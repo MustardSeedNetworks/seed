@@ -92,7 +92,7 @@ export function useSettingsDrawerSavers({
     setTestsStatus('saving');
     try {
       const payload = normalizeTestsSettingsForSave(testsSettings);
-      const response = await fetch(`${API_BASE}/api/v1/telemetry/health-checks/settings`, {
+      const response = await fetch(`${API_BASE}/api/v1/telemetry/probes/settings`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',

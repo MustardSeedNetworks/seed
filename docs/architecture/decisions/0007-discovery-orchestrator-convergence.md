@@ -1,6 +1,6 @@
 # ADR-0007: Discovery orchestrator convergence — engine vs pipeline, deferred to Phase 7
 
-**Status:** Accepted — 2026-06-03
+**Status:** Accepted — 2026-06-03 · partially superseded by [ADR-0008](0008-pure-data-discovery-types-in-schema.md) (2026-06-04) on the schema/types-extraction deferral; the Pipeline→Engine fold still stands
 
 ## Context
 
@@ -52,6 +52,15 @@ Engine endpoint — which is the same Phase 7 frontend migration.
   frontend consuming Engine). Until a consumer exists, the ~150-field cluster stays
   an opaque `any` job result / unregistered DTO rather than a speculative generated
   schema maintained against no client.
+
+> **Partial supersession — [ADR-0008](0008-pure-data-discovery-types-in-schema.md)
+> (2026-06-04):** the schema/types bullet above was revisited sooner than Phase 7.
+> ADR-0008 registers `EngineDiscoveryResponse` directly by reflecting `discovery`'s
+> pure-data types (drift-gated by `cmd/seed-schema`) and **withdraws the
+> `internal/discovery/types` extraction as unnecessary** — the wire contract is
+> generated from the domain structs and visible in review, not decoupled behind a
+> new package. The rest of this ADR — deferring the Pipeline→Engine orchestrator
+> fold to Phase 7 — is unaffected and still pending.
 
 ## Consequences
 

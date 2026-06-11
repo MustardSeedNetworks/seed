@@ -42,8 +42,8 @@ func initServeCmd(state *cliState) {
 		Long: `Start The Seed network diagnostics server.
 
 The server provides a web-based UI for network diagnostics, monitoring,
-and analysis. It runs with HTTPS on port 8443. HTTPS is required —
-the HTTP listener exists only as a 308 redirector.`,
+and analysis. It serves HTTPS only on port 8443 — the daemon binds no
+plain-HTTP listener, so clients must use the https:// scheme.`,
 		Example: `  # Start with the default config
   seed serve
 
@@ -116,7 +116,7 @@ func initializeBackgroundComponents(cfg *config.Config, db *database.DB) *api.Ba
 	// Wi-Fi airspace visibility: holds the live airspace + anomaly engine, fed by
 	// the monitor-mode capture source. A malformed catalog is a programming error
 	// — log and continue without the component (handlers degrade gracefully).
-	if wifiVis, err := app.NewWiFiVisibility(); err != nil {
+	if wifiVis, err := app.NewWiFiVisibility(db.Anomalies()); err != nil {
 		logging.GetLogger().Error("Wi-Fi visibility init failed; feature disabled", "error", err)
 	} else {
 		components.WiFiVisibility = wifiVis
@@ -234,10 +234,8 @@ func loadAndConfigureConfig(configPath string) *config.Config {
 		cfg.Auth.DefaultPasswordHash = auth.SetupModePlaceholder
 	}
 
-	migrateSNMPCredentials(cfg, configPath)
-
-	// HTTPS is required, unconditionally. The HTTP listener exists only as a
-	// 308 redirector. No --dev or env-var opt-out is supported.
+	// HTTPS is required, unconditionally — the daemon binds no HTTP listener.
+	// No --dev or env-var opt-out is supported.
 	cfg.Server.HTTPS = true
 
 	if validateErr := cfg.Validate(); validateErr != nil {
@@ -271,47 +269,6 @@ func ensureJWTSecret(cfg *config.Config, configPath string) {
 func ensureCredentialKeyring(cfg *config.Config, configPath string) {
 	if err := cfg.InitCredentialKeyring(filepath.Dir(configPath)); err != nil {
 		fmt.Fprintf(os.Stderr, "Warning: Failed to initialize credential key: %v\n", err)
-	}
-}
-
-// credentialNeedsMigration reports whether a credential value still needs to be
-// encrypted (plaintext) or upgraded from the legacy JWT-derived format to the
-// versioned DEK format (ADR-0015).
-func credentialNeedsMigration(value string) bool {
-	if value == "" {
-		return false
-	}
-	return !config.IsEncrypted(value) || config.IsLegacyEncrypted(value)
-}
-
-// migrateSNMPCredentials encrypts plaintext SNMP credentials and migrates legacy
-// JWT-derived ciphertext to the versioned DEK format (ADR-0015).
-// Note: Called before logging is initialized, so uses [fmt.Fprintf].
-func migrateSNMPCredentials(cfg *config.Config, configPath string) {
-	if len(cfg.SNMP.V3Credentials) == 0 {
-		return
-	}
-
-	needsSave := false
-	for i := range cfg.SNMP.V3Credentials {
-		cred := &cfg.SNMP.V3Credentials[i]
-		if credentialNeedsMigration(cred.AuthPassword) || credentialNeedsMigration(cred.PrivPassword) {
-			needsSave = true
-			break
-		}
-	}
-
-	if !needsSave {
-		return
-	}
-
-	fmt.Fprintln(os.Stderr, "Migrating SNMP credentials to encrypted format...")
-	if encryptErr := cfg.EncryptSNMPCredentials(); encryptErr != nil {
-		fmt.Fprintf(os.Stderr, "Warning: Failed to encrypt SNMP credentials: %v\n", encryptErr)
-	} else if saveErr := cfg.Save(configPath); saveErr != nil {
-		fmt.Fprintf(os.Stderr, "Warning: Failed to persist encrypted SNMP credentials: %v\n", saveErr)
-	} else {
-		fmt.Fprintln(os.Stderr, "SNMP credentials encrypted and saved securely")
 	}
 }
 

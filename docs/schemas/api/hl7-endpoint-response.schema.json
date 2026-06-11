@@ -28,9 +28,6 @@
         },
         "enabled": {
           "type": "boolean"
-        },
-        "criticality": {
-          "type": "integer"
         }
       },
       "additionalProperties": false,
@@ -43,8 +40,7 @@
         "sendingFacility",
         "receivingApp",
         "receivingFacility",
-        "enabled",
-        "criticality"
+        "enabled"
       ]
     }
   },

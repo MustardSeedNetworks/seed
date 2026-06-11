@@ -1,16 +1,15 @@
 /**
  * SLADashboardCard Component
  *
- * Purpose: Displays SLA compliance metrics, health scores, and alerts for monitored endpoints.
- * Provides an overview of service health and SLA adherence across all configured endpoints.
+ * Purpose: Surfaces the active anomalies detected by the active-monitoring probe
+ * engine (source=probe, ADR-0025), read from the unified anomaly store
+ * (ADR-0021). The legacy SLA/scoring/alerts sections were removed with the dead
+ * health_check_results read-path (ADR-0026); SLA/scoring on probe_results, if
+ * rebuilt, is a future feature and the component will be renamed then.
  *
  * Key Features:
- * - SLA compliance summary: percentage of endpoints meeting SLA targets
- * - Health score distribution: healthy, degraded, critical endpoint counts
- * - Active alerts: count and severity breakdown
- * - Anomaly detection: active anomalies with severity indicators
- * - Period selection: daily, weekly, monthly views
- * - Click-through to detailed endpoint views
+ * - Active anomaly count with severity-tinted emphasis
+ * - Periodic refresh
  *
  * Usage:
  * ```typescript
@@ -18,216 +17,45 @@
  * ```
  *
  * Dependencies: BaseCard, Card UI components, Icons, theme utilities
- * State: Fetches from SLA and scores API endpoints, updates periodically
+ * State: Fetches the active anomaly count, updates periodically
  */
 
-import { AlertTriangle, CheckCircle2, Shield, TrendingUp, XCircle } from 'lucide-react';
+import { Shield } from 'lucide-react';
 import type React from 'react';
 import { memo, useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { cn, icon as iconTokens, radius, spacing, status as statusColor } from '../../styles/theme';
-import { Card, CardDivider } from '../ui/card';
+import { Card } from '../ui/card';
 import type { Status } from '../ui/StatusBadge';
-
-interface SLASummary {
-  period: string;
-  periodStart: string;
-  periodEnd: string;
-  totalEndpoints: number;
-  endpointsMet: number;
-  endpointsMissed: number;
-  complianceRate: number;
-  generatedAt: string;
-}
-
-interface ScoresSummary {
-  totalEndpoints: number;
-  healthy: number;
-  degraded: number;
-  critical: number;
-  unknown: number;
-}
-
-interface AlertStats {
-  total: number;
-  active: number;
-  acknowledged: number;
-  resolved: number;
-  critical: number;
-  warning: number;
-  info: number;
-}
-
-interface DashboardData {
-  sla: SLASummary | null;
-  scores: ScoresSummary | null;
-  alerts: AlertStats | null;
-  anomalyCount: number;
-}
 
 interface SLADashboardCardProps {
   className?: string;
 }
 
-function getComplianceStatus(rate: number): Status {
-  if (rate >= 99) {
-    return 'success';
-  }
-  if (rate >= 95) {
-    return 'warning';
-  }
-  return 'error';
-}
-
-/** Helper to get stroke color based on status */
-function getStrokeColor(status: Status): string {
-  if (status === 'success') {
-    return 'var(--color-status-success)';
-  }
-  if (status === 'warning') {
-    return 'var(--color-status-warning)';
-  }
-  return 'var(--color-status-error)';
-}
-
-function ComplianceRing({ rate, size = 80 }: { rate: number; size?: number }): React.ReactElement {
-  const strokeWidth = 8;
-  const normalizedRadius = (size - strokeWidth) / 2;
-  const circumference = normalizedRadius * 2 * Math.PI;
-  const strokeDashoffset = circumference - (rate / 100) * circumference;
-
-  const status = getComplianceStatus(rate);
-  const strokeColor = getStrokeColor(status);
-
-  return (
-    <div className="relative inline-flex items-center justify-center">
-      <svg
-        height={size}
-        width={size}
-        className="-rotate-90"
-        role="img"
-        aria-labelledby="compliance-title"
-      >
-        <title id="compliance-title">SLA Compliance {rate.toFixed(1)}%</title>
-        <circle
-          stroke="var(--color-border)"
-          fill="transparent"
-          strokeWidth={strokeWidth}
-          r={normalizedRadius}
-          cx={size / 2}
-          cy={size / 2}
-        />
-        <circle
-          stroke={strokeColor}
-          fill="transparent"
-          strokeWidth={strokeWidth}
-          strokeDasharray={`${circumference} ${circumference}`}
-          style={{ strokeDashoffset }}
-          strokeLinecap="round"
-          r={normalizedRadius}
-          cx={size / 2}
-          cy={size / 2}
-          className="transition-all duration-500"
-        />
-      </svg>
-      <div className="absolute inset-0 flex-center">
-        <span className="text-lg font-bold text-text-primary">{rate.toFixed(1)}%</span>
-      </div>
-    </div>
-  );
-}
-
-function StatBlock({
-  icon: ICON,
-  label,
-  value,
-  status,
-  className,
-}: {
-  icon: React.ElementType;
-  label: string;
-  value: number | string;
-  status?: Status;
-  className?: string;
-}): React.ReactElement {
-  return (
-    <div className={cn('flex items-center gap-compact', className)}>
-      <div
-        className={cn(
-          'flex-center rounded-md',
-          radius.md,
-          spacing.pad.xs,
-          status === 'success' && 'bg-status-success/10 text-status-success',
-          status === 'warning' && 'bg-status-warning/10 text-status-warning',
-          status === 'error' && 'bg-status-error/10 text-status-error',
-          !status && 'bg-surface-hover text-text-muted',
-        )}
-      >
-        <ICON className={iconTokens.size.sm} />
-      </div>
-      <div className="flex flex-col">
-        <span className="text-xs text-text-muted">{label}</span>
-        <span className="label">{value}</span>
-      </div>
-    </div>
-  );
-}
-
 export const SLADashboardCard: React.NamedExoticComponent<SLADashboardCardProps> = memo(
   function slaDashboardCardInner({ className }: SLADashboardCardProps): React.ReactElement {
     const { t } = useTranslation('cards');
-    const [data, setData] = useState<DashboardData>({
-      sla: null,
-      scores: null,
-      alerts: null,
-      anomalyCount: 0,
-    });
+    const [anomalyCount, setAnomalyCount] = useState(0);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
-    const [period, setPeriod] = useState<'daily' | 'weekly' | 'monthly'>('daily');
 
     const fetchData = useCallback(async () => {
       setLoading(true);
       setError(null);
-
       try {
-        const [slaRes, scoresRes, alertsRes, anomaliesRes] = await Promise.all([
-          fetch(`/api/v1/telemetry/health-checks/sla?period=${period}`, { credentials: 'include' }),
-          fetch('/api/v1/telemetry/health-checks/scores', { credentials: 'include' }),
-          fetch('/api/v1/telemetry/health-checks/alerts', { credentials: 'include' }),
-          fetch('/api/v1/telemetry/health-checks/anomalies', { credentials: 'include' }),
-        ]);
-
-        const newData: DashboardData = {
-          sla: null,
-          scores: null,
-          alerts: null,
-          anomalyCount: 0,
-        };
-
-        if (slaRes.ok) {
-          newData.sla = await slaRes.json();
+        const res = await fetch('/api/v1/telemetry/probes/anomalies', {
+          credentials: 'include',
+        });
+        if (res.ok) {
+          const data = await res.json();
+          setAnomalyCount(data.activeCount ?? 0);
         }
-        if (scoresRes.ok) {
-          const scoresData = await scoresRes.json();
-          newData.scores = scoresData.summary;
-        }
-        if (alertsRes.ok) {
-          const alertsData = await alertsRes.json();
-          newData.alerts = alertsData.stats;
-        }
-        if (anomaliesRes.ok) {
-          const anomaliesData = await anomaliesRes.json();
-          newData.anomalyCount = anomaliesData.activeCount ?? 0;
-        }
-
-        setData(newData);
       } catch (err) {
-        setError(err instanceof Error ? err.message : 'Failed to load SLA data');
+        setError(err instanceof Error ? err.message : 'Failed to load anomalies');
       } finally {
         setLoading(false);
       }
-    }, [period]);
+    }, []);
 
     useEffect(() => {
       fetchData().catch(() => undefined);
@@ -245,34 +73,19 @@ export const SLADashboardCard: React.NamedExoticComponent<SLADashboardCardProps>
       if (error) {
         return 'error';
       }
-      if (!data.scores) {
-        return 'unknown';
-      }
-
-      const { healthy, degraded, critical, totalEndpoints } = data.scores;
-      if (critical > 0) {
-        return 'error';
-      }
-      if (degraded > 0) {
-        return 'warning';
-      }
-      if (healthy === totalEndpoints && totalEndpoints > 0) {
-        return 'success';
-      }
-      return 'unknown';
+      return anomalyCount > 0 ? 'warning' : 'success';
     };
 
     return (
       <Card
-        title={t('slaDashboard.title', 'SLA Dashboard')}
-        subtitle={t('slaDashboard.subtitle', 'Service health and compliance')}
+        title={t('slaDashboard.title', 'Active Anomalies')}
+        subtitle={t('slaDashboard.subtitle', 'Detected by active monitoring')}
         icon={<Shield className={iconTokens.size.md} />}
         status={overallStatus()}
         className={className}
       >
         {loading ? (
           <div className={cn('animate-pulse stack-lg', spacing.pad.default)}>
-            <div className="h-20 bg-surface-hover rounded-lg" />
             <div className="h-16 bg-surface-hover rounded-lg" />
           </div>
         ) : null}
@@ -281,137 +94,27 @@ export const SLADashboardCard: React.NamedExoticComponent<SLADashboardCardProps>
         ) : null}
         {loading || error ? null : (
           <div className={cn('stack-lg', spacing.pad.default)}>
-            {/* Period selector */}
-            <div className="flex justify-end gap-tight">
-              {(['daily', 'weekly', 'monthly'] as const).map((p) => (
-                <button
-                  type="button"
-                  key={p}
-                  onClick={(): void => setPeriod(p)}
+            <div>
+              <h4 className="caption mb-2">{t('slaDashboard.anomalies', 'Anomalies')}</h4>
+              <div className="flex items-center gap-compact">
+                <span
                   className={cn(
-                    'px-cell py-compact text-xs rounded transition-colors',
-                    period === p
-                      ? 'bg-brand-primary text-on-brand'
-                      : 'bg-surface-hover text-text-muted hover:text-text-primary',
+                    'heading-1',
+                    anomalyCount > 0 ? statusColor.text.warning : 'text-text-primary',
                   )}
                 >
-                  {t(`slaDashboard.period.${p}`, p.charAt(0).toUpperCase() + p.slice(1))}
-                </button>
-              ))}
-            </div>
-
-            {/* SLA Compliance */}
-            {data.sla ? (
-              <div className="flex-between">
-                <div>
-                  <h4 className="label mb-tight">
-                    {t('slaDashboard.compliance', 'SLA Compliance')}
-                  </h4>
-                  <p className="text-xs text-text-muted">
-                    {data.sla.endpointsMet} / {data.sla.totalEndpoints}{' '}
-                    {t('slaDashboard.endpointsMet', 'endpoints meeting SLA')}
-                  </p>
-                  {data.sla.endpointsMissed > 0 ? (
-                    <p className="text-xs text-status-error mt-tight">
-                      {data.sla.endpointsMissed}{' '}
-                      {t('slaDashboard.endpointsMissed', 'endpoints missing SLA')}
-                    </p>
-                  ) : null}
-                </div>
-                <ComplianceRing rate={data.sla.complianceRate} />
-              </div>
-            ) : null}
-
-            <CardDivider />
-
-            {/* Health Score Distribution */}
-            {data.scores ? (
-              <div>
-                <h4 className="label mb-heading">
-                  {t('slaDashboard.healthScores', 'Health Scores')}
-                </h4>
-                <div className="grid grid-cols-2 gap-default">
-                  <StatBlock
-                    icon={CheckCircle2}
-                    label={t('slaDashboard.healthy', 'Healthy')}
-                    value={data.scores.healthy}
-                    status="success"
-                  />
-                  <StatBlock
-                    icon={AlertTriangle}
-                    label={t('slaDashboard.degraded', 'Degraded')}
-                    value={data.scores.degraded}
-                    status={data.scores.degraded > 0 ? 'warning' : undefined}
-                  />
-                  <StatBlock
-                    icon={XCircle}
-                    label={t('slaDashboard.critical', 'Critical')}
-                    value={data.scores.critical}
-                    status={data.scores.critical > 0 ? 'error' : undefined}
-                  />
-                  <StatBlock
-                    icon={TrendingUp}
-                    label={t('slaDashboard.total', 'Total')}
-                    value={data.scores.totalEndpoints}
-                  />
-                </div>
-              </div>
-            ) : null}
-
-            <CardDivider />
-
-            {/* Alerts and Anomalies */}
-            <div className="grid grid-cols-2 gap-comfortable">
-              {data.alerts ? (
-                <div>
-                  <h4 className="caption mb-2">
-                    {t('slaDashboard.activeAlerts', 'Active Alerts')}
-                  </h4>
-                  <div className="flex items-center gap-compact">
-                    <span
-                      className={cn(
-                        'heading-1',
-                        data.alerts.active > 0 ? statusColor.text.error : 'text-text-primary',
-                      )}
-                    >
-                      {data.alerts.active}
-                    </span>
-                    {data.alerts.critical > 0 ? (
-                      <span
-                        className={cn(
-                          'text-xs px-cell py-0.5 bg-status-error/10 text-status-error',
-                          radius.full,
-                        )}
-                      >
-                        {data.alerts.critical} {t('slaDashboard.criticalLabel', 'critical')}
-                      </span>
-                    ) : null}
-                  </div>
-                </div>
-              ) : null}
-
-              <div>
-                <h4 className="caption mb-2">{t('slaDashboard.anomalies', 'Anomalies')}</h4>
-                <div className="flex items-center gap-compact">
+                  {anomalyCount}
+                </span>
+                {anomalyCount > 0 ? (
                   <span
                     className={cn(
-                      'heading-1',
-                      data.anomalyCount > 0 ? statusColor.text.warning : 'text-text-primary',
+                      'text-xs px-cell py-0.5 bg-status-warning/10 text-status-warning',
+                      radius.full,
                     )}
                   >
-                    {data.anomalyCount}
+                    {t('slaDashboard.detected', 'detected')}
                   </span>
-                  {data.anomalyCount > 0 ? (
-                    <span
-                      className={cn(
-                        'text-xs px-cell py-0.5 bg-status-warning/10 text-status-warning',
-                        radius.full,
-                      )}
-                    >
-                      {t('slaDashboard.detected', 'detected')}
-                    </span>
-                  ) : null}
-                </div>
+                ) : null}
               </div>
             </div>
           </div>

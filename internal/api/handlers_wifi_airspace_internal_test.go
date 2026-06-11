@@ -1,6 +1,7 @@
 package api
 
 import (
+	"context"
 	"encoding/json"
 	"net"
 	"net/http"
@@ -9,8 +10,8 @@ import (
 	"time"
 
 	wifianomaly "github.com/MustardSeedNetworks/seed/internal/wifi/anomaly"
-	wifiapp "github.com/MustardSeedNetworks/seed/internal/wifi/app"
 	"github.com/MustardSeedNetworks/seed/internal/wifi/dot11"
+	"github.com/MustardSeedNetworks/seed/internal/wifi/troubleshooting"
 	"github.com/MustardSeedNetworks/seed/internal/wifi/visibility"
 )
 
@@ -47,7 +48,7 @@ func openBeacon(t *testing.T) *dot11.Frame {
 
 func TestHandleWiFiAirspaceEmptyWhenNoComponent(t *testing.T) {
 	// No visibility source wired → graceful empty response, never 500/null.
-	s := &Server{wifiQueries: wifiapp.NewQueries(nil)}
+	s := &Server{wifiQueries: troubleshooting.NewQueries(nil)}
 	rec := httptest.NewRecorder()
 	s.handleWiFiAirspace(rec, httptest.NewRequest(http.MethodGet, "/api/v1/wifi/airspace", nil))
 
@@ -67,8 +68,8 @@ func TestHandleWiFiAirspaceAndAnomaliesPopulated(t *testing.T) {
 	}
 	svc.SetSource("monitor0")
 	svc.Ingest(openBeacon(t), time.Now())
-	svc.Evaluate(time.Now())
-	s := &Server{wifiQueries: wifiapp.NewQueries(svc)}
+	svc.Evaluate(context.Background(), time.Now())
+	s := &Server{wifiQueries: troubleshooting.NewQueries(svc)}
 
 	// Airspace tree is populated and reports the active source.
 	recA := httptest.NewRecorder()

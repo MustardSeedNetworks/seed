@@ -10,5 +10,4 @@ export interface LTIEndpointResponse {
   launchUrl: string;
   ltiVersion?: string;
   enabled: boolean;
-  criticality: number;
 }

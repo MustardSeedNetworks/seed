@@ -15,5 +15,4 @@ export interface FileShareEndpointResponse {
   testWritePerformance?: boolean;
   testFileSizeMb?: number;
   enabled: boolean;
-  criticality: number;
 }

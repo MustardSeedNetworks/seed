@@ -4,7 +4,6 @@ package api_test
 // and HTTP request parsing utilities.
 
 import (
-	"context"
 	"net/http"
 	"testing"
 	"time"
@@ -197,89 +196,6 @@ func TestGetTestStatus(t *testing.T) {
 	}
 }
 
-func TestGetTLSVersionString(t *testing.T) {
-	tests := []struct {
-		version  uint16
-		expected string
-	}{
-		{0x0301, "TLS 1.0"},
-		{0x0302, "TLS 1.1"},
-		{0x0303, "TLS 1.2"},
-		{0x0304, "TLS 1.3"},
-		{0x0000, "Unknown"},
-		{0x9999, "Unknown"},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.expected, func(t *testing.T) {
-			result := api.ExportGetTLSVersionString(tt.version)
-			if result != tt.expected {
-				t.Errorf(
-					"GetTLSVersionString(0x%04X) = %q, want %q",
-					tt.version,
-					result,
-					tt.expected,
-				)
-			}
-		})
-	}
-}
-
-func TestRunTCPTest(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping network test in short mode")
-	}
-
-	// Test against a known-working port
-	latency, err := api.ExportRunTCPTest(context.Background(), "google.com", 80)
-	if err != nil {
-		t.Skipf("network test failed (may be offline): %v", err)
-	}
-	if latency <= 0 {
-		t.Error("expected positive latency")
-	}
-}
-
-func TestRunTCPTestInvalidHost(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping network test in short mode")
-	}
-
-	_, err := api.ExportRunTCPTest(context.Background(), "invalid.invalid.invalid", 80)
-	if err == nil {
-		t.Error("expected error for invalid host")
-	}
-}
-
-func TestRunExtendedPing(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping network test in short mode")
-	}
-
-	stats, err := api.ExportRunExtendedPing("google.com", 3)
-	if err != nil {
-		t.Skipf("network test failed (may be offline): %v", err)
-	}
-
-	if stats.AvgLatency <= 0 && stats.PacketLoss < 100 {
-		t.Error("expected positive average latency")
-	}
-	if stats.PacketLoss < 0 || stats.PacketLoss > 100 {
-		t.Errorf("packet loss should be 0-100%%, got %v", stats.PacketLoss)
-	}
-}
-
-func TestRunExtendedPingInvalidHost(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping network test in short mode")
-	}
-
-	stats, err := api.ExportRunExtendedPing("invalid.invalid.invalid", 2)
-	if err == nil && stats.PacketLoss != 100 {
-		t.Error("expected 100% packet loss for invalid host")
-	}
-}
-
 func TestLoginRequestValidation(t *testing.T) {
 	req := api.LoginRequest{
 		Username: "admin",
@@ -399,41 +315,6 @@ func TestLinkResponse(t *testing.T) {
 	}
 	if !resp.AutoNeg {
 		t.Error("expected autonegotiation to be enabled")
-	}
-}
-
-func TestCustomTestResult(t *testing.T) {
-	result := api.CustomTestResult{
-		Name:       "Test Server",
-		Host:       "example.com",
-		Port:       80,
-		Success:    true,
-		Latency:    25.5,
-		TestStatus: "success",
-	}
-
-	if result.Name != "Test Server" {
-		t.Errorf("expected name 'Test Server', got %s", result.Name)
-	}
-	if result.Host == "" {
-		t.Error("expected host to be set")
-	}
-	if result.Port <= 0 {
-		t.Error("expected port to be positive")
-	}
-	if result.Latency <= 0 {
-		t.Error("expected latency to be positive")
-	}
-	if result.TestStatus != "success" && result.TestStatus != "warning" &&
-		result.TestStatus != "error" {
-		t.Errorf("invalid test status: %s", result.TestStatus)
-	}
-
-	if !result.Success {
-		t.Error("expected success")
-	}
-	if result.Latency <= 0 {
-		t.Error("expected positive latency")
 	}
 }
 

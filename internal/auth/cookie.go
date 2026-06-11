@@ -28,9 +28,9 @@ const (
 // CookieConfig holds cookie scope settings.
 //
 // Security attributes (Secure, HttpOnly, SameSite) are hardcoded on every
-// auth cookie because the daemon enforces HTTPS for all auth endpoints
-// (HTTP listener redirects to HTTPS; no auth flow ever runs over plain
-// HTTP). They are intentionally NOT configurable.
+// auth cookie because the daemon serves HTTPS only — it binds no HTTP
+// listener, so no auth flow ever runs over plain HTTP. They are
+// intentionally NOT configurable.
 type CookieConfig struct {
 	// Domain sets the cookie domain
 	Domain string
@@ -59,7 +59,7 @@ func newAuthCookie(name, value string, expires time.Time, maxAge int, config Coo
 		Domain:   config.Domain,
 		Expires:  expires,
 		MaxAge:   maxAge,
-		Secure:   true,                    // HTTPS-only (HTTP listener redirects, never serves auth)
+		Secure:   true,                    // HTTPS-only (no HTTP listener; auth never served over plain HTTP)
 		HttpOnly: true,                    // Prevent JavaScript access (XSS protection)
 		SameSite: http.SameSiteStrictMode, // Block cross-site contexts (CSRF)
 	}

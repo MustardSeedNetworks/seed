@@ -32,7 +32,6 @@ export function HealthChecksSettingsSpecialty({
     name: '',
     url: 'rtsp://',
     enabled: true,
-    criticality: 5,
   }));
 
   const {
@@ -45,7 +44,6 @@ export function HealthChecksSettingsSpecialty({
     port: 104,
     aeTitle: '',
     enabled: true,
-    criticality: 8,
   }));
 
   const {
@@ -61,7 +59,6 @@ export function HealthChecksSettingsSpecialty({
     receivingApp: '',
     receivingFacility: '',
     enabled: true,
-    criticality: 9,
   }));
 
   const {
@@ -73,7 +70,6 @@ export function HealthChecksSettingsSpecialty({
     baseUrl: 'https://',
     authType: 'none' as const,
     enabled: true,
-    criticality: 8,
   }));
 
   const {
@@ -85,7 +81,6 @@ export function HealthChecksSettingsSpecialty({
     launchUrl: 'https://',
     consumerKey: '',
     enabled: true,
-    criticality: 6,
   }));
 
   const {
@@ -97,7 +92,6 @@ export function HealthChecksSettingsSpecialty({
     endpointUrl: 'opc.tcp://',
     securityMode: 'None' as const,
     enabled: true,
-    criticality: 8,
   }));
 
   const {
@@ -111,7 +105,6 @@ export function HealthChecksSettingsSpecialty({
     unitId: 1,
     testRegister: 0,
     enabled: true,
-    criticality: 8,
   }));
 
   return (

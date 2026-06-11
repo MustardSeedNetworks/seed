@@ -22,6 +22,8 @@ const (
 	KindFHIR        = "fhir"
 	KindLTI         = "lti"
 	KindLDAP        = "ldap"
+	KindSQL         = "sql"
+	KindFileShare   = "fileshare"
 	KindOPCUA       = "opcua"
 	KindMODBUS      = "modbus"
 	KindNTP         = "ntp"

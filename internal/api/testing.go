@@ -3,6 +3,7 @@ package api
 import (
 	"net/http"
 
+	"github.com/MustardSeedNetworks/seed/internal/app"
 	"github.com/MustardSeedNetworks/seed/internal/auth"
 	"github.com/MustardSeedNetworks/seed/internal/config"
 	"github.com/MustardSeedNetworks/seed/internal/database"
@@ -13,6 +14,7 @@ import (
 	"github.com/MustardSeedNetworks/seed/internal/diagnostics/iperf"
 	"github.com/MustardSeedNetworks/seed/internal/diagnostics/speedtest"
 	"github.com/MustardSeedNetworks/seed/internal/diagnostics/vlan"
+	"github.com/MustardSeedNetworks/seed/internal/engine"
 	"github.com/MustardSeedNetworks/seed/internal/netif"
 	"github.com/MustardSeedNetworks/seed/internal/pipeline/publicip"
 	"github.com/MustardSeedNetworks/seed/internal/testutil"
@@ -33,41 +35,41 @@ func NewTestServer() *Server {
 // This should be called with defer after creating a test server.
 func (s *Server) Close() {
 	// Stop rate limiters
-	if s.services.RateLimit.Login != nil {
-		s.services.RateLimit.Login.Stop()
+	if s.loginLimiter != nil {
+		s.loginLimiter.Stop()
 	}
-	if s.services.RateLimit.Endpoint != nil {
-		s.services.RateLimit.Endpoint.Stop()
+	if s.endpointLimiter != nil {
+		s.endpointLimiter.Stop()
 	}
 
 	// Stop CSRF manager
-	if s.services.Auth.CSRF != nil {
-		s.services.Auth.CSRF.Stop()
+	if s.csrf != nil {
+		s.csrf.Stop()
 	}
 
 	// Stop auth manager (token blacklist cleanup)
-	if s.services.Auth.Manager != nil {
-		s.services.Auth.Manager.Stop()
+	if s.authMgr != nil {
+		s.authMgr.Stop()
 	}
 
 	// Stop link monitor
-	if s.services.Network.LinkMonitor != nil {
-		s.services.Network.LinkMonitor.Stop()
+	if s.linkMon != nil {
+		s.linkMon.Stop()
 	}
 
 	// Stop discovery service
-	if s.services.Discovery.Service != nil {
-		s.services.Discovery.Service.Stop()
+	if s.discoverySvc != nil {
+		s.discoverySvc.Stop()
 	}
 
 	// Stop discovery engine (fixes EventBus goroutine leak)
-	if s.services.Discovery.Engine != nil {
-		s.services.Discovery.Engine.Stop()
+	if s.discoveryEng != nil {
+		s.discoveryEng.Stop()
 	}
 
 	// Stop SSE hub
-	if s.services.RealTime.SSEHub != nil {
-		s.services.RealTime.SSEHub.Shutdown()
+	if s.sse != nil {
+		s.sse.Shutdown()
 	}
 }
 
@@ -82,7 +84,7 @@ func (s *Server) GetAuthenticatedHandler() http.Handler {
 // attach a temp SQLite database without standing up the full
 // NewServer dependency graph.
 func SetTestDB(s *Server, db *database.DB) {
-	s.services.Database.DB = db
+	s.dbConn = db
 }
 
 // ResetMFAAttempts clears the package-level MFA rate-limit store.
@@ -101,60 +103,64 @@ func NewTestServerWithConfig(cfg *config.Config) *Server {
 	// The mock provides realistic interface data for handler testing.
 	netMgr := netif.NewMockManager(netif.DefaultMockConfig())
 
-	// Create server with ServiceContainer (#888)
+	// Create server with the lightweight subset of services tests need (D1).
 	s := &Server{
 		config:        cfg,
 		configPath:    "/tmp/test-config.yaml",
 		logPath:       "/tmp/test.log",
 		mux:           http.NewServeMux(),
 		icmpAvailable: true,
-		services:      NewServiceContainer(),
+		engines:       engine.NewRegistry(nil),
 	}
 
-	// Initialize services in container
-	s.services.Network.Manager = netMgr
-	s.services.Network.LinkMonitor = netif.NewLinkMonitor(cfg.Interface.Default)
+	// Initialize services
+	s.netMgr = netMgr
+	s.linkMon = netif.NewLinkMonitor(cfg.Interface.Default)
 
-	s.services.Auth.Manager = auth.NewManager(
+	s.authMgr = auth.NewManager(
 		cfg.Auth.JWTSecret,
 		cfg.Auth.SessionTimeout,
 		cfg.Auth.DefaultUsername,
 		cfg.Auth.DefaultPasswordHash,
 	)
-	s.services.Auth.CSRF = auth.NewCSRFManager()
-	s.services.Auth.SetupToken = NewSetupTokenManager()
-	s.services.Auth.TrustedProxies = NewTrustedProxies("") // Empty for testing
+	s.csrf = auth.NewCSRFManager()
+	s.setupToken = NewSetupTokenManager()
+	s.proxies = NewTrustedProxies("") // Empty for testing
 
-	s.services.RateLimit.Login = NewRateLimiter(DefaultRateLimitConfig())
-	s.services.RateLimit.Endpoint = NewEndpointRateLimiter(DefaultEndpointRateLimitConfig())
+	s.loginLimiter = NewRateLimiter(DefaultRateLimitConfig())
+	s.endpointLimiter = NewEndpointRateLimiter(DefaultEndpointRateLimitConfig())
 
-	// Skip slow discovery initialization (OUI database loading, EventBus goroutines)
-	// Discovery.Device, Discovery.Service, Discovery.Engine are nil by default.
-	// Handlers check for nil and return appropriate errors.
+	// Skip slow discovery initialization (OUI database loading, EventBus goroutines).
+	// deviceDisc, discoverySvc, discoveryEng are nil by default; handlers check for
+	// nil and return appropriate errors.
 
 	// Initialize lightweight telemetry services (no slow I/O)
-	s.services.Diagnostics.DNS = dns.NewTester("", cfg.DNS.TestHostname, dns.DefaultThresholds())
-	s.services.Diagnostics.DNSSecurity = dns.NewSecurityScanner(dns.DefaultSecurityScanConfig())
-	s.services.Diagnostics.DHCP = dhcp.NewMonitor(cfg.Interface.Default)
-	s.services.Diagnostics.Gateway = gateway.NewTester(gateway.DefaultThresholds())
-	s.services.Diagnostics.VLAN = vlan.NewManager(cfg.Interface.Default)
-	s.services.Diagnostics.VLANTraffic = vlan.NewTrafficMonitor(cfg.Interface.Default)
-	s.services.Diagnostics.Speedtest = speedtest.NewTesterWithConfig(cfg.Speedtest.ServerID)
-	s.services.Diagnostics.Iperf = iperf.NewManager()
-	s.services.Diagnostics.Cable = cable.NewTester(cfg.Interface.Default)
-	s.services.Diagnostics.PublicIP = publicip.NewChecker()
+	s.dnsTest = dns.NewTester("", cfg.DNS.TestHostname, dns.DefaultThresholds())
+	s.dnsSec = dns.NewSecurityScanner(dns.DefaultSecurityScanConfig())
+	s.dhcpMon = dhcp.NewMonitor(cfg.Interface.Default)
+	s.gatewayTest = gateway.NewTester(gateway.DefaultThresholds())
+	s.vlanMgr = vlan.NewManager(cfg.Interface.Default)
+	s.vlanTraffic = vlan.NewTrafficMonitor(cfg.Interface.Default)
+	s.speedtestTest = speedtest.NewTesterWithConfig(cfg.Speedtest.ServerID)
+	s.iperfMgr = iperf.NewManager()
+	s.cableTest = cable.NewTester(cfg.Interface.Default)
+	s.publicIP = publicip.NewChecker()
 
-	s.services.Wireless.WiFi = wifi.NewManager(cfg.Interface.Default)
+	s.wifiMgr = wifi.NewManager(cfg.Interface.Default)
 
 	// Initialize SSE hub
-	s.services.RealTime.SSEHub = NewSSEHub()
+	s.sse = NewSSEHub()
 
-	// Wire the ADR-0016 use-cases the same way NewServer does, so handlers that
-	// depend on them work under the test harness.
-	s.initSettingsUseCase()
-	s.initProfilesUseCase()
-	s.initNetworkUseCase()
-	s.initAlertsUseCase()
+	// Wire the ADR-0020 use-cases the same way NewServer does, so handlers that
+	// depend on them work under the test harness. The Wi-Fi use-cases degrade
+	// gracefully here: no visibility component, scanner, or discovery bridge is
+	// wired, so reads return empty results and management/discovery report the
+	// adapter-absent states.
+	s.settingsStore = app.NewSettings(s.db, s.config)
+	s.profiles = app.NewProfiles(s.db)
+	s.networkIP = app.NewNetworkIP(s.netManager, s.config, s.configPath)
+	s.alertRules = app.NewAlertRules(s.db)
+	s.initUseCases()
 
 	// Setup routes
 	s.setupRoutes()

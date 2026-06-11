@@ -11,7 +11,7 @@ import (
 
 	"github.com/MustardSeedNetworks/seed/internal/i18n"
 	"github.com/MustardSeedNetworks/seed/internal/logging"
-	profilesapp "github.com/MustardSeedNetworks/seed/internal/profiles/app"
+	"github.com/MustardSeedNetworks/seed/internal/profiles/catalog"
 )
 
 // ProfileRequest represents a profile create/update request.
@@ -157,7 +157,7 @@ func (s *Server) handleCreateProfile(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	profile, err := s.profiles.Create(r.Context(), profilesapp.NewProfile{
+	profile, err := s.profiles.Create(r.Context(), catalog.NewProfile{
 		Name:        req.Name,
 		Description: req.Description,
 		ConfigJSON:  string(req.Config),
@@ -165,10 +165,10 @@ func (s *Server) handleCreateProfile(w http.ResponseWriter, r *http.Request) {
 	})
 	if err != nil {
 		switch {
-		case errors.Is(err, profilesapp.ErrNameRequired):
+		case errors.Is(err, catalog.ErrNameRequired):
 			sendErrorResponseWithDetails(w, logger, http.StatusBadRequest,
 				ErrCodeValidation, localizer.T("errors.profile.nameRequired"), "")
-		case errors.Is(err, profilesapp.ErrNameExists):
+		case errors.Is(err, catalog.ErrNameExists):
 			sendErrorResponseWithDetails(w, logger, http.StatusConflict,
 				ErrCodeConflict, localizer.T("errors.profile.nameExists"), "") // fixes #694
 		default:
@@ -189,7 +189,7 @@ func (s *Server) handleGetProfile(w http.ResponseWriter, r *http.Request, id str
 
 	profile, err := s.profiles.Get(r.Context(), id)
 	if err != nil {
-		if errors.Is(err, profilesapp.ErrNotFound) {
+		if errors.Is(err, catalog.ErrNotFound) {
 			sendErrorResponseWithDetails(w, logger, http.StatusNotFound,
 				ErrCodeNotFound, localizer.T("errors.profile.notFound"), "") // fixes #694
 			return
@@ -219,7 +219,7 @@ func (s *Server) handleUpdateProfile(w http.ResponseWriter, r *http.Request, id 
 		return
 	}
 
-	update := profilesapp.ProfileUpdate{
+	update := catalog.ProfileUpdate{
 		Name:        req.Name,
 		Description: req.Description,
 		IsDefault:   req.IsDefault,
@@ -235,13 +235,13 @@ func (s *Server) handleUpdateProfile(w http.ResponseWriter, r *http.Request, id 
 	profile, err := s.profiles.Update(r.Context(), id, update, parseIfMatch(r))
 	if err != nil {
 		switch {
-		case errors.Is(err, profilesapp.ErrNotFound):
+		case errors.Is(err, catalog.ErrNotFound):
 			sendErrorResponseWithDetails(w, logger, http.StatusNotFound,
 				ErrCodeNotFound, localizer.T("errors.profile.notFound"), "") // fixes #694
-		case errors.Is(err, profilesapp.ErrNameExists):
+		case errors.Is(err, catalog.ErrNameExists):
 			sendErrorResponseWithDetails(w, logger, http.StatusConflict,
 				ErrCodeConflict, localizer.T("errors.profile.nameExists"), "") // fixes #694
-		case errors.Is(err, profilesapp.ErrConflict):
+		case errors.Is(err, catalog.ErrConflict):
 			sendErrorResponseWithDetails(w, logger, http.StatusPreconditionFailed,
 				ErrCodeConflict, localizer.T("errors.profile.conflict"), "")
 		default:
@@ -258,7 +258,7 @@ func (s *Server) handleUpdateProfile(w http.ResponseWriter, r *http.Request, id 
 // profileETag returns the strong ETag for a profile — its row_version, the
 // monotonic optimistic-concurrency token, wrapped in quotes per RFC 9110. Unlike
 // the prior updated_at token it is exact, so a sub-second double-write conflicts.
-func profileETag(p profilesapp.Profile) string {
+func profileETag(p catalog.Profile) string {
 	return `"` + strconv.FormatInt(p.RowVersion, 10) + `"`
 }
 
@@ -285,13 +285,13 @@ func (s *Server) handleDeleteProfile(w http.ResponseWriter, r *http.Request, id 
 		sendJSONResponse(w, logger, http.StatusOK, map[string]string{
 			"message": "Profile deleted successfully",
 		})
-	case errors.Is(err, profilesapp.ErrNotFound):
+	case errors.Is(err, catalog.ErrNotFound):
 		sendErrorResponseWithDetails(w, logger, http.StatusNotFound,
 			ErrCodeNotFound, localizer.T("errors.profile.notFound"), "") // fixes #694
-	case errors.Is(err, profilesapp.ErrDeleteDefault):
+	case errors.Is(err, catalog.ErrDeleteDefault):
 		sendErrorResponseWithDetails(w, logger, http.StatusBadRequest,
 			ErrCodeBadRequest, localizer.T("errors.profile.cannotDeleteDefault"), "") // fixes #694
-	case errors.Is(err, profilesapp.ErrDeleteActive):
+	case errors.Is(err, catalog.ErrDeleteActive):
 		sendErrorResponseWithDetails(w, logger, http.StatusBadRequest,
 			ErrCodeBadRequest, localizer.T("errors.profile.cannotDeleteActive"), "") // fixes #694
 	default:
@@ -336,16 +336,16 @@ func (s *Server) handleGetActiveProfile(w http.ResponseWriter, r *http.Request) 
 	profile, err := s.profiles.ActiveProfile(r.Context())
 	if err != nil {
 		switch {
-		case errors.Is(err, profilesapp.ErrNoActiveOrDefault):
+		case errors.Is(err, catalog.ErrNoActiveOrDefault):
 			sendErrorResponseWithDetails(w, logger, http.StatusNotFound,
 				ErrCodeNotFound, localizer.T("errors.profile.noActiveOrDefault"), "") // fixes #694
-		case errors.Is(err, profilesapp.ErrActiveNotFound):
+		case errors.Is(err, catalog.ErrActiveNotFound):
 			sendErrorResponseWithDetails(w, logger, http.StatusNotFound,
 				ErrCodeNotFound, localizer.T("errors.profile.activeNotFound"), "") // fixes #694
-		case errors.Is(err, profilesapp.ErrDefaultLookup):
+		case errors.Is(err, catalog.ErrDefaultLookup):
 			sendErrorResponseWithDetails(w, logger, http.StatusInternalServerError,
 				ErrCodeInternal, localizer.T("errors.profile.getDefaultFailed"), "") // fixes #694, #H7
-		case errors.Is(err, profilesapp.ErrActiveLookup):
+		case errors.Is(err, catalog.ErrActiveLookup):
 			sendErrorResponseWithDetails(w, logger, http.StatusInternalServerError,
 				ErrCodeInternal, localizer.T("errors.profile.getActiveFailed"), "") // fixes #694, #H7
 		default:
@@ -374,10 +374,10 @@ func (s *Server) handleSetActiveProfile(w http.ResponseWriter, r *http.Request) 
 	profile, err := s.profiles.SetActiveProfile(r.Context(), req.ProfileID)
 	if err != nil {
 		switch {
-		case errors.Is(err, profilesapp.ErrIDRequired):
+		case errors.Is(err, catalog.ErrIDRequired):
 			sendErrorResponseWithDetails(w, logger, http.StatusBadRequest,
 				ErrCodeValidation, localizer.T("errors.profile.idRequired"), "") // fixes #694
-		case errors.Is(err, profilesapp.ErrNotFound):
+		case errors.Is(err, catalog.ErrNotFound):
 			sendErrorResponseWithDetails(w, logger, http.StatusNotFound,
 				ErrCodeNotFound, localizer.T("errors.profile.notFound"), "") // fixes #694
 		default:
@@ -465,10 +465,10 @@ func (s *Server) handleDuplicateProfile(w http.ResponseWriter, r *http.Request) 
 	duplicate, err := s.profiles.Duplicate(r.Context(), id, req.Name)
 	if err != nil {
 		switch {
-		case errors.Is(err, profilesapp.ErrNotFound):
+		case errors.Is(err, catalog.ErrNotFound):
 			sendErrorResponseWithDetails(w, logger, http.StatusNotFound,
 				ErrCodeNotFound, localizer.T("errors.profile.notFound"), "") // fixes #694
-		case errors.Is(err, profilesapp.ErrNameExists):
+		case errors.Is(err, catalog.ErrNameExists):
 			sendErrorResponseWithDetails(w, logger, http.StatusConflict,
 				ErrCodeConflict, localizer.T("errors.profile.nameExists"), "") // fixes #694
 		default:
@@ -504,9 +504,9 @@ func (s *Server) handleImportProfiles(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	items := make([]profilesapp.ImportItem, 0, len(req.Profiles))
+	items := make([]catalog.ImportItem, 0, len(req.Profiles))
 	for _, p := range req.Profiles {
-		items = append(items, profilesapp.ImportItem{
+		items = append(items, catalog.ImportItem{
 			Name:        p.Name,
 			Description: p.Description,
 			ConfigJSON:  string(p.Config),
@@ -587,7 +587,7 @@ func (s *Server) enforceMultiClientGate(w http.ResponseWriter, r *http.Request) 
 	}
 
 	// 2nd+ profile. Check the license.
-	mgr := s.services.Auth.License
+	mgr := s.licenseManager()
 	if mgr == nil {
 		// License disabled (dev / test builds) — permit.
 		return true
@@ -609,7 +609,7 @@ func (s *Server) enforceMultiClientGate(w http.ResponseWriter, r *http.Request) 
 }
 
 // profileToResponse converts a use-case profile to an API response.
-func profileToResponse(p profilesapp.Profile) ProfileResponse {
+func profileToResponse(p catalog.Profile) ProfileResponse {
 	var configJSON json.RawMessage
 	if p.ConfigJSON != "" {
 		configJSON = json.RawMessage(p.ConfigJSON)
@@ -666,7 +666,7 @@ func (s *Server) enforceMultiInterfaceGate(w http.ResponseWriter, r *http.Reques
 		return true
 	}
 
-	mgr := s.services.Auth.License
+	mgr := s.licenseManager()
 	if mgr == nil {
 		return true
 	}

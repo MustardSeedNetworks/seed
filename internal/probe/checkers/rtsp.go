@@ -117,7 +117,7 @@ func (c *RTSPChecker) Run(ctx context.Context, p probe.Probe) probe.Result {
 
 	meta, _ := json.Marshal(map[string]any{
 		"status_line": statusLine,
-		"addr":        addr,
+		metaKeyAddr:   addr,
 	})
 
 	if !statusOK {

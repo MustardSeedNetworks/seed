@@ -16,8 +16,7 @@ var ErrProbeNotFound = errors.New("probe not found")
 // ProbeRepository provides CRUD for probes and append/query for
 // probe_results. Future Stage A2 rollups (probe_rollups_hourly,
 // probe_rollups_daily) will land as additional methods on this
-// repository, mirroring the HealthCheckRepository multi-table
-// pattern.
+// repository, following the same raw-plus-rollups multi-table pattern.
 type ProbeRepository struct {
 	db *DB
 }
@@ -54,6 +53,55 @@ func (r *ProbeRepository) CreateProbe(ctx context.Context, p *Probe) error {
 		return fmt.Errorf("create probe: %w", err)
 	}
 	return nil
+}
+
+// ReplaceProbesByKinds swaps every probe of the named kinds for clientID
+// with the supplied set, in a single transaction. Probes of other kinds
+// are left untouched. Used by the health-check settings save (ADR-0027
+// P2), where the probes table is the store of record for the fourteen
+// health-check kinds: the operator's edited endpoint set replaces the
+// stored one wholesale, and probes of unrelated kinds (DNS, TLS, …) are
+// preserved. An empty kinds slice is a no-op delete; passing no
+// replacement probes clears the named kinds.
+func (r *ProbeRepository) ReplaceProbesByKinds(
+	ctx context.Context, clientID string, kinds []string, probes []*Probe,
+) error {
+	if clientID == "" {
+		clientID = DefaultClientID
+	}
+	now := time.Now().UTC().Format(time.RFC3339Nano)
+	return r.db.WithTx(ctx, func(tx *sql.Tx) error {
+		for _, kind := range kinds {
+			if _, err := tx.ExecContext(ctx,
+				`DELETE FROM probes WHERE client_id = ? AND kind = ?`, clientID, kind,
+			); err != nil {
+				return fmt.Errorf("delete %s probes: %w", kind, err)
+			}
+		}
+		for _, p := range probes {
+			if p.ID == "" {
+				p.ID = uuid.New().String()
+			}
+			p.ClientID = clientID
+			p.CreatedAt = time.Now().UTC()
+			p.UpdatedAt = p.CreatedAt
+			_, err := tx.ExecContext(ctx, `
+				INSERT INTO probes (id, client_id, kind, display_name, target, params_json,
+					interval_seconds, enabled, warning_json, critical_json, created_at, updated_at)
+				VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+			`,
+				p.ID, p.ClientID, p.Kind, p.DisplayName, p.Target,
+				toNullString(p.ParamsJSON),
+				p.IntervalSeconds, boolToInt(p.Enabled),
+				toNullString(p.WarningJSON), toNullString(p.CriticalJSON),
+				now, now,
+			)
+			if err != nil {
+				return fmt.Errorf("insert replacement probe: %w", err)
+			}
+		}
+		return nil
+	})
 }
 
 // GetProbe returns a probe by id.

@@ -17,8 +17,8 @@ import (
 func newAlertsTestServer(t *testing.T) *Server {
 	t.Helper()
 	db := newTestDB(t)
-	s := &Server{services: NewServiceContainer()}
-	s.services.Database = &DatabaseServices{DB: db}
+	s := &Server{}
+	s.dbConn = db
 	return s
 }
 
@@ -81,6 +81,7 @@ func TestHandleAlerts_SeverityFilter(t *testing.T) {
 		t.Errorf("count = %d, want 1 (only error severity)", resp.Count)
 	}
 }
+
 func TestHandleAlerts_InvalidSinceReturns400(t *testing.T) {
 	s := newAlertsTestServer(t)
 	req := httptest.NewRequest(http.MethodGet, APIVersionPrefix+"/alerts?since=not-a-date", http.NoBody)
@@ -134,6 +135,7 @@ func TestHandleAlertAction_Resolve(t *testing.T) {
 		t.Error("alert should be resolved in DB")
 	}
 }
+
 func TestHandleAlertAction_BadPathReturns400(t *testing.T) {
 	s := newAlertsTestServer(t)
 	tests := []struct{ name, path string }{

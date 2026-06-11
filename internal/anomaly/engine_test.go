@@ -136,8 +136,35 @@ func TestSeverityEscalationOnRecurrence(t *testing.T) {
 		t.Fatalf("before threshold: severity = %q, want warning", got)
 	}
 	must(t, e.Observe(det, at)) // count now 3 == threshold
-	if got := e.Snapshot()[0].Severity; got != anomaly.SeverityCritical {
-		t.Errorf("after threshold: severity = %q, want critical (escalated)", got)
+	if got := e.Snapshot()[0].Severity; got != anomaly.SeverityError {
+		t.Errorf("after threshold: severity = %q, want error (one bump up the ladder)", got)
+	}
+}
+
+// TestSeverityLadderEscalation exercises the full info→warning→error→critical
+// ladder (ADR-0021 ph5): each recurrence past the threshold bumps the base one
+// level, and critical is the cap.
+func TestSeverityLadderEscalation(t *testing.T) {
+	for _, tc := range []struct {
+		name string
+		base anomaly.Severity
+		want anomaly.Severity
+	}{
+		{"info escalates to warning", anomaly.SeverityInfo, anomaly.SeverityWarning},
+		{"warning escalates to error", anomaly.SeverityWarning, anomaly.SeverityError},
+		{"error escalates to critical", anomaly.SeverityError, anomaly.SeverityCritical},
+		{"critical is the cap", anomaly.SeverityCritical, anomaly.SeverityCritical},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			e := anomaly.NewEngine(testCatalog(t), anomaly.WithEscalateAfter(2))
+			// open-ssid exists in the test catalog; override its base severity.
+			det := anomaly.Detection{DefKey: "open-ssid", Subject: bssid("aa"), Severity: tc.base}
+			must(t, e.Observe(det, time.Unix(0, 0)))
+			must(t, e.Observe(det, time.Unix(0, 0))) // count == threshold → escalate
+			if got := e.Snapshot()[0].Severity; got != tc.want {
+				t.Errorf("base %q escalated to %q, want %q", tc.base, got, tc.want)
+			}
+		})
 	}
 }
 

@@ -9,6 +9,7 @@ import (
 	"net/http"
 
 	"github.com/MustardSeedNetworks/seed/internal/config"
+	"github.com/MustardSeedNetworks/seed/internal/database"
 	"github.com/MustardSeedNetworks/seed/internal/diagnostics/dns"
 	"github.com/MustardSeedNetworks/seed/internal/i18n"
 	"github.com/MustardSeedNetworks/seed/internal/logging"
@@ -45,37 +46,37 @@ func (s *Server) buildDNSServersResponse() []DNSServerResponse {
 	return resp
 }
 
-// buildPingTargetsResponse converts config ping targets to response format.
-func (s *Server) buildPingTargetsResponse() []PingTargetResponse {
-	resp := make([]PingTargetResponse, 0, len(s.config.HealthChecks.PingTargets))
-	for _, p := range s.config.HealthChecks.PingTargets {
+// buildPingTargetsResponse converts ping targets to response format.
+func buildPingTargetsResponse(eps []config.PingTarget) []PingTargetResponse {
+	resp := make([]PingTargetResponse, 0, len(eps))
+	for _, p := range eps {
 		resp = append(resp, PingTargetResponse{Name: p.Name, Host: p.Host, Enabled: p.Enabled})
 	}
 	return resp
 }
 
-// buildTCPPortsResponse converts config TCP ports to response format.
-func (s *Server) buildTCPPortsResponse() []TCPPortResponse {
-	resp := make([]TCPPortResponse, 0, len(s.config.HealthChecks.TCPPorts))
-	for _, t := range s.config.HealthChecks.TCPPorts {
+// buildTCPPortsResponse converts TCP ports to response format.
+func buildTCPPortsResponse(eps []config.TCPPortTest) []TCPPortResponse {
+	resp := make([]TCPPortResponse, 0, len(eps))
+	for _, t := range eps {
 		resp = append(resp, TCPPortResponse{Name: t.Name, Host: t.Host, Port: t.Port, Enabled: t.Enabled})
 	}
 	return resp
 }
 
-// buildUDPPortsResponse converts config UDP ports to response format.
-func (s *Server) buildUDPPortsResponse() []UDPPortResponse {
-	resp := make([]UDPPortResponse, 0, len(s.config.HealthChecks.UDPPorts))
-	for _, u := range s.config.HealthChecks.UDPPorts {
+// buildUDPPortsResponse converts UDP ports to response format.
+func buildUDPPortsResponse(eps []config.UDPPortTest) []UDPPortResponse {
+	resp := make([]UDPPortResponse, 0, len(eps))
+	for _, u := range eps {
 		resp = append(resp, UDPPortResponse{Name: u.Name, Host: u.Host, Port: u.Port, Enabled: u.Enabled})
 	}
 	return resp
 }
 
-// buildHTTPEndpointsResponse converts config HTTP endpoints to response format.
-func (s *Server) buildHTTPEndpointsResponse() []HTTPEndpointResponse {
-	resp := make([]HTTPEndpointResponse, 0, len(s.config.HealthChecks.HTTPEndpoints))
-	for _, h := range s.config.HealthChecks.HTTPEndpoints {
+// buildHTTPEndpointsResponse converts HTTP endpoints to response format.
+func buildHTTPEndpointsResponse(eps []config.HTTPEndpoint) []HTTPEndpointResponse {
+	resp := make([]HTTPEndpointResponse, 0, len(eps))
+	for _, h := range eps {
 		resp = append(resp, HTTPEndpointResponse{
 			Name:                 h.Name,
 			URL:                  h.URL,
@@ -91,19 +92,19 @@ func (s *Server) buildHTTPEndpointsResponse() []HTTPEndpointResponse {
 	return resp
 }
 
-// buildRTSPEndpointsResponse converts config RTSP endpoints to response format.
-func (s *Server) buildRTSPEndpointsResponse() []RTSPEndpointResponse {
-	resp := make([]RTSPEndpointResponse, 0, len(s.config.HealthChecks.RTSPEndpoints))
-	for _, r := range s.config.HealthChecks.RTSPEndpoints {
+// buildRTSPEndpointsResponse converts RTSP endpoints to response format.
+func buildRTSPEndpointsResponse(eps []config.RTSPEndpoint) []RTSPEndpointResponse {
+	resp := make([]RTSPEndpointResponse, 0, len(eps))
+	for _, r := range eps {
 		resp = append(resp, RTSPEndpointResponse{Name: r.Name, URL: r.URL, Enabled: r.Enabled})
 	}
 	return resp
 }
 
-// buildDICOMEndpointsResponse converts config DICOM endpoints to response format.
-func (s *Server) buildDICOMEndpointsResponse() []DICOMEndpointResponse {
-	resp := make([]DICOMEndpointResponse, 0, len(s.config.HealthChecks.DICOMEndpoints))
-	for _, d := range s.config.HealthChecks.DICOMEndpoints {
+// buildDICOMEndpointsResponse converts DICOM endpoints to response format.
+func buildDICOMEndpointsResponse(eps []config.DICOMEndpoint) []DICOMEndpointResponse {
+	resp := make([]DICOMEndpointResponse, 0, len(eps))
+	for _, d := range eps {
 		resp = append(resp, DICOMEndpointResponse{
 			Name: d.Name, Host: d.Host, Port: d.Port,
 			CalledAE: d.CalledAE, CallingAE: d.CallingAE, Enabled: d.Enabled,
@@ -112,127 +113,142 @@ func (s *Server) buildDICOMEndpointsResponse() []DICOMEndpointResponse {
 	return resp
 }
 
-// buildHL7EndpointsResponse converts config HL7 endpoints to response format.
-func (s *Server) buildHL7EndpointsResponse() []HL7EndpointResponse {
-	resp := make([]HL7EndpointResponse, 0, len(s.config.HealthChecks.HL7Endpoints))
-	for _, h := range s.config.HealthChecks.HL7Endpoints {
+// buildHL7EndpointsResponse converts HL7 endpoints to response format.
+func buildHL7EndpointsResponse(eps []config.HL7Endpoint) []HL7EndpointResponse {
+	resp := make([]HL7EndpointResponse, 0, len(eps))
+	for _, h := range eps {
 		resp = append(resp, HL7EndpointResponse{
 			Name: h.Name, Host: h.Host, Port: h.Port,
 			SendingApp: h.SendingApp, SendingFac: h.SendingFac,
 			ReceivingApp: h.ReceivingApp, ReceivingFac: h.ReceivingFac,
-			Enabled: h.Enabled, Criticality: h.Criticality,
+			Enabled: h.Enabled,
 		})
 	}
 	return resp
 }
 
-// buildFHIREndpointsResponse converts config FHIR endpoints to response format.
-func (s *Server) buildFHIREndpointsResponse() []FHIREndpointResponse {
-	resp := make([]FHIREndpointResponse, 0, len(s.config.HealthChecks.FHIREndpoints))
-	for _, f := range s.config.HealthChecks.FHIREndpoints {
+// buildFHIREndpointsResponse converts FHIR endpoints to response format.
+func buildFHIREndpointsResponse(eps []config.FHIREndpoint) []FHIREndpointResponse {
+	resp := make([]FHIREndpointResponse, 0, len(eps))
+	for _, f := range eps {
 		resp = append(resp, FHIREndpointResponse{
 			Name: f.Name, BaseURL: f.BaseURL, AuthType: f.AuthType,
-			Enabled: f.Enabled, Criticality: f.Criticality,
+			Enabled: f.Enabled,
 		})
 	}
 	return resp
 }
 
-// buildSQLEndpointsResponse converts config SQL endpoints to response format.
-func (s *Server) buildSQLEndpointsResponse() []SQLEndpointResponse {
-	resp := make([]SQLEndpointResponse, 0, len(s.config.HealthChecks.SQLEndpoints))
-	for _, sq := range s.config.HealthChecks.SQLEndpoints {
+// buildSQLEndpointsResponse converts SQL endpoints to response format.
+func buildSQLEndpointsResponse(eps []config.SQLEndpoint) []SQLEndpointResponse {
+	resp := make([]SQLEndpointResponse, 0, len(eps))
+	for _, sq := range eps {
 		resp = append(resp, SQLEndpointResponse{
 			Name: sq.Name, Driver: sq.Driver, Host: sq.Host, Port: sq.Port,
 			Database: sq.Database, SSLMode: sq.SSLMode,
-			Enabled: sq.Enabled, Criticality: sq.Criticality,
+			Enabled: sq.Enabled,
 		})
 	}
 	return resp
 }
 
-// buildFileShareEndpointsResponse converts config file share endpoints to response format.
-func (s *Server) buildFileShareEndpointsResponse() []FileShareEndpointResponse {
-	resp := make([]FileShareEndpointResponse, 0, len(s.config.HealthChecks.FileShareEndpoints))
-	for _, fs := range s.config.HealthChecks.FileShareEndpoints {
+// buildFileShareEndpointsResponse converts file share endpoints to response format.
+func buildFileShareEndpointsResponse(eps []config.FileShareEndpoint) []FileShareEndpointResponse {
+	resp := make([]FileShareEndpointResponse, 0, len(eps))
+	for _, fs := range eps {
 		resp = append(resp, FileShareEndpointResponse{
 			Name: fs.Name, Protocol: fs.Protocol, Host: fs.Host, Share: fs.Share, Path: fs.Path,
 			TestReadPerformance: fs.TestReadPerformance, TestWritePerformance: fs.TestWritePerformance,
-			TestFileSizeMB: fs.TestFileSizeMB, Enabled: fs.Enabled, Criticality: fs.Criticality,
+			TestFileSizeMB: fs.TestFileSizeMB, Enabled: fs.Enabled,
 		})
 	}
 	return resp
 }
 
-// buildLDAPEndpointsResponse converts config LDAP endpoints to response format.
-func (s *Server) buildLDAPEndpointsResponse() []LDAPEndpointResponse {
-	resp := make([]LDAPEndpointResponse, 0, len(s.config.HealthChecks.LDAPEndpoints))
-	for _, l := range s.config.HealthChecks.LDAPEndpoints {
+// buildLDAPEndpointsResponse converts LDAP endpoints to response format.
+func buildLDAPEndpointsResponse(eps []config.LDAPEndpoint) []LDAPEndpointResponse {
+	resp := make([]LDAPEndpointResponse, 0, len(eps))
+	for _, l := range eps {
 		resp = append(resp, LDAPEndpointResponse{
 			Name: l.Name, Host: l.Host, Port: l.Port, UseTLS: l.UseTLS, StartTLS: l.StartTLS,
-			BaseDN: l.BaseDN, SearchFilter: l.SearchFilter, Enabled: l.Enabled, Criticality: l.Criticality,
+			BaseDN: l.BaseDN, SearchFilter: l.SearchFilter, Enabled: l.Enabled,
 		})
 	}
 	return resp
 }
 
-// buildLTIEndpointsResponse converts config LTI endpoints to response format.
-func (s *Server) buildLTIEndpointsResponse() []LTIEndpointResponse {
-	resp := make([]LTIEndpointResponse, 0, len(s.config.HealthChecks.LTIEndpoints))
-	for _, lt := range s.config.HealthChecks.LTIEndpoints {
+// buildLTIEndpointsResponse converts LTI endpoints to response format.
+func buildLTIEndpointsResponse(eps []config.LTIEndpoint) []LTIEndpointResponse {
+	resp := make([]LTIEndpointResponse, 0, len(eps))
+	for _, lt := range eps {
 		resp = append(resp, LTIEndpointResponse{
 			Name: lt.Name, LaunchURL: lt.LaunchURL, LTIVersion: lt.LTIVersion,
-			Enabled: lt.Enabled, Criticality: lt.Criticality,
+			Enabled: lt.Enabled,
 		})
 	}
 	return resp
 }
 
-// buildOPCUAEndpointsResponse converts config OPC-UA endpoints to response format.
-func (s *Server) buildOPCUAEndpointsResponse() []OPCUAEndpointResponse {
-	resp := make([]OPCUAEndpointResponse, 0, len(s.config.HealthChecks.OPCUAEndpoints))
-	for _, opc := range s.config.HealthChecks.OPCUAEndpoints {
+// buildOPCUAEndpointsResponse converts OPC-UA endpoints to response format.
+func buildOPCUAEndpointsResponse(eps []config.OPCUAEndpoint) []OPCUAEndpointResponse {
+	resp := make([]OPCUAEndpointResponse, 0, len(eps))
+	for _, opc := range eps {
 		resp = append(resp, OPCUAEndpointResponse{
 			Name: opc.Name, EndpointURL: opc.EndpointURL,
 			SecurityMode: opc.SecurityMode, SecurityPolicy: opc.SecurityPolicy,
-			Enabled: opc.Enabled, Criticality: opc.Criticality,
+			Enabled: opc.Enabled,
 		})
 	}
 	return resp
 }
 
-// buildModbusEndpointsResponse converts config Modbus endpoints to response format.
-func (s *Server) buildModbusEndpointsResponse() []ModbusEndpointResponse {
-	resp := make([]ModbusEndpointResponse, 0, len(s.config.HealthChecks.ModbusEndpoints))
-	for _, mb := range s.config.HealthChecks.ModbusEndpoints {
+// buildModbusEndpointsResponse converts Modbus endpoints to response format.
+func buildModbusEndpointsResponse(eps []config.ModbusEndpoint) []ModbusEndpointResponse {
+	resp := make([]ModbusEndpointResponse, 0, len(eps))
+	for _, mb := range eps {
 		resp = append(resp, ModbusEndpointResponse{
 			Name: mb.Name, Host: mb.Host, Port: mb.Port, UnitID: mb.UnitID,
 			TestRegister: mb.TestRegister, RegisterType: mb.RegisterType,
-			Enabled: mb.Enabled, Criticality: mb.Criticality,
+			Enabled: mb.Enabled,
 		})
 	}
 	return resp
 }
 
+// getHealthChecksSettings returns the check-target configuration. The
+// health-check endpoint lists are sourced from the probes table (the
+// store of record since ADR-0027 P2); the DNS, performance, and
+// speedtest/iperf toggles remain config-file backed.
 func (s *Server) getHealthChecksSettings(w http.ResponseWriter, r *http.Request) {
 	logger := logging.FromContext(r.Context())
+
+	hc, err := loadHealthCheckEndpoints(r.Context(), s.db().Probes())
+	if err != nil {
+		logger.ErrorContext(r.Context(), "Failed to load health-check probes", "error", err)
+		sendErrorResponseWithDetails(
+			w, logger, http.StatusInternalServerError, ErrCodeInternal,
+			i18n.FromRequest(r).T("errors.settings.loadFailed"), "",
+		)
+		return
+	}
+
 	resp := TestsSettingsResponse{
 		DNSHostname:        s.config.DNS.TestHostname,
 		DNSServers:         s.buildDNSServersResponse(),
-		PingTargets:        s.buildPingTargetsResponse(),
-		TCPPorts:           s.buildTCPPortsResponse(),
-		UDPPorts:           s.buildUDPPortsResponse(),
-		HTTPEndpoints:      s.buildHTTPEndpointsResponse(),
-		RTSPEndpoints:      s.buildRTSPEndpointsResponse(),
-		DICOMEndpoints:     s.buildDICOMEndpointsResponse(),
-		HL7Endpoints:       s.buildHL7EndpointsResponse(),
-		FHIREndpoints:      s.buildFHIREndpointsResponse(),
-		SQLEndpoints:       s.buildSQLEndpointsResponse(),
-		FileShareEndpoints: s.buildFileShareEndpointsResponse(),
-		LDAPEndpoints:      s.buildLDAPEndpointsResponse(),
-		LTIEndpoints:       s.buildLTIEndpointsResponse(),
-		OPCUAEndpoints:     s.buildOPCUAEndpointsResponse(),
-		ModbusEndpoints:    s.buildModbusEndpointsResponse(),
+		PingTargets:        buildPingTargetsResponse(hc.PingTargets),
+		TCPPorts:           buildTCPPortsResponse(hc.TCPPorts),
+		UDPPorts:           buildUDPPortsResponse(hc.UDPPorts),
+		HTTPEndpoints:      buildHTTPEndpointsResponse(hc.HTTPEndpoints),
+		RTSPEndpoints:      buildRTSPEndpointsResponse(hc.RTSPEndpoints),
+		DICOMEndpoints:     buildDICOMEndpointsResponse(hc.DICOMEndpoints),
+		HL7Endpoints:       buildHL7EndpointsResponse(hc.HL7Endpoints),
+		FHIREndpoints:      buildFHIREndpointsResponse(hc.FHIREndpoints),
+		SQLEndpoints:       buildSQLEndpointsResponse(hc.SQLEndpoints),
+		FileShareEndpoints: buildFileShareEndpointsResponse(hc.FileShareEndpoints),
+		LDAPEndpoints:      buildLDAPEndpointsResponse(hc.LDAPEndpoints),
+		LTIEndpoints:       buildLTIEndpointsResponse(hc.LTIEndpoints),
+		OPCUAEndpoints:     buildOPCUAEndpointsResponse(hc.OPCUAEndpoints),
+		ModbusEndpoints:    buildModbusEndpointsResponse(hc.ModbusEndpoints),
 		RunPerformance:     s.config.HealthChecks.RunPerformance,
 		RunSpeedtest:       s.config.HealthChecks.RunSpeedtest,
 		RunIperf:           s.config.HealthChecks.RunIperf,
@@ -276,70 +292,132 @@ func (s *Server) applyDNSSettings(req *TestsSettingsResponse) {
 	}
 }
 
-// applyTestTargets applies test target configuration from request.
-func (s *Server) applyTestTargets(req *TestsSettingsResponse) {
-	s.config.HealthChecks.PingTargets = make([]config.PingTarget, 0, len(req.PingTargets))
+// requestEndpointTargets builds a HealthChecksConfig from the request's
+// endpoint lists, covering all fourteen health-check kinds. This is the
+// inverse of the build*Response helpers; the resulting config is flattened
+// into probe rows by healthCheckProbesFromConfig for persistence in the
+// probes table (ADR-0027 P2). Only the fields the settings DTO carries are
+// mapped; credential-bearing fields not yet exposed by the settings UI
+// (FHIR/SQL/LDAP/OPC-UA/LTI secrets) are out of scope until the P4 frontend
+// rework surfaces them.
+//
+//nolint:funlen // A flat fan over the fourteen endpoint lists; one block each.
+func requestEndpointTargets(req *TestsSettingsResponse) config.HealthChecksConfig {
+	var hc config.HealthChecksConfig
+
+	hc.PingTargets = make([]config.PingTarget, 0, len(req.PingTargets))
 	for _, p := range req.PingTargets {
-		s.config.HealthChecks.PingTargets = append(
-			s.config.HealthChecks.PingTargets,
-			config.PingTarget{Name: p.Name, Host: p.Host, Enabled: p.Enabled},
-		)
+		hc.PingTargets = append(hc.PingTargets,
+			config.PingTarget{Name: p.Name, Host: p.Host, Enabled: p.Enabled})
 	}
 
-	s.config.HealthChecks.TCPPorts = make([]config.TCPPortTest, 0, len(req.TCPPorts))
+	hc.TCPPorts = make([]config.TCPPortTest, 0, len(req.TCPPorts))
 	for _, t := range req.TCPPorts {
-		s.config.HealthChecks.TCPPorts = append(
-			s.config.HealthChecks.TCPPorts,
-			config.TCPPortTest{Name: t.Name, Host: t.Host, Port: t.Port, Enabled: t.Enabled},
-		)
+		hc.TCPPorts = append(hc.TCPPorts,
+			config.TCPPortTest{Name: t.Name, Host: t.Host, Port: t.Port, Enabled: t.Enabled})
 	}
 
-	s.config.HealthChecks.UDPPorts = make([]config.UDPPortTest, 0, len(req.UDPPorts))
+	hc.UDPPorts = make([]config.UDPPortTest, 0, len(req.UDPPorts))
 	for _, u := range req.UDPPorts {
-		s.config.HealthChecks.UDPPorts = append(
-			s.config.HealthChecks.UDPPorts,
-			config.UDPPortTest{Name: u.Name, Host: u.Host, Port: u.Port, Enabled: u.Enabled},
-		)
+		hc.UDPPorts = append(hc.UDPPorts,
+			config.UDPPortTest{Name: u.Name, Host: u.Host, Port: u.Port, Enabled: u.Enabled})
 	}
 
-	s.config.HealthChecks.HTTPEndpoints = make([]config.HTTPEndpoint, 0, len(req.HTTPEndpoints))
+	hc.HTTPEndpoints = make([]config.HTTPEndpoint, 0, len(req.HTTPEndpoints))
 	for _, h := range req.HTTPEndpoints {
-		s.config.HealthChecks.HTTPEndpoints = append(
-			s.config.HealthChecks.HTTPEndpoints,
-			config.HTTPEndpoint{
-				Name:                 h.Name,
-				URL:                  h.URL,
-				ExpectedStatus:       h.ExpectedStatus,
-				Enabled:              h.Enabled,
-				BodyMatch:            h.BodyMatch,
-				BodyMatchIsRegex:     h.BodyMatchIsRegex,
-				CheckSecurityHeaders: h.CheckSecurityHeaders,
-				FollowRedirects:      h.FollowRedirects,
-				MaxRedirects:         h.MaxRedirects,
-			},
-		)
+		hc.HTTPEndpoints = append(hc.HTTPEndpoints, config.HTTPEndpoint{
+			Name:                 h.Name,
+			URL:                  h.URL,
+			ExpectedStatus:       h.ExpectedStatus,
+			Enabled:              h.Enabled,
+			BodyMatch:            h.BodyMatch,
+			BodyMatchIsRegex:     h.BodyMatchIsRegex,
+			CheckSecurityHeaders: h.CheckSecurityHeaders,
+			FollowRedirects:      h.FollowRedirects,
+			MaxRedirects:         h.MaxRedirects,
+		})
 	}
 
-	// RTSP endpoints (Issue #778)
-	s.config.HealthChecks.RTSPEndpoints = make([]config.RTSPEndpoint, 0, len(req.RTSPEndpoints))
+	hc.RTSPEndpoints = make([]config.RTSPEndpoint, 0, len(req.RTSPEndpoints))
 	for _, r := range req.RTSPEndpoints {
-		s.config.HealthChecks.RTSPEndpoints = append(
-			s.config.HealthChecks.RTSPEndpoints,
-			config.RTSPEndpoint{Name: r.Name, URL: r.URL, Enabled: r.Enabled},
-		)
+		hc.RTSPEndpoints = append(hc.RTSPEndpoints,
+			config.RTSPEndpoint{Name: r.Name, URL: r.URL, Enabled: r.Enabled})
 	}
 
-	// DICOM endpoints (Issue #777)
-	s.config.HealthChecks.DICOMEndpoints = make([]config.DICOMEndpoint, 0, len(req.DICOMEndpoints))
+	hc.DICOMEndpoints = make([]config.DICOMEndpoint, 0, len(req.DICOMEndpoints))
 	for _, d := range req.DICOMEndpoints {
-		s.config.HealthChecks.DICOMEndpoints = append(
-			s.config.HealthChecks.DICOMEndpoints,
-			config.DICOMEndpoint{
-				Name: d.Name, Host: d.Host, Port: d.Port,
-				CalledAE: d.CalledAE, CallingAE: d.CallingAE, Enabled: d.Enabled,
-			},
-		)
+		hc.DICOMEndpoints = append(hc.DICOMEndpoints, config.DICOMEndpoint{
+			Name: d.Name, Host: d.Host, Port: d.Port,
+			CalledAE: d.CalledAE, CallingAE: d.CallingAE, Enabled: d.Enabled,
+		})
 	}
+
+	hc.HL7Endpoints = make([]config.HL7Endpoint, 0, len(req.HL7Endpoints))
+	for _, h := range req.HL7Endpoints {
+		hc.HL7Endpoints = append(hc.HL7Endpoints, config.HL7Endpoint{
+			Name: h.Name, Host: h.Host, Port: h.Port,
+			SendingApp: h.SendingApp, SendingFac: h.SendingFac,
+			ReceivingApp: h.ReceivingApp, ReceivingFac: h.ReceivingFac,
+			Enabled: h.Enabled,
+		})
+	}
+
+	hc.FHIREndpoints = make([]config.FHIREndpoint, 0, len(req.FHIREndpoints))
+	for _, f := range req.FHIREndpoints {
+		hc.FHIREndpoints = append(hc.FHIREndpoints, config.FHIREndpoint{
+			Name: f.Name, BaseURL: f.BaseURL, AuthType: f.AuthType, Enabled: f.Enabled,
+		})
+	}
+
+	hc.SQLEndpoints = make([]config.SQLEndpoint, 0, len(req.SQLEndpoints))
+	for _, sq := range req.SQLEndpoints {
+		hc.SQLEndpoints = append(hc.SQLEndpoints, config.SQLEndpoint{
+			Name: sq.Name, Driver: sq.Driver, Host: sq.Host, Port: sq.Port,
+			Database: sq.Database, SSLMode: sq.SSLMode, Enabled: sq.Enabled,
+		})
+	}
+
+	hc.FileShareEndpoints = make([]config.FileShareEndpoint, 0, len(req.FileShareEndpoints))
+	for _, fs := range req.FileShareEndpoints {
+		hc.FileShareEndpoints = append(hc.FileShareEndpoints, config.FileShareEndpoint{
+			Name: fs.Name, Protocol: fs.Protocol, Host: fs.Host, Share: fs.Share, Path: fs.Path,
+			TestReadPerformance: fs.TestReadPerformance, TestWritePerformance: fs.TestWritePerformance,
+			TestFileSizeMB: fs.TestFileSizeMB, Enabled: fs.Enabled,
+		})
+	}
+
+	hc.LDAPEndpoints = make([]config.LDAPEndpoint, 0, len(req.LDAPEndpoints))
+	for _, l := range req.LDAPEndpoints {
+		hc.LDAPEndpoints = append(hc.LDAPEndpoints, config.LDAPEndpoint{
+			Name: l.Name, Host: l.Host, Port: l.Port, UseTLS: l.UseTLS, StartTLS: l.StartTLS,
+			BaseDN: l.BaseDN, SearchFilter: l.SearchFilter, Enabled: l.Enabled,
+		})
+	}
+
+	hc.LTIEndpoints = make([]config.LTIEndpoint, 0, len(req.LTIEndpoints))
+	for _, lt := range req.LTIEndpoints {
+		hc.LTIEndpoints = append(hc.LTIEndpoints, config.LTIEndpoint{
+			Name: lt.Name, LaunchURL: lt.LaunchURL, LTIVersion: lt.LTIVersion, Enabled: lt.Enabled,
+		})
+	}
+
+	hc.OPCUAEndpoints = make([]config.OPCUAEndpoint, 0, len(req.OPCUAEndpoints))
+	for _, opc := range req.OPCUAEndpoints {
+		hc.OPCUAEndpoints = append(hc.OPCUAEndpoints, config.OPCUAEndpoint{
+			Name: opc.Name, EndpointURL: opc.EndpointURL,
+			SecurityMode: opc.SecurityMode, SecurityPolicy: opc.SecurityPolicy, Enabled: opc.Enabled,
+		})
+	}
+
+	hc.ModbusEndpoints = make([]config.ModbusEndpoint, 0, len(req.ModbusEndpoints))
+	for _, mb := range req.ModbusEndpoints {
+		hc.ModbusEndpoints = append(hc.ModbusEndpoints, config.ModbusEndpoint{
+			Name: mb.Name, Host: mb.Host, Port: mb.Port, UnitID: mb.UnitID,
+			TestRegister: mb.TestRegister, RegisterType: mb.RegisterType, Enabled: mb.Enabled,
+		})
+	}
+
+	return hc
 }
 
 // applyPerformanceSettings applies performance test configuration from request.
@@ -367,10 +445,16 @@ func (s *Server) updateHealthChecksSettings(w http.ResponseWriter, r *http.Reque
 		return
 	}
 
-	// Lock config for write access (unlock before Save to avoid deadlock)
+	// The endpoint targets are the store-of-record in the probes table
+	// (ADR-0027 P2); the DNS, performance, and speedtest/iperf toggles
+	// remain config-file backed.
+	if !s.saveHealthCheckProbes(w, r, &req) {
+		return
+	}
+
+	// Lock config for write access (unlock before Save to avoid deadlock).
 	s.config.Lock()
 	s.applyDNSSettings(&req)
-	s.applyTestTargets(&req)
 	s.applyPerformanceSettings(&req)
 	s.config.Unlock()
 
@@ -391,6 +475,47 @@ func (s *Server) updateHealthChecksSettings(w http.ResponseWriter, r *http.Reque
 		Status:  statusSuccess,
 		Message: "Health checks settings updated",
 	})
+}
+
+// saveHealthCheckProbes persists the request's endpoint targets to the
+// probes table (replacing the existing health-check-kind probes) and
+// reschedules the running probe engine so the change takes effect without
+// a restart. Returns false (after writing an error response) on failure.
+func (s *Server) saveHealthCheckProbes(w http.ResponseWriter, r *http.Request, req *TestsSettingsResponse) bool {
+	logger := logging.FromContext(r.Context())
+	localizer := i18n.FromRequest(r)
+
+	hc := requestEndpointTargets(req)
+	probes, err := healthCheckProbesFromConfig(&hc)
+	if err != nil {
+		logger.ErrorContext(r.Context(), "Failed to map health-check endpoints to probes", "error", err)
+		sendErrorResponseWithDetails(
+			w, logger, http.StatusInternalServerError, ErrCodeInternal,
+			localizer.T("errors.settings.saveFailed"), "",
+		)
+		return false
+	}
+
+	if dbErr := s.db().Probes().ReplaceProbesByKinds(
+		r.Context(), database.DefaultClientID, healthCheckKinds(), probes,
+	); dbErr != nil {
+		logger.ErrorContext(r.Context(), "Failed to persist health-check probes", "error", dbErr)
+		sendErrorResponseWithDetails(
+			w, logger, http.StatusInternalServerError, ErrCodeInternal,
+			localizer.T("errors.settings.saveFailed"), "",
+		)
+		return false
+	}
+
+	// Best-effort reschedule: persistence already succeeded, so a
+	// reschedule failure is logged but not surfaced — the new set takes
+	// effect on the next engine start regardless.
+	if s.probeEngine != nil {
+		if rErr := s.probeEngine.Reschedule(r.Context()); rErr != nil {
+			logger.WarnContext(r.Context(), "Failed to reschedule probe engine after settings save", "error", rErr)
+		}
+	}
+	return true
 }
 
 // statusResponse is the JSON body returned by simple ack-style endpoints.

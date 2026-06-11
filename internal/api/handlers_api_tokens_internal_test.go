@@ -53,12 +53,18 @@ func apiTokenTestSetup(t *testing.T) (*Server, *license.Manager) {
 	}
 
 	s := &Server{
-		mux:      http.NewServeMux(),
-		services: NewServiceContainer(),
+		mux: http.NewServeMux(),
 	}
-	s.services.Database.DB = db
-	s.services.Auth.APITokens = database.NewAPITokenRepository(db)
-	s.services.Auth.License = mgr
+	s.dbConn = db
+	s.apiTokens = database.NewAPITokenRepository(db)
+	s.licenseMgr = mgr
+	// Wire the discovery use-cases so routed handlers (e.g. the
+	// /discovery/engine/events SSE policy test) have a non-nil use-case; the
+	// engine stays nil here, so they degrade to the unavailable (503) path.
+	s.initDiscoveryUseCases()
+	// Wire the identity use-cases (ADR-0024) so the token handlers and
+	// callerRole resolve through the repository ports against the seeded store.
+	s.initIdentityUseCases()
 	return s, mgr
 }
 
@@ -83,7 +89,8 @@ func newAuthedRequest(method, path string, body []byte, username string) *http.R
 func TestMintRequiresPro_NoLicense(t *testing.T) {
 	t.Parallel()
 	s, _ := apiTokenTestSetup(t)
-	// No StartTrial → license state is nil → licenseAllowsAPITokens=false.
+	// No StartTrial → license state is nil → the tokens use-case LicenseGate
+	// (HasFeature "rest_api") returns false → mint is rejected with 402.
 
 	body, _ := json.Marshal(MintTokenRequest{Name: "ci"})
 	req := newAuthedRequest(http.MethodPost, APIVersionPrefix+"/tokens", body, "alice")
@@ -233,7 +240,7 @@ func TestAPITokenMiddlewareResolvesValidToken(t *testing.T) {
 		TokenHash: hashAPIToken(plaintext),
 		Prefix:    plaintext[:apiTokenDisplayPrefix],
 	}
-	if insErr := s.services.Auth.APITokens.Insert(context.Background(), rec); insErr != nil {
+	if insErr := s.apiTokens.Insert(context.Background(), rec); insErr != nil {
 		t.Fatalf("insert: %v", insErr)
 	}
 
@@ -241,7 +248,7 @@ func TestAPITokenMiddlewareResolvesValidToken(t *testing.T) {
 	next := http.HandlerFunc(func(_ http.ResponseWriter, r *http.Request) {
 		capturedUser = r.Header.Get("X-Username")
 	})
-	mw := apiTokenMiddleware(s.services.Auth.APITokens, next)
+	mw := apiTokenMiddleware(s.apiTokens, next)
 
 	req := httptest.NewRequest(http.MethodGet, APIVersionPrefix+"/anything", http.NoBody)
 	req.Header.Set("Authorization", "Bearer "+plaintext)
@@ -259,7 +266,7 @@ func TestAPITokenMiddlewareRejectsBadToken(t *testing.T) {
 
 	called := false
 	next := http.HandlerFunc(func(_ http.ResponseWriter, _ *http.Request) { called = true })
-	mw := apiTokenMiddleware(s.services.Auth.APITokens, next)
+	mw := apiTokenMiddleware(s.apiTokens, next)
 
 	req := httptest.NewRequest(http.MethodGet, APIVersionPrefix+"/anything", http.NoBody)
 	req.Header.Set("Authorization", "Bearer "+APITokenPrefix+"deadbeef")
@@ -280,7 +287,7 @@ func TestAPITokenMiddlewareFallsThroughForJWT(t *testing.T) {
 
 	called := false
 	next := http.HandlerFunc(func(_ http.ResponseWriter, _ *http.Request) { called = true })
-	mw := apiTokenMiddleware(s.services.Auth.APITokens, next)
+	mw := apiTokenMiddleware(s.apiTokens, next)
 
 	req := httptest.NewRequest(http.MethodGet, APIVersionPrefix+"/anything", http.NoBody)
 	req.Header.Set("Authorization", "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.fake.fake")
@@ -298,7 +305,7 @@ func TestAPITokenMiddlewareSkipsNonAPI(t *testing.T) {
 
 	called := false
 	next := http.HandlerFunc(func(_ http.ResponseWriter, _ *http.Request) { called = true })
-	mw := apiTokenMiddleware(s.services.Auth.APITokens, next)
+	mw := apiTokenMiddleware(s.apiTokens, next)
 
 	req := httptest.NewRequest(http.MethodGet, "/static/app.js", http.NoBody)
 	req.Header.Set("Authorization", "Bearer "+APITokenPrefix+"anything")
