@@ -197,6 +197,87 @@ func TestCoordinatorResolvesOnPrune(t *testing.T) {
 	}
 }
 
+// TestCoordinatorResolveSubject asserts the explicit recovery fast-path clears
+// every live instance for a subject (across all defs) and marks exactly those
+// resolved as of the supplied time, leaving other subjects untouched.
+func TestCoordinatorResolveSubject(t *testing.T) {
+	cat, err := anomaly.NewCatalog(
+		anomaly.Def{
+			ID: "open-ssid", Category: anomaly.CategorySecurity,
+			DefaultSeverity: anomaly.SeverityWarning, Title: "Open network",
+			Description: "No encryption.", Recommendation: "Enable WPA2/WPA3.",
+		},
+		anomaly.Def{
+			ID: "weak-cipher", Category: anomaly.CategorySecurity,
+			DefaultSeverity: anomaly.SeverityWarning, Title: "Weak cipher",
+			Description: "Deprecated cipher suite.", Recommendation: "Use AES-CCMP.",
+		},
+	)
+	if err != nil {
+		t.Fatalf("NewCatalog: %v", err)
+	}
+	store := newFakeStore()
+	c := anomaly.NewCoordinator(anomaly.NewEngine(cat), store, anomaly.SourceWiFi)
+	ctx := context.Background()
+	at := time.Unix(1000, 0)
+
+	det := func(def, id string) anomaly.Detection {
+		return anomaly.Detection{DefKey: def, Subject: anomaly.SubjectRef{Kind: anomaly.SubjectBSSID, ID: id}}
+	}
+	// Two defs on subject A, one on subject B.
+	for _, d := range []anomaly.Detection{det("open-ssid", "A"), det("weak-cipher", "A"), det("open-ssid", "B")} {
+		if obsErr := c.Observe(ctx, d, at); obsErr != nil {
+			t.Fatalf("Observe %s/%s: %v", d.DefKey, d.Subject.ID, obsErr)
+		}
+	}
+
+	resolveAt := time.Unix(2000, 0)
+	n, err := c.ResolveSubject(ctx, anomaly.SubjectRef{Kind: anomaly.SubjectBSSID, ID: "A"}, resolveAt)
+	if err != nil {
+		t.Fatalf("ResolveSubject: %v", err)
+	}
+	if n != 2 {
+		t.Fatalf("ResolveSubject cleared %d, want 2 (both defs on A)", n)
+	}
+	for _, id := range []string{"open-ssid|bssid|A", "weak-cipher|bssid|A"} {
+		if got, ok := store.resolved[id]; !ok {
+			t.Errorf("%s not marked resolved; resolved=%v", id, store.resolved)
+		} else if !got.Equal(resolveAt) {
+			t.Errorf("%s resolved at %v, want %v", id, got, resolveAt)
+		}
+	}
+	if _, live := store.rows["open-ssid|bssid|B"]; !live {
+		t.Errorf("subject B should remain live; rows=%v", store.rows)
+	}
+
+	// A Flush must not resurrect a resolved row.
+	if flushErr := c.Flush(ctx); flushErr != nil {
+		t.Fatalf("Flush: %v", flushErr)
+	}
+	if _, revived := store.rows["open-ssid|bssid|A"]; revived {
+		t.Error("Flush resurrected a resolved instance")
+	}
+}
+
+// TestCoordinatorResolveSubjectUnknownIsNoop asserts resolving a subject with no
+// active instances neither errors nor touches the store.
+func TestCoordinatorResolveSubjectUnknownIsNoop(t *testing.T) {
+	store := newFakeStore()
+	c := newCoord(t, store)
+
+	n, err := c.ResolveSubject(
+		context.Background(),
+		anomaly.SubjectRef{Kind: anomaly.SubjectBSSID, ID: "ghost"},
+		time.Unix(1, 0),
+	)
+	if err != nil {
+		t.Fatalf("ResolveSubject: %v", err)
+	}
+	if n != 0 || len(store.resolved) != 0 {
+		t.Fatalf("unknown subject: cleared=%d resolved=%v, want 0 / empty", n, store.resolved)
+	}
+}
+
 // TestEngineRestoreSeedsActiveInstances asserts Restore repopulates the live set
 // from records (load-on-start) and skips records whose def is uncatalogued.
 func TestEngineRestoreSeedsActiveInstances(t *testing.T) {

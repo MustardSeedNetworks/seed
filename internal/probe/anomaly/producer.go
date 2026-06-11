@@ -180,12 +180,36 @@ func (p *Producer) consume(ctx context.Context) {
 // errors are logged, not fatal — the in-memory engine stays authoritative and
 // the next Flush re-persists. Separated from consume so it is unit-testable
 // without the goroutine.
+//
+// A clean run (no breaches) is the recovery fast-path (ADR-0025 §3): the probe
+// ran and nothing tripped, so any active anomalies for that probe are resolved
+// immediately rather than aging out over the silence window. The maintenance
+// Prune remains the backstop for a probe that goes fully silent (disabled or
+// deleted) and never emits a clean result.
 func (p *Producer) observe(ctx context.Context, re probe.ResultEvent, at time.Time) {
-	for _, d := range Detections(re) {
+	dets := Detections(re)
+	if len(dets) == 0 {
+		p.resolveClean(ctx, re.Result.ProbeID, at)
+		return
+	}
+	for _, d := range dets {
 		if err := p.coord.Observe(ctx, d, at); err != nil {
 			p.logger.WarnContext(ctx, "probe anomaly persist (observe) failed",
 				"defKey", d.DefKey, "probeID", d.Subject.ID, "error", err)
 		}
+	}
+}
+
+// resolveClean resolves every active anomaly for a recovered probe. A blank
+// probe ID (a malformed event) is skipped — there is no subject to key on.
+func (p *Producer) resolveClean(ctx context.Context, probeID string, at time.Time) {
+	if probeID == "" {
+		return
+	}
+	subject := anomaly.SubjectRef{Kind: anomaly.SubjectProbe, ID: probeID}
+	if _, err := p.coord.ResolveSubject(ctx, subject, at); err != nil {
+		p.logger.WarnContext(ctx, "probe anomaly persist (resolve-on-clean) failed",
+			"probeID", probeID, "error", err)
 	}
 }
 
