@@ -16,8 +16,7 @@ var ErrProbeNotFound = errors.New("probe not found")
 // ProbeRepository provides CRUD for probes and append/query for
 // probe_results. Future Stage A2 rollups (probe_rollups_hourly,
 // probe_rollups_daily) will land as additional methods on this
-// repository, mirroring the HealthCheckRepository multi-table
-// pattern.
+// repository, following the same raw-plus-rollups multi-table pattern.
 type ProbeRepository struct {
 	db *DB
 }

@@ -257,29 +257,6 @@ CREATE INDEX idx_gateway_results_client ON gateway_results(client_id);
 -- index: idx_gateway_timestamp
 CREATE INDEX idx_gateway_timestamp ON gateway_results(timestamp);
 
--- index: idx_health_check_endpoint_time
-CREATE INDEX idx_health_check_endpoint_time ON health_check_results(endpoint_name, recorded_at);
-
--- index: idx_health_check_recorded
-CREATE INDEX idx_health_check_recorded ON health_check_results(recorded_at);
-
--- index: idx_health_check_type_time
-CREATE INDEX idx_health_check_type_time ON health_check_results(check_type, recorded_at);
-
--- index: idx_health_daily_bucket
-CREATE INDEX idx_health_daily_bucket ON health_check_rollups_daily(day_bucket);
-
--- index: idx_health_daily_unique
-CREATE UNIQUE INDEX idx_health_daily_unique
-				ON health_check_rollups_daily(check_type, endpoint_name, day_bucket);
-
--- index: idx_health_hourly_bucket
-CREATE INDEX idx_health_hourly_bucket ON health_check_rollups_hourly(hour_bucket);
-
--- index: idx_health_hourly_unique
-CREATE UNIQUE INDEX idx_health_hourly_unique
-				ON health_check_rollups_hourly(check_type, endpoint_name, hour_bucket);
-
 -- index: idx_job_idempotency_job
 CREATE INDEX idx_job_idempotency_job ON job_idempotency(job_id);
 
@@ -1034,49 +1011,6 @@ CREATE TABLE gateway_results (
 				reachable INTEGER CHECK (reachable IN (0,1)),
 				timestamp TEXT NOT NULL
 			, client_id TEXT NOT NULL DEFAULT 'default' REFERENCES clients(id)) STRICT;
-
--- table: health_check_results
-CREATE TABLE health_check_results (
-				id INTEGER PRIMARY KEY AUTOINCREMENT,
-				check_type TEXT NOT NULL,
-				endpoint_name TEXT NOT NULL,
-				endpoint_target TEXT NOT NULL,
-				success INTEGER NOT NULL CHECK (success IN (0,1)),
-				latency_ms REAL,
-				status_code INTEGER,
-				error_message TEXT,
-				metadata_json TEXT,
-				recorded_at TEXT NOT NULL
-			) STRICT;
-
--- table: health_check_rollups_daily
-CREATE TABLE health_check_rollups_daily (
-				id INTEGER PRIMARY KEY AUTOINCREMENT,
-				check_type TEXT NOT NULL,
-				endpoint_name TEXT NOT NULL,
-				day_bucket TEXT NOT NULL,
-				total_checks INTEGER NOT NULL,
-				successful_checks INTEGER NOT NULL,
-				avg_latency_ms REAL,
-				min_latency_ms REAL,
-				max_latency_ms REAL,
-				p95_latency_ms REAL,
-				availability_percent REAL
-			) STRICT;
-
--- table: health_check_rollups_hourly
-CREATE TABLE health_check_rollups_hourly (
-				id INTEGER PRIMARY KEY AUTOINCREMENT,
-				check_type TEXT NOT NULL,
-				endpoint_name TEXT NOT NULL,
-				hour_bucket TEXT NOT NULL,
-				total_checks INTEGER NOT NULL,
-				successful_checks INTEGER NOT NULL,
-				avg_latency_ms REAL,
-				min_latency_ms REAL,
-				max_latency_ms REAL,
-				p95_latency_ms REAL
-			) STRICT;
 
 -- table: job_idempotency
 CREATE TABLE job_idempotency (
