@@ -13,7 +13,7 @@ import (
 // seedRoledUser adds a user with the given role to the test server's DB.
 func seedRoledUser(t *testing.T, s *Server, username, role string) {
 	t.Helper()
-	if _, err := s.services.Database.DB.CreateUser(t.Context(), username, "$2a$10$x", role); err != nil {
+	if _, err := s.dbConn.CreateUser(t.Context(), username, "$2a$10$x", role); err != nil {
 		t.Fatalf("seed %s (%s): %v", username, role, err)
 	}
 }
@@ -114,7 +114,7 @@ func TestRequireRole_Hierarchy(t *testing.T) {
 // write gate never locks a single-user deployment out of its own tool.
 func TestCallerRole_NoDBIsImplicitAdmin(t *testing.T) {
 	t.Parallel()
-	s := &Server{services: NewServiceContainer()} // no DB attached
+	s := &Server{} // no DB attached
 	req := newAuthedRequest(http.MethodPost, APIVersionPrefix+"/x", nil, "someone")
 	role, ok := s.callerRole(req)
 	if !ok || role != database.RoleAdmin {

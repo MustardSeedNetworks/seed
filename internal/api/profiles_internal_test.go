@@ -23,8 +23,8 @@ func newProfilesTestServer(t *testing.T) (*Server, *database.DB) {
 	}
 	t.Cleanup(func() { _ = db.Close() })
 
-	s := &Server{services: NewServiceContainer()}
-	s.services.Database.DB = db
+	s := &Server{}
+	s.dbConn = db
 	s.profiles = app.NewProfiles(s.db)
 	// Wire the identity use-cases (ADR-0024) so writeGated→requireRole→callerRole
 	// resolves through the repository port instead of nil-panicking.

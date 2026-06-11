@@ -111,11 +111,32 @@ func (s *Server) Shutdown(ctx context.Context) error {
 	// winding down. Stage A3.5d unified what was previously two
 	// ad-hoc Stop blocks (probe + retention) into one registry
 	// drive.
-	if reg := s.services.Engines; reg != nil {
+	if reg := s.engines; reg != nil {
 		logging.GetLogger().InfoContext(ctx, "Stopping engines...")
 		if stopErr := reg.Stop(ctx); stopErr != nil {
 			logging.GetLogger().WarnContext(ctx, "engine registry stop returned error", "error", stopErr)
 		}
+	}
+
+	// Drain the async job substrate (ADR-0004 / ADR-0005). The runner publishes
+	// lifecycle transitions onto the bus, so close it first, then the bus. Each
+	// drain is bounded by jobsShutdownTimeout so a stuck handler can't wedge
+	// shutdown. (Folded in from the former ServiceContainer.Stop() in D1.)
+	if s.jobRunner != nil {
+		logging.GetLogger().InfoContext(ctx, "Stopping job runner...")
+		drainCtx, cancel := context.WithTimeout(ctx, jobsShutdownTimeout)
+		if closeErr := s.jobRunner.Close(drainCtx); closeErr != nil {
+			logging.GetLogger().WarnContext(ctx, "job runner close returned error", "error", closeErr)
+		}
+		cancel()
+	}
+	if s.bus != nil {
+		logging.GetLogger().InfoContext(ctx, "Draining event bus...")
+		drainCtx, cancel := context.WithTimeout(ctx, jobsShutdownTimeout)
+		if closeErr := s.bus.Close(drainCtx); closeErr != nil {
+			logging.GetLogger().WarnContext(ctx, "event bus close returned error", "error", closeErr)
+		}
+		cancel()
 	}
 
 	logging.GetLogger().InfoContext(ctx, "Stopping rate limiters...")
@@ -129,10 +150,10 @@ func (s *Server) Shutdown(ctx context.Context) error {
 	s.authManager().Stop()
 
 	// Stop data retention goroutine (fixes #848)
-	if s.services.Database.RetentionStopCh != nil {
+	if s.retentionStopCh != nil {
 		logging.GetLogger().InfoContext(ctx, "Stopping data retention goroutine...")
-		close(s.services.Database.RetentionStopCh)
-		s.services.Database.RetentionStopCh = nil
+		close(s.retentionStopCh)
+		s.retentionStopCh = nil
 	}
 
 	// Close database connection (#755)
@@ -172,7 +193,7 @@ func (s *Server) startMaintenance(retentionDays int) {
 
 	for {
 		select {
-		case <-s.services.Database.RetentionStopCh:
+		case <-s.retentionStopCh:
 			logging.GetLogger().Debug("Data retention goroutine shutting down")
 			return
 		case <-ticker.C:

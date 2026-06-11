@@ -464,12 +464,9 @@ func (s *Server) handleWiFiChannelGraph(w http.ResponseWriter, r *http.Request) 
 // Enhanced WiFi Discovery Handlers (using WiFiBridge)
 // ============================================================================
 
-// wifiBridge returns the WiFi bridge from the service container.
+// wifiBridge returns the WiFi bridge (nil until initVulnerabilityScanner wires it).
 func (s *Server) wifiBridge() *enumerate.WiFiBridge {
-	if s.services == nil || s.services.Discovery == nil {
-		return nil
-	}
-	return s.services.Discovery.WiFiBridge
+	return s.wifiBridgeSvc
 }
 
 // WiFiDiscoveryScanResponse contains enhanced WiFi scan results.

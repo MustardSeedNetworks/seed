@@ -4,7 +4,7 @@ package app
 // application (use-case) service (ADR-0020). The adapters below implement the
 // narrow ports declared in internal/settings/persistence over the concrete
 // database repositories and the live config, so the settings handlers depend on
-// a use-case instead of reaching into ServiceContainer / s.db() directly.
+// a use-case instead of reaching into the server's service fields / s.db() directly.
 
 import (
 	"context"

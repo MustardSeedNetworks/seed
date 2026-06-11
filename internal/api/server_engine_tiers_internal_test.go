@@ -4,6 +4,7 @@ import (
 	"context"
 	"testing"
 
+	"github.com/MustardSeedNetworks/seed/internal/engine"
 	"github.com/MustardSeedNetworks/seed/internal/license"
 )
 
@@ -43,24 +44,24 @@ func (g *gatingTestEngine) Name() string                { return g.name }
 func (*gatingTestEngine) Start(_ context.Context) error { return nil }
 func (*gatingTestEngine) Stop(_ context.Context) error  { return nil }
 
-func TestRegisterEngineIfLicensed_NilServicesIsNoOp(t *testing.T) {
-	if err := registerEngineIfLicensed(nil, &gatingTestEngine{name: "probe"}); err != nil {
-		t.Errorf("nil services should be no-op, got %v", err)
+func TestRegisterEngineIfLicensed_NilServerIsNoOp(t *testing.T) {
+	if err := (*Server)(nil).registerEngineIfLicensed(&gatingTestEngine{name: "probe"}); err != nil {
+		t.Errorf("nil server should be no-op, got %v", err)
 	}
 }
 
 func TestRegisterEngineIfLicensed_NoManagerAllowsAllEngines(t *testing.T) {
 	// Pre-license state (nil Manager) treats every engine as
 	// allowed — matches dev / fresh install / test experience.
-	services := NewServiceContainer()
+	s := &Server{engines: engine.NewRegistry(nil)}
 	for _, name := range []string{
 		"probe", "snmp-poller", "alert-listener-pipeline",
 	} {
-		if err := registerEngineIfLicensed(services, &gatingTestEngine{name: name}); err != nil {
+		if err := s.registerEngineIfLicensed(&gatingTestEngine{name: name}); err != nil {
 			t.Fatalf("nil-manager pre-license should allow %s, got %v", name, err)
 		}
 	}
-	if got := len(services.Engines.Engines()); got != 3 {
+	if got := len(s.engines.Engines()); got != 3 {
 		t.Errorf("expected 3 registered engines, got %d", got)
 	}
 }
