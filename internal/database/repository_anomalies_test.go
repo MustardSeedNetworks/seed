@@ -295,34 +295,34 @@ func TestActiveBySourceFiltersAndExcludesResolved(t *testing.T) {
 	repo, ctx := setupAnomalyTest(t)
 
 	recs := []anomaly.Record{
-		recordForSource("h1", anomaly.SourceHealth),
-		recordForSource("h2", anomaly.SourceHealth),
+		recordForSource("p1", anomaly.SourceProbe),
+		recordForSource("p2", anomaly.SourceProbe),
 		recordForSource("w1", anomaly.SourceWiFi),
 	}
 	if err := repo.Upsert(ctx, recs); err != nil {
 		t.Fatalf("Upsert: %v", err)
 	}
 
-	health, err := repo.ActiveBySource(ctx, anomaly.SourceHealth)
+	probe, err := repo.ActiveBySource(ctx, anomaly.SourceProbe)
 	if err != nil {
-		t.Fatalf("ActiveBySource(health): %v", err)
+		t.Fatalf("ActiveBySource(probe): %v", err)
 	}
-	if len(health) != 2 {
-		t.Fatalf("want 2 health anomalies, got %d (%+v)", len(health), health)
+	if len(probe) != 2 {
+		t.Fatalf("want 2 probe anomalies, got %d (%+v)", len(probe), probe)
 	}
 
-	// Resolving one health instance drops it from the active read; the other
+	// Resolving one probe instance drops it from the active read; the other
 	// source is untouched.
 	at := time.Date(2026, 6, 11, 13, 0, 0, 0, time.UTC)
-	if err = repo.MarkResolved(ctx, []string{"h1"}, at); err != nil {
+	if err = repo.MarkResolved(ctx, []string{"p1"}, at); err != nil {
 		t.Fatalf("MarkResolved: %v", err)
 	}
-	health, err = repo.ActiveBySource(ctx, anomaly.SourceHealth)
+	probe, err = repo.ActiveBySource(ctx, anomaly.SourceProbe)
 	if err != nil {
-		t.Fatalf("ActiveBySource(health) after resolve: %v", err)
+		t.Fatalf("ActiveBySource(probe) after resolve: %v", err)
 	}
-	if len(health) != 1 {
-		t.Fatalf("want 1 active health anomaly after resolve, got %d", len(health))
+	if len(probe) != 1 {
+		t.Fatalf("want 1 active probe anomaly after resolve, got %d", len(probe))
 	}
 	wifi, err := repo.ActiveBySource(ctx, anomaly.SourceWiFi)
 	if err != nil {

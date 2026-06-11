@@ -113,14 +113,15 @@ func (a healthAlerts) Acknowledge(alertID, acknowledgedBy string) bool {
 }
 
 // healthAnomaly implements monitoring.AnomalyReader over the unified anomaly
-// store (ADR-0021), reading the source=health slice. It replaced the bespoke,
-// never-fed health.AnomalyDetector that was deleted when health converged on the
-// single engine; per-endpoint rolling statistics went away with it.
+// store (ADR-0021), reading the source=probe slice — the active-monitoring probe
+// engine is the producer of these anomalies (ADR-0025). It replaced the bespoke,
+// never-fed health.AnomalyDetector that was deleted when anomalies converged on
+// the single engine; per-endpoint rolling statistics went away with it.
 type healthAnomaly struct {
 	store func() *database.AnomalyRepository
 }
 
 func (a healthAnomaly) Available() bool { return a.store() != nil }
 func (a healthAnomaly) ActiveAnomalies(ctx context.Context) ([]anomaly.Anomaly, error) {
-	return a.store().ActiveBySource(ctx, anomaly.SourceHealth)
+	return a.store().ActiveBySource(ctx, anomaly.SourceProbe)
 }

@@ -126,6 +126,9 @@ const (
 	SubjectDevice SubjectKind = "device"
 	// SubjectInterface identifies a device interface (future sources).
 	SubjectInterface SubjectKind = "interface"
+	// SubjectProbe identifies one configured active-monitoring probe by its
+	// ProbeID — the correlation subject for probe breaches (ADR-0025).
+	SubjectProbe SubjectKind = "probe"
 )
 
 // SubjectRef points at the entity an anomaly concerns.

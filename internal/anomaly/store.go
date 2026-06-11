@@ -19,8 +19,11 @@ const (
 	SourceSNMP Source = "snmp"
 	// SourceBluetooth is Bluetooth live capture.
 	SourceBluetooth Source = "bluetooth"
-	// SourceHealth is endpoint/latency health monitoring.
-	SourceHealth Source = "health"
+	// SourceProbe is the active-monitoring probe engine (internal/probe): the
+	// recurring DNS/TLS/ping/HTTP/… observations whose threshold breaches become
+	// anomalies (ADR-0025). Replaces the never-built "health" source name — probe
+	// spans far more than endpoint latency.
+	SourceProbe Source = "probe"
 	// SourceSecurity is the security/authorization framework.
 	SourceSecurity Source = "security"
 	// SourceAutoTest is automated test outcomes (RFC/standards conformance).
