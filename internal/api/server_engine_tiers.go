@@ -25,7 +25,7 @@ import (
 // the operator deliberately puts it on a paid tier.
 func minTierForEngine(name string) license.Tier {
 	switch name {
-	case "probe", "retention":
+	case "probe", "probe-anomaly", "retention":
 		return license.TierFree
 	case "snmp-poller",
 		"topology-sysinfo-reconciler",
