@@ -1,6 +1,6 @@
 package api
 
-// healthcheckrun.go implements the /telemetry/health-checks/run endpoint on
+// healthcheckrun.go implements the /telemetry/probes/run endpoint on
 // the probe engine (ADR-0027 P3). It loads the operator's configured
 // health-check probes from the probes table, dispatches each through
 // Engine.RunNow (sharing the same checker → breach → anomaly path a scheduled

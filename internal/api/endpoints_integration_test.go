@@ -428,9 +428,9 @@ func TestTestsSettingsEndpoints(t *testing.T) {
 
 	// The health-checks settings endpoint is store-of-record backed by the
 	// probes table (ADR-0027 P2), so the server needs a real database.
-	db, err := database.Open(filepath.Join(tmpDir, "test.db"))
-	if err != nil {
-		t.Fatalf("Failed to open test database: %v", err)
+	db, dbErr := database.Open(filepath.Join(tmpDir, "test.db"))
+	if dbErr != nil {
+		t.Fatalf("Failed to open test database: %v", dbErr)
 	}
 	defer func() { _ = db.Close() }()
 
@@ -442,9 +442,9 @@ func TestTestsSettingsEndpoints(t *testing.T) {
 	defer ts.Close()
 
 	t.Run("GetHealthChecksSettings", func(t *testing.T) {
-		resp, err := http.Get(ts.URL + "/api/v1/telemetry/health-checks/settings")
+		resp, err := http.Get(ts.URL + "/api/v1/telemetry/probes/settings")
 		if err != nil {
-			t.Fatalf("GET /api/telemetry/health-checks/settings failed: %v", err)
+			t.Fatalf("GET /api/telemetry/probes/settings failed: %v", err)
 		}
 		defer func() { _ = resp.Body.Close() }()
 
@@ -473,7 +473,7 @@ func TestTestsSettingsEndpoints(t *testing.T) {
 		body, _ := json.Marshal(settings)
 		req, _ := http.NewRequest(
 			http.MethodPut,
-			ts.URL+"/api/v1/telemetry/health-checks/settings",
+			ts.URL+"/api/v1/telemetry/probes/settings",
 			bytes.NewReader(body),
 		)
 		req.Header.Set("Content-Type", "application/json")
@@ -481,7 +481,7 @@ func TestTestsSettingsEndpoints(t *testing.T) {
 		client := &http.Client{Timeout: 15 * time.Second}
 		resp, err := client.Do(req)
 		if err != nil {
-			t.Fatalf("PUT /api/telemetry/health-checks/settings failed: %v", err)
+			t.Fatalf("PUT /api/telemetry/probes/settings failed: %v", err)
 		}
 		defer func() { _ = resp.Body.Close() }()
 
