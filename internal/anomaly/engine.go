@@ -221,6 +221,24 @@ func (e *Engine) pruneKeys(cutoff time.Time) []instanceKey {
 	return cleared
 }
 
+// clearSubject removes every live instance for subject (across all defs) and
+// returns their keys, so a source that observes a subject return to health can
+// resolve all of its anomalies at once (the explicit recovery fast-path,
+// ADR-0025 §3). Mirror of pruneKeys, keyed on subject identity rather than idle
+// time.
+func (e *Engine) clearSubject(subject SubjectRef) []instanceKey {
+	e.mu.Lock()
+	defer e.mu.Unlock()
+	var cleared []instanceKey
+	for k := range e.active {
+		if k.kind == subject.Kind && k.id == subject.ID {
+			cleared = append(cleared, k)
+			delete(e.active, k)
+		}
+	}
+	return cleared
+}
+
 // project builds the Anomaly view of one tracked instance, merging catalog copy
 // with instance evidence/lifecycle and degrading capability-gated auto
 // follow-ups to prompts. The caller holds e.mu.

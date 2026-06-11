@@ -82,8 +82,15 @@ breaches. The producer therefore resolves an instance by **`Prune(cutoff)` on a 
 tick**, where `cutoff = now − resolveWindow`. `resolveWindow` must exceed a probe's interval so a
 still-failing probe (which re-breaches every interval, refreshing `lastSeen`) stays active; a recovered
 probe's anomaly resolves once it has been silent for the window. Interval-aware (per-probe) resolution
-and an explicit "clean result clears this probe's anomalies now" fast-path are noted refinements, not
-required for the first producer.
+is still a noted refinement.
+
+**As-built (2026-06-11):** the explicit "clean result clears this probe's anomalies now" fast-path is
+**implemented**. A `ResultEvent` with zero breaches resolves every active anomaly for that probe
+(`SubjectProbe` keyed by `ProbeID`) immediately, via `Coordinator.ResolveSubject` (which clears all of a
+subject's instances across defs and marks exactly those resolved). The maintenance `Prune` remains the
+backstop for a probe that goes **fully silent** — disabled or deleted — and therefore never emits a clean
+result to trigger the fast-path. So recovery is immediate when the probe reports healthy, and bounded by
+`resolveWindow` when it stops reporting entirely.
 
 ### 4. The health-check stack is legacy to delete, not revive
 
@@ -112,9 +119,10 @@ compat, so the rename is free when it happens).
   was never meant to own, and saddle every probe with a terminal-state lifecycle it does not have.
 - **Per-source anomaly tables / a second engine for probe.** Rejected — ADR-0021's single store and
   source-neutral engine already hold; probe is just another `Source` writing the one schema.
-- **Resolve probe anomalies only by exact recovery signal (clean result).** Deferred, not rejected — a
-  precise fast-path, but TTL-on-silence is simpler, matches the engine's existing `Prune(cutoff)` API,
-  and is correct; the fast-path is an additive refinement.
+- **Resolve probe anomalies only by exact recovery signal (clean result).** Was deferred; **now shipped
+  as an additive fast-path alongside** TTL-on-silence (see §3 as-built). The clean-result signal resolves
+  immediately when a probe reports healthy; TTL-on-silence still backstops a probe that stops reporting
+  entirely. Resolving *only* by clean result remains rejected — a deleted/disabled probe never sends one.
 
 ## Consequences
 

@@ -58,6 +58,56 @@ func latencyEvent(probeID string) probe.ResultEvent {
 	}
 }
 
+// cleanEvent is a successful probe run with no threshold breaches.
+func cleanEvent(probeID string) probe.ResultEvent {
+	return probe.ResultEvent{Result: probe.Result{ProbeID: probeID, Kind: "http", Success: true}}
+}
+
+// TestObserveCleanResultResolvesImmediately asserts the recovery fast-path
+// (ADR-0025 §3): a clean run for a probe with an active anomaly resolves it right
+// away rather than waiting out the silence window.
+func TestObserveCleanResultResolvesImmediately(t *testing.T) {
+	t.Parallel()
+	fs := &fakeStore{}
+	p, err := New(nil, fs, WithResolveWindow(time.Hour))
+	if err != nil {
+		t.Fatalf("New: %v", err)
+	}
+	ctx := context.Background()
+	t0 := time.Unix(3000, 0).UTC()
+	p.observe(ctx, latencyEvent("p1"), t0) // active anomaly
+
+	// A clean run resolves it immediately — no flushAndPrune / silence wait.
+	p.observe(ctx, cleanEvent("p1"), t0.Add(time.Minute))
+
+	_, _, res := fs.snapshot()
+	wantID := anomaly.RecordID(DefHighLatency, anomaly.SubjectRef{Kind: anomaly.SubjectProbe, ID: "p1"})
+	if len(res) != 1 || res[0] != wantID {
+		t.Fatalf("want %q resolved on clean result, got %v", wantID, res)
+	}
+	if n := p.coord.Engine().Len(); n != 0 {
+		t.Errorf("engine still tracks %d instances after clean result, want 0", n)
+	}
+}
+
+// TestObserveCleanResultNoActiveIsNoop asserts a clean run for a probe with no
+// active anomalies neither writes nor resolves anything.
+func TestObserveCleanResultNoActiveIsNoop(t *testing.T) {
+	t.Parallel()
+	fs := &fakeStore{}
+	p, err := New(nil, fs)
+	if err != nil {
+		t.Fatalf("New: %v", err)
+	}
+	p.observe(context.Background(), cleanEvent("ghost"), time.Unix(1, 0).UTC())
+
+	upserts, rows, res := fs.snapshot()
+	if upserts != 0 || len(rows) != 0 || len(res) != 0 {
+		t.Fatalf("clean run with no active anomaly touched the store: upserts=%d rows=%d resolved=%v",
+			upserts, len(rows), res)
+	}
+}
+
 func TestObservePersistsThroughCoordinator(t *testing.T) {
 	t.Parallel()
 	fs := &fakeStore{}

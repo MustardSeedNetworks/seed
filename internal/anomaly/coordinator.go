@@ -72,28 +72,42 @@ func (c *Coordinator) Flush(ctx context.Context) error {
 }
 
 // Prune clears instances idle since cutoff and marks exactly those resolved in
-// the store as of cutoff (the idle boundary). Returns the number cleared.
+// the store as of cutoff (the idle boundary). Returns the number cleared. This is
+// the TTL-on-silence resolution path; ResolveSubject is the explicit fast-path.
 func (c *Coordinator) Prune(ctx context.Context, cutoff time.Time) (int, error) {
 	keys := c.engine.pruneKeys(cutoff)
+	return len(keys), c.resolveKeys(ctx, keys, cutoff)
+}
+
+// ResolveSubject clears every live instance for subject (across all defs) and
+// marks exactly those resolved in the store as of `at`. It is the explicit
+// recovery fast-path (ADR-0025 §3): a source that observes a subject return to
+// health resolves its anomalies at once, instead of waiting for Prune's
+// TTL-on-silence. Returns the number cleared; a subject with no active instances
+// is a no-op.
+func (c *Coordinator) ResolveSubject(ctx context.Context, subject SubjectRef, at time.Time) (int, error) {
+	keys := c.engine.clearSubject(subject)
+	return len(keys), c.resolveKeys(ctx, keys, at)
+}
+
+// resolveKeys marks already-cleared instance keys resolved in the store as of
+// `at` and drops any pending dirty marks, so a later Flush cannot resurrect a
+// resolved row. Shared by Prune (idle boundary) and ResolveSubject (explicit
+// recovery). A no-op when keys is empty.
+func (c *Coordinator) resolveKeys(ctx context.Context, keys []instanceKey, at time.Time) error {
 	if len(keys) == 0 {
-		return 0, nil
+		return nil
 	}
 	ids := make([]string, len(keys))
 	for i, k := range keys {
 		ids[i] = k.recordID()
 	}
-	// The pruned instances are gone from the engine; drop any pending dirty
-	// marks so a later Flush does not resurrect a resolved row.
 	c.mu.Lock()
 	for _, k := range keys {
 		delete(c.dirty, k)
 	}
 	c.mu.Unlock()
-
-	if err := c.store.MarkResolved(ctx, ids, cutoff); err != nil {
-		return len(keys), err
-	}
-	return len(keys), nil
+	return c.store.MarkResolved(ctx, ids, at)
 }
 
 // Load seeds the engine from the store's active (unresolved) instances (ADR-0021
