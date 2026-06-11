@@ -8,19 +8,19 @@
         "id": {
           "type": "string"
         },
-        "device_id": {
+        "deviceId": {
           "type": "string"
         },
         "bssid": {
           "type": "string"
         },
-        "ssid_id": {
+        "ssidId": {
           "type": "string"
         },
-        "ssid_name": {
+        "ssidName": {
           "type": "string"
         },
-        "ap_name": {
+        "apName": {
           "type": "string"
         },
         "vendor": {
@@ -29,41 +29,41 @@
         "channel": {
           "type": "integer"
         },
-        "channel_width": {
+        "channelWidth": {
           "type": "integer"
         },
-        "frequency_mhz": {
+        "frequencyMhz": {
           "type": "integer"
         },
         "band": {
           "type": "string"
         },
-        "wifi_standard": {
+        "wifiStandard": {
           "items": {
             "type": "string"
           },
           "type": "array"
         },
-        "signal_dbm": {
+        "signalDbm": {
           "type": "integer"
         },
-        "noise_dbm": {
+        "noiseDbm": {
           "type": "integer"
         },
-        "client_count": {
+        "clientCount": {
           "type": "integer"
         },
-        "max_clients": {
+        "maxClients": {
           "type": "integer"
         },
-        "is_authorized": {
+        "isAuthorized": {
           "type": "boolean"
         },
-        "first_seen": {
+        "firstSeen": {
           "type": "string",
           "format": "date-time"
         },
-        "last_seen": {
+        "lastSeen": {
           "type": "string",
           "format": "date-time"
         },
@@ -77,14 +77,14 @@
         "id",
         "bssid",
         "channel",
-        "channel_width",
-        "frequency_mhz",
+        "channelWidth",
+        "frequencyMhz",
         "band",
-        "signal_dbm",
-        "client_count",
-        "is_authorized",
-        "first_seen",
-        "last_seen"
+        "signalDbm",
+        "clientCount",
+        "isAuthorized",
+        "firstSeen",
+        "lastSeen"
       ]
     },
     "WiFiDiscoveryAPsResponse": {

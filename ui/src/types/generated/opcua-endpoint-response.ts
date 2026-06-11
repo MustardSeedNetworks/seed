@@ -11,5 +11,4 @@ export interface OPCUAEndpointResponse {
   securityMode?: string;
   securityPolicy?: string;
   enabled: boolean;
-  criticality: number;
 }

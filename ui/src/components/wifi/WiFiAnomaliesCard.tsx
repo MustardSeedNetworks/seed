@@ -4,9 +4,11 @@ import { Card } from '../ui/card';
 import type { Status } from '../ui/statusConfig';
 import { WiFiAnomalyStream } from './WiFiAnomalyStream';
 
-// cardStatus reflects the most urgent anomaly severity in the card header.
+// cardStatus reflects the most urgent anomaly severity in the card header. The
+// Status vocabulary tops out at 'error', so both critical and error anomalies
+// map to it (the per-row badge in severity.ts keeps them visually distinct).
 function cardStatus(anomalies: Anomaly[]): Status {
-  if (anomalies.some((a) => a.severity === 'critical')) {
+  if (anomalies.some((a) => a.severity === 'critical' || a.severity === 'error')) {
     return 'error';
   }
   if (anomalies.some((a) => a.severity === 'warning')) {

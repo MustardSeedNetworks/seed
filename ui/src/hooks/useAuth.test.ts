@@ -158,6 +158,36 @@ describe('useAuth', () => {
     );
   });
 
+  it('a late mount /status probe does not clobber a completed login (seed#1593)', async () => {
+    // The mount-time /status probe is fired while unauthenticated. Hold it
+    // pending, log in successfully, THEN let the stale 401 resolve — it must
+    // not flip isAuthenticated back to false (the rotating E2E flake's cause).
+    let resolveProbe!: (value: { ok: boolean; status: number }) => void;
+    const pendingProbe = new Promise<{ ok: boolean; status: number }>((res) => {
+      resolveProbe = res;
+    });
+    mockFetch.mockReturnValueOnce(pendingProbe); // mount /status — stays in flight
+
+    const { result } = renderHook(() => useAuth());
+
+    // Log in successfully while the mount probe is still pending.
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      json: () => Promise.resolve({ token: 'access-token', expires: 3600 }),
+    });
+    await act(async () => {
+      await result.current.login('admin', 'password');
+    });
+    expect(result.current.isAuthenticated).toBe(true);
+
+    // Now the stale mount probe resolves 401 — the guard must hold.
+    await act(async () => {
+      resolveProbe({ ok: false, status: 401 });
+      await pendingProbe;
+    });
+    expect(result.current.isAuthenticated).toBe(true);
+  });
+
   it('login sets error on failure', async () => {
     mockFetch.mockResolvedValueOnce({ ok: false }); // Initial status check
 

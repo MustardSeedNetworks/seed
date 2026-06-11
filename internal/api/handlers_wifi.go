@@ -10,10 +10,11 @@ import (
 	"time"
 
 	"github.com/MustardSeedNetworks/seed/internal/discovery"
+	"github.com/MustardSeedNetworks/seed/internal/discovery/enumerate"
 	"github.com/MustardSeedNetworks/seed/internal/i18n"
 	"github.com/MustardSeedNetworks/seed/internal/logging"
 	"github.com/MustardSeedNetworks/seed/internal/wifi"
-	wifiapp "github.com/MustardSeedNetworks/seed/internal/wifi/app"
+	"github.com/MustardSeedNetworks/seed/internal/wifi/troubleshooting"
 )
 
 // ============================================================================
@@ -264,7 +265,7 @@ func (s *Server) handleWiFiConnect(w http.ResponseWriter, r *http.Request) {
 
 	result, err := s.wifiManagement.Connect(req.SSID, req.Password)
 	switch {
-	case errors.Is(err, wifiapp.ErrRadioUnavailable):
+	case errors.Is(err, troubleshooting.ErrRadioUnavailable):
 		sendErrorResponseWithDetails(
 			w,
 			logger,
@@ -297,7 +298,7 @@ func (s *Server) handleWiFiDisconnect(w http.ResponseWriter, r *http.Request) {
 
 	result, err := s.wifiManagement.Disconnect()
 	switch {
-	case errors.Is(err, wifiapp.ErrRadioUnavailable):
+	case errors.Is(err, troubleshooting.ErrRadioUnavailable):
 		sendErrorResponseWithDetails(
 			w,
 			logger,
@@ -326,19 +327,6 @@ func (s *Server) handleWiFiDisconnect(w http.ResponseWriter, r *http.Request) {
 // handleWiFiSavedNetworks returns a list of saved WiFi networks.
 func (s *Server) handleWiFiSavedNetworks(w http.ResponseWriter, r *http.Request) {
 	logger := logging.FromContext(r.Context())
-	localizer := i18n.FromRequest(r)
-
-	if r.Method != http.MethodGet {
-		sendErrorResponseWithDetails(
-			w,
-			logger,
-			http.StatusMethodNotAllowed,
-			ErrCodeMethodNotAllowed,
-			localizer.T("errors.api.methodNotAllowed"),
-			"",
-		)
-		return
-	}
 
 	if s.wifiManager() == nil {
 		sendJSONResponse(w, nil, http.StatusOK, map[string]any{
@@ -365,19 +353,6 @@ func (s *Server) handleWiFiSavedNetworks(w http.ResponseWriter, r *http.Request)
 // handleWiFiForgetNetwork handles requests to forget a saved WiFi network.
 func (s *Server) handleWiFiForgetNetwork(w http.ResponseWriter, r *http.Request) {
 	logger := logging.FromContext(r.Context())
-	localizer := i18n.FromRequest(r)
-
-	if r.Method != http.MethodDelete {
-		sendErrorResponseWithDetails(
-			w,
-			logger,
-			http.StatusMethodNotAllowed,
-			ErrCodeMethodNotAllowed,
-			localizer.T("errors.api.methodNotAllowed"),
-			"",
-		)
-		return
-	}
 
 	if s.wifiManager() == nil {
 		sendErrorResponseWithDetails(
@@ -427,21 +402,6 @@ func (s *Server) handleWiFiForgetNetwork(w http.ResponseWriter, r *http.Request)
 // handleWiFiChannelGraph returns channel overlap graph data for WiFi visualization.
 // It scans available networks and organizes them by frequency band with channel overlap information.
 func (s *Server) handleWiFiChannelGraph(w http.ResponseWriter, r *http.Request) {
-	logger := logging.FromContext(r.Context())
-	localizer := i18n.FromRequest(r)
-
-	if r.Method != http.MethodGet {
-		sendErrorResponseWithDetails(
-			w,
-			logger,
-			http.StatusMethodNotAllowed,
-			ErrCodeMethodNotAllowed,
-			localizer.T("errors.api.methodNotAllowed"),
-			"",
-		)
-		return
-	}
-
 	// Get interface from query param or use current/default
 	wlanIface := s.getInterfaceFromRequest(r)
 	if wlanIface == "" {
@@ -504,12 +464,9 @@ func (s *Server) handleWiFiChannelGraph(w http.ResponseWriter, r *http.Request) 
 // Enhanced WiFi Discovery Handlers (using WiFiBridge)
 // ============================================================================
 
-// wifiBridge returns the WiFi bridge from the service container.
-func (s *Server) wifiBridge() *discovery.WiFiBridge {
-	if s.services == nil || s.services.Discovery == nil {
-		return nil
-	}
-	return s.services.Discovery.WiFiBridge
+// wifiBridge returns the WiFi bridge (nil until initVulnerabilityScanner wires it).
+func (s *Server) wifiBridge() *enumerate.WiFiBridge {
+	return s.wifiBridgeSvc
 }
 
 // WiFiDiscoveryScanResponse contains enhanced WiFi scan results.
@@ -546,37 +503,37 @@ type WiFiDiscoveryStatsResponse struct {
 type WiFiNetwork struct {
 	ID                  string         `json:"id"`
 	SSID                string         `json:"ssid"`
-	IsHidden            bool           `json:"is_hidden"`
-	SecurityType        string         `json:"security_type"`
-	AuthorizationStatus string         `json:"authorization_status"`
-	FirstSeen           time.Time      `json:"first_seen"`
-	LastSeen            time.Time      `json:"last_seen"`
-	APCount             int            `json:"ap_count,omitempty"`
-	BestSignal          int            `json:"best_signal,omitempty"`
+	IsHidden            bool           `json:"isHidden"`
+	SecurityType        string         `json:"securityType"`
+	AuthorizationStatus string         `json:"authorizationStatus"`
+	FirstSeen           time.Time      `json:"firstSeen"`
+	LastSeen            time.Time      `json:"lastSeen"`
+	APCount             int            `json:"apCount,omitempty"`
+	BestSignal          int            `json:"bestSignal,omitempty"`
 	Metadata            map[string]any `json:"metadata,omitempty"`
 }
 
 // WiFiAccessPoint is the flat transport view of discovery.WiFiAccessPoint.
 type WiFiAccessPoint struct {
 	ID           string         `json:"id"`
-	DeviceID     string         `json:"device_id,omitempty"`
+	DeviceID     string         `json:"deviceId,omitempty"`
 	BSSID        string         `json:"bssid"`
-	SSIDID       string         `json:"ssid_id,omitempty"`
-	SSIDName     string         `json:"ssid_name,omitempty"`
-	APName       string         `json:"ap_name,omitempty"`
+	SSIDID       string         `json:"ssidId,omitempty"`
+	SSIDName     string         `json:"ssidName,omitempty"`
+	APName       string         `json:"apName,omitempty"`
 	Vendor       string         `json:"vendor,omitempty"`
 	Channel      int            `json:"channel"`
-	ChannelWidth int            `json:"channel_width"`
-	FrequencyMHz int            `json:"frequency_mhz"`
+	ChannelWidth int            `json:"channelWidth"`
+	FrequencyMHz int            `json:"frequencyMhz"`
 	Band         string         `json:"band"`
-	WiFiStandard []string       `json:"wifi_standard,omitempty"`
-	SignalDBm    int            `json:"signal_dbm"`
-	NoiseDBm     int            `json:"noise_dbm,omitempty"`
-	ClientCount  int            `json:"client_count"`
-	MaxClients   int            `json:"max_clients,omitempty"`
-	IsAuthorized bool           `json:"is_authorized"`
-	FirstSeen    time.Time      `json:"first_seen"`
-	LastSeen     time.Time      `json:"last_seen"`
+	WiFiStandard []string       `json:"wifiStandard,omitempty"`
+	SignalDBm    int            `json:"signalDbm"`
+	NoiseDBm     int            `json:"noiseDbm,omitempty"`
+	ClientCount  int            `json:"clientCount"`
+	MaxClients   int            `json:"maxClients,omitempty"`
+	IsAuthorized bool           `json:"isAuthorized"`
+	FirstSeen    time.Time      `json:"firstSeen"`
+	LastSeen     time.Time      `json:"lastSeen"`
 	Metadata     map[string]any `json:"metadata,omitempty"`
 }
 
@@ -585,27 +542,27 @@ type ChannelUtilization struct {
 	ID                 string    `json:"id"`
 	Channel            int       `json:"channel"`
 	Band               string    `json:"band"`
-	FrequencyMHz       int       `json:"frequency_mhz"`
-	UtilizationPercent float64   `json:"utilization_percent"`
-	NonWiFiPercent     float64   `json:"non_wifi_percent"`
-	RetryPercent       float64   `json:"retry_percent"`
-	APCount            int       `json:"ap_count"`
-	ClientCount        int       `json:"client_count"`
-	RecordedAt         time.Time `json:"recorded_at"`
+	FrequencyMHz       int       `json:"frequencyMhz"`
+	UtilizationPercent float64   `json:"utilizationPercent"`
+	NonWiFiPercent     float64   `json:"nonWifiPercent"`
+	RetryPercent       float64   `json:"retryPercent"`
+	APCount            int       `json:"apCount"`
+	ClientCount        int       `json:"clientCount"`
+	RecordedAt         time.Time `json:"recordedAt"`
 }
 
 // WiFiDiscoveryStats is the flat transport view of discovery.WiFiDiscoveryStats.
 type WiFiDiscoveryStats struct {
-	TotalNetworks     int            `json:"total_networks"`
-	HiddenNetworks    int            `json:"hidden_networks"`
-	TotalAPs          int            `json:"total_aps"`
-	AuthorizedAPs     int            `json:"authorized_aps"`
-	UnauthorizedAPs   int            `json:"unauthorized_aps"`
-	TotalClients      int            `json:"total_clients"`
-	ChannelsByBand    map[string]int `json:"channels_by_band"`
-	SecurityBreakdown map[string]int `json:"security_breakdown"`
-	VendorBreakdown   map[string]int `json:"vendor_breakdown"`
-	LastScanTime      time.Time      `json:"last_scan_time"`
+	TotalNetworks     int            `json:"totalNetworks"`
+	HiddenNetworks    int            `json:"hiddenNetworks"`
+	TotalAPs          int            `json:"totalAps"`
+	AuthorizedAPs     int            `json:"authorizedAps"`
+	UnauthorizedAPs   int            `json:"unauthorizedAps"`
+	TotalClients      int            `json:"totalClients"`
+	ChannelsByBand    map[string]int `json:"channelsByBand"`
+	SecurityBreakdown map[string]int `json:"securityBreakdown"`
+	VendorBreakdown   map[string]int `json:"vendorBreakdown"`
+	LastScanTime      time.Time      `json:"lastScanTime"`
 }
 
 // toWiFiNetworks maps discovered Wi-Fi networks onto their flat transport view,
@@ -714,7 +671,7 @@ func (s *Server) handleWiFiDiscoveryScan(w http.ResponseWriter, r *http.Request)
 
 	result, err := s.wifiDiscovery.Scan(r.Context())
 	switch {
-	case errors.Is(err, wifiapp.ErrDiscoveryUnavailable):
+	case errors.Is(err, troubleshooting.ErrDiscoveryUnavailable):
 		s.respondWiFiDiscoveryUnavailable(w, logger)
 		return
 	case err != nil:
@@ -770,7 +727,7 @@ func (s *Server) handleWiFiDiscoveryNetworks(w http.ResponseWriter, r *http.Requ
 	logger := logging.FromContext(r.Context())
 
 	networks, err := s.wifiDiscovery.Networks()
-	if errors.Is(err, wifiapp.ErrDiscoveryUnavailable) {
+	if errors.Is(err, troubleshooting.ErrDiscoveryUnavailable) {
 		s.respondWiFiDiscoveryUnavailable(w, logger)
 		return
 	}
@@ -792,7 +749,7 @@ func (s *Server) handleWiFiDiscoveryAPs(w http.ResponseWriter, r *http.Request) 
 	logger := logging.FromContext(r.Context())
 
 	aps, err := s.wifiDiscovery.AccessPoints()
-	if errors.Is(err, wifiapp.ErrDiscoveryUnavailable) {
+	if errors.Is(err, troubleshooting.ErrDiscoveryUnavailable) {
 		s.respondWiFiDiscoveryUnavailable(w, logger)
 		return
 	}
@@ -814,7 +771,7 @@ func (s *Server) handleWiFiDiscoveryStats(w http.ResponseWriter, r *http.Request
 	logger := logging.FromContext(r.Context())
 
 	stats, err := s.wifiDiscovery.Stats()
-	if errors.Is(err, wifiapp.ErrDiscoveryUnavailable) {
+	if errors.Is(err, troubleshooting.ErrDiscoveryUnavailable) {
 		s.respondWiFiDiscoveryUnavailable(w, logger)
 		return
 	}

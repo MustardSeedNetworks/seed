@@ -416,25 +416,10 @@
     "viewDetails": "Ver detalles"
   },
   "slaDashboard": {
-    "title": "Panel SLA",
-    "subtitle": "Salud del servicio y cumplimiento",
-    "compliance": "Cumplimiento SLA",
-    "endpointsMet": "endpoints que cumplen el SLA",
-    "endpointsMissed": "endpoints que no cumplen el SLA",
-    "healthScores": "Puntuaciones de salud",
-    "healthy": "Saludable",
-    "degraded": "Degradado",
-    "critical": "Crítico",
-    "total": "Total",
-    "activeAlerts": "Alertas activas",
-    "criticalLabel": "críticas",
+    "title": "Anomalías activas",
+    "subtitle": "Detectadas por la monitorización activa",
     "anomalies": "Anomalías",
-    "detected": "detectadas",
-    "period": {
-      "daily": "Diario",
-      "weekly": "Semanal",
-      "monthly": "Mensual"
-    }
+    "detected": "detectadas"
   },
   "guestAudit": {
     "title": "Auditoría de red de invitados",

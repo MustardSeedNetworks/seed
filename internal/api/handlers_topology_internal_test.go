@@ -19,10 +19,8 @@ import (
 func newTopologyTestServer(t *testing.T) *Server {
 	t.Helper()
 	db := newTestDB(t)
-	s := &Server{
-		services: NewServiceContainer(),
-	}
-	s.services.Database = &DatabaseServices{DB: db}
+	s := &Server{}
+	s.dbConn = db
 	return s
 }
 
@@ -97,16 +95,6 @@ func TestHandleTopologyNodes_ReturnsSeedededNodes(t *testing.T) {
 	}
 	if len(resp.Nodes) != 2 {
 		t.Fatalf("nodes = %d, want 2", len(resp.Nodes))
-	}
-}
-
-func TestHandleTopologyNodes_RejectsNonGET(t *testing.T) {
-	s := newTopologyTestServer(t)
-	req := httptest.NewRequest(http.MethodPost, APIVersionPrefix+"/topology/nodes", http.NoBody)
-	w := httptest.NewRecorder()
-	s.handleTopologyNodes(w, req)
-	if w.Code != http.StatusMethodNotAllowed {
-		t.Errorf("status = %d, want 405", w.Code)
 	}
 }
 
@@ -291,16 +279,6 @@ func TestHandleTopologyARP_FilterByNodeID(t *testing.T) {
 	_ = json.Unmarshal(w.Body.Bytes(), &resp)
 	if resp.Count != 2 {
 		t.Errorf("count = %d, want 2 (both bindings live on node-test-1)", resp.Count)
-	}
-}
-
-func TestHandleTopologyARP_NonGETReturns405(t *testing.T) {
-	s := newTopologyTestServer(t)
-	req := httptest.NewRequest(http.MethodPost, APIVersionPrefix+"/topology/arp", http.NoBody)
-	w := httptest.NewRecorder()
-	s.handleTopologyARP(w, req)
-	if w.Code != http.StatusMethodNotAllowed {
-		t.Errorf("status = %d, want 405", w.Code)
 	}
 }
 

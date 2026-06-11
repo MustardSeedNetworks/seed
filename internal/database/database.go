@@ -71,7 +71,6 @@ type DB struct {
 	alerts            *AlertRepository
 	settings          *SettingsRepository
 	logs              *LogRepository
-	healthChecks      *HealthCheckRepository
 	discovery         *DiscoveryRepository
 	clients           *ClientRepository
 	probes            *ProbeRepository
@@ -83,6 +82,7 @@ type DB struct {
 	topology          *TopologyRepository
 	alertRules        *AlertRulesRepository
 	alertSuppressions *AlertSuppressionsRepository
+	anomalies         *AnomalyRepository
 }
 
 // Config holds database configuration options.
@@ -467,17 +467,6 @@ func (db *DB) Logs() *LogRepository {
 	return db.logs
 }
 
-// HealthChecks returns the health checks repository.
-func (db *DB) HealthChecks() *HealthCheckRepository {
-	db.mu.Lock()
-	defer db.mu.Unlock()
-
-	if db.healthChecks == nil {
-		db.healthChecks = &HealthCheckRepository{db: db}
-	}
-	return db.healthChecks
-}
-
 // Discovery returns the discovery repository for WiFi, problems, and OUI data.
 func (db *DB) Discovery() *DiscoveryRepository {
 	db.mu.Lock()
@@ -594,6 +583,19 @@ func (db *DB) AlertSuppressions() *AlertSuppressionsRepository {
 		db.alertSuppressions = &AlertSuppressionsRepository{db: db}
 	}
 	return db.alertSuppressions
+}
+
+// Anomalies returns the anomaly repository (ADR-0021, Anomaly Platform). It is
+// the SQL system of record the engine's persistence Coordinator writes detected
+// anomalies through and reads active instances back from on start.
+func (db *DB) Anomalies() *AnomalyRepository {
+	db.mu.Lock()
+	defer db.mu.Unlock()
+
+	if db.anomalies == nil {
+		db.anomalies = &AnomalyRepository{db: db}
+	}
+	return db.anomalies
 }
 
 // Exec executes a query without returning any rows.

@@ -39,8 +39,8 @@ type LoginRequest struct {
 type LoginResponse struct {
 	Token       string `json:"token,omitempty"`
 	Expires     int64  `json:"expires,omitempty"`
-	MFARequired bool   `json:"mfa_required,omitempty"`
-	MFAToken    string `json:"mfa_token,omitempty"`
+	MFARequired bool   `json:"mfaRequired,omitempty"`
+	MFAToken    string `json:"mfaToken,omitempty"`
 }
 
 // handleLoginRateLimited checks and handles rate limiting, returns true if blocked.
@@ -127,12 +127,6 @@ func (s *Server) handleLogin(w http.ResponseWriter, r *http.Request) {
 	logger := logging.FromContext(r.Context())
 	localizer := i18n.FromRequest(r)
 
-	if r.Method != http.MethodPost {
-		sendErrorResponseWithDetails(w, logger, http.StatusMethodNotAllowed,
-			ErrCodeMethodNotAllowed, localizer.T("errors.api.methodNotAllowed"), "")
-		return
-	}
-
 	clientIP := s.getClientIP(r)
 	if s.handleLoginRateLimited(w, logger, localizer, clientIP) {
 		return
@@ -202,19 +196,6 @@ func (s *Server) handleLogin(w http.ResponseWriter, r *http.Request) {
 // handleLogout handles user logout (fixes #544 - split from handlers.go).
 func (s *Server) handleLogout(w http.ResponseWriter, r *http.Request) {
 	logger := logging.FromContext(r.Context())
-	localizer := i18n.FromRequest(r)
-
-	if r.Method != http.MethodPost {
-		sendErrorResponseWithDetails(
-			w,
-			logger,
-			http.StatusMethodNotAllowed,
-			ErrCodeMethodNotAllowed,
-			localizer.T("errors.api.methodNotAllowed"),
-			"",
-		) // fixes #694, #699
-		return
-	}
 
 	// Revoke tokens to prevent reuse (ported from Stem)
 	// Extract and blacklist both access and refresh tokens
@@ -242,18 +223,6 @@ func (s *Server) handleLogout(w http.ResponseWriter, r *http.Request) {
 func (s *Server) handleRefreshToken(w http.ResponseWriter, r *http.Request) {
 	logger := logging.FromContext(r.Context())
 	localizer := i18n.FromRequest(r)
-
-	if r.Method != http.MethodPost {
-		sendErrorResponseWithDetails(
-			w,
-			logger,
-			http.StatusMethodNotAllowed,
-			ErrCodeMethodNotAllowed,
-			localizer.T("errors.api.methodNotAllowed"),
-			"",
-		) // fixes #694, #699
-		return
-	}
 
 	// Rate-limit refresh on the same per-IP bucket as login (#1224).
 	// Refresh tokens are signed JWTs so a valid one can't be brute-forced,
@@ -326,18 +295,6 @@ func (s *Server) handleCSRFToken(w http.ResponseWriter, r *http.Request) {
 	logger := logging.FromContext(r.Context())
 	localizer := i18n.FromRequest(r)
 
-	if r.Method != http.MethodGet {
-		sendErrorResponseWithDetails(
-			w,
-			logger,
-			http.StatusMethodNotAllowed,
-			ErrCodeMethodNotAllowed,
-			localizer.T("errors.api.methodNotAllowed"),
-			"",
-		)
-		return
-	}
-
 	// Get session ID from JWT (set by auth middleware)
 	sessionID := auth.GetSessionIDFromRequest(r)
 	if sessionID == "" {
@@ -396,19 +353,6 @@ type SetupStatusResponse struct {
 // Security fix #724, #758: Generates a one-time setup token to prevent CSRF/unauthenticated access.
 func (s *Server) handleSetupStatus(w http.ResponseWriter, r *http.Request) {
 	logger := logging.FromContext(r.Context())
-	localizer := i18n.FromRequest(r)
-
-	if r.Method != http.MethodGet {
-		sendErrorResponseWithDetails(
-			w,
-			logger,
-			http.StatusMethodNotAllowed,
-			ErrCodeMethodNotAllowed,
-			localizer.T("errors.api.methodNotAllowed"),
-			"",
-		) // fixes #694, #699
-		return
-	}
 
 	// Check if using default password
 	needsSetup := auth.IsDefaultPasswordHash(s.config.Auth.DefaultPasswordHash)

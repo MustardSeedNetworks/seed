@@ -245,7 +245,12 @@ func (s *Server) setupCoreRoutes() {
 			maxBodyBytes: cfgBody,
 		},
 		{path: APIVersionPrefix + "/interfaces", handler: s.handleInterfaces, methods: get},
-		{path: APIVersionPrefix + "/interface", handler: s.handleInterface, methods: getPut},
+		{
+			path:    APIVersionPrefix + "/interface",
+			handler: s.handleInterface,
+			methods: getPut,
+			minRole: op, // PUT persists the active NIC to disk (writeGated: operator+)
+		},
 		{
 			path:    APIVersionPrefix + "/network/mtu",
 			handler: s.handleSetMTU,
@@ -406,6 +411,7 @@ func (s *Server) setupTelemetryRoutes() {
 			path:    APIVersionPrefix + "/telemetry/vlan/interface",
 			handler: s.handleVLANInterface,
 			methods: getPostPut,
+			minRole: op, // POST creates a live kernel VLAN sub-interface (writeGated: operator+)
 		},
 		{
 			path:        APIVersionPrefix + "/telemetry/speedtest",
@@ -450,46 +456,23 @@ func (s *Server) setupTelemetryRoutes() {
 			methods: get,
 		},
 		{
-			path:    APIVersionPrefix + "/telemetry/health-checks/settings",
+			path:    APIVersionPrefix + "/telemetry/probes/settings",
 			handler: s.handleHealthChecksSettings,
 			methods: getPut,
 			minRole: op,
 		},
 		{
-			path:        APIVersionPrefix + "/telemetry/health-checks/run",
+			path:        APIVersionPrefix + "/telemetry/probes/run",
 			handler:     s.handleHealthChecks,
 			methods:     getPost,
 			rateLimited: true,
 		},
+		// Anomaly detection is Pro (LICENSE_STRATEGY §2). It reads the unified
+		// anomaly store's source=probe slice (ADR-0021/0025); the legacy
+		// results/history/scores/sla/alerts read-path over health_check_results
+		// was deleted as dead code (ADR-0026).
 		{
-			path:    APIVersionPrefix + "/telemetry/health-checks/results",
-			handler: s.handleHealthCheckResults,
-			methods: get,
-		},
-		{
-			path:    APIVersionPrefix + "/telemetry/health-checks/history",
-			handler: s.handleHealthCheckHistory,
-			methods: get,
-		},
-		{
-			path:    APIVersionPrefix + "/telemetry/health-checks/scores",
-			handler: s.handleHealthCheckScores,
-			methods: get,
-		},
-		{
-			path:    APIVersionPrefix + "/telemetry/health-checks/sla",
-			handler: s.handleHealthCheckSLA,
-			methods: get,
-		},
-		{
-			path:    APIVersionPrefix + "/telemetry/health-checks/alerts",
-			handler: s.handleHealthCheckAlerts,
-			methods: get,
-		},
-		// Anomaly detection is Pro (LICENSE_STRATEGY §2); base results/history/alerts
-		// stay open to all tiers — only the trend/anomaly analysis is paid.
-		{
-			path:    APIVersionPrefix + "/telemetry/health-checks/anomalies",
+			path:    APIVersionPrefix + "/telemetry/probes/anomalies",
 			handler: s.handleHealthCheckAnomalies,
 			methods: get,
 			feature: "anomaly_detection",
@@ -544,6 +527,7 @@ func (s *Server) setupSecurityRoutes() {
 			path:    APIVersionPrefix + "/security/discovery/options",
 			handler: s.handleDiscoveryOptions,
 			methods: getPut,
+			minRole: op, // PUT saves discovery options to disk (writeGated: operator+)
 		},
 		{
 			path:    APIVersionPrefix + "/security/discovery/service/status",
@@ -577,6 +561,7 @@ func (s *Server) setupSecurityRoutes() {
 			path:    APIVersionPrefix + "/security/devices/subnets",
 			handler: s.handleDevicesSubnets,
 			methods: crud,
+			minRole: op, // POST/PUT/DELETE mutate persisted subnet entries (writeGated: operator+)
 		},
 		// Vulnerability scan + guest-audit run are compliance_advanced (Pro,
 		// LICENSE_STRATEGY §2); read-only results/status/settings stay open so prior

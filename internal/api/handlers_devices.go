@@ -66,18 +66,6 @@ func (s *Server) handleDevices(w http.ResponseWriter, r *http.Request) {
 // handleDevicesScan triggers a network device scan (fixes #702 - uses r.Context()).
 func (s *Server) handleDevicesScan(w http.ResponseWriter, r *http.Request) {
 	logger := logging.FromContext(r.Context())
-	if r.Method != http.MethodPost {
-		sendErrorResponseWithDetails(
-			w,
-			logger,
-			http.StatusMethodNotAllowed,
-			ErrCodeMethodNotAllowed,
-			"Method not allowed",
-			"",
-		) // fixes #694, #699
-		return
-	}
-
 	if s.deviceDiscovery() == nil {
 		sendErrorResponseWithDetails(
 			w,
@@ -177,18 +165,6 @@ func (s *Server) postScanVulnerabilityCheck(logger *slog.Logger) {
 // handleDevicesStatus returns the current device discovery status (fixes #702 - uses r.Context()).
 func (s *Server) handleDevicesStatus(w http.ResponseWriter, r *http.Request) {
 	logger := logging.FromContext(r.Context())
-	if r.Method != http.MethodGet {
-		sendErrorResponseWithDetails(
-			w,
-			logger,
-			http.StatusMethodNotAllowed,
-			ErrCodeMethodNotAllowed,
-			"Method not allowed",
-			"",
-		) // fixes #694, #699
-		return
-	}
-
 	if s.deviceDiscovery() == nil {
 		sendErrorResponseWithDetails(
 			w,

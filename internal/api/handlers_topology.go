@@ -41,10 +41,6 @@ const topologyDefaultLimit = 200
 // array. Empty results are not 404 — that's reserved for malformed
 // requests.
 func (s *Server) handleTopologyNodes(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodGet {
-		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
-		return
-	}
 	logger := logging.FromContext(r.Context())
 	db := s.db()
 	if db == nil {
@@ -72,10 +68,6 @@ func (s *Server) handleTopologyNodes(w http.ResponseWriter, r *http.Request) {
 // Returns the node plus its interfaces and links — one HTTP call
 // per "device detail" page in the UI.
 func (s *Server) handleTopologyNodeByID(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodGet {
-		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
-		return
-	}
 	id := strings.TrimPrefix(r.URL.Path, topologyPathPrefix+"nodes/")
 	if id == "" || strings.Contains(id, "/") {
 		http.Error(w, "Missing or invalid node id", http.StatusBadRequest)
@@ -131,10 +123,6 @@ func (s *Server) handleTopologyNodeByID(w http.ResponseWriter, r *http.Request) 
 // ?node_id, returns the global edge list; with ?node_id, returns
 // the edges incident to that node.
 func (s *Server) handleTopologyLinks(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodGet {
-		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
-		return
-	}
 	logger := logging.FromContext(r.Context())
 	db := s.db()
 	if db == nil {
@@ -167,10 +155,6 @@ func (s *Server) handleTopologyLinks(w http.ResponseWriter, r *http.Request) {
 // so the parser shape differs from parseTopologyListOptions enough
 // that sharing would just push the divergence into the helper.
 func (s *Server) handleTopologyARP(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodGet {
-		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
-		return
-	}
 	q := r.URL.Query()
 	opts := database.TopologyARPListOptions{
 		ClientID:     q.Get("client_id"),

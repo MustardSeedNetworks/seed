@@ -1,8 +1,8 @@
 package api
 
 // /api/v1/engines — Stage A5.8 + #1383 enhancement. Read-only admin
-// endpoint listing every long-running subsystem registered with
-// services.Engines (probe, retention, snmp-poller, the 4 topology
+// endpoint listing every long-running subsystem registered with the
+// engine registry (probe, retention, snmp-poller, the 4 topology
 // reconcilers, the 2 alert pipelines, plus any opt-in listeners).
 //
 //   GET /api/v1/engines
@@ -14,30 +14,23 @@ package api
 //            "inflight": N
 //          }, ...] }
 //
-// Engines opt into rich status by implementing engine.Reporter. Those
-// that don't get a default {state: "ok"} payload — backward-compatible
-// with the V1.0 wire format and avoids forcing every engine to grow a
-// Status() method before operators see any signal.
+// The status logic lives in the engine-status use-case (s.engineStatus,
+// ADR-0020): engines that implement engine.Reporter contribute their
+// Status(), engines that don't default to {state: "ok"}. This handler
+// keeps only transport concerns — encoding the domain snapshot to the
+// V1.0 wire shape. No raw engine-registry reference remains in transport.
 
 import (
 	"net/http"
 
-	"github.com/MustardSeedNetworks/seed/internal/engine"
+	"github.com/MustardSeedNetworks/seed/internal/engine/status"
 )
 
 func (s *Server) handleEngines(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodGet {
-		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
-		return
-	}
-	if s.services == nil || s.services.Engines == nil {
-		writeJSON(w, r, map[string]any{jsonKeyCount: 0, "engines": []any{}})
-		return
-	}
-	engines := s.services.Engines.Engines()
-	out := make([]map[string]any, 0, len(engines))
-	for _, e := range engines {
-		out = append(out, encodeEngineEntry(e))
+	statuses := s.engineStatus.List()
+	out := make([]map[string]any, 0, len(statuses))
+	for _, st := range statuses {
+		out = append(out, encodeEngineEntry(st))
 	}
 	writeJSON(w, r, map[string]any{
 		jsonKeyCount: len(out),
@@ -45,22 +38,15 @@ func (s *Server) handleEngines(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
-// encodeEngineEntry flattens one engine into the wire shape. Engines
-// that implement engine.Reporter get their Status() surfaced; engines
-// that don't get StatusOK() so the response is uniform.
-func encodeEngineEntry(e engine.Engine) map[string]any {
-	status := engine.StatusOK()
-	if reporter, ok := e.(engine.Reporter); ok {
-		status = reporter.Status()
-		if status.State == "" {
-			status.State = engine.StateOK
-		}
-	}
+// encodeEngineEntry flattens one engine-status snapshot into the wire
+// shape. The status determination (Reporter vs StatusOK fallback) happens
+// in the use-case; this only shapes the response.
+func encodeEngineEntry(st status.EngineStatus) map[string]any {
 	return map[string]any{
-		jsonKeyName:  e.Name(),
-		"state":      status.State,
-		"lastTickAt": formatTime(status.LastTickAt),
-		"lastError":  status.LastError,
-		"inflight":   status.Inflight,
+		jsonKeyName:  st.Name,
+		"state":      st.State,
+		"lastTickAt": formatTime(st.LastTickAt),
+		"lastError":  st.LastError,
+		"inflight":   st.Inflight,
 	}
 }

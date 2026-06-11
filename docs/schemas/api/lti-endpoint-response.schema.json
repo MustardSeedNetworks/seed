@@ -16,9 +16,6 @@
         },
         "enabled": {
           "type": "boolean"
-        },
-        "criticality": {
-          "type": "integer"
         }
       },
       "additionalProperties": false,
@@ -26,8 +23,7 @@
       "required": [
         "name",
         "launchUrl",
-        "enabled",
-        "criticality"
+        "enabled"
       ]
     }
   },

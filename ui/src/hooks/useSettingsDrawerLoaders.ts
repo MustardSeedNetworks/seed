@@ -129,7 +129,7 @@ export function useSettingsDrawerLoaders({
 
   const fetchTestsSettings = useCallback(async () => {
     try {
-      const response = await fetch(`${API_BASE}/api/v1/telemetry/health-checks/settings`, {
+      const response = await fetch(`${API_BASE}/api/v1/telemetry/probes/settings`, {
         credentials: 'include',
       });
       if (response.ok) {

@@ -14,5 +14,5 @@ export interface ProfileRequest {
   name: string;
   description: string;
   config: unknown;
-  is_default: boolean;
+  isDefault: boolean;
 }

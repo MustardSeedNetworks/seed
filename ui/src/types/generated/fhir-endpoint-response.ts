@@ -10,5 +10,4 @@ export interface FHIREndpointResponse {
   baseUrl: string;
   authType: string;
   enabled: boolean;
-  criticality: number;
 }

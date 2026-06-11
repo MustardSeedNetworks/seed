@@ -36,19 +36,6 @@ type RecoveryCompleteResponse struct {
 // This endpoint is public (no auth required) so the login page can check status.
 func (s *Server) handleRecoveryStatus(w http.ResponseWriter, r *http.Request) {
 	logger := logging.FromContext(r.Context())
-	localizer := i18n.FromRequest(r)
-
-	if r.Method != http.MethodGet {
-		sendErrorResponseWithDetails(
-			w,
-			logger,
-			http.StatusMethodNotAllowed,
-			ErrCodeMethodNotAllowed,
-			localizer.T("errors.api.methodNotAllowed"),
-			"",
-		)
-		return
-	}
 
 	// Check if recovery manager is configured
 	if s.recoveryManager() == nil {
@@ -111,18 +98,6 @@ func (s *Server) handleRecoveryComplete(w http.ResponseWriter, r *http.Request) 
 	logger := logging.FromContext(r.Context())
 	localizer := i18n.FromRequest(r)
 	clientIP := s.getClientIP(r)
-
-	if r.Method != http.MethodPost {
-		sendErrorResponseWithDetails(
-			w,
-			logger,
-			http.StatusMethodNotAllowed,
-			ErrCodeMethodNotAllowed,
-			localizer.T("errors.api.methodNotAllowed"),
-			"",
-		)
-		return
-	}
 
 	// Check if recovery manager is configured
 	if s.recoveryManager() == nil {
@@ -235,19 +210,6 @@ type RecoveryInstructionsResponse struct {
 // This is a public endpoint that provides information without exposing secrets.
 func (s *Server) handleRecoveryInstructions(w http.ResponseWriter, r *http.Request) {
 	logger := logging.FromContext(r.Context())
-	localizer := i18n.FromRequest(r)
-
-	if r.Method != http.MethodGet {
-		sendErrorResponseWithDetails(
-			w,
-			logger,
-			http.StatusMethodNotAllowed,
-			ErrCodeMethodNotAllowed,
-			localizer.T("errors.api.methodNotAllowed"),
-			"",
-		)
-		return
-	}
 
 	if s.recoveryManager() == nil {
 		sendErrorResponseWithDetails(w, logger, http.StatusServiceUnavailable, ErrCodeInternal,

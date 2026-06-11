@@ -111,12 +111,14 @@ func (s *Server) Shutdown(ctx context.Context) error {
 	// winding down. Stage A3.5d unified what was previously two
 	// ad-hoc Stop blocks (probe + retention) into one registry
 	// drive.
-	if reg := s.services.Engines; reg != nil {
+	if reg := s.engines; reg != nil {
 		logging.GetLogger().InfoContext(ctx, "Stopping engines...")
 		if stopErr := reg.Stop(ctx); stopErr != nil {
 			logging.GetLogger().WarnContext(ctx, "engine registry stop returned error", "error", stopErr)
 		}
 	}
+
+	s.drainJobSubstrate(ctx)
 
 	logging.GetLogger().InfoContext(ctx, "Stopping rate limiters...")
 	s.loginRateLimiter().Stop()
@@ -129,10 +131,10 @@ func (s *Server) Shutdown(ctx context.Context) error {
 	s.authManager().Stop()
 
 	// Stop data retention goroutine (fixes #848)
-	if s.services.Database.RetentionStopCh != nil {
+	if s.retentionStopCh != nil {
 		logging.GetLogger().InfoContext(ctx, "Stopping data retention goroutine...")
-		close(s.services.Database.RetentionStopCh)
-		s.services.Database.RetentionStopCh = nil
+		close(s.retentionStopCh)
+		s.retentionStopCh = nil
 	}
 
 	// Close database connection (#755)
@@ -149,6 +151,36 @@ func (s *Server) Shutdown(ctx context.Context) error {
 		return fmt.Errorf("shutdown main server: %w", err)
 	}
 	return nil
+}
+
+// drainJobSubstrate gracefully closes the async job runner and the in-process
+// event bus (ADR-0004 / ADR-0005). The runner publishes lifecycle transitions
+// onto the bus, so it is closed first, then the bus. Each close is bounded by
+// jobsShutdownTimeout so a wedged handler can't stall shutdown indefinitely.
+//
+// This teardown previously lived only in ServiceContainer.Stop(), which had no
+// callers — so the runner goroutines and bus were never actually drained on a
+// real shutdown. D1 restored the drain onto the live Shutdown path; this
+// extracts it behind a single seam so the close ordering is unit-testable.
+// Both fields may be nil (the lightweight test server never wires them), so
+// each is nil-guarded.
+func (s *Server) drainJobSubstrate(ctx context.Context) {
+	if s.jobRunner != nil {
+		logging.GetLogger().InfoContext(ctx, "Stopping job runner...")
+		drainCtx, cancel := context.WithTimeout(ctx, jobsShutdownTimeout)
+		if closeErr := s.jobRunner.Close(drainCtx); closeErr != nil {
+			logging.GetLogger().WarnContext(ctx, "job runner close returned error", "error", closeErr)
+		}
+		cancel()
+	}
+	if s.bus != nil {
+		logging.GetLogger().InfoContext(ctx, "Draining event bus...")
+		drainCtx, cancel := context.WithTimeout(ctx, jobsShutdownTimeout)
+		if closeErr := s.bus.Close(drainCtx); closeErr != nil {
+			logging.GetLogger().WarnContext(ctx, "event bus close returned error", "error", closeErr)
+		}
+		cancel()
+	}
 }
 
 // startMaintenance runs the periodic background maintenance loop: jobs retention
@@ -168,11 +200,15 @@ func (s *Server) startMaintenance(retentionDays int) {
 		GatewayResultDays:  retentionDays,
 		AuditLogDays:       retentionDays * retentionAuditLogMultiplier,       // Keep audit logs longest
 		InactiveDeviceDays: retentionDays * retentionInactiveDeviceMultiplier, // Keep inactive device records longer
+		// Resolved anomalies age out on their own fixed 90d window (ADR-0021);
+		// active anomalies are never purged, so this is independent of the
+		// operator's general retention window.
+		AnomalyResolvedDays: database.DefaultRetentionPolicy().AnomalyResolvedDays,
 	}
 
 	for {
 		select {
-		case <-s.services.Database.RetentionStopCh:
+		case <-s.retentionStopCh:
 			logging.GetLogger().Debug("Data retention goroutine shutting down")
 			return
 		case <-ticker.C:
@@ -203,7 +239,7 @@ func (s *Server) startMaintenance(retentionDays int) {
 			totalDeleted := result.MetricsDeleted + result.AlertsDeleted +
 				result.SpeedTestsDeleted + result.DNSResultsDeleted +
 				result.GatewayResultsDeleted + result.AuditLogsDeleted +
-				result.DevicesDeleted
+				result.DevicesDeleted + result.AnomaliesResolvedDeleted
 			if totalDeleted > 0 {
 				logging.GetLogger().Info("Data retention cleanup completed",
 					"metrics_deleted", result.MetricsDeleted,
@@ -213,6 +249,7 @@ func (s *Server) startMaintenance(retentionDays int) {
 					"dns_deleted", result.DNSResultsDeleted,
 					"gateway_deleted", result.GatewayResultsDeleted,
 					"audit_deleted", result.AuditLogsDeleted,
+					"anomalies_resolved_deleted", result.AnomaliesResolvedDeleted,
 					"duration", result.Duration)
 			}
 		}

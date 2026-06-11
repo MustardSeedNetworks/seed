@@ -19,6 +19,7 @@ import (
 	"time"
 
 	"github.com/MustardSeedNetworks/seed/internal/config"
+	"github.com/MustardSeedNetworks/seed/internal/discovery/resolve"
 	"github.com/MustardSeedNetworks/seed/internal/logging"
 )
 
@@ -26,9 +27,9 @@ import (
 type DeviceProfiler struct {
 	config          *ProfilerConfig
 	snmpConfig      *config.SNMPConfig
-	snmpCollector   *SNMPCollector   // For full MIB collection
-	netbiosResolver *NetBIOSResolver // For NetBIOS name queries
-	mdnsResolver    *MDNSResolver    // For mDNS name queries
+	snmpCollector   *SNMPCollector           // For full MIB collection
+	netbiosResolver *resolve.NetBIOSResolver // For NetBIOS name queries
+	mdnsResolver    *resolve.MDNSResolver    // For mDNS name queries
 	httpClient      *http.Client
 	transport       *http.Transport // Store transport for cleanup (fixes #825)
 	mu              sync.RWMutex
@@ -95,10 +96,10 @@ func NewDeviceProfiler(cfg *ProfilerConfig, snmpCfg *config.SNMPConfig) *DeviceP
 	// Initialize name resolvers if enabled
 	if cfg.EnableNameResolution {
 		if cfg.ResolveNetBIOS {
-			p.netbiosResolver = NewNetBIOSResolver()
+			p.netbiosResolver = resolve.NewNetBIOSResolver()
 		}
 		if cfg.ResolveMDNS {
-			p.mdnsResolver = NewMDNSResolver("") // Interface set later via SetInterface
+			p.mdnsResolver = resolve.NewMDNSResolver("") // Interface set later via SetInterface
 		}
 		logging.GetLogger().Info("Name resolution initialized",
 			"dns", cfg.ResolveDNS,

@@ -1,11 +1,17 @@
 package api
 
-// handlers_problems.go extends the discovery API with network problem detection endpoints.
+// handlers_problems.go extends the discovery API with network problem detection
+// endpoints. The handlers are pure transport (ADR-0020): decode/encode and map
+// a problems use-case sentinel to its HTTP status; the detection orchestration
+// lives in internal/discovery/problems, with the adapter in internal/app.
 
 import (
+	"errors"
+	"log/slog"
 	"net/http"
 
 	"github.com/MustardSeedNetworks/seed/internal/discovery"
+	"github.com/MustardSeedNetworks/seed/internal/discovery/problems"
 	"github.com/MustardSeedNetworks/seed/internal/i18n"
 	"github.com/MustardSeedNetworks/seed/internal/logging"
 )
@@ -31,6 +37,12 @@ type ProblemScanResponse struct {
 	DurationMS   int64                           `json:"durationMs"`
 }
 
+// writeProblemsUnavailable writes the pre-strangle 503 for an absent detector.
+func writeProblemsUnavailable(w http.ResponseWriter, logger *slog.Logger) {
+	sendErrorResponseWithDetails(w, logger, http.StatusServiceUnavailable,
+		ErrCodeServiceUnavail, "Problem detector not available", "")
+}
+
 // handleNetworkProblems returns current network problems.
 //
 // GET /api/v1/discovery/problems
@@ -40,40 +52,17 @@ type ProblemScanResponse struct {
 // Response: 200 OK with NetworkProblemsResponse.
 func (s *Server) handleNetworkProblems(w http.ResponseWriter, r *http.Request) {
 	logger := logging.FromContext(r.Context())
-	localizer := i18n.FromRequest(r)
 
-	if r.Method != http.MethodGet {
-		sendErrorResponseWithDetails(
-			w,
-			logger,
-			http.StatusMethodNotAllowed,
-			ErrCodeMethodNotAllowed,
-			localizer.T("errors.api.methodNotAllowed"),
-			"",
-		)
+	active, err := s.networkProblems.Active()
+	if err != nil {
+		writeProblemsUnavailable(w, logger)
 		return
 	}
-
-	detector := s.problemDetector()
-	if detector == nil {
-		sendErrorResponseWithDetails(
-			w,
-			logger,
-			http.StatusServiceUnavailable,
-			ErrCodeServiceUnavail,
-			"Problem detector not available",
-			"",
-		)
-		return
-	}
-
-	problems := detector.GetActiveProblems()
-	summary := detector.GetSummary()
 
 	sendJSONResponse(w, logger, http.StatusOK, NetworkProblemsResponse{
-		Problems: problems,
-		Summary:  summary,
-		Total:    len(problems),
+		Problems: active.Problems,
+		Summary:  active.Summary,
+		Total:    len(active.Problems),
 	})
 }
 
@@ -86,50 +75,16 @@ func (s *Server) handleNetworkProblems(w http.ResponseWriter, r *http.Request) {
 // Response: 200 OK with ProblemScanResponse.
 func (s *Server) handleProblemScan(w http.ResponseWriter, r *http.Request) {
 	logger := logging.FromContext(r.Context())
-	localizer := i18n.FromRequest(r)
 
-	if r.Method != http.MethodPost {
-		sendErrorResponseWithDetails(
-			w,
-			logger,
-			http.StatusMethodNotAllowed,
-			ErrCodeMethodNotAllowed,
-			localizer.T("errors.api.methodNotAllowed"),
-			"",
-		)
-		return
-	}
-
-	detector := s.problemDetector()
-	if detector == nil {
-		sendErrorResponseWithDetails(
-			w,
-			logger,
-			http.StatusServiceUnavailable,
-			ErrCodeServiceUnavail,
-			"Problem detector not available",
-			"",
-		)
-		return
-	}
-
-	// Get discovered devices from discovery service
-	var devices []*discovery.DiscoveredDevice
-	if s.discoveryService() != nil {
-		devices = s.discoveryService().GetDevices()
-	}
-
-	result, err := detector.Scan(r.Context(), devices)
+	result, err := s.networkProblems.Scan(r.Context())
 	if err != nil {
+		if errors.Is(err, problems.ErrUnavailable) {
+			writeProblemsUnavailable(w, logger)
+			return
+		}
 		logger.ErrorContext(r.Context(), "Problem scan failed", "error", err)
-		sendErrorResponseWithDetails(
-			w,
-			logger,
-			http.StatusInternalServerError,
-			ErrCodeInternal,
-			"Problem scan failed: "+err.Error(),
-			"",
-		)
+		sendErrorResponseWithDetails(w, logger, http.StatusInternalServerError,
+			ErrCodeInternal, "Problem scan failed: "+err.Error(), "")
 		return
 	}
 
@@ -151,22 +106,18 @@ func (s *Server) handleProblemThresholds(w http.ResponseWriter, r *http.Request)
 	logger := logging.FromContext(r.Context())
 	localizer := i18n.FromRequest(r)
 
-	detector := s.problemDetector()
-	if detector == nil {
-		sendErrorResponseWithDetails(
-			w,
-			logger,
-			http.StatusServiceUnavailable,
-			ErrCodeServiceUnavail,
-			"Problem detector not available",
-			"",
-		)
+	if !s.networkProblems.Available() {
+		writeProblemsUnavailable(w, logger)
 		return
 	}
 
 	switch r.Method {
 	case http.MethodGet:
-		thresholds := detector.GetThresholds()
+		thresholds, err := s.networkProblems.Thresholds()
+		if err != nil {
+			writeProblemsUnavailable(w, logger)
+			return
+		}
 		sendJSONResponse(w, logger, http.StatusOK, thresholds)
 
 	case http.MethodPut:
@@ -174,29 +125,17 @@ func (s *Server) handleProblemThresholds(w http.ResponseWriter, r *http.Request)
 		if !decodeJSONStrictLocalized(w, r, &thresholds, MaxBodySizeJSON, logger, localizer) {
 			return
 		}
-
-		detector.SetThresholds(thresholds)
+		if err := s.networkProblems.SetThresholds(thresholds); err != nil {
+			writeProblemsUnavailable(w, logger)
+			return
+		}
 		sendJSONResponse(w, logger, http.StatusOK, map[string]string{
 			"status":  statusSuccess,
 			"message": "Thresholds updated",
 		})
 
 	default:
-		sendErrorResponseWithDetails(
-			w,
-			logger,
-			http.StatusMethodNotAllowed,
-			ErrCodeMethodNotAllowed,
-			localizer.T("errors.api.methodNotAllowed"),
-			"",
-		)
+		sendErrorResponseWithDetails(w, logger, http.StatusMethodNotAllowed,
+			ErrCodeMethodNotAllowed, localizer.T("errors.api.methodNotAllowed"), "")
 	}
-}
-
-// problemDetector returns the problem detector from the service container.
-func (s *Server) problemDetector() *discovery.ProblemDetector {
-	if s.services == nil || s.services.Discovery == nil {
-		return nil
-	}
-	return s.services.Discovery.ProblemDetector
 }

@@ -40,7 +40,6 @@ import type { CardSettings, SaveStatus, TestsSettings } from '../../../types/set
 import { CollapsibleSection } from '../../ui/CollapsibleSection';
 import { HeartPulse } from '../../ui/icons';
 import { AutoSaveIndicator } from './AutoSaveIndicator';
-import { HealthChecksSettingsAdvanced } from './HealthChecksSettingsAdvanced';
 import { HealthChecksSettingsEnterprise } from './HealthChecksSettingsEnterprise';
 import { HealthChecksSettingsSpecialty } from './HealthChecksSettingsSpecialty';
 
@@ -147,7 +146,10 @@ export const HealthChecksSettings: React.NamedExoticComponent<HealthChecksSettin
                 checked={cardSettings.healthChecks.enabled}
                 onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>
                   updateCardSettings({
-                    healthChecks: { ...cardSettings.healthChecks, enabled: e.target.checked },
+                    healthChecks: {
+                      ...cardSettings.healthChecks,
+                      enabled: e.target.checked,
+                    },
                   })
                 }
                 className={iconTokens.size.sm}
@@ -175,7 +177,10 @@ export const HealthChecksSettings: React.NamedExoticComponent<HealthChecksSettin
                 checked={cardSettings.healthChecks.autoRunOnLink}
                 onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>
                   updateCardSettings({
-                    healthChecks: { ...cardSettings.healthChecks, autoRunOnLink: e.target.checked },
+                    healthChecks: {
+                      ...cardSettings.healthChecks,
+                      autoRunOnLink: e.target.checked,
+                    },
                   })
                 }
                 className={iconTokens.size.sm}
@@ -479,33 +484,6 @@ export const HealthChecksSettings: React.NamedExoticComponent<HealthChecksSettin
                     'bg-surface-raised',
                   )}
                 />
-                {/* Criticality Slider */}
-                <div className={cn('flex items-center', spacing.gap.compact)}>
-                  <label
-                    htmlFor={`http-criticality-${endpoint.id}`}
-                    className="caption text-text-muted w-28"
-                  >
-                    {t('health.criticality')}
-                  </label>
-                  <input
-                    id={`http-criticality-${endpoint.id}`}
-                    type="range"
-                    min={1}
-                    max={10}
-                    value={endpoint.criticality ?? 5}
-                    onChange={(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>): void =>
-                      updateHttpEndpoint(
-                        endpoint.id ?? '',
-                        'criticality',
-                        Number.parseInt(e.target.value, 10),
-                      )
-                    }
-                    className="flex-1 h-2 bg-surface-raised rounded-lg appearance-none cursor-pointer accent-brand-primary"
-                  />
-                  <span className="caption text-text-muted w-6 text-center">
-                    {endpoint.criticality ?? 5}
-                  </span>
-                </div>
               </div>
             ))}
           </div>
@@ -516,11 +494,6 @@ export const HealthChecksSettings: React.NamedExoticComponent<HealthChecksSettin
           />
 
           <HealthChecksSettingsSpecialty
-            testsSettings={testsSettings}
-            setTestsSettings={setTestsSettings}
-          />
-
-          <HealthChecksSettingsAdvanced
             testsSettings={testsSettings}
             setTestsSettings={setTestsSettings}
           />

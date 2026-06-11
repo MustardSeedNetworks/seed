@@ -130,7 +130,7 @@ function LogEntryRow({ entry, expanded, onToggle, onClose }: LogEntryRowProps): 
         ) : null}
 
         {/* Request ID badge */}
-        {entry.request_id ? (
+        {entry.requestId ? (
           <span
             className={cn(
               'px-3 py-compact',
@@ -138,7 +138,7 @@ function LogEntryRow({ entry, expanded, onToggle, onClose }: LogEntryRowProps): 
               'bg-status-info/20 text-status-info text-sm font-mono',
             )}
           >
-            {entry.request_id.substring(0, 8)}
+            {entry.requestId.substring(0, 8)}
           </span>
         ) : null}
 
@@ -148,7 +148,7 @@ function LogEntryRow({ entry, expanded, onToggle, onClose }: LogEntryRowProps): 
         </span>
 
         {/* Duration badge */}
-        {entry.duration_ms !== undefined && entry.duration_ms > 0 ? (
+        {entry.durationMs !== undefined && entry.durationMs > 0 ? (
           <span
             className={cn(
               'px-3 py-compact',
@@ -156,7 +156,7 @@ function LogEntryRow({ entry, expanded, onToggle, onClose }: LogEntryRowProps): 
               'bg-status-success/20 text-status-success text-sm',
             )}
           >
-            {entry.duration_ms}ms
+            {entry.durationMs}ms
           </span>
         ) : null}
 
@@ -235,19 +235,19 @@ function LogEntryRow({ entry, expanded, onToggle, onClose }: LogEntryRowProps): 
               <strong className="text-text-primary">Timestamp:</strong>{' '}
               {new Date(entry.timestamp).toISOString()}
             </div>
-            {entry.session_id ? (
+            {entry.sessionId ? (
               <div>
-                <strong className="text-text-primary">Session:</strong> {entry.session_id}
+                <strong className="text-text-primary">Session:</strong> {entry.sessionId}
               </div>
             ) : null}
-            {entry.request_id ? (
+            {entry.requestId ? (
               <div>
-                <strong className="text-text-primary">Request ID:</strong> {entry.request_id}
+                <strong className="text-text-primary">Request ID:</strong> {entry.requestId}
               </div>
             ) : null}
-            {entry.duration_ms !== undefined ? (
+            {entry.durationMs !== undefined ? (
               <div>
-                <strong className="text-text-primary">Duration:</strong> {entry.duration_ms}ms
+                <strong className="text-text-primary">Duration:</strong> {entry.durationMs}ms
               </div>
             ) : null}
           </div>
@@ -500,15 +500,15 @@ export function LogViewerModal({ isOpen, onClose }: LogViewerModalProps): React.
         escapeCsv(entry.layer),
         escapeCsv(entry.component ?? ''),
         escapeCsv(entry.message),
-        escapeCsv(entry.request_id ?? ''),
-        escapeCsv(entry.session_id ?? ''),
-        escapeCsv(entry.duration_ms ?? ''),
+        escapeCsv(entry.requestId ?? ''),
+        escapeCsv(entry.sessionId ?? ''),
+        escapeCsv(entry.durationMs ?? ''),
         escapeCsv(metadata),
       ].join(',');
     });
 
     const header: string =
-      'timestamp,level,layer,component,message,request_id,session_id,duration_ms,metadata';
+      'timestamp,level,layer,component,message,requestId,sessionId,durationMs,metadata';
     const csv: string = [header, ...rows].join('\n');
     const blob = new Blob([csv], { type: 'text/csv' });
     const url: string = URL.createObjectURL(blob);
@@ -561,10 +561,10 @@ export function LogViewerModal({ isOpen, onClose }: LogViewerModalProps): React.
               {t('logs.subtitle', 'Real-time application logs with filtering')}
               {stats ? (
                 <span className="ml-content">
-                  <strong>{stats.total_count}</strong> {t('logs.totalLogs', 'logs')}
-                  {stats.errors_last_hour > 0 ? (
+                  <strong>{stats.totalCount}</strong> {t('logs.totalLogs', 'logs')}
+                  {stats.errorsLastHour > 0 ? (
                     <span className="text-status-error ml-inline">
-                      ({stats.errors_last_hour} {t('logs.errorsLastHour', 'errors last hour')})
+                      ({stats.errorsLastHour} {t('logs.errorsLastHour', 'errors last hour')})
                     </span>
                   ) : null}
                 </span>

@@ -10,6 +10,8 @@ import (
 	"net/http/httptest"
 	"strings"
 	"testing"
+
+	"github.com/MustardSeedNetworks/seed/internal/database"
 )
 
 // apiPath strips a Go 1.22 method prefix ("GET /api/v1/x" -> "/api/v1/x").
@@ -70,5 +72,41 @@ func TestMethodGateRejectsUndeclaredMethod(t *testing.T) {
 	s.mux.ServeHTTP(rec, httptest.NewRequest(http.MethodGet, path, nil))
 	if rec.Code != http.StatusOK {
 		t.Errorf("GET %s: got status %d, want 200", path, rec.Code)
+	}
+}
+
+// TestPersistentWriteRoutesRequireOperator pins the operator-role gate on routes
+// whose mutating methods persist state (config-to-disk or a live kernel change).
+// These bypassed writeGated until the role gate was added; this guards against a
+// future edit silently dropping minRole and re-opening the write to any viewer.
+func TestPersistentWriteRoutesRequireOperator(t *testing.T) {
+	s := NewTestServer()
+	defer s.Close()
+
+	// Persistent-write routes that MUST require operator+ on their mutating
+	// methods. (Diagnostic-action POSTs — scans/probes/speedtest — are
+	// deliberately ungated and intentionally absent from this list.)
+	wantOperator := map[string]bool{
+		APIVersionPrefix + "/interface":                  true, // PUT persists active NIC
+		APIVersionPrefix + "/telemetry/vlan/interface":   true, // POST creates kernel VLAN
+		APIVersionPrefix + "/security/discovery/options": true, // PUT saves discovery config
+		APIVersionPrefix + "/security/devices/subnets":   true, // CRUD on persisted subnets
+	}
+
+	seen := make(map[string]bool, len(wantOperator))
+	for _, rt := range s.manifest {
+		if !wantOperator[apiPath(rt.path)] {
+			continue
+		}
+		seen[apiPath(rt.path)] = true
+		if rt.minRole != database.RoleOperator {
+			t.Errorf("route %q: minRole = %q, want %q (persistent write must be operator-gated)",
+				rt.path, rt.minRole, database.RoleOperator)
+		}
+	}
+	for path := range wantOperator {
+		if !seen[path] {
+			t.Errorf("expected persistent-write route %q not found in manifest", path)
+		}
 	}
 }

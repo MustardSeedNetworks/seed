@@ -94,7 +94,6 @@ type HL7Endpoint struct {
 	ReceivingApp string `json:"receiving_app"`      // Receiving application name
 	ReceivingFac string `json:"receiving_facility"` // Receiving facility name
 	Enabled      bool   `json:"enabled"`
-	Criticality  int    `json:"criticality"` // 1-10 scale for health scoring
 }
 
 // FHIREndpoint represents a custom FHIR R4 endpoint test (Health Checks 100x).
@@ -109,22 +108,20 @@ type FHIREndpoint struct {
 	ClientSecret string `json:"client_secret,omitempty"`
 	TokenURL     string `json:"token_url,omitempty"` // OAuth2 token endpoint
 	Enabled      bool   `json:"enabled"`
-	Criticality  int    `json:"criticality"` // 1-10 scale for health scoring
 }
 
 // SQLEndpoint represents a custom SQL database test (Health Checks 100x).
 type SQLEndpoint struct {
-	Name        string `json:"name"`
-	Driver      string `json:"driver"` // "mysql", "postgres", "sqlserver", "oracle", "sqlite"
-	Host        string `json:"host"`
-	Port        int    `json:"port"` // Default varies by driver
-	Database    string `json:"database"`
-	Username    string `json:"username,omitempty"`
-	Password    string `json:"password,omitempty"`
-	SSLMode     string `json:"ssl_mode,omitempty"`   // "disable", "require", "verify-ca", "verify-full"
-	TestQuery   string `json:"test_query,omitempty"` // Custom query to execute (default: SELECT 1)
-	Enabled     bool   `json:"enabled"`
-	Criticality int    `json:"criticality"` // 1-10 scale for health scoring
+	Name      string `json:"name"`
+	Driver    string `json:"driver"` // "mysql", "postgres", "sqlserver", "oracle", "sqlite"
+	Host      string `json:"host"`
+	Port      int    `json:"port"` // Default varies by driver
+	Database  string `json:"database"`
+	Username  string `json:"username,omitempty"`
+	Password  string `json:"password,omitempty"`
+	SSLMode   string `json:"ssl_mode,omitempty"`   // "disable", "require", "verify-ca", "verify-full"
+	TestQuery string `json:"test_query,omitempty"` // Custom query to execute (default: SELECT 1)
+	Enabled   bool   `json:"enabled"`
 }
 
 // FileShareEndpoint represents a file share test (SMB/CIFS or NFS) with performance testing.
@@ -142,7 +139,6 @@ type FileShareEndpoint struct {
 	TestWritePerformance bool `json:"test_write_performance,omitempty"` // Write test file to measure speed
 	TestFileSizeMB       int  `json:"test_file_size_mb,omitempty"`      // Size of test file in MB (default: 10)
 	Enabled              bool `json:"enabled"`
-	Criticality          int  `json:"criticality"` // 1-10 scale for health scoring
 }
 
 // LDAPEndpoint represents an LDAP/Active Directory test (Health Checks 100x).
@@ -157,7 +153,6 @@ type LDAPEndpoint struct {
 	BindPassword string `json:"bind_password,omitempty"`
 	SearchFilter string `json:"search_filter,omitempty"` // Test search filter
 	Enabled      bool   `json:"enabled"`
-	Criticality  int    `json:"criticality"` // 1-10 scale for health scoring
 }
 
 // LTIEndpoint represents an LTI/LMS endpoint test (Health Checks 100x - Education).
@@ -171,7 +166,6 @@ type LTIEndpoint struct {
 	DeploymentID   string `json:"deployment_id,omitempty"`   // LTI 1.3 deployment ID
 	PlatformURL    string `json:"platform_url,omitempty"`    // LTI 1.3 platform issuer URL
 	Enabled        bool   `json:"enabled"`
-	Criticality    int    `json:"criticality"` // 1-10 scale for health scoring
 }
 
 // OPCUAEndpoint represents an OPC-UA endpoint test (Health Checks 100x - Manufacturing).
@@ -185,7 +179,6 @@ type OPCUAEndpoint struct {
 	CertPath       string `json:"cert_path,omitempty"` // Client certificate path
 	KeyPath        string `json:"key_path,omitempty"`  // Client private key path
 	Enabled        bool   `json:"enabled"`
-	Criticality    int    `json:"criticality"` // 1-10 scale for health scoring
 }
 
 // ModbusEndpoint represents a Modbus TCP endpoint test (Health Checks 100x - Manufacturing).
@@ -197,7 +190,6 @@ type ModbusEndpoint struct {
 	TestRegister int    `json:"test_register"`           // Register address to read for testing
 	RegisterType string `json:"register_type,omitempty"` // "holding", "input", "coil", "discrete"
 	Enabled      bool   `json:"enabled"`
-	Criticality  int    `json:"criticality"` // 1-10 scale for health scoring
 }
 
 // SpeedtestConfig contains speedtest settings.

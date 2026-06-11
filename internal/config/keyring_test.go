@@ -17,9 +17,7 @@ const versionedPrefix = "enc:v1:"
 
 func newKeyedConfig(t *testing.T, dir string) *config.Config {
 	t.Helper()
-	cfg := &config.Config{
-		Auth: config.AuthConfig{JWTSecret: "jwt-secret-only-for-legacy-decrypt"},
-	}
+	cfg := &config.Config{}
 	if err := cfg.InitCredentialKeyring(dir); err != nil {
 		t.Fatalf("InitCredentialKeyring failed: %v", err)
 	}
@@ -145,64 +143,5 @@ func TestCredentialKeyEnvOverride(t *testing.T) {
 	}
 	if got != "byo-kms" {
 		t.Fatalf("env reload roundtrip mismatch: got %q", got)
-	}
-}
-
-// TestLegacyV0Migration proves a legacy JWT-derived ciphertext is transparently
-// re-encrypted to the versioned DEK format and remains decryptable throughout.
-func TestLegacyV0Migration(t *testing.T) {
-	dir := t.TempDir()
-	const jwt = "legacy-jwt-secret-used-for-v0-credentials"
-	const plain = "legacy-priv-pass"
-
-	// Craft a legacy v0 ciphertext exactly as the old code did.
-	v0, err := config.EncryptCredential(plain, jwt)
-	if err != nil {
-		t.Fatalf("legacy encrypt failed: %v", err)
-	}
-	if strings.HasPrefix(v0, versionedPrefix) {
-		t.Fatalf("legacy ciphertext should be unversioned, got %q", v0)
-	}
-	if !config.IsLegacyEncrypted(v0) {
-		t.Fatalf("v0 ciphertext should be detected as legacy-encrypted")
-	}
-
-	cfg := &config.Config{
-		Auth: config.AuthConfig{JWTSecret: jwt},
-		SNMP: config.SNMPConfig{
-			V3Credentials: []config.SNMPv3Credential{
-				{Name: "legacy", PrivPassword: v0},
-			},
-		},
-	}
-	if initErr := cfg.InitCredentialKeyring(dir); initErr != nil {
-		t.Fatalf("InitCredentialKeyring failed: %v", initErr)
-	}
-
-	// Migration must still read v0 directly (read-only legacy path).
-	pre, err := cfg.DecryptSNMPPassword(v0)
-	if err != nil {
-		t.Fatalf("legacy decrypt failed: %v", err)
-	}
-	if pre != plain {
-		t.Fatalf("legacy decrypt mismatch: got %q", pre)
-	}
-
-	// EncryptSNMPCredentials re-encrypts v0 -> v1.
-	if encErr := cfg.EncryptSNMPCredentials(); encErr != nil {
-		t.Fatalf("EncryptSNMPCredentials failed: %v", encErr)
-	}
-	migrated := cfg.SNMP.V3Credentials[0].PrivPassword
-	if !strings.HasPrefix(migrated, versionedPrefix) {
-		t.Fatalf("credential should be migrated to versioned format, got %q", migrated)
-	}
-
-	// Decryptable after migration.
-	post, err := cfg.DecryptSNMPPassword(migrated)
-	if err != nil {
-		t.Fatalf("post-migration decrypt failed: %v", err)
-	}
-	if post != plain {
-		t.Fatalf("post-migration mismatch: got %q", post)
 	}
 }

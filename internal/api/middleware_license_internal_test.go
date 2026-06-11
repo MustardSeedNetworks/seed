@@ -24,7 +24,7 @@ func nopHandler(seen *bool) http.HandlerFunc {
 func TestRequireFeature_AllowsWhenLicenseDisabled(t *testing.T) {
 	t.Parallel()
 	s, _ := apiTokenTestSetup(t)
-	s.services.Auth.License = nil // simulate dev build
+	s.licenseMgr = nil // simulate dev build
 
 	called := false
 	h := s.requireFeature("any_feature", nopHandler(&called))

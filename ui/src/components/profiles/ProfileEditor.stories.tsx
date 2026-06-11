@@ -10,7 +10,6 @@ const sampleProfile = {
   isDefault: true,
   createdAt: new Date().toISOString(),
   updatedAt: new Date().toISOString(),
-  is_default: true,
 } as Profile;
 
 const meta = {

@@ -38,15 +38,24 @@ type PortInfo struct {
 	ConnectedTo string `json:"connectedTo"` // Device name/MAC on this port
 }
 
+// DeviceLocator is the narrow device-lookup port L2 path tracing needs from the
+// wired collector. The concrete collector (now in internal/discovery/enumerate)
+// satisfies it, so L2PathBuilder stays kernel-resident without importing the
+// enumerate stage (which would invert the kernel→stage direction).
+type DeviceLocator interface {
+	GetDeviceByIP(ip string) *DiscoveredDevice
+	GetDevices() []*DiscoveredDevice
+}
+
 // L2PathBuilder builds Layer 2 paths between devices using LLDP/CDP and SNMP.
 type L2PathBuilder struct {
-	deviceDiscovery *DeviceDiscovery
+	deviceDiscovery DeviceLocator
 	snmpConfig      *config.SNMPConfig
 }
 
 // NewL2PathBuilder creates a new L2 path builder.
 func NewL2PathBuilder(
-	deviceDiscovery *DeviceDiscovery,
+	deviceDiscovery DeviceLocator,
 	snmpConfig *config.SNMPConfig,
 ) *L2PathBuilder {
 	return &L2PathBuilder{

@@ -26,7 +26,7 @@ type DeviceScanJobResult struct {
 	Count   int                           `json:"count"`
 }
 
-// deviceScanService is the slice of *discovery.DeviceDiscovery behaviour the
+// deviceScanService is the slice of *enumerate.DeviceDiscovery behaviour the
 // kind needs.
 type deviceScanService interface {
 	Scan(ctx context.Context) error

@@ -11,10 +11,10 @@
         "expires": {
           "type": "integer"
         },
-        "mfa_required": {
+        "mfaRequired": {
           "type": "boolean"
         },
-        "mfa_token": {
+        "mfaToken": {
           "type": "string"
         }
       },

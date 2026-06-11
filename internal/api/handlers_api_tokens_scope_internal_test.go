@@ -85,7 +85,7 @@ func TestWriteGate_ViewerScopedAdminTokenBlocksWrites(t *testing.T) {
 func TestAPITokenRepo_ScopeRoundtrips(t *testing.T) {
 	t.Parallel()
 	s, _ := usersTestSetup(t)
-	db := s.services.Database.DB
+	db := s.dbConn
 	repo := database.NewAPITokenRepository(db)
 
 	// Seed two tokens for "admin": one viewer-scoped, one inherits.
@@ -138,7 +138,7 @@ func TestAPITokenRepo_ScopeRoundtrips(t *testing.T) {
 // service container so the mint/list/revoke handlers can run.
 func attachAPITokenRepo(t *testing.T, s *Server) {
 	t.Helper()
-	s.services.Auth.APITokens = database.NewAPITokenRepository(s.services.Database.DB)
+	s.apiTokens = database.NewAPITokenRepository(s.dbConn)
 }
 
 // TestMintAPIToken_RejectsScopeAboveOwner proves the mint handler

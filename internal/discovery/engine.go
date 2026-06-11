@@ -47,14 +47,19 @@ type Engine struct {
 	registry *DeviceRegistry
 	eventBus *EventBus
 
-	// Discovery sources (collectors)
-	wiredCollector     *DeviceDiscovery
-	wifiCollector      *WiFiBridge
-	bluetoothCollector *BluetoothScanner
+	// Discovery sources (collectors). Held behind the enumerate stage's collector
+	// ports (ADR-0018, Phase 6) so the concrete collectors can relocate to
+	// internal/discovery/enumerate; the composition root injects them.
+	wiredCollector     WiredCollectorPort
+	wifiCollector      WiFiCollectorPort
+	bluetoothCollector BluetoothCollectorPort
 
-	// Enrichment components
+	// Enrichment components. portScanner is the fingerprint stage's PortScannerPort
+	// (ADR-0018, Phase 6): the concrete scanner lives in internal/discovery/fingerprint
+	// and is injected by the composition root. snmpCollector + profiler stay concrete
+	// kernel types — the kernel orchestrator (Service) co-owns the profiler lifecycle.
 	snmpCollector *SNMPCollector
-	portScanner   *PortScanner
+	portScanner   PortScannerPort
 	profiler      *DeviceProfiler
 
 	// Assessment stage (ADR-0018): the vuln Assessor port, injected by the
@@ -248,22 +253,22 @@ func NewEngine(config *EngineConfig) *Engine {
 	}
 }
 
-// SetWiredCollector sets the wired discovery collector.
-func (e *Engine) SetWiredCollector(collector *DeviceDiscovery) {
+// SetWiredCollector sets the wired discovery collector (WiredCollectorPort).
+func (e *Engine) SetWiredCollector(collector WiredCollectorPort) {
 	e.mu.Lock()
 	defer e.mu.Unlock()
 	e.wiredCollector = collector
 }
 
-// SetWiFiCollector sets the WiFi discovery collector.
-func (e *Engine) SetWiFiCollector(collector *WiFiBridge) {
+// SetWiFiCollector sets the WiFi discovery collector (WiFiCollectorPort).
+func (e *Engine) SetWiFiCollector(collector WiFiCollectorPort) {
 	e.mu.Lock()
 	defer e.mu.Unlock()
 	e.wifiCollector = collector
 }
 
-// SetBluetoothCollector sets the Bluetooth discovery collector.
-func (e *Engine) SetBluetoothCollector(collector *BluetoothScanner) {
+// SetBluetoothCollector sets the Bluetooth discovery collector (BluetoothCollectorPort).
+func (e *Engine) SetBluetoothCollector(collector BluetoothCollectorPort) {
 	e.mu.Lock()
 	defer e.mu.Unlock()
 	e.bluetoothCollector = collector
@@ -276,8 +281,8 @@ func (e *Engine) SetSNMPCollector(collector *SNMPCollector) {
 	e.snmpCollector = collector
 }
 
-// SetPortScanner sets the port scanner.
-func (e *Engine) SetPortScanner(scanner *PortScanner) {
+// SetPortScanner sets the port scanner (the fingerprint stage's PortScannerPort).
+func (e *Engine) SetPortScanner(scanner PortScannerPort) {
 	e.mu.Lock()
 	defer e.mu.Unlock()
 	e.portScanner = scanner

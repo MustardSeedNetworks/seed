@@ -416,25 +416,10 @@
     "viewDetails": "View Details"
   },
   "slaDashboard": {
-    "title": "SLA Dashboard",
-    "subtitle": "Service health and compliance",
-    "compliance": "SLA Compliance",
-    "endpointsMet": "endpoints meeting SLA",
-    "endpointsMissed": "endpoints missing SLA",
-    "healthScores": "Health Scores",
-    "healthy": "Healthy",
-    "degraded": "Degraded",
-    "critical": "Critical",
-    "total": "Total",
-    "activeAlerts": "Active Alerts",
-    "criticalLabel": "critical",
+    "title": "Active Anomalies",
+    "subtitle": "Detected by active monitoring",
     "anomalies": "Anomalies",
-    "detected": "detected",
-    "period": {
-      "daily": "Daily",
-      "weekly": "Weekly",
-      "monthly": "Monthly"
-    }
+    "detected": "detected"
   },
   "guestAudit": {
     "title": "Guest Network Audit",

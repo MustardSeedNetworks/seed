@@ -70,18 +70,6 @@ func (s *Server) handleDiscovery(w http.ResponseWriter, r *http.Request) {
 	logger := logging.FromContext(r.Context())
 	localizer := i18n.FromRequest(r)
 
-	if r.Method != http.MethodGet {
-		sendErrorResponseWithDetails(
-			w,
-			logger,
-			http.StatusMethodNotAllowed,
-			ErrCodeMethodNotAllowed,
-			localizer.T("errors.api.methodNotAllowed"),
-			"",
-		) // fixes #694
-		return
-	}
-
 	if s.discoveryService() == nil {
 		sendErrorResponseWithDetails(
 			w,
@@ -206,19 +194,6 @@ func (s *Server) setDiscoveryOptions(w http.ResponseWriter, r *http.Request) {
 // handleDiscoveryServiceStatus returns the current status of the discovery service.
 func (s *Server) handleDiscoveryServiceStatus(w http.ResponseWriter, r *http.Request) {
 	logger := logging.FromContext(r.Context())
-	localizer := i18n.FromRequest(r)
-
-	if r.Method != http.MethodGet {
-		sendErrorResponseWithDetails(
-			w,
-			logger,
-			http.StatusMethodNotAllowed,
-			ErrCodeMethodNotAllowed,
-			localizer.T("errors.api.methodNotAllowed"),
-			"",
-		) // fixes #694
-		return
-	}
 
 	status := s.discoveryService().GetStatus()
 	sendJSONResponse(w, logger, http.StatusOK, status)

@@ -35,7 +35,7 @@
           "type": "string"
         },
         "config": true,
-        "is_default": {
+        "isDefault": {
           "type": "boolean"
         }
       },
@@ -45,7 +45,7 @@
         "name",
         "description",
         "config",
-        "is_default"
+        "isDefault"
       ]
     }
   },

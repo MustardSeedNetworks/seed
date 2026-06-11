@@ -227,7 +227,7 @@ func (r *DeviceRegistry) mergeNetworkIdentifiers(
 
 	// Add IPv6 addresses (merge, don't replace)
 	for _, addr := range incoming.IPv6Addresses {
-		if !containsIPv6(existing.IPv6Addresses, addr) {
+		if !slices.Contains(existing.IPv6Addresses, addr) {
 			existing.IPv6Addresses = append(existing.IPv6Addresses, addr)
 			changes["ipv6Addresses"] = existing.IPv6Addresses
 		}
@@ -254,7 +254,7 @@ func (r *DeviceRegistry) mergeDeviceMetadata(
 
 	// Merge discovery methods
 	for _, method := range incoming.DiscoveryMethod {
-		if !containsMethod(existing.DiscoveryMethod, method) {
+		if !slices.Contains(existing.DiscoveryMethod, method) {
 			existing.DiscoveryMethod = append(existing.DiscoveryMethod, method)
 			changes["discoveryMethod"] = existing.DiscoveryMethod
 		}

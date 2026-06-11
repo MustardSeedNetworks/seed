@@ -26,19 +26,19 @@
         "description": {
           "type": "string"
         },
-        "device_id": {
+        "deviceId": {
           "type": "string"
         },
-        "device_mac": {
+        "deviceMac": {
           "type": "string"
         },
-        "interface_name": {
+        "interfaceName": {
           "type": "string"
         },
-        "ip_address": {
+        "ipAddress": {
           "type": "string"
         },
-        "affected_macs": {
+        "affectedMacs": {
           "type": "string"
         },
         "ssid": {
@@ -50,28 +50,28 @@
         "channel": {
           "type": "integer"
         },
-        "current_value": {
+        "currentValue": {
           "type": "number"
         },
-        "threshold_value": {
+        "thresholdValue": {
           "type": "number"
         },
         "unit": {
           "type": "string"
         },
-        "first_seen": {
+        "firstSeen": {
           "type": "string",
           "format": "date-time"
         },
-        "last_seen": {
+        "lastSeen": {
           "type": "string",
           "format": "date-time"
         },
-        "resolved_at": {
+        "resolvedAt": {
           "type": "string",
           "format": "date-time"
         },
-        "occurrence_count": {
+        "occurrenceCount": {
           "type": "integer"
         },
         "metadata": {
@@ -88,9 +88,9 @@
         "status",
         "title",
         "description",
-        "first_seen",
-        "last_seen",
-        "occurrence_count"
+        "firstSeen",
+        "lastSeen",
+        "occurrenceCount"
       ]
     },
     "NetworkProblemsResponse": {
@@ -118,28 +118,28 @@
     },
     "ProblemSummary": {
       "properties": {
-        "total_active": {
+        "totalActive": {
           "type": "integer"
         },
-        "by_severity": {
+        "bySeverity": {
           "additionalProperties": {
             "type": "integer"
           },
           "type": "object"
         },
-        "by_category": {
+        "byCategory": {
           "additionalProperties": {
             "type": "integer"
           },
           "type": "object"
         },
-        "recent_count": {
+        "recentCount": {
           "type": "integer"
         },
-        "resolved_today": {
+        "resolvedToday": {
           "type": "integer"
         },
-        "last_scan_time": {
+        "lastScanTime": {
           "type": "string",
           "format": "date-time"
         }
@@ -147,12 +147,12 @@
       "additionalProperties": false,
       "type": "object",
       "required": [
-        "total_active",
-        "by_severity",
-        "by_category",
-        "recent_count",
-        "resolved_today",
-        "last_scan_time"
+        "totalActive",
+        "bySeverity",
+        "byCategory",
+        "recentCount",
+        "resolvedToday",
+        "lastScanTime"
       ]
     }
   },

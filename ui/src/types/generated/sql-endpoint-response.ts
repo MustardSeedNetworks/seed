@@ -13,5 +13,4 @@ export interface SQLEndpointResponse {
   database: string;
   sslMode?: string;
   enabled: boolean;
-  criticality: number;
 }

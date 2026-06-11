@@ -194,27 +194,46 @@ orchestrates the ports. Per-stage subpackage relocation + depguard follow.
       port; `internal/api` wires `vuln.NewStage(scanner, engine.Registry(),
       engine.EventBus())`. depguard rule `discovery-stage-direction` bans the kernel
       from importing the stage. Golden byte-identical, schema unchanged.
-- [ ] 2. `fingerprint`/enrich stage → `discovery/fingerprint` + depguard.
-      **DESIGN (scoped 2026-06-07): this is an ATOMIC ~9-file move, not per-component.**
-      `DeviceProfiler` embeds `*SNMPCollector` + `*PortScanner` (profiler.go), so the
-      three enrich components are mutually coupled and relocate together: `snmp_collector`,
-      `portscan`, `tcpprobe(_windows)`, `profiler{,_config,_scan,_resolve,_infer,_accessors}`.
-      **Component-port approach (keeps GetCapabilities byte-identical):** define three
-      seams in the kernel — `SNMPCollectorPort{Collect}`, `PortScannerPort{QuickScan}`,
-      `ProfilerPort{QueueProfile,GetProfile}` — change the kernel `enrichStage` + `Engine`
-      fields (and the `Set*` injectors) to those interface types; the concrete producers
-      move to `fingerprint` and implement them. `Engine.GetCapabilities` keeps its
-      per-component nil-checks on the interface fields → identical wire. **Result/config
-      types STAY in the kernel (split out, then alias in fingerprint):** `SNMPFullData`
-      + nested (snmp_collector.go), `DeviceProfile`/`OpenPort`/`OSFingerprint`/
-      `ServiceVersion`/`TLSInfo`/`ResolvedNames` (profiler_types.go — already mostly a
-      types file), `PortScanResult`/`PortInfo`/`ServiceInfo` (portscan.go),
-      `PortScanIntensity`/`ScanTimingProfile` (scan_config.go — used by kernel
-      `ScanOptions`). `Fingerprinter` + `Tracer` are NOT in the enrich path — leave them
-      in the kernel for a later slice. api re-points `New{DeviceProfiler,PortScanner,
-      TCPProber}`/`DefaultProfilerConfig`/`DeviceProfiler`/`PortScanner` → `fingerprint.*`;
-      keeps `discovery.{DeviceProfile,PortInfo,PortScanResult,PortScanIntensity,
-      ScanTimingProfile}` (result types). SNMP is currently dormant (never wired in api).
+- [x] 2. `fingerprint` stage → `discovery/fingerprint` + depguard. **DONE — scoped to
+      the port-scan leaf cluster (PortScanner + TCPProber), NOT the whole enrich cluster.**
+
+      **Why the original "atomic ~9-file move" plan was wrong (discovered during
+      implementation, 2026-06-08):** the plan rested on *"`DeviceProfiler` embeds
+      `*SNMPCollector` + `*PortScanner`, so the three enrich components are mutually
+      coupled."* The first half is false in the code: `DeviceProfiler` embeds only
+      `*SNMPCollector` and does its own `net.Dial` port scanning — it holds **no**
+      `PortScanner`. So the enrich code is two *independent* clusters:
+      (A) `SNMPCollector` ← `DeviceProfiler`, and (B) `TCPProber` ← `PortScanner`.
+
+      **Why cluster A (profiler/SNMP) STAYS kernel-resident, by design:** the kernel
+      orchestrator `discovery.Service` co-owns the `DeviceProfiler` lifecycle — it
+      constructs it and drives ~11 methods (`Start/Stop/QueueProfile/GetProfile/
+      IsProfiling/GetSNMPData/GetResolvedNames/GetProfilingStatus/Clear{Profiles,
+      SNMPData,ResolvedNames}`), and the Engine adds `ScanConfigSnapshot/UpdateScanConfig`.
+      `Service` cannot move to a stage subpackage (it reaches into `DeviceDiscovery`'s
+      unexported `protoManager`). Moving `DeviceProfiler` out while `Service` stays
+      would force a ~13-method union "ProfilerPort" that trips `interfacebloat` and is a
+      1:1 mirror of the struct — a header-interface anti-pattern that hides nothing and
+      adds only indirection. The profiler is genuinely orchestrator-coupled, not a leaf;
+      forcing it behind a port fights that reality. It stays in the kernel until/unless
+      a deliberate redesign gives `Service` a narrow profiler contract.
+
+      **What moved (cluster B — a clean leaf with a narrow seam):** `portscan.go`,
+      `tcpprobe.go`, `tcpprobe_windows.go` (+ their tests) → `internal/discovery/fingerprint`.
+      The kernel gains one narrow port `PortScannerPort{QuickScan}` (stages.go); the
+      `enrichStage`/`Engine` `portScanner` field + `SetPortScanner` take that interface;
+      the composition root injects the concrete `fingerprint.PortScanner`.
+      `Engine.GetCapabilities` keeps its nil-check on the interface field → identical wire.
+      **Result types STAY in the kernel (`portscan_types.go`), aliased in fingerprint:**
+      `PortState` (+ `PortOpen/PortClosed/PortFiltered`), `ServiceInfo`, `PortScanResult`
+      (they sit in the `QuickScan` signature). `TCPProbeResult` moved to fingerprint (no
+      kernel port uses it). Two unexported strings (`serviceUnknown`, `errNoIPv4ForTarget`)
+      stay in the kernel for staying callers (the classifier / traceroute) with private
+      copies in fingerprint. api re-points `New{PortScanner,TCPProber}` → `fingerprint.*`
+      and keeps `discovery.PortScanResult` (kernel result type). depguard
+      `discovery-stage-direction` extended to ban the kernel from importing fingerprint.
+      Golden byte-identical, schema unchanged. `Fingerprinter` + `Tracer` were never in
+      the enrich path and remain kernel-resident.
 - [ ] 3. `resolve` stage → `discovery/resolve` + depguard
 - [ ] 4. `enumerate` stage → `discovery/enumerate` + depguard
 - [ ] 5. direction-lock depguard + cleanup + §16 doc

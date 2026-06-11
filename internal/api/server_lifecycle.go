@@ -39,15 +39,15 @@ import (
 //
 // V1.0 NMS expansion — Stage A3.5d.
 func (s *Server) startBackgroundEngines() {
-	if s.services.Engines == nil {
+	if s.engines == nil {
 		return
 	}
-	if err := s.services.Engines.Start(context.Background()); err != nil {
+	if err := s.engines.Start(context.Background()); err != nil {
 		logging.GetLogger().Warn("engine registry start failed", "error", err)
 		return
 	}
 	logging.GetLogger().Info("engine registry started",
-		"engines", engineNames(s.services.Engines.Engines()))
+		"engines", engineNames(s.engines.Engines()))
 }
 
 // engineNames extracts Name() from each engine for structured-log
@@ -77,7 +77,7 @@ func (s *Server) Handler() http.Handler {
 					bodyLimitMiddleware(
 						corsMiddleware(
 							i18n.Middleware()(
-								apiTokenMiddleware(s.services.Auth.APITokens,
+								apiTokenMiddleware(s.apiTokens,
 									s.authManager().Middleware(
 										s.csrfManager().CSRFMiddleware(s.mux))))))))))
 }
@@ -112,7 +112,7 @@ func (s *Server) Start() error {
 	// concurrently so the runtime can observe state changes across N
 	// interfaces. A single monitor (Default) is the common Free / Starter
 	// case — the pool gracefully handles that with one child.
-	if pool := s.services.Network.LinkMonitorPool; pool != nil {
+	if pool := s.linkMonPool; pool != nil {
 		if err := pool.Start(); err != nil {
 			logging.GetLogger().Warn("Link monitor pool: partial start", "error", err)
 		} else {

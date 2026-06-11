@@ -32,7 +32,7 @@ import (
 	"context"
 	"time"
 
-	"github.com/MustardSeedNetworks/seed/internal/discovery"
+	"github.com/MustardSeedNetworks/seed/internal/discovery/enumerate"
 	"github.com/MustardSeedNetworks/seed/internal/logging"
 )
 
@@ -339,7 +339,7 @@ func (s *Server) collectDiscoveryData() map[string]any {
 
 	// Also get discovered devices count and status from pipeline/service
 	var deviceCount int
-	var serviceStatus *discovery.ServiceStatus
+	var serviceStatus *enumerate.ServiceStatus
 	if s.discoveryService() != nil {
 		deviceCount = len(s.discoveryService().GetDevices())
 		serviceStatus = s.discoveryService().GetStatus()
@@ -371,7 +371,7 @@ func (s *Server) collectDiscoveryData() map[string]any {
 }
 
 // addServiceStatusToResult adds discovery service status fields to the result map.
-func addServiceStatusToResult(result map[string]any, status *discovery.ServiceStatus) {
+func addServiceStatusToResult(result map[string]any, status *enumerate.ServiceStatus) {
 	if status == nil {
 		return
 	}

@@ -9,15 +9,16 @@ import (
 	"strconv"
 	"testing"
 
+	"github.com/MustardSeedNetworks/seed/internal/app"
 	"github.com/MustardSeedNetworks/seed/internal/database"
 )
 
 func newAlertRulesTestServer(t *testing.T) *Server {
 	t.Helper()
 	db := newTestDB(t)
-	s := &Server{services: NewServiceContainer()}
-	s.services.Database = &DatabaseServices{DB: db}
-	s.initAlertsUseCase()
+	s := &Server{}
+	s.dbConn = db
+	s.alertRules = app.NewAlertRules(s.db)
 	return s
 }
 

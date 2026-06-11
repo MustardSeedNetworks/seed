@@ -33,18 +33,6 @@ func (s *Server) handleVulnerabilityScan(w http.ResponseWriter, r *http.Request)
 	logger := logging.FromContext(r.Context())
 	localizer := i18n.FromRequest(r)
 
-	if r.Method != http.MethodPost {
-		sendErrorResponseWithDetails(
-			w,
-			logger,
-			http.StatusMethodNotAllowed,
-			ErrCodeMethodNotAllowed,
-			localizer.T("errors.api.methodNotAllowed"),
-			"",
-		) // fixes #694
-		return
-	}
-
 	if s.vulnScanner() == nil {
 		sendErrorResponseWithDetails(
 			w,
@@ -126,19 +114,6 @@ func (s *Server) handleVulnerabilityScan(w http.ResponseWriter, r *http.Request)
 // GET /api/vulnerabilities/status (fixes #703).
 func (s *Server) handleVulnerabilityStatus(w http.ResponseWriter, r *http.Request) {
 	logger := logging.FromContext(r.Context())
-	localizer := i18n.FromRequest(r)
-
-	if r.Method != http.MethodGet {
-		sendErrorResponseWithDetails(
-			w,
-			logger,
-			http.StatusMethodNotAllowed,
-			ErrCodeMethodNotAllowed,
-			localizer.T("errors.api.methodNotAllowed"),
-			"",
-		) // fixes #694
-		return
-	}
 
 	if s.vulnScanner() == nil {
 		sendJSONResponse(w, logger, http.StatusServiceUnavailable, map[string]any{
@@ -161,19 +136,6 @@ func (s *Server) handleVulnerabilityStatus(w http.ResponseWriter, r *http.Reques
 // GET /api/vulnerabilities/results?severity=high (optional filter) (fixes #703).
 func (s *Server) handleVulnerabilityResults(w http.ResponseWriter, r *http.Request) {
 	logger := logging.FromContext(r.Context())
-	localizer := i18n.FromRequest(r)
-
-	if r.Method != http.MethodGet {
-		sendErrorResponseWithDetails(
-			w,
-			logger,
-			http.StatusMethodNotAllowed,
-			ErrCodeMethodNotAllowed,
-			localizer.T("errors.api.methodNotAllowed"),
-			"",
-		) // fixes #694
-		return
-	}
 
 	if s.vulnScanner() == nil {
 		sendJSONResponse(w, logger, http.StatusServiceUnavailable, map[string]string{
@@ -209,18 +171,6 @@ func (s *Server) handleVulnerabilityResults(w http.ResponseWriter, r *http.Reque
 func (s *Server) handleDeviceVulnerabilities(w http.ResponseWriter, r *http.Request) {
 	logger := logging.FromContext(r.Context())
 	localizer := i18n.FromRequest(r)
-
-	if r.Method != http.MethodGet {
-		sendErrorResponseWithDetails(
-			w,
-			logger,
-			http.StatusMethodNotAllowed,
-			ErrCodeMethodNotAllowed,
-			localizer.T("errors.api.methodNotAllowed"),
-			"",
-		) // fixes #694
-		return
-	}
 
 	if s.vulnScanner() == nil {
 		sendErrorResponseWithDetails(
@@ -349,18 +299,6 @@ type NVDAPIKeyValidateResponse struct {
 func (s *Server) handleNVDAPIKeyValidate(w http.ResponseWriter, r *http.Request) {
 	logger := logging.FromContext(r.Context())
 	localizer := i18n.FromRequest(r)
-
-	if r.Method != http.MethodPost {
-		sendErrorResponseWithDetails(
-			w,
-			logger,
-			http.StatusMethodNotAllowed,
-			ErrCodeMethodNotAllowed,
-			localizer.T("errors.api.methodNotAllowed"),
-			"",
-		)
-		return
-	}
 
 	var req NVDAPIKeyValidateRequest
 	if !decodeJSONStrictLocalized(w, r, &req, MaxBodySizeJSON,

@@ -33,19 +33,21 @@ describe('WiFiAnomalyStream', () => {
     expect(screen.getByText('00:11:22:33:44:55')).toBeInTheDocument();
   });
 
-  it('orders critical before warning before info', () => {
+  it('orders critical before error before warning before info', () => {
     render(
       <WiFiAnomalyStream
         anomalies={[
           anomaly({ defKey: 'a', severity: 'info', title: 'Info one' }),
           anomaly({ defKey: 'b', severity: 'critical', title: 'Critical one' }),
           anomaly({ defKey: 'c', severity: 'warning', title: 'Warning one' }),
+          anomaly({ defKey: 'd', severity: 'error', title: 'Error one' }),
         ]}
       />,
     );
     const titles = screen.getAllByTestId('wifi-anomaly-row').map((r) => r.textContent ?? '');
     expect(titles[0]).toContain('Critical one');
-    expect(titles[1]).toContain('Warning one');
-    expect(titles[2]).toContain('Info one');
+    expect(titles[1]).toContain('Error one');
+    expect(titles[2]).toContain('Warning one');
+    expect(titles[3]).toContain('Info one');
   });
 });

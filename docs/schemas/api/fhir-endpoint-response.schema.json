@@ -16,9 +16,6 @@
         },
         "enabled": {
           "type": "boolean"
-        },
-        "criticality": {
-          "type": "integer"
         }
       },
       "additionalProperties": false,
@@ -27,8 +24,7 @@
         "name",
         "baseUrl",
         "authType",
-        "enabled",
-        "criticality"
+        "enabled"
       ]
     }
   },

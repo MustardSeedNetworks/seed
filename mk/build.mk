@@ -67,9 +67,9 @@ frontend-deps: ## Install frontend dependencies (cached)
 		echo "Frontend dependencies up to date"; \
 	fi
 
-generate-types: frontend-deps ## Generate TypeScript types from JSON Schema
+generate-types: frontend-deps ## Generate TypeScript types from docs/schemas/api/*.json
 	@echo "🔧 Generating TypeScript types from schema..."
-	@./scripts/generate-types.sh
+	@cd ui && npm run gen-types
 	@echo "✅ TypeScript types generated"
 
 schema: ## Regenerate docs/schemas/api/*.json from internal/api Go DTOs

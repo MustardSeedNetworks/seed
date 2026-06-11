@@ -17,8 +17,8 @@ import (
 func newAlertsTestServer(t *testing.T) *Server {
 	t.Helper()
 	db := newTestDB(t)
-	s := &Server{services: NewServiceContainer()}
-	s.services.Database = &DatabaseServices{DB: db}
+	s := &Server{}
+	s.dbConn = db
 	return s
 }
 
@@ -82,16 +82,6 @@ func TestHandleAlerts_SeverityFilter(t *testing.T) {
 	}
 }
 
-func TestHandleAlerts_RejectsNonGET(t *testing.T) {
-	s := newAlertsTestServer(t)
-	req := httptest.NewRequest(http.MethodPost, APIVersionPrefix+"/alerts", http.NoBody)
-	w := httptest.NewRecorder()
-	s.handleAlerts(w, req)
-	if w.Code != http.StatusMethodNotAllowed {
-		t.Errorf("status = %d, want 405", w.Code)
-	}
-}
-
 func TestHandleAlerts_InvalidSinceReturns400(t *testing.T) {
 	s := newAlertsTestServer(t)
 	req := httptest.NewRequest(http.MethodGet, APIVersionPrefix+"/alerts?since=not-a-date", http.NoBody)
@@ -143,16 +133,6 @@ func TestHandleAlertAction_Resolve(t *testing.T) {
 	alert, _ := s.db().Alerts().Get(context.Background(), id)
 	if !alert.Resolved {
 		t.Error("alert should be resolved in DB")
-	}
-}
-
-func TestHandleAlertAction_RejectsNonPOST(t *testing.T) {
-	s := newAlertsTestServer(t)
-	req := httptest.NewRequest(http.MethodGet, APIVersionPrefix+"/alerts/1/acknowledge", http.NoBody)
-	w := httptest.NewRecorder()
-	s.handleAlertAction(w, req)
-	if w.Code != http.StatusMethodNotAllowed {
-		t.Errorf("status = %d, want 405", w.Code)
 	}
 }
 

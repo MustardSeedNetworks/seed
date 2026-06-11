@@ -305,9 +305,15 @@ linters:
           files:
             - "**/internal/discovery/**"
             - "!**/internal/discovery/vuln/**"
+            - "!**/internal/discovery/fingerprint/**"
+            - "!**/internal/discovery/enumerate/**"
           deny:
             - pkg: github.com/MustardSeedNetworks/seed/internal/discovery/vuln
               desc: "inward-only — a discovery stage (internal/discovery/vuln) imports the kernel, never the reverse; the Engine holds the Assessor port and the composition root injects the stage"
+            - pkg: github.com/MustardSeedNetworks/seed/internal/discovery/fingerprint
+              desc: "inward-only — a discovery stage (internal/discovery/fingerprint) imports the kernel, never the reverse; the Engine holds the PortScannerPort and the composition root injects the scanner"
+            - pkg: github.com/MustardSeedNetworks/seed/internal/discovery/enumerate
+              desc: "inward-only — a discovery stage (internal/discovery/enumerate) imports the kernel, never the reverse; the Engine holds the BluetoothCollectorPort and the composition root injects the collector"
 
     embeddedstructfieldcheck:
       # Checks that sync.Mutex and sync.RWMutex are not used as embedded fields.
@@ -576,11 +582,6 @@ linters:
       # The repeated strings (ftp/ssh/http/etc.) are protocol identifiers,
       # not refactorable constants.
       - path: 'internal/discovery/profiler_infer\.go'
-        linters: [ goconst ]
-      # oui.go is a MAC OUI -> vendor name lookup table. Apple/Dell appear
-      # 16-24 times because the IEEE assigns them many prefixes; extracting
-      # `const VendorApple` adds noise without improving safety.
-      - path: 'internal/discovery/oui\.go'
         linters: [ goconst ]
       # Shared JSON response field-name conventions across all api handlers
       # (status/message/error/interface/available/good). Project uses literal

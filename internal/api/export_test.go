@@ -8,6 +8,7 @@ import (
 
 	"github.com/MustardSeedNetworks/seed/internal/auth"
 	"github.com/MustardSeedNetworks/seed/internal/config"
+	"github.com/MustardSeedNetworks/seed/internal/engine"
 	"github.com/MustardSeedNetworks/seed/internal/i18n"
 	"github.com/MustardSeedNetworks/seed/internal/logging"
 )
@@ -65,29 +66,9 @@ func ExportGetTestStatus(latencyMs float64, warningMs, criticalMs int64) string 
 	return getTestStatus(latencyMs, warningMs, criticalMs)
 }
 
-// ExportGetTLSVersionString exposes getTLSVersionString for testing.
-func ExportGetTLSVersionString(tlsVersion uint16) string {
-	return getTLSVersionString(tlsVersion)
-}
-
-// ExportRunTCPTest exposes runTCPTest for testing.
-func ExportRunTCPTest(ctx context.Context, host string, port int) (float64, error) {
-	return runTCPTest(ctx, host, port)
-}
-
-// ExportRunExtendedPing exposes runExtendedPing for testing.
-func ExportRunExtendedPing(host string, count int) (*PingStats, error) {
-	return runExtendedPing(host, count)
-}
-
 // GetInterfaceFromRequest exports getInterfaceFromRequest for testing.
 func (s *Server) GetInterfaceFromRequest(r *http.Request) string {
 	return s.getInterfaceFromRequest(r)
-}
-
-// ExportNormalizeHTTPURL exposes normalizeHTTPURL for testing.
-func ExportNormalizeHTTPURL(rawURL string) (string, bool) {
-	return normalizeHTTPURL(rawURL)
 }
 
 // ExportValidateIperfClientRequest exposes validateIperfClientRequest for testing.
@@ -163,13 +144,14 @@ func (s *Server) SetConfigPath(path string) {
 	s.configPath = path
 }
 
-// InitServices initializes the ServiceContainer for testing.
+// InitServices initializes the minimal services for testing.
 // This should be called before using a bare &Server{} in tests.
 func (s *Server) InitServices() {
-	if s.services == nil {
-		s.services = NewServiceContainer()
-		// Initialize minimal services needed for most tests
-		s.services.Auth.TrustedProxies = NewTrustedProxies("")
+	if s.proxies == nil {
+		s.proxies = NewTrustedProxies("")
+	}
+	if s.engines == nil {
+		s.engines = engine.NewRegistry(nil)
 	}
 }
 
@@ -240,7 +222,7 @@ func (s *Server) HandleRecoveryInstructions(w http.ResponseWriter, r *http.Reque
 
 // SetRecoveryManager sets the server's recovery manager for testing.
 func (s *Server) SetRecoveryManager(rm *auth.RecoveryTokenManager) {
-	s.services.Auth.Recovery = rm
+	s.recovery = rm
 }
 
 // HandleSettings exports handleSettings for testing.
@@ -421,7 +403,7 @@ type ExportEngineDiscoveryResponse = EngineDiscoveryResponse
 
 // GetEngine returns the discovery engine for testing.
 func (s *Server) GetEngine() any {
-	return s.services.Discovery.Engine
+	return s.discoveryEng
 }
 
 // ExportBindWithFallback exposes bindWithFallback for testing.

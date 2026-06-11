@@ -13,6 +13,7 @@ package visibility
 
 import (
 	"context"
+	"log/slog"
 	"sync"
 	"time"
 
@@ -51,6 +52,11 @@ type Service struct {
 	air      *airspace.Airspace
 	engine   *anomaly.Engine
 	detector *wifianomaly.Detector
+	// coordinator persists the engine's stream to the unified anomaly store
+	// (ADR-0021). Nil when no store is configured — the engine then stays purely
+	// in-memory (the prior behavior). When set, Evaluate writes through it.
+	coordinator *anomaly.Coordinator
+	logger      *slog.Logger
 
 	evalInterval time.Duration
 	retention    time.Duration
@@ -70,6 +76,8 @@ type config struct {
 	retention    time.Duration
 	detector     *wifianomaly.Detector
 	capabilities []string
+	store        anomaly.Store
+	logger       *slog.Logger
 }
 
 // WithEvalInterval sets the background evaluation cadence.
@@ -105,6 +113,24 @@ func WithCapabilities(caps ...string) Option {
 	return func(c *config) { c.capabilities = append(c.capabilities, caps...) }
 }
 
+// WithStore persists the anomaly stream to the unified store (ADR-0021): the
+// service writes detections through a Coordinator (write-through on a material
+// change, batched on recurrence, resolve-on-prune) and reloads active instances
+// on Start. A nil store leaves the engine purely in-memory.
+func WithStore(store anomaly.Store) Option {
+	return func(c *config) { c.store = store }
+}
+
+// WithLogger sets the logger for persistence diagnostics. Defaults to
+// [slog.Default].
+func WithLogger(l *slog.Logger) Option {
+	return func(c *config) {
+		if l != nil {
+			c.logger = l
+		}
+	}
+}
+
 // New builds a visibility service. It errors only if the Wi-Fi anomaly catalog
 // is malformed — a programming error surfaced at startup, never at runtime.
 func New(opts ...Option) (*Service, error) {
@@ -120,10 +146,21 @@ func New(opts ...Option) (*Service, error) {
 	if det == nil {
 		det = wifianomaly.NewDetector()
 	}
+	logger := cfg.logger
+	if logger == nil {
+		logger = slog.Default()
+	}
+	engine := anomaly.NewEngine(cat, anomaly.WithCapabilities(cfg.capabilities...))
+	var coord *anomaly.Coordinator
+	if cfg.store != nil {
+		coord = anomaly.NewCoordinator(engine, cfg.store, anomaly.SourceWiFi)
+	}
 	return &Service{
 		air:          airspace.New(),
-		engine:       anomaly.NewEngine(cat, anomaly.WithCapabilities(cfg.capabilities...)),
+		engine:       engine,
 		detector:     det,
+		coordinator:  coord,
+		logger:       logger,
 		evalInterval: cfg.evalInterval,
 		retention:    cfg.retention,
 	}, nil
@@ -136,21 +173,46 @@ func (s *Service) Ingest(f *dot11.Frame, at time.Time) {
 }
 
 // Evaluate ages out stale entities, runs the Wi-Fi rules over the current
-// airspace, and folds the resulting detections into the persistent engine
-// (which coalesces, escalates on recurrence, and ages out resolved anomalies).
-func (s *Service) Evaluate(at time.Time) {
+// airspace, and folds the resulting detections into the engine (which coalesces,
+// escalates on recurrence, and ages out resolved anomalies). When a store is
+// configured it persists through the Coordinator: write-through on a material
+// change, a single batched Flush for the tick's recurrences, and resolve-on-prune.
+func (s *Service) Evaluate(ctx context.Context, at time.Time) {
 	cutoff := at.Add(-s.retention)
 	s.air.Prune(cutoff)
-	for _, d := range s.detector.Detect(s.air.Tree()) {
-		// Observe only errors on an uncatalogued def or invalid severity; the
-		// detector emits neither, so the error is structurally impossible here.
-		_ = s.engine.Observe(d, at)
+
+	if s.coordinator != nil {
+		s.evaluatePersistent(ctx, at, cutoff)
+	} else {
+		for _, d := range s.detector.Detect(s.air.Tree()) {
+			// Observe only errors on an uncatalogued def or invalid severity; the
+			// detector emits neither, so the error is structurally impossible.
+			_ = s.engine.Observe(d, at)
+		}
+		s.engine.Prune(cutoff)
 	}
-	s.engine.Prune(cutoff)
 
 	s.mu.Lock()
 	s.lastEvaluated = at
 	s.mu.Unlock()
+}
+
+// evaluatePersistent runs the detection + persistence path through the
+// Coordinator. Store errors are logged, not fatal — the in-memory engine stays
+// authoritative and the next tick re-persists.
+func (s *Service) evaluatePersistent(ctx context.Context, at, cutoff time.Time) {
+	for _, d := range s.detector.Detect(s.air.Tree()) {
+		if err := s.coordinator.Observe(ctx, d, at); err != nil {
+			s.logger.WarnContext(ctx, "anomaly persist (observe) failed",
+				"defKey", d.DefKey, "error", err)
+		}
+	}
+	if err := s.coordinator.Flush(ctx); err != nil {
+		s.logger.WarnContext(ctx, "anomaly persist (flush) failed", "error", err)
+	}
+	if _, err := s.coordinator.Prune(ctx, cutoff); err != nil {
+		s.logger.WarnContext(ctx, "anomaly persist (prune) failed", "error", err)
+	}
 }
 
 // Tree returns the current cross-referenced SSID → AP → BSSID → client view.
@@ -214,6 +276,18 @@ func (s *Service) Start(ctx context.Context) error {
 	s.cancel = cancel
 	s.mu.Unlock()
 
+	// Load-on-start: repopulate the engine from the unified store so a restart
+	// continues coalescing onto persisted instances (ADR-0021) rather than
+	// re-detecting them as new. Best-effort — a store error degrades to a
+	// cold-start, not a failed Start.
+	if s.coordinator != nil {
+		if n, err := s.coordinator.Load(ctx); err != nil {
+			s.logger.WarnContext(ctx, "anomaly load-on-start failed", "error", err)
+		} else if n > 0 {
+			s.logger.InfoContext(ctx, "restored persisted anomalies", "count", n)
+		}
+	}
+
 	s.wg.Add(1)
 	go s.loop(loopCtx)
 	return nil
@@ -228,7 +302,7 @@ func (s *Service) loop(ctx context.Context) {
 		case <-ctx.Done():
 			return
 		case <-ticker.C:
-			s.Evaluate(time.Now())
+			s.Evaluate(ctx, time.Now())
 		}
 	}
 }

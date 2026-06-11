@@ -116,18 +116,6 @@ func (c *surveyHandlerContext) sendInternalError(msgKey string) {
 	)
 }
 
-// sendMethodNotAllowed sends a method not allowed error response.
-func (c *surveyHandlerContext) sendMethodNotAllowed() {
-	sendErrorResponseWithDetails(
-		c.w,
-		c.logger,
-		http.StatusMethodNotAllowed,
-		ErrCodeMethodNotAllowed,
-		c.localizer.T("errors.api.methodNotAllowed"),
-		"",
-	)
-}
-
 // sendRateLimitError sends a rate limit error response and returns true.
 func (c *surveyHandlerContext) sendRateLimitError() bool {
 	sendErrorResponseWithDetails(
@@ -467,7 +455,7 @@ func filterSamplePointsRoam(in []*survey.SamplePoint) []*survey.SamplePoint {
 // stripped. Centralizes the gate so getSurvey + listSurveys share the
 // same policy.
 func (s *Server) applyRoamFilterIfGated(in *survey.Survey) *survey.Survey {
-	mgr := s.services.Auth.License
+	mgr := s.licenseManager()
 	if mgr == nil || mgr.HasFeature("wifi_roam_analysis") {
 		return in
 	}

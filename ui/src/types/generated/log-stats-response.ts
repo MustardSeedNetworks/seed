@@ -6,16 +6,16 @@
  * docs/schemas/api/; the Go DTO source lives at internal/api/.
  */
 export interface LogStatsResponse {
-  total_count: number;
-  by_level: {
+  totalCount: number;
+  byLevel: {
     [k: string]: number;
   };
-  by_layer: {
+  byLayer: {
     [k: string]: number;
   };
-  by_component: {
+  byComponent: {
     [k: string]: number;
   };
-  errors_last_hour: number;
-  warnings_last_hour: number;
+  errorsLastHour: number;
+  warningsLastHour: number;
 }

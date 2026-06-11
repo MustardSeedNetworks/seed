@@ -28,18 +28,6 @@ func (s *Server) generateSurveyReport(w http.ResponseWriter, r *http.Request) {
 	logger := logging.FromContext(r.Context())
 	localizer := i18n.FromRequest(r)
 
-	if r.Method != http.MethodPost {
-		sendErrorResponseWithDetails(
-			w,
-			logger,
-			http.StatusMethodNotAllowed,
-			ErrCodeMethodNotAllowed,
-			localizer.T("errors.api.methodNotAllowed"),
-			"",
-		) // fixes #694
-		return
-	}
-
 	surveyID := r.URL.Query().Get("id")
 	if !isValidSurveyID(surveyID) {
 		sendErrorResponseWithDetails(

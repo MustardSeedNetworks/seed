@@ -33,7 +33,7 @@ type localCVEEntry struct {
 	ID          string   `json:"id"`
 	Description string   `json:"description"`
 	Severity    string   `json:"severity"`
-	CVSSScore   float64  `json:"cvss_score"`
+	CVSSScore   float64  `json:"cvssScore"`
 	Published   string   `json:"published"`
 	Modified    string   `json:"modified"`
 	References  []string `json:"references"`
@@ -46,7 +46,7 @@ type localCVEEntry struct {
 // localCVEDatabase represents the structure of the local CVE JSON file.
 type localCVEDatabase struct {
 	Version     string          `json:"version"`
-	LastUpdated string          `json:"last_updated"`
+	LastUpdated string          `json:"lastUpdated"`
 	CVEs        []localCVEEntry `json:"cves"`
 }
 

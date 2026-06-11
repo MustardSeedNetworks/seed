@@ -5,7 +5,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/MustardSeedNetworks/seed/internal/discovery"
+	"github.com/MustardSeedNetworks/seed/internal/discovery/enumerate"
 )
 
 // TesterPingCount returns the ping count for testing.
@@ -61,14 +61,14 @@ func (t *Tester) DetermineStatus(stats *PingStats) Status {
 }
 
 // TesterSetPinger sets the pinger for testing.
-func (t *Tester) TesterSetPinger(p *discovery.ICMPPinger) {
+func (t *Tester) TesterSetPinger(p *enumerate.ICMPPinger) {
 	t.mu.Lock()
 	defer t.mu.Unlock()
 	t.pinger = p
 }
 
 // TesterGetPinger gets the pinger for testing.
-func (t *Tester) TesterGetPinger() *discovery.ICMPPinger {
+func (t *Tester) TesterGetPinger() *enumerate.ICMPPinger {
 	t.mu.RLock()
 	defer t.mu.RUnlock()
 	return t.pinger

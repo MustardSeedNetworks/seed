@@ -97,7 +97,6 @@ export interface PingTarget {
   host: string;
   enabled: boolean;
   count?: number;
-  criticality?: number; // 1-10 scale for health scoring
 }
 
 export interface DnsServer {
@@ -112,7 +111,6 @@ export interface TcpPort {
   host: string;
   port: number;
   enabled: boolean;
-  criticality?: number; // 1-10 scale for health scoring
 }
 
 export interface UdpPort {
@@ -121,7 +119,6 @@ export interface UdpPort {
   host: string;
   port: number;
   enabled: boolean;
-  criticality?: number; // 1-10 scale for health scoring
 }
 
 export interface HttpEndpoint {
@@ -130,7 +127,6 @@ export interface HttpEndpoint {
   url: string;
   expectedStatus: number;
   enabled: boolean;
-  criticality?: number; // 1-10 scale for health scoring
 }
 
 // ============================================================================
@@ -143,7 +139,6 @@ export interface RtspEndpoint {
   name: string;
   url: string; // rtsp://host:554/path
   enabled: boolean;
-  criticality?: number;
 }
 
 /** DICOM medical imaging endpoint */
@@ -154,7 +149,6 @@ export interface DicomEndpoint {
   port: number; // Default: 104
   aeTitle: string; // Application Entity Title
   enabled: boolean;
-  criticality?: number;
 }
 
 /** SQL database endpoint */
@@ -167,7 +161,6 @@ export interface SqlEndpoint {
   database: string;
   username: string;
   enabled: boolean;
-  criticality?: number;
 }
 
 /** File share endpoint (SMB/NFS) */
@@ -178,7 +171,6 @@ export interface FileShareEndpoint {
   host: string;
   sharePath: string;
   enabled: boolean;
-  criticality?: number;
 }
 
 /** LDAP/Active Directory endpoint */
@@ -190,7 +182,6 @@ export interface LdapEndpoint {
   useTls: boolean;
   baseDn: string;
   enabled: boolean;
-  criticality?: number;
 }
 
 /** HL7 MLLP medical messaging endpoint */
@@ -204,7 +195,6 @@ export interface Hl7Endpoint {
   receivingApp: string;
   receivingFacility: string;
   enabled: boolean;
-  criticality?: number;
 }
 
 /** FHIR R4 healthcare API endpoint */
@@ -214,7 +204,6 @@ export interface FhirEndpoint {
   baseUrl: string;
   authType: 'none' | 'basic' | 'oauth2';
   enabled: boolean;
-  criticality?: number;
 }
 
 /** LTI/LMS education endpoint */
@@ -224,7 +213,6 @@ export interface LtiEndpoint {
   launchUrl: string;
   consumerKey: string;
   enabled: boolean;
-  criticality?: number;
 }
 
 /** OPC-UA industrial endpoint */
@@ -234,7 +222,6 @@ export interface OpcuaEndpoint {
   endpointUrl: string; // opc.tcp://host:4840
   securityMode: 'None' | 'Sign' | 'SignAndEncrypt';
   enabled: boolean;
-  criticality?: number;
 }
 
 /** Modbus TCP industrial endpoint */
@@ -246,31 +233,6 @@ export interface ModbusEndpoint {
   unitId: number;
   testRegister: number;
   enabled: boolean;
-  criticality?: number;
-}
-
-/** SLA configuration for an endpoint */
-export interface SlaConfig {
-  endpointName: string;
-  targetUptime: number; // Percentage (e.g., 99.9)
-  targetLatencyP95: number; // Milliseconds
-  reportingPeriod: 'daily' | 'weekly' | 'monthly';
-  enabled: boolean;
-}
-
-/** Alert configuration settings */
-export interface AlertConfig {
-  enabled: boolean;
-  consecutiveFailures: number; // Number of failures before alerting
-  cooldownMinutes: number; // Minutes between alerts for same endpoint
-  digestMode: boolean; // Batch alerts instead of immediate
-}
-
-/** Anomaly detection configuration */
-export interface AnomalyConfig {
-  enabled: boolean;
-  stdDevThreshold: number; // Number of standard deviations (default: 2)
-  maxSamples: number; // Rolling window size (default: 100)
 }
 
 export interface TestsSettings {
@@ -303,10 +265,6 @@ export interface TestsSettings {
   iperf: {
     autoRunOnLink: boolean;
   };
-  // SLA and health monitoring configuration
-  slaConfigs?: SlaConfig[];
-  alertConfig?: AlertConfig;
-  anomalyConfig?: AnomalyConfig;
 }
 
 // ============================================================================

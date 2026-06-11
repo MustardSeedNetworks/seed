@@ -17,7 +17,7 @@ import (
 	"strconv"
 	"strings"
 
-	alertsapp "github.com/MustardSeedNetworks/seed/internal/alerts/app"
+	"github.com/MustardSeedNetworks/seed/internal/alerts/rules"
 	"github.com/MustardSeedNetworks/seed/internal/logging"
 )
 
@@ -83,15 +83,15 @@ func (s *Server) listAlertRules(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	enabledOnly := r.URL.Query().Get("enabled_only") == "true"
-	rules, err := s.alertRules.List(r.Context(), enabledOnly)
+	ruleList, err := s.alertRules.List(r.Context(), enabledOnly)
 	if err != nil {
 		logger.ErrorContext(r.Context(), "list alert_rules failed", "error", err)
 		http.Error(w, "Failed to list rules", http.StatusInternalServerError)
 		return
 	}
 	writeJSON(w, r, map[string]any{
-		jsonKeyCount: len(rules),
-		"rules":      encodeAlertRules(rules),
+		jsonKeyCount: len(ruleList),
+		"rules":      encodeAlertRules(ruleList),
 	})
 }
 
@@ -103,7 +103,7 @@ func (s *Server) getAlertRule(w http.ResponseWriter, r *http.Request, id int64) 
 	}
 	rule, err := s.alertRules.Get(r.Context(), id)
 	if err != nil {
-		if errors.Is(err, alertsapp.ErrRuleNotFound) {
+		if errors.Is(err, rules.ErrNotFound) {
 			http.Error(w, "Rule not found", http.StatusNotFound)
 			return
 		}
@@ -127,7 +127,7 @@ func (s *Server) createAlertRule(w http.ResponseWriter, r *http.Request) {
 	}
 	rule, createErr := s.alertRules.Create(r.Context(), inputToRule(in))
 	if createErr != nil {
-		var ve *alertsapp.ValidationError
+		var ve *rules.ValidationError
 		if errors.As(createErr, &ve) {
 			http.Error(w, ve.Msg, http.StatusBadRequest)
 			return
@@ -155,7 +155,7 @@ func (s *Server) updateAlertRule(w http.ResponseWriter, r *http.Request, id int6
 	// JSON reflects updated_at (falling back to the written shape on re-read).
 	rule, updateErr := s.alertRules.Update(r.Context(), id, inputToRule(in))
 	if updateErr != nil {
-		if errors.Is(updateErr, alertsapp.ErrRuleNotFound) {
+		if errors.Is(updateErr, rules.ErrNotFound) {
 			http.Error(w, "Rule not found", http.StatusNotFound)
 			return
 		}
@@ -173,7 +173,7 @@ func (s *Server) deleteAlertRule(w http.ResponseWriter, r *http.Request, id int6
 		return
 	}
 	if err := s.alertRules.Delete(r.Context(), id); err != nil {
-		if errors.Is(err, alertsapp.ErrRuleNotFound) {
+		if errors.Is(err, rules.ErrNotFound) {
 			http.Error(w, "Rule not found", http.StatusNotFound)
 			return
 		}
@@ -205,8 +205,8 @@ func decodeAlertRuleInput(r *http.Request) (*alertRuleInput, error) {
 
 // inputToRule maps the wire input to the use-case model. The ThresholdCount
 // floor (>=1) is applied by the use-case, so it is passed through raw here.
-func inputToRule(in *alertRuleInput) alertsapp.Rule {
-	return alertsapp.Rule{
+func inputToRule(in *alertRuleInput) rules.Rule {
+	return rules.Rule{
 		Name:                 in.Name,
 		Enabled:              in.Enabled,
 		MatchKind:            in.MatchKind,
@@ -221,7 +221,7 @@ func inputToRule(in *alertRuleInput) alertsapp.Rule {
 	}
 }
 
-func encodeAlertRule(rule alertsapp.Rule) map[string]any {
+func encodeAlertRule(rule rules.Rule) map[string]any {
 	return map[string]any{
 		"id":                   rule.ID,
 		jsonKeyName:            rule.Name,
@@ -240,9 +240,9 @@ func encodeAlertRule(rule alertsapp.Rule) map[string]any {
 	}
 }
 
-func encodeAlertRules(rules []alertsapp.Rule) []map[string]any {
-	out := make([]map[string]any, 0, len(rules))
-	for _, r := range rules {
+func encodeAlertRules(ruleList []rules.Rule) []map[string]any {
+	out := make([]map[string]any, 0, len(ruleList))
+	for _, r := range ruleList {
 		out = append(out, encodeAlertRule(r))
 	}
 	return out

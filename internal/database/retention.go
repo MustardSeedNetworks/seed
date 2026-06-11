@@ -30,14 +30,10 @@ const (
 	// defaultGatewayResultDays is the default retention period for gateway results (1 month).
 	defaultGatewayResultDays = 30
 
-	// defaultHealthCheckRawDays is the default retention for raw health check data (7 days).
-	defaultHealthCheckRawDays = 7
-
-	// defaultHealthCheckHourlyDays is the default retention for hourly rollups (90 days).
-	defaultHealthCheckHourlyDays = 90
-
-	// defaultHealthCheckDailyDays is the default retention for daily rollups (365 days).
-	defaultHealthCheckDailyDays = 365
+	// defaultAnomalyResolvedDays is the default retention for resolved anomalies
+	// (90 days). Active anomalies are kept indefinitely (ADR-0021); only resolved
+	// instances age out, bounding table growth on appliances.
+	defaultAnomalyResolvedDays = 90
 )
 
 // SQL query fragment constants.
@@ -78,29 +74,22 @@ type RetentionPolicy struct {
 	// GatewayResultDays is how many days to keep gateway results (0 = forever)
 	GatewayResultDays int
 
-	// HealthCheckRawDays is how many days to keep raw health check data (0 = forever)
-	HealthCheckRawDays int
-
-	// HealthCheckHourlyDays is how many days to keep hourly rollups (0 = forever)
-	HealthCheckHourlyDays int
-
-	// HealthCheckDailyDays is how many days to keep daily rollups (0 = forever)
-	HealthCheckDailyDays int
+	// AnomalyResolvedDays is how many days to keep RESOLVED anomalies (0 =
+	// forever). Active anomalies are never aged out (ADR-0021).
+	AnomalyResolvedDays int
 }
 
 // DefaultRetentionPolicy returns the default retention policy.
 func DefaultRetentionPolicy() RetentionPolicy {
 	return RetentionPolicy{
-		MetricsDays:           defaultMetricsDays,
-		AlertsDays:            defaultAlertsDays,
-		InactiveDeviceDays:    defaultInactiveDeviceDays,
-		AuditLogDays:          defaultAuditLogDays,
-		SpeedTestDays:         defaultSpeedTestDays,
-		DNSResultDays:         defaultDNSResultDays,
-		GatewayResultDays:     defaultGatewayResultDays,
-		HealthCheckRawDays:    defaultHealthCheckRawDays,
-		HealthCheckHourlyDays: defaultHealthCheckHourlyDays,
-		HealthCheckDailyDays:  defaultHealthCheckDailyDays,
+		MetricsDays:         defaultMetricsDays,
+		AlertsDays:          defaultAlertsDays,
+		InactiveDeviceDays:  defaultInactiveDeviceDays,
+		AuditLogDays:        defaultAuditLogDays,
+		SpeedTestDays:       defaultSpeedTestDays,
+		DNSResultDays:       defaultDNSResultDays,
+		GatewayResultDays:   defaultGatewayResultDays,
+		AnomalyResolvedDays: defaultAnomalyResolvedDays,
 	}
 }
 
@@ -113,9 +102,7 @@ type CleanupResult struct {
 	SpeedTestsDeleted        int64
 	DNSResultsDeleted        int64
 	GatewayResultsDeleted    int64
-	HealthCheckRawDeleted    int64
-	HealthCheckHourlyDeleted int64
-	HealthCheckDailyDeleted  int64
+	AnomaliesResolvedDeleted int64
 	Duration                 time.Duration
 }
 
@@ -158,9 +145,7 @@ func (db *DB) RunCleanup(ctx context.Context, policy RetentionPolicy) (*CleanupR
 		{policy.SpeedTestDays, db.deleteSpeedTestsOlderThan, "speed tests"},
 		{policy.DNSResultDays, db.deleteDNSResultsOlderThan, "DNS results"},
 		{policy.GatewayResultDays, db.deleteGatewayResultsOlderThan, "gateway results"},
-		{policy.HealthCheckRawDays, db.cleanupHealthCheckRaw, "health check raw"},
-		{policy.HealthCheckHourlyDays, db.cleanupHealthCheckHourly, "health check hourly"},
-		{policy.HealthCheckDailyDays, db.cleanupHealthCheckDaily, "health check daily"},
+		{policy.AnomalyResolvedDays, db.cleanupResolvedAnomalies, "resolved anomalies"},
 	}
 
 	results := make([]int64, len(tasks))
@@ -179,9 +164,7 @@ func (db *DB) RunCleanup(ctx context.Context, policy RetentionPolicy) (*CleanupR
 	result.SpeedTestsDeleted = results[4]
 	result.DNSResultsDeleted = results[5]
 	result.GatewayResultsDeleted = results[6]
-	result.HealthCheckRawDeleted = results[7]
-	result.HealthCheckHourlyDeleted = results[8]
-	result.HealthCheckDailyDeleted = results[9]
+	result.AnomaliesResolvedDeleted = results[7]
 	result.Duration = time.Since(start)
 
 	return result, nil
@@ -305,19 +288,9 @@ func (db *DB) deleteGatewayResultsOlderThan(ctx context.Context, cutoff time.Tim
 	return rowsAffected, nil
 }
 
-// cleanupHealthCheckRaw wraps HealthChecks().DeleteOlderThan for raw health check data.
-func (db *DB) cleanupHealthCheckRaw(ctx context.Context, cutoff time.Time) (int64, error) {
-	return db.HealthChecks().DeleteOlderThan(ctx, cutoff)
-}
-
-// cleanupHealthCheckHourly wraps HealthChecks().DeleteHourlyRollupsOlderThan.
-func (db *DB) cleanupHealthCheckHourly(ctx context.Context, cutoff time.Time) (int64, error) {
-	return db.HealthChecks().DeleteHourlyRollupsOlderThan(ctx, cutoff)
-}
-
-// cleanupHealthCheckDaily wraps HealthChecks().DeleteDailyRollupsOlderThan.
-func (db *DB) cleanupHealthCheckDaily(ctx context.Context, cutoff time.Time) (int64, error) {
-	return db.HealthChecks().DeleteDailyRollupsOlderThan(ctx, cutoff)
+// cleanupResolvedAnomalies wraps Anomalies().DeleteResolvedOlderThan (ADR-0021).
+func (db *DB) cleanupResolvedAnomalies(ctx context.Context, cutoff time.Time) (int64, error) {
+	return db.Anomalies().DeleteResolvedOlderThan(ctx, cutoff)
 }
 
 // RecordAuditLog records an audit log entry.

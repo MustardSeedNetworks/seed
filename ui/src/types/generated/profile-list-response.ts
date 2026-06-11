@@ -14,7 +14,7 @@ export interface ProfileResponse {
   name: string;
   description: string;
   config: unknown;
-  is_default: boolean;
-  created_at: string;
-  updated_at: string;
+  isDefault: boolean;
+  createdAt: string;
+  updatedAt: string;
 }

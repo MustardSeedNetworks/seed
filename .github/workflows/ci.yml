@@ -849,18 +849,25 @@ jobs:
     runs-on: ubuntu-latest
     needs: [changes, backend, frontend]
     timeout-minutes: 15
-    # Advisory tier — "CI Complete" does NOT gate on this job. PR-2.5 added a
-    # second matrix axis (shard 1–4) on top of the browser axis so the full
-    # 186-test suite is split into 8 parallel jobs (4 shards × 2 browsers).
-    # Combined with playwright.config.ts workers=4, each shard sees ~46 tests
-    # at 4-way parallelism, dropping per-shard wall-clock from ~17 min to
-    # ~5 min today and ~2 min once PRs 1–5 land. timeout-minutes was 30 for
-    # the single-shard runs; now 15 is comfortable headroom. continue-on-error
-    # keeps a slow or failing leg from flipping the overall workflow run to a
-    # non-success conclusion (which would skip release-please's workflow_run
-    # success gate). The required, blocking E2E gate is the separate E2E
-    # Smoke job.
-    continue-on-error: true
+    # Blocking tier — "CI Complete" gates on this job (see ci-complete.needs).
+    # PR-2.5 added a second matrix axis (shard 1–4) on top of the browser axis
+    # so the full 186-test suite is split into 8 parallel jobs (4 shards × 2
+    # browsers). Combined with playwright.config.ts workers=4, each shard sees
+    # ~46 tests at 4-way parallelism, dropping per-shard wall-clock to ~3–5 min.
+    # timeout-minutes was 30 for the single-shard runs; 15 is comfortable
+    # headroom.
+    #
+    # continue-on-error was REMOVED once the suite went flake-free (the rotating
+    # post-login dashboard flake was fixed in #1588; full-suite main runs are 0
+    # hard failures / 0 flaky). The flag had masked real failures from the
+    # ci-complete aggregator, so the full E2E suite could not gate merge.
+    # Tradeoff now made explicit: a genuine E2E failure flips the CI workflow_run
+    # conclusion to failure, which defers release-please's workflow_run success
+    # gate (release-please.yml) to the next green CI run. That is the intended
+    # behavior — main being E2E-red should NOT cut a release — and release-please
+    # re-triggers on the next push. If a flake recurs, fix or quarantine it (do
+    # NOT re-add continue-on-error); retries:1 in playwright.config.ts already
+    # absorbs single transient failures.
     strategy:
       fail-fast: false
       matrix:
@@ -1146,12 +1153,19 @@ jobs:
   ci-complete:
     name: CI Complete
     runs-on: ubuntu-latest
-    # NOTE: e2e and lighthouse are deliberately excluded from this aggregator.
-    # They were dropped from required-status-checks on main because they're
-    # advisory (flaky / surface real issues that are tracked separately).
-    # Including them here would re-block merge via the dispatcher on the
-    # same flakes. They still run on every PR and surface their own status;
-    # they just don't gate merge.
+    # The full E2E browser suite (e2e) and E2E Smoke now gate merge through
+    # this aggregator — the suite went flake-free after #1588, so it can be
+    # trusted to block. Branch protection should require ONLY "CI Complete"
+    # (plus the cross-workflow CodeQL + license checks), NOT the individual
+    # E2E shard names: enumerating "E2E Browser Tests (webkit 3/4)" ×8 in
+    # branch protection is brittle (a reshard silently breaks every required
+    # entry) and was also toothless while e2e carried continue-on-error. The
+    # aggregator's success-or-skipped check below handles the path-filter case
+    # (a docs/backend-only PR skips e2e and still passes) without the
+    # skipped-required-check deadlock.
+    #
+    # lighthouse stays excluded — it's a genuine perf-advisory signal, not a
+    # correctness gate.
     needs:
       - changes
       - backend
@@ -1163,6 +1177,8 @@ jobs:
       - i18n
       - docs
       - build
+      - e2e
+      - e2e-smoke
     if: always()
     steps:
       - name: Verify upstream results

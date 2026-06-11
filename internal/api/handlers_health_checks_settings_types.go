@@ -99,28 +99,25 @@ type HL7EndpointResponse struct {
 	ReceivingApp string `json:"receivingApp"`
 	ReceivingFac string `json:"receivingFacility"`
 	Enabled      bool   `json:"enabled"`
-	Criticality  int    `json:"criticality"`
 }
 
 // FHIREndpointResponse contains a FHIR R4 endpoint configuration (Health Checks 100x).
 type FHIREndpointResponse struct {
-	Name        string `json:"name"`
-	BaseURL     string `json:"baseUrl"`
-	AuthType    string `json:"authType"`
-	Enabled     bool   `json:"enabled"`
-	Criticality int    `json:"criticality"`
+	Name     string `json:"name"`
+	BaseURL  string `json:"baseUrl"`
+	AuthType string `json:"authType"`
+	Enabled  bool   `json:"enabled"`
 }
 
 // SQLEndpointResponse contains a SQL database endpoint configuration (Health Checks 100x).
 type SQLEndpointResponse struct {
-	Name        string `json:"name"`
-	Driver      string `json:"driver"`
-	Host        string `json:"host"`
-	Port        int    `json:"port"`
-	Database    string `json:"database"`
-	SSLMode     string `json:"sslMode,omitempty"`
-	Enabled     bool   `json:"enabled"`
-	Criticality int    `json:"criticality"`
+	Name     string `json:"name"`
+	Driver   string `json:"driver"`
+	Host     string `json:"host"`
+	Port     int    `json:"port"`
+	Database string `json:"database"`
+	SSLMode  string `json:"sslMode,omitempty"`
+	Enabled  bool   `json:"enabled"`
 }
 
 // FileShareEndpointResponse contains a file share endpoint configuration (Health Checks 100x).
@@ -134,7 +131,6 @@ type FileShareEndpointResponse struct {
 	TestWritePerformance bool   `json:"testWritePerformance,omitempty"`
 	TestFileSizeMB       int    `json:"testFileSizeMb,omitempty"`
 	Enabled              bool   `json:"enabled"`
-	Criticality          int    `json:"criticality"`
 }
 
 // LDAPEndpointResponse contains an LDAP/AD endpoint configuration (Health Checks 100x).
@@ -147,16 +143,14 @@ type LDAPEndpointResponse struct {
 	BaseDN       string `json:"baseDn"`
 	SearchFilter string `json:"searchFilter,omitempty"`
 	Enabled      bool   `json:"enabled"`
-	Criticality  int    `json:"criticality"`
 }
 
 // LTIEndpointResponse contains an LTI/LMS endpoint configuration (Health Checks 100x - Education).
 type LTIEndpointResponse struct {
-	Name        string `json:"name"`
-	LaunchURL   string `json:"launchUrl"`
-	LTIVersion  string `json:"ltiVersion,omitempty"`
-	Enabled     bool   `json:"enabled"`
-	Criticality int    `json:"criticality"`
+	Name       string `json:"name"`
+	LaunchURL  string `json:"launchUrl"`
+	LTIVersion string `json:"ltiVersion,omitempty"`
+	Enabled    bool   `json:"enabled"`
 }
 
 // OPCUAEndpointResponse contains an OPC-UA endpoint configuration (Health Checks 100x - Manufacturing).
@@ -166,7 +160,6 @@ type OPCUAEndpointResponse struct {
 	SecurityMode   string `json:"securityMode,omitempty"`
 	SecurityPolicy string `json:"securityPolicy,omitempty"`
 	Enabled        bool   `json:"enabled"`
-	Criticality    int    `json:"criticality"`
 }
 
 // ModbusEndpointResponse contains a Modbus TCP endpoint configuration (Health Checks 100x - Manufacturing).
@@ -178,7 +171,6 @@ type ModbusEndpointResponse struct {
 	TestRegister int    `json:"testRegister"`
 	RegisterType string `json:"registerType,omitempty"`
 	Enabled      bool   `json:"enabled"`
-	Criticality  int    `json:"criticality"`
 }
 
 // SpeedtestSettingsResponse contains speedtest configuration options.

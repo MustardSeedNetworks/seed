@@ -8,5 +8,5 @@
 export interface ConfigVersionResponse {
   current: number;
   latest: number;
-  needs_migration: boolean;
+  needsMigration: boolean;
 }

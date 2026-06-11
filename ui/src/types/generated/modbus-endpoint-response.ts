@@ -13,5 +13,4 @@ export interface ModbusEndpointResponse {
   testRegister: number;
   registerType?: string;
   enabled: boolean;
-  criticality: number;
 }

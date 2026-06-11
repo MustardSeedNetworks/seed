@@ -8,7 +8,7 @@
         "version": {
           "type": "string"
         },
-        "exported_at": {
+        "exportedAt": {
           "type": "string"
         },
         "profiles": {
@@ -22,7 +22,7 @@
       "type": "object",
       "required": [
         "version",
-        "exported_at",
+        "exportedAt",
         "profiles"
       ]
     },
@@ -38,13 +38,13 @@
           "type": "string"
         },
         "config": true,
-        "is_default": {
+        "isDefault": {
           "type": "boolean"
         },
-        "created_at": {
+        "createdAt": {
           "type": "string"
         },
-        "updated_at": {
+        "updatedAt": {
           "type": "string"
         }
       },
@@ -55,9 +55,9 @@
         "name",
         "description",
         "config",
-        "is_default",
-        "created_at",
-        "updated_at"
+        "isDefault",
+        "createdAt",
+        "updatedAt"
       ]
     }
   },

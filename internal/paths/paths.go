@@ -11,19 +11,6 @@ const (
 	defaultConfig = "seed.json"
 )
 
-// legacyConfigNames returns config filenames from before the JSON unification
-// (ADR-0010). They are read as a fallback so pre-rename installs keep loading;
-// their content was always JSON (the loader has only ever been encoding/json),
-// the names just drifted. New installs write defaultConfig.
-func legacyConfigNames() []string {
-	return []string{
-		"config.yaml",
-		"seed.yaml",
-		"config.json",
-		".seed.yaml",
-	}
-}
-
 // Mode indicates the installation mode.
 type Mode int
 
@@ -129,41 +116,8 @@ func ResolveConfigPath(explicit string, mode Mode) string {
 		return envPath
 	}
 
-	// Priority 3: XDG-compliant path. Prefer the canonical seed.json; if it is
-	// absent but a legacy-named config exists in the same dir, load that so
-	// pre-rename installs keep working (the content is JSON either way).
-	paths := Resolve(mode)
-	if _, statErr := os.Stat(paths.ConfigFile); statErr == nil {
-		return paths.ConfigFile
-	}
-	for _, name := range legacyConfigNames() {
-		candidate := filepath.Join(paths.ConfigDir, name)
-		if _, statErr := os.Stat(candidate); statErr == nil {
-			return candidate
-		}
-	}
-	return paths.ConfigFile
-}
-
-// DetectLegacyConfig checks for configs in legacy locations.
-//
-// It looks for config files in the current working directory under any of the
-// pre-JSON-unification names (see legacyConfigNames).
-//
-// Returns the path and true if found, empty string and false otherwise.
-func DetectLegacyConfig() (string, bool) {
-	// Check current directory for legacy configs
-	for _, path := range legacyConfigNames() {
-		if _, statErr := os.Stat(path); statErr == nil {
-			abs, absErr := filepath.Abs(path)
-			if absErr == nil {
-				return abs, true
-			}
-			return path, true
-		}
-	}
-
-	return "", false
+	// Priority 3: XDG-compliant path.
+	return Resolve(mode).ConfigFile
 }
 
 // isSystemdService detects if running under systemd by checking for

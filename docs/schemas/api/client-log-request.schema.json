@@ -17,10 +17,10 @@
         "message": {
           "type": "string"
         },
-        "request_id": {
+        "requestId": {
           "type": "string"
         },
-        "session_id": {
+        "sessionId": {
           "type": "string"
         },
         "metadata": {

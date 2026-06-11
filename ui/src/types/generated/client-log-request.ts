@@ -13,8 +13,8 @@ export interface ClientLogEntry {
   level: string;
   component: string;
   message: string;
-  request_id?: string;
-  session_id?: string;
+  requestId?: string;
+  sessionId?: string;
   metadata?: {};
   stack?: string;
 }
