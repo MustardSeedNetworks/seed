@@ -147,6 +147,7 @@ body:
       "GET",
       "PUT"
     ],
+    "minRole": "operator",
     "path": "/api/v1/interface"
   },
   {
@@ -522,6 +523,7 @@ body:
       "POST",
       "PUT"
     ],
+    "minRole": "operator",
     "path": "/api/v1/telemetry/vlan/interface"
   },
   {
@@ -711,6 +713,7 @@ body:
       "GET",
       "PUT"
     ],
+    "minRole": "operator",
     "path": "/api/v1/security/discovery/options"
   },
   {
@@ -767,6 +770,7 @@ body:
       "PUT",
       "DELETE"
     ],
+    "minRole": "operator",
     "path": "/api/v1/security/devices/subnets"
   },
   {

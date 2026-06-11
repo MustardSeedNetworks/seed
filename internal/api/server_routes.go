@@ -245,7 +245,12 @@ func (s *Server) setupCoreRoutes() {
 			maxBodyBytes: cfgBody,
 		},
 		{path: APIVersionPrefix + "/interfaces", handler: s.handleInterfaces, methods: get},
-		{path: APIVersionPrefix + "/interface", handler: s.handleInterface, methods: getPut},
+		{
+			path:    APIVersionPrefix + "/interface",
+			handler: s.handleInterface,
+			methods: getPut,
+			minRole: op, // PUT persists the active NIC to disk (writeGated: operator+)
+		},
 		{
 			path:    APIVersionPrefix + "/network/mtu",
 			handler: s.handleSetMTU,
@@ -406,6 +411,7 @@ func (s *Server) setupTelemetryRoutes() {
 			path:    APIVersionPrefix + "/telemetry/vlan/interface",
 			handler: s.handleVLANInterface,
 			methods: getPostPut,
+			minRole: op, // POST creates a live kernel VLAN sub-interface (writeGated: operator+)
 		},
 		{
 			path:        APIVersionPrefix + "/telemetry/speedtest",
@@ -544,6 +550,7 @@ func (s *Server) setupSecurityRoutes() {
 			path:    APIVersionPrefix + "/security/discovery/options",
 			handler: s.handleDiscoveryOptions,
 			methods: getPut,
+			minRole: op, // PUT saves discovery options to disk (writeGated: operator+)
 		},
 		{
 			path:    APIVersionPrefix + "/security/discovery/service/status",
@@ -577,6 +584,7 @@ func (s *Server) setupSecurityRoutes() {
 			path:    APIVersionPrefix + "/security/devices/subnets",
 			handler: s.handleDevicesSubnets,
 			methods: crud,
+			minRole: op, // POST/PUT/DELETE mutate persisted subnet entries (writeGated: operator+)
 		},
 		// Vulnerability scan + guest-audit run are compliance_advanced (Pro,
 		// LICENSE_STRATEGY §2); read-only results/status/settings stay open so prior

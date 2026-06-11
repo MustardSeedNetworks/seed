@@ -224,6 +224,7 @@ func TestHandleConfigBackupDelete(t *testing.T) {
 		t.Error("Backup file should be deleted")
 	}
 }
+
 func TestHandleConfigRestore_MissingBackupName(t *testing.T) {
 	// Use testutil for consistent test configuration
 	s := &api.Server{}
