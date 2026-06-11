@@ -34,6 +34,7 @@ func (r *reportingEngine) Status() engine.Status       { return r.status }
 func TestHandleEngines_ReturnsRegistryContents(t *testing.T) {
 	s := &Server{services: NewServiceContainer()}
 	initDatabaseDependentServices(s.services, newTestDB(t))
+	s.initEngineUseCases()
 
 	req := httptest.NewRequest(http.MethodGet, APIVersionPrefix+"/engines", http.NoBody)
 	w := httptest.NewRecorder()
@@ -65,6 +66,7 @@ func TestHandleEngines_ReturnsRegistryContents(t *testing.T) {
 		}
 	}
 }
+
 func TestHandleEngines_NoServicesReturnsEmpty(t *testing.T) {
 	s := &Server{}
 	req := httptest.NewRequest(http.MethodGet, APIVersionPrefix+"/engines", http.NoBody)
@@ -87,6 +89,7 @@ func TestHandleEngines_EngineWithoutReporter_DefaultsToStateOK(t *testing.T) {
 	if regErr := s.services.Engines.Register(&minimalEngine{name: "plain"}); regErr != nil {
 		t.Fatalf("register: %v", regErr)
 	}
+	s.initEngineUseCases()
 
 	req := httptest.NewRequest(http.MethodGet, APIVersionPrefix+"/engines", http.NoBody)
 	w := httptest.NewRecorder()
@@ -126,6 +129,7 @@ func TestHandleEngines_EngineWithReporter_SurfacesStatus(t *testing.T) {
 	if regErr := s.services.Engines.Register(rep); regErr != nil {
 		t.Fatalf("register: %v", regErr)
 	}
+	s.initEngineUseCases()
 
 	req := httptest.NewRequest(http.MethodGet, APIVersionPrefix+"/engines", http.NoBody)
 	w := httptest.NewRecorder()
@@ -164,6 +168,7 @@ func TestHandleEngines_ReporterReturnsEmptyState_FillsOK(t *testing.T) {
 	}); regErr != nil {
 		t.Fatalf("register: %v", regErr)
 	}
+	s.initEngineUseCases()
 	req := httptest.NewRequest(http.MethodGet, APIVersionPrefix+"/engines", http.NoBody)
 	w := httptest.NewRecorder()
 	s.handleEngines(w, req)
