@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"net/http/httptrace"
 	"slices"
 	"strings"
 	"time"
@@ -20,6 +21,11 @@ const defaultHTTPTimeout = 10 * time.Second
 // maxResponseBodyBytes caps how much of the response body the
 // checker reads when matching body patterns. 1 MiB is generous.
 const maxResponseBodyBytes = 1 << 20
+
+// microsPerMilli converts microseconds to milliseconds as a float so the
+// per-phase timings keep sub-millisecond precision (localhost handshakes
+// round to zero at whole-millisecond resolution).
+const microsPerMilli = 1000.0
 
 // bodySnippetMaxBytes caps the on-failure body snippet included
 // in the Result.Error field.
@@ -96,7 +102,9 @@ func (c *HTTPChecker) Run(ctx context.Context, p probe.Probe) probe.Result {
 		method = http.MethodGet
 	}
 
-	req, err := http.NewRequestWithContext(reqCtx, method, p.Target, http.NoBody)
+	tr := &httpTrace{}
+	traceCtx := httptrace.WithClientTrace(reqCtx, tr.clientTrace())
+	req, err := http.NewRequestWithContext(traceCtx, method, p.Target, http.NoBody)
 	if err != nil {
 		return c.failResult(p, 0, fmt.Sprintf("invalid request: %v", err))
 	}
@@ -131,11 +139,18 @@ func (c *HTTPChecker) Run(ctx context.Context, p probe.Probe) probe.Result {
 		}
 	}
 
-	meta, _ := json.Marshal(map[string]any{
+	metaMap := map[string]any{
 		"status_code":  resp.StatusCode,
 		"content_type": resp.Header.Get("Content-Type"),
 		"body_match":   params.BodyMatch != "" && bodyOK,
-	})
+	}
+	if timings := tr.timings(start); len(timings) > 0 {
+		metaMap["timings_ms"] = timings
+	}
+	if cert, ok := certInfoFromResponse(resp, req.URL.Hostname()); ok {
+		metaMap["tls"] = cert
+	}
+	meta, _ := json.Marshal(metaMap)
 
 	if !statusOK || !bodyOK {
 		errMsg := fmt.Sprintf("status %d", resp.StatusCode)
@@ -230,4 +245,63 @@ func buildHTTPClient(timeout time.Duration, params HTTPParams) HTTPDoer {
 		}
 	}
 	return client
+}
+
+// httpTrace records the connection-phase timestamps captured by an
+// [httptrace.ClientTrace] during a single request, so the checker can
+// publish a DNS/TCP/TLS/TTFB latency breakdown — the per-phase timing
+// the legacy /run surfaced on the health-check card (ADR-0027 P3a).
+type httpTrace struct {
+	dnsStart, dnsDone   time.Time
+	connStart, connDone time.Time
+	tlsStart, tlsDone   time.Time
+	firstByte           time.Time
+}
+
+// clientTrace returns the trace whose hooks stamp the phase timestamps.
+// Connection reuse means DNS/connect/TLS hooks may not fire; the timings
+// helper emits only the phases that were actually measured.
+func (h *httpTrace) clientTrace() *httptrace.ClientTrace {
+	return &httptrace.ClientTrace{
+		DNSStart:             func(httptrace.DNSStartInfo) { h.dnsStart = time.Now() },
+		DNSDone:              func(httptrace.DNSDoneInfo) { h.dnsDone = time.Now() },
+		ConnectStart:         func(_, _ string) { h.connStart = time.Now() },
+		ConnectDone:          func(_, _ string, _ error) { h.connDone = time.Now() },
+		TLSHandshakeStart:    func() { h.tlsStart = time.Now() },
+		TLSHandshakeDone:     func(tls.ConnectionState, error) { h.tlsDone = time.Now() },
+		GotFirstResponseByte: func() { h.firstByte = time.Now() },
+	}
+}
+
+// timings returns the measured per-phase durations in milliseconds. start
+// is the wall-clock instant the request was dispatched (the TTFB baseline).
+// Phases that did not fire (e.g. TLS on a plain-HTTP request, or any phase
+// on a reused connection) are omitted rather than reported as zero.
+func (h *httpTrace) timings(start time.Time) map[string]float64 {
+	m := map[string]float64{}
+	add := func(key string, from, to time.Time) {
+		if !from.IsZero() && !to.IsZero() && to.After(from) {
+			m[key] = float64(to.Sub(from).Microseconds()) / microsPerMilli
+		}
+	}
+	add("dns", h.dnsStart, h.dnsDone)
+	add("tcp", h.connStart, h.connDone)
+	add("tls", h.tlsStart, h.tlsDone)
+	if !h.firstByte.IsZero() && !start.IsZero() && h.firstByte.After(start) {
+		m["ttfb"] = float64(h.firstByte.Sub(start).Microseconds()) / microsPerMilli
+	}
+	return m
+}
+
+// certInfoFromResponse extracts the leaf-certificate summary from a TLS
+// response, reusing the same shape the TLS checker publishes so a single
+// cert-extraction path serves both kinds. Returns ok=false for plain HTTP.
+func certInfoFromResponse(resp *http.Response, sni string) (TLSCertInfo, bool) {
+	if resp.TLS == nil || len(resp.TLS.PeerCertificates) == 0 {
+		return TLSCertInfo{}, false
+	}
+	return extractCertInfo(TLSConnState{
+		PeerCertificates: resp.TLS.PeerCertificates,
+		Version:          resp.TLS.Version,
+	}, sni), true
 }

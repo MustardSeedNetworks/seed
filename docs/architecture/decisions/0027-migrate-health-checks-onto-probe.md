@@ -1,6 +1,42 @@
 # ADR-0027: Migrate the on-demand health-check stack onto the probe engine, then rename the transport
 
-**Status:** Accepted — 2026-06-11 (scoping ADR; P1 implemented)
+**Status:** Accepted — 2026-06-11 (scoping ADR; P1–P2 implemented, P3a checker-enrichment landed)
+
+> **P3a checker-enrichment as-built (2026-06-11).** A read-only audit before the P3 cutover
+> found that the probe checkers emit thinner `Result.Metadata` than the legacy `/run` surfaced
+> on the health-check card — so rewiring `/run` onto the engine as-is would have **regressed**
+> the rendered diagnostics. (This also corrects the P1 note below: the HTTP checker was *not* a
+> faithful port — it was a status/body-match reachability check.) P3a closes the gap for the
+> dominant case: the HTTP/HTTPS checker now publishes a **per-phase timing breakdown**
+> (`timings_ms`: dns/tcp/tls/ttfb via `httptrace`) and, for HTTPS, a **leaf-cert summary**
+> (`tls`: CN/issuer/not-after/days-remaining/version, reusing the TLS checker's
+> `extractCertInfo` so one cert path serves both kinds). The dedicated `tls` checker already
+> emitted the cert block, and the P1 vertical checkers already emit their key protocol fields
+> (HL7 `ack_code`, FHIR `fhir_version`/`resource_count`, Modbus `register_value`, etc.), so
+> after P3a the probe metadata carries the rich data the card renders. **Deliberate non-ports**
+> (documented, not silent regressions): (a) extended-ping loss/jitter/min/max — a multi-sample
+> *on-demand snapshot* concept that does not belong in a continuously-scheduled probe (the
+> engine samples once per interval; jitter/loss emerge from the time series, or from a future
+> `/run` multi-sample mode, not from N rapid dials baked into the checker); (b) deep vertical
+> fields (SQL driver-version/query timing, LDAP bind/search/entries, OPC-UA session state,
+> FileShare read/write IO) — these need a real driver/library or a stateful protocol session
+> and were already dead/stub in the legacy stack (see the P1 note), so omitting them is honest.
+> Cert *status* (`success`/`warning`/`error`) stays a consumer concern (it needs the config
+> expiry thresholds), derived in the P3/P4 mapping rather than baked into the checker.
+
+> **P2 as-built (2026-06-11).** The `/telemetry/health-checks/settings` endpoint is now
+> store-of-record backed by the `probes` table for all fourteen health-check kinds.
+> `internal/api/healthcheckmapping.go` maps each `config.*Endpoint` ⇄ a `database.Probe`
+> (identity in the `display_name`/`target`/`enabled` columns, the full endpoint JSON in
+> `params_json`). GET reads via `loadHealthCheckEndpoints`; PUT flattens the request via
+> `requestEndpointTargets` → `healthCheckProbesFromConfig` and persists with the transactional
+> `ProbeRepository.ReplaceProbesByKinds` (delete-then-insert scoped to the fourteen kinds, so
+> DNS/TLS/HTTPS probes are untouched), then calls `Engine.Reschedule`. Targets are now
+> continuously monitored rather than on-demand only. The pre-P2 save path silently dropped the
+> eight vertical kinds — they now persist. The unread `criticality` field (dead since ADR-0026
+> deleted health scoring) was **removed outright** rather than given a home. `/run` is fed from
+> the probes table via a thin best-effort hydrate snapshot; P3 deletes that. No schema
+> migration was needed. (Landed in #1642.)
 
 > **P1 as-built (2026-06-11).** The eight vertical checkers landed as `probe.Checker`
 > implementations under `internal/probe/checkers/` (`hl7.go`, `fhir.go`, `sql.go`,
@@ -112,7 +148,7 @@ Each phase is its own PR; the behavioral migration (1–4) **must precede** the 
 | Phase | Scope | Notes |
 |---|---|---|
 | **P1** | Vertical checkers — HL7, FHIR, SQL, FileShare, LDAP, LTI, OPC-UA, Modbus as `probe.Checker`s, registered in the engine. | The bulk of the work; can be split per-kind or batched. Each needs its kind-specific threshold shape (à la cert-expiry). New files are single-word lowercase per the existing `internal/probe/checkers/` convention — `hl7.go`, `fhir.go`, `sql.go`, `fileshare.go`, `ldap.go`, `lti.go`, `opcua.go`, `modbus.go` — **no underscores** (the repo filename policy allows `_` only in `_test.go`). |
-| **P2** | `/settings` storage migration: `config.Config.HealthChecks` target lists → `probes` table; `criticality` → threshold/severity mapping; a goose migration if the `probes` schema needs new columns. | Settling the config→DB move; the scheduler now monitors these targets continuously. |
+| **P2** ✅ | `/settings` storage migration: `config.Config.HealthChecks` target lists → `probes` table; a goose migration if the `probes` schema needs new columns. **As-built: `criticality` was removed outright** (unread since ADR-0026), not mapped; no migration was needed. | Settling the config→DB move; the scheduler now monitors these targets continuously. |
 | **P3** | Rewire `/run` to fan `Engine.RunNow` over the configured probes; **delete** the legacy protocol files + `run*Tests()`/`Run*Checks()` methods + config-file plumbing. | The ~4,067-LOC deletion lands here, once P1 covers every kind. This also retires the underscore-named `internal/api/health_checks_*.go` filenames (a pre-policy legacy naming) — the replacements already live under the no-underscore `internal/probe/checkers/` convention from P1. |
 | **P4** | Frontend rework: `HealthCheckCard` results display reads the new run/probe-result shape; settings panels bind to probe definitions; regenerate `types/generated/config.ts`; rename `HealthCheck*` components/types and the internal `'healthchecks'` / `'healthChecksUpdated'` coordination tokens. | Mostly mechanical but touches ~6 components + ~80 i18n keys (en+es). |
 | **P5** | Transport rename `/telemetry/health-checks/*` → `/telemetry/probes/*` (3 backend literals + `capabilities.txt` golden + integration tests + 4 FE fetch sites + i18n namespace). | Pure rename; rides last so it is never a half-rename. |
@@ -153,5 +189,7 @@ Each phase is its own PR; the behavioral migration (1–4) **must precede** the 
   variant only if real batch sizes demand it (still a probe run-now, not a job).
 - **Per-kind threshold shapes.** Each vertical defines its own breach fields (à la
   `cert_days_remaining`); the exact fields and catalog `Def`s are authored with each checker in P1.
-- **`criticality` mapping.** Whether it becomes a threshold input or an anomaly severity is a per-kind
-  call made in P2.
+- **`criticality` mapping.** ~~Whether it becomes a threshold input or an anomaly severity is a per-kind
+  call made in P2.~~ **Resolved in P2: removed.** Unread since ADR-0026 deleted health scoring; dropped
+  everywhere (no-compat, pre-alpha) rather than invent a new behavior. A future per-kind severity input
+  can be reintroduced deliberately if a real consumer needs it.
