@@ -29,6 +29,12 @@ const initialPassDelay = 60 * time.Second
 // architecture locks 7 days across all tiers.
 const rawRetentionDays = 7
 
+// HorizonsFor exposes the per-tier retention horizons to callers
+// outside this package (e.g. the anomaly daily-rollup census, which
+// reuses the DailyDays horizon verbatim — ADR-0028 §4). It is a thin
+// exported wrapper over the same locked policy the engine applies.
+func HorizonsFor(t license.Tier) TierHorizons { return tierHorizons(t) }
+
 // tierHorizons returns the (raw, hourly, daily) day-count tuple for
 // a given license tier. Lock the architecture's locked-decision:
 // Free retains raw-7d only; Starter adds hourly-30d; Pro adds

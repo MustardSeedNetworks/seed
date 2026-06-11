@@ -77,6 +77,14 @@ type RetentionPolicy struct {
 	// AnomalyResolvedDays is how many days to keep RESOLVED anomalies (0 =
 	// forever). Active anomalies are never aged out (ADR-0021).
 	AnomalyResolvedDays int
+
+	// AnomalyRollupDailyDays is how many days to keep daily anomaly census
+	// rollups, and the gate for writing them (ADR-0028 §4). It reuses the probe
+	// DailyDays tier horizon (Pro 730, Free/Starter 0). When > 0 the maintenance
+	// pass censuses the live anomaly table (census first) and purges census rows
+	// older than this window; when 0 (Free/Starter) no census is written and any
+	// existing rollups are purged in full, mirroring probe_rollups_daily.
+	AnomalyRollupDailyDays int
 }
 
 // DefaultRetentionPolicy returns the default retention policy.
@@ -103,6 +111,8 @@ type CleanupResult struct {
 	DNSResultsDeleted        int64
 	GatewayResultsDeleted    int64
 	AnomaliesResolvedDeleted int64
+	AnomalyRollupsCensused   int64
+	AnomalyRollupsDeleted    int64
 	Duration                 time.Duration
 }
 
@@ -137,6 +147,15 @@ func (db *DB) RunCleanup(ctx context.Context, policy RetentionPolicy) (*CleanupR
 	result := &CleanupResult{}
 	now := time.Now().UTC()
 
+	// Anomaly daily-rollup census (ADR-0028) runs FIRST so a resolution-day row
+	// is captured before cleanupResolvedAnomalies (below) can TTL-delete its live
+	// row — census first, purge second. Gated on the DailyDays horizon: Pro
+	// censuses + retains; Free/Starter (0) skip the census and purge any existing
+	// rollups in full.
+	if err := db.runAnomalyRollups(ctx, policy, now, result); err != nil {
+		return nil, err
+	}
+
 	tasks := []cleanupTask{
 		{policy.MetricsDays, db.cleanupMetrics, "metrics"},
 		{policy.AlertsDays, db.cleanupAlerts, "alerts"},
@@ -168,6 +187,31 @@ func (db *DB) RunCleanup(ctx context.Context, policy RetentionPolicy) (*CleanupR
 	result.Duration = time.Since(start)
 
 	return result, nil
+}
+
+// runAnomalyRollups writes the daily census and purges aged census rows in one
+// step (ADR-0028). It is invoked at the top of RunCleanup so the census reads
+// resolved rows before they are TTL-purged. When AnomalyRollupDailyDays is 0
+// (Free/Starter) no census is written; any existing rollups are purged in full
+// (cutoff = now), mirroring probe_rollups_daily on those tiers.
+func (db *DB) runAnomalyRollups(
+	ctx context.Context, policy RetentionPolicy, now time.Time, result *CleanupResult,
+) error {
+	if policy.AnomalyRollupDailyDays > 0 {
+		censused, err := db.Anomalies().CensusThrough(ctx, now)
+		if err != nil {
+			return fmt.Errorf("anomaly rollup census: %w", err)
+		}
+		result.AnomalyRollupsCensused = censused
+	}
+
+	cutoff := now.AddDate(0, 0, -policy.AnomalyRollupDailyDays)
+	deleted, err := db.Anomalies().PurgeRollupsDailyOlderThan(ctx, cutoff)
+	if err != nil {
+		return fmt.Errorf("anomaly rollup purge: %w", err)
+	}
+	result.AnomalyRollupsDeleted = deleted
+	return nil
 }
 
 // cleanupMetrics wraps the Metrics().DeleteOlderThan call to match cleanupFunc signature.

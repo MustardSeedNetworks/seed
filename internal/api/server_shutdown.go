@@ -13,6 +13,7 @@ import (
 	"github.com/MustardSeedNetworks/seed/internal/database"
 	"github.com/MustardSeedNetworks/seed/internal/logging"
 	"github.com/MustardSeedNetworks/seed/internal/netif"
+	"github.com/MustardSeedNetworks/seed/internal/timeseries/retention"
 )
 
 // getClientIP extracts the client IP from a request, considering trusted proxies.
@@ -231,6 +232,11 @@ func (s *Server) startMaintenance(retentionDays int) {
 			if retentionDays <= 0 || s.db() == nil {
 				continue
 			}
+			// Resolve the anomaly daily-rollup horizon per tick so an in-place
+			// license upgrade takes effect on the next pass (ADR-0028 §4 reuses the
+			// probe DailyDays horizon, same as the retention engine).
+			tier := licenseTierAdapter{lm: s.licenseMgr}.GetTier()
+			policy.AnomalyRollupDailyDays = retention.HorizonsFor(tier).DailyDays
 			result, err := s.db().RunCleanup(context.Background(), policy)
 			if err != nil {
 				logging.GetLogger().Error("Data retention cleanup failed", "error", err)

@@ -1,11 +1,11 @@
 # ADR-0028: Daily rollups for the anomaly store (census of mutable instances, not a RollupSource)
 
-**Status:** Proposed — 2026-06-11 · design-only (no code in this ADR) · realizes the deferred
-"daily rollups" clause of [ADR-0021](0021-persist-and-converge-anomaly-engine.md) §"Owner decisions"
-and its "Phase 2 as-built" re-sequencing note. Builds on
-[ADR-0006](0006-migrations-sql-goose-strict.md) (goose/STRICT migrations),
-[ADR-0010](0010-identifier-casing-conventions.md) (casing). Owner sign-off needed on the two
-decision points flagged **[OWNER]** below before implementation.
+**Status:** Accepted — 2026-06-11 · realizes the deferred "daily rollups" clause of
+[ADR-0021](0021-persist-and-converge-anomaly-engine.md) §"Owner decisions" and its "Phase 2
+as-built" re-sequencing note. Builds on [ADR-0006](0006-migrations-sql-goose-strict.md)
+(goose/STRICT migrations), [ADR-0010](0010-identifier-casing-conventions.md) (casing). Both
+**[OWNER]** decision points below were resolved on 2026-06-11 (cumulative snapshot; reuse the probe
+DailyDays horizon) and the census shipped — see "As-built" at the end.
 
 ## Context
 
@@ -112,15 +112,15 @@ The live row carries only a **cumulative** `count`, so a faithful "occurrences o
 prior day's cumulative. V1.0 stores `count_cumulative` and derives per-day deltas by differencing
 consecutive day rows for the same (def, subject) at query time. This is the same honesty trade-off
 the probe daily rollup already documents (its `AVG(avg_latency_ms)` caveat) — exact intra-day
-recurrence counting would require snapshotting at each day boundary and is deferred. **[OWNER]**
-confirm census-with-cumulative is acceptable vs. carrying a true per-day delta column.
+recurrence counting would require snapshotting at each day boundary and is deferred.
 
-## [OWNER] decision points
+## [OWNER] decision points — RESOLVED 2026-06-11
 
-1. **Census vs. true per-day delta** (§5): ship the simpler cumulative-snapshot census in V1.0, or
-   pay for a per-day-delta column now?
-2. **`DailyDays` horizon for anomaly rollups**: reuse the probe tier horizons verbatim (Pro 730d), or
-   a distinct anomaly horizon? Default proposal: reuse, one policy to reason about.
+1. **Census vs. true per-day delta** (§5): **cumulative-snapshot census** chosen for V1.0. Stores
+   `count_cumulative`; per-day deltas are derived by differencing consecutive day rows at query time.
+   A true per-day-delta column is deferred until exact intra-day analytics are a requirement.
+2. **`DailyDays` horizon for anomaly rollups**: **reuse the probe tier horizons verbatim** (Pro 730d,
+   Free/Starter 0). One policy to reason about; exposed via `retention.HorizonsFor(tier).DailyDays`.
 
 ## Consequences
 
@@ -148,3 +148,33 @@ confirm census-with-cumulative is acceptable vs. carrying a true per-day delta c
   exact intra-day recurrence analytics become a requirement.
 - **No rollups, rely on TTL only.** Rejected: violates the locked ADR-0021 decision and loses all
   history older than 90 days — the appliance could not answer "was this site flapping last quarter?"
+
+## As-built — 2026-06-11
+
+Shipped exactly as decided, both owner decisions resolved (cumulative snapshot; reuse horizon):
+
+- **Schema:** migration `00008_anomaly_rollups_daily.sql` — STRICT `anomaly_rollups_daily`, PK
+  `(day_bucket, def_key, subject_kind, subject_id)`, indexes on `day_bucket` and
+  `(subject_kind, subject_id)`; columns per §4 (`max_severity` = the live row's current escalated
+  severity, `count_cumulative` per §5). Schema golden regenerated.
+- **Census query** (`AnomalyRepository.CensusThrough`): `INSERT OR REPLACE … SELECT FROM anomalies
+  WHERE date(first_seen) <= :day AND :day <= date(COALESCE(resolved_at, last_seen))` — the §1
+  intersection. The rollup table's own `MAX(day_bucket)` is the high-water mark, so a pass after
+  downtime catches up every missed day through today (§3) with **no separate marker**; an empty table
+  censuses today only. Re-census is idempotent (REPLACE).
+- **One ordered pass** (§2): folded into `database.RunCleanup` — census runs **first** (before
+  `cleanupResolvedAnomalies` TTL-purges resolved rows), then `PurgeRollupsDailyOlderThan` bounds the
+  rollup table. Gated on `RetentionPolicy.AnomalyRollupDailyDays`: Pro censuses + retains 730d;
+  Free/Starter (0) skip the census and purge in full. The api maintenance goroutine
+  (`server_shutdown.go`) sets the horizon per tick from `retention.HorizonsFor(tier).DailyDays`, so an
+  in-place upgrade takes effect on the next pass — same tier-awareness as the retention engine.
+- **Callsite guard** (§3): `TestRunCleanupCensusesResolvedRowBeforePurge` asserts a row resolved
+  within the census window survives in the rollups after its live row is purged in the same
+  `RunCleanup` — the "0 callers" gap is structurally impossible to reintroduce silently. Plus unit
+  coverage for the intersection predicate, catch-up, idempotent re-census, bucket-cutoff purge, and
+  the Free-tier skip.
+- **V1.0 boundary:** the catch-up only reaches back to the last censused day, so the very first census
+  pass ever (empty table) records today only — a cold-start with no prior history, by definition
+  lossless. Per-day occurrence counts are derived by differencing `count_cumulative` at query time
+  (§5); no consumer read API yet (the future trend/correlation surface plugs into this table when a
+  consumer needs it).

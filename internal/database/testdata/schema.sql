@@ -41,6 +41,12 @@ CREATE INDEX idx_anomalies_source ON anomalies(source);
 -- index: idx_anomalies_subject
 CREATE INDEX idx_anomalies_subject ON anomalies(subject_kind, subject_id);
 
+-- index: idx_anomaly_rollups_daily_bucket
+CREATE INDEX idx_anomaly_rollups_daily_bucket ON anomaly_rollups_daily(day_bucket);
+
+-- index: idx_anomaly_rollups_daily_subject
+CREATE INDEX idx_anomaly_rollups_daily_subject ON anomaly_rollups_daily(subject_kind, subject_id);
+
 -- index: idx_api_tokens_active
 CREATE INDEX idx_api_tokens_active ON api_tokens(revoked_at);
 
@@ -716,6 +722,23 @@ CREATE TABLE anomalies (
 	is_resolved     INTEGER NOT NULL DEFAULT 0 CHECK (is_resolved IN (0, 1)),
 	acknowledged_by TEXT,
 	acknowledged_at TEXT
+) STRICT;
+
+-- table: anomaly_rollups_daily
+CREATE TABLE anomaly_rollups_daily (
+	day_bucket       TEXT    NOT NULL,                      -- YYYY-MM-DD UTC (retention.dayFormat)
+	def_key          TEXT    NOT NULL CHECK (def_key <> ''),
+	source           TEXT    NOT NULL CHECK (source <> ''), -- wifi|wired|snmp|bluetooth|health|security|autotest
+	category         TEXT    NOT NULL CHECK (category <> ''),
+	subject_kind     TEXT    NOT NULL CHECK (subject_kind <> ''),
+	subject_id       TEXT    NOT NULL,
+	max_severity     TEXT    NOT NULL CHECK (max_severity <> ''), -- highest severity held as of the census
+	count_cumulative INTEGER NOT NULL CHECK (count_cumulative >= 0),
+	first_seen       TEXT    NOT NULL,                       -- RFC3339, carried from the live row
+	last_seen        TEXT    NOT NULL,                       -- RFC3339, carried from the live row
+	is_resolved      INTEGER NOT NULL DEFAULT 0 CHECK (is_resolved IN (0, 1)),
+	resolved_at      TEXT,                                   -- RFC3339, NULL while active
+	PRIMARY KEY (day_bucket, def_key, subject_kind, subject_id) -- idempotent re-census
 ) STRICT;
 
 -- table: api_tokens
