@@ -196,3 +196,61 @@ func TestCoordinatorResolvesOnPrune(t *testing.T) {
 		t.Error("Flush resurrected a pruned instance")
 	}
 }
+
+// TestEngineRestoreSeedsActiveInstances asserts Restore repopulates the live set
+// from records (load-on-start) and skips records whose def is uncatalogued.
+func TestEngineRestoreSeedsActiveInstances(t *testing.T) {
+	e := anomaly.NewEngine(coordTestCatalog(t))
+	t0 := time.Unix(1000, 0)
+	recs := []anomaly.Record{
+		{
+			ID: "open-ssid|bssid|aa", Source: anomaly.SourceWiFi,
+			Anomaly: anomaly.Anomaly{
+				DefKey: "open-ssid", Category: anomaly.CategorySecurity,
+				Severity:  anomaly.SeverityWarning,
+				Subject:   anomaly.SubjectRef{Kind: anomaly.SubjectBSSID, ID: "aa"},
+				FirstSeen: t0, LastSeen: t0.Add(time.Minute), Count: 4,
+			},
+		},
+		{ // uncatalogued def — must be skipped, not loaded
+			ID: "ghost|bssid|zz", Source: anomaly.SourceWiFi,
+			Anomaly: anomaly.Anomaly{
+				DefKey: "ghost", Subject: anomaly.SubjectRef{Kind: anomaly.SubjectBSSID, ID: "zz"},
+				Severity: anomaly.SeverityInfo, FirstSeen: t0, LastSeen: t0, Count: 1,
+			},
+		},
+	}
+	if n := e.Restore(recs); n != 1 {
+		t.Fatalf("Restore loaded %d, want 1 (ghost skipped)", n)
+	}
+	snap := e.Snapshot()
+	if len(snap) != 1 || snap[0].Subject.ID != "aa" {
+		t.Fatalf("snapshot = %+v, want one restored 'aa'", snap)
+	}
+	if snap[0].Count != 4 || !snap[0].FirstSeen.Equal(t0) {
+		t.Errorf("restored lifecycle: count=%d firstSeen=%v, want 4/%v", snap[0].Count, snap[0].FirstSeen, t0)
+	}
+}
+
+// TestCoordinatorLoad asserts Load pulls active instances from the store into the
+// engine.
+func TestCoordinatorLoad(t *testing.T) {
+	store := newFakeStore()
+	store.rows["open-ssid|bssid|aa"] = anomaly.Record{
+		ID: "open-ssid|bssid|aa", Source: anomaly.SourceWiFi,
+		Anomaly: anomaly.Anomaly{
+			DefKey: "open-ssid", Category: anomaly.CategorySecurity,
+			Severity:  anomaly.SeverityWarning,
+			Subject:   anomaly.SubjectRef{Kind: anomaly.SubjectBSSID, ID: "aa"},
+			FirstSeen: time.Unix(1, 0), LastSeen: time.Unix(2, 0), Count: 3,
+		},
+	}
+	c := newCoord(t, store)
+	n, err := c.Load(context.Background())
+	if err != nil {
+		t.Fatalf("Load: %v", err)
+	}
+	if n != 1 || c.Engine().Len() != 1 {
+		t.Fatalf("Load restored n=%d engineLen=%d, want 1/1", n, c.Engine().Len())
+	}
+}

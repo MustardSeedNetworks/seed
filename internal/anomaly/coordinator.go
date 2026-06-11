@@ -96,6 +96,17 @@ func (c *Coordinator) Prune(ctx context.Context, cutoff time.Time) (int, error) 
 	return len(keys), nil
 }
 
+// Load seeds the engine from the store's active (unresolved) instances (ADR-0021
+// load-on-start). Call once before observation begins; returns the number
+// restored. A store error is returned without mutating the engine.
+func (c *Coordinator) Load(ctx context.Context) (int, error) {
+	recs, err := c.store.LoadActive(ctx)
+	if err != nil {
+		return 0, err
+	}
+	return c.engine.Restore(recs), nil
+}
+
 // Engine returns the underlying in-memory engine for read-only projection
 // (Snapshot) by consumers that also read live state.
 func (c *Coordinator) Engine() *Engine { return c.engine }

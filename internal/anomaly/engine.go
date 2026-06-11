@@ -131,6 +131,41 @@ func (e *Engine) Observe(d Detection, at time.Time) error {
 	return err
 }
 
+// Restore seeds the live set from persisted records (ADR-0021 load-on-start), so
+// a restart continues coalescing onto the same instances instead of re-detecting
+// them as new. Each record's persisted (effective) severity becomes the restored
+// base severity (ADR-0021: the store holds the effective value); a live
+// re-detection then overrides it from the catalog default on the next Observe.
+// Records whose DefKey is no longer in the catalog are skipped — a catalog change
+// can orphan an old row. Intended to be called once, before Observe traffic
+// begins. Returns the number of instances restored.
+func (e *Engine) Restore(records []Record) int {
+	e.mu.Lock()
+	defer e.mu.Unlock()
+	n := 0
+	for _, r := range records {
+		a := r.Anomaly
+		if _, ok := e.catalog.Lookup(a.DefKey); !ok {
+			continue
+		}
+		k := instanceKey{def: a.DefKey, kind: a.Subject.Kind, id: a.Subject.ID}
+		e.active[k] = &tracked{
+			det: Detection{
+				DefKey:   a.DefKey,
+				Subject:  a.Subject,
+				Severity: a.Severity,
+				Evidence: a.Evidence,
+			},
+			baseSeverity: a.Severity,
+			firstSeen:    a.FirstSeen,
+			lastSeen:     a.LastSeen,
+			count:        a.Count,
+		}
+		n++
+	}
+	return n
+}
+
 // baseSeverity is the detection's explicit severity, else the catalog default.
 func (e *Engine) baseSeverity(d Detection) Severity {
 	if d.Severity != "" {
