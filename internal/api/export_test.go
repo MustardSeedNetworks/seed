@@ -66,29 +66,9 @@ func ExportGetTestStatus(latencyMs float64, warningMs, criticalMs int64) string 
 	return getTestStatus(latencyMs, warningMs, criticalMs)
 }
 
-// ExportGetTLSVersionString exposes getTLSVersionString for testing.
-func ExportGetTLSVersionString(tlsVersion uint16) string {
-	return getTLSVersionString(tlsVersion)
-}
-
-// ExportRunTCPTest exposes runTCPTest for testing.
-func ExportRunTCPTest(ctx context.Context, host string, port int) (float64, error) {
-	return runTCPTest(ctx, host, port)
-}
-
-// ExportRunExtendedPing exposes runExtendedPing for testing.
-func ExportRunExtendedPing(host string, count int) (*PingStats, error) {
-	return runExtendedPing(host, count)
-}
-
 // GetInterfaceFromRequest exports getInterfaceFromRequest for testing.
 func (s *Server) GetInterfaceFromRequest(r *http.Request) string {
 	return s.getInterfaceFromRequest(r)
-}
-
-// ExportNormalizeHTTPURL exposes normalizeHTTPURL for testing.
-func ExportNormalizeHTTPURL(rawURL string) (string, bool) {
-	return normalizeHTTPURL(rawURL)
 }
 
 // ExportValidateIperfClientRequest exposes validateIperfClientRequest for testing.

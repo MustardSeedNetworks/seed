@@ -1,6 +1,40 @@
 # ADR-0027: Migrate the on-demand health-check stack onto the probe engine, then rename the transport
 
-**Status:** Accepted — 2026-06-11 (scoping ADR; P1–P2 implemented, P3a checker-enrichment landed)
+**Status:** Accepted — 2026-06-11 (scoping ADR; P1–P3 + P4 implemented; only the P5 transport rename remains)
+
+> **P3+P4 cutover as-built (2026-06-11).** `/telemetry/health-checks/run` now dispatches the
+> operator's configured probes through `Engine.RunNow` (load from the `probes` table → dispatch
+> → persist → same breach/anomaly path a scheduled run uses, ADR-0025 §1) and maps the probe
+> `Result`s into the card's shape. The ~3,600-LOC legacy parallel stack is **deleted**: the seven
+> `health_checks_*.go` protocol files, the three `handlers_{medical,enterprise,industry}_checks.go`
+> vertical files, the `run*Tests()`/`Run*Checks()` methods, the `CustomTestResult`/`CustomTestsResult`
+> DTOs, and the P2 `hydrateHealthCheckTargets` shim. `handlers_health_checks.go` shrank to the shared
+> status vocabulary + `getTestStatus` the rest of the API package still uses.
+>
+> **P4 came nearly free** — a deliberate scope choice. The card fetches `/run` and casts the JSON
+> directly to its hand-written `HealthCheckData` type, so rather than reshape the wire + rework the
+> card (the ADR's original P3/P4 split, which would have left the card broken between PRs), the new
+> Go DTO (`HealthCheckRunResponse` in `healthcheckrun.go`) mirrors `HealthCheckData` field-for-field
+> and the card is untouched. A card-consumption audit drove the DTO to emit **only the fields the card
+> actually renders** (host/port/url, min/maxLatency, certCommonName, and the never-populated vertical
+> detail fields were dropped). This also **fixed a pre-existing drift**: the old backend emitted
+> `industryResults` + top-level `dicomResults`/`rtspResults`, but the card reads `industrialResults`
+> + nested `medicalResults.dicomResults`/`videoResults.rtspResults` — those sections were silently
+> empty before and now populate.
+>
+> No regression: an audit confirmed the vertical "rich" fields the probe checkers don't emit
+> (rtsp codec/resolution, dicom serverAeTitle, opcua productName/serverState, fileshare IO, etc.)
+> were **never populated by the legacy backend either** (they were declared-but-empty card fields, or
+> driver-dead/heuristic strings). The HTTP per-phase timings + cert summary the card genuinely
+> rendered are covered by P3a. Per-phase/cert/overall **status derivation** (the `getTestStatus`
+> threshold logic) was ported into the `/run` mapping. The metadata read-types live in
+> `internal/probe/checkers/metadata.go` (the package that owns the snake_case metadata format), not
+> the API layer, so the camelCase wire-tag gate stays clean.
+>
+> **Deferred (noted, not silent):** the `config.HealthChecks` endpoint *lists* are now loaded-from-file
+> but unread (settings + /run both read the `probes` table); removing them needs splitting the
+> `HealthChecksConfig` type (still the settings transport shape) and is a separate cleanup. P5 (the
+> `/telemetry/health-checks/*` → `/telemetry/probes/*` transport rename) is the only remaining phase.
 
 > **P3a checker-enrichment as-built (2026-06-11).** A read-only audit before the P3 cutover
 > found that the probe checkers emit thinner `Result.Metadata` than the legacy `/run` surfaced
@@ -149,8 +183,8 @@ Each phase is its own PR; the behavioral migration (1–4) **must precede** the 
 |---|---|---|
 | **P1** | Vertical checkers — HL7, FHIR, SQL, FileShare, LDAP, LTI, OPC-UA, Modbus as `probe.Checker`s, registered in the engine. | The bulk of the work; can be split per-kind or batched. Each needs its kind-specific threshold shape (à la cert-expiry). New files are single-word lowercase per the existing `internal/probe/checkers/` convention — `hl7.go`, `fhir.go`, `sql.go`, `fileshare.go`, `ldap.go`, `lti.go`, `opcua.go`, `modbus.go` — **no underscores** (the repo filename policy allows `_` only in `_test.go`). |
 | **P2** ✅ | `/settings` storage migration: `config.Config.HealthChecks` target lists → `probes` table; a goose migration if the `probes` schema needs new columns. **As-built: `criticality` was removed outright** (unread since ADR-0026), not mapped; no migration was needed. | Settling the config→DB move; the scheduler now monitors these targets continuously. |
-| **P3** | Rewire `/run` to fan `Engine.RunNow` over the configured probes; **delete** the legacy protocol files + `run*Tests()`/`Run*Checks()` methods + config-file plumbing. | The ~4,067-LOC deletion lands here, once P1 covers every kind. This also retires the underscore-named `internal/api/health_checks_*.go` filenames (a pre-policy legacy naming) — the replacements already live under the no-underscore `internal/probe/checkers/` convention from P1. |
-| **P4** | Frontend rework: `HealthCheckCard` results display reads the new run/probe-result shape; settings panels bind to probe definitions; regenerate `types/generated/config.ts`; rename `HealthCheck*` components/types and the internal `'healthchecks'` / `'healthChecksUpdated'` coordination tokens. | Mostly mechanical but touches ~6 components + ~80 i18n keys (en+es). |
+| **P3** ✅ | Rewire `/run` to fan `Engine.RunNow` over the configured probes; **delete** the legacy protocol files + `run*Tests()`/`Run*Checks()` methods. **As-built: ~3,600 LOC deleted** (combined with P4 — see the as-built note). Config-file-list plumbing left as a noted follow-up. | The deletion landed here once P3a covered the rendered metadata. |
+| **P4** ✅ | Frontend rework. **As-built: nearly free** — the new `/run` Go DTO mirrors the card's existing `HealthCheckData` shape field-for-field (and fixes a pre-existing FE/backend drift), so the card was untouched and no shape reshuffle/broken-intermediate was needed. Component/token renames are cosmetic and not required for correctness; deferred. | Folded into the P3 PR to avoid a broken intermediate. |
 | **P5** | Transport rename `/telemetry/health-checks/*` → `/telemetry/probes/*` (3 backend literals + `capabilities.txt` golden + integration tests + 4 FE fetch sites + i18n namespace). | Pure rename; rides last so it is never a half-rename. |
 
 ## Alternatives considered
