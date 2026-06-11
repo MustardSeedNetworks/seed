@@ -34,4 +34,5 @@ See the [Re-Architecture Blueprint](../RE_ARCHITECTURE_BLUEPRINT.md) for the ful
 | [0024](0024-identity-use-cases-and-repository-ports.md) | Identity decomposition — users / oauth / tokens use-cases over repository ports | Accepted |
 | [0025](0025-probe-is-the-active-monitoring-anomaly-source.md) | Probe is the recurring-observation engine and the anomaly producer (probe vs jobs) | Accepted |
 | [0026](0026-delete-dead-health-check-read-path.md) | Delete the dead health-check read path (results/scoring/SLA); keep run/settings/anomalies | Accepted |
-| [0027](0027-migrate-health-checks-onto-probe.md) | Migrate on-demand health-checks onto the probe engine, then rename the transport | Proposed |
+| [0027](0027-migrate-health-checks-onto-probe.md) | Migrate on-demand health-checks onto the probe engine, then rename the transport | Accepted |
+| [0028](0028-anomaly-daily-rollups.md) | Daily rollups for the anomaly store — a daily census of mutable instances, not a RollupSource | Proposed |
