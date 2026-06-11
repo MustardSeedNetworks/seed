@@ -146,12 +146,17 @@ type SubjectRef struct {
 
 // Detection is what a rule source emits to the engine: which catalog entry
 // fired, about what subject, with the live evidence (measured values). An empty
-// Severity means "use the catalog default".
+// Severity means "use the catalog default". Source identifies the producer; the
+// shared server-owned Coordinator (ADR-0029) tags persisted instances from it, so
+// one engine can coalesce detections from every source while the store stays
+// filterable by producer. The domain rule code leaves it empty; the producer
+// stamps it at the hand-off to the Coordinator.
 type Detection struct {
 	DefKey   string
 	Subject  SubjectRef
 	Severity Severity
 	Evidence map[string]string
+	Source   Source
 }
 
 // key identifies the live instance a detection coalesces into: one per

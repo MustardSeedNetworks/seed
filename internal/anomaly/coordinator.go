@@ -17,19 +17,18 @@ import (
 type Coordinator struct {
 	engine *Engine
 	store  Store
-	source Source
 
 	mu    sync.Mutex
 	dirty map[instanceKey]struct{}
 }
 
-// NewCoordinator wraps engine with write-through persistence to store, tagging
-// every persisted instance with source.
-func NewCoordinator(engine *Engine, store Store, source Source) *Coordinator {
+// NewCoordinator wraps engine with write-through persistence to store. Each
+// persisted instance is tagged with the Source carried on its detection
+// (ADR-0029), so one shared Coordinator serves every producer.
+func NewCoordinator(engine *Engine, store Store) *Coordinator {
 	return &Coordinator{
 		engine: engine,
 		store:  store,
-		source: source,
 		dirty:  make(map[instanceKey]struct{}),
 	}
 }
@@ -44,7 +43,7 @@ func (c *Coordinator) Observe(ctx context.Context, d Detection, at time.Time) er
 		return err
 	}
 	if res.material {
-		return c.store.Upsert(ctx, c.records([]instanceKey{res.key}))
+		return c.store.Upsert(ctx, c.engine.recordsForKeys([]instanceKey{res.key}))
 	}
 	c.mu.Lock()
 	c.dirty[res.key] = struct{}{}
@@ -64,18 +63,21 @@ func (c *Coordinator) Flush(ctx context.Context) error {
 	c.dirty = make(map[instanceKey]struct{})
 	c.mu.Unlock()
 
-	recs := c.records(keys)
+	recs := c.engine.recordsForKeys(keys)
 	if len(recs) == 0 {
 		return nil
 	}
 	return c.store.Upsert(ctx, recs)
 }
 
-// Prune clears instances idle since cutoff and marks exactly those resolved in
-// the store as of cutoff (the idle boundary). Returns the number cleared. This is
-// the TTL-on-silence resolution path; ResolveSubject is the explicit fast-path.
-func (c *Coordinator) Prune(ctx context.Context, cutoff time.Time) (int, error) {
-	keys := c.engine.pruneKeys(cutoff)
+// Prune clears the given source's instances idle since cutoff and marks exactly
+// those resolved in the store as of cutoff (the idle boundary). Returns the
+// number cleared. This is the TTL-on-silence resolution path; ResolveSubject is
+// the explicit fast-path. Source-scoped because resolution windows differ per
+// producer (ADR-0029 §3) — a shared engine must not resolve one source's
+// instances on another source's cadence.
+func (c *Coordinator) Prune(ctx context.Context, source Source, cutoff time.Time) (int, error) {
+	keys := c.engine.pruneKeysForSource(source, cutoff)
 	return len(keys), c.resolveKeys(ctx, keys, cutoff)
 }
 
@@ -124,18 +126,3 @@ func (c *Coordinator) Load(ctx context.Context) (int, error) {
 // Engine returns the underlying in-memory engine for read-only projection
 // (Snapshot) by consumers that also read live state.
 func (c *Coordinator) Engine() *Engine { return c.engine }
-
-// records projects keys into persistable Records, tagging source and the stable
-// id and skipping keys no longer live.
-func (c *Coordinator) records(keys []instanceKey) []Record {
-	anoms := c.engine.snapshotKeys(keys)
-	out := make([]Record, 0, len(anoms))
-	for _, a := range anoms {
-		out = append(out, Record{
-			ID:      RecordID(a.DefKey, a.Subject),
-			Source:  c.source,
-			Anomaly: a,
-		})
-	}
-	return out
-}

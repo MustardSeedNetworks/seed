@@ -99,7 +99,7 @@ func New(events <-chan probe.ResultEvent, store anomaly.Store, opts ...Option) (
 		logger = slog.Default()
 	}
 	engine := anomaly.NewEngine(cat)
-	coord := anomaly.NewCoordinator(engine, store, anomaly.SourceProbe)
+	coord := anomaly.NewCoordinator(engine, store)
 	return &Producer{
 		events:        events,
 		coord:         coord,
@@ -193,6 +193,8 @@ func (p *Producer) observe(ctx context.Context, re probe.ResultEvent, at time.Ti
 		return
 	}
 	for _, d := range dets {
+		// Stamp the producer source at the hand-off (ADR-0029 §2).
+		d.Source = anomaly.SourceProbe
 		if err := p.coord.Observe(ctx, d, at); err != nil {
 			p.logger.WarnContext(ctx, "probe anomaly persist (observe) failed",
 				"defKey", d.DefKey, "probeID", d.Subject.ID, "error", err)
@@ -236,7 +238,7 @@ func (p *Producer) flushAndPrune(ctx context.Context, now time.Time) {
 	if err := p.coord.Flush(ctx); err != nil {
 		p.logger.WarnContext(ctx, "probe anomaly persist (flush) failed", "error", err)
 	}
-	if _, err := p.coord.Prune(ctx, now.Add(-p.resolveWindow)); err != nil {
+	if _, err := p.coord.Prune(ctx, anomaly.SourceProbe, now.Add(-p.resolveWindow)); err != nil {
 		p.logger.WarnContext(ctx, "probe anomaly persist (prune) failed", "error", err)
 	}
 }

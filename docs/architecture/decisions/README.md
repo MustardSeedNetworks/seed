@@ -36,3 +36,4 @@ See the [Re-Architecture Blueprint](../RE_ARCHITECTURE_BLUEPRINT.md) for the ful
 | [0026](0026-delete-dead-health-check-read-path.md) | Delete the dead health-check read path (results/scoring/SLA); keep run/settings/anomalies | Accepted |
 | [0027](0027-migrate-health-checks-onto-probe.md) | Migrate on-demand health-checks onto the probe engine, then rename the transport | Accepted |
 | [0028](0028-anomaly-daily-rollups.md) | Daily rollups for the anomaly store — a daily census of mutable instances, not a RollupSource | Proposed |
+| [0029](0029-converge-anomaly-engines.md) | Converge the per-producer anomaly engines into one server-owned engine | Accepted |
