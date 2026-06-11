@@ -1,0 +1,142 @@
+# ADR-0027: Migrate the on-demand health-check stack onto the probe engine, then rename the transport
+
+**Status:** Proposed — 2026-06-11 (scoping ADR; no code in this change)
+
+## Context
+
+ADR-0025 made `internal/probe` the recurring-observation engine and the active-monitoring
+anomaly producer; ADR-0026 deleted the dead health-check *read* path (scoring/SLA/results).
+Both deliberately **kept three live routes** under `/telemetry/health-checks/*` and deferred
+renaming the transport family until the survivors moved onto probe:
+
+- `GET|POST /telemetry/health-checks/run` — run all configured checks **now** and return the batch.
+- `GET|PUT  /telemetry/health-checks/settings` — the check **target** configuration.
+- `GET      /telemetry/health-checks/anomalies` — already probe-backed (`source=probe`), since ADR-0026.
+
+A read-only audit (2026-06-11) established what the two unmigrated routes actually are:
+
+- **`/run` is a ~4,067-LOC legacy parallel stack** (13 `internal/api/health_checks_*.go` +
+  `handlers_*_checks.go` files), entirely independent of `internal/probe`. It **re-implements** six
+  protocols the probe checkers already cover (ping/tcp/udp/http/rtsp/dicom — `checkers/ping.go` even
+  documents itself as "mirrors `health_checks_ping.go`") **and adds eight verticals with no probe
+  checker at all**: HL7, FHIR, SQL, FileShare, LDAP, LTI, OPC-UA, Modbus.
+- **`/settings` persists to the config JSON file** (`config.Config.HealthChecks`), not the `probes`
+  SQLite table the probe engine uses. The two storage systems do not overlap. The per-endpoint
+  `criticality` field ADR-0026 flagged as unread lives here.
+- There is **no `/telemetry/probes/*` transport** — `/telemetry/health-checks/*` is the only HTTP
+  surface for both the legacy on-demand checks and the probe-backed anomalies.
+
+This is not the "small rewire" the roadmap assumed. It needs a decision and a phased plan before code,
+which is what this ADR provides. The direction is already constrained by two prior decisions:
+
+- **The probe package charter** (`internal/probe/doc.go`) already declares **one engine, one config
+  table, one results table for ALL probe-style observations** and names exactly these kinds — DNS, TLS,
+  PING, TCP, UDP, HTTP, HTTPS, RTSP, DICOM, **HL7, FHIR, LTI, LDAP, OPCUA, MODBUS**, NTP, SIP, 802.1X,
+  cable, multi-step transactions — plus `internal/api/health_checks_*.go` as the **parallel stack to
+  absorb** (SEED_ARCHITECTURE §3.1, Stage A1).
+- **ADR-0025 §1** already drew the probe-vs-jobs boundary: a *recurring monitor is a probe*; a
+  *one-shot diagnostic is a job*; and the one bridge is the engine's run-now primitive — "evaluate this
+  *configured monitor* immediately," which shares the probe's threshold/breach/anomaly path. Both
+  `Engine.RunDefinition` (ad-hoc) and `Engine.RunNow` (load a stored definition, dispatch, persist)
+  exist today.
+
+## Decision
+
+Migrate the on-demand health-check stack onto the probe engine, delete the legacy parallel stack, and
+rename the transport family **last**. Concretely:
+
+### 1. The health-check verticals are probes — make the charter concrete
+
+The eight verticals (HL7, FHIR, SQL, FileShare, LDAP, LTI, OPC-UA, Modbus) are **recurring
+reachability/health observations of a target** — probes by ADR-0025 §1, and already claimed by the
+probe charter. They become `probe.Checker` implementations under `internal/probe/checkers/`, registered
+in the engine alongside the existing nine. The six already-duplicated protocols (ping/tcp/udp/http/
+rtsp/dicom) keep the probe checker and **delete the `health_checks_*.go` copy** — one implementation per
+protocol.
+
+### 2. On-demand `/run` is a probe run-now, not a job
+
+Per ADR-0025 §1, on-demand "run all my checks now" is **not** a `platform/jobs` job (jobs are one-shot
+operations that produce a `Job{Result}` and *never* anomalies). It is the engine's on-demand evaluation
+of the operator's **configured probe definitions** — `RunNow` per definition — sharing the same
+checker → `Breach` → anomaly path an interval run uses. So an on-demand check **raises and clears the
+same anomaly** a scheduled run would. `/run` is rewired to fan `RunNow` over the configured probes and
+return their `Result`s; it dispatches through the engine, not the deleted `run*Tests()` methods.
+
+### 3. `/settings` target config migrates from the config file to the `probes` table
+
+The check targets (`config.Config.HealthChecks.*` lists) become **probe definitions** in the `probes`
+table — the single source the engine schedules and `RunNow` loads. The migration maps each target list
+to `Probe{Kind, Target, Params, IntervalSeconds, Enabled, Warning, Critical}`, and resolves the
+`criticality` field to either a threshold input or a catalog/anomaly severity (decided per kind in the
+implementing PR; cert-expiry in ADR-0025's as-built shows the kind-specific-threshold pattern). Once
+migrated, these targets are **continuously monitored and feed the unified anomaly store** — the point of
+the whole platform — instead of only being checked on demand.
+
+### 4. Delete the ~4,067-LOC legacy stack — no compat
+
+As each kind is covered by a probe checker, its `health_checks_*.go` / `handlers_*_checks.go` files,
+the `run*Tests()`/`Run*Checks()` `Server` methods, and the config-file `HealthChecks` plumbing are
+**deleted** (pre-alpha, no compat). The end state has one protocol implementation, one storage, one
+transport.
+
+### 5. Rename the transport family **last**, in one coherent change
+
+Only after `/run` + `/settings` are probe-backed does `/telemetry/health-checks/*` →
+`/telemetry/probes/*` become honest. Renaming earlier would leave a path that says "probes" while the
+data still came from the legacy config-file stack — the half-rename ADR-0025 §5 and ADR-0026 explicitly
+refused. The rename is mechanical: three `path:` literals in `server_routes.go`, regenerate the
+`capabilities.txt` golden, update the auth/endpoints integration tests, and the four frontend fetch
+sites (`HealthCheckCard`, `SlaDashboardCard`, the two settings-drawer hooks) plus the `HealthCheck*`
+component/type/i18n identifiers. The `/anomalies` path rename rides along here.
+
+## Phasing
+
+Each phase is its own PR; the behavioral migration (1–4) **must precede** the rename (5).
+
+| Phase | Scope | Notes |
+|---|---|---|
+| **P1** | Vertical checkers — HL7, FHIR, SQL, FileShare, LDAP, LTI, OPC-UA, Modbus as `probe.Checker`s, registered in the engine. | The bulk of the work; can be split per-kind or batched. Each needs its kind-specific threshold shape (à la cert-expiry). New files are single-word lowercase per the existing `internal/probe/checkers/` convention — `hl7.go`, `fhir.go`, `sql.go`, `fileshare.go`, `ldap.go`, `lti.go`, `opcua.go`, `modbus.go` — **no underscores** (the repo filename policy allows `_` only in `_test.go`). |
+| **P2** | `/settings` storage migration: `config.Config.HealthChecks` target lists → `probes` table; `criticality` → threshold/severity mapping; a goose migration if the `probes` schema needs new columns. | Settling the config→DB move; the scheduler now monitors these targets continuously. |
+| **P3** | Rewire `/run` to fan `Engine.RunNow` over the configured probes; **delete** the legacy protocol files + `run*Tests()`/`Run*Checks()` methods + config-file plumbing. | The ~4,067-LOC deletion lands here, once P1 covers every kind. This also retires the underscore-named `internal/api/health_checks_*.go` filenames (a pre-policy legacy naming) — the replacements already live under the no-underscore `internal/probe/checkers/` convention from P1. |
+| **P4** | Frontend rework: `HealthCheckCard` results display reads the new run/probe-result shape; settings panels bind to probe definitions; regenerate `types/generated/config.ts`; rename `HealthCheck*` components/types and the internal `'healthchecks'` / `'healthChecksUpdated'` coordination tokens. | Mostly mechanical but touches ~6 components + ~80 i18n keys (en+es). |
+| **P5** | Transport rename `/telemetry/health-checks/*` → `/telemetry/probes/*` (3 backend literals + `capabilities.txt` golden + integration tests + 4 FE fetch sites + i18n namespace). | Pure rename; rides last so it is never a half-rename. |
+
+## Alternatives considered
+
+- **On-demand `/run` becomes a `platform/jobs` job kind.** Rejected — ADR-0025 §1: jobs are one-shot
+  operations producing a `Job{Result}` and never anomalies; `/run` is an on-demand evaluation of
+  *configured monitors* that must raise/clear the same anomalies an interval run does. It is a probe
+  run-now, not a job. (A genuinely long batch could later gain progress via SSE, but that does not make
+  it a job — the engine already bounds concurrency.)
+- **Rename the transport now, migrate behavior later.** Rejected — a `/telemetry/probes/*` path serving
+  the legacy config-file stack is the misleading half-rename ADR-0025 §5 / ADR-0026 refused. The rename
+  must follow the behavior.
+- **Keep the legacy stack; only add new checkers to probe.** Rejected — two parallel protocol
+  implementations is exactly the duplication the NMS re-architecture (probe charter, SEED_ARCHITECTURE
+  §3.1) sets out to delete, and it leaves the verticals un-monitored (on-demand only, no anomalies).
+- **Drop the eight verticals entirely.** Rejected — they are real diagnostic capabilities (medical
+  HL7/FHIR/DICOM, enterprise SQL/LDAP/FileShare, industrial OPC-UA/Modbus, education LTI) that the
+  probe charter already commits to owning.
+
+## Consequences
+
+- One protocol implementation, one config store (`probes` table), one transport family. ~4,067 LOC of
+  duplicated legacy code deleted.
+- The eight verticals gain **continuous monitoring and anomalies** — today they are on-demand only.
+- Real cost: **eight new probe checkers** (P1) is the bulk of the effort, each needing a kind-specific
+  threshold shape and tests; plus a storage migration and a non-trivial frontend rework.
+- `criticality` finally gets a home (a threshold input or anomaly severity per kind) instead of being
+  stored-but-unread.
+- Until P1–P4 land, the transport keeps the `health-checks` name — accepted, because an honest name is
+  worth more than an early one.
+
+## Open questions (resolved in the implementing PRs, not here)
+
+- **`/run` batch latency.** Fanning `RunNow` over many targets (DICOM/HTTP handshakes) may be slow.
+  Lean: keep it synchronous and rely on the engine's bounded concurrency; revisit a progress-bearing
+  variant only if real batch sizes demand it (still a probe run-now, not a job).
+- **Per-kind threshold shapes.** Each vertical defines its own breach fields (à la
+  `cert_days_remaining`); the exact fields and catalog `Def`s are authored with each checker in P1.
+- **`criticality` mapping.** Whether it becomes a threshold input or an anomaly severity is a per-kind
+  call made in P2.
