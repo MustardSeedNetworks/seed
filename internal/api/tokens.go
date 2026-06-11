@@ -108,7 +108,8 @@ type LicenseStatusResponse struct {
 
 // handleLicenseStatus exposes the local license state to the UI. The
 // unlicensed (Free) state is a valid result, not an error condition.
-// Out of scope for C4 (ADR-0024): reads s.services.Auth.License directly.
+// Reads the license manager through s.licenseManager() — the single
+// Server accessor that D1 will repoint off the service container.
 func (s *Server) handleLicenseStatus(w http.ResponseWriter, r *http.Request) {
 	resp := LicenseStatusResponse{
 		Tier:          license.TierFree.String(),
@@ -116,7 +117,7 @@ func (s *Server) handleLicenseStatus(w http.ResponseWriter, r *http.Request) {
 		CanMintTokens: false,
 	}
 
-	mgr := s.services.Auth.License
+	mgr := s.licenseManager()
 	if mgr == nil {
 		// License disabled (dev / test build) — allow minting so the
 		// feature stays usable. Matches the tokens use-case LicenseGate

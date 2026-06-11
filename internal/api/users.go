@@ -553,7 +553,7 @@ func (s *Server) writeGated(next http.HandlerFunc) http.HandlerFunc {
 // grants it; Free + Starter do not. A nil license manager is treated
 // as "license disabled" (dev / test) and permits.
 func (s *Server) licenseAllowsMultiUser() bool {
-	mgr := s.services.Auth.License
+	mgr := s.licenseManager()
 	if mgr == nil {
 		return true
 	}

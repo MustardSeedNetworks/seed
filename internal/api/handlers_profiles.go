@@ -587,7 +587,7 @@ func (s *Server) enforceMultiClientGate(w http.ResponseWriter, r *http.Request) 
 	}
 
 	// 2nd+ profile. Check the license.
-	mgr := s.services.Auth.License
+	mgr := s.licenseManager()
 	if mgr == nil {
 		// License disabled (dev / test builds) — permit.
 		return true
@@ -666,7 +666,7 @@ func (s *Server) enforceMultiInterfaceGate(w http.ResponseWriter, r *http.Reques
 		return true
 	}
 
-	mgr := s.services.Auth.License
+	mgr := s.licenseManager()
 	if mgr == nil {
 		return true
 	}

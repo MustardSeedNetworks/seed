@@ -41,7 +41,7 @@ type FeatureGateResponse struct {
 // the gating layer never breaks local development workflows.
 func (s *Server) requireFeature(feature string, next http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		mgr := s.services.Auth.License
+		mgr := s.licenseManager()
 		if mgr == nil || mgr.HasFeature(feature) {
 			next(w, r)
 			return

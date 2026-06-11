@@ -455,7 +455,7 @@ func filterSamplePointsRoam(in []*survey.SamplePoint) []*survey.SamplePoint {
 // stripped. Centralizes the gate so getSurvey + listSurveys share the
 // same policy.
 func (s *Server) applyRoamFilterIfGated(in *survey.Survey) *survey.Survey {
-	mgr := s.services.Auth.License
+	mgr := s.licenseManager()
 	if mgr == nil || mgr.HasFeature("wifi_roam_analysis") {
 		return in
 	}
