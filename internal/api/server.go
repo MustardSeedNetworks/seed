@@ -458,8 +458,8 @@ func (s *Server) initProbeEngine(db *database.DB) {
 	probeEngine := probe.NewEngine(logging.GetLogger()).
 		WithStorage(db.Probes(), sched)
 
-	// Register V1.0 baseline checkers. Stage A1.7 will absorb the
-	// remaining 11 internal/api/health_checks_*.go kinds.
+	// Register V1.0 baseline checkers plus the health-check vertical
+	// checkers absorbed onto the probe engine (ADR-0027 P1).
 	probeEngine.RegisterChecker(checkers.NewDNSChecker())
 	probeEngine.RegisterChecker(checkers.NewTLSChecker())
 	probeEngine.RegisterChecker(checkers.NewPingChecker())
@@ -469,6 +469,14 @@ func (s *Server) initProbeEngine(db *database.DB) {
 	probeEngine.RegisterChecker(checkers.NewHTTPSChecker())
 	probeEngine.RegisterChecker(checkers.NewRTSPChecker())
 	probeEngine.RegisterChecker(checkers.NewDICOMChecker())
+	probeEngine.RegisterChecker(checkers.NewHL7Checker())
+	probeEngine.RegisterChecker(checkers.NewFHIRChecker())
+	probeEngine.RegisterChecker(checkers.NewSQLChecker())
+	probeEngine.RegisterChecker(checkers.NewFileShareChecker())
+	probeEngine.RegisterChecker(checkers.NewLDAPChecker())
+	probeEngine.RegisterChecker(checkers.NewLTIChecker())
+	probeEngine.RegisterChecker(checkers.NewOPCUAChecker())
+	probeEngine.RegisterChecker(checkers.NewModbusChecker())
 
 	s.probeEngine = probeEngine
 	s.probeScheduler = sched

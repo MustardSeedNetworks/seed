@@ -92,7 +92,7 @@ func (c *UDPChecker) Run(ctx context.Context, p probe.Probe) probe.Result {
 		}
 	}
 
-	meta, _ := json.Marshal(map[string]any{"addr": addr})
+	meta, _ := json.Marshal(map[string]any{metaKeyAddr: addr})
 	return probe.Result{
 		ProbeID:   p.ID,
 		ClientID:  p.ClientID,
