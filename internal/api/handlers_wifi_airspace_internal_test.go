@@ -1,6 +1,7 @@
 package api
 
 import (
+	"context"
 	"encoding/json"
 	"net"
 	"net/http"
@@ -67,7 +68,7 @@ func TestHandleWiFiAirspaceAndAnomaliesPopulated(t *testing.T) {
 	}
 	svc.SetSource("monitor0")
 	svc.Ingest(openBeacon(t), time.Now())
-	svc.Evaluate(time.Now())
+	svc.Evaluate(context.Background(), time.Now())
 	s := &Server{wifiQueries: troubleshooting.NewQueries(svc)}
 
 	// Airspace tree is populated and reports the active source.

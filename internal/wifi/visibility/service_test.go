@@ -1,10 +1,13 @@
 package visibility_test
 
 import (
+	"context"
 	"net"
+	"sync"
 	"testing"
 	"time"
 
+	"github.com/MustardSeedNetworks/seed/internal/anomaly"
 	wifianomaly "github.com/MustardSeedNetworks/seed/internal/wifi/anomaly"
 	"github.com/MustardSeedNetworks/seed/internal/wifi/dot11"
 	"github.com/MustardSeedNetworks/seed/internal/wifi/visibility"
@@ -75,7 +78,7 @@ func TestIngestAndEvaluateProducesAnomaly(t *testing.T) {
 	// An open network on 2.4 GHz channel 6: trips wifi-open-network (and is on a
 	// valid non-overlapping channel, so no adjacent-channel noise).
 	svc.Ingest(beacon(t, "00:11:22:33:44:55", "guest", dot11.SecurityOpen), now)
-	svc.Evaluate(now)
+	svc.Evaluate(context.Background(), now)
 
 	if len(svc.Tree()) == 0 {
 		t.Fatal("Tree empty after ingesting a beacon")
@@ -101,9 +104,9 @@ func TestEvaluateCoalesces(t *testing.T) {
 	now := time.Now()
 	b := beacon(t, "00:11:22:33:44:55", "guest", dot11.SecurityOpen)
 	svc.Ingest(b, now)
-	svc.Evaluate(now)
+	svc.Evaluate(context.Background(), now)
 	svc.Ingest(b, now.Add(time.Second))
-	svc.Evaluate(now.Add(time.Second))
+	svc.Evaluate(context.Background(), now.Add(time.Second))
 
 	open := 0
 	for _, a := range svc.Anomalies() {
@@ -138,7 +141,7 @@ func TestCustomDetectorAndOptions(t *testing.T) {
 		b.BSS.PMFRequired = true
 		svc.Ingest(b, now)
 	}
-	svc.Evaluate(now)
+	svc.Evaluate(context.Background(), now)
 
 	found := false
 	for _, a := range svc.Anomalies() {
@@ -197,5 +200,120 @@ func TestStartStopLifecycle(t *testing.T) {
 	// Stop is idempotent.
 	if stopErr := svc.Stop(); stopErr != nil {
 		t.Fatalf("second Stop: %v", stopErr)
+	}
+}
+
+// fakeAnomalyStore is an in-memory anomaly.Store for the persistence tests.
+type fakeAnomalyStore struct {
+	mu       sync.Mutex
+	rows     map[string]anomaly.Record
+	resolved map[string]time.Time
+	seed     []anomaly.Record // returned by LoadActive
+}
+
+func newFakeAnomalyStore() *fakeAnomalyStore {
+	return &fakeAnomalyStore{rows: map[string]anomaly.Record{}, resolved: map[string]time.Time{}}
+}
+
+func (f *fakeAnomalyStore) Upsert(_ context.Context, recs []anomaly.Record) error {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	for _, r := range recs {
+		f.rows[r.ID] = r
+	}
+	return nil
+}
+
+func (f *fakeAnomalyStore) MarkResolved(_ context.Context, ids []string, at time.Time) error {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	for _, id := range ids {
+		f.resolved[id] = at
+		delete(f.rows, id)
+	}
+	return nil
+}
+
+func (f *fakeAnomalyStore) LoadActive(_ context.Context) ([]anomaly.Record, error) {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	return f.seed, nil
+}
+
+func (f *fakeAnomalyStore) snapshot() []anomaly.Record {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	out := make([]anomaly.Record, 0, len(f.rows))
+	for _, r := range f.rows {
+		out = append(out, r)
+	}
+	return out
+}
+
+// TestPersistsAnomaliesToStore asserts that with a store configured, evaluating
+// an open-network beacon writes the detected anomaly through to the store tagged
+// with the Wi-Fi source (ADR-0021 phase 3 producer).
+func TestPersistsAnomaliesToStore(t *testing.T) {
+	fake := newFakeAnomalyStore()
+	svc, err := visibility.New(visibility.WithStore(fake))
+	if err != nil {
+		t.Fatalf("New: %v", err)
+	}
+	now := time.Now()
+	svc.Ingest(beacon(t, "00:11:22:33:44:55", "guest", dot11.SecurityOpen), now)
+	svc.Evaluate(context.Background(), now)
+
+	rows := fake.snapshot()
+	if len(rows) == 0 {
+		t.Fatal("no anomalies persisted after evaluate")
+	}
+	var foundOpen bool
+	for _, r := range rows {
+		if r.Source != anomaly.SourceWiFi {
+			t.Errorf("persisted source = %q, want wifi", r.Source)
+		}
+		if r.Anomaly.DefKey == wifianomaly.DefOpenNetwork {
+			foundOpen = true
+		}
+	}
+	if !foundOpen {
+		t.Errorf("expected a persisted %s anomaly, got %+v", wifianomaly.DefOpenNetwork, rows)
+	}
+}
+
+// TestLoadOnStartRestoresAnomalies asserts Start repopulates the engine from the
+// store's active instances so a restart does not lose live anomalies.
+func TestLoadOnStartRestoresAnomalies(t *testing.T) {
+	fake := newFakeAnomalyStore()
+	t0 := time.Now().Add(-time.Minute)
+	fake.seed = []anomaly.Record{{
+		ID: wifianomaly.DefOpenNetwork + "|bssid|00:11:22:33:44:55", Source: anomaly.SourceWiFi,
+		Anomaly: anomaly.Anomaly{
+			DefKey:    wifianomaly.DefOpenNetwork,
+			Severity:  anomaly.SeverityWarning,
+			Subject:   anomaly.SubjectRef{Kind: anomaly.SubjectBSSID, ID: "00:11:22:33:44:55"},
+			FirstSeen: t0, LastSeen: t0, Count: 3,
+		},
+	}}
+	// Long eval interval so the background loop does not evaluate during the test;
+	// load-on-start runs synchronously inside Start.
+	svc, err := visibility.New(visibility.WithStore(fake), visibility.WithEvalInterval(time.Hour))
+	if err != nil {
+		t.Fatalf("New: %v", err)
+	}
+	if startErr := svc.Start(t.Context()); startErr != nil {
+		t.Fatalf("Start: %v", startErr)
+	}
+	defer func() { _ = svc.Stop() }()
+
+	anoms := svc.Anomalies()
+	if len(anoms) != 1 || anoms[0].DefKey != wifianomaly.DefOpenNetwork {
+		t.Fatalf("restored anomalies = %+v, want one %s", anoms, wifianomaly.DefOpenNetwork)
+	}
+	if anoms[0].Count != 3 {
+		t.Errorf("restored count = %d, want 3", anoms[0].Count)
+	}
+	if svc.Status().Anomalies != 1 {
+		t.Errorf("Status.Anomalies = %d, want 1", svc.Status().Anomalies)
 	}
 }
