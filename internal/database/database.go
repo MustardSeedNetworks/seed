@@ -83,6 +83,7 @@ type DB struct {
 	topology          *TopologyRepository
 	alertRules        *AlertRulesRepository
 	alertSuppressions *AlertSuppressionsRepository
+	anomalies         *AnomalyRepository
 }
 
 // Config holds database configuration options.
@@ -594,6 +595,19 @@ func (db *DB) AlertSuppressions() *AlertSuppressionsRepository {
 		db.alertSuppressions = &AlertSuppressionsRepository{db: db}
 	}
 	return db.alertSuppressions
+}
+
+// Anomalies returns the anomaly repository (ADR-0021, Anomaly Platform). It is
+// the SQL system of record the engine's persistence Coordinator writes detected
+// anomalies through and reads active instances back from on start.
+func (db *DB) Anomalies() *AnomalyRepository {
+	db.mu.Lock()
+	defer db.mu.Unlock()
+
+	if db.anomalies == nil {
+		db.anomalies = &AnomalyRepository{db: db}
+	}
+	return db.anomalies
 }
 
 // Exec executes a query without returning any rows.
