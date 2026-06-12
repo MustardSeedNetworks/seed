@@ -9,8 +9,7 @@ import (
 	"net/http"
 
 	"github.com/MustardSeedNetworks/seed/internal/config"
-	"github.com/MustardSeedNetworks/seed/internal/database"
-	"github.com/MustardSeedNetworks/seed/internal/diagnostics/dns"
+	healthsettings "github.com/MustardSeedNetworks/seed/internal/health/settings"
 	"github.com/MustardSeedNetworks/seed/internal/i18n"
 	"github.com/MustardSeedNetworks/seed/internal/logging"
 )
@@ -38,9 +37,9 @@ func (s *Server) handleHealthChecksSettings(w http.ResponseWriter, r *http.Reque
 }
 
 // buildDNSServersResponse converts config DNS servers to response format.
-func (s *Server) buildDNSServersResponse() []DNSServerResponse {
-	resp := make([]DNSServerResponse, 0, len(s.config.DNS.Servers))
-	for _, d := range s.config.DNS.Servers {
+func buildDNSServersResponse(servers []config.DNSServer) []DNSServerResponse {
+	resp := make([]DNSServerResponse, 0, len(servers))
+	for _, d := range servers {
 		resp = append(resp, DNSServerResponse{Address: d.Address, Enabled: d.Enabled})
 	}
 	return resp
@@ -222,9 +221,9 @@ func buildModbusEndpointsResponse(eps []config.ModbusEndpoint) []ModbusEndpointR
 func (s *Server) getHealthChecksSettings(w http.ResponseWriter, r *http.Request) {
 	logger := logging.FromContext(r.Context())
 
-	hc, err := loadHealthCheckEndpoints(r.Context(), s.db().Probes())
+	st, err := s.healthSettings.Get(r.Context())
 	if err != nil {
-		logger.ErrorContext(r.Context(), "Failed to load health-check probes", "error", err)
+		logger.ErrorContext(r.Context(), "Failed to load health-check settings", "error", err)
 		sendErrorResponseWithDetails(
 			w, logger, http.StatusInternalServerError, ErrCodeInternal,
 			i18n.FromRequest(r).T("errors.settings.loadFailed"), "",
@@ -232,9 +231,10 @@ func (s *Server) getHealthChecksSettings(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
+	hc := st.Endpoints
 	resp := TestsSettingsResponse{
-		DNSHostname:        s.config.DNS.TestHostname,
-		DNSServers:         s.buildDNSServersResponse(),
+		DNSHostname:        st.DNSHostname,
+		DNSServers:         buildDNSServersResponse(st.DNSServers),
 		PingTargets:        buildPingTargetsResponse(hc.PingTargets),
 		TCPPorts:           buildTCPPortsResponse(hc.TCPPorts),
 		UDPPorts:           buildUDPPortsResponse(hc.UDPPorts),
@@ -249,47 +249,28 @@ func (s *Server) getHealthChecksSettings(w http.ResponseWriter, r *http.Request)
 		LTIEndpoints:       buildLTIEndpointsResponse(hc.LTIEndpoints),
 		OPCUAEndpoints:     buildOPCUAEndpointsResponse(hc.OPCUAEndpoints),
 		ModbusEndpoints:    buildModbusEndpointsResponse(hc.ModbusEndpoints),
-		RunPerformance:     s.config.HealthChecks.RunPerformance,
-		RunSpeedtest:       s.config.HealthChecks.RunSpeedtest,
-		RunIperf:           s.config.HealthChecks.RunIperf,
-		RunDiscovery:       s.config.HealthChecks.RunDiscovery,
+		RunPerformance:     st.RunPerformance,
+		RunSpeedtest:       st.RunSpeedtest,
+		RunIperf:           st.RunIperf,
+		RunDiscovery:       st.RunDiscovery,
 		Speedtest: SpeedtestSettingsResponse{
-			ServerID:      s.config.Speedtest.ServerID,
-			AutoRunOnLink: s.config.Speedtest.AutoRunOnLink,
+			ServerID:      st.SpeedtestServerID,
+			AutoRunOnLink: st.SpeedtestAutoRunOnLink,
 		},
 		Iperf: IperfSettingsResponse{
-			AutoRunOnLink: s.config.Iperf.AutoRunOnLink,
+			AutoRunOnLink: st.IperfAutoRunOnLink,
 		},
 	}
 	sendJSONResponse(w, logger, http.StatusOK, resp)
 }
 
-// applyDNSSettings applies DNS configuration from request.
-func (s *Server) applyDNSSettings(req *TestsSettingsResponse) {
-	if req.DNSHostname != "" {
-		s.config.DNS.TestHostname = req.DNSHostname
-		if s.dnsTester() != nil {
-			s.dnsTester().SetTestHostname(req.DNSHostname)
-		}
-	}
-
-	s.config.DNS.Servers = make([]config.DNSServer, 0, len(req.DNSServers))
+// requestDNSServers maps the wire DNS server list to config form.
+func requestDNSServers(req *TestsSettingsResponse) []config.DNSServer {
+	servers := make([]config.DNSServer, 0, len(req.DNSServers))
 	for _, d := range req.DNSServers {
-		s.config.DNS.Servers = append(
-			s.config.DNS.Servers,
-			config.DNSServer{Address: d.Address, Enabled: d.Enabled},
-		)
+		servers = append(servers, config.DNSServer{Address: d.Address, Enabled: d.Enabled})
 	}
-	if s.dnsTester() != nil {
-		configuredServers := make([]dns.ConfiguredServer, 0, len(s.config.DNS.Servers))
-		for _, d := range s.config.DNS.Servers {
-			configuredServers = append(
-				configuredServers,
-				dns.ConfiguredServer{Address: d.Address, Enabled: d.Enabled},
-			)
-		}
-		s.dnsTester().SetConfiguredServers(configuredServers)
-	}
+	return servers
 }
 
 // requestEndpointTargets builds a HealthChecksConfig from the request's
@@ -421,21 +402,9 @@ func requestEndpointTargets(req *TestsSettingsResponse) config.HealthChecksConfi
 }
 
 // applyPerformanceSettings applies performance test configuration from request.
-func (s *Server) applyPerformanceSettings(req *TestsSettingsResponse) {
-	s.config.HealthChecks.RunPerformance = req.RunPerformance
-	s.config.HealthChecks.RunSpeedtest = req.RunSpeedtest
-	s.config.HealthChecks.RunIperf = req.RunIperf
-	s.config.HealthChecks.RunDiscovery = req.RunDiscovery
-
-	s.config.Speedtest.ServerID = req.Speedtest.ServerID
-	s.config.Speedtest.AutoRunOnLink = req.Speedtest.AutoRunOnLink
-	if s.speedtestTester() != nil {
-		s.speedtestTester().SetServerID(req.Speedtest.ServerID)
-	}
-
-	s.config.Iperf.AutoRunOnLink = req.Iperf.AutoRunOnLink
-}
-
+// updateHealthChecksSettings persists the health-checks settings. Thin transport
+// (ADR-0020): decode, map the wire DTO to the domain model, and delegate the
+// probe-table + config persistence + tester sync to the service.
 func (s *Server) updateHealthChecksSettings(w http.ResponseWriter, r *http.Request) {
 	logger := logging.FromContext(r.Context())
 	localizer := i18n.FromRequest(r)
@@ -445,28 +414,23 @@ func (s *Server) updateHealthChecksSettings(w http.ResponseWriter, r *http.Reque
 		return
 	}
 
-	// The endpoint targets are the store-of-record in the probes table
-	// (ADR-0027 P2); the DNS, performance, and speedtest/iperf toggles
-	// remain config-file backed.
-	if !s.saveHealthCheckProbes(w, r, &req) {
-		return
-	}
-
-	// Lock config for write access (unlock before Save to avoid deadlock).
-	s.config.Lock()
-	s.applyDNSSettings(&req)
-	s.applyPerformanceSettings(&req)
-	s.config.Unlock()
-
-	if err := s.config.Save(s.configPath); err != nil {
-		logger.ErrorContext(r.Context(), "Failed to save config", "error", err)
+	err := s.healthSettings.Update(r.Context(), healthsettings.Settings{
+		Endpoints:              requestEndpointTargets(&req),
+		DNSHostname:            req.DNSHostname,
+		DNSServers:             requestDNSServers(&req),
+		RunPerformance:         req.RunPerformance,
+		RunSpeedtest:           req.RunSpeedtest,
+		RunIperf:               req.RunIperf,
+		RunDiscovery:           req.RunDiscovery,
+		SpeedtestServerID:      req.Speedtest.ServerID,
+		SpeedtestAutoRunOnLink: req.Speedtest.AutoRunOnLink,
+		IperfAutoRunOnLink:     req.Iperf.AutoRunOnLink,
+	})
+	if err != nil {
+		logger.ErrorContext(r.Context(), "Failed to save health-checks settings", "error", err)
 		sendErrorResponseWithDetails(
-			w,
-			logger,
-			http.StatusInternalServerError,
-			ErrCodeInternal,
-			localizer.T("errors.settings.saveFailed"),
-			"",
+			w, logger, http.StatusInternalServerError, ErrCodeInternal,
+			localizer.T("errors.settings.saveFailed"), "",
 		)
 		return
 	}
@@ -475,47 +439,6 @@ func (s *Server) updateHealthChecksSettings(w http.ResponseWriter, r *http.Reque
 		Status:  statusSuccess,
 		Message: "Health checks settings updated",
 	})
-}
-
-// saveHealthCheckProbes persists the request's endpoint targets to the
-// probes table (replacing the existing health-check-kind probes) and
-// reschedules the running probe engine so the change takes effect without
-// a restart. Returns false (after writing an error response) on failure.
-func (s *Server) saveHealthCheckProbes(w http.ResponseWriter, r *http.Request, req *TestsSettingsResponse) bool {
-	logger := logging.FromContext(r.Context())
-	localizer := i18n.FromRequest(r)
-
-	hc := requestEndpointTargets(req)
-	probes, err := healthCheckProbesFromConfig(&hc)
-	if err != nil {
-		logger.ErrorContext(r.Context(), "Failed to map health-check endpoints to probes", "error", err)
-		sendErrorResponseWithDetails(
-			w, logger, http.StatusInternalServerError, ErrCodeInternal,
-			localizer.T("errors.settings.saveFailed"), "",
-		)
-		return false
-	}
-
-	if dbErr := s.db().Probes().ReplaceProbesByKinds(
-		r.Context(), database.DefaultClientID, healthCheckKinds(), probes,
-	); dbErr != nil {
-		logger.ErrorContext(r.Context(), "Failed to persist health-check probes", "error", dbErr)
-		sendErrorResponseWithDetails(
-			w, logger, http.StatusInternalServerError, ErrCodeInternal,
-			localizer.T("errors.settings.saveFailed"), "",
-		)
-		return false
-	}
-
-	// Best-effort reschedule: persistence already succeeded, so a
-	// reschedule failure is logged but not surfaced — the new set takes
-	// effect on the next engine start regardless.
-	if s.probeEngine != nil {
-		if rErr := s.probeEngine.Reschedule(r.Context()); rErr != nil {
-			logger.WarnContext(r.Context(), "Failed to reschedule probe engine after settings save", "error", rErr)
-		}
-	}
-	return true
 }
 
 // statusResponse is the JSON body returned by simple ack-style endpoints.

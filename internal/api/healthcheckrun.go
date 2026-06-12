@@ -22,6 +22,7 @@ import (
 
 	"github.com/MustardSeedNetworks/seed/internal/config"
 	"github.com/MustardSeedNetworks/seed/internal/database"
+	"github.com/MustardSeedNetworks/seed/internal/health/probemap"
 	"github.com/MustardSeedNetworks/seed/internal/i18n"
 	"github.com/MustardSeedNetworks/seed/internal/logging"
 	"github.com/MustardSeedNetworks/seed/internal/probe"
@@ -298,7 +299,7 @@ func (s *Server) healthCheckProbes(ctx context.Context) ([]*database.Probe, erro
 // isHealthCheckKind reports whether kind is one of the fourteen kinds the
 // health-check surface owns.
 func isHealthCheckKind(kind string) bool {
-	return slices.Contains(healthCheckKinds(), kind)
+	return slices.Contains(probemap.Kinds(), kind)
 }
 
 // dispatchProbes runs each probe via Engine.RunNow with bounded concurrency

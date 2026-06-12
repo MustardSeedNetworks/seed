@@ -1,4 +1,4 @@
-package api
+package probemap
 
 import (
 	"encoding/json"
@@ -90,9 +90,9 @@ func TestHealthCheckProbesFromConfigAndBack(t *testing.T) {
 			},
 		},
 	}
-	probes, err := healthCheckProbesFromConfig(&hc)
+	probes, err := ProbesFromConfig(&hc)
 	if err != nil {
-		t.Fatalf("healthCheckProbesFromConfig: %v", err)
+		t.Fatalf("ProbesFromConfig: %v", err)
 	}
 	if len(probes) != 2 {
 		t.Fatalf("expected 2 probes, got %d", len(probes))

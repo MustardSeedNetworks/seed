@@ -8,6 +8,7 @@ package api
 // retention each live in sibling server_*.go files.
 
 import (
+	"context"
 	"net/http"
 	"os"
 	"strconv"
@@ -38,6 +39,7 @@ import (
 	"github.com/MustardSeedNetworks/seed/internal/engine"
 	enginestatus "github.com/MustardSeedNetworks/seed/internal/engine/status"
 	"github.com/MustardSeedNetworks/seed/internal/health/monitoring"
+	healthsettings "github.com/MustardSeedNetworks/seed/internal/health/settings"
 	ssosync "github.com/MustardSeedNetworks/seed/internal/identity/oauth"
 	"github.com/MustardSeedNetworks/seed/internal/identity/tokens"
 	"github.com/MustardSeedNetworks/seed/internal/identity/users"
@@ -254,6 +256,7 @@ type Server struct {
 	networkProblems    *problems.Service           // Network problem-detection use-case (ADR-0020)
 	bluetoothScans     *bluetooth.Service          // Bluetooth-discovery use-case (ADR-0020)
 	healthMonitoring   *monitoring.Service         // Health-monitoring use-case (ADR-0020)
+	healthSettings     *healthsettings.Service     // Health-checks settings use-case (ADR-0020)
 	updateLifecycle    *lifecycle.Service          // Update-lifecycle use-case (ADR-0020)
 	engineStatus       *enginestatus.Service       // Engine-status use-case (ADR-0020)
 	identityUsers      *users.Service              // User-management use-case (ADR-0020, ADR-0024)
@@ -932,6 +935,28 @@ func (s *Server) initDiscoveryUseCases() {
 // deleted — ADR-0026), so a nil or later-set store (the test harness) is honored.
 func (s *Server) initHealthUseCases() {
 	s.healthMonitoring = app.NewHealthMonitoring(s.anomalyStore, s.anomalyEngine)
+	s.healthSettings = app.NewHealthSettings(
+		s.healthProbeRepo, s.rescheduleProbeEngine,
+		s.config, s.configPath, s.dnsTester, s.speedtestTester,
+	)
+}
+
+// healthProbeRepo is the probes-table accessor the health-settings use-case reads
+// and writes through; nil when no DB is wired (the test harness).
+func (s *Server) healthProbeRepo() *database.ProbeRepository {
+	if s.dbConn == nil {
+		return nil
+	}
+	return s.dbConn.Probes()
+}
+
+// rescheduleProbeEngine reschedules the running probe engine after a settings
+// save; a nil engine is a no-op (best-effort, ADR-0027).
+func (s *Server) rescheduleProbeEngine(ctx context.Context) error {
+	if s.probeEngine == nil {
+		return nil
+	}
+	return s.probeEngine.Reschedule(ctx)
 }
 
 // initUpdateUseCases wires the update-lifecycle use-case (ADR-0020) from the
