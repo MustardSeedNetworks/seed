@@ -9,9 +9,11 @@ package settings
 import (
 	"errors"
 	"fmt"
+	"strconv"
 	"time"
 
 	"github.com/MustardSeedNetworks/seed/internal/config"
+	"github.com/MustardSeedNetworks/seed/internal/validation"
 )
 
 // PasswordPlaceholder is the masked value returned for stored SNMP passwords. A
@@ -311,4 +313,48 @@ func (s *Service) UpdateRogueDHCP(in RogueUpdate) error {
 		s.detector.UpdateKnownServers(in.KnownServers)
 	}
 	return nil
+}
+
+// ---------------------------------------------------------------------------
+// Guest-network isolation audit (#397)
+// ---------------------------------------------------------------------------
+
+// GuestAuditValidationError reports an invalid guest-audit setting. Kind is
+// "target" (Value is the offending IP) or "port" (Value is the offending port).
+// The transport layer maps Kind to the matching i18n message and surfaces Value
+// as the error detail.
+type GuestAuditValidationError struct {
+	Kind  string
+	Value string
+}
+
+func (e GuestAuditValidationError) Error() string {
+	return "settings: invalid guest-audit " + e.Kind + ": " + e.Value
+}
+
+// GuestAudit returns the configured guest-network isolation audit settings.
+func (s *Service) GuestAudit() config.GuestNetworkAuditConfig {
+	var out config.GuestNetworkAuditConfig
+	s.store.Read(func(c *config.Config) { out = c.Security.GuestNetworkAudit })
+	return out
+}
+
+// UpdateGuestAudit validates and persists the guest-audit settings. Every target
+// IP must parse and every port must be in 1..65535; the first offender is
+// returned as a GuestAuditValidationError before anything is persisted.
+func (s *Service) UpdateGuestAudit(in config.GuestNetworkAuditConfig) error {
+	for _, t := range in.Targets {
+		if !validation.IsValidIP(t.IP) {
+			return GuestAuditValidationError{Kind: "target", Value: t.IP}
+		}
+	}
+	for _, p := range in.Ports {
+		if p < 1 || p > 65535 {
+			return GuestAuditValidationError{Kind: "port", Value: strconv.Itoa(p)}
+		}
+	}
+	return s.store.Write(func(c *config.Config) error {
+		c.Security.GuestNetworkAudit = in
+		return nil
+	})
 }

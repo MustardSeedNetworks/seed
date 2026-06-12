@@ -143,13 +143,7 @@ func (s *Server) handleWiFi(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Get interface from query param or use current/default
-	wlanIface := s.getInterfaceFromRequest(r)
-	if wlanIface == "" {
-		wlanIface = s.config.Interface.WiFi
-		if wlanIface == "" {
-			wlanIface = s.config.Interface.Default
-		}
-	}
+	wlanIface := s.resolveWiFiInterface(r)
 
 	// Update WiFi manager to use the requested interface
 	s.wifiManager().SetInterface(wlanIface)
@@ -403,13 +397,7 @@ func (s *Server) handleWiFiForgetNetwork(w http.ResponseWriter, r *http.Request)
 // It scans available networks and organizes them by frequency band with channel overlap information.
 func (s *Server) handleWiFiChannelGraph(w http.ResponseWriter, r *http.Request) {
 	// Get interface from query param or use current/default
-	wlanIface := s.getInterfaceFromRequest(r)
-	if wlanIface == "" {
-		wlanIface = s.config.Interface.WiFi
-		if wlanIface == "" {
-			wlanIface = s.config.Interface.Default
-		}
-	}
+	wlanIface := s.resolveWiFiInterface(r)
 
 	if s.wifiScanner() == nil {
 		sendJSONResponse(w, nil, http.StatusOK, map[string]any{

@@ -56,11 +56,13 @@ func NewBluetooth(scanner func() *enumerate.BluetoothScanner) *bluetooth.Service
 // lifetime; the scanner is resolved per call so a later-set value (the api test
 // harness) is honored, and a nil scanner makes the subnet sync a no-op.
 func NewDiscoverySettings(
-	cfg *config.Config, path string, dd func() *enumerate.DeviceDiscovery,
+	cfg *config.Config, path string,
+	dd func() *enumerate.DeviceDiscovery, svc func() *enumerate.Service,
 ) *settings.Service {
 	return settings.NewService(
 		discoverySettingsStore{cfg: cfg, path: path},
 		discoverySubnetSink{dd: dd},
+		discoveryOptionsApplier{svc: svc},
 	)
 }
 
@@ -102,6 +104,21 @@ func (a discoverySubnetSink) SetAdditionalSubnets(cidrs []string) error {
 		return nil
 	}
 	return d.SetAdditionalSubnets(cidrs)
+}
+
+// discoveryOptionsApplier implements settings.OptionsApplier over the enumeration
+// service, resolved lazily; a nil service is a no-op so a settings write still
+// persists when the live scanner is not running.
+type discoveryOptionsApplier struct {
+	svc func() *enumerate.Service
+}
+
+func (a discoveryOptionsApplier) ReloadOptions() error {
+	svc := a.svc()
+	if svc == nil {
+		return nil
+	}
+	return svc.Reload()
 }
 
 // discoveryEngineAdapter implements devices.Engine over the discovery engine,

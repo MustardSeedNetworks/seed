@@ -427,7 +427,7 @@ func (s *Server) handleAdvancedFingerprint(w http.ResponseWriter, r *http.Reques
 	}
 
 	// Create fingerprinter with config timeout
-	timeout := s.config.NetworkDiscovery.ScanTimeout
+	timeout := s.discoveryScanTimeout()
 	if timeout == 0 {
 		timeout = fingerprintDefaultTimeoutSec * time.Second
 	}

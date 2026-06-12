@@ -9,6 +9,7 @@ package api
 
 import (
 	"context"
+	"errors"
 	"net/http"
 	"time"
 
@@ -16,10 +17,39 @@ import (
 	"github.com/MustardSeedNetworks/seed/internal/i18n"
 	"github.com/MustardSeedNetworks/seed/internal/logging"
 	"github.com/MustardSeedNetworks/seed/internal/security/guestaudit"
-	"github.com/MustardSeedNetworks/seed/internal/validation"
+	secsettings "github.com/MustardSeedNetworks/seed/internal/security/settings"
 )
 
 const guestAuditRunTimeout = 60 * time.Second
+
+// writeGuestAuditError maps a guest-audit settings error to its HTTP response: a
+// GuestAuditValidationError becomes a 400 with the field-specific i18n message and
+// the offending value as detail; anything else is a 500 save failure.
+func (s *Server) writeGuestAuditError(w http.ResponseWriter, r *http.Request, err error) {
+	logger := logging.FromContext(r.Context())
+	localizer := i18n.FromRequest(r)
+
+	var vErr secsettings.GuestAuditValidationError
+	if errors.As(err, &vErr) {
+		msgKey := "errors.guestAudit.invalidTarget"
+		detail := vErr.Value
+		if vErr.Kind == "port" {
+			msgKey = "errors.guestAudit.invalidPort"
+			detail = ""
+		}
+		sendErrorResponseWithDetails(
+			w, logger, http.StatusBadRequest, ErrCodeValidation,
+			localizer.T(msgKey), detail,
+		)
+		return
+	}
+
+	logger.ErrorContext(r.Context(), "Failed to save guest-audit settings", "error", err)
+	sendErrorResponseWithDetails(
+		w, logger, http.StatusInternalServerError, ErrCodeInternal,
+		localizer.T("errors.config.failedToSave"), "",
+	)
+}
 
 // handleGuestAuditSettings returns or updates the configured target list.
 // Routes: GET and PUT on /api/v1/security/guest-audit/settings.
@@ -29,7 +59,7 @@ func (s *Server) handleGuestAuditSettings(w http.ResponseWriter, r *http.Request
 
 	switch r.Method {
 	case http.MethodGet:
-		sendJSONResponse(w, logger, http.StatusOK, s.config.Security.GuestNetworkAudit)
+		sendJSONResponse(w, logger, http.StatusOK, s.securitySettings.GuestAudit())
 
 	case http.MethodPut:
 		var settings config.GuestNetworkAuditConfig
@@ -37,48 +67,8 @@ func (s *Server) handleGuestAuditSettings(w http.ResponseWriter, r *http.Request
 			return
 		}
 
-		// Validate each target before persisting.
-		for _, t := range settings.Targets {
-			if !validation.IsValidIP(t.IP) {
-				sendErrorResponseWithDetails(
-					w,
-					logger,
-					http.StatusBadRequest,
-					ErrCodeValidation,
-					localizer.T("errors.guestAudit.invalidTarget"),
-					t.IP,
-				)
-				return
-			}
-		}
-		for _, p := range settings.Ports {
-			if p < 1 || p > 65535 {
-				sendErrorResponseWithDetails(
-					w,
-					logger,
-					http.StatusBadRequest,
-					ErrCodeValidation,
-					localizer.T("errors.guestAudit.invalidPort"),
-					"",
-				)
-				return
-			}
-		}
-
-		s.config.Lock()
-		s.config.Security.GuestNetworkAudit = settings
-		s.config.Unlock()
-
-		if err := s.config.Save(s.configPath); err != nil {
-			logger.ErrorContext(r.Context(), "Failed to save guest-audit settings", "error", err)
-			sendErrorResponseWithDetails(
-				w,
-				logger,
-				http.StatusInternalServerError,
-				ErrCodeInternal,
-				localizer.T("errors.config.failedToSave"),
-				"",
-			)
+		if err := s.securitySettings.UpdateGuestAudit(settings); err != nil {
+			s.writeGuestAuditError(w, r, err)
 			return
 		}
 
@@ -107,7 +97,7 @@ func (s *Server) handleGuestAuditRun(w http.ResponseWriter, r *http.Request) {
 	logger := logging.FromContext(r.Context())
 	localizer := i18n.FromRequest(r)
 
-	cfg := s.config.Security.GuestNetworkAudit
+	cfg := s.securitySettings.GuestAudit()
 	if !cfg.Enabled {
 		sendErrorResponseWithDetails(
 			w,
