@@ -14,9 +14,6 @@ import (
 	securitysettings "github.com/MustardSeedNetworks/seed/internal/security/settings"
 )
 
-// passwordPlaceholder is used to mask sensitive values in API responses.
-const passwordPlaceholder = "*****"
-
 // ============================================================================
 // Request/Response Types and Handlers (fixes #544 - split from handlers.go)
 // ============================================================================
