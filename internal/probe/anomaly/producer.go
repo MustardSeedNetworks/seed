@@ -2,6 +2,7 @@ package probeanomaly
 
 import (
 	"context"
+	"errors"
 	"log/slog"
 	"sync"
 	"time"
@@ -9,6 +10,10 @@ import (
 	"github.com/MustardSeedNetworks/seed/internal/anomaly"
 	"github.com/MustardSeedNetworks/seed/internal/probe"
 )
+
+// errNilCoordinator guards New against a missing shared Coordinator — a wiring
+// bug, surfaced at startup rather than as a nil-deref in the consume loop.
+var errNilCoordinator = errors.New("probeanomaly: nil coordinator")
 
 const (
 	// defaultFlushInterval is how often the maintenance tick batches recurrence
@@ -82,24 +87,23 @@ func WithLogger(l *slog.Logger) Option {
 }
 
 // New builds a probe anomaly producer over the probe engine's event channel
-// (from Engine.Subscribe) and the unified anomaly store. It errors only if the
-// probe anomaly catalog is malformed — a programming error surfaced at startup,
-// never at runtime.
-func New(events <-chan probe.ResultEvent, store anomaly.Store, opts ...Option) (*Producer, error) {
+// (from Engine.Subscribe) and the shared, server-owned anomaly Coordinator
+// (ADR-0029): the producer no longer owns an engine or a Coordinator — it stamps
+// source=probe at the observe hand-off and drives its own Flush/Prune window on
+// the shared instance. The server performs the single load-on-start before any
+// producer observes, so Start does not load. coord must be non-nil.
+func New(events <-chan probe.ResultEvent, coord *anomaly.Coordinator, opts ...Option) (*Producer, error) {
+	if coord == nil {
+		return nil, errNilCoordinator
+	}
 	cfg := config{flushInterval: defaultFlushInterval, resolveWindow: defaultResolveWindow}
 	for _, o := range opts {
 		o(&cfg)
-	}
-	cat, err := Catalog()
-	if err != nil {
-		return nil, err
 	}
 	logger := cfg.logger
 	if logger == nil {
 		logger = slog.Default()
 	}
-	engine := anomaly.NewEngine(cat)
-	coord := anomaly.NewCoordinator(engine, store)
 	return &Producer{
 		events:        events,
 		coord:         coord,
@@ -112,9 +116,10 @@ func New(events <-chan probe.ResultEvent, store anomaly.Store, opts ...Option) (
 // Name implements engine.Engine.
 func (*Producer) Name() string { return "probe-anomaly" }
 
-// Start loads active instances from the store (so a restart keeps coalescing onto
-// persisted anomalies) and launches the consume + maintenance goroutines. It is
-// idempotent: a second call while running is a no-op.
+// Start launches the consume + maintenance goroutines. It is idempotent: a
+// second call while running is a no-op. Load-on-start is server-owned and
+// happens once on the shared Coordinator before any producer observes (ADR-0029),
+// so the producer does not load here.
 func (p *Producer) Start(ctx context.Context) error {
 	p.mu.Lock()
 	if p.cancel != nil {
@@ -124,14 +129,6 @@ func (p *Producer) Start(ctx context.Context) error {
 	loopCtx, cancel := context.WithCancel(ctx)
 	p.cancel = cancel
 	p.mu.Unlock()
-
-	// Load-on-start (ADR-0021). Best-effort — a store error degrades to a
-	// cold-start, not a failed Start.
-	if n, err := p.coord.Load(ctx); err != nil {
-		p.logger.WarnContext(ctx, "probe anomaly load-on-start failed", "error", err)
-	} else if n > 0 {
-		p.logger.InfoContext(ctx, "restored persisted probe anomalies", "count", n)
-	}
 
 	p.wg.Add(1)
 	go p.consume(loopCtx)

@@ -264,6 +264,36 @@ func TestFollowUpCapabilityDegradation(t *testing.T) {
 	}
 }
 
+// TestLenBySource asserts the source-scoped count only tallies one producer's
+// instances, so a shared engine (ADR-0029) lets each producer report its own
+// count without over-counting the others.
+func TestLenBySource(t *testing.T) {
+	at := time.Unix(0, 0)
+	e := anomaly.NewEngine(testCatalog(t))
+	must(t, e.Observe(anomaly.Detection{
+		DefKey: "open-ssid", Subject: bssid("aa"), Source: anomaly.SourceWiFi,
+	}, at))
+	must(t, e.Observe(anomaly.Detection{
+		DefKey: "co-channel", Subject: bssid("bb"), Source: anomaly.SourceWiFi,
+	}, at))
+	must(t, e.Observe(anomaly.Detection{
+		DefKey: "open-ssid", Subject: bssid("cc"), Source: anomaly.SourceProbe,
+	}, at))
+
+	if got := e.Len(); got != 3 {
+		t.Errorf("Len = %d, want 3", got)
+	}
+	if got := e.LenBySource(anomaly.SourceWiFi); got != 2 {
+		t.Errorf("LenBySource(wifi) = %d, want 2", got)
+	}
+	if got := e.LenBySource(anomaly.SourceProbe); got != 1 {
+		t.Errorf("LenBySource(probe) = %d, want 1", got)
+	}
+	if got := e.LenBySource(anomaly.SourceWired); got != 0 {
+		t.Errorf("LenBySource(wired) = %d, want 0", got)
+	}
+}
+
 func must(t *testing.T, err error) {
 	t.Helper()
 	if err != nil {

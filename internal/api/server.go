@@ -15,6 +15,7 @@ import (
 
 	alertpipeline "github.com/MustardSeedNetworks/seed/internal/alerts/pipeline"
 	"github.com/MustardSeedNetworks/seed/internal/alerts/rules"
+	"github.com/MustardSeedNetworks/seed/internal/anomaly"
 	"github.com/MustardSeedNetworks/seed/internal/app"
 	"github.com/MustardSeedNetworks/seed/internal/auth"
 	"github.com/MustardSeedNetworks/seed/internal/config"
@@ -197,6 +198,13 @@ type Server struct {
 	probeScheduler  *scheduler.Scheduler
 	probeAnomaly    *probeanomaly.Producer
 	retentionEngine *retention.Engine
+
+	// anomalyCoord is the single, server-owned anomaly Coordinator every producer
+	// shares (ADR-0029): one engine over the merged catalog + the unified store.
+	// Built by initAnomalyPlatform before the producers; nil only if the merged
+	// catalog is malformed (a programming error), in which case producers degrade
+	// to off.
+	anomalyCoord *anomaly.Coordinator
 
 	// --- Wi-Fi visibility (scan, manage, survey) ---
 	wifiMgr   *wifi.Manager
@@ -421,6 +429,7 @@ func (s *Server) initDatabaseDependentServices(db *database.DB) {
 		return
 	}
 	s.initLicenseAndAPITokens(db)
+	s.initAnomalyPlatform(db)
 	s.initProbeEngine(db)
 	s.initRetentionEngine(db)
 	s.initListeners(db)
@@ -487,11 +496,16 @@ func (s *Server) initProbeEngine(db *database.DB) {
 	// Wire the active-monitoring anomaly producer (ADR-0025): it subscribes to
 	// the probe engine's ResultEvent channel here (so it does not miss events
 	// before its own Start) and persists threshold breaches as anomalies under
-	// source=probe. Subscription happens now; the consume/maintenance loops start
-	// with the lifecycle. A catalog error is logged and skips the producer rather
-	// than aborting probe startup.
+	// source=probe through the shared, server-owned Coordinator (ADR-0029).
+	// Subscription happens now; the consume/maintenance loops start with the
+	// lifecycle. A nil Coordinator (malformed merged catalog) skips the producer
+	// rather than aborting probe startup.
+	if s.anomalyCoord == nil {
+		logging.GetLogger().Warn("probe anomaly producer not wired: no anomaly coordinator")
+		return
+	}
 	producer, prodErr := probeanomaly.New(
-		probeEngine.Subscribe(), db.Anomalies(),
+		probeEngine.Subscribe(), s.anomalyCoord,
 		probeanomaly.WithLogger(logging.GetLogger()),
 	)
 	if prodErr != nil {
@@ -876,7 +890,7 @@ func (s *Server) engineRegistry() *engine.Registry              { return s.engin
 // the server's lazy accessors + live config. Called after initDiscovery so the
 // discovery bridge the discovery use-case captures already exists.
 func (s *Server) initWiFiUseCases() {
-	s.wifiQueries = app.NewWiFiQueries(s.wifiVisibility)
+	s.wifiQueries = app.NewWiFiQueries(s.wifiVisibility, s.anomalyStore)
 	s.wifiManagement = app.NewWiFiManagement(s.wifiManager, s.wifiScanner, s.netManager, s.config, s.configPath)
 	s.wifiDiscovery = app.NewWiFiDiscovery(s.wifiBridge)
 }

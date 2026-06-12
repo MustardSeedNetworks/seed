@@ -103,6 +103,30 @@ lifecycle, no persistence). It is intentionally ephemeral and is **not** converg
 - **P3 — consumers read the store:** `/wifi/anomalies` → `ActiveBySource(wifi)`; remove the dead
   in-memory read path; goldens/tests updated.
 
+### As-built — P2 + P3 (shipped together)
+
+P2 and P3 landed in one PR: a shared, server-owned engine that is read in-memory per-source would
+over-report, so the consumer read switch could not be deferred behind P2. As built:
+
+- `api.initAnomalyPlatform` builds one `Engine` over `wifianomaly.Defs() ∪ probeanomaly.Defs()`
+  (NewCatalog's dup-id guard is the fail-fast), one `Coordinator` over `db.Anomalies()`, parked on
+  `Server.anomalyCoord`. Runs before `initProbeEngine`.
+- Both producers are injected with the shared Coordinator and no longer own an engine/Coordinator or
+  load on start: `probeanomaly.New(events, coord)`; `visibility.Service` gains
+  `WithCoordinator`/`SetCoordinator` (the cmd layer builds it airspace-only, the server injects the
+  Coordinator during init) and drops its owned engine, `WithStore`, `WithCapabilities`, and the
+  consumer `Anomalies()` method.
+- Single server-owned load-on-start: `coord.Load()` once in `initAnomalyPlatform`, before any
+  producer observes; the per-producer loads are removed. The shared engine holds every def, so
+  Restore no longer drops one producer's rows as orphans.
+- `Engine.LenBySource` added so `visibility.Status().Anomalies` reports only Wi-Fi (the shared engine
+  would otherwise over-count); `Engine.Snapshot` stays as the diagnostic in-memory view.
+- `/wifi/anomalies` reads `ActiveBySource(SourceWiFi)` via the troubleshooting `AnomalyStore` port
+  (symmetric with the probe endpoint's `source=probe` reader); the use-case composes the store list
+  with the live visibility `Status`. No route/capability change. The Wi-Fi card renders only persisted
+  fields, so there is no visible regression. Catalog-static `impact`/`followUps` re-derivation on read
+  (both endpoints, app-layer) is a deliberate, separate follow-up.
+
 ## Alternatives considered
 
 - **Keep two Coordinators sharing one store (status quo).** Rejected: leaves two engines, two catalogs,
