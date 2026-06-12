@@ -39,15 +39,23 @@ type SubnetSink interface {
 	SetAdditionalSubnets(cidrs []string) error
 }
 
+// OptionsApplier applies a discovery-options change to the running enumeration
+// service so an options update takes effect without a restart. A nil-backed
+// applier is a no-op.
+type OptionsApplier interface {
+	ReloadOptions() error
+}
+
 // Service is the network-discovery settings application service.
 type Service struct {
-	store Store
-	sink  SubnetSink
+	store   Store
+	sink    SubnetSink
+	applier OptionsApplier
 }
 
 // NewService builds the settings service over its ports.
-func NewService(store Store, sink SubnetSink) *Service {
-	return &Service{store: store, sink: sink}
+func NewService(store Store, sink SubnetSink, applier OptionsApplier) *Service {
+	return &Service{store: store, sink: sink, applier: applier}
 }
 
 // Settings returns the current network-discovery configuration.
@@ -63,6 +71,21 @@ func (s *Service) Update(in Update) error {
 	cur := s.store.Discovery()
 	in.mergeInto(&cur)
 	return s.store.SaveDiscovery(cur)
+}
+
+// SetOptions replaces the discovery options wholesale, persists, then applies the
+// change to the running enumeration service. Persisting before the apply lets the
+// applier read the new options off the live config (Reload re-reads it) and means
+// a successful write is durable even if the live reload reports an error — the
+// operator's setting survives a restart. Returns the applier error if the reload
+// fails after a successful save.
+func (s *Service) SetOptions(opts config.DiscoveryOptions) error {
+	cur := s.store.Discovery()
+	cur.Options = opts
+	if err := s.store.SaveDiscovery(cur); err != nil {
+		return err
+	}
+	return s.applier.ReloadOptions()
 }
 
 // Subnets returns the configured additional subnets.

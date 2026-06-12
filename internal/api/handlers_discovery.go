@@ -150,36 +150,17 @@ func (s *Server) setDiscoveryOptions(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Lock config for write access (fixes #759 - race condition)
-	// NOTE: Must unlock before Save() - Save() acquires RLock internally (fixes #783)
-	s.config.Lock()
-	s.config.NetworkDiscovery.Options = req
-	// Unlock before Save() to avoid deadlock
-	s.config.Unlock()
-
-	// Apply the options change to the running service
-	if err := s.discoveryService().Reload(); err != nil {
-		logger.ErrorContext(r.Context(), "Failed to reload discovery options", "error", err)
+	// Persist the new options and apply them to the running scanner via the
+	// discovery-settings use-case (fixes #759 race, #783 save deadlock, #735
+	// save-error surfacing — all owned by the service now).
+	if err := s.discoverySettings.SetOptions(req); err != nil {
+		logger.ErrorContext(r.Context(), "Failed to apply discovery options", "error", err)
 		sendErrorResponseWithDetails(
 			w,
 			logger,
 			http.StatusInternalServerError,
 			ErrCodeInternal,
 			localizer.T("errors.discovery.failedToApplyOptions"),
-			"",
-		)
-		return
-	}
-
-	// Save config to file (fixes #735 - return error on save failure)
-	if err := s.config.Save(s.configPath); err != nil {
-		logger.ErrorContext(r.Context(), "Failed to save config", "error", err)
-		sendErrorResponseWithDetails(
-			w,
-			logger,
-			http.StatusInternalServerError,
-			ErrCodeInternal,
-			localizer.T("errors.settings.saveFailed"),
 			"",
 		)
 		return

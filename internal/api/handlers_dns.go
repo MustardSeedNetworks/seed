@@ -152,14 +152,8 @@ func (s *Server) handleDNSSecurity(w http.ResponseWriter, r *http.Request) {
 		}
 
 		if len(req.Servers) == 0 {
-			// Use configured DNS servers from config
-			s.config.RLock()
-			for _, srv := range s.config.DNS.Servers {
-				if srv.Enabled {
-					req.Servers = append(req.Servers, srv.Address)
-				}
-			}
-			s.config.RUnlock()
+			// Fall back to the configured, enabled DNS servers.
+			req.Servers = s.enabledDNSServers()
 		}
 
 		if len(req.Servers) == 0 {

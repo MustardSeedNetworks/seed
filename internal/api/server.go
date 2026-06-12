@@ -864,11 +864,39 @@ func (s *Server) loginRateLimiter() *RateLimiter              { return s.loginLi
 func (s *Server) endpointRateLimiter() *EndpointRateLimiter   { return s.endpointLimiter }
 func (s *Server) netManager() *netif.Manager                  { return s.netMgr }
 func (s *Server) defaultInterface() string                    { return s.config.Interface.Default }
+func (s *Server) snmpConfig() *config.SNMPConfig              { return &s.config.SNMP }
+func (s *Server) discoveryScanTimeout() time.Duration         { return s.config.NetworkDiscovery.ScanTimeout }
 func (s *Server) linkMonitor() *netif.LinkMonitor             { return s.linkMon }
 func (s *Server) deviceDiscovery() *enumerate.DeviceDiscovery { return s.deviceDisc }
 func (s *Server) discoveryService() *enumerate.Service        { return s.discoverySvc }
 func (s *Server) discoveryEngine() *discovery.Engine          { return s.discoveryEng }
 func (s *Server) problemDetector() *discovery.ProblemDetector { return s.problemDet }
+
+// enabledDNSServers returns the addresses of the configured, enabled DNS servers,
+// encapsulating the config lock + layout so handlers stay free of it.
+func (s *Server) enabledDNSServers() []string {
+	s.config.RLock()
+	defer s.config.RUnlock()
+	addrs := make([]string, 0, len(s.config.DNS.Servers))
+	for _, srv := range s.config.DNS.Servers {
+		if srv.Enabled {
+			addrs = append(addrs, srv.Address)
+		}
+	}
+	return addrs
+}
+
+// resolveWiFiInterface picks the Wi-Fi interface for a request: an explicit query
+// override, else the configured Wi-Fi interface, else the default interface.
+func (s *Server) resolveWiFiInterface(r *http.Request) string {
+	if iface := s.getInterfaceFromRequest(r); iface != "" {
+		return iface
+	}
+	if wifi := s.config.Interface.WiFi; wifi != "" {
+		return wifi
+	}
+	return s.config.Interface.Default
+}
 
 // anomalyStore is the unified anomaly system of record (ADR-0021), the read
 // source for the health-checks anomaly endpoint after the bespoke health
@@ -935,7 +963,9 @@ func (s *Server) initWiFiUseCases() {
 // scan reads the discovered devices through the device-discovery accessor.
 func (s *Server) initDiscoveryUseCases() {
 	s.discoveryDevices = app.NewDiscoveryDevices(s.discoveryEngine)
-	s.discoverySettings = app.NewDiscoverySettings(s.config, s.configPath, s.deviceDiscovery)
+	s.discoverySettings = app.NewDiscoverySettings(
+		s.config, s.configPath, s.deviceDiscovery, s.discoveryService,
+	)
 	s.networkProblems = app.NewProblems(s.problemDetector, s.discoveryService)
 	s.topologyQueries = app.NewTopologyQueries(s.db, topologyMaxLimit)
 	s.exportService = export.NewService(serverExportSources{s: s})
