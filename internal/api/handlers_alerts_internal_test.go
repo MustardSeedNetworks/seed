@@ -9,6 +9,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/MustardSeedNetworks/seed/internal/app"
 	"github.com/MustardSeedNetworks/seed/internal/database"
 )
 
@@ -19,6 +20,7 @@ func newAlertsTestServer(t *testing.T) *Server {
 	db := newTestDB(t)
 	s := &Server{}
 	s.dbConn = db
+	s.alertInbox = app.NewAlertInbox(s.db)
 	return s
 }
 

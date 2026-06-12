@@ -14,6 +14,7 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/MustardSeedNetworks/seed/internal/alerts/inbox"
 	alertpipeline "github.com/MustardSeedNetworks/seed/internal/alerts/pipeline"
 	"github.com/MustardSeedNetworks/seed/internal/alerts/rules"
 	"github.com/MustardSeedNetworks/seed/internal/anomaly"
@@ -257,6 +258,7 @@ type Server struct {
 	networkProblems    *problems.Service           // Network problem-detection use-case (ADR-0020)
 	topologyQueries    *topology.Queries           // Topology read use-case (ADR-0020)
 	pollingTargets     *targets.Service            // Polling-targets CRUD use-case (ADR-0020)
+	alertInbox         *inbox.Service              // Alert-inbox (list/ack/resolve) use-case (ADR-0020)
 	bluetoothScans     *bluetooth.Service          // Bluetooth-discovery use-case (ADR-0020)
 	healthMonitoring   *monitoring.Service         // Health-monitoring use-case (ADR-0020)
 	healthSettings     *healthsettings.Service     // Health-checks settings use-case (ADR-0020)
@@ -931,6 +933,7 @@ func (s *Server) initDiscoveryUseCases() {
 	s.networkProblems = app.NewProblems(s.problemDetector, s.discoveryService)
 	s.topologyQueries = app.NewTopologyQueries(s.db, topologyMaxLimit)
 	s.pollingTargets = app.NewPollingTargets(s.db)
+	s.alertInbox = app.NewAlertInbox(s.db)
 	s.bluetoothScans = app.NewBluetooth(s.bluetoothScanner)
 }
 
