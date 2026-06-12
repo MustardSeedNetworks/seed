@@ -22,7 +22,22 @@ import (
 
 	"github.com/MustardSeedNetworks/seed/internal/database"
 	"github.com/MustardSeedNetworks/seed/internal/logging"
+	"github.com/MustardSeedNetworks/seed/internal/topology"
 )
+
+// writeTopologyError maps a topology read error to its HTTP status: the store
+// being unwired → 503 (the prior "Database not initialized"), a missing node →
+// 404, anything else → 500 with genericMsg.
+func writeTopologyError(w http.ResponseWriter, err error, genericMsg string) {
+	switch {
+	case errors.Is(err, topology.ErrUnavailable):
+		http.Error(w, "Database not initialized", http.StatusServiceUnavailable)
+	case errors.Is(err, topology.ErrNodeNotFound):
+		http.Error(w, "Node not found", http.StatusNotFound)
+	default:
+		http.Error(w, genericMsg, http.StatusInternalServerError)
+	}
+}
 
 // topologyPathPrefix is the route root for every topology handler.
 // Used to strip the prefix when extracting path parameters.
@@ -42,11 +57,6 @@ const topologyDefaultLimit = 200
 // requests.
 func (s *Server) handleTopologyNodes(w http.ResponseWriter, r *http.Request) {
 	logger := logging.FromContext(r.Context())
-	db := s.db()
-	if db == nil {
-		http.Error(w, "Database not initialized", http.StatusServiceUnavailable)
-		return
-	}
 
 	opts, parseErr := parseTopologyListOptions(r)
 	if parseErr != nil {
@@ -54,10 +64,10 @@ func (s *Server) handleTopologyNodes(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	nodes, err := db.Topology().List(r.Context(), opts)
+	nodes, err := s.topologyQueries.Nodes(r.Context(), opts)
 	if err != nil {
 		logger.ErrorContext(r.Context(), "list topology_nodes failed", "error", err)
-		http.Error(w, "Failed to list nodes", http.StatusInternalServerError)
+		writeTopologyError(w, err, "Failed to list nodes")
 		return
 	}
 
@@ -74,48 +84,18 @@ func (s *Server) handleTopologyNodeByID(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 	logger := logging.FromContext(r.Context())
-	db := s.db()
-	if db == nil {
-		http.Error(w, "Database not initialized", http.StatusServiceUnavailable)
-		return
-	}
 
-	// We don't have a GetByID — look up via List with no filter,
-	// then match in-memory. List is paged; with at most N=1000 nodes
-	// per page this is fine. A future GetByID method on the repo
-	// becomes a worthwhile optimization when the graph exceeds the
-	// page cap.
-	nodes, err := db.Topology().List(r.Context(), database.TopologyListOptions{Limit: topologyMaxLimit})
+	detail, err := s.topologyQueries.Node(r.Context(), id)
 	if err != nil {
-		logger.ErrorContext(r.Context(), "list topology_nodes failed", "error", err)
-		http.Error(w, "Failed to load node", http.StatusInternalServerError)
+		logger.ErrorContext(r.Context(), "load topology node failed", "node_id", id, "error", err)
+		writeTopologyError(w, err, "Failed to load node")
 		return
-	}
-	var node *database.TopologyNode
-	for _, n := range nodes {
-		if n.ID == id {
-			node = n
-			break
-		}
-	}
-	if node == nil {
-		http.Error(w, "Node not found", http.StatusNotFound)
-		return
-	}
-
-	interfaces, err := db.Topology().ListInterfaces(r.Context(), node.ID)
-	if err != nil {
-		logger.ErrorContext(r.Context(), "list interfaces failed", "node_id", node.ID, "error", err)
-	}
-	links, err := db.Topology().ListLinks(r.Context(), node.ID)
-	if err != nil {
-		logger.ErrorContext(r.Context(), "list links failed", "node_id", node.ID, "error", err)
 	}
 
 	writeJSON(w, r, map[string]any{
-		"node":       encodeNode(node),
-		"interfaces": encodeInterfaces(interfaces),
-		"links":      encodeLinks(links),
+		"node":       encodeNode(detail.Node),
+		"interfaces": encodeInterfaces(detail.Interfaces),
+		"links":      encodeLinks(detail.Links),
 	})
 }
 
@@ -124,21 +104,16 @@ func (s *Server) handleTopologyNodeByID(w http.ResponseWriter, r *http.Request) 
 // the edges incident to that node.
 func (s *Server) handleTopologyLinks(w http.ResponseWriter, r *http.Request) {
 	logger := logging.FromContext(r.Context())
-	db := s.db()
-	if db == nil {
-		http.Error(w, "Database not initialized", http.StatusServiceUnavailable)
-		return
-	}
 	nodeID := r.URL.Query().Get("node_id")
 	if nodeID == "" {
 		http.Error(w, "node_id query parameter required", http.StatusBadRequest)
 		return
 	}
 
-	links, err := db.Topology().ListLinks(r.Context(), nodeID)
+	links, err := s.topologyQueries.Links(r.Context(), nodeID)
 	if err != nil {
 		logger.ErrorContext(r.Context(), "list links failed", "node_id", nodeID, "error", err)
-		http.Error(w, "Failed to list links", http.StatusInternalServerError)
+		writeTopologyError(w, err, "Failed to list links")
 		return
 	}
 	writeTopologyJSON(w, r, "links", encodeLinks(links))
@@ -181,16 +156,11 @@ func (s *Server) handleTopologyARP(w http.ResponseWriter, r *http.Request) {
 		opts.Limit = n
 	}
 
-	db := s.db()
-	if db == nil {
-		http.Error(w, "Database not initialized", http.StatusServiceUnavailable)
-		return
-	}
-	bindings, err := db.Topology().ListARPBindings(r.Context(), opts)
+	bindings, err := s.topologyQueries.ARP(r.Context(), opts)
 	if err != nil {
 		logging.FromContext(r.Context()).ErrorContext(r.Context(),
 			"list topology_arp_bindings failed", "error", err)
-		http.Error(w, "Failed to list ARP bindings", http.StatusInternalServerError)
+		writeTopologyError(w, err, "Failed to list ARP bindings")
 		return
 	}
 	writeTopologyJSON(w, r, "bindings", encodeARPBindings(bindings))

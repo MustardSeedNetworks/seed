@@ -254,6 +254,7 @@ type Server struct {
 	discoveryDevices   *devices.Service            // Unified-discovery (engine) use-case (ADR-0020)
 	discoverySettings  *discoverysettings.Service  // Network-discovery settings use-case (ADR-0020)
 	networkProblems    *problems.Service           // Network problem-detection use-case (ADR-0020)
+	topologyQueries    *topology.Queries           // Topology read use-case (ADR-0020)
 	bluetoothScans     *bluetooth.Service          // Bluetooth-discovery use-case (ADR-0020)
 	healthMonitoring   *monitoring.Service         // Health-monitoring use-case (ADR-0020)
 	healthSettings     *healthsettings.Service     // Health-checks settings use-case (ADR-0020)
@@ -926,6 +927,7 @@ func (s *Server) initDiscoveryUseCases() {
 	s.discoveryDevices = app.NewDiscoveryDevices(s.discoveryEngine)
 	s.discoverySettings = app.NewDiscoverySettings(s.config, s.configPath, s.deviceDiscovery)
 	s.networkProblems = app.NewProblems(s.problemDetector, s.discoveryService)
+	s.topologyQueries = app.NewTopologyQueries(s.db, topologyMaxLimit)
 	s.bluetoothScans = app.NewBluetooth(s.bluetoothScanner)
 }
 
