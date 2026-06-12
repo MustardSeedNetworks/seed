@@ -123,3 +123,38 @@ func TestUpdateRogueDHCPAppliesAndSyncsDetector(t *testing.T) {
 		t.Errorf("detector should not sync when KnownServers is nil, got %v", det.lastKnownSet)
 	}
 }
+
+func TestVulnReadAndSeverity(t *testing.T) {
+	svc, cfg, _ := newService(t)
+	cfg.Security.VulnerabilityScanning.Enabled = true
+	cfg.Security.VulnerabilityScanning.SeverityThreshold = "high"
+
+	if v := svc.Vuln(); !v.Enabled || v.SeverityThreshold != "high" {
+		t.Errorf("Vuln() did not reflect config: %+v", v)
+	}
+	if svc.VulnSeverity() != "high" {
+		t.Errorf("VulnSeverity() = %q, want high", svc.VulnSeverity())
+	}
+}
+
+func TestUpdateVulnAppliesSixFieldsAndKeepsAutoScan(t *testing.T) {
+	svc, cfg, _ := newService(t)
+	// AutoScan is not an operator-settable field; it must survive an update.
+	cfg.Security.VulnerabilityScanning.AutoScan = true
+
+	err := svc.UpdateVuln(settings.VulnUpdate{
+		Enabled: true, CVEDatabase: "nvd", NVDAPIKey: "k",
+		UpdateInterval: 3600, SeverityThreshold: "medium", MaxConcurrent: 4,
+	})
+	if err != nil {
+		t.Fatalf("UpdateVuln: %v", err)
+	}
+	v := cfg.Security.VulnerabilityScanning
+	if !v.Enabled || v.CVEDatabase != "nvd" || v.NVDAPIKey != "k" ||
+		v.UpdateInterval != 3600 || v.SeverityThreshold != "medium" || v.MaxConcurrent != 4 {
+		t.Errorf("UpdateVuln did not apply the six fields: %+v", v)
+	}
+	if !v.AutoScan {
+		t.Error("UpdateVuln must not clobber AutoScan")
+	}
+}

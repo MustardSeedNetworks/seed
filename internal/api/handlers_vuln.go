@@ -24,6 +24,7 @@ import (
 	"github.com/MustardSeedNetworks/seed/internal/discovery/vuln"
 	"github.com/MustardSeedNetworks/seed/internal/i18n"
 	"github.com/MustardSeedNetworks/seed/internal/logging"
+	securitysettings "github.com/MustardSeedNetworks/seed/internal/security/settings"
 	"github.com/MustardSeedNetworks/seed/internal/validation"
 )
 
@@ -128,7 +129,7 @@ func (s *Server) handleVulnerabilityStatus(w http.ResponseWriter, r *http.Reques
 		jsonKeyEnabled:   true,
 		"scanning":       s.vulnScanner().IsRunning(),
 		"stats":          stats,
-		"severityFilter": s.config.Security.VulnerabilityScanning.SeverityThreshold,
+		"severityFilter": s.securitySettings.VulnSeverity(),
 	})
 }
 
@@ -229,7 +230,7 @@ func (s *Server) handleVulnerabilitySettings(w http.ResponseWriter, r *http.Requ
 
 	switch r.Method {
 	case http.MethodGet:
-		sendJSONResponse(w, logger, http.StatusOK, s.config.Security.VulnerabilityScanning)
+		sendJSONResponse(w, logger, http.StatusOK, s.securitySettings.Vuln())
 
 	case http.MethodPut:
 		var settings vuln.VulnerabilityScannerConfig
@@ -238,29 +239,20 @@ func (s *Server) handleVulnerabilitySettings(w http.ResponseWriter, r *http.Requ
 			return
 		}
 
-		// Update config
-		// NOTE: Must unlock before Save() - Save() acquires RLock internally (fixes #783)
-		s.config.Lock()
-		s.config.Security.VulnerabilityScanning.Enabled = settings.Enabled
-		s.config.Security.VulnerabilityScanning.CVEDatabase = settings.CVEDatabase
-		s.config.Security.VulnerabilityScanning.NVDAPIKey = settings.NVDAPIKey
-		s.config.Security.VulnerabilityScanning.UpdateInterval = settings.UpdateInterval
-		s.config.Security.VulnerabilityScanning.SeverityThreshold = settings.SeverityThreshold
-		s.config.Security.VulnerabilityScanning.MaxConcurrent = settings.MaxConcurrent
-		// Unlock before Save() to avoid deadlock
-		s.config.Unlock()
-
-		// Save config
-		if err := s.config.Save(s.configPath); err != nil {
+		err := s.securitySettings.UpdateVuln(securitysettings.VulnUpdate{
+			Enabled:           settings.Enabled,
+			CVEDatabase:       settings.CVEDatabase,
+			NVDAPIKey:         settings.NVDAPIKey,
+			UpdateInterval:    settings.UpdateInterval,
+			SeverityThreshold: settings.SeverityThreshold,
+			MaxConcurrent:     settings.MaxConcurrent,
+		})
+		if err != nil {
 			logger.ErrorContext(r.Context(), "Failed to save vulnerability config", "error", err)
 			sendErrorResponseWithDetails(
-				w,
-				logger,
-				http.StatusInternalServerError,
-				ErrCodeInternal,
-				localizer.T("errors.config.failedToSave"),
-				"",
-			) // fixes #694, #H7
+				w, logger, http.StatusInternalServerError, ErrCodeInternal,
+				localizer.T("errors.config.failedToSave"), "",
+			)
 			return
 		}
 
