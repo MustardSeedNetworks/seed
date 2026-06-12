@@ -22,6 +22,7 @@ import (
 
 	"github.com/MustardSeedNetworks/seed/internal/database"
 	"github.com/MustardSeedNetworks/seed/internal/logging"
+	"github.com/MustardSeedNetworks/seed/internal/polling/targets"
 )
 
 const (
@@ -78,38 +79,24 @@ func (s *Server) handlePollingTargetByID(w http.ResponseWriter, r *http.Request)
 
 func (s *Server) listPollingTargets(w http.ResponseWriter, r *http.Request) {
 	logger := logging.FromContext(r.Context())
-	db := s.db()
-	if db == nil {
-		http.Error(w, "Database not initialized", http.StatusServiceUnavailable)
-		return
-	}
-	targets, err := db.PollingTargets().List(r.Context(), r.URL.Query().Get("client_id"))
+	list, err := s.pollingTargets.List(r.Context(), r.URL.Query().Get("client_id"))
 	if err != nil {
 		logger.ErrorContext(r.Context(), "list polling_targets failed", "error", err)
-		http.Error(w, "Failed to list polling targets", http.StatusInternalServerError)
+		writePollingError(w, err, "Failed to list polling targets")
 		return
 	}
 	writeJSON(w, r, map[string]any{
-		jsonKeyCount: len(targets),
-		"targets":    encodePollingTargets(targets),
+		jsonKeyCount: len(list),
+		"targets":    encodePollingTargets(list),
 	})
 }
 
 func (s *Server) getPollingTarget(w http.ResponseWriter, r *http.Request, id string) {
 	logger := logging.FromContext(r.Context())
-	db := s.db()
-	if db == nil {
-		http.Error(w, "Database not initialized", http.StatusServiceUnavailable)
-		return
-	}
-	target, err := db.PollingTargets().Get(r.Context(), id)
+	target, err := s.pollingTargets.Get(r.Context(), id)
 	if err != nil {
-		if errors.Is(err, database.ErrPollingTargetNotFound) {
-			http.Error(w, "Target not found", http.StatusNotFound)
-			return
-		}
 		logger.ErrorContext(r.Context(), "get polling_target failed", "id", id, "error", err)
-		http.Error(w, "Failed to load target", http.StatusInternalServerError)
+		writePollingError(w, err, "Failed to load target")
 		return
 	}
 	writeJSON(w, r, encodePollingTarget(target))
@@ -117,29 +104,15 @@ func (s *Server) getPollingTarget(w http.ResponseWriter, r *http.Request, id str
 
 func (s *Server) createPollingTarget(w http.ResponseWriter, r *http.Request) {
 	logger := logging.FromContext(r.Context())
-	db := s.db()
-	if db == nil {
-		http.Error(w, "Database not initialized", http.StatusServiceUnavailable)
-		return
-	}
 	in, err := decodePollingTargetInput(r)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 	target := inputToTarget(in, "")
-	if createErr := db.PollingTargets().Create(r.Context(), target); createErr != nil {
+	if createErr := s.pollingTargets.Create(r.Context(), target); createErr != nil {
 		logger.ErrorContext(r.Context(), "create polling_target failed", "error", createErr)
-		// Validation errors from the repo are user input; everything
-		// else is a server problem. The repo signals validation via
-		// errors that don't wrap an underlying sql error — pragmatic
-		// classification by prefix keeps us from inventing a typed
-		// error hierarchy for one endpoint.
-		if strings.HasPrefix(createErr.Error(), "polling_targets:") {
-			http.Error(w, createErr.Error(), http.StatusBadRequest)
-			return
-		}
-		http.Error(w, "Failed to create target", http.StatusInternalServerError)
+		writePollingError(w, createErr, "Failed to create target")
 		return
 	}
 	w.Header().Set("Location", pollingTargetsPathPrefix+target.ID)
@@ -148,31 +121,15 @@ func (s *Server) createPollingTarget(w http.ResponseWriter, r *http.Request) {
 
 func (s *Server) updatePollingTarget(w http.ResponseWriter, r *http.Request, id string) {
 	logger := logging.FromContext(r.Context())
-	db := s.db()
-	if db == nil {
-		http.Error(w, "Database not initialized", http.StatusServiceUnavailable)
-		return
-	}
 	in, err := decodePollingTargetInput(r)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
-	target := inputToTarget(in, id)
-	if updErr := db.PollingTargets().Update(r.Context(), target); updErr != nil {
-		if errors.Is(updErr, database.ErrPollingTargetNotFound) {
-			http.Error(w, "Target not found", http.StatusNotFound)
-			return
-		}
+	current, updErr := s.pollingTargets.Update(r.Context(), inputToTarget(in, id))
+	if updErr != nil {
 		logger.ErrorContext(r.Context(), "update polling_target failed", "id", id, "error", updErr)
-		http.Error(w, "Failed to update target", http.StatusInternalServerError)
-		return
-	}
-	// Echo the freshly-read row so the client sees the audit columns
-	// (updated_at) the repo refreshed.
-	current, _ := db.PollingTargets().Get(r.Context(), id)
-	if current == nil {
-		writeJSON(w, r, encodePollingTarget(target))
+		writePollingError(w, updErr, "Failed to update target")
 		return
 	}
 	writeJSON(w, r, encodePollingTarget(current))
@@ -180,21 +137,29 @@ func (s *Server) updatePollingTarget(w http.ResponseWriter, r *http.Request, id 
 
 func (s *Server) deletePollingTarget(w http.ResponseWriter, r *http.Request, id string) {
 	logger := logging.FromContext(r.Context())
-	db := s.db()
-	if db == nil {
-		http.Error(w, "Database not initialized", http.StatusServiceUnavailable)
-		return
-	}
-	if err := db.PollingTargets().Delete(r.Context(), id); err != nil {
-		if errors.Is(err, database.ErrPollingTargetNotFound) {
-			http.Error(w, "Target not found", http.StatusNotFound)
-			return
-		}
+	if err := s.pollingTargets.Delete(r.Context(), id); err != nil {
 		logger.ErrorContext(r.Context(), "delete polling_target failed", "id", id, "error", err)
-		http.Error(w, "Failed to delete target", http.StatusInternalServerError)
+		writePollingError(w, err, "Failed to delete target")
 		return
 	}
 	w.WriteHeader(http.StatusNoContent)
+}
+
+// writePollingError maps a polling-targets use-case error to its HTTP status: the
+// store unwired → 503 (the prior "Database not initialized"), a missing target →
+// 404, a repo validation error → 400 with its message, anything else → 500.
+func writePollingError(w http.ResponseWriter, err error, genericMsg string) {
+	var ve targets.ValidationError
+	switch {
+	case errors.Is(err, targets.ErrUnavailable):
+		http.Error(w, "Database not initialized", http.StatusServiceUnavailable)
+	case errors.Is(err, targets.ErrNotFound):
+		http.Error(w, "Target not found", http.StatusNotFound)
+	case errors.As(err, &ve):
+		http.Error(w, ve.Msg, http.StatusBadRequest)
+	default:
+		http.Error(w, genericMsg, http.StatusInternalServerError)
+	}
 }
 
 // decodePollingTargetInput parses the JSON body. Returns a 400-

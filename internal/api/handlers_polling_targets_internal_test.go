@@ -8,6 +8,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	"github.com/MustardSeedNetworks/seed/internal/app"
 	"github.com/MustardSeedNetworks/seed/internal/database"
 )
 
@@ -18,6 +19,7 @@ func newPollingTargetsTestServer(t *testing.T) *Server {
 	db := newTestDB(t)
 	s := &Server{}
 	s.dbConn = db
+	s.pollingTargets = app.NewPollingTargets(s.db)
 	return s
 }
 
