@@ -58,6 +58,7 @@ import (
 	"github.com/MustardSeedNetworks/seed/internal/platform/jobs"
 	snmporchestrator "github.com/MustardSeedNetworks/seed/internal/polling/snmp/orchestrator"
 	"github.com/MustardSeedNetworks/seed/internal/polling/snmp/snmpclient"
+	"github.com/MustardSeedNetworks/seed/internal/polling/targets"
 	"github.com/MustardSeedNetworks/seed/internal/probe"
 	probeanomaly "github.com/MustardSeedNetworks/seed/internal/probe/anomaly"
 	"github.com/MustardSeedNetworks/seed/internal/probe/checkers"
@@ -255,6 +256,7 @@ type Server struct {
 	discoverySettings  *discoverysettings.Service  // Network-discovery settings use-case (ADR-0020)
 	networkProblems    *problems.Service           // Network problem-detection use-case (ADR-0020)
 	topologyQueries    *topology.Queries           // Topology read use-case (ADR-0020)
+	pollingTargets     *targets.Service            // Polling-targets CRUD use-case (ADR-0020)
 	bluetoothScans     *bluetooth.Service          // Bluetooth-discovery use-case (ADR-0020)
 	healthMonitoring   *monitoring.Service         // Health-monitoring use-case (ADR-0020)
 	healthSettings     *healthsettings.Service     // Health-checks settings use-case (ADR-0020)
@@ -928,6 +930,7 @@ func (s *Server) initDiscoveryUseCases() {
 	s.discoverySettings = app.NewDiscoverySettings(s.config, s.configPath, s.deviceDiscovery)
 	s.networkProblems = app.NewProblems(s.problemDetector, s.discoveryService)
 	s.topologyQueries = app.NewTopologyQueries(s.db, topologyMaxLimit)
+	s.pollingTargets = app.NewPollingTargets(s.db)
 	s.bluetoothScans = app.NewBluetooth(s.bluetoothScanner)
 }
 
