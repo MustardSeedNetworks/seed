@@ -21,6 +21,7 @@ import (
 	"github.com/MustardSeedNetworks/seed/internal/app"
 	"github.com/MustardSeedNetworks/seed/internal/auth"
 	"github.com/MustardSeedNetworks/seed/internal/config"
+	"github.com/MustardSeedNetworks/seed/internal/config/backups"
 	"github.com/MustardSeedNetworks/seed/internal/database"
 	"github.com/MustardSeedNetworks/seed/internal/dhcp"
 	"github.com/MustardSeedNetworks/seed/internal/diagnostics/cable"
@@ -259,6 +260,7 @@ type Server struct {
 	topologyQueries    *topology.Queries           // Topology read use-case (ADR-0020)
 	pollingTargets     *targets.Service            // Polling-targets CRUD use-case (ADR-0020)
 	alertInbox         *inbox.Service              // Alert-inbox (list/ack/resolve) use-case (ADR-0020)
+	configBackups      *backups.Service            // Config backup/restore use-case (ADR-0020)
 	bluetoothScans     *bluetooth.Service          // Bluetooth-discovery use-case (ADR-0020)
 	healthMonitoring   *monitoring.Service         // Health-monitoring use-case (ADR-0020)
 	healthSettings     *healthsettings.Service     // Health-checks settings use-case (ADR-0020)
@@ -382,6 +384,7 @@ func NewServer(
 	// builds the adapters; api passes its lazy db accessor + live config.
 	s.settingsStore = app.NewSettings(s.db, s.config)
 	s.settingsManagement = app.NewSettingsManagement(s.config, s.configPath)
+	s.configBackups = backups.NewService(s.config, s.configPath)
 	s.securitySettings = app.NewSecuritySettings(s.config, s.configPath, s.rogueDetector)
 
 	// Wire the profiles catalog use-case (ADR-0020). The composition root builds
