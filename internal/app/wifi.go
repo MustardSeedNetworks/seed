@@ -31,8 +31,12 @@ import (
 func NewWiFiQueries(
 	src func() *visibility.Service,
 	anomalyStore func() *database.AnomalyRepository,
+	anomalyEngine func() *anomaly.Engine,
 ) *troubleshooting.Queries {
-	return troubleshooting.NewQueries(wifiVisibilitySource(src), wifiAnomalyStore{store: anomalyStore})
+	return troubleshooting.NewQueries(
+		wifiVisibilitySource(src),
+		wifiAnomalyStore{store: anomalyStore, engine: anomalyEngine},
+	)
 }
 
 // wifiVisibilitySource returns the visibility port, or a genuinely-nil interface
@@ -47,17 +51,23 @@ func wifiVisibilitySource(src func() *visibility.Service) troubleshooting.Visibi
 
 // wifiAnomalyStore implements troubleshooting.AnomalyStore over the unified
 // anomaly store (ADR-0029 §4), reading the source=wifi slice — symmetric with the
-// health endpoint's source=probe reader (see health.go). The collaborator is
-// resolved lazily so a later-set value (the api test harness) is honored; a nil
-// store degrades to Available() == false (empty-but-valid list).
+// health endpoint's source=probe reader (see health.go) — and re-deriving the
+// catalog-static Impact / FollowUps on read from the shared engine. Collaborators
+// are resolved lazily so a later-set value (the api test harness) is honored; a
+// nil store degrades to Available() == false (empty-but-valid list).
 type wifiAnomalyStore struct {
-	store func() *database.AnomalyRepository
+	store  func() *database.AnomalyRepository
+	engine func() *anomaly.Engine
 }
 
 func (a wifiAnomalyStore) Available() bool { return a.store() != nil }
 
 func (a wifiAnomalyStore) ActiveWiFi(ctx context.Context) ([]anomaly.Anomaly, error) {
-	return a.store().ActiveBySource(ctx, anomaly.SourceWiFi)
+	list, err := a.store().ActiveBySource(ctx, anomaly.SourceWiFi)
+	if err != nil {
+		return nil, err
+	}
+	return enrichAnomalies(a.engine(), list), nil
 }
 
 // NewWiFiManagement builds the Wi-Fi settings/scan/status/connect use-case

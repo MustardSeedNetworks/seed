@@ -305,6 +305,25 @@ func (e *Engine) recordsForKeys(keys []instanceKey) []Record {
 	return out
 }
 
+// EnrichStatic fills the catalog-static fields a store read cannot reconstruct —
+// Impact and the capability-degraded FollowUps — from the catalog by DefKey,
+// returning the enriched copy. The persisted scalar fields (Title, Description,
+// Recommendation, Standards, Severity, …) are left exactly as the store returned
+// them; only the two unpersisted fields are filled. FollowUps reuse the same
+// capability degradation as the live Snapshot, so a store-backed read and an
+// in-memory read present the identical projection. An orphaned row whose DefKey
+// is no longer in the catalog is returned unchanged. Reads only the immutable
+// catalog and capability set, so it is safe to call while producers observe.
+func (e *Engine) EnrichStatic(a Anomaly) Anomaly {
+	def, ok := e.catalog.Lookup(a.DefKey)
+	if !ok {
+		return a
+	}
+	a.Impact = def.Impact
+	a.FollowUps = e.projectFollowUps(def.FollowUps)
+	return a
+}
+
 // Snapshot projects the live stream as deterministically-ordered Anomaly views,
 // merging catalog copy with instance evidence/lifecycle and degrading
 // capability-gated auto follow-ups to prompts. Ordering: severity (most urgent
