@@ -2,12 +2,13 @@ package api
 
 import (
 	"context"
+	"errors"
 	"log/slog"
-	"net"
 	"net/http"
 	"time"
 
 	"github.com/MustardSeedNetworks/seed/internal/config"
+	discoverysettings "github.com/MustardSeedNetworks/seed/internal/discovery/settings"
 	"github.com/MustardSeedNetworks/seed/internal/i18n"
 	"github.com/MustardSeedNetworks/seed/internal/logging"
 )
@@ -275,12 +276,46 @@ func (s *Server) handleDevicesSettings(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+// getDevicesSettings serves the current network-discovery settings. Thin
+// transport (ADR-0020): read from the discovery-settings service, map the domain
+// config to the wire DTO (duration → ms).
 func (s *Server) getDevicesSettings(w http.ResponseWriter, r *http.Request) {
 	logger := logging.FromContext(r.Context())
-	cfg := s.config.NetworkDiscovery
+	sendJSONResponse(w, logger, http.StatusOK, discoveryConfigToResponse(s.discoverySettings.Settings()))
+}
 
-	resp := NetworkDiscoverySettingsResponse{
-		// Legacy fields (backward compatibility)
+// updateDevicesSettings persists the network-discovery settings. Thin transport:
+// decode the wire DTO, map it to the domain update, delegate the merge/persist to
+// the service, and map a store error to 500.
+func (s *Server) updateDevicesSettings(w http.ResponseWriter, r *http.Request) {
+	logger := logging.FromContext(r.Context())
+	localizer := i18n.FromRequest(r)
+	r.Body = http.MaxBytesReader(w, r.Body, MaxBodySizeJSON)
+
+	var req NetworkDiscoverySettingsResponse
+	if !decodeJSONStrict(w, r, &req, MaxBodySizeJSON) {
+		return
+	}
+
+	if err := s.discoverySettings.Update(requestToDiscoveryUpdate(req)); err != nil {
+		logger.ErrorContext(r.Context(), "Failed to save discovery settings", "error", err)
+		sendErrorResponseWithDetails(
+			w, logger, http.StatusInternalServerError, ErrCodeInternal,
+			localizer.T("errors.settings.saveFailed"), "",
+		)
+		return
+	}
+
+	sendJSONResponse(w, logger, http.StatusOK, map[string]string{
+		"status":  statusSuccess,
+		"message": "Network discovery settings updated",
+	})
+}
+
+// discoveryConfigToResponse maps the domain discovery config to the wire DTO
+// (duration → milliseconds). Pure transport serialization.
+func discoveryConfigToResponse(cfg config.NetworkDiscoveryConfig) NetworkDiscoverySettingsResponse {
+	return NetworkDiscoverySettingsResponse{
 		Enabled:        cfg.Enabled,
 		ARPScanWorkers: cfg.ARPScanWorkers,
 		PingTimeoutMs:  cfg.PingTimeout.Milliseconds(),
@@ -288,9 +323,7 @@ func (s *Server) getDevicesSettings(w http.ResponseWriter, r *http.Request) {
 		AutoScan:       cfg.AutoScan,
 		ScanIntervalMs: cfg.ScanInterval.Milliseconds(),
 		OUIFilePath:    cfg.OUIFilePath,
-
-		// Direct options configuration (profiles removed).
-		IPv6Enabled: cfg.IPv6Enabled,
+		IPv6Enabled:    cfg.IPv6Enabled,
 		Options: OptionsResponse{
 			PassiveProtocols: PassiveProtocolResponse{
 				LLDP: cfg.Options.PassiveProtocols.LLDP,
@@ -330,134 +363,59 @@ func (s *Server) getDevicesSettings(w http.ResponseWriter, r *http.Request) {
 			ServiceProbes: cfg.Fingerprinting.ServiceProbes,
 		},
 	}
-
-	sendJSONResponse(w, logger, http.StatusOK, resp)
 }
 
-// applyLegacyDiscoveryConfig applies legacy/backward-compatible discovery settings.
-func (s *Server) applyLegacyDiscoveryConfig(req *NetworkDiscoverySettingsResponse) {
-	s.config.NetworkDiscovery.Enabled = req.Enabled
-	if req.ARPScanWorkers > 0 {
-		s.config.NetworkDiscovery.ARPScanWorkers = req.ARPScanWorkers
+// requestToDiscoveryUpdate maps the wire DTO to the domain update model. Pure
+// transport mapping; the field-specific merge rules live in the service.
+func requestToDiscoveryUpdate(req NetworkDiscoverySettingsResponse) discoverysettings.Update {
+	return discoverysettings.Update{
+		Enabled:        req.Enabled,
+		ARPScanWorkers: req.ARPScanWorkers,
+		PingTimeoutMs:  req.PingTimeoutMs,
+		ScanTimeoutMs:  req.ScanTimeoutMs,
+		AutoScan:       req.AutoScan,
+		ScanIntervalMs: req.ScanIntervalMs,
+		OUIFilePath:    req.OUIFilePath,
+		IPv6Enabled:    req.IPv6Enabled,
+		Options: discoverysettings.OptionsUpdate{
+			PassiveProtocols: discoverysettings.PassiveProtocolsUpdate{
+				LLDP: req.Options.PassiveProtocols.LLDP,
+				CDP:  req.Options.PassiveProtocols.CDP,
+				EDP:  req.Options.PassiveProtocols.EDP,
+				NDP:  req.Options.PassiveProtocols.NDP,
+			},
+			ARPScan:  req.Options.ARPScan,
+			ICMPScan: req.Options.ICMPScan,
+			PortScan: discoverysettings.PortScanUpdate{
+				Enabled:         req.Options.PortScan.Enabled,
+				TCPPorts:        req.Options.PortScan.TCPPorts,
+				UDPPorts:        req.Options.PortScan.UDPPorts,
+				BannerTimeoutMs: req.Options.PortScan.BannerTimeoutMs,
+			},
+			TCPProbe: discoverysettings.TCPProbeUpdate{
+				TimeoutMs: req.Options.TCPProbe.TimeoutMs,
+				Workers:   req.Options.TCPProbe.Workers,
+			},
+			Traceroute: req.Options.Traceroute,
+			SNMPQuery:  req.Options.SNMPQuery,
+		},
+		Timing: discoverysettings.TimingUpdate{
+			ProbeIntervalMs:  req.Timing.ProbeIntervalMs,
+			RescanIntervalMs: req.Timing.RescanIntervalMs,
+			Workers:          req.Timing.Workers,
+		},
+		Profiler: discoverysettings.ProfilerUpdate{
+			Enabled:       req.Profiler.Enabled,
+			TimeoutMs:     req.Profiler.TimeoutMs,
+			MaxConcurrent: req.Profiler.MaxConcurrent,
+			QuickPorts:    req.Profiler.QuickPorts,
+		},
+		Fingerprinting: discoverysettings.FingerprintingUpdate{
+			Enabled:       req.Fingerprinting.Enabled,
+			OSDetection:   req.Fingerprinting.OSDetection,
+			ServiceProbes: req.Fingerprinting.ServiceProbes,
+		},
 	}
-	if req.PingTimeoutMs > 0 {
-		s.config.NetworkDiscovery.PingTimeout = time.Duration(req.PingTimeoutMs) * time.Millisecond
-	}
-	if req.ScanTimeoutMs > 0 {
-		s.config.NetworkDiscovery.ScanTimeout = time.Duration(req.ScanTimeoutMs) * time.Millisecond
-	}
-	s.config.NetworkDiscovery.AutoScan = req.AutoScan
-	s.config.NetworkDiscovery.ScanInterval = time.Duration(req.ScanIntervalMs) * time.Millisecond
-	if req.OUIFilePath != "" {
-		s.config.NetworkDiscovery.OUIFilePath = req.OUIFilePath
-	}
-	s.config.NetworkDiscovery.IPv6Enabled = req.IPv6Enabled
-}
-
-// applyDiscoveryOptions applies discovery options including protocols, port scan, and TCP probe.
-func (s *Server) applyDiscoveryOptions(req *NetworkDiscoverySettingsResponse) {
-	opts := &s.config.NetworkDiscovery.Options
-	opts.PassiveProtocols.LLDP = req.Options.PassiveProtocols.LLDP
-	opts.PassiveProtocols.CDP = req.Options.PassiveProtocols.CDP
-	opts.PassiveProtocols.EDP = req.Options.PassiveProtocols.EDP
-	opts.PassiveProtocols.NDP = req.Options.PassiveProtocols.NDP
-	opts.ARPScan = req.Options.ARPScan
-	opts.ICMPScan = req.Options.ICMPScan
-	opts.Traceroute = req.Options.Traceroute
-	opts.SNMPQuery = req.Options.SNMPQuery
-
-	// Port scan config
-	opts.PortScan.Enabled = req.Options.PortScan.Enabled
-	if req.Options.PortScan.TCPPorts != "" {
-		opts.PortScan.TCPPorts = req.Options.PortScan.TCPPorts
-	}
-	if req.Options.PortScan.UDPPorts != "" {
-		opts.PortScan.UDPPorts = req.Options.PortScan.UDPPorts
-	}
-	if req.Options.PortScan.BannerTimeoutMs > 0 {
-		opts.PortScan.BannerTimeout = time.Duration(
-			req.Options.PortScan.BannerTimeoutMs,
-		) * time.Millisecond
-	}
-
-	// TCP probe config
-	if req.Options.TCPProbe.TimeoutMs > 0 {
-		opts.TCPProbe.Timeout = time.Duration(req.Options.TCPProbe.TimeoutMs) * time.Millisecond
-	}
-	if req.Options.TCPProbe.Workers > 0 {
-		opts.TCPProbe.Workers = req.Options.TCPProbe.Workers
-	}
-}
-
-// applyAdvancedDiscoverySettings applies timing, profiler, and fingerprinting settings.
-func (s *Server) applyAdvancedDiscoverySettings(req *NetworkDiscoverySettingsResponse) {
-	// Timing config
-	if req.Timing.ProbeIntervalMs > 0 {
-		s.config.NetworkDiscovery.Timing.ProbeInterval = time.Duration(
-			req.Timing.ProbeIntervalMs,
-		) * time.Millisecond
-	}
-	if req.Timing.RescanIntervalMs > 0 {
-		s.config.NetworkDiscovery.Timing.RescanInterval = time.Duration(
-			req.Timing.RescanIntervalMs,
-		) * time.Millisecond
-	}
-	if req.Timing.Workers > 0 {
-		s.config.NetworkDiscovery.Timing.Workers = req.Timing.Workers
-	}
-
-	// Profiler config
-	s.config.NetworkDiscovery.Profiler.Enabled = req.Profiler.Enabled
-	if req.Profiler.TimeoutMs > 0 {
-		s.config.NetworkDiscovery.Profiler.Timeout = time.Duration(
-			req.Profiler.TimeoutMs,
-		) * time.Millisecond
-	}
-	if req.Profiler.MaxConcurrent > 0 {
-		s.config.NetworkDiscovery.Profiler.MaxConcurrent = req.Profiler.MaxConcurrent
-	}
-	if len(req.Profiler.QuickPorts) > 0 {
-		s.config.NetworkDiscovery.Profiler.QuickPorts = req.Profiler.QuickPorts
-	}
-
-	// Fingerprinting config
-	s.config.NetworkDiscovery.Fingerprinting.Enabled = req.Fingerprinting.Enabled
-	s.config.NetworkDiscovery.Fingerprinting.OSDetection = req.Fingerprinting.OSDetection
-	s.config.NetworkDiscovery.Fingerprinting.ServiceProbes = req.Fingerprinting.ServiceProbes
-}
-
-func (s *Server) updateDevicesSettings(w http.ResponseWriter, r *http.Request) {
-	logger := logging.FromContext(r.Context())
-	localizer := i18n.FromRequest(r)
-	r.Body = http.MaxBytesReader(w, r.Body, MaxBodySizeJSON)
-
-	var req NetworkDiscoverySettingsResponse
-	if !decodeJSONStrict(w, r, &req, MaxBodySizeJSON) {
-		return
-	}
-
-	// Lock config for write access (fixes #759 - race condition)
-	// NOTE: Must unlock before Save() - Save() acquires RLock internally (fixes #783)
-	s.config.Lock()
-	s.applyLegacyDiscoveryConfig(&req)
-	s.applyDiscoveryOptions(&req)
-	s.applyAdvancedDiscoverySettings(&req)
-	s.config.Unlock()
-
-	// Save config to file (fixes #735 - return error on save failure)
-	if err := s.config.Save(s.configPath); err != nil {
-		logger.ErrorContext(r.Context(), "Failed to save config", "error", err)
-		sendErrorResponseWithDetails(
-			w, logger, http.StatusInternalServerError, ErrCodeInternal,
-			localizer.T("errors.settings.saveFailed"), "",
-		)
-		return
-	}
-
-	sendJSONResponse(w, logger, http.StatusOK, map[string]string{
-		"status":  statusSuccess,
-		"message": "Network discovery settings updated",
-	})
 }
 
 // SubnetRequest represents a subnet configuration request.
@@ -498,24 +456,22 @@ func (s *Server) handleDevicesSubnets(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+// getDevicesSubnets lists the configured additional subnets. Thin transport.
 func (s *Server) getDevicesSubnets(w http.ResponseWriter, r *http.Request) {
 	logger := logging.FromContext(r.Context())
-	subnets := make([]SubnetResponse, 0, len(s.config.NetworkDiscovery.AdditionalSubnets))
-	for _, subnet := range s.config.NetworkDiscovery.AdditionalSubnets {
+	cfgSubnets := s.discoverySettings.Subnets()
+	subnets := make([]SubnetResponse, 0, len(cfgSubnets))
+	for _, subnet := range cfgSubnets {
 		subnets = append(subnets, SubnetResponse{
 			CIDR:    subnet.CIDR,
 			Name:    subnet.Name,
 			Enabled: subnet.Enabled,
 		})
 	}
-
 	sendJSONResponse(w, logger, http.StatusOK, subnets)
 }
 
 func (s *Server) addDevicesSubnet(w http.ResponseWriter, r *http.Request) {
-	logger := logging.FromContext(r.Context())
-	localizer := i18n.FromRequest(r)
-	// Limit request body size to prevent DoS attacks (fixes #693)
 	r.Body = http.MaxBytesReader(w, r.Body, MaxBodySizeJSON)
 
 	var req SubnetRequest
@@ -523,74 +479,13 @@ func (s *Server) addDevicesSubnet(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Validate CIDR format
-	_, _, err := net.ParseCIDR(req.CIDR)
-	if err != nil {
-		logger.WarnContext(r.Context(), "Invalid CIDR format", "error", err, "cidr", req.CIDR)
-		sendErrorResponseWithDetails(
-			w,
-			logger,
-			http.StatusBadRequest,
-			ErrCodeBadRequest,
-			"Invalid CIDR format",
-			"",
-		)
-		return
-	}
-
-	// Check for duplicates
-	for _, existing := range s.config.NetworkDiscovery.AdditionalSubnets {
-		if existing.CIDR == req.CIDR {
-			sendErrorResponseWithDetails(
-				w,
-				logger,
-				http.StatusConflict,
-				ErrCodeConflict,
-				"Subnet already exists",
-				"",
-			) // fixes #694, #699
-			return
-		}
-	}
-
-	// Add the new subnet
-	newSubnet := config.SubnetConfig{
-		CIDR:    req.CIDR,
-		Name:    req.Name,
-		Enabled: req.Enabled,
-	}
-	s.config.NetworkDiscovery.AdditionalSubnets = append(
-		s.config.NetworkDiscovery.AdditionalSubnets,
-		newSubnet,
-	)
-
-	// Update the device discovery scanner
-	s.syncDeviceDiscoverySubnets(logger)
-
-	// Save config to file (fixes #735 - return error on save failure)
-	if saveErr := s.config.Save(s.configPath); saveErr != nil {
-		logger.ErrorContext(r.Context(), "Failed to save config", "error", saveErr)
-		sendErrorResponseWithDetails(
-			w,
-			logger,
-			http.StatusInternalServerError,
-			ErrCodeInternal,
-			localizer.T("errors.settings.saveFailed"),
-			"",
-		)
-		return
-	}
-
-	sendJSONResponse(w, logger, http.StatusOK, map[string]string{
-		"status":  statusSuccess,
-		"message": "Subnet added",
+	err := s.discoverySettings.AddSubnet(config.SubnetConfig{
+		CIDR: req.CIDR, Name: req.Name, Enabled: req.Enabled,
 	})
+	s.writeSubnetResult(w, r, err, "Subnet added")
 }
 
 func (s *Server) updateDevicesSubnet(w http.ResponseWriter, r *http.Request) {
-	logger := logging.FromContext(r.Context())
-	localizer := i18n.FromRequest(r)
-	// Limit request body size to prevent DoS attacks (fixes #693)
 	r.Body = http.MaxBytesReader(w, r.Body, MaxBodySizeJSON)
 
 	var req SubnetRequest
@@ -598,146 +493,50 @@ func (s *Server) updateDevicesSubnet(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Validate CIDR format
-	if _, _, err := net.ParseCIDR(req.CIDR); err != nil {
-		logger.WarnContext(r.Context(), "Invalid CIDR format", "error", err, "cidr", req.CIDR)
-		sendErrorResponseWithDetails(
-			w,
-			logger,
-			http.StatusBadRequest,
-			ErrCodeBadRequest,
-			"Invalid CIDR format",
-			"",
-		)
-		return
-	}
-
-	// Find and update the subnet
-	found := false
-	for i, existing := range s.config.NetworkDiscovery.AdditionalSubnets {
-		if existing.CIDR == req.CIDR {
-			s.config.NetworkDiscovery.AdditionalSubnets[i].Name = req.Name
-			s.config.NetworkDiscovery.AdditionalSubnets[i].Enabled = req.Enabled
-			found = true
-			break
-		}
-	}
-
-	if !found {
-		sendErrorResponseWithDetails(
-			w,
-			logger,
-			http.StatusNotFound,
-			ErrCodeNotFound,
-			"Subnet not found",
-			"",
-		) // fixes #694, #699
-		return
-	}
-
-	// Update the device discovery scanner
-	s.syncDeviceDiscoverySubnets(logger)
-
-	// Save config to file (fixes #735 - return error on save failure)
-	if err := s.config.Save(s.configPath); err != nil {
-		logger.ErrorContext(r.Context(), "Failed to save config", "error", err)
-		sendErrorResponseWithDetails(
-			w,
-			logger,
-			http.StatusInternalServerError,
-			ErrCodeInternal,
-			localizer.T("errors.settings.saveFailed"),
-			"",
-		)
-		return
-	}
-
-	sendJSONResponse(w, logger, http.StatusOK, map[string]string{
-		"status":  statusSuccess,
-		"message": "Subnet updated",
+	err := s.discoverySettings.UpdateSubnet(config.SubnetConfig{
+		CIDR: req.CIDR, Name: req.Name, Enabled: req.Enabled,
 	})
+	s.writeSubnetResult(w, r, err, "Subnet updated")
 }
 
 func (s *Server) deleteDevicesSubnet(w http.ResponseWriter, r *http.Request) {
 	logger := logging.FromContext(r.Context())
-	localizer := i18n.FromRequest(r)
 	cidr := r.URL.Query().Get("cidr")
 	if cidr == "" {
 		sendErrorResponseWithDetails(
-			w,
-			logger,
-			http.StatusBadRequest,
-			ErrCodeBadRequest,
-			"CIDR parameter required",
-			"",
-		) // fixes #694, #699
-		return
-	}
-
-	// Find and remove the subnet
-	found := false
-	newSubnets := make([]config.SubnetConfig, 0, len(s.config.NetworkDiscovery.AdditionalSubnets))
-	for _, existing := range s.config.NetworkDiscovery.AdditionalSubnets {
-		if existing.CIDR == cidr {
-			found = true
-			continue
-		}
-		newSubnets = append(newSubnets, existing)
-	}
-
-	if !found {
-		sendErrorResponseWithDetails(
-			w,
-			logger,
-			http.StatusNotFound,
-			ErrCodeNotFound,
-			"Subnet not found",
-			"",
-		) // fixes #694, #699
-		return
-	}
-
-	s.config.NetworkDiscovery.AdditionalSubnets = newSubnets
-
-	// Update the device discovery scanner
-	s.syncDeviceDiscoverySubnets(logger)
-
-	// Save config to file (fixes #735 - return error on save failure)
-	if err := s.config.Save(s.configPath); err != nil {
-		logger.ErrorContext(r.Context(), "Failed to save config", "error", err)
-		sendErrorResponseWithDetails(
-			w,
-			logger,
-			http.StatusInternalServerError,
-			ErrCodeInternal,
-			localizer.T("errors.settings.saveFailed"),
-			"",
+			w, logger, http.StatusBadRequest, ErrCodeBadRequest, "CIDR parameter required", "",
 		)
 		return
 	}
-
-	sendJSONResponse(w, logger, http.StatusOK, map[string]string{
-		"status":  statusSuccess,
-		"message": "Subnet deleted",
-	})
+	s.writeSubnetResult(w, r, s.discoverySettings.DeleteSubnet(cidr), "Subnet deleted")
 }
 
-// syncDeviceDiscoverySubnets synchronizes enabled subnets from config to the device discovery scanner.
-// This helper method eliminates DRY violation across add/update/delete subnet handlers.
-func (s *Server) syncDeviceDiscoverySubnets(logger *slog.Logger) {
-	if s.deviceDiscovery() == nil {
-		return
-	}
-
-	enabledCIDRs := make([]string, 0, len(s.config.NetworkDiscovery.AdditionalSubnets))
-	for _, subnet := range s.config.NetworkDiscovery.AdditionalSubnets {
-		if subnet.Enabled {
-			enabledCIDRs = append(enabledCIDRs, subnet.CIDR)
-		}
-	}
-
-	if err := s.deviceDiscovery().SetAdditionalSubnets(enabledCIDRs); err != nil {
-		logger.Warn("Failed to update scanner subnets", "error", err)
+// writeSubnetResult maps a discovery-settings subnet error to an HTTP response,
+// or writes the success message. Centralizes the validation/conflict/not-found/
+// save error mapping shared by the subnet add/update/delete handlers.
+func (s *Server) writeSubnetResult(
+	w http.ResponseWriter, r *http.Request, err error, successMsg string,
+) {
+	logger := logging.FromContext(r.Context())
+	switch {
+	case errors.Is(err, discoverysettings.ErrInvalidCIDR):
+		sendErrorResponseWithDetails(
+			w, logger, http.StatusBadRequest, ErrCodeBadRequest, "Invalid CIDR format", "")
+	case errors.Is(err, discoverysettings.ErrSubnetExists):
+		sendErrorResponseWithDetails(
+			w, logger, http.StatusConflict, ErrCodeConflict, "Subnet already exists", "")
+	case errors.Is(err, discoverysettings.ErrSubnetNotFound):
+		sendErrorResponseWithDetails(
+			w, logger, http.StatusNotFound, ErrCodeNotFound, "Subnet not found", "")
+	case err != nil:
+		logger.ErrorContext(r.Context(), "Failed to save subnet change", "error", err)
+		sendErrorResponseWithDetails(
+			w, logger, http.StatusInternalServerError, ErrCodeInternal,
+			i18n.FromRequest(r).T("errors.settings.saveFailed"), "")
+	default:
+		sendJSONResponse(w, logger, http.StatusOK, map[string]string{
+			"status": statusSuccess, "message": successMsg,
+		})
 	}
 }
 

@@ -14,11 +14,13 @@ package app
 import (
 	"context"
 
+	"github.com/MustardSeedNetworks/seed/internal/config"
 	"github.com/MustardSeedNetworks/seed/internal/discovery"
 	"github.com/MustardSeedNetworks/seed/internal/discovery/bluetooth"
 	"github.com/MustardSeedNetworks/seed/internal/discovery/devices"
 	"github.com/MustardSeedNetworks/seed/internal/discovery/enumerate"
 	"github.com/MustardSeedNetworks/seed/internal/discovery/problems"
+	"github.com/MustardSeedNetworks/seed/internal/discovery/settings"
 )
 
 // NewDiscoveryDevices builds the unified-discovery use-case (ADR-0020) over a lazy
@@ -46,6 +48,60 @@ func NewProblems(
 // methods degrade to bluetooth.ErrUnavailable, while Status reports unavailable.
 func NewBluetooth(scanner func() *enumerate.BluetoothScanner) *bluetooth.Service {
 	return bluetooth.NewService(bluetoothScannerAdapter{scanner: scanner})
+}
+
+// NewDiscoverySettings builds the network-discovery settings service (ADR-0020)
+// over the live config (read/merge/persist) and a lazy accessor for the
+// device-discovery scanner (subnet re-sync). cfg/path are fixed for the process
+// lifetime; the scanner is resolved per call so a later-set value (the api test
+// harness) is honored, and a nil scanner makes the subnet sync a no-op.
+func NewDiscoverySettings(
+	cfg *config.Config, path string, dd func() *enumerate.DeviceDiscovery,
+) *settings.Service {
+	return settings.NewService(
+		discoverySettingsStore{cfg: cfg, path: path},
+		discoverySubnetSink{dd: dd},
+	)
+}
+
+// discoverySettingsStore implements settings.Store over the live config, owning
+// the lock + on-disk save the port abstracts away.
+type discoverySettingsStore struct {
+	cfg  *config.Config
+	path string
+}
+
+func (s discoverySettingsStore) Discovery() config.NetworkDiscoveryConfig {
+	s.cfg.RLock()
+	defer s.cfg.RUnlock()
+	nd := s.cfg.NetworkDiscovery
+	// Copy the subnet slice so the service can mutate its working copy without
+	// touching the live config's backing array before SaveDiscovery commits.
+	nd.AdditionalSubnets = append([]config.SubnetConfig(nil), nd.AdditionalSubnets...)
+	return nd
+}
+
+func (s discoverySettingsStore) SaveDiscovery(nd config.NetworkDiscoveryConfig) error {
+	// Lock for the in-memory mutation only; Save acquires its own RLock and so
+	// must run unlocked to avoid the historic deadlock (fixes #783).
+	s.cfg.Lock()
+	s.cfg.NetworkDiscovery = nd
+	s.cfg.Unlock()
+	return s.cfg.Save(s.path)
+}
+
+// discoverySubnetSink implements settings.SubnetSink over the device-discovery
+// scanner, resolved lazily; a nil scanner is a no-op.
+type discoverySubnetSink struct {
+	dd func() *enumerate.DeviceDiscovery
+}
+
+func (a discoverySubnetSink) SetAdditionalSubnets(cidrs []string) error {
+	d := a.dd()
+	if d == nil {
+		return nil
+	}
+	return d.SetAdditionalSubnets(cidrs)
 }
 
 // discoveryEngineAdapter implements devices.Engine over the discovery engine,
