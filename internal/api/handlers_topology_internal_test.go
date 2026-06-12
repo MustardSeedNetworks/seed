@@ -9,6 +9,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/MustardSeedNetworks/seed/internal/app"
 	"github.com/MustardSeedNetworks/seed/internal/database"
 )
 
@@ -21,6 +22,7 @@ func newTopologyTestServer(t *testing.T) *Server {
 	db := newTestDB(t)
 	s := &Server{}
 	s.dbConn = db
+	s.topologyQueries = app.NewTopologyQueries(s.db, topologyMaxLimit)
 	return s
 }
 
