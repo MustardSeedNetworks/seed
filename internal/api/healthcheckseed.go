@@ -15,6 +15,7 @@ import (
 
 	"github.com/MustardSeedNetworks/seed/internal/config"
 	"github.com/MustardSeedNetworks/seed/internal/database"
+	"github.com/MustardSeedNetworks/seed/internal/health/probemap"
 )
 
 // settingKeyHealthChecksSeeded marks that the factory health-check probes
@@ -27,7 +28,7 @@ const settingKeyHealthChecksSeeded = "health_checks.seeded"
 // marker is set, and it never overwrites an install that already holds
 // health-check probes (the upgrade path, where the marker predates this
 // code). The factory set comes from config.DefaultConfig().HealthChecks and
-// is mapped through the same healthCheckProbesFromConfig used by the
+// is mapped through the same ProbesFromConfig used by the
 // settings-PUT save, so the two paths can never diverge.
 func (s *Server) seedDefaultHealthCheckProbes(ctx context.Context, db *database.DB) error {
 	settings := db.Settings()
@@ -43,7 +44,7 @@ func (s *Server) seedDefaultHealthCheckProbes(ctx context.Context, db *database.
 	// Upgrade guard: an install that already configured health-check probes
 	// (saved before this seeding existed, so no marker) must keep its set.
 	// Mark it seeded and leave the probes untouched.
-	existing, err := countHealthCheckProbes(ctx, db.Probes())
+	existing, err := probemap.CountProbes(ctx, db.Probes())
 	if err != nil {
 		return fmt.Errorf("count existing health-check probes: %w", err)
 	}
@@ -52,12 +53,12 @@ func (s *Server) seedDefaultHealthCheckProbes(ctx context.Context, db *database.
 	}
 
 	hc := config.DefaultConfig().HealthChecks
-	probes, err := healthCheckProbesFromConfig(&hc)
+	probes, err := probemap.ProbesFromConfig(&hc)
 	if err != nil {
 		return fmt.Errorf("build default health-check probes: %w", err)
 	}
 	if err = db.Probes().ReplaceProbesByKinds(
-		ctx, database.DefaultClientID, healthCheckKinds(), probes,
+		ctx, database.DefaultClientID, probemap.Kinds(), probes,
 	); err != nil {
 		return fmt.Errorf("seed default health-check probes: %w", err)
 	}

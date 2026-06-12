@@ -10,6 +10,7 @@ import (
 
 	"github.com/MustardSeedNetworks/seed/internal/config"
 	"github.com/MustardSeedNetworks/seed/internal/database"
+	"github.com/MustardSeedNetworks/seed/internal/health/probemap"
 	"github.com/MustardSeedNetworks/seed/internal/probe"
 )
 
@@ -21,6 +22,7 @@ import (
 func TestSeedDefaultHealthCheckProbes_FreshInstall(t *testing.T) {
 	db := newTestDB(t)
 	s := &Server{config: &config.Config{}, dbConn: db}
+	wireHealthSettings(s)
 	ctx := context.Background()
 
 	require.NoError(t, s.seedDefaultHealthCheckProbes(ctx, db))
@@ -75,7 +77,7 @@ func TestSeedDefaultHealthCheckProbes_NoReseedAfterDeleteAll(t *testing.T) {
 
 	// Operator clears the whole health-check set (settings save with no targets).
 	require.NoError(t, db.Probes().ReplaceProbesByKinds(
-		ctx, database.DefaultClientID, healthCheckKinds(), nil,
+		ctx, database.DefaultClientID, probemap.Kinds(), nil,
 	))
 
 	// A subsequent boot must NOT re-seed.
@@ -94,14 +96,16 @@ func TestSeedDefaultHealthCheckProbes_PreservesExistingProbes(t *testing.T) {
 	s := &Server{config: &config.Config{}, dbConn: db}
 	ctx := context.Background()
 
-	// Pre-existing operator-configured set, no seed marker.
+	// Pre-existing operator-configured set, no seed marker, written straight to
+	// the probes table (the store of record) via the shared mapping.
 	custom := TestsSettingsResponse{
 		PingTargets: []PingTargetResponse{{Name: "lab", Host: "10.0.0.1", Enabled: true}},
 	}
-	require.True(t, s.saveHealthCheckProbes(
-		httptest.NewRecorder(),
-		httptest.NewRequest(http.MethodPut, "/x", http.NoBody),
-		&custom,
+	hc := requestEndpointTargets(&custom)
+	customProbes, err := probemap.ProbesFromConfig(&hc)
+	require.NoError(t, err)
+	require.NoError(t, db.Probes().ReplaceProbesByKinds(
+		ctx, database.DefaultClientID, probemap.Kinds(), customProbes,
 	))
 
 	require.NoError(t, s.seedDefaultHealthCheckProbes(ctx, db))

@@ -1,4 +1,4 @@
-package api
+package probemap
 
 // healthcheckmapping.go converts between the health-check endpoint
 // configuration shapes (config.*Endpoint) and probe.Probe definitions
@@ -28,10 +28,10 @@ import (
 // engine schedules each probe at this cadence.
 const defaultHealthCheckIntervalSeconds = 60
 
-// healthCheckKinds lists the probe kinds owned by the health-check
+// Kinds lists the probe kinds owned by the health-check
 // settings surface. Used to scope the replace-by-kind save so the
 // migration never touches probes of other kinds.
-func healthCheckKinds() []string {
+func Kinds() []string {
 	return []string{
 		probe.KindPing, probe.KindTCP, probe.KindUDP, probe.KindHTTP,
 		probe.KindRTSP, probe.KindDICOM, probe.KindHL7, probe.KindFHIR,
@@ -40,13 +40,13 @@ func healthCheckKinds() []string {
 	}
 }
 
-// countHealthCheckProbes returns the total number of probes across the
+// CountProbes returns the total number of probes across the
 // health-check kinds for the default client. Used by the first-run seed to
 // detect an install that already holds a configured set (the upgrade path)
 // so the factory defaults never overwrite it.
-func countHealthCheckProbes(ctx context.Context, repo *database.ProbeRepository) (int, error) {
+func CountProbes(ctx context.Context, repo *database.ProbeRepository) (int, error) {
 	total := 0
-	for _, kind := range healthCheckKinds() {
+	for _, kind := range Kinds() {
 		n, err := repo.CountProbes(ctx, database.DefaultClientID, kind)
 		if err != nil {
 			return 0, fmt.Errorf("count %s probes: %w", kind, err)
@@ -276,13 +276,13 @@ func probeToModbusEndpoint(p *database.Probe) (config.ModbusEndpoint, error) {
 	return e, nil
 }
 
-// loadHealthCheckEndpoints reads the health-check probe definitions from
+// LoadEndpoints reads the health-check probe definitions from
 // the probes table and assembles them into the endpoint lists of a
 // HealthChecksConfig. Only the endpoint lists are populated; the
 // performance/discovery toggles live in the config file and are not
 // sourced here. A malformed params row is skipped with the error
 // returned so the caller can log it without dropping the whole set.
-func loadHealthCheckEndpoints(ctx context.Context, repo *database.ProbeRepository) (config.HealthChecksConfig, error) {
+func LoadEndpoints(ctx context.Context, repo *database.ProbeRepository) (config.HealthChecksConfig, error) {
 	var hc config.HealthChecksConfig
 	probes, err := repo.ListProbes(ctx, database.DefaultClientID, "")
 	if err != nil {
@@ -390,12 +390,12 @@ func appendProbeToConfig(hc *config.HealthChecksConfig, p *database.Probe) error
 	return nil
 }
 
-// healthCheckProbesFromConfig flattens the endpoint lists of a
+// ProbesFromConfig flattens the endpoint lists of a
 // HealthChecksConfig into the probe rows to persist. Order follows
-// healthCheckKinds; a marshal failure aborts the whole set.
+// Kinds; a marshal failure aborts the whole set.
 //
 //nolint:gocognit,cyclop // A flat fan over the fourteen endpoint lists; one block each.
-func healthCheckProbesFromConfig(hc *config.HealthChecksConfig) ([]*database.Probe, error) {
+func ProbesFromConfig(hc *config.HealthChecksConfig) ([]*database.Probe, error) {
 	var out []*database.Probe
 	add := func(p *database.Probe, err error) error {
 		if err != nil {
