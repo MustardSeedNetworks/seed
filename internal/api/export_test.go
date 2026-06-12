@@ -8,6 +8,7 @@ import (
 
 	"github.com/MustardSeedNetworks/seed/internal/auth"
 	"github.com/MustardSeedNetworks/seed/internal/config"
+	"github.com/MustardSeedNetworks/seed/internal/config/backups"
 	"github.com/MustardSeedNetworks/seed/internal/engine"
 	"github.com/MustardSeedNetworks/seed/internal/i18n"
 	"github.com/MustardSeedNetworks/seed/internal/logging"
@@ -137,11 +138,22 @@ func (rl *RateLimiter) Limit() int {
 // SetConfig sets the server config for testing.
 func (s *Server) SetConfig(cfg *config.Config) {
 	s.config = cfg
+	s.wireConfigBackupsForTest()
 }
 
 // SetConfigPath sets the server config path for testing.
 func (s *Server) SetConfigPath(path string) {
 	s.configPath = path
+	s.wireConfigBackupsForTest()
+}
+
+// wireConfigBackupsForTest builds the config-backups use-case once both the
+// config and its path are set, mirroring NewServer's wiring for the bare-Server
+// test harnesses.
+func (s *Server) wireConfigBackupsForTest() {
+	if s.config != nil && s.configPath != "" {
+		s.configBackups = backups.NewService(s.config, s.configPath)
+	}
 }
 
 // InitServices initializes the minimal services for testing.

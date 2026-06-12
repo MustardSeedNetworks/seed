@@ -1,19 +1,15 @@
 package api
 
 import (
+	"errors"
 	"net/http"
 	"path/filepath"
 	"regexp"
 
 	"github.com/MustardSeedNetworks/seed/internal/config"
+	"github.com/MustardSeedNetworks/seed/internal/config/backups"
 	"github.com/MustardSeedNetworks/seed/internal/i18n"
 	"github.com/MustardSeedNetworks/seed/internal/logging"
-)
-
-// Configuration backup constants.
-const (
-	// defaultBackupMaxCount is the maximum number of configuration backups to retain.
-	defaultBackupMaxCount = 10
 )
 
 // ============================================================================
@@ -42,10 +38,7 @@ func (s *Server) handleConfigBackups(w http.ResponseWriter, r *http.Request) {
 	logger := logging.FromContext(r.Context())
 	localizer := i18n.FromRequest(r)
 
-	backupDir := filepath.Dir(s.configPath)
-	backupMgr := config.NewBackupManager(s.configPath, backupDir, defaultBackupMaxCount)
-
-	backups, err := backupMgr.ListBackups()
+	backupList, err := s.configBackups.List()
 	if err != nil {
 		logger.ErrorContext(r.Context(), "Failed to list backups", "error", err)
 		sendErrorResponseWithDetails(
@@ -59,7 +52,7 @@ func (s *Server) handleConfigBackups(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	sendJSONResponse(w, logger, http.StatusOK, BackupListResponse{Backups: backups})
+	sendJSONResponse(w, logger, http.StatusOK, BackupListResponse{Backups: backupList})
 }
 
 // handleConfigBackupCreate handles POST /api/config/backup - create a new backup.
@@ -67,10 +60,7 @@ func (s *Server) handleConfigBackupCreate(w http.ResponseWriter, r *http.Request
 	logger := logging.FromContext(r.Context())
 	localizer := i18n.FromRequest(r)
 
-	backupDir := filepath.Dir(s.configPath)
-	backupMgr := config.NewBackupManager(s.configPath, backupDir, defaultBackupMaxCount)
-
-	backup, err := backupMgr.CreateBackup()
+	backup, err := s.configBackups.Create()
 	if err != nil {
 		logger.ErrorContext(r.Context(), "Failed to create backup", "error", err)
 		sendErrorResponseWithDetails(
@@ -116,43 +106,18 @@ func (s *Server) handleConfigRestore(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	backupDir := filepath.Dir(s.configPath)
-	backupMgr := config.NewBackupManager(s.configPath, backupDir, defaultBackupMaxCount)
-
-	if err := backupMgr.RestoreBackup(req.BackupName); err != nil {
+	if err := s.configBackups.Restore(req.BackupName); err != nil {
+		msgKey := "errors.config.failedToRestoreBackup"
+		if errors.Is(err, backups.ErrReloadFailed) {
+			msgKey = "errors.config.failedToReloadAfterRestore"
+		}
 		logger.ErrorContext(r.Context(), "Failed to restore backup", "error", err, "backup_name", req.BackupName)
 		sendErrorResponseWithDetails(
-			w,
-			logger,
-			http.StatusInternalServerError,
-			ErrCodeInternal,
-			localizer.T("errors.config.failedToRestoreBackup"),
-			"",
-		) // fixes #694, #H7
+			w, logger, http.StatusInternalServerError, ErrCodeInternal,
+			localizer.T(msgKey), "",
+		)
 		return
 	}
-
-	// Reload config after restore
-	newCfg, err := config.Load(s.configPath)
-	if err != nil {
-		logger.ErrorContext(r.Context(), "Failed to reload config after restore", "error", err)
-		sendErrorResponseWithDetails(
-			w,
-			logger,
-			http.StatusInternalServerError,
-			ErrCodeInternal,
-			localizer.T("errors.config.failedToReloadAfterRestore"),
-			"",
-		) // fixes #694, #H7
-		return
-	}
-
-	// Update server config using CopyFieldsFrom to prevent race conditions (fixes #691)
-	// CopyFieldsFrom uses struct literals for compile-time checking that no fields are missed
-	// Using defer for panic safety (fixes #783)
-	s.config.Lock()
-	defer s.config.Unlock()
-	s.config.CopyFieldsFrom(newCfg)
 
 	// Security audit log: config restored from backup (fixes #697)
 	clientIP := s.getClientIP(r)
@@ -203,10 +168,7 @@ func (s *Server) handleConfigBackupDelete(w http.ResponseWriter, r *http.Request
 	// Strip any directory components as additional safety measure
 	backupName = filepath.Base(backupName)
 
-	backupDir := filepath.Dir(s.configPath)
-	backupMgr := config.NewBackupManager(s.configPath, backupDir, defaultBackupMaxCount)
-
-	if err := backupMgr.DeleteBackup(backupName); err != nil {
+	if err := s.configBackups.Delete(backupName); err != nil {
 		logger.ErrorContext(r.Context(), "Failed to delete backup", "error", err, "backup_name", backupName)
 		sendErrorResponseWithDetails(
 			w,
@@ -238,14 +200,11 @@ func (s *Server) handleConfigBackupDelete(w http.ResponseWriter, r *http.Request
 func (s *Server) handleConfigVersion(w http.ResponseWriter, r *http.Request) {
 	logger := logging.FromContext(r.Context())
 
-	s.config.RLock()
-	currentVersion := s.config.Version
-	s.config.RUnlock()
-
+	current, latest := s.configBackups.Version()
 	resp := ConfigVersionResponse{
-		Current:        currentVersion,
-		Latest:         config.ConfigVersion,
-		NeedsMigration: currentVersion < config.ConfigVersion,
+		Current:        current,
+		Latest:         latest,
+		NeedsMigration: current < latest,
 	}
 
 	sendJSONResponse(w, logger, http.StatusOK, resp)
