@@ -858,6 +858,17 @@ func (s *Server) anomalyStore() *database.AnomalyRepository {
 	return s.dbConn.Anomalies()
 }
 
+// anomalyEngine is the shared, server-owned anomaly engine (ADR-0029), exposed so
+// the store-read adapters can re-derive the catalog-static Impact / FollowUps the
+// store does not persist. Nil when the merged catalog failed to build or no DB is
+// wired (the test harness) — enrichment then degrades to a passthrough.
+func (s *Server) anomalyEngine() *anomaly.Engine {
+	if s.anomalyCoord == nil {
+		return nil
+	}
+	return s.anomalyCoord.Engine()
+}
+
 func (s *Server) bluetoothScanner() *enumerate.BluetoothScanner { return s.bluetoothScan }
 func (s *Server) vulnScanner() *vuln.VulnerabilityScanner       { return s.vulnScan }
 func (s *Server) dnsTester() *dns.Tester                        { return s.dnsTest }
@@ -890,7 +901,7 @@ func (s *Server) engineRegistry() *engine.Registry              { return s.engin
 // the server's lazy accessors + live config. Called after initDiscovery so the
 // discovery bridge the discovery use-case captures already exists.
 func (s *Server) initWiFiUseCases() {
-	s.wifiQueries = app.NewWiFiQueries(s.wifiVisibility, s.anomalyStore)
+	s.wifiQueries = app.NewWiFiQueries(s.wifiVisibility, s.anomalyStore, s.anomalyEngine)
 	s.wifiManagement = app.NewWiFiManagement(s.wifiManager, s.wifiScanner, s.netManager, s.config, s.configPath)
 	s.wifiDiscovery = app.NewWiFiDiscovery(s.wifiBridge)
 }
@@ -911,7 +922,7 @@ func (s *Server) initDiscoveryUseCases() {
 // (the only remaining concern after the dead health_check_results read-path was
 // deleted — ADR-0026), so a nil or later-set store (the test harness) is honored.
 func (s *Server) initHealthUseCases() {
-	s.healthMonitoring = app.NewHealthMonitoring(s.anomalyStore)
+	s.healthMonitoring = app.NewHealthMonitoring(s.anomalyStore, s.anomalyEngine)
 }
 
 // initUpdateUseCases wires the update-lifecycle use-case (ADR-0020) from the

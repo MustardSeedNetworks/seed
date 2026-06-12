@@ -17,21 +17,32 @@ import (
 	"github.com/MustardSeedNetworks/seed/internal/health/monitoring"
 )
 
-// NewHealthMonitoring builds the health-monitoring use-case (ADR-0020) over a
-// lazy accessor for the unified anomaly store. A nil accessor result makes
-// Anomalies degrade to monitoring.ErrUnavailable (the golden-pinned 503 path).
-func NewHealthMonitoring(anomalyStore func() *database.AnomalyRepository) *monitoring.Service {
-	return monitoring.NewService(healthAnomaly{store: anomalyStore})
+// NewHealthMonitoring builds the health-monitoring use-case (ADR-0020) over lazy
+// accessors for the unified anomaly store and the shared engine (the latter
+// re-derives the catalog-static Impact / FollowUps the store does not persist,
+// ADR-0029). A nil store makes Anomalies degrade to monitoring.ErrUnavailable
+// (the golden-pinned 503 path).
+func NewHealthMonitoring(
+	anomalyStore func() *database.AnomalyRepository,
+	anomalyEngine func() *anomaly.Engine,
+) *monitoring.Service {
+	return monitoring.NewService(healthAnomaly{store: anomalyStore, engine: anomalyEngine})
 }
 
 // healthAnomaly implements monitoring.AnomalyReader over the unified anomaly
 // store (ADR-0021), reading the source=probe slice — the active-monitoring probe
-// engine is the producer of these anomalies (ADR-0025).
+// engine is the producer of these anomalies (ADR-0025) — and re-deriving the
+// catalog-static fields on read (ADR-0029).
 type healthAnomaly struct {
-	store func() *database.AnomalyRepository
+	store  func() *database.AnomalyRepository
+	engine func() *anomaly.Engine
 }
 
 func (a healthAnomaly) Available() bool { return a.store() != nil }
 func (a healthAnomaly) ActiveAnomalies(ctx context.Context) ([]anomaly.Anomaly, error) {
-	return a.store().ActiveBySource(ctx, anomaly.SourceProbe)
+	list, err := a.store().ActiveBySource(ctx, anomaly.SourceProbe)
+	if err != nil {
+		return nil, err
+	}
+	return enrichAnomalies(a.engine(), list), nil
 }

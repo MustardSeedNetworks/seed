@@ -260,9 +260,9 @@ func (r *AnomalyRepository) LoadActive(ctx context.Context) ([]anomaly.Record, e
 // as projected Anomaly views, canonically ordered (ADR-0021 §4: reads go through
 // the store). It is the source-scoped read path behind consumers like the
 // health-checks and Wi-Fi anomaly endpoints. Catalog-static copy (impact,
-// follow-ups) is not persisted; those fields are re-derived from the embedded
-// catalog by def_key once a server-owned catalog exists (the producer phase) —
-// the scalar, evidence, and lifecycle fields come straight from the row.
+// follow-ups) is not persisted; those fields are re-derived from the shared
+// engine's catalog by def_key at the app layer on read (ADR-0029, enrichAnomalies)
+// — the scalar, evidence, and lifecycle fields come straight from the row.
 func (r *AnomalyRepository) ActiveBySource(
 	ctx context.Context, source anomaly.Source,
 ) ([]anomaly.Anomaly, error) {

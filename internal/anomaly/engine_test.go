@@ -294,6 +294,52 @@ func TestLenBySource(t *testing.T) {
 	}
 }
 
+// TestEnrichStatic asserts the catalog re-hydration a store read needs (ADR-0029
+// follow-up): a store-backed Anomaly carries the persisted scalar fields but not
+// the catalog-static Impact / FollowUps, so EnrichStatic fills exactly those from
+// the catalog by DefKey, leaving the persisted fields untouched and reusing the
+// engine's capability degradation for follow-ups.
+func TestEnrichStatic(t *testing.T) {
+	// Without the capability, the gated auto follow-up degrades to a prompt — the
+	// same projection the live Snapshot would produce.
+	e := anomaly.NewEngine(testCatalog(t))
+	stored := anomaly.Anomaly{
+		DefKey:   "open-ssid",
+		Title:    "persisted title", // store-authoritative; must survive
+		Severity: anomaly.SeverityWarning,
+		Subject:  bssid("aa"),
+		// Impact + FollowUps intentionally blank (a store read cannot reconstruct them).
+	}
+	got := e.EnrichStatic(stored)
+
+	if got.Title != "persisted title" {
+		t.Errorf("Title = %q, want the persisted value left untouched", got.Title)
+	}
+	if got.Impact != "Traffic is cleartext." {
+		t.Errorf("Impact = %q, want it filled from the catalog", got.Impact)
+	}
+	if len(got.FollowUps) != 3 {
+		t.Fatalf("FollowUps = %d, want 3 from the catalog", len(got.FollowUps))
+	}
+	if got.FollowUps[0].Kind != anomaly.FollowUpPrompt {
+		t.Errorf("gated auto without capability: kind = %q, want prompt (degraded)",
+			got.FollowUps[0].Kind)
+	}
+
+	// With the capability registered the gated follow-up stays auto.
+	e2 := anomaly.NewEngine(testCatalog(t), anomaly.WithCapabilities("wifi-active-diag"))
+	if got := e2.EnrichStatic(stored).FollowUps[0].Kind; got != anomaly.FollowUpAuto {
+		t.Errorf("gated auto with capability: kind = %q, want auto", got)
+	}
+
+	// An orphaned row (def no longer in the catalog) is returned unchanged.
+	orphan := anomaly.Anomaly{DefKey: "gone", Title: "orphan"}
+	enriched := e.EnrichStatic(orphan)
+	if enriched.Impact != "" || len(enriched.FollowUps) != 0 || enriched.Title != "orphan" {
+		t.Errorf("unknown def should pass through unchanged, got %+v", enriched)
+	}
+}
+
 func must(t *testing.T, err error) {
 	t.Helper()
 	if err != nil {
