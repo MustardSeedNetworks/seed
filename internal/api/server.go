@@ -33,6 +33,7 @@ import (
 	"github.com/MustardSeedNetworks/seed/internal/discovery/enumerate"
 	"github.com/MustardSeedNetworks/seed/internal/discovery/fingerprint"
 	"github.com/MustardSeedNetworks/seed/internal/discovery/problems"
+	discoverysettings "github.com/MustardSeedNetworks/seed/internal/discovery/settings"
 	"github.com/MustardSeedNetworks/seed/internal/discovery/vuln"
 	"github.com/MustardSeedNetworks/seed/internal/engine"
 	enginestatus "github.com/MustardSeedNetworks/seed/internal/engine/status"
@@ -245,6 +246,7 @@ type Server struct {
 	networkIP          *ipconfig.Service           // IP-config + MTU use-case (ADR-0020)
 	alertRules         *rules.Service              // Alert-rule CRUD use-case (ADR-0020)
 	discoveryDevices   *devices.Service            // Unified-discovery (engine) use-case (ADR-0020)
+	discoverySettings  *discoverysettings.Service  // Network-discovery settings use-case (ADR-0020)
 	networkProblems    *problems.Service           // Network problem-detection use-case (ADR-0020)
 	bluetoothScans     *bluetooth.Service          // Bluetooth-discovery use-case (ADR-0020)
 	healthMonitoring   *monitoring.Service         // Health-monitoring use-case (ADR-0020)
@@ -913,6 +915,7 @@ func (s *Server) initWiFiUseCases() {
 // scan reads the discovered devices through the device-discovery accessor.
 func (s *Server) initDiscoveryUseCases() {
 	s.discoveryDevices = app.NewDiscoveryDevices(s.discoveryEngine)
+	s.discoverySettings = app.NewDiscoverySettings(s.config, s.configPath, s.deviceDiscovery)
 	s.networkProblems = app.NewProblems(s.problemDetector, s.discoveryService)
 	s.bluetoothScans = app.NewBluetooth(s.bluetoothScanner)
 }
