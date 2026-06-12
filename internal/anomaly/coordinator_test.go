@@ -2,11 +2,54 @@ package anomaly_test
 
 import (
 	"context"
+	"sync"
 	"testing"
 	"time"
 
 	"github.com/MustardSeedNetworks/seed/internal/anomaly"
 )
+
+// syncStore is a thread-safe anomaly.Store for the concurrent-producers test
+// (the bare fakeStore is only exercised single-threaded).
+type syncStore struct {
+	mu       sync.Mutex
+	rows     map[string]anomaly.Record
+	resolved map[string]time.Time
+}
+
+func newSyncStore() *syncStore {
+	return &syncStore{rows: map[string]anomaly.Record{}, resolved: map[string]time.Time{}}
+}
+
+func (s *syncStore) Upsert(_ context.Context, recs []anomaly.Record) error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	for _, r := range recs {
+		s.rows[r.ID] = r
+		delete(s.resolved, r.ID)
+	}
+	return nil
+}
+
+func (s *syncStore) MarkResolved(_ context.Context, ids []string, at time.Time) error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	for _, id := range ids {
+		s.resolved[id] = at
+		delete(s.rows, id)
+	}
+	return nil
+}
+
+func (s *syncStore) LoadActive(_ context.Context) ([]anomaly.Record, error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	out := make([]anomaly.Record, 0, len(s.rows))
+	for _, r := range s.rows {
+		out = append(out, r)
+	}
+	return out, nil
+}
 
 // fakeStore is an in-memory anomaly.Store recording the calls a Coordinator
 // makes, so tests can assert the write cadence (write-through vs batched) without
@@ -387,5 +430,60 @@ func TestCoordinatorLoad(t *testing.T) {
 	}
 	if n != 1 || c.Engine().Len() != 1 {
 		t.Fatalf("Load restored n=%d engineLen=%d, want 1/1", n, c.Engine().Len())
+	}
+}
+
+// TestCoordinatorConcurrentProducers asserts the shared Coordinator (ADR-0029)
+// is safe under two producers observing and pruning it concurrently, and that
+// source-scoped prune only resolves the named source's instances — the property
+// that lets Wi-Fi (5 m) and probe (15 m) share one engine without one source
+// resolving the other's still-live instances.
+func TestCoordinatorConcurrentProducers(t *testing.T) {
+	c := newCoord(t, newSyncStore())
+	ctx := context.Background()
+	base := time.Unix(10000, 0).UTC()
+
+	const n = 200
+	var wg sync.WaitGroup
+	wg.Add(2)
+	observe := func(src anomaly.Source, prefix string) {
+		defer wg.Done()
+		for i := range n {
+			at := base.Add(time.Duration(i) * time.Millisecond)
+			id := prefix + string(rune('a'+i%26))
+			_ = c.Observe(ctx, anomaly.Detection{
+				DefKey:  "open-ssid",
+				Subject: anomaly.SubjectRef{Kind: anomaly.SubjectBSSID, ID: id},
+				Source:  src,
+			}, at)
+			if i%10 == 0 {
+				_ = c.Flush(ctx)
+			}
+		}
+	}
+	go observe(anomaly.SourceWiFi, "w-")
+	go observe(anomaly.SourceProbe, "p-")
+	wg.Wait()
+
+	// Both sources coalesced onto 26 distinct subjects each (no lost updates, no
+	// races under -race).
+	if got := c.Engine().LenBySource(anomaly.SourceWiFi); got != 26 {
+		t.Errorf("wifi instances = %d, want 26", got)
+	}
+	if got := c.Engine().LenBySource(anomaly.SourceProbe); got != 26 {
+		t.Errorf("probe instances = %d, want 26", got)
+	}
+
+	// Source-scoped prune past every observation resolves only Wi-Fi; probe stays.
+	cutoff := base.Add(time.Hour)
+	cleared, err := c.Prune(ctx, anomaly.SourceWiFi, cutoff)
+	if err != nil {
+		t.Fatalf("Prune: %v", err)
+	}
+	if cleared != 26 {
+		t.Errorf("pruned wifi = %d, want 26", cleared)
+	}
+	if got := c.Engine().LenBySource(anomaly.SourceProbe); got != 26 {
+		t.Errorf("probe instances after wifi prune = %d, want 26 (untouched)", got)
 	}
 }

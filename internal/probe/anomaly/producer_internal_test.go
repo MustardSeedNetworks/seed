@@ -43,6 +43,17 @@ func (f *fakeStore) snapshot() (int, []anomaly.Record, []string) {
 	return f.upserts, rows, res
 }
 
+// coordFor wraps a fake store in a Coordinator over the probe catalog — the
+// shared engine the server now owns (ADR-0029), stood up locally for the unit.
+func coordFor(t *testing.T, store anomaly.Store) *anomaly.Coordinator {
+	t.Helper()
+	cat, err := Catalog()
+	if err != nil {
+		t.Fatalf("Catalog: %v", err)
+	}
+	return anomaly.NewCoordinator(anomaly.NewEngine(cat), store)
+}
+
 func latencyEvent(probeID string) probe.ResultEvent {
 	return probe.ResultEvent{
 		Result: probe.Result{ProbeID: probeID, Kind: "http"},
@@ -69,7 +80,7 @@ func cleanEvent(probeID string) probe.ResultEvent {
 func TestObserveCleanResultResolvesImmediately(t *testing.T) {
 	t.Parallel()
 	fs := &fakeStore{}
-	p, err := New(nil, fs, WithResolveWindow(time.Hour))
+	p, err := New(nil, coordFor(t, fs), WithResolveWindow(time.Hour))
 	if err != nil {
 		t.Fatalf("New: %v", err)
 	}
@@ -90,12 +101,21 @@ func TestObserveCleanResultResolvesImmediately(t *testing.T) {
 	}
 }
 
+// TestNewRejectsNilCoordinator asserts the wiring guard: a producer cannot be
+// built without the shared Coordinator (ADR-0029).
+func TestNewRejectsNilCoordinator(t *testing.T) {
+	t.Parallel()
+	if _, err := New(nil, nil); err == nil {
+		t.Fatal("New with nil coordinator should error")
+	}
+}
+
 // TestObserveCleanResultNoActiveIsNoop asserts a clean run for a probe with no
 // active anomalies neither writes nor resolves anything.
 func TestObserveCleanResultNoActiveIsNoop(t *testing.T) {
 	t.Parallel()
 	fs := &fakeStore{}
-	p, err := New(nil, fs)
+	p, err := New(nil, coordFor(t, fs))
 	if err != nil {
 		t.Fatalf("New: %v", err)
 	}
@@ -111,7 +131,7 @@ func TestObserveCleanResultNoActiveIsNoop(t *testing.T) {
 func TestObservePersistsThroughCoordinator(t *testing.T) {
 	t.Parallel()
 	fs := &fakeStore{}
-	p, err := New(nil, fs)
+	p, err := New(nil, coordFor(t, fs))
 	if err != nil {
 		t.Fatalf("New: %v", err)
 	}
@@ -148,7 +168,7 @@ func TestObservePersistsThroughCoordinator(t *testing.T) {
 func TestFlushAndPruneResolvesAfterSilence(t *testing.T) {
 	t.Parallel()
 	fs := &fakeStore{}
-	p, err := New(nil, fs, WithResolveWindow(10*time.Minute))
+	p, err := New(nil, coordFor(t, fs), WithResolveWindow(10*time.Minute))
 	if err != nil {
 		t.Fatalf("New: %v", err)
 	}
@@ -177,7 +197,7 @@ func TestStartStopIsIdempotentAndDrains(t *testing.T) {
 	t.Parallel()
 	fs := &fakeStore{}
 	events := make(chan probe.ResultEvent, 4)
-	p, err := New(events, fs, WithFlushInterval(5*time.Millisecond), WithResolveWindow(time.Hour))
+	p, err := New(events, coordFor(t, fs), WithFlushInterval(5*time.Millisecond), WithResolveWindow(time.Hour))
 	if err != nil {
 		t.Fatalf("New: %v", err)
 	}

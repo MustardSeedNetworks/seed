@@ -43,9 +43,14 @@ func (s *Server) handleWiFiAirspace(w http.ResponseWriter, _ *http.Request) {
 }
 
 // handleWiFiAnomalies serves GET /api/v1/wifi/anomalies. Thin handler delegating
-// to the use-case; feature-gated (wifi_association_forensics); degrades to an
-// empty stream when no capture component is present.
-func (s *Server) handleWiFiAnomalies(w http.ResponseWriter, _ *http.Request) {
-	res := s.wifiQueries.Anomalies()
+// to the use-case, which reads the active Wi-Fi anomalies from the unified store
+// (ADR-0029 §4). Feature-gated (wifi_association_forensics); an unwired store
+// degrades to an empty stream, while a genuine store error maps to 500.
+func (s *Server) handleWiFiAnomalies(w http.ResponseWriter, r *http.Request) {
+	res, err := s.wifiQueries.Anomalies(r.Context())
+	if err != nil {
+		http.Error(w, "Failed to read Wi-Fi anomalies", http.StatusInternalServerError)
+		return
+	}
 	sendJSONResponse(w, nil, http.StatusOK, WiFiAnomaliesResponse{Anomalies: res.Anomalies, Status: res.Status})
 }

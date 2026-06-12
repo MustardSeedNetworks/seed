@@ -38,7 +38,20 @@ func beacon(t *testing.T, bssid, ssid string, sec dot11.Security) *dot11.Frame {
 	}
 }
 
-func hasAnomaly(as []anomalyView, id string) bool {
+// wifiCoord wraps a store in a Coordinator over the Wi-Fi catalog — the slice of
+// the shared, server-owned engine (ADR-0029) a visibility unit exercises. The
+// test holds the Coordinator, so it can assert both the in-memory engine
+// (coalescing, counts) and the persisted store rows (the production read path).
+func wifiCoord(t *testing.T, store anomaly.Store) *anomaly.Coordinator {
+	t.Helper()
+	cat, err := wifianomaly.Catalog()
+	if err != nil {
+		t.Fatalf("Catalog: %v", err)
+	}
+	return anomaly.NewCoordinator(anomaly.NewEngine(cat), store)
+}
+
+func hasAnomaly(as []anomaly.Anomaly, id string) bool {
 	for _, a := range as {
 		if a.DefKey == id {
 			return true
@@ -47,33 +60,24 @@ func hasAnomaly(as []anomalyView, id string) bool {
 	return false
 }
 
-// anomalyView is the minimal shape we assert on (mirrors anomaly.Anomaly).
-type anomalyView = struct {
-	DefKey string
-}
-
-func TestNewIsEmpty(t *testing.T) {
-	svc, err := visibility.New()
-	if err != nil {
-		t.Fatalf("New: %v", err)
-	}
+func TestNewIsAirspaceOnlyWithoutCoordinator(t *testing.T) {
+	// No Coordinator wired → airspace-only: Tree/Status live, no anomaly work.
+	svc := visibility.New()
 	if got := len(svc.Tree()); got != 0 {
 		t.Errorf("fresh Tree len = %d, want 0", got)
-	}
-	if got := len(svc.Anomalies()); got != 0 {
-		t.Errorf("fresh Anomalies len = %d, want 0", got)
 	}
 	st := svc.Status()
 	if st.CaptureActive {
 		t.Error("fresh service should not report capture active")
 	}
+	if st.Anomalies != 0 {
+		t.Errorf("airspace-only Status.Anomalies = %d, want 0", st.Anomalies)
+	}
 }
 
 func TestIngestAndEvaluateProducesAnomaly(t *testing.T) {
-	svc, err := visibility.New()
-	if err != nil {
-		t.Fatalf("New: %v", err)
-	}
+	coord := wifiCoord(t, newFakeAnomalyStore())
+	svc := visibility.New(visibility.WithCoordinator(coord))
 	now := time.Now()
 	// An open network on 2.4 GHz channel 6: trips wifi-open-network (and is on a
 	// valid non-overlapping channel, so no adjacent-channel noise).
@@ -83,13 +87,9 @@ func TestIngestAndEvaluateProducesAnomaly(t *testing.T) {
 	if len(svc.Tree()) == 0 {
 		t.Fatal("Tree empty after ingesting a beacon")
 	}
-	got := svc.Anomalies()
-	views := make([]anomalyView, len(got))
-	for i, a := range got {
-		views[i] = anomalyView{DefKey: a.DefKey}
-	}
-	if !hasAnomaly(views, wifianomaly.DefOpenNetwork) {
-		t.Errorf("expected %s anomaly, got %+v", wifianomaly.DefOpenNetwork, got)
+	if !hasAnomaly(coord.Engine().Snapshot(), wifianomaly.DefOpenNetwork) {
+		t.Errorf("expected %s in the shared engine, got %+v",
+			wifianomaly.DefOpenNetwork, coord.Engine().Snapshot())
 	}
 	if svc.Status().Anomalies == 0 {
 		t.Error("Status.Anomalies should be > 0 after evaluate")
@@ -97,10 +97,8 @@ func TestIngestAndEvaluateProducesAnomaly(t *testing.T) {
 }
 
 func TestEvaluateCoalesces(t *testing.T) {
-	svc, err := visibility.New()
-	if err != nil {
-		t.Fatalf("New: %v", err)
-	}
+	coord := wifiCoord(t, newFakeAnomalyStore())
+	svc := visibility.New(visibility.WithCoordinator(coord))
 	now := time.Now()
 	b := beacon(t, "00:11:22:33:44:55", "guest", dot11.SecurityOpen)
 	svc.Ingest(b, now)
@@ -109,7 +107,7 @@ func TestEvaluateCoalesces(t *testing.T) {
 	svc.Evaluate(context.Background(), now.Add(time.Second))
 
 	open := 0
-	for _, a := range svc.Anomalies() {
+	for _, a := range coord.Engine().Snapshot() {
 		if a.DefKey == wifianomaly.DefOpenNetwork {
 			open++
 			if a.Count < 2 {
@@ -123,17 +121,15 @@ func TestEvaluateCoalesces(t *testing.T) {
 }
 
 func TestCustomDetectorAndOptions(t *testing.T) {
-	// A tuned detector (co-channel threshold 2) plus the non-default options, to
+	// A tuned detector (co-channel threshold 2) plus non-default options, to
 	// exercise the option path and a multi-BSS evaluation.
 	det := wifianomaly.NewDetector(wifianomaly.WithCoChannelThreshold(2))
-	svc, err := visibility.New(
+	coord := wifiCoord(t, newFakeAnomalyStore())
+	svc := visibility.New(
 		visibility.WithDetector(det),
 		visibility.WithRetention(time.Minute),
-		visibility.WithCapabilities(wifianomaly.CapActiveTest),
+		visibility.WithCoordinator(coord),
 	)
-	if err != nil {
-		t.Fatalf("New: %v", err)
-	}
 	now := time.Now()
 	// Two WPA3/PMF BSSes sharing 2.4 GHz channel 6 → co-channel contention.
 	for _, m := range []string{"00:11:22:33:44:01", "00:11:22:33:44:02"} {
@@ -143,14 +139,9 @@ func TestCustomDetectorAndOptions(t *testing.T) {
 	}
 	svc.Evaluate(context.Background(), now)
 
-	found := false
-	for _, a := range svc.Anomalies() {
-		if a.DefKey == wifianomaly.DefCoChannelContention {
-			found = true
-		}
-	}
-	if !found {
-		t.Errorf("expected co-channel-contention with threshold 2, got %+v", svc.Anomalies())
+	if !hasAnomaly(coord.Engine().Snapshot(), wifianomaly.DefCoChannelContention) {
+		t.Errorf("expected co-channel-contention with threshold 2, got %+v",
+			coord.Engine().Snapshot())
 	}
 	st := svc.Status()
 	if st.BSSes != 2 || st.APs == 0 {
@@ -159,10 +150,7 @@ func TestCustomDetectorAndOptions(t *testing.T) {
 }
 
 func TestSourceToggle(t *testing.T) {
-	svc, err := visibility.New()
-	if err != nil {
-		t.Fatalf("New: %v", err)
-	}
+	svc := visibility.New()
 	svc.SetSource("monitor0")
 	st := svc.Status()
 	if !st.CaptureActive || st.Source != "monitor0" {
@@ -175,10 +163,11 @@ func TestSourceToggle(t *testing.T) {
 }
 
 func TestStartStopLifecycle(t *testing.T) {
-	svc, err := visibility.New(visibility.WithEvalInterval(5 * time.Millisecond))
-	if err != nil {
-		t.Fatalf("New: %v", err)
-	}
+	coord := wifiCoord(t, newFakeAnomalyStore())
+	svc := visibility.New(
+		visibility.WithCoordinator(coord),
+		visibility.WithEvalInterval(5*time.Millisecond),
+	)
 	if startErr := svc.Start(t.Context()); startErr != nil {
 		t.Fatalf("Start: %v", startErr)
 	}
@@ -186,12 +175,12 @@ func TestStartStopLifecycle(t *testing.T) {
 	// Give the ticker a few cycles to evaluate.
 	deadline := time.Now().Add(2 * time.Second)
 	for time.Now().Before(deadline) {
-		if len(svc.Anomalies()) > 0 {
+		if coord.Engine().LenBySource(anomaly.SourceWiFi) > 0 {
 			break
 		}
 		time.Sleep(5 * time.Millisecond)
 	}
-	if len(svc.Anomalies()) == 0 {
+	if coord.Engine().LenBySource(anomaly.SourceWiFi) == 0 {
 		t.Error("background loop did not evaluate ingested frames")
 	}
 	if stopErr := svc.Stop(); stopErr != nil {
@@ -250,15 +239,12 @@ func (f *fakeAnomalyStore) snapshot() []anomaly.Record {
 	return out
 }
 
-// TestPersistsAnomaliesToStore asserts that with a store configured, evaluating
-// an open-network beacon writes the detected anomaly through to the store tagged
-// with the Wi-Fi source (ADR-0021 phase 3 producer).
+// TestPersistsAnomaliesToStore asserts that evaluating an open-network beacon
+// writes the detected anomaly through to the shared store tagged source=wifi
+// (ADR-0029 producer).
 func TestPersistsAnomaliesToStore(t *testing.T) {
 	fake := newFakeAnomalyStore()
-	svc, err := visibility.New(visibility.WithStore(fake))
-	if err != nil {
-		t.Fatalf("New: %v", err)
-	}
+	svc := visibility.New(visibility.WithCoordinator(wifiCoord(t, fake)))
 	now := time.Now()
 	svc.Ingest(beacon(t, "00:11:22:33:44:55", "guest", dot11.SecurityOpen), now)
 	svc.Evaluate(context.Background(), now)
@@ -281,9 +267,10 @@ func TestPersistsAnomaliesToStore(t *testing.T) {
 	}
 }
 
-// TestLoadOnStartRestoresAnomalies asserts Start repopulates the engine from the
-// store's active instances so a restart does not lose live anomalies.
-func TestLoadOnStartRestoresAnomalies(t *testing.T) {
+// TestReflectsPreloadedSharedEngine asserts the service reads its Status count
+// from the shared engine, including instances restored by the server-owned
+// load-on-start (ADR-0029 §5) — the service itself no longer loads.
+func TestReflectsPreloadedSharedEngine(t *testing.T) {
 	fake := newFakeAnomalyStore()
 	t0 := time.Now().Add(-time.Minute)
 	fake.seed = []anomaly.Record{{
@@ -295,25 +282,18 @@ func TestLoadOnStartRestoresAnomalies(t *testing.T) {
 			FirstSeen: t0, LastSeen: t0, Count: 3,
 		},
 	}}
-	// Long eval interval so the background loop does not evaluate during the test;
-	// load-on-start runs synchronously inside Start.
-	svc, err := visibility.New(visibility.WithStore(fake), visibility.WithEvalInterval(time.Hour))
-	if err != nil {
-		t.Fatalf("New: %v", err)
+	coord := wifiCoord(t, fake)
+	// The server performs the single load-on-start before producers observe.
+	if n, err := coord.Load(context.Background()); err != nil || n != 1 {
+		t.Fatalf("Load = (%d, %v), want (1, nil)", n, err)
 	}
-	if startErr := svc.Start(t.Context()); startErr != nil {
-		t.Fatalf("Start: %v", startErr)
-	}
-	defer func() { _ = svc.Stop() }()
+	svc := visibility.New(visibility.WithCoordinator(coord), visibility.WithEvalInterval(time.Hour))
 
-	anoms := svc.Anomalies()
-	if len(anoms) != 1 || anoms[0].DefKey != wifianomaly.DefOpenNetwork {
-		t.Fatalf("restored anomalies = %+v, want one %s", anoms, wifianomaly.DefOpenNetwork)
+	if got := svc.Status().Anomalies; got != 1 {
+		t.Errorf("Status.Anomalies = %d, want 1 (restored)", got)
 	}
-	if anoms[0].Count != 3 {
-		t.Errorf("restored count = %d, want 3", anoms[0].Count)
-	}
-	if svc.Status().Anomalies != 1 {
-		t.Errorf("Status.Anomalies = %d, want 1", svc.Status().Anomalies)
+	snap := coord.Engine().Snapshot()
+	if len(snap) != 1 || snap[0].DefKey != wifianomaly.DefOpenNetwork || snap[0].Count != 3 {
+		t.Errorf("restored engine state = %+v, want one %s count=3", snap, wifianomaly.DefOpenNetwork)
 	}
 }

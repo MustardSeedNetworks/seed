@@ -12,7 +12,9 @@ package app
 import (
 	"context"
 
+	"github.com/MustardSeedNetworks/seed/internal/anomaly"
 	"github.com/MustardSeedNetworks/seed/internal/config"
+	"github.com/MustardSeedNetworks/seed/internal/database"
 	"github.com/MustardSeedNetworks/seed/internal/discovery"
 	"github.com/MustardSeedNetworks/seed/internal/discovery/enumerate"
 	"github.com/MustardSeedNetworks/seed/internal/netif"
@@ -21,12 +23,16 @@ import (
 	"github.com/MustardSeedNetworks/seed/internal/wifi/visibility"
 )
 
-// NewWiFiQueries builds the Wi-Fi visibility read use-case (ADR-0020) over a lazy
-// accessor for the live visibility component. A nil component (no capture wired,
-// e.g. the test harness) yields a use-case that degrades to empty-but-valid
-// results rather than erroring.
-func NewWiFiQueries(src func() *visibility.Service) *troubleshooting.Queries {
-	return troubleshooting.NewQueries(wifiVisibilitySource(src))
+// NewWiFiQueries builds the Wi-Fi visibility read use-case (ADR-0020) over lazy
+// accessors for the live visibility component (airspace tree + status) and the
+// unified anomaly store (the source=wifi anomaly list, ADR-0029 §4). A nil
+// component or store (no capture / no DB, e.g. the test harness) yields a
+// use-case that degrades to empty-but-valid results rather than erroring.
+func NewWiFiQueries(
+	src func() *visibility.Service,
+	anomalyStore func() *database.AnomalyRepository,
+) *troubleshooting.Queries {
+	return troubleshooting.NewQueries(wifiVisibilitySource(src), wifiAnomalyStore{store: anomalyStore})
 }
 
 // wifiVisibilitySource returns the visibility port, or a genuinely-nil interface
@@ -37,6 +43,21 @@ func wifiVisibilitySource(src func() *visibility.Service) troubleshooting.Visibi
 		return s
 	}
 	return nil
+}
+
+// wifiAnomalyStore implements troubleshooting.AnomalyStore over the unified
+// anomaly store (ADR-0029 §4), reading the source=wifi slice — symmetric with the
+// health endpoint's source=probe reader (see health.go). The collaborator is
+// resolved lazily so a later-set value (the api test harness) is honored; a nil
+// store degrades to Available() == false (empty-but-valid list).
+type wifiAnomalyStore struct {
+	store func() *database.AnomalyRepository
+}
+
+func (a wifiAnomalyStore) Available() bool { return a.store() != nil }
+
+func (a wifiAnomalyStore) ActiveWiFi(ctx context.Context) ([]anomaly.Anomaly, error) {
+	return a.store().ActiveBySource(ctx, anomaly.SourceWiFi)
 }
 
 // NewWiFiManagement builds the Wi-Fi settings/scan/status/connect use-case

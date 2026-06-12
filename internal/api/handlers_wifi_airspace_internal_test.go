@@ -9,11 +9,25 @@ import (
 	"testing"
 	"time"
 
+	"github.com/MustardSeedNetworks/seed/internal/anomaly"
 	wifianomaly "github.com/MustardSeedNetworks/seed/internal/wifi/anomaly"
 	"github.com/MustardSeedNetworks/seed/internal/wifi/dot11"
 	"github.com/MustardSeedNetworks/seed/internal/wifi/troubleshooting"
 	"github.com/MustardSeedNetworks/seed/internal/wifi/visibility"
 )
+
+// stubAnomalyStore is the troubleshooting.AnomalyStore half of the read use-case:
+// the source=wifi anomaly list the handler now reads from the unified store
+// (ADR-0029 §4), instead of from the in-memory visibility engine.
+type stubAnomalyStore struct {
+	available bool
+	anomalies []anomaly.Anomaly
+}
+
+func (s stubAnomalyStore) Available() bool { return s.available }
+func (s stubAnomalyStore) ActiveWiFi(context.Context) ([]anomaly.Anomaly, error) {
+	return s.anomalies, nil
+}
 
 // The feature-gate middleware is applied at route registration and exercised by
 // the authchain golden harness; these tests drive the handlers directly to
@@ -47,8 +61,8 @@ func openBeacon(t *testing.T) *dot11.Frame {
 }
 
 func TestHandleWiFiAirspaceEmptyWhenNoComponent(t *testing.T) {
-	// No visibility source wired → graceful empty response, never 500/null.
-	s := &Server{wifiQueries: troubleshooting.NewQueries(nil)}
+	// No visibility source / store wired → graceful empty response, never 500/null.
+	s := &Server{wifiQueries: troubleshooting.NewQueries(nil, nil)}
 	rec := httptest.NewRecorder()
 	s.handleWiFiAirspace(rec, httptest.NewRequest(http.MethodGet, "/api/v1/wifi/airspace", nil))
 
@@ -59,17 +73,31 @@ func TestHandleWiFiAirspaceEmptyWhenNoComponent(t *testing.T) {
 	if len(resp.SSIDs) != 0 || resp.Status.CaptureActive {
 		t.Errorf("expected empty inactive airspace, got %+v", resp)
 	}
+
+	// Anomalies likewise degrade to an empty stream (never 500/null).
+	recN := httptest.NewRecorder()
+	s.handleWiFiAnomalies(recN, httptest.NewRequest(http.MethodGet, "/api/v1/wifi/anomalies", nil))
+	an := decodeJSON[WiFiAnomaliesResponse](t, recN)
+	if an.Anomalies == nil || len(an.Anomalies) != 0 {
+		t.Errorf("expected empty anomaly stream, got %+v", an.Anomalies)
+	}
 }
 
 func TestHandleWiFiAirspaceAndAnomaliesPopulated(t *testing.T) {
-	svc, err := visibility.New()
-	if err != nil {
-		t.Fatalf("visibility.New: %v", err)
-	}
+	// Airspace (tree + status) comes from the live visibility component...
+	svc := visibility.New()
 	svc.SetSource("monitor0")
 	svc.Ingest(openBeacon(t), time.Now())
 	svc.Evaluate(context.Background(), time.Now())
-	s := &Server{wifiQueries: troubleshooting.NewQueries(svc)}
+	// ...while the anomaly list comes from the unified store (ADR-0029 §4).
+	store := stubAnomalyStore{
+		available: true,
+		anomalies: []anomaly.Anomaly{{
+			DefKey:  wifianomaly.DefOpenNetwork,
+			Subject: anomaly.SubjectRef{Kind: anomaly.SubjectBSSID, ID: "00:11:22:33:44:55"},
+		}},
+	}
+	s := &Server{wifiQueries: troubleshooting.NewQueries(svc, store)}
 
 	// Airspace tree is populated and reports the active source.
 	recA := httptest.NewRecorder()
@@ -82,7 +110,7 @@ func TestHandleWiFiAirspaceAndAnomaliesPopulated(t *testing.T) {
 		t.Errorf("status should reflect the active source: %+v", air.Status)
 	}
 
-	// Anomaly stream contains the open-network detection.
+	// Anomaly stream (read from the store) contains the open-network detection.
 	recN := httptest.NewRecorder()
 	s.handleWiFiAnomalies(recN, httptest.NewRequest(http.MethodGet, "/api/v1/wifi/anomalies", nil))
 	an := decodeJSON[WiFiAnomaliesResponse](t, recN)

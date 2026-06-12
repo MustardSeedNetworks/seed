@@ -1,14 +1,17 @@
 // Package visibility is the runtime orchestrator for Wi-Fi airspace visibility
 // and anomaly detection. It owns the live cross-referenced airspace model
-// (internal/wifi/airspace), a persistent anomaly engine (internal/anomaly) seeded
-// with the Wi-Fi rule catalog (internal/wifi/anomaly), and the detector that
-// evaluates one against the other.
+// (internal/wifi/airspace) and the detector that evaluates the Wi-Fi rules
+// (internal/wifi/anomaly) against it. It is a *producer* into the shared,
+// server-owned anomaly Coordinator (internal/anomaly, ADR-0029): it no longer
+// owns an engine — detections are stamped source=wifi and folded into the one
+// engine every producer shares, persisted through the unified store.
 //
 // A capture source (W3, libpcap/monitor-mode, built separately and CGO-tagged)
 // feeds decoded 802.11 frames in via Ingest; this package is itself CGO-free and
 // frame-source-agnostic, so it builds and tests everywhere. Start runs a periodic
-// evaluation loop (detector → engine), and Tree/Anomalies/Status are the read
-// model the API layer (W5b) serves Pro-gated.
+// evaluation loop (detector → Coordinator), and Tree/Status are the read model
+// the API layer (W5b) serves Pro-gated; the anomaly list itself is read from the
+// store (ADR-0029 §4), not from here.
 package visibility
 
 import (
@@ -46,15 +49,17 @@ type Status struct {
 	LastEvaluated time.Time `json:"lastEvaluated,omitzero"`
 }
 
-// Service owns the live airspace, the anomaly engine, and the evaluation loop.
-// All exported methods are safe for concurrent use.
+// Service owns the live airspace, the Wi-Fi detector, and the evaluation loop. It
+// is a producer into the shared anomaly Coordinator. All exported methods are
+// safe for concurrent use.
 type Service struct {
 	air      *airspace.Airspace
-	engine   *anomaly.Engine
 	detector *wifianomaly.Detector
-	// coordinator persists the engine's stream to the unified anomaly store
-	// (ADR-0021). Nil when no store is configured — the engine then stays purely
-	// in-memory (the prior behavior). When set, Evaluate writes through it.
+	// coordinator is the shared, server-owned anomaly Coordinator (ADR-0029).
+	// Wi-Fi detections persist through it under source=wifi. Nil leaves the
+	// service airspace-only (Ingest/Tree/Status still work; no anomaly
+	// detection) — the cmd layer builds the Service before the server owns the
+	// Coordinator, then injects it via SetCoordinator.
 	coordinator *anomaly.Coordinator
 	logger      *slog.Logger
 
@@ -75,8 +80,7 @@ type config struct {
 	evalInterval time.Duration
 	retention    time.Duration
 	detector     *wifianomaly.Detector
-	capabilities []string
-	store        anomaly.Store
+	coordinator  *anomaly.Coordinator
 	logger       *slog.Logger
 }
 
@@ -107,18 +111,12 @@ func WithDetector(d *wifianomaly.Detector) Option {
 	}
 }
 
-// WithCapabilities registers platform capabilities for the engine's auto
-// follow-ups (e.g. wifianomaly.CapActiveTest when active testing is available).
-func WithCapabilities(caps ...string) Option {
-	return func(c *config) { c.capabilities = append(c.capabilities, caps...) }
-}
-
-// WithStore persists the anomaly stream to the unified store (ADR-0021): the
-// service writes detections through a Coordinator (write-through on a material
-// change, batched on recurrence, resolve-on-prune) and reloads active instances
-// on Start. A nil store leaves the engine purely in-memory.
-func WithStore(store anomaly.Store) Option {
-	return func(c *config) { c.store = store }
+// WithCoordinator injects the shared, server-owned anomaly Coordinator
+// (ADR-0029) at construction. Production builds the Service in the cmd layer
+// before the server owns the Coordinator and injects it later via
+// SetCoordinator; this option is for tests that have the Coordinator up front.
+func WithCoordinator(coord *anomaly.Coordinator) Option {
+	return func(c *config) { c.coordinator = coord }
 }
 
 // WithLogger sets the logger for persistence diagnostics. Defaults to
@@ -131,16 +129,14 @@ func WithLogger(l *slog.Logger) Option {
 	}
 }
 
-// New builds a visibility service. It errors only if the Wi-Fi anomaly catalog
-// is malformed — a programming error surfaced at startup, never at runtime.
-func New(opts ...Option) (*Service, error) {
+// New builds a visibility service. The Wi-Fi anomaly catalog now lives on the
+// shared, server-owned engine (ADR-0029), so construction cannot fail; the
+// Coordinator is injected via WithCoordinator (tests) or SetCoordinator (the
+// server, after it owns the merged engine).
+func New(opts ...Option) *Service {
 	cfg := config{evalInterval: defaultEvalInterval, retention: defaultRetention}
 	for _, o := range opts {
 		o(&cfg)
-	}
-	cat, err := wifianomaly.Catalog()
-	if err != nil {
-		return nil, err
 	}
 	det := cfg.detector
 	if det == nil {
@@ -150,20 +146,24 @@ func New(opts ...Option) (*Service, error) {
 	if logger == nil {
 		logger = slog.Default()
 	}
-	engine := anomaly.NewEngine(cat, anomaly.WithCapabilities(cfg.capabilities...))
-	var coord *anomaly.Coordinator
-	if cfg.store != nil {
-		coord = anomaly.NewCoordinator(engine, cfg.store)
-	}
 	return &Service{
 		air:          airspace.New(),
-		engine:       engine,
 		detector:     det,
-		coordinator:  coord,
+		coordinator:  cfg.coordinator,
 		logger:       logger,
 		evalInterval: cfg.evalInterval,
 		retention:    cfg.retention,
-	}, nil
+	}
+}
+
+// SetCoordinator injects the shared anomaly Coordinator after construction
+// (ADR-0029): the cmd layer builds the Service before the server owns the merged
+// engine, so the server wires the Coordinator in during init, before Start. Wi-Fi
+// detections then persist through it under source=wifi.
+func (s *Service) SetCoordinator(coord *anomaly.Coordinator) {
+	s.mu.Lock()
+	s.coordinator = coord
+	s.mu.Unlock()
 }
 
 // Ingest folds one decoded frame into the airspace at observation time `at`.
@@ -181,15 +181,10 @@ func (s *Service) Evaluate(ctx context.Context, at time.Time) {
 	cutoff := at.Add(-s.retention)
 	s.air.Prune(cutoff)
 
-	if s.coordinator != nil {
-		s.evaluatePersistent(ctx, at, cutoff)
-	} else {
-		for _, d := range s.detector.Detect(s.air.Tree()) {
-			// Observe only errors on an uncatalogued def or invalid severity; the
-			// detector emits neither, so the error is structurally impossible.
-			_ = s.engine.Observe(d, at)
-		}
-		s.engine.Prune(cutoff)
+	// Airspace-only when no Coordinator is wired (ADR-0029): Ingest/Tree/Status
+	// stay live, but anomaly detection needs the shared engine.
+	if coord := s.snapshotCoordinator(); coord != nil {
+		s.evaluatePersistent(ctx, coord, at, cutoff)
 	}
 
 	s.mu.Lock()
@@ -197,32 +192,39 @@ func (s *Service) Evaluate(ctx context.Context, at time.Time) {
 	s.mu.Unlock()
 }
 
-// evaluatePersistent runs the detection + persistence path through the
+// evaluatePersistent runs the detection + persistence path through the shared
 // Coordinator. Store errors are logged, not fatal — the in-memory engine stays
 // authoritative and the next tick re-persists.
-func (s *Service) evaluatePersistent(ctx context.Context, at, cutoff time.Time) {
+func (s *Service) evaluatePersistent(ctx context.Context, coord *anomaly.Coordinator, at, cutoff time.Time) {
 	for _, d := range s.detector.Detect(s.air.Tree()) {
 		// Stamp the producer source at the hand-off (ADR-0029 §2); the Wi-Fi
 		// detector stays source-agnostic.
 		d.Source = anomaly.SourceWiFi
-		if err := s.coordinator.Observe(ctx, d, at); err != nil {
+		if err := coord.Observe(ctx, d, at); err != nil {
 			s.logger.WarnContext(ctx, "anomaly persist (observe) failed",
 				"defKey", d.DefKey, "error", err)
 		}
 	}
-	if err := s.coordinator.Flush(ctx); err != nil {
+	if err := coord.Flush(ctx); err != nil {
 		s.logger.WarnContext(ctx, "anomaly persist (flush) failed", "error", err)
 	}
-	if _, err := s.coordinator.Prune(ctx, anomaly.SourceWiFi, cutoff); err != nil {
+	// Source-scoped prune (ADR-0029 §3): resolve only Wi-Fi instances idle past
+	// the 5 m retention window, never another producer's still-live instances.
+	if _, err := coord.Prune(ctx, anomaly.SourceWiFi, cutoff); err != nil {
 		s.logger.WarnContext(ctx, "anomaly persist (prune) failed", "error", err)
 	}
 }
 
+// snapshotCoordinator reads the injected Coordinator under the lock so a
+// concurrent SetCoordinator (server init) is race-free.
+func (s *Service) snapshotCoordinator() *anomaly.Coordinator {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	return s.coordinator
+}
+
 // Tree returns the current cross-referenced SSID → AP → BSSID → client view.
 func (s *Service) Tree() []airspace.SSIDGroup { return s.air.Tree() }
-
-// Anomalies returns the current anomaly stream, most urgent first.
-func (s *Service) Anomalies() []anomaly.Anomaly { return s.engine.Snapshot() }
 
 // SetSource records that a named capture source is actively feeding frames.
 func (s *Service) SetSource(name string) {
@@ -252,8 +254,15 @@ func (s *Service) Status() Status {
 	}
 
 	s.mu.Lock()
-	src, last := s.source, s.lastEvaluated
+	src, last, coord := s.source, s.lastEvaluated, s.coordinator
 	s.mu.Unlock()
+
+	// Source-scoped count (ADR-0029 §4): the shared engine holds every producer's
+	// instances, so Wi-Fi reports only its own — engine.Len would over-count.
+	anomalies := 0
+	if coord != nil {
+		anomalies = coord.Engine().LenBySource(anomaly.SourceWiFi)
+	}
 
 	return Status{
 		CaptureActive: src != "",
@@ -262,7 +271,7 @@ func (s *Service) Status() Status {
 		APs:           len(apKeys),
 		BSSes:         bsses,
 		Stations:      stations,
-		Anomalies:     s.engine.Len(),
+		Anomalies:     anomalies,
 		LastEvaluated: last,
 	}
 }
@@ -279,17 +288,9 @@ func (s *Service) Start(ctx context.Context) error {
 	s.cancel = cancel
 	s.mu.Unlock()
 
-	// Load-on-start: repopulate the engine from the unified store so a restart
-	// continues coalescing onto persisted instances (ADR-0021) rather than
-	// re-detecting them as new. Best-effort — a store error degrades to a
-	// cold-start, not a failed Start.
-	if s.coordinator != nil {
-		if n, err := s.coordinator.Load(ctx); err != nil {
-			s.logger.WarnContext(ctx, "anomaly load-on-start failed", "error", err)
-		} else if n > 0 {
-			s.logger.InfoContext(ctx, "restored persisted anomalies", "count", n)
-		}
-	}
+	// Load-on-start is server-owned and happens once on the shared Coordinator
+	// before any producer observes (ADR-0029 §5), so the service does not load
+	// here — it would re-load the merged engine a second time.
 
 	s.wg.Add(1)
 	go s.loop(loopCtx)

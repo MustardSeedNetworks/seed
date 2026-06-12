@@ -113,29 +113,27 @@ func initializeBackgroundComponents(cfg *config.Config, db *database.DB) *api.Ba
 	components.Reporting = app.NewReporting(cfg, db)
 	logging.GetLogger().Info("Reporting module initialized")
 
-	// Wi-Fi airspace visibility: holds the live airspace + anomaly engine, fed by
-	// the monitor-mode capture source. A malformed catalog is a programming error
-	// — log and continue without the component (handlers degrade gracefully).
-	if wifiVis, err := app.NewWiFiVisibility(db.Anomalies()); err != nil {
-		logging.GetLogger().Error("Wi-Fi visibility init failed; feature disabled", "error", err)
-	} else {
-		components.WiFiVisibility = wifiVis
-		logging.GetLogger().Info("Wi-Fi visibility module initialized")
+	// Wi-Fi airspace visibility: holds the live airspace + Wi-Fi detector, fed by
+	// the monitor-mode capture source. It is a producer into the shared anomaly
+	// engine, which the server owns — the server injects the Coordinator during
+	// init (ADR-0029), so construction here is airspace-only and cannot fail.
+	wifiVis := app.NewWiFiVisibility()
+	components.WiFiVisibility = wifiVis
+	logging.GetLogger().Info("Wi-Fi visibility module initialized")
 
-		// Monitor-mode capture is opt-in via a bring-your-own monitor interface
-		// (third-party adapter): set SEED_WIFI_MONITOR_IFACE to the iface name.
-		// Unset (the default) leaves the visibility endpoints serving an empty
-		// airspace; capture also degrades gracefully if the iface is not in
-		// monitor mode or libpcap is unavailable.
-		if iface := os.Getenv("SEED_WIFI_MONITOR_IFACE"); iface != "" {
-			// SEED_WIFI_MONITOR_AUTO=1 also switches the interface into monitor
-			// mode on start (Linux iw/nl80211); otherwise it must already be in
-			// monitor mode (bring-your-own).
-			autoEnable := os.Getenv("SEED_WIFI_MONITOR_AUTO") == "1"
-			components.WiFiCapture = app.NewWiFiCapture(wifiVis, iface, autoEnable)
-			logging.GetLogger().Info("Wi-Fi monitor capture configured",
-				"iface", iface, "autoEnable", autoEnable)
-		}
+	// Monitor-mode capture is opt-in via a bring-your-own monitor interface
+	// (third-party adapter): set SEED_WIFI_MONITOR_IFACE to the iface name. Unset
+	// (the default) leaves the visibility endpoints serving an empty airspace;
+	// capture also degrades gracefully if the iface is not in monitor mode or
+	// libpcap is unavailable.
+	if iface := os.Getenv("SEED_WIFI_MONITOR_IFACE"); iface != "" {
+		// SEED_WIFI_MONITOR_AUTO=1 also switches the interface into monitor mode
+		// on start (Linux iw/nl80211); otherwise it must already be in monitor
+		// mode (bring-your-own).
+		autoEnable := os.Getenv("SEED_WIFI_MONITOR_AUTO") == "1"
+		components.WiFiCapture = app.NewWiFiCapture(wifiVis, iface, autoEnable)
+		logging.GetLogger().Info("Wi-Fi monitor capture configured",
+			"iface", iface, "autoEnable", autoEnable)
 	}
 
 	return components

@@ -355,9 +355,24 @@ func (e *Engine) projectFollowUps(fus []FollowUp) []FollowUp {
 	return out
 }
 
-// Len is the number of live anomaly instances.
+// Len is the number of live anomaly instances across all sources.
 func (e *Engine) Len() int {
 	e.mu.RLock()
 	defer e.mu.RUnlock()
 	return len(e.active)
+}
+
+// LenBySource is the number of live instances produced by one source. With the
+// engine shared across producers (ADR-0029), a per-source producer reports its
+// own count — Len would over-count every source's instances.
+func (e *Engine) LenBySource(source Source) int {
+	e.mu.RLock()
+	defer e.mu.RUnlock()
+	n := 0
+	for _, t := range e.active {
+		if t.det.Source == source {
+			n++
+		}
+	}
+	return n
 }
