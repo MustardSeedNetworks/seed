@@ -153,7 +153,7 @@ func New(opts ...Option) (*Service, error) {
 	engine := anomaly.NewEngine(cat, anomaly.WithCapabilities(cfg.capabilities...))
 	var coord *anomaly.Coordinator
 	if cfg.store != nil {
-		coord = anomaly.NewCoordinator(engine, cfg.store, anomaly.SourceWiFi)
+		coord = anomaly.NewCoordinator(engine, cfg.store)
 	}
 	return &Service{
 		air:          airspace.New(),
@@ -202,6 +202,9 @@ func (s *Service) Evaluate(ctx context.Context, at time.Time) {
 // authoritative and the next tick re-persists.
 func (s *Service) evaluatePersistent(ctx context.Context, at, cutoff time.Time) {
 	for _, d := range s.detector.Detect(s.air.Tree()) {
+		// Stamp the producer source at the hand-off (ADR-0029 §2); the Wi-Fi
+		// detector stays source-agnostic.
+		d.Source = anomaly.SourceWiFi
 		if err := s.coordinator.Observe(ctx, d, at); err != nil {
 			s.logger.WarnContext(ctx, "anomaly persist (observe) failed",
 				"defKey", d.DefKey, "error", err)
@@ -210,7 +213,7 @@ func (s *Service) evaluatePersistent(ctx context.Context, at, cutoff time.Time) 
 	if err := s.coordinator.Flush(ctx); err != nil {
 		s.logger.WarnContext(ctx, "anomaly persist (flush) failed", "error", err)
 	}
-	if _, err := s.coordinator.Prune(ctx, cutoff); err != nil {
+	if _, err := s.coordinator.Prune(ctx, anomaly.SourceWiFi, cutoff); err != nil {
 		s.logger.WarnContext(ctx, "anomaly persist (prune) failed", "error", err)
 	}
 }

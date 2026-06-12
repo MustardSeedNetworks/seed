@@ -155,6 +155,7 @@ func (e *Engine) Restore(records []Record) int {
 				Subject:  a.Subject,
 				Severity: a.Severity,
 				Evidence: a.Evidence,
+				Source:   r.Source,
 			},
 			baseSeverity: a.Severity,
 			firstSeen:    a.FirstSeen,
@@ -221,6 +222,23 @@ func (e *Engine) pruneKeys(cutoff time.Time) []instanceKey {
 	return cleared
 }
 
+// pruneKeysForSource clears only the named source's instances not re-observed
+// since cutoff, returning their keys. Resolution windows are per-source (ADR-0029
+// §3) — Wi-Fi resolves on 5 m of silence, probe on 15 m — so a shared engine must
+// prune one source without touching another's still-live instances.
+func (e *Engine) pruneKeysForSource(source Source, cutoff time.Time) []instanceKey {
+	e.mu.Lock()
+	defer e.mu.Unlock()
+	var cleared []instanceKey
+	for k, t := range e.active {
+		if t.det.Source == source && t.lastSeen.Before(cutoff) {
+			cleared = append(cleared, k)
+			delete(e.active, k)
+		}
+	}
+	return cleared
+}
+
 // clearSubject removes every live instance for subject (across all defs) and
 // returns their keys, so a source that observes a subject return to health can
 // resolve all of its anomalies at once (the explicit recovery fast-path,
@@ -262,17 +280,27 @@ func (e *Engine) project(t *tracked) Anomaly {
 	}
 }
 
-// snapshotKeys projects the named live instances, skipping any no longer
-// present. Used by the persistence Coordinator to build write-through and Flush
-// records without re-projecting the whole stream.
-func (e *Engine) snapshotKeys(keys []instanceKey) []Anomaly {
+// recordsForKeys projects the named live instances into persistable Records,
+// skipping any no longer present. The Source is read from each tracked instance's
+// detection (ADR-0029 §2) — so one shared engine can persist instances under the
+// source that produced them, without the Coordinator holding a single source.
+// Used by the Coordinator to build write-through and Flush records without
+// re-projecting the whole stream.
+func (e *Engine) recordsForKeys(keys []instanceKey) []Record {
 	e.mu.RLock()
 	defer e.mu.RUnlock()
-	out := make([]Anomaly, 0, len(keys))
+	out := make([]Record, 0, len(keys))
 	for _, k := range keys {
-		if t, ok := e.active[k]; ok {
-			out = append(out, e.project(t))
+		t, ok := e.active[k]
+		if !ok {
+			continue
 		}
+		a := e.project(t)
+		out = append(out, Record{
+			ID:      RecordID(a.DefKey, a.Subject),
+			Source:  t.det.Source,
+			Anomaly: a,
+		})
 	}
 	return out
 }

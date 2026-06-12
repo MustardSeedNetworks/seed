@@ -66,11 +66,15 @@ func coordTestCatalog(t *testing.T) *anomaly.Catalog {
 
 func newCoord(t *testing.T, store anomaly.Store, opts ...anomaly.Option) *anomaly.Coordinator {
 	t.Helper()
-	return anomaly.NewCoordinator(anomaly.NewEngine(coordTestCatalog(t), opts...), store, anomaly.SourceWiFi)
+	return anomaly.NewCoordinator(anomaly.NewEngine(coordTestCatalog(t), opts...), store)
 }
 
 func openSSID(id string) anomaly.Detection {
-	return anomaly.Detection{DefKey: "open-ssid", Subject: anomaly.SubjectRef{Kind: anomaly.SubjectBSSID, ID: id}}
+	return anomaly.Detection{
+		DefKey:  "open-ssid",
+		Subject: anomaly.SubjectRef{Kind: anomaly.SubjectBSSID, ID: id},
+		Source:  anomaly.SourceWiFi,
+	}
 }
 
 // TestCoordinatorWritesThroughOnCreate asserts a brand-new anomaly is persisted
@@ -174,7 +178,7 @@ func TestCoordinatorResolvesOnPrune(t *testing.T) {
 		t.Fatalf("Observe live: %v", err)
 	}
 
-	n, err := c.Prune(ctx, time.Unix(5000, 0))
+	n, err := c.Prune(ctx, anomaly.SourceWiFi, time.Unix(5000, 0))
 	if err != nil {
 		t.Fatalf("Prune: %v", err)
 	}
@@ -194,6 +198,52 @@ func TestCoordinatorResolvesOnPrune(t *testing.T) {
 	}
 	if _, revived := store.rows["open-ssid|bssid|stale"]; revived {
 		t.Error("Flush resurrected a pruned instance")
+	}
+}
+
+// TestCoordinatorPruneIsSourceScoped asserts that pruning one source leaves
+// another source's idle instances untouched (ADR-0029 §3): a single shared engine
+// must honor per-source resolution windows. Both instances are equally idle, but
+// only the pruned source's instance resolves.
+func TestCoordinatorPruneIsSourceScoped(t *testing.T) {
+	store := newFakeStore()
+	c := newCoord(t, store)
+	ctx := context.Background()
+	old := time.Unix(100, 0)
+
+	wifi := anomaly.Detection{
+		DefKey:  "open-ssid",
+		Subject: anomaly.SubjectRef{Kind: anomaly.SubjectBSSID, ID: "wifi-subj"},
+		Source:  anomaly.SourceWiFi,
+	}
+	probe := anomaly.Detection{
+		DefKey:  "open-ssid",
+		Subject: anomaly.SubjectRef{Kind: anomaly.SubjectBSSID, ID: "probe-subj"},
+		Source:  anomaly.SourceProbe,
+	}
+	if err := c.Observe(ctx, wifi, old); err != nil {
+		t.Fatalf("Observe wifi: %v", err)
+	}
+	if err := c.Observe(ctx, probe, old); err != nil {
+		t.Fatalf("Observe probe: %v", err)
+	}
+
+	// Prune the probe source past both instances' idle time.
+	n, err := c.Prune(ctx, anomaly.SourceProbe, time.Unix(5000, 0))
+	if err != nil {
+		t.Fatalf("Prune: %v", err)
+	}
+	if n != 1 {
+		t.Fatalf("Prune cleared %d, want 1 (only the probe instance)", n)
+	}
+	if _, resolved := store.resolved["open-ssid|bssid|probe-subj"]; !resolved {
+		t.Errorf("probe instance not resolved; resolved=%v", store.resolved)
+	}
+	if _, stillResolved := store.resolved["open-ssid|bssid|wifi-subj"]; stillResolved {
+		t.Errorf("wifi instance was wrongly resolved by a probe-scoped prune")
+	}
+	if _, live := store.rows["open-ssid|bssid|wifi-subj"]; !live {
+		t.Errorf("wifi instance should remain live; rows=%v", store.rows)
 	}
 }
 
@@ -217,12 +267,16 @@ func TestCoordinatorResolveSubject(t *testing.T) {
 		t.Fatalf("NewCatalog: %v", err)
 	}
 	store := newFakeStore()
-	c := anomaly.NewCoordinator(anomaly.NewEngine(cat), store, anomaly.SourceWiFi)
+	c := anomaly.NewCoordinator(anomaly.NewEngine(cat), store)
 	ctx := context.Background()
 	at := time.Unix(1000, 0)
 
 	det := func(def, id string) anomaly.Detection {
-		return anomaly.Detection{DefKey: def, Subject: anomaly.SubjectRef{Kind: anomaly.SubjectBSSID, ID: id}}
+		return anomaly.Detection{
+			DefKey:  def,
+			Subject: anomaly.SubjectRef{Kind: anomaly.SubjectBSSID, ID: id},
+			Source:  anomaly.SourceWiFi,
+		}
 	}
 	// Two defs on subject A, one on subject B.
 	for _, d := range []anomaly.Detection{det("open-ssid", "A"), det("weak-cipher", "A"), det("open-ssid", "B")} {
