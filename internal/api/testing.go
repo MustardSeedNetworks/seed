@@ -157,6 +157,7 @@ func NewTestServerWithConfig(cfg *config.Config) *Server {
 	// wired, so reads return empty results and management/discovery report the
 	// adapter-absent states.
 	s.settingsStore = app.NewSettings(s.db, s.config)
+	s.settingsManagement = app.NewSettingsManagement(s.config, s.configPath)
 	s.profiles = app.NewProfiles(s.db)
 	s.networkIP = app.NewNetworkIP(s.netManager, s.config, s.configPath)
 	s.alertRules = app.NewAlertRules(s.db)
