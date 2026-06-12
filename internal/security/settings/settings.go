@@ -1,6 +1,6 @@
 // Package settings is the application service for the security-settings endpoints
-// (ADR-0020 clean-hexagonal, WS-A3): SNMP credentials and rogue-DHCP detection
-// configuration. It owns the read/mask/encrypt/merge/persist logic the transport
+// (ADR-0020 clean-hexagonal, WS-A3/A5): SNMP credentials, rogue-DHCP detection,
+// and vulnerability-scanner configuration. It owns the read/mask/encrypt/merge/persist logic the transport
 // layer used to carry inline. Persistence is reached through the consumer-defined
 // Store port; the live rogue-DHCP detector through the RogueDetector port. Both
 // are satisfied by adapters in the composition root (internal/app).
@@ -198,6 +198,52 @@ func maskIfSet(stored string) string {
 		return PasswordPlaceholder
 	}
 	return ""
+}
+
+// ---------------------------------------------------------------------------
+// Vulnerability scanning
+// ---------------------------------------------------------------------------
+
+// VulnUpdate is the vulnerability-scanner settings write model. It carries the
+// six operator-settable fields; AutoScan is left untouched (it is not exposed by
+// the settings endpoint — the original contract).
+type VulnUpdate struct {
+	Enabled           bool
+	CVEDatabase       string
+	NVDAPIKey         string
+	UpdateInterval    int
+	SeverityThreshold string
+	MaxConcurrent     int
+}
+
+// Vuln returns the current vulnerability-scanner configuration.
+func (s *Service) Vuln() config.VulnerabilityScanConfig {
+	var out config.VulnerabilityScanConfig
+	s.store.Read(func(c *config.Config) { out = c.Security.VulnerabilityScanning })
+	return out
+}
+
+// VulnSeverity returns the configured severity threshold — the single field the
+// scan-status endpoint surfaces, without reaching into the config directly.
+func (s *Service) VulnSeverity() string {
+	var out string
+	s.store.Read(func(c *config.Config) { out = c.Security.VulnerabilityScanning.SeverityThreshold })
+	return out
+}
+
+// UpdateVuln applies the six operator-settable fields and persists, leaving
+// AutoScan untouched.
+func (s *Service) UpdateVuln(in VulnUpdate) error {
+	return s.store.Write(func(c *config.Config) error {
+		v := &c.Security.VulnerabilityScanning
+		v.Enabled = in.Enabled
+		v.CVEDatabase = in.CVEDatabase
+		v.NVDAPIKey = in.NVDAPIKey
+		v.UpdateInterval = in.UpdateInterval
+		v.SeverityThreshold = in.SeverityThreshold
+		v.MaxConcurrent = in.MaxConcurrent
+		return nil
+	})
 }
 
 // ---------------------------------------------------------------------------
