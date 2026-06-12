@@ -61,6 +61,7 @@ import (
 	"github.com/MustardSeedNetworks/seed/internal/probe/checkers"
 	"github.com/MustardSeedNetworks/seed/internal/profiles/catalog"
 	"github.com/MustardSeedNetworks/seed/internal/scheduler"
+	"github.com/MustardSeedNetworks/seed/internal/settings/management"
 	"github.com/MustardSeedNetworks/seed/internal/settings/persistence"
 	"github.com/MustardSeedNetworks/seed/internal/timeseries/retention"
 	"github.com/MustardSeedNetworks/seed/internal/topology"
@@ -242,6 +243,7 @@ type Server struct {
 	wifiManagement     *troubleshooting.Management // Wi-Fi settings/scan/status/connect use-case (ADR-0020)
 	wifiDiscovery      *troubleshooting.Discovery  // Enhanced Wi-Fi discovery use-case (ADR-0020)
 	settingsStore      *persistence.Service        // Settings-to-profile persistence use-case (ADR-0020)
+	settingsManagement *management.Service         // Main settings read/apply use-case (ADR-0020)
 	profiles           *catalog.Service            // Profile CRUD/active/import use-case (ADR-0020)
 	networkIP          *ipconfig.Service           // IP-config + MTU use-case (ADR-0020)
 	alertRules         *rules.Service              // Alert-rule CRUD use-case (ADR-0020)
@@ -369,6 +371,7 @@ func NewServer(
 	// Wire the settings-persistence use-case (ADR-0020). The composition root
 	// builds the adapters; api passes its lazy db accessor + live config.
 	s.settingsStore = app.NewSettings(s.db, s.config)
+	s.settingsManagement = app.NewSettingsManagement(s.config, s.configPath)
 
 	// Wire the profiles catalog use-case (ADR-0020). The composition root builds
 	// the adapter; api passes its lazy db accessor.
