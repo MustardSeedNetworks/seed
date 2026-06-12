@@ -158,6 +158,7 @@ func NewTestServerWithConfig(cfg *config.Config) *Server {
 	// adapter-absent states.
 	s.settingsStore = app.NewSettings(s.db, s.config)
 	s.settingsManagement = app.NewSettingsManagement(s.config, s.configPath)
+	s.securitySettings = app.NewSecuritySettings(s.config, s.configPath, s.rogueDetector)
 	s.profiles = app.NewProfiles(s.db)
 	s.networkIP = app.NewNetworkIP(s.netManager, s.config, s.configPath)
 	s.alertRules = app.NewAlertRules(s.db)

@@ -1,21 +1,18 @@
 package api
 
 import (
-	"fmt"
+	"errors"
 	"log/slog"
 	"net/http"
 	"strings"
 	"time"
 
-	"github.com/MustardSeedNetworks/seed/internal/config"
 	"github.com/MustardSeedNetworks/seed/internal/dhcp"
 	"github.com/MustardSeedNetworks/seed/internal/diagnostics/gateway"
 	"github.com/MustardSeedNetworks/seed/internal/i18n"
 	"github.com/MustardSeedNetworks/seed/internal/logging"
+	securitysettings "github.com/MustardSeedNetworks/seed/internal/security/settings"
 )
-
-// passwordPlaceholder is used to mask sensitive values in API responses.
-const passwordPlaceholder = "*****"
 
 // ============================================================================
 // Request/Response Types and Handlers (fixes #544 - split from handlers.go)
@@ -83,7 +80,7 @@ func (s *Server) handleRogueDHCP(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {
 	case http.MethodGet:
 		resp := RogueDHCPResponse{
-			Enabled: s.config.DHCP.RogueDetection.Enabled,
+			Enabled: s.securitySettings.RogueEnabled(),
 			Running: s.rogueDetector().IsRunning(),
 		}
 		sendJSONResponse(w, logger, http.StatusOK, resp)
@@ -113,7 +110,7 @@ func (s *Server) handleRogueDHCPAction(
 		return
 	}
 
-	resp := RogueDHCPResponse{Enabled: s.config.DHCP.RogueDetection.Enabled}
+	resp := RogueDHCPResponse{Enabled: s.securitySettings.RogueEnabled()}
 
 	switch strings.ToLower(req.Action) {
 	case "start":
@@ -134,7 +131,7 @@ func (s *Server) handleRogueDHCPStart(
 	logger *slog.Logger,
 	resp *RogueDHCPResponse,
 ) {
-	if !s.config.DHCP.RogueDetection.Enabled {
+	if !s.securitySettings.RogueEnabled() {
 		resp.Error = "Rogue DHCP detection is disabled in configuration"
 		sendJSONResponse(w, logger, http.StatusBadRequest, *resp)
 		return
@@ -216,25 +213,18 @@ func (s *Server) handleRogueDHCPServers(w http.ResponseWriter, r *http.Request) 
 	}
 }
 
-// handleRogueDHCPConfig gets (GET) or updates (PUT) the rogue DHCP detector configuration.
+// handleRogueDHCPConfig gets (GET) or updates (PUT) the rogue DHCP detector
+// configuration. Thin transport (ADR-0020): delegates to the security-settings
+// service, which owns the config merge/persist + live-detector sync.
 func (s *Server) handleRogueDHCPConfig(w http.ResponseWriter, r *http.Request) {
 	logger := logging.FromContext(r.Context())
 	localizer := i18n.FromRequest(r)
 
 	switch r.Method {
 	case http.MethodGet:
-		// Get current configuration
-		rogueConfig := s.rogueDetector().GetConfig()
-		resp := RogueDHCPConfigResponse{
-			Enabled:          s.config.DHCP.RogueDetection.Enabled,
-			KnownServers:     rogueConfig.KnownServers,
-			AlertOnDetection: rogueConfig.AlertOnDetection,
-			Interface:        rogueConfig.Interface,
-		}
-		sendJSONResponse(w, logger, http.StatusOK, resp)
+		sendJSONResponse(w, logger, http.StatusOK, rogueViewToResponse(s.securitySettings.RogueDHCP()))
 
 	case http.MethodPut:
-		// Update configuration
 		var req struct {
 			Enabled          *bool    `json:"enabled,omitempty"`
 			KnownServers     []string `json:"knownServers,omitempty"`
@@ -243,57 +233,32 @@ func (s *Server) handleRogueDHCPConfig(w http.ResponseWriter, r *http.Request) {
 		if !decodeJSONStrictLocalized(w, r, &req, MaxBodySizeJSON, logger, localizer) {
 			return
 		}
-
-		// Update config
-		// NOTE: Must unlock before Save() - Save() acquires RLock internally (fixes #783)
-		s.config.Lock()
-		if req.Enabled != nil {
-			s.config.DHCP.RogueDetection.Enabled = *req.Enabled
-		}
-		if req.KnownServers != nil {
-			s.config.DHCP.RogueDetection.KnownServers = req.KnownServers
-			// Update detector's known servers
-			s.rogueDetector().UpdateKnownServers(req.KnownServers)
-		}
-		if req.AlertOnDetection != nil {
-			s.config.DHCP.RogueDetection.AlertOnDetection = *req.AlertOnDetection
-		}
-		// Unlock before Save() to avoid deadlock
-		s.config.Unlock()
-
-		// Save config (fixes #782 - return error instead of silent warning)
-		if err := s.config.Save(s.configPath); err != nil {
-			logger.ErrorContext(r.Context(), "Failed to save config", "error", err)
-			sendErrorResponseWithDetails(
-				w,
-				logger,
-				http.StatusInternalServerError,
-				ErrCodeInternal,
-				localizer.T("errors.config.failedToSave"),
-				"",
-			) // fixes #H7
+		err := s.securitySettings.UpdateRogueDHCP(securitysettings.RogueUpdate{
+			Enabled:          req.Enabled,
+			KnownServers:     req.KnownServers,
+			AlertOnDetection: req.AlertOnDetection,
+		})
+		if err != nil {
+			logger.ErrorContext(r.Context(), "Failed to save rogue DHCP config", "error", err)
+			sendErrorResponseWithDetails(w, logger, http.StatusInternalServerError,
+				ErrCodeInternal, localizer.T("errors.config.failedToSave"), "")
 			return
 		}
-
-		// Return updated config
-		rogueConfig := s.rogueDetector().GetConfig()
-		resp := RogueDHCPConfigResponse{
-			Enabled:          s.config.DHCP.RogueDetection.Enabled,
-			KnownServers:     rogueConfig.KnownServers,
-			AlertOnDetection: rogueConfig.AlertOnDetection,
-			Interface:        rogueConfig.Interface,
-		}
-		sendJSONResponse(w, logger, http.StatusOK, resp)
+		sendJSONResponse(w, logger, http.StatusOK, rogueViewToResponse(s.securitySettings.RogueDHCP()))
 
 	default:
-		sendErrorResponseWithDetails(
-			w,
-			logger,
-			http.StatusMethodNotAllowed,
-			ErrCodeMethodNotAllowed,
-			localizer.T("errors.api.methodNotAllowed"),
-			"",
-		) // fixes #694
+		sendErrorResponseWithDetails(w, logger, http.StatusMethodNotAllowed,
+			ErrCodeMethodNotAllowed, localizer.T("errors.api.methodNotAllowed"), "")
+	}
+}
+
+// rogueViewToResponse maps the service read model to the wire DTO.
+func rogueViewToResponse(v securitysettings.RogueView) RogueDHCPConfigResponse {
+	return RogueDHCPConfigResponse{
+		Enabled:          v.Enabled,
+		KnownServers:     v.KnownServers,
+		AlertOnDetection: v.AlertOnDetection,
+		Interface:        v.Interface,
 	}
 }
 
@@ -446,92 +411,15 @@ func (s *Server) handleSNMPSettings(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+// getSNMPSettings serves the SNMP settings with passwords masked. Thin transport.
 func (s *Server) getSNMPSettings(w http.ResponseWriter, r *http.Request) {
 	logger := logging.FromContext(r.Context())
-	s.config.RLock()
-	defer s.config.RUnlock()
-
-	// Convert v3 credentials to response format (fixes #518)
-	// NEVER return actual passwords in GET responses - use placeholder instead
-	v3Creds := make([]SNMPv3CredentialResponse, len(s.config.SNMP.V3Credentials))
-	for i := range s.config.SNMP.V3Credentials {
-		cred := &s.config.SNMP.V3Credentials[i]
-		// Use passwordPlaceholder for passwords (never expose actual values)
-		authPass := ""
-		if cred.AuthPassword != "" {
-			authPass = passwordPlaceholder
-		}
-		privPass := ""
-		if cred.PrivPassword != "" {
-			privPass = passwordPlaceholder
-		}
-
-		v3Creds[i] = SNMPv3CredentialResponse{
-			Name:          cred.Name,
-			Username:      cred.Username,
-			AuthProtocol:  cred.AuthProtocol,
-			AuthPassword:  authPass, // Never return actual password
-			PrivProtocol:  cred.PrivProtocol,
-			PrivPassword:  privPass, // Never return actual password
-			ContextName:   cred.ContextName,
-			SecurityLevel: cred.SecurityLevel,
-		}
-	}
-
-	resp := SNMPSettingsResponse{
-		Communities:   s.config.SNMP.Communities,
-		V3Credentials: v3Creds,
-		Timeout:       int(s.config.SNMP.Timeout.Milliseconds()),
-		Retries:       s.config.SNMP.Retries,
-		Port:          s.config.SNMP.Port,
-	}
-
-	sendJSONResponse(w, logger, http.StatusOK, resp)
+	sendJSONResponse(w, logger, http.StatusOK, snmpViewToResponse(s.securitySettings.SNMP()))
 }
 
-// convertSNMPv3Credential converts an API credential request to config format.
-// It handles password encryption and preserves existing passwords for placeholders.
-func (s *Server) convertSNMPv3Credential(
-	cred *SNMPv3CredentialResponse,
-	existingCred *config.SNMPv3Credential,
-	logger *slog.Logger,
-) (*config.SNMPv3Credential, error) {
-	newCred := &config.SNMPv3Credential{
-		Name:          cred.Name,
-		Username:      cred.Username,
-		AuthProtocol:  cred.AuthProtocol,
-		PrivProtocol:  cred.PrivProtocol,
-		ContextName:   cred.ContextName,
-		SecurityLevel: cred.SecurityLevel,
-	}
-
-	// Handle AuthPassword
-	if cred.AuthPassword != "" && cred.AuthPassword != passwordPlaceholder {
-		encrypted, err := s.config.EncryptCredentialValue(cred.AuthPassword)
-		if err != nil {
-			logger.Error("Failed to encrypt auth password", "error", err, "credential_name", cred.Name)
-			return nil, fmt.Errorf("encrypt auth password: %w", err)
-		}
-		newCred.AuthPassword = encrypted
-	} else if existingCred != nil {
-		newCred.AuthPassword = existingCred.AuthPassword
-	}
-
-	// Handle PrivPassword
-	if cred.PrivPassword != "" && cred.PrivPassword != passwordPlaceholder {
-		encrypted, err := s.config.EncryptCredentialValue(cred.PrivPassword)
-		if err != nil {
-			logger.Error("Failed to encrypt priv password", "error", err, "credential_name", cred.Name)
-			return nil, fmt.Errorf("encrypt priv password: %w", err)
-		}
-		newCred.PrivPassword = encrypted
-	} else if existingCred != nil {
-		newCred.PrivPassword = existingCred.PrivPassword
-	}
-
-	return newCred, nil
-}
-
+// updateSNMPSettings persists SNMP settings (encrypting new passwords). Thin
+// transport: decode, map to the domain update, delegate to the service, and map
+// the typed encrypt errors to the distinct i18n messages.
 func (s *Server) updateSNMPSettings(w http.ResponseWriter, r *http.Request) {
 	logger := logging.FromContext(r.Context())
 	localizer := i18n.FromRequest(r)
@@ -541,53 +429,68 @@ func (s *Server) updateSNMPSettings(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Lock config for write access
-	// NOTE: Must unlock before Save() - Save() acquires RLock internally (fixes #783)
-	s.config.Lock()
-	defer s.config.Unlock()
-
-	// Convert request v3 credentials to config format (fixes #518)
-	v3Creds := make([]config.SNMPv3Credential, len(req.V3Credentials))
-	for i := range req.V3Credentials {
-		var existingCred *config.SNMPv3Credential
-		if i < len(s.config.SNMP.V3Credentials) {
-			existingCred = &s.config.SNMP.V3Credentials[i]
-		}
-		newCred, err := s.convertSNMPv3Credential(&req.V3Credentials[i], existingCred, logger)
-		if err != nil {
-			errMsg := localizer.T("errors.security.failedToEncryptAuth")
-			if strings.Contains(err.Error(), "priv") {
-				errMsg = localizer.T("errors.security.failedToEncryptPriv")
-			}
-			sendErrorResponseWithDetails(w, logger, http.StatusInternalServerError, ErrCodeInternal, errMsg, "")
-			return
-		}
-		v3Creds[i] = *newCred
+	switch err := s.securitySettings.UpdateSNMP(snmpRequestToUpdate(req)); {
+	case errors.Is(err, securitysettings.ErrEncryptPriv):
+		sendErrorResponseWithDetails(w, logger, http.StatusInternalServerError,
+			ErrCodeInternal, localizer.T("errors.security.failedToEncryptPriv"), "")
+	case errors.Is(err, securitysettings.ErrEncryptAuth):
+		sendErrorResponseWithDetails(w, logger, http.StatusInternalServerError,
+			ErrCodeInternal, localizer.T("errors.security.failedToEncryptAuth"), "")
+	case err != nil:
+		logger.ErrorContext(r.Context(), "Failed to save SNMP settings", "error", err)
+		sendErrorResponseWithDetails(w, logger, http.StatusInternalServerError,
+			ErrCodeInternal, localizer.T("errors.config.failedToSave"), "")
+	default:
+		sendJSONResponse(w, logger, http.StatusOK, map[string]string{
+			"status": statusSuccess, "message": "SNMP settings updated",
+		})
 	}
+}
 
-	// Update SNMP settings
-	s.config.SNMP.Communities = req.Communities
-	s.config.SNMP.V3Credentials = v3Creds
-	s.config.SNMP.Timeout = time.Duration(req.Timeout) * time.Millisecond
-	s.config.SNMP.Retries = req.Retries
-	s.config.SNMP.Port = req.Port
-
-	// Save config (passwords are now encrypted) (fixes #782 - return error instead of silent warning)
-	if err := s.config.Save(s.configPath); err != nil {
-		logger.ErrorContext(r.Context(), "Failed to save config", "error", err)
-		sendErrorResponseWithDetails(
-			w,
-			logger,
-			http.StatusInternalServerError,
-			ErrCodeInternal,
-			localizer.T("errors.config.failedToSave"),
-			"",
-		) // fixes #H7
-		return
+// snmpViewToResponse maps the service read model to the wire DTO.
+func snmpViewToResponse(v securitysettings.SNMPView) SNMPSettingsResponse {
+	creds := make([]SNMPv3CredentialResponse, len(v.V3Credentials))
+	for i, c := range v.V3Credentials {
+		creds[i] = SNMPv3CredentialResponse{
+			Name:          c.Name,
+			Username:      c.Username,
+			AuthProtocol:  c.AuthProtocol,
+			AuthPassword:  c.AuthPassword,
+			PrivProtocol:  c.PrivProtocol,
+			PrivPassword:  c.PrivPassword,
+			ContextName:   c.ContextName,
+			SecurityLevel: c.SecurityLevel,
+		}
 	}
+	return SNMPSettingsResponse{
+		Communities:   v.Communities,
+		V3Credentials: creds,
+		Timeout:       v.TimeoutMs,
+		Retries:       v.Retries,
+		Port:          v.Port,
+	}
+}
 
-	sendJSONResponse(w, logger, http.StatusOK, map[string]string{
-		"status":  statusSuccess,
-		"message": "SNMP settings updated",
-	})
+// snmpRequestToUpdate maps the wire DTO to the domain update model.
+func snmpRequestToUpdate(req SNMPSettingsResponse) securitysettings.SNMPUpdate {
+	creds := make([]securitysettings.SNMPv3Credential, len(req.V3Credentials))
+	for i, c := range req.V3Credentials {
+		creds[i] = securitysettings.SNMPv3Credential{
+			Name:          c.Name,
+			Username:      c.Username,
+			AuthProtocol:  c.AuthProtocol,
+			AuthPassword:  c.AuthPassword,
+			PrivProtocol:  c.PrivProtocol,
+			PrivPassword:  c.PrivPassword,
+			ContextName:   c.ContextName,
+			SecurityLevel: c.SecurityLevel,
+		}
+	}
+	return securitysettings.SNMPUpdate{
+		Communities:   req.Communities,
+		V3Credentials: creds,
+		TimeoutMs:     req.Timeout,
+		Retries:       req.Retries,
+		Port:          req.Port,
+	}
 }
