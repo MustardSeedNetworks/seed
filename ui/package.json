@@ -29,26 +29,26 @@
     "@fontsource-variable/inter": "5.2.8",
     "@fontsource-variable/jetbrains-mono": "5.2.8",
     "@hookform/resolvers": "^5.4.0",
-    "@tailwindcss/postcss": "4.3.0",
+    "@tailwindcss/postcss": "4.3.1",
     "@tanstack/react-query": "5.101.0",
     "cmdk": "^1.1.1",
     "i18next": "26.3.1",
     "i18next-browser-languagedetector": "8.2.1",
     "immer": "11.1.8",
     "jszip": "3.10.1",
-    "lucide-react": "1.17.0",
+    "lucide-react": "1.18.0",
     "react": "19.2.7",
     "react-dom": "19.2.7",
     "react-hook-form": "^7.78.0",
     "react-i18next": "17.0.8",
     "react-router-dom": "^7.17.0",
     "tailwind-merge": "3.6.0",
-    "tailwindcss": "4.3.0",
+    "tailwindcss": "4.3.1",
     "valibot": "^1.4.1",
     "zustand": "5.0.14"
   },
   "devDependencies": {
-    "@biomejs/biome": "2.4.16",
+    "@biomejs/biome": "2.5.0",
     "@chromatic-com/storybook": "5.2.1",
     "@playwright/test": "1.60.0",
     "@storybook/addon-a11y": "10.4.4",
@@ -77,5 +77,8 @@
     "typescript": "6.0.3",
     "vite": "8.0.16",
     "vitest": "4.1.8"
+  },
+  "overrides": {
+    "esbuild": "0.28.1"
   }
 }
