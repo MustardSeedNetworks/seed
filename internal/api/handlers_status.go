@@ -1,13 +1,11 @@
 package api
 
 import (
-	"context"
 	"encoding/json"
 	"net/http"
 	"strconv"
 	"time"
 
-	"github.com/MustardSeedNetworks/seed/internal/dhcp"
 	"github.com/MustardSeedNetworks/seed/internal/logging"
 	"github.com/MustardSeedNetworks/seed/internal/system"
 	"github.com/MustardSeedNetworks/seed/internal/version"
@@ -29,21 +27,6 @@ type StatusResponse struct {
 	ICMPAvailable bool   `json:"icmpAvailable"`
 }
 
-// ExportData represents the full diagnostic export.
-type ExportData struct {
-	Version   string           `json:"version"`
-	Timestamp string           `json:"timestamp"`
-	Device    ExportDeviceInfo `json:"device"`
-	Cards     map[string]any   `json:"cards"`
-}
-
-// ExportDeviceInfo contains device information.
-type ExportDeviceInfo struct {
-	Interface string `json:"interface"`
-	MAC       string `json:"mac,omitempty"`
-	IPMode    string `json:"ipMode"`
-}
-
 // handleStatus returns the system status (fixes #544 - split from handlers.go).
 func (s *Server) handleStatus(w http.ResponseWriter, r *http.Request) {
 	logger := logging.FromContext(r.Context())
@@ -56,7 +39,7 @@ func (s *Server) handleStatus(w http.ResponseWriter, r *http.Request) {
 	resp := StatusResponse{
 		Status:        "ok",
 		Version:       version.GetVersion(),
-		Interface:     s.config.Interface.Default,
+		Interface:     s.defaultInterface(),
 		IsWireless:    isWireless,
 		ICMPAvailable: s.icmpAvailable,
 	}
@@ -64,199 +47,28 @@ func (s *Server) handleStatus(w http.ResponseWriter, r *http.Request) {
 	sendJSONResponse(w, logger, http.StatusOK, resp)
 }
 
-// handleExport exports current diagnostic data as JSON (fixes #544 - split from handlers.go).
-// Accepts optional query parameter: ?interface=eth0.
+// handleExport exports current diagnostic data as JSON (fixes #544 - split from
+// handlers.go). Accepts optional query parameter: ?interface=eth0. Thin transport
+// (ADR-0020): the export-assembly fan-out lives in the export use-case.
 func (s *Server) handleExport(w http.ResponseWriter, r *http.Request) {
 	logger := logging.FromContext(r.Context())
-	// Get interface from query param or fallback to current.
-	currentIface := s.getInterfaceFromRequest(r)
-	if err := s.netManager().RefreshInterfaces(); err != nil {
+
+	data, err := s.exportService.Build(r.Context(), s.getInterfaceFromRequest(r), version.GetVersion())
+	if err != nil {
 		logger.ErrorContext(r.Context(), "Failed to refresh interfaces", "error", err)
 		sendErrorResponseWithDetails(
-			w,
-			logger,
-			http.StatusInternalServerError,
-			ErrCodeInternal,
-			"Failed to refresh interfaces",
-			"",
+			w, logger, http.StatusInternalServerError, ErrCodeInternal,
+			"Failed to refresh interfaces", "",
 		)
 		return
 	}
-
-	var mac string
-	if ifaceInfo, err := s.netManager().GetInterface(currentIface); err == nil {
-		mac = ifaceInfo.HardwareAddr
-	}
-
-	export := ExportData{
-		Version:   version.GetVersion(),
-		Timestamp: time.Now().UTC().Format(time.RFC3339),
-		Device: ExportDeviceInfo{
-			Interface: currentIface,
-			MAC:       mac,
-			IPMode:    s.config.IP.Mode,
-		},
-		Cards: make(map[string]any),
-	}
-
-	s.exportLinkCard(currentIface, export.Cards)
-	s.exportIPConfigCard(currentIface, export.Cards)
-	s.exportDiscoveryCard(export.Cards)
-	s.exportDNSCard(r.Context(), export.Cards)
-	s.exportGatewayCard(export.Cards)
-	s.exportVLANCard(export.Cards)
-	s.exportWiFiCard(currentIface, export.Cards)
-	s.exportCableCard(export.Cards)
-	s.exportSpeedtestCard(export.Cards)
-	s.exportIperfCard(export.Cards)
 
 	w.Header().Set("Content-Type", "application/json")
 	w.Header().Set("Content-Disposition", "attachment; filename=seed-export.json")
 	encoder := json.NewEncoder(w)
 	encoder.SetIndent("", "  ")
-	if err := encoder.Encode(export); err != nil {
-		logger.ErrorContext(r.Context(), "Error encoding export response", "error", err)
-	}
-}
-
-func (s *Server) exportLinkCard(iface string, cards map[string]any) {
-	if linkStatus, err := s.netManager().GetLinkStatus(iface); err == nil {
-		cards["link"] = map[string]any{
-			"linkUp": linkStatus.LinkUp, "speed": linkStatus.Speed,
-			"duplex": linkStatus.Duplex, "autoNeg": linkStatus.AutoNeg,
-		}
-	}
-}
-
-func (s *Server) exportIPConfigCard(iface string, cards map[string]any) {
-	ifaceInfo, err := s.netManager().GetInterface(iface)
-	if err != nil {
-		return
-	}
-	ipData := map[string]any{"addresses": ifaceInfo.Addresses}
-	if leaseInfo, leaseErr := dhcp.GetLeaseInfo(iface); leaseErr == nil && leaseInfo != nil {
-		ipData["dhcpServer"] = leaseInfo.DHCPServer
-		ipData["gateway"] = leaseInfo.Gateway
-		ipData["leaseTime"] = leaseInfo.LeaseTime
-		ipData["dns"] = leaseInfo.DNS
-	}
-	cards["ipConfig"] = ipData
-}
-
-func (s *Server) exportDiscoveryCard(cards map[string]any) {
-	if s.discoveryService() == nil {
-		return
-	}
-	neighbors := s.discoveryService().GetNeighbors()
-	neighborList := make([]map[string]any, 0, len(neighbors))
-	for _, n := range neighbors {
-		neighborList = append(neighborList, map[string]any{
-			"protocol": n.Protocol, "systemName": n.SystemName, "portId": n.PortID,
-			"portDescription": n.PortDescription, "managementAddress": n.ManagementAddress,
-		})
-	}
-	cards["switch"] = map[string]any{
-		"running":   s.discoveryService().IsRunning(),
-		"neighbors": neighborList,
-	}
-}
-
-func (s *Server) exportDNSCard(ctx context.Context, cards map[string]any) {
-	if s.dnsTester() == nil {
-		return
-	}
-	result := s.dnsTester().Test(ctx)
-	dnsData := map[string]any{"server": result.Server, "testHostname": result.TestHostname}
-	if result.Forward != nil {
-		dnsData["forward"] = map[string]any{
-			"result": result.Forward.Resolved, "time": result.Forward.Time.Milliseconds(),
-			"status": result.Forward.Status, "error": result.Forward.Error,
-		}
-	}
-	if result.Reverse != nil {
-		dnsData["reverse"] = map[string]any{
-			"result": result.Reverse.Resolved, "time": result.Reverse.Time.Milliseconds(),
-			"status": result.Reverse.Status, "error": result.Reverse.Error,
-		}
-	}
-	cards["dns"] = dnsData
-}
-
-func (s *Server) exportGatewayCard(cards map[string]any) {
-	if s.gatewayTester() == nil {
-		return
-	}
-	stats := s.gatewayTester().GetStats()
-	cards["gateway"] = map[string]any{
-		"gateway": stats.Gateway, "reachable": stats.Reachable, "sent": stats.Sent,
-		"received": stats.Received, "lossPercent": stats.LossPercent,
-		"avgTime": stats.AvgTime, "status": stats.Status,
-	}
-}
-
-func (s *Server) exportVLANCard(cards map[string]any) {
-	if s.vlanManager() == nil {
-		return
-	}
-	vlanInfo := s.vlanManager().GetInfo()
-	cards["vlan"] = map[string]any{
-		"nativeVlan": vlanInfo.NativeVlan, "taggedVlans": vlanInfo.TaggedVlans,
-		"voiceVlan": vlanInfo.VoiceVlan, "configured": vlanInfo.Configured,
-	}
-}
-
-func (s *Server) exportWiFiCard(iface string, cards map[string]any) {
-	if !s.netManager().IsWireless(iface) || s.wifiManager() == nil {
-		return
-	}
-	wifiInfo := s.wifiManager().GetInfo()
-	if wifiInfo.SSID != "" {
-		cards["wifi"] = map[string]any{
-			"ssid": wifiInfo.SSID, "bssid": wifiInfo.BSSID, "signal": wifiInfo.Signal,
-			"channel": wifiInfo.Channel, "frequency": wifiInfo.Frequency, "security": wifiInfo.Security,
-		}
-	}
-}
-
-func (s *Server) exportCableCard(cards map[string]any) {
-	if s.cableTester() == nil {
-		return
-	}
-	cableResult := s.cableTester().Test()
-	cards["cable"] = map[string]any{
-		"supported": cableResult.Supported, "length": cableResult.Length,
-		"status": cableResult.Status, "faults": cableResult.Faults,
-	}
-}
-
-func (s *Server) exportSpeedtestCard(cards map[string]any) {
-	if s.speedtestTester() == nil {
-		return
-	}
-	result := s.speedtestTester().GetLastResult()
-	if result == nil {
-		return
-	}
-	cards["speedtest"] = map[string]any{
-		"download": result.Download, "upload": result.Upload, "latency": result.Latency,
-		"server": result.Server, "location": result.Location, "host": result.Host,
-		"distance": result.Distance, "timestamp": result.Timestamp, "testDuration": result.TestDuration,
-	}
-}
-
-func (s *Server) exportIperfCard(cards map[string]any) {
-	if s.iperfManager() == nil {
-		return
-	}
-	result := s.iperfManager().GetLastResult()
-	if result == nil {
-		return
-	}
-	cards["iperf"] = map[string]any{
-		"bandwidth": result.Bandwidth, "transfer": result.Transfer, "retransmits": result.Retransmits,
-		"jitter": result.Jitter, "lostPackets": result.LostPackets, "lostPercent": result.LostPercent,
-		"protocol": result.Protocol, "direction": result.Direction, "duration": result.Duration,
-		"server": result.Server, "port": result.Port, "timestamp": result.Timestamp,
+	if encErr := encoder.Encode(data); encErr != nil {
+		logger.ErrorContext(r.Context(), "Error encoding export response", "error", encErr)
 	}
 }
 

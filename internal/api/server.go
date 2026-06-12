@@ -26,6 +26,7 @@ import (
 	"github.com/MustardSeedNetworks/seed/internal/dhcp"
 	"github.com/MustardSeedNetworks/seed/internal/diagnostics/cable"
 	"github.com/MustardSeedNetworks/seed/internal/diagnostics/dns"
+	"github.com/MustardSeedNetworks/seed/internal/diagnostics/export"
 	"github.com/MustardSeedNetworks/seed/internal/diagnostics/gateway"
 	"github.com/MustardSeedNetworks/seed/internal/diagnostics/iperf"
 	"github.com/MustardSeedNetworks/seed/internal/diagnostics/speedtest"
@@ -261,6 +262,7 @@ type Server struct {
 	pollingTargets     *targets.Service            // Polling-targets CRUD use-case (ADR-0020)
 	alertInbox         *inbox.Service              // Alert-inbox (list/ack/resolve) use-case (ADR-0020)
 	configBackups      *backups.Service            // Config backup/restore use-case (ADR-0020)
+	exportService      *export.Service             // Diagnostic-export use-case (ADR-0020)
 	bluetoothScans     *bluetooth.Service          // Bluetooth-discovery use-case (ADR-0020)
 	healthMonitoring   *monitoring.Service         // Health-monitoring use-case (ADR-0020)
 	healthSettings     *healthsettings.Service     // Health-checks settings use-case (ADR-0020)
@@ -861,6 +863,7 @@ func (s *Server) webAuthnManager() *auth.WebAuthnManager      { return s.webAuth
 func (s *Server) loginRateLimiter() *RateLimiter              { return s.loginLimiter }
 func (s *Server) endpointRateLimiter() *EndpointRateLimiter   { return s.endpointLimiter }
 func (s *Server) netManager() *netif.Manager                  { return s.netMgr }
+func (s *Server) defaultInterface() string                    { return s.config.Interface.Default }
 func (s *Server) linkMonitor() *netif.LinkMonitor             { return s.linkMon }
 func (s *Server) deviceDiscovery() *enumerate.DeviceDiscovery { return s.deviceDisc }
 func (s *Server) discoveryService() *enumerate.Service        { return s.discoverySvc }
@@ -935,6 +938,7 @@ func (s *Server) initDiscoveryUseCases() {
 	s.discoverySettings = app.NewDiscoverySettings(s.config, s.configPath, s.deviceDiscovery)
 	s.networkProblems = app.NewProblems(s.problemDetector, s.discoveryService)
 	s.topologyQueries = app.NewTopologyQueries(s.db, topologyMaxLimit)
+	s.exportService = export.NewService(serverExportSources{s: s})
 	s.pollingTargets = app.NewPollingTargets(s.db)
 	s.alertInbox = app.NewAlertInbox(s.db)
 	s.bluetoothScans = app.NewBluetooth(s.bluetoothScanner)
