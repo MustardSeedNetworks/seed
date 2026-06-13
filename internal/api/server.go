@@ -51,6 +51,7 @@ import (
 	"github.com/MustardSeedNetworks/seed/internal/listener/snmptrap"
 	"github.com/MustardSeedNetworks/seed/internal/listener/syslog"
 	"github.com/MustardSeedNetworks/seed/internal/logging"
+	logquery "github.com/MustardSeedNetworks/seed/internal/logs/query"
 	"github.com/MustardSeedNetworks/seed/internal/mibdb"
 	"github.com/MustardSeedNetworks/seed/internal/netif"
 	"github.com/MustardSeedNetworks/seed/internal/network/ipconfig"
@@ -263,6 +264,7 @@ type Server struct {
 	alertInbox         *inbox.Service              // Alert-inbox (list/ack/resolve) use-case (ADR-0020)
 	configBackups      *backups.Service            // Config backup/restore use-case (ADR-0020)
 	exportService      *export.Service             // Diagnostic-export use-case (ADR-0020)
+	logQuery           *logquery.Service           // Log-query use-case (ADR-0020)
 	bluetoothScans     *bluetooth.Service          // Bluetooth-discovery use-case (ADR-0020)
 	healthMonitoring   *monitoring.Service         // Health-monitoring use-case (ADR-0020)
 	healthSettings     *healthsettings.Service     // Health-checks settings use-case (ADR-0020)
@@ -969,6 +971,7 @@ func (s *Server) initDiscoveryUseCases() {
 	s.networkProblems = app.NewProblems(s.problemDetector, s.discoveryService)
 	s.topologyQueries = app.NewTopologyQueries(s.db, topologyMaxLimit)
 	s.exportService = export.NewService(serverExportSources{s: s})
+	s.logQuery = app.NewLogQuery(s.db)
 	s.pollingTargets = app.NewPollingTargets(s.db)
 	s.alertInbox = app.NewAlertInbox(s.db)
 	s.bluetoothScans = app.NewBluetooth(s.bluetoothScanner)

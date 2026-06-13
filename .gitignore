@@ -107,6 +107,7 @@ docs/WIKI_CONTENT.md
 go.work
 go.work.sum
 logs/
+!internal/logs/
 node_modules/
 npm-debug.log*
 storybook-static/

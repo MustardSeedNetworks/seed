@@ -11,7 +11,6 @@ import (
 	"github.com/MustardSeedNetworks/seed/internal/config/backups"
 	"github.com/MustardSeedNetworks/seed/internal/engine"
 	"github.com/MustardSeedNetworks/seed/internal/i18n"
-	"github.com/MustardSeedNetworks/seed/internal/logging"
 )
 
 // ExportSplitCIDR exposes splitCIDR for testing.
@@ -77,38 +76,15 @@ func ExportValidateIperfClientRequest(req *IperfClientRequest) error {
 	return validateIperfClientRequest(req)
 }
 
-// ExportParseLogQueryParams exposes parseLogQueryParams for testing.
-func ExportParseLogQueryParams(r *http.Request) LogQueryParams {
-	return parseLogQueryParams(r)
-}
-
-// ExportMatchesLogFilters exposes matchesLogFilters for testing.
-func ExportMatchesLogFilters(log *logging.LogEntry, params *LogQueryParams) bool {
-	return matchesLogFilters(log, params)
-}
-
-// ExportPaginateLogs exposes paginateLogs for testing.
-func ExportPaginateLogs(logs []*logging.LogEntry, offset, limit int) []*logging.LogEntry {
-	return paginateLogs(logs, offset, limit)
-}
-
 // ExportParseCSV exposes parseCSV for testing.
 func ExportParseCSV(s string) []string {
 	return parseCSV(s)
-}
-
-// ExportContainsIgnoreCase exposes containsIgnoreCase for testing.
-func ExportContainsIgnoreCase(slice []string, target string) bool {
-	return containsIgnoreCase(slice, target)
 }
 
 // ExportIsValidOctet exposes isValidOctet for testing.
 func ExportIsValidOctet(s string) bool {
 	return isValidOctet(s)
 }
-
-// LogQueryParams is a type alias for logQueryParams for testing.
-type LogQueryParams = logQueryParams
 
 // ExportBodyLimitMiddleware exposes bodyLimitMiddleware for testing.
 func ExportBodyLimitMiddleware(next http.Handler) http.Handler {

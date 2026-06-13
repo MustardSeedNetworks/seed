@@ -1,15 +1,14 @@
 package api
 
 import (
-	"context"
 	"net/http"
 	"strconv"
 	"strings"
 	"time"
 
-	"github.com/MustardSeedNetworks/seed/internal/database"
 	"github.com/MustardSeedNetworks/seed/internal/i18n"
 	"github.com/MustardSeedNetworks/seed/internal/logging"
+	logquery "github.com/MustardSeedNetworks/seed/internal/logs/query"
 )
 
 // Log query constants.
@@ -150,96 +149,47 @@ func (s *Server) handleClientLogs(w http.ResponseWriter, r *http.Request) {
 }
 
 // logQueryParams holds parsed log query parameters.
-type logQueryParams struct {
-	levels     []string
-	layers     []string
-	components []string
-	search     string
-	limit      int
-	offset     int
-}
-
-// parseLogQueryParams extracts and validates query parameters from the request.
-func parseLogQueryParams(r *http.Request) logQueryParams {
+// parseLogQueryParams extracts and validates the log-query filter from the
+// request, producing the transport-neutral input the log-query use-case consumes.
+func parseLogQueryParams(r *http.Request) logquery.Params {
 	query := r.URL.Query()
-	params := logQueryParams{
-		levels:     parseCSV(query.Get("level")),
-		layers:     parseCSV(query.Get("layer")),
-		components: parseCSV(query.Get("component")),
-		search:     strings.ToLower(query.Get("search")),
-		limit:      logQueryDefaultLimit,
-		offset:     0,
+	params := logquery.Params{
+		Levels:     parseCSV(query.Get("level")),
+		Layers:     parseCSV(query.Get("layer")),
+		Components: parseCSV(query.Get("component")),
+		Search:     strings.ToLower(query.Get("search")),
+		Limit:      logQueryDefaultLimit,
+		Offset:     0,
 	}
 
 	if l := query.Get("limit"); l != "" {
 		if parsed, err := strconv.Atoi(l); err == nil && parsed > 0 && parsed <= 1000 {
-			params.limit = parsed
+			params.Limit = parsed
 		}
 	}
 
 	if o := query.Get("offset"); o != "" {
 		if parsed, err := strconv.Atoi(o); err == nil && parsed >= 0 {
-			params.offset = parsed
+			params.Offset = parsed
 		}
 	}
 
 	return params
 }
 
-// matchesLogFilters checks if a log entry matches the given filter criteria.
-func matchesLogFilters(log *logging.LogEntry, params *logQueryParams) bool {
-	if len(params.levels) > 0 && !containsIgnoreCase(params.levels, log.Level) {
-		return false
-	}
-	if len(params.layers) > 0 && !containsIgnoreCase(params.layers, log.Layer) {
-		return false
-	}
-	if len(params.components) > 0 && !containsIgnoreCase(params.components, log.Component) {
-		return false
-	}
-	if params.search != "" && !strings.Contains(strings.ToLower(log.Message), params.search) {
-		return false
-	}
-	return true
-}
-
-// paginateLogs applies pagination to a slice of logs.
-func paginateLogs(logs []*logging.LogEntry, offset, limit int) []*logging.LogEntry {
-	if offset >= len(logs) {
-		return nil
-	}
-	end := min(offset+limit, len(logs))
-	return logs[offset:end]
-}
-
 // handleLogsQuery returns logs matching the specified filters.
 // GET /api/logs/query?level=ERROR,WARN&layer=backend,api&component=auth&search=failed&limit=100&offset=0 (fixes #703).
-// Reads from database for persistence, falls back to memory buffer.
+// Thin handler (ADR-0020): the log-query use-case owns the "persisted store first,
+// memory buffer fallback" decision and filtering/pagination.
 func (s *Server) handleLogsQuery(w http.ResponseWriter, r *http.Request) {
 	logger := logging.FromContext(r.Context())
 	localizer := i18n.FromRequest(r)
 
 	params := parseLogQueryParams(r)
 
-	// Try database first if available (for persisted logs)
-	if s.db() != nil {
-		dbLogs, err := s.queryLogsFromDB(r.Context(), params)
-		if err == nil {
-			sendJSONResponse(w, logger, http.StatusOK, LogQueryResponse{
-				Logs:       toLogEntries(dbLogs),
-				TotalCount: len(dbLogs), // TODO: get actual count from DB
-				Offset:     params.offset,
-				Limit:      params.limit,
-			})
-			return
-		}
-		// Fall through to memory buffer on error
-		logger.WarnContext(r.Context(), "Failed to query logs from database, falling back to memory", "error", err)
-	}
-
-	// Fall back to memory buffer
-	broadcaster := logging.GetBroadcaster()
-	if broadcaster == nil {
+	res, err := s.logQuery.Query(r.Context(), params)
+	if err != nil {
+		// The only error is ErrNoSource (neither store nor buffer available).
 		sendErrorResponseWithDetails(
 			w,
 			logger,
@@ -251,70 +201,12 @@ func (s *Server) handleLogsQuery(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	allLogs := broadcaster.GetAllLogs()
-	filtered := make([]*logging.LogEntry, 0, len(allLogs))
-
-	for _, log := range allLogs {
-		if matchesLogFilters(log, &params) {
-			filtered = append(filtered, log)
-		}
-	}
-
-	totalCount := len(filtered)
-	filtered = paginateLogs(filtered, params.offset, params.limit)
-
 	sendJSONResponse(w, logger, http.StatusOK, LogQueryResponse{
-		Logs:       toLogEntries(filtered),
-		TotalCount: totalCount,
-		Offset:     params.offset,
-		Limit:      params.limit,
+		Logs:       toLogEntries(res.Entries),
+		TotalCount: res.TotalCount,
+		Offset:     params.Offset,
+		Limit:      params.Limit,
 	})
-}
-
-// queryLogsFromDB queries logs from the database with filters.
-func (s *Server) queryLogsFromDB(
-	ctx context.Context,
-	params logQueryParams,
-) ([]*logging.LogEntry, error) {
-	opts := database.LogListOptions{
-		Search: params.search,
-		Limit:  params.limit,
-		Offset: params.offset,
-	}
-
-	// Use first level/layer/component if specified
-	if len(params.levels) > 0 {
-		opts.Level = params.levels[0]
-	}
-	if len(params.layers) > 0 {
-		opts.Layer = params.layers[0]
-	}
-	if len(params.components) > 0 {
-		opts.Component = params.components[0]
-	}
-
-	dbEntries, err := s.db().Logs().List(ctx, opts)
-	if err != nil {
-		return nil, err
-	}
-
-	// Convert database entries to logging.LogEntry
-	result := make([]*logging.LogEntry, len(dbEntries))
-	for i, e := range dbEntries {
-		result[i] = &logging.LogEntry{
-			Timestamp:  e.Timestamp,
-			Level:      e.Level,
-			Layer:      e.Layer,
-			Message:    e.Message,
-			Component:  e.Component,
-			RequestID:  e.RequestID,
-			SessionID:  e.SessionID,
-			DurationMs: e.DurationMs,
-			Stack:      e.Stack,
-		}
-	}
-
-	return result, nil
 }
 
 // handleLogsStats returns aggregated log statistics.
@@ -428,14 +320,4 @@ func parseCSV(s string) []string {
 		}
 	}
 	return result
-}
-
-// containsIgnoreCase checks if a slice contains a string (case-insensitive).
-func containsIgnoreCase(slice []string, target string) bool {
-	for _, s := range slice {
-		if strings.EqualFold(s, target) {
-			return true
-		}
-	}
-	return false
 }
