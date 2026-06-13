@@ -8,7 +8,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/MustardSeedNetworks/seed/internal/database"
+	"github.com/MustardSeedNetworks/seed/internal/polling/observation"
 	"github.com/MustardSeedNetworks/seed/internal/topology"
 )
 
@@ -18,7 +18,7 @@ type fakeARPStore struct {
 	targetMap map[string]string // (client|target) -> node_id
 	macMap    map[string]string // mac -> node_id
 
-	bindings   []*database.TopologyARPBinding
+	bindings   []*topology.ARPBinding
 	primaryIPs map[string]string // node_id -> ip
 
 	upsertErr error
@@ -38,7 +38,7 @@ func (f *fakeARPStore) NodeIDForTarget(_ context.Context, clientID, targetID str
 	defer f.mu.Unlock()
 	id, ok := f.targetMap[clientID+"|"+targetID]
 	if !ok {
-		return "", database.ErrTopologyNodeNotFound
+		return "", topology.ErrTopologyNodeNotFound
 	}
 	return id, nil
 }
@@ -48,12 +48,12 @@ func (f *fakeARPStore) NodeIDForMAC(_ context.Context, _, mac string) (string, e
 	defer f.mu.Unlock()
 	id, ok := f.macMap[mac]
 	if !ok {
-		return "", database.ErrTopologyNodeNotFound
+		return "", topology.ErrTopologyNodeNotFound
 	}
 	return id, nil
 }
 
-func (f *fakeARPStore) UpsertARPBinding(_ context.Context, b *database.TopologyARPBinding) error {
+func (f *fakeARPStore) UpsertARPBinding(_ context.Context, b *topology.ARPBinding) error {
 	f.mu.Lock()
 	defer f.mu.Unlock()
 	if f.upsertErr != nil {
@@ -73,9 +73,9 @@ func (f *fakeARPStore) SetNodePrimaryIP(_ context.Context, nodeID, ip string) er
 	return nil
 }
 
-func arpObs(target string, observed time.Time, entries []map[string]any) *database.SNMPObservation {
+func arpObs(target string, observed time.Time, entries []map[string]any) *observation.SNMPObservation {
 	b, _ := json.Marshal(map[string]any{"Entries": entries})
-	return &database.SNMPObservation{
+	return &observation.SNMPObservation{
 		ClientID:    "c",
 		TargetID:    target,
 		Kind:        "arp",
@@ -109,7 +109,7 @@ func TestARPReconcileOnce_UpsertsOneBindingPerEntry(t *testing.T) {
 	store := newFakeARPStore()
 	store.targetMap["c|t-1"] = "node-source"
 
-	o := &fakeObservations{rows: []*database.SNMPObservation{
+	o := &fakeObservations{rows: []*observation.SNMPObservation{
 		arpObs("t-1", at(), []map[string]any{
 			{"IfIndex": 1, "IPAddress": "10.0.0.1", "MACAddress": "aa:bb:cc:dd:ee:01", "MediaType": 3},
 			{"IfIndex": 1, "IPAddress": "10.0.0.2", "MACAddress": "aa:bb:cc:dd:ee:02", "MediaType": 3},
@@ -141,7 +141,7 @@ func TestARPReconcileOnce_BackfillsPrimaryIPOnMACMatch(t *testing.T) {
 	// should be backfilled.
 	store.macMap["aa:bb:cc:dd:ee:99"] = "node-B"
 
-	o := &fakeObservations{rows: []*database.SNMPObservation{
+	o := &fakeObservations{rows: []*observation.SNMPObservation{
 		arpObs("t-1", at(), []map[string]any{
 			{"IfIndex": 1, "IPAddress": "192.0.2.10", "MACAddress": "aa:bb:cc:dd:ee:99"},
 		}),
@@ -163,7 +163,7 @@ func TestARPReconcileOnce_UnmatchedMACSkipsBackfill(t *testing.T) {
 	store.targetMap["c|t-1"] = "node-source"
 	// macMap deliberately empty — no node matches the binding's MAC.
 
-	o := &fakeObservations{rows: []*database.SNMPObservation{
+	o := &fakeObservations{rows: []*observation.SNMPObservation{
 		arpObs("t-1", at(), []map[string]any{
 			{"IfIndex": 1, "IPAddress": "10.0.0.5", "MACAddress": "11:22:33:44:55:66"},
 		}),
@@ -187,7 +187,7 @@ func TestARPReconcileOnce_SourceNotMappedSkips(t *testing.T) {
 	t.Parallel()
 	store := newFakeARPStore() // empty target map -> source unknown
 
-	o := &fakeObservations{rows: []*database.SNMPObservation{
+	o := &fakeObservations{rows: []*observation.SNMPObservation{
 		arpObs("t-orphan", at(), []map[string]any{
 			{"IfIndex": 1, "IPAddress": "10.0.0.1", "MACAddress": "aa:aa:aa:aa:aa:aa"},
 		}),
@@ -209,7 +209,7 @@ func TestARPReconcileOnce_EmptyIPOrMACSkipped(t *testing.T) {
 	store := newFakeARPStore()
 	store.targetMap["c|t-1"] = "node-source"
 
-	o := &fakeObservations{rows: []*database.SNMPObservation{
+	o := &fakeObservations{rows: []*observation.SNMPObservation{
 		arpObs("t-1", at(), []map[string]any{
 			{"IfIndex": 1, "IPAddress": "10.0.0.1", "MACAddress": ""},                  // bad
 			{"IfIndex": 1, "IPAddress": "", "MACAddress": "aa:bb:cc:dd:ee:ff"},         // bad
@@ -234,7 +234,7 @@ func TestARPReconcileOnce_UpsertErrorSkipsBackfill(t *testing.T) {
 	store.macMap["aa:aa:aa:aa:aa:aa"] = "node-B"
 	store.upsertErr = errors.New("constraint")
 
-	o := &fakeObservations{rows: []*database.SNMPObservation{
+	o := &fakeObservations{rows: []*observation.SNMPObservation{
 		arpObs("t-1", at(), []map[string]any{
 			{"IfIndex": 1, "IPAddress": "10.0.0.1", "MACAddress": "aa:aa:aa:aa:aa:aa"},
 		}),
@@ -255,7 +255,7 @@ func TestARPReconcileOnce_MalformedPayloadSkipsObservation(t *testing.T) {
 	t.Parallel()
 	store := newFakeARPStore()
 	store.targetMap["c|t-1"] = "node-source"
-	o := &fakeObservations{rows: []*database.SNMPObservation{
+	o := &fakeObservations{rows: []*observation.SNMPObservation{
 		{
 			ClientID: "c", TargetID: "t-1", Kind: "arp",
 			ObservedAt: at(), PayloadJSON: "{not valid",
@@ -278,7 +278,7 @@ func TestARPReconcileOnce_PersistsHighWater(t *testing.T) {
 	store := newFakeARPStore()
 	store.targetMap["c|t-1"] = "node-source"
 
-	o := &fakeObservations{rows: []*database.SNMPObservation{
+	o := &fakeObservations{rows: []*observation.SNMPObservation{
 		arpObs("t-1", at(), []map[string]any{
 			{"IfIndex": 1, "IPAddress": "10.0.0.1", "MACAddress": "aa:bb:cc:dd:ee:ff"},
 		}),

@@ -11,8 +11,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/MustardSeedNetworks/seed/internal/database"
 	"github.com/MustardSeedNetworks/seed/internal/engine"
+	"github.com/MustardSeedNetworks/seed/internal/polling/observation"
 )
 
 // EdgeReconcilerName is the engine identifier.
@@ -34,7 +34,7 @@ func neighborKinds() []string { return []string{"lldp", "cdp", "fdp"} }
 type edgeStore interface {
 	NodeIDForTarget(ctx context.Context, clientID, targetID string) (string, error)
 	NodeIDForSysName(ctx context.Context, clientID, sysName string) (string, error)
-	UpsertLink(ctx context.Context, link *database.TopologyLink) error
+	UpsertLink(ctx context.Context, link *Link) error
 }
 
 // EdgeReconciler turns lldp/cdp/fdp observations into
@@ -213,7 +213,7 @@ func (r *EdgeReconciler) reconcileKind(
 	kind string,
 	since time.Time,
 ) (int, time.Time, error) {
-	observations, err := r.obs.List(ctx, database.ListOptions{
+	observations, err := r.obs.List(ctx, observation.ListOptions{
 		Kind:  kind,
 		Since: since,
 		Limit: defaultBatchLimit,
@@ -230,7 +230,7 @@ func (r *EdgeReconciler) reconcileKind(
 		}
 		sourceNodeID, lookupErr := r.store.NodeIDForTarget(ctx, obs.ClientID, obs.TargetID)
 		if lookupErr != nil {
-			if errors.Is(lookupErr, database.ErrTopologyNodeNotFound) {
+			if errors.Is(lookupErr, ErrTopologyNodeNotFound) {
 				continue
 			}
 			r.logger.WarnContext(ctx, "edge: source node lookup failed",
@@ -255,7 +255,7 @@ type neighborRecord struct {
 // that landed.
 func (r *EdgeReconciler) applyObservation(
 	ctx context.Context,
-	obs *database.SNMPObservation,
+	obs *observation.SNMPObservation,
 	kind string,
 	sourceNodeID string,
 ) int {
@@ -282,7 +282,7 @@ func (r *EdgeReconciler) applyObservation(
 			"source_target": obs.TargetID,
 			"remote_name":   n.remoteName,
 		})
-		link := &database.TopologyLink{
+		link := &Link{
 			ID:              linkID,
 			SourceNodeID:    sourceNodeID,
 			TargetNodeID:    remoteNodeID,

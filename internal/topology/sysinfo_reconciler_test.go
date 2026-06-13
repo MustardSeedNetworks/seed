@@ -9,7 +9,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/MustardSeedNetworks/seed/internal/database"
+	"github.com/MustardSeedNetworks/seed/internal/polling/observation"
 	"github.com/MustardSeedNetworks/seed/internal/topology"
 )
 
@@ -18,14 +18,14 @@ func at() time.Time              { return time.Date(2026, 5, 31, 12, 0, 0, 0, ti
 
 type fakeObservations struct {
 	mu      sync.Mutex
-	rows    []*database.SNMPObservation
+	rows    []*observation.SNMPObservation
 	listErr error
 }
 
 func (f *fakeObservations) List(
 	_ context.Context,
-	opts database.ListOptions,
-) ([]*database.SNMPObservation, error) {
+	opts observation.ListOptions,
+) ([]*observation.SNMPObservation, error) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
 	if f.listErr != nil {
@@ -33,7 +33,7 @@ func (f *fakeObservations) List(
 	}
 	// Honor the kind filter so reconcilers that fan out across
 	// multiple kinds (lldp/cdp/fdp) don't see each other's rows.
-	out := make([]*database.SNMPObservation, 0, len(f.rows))
+	out := make([]*observation.SNMPObservation, 0, len(f.rows))
 	for _, row := range f.rows {
 		if opts.Kind != "" && row.Kind != opts.Kind {
 			continue
@@ -45,7 +45,7 @@ func (f *fakeObservations) List(
 
 type fakeNodes struct {
 	mu        sync.Mutex
-	upserts   []*database.TopologyNode
+	upserts   []*topology.Node
 	mappings  []targetNodeMapping
 	upsertErr error
 }
@@ -57,8 +57,8 @@ type targetNodeMapping struct {
 
 func (f *fakeNodes) Upsert(
 	_ context.Context,
-	node *database.TopologyNode,
-) (*database.TopologyNode, error) {
+	node *topology.Node,
+) (*topology.Node, error) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
 	if f.upsertErr != nil {
@@ -121,8 +121,8 @@ func payload(client, target, sysName, sysObjectID string) string {
 func obs(
 	client, target, sysName, sysObjectID string,
 	observed time.Time,
-) *database.SNMPObservation {
-	return &database.SNMPObservation{
+) *observation.SNMPObservation {
+	return &observation.SNMPObservation{
 		ClientID:    client,
 		TargetID:    target,
 		Kind:        "sys_info",
@@ -176,7 +176,7 @@ func TestNew_EngineName(t *testing.T) {
 
 func TestReconcileOnce_UpsertsOneNodePerObservation(t *testing.T) {
 	t.Parallel()
-	o := &fakeObservations{rows: []*database.SNMPObservation{
+	o := &fakeObservations{rows: []*observation.SNMPObservation{
 		obs("client-a", "t-1", "router-1", "1.3.6.1.4.1.9.1.123", at()),
 		obs("client-a", "t-2", "router-2", "1.3.6.1.4.1.9.1.456", at()),
 	}}
@@ -204,7 +204,7 @@ func TestReconcileOnce_PersistsHighWaterMark(t *testing.T) {
 	t.Parallel()
 	old := at().Add(-1 * time.Hour)
 	newer := at()
-	o := &fakeObservations{rows: []*database.SNMPObservation{
+	o := &fakeObservations{rows: []*observation.SNMPObservation{
 		obs("c", "t-1", "h-1", "1.3.6.1.4.1.9.1.1", newer),
 		obs("c", "t-2", "h-2", "1.3.6.1.4.1.9.1.2", old),
 	}}
@@ -230,7 +230,7 @@ func TestReconcileOnce_IdentityHashMergesObservationsFromSameDevice(t *testing.T
 	t.Parallel()
 	// Same client + sysName + sysObjectID across two observations
 	// at different times -> same identity_hash -> same node.
-	o := &fakeObservations{rows: []*database.SNMPObservation{
+	o := &fakeObservations{rows: []*observation.SNMPObservation{
 		obs("c", "t-1", "router-1", "1.3.6.1.4.1.9.1.1", at().Add(-1*time.Minute)),
 		obs("c", "t-1", "router-1", "1.3.6.1.4.1.9.1.1", at()),
 	}}
@@ -252,7 +252,7 @@ func TestReconcileOnce_IdentityHashMergesObservationsFromSameDevice(t *testing.T
 
 func TestReconcileOnce_DifferentClientsGetDifferentNodes(t *testing.T) {
 	t.Parallel()
-	o := &fakeObservations{rows: []*database.SNMPObservation{
+	o := &fakeObservations{rows: []*observation.SNMPObservation{
 		obs("client-a", "t-1", "router-1", "1.3.6.1.4.1.9.1.1", at()),
 		obs("client-b", "t-1", "router-1", "1.3.6.1.4.1.9.1.1", at()),
 	}}
@@ -303,7 +303,7 @@ func TestReconcileOnce_ListErrorPropagates(t *testing.T) {
 
 func TestReconcileOnce_UpsertFailureContinuesBatch(t *testing.T) {
 	t.Parallel()
-	o := &fakeObservations{rows: []*database.SNMPObservation{
+	o := &fakeObservations{rows: []*observation.SNMPObservation{
 		obs("c", "t-1", "h-1", "1.3.6.1.4.1.9.1.1", at()),
 		obs("c", "t-2", "h-2", "1.3.6.1.4.1.9.1.2", at()),
 	}}
@@ -329,7 +329,7 @@ func TestReconcileOnce_UpsertFailureContinuesBatch(t *testing.T) {
 func TestReconcileOnce_SkipsObservationWithoutIdentity(t *testing.T) {
 	t.Parallel()
 	// Empty SysName + SysObjectID — buildNode rejects this.
-	o := &fakeObservations{rows: []*database.SNMPObservation{
+	o := &fakeObservations{rows: []*observation.SNMPObservation{
 		obs("c", "t-1", "", "", at()),
 	}}
 	n := &fakeNodes{}

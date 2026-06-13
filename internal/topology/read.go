@@ -8,8 +8,6 @@ package topology
 import (
 	"context"
 	"errors"
-
-	"github.com/MustardSeedNetworks/seed/internal/database"
 )
 
 // ErrNodeNotFound is returned by Node when no node matches the id.
@@ -22,18 +20,18 @@ var ErrUnavailable = errors.New("topology: store unavailable")
 // Reader is the read surface the topology queries need. It mirrors the topology
 // repository's read methods; the adapter satisfies it over database.TopologyRepository.
 type Reader interface {
-	List(ctx context.Context, opts database.TopologyListOptions) ([]*database.TopologyNode, error)
-	ListInterfaces(ctx context.Context, nodeID string) ([]*database.TopologyInterface, error)
-	ListLinks(ctx context.Context, nodeID string) ([]*database.TopologyLink, error)
-	ListARPBindings(ctx context.Context, opts database.TopologyARPListOptions) ([]*database.TopologyARPBinding, error)
+	List(ctx context.Context, opts ListOptions) ([]*Node, error)
+	ListInterfaces(ctx context.Context, nodeID string) ([]*Interface, error)
+	ListLinks(ctx context.Context, nodeID string) ([]*Link, error)
+	ListARPBindings(ctx context.Context, opts ARPListOptions) ([]*ARPBinding, error)
 }
 
 // NodeDetail is the single-node read model: the node plus its interfaces and
 // incident links.
 type NodeDetail struct {
-	Node       *database.TopologyNode
-	Interfaces []*database.TopologyInterface
-	Links      []*database.TopologyLink
+	Node       *Node
+	Interfaces []*Interface
+	Links      []*Link
 }
 
 // Queries is the topology read use-case.
@@ -49,7 +47,7 @@ func NewQueries(reader Reader, maxLimit int) *Queries {
 }
 
 // Nodes lists topology nodes matching opts.
-func (q *Queries) Nodes(ctx context.Context, opts database.TopologyListOptions) ([]*database.TopologyNode, error) {
+func (q *Queries) Nodes(ctx context.Context, opts ListOptions) ([]*Node, error) {
 	return q.reader.List(ctx, opts)
 }
 
@@ -58,11 +56,11 @@ func (q *Queries) Nodes(ctx context.Context, opts database.TopologyListOptions) 
 // yields an empty list rather than failing the whole detail view (the prior
 // handler behavior).
 func (q *Queries) Node(ctx context.Context, id string) (NodeDetail, error) {
-	nodes, err := q.reader.List(ctx, database.TopologyListOptions{Limit: q.maxLimit})
+	nodes, err := q.reader.List(ctx, ListOptions{Limit: q.maxLimit})
 	if err != nil {
 		return NodeDetail{}, err
 	}
-	var node *database.TopologyNode
+	var node *Node
 	for _, n := range nodes {
 		if n.ID == id {
 			node = n
@@ -78,14 +76,14 @@ func (q *Queries) Node(ctx context.Context, id string) (NodeDetail, error) {
 }
 
 // Links returns the links incident to nodeID.
-func (q *Queries) Links(ctx context.Context, nodeID string) ([]*database.TopologyLink, error) {
+func (q *Queries) Links(ctx context.Context, nodeID string) ([]*Link, error) {
 	return q.reader.ListLinks(ctx, nodeID)
 }
 
 // ARP returns the ARP bindings matching opts.
 func (q *Queries) ARP(
 	ctx context.Context,
-	opts database.TopologyARPListOptions,
-) ([]*database.TopologyARPBinding, error) {
+	opts ARPListOptions,
+) ([]*ARPBinding, error) {
 	return q.reader.ListARPBindings(ctx, opts)
 }

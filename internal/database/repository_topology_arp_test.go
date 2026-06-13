@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/MustardSeedNetworks/seed/internal/database"
+	"github.com/MustardSeedNetworks/seed/internal/topology"
 )
 
 func newTopoARPDB(t *testing.T) *database.DB {
@@ -22,7 +23,7 @@ func seedARPBindings(t *testing.T, db *database.DB) {
 	t.Helper()
 	ctx := context.Background()
 	// FK requires topology_nodes rows for both source nodes.
-	for _, n := range []*database.TopologyNode{
+	for _, n := range []*topology.Node{
 		{
 			ID: "node-a", ClientID: "default", IdentityHash: "h-a",
 			DisplayName: "router-a", LastSeen: time.Now().UTC(),
@@ -36,7 +37,7 @@ func seedARPBindings(t *testing.T, db *database.DB) {
 			t.Fatalf("seed node %s: %v", n.ID, err)
 		}
 	}
-	rows := []*database.TopologyARPBinding{
+	rows := []*topology.ARPBinding{
 		{
 			ClientID: "default", SourceNodeID: "node-a", IfIndex: 1,
 			IPAddress: "10.0.0.1", MACAddress: "aa:bb:cc:00:00:01",
@@ -64,7 +65,7 @@ func TestListARPBindings_EmptyReturnsEmpty(t *testing.T) {
 	t.Parallel()
 	db := newTopoARPDB(t)
 	rows, err := db.Topology().ListARPBindings(context.Background(),
-		database.TopologyARPListOptions{})
+		topology.ARPListOptions{})
 	if err != nil {
 		t.Fatalf("ListARPBindings: %v", err)
 	}
@@ -79,7 +80,7 @@ func TestListARPBindings_ReturnsAllRowsOrderedByLastSeenDesc(t *testing.T) {
 	seedARPBindings(t, db)
 
 	rows, err := db.Topology().ListARPBindings(context.Background(),
-		database.TopologyARPListOptions{})
+		topology.ARPListOptions{})
 	if err != nil {
 		t.Fatalf("ListARPBindings: %v", err)
 	}
@@ -98,7 +99,7 @@ func TestListARPBindings_FilterBySourceNode(t *testing.T) {
 	seedARPBindings(t, db)
 
 	rows, err := db.Topology().ListARPBindings(context.Background(),
-		database.TopologyARPListOptions{SourceNodeID: "node-b"})
+		topology.ARPListOptions{SourceNodeID: "node-b"})
 	if err != nil {
 		t.Fatalf("ListARPBindings: %v", err)
 	}
@@ -117,7 +118,7 @@ func TestListARPBindings_FilterBySince(t *testing.T) {
 
 	cutoff := time.Date(2026, 5, 31, 0, 0, 0, 0, time.UTC)
 	rows, err := db.Topology().ListARPBindings(context.Background(),
-		database.TopologyARPListOptions{Since: cutoff})
+		topology.ARPListOptions{Since: cutoff})
 	if err != nil {
 		t.Fatalf("ListARPBindings: %v", err)
 	}
@@ -132,7 +133,7 @@ func TestListARPBindings_LimitClamps(t *testing.T) {
 	seedARPBindings(t, db)
 
 	rows, err := db.Topology().ListARPBindings(context.Background(),
-		database.TopologyARPListOptions{Limit: 1})
+		topology.ARPListOptions{Limit: 1})
 	if err != nil {
 		t.Fatalf("ListARPBindings: %v", err)
 	}

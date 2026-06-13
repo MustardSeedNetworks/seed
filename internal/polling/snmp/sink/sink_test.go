@@ -9,7 +9,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/MustardSeedNetworks/seed/internal/database"
+	"github.com/MustardSeedNetworks/seed/internal/polling/observation"
 	"github.com/MustardSeedNetworks/seed/internal/polling/snmp/collectors/arp"
 	"github.com/MustardSeedNetworks/seed/internal/polling/snmp/collectors/bgp4"
 	"github.com/MustardSeedNetworks/seed/internal/polling/snmp/collectors/cdp"
@@ -27,11 +27,11 @@ func at() time.Time              { return time.Date(2026, 5, 31, 12, 0, 0, 0, ti
 
 type fakeStore struct {
 	mu     sync.Mutex
-	rows   []*database.SNMPObservation
+	rows   []*observation.SNMPObservation
 	insErr error
 }
 
-func (f *fakeStore) Insert(_ context.Context, obs *database.SNMPObservation) error {
+func (f *fakeStore) Insert(_ context.Context, obs *observation.SNMPObservation) error {
 	f.mu.Lock()
 	defer f.mu.Unlock()
 	if f.insErr != nil {

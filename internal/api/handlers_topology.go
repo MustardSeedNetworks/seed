@@ -20,7 +20,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/MustardSeedNetworks/seed/internal/database"
 	"github.com/MustardSeedNetworks/seed/internal/logging"
 	"github.com/MustardSeedNetworks/seed/internal/topology"
 )
@@ -131,7 +130,7 @@ func (s *Server) handleTopologyLinks(w http.ResponseWriter, r *http.Request) {
 // that sharing would just push the divergence into the helper.
 func (s *Server) handleTopologyARP(w http.ResponseWriter, r *http.Request) {
 	q := r.URL.Query()
-	opts := database.TopologyARPListOptions{
+	opts := topology.ARPListOptions{
 		ClientID:     q.Get("client_id"),
 		SourceNodeID: q.Get("node_id"),
 		Limit:        topologyDefaultLimit,
@@ -166,8 +165,8 @@ func (s *Server) handleTopologyARP(w http.ResponseWriter, r *http.Request) {
 	writeTopologyJSON(w, r, "bindings", encodeARPBindings(bindings))
 }
 
-// encodeARPBindings flattens TopologyARPBinding rows for JSON.
-func encodeARPBindings(bindings []*database.TopologyARPBinding) []map[string]any {
+// encodeARPBindings flattens ARPBinding rows for JSON.
+func encodeARPBindings(bindings []*topology.ARPBinding) []map[string]any {
 	out := make([]map[string]any, 0, len(bindings))
 	for _, b := range bindings {
 		out = append(out, map[string]any{
@@ -186,9 +185,9 @@ func encodeARPBindings(bindings []*database.TopologyARPBinding) []map[string]any
 
 // parseTopologyListOptions extracts query-string filters for the
 // nodes endpoint. Returns 400-shaped errors via plain text.
-func parseTopologyListOptions(r *http.Request) (database.TopologyListOptions, error) {
+func parseTopologyListOptions(r *http.Request) (topology.ListOptions, error) {
 	q := r.URL.Query()
-	opts := database.TopologyListOptions{
+	opts := topology.ListOptions{
 		ClientID:   q.Get("client_id"),
 		DeviceType: q.Get("device_type"),
 		Limit:      topologyDefaultLimit,
@@ -196,14 +195,14 @@ func parseTopologyListOptions(r *http.Request) (database.TopologyListOptions, er
 	if sinceRaw := q.Get("since"); sinceRaw != "" {
 		t, err := time.Parse(time.RFC3339, sinceRaw)
 		if err != nil {
-			return database.TopologyListOptions{}, errors.New("invalid 'since' (expect RFC3339)")
+			return topology.ListOptions{}, errors.New("invalid 'since' (expect RFC3339)")
 		}
 		opts.SeenSince = t
 	}
 	if limitRaw := q.Get("limit"); limitRaw != "" {
 		n, err := strconv.Atoi(limitRaw)
 		if err != nil || n < 1 {
-			return database.TopologyListOptions{}, errors.New("invalid 'limit' (positive integer)")
+			return topology.ListOptions{}, errors.New("invalid 'limit' (positive integer)")
 		}
 		if n > topologyMaxLimit {
 			n = topologyMaxLimit
@@ -213,10 +212,10 @@ func parseTopologyListOptions(r *http.Request) (database.TopologyListOptions, er
 	return opts, nil
 }
 
-// encodeNode flattens a TopologyNode for JSON. Done explicitly
+// encodeNode flattens a Node for JSON. Done explicitly
 // (rather than tagging the DB struct) so the wire format stays
 // stable when DB columns evolve.
-func encodeNode(n *database.TopologyNode) map[string]any {
+func encodeNode(n *topology.Node) map[string]any {
 	return map[string]any{
 		"id":           n.ID,
 		"clientId":     n.ClientID,
@@ -233,7 +232,7 @@ func encodeNode(n *database.TopologyNode) map[string]any {
 	}
 }
 
-func encodeNodes(nodes []*database.TopologyNode) []map[string]any {
+func encodeNodes(nodes []*topology.Node) []map[string]any {
 	out := make([]map[string]any, 0, len(nodes))
 	for _, n := range nodes {
 		out = append(out, encodeNode(n))
@@ -241,7 +240,7 @@ func encodeNodes(nodes []*database.TopologyNode) []map[string]any {
 	return out
 }
 
-func encodeInterfaces(ifaces []*database.TopologyInterface) []map[string]any {
+func encodeInterfaces(ifaces []*topology.Interface) []map[string]any {
 	out := make([]map[string]any, 0, len(ifaces))
 	for _, i := range ifaces {
 		out = append(out, map[string]any{
@@ -262,7 +261,7 @@ func encodeInterfaces(ifaces []*database.TopologyInterface) []map[string]any {
 	return out
 }
 
-func encodeLinks(links []*database.TopologyLink) []map[string]any {
+func encodeLinks(links []*topology.Link) []map[string]any {
 	out := make([]map[string]any, 0, len(links))
 	for _, l := range links {
 		out = append(out, map[string]any{

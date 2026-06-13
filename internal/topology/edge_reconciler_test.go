@@ -9,7 +9,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/MustardSeedNetworks/seed/internal/database"
+	"github.com/MustardSeedNetworks/seed/internal/polling/observation"
 	"github.com/MustardSeedNetworks/seed/internal/topology"
 )
 
@@ -21,7 +21,7 @@ type fakeEdgeStore struct {
 	// sys_name -> node_id for remote-neighbor resolution.
 	sysNameMap map[string]string
 
-	links     []*database.TopologyLink
+	links     []*topology.Link
 	upsertErr error
 }
 
@@ -37,7 +37,7 @@ func (f *fakeEdgeStore) NodeIDForTarget(_ context.Context, clientID, targetID st
 	defer f.mu.Unlock()
 	id, ok := f.targetMap[clientID+"|"+targetID]
 	if !ok {
-		return "", database.ErrTopologyNodeNotFound
+		return "", topology.ErrTopologyNodeNotFound
 	}
 	return id, nil
 }
@@ -47,12 +47,12 @@ func (f *fakeEdgeStore) NodeIDForSysName(_ context.Context, _, sysName string) (
 	defer f.mu.Unlock()
 	id, ok := f.sysNameMap[sysName]
 	if !ok {
-		return "", database.ErrTopologyNodeNotFound
+		return "", topology.ErrTopologyNodeNotFound
 	}
 	return id, nil
 }
 
-func (f *fakeEdgeStore) UpsertLink(_ context.Context, link *database.TopologyLink) error {
+func (f *fakeEdgeStore) UpsertLink(_ context.Context, link *topology.Link) error {
 	f.mu.Lock()
 	defer f.mu.Unlock()
 	if f.upsertErr != nil {
@@ -67,17 +67,17 @@ func (f *fakeEdgeStore) UpsertLink(_ context.Context, link *database.TopologyLin
 // client_id matters for identity merging.
 const edgeTestClient = "c"
 
-func lldpObs(target string, observed time.Time, neighbors []map[string]any) *database.SNMPObservation {
+func lldpObs(target string, observed time.Time, neighbors []map[string]any) *observation.SNMPObservation {
 	b, _ := json.Marshal(map[string]any{"Neighbors": neighbors})
-	return &database.SNMPObservation{
+	return &observation.SNMPObservation{
 		ClientID: edgeTestClient, TargetID: target, Kind: "lldp",
 		ObservedAt: observed, PayloadJSON: string(b),
 	}
 }
 
-func cdpObs(target, kind string, observed time.Time, neighbors []map[string]any) *database.SNMPObservation {
+func cdpObs(target, kind string, observed time.Time, neighbors []map[string]any) *observation.SNMPObservation {
 	b, _ := json.Marshal(map[string]any{"Neighbors": neighbors})
-	return &database.SNMPObservation{
+	return &observation.SNMPObservation{
 		ClientID: edgeTestClient, TargetID: target, Kind: kind,
 		ObservedAt: observed, PayloadJSON: string(b),
 	}
@@ -109,7 +109,7 @@ func TestEdgeReconcileOnce_LLDPEmitsOneLinkPerNeighbor(t *testing.T) {
 	store.targetMap["c|t-source"] = "node-A"
 	store.sysNameMap["core-sw"] = "node-B"
 
-	o := &fakeObservations{rows: []*database.SNMPObservation{
+	o := &fakeObservations{rows: []*observation.SNMPObservation{
 		lldpObs("t-source", at(), []map[string]any{
 			{"LocalPortNum": 24, "PortID": "Gi0/24", "SysName": "core-sw"},
 		}),
@@ -141,7 +141,7 @@ func TestEdgeReconcileOnce_OrphanNeighborSkipped(t *testing.T) {
 	store.targetMap["c|t-source"] = "node-A"
 	// sysNameMap deliberately empty — remote unknown.
 
-	o := &fakeObservations{rows: []*database.SNMPObservation{
+	o := &fakeObservations{rows: []*observation.SNMPObservation{
 		lldpObs("t-source", at(), []map[string]any{
 			{"LocalPortNum": 1, "SysName": "unknown-edge"},
 		}),
@@ -172,7 +172,7 @@ func TestEdgeReconcileOnce_SameLinkFromBothSidesMergesToOneRow(t *testing.T) {
 	// upserts must hit the same ID — but interfaces differ between
 	// the two views, so the resulting row will reflect whichever
 	// arrived last (deterministic given high-water ordering).
-	o := &fakeObservations{rows: []*database.SNMPObservation{
+	o := &fakeObservations{rows: []*observation.SNMPObservation{
 		lldpObs("t-A", at(), []map[string]any{
 			{"LocalPortNum": 24, "PortID": "Gi0/12", "SysName": "sw-B"},
 		}),
@@ -206,7 +206,7 @@ func TestEdgeReconcileOnce_CDPAlsoCreatesLinks(t *testing.T) {
 	store.targetMap["c|t-A"] = "node-A"
 	store.sysNameMap["fqdn-core-sw"] = "node-B"
 
-	o := &fakeObservations{rows: []*database.SNMPObservation{
+	o := &fakeObservations{rows: []*observation.SNMPObservation{
 		cdpObs("t-A", "cdp", at(), []map[string]any{
 			{"LocalIfIndex": 5, "DeviceID": "fqdn-core-sw", "DevicePort": "Gi1/0/24"},
 		}),
@@ -231,7 +231,7 @@ func TestEdgeReconcileOnce_FDPRoutedThroughCDPPayloadShape(t *testing.T) {
 	store.targetMap["c|t-A"] = "node-A"
 	store.sysNameMap["foundry-edge"] = "node-B"
 
-	o := &fakeObservations{rows: []*database.SNMPObservation{
+	o := &fakeObservations{rows: []*observation.SNMPObservation{
 		cdpObs("t-A", "fdp", at(), []map[string]any{
 			{"LocalIfIndex": 1, "DeviceID": "foundry-edge", "DevicePort": "ether-1"},
 		}),
@@ -251,7 +251,7 @@ func TestEdgeReconcileOnce_SourceNotKnownSkips(t *testing.T) {
 	t.Parallel()
 	store := newFakeEdgeStore()
 	// targetMap empty -> source unknown.
-	o := &fakeObservations{rows: []*database.SNMPObservation{
+	o := &fakeObservations{rows: []*observation.SNMPObservation{
 		lldpObs("t-A", at(), []map[string]any{
 			{"LocalPortNum": 1, "SysName": "core"},
 		}),
@@ -275,7 +275,7 @@ func TestEdgeReconcileOnce_ListErrorOnOneKindContinuesOthers(t *testing.T) {
 	// fakeObservations.List ignores kind filter — so a list error
 	// kills all kinds at once. Use a per-kind capable fake.
 	pc := &perKindObservations{
-		byKind: map[string][]*database.SNMPObservation{
+		byKind: map[string][]*observation.SNMPObservation{
 			"lldp": {lldpObs("t-A", at(), []map[string]any{
 				{"LocalPortNum": 1, "SysName": "core"},
 			})},
@@ -300,11 +300,14 @@ func TestEdgeReconcileOnce_ListErrorOnOneKindContinuesOthers(t *testing.T) {
 // test the per-kind error-isolation behavior.
 type perKindObservations struct {
 	mu        sync.Mutex
-	byKind    map[string][]*database.SNMPObservation
+	byKind    map[string][]*observation.SNMPObservation
 	errByKind map[string]error
 }
 
-func (p *perKindObservations) List(_ context.Context, opts database.ListOptions) ([]*database.SNMPObservation, error) {
+func (p *perKindObservations) List(
+	_ context.Context,
+	opts observation.ListOptions,
+) ([]*observation.SNMPObservation, error) {
 	p.mu.Lock()
 	defer p.mu.Unlock()
 	if err, ok := p.errByKind[opts.Kind]; ok {
@@ -321,7 +324,7 @@ func TestEdgeReconcileOnce_MaxObservedAtAcrossKinds(t *testing.T) {
 
 	older := at().Add(-time.Hour)
 	newer := at()
-	pc := &perKindObservations{byKind: map[string][]*database.SNMPObservation{
+	pc := &perKindObservations{byKind: map[string][]*observation.SNMPObservation{
 		"lldp": {lldpObs("t-A", older, []map[string]any{{"LocalPortNum": 1, "SysName": "b"}})},
 		"cdp":  {cdpObs("t-A", "cdp", newer, []map[string]any{{"LocalIfIndex": 1, "DeviceID": "b"}})},
 	}}

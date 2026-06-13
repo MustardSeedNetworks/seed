@@ -22,7 +22,7 @@ import (
 	"log/slog"
 	"time"
 
-	"github.com/MustardSeedNetworks/seed/internal/database"
+	"github.com/MustardSeedNetworks/seed/internal/polling/observation"
 	"github.com/MustardSeedNetworks/seed/internal/polling/snmp/collectors/arp"
 	"github.com/MustardSeedNetworks/seed/internal/polling/snmp/collectors/bgp4"
 	"github.com/MustardSeedNetworks/seed/internal/polling/snmp/collectors/cdp"
@@ -53,7 +53,7 @@ const (
 // observationsStore is the narrowed surface the Sink needs from the
 // database layer. Tests inject a fake.
 type observationsStore interface {
-	Insert(ctx context.Context, obs *database.SNMPObservation) error
+	Insert(ctx context.Context, obs *observation.SNMPObservation) error
 }
 
 // Sink persists every kind of collector Observation into the
@@ -93,7 +93,7 @@ func (s *Sink) persist(
 			"kind", kind, "target_id", targetID, "error", err)
 		return fmt.Errorf("snmp sink: marshal %s: %w", kind, err)
 	}
-	obs := &database.SNMPObservation{
+	obs := &observation.SNMPObservation{
 		ClientID:    clientID,
 		TargetID:    targetID,
 		Kind:        kind,

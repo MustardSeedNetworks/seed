@@ -22,8 +22,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/MustardSeedNetworks/seed/internal/database"
 	"github.com/MustardSeedNetworks/seed/internal/engine"
+	"github.com/MustardSeedNetworks/seed/internal/polling/observation"
 )
 
 // SysInfoReconcilerName is the engine identifier.
@@ -51,7 +51,7 @@ const (
 // observationsReader is the narrowed surface the reconciler needs
 // from the SNMP observations repo. Tests inject a fake.
 type observationsReader interface {
-	List(ctx context.Context, opts database.ListOptions) ([]*database.SNMPObservation, error)
+	List(ctx context.Context, opts observation.ListOptions) ([]*observation.SNMPObservation, error)
 }
 
 // nodeUpserter is the narrowed surface for topology_nodes writes.
@@ -60,7 +60,7 @@ type observationsReader interface {
 // can resolve their observations to the right node without re-
 // decoding sysinfo on every pass.
 type nodeUpserter interface {
-	Upsert(ctx context.Context, node *database.TopologyNode) (*database.TopologyNode, error)
+	Upsert(ctx context.Context, node *Node) (*Node, error)
 	UpsertTargetNode(
 		ctx context.Context,
 		clientID, targetID, nodeID string,
@@ -215,7 +215,7 @@ func (r *SysInfoReconciler) reconcileOnceInner(ctx context.Context) error {
 	if err != nil {
 		return fmt.Errorf("load high-water: %w", err)
 	}
-	observations, err := r.obs.List(ctx, database.ListOptions{
+	observations, err := r.obs.List(ctx, observation.ListOptions{
 		Kind:  "sys_info",
 		Since: since,
 		Limit: defaultBatchLimit,
@@ -285,11 +285,11 @@ type sysInfoPayload struct {
 	SysContact  string `json:"SysContact"`
 }
 
-// buildNode decodes the observation payload into a TopologyNode
+// buildNode decodes the observation payload into a Node
 // ready for upsert.
 func (r *SysInfoReconciler) buildNode(
-	obs *database.SNMPObservation,
-) (*database.TopologyNode, error) {
+	obs *observation.SNMPObservation,
+) (*Node, error) {
 	var p sysInfoPayload
 	if err := json.Unmarshal([]byte(obs.PayloadJSON), &p); err != nil {
 		return nil, fmt.Errorf("unmarshal sysinfo payload: %w", err)
@@ -313,7 +313,7 @@ func (r *SysInfoReconciler) buildNode(
 		"sys_contact":  p.SysContact,
 	})
 
-	node := &database.TopologyNode{
+	node := &Node{
 		ID:           "node-" + hash[:16],
 		ClientID:     obs.ClientID,
 		IdentityHash: hash,

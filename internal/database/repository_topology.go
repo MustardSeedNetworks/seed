@@ -7,29 +7,9 @@ import (
 	"fmt"
 	"strings"
 	"time"
-)
 
-// TopologyNode is one row of topology_nodes. The fat-Node carries
-// every observation source's contribution: identity from sys_info,
-// per-interface state from if_table (folded into MetadataJSON),
-// addresses from arp, neighbors from lldp/cdp/fdp. Reconcilers in
-// internal/topology own writes; alert rules + the operator UI own
-// reads.
-type TopologyNode struct {
-	ID           string
-	ClientID     string
-	IdentityHash string
-	DisplayName  string
-	DeviceType   string
-	ChassisID    string
-	SysName      string
-	PrimaryMAC   string
-	PrimaryIP    string
-	FirstSeen    time.Time
-	LastSeen     time.Time
-	ExpiresAt    time.Time
-	MetadataJSON string
-}
+	"github.com/MustardSeedNetworks/seed/internal/topology"
+)
 
 // TopologyRepository owns CRUD over topology_nodes + topology_links.
 // Stage A4.1 wires the nodes side; links arrive in A4.3.
@@ -38,11 +18,11 @@ type TopologyRepository struct {
 }
 
 // GetByIdentityHash returns the node with the given identity hash
-// or ErrTopologyNodeNotFound when absent.
+// or topology.ErrTopologyNodeNotFound when absent.
 func (r *TopologyRepository) GetByIdentityHash(
 	ctx context.Context,
 	hash string,
-) (*TopologyNode, error) {
+) (*topology.Node, error) {
 	row := r.db.QueryRow(ctx, `
 		SELECT id, client_id, identity_hash, display_name, device_type,
 		       chassis_id, sys_name, primary_mac, primary_ip,
@@ -51,9 +31,6 @@ func (r *TopologyRepository) GetByIdentityHash(
 	`, hash)
 	return scanTopologyNode(row.Scan)
 }
-
-// ErrTopologyNodeNotFound is returned when a node lookup misses.
-var ErrTopologyNodeNotFound = errors.New("topology node not found")
 
 // Upsert inserts or updates a node by identity_hash. The hash is
 // the merge key — same hash = same physical device regardless of
@@ -65,8 +42,8 @@ var ErrTopologyNodeNotFound = errors.New("topology node not found")
 // record carried.
 func (r *TopologyRepository) Upsert(
 	ctx context.Context,
-	node *TopologyNode,
-) (*TopologyNode, error) {
+	node *topology.Node,
+) (*topology.Node, error) {
 	if node.IdentityHash == "" {
 		return nil, errors.New("topology_nodes: IdentityHash required")
 	}
@@ -92,7 +69,7 @@ func (r *TopologyRepository) Upsert(
 		if updErr := r.update(ctx, node); updErr != nil {
 			return nil, updErr
 		}
-	case errors.Is(err, ErrTopologyNodeNotFound):
+	case errors.Is(err, topology.ErrTopologyNodeNotFound):
 		if insErr := r.insert(ctx, node); insErr != nil {
 			return nil, insErr
 		}
@@ -102,7 +79,7 @@ func (r *TopologyRepository) Upsert(
 	return node, nil
 }
 
-func (r *TopologyRepository) insert(ctx context.Context, node *TopologyNode) error {
+func (r *TopologyRepository) insert(ctx context.Context, node *topology.Node) error {
 	_, err := r.db.Exec(ctx, `
 		INSERT INTO topology_nodes
 		  (id, client_id, identity_hash, display_name, device_type,
@@ -125,7 +102,7 @@ func (r *TopologyRepository) insert(ctx context.Context, node *TopologyNode) err
 	return nil
 }
 
-func (r *TopologyRepository) update(ctx context.Context, node *TopologyNode) error {
+func (r *TopologyRepository) update(ctx context.Context, node *topology.Node) error {
 	_, err := r.db.Exec(ctx, `
 		UPDATE topology_nodes SET
 			display_name = ?, device_type = ?, chassis_id = ?, sys_name = ?,
@@ -148,19 +125,11 @@ func (r *TopologyRepository) update(ctx context.Context, node *TopologyNode) err
 	return nil
 }
 
-// TopologyListOptions narrows a topology_nodes query.
-type TopologyListOptions struct {
-	ClientID   string
-	DeviceType string
-	SeenSince  time.Time
-	Limit      int
-}
-
 // List returns nodes matching opts ordered by LastSeen desc.
 func (r *TopologyRepository) List(
 	ctx context.Context,
-	opts TopologyListOptions,
-) ([]*TopologyNode, error) {
+	opts topology.ListOptions,
+) ([]*topology.Node, error) {
 	const defaultLimit, maxLimit = 100, 5000
 
 	query, args := newListQueryBuilder(`
@@ -188,25 +157,10 @@ func toNullTime(t time.Time) sql.NullString {
 	return sql.NullString{String: t.UTC().Format(time.RFC3339Nano), Valid: true}
 }
 
-// TopologyARPBinding mirrors one row of topology_arp_bindings.
-// Reconciled from arp observations; the row's MAC is the join key
-// used to backfill node.primary_ip when a binding matches a known
-// node's chassis/primary MAC.
-type TopologyARPBinding struct {
-	ID           int64
-	ClientID     string
-	SourceNodeID string
-	IfIndex      uint32
-	IPAddress    string
-	MACAddress   string
-	MediaType    int
-	LastSeen     time.Time
-}
-
 // UpsertARPBinding writes one binding row. The unique constraint
 // (source_node, if_index, ip_address) ensures repeated observations
 // of the same binding update one row.
-func (r *TopologyRepository) UpsertARPBinding(ctx context.Context, b *TopologyARPBinding) error {
+func (r *TopologyRepository) UpsertARPBinding(ctx context.Context, b *topology.ARPBinding) error {
 	if b.SourceNodeID == "" {
 		return errors.New("topology_arp_bindings: SourceNodeID required")
 	}
@@ -238,22 +192,13 @@ func (r *TopologyRepository) UpsertARPBinding(ctx context.Context, b *TopologyAR
 	return nil
 }
 
-// TopologyARPListOptions filters the ListARPBindings query.
-// Empty fields mean "no filter".
-type TopologyARPListOptions struct {
-	ClientID     string
-	SourceNodeID string
-	Since        time.Time
-	Limit        int
-}
-
 // ListARPBindings returns ARP bindings ordered by LastSeen desc.
 // All filter fields are optional. The Limit field caps the result
 // set; callers in handlers_topology.go clamp it to topologyMaxLimit
 // before invoking.
 func (r *TopologyRepository) ListARPBindings(
-	ctx context.Context, opts TopologyARPListOptions,
-) ([]*TopologyARPBinding, error) {
+	ctx context.Context, opts topology.ARPListOptions,
+) ([]*topology.ARPBinding, error) {
 	const maxFilterArgs = 4 // client_id + source_node_id + since + limit
 	args := make([]any, 0, maxFilterArgs)
 	clauses := []string{}
@@ -288,10 +233,10 @@ func (r *TopologyRepository) ListARPBindings(
 	}
 	defer func() { _ = rows.Close() }()
 
-	out := make([]*TopologyARPBinding, 0)
+	out := make([]*topology.ARPBinding, 0)
 	for rows.Next() {
 		var (
-			b       TopologyARPBinding
+			b       topology.ARPBinding
 			lastStr string
 		)
 		if scanErr := rows.Scan(
@@ -330,7 +275,7 @@ func (r *TopologyRepository) SetNodePrimaryIP(ctx context.Context, nodeID, ip st
 }
 
 // NodeIDForMAC resolves a MAC address to a node by matching against
-// topology_nodes.primary_mac. Returns ErrTopologyNodeNotFound when
+// topology_nodes.primary_mac. Returns topology.ErrTopologyNodeNotFound when
 // no node has that MAC. Used by the ARP reconciler to identify
 // which (if any) node a binding's MAC corresponds to.
 func (r *TopologyRepository) NodeIDForMAC(ctx context.Context, clientID, mac string) (string, error) {
@@ -338,7 +283,7 @@ func (r *TopologyRepository) NodeIDForMAC(ctx context.Context, clientID, mac str
 		clientID = "default"
 	}
 	if mac == "" {
-		return "", ErrTopologyNodeNotFound
+		return "", topology.ErrTopologyNodeNotFound
 	}
 	row := r.db.QueryRow(ctx, `
 		SELECT id FROM topology_nodes
@@ -349,43 +294,23 @@ func (r *TopologyRepository) NodeIDForMAC(ctx context.Context, clientID, mac str
 	var id string
 	if err := row.Scan(&id); err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			return "", ErrTopologyNodeNotFound
+			return "", topology.ErrTopologyNodeNotFound
 		}
 		return "", fmt.Errorf("nodeIDForMAC: %w", err)
 	}
 	return id, nil
 }
 
-// TopologyLink mirrors one row of topology_links. Edges are
-// identity-merged the same way nodes are — the link ID is derived
-// from (source_node, source_interface, target_node, target_interface)
-// so re-observations of the same physical cable upsert rather than
-// duplicate.
-type TopologyLink struct {
-	ID              string
-	SourceNodeID    string
-	TargetNodeID    string
-	SourceInterface string
-	TargetInterface string
-	LinkType        string // "lldp", "cdp", "fdp"
-	Status          string // "up", "down", "unknown"
-	SpeedMbps       uint32
-	UtilizationPct  float64
-	FirstSeen       time.Time
-	LastSeen        time.Time
-	EvidenceJSON    string
-}
-
 // NodeIDForSysName resolves a sys_name back to its node_id by
 // looking up topology_nodes. Used by the edge reconciler to map
 // an LLDP/CDP neighbor's reported hostname to a known node.
-// Returns ErrTopologyNodeNotFound when no node has that sys_name.
+// Returns topology.ErrTopologyNodeNotFound when no node has that sys_name.
 func (r *TopologyRepository) NodeIDForSysName(ctx context.Context, clientID, sysName string) (string, error) {
 	if clientID == "" {
 		clientID = "default"
 	}
 	if sysName == "" {
-		return "", ErrTopologyNodeNotFound
+		return "", topology.ErrTopologyNodeNotFound
 	}
 	row := r.db.QueryRow(ctx, `
 		SELECT id FROM topology_nodes
@@ -396,7 +321,7 @@ func (r *TopologyRepository) NodeIDForSysName(ctx context.Context, clientID, sys
 	var id string
 	if err := row.Scan(&id); err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			return "", ErrTopologyNodeNotFound
+			return "", topology.ErrTopologyNodeNotFound
 		}
 		return "", fmt.Errorf("nodeIDForSysName: %w", err)
 	}
@@ -408,7 +333,7 @@ func (r *TopologyRepository) NodeIDForSysName(ctx context.Context, clientID, sys
 // deterministically from (source_node, source_interface,
 // target_node, target_interface) so two LLDP polls of the same
 // physical cable update one row instead of inserting two.
-func (r *TopologyRepository) UpsertLink(ctx context.Context, link *TopologyLink) error {
+func (r *TopologyRepository) UpsertLink(ctx context.Context, link *topology.Link) error {
 	if link.ID == "" {
 		return errors.New("topology_links: ID required")
 	}
@@ -463,7 +388,7 @@ func (r *TopologyRepository) UpsertLink(ctx context.Context, link *TopologyLink)
 
 // ListLinks returns every link involving nodeID (either source or
 // target) ordered by LastSeen desc.
-func (r *TopologyRepository) ListLinks(ctx context.Context, nodeID string) ([]*TopologyLink, error) {
+func (r *TopologyRepository) ListLinks(ctx context.Context, nodeID string) ([]*topology.Link, error) {
 	rows, err := r.db.Query(ctx, `
 		SELECT id, source_node_id, target_node_id, source_interface, target_interface,
 		       link_type, status, speed_mbps, utilization_pct,
@@ -477,7 +402,7 @@ func (r *TopologyRepository) ListLinks(ctx context.Context, nodeID string) ([]*T
 	}
 	defer func() { _ = rows.Close() }()
 
-	var out []*TopologyLink
+	var out []*topology.Link
 	for rows.Next() {
 		link, scanErr := scanTopologyLink(rows.Scan)
 		if scanErr != nil {
@@ -515,9 +440,9 @@ func nullableFloat(v float64) sql.NullFloat64 {
 	return sql.NullFloat64{Float64: v, Valid: true}
 }
 
-func scanTopologyLink(scan func(...any) error) (*TopologyLink, error) {
+func scanTopologyLink(scan func(...any) error) (*topology.Link, error) {
 	var (
-		link         TopologyLink
+		link         topology.Link
 		srcIface     sql.NullString
 		tgtIface     sql.NullString
 		speedMbps    sql.NullInt32
@@ -533,7 +458,7 @@ func scanTopologyLink(scan func(...any) error) (*TopologyLink, error) {
 		&firstSeenStr, &lastSeenStr, &evidenceJSON,
 	)
 	if errors.Is(err, sql.ErrNoRows) {
-		return nil, ErrTopologyNodeNotFound
+		return nil, topology.ErrTopologyNodeNotFound
 	}
 	if err != nil {
 		return nil, fmt.Errorf("scan topology_link: %w", err)
@@ -560,24 +485,6 @@ func scanTopologyLink(scan func(...any) error) (*TopologyLink, error) {
 		link.LastSeen = parsed
 	}
 	return &link, nil
-}
-
-// TopologyInterface mirrors one row of topology_interfaces.
-// Reconciled from if_table observations; columns shaped so alert
-// rules can index admin/oper status and speed without parsing JSON.
-type TopologyInterface struct {
-	ID            int64
-	NodeID        string
-	IfIndex       uint32
-	IfName        string
-	IfDescr       string
-	IfAlias       string
-	IfType        uint32
-	IfAdminStatus int
-	IfOperStatus  int
-	IfPhysAddr    string
-	SpeedBps      uint64
-	LastSeen      time.Time
 }
 
 // UpsertTargetNode records the (client_id, target_id) -> node_id
@@ -619,7 +526,7 @@ func (r *TopologyRepository) UpsertTargetNode(
 }
 
 // NodeIDForTarget resolves (client_id, target_id) -> node_id. Returns
-// "" + ErrTopologyNodeNotFound when no mapping exists yet (the
+// "" + topology.ErrTopologyNodeNotFound when no mapping exists yet (the
 // sysinfo reconciler hasn't seen this target).
 func (r *TopologyRepository) NodeIDForTarget(
 	ctx context.Context,
@@ -635,7 +542,7 @@ func (r *TopologyRepository) NodeIDForTarget(
 	var nodeID string
 	if err := row.Scan(&nodeID); err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			return "", ErrTopologyNodeNotFound
+			return "", topology.ErrTopologyNodeNotFound
 		}
 		return "", fmt.Errorf("nodeIDForTarget: %w", err)
 	}
@@ -644,7 +551,7 @@ func (r *TopologyRepository) NodeIDForTarget(
 
 // UpsertInterface inserts or updates one topology_interfaces row.
 // Reconcilers call this once per if_table row per node per poll.
-func (r *TopologyRepository) UpsertInterface(ctx context.Context, iface *TopologyInterface) error {
+func (r *TopologyRepository) UpsertInterface(ctx context.Context, iface *topology.Interface) error {
 	if iface.NodeID == "" {
 		return errors.New("topology_interfaces: NodeID required")
 	}
@@ -689,7 +596,7 @@ func (r *TopologyRepository) UpsertInterface(ctx context.Context, iface *Topolog
 func (r *TopologyRepository) ListInterfaces(
 	ctx context.Context,
 	nodeID string,
-) ([]*TopologyInterface, error) {
+) ([]*topology.Interface, error) {
 	rows, err := r.db.Query(ctx, `
 		SELECT id, node_id, if_index, if_name, if_descr, if_alias,
 		       if_type, if_admin_status, if_oper_status, if_phys_addr,
@@ -703,7 +610,7 @@ func (r *TopologyRepository) ListInterfaces(
 	}
 	defer func() { _ = rows.Close() }()
 
-	var out []*TopologyInterface
+	var out []*topology.Interface
 	for rows.Next() {
 		iface, scanErr := scanTopologyInterface(rows.Scan)
 		if scanErr != nil {
@@ -717,9 +624,9 @@ func (r *TopologyRepository) ListInterfaces(
 	return out, nil
 }
 
-func scanTopologyInterface(scan func(...any) error) (*TopologyInterface, error) {
+func scanTopologyInterface(scan func(...any) error) (*topology.Interface, error) {
 	var (
-		iface       TopologyInterface
+		iface       topology.Interface
 		ifName      sql.NullString
 		ifDescr     sql.NullString
 		ifAlias     sql.NullString
@@ -733,7 +640,7 @@ func scanTopologyInterface(scan func(...any) error) (*TopologyInterface, error) 
 		&ifPhysAddr, &iface.SpeedBps, &lastSeenStr,
 	)
 	if errors.Is(err, sql.ErrNoRows) {
-		return nil, ErrTopologyNodeNotFound
+		return nil, topology.ErrTopologyNodeNotFound
 	}
 	if err != nil {
 		return nil, fmt.Errorf("scan topology_interface: %w", err)
@@ -756,9 +663,9 @@ func scanTopologyInterface(scan func(...any) error) (*TopologyInterface, error) 
 	return &iface, nil
 }
 
-func scanTopologyNode(scan func(...any) error) (*TopologyNode, error) {
+func scanTopologyNode(scan func(...any) error) (*topology.Node, error) {
 	var (
-		node         TopologyNode
+		node         topology.Node
 		deviceType   sql.NullString
 		chassisID    sql.NullString
 		sysName      sql.NullString
@@ -775,7 +682,7 @@ func scanTopologyNode(scan func(...any) error) (*TopologyNode, error) {
 		&firstSeenStr, &lastSeenStr, &expiresAt, &metadataJSON,
 	)
 	if errors.Is(err, sql.ErrNoRows) {
-		return nil, ErrTopologyNodeNotFound
+		return nil, topology.ErrTopologyNodeNotFound
 	}
 	if err != nil {
 		return nil, fmt.Errorf("scan topology_node: %w", err)

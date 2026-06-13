@@ -9,8 +9,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/MustardSeedNetworks/seed/internal/database"
 	"github.com/MustardSeedNetworks/seed/internal/engine"
+	"github.com/MustardSeedNetworks/seed/internal/polling/observation"
 )
 
 // IfTableReconcilerName is the engine identifier.
@@ -26,7 +26,7 @@ const ifTableHighWaterKey = "topology.iftable.high_water"
 // one row per interface.
 type nodeIfaceUpserter interface {
 	NodeIDForTarget(ctx context.Context, clientID, targetID string) (string, error)
-	UpsertInterface(ctx context.Context, iface *database.TopologyInterface) error
+	UpsertInterface(ctx context.Context, iface *Interface) error
 }
 
 // IfTableReconciler turns if_table observations into
@@ -169,7 +169,7 @@ func (r *IfTableReconciler) reconcileOnceInner(ctx context.Context) error {
 	if err != nil {
 		return fmt.Errorf("load high-water: %w", err)
 	}
-	observations, err := r.obs.List(ctx, database.ListOptions{
+	observations, err := r.obs.List(ctx, observation.ListOptions{
 		Kind:  "if_table",
 		Since: since,
 		Limit: defaultBatchLimit,
@@ -189,7 +189,7 @@ func (r *IfTableReconciler) reconcileOnceInner(ctx context.Context) error {
 		}
 		nodeID, lookupErr := r.store.NodeIDForTarget(ctx, obs.ClientID, obs.TargetID)
 		if lookupErr != nil {
-			if errors.Is(lookupErr, database.ErrTopologyNodeNotFound) {
+			if errors.Is(lookupErr, ErrTopologyNodeNotFound) {
 				r.logger.DebugContext(ctx, "iftable: target has no node mapping yet, skipping",
 					"target_id", obs.TargetID)
 				continue
@@ -234,7 +234,7 @@ type ifRow struct {
 // per interface. Returns the count of upserts that succeeded.
 func (r *IfTableReconciler) applyObservation(
 	ctx context.Context,
-	obs *database.SNMPObservation,
+	obs *observation.SNMPObservation,
 	nodeID string,
 ) int {
 	var p ifTablePayload
@@ -248,7 +248,7 @@ func (r *IfTableReconciler) applyObservation(
 		if row.IfIndex == 0 {
 			continue
 		}
-		iface := &database.TopologyInterface{
+		iface := &Interface{
 			NodeID:        nodeID,
 			IfIndex:       row.IfIndex,
 			IfName:        row.IfName,
