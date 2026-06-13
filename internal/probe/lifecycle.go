@@ -2,12 +2,10 @@ package probe
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"time"
 
-	"github.com/MustardSeedNetworks/seed/internal/database"
 	"github.com/MustardSeedNetworks/seed/internal/scheduler"
 )
 
@@ -16,13 +14,15 @@ import (
 // via RunDefinition still works without storage.
 var ErrStorageNotConfigured = errors.New("probe.Engine has no storage configured (call WithStorage)")
 
-// probeStorage is the subset of *database.ProbeRepository the Engine
-// needs. Narrowed interface so tests can inject fakes without
+// probeStorage is the persistence port the Engine needs, expressed in the
+// probe package's own domain types. The concrete adapter (internal/app)
+// translates to/from the database row representation, so the probe package
+// itself stays persistence-free. Narrowed so tests can inject fakes without
 // constructing a real DB.
 type probeStorage interface {
-	GetProbe(ctx context.Context, id string) (*database.Probe, error)
-	ListProbes(ctx context.Context, clientID, kind string) ([]*database.Probe, error)
-	RecordResult(ctx context.Context, pr *database.ProbeResult) error
+	GetProbe(ctx context.Context, id string) (Probe, error)
+	ListProbes(ctx context.Context, clientID, kind string) ([]Probe, error)
+	RecordResult(ctx context.Context, r Result) error
 }
 
 // probeScheduler is the subset of *scheduler.Scheduler the Engine
@@ -175,8 +175,8 @@ func (e *Engine) RunNow(ctx context.Context, probeID string) (Result, error) {
 		return Result{}, fmt.Errorf("get probe %q: %w", probeID, err)
 	}
 
-	r := e.RunDefinition(ctx, dbProbeToModel(p))
-	if persistErr := persistResult(ctx, storage, r); persistErr != nil {
+	r := e.RunDefinition(ctx, p)
+	if persistErr := storage.RecordResult(ctx, r); persistErr != nil {
 		return r, fmt.Errorf("persist result for probe %q: %w", probeID, persistErr)
 	}
 	return r, nil
@@ -191,43 +191,6 @@ func (e *Engine) requireStorage() (probeStorage, probeScheduler, error) {
 		return nil, nil, ErrStorageNotConfigured
 	}
 	return e.storage, e.scheduler, nil
-}
-
-// dbProbeToModel converts the database row representation into the
-// probe package's Probe type. The JSON columns are passed through as
-// [json.RawMessage]; consumers decode them per-Kind.
-func dbProbeToModel(p *database.Probe) Probe {
-	return Probe{
-		ID:              p.ID,
-		ClientID:        p.ClientID,
-		Kind:            p.Kind,
-		DisplayName:     p.DisplayName,
-		Target:          p.Target,
-		Params:          json.RawMessage(p.ParamsJSON),
-		IntervalSeconds: p.IntervalSeconds,
-		Enabled:         p.Enabled,
-		Warning:         json.RawMessage(p.WarningJSON),
-		Critical:        json.RawMessage(p.CriticalJSON),
-		CreatedAt:       p.CreatedAt,
-		UpdatedAt:       p.UpdatedAt,
-	}
-}
-
-// persistResult writes a dispatch Result into probe_results via the
-// storage layer. Metadata is preserved as-is; the database column is
-// TEXT and accepts opaque JSON.
-func persistResult(ctx context.Context, storage probeStorage, r Result) error {
-	pr := &database.ProbeResult{
-		ProbeID:      r.ProbeID,
-		ClientID:     r.ClientID,
-		Kind:         r.Kind,
-		Timestamp:    r.Timestamp,
-		Success:      r.Success,
-		LatencyMs:    r.LatencyMs,
-		Error:        r.Error,
-		MetadataJSON: string(r.Metadata),
-	}
-	return storage.RecordResult(ctx, pr)
 }
 
 // probeJob is the scheduler.Job adapter that drives one probe at its

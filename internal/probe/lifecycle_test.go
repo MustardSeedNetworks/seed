@@ -7,16 +7,22 @@ import (
 	"sync"
 	"testing"
 
-	"github.com/MustardSeedNetworks/seed/internal/database"
 	"github.com/MustardSeedNetworks/seed/internal/probe"
 	"github.com/MustardSeedNetworks/seed/internal/scheduler"
 )
 
-// fakeStorage implements probe.storage's behavior for tests.
+// errProbeNotFound is the fake's stand-in for a missing-probe lookup. The
+// engine wraps whatever the storage port returns with %w, so the concrete
+// sentinel value is not asserted — only that an error propagates.
+var errProbeNotFound = errors.New("probe not found")
+
+// fakeStorage implements the probe engine's probeStorage port for tests,
+// speaking the probe package's own domain types (the DB-row translation now
+// lives in the internal/app adapter).
 type fakeStorage struct {
 	mu           sync.Mutex
-	probes       map[string]*database.Probe
-	results      []*database.ProbeResult
+	probes       map[string]probe.Probe
+	results      []probe.Result
 	getErr       error
 	recordErr    error
 	listFilter   string // captures the kind filter passed to ListProbes
@@ -24,54 +30,54 @@ type fakeStorage struct {
 }
 
 func newFakeStorage() *fakeStorage {
-	return &fakeStorage{probes: make(map[string]*database.Probe)}
+	return &fakeStorage{probes: make(map[string]probe.Probe)}
 }
 
-func (f *fakeStorage) GetProbe(_ context.Context, id string) (*database.Probe, error) {
+func (f *fakeStorage) GetProbe(_ context.Context, id string) (probe.Probe, error) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
 	if f.getErr != nil {
-		return nil, f.getErr
+		return probe.Probe{}, f.getErr
 	}
 	p, ok := f.probes[id]
 	if !ok {
-		return nil, database.ErrProbeNotFound
+		return probe.Probe{}, errProbeNotFound
 	}
 	return p, nil
 }
 
-func (f *fakeStorage) ListProbes(_ context.Context, clientID, kind string) ([]*database.Probe, error) {
+func (f *fakeStorage) ListProbes(_ context.Context, clientID, kind string) ([]probe.Probe, error) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
 	f.clientFilter = clientID
 	f.listFilter = kind
-	out := make([]*database.Probe, 0, len(f.probes))
+	out := make([]probe.Probe, 0, len(f.probes))
 	for _, p := range f.probes {
 		out = append(out, p)
 	}
 	return out, nil
 }
 
-func (f *fakeStorage) RecordResult(_ context.Context, pr *database.ProbeResult) error {
+func (f *fakeStorage) RecordResult(_ context.Context, r probe.Result) error {
 	f.mu.Lock()
 	defer f.mu.Unlock()
 	if f.recordErr != nil {
 		return f.recordErr
 	}
-	f.results = append(f.results, pr)
+	f.results = append(f.results, r)
 	return nil
 }
 
-func (f *fakeStorage) addProbe(p *database.Probe) {
+func (f *fakeStorage) addProbe(p probe.Probe) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
 	f.probes[p.ID] = p
 }
 
-func (f *fakeStorage) recordedResults() []*database.ProbeResult {
+func (f *fakeStorage) recordedResults() []probe.Result {
 	f.mu.Lock()
 	defer f.mu.Unlock()
-	out := make([]*database.ProbeResult, len(f.results))
+	out := make([]probe.Result, len(f.results))
 	copy(out, f.results)
 	return out
 }
@@ -162,9 +168,9 @@ func TestEngine_Stop_IdempotentAndNoStorage(t *testing.T) {
 func TestEngine_Start_LoadsEnabledProbes_SkipsDisabled(t *testing.T) {
 	t.Parallel()
 	storage := newFakeStorage()
-	storage.addProbe(&database.Probe{ID: "p-1", Kind: "dns", IntervalSeconds: 60, Enabled: true})
-	storage.addProbe(&database.Probe{ID: "p-2", Kind: "tls", IntervalSeconds: 300, Enabled: false})
-	storage.addProbe(&database.Probe{ID: "p-3", Kind: "dns", IntervalSeconds: 30, Enabled: true})
+	storage.addProbe(probe.Probe{ID: "p-1", Kind: "dns", IntervalSeconds: 60, Enabled: true})
+	storage.addProbe(probe.Probe{ID: "p-2", Kind: "tls", IntervalSeconds: 300, Enabled: false})
+	storage.addProbe(probe.Probe{ID: "p-3", Kind: "dns", IntervalSeconds: 30, Enabled: true})
 	sched := newFakeScheduler()
 	e := probe.NewEngine(silentLogger()).WithStorage(storage, sched)
 
@@ -183,7 +189,7 @@ func TestEngine_Start_LoadsEnabledProbes_SkipsDisabled(t *testing.T) {
 func TestEngine_Start_Idempotent(t *testing.T) {
 	t.Parallel()
 	storage := newFakeStorage()
-	storage.addProbe(&database.Probe{ID: "p-1", Kind: "dns", IntervalSeconds: 60, Enabled: true})
+	storage.addProbe(probe.Probe{ID: "p-1", Kind: "dns", IntervalSeconds: 60, Enabled: true})
 	sched := newFakeScheduler()
 	e := probe.NewEngine(silentLogger()).WithStorage(storage, sched)
 
@@ -201,8 +207,8 @@ func TestEngine_Start_Idempotent(t *testing.T) {
 func TestEngine_Stop_UnregistersJobs(t *testing.T) {
 	t.Parallel()
 	storage := newFakeStorage()
-	storage.addProbe(&database.Probe{ID: "p-1", Kind: "dns", IntervalSeconds: 60, Enabled: true})
-	storage.addProbe(&database.Probe{ID: "p-2", Kind: "tls", IntervalSeconds: 300, Enabled: true})
+	storage.addProbe(probe.Probe{ID: "p-1", Kind: "dns", IntervalSeconds: 60, Enabled: true})
+	storage.addProbe(probe.Probe{ID: "p-2", Kind: "tls", IntervalSeconds: 300, Enabled: true})
 	sched := newFakeScheduler()
 	e := probe.NewEngine(silentLogger()).WithStorage(storage, sched)
 
@@ -224,13 +230,13 @@ func TestEngine_Stop_UnregistersJobs(t *testing.T) {
 func TestEngine_RunNow_DispatchesAndPersists(t *testing.T) {
 	t.Parallel()
 	storage := newFakeStorage()
-	storage.addProbe(&database.Probe{
+	storage.addProbe(probe.Probe{
 		ID:          "p-1",
 		ClientID:    "default",
 		Kind:        "dns",
 		DisplayName: "google.com",
 		Target:      "google.com",
-		ParamsJSON:  `{"record_type":"A"}`,
+		Params:      json.RawMessage(`{"record_type":"A"}`),
 		Enabled:     true,
 	})
 	sched := newFakeScheduler()
@@ -282,7 +288,7 @@ func TestEngine_RunNow_PropagatesProbeNotFound(t *testing.T) {
 func TestEngine_RunNow_PropagatesPersistError(t *testing.T) {
 	t.Parallel()
 	storage := newFakeStorage()
-	storage.addProbe(&database.Probe{ID: "p-1", Kind: "dns", Enabled: true})
+	storage.addProbe(probe.Probe{ID: "p-1", Kind: "dns", Enabled: true})
 	storage.recordErr = errors.New("disk full")
 	sched := newFakeScheduler()
 	e := probe.NewEngine(silentLogger()).WithStorage(storage, sched)
@@ -297,21 +303,20 @@ func TestEngine_RunNow_PropagatesPersistError(t *testing.T) {
 func TestEngine_RunNow_ProbeFieldsRoundTripToResult(t *testing.T) {
 	t.Parallel()
 	storage := newFakeStorage()
-	storage.addProbe(&database.Probe{
+	storage.addProbe(probe.Probe{
 		ID:          "p-1",
 		ClientID:    "tenant-x",
 		Kind:        "dns",
 		DisplayName: "internal",
 		Target:      "internal.example.com",
-		ParamsJSON:  `{"server":"10.0.0.5"}`,
-		WarningJSON: `{"latency_ms":50}`,
+		Params:      json.RawMessage(`{"server":"10.0.0.5"}`),
+		Warning:     json.RawMessage(`{"latency_ms":50}`),
 		Enabled:     true,
 	})
 	sched := newFakeScheduler()
 
-	// Checker echoes the probe back as metadata so we can verify
-	// the round-trip from DB row through Probe model into the
-	// Checker's input.
+	// Checker echoes the probe back as metadata so we can verify the
+	// Probe definition's fields reach the Checker's input unchanged.
 	echoer := &echoChecker{}
 	e := probe.NewEngine(silentLogger()).WithStorage(storage, sched)
 	e.RegisterChecker(echoer)

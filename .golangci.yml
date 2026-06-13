@@ -278,6 +278,21 @@ linters:
               desc: "reporting is persistence-free — define a Repo port, implement it in internal/reporting/store"
             - pkg: github.com/MustardSeedNetworks/seed/internal/reporting/store
               desc: "inward-only — the store adapter imports reporting, never the reverse; wire it in internal/app"
+        # WS-B repository-port discipline: the probe engine declares its
+        # persistence needs as a consumer-side port (probeStorage) in its own
+        # domain types (probe.Probe / probe.Result); the concrete adapter lives
+        # in internal/app (NewProbeStorage) and translates to/from the database
+        # row representation. The probe package therefore never imports
+        # internal/database. Production-only: a probe test that wires a real DB
+        # end-to-end would do so through the app adapter, but today's tests use
+        # domain-typed fakes, so this also documents the inward direction.
+        "probe-no-persistence":
+          files:
+            - "**/internal/probe/**"
+            - "!$test"
+          deny:
+            - pkg: github.com/MustardSeedNetworks/seed/internal/database
+              desc: "probe is persistence-free — define a port in probe (domain types) and implement it in internal/app (NewProbeStorage)"
         # Phase 6 capture port: libpcap (via gopacket/pcap) carries the CGO
         # taint that re-links libpcap into every dependent test binary. It is
         # confined to the single adapter package internal/capture/pcap; every
