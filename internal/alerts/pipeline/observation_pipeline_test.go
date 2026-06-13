@@ -8,14 +8,18 @@ import (
 
 	"github.com/MustardSeedNetworks/seed/internal/alerts/pipeline"
 	"github.com/MustardSeedNetworks/seed/internal/database"
+	"github.com/MustardSeedNetworks/seed/internal/polling/observation"
 )
 
 type fakeObservations struct {
-	rows []*database.SNMPObservation
+	rows []*observation.SNMPObservation
 }
 
-func (f *fakeObservations) List(_ context.Context, opts database.ListOptions) ([]*database.SNMPObservation, error) {
-	out := make([]*database.SNMPObservation, 0, len(f.rows))
+func (f *fakeObservations) List(
+	_ context.Context,
+	opts observation.ListOptions,
+) ([]*observation.SNMPObservation, error) {
+	out := make([]*observation.SNMPObservation, 0, len(f.rows))
 	for _, row := range f.rows {
 		if opts.Kind != "" && row.Kind != opts.Kind {
 			continue
@@ -25,9 +29,9 @@ func (f *fakeObservations) List(_ context.Context, opts database.ListOptions) ([
 	return out, nil
 }
 
-func iftableObs(target string, observed time.Time, rows []map[string]any) *database.SNMPObservation {
+func iftableObs(target string, observed time.Time, rows []map[string]any) *observation.SNMPObservation {
 	b, _ := json.Marshal(map[string]any{"Rows": rows})
-	return &database.SNMPObservation{
+	return &observation.SNMPObservation{
 		ClientID: "default", TargetID: target, Kind: "if_table",
 		ObservedAt: observed, PayloadJSON: string(b),
 	}
@@ -37,17 +41,17 @@ func iftableObs(target string, observed time.Time, rows []map[string]any) *datab
 // only exercise single-target scenarios for these kinds; iftable
 // tests cover the multi-target case. If multi-target bgp/storage
 // tests arrive later, lift target back into a parameter.
-func bgpObs(observed time.Time, peers []map[string]any) *database.SNMPObservation {
+func bgpObs(observed time.Time, peers []map[string]any) *observation.SNMPObservation {
 	b, _ := json.Marshal(map[string]any{"Peers": peers})
-	return &database.SNMPObservation{
+	return &observation.SNMPObservation{
 		ClientID: "default", TargetID: "t-1", Kind: "bgp4_mib",
 		ObservedAt: observed, PayloadJSON: string(b),
 	}
 }
 
-func hostObs(observed time.Time, storage []map[string]any) *database.SNMPObservation {
+func hostObs(observed time.Time, storage []map[string]any) *observation.SNMPObservation {
 	b, _ := json.Marshal(map[string]any{"Storage": storage})
-	return &database.SNMPObservation{
+	return &observation.SNMPObservation{
 		ClientID: "default", TargetID: "t-1", Kind: "host_resources",
 		ObservedAt: observed, PayloadJSON: string(b),
 	}
@@ -76,7 +80,7 @@ func TestNewObservationPipeline_RejectsMissingDeps(t *testing.T) {
 func TestObservationScanOnce_InterfaceUpToDownEmitsAlert(t *testing.T) {
 	t.Parallel()
 	alerts := &fakeAlerts{}
-	o := &fakeObservations{rows: []*database.SNMPObservation{
+	o := &fakeObservations{rows: []*observation.SNMPObservation{
 		iftableObs("t-1", at().Add(-time.Minute), []map[string]any{
 			{"IfIndex": 1, "IfName": "Gi0/0", "IfAdmin": 1, "IfOper": 1},
 		}),
@@ -103,7 +107,7 @@ func TestObservationScanOnce_InterfaceUpToDownEmitsAlert(t *testing.T) {
 func TestObservationScanOnce_AdminDownDoesNotAlert(t *testing.T) {
 	t.Parallel()
 	alerts := &fakeAlerts{}
-	o := &fakeObservations{rows: []*database.SNMPObservation{
+	o := &fakeObservations{rows: []*observation.SNMPObservation{
 		iftableObs("t-1", at().Add(-time.Minute), []map[string]any{
 			{"IfIndex": 1, "IfName": "Gi0/0", "IfAdmin": 1, "IfOper": 1},
 		}),
@@ -127,7 +131,7 @@ func TestObservationScanOnce_FirstObservationDoesNotAlert(t *testing.T) {
 	t.Parallel()
 	// No prior state -> the first observation cannot be a transition.
 	alerts := &fakeAlerts{}
-	o := &fakeObservations{rows: []*database.SNMPObservation{
+	o := &fakeObservations{rows: []*observation.SNMPObservation{
 		iftableObs("t-1", at(), []map[string]any{
 			{"IfIndex": 1, "IfName": "Gi0/0", "IfAdmin": 1, "IfOper": 2},
 		}),
@@ -145,7 +149,7 @@ func TestObservationScanOnce_FirstObservationDoesNotAlert(t *testing.T) {
 func TestObservationScanOnce_BGPLeavingEstablishedFires(t *testing.T) {
 	t.Parallel()
 	alerts := &fakeAlerts{}
-	o := &fakeObservations{rows: []*database.SNMPObservation{
+	o := &fakeObservations{rows: []*observation.SNMPObservation{
 		bgpObs(at().Add(-time.Minute), []map[string]any{
 			{"RemoteAddr": "192.0.2.1", "State": 6, "RemoteAS": 65001},
 		}),
@@ -169,7 +173,7 @@ func TestObservationScanOnce_BGPLeavingEstablishedFires(t *testing.T) {
 func TestObservationScanOnce_BGPStillEstablishedNoAlert(t *testing.T) {
 	t.Parallel()
 	alerts := &fakeAlerts{}
-	o := &fakeObservations{rows: []*database.SNMPObservation{
+	o := &fakeObservations{rows: []*observation.SNMPObservation{
 		bgpObs(at().Add(-time.Minute), []map[string]any{
 			{"RemoteAddr": "192.0.2.1", "State": 6, "RemoteAS": 65001},
 		}),
@@ -190,7 +194,7 @@ func TestObservationScanOnce_BGPStillEstablishedNoAlert(t *testing.T) {
 func TestObservationScanOnce_StorageCrosses85FiresWarning(t *testing.T) {
 	t.Parallel()
 	alerts := &fakeAlerts{}
-	o := &fakeObservations{rows: []*database.SNMPObservation{
+	o := &fakeObservations{rows: []*observation.SNMPObservation{
 		hostObs(at().Add(-time.Minute), []map[string]any{
 			{"Index": 1, "Description": "/", "SizeBytes": 1000, "UsedBytes": 800}, // 80%
 		}),
@@ -211,7 +215,7 @@ func TestObservationScanOnce_StorageCrosses85FiresWarning(t *testing.T) {
 func TestObservationScanOnce_StorageCrosses95FiresCritical(t *testing.T) {
 	t.Parallel()
 	alerts := &fakeAlerts{}
-	o := &fakeObservations{rows: []*database.SNMPObservation{
+	o := &fakeObservations{rows: []*observation.SNMPObservation{
 		hostObs(at().Add(-time.Minute), []map[string]any{
 			{"Index": 1, "Description": "/", "SizeBytes": 1000, "UsedBytes": 800},
 		}),
@@ -235,7 +239,7 @@ func TestObservationScanOnce_StorageRemainingHighNoRepeatAlert(t *testing.T) {
 	// (initial unknown) to 87%, so warning fires once. Second is
 	// 87% to 87%, no upward crossing -> no alert.
 	alerts := &fakeAlerts{}
-	o := &fakeObservations{rows: []*database.SNMPObservation{
+	o := &fakeObservations{rows: []*observation.SNMPObservation{
 		hostObs(at().Add(-time.Minute), []map[string]any{
 			{"Index": 1, "Description": "/", "SizeBytes": 1000, "UsedBytes": 870},
 		}),
@@ -256,7 +260,7 @@ func TestObservationScanOnce_StorageRemainingHighNoRepeatAlert(t *testing.T) {
 func TestObservationScanOnce_DifferentTargetsTrackedIndependently(t *testing.T) {
 	t.Parallel()
 	alerts := &fakeAlerts{}
-	o := &fakeObservations{rows: []*database.SNMPObservation{
+	o := &fakeObservations{rows: []*observation.SNMPObservation{
 		iftableObs("t-1", at().Add(-time.Minute), []map[string]any{
 			{"IfIndex": 1, "IfName": "Gi0/0", "IfAdmin": 1, "IfOper": 1},
 		}),
@@ -284,7 +288,7 @@ func TestObservationScanOnce_PersistsMaxObservedAtAcrossKinds(t *testing.T) {
 	t.Parallel()
 	newer := at()
 	older := at().Add(-2 * time.Hour)
-	o := &fakeObservations{rows: []*database.SNMPObservation{
+	o := &fakeObservations{rows: []*observation.SNMPObservation{
 		iftableObs("t-1", older, nil),
 		bgpObs(newer, nil),
 	}}

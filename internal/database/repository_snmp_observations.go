@@ -6,20 +6,9 @@ import (
 	"errors"
 	"fmt"
 	"time"
-)
 
-// SNMPObservation is one row of snmp_observations. PayloadJSON
-// carries the typed collector Observation struct serialized as JSON
-// — callers decode it back into the kind-specific shape they own.
-type SNMPObservation struct {
-	ID          int64
-	ClientID    string
-	TargetID    string
-	Kind        string
-	ObservedAt  time.Time
-	PayloadJSON string
-	IngestedAt  time.Time
-}
+	"github.com/MustardSeedNetworks/seed/internal/polling/observation"
+)
 
 // SNMPObservationsRepository owns CRUD over snmp_observations.
 type SNMPObservationsRepository struct {
@@ -28,7 +17,7 @@ type SNMPObservationsRepository struct {
 
 // Insert records one observation. ObservedAt and IngestedAt are
 // stamped if zero.
-func (r *SNMPObservationsRepository) Insert(ctx context.Context, obs *SNMPObservation) error {
+func (r *SNMPObservationsRepository) Insert(ctx context.Context, obs *observation.SNMPObservation) error {
 	if obs.Kind == "" {
 		return errors.New("snmp_observations: Kind required")
 	}
@@ -66,19 +55,12 @@ func (r *SNMPObservationsRepository) Insert(ctx context.Context, obs *SNMPObserv
 	return nil
 }
 
-// ListOptions narrows the query — empty values disable that filter.
-type ListOptions struct {
-	ClientID string
-	TargetID string
-	Kind     string
-	Since    time.Time
-	Until    time.Time
-	Limit    int
-}
-
 // List returns observations matching opts ordered by ObservedAt
 // descending (newest first). Limit defaults to 100; clamped to 1000.
-func (r *SNMPObservationsRepository) List(ctx context.Context, opts ListOptions) ([]*SNMPObservation, error) {
+func (r *SNMPObservationsRepository) List(
+	ctx context.Context,
+	opts observation.ListOptions,
+) ([]*observation.SNMPObservation, error) {
 	const defaultLimit, maxLimit = 100, 1000
 
 	query, args := newListQueryBuilder(`
@@ -116,9 +98,9 @@ func (r *SNMPObservationsRepository) DeleteOlderThan(ctx context.Context, cutoff
 
 // scanSNMPObservation reads a row via a [sql.Row.Scan] or
 // [sql.Rows.Scan] signature.
-func scanSNMPObservation(scan func(...any) error) (*SNMPObservation, error) {
+func scanSNMPObservation(scan func(...any) error) (*observation.SNMPObservation, error) {
 	var (
-		obs           SNMPObservation
+		obs           observation.SNMPObservation
 		observedAtStr string
 		ingestedAtStr string
 	)

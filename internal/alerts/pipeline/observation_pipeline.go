@@ -12,6 +12,7 @@ import (
 
 	"github.com/MustardSeedNetworks/seed/internal/database"
 	"github.com/MustardSeedNetworks/seed/internal/engine"
+	"github.com/MustardSeedNetworks/seed/internal/polling/observation"
 )
 
 // degradedTickMultiplier is how many scan intervals can elapse
@@ -37,7 +38,7 @@ const (
 
 // observationReader is the narrowed surface this pipeline needs.
 type observationReader interface {
-	List(ctx context.Context, opts database.ListOptions) ([]*database.SNMPObservation, error)
+	List(ctx context.Context, opts observation.ListOptions) ([]*observation.SNMPObservation, error)
 }
 
 // ObservationPipeline consumes the snmp_observations stream, detects
@@ -223,7 +224,7 @@ func (p *ObservationPipeline) Start(ctx context.Context) error {
 // real previous values instead of zero.
 func (p *ObservationPipeline) primeFromHistory(ctx context.Context) error {
 	for _, kind := range observationKinds() {
-		observations, err := p.obs.List(ctx, database.ListOptions{
+		observations, err := p.obs.List(ctx, observation.ListOptions{
 			Kind:  kind,
 			Limit: p.replayDepth,
 		})
@@ -242,7 +243,7 @@ func (p *ObservationPipeline) primeFromHistory(ctx context.Context) error {
 // primeOne dispatches to the per-kind primer. Unknown kinds are
 // silently skipped — they were filtered out by observationKinds()
 // at the caller, but we double-check here for safety.
-func (p *ObservationPipeline) primeOne(kind string, obs *database.SNMPObservation) {
+func (p *ObservationPipeline) primeOne(kind string, obs *observation.SNMPObservation) {
 	switch kind {
 	case "if_table":
 		p.primeIfTable(obs)
@@ -253,7 +254,7 @@ func (p *ObservationPipeline) primeOne(kind string, obs *database.SNMPObservatio
 	}
 }
 
-func (p *ObservationPipeline) primeIfTable(obs *database.SNMPObservation) {
+func (p *ObservationPipeline) primeIfTable(obs *observation.SNMPObservation) {
 	var pay ifTableObsPayload
 	if err := json.Unmarshal([]byte(obs.PayloadJSON), &pay); err != nil {
 		return
@@ -264,7 +265,7 @@ func (p *ObservationPipeline) primeIfTable(obs *database.SNMPObservation) {
 	}
 }
 
-func (p *ObservationPipeline) primeBGP(obs *database.SNMPObservation) {
+func (p *ObservationPipeline) primeBGP(obs *observation.SNMPObservation) {
 	var pay bgpObsPayload
 	if err := json.Unmarshal([]byte(obs.PayloadJSON), &pay); err != nil {
 		return
@@ -275,7 +276,7 @@ func (p *ObservationPipeline) primeBGP(obs *database.SNMPObservation) {
 	}
 }
 
-func (p *ObservationPipeline) primeHostResources(obs *database.SNMPObservation) {
+func (p *ObservationPipeline) primeHostResources(obs *observation.SNMPObservation) {
 	var pay hostResObsPayload
 	if err := json.Unmarshal([]byte(obs.PayloadJSON), &pay); err != nil {
 		return
@@ -400,7 +401,7 @@ func observationKinds() []string {
 func (p *ObservationPipeline) scanKind(
 	ctx context.Context, kind string, since time.Time,
 ) (int, time.Time, error) {
-	observations, err := p.obs.List(ctx, database.ListOptions{
+	observations, err := p.obs.List(ctx, observation.ListOptions{
 		Kind: kind, Since: since, Limit: defaultBatch,
 	})
 	if err != nil {
@@ -442,7 +443,7 @@ const ifOperUp = 1
 // else. Up→up and any change from initial unknown state do NOT fire
 // (we need a "previous up" to define a transition).
 func (p *ObservationPipeline) evaluateIfTable(
-	ctx context.Context, obs *database.SNMPObservation,
+	ctx context.Context, obs *observation.SNMPObservation,
 ) int {
 	var pay ifTableObsPayload
 	if err := json.Unmarshal([]byte(obs.PayloadJSON), &pay); err != nil {
@@ -488,7 +489,7 @@ const bgpStateEstablished = 6
 
 // evaluateBGP detects peers leaving the Established state.
 func (p *ObservationPipeline) evaluateBGP(
-	ctx context.Context, obs *database.SNMPObservation,
+	ctx context.Context, obs *observation.SNMPObservation,
 ) int {
 	var pay bgpObsPayload
 	if err := json.Unmarshal([]byte(obs.PayloadJSON), &pay); err != nil {
@@ -537,7 +538,7 @@ type hostResObsPayload struct {
 // fire only on the upward crossing (not every poll while above the
 // threshold).
 func (p *ObservationPipeline) evaluateHostResources(
-	ctx context.Context, obs *database.SNMPObservation,
+	ctx context.Context, obs *observation.SNMPObservation,
 ) int {
 	var pay hostResObsPayload
 	if err := json.Unmarshal([]byte(obs.PayloadJSON), &pay); err != nil {

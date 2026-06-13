@@ -293,6 +293,22 @@ linters:
           deny:
             - pkg: github.com/MustardSeedNetworks/seed/internal/database
               desc: "probe is persistence-free — define a port in probe (domain types) and implement it in internal/app (NewProbeStorage)"
+        # WS-B repository-port discipline: topology owns its row types
+        # (TopologyNode/Link/Interface/ARPBinding + list options + the
+        # ErrTopologyNodeNotFound sentinel) in internal/topology, and the SNMP
+        # observations it reconciles live in internal/polling/observation. The
+        # TopologyRepository / SNMPObservationsRepository stay in internal/database
+        # and map SQL rows to those domain types — dependency points inward
+        # (database imports the domain pkgs, never the reverse). So internal/topology
+        # never imports internal/database. Production-only (tests build domain-typed
+        # fakes); the api/app composition root still holds the database handle.
+        "topology-no-persistence":
+          files:
+            - "**/internal/topology/**"
+            - "!$test"
+          deny:
+            - pkg: github.com/MustardSeedNetworks/seed/internal/database
+              desc: "topology is persistence-free — its row types live in internal/topology and the TopologyRepository (internal/database) maps rows to them; wire it in internal/app"
         # Phase 6 capture port: libpcap (via gopacket/pcap) carries the CGO
         # taint that re-links libpcap into every dependent test binary. It is
         # confined to the single adapter package internal/capture/pcap; every

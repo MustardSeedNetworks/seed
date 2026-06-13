@@ -8,7 +8,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/MustardSeedNetworks/seed/internal/database"
+	"github.com/MustardSeedNetworks/seed/internal/polling/observation"
 	"github.com/MustardSeedNetworks/seed/internal/topology"
 )
 
@@ -16,7 +16,7 @@ type fakeIfStore struct {
 	mu        sync.Mutex
 	nodeFor   map[string]string // (client|target) -> nodeID
 	lookupErr error
-	upserts   []*database.TopologyInterface
+	upserts   []*topology.Interface
 	upsertErr error
 }
 
@@ -32,12 +32,12 @@ func (f *fakeIfStore) NodeIDForTarget(_ context.Context, clientID, targetID stri
 	}
 	id, ok := f.nodeFor[clientID+"|"+targetID]
 	if !ok {
-		return "", database.ErrTopologyNodeNotFound
+		return "", topology.ErrTopologyNodeNotFound
 	}
 	return id, nil
 }
 
-func (f *fakeIfStore) UpsertInterface(_ context.Context, iface *database.TopologyInterface) error {
+func (f *fakeIfStore) UpsertInterface(_ context.Context, iface *topology.Interface) error {
 	f.mu.Lock()
 	defer f.mu.Unlock()
 	if f.upsertErr != nil {
@@ -52,8 +52,8 @@ func ifPayload(rows ...map[string]any) string {
 	return string(b)
 }
 
-func ifObs(client, target string, observed time.Time, rows ...map[string]any) *database.SNMPObservation {
-	return &database.SNMPObservation{
+func ifObs(client, target string, observed time.Time, rows ...map[string]any) *observation.SNMPObservation {
+	return &observation.SNMPObservation{
 		ClientID:    client,
 		TargetID:    target,
 		Kind:        "if_table",
@@ -87,7 +87,7 @@ func TestIfTableReconcileOnce_UpsertsOneRowPerInterface(t *testing.T) {
 	store := newFakeIfStore()
 	store.nodeFor["client-a|t-1"] = "node-abc"
 
-	o := &fakeObservations{rows: []*database.SNMPObservation{
+	o := &fakeObservations{rows: []*observation.SNMPObservation{
 		ifObs("client-a", "t-1", at(),
 			map[string]any{
 				"IfIndex": 1, "IfName": "Gi0/0", "IfAdmin": 1, "IfOper": 1, "SpeedBps": 1000000000,
@@ -118,7 +118,7 @@ func TestIfTableReconcileOnce_UpsertsOneRowPerInterface(t *testing.T) {
 func TestIfTableReconcileOnce_SkipsObservationsWithoutNodeMapping(t *testing.T) {
 	t.Parallel()
 	store := newFakeIfStore() // empty mapping
-	o := &fakeObservations{rows: []*database.SNMPObservation{
+	o := &fakeObservations{rows: []*observation.SNMPObservation{
 		ifObs("c", "t-orphan", at(),
 			map[string]any{"IfIndex": 1, "IfName": "eth0"},
 		),
@@ -150,7 +150,7 @@ func TestIfTableReconcileOnce_PersistsMaxObservedAt(t *testing.T) {
 
 	old := at().Add(-time.Hour)
 	newer := at()
-	o := &fakeObservations{rows: []*database.SNMPObservation{
+	o := &fakeObservations{rows: []*observation.SNMPObservation{
 		ifObs("c", "t-1", newer, map[string]any{"IfIndex": 1, "IfName": "e0"}),
 		ifObs("c", "t-2", old, map[string]any{"IfIndex": 1, "IfName": "e0"}),
 	}}
@@ -175,7 +175,7 @@ func TestIfTableReconcileOnce_MalformedPayloadSkipsObservation(t *testing.T) {
 	t.Parallel()
 	store := newFakeIfStore()
 	store.nodeFor["c|t-1"] = "node-1"
-	o := &fakeObservations{rows: []*database.SNMPObservation{
+	o := &fakeObservations{rows: []*observation.SNMPObservation{
 		{
 			ClientID: "c", TargetID: "t-1", Kind: "if_table",
 			ObservedAt: at(), PayloadJSON: "{not valid json",
@@ -197,7 +197,7 @@ func TestIfTableReconcileOnce_ZeroIfIndexSkipped(t *testing.T) {
 	t.Parallel()
 	store := newFakeIfStore()
 	store.nodeFor["c|t-1"] = "node-1"
-	o := &fakeObservations{rows: []*database.SNMPObservation{
+	o := &fakeObservations{rows: []*observation.SNMPObservation{
 		ifObs("c", "t-1", at(),
 			map[string]any{"IfIndex": 0, "IfName": "invalid"},
 			map[string]any{"IfIndex": 1, "IfName": "ok"},
@@ -217,7 +217,7 @@ func TestIfTableReconcileOnce_LookupErrorContinuesBatch(t *testing.T) {
 	t.Parallel()
 	store := newFakeIfStore()
 	store.lookupErr = errors.New("db down")
-	o := &fakeObservations{rows: []*database.SNMPObservation{
+	o := &fakeObservations{rows: []*observation.SNMPObservation{
 		ifObs("c", "t-1", at(), map[string]any{"IfIndex": 1, "IfName": "e0"}),
 	}}
 	r, _ := topology.NewIfTableReconciler(topology.IfTableConfig{

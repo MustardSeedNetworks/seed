@@ -5,41 +5,40 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/MustardSeedNetworks/seed/internal/database"
 	"github.com/MustardSeedNetworks/seed/internal/topology"
 )
 
 type fakeReader struct {
-	nodes      []*database.TopologyNode
-	interfaces []*database.TopologyInterface
-	links      []*database.TopologyLink
+	nodes      []*topology.Node
+	interfaces []*topology.Interface
+	links      []*topology.Link
 	listErr    error
 }
 
-func (f fakeReader) List(context.Context, database.TopologyListOptions) ([]*database.TopologyNode, error) {
+func (f fakeReader) List(context.Context, topology.ListOptions) ([]*topology.Node, error) {
 	return f.nodes, f.listErr
 }
 
-func (f fakeReader) ListInterfaces(context.Context, string) ([]*database.TopologyInterface, error) {
+func (f fakeReader) ListInterfaces(context.Context, string) ([]*topology.Interface, error) {
 	return f.interfaces, nil
 }
 
-func (f fakeReader) ListLinks(context.Context, string) ([]*database.TopologyLink, error) {
+func (f fakeReader) ListLinks(context.Context, string) ([]*topology.Link, error) {
 	return f.links, nil
 }
 
 func (f fakeReader) ListARPBindings(
 	context.Context,
-	database.TopologyARPListOptions,
-) ([]*database.TopologyARPBinding, error) {
+	topology.ARPListOptions,
+) ([]*topology.ARPBinding, error) {
 	return nil, nil
 }
 
 func TestNodeReturnsDetailForMatch(t *testing.T) {
 	r := fakeReader{
-		nodes:      []*database.TopologyNode{{ID: "a"}, {ID: "b"}},
-		interfaces: []*database.TopologyInterface{{IfName: "eth0"}},
-		links:      []*database.TopologyLink{{LinkType: "lldp"}},
+		nodes:      []*topology.Node{{ID: "a"}, {ID: "b"}},
+		interfaces: []*topology.Interface{{IfName: "eth0"}},
+		links:      []*topology.Link{{LinkType: "lldp"}},
 	}
 	q := topology.NewQueries(r, 1000)
 
@@ -56,7 +55,7 @@ func TestNodeReturnsDetailForMatch(t *testing.T) {
 }
 
 func TestNodeUnknownReturnsNotFound(t *testing.T) {
-	q := topology.NewQueries(fakeReader{nodes: []*database.TopologyNode{{ID: "a"}}}, 1000)
+	q := topology.NewQueries(fakeReader{nodes: []*topology.Node{{ID: "a"}}}, 1000)
 	if _, err := q.Node(context.Background(), "missing"); !errors.Is(err, topology.ErrNodeNotFound) {
 		t.Errorf("want ErrNodeNotFound, got %v", err)
 	}

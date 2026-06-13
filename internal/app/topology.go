@@ -33,8 +33,8 @@ func (a topologyReader) repo() (*database.TopologyRepository, error) {
 }
 
 func (a topologyReader) List(
-	ctx context.Context, opts database.TopologyListOptions,
-) ([]*database.TopologyNode, error) {
+	ctx context.Context, opts topology.ListOptions,
+) ([]*topology.Node, error) {
 	repo, err := a.repo()
 	if err != nil {
 		return nil, err
@@ -44,7 +44,7 @@ func (a topologyReader) List(
 
 func (a topologyReader) ListInterfaces(
 	ctx context.Context, nodeID string,
-) ([]*database.TopologyInterface, error) {
+) ([]*topology.Interface, error) {
 	repo, err := a.repo()
 	if err != nil {
 		return nil, err
@@ -54,7 +54,7 @@ func (a topologyReader) ListInterfaces(
 
 func (a topologyReader) ListLinks(
 	ctx context.Context, nodeID string,
-) ([]*database.TopologyLink, error) {
+) ([]*topology.Link, error) {
 	repo, err := a.repo()
 	if err != nil {
 		return nil, err
@@ -63,8 +63,8 @@ func (a topologyReader) ListLinks(
 }
 
 func (a topologyReader) ListARPBindings(
-	ctx context.Context, opts database.TopologyARPListOptions,
-) ([]*database.TopologyARPBinding, error) {
+	ctx context.Context, opts topology.ARPListOptions,
+) ([]*topology.ARPBinding, error) {
 	repo, err := a.repo()
 	if err != nil {
 		return nil, err

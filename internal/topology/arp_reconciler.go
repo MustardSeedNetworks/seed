@@ -9,8 +9,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/MustardSeedNetworks/seed/internal/database"
 	"github.com/MustardSeedNetworks/seed/internal/engine"
+	"github.com/MustardSeedNetworks/seed/internal/polling/observation"
 )
 
 // ARPReconcilerName is the engine identifier.
@@ -28,7 +28,7 @@ const arpHighWaterKey = "topology.arp.high_water"
 type arpStore interface {
 	NodeIDForTarget(ctx context.Context, clientID, targetID string) (string, error)
 	NodeIDForMAC(ctx context.Context, clientID, mac string) (string, error)
-	UpsertARPBinding(ctx context.Context, b *database.TopologyARPBinding) error
+	UpsertARPBinding(ctx context.Context, b *ARPBinding) error
 	SetNodePrimaryIP(ctx context.Context, nodeID, ip string) error
 }
 
@@ -171,7 +171,7 @@ func (r *ARPReconciler) reconcileOnceInner(ctx context.Context) error {
 	if err != nil {
 		return fmt.Errorf("load high-water: %w", err)
 	}
-	observations, err := r.obs.List(ctx, database.ListOptions{
+	observations, err := r.obs.List(ctx, observation.ListOptions{
 		Kind:  "arp",
 		Since: since,
 		Limit: defaultBatchLimit,
@@ -229,7 +229,7 @@ type arpEntry struct {
 // matches an entry's MAC. Returns (bindingCount, backfillCount).
 func (r *ARPReconciler) applyObservation(
 	ctx context.Context,
-	obs *database.SNMPObservation,
+	obs *observation.SNMPObservation,
 	sourceNodeID string,
 ) (int, int) {
 	var p arpPayload
@@ -243,7 +243,7 @@ func (r *ARPReconciler) applyObservation(
 		if e.IPAddress == "" || e.MACAddress == "" {
 			continue
 		}
-		binding := &database.TopologyARPBinding{
+		binding := &ARPBinding{
 			ClientID:     obs.ClientID,
 			SourceNodeID: sourceNodeID,
 			IfIndex:      e.IfIndex,

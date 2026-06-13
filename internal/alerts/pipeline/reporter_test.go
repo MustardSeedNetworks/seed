@@ -7,8 +7,8 @@ import (
 	"time"
 
 	"github.com/MustardSeedNetworks/seed/internal/alerts/pipeline"
-	"github.com/MustardSeedNetworks/seed/internal/database"
 	"github.com/MustardSeedNetworks/seed/internal/engine"
+	"github.com/MustardSeedNetworks/seed/internal/polling/observation"
 )
 
 func TestListenerPipeline_Status_BeforeFirstScan(t *testing.T) {
@@ -84,15 +84,15 @@ func TestListenerPipeline_Status_AfterStop(t *testing.T) {
 
 // fakeObs lets us drive ObservationPipeline.ScanOnce.
 type fakeObs struct {
-	rows    []*database.SNMPObservation
+	rows    []*observation.SNMPObservation
 	listErr error
 }
 
-func (f *fakeObs) List(_ context.Context, _ database.ListOptions) ([]*database.SNMPObservation, error) {
+func (f *fakeObs) List(_ context.Context, _ observation.ListOptions) ([]*observation.SNMPObservation, error) {
 	if f.listErr != nil {
 		return nil, f.listErr
 	}
-	out := make([]*database.SNMPObservation, len(f.rows))
+	out := make([]*observation.SNMPObservation, len(f.rows))
 	copy(out, f.rows)
 	return out, nil
 }

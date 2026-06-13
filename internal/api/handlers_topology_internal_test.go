@@ -11,6 +11,7 @@ import (
 
 	"github.com/MustardSeedNetworks/seed/internal/app"
 	"github.com/MustardSeedNetworks/seed/internal/database"
+	"github.com/MustardSeedNetworks/seed/internal/topology"
 )
 
 // newTopologyTestServer builds a minimal Server backed by a temp
@@ -32,7 +33,7 @@ func newTopologyTestServer(t *testing.T) *Server {
 func seedTopology(t *testing.T, db *database.DB) string {
 	t.Helper()
 	ctx := context.Background()
-	node, err := db.Topology().Upsert(ctx, &database.TopologyNode{
+	node, err := db.Topology().Upsert(ctx, &topology.Node{
 		ID:           "node-test-1",
 		ClientID:     "default",
 		IdentityHash: "hash-test-1",
@@ -45,7 +46,7 @@ func seedTopology(t *testing.T, db *database.DB) string {
 	if err != nil {
 		t.Fatalf("seed node: %v", err)
 	}
-	if upErr := db.Topology().UpsertInterface(ctx, &database.TopologyInterface{
+	if upErr := db.Topology().UpsertInterface(ctx, &topology.Interface{
 		NodeID: node.ID, IfIndex: 1, IfName: "Gi0/0",
 		IfAdminStatus: 1, IfOperStatus: 1, SpeedBps: 1_000_000_000,
 		LastSeen: time.Now().UTC(),
@@ -53,7 +54,7 @@ func seedTopology(t *testing.T, db *database.DB) string {
 		t.Fatalf("seed interface: %v", upErr)
 	}
 	// Create a second node so the edge has both endpoints.
-	other, _ := db.Topology().Upsert(ctx, &database.TopologyNode{
+	other, _ := db.Topology().Upsert(ctx, &topology.Node{
 		ID:           "node-test-2",
 		ClientID:     "default",
 		IdentityHash: "hash-test-2",
@@ -61,7 +62,7 @@ func seedTopology(t *testing.T, db *database.DB) string {
 		SysName:      "core-sw",
 		LastSeen:     time.Now().UTC(),
 	})
-	if linkErr := db.Topology().UpsertLink(ctx, &database.TopologyLink{
+	if linkErr := db.Topology().UpsertLink(ctx, &topology.Link{
 		ID:           "link-test-1",
 		SourceNodeID: node.ID,
 		TargetNodeID: other.ID,
@@ -222,7 +223,7 @@ func seedARPBindingsForHandler(t *testing.T, db *database.DB) {
 	// insert two bindings under node-test-1.
 	_ = seedTopology(t, db)
 	ctx := context.Background()
-	for _, b := range []*database.TopologyARPBinding{
+	for _, b := range []*topology.ARPBinding{
 		{
 			ClientID: "default", SourceNodeID: "node-test-1", IfIndex: 1,
 			IPAddress: "10.0.0.1", MACAddress: "aa:bb:cc:dd:ee:01",
