@@ -5,6 +5,94 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.212.0](https://github.com/MustardSeedNetworks/seed/compare/v0.211.0...v0.212.0) (2026-06-13)
+
+
+### ⚠ BREAKING CHANGES
+
+* **probe:** the health-check run/settings/anomalies endpoints moved from /telemetry/health-checks/* to /telemetry/probes/*. Pre-alpha, no compat.
+* **probe:** /run response drops the unrendered CustomTestResult fields (security headers, redirect chains, body-match, per-endpoint vertical detail that was never populated). Pre-alpha, no compat.
+* **health:** delete the dead health_check_results read-path (ADR-0026) ([#1636](https://github.com/MustardSeedNetworks/seed/issues/1636))
+
+### Features
+
+* **anomaly:** add error severity to the four-level ladder (ADR-0021 ph5) ([#1637](https://github.com/MustardSeedNetworks/seed/issues/1637)) ([5127ca0](https://github.com/MustardSeedNetworks/seed/commit/5127ca0fe53a59bd36e1b86aab2f2a544f872bc1))
+* **anomaly:** daily-rollup census of the anomaly store (ADR-0028) ([#1650](https://github.com/MustardSeedNetworks/seed/issues/1650)) ([97aab3e](https://github.com/MustardSeedNetworks/seed/commit/97aab3ec2598a3ceb9d8976746dcf7483b058041))
+* **anomaly:** persist the anomaly engine in SQL (ADR-0021 phase 1) ([#1629](https://github.com/MustardSeedNetworks/seed/issues/1629)) ([83f2ce4](https://github.com/MustardSeedNetworks/seed/commit/83f2ce46eeebf55335c3de548117dc0ca7e71527))
+* **anomaly:** persist the Wi-Fi anomaly stream + load-on-start (ADR-0021 phase 3) ([#1632](https://github.com/MustardSeedNetworks/seed/issues/1632)) ([d24f896](https://github.com/MustardSeedNetworks/seed/commit/d24f896670a1c62cd4d19e1522cf3e14af3f9978))
+* **anomaly:** probe is the active-monitoring anomaly producer (ADR-0025) ([#1635](https://github.com/MustardSeedNetworks/seed/issues/1635)) ([500c890](https://github.com/MustardSeedNetworks/seed/commit/500c8902a7ecfeb51ea49a71e8b8b8665d9507d7))
+* **anomaly:** re-derive catalog-static impact/followUps on store read (ADR-0029) ([#1653](https://github.com/MustardSeedNetworks/seed/issues/1653)) ([be81b0d](https://github.com/MustardSeedNetworks/seed/commit/be81b0db76e31a7fccc749b0cc9b58a0f5bf3e56))
+* **anomaly:** resolve probe anomalies immediately on a clean result ([#1638](https://github.com/MustardSeedNetworks/seed/issues/1638)) ([1365e9a](https://github.com/MustardSeedNetworks/seed/commit/1365e9a1b154a45c59ea1f9036e2fdf7af115957))
+* **anomaly:** TTL-purge resolved anomalies in retention (ADR-0021 phase 2) ([#1630](https://github.com/MustardSeedNetworks/seed/issues/1630)) ([0ca47d7](https://github.com/MustardSeedNetworks/seed/commit/0ca47d7566e978a421b7189b3341a458dfea089e))
+* **probe:** add eight health-check vertical checkers (ADR-0027 P1) ([#1641](https://github.com/MustardSeedNetworks/seed/issues/1641)) ([99649e5](https://github.com/MustardSeedNetworks/seed/commit/99649e5c55185c3ea511677401edc01a480afb7a))
+* **probe:** detect TLS certificate expiry as a probe anomaly ([#1639](https://github.com/MustardSeedNetworks/seed/issues/1639)) ([a93cac5](https://github.com/MustardSeedNetworks/seed/commit/a93cac5fd260315b5fdd6009dcf7f95cfb0cff20))
+* **probe:** enrich HTTP/HTTPS checker with per-phase timings and cert summary (ADR-0027 P3a) ([#1643](https://github.com/MustardSeedNetworks/seed/issues/1643)) ([94c47ab](https://github.com/MustardSeedNetworks/seed/commit/94c47ab9a20b901c8e02d5270a980f218d6f7977))
+* **probe:** make the probes table store-of-record for health-check settings (ADR-0027 P2) ([#1642](https://github.com/MustardSeedNetworks/seed/issues/1642)) ([b37fe80](https://github.com/MustardSeedNetworks/seed/commit/b37fe8024b75c2398652c2376d78daeafae67de2))
+* **probe:** rename health-check transport to /telemetry/probes/* (ADR-0027 P5) ([#1645](https://github.com/MustardSeedNetworks/seed/issues/1645)) ([8296cc2](https://github.com/MustardSeedNetworks/seed/commit/8296cc2a64645ae94cf38859b701da4270d6a873))
+* **probe:** run health checks through the probe engine; delete the legacy stack (ADR-0027 P3+P4) ([#1644](https://github.com/MustardSeedNetworks/seed/issues/1644)) ([15bf342](https://github.com/MustardSeedNetworks/seed/commit/15bf3423b4bcb45636578cae5f291d5449d5efd8))
+* **ui:** add RequireRole/RequireAdmin gate + hide user mgmt from non-admins ([#1254](https://github.com/MustardSeedNetworks/seed/issues/1254)) ([#1586](https://github.com/MustardSeedNetworks/seed/issues/1586)) ([0ee5694](https://github.com/MustardSeedNetworks/seed/commit/0ee569495c9e1ea2efbd41a5c6b7ff3207d24cde))
+
+
+### Bug Fixes
+
+* **api:** require operator role on persistent-write routes ([#1631](https://github.com/MustardSeedNetworks/seed/issues/1631)) ([fc7e3f5](https://github.com/MustardSeedNetworks/seed/commit/fc7e3f5e2bb3d6af97652e74f45198c2509546ae))
+* **database:** de-collide anomaly census test fixtures (flaky) ([#1670](https://github.com/MustardSeedNetworks/seed/issues/1670)) ([c6414cd](https://github.com/MustardSeedNetworks/seed/commit/c6414cd709511719595dce59560ccca8cffddd7b))
+* **probe:** seed factory health-check targets on first run ([#1646](https://github.com/MustardSeedNetworks/seed/issues/1646)) ([4283b6e](https://github.com/MustardSeedNetworks/seed/commit/4283b6e228851c4e201db7799c556be1c4de49a1))
+
+
+### Code Refactoring
+
+* **anomaly:** converge producers onto one server-owned engine (ADR-0029 P2+P3) ([#1652](https://github.com/MustardSeedNetworks/seed/issues/1652)) ([58007b4](https://github.com/MustardSeedNetworks/seed/commit/58007b4c36b3bbb011712901f52ed178b2aac6c8))
+* **anomaly:** delete bespoke health detector, read unified store (ADR-0021 phase 4) ([#1633](https://github.com/MustardSeedNetworks/seed/issues/1633)) ([438e3d1](https://github.com/MustardSeedNetworks/seed/commit/438e3d1b7dbb8256ce2cf31c60fde2485d9ca627))
+* **anomaly:** source on detection + source-scoped prune (ADR-0029 P1) ([#1651](https://github.com/MustardSeedNetworks/seed/issues/1651)) ([21dc576](https://github.com/MustardSeedNetworks/seed/commit/21dc576d5cdc573ce64128230615175278bff469))
+* **api:** clean-hexagonal alerts retrofit (ADR-0020) ([#1612](https://github.com/MustardSeedNetworks/seed/issues/1612)) ([412e2b9](https://github.com/MustardSeedNetworks/seed/commit/412e2b984f715a861dd992b5bc99ea551235b4cc))
+* **api:** clean-hexagonal discovery retrofit (ADR-0020) ([#1616](https://github.com/MustardSeedNetworks/seed/issues/1616)) ([6d0c035](https://github.com/MustardSeedNetworks/seed/commit/6d0c0352bfc159ade52df7b2a2c19244e6864cb7))
+* **api:** clean-hexagonal health-monitoring retrofit (ADR-0020) ([#1618](https://github.com/MustardSeedNetworks/seed/issues/1618)) ([4678697](https://github.com/MustardSeedNetworks/seed/commit/46786970f84b34681749630cd53373144ead5258))
+* **api:** clean-hexagonal network exemplar + ADR-0020 ([#1611](https://github.com/MustardSeedNetworks/seed/issues/1611)) ([dbaf8dc](https://github.com/MustardSeedNetworks/seed/commit/dbaf8dcac55b6805b00fa5695293ef8bac1005f4))
+* **api:** clean-hexagonal profiles retrofit (ADR-0020) ([#1614](https://github.com/MustardSeedNetworks/seed/issues/1614)) ([b5516b2](https://github.com/MustardSeedNetworks/seed/commit/b5516b2267fce5a8a8508ea9a6059c4b3c62767b))
+* **api:** clean-hexagonal settings retrofit (ADR-0020) ([#1613](https://github.com/MustardSeedNetworks/seed/issues/1613)) ([5d98097](https://github.com/MustardSeedNetworks/seed/commit/5d980976222a0ed2aad5ce459c7eb85cb4ec70b6))
+* **api:** clean-hexagonal wifi retrofit (ADR-0020) ([#1615](https://github.com/MustardSeedNetworks/seed/issues/1615)) ([e903744](https://github.com/MustardSeedNetworks/seed/commit/e90374445d7b1eb66b2d1cb91cc40e9b6319973d))
+* **api:** delete ServiceContainer, flatten services onto Server (D1) ([#1627](https://github.com/MustardSeedNetworks/seed/issues/1627)) ([feb198e](https://github.com/MustardSeedNetworks/seed/commit/feb198e3df9db18ebb83aa497535f550f8d18fc2))
+* **api:** extract drainJobSubstrate + test the shutdown drain ([#1628](https://github.com/MustardSeedNetworks/seed/issues/1628)) ([1b8d2cf](https://github.com/MustardSeedNetworks/seed/commit/1b8d2cf5c69833b0152a44b734b41b8aeb73c213))
+* **api:** finish the profiles handler strangle (ADR-0020, WS-A11c) ([#1669](https://github.com/MustardSeedNetworks/seed/issues/1669)) ([c92f82b](https://github.com/MustardSeedNetworks/seed/commit/c92f82b865c1881b4dda210bef3ab07c0f81e657))
+* **api:** route handler license reads through s.licenseManager() (D1 prep) ([#1626](https://github.com/MustardSeedNetworks/seed/issues/1626)) ([54318de](https://github.com/MustardSeedNetworks/seed/commit/54318de5ef736edddf58b1776f736ca05d14f787))
+* **api:** route the config-read/write residuals through use-cases (ADR-0020, WS-A11a) ([#1665](https://github.com/MustardSeedNetworks/seed/issues/1665)) ([50d92e5](https://github.com/MustardSeedNetworks/seed/commit/50d92e5a89cc4ba7ef10db8691edbd3876bcf462))
+* **api:** strangle alert inbox into a use-case (ADR-0020, WS-A8) ([#1662](https://github.com/MustardSeedNetworks/seed/issues/1662)) ([c25d4cf](https://github.com/MustardSeedNetworks/seed/commit/c25d4cf20fe0f1db1dfe8c8e443f42996e5a209d))
+* **api:** strangle config backup/restore into a use-case (ADR-0020, WS-A9) ([#1663](https://github.com/MustardSeedNetworks/seed/issues/1663)) ([5460177](https://github.com/MustardSeedNetworks/seed/commit/54601779883293399a0472a98be3e78463b0f799))
+* **api:** strangle device-discovery settings into a use-case (ADR-0020, WS-A1) ([#1655](https://github.com/MustardSeedNetworks/seed/issues/1655)) ([f39f91e](https://github.com/MustardSeedNetworks/seed/commit/f39f91e45d81fd13f26758f52d0a366edd1e3220))
+* **api:** strangle diagnostic export into a use-case (ADR-0020, WS-A10) ([#1664](https://github.com/MustardSeedNetworks/seed/issues/1664)) ([b1774de](https://github.com/MustardSeedNetworks/seed/commit/b1774de2d1963efa22e21511783cc7d617808ac8))
+* **api:** strangle engine-status into a use-case over the engine registry (ADR-0020) ([#1625](https://github.com/MustardSeedNetworks/seed/issues/1625)) ([1f2c242](https://github.com/MustardSeedNetworks/seed/commit/1f2c242a6af96780696974bf9dd2e212fff5265b))
+* **api:** strangle health-checks settings into a use-case (ADR-0020, WS-A4) ([#1658](https://github.com/MustardSeedNetworks/seed/issues/1658)) ([6967217](https://github.com/MustardSeedNetworks/seed/commit/696721726d007f55b6a596b86e7f2ecfbc581a4e))
+* **api:** strangle identity (users/oauth/tokens) into use-cases over repository ports (C4) ([#1624](https://github.com/MustardSeedNetworks/seed/issues/1624)) ([8c335f8](https://github.com/MustardSeedNetworks/seed/commit/8c335f82a8396e0ed5242f873a8a37abc6d0db58))
+* **api:** strangle main settings into a use-case (ADR-0020, WS-A2) ([#1656](https://github.com/MustardSeedNetworks/seed/issues/1656)) ([c9f16ce](https://github.com/MustardSeedNetworks/seed/commit/c9f16cefacc7415254b49c5c3894e3a0b8ce950e))
+* **api:** strangle polling-targets CRUD into a use-case (ADR-0020, WS-A7) ([#1661](https://github.com/MustardSeedNetworks/seed/issues/1661)) ([3640352](https://github.com/MustardSeedNetworks/seed/commit/364035220a43b59357a5716e12bf514aae3f9a6a))
+* **api:** strangle security settings into a use-case + fix SNMP deadlock (ADR-0020, WS-A3) ([#1657](https://github.com/MustardSeedNetworks/seed/issues/1657)) ([7146550](https://github.com/MustardSeedNetworks/seed/commit/714655090163ec6fe53fd43e9c97cc94ff479929))
+* **api:** strangle the log query into a use-case (ADR-0020, WS-A11b) ([#1668](https://github.com/MustardSeedNetworks/seed/issues/1668)) ([9e22a05](https://github.com/MustardSeedNetworks/seed/commit/9e22a0516eea99a31ed116b895b4824f9f3f7f18))
+* **api:** strangle topology read endpoints into a use-case (ADR-0020, WS-A6) ([#1660](https://github.com/MustardSeedNetworks/seed/issues/1660)) ([b306028](https://github.com/MustardSeedNetworks/seed/commit/b30602829e09df79d561e39fedb0a3dffd7abade))
+* **api:** strangle update handlers into internal/update/lifecycle (C3) ([#1620](https://github.com/MustardSeedNetworks/seed/issues/1620)) ([decba0c](https://github.com/MustardSeedNetworks/seed/commit/decba0c78f65dc2522fcfe6e5148cefe386304fa))
+* **api:** strangle vulnerability-scanner settings into the security use-case (ADR-0020, WS-A5) ([#1659](https://github.com/MustardSeedNetworks/seed/issues/1659)) ([1d0d33e](https://github.com/MustardSeedNetworks/seed/commit/1d0d33edf428950482953cec542b4bb9b7c7299f))
+* **config:** reject plaintext credentials, delete legacy v0/JWT path ([#1623](https://github.com/MustardSeedNetworks/seed/issues/1623)) ([05350bf](https://github.com/MustardSeedNetworks/seed/commit/05350bfbece01b143d7f7fde135fa52249d6bc6e))
+* **health:** delete the dead health_check_results read-path (ADR-0026) ([#1636](https://github.com/MustardSeedNetworks/seed/issues/1636)) ([ded0f2b](https://github.com/MustardSeedNetworks/seed/commit/ded0f2bd43ee077374a9bb5322a4f4413782bf37))
+* **paths:** drop legacy config-name fallback and dead DetectLegacyConfig ([#1609](https://github.com/MustardSeedNetworks/seed/issues/1609)) ([7b0c6f9](https://github.com/MustardSeedNetworks/seed/commit/7b0c6f926416c2dd9ee054497d6ee64785b0c609))
+
+
+### Documentation
+
+* **adr:** ADR-0021 persist anomaly engine in SQL + converge all sources ([#1619](https://github.com/MustardSeedNetworks/seed/issues/1619)) ([d2d367a](https://github.com/MustardSeedNetworks/seed/commit/d2d367a67f0e95302d593ad65e0da8b4c3f7628f))
+* **adr:** design daily rollups for the anomaly store (ADR-0028) ([#1649](https://github.com/MustardSeedNetworks/seed/issues/1649)) ([1150b81](https://github.com/MustardSeedNetworks/seed/commit/1150b8144ff471aa7534648dbf8172c3ba5baea6))
+* **adr:** hygiene pass — honest statuses + two as-built ADRs ([#1622](https://github.com/MustardSeedNetworks/seed/issues/1622)) ([db669f7](https://github.com/MustardSeedNetworks/seed/commit/db669f7615fe7082a8d2b9de875475178d8ee492))
+* **adr:** probe is the active-monitoring anomaly source (ADR-0025) ([#1634](https://github.com/MustardSeedNetworks/seed/issues/1634)) ([58370b8](https://github.com/MustardSeedNetworks/seed/commit/58370b8128df232344cd26beb435f06645160c9e))
+* **adr:** scope migrating health-checks onto probe, then renaming (ADR-0027) ([#1640](https://github.com/MustardSeedNetworks/seed/issues/1640)) ([a7da0da](https://github.com/MustardSeedNetworks/seed/commit/a7da0da7a4522dd7b37e2f18c41a754b3c57026b))
+* **architecture:** add the architecture completion plan (no-shortcuts strangle finish) ([#1654](https://github.com/MustardSeedNetworks/seed/issues/1654)) ([4b189f1](https://github.com/MustardSeedNetworks/seed/commit/4b189f12644392cad33446086d1854d55eed326a))
+
+
+### Miscellaneous
+
+* **ci:** add filename-policy gate for decomposed packages ([#1617](https://github.com/MustardSeedNetworks/seed/issues/1617)) ([cd8642c](https://github.com/MustardSeedNetworks/seed/commit/cd8642ccea29b2324573d43447f2a2a2d8b8772b))
+* **cleanup:** remove dead HTTP-redirector remnants ([#1621](https://github.com/MustardSeedNetworks/seed/issues/1621)) ([1fc1275](https://github.com/MustardSeedNetworks/seed/commit/1fc12751a4c548be59b7f21bc20708f31f95f22b))
+* **deps:** update frontend deps to latest + clear esbuild advisory ([#1666](https://github.com/MustardSeedNetworks/seed/issues/1666)) ([9d669bf](https://github.com/MustardSeedNetworks/seed/commit/9d669bfbc22b448c26986835c8f4e05f29ea2408))
+* **deps:** update Go modules to latest ([#1667](https://github.com/MustardSeedNetworks/seed/issues/1667)) ([2153916](https://github.com/MustardSeedNetworks/seed/commit/21539163bc5ea64f432991a9b2c2b0d3b96f3477))
+
 ## [0.211.0](https://github.com/MustardSeedNetworks/seed/compare/v0.210.0...v0.211.0) (2026-06-09)
 
 
