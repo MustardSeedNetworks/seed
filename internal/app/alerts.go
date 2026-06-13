@@ -29,6 +29,8 @@ type alertRuleStore struct {
 	db func() *database.DB
 }
 
+func (a alertRuleStore) Available() bool { return a.db() != nil }
+
 func toAppRule(r *database.AlertRule) rules.Rule {
 	return rules.Rule{
 		ID:                   r.ID,

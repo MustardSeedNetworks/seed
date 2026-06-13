@@ -46,6 +46,9 @@ type Rule struct {
 // repository, mapping ErrAlertRuleNotFound -> ErrNotFound and the repo's
 // "alert_rules:"-prefixed validation errors -> *ValidationError.
 type Store interface {
+	// Available reports whether the backing persistence is wired; a false result
+	// means the rule subsystem cannot serve any request (the 503 path).
+	Available() bool
 	List(ctx context.Context, enabledOnly bool) ([]Rule, error)
 	Get(ctx context.Context, id int64) (Rule, error)
 	// Create stores r and returns it with the generated ID + timestamps.
@@ -62,6 +65,11 @@ type Service struct {
 // NewService builds the use-case over its Store port.
 func NewService(store Store) *Service {
 	return &Service{store: store}
+}
+
+// Available reports whether the rule subsystem can serve requests.
+func (s *Service) Available() bool {
+	return s.store.Available()
 }
 
 // minThreshold mirrors the pre-strangle max(threshold, 1): a rule fires on the

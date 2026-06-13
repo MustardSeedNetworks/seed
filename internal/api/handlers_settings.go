@@ -94,7 +94,7 @@ func (s *Server) updateSettings(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Emit the fresh token so the client can chain a subsequent conditional write.
-	w.Header().Set("ETag", s.config.SettingsETag())
+	w.Header().Set("ETag", s.settingsManagement.ETag())
 	sendJSONResponse(w, logger, http.StatusOK, map[string]string{"status": "updated"})
 }
 func (s *Server) handleLinkSettings(w http.ResponseWriter, r *http.Request) {
@@ -116,21 +116,10 @@ func (s *Server) handleLinkSettings(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-// getLinkSettings returns current link settings from config.
+// getLinkSettings returns current link settings via the settings use-case.
 func (s *Server) getLinkSettings(w http.ResponseWriter, r *http.Request) {
 	logger := logging.FromContext(r.Context())
-
-	// Read directly from Config (single source of truth)
-	s.config.RLock()
-	settings := s.config.Link
-	s.config.RUnlock()
-
-	// Default to "auto" if not set
-	if settings.Mode == "" {
-		settings.Mode = "auto"
-	}
-
-	sendJSONResponse(w, logger, http.StatusOK, settings)
+	sendJSONResponse(w, logger, http.StatusOK, s.settingsManagement.Link())
 }
 
 // updateLinkSettings updates link settings in config and saves to active profile.
@@ -146,39 +135,24 @@ func (s *Server) updateLinkSettings(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Validate mode value (combined speed/duplex format like "100/full" or "auto")
-	validModes := map[string]bool{
-		"auto": true, "10/half": true, "10/full": true, "100/half": true, "100/full": true,
-		"1000/full": true, "2500/full": true, "5000/full": true, "10000/full": true,
-	}
-	if updates.Mode != "" && !validModes[updates.Mode] {
-		sendErrorResponseWithDetails(
-			w,
-			logger,
-			http.StatusBadRequest,
-			ErrCodeValidation,
-			"Invalid mode value",
-			"",
-		)
+	// Validate + persist via the settings use-case; an invalid mode is a 400.
+	if err := s.settingsManagement.UpdateLink(updates); err != nil {
+		if errors.Is(err, management.ErrValidation) {
+			sendErrorResponseWithDetails(w, logger, http.StatusBadRequest,
+				ErrCodeValidation, "Invalid mode value", "")
+			return
+		}
+		logger.ErrorContext(ctx, "Failed to save link settings", "error", err)
+		sendErrorResponseWithDetails(w, logger, http.StatusInternalServerError,
+			ErrCodeInternal, "Failed to save link settings", "")
 		return
 	}
-
-	// Update Config directly (single source of truth)
-	s.config.Lock()
-	s.config.Link = updates
-	s.config.Unlock()
 
 	// Persist to the active profile (ADR-0016 phase 3; no-op without a db).
 	if err := s.settingsStore.SaveToActiveProfile(ctx); err != nil {
 		logger.ErrorContext(ctx, "Failed to save link settings to profile", "error", err)
-		sendErrorResponseWithDetails(
-			w,
-			logger,
-			http.StatusInternalServerError,
-			ErrCodeInternal,
-			"Failed to save link settings",
-			"",
-		)
+		sendErrorResponseWithDetails(w, logger, http.StatusInternalServerError,
+			ErrCodeInternal, "Failed to save link settings", "")
 		return
 	}
 
@@ -210,16 +184,10 @@ func (s *Server) handleCableTestSettings(w http.ResponseWriter, r *http.Request)
 	}
 }
 
-// getCableTestSettings returns current cable test settings from config.
+// getCableTestSettings returns current cable test settings via the settings use-case.
 func (s *Server) getCableTestSettings(w http.ResponseWriter, r *http.Request) {
 	logger := logging.FromContext(r.Context())
-
-	// Read directly from Config (single source of truth)
-	s.config.RLock()
-	settings := s.config.CableTest
-	s.config.RUnlock()
-
-	sendJSONResponse(w, logger, http.StatusOK, settings)
+	sendJSONResponse(w, logger, http.StatusOK, s.settingsManagement.CableTest())
 }
 
 // updateCableTestSettings updates cable test settings in config and saves to active profile.
@@ -235,22 +203,19 @@ func (s *Server) updateCableTestSettings(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	// Update Config directly (single source of truth)
-	s.config.Lock()
-	s.config.CableTest = updates
-	s.config.Unlock()
+	// Persist via the settings use-case, then to the active profile.
+	if err := s.settingsManagement.UpdateCableTest(updates); err != nil {
+		logger.ErrorContext(ctx, "Failed to save cable test settings", "error", err)
+		sendErrorResponseWithDetails(w, logger, http.StatusInternalServerError,
+			ErrCodeInternal, "Failed to save cable test settings", "")
+		return
+	}
 
 	// Persist to the active profile (ADR-0016 phase 3; no-op without a db).
 	if err := s.settingsStore.SaveToActiveProfile(ctx); err != nil {
 		logger.ErrorContext(ctx, "Failed to save cable test settings to profile", "error", err)
-		sendErrorResponseWithDetails(
-			w,
-			logger,
-			http.StatusInternalServerError,
-			ErrCodeInternal,
-			"Failed to save cable test settings",
-			"",
-		)
+		sendErrorResponseWithDetails(w, logger, http.StatusInternalServerError,
+			ErrCodeInternal, "Failed to save cable test settings", "")
 		return
 	}
 

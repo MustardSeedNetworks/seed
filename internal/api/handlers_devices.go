@@ -133,8 +133,8 @@ func (s *Server) handleDevicesScan(w http.ResponseWriter, r *http.Request) {
 // postScanVulnerabilityCheck runs vulnerability scans after device discovery if auto-scan is enabled.
 // This method extracts business logic from the handler for better separation of concerns.
 func (s *Server) postScanVulnerabilityCheck(logger *slog.Logger) {
-	if s.vulnScanner() == nil || !s.config.Security.VulnerabilityScanning.Enabled ||
-		!s.config.Security.VulnerabilityScanning.AutoScan {
+	vuln := s.securitySettings.Vuln()
+	if s.vulnScanner() == nil || !vuln.Enabled || !vuln.AutoScan {
 		return
 	}
 

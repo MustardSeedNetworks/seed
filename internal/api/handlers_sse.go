@@ -372,7 +372,7 @@ func (s *Server) sendSSEInitialState(w http.ResponseWriter, flusher http.Flusher
 		Type: "initial_state",
 		Payload: map[string]any{
 			"status":     "connected",
-			"interface":  s.config.Interface.Default,
+			"interface":  s.defaultInterface(),
 			"isWireless": isWireless,
 			"cards":      cards,
 		},
