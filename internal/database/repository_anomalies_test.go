@@ -5,6 +5,7 @@ package database_test
 import (
 	"context"
 	"os"
+	"strings"
 	"testing"
 	"time"
 
@@ -38,6 +39,14 @@ func setupAnomalyTest(t *testing.T) (*database.AnomalyRepository, context.Contex
 
 func sampleRecord(id string) anomaly.Record {
 	t0 := time.Date(2026, 6, 11, 12, 0, 0, 0, time.UTC)
+	// Derive the subject from the id's last "|"-segment so distinct fixtures get
+	// distinct census keys (day_bucket, def_key, subject_kind, subject_id). A fixed
+	// subject would collide unrelated records (e.g. "A|bssid|aa:bb" and
+	// "B|bssid|cc:dd") on that key, making the daily census nondeterministic.
+	subject := id
+	if i := strings.LastIndex(id, "|"); i >= 0 {
+		subject = id[i+1:]
+	}
 	return anomaly.Record{
 		ID:     id,
 		Source: anomaly.SourceWiFi,
@@ -45,7 +54,7 @@ func sampleRecord(id string) anomaly.Record {
 			DefKey:         "open-ssid",
 			Category:       anomaly.CategorySecurity,
 			Severity:       anomaly.SeverityWarning,
-			Subject:        anomaly.SubjectRef{Kind: anomaly.SubjectBSSID, ID: "aa:bb"},
+			Subject:        anomaly.SubjectRef{Kind: anomaly.SubjectBSSID, ID: subject},
 			Title:          "Open network",
 			Description:    "No encryption.",
 			Recommendation: "Enable WPA2/WPA3.",
