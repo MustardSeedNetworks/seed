@@ -19,6 +19,8 @@ func newFakeRuleStore() *fakeRuleStore {
 	return &fakeRuleStore{byID: map[int64]rules.Rule{}, nextID: 1}
 }
 
+func (f *fakeRuleStore) Available() bool { return true }
+
 func (f *fakeRuleStore) List(_ context.Context, enabledOnly bool) ([]rules.Rule, error) {
 	out := make([]rules.Rule, 0, len(f.byID))
 	for _, r := range f.byID {

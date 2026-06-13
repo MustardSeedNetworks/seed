@@ -78,7 +78,7 @@ func (s *Server) handleAlertRuleByID(w http.ResponseWriter, r *http.Request) {
 
 func (s *Server) listAlertRules(w http.ResponseWriter, r *http.Request) {
 	logger := logging.FromContext(r.Context())
-	if s.db() == nil {
+	if !s.alertRules.Available() {
 		http.Error(w, "Database not initialized", http.StatusServiceUnavailable)
 		return
 	}
@@ -97,7 +97,7 @@ func (s *Server) listAlertRules(w http.ResponseWriter, r *http.Request) {
 
 func (s *Server) getAlertRule(w http.ResponseWriter, r *http.Request, id int64) {
 	logger := logging.FromContext(r.Context())
-	if s.db() == nil {
+	if !s.alertRules.Available() {
 		http.Error(w, "Database not initialized", http.StatusServiceUnavailable)
 		return
 	}
@@ -116,7 +116,7 @@ func (s *Server) getAlertRule(w http.ResponseWriter, r *http.Request, id int64) 
 
 func (s *Server) createAlertRule(w http.ResponseWriter, r *http.Request) {
 	logger := logging.FromContext(r.Context())
-	if s.db() == nil {
+	if !s.alertRules.Available() {
 		http.Error(w, "Database not initialized", http.StatusServiceUnavailable)
 		return
 	}
@@ -142,7 +142,7 @@ func (s *Server) createAlertRule(w http.ResponseWriter, r *http.Request) {
 
 func (s *Server) updateAlertRule(w http.ResponseWriter, r *http.Request, id int64) {
 	logger := logging.FromContext(r.Context())
-	if s.db() == nil {
+	if !s.alertRules.Available() {
 		http.Error(w, "Database not initialized", http.StatusServiceUnavailable)
 		return
 	}
@@ -168,7 +168,7 @@ func (s *Server) updateAlertRule(w http.ResponseWriter, r *http.Request, id int6
 
 func (s *Server) deleteAlertRule(w http.ResponseWriter, r *http.Request, id int64) {
 	logger := logging.FromContext(r.Context())
-	if s.db() == nil {
+	if !s.alertRules.Available() {
 		http.Error(w, "Database not initialized", http.StatusServiceUnavailable)
 		return
 	}

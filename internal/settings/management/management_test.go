@@ -75,3 +75,43 @@ func TestUpdateInvalidTypeValidation(t *testing.T) {
 		t.Error("invalid update should not have mutated config")
 	}
 }
+
+func TestLinkSettingsDefaultAndUpdate(t *testing.T) {
+	svc := management.NewService(&fakeStore{cfg: config.DefaultConfig()})
+
+	// Unset mode defaults to "auto" on read.
+	if got := svc.Link(); got.Mode != "auto" {
+		t.Errorf("default link mode = %q, want auto", got.Mode)
+	}
+
+	// A valid mode persists.
+	if err := svc.UpdateLink(config.LinkConfig{Mode: "1000/full"}); err != nil {
+		t.Fatalf("UpdateLink valid: %v", err)
+	}
+	if got := svc.Link(); got.Mode != "1000/full" {
+		t.Errorf("link mode = %q, want 1000/full", got.Mode)
+	}
+
+	// An invalid mode is a validation error.
+	if err := svc.UpdateLink(config.LinkConfig{Mode: "bogus"}); !errors.Is(err, management.ErrValidation) {
+		t.Errorf("UpdateLink bogus: want ErrValidation, got %v", err)
+	}
+}
+
+func TestCableTestSettingsRoundTrip(t *testing.T) {
+	svc := management.NewService(&fakeStore{cfg: config.DefaultConfig()})
+	in := config.CableTestConfig{Enabled: true}
+	if err := svc.UpdateCableTest(in); err != nil {
+		t.Fatalf("UpdateCableTest: %v", err)
+	}
+	if got := svc.CableTest(); !got.Enabled {
+		t.Errorf("cable test round-trip mismatch: %+v", got)
+	}
+}
+
+func TestETagNonEmpty(t *testing.T) {
+	svc := management.NewService(&fakeStore{cfg: config.DefaultConfig()})
+	if svc.ETag() == "" {
+		t.Error("ETag should be non-empty")
+	}
+}
