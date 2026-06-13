@@ -488,7 +488,7 @@ func (s *Server) initProbeEngine(db *database.DB) {
 	sched := scheduler.New(probeSchedulerTick)
 
 	probeEngine := probe.NewEngine(logging.GetLogger()).
-		WithStorage(db.Probes(), sched)
+		WithStorage(app.NewProbeStorage(db.Probes()), sched)
 
 	// Register V1.0 baseline checkers plus the health-check vertical
 	// checkers absorbed onto the probe engine (ADR-0027 P1).
