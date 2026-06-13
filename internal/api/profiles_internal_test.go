@@ -9,6 +9,7 @@ import (
 	"testing"
 
 	"github.com/MustardSeedNetworks/seed/internal/app"
+	"github.com/MustardSeedNetworks/seed/internal/config"
 	"github.com/MustardSeedNetworks/seed/internal/database"
 	"github.com/MustardSeedNetworks/seed/internal/profiles/catalog"
 )
@@ -25,7 +26,11 @@ func newProfilesTestServer(t *testing.T) (*Server, *database.DB) {
 
 	s := &Server{}
 	s.dbConn = db
-	s.profiles = app.NewProfiles(s.db)
+	// A real config + path so activating a profile (which applies its saved config
+	// to the running config and persists) has somewhere to write.
+	s.config = config.DefaultConfig()
+	s.configPath = filepath.Join(t.TempDir(), "config.yaml")
+	s.profiles = app.NewProfiles(s.db, s.config, s.configPath)
 	// Wire the identity use-cases (ADR-0024) so writeGated→requireRole→callerRole
 	// resolves through the repository port instead of nil-panicking.
 	s.initIdentityUseCases()

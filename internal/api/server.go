@@ -393,7 +393,7 @@ func NewServer(
 
 	// Wire the profiles catalog use-case (ADR-0020). The composition root builds
 	// the adapter; api passes its lazy db accessor.
-	s.profiles = app.NewProfiles(s.db)
+	s.profiles = app.NewProfiles(s.db, s.config, s.configPath)
 
 	// Wire the network IP-config + MTU use-case (ADR-0020). The composition root
 	// builds the adapters; api passes its lazy manager accessor + config.

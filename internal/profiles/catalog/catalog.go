@@ -37,6 +37,11 @@ var (
 	ErrNoActiveOrDefault = errors.New("no active or default profile")
 	ErrDefaultLookup     = errors.New("failed to read the default profile")
 	ErrActiveNotFound    = errors.New("active profile missing and no default")
+
+	// ErrConfigApply wraps a fatal failure to persist the running config after an
+	// activated profile's settings were applied. The transport layer maps it to a
+	// 500 "failed to save" — the active-id is already set, only the save failed.
+	ErrConfigApply = errors.New("failed to persist config after profile activation")
 )
 
 // Profile is the use-case profile model. The adapter maps it to/from
@@ -92,6 +97,9 @@ type ImportResult struct {
 // Settings repositories, mapping their ErrProfileNotFound/ErrProfileNameExists
 // to ErrNotFound/ErrNameExists.
 type Store interface {
+	// Available reports whether the backing persistence is wired. A false result
+	// means the profiles subsystem cannot serve any request (the 503 path).
+	Available() bool
 	List(ctx context.Context) ([]Profile, error)
 	Get(ctx context.Context, id string) (Profile, error)
 	// GetByName returns ok=false (and a nil error) when no profile has the name.
@@ -108,14 +116,30 @@ type Store interface {
 	SetActiveID(ctx context.Context, id string) error
 }
 
+// LiveConfig applies an activated profile's saved settings to the running config
+// and persists them. A nil-backed applier is a no-op (no live config wired, e.g.
+// tests). Apply returns ErrConfigApply only for a fatal persistence failure; a
+// profile whose JSON cannot be parsed is logged and skipped by the adapter
+// (best-effort), so a malformed saved config never fails activation.
+type LiveConfig interface {
+	Apply(ctx context.Context, profileJSON string) error
+}
+
 // Service is the profiles use-case.
 type Service struct {
 	store Store
+	live  LiveConfig
 }
 
-// NewService builds the use-case over its Store port.
-func NewService(store Store) *Service {
-	return &Service{store: store}
+// NewService builds the use-case over its Store port and an optional LiveConfig
+// applier (nil = activation does not touch the running config).
+func NewService(store Store, live LiveConfig) *Service {
+	return &Service{store: store, live: live}
+}
+
+// Available reports whether the profiles subsystem can serve requests.
+func (s *Service) Available() bool {
+	return s.store.Available()
 }
 
 // List returns all profiles.
@@ -244,6 +268,16 @@ func (s *Service) SetActiveProfile(ctx context.Context, id string) (Profile, err
 	}
 	if setErr := s.store.SetActiveID(ctx, id); setErr != nil {
 		return Profile{}, setErr
+	}
+
+	// Activating a profile applies its saved settings to the running config. The
+	// applier is best-effort on a malformed saved config (logged and skipped) and
+	// returns ErrConfigApply only when the post-apply persist fails — in which case
+	// the profile is already active but the config save did not land.
+	if p.ConfigJSON != "" && s.live != nil {
+		if applyErr := s.live.Apply(ctx, p.ConfigJSON); applyErr != nil {
+			return p, applyErr
+		}
 	}
 	return p, nil
 }

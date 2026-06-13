@@ -67,7 +67,7 @@ func (s *Server) handleProfiles(w http.ResponseWriter, r *http.Request) {
 	localizer := i18n.FromRequest(r)
 
 	// Check if database is available
-	if s.db() == nil {
+	if !s.profiles.Available() {
 		sendErrorResponseWithDetails(w, logger, http.StatusServiceUnavailable,
 			ErrCodeServiceUnavail, localizer.T("errors.profile.dbNotAvailable"), "") // fixes #694
 		return
@@ -305,7 +305,7 @@ func (s *Server) handleActiveProfile(w http.ResponseWriter, r *http.Request) {
 	logger := logging.FromContext(r.Context())
 	localizer := i18n.FromRequest(r)
 
-	if s.db() == nil {
+	if !s.profiles.Available() {
 		sendErrorResponseWithDetails(w, logger, http.StatusServiceUnavailable,
 			ErrCodeServiceUnavail, localizer.T("errors.profile.dbNotAvailable"), "") // fixes #694
 		return
@@ -371,6 +371,10 @@ func (s *Server) handleSetActiveProfile(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
+	// SetActiveProfile sets the active profile and (via the use-case's LiveConfig
+	// applier) applies its saved settings to the running config, persisting them.
+	// A malformed saved config is skipped best-effort inside the use-case; only a
+	// failed persist surfaces here as ErrConfigApply (#781, #782).
 	profile, err := s.profiles.SetActiveProfile(r.Context(), req.ProfileID)
 	if err != nil {
 		switch {
@@ -380,32 +384,15 @@ func (s *Server) handleSetActiveProfile(w http.ResponseWriter, r *http.Request) 
 		case errors.Is(err, catalog.ErrNotFound):
 			sendErrorResponseWithDetails(w, logger, http.StatusNotFound,
 				ErrCodeNotFound, localizer.T("errors.profile.notFound"), "") // fixes #694
+		case errors.Is(err, catalog.ErrConfigApply):
+			logger.ErrorContext(r.Context(), "Failed to save config after profile switch", "error", err)
+			sendErrorResponseWithDetails(w, logger, http.StatusInternalServerError,
+				ErrCodeInternal, localizer.T("errors.config.failedToSave"), "")
 		default:
 			sendErrorResponseWithDetails(w, logger, http.StatusInternalServerError,
 				ErrCodeInternal, localizer.T("errors.profile.setActiveFailed"), "") // fixes #694, #H7
 		}
 		return
-	}
-
-	// Apply profile settings to the active config (fixes #781).
-	// Uses Config.ApplyProfileJSON() - single source of truth.
-	if profile.ConfigJSON != "" {
-		if applyErr := s.config.ApplyProfileJSON(profile.ConfigJSON); applyErr != nil {
-			logger.WarnContext(r.Context(),
-				"Failed to parse profile settings, using defaults",
-				"error", applyErr, "profile_id", profile.ID,
-			)
-		} else if saveErr := s.config.Save(s.configPath); saveErr != nil {
-			// fixes #782 - return error instead of silent warning
-			logger.ErrorContext(r.Context(), "Failed to save config after profile switch", "error", saveErr)
-			sendErrorResponseWithDetails(w, logger, http.StatusInternalServerError,
-				ErrCodeInternal, localizer.T("errors.config.failedToSave"), saveErr.Error())
-			return
-		} else {
-			logger.InfoContext(r.Context(),
-				"Applied profile settings", "profile_id", profile.ID, "profile_name", profile.Name,
-			)
-		}
 	}
 
 	// Broadcast profile change via SSE
@@ -428,7 +415,7 @@ func (s *Server) handleDuplicateProfile(w http.ResponseWriter, r *http.Request) 
 	logger := logging.FromContext(r.Context())
 	localizer := i18n.FromRequest(r)
 
-	if s.db() == nil {
+	if !s.profiles.Available() {
 		sendErrorResponseWithDetails(w, logger, http.StatusServiceUnavailable,
 			ErrCodeServiceUnavail, localizer.T("errors.profile.dbNotAvailable"), "") // fixes #694
 		return
@@ -486,7 +473,7 @@ func (s *Server) handleImportProfiles(w http.ResponseWriter, r *http.Request) {
 	logger := logging.FromContext(r.Context())
 	localizer := i18n.FromRequest(r)
 
-	if s.db() == nil {
+	if !s.profiles.Available() {
 		sendErrorResponseWithDetails(w, logger, http.StatusServiceUnavailable,
 			ErrCodeServiceUnavail, localizer.T("errors.profile.dbNotAvailable"), "") // fixes #694
 		return
@@ -527,7 +514,7 @@ func (s *Server) handleExportProfiles(w http.ResponseWriter, r *http.Request) {
 	logger := logging.FromContext(r.Context())
 	localizer := i18n.FromRequest(r)
 
-	if s.db() == nil {
+	if !s.profiles.Available() {
 		sendErrorResponseWithDetails(w, logger, http.StatusServiceUnavailable,
 			ErrCodeServiceUnavail, localizer.T("errors.profile.dbNotAvailable"), "") // fixes #694
 		return
@@ -568,7 +555,7 @@ func (s *Server) handleExportProfiles(w http.ResponseWriter, r *http.Request) {
 func (s *Server) enforceMultiClientGate(w http.ResponseWriter, r *http.Request) bool {
 	logger := logging.FromContext(r.Context())
 
-	if s.db() == nil {
+	if !s.profiles.Available() {
 		// No DB → no profile count to compare; fall through. The downstream
 		// handler returns a service-unavailable error.
 		return true

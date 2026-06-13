@@ -10,18 +10,23 @@ package app
 import (
 	"context"
 	"errors"
+	"fmt"
 	"strconv"
 
+	"github.com/MustardSeedNetworks/seed/internal/config"
 	"github.com/MustardSeedNetworks/seed/internal/database"
+	"github.com/MustardSeedNetworks/seed/internal/logging"
 	"github.com/MustardSeedNetworks/seed/internal/profiles/catalog"
 )
 
-// profilesStore implements catalog.Store over the database repositories.
-// The database is resolved lazily; callers (handlers) gate on s.db() != nil
-// before invoking the use-case, so a nil db here is not expected.
+// profilesStore implements catalog.Store over the database repositories. The
+// database is resolved lazily; Available reports whether it is wired so the
+// use-case can degrade to the service-unavailable path.
 type profilesStore struct {
 	db func() *database.DB
 }
+
+func (s profilesStore) Available() bool { return s.db() != nil }
 
 // mapProfileErr translates database sentinels to use-case sentinels.
 func mapProfileErr(err error) error {
@@ -142,10 +147,33 @@ func (s profilesStore) SetActiveID(ctx context.Context, id string) error {
 	return s.db().Settings().Set(ctx, database.SettingKeyActiveProfile, id)
 }
 
+// profilesLiveConfig implements catalog.LiveConfig over the live config: it
+// applies an activated profile's saved settings and persists them. A malformed
+// saved config is logged and skipped (best-effort, never fatal); only a failed
+// persist is returned, wrapped as catalog.ErrConfigApply.
+type profilesLiveConfig struct {
+	cfg  *config.Config
+	path string
+}
+
+func (a profilesLiveConfig) Apply(ctx context.Context, profileJSON string) error {
+	if err := a.cfg.ApplyProfileJSON(profileJSON); err != nil {
+		logging.FromContext(ctx).WarnContext(ctx,
+			"profile activate: failed to apply saved config, keeping current", "error", err)
+		return nil
+	}
+	if err := a.cfg.Save(a.path); err != nil {
+		return fmt.Errorf("%w: %w", catalog.ErrConfigApply, err)
+	}
+	return nil
+}
+
 // NewProfiles builds the profiles catalog use-case (ADR-0020) over the lazy db
-// accessor, assembling the catalog.Store adapter over the database Profiles +
-// Settings repositories. The database is resolved through db on each call so the
-// api test harness's later-set DB is honored; handlers gate on db() != nil first.
-func NewProfiles(db func() *database.DB) *catalog.Service {
-	return catalog.NewService(profilesStore{db: db})
+// accessor and the live config. The catalog.Store adapter spans the database
+// Profiles + Settings repositories; the catalog.LiveConfig adapter applies an
+// activated profile's settings to cfg and persists to path. The database is
+// resolved through db on each call so the api test harness's later-set DB is
+// honored; the use-case reports Available()==false when no DB is wired.
+func NewProfiles(db func() *database.DB, cfg *config.Config, path string) *catalog.Service {
+	return catalog.NewService(profilesStore{db: db}, profilesLiveConfig{cfg: cfg, path: path})
 }
