@@ -98,6 +98,21 @@ The 7 bypass packages define consumer-side repo ports + receive concretes from
   B6 `polling/snmp` · B7 `alerts/pipeline`.
 - Each PR adds a **depguard rule** (RED-proven) banning `internal/database` in that
   package, so it can't regress.
+- **Status (2026-06-14): B1–B2 + B4–B7 DONE** (probe #1672, topology #1673,
+  listener/sink + alerts #1676, polling #1675, retention #1677, health #1678 — each
+  with its RED-proven `*-no-persistence` depguard rule).
+- **B3 `identity` — CLOSED as a documented exception, NOT a relocation.** It is the
+  one intentional exception to this workstream. ADR-0024 (Accepted 2026-06-10)
+  deliberately kept the identity repository ports typed on the existing
+  `*database.User` / `database.APITokenRecord` / `database.SSOUserInput` rows
+  (plus the `ErrUser*`/`ErrLastAdmin` sentinels): "thin CRUD stays thin — inventing
+  a DTO here is churn without a security or clarity gain" on the codebase's most
+  security-sensitive store. The repository-port win (no raw store handle in handler
+  bodies) already landed in #1624; relocating the row types would reverse a reasoned
+  ADR for no gain. So `internal/identity` keeps its `internal/database` import by
+  design and gets **no** `identity-no-persistence` deny rule — the exception is
+  recorded as a comment in `.golangci.yml` and in ADR-0024 §Consequences. This makes
+  WS-B complete: every domain package has a purity rule **or** a documented exception.
 
 ### WS-C — Domain purity (net/http) + depguard coverage
 - C1 Move `iperf/installer.go` net/http into an adapter (composition root or `internal/app`).

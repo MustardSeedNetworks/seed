@@ -115,6 +115,18 @@ prefix (`handlers_users.go` → `users.go`, `handlers_oauth.go` → `oauth.go`,
   OAuth package is thin by design (one method) — accepted as honest capability
   segregation, not over-packaging, because it backs an independent route tree with
   upsert-by-external-id semantics distinct from CRUD.
+- **Relationship to WS-B (repository-port discipline, 2026-06-12).** WS-B relocates
+  each domain package's row types into the package so it stops importing
+  `internal/database`. **This ADR takes precedence for identity:** the ports here
+  intentionally return `*database.User` / `database.APITokenRecord` /
+  `database.SSOUserInput` (and pass the `ErrUser*`/`ErrLastAdmin` sentinels through),
+  so `internal/identity/{users,oauth,tokens}` keep their `internal/database` import
+  **by design** — the "thin CRUD stays thin" decision above stands. Identity is
+  therefore the **one documented exception** to WS-B: it gets no
+  `identity-no-persistence` depguard rule (the exemption is recorded as a comment in
+  `.golangci.yml`, next to the other WS-B rules). Should a future change give the
+  user/token store domain-meaningful behavior beyond thin CRUD, revisit this — the
+  exception is scoped to the current thin-CRUD shape, not a permanent carve-out.
 
 ## Implementation phasing
 
