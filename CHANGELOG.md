@@ -5,6 +5,23 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.212.1](https://github.com/MustardSeedNetworks/seed/compare/v0.212.0...v0.212.1) (2026-06-14)
+
+
+### Code Refactoring
+
+* **alerts:** relocate Alert/Rule/ListenerEvent rows to domain pkgs, make persistence-free (WS-B) ([#1676](https://github.com/MustardSeedNetworks/seed/issues/1676)) ([0323857](https://github.com/MustardSeedNetworks/seed/commit/0323857e9d56274430e766e76e3790415ed93b4a))
+* **health:** make health surface persistence-free (WS-B) ([#1678](https://github.com/MustardSeedNetworks/seed/issues/1678)) ([3215b97](https://github.com/MustardSeedNetworks/seed/commit/3215b97f13640d680083445865add9d5b27fcd16))
+* **polling:** relocate PollingTarget to domain pkg + orchestrator ports, make persistence-free (WS-B) ([#1675](https://github.com/MustardSeedNetworks/seed/issues/1675)) ([74c4162](https://github.com/MustardSeedNetworks/seed/commit/74c4162e637d459ad2be551b13e49e0489796b2c))
+* **probe:** narrow persistence port to domain types (WS-B1) ([#1672](https://github.com/MustardSeedNetworks/seed/issues/1672)) ([e07d928](https://github.com/MustardSeedNetworks/seed/commit/e07d9285c75763bdd12bc59b3c59f10a06b6a4bb))
+* **retention:** relocate rollup SQL adapters to internal/database (WS-B5) ([#1677](https://github.com/MustardSeedNetworks/seed/issues/1677)) ([7370c51](https://github.com/MustardSeedNetworks/seed/commit/7370c515dfd01046fd9c666a4a9a2c73c1edca34))
+* **topology:** relocate row types to domain pkgs, make persistence-free (WS-B) ([#1673](https://github.com/MustardSeedNetworks/seed/issues/1673)) ([e768fcc](https://github.com/MustardSeedNetworks/seed/commit/e768fcc7b884fd387b87faf46a799ca4740f7256))
+
+
+### Documentation
+
+* **ws-b:** close B3 — identity is the documented ADR-0024 exception ([#1679](https://github.com/MustardSeedNetworks/seed/issues/1679)) ([2bd9ab6](https://github.com/MustardSeedNetworks/seed/commit/2bd9ab6ccde0436c13ec38c172e5f3525723cb9f))
+
 ## [0.212.0](https://github.com/MustardSeedNetworks/seed/compare/v0.211.0...v0.212.0) (2026-06-13)
 
 
