@@ -9,6 +9,7 @@ import (
 	"strconv"
 	"testing"
 
+	"github.com/MustardSeedNetworks/seed/internal/alerts"
 	"github.com/MustardSeedNetworks/seed/internal/app"
 	"github.com/MustardSeedNetworks/seed/internal/database"
 )
@@ -22,15 +23,15 @@ func newAlertRulesTestServer(t *testing.T) *Server {
 	return s
 }
 
-func seedAlertRule(t *testing.T, db *database.DB, name string, enabled bool) *database.AlertRule {
+func seedAlertRule(t *testing.T, db *database.DB, name string, enabled bool) *alerts.Rule {
 	t.Helper()
-	rule := &database.AlertRule{
+	rule := &alerts.Rule{
 		Name:          name,
 		Enabled:       enabled,
 		MatchKind:     "syslog-udp",
 		MatchSeverity: "error",
-		AlertType:     database.AlertTypeSystem,
-		AlertSeverity: database.AlertSeverityError,
+		AlertType:     alerts.TypeSystem,
+		AlertSeverity: alerts.SeverityError,
 		AlertTitle:    "Test rule",
 		AlertMessage:  "Triggered by test seed",
 	}

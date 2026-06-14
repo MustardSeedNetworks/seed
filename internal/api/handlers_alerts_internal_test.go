@@ -9,6 +9,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/MustardSeedNetworks/seed/internal/alerts"
 	"github.com/MustardSeedNetworks/seed/internal/app"
 	"github.com/MustardSeedNetworks/seed/internal/database"
 )
@@ -28,8 +29,8 @@ func newAlertsTestServer(t *testing.T) *Server {
 // generated ID.
 func seedAlert(t *testing.T, db *database.DB, severity string) int64 {
 	t.Helper()
-	a := &database.Alert{
-		Type:     database.AlertTypeConnectivity,
+	a := &alerts.Alert{
+		Type:     alerts.TypeConnectivity,
 		Severity: severity,
 		Title:    "test alert",
 		Message:  "for testing",
@@ -43,8 +44,8 @@ func seedAlert(t *testing.T, db *database.DB, severity string) int64 {
 
 func TestHandleAlerts_ReturnsList(t *testing.T) {
 	s := newAlertsTestServer(t)
-	seedAlert(t, s.db(), database.AlertSeverityWarning)
-	seedAlert(t, s.db(), database.AlertSeverityError)
+	seedAlert(t, s.db(), alerts.SeverityWarning)
+	seedAlert(t, s.db(), alerts.SeverityError)
 
 	req := httptest.NewRequest(http.MethodGet, APIVersionPrefix+"/alerts", http.NoBody)
 	w := httptest.NewRecorder()
@@ -66,8 +67,8 @@ func TestHandleAlerts_ReturnsList(t *testing.T) {
 
 func TestHandleAlerts_SeverityFilter(t *testing.T) {
 	s := newAlertsTestServer(t)
-	seedAlert(t, s.db(), database.AlertSeverityWarning)
-	seedAlert(t, s.db(), database.AlertSeverityError)
+	seedAlert(t, s.db(), alerts.SeverityWarning)
+	seedAlert(t, s.db(), alerts.SeverityError)
 
 	req := httptest.NewRequest(http.MethodGet, APIVersionPrefix+"/alerts?severity=error", http.NoBody)
 	w := httptest.NewRecorder()
@@ -96,7 +97,7 @@ func TestHandleAlerts_InvalidSinceReturns400(t *testing.T) {
 
 func TestHandleAlertAction_Acknowledge(t *testing.T) {
 	s := newAlertsTestServer(t)
-	id := seedAlert(t, s.db(), database.AlertSeverityWarning)
+	id := seedAlert(t, s.db(), alerts.SeverityWarning)
 
 	url := APIVersionPrefix + "/alerts/" + strconv.FormatInt(id, 10) + "/acknowledge"
 	req := httptest.NewRequest(http.MethodPost, url, http.NoBody)
@@ -122,7 +123,7 @@ func TestHandleAlertAction_Acknowledge(t *testing.T) {
 
 func TestHandleAlertAction_Resolve(t *testing.T) {
 	s := newAlertsTestServer(t)
-	id := seedAlert(t, s.db(), database.AlertSeverityWarning)
+	id := seedAlert(t, s.db(), alerts.SeverityWarning)
 
 	url := APIVersionPrefix + "/alerts/" + strconv.FormatInt(id, 10) + "/resolve"
 	req := httptest.NewRequest(http.MethodPost, url, http.NoBody)
@@ -160,7 +161,7 @@ func TestHandleAlertAction_BadPathReturns400(t *testing.T) {
 
 func TestHandleAlertAction_UnknownActionReturns400(t *testing.T) {
 	s := newAlertsTestServer(t)
-	id := seedAlert(t, s.db(), database.AlertSeverityWarning)
+	id := seedAlert(t, s.db(), alerts.SeverityWarning)
 	url := APIVersionPrefix + "/alerts/" + strconv.FormatInt(id, 10) + "/explode"
 	req := httptest.NewRequest(http.MethodPost, url, http.NoBody)
 	w := httptest.NewRecorder()
@@ -173,7 +174,7 @@ func TestHandleAlertAction_UnknownActionReturns400(t *testing.T) {
 func TestHandleAlerts_PaginationLimitClamped(t *testing.T) {
 	s := newAlertsTestServer(t)
 	for range 5 {
-		seedAlert(t, s.db(), database.AlertSeverityInfo)
+		seedAlert(t, s.db(), alerts.SeverityInfo)
 	}
 	req := httptest.NewRequest(http.MethodGet, APIVersionPrefix+"/alerts?limit=2", http.NoBody)
 	w := httptest.NewRecorder()
@@ -201,7 +202,7 @@ func TestUsernameFromRequest_FallsBackToSystem(t *testing.T) {
 // "0001-01-01T00:00:00Z" instead of "".
 func TestSeedAlert_HasNonZeroCreatedAt(t *testing.T) {
 	s := newAlertsTestServer(t)
-	id := seedAlert(t, s.db(), database.AlertSeverityWarning)
+	id := seedAlert(t, s.db(), alerts.SeverityWarning)
 	alert, _ := s.db().Alerts().Get(context.Background(), id)
 	if alert.CreatedAt.IsZero() {
 		t.Error("CreatedAt should be auto-populated by repo")

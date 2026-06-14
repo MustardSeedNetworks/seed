@@ -30,7 +30,8 @@ import (
 	"text/template"
 	"time"
 
-	"github.com/MustardSeedNetworks/seed/internal/database"
+	"github.com/MustardSeedNetworks/seed/internal/alerts"
+	"github.com/MustardSeedNetworks/seed/internal/listener"
 )
 
 // ListenerEventContext is the data passed to AlertTitle / AlertMessage
@@ -58,7 +59,7 @@ type ListenerEventContext struct {
 // runtime Rule. Disabled rows are dropped. Returns an empty slice
 // when no enabled rows are present so callers can decide to fall
 // back to DefaultListenerRules.
-func CompileRulesFromDB(rows []*database.AlertRule) []Rule {
+func CompileRulesFromDB(rows []*alerts.Rule) []Rule {
 	out := make([]Rule, 0, len(rows))
 	for _, row := range rows {
 		if row == nil || !row.Enabled {
@@ -69,7 +70,7 @@ func CompileRulesFromDB(rows []*database.AlertRule) []Rule {
 	return out
 }
 
-func compileOne(row *database.AlertRule) Rule {
+func compileOne(row *alerts.Rule) Rule {
 	matchKind := row.MatchKind
 	matchSev := row.MatchSeverity
 	matchSubstring := row.MatchPayloadContains
@@ -95,7 +96,7 @@ func compileOne(row *database.AlertRule) Rule {
 		Threshold: threshold,
 		Window:    window,
 		counter:   counter,
-		Match: func(evt *database.ListenerEvent) bool {
+		Match: func(evt *listener.EventRecord) bool {
 			if matchKind != "" && evt.Kind != matchKind {
 				return false
 			}
@@ -107,9 +108,9 @@ func compileOne(row *database.AlertRule) Rule {
 			}
 			return true
 		},
-		Build: func(evt *database.ListenerEvent) *database.Alert {
+		Build: func(evt *listener.EventRecord) *alerts.Alert {
 			ctx := buildEventContext(evt, ruleName)
-			return &database.Alert{
+			return &alerts.Alert{
 				Type:     alertType,
 				Severity: alertSeverity,
 				Title:    titleRenderer(ctx),
@@ -153,7 +154,7 @@ func compileTemplate(s string) templateRenderer {
 // visible struct. Payload JSON is best-effort decoded into a map
 // so templates can reach inside it via .Payload.<field>; a bad
 // payload renders as an empty map.
-func buildEventContext(evt *database.ListenerEvent, ruleName string) ListenerEventContext {
+func buildEventContext(evt *listener.EventRecord, ruleName string) ListenerEventContext {
 	payload := map[string]any{}
 	if evt.PayloadJSON != "" {
 		_ = json.Unmarshal([]byte(evt.PayloadJSON), &payload)
@@ -172,5 +173,5 @@ func buildEventContext(evt *database.ListenerEvent, ruleName string) ListenerEve
 // from the alert_rules repo. Tests inject a fake. Implemented by
 // *database.AlertRulesRepository.
 type alertRulesReader interface {
-	List(ctx context.Context, enabledOnly bool) ([]*database.AlertRule, error)
+	List(ctx context.Context, enabledOnly bool) ([]*alerts.Rule, error)
 }

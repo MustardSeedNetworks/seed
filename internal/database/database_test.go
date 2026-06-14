@@ -11,6 +11,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 
+	alertmodel "github.com/MustardSeedNetworks/seed/internal/alerts"
 	"github.com/MustardSeedNetworks/seed/internal/database"
 )
 
@@ -815,9 +816,9 @@ func TestAlertRepository(t *testing.T) {
 	repo := db.Alerts()
 
 	// Create
-	alert := &database.Alert{
-		Type:     database.AlertTypeSecurity,
-		Severity: database.AlertSeverityWarning,
+	alert := &alertmodel.Alert{
+		Type:     alertmodel.TypeSecurity,
+		Severity: alertmodel.SeverityWarning,
 		Title:    "Test Alert",
 		Message:  "This is a test alert",
 		Source:   "test",
@@ -843,7 +844,7 @@ func TestAlertRepository(t *testing.T) {
 	}
 
 	// List
-	alerts, err := repo.List(ctx, database.AlertListOptions{})
+	alerts, err := repo.List(ctx, alertmodel.ListOptions{})
 	if err != nil {
 		t.Fatalf("failed to list alerts: %v", err)
 	}
@@ -877,7 +878,7 @@ func TestAlertRepository(t *testing.T) {
 	}
 
 	// Count
-	count, err := repo.Count(ctx, database.AlertListOptions{})
+	count, err := repo.Count(ctx, alertmodel.ListOptions{})
 	if err != nil {
 		t.Fatalf("failed to count: %v", err)
 	}
@@ -1301,7 +1302,7 @@ func TestAlertRepositoryExtended(t *testing.T) {
 	repo := db.Alerts()
 
 	// Create test alerts
-	alerts := []*database.Alert{
+	alerts := []*alertmodel.Alert{
 		{Title: "Alert 1", Severity: "critical", Source: "test"},
 		{Title: "Alert 2", Severity: "warning", Source: "test"},
 		{Title: "Alert 3", Severity: "info", Source: "test"},
@@ -1313,7 +1314,7 @@ func TestAlertRepositoryExtended(t *testing.T) {
 	}
 
 	t.Run("AcknowledgeAll", func(t *testing.T) {
-		count, err := repo.AcknowledgeAll(ctx, database.AlertListOptions{}, "testuser")
+		count, err := repo.AcknowledgeAll(ctx, alertmodel.ListOptions{}, "testuser")
 		require.NoError(t, err)
 		if count != 3 {
 			t.Errorf("expected 3 acknowledged, got %d", count)
@@ -1324,7 +1325,7 @@ func TestAlertRepositoryExtended(t *testing.T) {
 		// Create one more unacknowledged
 		err := repo.Create(
 			ctx,
-			&database.Alert{Title: "New Alert", Severity: "info", Source: "test"},
+			&alertmodel.Alert{Title: "New Alert", Severity: "info", Source: "test"},
 		)
 		require.NoError(t, err)
 
@@ -1698,7 +1699,7 @@ func TestAlertListWithFilters(t *testing.T) {
 	repo := db.Alerts()
 
 	// Create alerts with different severities and sources
-	alerts := []*database.Alert{
+	alerts := []*alertmodel.Alert{
 		{Title: "Critical Alert", Severity: "critical", Source: "system"},
 		{Title: "Warning Alert", Severity: "warning", Source: "network"},
 		{Title: "Info Alert", Severity: "info", Source: "system"},
@@ -1709,7 +1710,7 @@ func TestAlertListWithFilters(t *testing.T) {
 	}
 
 	t.Run("filter by severity", func(t *testing.T) {
-		list, err := repo.List(ctx, database.AlertListOptions{Severity: "critical"})
+		list, err := repo.List(ctx, alertmodel.ListOptions{Severity: "critical"})
 		require.NoError(t, err)
 		if len(list) != 1 {
 			t.Errorf("expected 1 critical alert, got %d", len(list))
@@ -1717,7 +1718,7 @@ func TestAlertListWithFilters(t *testing.T) {
 	})
 
 	t.Run("filter unresolved only", func(t *testing.T) {
-		list, err := repo.List(ctx, database.AlertListOptions{UnresolvedOnly: true})
+		list, err := repo.List(ctx, alertmodel.ListOptions{UnresolvedOnly: true})
 		require.NoError(t, err)
 		if len(list) != 3 {
 			t.Errorf("expected 3 unresolved alerts, got %d", len(list))
@@ -1725,7 +1726,7 @@ func TestAlertListWithFilters(t *testing.T) {
 	})
 
 	t.Run("with pagination", func(t *testing.T) {
-		list, err := repo.List(ctx, database.AlertListOptions{Limit: 1, Offset: 1})
+		list, err := repo.List(ctx, alertmodel.ListOptions{Limit: 1, Offset: 1})
 		require.NoError(t, err)
 		if len(list) != 1 {
 			t.Errorf("expected 1 alert with pagination, got %d", len(list))
@@ -1799,7 +1800,7 @@ func TestAcknowledgeAndResolve(t *testing.T) {
 	repo := db.Alerts()
 
 	// Create an alert
-	alert := &database.Alert{Title: "Test Alert", Severity: "warning", Source: "test"}
+	alert := &alertmodel.Alert{Title: "Test Alert", Severity: "warning", Source: "test"}
 	createErr := repo.Create(ctx, alert)
 	require.NoError(t, createErr)
 

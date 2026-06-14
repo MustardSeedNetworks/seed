@@ -6,48 +6,21 @@ import (
 	"errors"
 	"fmt"
 	"time"
-)
 
-// AlertRule is one row of alert_rules. Match fields default to ""
-// which the listener pipeline treats as "any value matches".
-//
-// Time-windowed rules (#1379): WindowSeconds > 0 + ThresholdCount > 1
-// means "fire only after N matching events within W seconds." The
-// default (0/1) preserves the pre-#1379 fire-on-first-match
-// behavior. Validation rejects ThresholdCount > 1 with WindowSeconds
-// = 0 because a threshold without a window has no time bound and
-// would silently never reset.
-type AlertRule struct {
-	ID                   int64
-	Name                 string
-	Enabled              bool
-	MatchKind            string
-	MatchSeverity        string
-	MatchPayloadContains string
-	AlertType            string
-	AlertSeverity        string
-	AlertTitle           string
-	AlertMessage         string
-	WindowSeconds        int
-	ThresholdCount       int
-	CreatedAt            time.Time
-	UpdatedAt            time.Time
-}
+	"github.com/MustardSeedNetworks/seed/internal/alerts"
+)
 
 // AlertRulesRepository owns CRUD over alert_rules.
 type AlertRulesRepository struct {
 	db *DB
 }
 
-// ErrAlertRuleNotFound is returned when a rule lookup misses.
-var ErrAlertRuleNotFound = errors.New("alert rule not found")
-
 // validateRule enforces invariants both Create and Update need.
 // Time-window validation (#1379): threshold > 1 requires a window;
 // negative values are nonsense for either field. ThresholdCount == 0
 // is normalized to 1 in-place so callers (handlers, tests) that
 // don't think about windowing don't need to set the field.
-func validateRule(rule *AlertRule) error {
+func validateRule(rule *alerts.Rule) error {
 	if rule.Name == "" {
 		return errors.New("alert_rules: Name required")
 	}
@@ -73,7 +46,7 @@ func validateRule(rule *AlertRule) error {
 }
 
 // Create inserts a new rule.
-func (r *AlertRulesRepository) Create(ctx context.Context, rule *AlertRule) error {
+func (r *AlertRulesRepository) Create(ctx context.Context, rule *alerts.Rule) error {
 	if err := validateRule(rule); err != nil {
 		return err
 	}
@@ -111,7 +84,7 @@ func (r *AlertRulesRepository) Create(ctx context.Context, rule *AlertRule) erro
 }
 
 // Get returns the rule with the given id.
-func (r *AlertRulesRepository) Get(ctx context.Context, id int64) (*AlertRule, error) {
+func (r *AlertRulesRepository) Get(ctx context.Context, id int64) (*alerts.Rule, error) {
 	row := r.db.QueryRow(ctx, `
 		SELECT id, name, enabled, match_kind, match_severity, match_payload_contains,
 		       alert_type, alert_severity, alert_title, alert_message,
@@ -125,7 +98,7 @@ func (r *AlertRulesRepository) Get(ctx context.Context, id int64) (*AlertRule, e
 // List returns every rule ordered by id ascending so the pipeline
 // applies rules in a deterministic order. enabledOnly filters out
 // disabled rows (the pipeline uses true; the operator UI uses false).
-func (r *AlertRulesRepository) List(ctx context.Context, enabledOnly bool) ([]*AlertRule, error) {
+func (r *AlertRulesRepository) List(ctx context.Context, enabledOnly bool) ([]*alerts.Rule, error) {
 	query := `
 		SELECT id, name, enabled, match_kind, match_severity, match_payload_contains,
 		       alert_type, alert_severity, alert_title, alert_message,
@@ -142,8 +115,8 @@ func (r *AlertRulesRepository) List(ctx context.Context, enabledOnly bool) ([]*A
 }
 
 // Update replaces every writable field on the rule. Returns
-// ErrAlertRuleNotFound when id doesn't exist.
-func (r *AlertRulesRepository) Update(ctx context.Context, rule *AlertRule) error {
+// alerts.ErrRuleNotFound when id doesn't exist.
+func (r *AlertRulesRepository) Update(ctx context.Context, rule *alerts.Rule) error {
 	if rule.ID == 0 {
 		return errors.New("alert_rules: ID required for Update")
 	}
@@ -178,7 +151,7 @@ func (r *AlertRulesRepository) Update(ctx context.Context, rule *AlertRule) erro
 	}
 	n, _ := res.RowsAffected()
 	if n == 0 {
-		return ErrAlertRuleNotFound
+		return alerts.ErrRuleNotFound
 	}
 	return nil
 }
@@ -191,14 +164,14 @@ func (r *AlertRulesRepository) Delete(ctx context.Context, id int64) error {
 	}
 	n, _ := res.RowsAffected()
 	if n == 0 {
-		return ErrAlertRuleNotFound
+		return alerts.ErrRuleNotFound
 	}
 	return nil
 }
 
-func scanAlertRule(scan func(...any) error) (*AlertRule, error) {
+func scanAlertRule(scan func(...any) error) (*alerts.Rule, error) {
 	var (
-		rule         AlertRule
+		rule         alerts.Rule
 		enabledInt   int
 		matchKind    sql.NullString
 		matchSev     sql.NullString
@@ -215,7 +188,7 @@ func scanAlertRule(scan func(...any) error) (*AlertRule, error) {
 		&createdStr, &updatedStr,
 	)
 	if errors.Is(err, sql.ErrNoRows) {
-		return nil, ErrAlertRuleNotFound
+		return nil, alerts.ErrRuleNotFound
 	}
 	if err != nil {
 		return nil, fmt.Errorf("scan alert_rule: %w", err)

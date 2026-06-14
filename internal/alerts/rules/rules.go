@@ -23,7 +23,7 @@ type ValidationError struct{ Msg string }
 func (e *ValidationError) Error() string { return e.Msg }
 
 // Rule is the use-case alert-rule model. The adapter maps it to/from
-// database.AlertRule so the app layer stays free of persistence types.
+// alerts.Rule so the app layer stays free of persistence types.
 type Rule struct {
 	ID                   int64
 	Name                 string

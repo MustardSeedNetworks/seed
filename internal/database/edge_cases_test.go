@@ -9,6 +9,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 
+	alertmodel "github.com/MustardSeedNetworks/seed/internal/alerts"
 	"github.com/MustardSeedNetworks/seed/internal/database"
 )
 
@@ -169,9 +170,9 @@ func TestAlertRepositoryFilters(t *testing.T) {
 	require.NoError(t, deviceRepo.Create(ctx, testDevice))
 
 	// Create test alert with device
-	alert := &database.Alert{
-		Type:     database.AlertTypeSecurity,
-		Severity: database.AlertSeverityCritical,
+	alert := &alertmodel.Alert{
+		Type:     alertmodel.TypeSecurity,
+		Severity: alertmodel.SeverityCritical,
 		Title:    "Alert with device",
 		Message:  "Test",
 		Source:   "test",
@@ -180,21 +181,21 @@ func TestAlertRepositoryFilters(t *testing.T) {
 	require.NoError(t, repo.Create(ctx, alert))
 
 	t.Run("List with type filter", func(t *testing.T) {
-		alerts, err := repo.List(ctx, database.AlertListOptions{Type: database.AlertTypeSecurity})
+		alerts, err := repo.List(ctx, alertmodel.ListOptions{Type: alertmodel.TypeSecurity})
 		require.NoError(t, err)
 		for _, a := range alerts {
-			require.Equal(t, database.AlertTypeSecurity, a.Type)
+			require.Equal(t, alertmodel.TypeSecurity, a.Type)
 		}
 	})
 
 	t.Run("List with device ID filter", func(t *testing.T) {
-		alerts, err := repo.List(ctx, database.AlertListOptions{DeviceID: testDevice.ID})
+		alerts, err := repo.List(ctx, alertmodel.ListOptions{DeviceID: testDevice.ID})
 		require.NoError(t, err)
 		require.GreaterOrEqual(t, len(alerts), 1)
 	})
 
 	t.Run("List with unacknowledged only", func(t *testing.T) {
-		alerts, err := repo.List(ctx, database.AlertListOptions{UnacknowledgedOnly: true})
+		alerts, err := repo.List(ctx, alertmodel.ListOptions{UnacknowledgedOnly: true})
 		require.NoError(t, err)
 		for _, a := range alerts {
 			require.False(t, a.Acknowledged)
@@ -214,9 +215,9 @@ func TestAlertRepositoryEdgeCases(t *testing.T) {
 	require.NoError(t, deviceRepo.Create(ctx, testDevice))
 
 	t.Run("Alert with device ID and metadata", func(t *testing.T) {
-		alert := &database.Alert{
-			Type:     database.AlertTypeSecurity,
-			Severity: database.AlertSeverityCritical,
+		alert := &alertmodel.Alert{
+			Type:     alertmodel.TypeSecurity,
+			Severity: alertmodel.SeverityCritical,
 			Title:    "Alert with device",
 			Message:  "Test message",
 			Source:   "test",
@@ -234,25 +235,25 @@ func TestAlertRepositoryEdgeCases(t *testing.T) {
 
 	t.Run("AcknowledgeAll operations", func(t *testing.T) {
 		// Create unacknowledged alert
-		require.NoError(t, repo.Create(ctx, &database.Alert{
-			Type:     database.AlertTypeSystem,
-			Severity: database.AlertSeverityWarning,
+		require.NoError(t, repo.Create(ctx, &alertmodel.Alert{
+			Type:     alertmodel.TypeSystem,
+			Severity: alertmodel.SeverityWarning,
 			Title:    "Warning alert",
 			Message:  "Test",
 			Source:   "test",
 		}))
 
-		count, err := repo.AcknowledgeAll(ctx, database.AlertListOptions{
-			Severity: database.AlertSeverityWarning,
+		count, err := repo.AcknowledgeAll(ctx, alertmodel.ListOptions{
+			Severity: alertmodel.SeverityWarning,
 		}, "admin")
 		require.NoError(t, err)
 		require.GreaterOrEqual(t, count, int64(1))
 	})
 
 	t.Run("Count with filters", func(t *testing.T) {
-		count, err := repo.Count(ctx, database.AlertListOptions{
-			Type:     database.AlertTypeSecurity,
-			Severity: database.AlertSeverityCritical,
+		count, err := repo.Count(ctx, alertmodel.ListOptions{
+			Type:     alertmodel.TypeSecurity,
+			Severity: alertmodel.SeverityCritical,
 		})
 		require.NoError(t, err)
 		require.GreaterOrEqual(t, count, int64(0))

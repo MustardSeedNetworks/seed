@@ -6,8 +6,8 @@ import (
 	"testing"
 	"time"
 
+	alertmodel "github.com/MustardSeedNetworks/seed/internal/alerts"
 	"github.com/MustardSeedNetworks/seed/internal/alerts/pipeline"
-	"github.com/MustardSeedNetworks/seed/internal/database"
 	"github.com/MustardSeedNetworks/seed/internal/polling/observation"
 )
 
@@ -99,7 +99,7 @@ func TestObservationScanOnce_InterfaceUpToDownEmitsAlert(t *testing.T) {
 		t.Fatalf("alerts = %d, want 1 (only the up->down transition)", len(alerts.created))
 	}
 	a := alerts.created[0]
-	if a.Severity != database.AlertSeverityWarning || a.Type != database.AlertTypeConnectivity {
+	if a.Severity != alertmodel.SeverityWarning || a.Type != alertmodel.TypeConnectivity {
 		t.Errorf("type/severity = %q/%q", a.Type, a.Severity)
 	}
 }
@@ -165,7 +165,7 @@ func TestObservationScanOnce_BGPLeavingEstablishedFires(t *testing.T) {
 	if len(alerts.created) != 1 {
 		t.Fatalf("alerts = %d, want 1", len(alerts.created))
 	}
-	if alerts.created[0].Severity != database.AlertSeverityError {
+	if alerts.created[0].Severity != alertmodel.SeverityError {
 		t.Errorf("BGP flap should be error severity, got %q", alerts.created[0].Severity)
 	}
 }
@@ -207,7 +207,7 @@ func TestObservationScanOnce_StorageCrosses85FiresWarning(t *testing.T) {
 		Logger: silentLogger(), Now: at,
 	})
 	_ = p.ScanOnce(context.Background())
-	if len(alerts.created) != 1 || alerts.created[0].Severity != database.AlertSeverityWarning {
+	if len(alerts.created) != 1 || alerts.created[0].Severity != alertmodel.SeverityWarning {
 		t.Errorf("expected one warning alert, got %+v", alerts.created)
 	}
 }
@@ -228,7 +228,7 @@ func TestObservationScanOnce_StorageCrosses95FiresCritical(t *testing.T) {
 		Logger: silentLogger(), Now: at,
 	})
 	_ = p.ScanOnce(context.Background())
-	if len(alerts.created) != 1 || alerts.created[0].Severity != database.AlertSeverityCritical {
+	if len(alerts.created) != 1 || alerts.created[0].Severity != alertmodel.SeverityCritical {
 		t.Errorf("expected one critical alert, got %+v", alerts.created)
 	}
 }

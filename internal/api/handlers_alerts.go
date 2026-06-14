@@ -19,8 +19,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/MustardSeedNetworks/seed/internal/alerts"
 	"github.com/MustardSeedNetworks/seed/internal/alerts/inbox"
-	"github.com/MustardSeedNetworks/seed/internal/database"
 	"github.com/MustardSeedNetworks/seed/internal/logging"
 )
 
@@ -146,9 +146,9 @@ func (s *Server) usernameFromRequest(r *http.Request) string {
 
 // parseAlertListOptions reads query-string filters. Returns 400-
 // shaped errors via plain text.
-func parseAlertListOptions(r *http.Request) (database.AlertListOptions, error) {
+func parseAlertListOptions(r *http.Request) (alerts.ListOptions, error) {
 	q := r.URL.Query()
-	opts := database.AlertListOptions{
+	opts := alerts.ListOptions{
 		Type:     q.Get("type"),
 		Severity: q.Get("severity"),
 		DeviceID: q.Get("device_id"),
@@ -163,14 +163,14 @@ func parseAlertListOptions(r *http.Request) (database.AlertListOptions, error) {
 	if since := q.Get("since"); since != "" {
 		t, err := time.Parse(time.RFC3339, since)
 		if err != nil {
-			return database.AlertListOptions{}, errors.New("invalid 'since' (expect RFC3339)")
+			return alerts.ListOptions{}, errors.New("invalid 'since' (expect RFC3339)")
 		}
 		opts.Since = t
 	}
 	if limitRaw := q.Get("limit"); limitRaw != "" {
 		n, err := strconv.Atoi(limitRaw)
 		if err != nil || n < 1 {
-			return database.AlertListOptions{}, errors.New("invalid 'limit' (positive integer)")
+			return alerts.ListOptions{}, errors.New("invalid 'limit' (positive integer)")
 		}
 		if n > alertsMaxLimit {
 			n = alertsMaxLimit
@@ -180,7 +180,7 @@ func parseAlertListOptions(r *http.Request) (database.AlertListOptions, error) {
 	if offsetRaw := q.Get("offset"); offsetRaw != "" {
 		n, err := strconv.Atoi(offsetRaw)
 		if err != nil || n < 0 {
-			return database.AlertListOptions{}, errors.New("invalid 'offset' (non-negative integer)")
+			return alerts.ListOptions{}, errors.New("invalid 'offset' (non-negative integer)")
 		}
 		opts.Offset = n
 	}
@@ -190,7 +190,7 @@ func parseAlertListOptions(r *http.Request) (database.AlertListOptions, error) {
 // encodeAlerts shapes the AlertRepository rows into the JSON
 // envelope. Done explicitly so the wire format stays stable when
 // DB columns evolve.
-func encodeAlerts(alerts []*database.Alert) []map[string]any {
+func encodeAlerts(alerts []*alerts.Alert) []map[string]any {
 	out := make([]map[string]any, 0, len(alerts))
 	for _, a := range alerts {
 		row := map[string]any{

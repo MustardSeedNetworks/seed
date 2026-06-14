@@ -5,21 +5,21 @@ import (
 	"errors"
 	"testing"
 
+	"github.com/MustardSeedNetworks/seed/internal/alerts"
 	"github.com/MustardSeedNetworks/seed/internal/alerts/inbox"
-	"github.com/MustardSeedNetworks/seed/internal/database"
 )
 
 type fakeRepo struct {
-	listOpts  database.AlertListOptions
+	listOpts  alerts.ListOptions
 	ackID     int64
 	ackUser   string
 	resolveID int64
 	err       error
 }
 
-func (f *fakeRepo) List(_ context.Context, opts database.AlertListOptions) ([]*database.Alert, error) {
+func (f *fakeRepo) List(_ context.Context, opts alerts.ListOptions) ([]*alerts.Alert, error) {
 	f.listOpts = opts
-	return []*database.Alert{{ID: 1}}, f.err
+	return []*alerts.Alert{{ID: 1}}, f.err
 }
 
 func (f *fakeRepo) Acknowledge(_ context.Context, id int64, user string) error {
@@ -37,7 +37,7 @@ func TestServiceDelegates(t *testing.T) {
 	svc := inbox.NewService(repo)
 	ctx := context.Background()
 
-	alerts, err := svc.List(ctx, database.AlertListOptions{Severity: "warning"})
+	alerts, err := svc.List(ctx, alerts.ListOptions{Severity: "warning"})
 	if err != nil || len(alerts) != 1 || repo.listOpts.Severity != "warning" {
 		t.Errorf("List did not delegate: alerts=%v err=%v opts=%+v", alerts, err, repo.listOpts)
 	}
@@ -52,7 +52,7 @@ func TestServiceDelegates(t *testing.T) {
 func TestServicePropagatesRepoError(t *testing.T) {
 	wantErr := errors.New("boom")
 	svc := inbox.NewService(&fakeRepo{err: wantErr})
-	if _, err := svc.List(context.Background(), database.AlertListOptions{}); !errors.Is(err, wantErr) {
+	if _, err := svc.List(context.Background(), alerts.ListOptions{}); !errors.Is(err, wantErr) {
 		t.Errorf("repo error not propagated: %v", err)
 	}
 }

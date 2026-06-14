@@ -16,14 +16,13 @@ import (
 	"log/slog"
 	"time"
 
-	"github.com/MustardSeedNetworks/seed/internal/database"
 	"github.com/MustardSeedNetworks/seed/internal/listener"
 )
 
 // eventsStore is the narrowed surface the sink uses. Tests inject a
 // fake.
 type eventsStore interface {
-	Insert(ctx context.Context, evt *database.ListenerEvent) error
+	Insert(ctx context.Context, evt *listener.EventRecord) error
 }
 
 // Sink persists [listener.Event] instances into listener_events.
@@ -63,7 +62,7 @@ func (s *Sink) Publish(ctx context.Context, evt listener.Event) error {
 		return fmt.Errorf("listener sink: invalid JSON payload for %s", evt.Kind)
 	}
 
-	if err := s.store.Insert(ctx, &database.ListenerEvent{
+	if err := s.store.Insert(ctx, &listener.EventRecord{
 		ClientID:    evt.ClientID,
 		Kind:        evt.Kind,
 		SourceAddr:  evt.SourceAddr,
