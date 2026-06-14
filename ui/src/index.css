@@ -148,9 +148,11 @@
      ========================================================================== */
 
   /* Brand Colors — constant across light/dark (canonical 2026-05-22).
-   * Seed product anchor is seed-500. Foreground variants for AA on light
-   * surfaces use text-accent (below) which carries the darker seed-600. */
-  --color-brand-primary: #4caf50; /* Seed anchor (seed-500) — buttons, focus, glows */
+   * Seed product anchor sits between seed-500 and seed-600. Foreground variants
+   * for AA on light surfaces use text-accent (below) which carries seed-600. */
+  --color-brand-primary: #3d9942; /* Seed anchor — deliberately deeper than
+   * status-success #4caf50 (L1): a primary fill must not read as a "success"
+   * state. Keeps AA with on-brand near-black (#18181b → 4.92:1). buttons, focus, glows. */
   --color-brand-accent: #81c784; /* Lighter sibling (seed-300) — hover states */
   --color-brand-gold: #d4a017; /* Mustard cross-brand accent (mustard-500) */
 
