@@ -49,9 +49,38 @@ func TestBuild_AllRequiredFieldsValidated(t *testing.T) {
 		name string
 		cfg  orchestrator.Config
 	}{
-		{"missing DB", orchestrator.Config{Scheduler: sched, ClientFactory: nopClientFactory}},
-		{"missing Scheduler", orchestrator.Config{DB: db, ClientFactory: nopClientFactory}},
-		{"missing ClientFactory", orchestrator.Config{DB: db, Scheduler: sched}},
+		{
+			"missing Targets",
+			orchestrator.Config{
+				Observations:  db.SNMPObservations(),
+				Scheduler:     sched,
+				ClientFactory: nopClientFactory,
+			},
+		},
+		{
+			"missing Observations",
+			orchestrator.Config{
+				Targets:       db.PollingTargets(),
+				Scheduler:     sched,
+				ClientFactory: nopClientFactory,
+			},
+		},
+		{
+			"missing Scheduler",
+			orchestrator.Config{
+				Targets:       db.PollingTargets(),
+				Observations:  db.SNMPObservations(),
+				ClientFactory: nopClientFactory,
+			},
+		},
+		{
+			"missing ClientFactory",
+			orchestrator.Config{
+				Targets:      db.PollingTargets(),
+				Observations: db.SNMPObservations(),
+				Scheduler:    sched,
+			},
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -69,7 +98,8 @@ func TestBuild_ReturnsPollerWithEngineName(t *testing.T) {
 	sched := newSchedulerForTest()
 
 	poller, err := orchestrator.Build(orchestrator.Config{
-		DB:            db,
+		Targets:       db.PollingTargets(),
+		Observations:  db.SNMPObservations(),
 		Scheduler:     sched,
 		ClientFactory: nopClientFactory,
 		Logger:        silentLogger(),
@@ -89,7 +119,8 @@ func TestBuild_PollerStartLoadsZeroTargetsCleanly(t *testing.T) {
 	sched := newSchedulerForTest()
 
 	poller, err := orchestrator.Build(orchestrator.Config{
-		DB:            db,
+		Targets:       db.PollingTargets(),
+		Observations:  db.SNMPObservations(),
 		Scheduler:     sched,
 		ClientFactory: nopClientFactory,
 		Logger:        silentLogger(),
@@ -130,7 +161,8 @@ func TestBuild_RegistersAllElevenCollectorChainKinds(t *testing.T) {
 	}
 
 	poller, err := orchestrator.Build(orchestrator.Config{
-		DB:            db,
+		Targets:       db.PollingTargets(),
+		Observations:  db.SNMPObservations(),
 		Scheduler:     sched,
 		ClientFactory: nopClientFactory,
 		Logger:        silentLogger(),

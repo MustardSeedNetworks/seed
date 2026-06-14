@@ -10,6 +10,7 @@ import (
 
 	"github.com/MustardSeedNetworks/seed/internal/app"
 	"github.com/MustardSeedNetworks/seed/internal/database"
+	"github.com/MustardSeedNetworks/seed/internal/polling"
 )
 
 // newPollingTargetsTestServer returns a Server with only the bits
@@ -24,9 +25,9 @@ func newPollingTargetsTestServer(t *testing.T) *Server {
 }
 
 // seedTarget inserts a polling target via the repo and returns it.
-func seedTarget(t *testing.T, db *database.DB, name string) *database.PollingTarget {
+func seedTarget(t *testing.T, db *database.DB, name string) *polling.Target {
 	t.Helper()
-	target := &database.PollingTarget{
+	target := &polling.Target{
 		Name:            name,
 		IPAddress:       "10.0.0.1",
 		SNMPVersion:     "v2c",

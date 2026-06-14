@@ -8,7 +8,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/MustardSeedNetworks/seed/internal/database"
+	"github.com/MustardSeedNetworks/seed/internal/polling"
 	"github.com/MustardSeedNetworks/seed/internal/polling/snmp"
 	"github.com/MustardSeedNetworks/seed/internal/scheduler"
 )
@@ -18,7 +18,7 @@ func silentLogger() *slog.Logger { return slog.New(slog.DiscardHandler) }
 // fakeStorage mirrors a tiny subset of database.PollingTargetRepository.
 type fakeStorage struct {
 	mu      sync.Mutex
-	targets []*database.PollingTarget
+	targets []*polling.Target
 	listErr error
 
 	updates []updateRecord
@@ -31,7 +31,7 @@ type updateRecord struct {
 	errMsg string
 }
 
-func (f *fakeStorage) List(_ context.Context, _ string) ([]*database.PollingTarget, error) {
+func (f *fakeStorage) List(_ context.Context, _ string) ([]*polling.Target, error) {
 	if f.listErr != nil {
 		return nil, f.listErr
 	}
@@ -131,7 +131,7 @@ func (s *stubCollector) callCount() int {
 func TestPoller_Start_RegistersJobsForEachEnabledTarget(t *testing.T) {
 	t.Parallel()
 	storage := &fakeStorage{
-		targets: []*database.PollingTarget{
+		targets: []*polling.Target{
 			{
 				ID:              "t-1",
 				Name:            "router-1",
@@ -168,7 +168,7 @@ func TestPoller_Start_RegistersJobsForEachEnabledTarget(t *testing.T) {
 func TestPoller_Start_Idempotent(t *testing.T) {
 	t.Parallel()
 	storage := &fakeStorage{
-		targets: []*database.PollingTarget{
+		targets: []*polling.Target{
 			{ID: "t-1", Enabled: true, PollIntervalSec: 60},
 		},
 	}
@@ -199,7 +199,7 @@ func TestPoller_Start_PropagatesListError(t *testing.T) {
 func TestPoller_Stop_UnregistersJobsAndStopsScheduler(t *testing.T) {
 	t.Parallel()
 	storage := &fakeStorage{
-		targets: []*database.PollingTarget{
+		targets: []*polling.Target{
 			{ID: "t-1", Enabled: true, PollIntervalSec: 60},
 		},
 	}
@@ -230,12 +230,12 @@ func TestPoller_Stop_NotStartedReturnsNil(t *testing.T) {
 
 func TestPoller_RunChain_InvokesEveryCollectorInOrder(t *testing.T) {
 	t.Parallel()
-	target := &database.PollingTarget{
+	target := &polling.Target{
 		ID: "t-1", Name: "router-1", IPAddress: "10.0.0.1",
 		Enabled: true, PollIntervalSec: 60,
 		CollectorChain: []string{"sys_info", "if_table"},
 	}
-	storage := &fakeStorage{targets: []*database.PollingTarget{target}}
+	storage := &fakeStorage{targets: []*polling.Target{target}}
 	sched := newFakeScheduler()
 	p := snmp.NewPoller(storage, sched, silentLogger())
 
@@ -270,12 +270,12 @@ func TestPoller_RunChain_InvokesEveryCollectorInOrder(t *testing.T) {
 
 func TestPoller_RunChain_UnknownCollectorIsSkipped(t *testing.T) {
 	t.Parallel()
-	target := &database.PollingTarget{
+	target := &polling.Target{
 		ID: "t-1", IPAddress: "10.0.0.1", Enabled: true,
 		PollIntervalSec: 60,
 		CollectorChain:  []string{"unknown_kind", "sys_info"},
 	}
-	storage := &fakeStorage{targets: []*database.PollingTarget{target}}
+	storage := &fakeStorage{targets: []*polling.Target{target}}
 	sched := newFakeScheduler()
 	p := snmp.NewPoller(storage, sched, silentLogger())
 
@@ -297,12 +297,12 @@ func TestPoller_RunChain_UnknownCollectorIsSkipped(t *testing.T) {
 
 func TestPoller_RunChain_CollectorErrorCapturedInLastError(t *testing.T) {
 	t.Parallel()
-	target := &database.PollingTarget{
+	target := &polling.Target{
 		ID: "t-1", IPAddress: "10.0.0.1", Enabled: true,
 		PollIntervalSec: 60,
 		CollectorChain:  []string{"sys_info"},
 	}
-	storage := &fakeStorage{targets: []*database.PollingTarget{target}}
+	storage := &fakeStorage{targets: []*polling.Target{target}}
 	sched := newFakeScheduler()
 	p := snmp.NewPoller(storage, sched, silentLogger())
 
@@ -326,12 +326,12 @@ func TestPoller_RunChain_CollectorErrorCapturedInLastError(t *testing.T) {
 
 func TestPoller_TargetJob_NextRunCadence(t *testing.T) {
 	t.Parallel()
-	target := &database.PollingTarget{
+	target := &polling.Target{
 		ID: "t-1", IPAddress: "10.0.0.1", Enabled: true,
 		PollIntervalSec: 300,
 		CollectorChain:  []string{"sys_info"},
 	}
-	storage := &fakeStorage{targets: []*database.PollingTarget{target}}
+	storage := &fakeStorage{targets: []*polling.Target{target}}
 	sched := newFakeScheduler()
 	p := snmp.NewPoller(storage, sched, silentLogger())
 	p.RegisterCollector(&stubCollector{name: "sys_info"})

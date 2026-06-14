@@ -15,7 +15,6 @@ import (
 	"log/slog"
 	"time"
 
-	"github.com/MustardSeedNetworks/seed/internal/database"
 	"github.com/MustardSeedNetworks/seed/internal/polling/snmp"
 	"github.com/MustardSeedNetworks/seed/internal/polling/snmp/collectors/arp"
 	"github.com/MustardSeedNetworks/seed/internal/polling/snmp/collectors/bgp4"
@@ -35,7 +34,8 @@ import (
 // fully wired Poller. Logger and Now are optional — nil values fall
 // back to [slog.Default] and [time.Now].UTC respectively.
 type Config struct {
-	DB            *database.DB
+	Targets       snmp.PollerStorage
+	Observations  sink.ObservationsStore
 	Scheduler     *scheduler.Scheduler
 	ClientFactory snmp.ClientFactory
 	Logger        *slog.Logger
@@ -49,8 +49,11 @@ type Config struct {
 //
 // Returns an error if any required Config field is unset.
 func Build(cfg Config) (*snmp.Poller, error) {
-	if cfg.DB == nil {
-		return nil, errors.New("orchestrator: DB required")
+	if cfg.Targets == nil {
+		return nil, errors.New("orchestrator: Targets required")
+	}
+	if cfg.Observations == nil {
+		return nil, errors.New("orchestrator: Observations required")
 	}
 	if cfg.Scheduler == nil {
 		return nil, errors.New("orchestrator: Scheduler required")
@@ -68,8 +71,8 @@ func Build(cfg Config) (*snmp.Poller, error) {
 		now = func() time.Time { return time.Now().UTC() }
 	}
 
-	persistSink := sink.New(cfg.DB.SNMPObservations(), logger, now)
-	poller := snmp.NewPoller(cfg.DB.PollingTargets(), cfg.Scheduler, logger)
+	persistSink := sink.New(cfg.Observations, logger, now)
+	poller := snmp.NewPoller(cfg.Targets, cfg.Scheduler, logger)
 
 	// Register every collector. cdp + fdp share a Publisher (CDP),
 	// distinguished downstream by Observation.TablePrefix.

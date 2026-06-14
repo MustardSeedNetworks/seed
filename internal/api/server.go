@@ -613,7 +613,8 @@ func (s *Server) initSNMPPoller(db *database.DB) {
 	sched := scheduler.New(snmpPollerSchedulerTick)
 	factory := snmpclient.NewFactory(snmpclient.Options{})
 	poller, err := snmporchestrator.Build(snmporchestrator.Config{
-		DB:            db,
+		Targets:       db.PollingTargets(),
+		Observations:  db.SNMPObservations(),
 		Scheduler:     sched,
 		ClientFactory: factory,
 		Logger:        logger,

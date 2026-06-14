@@ -50,9 +50,9 @@ const (
 	KindBGP4          = "bgp4_mib"
 )
 
-// observationsStore is the narrowed surface the Sink needs from the
+// ObservationsStore is the narrowed surface the Sink needs from the
 // database layer. Tests inject a fake.
-type observationsStore interface {
+type ObservationsStore interface {
 	Insert(ctx context.Context, obs *observation.SNMPObservation) error
 }
 
@@ -60,14 +60,14 @@ type observationsStore interface {
 // snmp_observations table. One Sink instance implements every
 // Publisher interface so the orchestrator wire-up stays trivial.
 type Sink struct {
-	store  observationsStore
+	store  ObservationsStore
 	logger *slog.Logger
 	now    func() time.Time
 }
 
 // New returns a Sink bound to store. Pass nil logger to use
 // [slog.Default]; pass nil now to use [time.Now] in UTC.
-func New(store observationsStore, logger *slog.Logger, now func() time.Time) *Sink {
+func New(store ObservationsStore, logger *slog.Logger, now func() time.Time) *Sink {
 	if logger == nil {
 		logger = slog.Default()
 	}
