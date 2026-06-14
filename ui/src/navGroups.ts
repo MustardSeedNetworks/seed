@@ -42,20 +42,26 @@ export const navGroups: SidebarNavGroup[] = [
   {
     label: 'Live Telemetry',
     items: [
-      { path: '/link', label: 'Link', icon: Network },
-      { path: '/network', label: 'Network', icon: Server },
-      { path: '/performance', label: 'Performance', icon: Activity },
+      { path: '/link', label: 'Link', icon: Network, accent: 'text-module-telemetry' },
+      { path: '/network', label: 'Network', icon: Server, accent: 'text-module-telemetry' },
+      {
+        path: '/performance',
+        label: 'Performance',
+        icon: Activity,
+        accent: 'text-module-telemetry',
+      },
     ],
   },
   {
     label: 'Diagnostics',
     items: [
-      { path: '/path', label: 'Path Analysis', icon: Route },
-      { path: '/wifi', label: 'Wi-Fi', icon: Wifi },
-      { path: '/security', label: 'Security', icon: Shield },
+      { path: '/path', label: 'Path Analysis', icon: Route, accent: 'text-module-path' },
+      { path: '/wifi', label: 'Wi-Fi', icon: Wifi, accent: 'text-module-wifi' },
+      { path: '/security', label: 'Security', icon: Shield, accent: 'text-module-security' },
     ],
   },
   {
+    // NMS pages have no botanical module; they keep the neutral colouring.
     label: 'Monitoring',
     items: [
       { path: '/topology', label: 'Topology', icon: Share2 },
@@ -66,8 +72,8 @@ export const navGroups: SidebarNavGroup[] = [
   {
     label: 'Reporting',
     items: [
-      { path: '/reports', label: 'Reports', icon: BarChart3 },
-      { path: '/logs', label: 'Logs', icon: ScrollText },
+      { path: '/reports', label: 'Reports', icon: BarChart3, accent: 'text-module-reporting' },
+      { path: '/logs', label: 'Logs', icon: ScrollText, accent: 'text-module-reporting' },
     ],
   },
 ];

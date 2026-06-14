@@ -34,6 +34,14 @@ export interface SidebarNavItem {
   label: string;
   icon: LucideIcon;
   badge?: string;
+  /**
+   * Optional module accent — a semantic text-colour utility (e.g.
+   * `text-module-wifi`). Carries the per-module brand identity that the
+   * function-first nav (M1) moved off the group headers. Items with no module
+   * (e.g. NMS) omit it and fall back to the neutral/brand colouring. Optional
+   * so the sibling repos' navGroups stay valid until they adopt it.
+   */
+  accent?: string;
 }
 
 export interface SidebarNavGroup {
@@ -86,8 +94,18 @@ const NavItemButton: FC<NavItemButtonProps> = ({ item, active, collapsed, onNavi
     title={collapsed ? item.label : undefined}
   >
     {createElement(item.icon, {
+      // Module accent (M1 follow-up): the icon carries the per-module brand
+      // colour the function-first nav moved off the group headers — dimmed at
+      // rest, full-strength when active. Items without a module accent keep the
+      // neutral→brand colouring.
       className: `${iconSizes.lg} flex-shrink-0 ${
-        active ? 'text-brand-accent' : 'text-text-muted group-hover:text-text-secondary'
+        item.accent
+          ? active
+            ? item.accent
+            : `${item.accent} opacity-60 group-hover:opacity-100`
+          : active
+            ? 'text-brand-accent'
+            : 'text-text-muted group-hover:text-text-secondary'
       }`,
     })}
     {!collapsed ? (
