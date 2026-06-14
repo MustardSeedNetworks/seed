@@ -226,7 +226,8 @@
     "descriptionPlaceholder": "Descripción opcional",
     "manage": "Gestionar",
     "noProfiles": "Sin perfiles",
-    "select": "Seleccionar perfil"
+    "select": "Seleccionar perfil",
+    "switch": "Cambiar perfil"
   },
   "recovery": {
     "backToLogin": "Volver a iniciar sesión",

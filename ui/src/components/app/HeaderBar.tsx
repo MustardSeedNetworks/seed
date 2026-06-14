@@ -278,6 +278,16 @@ export const HeaderBar: React.FC<HeaderBarProps> = memo(function headerBar({
                   'border border-surface-border bg-surface-raised shadow-lg z-50 overflow-hidden',
                 )}
               >
+                {/* Quick-switch intent (VL1): this dropdown switches the active
+                 * profile; full management lives behind the sidebar's "Manage
+                 * Profiles" button. */}
+                <div
+                  className={cn(spacing.pad.sm, 'border-b border-surface-border bg-surface-base')}
+                >
+                  <span className="caption font-medium text-text-muted uppercase tracking-wide">
+                    {t('profile.switch', 'Switch Profile')}
+                  </span>
+                </div>
                 <div className="max-h-60 overflow-y-auto">
                   {profiles.length === 0 ? (
                     <div className={cn(spacing.pad.default, 'text-center')}>

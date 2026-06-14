@@ -245,8 +245,8 @@ const SidebarFooter: FC<SidebarFooterProps> = ({
       <FullWidthDrawerButton
         onClick={onOpenProfiles}
         icon={Users}
-        label="Profiles"
-        title="Manage profiles"
+        label="Manage Profiles"
+        title="Create, edit, and delete profiles"
       />
     ) : null}
 

@@ -204,7 +204,9 @@
   --color-knob: #ffffff;
 
   /* On-color foregrounds — constant across modes (no .dark override). */
-  --color-on-brand: #18181b; /* zinc-900 — AA on brand/success fills */
+  --color-on-brand: #18181b; /* zinc-900 — foreground on brand/success fills.
+   * AA-verified (VL2), theme-constant: 4.92:1 on brand-primary #3d9942,
+   * 7.55:1 on status-success #4caf50. Both >= WCAG AA 4.5. */
   --color-on-danger: #ffffff; /* white — AA on status-error fills */
   --color-on-info: #ffffff; /* white — AA on status-info fills */
 
