@@ -25,7 +25,7 @@ func TestSeedDefaultHealthCheckProbes_FreshInstall(t *testing.T) {
 	wireHealthSettings(s)
 	ctx := context.Background()
 
-	require.NoError(t, s.seedDefaultHealthCheckProbes(ctx, db))
+	require.NoError(t, s.seedDefaultHealthCheckProbes(ctx))
 
 	// The factory ping targets are now persisted as probe rows.
 	pings, err := db.Probes().ListProbes(ctx, database.DefaultClientID, probe.KindPing)
@@ -51,14 +51,15 @@ func TestSeedDefaultHealthCheckProbes_FreshInstall(t *testing.T) {
 func TestSeedDefaultHealthCheckProbes_Idempotent(t *testing.T) {
 	db := newTestDB(t)
 	s := &Server{config: &config.Config{}, dbConn: db}
+	wireHealthSettings(s)
 	ctx := context.Background()
 
-	require.NoError(t, s.seedDefaultHealthCheckProbes(ctx, db))
+	require.NoError(t, s.seedDefaultHealthCheckProbes(ctx))
 	first, err := db.Probes().CountProbes(ctx, database.DefaultClientID, probe.KindPing)
 	require.NoError(t, err)
 	require.Equal(t, 2, first, "factory set has two ping targets")
 
-	require.NoError(t, s.seedDefaultHealthCheckProbes(ctx, db))
+	require.NoError(t, s.seedDefaultHealthCheckProbes(ctx))
 	second, err := db.Probes().CountProbes(ctx, database.DefaultClientID, probe.KindPing)
 	require.NoError(t, err)
 	require.Equal(t, first, second, "second seed must not duplicate the factory set")
@@ -71,9 +72,10 @@ func TestSeedDefaultHealthCheckProbes_Idempotent(t *testing.T) {
 func TestSeedDefaultHealthCheckProbes_NoReseedAfterDeleteAll(t *testing.T) {
 	db := newTestDB(t)
 	s := &Server{config: &config.Config{}, dbConn: db}
+	wireHealthSettings(s)
 	ctx := context.Background()
 
-	require.NoError(t, s.seedDefaultHealthCheckProbes(ctx, db))
+	require.NoError(t, s.seedDefaultHealthCheckProbes(ctx))
 
 	// Operator clears the whole health-check set (settings save with no targets).
 	require.NoError(t, db.Probes().ReplaceProbesByKinds(
@@ -81,7 +83,7 @@ func TestSeedDefaultHealthCheckProbes_NoReseedAfterDeleteAll(t *testing.T) {
 	))
 
 	// A subsequent boot must NOT re-seed.
-	require.NoError(t, s.seedDefaultHealthCheckProbes(ctx, db))
+	require.NoError(t, s.seedDefaultHealthCheckProbes(ctx))
 	count, err := db.Probes().CountProbes(ctx, database.DefaultClientID, probe.KindPing)
 	require.NoError(t, err)
 	require.Equal(t, 0, count, "deleting all probes must not trigger a re-seed")
@@ -94,6 +96,7 @@ func TestSeedDefaultHealthCheckProbes_NoReseedAfterDeleteAll(t *testing.T) {
 func TestSeedDefaultHealthCheckProbes_PreservesExistingProbes(t *testing.T) {
 	db := newTestDB(t)
 	s := &Server{config: &config.Config{}, dbConn: db}
+	wireHealthSettings(s)
 	ctx := context.Background()
 
 	// Pre-existing operator-configured set, no seed marker, written straight to
@@ -104,11 +107,22 @@ func TestSeedDefaultHealthCheckProbes_PreservesExistingProbes(t *testing.T) {
 	hc := requestEndpointTargets(&custom)
 	customProbes, err := probemap.ProbesFromConfig(&hc)
 	require.NoError(t, err)
+	rows := make([]*database.Probe, 0, len(customProbes))
+	for _, p := range customProbes {
+		rows = append(rows, &database.Probe{
+			Kind:            p.Kind,
+			DisplayName:     p.DisplayName,
+			Target:          p.Target,
+			ParamsJSON:      string(p.Params),
+			Enabled:         p.Enabled,
+			IntervalSeconds: p.IntervalSeconds,
+		})
+	}
 	require.NoError(t, db.Probes().ReplaceProbesByKinds(
-		ctx, database.DefaultClientID, probemap.Kinds(), customProbes,
+		ctx, database.DefaultClientID, probemap.Kinds(), rows,
 	))
 
-	require.NoError(t, s.seedDefaultHealthCheckProbes(ctx, db))
+	require.NoError(t, s.seedDefaultHealthCheckProbes(ctx))
 
 	pings, err := db.Probes().ListProbes(ctx, database.DefaultClientID, probe.KindPing)
 	require.NoError(t, err)

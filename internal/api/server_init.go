@@ -111,15 +111,6 @@ func (s *Server) initDatabaseServices(cfg *config.Config, db *database.DB) {
 		}
 	}
 
-	// Seed the factory health-check targets on first run (ADR-0027 follow-up).
-	// The probes table is the store of record since P2; without this a fresh
-	// install comes up with an empty health-check card. Gated by a persistent
-	// marker, so a later delete-all is not re-seeded. Non-fatal: a failure
-	// degrades to the empty card rather than aborting startup.
-	if err := s.seedDefaultHealthCheckProbes(context.Background(), db); err != nil {
-		logging.GetLogger().Error("Failed to seed default health-check probes", "error", err)
-	}
-
 	// Initialize MIB database for SNMP OID resolution
 	s.initMibDatabase(db)
 

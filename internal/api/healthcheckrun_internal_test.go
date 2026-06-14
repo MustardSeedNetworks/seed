@@ -8,7 +8,6 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/MustardSeedNetworks/seed/internal/config"
-	"github.com/MustardSeedNetworks/seed/internal/database"
 	"github.com/MustardSeedNetworks/seed/internal/probe"
 )
 
@@ -28,7 +27,7 @@ func lenientThresholds() config.CustomThresholds {
 // success testStatus when every phase is within bounds.
 func TestMapHTTPResult_TimingsAndCert(t *testing.T) {
 	th := lenientThresholds()
-	p := &database.Probe{Kind: probe.KindHTTPS, DisplayName: "api", Target: "https://api.example"}
+	p := probe.Probe{Kind: probe.KindHTTPS, DisplayName: "api", Target: "https://api.example"}
 	meta, _ := json.Marshal(map[string]any{
 		"status_code": 200,
 		"timings_ms":  map[string]float64{"dns": 1, "tcp": 2, "tls": 3, "ttfb": 10},
@@ -58,7 +57,7 @@ func TestMapHTTPResult_TimingsAndCert(t *testing.T) {
 // downgrades both certStatus and the overall testStatus to warning.
 func TestMapHTTPResult_CertNearExpiryWarns(t *testing.T) {
 	th := lenientThresholds()
-	p := &database.Probe{Kind: probe.KindHTTPS, DisplayName: "api", Target: "https://api.example"}
+	p := probe.Probe{Kind: probe.KindHTTPS, DisplayName: "api", Target: "https://api.example"}
 	meta, _ := json.Marshal(map[string]any{
 		"status_code": 200,
 		"timings_ms":  map[string]float64{"ttfb": 5},
@@ -76,7 +75,7 @@ func TestMapHTTPResult_CertNearExpiryWarns(t *testing.T) {
 // from the connect-latency threshold.
 func TestMapPortResult_DerivesStatusFromThreshold(t *testing.T) {
 	th := config.Threshold{Warning: 10 * time.Millisecond, Critical: 50 * time.Millisecond}
-	p := &database.Probe{Kind: probe.KindTCP, DisplayName: "db", Target: "db:5432"}
+	p := probe.Probe{Kind: probe.KindTCP, DisplayName: "db", Target: "db:5432"}
 
 	warn := mapPortResult(p, probe.Result{Success: true, LatencyMs: 20}, th)
 	require.Equal(t, statusWarning, warn.TestStatus)
@@ -94,14 +93,17 @@ func TestMapRunResult_GroupsByFamily(t *testing.T) {
 
 	hl7Params, _ := json.Marshal(config.HL7Endpoint{Host: "hl7.example", Port: 2575})
 	hl7Meta, _ := json.Marshal(map[string]any{"ack_code": "AA"})
-	mapRunResult(&resp, &database.Probe{Kind: probe.KindHL7, DisplayName: "lab", ParamsJSON: string(hl7Params)},
+	mapRunResult(&resp,
+		probe.Probe{Kind: probe.KindHL7, DisplayName: "lab", Params: json.RawMessage(hl7Params)},
 		probe.Result{Kind: probe.KindHL7, Success: true, LatencyMs: 8, Metadata: hl7Meta}, &th)
 
 	sqlParams, _ := json.Marshal(config.SQLEndpoint{Driver: "postgres", Host: "db", Port: 5432})
-	mapRunResult(&resp, &database.Probe{Kind: probe.KindSQL, DisplayName: "pg", ParamsJSON: string(sqlParams)},
+	mapRunResult(&resp,
+		probe.Probe{Kind: probe.KindSQL, DisplayName: "pg", Params: json.RawMessage(sqlParams)},
 		probe.Result{Kind: probe.KindSQL, Success: true, LatencyMs: 4}, &th)
 
-	mapRunResult(&resp, &database.Probe{Kind: probe.KindPing, DisplayName: "gw", Target: "1.1.1.1"},
+	mapRunResult(&resp,
+		probe.Probe{Kind: probe.KindPing, DisplayName: "gw", Target: "1.1.1.1"},
 		probe.Result{Kind: probe.KindPing, Success: true, LatencyMs: 2}, &th)
 
 	require.Len(t, resp.PingResults, 1)

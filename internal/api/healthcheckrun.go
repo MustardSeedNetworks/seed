@@ -17,12 +17,9 @@ import (
 	"context"
 	"encoding/json"
 	"net/http"
-	"slices"
 	"sync"
 
 	"github.com/MustardSeedNetworks/seed/internal/config"
-	"github.com/MustardSeedNetworks/seed/internal/database"
-	"github.com/MustardSeedNetworks/seed/internal/health/probemap"
 	"github.com/MustardSeedNetworks/seed/internal/i18n"
 	"github.com/MustardSeedNetworks/seed/internal/logging"
 	"github.com/MustardSeedNetworks/seed/internal/probe"
@@ -238,7 +235,7 @@ type ModbusTestResult struct {
 
 // runProbeResult pairs a dispatched probe with its Result for mapping.
 type runProbeResult struct {
-	probe  *database.Probe
+	probe  probe.Probe
 	result probe.Result
 }
 
@@ -282,38 +279,22 @@ func (s *Server) handleHealthChecks(w http.ResponseWriter, r *http.Request) {
 // healthCheckProbes lists the operator's configured probes of the health-check
 // kinds (ping/tcp/udp/http/rtsp/dicom + the eight verticals), in a stable
 // display order.
-func (s *Server) healthCheckProbes(ctx context.Context) ([]*database.Probe, error) {
-	all, err := s.db().Probes().ListProbes(ctx, database.DefaultClientID, "")
-	if err != nil {
-		return nil, err
-	}
-	out := make([]*database.Probe, 0, len(all))
-	for _, p := range all {
-		if isHealthCheckKind(p.Kind) {
-			out = append(out, p)
-		}
-	}
-	return out, nil
-}
-
-// isHealthCheckKind reports whether kind is one of the fourteen kinds the
-// health-check surface owns.
-func isHealthCheckKind(kind string) bool {
-	return slices.Contains(probemap.Kinds(), kind)
+func (s *Server) healthCheckProbes(ctx context.Context) ([]probe.Probe, error) {
+	return s.healthSettings.HealthCheckProbes(ctx)
 }
 
 // dispatchProbes runs each probe via Engine.RunNow with bounded concurrency
 // and returns the (probe, result) pairs in the input order. A probe whose
 // dispatch errors (e.g. storage hiccup) still yields its error as a failed
 // Result so the card shows it rather than silently dropping the row.
-func (s *Server) dispatchProbes(ctx context.Context, probes []*database.Probe) []runProbeResult {
+func (s *Server) dispatchProbes(ctx context.Context, probes []probe.Probe) []runProbeResult {
 	out := make([]runProbeResult, len(probes))
 	sem := make(chan struct{}, maxConcurrentRunProbes)
 	var wg sync.WaitGroup
 	for i, p := range probes {
 		wg.Add(1)
 		sem <- struct{}{}
-		go func(idx int, pr *database.Probe) {
+		go func(idx int, pr probe.Probe) {
 			defer wg.Done()
 			defer func() { <-sem }()
 			res, err := s.probeEngine.RunNow(ctx, pr.ID)
@@ -329,7 +310,7 @@ func (s *Server) dispatchProbes(ctx context.Context, probes []*database.Probe) [
 
 // mapRunResult dispatches a single (probe, result) into the right slot of the
 // response by kind. The per-kind mappers live in healthcheckrunmappers.go.
-func mapRunResult(resp *HealthCheckRunResponse, p *database.Probe, r probe.Result, th *config.CustomThresholds) {
+func mapRunResult(resp *HealthCheckRunResponse, p probe.Probe, r probe.Result, th *config.CustomThresholds) {
 	switch p.Kind {
 	case probe.KindPing:
 		resp.PingResults = append(resp.PingResults, mapPingResult(p, r))
@@ -402,13 +383,13 @@ func (resp *HealthCheckRunResponse) industrial() *IndustrialResults {
 // mapPingResult maps a ping probe Result. Ping reports reachability + dial
 // latency; extended loss/jitter stats are not produced by the scheduled
 // probe (ADR-0027 P3a non-port), so those fields stay zero/absent.
-func mapPingResult(p *database.Probe, r probe.Result) TestResult {
+func mapPingResult(p probe.Probe, r probe.Result) TestResult {
 	return baseTestResult(p, r)
 }
 
 // mapPortResult maps a tcp/udp probe Result, deriving testStatus from the
 // connect-latency threshold for that kind.
-func mapPortResult(p *database.Probe, r probe.Result, th config.Threshold) TestResult {
+func mapPortResult(p probe.Probe, r probe.Result, th config.Threshold) TestResult {
 	out := baseTestResult(p, r)
 	if r.Success {
 		out.TestStatus = getTestStatus(r.LatencyMs, th.Warning.Milliseconds(), th.Critical.Milliseconds())
@@ -418,7 +399,7 @@ func mapPortResult(p *database.Probe, r probe.Result, th config.Threshold) TestR
 
 // mapHTTPResult maps an http/https probe Result: status code, per-phase
 // timing breakdown + derived statuses, and (for https) the cert summary.
-func mapHTTPResult(p *database.Probe, r probe.Result, th *config.CustomThresholds) TestResult {
+func mapHTTPResult(p probe.Probe, r probe.Result, th *config.CustomThresholds) TestResult {
 	out := baseTestResult(p, r)
 	var meta checkers.HTTPRunMetadata
 	if len(r.Metadata) > 0 {
@@ -485,7 +466,7 @@ func certStatusFromDays(days int, th config.CertExpiryThreshold) string {
 
 // baseTestResult fills the fields common to every kind: the display name,
 // success, latency, and error.
-func baseTestResult(p *database.Probe, r probe.Result) TestResult {
+func baseTestResult(p probe.Probe, r probe.Result) TestResult {
 	out := TestResult{
 		Name:    p.DisplayName,
 		Success: r.Success,

@@ -97,6 +97,7 @@ func (s *Server) updateSettings(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("ETag", s.settingsManagement.ETag())
 	sendJSONResponse(w, logger, http.StatusOK, map[string]string{"status": "updated"})
 }
+
 func (s *Server) handleLinkSettings(w http.ResponseWriter, r *http.Request) {
 	logger := logging.FromContext(r.Context())
 	switch r.Method {

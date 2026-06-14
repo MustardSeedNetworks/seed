@@ -6,7 +6,6 @@ import (
 	"testing"
 
 	"github.com/MustardSeedNetworks/seed/internal/config"
-	"github.com/MustardSeedNetworks/seed/internal/database"
 	"github.com/MustardSeedNetworks/seed/internal/probe"
 )
 
@@ -34,8 +33,8 @@ func TestHL7EndpointRoundTrip(t *testing.T) {
 			p.Enabled,
 		)
 	}
-	if !strings.Contains(p.ParamsJSON, `"sending_facility":"MAIN"`) {
-		t.Errorf("params_json should carry checker-aligned key sending_facility; got %s", p.ParamsJSON)
+	if !strings.Contains(string(p.Params), `"sending_facility":"MAIN"`) {
+		t.Errorf("Params should carry checker-aligned key sending_facility; got %s", string(p.Params))
 	}
 	out, err := probeToHL7Endpoint(p)
 	if err != nil {
@@ -48,7 +47,7 @@ func TestHL7EndpointRoundTrip(t *testing.T) {
 
 // TestFHIREndpointPreservesSettingsOnlyFields verifies that fields the
 // checker never reads (ClientSecret, TokenURL) still round-trip, since
-// params_json stores the whole endpoint.
+// Params stores the whole endpoint.
 func TestFHIREndpointPreservesSettingsOnlyFields(t *testing.T) {
 	t.Parallel()
 	in := config.FHIREndpoint{
@@ -117,7 +116,7 @@ func TestNonHealthCheckKindIgnored(t *testing.T) {
 	t.Parallel()
 	var hc config.HealthChecksConfig
 	params, _ := json.Marshal(map[string]any{"x": 1})
-	dnsProbe := &database.Probe{Kind: "dns", Target: "8.8.8.8", ParamsJSON: string(params)}
+	dnsProbe := probe.Probe{Kind: "dns", Target: "8.8.8.8", Params: json.RawMessage(params)}
 	if err := appendProbeToConfig(&hc, dnsProbe); err != nil {
 		t.Fatalf("appendProbeToConfig: %v", err)
 	}

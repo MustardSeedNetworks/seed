@@ -362,6 +362,21 @@ linters:
           deny:
             - pkg: github.com/MustardSeedNetworks/seed/internal/database
               desc: "timeseries is persistence-free — the RollupSource port lives in internal/timeseries/retention; the MetricsRollupSource/ProbeRollupSource SQL adapters (internal/database) implement it; wire them in internal/app/api"
+        # WS-B repository-port discipline: the health surface owns its config
+        # endpoint mapping (internal/health/probemap) and settings use-case
+        # (internal/health/settings) in domain terms — it maps config endpoints to
+        # the probe.Probe domain type, never the database row. The probes table is
+        # reached only through the probe repository, wired in internal/app
+        # (healthProbeStore / dbProbeToModel / modelToDBProbe). So internal/health
+        # never imports internal/database. Production-only (tests are mini
+        # composition roots).
+        "health-no-persistence":
+          files:
+            - "**/internal/health/**"
+            - "!$test"
+          deny:
+            - pkg: github.com/MustardSeedNetworks/seed/internal/database
+              desc: "health is persistence-free — probemap maps to the probe.Probe domain type; the probe repository (internal/database) is wired in internal/app (healthProbeStore); never import internal/database from internal/health"
         # Phase 6 capture port: libpcap (via gopacket/pcap) carries the CGO
         # taint that re-links libpcap into every dependent test binary. It is
         # confined to the single adapter package internal/capture/pcap; every

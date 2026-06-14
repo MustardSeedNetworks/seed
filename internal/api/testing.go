@@ -162,6 +162,7 @@ func NewTestServerWithConfig(cfg *config.Config) *Server {
 	s.healthSettings = app.NewHealthSettings(
 		s.healthProbeRepo, s.rescheduleProbeEngine,
 		s.config, s.configPath, s.dnsTester, s.speedtestTester,
+		s.healthSettingsRepo,
 	)
 	s.profiles = app.NewProfiles(s.db, s.config, s.configPath)
 	s.networkIP = app.NewNetworkIP(s.netManager, s.config, s.configPath)

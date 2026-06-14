@@ -384,6 +384,19 @@ func NewServer(
 	// Wire the ADR-0020 use-cases now the discovery components exist.
 	s.initUseCases()
 
+	// Seed the factory health-check targets on first run (ADR-0027 follow-up).
+	// Runs after initUseCases (so s.healthSettings is wired — the seed goes
+	// through the use-case) and before initProbeEngine (so the engine loads the
+	// seeded probes on start). The probes table is the store of record since P2;
+	// without this a fresh install comes up with an empty health-check card.
+	// Gated by a persistent marker, so a later delete-all is not re-seeded.
+	// Non-fatal: a failure degrades to the empty card rather than aborting startup.
+	if db != nil {
+		if err := s.seedDefaultHealthCheckProbes(context.Background()); err != nil {
+			logging.GetLogger().Error("Failed to seed default health-check probes", "error", err)
+		}
+	}
+
 	// Wire the settings-persistence use-case (ADR-0020). The composition root
 	// builds the adapters; api passes its lazy db accessor + live config.
 	s.settingsStore = app.NewSettings(s.db, s.config)
@@ -987,6 +1000,7 @@ func (s *Server) initHealthUseCases() {
 	s.healthSettings = app.NewHealthSettings(
 		s.healthProbeRepo, s.rescheduleProbeEngine,
 		s.config, s.configPath, s.dnsTester, s.speedtestTester,
+		s.healthSettingsRepo,
 	)
 }
 
@@ -997,6 +1011,15 @@ func (s *Server) healthProbeRepo() *database.ProbeRepository {
 		return nil
 	}
 	return s.dbConn.Probes()
+}
+
+// healthSettingsRepo is the settings-KV accessor the health seed-marker reads and
+// writes through; nil when no DB is wired (the test harness).
+func (s *Server) healthSettingsRepo() *database.SettingsRepository {
+	if s.dbConn == nil {
+		return nil
+	}
+	return s.dbConn.Settings()
 }
 
 // rescheduleProbeEngine reschedules the running probe engine after a settings

@@ -11,6 +11,7 @@ import (
 	"context"
 
 	"github.com/MustardSeedNetworks/seed/internal/config"
+	"github.com/MustardSeedNetworks/seed/internal/probe"
 )
 
 // ProbeStore is the endpoint-target store of record (the probes table). Endpoints
@@ -19,6 +20,12 @@ import (
 type ProbeStore interface {
 	Endpoints(ctx context.Context) (config.HealthChecksConfig, error)
 	SaveEndpoints(ctx context.Context, hc config.HealthChecksConfig) error
+	// Count returns how many health-check probes are configured (across the
+	// fourteen kinds). Used by the first-run seed's upgrade guard.
+	Count(ctx context.Context) (int, error)
+	// List returns the configured health-check probes in display order. Used by
+	// the on-demand /run path.
+	List(ctx context.Context) ([]probe.Probe, error)
 }
 
 // ConfigStore reads/persists the config-file-backed toggles. Read runs fn under
@@ -35,16 +42,25 @@ type Appliers interface {
 	ApplySpeedtestServer(id string)
 }
 
+// SeedMarker gates the one-time first-run seeding. Seeded reports whether the
+// factory set has been seeded; MarkSeeded records it. Its presence — not the
+// probe count — is the gate, so an operator's later delete-all stays empty.
+type SeedMarker interface {
+	Seeded(ctx context.Context) (bool, error)
+	MarkSeeded(ctx context.Context) error
+}
+
 // Service is the health-checks settings application service.
 type Service struct {
 	probes   ProbeStore
 	cfg      ConfigStore
 	appliers Appliers
+	marker   SeedMarker
 }
 
 // NewService builds the service over its ports.
-func NewService(probes ProbeStore, cfg ConfigStore, appliers Appliers) *Service {
-	return &Service{probes: probes, cfg: cfg, appliers: appliers}
+func NewService(probes ProbeStore, cfg ConfigStore, appliers Appliers, marker SeedMarker) *Service {
+	return &Service{probes: probes, cfg: cfg, appliers: appliers, marker: marker}
 }
 
 // Settings is the read/write model: the endpoint targets plus the
@@ -114,4 +130,35 @@ func (s *Service) Update(ctx context.Context, in Settings) error {
 	s.appliers.ApplyDNS(in.DNSHostname, in.DNSServers)
 	s.appliers.ApplySpeedtestServer(in.SpeedtestServerID)
 	return nil
+}
+
+// HealthCheckProbes returns the operator's configured health-check probes for
+// the on-demand run path.
+func (s *Service) HealthCheckProbes(ctx context.Context) ([]probe.Probe, error) {
+	return s.probes.List(ctx)
+}
+
+// SeedDefaults seeds the factory health-check targets on a genuine first run.
+// No-op once the marker is set (honoring a later delete-all). An install that
+// already holds health-check probes (upgrade path, no marker) is marked seeded
+// without overwriting its set.
+func (s *Service) SeedDefaults(ctx context.Context, defaults config.HealthChecksConfig) error {
+	seeded, err := s.marker.Seeded(ctx)
+	if err != nil {
+		return err
+	}
+	if seeded {
+		return nil
+	}
+	n, err := s.probes.Count(ctx)
+	if err != nil {
+		return err
+	}
+	if n > 0 {
+		return s.marker.MarkSeeded(ctx)
+	}
+	if saveErr := s.probes.SaveEndpoints(ctx, defaults); saveErr != nil {
+		return saveErr
+	}
+	return s.marker.MarkSeeded(ctx)
 }
