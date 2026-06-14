@@ -48,7 +48,7 @@ export const Heading4: Story = {
 export const Paragraph: Story = {
   render: () => (
     <P>
-      The Roots module analyses path quality across the discovered topology using TCP, UDP, and ICMP
+      Path Analysis examines path quality across the discovered topology using TCP, UDP, and ICMP
       probes. Results are persisted to SQLite and exposed via the REST API.
     </P>
   ),
@@ -72,7 +72,7 @@ export const LinkVariants: Story = {
         <AccentLink href="https://example.com">External link (href)</AccentLink>
       </div>
       <div>
-        <AccentLink to="/roots">Internal link (react-router)</AccentLink>
+        <AccentLink to="/path">Internal link (react-router)</AccentLink>
       </div>
       <div>
         <AccentLink onClick={() => undefined}>Button-styled link</AccentLink>
@@ -85,16 +85,19 @@ export const Hierarchy: Story = {
   render: () => (
     <div className="space-y-4">
       <H1>The Seed</H1>
-      <H2>Modules</H2>
-      <P>Five modules cover the full network diagnostics surface:</P>
+      <H2>Diagnostics</H2>
+      <P>Function-grouped surfaces cover the full network diagnostics workflow:</P>
       <div className="space-y-2">
-        <H3>Roots — path analysis</H3>
+        <H3>Path Analysis</H3>
         <P>Hop-by-hop latency, jitter, and loss measurements over TCP/UDP/ICMP.</P>
         <SmallText>RFC 2544 baseline supported.</SmallText>
       </div>
       <div className="space-y-2">
-        <H3>Canopy — Wi-Fi planning</H3>
-        <P>RF coverage and capacity planning informed by IEEE 802.11 telemetry.</P>
+        <H3>Wi-Fi</H3>
+        <P>
+          Connected-SSID signal/SNR, neighbor AP scan, and channel utilization from IEEE 802.11
+          telemetry.
+        </P>
       </div>
       <Caption>Last updated 5 minutes ago.</Caption>
     </div>

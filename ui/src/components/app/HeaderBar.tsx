@@ -476,7 +476,7 @@ export const HeaderBar: React.FC<HeaderBarProps> = memo(function headerBar({
               onClick={(): void => {
                 // Always use switchToInterfaceType to properly set Wi-Fi mode.
                 // This handles both real Wi-Fi interfaces and survey mode
-                // (no-hardware): Canopy is troubleshooting/survey, not planning.
+                // (no-hardware): Wi-Fi is troubleshooting/survey, not planning.
                 switchToInterfaceType('wifi');
               }}
               aria-label={t('accessibility.selectWifi', 'Select Wi-Fi / Survey Mode')}

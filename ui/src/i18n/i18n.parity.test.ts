@@ -87,12 +87,7 @@ const DNT_TERMS = [
   'jitter',
   'throughput',
   'latency',
-  // Product / modules
-  'Roots',
-  'Canopy',
-  'Shell',
-  'Sap',
-  'Harvest',
+  // Product names
   'Seed',
   'Stem',
   'NIAC',

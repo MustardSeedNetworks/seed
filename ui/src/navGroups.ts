@@ -1,16 +1,27 @@
 /**
  * Sidebar navigation groups for The Seed.
  *
- * Groups follow the existing module taxonomy (Roots / Canopy / Shell /
- * Sap / Harvest). The botanical group *labels* are intentional brand (the
- * code-vs-brand split, R4b) — do not "fix" them to literal module names.
- * Non-module functional groups (Performance, Monitoring) are allowed where
- * pages do not map to a botanical module.
+ * Groups are labelled by FUNCTION, not by the botanical module metaphor
+ * (Sap/Roots/Canopy/Shell/Harvest). This matches where the rest of the
+ * product already landed after the strategy reset: code uses meaningful
+ * tokens (`module-telemetry/path/wifi/security/reporting`), page copy never
+ * used the metaphor, and the marketing site leads with the function and keeps
+ * the botanical name only as a parenthetical aside ("Path analysis (Roots)").
+ * The sidebar was the lone surface still leading with bare metaphors — and the
+ * least self-evident one for a network engineer — so it now leads with the
+ * function too (M1, #1452). The botanical names survive as the module accent
+ * colour (`module-*` tokens) and in marketing; they are not sidebar headers.
+ *
+ * Grouping is by user intent:
+ *   - Live Telemetry — real-time connection state + throughput.
+ *   - Diagnostics    — on-demand investigations (path / Wi-Fi / security).
+ *   - Monitoring     — NMS: SNMP/LLDP/CDP topology, alerting, polling.
+ *   - Reporting      — outputs (reports, logs).
  *
  * Every routable page in pageRegistry must appear here so it is reachable
  * from the sidebar; navGroups.test.ts asserts that parity (guards H3 drift).
  * The sibling projects (niac, stem) ship the same shape via their own
- * navGroups files.
+ * navGroups files; mirror this function-first move there as separate PRs.
  */
 import {
   Activity,
@@ -29,32 +40,22 @@ import type { SidebarNavGroup } from './ui/Sidebar';
 
 export const navGroups: SidebarNavGroup[] = [
   {
-    label: 'Sap',
+    label: 'Live Telemetry',
     items: [
       { path: '/link', label: 'Link', icon: Network },
       { path: '/network', label: 'Network', icon: Server },
+      { path: '/performance', label: 'Performance', icon: Activity },
     ],
   },
   {
-    label: 'Roots',
-    items: [{ path: '/path', label: 'Path Analysis', icon: Route }],
+    label: 'Diagnostics',
+    items: [
+      { path: '/path', label: 'Path Analysis', icon: Route },
+      { path: '/wifi', label: 'Wi-Fi', icon: Wifi },
+      { path: '/security', label: 'Security', icon: Shield },
+    ],
   },
   {
-    label: 'Canopy',
-    items: [{ path: '/wifi', label: 'Wi-Fi', icon: Wifi }],
-  },
-  {
-    label: 'Shell',
-    items: [{ path: '/security', label: 'Security', icon: Shield }],
-  },
-  {
-    label: 'Performance',
-    items: [{ path: '/performance', label: 'Performance', icon: Activity }],
-  },
-  {
-    // NMS pages (SNMP/LLDP/CDP topology, alerting, polling). Minimal
-    // discoverable placement in a functional group; the broader nav IA
-    // redesign is deferred (#1452).
     label: 'Monitoring',
     items: [
       { path: '/topology', label: 'Topology', icon: Share2 },
@@ -63,7 +64,7 @@ export const navGroups: SidebarNavGroup[] = [
     ],
   },
   {
-    label: 'Harvest',
+    label: 'Reporting',
     items: [
       { path: '/reports', label: 'Reports', icon: BarChart3 },
       { path: '/logs', label: 'Logs', icon: ScrollText },

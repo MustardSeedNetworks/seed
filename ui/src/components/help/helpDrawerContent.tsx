@@ -8,7 +8,7 @@
  * Section bodies are authored as a sequence of typed `HelpBlock`s so a single
  * generic renderer can present every section without bespoke per-section JSX.
  * Content is FACTUAL — drawn from Seed's real feature set
- * (Roots/Canopy/Shell/Sap/Harvest plus the dashboard diagnostics). Section
+ * (live telemetry, diagnostics, monitoring, reporting). Section
  * titles come from the `help` i18n namespace (`sections.*`); body copy is
  * authored here in English. No invented features, no banned vocabulary.
  *
@@ -98,42 +98,11 @@ export const helpSections: HelpSection[] = [
     id: 'about',
     titleKey: 'sections.about',
     icon: <Info className={ICON} />,
-    keywords: ['about', 'overview', 'modules', 'roots', 'canopy', 'shell', 'sap', 'harvest'],
+    keywords: ['about', 'overview', 'live telemetry', 'diagnostics', 'monitoring', 'reporting'],
     blocks: [
       {
         kind: 'paragraph',
         text: 'The Seed is a network diagnostics and monitoring tool by Mustard Seed Networks. It gives you visibility into physical-layer link state, IP configuration, gateway and DNS reachability, device discovery, throughput, Wi-Fi connection quality, and endpoint health from a single dashboard.',
-      },
-      {
-        kind: 'terms',
-        heading: 'Modules',
-        items: [
-          {
-            term: 'Roots',
-            description:
-              'Path and route analysis — examines how traffic leaves the local network and reaches a destination.',
-          },
-          {
-            term: 'Canopy',
-            description:
-              'Wi-Fi visibility and troubleshooting — connected-SSID signal/SNR, neighbor access-point scanning, and channel utilization. Focused on diagnosing wireless problems, not coverage planning.',
-          },
-          {
-            term: 'Shell',
-            description:
-              'Security posture — surfaces open ports, device posture, and configuration risks discovered on the network.',
-          },
-          {
-            term: 'Sap',
-            description:
-              'Live telemetry — streams real-time metrics (link, signal, latency, throughput) as tests run.',
-          },
-          {
-            term: 'Harvest',
-            description:
-              'Reporting — collects diagnostic results into exportable reports for documentation and handoff.',
-          },
-        ],
       },
       {
         kind: 'note',
@@ -184,7 +153,7 @@ export const helpSections: HelpSection[] = [
         items: [
           'Use Network Discovery to find every device on the local subnet.',
           'Save per-site configuration as a Profile and switch between profiles from the header.',
-          'Export diagnostics from Harvest for documentation or troubleshooting handoff.',
+          'Export diagnostics for documentation or troubleshooting handoff.',
         ],
       },
     ],
@@ -329,7 +298,7 @@ export const helpSections: HelpSection[] = [
     blocks: [
       {
         kind: 'paragraph',
-        text: 'Wi-Fi Status monitors the quality and settings of the current wireless connection — part of the Canopy module for Wi-Fi visibility and troubleshooting.',
+        text: 'Wi-Fi Status monitors the quality and settings of the current wireless connection — Wi-Fi visibility and troubleshooting.',
       },
       {
         kind: 'terms',
@@ -781,7 +750,7 @@ export const helpSections: HelpSection[] = [
     blocks: [
       {
         kind: 'paragraph',
-        text: 'Security & Administration covers device scanning, posture assessment, and account administration — the basis of the Shell module for security posture.',
+        text: 'Security & Administration covers device scanning, posture assessment, and account administration — security posture for the network.',
       },
       {
         kind: 'terms',
@@ -961,7 +930,7 @@ export const helpSections: HelpSection[] = [
     blocks: [
       {
         kind: 'paragraph',
-        text: 'Path Analysis traces how traffic leaves the local network and reaches a destination. It surfaces every L2 hop on the local segment, every L3 hop on the route off-link, and the on-link devices ARP/ND can see along the way. The Roots module owns this surface.',
+        text: 'Path Analysis traces how traffic leaves the local network and reaches a destination. It surfaces every L2 hop on the local segment, every L3 hop on the route off-link, and the on-link devices ARP/ND can see along the way.',
       },
       {
         kind: 'terms',
@@ -999,7 +968,7 @@ export const helpSections: HelpSection[] = [
     blocks: [
       {
         kind: 'paragraph',
-        text: 'Reports collects the results of Seed’s diagnostic tests over time and exports them as SLA dashboards, compliance summaries, and historical CSV/JSON. The Harvest module owns this surface.',
+        text: 'Reports collects the results of Seed’s diagnostic tests over time and exports them as SLA dashboards, compliance summaries, and historical CSV/JSON.',
       },
       {
         kind: 'terms',
