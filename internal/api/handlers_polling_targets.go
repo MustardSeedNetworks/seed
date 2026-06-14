@@ -20,8 +20,8 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/MustardSeedNetworks/seed/internal/database"
 	"github.com/MustardSeedNetworks/seed/internal/logging"
+	"github.com/MustardSeedNetworks/seed/internal/polling"
 	"github.com/MustardSeedNetworks/seed/internal/polling/targets"
 )
 
@@ -183,11 +183,11 @@ func decodePollingTargetInput(r *http.Request) (*pollingTargetInput, error) {
 	return &in, nil
 }
 
-// inputToTarget maps the wire shape into the repo struct. id ==
+// inputToTarget maps the wire shape into the domain struct. id ==
 // "" means "let the repo generate one" (Create); a non-empty id is
 // used for Update.
-func inputToTarget(in *pollingTargetInput, id string) *database.PollingTarget {
-	return &database.PollingTarget{
+func inputToTarget(in *pollingTargetInput, id string) *polling.Target {
+	return &polling.Target{
 		ID:              id,
 		ClientID:        in.ClientID,
 		Name:            in.Name,
@@ -200,10 +200,10 @@ func inputToTarget(in *pollingTargetInput, id string) *database.PollingTarget {
 	}
 }
 
-// encodePollingTarget shapes the repo row into JSON. Done
+// encodePollingTarget shapes the domain row into JSON. Done
 // explicitly so the wire format stays stable when DB columns
 // evolve.
-func encodePollingTarget(t *database.PollingTarget) map[string]any {
+func encodePollingTarget(t *polling.Target) map[string]any {
 	row := map[string]any{
 		"id":                  t.ID,
 		"clientId":            t.ClientID,
@@ -225,7 +225,7 @@ func encodePollingTarget(t *database.PollingTarget) map[string]any {
 	return row
 }
 
-func encodePollingTargets(targets []*database.PollingTarget) []map[string]any {
+func encodePollingTargets(targets []*polling.Target) []map[string]any {
 	out := make([]map[string]any, 0, len(targets))
 	for _, t := range targets {
 		out = append(out, encodePollingTarget(t))

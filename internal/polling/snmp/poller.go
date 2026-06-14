@@ -7,8 +7,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/MustardSeedNetworks/seed/internal/database"
 	"github.com/MustardSeedNetworks/seed/internal/engine"
+	"github.com/MustardSeedNetworks/seed/internal/polling"
 	"github.com/MustardSeedNetworks/seed/internal/scheduler"
 )
 
@@ -25,10 +25,10 @@ const (
 // chain runs.
 var ErrCollectorNotRegistered = errors.New("collector not registered")
 
-// pollerStorage is the narrowed surface the Poller needs from the
+// PollerStorage is the narrowed surface the Poller needs from the
 // database layer. Tests inject a fake.
-type pollerStorage interface {
-	List(ctx context.Context, clientID string) ([]*database.PollingTarget, error)
+type PollerStorage interface {
+	List(ctx context.Context, clientID string) ([]*polling.Target, error)
 	UpdateLastPoll(ctx context.Context, id, status, errMsg string) error
 }
 
@@ -46,7 +46,7 @@ type pollerScheduler interface {
 // each target's configured cadence.
 type Poller struct {
 	logger    *slog.Logger
-	storage   pollerStorage
+	storage   PollerStorage
 	scheduler pollerScheduler
 
 	mu         sync.RWMutex
@@ -65,7 +65,7 @@ type Poller struct {
 
 // NewPoller returns an unstarted Poller. Pass nil logger to use
 // [slog.Default].
-func NewPoller(storage pollerStorage, sched pollerScheduler, logger *slog.Logger) *Poller {
+func NewPoller(storage PollerStorage, sched pollerScheduler, logger *slog.Logger) *Poller {
 	if logger == nil {
 		logger = slog.Default()
 	}
@@ -199,11 +199,11 @@ func (p *Poller) Stop(ctx context.Context) error {
 // invoked sequentially; failures are logged and the chain
 // continues. After the chain runs, last_status / last_error /
 // last_polled_at are recorded.
-func (p *Poller) runChain(ctx context.Context, target *database.PollingTarget) {
+func (p *Poller) runChain(ctx context.Context, target *polling.Target) {
 	p.recordChainStart()
 	creds := credentialsForTarget(target)
 
-	wireTarget := wireTarget(target)
+	wt := wireTarget(target)
 	var firstErr error
 	defer func() { p.recordChainEnd(firstErr) }()
 	for _, name := range target.CollectorChain {
@@ -220,7 +220,7 @@ func (p *Poller) runChain(ctx context.Context, target *database.PollingTarget) {
 			continue
 		}
 
-		if err := c.Collect(ctx, wireTarget, creds); err != nil {
+		if err := c.Collect(ctx, wt, creds); err != nil {
 			p.logger.WarnContext(ctx, "snmp poller: collector failed",
 				"target_id", target.ID, "collector", name, "error", err)
 			if firstErr == nil {
@@ -245,13 +245,13 @@ func (p *Poller) runChain(ctx context.Context, target *database.PollingTarget) {
 // polling target. V1.0 ships with a no-credentials stub — Stage
 // A3.x adds the device_credentials decryption via
 // license.Manager.DecryptSecret.
-func credentialsForTarget(_ *database.PollingTarget) ResolvedCredentials {
+func credentialsForTarget(_ *polling.Target) ResolvedCredentials {
 	return ResolvedCredentials{}
 }
 
-// wireTarget converts a database.PollingTarget into the
-// internal/polling/snmp Target shape that Collectors consume.
-func wireTarget(t *database.PollingTarget) Target {
+// wireTarget converts a polling.Target into the Target shape that
+// Collectors consume.
+func wireTarget(t *polling.Target) Target {
 	return Target{
 		ID:              t.ID,
 		ClientID:        t.ClientID,
@@ -273,7 +273,7 @@ func wireTarget(t *database.PollingTarget) Target {
 // dispatch.
 type targetJob struct {
 	poller  *Poller
-	target  *database.PollingTarget
+	target  *polling.Target
 	lastRun time.Time
 }
 

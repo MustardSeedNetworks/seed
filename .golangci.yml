@@ -309,6 +309,20 @@ linters:
           deny:
             - pkg: github.com/MustardSeedNetworks/seed/internal/database
               desc: "topology is persistence-free — its row types live in internal/topology and the TopologyRepository (internal/database) maps rows to them; wire it in internal/app"
+        # WS-B repository-port discipline: the polling domain (internal/polling)
+        # owns its row type (polling.Target + polling.ErrTargetNotFound); the
+        # concrete adapter lives in internal/database (PollingTargetRepository)
+        # and maps SQL rows to the domain type. The domain therefore never imports
+        # internal/database — the orchestrator takes typed ports (PollerStorage /
+        # ObservationsStore), not a *database.DB handle. Production-only: test
+        # files that compose a real DB are exempt (they are mini composition roots).
+        "polling-no-persistence":
+          files:
+            - "**/internal/polling/**"
+            - "!$test"
+          deny:
+            - pkg: github.com/MustardSeedNetworks/seed/internal/database
+              desc: "polling is persistence-free — polling.Target lives in internal/polling; PollingTargetRepository (internal/database) maps rows to it; wire ports in internal/app and the orchestrator Config"
         # Phase 6 capture port: libpcap (via gopacket/pcap) carries the CGO
         # taint that re-links libpcap into every dependent test binary. It is
         # confined to the single adapter package internal/capture/pcap; every

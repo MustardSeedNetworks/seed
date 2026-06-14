@@ -9,6 +9,7 @@ import (
 	"context"
 
 	"github.com/MustardSeedNetworks/seed/internal/database"
+	"github.com/MustardSeedNetworks/seed/internal/polling"
 	"github.com/MustardSeedNetworks/seed/internal/polling/targets"
 )
 
@@ -32,7 +33,7 @@ func (a pollingTargetRepo) repo() (*database.PollingTargetRepository, error) {
 	return db.PollingTargets(), nil
 }
 
-func (a pollingTargetRepo) List(ctx context.Context, clientID string) ([]*database.PollingTarget, error) {
+func (a pollingTargetRepo) List(ctx context.Context, clientID string) ([]*polling.Target, error) {
 	repo, err := a.repo()
 	if err != nil {
 		return nil, err
@@ -40,7 +41,7 @@ func (a pollingTargetRepo) List(ctx context.Context, clientID string) ([]*databa
 	return repo.List(ctx, clientID)
 }
 
-func (a pollingTargetRepo) Get(ctx context.Context, id string) (*database.PollingTarget, error) {
+func (a pollingTargetRepo) Get(ctx context.Context, id string) (*polling.Target, error) {
 	repo, err := a.repo()
 	if err != nil {
 		return nil, err
@@ -48,7 +49,7 @@ func (a pollingTargetRepo) Get(ctx context.Context, id string) (*database.Pollin
 	return repo.Get(ctx, id)
 }
 
-func (a pollingTargetRepo) Create(ctx context.Context, t *database.PollingTarget) error {
+func (a pollingTargetRepo) Create(ctx context.Context, t *polling.Target) error {
 	repo, err := a.repo()
 	if err != nil {
 		return err
@@ -56,7 +57,7 @@ func (a pollingTargetRepo) Create(ctx context.Context, t *database.PollingTarget
 	return repo.Create(ctx, t)
 }
 
-func (a pollingTargetRepo) Update(ctx context.Context, t *database.PollingTarget) error {
+func (a pollingTargetRepo) Update(ctx context.Context, t *polling.Target) error {
 	repo, err := a.repo()
 	if err != nil {
 		return err

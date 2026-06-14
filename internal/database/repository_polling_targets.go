@@ -9,31 +9,9 @@ import (
 	"errors"
 	"fmt"
 	"time"
+
+	"github.com/MustardSeedNetworks/seed/internal/polling"
 )
-
-// ErrPollingTargetNotFound is returned when a polling target lookup
-// misses.
-var ErrPollingTargetNotFound = errors.New("polling target not found")
-
-// PollingTarget mirrors a polling_targets row. CollectorChain is
-// decoded from the JSON column. Last* fields record the most
-// recent poll's outcome and feed the operator-facing target status.
-type PollingTarget struct {
-	ID              string    `json:"id"`
-	ClientID        string    `json:"clientId"`
-	Name            string    `json:"name"`
-	IPAddress       string    `json:"ipAddress"`
-	SNMPVersion     string    `json:"snmpVersion"`
-	CredentialsID   string    `json:"credentialsId,omitempty"`
-	PollIntervalSec int       `json:"pollIntervalSeconds"`
-	Enabled         bool      `json:"enabled"`
-	CollectorChain  []string  `json:"collectorChain"`
-	LastPolledAt    time.Time `json:"lastPolledAt,omitzero"`
-	LastStatus      string    `json:"lastStatus,omitempty"`
-	LastError       string    `json:"lastError,omitempty"`
-	CreatedAt       time.Time `json:"createdAt"`
-	UpdatedAt       time.Time `json:"updatedAt"`
-}
 
 // PollingTargetRepository owns CRUD + status-update access to
 // polling_targets.
@@ -44,7 +22,7 @@ type PollingTargetRepository struct {
 // List returns all enabled polling targets for a client. Empty
 // clientID returns enabled targets across every client (useful for
 // the system-wide poller loop).
-func (r *PollingTargetRepository) List(ctx context.Context, clientID string) ([]*PollingTarget, error) {
+func (r *PollingTargetRepository) List(ctx context.Context, clientID string) ([]*polling.Target, error) {
 	query := `
 		SELECT id, client_id, name, ip_address, snmp_version,
 			credentials_id, poll_interval_seconds, enabled, collector_chain,
@@ -65,7 +43,7 @@ func (r *PollingTargetRepository) List(ctx context.Context, clientID string) ([]
 	}
 	defer func() { _ = rows.Close() }()
 
-	var out []*PollingTarget
+	var out []*polling.Target
 	for rows.Next() {
 		t, scanErr := scanPollingTarget(rows.Scan)
 		if scanErr != nil {
@@ -80,7 +58,7 @@ func (r *PollingTargetRepository) List(ctx context.Context, clientID string) ([]
 }
 
 // Get returns one polling target by id.
-func (r *PollingTargetRepository) Get(ctx context.Context, id string) (*PollingTarget, error) {
+func (r *PollingTargetRepository) Get(ctx context.Context, id string) (*polling.Target, error) {
 	row := r.db.QueryRow(ctx, `
 		SELECT id, client_id, name, ip_address, snmp_version,
 			credentials_id, poll_interval_seconds, enabled, collector_chain,
@@ -94,7 +72,7 @@ func (r *PollingTargetRepository) Get(ctx context.Context, id string) (*PollingT
 // here if zero; the caller is expected to populate the remaining
 // fields (Name, IPAddress, SNMPVersion, CollectorChain, etc.).
 // Default poll interval is 300s when caller passes 0.
-func (r *PollingTargetRepository) Create(ctx context.Context, t *PollingTarget) error {
+func (r *PollingTargetRepository) Create(ctx context.Context, t *polling.Target) error {
 	if t.IPAddress == "" {
 		return errors.New("polling_targets: IPAddress required")
 	}
@@ -148,10 +126,10 @@ func (r *PollingTargetRepository) Create(ctx context.Context, t *PollingTarget) 
 // Update modifies the writable fields (name, ip, snmp version, poll
 // interval, enabled, collector chain, credentials_id). Read-only
 // audit columns (created_at, last_polled_at, last_status, last_error)
-// stay untouched. Returns [ErrPollingTargetNotFound] when id is
+// stay untouched. Returns [polling.ErrTargetNotFound] when id is
 // absent — distinguishes a missing target from a SQL-level
 // [sql.ErrNoRows] surface so handlers can map it to HTTP 404.
-func (r *PollingTargetRepository) Update(ctx context.Context, t *PollingTarget) error {
+func (r *PollingTargetRepository) Update(ctx context.Context, t *polling.Target) error {
 	if t.ID == "" {
 		return errors.New("polling_targets: ID required for Update")
 	}
@@ -178,14 +156,14 @@ func (r *PollingTargetRepository) Update(ctx context.Context, t *PollingTarget) 
 	}
 	n, _ := res.RowsAffected()
 	if n == 0 {
-		return ErrPollingTargetNotFound
+		return polling.ErrTargetNotFound
 	}
 	return nil
 }
 
 // Delete removes a polling target by id. Cascades via foreign-key
 // chain on dependent rows (none today). Returns
-// ErrPollingTargetNotFound when no row matched.
+// polling.ErrTargetNotFound when no row matched.
 func (r *PollingTargetRepository) Delete(ctx context.Context, id string) error {
 	if id == "" {
 		return errors.New("polling_targets: ID required for Delete")
@@ -196,7 +174,7 @@ func (r *PollingTargetRepository) Delete(ctx context.Context, id string) error {
 	}
 	n, _ := res.RowsAffected()
 	if n == 0 {
-		return ErrPollingTargetNotFound
+		return polling.ErrTargetNotFound
 	}
 	return nil
 }
@@ -230,11 +208,11 @@ func (r *PollingTargetRepository) UpdateLastPoll(ctx context.Context, id, status
 	return nil
 }
 
-// scanPollingTarget reads a PollingTarget row via a [sql.Row.Scan]
+// scanPollingTarget reads a polling.Target row via a [sql.Row.Scan]
 // or [sql.Rows.Scan] signature.
-func scanPollingTarget(scan func(...any) error) (*PollingTarget, error) {
+func scanPollingTarget(scan func(...any) error) (*polling.Target, error) {
 	var (
-		t             PollingTarget
+		t             polling.Target
 		credentialsID sql.NullString
 		chainJSON     sql.NullString
 		lastPolledAt  sql.NullString
@@ -250,7 +228,7 @@ func scanPollingTarget(scan func(...any) error) (*PollingTarget, error) {
 		&lastPolledAt, &lastStatus, &lastError, &createdAtStr, &updatedAtStr,
 	)
 	if errors.Is(err, sql.ErrNoRows) {
-		return nil, ErrPollingTargetNotFound
+		return nil, polling.ErrTargetNotFound
 	}
 	if err != nil {
 		return nil, fmt.Errorf("scan polling_target: %w", err)

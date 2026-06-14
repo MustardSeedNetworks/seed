@@ -5,33 +5,33 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/MustardSeedNetworks/seed/internal/database"
+	"github.com/MustardSeedNetworks/seed/internal/polling"
 	"github.com/MustardSeedNetworks/seed/internal/polling/targets"
 )
 
 type fakeRepo struct {
-	store     map[string]*database.PollingTarget
+	store     map[string]*polling.Target
 	createErr error
 }
 
-func newFakeRepo() *fakeRepo { return &fakeRepo{store: map[string]*database.PollingTarget{}} }
+func newFakeRepo() *fakeRepo { return &fakeRepo{store: map[string]*polling.Target{}} }
 
-func (f *fakeRepo) List(context.Context, string) ([]*database.PollingTarget, error) {
-	out := make([]*database.PollingTarget, 0, len(f.store))
+func (f *fakeRepo) List(context.Context, string) ([]*polling.Target, error) {
+	out := make([]*polling.Target, 0, len(f.store))
 	for _, t := range f.store {
 		out = append(out, t)
 	}
 	return out, nil
 }
 
-func (f *fakeRepo) Get(_ context.Context, id string) (*database.PollingTarget, error) {
+func (f *fakeRepo) Get(_ context.Context, id string) (*polling.Target, error) {
 	if t, ok := f.store[id]; ok {
 		return t, nil
 	}
-	return nil, database.ErrPollingTargetNotFound
+	return nil, polling.ErrTargetNotFound
 }
 
-func (f *fakeRepo) Create(_ context.Context, t *database.PollingTarget) error {
+func (f *fakeRepo) Create(_ context.Context, t *polling.Target) error {
 	if f.createErr != nil {
 		return f.createErr
 	}
@@ -42,9 +42,9 @@ func (f *fakeRepo) Create(_ context.Context, t *database.PollingTarget) error {
 	return nil
 }
 
-func (f *fakeRepo) Update(_ context.Context, t *database.PollingTarget) error {
+func (f *fakeRepo) Update(_ context.Context, t *polling.Target) error {
 	if _, ok := f.store[t.ID]; !ok {
-		return database.ErrPollingTargetNotFound
+		return polling.ErrTargetNotFound
 	}
 	f.store[t.ID] = t
 	return nil
@@ -52,7 +52,7 @@ func (f *fakeRepo) Update(_ context.Context, t *database.PollingTarget) error {
 
 func (f *fakeRepo) Delete(_ context.Context, id string) error {
 	if _, ok := f.store[id]; !ok {
-		return database.ErrPollingTargetNotFound
+		return polling.ErrTargetNotFound
 	}
 	delete(f.store, id)
 	return nil
@@ -63,7 +63,7 @@ func TestCreateClassifiesRepoValidationError(t *testing.T) {
 	repo.createErr = errors.New("polling_targets: name must be unique")
 	svc := targets.NewService(repo)
 
-	err := svc.Create(context.Background(), &database.PollingTarget{Name: "x"})
+	err := svc.Create(context.Background(), &polling.Target{Name: "x"})
 	var ve targets.ValidationError
 	if !errors.As(err, &ve) {
 		t.Fatalf("want ValidationError, got %v", err)
@@ -85,10 +85,10 @@ func TestGetAndDeleteMapNotFound(t *testing.T) {
 
 func TestUpdateEchoesFreshRowAndMapsNotFound(t *testing.T) {
 	repo := newFakeRepo()
-	repo.store["t1"] = &database.PollingTarget{ID: "t1", Name: "old"}
+	repo.store["t1"] = &polling.Target{ID: "t1", Name: "old"}
 	svc := targets.NewService(repo)
 
-	got, err := svc.Update(context.Background(), &database.PollingTarget{ID: "t1", Name: "new"})
+	got, err := svc.Update(context.Background(), &polling.Target{ID: "t1", Name: "new"})
 	if err != nil {
 		t.Fatalf("Update: %v", err)
 	}
@@ -96,7 +96,7 @@ func TestUpdateEchoesFreshRowAndMapsNotFound(t *testing.T) {
 		t.Errorf("Update did not echo the fresh row: %+v", got)
 	}
 
-	_, err = svc.Update(context.Background(), &database.PollingTarget{ID: "nope"})
+	_, err = svc.Update(context.Background(), &polling.Target{ID: "nope"})
 	if !errors.Is(err, targets.ErrNotFound) {
 		t.Errorf("Update missing: want ErrNotFound, got %v", err)
 	}
