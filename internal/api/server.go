@@ -725,8 +725,8 @@ func (s *Server) initRetentionEngine(db *database.DB) {
 		licenseTierAdapter{lm: s.licenseMgr},
 		logging.GetLogger(),
 	)
-	retentionEngine.Register(retention.NewProbeResultsSource(db))
-	retentionEngine.Register(retention.NewMetricsSource(db))
+	retentionEngine.Register(database.NewProbeRollupSource(db))
+	retentionEngine.Register(database.NewMetricsRollupSource(db))
 	s.retentionEngine = retentionEngine
 	if regErr := s.registerEngineIfLicensed(retentionEngine); regErr != nil {
 		logging.GetLogger().Warn("retention engine registry registration failed", "error", regErr)
