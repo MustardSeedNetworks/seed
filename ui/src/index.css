@@ -148,9 +148,11 @@
      ========================================================================== */
 
   /* Brand Colors — constant across light/dark (canonical 2026-05-22).
-   * Seed product anchor is seed-500. Foreground variants for AA on light
-   * surfaces use text-accent (below) which carries the darker seed-600. */
-  --color-brand-primary: #4caf50; /* Seed anchor (seed-500) — buttons, focus, glows */
+   * Seed product anchor sits between seed-500 and seed-600. Foreground variants
+   * for AA on light surfaces use text-accent (below) which carries seed-600. */
+  --color-brand-primary: #3d9942; /* Seed anchor — deliberately deeper than
+   * status-success #4caf50 (L1): a primary fill must not read as a "success"
+   * state. Keeps AA with on-brand near-black (#18181b → 4.92:1). buttons, focus, glows. */
   --color-brand-accent: #81c784; /* Lighter sibling (seed-300) — hover states */
   --color-brand-gold: #d4a017; /* Mustard cross-brand accent (mustard-500) */
 
@@ -202,7 +204,9 @@
   --color-knob: #ffffff;
 
   /* On-color foregrounds — constant across modes (no .dark override). */
-  --color-on-brand: #18181b; /* zinc-900 — AA on brand/success fills */
+  --color-on-brand: #18181b; /* zinc-900 — foreground on brand/success fills.
+   * AA-verified (VL2), theme-constant: 4.92:1 on brand-primary #3d9942,
+   * 7.55:1 on status-success #4caf50. Both >= WCAG AA 4.5. */
   --color-on-danger: #ffffff; /* white — AA on status-error fills */
   --color-on-info: #ffffff; /* white — AA on status-info fills */
 

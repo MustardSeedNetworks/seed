@@ -226,7 +226,8 @@
     "descriptionPlaceholder": "Optional description",
     "manage": "Manage",
     "noProfiles": "No profiles",
-    "select": "Select Profile"
+    "select": "Select Profile",
+    "switch": "Switch Profile"
   },
   "recovery": {
     "backToLogin": "Back to login",
