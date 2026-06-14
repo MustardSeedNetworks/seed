@@ -8,11 +8,11 @@ import { CommandPalette } from './CommandPalette';
 
 const navGroups: SidebarNavGroup[] = [
   {
-    label: 'Modules',
+    label: 'Diagnostics',
     items: [
-      { label: 'Roots', path: '/roots', icon: Home },
-      { label: 'Canopy', path: '/canopy', icon: Activity },
-      { label: 'Sap', path: '/sap', icon: Sparkles },
+      { label: 'Path Analysis', path: '/path', icon: Home },
+      { label: 'Wi-Fi', path: '/wifi', icon: Activity },
+      { label: 'Link', path: '/link', icon: Sparkles },
     ],
   },
   {
@@ -121,7 +121,7 @@ export const WithExtraActions: Story = {
         },
         {
           id: 'export-report',
-          label: 'Export Harvest report',
+          label: 'Export report',
           hint: 'reports',
           perform: () => undefined,
         },
