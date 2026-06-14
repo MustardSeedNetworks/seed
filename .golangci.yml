@@ -348,6 +348,20 @@ linters:
           deny:
             - pkg: github.com/MustardSeedNetworks/seed/internal/database
               desc: "listener is persistence-free — listener.EventRecord lives in internal/listener; the ListenerEventsRepository (internal/database) maps rows to it; wire it in internal/app"
+        # WS-B repository-port discipline: the retention engine (internal/timeseries/
+        # retention) orchestrates rollup + purge cadence through its consumer-side
+        # RollupSource port; the concrete SQL adapters (MetricsRollupSource /
+        # ProbeRollupSource) live in internal/database and are wired in at the
+        # composition root (internal/api initRetentionEngine). The timeseries domain
+        # therefore never imports internal/database. Production-only (tests use the
+        # engine's domain-typed fakeSource).
+        "timeseries-no-persistence":
+          files:
+            - "**/internal/timeseries/**"
+            - "!$test"
+          deny:
+            - pkg: github.com/MustardSeedNetworks/seed/internal/database
+              desc: "timeseries is persistence-free — the RollupSource port lives in internal/timeseries/retention; the MetricsRollupSource/ProbeRollupSource SQL adapters (internal/database) implement it; wire them in internal/app/api"
         # Phase 6 capture port: libpcap (via gopacket/pcap) carries the CGO
         # taint that re-links libpcap into every dependent test binary. It is
         # confined to the single adapter package internal/capture/pcap; every
