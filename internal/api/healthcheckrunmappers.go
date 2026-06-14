@@ -2,26 +2,25 @@ package api
 
 // healthcheckrunmappers.go contains the per-kind result mappers for the
 // health-check /run endpoint (ADR-0027 P3). Each mapper converts a
-// (database.Probe, probe.Result) pair into the wire DTO the HealthCheckCard
+// (probe.Probe, probe.Result) pair into the wire DTO the HealthCheckCard
 // renders. Static fields (host, port, driver, …) come from the probe's
-// ParamsJSON; dynamic fields (server version, ack code, …) come from
+// Params; dynamic fields (server version, ack code, …) come from
 // probe.Result.Metadata.
 
 import (
 	"encoding/json"
 
 	"github.com/MustardSeedNetworks/seed/internal/config"
-	"github.com/MustardSeedNetworks/seed/internal/database"
 	"github.com/MustardSeedNetworks/seed/internal/probe"
 	"github.com/MustardSeedNetworks/seed/internal/probe/checkers"
 )
 
 // mapSQLResult maps a KindSQL probe result. Driver/host/port come from
-// ParamsJSON; server_version comes from Result.Metadata.
-func mapSQLResult(p *database.Probe, r probe.Result) SQLTestResult {
+// Params; server_version comes from Result.Metadata.
+func mapSQLResult(p probe.Probe, r probe.Result) SQLTestResult {
 	var ep config.SQLEndpoint
-	if p.ParamsJSON != "" {
-		_ = json.Unmarshal([]byte(p.ParamsJSON), &ep)
+	if len(p.Params) > 0 {
+		_ = json.Unmarshal(p.Params, &ep)
 	}
 	var md checkers.SQLRunMetadata
 	if len(r.Metadata) > 0 {
@@ -41,11 +40,11 @@ func mapSQLResult(p *database.Probe, r probe.Result) SQLTestResult {
 }
 
 // mapFileShareResult maps a KindFileShare probe result. Protocol/host/share
-// come from ParamsJSON; speed fields have no metadata source and stay zero.
-func mapFileShareResult(p *database.Probe, r probe.Result) FileShareTestResult {
+// come from Params; speed fields have no metadata source and stay zero.
+func mapFileShareResult(p probe.Probe, r probe.Result) FileShareTestResult {
 	var ep config.FileShareEndpoint
-	if p.ParamsJSON != "" {
-		_ = json.Unmarshal([]byte(p.ParamsJSON), &ep)
+	if len(p.Params) > 0 {
+		_ = json.Unmarshal(p.Params, &ep)
 	}
 	return FileShareTestResult{
 		Name:          p.DisplayName,
@@ -59,11 +58,11 @@ func mapFileShareResult(p *database.Probe, r probe.Result) FileShareTestResult {
 }
 
 // mapLDAPResult maps a KindLDAP probe result. UseTLS/host/port come from
-// ParamsJSON; ServerInfo has no reliable metadata source and stays empty.
-func mapLDAPResult(p *database.Probe, r probe.Result) LDAPTestResult {
+// Params; ServerInfo has no reliable metadata source and stays empty.
+func mapLDAPResult(p probe.Probe, r probe.Result) LDAPTestResult {
 	var ep config.LDAPEndpoint
-	if p.ParamsJSON != "" {
-		_ = json.Unmarshal([]byte(p.ParamsJSON), &ep)
+	if len(p.Params) > 0 {
+		_ = json.Unmarshal(p.Params, &ep)
 	}
 	return LDAPTestResult{
 		Name:          p.DisplayName,
@@ -77,12 +76,12 @@ func mapLDAPResult(p *database.Probe, r probe.Result) LDAPTestResult {
 	}
 }
 
-// mapRTSPResult maps a KindRTSP probe result. URL comes from ParamsJSON;
+// mapRTSPResult maps a KindRTSP probe result. URL comes from Params;
 // codec and resolution have no metadata source and stay empty.
-func mapRTSPResult(p *database.Probe, r probe.Result) RTSPTestResult {
+func mapRTSPResult(p probe.Probe, r probe.Result) RTSPTestResult {
 	var ep config.RTSPEndpoint
-	if p.ParamsJSON != "" {
-		_ = json.Unmarshal([]byte(p.ParamsJSON), &ep)
+	if len(p.Params) > 0 {
+		_ = json.Unmarshal(p.Params, &ep)
 	}
 	return RTSPTestResult{
 		Name:          p.DisplayName,
@@ -94,12 +93,12 @@ func mapRTSPResult(p *database.Probe, r probe.Result) RTSPTestResult {
 }
 
 // mapDICOMResult maps a KindDICOM probe result. Host/port come from
-// ParamsJSON; AETitle is the CalledAE static field. Dynamic fields
+// Params; AETitle is the CalledAE static field. Dynamic fields
 // (ServerAETitle, EchoTimeMs) have no metadata source and stay zero/empty.
-func mapDICOMResult(p *database.Probe, r probe.Result) DICOMTestResult {
+func mapDICOMResult(p probe.Probe, r probe.Result) DICOMTestResult {
 	var ep config.DICOMEndpoint
-	if p.ParamsJSON != "" {
-		_ = json.Unmarshal([]byte(p.ParamsJSON), &ep)
+	if len(p.Params) > 0 {
+		_ = json.Unmarshal(p.Params, &ep)
 	}
 	return DICOMTestResult{
 		Name:        p.DisplayName,
@@ -112,13 +111,13 @@ func mapDICOMResult(p *database.Probe, r probe.Result) DICOMTestResult {
 	}
 }
 
-// mapHL7Result maps a KindHL7 probe result. Host/port come from ParamsJSON;
+// mapHL7Result maps a KindHL7 probe result. Host/port come from Params;
 // ack_code comes from Result.Metadata. ServerVersion has no source and stays
 // empty.
-func mapHL7Result(p *database.Probe, r probe.Result) HL7TestResult {
+func mapHL7Result(p probe.Probe, r probe.Result) HL7TestResult {
 	var ep config.HL7Endpoint
-	if p.ParamsJSON != "" {
-		_ = json.Unmarshal([]byte(p.ParamsJSON), &ep)
+	if len(p.Params) > 0 {
+		_ = json.Unmarshal(p.Params, &ep)
 	}
 	var md checkers.HL7RunMetadata
 	if len(r.Metadata) > 0 {
@@ -135,12 +134,12 @@ func mapHL7Result(p *database.Probe, r probe.Result) HL7TestResult {
 	}
 }
 
-// mapFHIRResult maps a KindFHIR probe result. BaseURL comes from ParamsJSON;
+// mapFHIRResult maps a KindFHIR probe result. BaseURL comes from Params;
 // fhir_version/server_name/resource_count come from Result.Metadata.
-func mapFHIRResult(p *database.Probe, r probe.Result) FHIRTestResult {
+func mapFHIRResult(p probe.Probe, r probe.Result) FHIRTestResult {
 	var ep config.FHIREndpoint
-	if p.ParamsJSON != "" {
-		_ = json.Unmarshal([]byte(p.ParamsJSON), &ep)
+	if len(p.Params) > 0 {
+		_ = json.Unmarshal(p.Params, &ep)
 	}
 	var md checkers.FHIRRunMetadata
 	if len(r.Metadata) > 0 {
@@ -158,12 +157,12 @@ func mapFHIRResult(p *database.Probe, r probe.Result) FHIRTestResult {
 	}
 }
 
-// mapLTIResult maps a KindLTI probe result. LaunchURL comes from ParamsJSON;
+// mapLTIResult maps a KindLTI probe result. LaunchURL comes from Params;
 // lti_version comes from Result.Metadata.
-func mapLTIResult(p *database.Probe, r probe.Result) LTITestResult {
+func mapLTIResult(p probe.Probe, r probe.Result) LTITestResult {
 	var ep config.LTIEndpoint
-	if p.ParamsJSON != "" {
-		_ = json.Unmarshal([]byte(p.ParamsJSON), &ep)
+	if len(p.Params) > 0 {
+		_ = json.Unmarshal(p.Params, &ep)
 	}
 	var md checkers.LTIRunMetadata
 	if len(r.Metadata) > 0 {
@@ -180,12 +179,12 @@ func mapLTIResult(p *database.Probe, r probe.Result) LTITestResult {
 }
 
 // mapOPCUAResult maps a KindOPCUA probe result. EndpointURL comes from
-// ParamsJSON; security_mode comes from Result.Metadata. ProductName and
+// Params; security_mode comes from Result.Metadata. ProductName and
 // ServerState have no metadata source and stay empty.
-func mapOPCUAResult(p *database.Probe, r probe.Result) OPCUATestResult {
+func mapOPCUAResult(p probe.Probe, r probe.Result) OPCUATestResult {
 	var ep config.OPCUAEndpoint
-	if p.ParamsJSON != "" {
-		_ = json.Unmarshal([]byte(p.ParamsJSON), &ep)
+	if len(p.Params) > 0 {
+		_ = json.Unmarshal(p.Params, &ep)
 	}
 	var md checkers.OPCUARunMetadata
 	if len(r.Metadata) > 0 {
@@ -202,11 +201,11 @@ func mapOPCUAResult(p *database.Probe, r probe.Result) OPCUATestResult {
 }
 
 // mapModbusResult maps a KindMODBUS probe result. Host/port/unitId come from
-// ParamsJSON; register_value comes from Result.Metadata.
-func mapModbusResult(p *database.Probe, r probe.Result) ModbusTestResult {
+// Params; register_value comes from Result.Metadata.
+func mapModbusResult(p probe.Probe, r probe.Result) ModbusTestResult {
 	var ep config.ModbusEndpoint
-	if p.ParamsJSON != "" {
-		_ = json.Unmarshal([]byte(p.ParamsJSON), &ep)
+	if len(p.Params) > 0 {
+		_ = json.Unmarshal(p.Params, &ep)
 	}
 	var md checkers.ModbusRunMetadata
 	if len(r.Metadata) > 0 {

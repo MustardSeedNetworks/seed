@@ -987,6 +987,7 @@ func (s *Server) initHealthUseCases() {
 	s.healthSettings = app.NewHealthSettings(
 		s.healthProbeRepo, s.rescheduleProbeEngine,
 		s.config, s.configPath, s.dnsTester, s.speedtestTester,
+		s.healthSettingsRepo,
 	)
 }
 
@@ -997,6 +998,15 @@ func (s *Server) healthProbeRepo() *database.ProbeRepository {
 		return nil
 	}
 	return s.dbConn.Probes()
+}
+
+// healthSettingsRepo is the settings-KV accessor the health seed-marker reads and
+// writes through; nil when no DB is wired (the test harness).
+func (s *Server) healthSettingsRepo() *database.SettingsRepository {
+	if s.dbConn == nil {
+		return nil
+	}
+	return s.dbConn.Settings()
 }
 
 // rescheduleProbeEngine reschedules the running probe engine after a settings

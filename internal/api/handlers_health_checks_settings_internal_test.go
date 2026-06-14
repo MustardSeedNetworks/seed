@@ -22,6 +22,7 @@ func wireHealthSettings(s *Server) {
 	s.healthSettings = app.NewHealthSettings(
 		s.healthProbeRepo, s.rescheduleProbeEngine,
 		s.config, s.configPath, s.dnsTester, s.speedtestTester,
+		s.healthSettingsRepo,
 	)
 }
 

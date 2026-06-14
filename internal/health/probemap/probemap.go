@@ -14,12 +14,10 @@ package probemap
 // JSON key namespaces are kept aligned so one params blob serves both.
 
 import (
-	"context"
 	"encoding/json"
 	"fmt"
 
 	"github.com/MustardSeedNetworks/seed/internal/config"
-	"github.com/MustardSeedNetworks/seed/internal/database"
 	"github.com/MustardSeedNetworks/seed/internal/probe"
 )
 
@@ -40,117 +38,101 @@ func Kinds() []string {
 	}
 }
 
-// CountProbes returns the total number of probes across the
-// health-check kinds for the default client. Used by the first-run seed to
-// detect an install that already holds a configured set (the upgrade path)
-// so the factory defaults never overwrite it.
-func CountProbes(ctx context.Context, repo *database.ProbeRepository) (int, error) {
-	total := 0
-	for _, kind := range Kinds() {
-		n, err := repo.CountProbes(ctx, database.DefaultClientID, kind)
-		if err != nil {
-			return 0, fmt.Errorf("count %s probes: %w", kind, err)
-		}
-		total += n
-	}
-	return total, nil
-}
-
-// endpointToProbe builds a probe row from an endpoint: the endpoint is
-// marshaled wholesale into params_json (Name/Target/Enabled are also
-// authoritative columns, so the duplicate keys in params are harmless
+// endpointToProbe builds a probe.Probe from an endpoint: the endpoint is
+// marshaled wholesale into Params (Name/Target/Enabled are also
+// authoritative fields, so the duplicate keys in params are harmless
 // and the columns win on read). ID and ClientID are left empty for
-// CreateProbe to fill (uuid + default client).
-func endpointToProbe(kind, name, target string, enabled bool, endpoint any) (*database.Probe, error) {
+// the repository to fill (uuid + default client).
+func endpointToProbe(kind, name, target string, enabled bool, endpoint any) (probe.Probe, error) {
 	pj, err := json.Marshal(endpoint)
 	if err != nil {
-		return nil, fmt.Errorf("marshal %s endpoint params: %w", kind, err)
+		return probe.Probe{}, fmt.Errorf("marshal %s endpoint params: %w", kind, err)
 	}
-	return &database.Probe{
+	return probe.Probe{
 		Kind:            kind,
 		DisplayName:     name,
 		Target:          target,
-		ParamsJSON:      string(pj),
+		Params:          json.RawMessage(pj),
 		IntervalSeconds: defaultHealthCheckIntervalSeconds,
 		Enabled:         enabled,
 	}, nil
 }
 
-// endpointFromProbe unmarshals a probe's params_json into the endpoint
+// endpointFromProbe unmarshals a probe's Params into the endpoint
 // type T. The caller overwrites the identity fields (Name/Target/Enabled)
 // from the authoritative columns afterwards.
-func endpointFromProbe[T any](p *database.Probe) (T, error) {
+func endpointFromProbe[T any](p probe.Probe) (T, error) {
 	var e T
-	if p.ParamsJSON == "" {
+	if len(p.Params) == 0 {
 		return e, nil
 	}
-	if err := json.Unmarshal([]byte(p.ParamsJSON), &e); err != nil {
+	if err := json.Unmarshal(p.Params, &e); err != nil {
 		return e, fmt.Errorf("unmarshal %s probe params: %w", p.Kind, err)
 	}
 	return e, nil
 }
 
-// --- per-kind forward mappings (config endpoint -> probe row) ---
+// --- per-kind forward mappings (config endpoint -> probe.Probe) ---
 
-func pingTargetToProbe(e config.PingTarget) (*database.Probe, error) {
+func pingTargetToProbe(e config.PingTarget) (probe.Probe, error) {
 	return endpointToProbe(probe.KindPing, e.Name, e.Host, e.Enabled, e)
 }
 
-func tcpPortToProbe(e config.TCPPortTest) (*database.Probe, error) {
+func tcpPortToProbe(e config.TCPPortTest) (probe.Probe, error) {
 	return endpointToProbe(probe.KindTCP, e.Name, e.Host, e.Enabled, e)
 }
 
-func udpPortToProbe(e config.UDPPortTest) (*database.Probe, error) {
+func udpPortToProbe(e config.UDPPortTest) (probe.Probe, error) {
 	return endpointToProbe(probe.KindUDP, e.Name, e.Host, e.Enabled, e)
 }
 
-func httpEndpointToProbe(e config.HTTPEndpoint) (*database.Probe, error) {
+func httpEndpointToProbe(e config.HTTPEndpoint) (probe.Probe, error) {
 	return endpointToProbe(probe.KindHTTP, e.Name, e.URL, e.Enabled, e)
 }
 
-func rtspEndpointToProbe(e config.RTSPEndpoint) (*database.Probe, error) {
+func rtspEndpointToProbe(e config.RTSPEndpoint) (probe.Probe, error) {
 	return endpointToProbe(probe.KindRTSP, e.Name, e.URL, e.Enabled, e)
 }
 
-func dicomEndpointToProbe(e config.DICOMEndpoint) (*database.Probe, error) {
+func dicomEndpointToProbe(e config.DICOMEndpoint) (probe.Probe, error) {
 	return endpointToProbe(probe.KindDICOM, e.Name, e.Host, e.Enabled, e)
 }
 
-func hl7EndpointToProbe(e config.HL7Endpoint) (*database.Probe, error) {
+func hl7EndpointToProbe(e config.HL7Endpoint) (probe.Probe, error) {
 	return endpointToProbe(probe.KindHL7, e.Name, e.Host, e.Enabled, e)
 }
 
-func fhirEndpointToProbe(e config.FHIREndpoint) (*database.Probe, error) {
+func fhirEndpointToProbe(e config.FHIREndpoint) (probe.Probe, error) {
 	return endpointToProbe(probe.KindFHIR, e.Name, e.BaseURL, e.Enabled, e)
 }
 
-func sqlEndpointToProbe(e config.SQLEndpoint) (*database.Probe, error) {
+func sqlEndpointToProbe(e config.SQLEndpoint) (probe.Probe, error) {
 	return endpointToProbe(probe.KindSQL, e.Name, e.Host, e.Enabled, e)
 }
 
-func fileShareEndpointToProbe(e config.FileShareEndpoint) (*database.Probe, error) {
+func fileShareEndpointToProbe(e config.FileShareEndpoint) (probe.Probe, error) {
 	return endpointToProbe(probe.KindFileShare, e.Name, e.Host, e.Enabled, e)
 }
 
-func ldapEndpointToProbe(e config.LDAPEndpoint) (*database.Probe, error) {
+func ldapEndpointToProbe(e config.LDAPEndpoint) (probe.Probe, error) {
 	return endpointToProbe(probe.KindLDAP, e.Name, e.Host, e.Enabled, e)
 }
 
-func ltiEndpointToProbe(e config.LTIEndpoint) (*database.Probe, error) {
+func ltiEndpointToProbe(e config.LTIEndpoint) (probe.Probe, error) {
 	return endpointToProbe(probe.KindLTI, e.Name, e.LaunchURL, e.Enabled, e)
 }
 
-func opcuaEndpointToProbe(e config.OPCUAEndpoint) (*database.Probe, error) {
+func opcuaEndpointToProbe(e config.OPCUAEndpoint) (probe.Probe, error) {
 	return endpointToProbe(probe.KindOPCUA, e.Name, e.EndpointURL, e.Enabled, e)
 }
 
-func modbusEndpointToProbe(e config.ModbusEndpoint) (*database.Probe, error) {
+func modbusEndpointToProbe(e config.ModbusEndpoint) (probe.Probe, error) {
 	return endpointToProbe(probe.KindMODBUS, e.Name, e.Host, e.Enabled, e)
 }
 
-// --- per-kind reverse mappings (probe row -> config endpoint) ---
+// --- per-kind reverse mappings (probe.Probe -> config endpoint) ---
 
-func probeToPingTarget(p *database.Probe) (config.PingTarget, error) {
+func probeToPingTarget(p probe.Probe) (config.PingTarget, error) {
 	e, err := endpointFromProbe[config.PingTarget](p)
 	if err != nil {
 		return e, err
@@ -159,7 +141,7 @@ func probeToPingTarget(p *database.Probe) (config.PingTarget, error) {
 	return e, nil
 }
 
-func probeToTCPPort(p *database.Probe) (config.TCPPortTest, error) {
+func probeToTCPPort(p probe.Probe) (config.TCPPortTest, error) {
 	e, err := endpointFromProbe[config.TCPPortTest](p)
 	if err != nil {
 		return e, err
@@ -168,7 +150,7 @@ func probeToTCPPort(p *database.Probe) (config.TCPPortTest, error) {
 	return e, nil
 }
 
-func probeToUDPPort(p *database.Probe) (config.UDPPortTest, error) {
+func probeToUDPPort(p probe.Probe) (config.UDPPortTest, error) {
 	e, err := endpointFromProbe[config.UDPPortTest](p)
 	if err != nil {
 		return e, err
@@ -177,7 +159,7 @@ func probeToUDPPort(p *database.Probe) (config.UDPPortTest, error) {
 	return e, nil
 }
 
-func probeToHTTPEndpoint(p *database.Probe) (config.HTTPEndpoint, error) {
+func probeToHTTPEndpoint(p probe.Probe) (config.HTTPEndpoint, error) {
 	e, err := endpointFromProbe[config.HTTPEndpoint](p)
 	if err != nil {
 		return e, err
@@ -186,7 +168,7 @@ func probeToHTTPEndpoint(p *database.Probe) (config.HTTPEndpoint, error) {
 	return e, nil
 }
 
-func probeToRTSPEndpoint(p *database.Probe) (config.RTSPEndpoint, error) {
+func probeToRTSPEndpoint(p probe.Probe) (config.RTSPEndpoint, error) {
 	e, err := endpointFromProbe[config.RTSPEndpoint](p)
 	if err != nil {
 		return e, err
@@ -195,7 +177,7 @@ func probeToRTSPEndpoint(p *database.Probe) (config.RTSPEndpoint, error) {
 	return e, nil
 }
 
-func probeToDICOMEndpoint(p *database.Probe) (config.DICOMEndpoint, error) {
+func probeToDICOMEndpoint(p probe.Probe) (config.DICOMEndpoint, error) {
 	e, err := endpointFromProbe[config.DICOMEndpoint](p)
 	if err != nil {
 		return e, err
@@ -204,7 +186,7 @@ func probeToDICOMEndpoint(p *database.Probe) (config.DICOMEndpoint, error) {
 	return e, nil
 }
 
-func probeToHL7Endpoint(p *database.Probe) (config.HL7Endpoint, error) {
+func probeToHL7Endpoint(p probe.Probe) (config.HL7Endpoint, error) {
 	e, err := endpointFromProbe[config.HL7Endpoint](p)
 	if err != nil {
 		return e, err
@@ -213,7 +195,7 @@ func probeToHL7Endpoint(p *database.Probe) (config.HL7Endpoint, error) {
 	return e, nil
 }
 
-func probeToFHIREndpoint(p *database.Probe) (config.FHIREndpoint, error) {
+func probeToFHIREndpoint(p probe.Probe) (config.FHIREndpoint, error) {
 	e, err := endpointFromProbe[config.FHIREndpoint](p)
 	if err != nil {
 		return e, err
@@ -222,7 +204,7 @@ func probeToFHIREndpoint(p *database.Probe) (config.FHIREndpoint, error) {
 	return e, nil
 }
 
-func probeToSQLEndpoint(p *database.Probe) (config.SQLEndpoint, error) {
+func probeToSQLEndpoint(p probe.Probe) (config.SQLEndpoint, error) {
 	e, err := endpointFromProbe[config.SQLEndpoint](p)
 	if err != nil {
 		return e, err
@@ -231,7 +213,7 @@ func probeToSQLEndpoint(p *database.Probe) (config.SQLEndpoint, error) {
 	return e, nil
 }
 
-func probeToFileShareEndpoint(p *database.Probe) (config.FileShareEndpoint, error) {
+func probeToFileShareEndpoint(p probe.Probe) (config.FileShareEndpoint, error) {
 	e, err := endpointFromProbe[config.FileShareEndpoint](p)
 	if err != nil {
 		return e, err
@@ -240,7 +222,7 @@ func probeToFileShareEndpoint(p *database.Probe) (config.FileShareEndpoint, erro
 	return e, nil
 }
 
-func probeToLDAPEndpoint(p *database.Probe) (config.LDAPEndpoint, error) {
+func probeToLDAPEndpoint(p probe.Probe) (config.LDAPEndpoint, error) {
 	e, err := endpointFromProbe[config.LDAPEndpoint](p)
 	if err != nil {
 		return e, err
@@ -249,7 +231,7 @@ func probeToLDAPEndpoint(p *database.Probe) (config.LDAPEndpoint, error) {
 	return e, nil
 }
 
-func probeToLTIEndpoint(p *database.Probe) (config.LTIEndpoint, error) {
+func probeToLTIEndpoint(p probe.Probe) (config.LTIEndpoint, error) {
 	e, err := endpointFromProbe[config.LTIEndpoint](p)
 	if err != nil {
 		return e, err
@@ -258,7 +240,7 @@ func probeToLTIEndpoint(p *database.Probe) (config.LTIEndpoint, error) {
 	return e, nil
 }
 
-func probeToOPCUAEndpoint(p *database.Probe) (config.OPCUAEndpoint, error) {
+func probeToOPCUAEndpoint(p probe.Probe) (config.OPCUAEndpoint, error) {
 	e, err := endpointFromProbe[config.OPCUAEndpoint](p)
 	if err != nil {
 		return e, err
@@ -267,7 +249,7 @@ func probeToOPCUAEndpoint(p *database.Probe) (config.OPCUAEndpoint, error) {
 	return e, nil
 }
 
-func probeToModbusEndpoint(p *database.Probe) (config.ModbusEndpoint, error) {
+func probeToModbusEndpoint(p probe.Probe) (config.ModbusEndpoint, error) {
 	e, err := endpointFromProbe[config.ModbusEndpoint](p)
 	if err != nil {
 		return e, err
@@ -276,31 +258,24 @@ func probeToModbusEndpoint(p *database.Probe) (config.ModbusEndpoint, error) {
 	return e, nil
 }
 
-// LoadEndpoints reads the health-check probe definitions from
-// the probes table and assembles them into the endpoint lists of a
-// HealthChecksConfig. Only the endpoint lists are populated; the
-// performance/discovery toggles live in the config file and are not
-// sourced here. A malformed params row is skipped with the error
-// returned so the caller can log it without dropping the whole set.
-func LoadEndpoints(ctx context.Context, repo *database.ProbeRepository) (config.HealthChecksConfig, error) {
+// EndpointsFromProbes assembles the health-check endpoint lists of a
+// HealthChecksConfig from probe definitions. Probes of non-health-check kinds
+// are ignored. A malformed params row aborts with the error.
+func EndpointsFromProbes(probes []probe.Probe) (config.HealthChecksConfig, error) {
 	var hc config.HealthChecksConfig
-	probes, err := repo.ListProbes(ctx, database.DefaultClientID, "")
-	if err != nil {
-		return hc, fmt.Errorf("list health-check probes: %w", err)
-	}
 	for _, p := range probes {
-		if err = appendProbeToConfig(&hc, p); err != nil {
+		if err := appendProbeToConfig(&hc, p); err != nil {
 			return hc, err
 		}
 	}
 	return hc, nil
 }
 
-// appendProbeToConfig maps one probe row onto its endpoint list in hc.
+// appendProbeToConfig maps one probe.Probe onto its endpoint list in hc.
 // Probes of non-health-check kinds are ignored.
 //
 //nolint:gocognit,cyclop,funlen // A flat dispatch over the fourteen probe kinds; one case each.
-func appendProbeToConfig(hc *config.HealthChecksConfig, p *database.Probe) error {
+func appendProbeToConfig(hc *config.HealthChecksConfig, p probe.Probe) error {
 	switch p.Kind {
 	case probe.KindPing:
 		e, err := probeToPingTarget(p)
@@ -391,13 +366,13 @@ func appendProbeToConfig(hc *config.HealthChecksConfig, p *database.Probe) error
 }
 
 // ProbesFromConfig flattens the endpoint lists of a
-// HealthChecksConfig into the probe rows to persist. Order follows
+// HealthChecksConfig into the probe.Probe slice to persist. Order follows
 // Kinds; a marshal failure aborts the whole set.
 //
 //nolint:gocognit,cyclop // A flat fan over the fourteen endpoint lists; one block each.
-func ProbesFromConfig(hc *config.HealthChecksConfig) ([]*database.Probe, error) {
-	var out []*database.Probe
-	add := func(p *database.Probe, err error) error {
+func ProbesFromConfig(hc *config.HealthChecksConfig) ([]probe.Probe, error) {
+	var out []probe.Probe
+	add := func(p probe.Probe, err error) error {
 		if err != nil {
 			return err
 		}

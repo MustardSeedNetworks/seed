@@ -68,6 +68,27 @@ func (s *ProbeStorage) RecordResult(ctx context.Context, r probe.Result) error {
 	})
 }
 
+// modelToDBProbe converts the probe package's domain Probe into the database
+// row representation. The inverse of dbProbeToModel: the [json.RawMessage] columns
+// become TEXT. ID/ClientID/timestamps pass through (empty on the save path, where
+// the repository fills them).
+func modelToDBProbe(p probe.Probe) *database.Probe {
+	return &database.Probe{
+		ID:              p.ID,
+		ClientID:        p.ClientID,
+		Kind:            p.Kind,
+		DisplayName:     p.DisplayName,
+		Target:          p.Target,
+		ParamsJSON:      string(p.Params),
+		IntervalSeconds: p.IntervalSeconds,
+		Enabled:         p.Enabled,
+		WarningJSON:     string(p.Warning),
+		CriticalJSON:    string(p.Critical),
+		CreatedAt:       p.CreatedAt,
+		UpdatedAt:       p.UpdatedAt,
+	}
+}
+
 // dbProbeToModel converts the database row representation into the probe
 // package's Probe type. The JSON columns are passed through as
 // [json.RawMessage]; consumers decode them per-Kind.

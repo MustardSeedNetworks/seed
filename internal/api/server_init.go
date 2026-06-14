@@ -116,7 +116,7 @@ func (s *Server) initDatabaseServices(cfg *config.Config, db *database.DB) {
 	// install comes up with an empty health-check card. Gated by a persistent
 	// marker, so a later delete-all is not re-seeded. Non-fatal: a failure
 	// degrades to the empty card rather than aborting startup.
-	if err := s.seedDefaultHealthCheckProbes(context.Background(), db); err != nil {
+	if err := s.seedDefaultHealthCheckProbes(context.Background()); err != nil {
 		logging.GetLogger().Error("Failed to seed default health-check probes", "error", err)
 	}
 

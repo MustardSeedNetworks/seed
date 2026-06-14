@@ -10,6 +10,9 @@ package app
 
 import (
 	"context"
+	"fmt"
+	"slices"
+	"time"
 
 	"github.com/MustardSeedNetworks/seed/internal/config"
 	"github.com/MustardSeedNetworks/seed/internal/database"
@@ -17,6 +20,7 @@ import (
 	"github.com/MustardSeedNetworks/seed/internal/diagnostics/speedtest"
 	"github.com/MustardSeedNetworks/seed/internal/health/probemap"
 	healthsettings "github.com/MustardSeedNetworks/seed/internal/health/settings"
+	"github.com/MustardSeedNetworks/seed/internal/probe"
 )
 
 // NewHealthSettings builds the health-checks settings use-case over the probes
@@ -30,11 +34,13 @@ func NewHealthSettings(
 	path string,
 	dnsTester func() *dns.Tester,
 	speedTester func() *speedtest.Tester,
+	settings func() *database.SettingsRepository,
 ) *healthsettings.Service {
 	return healthsettings.NewService(
 		healthProbeStore{probes: probes, reschedule: reschedule},
 		healthConfigStore{cfg: cfg, path: path},
 		healthAppliers{dnsTester: dnsTester, speedTester: speedTester},
+		healthSeedMarker{settings: settings},
 	)
 }
 
@@ -46,16 +52,54 @@ type healthProbeStore struct {
 }
 
 func (a healthProbeStore) Endpoints(ctx context.Context) (config.HealthChecksConfig, error) {
-	return probemap.LoadEndpoints(ctx, a.probes())
+	probes, err := a.list(ctx)
+	if err != nil {
+		return config.HealthChecksConfig{}, err
+	}
+	return probemap.EndpointsFromProbes(probes)
+}
+
+// list loads the health-check probes and translates rows to domain probes.
+func (a healthProbeStore) list(ctx context.Context) ([]probe.Probe, error) {
+	rows, err := a.probes().ListProbes(ctx, database.DefaultClientID, "")
+	if err != nil {
+		return nil, err
+	}
+	kinds := probemap.Kinds()
+	out := make([]probe.Probe, 0, len(rows))
+	for _, p := range rows {
+		if slices.Contains(kinds, p.Kind) {
+			out = append(out, dbProbeToModel(p))
+		}
+	}
+	return out, nil
+}
+
+func (a healthProbeStore) List(ctx context.Context) ([]probe.Probe, error) { return a.list(ctx) }
+
+func (a healthProbeStore) Count(ctx context.Context) (int, error) {
+	total := 0
+	for _, kind := range probemap.Kinds() {
+		n, err := a.probes().CountProbes(ctx, database.DefaultClientID, kind)
+		if err != nil {
+			return 0, fmt.Errorf("count %s probes: %w", kind, err)
+		}
+		total += n
+	}
+	return total, nil
 }
 
 func (a healthProbeStore) SaveEndpoints(ctx context.Context, hc config.HealthChecksConfig) error {
-	probes, err := probemap.ProbesFromConfig(&hc)
+	domain, err := probemap.ProbesFromConfig(&hc)
 	if err != nil {
 		return err
 	}
+	rows := make([]*database.Probe, 0, len(domain))
+	for _, p := range domain {
+		rows = append(rows, modelToDBProbe(p))
+	}
 	if err = a.probes().ReplaceProbesByKinds(
-		ctx, database.DefaultClientID, probemap.Kinds(), probes,
+		ctx, database.DefaultClientID, probemap.Kinds(), rows,
 	); err != nil {
 		return err
 	}
@@ -117,4 +161,28 @@ func (a healthAppliers) ApplySpeedtestServer(id string) {
 	if t := a.speedTester(); t != nil {
 		t.SetServerID(id)
 	}
+}
+
+// settingKeyHealthChecksSeeded marks that the factory health-check probes have
+// been seeded. Its presence (not the probe count) is the gate.
+const settingKeyHealthChecksSeeded = "health_checks.seeded"
+
+// healthSeedMarker implements healthsettings.SeedMarker over the settings KV.
+type healthSeedMarker struct {
+	settings func() *database.SettingsRepository
+}
+
+func (m healthSeedMarker) Seeded(ctx context.Context) (bool, error) {
+	v, err := m.settings().GetValue(ctx, settingKeyHealthChecksSeeded)
+	if err != nil {
+		return false, fmt.Errorf("read health-check seed marker: %w", err)
+	}
+	return v != "", nil
+}
+
+func (m healthSeedMarker) MarkSeeded(ctx context.Context) error {
+	if err := m.settings().Set(ctx, settingKeyHealthChecksSeeded, time.Now().UTC().Format(time.RFC3339)); err != nil {
+		return fmt.Errorf("set health-check seed marker: %w", err)
+	}
+	return nil
 }
