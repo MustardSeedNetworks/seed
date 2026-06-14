@@ -277,9 +277,11 @@ test.describe('Theme Toggle and Help Modal', { tag: '@smoke' }, () => {
       const content = page.getByTestId('help-drawer-content');
       await expect(content).toBeVisible();
 
-      // The default (About) section names the Seed modules in its body.
-      await expect(content).toContainText('Roots');
-      await expect(content).toContainText('Canopy');
+      // The default (About) section renders real product prose (the help
+      // glossary's botanical module terms were retired with the function-first
+      // nav — this asserts stable About copy instead).
+      await expect(content).toContainText('network diagnostics');
+      await expect(content).toContainText('Mustard Seed Networks');
 
       // And there is substantive prose, not an empty pane.
       const text = (await content.innerText()).trim();
