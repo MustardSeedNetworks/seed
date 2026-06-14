@@ -1,28 +1,26 @@
 #!/usr/bin/env bash
-# check-json-casing.sh — JSON wire-casing discipline gate (ADR-0010).
+# check-json-casing.sh — JSON wire-casing discipline gate (ADR-0010, revised 2026-06-14).
 #
-# ADR-0010: JSON API wire tags are camelCase. The config-file format
-# (internal/config) and SQL columns are snake_case by design and are NOT
-# scanned here.
+# ADR-0010 (pure boundary mapping): every JSON `json:"..."` wire tag our API
+# emits or accepts is camelCase. There are NO wire-level snake_case exceptions
+# and NO key allow-list / baseline. snake_case lives only OFF the wire — config
+# files (internal/config), SQL columns, and internal adapters that parse an
+# external tool's output.
 #
-# All of OUR own wire/domain tags are now camelCase (the Phase-8 normalization
-# is complete). The baseline is therefore NOT a debt list — it is an
-# EXTERNAL-BOUNDARY allow-list: the only remaining entries are the macOS
-# `system_profiler SPBluetoothDataType -json` keys that bluetooth_darwin.go
-# unmarshals verbatim (device_address, controller_state, …). Those keys are
-# Apple's external contract; matching the struct tags to them is the correct,
-# best-practice way to parse the OS tool's output, so they stay snake_case by
-# design. Do NOT add OUR keys here — fix the casing instead.
+# External-tool adapters: a struct that `json.Unmarshal`s an external tool's
+# output (e.g. macOS `system_profiler SPBluetoothDataType -json` in
+# bluetooth_darwin.go) MUST match that tool's casing to deserialize it, and is
+# mapped to a camelCase domain type before any API emission. Such a file opts
+# out of this gate with the marker comment:
+#
+#     // json-wire:external-adapter — <which external tool, and where it maps>
+#
+# That is a STRUCTURAL boundary ("this file parses a foreign format"), not a
+# per-key allow-list — there is nothing to grandfather. Do NOT add the marker
+# to a file that emits our own wire; fix the casing instead.
 #
 # This gate scans `json:"..."` struct tags in internal/api + internal/discovery
-# for snake_case keys and compares them to the committed allow-list
-# (scripts/json-casing-baseline.txt). It is a RATCHET:
-#   - it FAILS if a NEW snake_case tag appears that is not in the allow-list
-#     (i.e. new drift), and
-#   - it passes when violations only shrink.
-#
-# Regenerate the allow-list only when adding a genuinely-external contract key:
-#   scripts/check-json-casing.sh --update
+# for snake_case keys and FAILS on any that are not inside a marked adapter.
 #
 # Run locally: scripts/check-json-casing.sh
 set -euo pipefail
@@ -30,44 +28,36 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$ROOT"
 
-BASELINE="scripts/json-casing-baseline.txt"
 SCAN_DIRS=("internal/api" "internal/discovery")
+EXEMPT_MARKER="json-wire:external-adapter"
 
-# current_violations prints sorted "path\ttag" lines for every snake_case JSON
-# tag in the scanned dirs (excluding tests). A snake_case tag is a json tag
-# whose key contains an underscore between lowercase/alnum segments.
-current_violations() {
-	# -r recurse, only .go, skip _test.go; match json:"...snake...".
-	grep -rnoE 'json:"[a-z][a-z0-9]*_[a-z0-9_]+[^"]*"' "${SCAN_DIRS[@]}" --include='*.go' 2>/dev/null \
-		| grep -v '_test\.go:' \
-		| sed -E 's/^([^:]+):[0-9]+:json:"([^",]+).*/\1\t\2/' \
-		| sort -u
+# Files that declare themselves external-tool adapters (parse a foreign format,
+# map to camelCase before emission). Their snake tags are the tool's contract.
+exempt_files() {
+	grep -rlF "$EXEMPT_MARKER" "${SCAN_DIRS[@]}" --include='*.go' 2>/dev/null | sort -u || true
 }
 
-if [[ "${1:-}" == "--update" ]]; then
-	current_violations >"$BASELINE"
-	echo "Wrote $(wc -l <"$BASELINE" | tr -d ' ') baselined snake_case JSON tag(s) to $BASELINE"
-	exit 0
-fi
+# violations prints "path\ttag" for every snake_case json tag in a non-exempt,
+# non-test file. `|| true` tolerates the zero-match (healthy) case under pipefail.
+violations() {
+	local exempt
+	exempt="$(exempt_files)"
+	grep -rnoE 'json:"[a-z][a-z0-9]*_[a-z0-9_]+[^"]*"' "${SCAN_DIRS[@]}" --include='*.go' 2>/dev/null \
+		| grep -v '_test\.go:' \
+		| { [[ -n "$exempt" ]] && grep -vFf <(printf '%s\n' "$exempt") || cat; } \
+		| sed -E 's/^([^:]+):[0-9]+:json:"([^",]+).*/\1\t\2/' \
+		| sort -u || true
+}
 
-if [[ ! -f "$BASELINE" ]]; then
-	echo "::error::$BASELINE missing — run scripts/check-json-casing.sh --update" >&2
-	exit 1
-fi
+found="$(violations)"
 
-# New violations = current entries not present in the baseline.
-new=$(comm -23 <(current_violations) <(sort -u "$BASELINE") || true)
-
-if [[ -n "$new" ]]; then
-	echo "::error::New snake_case JSON wire tag(s) introduced — use camelCase (ADR-0010):" >&2
-	echo "$new" | sed 's/^/  /' >&2
+if [[ -n "$found" ]]; then
+	echo "::error::snake_case JSON wire tag(s) — use camelCase (ADR-0010, no exceptions):" >&2
+	echo "$found" | sed 's/^/  /' >&2
 	echo "" >&2
-	echo "If this is a protocol-mandated key (e.g. OAuth client_id), grandfather it:" >&2
-	echo "  scripts/check-json-casing.sh --update   # then commit the baseline" >&2
+	echo "If this file parses an external tool's output (and maps to camelCase" >&2
+	echo "before emission), mark it: // ${EXEMPT_MARKER} — <tool, where it maps>" >&2
 	exit 1
 fi
 
-# Informational: size of the external-boundary allow-list (macOS system_profiler
-# keys). This is no longer "debt to normalize" — our own tags are all camelCase.
-remaining=$(current_violations | comm -12 - <(sort -u "$BASELINE") | wc -l | tr -d ' ')
-echo "JSON casing gate OK — no new snake_case wire tags. ${remaining} external-contract tag(s) on the allow-list (macOS system_profiler; ADR-0010)."
+echo "JSON casing gate OK — wire is 100% camelCase (ADR-0010); external-tool adapters exempt by marker: $(exempt_files | tr '\n' ' ')"

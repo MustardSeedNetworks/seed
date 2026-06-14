@@ -67,6 +67,13 @@ func (s *BluetoothScanner) scanSystemProfiler(ctx context.Context) ([]BluetoothD
 	return parseSystemProfilerOutput(output)
 }
 
+// json-wire:external-adapter — these structs json.Unmarshal macOS
+// `system_profiler SPBluetoothDataType -json` output verbatim (Apple's snake_case
+// contract), then map to the camelCase BluetoothDevice domain type via
+// createBluetoothDevice before any API emission. The snake_case tags here are
+// the OS tool's format, never our wire — so this file is exempt from the
+// json-casing gate by structural boundary (ADR-0010), not a per-key allow-list.
+
 // btDeviceInfo represents a Bluetooth device from system_profiler JSON.
 type btDeviceInfo struct {
 	Address      string `json:"device_address"`
