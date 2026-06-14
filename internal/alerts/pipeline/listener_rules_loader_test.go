@@ -7,8 +7,9 @@ import (
 	"testing"
 	"time"
 
+	alertmodel "github.com/MustardSeedNetworks/seed/internal/alerts"
 	"github.com/MustardSeedNetworks/seed/internal/alerts/pipeline"
-	"github.com/MustardSeedNetworks/seed/internal/database"
+	"github.com/MustardSeedNetworks/seed/internal/listener"
 )
 
 // fakeAlertRulesReader implements the narrow alertRulesReader contract.
@@ -16,19 +17,19 @@ import (
 // copy so the pipeline can hold its own snapshot.
 type fakeAlertRulesReader struct {
 	mu      sync.Mutex
-	rows    []*database.AlertRule
+	rows    []*alertmodel.Rule
 	listErr error
 	calls   int
 }
 
-func (f *fakeAlertRulesReader) List(_ context.Context, enabledOnly bool) ([]*database.AlertRule, error) {
+func (f *fakeAlertRulesReader) List(_ context.Context, enabledOnly bool) ([]*alertmodel.Rule, error) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
 	f.calls++
 	if f.listErr != nil {
 		return nil, f.listErr
 	}
-	out := make([]*database.AlertRule, 0, len(f.rows))
+	out := make([]*alertmodel.Rule, 0, len(f.rows))
 	for _, r := range f.rows {
 		if enabledOnly && !r.Enabled {
 			continue
@@ -38,22 +39,22 @@ func (f *fakeAlertRulesReader) List(_ context.Context, enabledOnly bool) ([]*dat
 	return out, nil
 }
 
-func (f *fakeAlertRulesReader) set(rows []*database.AlertRule) {
+func (f *fakeAlertRulesReader) set(rows []*alertmodel.Rule) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
 	f.rows = rows
 }
 
-func dbRule(name, kind, severity, contains string, enabled bool) *database.AlertRule {
-	return &database.AlertRule{
+func dbRule(name, kind, severity, contains string, enabled bool) *alertmodel.Rule {
+	return &alertmodel.Rule{
 		ID:                   int64(len(name)),
 		Name:                 name,
 		Enabled:              enabled,
 		MatchKind:            kind,
 		MatchSeverity:        severity,
 		MatchPayloadContains: contains,
-		AlertType:            database.AlertTypeSystem,
-		AlertSeverity:        database.AlertSeverityError,
+		AlertType:            alertmodel.TypeSystem,
+		AlertSeverity:        alertmodel.SeverityError,
 		AlertTitle:           "Rule " + name + " matched",
 		AlertMessage:         "Triggered by listener event",
 	}
@@ -69,7 +70,7 @@ func TestCompileRulesFromDB_EmptySliceReturnsEmpty(t *testing.T) {
 
 func TestCompileRulesFromDB_DisabledRowsSkipped(t *testing.T) {
 	t.Parallel()
-	rows := []*database.AlertRule{
+	rows := []*alertmodel.Rule{
 		dbRule("active", "syslog-udp", "error", "", true),
 		dbRule("inactive", "syslog-udp", "error", "", false),
 	}
@@ -84,7 +85,7 @@ func TestCompileRulesFromDB_DisabledRowsSkipped(t *testing.T) {
 
 func TestCompileRulesFromDB_MatchKindFilter(t *testing.T) {
 	t.Parallel()
-	rows := []*database.AlertRule{
+	rows := []*alertmodel.Rule{
 		dbRule("syslog-only", "syslog-udp", "", "", true),
 	}
 	rules := pipeline.CompileRulesFromDB(rows)
@@ -93,8 +94,8 @@ func TestCompileRulesFromDB_MatchKindFilter(t *testing.T) {
 	}
 	rule := rules[0]
 
-	syslogEvt := &database.ListenerEvent{Kind: "syslog-udp"}
-	trapEvt := &database.ListenerEvent{Kind: "snmp-trap-v2c"}
+	syslogEvt := &listener.EventRecord{Kind: "syslog-udp"}
+	trapEvt := &listener.EventRecord{Kind: "snmp-trap-v2c"}
 
 	if !rule.Match(syslogEvt) {
 		t.Error("syslog-udp event should match syslog-udp filter")
@@ -106,46 +107,46 @@ func TestCompileRulesFromDB_MatchKindFilter(t *testing.T) {
 
 func TestCompileRulesFromDB_MatchKindEmptyMatchesAll(t *testing.T) {
 	t.Parallel()
-	rows := []*database.AlertRule{
+	rows := []*alertmodel.Rule{
 		dbRule("any-kind", "", "", "", true),
 	}
 	rule := pipeline.CompileRulesFromDB(rows)[0]
-	if !rule.Match(&database.ListenerEvent{Kind: "syslog-udp"}) {
+	if !rule.Match(&listener.EventRecord{Kind: "syslog-udp"}) {
 		t.Error("empty match_kind should match syslog-udp")
 	}
-	if !rule.Match(&database.ListenerEvent{Kind: "snmp-trap-v2c"}) {
+	if !rule.Match(&listener.EventRecord{Kind: "snmp-trap-v2c"}) {
 		t.Error("empty match_kind should match snmp-trap-v2c")
 	}
 }
 
 func TestCompileRulesFromDB_MatchSeverityFilter(t *testing.T) {
 	t.Parallel()
-	rows := []*database.AlertRule{
+	rows := []*alertmodel.Rule{
 		dbRule("error-only", "syslog-udp", "error", "", true),
 	}
 	rule := pipeline.CompileRulesFromDB(rows)[0]
-	if !rule.Match(&database.ListenerEvent{Kind: "syslog-udp", Severity: "error"}) {
+	if !rule.Match(&listener.EventRecord{Kind: "syslog-udp", Severity: "error"}) {
 		t.Error("severity=error should match")
 	}
-	if rule.Match(&database.ListenerEvent{Kind: "syslog-udp", Severity: "informational"}) {
+	if rule.Match(&listener.EventRecord{Kind: "syslog-udp", Severity: "informational"}) {
 		t.Error("severity=informational should NOT match error-only rule")
 	}
 }
 
 func TestCompileRulesFromDB_MatchPayloadContainsSubstring(t *testing.T) {
 	t.Parallel()
-	rows := []*database.AlertRule{
+	rows := []*alertmodel.Rule{
 		dbRule("link-state", "syslog-udp", "", "link state", true),
 	}
 	rule := pipeline.CompileRulesFromDB(rows)[0]
 
 	payload, _ := json.Marshal(map[string]string{"message": "interface eth0 link state changed to down"})
-	matching := &database.ListenerEvent{Kind: "syslog-udp", PayloadJSON: string(payload)}
+	matching := &listener.EventRecord{Kind: "syslog-udp", PayloadJSON: string(payload)}
 	if !rule.Match(matching) {
 		t.Error("substring 'link state' should match")
 	}
 
-	nonMatching := &database.ListenerEvent{Kind: "syslog-udp", PayloadJSON: `{"message":"ssh login from 10.0.0.1"}`}
+	nonMatching := &listener.EventRecord{Kind: "syslog-udp", PayloadJSON: `{"message":"ssh login from 10.0.0.1"}`}
 	if rule.Match(nonMatching) {
 		t.Error("payload without substring should NOT match")
 	}
@@ -153,29 +154,29 @@ func TestCompileRulesFromDB_MatchPayloadContainsSubstring(t *testing.T) {
 
 func TestCompileRulesFromDB_BuildPopulatesAlertFields(t *testing.T) {
 	t.Parallel()
-	rows := []*database.AlertRule{
+	rows := []*alertmodel.Rule{
 		{
 			ID: 42, Name: "interface-down", Enabled: true,
 			MatchKind:     "syslog-udp",
-			AlertType:     database.AlertTypeConnectivity,
-			AlertSeverity: database.AlertSeverityWarning,
+			AlertType:     alertmodel.TypeConnectivity,
+			AlertSeverity: alertmodel.SeverityWarning,
 			AlertTitle:    "Interface down",
 			AlertMessage:  "Saw an interface-down event",
 		},
 	}
 	rule := pipeline.CompileRulesFromDB(rows)[0]
-	alert := rule.Build(&database.ListenerEvent{
+	alert := rule.Build(&listener.EventRecord{
 		Kind: "syslog-udp", SourceAddr: "10.0.0.1:514",
 		PayloadJSON: `{"message":"eth0 down"}`,
 	})
 	if alert == nil {
 		t.Fatal("Build returned nil alert")
 	}
-	if alert.Type != database.AlertTypeConnectivity {
-		t.Errorf("Type = %q, want %q", alert.Type, database.AlertTypeConnectivity)
+	if alert.Type != alertmodel.TypeConnectivity {
+		t.Errorf("Type = %q, want %q", alert.Type, alertmodel.TypeConnectivity)
 	}
-	if alert.Severity != database.AlertSeverityWarning {
-		t.Errorf("Severity = %q, want %q", alert.Severity, database.AlertSeverityWarning)
+	if alert.Severity != alertmodel.SeverityWarning {
+		t.Errorf("Severity = %q, want %q", alert.Severity, alertmodel.SeverityWarning)
 	}
 	if alert.Title != "Interface down" {
 		t.Errorf("Title = %q, want literal 'Interface down'", alert.Title)
@@ -193,9 +194,9 @@ func TestCompileRulesFromDB_BuildPopulatesAlertFields(t *testing.T) {
 
 func TestCompileRulesFromDB_StableFingerprintID(t *testing.T) {
 	t.Parallel()
-	rows := []*database.AlertRule{{
+	rows := []*alertmodel.Rule{{
 		ID: 7, Name: "x", Enabled: true,
-		AlertType: database.AlertTypeSystem, AlertSeverity: database.AlertSeverityInfo,
+		AlertType: alertmodel.TypeSystem, AlertSeverity: alertmodel.SeverityInfo,
 		AlertTitle: "x",
 	}}
 	rule := pipeline.CompileRulesFromDB(rows)[0]
@@ -208,12 +209,12 @@ func TestCompileRulesFromDB_StableFingerprintID(t *testing.T) {
 
 func TestScanOnce_DBRulesReplaceDefaultsWhenNonEmpty(t *testing.T) {
 	t.Parallel()
-	reader := &fakeAlertRulesReader{rows: []*database.AlertRule{
+	reader := &fakeAlertRulesReader{rows: []*alertmodel.Rule{
 		// One DB rule matching only "informational" syslog — would NEVER
 		// fire under the defaults (defaults only alert on error+ severities).
 		dbRule("info-rule", "syslog-udp", "informational", "", true),
 	}}
-	events := &fakeEvents{rows: []*database.ListenerEvent{
+	events := &fakeEvents{rows: []*listener.EventRecord{
 		// An error syslog. Under DEFAULTS this would fire (defaults match error+).
 		// Under DB rules only it should NOT fire (DB rule is informational-only).
 		syslogEvent("error", "10.0.0.1:514", at(), "boom"),
@@ -247,7 +248,7 @@ func TestScanOnce_DBRulesReplaceDefaultsWhenNonEmpty(t *testing.T) {
 func TestScanOnce_FallsBackToDefaultsWhenDBEmpty(t *testing.T) {
 	t.Parallel()
 	reader := &fakeAlertRulesReader{rows: nil}
-	events := &fakeEvents{rows: []*database.ListenerEvent{
+	events := &fakeEvents{rows: []*listener.EventRecord{
 		syslogEvent("error", "10.0.0.1:514", at(), "default-must-fire"),
 	}}
 	alerts := &fakeAlerts{}
@@ -270,10 +271,10 @@ func TestScanOnce_FallsBackToDefaultsWhenDBEmpty(t *testing.T) {
 
 func TestScanOnce_FallsBackToDefaultsWhenAllDBRulesDisabled(t *testing.T) {
 	t.Parallel()
-	reader := &fakeAlertRulesReader{rows: []*database.AlertRule{
+	reader := &fakeAlertRulesReader{rows: []*alertmodel.Rule{
 		dbRule("disabled", "syslog-udp", "informational", "", false),
 	}}
-	events := &fakeEvents{rows: []*database.ListenerEvent{
+	events := &fakeEvents{rows: []*listener.EventRecord{
 		syslogEvent("error", "10.0.0.1:514", at(), "boom"),
 	}}
 	alerts := &fakeAlerts{}
@@ -291,7 +292,7 @@ func TestScanOnce_FallsBackToDefaultsWhenAllDBRulesDisabled(t *testing.T) {
 func TestScanOnce_ReloadPicksUpNewlyInsertedRule(t *testing.T) {
 	t.Parallel()
 	reader := &fakeAlertRulesReader{rows: nil}
-	events := &fakeEvents{rows: []*database.ListenerEvent{
+	events := &fakeEvents{rows: []*listener.EventRecord{
 		syslogEvent("informational", "10.0.0.1:514", at(), "ignore-me-under-defaults"),
 	}}
 	alerts := &fakeAlerts{}
@@ -308,7 +309,7 @@ func TestScanOnce_ReloadPicksUpNewlyInsertedRule(t *testing.T) {
 	}
 
 	// Operator inserts a rule, then triggers reload.
-	reader.set([]*database.AlertRule{dbRule("informational-now-fires", "syslog-udp", "informational", "", true)})
+	reader.set([]*alertmodel.Rule{dbRule("informational-now-fires", "syslog-udp", "informational", "", true)})
 	if reloadErr := p.ReloadRules(context.Background()); reloadErr != nil {
 		t.Fatalf("ReloadRules: %v", reloadErr)
 	}
@@ -316,7 +317,7 @@ func TestScanOnce_ReloadPicksUpNewlyInsertedRule(t *testing.T) {
 	// Reset high-water so the same event is re-considered, then scan again.
 	// In production a new event arrives; here we just bump the fake events
 	// observed-at by 1ns to step the high-water forward.
-	events.rows = []*database.ListenerEvent{
+	events.rows = []*listener.EventRecord{
 		syslogEvent("informational", "10.0.0.2:514", at().Add(time.Second), "fire-now"),
 	}
 	_ = p.ScanOnce(context.Background())
@@ -327,10 +328,10 @@ func TestScanOnce_ReloadPicksUpNewlyInsertedRule(t *testing.T) {
 
 func TestScanOnce_ReloadErrorKeepsPreviousRuleset(t *testing.T) {
 	t.Parallel()
-	reader := &fakeAlertRulesReader{rows: []*database.AlertRule{
+	reader := &fakeAlertRulesReader{rows: []*alertmodel.Rule{
 		dbRule("starter", "syslog-udp", "informational", "", true),
 	}}
-	events := &fakeEvents{rows: []*database.ListenerEvent{
+	events := &fakeEvents{rows: []*listener.EventRecord{
 		syslogEvent("informational", "10.0.0.1:514", at(), "should-fire"),
 	}}
 	alerts := &fakeAlerts{}

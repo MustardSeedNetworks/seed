@@ -25,8 +25,9 @@ import (
 	"sync"
 	"time"
 
-	"github.com/MustardSeedNetworks/seed/internal/database"
+	"github.com/MustardSeedNetworks/seed/internal/alerts"
 	"github.com/MustardSeedNetworks/seed/internal/engine"
+	"github.com/MustardSeedNetworks/seed/internal/listener"
 )
 
 // ListenerPipelineName is the engine identifier.
@@ -48,12 +49,12 @@ const (
 // listenerReader is the narrowed surface the listener pipeline
 // needs from the listener_events repo. Tests inject a fake.
 type listenerReader interface {
-	List(ctx context.Context, opts database.ListenerEventListOptions) ([]*database.ListenerEvent, error)
+	List(ctx context.Context, opts listener.EventListOptions) ([]*listener.EventRecord, error)
 }
 
 // alertWriter is the narrowed surface for writing alerts.
 type alertWriter interface {
-	Create(ctx context.Context, alert *database.Alert) error
+	Create(ctx context.Context, alert *alerts.Alert) error
 }
 
 // settingsKV is the high-water-mark store. Same shape as
@@ -74,11 +75,11 @@ type Rule struct {
 	ID string
 
 	// Match returns true when this rule applies to evt.
-	Match func(evt *database.ListenerEvent) bool
+	Match func(evt *listener.EventRecord) bool
 
 	// Build returns the alert to write. The returned Source is used
 	// in the suppression fingerprint alongside the rule ID.
-	Build func(evt *database.ListenerEvent) *database.Alert
+	Build func(evt *listener.EventRecord) *alerts.Alert
 
 	// Threshold is how many matching events must accrue inside
 	// Window before this rule fires. Threshold=1 / Window=0 is the
@@ -421,7 +422,7 @@ func (p *ListenerPipeline) scanOnceInner(ctx context.Context) error {
 	if err != nil {
 		return fmt.Errorf("load high-water: %w", err)
 	}
-	events, err := p.events.List(ctx, database.ListenerEventListOptions{
+	events, err := p.events.List(ctx, listener.EventListOptions{
 		Since: since,
 		Limit: defaultBatch,
 	})
@@ -454,7 +455,7 @@ func (p *ListenerPipeline) scanOnceInner(ctx context.Context) error {
 
 // evaluate applies every rule to evt and writes any alerts that
 // match + pass suppression. Returns the count of alerts emitted.
-func (p *ListenerPipeline) evaluate(ctx context.Context, evt *database.ListenerEvent) int {
+func (p *ListenerPipeline) evaluate(ctx context.Context, evt *listener.EventRecord) int {
 	now := p.now()
 	count := 0
 	rules := p.snapshotRules()
@@ -557,12 +558,12 @@ func ruleSyslogSevereLogged() Rule {
 	}
 	return Rule{
 		ID: "syslog.severe",
-		Match: func(evt *database.ListenerEvent) bool {
+		Match: func(evt *listener.EventRecord) bool {
 			return evt.Kind == "syslog-udp" && severeSeverities[evt.Severity]
 		},
-		Build: func(evt *database.ListenerEvent) *database.Alert {
-			return &database.Alert{
-				Type:     database.AlertTypeSystem,
+		Build: func(evt *listener.EventRecord) *alerts.Alert {
+			return &alerts.Alert{
+				Type:     alerts.TypeSystem,
 				Severity: mapSyslogSeverity(evt.Severity),
 				Title:    fmt.Sprintf("Syslog %s from %s", evt.Severity, evt.SourceAddr),
 				Message:  summarize(evt.PayloadJSON, "message"),
@@ -576,16 +577,16 @@ func ruleSyslogSevereLogged() Rule {
 func ruleTrapLinkDown() Rule {
 	return Rule{
 		ID: "trap.linkdown",
-		Match: func(evt *database.ListenerEvent) bool {
+		Match: func(evt *listener.EventRecord) bool {
 			if evt.Kind != "snmp-trap-v2c" {
 				return false
 			}
 			return strings.Contains(evt.PayloadJSON, `"1.3.6.1.6.3.1.1.5.3"`)
 		},
-		Build: func(evt *database.ListenerEvent) *database.Alert {
-			return &database.Alert{
-				Type:     database.AlertTypeConnectivity,
-				Severity: database.AlertSeverityWarning,
+		Build: func(evt *listener.EventRecord) *alerts.Alert {
+			return &alerts.Alert{
+				Type:     alerts.TypeConnectivity,
+				Severity: alerts.SeverityWarning,
 				Title:    "Link down trap from " + evt.SourceAddr,
 				Message:  "SNMP linkDown trap received",
 				Source:   evt.SourceAddr,
@@ -598,16 +599,16 @@ func ruleTrapLinkDown() Rule {
 func ruleTrapAuthFailure() Rule {
 	return Rule{
 		ID: "trap.authfail",
-		Match: func(evt *database.ListenerEvent) bool {
+		Match: func(evt *listener.EventRecord) bool {
 			if evt.Kind != "snmp-trap-v2c" {
 				return false
 			}
 			return strings.Contains(evt.PayloadJSON, `"1.3.6.1.6.3.1.1.5.5"`)
 		},
-		Build: func(evt *database.ListenerEvent) *database.Alert {
-			return &database.Alert{
-				Type:     database.AlertTypeSecurity,
-				Severity: database.AlertSeverityError,
+		Build: func(evt *listener.EventRecord) *alerts.Alert {
+			return &alerts.Alert{
+				Type:     alerts.TypeSecurity,
+				Severity: alerts.SeverityError,
 				Title:    "SNMP authentication failure from " + evt.SourceAddr,
 				Message:  "Repeated authentication failures may indicate a credential probe",
 				Source:   evt.SourceAddr,
@@ -622,13 +623,13 @@ func ruleTrapAuthFailure() Rule {
 func mapSyslogSeverity(s string) string {
 	switch s {
 	case "emergency", "alert", "critical":
-		return database.AlertSeverityCritical
+		return alerts.SeverityCritical
 	case "error":
-		return database.AlertSeverityError
+		return alerts.SeverityError
 	case "warning":
-		return database.AlertSeverityWarning
+		return alerts.SeverityWarning
 	default:
-		return database.AlertSeverityInfo
+		return alerts.SeverityInfo
 	}
 }
 

@@ -8,6 +8,7 @@ package app
 import (
 	"context"
 
+	"github.com/MustardSeedNetworks/seed/internal/alerts"
 	"github.com/MustardSeedNetworks/seed/internal/alerts/inbox"
 	"github.com/MustardSeedNetworks/seed/internal/database"
 )
@@ -32,8 +33,8 @@ func (a alertInboxRepo) repo() (*database.AlertRepository, error) {
 }
 
 func (a alertInboxRepo) List(
-	ctx context.Context, opts database.AlertListOptions,
-) ([]*database.Alert, error) {
+	ctx context.Context, opts alerts.ListOptions,
+) ([]*alerts.Alert, error) {
 	repo, err := a.repo()
 	if err != nil {
 		return nil, err

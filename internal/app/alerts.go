@@ -2,7 +2,7 @@ package app
 
 // alerts.go wires the composition root to the alert-rule application (use-case)
 // service (ADR-0020). The adapter implements the narrow rules.Store port over
-// the database AlertRules repository, mapping the database.AlertRule row to the
+// the database AlertRules repository, mapping the alerts.Rule row to the
 // use-case model and the repo's ErrAlertRuleNotFound / "alert_rules:"-prefixed
 // validation errors to the use-case's sentinels.
 
@@ -11,6 +11,7 @@ import (
 	"errors"
 	"strings"
 
+	"github.com/MustardSeedNetworks/seed/internal/alerts"
 	"github.com/MustardSeedNetworks/seed/internal/alerts/rules"
 	"github.com/MustardSeedNetworks/seed/internal/database"
 )
@@ -31,7 +32,7 @@ type alertRuleStore struct {
 
 func (a alertRuleStore) Available() bool { return a.db() != nil }
 
-func toAppRule(r *database.AlertRule) rules.Rule {
+func toAppRule(r *alerts.Rule) rules.Rule {
 	return rules.Rule{
 		ID:                   r.ID,
 		Name:                 r.Name,
@@ -50,8 +51,8 @@ func toAppRule(r *database.AlertRule) rules.Rule {
 	}
 }
 
-func toDBRule(r rules.Rule) *database.AlertRule {
-	return &database.AlertRule{
+func toDBRule(r rules.Rule) *alerts.Rule {
+	return &alerts.Rule{
 		ID:                   r.ID,
 		Name:                 r.Name,
 		Enabled:              r.Enabled,
@@ -70,7 +71,7 @@ func toDBRule(r rules.Rule) *database.AlertRule {
 }
 
 func mapAlertRuleErr(err error) error {
-	if errors.Is(err, database.ErrAlertRuleNotFound) {
+	if errors.Is(err, alerts.ErrRuleNotFound) {
 		return rules.ErrNotFound
 	}
 	return err

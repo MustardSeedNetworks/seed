@@ -323,6 +323,31 @@ linters:
           deny:
             - pkg: github.com/MustardSeedNetworks/seed/internal/database
               desc: "polling is persistence-free — polling.Target lives in internal/polling; PollingTargetRepository (internal/database) maps rows to it; wire ports in internal/app and the orchestrator Config"
+        # WS-B repository-port discipline: the alert domain (internal/alerts) owns
+        # its row types (alerts.Alert / alerts.Rule / alerts.ListOptions + the
+        # Severity/Type consts + alerts.ErrRuleNotFound); the Alert/AlertRules
+        # repositories in internal/database import internal/alerts and map SQL rows
+        # to them. The alert pipeline/inbox/rules subpackages therefore never import
+        # internal/database. Production-only (tests are mini composition roots).
+        "alerts-no-persistence":
+          files:
+            - "**/internal/alerts/**"
+            - "!$test"
+          deny:
+            - pkg: github.com/MustardSeedNetworks/seed/internal/database
+              desc: "alerts is persistence-free — its row types live in internal/alerts; the Alert/AlertRules repositories (internal/database) map rows to them; wire it in internal/app"
+        # WS-B repository-port discipline: the listener domain owns both the live
+        # Event and the persisted listener.EventRecord (+ EventListOptions); the
+        # ListenerEventsRepository in internal/database maps SQL rows to EventRecord.
+        # The sink and listeners build domain values and persist through a port, so
+        # internal/listener never imports internal/database. Production-only.
+        "listener-no-persistence":
+          files:
+            - "**/internal/listener/**"
+            - "!$test"
+          deny:
+            - pkg: github.com/MustardSeedNetworks/seed/internal/database
+              desc: "listener is persistence-free — listener.EventRecord lives in internal/listener; the ListenerEventsRepository (internal/database) maps rows to it; wire it in internal/app"
         # Phase 6 capture port: libpcap (via gopacket/pcap) carries the CGO
         # taint that re-links libpcap into every dependent test binary. It is
         # confined to the single adapter package internal/capture/pcap; every

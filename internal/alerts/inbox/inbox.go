@@ -9,7 +9,7 @@ import (
 	"context"
 	"errors"
 
-	"github.com/MustardSeedNetworks/seed/internal/database"
+	"github.com/MustardSeedNetworks/seed/internal/alerts"
 )
 
 // ErrUnavailable is returned when the store is not wired (handler → 503).
@@ -18,7 +18,7 @@ var ErrUnavailable = errors.New("inbox: store unavailable")
 // Repository is the alert-store surface the use-case needs: list the alerts the
 // pipelines have written, and mark one acknowledged or resolved.
 type Repository interface {
-	List(ctx context.Context, opts database.AlertListOptions) ([]*database.Alert, error)
+	List(ctx context.Context, opts alerts.ListOptions) ([]*alerts.Alert, error)
 	Acknowledge(ctx context.Context, id int64, username string) error
 	Resolve(ctx context.Context, id int64) error
 }
@@ -32,7 +32,7 @@ type Service struct {
 func NewService(repo Repository) *Service { return &Service{repo: repo} }
 
 // List returns the alerts matching opts.
-func (s *Service) List(ctx context.Context, opts database.AlertListOptions) ([]*database.Alert, error) {
+func (s *Service) List(ctx context.Context, opts alerts.ListOptions) ([]*alerts.Alert, error) {
 	return s.repo.List(ctx, opts)
 }
 

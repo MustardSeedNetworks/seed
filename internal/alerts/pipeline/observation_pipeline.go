@@ -10,7 +10,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/MustardSeedNetworks/seed/internal/database"
+	"github.com/MustardSeedNetworks/seed/internal/alerts"
 	"github.com/MustardSeedNetworks/seed/internal/engine"
 	"github.com/MustardSeedNetworks/seed/internal/polling/observation"
 )
@@ -460,9 +460,9 @@ func (p *ObservationPipeline) evaluateIfTable(
 		if prev != ifOperUp || row.IfOper == ifOperUp || row.IfAdmin != ifOperUp {
 			continue
 		}
-		alert := &database.Alert{
-			Type:     database.AlertTypeConnectivity,
-			Severity: database.AlertSeverityWarning,
+		alert := &alerts.Alert{
+			Type:     alerts.TypeConnectivity,
+			Severity: alerts.SeverityWarning,
 			Title:    fmt.Sprintf("Interface %s down on %s", row.IfName, obs.TargetID),
 			Message: fmt.Sprintf("ifOperStatus transitioned from up to %d (ifIndex=%d, admin=up)",
 				row.IfOper, row.IfIndex),
@@ -505,9 +505,9 @@ func (p *ObservationPipeline) evaluateBGP(
 		if prev != bgpStateEstablished || peer.State == bgpStateEstablished {
 			continue
 		}
-		alert := &database.Alert{
-			Type:     database.AlertTypeConnectivity,
-			Severity: database.AlertSeverityError,
+		alert := &alerts.Alert{
+			Type:     alerts.TypeConnectivity,
+			Severity: alerts.SeverityError,
 			Title:    fmt.Sprintf("BGP peer %s left Established on %s", peer.RemoteAddr, obs.TargetID),
 			Message: fmt.Sprintf("Peer state transitioned from 6 (Established) to %d, AS%d",
 				peer.State, peer.RemoteAS),
@@ -557,9 +557,9 @@ func (p *ObservationPipeline) evaluateHostResources(
 		// Upward crossings: prev below threshold and now at-or-above.
 		// Two thresholds means two possible alerts per observation.
 		if prev < storageFullPct && pct >= storageFullPct {
-			alert := &database.Alert{
-				Type:     database.AlertTypeSystem,
-				Severity: database.AlertSeverityCritical,
+			alert := &alerts.Alert{
+				Type:     alerts.TypeSystem,
+				Severity: alerts.SeverityCritical,
 				Title:    fmt.Sprintf("Filesystem %s critical on %s", st.Description, obs.TargetID),
 				Message:  fmt.Sprintf("Usage crossed %.0f%%: %.1f%% of %d bytes", storageFullPct, pct, st.SizeBytes),
 				Source:   obs.TargetID,
@@ -569,9 +569,9 @@ func (p *ObservationPipeline) evaluateHostResources(
 				count++
 			}
 		} else if prev < storageHighPct && pct >= storageHighPct {
-			alert := &database.Alert{
-				Type:     database.AlertTypeSystem,
-				Severity: database.AlertSeverityWarning,
+			alert := &alerts.Alert{
+				Type:     alerts.TypeSystem,
+				Severity: alerts.SeverityWarning,
 				Title:    fmt.Sprintf("Filesystem %s high on %s", st.Description, obs.TargetID),
 				Message:  fmt.Sprintf("Usage crossed %.0f%%: %.1f%% of %d bytes", storageHighPct, pct, st.SizeBytes),
 				Source:   obs.TargetID,
@@ -588,7 +588,7 @@ func (p *ObservationPipeline) evaluateHostResources(
 // fire writes an alert if the (ruleID, entityKey) fingerprint isn't
 // suppressed. Returns true when the alert was actually written.
 func (p *ObservationPipeline) fire(
-	ctx context.Context, ruleID, entityKey string, alert *database.Alert,
+	ctx context.Context, ruleID, entityKey string, alert *alerts.Alert,
 ) bool {
 	now := p.now()
 	fingerprint := fingerprintFor(ruleID, entityKey, alert.Source)

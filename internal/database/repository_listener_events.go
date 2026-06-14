@@ -6,21 +6,9 @@ import (
 	"errors"
 	"fmt"
 	"time"
-)
 
-// ListenerEvent is one row of listener_events.
-type ListenerEvent struct {
-	ID          int64
-	ClientID    string
-	Kind        string
-	SourceAddr  string
-	TargetKind  string
-	TargetID    string
-	Severity    string
-	ObservedAt  time.Time
-	PayloadJSON string
-	IngestedAt  time.Time
-}
+	"github.com/MustardSeedNetworks/seed/internal/listener"
+)
 
 // ListenerEventsRepository owns CRUD over listener_events.
 type ListenerEventsRepository struct {
@@ -29,7 +17,7 @@ type ListenerEventsRepository struct {
 
 // Insert records one listener event. ObservedAt and IngestedAt are
 // stamped with the current time if zero.
-func (r *ListenerEventsRepository) Insert(ctx context.Context, evt *ListenerEvent) error {
+func (r *ListenerEventsRepository) Insert(ctx context.Context, evt *listener.EventRecord) error {
 	if evt.Kind == "" {
 		return errors.New("listener_events: Kind required")
 	}
@@ -72,23 +60,12 @@ func (r *ListenerEventsRepository) Insert(ctx context.Context, evt *ListenerEven
 	return nil
 }
 
-// ListenerEventListOptions narrows the query — empty values disable
-// that filter.
-type ListenerEventListOptions struct {
-	ClientID   string
-	Kind       string
-	SourceAddr string
-	Since      time.Time
-	Until      time.Time
-	Limit      int
-}
-
 // List returns events matching opts ordered by ObservedAt desc.
 // Limit defaults to 100; clamped to 1000.
 func (r *ListenerEventsRepository) List(
 	ctx context.Context,
-	opts ListenerEventListOptions,
-) ([]*ListenerEvent, error) {
+	opts listener.EventListOptions,
+) ([]*listener.EventRecord, error) {
 	const defaultLimit, maxLimit = 100, 1000
 
 	query, args := newListQueryBuilder(`
@@ -130,9 +107,9 @@ func (r *ListenerEventsRepository) DeleteOlderThan(
 
 // scanListenerEvent reads a row via either [sql.Row.Scan] or
 // [sql.Rows.Scan] signatures.
-func scanListenerEvent(scan func(...any) error) (*ListenerEvent, error) {
+func scanListenerEvent(scan func(...any) error) (*listener.EventRecord, error) {
 	var (
-		evt           ListenerEvent
+		evt           listener.EventRecord
 		targetKind    sql.NullString
 		targetID      sql.NullString
 		severity      sql.NullString

@@ -9,7 +9,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/MustardSeedNetworks/seed/internal/database"
 	"github.com/MustardSeedNetworks/seed/internal/listener"
 	"github.com/MustardSeedNetworks/seed/internal/listener/sink"
 )
@@ -18,11 +17,11 @@ func silentLogger() *slog.Logger { return slog.New(slog.DiscardHandler) }
 
 type fakeStore struct {
 	mu   sync.Mutex
-	rows []*database.ListenerEvent
+	rows []*listener.EventRecord
 	err  error
 }
 
-func (f *fakeStore) Insert(_ context.Context, evt *database.ListenerEvent) error {
+func (f *fakeStore) Insert(_ context.Context, evt *listener.EventRecord) error {
 	f.mu.Lock()
 	defer f.mu.Unlock()
 	if f.err != nil {

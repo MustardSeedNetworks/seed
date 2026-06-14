@@ -86,41 +86,6 @@ type Device struct {
 	Metadata   string    `json:"metadata,omitempty"` // JSON string for extra data
 }
 
-// Alert represents a system alert.
-type Alert struct {
-	ID             int64      `json:"id"`
-	Type           string     `json:"type"`     // e.g., "security", "performance", "connectivity"
-	Severity       string     `json:"severity"` // "info", "warning", "error", "critical"
-	Title          string     `json:"title"`
-	Message        string     `json:"message"`
-	Source         string     `json:"source,omitempty"` // What generated the alert
-	DeviceID       *string    `json:"deviceId,omitempty"`
-	Acknowledged   bool       `json:"acknowledged"`
-	AcknowledgedBy *string    `json:"acknowledgedBy,omitempty"`
-	AcknowledgedAt *time.Time `json:"acknowledgedAt,omitempty"`
-	Resolved       bool       `json:"resolved"`
-	ResolvedAt     *time.Time `json:"resolvedAt,omitempty"`
-	CreatedAt      time.Time  `json:"createdAt"`
-	Metadata       string     `json:"metadata,omitempty"` // JSON string for extra data
-}
-
-// AlertType constants for common alert types.
-const (
-	AlertTypeSecurity     = "security"
-	AlertTypePerformance  = "performance"
-	AlertTypeConnectivity = "connectivity"
-	AlertTypeSystem       = "system"
-	AlertTypeDiscovery    = "discovery"
-)
-
-// AlertSeverity constants.
-const (
-	AlertSeverityInfo     = "info"
-	AlertSeverityWarning  = "warning"
-	AlertSeverityError    = "error"
-	AlertSeverityCritical = "critical"
-)
-
 // SpeedTestResult represents a speed test result.
 type SpeedTestResult struct {
 	ID             int64     `json:"id"`

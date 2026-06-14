@@ -9,8 +9,9 @@ import (
 	"testing"
 	"time"
 
+	alertmodel "github.com/MustardSeedNetworks/seed/internal/alerts"
 	"github.com/MustardSeedNetworks/seed/internal/alerts/pipeline"
-	"github.com/MustardSeedNetworks/seed/internal/database"
+	"github.com/MustardSeedNetworks/seed/internal/listener"
 )
 
 func silentLogger() *slog.Logger { return slog.New(slog.DiscardHandler) }
@@ -18,28 +19,28 @@ func at() time.Time              { return time.Date(2026, 5, 31, 12, 0, 0, 0, ti
 
 type fakeEvents struct {
 	mu      sync.Mutex
-	rows    []*database.ListenerEvent
+	rows    []*listener.EventRecord
 	listErr error
 }
 
-func (f *fakeEvents) List(_ context.Context, _ database.ListenerEventListOptions) ([]*database.ListenerEvent, error) {
+func (f *fakeEvents) List(_ context.Context, _ listener.EventListOptions) ([]*listener.EventRecord, error) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
 	if f.listErr != nil {
 		return nil, f.listErr
 	}
-	out := make([]*database.ListenerEvent, len(f.rows))
+	out := make([]*listener.EventRecord, len(f.rows))
 	copy(out, f.rows)
 	return out, nil
 }
 
 type fakeAlerts struct {
 	mu        sync.Mutex
-	created   []*database.Alert
+	created   []*alertmodel.Alert
 	createErr error
 }
 
-func (f *fakeAlerts) Create(_ context.Context, alert *database.Alert) error {
+func (f *fakeAlerts) Create(_ context.Context, alert *alertmodel.Alert) error {
 	f.mu.Lock()
 	defer f.mu.Unlock()
 	if f.createErr != nil {
@@ -75,13 +76,13 @@ func (f *fakeSettings) Set(_ context.Context, key, value string) error {
 	return nil
 }
 
-func syslogEvent(severity, source string, observed time.Time, message string) *database.ListenerEvent {
+func syslogEvent(severity, source string, observed time.Time, message string) *listener.EventRecord {
 	payload, _ := json.Marshal(map[string]string{
 		"facility":     "3",
 		"severityName": severity,
 		"message":      message,
 	})
-	return &database.ListenerEvent{
+	return &listener.EventRecord{
 		Kind:        "syslog-udp",
 		ClientID:    "default",
 		SourceAddr:  source,
@@ -91,12 +92,12 @@ func syslogEvent(severity, source string, observed time.Time, message string) *d
 	}
 }
 
-func trapEvent(trapOID, source string, observed time.Time) *database.ListenerEvent {
+func trapEvent(trapOID, source string, observed time.Time) *listener.EventRecord {
 	payload, _ := json.Marshal(map[string]string{
 		"version": "v2c",
 		"trapOid": trapOID,
 	})
-	return &database.ListenerEvent{
+	return &listener.EventRecord{
 		Kind:        "snmp-trap-v2c",
 		ClientID:    "default",
 		SourceAddr:  source,
@@ -127,7 +128,7 @@ func TestNewListenerPipeline_RejectsMissingDeps(t *testing.T) {
 
 func TestScanOnce_SyslogSevereErrorEmitsAlert(t *testing.T) {
 	t.Parallel()
-	events := &fakeEvents{rows: []*database.ListenerEvent{
+	events := &fakeEvents{rows: []*listener.EventRecord{
 		syslogEvent("error", "10.0.0.1:514", at(), "SSH login failed for user admin"),
 	}}
 	alerts := &fakeAlerts{}
@@ -141,14 +142,14 @@ func TestScanOnce_SyslogSevereErrorEmitsAlert(t *testing.T) {
 	if len(alerts.created) != 1 {
 		t.Fatalf("alerts = %d, want 1", len(alerts.created))
 	}
-	if alerts.created[0].Severity != database.AlertSeverityError {
+	if alerts.created[0].Severity != alertmodel.SeverityError {
 		t.Errorf("severity = %q, want error", alerts.created[0].Severity)
 	}
 }
 
 func TestScanOnce_SyslogInfoDoesNotAlert(t *testing.T) {
 	t.Parallel()
-	events := &fakeEvents{rows: []*database.ListenerEvent{
+	events := &fakeEvents{rows: []*listener.EventRecord{
 		syslogEvent("informational", "10.0.0.1:514", at(), "nightly cron run"),
 	}}
 	alerts := &fakeAlerts{}
@@ -164,7 +165,7 @@ func TestScanOnce_SyslogInfoDoesNotAlert(t *testing.T) {
 
 func TestScanOnce_TrapLinkDownEmitsConnectivityAlert(t *testing.T) {
 	t.Parallel()
-	events := &fakeEvents{rows: []*database.ListenerEvent{
+	events := &fakeEvents{rows: []*listener.EventRecord{
 		trapEvent("1.3.6.1.6.3.1.1.5.3", "10.0.0.5:0", at()),
 	}}
 	alerts := &fakeAlerts{}
@@ -177,14 +178,14 @@ func TestScanOnce_TrapLinkDownEmitsConnectivityAlert(t *testing.T) {
 		t.Fatalf("alerts = %d, want 1", len(alerts.created))
 	}
 	a := alerts.created[0]
-	if a.Type != database.AlertTypeConnectivity || a.Severity != database.AlertSeverityWarning {
+	if a.Type != alertmodel.TypeConnectivity || a.Severity != alertmodel.SeverityWarning {
 		t.Errorf("type/severity = %q/%q", a.Type, a.Severity)
 	}
 }
 
 func TestScanOnce_TrapAuthFailureEmitsSecurityAlert(t *testing.T) {
 	t.Parallel()
-	events := &fakeEvents{rows: []*database.ListenerEvent{
+	events := &fakeEvents{rows: []*listener.EventRecord{
 		trapEvent("1.3.6.1.6.3.1.1.5.5", "10.0.0.5:0", at()),
 	}}
 	alerts := &fakeAlerts{}
@@ -197,7 +198,7 @@ func TestScanOnce_TrapAuthFailureEmitsSecurityAlert(t *testing.T) {
 		t.Fatalf("alerts = %d, want 1", len(alerts.created))
 	}
 	a := alerts.created[0]
-	if a.Type != database.AlertTypeSecurity || a.Severity != database.AlertSeverityError {
+	if a.Type != alertmodel.TypeSecurity || a.Severity != alertmodel.SeverityError {
 		t.Errorf("type/severity = %q/%q", a.Type, a.Severity)
 	}
 }
@@ -205,7 +206,7 @@ func TestScanOnce_TrapAuthFailureEmitsSecurityAlert(t *testing.T) {
 func TestScanOnce_SuppressionBlocksRepeats(t *testing.T) {
 	t.Parallel()
 	// Two identical linkDown traps in the same scan -> one alert.
-	events := &fakeEvents{rows: []*database.ListenerEvent{
+	events := &fakeEvents{rows: []*listener.EventRecord{
 		trapEvent("1.3.6.1.6.3.1.1.5.3", "10.0.0.5:0", at()),
 		trapEvent("1.3.6.1.6.3.1.1.5.3", "10.0.0.5:0", at().Add(time.Second)),
 	}}
@@ -222,7 +223,7 @@ func TestScanOnce_SuppressionBlocksRepeats(t *testing.T) {
 
 func TestScanOnce_DifferentSourcesNotSuppressed(t *testing.T) {
 	t.Parallel()
-	events := &fakeEvents{rows: []*database.ListenerEvent{
+	events := &fakeEvents{rows: []*listener.EventRecord{
 		trapEvent("1.3.6.1.6.3.1.1.5.3", "10.0.0.5:0", at()),
 		trapEvent("1.3.6.1.6.3.1.1.5.3", "10.0.0.6:0", at()),
 	}}
@@ -241,7 +242,7 @@ func TestScanOnce_PersistsHighWater(t *testing.T) {
 	t.Parallel()
 	older := at().Add(-time.Hour)
 	newer := at()
-	events := &fakeEvents{rows: []*database.ListenerEvent{
+	events := &fakeEvents{rows: []*listener.EventRecord{
 		syslogEvent("error", "10.0.0.1:514", older, "old"),
 		syslogEvent("error", "10.0.0.2:514", newer, "new"),
 	}}
@@ -278,7 +279,7 @@ func TestScanOnce_ListErrorPropagates(t *testing.T) {
 
 func TestScanOnce_CreateErrorContinuesBatch(t *testing.T) {
 	t.Parallel()
-	events := &fakeEvents{rows: []*database.ListenerEvent{
+	events := &fakeEvents{rows: []*listener.EventRecord{
 		syslogEvent("error", "10.0.0.1:514", at(), "boom"),
 	}}
 	alerts := &fakeAlerts{createErr: errors.New("constraint")}
@@ -297,17 +298,17 @@ func TestScanOnce_CustomRulesOverrideDefaults(t *testing.T) {
 	custom := []pipeline.Rule{
 		{
 			ID:    "test.everything",
-			Match: func(_ *database.ListenerEvent) bool { return true },
-			Build: func(evt *database.ListenerEvent) *database.Alert {
+			Match: func(_ *listener.EventRecord) bool { return true },
+			Build: func(evt *listener.EventRecord) *alertmodel.Alert {
 				hits++
-				return &database.Alert{
+				return &alertmodel.Alert{
 					Type: "test", Severity: "info",
 					Title: "all", Message: "all", Source: evt.SourceAddr,
 				}
 			},
 		},
 	}
-	events := &fakeEvents{rows: []*database.ListenerEvent{
+	events := &fakeEvents{rows: []*listener.EventRecord{
 		// An informational syslog would NOT trip the defaults but
 		// will trip our match-all custom rule.
 		syslogEvent("informational", "10.0.0.1:514", at(), "noise"),

@@ -6,6 +6,8 @@ import (
 	"errors"
 	"fmt"
 	"time"
+
+	"github.com/MustardSeedNetworks/seed/internal/alerts"
 )
 
 // ErrAlertNotFound is returned when an alert is not found.
@@ -17,7 +19,7 @@ type AlertRepository struct {
 }
 
 // Create creates a new alert.
-func (r *AlertRepository) Create(ctx context.Context, alert *Alert) error {
+func (r *AlertRepository) Create(ctx context.Context, alert *alerts.Alert) error {
 	if alert.CreatedAt.IsZero() {
 		alert.CreatedAt = time.Now().UTC()
 	}
@@ -44,7 +46,7 @@ func (r *AlertRepository) Create(ctx context.Context, alert *Alert) error {
 }
 
 // Get retrieves an alert by ID.
-func (r *AlertRepository) Get(ctx context.Context, id int64) (*Alert, error) {
+func (r *AlertRepository) Get(ctx context.Context, id int64) (*alerts.Alert, error) {
 	row := r.db.QueryRow(ctx, `
 		SELECT id, type, severity, title, message, source, device_id, acknowledged,
 		       acknowledged_by, acknowledged_at, resolved, resolved_at, created_at, metadata_json
@@ -57,7 +59,7 @@ func (r *AlertRepository) Get(ctx context.Context, id int64) (*Alert, error) {
 // List retrieves alerts matching the criteria.
 //
 
-func (r *AlertRepository) List(ctx context.Context, opts AlertListOptions) ([]*Alert, error) {
+func (r *AlertRepository) List(ctx context.Context, opts alerts.ListOptions) ([]*alerts.Alert, error) {
 	query := `
 		SELECT id, type, severity, title, message, source, device_id, acknowledged,
 		       acknowledged_by, acknowledged_at, resolved, resolved_at, created_at, metadata_json
@@ -112,28 +114,16 @@ func (r *AlertRepository) List(ctx context.Context, opts AlertListOptions) ([]*A
 	}
 	defer func() { _ = rows.Close() }()
 
-	var alerts []*Alert
+	var out []*alerts.Alert
 	for rows.Next() {
 		a, scanErr := r.scanAlertFromRows(rows)
 		if scanErr != nil {
 			return nil, scanErr
 		}
-		alerts = append(alerts, a)
+		out = append(out, a)
 	}
 
-	return alerts, rows.Err()
-}
-
-// AlertListOptions specifies criteria for listing alerts.
-type AlertListOptions struct {
-	Type               string
-	Severity           string
-	DeviceID           string
-	UnacknowledgedOnly bool
-	UnresolvedOnly     bool
-	Since              time.Time
-	Limit              int
-	Offset             int
+	return out, rows.Err()
 }
 
 // Acknowledge marks an alert as acknowledged.
@@ -165,7 +155,7 @@ func (r *AlertRepository) Acknowledge(ctx context.Context, id int64, by string) 
 
 func (r *AlertRepository) AcknowledgeAll(
 	ctx context.Context,
-	opts AlertListOptions,
+	opts alerts.ListOptions,
 	by string,
 ) (int64, error) {
 	now := time.Now().UTC()
@@ -256,7 +246,7 @@ func (r *AlertRepository) DeleteOlderThan(ctx context.Context, cutoff time.Time)
 // Count returns the number of alerts matching the criteria.
 //
 
-func (r *AlertRepository) Count(ctx context.Context, opts AlertListOptions) (int64, error) {
+func (r *AlertRepository) Count(ctx context.Context, opts alerts.ListOptions) (int64, error) {
 	query := "SELECT COUNT(*) FROM alerts WHERE 1=1"
 	var args []any
 
@@ -288,20 +278,20 @@ func (r *AlertRepository) Count(ctx context.Context, opts AlertListOptions) (int
 
 // GetUnacknowledgedCount returns the number of unacknowledged alerts.
 func (r *AlertRepository) GetUnacknowledgedCount(ctx context.Context) (int64, error) {
-	return r.Count(ctx, AlertListOptions{UnacknowledgedOnly: true})
+	return r.Count(ctx, alerts.ListOptions{UnacknowledgedOnly: true})
 }
 
 // GetCriticalCount returns the number of unresolved critical alerts.
 func (r *AlertRepository) GetCriticalCount(ctx context.Context) (int64, error) {
-	return r.Count(ctx, AlertListOptions{
-		Severity:       AlertSeverityCritical,
+	return r.Count(ctx, alerts.ListOptions{
+		Severity:       alerts.SeverityCritical,
 		UnresolvedOnly: true,
 	})
 }
 
 // scanAlert scans an alert from a row.
-func (r *AlertRepository) scanAlert(row *sql.Row) (*Alert, error) {
-	var a Alert
+func (r *AlertRepository) scanAlert(row *sql.Row) (*alerts.Alert, error) {
+	var a alerts.Alert
 	var createdAt string
 	var acked, resolved int
 	var source, deviceID, ackedBy, ackedAt, resolvedAt, metadata sql.NullString
@@ -344,8 +334,8 @@ func (r *AlertRepository) scanAlert(row *sql.Row) (*Alert, error) {
 }
 
 // scanAlertFromRows scans an alert from rows.
-func (r *AlertRepository) scanAlertFromRows(rows *sql.Rows) (*Alert, error) {
-	var a Alert
+func (r *AlertRepository) scanAlertFromRows(rows *sql.Rows) (*alerts.Alert, error) {
+	var a alerts.Alert
 	var createdAt string
 	var acked, resolved int
 	var source, deviceID, ackedBy, ackedAt, resolvedAt, metadata sql.NullString
