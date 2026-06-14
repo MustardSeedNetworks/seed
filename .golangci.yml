@@ -377,6 +377,20 @@ linters:
           deny:
             - pkg: github.com/MustardSeedNetworks/seed/internal/database
               desc: "health is persistence-free — probemap maps to the probe.Probe domain type; the probe repository (internal/database) is wired in internal/app (healthProbeStore); never import internal/database from internal/health"
+        # WS-B repository-port discipline — identity is the ONE intentional
+        # exception, so it has NO no-persistence deny rule (this comment is the
+        # record). ADR-0024 (Accepted 2026-06-10) decomposed identity into
+        # users/oauth/tokens use-cases over consumer-defined repository ports, but
+        # deliberately kept those ports typed on the existing database rows —
+        # *database.User / database.APITokenRecord / database.SSOUserInput plus the
+        # ErrUser*/ErrLastAdmin sentinels — because "thin CRUD stays thin: inventing
+        # a DTO here is churn without a security or clarity gain" on the most
+        # security-sensitive store in the codebase (the users / api_tokens tables the
+        # whole authz model rests on). So internal/identity/{users,oauth,tokens}
+        # import internal/database BY DESIGN. The repository-port win (no raw store
+        # handle in handler bodies) already landed in #1624; relocating the row types
+        # would reverse a reasoned ADR for no gain. See ADR-0024 §Decision/§Consequences
+        # and the Architecture Completion Plan WS-B (B3).
         # Phase 6 capture port: libpcap (via gopacket/pcap) carries the CGO
         # taint that re-links libpcap into every dependent test binary. It is
         # confined to the single adapter package internal/capture/pcap; every
