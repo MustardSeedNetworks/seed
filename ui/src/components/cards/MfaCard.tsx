@@ -98,7 +98,6 @@ export function MfaCard(): JSX.Element {
       // The browser WebAuthn API is wired up at the page level so the
       // card stays presentational. We hand off to a global helper
       // that's been registered by the surrounding page.
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const w = window as unknown as { seedWebAuthnRegister?: (o: unknown) => Promise<void> };
       if (w.seedWebAuthnRegister) {
         await w.seedWebAuthnRegister(opts);
