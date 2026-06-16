@@ -152,7 +152,7 @@ tools-go-quiet:
 
 tools-frontend: ## Install frontend development tools
 	@printf "\n$(BOLD)=== Installing Frontend Development Tools ===$(RESET)\n"
-	@printf "Installing root npm dependencies (prettier, husky)...\n"
+	@printf "Installing root npm dependencies (Biome, Husky)...\n"
 	@npm ci
 	@printf "Installing ui dependencies...\n"
 	@cd ui && npm ci

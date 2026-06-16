@@ -4,7 +4,7 @@
 #
 # Code quality and formatting:
 #   - Linting (golangci-lint, Biome, markdownlint)
-#   - Formatting (gofumpt, Biome, Prettier)
+#   - Formatting (gofumpt, Biome)
 #   - Auto-fix capabilities
 #
 # =============================================================================

@@ -9,7 +9,7 @@ The CI pipeline runs on every push and PR. **All checks must pass.**
 | Job         | Description        | Checks                                         |
 | ----------- | ------------------ | ---------------------------------------------- |
 | `backend`   | Go checks          | lint, vet, staticcheck, fmt, tests, coverage   |
-| `frontend`  | React/TS checks    | TypeScript, ESLint, Prettier, build            |
+| `frontend`  | React/TS checks    | TypeScript, Biome, build                       |
 | `security`  | Security scans     | govulncheck, gosec, npm audit, gitleaks, trivy |
 | `quality`   | Code quality       | AI refs, sensitive files, unsafe logging       |
 | `docs`      | Documentation      | Markdown lint, link check                      |
@@ -53,7 +53,7 @@ make security-backend  # gosec + govulncheck
 ### Frontend Checks
 
 ```bash
-make lint-frontend     # ESLint + TypeScript
+make lint-frontend     # Biome + TypeScript
 make test-frontend     # Vitest
 make build-frontend    # Vite build
 ```

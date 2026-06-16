@@ -758,9 +758,9 @@ import { layout } from '../styles/theme';
 | Card wrapper     | `rounded-lg border bg-*`     | `cardClass()` or `card.*`     |
 | Modal overlay    | `fixed inset-0 bg-black/50`  | `modal.overlay`               |
 
-### ESLint Enforcement
+### Biome Enforcement
 
-The following patterns are flagged by ESLint:
+The following patterns are flagged by Biome and theme-token review:
 
 #### Colors
 
