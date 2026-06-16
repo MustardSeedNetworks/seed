@@ -5,8 +5,8 @@
   "description": "The Seed - Network Diagnostics - Mustard Seed Networks",
   "type": "module",
   "engines": {
-    "node": ">=26.2.0",
-    "npm": ">=11.7.0"
+    "node": "26.3.0",
+    "npm": "11.17.0"
   },
   "scripts": {
     "prepare": "husky",
@@ -24,10 +24,11 @@
     "build-storybook": "cd ui && npm run build-storybook"
   },
   "devDependencies": {
-    "@commitlint/cli": "20.5.3",
-    "@commitlint/config-conventional": "20.5.3",
+    "@commitlint/cli": "21.0.2",
+    "@commitlint/config-conventional": "21.0.2",
     "husky": "9.1.7",
-    "lint-staged": "17.0.2"
+    "lint-staged": "17.0.7",
+    "@typescript/native-preview": "7.0.0-dev.20260615.1"
   },
   "lint-staged": {
     "ui/src/**/*.{ts,tsx}": "cd ui && npx biome check --write",
@@ -37,5 +38,6 @@
     "extends": [
       "@commitlint/config-conventional"
     ]
-  }
+  },
+  "packageManager": "npm@11.17.0"
 }
