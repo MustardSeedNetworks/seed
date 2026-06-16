@@ -9,6 +9,7 @@ body:
 {
   "buildTime": "\u003cvolatile\u003e",
   "commit": "\u003cvolatile\u003e",
+  "releaseTrain": "unknown",
   "tlsFingerprint": "",
   "uiBuildHash": "\u003cvolatile\u003e",
   "version": "\u003cvolatile\u003e"
