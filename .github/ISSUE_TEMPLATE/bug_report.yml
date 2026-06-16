@@ -1,146 +1,96 @@
-name: Bug Report
-description: Report a bug to help us improve The Seed
-title: "[BUG] "
+name: Defect
+description: Report a reproducible defect or regression in Seed
+title: "Defect: "
 labels: ["type: defect", "status: needs-triage"]
 body:
-  - type: markdown
-    attributes:
-      value: |
-        Thanks for taking the time to report a bug! Please fill out all required fields.
-
   - type: textarea
-    id: description
+    id: summary
     attributes:
-      label: Description
-      description: A clear and concise description of the bug.
-      placeholder: Describe what went wrong...
+      label: Summary
+      description: What broke, and what impact does it have?
+      placeholder: Describe the defect in one or two sentences.
     validations:
       required: true
-
   - type: textarea
     id: steps
     attributes:
       label: Steps to Reproduce
-      description: How can we reproduce this issue?
+      description: Provide the shortest reliable path to reproduce the defect.
       placeholder: |
-        1. Go to '...'
-        2. Click on '...'
-        3. See error
+        1. ...
+        2. ...
+        3. ...
     validations:
       required: true
-
   - type: textarea
     id: expected
     attributes:
       label: Expected Behavior
-      description: What did you expect to happen?
-      placeholder: Describe what you expected...
     validations:
       required: true
-
   - type: textarea
     id: actual
     attributes:
       label: Actual Behavior
-      description: What actually happened?
-      placeholder: Describe what actually happened...
     validations:
       required: true
-
   - type: dropdown
     id: area
     attributes:
       label: Area
-      description: Which part of The Seed is affected?
       options:
-        - Auth / Setup
-        - Survey / Floorplan
-        - Discovery / Network
-        - Logging / Observability
-        - UI / UX
-        - Backend / API
-        - Frontend / UI
-        - Infra / CI/CD
-        - Documentation
-        - Other
+        - area: api
+        - area: auth
+        - area: build
+        - area: ci
+        - area: docs
+        - area: frontend
+        - area: license
+        - area: network
+        - area: reporting
+        - area: security
+        - area: telemetry
+        - area: tests
+        - area: wifi
     validations:
       required: true
-
   - type: dropdown
     id: severity
     attributes:
       label: Severity
-      description: How severe is this bug?
       options:
-        - Critical - App crashes or data loss
-        - High - Major feature broken
-        - Medium - Feature partially broken
-        - Low - Minor issue or cosmetic
+        - severity: critical
+        - severity: high
+        - severity: medium
+        - severity: low
     validations:
       required: true
-
   - type: input
     id: version
     attributes:
-      label: Seed Version
-      description: "Run: ./seed --version or check the UI footer"
-      placeholder: "e.g., v1.0.0"
-    validations:
-      required: true
-
+      label: Version or Commit
+      placeholder: v1.2.3, commit SHA, deployed URL, or "main"
   - type: input
-    id: os
+    id: environment
     attributes:
-      label: Operating System
-      description: Which OS are you running on?
-      placeholder: "e.g., Ubuntu 24.04, macOS 15.1, Raspberry Pi OS"
-    validations:
-      required: true
-
-  - type: dropdown
-    id: architecture
-    attributes:
-      label: Architecture
-      description: What CPU architecture?
-      options:
-        - amd64 (x86_64)
-        - arm64 (aarch64)
-        - Other
-    validations:
-      required: true
-
-  - type: input
-    id: browser
-    attributes:
-      label: Browser (if UI issue)
-      description: Which browser are you using?
-      placeholder: "e.g., Chrome 120, Firefox 121, Safari 17"
-
+      label: Environment
+      placeholder: OS, browser, device, deployment target, or runtime version
   - type: textarea
     id: logs
     attributes:
-      label: Logs
-      description: Paste relevant logs here (check journalctl -u seed or seed.log)
+      label: Logs or Output
+      description: Paste only relevant output. Redact secrets.
       render: shell
-
-  - type: textarea
-    id: screenshots
-    attributes:
-      label: Screenshots
-      description: If applicable, add screenshots to help explain the problem.
-
   - type: textarea
     id: context
     attributes:
       label: Additional Context
-      description: Any other context about the problem.
-
   - type: checkboxes
     id: checklist
     attributes:
       label: Pre-submission Checklist
       options:
-        - label: I have searched existing issues to ensure this isn't a duplicate
+        - label: I searched existing issues and did not find a duplicate.
           required: true
-        - label: I have included version and environment information
+        - label: I included enough detail for someone else to reproduce or investigate.
           required: true

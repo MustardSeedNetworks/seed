@@ -13,7 +13,7 @@ func TestInfo(t *testing.T) {
 	}{
 		{
 			name:     "returns all version fields",
-			wantKeys: []string{"version", "commit", "buildTime", "uiBuildHash"},
+			wantKeys: []string{"version", "commit", "buildTime", "releaseTrain", "uiBuildHash"},
 		},
 	}
 
@@ -92,6 +92,11 @@ func TestGetterFunctions(t *testing.T) {
 		{
 			name:     "GetBuildTime returns value",
 			getter:   version.GetBuildTime,
+			notEmpty: true,
+		},
+		{
+			name:     "GetReleaseTrain returns value",
+			getter:   version.GetReleaseTrain,
 			notEmpty: true,
 		},
 		{
