@@ -1,8 +1,8 @@
 blank_issues_enabled: false
 contact_links:
-  - name: Documentation
-    url: https://github.com/MustardSeedNetworks/seed/wiki
-    about: Check the wiki for guides and FAQ before opening an issue
-  - name: Discussions
+  - name: Questions and Discussions
     url: https://github.com/MustardSeedNetworks/seed/discussions
-    about: Ask questions or discuss ideas in GitHub Discussions
+    about: Ask usage questions or discuss ideas before filing a tracked issue.
+  - name: Security Vulnerability
+    url: https://github.com/MustardSeedNetworks/seed/security/advisories/new
+    about: Report security issues privately.

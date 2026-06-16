@@ -1,114 +1,60 @@
 name: Task
-description: Track a development task or chore
-title: "[CHORE] "
+description: Track maintenance, refactoring, dependency, CI, or documentation work for Seed
+title: "Chore: "
 labels: ["type: chore", "status: needs-triage"]
 body:
-  - type: markdown
-    attributes:
-      value: |
-        Use this template for internal development tasks, refactoring, technical debt, or maintenance work.
-
   - type: textarea
-    id: description
+    id: summary
     attributes:
-      label: Description
-      description: A clear description of the task to be completed.
-      placeholder: Describe the task...
+      label: Summary
+      description: What work needs to be done?
     validations:
       required: true
-
-  - type: dropdown
-    id: type
-    attributes:
-      label: Task Type
-      description: What kind of task is this?
-      options:
-        - Refactoring
-        - Technical Debt
-        - CI/CD
-        - Testing
-        - Documentation
-        - Dependencies
-        - Performance
-        - Security
-        - Build/Packaging
-        - Other
-    validations:
-      required: true
-
   - type: dropdown
     id: area
     attributes:
       label: Area
-      description: Which part of The Seed does this affect?
       options:
-        - Auth / Setup
-        - Survey / Floorplan
-        - Discovery / Network
-        - Logging / Observability
-        - UI / UX
-        - Backend / API
-        - Frontend / UI
-        - Infra / CI/CD
-        - Documentation
-        - Multiple Areas
-        - Other
+        - area: api
+        - area: auth
+        - area: build
+        - area: ci
+        - area: docs
+        - area: frontend
+        - area: license
+        - area: network
+        - area: reporting
+        - area: security
+        - area: telemetry
+        - area: tests
+        - area: wifi
     validations:
       required: true
-
   - type: dropdown
     id: priority
     attributes:
       label: Priority
-      description: How urgent is this task?
       options:
-        - Low - Can wait
-        - Medium - Should be done soon
-        - High - Important for next release
-        - Critical - Blocking other work
+        - priority: critical
+        - priority: high
+        - priority: medium
+        - priority: low
     validations:
       required: true
-
   - type: textarea
     id: acceptance
     attributes:
       label: Acceptance Criteria
-      description: What needs to be true for this task to be considered complete?
       placeholder: |
-        - [ ] Criterion 1
-        - [ ] Criterion 2
-        - [ ] Criterion 3
+        - [ ] ...
+        - [ ] ...
     validations:
       required: true
-
   - type: textarea
-    id: technical
+    id: notes
     attributes:
       label: Technical Notes
-      description: Any technical details or implementation notes.
-      placeholder: |
-        Files to modify:
-        - src/...
-
-        Approach:
-        - Step 1...
-
   - type: textarea
     id: related
     attributes:
-      label: Related Issues
-      description: Any related issues or PRs?
-      placeholder: |
-        - Fixes #123
-        - Related to #456
-
-  - type: checkboxes
-    id: checklist
-    attributes:
-      label: Definition of Done
-      description: Standard checklist for task completion
-      options:
-        - label: Code complete
-        - label: Tests written/updated
-        - label: Documentation updated (if needed)
-        - label: CI passing
+      label: Related Issues or Pull Requests

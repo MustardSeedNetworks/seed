@@ -1,39 +1,39 @@
 ## Summary
 
-<!-- Brief description of what this PR does -->
+<!-- What changed and why? Keep this short and concrete. -->
 
-## Changes
+## Linked Issue
 
-<!-- List the key changes made -->
+<!-- Use Fixes #123, Closes #123, or Related to #123. Every PR should point at tracked work unless it is emergency maintenance. -->
 
--
+Fixes #
 
 ## Type of Change
 
-- [ ] Bug fix (non-breaking change that fixes an issue)
-- [ ] New feature (non-breaking change that adds functionality)
-- [ ] Breaking change (fix or feature that would cause existing functionality to change)
-- [ ] Refactor (code change that neither fixes a bug nor adds a feature)
-- [ ] Documentation update
-- [ ] CI/CD or tooling change
+- [ ] Defect fix
+- [ ] Feature
+- [ ] Chore / refactor / dependency update
+- [ ] Documentation
+- [ ] CI / release / packaging
+- [ ] Security hardening
 
-## Testing
+## Risk
 
-<!-- Describe how you tested these changes -->
+- [ ] Low
+- [ ] Medium
+- [ ] High
 
-- [ ] Unit tests pass (`go test ./...`)
-- [ ] Frontend builds (`cd ui && npm run build`)
-- [ ] Manual testing on Ubuntu VM
+## Testing Evidence
 
-## Related Issues
+<!-- Paste the exact commands you ran and the meaningful result. "Not run" requires a reason. -->
 
-<!-- Link to related issues using "closes #XX" or "fixes #XX" -->
+```text
 
-Closes #
+```
 
-## Checklist
+## Security and Release Checklist
 
-- [ ] Code follows project style guidelines
-- [ ] Self-review completed
-- [ ] Tests added/updated as needed
-- [ ] Documentation updated if needed
+- [ ] No secrets, tokens, credentials, or customer data are included.
+- [ ] Mutating routes, auth surfaces, permission checks, and output encoding were reviewed if touched.
+- [ ] Dependencies are pinned and justified if changed.
+- [ ] Documentation, screenshots, or operator notes were updated if behavior changed.

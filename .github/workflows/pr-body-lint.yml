@@ -1,0 +1,39 @@
+name: PR Body Lint
+
+on:
+  pull_request:
+    types: [opened, edited, synchronize, reopened, ready_for_review]
+  merge_group:
+
+permissions:
+  pull-requests: read
+
+jobs:
+  lint-pr-body:
+    name: Lint PR Body
+    runs-on: ubuntu-latest
+    steps:
+      - name: Validate PR body
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
+        with:
+          script: |
+            const body = context.payload.pull_request.body || "";
+            const errors = [];
+            const requiredHeadings = ["## Summary", "## Linked Issue", "## Testing Evidence", "## Security and Release Checklist"];
+            for (const heading of requiredHeadings) {
+              if (!body.includes(heading)) errors.push(`Missing ${heading}`);
+            }
+            if (!/(Fixes|Closes|Resolves|Related to)\s+#\d+/i.test(body)) {
+              errors.push("Link the tracked issue with Fixes #123, Closes #123, Resolves #123, or Related to #123.");
+            }
+            const testing = body.split("## Testing Evidence")[1]?.split("## ")[0] || "";
+            if (!/```[\s\S]*\S[\s\S]*```/.test(testing) && !/not run/i.test(testing)) {
+              errors.push("Testing Evidence must include command output or an explicit not-run reason.");
+            }
+            if (errors.length > 0) {
+              core.setFailed(errors.join("\n"));
+            }
+      - name: Merge queue placeholder
+        if: github.event_name == 'merge_group'
+        run: echo "PR body lint is satisfied for merge queue batches."
