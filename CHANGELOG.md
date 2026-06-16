@@ -5,6 +5,45 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.212.1](https://github.com/MustardSeedNetworks/seed/compare/v0.212.0...v0.212.1) (2026-06-16)
+
+
+### Features
+
+* **ui:** per-item module accent colour in the sidebar (M1 follow-up) ([#1682](https://github.com/MustardSeedNetworks/seed/issues/1682)) ([2aa1f1c](https://github.com/MustardSeedNetworks/seed/commit/2aa1f1c730fd9da38315f6417dff246eee0d9558))
+
+
+### Bug Fixes
+
+* **ui:** close SEED_UI_ARCH_PLAN D-batch — distinct brand green (L1) + profile entry points (VL1) + on-brand AA (VL2) ([#1680](https://github.com/MustardSeedNetworks/seed/issues/1680)) ([af1e7d1](https://github.com/MustardSeedNetworks/seed/commit/af1e7d1496b965f3c507df7fa9cd6c8af3d7b35e))
+
+
+### Code Refactoring
+
+* **alerts:** relocate Alert/Rule/ListenerEvent rows to domain pkgs, make persistence-free (WS-B) ([#1676](https://github.com/MustardSeedNetworks/seed/issues/1676)) ([0323857](https://github.com/MustardSeedNetworks/seed/commit/0323857e9d56274430e766e76e3790415ed93b4a))
+* **ci:** empty the json-casing baseline; exempt external adapters by marker (ADR-0010 revised) ([#1684](https://github.com/MustardSeedNetworks/seed/issues/1684)) ([1df12dd](https://github.com/MustardSeedNetworks/seed/commit/1df12dd6c5a80fd8a9ade6b746aea8aabbe0be66))
+* **health:** make health surface persistence-free (WS-B) ([#1678](https://github.com/MustardSeedNetworks/seed/issues/1678)) ([3215b97](https://github.com/MustardSeedNetworks/seed/commit/3215b97f13640d680083445865add9d5b27fcd16))
+* **polling:** relocate PollingTarget to domain pkg + orchestrator ports, make persistence-free (WS-B) ([#1675](https://github.com/MustardSeedNetworks/seed/issues/1675)) ([74c4162](https://github.com/MustardSeedNetworks/seed/commit/74c4162e637d459ad2be551b13e49e0489796b2c))
+* **probe:** narrow persistence port to domain types (WS-B1) ([#1672](https://github.com/MustardSeedNetworks/seed/issues/1672)) ([e07d928](https://github.com/MustardSeedNetworks/seed/commit/e07d9285c75763bdd12bc59b3c59f10a06b6a4bb))
+* **retention:** relocate rollup SQL adapters to internal/database (WS-B5) ([#1677](https://github.com/MustardSeedNetworks/seed/issues/1677)) ([7370c51](https://github.com/MustardSeedNetworks/seed/commit/7370c515dfd01046fd9c666a4a9a2c73c1edca34))
+* **topology:** relocate row types to domain pkgs, make persistence-free (WS-B) ([#1673](https://github.com/MustardSeedNetworks/seed/issues/1673)) ([e768fcc](https://github.com/MustardSeedNetworks/seed/commit/e768fcc7b884fd387b87faf46a799ca4740f7256))
+* **ui:** function-first sidebar nav IA, retire botanical metaphor (M1, [#1452](https://github.com/MustardSeedNetworks/seed/issues/1452)) ([#1681](https://github.com/MustardSeedNetworks/seed/issues/1681)) ([546d937](https://github.com/MustardSeedNetworks/seed/commit/546d93724dd5f26a7ba984b32a0923bc61fe1ff2))
+
+
+### Documentation
+
+* **adr-0010:** revise to pure boundary mapping — wire is 100% camelCase, no exceptions ([#1683](https://github.com/MustardSeedNetworks/seed/issues/1683)) ([0259e3d](https://github.com/MustardSeedNetworks/seed/commit/0259e3d39c94e60887446307f33487e02fc6cde1))
+* **ws-b:** close B3 — identity is the documented ADR-0024 exception ([#1679](https://github.com/MustardSeedNetworks/seed/issues/1679)) ([2bd9ab6](https://github.com/MustardSeedNetworks/seed/commit/2bd9ab6ccde0436c13ec38c172e5f3525723cb9f))
+
+
+### Miscellaneous
+
+* **deps:** always-latest toolchain sweep (lockstep with stem) ([#1687](https://github.com/MustardSeedNetworks/seed/issues/1687)) ([60b54c4](https://github.com/MustardSeedNetworks/seed/commit/60b54c415ab2a120a5c39a98b0a2838859086868))
+* **deps:** refresh go module graph ([#1690](https://github.com/MustardSeedNetworks/seed/issues/1690)) ([82144b5](https://github.com/MustardSeedNetworks/seed/commit/82144b5e5c5c479289df6b759aaedb3119509b06))
+* **github:** standardize repo governance ([#1689](https://github.com/MustardSeedNetworks/seed/issues/1689)) ([f409599](https://github.com/MustardSeedNetworks/seed/commit/f40959915e63522e426b5c60236794122085977e))
+* **release:** expose release train metadata ([#1693](https://github.com/MustardSeedNetworks/seed/issues/1693)) ([58c79fc](https://github.com/MustardSeedNetworks/seed/commit/58c79fc26b96d19c213afc4773dcf54e65d7212e))
+* **ui:** replace eslint references with biome ([#1695](https://github.com/MustardSeedNetworks/seed/issues/1695)) ([139b5d5](https://github.com/MustardSeedNetworks/seed/commit/139b5d5a552aeda50cc6ec4721736ef7f835d297))
+
 ## [0.212.0](https://github.com/MustardSeedNetworks/seed/compare/v0.211.0...v0.212.0) (2026-06-13)
 
 
