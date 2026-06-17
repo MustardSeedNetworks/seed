@@ -427,6 +427,109 @@ linters:
               desc: "inward-only — a discovery stage (internal/discovery/fingerprint) imports the kernel, never the reverse; the Engine holds the PortScannerPort and the composition root injects the scanner"
             - pkg: github.com/MustardSeedNetworks/seed/internal/discovery/enumerate
               desc: "inward-only — a discovery stage (internal/discovery/enumerate) imports the kernel, never the reverse; the Engine holds the BluetoothCollectorPort and the composition root injects the collector"
+        # WS-C4 domain-purity coverage: the capability packages below are pure
+        # domain — they hold business logic and consumer-side ports, never
+        # transport (net/http) nor persistence (database/sql or our internal/database
+        # wrapper). The WS-A handler strangle and WS-B repository-port discipline
+        # already removed every such reach; these rules lock that in so it cannot
+        # regress. Each capability gets the same two-rule shape used by reporting
+        # and the WS-B packages above: a transport+raw-SQL ban across all files,
+        # and a production-only internal/database ban (tests stay exempt as mini
+        # composition roots, matching the rest of this file). All six are
+        # currently green on every file, production and test.
+        "wifi-domain-purity":
+          files:
+            - "**/internal/wifi/**"
+          deny:
+            - pkg: net/http
+              desc: "wifi is transport-free — capture/decode goes through the capture port; expose a port and implement it in an adapter"
+            - pkg: database/sql
+              desc: "wifi is persistence-free — define a Repo port and implement it in an adapter wired at the composition root"
+        "wifi-no-persistence":
+          files:
+            - "**/internal/wifi/**"
+            - "!$test"
+          deny:
+            - pkg: github.com/MustardSeedNetworks/seed/internal/database
+              desc: "wifi is persistence-free — define a Repo port in internal/wifi and map rows to its domain types in internal/database; wire it in internal/app"
+        "security-domain-purity":
+          files:
+            - "**/internal/security/**"
+          deny:
+            - pkg: net/http
+              desc: "security is transport-free — define a port and implement it in an adapter"
+            - pkg: database/sql
+              desc: "security is persistence-free — define a Repo port and implement it in an adapter wired at the composition root"
+        "security-no-persistence":
+          files:
+            - "**/internal/security/**"
+            - "!$test"
+          deny:
+            - pkg: github.com/MustardSeedNetworks/seed/internal/database
+              desc: "security is persistence-free — define a Repo port in internal/security and map rows to its domain types in internal/database; wire it in internal/app"
+        "network-domain-purity":
+          files:
+            - "**/internal/network/**"
+          deny:
+            - pkg: net/http
+              desc: "network is transport-free — define a port and implement it in an adapter"
+            - pkg: database/sql
+              desc: "network is persistence-free — define a Repo port and implement it in an adapter wired at the composition root"
+        "network-no-persistence":
+          files:
+            - "**/internal/network/**"
+            - "!$test"
+          deny:
+            - pkg: github.com/MustardSeedNetworks/seed/internal/database
+              desc: "network is persistence-free — define a Repo port in internal/network and map rows to its domain types in internal/database; wire it in internal/app"
+        "settings-domain-purity":
+          files:
+            - "**/internal/settings/**"
+          deny:
+            - pkg: net/http
+              desc: "settings is transport-free — define a port and implement it in an adapter"
+            - pkg: database/sql
+              desc: "settings is persistence-free — define a Repo port and implement it in an adapter wired at the composition root"
+        "settings-no-persistence":
+          files:
+            - "**/internal/settings/**"
+            - "!$test"
+          deny:
+            - pkg: github.com/MustardSeedNetworks/seed/internal/database
+              desc: "settings is persistence-free — define a Repo port in internal/settings and map rows to its domain types in internal/database; wire it in internal/app"
+        "profiles-domain-purity":
+          files:
+            - "**/internal/profiles/**"
+          deny:
+            - pkg: net/http
+              desc: "profiles is transport-free — define a port and implement it in an adapter"
+            - pkg: database/sql
+              desc: "profiles is persistence-free — define a Repo port and implement it in an adapter wired at the composition root"
+        "profiles-no-persistence":
+          files:
+            - "**/internal/profiles/**"
+            - "!$test"
+          deny:
+            - pkg: github.com/MustardSeedNetworks/seed/internal/database
+              desc: "profiles is persistence-free — define a Repo port in internal/profiles and map rows to its domain types in internal/database; wire it in internal/app"
+        # anomaly already declares its persistence needs as a port (ADR-0021/0029,
+        # implemented by internal/database); these rules document and enforce that
+        # the anomaly domain itself stays transport- and persistence-free.
+        "anomaly-domain-purity":
+          files:
+            - "**/internal/anomaly/**"
+          deny:
+            - pkg: net/http
+              desc: "anomaly is transport-free — define a port and implement it in an adapter"
+            - pkg: database/sql
+              desc: "anomaly is persistence-free — it declares its persistence port (ADR-0021/0029); implement it in internal/database"
+        "anomaly-no-persistence":
+          files:
+            - "**/internal/anomaly/**"
+            - "!$test"
+          deny:
+            - pkg: github.com/MustardSeedNetworks/seed/internal/database
+              desc: "anomaly is persistence-free — its persistence port (ADR-0021/0029) is implemented by internal/database and wired at the composition root; never import internal/database from internal/anomaly"
 
     embeddedstructfieldcheck:
       # Checks that sync.Mutex and sync.RWMutex are not used as embedded fields.
