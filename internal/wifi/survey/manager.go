@@ -4,7 +4,6 @@ import (
 	"errors"
 	"fmt"
 	"os"
-	"path/filepath"
 	"sync"
 	"time"
 
@@ -116,8 +115,11 @@ func (m *Manager) DeleteSurvey(id string) error {
 	}
 
 	// Delete from disk
-	filename := filepath.Join(m.storagePath, fmt.Sprintf("%s.json", id))
-	if err := os.Remove(filename); err != nil && !os.IsNotExist(err) {
+	filename, err := m.surveyFilePath(id)
+	if err != nil {
+		return err
+	}
+	if err = os.Remove(filename); err != nil && !os.IsNotExist(err) {
 		return fmt.Errorf("failed to delete survey file: %w", err)
 	}
 

@@ -5,10 +5,29 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 	"time"
 
 	"github.com/MustardSeedNetworks/seed/internal/logging"
 )
+
+// surveyFilePath returns the on-disk JSON path for a survey ID, rejecting any
+// ID that would escape the storage directory. Survey IDs are generated UUIDs,
+// but DeleteSurvey accepts a caller-supplied ID, so the path-traversal guard is
+// enforced for every filesystem access through this single chokepoint.
+func (m *Manager) surveyFilePath(id string) (string, error) {
+	// Survey IDs must be a single clean path element (generated UUIDs are);
+	// reject separators and parent references before any filesystem access.
+	if id == "" || id != filepath.Base(id) || strings.Contains(id, "..") {
+		return "", fmt.Errorf("invalid survey id: %q", id)
+	}
+	base := filepath.Clean(m.storagePath)
+	filename := filepath.Clean(filepath.Join(base, id+".json"))
+	if !strings.HasPrefix(filename, base+string(os.PathSeparator)) {
+		return "", fmt.Errorf("invalid survey id: %q", id)
+	}
+	return filename, nil
+}
 
 // saveSurvey persists a survey to disk.
 func (m *Manager) saveSurvey(survey *Survey) error {
@@ -17,7 +36,11 @@ func (m *Manager) saveSurvey(survey *Survey) error {
 		return fmt.Errorf("failed to create storage directory: %w", err)
 	}
 
-	filename := filepath.Join(m.storagePath, fmt.Sprintf("%s.json", survey.ID))
+	filename, err := m.surveyFilePath(survey.ID)
+	if err != nil {
+		return err
+	}
+
 	data, err := json.MarshalIndent(survey, "", "  ")
 	if err != nil {
 		return fmt.Errorf("failed to marshal survey: %w", err)
@@ -95,7 +118,11 @@ func (m *Manager) saveSurveyUnlocked(survey *Survey) error {
 		return fmt.Errorf("failed to create storage directory: %w", err)
 	}
 
-	filename := filepath.Join(m.storagePath, fmt.Sprintf("%s.json", survey.ID))
+	filename, err := m.surveyFilePath(survey.ID)
+	if err != nil {
+		return err
+	}
+
 	data, err := json.MarshalIndent(survey, "", "  ")
 	if err != nil {
 		return fmt.Errorf("failed to marshal survey: %w", err)
