@@ -112,6 +112,12 @@ type Store interface {
 	Update(ctx context.Context, p Profile, ifMatch string) error
 	Delete(ctx context.Context, id string) error
 	Count(ctx context.Context) (int, error)
+}
+
+// ActiveStore is the persistence surface for the "currently active profile"
+// pointer, split from Store (ADR-0016 consumer port) so neither interface
+// exceeds the cohesion budget. The same adapter satisfies both.
+type ActiveStore interface {
 	ActiveID(ctx context.Context) (string, error)
 	SetActiveID(ctx context.Context, id string) error
 }
@@ -127,14 +133,16 @@ type LiveConfig interface {
 
 // Service is the profiles use-case.
 type Service struct {
-	store Store
-	live  LiveConfig
+	store  Store
+	active ActiveStore
+	live   LiveConfig
 }
 
-// NewService builds the use-case over its Store port and an optional LiveConfig
-// applier (nil = activation does not touch the running config).
-func NewService(store Store, live LiveConfig) *Service {
-	return &Service{store: store, live: live}
+// NewService builds the use-case over its Store + ActiveStore ports and an
+// optional LiveConfig applier (nil = activation does not touch the running
+// config). In production a single adapter satisfies both store and active.
+func NewService(store Store, active ActiveStore, live LiveConfig) *Service {
+	return &Service{store: store, active: active, live: live}
 }
 
 // Available reports whether the profiles subsystem can serve requests.
@@ -215,7 +223,7 @@ func (s *Service) Delete(ctx context.Context, id string) error {
 		return ErrDeleteDefault
 	}
 	// A failed active-id read must not block deletion (best-effort, as before).
-	if activeID, activeErr := s.store.ActiveID(ctx); activeErr == nil && activeID == id {
+	if activeID, activeErr := s.active.ActiveID(ctx); activeErr == nil && activeID == id {
 		return ErrDeleteActive
 	}
 	return s.store.Delete(ctx, id)
@@ -224,7 +232,7 @@ func (s *Service) Delete(ctx context.Context, id string) error {
 // ActiveProfile resolves the active profile, falling back to the default and
 // self-healing a stale active-id pointer, mirroring the pre-strangle handler.
 func (s *Service) ActiveProfile(ctx context.Context) (Profile, error) {
-	activeID, err := s.store.ActiveID(ctx)
+	activeID, err := s.active.ActiveID(ctx)
 	if err != nil {
 		return Profile{}, ErrActiveLookup
 	}
@@ -250,7 +258,7 @@ func (s *Service) ActiveProfile(ctx context.Context) (Profile, error) {
 		if defErr != nil {
 			return Profile{}, ErrActiveNotFound
 		}
-		_ = s.store.SetActiveID(ctx, def.ID)
+		_ = s.active.SetActiveID(ctx, def.ID)
 		return def, nil
 	}
 	return p, nil
@@ -266,7 +274,7 @@ func (s *Service) SetActiveProfile(ctx context.Context, id string) (Profile, err
 	if err != nil {
 		return Profile{}, err
 	}
-	if setErr := s.store.SetActiveID(ctx, id); setErr != nil {
+	if setErr := s.active.SetActiveID(ctx, id); setErr != nil {
 		return Profile{}, setErr
 	}
 

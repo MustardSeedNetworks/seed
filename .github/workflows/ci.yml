@@ -127,8 +127,11 @@ jobs:
       - name: Run golangci-lint
         uses: golangci/golangci-lint-action@82606bf257cbaff209d206a39f5134f0cfbfd2ee # v9.2.1
         with:
-          version: v2.12.1
-          args: --timeout=5m --new-from-rev=HEAD~1
+          version: v2.12.2
+          # WS-Z Z1: lint the FULL tree, not just the PR diff. The prior
+          # --new-from-rev=HEAD~1 was a blind gate that let whole-tree backlog
+          # accumulate unseen; the backlog is now zero, so the gate goes full.
+          args: --timeout=10m
 
       - name: Run go vet
         run: go vet ./...

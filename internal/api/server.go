@@ -297,28 +297,8 @@ func NewServer(
 		engines:       engine.NewRegistry(nil),
 	}
 
-	// Initialize auth services
-	s.authMgr = auth.NewManager(
-		cfg.Auth.JWTSecret,
-		cfg.Auth.SessionTimeout,
-		cfg.Auth.DefaultUsername,
-		cfg.Auth.DefaultPasswordHash,
-	)
-	s.csrf = auth.NewCSRFManager()
-	s.setupToken = NewSetupTokenManager()
-	s.recovery = auth.NewRecoveryTokenManager(paths.Resolve(paths.ModeAuto).DataDir)
-	s.proxies = trustedProxies
-
-	// Wave 3 (#85): initialise the WebAuthn manager. The relying-party
-	// ID and origins are derived from the server config; failures here
-	// are non-fatal because the rest of the auth surface still works
-	// without passkeys.
-	if wan, wanErr := auth.NewWebAuthnManager(webAuthnConfigFromServer(cfg)); wanErr != nil {
-		logging.GetLogger().Warn("WebAuthn manager init failed; passkeys disabled",
-			"error", wanErr)
-	} else {
-		s.webAuthn = wan
-	}
+	// Initialize auth services (manager, CSRF, setup/recovery tokens, WebAuthn).
+	s.initAuthServices(cfg, trustedProxies)
 
 	// Initialize rate limiters
 	s.loginLimiter = NewRateLimiter(DefaultRateLimitConfig())
@@ -426,6 +406,34 @@ func NewServer(
 	s.setupRoutes()
 
 	return s
+}
+
+// initAuthServices wires the authentication surface: the JWT/session manager,
+// the per-session CSRF manager, the first-run setup-token and recovery-token
+// managers, the trusted-proxy set, and (best-effort) the WebAuthn/passkey
+// manager. Split out of NewServer to keep the composition root under the funlen
+// limit; failures wiring WebAuthn are non-fatal (passkeys disabled, rest works).
+func (s *Server) initAuthServices(cfg *config.Config, trustedProxies *TrustedProxies) {
+	s.authMgr = auth.NewManager(
+		cfg.Auth.JWTSecret,
+		cfg.Auth.SessionTimeout,
+		cfg.Auth.DefaultUsername,
+		cfg.Auth.DefaultPasswordHash,
+	)
+	s.csrf = auth.NewCSRFManager()
+	s.setupToken = NewSetupTokenManager()
+	s.recovery = auth.NewRecoveryTokenManager(paths.Resolve(paths.ModeAuto).DataDir)
+	s.proxies = trustedProxies
+
+	// Wave 3 (#85): initialise the WebAuthn manager. The relying-party ID and
+	// origins are derived from the server config; failures here are non-fatal
+	// because the rest of the auth surface still works without passkeys.
+	if wan, wanErr := auth.NewWebAuthnManager(webAuthnConfigFromServer(cfg)); wanErr != nil {
+		logging.GetLogger().Warn("WebAuthn manager init failed; passkeys disabled",
+			"error", wanErr)
+	} else {
+		s.webAuthn = wan
+	}
 }
 
 // initCaptureServices constructs the services that perform live packet capture

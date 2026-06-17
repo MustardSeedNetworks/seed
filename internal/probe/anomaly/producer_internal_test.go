@@ -54,7 +54,8 @@ func coordFor(t *testing.T, store anomaly.Store) *anomaly.Coordinator {
 	return anomaly.NewCoordinator(anomaly.NewEngine(cat), store)
 }
 
-func latencyEvent(probeID string) probe.ResultEvent {
+func latencyEvent() probe.ResultEvent {
+	const probeID = "p1"
 	return probe.ResultEvent{
 		Result: probe.Result{ProbeID: probeID, Kind: "http"},
 		Breaches: []probe.Breach{
@@ -86,7 +87,7 @@ func TestObserveCleanResultResolvesImmediately(t *testing.T) {
 	}
 	ctx := context.Background()
 	t0 := time.Unix(3000, 0).UTC()
-	p.observe(ctx, latencyEvent("p1"), t0) // active anomaly
+	p.observe(ctx, latencyEvent(), t0) // active anomaly
 
 	// A clean run resolves it immediately — no flushAndPrune / silence wait.
 	p.observe(ctx, cleanEvent("p1"), t0.Add(time.Minute))
@@ -135,7 +136,7 @@ func TestObservePersistsThroughCoordinator(t *testing.T) {
 	if err != nil {
 		t.Fatalf("New: %v", err)
 	}
-	p.observe(context.Background(), latencyEvent("p1"), time.Unix(1000, 0).UTC())
+	p.observe(context.Background(), latencyEvent(), time.Unix(1000, 0).UTC())
 
 	upserts, rows, _ := fs.snapshot()
 	if upserts != 1 || len(rows) != 1 {
@@ -173,7 +174,7 @@ func TestFlushAndPruneResolvesAfterSilence(t *testing.T) {
 		t.Fatalf("New: %v", err)
 	}
 	t0 := time.Unix(2000, 0).UTC()
-	p.observe(context.Background(), latencyEvent("p1"), t0)
+	p.observe(context.Background(), latencyEvent(), t0)
 
 	// Within the window: not yet resolved.
 	p.flushAndPrune(context.Background(), t0.Add(5*time.Minute))
@@ -210,7 +211,7 @@ func TestStartStopIsIdempotentAndDrains(t *testing.T) {
 		t.Fatalf("second Start: %v", err)
 	}
 
-	events <- latencyEvent("p1")
+	events <- latencyEvent()
 	// Wait for the consume goroutine to persist it.
 	deadline := time.Now().Add(2 * time.Second)
 	for {

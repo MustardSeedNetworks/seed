@@ -94,8 +94,15 @@ func (f *fakeStore) SetActiveID(_ context.Context, id string) error {
 
 func ctx() context.Context { return context.Background() }
 
+// newSvc builds the use-case with the fake satisfying both the Store and
+// ActiveStore ports (as the production adapter does), so active-profile state
+// is shared across the two ports.
+func newSvc(store *fakeStore, live catalog.LiveConfig) *catalog.Service {
+	return catalog.NewService(store, store, live)
+}
+
 func TestCreateValidatesNameAndStores(t *testing.T) {
-	svc := catalog.NewService(newFakeStore(), nil)
+	svc := newSvc(newFakeStore(), nil)
 
 	if _, err := svc.Create(ctx(), catalog.NewProfile{Name: ""}); !errors.Is(err, catalog.ErrNameRequired) {
 		t.Fatalf("empty name should be ErrNameRequired, got %v", err)
@@ -120,7 +127,7 @@ func TestCreateValidatesNameAndStores(t *testing.T) {
 func TestUpdatePartialSemantics(t *testing.T) {
 	store := newFakeStore()
 	store.byID["p1"] = catalog.Profile{ID: "p1", Name: "orig", Description: "d", ConfigJSON: "{}"}
-	svc := catalog.NewService(store, nil)
+	svc := newSvc(store, nil)
 
 	// Empty name keeps existing; nil config keeps existing; description always applied.
 	got, err := svc.Update(ctx(), "p1", catalog.ProfileUpdate{Name: "", Description: "new", ConfigJSON: nil}, "")
@@ -149,7 +156,7 @@ func TestUpdateIfMatch(t *testing.T) {
 	store := newFakeStore()
 	// fakeStore.UpdateIfMatch treats ConfigJSON as the version token.
 	store.byID["p1"] = catalog.Profile{ID: "p1", Name: "n", ConfigJSON: "v1"}
-	svc := catalog.NewService(store, nil)
+	svc := newSvc(store, nil)
 
 	// Matching ETag writes through.
 	upd := `v2`
@@ -179,7 +186,7 @@ func TestDeleteGuards(t *testing.T) {
 	store.byID["act"] = catalog.Profile{ID: "act", Name: "active"}
 	store.byID["ok"] = catalog.Profile{ID: "ok", Name: "ok"}
 	store.activeID = "act"
-	svc := catalog.NewService(store, nil)
+	svc := newSvc(store, nil)
 
 	if err := svc.Delete(ctx(), "def"); !errors.Is(err, catalog.ErrDeleteDefault) {
 		t.Fatalf("deleting default should be ErrDeleteDefault, got %v", err)
@@ -200,7 +207,7 @@ func TestActiveProfileResolution(t *testing.T) {
 		store := newFakeStore()
 		store.byID["p1"] = catalog.Profile{ID: "p1", Name: "one"}
 		store.activeID = "p1"
-		got, err := catalog.NewService(store, nil).ActiveProfile(ctx())
+		got, err := newSvc(store, nil).ActiveProfile(ctx())
 		if err != nil || got.ID != "p1" {
 			t.Fatalf("want p1, got %+v err=%v", got, err)
 		}
@@ -209,14 +216,14 @@ func TestActiveProfileResolution(t *testing.T) {
 	t.Run("falls back to default when unset", func(t *testing.T) {
 		store := newFakeStore()
 		store.byID["d"] = catalog.Profile{ID: "d", Name: "def", IsDefault: true}
-		got, err := catalog.NewService(store, nil).ActiveProfile(ctx())
+		got, err := newSvc(store, nil).ActiveProfile(ctx())
 		if err != nil || got.ID != "d" {
 			t.Fatalf("want default d, got %+v err=%v", got, err)
 		}
 	})
 
 	t.Run("no active and no default", func(t *testing.T) {
-		_, err := catalog.NewService(newFakeStore(), nil).ActiveProfile(ctx())
+		_, err := newSvc(newFakeStore(), nil).ActiveProfile(ctx())
 		if !errors.Is(err, catalog.ErrNoActiveOrDefault) {
 			t.Fatalf("want ErrNoActiveOrDefault, got %v", err)
 		}
@@ -226,7 +233,7 @@ func TestActiveProfileResolution(t *testing.T) {
 		store := newFakeStore()
 		store.byID["d"] = catalog.Profile{ID: "d", Name: "def", IsDefault: true}
 		store.activeID = "ghost" // points at a deleted profile
-		got, err := catalog.NewService(store, nil).ActiveProfile(ctx())
+		got, err := newSvc(store, nil).ActiveProfile(ctx())
 		if err != nil || got.ID != "d" {
 			t.Fatalf("want self-heal to d, got %+v err=%v", got, err)
 		}
@@ -239,7 +246,7 @@ func TestActiveProfileResolution(t *testing.T) {
 func TestSetActiveProfile(t *testing.T) {
 	store := newFakeStore()
 	store.byID["p1"] = catalog.Profile{ID: "p1", Name: "one"}
-	svc := catalog.NewService(store, nil)
+	svc := newSvc(store, nil)
 
 	if _, err := svc.SetActiveProfile(ctx(), ""); !errors.Is(err, catalog.ErrIDRequired) {
 		t.Fatalf("empty id should be ErrIDRequired, got %v", err)
@@ -268,7 +275,7 @@ func TestSetActiveProfileAppliesConfig(t *testing.T) {
 	store := newFakeStore()
 	store.byID["p1"] = catalog.Profile{ID: "p1", Name: "one", ConfigJSON: `{"k":1}`}
 	live := &fakeLive{}
-	svc := catalog.NewService(store, live)
+	svc := newSvc(store, live)
 
 	if _, err := svc.SetActiveProfile(ctx(), "p1"); err != nil {
 		t.Fatalf("set active: %v", err)
@@ -281,7 +288,7 @@ func TestSetActiveProfileAppliesConfig(t *testing.T) {
 func TestSetActiveProfileSurfacesApplyError(t *testing.T) {
 	store := newFakeStore()
 	store.byID["p1"] = catalog.Profile{ID: "p1", Name: "one", ConfigJSON: `{"k":1}`}
-	svc := catalog.NewService(store, &fakeLive{err: catalog.ErrConfigApply})
+	svc := newSvc(store, &fakeLive{err: catalog.ErrConfigApply})
 
 	_, err := svc.SetActiveProfile(ctx(), "p1")
 	if !errors.Is(err, catalog.ErrConfigApply) {
@@ -297,7 +304,7 @@ func TestSetActiveProfileSkipsApplyWhenConfigEmpty(t *testing.T) {
 	store := newFakeStore()
 	store.byID["p1"] = catalog.Profile{ID: "p1", Name: "one"} // no ConfigJSON
 	live := &fakeLive{err: errors.New("should not be called")}
-	svc := catalog.NewService(store, live)
+	svc := newSvc(store, live)
 
 	if _, err := svc.SetActiveProfile(ctx(), "p1"); err != nil {
 		t.Fatalf("set active with empty config should not invoke apply: %v", err)
@@ -311,7 +318,7 @@ func TestDuplicateRetriesOnNameCollision(t *testing.T) {
 	store := newFakeStore()
 	store.byID["src"] = catalog.Profile{ID: "src", Name: "src", ConfigJSON: `{"k":1}`}
 	store.byID["copy"] = catalog.Profile{ID: "copy", Name: "src (Copy)"} // forces first-attempt collision
-	svc := catalog.NewService(store, nil)
+	svc := newSvc(store, nil)
 
 	dup, err := svc.Duplicate(ctx(), "src", "")
 	if err != nil {
@@ -328,7 +335,7 @@ func TestDuplicateRetriesOnNameCollision(t *testing.T) {
 func TestImportCreateUpdateSkip(t *testing.T) {
 	store := newFakeStore()
 	store.byID["e"] = catalog.Profile{ID: "e", Name: "exists", ConfigJSON: "{}"}
-	svc := catalog.NewService(store, nil)
+	svc := newSvc(store, nil)
 
 	res := svc.Import(ctx(), []catalog.ImportItem{
 		{Name: "fresh", ConfigJSON: `{"a":1}`},
