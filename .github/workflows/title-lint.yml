@@ -1,18 +1,10 @@
-# =============================================================================
-# Title Lint
-# =============================================================================
-# Enforces conventional commit format on PR titles via amannn/action-
-# semantic-pull-request. Also checks that issue titles use an approved
-# prefix (BUG, FEATURE, etc.) — adds needs-triage if not.
-# =============================================================================
-
 name: Title Lint
 
 on:
   issues:
     types: [opened, edited]
   pull_request_target:
-    types: [opened, edited, synchronize]
+    types: [opened, edited, synchronize, reopened, ready_for_review]
 
 permissions:
   issues: write
@@ -24,29 +16,26 @@ jobs:
     runs-on: ubuntu-latest
     if: github.event_name == 'pull_request_target'
     steps:
-      - name: Validate PR title (conventional commits)
+      - name: Validate PR title
         uses: amannn/action-semantic-pull-request@48f256284bd46cdaab1048c3721360e808335d50 # v6.1.1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           types: |
+            build
+            chore
+            ci
+            docs
             feat
             fix
-            docs
-            style
-            refactor
             perf
-            test
-            build
-            ci
-            chore
+            refactor
             revert
+            test
           requireScope: false
-          subjectPattern: ^.{3,}$
-          subjectPatternError: |
-            The subject "{subject}" must be at least 3 characters.
+          subjectPattern: ^[a-z0-9].{2,}$
+          subjectPatternError: The subject must start lowercase or with a number and be at least 3 characters.
           ignoreLabels: |
-            bot
             dependencies
 
   lint-issue-title:
@@ -54,21 +43,19 @@ jobs:
     runs-on: ubuntu-latest
     if: github.event_name == 'issues'
     steps:
-      - name: Check issue title prefix
+      - name: Check issue title
         uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
         with:
           script: |
-            const title = context.payload.issue.title || '';
-            const validPrefixes = ['[BUG]', '[FEATURE]', '[CHORE]', '[DOCS]', '[TEST]', '[SECURITY]', '[ENHANCEMENT]', '[Hardware]', '[EPIC]', '[RENAME]'];
-            const conventional = /^(feat|fix|docs|style|refactor|perf|test|chore|ci|build)(\(.+\))?:/i;
-            const hasPrefix = validPrefixes.some(p => title.startsWith(p));
-            const isConventional = conventional.test(title);
-            if (!hasPrefix && !isConventional) {
+            const title = context.payload.issue.title || "";
+            const valid = /^(Defect|Feature|Chore|Docs|Security|Epic):\s\S.{2,}$/;
+            const placeholder = /^\[(BUG|FEATURE|CHORE|DOCS|SECURITY|EPIC)\]\s*$/i;
+            if (!valid.test(title) || placeholder.test(title)) {
               await github.rest.issues.addLabels({
                 owner: context.repo.owner,
                 repo: context.repo.repo,
                 issue_number: context.payload.issue.number,
-                labels: ['needs-triage'],
+                labels: ["status: needs-info"],
               });
-              console.log('Added needs-triage to issue #' + context.payload.issue.number);
+              core.setFailed("Issue titles must use 'Defect:', 'Feature:', 'Chore:', 'Docs:', 'Security:', or 'Epic:' followed by a specific subject.");
             }

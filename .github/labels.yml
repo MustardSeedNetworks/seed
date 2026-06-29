@@ -1,129 +1,123 @@
-# Types
 - name: "type: defect"
   color: D73A4A
-  description: Product defect or regression
+  description: "Product defect or regression."
 - name: "type: feature"
   color: 0E8A16
-  description: New feature or enhancement
+  description: "New feature or enhancement."
 - name: "type: chore"
   color: FEF2C0
-  description: Maintenance or refactoring
+  description: "Maintenance, refactoring, tooling, or dependency work."
 - name: "type: docs"
   color: 0075CA
-  description: Documentation
+  description: "Documentation work."
 - name: "type: security"
   color: B60205
-  description: Security vulnerabilities and hardening
+  description: "Security vulnerability or hardening work."
 - name: "type: epic"
   color: 8B5CF6
-  description: Epic grouping multiple related issues
-
-# Priorities
+  description: "Tracking issue that groups related work."
 - name: "priority: critical"
   color: B60205
-  description: Must have for release
+  description: "Release blocker or urgent customer impact."
 - name: "priority: high"
   color: D93F0B
-  description: Should have
+  description: "Important work for the current milestone."
 - name: "priority: medium"
   color: FBCA04
-  description: Nice to have
+  description: "Useful work with normal priority."
 - name: "priority: low"
   color: C5DEF5
-  description: Future consideration
-
-# Status
+  description: "Low urgency or future consideration."
+- name: "severity: critical"
+  color: B60205
+  description: "Crash, data loss, security exposure, or unusable release."
+- name: "severity: high"
+  color: D93F0B
+  description: "Major workflow broken with no good workaround."
+- name: "severity: medium"
+  color: FBCA04
+  description: "Partial breakage or workaround exists."
+- name: "severity: low"
+  color: C5DEF5
+  description: "Minor functional or cosmetic issue."
 - name: "status: needs-triage"
   color: EDEDED
-  description: Awaiting triage and label assignment
-- name: "status: investigating"
+  description: "Awaiting owner triage."
+- name: "status: accepted"
   color: 0E8A16
-  description: Being actively investigated
+  description: "Accepted for implementation."
+- name: "status: in-progress"
+  color: 1D76DB
+  description: "Work is actively underway."
 - name: "status: blocked"
   color: B60205
-  description: Blocked by dependency or prerequisite
-- name: "status: regression"
-  color: D93F0B
-  description: Regression from previous release
-
-# Areas
-- name: "area: auth/setup"
-  color: 6F42C1
-  description: Authentication, authorization, and setup wizard
-- name: "area: survey/floorplan"
-  color: 0052CC
-  description: Surveys, floorplans, and planner
-- name: "area: discovery/network"
-  color: 0C88FF
-  description: Network discovery, link tests, DHCP, gateway, speedtest
-- name: "area: logging"
-  color: F9D0C4
-  description: Logging, observability, log viewer
-- name: "area: UI/UX"
-  color: CFD3D7
-  description: User interface and experience
-- name: "area: backend"
-  color: 5319E7
-  description: Backend/Go services
-- name: "area: frontend"
-  color: 1D76DB
-  description: Frontend/React UI
-- name: "area: infra"
-  color: 006B75
-  description: CI/CD, packaging, deployment
-- name: "area: i18n"
-  color: 9B59B6
-  description: Internationalization and localization
-
-# Meta
-- name: duplicate
-  color: CFD3D7
-  description: This issue or pull request already exists
-- name: question
+  description: "Blocked by a dependency or decision."
+- name: "status: needs-info"
   color: D876E3
-  description: Further information is requested
-- name: wontfix
-  color: FFFFFF
-  description: This will not be worked on
-- name: invalid
-  color: E4E669
-  description: This doesn't seem right
-- name: help wanted
-  color: 008672
-  description: Extra attention is needed
-- name: good first issue
-  color: 7057FF
-  description: Good for newcomers
-- name: tech-debt
+  description: "Needs more information before work can proceed."
+- name: "status: ready-for-review"
   color: 5319E7
-  description: Technical debt and refactoring
-- name: testing
-  color: 0E8A16
-  description: Testing and test coverage
-- name: ci
-  color: 6E543E
-  description: CI/CD pipelines
-- name: accessibility
-  color: 0E7490
-  description: Accessibility improvements
-- name: integration
-  color: 4A0A66
-  description: Integrations with third-party systems and APIs
-- name: tracking issue
-  color: 1D76DB
-  description: Meta-issue tracking related tasks
-- name: "autorelease: pending"
+  description: "Implementation is ready for review."
+- name: "area: api"
+  color: D4C5F9
+  description: "Api area."
+- name: "area: auth"
+  color: D4C5F9
+  description: "Auth area."
+- name: "area: build"
+  color: D4C5F9
+  description: "Build area."
+- name: "area: ci"
+  color: D4C5F9
+  description: "Ci area."
+- name: "area: docs"
+  color: D4C5F9
+  description: "Docs area."
+- name: "area: frontend"
+  color: D4C5F9
+  description: "Frontend area."
+- name: "area: license"
+  color: D4C5F9
+  description: "License area."
+- name: "area: network"
+  color: D4C5F9
+  description: "Network area."
+- name: "area: reporting"
+  color: D4C5F9
+  description: "Reporting area."
+- name: "area: security"
+  color: D4C5F9
+  description: "Security area."
+- name: "area: telemetry"
+  color: D4C5F9
+  description: "Telemetry area."
+- name: "area: tests"
+  color: D4C5F9
+  description: "Tests area."
+- name: "area: wifi"
+  color: D4C5F9
+  description: "Wifi area."
+- name: "good first issue"
+  color: 7057FF
+  description: "Small, well-scoped issue for a first contribution."
+- name: "help wanted"
+  color: 008672
+  description: "Extra attention is welcome."
+- name: "duplicate"
+  color: CFD3D7
+  description: "Duplicate of another issue or pull request."
+- name: "invalid"
+  color: E4E669
+  description: "Not actionable or not applicable."
+- name: "wontfix"
+  color: FFFFFF
+  description: "Intentionally not planned."
+- name: "dependencies"
+  color: 0366D6
+  description: "Dependency update."
+- name: "release: pending"
   color: EDEDED
-  description: ""
-- name: "autorelease: tagged"
+  description: "Release automation is pending."
+- name: "release: tagged"
   color: EDEDED
-  description: ""
-- name: Review effort 1/5
-  color: D1BCF9
-  description: ""
-- name: hardware-testing
-  color: 0E8A16
-  description: Hardware compatibility testing and validation
-- name: "component: ai"
-  color: 8B5CF6
-  description: Reserved
+  description: "Release automation tagged this change."

@@ -1,0 +1,66 @@
+name: Epic
+description: Track a larger body of related work for Seed
+title: "Epic: "
+labels: ["type: epic", "status: needs-triage"]
+body:
+  - type: textarea
+    id: outcome
+    attributes:
+      label: Outcome
+      description: What strategic or user-visible outcome does this epic deliver?
+    validations:
+      required: true
+  - type: dropdown
+    id: area
+    attributes:
+      label: Primary Area
+      options:
+        - area: api
+        - area: auth
+        - area: build
+        - area: ci
+        - area: docs
+        - area: frontend
+        - area: license
+        - area: network
+        - area: reporting
+        - area: security
+        - area: telemetry
+        - area: tests
+        - area: wifi
+    validations:
+      required: true
+  - type: textarea
+    id: scope
+    attributes:
+      label: Scope
+      description: What is in scope and out of scope?
+      placeholder: |
+        In scope:
+        - ...
+
+        Out of scope:
+        - ...
+    validations:
+      required: true
+  - type: textarea
+    id: child_issues
+    attributes:
+      label: Child Issues
+      description: Link issues as they are created.
+      placeholder: |
+        - [ ] #...
+        - [ ] #...
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: Epic Completion Criteria
+      placeholder: |
+        - [ ] ...
+        - [ ] ...
+    validations:
+      required: true
+  - type: textarea
+    id: risks
+    attributes:
+      label: Risks and Dependencies
