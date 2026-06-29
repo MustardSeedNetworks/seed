@@ -16,7 +16,7 @@ require (
 	github.com/google/uuid v1.6.0
 	github.com/gosnmp/gosnmp v1.43.2
 	github.com/kardianos/service v1.2.4
-	github.com/mdlayher/wifi v0.7.2
+	github.com/mdlayher/wifi v0.8.0
 	github.com/nicksnyder/go-i18n/v2 v2.6.1
 	github.com/safchain/ethtool v0.7.0
 	github.com/santhosh-tekuri/jsonschema/v6 v6.0.2
@@ -27,7 +27,7 @@ require (
 	golang.org/x/oauth2 v0.36.0
 	golang.org/x/text v0.38.0
 	gopkg.in/natefinch/lumberjack.v2 v2.2.1
-	modernc.org/sqlite v1.52.0
+	modernc.org/sqlite v1.53.0
 )
 
 require (
