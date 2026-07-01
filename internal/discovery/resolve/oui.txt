@@ -8,72 +8,6 @@ company_id                                                  Organization
 				Shanghai     201206
 				CN
 
-08-EA-44   (hex)		Extreme Networks Headquarters
-08EA44     (base 16)		Extreme Networks Headquarters
-				2121 RDU Center Drive 
-				Morrisville  NC  27560
-				US
-
-F4-EA-B5   (hex)		Extreme Networks Headquarters
-F4EAB5     (base 16)		Extreme Networks Headquarters
-				2121 RDU Center Drive 
-				Morrisville  NC  27560
-				US
-
-B8-7C-F2   (hex)		Extreme Networks Headquarters
-B87CF2     (base 16)		Extreme Networks Headquarters
-				2121 RDU Center Drive 
-				Morrisville  NC  27560
-				US
-
-E0-A1-29   (hex)		Extreme Networks Headquarters
-E0A129     (base 16)		Extreme Networks Headquarters
-				2121 RDU Center Drive
-				Morrisville  NC  27560
-				US
-
-A8-C6-47   (hex)		Extreme Networks Headquarters
-A8C647     (base 16)		Extreme Networks Headquarters
-				2121 RDU Center Drive 
-				Morrisville  NC  27560
-				US
-
-A4-73-AB   (hex)		Extreme Networks Headquarters
-A473AB     (base 16)		Extreme Networks Headquarters
-				2121 RDU Center Drive 
-				Morrisville  NC  27560
-				US
-
-0C-9B-78   (hex)		Extreme Networks Headquarters
-0C9B78     (base 16)		Extreme Networks Headquarters
-				2121 RDU Center Drive 
-				Morrisville  NC  27560
-				US
-
-A4-C7-F6   (hex)		Extreme Networks Headquarters
-A4C7F6     (base 16)		Extreme Networks Headquarters
-				2121 RDU Center Drive 
-				Morrisville  NC  27560
-				US
-
-B4-2D-56   (hex)		Extreme Networks Headquarters
-B42D56     (base 16)		Extreme Networks Headquarters
-				2121 RDU Center Drive 
-				Morrisville  NC  27560
-				US
-
-88-7E-25   (hex)		Extreme Networks Headquarters
-887E25     (base 16)		Extreme Networks Headquarters
-				2121 RDU Center Drive 
-				Morrisville  NC  27560
-				US
-
-00-19-77   (hex)		Extreme Networks Headquarters
-001977     (base 16)		Extreme Networks Headquarters
-				2121 RDU Center Drive 
-				Morrisville  NC  27560
-				US
-
 38-E2-CA   (hex)		Katun Corporation
 38E2CA     (base 16)		Katun Corporation
 				7760 France Ave SSuite 340
@@ -832,18 +766,6 @@ C4799F     (base 16)		Haiguang Smart Device Co.,Ltd.
 				#101,69, Jongam-ro 28-gil, Seongbuk-gu
 				seoul    02797
 				KR
-
-68-DD-B7   (hex)		TP-LINK TECHNOLOGIES CO.,LTD.
-68DDB7     (base 16)		TP-LINK TECHNOLOGIES CO.,LTD.
-				Building 24(floors 1,3,4,5)and 28(floors 1-4)Central Science and Technology Park,Shennan Road,Nanshan
-				Shenzhen  Guangdong  518057
-				CN
-
-14-D8-64   (hex)		TP-LINK TECHNOLOGIES CO.,LTD.
-14D864     (base 16)		TP-LINK TECHNOLOGIES CO.,LTD.
-				Building 24(floors 1,3,4,5)and 28(floors 1-4)Central Science and Technology Park,Shennan Road,Nanshan
-				Shenzhen  Guangdong  518057
-				CN
 
 B8-51-A9   (hex)		Nokia
 B851A9     (base 16)		Nokia
@@ -3425,12 +3347,6 @@ ECE6A2     (base 16)		Fiberhome Telecommunication Technologies Co.,LTD
 				Wuhan  Hubei  430074
 				CN
 
-AC-84-C6   (hex)		TP-LINK TECHNOLOGIES CO.,LTD.
-AC84C6     (base 16)		TP-LINK TECHNOLOGIES CO.,LTD.
-				Building 24(floors 1,3,4,5)and 28(floors 1-4)Central Science and Technology Park,Shennan Road,Nanshan
-				Shenzhen  Guangdong  518057
-				CN
-
 1C-0E-D3   (hex)		Sichuan Tianyi Comheart Telecom Co.,LTD
 1C0ED3     (base 16)		Sichuan Tianyi Comheart Telecom Co.,LTD
 				No.198,First Section,Snow Mountain Avenue, Jinyuan Town, Dayi County
@@ -3857,12 +3773,6 @@ CC6618     (base 16)		Adtran Inc
 				Huntsville  AL  35806-2807
 				US
 
-44-29-1E   (hex)		AltoBeam (China) Inc.
-44291E     (base 16)		AltoBeam (China) Inc.
-				B808, Tsinghua Tongfang Hi-Tech Plaza, Haidian
-				Beijing  Beijing  100083
-				CN
-
 24-EB-ED   (hex)		HUAWEI TECHNOLOGIES CO.,LTD
 24EBED     (base 16)		HUAWEI TECHNOLOGIES CO.,LTD
 				No.2 Xin Cheng Road, Room R6,Songshan Lake Technology Park
@@ -3999,12 +3909,6 @@ D4BD4F     (base 16)		Ruckus Wireless
 8C1553     (base 16)		Beijing Memblaze Technology Co Ltd
 				Building B2,Dongsheng Park, 66 Xixiaokou Road, Haidian
 				Beijing  Beijing  100192
-				CN
-
-6C-B1-58   (hex)		TP-LINK TECHNOLOGIES CO.,LTD.
-6CB158     (base 16)		TP-LINK TECHNOLOGIES CO.,LTD.
-				Building 24(floors 1,3,4,5)and 28(floors 1-4)Central Science and Technology Park,Shennan Road,Nanshan
-				Shenzhen  Guangdong  518057
 				CN
 
 B0-A4-F0   (hex)		HUAWEI TECHNOLOGIES CO.,LTD
@@ -4624,12 +4528,6 @@ C47D9F     (base 16)		Samsung Electronics Co.,Ltd
 				#94-1, Imsoo-Dong
 				Gumi  Gyeongbuk  730-350
 				KR
-
-A4-EF-15   (hex)		AltoBeam (China) Inc.
-A4EF15     (base 16)		AltoBeam (China) Inc.
-				B808, Tsinghua Tongfang Hi-Tech Plaza, Haidian
-				Beijing  Beijing  100083
-				CN
 
 1C-45-86   (hex)		Nintendo Co.,Ltd
 1C4586     (base 16)		Nintendo Co.,Ltd
@@ -5903,12 +5801,6 @@ C42360     (base 16)		Intel Corporate
 				Chongqing   China  401120
 				CN
 
-9C-1C-37   (hex)		AltoBeam (China) Inc.
-9C1C37     (base 16)		AltoBeam (China) Inc.
-				B808, Tsinghua Tongfang Hi-Tech Plaza, Haidian
-				Beijing  Beijing  100083
-				CN
-
 2C-08-23   (hex)		Sercomm France Sarl
 2C0823     (base 16)		Sercomm France Sarl
 				2/4 Rue Maurice Hartmann 92370  Issy Les Moulineaux France
@@ -6239,12 +6131,6 @@ F40223     (base 16)		PAX Computer Technology(Shenzhen) Ltd.
 				Kulim  Kedah  09000
 				MY
 
-08-10-86   (hex)		NEC Platforms, Ltd.
-081086     (base 16)		NEC Platforms, Ltd.
-				2-3 Kandatsukasamachi
-				Chiyodaku  Tokyo  101-8532
-				JP
-
 78-65-3B   (hex)		Shaoxing Ourten Electronics Co., Ltd.
 78653B     (base 16)		Shaoxing Ourten Electronics Co., Ltd.
 				3rd Floor # 7, No. 1732 Yanhua industrial park West Renmin Road,Shangyu
@@ -6303,12 +6189,6 @@ FC584A     (base 16)		xiamenshi c-chip technology co., ltd
 882A5E     (base 16)		New H3C Technologies Co., Ltd
 				466 Changhe Road, Binjiang District
 				Hangzhou  Zhejiang  310052
-				CN
-
-24-69-68   (hex)		TP-LINK TECHNOLOGIES CO.,LTD.
-246968     (base 16)		TP-LINK TECHNOLOGIES CO.,LTD.
-				Building 24(floors 1,3,4,5)and 28(floors 1-4)Central Science and Technology Park,Shennan Road,Nanshan
-				Shenzhen  Guangdong  518057
 				CN
 
 FC-A9-DC   (hex)		Renesas Electronics (Penang) Sdn. Bhd.
@@ -8315,18 +8195,6 @@ F419E2     (base 16)		Volterra
 				Santa Clara  CA  95054
 				US
 
-D8-07-B6   (hex)		TP-LINK TECHNOLOGIES CO.,LTD.
-D807B6     (base 16)		TP-LINK TECHNOLOGIES CO.,LTD.
-				Building 24(floors 1,3,4,5)and 28(floors 1-4)Central Science and Technology Park,Shennan Road,Nanshan
-				Shenzhen  Guangdong  518057
-				CN
-
-64-6E-97   (hex)		TP-LINK TECHNOLOGIES CO.,LTD.
-646E97     (base 16)		TP-LINK TECHNOLOGIES CO.,LTD.
-				Building 24(floors 1,3,4,5)and 28(floors 1-4)Central Science and Technology Park,Shennan Road,Nanshan
-				Shenzhen  Guangdong  518057
-				CN
-
 6C-0D-34   (hex)		Nokia
 6C0D34     (base 16)		Nokia
 				600 March Road
@@ -9526,18 +9394,6 @@ F8ADCB     (base 16)		HMD Global Oy
 				Bertel Jungin aukio 9
 				Espoo    02600
 				FI
-
-D0-37-45   (hex)		TP-LINK TECHNOLOGIES CO.,LTD.
-D03745     (base 16)		TP-LINK TECHNOLOGIES CO.,LTD.
-				Building 24(floors 1,3,4,5)and 28(floors 1-4)Central Science and Technology Park,Shennan Road,Nanshan
-				Shenzhen  Guangdong  518057
-				CN
-
-60-3A-7C   (hex)		TP-LINK TECHNOLOGIES CO.,LTD.
-603A7C     (base 16)		TP-LINK TECHNOLOGIES CO.,LTD.
-				Building 24(floors 1,3,4,5)and 28(floors 1-4)Central Science and Technology Park,Shennan Road,Nanshan
-				Shenzhen  Guangdong  518057
-				CN
 
 00-01-78   (hex)		MARGI Systems, Inc.
 000178     (base 16)		MARGI Systems, Inc.
@@ -12337,12 +12193,6 @@ B0ACD2     (base 16)		zte corporation
 				80 West Tasman Drive
 				San Jose  CA  94568
 				US
-
-6C-E4-DA   (hex)		NEC Platforms, Ltd.
-6CE4DA     (base 16)		NEC Platforms, Ltd.
-				2-3 Kandatsukasamachi
-				Chiyodaku  Tokyo  101-8532
-				JP
 
 E4-C4-83   (hex)		GUANGDONG OPPO MOBILE TELECOMMUNICATIONS CORP.,LTD
 E4C483     (base 16)		GUANGDONG OPPO MOBILE TELECOMMUNICATIONS CORP.,LTD
@@ -44384,9 +44234,6 @@ CCBABD     (base 16)		TP-Link Systems Inc.
 				 Irvine  CA  92618
 				US
 
-5C-E7-53   (hex)		Private
-5CE753     (base 16)		Private
-
 B4-5B-86   (hex)		Funshion Online Technologies Co.,Ltd
 B45B86     (base 16)		Funshion Online Technologies Co.,Ltd
 				2101, Floor 1-2, Building 9, Anzhen Xili District 3, Chaoyang District, Beijing
@@ -44935,12 +44782,6 @@ F4063C     (base 16)		Texas Instruments
 				The Rainbow City Office Building, 68 Qinghe Middle Street Haidian District
 				Beijing  Beijing  100085
 				CN
-
-BC-34-D6   (hex)		Extreme Networks Headquarters
-BC34D6     (base 16)		Extreme Networks Headquarters
-				2121 RDU Center Drive 
-				Morrisville  NC  27560
-				US
 
 CC-E4-D1   (hex)		Arista Networks
 CCE4D1     (base 16)		Arista Networks
@@ -46142,12 +45983,6 @@ D0B324     (base 16)		Apple, Inc.
 				Shenzhen  Guangdong  518110
 				CN
 
-2C-79-BE   (hex)		TP-LINK TECHNOLOGIES CO.,LTD.
-2C79BE     (base 16)		TP-LINK TECHNOLOGIES CO.,LTD.
-				Building 24(floors 1,3,4,5)and 28(floors 1-4)Central Science and Technology Park,Shennan Road,Nanshan
-				Shenzhen  Guangdong  518057
-				CN
-
 4C-09-97   (hex)		Arista Networks
 4C0997     (base 16)		Arista Networks
 				5453 Great America Parkway
@@ -46165,12 +46000,6 @@ D0B324     (base 16)		Apple, Inc.
 				No.5 DongXin Road
 				Wuhan  Hubei  430074
 				CN
-
-B8-1E-0B   (hex)		Extreme Networks Headquarters
-B81E0B     (base 16)		Extreme Networks Headquarters
-				2121 RDU Center Drive 
-				Morrisville  NC  27560
-				US
 
 AC-D2-0C   (hex)		Chengdu SingCore Technology Co.,Ltd.
 ACD20C     (base 16)		Chengdu SingCore Technology Co.,Ltd.
@@ -46696,18 +46525,6 @@ D42BF0     (base 16)		Tiinlab Corporation
 				Building A Room 201 Cooperation District between Shenzhen and HongKong,Qianwan Road No.1,Shenzhen City, Business Address:No. 3333, Liuxian AvenueTower A, 35th Floor,Tanglang City, Nanshan District, Shenzhen, China
 				Shenzhen  Guangdong  518000
 				CN
-
-B8-DC-28   (hex)		Extreme Networks Headquarters
-B8DC28     (base 16)		Extreme Networks Headquarters
-				2121 RDU Center Drive 
-				Morrisville  NC  27560
-				US
-
-1C-2D-60   (hex)		Extreme Networks Headquarters
-1C2D60     (base 16)		Extreme Networks Headquarters
-				2121 RDU Center Drive 
-				Morrisville  NC  27560
-				US
 
 84-EB-0C   (hex)		Mellanox Technologies, Inc.
 84EB0C     (base 16)		Mellanox Technologies, Inc.
@@ -47699,42 +47516,6 @@ FCF5C4     (base 16)		Espressif Inc.
 				Road Town  Tortola  VG1110
 				VG
 
-10-06-1C   (hex)		Espressif Inc.
-10061C     (base 16)		Espressif Inc.
-				Vistra Corporate Services Centre, Wickhams Cay II
-				Road Town  Tortola  VG1110
-				VG
-
-AC-15-18   (hex)		Espressif Inc.
-AC1518     (base 16)		Espressif Inc.
-				Vistra Corporate Services Centre, Wickhams Cay II
-				Road Town  Tortola  VG1110
-				VG
-
-F0-9E-9E   (hex)		Espressif Inc.
-F09E9E     (base 16)		Espressif Inc.
-				Vistra Corporate Services Centre, Wickhams Cay II
-				Road Town  Tortola  VG1110
-				VG
-
-DC-06-75   (hex)		Espressif Inc.
-DC0675     (base 16)		Espressif Inc.
-				Vistra Corporate Services Centre, Wickhams Cay II
-				Road Town  Tortola  VG1110
-				VG
-
-58-8C-81   (hex)		Espressif Inc.
-588C81     (base 16)		Espressif Inc.
-				Vistra Corporate Services Centre, Wickhams Cay II
-				Road Town  Tortola  VG1110
-				VG
-
-FC-01-2C   (hex)		Espressif Inc.
-FC012C     (base 16)		Espressif Inc.
-				Vistra Corporate Services Centre, Wickhams Cay II
-				Road Town  Tortola  VG1110
-				VG
-
 80-F3-DA   (hex)		Espressif Inc.
 80F3DA     (base 16)		Espressif Inc.
 				Vistra Corporate Services Centre, Wickhams Cay II
@@ -47753,23 +47534,419 @@ FC012C     (base 16)		Espressif Inc.
 				Road Town  Tortola  VG1110
 				VG
 
+AC-15-18   (hex)		Espressif Inc.
+AC1518     (base 16)		Espressif Inc.
+				Vistra Corporate Services Centre, Wickhams Cay II
+				Road Town  Tortola  VG1110
+				VG
+
+F0-9E-9E   (hex)		Espressif Inc.
+F09E9E     (base 16)		Espressif Inc.
+				Vistra Corporate Services Centre, Wickhams Cay II
+				Road Town  Tortola  VG1110
+				VG
+
+58-8C-81   (hex)		Espressif Inc.
+588C81     (base 16)		Espressif Inc.
+				Vistra Corporate Services Centre, Wickhams Cay II
+				Road Town  Tortola  VG1110
+				VG
+
+FC-01-2C   (hex)		Espressif Inc.
+FC012C     (base 16)		Espressif Inc.
+				Vistra Corporate Services Centre, Wickhams Cay II
+				Road Town  Tortola  VG1110
+				VG
+
 5C-BA-75   (hex)		Quectel Wireless Solutions Co.,Ltd.
 5CBA75     (base 16)		Quectel Wireless Solutions Co.,Ltd.
 				Building 5, Shanghai Business Park Phase III (Area B), No.1016 Tianlin Road, Minhang District
 				Shanghai    200233
 				CN
 
-00-01-30   (hex)		Extreme Networks Headquarters
-000130     (base 16)		Extreme Networks Headquarters
+DC-06-75   (hex)		Espressif Inc.
+DC0675     (base 16)		Espressif Inc.
+				Vistra Corporate Services Centre, Wickhams Cay II
+				Road Town  Tortola  VG1110
+				VG
+
+10-06-1C   (hex)		Espressif Inc.
+10061C     (base 16)		Espressif Inc.
+				Vistra Corporate Services Centre, Wickhams Cay II
+				Road Town  Tortola  VG1110
+				VG
+
+B8-D3-EF   (hex)		UNISEM (M) BERHAD
+B8D3EF     (base 16)		UNISEM (M) BERHAD
+				LOT 302285, JALAN INDUSTRI 1/1,KAWASAN PERINDUSTRIAN GOPENG,
+				GOPENG  PERAK  31600
+				MY
+
+6C-E4-DA   (hex)		NEC Platforms, Ltd.
+6CE4DA     (base 16)		NEC Platforms, Ltd.
+				14-1, Shiba 4-chome
+				Minato-ku  Tokyo  108-8556
+				JP
+
+08-10-86   (hex)		NEC Platforms, Ltd.
+081086     (base 16)		NEC Platforms, Ltd.
+				14-1, Shiba 4-chome
+				Minato-ku  Tokyo  108-8556
+				JP
+
+5C-40-97   (hex)		ACCTON TECHNOLOGY CORPORATION
+5C4097     (base 16)		ACCTON TECHNOLOGY CORPORATION
+				No.1, Creation Road 3, Hsinchu Science Park,
+				Hsinchu    30077
+				TW
+
+04-FB-66   (hex)		Ericsson AB
+04FB66     (base 16)		Ericsson AB
+				Torshamnsgatan 36
+				Stockholm    SE-164 80
+				SE
+
+D8-07-B6   (hex)		TP-LINK TECHNOLOGIES CO.,LTD.
+D807B6     (base 16)		TP-LINK TECHNOLOGIES CO.,LTD.
+				2-7th floors of South Building and 3-11th floors of North Building, No. 396, Jucai Road, Changhe Street, Binjiang District
+				Hangzhou City  Zhejiang Province,  310000
+				CN
+
+64-6E-97   (hex)		TP-LINK TECHNOLOGIES CO.,LTD.
+646E97     (base 16)		TP-LINK TECHNOLOGIES CO.,LTD.
+				2-7th floors of South Building and 3-11th floors of North Building, No. 396, Jucai Road, Changhe Street, Binjiang District
+				Hangzhou City  Zhejiang Province,  310000
+				CN
+
+D0-37-45   (hex)		TP-LINK TECHNOLOGIES CO.,LTD.
+D03745     (base 16)		TP-LINK TECHNOLOGIES CO.,LTD.
+				2-7th floors of South Building and 3-11th floors of North Building, No. 396, Jucai Road, Changhe Street, Binjiang District
+				Hangzhou City  Zhejiang Province,  310000
+				CN
+
+60-3A-7C   (hex)		TP-LINK TECHNOLOGIES CO.,LTD.
+603A7C     (base 16)		TP-LINK TECHNOLOGIES CO.,LTD.
+				2-7th floors of South Building and 3-11th floors of North Building, No. 396, Jucai Road, Changhe Street, Binjiang District
+				Hangzhou City  Zhejiang Province,  310000
+				CN
+
+68-DD-B7   (hex)		TP-LINK TECHNOLOGIES CO.,LTD.
+68DDB7     (base 16)		TP-LINK TECHNOLOGIES CO.,LTD.
+				2-7th floors of South Building and 3-11th floors of North Building, No. 396, Jucai Road, Changhe Street, Binjiang District
+				Hangzhou City  Zhejiang Province,  310000
+				CN
+
+14-D8-64   (hex)		TP-LINK TECHNOLOGIES CO.,LTD.
+14D864     (base 16)		TP-LINK TECHNOLOGIES CO.,LTD.
+				2-7th floors of South Building and 3-11th floors of North Building, No. 396, Jucai Road, Changhe Street, Binjiang District
+				Hangzhou City  Zhejiang Province,  310000
+				CN
+
+AC-84-C6   (hex)		TP-LINK TECHNOLOGIES CO.,LTD.
+AC84C6     (base 16)		TP-LINK TECHNOLOGIES CO.,LTD.
+				2-7th floors of South Building and 3-11th floors of North Building, No. 396, Jucai Road, Changhe Street, Binjiang District
+				Hangzhou City  Zhejiang Province,  310000
+				CN
+
+6C-B1-58   (hex)		TP-LINK TECHNOLOGIES CO.,LTD.
+6CB158     (base 16)		TP-LINK TECHNOLOGIES CO.,LTD.
+				2-7th floors of South Building and 3-11th floors of North Building, No. 396, Jucai Road, Changhe Street, Binjiang District
+				Hangzhou City  Zhejiang Province,  310000
+				CN
+
+24-69-68   (hex)		TP-LINK TECHNOLOGIES CO.,LTD.
+246968     (base 16)		TP-LINK TECHNOLOGIES CO.,LTD.
+				2-7th floors of South Building and 3-11th floors of North Building, No. 396, Jucai Road, Changhe Street, Binjiang District
+				Hangzhou City  Zhejiang Province,  310000
+				CN
+
+9C-1C-37   (hex)		AltoBeam Inc.
+9C1C37     (base 16)		AltoBeam Inc.
+				B808, Tsinghua Tongfang Hi-Tech Plaza, Haidian
+				Beijing  Beijing  100083
+				CN
+
+A4-EF-15   (hex)		AltoBeam Inc.
+A4EF15     (base 16)		AltoBeam Inc.
+				B808, Tsinghua Tongfang Hi-Tech Plaza, Haidian
+				Beijing  Beijing  100083
+				CN
+
+44-29-1E   (hex)		AltoBeam Inc.
+44291E     (base 16)		AltoBeam Inc.
+				B808, Tsinghua Tongfang Hi-Tech Plaza, Haidian
+				Beijing  Beijing  100083
+				CN
+
+2C-79-BE   (hex)		TP-LINK TECHNOLOGIES CO.,LTD.
+2C79BE     (base 16)		TP-LINK TECHNOLOGIES CO.,LTD.
+				2-7th floors of South Building and 3-11th floors of North Building, No. 396, Jucai Road, Changhe Street, Binjiang District
+				Hangzhou City  Zhejiang Province,  310000
+				CN
+
+04-23-A3   (hex)		Mellanox Technologies, Inc.
+0423A3     (base 16)		Mellanox Technologies, Inc.
+				350 Oakmead Parkway, Suite 100  
+				Sunnyvale  CA  94085
+				US
+
+2C-E5-BD   (hex)		Ubiquiti Inc
+2CE5BD     (base 16)		Ubiquiti Inc
+				685 Third Avenue, 27th Floor
+				New York  NY  New York NY 10017
+				US
+
+5C-E7-53   (hex)		Shenzhen Intellirocks Tech. Co. Ltd.
+5CE753     (base 16)		Shenzhen Intellirocks Tech. Co. Ltd.
+				
+				    
+				
+
+38-6F-F4   (hex)		Amazon Technologies Inc.
+386FF4     (base 16)		Amazon Technologies Inc.
+				P.O Box 8102 
+				Reno  NV  89507
+				US
+
+C4-69-40   (hex)		Xiaomi Communications Co Ltd
+C46940     (base 16)		Xiaomi Communications Co Ltd
+				#019, 9th Floor, Building 6, 33 Xi'erqi Middle Road
+				Beijing  Haidian District  100085
+				CN
+
+B0-EC-69   (hex)		Apple, Inc.
+B0EC69     (base 16)		Apple, Inc.
+				1 Infinite Loop
+				Cupertino  CA  95014
+				US
+
+20-84-5F   (hex)		Apple, Inc.
+20845F     (base 16)		Apple, Inc.
+				1 Infinite Loop
+				Cupertino  CA  95014
+				US
+
+B0-BB-A9   (hex)		Apple, Inc.
+B0BBA9     (base 16)		Apple, Inc.
+				1 Infinite Loop
+				Cupertino  CA  95014
+				US
+
+CC-38-E1   (hex)		HUAWEI TECHNOLOGIES CO.,LTD
+CC38E1     (base 16)		HUAWEI TECHNOLOGIES CO.,LTD
+				No.2 Xin Cheng Road, Room R6,Songshan Lake Technology Park
+				Dongguan    523808
+				CN
+
+50-95-46   (hex)		HUAWEI TECHNOLOGIES CO.,LTD
+509546     (base 16)		HUAWEI TECHNOLOGIES CO.,LTD
+				No.2 Xin Cheng Road, Room R6,Songshan Lake Technology Park
+				Dongguan    523808
+				CN
+
+14-B6-EB   (hex)		 CJ intelligent technology LTD.
+14B6EB     (base 16)		 CJ intelligent technology LTD.
+				4F, No. 16, Zhongxin St., Shulin Dist.
+				New Taipei City    238035
+				TW
+
+C4-C0-0A   (hex)		Microsoft Corporation
+C4C00A     (base 16)		Microsoft Corporation
+				One Microsoft Way
+				REDMOND  WA  98052
+				US
+
+E0-9E-C1   (hex)		Silicon Innovation Microelectronics Co.,Ltd.
+E09EC1     (base 16)		Silicon Innovation Microelectronics Co.,Ltd.
+				2106, Building C, Maoye Center, 28 North Tianfu Avenue, High-tech Zone, Chengdu, Sichuan, China2106-7
+				Chengdu    610041
+				CN
+
+F4-9A-7C   (hex)		Hangzhou Supranett Network Technology Co.,Ltd.
+F49A7C     (base 16)		Hangzhou Supranett Network Technology Co.,Ltd.
+				12F Building 1, 1399 Xiangbin Road, Xiaoshan Distric
+				Hangzhou  Zhejiang  310000
+				CN
+
+10-93-27   (hex)		GIGA-BYTE TECHNOLOGY CO. , Ltd.
+109327     (base 16)		GIGA-BYTE TECHNOLOGY CO. , Ltd.
+				No.215 Nan-Ping Road
+				Taoyuan     324
+				TW
+
+18-12-0C   (hex)		Zhouhai Intelligence(Shenzhen).,Ltd
+18120C     (base 16)		Zhouhai Intelligence(Shenzhen).,Ltd
+				Guangming Jianfa Yule No.2 Industrial Park, Yatong Street, Guangming District, Shenzhen City
+				Shenzhen  Gudong  518083
+				CN
+
+0C-E6-23   (hex)		Huawei Device Co., Ltd.
+0CE623     (base 16)		Huawei Device Co., Ltd.
+				No.2 of Xincheng Road, Songshan Lake Zone
+				Dongguan  Guangdong  523808
+				CN
+
+A0-C9-26   (hex)		Huawei Device Co., Ltd.
+A0C926     (base 16)		Huawei Device Co., Ltd.
+				No.2 of Xincheng Road, Songshan Lake Zone
+				Dongguan  Guangdong  523808
+				CN
+
+94-AD-05   (hex)		Huawei Device Co., Ltd.
+94AD05     (base 16)		Huawei Device Co., Ltd.
+				No.2 of Xincheng Road, Songshan Lake Zone
+				Dongguan  Guangdong  523808
+				CN
+
+64-D6-67   (hex)		Shanghai Ikotek Technology Co.,Ltd
+64D667     (base 16)		Shanghai Ikotek Technology Co.,Ltd
+				Room 209, Building 7, No. 351 Sizhuan Road, Sijing Town, Songjiang District, Shanghai Municipality
+				Shanghai    200233
+				CN
+
+08-51-F2   (hex)		Sagemcom Broadband SAS
+0851F2     (base 16)		Sagemcom Broadband SAS
+				4 Allée des Messageries
+				Bois-Colombes  haut de seine  92270 
+				FR
+
+50-19-11   (hex)		IEEE Registration Authority
+501911     (base 16)		IEEE Registration Authority
+				445 Hoes Lane
+				Piscataway  NJ  08554
+				US
+
+88-7E-25   (hex)		Extreme Networks, Inc.
+887E25     (base 16)		Extreme Networks, Inc.
 				2121 RDU Center Drive 
 				Morrisville  NC  27560
 				US
 
-FC-0A-81   (hex)		Extreme Networks Headquarters
-FC0A81     (base 16)		Extreme Networks Headquarters
+B8-7C-F2   (hex)		Extreme Networks, Inc.
+B87CF2     (base 16)		Extreme Networks, Inc.
 				2121 RDU Center Drive 
 				Morrisville  NC  27560
 				US
+
+F4-EA-B5   (hex)		Extreme Networks, Inc.
+F4EAB5     (base 16)		Extreme Networks, Inc.
+				2121 RDU Center Drive 
+				Morrisville  NC  27560
+				US
+
+08-EA-44   (hex)		Extreme Networks, Inc.
+08EA44     (base 16)		Extreme Networks, Inc.
+				2121 RDU Center Drive 
+				Morrisville  NC  27560
+				US
+
+BC-34-D6   (hex)		Extreme Networks, Inc.
+BC34D6     (base 16)		Extreme Networks, Inc.
+				2121 RDU Center Drive 
+				Morrisville  NC  27560
+				US
+
+B8-1E-0B   (hex)		Extreme Networks, Inc.
+B81E0B     (base 16)		Extreme Networks, Inc.
+				2121 RDU Center Drive 
+				Morrisville  NC  27560
+				US
+
+B8-DC-28   (hex)		Extreme Networks, Inc.
+B8DC28     (base 16)		Extreme Networks, Inc.
+				2121 RDU Center Drive 
+				Morrisville  NC  27560
+				US
+
+1C-2D-60   (hex)		Extreme Networks, Inc.
+1C2D60     (base 16)		Extreme Networks, Inc.
+				2121 RDU Center Drive 
+				Morrisville  NC  27560
+				US
+
+A4-C7-F6   (hex)		Extreme Networks, Inc.
+A4C7F6     (base 16)		Extreme Networks, Inc.
+				2121 RDU Center Drive 
+				Morrisville  NC  27560
+				US
+
+A8-C6-47   (hex)		Extreme Networks, Inc.
+A8C647     (base 16)		Extreme Networks, Inc.
+				2121 RDU Center Drive 
+				Morrisville  NC  27560
+				US
+
+E0-A1-29   (hex)		Extreme Networks, Inc.
+E0A129     (base 16)		Extreme Networks, Inc.
+				2121 RDU Center Drive
+				Morrisville  NC  27560
+				US
+
+0C-9B-78   (hex)		Extreme Networks, Inc.
+0C9B78     (base 16)		Extreme Networks, Inc.
+				2121 RDU Center Drive 
+				Morrisville  NC  27560
+				US
+
+A4-73-AB   (hex)		Extreme Networks, Inc.
+A473AB     (base 16)		Extreme Networks, Inc.
+				2121 RDU Center Drive 
+				Morrisville  NC  27560
+				US
+
+D0-A6-51   (hex)		AltoBeam Inc.
+D0A651     (base 16)		AltoBeam Inc.
+				B808, Tsinghua Tongfang Hi-Tech Plaza, Haidian
+				Beijing  Beijing  100083
+				CN
+
+B4-2D-56   (hex)		Extreme Networks, Inc.
+B42D56     (base 16)		Extreme Networks, Inc.
+				2121 RDU Center Drive 
+				Morrisville  NC  27560
+				US
+
+00-19-77   (hex)		Extreme Networks, Inc.
+001977     (base 16)		Extreme Networks, Inc.
+				2121 RDU Center Drive 
+				Morrisville  NC  27560
+				US
+
+60-D1-D8   (hex)		Silicon Laboratories
+60D1D8     (base 16)		Silicon Laboratories
+				 400 West Cesar Chavez
+				Austin  TX  78701
+				US
+
+38-04-84   (hex)		Apple, Inc.
+380484     (base 16)		Apple, Inc.
+				1 Infinite Loop
+				Cupertino  CA  95014
+				US
+
+40-89-C2   (hex)		Apple, Inc.
+4089C2     (base 16)		Apple, Inc.
+				1 Infinite Loop
+				Cupertino  CA  95014
+				US
+
+0C-2D-71   (hex)		Apple, Inc.
+0C2D71     (base 16)		Apple, Inc.
+				1 Infinite Loop
+				Cupertino  CA  95014
+				US
+
+94-0E-5F   (hex)		Apple, Inc.
+940E5F     (base 16)		Apple, Inc.
+				1 Infinite Loop
+				Cupertino  CA  95014
+				US
+
+C8-8A-7B   (hex)		Espressif Inc.
+C88A7B     (base 16)		Espressif Inc.
+				Vistra Corporate Services Centre, Wickhams Cay II
+				Road Town  Tortola  VG1110
+				VG
 
 00-74-9C   (hex)		Ruijie Networks Co.,LTD
 00749C     (base 16)		Ruijie Networks Co.,LTD
@@ -47782,78 +47959,6 @@ FC0A81     (base 16)		Extreme Networks Headquarters
 				No.215,Nan-Ping Road,Ping-Jen City,
 				Ping-Jen  Taoyuan  324
 				TW
-
-48-9B-D5   (hex)		Extreme Networks Headquarters
-489BD5     (base 16)		Extreme Networks Headquarters
-				2121 RDU Center Drive 
-				Morrisville  NC  27560
-				US
-
-DC-B8-08   (hex)		Extreme Networks Headquarters
-DCB808     (base 16)		Extreme Networks Headquarters
-				2121 RDU Center Drive 
-				Morrisville  NC  27560
-				US
-
-F4-6E-95   (hex)		Extreme Networks Headquarters
-F46E95     (base 16)		Extreme Networks Headquarters
-				2121 RDU Center Drive 
-				Morrisville  NC  27560
-				US
-
-E0-1C-41   (hex)		Extreme Networks Headquarters
-E01C41     (base 16)		Extreme Networks Headquarters
-				2121 RDU Center Drive 
-				Morrisville  NC  27560
-				US
-
-BC-F3-10   (hex)		Extreme Networks Headquarters
-BCF310     (base 16)		Extreme Networks Headquarters
-				2121 RDU Center Drive 
-				Morrisville  NC  27560
-				US
-
-D8-54-A2   (hex)		Extreme Networks Headquarters
-D854A2     (base 16)		Extreme Networks Headquarters
-				2121 RDU Center Drive 
-				Morrisville  NC  27560
-				US
-
-C8-66-5D   (hex)		Extreme Networks Headquarters
-C8665D     (base 16)		Extreme Networks Headquarters
-				2121 RDU Center Drive 
-				Morrisville  NC  27560
-				US
-
-8C-49-7A   (hex)		Extreme Networks Headquarters
-8C497A     (base 16)		Extreme Networks Headquarters
-				2121 RDU Center Drive 
-				Morrisville  NC  27560
-				US
-
-B0-27-CF   (hex)		Extreme Networks Headquarters
-B027CF     (base 16)		Extreme Networks Headquarters
-				2121 RDU Center Drive 
-				Morrisville  NC  27560
-				US
-
-C8-51-FB   (hex)		Extreme Networks Headquarters
-C851FB     (base 16)		Extreme Networks Headquarters
-				2121 RDU Center Drive 
-				Morrisville  NC  27560
-				US
-
-DC-23-3B   (hex)		Extreme Networks Headquarters
-DC233B     (base 16)		Extreme Networks Headquarters
-				2121 RDU Center Drive 
-				Morrisville  NC  27560
-				US
-
-E4-DB-AE   (hex)		Extreme Networks Headquarters
-E4DBAE     (base 16)		Extreme Networks Headquarters
-				2121 RDU Center Drive
-				Morrisville  NC  27560
-				US
 
 38-AD-2B   (hex)		Hitron Technologies. Inc
 38AD2B     (base 16)		Hitron Technologies. Inc
@@ -50027,12 +50132,6 @@ EC7379     (base 16)		Apple, Inc.
 				Xiamen  Fujian  361024
 				CN
 
-3C-6A-48   (hex)		TP-LINK TECHNOLOGIES CO.,LTD.
-3C6A48     (base 16)		TP-LINK TECHNOLOGIES CO.,LTD.
-				Building 24(floors 1,3,4,5)and 28(floors 1-4)Central Science and Technology Park,Shennan Road,Nanshan
-				Shenzhen  Guangdong  518057
-				CN
-
 FC-2A-46   (hex)		Realme Chongqing Mobile Telecommunications Corp.,Ltd.
 FC2A46     (base 16)		Realme Chongqing Mobile Telecommunications Corp.,Ltd.
 				No.178 Yulong Avenue, Yufengshan, Yubei District, Chongqing.
@@ -50686,12 +50785,6 @@ C4ACAA     (base 16)		Apple, Inc.
 				Horia Macelariu 30-34
 				Bucharest    013937
 				RO
-
-88-28-7D   (hex)		AltoBeam (China) Inc.
-88287D     (base 16)		AltoBeam (China) Inc.
-				B808, Tsinghua Tongfang Hi-Tech Plaza, Haidian
-				Beijing  Beijing  100083
-				CN
 
 44-5A-DF   (hex)		MIKAMI & CO., LTD.
 445ADF     (base 16)		MIKAMI & CO., LTD.
@@ -53051,12 +53144,6 @@ C84D44     (base 16)		Shenzhen Jiapeng Huaxiang Technology Co.,Ltd
 				Shenzhen  Guangdong  518109
 				CN
 
-98-B1-77   (hex)		LANDIS + GYR
-98B177     (base 16)		LANDIS + GYR
-				78th km Old National Road Athens-Corinth 
-				Corinth     20100
-				GR
-
 A0-29-BD   (hex)		Team Group Inc
 A029BD     (base 16)		Team Group Inc
 				3F., No. 166 Jian 1st Rd., 
@@ -54215,12 +54302,6 @@ B4A25C     (base 16)		Cambium Networks Limited
 				Reno  NV  89507
 				US
 
-DC-00-77   (hex)		TP-LINK TECHNOLOGIES CO.,LTD.
-DC0077     (base 16)		TP-LINK TECHNOLOGIES CO.,LTD.
-				Building 24(floors 1,3,4,5)and 28(floors 1-4)Central Science and Technology Park,Shennan Road,Nanshan
-				Shenzhen  Guangdong  518057
-				CN
-
 48-78-5E   (hex)		Amazon Technologies Inc.
 48785E     (base 16)		Amazon Technologies Inc.
 				P.O Box 8102 
@@ -55031,12 +55112,6 @@ B43161     (base 16)		Realme Chongqing Mobile Telecommunications Corp.,Ltd.
 				Chongqing   China  401120
 				CN
 
-B4-FB-E3   (hex)		AltoBeam (China) Inc.
-B4FBE3     (base 16)		AltoBeam (China) Inc.
-				B808, Tsinghua Tongfang Hi-Tech Plaza, Haidian
-				Beijing  Beijing  100083
-				CN
-
 18-87-40   (hex)		Xiaomi Communications Co Ltd
 188740     (base 16)		Xiaomi Communications Co Ltd
 				#019, 9th Floor, Building 6, 33 Xi'erqi Middle Road
@@ -55571,12 +55646,6 @@ E41F7B     (base 16)		Cisco Systems, Inc
 				San Jose  CA  94568
 				US
 
-60-32-B1   (hex)		TP-LINK TECHNOLOGIES CO.,LTD.
-6032B1     (base 16)		TP-LINK TECHNOLOGIES CO.,LTD.
-				Building 24(floors 1,3,4,5)and 28(floors 1-4)Central Science and Technology Park,Shennan Road,Nanshan
-				Shenzhen  Guangdong  518057
-				CN
-
 7C-FD-6B   (hex)		Xiaomi Communications Co Ltd
 7CFD6B     (base 16)		Xiaomi Communications Co Ltd
 				#019, 9th Floor, Building 6, 33 Xi'erqi Middle Road
@@ -56008,12 +56077,6 @@ A027B6     (base 16)		Samsung Electronics Co.,Ltd
 				#94-1, Imsoo-Dong
 				Gumi  Gyeongbuk  730-350
 				KR
-
-80-22-A7   (hex)		NEC Platforms, Ltd.
-8022A7     (base 16)		NEC Platforms, Ltd.
-				2-3 Kandatsukasamachi
-				Chiyodaku  Tokyo  101-8532
-				JP
 
 5C-23-16   (hex)		Squirrels Research Labs LLC
 5C2316     (base 16)		Squirrels Research Labs LLC
@@ -58732,12 +58795,6 @@ B8259A     (base 16)		Thalmic Labs
 				24 Charles Street West 
 				Kitchener   Ontario   N2G 1H2
 				CA
-
-30-EB-5A   (hex)		LANDIS + GYR
-30EB5A     (base 16)		LANDIS + GYR
-				78th km Old National Road Athens-Corinth 
-				Corinth     20100
-				GR
 
 F8-0F-6F   (hex)		Cisco Systems, Inc
 F80F6F     (base 16)		Cisco Systems, Inc
@@ -63802,12 +63859,6 @@ B8E779     (base 16)		9Solutions Oy
 				Teknologiantie 2
 				Oulu    90590
 				FI
-
-28-F3-66   (hex)		Shenzhen Bilian electronic CO.,LTD
-28F366     (base 16)		Shenzhen Bilian electronic CO.,LTD
-				NO 268，Fuqian Rd,Jutang Community,Guanlan town , LongHua new district,Shenzhen,518110,China.
-				Shenzhen    518110
-				CN
 
 E0-A3-AC   (hex)		HUAWEI TECHNOLOGIES CO.,LTD
 E0A3AC     (base 16)		HUAWEI TECHNOLOGIES CO.,LTD
@@ -80084,12 +80135,6 @@ CC0080     (base 16)		BETTINI SRL
 				Oakdale  PA  15071
 				US
 
-00-0B-D7   (hex)		DORMA Time + Access GmbH
-000BD7     (base 16)		DORMA Time + Access GmbH
-				Mainzer Straße 36-52
-				Bonn  Nordrheinwestfalen  53179
-				DE
-
 00-0B-95   (hex)		eBet Gaming Systems Pty Ltd
 000B95     (base 16)		eBet Gaming Systems Pty Ltd
 				Suite D, 255 Rawson Street
@@ -81188,12 +81233,6 @@ CC0080     (base 16)		BETTINI SRL
 00-07-C6   (hex)		VDS Vosskuhler GmbH
 0007C6     (base 16)		VDS Vosskuhler GmbH
 				Weibe Breite 7
-				    
-				DE
-
-00-07-CC   (hex)		Kaba Benzing GmbH
-0007CC     (base 16)		Kaba Benzing GmbH
-				Albertistrabe 3
 				    
 				DE
 
@@ -87494,12 +87533,6 @@ BC0FB7     (base 16)		sywinkey HongKong Co,. Limited?
 				Dongguan    523808
 				CN
 
-60-1D-56   (hex)		Extreme Networks Headquarters
-601D56     (base 16)		Extreme Networks Headquarters
-				2121 RDU Center Drive 
-				Morrisville  NC  27560
-				US
-
 44-D4-65   (hex)		NXP Semiconductors Taiwan Ltd.
 44D465     (base 16)		NXP Semiconductors Taiwan Ltd.
 				No. 10, Jing 5th Rd., Nanzi Dist., Kaohsiung City 811643, Taiwan
@@ -87874,12 +87907,6 @@ D07602     (base 16)		Hui Zhou Gaoshengda Technology Co.,LTD
 				445 Hoes Lane
 				Piscataway  NJ  08554
 				US
-
-74-39-89   (hex)		TP-LINK TECHNOLOGIES CO.,LTD.
-743989     (base 16)		TP-LINK TECHNOLOGIES CO.,LTD.
-				Building 24(floors 1,3,4,5)and 28(floors 1-4)Central Science and Technology Park,Shennan Road,Nanshan
-				Shenzhen  Guangdong  518057
-				CN
 
 28-39-84   (hex)		Qidi Technology (shanghai) Co.,Ltd.
 283984     (base 16)		Qidi Technology (shanghai) Co.,Ltd.
@@ -89357,12 +89384,6 @@ E81CA5     (base 16)		Hewlett Packard Enterprise
 				Carlsbad  CA  92008
 				US
 
-50-0A-9C   (hex)		Extreme Networks Headquarters
-500A9C     (base 16)		Extreme Networks Headquarters
-				2121 RDU Center Drive 
-				Morrisville    27560
-				US
-
 4C-92-D2   (hex)		GUANGDONG OPPO MOBILE TELECOMMUNICATIONS CORP.,LTD
 4C92D2     (base 16)		GUANGDONG OPPO MOBILE TELECOMMUNICATIONS CORP.,LTD
 				NO.18 HAIBIN ROAD,
@@ -90024,12 +90045,6 @@ F815E0     (base 16)		Siemens Canada
 3CE86E     (base 16)		Hewlett Packard Enterprise
 				6280 America Center Dr
 				San Jose  CA  95002
-				US
-
-0C-ED-71   (hex)		Extreme Networks Headquarters
-0CED71     (base 16)		Extreme Networks Headquarters
-				2121 RDU Center Drive 
-				Morrisville  NC  27560
 				US
 
 A0-0C-E2   (hex)		Shenzhen Shokz Co., Ltd.
@@ -90737,12 +90752,6 @@ ECF37A     (base 16)		Forecr OU
 				REDMOND  WA  98052
 				US
 
-A4-97-91   (hex)		Extreme Networks Headquarters
-A49791     (base 16)		Extreme Networks Headquarters
-				2121 RDU Center Drive 
-				Morrisville  NC  27560
-				US
-
 DC-84-03   (hex)		shenzhen trolink  Technology Co.,Ltd
 DC8403     (base 16)		shenzhen trolink  Technology Co.,Ltd
 				F/5 Building -E ,Fenda Hight Technology Park,Sanwei Hangcheng Street,Bao'an ,Shenzhen 
@@ -90965,9 +90974,6 @@ C4CA67     (base 16)		Chongqing ZQZER Technology Co., LTD
 				Hezhou   Guangxi  542800
 				CN
 
-EC-84-39   (hex)		Private
-EC8439     (base 16)		Private
-
 F4-63-5A   (hex)		NXP Semiconductor (Tianjin) LTD.
 F4635A     (base 16)		NXP Semiconductor (Tianjin) LTD.
 				No.15 Xinghua Avenue, Xiqing Economic Development Area
@@ -91038,12 +91044,6 @@ F8EDFC     (base 16)		HP Inc.
 90AC6D     (base 16)		Apple, Inc.
 				1 Infinite Loop
 				Cupertino  CA  95014
-				US
-
-7C-A4-F7   (hex)		Extreme Networks Headquarters
-7CA4F7     (base 16)		Extreme Networks Headquarters
-				2121 RDU Center Drive 
-				Morrisville  NC  27560
 				US
 
 50-3D-D1   (hex)		TP-Link Systems Inc.
@@ -91603,12 +91603,6 @@ FC9F2A     (base 16)		Zyxel Communications Corporation
 				No.8, Sec.2, Guangfu Rd.
 				Hsinchu City  Hsinchu  30071
 				TW
-
-DC-BB-3D   (hex)		Extreme Networks Headquarters
-DCBB3D     (base 16)		Extreme Networks Headquarters
-				2121 RDU Center Drive 
-				Morrisville    27560
-				US
 
 B0-CC-CE   (hex)		IEEE Registration Authority
 B0CCCE     (base 16)		IEEE Registration Authority
@@ -93170,12 +93164,6 @@ B4C3D9     (base 16)		HUAWEI TECHNOLOGIES CO.,LTD
 				Dongguan    523808
 				CN
 
-88-99-86   (hex)		TP-LINK TECHNOLOGIES CO.,LTD.
-889986     (base 16)		TP-LINK TECHNOLOGIES CO.,LTD.
-				Building 24(floors 1,3,4,5)and 28(floors 1-4)Central Science and Technology Park,Shennan Road,Nanshan
-				Shenzhen  Guangdong  518057
-				CN
-
 90-20-D7   (hex)		Microsoft Corporation
 9020D7     (base 16)		Microsoft Corporation
 				One Microsoft Way
@@ -94676,6 +94664,417 @@ D8132A     (base 16)		Espressif Inc.
 				Road Town  Tortola  VG1110
 				VG
 
+58-6D-0C   (hex)		Hewlett Packard Enterprise
+586D0C     (base 16)		Hewlett Packard Enterprise
+				6280 America Center Dr
+				San Jose  CA  95002
+				US
+
+B4-FB-E3   (hex)		AltoBeam Inc.
+B4FBE3     (base 16)		AltoBeam Inc.
+				B808, Tsinghua Tongfang Hi-Tech Plaza, Haidian
+				Beijing  Beijing  100083
+				CN
+
+88-28-7D   (hex)		AltoBeam Inc.
+88287D     (base 16)		AltoBeam Inc.
+				B808, Tsinghua Tongfang Hi-Tech Plaza, Haidian
+				Beijing  Beijing  100083
+				CN
+
+28-F3-66   (hex)		SHENZHEN BILIAN ELECTRONIC CO.，LTD
+28F366     (base 16)		SHENZHEN BILIAN ELECTRONIC CO.，LTD
+				NO 268，Fuqian Rd,Jutang Community,Guanlan town , LongHua new district,Shenzhen,518110,China.
+				Shenzhen    518110
+				CN
+
+84-57-EB   (hex)		Motorola Mobility LLC, a Lenovo Company
+8457EB     (base 16)		Motorola Mobility LLC, a Lenovo Company
+				222 West Merchandise Mart Plaza
+				Chicago  IL  60654
+				US
+
+54-3C-ED   (hex)		Sagemcom Broadband SAS
+543CED     (base 16)		Sagemcom Broadband SAS
+				4 Allée des Messageries
+				Bois-Colombes  haut de seine  92270 
+				FR
+
+80-22-A7   (hex)		NEC Platforms, Ltd.
+8022A7     (base 16)		NEC Platforms, Ltd.
+				14-1, Shiba 4-chome
+				Minato-ku  Tokyo  108-8556
+				JP
+
+D8-26-D3   (hex)		eero inc.
+D826D3     (base 16)		eero inc.
+				660 3rd Street 
+				San Francisco  CA  94107
+				US
+
+2C-3F-87   (hex)		Private
+2C3F87     (base 16)		Private
+
+0C-16-6E   (hex)		WirelessMobility Engineering Centre SDN. BHD
+0C166E     (base 16)		WirelessMobility Engineering Centre SDN. BHD
+				SummerSkye Square, NO. 1-2-13 & 1-2, 13A, Jalan Sungai Tiram 8, 11900 Bayan Lepas
+				Penang    11900
+				MY
+
+D8-FB-58   (hex)		Mellanox Technologies, Inc.
+D8FB58     (base 16)		Mellanox Technologies, Inc.
+				350 Oakmead Parkway, Suite 100  
+				Sunnyvale  CA  94085
+				US
+
+18-D0-E1   (hex)		Mellanox Technologies, Inc.
+18D0E1     (base 16)		Mellanox Technologies, Inc.
+				350 Oakmead Parkway, Suite 100  
+				Sunnyvale  CA  94085
+				US
+
+88-99-86   (hex)		TP-LINK TECHNOLOGIES CO.,LTD.
+889986     (base 16)		TP-LINK TECHNOLOGIES CO.,LTD.
+				2-7th floors of South Building and 3-11th floors of North Building, No. 396, Jucai Road, Changhe Street, Binjiang District
+				Hangzhou City  Zhejiang Province,  310000
+				CN
+
+74-39-89   (hex)		TP-LINK TECHNOLOGIES CO.,LTD.
+743989     (base 16)		TP-LINK TECHNOLOGIES CO.,LTD.
+				2-7th floors of South Building and 3-11th floors of North Building, No. 396, Jucai Road, Changhe Street, Binjiang District
+				Hangzhou City  Zhejiang Province,  310000
+				CN
+
+DC-00-77   (hex)		TP-LINK TECHNOLOGIES CO.,LTD.
+DC0077     (base 16)		TP-LINK TECHNOLOGIES CO.,LTD.
+				2-7th floors of South Building and 3-11th floors of North Building, No. 396, Jucai Road, Changhe Street, Binjiang District
+				Hangzhou City  Zhejiang Province,  310000
+				CN
+
+60-32-B1   (hex)		TP-LINK TECHNOLOGIES CO.,LTD.
+6032B1     (base 16)		TP-LINK TECHNOLOGIES CO.,LTD.
+				2-7th floors of South Building and 3-11th floors of North Building, No. 396, Jucai Road, Changhe Street, Binjiang District
+				Hangzhou City  Zhejiang Province,  310000
+				CN
+
+3C-6A-48   (hex)		TP-LINK TECHNOLOGIES CO.,LTD.
+3C6A48     (base 16)		TP-LINK TECHNOLOGIES CO.,LTD.
+				2-7th floors of South Building and 3-11th floors of North Building, No. 396, Jucai Road, Changhe Street, Binjiang District
+				Hangzhou City  Zhejiang Province,  310000
+				CN
+
+48-7F-80   (hex)		FRITZ! Technology GmbH
+487F80     (base 16)		FRITZ! Technology GmbH
+				Alt-Moabit 95
+				Berlin  Berlin  10559
+				DE
+
+30-EB-5A   (hex)		Landis+Gyr S.A.
+30EB5A     (base 16)		Landis+Gyr S.A.
+				78th km Old National Road Athens-Corinth 
+				Corinth     20100
+				GR
+
+98-B1-77   (hex)		Landis+Gyr S.A.
+98B177     (base 16)		Landis+Gyr S.A.
+				78th km Old National Road Athens-Corinth 
+				Corinth     20100
+				GR
+
+E8-FE-BE   (hex)		Apple, Inc.
+E8FEBE     (base 16)		Apple, Inc.
+				1 Infinite Loop
+				Cupertino  CA  95014
+				US
+
+88-17-A8   (hex)		Apple, Inc.
+8817A8     (base 16)		Apple, Inc.
+				1 Infinite Loop
+				Cupertino  CA  95014
+				US
+
+74-D5-E8   (hex)		Apple, Inc.
+74D5E8     (base 16)		Apple, Inc.
+				1 Infinite Loop
+				Cupertino  CA  95014
+				US
+
+44-63-B6   (hex)		Apple, Inc.
+4463B6     (base 16)		Apple, Inc.
+				1 Infinite Loop
+				Cupertino  CA  95014
+				US
+
+68-3B-09   (hex)		Apple, Inc.
+683B09     (base 16)		Apple, Inc.
+				1 Infinite Loop
+				Cupertino  CA  95014
+				US
+
+C8-BB-B4   (hex)		GSD VIET NAM TECHNOLOGY COMPANY LIMITED
+C8BBB4     (base 16)		GSD VIET NAM TECHNOLOGY COMPANY LIMITED
+				PART OF FACTORY 2, LOT C2.10, D1 STREET, DONG AN 2 INDUSTRIAL PARK, BINHDUONG WARD
+				HO CHI MINH CITY  HO CHI MINH  820000
+				VN
+
+34-36-38   (hex)		HUAWEI TECHNOLOGIES CO.,LTD
+343638     (base 16)		HUAWEI TECHNOLOGIES CO.,LTD
+				No.2 Xin Cheng Road, Room R6,Songshan Lake Technology Park
+				Dongguan    523808
+				CN
+
+60-79-C9   (hex)		HUAWEI TECHNOLOGIES CO.,LTD
+6079C9     (base 16)		HUAWEI TECHNOLOGIES CO.,LTD
+				No.2 Xin Cheng Road, Room R6,Songshan Lake Technology Park
+				Dongguan    523808
+				CN
+
+38-3E-51   (hex)		Espressif Inc.
+383E51     (base 16)		Espressif Inc.
+				Vistra Corporate Services Centre, Wickhams Cay II
+				Road Town  Tortola  VG1110
+				VG
+
+78-B5-F2   (hex)		HUAWEI TECHNOLOGIES CO.,LTD
+78B5F2     (base 16)		HUAWEI TECHNOLOGIES CO.,LTD
+				No.2 Xin Cheng Road, Room R6,Songshan Lake Technology Park
+				Dongguan    523808
+				CN
+
+64-C0-45   (hex)		Apple, Inc.
+64C045     (base 16)		Apple, Inc.
+				1 Infinite Loop
+				Cupertino  CA  95014
+				US
+
+EC-84-39   (hex)		BITMAIN DEVELOPMENT PTE. LTD.
+EC8439     (base 16)		BITMAIN DEVELOPMENT PTE. LTD.
+				
+				    
+				
+
+DC-B8-08   (hex)		Extreme Networks, Inc.
+DCB808     (base 16)		Extreme Networks, Inc.
+				2121 RDU Center Drive 
+				Morrisville  NC  27560
+				US
+
+48-9B-D5   (hex)		Extreme Networks, Inc.
+489BD5     (base 16)		Extreme Networks, Inc.
+				2121 RDU Center Drive 
+				Morrisville  NC  27560
+				US
+
+BC-F3-10   (hex)		Extreme Networks, Inc.
+BCF310     (base 16)		Extreme Networks, Inc.
+				2121 RDU Center Drive 
+				Morrisville  NC  27560
+				US
+
+E0-1C-41   (hex)		Extreme Networks, Inc.
+E01C41     (base 16)		Extreme Networks, Inc.
+				2121 RDU Center Drive 
+				Morrisville  NC  27560
+				US
+
+84-E6-B3   (hex)		Tiinlab Corporation
+84E6B3     (base 16)		Tiinlab Corporation
+				Building A Room 201 Cooperation District between Shenzhen and HongKong,Qianwan Road No.1,Shenzhen City, Business Address:No. 3333, Liuxian AvenueTower A, 35th Floor,Tanglang City, Nanshan District, Shenzhen, China
+				Shenzhen  Guangdong  518000
+				CN
+
+FC-0A-81   (hex)		Extreme Networks, Inc.
+FC0A81     (base 16)		Extreme Networks, Inc.
+				2121 RDU Center Drive 
+				Morrisville  NC  27560
+				US
+
+00-01-30   (hex)		Extreme Networks, Inc.
+000130     (base 16)		Extreme Networks, Inc.
+				2121 RDU Center Drive 
+				Morrisville  NC  27560
+				US
+
+F4-6E-95   (hex)		Extreme Networks, Inc.
+F46E95     (base 16)		Extreme Networks, Inc.
+				2121 RDU Center Drive 
+				Morrisville  NC  27560
+				US
+
+10-93-C9   (hex)		Kingsignal Technology Co., Ltd.
+1093C9     (base 16)		Kingsignal Technology Co., Ltd.
+				Floor 26,Unit B,Block 10,No.1819 Shahexi Road,Shenzhen Bay Eco-Technology Park,Nanshan District
+				Shenzhen  Guangdong  518000
+				CN
+
+C4-10-62   (hex)		Cornet Technology India Pvt Ltd
+C41062     (base 16)		Cornet Technology India Pvt Ltd
+				Plot No.10/A-16 5th Cross Road, SIPCOT IT PARK
+				Siruseri, Chennai  Tamilnadu  603103
+				IN
+
+80-DA-CE   (hex)		Huawei Device Co., Ltd.
+80DACE     (base 16)		Huawei Device Co., Ltd.
+				No.2 of Xincheng Road, Songshan Lake Zone
+				Dongguan  Guangdong  523808
+				CN
+
+24-BA-23   (hex)		Cisco Systems, Inc
+24BA23     (base 16)		Cisco Systems, Inc
+				80 West Tasman Drive
+				San Jose  CA  94568
+				US
+
+08-4F-44   (hex)		GEW (EC) Ltd
+084F44     (base 16)		GEW (EC) Ltd
+				Crompton Way
+				Crawley  West Sussex  RH10 9QR
+				GB
+
+DC-23-3B   (hex)		Extreme Networks, Inc.
+DC233B     (base 16)		Extreme Networks, Inc.
+				2121 RDU Center Drive 
+				Morrisville  NC  27560
+				US
+
+C8-51-FB   (hex)		Extreme Networks, Inc.
+C851FB     (base 16)		Extreme Networks, Inc.
+				2121 RDU Center Drive 
+				Morrisville  NC  27560
+				US
+
+60-1D-56   (hex)		Extreme Networks, Inc.
+601D56     (base 16)		Extreme Networks, Inc.
+				2121 RDU Center Drive 
+				Morrisville  NC  27560
+				US
+
+50-0A-9C   (hex)		Extreme Networks, Inc.
+500A9C     (base 16)		Extreme Networks, Inc.
+				2121 RDU Center Drive 
+				Morrisville    27560
+				US
+
+0C-ED-71   (hex)		Extreme Networks, Inc.
+0CED71     (base 16)		Extreme Networks, Inc.
+				2121 RDU Center Drive 
+				Morrisville  NC  27560
+				US
+
+A4-97-91   (hex)		Extreme Networks, Inc.
+A49791     (base 16)		Extreme Networks, Inc.
+				2121 RDU Center Drive 
+				Morrisville  NC  27560
+				US
+
+7C-A4-F7   (hex)		Extreme Networks, Inc.
+7CA4F7     (base 16)		Extreme Networks, Inc.
+				2121 RDU Center Drive 
+				Morrisville  NC  27560
+				US
+
+DC-BB-3D   (hex)		Extreme Networks, Inc.
+DCBB3D     (base 16)		Extreme Networks, Inc.
+				2121 RDU Center Drive 
+				Morrisville    27560
+				US
+
+C8-66-5D   (hex)		Extreme Networks, Inc.
+C8665D     (base 16)		Extreme Networks, Inc.
+				2121 RDU Center Drive 
+				Morrisville  NC  27560
+				US
+
+D8-54-A2   (hex)		Extreme Networks, Inc.
+D854A2     (base 16)		Extreme Networks, Inc.
+				2121 RDU Center Drive 
+				Morrisville  NC  27560
+				US
+
+B0-27-CF   (hex)		Extreme Networks, Inc.
+B027CF     (base 16)		Extreme Networks, Inc.
+				2121 RDU Center Drive 
+				Morrisville  NC  27560
+				US
+
+8C-49-7A   (hex)		Extreme Networks, Inc.
+8C497A     (base 16)		Extreme Networks, Inc.
+				2121 RDU Center Drive 
+				Morrisville  NC  27560
+				US
+
+E4-DB-AE   (hex)		Extreme Networks, Inc.
+E4DBAE     (base 16)		Extreme Networks, Inc.
+				2121 RDU Center Drive
+				Morrisville  NC  27560
+				US
+
+00-07-CC   (hex)		dormakaba Deutschland GmbH
+0007CC     (base 16)		dormakaba Deutschland GmbH
+				DORMA Platz 1
+				Ennepetal    58256 
+				DE
+
+00-0B-D7   (hex)		dormakaba Deutschland GmbH
+000BD7     (base 16)		dormakaba Deutschland GmbH
+				Mainzer Straße 36-52
+				Bonn  Nordrheinwestfalen  53179
+				DE
+
+6C-E4-0D   (hex)		Raisecom Technology CO., LTD
+6CE40D     (base 16)		Raisecom Technology CO., LTD
+				No. 11, East Area, No. 10 Block, East Xibeiwang Road
+				Beijing    100094
+				CN
+
+74-0B-12   (hex)		Silicon Laboratories
+740B12     (base 16)		Silicon Laboratories
+				 400 West Cesar Chavez
+				Austin  TX  78701
+				US
+
+6C-DA-1D   (hex)		SUNTON TECHNOLOGY (M) SDN. BHD
+6CDA1D     (base 16)		SUNTON TECHNOLOGY (M) SDN. BHD
+				No. 20, Jalan BS7/1C, Taman Perindustrian Bukit Serdang, Seksyen 7
+				Seri Kembangan  Selangor  43300
+				MY
+
+A4-42-80   (hex)		Apple, Inc.
+A44280     (base 16)		Apple, Inc.
+				1 Infinite Loop
+				Cupertino  CA  95014
+				US
+
+D0-92-82   (hex)		Apple, Inc.
+D09282     (base 16)		Apple, Inc.
+				1 Infinite Loop
+				Cupertino  CA  95014
+				US
+
+50-3B-70   (hex)		Apple, Inc.
+503B70     (base 16)		Apple, Inc.
+				1 Infinite Loop
+				Cupertino  CA  95014
+				US
+
+20-D5-C2   (hex)		Espressif Systems (Singapore) Pte. Ltd
+20D5C2     (base 16)		Espressif Systems (Singapore) Pte. Ltd
+				1 FUSIONOPOLIS VIEW#07-02ECLIPSE
+				Singapore    138577
+				SG
+
+98-C3-77   (hex)		Espressif Inc.
+98C377     (base 16)		Espressif Inc.
+				Vistra Corporate Services Centre, Wickhams Cay II
+				Road Town  Tortola  VG1110
+				VG
+
+B0-FC-4B   (hex)		Shenzhen Phaten Tech. LTD
+B0FC4B     (base 16)		Shenzhen Phaten Tech. LTD
+				C-6 ideamonto industril 7002 Songbai Road Guangming District Shenzhen City Guangdong, China
+				Shenzhen    518108
+				CN
+
 6C-87-20   (hex)		New H3C Technologies Co., Ltd
 6C8720     (base 16)		New H3C Technologies Co., Ltd
 				466 Changhe Road, Binjiang District
@@ -94694,84 +95093,6 @@ FCA9F5     (base 16)		Xiaomi Communications Co Ltd
 				Beijing  Haidian District  100085
 				CN
 
-6C-03-70   (hex)		Extreme Networks Headquarters
-6C0370     (base 16)		Extreme Networks Headquarters
-				2121 RDU Center Drive 
-				Morrisville  NC  27560
-				US
-
-78-96-A3   (hex)		Extreme Networks Headquarters
-7896A3     (base 16)		Extreme Networks Headquarters
-				2121 RDU Center Drive 
-				Morrisville  NC  27560
-				US
-
-DC-E6-50   (hex)		Extreme Networks Headquarters
-DCE650     (base 16)		Extreme Networks Headquarters
-				2121 RDU Center Drive 
-				Morrisville  NC  27560
-				US
-
-24-1F-BD   (hex)		Extreme Networks Headquarters
-241FBD     (base 16)		Extreme Networks Headquarters
-				2121 RDU Center Drive 
-				Morrisville  NC  27560
-				US
-
-E4-44-E5   (hex)		Extreme Networks Headquarters
-E444E5     (base 16)		Extreme Networks Headquarters
-				2121 RDU Center Drive 
-				Morrisville  NC  27560
-				US
-
-40-88-2F   (hex)		Extreme Networks Headquarters
-40882F     (base 16)		Extreme Networks Headquarters
-				2121 RDU Center Drive 
-				Morrisville  NC  27560
-				US
-
-40-18-B1   (hex)		Extreme Networks Headquarters
-4018B1     (base 16)		Extreme Networks Headquarters
-				2121 RDU Center Drive 
-				Morrisville  NC  27560
-				US
-
-20-6C-8A   (hex)		Extreme Networks Headquarters
-206C8A     (base 16)		Extreme Networks Headquarters
-				2121 RDU Center Drive 
-				Morrisville  NC  27560
-				US
-
-88-5B-DD   (hex)		Extreme Networks Headquarters
-885BDD     (base 16)		Extreme Networks Headquarters
-				2121 RDU Center Drive 
-				Morrisville  NC  27560
-				US
-
-34-85-84   (hex)		Extreme Networks Headquarters
-348584     (base 16)		Extreme Networks Headquarters
-				2121 RDU Center Drive 
-				Morrisville  NC  27560
-				US
-
-94-9B-2C   (hex)		Extreme Networks Headquarters
-949B2C     (base 16)		Extreme Networks Headquarters
-				2121 RDU Center Drive 
-				Morrisville  NC  27560
-				US
-
-A4-EA-8E   (hex)		Extreme Networks Headquarters
-A4EA8E     (base 16)		Extreme Networks Headquarters
-				2121 RDU Center Drive 
-				Morrisville  NC  27560
-				US
-
-B8-50-01   (hex)		Extreme Networks Headquarters
-B85001     (base 16)		Extreme Networks Headquarters
-				2121 RDU Center Drive 
-				Morrisville  NC  27560
-				US
-
 14-14-4B   (hex)		Ruijie Networks Co.,LTD
 14144B     (base 16)		Ruijie Networks Co.,LTD
 				19-22# Building,Star-net Science Plaza,Juyuanzhou, 
@@ -94783,18 +95104,6 @@ B85001     (base 16)		Extreme Networks Headquarters
 				BeneluxPark 21
 				Kortrijk    8500
 				BE
-
-AC-ED-32   (hex)		Extreme Networks Headquarters
-ACED32     (base 16)		Extreme Networks Headquarters
-				2121 RDU Center Drive 
-				Morrisville  NC  27560
-				US
-
-00-E6-0E   (hex)		Extreme Networks Headquarters
-00E60E     (base 16)		Extreme Networks Headquarters
-				2121 RDU Center Drive 
-				Morrisville  NC  27560
-				US
 
 44-D9-80   (hex)		EVERYBOT INC.
 44D980     (base 16)		EVERYBOT INC.
@@ -95389,12 +95698,6 @@ C47EE0     (base 16)		Cisco Systems, Inc
 				Lot 8, Jalan Hi-Tech 2/3  
 				Kulim  Kedah  09000
 				MY
-
-1C-7C-98   (hex)		NEC Platforms, Ltd.
-1C7C98     (base 16)		NEC Platforms, Ltd.
-				2-3 Kandatsukasamachi
-				Chiyodaku  Tokyo  101-8532
-				JP
 
 00-E0-4D   (hex)		INTERNET INITIATIVE JAPAN, INC
 00E04D     (base 16)		INTERNET INITIATIVE JAPAN, INC
@@ -96932,12 +97235,6 @@ DCB347     (base 16)		SHENZHEN FAST TECHNOLOGIES CO.,LTD
 				Shenzhen  Guangdong  518057
 				CN
 
-60-29-2B   (hex)		TP-LINK TECHNOLOGIES CO.,LTD.
-60292B     (base 16)		TP-LINK TECHNOLOGIES CO.,LTD.
-				Building 24(floors 1,3,4,5)and 28(floors 1-4)Central Science and Technology Park,Shennan Road,Nanshan
-				Shenzhen  Guangdong  518057
-				CN
-
 A4-86-AE   (hex)		Quectel Wireless Solutions Co.,Ltd.
 A486AE     (base 16)		Quectel Wireless Solutions Co.,Ltd.
 				No.1801 Hongmei Road, Xuhui District
@@ -97958,12 +98255,6 @@ C06911     (base 16)		Arista Networks
 				Moulineaux    92370
 				FR
 
-78-44-FD   (hex)		TP-LINK TECHNOLOGIES CO.,LTD.
-7844FD     (base 16)		TP-LINK TECHNOLOGIES CO.,LTD.
-				Building 24(floors 1,3,4,5)and 28(floors 1-4)Central Science and Technology Park,Shennan Road,Nanshan
-				Shenzhen  Guangdong  518057
-				CN
-
 B4-46-6B   (hex)		REALTIMEID AS
 B4466B     (base 16)		REALTIMEID AS
 				Busk Bruns veg 1 , 7760 Snåsa (Norway)
@@ -98454,12 +98745,6 @@ E0036B     (base 16)		Samsung Electronics Co.,Ltd
 50C1F0     (base 16)		NXP Semiconductor (Tianjin) LTD.
 				No.15 Xinghua Avenue, Xiqing Economic Development Area
 				Tianjin    300385
-				CN
-
-F4-84-8D   (hex)		TP-LINK TECHNOLOGIES CO.,LTD.
-F4848D     (base 16)		TP-LINK TECHNOLOGIES CO.,LTD.
-				Building 24(floors 1,3,4,5)and 28(floors 1-4)Central Science and Technology Park,Shennan Road,Nanshan
-				Shenzhen  Guangdong  518057
 				CN
 
 58-11-22   (hex)		ASUSTek COMPUTER INC.
@@ -99548,12 +99833,6 @@ D0C35A     (base 16)		Jabil Circuit de Chihuahua
 				Amsterdam  Noord-Holland  1097 JB
 				NL
 
-68-77-24   (hex)		TP-LINK TECHNOLOGIES CO.,LTD.
-687724     (base 16)		TP-LINK TECHNOLOGIES CO.,LTD.
-				Building 24(floors 1,3,4,5)and 28(floors 1-4)Central Science and Technology Park,Shennan Road,Nanshan
-				Shenzhen  Guangdong  518057
-				CN
-
 18-2D-F7   (hex)		JY COMPANY
 182DF7     (base 16)		JY COMPANY
 				A-1811 Ho, SamboTechno Tower,122, Jomaru-ro 385 Beon-gil,
@@ -99768,12 +100047,6 @@ F4-23-9C   (hex)		SERNET (SUZHOU) TECHNOLOGIES CORPORATION
 F4239C     (base 16)		SERNET (SUZHOU) TECHNOLOGIES CORPORATION
 				NO.8 Tangzhuang Road,Suzhou Industrial Park,Su ZhouCity,JiangSu Province,China
 				Suzhou    215021
-				CN
-
-F4-B1-9C   (hex)		AltoBeam (China) Inc.
-F4B19C     (base 16)		AltoBeam (China) Inc.
-				B808, Tsinghua Tongfang Hi-Tech Plaza, Haidian
-				Beijing  Beijing  100083
 				CN
 
 A8-D0-81   (hex)		Huawei Device Co., Ltd.
@@ -100860,12 +101133,6 @@ D8CD2C     (base 16)		WUXI NEIHUA NETWORK TECHNOLOGY CO., LTD
 682D83     (base 16)		SHENZHEN DINGHE COMMUNICATION COMPANY
 				ROOM 1802, BAOYUNDA WULIU INFORMATION BUILDING
 				SHENZHEN  GUANGDONG  518101
-				CN
-
-40-3F-8C   (hex)		TP-LINK TECHNOLOGIES CO.,LTD.
-403F8C     (base 16)		TP-LINK TECHNOLOGIES CO.,LTD.
-				Building 24(floors 1,3,4,5)and 28(floors 1-4)Central Science and Technology Park,Shennan Road,Nanshan
-				Shenzhen  Guangdong  518057
 				CN
 
 CC-DB-04   (hex)		DataRemote Inc.
@@ -102228,12 +102495,6 @@ C8E265     (base 16)		Intel Corporate
 2C6F51     (base 16)		Herospeed Digital Technology Limited
 				728 Kaichuang Avenue,Huangpu Distric
 				Guangzhou  Guangdong  510530
-				CN
-
-80-EA-07   (hex)		TP-LINK TECHNOLOGIES CO.,LTD.
-80EA07     (base 16)		TP-LINK TECHNOLOGIES CO.,LTD.
-				Building 24(floors 1,3,4,5)and 28(floors 1-4)Central Science and Technology Park,Shennan Road,Nanshan
-				Shenzhen  Guangdong  518057
 				CN
 
 80-12-DF   (hex)		Shenzhen SuperElectron Technology Co.,Ltd.
@@ -104340,12 +104601,6 @@ C4-06-83   (hex)		HUAWEI TECHNOLOGIES CO.,LTD
 C40683     (base 16)		HUAWEI TECHNOLOGIES CO.,LTD
 				No.2 Xin Cheng Road, Room R6,Songshan Lake Technology Park
 				Dongguan     523808
-				CN
-
-50-D4-F7   (hex)		TP-LINK TECHNOLOGIES CO.,LTD.
-50D4F7     (base 16)		TP-LINK TECHNOLOGIES CO.,LTD.
-				Building 24(floors 1,3,4,5)and 28(floors 1-4)Central Science and Technology Park,Shennan Road,Nanshan
-				Shenzhen  Guangdong  518057
 				CN
 
 00-1F-47   (hex)		MCS Logic Inc.
@@ -109280,12 +109535,6 @@ F015B9     (base 16)		PlayFusion Limited
 				Saarbruecken    66121
 				DE
 
-98-F1-99   (hex)		NEC Platforms, Ltd.
-98F199     (base 16)		NEC Platforms, Ltd.
-				2-3 Kandatsukasamachi
-				Chiyodaku  Tokyo  101-8532
-				JP
-
 18-40-A4   (hex)		Shenzhen Trylong Smart Science and Technology Co., Ltd.
 1840A4     (base 16)		Shenzhen Trylong Smart Science and Technology Co., Ltd.
 				15E, qingdian building, No#6007, Binhe road, futian district
@@ -110544,24 +110793,6 @@ C0E42D     (base 16)		TP-LINK TECHNOLOGIES CO.,LTD.
 18D6C7     (base 16)		TP-LINK TECHNOLOGIES CO.,LTD.
 				Building 24(floors 1,3,4,5)and 28(floors 1-4)Central Science and Technology Park,Shennan Road,Nanshan
 				Shenzhen  Guangdong  518057
-				CN
-
-44-33-4C   (hex)		Shenzhen Bilian electronic CO.,LTD
-44334C     (base 16)		Shenzhen Bilian electronic CO.,LTD
-				NO 268
-				Shenzhen  Guangdong  518110
-				CN
-
-AC-A2-13   (hex)		Shenzhen Bilian electronic CO.,LTD
-ACA213     (base 16)		Shenzhen Bilian electronic CO.,LTD
-				NO 268，Fuqian Rd,Jutang Community
-				shenzhen  guangdong  518110
-				CN
-
-3C-33-00   (hex)		Shenzhen Bilian electronic CO.,LTD
-3C3300     (base 16)		Shenzhen Bilian electronic CO.,LTD
-				NO 268，Fuqian Rd,Jutang Community,Guanlan town , LongHua new district
-				Shenzhen  Guangdong  518110
 				CN
 
 00-90-CC   (hex)		PLANEX COMMUNICATIONS INC.
@@ -134600,12 +134831,6 @@ E47450     (base 16)		Shenzhen Grandsun Electronic Co.,Ltd.
 				Shenzhen  Guangdong  518116
 				CN
 
-B4-A3-BD   (hex)		Extreme Networks Headquarters
-B4A3BD     (base 16)		Extreme Networks Headquarters
-				2121 RDU Center Drive 
-				Morrisville  NC  27560
-				US
-
 7C-D3-E5   (hex)		HUAWEI TECHNOLOGIES CO.,LTD
 7CD3E5     (base 16)		HUAWEI TECHNOLOGIES CO.,LTD
 				No.2 Xin Cheng Road, Room R6,Songshan Lake Technology Park
@@ -134800,12 +135025,6 @@ C03379     (base 16)		HUAWEI TECHNOLOGIES CO.,LTD
 				Block B1, XIXI center, No.588 West Wenyi Road, Xihu District
 				Hangzhou  Zhejiang  310000
 				CN
-
-AC-7F-8D   (hex)		Extreme Networks Headquarters
-AC7F8D     (base 16)		Extreme Networks Headquarters
-				2121 RDU Center Drive 
-				Morrisville  NC  27560
-				US
 
 24-AC-AC   (hex)		Polar Electro Oy
 24ACAC     (base 16)		Polar Electro Oy
@@ -135042,12 +135261,6 @@ F8-8F-C8   (hex)		Chipsea Technologies (Shenzhen) Corp.
 F88FC8     (base 16)		Chipsea Technologies (Shenzhen) Corp.
 				3 / F, Block A, Building 2, Shenzhen Bay Innovation Technology Center, No.3156 keyuan South Road, Yuehai Street, Nanshan District, Shenzhen
 				Shenzhen  Guangdong  518000
-				CN
-
-4C-10-D5   (hex)		TP-LINK TECHNOLOGIES CO.,LTD.
-4C10D5     (base 16)		TP-LINK TECHNOLOGIES CO.,LTD.
-				Building 24(floors 1,3,4,5)and 28(floors 1-4)Central Science and Technology Park,Shennan Road,Nanshan
-				Shenzhen  Guangdong  518057
 				CN
 
 28-91-76   (hex)		Indyme Solutions, LLC
@@ -137114,12 +137327,6 @@ C0F853     (base 16)		Tuya Smart Inc.
 				Santa Clara   CA  95054
 				US
 
-E4-FD-8C   (hex)		Extreme Networks Headquarters
-E4FD8C     (base 16)		Extreme Networks Headquarters
-				2121 RDU Center Drive 
-				Morrisville  NC  27560
-				US
-
 30-EB-15   (hex)		Huawei Device Co., Ltd.
 30EB15     (base 16)		Huawei Device Co., Ltd.
 				No.2 of Xincheng Road, Songshan Lake Zone
@@ -138094,12 +138301,6 @@ A888CE     (base 16)		GUANGDONG OPPO MOBILE TELECOMMUNICATIONS CORP.,LTD
 				NO.18 HAIBIN ROAD,
 				DONG GUAN  GUANG DONG  523860
 				CN
-
-4C-0A-4E   (hex)		Extreme Networks Headquarters
-4C0A4E     (base 16)		Extreme Networks Headquarters
-				2121 RDU Center Drive 
-				Morrisville  NC  27560
-				US
 
 BC-7E-C3   (hex)		Zyxel Communications Corporation
 BC7EC3     (base 16)		Zyxel Communications Corporation
@@ -140237,12 +140438,6 @@ DC575C     (base 16)		PR Electronics A/S
 				Følle    8410
 				DK
 
-44-66-90   (hex)		TP-LINK TECHNOLOGIES CO.,LTD.
-446690     (base 16)		TP-LINK TECHNOLOGIES CO.,LTD.
-				Building 24(floors 1,3,4,5)and 28(floors 1-4)Central Science and Technology Park,Shennan Road,Nanshan
-				Shenzhen  Guangdong  518057
-				CN
-
 38-47-12   (hex)		Luxottica Tristar (Dongguan) Optical Co.,Ltd
 384712     (base 16)		Luxottica Tristar (Dongguan) Optical Co.,Ltd
 				Oudeng Zone, Gaobu Town, Dongguan City, GuangDong, China
@@ -141605,41 +141800,17 @@ D8F15B     (base 16)		Espressif Inc.
 				Road Town  Tortola  VG1110
 				VG
 
-CC-7B-5C   (hex)		Espressif Inc.
-CC7B5C     (base 16)		Espressif Inc.
-				Vistra Corporate Services Centre, Wickhams Cay II
-				Road Town  Tortola  VG1110
-				VG
+74-8B-23   (hex)		Samsung Electronics Co.,Ltd
+748B23     (base 16)		Samsung Electronics Co.,Ltd
+				129, Samsung-ro, Youngtongl-Gu
+				Suwon  Gyeonggi-Do  16677
+				KR
 
-FC-E8-C0   (hex)		Espressif Inc.
-FCE8C0     (base 16)		Espressif Inc.
-				Vistra Corporate Services Centre, Wickhams Cay II
-				Road Town  Tortola  VG1110
-				VG
-
-14-2B-2F   (hex)		Espressif Inc.
-142B2F     (base 16)		Espressif Inc.
-				Vistra Corporate Services Centre, Wickhams Cay II
-				Road Town  Tortola  VG1110
-				VG
-
-48-CA-43   (hex)		Espressif Inc.
-48CA43     (base 16)		Espressif Inc.
-				Vistra Corporate Services Centre, Wickhams Cay II
-				Road Town  Tortola  VG1110
-				VG
-
-E8-06-90   (hex)		Espressif Inc.
-E80690     (base 16)		Espressif Inc.
-				Vistra Corporate Services Centre, Wickhams Cay II
-				Road Town  Tortola  VG1110
-				VG
-
-34-CD-B0   (hex)		Espressif Inc.
-34CDB0     (base 16)		Espressif Inc.
-				Vistra Corporate Services Centre, Wickhams Cay II
-				Road Town  Tortola  VG1110
-				VG
+20-0D-3D   (hex)		Quectel Wireless Solutions Co.,Ltd.
+200D3D     (base 16)		Quectel Wireless Solutions Co.,Ltd.
+				Building 5, Shanghai Business Park Phase III (Area B), No.1016 Tianlin Road, Minhang District
+				Shanghai    200233
+				CN
 
 94-54-C5   (hex)		Espressif Inc.
 9454C5     (base 16)		Espressif Inc.
@@ -141665,20 +141836,20 @@ E80690     (base 16)		Espressif Inc.
 				Road Town  Tortola  VG1110
 				VG
 
-14-33-5C   (hex)		Espressif Inc.
-14335C     (base 16)		Espressif Inc.
+CC-7B-5C   (hex)		Espressif Inc.
+CC7B5C     (base 16)		Espressif Inc.
 				Vistra Corporate Services Centre, Wickhams Cay II
 				Road Town  Tortola  VG1110
 				VG
 
-98-88-E0   (hex)		Espressif Inc.
-9888E0     (base 16)		Espressif Inc.
+FC-E8-C0   (hex)		Espressif Inc.
+FCE8C0     (base 16)		Espressif Inc.
 				Vistra Corporate Services Centre, Wickhams Cay II
 				Road Town  Tortola  VG1110
 				VG
 
-98-A3-16   (hex)		Espressif Inc.
-98A316     (base 16)		Espressif Inc.
+14-2B-2F   (hex)		Espressif Inc.
+142B2F     (base 16)		Espressif Inc.
 				Vistra Corporate Services Centre, Wickhams Cay II
 				Road Town  Tortola  VG1110
 				VG
@@ -141701,17 +141872,467 @@ B81F3F     (base 16)		Espressif Inc.
 				Road Town  Tortola  VG1110
 				VG
 
-74-8B-23   (hex)		Samsung Electronics Co.,Ltd
-748B23     (base 16)		Samsung Electronics Co.,Ltd
-				129, Samsung-ro, Youngtongl-Gu
-				Suwon  Gyeonggi-Do  16677
+48-CA-43   (hex)		Espressif Inc.
+48CA43     (base 16)		Espressif Inc.
+				Vistra Corporate Services Centre, Wickhams Cay II
+				Road Town  Tortola  VG1110
+				VG
+
+E8-06-90   (hex)		Espressif Inc.
+E80690     (base 16)		Espressif Inc.
+				Vistra Corporate Services Centre, Wickhams Cay II
+				Road Town  Tortola  VG1110
+				VG
+
+34-CD-B0   (hex)		Espressif Inc.
+34CDB0     (base 16)		Espressif Inc.
+				Vistra Corporate Services Centre, Wickhams Cay II
+				Road Town  Tortola  VG1110
+				VG
+
+14-33-5C   (hex)		Espressif Inc.
+14335C     (base 16)		Espressif Inc.
+				Vistra Corporate Services Centre, Wickhams Cay II
+				Road Town  Tortola  VG1110
+				VG
+
+98-88-E0   (hex)		Espressif Inc.
+9888E0     (base 16)		Espressif Inc.
+				Vistra Corporate Services Centre, Wickhams Cay II
+				Road Town  Tortola  VG1110
+				VG
+
+98-A3-16   (hex)		Espressif Inc.
+98A316     (base 16)		Espressif Inc.
+				Vistra Corporate Services Centre, Wickhams Cay II
+				Road Town  Tortola  VG1110
+				VG
+
+98-F1-99   (hex)		NEC Platforms, Ltd.
+98F199     (base 16)		NEC Platforms, Ltd.
+				14-1, Shiba 4-chome
+				Minato-ku  Tokyo  108-8556
+				JP
+
+4C-80-FB   (hex)		Google, Inc.
+4C80FB     (base 16)		Google, Inc.
+				1600 Amphitheatre Parkway
+				Mountain View  CA  94043
+				US
+
+3C-33-00   (hex)		SHENZHEN BILIAN ELECTRONIC CO.，LTD
+3C3300     (base 16)		SHENZHEN BILIAN ELECTRONIC CO.，LTD
+				NO 268，Fuqian Rd,Jutang Community,Guanlan town , LongHua new district
+				Shenzhen  Guangdong  518110
+				CN
+
+AC-A2-13   (hex)		SHENZHEN BILIAN ELECTRONIC CO.，LTD
+ACA213     (base 16)		SHENZHEN BILIAN ELECTRONIC CO.，LTD
+				NO 268，Fuqian Rd,Jutang Community
+				shenzhen  guangdong  518110
+				CN
+
+44-33-4C   (hex)		SHENZHEN BILIAN ELECTRONIC CO.，LTD
+44334C     (base 16)		SHENZHEN BILIAN ELECTRONIC CO.，LTD
+				NO 268
+				Shenzhen  Guangdong  518110
+				CN
+
+44-5E-82   (hex)		Zyxel Communications Corporation
+445E82     (base 16)		Zyxel Communications Corporation
+				No. 6 Innovation Road II, Science Park
+				Hsichu  Taiwan  300
+				TW
+
+F4-B1-9C   (hex)		AltoBeam Inc.
+F4B19C     (base 16)		AltoBeam Inc.
+				B808, Tsinghua Tongfang Hi-Tech Plaza, Haidian
+				Beijing  Beijing  100083
+				CN
+
+A0-CA-4A   (hex)		AltoBeam Inc.
+A0CA4A     (base 16)		AltoBeam Inc.
+				B808, Tsinghua Tongfang Hi-Tech Plaza, Haidian
+				Beijing  Beijing  100083
+				CN
+
+1C-7C-98   (hex)		NEC Platforms, Ltd.
+1C7C98     (base 16)		NEC Platforms, Ltd.
+				14-1, Shiba 4-chome
+				Minato-ku  Tokyo  108-8556
+				JP
+
+1C-4A-3B   (hex)		ACCTON TECHNOLOGY CORPORATION
+1C4A3B     (base 16)		ACCTON TECHNOLOGY CORPORATION
+				No.1, Creation Road 3, Hsinchu Science Park,
+				Hsinchu    30077
+				TW
+
+74-A2-35   (hex)		IEEE Registration Authority
+74A235     (base 16)		IEEE Registration Authority
+				445 Hoes Lane
+				Piscataway  NJ  08554
+				US
+
+F4-84-8D   (hex)		TP-LINK TECHNOLOGIES CO.,LTD.
+F4848D     (base 16)		TP-LINK TECHNOLOGIES CO.,LTD.
+				2-7th floors of South Building and 3-11th floors of North Building, No. 396, Jucai Road, Changhe Street, Binjiang District
+				Hangzhou City  Zhejiang Province,  310000
+				CN
+
+68-77-24   (hex)		TP-LINK TECHNOLOGIES CO.,LTD.
+687724     (base 16)		TP-LINK TECHNOLOGIES CO.,LTD.
+				2-7th floors of South Building and 3-11th floors of North Building, No. 396, Jucai Road, Changhe Street, Binjiang District
+				Hangzhou City  Zhejiang Province,  310000
+				CN
+
+40-3F-8C   (hex)		TP-LINK TECHNOLOGIES CO.,LTD.
+403F8C     (base 16)		TP-LINK TECHNOLOGIES CO.,LTD.
+				2-7th floors of South Building and 3-11th floors of North Building, No. 396, Jucai Road, Changhe Street, Binjiang District
+				Hangzhou City  Zhejiang Province,  310000
+				CN
+
+4C-10-D5   (hex)		TP-LINK TECHNOLOGIES CO.,LTD.
+4C10D5     (base 16)		TP-LINK TECHNOLOGIES CO.,LTD.
+				2-7th floors of South Building and 3-11th floors of North Building, No. 396, Jucai Road, Changhe Street, Binjiang District
+				Hangzhou City  Zhejiang Province,  310000
+				CN
+
+60-29-2B   (hex)		TP-LINK TECHNOLOGIES CO.,LTD.
+60292B     (base 16)		TP-LINK TECHNOLOGIES CO.,LTD.
+				2-7th floors of South Building and 3-11th floors of North Building, No. 396, Jucai Road, Changhe Street, Binjiang District
+				Hangzhou City  Zhejiang Province,  310000
+				CN
+
+78-44-FD   (hex)		TP-LINK TECHNOLOGIES CO.,LTD.
+7844FD     (base 16)		TP-LINK TECHNOLOGIES CO.,LTD.
+				2-7th floors of South Building and 3-11th floors of North Building, No. 396, Jucai Road, Changhe Street, Binjiang District
+				Hangzhou City  Zhejiang Province,  310000
+				CN
+
+B0-06-EC   (hex)		Nexquome Pte Limited
+B006EC     (base 16)		Nexquome Pte Limited
+				200 Cantoment Road#05-03 Southpoint
+				SINGAPORE    089763
+				SG
+
+38-16-B3   (hex)		HP Inc.
+3816B3     (base 16)		HP Inc.
+				10300 Energy Dr
+				Spring  TX  77389
+				US
+
+44-66-90   (hex)		TP-LINK TECHNOLOGIES CO.,LTD.
+446690     (base 16)		TP-LINK TECHNOLOGIES CO.,LTD.
+				2-7th floors of South Building and 3-11th floors of North Building, No. 396, Jucai Road, Changhe Street, Binjiang District
+				Hangzhou City  Zhejiang Province,  310000
+				CN
+
+80-EA-07   (hex)		TP-LINK TECHNOLOGIES CO.,LTD.
+80EA07     (base 16)		TP-LINK TECHNOLOGIES CO.,LTD.
+				2-7th floors of South Building and 3-11th floors of North Building, No. 396, Jucai Road, Changhe Street, Binjiang District
+				Hangzhou City  Zhejiang Province,  310000
+				CN
+
+50-D4-F7   (hex)		TP-LINK TECHNOLOGIES CO.,LTD.
+50D4F7     (base 16)		TP-LINK TECHNOLOGIES CO.,LTD.
+				2-7th floors of South Building and 3-11th floors of North Building, No. 396, Jucai Road, Changhe Street, Binjiang District
+				Hangzhou City  Zhejiang Province,  310000
+				CN
+
+9C-BC-A6   (hex)		Hewlett Packard Enterprise
+9CBCA6     (base 16)		Hewlett Packard Enterprise
+				6280 America Center Dr
+				San Jose  CA  95002
+				US
+
+28-80-6E   (hex)		Pirelli Tyre S.p.A.
+28806E     (base 16)		Pirelli Tyre S.p.A.
+				Via Piero e Alberto Pirelli 25
+				Milan  Lombardia  20126
+				IT
+
+68-2E-3C   (hex)		Ubiquiti Inc
+682E3C     (base 16)		Ubiquiti Inc
+				685 Third Avenue, 27th Floor
+				New York  NY  New York NY 10017
+				US
+
+98-2A-C3   (hex)		Silicon Laboratories
+982AC3     (base 16)		Silicon Laboratories
+				 400 West Cesar Chavez
+				Austin  TX  78701
+				US
+
+B4-7E-9F   (hex)		Xiaomi Communications Co Ltd
+B47E9F     (base 16)		Xiaomi Communications Co Ltd
+				#019, 9th Floor, Building 6, 33 Xi'erqi Middle Road
+				Beijing  Haidian District  100085
+				CN
+
+C0-C7-B5   (hex)		Infinix mobility limited
+C0C7B5     (base 16)		Infinix mobility limited
+				RMS 05-15, 13A/F SOUTH TOWER WORLD FINANCE CTR HARBOUR CITY 17 CANTON RD TST KLN HONG KONG
+				HongKong  HongKong  999077
+				HK
+
+D0-82-E8   (hex)		Tuya Smart Inc.
+D082E8     (base 16)		Tuya Smart Inc.
+				160 Greentree Drive, Suite 101
+				Dover  DE  19904
+				US
+
+6C-3D-D8   (hex)		Espressif Systems (Singapore) Pte. Ltd
+6C3DD8     (base 16)		Espressif Systems (Singapore) Pte. Ltd
+				1 FUSIONOPOLIS VIEW#07-02ECLIPSE
+				Singapore    138577
+				SG
+
+4C-D0-12   (hex)		Apple, Inc.
+4CD012     (base 16)		Apple, Inc.
+				1 Infinite Loop
+				Cupertino  CA  95014
+				US
+
+08-E6-4B   (hex)		Apple, Inc.
+08E64B     (base 16)		Apple, Inc.
+				1 Infinite Loop
+				Cupertino  CA  95014
+				US
+
+8C-C2-46   (hex)		Apple, Inc.
+8CC246     (base 16)		Apple, Inc.
+				1 Infinite Loop
+				Cupertino  CA  95014
+				US
+
+F4-B2-4E   (hex)		Huawei Device Co., Ltd.
+F4B24E     (base 16)		Huawei Device Co., Ltd.
+				No.2 of Xincheng Road, Songshan Lake Zone
+				Dongguan  Guangdong  523808
+				CN
+
+94-49-F6   (hex)		Huawei Device Co., Ltd.
+9449F6     (base 16)		Huawei Device Co., Ltd.
+				No.2 of Xincheng Road, Songshan Lake Zone
+				Dongguan  Guangdong  523808
+				CN
+
+38-73-6E   (hex)		Huawei Device Co., Ltd.
+38736E     (base 16)		Huawei Device Co., Ltd.
+				No.2 of Xincheng Road, Songshan Lake Zone
+				Dongguan  Guangdong  523808
+				CN
+
+F4-06-A3   (hex)		Huawei Device Co., Ltd.
+F406A3     (base 16)		Huawei Device Co., Ltd.
+				No.2 of Xincheng Road, Songshan Lake Zone
+				Dongguan  Guangdong  523808
+				CN
+
+20-68-AA   (hex)		Potron Technology Co.,Ltd.,
+2068AA     (base 16)		Potron Technology Co.,Ltd.,
+				708 Bldg.B, Qian wan Key&Core Technology Industrial Park, Shenzhen,China 518126
+				Shenzhen  Guangdong  518000
+				CN
+
+5C-23-C2   (hex)		Apple, Inc.
+5C23C2     (base 16)		Apple, Inc.
+				1 Infinite Loop
+				Cupertino  CA  95014
+				US
+
+00-66-DC   (hex)		Apple, Inc.
+0066DC     (base 16)		Apple, Inc.
+				1 Infinite Loop
+				Cupertino  CA  95014
+				US
+
+7C-59-B1   (hex)		Apple, Inc.
+7C59B1     (base 16)		Apple, Inc.
+				1 Infinite Loop
+				Cupertino  CA  95014
+				US
+
+80-D1-75   (hex)		iPanel.TV Inc.
+80D175     (base 16)		iPanel.TV Inc.
+				6th Floor, Building B, Jinfengcheng Mansion, Shennan East Road No. 5015, Luohu District
+				Shenzhen  Guangdong  518004
+				CN
+
+84-C7-BB   (hex)		Espressif Inc.
+84C7BB     (base 16)		Espressif Inc.
+				Vistra Corporate Services Centre, Wickhams Cay II
+				Road Town  Tortola  VG1110
+				VG
+
+34-54-EF   (hex)		Cisco Systems, Inc
+3454EF     (base 16)		Cisco Systems, Inc
+				80 West Tasman Drive
+				San Jose  CA  94568
+				US
+
+58-8F-A7   (hex)		LG Innotek
+588FA7     (base 16)		LG Innotek
+				26, HANAMSANDAN 5BEON-RO
+				Gwangju  Gwangsan-gu  506-731
 				KR
 
-20-0D-3D   (hex)		Quectel Wireless Solutions Co.,Ltd.
-200D3D     (base 16)		Quectel Wireless Solutions Co.,Ltd.
-				Building 5, Shanghai Business Park Phase III (Area B), No.1016 Tianlin Road, Minhang District
-				Shanghai    200233
+88-5B-DD   (hex)		Extreme Networks, Inc.
+885BDD     (base 16)		Extreme Networks, Inc.
+				2121 RDU Center Drive 
+				Morrisville  NC  27560
+				US
+
+20-6C-8A   (hex)		Extreme Networks, Inc.
+206C8A     (base 16)		Extreme Networks, Inc.
+				2121 RDU Center Drive 
+				Morrisville  NC  27560
+				US
+
+40-18-B1   (hex)		Extreme Networks, Inc.
+4018B1     (base 16)		Extreme Networks, Inc.
+				2121 RDU Center Drive 
+				Morrisville  NC  27560
+				US
+
+40-88-2F   (hex)		Extreme Networks, Inc.
+40882F     (base 16)		Extreme Networks, Inc.
+				2121 RDU Center Drive 
+				Morrisville  NC  27560
+				US
+
+E4-44-E5   (hex)		Extreme Networks, Inc.
+E444E5     (base 16)		Extreme Networks, Inc.
+				2121 RDU Center Drive 
+				Morrisville  NC  27560
+				US
+
+F0-2F-50   (hex)		Shenzhen SEI Robotics Co.,Ltd
+F02F50     (base 16)		Shenzhen SEI Robotics Co.,Ltd
+				11th Floor, Kangtai Group Building, No. 222 Kefa Road, Science and Technology Park Community, Yuehai Street, Nanshan District, Shenzhen
+				Shenzhen  Guangdong  518000
 				CN
+
+B8-50-01   (hex)		Extreme Networks, Inc.
+B85001     (base 16)		Extreme Networks, Inc.
+				2121 RDU Center Drive 
+				Morrisville  NC  27560
+				US
+
+A4-EA-8E   (hex)		Extreme Networks, Inc.
+A4EA8E     (base 16)		Extreme Networks, Inc.
+				2121 RDU Center Drive 
+				Morrisville  NC  27560
+				US
+
+94-9B-2C   (hex)		Extreme Networks, Inc.
+949B2C     (base 16)		Extreme Networks, Inc.
+				2121 RDU Center Drive 
+				Morrisville  NC  27560
+				US
+
+74-4F-80   (hex)		shenzhen Amos Electronics Co.,Ltd
+744F80     (base 16)		shenzhen Amos Electronics Co.,Ltd
+				1st floor,building 4,zhiheng industrialpark,No.15,guankou raod,nanshan district
+				shenzhen  Guangdong  518052
+				CN
+
+34-85-84   (hex)		Extreme Networks, Inc.
+348584     (base 16)		Extreme Networks, Inc.
+				2121 RDU Center Drive 
+				Morrisville  NC  27560
+				US
+
+B8-1B-CB   (hex)		Shanghai Sunmi Technology Co.,Ltd.
+B81BCB     (base 16)		Shanghai Sunmi Technology Co.,Ltd.
+				Room 505, No.388 Song Hu Road, Yang Pu District, Shanghai, China
+				Shanghai  Shanghai  200433
+				CN
+
+74-D5-9C   (hex)		fluidiQ by Magnalytix
+74D59C     (base 16)		fluidiQ by Magnalytix
+				424 Harding Industrial Drive
+				Nashville  TN  37211
+				US
+
+24-1F-BD   (hex)		Extreme Networks, Inc.
+241FBD     (base 16)		Extreme Networks, Inc.
+				2121 RDU Center Drive 
+				Morrisville  NC  27560
+				US
+
+DC-E6-50   (hex)		Extreme Networks, Inc.
+DCE650     (base 16)		Extreme Networks, Inc.
+				2121 RDU Center Drive 
+				Morrisville  NC  27560
+				US
+
+78-96-A3   (hex)		Extreme Networks, Inc.
+7896A3     (base 16)		Extreme Networks, Inc.
+				2121 RDU Center Drive 
+				Morrisville  NC  27560
+				US
+
+6C-03-70   (hex)		Extreme Networks, Inc.
+6C0370     (base 16)		Extreme Networks, Inc.
+				2121 RDU Center Drive 
+				Morrisville  NC  27560
+				US
+
+00-E6-0E   (hex)		Extreme Networks, Inc.
+00E60E     (base 16)		Extreme Networks, Inc.
+				2121 RDU Center Drive 
+				Morrisville  NC  27560
+				US
+
+AC-ED-32   (hex)		Extreme Networks, Inc.
+ACED32     (base 16)		Extreme Networks, Inc.
+				2121 RDU Center Drive 
+				Morrisville  NC  27560
+				US
+
+B4-A3-BD   (hex)		Extreme Networks, Inc.
+B4A3BD     (base 16)		Extreme Networks, Inc.
+				2121 RDU Center Drive 
+				Morrisville  NC  27560
+				US
+
+AC-7F-8D   (hex)		Extreme Networks, Inc.
+AC7F8D     (base 16)		Extreme Networks, Inc.
+				2121 RDU Center Drive 
+				Morrisville  NC  27560
+				US
+
+E4-FD-8C   (hex)		Extreme Networks, Inc.
+E4FD8C     (base 16)		Extreme Networks, Inc.
+				2121 RDU Center Drive 
+				Morrisville  NC  27560
+				US
+
+4C-0A-4E   (hex)		Extreme Networks, Inc.
+4C0A4E     (base 16)		Extreme Networks, Inc.
+				2121 RDU Center Drive 
+				Morrisville  NC  27560
+				US
+
+D4-12-6E   (hex)		Apple, Inc.
+D4126E     (base 16)		Apple, Inc.
+				1 Infinite Loop
+				Cupertino  CA  95014
+				US
+
+EC-D5-08   (hex)		Apple, Inc.
+ECD508     (base 16)		Apple, Inc.
+				1 Infinite Loop
+				Cupertino  CA  95014
+				US
+
+10-A4-C9   (hex)		Apple, Inc.
+10A4C9     (base 16)		Apple, Inc.
+				1 Infinite Loop
+				Cupertino  CA  95014
+				US
 
 B0-0C-9D   (hex)		Quectel Wireless Solutions Co.,Ltd.
 B00C9D     (base 16)		Quectel Wireless Solutions Co.,Ltd.
@@ -141731,71 +142352,11 @@ F0AB1F     (base 16)		zte corporation
 				shenzhen   guangdong  518057
 				CN
 
-B4-C7-99   (hex)		Extreme Networks Headquarters
-B4C799     (base 16)		Extreme Networks Headquarters
-				2121 RDU Center Drive 
-				Morrisville  NC  27560
-				US
-
 58-69-6C   (hex)		Ruijie Networks Co.,LTD
 58696C     (base 16)		Ruijie Networks Co.,LTD
 				19# Building,Star-net Science Plaza,Juyuanzhou, 618 Jinshan Road
 				Fuzhou  Fujian  350002
 				CN
-
-90-B8-32   (hex)		Extreme Networks Headquarters
-90B832     (base 16)		Extreme Networks Headquarters
-				2121 RDU Center Drive 
-				Morrisville  NC  27560
-				US
-
-9C-5D-12   (hex)		Extreme Networks Headquarters
-9C5D12     (base 16)		Extreme Networks Headquarters
-				2121 RDU Center Drive 
-				Morrisville  NC  27560
-				US
-
-F0-9C-E9   (hex)		Extreme Networks Headquarters
-F09CE9     (base 16)		Extreme Networks Headquarters
-				2121 RDU Center Drive 
-				Morrisville  NC  27560
-				US
-
-C8-67-5E   (hex)		Extreme Networks Headquarters
-C8675E     (base 16)		Extreme Networks Headquarters
-				2121 RDU Center Drive 
-				Morrisville  NC  27560
-				US
-
-C4-13-E2   (hex)		Extreme Networks Headquarters
-C413E2     (base 16)		Extreme Networks Headquarters
-				2121 RDU Center Drive 
-				Morrisville  NC  27560
-				US
-
-40-E3-17   (hex)		Extreme Networks Headquarters
-40E317     (base 16)		Extreme Networks Headquarters
-				2121 RDU Center Drive 
-				Morrisville  NC  27560
-				US
-
-AC-4D-D9   (hex)		Extreme Networks Headquarters
-AC4DD9     (base 16)		Extreme Networks Headquarters
-				2121 RDU Center Drive 
-				Morrisville  NC  27560
-				US
-
-F4-CE-48   (hex)		Extreme Networks Headquarters
-F4CE48     (base 16)		Extreme Networks Headquarters
-				2121 RDU Center Drive 
-				Morrisville  NC  27560
-				US
-
-00-DC-B2   (hex)		Extreme Networks Headquarters
-00DCB2     (base 16)		Extreme Networks Headquarters
-				2121 RDU Center Drive 
-				Morrisville  NC  27560
-				US
 
 8C-83-94   (hex)		Arcadyan Corporation
 8C8394     (base 16)		Arcadyan Corporation
@@ -144143,18 +144704,6 @@ E0382D     (base 16)		IEEE Registration Authority
 				Bucheon-si  Gyeonggi-do  14557
 				KR
 
-78-60-5B   (hex)		TP-LINK TECHNOLOGIES CO.,LTD.
-78605B     (base 16)		TP-LINK TECHNOLOGIES CO.,LTD.
-				Building 24(floors 1,3,4,5)and 28(floors 1-4)Central Science and Technology Park,Shennan Road,Nanshan
-				Shenzhen  Guangdong  518057
-				CN
-
-04-F9-F8   (hex)		TP-LINK TECHNOLOGIES CO.,LTD.
-04F9F8     (base 16)		TP-LINK TECHNOLOGIES CO.,LTD.
-				Building 24(floors 1,3,4,5)and 28(floors 1-4)Central Science and Technology Park,Shennan Road,Nanshan
-				Shenzhen  Guangdong  518057
-				CN
-
 38-47-F2   (hex)		Recogni Inc
 3847F2     (base 16)		Recogni Inc
 				2590 N 1ST STSuite 320
@@ -145013,12 +145562,6 @@ D49B74     (base 16)		Kinetic Technologies
 				San Jose  CA  95119
 				US
 
-48-0E-EC   (hex)		TP-LINK TECHNOLOGIES CO.,LTD.
-480EEC     (base 16)		TP-LINK TECHNOLOGIES CO.,LTD.
-				Building 24(floors 1,3,4,5)and 28(floors 1-4)Central Science and Technology Park,Shennan Road,Nanshan
-				Shenzhen  Guangdong  518057
-				CN
-
 50-F2-61   (hex)		Photon Sail Technologies
 50F261     (base 16)		Photon Sail Technologies
 				8 Robinson Road, ASO Building
@@ -145048,12 +145591,6 @@ B4BA9D     (base 16)		SKY UK LIMITED
 				445 Hoes Lane
 				Piscataway  NJ  08554
 				US
-
-50-3E-AA   (hex)		TP-LINK TECHNOLOGIES CO.,LTD.
-503EAA     (base 16)		TP-LINK TECHNOLOGIES CO.,LTD.
-				Building 24(floors 1,3,4,5)and 28(floors 1-4)Central Science and Technology Park,Shennan Road,Nanshan
-				Shenzhen  Guangdong  518057
-				CN
 
 3C-FE-AC   (hex)		Cisco Systems, Inc
 3CFEAC     (base 16)		Cisco Systems, Inc
@@ -145725,12 +146262,6 @@ FC101A     (base 16)		Palo Alto Networks
 00A265     (base 16)		M2Motive Technology Inc.
 				Room 402,No. 125 North Jiangsu Road, Changning District
 				Shanghai  Shanghai  200042
-				CN
-
-F4-6D-2F   (hex)		TP-LINK TECHNOLOGIES CO.,LTD.
-F46D2F     (base 16)		TP-LINK TECHNOLOGIES CO.,LTD.
-				Building 24(floors 1,3,4,5)and 28(floors 1-4)Central Science and Technology Park,Shennan Road,Nanshan
-				Shenzhen  Guangdong  518057
 				CN
 
 10-54-D2   (hex)		IEEE Registration Authority
@@ -146715,18 +147246,6 @@ E8-97-9A   (hex)		Quectel Wireless Solutions Co.,Ltd.
 E8979A     (base 16)		Quectel Wireless Solutions Co.,Ltd.
 				7th Floor, Hongye Building, No.1801 Hongmei Road, Xuhui District
 				Shanghai    200233
-				CN
-
-18-F2-2C   (hex)		TP-LINK TECHNOLOGIES CO.,LTD.
-18F22C     (base 16)		TP-LINK TECHNOLOGIES CO.,LTD.
-				Building 24(floors 1,3,4,5)and 28(floors 1-4)Central Science and Technology Park,Shennan Road,Nanshan
-				Shenzhen  Guangdong  518057
-				CN
-
-98-97-CC   (hex)		TP-LINK TECHNOLOGIES CO.,LTD.
-9897CC     (base 16)		TP-LINK TECHNOLOGIES CO.,LTD.
-				Building 24(floors 1,3,4,5)and 28(floors 1-4)Central Science and Technology Park,Shennan Road,Nanshan
-				Shenzhen  Guangdong  518057
 				CN
 
 18-0E-AC   (hex)		SHENZHEN FAST TECHNOLOGIES CO.,LTD
@@ -148157,12 +148676,6 @@ A4CEDA     (base 16)		Arcadyan Corporation
 				Hsinchu City  Hsinchu  30071
 				TW
 
-84-7A-B6   (hex)		AltoBeam (China) Inc.
-847AB6     (base 16)		AltoBeam (China) Inc.
-				B808, Tsinghua Tongfang Hi-Tech Plaza, Haidian
-				Beijing  Beijing  100083
-				CN
-
 28-41-EC   (hex)		HUAWEI TECHNOLOGIES CO.,LTD
 2841EC     (base 16)		HUAWEI TECHNOLOGIES CO.,LTD
 				No.2 Xin Cheng Road, Room R6,Songshan Lake Technology Park
@@ -148312,12 +148825,6 @@ E455A8     (base 16)		Cisco Meraki
 				Werinherstrasse 91
 				München  Bavaria  D-81541
 				DE
-
-18-A6-F7   (hex)		TP-LINK TECHNOLOGIES CO.,LTD.
-18A6F7     (base 16)		TP-LINK TECHNOLOGIES CO.,LTD.
-				Building 24(floors 1,3,4,5)and 28(floors 1-4)Central Science and Technology Park,Shennan Road,Nanshan
-				Shenzhen  Guangdong  518057
-				CN
 
 E4-C9-0B   (hex)		Radwin
 E4C90B     (base 16)		Radwin
@@ -150603,12 +151110,6 @@ CCD42E     (base 16)		Arcadyan Corporation
 5894B2     (base 16)		BrainCo
 				????????????????1107?
 				???  ???  518000
-				CN
-
-B0-95-75   (hex)		TP-LINK TECHNOLOGIES CO.,LTD.
-B09575     (base 16)		TP-LINK TECHNOLOGIES CO.,LTD.
-				Building 24(floors 1,3,4,5)and 28(floors 1-4)Central Science and Technology Park,Shennan Road,Nanshan
-				Shenzhen  Guangdong  518057
 				CN
 
 14-16-9D   (hex)		Cisco Systems, Inc
@@ -154001,12 +154502,6 @@ C819F7     (base 16)		Samsung Electronics Co.,Ltd
 				Gumi  Gyeongbuk  730-350
 				KR
 
-DC-29-19   (hex)		AltoBeam (Xiamen) Technology Ltd, Co.
-DC2919     (base 16)		AltoBeam (Xiamen) Technology Ltd, Co.
-				South Building 203-38,Huoju Square ,No.56-58,Huoju Road, Huoju Park, Huoju High-tech District
-				Xiamen    361000
-				CN
-
 64-5A-ED   (hex)		Apple, Inc.
 645AED     (base 16)		Apple, Inc.
 				1 Infinite Loop
@@ -156993,12 +157488,6 @@ C4-04-7B   (hex)		Shenzhen YOUHUA Technology Co., Ltd
 C4047B     (base 16)		Shenzhen YOUHUA Technology Co., Ltd
 				Shenzhen University-town Business Park,Lishan Road,Taoyuan Street
 				Shenzhen  Guangdong  518055
-				CN
-
-20-F4-1B   (hex)		Shenzhen Bilian electronic CO.,LTD
-20F41B     (base 16)		Shenzhen Bilian electronic CO.,LTD
-				NO 268, Fuqian Rd,Jutang Community,Guanlan town,
-				ShenZhen  Guangdong  518110
 				CN
 
 00-23-3E   (hex)		Alcatel-Lucent IPD
@@ -161173,12 +161662,6 @@ A87285     (base 16)		IDT, INC.
 				6024 SILVER CREEK VALLEY RD
 				SAN JOSE  CA  95138
 				US
-
-78-05-41   (hex)		Queclink Wireless Solutions Co., Ltd
-780541     (base 16)		Queclink Wireless Solutions Co., Ltd
-				Room 501, Building 9, No.99 Tianzhou Road
-				shanghai  shanghai  200233
-				CN
 
 04-41-69   (hex)		GoPro
 044169     (base 16)		GoPro
@@ -181181,12 +181664,6 @@ D0C050     (base 16)		Apple, Inc.
 				Eningen    72800
 				DE
 
-44-E4-E6   (hex)		Extreme Networks Headquarters
-44E4E6     (base 16)		Extreme Networks Headquarters
-				2121 RDU Center Drive 
-				Morrisville  NC  27560
-				US
-
 EC-46-2C   (hex)		Infinix mobility limited
 EC462C     (base 16)		Infinix mobility limited
 				RMS 05-15, 13A/F SOUTH TOWER WORLD FINANCE CTR HARBOUR CITY 17 CANTON RD TST KLN HONG KONG
@@ -181975,12 +182452,6 @@ CC6A33     (base 16)		Cisco Systems, Inc
 				Laubisruetistrasse 28
 				Staefa    8712
 				CH
-
-80-AE-54   (hex)		TP-LINK TECHNOLOGIES CO.,LTD.
-80AE54     (base 16)		TP-LINK TECHNOLOGIES CO.,LTD.
-				Building 24(floors 1,3,4,5)and 28(floors 1-4)Central Science and Technology Park,Shennan Road,Nanshan
-				Shenzhen  Guangdong  518057
-				CN
 
 F4-6E-D6   (hex)		EM Microelectronic
 F46ED6     (base 16)		EM Microelectronic
@@ -183301,12 +183772,6 @@ E47F3C     (base 16)		zte corporation
 				Building A Room 201 Cooperation District between Shenzhen and HongKong,Qianwan Road No.1,Shenzhen City, Business Address:No. 3333, Liuxian AvenueTower A, 35th Floor,Tanglang City, Nanshan District, Shenzhen, China
 				Shenzhen  Guangdong  518000
 				CN
-
-40-B2-15   (hex)		Extreme Networks Headquarters
-40B215     (base 16)		Extreme Networks Headquarters
-				2121 RDU Center Drive 
-				Morrisville  NC  27560
-				US
 
 FC-62-6F   (hex)		Fortx
 FC626F     (base 16)		Fortx
@@ -185207,12 +185672,6 @@ BCA68D     (base 16)		Continetal Automotive Systems Sibiu
 				HEiFEI  High-Tech Zone  230000
 				CN
 
-34-38-39   (hex)		NEC Platforms, Ltd.
-343839     (base 16)		NEC Platforms, Ltd.
-				2-3 Kandatsukasamachi
-				Chiyodaku  Tokyo  101-8532
-				JP
-
 A0-9A-52   (hex)		Shenzhen MoreSense Technology Co., Ltd. 
 A09A52     (base 16)		Shenzhen MoreSense Technology Co., Ltd. 
 				#206 Building A1,#663 Bulong Road,Dafapu Community,Bantian Street,
@@ -186677,12 +187136,6 @@ F4979D     (base 16)		IEEE Registration Authority
 				Piscataway  NJ  08554
 				US
 
-D8-E0-16   (hex)		Extreme Networks Headquarters
-D8E016     (base 16)		Extreme Networks Headquarters
-				2121 RDU Center Drive 
-				Morrisville  NC  27560
-				US
-
 B0-F1-AE   (hex)		eero inc.
 B0F1AE     (base 16)		eero inc.
 				660 3rd Street 
@@ -187150,18 +187603,6 @@ C834E5     (base 16)		Cisco Systems, Inc
 				600 March Road
 				Kanata  Ontario  K2K 2E6
 				CA
-
-E4-16-13   (hex)		Extreme Networks Headquarters
-E41613     (base 16)		Extreme Networks Headquarters
-				2121 RDU Center Drive 
-				Morrisville  NC  27560
-				US
-
-1C-98-4B   (hex)		Extreme Networks Headquarters
-1C984B     (base 16)		Extreme Networks Headquarters
-				2121 RDU Center Drive 
-				Morrisville  NC  27560
-				US
 
 F0-FB-7F   (hex)		Mellanox Technologies, Inc.
 F0FB7F     (base 16)		Mellanox Technologies, Inc.
@@ -187730,12 +188171,6 @@ B042B7     (base 16)		HUAWEI TECHNOLOGIES CO.,LTD
 				Guangzhou  Guangdong  511458
 				CN
 
-24-81-85   (hex)		Extreme Networks Headquarters
-248185     (base 16)		Extreme Networks Headquarters
-				2121 RDU Center Drive 
-				Morrisville    27560
-				US
-
 24-AF-CC   (hex)		Chiun Mai Communication System, Inc
 24AFCC     (base 16)		Chiun Mai Communication System, Inc
 				No.4, MingSheng St. TuCheng District
@@ -188023,12 +188458,6 @@ E8F094     (base 16)		GD Midea Air-Conditioning Equipment Co.,Ltd.
 				No. 6 Innovation Road II, Science Park
 				Hsichu  Taiwan  300
 				TW
-
-00-B8-1D   (hex)		Extreme Networks Headquarters
-00B81D     (base 16)		Extreme Networks Headquarters
-				2121 RDU Center Drive 
-				Morrisville  NC  27560
-				US
 
 34-12-DC   (hex)		Qingdao HaierTechnology Co.,Ltd
 3412DC     (base 16)		Qingdao HaierTechnology Co.,Ltd
@@ -189446,12 +189875,6 @@ B03FD3     (base 16)		Espressif Inc.
 				Road Town  Tortola  VG1110
 				VG
 
-C0-50-97   (hex)		EG4 Electronics
-C05097     (base 16)		EG4 Electronics
-				1030 Como St
-				Sulphur Springs  TX  75482
-				US
-
 3C-22-7F   (hex)		Quectel Wireless Solutions Co.,Ltd.
 3C227F     (base 16)		Quectel Wireless Solutions Co.,Ltd.
 				Building 5, Shanghai Business Park Phase III (Area B), No.1016 Tianlin Road, Minhang District
@@ -189463,6 +189886,378 @@ C05097     (base 16)		EG4 Electronics
 				Building 5, Shanghai Business Park Phase III (Area B), No.1016 Tianlin Road, Minhang District
 				Shanghai    200233
 				CN
+
+2C-2B-86   (hex)		Sagemcom Broadband SAS
+2C2B86     (base 16)		Sagemcom Broadband SAS
+				4 Allée des Messageries
+				Bois-Colombes  haut de seine  92270 
+				FR
+
+34-38-39   (hex)		NEC Platforms, Ltd.
+343839     (base 16)		NEC Platforms, Ltd.
+				14-1, Shiba 4-chome
+				Minato-ku  Tokyo  108-8556
+				JP
+
+C0-50-97   (hex)		EG4 Electronics
+C05097     (base 16)		EG4 Electronics
+				1030 Como St
+				Sulphur Springs  TX  75482
+				US
+
+28-B3-AF   (hex)		Qualynxus Inc
+28B3AF     (base 16)		Qualynxus Inc
+				10080 N Wolfe Road Suite SW3273
+				Cupertino    95014
+				US
+
+F8-62-2A   (hex)		eero inc.
+F8622A     (base 16)		eero inc.
+				660 3rd Street 
+				San Francisco  CA  94107
+				US
+
+88-C2-2D   (hex)		BUFFALO.INC
+88C22D     (base 16)		BUFFALO.INC
+				AKAMONDORI Bld.,30-20,Ohsu 3-chome,Naka-ku
+				Nagoya  Aichi Pref.  460-8315
+				JP
+
+4C-E4-B6   (hex)		Motorola Mobility LLC, a Lenovo Company
+4CE4B6     (base 16)		Motorola Mobility LLC, a Lenovo Company
+				222 West Merchandise Mart Plaza
+				Chicago  IL  60654
+				US
+
+DC-29-19   (hex)		AltoBeam(Xiamen)Technology Co., Ltd.
+DC2919     (base 16)		AltoBeam(Xiamen)Technology Co., Ltd.
+				South Building 203-38,Huoju Square ,No.56-58,Huoju Road, Huoju Park, Huoju High-tech District
+				Xiamen    361000
+				CN
+
+20-F4-1B   (hex)		SHENZHEN BILIAN ELECTRONIC CO.，LTD
+20F41B     (base 16)		SHENZHEN BILIAN ELECTRONIC CO.，LTD
+				NO 268, Fuqian Rd,Jutang Community,Guanlan town,
+				ShenZhen  Guangdong  518110
+				CN
+
+84-7A-B6   (hex)		AltoBeam Inc.
+847AB6     (base 16)		AltoBeam Inc.
+				B808, Tsinghua Tongfang Hi-Tech Plaza, Haidian
+				Beijing  Beijing  100083
+				CN
+
+50-40-35   (hex)		Vantiva USA LLC
+504035     (base 16)		Vantiva USA LLC
+				4855 Peachtree Industrial Blvd, Suite 200
+				Norcross  GA  30902
+				US
+
+80-AE-54   (hex)		TP-LINK TECHNOLOGIES CO.,LTD.
+80AE54     (base 16)		TP-LINK TECHNOLOGIES CO.,LTD.
+				2-7th floors of South Building and 3-11th floors of North Building, No. 396, Jucai Road, Changhe Street, Binjiang District
+				Hangzhou City  Zhejiang Province,  310000
+				CN
+
+78-60-5B   (hex)		TP-LINK TECHNOLOGIES CO.,LTD.
+78605B     (base 16)		TP-LINK TECHNOLOGIES CO.,LTD.
+				2-7th floors of South Building and 3-11th floors of North Building, No. 396, Jucai Road, Changhe Street, Binjiang District
+				Hangzhou City  Zhejiang Province,  310000
+				CN
+
+04-F9-F8   (hex)		TP-LINK TECHNOLOGIES CO.,LTD.
+04F9F8     (base 16)		TP-LINK TECHNOLOGIES CO.,LTD.
+				2-7th floors of South Building and 3-11th floors of North Building, No. 396, Jucai Road, Changhe Street, Binjiang District
+				Hangzhou City  Zhejiang Province,  310000
+				CN
+
+48-0E-EC   (hex)		TP-LINK TECHNOLOGIES CO.,LTD.
+480EEC     (base 16)		TP-LINK TECHNOLOGIES CO.,LTD.
+				2-7th floors of South Building and 3-11th floors of North Building, No. 396, Jucai Road, Changhe Street, Binjiang District
+				Hangzhou City  Zhejiang Province,  310000
+				CN
+
+50-3E-AA   (hex)		TP-LINK TECHNOLOGIES CO.,LTD.
+503EAA     (base 16)		TP-LINK TECHNOLOGIES CO.,LTD.
+				2-7th floors of South Building and 3-11th floors of North Building, No. 396, Jucai Road, Changhe Street, Binjiang District
+				Hangzhou City  Zhejiang Province,  310000
+				CN
+
+F4-6D-2F   (hex)		TP-LINK TECHNOLOGIES CO.,LTD.
+F46D2F     (base 16)		TP-LINK TECHNOLOGIES CO.,LTD.
+				2-7th floors of South Building and 3-11th floors of North Building, No. 396, Jucai Road, Changhe Street, Binjiang District
+				Hangzhou City  Zhejiang Province,  310000
+				CN
+
+18-F2-2C   (hex)		TP-LINK TECHNOLOGIES CO.,LTD.
+18F22C     (base 16)		TP-LINK TECHNOLOGIES CO.,LTD.
+				2-7th floors of South Building and 3-11th floors of North Building, No. 396, Jucai Road, Changhe Street, Binjiang District
+				Hangzhou City  Zhejiang Province,  310000
+				CN
+
+98-97-CC   (hex)		TP-LINK TECHNOLOGIES CO.,LTD.
+9897CC     (base 16)		TP-LINK TECHNOLOGIES CO.,LTD.
+				2-7th floors of South Building and 3-11th floors of North Building, No. 396, Jucai Road, Changhe Street, Binjiang District
+				Hangzhou City  Zhejiang Province,  310000
+				CN
+
+18-A6-F7   (hex)		TP-LINK TECHNOLOGIES CO.,LTD.
+18A6F7     (base 16)		TP-LINK TECHNOLOGIES CO.,LTD.
+				2-7th floors of South Building and 3-11th floors of North Building, No. 396, Jucai Road, Changhe Street, Binjiang District
+				Hangzhou City  Zhejiang Province,  310000
+				CN
+
+AC-E4-D8   (hex)		Xiaomi Communications Co Ltd
+ACE4D8     (base 16)		Xiaomi Communications Co Ltd
+				#019, 9th Floor, Building 6, 33 Xi'erqi Middle Road
+				Beijing  Haidian District  100085
+				CN
+
+6C-72-B8   (hex)		LCFC(Hefei) Electronics Technology co., ltd
+6C72B8     (base 16)		LCFC(Hefei) Electronics Technology co., ltd
+				No. 3188-1 Yungu Road (Comprehensive Bonded Zone), Hefei Economic & Technological Development Area，Anhui
+				HEFEI  ANHUI  230601
+				CN
+
+B0-95-75   (hex)		TP-LINK TECHNOLOGIES CO.,LTD.
+B09575     (base 16)		TP-LINK TECHNOLOGIES CO.,LTD.
+				2-7th floors of South Building and 3-11th floors of North Building, No. 396, Jucai Road, Changhe Street, Binjiang District
+				Hangzhou City  Zhejiang Province,  310000
+				CN
+
+FC-0F-76   (hex)		Amazon Technologies Inc.
+FC0F76     (base 16)		Amazon Technologies Inc.
+				P.O Box 8102 
+				Reno  NV  89507
+				US
+
+F0-40-D9   (hex)		Apple, Inc.
+F040D9     (base 16)		Apple, Inc.
+				1 Infinite Loop
+				Cupertino  CA  95014
+				US
+
+20-52-1D   (hex)		Apple, Inc.
+20521D     (base 16)		Apple, Inc.
+				1 Infinite Loop
+				Cupertino  CA  95014
+				US
+
+10-30-89   (hex)		Resideo
+103089     (base 16)		Resideo
+				2 Corporate Center Dr.
+				Melville  NY  11747
+				US
+
+D8-54-37   (hex)		HUAWEI TECHNOLOGIES CO.,LTD
+D85437     (base 16)		HUAWEI TECHNOLOGIES CO.,LTD
+				No.2 Xin Cheng Road, Room R6,Songshan Lake Technology Park
+				Dongguan    523808
+				CN
+
+F4-53-E4   (hex)		HUAWEI TECHNOLOGIES CO.,LTD
+F453E4     (base 16)		HUAWEI TECHNOLOGIES CO.,LTD
+				No.2 Xin Cheng Road, Room R6,Songshan Lake Technology Park
+				Dongguan    523808
+				CN
+
+F4-25-FE   (hex)		HUAWEI TECHNOLOGIES CO.,LTD
+F425FE     (base 16)		HUAWEI TECHNOLOGIES CO.,LTD
+				No.2 Xin Cheng Road, Room R6,Songshan Lake Technology Park
+				Dongguan    523808
+				CN
+
+C0-3E-75   (hex)		HUAWEI TECHNOLOGIES CO.,LTD
+C03E75     (base 16)		HUAWEI TECHNOLOGIES CO.,LTD
+				No.2 Xin Cheng Road, Room R6,Songshan Lake Technology Park
+				Dongguan    523808
+				CN
+
+40-67-68   (hex)		Huawei Device Co., Ltd.
+406768     (base 16)		Huawei Device Co., Ltd.
+				No.2 of Xincheng Road, Songshan Lake Zone
+				Dongguan  Guangdong  523808
+				CN
+
+78-05-41   (hex)		Queclink Wireless Solutions Co., Ltd.
+780541     (base 16)		Queclink Wireless Solutions Co., Ltd.
+				Room 501, Building 9, No.99 Tianzhou Road
+				shanghai  shanghai  200233
+				CN
+
+68-9D-D2   (hex)		Espressif Inc.
+689DD2     (base 16)		Espressif Inc.
+				Vistra Corporate Services Centre, Wickhams Cay II
+				Road Town  Tortola  VG1110
+				VG
+
+90-74-F2   (hex)		HUAWEI TECHNOLOGIES CO.,LTD
+9074F2     (base 16)		HUAWEI TECHNOLOGIES CO.,LTD
+				No.2 Xin Cheng Road, Room R6,Songshan Lake Technology Park
+				Dongguan    523808
+				CN
+
+70-9F-EC   (hex)		CU Velocity
+709FEC     (base 16)		CU Velocity
+				480 Brogdon Rd, Suite 500
+				Suwanee  GA  30024
+				US
+
+60-FA-A7   (hex)		SHENZHEN MTC CO LTD
+60FAA7     (base 16)		SHENZHEN MTC CO LTD
+				5th Floor, 3rd Building, SHENZHEN MTC Industrial Park, XiaLilang Rd, Nanwan Street, Long’gang District
+				Shenzhen  Guangdong  518100
+				CN
+
+C8-C9-92   (hex)		Beijing Roborock Technology Co., Ltd.
+C8C992     (base 16)		Beijing Roborock Technology Co., Ltd.
+				Floor 6,Building C,Kangjian Baosheng Plaza,No. 8 Heiquan Road,Haidian District
+				Beijing  Beijing  100085
+				CN
+
+C4-13-E2   (hex)		Extreme Networks, Inc.
+C413E2     (base 16)		Extreme Networks, Inc.
+				2121 RDU Center Drive 
+				Morrisville  NC  27560
+				US
+
+C8-67-5E   (hex)		Extreme Networks, Inc.
+C8675E     (base 16)		Extreme Networks, Inc.
+				2121 RDU Center Drive 
+				Morrisville  NC  27560
+				US
+
+00-DC-B2   (hex)		Extreme Networks, Inc.
+00DCB2     (base 16)		Extreme Networks, Inc.
+				2121 RDU Center Drive 
+				Morrisville  NC  27560
+				US
+
+F4-CE-48   (hex)		Extreme Networks, Inc.
+F4CE48     (base 16)		Extreme Networks, Inc.
+				2121 RDU Center Drive 
+				Morrisville  NC  27560
+				US
+
+B4-C7-99   (hex)		Extreme Networks, Inc.
+B4C799     (base 16)		Extreme Networks, Inc.
+				2121 RDU Center Drive 
+				Morrisville  NC  27560
+				US
+
+F0-9C-E9   (hex)		Extreme Networks, Inc.
+F09CE9     (base 16)		Extreme Networks, Inc.
+				2121 RDU Center Drive 
+				Morrisville  NC  27560
+				US
+
+9C-5D-12   (hex)		Extreme Networks, Inc.
+9C5D12     (base 16)		Extreme Networks, Inc.
+				2121 RDU Center Drive 
+				Morrisville  NC  27560
+				US
+
+90-B8-32   (hex)		Extreme Networks, Inc.
+90B832     (base 16)		Extreme Networks, Inc.
+				2121 RDU Center Drive 
+				Morrisville  NC  27560
+				US
+
+AC-4D-D9   (hex)		Extreme Networks, Inc.
+AC4DD9     (base 16)		Extreme Networks, Inc.
+				2121 RDU Center Drive 
+				Morrisville  NC  27560
+				US
+
+C4-7A-5D   (hex)		Panmnesia Inc.
+C47A5D     (base 16)		Panmnesia Inc.
+				1, Expo-ro, Yuseong-gu
+				Daejeon    34126
+				KR
+
+40-E3-17   (hex)		Extreme Networks, Inc.
+40E317     (base 16)		Extreme Networks, Inc.
+				2121 RDU Center Drive 
+				Morrisville  NC  27560
+				US
+
+44-E4-E6   (hex)		Extreme Networks, Inc.
+44E4E6     (base 16)		Extreme Networks, Inc.
+				2121 RDU Center Drive 
+				Morrisville  NC  27560
+				US
+
+40-B2-15   (hex)		Extreme Networks, Inc.
+40B215     (base 16)		Extreme Networks, Inc.
+				2121 RDU Center Drive 
+				Morrisville  NC  27560
+				US
+
+D8-E0-16   (hex)		Extreme Networks, Inc.
+D8E016     (base 16)		Extreme Networks, Inc.
+				2121 RDU Center Drive 
+				Morrisville  NC  27560
+				US
+
+E4-16-13   (hex)		Extreme Networks, Inc.
+E41613     (base 16)		Extreme Networks, Inc.
+				2121 RDU Center Drive 
+				Morrisville  NC  27560
+				US
+
+1C-98-4B   (hex)		Extreme Networks, Inc.
+1C984B     (base 16)		Extreme Networks, Inc.
+				2121 RDU Center Drive 
+				Morrisville  NC  27560
+				US
+
+24-81-85   (hex)		Extreme Networks, Inc.
+248185     (base 16)		Extreme Networks, Inc.
+				2121 RDU Center Drive 
+				Morrisville    27560
+				US
+
+00-B8-1D   (hex)		Extreme Networks, Inc.
+00B81D     (base 16)		Extreme Networks, Inc.
+				2121 RDU Center Drive 
+				Morrisville  NC  27560
+				US
+
+8C-E8-07   (hex)		Bouffalo Lab (Nanjing) Co., Ltd.
+8CE807     (base 16)		Bouffalo Lab (Nanjing) Co., Ltd.
+				5F, Gongxiang Space, No.100 Tuanjie Road, Nanjing, China
+				Nanjing  Jiangsu  211800
+				CN
+
+30-B8-9A   (hex)		KRYON TECHNOLOGY PRIVATE LIMITED
+30B89A     (base 16)		KRYON TECHNOLOGY PRIVATE LIMITED
+				KRYON TECHNOLOGY PRIVATE LIMITEDRBF 5 5G, DTZ, 380 Belerica Road, Sricity, Siddam Agraharam village, Varadaiahpalem,Tirupati, Andhra Pradesh, 517541 
+				TIRUPATI  ANDHRA PRADESH  517541
+				IN
+
+48-35-AB   (hex)		Apple, Inc.
+4835AB     (base 16)		Apple, Inc.
+				1 Infinite Loop
+				Cupertino  CA  95014
+				US
+
+FC-9D-D2   (hex)		Apple, Inc.
+FC9DD2     (base 16)		Apple, Inc.
+				1 Infinite Loop
+				Cupertino  CA  95014
+				US
+
+E4-C0-FE   (hex)		Apple, Inc.
+E4C0FE     (base 16)		Apple, Inc.
+				1 Infinite Loop
+				Cupertino  CA  95014
+				US
+
+7C-D5-44   (hex)		Espressif Inc.
+7CD544     (base 16)		Espressif Inc.
+				Vistra Corporate Services Centre, Wickhams Cay II
+				Road Town  Tortola  VG1110
+				VG
 
 C8-5C-E2   (hex)		IEEE Registration Authority
 C85CE2     (base 16)		IEEE Registration Authority
@@ -189482,12 +190277,6 @@ DCEE14     (base 16)		ADT Technology
 				Pin-Jen  Taoyuan  324
 				TW
 
-18-49-F8   (hex)		Extreme Networks Headquarters
-1849F8     (base 16)		Extreme Networks Headquarters
-				2121 RDU Center Drive 
-				Morrisville  NC  27560
-				US
-
 E8-4A-54   (hex)		Beijing Xiaomi Mobile Software Co., Ltd
 E84A54     (base 16)		Beijing Xiaomi Mobile Software Co., Ltd
 				The Rainbow City Office Building, 68 Qinghe Middle Street Haidian District
@@ -189498,108 +190287,6 @@ E84A54     (base 16)		Beijing Xiaomi Mobile Software Co., Ltd
 2CAB46     (base 16)		Ruckus Wireless
 				350 West Java Drive
 				Sunnyvale  CA  94089
-				US
-
-D8-84-66   (hex)		Extreme Networks Headquarters
-D88466     (base 16)		Extreme Networks Headquarters
-				2121 RDU Center Drive 
-				Morrisville  NC  27560
-				US
-
-00-04-96   (hex)		Extreme Networks Headquarters
-000496     (base 16)		Extreme Networks Headquarters
-				2121 RDU Center Drive 
-				Morrisville  NC  27560
-				US
-
-00-E0-2B   (hex)		Extreme Networks Headquarters
-00E02B     (base 16)		Extreme Networks Headquarters
-				2121 RDU Center Drive 
-				Morrisville  NC  27560
-				US
-
-5C-0E-8B   (hex)		Extreme Networks Headquarters
-5C0E8B     (base 16)		Extreme Networks Headquarters
-				475 Half Day Road
-				Lincolnshire  IL  60069
-				US
-
-74-67-F7   (hex)		Extreme Networks Headquarters
-7467F7     (base 16)		Extreme Networks Headquarters
-				2121 RDU Center Drive 
-				Morrisville  NC  27560
-				US
-
-4C-23-1A   (hex)		Extreme Networks Headquarters
-4C231A     (base 16)		Extreme Networks Headquarters
-				6480 Via Del Oro
-				San Jose  CA  95119
-				US
-
-58-58-CD   (hex)		Extreme Networks Headquarters
-5858CD     (base 16)		Extreme Networks Headquarters
-				2121 RDU Center Drive 
-				Morrisville  NC  27560
-				US
-
-DC-DC-C3   (hex)		Extreme Networks Headquarters
-DCDCC3     (base 16)		Extreme Networks Headquarters
-				2121 RDU Center Drive
-				Morrisville  NC  27560
-				US
-
-C8-BE-35   (hex)		Extreme Networks Headquarters
-C8BE35     (base 16)		Extreme Networks Headquarters
-				2121 RDU Center Drive 
-				Morrisville  NC  27560
-				US
-
-F0-64-26   (hex)		Extreme Networks Headquarters
-F06426     (base 16)		Extreme Networks Headquarters
-				2121 RDU Center Drive 
-				Morrisville  NC  27560
-				US
-
-F4-54-24   (hex)		Extreme Networks Headquarters
-F45424     (base 16)		Extreme Networks Headquarters
-				2121 RDU Center Drive
-				Morrisville  NC  27560
-				US
-
-F0-2B-7C   (hex)		Extreme Networks Headquarters
-F02B7C     (base 16)		Extreme Networks Headquarters
-				2121 RDU Center Drive
-				Morrisville  NC  27560
-				US
-
-7C-95-B1   (hex)		Extreme Networks Headquarters
-7C95B1     (base 16)		Extreme Networks Headquarters
-				2121 RDU Center Drive 
-				Morrisville  NC  27560
-				US
-
-58-59-C2   (hex)		Extreme Networks Headquarters
-5859C2     (base 16)		Extreme Networks Headquarters
-				2121 RDU Center Drive 
-				Morrisville  NC  27560
-				US
-
-78-7D-53   (hex)		Extreme Networks Headquarters
-787D53     (base 16)		Extreme Networks Headquarters
-				2121 RDU Center Drive 
-				Morrisville  NC  27560
-				US
-
-20-9E-F7   (hex)		Extreme Networks Headquarters
-209EF7     (base 16)		Extreme Networks Headquarters
-				2121 RDU Center Drive 
-				Morrisville  NC  27560
-				US
-
-80-95-62   (hex)		Extreme Networks Headquarters
-809562     (base 16)		Extreme Networks Headquarters
-				2121 RDU Center Drive 
-				Morrisville  NC  27560
 				US
 
 90-A1-BA   (hex)		PNetworks Electronics Information 
@@ -190335,18 +191022,6 @@ AC3B96     (base 16)		NXP Semiconductor (Tianjin) LTD.
 0C6714     (base 16)		SERNET (SUZHOU) TECHNOLOGIES CORPORATION
 				NO.8 Tangzhuang Road,Suzhou Industrial Park,Su ZhouCity,JiangSu Province,China
 				Suzhou    215021
-				CN
-
-48-5F-08   (hex)		TP-LINK TECHNOLOGIES CO.,LTD.
-485F08     (base 16)		TP-LINK TECHNOLOGIES CO.,LTD.
-				Building 24(floors 1,3,4,5)and 28(floors 1-4)Central Science and Technology Park,Shennan Road,Nanshan
-				Shenzhen  Guangdong  518057
-				CN
-
-F8-6F-B0   (hex)		TP-LINK TECHNOLOGIES CO.,LTD.
-F86FB0     (base 16)		TP-LINK TECHNOLOGIES CO.,LTD.
-				Building 24(floors 1,3,4,5)and 28(floors 1-4)Central Science and Technology Park,Shennan Road,Nanshan
-				Shenzhen  Guangdong  518057
 				CN
 
 90-F8-91   (hex)		Kaon Group Co., Ltd.
@@ -193511,12 +194186,6 @@ AC330B     (base 16)		Japan Computer Vision Corp.
 				Changsha  HUNAN  410329
 				CN
 
-EC-60-73   (hex)		TP-LINK TECHNOLOGIES CO.,LTD.
-EC6073     (base 16)		TP-LINK TECHNOLOGIES CO.,LTD.
-				Building 24(floors 1,3,4,5)and 28(floors 1-4)Central Science and Technology Park,Shennan Road,Nanshan
-				Shenzhen  Guangdong  518057
-				CN
-
 74-DD-CB   (hex)		China Leadshine Technology Co.,Ltd
 74DDCB     (base 16)		China Leadshine Technology Co.,Ltd
 				9-11, Building A3, Nanshan Ipark, No.1001 Xueyuan Avenue, Nanshan?
@@ -193798,12 +194467,6 @@ BC2247     (base 16)		New H3C Technologies Co., Ltd
 				1213-1214, haosheng business center, dongbin road, nanshan street, nanshan district, shenzhen city
 				Shenzhen  Guangdong  518000
 				CN
-
-54-9B-49   (hex)		NEC Platforms, Ltd.
-549B49     (base 16)		NEC Platforms, Ltd.
-				2-3 Kandatsukasamachi
-				Chiyodaku  Tokyo  101-8532
-				JP
 
 7C-77-16   (hex)		Zyxel Communications Corporation
 7C7716     (base 16)		Zyxel Communications Corporation
@@ -194140,12 +194803,6 @@ E07E5F     (base 16)		Renesas Electronics (Penang) Sdn. Bhd.
 				Phase 3, Bayan Lepas FIZ
 				Bayan Lepas  Penang  11900
 				MY
-
-38-BE-AB   (hex)		AltoBeam (China) Inc.
-38BEAB     (base 16)		AltoBeam (China) Inc.
-				B808, Tsinghua Tongfang Hi-Tech Plaza, Haidian
-				Beijing  Beijing  100083
-				CN
 
 04-79-75   (hex)		Honor Device Co., Ltd.
 047975     (base 16)		Honor Device Co., Ltd.
@@ -194590,12 +195247,6 @@ FCA84A     (base 16)		Sentinum GmbH
 				8F., No. 94, Baozhong Rd.
 				New Taipei City  Taiwan  231
 				TW
-
-A4-1A-3A   (hex)		TP-LINK TECHNOLOGIES CO.,LTD.
-A41A3A     (base 16)		TP-LINK TECHNOLOGIES CO.,LTD.
-				Building 24(floors 1,3,4,5)and 28(floors 1-4)Central Science and Technology Park,Shennan Road,Nanshan
-				Shenzhen  Guangdong  518057
-				CN
 
 34-84-E4   (hex)		Texas Instruments
 3484E4     (base 16)		Texas Instruments
@@ -197177,18 +197828,6 @@ ECDB86     (base 16)		API-K
 				Saint Vincent de Mercuze  Isère  38660
 				FR
 
-3C-84-6A   (hex)		TP-LINK TECHNOLOGIES CO.,LTD.
-3C846A     (base 16)		TP-LINK TECHNOLOGIES CO.,LTD.
-				Building 24(floors 1,3,4,5)and 28(floors 1-4)Central Science and Technology Park,Shennan Road,Nanshan
-				Shenzhen  Guangdong  518057
-				CN
-
-84-D8-1B   (hex)		TP-LINK TECHNOLOGIES CO.,LTD.
-84D81B     (base 16)		TP-LINK TECHNOLOGIES CO.,LTD.
-				Building 24(floors 1,3,4,5)and 28(floors 1-4)Central Science and Technology Park,Shennan Road,Nanshan
-				Shenzhen  Guangdong  518057
-				CN
-
 7C-2A-DB   (hex)		Xiaomi Communications Co Ltd
 7C2ADB     (base 16)		Xiaomi Communications Co Ltd
 				#019, 9th Floor, Building 6, 33 Xi'erqi Middle Road
@@ -197925,12 +198564,6 @@ D84C90     (base 16)		Apple, Inc.
 688FC9     (base 16)		Zhuolian (Shenzhen) Communication Co., Ltd
 				Shengli electromechanical Co., Ltd. 201, No.19, Xixiang section, Guangshen Road, Jingbei community, Xixiang street, Bao'an District
 				Shenzhen  Shenzhen  518101
-				CN
-
-D8-47-32   (hex)		TP-LINK TECHNOLOGIES CO.,LTD.
-D84732     (base 16)		TP-LINK TECHNOLOGIES CO.,LTD.
-				Building 24(floors 1,3,4,5)and 28(floors 1-4)Central Science and Technology Park,Shennan Road,Nanshan
-				Shenzhen  Guangdong  518057
 				CN
 
 A0-43-B0   (hex)		Hangzhou BroadLink Technology Co.,Ltd
@@ -199120,12 +199753,6 @@ C4C603     (base 16)		Cisco Systems, Inc
 				80 West Tasman Drive
 				San Jose  CA  94568
 				US
-
-7C-B5-9B   (hex)		TP-LINK TECHNOLOGIES CO.,LTD.
-7CB59B     (base 16)		TP-LINK TECHNOLOGIES CO.,LTD.
-				Building 24(floors 1,3,4,5)and 28(floors 1-4)Central Science and Technology Park,Shennan Road,Nanshan
-				Shenzhen  Guangdong  518057
-				CN
 
 2C-4F-52   (hex)		Cisco Systems, Inc
 2C4F52     (base 16)		Cisco Systems, Inc
@@ -209284,12 +209911,6 @@ D00F6D     (base 16)		T&W Electronics Company
 				#94-1, Imsoo-Dong
 				Gumi  Gyeongbuk  730-350
 				KR
-
-C0-25-A2   (hex)		NEC Platforms, Ltd.
-C025A2     (base 16)		NEC Platforms, Ltd.
-				2-3 Kandatsukasamachi
-				Chiyodaku  Tokyo  101-8532
-				JP
 
 90-8D-78   (hex)		D-Link International
 908D78     (base 16)		D-Link International
@@ -228695,12 +229316,6 @@ FCD586     (base 16)		Shenzhen SuperElectron Technology Co.,Ltd.
 				Shenzhen  Guangdong  518000
 				CN
 
-D8-02-C0   (hex)		Extreme Networks Headquarters
-D802C0     (base 16)		Extreme Networks Headquarters
-				2121 RDU Center Drive 
-				Morrisville  NC  27560
-				US
-
 0C-DC-91   (hex)		Amazon Technologies Inc.
 0CDC91     (base 16)		Amazon Technologies Inc.
 				P.O Box 8102 
@@ -229504,12 +230119,6 @@ AC0775     (base 16)		Apple, Inc.
 				RUA AMERICA,1000
 				Eldorado do Sul  Rio Grande do Sul  92990-000
 				BR
-
-24-5A-5F   (hex)		TP-LINK TECHNOLOGIES CO.,LTD.
-245A5F     (base 16)		TP-LINK TECHNOLOGIES CO.,LTD.
-				Building 24(floors 1,3,4,5)and 28(floors 1-4)Central Science and Technology Park,Shennan Road,Nanshan
-				Shenzhen  Guangdong  518057
-				CN
 
 00-10-9C   (hex)		MG Co., Ltd.
 00109C     (base 16)		MG Co., Ltd.
@@ -230803,12 +231412,6 @@ ACB480     (base 16)		Dell Inc.
 				Suite 3401, Unit A, Building 6, Shum Yip Sky Park, No. 8089, Hongli West Road, Xiangmihu Street, Futian District 
 				Shenzhen   Guangdong  518040
 				CN
-
-60-2D-74   (hex)		Extreme Networks Headquarters
-602D74     (base 16)		Extreme Networks Headquarters
-				2121 RDU Center Drive 
-				Morrisville  NC  27560
-				US
 
 10-A3-0F   (hex)		HUAWEI TECHNOLOGIES CO.,LTD
 10A30F     (base 16)		HUAWEI TECHNOLOGIES CO.,LTD
@@ -232601,12 +233204,6 @@ B0F5C8     (base 16)		AMPAK Technology Inc.
 				Zhubei City  Hsinchu County  302047
 				TW
 
-40-3F-43   (hex)		Extreme Networks Headquarters
-403F43     (base 16)		Extreme Networks Headquarters
-				2121 RDU Center Drive 
-				Morrisville  NC  27560
-				US
-
 F8-68-FF   (hex)		Cisco Systems, Inc
 F868FF     (base 16)		Cisco Systems, Inc
 				80 West Tasman Drive
@@ -233625,12 +234222,6 @@ CC-EA-27   (hex)		GE Appliances
 CCEA27     (base 16)		GE Appliances
 				4000 Buechel Bank Road
 				Louisville  KY  40225
-				US
-
-30-F8-56   (hex)		Extreme Networks Headquarters
-30F856     (base 16)		Extreme Networks Headquarters
-				2121 RDU Center Drive 
-				Morrisville    27560
 				US
 
 8C-3D-16   (hex)		Shenzhen Four Seas Global Link Network Technology Co.,Ltd
@@ -234704,12 +235295,6 @@ FC8827     (base 16)		Apple, Inc.
 				Austin  TX  78701
 				US
 
-00-89-C9   (hex)		Extreme Networks Headquarters
-0089C9     (base 16)		Extreme Networks Headquarters
-				2121 RDU Center Drive 
-				Morrisville    27560
-				US
-
 10-BC-36   (hex)		Huawei Device Co., Ltd.
 10BC36     (base 16)		Huawei Device Co., Ltd.
 				No.2 of Xincheng Road, Songshan Lake Zone
@@ -235077,12 +235662,6 @@ B8-84-11   (hex)		Shenzhen Shokz Co., Ltd.
 B88411     (base 16)		Shenzhen Shokz Co., Ltd.
 				Baoan District Shiyan street Shancheng Industrial zone 26 building
 				Shenzhen  Guangdong  518108
-				CN
-
-84-B8-90   (hex)		TP-LINK TECHNOLOGIES CO.,LTD.
-84B890     (base 16)		TP-LINK TECHNOLOGIES CO.,LTD.
-				Building 24(floors 1,3,4,5)and 28(floors 1-4)Central Science and Technology Park,Shennan Road,Nanshan
-				Shenzhen  Guangdong  518057
 				CN
 
 94-6A-7C   (hex)		OnePlus Technology (Shenzhen) Co., Ltd
@@ -236603,23 +237182,11 @@ A8032A     (base 16)		Espressif Inc.
 				Road Town  Tortola  VG1110
 				VG
 
-D4-8C-49   (hex)		Espressif Inc.
-D48C49     (base 16)		Espressif Inc.
-				Vistra Corporate Services Centre, Wickhams Cay II
-				Road Town  Tortola  VG1110
-				VG
-
-DC-1E-D5   (hex)		Espressif Inc.
-DC1ED5     (base 16)		Espressif Inc.
-				Vistra Corporate Services Centre, Wickhams Cay II
-				Road Town  Tortola  VG1110
-				VG
-
-30-ED-A0   (hex)		Espressif Inc.
-30EDA0     (base 16)		Espressif Inc.
-				Vistra Corporate Services Centre, Wickhams Cay II
-				Road Town  Tortola  VG1110
-				VG
+FC-93-4E   (hex)		REALTEK SEMICONDUCTOR CORP.
+FC934E     (base 16)		REALTEK SEMICONDUCTOR CORP.
+				1F, NO. 11, INDUSTRY E. RD. IX
+				HSINCHU 300    
+				TW
 
 B4-3A-45   (hex)		Espressif Inc.
 B43A45     (base 16)		Espressif Inc.
@@ -236645,14 +237212,470 @@ B43A45     (base 16)		Espressif Inc.
 				Road Town  Tortola  VG1110
 				VG
 
-D0-CF-13   (hex)		Espressif Inc.
-D0CF13     (base 16)		Espressif Inc.
+D4-8C-49   (hex)		Espressif Inc.
+D48C49     (base 16)		Espressif Inc.
 				Vistra Corporate Services Centre, Wickhams Cay II
 				Road Town  Tortola  VG1110
 				VG
+
+DC-1E-D5   (hex)		Espressif Inc.
+DC1ED5     (base 16)		Espressif Inc.
+				Vistra Corporate Services Centre, Wickhams Cay II
+				Road Town  Tortola  VG1110
+				VG
+
+30-ED-A0   (hex)		Espressif Inc.
+30EDA0     (base 16)		Espressif Inc.
+				Vistra Corporate Services Centre, Wickhams Cay II
+				Road Town  Tortola  VG1110
+				VG
+
+38-32-7A   (hex)		Routerboard.com
+38327A     (base 16)		Routerboard.com
+				Mikrotikls SIA
+				Riga  Riga  LV1009
+				LV
+
+84-C0-65   (hex)		Nintendo Co.,Ltd
+84C065     (base 16)		Nintendo Co.,Ltd
+				11-1 HOKOTATE-CHO KAMITOBA,MINAMI-KU
+				KYOTO  KYOTO  601-8501
+				JP
 
 30-62-22   (hex)		Samsung Electronics Co.,Ltd
 306222     (base 16)		Samsung Electronics Co.,Ltd
 				129, Samsung-ro, Youngtongl-Gu
 				Suwon  Gyeonggi-Do  16677
 				KR
+
+D0-CF-13   (hex)		Espressif Inc.
+D0CF13     (base 16)		Espressif Inc.
+				Vistra Corporate Services Centre, Wickhams Cay II
+				Road Town  Tortola  VG1110
+				VG
+
+54-9B-49   (hex)		NEC Platforms, Ltd.
+549B49     (base 16)		NEC Platforms, Ltd.
+				14-1, Shiba 4-chome
+				Minato-ku  Tokyo  108-8556
+				JP
+
+C0-25-A2   (hex)		NEC Platforms, Ltd.
+C025A2     (base 16)		NEC Platforms, Ltd.
+				14-1, Shiba 4-chome
+				Minato-ku  Tokyo  108-8556
+				JP
+
+4C-45-53   (hex)		Silicon Laboratories
+4C4553     (base 16)		Silicon Laboratories
+				 400 West Cesar Chavez
+				Austin  TX  78701
+				US
+
+38-BE-AB   (hex)		AltoBeam Inc.
+38BEAB     (base 16)		AltoBeam Inc.
+				B808, Tsinghua Tongfang Hi-Tech Plaza, Haidian
+				Beijing  Beijing  100083
+				CN
+
+A0-B1-5C   (hex)		Google, Inc.
+A0B15C     (base 16)		Google, Inc.
+				1600 Amphitheatre Parkway
+				Mountain View  CA  94043
+				US
+
+40-59-25   (hex)		Kaon Broadband CO., LTD.
+405925     (base 16)		Kaon Broadband CO., LTD.
+				884-3, Seongnam-daero, Bundang-gu
+				Seongnam-si    13517
+				KR
+
+AC-2B-A2   (hex)		The Chamberlain Group, Inc
+AC2BA2     (base 16)		The Chamberlain Group, Inc
+				300 Windsor Drive
+				Oak Brook    60523
+				US
+
+E0-DF-B7   (hex)		Zeica Labs Pte Ltd
+E0DFB7     (base 16)		Zeica Labs Pte Ltd
+				380 Jalan Besar, #06-06, ARC 380
+				Singapore    209000
+				SG
+
+3C-84-6A   (hex)		TP-LINK TECHNOLOGIES CO.,LTD.
+3C846A     (base 16)		TP-LINK TECHNOLOGIES CO.,LTD.
+				2-7th floors of South Building and 3-11th floors of North Building, No. 396, Jucai Road, Changhe Street, Binjiang District
+				Hangzhou City  Zhejiang Province,  310000
+				CN
+
+84-D8-1B   (hex)		TP-LINK TECHNOLOGIES CO.,LTD.
+84D81B     (base 16)		TP-LINK TECHNOLOGIES CO.,LTD.
+				2-7th floors of South Building and 3-11th floors of North Building, No. 396, Jucai Road, Changhe Street, Binjiang District
+				Hangzhou City  Zhejiang Province,  310000
+				CN
+
+D8-47-32   (hex)		TP-LINK TECHNOLOGIES CO.,LTD.
+D84732     (base 16)		TP-LINK TECHNOLOGIES CO.,LTD.
+				2-7th floors of South Building and 3-11th floors of North Building, No. 396, Jucai Road, Changhe Street, Binjiang District
+				Hangzhou City  Zhejiang Province,  310000
+				CN
+
+24-5A-5F   (hex)		TP-LINK TECHNOLOGIES CO.,LTD.
+245A5F     (base 16)		TP-LINK TECHNOLOGIES CO.,LTD.
+				2-7th floors of South Building and 3-11th floors of North Building, No. 396, Jucai Road, Changhe Street, Binjiang District
+				Hangzhou City  Zhejiang Province,  310000
+				CN
+
+48-5F-08   (hex)		TP-LINK TECHNOLOGIES CO.,LTD.
+485F08     (base 16)		TP-LINK TECHNOLOGIES CO.,LTD.
+				2-7th floors of South Building and 3-11th floors of North Building, No. 396, Jucai Road, Changhe Street, Binjiang District
+				Hangzhou City  Zhejiang Province,  310000
+				CN
+
+F8-6F-B0   (hex)		TP-LINK TECHNOLOGIES CO.,LTD.
+F86FB0     (base 16)		TP-LINK TECHNOLOGIES CO.,LTD.
+				2-7th floors of South Building and 3-11th floors of North Building, No. 396, Jucai Road, Changhe Street, Binjiang District
+				Hangzhou City  Zhejiang Province,  310000
+				CN
+
+C4-BB-89   (hex)		Shanghai High-Flying Electronics Technology Co.,Ltd
+C4BB89     (base 16)		Shanghai High-Flying Electronics Technology Co.,Ltd
+				#17 Building, No.1500 Zu Chongzhi Road, Pudong District, 201203, Shanghai, China
+				SHANGHAI  SHANGHAI  201200
+				CN
+
+E4-70-10   (hex)		Apple, Inc.
+E47010     (base 16)		Apple, Inc.
+				1 Infinite Loop
+				Cupertino  CA  95014
+				US
+
+EC-60-73   (hex)		TP-LINK TECHNOLOGIES CO.,LTD.
+EC6073     (base 16)		TP-LINK TECHNOLOGIES CO.,LTD.
+				2-7th floors of South Building and 3-11th floors of North Building, No. 396, Jucai Road, Changhe Street, Binjiang District
+				Hangzhou City  Zhejiang Province,  310000
+				CN
+
+A4-1A-3A   (hex)		TP-LINK TECHNOLOGIES CO.,LTD.
+A41A3A     (base 16)		TP-LINK TECHNOLOGIES CO.,LTD.
+				2-7th floors of South Building and 3-11th floors of North Building, No. 396, Jucai Road, Changhe Street, Binjiang District
+				Hangzhou City  Zhejiang Province,  310000
+				CN
+
+7C-B5-9B   (hex)		TP-LINK TECHNOLOGIES CO.,LTD.
+7CB59B     (base 16)		TP-LINK TECHNOLOGIES CO.,LTD.
+				2-7th floors of South Building and 3-11th floors of North Building, No. 396, Jucai Road, Changhe Street, Binjiang District
+				Hangzhou City  Zhejiang Province,  310000
+				CN
+
+84-B8-90   (hex)		TP-LINK TECHNOLOGIES CO.,LTD.
+84B890     (base 16)		TP-LINK TECHNOLOGIES CO.,LTD.
+				2-7th floors of South Building and 3-11th floors of North Building, No. 396, Jucai Road, Changhe Street, Binjiang District
+				Hangzhou City  Zhejiang Province,  310000
+				CN
+
+38-C2-2D   (hex)		Mellanox Technologies, Inc.
+38C22D     (base 16)		Mellanox Technologies, Inc.
+				350 Oakmead Parkway, Suite 100  
+				Sunnyvale  CA  94085
+				US
+
+D8-C2-62   (hex)		Ubiquiti Inc
+D8C262     (base 16)		Ubiquiti Inc
+				685 Third Avenue, 27th Floor
+				New York  NY  New York NY 10017
+				US
+
+A0-9C-19   (hex)		CIG SHANGHAI CO LTD
+A09C19     (base 16)		CIG SHANGHAI CO LTD
+				5th Floor, Building 8 No 2388 Chenhang Road 
+				SHANGHAI    201114
+				CN
+
+34-09-E9   (hex)		Harman/Becker Automotive Systems GmbH
+3409E9     (base 16)		Harman/Becker Automotive Systems GmbH
+				Becker-Göring-Straße 16
+				Karlsbad  Baden-Württemberg  76307
+				DE
+
+C0-58-2E   (hex)		Cisco Systems, Inc
+C0582E     (base 16)		Cisco Systems, Inc
+				80 West Tasman Drive
+				San Jose  CA  94568
+				US
+
+E4-13-5C   (hex)		Cisco Systems, Inc
+E4135C     (base 16)		Cisco Systems, Inc
+				80 West Tasman Drive
+				San Jose  CA  94568
+				US
+
+D8-C9-60   (hex)		Huawei Device Co., Ltd.
+D8C960     (base 16)		Huawei Device Co., Ltd.
+				No.2 of Xincheng Road, Songshan Lake Zone
+				Dongguan  Guangdong  523808
+				CN
+
+30-E2-26   (hex)		Apple, Inc.
+30E226     (base 16)		Apple, Inc.
+				1 Infinite Loop
+				Cupertino  CA  95014
+				US
+
+84-27-89   (hex)		Apple, Inc.
+842789     (base 16)		Apple, Inc.
+				1 Infinite Loop
+				Cupertino  CA  95014
+				US
+
+B4-A6-4A   (hex)		Espressif Inc.
+B4A64A     (base 16)		Espressif Inc.
+				Vistra Corporate Services Centre, Wickhams Cay II
+				Road Town  Tortola  VG1110
+				VG
+
+D0-32-E7   (hex)		Tuya Smart Inc.
+D032E7     (base 16)		Tuya Smart Inc.
+				160 Greentree Drive, Suite 101
+				Dover  DE  19904
+				US
+
+48-90-F0   (hex)		Dell Inc.
+4890F0     (base 16)		Dell Inc.
+				One Dell Way
+				Round Rock   TX  78682
+				US
+
+6C-70-28   (hex)		Landis+Gyr S.A.
+6C7028     (base 16)		Landis+Gyr S.A.
+				78th km Old National Road Athens-Corinth
+				Corinth    20100
+				GR
+
+88-82-25   (hex)		Telink Micro LLC
+888225     (base 16)		Telink Micro LLC
+				2975 Scott Blvd #120
+				Santa Clara  CA  95054
+				US
+
+70-24-6E   (hex)		Zhejiang Laibao Display Technology Co., Ltd.
+70246E     (base 16)		Zhejiang Laibao Display Technology Co., Ltd.
+				No. 2366 Xiangyang West Road, Dongqian Street, Nanxun District, Huzhou City, Zhejiang Province
+				Huzhou  Zhejiang  313000
+				CN
+
+F4-54-24   (hex)		Extreme Networks, Inc.
+F45424     (base 16)		Extreme Networks, Inc.
+				2121 RDU Center Drive
+				Morrisville  NC  27560
+				US
+
+F0-2B-7C   (hex)		Extreme Networks, Inc.
+F02B7C     (base 16)		Extreme Networks, Inc.
+				2121 RDU Center Drive
+				Morrisville  NC  27560
+				US
+
+74-67-F7   (hex)		Extreme Networks, Inc.
+7467F7     (base 16)		Extreme Networks, Inc.
+				2121 RDU Center Drive 
+				Morrisville  NC  27560
+				US
+
+58-0E-85   (hex)		Sagemcom Broadband SAS
+580E85     (base 16)		Sagemcom Broadband SAS
+				4 Allée des Messageries
+				Bois-Colombes  haut de seine  92270 
+				FR
+
+5C-0E-8B   (hex)		Extreme Networks, Inc.
+5C0E8B     (base 16)		Extreme Networks, Inc.
+				475 Half Day Road
+				Lincolnshire  IL  60069
+				US
+
+00-E0-2B   (hex)		Extreme Networks, Inc.
+00E02B     (base 16)		Extreme Networks, Inc.
+				2121 RDU Center Drive 
+				Morrisville  NC  27560
+				US
+
+00-04-96   (hex)		Extreme Networks, Inc.
+000496     (base 16)		Extreme Networks, Inc.
+				2121 RDU Center Drive 
+				Morrisville  NC  27560
+				US
+
+D8-84-66   (hex)		Extreme Networks, Inc.
+D88466     (base 16)		Extreme Networks, Inc.
+				2121 RDU Center Drive 
+				Morrisville  NC  27560
+				US
+
+20-9E-F7   (hex)		Extreme Networks, Inc.
+209EF7     (base 16)		Extreme Networks, Inc.
+				2121 RDU Center Drive 
+				Morrisville  NC  27560
+				US
+
+78-7D-53   (hex)		Extreme Networks, Inc.
+787D53     (base 16)		Extreme Networks, Inc.
+				2121 RDU Center Drive 
+				Morrisville  NC  27560
+				US
+
+58-59-C2   (hex)		Extreme Networks, Inc.
+5859C2     (base 16)		Extreme Networks, Inc.
+				2121 RDU Center Drive 
+				Morrisville  NC  27560
+				US
+
+7C-95-B1   (hex)		Extreme Networks, Inc.
+7C95B1     (base 16)		Extreme Networks, Inc.
+				2121 RDU Center Drive 
+				Morrisville  NC  27560
+				US
+
+F0-64-26   (hex)		Extreme Networks, Inc.
+F06426     (base 16)		Extreme Networks, Inc.
+				2121 RDU Center Drive 
+				Morrisville  NC  27560
+				US
+
+2C-E7-A7   (hex)		SJIT Co., Ltd.
+2CE7A7     (base 16)		SJIT Co., Ltd.
+				54-33 Dongtanhana 1-gil
+				Hwaseong-si  Gyeonggi-do  18423
+				KR
+
+C8-BE-35   (hex)		Extreme Networks, Inc.
+C8BE35     (base 16)		Extreme Networks, Inc.
+				2121 RDU Center Drive 
+				Morrisville  NC  27560
+				US
+
+DC-DC-C3   (hex)		Extreme Networks, Inc.
+DCDCC3     (base 16)		Extreme Networks, Inc.
+				2121 RDU Center Drive
+				Morrisville  NC  27560
+				US
+
+58-58-CD   (hex)		Extreme Networks, Inc.
+5858CD     (base 16)		Extreme Networks, Inc.
+				2121 RDU Center Drive 
+				Morrisville  NC  27560
+				US
+
+4C-23-1A   (hex)		Extreme Networks, Inc.
+4C231A     (base 16)		Extreme Networks, Inc.
+				6480 Via Del Oro
+				San Jose  CA  95119
+				US
+
+80-95-62   (hex)		Extreme Networks, Inc.
+809562     (base 16)		Extreme Networks, Inc.
+				2121 RDU Center Drive 
+				Morrisville  NC  27560
+				US
+
+18-49-F8   (hex)		Extreme Networks, Inc.
+1849F8     (base 16)		Extreme Networks, Inc.
+				2121 RDU Center Drive 
+				Morrisville  NC  27560
+				US
+
+D8-02-C0   (hex)		Extreme Networks, Inc.
+D802C0     (base 16)		Extreme Networks, Inc.
+				2121 RDU Center Drive 
+				Morrisville  NC  27560
+				US
+
+60-2D-74   (hex)		Extreme Networks, Inc.
+602D74     (base 16)		Extreme Networks, Inc.
+				2121 RDU Center Drive 
+				Morrisville  NC  27560
+				US
+
+88-F2-CE   (hex)		Apple, Inc.
+88F2CE     (base 16)		Apple, Inc.
+				1 Infinite Loop
+				Cupertino  CA  95014
+				US
+
+88-10-32   (hex)		Apple, Inc.
+881032     (base 16)		Apple, Inc.
+				1 Infinite Loop
+				Cupertino  CA  95014
+				US
+
+34-C3-86   (hex)		Apple, Inc.
+34C386     (base 16)		Apple, Inc.
+				1 Infinite Loop
+				Cupertino  CA  95014
+				US
+
+AC-E6-FB   (hex)		Apple, Inc.
+ACE6FB     (base 16)		Apple, Inc.
+				1 Infinite Loop
+				Cupertino  CA  95014
+				US
+
+40-3F-43   (hex)		Extreme Networks, Inc.
+403F43     (base 16)		Extreme Networks, Inc.
+				2121 RDU Center Drive 
+				Morrisville  NC  27560
+				US
+
+30-F8-56   (hex)		Extreme Networks, Inc.
+30F856     (base 16)		Extreme Networks, Inc.
+				2121 RDU Center Drive 
+				Morrisville    27560
+				US
+
+00-89-C9   (hex)		Extreme Networks, Inc.
+0089C9     (base 16)		Extreme Networks, Inc.
+				2121 RDU Center Drive 
+				Morrisville    27560
+				US
+
+74-DD-F0   (hex)		SHEN ZHEN TENDA TECHNOLOGY CO.,LTD
+74DDF0     (base 16)		SHEN ZHEN TENDA TECHNOLOGY CO.,LTD
+				6-8 Floor, Tower E3, No. 1001, Zhongshanyuan Road, Nanshan District, Shenzhen,China
+				Shenzhen    518052
+				CN
+
+CC-79-B8   (hex)		Lunar Energy
+CC79B8     (base 16)		Lunar Energy
+				755 Ravendale Dr
+				Mountain View  CA  94043
+				US
+
+80-3F-D4   (hex)		Apple, Inc.
+803FD4     (base 16)		Apple, Inc.
+				1 Infinite Loop
+				Cupertino  CA  95014
+				US
+
+44-E8-53   (hex)		Apple, Inc.
+44E853     (base 16)		Apple, Inc.
+				1 Infinite Loop
+				Cupertino  CA  95014
+				US
+
+DC-E5-41   (hex)		Apple, Inc.
+DCE541     (base 16)		Apple, Inc.
+				1 Infinite Loop
+				Cupertino  CA  95014
+				US
+
+DC-0A-69   (hex)		Espressif Inc.
+DC0A69     (base 16)		Espressif Inc.
+				Vistra Corporate Services Centre, Wickhams Cay II
+				Road Town  Tortola  VG1110
+				VG
+
+08-25-32   (hex)		IEEE Registration Authority
+082532     (base 16)		IEEE Registration Authority
+				445 Hoes Lane
+				Piscataway  NJ  08554
+				US
