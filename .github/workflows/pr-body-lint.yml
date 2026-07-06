@@ -14,7 +14,11 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Validate PR body
-        if: github.event_name == 'pull_request'
+        # release-please PRs carry an auto-generated changelog body, not the human
+        # change-PR template (no single linked issue, no code delta to test).
+        # Validating them against it is a category error; their integrity is
+        # ensured by release-please itself + the CI Complete gate. Skip them.
+        if: github.event_name == 'pull_request' && !startsWith(github.head_ref, 'release-please--')
         uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
         with:
           script: |
