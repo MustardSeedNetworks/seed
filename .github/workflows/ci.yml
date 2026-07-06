@@ -164,7 +164,10 @@ jobs:
         uses: golangci/golangci-lint-action@82606bf257cbaff209d206a39f5134f0cfbfd2ee # v9.2.1
         with:
           version: v2.12.2
-          args: --timeout=5m --new-from-rev=HEAD~1
+          # Full-tree lint (backlog cleared 2026-07-06, verified 0 issues).
+          # Was --new-from-rev=HEAD~1 (diff-only); now lints the whole tree so
+          # "zero warnings" means the whole repo, not just changed lines.
+          args: --timeout=5m
 
       - name: Run go vet
         run: go vet ./...
