@@ -132,7 +132,7 @@ export const GatewayCard: React.FC<GatewayCardProps> = memo(function gatewayCard
   }
 
   // Map API status to card status
-  let status: Status = 'unknown';
+  let status: Status;
   switch (data.status) {
     case 'success':
       status = 'success';

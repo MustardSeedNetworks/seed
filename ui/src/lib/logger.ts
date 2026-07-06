@@ -129,7 +129,11 @@ class Logger {
   }
 
   private generateSessionId(): string {
-    return `${Date.now().toString(36)}-${Math.random().toString(36).substring(2, 9)}`;
+    // crypto.randomUUID() is CSPRNG-backed; Math.random() is not suitable
+    // even for a non-secret correlation ID like this one (predictable output
+    // in a security-sensitive-looking context trips SAST and is trivial to
+    // avoid).
+    return `${Date.now().toString(36)}-${crypto.randomUUID()}`;
   }
 
   private shouldLog(level: LogLevel): boolean {

@@ -89,9 +89,24 @@ func sendJSONResponse(w http.ResponseWriter, logger *slog.Logger, status int, da
 	}
 }
 
+// readLastLinesHardCap bounds the maxLines parameter accepted by
+// readLastLines so the initial slice allocation can never grow unbounded
+// from a caller-supplied value (CWE-770), independent of whether the
+// caller already validated its own input. Existing callers clamp well
+// below this (handleLogs caps at maxLogLinesLimit), so it only guards
+// future/other callers of this shared utility.
+const readLastLinesHardCap = 100_000
+
 // readLastLines reads the last N lines from a file, up to maxBytes from the end.
 // Used by handleLogs and other log-reading handlers (fixes #544 - shared utilities).
 func readLastLines(path string, maxBytes int64, maxLines int) ([]string, error) {
+	if maxLines <= 0 {
+		return nil, nil
+	}
+	if maxLines > readLastLinesHardCap {
+		maxLines = readLastLinesHardCap
+	}
+
 	f, err := os.Open(path)
 	if err != nil {
 		return nil, err

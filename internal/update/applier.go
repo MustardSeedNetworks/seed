@@ -312,12 +312,12 @@ func (a *Applier) directRestart(ctx context.Context, binaryPath string) error {
 }
 
 // copyFile copies a file from src to dst.
-func copyFile(src, dst string) error {
+func copyFile(src, dst string) (err error) {
 	sourceFile, err := os.Open(src)
 	if err != nil {
 		return err
 	}
-	defer sourceFile.Close()
+	defer func() { _ = sourceFile.Close() }()
 
 	// Get source file info for permissions
 	info, err := sourceFile.Stat()
@@ -329,7 +329,14 @@ func copyFile(src, dst string) error {
 	if err != nil {
 		return err
 	}
-	defer destFile.Close()
+	// destFile is writable: a failed Close (e.g. a delayed write-back error)
+	// can mean data loss, so surface it instead of discarding it — but only
+	// if ReadFrom itself didn't already fail.
+	defer func() {
+		if closeErr := destFile.Close(); closeErr != nil && err == nil {
+			err = fmt.Errorf("close copied file %s: %w", dst, closeErr)
+		}
+	}()
 
 	_, err = destFile.ReadFrom(sourceFile)
 	return err
