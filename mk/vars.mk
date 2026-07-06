@@ -16,10 +16,13 @@ BUILD_TIME ?= $(shell date -u +"%Y-%m-%dT%H:%M:%SZ")
 UNAME := $(shell uname -s)
 ifeq ($(UNAME),Darwin)
     PLATFORM := darwin
+    PLATFORM_PRETTY := macOS
 else ifeq ($(UNAME),Linux)
     PLATFORM := linux
+    PLATFORM_PRETTY := Linux
 else
     PLATFORM := unknown
+    PLATFORM_PRETTY := Unknown
 endif
 
 ARCH := $(shell uname -m)
