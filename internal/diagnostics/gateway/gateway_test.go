@@ -1,6 +1,7 @@
 package gateway_test
 
 import (
+	"sync"
 	"testing"
 	"time"
 
@@ -1088,24 +1089,50 @@ func TestStartContinuousCallback(t *testing.T) {
 	tester.SetGateway("127.0.0.1")
 	tester.TesterSetPingCount(1) // Reduce for faster test.
 
-	callCount := 0
-	var lastStats *gateway.PingStats
+	var (
+		mu        sync.Mutex
+		callCount int
+		lastStats *gateway.PingStats
+	)
 	callback := func(stats *gateway.PingStats) {
+		mu.Lock()
+		defer mu.Unlock()
 		callCount++
 		lastStats = stats
 	}
 
-	tester.StartContinuous(50*time.Millisecond, callback)
-	time.Sleep(200 * time.Millisecond)
-	tester.StopContinuous()
+	tester.StartContinuous(10*time.Millisecond, callback)
 
-	// Should have received at least one callback.
-	if callCount == 0 {
-		t.Log("callback was not called - may be due to timing or ICMP permission")
+	// Poll (instead of a fixed sleep) for the first callback, bounded by a
+	// generous deadline so this is fast on a quiet machine and still
+	// tolerant under -race scheduler contention in the full suite.
+	deadline := time.Now().Add(5 * time.Second)
+	for {
+		mu.Lock()
+		got := callCount
+		mu.Unlock()
+		if got > 0 {
+			break
+		}
+		if time.Now().After(deadline) {
+			t.Fatal("callback was not called within 5s")
+		}
+		time.Sleep(2 * time.Millisecond)
 	}
 
-	// If callback was called, verify stats were passed.
-	if lastStats != nil && lastStats.Gateway != "127.0.0.1" {
+	// StopContinuous blocks until the background goroutine has fully
+	// returned, so reading callCount/lastStats here (without the mutex) is
+	// safe under the race detector: the goroutine and this read are ordered
+	// by the sync.WaitGroup inside StopContinuous.
+	tester.StopContinuous()
+
+	if callCount == 0 {
+		t.Fatal("expected at least one callback invocation")
+	}
+	if lastStats == nil {
+		t.Fatal("expected callback to receive non-nil stats")
+	}
+	if lastStats.Gateway != "127.0.0.1" {
 		t.Errorf("expected Gateway '127.0.0.1', got %q", lastStats.Gateway)
 	}
 }

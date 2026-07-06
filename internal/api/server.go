@@ -297,32 +297,8 @@ func NewServer(
 		engines:       engine.NewRegistry(nil),
 	}
 
-	// Initialize auth services
-	s.authMgr = auth.NewManager(
-		cfg.Auth.JWTSecret,
-		cfg.Auth.SessionTimeout,
-		cfg.Auth.DefaultUsername,
-		cfg.Auth.DefaultPasswordHash,
-	)
-	s.csrf = auth.NewCSRFManager()
-	s.setupToken = NewSetupTokenManager()
-	s.recovery = auth.NewRecoveryTokenManager(paths.Resolve(paths.ModeAuto).DataDir)
-	s.proxies = trustedProxies
-
-	// Wave 3 (#85): initialise the WebAuthn manager. The relying-party
-	// ID and origins are derived from the server config; failures here
-	// are non-fatal because the rest of the auth surface still works
-	// without passkeys.
-	if wan, wanErr := auth.NewWebAuthnManager(webAuthnConfigFromServer(cfg)); wanErr != nil {
-		logging.GetLogger().Warn("WebAuthn manager init failed; passkeys disabled",
-			"error", wanErr)
-	} else {
-		s.webAuthn = wan
-	}
-
-	// Initialize rate limiters
-	s.loginLimiter = NewRateLimiter(DefaultRateLimitConfig())
-	s.endpointLimiter = NewEndpointRateLimiter(DefaultEndpointRateLimitConfig())
+	// Initialize auth, WebAuthn, and rate-limiting services
+	s.initAuthSecurity(cfg, trustedProxies)
 
 	// Initialize network services
 	s.netMgr = netMgr
@@ -339,19 +315,8 @@ func NewServer(
 	// domain packages stay CGO-free. See docs/architecture/CGO_BUILD_STRATEGY.md.
 	s.initCaptureServices(cfg)
 
-	// Initialize telemetry services
-	s.dnsTest = dns.NewTester("", cfg.DNS.TestHostname, dns.DefaultThresholds())
-	s.dnsSec = dns.NewSecurityScanner(dns.DefaultSecurityScanConfig())
-	s.gatewayTest = gateway.NewTester(gateway.DefaultThresholds())
-	s.vlanMgr = vlan.NewManager(cfg.Interface.Default)
-	s.speedtestTest = speedtest.NewTesterWithConfig(cfg.Speedtest.ServerID)
-	s.iperfMgr = iperf.NewManager()
-	s.cableTest = cable.NewTester(cfg.Interface.Default)
-	s.publicIP = publicip.NewChecker()
-
-	// Initialize Wi-Fi services
-	s.wifiMgr = wifi.NewManager(cfg.Interface.Default)
-	s.wifiScan = wifi.NewScanner(cfg.Interface.Default)
+	// Initialize telemetry test tools + Wi-Fi services
+	s.initTelemetryAndWiFiServices(cfg)
 
 	// Initialize database services
 	s.dbConn = db
@@ -397,24 +362,8 @@ func NewServer(
 		}
 	}
 
-	// Wire the settings-persistence use-case (ADR-0020). The composition root
-	// builds the adapters; api passes its lazy db accessor + live config.
-	s.settingsStore = app.NewSettings(s.db, s.config)
-	s.settingsManagement = app.NewSettingsManagement(s.config, s.configPath)
-	s.configBackups = backups.NewService(s.config, s.configPath)
-	s.securitySettings = app.NewSecuritySettings(s.config, s.configPath, s.rogueDetector)
-
-	// Wire the profiles catalog use-case (ADR-0020). The composition root builds
-	// the adapter; api passes its lazy db accessor.
-	s.profiles = app.NewProfiles(s.db, s.config, s.configPath)
-
-	// Wire the network IP-config + MTU use-case (ADR-0020). The composition root
-	// builds the adapters; api passes its lazy manager accessor + config.
-	s.networkIP = app.NewNetworkIP(s.netManager, s.config, s.configPath)
-
-	// Wire the alert-rule use-case (ADR-0020). The composition root builds the
-	// adapter; api passes its lazy db accessor.
-	s.alertRules = app.NewAlertRules(s.db)
+	// Wire the settings/profiles/network-IP/alert-rule use-cases (ADR-0020).
+	s.initSettingsUseCases()
 
 	// Initialize vulnerability scanner if enabled
 	s.initVulnerabilityScanner(cfg)
@@ -426,6 +375,71 @@ func NewServer(
 	s.setupRoutes()
 
 	return s
+}
+
+// initAuthSecurity wires the auth manager, CSRF manager, setup-token and
+// recovery-token managers, the optional WebAuthn manager, and the
+// login/endpoint rate limiters. Split out of NewServer to keep it under the
+// funlen limit; kept as one helper since these all share the "auth surface"
+// concern and construction order does not matter across them.
+func (s *Server) initAuthSecurity(cfg *config.Config, trustedProxies *TrustedProxies) {
+	s.authMgr = auth.NewManager(
+		cfg.Auth.JWTSecret,
+		cfg.Auth.SessionTimeout,
+		cfg.Auth.DefaultUsername,
+		cfg.Auth.DefaultPasswordHash,
+	)
+	s.csrf = auth.NewCSRFManager()
+	s.setupToken = NewSetupTokenManager()
+	s.recovery = auth.NewRecoveryTokenManager(paths.Resolve(paths.ModeAuto).DataDir)
+	s.proxies = trustedProxies
+
+	// Wave 3 (#85): initialise the WebAuthn manager. The relying-party
+	// ID and origins are derived from the server config; failures here
+	// are non-fatal because the rest of the auth surface still works
+	// without passkeys.
+	if wan, wanErr := auth.NewWebAuthnManager(webAuthnConfigFromServer(cfg)); wanErr != nil {
+		logging.GetLogger().Warn("WebAuthn manager init failed; passkeys disabled",
+			"error", wanErr)
+	} else {
+		s.webAuthn = wan
+	}
+
+	s.loginLimiter = NewRateLimiter(DefaultRateLimitConfig())
+	s.endpointLimiter = NewEndpointRateLimiter(DefaultEndpointRateLimitConfig())
+}
+
+// initTelemetryAndWiFiServices constructs the diagnostic test tools (DNS,
+// gateway, VLAN, speedtest, iperf, cable, public-IP) and the Wi-Fi
+// manager/scanner. Grouped together because none of these depend on the
+// database or on each other; split out of NewServer to keep it under the
+// funlen limit.
+func (s *Server) initTelemetryAndWiFiServices(cfg *config.Config) {
+	s.dnsTest = dns.NewTester("", cfg.DNS.TestHostname, dns.DefaultThresholds())
+	s.dnsSec = dns.NewSecurityScanner(dns.DefaultSecurityScanConfig())
+	s.gatewayTest = gateway.NewTester(gateway.DefaultThresholds())
+	s.vlanMgr = vlan.NewManager(cfg.Interface.Default)
+	s.speedtestTest = speedtest.NewTesterWithConfig(cfg.Speedtest.ServerID)
+	s.iperfMgr = iperf.NewManager()
+	s.cableTest = cable.NewTester(cfg.Interface.Default)
+	s.publicIP = publicip.NewChecker()
+
+	s.wifiMgr = wifi.NewManager(cfg.Interface.Default)
+	s.wifiScan = wifi.NewScanner(cfg.Interface.Default)
+}
+
+// initSettingsUseCases wires the ADR-0020 settings, profiles, network-IP, and
+// alert-rule use-cases. The composition root builds the adapters; api passes
+// its lazy db/manager accessors + live config. Split out of NewServer to
+// keep it under the funlen limit.
+func (s *Server) initSettingsUseCases() {
+	s.settingsStore = app.NewSettings(s.db, s.config)
+	s.settingsManagement = app.NewSettingsManagement(s.config, s.configPath)
+	s.configBackups = backups.NewService(s.config, s.configPath)
+	s.securitySettings = app.NewSecuritySettings(s.config, s.configPath, s.rogueDetector)
+	s.profiles = app.NewProfiles(s.db, s.config, s.configPath)
+	s.networkIP = app.NewNetworkIP(s.netManager, s.config, s.configPath)
+	s.alertRules = app.NewAlertRules(s.db)
 }
 
 // initCaptureServices constructs the services that perform live packet capture

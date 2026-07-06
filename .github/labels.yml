@@ -115,6 +115,9 @@
 - name: "dependencies"
   color: 0366D6
   description: "Dependency update."
+- name: "todo"
+  color: FBCA04
+  description: "Auto-filed from a TODO/FIXME/HACK/XXX code comment (todo-tracker workflow)."
 - name: "release: pending"
   color: EDEDED
   description: "Release automation is pending."

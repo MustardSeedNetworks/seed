@@ -1,7 +1,7 @@
 // Package catalog holds the profiles application (use-case) layer (ADR-0020).
 // It owns the CRUD, active-profile resolution, duplicate, and import/export
 // orchestration that previously lived in the api.Server profile handlers,
-// behind a narrow consumer-defined Store port — so handlers depend on a
+// behind a narrow consumer-defined ProfileRepository/ActiveProfileStore ports — so handlers depend on a
 // use-case instead of reaching into the database repositories. Handlers keep
 // transport concerns (decode/encode, localized error mapping), license
 // feature-gating, and the config-apply/SSE side effects.
@@ -55,7 +55,7 @@ type Profile struct {
 	CreatedAt   time.Time
 	UpdatedAt   time.Time
 	// RowVersion is the optimistic-concurrency token surfaced as the ETag. It is
-	// opaque to the use-case (the ifMatch string is passed through to the Store).
+	// opaque to the use-case (the ifMatch string is passed through to the ProfileRepository).
 	RowVersion int64
 }
 
@@ -92,11 +92,11 @@ type ImportResult struct {
 	Errors  []string
 }
 
-// Store is the persistence surface the profiles use-case needs, defined at the
-// consumer (ADR-0016). The adapter satisfies it over the database Profiles and
-// Settings repositories, mapping their ErrProfileNotFound/ErrProfileNameExists
-// to ErrNotFound/ErrNameExists.
-type Store interface {
+// ProfileRepository is the profile-record persistence surface the use-case
+// needs, defined at the consumer (ADR-0016). The adapter satisfies it over the
+// database Profiles repository, mapping its ErrProfileNotFound/
+// ErrProfileNameExists to ErrNotFound/ErrNameExists.
+type ProfileRepository interface {
 	// Available reports whether the backing persistence is wired. A false result
 	// means the profiles subsystem cannot serve any request (the 503 path).
 	Available() bool
@@ -112,6 +112,13 @@ type Store interface {
 	Update(ctx context.Context, p Profile, ifMatch string) error
 	Delete(ctx context.Context, id string) error
 	Count(ctx context.Context) (int, error)
+}
+
+// ActiveProfileStore is the active-profile-pointer persistence surface. It is
+// segregated from ProfileRepository because the adapter backs it with a
+// different repository (Settings, not Profiles) — the two seams are not
+// substitutable for each other, only for a caller that genuinely needs both.
+type ActiveProfileStore interface {
 	ActiveID(ctx context.Context) (string, error)
 	SetActiveID(ctx context.Context, id string) error
 }
@@ -127,34 +134,38 @@ type LiveConfig interface {
 
 // Service is the profiles use-case.
 type Service struct {
-	store Store
-	live  LiveConfig
+	records ProfileRepository
+	active  ActiveProfileStore
+	live    LiveConfig
 }
 
-// NewService builds the use-case over its Store port and an optional LiveConfig
-// applier (nil = activation does not touch the running config).
-func NewService(store Store, live LiveConfig) *Service {
-	return &Service{store: store, live: live}
+// NewService builds the use-case over its ProfileRepository + ActiveProfileStore
+// ports and an optional LiveConfig applier (nil = activation does not touch the
+// running config). records and active are typically backed by the same adapter
+// (see internal/app.profilesStore), but are accepted as separate segregated
+// interfaces so a consumer that only needs one seam is not forced onto the other.
+func NewService(records ProfileRepository, active ActiveProfileStore, live LiveConfig) *Service {
+	return &Service{records: records, active: active, live: live}
 }
 
 // Available reports whether the profiles subsystem can serve requests.
 func (s *Service) Available() bool {
-	return s.store.Available()
+	return s.records.Available()
 }
 
 // List returns all profiles.
 func (s *Service) List(ctx context.Context) ([]Profile, error) {
-	return s.store.List(ctx)
+	return s.records.List(ctx)
 }
 
 // Count returns the number of stored profiles (used by the multi_client gate).
 func (s *Service) Count(ctx context.Context) (int, error) {
-	return s.store.Count(ctx)
+	return s.records.Count(ctx)
 }
 
 // Get returns a profile by id (ErrNotFound when absent).
 func (s *Service) Get(ctx context.Context, id string) (Profile, error) {
-	return s.store.Get(ctx, id)
+	return s.records.Get(ctx, id)
 }
 
 // Create validates and stores a new profile, returning the created record.
@@ -169,7 +180,7 @@ func (s *Service) Create(ctx context.Context, in NewProfile) (Profile, error) {
 		ConfigJSON:  in.ConfigJSON,
 		IsDefault:   in.IsDefault,
 	}
-	if err := s.store.Create(ctx, p); err != nil {
+	if err := s.records.Create(ctx, p); err != nil {
 		return Profile{}, err
 	}
 	return p, nil
@@ -181,7 +192,7 @@ func (s *Service) Create(ctx context.Context, in NewProfile) (Profile, error) {
 // preserving the prior behavior. It re-reads the row so the returned profile
 // carries the fresh updated_at (the new ETag).
 func (s *Service) Update(ctx context.Context, id string, u ProfileUpdate, ifMatch string) (Profile, error) {
-	p, err := s.store.Get(ctx, id)
+	p, err := s.records.Get(ctx, id)
 	if err != nil {
 		return Profile{}, err
 	}
@@ -194,12 +205,12 @@ func (s *Service) Update(ctx context.Context, id string, u ProfileUpdate, ifMatc
 	}
 	p.IsDefault = u.IsDefault
 
-	if err = s.store.Update(ctx, p, ifMatch); err != nil {
+	if err = s.records.Update(ctx, p, ifMatch); err != nil {
 		return Profile{}, err
 	}
 
 	// Re-read so the caller gets the persisted updated_at for the next ETag.
-	if current, getErr := s.store.Get(ctx, id); getErr == nil {
+	if current, getErr := s.records.Get(ctx, id); getErr == nil {
 		return current, nil
 	}
 	return p, nil
@@ -207,7 +218,7 @@ func (s *Service) Update(ctx context.Context, id string, u ProfileUpdate, ifMatc
 
 // Delete removes a profile, refusing to delete the default or active profile.
 func (s *Service) Delete(ctx context.Context, id string) error {
-	p, err := s.store.Get(ctx, id)
+	p, err := s.records.Get(ctx, id)
 	if err != nil {
 		return err
 	}
@@ -215,22 +226,22 @@ func (s *Service) Delete(ctx context.Context, id string) error {
 		return ErrDeleteDefault
 	}
 	// A failed active-id read must not block deletion (best-effort, as before).
-	if activeID, activeErr := s.store.ActiveID(ctx); activeErr == nil && activeID == id {
+	if activeID, activeErr := s.active.ActiveID(ctx); activeErr == nil && activeID == id {
 		return ErrDeleteActive
 	}
-	return s.store.Delete(ctx, id)
+	return s.records.Delete(ctx, id)
 }
 
 // ActiveProfile resolves the active profile, falling back to the default and
 // self-healing a stale active-id pointer, mirroring the pre-strangle handler.
 func (s *Service) ActiveProfile(ctx context.Context) (Profile, error) {
-	activeID, err := s.store.ActiveID(ctx)
+	activeID, err := s.active.ActiveID(ctx)
 	if err != nil {
 		return Profile{}, ErrActiveLookup
 	}
 
 	if activeID == "" {
-		def, defErr := s.store.GetDefault(ctx)
+		def, defErr := s.records.GetDefault(ctx)
 		if defErr != nil {
 			if errors.Is(defErr, ErrNotFound) {
 				return Profile{}, ErrNoActiveOrDefault
@@ -240,17 +251,17 @@ func (s *Service) ActiveProfile(ctx context.Context) (Profile, error) {
 		return def, nil
 	}
 
-	p, err := s.store.Get(ctx, activeID)
+	p, err := s.records.Get(ctx, activeID)
 	if err != nil {
 		if !errors.Is(err, ErrNotFound) {
 			return Profile{}, err
 		}
 		// Active profile was deleted — fall back to default and repoint.
-		def, defErr := s.store.GetDefault(ctx)
+		def, defErr := s.records.GetDefault(ctx)
 		if defErr != nil {
 			return Profile{}, ErrActiveNotFound
 		}
-		_ = s.store.SetActiveID(ctx, def.ID)
+		_ = s.active.SetActiveID(ctx, def.ID)
 		return def, nil
 	}
 	return p, nil
@@ -262,11 +273,11 @@ func (s *Service) SetActiveProfile(ctx context.Context, id string) (Profile, err
 	if id == "" {
 		return Profile{}, ErrIDRequired
 	}
-	p, err := s.store.Get(ctx, id)
+	p, err := s.records.Get(ctx, id)
 	if err != nil {
 		return Profile{}, err
 	}
-	if setErr := s.store.SetActiveID(ctx, id); setErr != nil {
+	if setErr := s.active.SetActiveID(ctx, id); setErr != nil {
 		return Profile{}, setErr
 	}
 
@@ -285,7 +296,7 @@ func (s *Service) SetActiveProfile(ctx context.Context, id string) (Profile, err
 // Duplicate copies a source profile under a new name (defaulting to
 // "<name> (Copy)"), retrying once with a timestamped name on a name collision.
 func (s *Service) Duplicate(ctx context.Context, sourceID, requestedName string) (Profile, error) {
-	source, err := s.store.Get(ctx, sourceID)
+	source, err := s.records.Get(ctx, sourceID)
 	if err != nil {
 		return Profile{}, err
 	}
@@ -302,7 +313,7 @@ func (s *Service) Duplicate(ctx context.Context, sourceID, requestedName string)
 		IsDefault:   false, // duplicates are never default
 	}
 
-	err = s.store.Create(ctx, dup)
+	err = s.records.Create(ctx, dup)
 	if err == nil {
 		return dup, nil
 	}
@@ -311,7 +322,7 @@ func (s *Service) Duplicate(ctx context.Context, sourceID, requestedName string)
 	}
 	// Retry with a timestamp suffix.
 	dup.Name = fmt.Sprintf("%s (%s)", source.Name, time.Now().Format("2006-01-02 15:04"))
-	if retryErr := s.store.Create(ctx, dup); retryErr != nil {
+	if retryErr := s.records.Create(ctx, dup); retryErr != nil {
 		return Profile{}, ErrNameExists
 	}
 	return dup, nil
@@ -331,7 +342,7 @@ func (s *Service) Import(ctx context.Context, items []ImportItem, overwrite bool
 
 		// Matches the pre-strangle handler, which ignored a GetByName error and
 		// branched only on presence.
-		existing, found, _ := s.store.GetByName(ctx, item.Name)
+		existing, found, _ := s.records.GetByName(ctx, item.Name)
 		if found {
 			s.importExisting(ctx, existing, item, overwrite, &result)
 			continue
@@ -344,7 +355,7 @@ func (s *Service) Import(ctx context.Context, items []ImportItem, overwrite bool
 			ConfigJSON:  item.ConfigJSON,
 			IsDefault:   false,
 		}
-		if err := s.store.Create(ctx, p); err != nil {
+		if err := s.records.Create(ctx, p); err != nil {
 			result.Errors = append(result.Errors, fmt.Sprintf("Profile '%s': failed to create - %v", item.Name, err))
 			result.Skipped++
 			continue
@@ -373,7 +384,7 @@ func (s *Service) importExisting(
 
 	existing.Description = item.Description
 	existing.ConfigJSON = item.ConfigJSON
-	if err := s.store.Update(ctx, existing, ""); err != nil {
+	if err := s.records.Update(ctx, existing, ""); err != nil {
 		result.Errors = append(result.Errors, fmt.Sprintf("Profile '%s': failed to update - %v", item.Name, err))
 		result.Skipped++
 		return
