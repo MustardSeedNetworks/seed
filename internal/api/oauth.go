@@ -187,6 +187,7 @@ func (s *Server) handleSSOLogin(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	//nolint:gosec // G710: authURL is verified to start with provider.Config.Endpoint.AuthURL (hardcoded at provider construction) above; gosec taint analysis can't follow the prefix check
+	// nosemgrep: go.lang.security.injection.open-redirect.open-redirect -- authURL is hardcoded per-provider + prefix-checked above, same rationale as the #nolint
 	http.Redirect(w, r, authURL, http.StatusTemporaryRedirect)
 }
 
