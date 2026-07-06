@@ -329,6 +329,7 @@ func (s *Server) handleCSRFToken(w http.ResponseWriter, r *http.Request) {
 	// X-CSRF-Token header) — that's the entire point of the double-submit
 	// CSRF pattern. Locked down otherwise (Secure + SameSiteStrict).
 	//nolint:gosec // G124: HttpOnly=false is intentional per double-submit-cookie CSRF pattern (OWASP-approved); Secure+Strict + HTTPS-required daemon are the actual defense
+	// nosemgrep: go.lang.security.audit.net.cookie-missing-httponly.cookie-missing-httponly -- intentional double-submit CSRF cookie, Secure+SameSiteStrict, same rationale as the #nolint
 	http.SetCookie(w, &http.Cookie{
 		Name:     auth.CSRFCookieName,
 		Value:    token,
