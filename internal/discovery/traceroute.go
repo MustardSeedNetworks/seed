@@ -29,6 +29,14 @@ const (
 	traceDNSResolveTimeoutS = 5    // Timeout in seconds for DNS resolution
 	tracePTRResolveTimeoutS = 2    // Timeout in seconds for PTR lookup
 	traceICMPBufferSize     = 1500 // Buffer size for ICMP reply packets
+
+	// defaultMaxHops is used when the caller passes 0 (unset).
+	defaultMaxHops = 30
+	// maxAllowedHops bounds Tracer.maxHops so the hop-slice allocation in
+	// initTracerouteResult can never grow unbounded from a caller-supplied
+	// value (CWE-770). API handlers already clamp to this same ceiling, but
+	// the clamp lives here too so NewTracer is safe for any caller.
+	maxAllowedHops = 64
 )
 
 // TracerouteHop represents a single hop in a traceroute.
@@ -69,8 +77,8 @@ func NewTracer(timeout time.Duration, maxHops int) *Tracer {
 	if timeout == 0 {
 		timeout = 1 * time.Second // Reduced from 3s for faster UI response
 	}
-	if maxHops == 0 {
-		maxHops = 30
+	if maxHops <= 0 || maxHops > maxAllowedHops {
+		maxHops = defaultMaxHops
 	}
 	return &Tracer{
 		timeout:    timeout,

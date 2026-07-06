@@ -117,7 +117,7 @@ function SliderComponent({
    */
   const handleKeyDown = useCallback(
     (event: React.KeyboardEvent<HTMLInputElement>) => {
-      let newValue = value;
+      let newValue: number;
       const largeStep = step * 10;
 
       switch (event.key) {

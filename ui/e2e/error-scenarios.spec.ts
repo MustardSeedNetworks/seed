@@ -1,5 +1,5 @@
 import { expect, type Page, test } from '@playwright/test';
-import { sidebarSettingsButton, skipSetupWizard, TEST_CREDENTIALS } from './helpers/auth';
+import { skipSetupWizard, TEST_CREDENTIALS } from './helpers/auth';
 
 /**
  * Comprehensive Error Scenario E2E Tests
@@ -299,7 +299,9 @@ test.describe('Resource Error Scenarios - Empty States', () => {
     // assertion never failed independently. Reduced to the survivor:
     // the page renders. Real empty-state coverage needs a stable
     // testid on the vulnerabilities EmptyState component.
-    await expect(page.getByTestId('page-header-title')).toBeVisible({ timeout: 5000 });
+    await expect(page.getByTestId('page-header-title')).toBeVisible({
+      timeout: 5000,
+    });
   });
 });
 
@@ -327,7 +329,9 @@ test.describe('Backend Service Unavailable', () => {
     // Reduced to the survivor: the page renders. Real iperf3-missing
     // coverage needs a stable testid on the iperf-availability
     // banner / error component.
-    await expect(page.getByTestId('page-header-title')).toBeVisible({ timeout: 5000 });
+    await expect(page.getByTestId('page-header-title')).toBeVisible({
+      timeout: 5000,
+    });
   });
 
   test('should handle speedtest.net unavailable', async ({ page }) => {

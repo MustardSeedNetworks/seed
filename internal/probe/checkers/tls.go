@@ -48,6 +48,14 @@ type TLSCertInfo struct {
 	SHA256Fingerprint string `json:"sha256_fingerprint"`
 	TLSVersion        string `json:"tls_version"`
 	SNI               string `json:"sni"`
+
+	// ChainValid reports whether the peer's certificate chain verifies
+	// against the system trust store for SNI, computed manually below
+	// (the handshake itself skips verification so the checker can still
+	// capture expired/self-signed/untrusted certs for inspection).
+	ChainValid bool `json:"chain_valid"`
+	// ChainError explains why ChainValid is false; empty when true.
+	ChainError string `json:"chain_error,omitempty"`
 }
 
 // TLSDialer captures the minimum surface a TLSChecker needs.
@@ -177,6 +185,8 @@ func extractCertInfo(state TLSConnState, sni string) TLSCertInfo {
 	fpBytes := sha256.Sum256(cert.Raw)
 	fp := hex.EncodeToString(fpBytes[:])
 
+	chainValid, chainErr := verifyChain(state.PeerCertificates, sni)
+
 	return TLSCertInfo{
 		Subject:           cert.Subject.CommonName,
 		Issuer:            issuer,
@@ -186,7 +196,35 @@ func extractCertInfo(state TLSConnState, sni string) TLSCertInfo {
 		SHA256Fingerprint: fp,
 		TLSVersion:        tlsVersionString(state.Version),
 		SNI:               sni,
+		ChainValid:        chainValid,
+		ChainError:        chainErr,
 	}
+}
+
+// verifyChain manually verifies the peer's certificate chain against the
+// system root pool for sni. This is the "narrow, report-only" use of the
+// handshake's InsecureSkipVerify=true: the checker never lets an invalid
+// chain affect trust or control flow, it only surfaces the verification
+// outcome as diagnostic metadata so operators can see *why* a cert is
+// (in)valid without the probe refusing to inspect it.
+func verifyChain(certs []*x509.Certificate, sni string) (bool, string) {
+	if len(certs) == 0 {
+		return false, "no certificates presented"
+	}
+
+	intermediates := x509.NewCertPool()
+	for _, c := range certs[1:] {
+		intermediates.AddCert(c)
+	}
+
+	_, err := certs[0].Verify(x509.VerifyOptions{
+		DNSName:       sni,
+		Intermediates: intermediates,
+	})
+	if err != nil {
+		return false, err.Error()
+	}
+	return true, ""
 }
 
 // tlsVersionString renders a uint16 TLS version constant as a label
