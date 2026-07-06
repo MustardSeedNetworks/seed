@@ -140,4 +140,4 @@ jobs:
           gh issue create \
             --title "TODO Summary $WEEK: ${{ steps.todos.outputs.count }} items" \
             --body "$BODY" \
-            --label "todo,needs-triage"
+            --label "todo,status: needs-triage"
