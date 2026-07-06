@@ -39,17 +39,23 @@ jobs:
       tag_name: ${{ steps.release.outputs.tag_name }}
       version: ${{ steps.release.outputs.version }}
     steps:
+      - name: Mint GitHub App token
+        id: app-token
+        uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3.2.0
+        with:
+          app-id: ${{ secrets.APP_ID }}
+          private-key: ${{ secrets.APP_PRIVATE_KEY }}
+
       - name: Run Release Please
         id: release
         uses: googleapis/release-please-action@45996ed1f6d02564a971a2fa1b5860e934307cf7 # v5.0.0
         with:
-          # PAT (not GITHUB_TOKEN) so the release PR's CI runs and the
-          # tag-push event triggers release.yml. With GITHUB_TOKEN those
-          # downstream workflows are silently skipped per GitHub's
-          # anti-recursion policy. Falls back to GITHUB_TOKEN if the
-          # secret isn't set, so the workflow doesn't break if the PAT
-          # expires before being renewed (cascade is lost until renewed).
-          token: ${{ secrets.RELEASE_PLEASE_TOKEN || secrets.GITHUB_TOKEN }}
+          # GitHub App installation token (not GITHUB_TOKEN) so the release
+          # PR's CI runs and the tag-push event triggers release.yml. With
+          # GITHUB_TOKEN those downstream workflows are silently skipped per
+          # GitHub's anti-recursion policy. App tokens are minted per-run and
+          # never expire out, unlike a PAT.
+          token: ${{ steps.app-token.outputs.token }}
           # NOTE: do NOT pass release-type here. It is declared per-package in
           # release-please-config.json (release-type: go). Passing it as a direct
           # action input forces a mode that ignores the config-file's per-package
