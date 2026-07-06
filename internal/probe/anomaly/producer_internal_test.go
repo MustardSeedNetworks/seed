@@ -130,12 +130,16 @@ func TestObserveCleanResultNoActiveIsNoop(t *testing.T) {
 
 func TestObservePersistsThroughCoordinator(t *testing.T) {
 	t.Parallel()
+	// A non-trivial probe ID (not the "p1" used by every other test in this
+	// file) proves the record-ID templating is not accidentally hardcoded to
+	// the common test fixture value.
+	const probeID = "web-primary-uplink"
 	fs := &fakeStore{}
 	p, err := New(nil, coordFor(t, fs))
 	if err != nil {
 		t.Fatalf("New: %v", err)
 	}
-	p.observe(context.Background(), latencyEvent("p1"), time.Unix(1000, 0).UTC())
+	p.observe(context.Background(), latencyEvent(probeID), time.Unix(1000, 0).UTC())
 
 	upserts, rows, _ := fs.snapshot()
 	if upserts != 1 || len(rows) != 1 {
@@ -149,16 +153,17 @@ func TestObservePersistsThroughCoordinator(t *testing.T) {
 	if got.Source != anomaly.SourceProbe {
 		t.Errorf("source = %q, want probe", got.Source)
 	}
-	if got.Anomaly.DefKey != DefHighLatency || got.Anomaly.Subject.ID != "p1" {
+	if got.Anomaly.DefKey != DefHighLatency || got.Anomaly.Subject.ID != probeID {
 		t.Errorf(
-			"record = def %q subject %q, want high-latency/p1",
+			"record = def %q subject %q, want high-latency/%s",
 			got.Anomaly.DefKey,
 			got.Anomaly.Subject.ID,
+			probeID,
 		)
 	}
 	wantID := anomaly.RecordID(
 		DefHighLatency,
-		anomaly.SubjectRef{Kind: anomaly.SubjectProbe, ID: "p1"},
+		anomaly.SubjectRef{Kind: anomaly.SubjectProbe, ID: probeID},
 	)
 	if got.ID != wantID {
 		t.Errorf("record id = %q, want %q", got.ID, wantID)

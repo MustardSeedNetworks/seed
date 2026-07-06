@@ -1,8 +1,9 @@
 package app
 
 // profiles.go wires the composition root to the profiles catalog application
-// (use-case) service (ADR-0020). The adapter implements the narrow catalog.Store
-// port over the database Profiles + Settings repositories, mapping the
+// (use-case) service (ADR-0020). The adapter implements the narrow
+// catalog.ProfileRepository and catalog.ActiveProfileStore ports over the
+// database Profiles + Settings repositories respectively, mapping the
 // repository's domain errors to the use-case's sentinels and the
 // database.Profile row to the use-case model, so the profile handlers depend on
 // a use-case instead of reaching into the database repositories directly.
@@ -169,11 +170,14 @@ func (a profilesLiveConfig) Apply(ctx context.Context, profileJSON string) error
 }
 
 // NewProfiles builds the profiles catalog use-case (ADR-0020) over the lazy db
-// accessor and the live config. The catalog.Store adapter spans the database
-// Profiles + Settings repositories; the catalog.LiveConfig adapter applies an
-// activated profile's settings to cfg and persists to path. The database is
-// resolved through db on each call so the api test harness's later-set DB is
-// honored; the use-case reports Available()==false when no DB is wired.
+// accessor and the live config. profilesStore satisfies both the
+// catalog.ProfileRepository port (over the database Profiles repository) and
+// the catalog.ActiveProfileStore port (over the database Settings repository);
+// the catalog.LiveConfig adapter applies an activated profile's settings to
+// cfg and persists to path. The database is resolved through db on each call
+// so the api test harness's later-set DB is honored; the use-case reports
+// Available()==false when no DB is wired.
 func NewProfiles(db func() *database.DB, cfg *config.Config, path string) *catalog.Service {
-	return catalog.NewService(profilesStore{db: db}, profilesLiveConfig{cfg: cfg, path: path})
+	store := profilesStore{db: db}
+	return catalog.NewService(store, store, profilesLiveConfig{cfg: cfg, path: path})
 }

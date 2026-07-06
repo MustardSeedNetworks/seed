@@ -20,57 +20,19 @@
 #
 # REQUIREMENTS
 # ------------
-#   - Go 1.25.5+ (with CGO for libpcap)
+#   - Go 1.26.4+ (with CGO for libpcap)
 #   - Node.js 26.3.0 and npm 11.17.0
 #   - libpcap-dev (Linux) or libpcap (macOS via Homebrew)
 #
 # =============================================================================
 
 # =============================================================================
-# Version and Build Information
+# Shared Variables (single source of truth)
 # =============================================================================
+# Version, platform/arch detection, and ANSI colors live in mk/vars.mk so
+# every domain-specific mk/*.mk file and this Makefile agree on one value.
 
-# Version information (can be overridden)
-VERSION ?= $(shell git describe --tags --always --dirty 2>/dev/null || echo "dev")
-COMMIT ?= $(shell git rev-parse --short HEAD 2>/dev/null || echo "unknown")
-BUILD_TIME ?= $(shell date -u +%Y-%m-%dT%H:%M:%SZ)
-
-# Platform detection
-UNAME := $(shell uname -s)
-ifeq ($(UNAME),Darwin)
-    PLATFORM := darwin
-    PLATFORM_PRETTY := macOS
-else ifeq ($(UNAME),Linux)
-    PLATFORM := linux
-    PLATFORM_PRETTY := Linux
-else
-    PLATFORM := unknown
-    PLATFORM_PRETTY := Unknown
-endif
-
-# Architecture detection
-ARCH := $(shell uname -m)
-ifeq ($(ARCH),x86_64)
-    GOARCH := amd64
-else ifeq ($(ARCH),arm64)
-    GOARCH := arm64
-else ifeq ($(ARCH),aarch64)
-    GOARCH := arm64
-endif
-
-# =============================================================================
-# ANSI Color Codes
-# =============================================================================
-
-BOLD := \033[1m
-RESET := \033[0m
-RED := \033[31m
-GREEN := \033[32m
-YELLOW := \033[33m
-BLUE := \033[34m
-MAGENTA := \033[35m
-CYAN := \033[36m
-WHITE := \033[37m
+include mk/vars.mk
 
 # =============================================================================
 # Display Helpers
@@ -136,8 +98,7 @@ endef
 # Application name
 BINARY_NAME=seed
 
-# Version package path for ldflags injection
-VERSION_PKG=github.com/MustardSeedNetworks/seed/internal/version
+# VERSION_PKG (ldflags injection target) comes from mk/vars.mk
 
 # Go build flags for reproducible builds
 GO_BUILD_FLAGS := -trimpath -buildvcs=false
