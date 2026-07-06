@@ -110,8 +110,14 @@ type Tester struct {
 	mu          sync.RWMutex
 	stopCh      chan struct{}
 	running     bool
-	stopOnce    sync.Once             // Prevents double-close panic on stopCh (fixes #854)
-	pinger      *enumerate.ICMPPinger // Raw ICMP pinger (nil if unavailable)
+	stopOnce    sync.Once // Prevents double-close panic on stopCh (fixes #854)
+	// wg tracks the background StartContinuous goroutine so StopContinuous can
+	// block until it has actually returned, instead of merely signaling it to
+	// stop. Without this, StopContinuous could return while the goroutine was
+	// still mid-callback, racing any state the callback touches (observed as
+	// an intermittent `go test -race` failure in TestStartContinuousCallback).
+	wg     sync.WaitGroup
+	pinger *enumerate.ICMPPinger // Raw ICMP pinger (nil if unavailable)
 }
 
 // NewTester creates a new gateway tester.
@@ -352,11 +358,13 @@ func (t *Tester) StartContinuous(interval time.Duration, callback func(*PingStat
 	t.stopCh = make(chan struct{})
 	t.stopOnce = sync.Once{} // Reset Once for new channel (fixes #854)
 	stopCh := t.stopCh
+	t.wg.Add(1)
 	t.mu.Unlock()
 
 	// Capture stopCh into a local so the goroutine doesn't race with a
 	// future StartContinuous reassigning t.stopCh.
 	go func() {
+		defer t.wg.Done()
 		ticker := time.NewTicker(interval)
 		defer ticker.Stop()
 
@@ -380,18 +388,25 @@ func (t *Tester) StartContinuous(interval time.Duration, callback func(*PingStat
 	}()
 }
 
-// StopContinuous stops continuous ping testing.
+// StopContinuous stops continuous ping testing and blocks until the
+// background goroutine has fully returned, so any state its callback wrote is
+// safely visible to the caller once StopContinuous returns.
 // Uses [sync.Once] to prevent double-close panic (fixes #854).
 func (t *Tester) StopContinuous() {
 	t.mu.Lock()
-	defer t.mu.Unlock()
-
-	if t.running {
-		t.stopOnce.Do(func() {
-			close(t.stopCh)
-		})
-		t.running = false
+	if !t.running {
+		t.mu.Unlock()
+		return
 	}
+	t.stopOnce.Do(func() {
+		close(t.stopCh)
+	})
+	t.running = false
+	t.mu.Unlock()
+
+	// Wait outside the lock: the goroutine's own Test() calls may need t.mu,
+	// so holding it here while waiting would deadlock.
+	t.wg.Wait()
 }
 
 // Close closes the tester and releases resources.
