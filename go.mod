@@ -4,7 +4,7 @@ go 1.26.4
 
 require (
 	github.com/golang-jwt/jwt/v5 v5.3.1
-	github.com/gopacket/gopacket v1.6.1
+	github.com/gopacket/gopacket v1.7.0
 	github.com/showwin/speedtest-go v1.7.10
 	github.com/spf13/cobra v1.10.2
 	golang.org/x/crypto v0.53.0
@@ -16,7 +16,7 @@ require (
 	github.com/google/uuid v1.6.0
 	github.com/gosnmp/gosnmp v1.43.2
 	github.com/kardianos/service v1.2.4
-	github.com/mdlayher/wifi v0.7.2
+	github.com/mdlayher/wifi v0.8.0
 	github.com/nicksnyder/go-i18n/v2 v2.6.1
 	github.com/safchain/ethtool v0.7.0
 	github.com/santhosh-tekuri/jsonschema/v6 v6.0.2
@@ -27,7 +27,7 @@ require (
 	golang.org/x/oauth2 v0.36.0
 	golang.org/x/text v0.38.0
 	gopkg.in/natefinch/lumberjack.v2 v2.2.1
-	modernc.org/sqlite v1.52.0
+	modernc.org/sqlite v1.53.0
 )
 
 require (
@@ -97,5 +97,5 @@ require (
 	github.com/go-webauthn/webauthn v0.17.4
 	github.com/invopop/jsonschema v0.14.0
 	github.com/pquerna/otp v1.5.0
-	github.com/pressly/goose/v3 v3.27.1
+	github.com/pressly/goose/v3 v3.27.2
 )
