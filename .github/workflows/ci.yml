@@ -434,6 +434,54 @@ jobs:
       # to avoid duplication. See .github/workflows/license-check.yml
 
   # ===========================================================================
+  # Semgrep SAST — required gate (Phase 4, replaces CodeQL as the required
+  # SAST signal since CodeQL is skipped entirely on private repos)
+  # ===========================================================================
+  # Blocking on ERROR severity only for now — a deliberate first step (see
+  # #1736). WARNING/MEDIUM findings are visible in the job log but do not fail
+  # the build yet; ratchet to a stricter --severity once the current WARNING
+  # backlog (missing-ssl-minversion, math-random-used, dependabot-missing-
+  # cooldown) is triaged in a follow-up. Three known false positives are
+  # already annotated inline with `// nosemgrep: <rule-id> -- <reason>`
+  # (mirroring the existing `#nosec`/`//nolint:gosec` justifications) so the
+  # ratchet won't need to re-litigate them: internal/auth/hibp.go (SHA-1 is
+  # the HIBP k-anonymity API contract), internal/api/oauth.go (hardcoded
+  # provider URL + prefix-check guard), internal/api/handlers_auth.go
+  # (intentional double-submit CSRF cookie, Secure+SameSiteStrict).
+  #
+  # Runs unconditionally (no path filter) — same rationale as `security`
+  # above: SAST coverage on every PR is non-negotiable, and Semgrep is fast
+  # enough (~1-2 min for this ruleset) that gating it behind path filters
+  # isn't worth the added complexity.
+  semgrep:
+    name: Semgrep SAST
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+
+      - name: Set up Python
+        uses: actions/setup-python@e797f83bcb11b83ae66e0230d6156d7c80228e7c # v6.0.0
+        with:
+          python-version: "3.13"
+
+      - name: Install Semgrep (pinned)
+        run: pip install "semgrep==1.168.0"
+
+      - name: Run Semgrep (blocking on ERROR severity)
+        run: |
+          semgrep scan \
+            --config p/golang \
+            --config p/typescript \
+            --config p/react \
+            --config p/owasp-top-ten \
+            --severity ERROR \
+            --error \
+            --metrics=off
+
+  # ===========================================================================
   # Code Quality Checks
   # ===========================================================================
   quality:
@@ -1187,23 +1235,27 @@ jobs:
   # Every required-status-check on `main` is consolidated into this single
   # job. It fails if any upstream job actually failed; it passes if every
   # upstream either succeeded or was intentionally skipped via the path
-  # filter. This lets branch protection require ONLY "CI Complete" plus
-  # security-critical checks from other workflows (CodeQL, license-check),
-  # rather than enumerating every individual job — so a docs-only PR can
-  # merge cleanly when backend/frontend/c are all skipped.
+  # filter. Branch protection requires ONLY "CI Complete" (plus "Lint PR
+  # Title" / "Lint PR Body" from their own workflows) rather than
+  # enumerating every individual job — so a docs-only PR can merge cleanly
+  # when backend/frontend/c are all skipped. CodeQL and license-check are
+  # NOT required contexts: CodeQL is advisory (and skips entirely on
+  # private repos) and license-check reports without blocking. The
+  # `semgrep` job in this file is the required SAST gate (blocking on
+  # ERROR severity).
   ci-complete:
     name: CI Complete
     runs-on: ubuntu-latest
     timeout-minutes: 5
     # The full E2E browser suite (e2e) and E2E Smoke now gate merge through
     # this aggregator — the suite went flake-free after #1588, so it can be
-    # trusted to block. Branch protection should require ONLY "CI Complete"
-    # (plus the cross-workflow CodeQL + license checks), NOT the individual
-    # E2E shard names: enumerating "E2E Browser Tests (webkit 3/4)" ×8 in
-    # branch protection is brittle (a reshard silently breaks every required
-    # entry) and was also toothless while e2e carried continue-on-error. The
-    # aggregator's success-or-skipped check below handles the path-filter case
-    # (a docs/backend-only PR skips e2e and still passes) without the
+    # trusted to block. Branch protection requires ONLY "CI Complete" (plus
+    # "Lint PR Title" / "Lint PR Body"), NOT the individual E2E shard names:
+    # enumerating "E2E Browser Tests (webkit 3/4)" ×8 in branch protection is
+    # brittle (a reshard silently breaks every required entry) and was also
+    # toothless while e2e carried continue-on-error. The aggregator's
+    # success-or-skipped check below handles the path-filter case (a
+    # docs/backend-only PR skips e2e and still passes) without the
     # skipped-required-check deadlock.
     #
     # lighthouse stays excluded — it's a genuine perf-advisory signal, not a
@@ -1215,6 +1267,7 @@ jobs:
       - race
       - frontend
       - security
+      - semgrep
       - quality
       - c-lint
       - i18n
