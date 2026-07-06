@@ -47,7 +47,9 @@ lint-backend-quiet:
 	fi; \
 	LINTER_COUNT=$$(grep -c "^    - " .golangci.yml 2>/dev/null || echo "30+"); \
 	printf "   Running $$LINTER_COUNT linters...\n"; \
-	$$GOLANGCI_LINT run 2>&1 | head -20 || true
+	OUT="$$($$GOLANGCI_LINT run 2>&1)"; STATUS=$$?; \
+	echo "$$OUT" | head -20; \
+	exit $$STATUS
 
 lint-frontend: ## Run frontend linter (Biome)
 	@printf "$(BOLD)🔍 Running frontend linter (Biome)...$(RESET)\n"
@@ -57,7 +59,9 @@ lint-frontend: ## Run frontend linter (Biome)
 lint-frontend-quiet:
 	@FILE_COUNT=$$(find ui/src -name "*.ts" -o -name "*.tsx" 2>/dev/null | wc -l | tr -d ' '); \
 	printf "   Checking $$FILE_COUNT files...\n"
-	@cd ui && npx @biomejs/biome check src/ 2>&1 | tail -5 || true
+	@OUT="$$(cd ui && npx @biomejs/biome check src/ 2>&1)"; STATUS=$$?; \
+	echo "$$OUT" | tail -5; \
+	exit $$STATUS
 
 lint-md: ## Lint markdown files with markdownlint
 	@printf "$(BOLD)🔍 Linting markdown files...$(RESET)\n"
@@ -102,8 +106,10 @@ fix-backend-quiet:
 	if [ ! -f "$$GOLANGCI_LINT" ]; then \
 		go install github.com/golangci/golangci-lint/v2/cmd/golangci-lint@v2.12.1; \
 	fi; \
-	$$GOLANGCI_LINT run --fix 2>&1 | grep -E "^[0-9]+ issues" || printf "   No issues found\n"
-	@git ls-files '*.go' | xargs gofmt -w -s
+	OUT="$$($$GOLANGCI_LINT run --fix 2>&1)"; STATUS=$$?; \
+	echo "$$OUT" | grep -E "^[0-9]+ issues" || printf "   No issues found\n"; \
+	git ls-files '*.go' | xargs gofmt -w -s; \
+	exit $$STATUS
 
 fix-frontend: ## Auto-fix frontend linting issues
 	@printf "$(BOLD)🔧 Auto-fixing frontend code...$(RESET)\n"
@@ -111,7 +117,9 @@ fix-frontend: ## Auto-fix frontend linting issues
 	@printf "$(GREEN)✓ Frontend auto-fix complete$(RESET)\n"
 
 fix-frontend-quiet:
-	@cd ui && npx @biomejs/biome check --write . 2>&1 | tail -3 || true
+	@OUT="$$(cd ui && npx @biomejs/biome check --write . 2>&1)"; STATUS=$$?; \
+	echo "$$OUT" | tail -3; \
+	exit $$STATUS
 
 fix-md: fmt-md ## Auto-fix markdown formatting
 

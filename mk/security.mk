@@ -49,7 +49,10 @@ security-backend-quiet:
 		go install golang.org/x/vuln/cmd/govulncheck@latest; \
 	fi
 	@printf "   Scanning Go dependencies...\n"
-	@govulncheck ./... 2>&1 | grep -E "(Vulnerability|No vulnerabilities)" | head -5 || printf "   No vulnerabilities found\n"
+	@OUT="$$(govulncheck ./... 2>&1)"; STATUS=$$?; \
+	echo "$$OUT" | grep -E "(Vulnerability|No vulnerabilities)" | head -5 || printf "   No vulnerabilities found\n"; \
+	if [ $$STATUS -ne 0 ]; then echo "$$OUT" | tail -40; fi; \
+	exit $$STATUS
 
 security-frontend: ## Run frontend security scan (npm audit)
 	@printf "$(BOLD)🔒 Running npm audit...$(RESET)\n"
@@ -58,7 +61,10 @@ security-frontend: ## Run frontend security scan (npm audit)
 
 security-frontend-quiet:
 	@printf "   Auditing npm packages...\n"
-	@cd ui && npm audit --audit-level=high 2>&1 | grep -E "(found|vulnerabilities)" | head -3 || printf "   No vulnerabilities found\n"
+	@OUT="$$(cd ui && npm audit --audit-level=high 2>&1)"; STATUS=$$?; \
+	echo "$$OUT" | grep -E "(found|vulnerabilities)" | head -3 || printf "   No vulnerabilities found\n"; \
+	if [ $$STATUS -ne 0 ]; then echo "$$OUT" | tail -40; fi; \
+	exit $$STATUS
 
 security-secrets: ## Scan for secrets in codebase (gitleaks)
 	@printf "$(BOLD)🔒 Running gitleaks...$(RESET)\n"
@@ -78,7 +84,10 @@ security-secrets-quiet:
 		GITLEAKS="$$(go env GOPATH)/bin/gitleaks"; \
 	fi; \
 	printf "   Scanning for secrets...\n"; \
-	$$GITLEAKS detect --source . --config .gitleaks.toml 2>&1 | grep -E "(leaks found|no leaks)" || printf "   No secrets found\n"
+	OUT="$$($$GITLEAKS detect --source . --config .gitleaks.toml 2>&1)"; STATUS=$$?; \
+	echo "$$OUT" | grep -E "(leaks found|no leaks)" || printf "   No secrets found\n"; \
+	if [ $$STATUS -ne 0 ]; then echo "$$OUT" | tail -40; fi; \
+	exit $$STATUS
 
 security-trivy: ## Run Trivy vulnerability scan
 	@printf "$(BOLD)🔒 Running Trivy filesystem scan...$(RESET)\n"
