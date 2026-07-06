@@ -31,11 +31,7 @@ concurrency:
   cancel-in-progress: true
 
 permissions:
-  actions: read
   contents: read
-  pull-requests: write
-  checks: write
-  security-events: write
 
 jobs:
   # ===========================================================================
@@ -49,6 +45,7 @@ jobs:
   changes:
     name: Changed paths
     runs-on: ubuntu-latest
+    timeout-minutes: 5
     outputs:
       backend: ${{ steps.filter.outputs.backend }}
       frontend: ${{ steps.filter.outputs.frontend }}
@@ -89,13 +86,49 @@ jobs:
               - '.github/workflows/**'
 
   # ===========================================================================
+  # Build UI once, shared via artifact
+  # ===========================================================================
+  # backend, race, and frontend all need internal/api/ui/ populated (Go's
+  # //go:embed in internal/api/embed_ui.go, or the frontend job's own checks).
+  # Building it three times per run was wasteful — build it once here and let
+  # every consumer download the artifact instead.
+  build-ui:
+    name: Build UI (shared artifact)
+    runs-on: ubuntu-latest
+    needs: changes
+    if: needs.changes.outputs.backend == 'true' || needs.changes.outputs.frontend == 'true' || needs.changes.outputs.workflows == 'true'
+    timeout-minutes: 10
+
+    steps:
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+
+      - name: Set up Node.js
+        uses: ./.github/actions/setup-node
+
+      - name: Install dependencies
+        working-directory: ui
+        run: npm ci
+
+      - name: Build
+        working-directory: ui
+        run: npm run build
+
+      - name: Upload built UI assets
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: frontend-dist
+          path: internal/api/ui/
+          retention-days: 1
+
+  # ===========================================================================
   # Go Backend Checks
   # ===========================================================================
   backend:
     name: Backend (Go)
     runs-on: ubuntu-latest
-    needs: changes
+    needs: [changes, build-ui]
     if: needs.changes.outputs.backend == 'true' || needs.changes.outputs.frontend == 'true' || needs.changes.outputs.workflows == 'true'
+    timeout-minutes: 20
     env:
       GOMODCACHE: ${{ github.workspace }}/.cache/go/pkg/mod
       GOCACHE: ${{ github.workspace }}/.cache/go/build
@@ -114,11 +147,18 @@ jobs:
       - name: Set up Node.js
         uses: ./.github/actions/setup-node
 
-      - name: Build embedded UI assets
+      - name: Download built UI assets
+        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7.0.0
+        with:
+          name: frontend-dist
+          path: internal/api/ui/
+
+      - name: Install UI dependencies
+        # npm ci (not a build) — needed by check-types-drift.sh, which runs
+        # `npm --prefix ui run gen-types` below. The actual built UI assets
+        # come from the build-ui job's shared artifact, downloaded above.
         working-directory: ui
-        run: |
-          npm ci
-          npm run build
+        run: npm ci
 
       - name: Run golangci-lint
         uses: golangci/golangci-lint-action@82606bf257cbaff209d206a39f5134f0cfbfd2ee # v9.2.1
@@ -220,8 +260,9 @@ jobs:
   race:
     name: Backend (race detector)
     runs-on: ubuntu-latest
-    needs: changes
+    needs: [changes, build-ui]
     if: needs.changes.outputs.backend == 'true' || needs.changes.outputs.frontend == 'true' || needs.changes.outputs.workflows == 'true'
+    timeout-minutes: 20
     env:
       GOMODCACHE: ${{ github.workspace }}/.cache/go/pkg/mod
       GOCACHE: ${{ github.workspace }}/.cache/go/build
@@ -235,14 +276,11 @@ jobs:
       - name: Install libpcap-dev
         uses: ./.github/actions/setup-libpcap
 
-      - name: Set up Node.js
-        uses: ./.github/actions/setup-node
-
-      - name: Build embedded UI assets
-        working-directory: ui
-        run: |
-          npm ci
-          npm run build
+      - name: Download built UI assets
+        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7.0.0
+        with:
+          name: frontend-dist
+          path: internal/api/ui/
 
       - name: Run tests with race detector
         env:
@@ -256,8 +294,9 @@ jobs:
   frontend:
     name: Frontend (React/TypeScript)
     runs-on: ubuntu-latest
-    needs: changes
+    needs: [changes, build-ui]
     if: needs.changes.outputs.frontend == 'true' || needs.changes.outputs.workflows == 'true'
+    timeout-minutes: 15
     defaults:
       run:
         working-directory: ui
@@ -285,16 +324,9 @@ jobs:
 
       - name: Run unit tests
         run: npm run test
-
-      - name: Build
-        run: npm run build
-
-      - name: Upload frontend build
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
-        with:
-          name: frontend-dist
-          path: internal/api/ui/
-          retention-days: 1
+      # Build is done once by the build-ui job and shared as the
+      # frontend-dist artifact (downloaded by backend/race/build/e2e/
+      # lighthouse). This job validates source (types/lint/tests) only.
 
   # ===========================================================================
   # Security Scanning
@@ -302,7 +334,15 @@ jobs:
   security:
     name: Security Scanning
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     # Always runs — security checks are non-negotiable on every PR.
+    permissions:
+      contents: read
+      # Uploads gosec + Trivy SARIF to the code-scanning tab. actions:read
+      # is paired with security-events:write per the pattern already used in
+      # codeql.yml — SARIF upload fails without it.
+      security-events: write
+      actions: read
 
     steps:
       - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
@@ -401,6 +441,7 @@ jobs:
     runs-on: ubuntu-latest
     needs: changes
     if: needs.changes.outputs.backend == 'true' || needs.changes.outputs.frontend == 'true' || needs.changes.outputs.c == 'true' || needs.changes.outputs.workflows == 'true'
+    timeout-minutes: 10
 
     steps:
       - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
@@ -499,6 +540,7 @@ jobs:
     runs-on: ubuntu-latest
     needs: changes
     if: needs.changes.outputs.c == 'true' || needs.changes.outputs.workflows == 'true'
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
 
@@ -600,6 +642,7 @@ jobs:
     runs-on: ubuntu-latest
     needs: changes
     if: needs.changes.outputs.frontend == 'true' || needs.changes.outputs.workflows == 'true'
+    timeout-minutes: 10
 
     steps:
       - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
@@ -625,6 +668,7 @@ jobs:
   docs:
     name: Documentation Quality
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     # Always runs — cheap (runs in seconds) and the templates/wiki checks
     # apply to every PR regardless of which paths changed.
 
@@ -707,6 +751,7 @@ jobs:
     name: Build Verification
     runs-on: ubuntu-latest
     needs: [changes, backend, frontend]
+    timeout-minutes: 20
     # Build needs the frontend-dist artifact; only runs when frontend ran.
     # The always() guard lets this job evaluate even when `backend` was
     # skipped (skipped upstream would otherwise skip this job implicitly).
@@ -1149,6 +1194,7 @@ jobs:
   ci-complete:
     name: CI Complete
     runs-on: ubuntu-latest
+    timeout-minutes: 5
     # The full E2E browser suite (e2e) and E2E Smoke now gate merge through
     # this aggregator — the suite went flake-free after #1588, so it can be
     # trusted to block. Branch protection should require ONLY "CI Complete"
@@ -1164,6 +1210,7 @@ jobs:
     # correctness gate.
     needs:
       - changes
+      - build-ui
       - backend
       - race
       - frontend
