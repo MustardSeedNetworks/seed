@@ -53,7 +53,6 @@ jobs:
       backend: ${{ steps.filter.outputs.backend }}
       frontend: ${{ steps.filter.outputs.frontend }}
       c: ${{ steps.filter.outputs.c }}
-      docker: ${{ steps.filter.outputs.docker }}
       docs: ${{ steps.filter.outputs.docs }}
       workflows: ${{ steps.filter.outputs.workflows }}
     steps:
@@ -84,9 +83,6 @@ jobs:
               - 'tests/c/**'
               - '.clang-tidy'
               - '.clang-format'
-            docker:
-              - 'Dockerfile*'
-              - '.dockerignore'
             docs:
               - '**/*.md'
             workflows:

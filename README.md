@@ -196,16 +196,6 @@ Verified versions: **Go 1.26.3**, Node.js 26, golangci-lint v2.12.1.
 Cross-platform releases (linux/macOS/windows × amd64/arm64) are built by
 `release.yml` on tag push and signed with cosign keyless OIDC.
 
-## Container
-
-```bash
-docker run --rm --net host --cap-add NET_RAW --cap-add NET_ADMIN \
-  ghcr.io/mustardseednetworks/seed:latest
-```
-
-Multi-arch images (linux/amd64, linux/arm64) built on native runners with
-SLSA-3 provenance and Syft-generated SBOM.
-
 ## Frontend design system
 
 The UI uses a Tailwind v4 CSS-first theme with semantic tokens:
@@ -217,8 +207,9 @@ The UI uses a Tailwind v4 CSS-first theme with semantic tokens:
 ## Versioning & Releases
 
 Conventional commits drive [release-please](https://github.com/googleapis/release-please).
-Tags trigger `release.yml` which builds binaries, packages, container
-images, and (when configured) updates the Homebrew tap.
+Tags trigger `release.yml` which builds binaries and packages
+(`.deb`/`.rpm`/`.zip`/`.tar.gz`), and (when configured) updates the
+Homebrew tap.
 
 ## License
 
