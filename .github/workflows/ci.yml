@@ -5,7 +5,7 @@
 #
 # Features:
 # - Pinned action versions (@v6) for reproducibility
-# - Go version from go.mod, Node.js 26.2.0
+# - Go version from go.mod, Node.js 26.3.0
 # - Full staticcheck analysis (dead-code.yml handles weekly U* reports)
 # - Deterministic builds with -trimpath -buildvcs=false
 # - Build verification for amd64 and arm64 release targets
@@ -127,7 +127,7 @@ jobs:
       - name: Run golangci-lint
         uses: golangci/golangci-lint-action@82606bf257cbaff209d206a39f5134f0cfbfd2ee # v9.2.1
         with:
-          version: v2.12.1
+          version: v2.12.2
           args: --timeout=5m --new-from-rev=HEAD~1
 
       - name: Run go vet
@@ -320,9 +320,7 @@ jobs:
         uses: ./.github/actions/setup-libpcap
 
       - name: Run govulncheck
-        run: |
-          go install golang.org/x/vuln/cmd/govulncheck@latest
-          govulncheck ./...
+        run: make security-backend-quiet
 
       # gosec is ENFORCED (blocking) by the golangci-lint job: `gosec` is an
       # enabled linter there, and high-signal rules fail the build — verified:
@@ -357,10 +355,9 @@ jobs:
         uses: ./.github/actions/setup-node
 
       - name: Run npm audit
-        working-directory: ui
         run: |
-          npm ci
-          npm audit --audit-level=high
+          cd ui && npm ci
+          cd .. && make security-frontend-quiet
 
       # gitleaks-action requires a paid licence for organization repos. Use the
       # MIT-licensed gitleaks CLI directly instead — same engine, same config,
