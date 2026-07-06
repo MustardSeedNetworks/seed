@@ -266,16 +266,10 @@ export function SurveyViewFloorPlanPanel({
             )}
 
             <FloorPlanCanvas
-              floorPlan={
-                currentFloorPlan ?? {
-                  id: '',
-                  name: '',
-                  imageUrl: '',
-                  width: 0,
-                  height: 0,
-                  scale: 1,
-                }
-              }
+              // currentFloorPlan is already narrowed non-null: this whole
+              // block only renders inside the `{currentFloorPlan ? (...) : (...)}`
+              // true-branch above (guarded upload prompt otherwise).
+              floorPlan={currentFloorPlan}
               samples={currentSamples}
               // #727: render imported AP placements so they're not silently dropped.
               apLocations={survey.apLocations}

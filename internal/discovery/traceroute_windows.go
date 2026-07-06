@@ -22,6 +22,13 @@ const (
 const (
 	traceDNSResolveTimeoutS = 5 // Timeout in seconds for DNS resolution
 	tracePTRResolveTimeoutS = 2 // Timeout in seconds for PTR lookup
+
+	// defaultMaxHops is used when the caller passes 0 (unset).
+	defaultMaxHops = 30
+	// maxAllowedHops bounds Tracer.maxHops so it can never grow unbounded
+	// from a caller-supplied value (CWE-770). Kept in sync with the
+	// non-Windows traceroute.go clamp.
+	maxAllowedHops = 64
 )
 
 // TracerouteHop represents a single hop in a traceroute.
@@ -62,8 +69,8 @@ func NewTracer(timeout time.Duration, maxHops int) *Tracer {
 	if timeout == 0 {
 		timeout = 1 * time.Second
 	}
-	if maxHops == 0 {
-		maxHops = 30
+	if maxHops <= 0 || maxHops > maxAllowedHops {
+		maxHops = defaultMaxHops
 	}
 	return &Tracer{
 		timeout:    timeout,
