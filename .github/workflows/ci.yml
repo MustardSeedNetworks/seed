@@ -414,6 +414,10 @@ jobs:
           ./gitleaks git . --config .gitleaks.toml --redact --no-banner --exit-code 1
 
       - name: Run Trivy vulnerability scanner
+        # exit-code is 0 here so the SARIF always gets written; we still
+        # surface findings as a separate step that fails CI when the SARIF
+        # contains CRITICAL/HIGH entries.
+        id: trivy
         uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
         with:
           scan-type: "fs"
@@ -421,7 +425,7 @@ jobs:
           format: "sarif"
           output: "trivy-results.sarif"
           severity: "CRITICAL,HIGH"
-          exit-code: "1"
+          exit-code: "0"
 
       - name: Upload Trivy results
         uses: github/codeql-action/upload-sarif@8aad20d150bbac5944a9f9d289da16a4b0d87c1e # v4.36.2
@@ -429,6 +433,18 @@ jobs:
         continue-on-error: true
         with:
           sarif_file: trivy-results.sarif
+
+      - name: Fail on CRITICAL/HIGH findings
+        # Reads the SARIF Trivy just produced and fails CI if any CRITICAL or
+        # HIGH-severity result is present. We do this in a separate step so
+        # the SARIF is always uploaded for security tab visibility.
+        if: always() && hashFiles('trivy-results.sarif') != ''
+        run: |
+          if jq -e '.runs[].results[] | select(.level=="error" or .properties.security_severity == "high" or .properties.security_severity == "critical")' trivy-results.sarif >/dev/null; then
+            echo "::error::Trivy found CRITICAL or HIGH severity issues — see Security tab."
+            jq '.runs[].results[] | {ruleId, level, severity: .properties.security_severity, message: .message.text}' trivy-results.sarif
+            exit 1
+          fi
 
       # License compliance is handled by the dedicated license-check.yml workflow
       # to avoid duplication. See .github/workflows/license-check.yml
