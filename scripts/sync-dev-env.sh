@@ -18,7 +18,7 @@ REMOTE_USER="krisarmstrong"
 REMOTE_PROJECT_PATH="/home/krisarmstrong/seed"
 PYTHON_VERSION="3.14.2"
 NODE_VERSION="26.3.0"
-GO_VERSION="1.25.5"
+GO_VERSION="1.26.5"
 
 # --- Helper Functions ---
 print_info() {
