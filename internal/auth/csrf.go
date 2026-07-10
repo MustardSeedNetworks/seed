@@ -154,7 +154,15 @@ func (m *CSRFManager) CSRFMiddleware(next http.Handler) http.Handler {
 // which must derive the same key it later validates against.
 func GetSessionIDFromRequest(r *http.Request) string {
 	token, _ := GetTokenFromRequest(r)
-	if token == "" {
+	// Only a JWT-shaped bearer (a browser session token) is CSRF-relevant.
+	// A malformed value or a non-JWT bearer (e.g. an API token, which a
+	// cross-site attacker cannot set) gets no session key, so the request is
+	// handled by the auth layer instead of being rejected here for a missing
+	// CSRF token. This mirrors the pre-migration gate (the old payload-segment
+	// extraction returned "" for a non-JWT), changing only the key derivation
+	// to sha256(bearer).
+	const jwtMinParts = 2
+	if len(strings.Split(token, ".")) < jwtMinParts {
 		return ""
 	}
 	return csrf.SessionKey(token)
