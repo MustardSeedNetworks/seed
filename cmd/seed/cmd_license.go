@@ -118,7 +118,7 @@ func runLicenseStatus(_ *cliState) {
 		return
 	}
 
-	_, _ = fmt.Fprintf(os.Stdout, "Tier:        %s\n", state.Tier)
+	_, _ = fmt.Fprintf(os.Stdout, "Tier:        %s\n", license.Tier(state.Tier))
 	_, _ = fmt.Fprintf(os.Stdout, "Key:         %s\n", license.FormatKey(state.LicenseKey))
 	_, _ = fmt.Fprintf(os.Stdout, "Activated:   %s\n", state.ActivatedAt.Format("2006-01-02"))
 	_, _ = fmt.Fprintf(os.Stdout, "Expires:     %s\n", state.ExpiresAt.Format("2006-01-02"))

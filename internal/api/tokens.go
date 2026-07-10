@@ -135,13 +135,13 @@ func (s *Server) handleLicenseStatus(w http.ResponseWriter, r *http.Request) {
 	resp.Activated = true
 	resp.IsTrialMode = st.IsTrialMode
 	resp.ExpiresAt = st.ExpiresAt
-	resp.TierValue = int(st.Tier)
+	resp.TierValue = st.Tier
 	if st.IsTrialMode {
 		resp.Tier = "Trial"
 		resp.TrialDaysLeft = mgr.TrialDaysRemaining()
 		resp.CanMintTokens = true
 	} else {
-		resp.Tier = st.Tier.String()
+		resp.Tier = license.Tier(st.Tier).String()
 		// Route the UI signal through the same catalog lookup the
 		// backend gate (tokens.LicenseGate) uses. Keeps the two in
 		// lock-step if rest_api ever moves between tiers.
