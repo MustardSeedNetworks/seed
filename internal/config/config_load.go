@@ -39,67 +39,6 @@ func Load(path string) (*Config, error) {
 	return cfg, nil
 }
 
-// LoadWithMigration reads configuration from a JSON file and applies any necessary migrations.
-// It creates a backup before applying migrations.
-func LoadWithMigration(path string, migrator *MigrationManager) (*Config, bool, error) {
-	cfg := DefaultConfig()
-
-	data, err := os.ReadFile(path)
-	if err != nil {
-		if os.IsNotExist(err) {
-			return cfg, false, nil // Use defaults if file doesn't exist
-		}
-		return nil, false, fmt.Errorf("read config file: %w", err)
-	}
-
-	// Check current version in file
-	var partial struct {
-		Version int `json:"version"`
-	}
-	if partialErr := json.Unmarshal(data, &partial); partialErr != nil {
-		return nil, false, fmt.Errorf("failed to parse config version: %w", partialErr)
-	}
-
-	migrated := false
-	if partial.Version < ConfigVersion && migrator != nil {
-		// Create backup before migration
-		backupMgr := NewBackupManager(path, "", defaultBackupMaxCount)
-		if _, backupErr := backupMgr.CreateBackup(); backupErr != nil {
-			logging.GetLogger().Warn("Failed to create backup before migration", "error", backupErr)
-		}
-
-		// Apply migrations
-		migratedData, migrateErr := migrator.Migrate(data, partial.Version, ConfigVersion)
-		if migrateErr != nil {
-			return nil, false, fmt.Errorf("failed to migrate config from v%d to v%d: %w",
-				partial.Version, ConfigVersion, migrateErr)
-		}
-		data = migratedData
-		migrated = true
-		logging.GetLogger().
-			Info("Migrated config", "from_version", partial.Version, "to_version", ConfigVersion)
-	}
-
-	if unmarshalErr := json.Unmarshal(data, cfg); unmarshalErr != nil {
-		return nil, false, fmt.Errorf("parse config JSON: %w", unmarshalErr)
-	}
-
-	// Ensure version is set
-	if cfg.Version == 0 {
-		cfg.Version = ConfigVersion
-		migrated = true
-	}
-
-	// Save migrated config
-	if migrated {
-		if saveErr := cfg.Save(path); saveErr != nil {
-			logging.GetLogger().Warn("Failed to save migrated config", "error", saveErr)
-		}
-	}
-
-	return cfg, migrated, nil
-}
-
 // Save writes the configuration to a JSON file at the specified path.
 // This method acquires a read lock to prevent data races during marshaling.
 func (c *Config) Save(path string) error {

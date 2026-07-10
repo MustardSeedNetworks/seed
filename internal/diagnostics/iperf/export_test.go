@@ -87,11 +87,6 @@ func ValidateBinary(path string) bool {
 	return validateBinary(path)
 }
 
-// NeedsSudo exposes the internal needsSudo function for testing.
-func NeedsSudo(packageManager string) bool {
-	return needsSudo(packageManager)
-}
-
 // GetCacheDir exposes the internal getCacheDir function for testing.
 func GetCacheDir() (string, error) {
 	return getCacheDir()
@@ -120,21 +115,6 @@ func ExtractEmbeddedBinary() (string, error) {
 // FindSystemIperf3 exposes the internal findSystemIperf3 function for testing.
 func FindSystemIperf3() (string, error) {
 	return findSystemIperf3()
-}
-
-// DetectLinuxPackageManager exposes the internal detectLinuxPackageManager function for testing.
-func DetectLinuxPackageManager() *PackageManagerInfo {
-	return detectLinuxPackageManager()
-}
-
-// DetectMacOSPackageManager exposes the internal detectMacOSPackageManager function for testing.
-func DetectMacOSPackageManager() *PackageManagerInfo {
-	return detectMacOSPackageManager()
-}
-
-// DetectWindowsPackageManager exposes the internal detectWindowsPackageManager function for testing.
-func DetectWindowsPackageManager() *PackageManagerInfo {
-	return detectWindowsPackageManager()
 }
 
 // ClearIperfBinaryPath clears the cached binary path for testing.

@@ -37,6 +37,13 @@ func getPlatformBinaryMap() map[string]string {
 // Update this when rebuilding embedded binaries.
 const EmbeddedVersion = "3.20"
 
+// OS constants for [runtime.GOOS] checks.
+const (
+	osLinux   = "linux"
+	osDarwin  = "darwin"
+	osWindows = "windows"
+)
+
 // getCacheDir returns the OS-appropriate cache directory for extracted binaries.
 // Linux: ~/.cache/seed/bin.
 // macOS: ~/Library/Caches/seed/bin.
