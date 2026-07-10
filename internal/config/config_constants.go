@@ -71,9 +71,6 @@ const (
 
 	// defaultDBMaxConnections is the default maximum number of database connections.
 	defaultDBMaxConnections = 10
-
-	// defaultBackupMaxCount is the default maximum number of config backups to retain.
-	defaultBackupMaxCount = 10
 )
 
 // Network port constants for common services.
