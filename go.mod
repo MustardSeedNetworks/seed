@@ -93,7 +93,7 @@ require (
 )
 
 require (
-	github.com/MustardSeedNetworks/foundation v0.1.0
+	github.com/MustardSeedNetworks/foundation v0.2.0
 	github.com/go-playground/validator/v10 v10.30.3
 	github.com/go-webauthn/webauthn v0.17.4
 	github.com/invopop/jsonschema v0.14.0

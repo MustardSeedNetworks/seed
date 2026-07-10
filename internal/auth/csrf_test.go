@@ -2,111 +2,80 @@ package auth_test
 
 import (
 	"errors"
+	"net/http"
 	"testing"
-	"time"
+
+	"github.com/MustardSeedNetworks/foundation/pkg/csrf"
 
 	"github.com/MustardSeedNetworks/seed/internal/auth"
 )
 
-func TestNewCSRFManager(t *testing.T) {
-	manager := auth.NewCSRFManager()
-	if manager == nil {
-		t.Fatal("NewCSRFManager returned nil")
-	}
-
-	if manager.CSRFManagerTokens() == nil {
-		t.Fatal("tokens map not initialized")
-	}
-
-	// Clean up
-	manager.Stop()
-}
-
-func TestCSRFManagerCleanupStopsOnContextCancel(t *testing.T) {
-	manager := auth.NewCSRFManager()
-
-	// Generate a token to ensure the manager is working
-	token, err := manager.GenerateToken("test-session")
-	if err != nil {
-		t.Fatalf("failed to generate token: %v", err)
-	}
-	if token == "" {
-		t.Fatal("expected non-empty token")
-	}
-
-	// Stop the manager
-	manager.Stop()
-
-	// Give the goroutine a moment to stop
-	time.Sleep(100 * time.Millisecond)
-
-	// The test passes if we get here without hanging or panicking
-	// In a real scenario, we'd verify the goroutine actually stopped,
-	// but that's difficult without exposing internal state
-}
-
+// TestCSRFManagerGenerateAndValidate exercises Seed's thin wrapper over
+// foundation's manager: a token generated for a session validates, and a wrong
+// session or wrong token is rejected with foundation's ErrTokenInvalid. The
+// per-session store mechanics themselves are covered in foundation's tests.
 func TestCSRFManagerGenerateAndValidate(t *testing.T) {
 	manager := auth.NewCSRFManager()
 	defer manager.Stop()
 
 	sessionID := "test-session"
 
-	// Generate a token
 	token, err := manager.GenerateToken(sessionID)
 	if err != nil {
 		t.Fatalf("failed to generate token: %v", err)
 	}
 
-	// Validate the token
 	if validateErr := manager.ValidateToken(sessionID, token); validateErr != nil {
 		t.Errorf("failed to validate token: %v", validateErr)
 	}
 
-	// Validate with wrong session ID
 	if wrongSessionErr := manager.ValidateToken("wrong-session", token); !errors.Is(
-		wrongSessionErr,
-		auth.ErrCSRFTokenInvalid,
+		wrongSessionErr, csrf.ErrTokenInvalid,
 	) {
-		t.Errorf("expected ErrCSRFTokenInvalid, got %v", wrongSessionErr)
+		t.Errorf("expected ErrTokenInvalid, got %v", wrongSessionErr)
 	}
 
-	// Validate with wrong token
 	if wrongTokenErr := manager.ValidateToken(sessionID, "wrong-token"); !errors.Is(
-		wrongTokenErr,
-		auth.ErrCSRFTokenInvalid,
+		wrongTokenErr, csrf.ErrTokenInvalid,
 	) {
-		t.Errorf("expected ErrCSRFTokenInvalid, got %v", wrongTokenErr)
+		t.Errorf("expected ErrTokenInvalid, got %v", wrongTokenErr)
 	}
 }
 
+// TestCSRFManagerStop confirms Stop shuts the manager down cleanly (delegating
+// to foundation's cleanup goroutine) without hanging or panicking.
 func TestCSRFManagerStop(t *testing.T) {
 	manager := auth.NewCSRFManager()
-
-	// Generate some tokens
-	_, err := manager.GenerateToken("session1")
-	if err != nil {
+	if _, err := manager.GenerateToken("session1"); err != nil {
 		t.Fatalf("failed to generate token: %v", err)
 	}
+	manager.Stop()
+}
 
-	// Verify context is not canceled initially
-	select {
-	case <-manager.CSRFManagerCtxDone():
-		t.Fatal("context should not be canceled initially")
-	default:
-		// Expected - context is still active
+// TestGetSessionIDFromRequest_HashedKeying pins the security-invariant change:
+// the CSRF session key is now sha256(bearer) (foundation's SessionKey), not the
+// raw JWT payload segment. It must not embed the token plaintext, must be the
+// 64-char sha256 hex, and a request with no token must yield "" so the
+// middleware rejects with 401.
+func TestGetSessionIDFromRequest_HashedKeying(t *testing.T) {
+	bearer := "header.payload-segment.signature"
+	r, _ := http.NewRequest(http.MethodPost, "/api/v1/x", nil)
+	r.Header.Set("Authorization", "Bearer "+bearer)
+
+	key := auth.GetSessionIDFromRequest(r)
+	if key == "" {
+		t.Fatal("expected a session key for an authenticated request")
+	}
+	if key == bearer || key == "payload-segment" {
+		t.Errorf("session key must not be the raw token/payload segment (got %q)", key)
+	}
+	if len(key) != 64 { // sha256 hex
+		t.Errorf("session key len = %d, want 64 (sha256 hex)", len(key))
 	}
 
-	// Stop the manager
-	manager.Stop()
-
-	// Give goroutine time to exit
-	time.Sleep(50 * time.Millisecond)
-
-	// Verify context is canceled
-	select {
-	case <-manager.CSRFManagerCtxDone():
-		// Expected - context is canceled
-	default:
-		t.Fatal("context should be canceled after Stop()")
+	// No token → empty key so the middleware can 401.
+	empty, _ := http.NewRequest(http.MethodPost, "/api/v1/x", nil)
+	if k := auth.GetSessionIDFromRequest(empty); k != "" {
+		t.Errorf("no-token request should yield empty key, got %q", k)
 	}
 }
