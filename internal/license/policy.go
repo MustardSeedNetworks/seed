@@ -122,21 +122,21 @@ func proFeatures() []string {
 		"sso",
 		"white_label",
 		"rest_api",
-		// V1.0 NMS expansion (Phase 0 anchor, 2026-05-30).
+		// V1.0 NMS expansion (Phase 0 anchor, 2026-05-30). Only features
+		// with a real backing implementation are listed — see the SNMP
+		// collector orchestrator (bgp4, hostresources) for bgp_monitoring /
+		// server_monitoring. microburst_detection, voip_mos_scoring,
+		// netflow_collection and config_backup_diff were removed 2026-07-10:
+		// they were sold in the Pro catalog with zero backing code (a
+		// verified audit found no collector, listener, or handler for any of
+		// them). Re-add each only when it is actually implemented.
 		"topology_estate",
 		"estate_polling",
-		"microburst_detection",
-		"voip_mos_scoring",
 		"server_monitoring",
 		"extended_retention",
 		"bgp_monitoring",
 		"wifi_management_capture",
 		"wifi_rogue_detection",
-		// V1.1 flags — present in catalog now; routes that gate on
-		// them return 402 until Phase 4 (NetFlow + config backup/diff)
-		// implements them.
-		"config_backup_diff",
-		"netflow_collection",
 	}
 	return append(starterFeatures(), pro...)
 }
