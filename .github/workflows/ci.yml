@@ -472,7 +472,7 @@ jobs:
   # Defined once in MustardSeedNetworks/.github (fleet-shared); ci-complete
   # still needs: [semgrep]. Edit the pinned version / config policy there.
   semgrep:
-    uses: MustardSeedNetworks/.github/.github/workflows/semgrep.yml@main
+    uses: MustardSeedNetworks/.github/.github/workflows/semgrep.yml@762b756e6fb5803443b9bcfdba03b88596c18e04 # v1.0.0
     permissions:
       contents: read
 

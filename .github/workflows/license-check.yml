@@ -22,4 +22,4 @@ jobs:
   # To change license policy for the fleet, edit that workflow, not this file.
   # foundation + modernc.org/mathutil are already ignored there fleet-wide.
   license-check:
-    uses: MustardSeedNetworks/.github/.github/workflows/license-check.yml@main
+    uses: MustardSeedNetworks/.github/.github/workflows/license-check.yml@762b756e6fb5803443b9bcfdba03b88596c18e04 # v1.0.0
