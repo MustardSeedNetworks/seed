@@ -51,7 +51,7 @@ func (s *Server) requireFeature(feature string, next http.HandlerFunc) http.Hand
 		// (no license activated) — present that as "Free".
 		tierName := license.TierFree.String()
 		if st := mgr.GetState(); st != nil {
-			tierName = st.Tier.String()
+			tierName = license.Tier(st.Tier).String()
 		}
 
 		resp := FeatureGateResponse{

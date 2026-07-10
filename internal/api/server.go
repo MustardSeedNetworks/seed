@@ -777,7 +777,7 @@ func (a licenseTierAdapter) GetTier() license.Tier {
 	if state == nil {
 		return license.TierFree
 	}
-	return state.Tier
+	return license.Tier(state.Tier)
 }
 
 // Service accessors — the in-package read interface and the lazy method
