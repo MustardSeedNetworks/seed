@@ -1,174 +1,62 @@
 package auth
 
 import (
-	"context"
-	"crypto/rand"
-	"crypto/subtle"
-	"encoding/base64"
 	"errors"
-	"fmt"
 	"net/http"
 	"strings"
-	"sync"
-	"time"
+
+	"github.com/MustardSeedNetworks/foundation/pkg/csrf"
 
 	"github.com/MustardSeedNetworks/seed/internal/logging"
 )
 
 // CSRF token configuration.
 const (
-	// CSRFTokenLength is the length of the CSRF token in bytes before encoding.
-	CSRFTokenLength = 32
-	// CSRFTokenExpiry is how long a CSRF token remains valid.
-	CSRFTokenExpiry = 24 * time.Hour
 	// CSRFHeaderName is the HTTP header name for CSRF tokens.
 	CSRFHeaderName = "X-Csrf-Token"
 	// CSRFCookieName is the cookie name for CSRF tokens.
 	CSRFCookieName = "csrf_token"
 )
 
-// Internal constants for CSRF token management.
-const (
-	// csrfCleanupIntervalMinutes is how often expired tokens are cleaned up.
-	csrfCleanupIntervalMinutes = 5
-
-	// jwtTokenPartsCount is the minimum number of parts in a valid JWT token (header.payload.signature).
-	jwtTokenPartsCount = 2
-)
-
-// CSRF errors.
-var (
-	// ErrCSRFTokenMissing is returned when no CSRF token is provided.
-	ErrCSRFTokenMissing = errors.New("CSRF token missing")
-	// ErrCSRFTokenInvalid is returned when the CSRF token is invalid.
-	ErrCSRFTokenInvalid = errors.New("CSRF token invalid")
-	// ErrCSRFTokenExpired is returned when the CSRF token has expired.
-	ErrCSRFTokenExpired = errors.New("CSRF token expired")
-)
-
-// CSRFToken represents a CSRF token with its metadata.
-type CSRFToken struct {
-	Token     string    // The actual token string
-	ExpiresAt time.Time // When the token expires
-}
-
-// CSRFManager manages CSRF token generation and validation.
+// CSRFManager backs Seed's CSRF protection with the fleet-shared foundation
+// per-session token manager (github.com/MustardSeedNetworks/foundation/pkg/csrf).
+// Token storage, generation, constant-time validation, expiry sweep and the
+// sha256(session-key) model all live in foundation now; Seed keeps only its
+// product-specific policy — the curated exempt-list, the response format, and
+// the JWT-derived session key — in CSRFMiddleware and GetSessionIDFromRequest
+// below.
 type CSRFManager struct {
-	mu     sync.RWMutex
-	tokens map[string]*CSRFToken // Map of token to metadata, keyed by user session
-	ctx    context.Context       // Context for shutdown coordination (fixes #785)
-	cancel context.CancelFunc    // Cancel function for shutdown (fixes #785)
+	mgr *csrf.Manager
 }
 
-// NewCSRFManager creates a new CSRF manager with context-based cleanup coordination (fixes #785).
+// NewCSRFManager creates a CSRF manager backed by foundation's per-session
+// token manager, whose cleanup goroutine is stopped via Stop() on shutdown.
 func NewCSRFManager() *CSRFManager {
-	ctx, cancel := context.WithCancel(context.Background())
-	manager := &CSRFManager{
-		tokens: make(map[string]*CSRFToken),
-		ctx:    ctx,
-		cancel: cancel,
-	}
-
-	// Start background cleanup goroutine with context cancellation (fixes #785)
-	go manager.cleanupExpiredTokens()
-
-	return manager
+	return &CSRFManager{mgr: csrf.NewManager()}
 }
 
-// GenerateToken creates a new CSRF token for the given session/user.
-// The sessionID should be derived from the user's JWT or session cookie.
+// GenerateToken mints a fresh CSRF token for the given session key (derived
+// from the caller's JWT via GetSessionIDFromRequest), replacing any existing
+// one.
 func (m *CSRFManager) GenerateToken(sessionID string) (string, error) {
-	// Generate cryptographically secure random bytes
-	tokenBytes := make([]byte, CSRFTokenLength)
-	if _, err := rand.Read(tokenBytes); err != nil {
-		return "", fmt.Errorf("failed to generate CSRF token: %w", err)
-	}
-
-	token := base64.URLEncoding.EncodeToString(tokenBytes)
-
-	m.mu.Lock()
-	defer m.mu.Unlock()
-
-	// Store the token with expiry
-	m.tokens[sessionID] = &CSRFToken{
-		Token:     token,
-		ExpiresAt: time.Now().Add(CSRFTokenExpiry),
-	}
-
-	return token, nil
+	return m.mgr.Generate(sessionID)
 }
 
-// ValidateToken checks if the provided token is valid for the given session.
-// Uses constant-time comparison to prevent timing attacks.
-// Fixes #856: Re-validates under write lock before deletion to prevent TOCTOU race.
+// ValidateToken checks the token against the one stored for sessionID. It
+// returns one of csrf.ErrTokenMissing / ErrTokenInvalid / ErrTokenExpired so
+// CSRFMiddleware can render a distinct response per cause.
 func (m *CSRFManager) ValidateToken(sessionID, token string) error {
-	if token == "" {
-		return ErrCSRFTokenMissing
-	}
-
-	m.mu.RLock()
-	storedToken, exists := m.tokens[sessionID]
-	m.mu.RUnlock()
-
-	if !exists {
-		return ErrCSRFTokenInvalid
-	}
-
-	// Check expiry
-	now := time.Now()
-	if now.After(storedToken.ExpiresAt) {
-		// Clean up expired token - re-check under write lock to prevent TOCTOU race
-		m.mu.Lock()
-		// Re-validate the token is still the same one we checked (fixes #856)
-		currentToken, stillExists := m.tokens[sessionID]
-		if stillExists && currentToken == storedToken {
-			delete(m.tokens, sessionID)
-		}
-		m.mu.Unlock()
-		return ErrCSRFTokenExpired
-	}
-
-	// Constant-time comparison to prevent timing attacks
-	if subtle.ConstantTimeCompare([]byte(token), []byte(storedToken.Token)) != 1 {
-		return ErrCSRFTokenInvalid
-	}
-
-	return nil
+	return m.mgr.Validate(sessionID, token)
 }
 
-// RevokeToken removes a CSRF token, typically on logout.
+// RevokeToken drops a session's CSRF token, e.g. on logout or session rotation.
 func (m *CSRFManager) RevokeToken(sessionID string) {
-	m.mu.Lock()
-	defer m.mu.Unlock()
-	delete(m.tokens, sessionID)
+	m.mgr.Revoke(sessionID)
 }
 
-// cleanupExpiredTokens periodically removes expired tokens (fixes #785 - respects shutdown signal).
-func (m *CSRFManager) cleanupExpiredTokens() {
-	ticker := time.NewTicker(csrfCleanupIntervalMinutes * time.Minute)
-	defer ticker.Stop()
-
-	for {
-		select {
-		case <-m.ctx.Done():
-			logging.GetLogger().Debug("CSRF cleanup goroutine stopping")
-			return
-		case <-ticker.C:
-			m.mu.Lock()
-			now := time.Now()
-			for sessionID, token := range m.tokens {
-				if now.After(token.ExpiresAt) {
-					delete(m.tokens, sessionID)
-				}
-			}
-			m.mu.Unlock()
-		}
-	}
-}
-
-// Stop gracefully shuts down the CSRF manager by stopping the cleanup goroutine (fixes #785).
+// Stop shuts down the manager's background cleanup goroutine.
 func (m *CSRFManager) Stop() {
-	m.cancel()
+	m.mgr.Stop()
 }
 
 // isCSRFExemptPath reports whether path is on the curated CSRF exempt-list:
@@ -221,7 +109,7 @@ func (m *CSRFManager) CSRFMiddleware(next http.Handler) http.Handler {
 			return
 		}
 
-		// Extract session ID from request (use username from JWT)
+		// Derive the per-session key from the request's authenticated JWT.
 		sessionID := GetSessionIDFromRequest(r)
 
 		if sessionID == "" {
@@ -243,9 +131,9 @@ func (m *CSRFManager) CSRFMiddleware(next http.Handler) http.Handler {
 				"error", err)
 
 			switch {
-			case errors.Is(err, ErrCSRFTokenMissing):
+			case errors.Is(err, csrf.ErrTokenMissing):
 				sendAuthError(w, http.StatusForbidden, errCodeForbidden, "CSRF token required")
-			case errors.Is(err, ErrCSRFTokenExpired):
+			case errors.Is(err, csrf.ErrTokenExpired):
 				sendAuthError(w, http.StatusForbidden, errCodeForbidden, "CSRF token expired")
 			default:
 				sendAuthError(w, http.StatusForbidden, errCodeForbidden, "Invalid CSRF token")
@@ -257,19 +145,17 @@ func (m *CSRFManager) CSRFMiddleware(next http.Handler) http.Handler {
 	})
 }
 
-// GetSessionIDFromRequest attempts to extract a session identifier from the request.
-// Exported for use by the CSRF token endpoint handler.
+// GetSessionIDFromRequest derives the CSRF session key from the request's
+// authenticated JWT. The JWT is extracted the same way the auth middleware
+// reads it (cookie, then Authorization header, then WebSocket subprotocol),
+// then hashed via foundation's SessionKey so the bearer plaintext is never
+// stored in the manager. Returns "" when the request carries no token, so the
+// middleware can reject with 401. Exported for the CSRF token endpoint handler,
+// which must derive the same key it later validates against.
 func GetSessionIDFromRequest(r *http.Request) string {
-	// Extract from JWT token in cookie (verified source)
 	token, _ := GetTokenFromRequest(r)
-	if token != "" {
-		// Use the first part of the token as a session identifier
-		// This is a simplified approach - in production you'd decode the JWT
-		parts := strings.Split(token, ".")
-		if len(parts) >= jwtTokenPartsCount {
-			return parts[1] // Use payload part as identifier
-		}
+	if token == "" {
+		return ""
 	}
-
-	return ""
+	return csrf.SessionKey(token)
 }

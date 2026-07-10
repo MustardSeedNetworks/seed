@@ -11,6 +11,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/MustardSeedNetworks/foundation/pkg/csrf"
+
 	"github.com/MustardSeedNetworks/seed/internal/auth"
 	"github.com/MustardSeedNetworks/seed/internal/testutil"
 )
@@ -1350,10 +1352,10 @@ func TestCSRFRevokeToken(t *testing.T) {
 	// Revoke it
 	mgr.RevokeToken("testsession")
 
-	// Should no longer be valid (returns ErrCSRFTokenInvalid when session not found)
+	// Should no longer be valid (returns ErrTokenInvalid when session not found)
 	err = mgr.ValidateToken("testsession", token)
-	if !errors.Is(err, auth.ErrCSRFTokenInvalid) {
-		t.Errorf("expected ErrCSRFTokenInvalid after revoke, got %v", err)
+	if !errors.Is(err, csrf.ErrTokenInvalid) {
+		t.Errorf("expected ErrTokenInvalid after revoke, got %v", err)
 	}
 }
 
@@ -1457,26 +1459,34 @@ func TestGetSessionIDFromRequest(t *testing.T) {
 		}
 	})
 
-	t.Run("valid JWT format extracts session ID", func(t *testing.T) {
+	// The session key is now sha256(bearer) (foundation's SessionKey), not the
+	// raw JWT payload segment — fleet CSRF convergence. Both extraction paths
+	// (header, cookie) must hash the same underlying token to the same key.
+	t.Run("header token hashes to sha256 session key", func(t *testing.T) {
+		bearer := "header.payload.signature"
 		req := httptest.NewRequest(http.MethodGet, "/api/test", http.NoBody)
-		req.Header.Set("Authorization", "Bearer header.payload.signature")
+		req.Header.Set("Authorization", "Bearer "+bearer)
 
 		sessionID := auth.GetSessionIDFromRequest(req)
-		if sessionID != "payload" {
-			t.Errorf("expected session ID 'payload', got %q", sessionID)
+		if sessionID != csrf.SessionKey(bearer) {
+			t.Errorf("session ID = %q, want sha256(bearer) %q", sessionID, csrf.SessionKey(bearer))
+		}
+		if sessionID == "payload" {
+			t.Error("session key must not be the raw JWT payload segment")
 		}
 	})
 
-	t.Run("cookie token extracts session ID", func(t *testing.T) {
+	t.Run("cookie token hashes to sha256 session key", func(t *testing.T) {
+		cookieToken := "header.cookiepayload.signature"
 		req := httptest.NewRequest(http.MethodGet, "/api/test", http.NoBody)
 		req.AddCookie(&http.Cookie{
 			Name:  auth.CookieNameAccess,
-			Value: "header.cookiepayload.signature",
+			Value: cookieToken,
 		})
 
 		sessionID := auth.GetSessionIDFromRequest(req)
-		if sessionID != "cookiepayload" {
-			t.Errorf("expected session ID 'cookiepayload', got %q", sessionID)
+		if sessionID != csrf.SessionKey(cookieToken) {
+			t.Errorf("session ID = %q, want sha256(cookie) %q", sessionID, csrf.SessionKey(cookieToken))
 		}
 	})
 }
