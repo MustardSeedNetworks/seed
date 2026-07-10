@@ -63,14 +63,3 @@ func (m *Manager) ManagerSessionTimeout() any {
 func (m *Manager) ManagerJWTSecret() []byte {
 	return m.jwtSecret
 }
-
-// CSRFManagerTokens returns the tokens map from a CSRFManager for testing.
-// Returns a map keyed by session ID for testing purposes only.
-func (c *CSRFManager) CSRFManagerTokens() map[string]*CSRFToken {
-	return c.tokens
-}
-
-// CSRFManagerCtxDone returns the context Done channel for testing.
-func (c *CSRFManager) CSRFManagerCtxDone() <-chan struct{} {
-	return c.ctx.Done()
-}
