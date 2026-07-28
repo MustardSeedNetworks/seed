@@ -10,7 +10,7 @@ import "time"
 func DefaultConfig() *Config {
 	return &Config{
 		Version: ConfigVersion,
-		Server:  ServerConfig{Port: defaultHTTPSPort, HTTPS: true},
+		Server:  ServerConfig{Port: defaultHTTPSPort},
 		Interface: InterfaceConfig{
 			Default:          "",
 			Fallbacks:        []string{},

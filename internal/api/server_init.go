@@ -348,8 +348,7 @@ func (s *Server) initSecurityOrigins(cfg *config.Config) {
 		return
 	}
 
-	// Check for wildcard origin in production mode (fixes #715)
-	// Production mode is inferred from HTTPS being enabled
+	// Check for wildcard origin (fixes #715).
 	s.logWildcardOriginWarning(cfg)
 
 	logging.GetLogger().Info(
@@ -365,15 +364,9 @@ func (s *Server) logWildcardOriginWarning(cfg *config.Config) {
 		return
 	}
 
-	if cfg.Server.HTTPS {
-		logging.GetLogger().Warn(
-			"SECURITY WARNING: Wildcard origin (*) allows all origins in production mode with HTTPS enabled",
-			"recommendation",
-			"Configure explicit allowed origins in Security.AllowedOrigins for production deployments",
-		)
-		return
-	}
-
-	logging.GetLogger().Info("Wildcard origin (*) configured - allows all origins (development mode)",
-		"warning", "Not recommended for production use")
+	logging.GetLogger().Warn(
+		"SECURITY WARNING: Wildcard origin (*) allows all origins",
+		"recommendation",
+		"Configure explicit allowed origins in Security.AllowedOrigins",
+	)
 }

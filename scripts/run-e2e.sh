@@ -44,7 +44,7 @@ case $(uname -s) in
   *) loopback=lo ;;
 esac
 printf '%s\n' \
-  "{\"server\":{\"port\":$port,\"https\":true},\"interface\":{\"default\":\"$loopback\",\"fallbacks\":[],\"startup_retries\":0,\"startup_retry_wait\":0},\"networkDiscovery\":{\"enabled\":false,\"auto_scan\":false,\"options\":{\"passiveProtocols\":{\"lldp\":false,\"cdp\":false,\"edp\":false,\"ndp\":false},\"arpScan\":false,\"icmpScan\":false,\"portScan\":{\"enabled\":false},\"traceroute\":false,\"snmpQuery\":false},\"profiler\":{\"enabled\":false},\"ipv6_enabled\":false},\"healthChecks\":{\"ping_targets\":[],\"tcp_ports\":[],\"udp_ports\":[],\"http_endpoints\":[],\"rtsp_endpoints\":[],\"dicom_endpoints\":[],\"hl7_endpoints\":[],\"fhir_endpoints\":[],\"sql_endpoints\":[],\"fileshare_endpoints\":[],\"ldap_endpoints\":[],\"lti_endpoints\":[],\"opcua_endpoints\":[],\"modbus_endpoints\":[],\"run_performance\":false,\"run_speedtest\":false,\"run_iperf\":false,\"run_discovery\":false},\"iperf\":{\"enable_server\":false,\"auto_run_on_link\":false},\"fabOptions\":{\"run_health_checks\":false,\"run_network_discovery\":false,\"run_speedtest\":false,\"run_iperf\":false,\"run_performance\":false,\"auto_scan_on_link\":false},\"database\":{\"path\":\"$run_dir/seed.db\"},\"logging\":{\"file\":\"$run_dir/seed.log\"}}" \
+  "{\"server\":{\"port\":$port},\"interface\":{\"default\":\"$loopback\",\"fallbacks\":[],\"startup_retries\":0,\"startup_retry_wait\":0},\"networkDiscovery\":{\"enabled\":false,\"auto_scan\":false,\"options\":{\"passiveProtocols\":{\"lldp\":false,\"cdp\":false,\"edp\":false,\"ndp\":false},\"arpScan\":false,\"icmpScan\":false,\"portScan\":{\"enabled\":false},\"traceroute\":false,\"snmpQuery\":false},\"profiler\":{\"enabled\":false},\"ipv6_enabled\":false},\"healthChecks\":{\"ping_targets\":[],\"tcp_ports\":[],\"udp_ports\":[],\"http_endpoints\":[],\"rtsp_endpoints\":[],\"dicom_endpoints\":[],\"hl7_endpoints\":[],\"fhir_endpoints\":[],\"sql_endpoints\":[],\"fileshare_endpoints\":[],\"ldap_endpoints\":[],\"lti_endpoints\":[],\"opcua_endpoints\":[],\"modbus_endpoints\":[],\"run_performance\":false,\"run_speedtest\":false,\"run_iperf\":false,\"run_discovery\":false},\"iperf\":{\"enable_server\":false,\"auto_run_on_link\":false},\"fabOptions\":{\"run_health_checks\":false,\"run_network_discovery\":false,\"run_speedtest\":false,\"run_iperf\":false,\"run_performance\":false,\"auto_scan_on_link\":false},\"database\":{\"path\":\"$run_dir/seed.db\"},\"logging\":{\"file\":\"$run_dir/seed.log\"}}" \
   >"$run_dir/config.json"
 
 (
@@ -75,8 +75,14 @@ while [ "$attempt" -lt 120 ]; do
 done
 
 if [ -z "$base_url" ]; then
-  printf '%s\n' 'Seed did not become ready within 30 seconds' >&2
-  exit 1
+	printf '%s\n' 'Seed did not become ready within 30 seconds' >&2
+	exit 1
+fi
+
+plain_url="http://${base_url#https://}"
+if curl -sf --max-time 2 "$plain_url/__version" >/dev/null 2>&1; then
+	printf '%s\n' "Seed served application content over plaintext HTTP at $plain_url" >&2
+	exit 1
 fi
 
 cd "$repo_dir/ui"

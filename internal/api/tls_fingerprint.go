@@ -24,7 +24,7 @@ import (
 const pemCertBlockType = "CERTIFICATE"
 
 // errEmptyCertPath is returned when the configured cert path is empty
-// (i.e. the server is running in HTTP mode and no cert exists).
+// and no generated certificate path has been selected.
 var errEmptyCertPath = errors.New("no certificate configured")
 
 // errNoCertificateBlock is returned when the PEM-encoded file does not
@@ -43,8 +43,7 @@ type tlsFingerprintCache struct {
 }
 
 // Get returns the fingerprint for the given cert file path, computing
-// and caching it on first access. An empty path returns an empty
-// fingerprint without error (HTTP mode is a supported configuration).
+// and caching it on first access. An empty path returns an empty fingerprint.
 func (c *tlsFingerprintCache) Get(path string) (string, error) {
 	if path == "" {
 		return "", nil
@@ -128,19 +127,9 @@ func formatFingerprint(digest []byte) string {
 	return string(out)
 }
 
-// activeCertPath returns the cert file path the server will use, or "" if
-// the server is running in HTTP mode. Mirrors the priority order of
+// activeCertPath returns the cert file path the server will use. Mirrors
 // startHTTPS so /__version reports the same cert that is actually served.
 func (s *Server) activeCertPath() string {
-	if !s.config.Server.HTTPS {
-		return ""
-	}
-	if s.config.Server.ACME.Enabled {
-		// ACME certs live in the autocert cache; they are not a single
-		// stable file path we can fingerprint here. Return empty rather
-		// than guessing.
-		return ""
-	}
 	if s.config.Server.CertFile != "" {
 		return s.config.Server.CertFile
 	}

@@ -59,8 +59,7 @@ func TestRedactSecrets(t *testing.T) {
 			cfg: &config.Config{
 				Version: 1,
 				Server: config.ServerConfig{
-					Port:  8443,
-					HTTPS: true,
+					Port: 8443,
 				},
 				Interface: config.InterfaceConfig{
 					Default: "eth0",
@@ -86,8 +85,7 @@ func TestRedactSecretsPreservesNonSensitiveData(t *testing.T) {
 	original := &config.Config{
 		Version: 2,
 		Server: config.ServerConfig{
-			Port:  8443,
-			HTTPS: true,
+			Port: 8443,
 		},
 		Interface: config.InterfaceConfig{
 			Default:   "eth0",
@@ -170,9 +168,6 @@ func assertPreservedNonSensitiveData(t *testing.T, original, redacted *config.Co
 	}
 	if redacted.Server.Port != original.Server.Port {
 		t.Errorf("Server.Port should be preserved: got %d, want %d", redacted.Server.Port, original.Server.Port)
-	}
-	if redacted.Server.HTTPS != original.Server.HTTPS {
-		t.Errorf("Server.HTTPS should be preserved: got %v, want %v", redacted.Server.HTTPS, original.Server.HTTPS)
 	}
 	if redacted.Interface.Default != original.Interface.Default {
 		t.Errorf(

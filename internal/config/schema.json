@@ -167,8 +167,8 @@
     },
     "ServerConfig": {
       "type": "object",
-      "description": "HTTP server settings",
-      "required": ["port", "https", "cert_file", "key_file"],
+      "description": "HTTPS server settings",
+      "required": ["port", "public_origin", "cert_file", "key_file"],
       "additionalProperties": false,
       "properties": {
         "port": {
@@ -176,17 +176,10 @@
           "description": "HTTPS server port",
           "default": 8443
         },
-        "https": {
-          "type": "boolean",
-          "description": "Enable HTTPS",
-          "default": true
-        },
-        "http_redirect_port": {
-          "type": "integer",
-          "description": "Port for HTTP to HTTPS redirect (0 = disabled, typically 80)",
-          "minimum": 0,
-          "maximum": 65535,
-          "default": 0
+        "public_origin": {
+          "type": "string",
+          "description": "HTTPS origin browsers use to reach Seed; empty uses localhost",
+          "default": ""
         },
         "cert_file": {
           "type": "string",
@@ -197,42 +190,6 @@
           "type": "string",
           "description": "Path to TLS private key file",
           "default": ""
-        },
-        "acme": {
-          "$ref": "#/$defs/ACMEConfig"
-        }
-      }
-    },
-    "ACMEConfig": {
-      "type": "object",
-      "description": "ACME/Let's Encrypt automatic certificate management",
-      "required": ["enabled"],
-      "additionalProperties": false,
-      "properties": {
-        "enabled": {
-          "type": "boolean",
-          "description": "Enable automatic certificate management",
-          "default": false
-        },
-        "domain": {
-          "type": "string",
-          "description": "Domain name for the certificate (e.g., 'seed.example.com')",
-          "format": "hostname"
-        },
-        "email": {
-          "type": "string",
-          "description": "Contact email for Let's Encrypt notifications",
-          "format": "email"
-        },
-        "cache_dir": {
-          "type": "string",
-          "description": "Directory to cache certificates",
-          "default": "certs/acme"
-        },
-        "staging": {
-          "type": "boolean",
-          "description": "Use Let's Encrypt staging server (for testing)",
-          "default": false
         }
       }
     },

@@ -27,8 +27,7 @@ type AuthDefaults struct {
 
 // ServerDefaults contains server-related test defaults.
 type ServerDefaults struct {
-	Port  int  // Server port
-	HTTPS bool // HTTPS enabled
+	Port int // Server port
 }
 
 // DNSDefaults contains DNS-related test defaults.
@@ -99,8 +98,7 @@ func GetTestDefaults() *TestDefaults {
 				Timeout:      cfg.Auth.SessionTimeout,
 			},
 			Server: ServerDefaults{
-				Port:  cfg.Server.Port,
-				HTTPS: false, // Easier for testing
+				Port: cfg.Server.Port,
 			},
 			DNS: DNSDefaults{
 				TestHostname: cfg.DNS.TestHostname,

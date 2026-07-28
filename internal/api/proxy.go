@@ -18,10 +18,18 @@ package api
 // When running behind nginx:
 //
 //	location / {
-//	    proxy_pass http://localhost:8443;
+//	    proxy_pass https://localhost:8443;
+//	    proxy_ssl_trusted_certificate /etc/nginx/seed-ca.crt;
+//	    proxy_ssl_verify on;
+//	    proxy_ssl_server_name on;
+//	    proxy_ssl_name localhost;
 //	    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
 //	    proxy_set_header X-Real-IP $remote_addr;
 //	}
+//
+// The trusted certificate must be Seed's self-signed certificate or the CA
+// that issued the operator-provided certificate. Disabling proxy_ssl_verify is
+// suitable only for an isolated development environment.
 
 import (
 	"log/slog"

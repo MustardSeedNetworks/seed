@@ -31,17 +31,9 @@ export interface Config {
 }
 export interface ServerConfig {
   port: number;
-  https: boolean;
+  public_origin: string;
   cert_file: string;
   key_file: string;
-  acme?: ACMEConfig;
-}
-export interface ACMEConfig {
-  enabled: boolean;
-  domain: string;
-  email: string;
-  cache_dir?: string;
-  staging?: boolean;
 }
 export interface InterfaceConfig {
   default: string;

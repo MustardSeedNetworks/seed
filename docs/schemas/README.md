@@ -64,7 +64,6 @@ The schema defines reusable types in `$defs`:
 The schema enforces the same validation rules as `config.Validate()`:
 
 - `server.port`: 1-65535
-- `server.http_redirect_port`: 0-65535
 - `vlan.id`: 1-4094 (when enabled)
 - `ip.mode`: "dhcp" or "static"
 - `network_discovery.arp_scan_workers`: 1-500

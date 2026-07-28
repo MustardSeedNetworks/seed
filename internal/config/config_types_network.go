@@ -1,30 +1,18 @@
 package config
 
 // config_types_network.go contains the runtime network configuration types:
-// HTTP server, ACME, interface selection, VLAN, IP / static IP, switch
+// HTTPS server, interface selection, VLAN, IP / static IP, switch
 // discovery, network device discovery, fingerprinting, and subnet config.
 
 import "time"
 
-// ServerConfig contains HTTP server settings.
+// ServerConfig contains HTTPS server settings.
 type ServerConfig struct {
-	Port     int    `json:"port"`
-	HTTPS    bool   `json:"https"`
-	CertFile string `json:"cert_file"`
-	KeyFile  string `json:"key_file"`
+	Port         int    `json:"port"`
+	PublicOrigin string `json:"public_origin"`
+	CertFile     string `json:"cert_file"`
+	KeyFile      string `json:"key_file"`
 	// Security fix #301: Removed LogAccessToken/LogAccessHeader - JWT authentication is sufficient
-
-	// ACME/Let's Encrypt automatic certificate management
-	ACME ACMEConfig `json:"acme,omitzero"`
-}
-
-// ACMEConfig contains ACME/Let's Encrypt certificate settings.
-type ACMEConfig struct {
-	Enabled  bool   `json:"enabled"`             // Enable automatic certificate management
-	Domain   string `json:"domain"`              // Domain name for the certificate (e.g., "seed.example.com")
-	Email    string `json:"email"`               // Contact email for Let's Encrypt notifications
-	CacheDir string `json:"cache_dir,omitempty"` // Directory to cache certificates (default: "certs/acme")
-	Staging  bool   `json:"staging,omitempty"`   // Use Let's Encrypt staging server (for testing)
 }
 
 // InterfaceConfig contains network interface settings.

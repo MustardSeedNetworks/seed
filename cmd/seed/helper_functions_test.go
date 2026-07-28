@@ -224,8 +224,7 @@ func TestRedactSecretsComprehensive(t *testing.T) {
 	cfg := &config.Config{
 		Version: 1,
 		Server: config.ServerConfig{
-			Port:  8443,
-			HTTPS: true,
+			Port: 8443,
 		},
 		Auth: config.AuthConfig{
 			DefaultUsername:     "admin",

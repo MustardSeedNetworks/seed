@@ -1,7 +1,7 @@
 package api
 
-// server_lifecycle.go contains the HTTP/HTTPS server lifecycle: Start,
-// ACME-managed HTTPS, and the self-signed fallback certificate generator.
+// server_lifecycle.go contains the HTTPS server lifecycle and the self-signed
+// fallback certificate generator.
 
 import (
 	"context"
@@ -19,15 +19,12 @@ import (
 	"path/filepath"
 	"time"
 
-	"golang.org/x/crypto/acme"
-	"golang.org/x/crypto/acme/autocert"
-
 	"github.com/MustardSeedNetworks/seed/internal/engine"
 	"github.com/MustardSeedNetworks/seed/internal/i18n"
 	"github.com/MustardSeedNetworks/seed/internal/logging"
 )
 
-// Start starts the HTTP/HTTPS server.
+// Start starts the HTTPS server.
 // startBackgroundEngines fires up every engine registered with the
 // service container's engine.Registry — probe + retention today,
 // snmp-poller + listeners as they land. Lifecycle ordering is
@@ -161,47 +158,20 @@ func (s *Server) Start() error {
 
 	s.startBackgroundEngines()
 
-	if s.config.Server.HTTPS {
-		return s.startHTTPS()
-	}
-	return s.startHTTP()
+	return s.startHTTPS()
 }
 
-// startHTTP starts the server in HTTP mode.
-//
-// Uses bindWithFallback so that a busy canonical port falls back to
-// port+1..+9 instead of failing outright. The actual bound port is
-// reflected back into s.httpServer.Addr so /__version and log lines
-// match reality (fixes #69).
-func (s *Server) startHTTP() error {
-	ln, actualPort, err := bindWithFallback(context.Background(), "", s.config.Server.Port)
-	if err != nil {
-		return fmt.Errorf("http server: %w", err)
-	}
-	s.httpServer.Addr = fmt.Sprintf(":%d", actualPort)
-	logging.GetLogger().Info("Starting HTTP server", "addr", s.httpServer.Addr)
-	if serveErr := s.httpServer.Serve(ln); serveErr != nil {
-		return fmt.Errorf("http server: %w", serveErr)
-	}
-	return nil
-}
-
-// startHTTPS starts the server in HTTPS mode.
+// startHTTPS starts the server with an operator-provided certificate or a
+// generated self-signed certificate.
 func (s *Server) startHTTPS() error {
-	// Priority 1: ACME/Let's Encrypt automatic certificates
-	if s.config.Server.ACME.Enabled {
-		if s.config.Server.ACME.Domain == "" {
-			return errors.New("ACME enabled but no domain specified")
-		}
-		return s.startHTTPSWithACME()
-	}
-
-	// Priority 2: Manual certificates from config
 	certFile := s.config.Server.CertFile
 	keyFile := s.config.Server.KeyFile
+	if (certFile == "") != (keyFile == "") {
+		return errors.New("server.cert_file and server.key_file must be configured together")
+	}
 
-	// Priority 3: Self-signed certificate (fallback)
-	if certFile == "" || keyFile == "" {
+	// Generate a self-signed certificate when the operator did not provide one.
+	if certFile == "" {
 		var err error
 		certFile, keyFile, err = s.ensureSelfSignedCert()
 		if err != nil {
@@ -215,7 +185,6 @@ func (s *Server) startHTTPS() error {
 	// - TLS_AES_256_GCM_SHA384
 	// - TLS_CHACHA20_POLY1305_SHA256
 	// Setting CipherSuites with TLS 1.3 is misleading as Go ignores them.
-	// If you need to control ciphers, use MinVersion: tls.VersionTLS12
 	tlsConfig := &tls.Config{
 		MinVersion: tls.VersionTLS13,
 	}
@@ -226,78 +195,12 @@ func (s *Server) startHTTPS() error {
 		return fmt.Errorf("https server: %w", bindErr)
 	}
 	s.httpServer.Addr = fmt.Sprintf(":%d", actualPort)
+	s.initWebAuthn(actualPort)
 
 	logging.GetLogger().
 		Info("Starting HTTPS server", "addr", s.httpServer.Addr, "tls_version", "1.3")
 	if err := s.httpServer.ServeTLS(ln, certFile, keyFile); err != nil {
 		return fmt.Errorf("https server: %w", err)
-	}
-	return nil
-}
-
-// startHTTPSWithACME starts the server with automatic Let's Encrypt certificates.
-func (s *Server) startHTTPSWithACME() error {
-	cacheDir := s.config.Server.ACME.CacheDir
-	if cacheDir == "" {
-		cacheDir = "certs/acme"
-	}
-
-	// Ensure cache directory exists
-	if err := os.MkdirAll(cacheDir, 0o700); err != nil {
-		return fmt.Errorf("failed to create ACME cache dir: %w", err)
-	}
-
-	manager := &autocert.Manager{
-		Prompt:     autocert.AcceptTOS,
-		HostPolicy: autocert.HostWhitelist(s.config.Server.ACME.Domain),
-		Cache:      autocert.DirCache(cacheDir),
-		Email:      s.config.Server.ACME.Email,
-	}
-
-	// Use Let's Encrypt staging server for testing (certs won't be trusted by browsers)
-	if s.config.Server.ACME.Staging {
-		manager.Client = &acme.Client{
-			DirectoryURL: "https://acme-staging-v02.api.letsencrypt.org/directory",
-		}
-		logging.GetLogger().
-			Warn("ACME: Using Let's Encrypt STAGING server (certificates will not be trusted)")
-	}
-
-	// Configure TLS with ACME
-	tlsConfig := manager.TLSConfig()
-	tlsConfig.MinVersion = tls.VersionTLS13
-
-	s.httpServer.TLSConfig = tlsConfig
-
-	logging.GetLogger().Info("Starting HTTPS server with ACME",
-		"addr", s.httpServer.Addr,
-		"domain", s.config.Server.ACME.Domain)
-
-	// Start HTTP-01 challenge handler on port 80
-	// This is required for Let's Encrypt domain validation
-	// Store reference so it can be shut down properly (fixes #837)
-	s.acmeChallengeServer = &http.Server{
-		Addr:              ":80",
-		Handler:           manager.HTTPHandler(nil),
-		ReadHeaderTimeout: acmeReadHeaderTimeoutSec * time.Second,
-	}
-	go func() {
-		logging.GetLogger().Info("Starting HTTP-01 challenge handler", "addr", ":80")
-		if err := s.acmeChallengeServer.ListenAndServe(); err != nil &&
-			err != http.ErrServerClosed {
-			logging.GetLogger().Error("HTTP-01 handler error", "error", err)
-		}
-	}()
-
-	ln, actualPort, bindErr := bindWithFallback(context.Background(), "", s.config.Server.Port)
-	if bindErr != nil {
-		return fmt.Errorf("https server with ACME: %w", bindErr)
-	}
-	s.httpServer.Addr = fmt.Sprintf(":%d", actualPort)
-
-	// ServeTLS with empty cert/key paths uses GetCertificate from TLSConfig.
-	if err := s.httpServer.ServeTLS(ln, "", ""); err != nil {
-		return fmt.Errorf("https server with ACME: %w", err)
 	}
 	return nil
 }

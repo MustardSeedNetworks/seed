@@ -13,11 +13,6 @@ import (
 	"github.com/MustardSeedNetworks/seed/internal/paths"
 )
 
-const (
-	protocolHTTP  = "http"
-	protocolHTTPS = "https"
-)
-
 func initCredentialsCmd(state *cliState) {
 	credentialsCmd := &cobra.Command{
 		Use:   "credentials",
@@ -60,11 +55,6 @@ func runCredentials(cmd *cobra.Command, _ []string, state *cliState) {
 
 	// Determine setup status
 	needsSetup := errors.Is(err, config.ErrInsecureCredentials) || result.GeneratedCreds
-	protocol := protocolHTTPS
-	if !cfg.Server.HTTPS {
-		protocol = protocolHTTP
-	}
-
 	// Prepare status output
 	status := struct {
 		NeedsSetup bool   `json:"needs_setup"`
@@ -74,7 +64,7 @@ func runCredentials(cmd *cobra.Command, _ []string, state *cliState) {
 	}{
 		NeedsSetup: needsSetup,
 		Username:   cfg.Auth.DefaultUsername,
-		URL:        fmt.Sprintf("%s://localhost:%d", protocol, cfg.Server.Port),
+		URL:        fmt.Sprintf("https://localhost:%d", cfg.Server.Port),
 	}
 
 	if needsSetup {

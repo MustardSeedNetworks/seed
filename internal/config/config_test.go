@@ -20,10 +20,6 @@ func TestDefaultConfig(t *testing.T) {
 	if cfg.Server.Port != 8443 {
 		t.Errorf("expected default port 8443, got %d", cfg.Server.Port)
 	}
-	if !cfg.Server.HTTPS {
-		t.Error("expected HTTPS to be enabled by default")
-	}
-
 	// Test interface defaults - empty means auto-detect (#572)
 	if cfg.Interface.Default != "" {
 		t.Errorf(
@@ -1081,34 +1077,6 @@ func TestDefaultIperfConfig(t *testing.T) {
 	}
 	if cfg.Iperf.Duration != 10 {
 		t.Errorf("expected iperf duration 10, got %d", cfg.Iperf.Duration)
-	}
-}
-
-// ========== ACME Configuration Tests ==========
-
-func TestACMEConfig(t *testing.T) {
-	acme := config.ACMEConfig{
-		Enabled:  true,
-		Domain:   "example.com",
-		Email:    "admin@example.com",
-		CacheDir: "/var/certs",
-		Staging:  true,
-	}
-
-	if !acme.Enabled {
-		t.Error("expected ACME enabled")
-	}
-	if acme.Domain != "example.com" {
-		t.Errorf("expected domain 'example.com', got %q", acme.Domain)
-	}
-	if acme.Email != "admin@example.com" {
-		t.Errorf("expected email 'admin@example.com', got %q", acme.Email)
-	}
-	if acme.CacheDir != "/var/certs" {
-		t.Errorf("expected cache dir '/var/certs', got %q", acme.CacheDir)
-	}
-	if !acme.Staging {
-		t.Error("expected staging to be true")
 	}
 }
 

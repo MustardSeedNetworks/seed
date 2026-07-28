@@ -32,9 +32,9 @@ func TestHandleBuildVersionGET(t *testing.T) {
 		}
 	}
 
-	// tlsFingerprint must always be present (stable response shape) but may
-	// be empty when the server runs in HTTP mode, which is the default for
-	// the test server.
+	// tlsFingerprint must always be present for a stable response shape. The
+	// in-process handler test has not started the production TLS listener, so
+	// no active certificate path has been selected yet.
 	if _, ok := body["tlsFingerprint"]; !ok {
 		t.Errorf("response missing tlsFingerprint field (got %#v)", body)
 	}

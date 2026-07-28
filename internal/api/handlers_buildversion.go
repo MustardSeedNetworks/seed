@@ -14,8 +14,8 @@ import (
 //
 // In addition to version.Info() the response carries `tlsFingerprint`, the
 // SHA-256 fingerprint of the active TLS certificate. The field is always
-// present so the response shape is stable; it is an empty string when the
-// server runs without TLS (HTTP mode or ACME-managed certs).
+// present so the response shape is stable; it is empty if the active
+// certificate is missing or unreadable.
 func (s *Server) handleBuildVersion(w http.ResponseWriter, r *http.Request) {
 	logger := logging.FromContext(r.Context())
 	if r.Method != http.MethodGet {

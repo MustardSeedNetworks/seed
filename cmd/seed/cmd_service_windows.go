@@ -15,7 +15,6 @@ import (
 
 	api "github.com/MustardSeedNetworks/seed/internal/api"
 	"github.com/MustardSeedNetworks/seed/internal/app"
-	"github.com/MustardSeedNetworks/seed/internal/auth"
 	"github.com/MustardSeedNetworks/seed/internal/config"
 	"github.com/MustardSeedNetworks/seed/internal/database"
 	"github.com/MustardSeedNetworks/seed/internal/logging"
@@ -40,6 +39,8 @@ const (
 // seedProgram implements service.Interface for Windows service management.
 type seedProgram struct {
 	state      *cliState
+	configPath string
+	config     *config.Config
 	server     *api.Server
 	components *api.BackgroundComponents
 	stopChan   chan struct{}
@@ -48,6 +49,12 @@ type seedProgram struct {
 
 // Start is called when the Windows Service Manager starts the service.
 func (p *seedProgram) Start(_ service.Service) error {
+	p.configPath = paths.ResolveConfigPath(p.state.cfgFile, paths.ModeAuto)
+	cfg, err := loadAndConfigureConfigForService(p.configPath)
+	if err != nil {
+		return err
+	}
+	p.config = cfg
 	p.stopChan = make(chan struct{})
 	p.stoppedCh = make(chan struct{})
 	go p.run()
@@ -70,10 +77,8 @@ func (p *seedProgram) Stop(_ service.Service) error {
 func (p *seedProgram) run() {
 	defer close(p.stoppedCh)
 
-	// Resolve config path using paths package
-	configPath := paths.ResolveConfigPath(p.state.cfgFile, paths.ModeAuto)
-
-	cfg := loadAndConfigureConfigForService(configPath)
+	configPath := p.configPath
+	cfg := p.config
 	logPath := setupLoggingForService(cfg)
 
 	// Check for deprecated SNMP settings after logging is initialized
@@ -108,7 +113,7 @@ func (p *seedProgram) run() {
 	// Start server in goroutine
 	serverErrors := make(chan error, 1)
 	go func() {
-		logging.GetLogger().Info("Starting server", "port", cfg.Server.Port, "https", cfg.Server.HTTPS)
+		logging.GetLogger().Info("Starting HTTPS server", "port", cfg.Server.Port)
 		serverErrors <- p.server.Start()
 	}()
 
@@ -138,26 +143,6 @@ func (p *seedProgram) run() {
 	}
 
 	logging.GetLogger().Info("The Seed service stopped")
-}
-
-// loadAndConfigureConfigForService loads config without console output.
-func loadAndConfigureConfigForService(configPath string) *config.Config {
-	cfg, _, err := config.EnsureConfig(configPath, auth.IsDefaultPasswordHash)
-	if err != nil && !errors.Is(err, config.ErrInsecureCredentials) {
-		os.Exit(1)
-	}
-
-	if cfg.Auth.JWTSecret == "" {
-		cfg.UpdateJWTSecret(auth.GenerateJWTSecret())
-		_ = cfg.Save(configPath)
-	}
-
-	if errors.Is(err, config.ErrInsecureCredentials) {
-		cfg.Auth.DefaultPasswordHash = auth.SetupModePlaceholder
-	}
-
-	_ = cfg.Validate()
-	return cfg
 }
 
 // setupLoggingForService configures logging for Windows service mode.
