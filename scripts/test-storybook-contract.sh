@@ -4,7 +4,7 @@ set -euo pipefail
 repo_root=$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)
 cd "$repo_root/ui"
 
-if ! npm run | rg -q 'test:storybook:run'; then
+if [ -z "$(node -p 'require("./package.json").scripts["test:storybook:run"] ?? ""')" ]; then
   echo 'Storybook runner is missing' >&2
   exit 1
 fi
@@ -21,7 +21,7 @@ verify_defect() {
     return 1
   fi
 
-  if ! rg -qi "$expected" "$log_file"; then
+  if ! grep -Eqi "$expected" "$log_file"; then
     echo "Injected $defect defect failed for the wrong reason" >&2
     cat "$log_file" >&2
     rm -f "$log_file"
