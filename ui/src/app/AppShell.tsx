@@ -10,7 +10,7 @@
 
 import type { JSX } from 'react';
 import { Suspense } from 'react';
-import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
+import { Redirect, Route, Switch } from 'wouter';
 import { AppFooter } from '../components/app/AppFooter';
 import { CapabilityWarnings } from '../components/app/CapabilityWarnings';
 import { HeaderBar } from '../components/app/HeaderBar';
@@ -117,63 +117,67 @@ export function AppShell({ orchestration, logout }: AppShellProps): JSX.Element 
   );
 
   return (
-    <BrowserRouter>
-      <AppContext.Provider value={appContextValue}>
-        <SidebarLayout
-          groups={navGroups}
-          version={appVersion}
-          onOpenHelp={openHelp}
-          onOpenSettings={openSettings}
-          onOpenProfiles={openProfiles}
-          topBar={topBar}
-        >
-          <div className={cn(section.width.xl, 'mx-auto')}>
-            <CapabilityWarnings capabilities={capabilities} />
+    <AppContext.Provider value={appContextValue}>
+      <SidebarLayout
+        groups={navGroups}
+        version={appVersion}
+        onOpenHelp={openHelp}
+        onOpenSettings={openSettings}
+        onOpenProfiles={openProfiles}
+        topBar={topBar}
+      >
+        <div className={cn(section.width.xl, 'mx-auto')}>
+          <CapabilityWarnings capabilities={capabilities} />
 
-            <Suspense fallback={<PageLoader />}>
-              <Routes>
-                <Route path="/" element={<Navigate to="/link" replace={true} />} />
-                {pages.map((page) => (
-                  <Route key={page.path} path={page.path} element={<page.component />} />
-                ))}
-                <Route path="*" element={<Navigate to="/link" replace={true} />} />
-              </Routes>
-            </Suspense>
+          <Suspense fallback={<PageLoader />}>
+            <Switch>
+              <Route path="/">
+                <Redirect to="/link" replace={true} />
+              </Route>
+              {pages.map((page) => (
+                <Route key={page.path} path={page.path}>
+                  <page.component />
+                </Route>
+              ))}
+              <Route>
+                <Redirect to="/link" replace={true} />
+              </Route>
+            </Switch>
+          </Suspense>
 
-            <AppFooter appVersion={appVersion} />
-          </div>
-        </SidebarLayout>
-
-        {/* Settings Drawer - shows interface-specific settings (#754) */}
-        <SettingsDrawer
-          isOpen={settingsOpen}
-          onClose={closeSettings}
-          version={appVersion}
-          isWifi={isWifi}
-        />
-
-        {/* Help Drawer - data-driven, with TOC, search, and real content */}
-        <HelpDrawer isOpen={helpOpen} onClose={closeHelp} version={appVersion} />
-
-        {/* Profile Management Modal (#754) */}
-        {profilesOpen ? <ProfileManagement onClose={closeProfiles} /> : null}
-
-        {/* FAB - Run All Tests - positioned bottom-right */}
-        <div className="fixed bottom-0 right-0 pointer-events-none z-50">
-          <Fab className="pointer-events-auto absolute bottom-20 right-6" />
+          <AppFooter appVersion={appVersion} />
         </div>
+      </SidebarLayout>
 
-        {/* Command palette (Cmd+K / Ctrl+K) */}
-        <CommandPalette
-          groups={navGroups}
-          open={paletteOpen}
-          onOpenChange={setPaletteOpen}
-          onOpenSettings={openSettings}
-          onOpenHelp={openHelp}
-          onToggleTheme={toggleTheme}
-          isDark={isDark}
-        />
-      </AppContext.Provider>
-    </BrowserRouter>
+      {/* Settings Drawer - shows interface-specific settings (#754) */}
+      <SettingsDrawer
+        isOpen={settingsOpen}
+        onClose={closeSettings}
+        version={appVersion}
+        isWifi={isWifi}
+      />
+
+      {/* Help Drawer - data-driven, with TOC, search, and real content */}
+      <HelpDrawer isOpen={helpOpen} onClose={closeHelp} version={appVersion} />
+
+      {/* Profile Management Modal (#754) */}
+      {profilesOpen ? <ProfileManagement onClose={closeProfiles} /> : null}
+
+      {/* FAB - Run All Tests - positioned bottom-right */}
+      <div className="fixed bottom-0 right-0 pointer-events-none z-50">
+        <Fab className="pointer-events-auto absolute bottom-20 right-6" />
+      </div>
+
+      {/* Command palette (Cmd+K / Ctrl+K) */}
+      <CommandPalette
+        groups={navGroups}
+        open={paletteOpen}
+        onOpenChange={setPaletteOpen}
+        onOpenSettings={openSettings}
+        onOpenHelp={openHelp}
+        onToggleTheme={toggleTheme}
+        isDark={isDark}
+      />
+    </AppContext.Provider>
   );
 }

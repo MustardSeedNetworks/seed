@@ -19,7 +19,7 @@
 import type { LucideIcon } from 'lucide-react';
 import { ChevronRight, HelpCircle, X } from 'lucide-react';
 import { createElement, type FC, type ReactNode, useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link } from 'wouter';
 import { iconSizes } from '../constants/sizes';
 
 interface BreadcrumbItem {

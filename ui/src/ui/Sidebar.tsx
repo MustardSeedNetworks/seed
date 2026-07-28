@@ -23,7 +23,7 @@ import {
 } from 'lucide-react';
 import { createElement, type FC, type ReactNode, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { useLocation } from 'wouter';
 import { SeedLogo } from '../components/app/SeedLogo';
 import { iconSizes } from '../constants/sizes';
 import { prefetchRoute } from '../utils/prefetch';
@@ -396,8 +396,7 @@ export const SidebarLayout: FC<SidebarLayoutProps> = ({
   onOpenProfiles,
   topBar,
 }) => {
-  const location = useLocation();
-  const navigate = useNavigate();
+  const [location, navigate] = useLocation();
   const [collapsed, setCollapsed] = useState(() => safeGetItem(STORAGE_KEY) === 'true');
   const [mobileOpen, setMobileOpen] = useState(false);
 
@@ -410,7 +409,7 @@ export const SidebarLayout: FC<SidebarLayoutProps> = ({
   }, []);
 
   const isActive = (path: string) =>
-    location.pathname === path || (path !== '/' && location.pathname.startsWith(path));
+    location === path || (path !== '/' && location.startsWith(path));
 
   const body = (
     <SidebarBody

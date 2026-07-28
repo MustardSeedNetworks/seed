@@ -12,7 +12,7 @@
 import { Command } from 'cmdk';
 import { HelpCircle, Moon, Search, Settings as SettingsIcon, Sun } from 'lucide-react';
 import { type FC, useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useLocation } from 'wouter';
 import type { SidebarNavGroup } from '../../ui/Sidebar';
 
 export interface CommandPaletteAction {
@@ -50,7 +50,7 @@ export const CommandPalette: FC<CommandPaletteProps> = ({
   onToggleTheme,
   isDark,
 }) => {
-  const navigate = useNavigate();
+  const [, navigate] = useLocation();
   const [value, setValue] = useState('');
 
   // Global ⌘K / Ctrl+K keybinding.
