@@ -29,7 +29,7 @@
     "@fontsource-variable/inter": "5.2.8",
     "@fontsource-variable/jetbrains-mono": "5.2.8",
     "@hookform/resolvers": "5.4.0",
-    "@tailwindcss/postcss": "4.3.1",
+    "@tailwindcss/postcss": "4.3.3",
     "@tanstack/react-query": "5.101.0",
     "cmdk": "1.1.1",
     "i18next": "26.3.1",
@@ -41,10 +41,10 @@
     "react-dom": "19.2.7",
     "react-hook-form": "7.79.0",
     "react-i18next": "17.0.8",
-    "react-router-dom": "7.17.0",
     "tailwind-merge": "3.6.0",
-    "tailwindcss": "4.3.1",
-    "valibot": "1.4.1",
+    "tailwindcss": "4.3.3",
+    "valibot": "1.4.2",
+    "wouter": "3.10.0",
     "zustand": "5.0.14"
   },
   "devDependencies": {
@@ -64,6 +64,7 @@
     "@types/node": "25.9.3",
     "@types/react": "19.2.17",
     "@types/react-dom": "19.2.3",
+    "@typescript/native-preview": "7.0.0-dev.20260615.1",
     "@vitejs/plugin-react": "6.0.2",
     "@vitest/coverage-v8": "4.1.9",
     "axe-core": "4.12.1",
@@ -71,15 +72,17 @@
     "jsdom": "29.1.1",
     "json-schema-to-typescript": "15.0.4",
     "playwright": "1.61.0",
-    "postcss": "8.5.15",
+    "postcss": "8.5.18",
     "rollup-plugin-visualizer": "7.0.1",
     "storybook": "10.4.5",
     "vite": "8.0.16",
-    "vitest": "4.1.9",
-    "@typescript/native-preview": "7.0.0-dev.20260615.1"
+    "vitest": "4.1.9"
   },
   "overrides": {
-    "esbuild": "0.28.1"
+    "brace-expansion": "5.0.8",
+    "esbuild": "0.28.1",
+    "fast-uri": "4.1.1",
+    "js-yaml": "4.3.0"
   },
   "packageManager": "npm@11.17.0"
 }

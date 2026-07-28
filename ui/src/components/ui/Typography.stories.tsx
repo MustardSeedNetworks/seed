@@ -1,5 +1,5 @@
 import type { Decorator, Meta, StoryObj } from '@storybook/react-vite';
-import { MemoryRouter } from 'react-router-dom';
+import { StoryRouter } from '../../test/StoryRouter';
 import { AccentLink, Caption, H1, H2, H3, H4, P, SmallText } from './Typography';
 
 const meta: Meta<typeof H1> = {
@@ -17,11 +17,11 @@ const meta: Meta<typeof H1> = {
   tags: ['autodocs'],
   decorators: [
     (Story: Parameters<Decorator>[0]) => (
-      <MemoryRouter>
+      <StoryRouter>
         <div className="w-[480px]">
           <Story />
         </div>
-      </MemoryRouter>
+      </StoryRouter>
     ),
   ],
 };

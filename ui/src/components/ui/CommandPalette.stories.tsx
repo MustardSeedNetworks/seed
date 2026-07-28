@@ -1,7 +1,7 @@
 import type { Decorator, Meta, StoryObj } from '@storybook/react-vite';
 import { Activity, BookOpen, Home, Sparkles } from 'lucide-react';
 import { useState } from 'react';
-import { MemoryRouter } from 'react-router-dom';
+import { StoryRouter } from '../../test/StoryRouter';
 import type { SidebarNavGroup } from '../../ui/Sidebar';
 import { Button } from './Button';
 import { CommandPalette } from './CommandPalette';
@@ -36,11 +36,11 @@ const meta: Meta<typeof CommandPalette> = {
   tags: ['autodocs'],
   decorators: [
     (Story: Parameters<Decorator>[0]) => (
-      <MemoryRouter>
+      <StoryRouter>
         <div className="min-h-[60vh] p-4">
           <Story />
         </div>
-      </MemoryRouter>
+      </StoryRouter>
     ),
   ],
 };

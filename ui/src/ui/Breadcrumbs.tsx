@@ -1,6 +1,6 @@
 import { ChevronRight, Home } from 'lucide-react';
 import type { FC } from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation } from 'wouter';
 import { iconSizes } from '../constants/sizes';
 
 interface BreadcrumbItem {
@@ -21,8 +21,8 @@ const ROUTE_LABELS: Record<string, string> = {
 };
 
 export const Breadcrumbs: FC = () => {
-  const location = useLocation();
-  const pathSegments = location.pathname.split('/').filter(Boolean);
+  const [location] = useLocation();
+  const pathSegments = location.split('/').filter(Boolean);
 
   if (pathSegments.length === 0) {
     return null;

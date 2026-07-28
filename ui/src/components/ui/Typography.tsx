@@ -5,7 +5,7 @@
  * a dozen "almost h2" inline classNames.
  */
 import type { FC, HTMLAttributes, ReactNode } from 'react';
-import { Link } from 'react-router-dom';
+import { Link } from 'wouter';
 
 interface TypographyProps extends HTMLAttributes<HTMLElement> {
   children: ReactNode;
