@@ -1,0 +1,76 @@
+{
+  "primaryAssets": [
+    {
+      "id": "linux-archive",
+      "type": "Archive",
+      "goos": "linux",
+      "goarch": "amd64",
+      "format": "tar.gz",
+      "nameTemplate": "seed-{version}-linux-amd64.tar.gz"
+    },
+    {
+      "id": "linux-archive",
+      "type": "Archive",
+      "goos": "linux",
+      "goarch": "arm64",
+      "format": "tar.gz",
+      "nameTemplate": "seed-{version}-linux-arm64.tar.gz"
+    },
+    {
+      "id": "darwin-archive",
+      "type": "Archive",
+      "goos": "darwin",
+      "goarch": "arm64",
+      "format": "tar.gz",
+      "nameTemplate": "seed-{version}-darwin-arm64.tar.gz"
+    },
+    {
+      "id": "windows-archive",
+      "type": "Archive",
+      "goos": "windows",
+      "goarch": "amd64",
+      "format": "zip",
+      "nameTemplate": "seed-{version}-windows-amd64.zip"
+    },
+    {
+      "id": "windows-archive",
+      "type": "Archive",
+      "goos": "windows",
+      "goarch": "arm64",
+      "format": "zip",
+      "nameTemplate": "seed-{version}-windows-arm64.zip"
+    },
+    {
+      "id": "linux-packages",
+      "type": "Linux Package",
+      "goos": "linux",
+      "goarch": "amd64",
+      "format": "deb",
+      "nameTemplate": "seed_{version}_amd64.deb"
+    },
+    {
+      "id": "linux-packages",
+      "type": "Linux Package",
+      "goos": "linux",
+      "goarch": "arm64",
+      "format": "deb",
+      "nameTemplate": "seed_{version}_arm64.deb"
+    },
+    {
+      "id": "linux-packages",
+      "type": "Linux Package",
+      "goos": "linux",
+      "goarch": "amd64",
+      "format": "rpm",
+      "nameTemplate": "seed-{version}-1.x86_64.rpm"
+    },
+    {
+      "id": "linux-packages",
+      "type": "Linux Package",
+      "goos": "linux",
+      "goarch": "arm64",
+      "format": "rpm",
+      "nameTemplate": "seed-{version}-1.aarch64.rpm"
+    }
+  ]
+}

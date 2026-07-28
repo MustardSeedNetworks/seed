@@ -7,8 +7,9 @@
 # Triggers:
 #   - push to a v* tag: real release — builds, signs, publishes, generates
 #     SLSA L3 provenance
-#   - workflow_dispatch with dry_run=true: snapshot only — no publish, no
-#     signing, no provenance; artifacts uploaded for inspection
+#   - workflow_dispatch with dry_run=true: snapshot only — no publish or
+#     attestation upload; artifacts are signed, coverage-verified, and uploaded
+#     for inspection
 #   - workflow_dispatch with provenance_only=true (ref=<existing tag>):
 #     skips goreleaser entirely, recomputes artifact subjects from the
 #     already-published checksums.txt on that tag's GitHub release, then
@@ -41,7 +42,7 @@ on:
   workflow_dispatch:
     inputs:
       dry_run:
-        description: "Snapshot build only — do not publish or sign"
+        description: "Snapshot build only — sign and verify, but do not publish or attest"
         type: boolean
         default: true
       provenance_only:
@@ -101,7 +102,7 @@ jobs:
           cd iperf-*
           if [ ! -f configure ]; then ./bootstrap.sh || autoreconf -i; fi
           ./configure --prefix=/tmp/iperf3-install --disable-shared --enable-static-bin
-          make -j$(nproc)
+          make -j"$(nproc)"
           make install
           mkdir -p ../dist
           cp /tmp/iperf3-install/bin/iperf3 ../dist/iperf3-linux-${{ matrix.arch }}
@@ -257,21 +258,19 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: goreleaser release --clean
 
+      - name: Verify release asset coverage
+        run: go run ./cmd/verify-release-assets
+
       - name: Capture artifact hashes for SLSA provenance
         if: ${{ !inputs.dry_run }}
         id: hashes
         shell: bash
         run: |
-          # goreleaser drops artifacts.json describing every produced
-          # artifact. Filter to the user-facing ones (archive/package
-          # types) and base64-encode their SHA-256 list for the
-          # slsa-github-generator reusable workflow.
+          # The release verifier emits only the frozen primary asset matrix.
+          # Feed that validated subject list to the provenance job so matrix
+          # coverage and attestation coverage cannot drift apart.
           set -euo pipefail
-          hashes=$(jq -r '
-            map(select(.type == "Archive" or .type == "Linux Package")) |
-            map("\(.extra.Checksum | sub("^sha256:"; ""))  \(.name)") |
-            join("\n")
-          ' dist/artifacts.json | base64 -w0)
+          hashes=$(base64 -w0 < dist/provenance-subjects.txt)
           echo "hashes=${hashes}" >> "$GITHUB_OUTPUT"
 
       - name: Upload dry-run artifact bundle for inspection
@@ -352,7 +351,7 @@ jobs:
     # Skip on dry-run snapshots; require one of the two upstreams to have
     # succeeded. `!cancelled()` lets this job run even though one of the
     # two `needs` is intentionally skipped per dispatch path.
-    if: ${{ !inputs.dry_run && !cancelled() && (needs.goreleaser.result == 'success' || needs.goreleaser-backfill-hashes.result == 'success') }}
+    if: ${{ !cancelled() && ((inputs.provenance_only && needs.goreleaser-backfill-hashes.result == 'success') || (!inputs.provenance_only && !inputs.dry_run && needs.goreleaser.result == 'success')) }}
     needs: [goreleaser, goreleaser-backfill-hashes]
     runs-on: ubuntu-latest
     permissions:
@@ -388,3 +387,17 @@ jobs:
              seed-slsa-provenance.intoto.jsonl
           gh release upload "$TARGET_TAG" \
              seed-slsa-provenance.intoto.jsonl --clobber --repo "${GITHUB_REPOSITORY}"
+
+  publish-release:
+    name: Publish verified release
+    if: ${{ !inputs.dry_run && !inputs.provenance_only }}
+    needs: [goreleaser, provenance]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Publish verified draft
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TARGET_TAG: ${{ github.ref_name }}
+        run: gh release edit "$TARGET_TAG" --draft=false --repo "${GITHUB_REPOSITORY}"

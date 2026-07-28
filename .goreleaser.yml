@@ -9,7 +9,7 @@
 #   - Archives (.tar.gz, .zip), Linux packages (.deb, .rpm) via nfpm
 #   - ldflags injection (Version, Commit, BuildTime, UIBuildHash)
 #   - cosign keyless signing of every artifact
-#   - syft SBOM per archive
+#   - syft SBOM per primary archive and Linux package
 #   - SHA-256 checksums
 #   - release-please CHANGELOG.md as release body
 #
@@ -235,6 +235,10 @@ sboms:
     artifacts: archive
     documents:
       - "{{ .ArtifactName }}.sbom.json"
+  - id: packages-sbom
+    artifacts: package
+    documents:
+      - "{{ .ArtifactName }}.sbom.json"
 
 signs:
   # Sign all release artifacts via cosign keyless OIDC. Mirrors release.yml's
@@ -266,7 +270,10 @@ release:
   # `replace_existing_artifacts: true` lets a re-run overwrite a partial
   # earlier failure cleanly.
   replace_existing_artifacts: true
-  draft: false
+  # Real releases stay hidden until the frozen asset matrix and SLSA
+  # provenance both pass. release.yml publishes the draft only after those
+  # gates complete.
+  draft: true
   prerelease: auto
   mode: replace
   header: |

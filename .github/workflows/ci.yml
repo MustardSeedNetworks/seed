@@ -503,6 +503,9 @@ jobs:
           python3 scripts/test-check-banned-vocabulary.py
           python3 scripts/check-banned-vocabulary.py
 
+      - name: Verify release workflow dispatch contract
+        run: ./scripts/check-release-workflow-contract.sh
+
       - name: Check for sensitive files
         run: |
           SENSITIVE=".env credentials.json secrets.yaml *.pem *.key"

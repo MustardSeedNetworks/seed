@@ -83,12 +83,9 @@ make build            # builds frontend + backend in one step
 sudo ./seed           # listens on https://localhost:8443
 ```
 
-Or grab a package from the [releases page](https://github.com/MustardSeedNetworks/seed/releases)
-(`.deb`, `.rpm`, macOS `.pkg`, Windows `.zip`) or install via Homebrew:
-
-```bash
-brew install MustardSeedNetworks/tap/seed
-```
+Or grab an artifact from the [releases page](https://github.com/MustardSeedNetworks/seed/releases):
+`.deb`/`.rpm` for Linux, an Apple Silicon `.tar.gz` for macOS, or `.zip` for Windows.
+The local macOS `.pkg` target is a developer convenience and is not a published release artifact.
 
 ### First run
 
