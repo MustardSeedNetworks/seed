@@ -11,7 +11,7 @@ The CI pipeline runs on every push and PR. **All checks must pass.**
 | `backend`   | Go checks          | lint, vet, staticcheck, fmt, tests, coverage   |
 | `frontend`  | React/TS checks    | TypeScript, Biome, build                       |
 | `security`  | Security scans     | govulncheck, gosec, npm audit, gitleaks, trivy |
-| `quality`   | Code quality       | AI refs, sensitive files, unsafe logging       |
+| `quality`   | Code quality       | vocabulary, sensitive files, unsafe logging    |
 | `docs`      | Documentation      | Markdown lint, link check                      |
 | `build`     | Build verification | Multi-arch binaries                            |
 | `e2e`       | Browser tests      | Playwright E2E tests in Chrome                 |

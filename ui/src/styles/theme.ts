@@ -25,7 +25,7 @@ import { twMerge } from 'tailwind-merge';
  * BRAND COLORS:
  * - Primary: Seed Green (#2d7a3e / #81c784 dark) - Actions, links, focus states
  * - Accent: Lighter Seed Green (#4caf50 / #a5d6a7 dark) - Hover states
- * - Gold: Mustard Gold (#d4a017 / #fbbf24 dark) - Special highlights, premium
+ * - Gold: Mustard Gold (#d4a017 / #fbbf24 dark) - Special licensed highlights
  *
  * USAGE:
  * import { spacing, button, cn, moduleColor } from '../styles/theme';

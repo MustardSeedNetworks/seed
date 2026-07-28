@@ -27,7 +27,7 @@ the first implementations drifted as a result:
    Wi-Fi capture/visibility/reporting components, by contrast, are correctly
    built in `internal/app` and injected. The api-layer wiring was the outlier.
 
-We are pre-alpha (no backwards-compatibility burden, see master CLAUDE.md), so we
+We are pre-alpha (no backwards-compatibility burden, see the master development policy), so we
 fix the convention now rather than grandfather the drift, and retrofit every
 already-migrated domain to the corrected shape before adding new slices.
 

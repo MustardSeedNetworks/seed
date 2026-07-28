@@ -76,7 +76,7 @@ creates only the structure the pilot needs and grows it module-by-module.
    by moving existing spine packages — wire the pilot against the packages where
    they live today (`internal/config`, `internal/database`, `internal/api`).
    The hexagon ring names are a *destination*, reached package-by-package; the
-   pilot proves the dependency *direction* (inward) without the disruptive moves.
+   pilot proves the dependency *direction* (inward) without broad structural moves.
 2. **Pilot one cold, self-contained module end-to-end** (harvest) — §4.
 3. **Roll the rest cold→hot** — §5.
 4. **Rehome the spine last, coordinated** — §6.

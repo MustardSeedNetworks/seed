@@ -150,7 +150,7 @@ WS-A (handlers shrink when strangled). Non-handler targets incl. `snmp/interface
 ### WS-I — Remaining blueprint phases
 - I1 **Phase 3.x** — ADR for the `/api/v1/*` resource taxonomy + sidebar IA redesign, then execute (registry-driven, regen goldens, UI fetch sites + nav).
 - I2 **Phase 7** — finalize ADR-0007 discovery engine-vs-pipeline convergence + `/jobs` consumption.
-- I3 Docs reconcile — CLAUDE.md + msn-docs architecture trees → capability-first layout + route prefixes.
+- I3 Docs reconcile — development policy + msn-docs architecture trees → capability-first layout + route prefixes.
 
 ### WS-Z — Gate keystone (LAST — locks "done" in place)
 Only after the backlog above is cleared:

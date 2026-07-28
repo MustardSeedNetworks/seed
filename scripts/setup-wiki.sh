@@ -49,7 +49,7 @@ echo "📝 Creating wiki pages..."
 cat > Home.md << 'EOFHOME'
 # Welcome to The Seed Wiki
 
-**The Seed** is an AI-powered network diagnostic platform that combines WiFi planning, network monitoring, vulnerability scanning, and compliance reporting in one affordable tool.
+**The Seed** is a source-available network diagnostic platform that combines wired and WiFi troubleshooting, network monitoring, vulnerability scanning, and compliance reporting.
 
 ## Quick Links
 
@@ -399,7 +399,7 @@ Each discovered device shows:
 - **Hostname:** device-name.local
 - **Device Type:** 💻 Computer, 🖨️ Printer, 📱 Phone, etc.
 - **Manufacturer:** Apple, Cisco, HP (from MAC lookup)
-- **OS:** macOS, Windows, Linux (AI fingerprinting)
+- **OS:** macOS, Windows, Linux (protocol fingerprinting)
 - **Last Seen:** 2 minutes ago
 - **Status:** 🟢 Online / 🔴 Offline
 
@@ -507,7 +507,7 @@ cat > FAQ.md << 'EOFFAQ'
 
 ### What is The Seed?
 
-The Seed is an AI-powered network diagnostic platform that combines WiFi planning, network monitoring, vulnerability scanning, and compliance reporting in one affordable tool.
+The Seed is a source-available network diagnostic platform that combines wired and WiFi troubleshooting, network monitoring, vulnerability scanning, and compliance reporting.
 
 ### Who is The Seed for?
 
@@ -521,10 +521,10 @@ The Seed is an AI-powered network diagnostic platform that combines WiFi plannin
 Yes! Free tier supports up to 50 devices with community support.
 
 **Paid tiers:**
-- Starter: $299/year (200 devices, AI classification)
-- Professional: $799/year (unlimited devices, full AI)
-- Premium: $1,999/year (predictive WiFi planning)
-- Enterprise: $4,999/year (multi-site fleet management)
+- Starter: $299/year
+- Pro: $999/year
+
+Commercial terms for volume licensing are available through Mustard Seed Networks.
 
 ### What platforms are supported?
 

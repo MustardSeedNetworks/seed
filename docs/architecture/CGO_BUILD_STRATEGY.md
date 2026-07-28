@@ -52,7 +52,7 @@ imports them — `api`, `diagnostics`, `pipeline`, `security`) compile and **tes
 
 - The dominant importer is `services/discovery` (the 24.5K-line monolith), a
   **HOT zone** and explicitly **Phase 6** per `PHASE3_RECONCILE_PROPOSAL.md` §5 and
-  the CLAUDE.md "do not touch" list. Touching it now risks colliding with the
+  the development-policy "do not touch" list. Touching it now risks colliding with the
   active discovery/NMS workstream.
 - Extracting only the cold importers (`dhcp`, `vlan`) would establish the
   `Capture` port + a dedicated `internal/capture` package but yield **little build-speed

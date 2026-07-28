@@ -236,11 +236,11 @@ export const moduleColor = {
  * Brand colors - for special brand elements
  *
  * Usage:
- * <span className={brand.gold.text}>Premium Feature</span>
+ * <span className={brand.gold.text}>Pro Feature</span>
  * <div className={brand.gold.badge}>PRO</div>
  */
 export const brand = {
-  // Mustard Gold - for premium/special highlights
+  // Mustard Gold - for licensed/special highlights
   gold: {
     text: 'text-brand-gold',
     bg: 'bg-brand-gold',

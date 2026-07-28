@@ -24,7 +24,7 @@ import (
 // which is a thin wrapper.
 //
 // Pick maxSize from the constants in limits.go ([MaxBodySizeAuth],
-// [MaxBodySizeConfig], [MaxBodySizeJSON], …) — never pass a magic number.
+// [MaxBodySizeConfig], [MaxBodySizeJSON], …) — never pass an unnamed literal.
 func decodeJSONStrict(w http.ResponseWriter, r *http.Request, dst any, maxSize int64) bool {
 	r.Body = http.MaxBytesReader(w, r.Body, maxSize)
 

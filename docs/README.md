@@ -66,9 +66,6 @@ docs/
 
 ### Product & Engineering
 
-- AI_QA_STRATEGY.md - AI-powered testing strategy
-- AI_TOOLS_STRATEGY.md - Which AI tools for development
-- AI_INTEGRATION_PLAN.md - AI integration roadmap
 - TESTING_REQUIREMENTS.md - Hardware/software for test lab
 - HARDWARE_PHASE4_PLAN.md - Hardware roadmap
 - HARDWARE_PHASE5_PLAN.md - Future hardware plans
@@ -82,7 +79,6 @@ docs/
 
 - TODO.md - Task tracking
 - VERIFICATION.md - Verification checklists
-- AI_ISSUES_SUMMARY.md - AI-related issues summary
 
 **Update frequency:** Quarterly review, before major milestones
 
@@ -99,7 +95,6 @@ docs/
 - DOCUMENTATION_STRUCTURE.md - Complete guide to doc organization
 - WIKI_CONTENT.md - Source content for wiki population
 - SETUP_COMPLETE.md - Summary of all documentation created
-- AI_README.md - AI integration documentation guide
 
 **Update frequency:** When documentation structure changes
 

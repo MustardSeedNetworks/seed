@@ -31,11 +31,11 @@ const (
 
 // DHCP protocol constants.
 const (
-	// dhcpMagicCookie is the DHCP magic cookie (RFC 2131).
+	// dhcpMagicCookie is the DHCP options marker (RFC 2131).
 	// This value identifies a BOOTP/DHCP options field.
 	dhcpMagicCookie = 0x63825363
 
-	// dhcpMinPacketSize is the minimum DHCP packet size (header + magic cookie).
+	// dhcpMinPacketSize is the minimum DHCP packet size (header + options marker).
 	dhcpMinPacketSize = 240
 
 	// dhcpOptionEnd marks the end of DHCP options (RFC 2132).
@@ -240,12 +240,12 @@ func extractDHCPPayload(packet gopacket.Packet) []byte {
 		return nil
 	}
 	payload := appLayer.Payload()
-	// DHCP packets must be at least dhcpMinPacketSize bytes (minimum header + magic cookie)
+	// DHCP packets must be at least dhcpMinPacketSize bytes (minimum header + options marker)
 	if len(payload) < dhcpMinPacketSize {
 		return nil
 	}
 
-	// Magic cookie check at offset 236-239 (should be dhcpMagicCookie)
+	// Validate the DHCP options marker at offset 236-239.
 	magicCookie := binary.BigEndian.Uint32(payload[236:240])
 	if magicCookie != dhcpMagicCookie {
 		return nil

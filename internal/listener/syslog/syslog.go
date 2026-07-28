@@ -56,7 +56,7 @@ const (
 
 // Severity values from the PRI byte's low 3 bits (RFC 3164 §4.1.1).
 // Exported so alert rules can compare against the named values
-// rather than magic numbers.
+// rather than unnamed numeric literals.
 const (
 	SeverityEmergency = iota
 	SeverityAlert

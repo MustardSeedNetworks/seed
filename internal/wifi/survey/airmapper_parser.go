@@ -193,7 +193,7 @@ func (a *AirMapperFile) ToImportResult() (*AirMapperImportResult, error) {
 
 	// Convert floor plan to base64 data URL
 	if len(a.FloorPlan) > 0 {
-		// Detect image type from magic bytes
+		// Detect the image type from its file signature.
 		mimeType := "image/jpeg"
 		if len(a.FloorPlan) > 8 && string(a.FloorPlan[:8]) == "\x89PNG\r\n\x1a\n" {
 			mimeType = "image/png"

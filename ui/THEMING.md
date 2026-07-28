@@ -31,7 +31,7 @@ Brand anchors are **constant across light and dark modes** (do not lighten in da
 | `--color-brand-primary`        | `#4caf50` | Seed Green anchor (seed-500) — filled buttons, focus rings, glows      |
 | `--color-brand-primary-strong` | `#2d7a3e` | Darker (seed-600) — for text/links on light surfaces (AA)              |
 | `--color-brand-primary-soft`   | `#81c784` | Lighter (seed-300) — for text/links on dark surfaces (AA)              |
-| `--color-brand-gold`           | `#d4a017` | Mustard cross-brand accent — warning state, focus, premium highlights  |
+| `--color-brand-gold`           | `#d4a017` | Mustard cross-brand accent — warning state, focus, licensed highlights |
 
 ### Surface Colors
 

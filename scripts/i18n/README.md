@@ -16,7 +16,7 @@ applies everywhere with no per-repo customization.
 |---|---|
 | `validate.sh` | Main validation script. Runs in CI; can run locally. |
 | `glossary.txt` | One term per line — must appear verbatim in es when present in en. Mirror of the Glossary doc. |
-| `banned-vocab.txt` | One term per line — must NOT appear in any locale file. Mirror of CLAUDE.md banned list. |
+| `banned-vocab.txt` | One term per line — must NOT appear in any locale file. Mirror of the product vocabulary policy. |
 
 ## Usage
 
@@ -48,7 +48,7 @@ BANNED_FILE=path/to/banned.txt \
 | key-parity | Locale files have drifted; a key exists in en but not es, or vice versa |
 | no-empty-values | At least one locale value is `""` |
 | no-fallback-patterns | Source uses banned `t('key', 'English fallback')` shortcut |
-| banned-vocab | A locale value contains a banned term (CLAUDE.md) |
+| banned-vocab | A locale value contains a term blocked by product policy |
 | glossary-preservation | A glossary term appears in en but not verbatim in es for the same key |
 | interpolation-parity | `{{var}}` tokens differ between en and es for the same key |
 | plural-completeness | A `_one` key exists without `_other` or vice versa |
