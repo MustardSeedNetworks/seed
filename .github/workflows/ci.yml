@@ -828,7 +828,7 @@ jobs:
           # UI build hash matches Makefile recipe; mandatory per CLAUDE.md
           # Universal Build Contract — /__version must return non-empty
           # uiBuildHash to prove the UI was embedded.
-          UI_BUILD_HASH=$(find internal/api/ui -type f -exec md5sum {} \; 2>/dev/null | sort | md5sum 2>/dev/null | cut -d' ' -f1)
+          UI_BUILD_HASH=$(./scripts/ui-build-hash.sh)
           echo "UI_BUILD_HASH=${UI_BUILD_HASH}"
           go build -trimpath -buildvcs=false \
             -ldflags="-s -w \
@@ -878,7 +878,7 @@ jobs:
           VERSION=$(git describe --tags --always --dirty 2>/dev/null || echo "dev")
           COMMIT=$(git rev-parse --short HEAD 2>/dev/null || echo "unknown")
           BUILD_TIME=$(date -u +%Y-%m-%dT%H:%M:%SZ)
-          UI_BUILD_HASH=$(find internal/api/ui -type f -exec md5sum {} \; 2>/dev/null | sort | md5sum 2>/dev/null | cut -d' ' -f1)
+          UI_BUILD_HASH=$(./scripts/ui-build-hash.sh)
           go build -trimpath -buildvcs=false \
             -ldflags="-s -w \
               -X github.com/MustardSeedNetworks/seed/internal/version.Version=${VERSION} \
@@ -909,7 +909,7 @@ jobs:
             echo "::error::internal/api/ui is empty — frontend-dist artifact missing?"
             exit 1
           fi
-          EXPECTED=$(find internal/api/ui -type f -exec md5sum {} \; | sort | md5sum | cut -d' ' -f1)
+          EXPECTED=$(./scripts/ui-build-hash.sh)
           if [ "${#EXPECTED}" -ne 32 ]; then
             echo "::error::Computed UI_BUILD_HASH is not 32 chars: '$EXPECTED'"
             exit 1
@@ -988,49 +988,22 @@ jobs:
         run: npm ci
 
       - name: Build backend
-        run: |
-          go build -trimpath -buildvcs=false \
-            -ldflags="-s -w" \
-            -o seed ./cmd/seed
+        run: make --no-print-directory build-backend-quiet
 
       - name: Install Playwright browsers
         working-directory: ui
         # Per E2E_CONVENTIONS: chromium (Chrome+Edge) and webkit (Safari).
         run: npx playwright install --with-deps chromium webkit
 
-      - name: Start backend server
-        env:
-          SEED_CONFIG_PATH: ${{ runner.temp }}/seed/config.yaml
-          SEED_LOGIN_MAX_ATTEMPTS: "200"
-        run: |
-          mkdir -p data
-          sudo setcap cap_net_raw=+ep ./seed || true
-          nohup ./seed --config "$SEED_CONFIG_PATH" > server.log 2>&1 &
-          echo "Waiting for server to start..."
-          for i in {1..30}; do
-            if curl -sk https://localhost:8443/ >/dev/null 2>&1; then
-              echo "Server ready after $i attempts"
-              exit 0
-            fi
-            echo "Attempt $i: Server not ready, waiting..."
-            sleep $((i < 5 ? 1 : 2))
-          done
-          echo "Server failed to start after 30 attempts"
-          cat server.log
-          exit 1
-
       - name: Run Playwright E2E tests (full suite minus smoke)
-        working-directory: ui
         env:
-          E2E_BASE_URL: https://localhost:8443
-          # Self-signed cert in CI; playwright.config.ts gates
-          # ignoreHTTPSErrors to !CI but honors this env override.
-          PLAYWRIGHT_IGNORE_HTTPS_ERRORS: "true"
+          E2E_SKIP_BUILD: "1"
+          E2E_SERVER_LOG: server.log
         # Smoke tier runs in the e2e-smoke job; full e2e skips it to
         # avoid duplicate runtime. See seed#1053.
         # Both chromium and webkit run per E2E_CONVENTIONS — the projects
         # array in playwright.config.ts is now exactly [chromium, webkit].
-        run: npx playwright test --reporter=html --project=${{ matrix.browser }} --grep-invert "@smoke" --shard=${{ matrix.shard }}/4
+        run: ./scripts/run-e2e.sh --reporter=html --project=${{ matrix.browser }} --grep-invert "@smoke" --shard=${{ matrix.shard }}/4
 
       - name: Upload Playwright report
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
@@ -1091,47 +1064,20 @@ jobs:
         run: npm ci
 
       - name: Build backend
-        run: |
-          go build -trimpath -buildvcs=false \
-            -ldflags="-s -w" \
-            -o seed ./cmd/seed
+        run: make --no-print-directory build-backend-quiet
 
       - name: Install Playwright browsers
         working-directory: ui
         # Per E2E_CONVENTIONS: chromium (Chrome+Edge) and webkit (Safari).
         run: npx playwright install --with-deps chromium webkit
 
-      - name: Start backend server
-        env:
-          SEED_CONFIG_PATH: ${{ runner.temp }}/seed/config.yaml
-          SEED_LOGIN_MAX_ATTEMPTS: "200"
-        run: |
-          mkdir -p data
-          sudo setcap cap_net_raw=+ep ./seed || true
-          nohup ./seed --config "$SEED_CONFIG_PATH" > server.log 2>&1 &
-          echo "Waiting for server to start..."
-          for i in {1..30}; do
-            if curl -sk https://localhost:8443/ >/dev/null 2>&1; then
-              echo "Server ready after $i attempts"
-              exit 0
-            fi
-            echo "Attempt $i: Server not ready, waiting..."
-            sleep $((i < 5 ? 1 : 2))
-          done
-          echo "Server failed to start after 30 attempts"
-          cat server.log
-          exit 1
-
       - name: Run Playwright @smoke tests
-        working-directory: ui
         env:
-          E2E_BASE_URL: https://localhost:8443
-          # Self-signed cert in CI; playwright.config.ts gates
-          # ignoreHTTPSErrors to !CI but honors this env override.
-          PLAYWRIGHT_IGNORE_HTTPS_ERRORS: "true"
+          E2E_SKIP_BUILD: "1"
+          E2E_SERVER_LOG: server.log
         # Both chromium and webkit run; smoke tier on both browsers per PR
         # per E2E_CONVENTIONS.
-        run: npx playwright test --reporter=html --grep "@smoke"
+        run: ./scripts/run-e2e.sh --reporter=html --grep "@smoke"
 
       - name: Upload Playwright smoke report
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1

@@ -144,7 +144,7 @@ jobs:
       - name: Compute UI build hash
         id: ui-hash
         run: |
-          UI_BUILD_HASH=$(find internal/api/ui -type f -exec md5sum {} \; | sort | md5sum | cut -d' ' -f1)
+          UI_BUILD_HASH=$(./scripts/ui-build-hash.sh)
           echo "hash=$UI_BUILD_HASH" >> "$GITHUB_OUTPUT"
 
       - name: Upload UI dist

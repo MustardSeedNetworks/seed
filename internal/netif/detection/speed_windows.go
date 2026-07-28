@@ -99,8 +99,8 @@ func convertSpeedToBps(value float64, unit string) int64 {
 	return 0
 }
 
-// identifyByPlatform attempts platform-specific chipset identification on Windows.
-func (db *ChipsetDatabase) identifyByPlatform(name string) *ChipsetInfo {
+// identifyByPlatformUncached attempts platform-specific chipset identification on Windows.
+func (db *ChipsetDatabase) identifyByPlatformUncached(name string) *ChipsetInfo {
 	ctx, cancel := context.WithTimeout(context.Background(), detectionTimeoutSeconds*time.Second)
 	defer cancel()
 

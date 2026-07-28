@@ -357,7 +357,7 @@ func NewServer(
 	// Gated by a persistent marker, so a later delete-all is not re-seeded.
 	// Non-fatal: a failure degrades to the empty card rather than aborting startup.
 	if db != nil {
-		if err := s.seedDefaultHealthCheckProbes(context.Background()); err != nil {
+		if err := s.seedDefaultHealthCheckProbes(context.Background(), cfg.HealthChecks); err != nil {
 			logging.GetLogger().Error("Failed to seed default health-check probes", "error", err)
 		}
 	}

@@ -117,20 +117,16 @@ func parseIfconfigSpeed(output string) int64 {
 	return 0
 }
 
-// identifyByPlatform attempts platform-specific chipset identification on macOS.
-func (db *ChipsetDatabase) identifyByPlatform(_ string) *ChipsetInfo {
+// identifyByPlatformUncached attempts platform-specific chipset identification on macOS.
+func (db *ChipsetDatabase) identifyByPlatformUncached(_ string) *ChipsetInfo {
 	ctx, cancel := context.WithTimeout(context.Background(), systemProfilerTimeout)
 	defer cancel()
 
-	// Use system_profiler to get hardware info
 	out, err := exec.CommandContext(ctx, "system_profiler", "SPNetworkDataType", "-json").Output()
 	if err != nil {
 		return nil
 	}
-
-	// Simple text search for chipset keywords
-	text := strings.ToLower(string(out))
-	return db.IdentifyByKeyword(text)
+	return db.IdentifyByKeyword(strings.ToLower(string(out)))
 }
 
 // hasTDRCapability checks if the interface supports Time Domain Reflectometry.
