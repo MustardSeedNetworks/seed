@@ -22,6 +22,12 @@ import (
 // Linux scanning constants.
 const (
 	linuxBTScanTimeoutSecs = 30
+	deviceLineParts        = 3
+	minimumDeviceParts     = 2
+	uuidLineParts          = 2
+	defaultBLEScanSeconds  = 5
+	macAddressParts        = 6
+	macAddressPartLength   = 2
 )
 
 // scanPlatform performs Bluetooth scanning on Linux.
@@ -36,23 +42,23 @@ func (s *BluetoothScanner) scanPlatform(
 	var devices []BluetoothDevice
 
 	// Get paired/connected devices via bluetoothctl
-	btctlDevices, err := s.scanBluetoothctl(ctx)
-	if err == nil {
+	btctlDevices, btctlErr := s.scanBluetoothctl(ctx)
+	if btctlErr == nil {
 		devices = append(devices, btctlDevices...)
 	}
 
 	// Try hcitool for classic discovery if enabled
 	if config.IncludeClassic {
-		hciDevices, err := s.scanHCITool(ctx, adapter, config)
-		if err == nil {
+		hciDevices, hciErr := s.scanHCITool(ctx, adapter, config)
+		if hciErr == nil {
 			devices = mergeBluetoothDevices(devices, hciDevices)
 		}
 	}
 
 	// Try BLE scanning if enabled
 	if config.IncludeBLE {
-		bleDevices, err := s.scanBLE(ctx, adapter, config)
-		if err == nil {
+		bleDevices, bleErr := s.scanBLE(ctx, adapter, config)
+		if bleErr == nil {
 			devices = mergeBluetoothDevices(devices, bleDevices)
 		}
 	}
@@ -73,21 +79,20 @@ func (s *BluetoothScanner) scanBluetoothctl(ctx context.Context) ([]BluetoothDev
 	now := time.Now()
 
 	// Parse output: "Device AA:BB:CC:DD:EE:FF DeviceName"
-	lines := strings.Split(string(output), "\n")
-	for _, line := range lines {
+	for line := range strings.SplitSeq(string(output), "\n") {
 		line = strings.TrimSpace(line)
 		if !strings.HasPrefix(line, "Device ") {
 			continue
 		}
 
-		parts := strings.SplitN(line, " ", 3)
-		if len(parts) < 2 {
+		parts := strings.SplitN(line, " ", deviceLineParts)
+		if len(parts) < minimumDeviceParts {
 			continue
 		}
 
 		address := parts[1]
 		name := ""
-		if len(parts) > 2 {
+		if len(parts) >= deviceLineParts {
 			name = parts[2]
 		}
 
@@ -103,8 +108,8 @@ func (s *BluetoothScanner) scanBluetoothctl(ctx context.Context) ([]BluetoothDev
 		}
 
 		// Get device info
-		info, err := s.getBluetoothctlDeviceInfo(ctx, address)
-		if err == nil {
+		info, infoErr := s.getBluetoothctlDeviceInfo(ctx, address)
+		if infoErr == nil {
 			dev = mergeDeviceInfo(dev, info)
 		}
 
@@ -132,55 +137,8 @@ func parseBluetoothctlInfo(output, address string) (BluetoothDevice, error) {
 	}
 	now := time.Now()
 
-	lines := strings.Split(output, "\n")
-	for _, line := range lines {
-		line = strings.TrimSpace(line)
-
-		if strings.HasPrefix(line, "Name:") {
-			dev.Name = strings.TrimSpace(strings.TrimPrefix(line, "Name:"))
-		} else if strings.HasPrefix(line, "Alias:") {
-			dev.Alias = strings.TrimSpace(strings.TrimPrefix(line, "Alias:"))
-		} else if strings.HasPrefix(line, "Class:") {
-			// Parse hex class of device
-			codStr := strings.TrimSpace(strings.TrimPrefix(line, "Class:"))
-			codStr = strings.TrimPrefix(codStr, "0x")
-			if cod, err := strconv.ParseUint(codStr, 16, 32); err == nil {
-				dev.ClassOfDev = uint32(cod)
-				dev.DeviceClass = ClassOfDeviceToClass(dev.ClassOfDev)
-			}
-		} else if strings.HasPrefix(line, "Paired:") {
-			dev.IsPaired = strings.Contains(line, "yes")
-		} else if strings.HasPrefix(line, "Trusted:") {
-			dev.IsTrusted = strings.Contains(line, "yes")
-		} else if strings.HasPrefix(line, "Blocked:") {
-			dev.IsBlocked = strings.Contains(line, "yes")
-		} else if strings.HasPrefix(line, "Connected:") {
-			dev.IsConnected = strings.Contains(line, "yes")
-		} else if strings.HasPrefix(line, "RSSI:") {
-			rssiStr := strings.TrimSpace(strings.TrimPrefix(line, "RSSI:"))
-			if rssi, err := strconv.Atoi(rssiStr); err == nil {
-				dev.RSSI = rssi
-			}
-		} else if strings.HasPrefix(line, "TxPower:") {
-			txStr := strings.TrimSpace(strings.TrimPrefix(line, "TxPower:"))
-			if tx, err := strconv.Atoi(txStr); err == nil {
-				dev.TxPower = tx
-			}
-		} else if strings.HasPrefix(line, "UUID:") {
-			// Parse service UUID
-			parts := strings.SplitN(line, "(", 2)
-			if len(parts) > 1 {
-				uuid := strings.TrimSuffix(strings.TrimSpace(parts[1]), ")")
-				dev.ServiceUUIDs = append(dev.ServiceUUIDs, uuid)
-			}
-		} else if strings.HasPrefix(line, "ManufacturerData Key:") {
-			// Parse manufacturer ID
-			keyStr := strings.TrimSpace(strings.TrimPrefix(line, "ManufacturerData Key:"))
-			keyStr = strings.TrimPrefix(keyStr, "0x")
-			if key, err := strconv.ParseUint(keyStr, 16, 16); err == nil {
-				dev.ManufacturerID = uint16(key)
-			}
-		}
+	for line := range strings.SplitSeq(output, "\n") {
+		parseBluetoothctlLine(strings.TrimSpace(line), &dev)
 	}
 
 	dev.FirstSeen = now
@@ -196,6 +154,60 @@ func parseBluetoothctlInfo(output, address string) (BluetoothDevice, error) {
 	}
 
 	return dev, nil
+}
+
+func parseBluetoothctlLine(line string, dev *BluetoothDevice) {
+	key, value, found := strings.Cut(line, ":")
+	if !found {
+		return
+	}
+	value = strings.TrimSpace(value)
+	switch key {
+	case "Name":
+		dev.Name = value
+	case "Alias":
+		dev.Alias = value
+	case "Class":
+		setBluetoothClass(dev, value)
+	case "Paired":
+		dev.IsPaired = strings.Contains(value, "yes")
+	case "Trusted":
+		dev.IsTrusted = strings.Contains(value, "yes")
+	case "Blocked":
+		dev.IsBlocked = strings.Contains(value, "yes")
+	case "Connected":
+		dev.IsConnected = strings.Contains(value, "yes")
+	case "RSSI":
+		dev.RSSI, _ = strconv.Atoi(value)
+	case "TxPower":
+		dev.TxPower, _ = strconv.Atoi(value)
+	case "UUID":
+		appendBluetoothUUID(dev, line)
+	case "ManufacturerData Key":
+		setBluetoothManufacturer(dev, value)
+	}
+}
+
+func setBluetoothClass(dev *BluetoothDevice, value string) {
+	class, err := strconv.ParseUint(strings.TrimPrefix(value, "0x"), 16, 32)
+	if err == nil {
+		dev.ClassOfDev = uint32(class)
+		dev.DeviceClass = ClassOfDeviceToClass(dev.ClassOfDev)
+	}
+}
+
+func appendBluetoothUUID(dev *BluetoothDevice, line string) {
+	parts := strings.SplitN(line, "(", uuidLineParts)
+	if len(parts) == uuidLineParts {
+		dev.ServiceUUIDs = append(dev.ServiceUUIDs, strings.TrimSuffix(strings.TrimSpace(parts[1]), ")"))
+	}
+}
+
+func setBluetoothManufacturer(dev *BluetoothDevice, value string) {
+	manufacturer, err := strconv.ParseUint(strings.TrimPrefix(value, "0x"), 16, 16)
+	if err == nil {
+		dev.ManufacturerID = uint16(manufacturer)
+	}
 }
 
 // scanHCITool uses hcitool for classic Bluetooth discovery.
@@ -232,10 +244,9 @@ func parseHCIToolOutput(output string) ([]BluetoothDevice, error) {
 	)
 	classRegex := regexp.MustCompile(`class:\s*0x([0-9A-Fa-f]+)`)
 
-	lines := strings.Split(output, "\n")
-	for _, line := range lines {
+	for line := range strings.SplitSeq(output, "\n") {
 		addrMatch := addrRegex.FindStringSubmatch(line)
-		if len(addrMatch) < 2 {
+		if len(addrMatch) < minimumDeviceParts {
 			continue
 		}
 
@@ -273,7 +284,7 @@ func (s *BluetoothScanner) scanBLE(
 	// hcitool lescan requires root, timeout after configured duration
 	scanDuration := time.Duration(config.ScanDurationSec) * time.Second
 	if scanDuration == 0 {
-		scanDuration = 5 * time.Second
+		scanDuration = defaultBLEScanSeconds * time.Second
 	}
 
 	scanCtx, cancel := context.WithTimeout(ctx, scanDuration)
@@ -290,8 +301,8 @@ func (s *BluetoothScanner) scanBLE(
 		return nil, fmt.Errorf("failed to get stdout pipe: %w", err)
 	}
 
-	if err := cmd.Start(); err != nil {
-		return nil, fmt.Errorf("hcitool lescan failed: %w", err)
+	if startErr := cmd.Start(); startErr != nil {
+		return nil, fmt.Errorf("hcitool lescan failed: %w", startErr)
 	}
 
 	// Collect devices while scanning
@@ -310,7 +321,7 @@ func (s *BluetoothScanner) scanBLE(
 			continue
 		}
 
-		parts := strings.SplitN(strings.TrimSpace(line), " ", 2)
+		parts := strings.SplitN(strings.TrimSpace(line), " ", minimumDeviceParts)
 		if len(parts) < 1 {
 			continue
 		}
@@ -365,11 +376,11 @@ func (s *BluetoothScanner) scanBLE(
 func isValidMACAddress(s string) bool {
 	// Simple check: 6 hex pairs separated by colons
 	parts := strings.Split(s, ":")
-	if len(parts) != 6 {
+	if len(parts) != macAddressParts {
 		return false
 	}
 	for _, part := range parts {
-		if len(part) != 2 {
+		if len(part) != macAddressPartLength {
 			return false
 		}
 		if _, err := strconv.ParseUint(part, 16, 8); err != nil {

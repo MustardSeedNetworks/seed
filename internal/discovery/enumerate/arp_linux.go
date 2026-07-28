@@ -1,18 +1,3 @@
-// Package discovery provides platform-specific ARP table management and neighbor discovery.
-//
-// This file contains OS-specific implementations for ARP cache reading and manipulation.
-// The implementation varies by platform to use native system calls and command-line tools.
-//
-// Platform support:
-//   - Darwin (macOS): Uses 'arp -an' command and route(4) system calls
-//   - Linux: Reads /proc/net/arp and uses netlink for real-time updates
-//
-// Features:
-//   - Read current ARP cache entries
-//   - Monitor ARP changes for neighbor discovery
-//   - Parse MAC addresses and IP mappings
-//   - Detect incomplete/failed ARP entries
-
 //go:build linux
 
 package enumerate
@@ -53,8 +38,8 @@ func (s *ARPScanner) readARPTablePlatform() ([]*ARPEntry, error) {
 		// Get interface name
 		var ifaceName string
 		if neigh.LinkIndex > 0 {
-			link, err := netlink.LinkByIndex(neigh.LinkIndex)
-			if err == nil {
+			link, linkErr := netlink.LinkByIndex(neigh.LinkIndex)
+			if linkErr == nil {
 				ifaceName = link.Attrs().Name
 			}
 		}
@@ -82,32 +67,32 @@ func (s *ARPScanner) readARPTablePlatform() ([]*ARPEntry, error) {
 func neighStateToString(state int) string {
 	// Netlink neighbor states from linux/neighbour.h
 	const (
-		NUD_INCOMPLETE = 0x01
-		NUD_REACHABLE  = 0x02
-		NUD_STALE      = 0x04
-		NUD_DELAY      = 0x08
-		NUD_PROBE      = 0x10
-		NUD_FAILED     = 0x20
-		NUD_NOARP      = 0x40
-		NUD_PERMANENT  = 0x80
+		nudIncomplete = 0x01
+		nudReachable  = 0x02
+		nudStale      = 0x04
+		nudDelay      = 0x08
+		nudProbe      = 0x10
+		nudFailed     = 0x20
+		nudNoARP      = 0x40
+		nudPermanent  = 0x80
 	)
 
 	switch {
-	case state&NUD_REACHABLE != 0:
+	case state&nudReachable != 0:
 		return "REACHABLE"
-	case state&NUD_STALE != 0:
+	case state&nudStale != 0:
 		return "STALE"
-	case state&NUD_DELAY != 0:
+	case state&nudDelay != 0:
 		return "DELAY"
-	case state&NUD_PROBE != 0:
+	case state&nudProbe != 0:
 		return "PROBE"
-	case state&NUD_PERMANENT != 0:
+	case state&nudPermanent != 0:
 		return "PERMANENT"
-	case state&NUD_NOARP != 0:
+	case state&nudNoARP != 0:
 		return "NOARP"
-	case state&NUD_INCOMPLETE != 0:
+	case state&nudIncomplete != 0:
 		return "INCOMPLETE"
-	case state&NUD_FAILED != 0:
+	case state&nudFailed != 0:
 		return "FAILED"
 	default:
 		return "UNKNOWN"

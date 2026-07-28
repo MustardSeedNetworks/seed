@@ -1,7 +1,5 @@
 //go:build linux
 
-// ethtool integration module (Linux) retrieves network interface speed, duplex, and autonegotiation
-// settings using the ethtool interface, providing detailed link layer information.
 package netif
 
 import (
@@ -10,7 +8,7 @@ import (
 
 // getEthtoolSettings retrieves link settings using pure Go ethtool.
 // Returns autoneg status and advertised link modes.
-func getEthtoolSettings(name string) (autoNeg bool, advertised []string) {
+func getEthtoolSettings(name string) (bool, []string) {
 	e, err := ethtool.NewEthtool()
 	if err != nil {
 		return false, nil
@@ -25,11 +23,13 @@ func getEthtoolSettings(name string) (autoNeg bool, advertised []string) {
 
 	// Check auto-negotiation
 	if an, ok := cmd["autoneg"]; ok {
-		autoNeg = an == 1
+		autoNeg := an == 1
+		return autoNeg, advertisedModes(cmd)
 	}
+	return false, advertisedModes(cmd)
+}
 
-	// Parse advertised link modes from bitmask
-	// Common speed modes (from ethtool.h ADVERTISED_* constants)
+func advertisedModes(cmd map[string]uint64) []string {
 	speedModes := map[uint64]string{
 		0x001:   "10baseT/Half",
 		0x002:   "10baseT/Full",
@@ -41,7 +41,7 @@ func getEthtoolSettings(name string) (autoNeg bool, advertised []string) {
 		0x40000: "5000baseT/Full",
 		0x1000:  "10000baseT/Full",
 	}
-
+	var advertised []string
 	if adv, ok := cmd["advertising"]; ok {
 		for mask, mode := range speedModes {
 			if adv&mask != 0 {
@@ -50,5 +50,5 @@ func getEthtoolSettings(name string) (autoNeg bool, advertised []string) {
 		}
 	}
 
-	return autoNeg, advertised
+	return advertised
 }

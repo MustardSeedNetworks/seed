@@ -1,7 +1,5 @@
 //go:build linux
 
-// Linux implementation uses netlink to detect default IPv4 and IPv6 gateways from kernel routing table,
-// enabling accurate gateway address resolution for network diagnostics.
 package gateway
 
 import (

@@ -413,14 +413,14 @@ func TestManagerGetInfoWithLLDPVariations(t *testing.T) {
 
 	tests := []lldpVariation{
 		{"both nil", nil, nil, false, false},
-		{"only native", intPtr(10), nil, true, false},
-		{"only voice", nil, intPtr(50), false, true},
-		{"both set", intPtr(1), intPtr(100), true, true},
-		{"zero native", intPtr(0), nil, true, false},
-		{"zero voice", nil, intPtr(0), false, true},
-		{"same values", intPtr(100), intPtr(100), true, true},
-		{"max VLAN native", intPtr(4094), nil, true, false},
-		{"max VLAN voice", nil, intPtr(4094), false, true},
+		{"only native", new(10), nil, true, false},
+		{"only voice", nil, new(50), false, true},
+		{"both set", new(1), new(100), true, true},
+		{"zero native", new(0), nil, true, false},
+		{"zero voice", nil, new(0), false, true},
+		{"same values", new(100), new(100), true, true},
+		{"max VLAN native", new(4094), nil, true, false},
+		{"max VLAN voice", nil, new(4094), false, true},
 	}
 
 	for _, tt := range tests {
@@ -457,11 +457,6 @@ func assertLLDPVariation(t *testing.T, variation lldpVariation) {
 	if variation.voiceVlan != nil && info.VoiceVlan != nil && *info.VoiceVlan != *variation.voiceVlan {
 		t.Errorf("VoiceVlan = %d, want %d", *info.VoiceVlan, *variation.voiceVlan)
 	}
-}
-
-// intPtr is a helper to create int pointers.
-func intPtr(i int) *int {
-	return &i
 }
 
 // BenchmarkManagerOperations benchmarks various manager operations.

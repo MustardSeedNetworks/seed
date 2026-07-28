@@ -55,7 +55,7 @@ func TestManagerSetInterfaceMultiple(t *testing.T) {
 }
 
 // TestManagerConcurrentSetAndGet tests concurrent access to Manager.
-func TestManagerConcurrentSetAndGet(t *testing.T) {
+func TestManagerConcurrentSetAndGet(_ *testing.T) {
 	manager := wifi.NewManager("en0")
 
 	var wg sync.WaitGroup
@@ -181,7 +181,7 @@ func TestScannerCachePersistence(t *testing.T) {
 }
 
 // TestScannerConcurrentReadWrite tests concurrent access to Scanner cache.
-func TestScannerConcurrentReadWrite(t *testing.T) {
+func TestScannerConcurrentReadWrite(_ *testing.T) {
 	scanner := wifi.NewScanner("en0")
 	scanTime := time.Now()
 
@@ -202,15 +202,13 @@ func TestScannerConcurrentReadWrite(t *testing.T) {
 
 	// Start readers
 	for range numReaders {
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
+		wg.Go(func() {
 			for range numIterations {
 				_ = scanner.GetCachedNetworks()
 				_ = scanner.GetLastScanTime()
 				_ = scanner.ScannerInterfaceName()
 			}
-		}()
+		})
 	}
 
 	// Start writers

@@ -320,8 +320,8 @@ func TestTrafficJSONSerialization(t *testing.T) {
 
 			// Unmarshal back.
 			var decoded vlan.Traffic
-			if err := json.Unmarshal(data, &decoded); err != nil {
-				t.Fatalf("json.Unmarshal failed: %v", err)
+			if unmarshalErr := json.Unmarshal(data, &decoded); unmarshalErr != nil {
+				t.Fatalf("json.Unmarshal failed: %v", unmarshalErr)
 			}
 
 			// Verify fields.

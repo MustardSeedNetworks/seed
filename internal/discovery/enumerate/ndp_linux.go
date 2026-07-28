@@ -1,19 +1,19 @@
 //go:build linux
 
-// Package discovery implements multi-protocol network device discovery.
-// NDP (Neighbor Discovery Protocol) support for Linux enables IPv6 neighbor discovery
-// by reading from the kernel's neighbor table, allowing detection of IPv6-capable devices
-// and routers on the local network segment.
 package enumerate
 
 import (
+	"errors"
 	"fmt"
-	"log/slog"
 	"sync"
 	"time"
 
 	"github.com/vishvananda/netlink"
+
+	"github.com/MustardSeedNetworks/seed/internal/logging"
 )
+
+const ndpScanInterval = 30 * time.Second
 
 // NDPScanner scans for IPv6 neighbors using the kernel's neighbor table.
 type NDPScanner struct {
@@ -47,7 +47,7 @@ func (ns *NDPScanner) Start() error {
 	defer ns.mu.Unlock()
 
 	if ns.running {
-		return fmt.Errorf("NDP scanner already running")
+		return errors.New("NDP scanner already running")
 	}
 
 	ns.running = true
@@ -58,7 +58,7 @@ func (ns *NDPScanner) Start() error {
 	// future Stop nil-ing ns.stopChan.
 	go ns.scanLoop(ns.stopChan)
 
-	slog.Info("IPv6 NDP scanner started", "interface", ns.interfaceName)
+	logging.GetLogger().Info("IPv6 NDP scanner started", "interface", ns.interfaceName)
 	return nil
 }
 
@@ -74,7 +74,7 @@ func (ns *NDPScanner) Stop() error {
 	close(ns.stopChan)
 	ns.running = false
 
-	slog.Info("IPv6 NDP scanner stopped")
+	logging.GetLogger().Info("IPv6 NDP scanner stopped")
 	return nil
 }
 
@@ -106,10 +106,10 @@ func (ns *NDPScanner) GetNeighbors() map[string]*NDPNeighbor {
 func (ns *NDPScanner) scanLoop(stopChan <-chan struct{}) {
 	// Initial scan
 	if err := ns.scanNeighborTable(); err != nil {
-		slog.Error("IPv6 neighbor scan error", "error", err)
+		logging.GetLogger().Error("IPv6 neighbor scan error", "error", err)
 	}
 
-	ticker := time.NewTicker(30 * time.Second)
+	ticker := time.NewTicker(ndpScanInterval)
 	defer ticker.Stop()
 
 	for {
@@ -118,7 +118,7 @@ func (ns *NDPScanner) scanLoop(stopChan <-chan struct{}) {
 			return
 		case <-ticker.C:
 			if err := ns.scanNeighborTable(); err != nil {
-				slog.Error("IPv6 neighbor scan error", "error", err)
+				logging.GetLogger().Error("IPv6 neighbor scan error", "error", err)
 			}
 		}
 	}

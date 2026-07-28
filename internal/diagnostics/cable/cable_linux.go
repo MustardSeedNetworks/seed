@@ -1,8 +1,5 @@
 //go:build linux
 
-// Package cable provides TDR cable testing functionality.
-// Linux implementation uses ethtool ioctl interface to perform Time Domain Reflectometry (TDR)
-// testing on network interfaces, detecting cable faults and cable length.
 package cable
 
 import (
@@ -332,7 +329,6 @@ func compileCablePairs(result *TestResult, pairMap map[string]*PairResult) {
 		pair := pairMap[letter]
 		result.Pairs = append(result.Pairs, *pair)
 
-		// Determine overall status (worst case)
 		if pair.Status != StatusOK {
 			overallStatus = pair.Status
 			result.Faults = append(
@@ -341,7 +337,6 @@ func compileCablePairs(result *TestResult, pairMap map[string]*PairResult) {
 			)
 		}
 
-		// Track minimum length (to fault)
 		if pair.LengthM != nil && (minLength == nil || *pair.LengthM < *minLength) {
 			minLength = pair.LengthM
 		}

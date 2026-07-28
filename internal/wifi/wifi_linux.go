@@ -4,14 +4,22 @@ package wifi
 
 import (
 	"bufio"
+	"context"
 	"fmt"
 	"net"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"strings"
+	"time"
 
 	"github.com/mdlayher/wifi"
+)
+
+const (
+	frequencyHertzPerMHz = 1_000_000
+	savedNetworkFields   = 4
+	nmcliTimeout         = 30 * time.Second
 )
 
 // isWirelessPlatform checks if interface is wireless on Linux using nl80211.
@@ -78,7 +86,7 @@ func getInfoPlatform(iface string) *Info {
 	info := &Info{
 		SSID:      bss.SSID,
 		BSSID:     bss.BSSID.String(),
-		Frequency: bss.Frequency / 1000000, // Convert Hz to MHz.
+		Frequency: bss.Frequency / frequencyHertzPerMHz,
 	}
 
 	// Calculate channel from frequency.
@@ -163,23 +171,14 @@ func frequencyToChannel(freq int) int {
 
 // connectPlatform connects to a WiFi network on Linux using nmcli.
 func connectPlatform(iface, ssid, password string) (*ConnectionResult, error) {
-	var cmd *exec.Cmd
-
+	args := []string{"device", "wifi", "connect", ssid}
 	if password != "" {
-		// Connect with password - creates new connection profile
-		//nolint:gosec // ssid and password are user-provided, iface is validated
-		cmd = exec.Command("nmcli", "device", "wifi", "connect", ssid,
-			"password", password, "ifname", iface)
-	} else {
-		// Try to connect using saved connection
-		//nolint:gosec // ssid is user-provided, iface is validated
-		cmd = exec.Command("nmcli", "device", "wifi", "connect", ssid, "ifname", iface)
+		args = append(args, "password", password)
 	}
-
-	output, err := cmd.CombinedOutput()
+	args = append(args, "ifname", iface)
+	output, success := runNMCLI(args...)
 	outputStr := strings.TrimSpace(string(output))
-
-	if err != nil {
+	if !success {
 		// Parse common error messages
 		if strings.Contains(outputStr, "Secrets were required") {
 			return &ConnectionResult{
@@ -218,12 +217,9 @@ func connectPlatform(iface, ssid, password string) (*ConnectionResult, error) {
 
 // disconnectPlatform disconnects from WiFi on Linux using nmcli.
 func disconnectPlatform(iface string) (*ConnectionResult, error) {
-	//nolint:gosec // iface is validated by caller
-	cmd := exec.Command("nmcli", "device", "disconnect", iface)
-	output, err := cmd.CombinedOutput()
+	output, success := runNMCLI("device", "disconnect", iface)
 	outputStr := strings.TrimSpace(string(output))
-
-	if err != nil {
+	if !success {
 		return &ConnectionResult{
 			Success: false,
 			Message: fmt.Sprintf("Disconnect failed: %s", outputStr),
@@ -239,8 +235,7 @@ func disconnectPlatform(iface string) (*ConnectionResult, error) {
 // getSavedNetworksPlatform returns saved WiFi networks on Linux using nmcli.
 func getSavedNetworksPlatform() ([]SavedNetwork, error) {
 	// List saved WiFi connections
-	cmd := exec.Command("nmcli", "-t", "-f", "NAME,UUID,TYPE,DEVICE", "connection", "show")
-	output, err := cmd.Output()
+	output, err := outputNMCLI("-t", "-f", "NAME,UUID,TYPE,DEVICE", "connection", "show")
 	if err != nil {
 		return nil, fmt.Errorf("failed to list saved networks: %w", err)
 	}
@@ -251,13 +246,13 @@ func getSavedNetworksPlatform() ([]SavedNetwork, error) {
 	for scanner.Scan() {
 		line := scanner.Text()
 		parts := strings.Split(line, ":")
-		if len(parts) >= 3 && parts[2] == "802-11-wireless" {
+		if len(parts) >= savedNetworkFields-1 && parts[2] == "802-11-wireless" {
 			network := SavedNetwork{
 				SSID: parts[0],
 				UUID: parts[1],
 				Type: "wifi",
 			}
-			if len(parts) >= 4 {
+			if len(parts) >= savedNetworkFields {
 				network.Device = parts[3]
 			}
 			networks = append(networks, network)
@@ -269,11 +264,22 @@ func getSavedNetworksPlatform() ([]SavedNetwork, error) {
 
 // forgetNetworkPlatform removes a saved WiFi network on Linux using nmcli.
 func forgetNetworkPlatform(ssid string) error {
-	//nolint:gosec // ssid is user-provided
-	cmd := exec.Command("nmcli", "connection", "delete", ssid)
-	output, err := cmd.CombinedOutput()
-	if err != nil {
+	output, success := runNMCLI("connection", "delete", ssid)
+	if !success {
 		return fmt.Errorf("failed to forget network: %s", strings.TrimSpace(string(output)))
 	}
 	return nil
+}
+
+func runNMCLI(args ...string) ([]byte, bool) {
+	ctx, cancel := context.WithTimeout(context.Background(), nmcliTimeout)
+	defer cancel()
+	output, err := exec.CommandContext(ctx, "nmcli", args...).CombinedOutput()
+	return output, err == nil
+}
+
+func outputNMCLI(args ...string) ([]byte, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), nmcliTimeout)
+	defer cancel()
+	return exec.CommandContext(ctx, "nmcli", args...).Output()
 }

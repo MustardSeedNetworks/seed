@@ -8,6 +8,8 @@ import (
 	"strings"
 )
 
+const nameserverFieldCount = 2
+
 // getSystemDNSPlatform reads DNS servers on Linux from /etc/resolv.conf
 // and systemd-resolved config files.
 func getSystemDNSPlatform() []string {
@@ -47,7 +49,7 @@ func parseResolvConf(path string) []string {
 		// Parse nameserver lines
 		if strings.HasPrefix(line, "nameserver") {
 			parts := strings.Fields(line)
-			if len(parts) >= 2 {
+			if len(parts) >= nameserverFieldCount {
 				servers = append(servers, parts[1])
 			}
 		}

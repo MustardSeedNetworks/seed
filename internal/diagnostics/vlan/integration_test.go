@@ -70,9 +70,7 @@ func TestManagerAndMonitorConcurrentUsage(t *testing.T) {
 	done := make(chan struct{})
 
 	// Manager operations.
-	wg.Add(1)
-	go func() {
-		defer wg.Done()
+	wg.Go(func() {
 		for {
 			select {
 			case <-done:
@@ -83,12 +81,10 @@ func TestManagerAndMonitorConcurrentUsage(t *testing.T) {
 				manager.SetInterface("en0")
 			}
 		}
-	}()
+	})
 
 	// Monitor recording.
-	wg.Add(1)
-	go func() {
-		defer wg.Done()
+	wg.Go(func() {
 		for {
 			select {
 			case <-done:
@@ -97,12 +93,10 @@ func TestManagerAndMonitorConcurrentUsage(t *testing.T) {
 				monitor.ExportRecordVLANTraffic(100, 1500)
 			}
 		}
-	}()
+	})
 
 	// Monitor reading.
-	wg.Add(1)
-	go func() {
-		defer wg.Done()
+	wg.Go(func() {
 		for {
 			select {
 			case <-done:
@@ -111,7 +105,7 @@ func TestManagerAndMonitorConcurrentUsage(t *testing.T) {
 				_ = monitor.GetStats()
 			}
 		}
-	}()
+	})
 
 	// Let it run for a bit.
 	time.Sleep(50 * time.Millisecond)
@@ -221,8 +215,6 @@ func TestMultipleMonitorInstances(t *testing.T) {
 func TestVLANIDValidation(t *testing.T) {
 	t.Parallel()
 
-	monitor := vlan.NewTrafficMonitor("eth0")
-
 	tests := []struct {
 		name   string
 		vlanID int
@@ -240,6 +232,9 @@ func TestVLANIDValidation(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			monitor := vlan.NewTrafficMonitor("eth0")
 			// Record traffic.
 			monitor.ExportRecordVLANTraffic(tt.vlanID, 1000)
 
@@ -255,9 +250,6 @@ func TestVLANIDValidation(t *testing.T) {
 			if !found {
 				t.Errorf("VLAN %d not found in stats", tt.vlanID)
 			}
-
-			// Reset for next test.
-			monitor.Reset()
 		})
 	}
 }
