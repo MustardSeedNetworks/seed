@@ -14,6 +14,9 @@ import (
 
 // seedDefaultHealthCheckProbes seeds the factory health-check targets on a
 // genuine first run via the health-settings use-case. No-op once seeded.
-func (s *Server) seedDefaultHealthCheckProbes(ctx context.Context) error {
-	return s.healthSettings.SeedDefaults(ctx, config.DefaultConfig().HealthChecks)
+func (s *Server) seedDefaultHealthCheckProbes(
+	ctx context.Context,
+	defaults config.HealthChecksConfig,
+) error {
+	return s.healthSettings.SeedDefaults(ctx, defaults)
 }

@@ -114,13 +114,13 @@ test-frontend-quiet:
 # E2E Tests
 # =============================================================================
 
-test-e2e: ## Run frontend E2E tests (requires backend running)
+test-e2e: ## Build an isolated Seed instance and run Playwright E2E tests
 	@echo ""
 	@echo "🎭 Running E2E tests (Playwright)..."
 	@E2E_COUNT=$$(find ui/e2e -name "*.spec.ts" 2>/dev/null | wc -l | tr -d ' '); \
 	echo "   📦 Running $$E2E_COUNT spec files..."
 	@echo ""
-	@cd ui && npm run test:e2e
+	@./scripts/run-e2e.sh
 	@echo ""
 	@echo "✅ E2E tests complete"
 

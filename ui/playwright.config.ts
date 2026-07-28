@@ -30,7 +30,7 @@ export default defineConfig({
   //   single shard) to ~5 min (workers=4, 4 shards) — and to ~2 min once the
   //   failing-test backlog from PRs 1–5 is cleared.
   retries: process.env.CI ? 1 : 0,
-  workers: process.env.CI ? 4 : undefined,
+  workers: process.env.CI ? 4 : 1,
   timeout: 30000,
   expect: {
     timeout: 10000,
@@ -76,7 +76,7 @@ export default defineConfig({
     },
   ],
   // Run local dev server before tests if not in CI
-  webServer: process.env.CI
+  webServer: process.env.CI || process.env.E2E_BASE_URL
     ? undefined
     : {
         command: 'npm run dev',

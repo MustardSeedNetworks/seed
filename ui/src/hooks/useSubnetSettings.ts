@@ -8,7 +8,7 @@
  * SettingsDrawer.
  */
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { LogComponents, logger } from '../lib/logger';
 import type { SaveStatus, SubnetConfig } from '../types/settings';
@@ -30,7 +30,7 @@ interface UseSubnetSettingsResult {
   deleteSubnet: (cidr: string) => Promise<void>;
 }
 
-export function useSubnetSettings(isOpen: boolean): UseSubnetSettingsResult {
+export function useSubnetSettings(): UseSubnetSettingsResult {
   const { t } = useTranslation('settings');
   const [subnets, setSubnets] = useState<SubnetConfig[]>([]);
   const [newSubnetCidr, setNewSubnetCidr] = useState('');
@@ -51,13 +51,6 @@ export function useSubnetSettings(isOpen: boolean): UseSubnetSettingsResult {
       logger.error(LogComponents.DISCOVERY, 'Failed to fetch subnets', err);
     }
   }, []);
-
-  // Fetch subnets when drawer opens
-  useEffect(() => {
-    if (isOpen) {
-      fetchSubnets().catch(() => undefined);
-    }
-  }, [isOpen, fetchSubnets]);
 
   const addSubnet = useCallback(async (): Promise<void> => {
     if (!newSubnetCidr.trim()) {

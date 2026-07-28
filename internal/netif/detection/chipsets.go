@@ -10,6 +10,7 @@ import (
 	_ "embed"
 	"os"
 	"strings"
+	"sync"
 
 	"gopkg.in/yaml.v3"
 
@@ -61,8 +62,11 @@ type ChipsetInfo struct {
 
 // ChipsetDatabase provides chipset identification.
 type ChipsetDatabase struct {
-	chipsets []ChipsetInfo
-	ouiMap   map[string]*ChipsetInfo
+	chipsets         []ChipsetInfo
+	ouiMap           map[string]*ChipsetInfo
+	platformMu       sync.Mutex
+	platformMatches  map[string]*ChipsetInfo
+	identifyPlatform func(string) *ChipsetInfo
 }
 
 // NewChipsetDatabase creates a populated chipset database.
@@ -88,6 +92,25 @@ func NewChipsetDatabase() *ChipsetDatabase {
 	}
 
 	return db
+}
+
+func (db *ChipsetDatabase) identifyByPlatform(name string) *ChipsetInfo {
+	db.platformMu.Lock()
+	defer db.platformMu.Unlock()
+
+	if match, ok := db.platformMatches[name]; ok {
+		return match
+	}
+	identify := db.identifyPlatform
+	if identify == nil {
+		identify = db.identifyByPlatformUncached
+	}
+	match := identify(name)
+	if db.platformMatches == nil {
+		db.platformMatches = make(map[string]*ChipsetInfo)
+	}
+	db.platformMatches[name] = match
+	return match
 }
 
 // NewChipsetDatabaseFromFile creates a database from a specific YAML file.

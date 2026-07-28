@@ -27,7 +27,7 @@
  */
 
 import type React from 'react';
-import { memo, useCallback, useEffect, useRef, useState } from 'react';
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useSettings } from '../../contexts/useSettings';
 import { useDebouncedAutoSave } from '../../hooks/useDebouncedAutoSave';
@@ -276,7 +276,7 @@ export const SettingsDrawer: React.MemoExoticComponent<
     addSubnet,
     toggleSubnet,
     deleteSubnet,
-  } = useSubnetSettings(isOpen);
+  } = useSubnetSettings();
   // Log preview (debug)
   const [logPreview, setLogPreview] = useState<string[]>([]);
   const [logLoading, setLogLoading] = useState(false);
@@ -327,10 +327,8 @@ export const SettingsDrawer: React.MemoExoticComponent<
   const [savingIp, setSavingIp] = useState(false);
   const [ipMessage, setIpMessage] = useState<string | null>(null);
 
-  // Per-section fetch callbacks + open-time orchestration live in their hook
-  const { fetchIperfSuggestions, fetchLogPreview } = useSettingsDrawerLoaders({
-    isOpen,
-    initRefs: {
+  const initRefs = useMemo(
+    () => ({
       initialLoadRef,
       thresholdsInitRef,
       testsInitRef,
@@ -340,7 +338,14 @@ export const SettingsDrawer: React.MemoExoticComponent<
       networkDiscoveryInitRef,
       snmpInitRef,
       vulnInitRef,
-    },
+    }),
+    [],
+  );
+
+  // Per-section fetch callbacks + open-time orchestration live in their hook
+  const { fetchIperfSuggestions, fetchLogPreview } = useSettingsDrawerLoaders({
+    isOpen,
+    initRefs,
     setThresholds,
     setIpSettings,
     setDnsInput,

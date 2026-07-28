@@ -108,7 +108,8 @@ GOFLAGS=$(GO_BUILD_FLAGS)
 GO_LDFLAGS = -s -w \
 	-X $(VERSION_PKG).Version=$(VERSION) \
 	-X $(VERSION_PKG).Commit=$(COMMIT) \
-	-X $(VERSION_PKG).BuildTime=$(BUILD_TIME)
+	-X $(VERSION_PKG).BuildTime=$(BUILD_TIME) \
+	-X $(VERSION_PKG).UIBuildHash=$(shell ./scripts/ui-build-hash.sh)
 LDFLAGS=$(GO_LDFLAGS)
 
 # =============================================================================

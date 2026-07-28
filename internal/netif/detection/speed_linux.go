@@ -45,8 +45,8 @@ func getInterfaceSpeed(name string) int64 {
 	return 0
 }
 
-// identifyByPlatform attempts platform-specific chipset identification.
-func (db *ChipsetDatabase) identifyByPlatform(name string) *ChipsetInfo {
+// identifyByPlatformUncached attempts platform-specific chipset identification.
+func (db *ChipsetDatabase) identifyByPlatformUncached(name string) *ChipsetInfo {
 	// Try to read device info from sysfs
 	devicePath := filepath.Join("/sys/class/net", name, "device")
 
