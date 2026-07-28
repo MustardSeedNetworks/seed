@@ -15,7 +15,7 @@ The CI pipeline runs on every push and PR. **All checks must pass.**
 | `docs`      | Documentation      | Markdown lint, link check                      |
 | `build`     | Build verification | Multi-arch binaries                            |
 | `e2e`       | Browser tests      | Playwright E2E tests in Chrome                 |
-| `storybook` | Component docs     | Storybook build                                |
+| `storybook` | Component tests    | Storybook interactions and axe accessibility  |
 
 ### Other Workflows
 
@@ -38,6 +38,7 @@ PRs cannot be merged if any CI job fails. Fix all issues locally first:
 ```bash
 make all      # Run full verification locally
 make test-e2e # Run E2E browser tests
+cd ui && npm run test:storybook # Build and test tagged component stories
 ```
 
 ## Running CI Checks Locally
@@ -56,6 +57,7 @@ make security-backend  # gosec + govulncheck
 make lint-frontend     # Biome + TypeScript
 make test-frontend     # Vitest
 make build-frontend    # Vite build
+cd ui && npm run test:storybook # Storybook interaction + accessibility tests
 ```
 
 ### Security Checks

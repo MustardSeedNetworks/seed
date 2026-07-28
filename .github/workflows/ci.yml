@@ -73,6 +73,7 @@ jobs:
               - '.github/actions/setup-libpcap/**'
             frontend:
               - 'ui/**'
+              - 'scripts/test-storybook-contract.sh'
               - '.github/actions/setup-node/**'
             c:
               - 'src/**'
@@ -327,6 +328,41 @@ jobs:
       # Build is done once by the build-ui job and shared as the
       # frontend-dist artifact (downloaded by backend/race/build/e2e/
       # lighthouse). This job validates source (types/lint/tests) only.
+
+  # ===========================================================================
+  # Storybook interaction and accessibility checks
+  # ===========================================================================
+  storybook:
+    name: Storybook interactions and accessibility
+    runs-on: ubuntu-latest
+    needs: changes
+    if: needs.changes.outputs.frontend == 'true' || needs.changes.outputs.workflows == 'true'
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: ui
+
+    steps:
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+
+      - name: Set up Node.js
+        uses: ./.github/actions/setup-node
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Chromium
+        run: node ./node_modules/playwright/cli.js install --with-deps chromium
+
+      - name: Run interaction and accessibility tests
+        env:
+          STORYBOOK_DISABLE_TELEMETRY: "1"
+        run: npm run test:storybook
+
+      - name: Verify injected defects fail the gate
+        env:
+          STORYBOOK_DISABLE_TELEMETRY: "1"
+        run: npm run test:storybook:contract
 
   # ===========================================================================
   # Security Scanning
@@ -1195,6 +1231,7 @@ jobs:
       - backend
       - race
       - frontend
+      - storybook
       - security
       - semgrep
       - quality

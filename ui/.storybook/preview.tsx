@@ -12,7 +12,8 @@
 
 import type { DecoratorFunction, StoryContext } from '@storybook/csf';
 import type { Preview, ReactRenderer } from '@storybook/react-vite';
-import { type JSX, type ReactNode, Suspense, useEffect } from 'react';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { type JSX, type ReactNode, Suspense, useEffect, useState } from 'react';
 import { I18nextProvider } from 'react-i18next';
 import { ProfileProvider } from '../src/contexts/ProfileContext';
 import i18n from '../src/i18n';
@@ -48,6 +49,32 @@ function ThemeWrapper({
  */
 function LoadingFallback(): JSX.Element {
   return <div className="flex items-center justify-center p-4 text-text-muted">Loading...</div>;
+}
+
+function StoryProviders({ children, profile }: { children: ReactNode; profile: boolean }) {
+  const [queryClient] = useState(
+    () => new QueryClient({ defaultOptions: { queries: { retry: false } } }),
+  );
+
+  useEffect(
+    () => (): void => {
+      queryClient.clear();
+    },
+    [queryClient],
+  );
+
+  const content = <Suspense fallback={<LoadingFallback />}>{children}</Suspense>;
+  return (
+    <I18nextProvider i18n={i18n}>
+      {profile ? (
+        <QueryClientProvider client={queryClient}>
+          <ProfileProvider>{content}</ProfileProvider>
+        </QueryClientProvider>
+      ) : (
+        content
+      )}
+    </I18nextProvider>
+  );
 }
 
 const preview: Preview = {
@@ -92,17 +119,13 @@ const preview: Preview = {
         context.globals.backgrounds?.value !== 'var(--color-surface-base-light, #f8fafc)';
 
       return (
-        <I18nextProvider i18n={i18n}>
-          <Suspense fallback={<LoadingFallback />}>
-            <ProfileProvider>
-              <ThemeWrapper dark={isDark}>
-                <div className="p-4">
-                  <Story />
-                </div>
-              </ThemeWrapper>
-            </ProfileProvider>
-          </Suspense>
-        </I18nextProvider>
+        <StoryProviders profile={context.parameters.seedProfile !== false}>
+          <ThemeWrapper dark={isDark}>
+            <div className="p-4">
+              <Story />
+            </div>
+          </ThemeWrapper>
+        </StoryProviders>
       );
     }) as DecoratorFunction<ReactRenderer>,
   ],
