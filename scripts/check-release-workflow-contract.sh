@@ -21,6 +21,16 @@ require "if: \${{ !inputs.provenance_only }}"
 require "if: \${{ !cancelled() && ((inputs.provenance_only && needs.goreleaser-backfill-hashes.result == 'success') || (!inputs.provenance_only && !inputs.dry_run && needs.goreleaser.result == 'success')) }}"
 require "if: \${{ !inputs.dry_run && !inputs.provenance_only }}"
 
+if ! awk '
+  /- name: Install Syft \(SBOM\) inside container/ { in_syft_step = 1; next }
+  in_syft_step && /^        shell: bash$/ { found_bash = 1; exit }
+  in_syft_step && /^      - name:/ { exit }
+  END { exit !found_bash }
+' "$workflow"; then
+  echo "release workflow contract missing Bash shell for Syft installation" >&2
+  exit 1
+fi
+
 attests() {
   local provenance_only="$1"
   local dry_run="$2"

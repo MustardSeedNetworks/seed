@@ -222,6 +222,7 @@ jobs:
           path: internal/api/ui/
 
       - name: Install Syft (SBOM) inside container
+        shell: bash
         env:
           SYFT_VERSION: "1.46.0"
           # SHA-256 of syft_1.46.0_linux_amd64.tar.gz from the upstream
