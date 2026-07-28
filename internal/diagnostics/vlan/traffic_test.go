@@ -13,6 +13,14 @@ import (
 	"github.com/MustardSeedNetworks/seed/internal/diagnostics/vlan"
 )
 
+type packetTestCase struct {
+	name        string
+	vlanID      uint16
+	payloadLen  int
+	wantPackets uint64
+	wantVLANID  int
+}
+
 // createVLANPacket creates a gopacket.Packet with a VLAN tag for testing.
 func createVLANPacket(vlanID uint16, dataLen int) gopacket.Packet {
 	// Create a minimal 802.1Q tagged Ethernet frame.
@@ -45,13 +53,9 @@ func createVLANPacket(vlanID uint16, dataLen int) gopacket.Packet {
 
 // TestProcessPacketWithRealPacket tests the processPacket logic using real gopacket packets.
 func TestProcessPacketWithRealPacket(t *testing.T) {
-	tests := []struct {
-		name        string
-		vlanID      uint16
-		payloadLen  int
-		wantPackets uint64
-		wantVLANID  int
-	}{
+	t.Parallel()
+
+	tests := []packetTestCase{
 		{
 			name:        "new VLAN packet",
 			vlanID:      100,
@@ -91,37 +95,30 @@ func TestProcessPacketWithRealPacket(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			monitor := vlan.NewTrafficMonitor("eth0")
-
-			// Create a real gopacket.Packet with VLAN tag.
-			pkt := createVLANPacket(tt.vlanID, tt.payloadLen)
-
-			// Process the packet.
-			monitor.ExportProcessPacketRaw(pkt)
-
-			// Verify stats.
-			stats := monitor.GetStats()
-			if len(stats) != 1 {
-				t.Fatalf("expected 1 stat entry, got %d", len(stats))
-			}
-
-			found := false
-			for _, s := range stats {
-				if s.ID == tt.wantVLANID {
-					found = true
-					if s.Packets != tt.wantPackets {
-						t.Errorf("packets = %d, want %d", s.Packets, tt.wantPackets)
-					}
-					// Bytes will be the full packet size (ethernet + dot1q + payload).
-					if s.Bytes == 0 {
-						t.Error("expected non-zero bytes")
-					}
-				}
-			}
-			if !found {
-				t.Errorf("VLAN %d not found in stats", tt.wantVLANID)
-			}
+			t.Parallel()
+			assertProcessedPacket(t, tt)
 		})
+	}
+}
+
+func assertProcessedPacket(t *testing.T, testCase packetTestCase) {
+	t.Helper()
+
+	monitor := vlan.NewTrafficMonitor("eth0")
+	monitor.ExportProcessPacketRaw(createVLANPacket(testCase.vlanID, testCase.payloadLen))
+	stats := monitor.GetStats()
+	if len(stats) != 1 {
+		t.Fatalf("expected 1 stat entry, got %d", len(stats))
+	}
+	stat := stats[0]
+	if stat.ID != testCase.wantVLANID {
+		t.Fatalf("VLAN ID = %d, want %d", stat.ID, testCase.wantVLANID)
+	}
+	if stat.Packets != testCase.wantPackets {
+		t.Errorf("packets = %d, want %d", stat.Packets, testCase.wantPackets)
+	}
+	if stat.Bytes == 0 {
+		t.Error("expected non-zero bytes")
 	}
 }
 
@@ -371,10 +368,7 @@ func TestTrafficMonitorStartFailsWithoutPrivileges(t *testing.T) {
 		t.Skip("Start succeeded - may have elevated privileges")
 	}
 
-	// Verify error message contains expected text.
-	if err != nil {
-		t.Logf("Start correctly failed: %v", err)
-	}
+	t.Logf("Start correctly failed: %v", err)
 
 	// Should not be running after failed start.
 	if monitor.IsRunning() {
@@ -548,9 +542,7 @@ func TestTrafficMonitorConcurrentOperations(t *testing.T) {
 	done := make(chan struct{})
 
 	// Packet processor.
-	wg.Add(1)
-	go func() {
-		defer wg.Done()
+	wg.Go(func() {
 		for {
 			select {
 			case <-done:
@@ -560,12 +552,10 @@ func TestTrafficMonitorConcurrentOperations(t *testing.T) {
 				monitor.ExportProcessPacketRaw(pkt)
 			}
 		}
-	}()
+	})
 
 	// Stats reader.
-	wg.Add(1)
-	go func() {
-		defer wg.Done()
+	wg.Go(func() {
 		for {
 			select {
 			case <-done:
@@ -574,12 +564,10 @@ func TestTrafficMonitorConcurrentOperations(t *testing.T) {
 				_ = monitor.GetStats()
 			}
 		}
-	}()
+	})
 
 	// IsRunning checker.
-	wg.Add(1)
-	go func() {
-		defer wg.Done()
+	wg.Go(func() {
 		for {
 			select {
 			case <-done:
@@ -588,7 +576,7 @@ func TestTrafficMonitorConcurrentOperations(t *testing.T) {
 				_ = monitor.IsRunning()
 			}
 		}
-	}()
+	})
 
 	// Let them run for a bit.
 	time.Sleep(50 * time.Millisecond)

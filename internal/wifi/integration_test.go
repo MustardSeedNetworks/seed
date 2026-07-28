@@ -191,7 +191,7 @@ func TestFrequencyChannelConsistency(t *testing.T) {
 }
 
 // TestConcurrentManagerAndScanner tests concurrent access to Manager and Scanner.
-func TestConcurrentManagerAndScanner(t *testing.T) {
+func TestConcurrentManagerAndScanner(_ *testing.T) {
 	manager := wifi.NewManager("en0")
 	scanner := wifi.NewScanner("en0")
 
@@ -373,7 +373,7 @@ func TestManagerIsWirelessWithDifferentInterfaces(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(_ *testing.T) {
 			manager := wifi.NewManager(tt.iface)
 
 			// Just verify it doesn't panic
@@ -395,7 +395,7 @@ func TestManagerGetInfoWithDifferentInterfaces(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(_ *testing.T) {
 			manager := wifi.NewManager(tt.iface)
 
 			// Just verify it doesn't panic

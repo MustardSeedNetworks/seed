@@ -136,34 +136,31 @@ func TestInfoJSONSerialization(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-
-			// Marshal to JSON.
-			data, err := json.Marshal(tt.info)
-			if err != nil {
-				t.Fatalf("json.Marshal failed: %v", err)
-			}
-
-			// Unmarshal back.
-			var decoded vlan.Info
-			if err := json.Unmarshal(data, &decoded); err != nil {
-				t.Fatalf("json.Unmarshal failed: %v", err)
-			}
-
-			// Verify key fields.
-			if tt.info.NativeVlan != nil {
-				if decoded.NativeVlan == nil || *decoded.NativeVlan != *tt.info.NativeVlan {
-					t.Error("NativeVlan mismatch after JSON round-trip")
-				}
-			}
-			if tt.info.VoiceVlan != nil {
-				if decoded.VoiceVlan == nil || *decoded.VoiceVlan != *tt.info.VoiceVlan {
-					t.Error("VoiceVlan mismatch after JSON round-trip")
-				}
-			}
-			if len(tt.info.TaggedVlans) != len(decoded.TaggedVlans) {
-				t.Error("TaggedVlans length mismatch after JSON round-trip")
-			}
+			assertInfoJSONRoundTrip(t, tt.info)
 		})
+	}
+}
+
+func assertInfoJSONRoundTrip(t *testing.T, info vlan.Info) {
+	t.Helper()
+
+	data, err := json.Marshal(info)
+	if err != nil {
+		t.Fatalf("json.Marshal failed: %v", err)
+	}
+
+	var decoded vlan.Info
+	if unmarshalErr := json.Unmarshal(data, &decoded); unmarshalErr != nil {
+		t.Fatalf("json.Unmarshal failed: %v", unmarshalErr)
+	}
+	if info.NativeVlan != nil && (decoded.NativeVlan == nil || *decoded.NativeVlan != *info.NativeVlan) {
+		t.Error("NativeVlan mismatch after JSON round-trip")
+	}
+	if info.VoiceVlan != nil && (decoded.VoiceVlan == nil || *decoded.VoiceVlan != *info.VoiceVlan) {
+		t.Error("VoiceVlan mismatch after JSON round-trip")
+	}
+	if len(info.TaggedVlans) != len(decoded.TaggedVlans) {
+		t.Error("TaggedVlans length mismatch after JSON round-trip")
 	}
 }
 
@@ -415,60 +412,53 @@ func TestCreateDeleteVlanInterfaceEdgeCases(t *testing.T) {
 func TestManagerGetInfoWithLLDPVariations(t *testing.T) {
 	t.Parallel()
 
-	manager := vlan.NewManager("eth0")
-	manager.SetConfigured(true, 100)
-
-	tests := []struct {
-		name       string
-		nativeVlan *int
-		voiceVlan  *int
-		wantNative bool
-		wantVoice  bool
-	}{
+	tests := []lldpVariation{
 		{"both nil", nil, nil, false, false},
-		{"only native", intPtr(10), nil, true, false},
-		{"only voice", nil, intPtr(50), false, true},
-		{"both set", intPtr(1), intPtr(100), true, true},
-		{"zero native", intPtr(0), nil, true, false},
-		{"zero voice", nil, intPtr(0), false, true},
-		{"same values", intPtr(100), intPtr(100), true, true},
-		{"max VLAN native", intPtr(4094), nil, true, false},
-		{"max VLAN voice", nil, intPtr(4094), false, true},
+		{"only native", new(10), nil, true, false},
+		{"only voice", nil, new(50), false, true},
+		{"both set", new(1), new(100), true, true},
+		{"zero native", new(0), nil, true, false},
+		{"zero voice", nil, new(0), false, true},
+		{"same values", new(100), new(100), true, true},
+		{"max VLAN native", new(4094), nil, true, false},
+		{"max VLAN voice", nil, new(4094), false, true},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-
-			info := manager.GetInfoWithLLDP(tt.nativeVlan, tt.voiceVlan)
-
-			hasNative := info.NativeVlan != nil
-			hasVoice := info.VoiceVlan != nil
-
-			if hasNative != tt.wantNative {
-				t.Errorf("NativeVlan presence = %v, want %v", hasNative, tt.wantNative)
-			}
-			if hasVoice != tt.wantVoice {
-				t.Errorf("VoiceVlan presence = %v, want %v", hasVoice, tt.wantVoice)
-			}
-
-			if tt.nativeVlan != nil && info.NativeVlan != nil {
-				if *info.NativeVlan != *tt.nativeVlan {
-					t.Errorf("NativeVlan = %d, want %d", *info.NativeVlan, *tt.nativeVlan)
-				}
-			}
-			if tt.voiceVlan != nil && info.VoiceVlan != nil {
-				if *info.VoiceVlan != *tt.voiceVlan {
-					t.Errorf("VoiceVlan = %d, want %d", *info.VoiceVlan, *tt.voiceVlan)
-				}
-			}
+			assertLLDPVariation(t, tt)
 		})
 	}
 }
 
-// intPtr is a helper to create int pointers.
-func intPtr(i int) *int {
-	return &i
+type lldpVariation struct {
+	name       string
+	nativeVlan *int
+	voiceVlan  *int
+	wantNative bool
+	wantVoice  bool
+}
+
+func assertLLDPVariation(t *testing.T, variation lldpVariation) {
+	t.Helper()
+
+	manager := vlan.NewManager("eth0")
+	manager.SetConfigured(true, 100)
+	info := manager.GetInfoWithLLDP(variation.nativeVlan, variation.voiceVlan)
+
+	if (info.NativeVlan != nil) != variation.wantNative {
+		t.Errorf("NativeVlan presence = %v, want %v", info.NativeVlan != nil, variation.wantNative)
+	}
+	if (info.VoiceVlan != nil) != variation.wantVoice {
+		t.Errorf("VoiceVlan presence = %v, want %v", info.VoiceVlan != nil, variation.wantVoice)
+	}
+	if variation.nativeVlan != nil && info.NativeVlan != nil && *info.NativeVlan != *variation.nativeVlan {
+		t.Errorf("NativeVlan = %d, want %d", *info.NativeVlan, *variation.nativeVlan)
+	}
+	if variation.voiceVlan != nil && info.VoiceVlan != nil && *info.VoiceVlan != *variation.voiceVlan {
+		t.Errorf("VoiceVlan = %d, want %d", *info.VoiceVlan, *variation.voiceVlan)
+	}
 }
 
 // BenchmarkManagerOperations benchmarks various manager operations.

@@ -227,9 +227,7 @@ func TestTrafficMonitorConcurrentRecordAndReset(t *testing.T) {
 	done := make(chan struct{})
 
 	// Recorder.
-	wg.Add(1)
-	go func() {
-		defer wg.Done()
+	wg.Go(func() {
 		for {
 			select {
 			case <-done:
@@ -238,12 +236,10 @@ func TestTrafficMonitorConcurrentRecordAndReset(t *testing.T) {
 				monitor.ExportRecordVLANTraffic(100, 1000)
 			}
 		}
-	}()
+	})
 
 	// Resetter.
-	wg.Add(1)
-	go func() {
-		defer wg.Done()
+	wg.Go(func() {
 		for {
 			select {
 			case <-done:
@@ -252,12 +248,10 @@ func TestTrafficMonitorConcurrentRecordAndReset(t *testing.T) {
 				monitor.Reset()
 			}
 		}
-	}()
+	})
 
 	// Reader.
-	wg.Add(1)
-	go func() {
-		defer wg.Done()
+	wg.Go(func() {
 		for {
 			select {
 			case <-done:
@@ -266,7 +260,7 @@ func TestTrafficMonitorConcurrentRecordAndReset(t *testing.T) {
 				_ = monitor.GetStats()
 			}
 		}
-	}()
+	})
 
 	time.Sleep(50 * time.Millisecond)
 	close(done)
@@ -376,11 +370,14 @@ func TestTrafficStructCopy(t *testing.T) {
 	}
 
 	// Create copy.
-	copy := original
+	clone := original
 
 	// Modify copy.
-	copy.Packets = 9999
-	copy.Bytes = 999999
+	clone.Packets = 9999
+	clone.Bytes = 999999
+	if clone.Packets != 9999 || clone.Bytes != 999999 {
+		t.Fatal("copy mutation did not take effect")
+	}
 
 	// Original should be unchanged.
 	if original.Packets != 1000 {

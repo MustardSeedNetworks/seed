@@ -1,24 +1,29 @@
 //go:build linux
 
-// Package cable provides TDR cable testing functionality.
-// Linux implementation uses ethtool ioctl interface to perform Time Domain Reflectometry (TDR)
-// testing on network interfaces, detecting cable faults and cable length.
 package cable
 
 import (
 	"bufio"
 	"bytes"
+	"context"
 	"net"
 	"os/exec"
 	"regexp"
+	"slices"
 	"strconv"
 	"strings"
 	"syscall"
+	"time"
 	"unsafe"
 )
 
 // SIOCETHTOOL ioctl command.
 const siocethtool = 0x8946
+
+const (
+	cablePairCount = 4
+	ethtoolTimeout = 10 * time.Second
+)
 
 // Ethtool command codes.
 const (
@@ -105,13 +110,7 @@ func isSupportedPlatform(iface string) bool {
 		"marvell",
 	}
 
-	for _, supported := range supportedDrivers {
-		if driver == supported {
-			return true
-		}
-	}
-
-	return false
+	return slices.Contains(supportedDrivers, driver)
 }
 
 // testPlatform performs a cable test on Linux.
@@ -226,7 +225,9 @@ func getDriverName(iface string) string {
 // Returns true if successful, false if not supported or failed.
 func tryEthtoolCableTest(iface string, result *TestResult) bool {
 	// Check if ethtool supports cable-test for this interface
-	cmd := exec.Command("ethtool", "--cable-test", iface)
+	ctx, cancel := context.WithTimeout(context.Background(), ethtoolTimeout)
+	defer cancel()
+	cmd := exec.CommandContext(ctx, "ethtool", "--cable-test", iface)
 	output, err := cmd.Output()
 	if err != nil {
 		// Cable test not supported or not root
@@ -252,9 +253,11 @@ func parseEthtoolCableTestOutput(output []byte, result *TestResult) {
 	scanner := bufio.NewScanner(bytes.NewReader(output))
 
 	// Regex patterns
-	pairRe := regexp.MustCompile(`Pair\s+([A-D]),?\s*(?:pin\s+)?(\d+[/-]\d+)?`)
-	statusRe := regexp.MustCompile(`Status:\s*(\w+)`)
-	lengthRe := regexp.MustCompile(`Length:\s*([\d.]+)\s*(?:meters?|m)`)
+	patterns := cableTestPatterns{
+		pair:   regexp.MustCompile(`Pair\s+([A-D]),?\s*(?:pin\s+)?(\d+[/-]\d+)?`),
+		status: regexp.MustCompile(`Status:\s*(\w+)`),
+		length: regexp.MustCompile(`Length:\s*([\d.]+)\s*(?:meters?|m)`),
+	}
 
 	var currentPair *PairResult
 	pairMap := map[string]*PairResult{
@@ -265,43 +268,61 @@ func parseEthtoolCableTestOutput(output []byte, result *TestResult) {
 	}
 
 	for scanner.Scan() {
-		line := scanner.Text()
-
-		// Check for pair header
-		if m := pairRe.FindStringSubmatch(line); m != nil {
-			pairLetter := m[1]
-			currentPair = pairMap[pairLetter]
-		}
-
-		// Check for status
-		if m := statusRe.FindStringSubmatch(line); m != nil && currentPair != nil {
-			statusStr := strings.ToLower(m[1])
-			switch statusStr {
-			case "ok":
-				currentPair.Status = StatusOK
-			case "open":
-				currentPair.Status = StatusOpen
-			case "short":
-				currentPair.Status = StatusShort
-			case "impedance_mismatch", "mismatch":
-				currentPair.Status = StatusImpedanceMismatch
-			default:
-				currentPair.Status = StatusUnknown
-			}
-		}
-
-		// Check for length
-		if m := lengthRe.FindStringSubmatch(line); m != nil && currentPair != nil {
-			if length, err := strconv.ParseFloat(m[1], 64); err == nil {
-				currentPair.LengthM = &length
-				ft := MetersToFeet(length)
-				currentPair.LengthFt = &ft
-			}
-		}
+		currentPair = parseCableTestLine(scanner.Text(), currentPair, pairMap, patterns)
 	}
 
-	// Compile pairs into result
-	result.Pairs = make([]PairResult, 0, 4)
+	compileCablePairs(result, pairMap)
+}
+
+type cableTestPatterns struct {
+	pair, status, length *regexp.Regexp
+}
+
+func parseCableTestLine(
+	line string,
+	current *PairResult,
+	pairs map[string]*PairResult,
+	patterns cableTestPatterns,
+) *PairResult {
+	if match := patterns.pair.FindStringSubmatch(line); match != nil {
+		current = pairs[match[1]]
+	}
+	if match := patterns.status.FindStringSubmatch(line); match != nil && current != nil {
+		current.Status = cableStatus(match[1])
+	}
+	if match := patterns.length.FindStringSubmatch(line); match != nil && current != nil {
+		setCableLength(current, match[1])
+	}
+	return current
+}
+
+func cableStatus(value string) Status {
+	switch strings.ToLower(value) {
+	case "ok":
+		return StatusOK
+	case "open":
+		return StatusOpen
+	case "short":
+		return StatusShort
+	case "impedance_mismatch", "mismatch":
+		return StatusImpedanceMismatch
+	default:
+		return StatusUnknown
+	}
+}
+
+func setCableLength(pair *PairResult, value string) {
+	length, err := strconv.ParseFloat(value, 64)
+	if err != nil {
+		return
+	}
+	pair.LengthM = &length
+	feet := MetersToFeet(length)
+	pair.LengthFt = &feet
+}
+
+func compileCablePairs(result *TestResult, pairMap map[string]*PairResult) {
+	result.Pairs = make([]PairResult, 0, cablePairCount)
 	overallStatus := StatusOK
 	var minLength *float64
 
@@ -309,7 +330,6 @@ func parseEthtoolCableTestOutput(output []byte, result *TestResult) {
 		pair := pairMap[letter]
 		result.Pairs = append(result.Pairs, *pair)
 
-		// Determine overall status (worst case)
 		if pair.Status != StatusOK {
 			overallStatus = pair.Status
 			result.Faults = append(
@@ -318,7 +338,6 @@ func parseEthtoolCableTestOutput(output []byte, result *TestResult) {
 			)
 		}
 
-		// Track minimum length (to fault)
 		if pair.LengthM != nil && (minLength == nil || *pair.LengthM < *minLength) {
 			minLength = pair.LengthM
 		}

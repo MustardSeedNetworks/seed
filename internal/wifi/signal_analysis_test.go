@@ -41,14 +41,7 @@ func TestSignalStrengthCategories(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			// Create a scanned network with the signal
-			network := wifi.ScannedNetwork{
-				SSID:      "TestNet",
-				BSSID:     "aa:bb:cc:dd:ee:ff",
-				Signal:    tt.signal,
-				Channel:   6,
-				Frequency: 2437,
-			}
+			network := wifi.ScannedNetwork{Signal: tt.signal}
 
 			// Classify signal strength
 			var category string
@@ -103,11 +96,7 @@ func TestSNRCalculation(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			network := wifi.ScannedNetwork{
-				Signal:     tt.signal,
-				NoiseFloor: tt.noiseFloor,
-				SNR:        tt.signal - tt.noiseFloor,
-			}
+			network := wifi.ScannedNetwork{SNR: tt.signal - tt.noiseFloor}
 
 			if network.SNR != tt.wantSNR {
 				t.Errorf("SNR = %d, want %d (signal=%d, noise=%d)",
@@ -157,12 +146,7 @@ func TestChannelWidthModes(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			network := wifi.ScannedNetwork{
-				HTMode:    tt.htMode,
-				Frequency: tt.freq,
-			}
-
-			gotBand := wifi.GetBand(network.Frequency)
+			gotBand := wifi.GetBand(tt.freq)
 			if gotBand != tt.wantBand {
 				t.Errorf("GetBand(%d) = %q, want %q", tt.freq, gotBand, tt.wantBand)
 			}
@@ -516,10 +500,7 @@ func TestEmptySSIDHandling(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			network := wifi.ScannedNetwork{
-				SSID:  tt.ssid,
-				BSSID: "aa:bb:cc:dd:ee:ff",
-			}
+			network := wifi.ScannedNetwork{SSID: tt.ssid}
 
 			isHidden := network.SSID == ""
 			if isHidden != tt.hidden {

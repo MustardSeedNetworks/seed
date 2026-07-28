@@ -11,6 +11,8 @@ import (
 	"github.com/vishvananda/netlink"
 )
 
+const vlanConfigFieldCount = 3
+
 // detectVlanSubinterfacesPlatform detects VLAN subinterfaces on Linux using netlink.
 func detectVlanSubinterfacesPlatform(iface string) []int {
 	vlans := make([]int, 0)
@@ -29,8 +31,8 @@ func detectVlanSubinterfacesPlatform(iface string) []int {
 		}
 
 		// Get the parent link
-		parentLink, err := netlink.LinkByIndex(vlan.Attrs().ParentIndex)
-		if err != nil {
+		parentLink, parentErr := netlink.LinkByIndex(vlan.Attrs().ParentIndex)
+		if parentErr != nil {
 			continue
 		}
 
@@ -61,13 +63,12 @@ func detectVlansFromProc(iface string) []int {
 	}
 
 	// Format: "eth0.100 | 100 | eth0"
-	lines := strings.Split(string(data), "\n")
-	for _, line := range lines {
+	for line := range strings.SplitSeq(string(data), "\n") {
 		fields := strings.Split(line, "|")
-		if len(fields) >= 3 {
+		if len(fields) >= vlanConfigFieldCount {
 			parentIface := strings.TrimSpace(fields[2])
 			if parentIface == iface {
-				if vlanID, err := strconv.Atoi(strings.TrimSpace(fields[1])); err == nil {
+				if vlanID, parseErr := strconv.Atoi(strings.TrimSpace(fields[1])); parseErr == nil {
 					vlans = append(vlans, vlanID)
 				}
 			}
@@ -96,8 +97,8 @@ func createVlanInterfacePlatform(parentIface string, vlanID int) error {
 		VlanId: vlanID,
 	}
 
-	if err := netlink.LinkAdd(vlan); err != nil {
-		return err
+	if addErr := netlink.LinkAdd(vlan); addErr != nil {
+		return addErr
 	}
 
 	// Bring interface up
