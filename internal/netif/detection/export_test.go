@@ -40,6 +40,11 @@ func (db *ChipsetDatabase) OUIMapCount() int {
 	return len(db.ouiMap)
 }
 
+// SetPlatformIdentifier replaces platform identification for testing.
+func (db *ChipsetDatabase) SetPlatformIdentifier(identify func(string) *ChipsetInfo) {
+	db.identifyPlatform = identify
+}
+
 // ChipsetDBNil checks if the detector's chipsetDB is nil.
 func (d *Detector) ChipsetDBNil() bool {
 	return d.chipsetDB == nil

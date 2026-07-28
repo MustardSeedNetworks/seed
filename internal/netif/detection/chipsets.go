@@ -94,25 +94,6 @@ func NewChipsetDatabase() *ChipsetDatabase {
 	return db
 }
 
-func (db *ChipsetDatabase) identifyByPlatform(name string) *ChipsetInfo {
-	db.platformMu.Lock()
-	defer db.platformMu.Unlock()
-
-	if match, ok := db.platformMatches[name]; ok {
-		return match
-	}
-	identify := db.identifyPlatform
-	if identify == nil {
-		identify = db.identifyByPlatformUncached
-	}
-	match := identify(name)
-	if db.platformMatches == nil {
-		db.platformMatches = make(map[string]*ChipsetInfo)
-	}
-	db.platformMatches[name] = match
-	return match
-}
-
 // NewChipsetDatabaseFromFile creates a database from a specific YAML file.
 // Returns error if file cannot be loaded.
 func NewChipsetDatabaseFromFile(path string) (*ChipsetDatabase, error) {
@@ -138,6 +119,25 @@ func NewChipsetDatabaseFromFile(path string) (*ChipsetDatabase, error) {
 	}
 
 	return db, nil
+}
+
+func (db *ChipsetDatabase) identifyByPlatform(name string) *ChipsetInfo {
+	db.platformMu.Lock()
+	defer db.platformMu.Unlock()
+
+	if match, ok := db.platformMatches[name]; ok {
+		return match
+	}
+	identify := db.identifyPlatform
+	if identify == nil {
+		identify = db.identifyByPlatformUncached
+	}
+	match := identify(name)
+	if db.platformMatches == nil {
+		db.platformMatches = make(map[string]*ChipsetInfo)
+	}
+	db.platformMatches[name] = match
+	return match
 }
 
 // loadChipsetsFromFile attempts to load chipsets from external YAML file.
