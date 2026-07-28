@@ -23,7 +23,10 @@
     "test:coverage": "node --disable-warning=DEP0205 ./node_modules/vitest/vitest.mjs run --coverage --reporter=verbose",
     "test:e2e": "NO_COLOR= node --disable-warning=DEP0205 ./node_modules/playwright/cli.js test --reporter=list",
     "storybook": "storybook dev -p 6006",
-    "build-storybook": "storybook build"
+    "build-storybook": "storybook build",
+    "test:storybook": "npm run build-storybook && npm run test:storybook:run",
+    "test:storybook:run": "node --disable-warning=DEP0205 ./node_modules/vitest/vitest.mjs run --config vitest.storybook.config.ts --project=storybook",
+    "test:storybook:contract": "../scripts/test-storybook-contract.sh"
   },
   "dependencies": {
     "@fontsource-variable/inter": "5.2.8",
@@ -66,7 +69,8 @@
     "@types/react-dom": "19.2.3",
     "@typescript/native-preview": "7.0.0-dev.20260615.1",
     "@vitejs/plugin-react": "6.0.2",
-    "@vitest/coverage-v8": "4.1.9",
+    "@vitest/browser-playwright": "4.1.10",
+    "@vitest/coverage-v8": "4.1.10",
     "axe-core": "4.12.1",
     "jscodeshift": "17.3.0",
     "jsdom": "29.1.1",
@@ -76,7 +80,7 @@
     "rollup-plugin-visualizer": "7.0.1",
     "storybook": "10.4.5",
     "vite": "8.0.16",
-    "vitest": "4.1.9"
+    "vitest": "4.1.10"
   },
   "overrides": {
     "brace-expansion": "5.0.8",

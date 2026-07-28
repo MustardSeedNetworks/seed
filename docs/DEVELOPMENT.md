@@ -33,6 +33,7 @@ make lint         # Run linters
 npm run dev       # Start dev server (port 5173)
 npm run test      # Run unit tests
 npm run test:e2e  # Run E2E tests
+npm run test:storybook # Build and test tagged Storybook interactions and accessibility
 npm run lint      # Run Biome linter
 ```
 
