@@ -23,7 +23,6 @@ func MinimalValidConfig() *config.Config {
 	return NewConfigBuilder().
 		WithPort(DefaultTestPort).
 		WithInterface("lo").
-		WithHTTPS(false).
 		Build()
 }
 
@@ -33,7 +32,6 @@ func InsecureConfig() *config.Config {
 	return NewConfigBuilder().
 		WithPort(DefaultTestPort).
 		WithInterface("lo").
-		WithHTTPS(false).
 		WithAuth("admin", ""). // Empty password hash triggers setup wizard
 		Build()
 }
@@ -44,7 +42,6 @@ func FullScanConfig() *config.Config {
 	return NewConfigBuilder().
 		WithPort(DefaultTestPort).
 		WithInterface("lo").
-		WithHTTPS(false).
 		WithDiscoveryConcurrency(FullScanConcurrency).
 		WithDiscoveryMethods(true, true, true). // All methods enabled
 		WithTCPPorts("22,80,443,445,8080").
@@ -56,7 +53,6 @@ func PassiveOnlyConfig() *config.Config {
 	return NewConfigBuilder().
 		WithPort(DefaultTestPort).
 		WithInterface("lo").
-		WithHTTPS(false).
 		WithDiscoveryConcurrency(PassiveOnlyConcurrency).
 		WithDiscoveryMethods(false, false, false). // Passive only
 		Build()
@@ -67,7 +63,6 @@ func StandardScanConfig() *config.Config {
 	return NewConfigBuilder().
 		WithPort(DefaultTestPort).
 		WithInterface("lo").
-		WithHTTPS(false).
 		WithDiscoveryConcurrency(StandardScanConcurrency).
 		WithDiscoveryMethods(true, true, false). // ARP + ICMP
 		Build()

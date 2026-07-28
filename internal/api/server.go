@@ -4,12 +4,14 @@ package api
 // server.go holds the Server struct, NewServer constructor, and the public/
 // lowercase service-accessor methods used throughout the api package. The
 // initialisation helpers (NewServer composes), routes, middleware stack,
-// SPA fallback, server lifecycle (Start/HTTPS/ACME/Shutdown), and data
+// SPA fallback, server lifecycle (Start/HTTPS/Shutdown), and data
 // retention each live in sibling server_*.go files.
 
 import (
 	"context"
+	"net"
 	"net/http"
+	"net/url"
 	"os"
 	"strconv"
 	"time"
@@ -103,9 +105,6 @@ const (
 	// serverIdleTimeoutSec is the HTTP server idle connection timeout in seconds.
 	serverIdleTimeoutSec = 60
 
-	// acmeReadHeaderTimeoutSec is the timeout for reading ACME challenge request headers.
-	acmeReadHeaderTimeoutSec = 10
-
 	// setupModeTimeoutMin is how long setup mode remains active (security fix #891).
 	// After this duration, setup is disabled and server restart is required.
 	setupModeTimeoutMin = 15
@@ -130,7 +129,7 @@ const (
 	APIBasePath = "/api"
 )
 
-// Server represents the HTTP/HTTPS server.
+// Server represents the HTTPS server.
 //
 // The long-running domain services live as direct fields on Server (D1,
 // ADR-0016/ADR-0020). The earlier ServiceContainer + grouped sub-structs
@@ -146,9 +145,8 @@ type Server struct {
 	logPath    string
 
 	// HTTP server components
-	httpServer          *http.Server
-	mux                 *http.ServeMux
-	acmeChallengeServer *http.Server // HTTP-01 challenge server for ACME (fixes #837)
+	httpServer *http.Server
+	mux        *http.ServeMux
 
 	// manifest records every route registered through register() (the
 	// capability registry, ADR-0002). Exposed read-only via /__capabilities
@@ -393,17 +391,6 @@ func (s *Server) initAuthSecurity(cfg *config.Config, trustedProxies *TrustedPro
 	s.setupToken = NewSetupTokenManager()
 	s.recovery = auth.NewRecoveryTokenManager(paths.Resolve(paths.ModeAuto).DataDir)
 	s.proxies = trustedProxies
-
-	// Wave 3 (#85): initialise the WebAuthn manager. The relying-party
-	// ID and origins are derived from the server config; failures here
-	// are non-fatal because the rest of the auth surface still works
-	// without passkeys.
-	if wan, wanErr := auth.NewWebAuthnManager(webAuthnConfigFromServer(cfg)); wanErr != nil {
-		logging.GetLogger().Warn("WebAuthn manager init failed; passkeys disabled",
-			"error", wanErr)
-	} else {
-		s.webAuthn = wan
-	}
 
 	s.loginLimiter = NewRateLimiter(DefaultRateLimitConfig())
 	s.endpointLimiter = NewEndpointRateLimiter(DefaultEndpointRateLimitConfig())
@@ -1081,38 +1068,43 @@ func (s *Server) initUseCases() {
 	s.initIdentityUseCases()
 }
 
-// webAuthnConfigFromServer derives the relying-party config for the
-// WebAuthn manager from the server config. The RPID is bound to the
-// configured ACME domain when present (production) and falls back to
-// the dev hostname otherwise (self-signed). Origins follow the same
-// scheme + port: HTTPS uses https:// and the configured port, HTTP
-// uses http://. Wave 3 (#85).
-func webAuthnConfigFromServer(cfg *config.Config) auth.WebAuthnConfig {
+// webAuthnConfigFromServer derives the relying-party config from the exact
+// public HTTPS origin, or from the port actually bound for a local deployment.
+func webAuthnConfigFromServer(cfg *config.Config, listenerPort int) auth.WebAuthnConfig {
 	const (
-		devHost     = "localhost"
-		defaultPort = 8443
-		schemeHTTPS = "https"
-		schemeHTTP  = "http"
+		devHost           = "localhost"
+		defaultPort       = 8443
+		standardHTTPSPort = 443
 	)
+	if listenerPort <= 0 {
+		listenerPort = defaultPort
+	}
+
 	rpid := devHost
-	if cfg != nil && cfg.Server.ACME.Domain != "" {
-		rpid = cfg.Server.ACME.Domain
+	originHost := devHost
+	if listenerPort != standardHTTPSPort {
+		originHost = net.JoinHostPort(devHost, strconv.Itoa(listenerPort))
 	}
-	scheme := schemeHTTPS
-	if cfg != nil && !cfg.Server.HTTPS {
-		scheme = schemeHTTP
-	}
-	port := defaultPort
-	if cfg != nil && cfg.Server.Port > 0 {
-		port = cfg.Server.Port
-	}
-	origin := scheme + "://" + rpid
-	if port != 443 && port != 80 {
-		origin = origin + ":" + strconv.Itoa(port)
+	origin := (&url.URL{Scheme: "https", Host: originHost}).String()
+	if cfg != nil && cfg.Server.PublicOrigin != "" {
+		if publicURL, err := url.Parse(cfg.Server.PublicOrigin); err == nil && publicURL.Hostname() != "" {
+			rpid = publicURL.Hostname()
+			origin = cfg.Server.PublicOrigin
+		}
 	}
 	return auth.WebAuthnConfig{
 		RPID:          rpid,
 		RPDisplayName: "Seed",
 		RPOrigins:     []string{origin},
 	}
+}
+
+func (s *Server) initWebAuthn(listenerPort int) {
+	wan, err := auth.NewWebAuthnManager(webAuthnConfigFromServer(s.config, listenerPort))
+	if err != nil {
+		logging.GetLogger().Warn("WebAuthn manager init failed; passkeys disabled", "error", err)
+		s.webAuthn = nil
+		return
+	}
+	s.webAuthn = wan
 }

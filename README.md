@@ -42,7 +42,7 @@ Linux box.
 - **Threshold alerts** — configurable green / yellow / red indicators
 - **Modern UI** — Tailwind v4 design system, dark/light themes, mobile-responsive
 - **i18n-ready** — translated UI namespaces
-- **Secure** — HTTPS by default with self-signed cert; password-only after first-run setup
+- **Secure** — HTTPS only with an operator-provided or self-signed certificate; password-only after first-run setup
 
 ## Quick Start
 
@@ -130,7 +130,12 @@ sudo seed install-ca --uninstall
 
 ```json
 {
-  "server": { "port": 8443, "https": true },
+  "server": {
+    "port": 8443,
+    "public_origin": "",
+    "cert_file": "",
+    "key_file": ""
+  },
   "interface": { "default": "eth0" }
 }
 ```
@@ -138,10 +143,16 @@ sudo seed install-ca --uninstall
 Common environment overrides:
 
 ```bash
-SEED_HTTP_PORT=8443
+SEED_HTTPS_PORT=8443
+SEED_PUBLIC_ORIGIN=https://seed.example.com
 SEED_LOG_LEVEL=info       # debug | info | warn | error
 SEED_DB_PATH=/var/lib/seed/data.db
 ```
+
+Leave `cert_file` and `key_file` empty to use Seed's generated self-signed
+certificate. Set both paths for an operator-provided certificate. Remote
+deployments that use passkeys must set `public_origin` to the exact HTTPS
+origin browsers use to reach Seed.
 
 ## Architecture
 

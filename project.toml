@@ -33,5 +33,5 @@ value = "bin/*"
 user-id = 1000
 
 [[io.buildpacks.run.env]]
-name = "SEED_HTTP_PORT"
+name = "SEED_HTTPS_PORT"
 value = "8443"

@@ -22,7 +22,7 @@ type SystemConfig struct {
 	// Database configuration for SQLite.
 	Database SystemDatabaseConfig `json:"database"`
 
-	// Server configuration for HTTP/HTTPS.
+	// Server configuration for HTTPS.
 	Server SystemServerConfig `json:"server"`
 
 	// Logging configuration.
@@ -54,15 +54,15 @@ type SystemDatabaseConfig struct {
 	MaxConnections int `json:"max_connections"`
 }
 
-// SystemServerConfig contains HTTP server settings.
+// SystemServerConfig contains HTTPS server settings.
 type SystemServerConfig struct {
 	// Port is the HTTPS port to listen on.
-	// Env: SEED_HTTP_PORT
+	// Env: SEED_HTTPS_PORT
 	Port int `json:"port"`
 
-	// HTTPS enables TLS.
-	// Env: SEED_HTTPS_ENABLED
-	HTTPS bool `json:"https"`
+	// PublicOrigin is the HTTPS origin browsers use to reach Seed.
+	// Env: SEED_PUBLIC_ORIGIN
+	PublicOrigin string `json:"public_origin"`
 
 	// CertFile is the path to the TLS certificate.
 	// Env: SEED_TLS_CERT_FILE
@@ -71,32 +71,6 @@ type SystemServerConfig struct {
 	// KeyFile is the path to the TLS private key.
 	// Env: SEED_TLS_KEY_FILE
 	KeyFile string `json:"key_file"`
-
-	// ACME configuration for Let's Encrypt (optional).
-	ACME SystemACMEConfig `json:"acme,omitzero"`
-}
-
-// SystemACMEConfig contains ACME/Let's Encrypt settings.
-type SystemACMEConfig struct {
-	// Enabled enables automatic certificate management.
-	// Env: SEED_ACME_ENABLED
-	Enabled bool `json:"enabled"`
-
-	// Domain is the domain name for the certificate.
-	// Env: SEED_ACME_DOMAIN
-	Domain string `json:"domain"`
-
-	// Email is the contact email for Let's Encrypt notifications.
-	// Env: SEED_ACME_EMAIL
-	Email string `json:"email"`
-
-	// CacheDir is the directory to cache certificates.
-	// Env: SEED_ACME_CACHE_DIR
-	CacheDir string `json:"cache_dir,omitempty"`
-
-	// Staging uses Let's Encrypt staging server (for testing).
-	// Env: SEED_ACME_STAGING
-	Staging bool `json:"staging,omitempty"`
 }
 
 // SystemLoggingConfig contains logging settings.
@@ -208,8 +182,7 @@ func DefaultSystemConfig() *SystemConfig {
 			MaxConnections: defaultDBMaxConnections,
 		},
 		Server: SystemServerConfig{
-			Port:  defaultHTTPSPort,
-			HTTPS: true,
+			Port: defaultHTTPSPort,
 		},
 		Logging: SystemLoggingConfig{
 			Level:      "info",
@@ -232,35 +205,43 @@ func DefaultSystemConfig() *SystemConfig {
 // LoadSystemConfig loads the system configuration from a JSON file with env var overrides.
 // The precedence is: defaults < config.json < environment variables.
 func LoadSystemConfig(path string) (*SystemConfig, error) {
+	if err := rejectRemovedTLSEnvironment(); err != nil {
+		return nil, err
+	}
 	cfg := DefaultSystemConfig()
 
 	// Try to read config file
-	data, err := os.ReadFile(path)
-	if err != nil {
-		if !os.IsNotExist(err) {
-			return nil, fmt.Errorf("read system config: %w", err)
+	data, readErr := os.ReadFile(path)
+	if readErr != nil {
+		if !os.IsNotExist(readErr) {
+			return nil, fmt.Errorf("read system config: %w", readErr)
 		}
 		// File doesn't exist, use defaults + env vars
 		logging.GetLogger().Info("System config file not found, using defaults", "path", path)
 	} else {
-		if unmarshalErr := json.Unmarshal(data, cfg); unmarshalErr != nil {
+		if unmarshalErr := decodeJSONStrict(data, cfg); unmarshalErr != nil {
 			return nil, fmt.Errorf("parse system config JSON: %w", unmarshalErr)
 		}
 	}
 
 	// Apply environment variable overrides
-	applyEnvOverrides(cfg)
+	if envErr := applyEnvOverrides(cfg); envErr != nil {
+		return nil, envErr
+	}
 
 	return cfg, nil
 }
 
 // applyEnvOverrides applies SEED_* environment variables to the config.
-func applyEnvOverrides(cfg *SystemConfig) {
+func applyEnvOverrides(cfg *SystemConfig) error {
 	applyDatabaseEnv(cfg)
-	applyServerEnv(cfg)
+	if err := applyServerEnv(cfg); err != nil {
+		return err
+	}
 	applyLoggingEnv(cfg)
 	applyAuthEnv(cfg)
 	applySecurityEnv(cfg)
+	return nil
 }
 
 func applyDatabaseEnv(cfg *SystemConfig) {
@@ -282,14 +263,16 @@ func applyDatabaseEnv(cfg *SystemConfig) {
 	}
 }
 
-func applyServerEnv(cfg *SystemConfig) {
-	if v := os.Getenv("SEED_HTTP_PORT"); v != "" {
-		if i, err := strconv.Atoi(v); err == nil {
-			cfg.Server.Port = i
-		}
+func applyServerEnv(cfg *SystemConfig) error {
+	port, exists, err := readHTTPSPortEnvironment()
+	if err != nil {
+		return err
 	}
-	if v := os.Getenv("SEED_HTTPS_ENABLED"); v != "" {
-		cfg.Server.HTTPS = parseBool(v)
+	if exists {
+		cfg.Server.Port = port
+	}
+	if v := os.Getenv("SEED_PUBLIC_ORIGIN"); v != "" {
+		cfg.Server.PublicOrigin = v
 	}
 	if v := os.Getenv("SEED_TLS_CERT_FILE"); v != "" {
 		cfg.Server.CertFile = v
@@ -297,25 +280,7 @@ func applyServerEnv(cfg *SystemConfig) {
 	if v := os.Getenv("SEED_TLS_KEY_FILE"); v != "" {
 		cfg.Server.KeyFile = v
 	}
-	applyACMEEnv(cfg)
-}
-
-func applyACMEEnv(cfg *SystemConfig) {
-	if v := os.Getenv("SEED_ACME_ENABLED"); v != "" {
-		cfg.Server.ACME.Enabled = parseBool(v)
-	}
-	if v := os.Getenv("SEED_ACME_DOMAIN"); v != "" {
-		cfg.Server.ACME.Domain = v
-	}
-	if v := os.Getenv("SEED_ACME_EMAIL"); v != "" {
-		cfg.Server.ACME.Email = v
-	}
-	if v := os.Getenv("SEED_ACME_CACHE_DIR"); v != "" {
-		cfg.Server.ACME.CacheDir = v
-	}
-	if v := os.Getenv("SEED_ACME_STAGING"); v != "" {
-		cfg.Server.ACME.Staging = parseBool(v)
-	}
+	return nil
 }
 
 func applyLoggingEnv(cfg *SystemConfig) {
@@ -435,21 +400,11 @@ func (c *SystemConfig) validateServer() []string {
 	if c.Server.Port < 1 || c.Server.Port > 65535 {
 		errs = append(errs, "server.port must be 1-65535")
 	}
-	if c.Server.HTTPS && !c.Server.ACME.Enabled {
-		if c.Server.CertFile == "" {
-			errs = append(errs, "server.cert_file required when HTTPS enabled without ACME")
-		}
-		if c.Server.KeyFile == "" {
-			errs = append(errs, "server.key_file required when HTTPS enabled without ACME")
-		}
+	if (c.Server.CertFile == "") != (c.Server.KeyFile == "") {
+		errs = append(errs, "server.cert_file and server.key_file must be configured together")
 	}
-	if c.Server.ACME.Enabled {
-		if c.Server.ACME.Domain == "" {
-			errs = append(errs, "server.acme.domain required when ACME enabled")
-		}
-		if c.Server.ACME.Email == "" {
-			errs = append(errs, "server.acme.email required when ACME enabled")
-		}
+	if err := validatePublicOrigin(c.Server.PublicOrigin); err != nil {
+		errs = append(errs, err.Error())
 	}
 	return errs
 }
@@ -491,14 +446,9 @@ func (c *SystemConfig) ToLegacyConfig() *Config {
 	cfg.Database.MaxConnections = c.Database.MaxConnections
 
 	cfg.Server.Port = c.Server.Port
-	cfg.Server.HTTPS = c.Server.HTTPS
+	cfg.Server.PublicOrigin = c.Server.PublicOrigin
 	cfg.Server.CertFile = c.Server.CertFile
 	cfg.Server.KeyFile = c.Server.KeyFile
-	cfg.Server.ACME.Enabled = c.Server.ACME.Enabled
-	cfg.Server.ACME.Domain = c.Server.ACME.Domain
-	cfg.Server.ACME.Email = c.Server.ACME.Email
-	cfg.Server.ACME.CacheDir = c.Server.ACME.CacheDir
-	cfg.Server.ACME.Staging = c.Server.ACME.Staging
 
 	cfg.Logging.Level = c.Logging.Level
 	cfg.Logging.Format = c.Logging.Format

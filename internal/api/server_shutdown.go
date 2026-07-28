@@ -83,15 +83,6 @@ func (s *Server) onLinkStateChange(event netif.LinkEvent) {
 func (s *Server) Shutdown(ctx context.Context) error {
 	logging.GetLogger().InfoContext(ctx, "Shutting down server...")
 
-	// Shutdown ACME HTTP-01 challenge server if running (fixes #837)
-	if s.acmeChallengeServer != nil {
-		logging.GetLogger().InfoContext(ctx, "Shutting down ACME challenge server...")
-		if err := s.acmeChallengeServer.Shutdown(ctx); err != nil {
-			logging.GetLogger().
-				ErrorContext(ctx, "Error shutting down ACME challenge server", "error", err)
-		}
-	}
-
 	// Stop all services (fixes #524 - services will complete gracefully)
 	logging.GetLogger().InfoContext(ctx, "Stopping SSE hub...")
 	s.sseHub().Shutdown()

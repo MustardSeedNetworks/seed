@@ -5,7 +5,10 @@ package config
 // inspects the loaded config at startup.
 
 import (
+	"errors"
 	"fmt"
+	"net/url"
+	"strconv"
 	"strings"
 
 	"github.com/MustardSeedNetworks/seed/internal/logging"
@@ -63,7 +66,36 @@ func (c *Config) validateServerConfig() []string {
 			fmt.Sprintf("server.port must be between 1-65535, got %d", c.Server.Port),
 		)
 	}
+	if (c.Server.CertFile == "") != (c.Server.KeyFile == "") {
+		errs = append(errs, "server.cert_file and server.key_file must be configured together")
+	}
+	if err := validatePublicOrigin(c.Server.PublicOrigin); err != nil {
+		errs = append(errs, err.Error())
+	}
 	return errs
+}
+
+func validatePublicOrigin(origin string) error {
+	if origin == "" {
+		return nil
+	}
+	u, err := url.Parse(origin)
+	canonical := ""
+	if err == nil {
+		canonical = (&url.URL{Scheme: "https", Host: u.Host}).String()
+	}
+	if err != nil || u.Scheme != "https" || u.Hostname() == "" || u.User != nil ||
+		u.Path != "" || u.RawQuery != "" || u.Fragment != "" || strings.HasSuffix(u.Host, ":") ||
+		origin != canonical {
+		return errors.New("server.public_origin must be an HTTPS origin without credentials, path, query, or fragment")
+	}
+	if u.Port() != "" {
+		port, parseErr := strconv.Atoi(u.Port())
+		if parseErr != nil || port < 1 || port > 65535 {
+			return errors.New("server.public_origin port must be between 1 and 65535")
+		}
+	}
+	return nil
 }
 
 // validateInterfaceConfig checks interface startup configuration.

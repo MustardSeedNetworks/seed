@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strconv"
 
 	"github.com/MustardSeedNetworks/seed/internal/logging"
 )
@@ -15,18 +16,20 @@ import (
 // Load reads configuration from a JSON file.
 // If the config has no version or an older version, it will be updated.
 func Load(path string) (*Config, error) {
+	if err := rejectRemovedTLSEnvironment(); err != nil {
+		return nil, err
+	}
 	cfg := DefaultConfig()
 
-	data, err := os.ReadFile(path)
-	if err != nil {
-		if os.IsNotExist(err) {
-			return cfg, nil // Use defaults if file doesn't exist
+	data, readErr := os.ReadFile(path)
+	if readErr != nil {
+		if !os.IsNotExist(readErr) {
+			return nil, fmt.Errorf("read config file: %w", readErr)
 		}
-		return nil, fmt.Errorf("read config file: %w", err)
-	}
-
-	if unmarshalErr := json.Unmarshal(data, cfg); unmarshalErr != nil {
-		return nil, fmt.Errorf("parse config JSON: %w", unmarshalErr)
+	} else {
+		if unmarshalErr := json.Unmarshal(data, cfg); unmarshalErr != nil {
+			return nil, fmt.Errorf("parse config JSON: %w", unmarshalErr)
+		}
 	}
 
 	// Handle unversioned configs (version 0 means unversioned)
@@ -35,8 +38,43 @@ func Load(path string) (*Config, error) {
 		logging.GetLogger().
 			Info("Upgraded unversioned config to current version", "version", ConfigVersion)
 	}
+	if envErr := applyConfigServerEnv(cfg); envErr != nil {
+		return nil, envErr
+	}
 
 	return cfg, nil
+}
+
+func readHTTPSPortEnvironment() (int, bool, error) {
+	value, exists := os.LookupEnv("SEED_HTTPS_PORT")
+	if !exists || value == "" {
+		return 0, false, nil
+	}
+	port, err := strconv.Atoi(value)
+	if err != nil {
+		return 0, false, fmt.Errorf("SEED_HTTPS_PORT must be an integer: %w", err)
+	}
+	return port, true, nil
+}
+
+func applyConfigServerEnv(cfg *Config) error {
+	port, exists, err := readHTTPSPortEnvironment()
+	if err != nil {
+		return err
+	}
+	if exists {
+		cfg.Server.Port = port
+	}
+	if value := os.Getenv("SEED_PUBLIC_ORIGIN"); value != "" {
+		cfg.Server.PublicOrigin = value
+	}
+	if value := os.Getenv("SEED_TLS_CERT_FILE"); value != "" {
+		cfg.Server.CertFile = value
+	}
+	if value := os.Getenv("SEED_TLS_KEY_FILE"); value != "" {
+		cfg.Server.KeyFile = value
+	}
+	return nil
 }
 
 // Save writes the configuration to a JSON file at the specified path.

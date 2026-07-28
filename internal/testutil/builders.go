@@ -19,7 +19,6 @@ func NewConfigBuilder() *ConfigBuilder {
 	cfg := config.DefaultConfig()
 
 	// Apply test-friendly overrides
-	cfg.Server.HTTPS = false // Easier for testing
 	cfg.Server.Port = defaults.Server.Port
 	cfg.Interface.Default = "lo" // Loopback for tests
 	cfg.Auth.DefaultPasswordHash = defaults.Auth.PasswordHash
@@ -44,12 +43,6 @@ func (b *ConfigBuilder) WithAuth(username, passwordHash string) *ConfigBuilder {
 // WithInterface sets the default network interface.
 func (b *ConfigBuilder) WithInterface(iface string) *ConfigBuilder {
 	b.cfg.Interface.Default = iface
-	return b
-}
-
-// WithHTTPS enables or disables HTTPS.
-func (b *ConfigBuilder) WithHTTPS(enabled bool) *ConfigBuilder {
-	b.cfg.Server.HTTPS = enabled
 	return b
 }
 

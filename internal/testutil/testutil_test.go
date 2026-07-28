@@ -32,10 +32,6 @@ func TestGetTestDefaults(t *testing.T) {
 			t.Errorf("expected JWT secret, got %q", defaults1.Auth.JWTSecret)
 		}
 
-		if defaults1.Server.HTTPS {
-			t.Error("expected HTTPS to be false for testing")
-		}
-
 		if defaults1.Server.Port == 0 {
 			t.Error("expected non-zero server port")
 		}
@@ -89,15 +85,6 @@ func assertInterface(t *testing.T, cfg *config.Config, expected string) {
 
 	if cfg.Interface.Default != expected {
 		t.Errorf("expected interface %q, got %q", expected, cfg.Interface.Default)
-	}
-}
-
-// assertHTTPS checks if HTTPS setting matches expected.
-func assertHTTPS(t *testing.T, cfg *config.Config, expected bool) {
-	t.Helper()
-
-	if cfg.Server.HTTPS != expected {
-		t.Errorf("expected HTTPS=%v, got %v", expected, cfg.Server.HTTPS)
 	}
 }
 
@@ -180,7 +167,6 @@ func TestConfigBuilder(t *testing.T) {
 	t.Run("creates valid config with defaults", func(t *testing.T) {
 		cfg := testutil.NewConfigBuilder().Build()
 		assertConfigNotNil(t, cfg)
-		assertHTTPS(t, cfg, false)
 		assertInterface(t, cfg, "lo")
 
 		defaults := testutil.GetTestDefaults()
@@ -193,14 +179,12 @@ func TestConfigBuilder(t *testing.T) {
 		cfg := testutil.NewConfigBuilder().
 			WithPort(9090).
 			WithInterface("eth0").
-			WithHTTPS(true).
 			WithDiscoveryMethods(true, true, true).
 			WithDiscoveryConcurrency(100).
 			Build()
 
 		assertPort(t, cfg, 9090)
 		assertInterface(t, cfg, "eth0")
-		assertHTTPS(t, cfg, true)
 		assertDiscoveryMethods(t, cfg, true, true, true)
 		assertConcurrency(t, cfg, 100)
 	})

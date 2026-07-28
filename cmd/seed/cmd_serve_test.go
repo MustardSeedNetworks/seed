@@ -1,6 +1,8 @@
 package main
 
 import (
+	"bytes"
+	"strings"
 	"testing"
 )
 
@@ -58,48 +60,11 @@ func TestShutdownTimeoutSeconds(t *testing.T) {
 	}
 }
 
-func TestPrintSetupBannerLogic(t *testing.T) {
-	tests := []struct {
-		name     string
-		port     int
-		https    bool
-		wantHTTP bool
-	}{
-		{
-			name:     "HTTPS mode",
-			port:     8443,
-			https:    true,
-			wantHTTP: false,
-		},
-		{
-			name:     "HTTP mode",
-			port:     8080,
-			https:    false,
-			wantHTTP: true,
-		},
-		{
-			name:     "HTTPS on custom port",
-			port:     9443,
-			https:    true,
-			wantHTTP: false,
-		},
-	}
-
-	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
-			// Test the protocol selection logic from printSetupBanner
-			protocol := "http"
-			if tc.https {
-				protocol = "https"
-			}
-
-			if tc.wantHTTP && protocol != "http" {
-				t.Errorf("Expected http protocol, got %s", protocol)
-			}
-			if !tc.wantHTTP && protocol != "https" {
-				t.Errorf("Expected https protocol, got %s", protocol)
-			}
-		})
+func TestPrintSetupBannerIsHTTPSOnly(t *testing.T) {
+	var output bytes.Buffer
+	printSetupBanner(&output, 8443)
+	if !strings.Contains(output.String(), "https://localhost:8443") {
+		t.Fatalf("setup banner did not use HTTPS: %s", output.String())
 	}
 }
 

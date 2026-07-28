@@ -175,7 +175,6 @@ func TestConfigValidationWithTestFile(t *testing.T) {
 	// Create a valid config with all required fields
 	cfg := config.DefaultConfig()
 	cfg.Server.Port = 8443
-	cfg.Server.HTTPS = true
 	cfg.Interface.Default = "eth0"
 	cfg.Auth.DefaultPasswordHash = "somehash"
 	cfg.Auth.JWTSecret = "somesecret"

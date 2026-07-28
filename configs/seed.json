@@ -2,7 +2,7 @@
   "version": 1,
   "server": {
     "port": 8443,
-    "https": true,
+    "public_origin": "",
     "cert_file": "",
     "key_file": ""
   },

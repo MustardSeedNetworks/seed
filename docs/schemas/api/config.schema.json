@@ -3,32 +3,6 @@
   "$id": "https://raw.githubusercontent.com/MustardSeedNetworks/seed/main/docs/schemas/api/config.schema.json",
   "$ref": "#/$defs/Config",
   "$defs": {
-    "ACMEConfig": {
-      "properties": {
-        "enabled": {
-          "type": "boolean"
-        },
-        "domain": {
-          "type": "string"
-        },
-        "email": {
-          "type": "string"
-        },
-        "cache_dir": {
-          "type": "string"
-        },
-        "staging": {
-          "type": "boolean"
-        }
-      },
-      "additionalProperties": false,
-      "type": "object",
-      "required": [
-        "enabled",
-        "domain",
-        "email"
-      ]
-    },
     "AuthConfig": {
       "properties": {
         "default_username": {
@@ -1594,24 +1568,21 @@
         "port": {
           "type": "integer"
         },
-        "https": {
-          "type": "boolean"
+        "public_origin": {
+          "type": "string"
         },
         "cert_file": {
           "type": "string"
         },
         "key_file": {
           "type": "string"
-        },
-        "acme": {
-          "$ref": "#/$defs/ACMEConfig"
         }
       },
       "additionalProperties": false,
       "type": "object",
       "required": [
         "port",
-        "https",
+        "public_origin",
         "cert_file",
         "key_file"
       ]

@@ -413,6 +413,23 @@ func (s *Server) EnsureSelfSignedCert() (string, string, error) {
 	return s.ensureSelfSignedCert()
 }
 
+// StartHTTPSForTest starts the production TLS listener with a focused handler.
+func (s *Server) StartHTTPSForTest(handler http.Handler, initialized chan<- struct{}) error {
+	s.httpServer = &http.Server{Handler: handler}
+	close(initialized)
+	return s.startHTTPS()
+}
+
+// ShutdownHTTPSForTest stops the focused production listener.
+func (s *Server) ShutdownHTTPSForTest(ctx context.Context) error {
+	return s.httpServer.Shutdown(ctx)
+}
+
+// WebAuthnEnabledForTest reports whether the bound listener initialized passkeys.
+func (s *Server) WebAuthnEnabledForTest() bool {
+	return s.webAuthn != nil
+}
+
 // ExportFingerprintFromPEM exposes fingerprintFromPEM for testing.
 func ExportFingerprintFromPEM(pemData []byte) (string, error) {
 	return fingerprintFromPEM(pemData)
@@ -437,3 +454,8 @@ var ErrNoCertificateBlock = errNoCertificateBlock
 // TLSFingerprintCache is the exported type alias for tlsFingerprintCache,
 // used in tests that exercise the cache behaviour directly.
 type TLSFingerprintCache = tlsFingerprintCache
+
+// ExportWebAuthnConfigFromServer exposes WebAuthn origin derivation for testing.
+func ExportWebAuthnConfigFromServer(cfg *config.Config, listenerPort int) auth.WebAuthnConfig {
+	return webAuthnConfigFromServer(cfg, listenerPort)
+}

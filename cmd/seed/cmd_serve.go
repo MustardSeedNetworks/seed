@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"io"
 	"os"
 	"os/signal"
 	"path/filepath"
@@ -227,14 +228,10 @@ func loadAndConfigureConfig(configPath string) *config.Config {
 			os.Stderr,
 			"Initial setup required - visit the web UI to set your admin password",
 		)
-		printSetupBanner(cfg.Server.Port, cfg.Server.HTTPS)
+		printSetupBanner(os.Stderr, cfg.Server.Port)
 		// Set placeholder hash to pass validation - wizard will set the real password
 		cfg.Auth.DefaultPasswordHash = auth.SetupModePlaceholder
 	}
-
-	// HTTPS is required, unconditionally — the daemon binds no HTTP listener.
-	// No --dev or env-var opt-out is supported.
-	cfg.Server.HTTPS = true
 
 	if validateErr := cfg.Validate(); validateErr != nil {
 		fmt.Fprintf(os.Stderr, "Fatal: Invalid configuration: %v\n", validateErr)
@@ -393,7 +390,7 @@ func runServerWithShutdown(server *api.Server, cfg *config.Config, components *a
 	serverErrors := make(chan error, 1)
 	go func() {
 		logging.GetLogger().
-			Info("Starting server", "port", cfg.Server.Port, "https", cfg.Server.HTTPS)
+			Info("Starting HTTPS server", "port", cfg.Server.Port)
 		serverErrors <- server.Start()
 	}()
 
@@ -436,11 +433,7 @@ func runServerWithShutdown(server *api.Server, cfg *config.Config, components *a
 }
 
 // printSetupBanner displays a message directing users to the web UI for setup.
-func printSetupBanner(port int, https bool) {
-	protocol := protocolHTTP
-	if https {
-		protocol = protocolHTTPS
-	}
+func printSetupBanner(w io.Writer, port int) {
 	banner := `
 ╔══════════════════════════════════════════════════════════════════╗
 ║                   THE SEED - INITIAL SETUP                       ║
@@ -458,7 +451,5 @@ func printSetupBanner(port int, https bool) {
 ║                                                                  ║
 ╚══════════════════════════════════════════════════════════════════╝
 `
-	// Use fmt.Fprintf to stderr so it's visible even when stdout is redirected
-	fmt.Fprintf(os.Stderr, banner, protocol, port)
-	// Note: Called before logging is initialized, so banner is stderr-only
+	fmt.Fprintf(w, banner, "https", port)
 }
