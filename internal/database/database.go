@@ -272,7 +272,7 @@ func OpenWithConfig(cfg Config) (*DB, error) {
 	}
 
 	// Build connection string with pragmas
-	dsn := fmt.Sprintf("file:%s?_txlock=immediate", cfg.Path)
+	dsn := fmt.Sprintf("file:%s?_txlock=immediate&_pragma=foreign_keys(1)", cfg.Path)
 	if cfg.BusyTimeout > 0 {
 		dsn += fmt.Sprintf("&_busy_timeout=%d", cfg.BusyTimeout)
 	}
@@ -289,7 +289,6 @@ func OpenWithConfig(cfg Config) (*DB, error) {
 
 	// Apply pragmas for performance and safety
 	pragmas := []string{
-		"PRAGMA foreign_keys = ON",
 		"PRAGMA journal_mode = WAL",
 		"PRAGMA synchronous = NORMAL",
 		"PRAGMA cache_size = -64000", // 64MB cache
@@ -297,7 +296,7 @@ func OpenWithConfig(cfg Config) (*DB, error) {
 	}
 
 	if !cfg.EnableWAL {
-		pragmas[1] = "PRAGMA journal_mode = DELETE"
+		pragmas[0] = "PRAGMA journal_mode = DELETE"
 	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), dbConnTimeoutSeconds*time.Second)
