@@ -618,7 +618,7 @@ Commits + PRs are gated by automation, all configured in-repo:
   anti-regression threshold; the Go test job in CI enforces its own.
 
 If pre-commit blocks a commit, fix the issue locally — **do not** use
-`--no-verify` (forbidden by CLAUDE.md).
+`--no-verify` (forbidden by the development policy).
 
 ## Reporting Security Vulnerabilities
 

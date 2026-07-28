@@ -8,7 +8,7 @@ Generated: 2025-01-11
 
 | Category | Count | Description |
 |----------|-------|-------------|
-| mnd (magic numbers) | 50 | Hardcoded numeric values that should be constants |
+| mnd (unnamed numeric literals) | 50 | Hardcoded numeric values that should be constants |
 | revive | 18 | Code style and naming issues |
 | musttag | 13 | Missing struct tags for serialization |
 | noctx | 12 | HTTP requests missing context |
@@ -100,7 +100,7 @@ Generated: 2025-01-11
 ### Priority 2 - Technical Debt
 1. Extract duplicate `httptrace.ClientTrace` into shared function
 2. Break down high-complexity functions
-3. Add constants for magic numbers (mnd issues)
+3. Add constants for unnamed numeric literals (mnd issues)
 
 ### Priority 3 - Code Quality
 1. Fix import formatting (goimports)

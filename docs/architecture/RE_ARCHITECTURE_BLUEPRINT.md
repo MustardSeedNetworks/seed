@@ -20,7 +20,7 @@
 **Supersedes (structure):** the legacy seed/cross-repo structure plans in msn-docs — see [§17](#17-documentation-alignment-per-phase-gate)
 
 > **Product boundary:** Seed = network discovery, monitoring, troubleshooting, security &
-> compliance — **non-disruptive by default, IDS/IPS-friendly**. Seed does **NOT** implement
+> compliance — **passive by default, IDS/IPS-friendly**. Seed does **NOT** implement
 > RFC2544 / ITU-T Y.1564 active throughput testing (that is **Stem**). Where this blueprint
 > mentions scans/jobs (discovery, vulnerability, port), they are **user-initiated diagnostics**,
 > not passive-vs-active performance testing.
@@ -61,7 +61,7 @@ lose. The play is **move-and-preserve the working logic, drop every compatibilit
 shim**. Strangler stays as a *safety* technique; it sheds its *compatibility* baggage.
 
 **"main stays green" still holds** — not for customers, but for the **team**
-(concurrent Claude/developer sessions run on this repo; a broken `main` blocks them).
+(concurrent development sessions run on this repo; a broken `main` blocks them).
 Green now means "builds + tests pass," not "preserves the old API."
 
 ---
@@ -77,7 +77,7 @@ Green now means "builds + tests pass," not "preserves the old API."
 
 ### Non-goals
 - Microservices. Seed is and stays a **modulith** (one binary, one DB, one server).
-- A magic DI framework. Wiring stays explicit, in one composition root.
+- An implicit DI framework. Wiring stays explicit, in one composition root.
 - A rich product CLI for seed (see [§12](#12-cli-scope)).
 - Distributed anything, phone-home anything (air-gapped market — see [§9](#9-observability-local-only)).
 
@@ -280,7 +280,7 @@ func New(cfg config.Config) (*App, error) {
 }
 ```
 
-Manual wiring (no magic), but in **one home** instead of ten.
+Manual, explicit wiring in **one home** instead of ten.
 
 ---
 
@@ -694,7 +694,7 @@ Mirror the backend rigor:
 
 - **Generated typed client** from the `contract/` OpenAPI — delete hand-written `client.ts` and hand-maintained types.
 - **React Query as the single server-state layer.** Zustand for UI-only state; finish retiring the legacy `profileContext`.
-- **SSE is the single realtime transport.** WebSocket is not used as a backend transport (only `/events` SSE exists); the stale `/ws` reference in `CLAUDE.md` is retired. **One SSE manager → React Query cache** (the unified job/event stream from §8). Cards just `useQuery`; no per-card `EventSource` dance.
+- **SSE is the single realtime transport.** WebSocket is not used as a backend transport (only `/events` SSE exists); the stale `/ws` policy reference is retired. **One SSE manager → React Query cache** (the unified job/event stream from §8). Cards just `useQuery`; no per-card `EventSource` dance.
 - **Route-level auth/role guards** sourced from the **same capability manifest** as the backend registry — single source of truth for "who can see this."
 - **Error boundaries + suspense per module** so one card's failure doesn't blank the dashboard.
 - **Design-token SSoT** — lands the existing token-consolidation / brand-token-map work; the re-arch executes it, doesn't relitigate it.

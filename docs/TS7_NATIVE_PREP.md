@@ -50,7 +50,7 @@ positives or miss anything `tsc` caught.
 When `npm view @typescript/native-preview dist-tags` lists `rc` or `next`:
 
 - Add `@typescript/native-preview@<rc-version>` to seed's devDependencies (exact
-  pin per CLAUDE.md).
+  pin per dependency policy).
 - Add a `typecheck:fast` script to `ui/package.json`:
   ```json
   "typecheck:fast": "tsgo --noEmit -p tsconfig.json"
@@ -64,7 +64,7 @@ When `npm view @typescript/native-preview dist-tags` lists `rc` or `next`:
 - Replace the `typescript` devDep with `typescript@7.0.0` (the native binary
   becomes the primary `tsc` at that point).
 - Drop `@typescript/native-preview` (folded into `typescript`).
-- Update CLAUDE.md required-versions: TypeScript `7.0.0`.
+- Update the required-version policy: TypeScript `7.0.0`.
 - Drop the `typecheck:fast` script — it's now the same as `typecheck`.
 
 ### Phase 3 — CI

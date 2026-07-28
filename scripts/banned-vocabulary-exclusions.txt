@@ -1,0 +1,35 @@
+# Exact, reviewable exceptions for text that is not current product copy.
+# Format: git path pattern | why the immutable or developer-only text is exempt
+
+# Immutable history, legal source text, and database migrations.
+CHANGELOG.md | release-please generated immutable release history
+LICENSE | unmodified BUSL legal source text
+internal/database/migrations/** | immutable applied database migrations
+docs/audits/AUDIT_SUITE_2026-01-26.md | dated audit snapshot retained as immutable history
+docs/audits/GITHUB_ISSUES_2026-01-26.md | dated issue snapshot retained as immutable history
+docs/security/AUTH_AUDIT_2026-05-19.md | dated security audit retained as immutable history
+
+# Imported immutable reference data.
+internal/discovery/resolve/oui.txt | IEEE vendor registry names are not Seed-authored copy
+
+# Developer instructions, tests, generated locks, and tool configuration.
+AGENTS.md | developer-only agent instructions
+**/AGENTS.md | developer-only agent instructions
+.gitignore | developer-tool path rules
+.markdownlint-cli2.jsonc | developer-tool path rules
+.markdownlintignore | developer-tool path rules
+codecov.yml | developer-tool path rules
+scripts/i18n/banned-vocab.txt | policy term source
+scripts/test-check-banned-vocabulary.py | checker fixture self-tests
+**/*_test.go | developer test fixtures and protocol terminology
+ui/**/*.test.ts | developer test fixtures
+ui/**/*.test.tsx | developer test fixtures
+ui/e2e/** | developer end-to-end test fixtures
+package-lock.json | generated dependency lockfile
+ui/package-lock.json | generated dependency lockfile
+.golangci.yml | developer linter rule identifiers
+.clang-tidy | developer linter rule identifiers
+.serena/** | developer agent tooling
+mk/test.mk | developer test package filters
+ui/vite.config.ts | developer-tool path rules
+ui/vitest.config.ts | developer-tool path rules

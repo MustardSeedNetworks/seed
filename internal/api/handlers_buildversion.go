@@ -10,7 +10,7 @@ import (
 // handleBuildVersion serves GET /__version with build metadata for deployment
 // validation. Unauthenticated by design — operators need to verify which
 // binary is running without holding a session. Required by the Universal
-// Build Contract; see CLAUDE.md.
+// Build Contract; see the repository development policy.
 //
 // In addition to version.Info() the response carries `tlsFingerprint`, the
 // SHA-256 fingerprint of the active TLS certificate. The field is always

@@ -482,8 +482,6 @@ jobs:
   quality:
     name: Code Quality
     runs-on: ubuntu-latest
-    needs: changes
-    if: needs.changes.outputs.backend == 'true' || needs.changes.outputs.frontend == 'true' || needs.changes.outputs.c == 'true' || needs.changes.outputs.workflows == 'true'
     timeout-minutes: 10
 
     steps:
@@ -500,23 +498,10 @@ jobs:
           STRICT: "0"
         run: ./scripts/check-file-size.sh
 
-      - name: Check for AI tool references
+      - name: Enforce customer-facing vocabulary policy
         run: |
-          PATTERN='(claude|chatgpt|gpt-4|gemini|anthropic|openai|copilot|ai.generated|generated.with)'
-          if grep -riE "$PATTERN" \
-            --include="*.go" \
-            --include="*.ts" \
-            --include="*.tsx" \
-            --include="*.js" \
-            --include="*.jsx" \
-            --include="*.css" \
-            --include="*.html" \
-            --exclude-dir=node_modules \
-            --exclude-dir=.git \
-            --exclude-dir=dist \
-            . 2>/dev/null; then
-            echo "::warning::AI/assistant references found; review for accidental disclosure"
-          fi
+          python3 scripts/test-check-banned-vocabulary.py
+          python3 scripts/check-banned-vocabulary.py
 
       - name: Check for sensitive files
         run: |
@@ -695,7 +680,7 @@ jobs:
         # `locales/en/*.json` — should be `internal/i18n/locales/en/`
         # — so it never actually ran). The shared script enforces
         # I18N_CONVENTIONS.md across all 3 products: key parity, no
-        # empty values, no t('key', 'fallback') patterns, banned
+        # empty values, no t('key', 'fallback') patterns, locale
         # vocabulary, glossary preservation, interpolation parity,
         # plural completeness, t()→key cross-reference, locked
         # versions, and a warn-only hardcoded-JSX heuristic.
@@ -825,7 +810,7 @@ jobs:
           VERSION=$(git describe --tags --always --dirty 2>/dev/null || echo "dev")
           COMMIT=$(git rev-parse --short HEAD 2>/dev/null || echo "unknown")
           BUILD_TIME=$(date -u +%Y-%m-%dT%H:%M:%SZ)
-          # UI build hash matches Makefile recipe; mandatory per CLAUDE.md
+          # UI build hash matches Makefile recipe; mandatory per build policy.
           # Universal Build Contract — /__version must return non-empty
           # uiBuildHash to prove the UI was embedded.
           UI_BUILD_HASH=$(./scripts/ui-build-hash.sh)

@@ -204,7 +204,7 @@ check_banned_vocab() {
       while IFS= read -r hit; do
         local file
         file=$(echo "$hit" | cut -d: -f1)
-        annotate "$file" "banned vocabulary: '$term' — see CLAUDE.md banned list"
+        annotate "$file" "banned vocabulary: '$term' — see the product vocabulary policy"
       done <<<"$hits"
       issues=$((issues + 1))
     fi
@@ -422,7 +422,7 @@ check_key_usage() {
 # Check: locked package versions (matches I18N_CONVENTIONS.md)
 # -----------------------------------------------------------------------------
 check_locked_versions() {
-  section "i18n package versions (pinned exact, per CLAUDE.md)"
+  section "i18n package versions (pinned exact, per dependency policy)"
   local pkg="${UI_SRC_DIR%/src}/package.json"
   [ ! -f "$pkg" ] && { warn "package.json not found at $pkg; skipping"; return; }
   local issues=0
@@ -439,7 +439,7 @@ check_locked_versions() {
       warn "$name not installed in $pkg"
     elif [ "$actual" != "$want" ]; then
       ratchet_fail "$name pinned to $actual but lockstep target is $want"
-      annotate "$pkg" "$name should be pinned to $want (CLAUDE.md always-latest + I18N_CONVENTIONS.md)"
+      annotate "$pkg" "$name should be pinned to $want (always-latest policy + I18N_CONVENTIONS.md)"
       issues=$((issues + 1))
     fi
     i=$((i + 1))

@@ -21,7 +21,7 @@ import "time"
 
 // State enumerates the values Status.State may take. Locked as
 // constants so handler dashboards and operator tooling can switch
-// on them without inventing magic strings.
+// on them without inventing unnamed string literals.
 const (
 	// StateOK means the engine is registered and either idle or
 	// ticking on schedule.

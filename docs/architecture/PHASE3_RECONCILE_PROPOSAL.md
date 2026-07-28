@@ -67,7 +67,7 @@ and green; all items below are merged.
    architecture and restructure the `/api/v1/*` taxonomy. Out of scope here.
 2. **(Optional, if the brand is ever retired)** a deliberate brand-removal step
    (sidebar labels + glossary) gated on a LICENSE_STRATEGY brand decision.
-3. **Docs reconcile (PR C, low-stakes):** CLAUDE.md "Module Architecture" /
+3. **Docs reconcile (PR C, low-stakes):** development-policy "Module Architecture" /
    "Project Structure" trees + msn-docs `THE_SEED_ARCHITECTURE` /
    `_BACKEND_ARCHITECTURE` to the capability-first layout + new route prefixes.
 
@@ -150,7 +150,7 @@ The api's own groupings already mix descriptive (`Auth`/`Network`/`Discovery`/
 so the rename lands there too.
 
 **Marketing names** are a *separate, deliberate* decision (they're baked into
-`LICENSE_STRATEGY.md`, the CLAUDE.md tables, brand, UI colors). Engineering
+`LICENSE_STRATEGY.md`, the development-policy tables, brand, UI colors). Engineering
 recommendation: **decouple** — code is descriptive regardless; keep the botanical
 theme as decoration (product name "The Seed", per-area colors) if brand wants it,
 but for a network-engineer buyer, descriptive feature labels (*Wi-Fi · Path
@@ -205,7 +205,7 @@ call** — flagged, not assumed.
   keep it scheduler-only and document that export is a separate snapshot concern.
   Collapse the facade into the root.
 - **R4 — descriptive rename** (mechanical, cross-cutting: package dirs, `Color()`,
-  UI theme keys, CLAUDE.md tables, docs). Done **with** the restructure, not as a
+  UI theme keys, development-policy tables, docs). Done **with** the restructure, not as a
   second pass.
 - **R5 — rewrite the blueprint** to this model; take the **marketing-name**
   decision explicitly (owner), with locked-doc impact listed.
