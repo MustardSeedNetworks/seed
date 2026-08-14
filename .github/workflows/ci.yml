@@ -4,7 +4,7 @@
 # Main CI pipeline running on every push/PR to main.
 #
 # Features:
-# - Pinned action versions (@v6) for reproducibility
+# - Actions pinned to full commit SHAs for reproducibility
 # - Go version from go.mod, Node.js 26.3.0
 # - Full staticcheck analysis (dead-code.yml handles weekly U* reports)
 # - Deterministic builds with -trimpath -buildvcs=false
@@ -53,7 +53,7 @@ jobs:
       docs: ${{ steps.filter.outputs.docs }}
       workflows: ${{ steps.filter.outputs.workflows }}
     steps:
-      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - uses: dorny/paths-filter@fbd0ab8f3e69293af611ebaee6363fc25e6d187d # v4.0.1
         id: filter
         with:
@@ -101,7 +101,7 @@ jobs:
     timeout-minutes: 10
 
     steps:
-      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
       - name: Set up Node.js
         uses: ./.github/actions/setup-node
@@ -135,7 +135,7 @@ jobs:
       GOCACHE: ${{ github.workspace }}/.cache/go/build
 
     steps:
-      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 0
 
@@ -162,7 +162,7 @@ jobs:
         run: npm ci
 
       - name: Run golangci-lint
-        uses: golangci/golangci-lint-action@82606bf257cbaff209d206a39f5134f0cfbfd2ee # v9.2.1
+        uses: golangci/golangci-lint-action@ba0d7d2ec06a0ea1cb5fa41b2e4a3ab91d21278a # v9.3.0
         with:
           version: v2.12.2
           # Full-tree lint verified clean on 2026-08-14. Keep CI aligned with
@@ -210,13 +210,14 @@ jobs:
           echo "Current coverage: ${COVERAGE}%"
 
           # Minimum coverage threshold. Acts as an anti-regression floor.
+          # Actual coverage is 54.0%, so the old floor of 42 left a 12pp hole a
+          # regression could fall through unnoticed. 50 is the fleet minimum
+          # (CLAUDE.md) and matches stem and niac.
           # Ratchet plan (see #959):
-          #   2026-Q2: 42 (current)
-          #   2026-Q3: 45
-          #   2026-Q4: 50
+          #   2026-Q3: 50 (current — fleet minimum)
           #   2027-Q2: 60
           #   long-term: 70
-          MIN_COVERAGE=42
+          MIN_COVERAGE=50
 
           if (( $(echo "$COVERAGE < $MIN_COVERAGE" | bc -l) )); then
             echo "ERROR: Coverage ${COVERAGE}% is below minimum threshold of ${MIN_COVERAGE}%"
@@ -271,7 +272,7 @@ jobs:
       GOCACHE: ${{ github.workspace }}/.cache/go/build
 
     steps:
-      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
       - name: Set up Go
         uses: ./.github/actions/setup-go
@@ -305,7 +306,7 @@ jobs:
         working-directory: ui
 
     steps:
-      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
       - name: Set up Node.js
         uses: ./.github/actions/setup-node
@@ -345,7 +346,7 @@ jobs:
         working-directory: ui
 
     steps:
-      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
       - name: Set up Node.js
         uses: ./.github/actions/setup-node
@@ -383,7 +384,7 @@ jobs:
       actions: read
 
     steps:
-      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 0
 
@@ -523,17 +524,17 @@ jobs:
     timeout-minutes: 10
 
     steps:
-      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 0
 
-      - name: Check file sizes (warn-only)
-        # Mirrors niac/go's file-size budget gate. Warn mode for now —
-        # seed has many oversized files inherited from earlier development.
-        # Flip STRICT=1 once the worst offenders (App.tsx, SettingsDrawer,
-        # handlers_health_checks.go, config.go, etc.) are split.
-        env:
-          STRICT: "0"
+      - name: File-size gate (baseline-ratchet)
+        # Adopts niac/go's implementation, which enforces instead of warning.
+        # The previous STRICT=0 mode reported violations and always exited 0,
+        # so the gate was inert. Red-flag files present at adoption are
+        # recorded in scripts/file-size-baseline.txt with their current size
+        # and may not grow; anything new or increased fails. Sub-red-flag size
+        # debt still reports as a warning without failing.
         run: ./scripts/check-file-size.sh
 
       - name: Enforce customer-facing vocabulary policy
@@ -611,7 +612,7 @@ jobs:
     if: needs.changes.outputs.c == 'true' || needs.changes.outputs.workflows == 'true'
     timeout-minutes: 10
     steps:
-      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
       - name: Install C23 tools (clang-tidy, cppcheck, bear)
         run: |
@@ -714,7 +715,7 @@ jobs:
     timeout-minutes: 10
 
     steps:
-      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
       - name: Run shared i18n validator
         # Replaces the prior inline stub (which used the wrong path
@@ -738,28 +739,50 @@ jobs:
     name: Documentation Quality
     runs-on: ubuntu-latest
     timeout-minutes: 10
-    # Always runs — cheap (runs in seconds) and the templates/wiki checks
-    # apply to every PR regardless of which paths changed.
+    # The wiki/template checks apply to every PR regardless of which paths
+    # changed. External link checking is NOT here: it walks every URL in every
+    # .md file, took ~6 min (the longest job in this workflow), and failed for
+    # reasons unrelated to the diff — dead third-party links — which is why it
+    # had been pinned to continue-on-error and therefore enforced nothing.
+    # It now runs on a schedule instead: .github/workflows/docs-link-check.yml
 
     steps:
-      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
-
-      - name: Set up Node.js
-        uses: ./.github/actions/setup-node
-
-      - name: Install dependencies
-        run: npm ci
-
-      - name: Check markdown links
-        uses: gaurav-nelson/github-action-markdown-link-check@5c5dfc0ac2e225883c0e5f03a85311ec2830d368 # v1
-        continue-on-error: true
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          use-quiet-mode: "yes"
-          config-file: ".github/markdown-link-check.json"
+          # Needed to diff against the base ref for changed-file scoping.
+          fetch-depth: 0
 
-      - name: Lint markdown files
-        uses: DavidAnson/markdownlint-cli2-action@ded1f9488f68a970bc66ea5619e13e9b52e601cd # v23.2.0
-        continue-on-error: true
+      - name: Collect changed markdown files
+        id: changed-md
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha || github.event.before }}
+        run: |
+          set -euo pipefail
+          if [ -n "${BASE_SHA}" ] && git cat-file -e "${BASE_SHA}^{commit}" 2>/dev/null; then
+            files=$(git diff --name-only --diff-filter=ACMR "${BASE_SHA}" HEAD -- '*.md')
+          else
+            files=$(git ls-files '*.md')
+          fi
+          # Config-level ignores are honoured by markdownlint-cli2 itself; only
+          # drop paths it never sees so an empty result skips the step cleanly.
+          files=$(printf '%s\n' "${files}" | grep -vE '^(node_modules|build|dist|coverage)/' | grep -v 'CHANGELOG.md$' || true)
+          {
+            echo "files<<EOF"
+            printf '%s\n' "${files}"
+            echo "EOF"
+          } >> "$GITHUB_OUTPUT"
+          if [ -z "${files}" ]; then echo "empty=true" >> "$GITHUB_OUTPUT"; fi
+
+      # Blocking, but scoped to the files this change touches. The repo carries
+      # ~1.1k pre-existing violations of its own .markdownlint.json; gating the
+      # full tree would fail every PR, and gating nothing (the previous
+      # continue-on-error) enforced nothing. Scoping ratchets the debt down as
+      # files are touched, matching the file-size gate's baseline approach.
+      - name: Lint changed markdown files
+        if: steps.changed-md.outputs.empty != 'true'
+        uses: DavidAnson/markdownlint-cli2-action@21c1be1b93ad9ed58fa840aacc3f279cde2a72ff # v24.2.0
+        with:
+          globs: ${{ steps.changed-md.outputs.files }}
         with:
           globs: |
             **/*.md
@@ -830,7 +853,7 @@ jobs:
       (needs.backend.result == 'success' || needs.backend.result == 'skipped')
 
     steps:
-      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
       - name: Set up Go
         uses: ./.github/actions/setup-go
@@ -955,17 +978,18 @@ jobs:
   # E2E Browser Tests (Playwright)
   # ===========================================================================
   e2e:
-    name: E2E Browser Tests (${{ matrix.browser }} ${{ matrix.shard }}/4)
+    name: E2E Browser Tests (${{ matrix.browser }} ${{ matrix.shard }}/2)
     runs-on: ubuntu-latest
     needs: [changes, backend, frontend]
     timeout-minutes: 15
     # Blocking tier — "CI Complete" gates on this job (see ci-complete.needs).
-    # PR-2.5 added a second matrix axis (shard 1–4) on top of the browser axis
-    # so the full 186-test suite is split into 8 parallel jobs (4 shards × 2
-    # browsers). Combined with playwright.config.ts workers=4, each shard sees
-    # ~46 tests at 4-way parallelism, dropping per-shard wall-clock to ~3–5 min.
-    # timeout-minutes was 30 for the single-shard runs; 15 is comfortable
-    # headroom.
+    # 2 shards × 2 browsers = 4 jobs. This was 4 × 2 = 8; per-shard wall-clock
+    # was indeed ~3–5 min, but the 8 shards did not start together — measured
+    # run 31840685070 launched them in waves at t+9, t+11 and t+12 min against
+    # a 24-job run, so the last shard finished at t+15 and the sharding added
+    # queue latency instead of removing wall-clock. Sharding past the available
+    # runner concurrency costs both time and billing. Re-measure before
+    # widening this axis again.
     #
     # continue-on-error was REMOVED once the suite went flake-free (the rotating
     # post-login dashboard flake was fixed in #1588; full-suite main runs are 0
@@ -982,7 +1006,7 @@ jobs:
       fail-fast: false
       matrix:
         browser: [chromium, webkit]
-        shard: [1, 2, 3, 4]
+        shard: [1, 2]
     # Skipped on draft PRs (slow); also skipped if no frontend/backend changed.
     # always() lets the if: evaluate when backend was skipped upstream.
     if: |
@@ -992,7 +1016,7 @@ jobs:
       (needs.backend.result == 'success' || needs.backend.result == 'skipped')
 
     steps:
-      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
       - name: Set up Go
         uses: ./.github/actions/setup-go
@@ -1029,7 +1053,7 @@ jobs:
         # avoid duplicate runtime. See seed#1053.
         # Both chromium and webkit run per E2E_CONVENTIONS — the projects
         # array in playwright.config.ts is now exactly [chromium, webkit].
-        run: ./scripts/run-e2e.sh --reporter=html --project=${{ matrix.browser }} --grep-invert "@smoke" --shard=${{ matrix.shard }}/4
+        run: ./scripts/run-e2e.sh --reporter=html --project=${{ matrix.browser }} --grep-invert "@smoke" --shard=${{ matrix.shard }}/2
 
       - name: Upload Playwright report
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
@@ -1068,7 +1092,7 @@ jobs:
       (needs.backend.result == 'success' || needs.backend.result == 'skipped')
 
     steps:
-      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
       - name: Set up Go
         uses: ./.github/actions/setup-go
@@ -1138,7 +1162,7 @@ jobs:
       (needs.changes.outputs.frontend == 'true' || needs.changes.outputs.workflows == 'true')
 
     steps:
-      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
       - name: Set up Go
         uses: ./.github/actions/setup-go

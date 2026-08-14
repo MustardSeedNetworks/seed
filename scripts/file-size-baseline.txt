@@ -1,0 +1,7 @@
+# path maximum-lines
+#
+# Files already over the red-flag threshold when the gate was adopted. A listed
+# file may not grow past its recorded maximum; new or increased red-flag files
+# fail CI. Shrink these and lower the number — never raise it without review.
+ui/src/components/help/helpDrawerContent.tsx 1251
+ui/src/hooks/useSurvey.ts 818
