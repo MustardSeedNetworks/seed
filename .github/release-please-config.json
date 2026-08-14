@@ -7,7 +7,23 @@
       "bump-patch-for-minor-pre-major": true,
       "changelog-path": "CHANGELOG.md",
       "versioning": "default",
-      "extra-files": ["ui/package.json"]
+      "extra-files": [
+        {
+          "type": "json",
+          "path": "ui/package.json",
+          "jsonpath": "$.version"
+        },
+        {
+          "type": "json",
+          "path": "ui/package-lock.json",
+          "jsonpath": "$.version"
+        },
+        {
+          "type": "json",
+          "path": "ui/package-lock.json",
+          "jsonpath": "$.packages[\"\"].version"
+        }
+      ]
     }
   },
   "changelog-sections": [
