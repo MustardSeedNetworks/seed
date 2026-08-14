@@ -20,6 +20,8 @@ require() {
 require "if: \${{ !inputs.provenance_only }}"
 require "if: \${{ !cancelled() && ((inputs.provenance_only && needs.goreleaser-backfill-hashes.result == 'success') || (!inputs.provenance_only && !inputs.dry_run && needs.goreleaser.result == 'success')) }}"
 require "if: \${{ !inputs.dry_run && !inputs.provenance_only }}"
+require "syft_dir=\$(mktemp -d)"
+require "trap 'rm -rf \"\$syft_dir\"' EXIT"
 
 if ! awk '
   /- name: Install Syft \(SBOM\) inside container/ { in_syft_step = 1; next }
