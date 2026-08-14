@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.212.2](https://github.com/MustardSeedNetworks/seed/compare/v0.212.1...v0.212.2) (2026-08-14)
+
+
+### Bug Fixes
+
+* **release:** keep Syft outside checkout ([#1825](https://github.com/MustardSeedNetworks/seed/issues/1825)) ([b2d38de](https://github.com/MustardSeedNetworks/seed/commit/b2d38dedf8baa7faebeedb231432588dd9885174))
+
 ## [0.212.1](https://github.com/MustardSeedNetworks/seed/compare/v0.212.0...v0.212.1) (2026-08-14)
 
 
