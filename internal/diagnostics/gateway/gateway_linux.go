@@ -60,58 +60,35 @@ func detectGatewayIPv6Netlink() (string, error) {
 // GetAllRoutes returns all routes using netlink (for debugging/display).
 func GetAllRoutes() ([]RouteInfo, error) {
 	var routes []RouteInfo
-
-	// Get IPv4 routes.
 	v4Routes, err := netlink.RouteList(nil, netlink.FAMILY_V4)
 	if err == nil {
-		for i := range v4Routes {
-			r := &v4Routes[i]
-			ri := RouteInfo{
-				Family: "inet",
-			}
-			if r.Dst != nil {
-				ri.Destination = r.Dst.String()
-			} else {
-				ri.Destination = "default"
-			}
-			if r.Gw != nil {
-				ri.Gateway = r.Gw.String()
-			}
-			if r.LinkIndex > 0 {
-				if link, linkErr := netlink.LinkByIndex(r.LinkIndex); linkErr == nil {
-					ri.Interface = link.Attrs().Name
-				}
-			}
-			routes = append(routes, ri)
-		}
+		routes = appendRouteInfo(routes, v4Routes, "inet")
 	}
-
-	// Get IPv6 routes.
 	v6Routes, err := netlink.RouteList(nil, netlink.FAMILY_V6)
 	if err == nil {
-		for i := range v6Routes {
-			r := &v6Routes[i]
-			ri := RouteInfo{
-				Family: "inet6",
-			}
-			if r.Dst != nil {
-				ri.Destination = r.Dst.String()
-			} else {
-				ri.Destination = "default"
-			}
-			if r.Gw != nil {
-				ri.Gateway = r.Gw.String()
-			}
-			if r.LinkIndex > 0 {
-				if link, linkErr := netlink.LinkByIndex(r.LinkIndex); linkErr == nil {
-					ri.Interface = link.Attrs().Name
-				}
-			}
-			routes = append(routes, ri)
-		}
+		routes = appendRouteInfo(routes, v6Routes, "inet6")
 	}
-
 	return routes, nil
+}
+
+func appendRouteInfo(result []RouteInfo, routes []netlink.Route, family string) []RouteInfo {
+	for index := range routes {
+		route := &routes[index]
+		info := RouteInfo{Destination: "default", Family: family}
+		if route.Dst != nil {
+			info.Destination = route.Dst.String()
+		}
+		if route.Gw != nil {
+			info.Gateway = route.Gw.String()
+		}
+		if route.LinkIndex > 0 {
+			if link, err := netlink.LinkByIndex(route.LinkIndex); err == nil {
+				info.Interface = link.Attrs().Name
+			}
+		}
+		result = append(result, info)
+	}
+	return result
 }
 
 // RouteInfo contains information about a route.

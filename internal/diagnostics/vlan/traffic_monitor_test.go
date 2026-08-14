@@ -131,15 +131,7 @@ func TestTrafficMonitorConcurrentRecordAndRead(t *testing.T) {
 	for i := range numRecorders {
 		go func(id int) {
 			defer wg.Done()
-			vlanID := id * 10
-			for {
-				select {
-				case <-done:
-					return
-				default:
-					monitor.ExportRecordVLANTraffic(vlanID, 1000)
-				}
-			}
+			recordTrafficUntilDone(monitor, done, id*10)
 		}(i)
 	}
 
@@ -149,36 +141,53 @@ func TestTrafficMonitorConcurrentRecordAndRead(t *testing.T) {
 	for range numReaders {
 		go func() {
 			defer wg.Done()
-			for {
-				select {
-				case <-done:
-					return
-				default:
-					_ = monitor.GetStats()
-				}
-			}
+			readTrafficUntilDone(monitor, done)
 		}()
 	}
 
 	// Reset goroutine.
-	wg.Add(1)
-	go func() {
-		defer wg.Done()
-		for {
-			select {
-			case <-done:
-				return
-			default:
-				time.Sleep(time.Millisecond)
-				monitor.Reset()
-			}
-		}
-	}()
+	wg.Go(func() {
+		resetTrafficUntilDone(monitor, done)
+	})
 
 	// Let it run for a bit.
 	time.Sleep(50 * time.Millisecond)
 	close(done)
 	wg.Wait()
+}
+
+func recordTrafficUntilDone(monitor *vlan.TrafficMonitor, done <-chan struct{}, vlanID int) {
+	for {
+		select {
+		case <-done:
+			return
+		default:
+			monitor.ExportRecordVLANTraffic(vlanID, 1000)
+		}
+	}
+}
+
+func readTrafficUntilDone(monitor *vlan.TrafficMonitor, done <-chan struct{}) {
+	for {
+		select {
+		case <-done:
+			return
+		default:
+			_ = monitor.GetStats()
+		}
+	}
+}
+
+func resetTrafficUntilDone(monitor *vlan.TrafficMonitor, done <-chan struct{}) {
+	for {
+		select {
+		case <-done:
+			return
+		default:
+			time.Sleep(time.Millisecond)
+			monitor.Reset()
+		}
+	}
 }
 
 // TestTrafficMonitorStopClearsHandle tests that Stop properly cleans up.
@@ -622,76 +631,82 @@ func TestTrafficMonitorConcurrentModification(t *testing.T) {
 
 // BenchmarkTrafficMonitorOperations benchmarks various operations.
 func BenchmarkTrafficMonitorOperations(b *testing.B) {
-	b.Run("NewTrafficMonitor", func(b *testing.B) {
-		for b.Loop() {
-			_ = vlan.NewTrafficMonitor("eth0")
-		}
-	})
+	b.Run("NewTrafficMonitor", benchmarkNewTrafficMonitor)
+	b.Run("RecordSingleVLAN", benchmarkRecordSingleVLAN)
+	b.Run("RecordMultipleVLANs", benchmarkRecordMultipleVLANs)
+	b.Run("GetStatsSmall", benchmarkGetStatsSmall)
+	b.Run("GetStatsLarge", benchmarkGetStatsLarge)
+	b.Run("Reset", benchmarkReset)
+	b.Run("IsRunning", benchmarkIsRunning)
+	b.Run("SetInterface", benchmarkSetInterface)
+}
 
-	b.Run("RecordSingleVLAN", func(b *testing.B) {
-		monitor := vlan.NewTrafficMonitor("eth0")
-		b.ResetTimer()
-		for b.Loop() {
-			monitor.ExportRecordVLANTraffic(100, 1500)
-		}
-	})
+func benchmarkNewTrafficMonitor(b *testing.B) {
+	for b.Loop() {
+		_ = vlan.NewTrafficMonitor("eth0")
+	}
+}
 
-	b.Run("RecordMultipleVLANs", func(b *testing.B) {
-		monitor := vlan.NewTrafficMonitor("eth0")
-		b.ResetTimer()
-		for i := 0; b.Loop(); i++ {
-			monitor.ExportRecordVLANTraffic(i%100, 1500)
-		}
-	})
+func benchmarkRecordSingleVLAN(b *testing.B) {
+	monitor := vlan.NewTrafficMonitor("eth0")
+	b.ResetTimer()
+	for b.Loop() {
+		monitor.ExportRecordVLANTraffic(100, 1500)
+	}
+}
 
-	b.Run("GetStatsSmall", func(b *testing.B) {
-		monitor := vlan.NewTrafficMonitor("eth0")
-		for i := range 10 {
-			monitor.ExportRecordVLANTraffic(i, 1000)
-		}
-		b.ResetTimer()
-		for b.Loop() {
-			_ = monitor.GetStats()
-		}
-	})
+func benchmarkRecordMultipleVLANs(b *testing.B) {
+	monitor := vlan.NewTrafficMonitor("eth0")
+	b.ResetTimer()
+	for i := 0; b.Loop(); i++ {
+		monitor.ExportRecordVLANTraffic(i%100, 1500)
+	}
+}
 
-	b.Run("GetStatsLarge", func(b *testing.B) {
-		monitor := vlan.NewTrafficMonitor("eth0")
-		for i := range 1000 {
-			monitor.ExportRecordVLANTraffic(i, 1000)
-		}
-		b.ResetTimer()
-		for b.Loop() {
-			_ = monitor.GetStats()
-		}
-	})
+func benchmarkGetStatsSmall(b *testing.B) {
+	benchmarkGetStats(b, 10)
+}
 
-	b.Run("Reset", func(b *testing.B) {
-		monitor := vlan.NewTrafficMonitor("eth0")
-		for i := range 100 {
-			monitor.ExportRecordVLANTraffic(i, 1000)
-		}
-		b.ResetTimer()
-		for b.Loop() {
-			monitor.Reset()
-		}
-	})
+func benchmarkGetStatsLarge(b *testing.B) {
+	benchmarkGetStats(b, 1000)
+}
 
-	b.Run("IsRunning", func(b *testing.B) {
-		monitor := vlan.NewTrafficMonitor("eth0")
-		b.ResetTimer()
-		for b.Loop() {
-			_ = monitor.IsRunning()
-		}
-	})
+func benchmarkGetStats(b *testing.B, vlanCount int) {
+	monitor := vlan.NewTrafficMonitor("eth0")
+	for i := range vlanCount {
+		monitor.ExportRecordVLANTraffic(i, 1000)
+	}
+	b.ResetTimer()
+	for b.Loop() {
+		_ = monitor.GetStats()
+	}
+}
 
-	b.Run("SetInterface", func(b *testing.B) {
-		monitor := vlan.NewTrafficMonitor("eth0")
-		b.ResetTimer()
-		for b.Loop() {
-			_ = monitor.SetInterface("en0")
-		}
-	})
+func benchmarkReset(b *testing.B) {
+	monitor := vlan.NewTrafficMonitor("eth0")
+	for i := range 100 {
+		monitor.ExportRecordVLANTraffic(i, 1000)
+	}
+	b.ResetTimer()
+	for b.Loop() {
+		monitor.Reset()
+	}
+}
+
+func benchmarkIsRunning(b *testing.B) {
+	monitor := vlan.NewTrafficMonitor("eth0")
+	b.ResetTimer()
+	for b.Loop() {
+		_ = monitor.IsRunning()
+	}
+}
+
+func benchmarkSetInterface(b *testing.B) {
+	monitor := vlan.NewTrafficMonitor("eth0")
+	b.ResetTimer()
+	for b.Loop() {
+		_ = monitor.SetInterface("en0")
+	}
 }
 
 // BenchmarkTrafficMonitorConcurrent benchmarks concurrent access.

@@ -14,13 +14,19 @@ import (
 	"time"
 )
 
-// Common DHCP lease file locations on Linux.
-var leaseFilePaths = []string{
-	"/var/lib/dhcp/dhclient.%s.leases",
-	"/var/lib/dhclient/dhclient-%s.leases",
-	"/var/lib/NetworkManager/dhclient-%s.lease",
-	"/var/lib/dhcpcd/dhcpcd-%s.lease",
-	"/run/dhcpcd-%s.lease",
+const (
+	leaseLineParts = 2
+	dhcpTimeParts  = 3
+)
+
+func linuxLeaseFilePaths() []string {
+	return []string{
+		"/var/lib/dhcp/dhclient.%s.leases",
+		"/var/lib/dhclient/dhclient-%s.leases",
+		"/var/lib/NetworkManager/dhclient-%s.lease",
+		"/var/lib/dhcpcd/dhcpcd-%s.lease",
+		"/run/dhcpcd-%s.lease",
+	}
 }
 
 // testDHCPPlatform performs platform-specific DHCP testing on Linux.
@@ -84,7 +90,7 @@ func testDHCPPlatform(ctx context.Context, interfaceName string) *TestResult {
 
 // findAndParseLeaseFile finds and parses the DHCP lease file for an interface.
 func findAndParseLeaseFile(interfaceName string) (*LeaseInfo, error) {
-	for _, pathTemplate := range leaseFilePaths {
+	for _, pathTemplate := range linuxLeaseFilePaths() {
 		path := strings.ReplaceAll(pathTemplate, "%s", interfaceName)
 		if _, err := os.Stat(path); err == nil {
 			return parseLeaseFile(path, interfaceName)
@@ -162,8 +168,8 @@ func parseLeaseFile(path, interfaceName string) (*LeaseInfo, error) {
 // parseLeaseFileLine parses a single line from a dhclient lease file.
 func parseLeaseFileLine(line string, lease *LeaseInfo) {
 	line = strings.TrimSuffix(line, ";")
-	parts := strings.SplitN(line, " ", 2)
-	if len(parts) < 2 {
+	parts := strings.SplitN(line, " ", leaseLineParts)
+	if len(parts) < leaseLineParts {
 		return
 	}
 
@@ -174,31 +180,7 @@ func parseLeaseFileLine(line string, lease *LeaseInfo) {
 	case "fixed-address":
 		lease.IPAddress = value
 	case "option":
-		if strings.HasPrefix(line, "option subnet-mask ") {
-			lease.SubnetMask = strings.TrimPrefix(value, "subnet-mask ")
-		} else if strings.HasPrefix(line, "option routers ") {
-			routers := strings.Split(strings.TrimPrefix(value, "routers "), ",")
-			if len(routers) > 0 {
-				lease.Gateway = strings.TrimSpace(routers[0])
-			}
-		} else if strings.HasPrefix(line, "option domain-name-servers ") {
-			servers := strings.Split(strings.TrimPrefix(value, "domain-name-servers "), ",")
-			for _, s := range servers {
-				s = strings.TrimSpace(s)
-				if s != "" {
-					lease.DNSServers = append(lease.DNSServers, s)
-				}
-			}
-		} else if strings.HasPrefix(line, "option domain-name ") {
-			lease.DomainName = strings.Trim(strings.TrimPrefix(value, "domain-name "), "\"")
-		} else if strings.HasPrefix(line, "option dhcp-server-identifier ") {
-			lease.ServerIP = strings.TrimPrefix(value, "dhcp-server-identifier ")
-		} else if strings.HasPrefix(line, "option dhcp-lease-time ") {
-			if seconds, err := strconv.Atoi(strings.TrimPrefix(value, "dhcp-lease-time ")); err == nil {
-				lease.LeaseTime = time.Duration(seconds) * time.Second
-				lease.LeaseTimeSec = seconds
-			}
-		}
+		parseLeaseOption(value, lease)
 	case "renew":
 		// Format: renew 3 2024/01/15 10:30:00;
 		if t, err := parseDHCPTime(value); err == nil {
@@ -212,11 +194,40 @@ func parseLeaseFileLine(line string, lease *LeaseInfo) {
 	}
 }
 
+func parseLeaseOption(value string, lease *LeaseInfo) {
+	switch {
+	case strings.HasPrefix(value, "subnet-mask "):
+		lease.SubnetMask = strings.TrimPrefix(value, "subnet-mask ")
+	case strings.HasPrefix(value, "routers "):
+		lease.Gateway = strings.TrimSpace(strings.Split(strings.TrimPrefix(value, "routers "), ",")[0])
+	case strings.HasPrefix(value, "domain-name-servers "):
+		for server := range strings.SplitSeq(strings.TrimPrefix(value, "domain-name-servers "), ",") {
+			if server = strings.TrimSpace(server); server != "" {
+				lease.DNSServers = append(lease.DNSServers, server)
+			}
+		}
+	case strings.HasPrefix(value, "domain-name "):
+		lease.DomainName = strings.Trim(strings.TrimPrefix(value, "domain-name "), "\"")
+	case strings.HasPrefix(value, "dhcp-server-identifier "):
+		lease.ServerIP = strings.TrimPrefix(value, "dhcp-server-identifier ")
+	case strings.HasPrefix(value, "dhcp-lease-time "):
+		setLeaseDuration(strings.TrimPrefix(value, "dhcp-lease-time "), lease)
+	}
+}
+
+func setLeaseDuration(value string, lease *LeaseInfo) {
+	seconds, err := strconv.Atoi(value)
+	if err == nil {
+		lease.LeaseTime = time.Duration(seconds) * time.Second
+		lease.LeaseTimeSec = seconds
+	}
+}
+
 // parseDHCPTime parses a time from dhclient lease file format.
 func parseDHCPTime(value string) (time.Time, error) {
 	// Format: "3 2024/01/15 10:30:00" (weekday date time)
 	parts := strings.Fields(value)
-	if len(parts) < 3 {
+	if len(parts) < dhcpTimeParts {
 		return time.Time{}, &InterfaceError{Message: "invalid time format"}
 	}
 	// Parse date and time, skipping weekday
@@ -228,28 +239,23 @@ func parseDHCPTime(value string) (time.Time, error) {
 func parseLinuxDHClientOutput(output string, result *TestResult) {
 	scanner := bufio.NewScanner(strings.NewReader(output))
 	for scanner.Scan() {
-		line := scanner.Text()
+		parseDHClientLine(scanner.Text(), result)
+	}
+}
 
+func parseDHClientLine(line string, result *TestResult) {
+	parts := strings.Fields(line)
+	for index, part := range parts {
+		if index+1 >= len(parts) {
+			continue
+		}
 		switch {
-		case strings.Contains(line, "DHCPOFFER"):
-			// DHCPOFFER of 192.168.1.100 from 192.168.1.1
-			parts := strings.Fields(line)
-			for i, p := range parts {
-				if p == "of" && i+1 < len(parts) {
-					result.OfferedIP = parts[i+1]
-				}
-				if p == "from" && i+1 < len(parts) {
-					result.ServerIP = parts[i+1]
-				}
-			}
-		case strings.Contains(line, "bound to"):
-			// bound to 192.168.1.100
-			parts := strings.Fields(line)
-			for i, p := range parts {
-				if p == "to" && i+1 < len(parts) {
-					result.OfferedIP = parts[i+1]
-				}
-			}
+		case strings.Contains(line, "DHCPOFFER") && part == "of":
+			result.OfferedIP = parts[index+1]
+		case strings.Contains(line, "DHCPOFFER") && part == "from":
+			result.ServerIP = parts[index+1]
+		case strings.Contains(line, "bound to") && part == "to":
+			result.OfferedIP = parts[index+1]
 		}
 	}
 }

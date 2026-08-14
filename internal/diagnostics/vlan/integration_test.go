@@ -3,6 +3,7 @@
 package vlan_test
 
 import (
+	"strconv"
 	"sync"
 	"testing"
 	"time"
@@ -371,36 +372,37 @@ func TestContainsFunctionality(t *testing.T) {
 	sizes := []int{0, 1, 10, 100, 1000}
 
 	for _, size := range sizes {
-		t.Run("size_"+string(rune('0'+size%10)), func(t *testing.T) {
-			slice := make([]int, size)
-			for i := range slice {
-				slice[i] = i
-			}
-
-			// Test finding existing elements.
-			if size > 0 {
-				if !vlan.ExportContains(slice, 0) {
-					t.Error("should find first element")
-				}
-				if !vlan.ExportContains(slice, size-1) {
-					t.Error("should find last element")
-				}
-				if size > 1 {
-					mid := size / 2
-					if !vlan.ExportContains(slice, mid) {
-						t.Error("should find middle element")
-					}
-				}
-			}
-
-			// Test not finding non-existent elements.
-			if vlan.ExportContains(slice, size) {
-				t.Error("should not find element beyond slice")
-			}
-			if vlan.ExportContains(slice, -1) {
-				t.Error("should not find negative element")
-			}
+		t.Run("size_"+strconv.Itoa(size), func(t *testing.T) {
+			t.Parallel()
+			assertContainsForSize(t, size)
 		})
+	}
+}
+
+func assertContainsForSize(t *testing.T, size int) {
+	t.Helper()
+
+	values := make([]int, size)
+	for i := range values {
+		values[i] = i
+	}
+	if vlan.ExportContains(values, size) {
+		t.Error("should not find element beyond slice")
+	}
+	if vlan.ExportContains(values, -1) {
+		t.Error("should not find negative element")
+	}
+	if size == 0 {
+		return
+	}
+	if !vlan.ExportContains(values, 0) {
+		t.Error("should find first element")
+	}
+	if !vlan.ExportContains(values, size-1) {
+		t.Error("should find last element")
+	}
+	if size > 1 && !vlan.ExportContains(values, size/2) {
+		t.Error("should find middle element")
 	}
 }
 
