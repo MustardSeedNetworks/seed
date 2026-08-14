@@ -1,13 +1,9 @@
 #!/usr/bin/env bash
-# check-release-workflow-contract.sh — dispatch-mode regression gate for release.yml.
-#
-# The default workflow_dispatch value for dry_run is true. A provenance-only
-# backfill must therefore bypass that default, while a normal dry-run must not
-# attest or publish. Keep the mode predicates explicit and independently gated.
+# check-release-workflow-contract.sh — release-mode and supply-chain regression gate.
 
 set -euo pipefail
 
-workflow=".github/workflows/release.yml"
+workflow="${RELEASE_WORKFLOW_PATH:-.github/workflows/release.yml}"
 
 require() {
   local pattern="$1"
@@ -17,19 +13,87 @@ require() {
   fi
 }
 
+validate_action_pins() {
+  local line
+  local ref
+
+  while IFS= read -r line; do
+    ref=$(awk '{ for (i = 1; i <= NF; i++) if ($i == "uses:") { print $(i + 1); exit } }' <<<"$line")
+    if [[ "$ref" == ./* ]]; then
+      continue
+    fi
+    if [[ ! "$ref" =~ ^[^@[:space:]]+@[0-9a-f]{40}$ ]]; then
+      echo "release workflow contract has mutable action reference: $line" >&2
+      exit 1
+    fi
+  done < <(grep -E '^[[:space:]]*(-[[:space:]]+)?uses:' "$workflow")
+}
+
 require "if: \${{ !inputs.provenance_only }}"
 require "if: \${{ !cancelled() && ((inputs.provenance_only && needs.goreleaser-backfill-hashes.result == 'success') || (!inputs.provenance_only && !inputs.dry_run && needs.goreleaser.result == 'success')) }}"
 require "if: \${{ !inputs.dry_run && !inputs.provenance_only }}"
+require 'IPERF3_VERSION: "3.21"'
+require 'IPERF3_SHA256: "656e4405ebd620121de7ceca3eaf43a88f79ea1b857d041a6a0b1314801acdd8"'
+require 'image: goreleaser/goreleaser-cross:v1.26.5@sha256:0cf2b7f757b40397d2bef5423adb88d0ac63899e88a9f0c4bbb370d3fb7b2fb5'
+require 'SYFT_VERSION: "1.51.0"'
+require 'SYFT_SHA256: "2a2e837a2c8d59ec9af5472ee22d3b04ee463c4e44476ecf993fd1e5ab6ebc7f"'
+require 'COSIGN_VERSION: "v3.1.3"'
+require 'COSIGN_SHA256: "4629c757b7618056f8ddd7e2625ae9fdd94c0372a65049520bc7d9df9efc7f71"'
 require "syft_dir=\$(mktemp -d)"
 require "trap 'rm -rf \"\$syft_dir\"' EXIT"
+require "cosign_dir=\$(mktemp -d)"
+require "trap 'rm -rf \"\$cosign_dir\"' EXIT"
+
+validate_action_pins
+
+if grep -Fq '/releases/latest' "$workflow"; then
+  echo "release workflow contract contains a mutable latest-release lookup" >&2
+  exit 1
+fi
 
 if ! awk '
-  /- name: Install Syft \(SBOM\) inside container/ { in_syft_step = 1; next }
-  in_syft_step && /^        shell: bash$/ { found_bash = 1; exit }
-  in_syft_step && /^      - name:/ { exit }
-  END { exit !found_bash }
+  /^permissions:$/ { top_permissions = 1; next }
+  top_permissions && /^  contents: read$/ { contents_read = 1; next }
+  top_permissions && /^  [a-z-]+:/ { unexpected = 1; next }
+  top_permissions && /^[^ ]/ { exit }
+  END { exit !(top_permissions && contents_read && !unexpected) }
 ' "$workflow"; then
-  echo "release workflow contract missing Bash shell for Syft installation" >&2
+  echo "release workflow contract missing read-only workflow permissions" >&2
+  exit 1
+fi
+
+if ! awk '
+  /- name: Download and build iperf3/ { in_step = 1; next }
+  in_step && /^        shell: bash$/ { bash = 1 }
+  in_step && /releases\/download\/\$\{IPERF3_VERSION\}\/iperf-\$\{IPERF3_VERSION\}\.tar\.gz/ { download = 1 }
+  in_step && /echo "\$\{IPERF3_SHA256\}  iperf3\.tar\.gz" \| sha256sum -c -/ { checksum = 1 }
+  in_step && /^      - name:/ { exit }
+  END { exit !(bash && download && checksum) }
+' "$workflow"; then
+  echo "release workflow contract missing checksum-bound iperf3 installation under Bash" >&2
+  exit 1
+fi
+
+if ! awk '
+  /- name: Install Syft \(SBOM\) inside container/ { in_step = 1; next }
+  in_step && /^        shell: bash$/ { bash = 1 }
+  in_step && /echo "\$\{SYFT_SHA256\}  \$syft_dir\/syft\.tar\.gz" \| sha256sum -c -/ { checksum = 1 }
+  in_step && /^      - name:/ { exit }
+  END { exit !(bash && checksum) }
+' "$workflow"; then
+  echo "release workflow contract missing checksum-bound Syft installation under Bash" >&2
+  exit 1
+fi
+
+if ! awk '
+  /- name: Install Cosign inside container/ { in_step = 1; next }
+  in_step && /^        shell: bash$/ { bash = 1 }
+  in_step && /releases\/download\/\$\{COSIGN_VERSION\}\/cosign-linux-amd64/ { download = 1 }
+  in_step && /echo "\$\{COSIGN_SHA256\}  \$cosign_dir\/cosign-linux-amd64" \| sha256sum -c -/ { checksum = 1 }
+  in_step && /^      - name:/ { exit }
+  END { exit !(bash && download && checksum) }
+' "$workflow"; then
+  echo "release workflow contract missing checksum-bound Cosign installation under Bash" >&2
   exit 1
 fi
 
@@ -64,4 +128,4 @@ assert_mode "normal release" true false false success skipped
 assert_mode "provenance-only default dry-run" true true true skipped success
 assert_mode "failed provenance-only backfill" false true true skipped failure
 
-echo "release workflow contract: dry-run, release, and provenance-only modes are disjoint."
+echo "release workflow contract: modes, checksums, pins, and permissions verified."
