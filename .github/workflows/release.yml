@@ -233,11 +233,13 @@ jobs:
           SYFT_SHA256: "d654f678b709eb53c393d38519d5ed7d2e57205529404018614cfefa0fb2b5ca"
         run: |
           set -euo pipefail
-          curl -sSfL -o syft.tar.gz \
+          syft_dir=$(mktemp -d)
+          trap 'rm -rf "$syft_dir"' EXIT
+          curl -sSfL -o "$syft_dir/syft.tar.gz" \
             "https://github.com/anchore/syft/releases/download/v${SYFT_VERSION}/syft_${SYFT_VERSION}_linux_amd64.tar.gz"
-          echo "${SYFT_SHA256}  syft.tar.gz" | sha256sum -c -
-          tar -xzf syft.tar.gz syft
-          install -m 0755 syft /usr/local/bin/syft
+          echo "${SYFT_SHA256}  $syft_dir/syft.tar.gz" | sha256sum -c -
+          tar -xzf "$syft_dir/syft.tar.gz" -C "$syft_dir" syft
+          install -m 0755 "$syft_dir/syft" /usr/local/bin/syft
 
       - name: Install Cosign inside container
         run: |
