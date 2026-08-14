@@ -39,5 +39,9 @@
       "@commitlint/config-conventional"
     ]
   },
+  "overrides": {
+    "fast-uri": "3.1.5",
+    "js-yaml": "4.3.1"
+  },
   "packageManager": "npm@11.17.0"
 }
