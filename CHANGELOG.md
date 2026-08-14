@@ -5,6 +5,96 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.212.1](https://github.com/MustardSeedNetworks/seed/compare/v0.212.0...v0.212.1) (2026-08-14)
+
+
+### Features
+
+* **ui:** per-item module accent colour in the sidebar (M1 follow-up) ([#1682](https://github.com/MustardSeedNetworks/seed/issues/1682)) ([2aa1f1c](https://github.com/MustardSeedNetworks/seed/commit/2aa1f1c730fd9da38315f6417dff246eee0d9558))
+
+
+### Bug Fixes
+
+* **build:** honest quality gates — propagate exit codes, fix hidden lint/race findings ([#1723](https://github.com/MustardSeedNetworks/seed/issues/1723)) ([474fcaf](https://github.com/MustardSeedNetworks/seed/commit/474fcafc4a5d974981dd6392035db2f89e67dc65))
+* **csrf:** gate CSRF session key on JWT structure ([#1757](https://github.com/MustardSeedNetworks/seed/issues/1757)) ([e1dbefe](https://github.com/MustardSeedNetworks/seed/commit/e1dbefe7a6c1114bdb2dc76e7d02a962a7f50a01))
+* **database:** enforce foreign keys across pool ([#1787](https://github.com/MustardSeedNetworks/seed/issues/1787)) ([a90f5cf](https://github.com/MustardSeedNetworks/seed/commit/a90f5cf266e52e11543379e3b811ed22f771c8ce))
+* **license:** remove vaporware features from the Pro catalog ([#1761](https://github.com/MustardSeedNetworks/seed/issues/1761)) ([f5533b1](https://github.com/MustardSeedNetworks/seed/commit/f5533b1443dfcaaaf3b3d2b94112704af6040056))
+* **release:** run Syft installation under Bash ([#1803](https://github.com/MustardSeedNetworks/seed/issues/1803)) ([5dc0f5c](https://github.com/MustardSeedNetworks/seed/commit/5dc0f5c016fc278e04ad5351160073d3ab1501cb))
+* **release:** synchronize Seed version metadata ([#1824](https://github.com/MustardSeedNetworks/seed/issues/1824)) ([9925f88](https://github.com/MustardSeedNetworks/seed/commit/9925f8804ee6b2e3edb262528b3d27e8b8fcb384))
+* **security:** bump Go 1.26.5 and gate Trivy SARIF ([#1747](https://github.com/MustardSeedNetworks/seed/issues/1747)) ([77378ed](https://github.com/MustardSeedNetworks/seed/commit/77378ed496106a14aa0565d121afde790530dd68))
+* **security:** bump Go to 1.26.6 for seven reachable stdlib CVEs ([#1822](https://github.com/MustardSeedNetworks/seed/issues/1822)) ([f6bfe65](https://github.com/MustardSeedNetworks/seed/commit/f6bfe654596bf81ffa72547b897a30e248f0eb64))
+* **security:** resolve CodeQL alerts (allocation caps, TLS inspect, secure RNG) ([#1728](https://github.com/MustardSeedNetworks/seed/issues/1728)) ([2a39e22](https://github.com/MustardSeedNetworks/seed/commit/2a39e22a6ae93d6e00843689e9bd1cdd4d887092))
+* **tls:** remove ACME and plaintext serving ([#1804](https://github.com/MustardSeedNetworks/seed/issues/1804)) ([4255ea1](https://github.com/MustardSeedNetworks/seed/commit/4255ea1fe7d324a4c6e4dcec10fe8aa5b4a48a33))
+* **ui:** close SEED_UI_ARCH_PLAN D-batch — distinct brand green (L1) + profile entry points (VL1) + on-brand AA (VL2) ([#1680](https://github.com/MustardSeedNetworks/seed/issues/1680)) ([af1e7d1](https://github.com/MustardSeedNetworks/seed/commit/af1e7d1496b965f3c507df7fa9cd6c8af3d7b35e))
+
+
+### Code Refactoring
+
+* **alerts:** relocate Alert/Rule/ListenerEvent rows to domain pkgs, make persistence-free (WS-B) ([#1676](https://github.com/MustardSeedNetworks/seed/issues/1676)) ([0323857](https://github.com/MustardSeedNetworks/seed/commit/0323857e9d56274430e766e76e3790415ed93b4a))
+* **ci:** add domain-purity depguard rules for six capability packages (WS-C4) ([#1697](https://github.com/MustardSeedNetworks/seed/issues/1697)) ([134e9eb](https://github.com/MustardSeedNetworks/seed/commit/134e9ebd57c7fb54c09081c2fd0bed7a774deb4d))
+* **ci:** empty the json-casing baseline; exempt external adapters by marker (ADR-0010 revised) ([#1684](https://github.com/MustardSeedNetworks/seed/issues/1684)) ([1df12dd](https://github.com/MustardSeedNetworks/seed/commit/1df12dd6c5a80fd8a9ade6b746aea8aabbe0be66))
+* **csrf:** back CSRF with foundation module; converge keying to sha256(bearer) ([#1755](https://github.com/MustardSeedNetworks/seed/issues/1755)) ([db4dd31](https://github.com/MustardSeedNetworks/seed/commit/db4dd31954137650026e9823c8431b91663c84e4))
+* **database:** decompose the discovery repository god-file by entity (WS-D) ([#1702](https://github.com/MustardSeedNetworks/seed/issues/1702)) ([57e1fbe](https://github.com/MustardSeedNetworks/seed/commit/57e1fbe40c031584e0d32cac9eb6c381416aa473))
+* decompose four WS-D god-files by role (arp, users, snmp, engine) ([#1709](https://github.com/MustardSeedNetworks/seed/issues/1709)) ([cb8e937](https://github.com/MustardSeedNetworks/seed/commit/cb8e9375184d9e8881a1bb8465abcd020d19b12f))
+* decompose seven more WS-D god-files by role (database, alerts, registry, netif, iperf installer) ([#1710](https://github.com/MustardSeedNetworks/seed/issues/1710)) ([ec72335](https://github.com/MustardSeedNetworks/seed/commit/ec723354cd0271bb704730784cce1556aa1c7ba3))
+* **dhcp:** split lease-file parsing out of the dhcp god-file (WS-D) ([#1700](https://github.com/MustardSeedNetworks/seed/issues/1700)) ([d4c7680](https://github.com/MustardSeedNetworks/seed/commit/d4c76808c3e747ea8e94cc1a0726211d1acbe15e))
+* **discovery:** decompose the fingerprint god-file by role (WS-D) ([#1708](https://github.com/MustardSeedNetworks/seed/issues/1708)) ([b90b0e2](https://github.com/MustardSeedNetworks/seed/commit/b90b0e26bed21434497c3edaea1a6bb77edef93e))
+* **discovery:** decompose the traceroute god-file by protocol (WS-D) ([#1705](https://github.com/MustardSeedNetworks/seed/issues/1705)) ([05fccd7](https://github.com/MustardSeedNetworks/seed/commit/05fccd76ef4b15dcef67b17fe1bb4d481f0b5b9f))
+* **health:** make health surface persistence-free (WS-B) ([#1678](https://github.com/MustardSeedNetworks/seed/issues/1678)) ([3215b97](https://github.com/MustardSeedNetworks/seed/commit/3215b97f13640d680083445865add9d5b27fcd16))
+* **iperf:** decompose the iperf god-file by role (WS-D) ([#1706](https://github.com/MustardSeedNetworks/seed/issues/1706)) ([62db623](https://github.com/MustardSeedNetworks/seed/commit/62db62346e008343e74d02b7849c1c82013b1aa8))
+* **license:** consume shared foundation module for license core ([#1753](https://github.com/MustardSeedNetworks/seed/issues/1753)) ([f35f069](https://github.com/MustardSeedNetworks/seed/commit/f35f0697017aa657c9530ace59996a6d148029fd))
+* **polling:** relocate PollingTarget to domain pkg + orchestrator ports, make persistence-free (WS-B) ([#1675](https://github.com/MustardSeedNetworks/seed/issues/1675)) ([74c4162](https://github.com/MustardSeedNetworks/seed/commit/74c4162e637d459ad2be551b13e49e0489796b2c))
+* **probe:** narrow persistence port to domain types (WS-B1) ([#1672](https://github.com/MustardSeedNetworks/seed/issues/1672)) ([e07d928](https://github.com/MustardSeedNetworks/seed/commit/e07d9285c75763bdd12bc59b3c59f10a06b6a4bb))
+* **retention:** relocate rollup SQL adapters to internal/database (WS-B5) ([#1677](https://github.com/MustardSeedNetworks/seed/issues/1677)) ([7370c51](https://github.com/MustardSeedNetworks/seed/commit/7370c515dfd01046fd9c666a4a9a2c73c1edca34))
+* **settings:** decompose the management god-file by role (WS-D) ([#1699](https://github.com/MustardSeedNetworks/seed/issues/1699)) ([54b3399](https://github.com/MustardSeedNetworks/seed/commit/54b33993b3a6553c525855a26abce9fe2474cd78))
+* **snmp:** decompose the interface god-file by query area (WS-D) ([#1701](https://github.com/MustardSeedNetworks/seed/issues/1701)) ([cdbbc18](https://github.com/MustardSeedNetworks/seed/commit/cdbbc1828be47086d87f569761a7397402ec273d))
+* **survey:** decompose the report god-file by role (WS-D) ([#1703](https://github.com/MustardSeedNetworks/seed/issues/1703)) ([b19db25](https://github.com/MustardSeedNetworks/seed/commit/b19db25c085437971690df31a103daa5f1869926))
+* **survey:** decompose the survey manager god-file by role (WS-D) ([#1704](https://github.com/MustardSeedNetworks/seed/issues/1704)) ([c06374a](https://github.com/MustardSeedNetworks/seed/commit/c06374a2641f881582e3245220dba2df66b9aaf6))
+* **topology:** relocate row types to domain pkgs, make persistence-free (WS-B) ([#1673](https://github.com/MustardSeedNetworks/seed/issues/1673)) ([e768fcc](https://github.com/MustardSeedNetworks/seed/commit/e768fcc7b884fd387b87faf46a799ca4740f7256))
+* **ui:** function-first sidebar nav IA, retire botanical metaphor (M1, [#1452](https://github.com/MustardSeedNetworks/seed/issues/1452)) ([#1681](https://github.com/MustardSeedNetworks/seed/issues/1681)) ([546d937](https://github.com/MustardSeedNetworks/seed/commit/546d93724dd5f26a7ba984b32a0923bc61fe1ff2))
+* **vuln:** decompose the scanner god-file by role (WS-D) ([#1707](https://github.com/MustardSeedNetworks/seed/issues/1707)) ([2701fef](https://github.com/MustardSeedNetworks/seed/commit/2701fefb81f63ea051e664f0688dda0dc5ecc2f9))
+
+
+### Documentation
+
+* **adr-0010:** revise to pure boundary mapping — wire is 100% camelCase, no exceptions ([#1683](https://github.com/MustardSeedNetworks/seed/issues/1683)) ([0259e3d](https://github.com/MustardSeedNetworks/seed/commit/0259e3d39c94e60887446307f33487e02fc6cde1))
+* **ws-b:** close B3 — identity is the documented ADR-0024 exception ([#1679](https://github.com/MustardSeedNetworks/seed/issues/1679)) ([2bd9ab6](https://github.com/MustardSeedNetworks/seed/commit/2bd9ab6ccde0436c13ec38c172e5f3525723cb9f))
+
+
+### Tests
+
+* make Darwin cache test lint-clean ([#1805](https://github.com/MustardSeedNetworks/seed/issues/1805)) ([74297a2](https://github.com/MustardSeedNetworks/seed/commit/74297a2704a5c2576ca9b4b5c9def4a0c4fbe231))
+* make end-to-end validation hermetic ([#1786](https://github.com/MustardSeedNetworks/seed/issues/1786)) ([fa4c15b](https://github.com/MustardSeedNetworks/seed/commit/fa4c15b6ae211a4d1a7b4a7b88eb63be3fcb2c1e))
+* **ui:** gate Storybook interactions and accessibility ([#1802](https://github.com/MustardSeedNetworks/seed/issues/1802)) ([22addfb](https://github.com/MustardSeedNetworks/seed/commit/22addfb0ba66cc8150fc66b07f18ed99d519904a))
+
+
+### Continuous Integration
+
+* enforce banned vocabulary policy ([#1801](https://github.com/MustardSeedNetworks/seed/issues/1801)) ([071b260](https://github.com/MustardSeedNetworks/seed/commit/071b260e08d0f289b1169125ebf1b91b9dea857c))
+* **governance:** exempt release-please PRs from human PR-body template ([#1741](https://github.com/MustardSeedNetworks/seed/issues/1741)) ([e083074](https://github.com/MustardSeedNetworks/seed/commit/e083074a5012085b678f451f8fa5a8c55dfbf5d0))
+* **license-check:** consume the fleet-shared reusable workflow ([#1758](https://github.com/MustardSeedNetworks/seed/issues/1758)) ([2f2cdfe](https://github.com/MustardSeedNetworks/seed/commit/2f2cdfe7c18f8e6e4abc5647f783c0c2f6e9abc0))
+* **perf:** build UI once, add job timeouts, least-privilege ([#1733](https://github.com/MustardSeedNetworks/seed/issues/1733)) ([02e2a17](https://github.com/MustardSeedNetworks/seed/commit/02e2a17bc8015357b8a61ad16e8242ca17c8526f))
+* **release:** use msn-ci-bot App token for release-please ([#1745](https://github.com/MustardSeedNetworks/seed/issues/1745)) ([515b298](https://github.com/MustardSeedNetworks/seed/commit/515b298f7c21e49b850f617576d15f805d38bc9f))
+* **release:** verify primary artifact coverage ([#1800](https://github.com/MustardSeedNetworks/seed/issues/1800)) ([fd52fc6](https://github.com/MustardSeedNetworks/seed/commit/fd52fc6662938054ee8af13605982df783cb20a6))
+* **security:** add Semgrep SAST gate, pin curl|sh install ([#1737](https://github.com/MustardSeedNetworks/seed/issues/1737)) ([ecbc6ec](https://github.com/MustardSeedNetworks/seed/commit/ecbc6ec12d383d3e34fe9408f7d387d90308af9b)), closes [#1736](https://github.com/MustardSeedNetworks/seed/issues/1736)
+* **semgrep:** consume the fleet-shared reusable Semgrep workflow ([#1760](https://github.com/MustardSeedNetworks/seed/issues/1760)) ([a88ef4d](https://github.com/MustardSeedNetworks/seed/commit/a88ef4d32e4e379ef0077f5781bd866850aa0c43))
+
+
+### Miscellaneous
+
+* **build:** remove Docker/GHCR publishing ([#1729](https://github.com/MustardSeedNetworks/seed/issues/1729)) ([513e1e0](https://github.com/MustardSeedNetworks/seed/commit/513e1e01d4291e13fa4e32231371644a26778e2e))
+* delete dead subsystems (config-migration, wake-on-LAN, iperf auto-installer) ([#1762](https://github.com/MustardSeedNetworks/seed/issues/1762)) ([d34e6ce](https://github.com/MustardSeedNetworks/seed/commit/d34e6cecbacb7bafb322d2a699d8a8b9224292b0))
+* **deps:** always-latest toolchain sweep (lockstep with stem) ([#1687](https://github.com/MustardSeedNetworks/seed/issues/1687)) ([60b54c4](https://github.com/MustardSeedNetworks/seed/commit/60b54c415ab2a120a5c39a98b0a2838859086868))
+* **deps:** refresh go module graph ([#1690](https://github.com/MustardSeedNetworks/seed/issues/1690)) ([82144b5](https://github.com/MustardSeedNetworks/seed/commit/82144b5e5c5c479289df6b759aaedb3119509b06))
+* **github:** standardize repo governance ([#1689](https://github.com/MustardSeedNetworks/seed/issues/1689)) ([f409599](https://github.com/MustardSeedNetworks/seed/commit/f40959915e63522e426b5c60236794122085977e))
+* **license:** add license-key-circumvention clause to BUSL Additional Use Grant ([#1735](https://github.com/MustardSeedNetworks/seed/issues/1735)) ([e961114](https://github.com/MustardSeedNetworks/seed/commit/e96111461834308534e4712e5a5b4dd1586e9d23))
+* **main:** release 0.211.0 ([#1698](https://github.com/MustardSeedNetworks/seed/issues/1698)) ([db007d9](https://github.com/MustardSeedNetworks/seed/commit/db007d91703bdb4ca3d92eb9ee5d64bda72154cd))
+* **main:** release 0.212.0 ([#1749](https://github.com/MustardSeedNetworks/seed/issues/1749)) ([cb85fb5](https://github.com/MustardSeedNetworks/seed/commit/cb85fb5305eebc8da4824c8ceae8b5babce3d645))
+* **main:** release 0.212.1 ([#1674](https://github.com/MustardSeedNetworks/seed/issues/1674)) ([33e4388](https://github.com/MustardSeedNetworks/seed/commit/33e4388b4faa927b72e176803f0271576c9fd848))
+* onboard Renovate via shared org preset ([#1750](https://github.com/MustardSeedNetworks/seed/issues/1750)) ([b98dfdc](https://github.com/MustardSeedNetworks/seed/commit/b98dfdcb2a9109a5c80398a78ea7c56c54ddc0fe))
+* **release:** expose release train metadata ([#1693](https://github.com/MustardSeedNetworks/seed/issues/1693)) ([58c79fc](https://github.com/MustardSeedNetworks/seed/commit/58c79fc26b96d19c213afc4773dcf54e65d7212e))
+* **ui:** replace eslint references with biome ([#1695](https://github.com/MustardSeedNetworks/seed/issues/1695)) ([139b5d5](https://github.com/MustardSeedNetworks/seed/commit/139b5d5a552aeda50cc6ec4721736ef7f835d297))
+
 ## [0.212.0](https://github.com/MustardSeedNetworks/seed/compare/v0.211.0...v0.212.0) (2026-07-08)
 
 
