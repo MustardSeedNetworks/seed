@@ -10,6 +10,11 @@ import (
 	"strings"
 )
 
+const (
+	speedMatchCount    = 2
+	megabitsPerGigabit = 1000
+)
+
 // sysfsNetPath is the base path for network interface information in sysfs.
 const sysfsNetPath = "/sys/class/net"
 
@@ -135,14 +140,14 @@ func parseSpeedPlatform(s string) Speed {
 	// Handle ethtool output formats
 	speedRegex := regexp.MustCompile(`(\d+)\s*(mb|gb|mbps|gbps)?`)
 	matches := speedRegex.FindStringSubmatch(s)
-	if len(matches) >= 2 {
+	if len(matches) >= speedMatchCount {
 		speedVal, err := strconv.Atoi(matches[1])
 		if err != nil {
 			return 0
 		}
 		// If Gbps, multiply by 1000
 		if len(matches) >= 3 && (matches[2] == "gb" || matches[2] == "gbps") {
-			return Speed(speedVal * 1000)
+			return Speed(speedVal * megabitsPerGigabit)
 		}
 		return Speed(speedVal)
 	}

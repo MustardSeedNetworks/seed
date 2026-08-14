@@ -169,14 +169,7 @@ func TestSecurityInfo(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			info := wifi.Info{
-				SSID:      "TestNetwork",
-				BSSID:     "00:11:22:33:44:55",
-				Signal:    -50,
-				Channel:   6,
-				Frequency: 2437,
-				Security:  tt.security,
-			}
+			info := wifi.Info{Security: tt.security}
 
 			if info.Security != tt.security {
 				t.Errorf("Security = %q, want %q", info.Security, tt.security)
@@ -200,13 +193,7 @@ func TestSecurityInScannedNetwork(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			network := wifi.ScannedNetwork{
-				SSID:     "TestNetwork",
-				BSSID:    "00:11:22:33:44:55",
-				Signal:   -50,
-				Channel:  6,
-				Security: tt.security,
-			}
+			network := wifi.ScannedNetwork{Security: tt.security}
 
 			if network.Security != tt.security {
 				t.Errorf("Security = %q, want %q", network.Security, tt.security)

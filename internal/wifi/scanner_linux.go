@@ -7,7 +7,6 @@ import (
 	"context"
 	"fmt"
 	"os/exec"
-	"regexp"
 	"strconv"
 	"strings"
 	"time"
@@ -18,6 +17,17 @@ import (
 // wifiCmdTimeout bounds external Wi-Fi tooling (nmcli/iw/ip) to prevent
 // hangs when the wireless stack is in a bad state.
 const wifiCmdTimeout = 30 * time.Second
+
+const (
+	bssidTextLength      = 17
+	nmcliFieldCount      = 7
+	signalPercentMaximum = 100
+	signalDbmRange       = 70
+	signalDbmMinimum     = -100
+	defaultChannelWidth  = 20
+	wideChannelWidth     = 80
+	fiveGHzMinimumMHz    = 5180
+)
 
 // scanPlatform performs a WiFi scan on Linux using nmcli.
 // nmcli doesn't require root privileges unlike iw scan.
@@ -34,7 +44,6 @@ func scanPlatform(iface string) ([]*ScannedNetwork, error) {
 	_ = rescanCmd.Run() // Ignore error, rescan might fail if already scanning
 
 	// Get the list of networks
-	//nolint:gosec // iface is validated by caller
 	cmd := exec.CommandContext(
 		ctx,
 		"nmcli",
@@ -63,7 +72,7 @@ func scanPlatform(iface string) ([]*ScannedNetwork, error) {
 }
 
 // parseNmcliOutput parses nmcli -t output format.
-// Format: BSSID:SSID:MODE:CHAN:FREQ:RATE:SIGNAL:SECURITY
+// Format: BSSID:SSID:MODE:CHAN:FREQ:RATE:SIGNAL:SECURITY.
 func parseNmcliOutput(output string) []*ScannedNetwork {
 	var networks []*ScannedNetwork
 
@@ -76,16 +85,16 @@ func parseNmcliOutput(output string) []*ScannedNetwork {
 
 		// nmcli -t uses : as delimiter, but BSSID also contains colons
 		// BSSID is first 17 chars (XX:XX:XX:XX:XX:XX), then fields are separated by :
-		if len(line) < 17 {
+		if len(line) < bssidTextLength {
 			continue
 		}
 
-		bssid := line[:17]
+		bssid := line[:bssidTextLength]
 		rest := line[18:] // Skip BSSID and its trailing :
 
 		// Split remaining fields
 		parts := strings.Split(rest, ":")
-		if len(parts) < 7 {
+		if len(parts) < nmcliFieldCount {
 			continue
 		}
 
@@ -99,7 +108,7 @@ func parseNmcliOutput(output string) []*ScannedNetwork {
 		security := parts[6]
 
 		// Parse frequency (e.g., "2437 MHz" -> 2437)
-		freq := 0
+		var freq int
 		if idx := strings.Index(freqStr, " "); idx > 0 {
 			freq, _ = strconv.Atoi(freqStr[:idx])
 		} else {
@@ -134,7 +143,7 @@ func parseNmcliOutput(output string) []*ScannedNetwork {
 // Approximate conversion: 100% ≈ -30 dBm, 0% ≈ -100 dBm.
 func percentToDbm(percent int) int {
 	// Linear mapping: 0% = -100 dBm, 100% = -30 dBm
-	return -100 + (percent * 70 / 100)
+	return signalDbmMinimum + (percent * signalDbmRange / signalPercentMaximum)
 }
 
 // mapNmcliSecurity maps nmcli security string to standard security type.
@@ -159,10 +168,10 @@ func mapNmcliSecurity(security string) string {
 
 // guessChannelWidth estimates channel width from frequency.
 func guessChannelWidth(freq int) int {
-	if freq >= 5180 { // 5 GHz typically uses wider channels
-		return 80
+	if freq >= fiveGHzMinimumMHz { // 5 GHz typically uses wider channels
+		return wideChannelWidth
 	}
-	return 20 // 2.4 GHz typically 20 MHz
+	return defaultChannelWidth
 }
 
 // scanWithIW is a fallback scanner using iw command.
@@ -178,7 +187,6 @@ func scanWithIW(iface string) ([]*ScannedNetwork, error) {
 	defer cancel()
 
 	// Try iw scan dump (doesn't trigger new scan, uses cached results)
-	//nolint:gosec // iface is validated by caller
 	cmd := exec.CommandContext(ctx, "iw", "dev", iface, "scan", "dump")
 	output, err := cmd.Output()
 	if err != nil {
@@ -192,168 +200,16 @@ func scanWithIW(iface string) ([]*ScannedNetwork, error) {
 func ensureInterfaceUp(iface string) error {
 	ctx, cancel := context.WithTimeout(context.Background(), wifiCmdTimeout)
 	defer cancel()
-	//nolint:gosec // iface is validated by caller
 	cmd := exec.CommandContext(ctx, "ip", "link", "set", iface, "up")
 	return cmd.Run()
 }
 
 // parseIWScanOutput parses the output of 'iw dev <iface> scan'.
 func parseIWScanOutput(output string) []*ScannedNetwork {
-	var networks []*ScannedNetwork
-	var current *ScannedNetwork
-
-	// Regex patterns for parsing
-	bssRegex := regexp.MustCompile(`^BSS ([0-9a-fA-F:]{17})`)
-	freqRegex := regexp.MustCompile(`freq:\s*(\d+)`)
-	signalRegex := regexp.MustCompile(`signal:\s*(-?\d+(?:\.\d+)?)\s*dBm`)
-	ssidRegex := regexp.MustCompile(`SSID:\s*(.*)`)
-	htRegex := regexp.MustCompile(`\* secondary channel offset: (above|below|no secondary)`)
-	vhtRegex := regexp.MustCompile(`\* channel width: (\d+)\s*\((\d+)\)?\s*MHz`)
-	heRegex := regexp.MustCompile(`HE capabilities`)
-	rsnRegex := regexp.MustCompile(`RSN:`)
-	wpaRegex := regexp.MustCompile(`WPA:`)
-	wepRegex := regexp.MustCompile(`WEP:`)
-
+	state := newIWScanState()
 	scanner := bufio.NewScanner(strings.NewReader(output))
-	inRSN := false
-	inWPA := false
-
 	for scanner.Scan() {
-		line := scanner.Text()
-		trimmed := strings.TrimSpace(line)
-
-		// New BSS entry
-		if matches := bssRegex.FindStringSubmatch(line); matches != nil {
-			// Save previous network
-			if current != nil && current.BSSID != "" {
-				networks = append(networks, current)
-			}
-			current = &ScannedNetwork{
-				BSSID:        strings.ToUpper(matches[1]),
-				LastSeen:     time.Now(),
-				ChannelWidth: 20,  // Default
-				NoiseFloor:   -95, // Default noise floor
-			}
-			inRSN = false
-			inWPA = false
-			continue
-		}
-
-		if current == nil {
-			continue
-		}
-
-		// Parse frequency
-		if matches := freqRegex.FindStringSubmatch(trimmed); matches != nil {
-			freq, _ := strconv.Atoi(matches[1])
-			current.Frequency = freq
-			current.Channel = frequencyToChannel(freq)
-			// Detect DFS channels (5250-5350, 5470-5725 MHz)
-			current.IsDFS = (freq >= 5250 && freq <= 5350) || (freq >= 5470 && freq <= 5725)
-		}
-
-		// Parse signal strength
-		if matches := signalRegex.FindStringSubmatch(trimmed); matches != nil {
-			signal, _ := strconv.ParseFloat(matches[1], 64)
-			current.Signal = int(signal)
-			current.SNR = current.Signal - current.NoiseFloor
-		}
-
-		// Parse SSID
-		if matches := ssidRegex.FindStringSubmatch(trimmed); matches != nil {
-			current.SSID = matches[1]
-		}
-
-		// Parse HT (802.11n) - 40 MHz
-		if htRegex.MatchString(trimmed) {
-			if strings.Contains(trimmed, "above") || strings.Contains(trimmed, "below") {
-				current.ChannelWidth = 40
-				current.HTMode = "HT40"
-			} else {
-				current.HTMode = "HT20"
-			}
-		}
-
-		// Parse VHT (802.11ac) - 80/160 MHz
-		if matches := vhtRegex.FindStringSubmatch(trimmed); matches != nil {
-			width, _ := strconv.Atoi(matches[1])
-			if width > current.ChannelWidth {
-				current.ChannelWidth = width
-			}
-			switch width {
-			case 80:
-				current.HTMode = "VHT80"
-			case 160:
-				current.HTMode = "VHT160"
-			}
-		}
-
-		// Detect HE (802.11ax/WiFi 6)
-		if heRegex.MatchString(trimmed) {
-			if current.HTMode == "" || strings.HasPrefix(current.HTMode, "HT") {
-				current.HTMode = "HE" + strconv.Itoa(current.ChannelWidth)
-			}
-		}
-
-		// Track RSN/WPA sections for security detection
-		if rsnRegex.MatchString(trimmed) {
-			inRSN = true
-			inWPA = false
-		}
-		if wpaRegex.MatchString(trimmed) {
-			inWPA = true
-			inRSN = false
-		}
-
-		// Parse security from RSN/WPA sections
-		if inRSN || inWPA {
-			if strings.Contains(trimmed, "SAE") {
-				current.Security = "WPA3"
-			} else if strings.Contains(trimmed, "PSK") {
-				if current.Security != "WPA3" {
-					if inRSN {
-						current.Security = "WPA2"
-					} else {
-						current.Security = "WPA"
-					}
-				}
-			} else if strings.Contains(trimmed, "802.1X") || strings.Contains(trimmed, "EAP") {
-				current.Security = "WPA2-Enterprise"
-			}
-		}
-
-		// Check for WEP
-		if wepRegex.MatchString(trimmed) {
-			if current.Security == "" {
-				current.Security = "WEP"
-			}
-		}
-
-		// Check for open network (Privacy capability)
-		if strings.Contains(trimmed, "capability:") && !strings.Contains(trimmed, "Privacy") {
-			if current.Security == "" {
-				current.Security = "Open"
-			}
-		}
+		state.consume(scanner.Text())
 	}
-
-	// Don't forget the last network
-	if current != nil && current.BSSID != "" {
-		networks = append(networks, current)
-	}
-
-	// Set default security for networks without detected security
-	for _, n := range networks {
-		if n.Security == "" {
-			n.Security = "Unknown"
-		}
-		// Set HTMode if not detected
-		if n.HTMode == "" {
-			if n.ChannelWidth >= 40 {
-				n.HTMode = fmt.Sprintf("HT%d", n.ChannelWidth)
-			}
-		}
-	}
-
-	return networks
+	return state.result()
 }

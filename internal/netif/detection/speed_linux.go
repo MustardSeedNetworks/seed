@@ -1,11 +1,9 @@
 //go:build linux
 
-// Package detection provides intelligent network interface auto-detection.
-// Linux-specific speed detection module uses sysfs and the safchain/ethtool
-// Go package for interface speed detection, PCI device identification, and driver info.
 package detection
 
 import (
+	"math"
 	"os"
 	"path/filepath"
 	"strconv"
@@ -14,15 +12,19 @@ import (
 	"github.com/safchain/ethtool"
 )
 
+const bitsPerMegabit = 1_000_000
+
+const ethtoolUnknownSpeed = 0xFFFFFFFF
+
 // getInterfaceSpeed returns the interface speed in bits per second.
 func getInterfaceSpeed(name string) int64 {
 	// Try sysfs first (most reliable)
 	speedPath := filepath.Join("/sys/class/net", name, "speed")
-	if data, err := os.ReadFile(speedPath); err == nil {
+	if data, readErr := os.ReadFile(speedPath); readErr == nil {
 		speedStr := strings.TrimSpace(string(data))
-		if speed, err := strconv.ParseInt(speedStr, 10, 64); err == nil && speed > 0 {
+		if speed, parseErr := strconv.ParseInt(speedStr, 10, 64); parseErr == nil && speed > 0 {
 			// sysfs reports speed in Mb/s, convert to bits per second
-			return speed * 1_000_000
+			return speed * bitsPerMegabit
 		}
 	}
 
@@ -38,8 +40,9 @@ func getInterfaceSpeed(name string) int64 {
 		return 0
 	}
 
-	if speed, ok := cmd["speed"]; ok && speed > 0 && speed != 0xFFFFFFFF {
-		return int64(speed) * 1_000_000
+	if speed, ok := cmd["speed"]; ok && speed > 0 &&
+		speed != ethtoolUnknownSpeed && speed <= math.MaxInt64/bitsPerMegabit {
+		return int64(speed) * bitsPerMegabit
 	}
 
 	return 0
@@ -81,14 +84,14 @@ func (db *ChipsetDatabase) identifyByPlatformUncached(name string) *ChipsetInfo 
 	e, err := ethtool.NewEthtool()
 	if err == nil {
 		defer e.Close()
-		if info, err := e.DriverInfo(name); err == nil {
+		if info, infoErr := e.DriverInfo(name); infoErr == nil {
 			return db.IdentifyByKeyword(info.Driver)
 		}
 	}
 
 	// Fallback to sysfs driver symlink
 	driverPath := filepath.Join(devicePath, "driver")
-	if target, err := os.Readlink(driverPath); err == nil {
+	if target, linkErr := os.Readlink(driverPath); linkErr == nil {
 		driverName := filepath.Base(target)
 		return db.IdentifyByKeyword(driverName)
 	}
