@@ -165,7 +165,9 @@ jobs:
         uses: golangci/golangci-lint-action@82606bf257cbaff209d206a39f5134f0cfbfd2ee # v9.2.1
         with:
           version: v2.12.2
-          args: --timeout=5m --new-from-rev=HEAD~1
+          # Full-tree lint verified clean on 2026-08-14. Keep CI aligned with
+          # the repository-wide zero-warning policy.
+          args: --timeout=5m
 
       - name: Run go vet
         run: go vet ./...
