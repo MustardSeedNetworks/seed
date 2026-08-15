@@ -78,15 +78,25 @@ failure that check exists to catch.
   in `ci.yml` that `yaml.safe_load` accepts silently by keeping the last one.
   `SC2129` is ignored as a pure style preference; every correctness rule stays on.
 - **zizmor** (pinned 1.29.0) — Actions security scanner. **Blocks on High
-  findings.** The repo sits at zero High. Two findings survived review and carry
-  `# zizmor: ignore[...]` comments with the reasoning inline; anything else that
-  reaches High fails the build. Low/Informational are reported but not enforced.
+  findings.** The repo sits at zero High. One finding survived review and carries
+  a `# zizmor: ignore[...]` comment with the reasoning inline (in
+  `release-please.yml`); anything else that reaches High fails the build.
+  Low/Informational are reported but not enforced.
 
 Permissions follow least privilege: workflows declare `permissions: {}` (or
 `contents: read`) at the top level and grant scopes per job. A new job that needs
 a write scope declares it on the job, never workflow-wide. `release.yml`
 deliberately runs without npm caching, because its output is published and
-attested and a restored cache entry could land inside a signed artifact.
+attested and a restored cache entry could land inside a signed artifact; it opts
+out by passing `cache: ""` to the `setup-node` composite action.
+
+## The Node.js pin lives in one file
+
+Every workflow that needs Node uses `./.github/actions/setup-node`; none pin a
+`node-version:` literal. The composite is the single place the Node and npm
+versions are declared, and it must stay in step with `.nvmrc` and the `engines` /
+`packageManager` fields in `package.json`. Release and CI therefore build on the
+same Node version by construction rather than by convention.
 
 ## CI Must Pass Before Merge
 

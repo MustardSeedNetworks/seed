@@ -56,18 +56,31 @@ assert_rejected \
   "workflow-extra-permission" \
   $'permissions:\n  contents: read' \
   $'permissions:\n  contents: read\n  id-token: write'
-# Derived from the workflow, never hardcoded: pinning the SHA here meant every
-# setup-node bump in release.yml left this fixture pointing at a ref that no
-# longer existed, failing the self-test for a dependency update.
-setup_node_ref=$(grep -oE 'actions/setup-node@[0-9a-f]{40}' "$source_workflow" | sort -u)
+# setup-node moved into the local composite so release.yml and ci.yml cannot
+# drift apart on the Node pin. The contract still has to reach it there, so
+# this stages a mutated copy of the composite and checks the checker follows
+# the `uses: ./...` ref into it instead of skipping local actions.
+composite_dir=".github/actions/setup-node"
+setup_node_ref=$(grep -oE 'actions/setup-node@[0-9a-f]{40}' "$composite_dir/action.yml" | sort -u)
 if [ "$(printf '%s\n' "$setup_node_ref" | grep -c .)" -ne 1 ]; then
-  echo "expected exactly one SHA-pinned actions/setup-node ref in $source_workflow" >&2
+  echo "expected exactly one SHA-pinned actions/setup-node ref in $composite_dir/action.yml" >&2
   exit 1
 fi
-assert_rejected \
-  "mutable-setup-node-action" \
-  "$setup_node_ref" \
-  'actions/setup-node@v6'
+
+fixture_root="$fixture_dir/root"
+mkdir -p "$fixture_root/$composite_dir"
+sed "s|$setup_node_ref|actions/setup-node@v6|" \
+  "$composite_dir/action.yml" >"$fixture_root/$composite_dir/action.yml"
+if RELEASE_REPO_ROOT="$fixture_root" "$checker" >/dev/null 2>&1; then
+  echo "release workflow contract accepted mutation: mutable-setup-node-action" >&2
+  exit 1
+fi
+
+# A composite that does not exist must fail loudly rather than pass vacuously.
+if RELEASE_REPO_ROOT="$fixture_dir/empty" "$checker" >/dev/null 2>&1; then
+  echo "release workflow contract accepted a missing composite" >&2
+  exit 1
+fi
 assert_rejected \
   "new-mutable-action" \
   $'    steps:\n      - name: Install build dependencies' \

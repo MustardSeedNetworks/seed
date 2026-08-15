@@ -4,6 +4,10 @@
 set -euo pipefail
 
 workflow="${RELEASE_WORKFLOW_PATH:-.github/workflows/release.yml}"
+# Local composite refs (`uses: ./.github/actions/...`) resolve against the repo
+# root, not the workflow's directory. Overridable so the self-test can stage a
+# mutated composite without touching the tree.
+repo_root="${RELEASE_REPO_ROOT:-.}"
 
 require() {
   local pattern="$1"
@@ -13,20 +17,32 @@ require() {
   fi
 }
 
+# Every external action reachable from the release path must be SHA-pinned.
+# Local composites are followed rather than skipped: the Node/npm pin lives in
+# .github/actions/setup-node, so skipping them would leave the actions it calls
+# unchecked on the path that produces signed, attested artifacts.
 validate_action_pins() {
+  local file="$1"
   local line
   local ref
+  local composite
 
   while IFS= read -r line; do
     ref=$(awk '{ for (i = 1; i <= NF; i++) if ($i == "uses:") { print $(i + 1); exit } }' <<<"$line")
     if [[ "$ref" == ./* ]]; then
+      composite="$repo_root/${ref#./}/action.yml"
+      if [[ ! -f "$composite" ]]; then
+        echo "release workflow contract references a missing composite: $ref" >&2
+        exit 1
+      fi
+      validate_action_pins "$composite"
       continue
     fi
     if [[ ! "$ref" =~ ^[^@[:space:]]+@[0-9a-f]{40}$ ]]; then
       echo "release workflow contract has mutable action reference: $line" >&2
       exit 1
     fi
-  done < <(grep -E '^[[:space:]]*(-[[:space:]]+)?uses:' "$workflow")
+  done < <(grep -E '^[[:space:]]*(-[[:space:]]+)?uses:' "$file")
 }
 
 require "if: \${{ !inputs.provenance_only }}"
@@ -44,7 +60,7 @@ require "trap 'rm -rf \"\$syft_dir\"' EXIT"
 require "cosign_dir=\$(mktemp -d)"
 require "trap 'rm -rf \"\$cosign_dir\"' EXIT"
 
-validate_action_pins
+validate_action_pins "$workflow"
 
 if grep -Fq '/releases/latest' "$workflow"; then
   echo "release workflow contract contains a mutable latest-release lookup" >&2

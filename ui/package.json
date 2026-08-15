@@ -5,8 +5,8 @@
   "type": "module",
   "description": "The Seed WebUI - Network Diagnostics - Mustard Seed Networks",
   "engines": {
-    "node": "26.3.0",
-    "npm": "11.17.0"
+    "node": "26.7.0",
+    "npm": "12.0.2"
   },
   "scripts": {
     "dev": "node --disable-warning=DEP0205 ./node_modules/vite/bin/vite.js",
@@ -89,5 +89,5 @@
     "js-yaml": "4.3.1",
     "nanoid": "3.3.18"
   },
-  "packageManager": "npm@11.17.0"
+  "packageManager": "npm@12.0.2"
 }

@@ -4,11 +4,21 @@ inputs:
   node-version:
     description: 'Node.js version'
     required: false
-    default: '26.3.0'
+    default: '26.7.0'
   working-directory:
     description: 'Working directory for npm'
     required: false
     default: 'ui'
+  npm-version:
+    description: 'npm version'
+    required: false
+    default: '12.0.2'
+  cache:
+    description: >-
+      Package manager to cache, or '' to disable caching entirely. Release
+      jobs pass '' so a poisoned cache entry cannot reach a signed artifact.
+    required: false
+    default: 'npm'
 runs:
   using: composite
   steps:
@@ -16,5 +26,15 @@ runs:
       uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
       with:
         node-version: ${{ inputs.node-version }}
-        cache: npm
+        cache: ${{ inputs.cache }}
         cache-dependency-path: ${{ inputs.working-directory }}/package-lock.json
+        # An empty `cache` alone is not enough: setup-node falls through to
+        # auto-caching whenever package.json has a `packageManager` field,
+        # which ours does. This turns that fallback off too.
+        package-manager-cache: ${{ inputs.cache != '' }}
+
+    - name: Set up npm
+      shell: bash
+      env:
+        NPM_VERSION: ${{ inputs.npm-version }}
+      run: npm install -g "npm@${NPM_VERSION}"
