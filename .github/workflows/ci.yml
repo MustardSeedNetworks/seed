@@ -1077,10 +1077,27 @@ jobs:
       - name: Build backend
         run: make --no-print-directory build-backend-quiet
 
+      - name: Cache Playwright browsers
+        id: playwright-cache
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ~/.cache/ms-playwright
+          key: ${{ runner.os }}-playwright-${{ hashFiles('ui/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-playwright-
+
+      - name: Install Playwright OS dependencies
+        working-directory: ui
+        # apt packages only, not cacheable — runs unconditionally regardless of
+        # whether the browser binaries were restored from the cache above.
+        run: npx playwright install-deps
+
       - name: Install Playwright browsers
+        if: steps.playwright-cache.outputs.cache-hit != 'true'
         working-directory: ui
         # Per E2E_CONVENTIONS: chromium (Chrome+Edge) and webkit (Safari).
-        run: npx playwright install --with-deps chromium webkit
+        # --with-deps omitted — OS deps are installed unconditionally above.
+        run: npx playwright install chromium webkit
 
       - name: Run Playwright E2E tests (full suite minus smoke)
         env:
@@ -1153,10 +1170,27 @@ jobs:
       - name: Build backend
         run: make --no-print-directory build-backend-quiet
 
+      - name: Cache Playwright browsers
+        id: playwright-cache
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ~/.cache/ms-playwright
+          key: ${{ runner.os }}-playwright-${{ hashFiles('ui/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-playwright-
+
+      - name: Install Playwright OS dependencies
+        working-directory: ui
+        # apt packages only, not cacheable — runs unconditionally regardless of
+        # whether the browser binaries were restored from the cache above.
+        run: npx playwright install-deps
+
       - name: Install Playwright browsers
+        if: steps.playwright-cache.outputs.cache-hit != 'true'
         working-directory: ui
         # Per E2E_CONVENTIONS: chromium (Chrome+Edge) and webkit (Safari).
-        run: npx playwright install --with-deps chromium webkit
+        # --with-deps omitted — OS deps are installed unconditionally above.
+        run: npx playwright install chromium webkit
 
       - name: Run Playwright @smoke tests
         env:
