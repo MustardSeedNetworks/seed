@@ -17,7 +17,7 @@ without adding it to `ci-complete`'s `needs:` list makes that job advisory.
 | `build-ui`      | Shared frontend build    | Builds `internal/api/ui/` once and uploads it as an artifact           |
 | `backend`       | Go checks                | lint, vet, staticcheck, fmt, tests, coverage floor (50%)               |
 | `race`          | Go race detector         | `go test -race`, split from `backend` so it fails distinctly           |
-| `frontend`      | React/TS checks          | tsgo typecheck, Biome, design-token gate, Vitest, lockfile integrity   |
+| `frontend`      | React/TS checks          | tsc typecheck, Biome, design-token gate, Vitest, lockfile integrity    |
 | `storybook`     | Component tests          | Storybook interactions and axe accessibility                           |
 | `security`      | Security scans           | govulncheck (hard gate), gosec, npm audit, gitleaks, Trivy             |
 | `semgrep`       | SAST                     | Semgrep rules                                                          |
@@ -90,6 +90,19 @@ deliberately runs without npm caching, because its output is published and
 attested and a restored cache entry could land inside a signed artifact; it opts
 out by passing `cache: ""` to the `setup-node` composite action.
 
+## Disabled lint rule: `nursery/useAwaitThenable`
+
+Off in `ui/biome.json` since Biome 2.5.8. That release made overload selection
+type-aware, and Biome now picks React's `act(callback: () => VoidOrUndefinedOnly):
+void` overload for `await act(async () => ...)`, reporting 16 awaits as awaiting a
+non-thenable. TypeScript picks the `Promise<T>` overload instead, because
+`VoidOrUndefinedOnly` is branded to reject Promise returns under `strictNullChecks`
+(see the NOTES comment above `act` in `@types/react`). Verified with a type probe:
+`const p: number = act(async () => {})` reports `Type 'Promise<void>' is not
+assignable to type 'number'`. The awaits are correct, so the rule is off rather
+than the tests rewritten. Re-enable when Biome models the brand. stem and niac-go
+keep it at `error` — neither uses `await act(`.
+
 ## The Node.js pin lives in one file
 
 Every workflow that needs Node uses `./.github/actions/setup-node`; none pin a
@@ -129,7 +142,7 @@ make security-backend  # gosec + govulncheck
 ### Frontend
 
 ```bash
-make lint-frontend     # Biome + tsgo
+make lint-frontend     # Biome + tsc
 make test-frontend     # Vitest
 make build-frontend    # Vite build into internal/api/ui/
 cd ui && npm run test:storybook
