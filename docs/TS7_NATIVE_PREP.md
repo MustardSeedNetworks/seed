@@ -30,7 +30,7 @@ Same `tsc --noEmit -p tsconfig.json` across all 3 UI repos, on the same M2 MacBo
 warm cache, with biome and prettier idle:
 
 | Repo | files (rough) | `tsc` (JS) | `tsgo` (native) | speedup |
-|------|---|------------|-----------------|---------|
+| ---- | --- | ---------- | --------------- | ------- |
 | niac | ~230 | 0.30s | 0.44s | ~equal (codebase too small to amortize the Go startup) |
 | stem | ~620 | 2.58s | 0.76s | **3.4×** |
 | seed | ~1700 | 14.40s | 2.37s | **6.1×** |
@@ -56,9 +56,11 @@ When `npm view @typescript/native-preview dist-tags` lists `rc` or `next`:
 - Add `@typescript/native-preview@<rc-version>` to seed's devDependencies (exact
   pin per dependency policy).
 - Add a `typecheck:fast` script to `ui/package.json`:
+
   ```json
   "typecheck:fast": "tsgo --noEmit -p tsconfig.json"
   ```
+
 - Leave the existing `typecheck` (`tsc --noEmit`) untouched; CI keeps using it as
   the source of truth.
 - Devs opt in for the dev loop via `npm run typecheck:fast`.
