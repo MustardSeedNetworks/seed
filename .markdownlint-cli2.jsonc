@@ -1,6 +1,10 @@
 {
-  // Globs to lint
-  "globs": ["**/*.md"],
+  // No "globs" here on purpose. markdownlint-cli2 UNIONS a "globs" property
+  // with any globs passed on the command line — it does not replace them. With
+  // "globs": ["**/*.md"] set, ci.yml's changed-files-only markdown gate silently
+  // linted the whole tree and failed on pre-existing debt in files the PR never
+  // touched. Callers pass their own scope instead: `make lint-md` passes
+  // "**/*.md" for the full tree, CI passes just the changed files.
 
   // Globs to ignore
   "ignores": [
