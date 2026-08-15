@@ -48,26 +48,26 @@ jobs:
         run: |
           go install honnef.co/go/tools/cmd/staticcheck@latest
 
-          echo "### Go Dead Code Analysis" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Go Dead Code Analysis" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
 
           # Run staticcheck and capture unused code warnings
           staticcheck -checks="U*" ./... 2>&1 | tee staticcheck-unused.txt || true
 
           UNUSED_COUNT=$(wc -l < staticcheck-unused.txt | tr -d ' ')
-          echo "Found $UNUSED_COUNT potential unused code items" >> $GITHUB_STEP_SUMMARY
+          echo "Found $UNUSED_COUNT potential unused code items" >> "$GITHUB_STEP_SUMMARY"
 
           if [ "$UNUSED_COUNT" -gt 0 ]; then
-            echo "" >> $GITHUB_STEP_SUMMARY
-            echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
-            cat staticcheck-unused.txt >> $GITHUB_STEP_SUMMARY
-            echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+            echo "" >> "$GITHUB_STEP_SUMMARY"
+            echo "\`\`\`" >> "$GITHUB_STEP_SUMMARY"
+            cat staticcheck-unused.txt >> "$GITHUB_STEP_SUMMARY"
+            echo "\`\`\`" >> "$GITHUB_STEP_SUMMARY"
           fi
 
       - name: Check for unused dependencies
         run: |
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "### Unused Go Dependencies" >> $GITHUB_STEP_SUMMARY
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "### Unused Go Dependencies" >> "$GITHUB_STEP_SUMMARY"
 
           # Check if go mod tidy would change anything
           cp go.mod go.mod.backup
@@ -76,10 +76,10 @@ jobs:
           go mod tidy
 
           if ! diff -q go.mod go.mod.backup > /dev/null 2>&1; then
-            echo "go.mod has unused dependencies:" >> $GITHUB_STEP_SUMMARY
-            diff go.mod.backup go.mod >> $GITHUB_STEP_SUMMARY || true
+            echo "go.mod has unused dependencies:" >> "$GITHUB_STEP_SUMMARY"
+            diff go.mod.backup go.mod >> "$GITHUB_STEP_SUMMARY" || true
           else
-            echo "No unused dependencies found" >> $GITHUB_STEP_SUMMARY
+            echo "No unused dependencies found" >> "$GITHUB_STEP_SUMMARY"
           fi
 
           # Restore original files
@@ -110,27 +110,27 @@ jobs:
       - name: Check for unused exports
         working-directory: ui
         run: |
-          echo "### Frontend Dead Code Analysis" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Frontend Dead Code Analysis" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
 
           # Run ts-prune to find unused exports
           ts-prune --error 2>&1 | tee ts-prune-output.txt || true
 
           UNUSED_COUNT=$(grep -c "unused" ts-prune-output.txt || echo "0")
-          echo "Found $UNUSED_COUNT potentially unused exports" >> $GITHUB_STEP_SUMMARY
+          echo "Found $UNUSED_COUNT potentially unused exports" >> "$GITHUB_STEP_SUMMARY"
 
           if [ "$UNUSED_COUNT" -gt 0 ]; then
-            echo "" >> $GITHUB_STEP_SUMMARY
-            echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
-            head -50 ts-prune-output.txt >> $GITHUB_STEP_SUMMARY
-            echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+            echo "" >> "$GITHUB_STEP_SUMMARY"
+            echo "\`\`\`" >> "$GITHUB_STEP_SUMMARY"
+            head -50 ts-prune-output.txt >> "$GITHUB_STEP_SUMMARY"
+            echo "\`\`\`" >> "$GITHUB_STEP_SUMMARY"
           fi
 
       - name: Check for unused npm dependencies
         working-directory: ui
         run: |
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "### Unused npm Dependencies" >> $GITHUB_STEP_SUMMARY
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "### Unused npm Dependencies" >> "$GITHUB_STEP_SUMMARY"
 
           npx depcheck --json 2>/dev/null | tee depcheck-output.json || true
 
@@ -139,12 +139,12 @@ jobs:
           DEV_UNUSED=$(jq -r '.devDependencies[]' depcheck-output.json 2>/dev/null | wc -l || echo "0")
 
           if [ "$UNUSED" -gt 0 ] || [ "$DEV_UNUSED" -gt 0 ]; then
-            echo "Potentially unused dependencies:" >> $GITHUB_STEP_SUMMARY
-            echo "\`\`\`json" >> $GITHUB_STEP_SUMMARY
-            cat depcheck-output.json >> $GITHUB_STEP_SUMMARY
-            echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+            echo "Potentially unused dependencies:" >> "$GITHUB_STEP_SUMMARY"
+            echo "\`\`\`json" >> "$GITHUB_STEP_SUMMARY"
+            cat depcheck-output.json >> "$GITHUB_STEP_SUMMARY"
+            echo "\`\`\`" >> "$GITHUB_STEP_SUMMARY"
           else
-            echo "No unused dependencies detected" >> $GITHUB_STEP_SUMMARY
+            echo "No unused dependencies detected" >> "$GITHUB_STEP_SUMMARY"
           fi
 
   orphaned-files:
@@ -156,12 +156,12 @@ jobs:
 
       - name: Check for orphaned files
         run: |
-          echo "### Orphaned File Analysis" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Orphaned File Analysis" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
 
           # Find Go files not imported anywhere
-          echo "#### Go Files" >> $GITHUB_STEP_SUMMARY
-          for file in $(find . -name "*.go" -not -path "./vendor/*" -not -name "*_test.go"); do
+          echo "#### Go Files" >> "$GITHUB_STEP_SUMMARY"
+          while IFS= read -r -d '' file; do
             pkg=$(dirname "$file" | sed 's|^\./||')
             # Check if package is imported
             if ! grep -r "\"github.com/MustardSeedNetworks/seed/$pkg\"" --include="*.go" . > /dev/null 2>&1; then
@@ -169,20 +169,20 @@ jobs:
               if grep -q "^package main" "$file"; then
                 continue  # Main packages don't need to be imported
               fi
-              echo "- Potentially orphaned: $file" >> $GITHUB_STEP_SUMMARY
+              echo "- Potentially orphaned: $file" >> "$GITHUB_STEP_SUMMARY"
             fi
-          done || echo "All Go packages appear to be used" >> $GITHUB_STEP_SUMMARY
+          done < <(find . -name "*.go" -not -path "./vendor/*" -not -name "*_test.go" -print0) || echo "All Go packages appear to be used" >> "$GITHUB_STEP_SUMMARY"
 
           # Find TypeScript files not imported anywhere
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "#### TypeScript Files" >> $GITHUB_STEP_SUMMARY
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "#### TypeScript Files" >> "$GITHUB_STEP_SUMMARY"
           cd ui/src
-          for file in $(find . -name "*.tsx" -o -name "*.ts" | grep -v ".test." | grep -v ".stories." | grep -v ".d.ts"); do
+          while IFS= read -r file; do
             basename=$(basename "$file" | sed 's/\.[^.]*$//')
             # Check if file is imported
-            if ! grep -r "from.*['\"].*$basename['\"]" --include="*.ts" --include="*.tsx" . > /dev/null 2>&1; then
-              if ! grep -r "import.*$basename" --include="*.ts" --include="*.tsx" . > /dev/null 2>&1; then
-                echo "- Potentially orphaned: $file" >> $GITHUB_STEP_SUMMARY
+            if ! grep -r "from.*['\"].*${basename}['\"]" --include="*.ts" --include="*.tsx" . > /dev/null 2>&1; then
+              if ! grep -r "import.*${basename}" --include="*.ts" --include="*.tsx" . > /dev/null 2>&1; then
+                echo "- Potentially orphaned: $file" >> "$GITHUB_STEP_SUMMARY"
               fi
             fi
-          done || echo "All TypeScript files appear to be used" >> $GITHUB_STEP_SUMMARY
+          done < <(find . \( -name "*.tsx" -o -name "*.ts" \) | grep -v ".test." | grep -v ".stories." | grep -v ".d.ts") || echo "All TypeScript files appear to be used" >> "$GITHUB_STEP_SUMMARY"

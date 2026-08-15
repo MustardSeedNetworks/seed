@@ -639,10 +639,10 @@ jobs:
         id: check-c
         run: |
           if find . -name '*.c' -o -name '*.h' 2>/dev/null | grep -v node_modules | grep -q .; then
-            echo "has_c=true" >> $GITHUB_OUTPUT
+            echo "has_c=true" >> "$GITHUB_OUTPUT"
             echo "Found C source files"
           else
-            echo "has_c=false" >> $GITHUB_OUTPUT
+            echo "has_c=false" >> "$GITHUB_OUTPUT"
             echo "No C source files found - C23 linting ready for when C code is added"
           fi
 
@@ -703,6 +703,42 @@ jobs:
           if [ -s cppcheck.log ]; then
             echo "::warning::cppcheck found issues"
           fi
+
+  # ===========================================================================
+  # Workflow Linting
+  # ===========================================================================
+  # Static analysis of the workflows themselves. Kept out of `quality` so it
+  # runs in parallel and only when workflow files actually change.
+  #   actionlint — syntax, expression and shell errors inside run: blocks. It
+  #                caught a duplicated `with:` key in this very file that
+  #                PyYAML accepts silently by keeping the last occurrence.
+  #
+  # zizmor (Actions security scanner) is NOT wired in yet: it currently reports
+  # 76-88 findings per repo, 10-13 of them high (pull_request_target triggers,
+  # workflow-level write permissions, release-please App-token use). Those need
+  # real review — narrowing them carelessly breaks release automation — so they
+  # are tracked as their own security pass rather than bolted on here as a
+  # continue-on-error step that would enforce nothing.
+  workflow-lint:
+    name: Workflow Lint (actionlint)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    needs: changes
+    if: needs.changes.outputs.workflows == 'true'
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Set up Go
+        uses: ./.github/actions/setup-go
+
+      - name: Run actionlint
+        run: |
+          go install github.com/rhysd/actionlint/cmd/actionlint@v1.7.12
+          # SC2129 is a pure style preference about grouping `>>` redirects in
+          # step summaries; the ungrouped form stays readable and diffs one
+          # line at a time. Every correctness-level rule stays enabled.
+          actionlint -ignore 'SC2129' -color
+
 
   # ===========================================================================
   # Internationalization (i18n) Checks
@@ -783,11 +819,6 @@ jobs:
         uses: DavidAnson/markdownlint-cli2-action@21c1be1b93ad9ed58fa840aacc3f279cde2a72ff # v24.2.0
         with:
           globs: ${{ steps.changed-md.outputs.files }}
-        with:
-          globs: |
-            **/*.md
-            !**/node_modules/**
-            !**/dist/**
 
       - name: Validate wiki navigation
         run: |
@@ -954,7 +985,7 @@ jobs:
         # violation. Static check is cheaper + more reliable than
         # starting the server with TLS+DB in CI.
         run: |
-          if [ -z "$(ls -A internal/api/ui/ 2>/dev/null | grep -v '^\.gitkeep$')" ]; then
+          if [ -z "$(find internal/api/ui -mindepth 1 ! -name '.gitkeep' -print -quit 2>/dev/null)" ]; then
             echo "::error::internal/api/ui is empty — frontend-dist artifact missing?"
             exit 1
           fi
@@ -1254,6 +1285,7 @@ jobs:
     needs:
       - changes
       - build-ui
+      - workflow-lint
       - backend
       - race
       - frontend
