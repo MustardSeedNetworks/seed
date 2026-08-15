@@ -5,8 +5,8 @@
   "description": "The Seed - Network Diagnostics - Mustard Seed Networks",
   "type": "module",
   "engines": {
-    "node": "26.3.0",
-    "npm": "11.17.0"
+    "node": "26.7.0",
+    "npm": "12.0.2"
   },
   "scripts": {
     "prepare": "husky",
@@ -43,5 +43,5 @@
     "fast-uri": "3.1.5",
     "js-yaml": "4.3.1"
   },
-  "packageManager": "npm@11.17.0"
+  "packageManager": "npm@12.0.2"
 }
