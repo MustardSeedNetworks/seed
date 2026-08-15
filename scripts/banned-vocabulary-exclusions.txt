@@ -33,3 +33,4 @@ ui/package-lock.json | generated dependency lockfile
 mk/test.mk | developer test package filters
 ui/vite.config.ts | developer-tool path rules
 ui/vitest.config.ts | developer-tool path rules
+scripts/banned-vocabulary-exclusions.txt | policy exclusion list; its reasons must name the terms

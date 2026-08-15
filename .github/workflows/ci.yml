@@ -212,7 +212,7 @@ jobs:
           # Minimum coverage threshold. Acts as an anti-regression floor.
           # Actual coverage is 54.0%, so the old floor of 42 left a 12pp hole a
           # regression could fall through unnoticed. 50 is the fleet minimum
-          # (CLAUDE.md) and matches stem and niac.
+          # and matches stem and niac.
           # Ratchet plan (see #959):
           #   2026-Q3: 50 (current — fleet minimum)
           #   2027-Q2: 60
