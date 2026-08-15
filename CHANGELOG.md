@@ -5,6 +5,33 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.212.4](https://github.com/MustardSeedNetworks/seed/compare/v0.212.3...v0.212.4) (2026-08-15)
+
+
+### Bug Fixes
+
+* **ci:** exempt bot PRs from the required PR-body check ([#1847](https://github.com/MustardSeedNetworks/seed/issues/1847)) ([f6e2b1e](https://github.com/MustardSeedNetworks/seed/commit/f6e2b1e570271662f7b89f8c28aaefaf8fc7a6cf))
+* **deps:** update dependency immer to v11.1.16 ([#1842](https://github.com/MustardSeedNetworks/seed/issues/1842)) ([1121303](https://github.com/MustardSeedNetworks/seed/commit/1121303fe07852eb472871bb24043d0d3bcd1bf6))
+* **deps:** update go dependencies ([#1845](https://github.com/MustardSeedNetworks/seed/issues/1845)) ([926e9ae](https://github.com/MustardSeedNetworks/seed/commit/926e9aee194bd20f08fcf7a2b23780f2ca5aac52))
+* **release:** stop requesting an App permission that is not granted ([#1866](https://github.com/MustardSeedNetworks/seed/issues/1866)) ([5f01cbb](https://github.com/MustardSeedNetworks/seed/commit/5f01cbb5456f6048ff6655321d8cb9e910694a50))
+
+
+### Continuous Integration
+
+* cache Playwright browsers and refresh CI.md ([#1834](https://github.com/MustardSeedNetworks/seed/issues/1834)) ([adc54a5](https://github.com/MustardSeedNetworks/seed/commit/adc54a5dd0b75d9f21e75d442742f825724ffd45))
+* pin Node via the setup-node composite everywhere ([#1836](https://github.com/MustardSeedNetworks/seed/issues/1836)) ([8b6ad41](https://github.com/MustardSeedNetworks/seed/commit/8b6ad41aba5502a9fcf62846ad7b48463cb80c75))
+* scope workflow permissions to jobs and gate on zizmor ([#1833](https://github.com/MustardSeedNetworks/seed/issues/1833)) ([1d9abe3](https://github.com/MustardSeedNetworks/seed/commit/1d9abe343240bc5d3319e190f1ecdc6673b1dccb))
+
+
+### Miscellaneous
+
+* **deps:** lock file maintenance ([#1861](https://github.com/MustardSeedNetworks/seed/issues/1861)) ([07a09e0](https://github.com/MustardSeedNetworks/seed/commit/07a09e03876250205d941d64f5fe2e644948630d))
+* **deps:** lock file maintenance ([#1869](https://github.com/MustardSeedNetworks/seed/issues/1869)) ([4fc7e3e](https://github.com/MustardSeedNetworks/seed/commit/4fc7e3e14eb28edf2013da793e1cb900e9fbdc3c))
+* **deps:** take remaining dependencies to latest ([#1864](https://github.com/MustardSeedNetworks/seed/issues/1864)) ([4a99249](https://github.com/MustardSeedNetworks/seed/commit/4a99249e84f5b0c08607369012c5fb7feb73f007))
+* **deps:** take the frontend toolchain to latest and adopt TypeScript 7 ([#1852](https://github.com/MustardSeedNetworks/seed/issues/1852)) ([2928ca2](https://github.com/MustardSeedNetworks/seed/commit/2928ca2326eef0edfd9747b2884c14ff1edcef26))
+* **deps:** update commitlint monorepo ([#1846](https://github.com/MustardSeedNetworks/seed/issues/1846)) ([2620f7a](https://github.com/MustardSeedNetworks/seed/commit/2620f7a6a56625a9e266515f533ed0f6b3fe181e))
+* **deps:** update dependency lint-staged to v17.3.0 ([#1853](https://github.com/MustardSeedNetworks/seed/issues/1853)) ([55a9083](https://github.com/MustardSeedNetworks/seed/commit/55a90837a2d33d40cf1d3899657d8133aad7bf82))
+
 ## [0.212.3](https://github.com/MustardSeedNetworks/seed/compare/v0.212.2...v0.212.3) (2026-08-15)
 
 
