@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.212.5](https://github.com/MustardSeedNetworks/seed/compare/v0.212.4...v0.212.5) (2026-08-15)
+
+
+### Miscellaneous
+
+* **deps:** take codeql-action to v4.37.7 ([#1873](https://github.com/MustardSeedNetworks/seed/issues/1873)) ([178f9e5](https://github.com/MustardSeedNetworks/seed/commit/178f9e557787618370c6e0d4c1a6b88be29c06f0))
+
 ## [0.212.4](https://github.com/MustardSeedNetworks/seed/compare/v0.212.3...v0.212.4) (2026-08-15)
 
 
