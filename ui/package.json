@@ -72,7 +72,7 @@
     "@vitest/browser-playwright": "4.1.10",
     "@vitest/coverage-v8": "4.1.10",
     "axe-core": "4.12.1",
-    "jscodeshift": "17.3.0",
+    "jscodeshift": "17.4.0",
     "jsdom": "29.1.1",
     "json-schema-to-typescript": "15.0.4",
     "playwright": "1.61.0",
