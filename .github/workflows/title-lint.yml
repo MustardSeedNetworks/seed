@@ -3,18 +3,22 @@ name: Title Lint
 on:
   issues:
     types: [opened, edited]
-  pull_request_target:
+  # pull_request, not pull_request_target: this job only reads the PR title
+  # and sets a check conclusion, so the fork-PR read-only token is sufficient.
+  # pull_request_target would hand a write-capable token to a workflow that
+  # never needs one. (zizmor dangerous-triggers)
+  pull_request:
     types: [opened, edited, synchronize, reopened, ready_for_review]
 
-permissions:
-  issues: write
-  pull-requests: read
+permissions: {}
 
 jobs:
   lint-pr-title:
     name: Lint PR Title
     runs-on: ubuntu-latest
-    if: github.event_name == 'pull_request_target'
+    if: github.event_name == 'pull_request'
+    permissions:
+      pull-requests: read
     steps:
       - name: Validate PR title
         uses: amannn/action-semantic-pull-request@48f256284bd46cdaab1048c3721360e808335d50 # v6.1.1
@@ -42,6 +46,8 @@ jobs:
     name: Lint Issue Title
     runs-on: ubuntu-latest
     if: github.event_name == 'issues'
+    permissions:
+      issues: write
     steps:
       - name: Check issue title
         uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
