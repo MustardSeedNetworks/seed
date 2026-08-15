@@ -34,7 +34,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
       - name: Scan for TODO comments
         id: todos
@@ -65,28 +65,28 @@ jobs:
           # Count TODOs
           TODO_COUNT=$(wc -l < "$TODOS_FILE" | tr -d ' ')
           echo "Found $TODO_COUNT TODO items"
-          echo "count=$TODO_COUNT" >> $GITHUB_OUTPUT
+          echo "count=$TODO_COUNT" >> "$GITHUB_OUTPUT"
 
           # Save for later steps
-          echo "todos_file=$TODOS_FILE" >> $GITHUB_OUTPUT
+          echo "todos_file=$TODOS_FILE" >> "$GITHUB_OUTPUT"
 
           # Output summary
           if [ "$TODO_COUNT" -gt 0 ]; then
-            echo "### TODO Items Found: $TODO_COUNT" >> $GITHUB_STEP_SUMMARY
-            echo "" >> $GITHUB_STEP_SUMMARY
-            echo "| File | Line | Comment |" >> $GITHUB_STEP_SUMMARY
-            echo "|------|------|---------|" >> $GITHUB_STEP_SUMMARY
+            echo "### TODO Items Found: $TODO_COUNT" >> "$GITHUB_STEP_SUMMARY"
+            echo "" >> "$GITHUB_STEP_SUMMARY"
+            echo "| File | Line | Comment |" >> "$GITHUB_STEP_SUMMARY"
+            echo "|------|------|---------|" >> "$GITHUB_STEP_SUMMARY"
             head -50 "$TODOS_FILE" | while IFS=: read -r file line content; do
               # Escape pipe characters for markdown
               safe_content=$(echo "$content" | sed 's/|/\\|/g' | head -c 100)
-              echo "| $file | $line | $safe_content |" >> $GITHUB_STEP_SUMMARY
+              echo "| $file | $line | $safe_content |" >> "$GITHUB_STEP_SUMMARY"
             done
             if [ "$TODO_COUNT" -gt 50 ]; then
-              echo "" >> $GITHUB_STEP_SUMMARY
-              echo "_...and $((TODO_COUNT - 50)) more_" >> $GITHUB_STEP_SUMMARY
+              echo "" >> "$GITHUB_STEP_SUMMARY"
+              echo "_...and $((TODO_COUNT - 50)) more_" >> "$GITHUB_STEP_SUMMARY"
             fi
           else
-            echo "### No TODO items found" >> $GITHUB_STEP_SUMMARY
+            echo "### No TODO items found" >> "$GITHUB_STEP_SUMMARY"
           fi
 
       - name: Check for new TODOs
@@ -95,7 +95,7 @@ jobs:
           echo "Checking for new TODOs in this commit..."
 
           # Get changed files
-          git diff --name-only HEAD~1 HEAD 2>/dev/null | while read file; do
+          git diff --name-only HEAD~1 HEAD 2>/dev/null | while read -r file; do
             if [[ "$file" =~ \.(go|ts|tsx|js|jsx)$ ]]; then
               # Check for TODOs in changed lines
               git diff HEAD~1 HEAD -- "$file" | grep "^+" | grep -i "TODO\|FIXME" && \

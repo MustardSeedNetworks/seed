@@ -56,9 +56,17 @@ assert_rejected \
   "workflow-extra-permission" \
   $'permissions:\n  contents: read' \
   $'permissions:\n  contents: read\n  id-token: write'
+# Derived from the workflow, never hardcoded: pinning the SHA here meant every
+# setup-node bump in release.yml left this fixture pointing at a ref that no
+# longer existed, failing the self-test for a dependency update.
+setup_node_ref=$(grep -oE 'actions/setup-node@[0-9a-f]{40}' "$source_workflow" | sort -u)
+if [ "$(printf '%s\n' "$setup_node_ref" | grep -c .)" -ne 1 ]; then
+  echo "expected exactly one SHA-pinned actions/setup-node ref in $source_workflow" >&2
+  exit 1
+fi
 assert_rejected \
   "mutable-setup-node-action" \
-  'actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e' \
+  "$setup_node_ref" \
   'actions/setup-node@v6'
 assert_rejected \
   "new-mutable-action" \
