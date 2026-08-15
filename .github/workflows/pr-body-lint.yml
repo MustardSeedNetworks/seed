@@ -14,11 +14,15 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Validate PR body
-        # release-please PRs carry an auto-generated changelog body, not the human
-        # change-PR template (no single linked issue, no code delta to test).
-        # Validating them against it is a category error; their integrity is
-        # ensured by release-please itself + the CI Complete gate. Skip them.
-        if: github.event_name == 'pull_request' && !startsWith(github.head_ref, 'release-please--')
+        # Bot PRs (release-please, Renovate, Dependabot) carry auto-generated
+        # bodies, not the human change-PR template — no single linked issue and
+        # no code delta to describe. Validating them against it is a category
+        # error, and because this is a *required* check it does not just annoy:
+        # it silently parks every dependency update instead of merging it.
+        # Their integrity comes from the CI Complete gate, which still runs.
+        if: >-
+          github.event_name == 'pull_request'
+          && github.event.pull_request.user.type != 'Bot'
         uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
         with:
           script: |
