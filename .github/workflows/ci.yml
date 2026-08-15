@@ -712,15 +712,12 @@ jobs:
   #   actionlint — syntax, expression and shell errors inside run: blocks. It
   #                caught a duplicated `with:` key in this very file that
   #                PyYAML accepts silently by keeping the last occurrence.
-  #
-  # zizmor (Actions security scanner) is NOT wired in yet: it currently reports
-  # 76-88 findings per repo, 10-13 of them high (pull_request_target triggers,
-  # workflow-level write permissions, release-please App-token use). Those need
-  # real review — narrowing them carelessly breaks release automation — so they
-  # are tracked as their own security pass rather than bolted on here as a
-  # continue-on-error step that would enforce nothing.
+  #   zizmor     — Actions security scanner. Blocks on High findings only.
+  #                The repo is at zero High; the two that survive review carry
+  #                `# zizmor: ignore[...]` comments with the reasoning inline.
+  #                Low/Informational (~25) are reported but not yet enforced.
   workflow-lint:
-    name: Workflow Lint (actionlint)
+    name: Workflow Lint
     runs-on: ubuntu-latest
     timeout-minutes: 10
     needs: changes
@@ -738,6 +735,15 @@ jobs:
           # step summaries; the ungrouped form stays readable and diffs one
           # line at a time. Every correctness-level rule stays enabled.
           actionlint -ignore 'SC2129' -color
+
+      - name: Run zizmor
+        env:
+          # zizmor resolves action refs against the API; without a token it
+          # falls back to unauthenticated requests and gets rate-limited.
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          pipx install zizmor==1.29.0
+          zizmor --min-severity high --color always .github/workflows/
 
 
   # ===========================================================================

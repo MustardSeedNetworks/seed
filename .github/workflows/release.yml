@@ -129,11 +129,18 @@ jobs:
           persist-credentials: false
 
       - name: Set up Node.js
+        # zizmor: ignore[cache-poisoning]
+        # Caching is disabled below, so there is no cache to poison. zizmor
+        # flags every setup-node in a publishing workflow regardless of the
+        # `cache` input (Low confidence); re-check on the next zizmor bump.
         uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
           node-version: "26.3.0"
-          cache: npm
-          cache-dependency-path: ui/package-lock.json
+          # No npm cache on the release path. This job's output is published
+          # and attested, so a poisoned cache entry restored from a branch
+          # would land in a signed artifact. CI keeps its cache; releases
+          # always resolve from the registry. (zizmor cache-poisoning)
+          cache: false
 
       - name: Build UI
         run: |
