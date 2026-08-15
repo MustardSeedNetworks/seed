@@ -53,13 +53,18 @@ jobs:
           app-id: ${{ secrets.APP_ID }}
           private-key: ${{ secrets.APP_PRIVATE_KEY }}
           # Scope the installation token to what release-please actually needs:
-          # write the changelog/tag/release (contents), open and update the
-          # release PR (pull-requests), and set its `autorelease:` labels —
-          # which go through the issues API. Without these the token inherits
-          # every permission the msn-ci-bot installation holds.
+          # write the changelog/tag/release (contents) and open, update and
+          # label the release PR (pull-requests). Without these the token
+          # inherits every permission the msn-ci-bot installation holds.
+          #
+          # Do NOT re-add permission-issues here. The msn-ci-bot installation
+          # does not grant Issues, and create-github-app-token hard-fails when
+          # asked for a permission the installation lacks — that broke every
+          # release across the fleet. Labels on a pull request are covered by
+          # pull-requests: write; the Issues scope is only needed for labelling
+          # real issues, which release-please never does.
           permission-contents: write
           permission-pull-requests: write
-          permission-issues: write
       - name: Run Release Please
         id: release
         uses: googleapis/release-please-action@45996ed1f6d02564a971a2fa1b5860e934307cf7 # v5.0.0
