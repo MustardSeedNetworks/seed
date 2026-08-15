@@ -5,6 +5,24 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.212.3](https://github.com/MustardSeedNetworks/seed/compare/v0.212.2...v0.212.3) (2026-08-15)
+
+
+### Bug Fixes
+
+* **release:** harden release supply chain ([#1827](https://github.com/MustardSeedNetworks/seed/issues/1827)) ([7e0f617](https://github.com/MustardSeedNetworks/seed/commit/7e0f617c703ecc37a9051598da18270ecee55284))
+
+
+### Continuous Integration
+
+* cut CI wall-clock and make inert gates enforce ([#1831](https://github.com/MustardSeedNetworks/seed/issues/1831)) ([28d817f](https://github.com/MustardSeedNetworks/seed/commit/28d817f0b90b5dac34bc3694e26c81849da69014))
+* **lint:** enforce full-tree Go lint ([#1828](https://github.com/MustardSeedNetworks/seed/issues/1828)) ([d969f5f](https://github.com/MustardSeedNetworks/seed/commit/d969f5fe6f3706f774c3afdfbf0582244dad5a92))
+
+
+### Miscellaneous
+
+* **discovery:** refresh embedded IEEE OUI registry (20260814) ([#1829](https://github.com/MustardSeedNetworks/seed/issues/1829)) ([6fe719a](https://github.com/MustardSeedNetworks/seed/commit/6fe719a7a27962b98e4c5b80034959b1a6376fbb))
+
 ## [0.212.2](https://github.com/MustardSeedNetworks/seed/compare/v0.212.1...v0.212.2) (2026-08-14)
 
 
