@@ -1,6 +1,10 @@
 # TypeScript 7 Native Compiler — Adoption Plan
 
-**Status:** Research / prep only. No package.json changes yet.
+**Status:** Complete. Phase 2 executed 2026-08-15 — TypeScript 7.0.2 went GA on
+2026-07-08 and `@typescript/native-preview` stopped publishing the day before it
+(last build `7.0.0-dev.20260707.2`). All three repos now depend on `typescript`
+and run `tsc --build --noEmit`; the preview package is gone. Kept for the
+measurements and the rationale.
 **Tracked:** Wave 5 / task #32 (cross-repo).
 **Author:** seed / Wave 5 prep, 2026-05-22.
 
