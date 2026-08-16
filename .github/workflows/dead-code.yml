@@ -42,7 +42,28 @@ jobs:
 
       - name: Install libpcap-dev
         timeout-minutes: 8
-        run: sudo apt-get update && sudo apt-get install -y libpcap-dev
+        # A stalled Ubuntu mirror can hang apt for the whole job budget without
+        # running a test (stem job 95068053052), because apt waits forever on a
+        # dead connection by default. Bound apt's own network waits, then retry
+        # the transient case.
+        run: |
+          sudo tee /etc/apt/apt.conf.d/99-ci-timeouts >/dev/null <<'EOF'
+          Acquire::http::Timeout "20";
+          Acquire::https::Timeout "20";
+          Acquire::Retries "2";
+          DPkg::Lock::Timeout "60";
+          EOF
+          for attempt in 1 2 3; do
+            # A timeout kill can leave dpkg half-configured; recover first.
+            [ "$attempt" -gt 1 ] && sudo dpkg --configure -a >/dev/null 2>&1 || true
+            if timeout -k 15 120 sudo bash -c 'apt-get update && apt-get install -y libpcap-dev'; then
+              exit 0
+            fi
+            echo "libpcap-dev install attempt ${attempt} failed; retrying in $((attempt * 10))s..."
+            sleep $((attempt * 10))
+          done
+          echo "::error::libpcap-dev install failed after 3 attempts"
+          exit 1
 
       - name: Run staticcheck for unused code
         run: |
