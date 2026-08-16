@@ -5,11 +5,12 @@
 # Generates summary reports to help keep the codebase clean.
 #
 # NOTE: This complements (does not duplicate) ci.yml:
-# - ci.yml runs full staticcheck on every PR (blocks merge if issues found)
+# - ci.yml's golangci-lint run includes the staticcheck linter on every PR
+#   (blocks merge if issues found); this job adds the unused-code checks only
 # - This workflow runs ONLY unused code checks (U*) weekly for reporting
 #
 # Checks:
-# - Go: unused functions, variables, types (staticcheck -checks="U*")
+# - Go: unused functions, variables, types (go tool staticcheck -checks="U*")
 # - Go: unused dependencies (go mod tidy)
 # - TypeScript: unused exports (ts-prune)
 # - Files: orphaned files not imported anywhere
@@ -69,13 +70,12 @@ jobs:
 
       - name: Run staticcheck for unused code
         run: |
-          go install honnef.co/go/tools/cmd/staticcheck@latest
 
           echo "### Go Dead Code Analysis" >> "$GITHUB_STEP_SUMMARY"
           echo "" >> "$GITHUB_STEP_SUMMARY"
 
           # Run staticcheck and capture unused code warnings
-          staticcheck -checks="U*" ./... 2>&1 | tee staticcheck-unused.txt || true
+          go tool staticcheck -checks="U*" ./... 2>&1 | tee staticcheck-unused.txt || true
 
           UNUSED_COUNT=$(wc -l < staticcheck-unused.txt | tr -d ' ')
           echo "Found $UNUSED_COUNT potential unused code items" >> "$GITHUB_STEP_SUMMARY"

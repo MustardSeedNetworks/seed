@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.212.6](https://github.com/MustardSeedNetworks/seed/compare/v0.212.5...v0.212.6) (2026-08-16)
+
+
+### Bug Fixes
+
+* **ci:** bound apt steps so a stalled mirror fails fast ([#1878](https://github.com/MustardSeedNetworks/seed/issues/1878)) ([1419165](https://github.com/MustardSeedNetworks/seed/commit/1419165ab00f0c7a80333282f0a60f9f1799d43e))
+* **ci:** bound apt waits in Playwright OS-deps step ([#1876](https://github.com/MustardSeedNetworks/seed/issues/1876)) ([33546e5](https://github.com/MustardSeedNetworks/seed/commit/33546e580c1f4b42fee80a3e72513be50adf3941))
+
 ## [0.212.5](https://github.com/MustardSeedNetworks/seed/compare/v0.212.4...v0.212.5) (2026-08-15)
 
 

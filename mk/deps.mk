@@ -87,7 +87,7 @@ version-check: ## Show versions of all tools and dependencies
 	@printf "  npm:           %s\n" "$$(npm --version)"
 	@printf "\n$(BOLD)Go Tools:$(RESET) (in $$(go env GOPATH)/bin)\n"
 	@printf "  golangci-lint: %s\n" "$$($$(go env GOPATH)/bin/golangci-lint --version 2>/dev/null | head -1 | awk '{print $$4}' || echo 'not installed')"
-	@printf "  govulncheck:   %s\n" "$$(test -f $$(go env GOPATH)/bin/govulncheck && echo 'installed' || echo 'not installed')"
+	@printf "  govulncheck:   %s\n" "declared in go.mod (run via: go tool govulncheck)"
 	@printf "  gofumpt:       %s\n" "$$($$(go env GOPATH)/bin/gofumpt --version 2>/dev/null || echo 'not installed')"
 	@printf "  gitleaks:      %s\n" "$$($$(go env GOPATH)/bin/gitleaks version 2>/dev/null || echo 'not installed')"
 	@printf "\n$(BOLD)Project Dependencies:$(RESET)\n"
@@ -122,14 +122,12 @@ tools-go: ## Install Go development tools
 	@printf "$(BOLD)=== Installing Go Development Tools ===$(RESET)\n"
 	@printf "  golangci-lint (comprehensive linter)...\n"
 	@go install github.com/golangci/golangci-lint/v2/cmd/golangci-lint@v2.12.1
-	@printf "  govulncheck (CVE vulnerability checker)...\n"
-	@go install golang.org/x/vuln/cmd/govulncheck@latest
 	@printf "  goimports (import formatter)...\n"
 	@go install golang.org/x/tools/cmd/goimports@latest
 	@printf "  gofumpt (strict formatter)...\n"
 	@go install mvdan.cc/gofumpt@latest
 	@printf "  gitleaks (secret scanner)...\n"
-	@go install github.com/zricethezav/gitleaks/v8@latest
+	@go install github.com/zricethezav/gitleaks/v8@v8.30.1
 	@printf "  deadcode (unused code finder)...\n"
 	@go install golang.org/x/tools/cmd/deadcode@latest
 	@printf "  gotestsum (test runner with better output)...\n"
@@ -141,10 +139,9 @@ tools-go: ## Install Go development tools
 tools-go-quiet:
 	@printf "   Installing latest versions...\n"
 	@go install github.com/golangci/golangci-lint/v2/cmd/golangci-lint@v2.12.1 2>/dev/null
-	@go install golang.org/x/vuln/cmd/govulncheck@latest 2>/dev/null
 	@go install golang.org/x/tools/cmd/goimports@latest 2>/dev/null
 	@go install mvdan.cc/gofumpt@latest 2>/dev/null
-	@go install github.com/zricethezav/gitleaks/v8@latest 2>/dev/null
+	@go install github.com/zricethezav/gitleaks/v8@v8.30.1 2>/dev/null
 	@go install golang.org/x/tools/cmd/deadcode@latest 2>/dev/null
 	@go install gotest.tools/gotestsum@latest 2>/dev/null
 	@go install github.com/google/go-licenses@latest 2>/dev/null

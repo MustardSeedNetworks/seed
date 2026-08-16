@@ -190,11 +190,6 @@ jobs:
       - name: Filename-policy gate — no monolith naming outside internal/api
         run: ./scripts/check-filename-policy.sh
 
-      - name: Run staticcheck
-        run: |
-          go install honnef.co/go/tools/cmd/staticcheck@latest
-          staticcheck ./...
-
       - name: Check formatting
         run: test -z "$(git ls-files '*.go' | xargs gofmt -l)"
 
@@ -614,7 +609,20 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
+      - name: Check if C files exist
+        id: check-c
+        run: |
+          if find . -name '*.c' -o -name '*.h' 2>/dev/null | grep -v node_modules | grep -q .; then
+            echo "has_c=true" >> "$GITHUB_OUTPUT"
+            echo "Found C source files"
+          else
+            echo "has_c=false" >> "$GITHUB_OUTPUT"
+            echo "No C source files found - C23 linting ready for when C code is added"
+          fi
+
+
       - name: Install C23 tools (clang-tidy, cppcheck, bear)
+        if: steps.check-c.outputs.has_c == 'true'
         timeout-minutes: 6
         # A stalled Ubuntu mirror can hang apt for the whole job budget without
         # running a test (stem job 95068053052), because apt waits forever on a
@@ -653,17 +661,6 @@ jobs:
           clang --version
           clang-tidy --version
           gcc-13 --version
-
-      - name: Check if C files exist
-        id: check-c
-        run: |
-          if find . -name '*.c' -o -name '*.h' 2>/dev/null | grep -v node_modules | grep -q .; then
-            echo "has_c=true" >> "$GITHUB_OUTPUT"
-            echo "Found C source files"
-          else
-            echo "has_c=false" >> "$GITHUB_OUTPUT"
-            echo "No C source files found - C23 linting ready for when C code is added"
-          fi
 
       - name: Generate compile_commands.json
         if: steps.check-c.outputs.has_c == 'true'
