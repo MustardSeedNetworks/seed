@@ -37,19 +37,12 @@ security: ## Run all security scans
 
 security-backend: ## Run Go vulnerability scan (govulncheck)
 	@printf "$(BOLD)🔒 Running Go vulnerability scan...$(RESET)\n"
-	@if ! command -v govulncheck > /dev/null 2>&1; then \
-		printf "📦 Installing govulncheck...\n"; \
-		go install golang.org/x/vuln/cmd/govulncheck@latest; \
-	fi
-	@govulncheck ./...
+	@go tool govulncheck ./...
 	@printf "$(GREEN)✓ Go vulnerability scan complete$(RESET)\n"
 
 security-backend-quiet:
-	@if ! command -v govulncheck > /dev/null 2>&1; then \
-		go install golang.org/x/vuln/cmd/govulncheck@latest; \
-	fi
 	@printf "   Scanning Go dependencies...\n"
-	@OUT="$$(govulncheck ./... 2>&1)"; STATUS=$$?; \
+	@OUT="$$(go tool govulncheck ./... 2>&1)"; STATUS=$$?; \
 	echo "$$OUT" | grep -E "(Vulnerability|No vulnerabilities)" | head -5 || printf "   No vulnerabilities found\n"; \
 	if [ $$STATUS -ne 0 ]; then echo "$$OUT" | tail -40; fi; \
 	exit $$STATUS
@@ -71,7 +64,7 @@ security-secrets: ## Scan for secrets in codebase (gitleaks)
 	@GITLEAKS=$$(command -v gitleaks 2>/dev/null || echo "$$(go env GOPATH)/bin/gitleaks"); \
 	if [ ! -x "$$GITLEAKS" ]; then \
 		printf "📦 Installing gitleaks...\n"; \
-		go install github.com/zricethezav/gitleaks/v8@latest; \
+		go install github.com/zricethezav/gitleaks/v8@v8.30.1; \
 		GITLEAKS="$$(go env GOPATH)/bin/gitleaks"; \
 	fi; \
 	$$GITLEAKS detect --source . --config .gitleaks.toml --verbose
@@ -80,7 +73,7 @@ security-secrets: ## Scan for secrets in codebase (gitleaks)
 security-secrets-quiet:
 	@GITLEAKS=$$(command -v gitleaks 2>/dev/null || echo "$$(go env GOPATH)/bin/gitleaks"); \
 	if [ ! -x "$$GITLEAKS" ]; then \
-		go install github.com/zricethezav/gitleaks/v8@latest; \
+		go install github.com/zricethezav/gitleaks/v8@v8.30.1; \
 		GITLEAKS="$$(go env GOPATH)/bin/gitleaks"; \
 	fi; \
 	printf "   Scanning for secrets...\n"; \
