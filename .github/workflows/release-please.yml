@@ -9,6 +9,12 @@
 #   - workflow_run on CI completion: real trigger; gated on success
 #   - workflow_dispatch: manual debug / force trigger
 #
+# The tag release-please pushes is what starts release.yml — there is no
+# explicit hand-off job. This works ONLY because the tag is pushed with the
+# msn-ci-bot App token: tags pushed with the default GITHUB_TOKEN do not
+# trigger workflows (GitHub's recursion guard), so swapping back to it would
+# silently stop every release from building.
+#
 # Versioning behaviour is driven by .github/release-please-config.json
 # and .github/.release-please-manifest.json so that release-please knows
 # the current version and applies the same changelog grouping across
@@ -94,16 +100,3 @@ jobs:
           echo "Release created: ${TAG_NAME}"
           echo "Version: ${VERSION}"
 
-  trigger-release:
-    name: Trigger Release Build
-    needs: release-please
-    if: needs.release-please.outputs.release_created == 'true'
-    runs-on: ubuntu-latest
-    permissions: {}
-    steps:
-      - name: Trigger release workflow
-        env:
-          TAG_NAME: ${{ needs.release-please.outputs.tag_name }}
-        run: |
-          echo "Release ${TAG_NAME} created"
-          echo "The release.yml workflow will be triggered by the new tag"
