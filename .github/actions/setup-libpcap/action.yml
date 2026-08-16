@@ -15,8 +15,30 @@ runs:
 
     - name: Install libpcap-dev
       shell: bash
+      # A composite step cannot carry timeout-minutes, so apt's own waits are
+      # bounded here instead. By default apt blocks forever on a dead mirror
+      # connection: one such stall hung an install for 25 minutes and burned a
+      # whole job without running anything (niac job 95072124340).
       run: |
-        if [ "${{ steps.cache-apt.outputs.cache-hit }}" != "true" ]; then
-          sudo apt-get update
-        fi
-        sudo apt-get install -y libpcap-dev
+        sudo tee /etc/apt/apt.conf.d/99-ci-timeouts >/dev/null <<'EOF'
+        Acquire::http::Timeout "20";
+        Acquire::https::Timeout "20";
+        Acquire::Retries "2";
+        DPkg::Lock::Timeout "60";
+        EOF
+        for attempt in 1 2 3; do
+          if [ "$attempt" -gt 1 ]; then
+            # A timeout kill can leave dpkg half-configured; recover first.
+            sudo dpkg --configure -a >/dev/null 2>&1 || true
+          fi
+          if [ "${{ steps.cache-apt.outputs.cache-hit }}" != "true" ]; then
+            timeout -k 15 120 sudo apt-get update || true
+          fi
+          if timeout -k 15 120 sudo apt-get install -y libpcap-dev; then
+            exit 0
+          fi
+          echo "libpcap-dev install attempt ${attempt} failed; retrying in $((attempt * 10))s..."
+          sleep $((attempt * 10))
+        done
+        echo "::error::libpcap-dev install failed after 3 attempts"
+        exit 1

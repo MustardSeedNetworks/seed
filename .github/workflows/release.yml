@@ -84,6 +84,7 @@ jobs:
             runner: ubuntu-24.04-arm
     steps:
       - name: Install build dependencies
+        timeout-minutes: 8
         run: |
           sudo apt-get update
           sudo apt-get install -y build-essential autoconf automake libtool
@@ -191,6 +192,7 @@ jobs:
         run: git config --global --add safe.directory "$GITHUB_WORKSPACE"
 
       - name: Install libpcap headers for amd64 + arm64
+        timeout-minutes: 8
         # goreleaser-cross ships compilers but not libpcap headers. gopacket/pcap
         # needs pcap.h + libpcap.so (and its transitive link deps: libdbus-1-3,
         # libibverbs, …) for cgo, per target arch.
