@@ -123,28 +123,28 @@ tools-go: ## Install Go development tools
 	@printf "  golangci-lint (comprehensive linter)...\n"
 	@go install github.com/golangci/golangci-lint/v2/cmd/golangci-lint@v2.12.2
 	@printf "  goimports (import formatter)...\n"
-	@go install golang.org/x/tools/cmd/goimports@latest
+	@go install golang.org/x/tools/cmd/goimports@v0.49.0
 	@printf "  gofumpt (strict formatter)...\n"
-	@go install mvdan.cc/gofumpt@latest
+	@go install mvdan.cc/gofumpt@v0.11.0
 	@printf "  gitleaks (secret scanner)...\n"
 	@go install github.com/zricethezav/gitleaks/v8@v8.30.1
 	@printf "  deadcode (unused code finder)...\n"
-	@go install golang.org/x/tools/cmd/deadcode@latest
+	@go install golang.org/x/tools/cmd/deadcode@v0.49.0
 	@printf "  gotestsum (test runner with better output)...\n"
-	@go install gotest.tools/gotestsum@latest
+	@go install gotest.tools/gotestsum@v1.13.0
 	@printf "  go-licenses (license compliance checker)...\n"
-	@go install github.com/google/go-licenses@latest
+	@go install github.com/google/go-licenses@v1.6.0
 	@printf "$(GREEN)✓ Go tools installed$(RESET)\n"
 
 tools-go-quiet:
 	@printf "   Installing latest versions...\n"
 	@go install github.com/golangci/golangci-lint/v2/cmd/golangci-lint@v2.12.2 2>/dev/null
-	@go install golang.org/x/tools/cmd/goimports@latest 2>/dev/null
-	@go install mvdan.cc/gofumpt@latest 2>/dev/null
+	@go install golang.org/x/tools/cmd/goimports@v0.49.0 2>/dev/null
+	@go install mvdan.cc/gofumpt@v0.11.0 2>/dev/null
 	@go install github.com/zricethezav/gitleaks/v8@v8.30.1 2>/dev/null
-	@go install golang.org/x/tools/cmd/deadcode@latest 2>/dev/null
-	@go install gotest.tools/gotestsum@latest 2>/dev/null
-	@go install github.com/google/go-licenses@latest 2>/dev/null
+	@go install golang.org/x/tools/cmd/deadcode@v0.49.0 2>/dev/null
+	@go install gotest.tools/gotestsum@v1.13.0 2>/dev/null
+	@go install github.com/google/go-licenses@v1.6.0 2>/dev/null
 	@printf "   8 tools updated\n"
 
 tools-frontend: ## Install frontend development tools

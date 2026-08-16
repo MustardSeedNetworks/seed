@@ -132,7 +132,7 @@ fix-all: fix fix-md ## Auto-fix all code and documentation
 fmt: ## Format Go code with gofumpt
 	@if ! command -v gofumpt > /dev/null 2>&1; then \
 		echo "📦 Installing gofumpt..."; \
-		go install mvdan.cc/gofumpt@latest; \
+		go install mvdan.cc/gofumpt@v0.11.0; \
 	fi
 	@git ls-files '*.go' | xargs gofumpt -w
 	@echo "✅ Go code formatted"
