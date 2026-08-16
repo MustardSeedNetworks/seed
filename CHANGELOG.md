@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.212.10](https://github.com/MustardSeedNetworks/seed/compare/v0.212.9...v0.212.10) (2026-08-16)
+
+
+### Bug Fixes
+
+* **ci:** give markdown lint a base ref in the merge queue ([#1901](https://github.com/MustardSeedNetworks/seed/issues/1901)) ([3c2d3e8](https://github.com/MustardSeedNetworks/seed/commit/3c2d3e8c2717b6345dceaa10aef7df1bd68f1b40))
+
+
+### Miscellaneous
+
+* un-fake the revive doc-comment gate and satisfy it ([#1905](https://github.com/MustardSeedNetworks/seed/issues/1905)) ([a6643c0](https://github.com/MustardSeedNetworks/seed/commit/a6643c02dfc779a79af91201ffc57fd02ce5d756))
+
 ## [0.212.9](https://github.com/MustardSeedNetworks/seed/compare/v0.212.8...v0.212.9) (2026-08-16)
 
 
