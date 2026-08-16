@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.212.9](https://github.com/MustardSeedNetworks/seed/compare/v0.212.8...v0.212.9) (2026-08-16)
+
+
+### Continuous Integration
+
+* make required checks report on merge_group ([#1898](https://github.com/MustardSeedNetworks/seed/issues/1898)) ([28bba41](https://github.com/MustardSeedNetworks/seed/commit/28bba41e4e2d932f0eb76d33c968800494db8112))
+* stop PRs writing their own cache copies ([#1896](https://github.com/MustardSeedNetworks/seed/issues/1896)) ([021f6c1](https://github.com/MustardSeedNetworks/seed/commit/021f6c1c44bfee5b615c24a78a250b32f7b91dc4))
+
 ## [0.212.8](https://github.com/MustardSeedNetworks/seed/compare/v0.212.7...v0.212.8) (2026-08-16)
 
 
