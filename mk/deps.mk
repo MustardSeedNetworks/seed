@@ -133,7 +133,7 @@ tools-go: ## Install Go development tools
 	@printf "  gotestsum (test runner with better output)...\n"
 	@go install gotest.tools/gotestsum@v1.13.0
 	@printf "  go-licenses (license compliance checker)...\n"
-	@go install github.com/google/go-licenses@v1.6.0
+	@go install github.com/google/go-licenses@v2.0.1
 	@printf "$(GREEN)✓ Go tools installed$(RESET)\n"
 
 tools-go-quiet:
@@ -144,7 +144,7 @@ tools-go-quiet:
 	@go install github.com/zricethezav/gitleaks/v8@v8.30.1 2>/dev/null
 	@go install golang.org/x/tools/cmd/deadcode@v0.49.0 2>/dev/null
 	@go install gotest.tools/gotestsum@v1.13.0 2>/dev/null
-	@go install github.com/google/go-licenses@v1.6.0 2>/dev/null
+	@go install github.com/google/go-licenses@v2.0.1 2>/dev/null
 	@printf "   8 tools updated\n"
 
 tools-frontend: ## Install frontend development tools
