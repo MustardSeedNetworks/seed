@@ -56,9 +56,8 @@ func (r *AlertRepository) Get(ctx context.Context, id int64) (*alerts.Alert, err
 	return r.scanAlert(row)
 }
 
-// List retrieves alerts matching the criteria.
-//
-
+// List retrieves alerts matching opts (type, severity, device, unacknowledged/
+// unresolved-only, since, limit/offset), newest first.
 func (r *AlertRepository) List(ctx context.Context, opts alerts.ListOptions) ([]*alerts.Alert, error) {
 	query := `
 		SELECT id, type, severity, title, message, source, device_id, acknowledged,
@@ -150,9 +149,9 @@ func (r *AlertRepository) Acknowledge(ctx context.Context, id int64, by string) 
 	return nil
 }
 
-// AcknowledgeAll marks all matching alerts as acknowledged.
-//
-
+// AcknowledgeAll marks every currently-unacknowledged alert matching opts as
+// acknowledged by the given user, in one statement, and returns the count of
+// rows updated.
 func (r *AlertRepository) AcknowledgeAll(
 	ctx context.Context,
 	opts alerts.ListOptions,
@@ -243,9 +242,8 @@ func (r *AlertRepository) DeleteOlderThan(ctx context.Context, cutoff time.Time)
 	return result.RowsAffected()
 }
 
-// Count returns the number of alerts matching the criteria.
-//
-
+// Count returns the number of alerts matching opts, using the same filters
+// as List but without Limit/Offset applied.
 func (r *AlertRepository) Count(ctx context.Context, opts alerts.ListOptions) (int64, error) {
 	query := "SELECT COUNT(*) FROM alerts WHERE 1=1"
 	var args []any

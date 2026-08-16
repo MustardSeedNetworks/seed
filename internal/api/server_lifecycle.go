@@ -79,6 +79,12 @@ func (s *Server) Handler() http.Handler {
 										s.csrfManager().CSRFMiddleware(s.mux))))))))))
 }
 
+// Start brings the server fully online: it starts the link monitor(s),
+// discovery service, VLAN traffic monitor, and background engines, kicks off
+// an initial discovery scan when network discovery is enabled, then blocks
+// serving HTTPS via startHTTPS until the listener stops or errors. A failure
+// to start any individual subsystem is logged and does not abort startup;
+// only the final HTTPS listen error is returned.
 func (s *Server) Start() error {
 	addr := fmt.Sprintf(":%d", s.config.Server.Port)
 

@@ -82,9 +82,9 @@ type LoginRequest struct {
 	Password string `json:"password"`
 }
 
-// ValidateLoginRequest validates a login request and returns field-level errors.
-//
-
+// ValidateLoginRequest checks that Username and Password are present and
+// within MaxUsernameLength/MaxPasswordLength, returning one FieldError per
+// violation. A nil/empty result means the request is valid.
 func ValidateLoginRequest(req *LoginRequest) []FieldError {
 	var errors []FieldError
 
@@ -178,9 +178,9 @@ type PingTargetRequest struct {
 	Enabled bool   `json:"enabled"`
 }
 
-// ValidatePingTarget validates a ping target configuration.
-//
-
+// ValidatePingTarget checks a ping target's host/IP format, name, and
+// interval/enabled settings, returning one FieldError per violation. A
+// nil/empty result means the request is valid.
 func ValidatePingTarget(pt *PingTargetRequest) []FieldError {
 	var errors []FieldError
 

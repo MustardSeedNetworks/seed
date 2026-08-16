@@ -20,6 +20,11 @@ run:
   relative-path-mode: gomod
 
 issues:
+  # Maximum issues per linter. Default: 50 — which silently truncated revive's
+  # documentation findings during the ci/golangci-streamline cleanup (50 of a
+  # true 70 were visible until this was disabled). Set to 0 to disable.
+  max-issues-per-linter: 0
+
   # Maximum count of issues with the same text.
   # Set to 0 to disable.
   # Default: 3
@@ -79,7 +84,8 @@ linters:
     - gocognit # computes and checks the cognitive complexity of functions
     - goconst # finds repeated strings that could be replaced by a constant
     - gocritic # provides diagnostics that check for bugs, performance and style issues
-    - gocyclo # computes and checks the cyclomatic complexity of functions
+    # gocyclo intentionally omitted: cyclop computes the same McCabe metric at a
+    # stricter threshold and adds package-average complexity. Duplicate signal.
     - godoclint # checks Golang's documentation practice
     - godot # checks if comments end in a period
     - gomoddirectives # manages the use of 'replace', 'retract', and 'excludes' directives in go.mod
@@ -541,6 +547,16 @@ linters:
       # Such cases aren't reported by default.
       # Default: false
       check-type-assertions: true
+    forbidigo:
+      # forbidigo has NO default forbid list — it was enabled but inert, verified
+      # empirically (a probe fmt.Println went unflagged). CLAUDE.md requires
+      # structured logging, so this is what it should have been enforcing.
+      forbid:
+        - pattern: '^fmt\.Print(|f|ln)$'
+          msg: 'use log/slog for structured logging; fmt.Print* is for CLI output only (see cmd/ exclusion)'
+        - pattern: '^print(ln)?$'
+          msg: 'builtin print/println is debug residue — use log/slog'
+      analyze-types: true
 
     exhaustive:
       # Program elements to check for exhaustiveness.
@@ -702,7 +718,8 @@ linters:
       # See https://github.com/curioswitch/go-reassign#usage
       # Default: ["EOF", "Err.*"]
       patterns:
-        - ".*"
+        - EOF
+        - 'Err.*'
 
     rowserrcheck:
       # database/sql is always checked.
@@ -762,10 +779,9 @@ linters:
     rules:
       - source: 'TODO'
         linters: [ godot ]
-      - text: 'should have a package comment'
-        linters: [ revive ]
-      - text: 'exported \S+ \S+ should have comment( \(or a comment on this block\))? or be unexported'
-        linters: [ revive ]
+      # revive's package-comment and exported-comment rules are NOT excluded:
+      # they were, which made revive look like a gate it was not. The findings
+      # they surface were fixed rather than suppressed.
       - text: 'package comment should be of the form ".+"'
         source: '// ?(nolint|TODO)'
         linters: [ revive ]

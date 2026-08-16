@@ -1,9 +1,8 @@
-package logging
-
 // Package logging provides structured logging with automatic redaction of sensitive data.
 //
 // This package wraps Go's log/slog with automatic sensitive data redaction,
 // request ID correlation, and configurable output formats (text/JSON).
+package logging
 
 import (
 	"context"

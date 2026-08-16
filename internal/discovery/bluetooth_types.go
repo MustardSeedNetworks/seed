@@ -14,6 +14,7 @@ import "time"
 // BluetoothType represents the Bluetooth protocol type.
 type BluetoothType string
 
+// Bluetooth protocol type values.
 const (
 	BluetoothTypeClassic BluetoothType = "classic" // BR/EDR (Basic Rate/Enhanced Data Rate)
 	BluetoothTypeBLE     BluetoothType = "ble"     // Bluetooth Low Energy
@@ -23,6 +24,7 @@ const (
 // BluetoothDeviceClass represents major device classes per Bluetooth spec.
 type BluetoothDeviceClass string
 
+// Bluetooth major device class values, per the Bluetooth Assigned Numbers spec.
 const (
 	BluetoothClassMisc          BluetoothDeviceClass = "miscellaneous"
 	BluetoothClassComputer      BluetoothDeviceClass = "computer"

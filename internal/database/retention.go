@@ -363,9 +363,8 @@ func (db *DB) RecordAuditLog(ctx context.Context, entry *AuditLogEntry) error {
 	return nil
 }
 
-// GetAuditLogs retrieves audit log entries.
-//
-
+// GetAuditLogs retrieves audit log entries matching opts (action, user,
+// resource type/ID, since, limit/offset), newest first.
 func (db *DB) GetAuditLogs(ctx context.Context, opts AuditLogOptions) ([]*AuditLogEntry, error) {
 	query := `
 		SELECT id, action, user, resource_type, resource_id, old_value_json,

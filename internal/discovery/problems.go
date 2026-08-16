@@ -19,6 +19,7 @@ import (
 // ProblemSeverity indicates the impact level of a detected problem.
 type ProblemSeverity string
 
+// Problem severity values, ordered from most to least urgent.
 const (
 	ProblemSeverityCritical ProblemSeverity = "critical"
 	ProblemSeverityWarning  ProblemSeverity = "warning"
@@ -28,6 +29,7 @@ const (
 // ProblemStatus indicates the current state of a detected problem.
 type ProblemStatus string
 
+// Problem lifecycle status values.
 const (
 	ProblemStatusActive   ProblemStatus = "active"
 	ProblemStatusResolved ProblemStatus = "resolved"
@@ -37,6 +39,7 @@ const (
 // ProblemCategory groups problems by type.
 type ProblemCategory string
 
+// Problem category values (see the file comment above for what each detects).
 const (
 	ProblemCategoryIPConflict      ProblemCategory = "ip_conflict"
 	ProblemCategoryDuplexMismatch  ProblemCategory = "duplex_mismatch"

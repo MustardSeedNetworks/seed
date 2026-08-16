@@ -56,9 +56,9 @@ func NewLLDPCapture(opener capture.Opener, interfaceName string) *LLDPCapture {
 	}
 }
 
-// Start begins capturing LLDP frames.
-//
-
+// Start begins capturing LLDP frames on the bound interface and returns once
+// the pcap handle is open. Capture runs in a background goroutine; call Stop
+// to end it. Calling Start again while already started is a no-op.
 func (c *LLDPCapture) Start() error {
 	c.mu.Lock()
 	if c.started {

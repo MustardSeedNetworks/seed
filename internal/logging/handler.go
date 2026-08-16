@@ -33,8 +33,6 @@ func (h *RedactingHandler) Enabled(ctx context.Context, level slog.Level) bool {
 
 // Handle processes the log record, redacting sensitive data from the message
 // and all attributes before passing to the inner handler.
-//
-
 func (h *RedactingHandler) Handle(ctx context.Context, r slog.Record) error {
 	// Redact the message
 	r.Message = RedactString(r.Message)

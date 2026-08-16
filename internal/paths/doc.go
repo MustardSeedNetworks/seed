@@ -1,5 +1,5 @@
-package paths
-
+// Package paths resolves seed's config/data/log/cache locations for both
+// user-mode and system-mode installs.
 //
 // The package implements the XDG Base Directory Specification for portable,
 // standards-compliant configuration and data storage across different installation
@@ -46,3 +46,4 @@ package paths
 //
 //	// Resolve config with priority handling
 //	configPath := paths.ResolveConfigPath(cliFlag, paths.ModeAuto)
+package paths

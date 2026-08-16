@@ -58,9 +58,9 @@ func NewCDPCapture(opener capture.Opener, interfaceName string) *CDPCapture {
 	}
 }
 
-// Start begins capturing CDP frames.
-//
-
+// Start begins capturing CDP frames on the bound interface and returns once
+// the pcap handle is open. Capture runs in a background goroutine; call Stop
+// to end it. Calling Start again while already started is a no-op.
 func (c *CDPCapture) Start() error {
 	c.mu.Lock()
 	if c.started {

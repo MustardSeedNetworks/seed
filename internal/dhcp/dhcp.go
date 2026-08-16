@@ -1,9 +1,9 @@
-package dhcp
-
+// Package dhcp monitors DHCP transaction timing on the local network.
 //
 // The Monitor uses the capture port (internal/capture) for real-time DHCP packet
 // capture to measure transaction timing (DISCOVER→OFFER→REQUEST→ACK). The
 // libpcap-backed adapter requires root/CAP_NET_RAW; wire it via WithCapture.
+package dhcp
 
 import (
 	"encoding/binary"

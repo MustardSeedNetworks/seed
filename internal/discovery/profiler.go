@@ -1,9 +1,9 @@
+// Package discovery is the network-discovery kernel: it drives device
+// enumeration (wired, Wi-Fi, Bluetooth), deep profiling (HTTP, SNMP, mDNS,
+// port scanning), problem detection, and the metrics/delta types the API and
+// enumerate sub-packages build on.
 package discovery
 
-// Package discovery's device profiler performs deep inspection of discovered
-// devices through HTTP, SNMP, mDNS, and port scanning to gather detailed
-// information about capabilities, services, and device types.
-//
 // profiler.go holds the DeviceProfiler struct, NewDeviceProfiler, the
 // Start/Stop/worker lifecycle, the QueueProfile entry point, and the
 // shutdown / context helpers. The types, config, active probes (scan / HTTP
