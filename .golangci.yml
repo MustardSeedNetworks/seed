@@ -792,12 +792,6 @@ linters:
         path: 'internal/api/'
         linters: [ revive ]
       # DICOM A-ASSOCIATE PDU framing intentionally truncates length values
-      # (bounded by the DICOM protocol — max PDU size 16 KB) to bytes via
-      # explicit shift+mask. The int→byte conversion is exactly the desired
-      # behaviour and predates this exclusion.
-      - text: 'G115: integer overflow conversion int -> byte'
-        path: 'internal/api/health_checks_dicom\.go'
-        linters: [ gosec ]
       # internal/truststore writes trust-anchor PEMs into the four OS-specific
       # CA directories (Debian/Ubuntu, RHEL/Fedora, Arch, openSUSE). The
       # destination is computed by detectLinuxStore from a hardcoded
@@ -856,16 +850,6 @@ linters:
       # catalog beats near-identical split functions (which dupl flags).
       - path: 'internal/wifi/anomaly/catalog\.go'
         linters: [ funlen ]
-      # internal/license/fingerprint.go memoizes the device fingerprint for the
-      # process lifetime via sync.OnceValues (a package-level var). This is a
-      # required process-singleton: the fingerprint is a stable machine property,
-      # and recomputing it per call shells out to OS tools that transiently fail
-      # under load, yielding a non-deterministic Hash() that spuriously
-      # invalidates a valid license on reload. The memo must outlive any single
-      # Manager, so it cannot hang off an instance.
-      - path: 'internal/license/fingerprint\.go'
-        text: 'generateFingerprintOnce is a global variable'
-        linters: [ gochecknoglobals ]
       # internal/wifi/dot11/decode.go classify() switches over gopacket's
       # layers.Dot11Type, a third-party enum with 30+ control/data subtypes. We
       # map the management subtypes the visibility feature decodes and fold the
