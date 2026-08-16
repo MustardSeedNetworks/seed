@@ -121,7 +121,7 @@ tools: tools-go tools-frontend ## Install all development tools (Go + Node)
 tools-go: ## Install Go development tools
 	@printf "$(BOLD)=== Installing Go Development Tools ===$(RESET)\n"
 	@printf "  golangci-lint (comprehensive linter)...\n"
-	@go install github.com/golangci/golangci-lint/v2/cmd/golangci-lint@v2.12.1
+	@go install github.com/golangci/golangci-lint/v2/cmd/golangci-lint@v2.12.2
 	@printf "  goimports (import formatter)...\n"
 	@go install golang.org/x/tools/cmd/goimports@latest
 	@printf "  gofumpt (strict formatter)...\n"
@@ -138,7 +138,7 @@ tools-go: ## Install Go development tools
 
 tools-go-quiet:
 	@printf "   Installing latest versions...\n"
-	@go install github.com/golangci/golangci-lint/v2/cmd/golangci-lint@v2.12.1 2>/dev/null
+	@go install github.com/golangci/golangci-lint/v2/cmd/golangci-lint@v2.12.2 2>/dev/null
 	@go install golang.org/x/tools/cmd/goimports@latest 2>/dev/null
 	@go install mvdan.cc/gofumpt@latest 2>/dev/null
 	@go install github.com/zricethezav/gitleaks/v8@v8.30.1 2>/dev/null
