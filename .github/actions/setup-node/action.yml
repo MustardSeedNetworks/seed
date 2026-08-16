@@ -26,15 +26,37 @@ runs:
       uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
       with:
         node-version: ${{ inputs.node-version }}
-        cache: ${{ inputs.cache }}
-        cache-dependency-path: ${{ inputs.working-directory }}/package-lock.json
+        # Built-in caching is deliberately OFF. setup-node saves its cache
+        # unconditionally in post-job, including on pull requests — and caches
+        # are scoped per ref, so every PR left behind its own ~140MB copy that
+        # died on merge. At ~30 merges/day that is >4GB/day against a 10GB
+        # repo quota, which evicts main's caches and breaks restores. The
+        # explicit restore/save below saves only on the default branch.
+        #
         # An empty `cache` alone is not enough: setup-node falls through to
         # auto-caching whenever package.json has a `packageManager` field,
-        # which ours does. This turns that fallback off too.
-        package-manager-cache: ${{ inputs.cache != '' }}
+        # which ours does. `package-manager-cache: false` turns that off too.
+        cache: ''
+        package-manager-cache: false
+
+    - name: Restore npm cache
+      if: inputs.cache != ''
+      uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+      with:
+        path: ~/.npm
+        key: ${{ runner.os }}-npm-${{ hashFiles(format('{0}/package-lock.json', inputs.working-directory)) }}
+        restore-keys: |
+          ${{ runner.os }}-npm-
 
     - name: Set up npm
       shell: bash
       env:
         NPM_VERSION: ${{ inputs.npm-version }}
       run: npm install -g "npm@${NPM_VERSION}"
+
+    - name: Save npm cache (default branch only)
+      if: inputs.cache != '' && github.ref == format('refs/heads/{0}', github.event.repository.default_branch)
+      uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+      with:
+        path: ~/.npm
+        key: ${{ runner.os }}-npm-${{ hashFiles(format('{0}/package-lock.json', inputs.working-directory)) }}
