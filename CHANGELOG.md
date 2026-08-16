@@ -5,6 +5,26 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.212.7](https://github.com/MustardSeedNetworks/seed/compare/v0.212.6...v0.212.7) (2026-08-16)
+
+
+### Bug Fixes
+
+* **lint:** align local golangci-lint with the version CI runs ([#1888](https://github.com/MustardSeedNetworks/seed/issues/1888)) ([9038f12](https://github.com/MustardSeedNetworks/seed/commit/9038f121dee107e943980a3916c86163b966ae0b))
+
+
+### Continuous Integration
+
+* declare Go tools in go.mod and drop redundant work ([#1883](https://github.com/MustardSeedNetworks/seed/issues/1883)) ([a81f855](https://github.com/MustardSeedNetworks/seed/commit/a81f855a1ed7179bf42cd7e77dadfaed19771acb))
+* declare which jobs deliberately do not gate a merge ([#1893](https://github.com/MustardSeedNetworks/seed/issues/1893)) ([f6beb5f](https://github.com/MustardSeedNetworks/seed/commit/f6beb5fcf9dfb8102e44043cf72a509e64e0cde7))
+
+
+### Miscellaneous
+
+* **ci:** remove dependabot, Renovate covers the same ecosystems ([#1885](https://github.com/MustardSeedNetworks/seed/issues/1885)) ([9ab267e](https://github.com/MustardSeedNetworks/seed/commit/9ab267eee2a6e5671fe87aca96fda4c5517088f8))
+* **deps:** update module github.com/golangci/golangci-lint/v2/cmd/golangci-lint to v2.12.2 ([#1886](https://github.com/MustardSeedNetworks/seed/issues/1886)) ([f064427](https://github.com/MustardSeedNetworks/seed/commit/f064427e15ef621e5936cc9a104c173f55ccf94e))
+* **release:** drop the no-op trigger-release job ([#1891](https://github.com/MustardSeedNetworks/seed/issues/1891)) ([173fee3](https://github.com/MustardSeedNetworks/seed/commit/173fee3a93b254aff16cf820551d9b2c6c3ca338))
+
 ## [0.212.6](https://github.com/MustardSeedNetworks/seed/compare/v0.212.5...v0.212.6) (2026-08-16)
 
 
