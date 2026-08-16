@@ -98,7 +98,9 @@ jobs:
           EOF
           for attempt in 1 2 3; do
             # A timeout kill can leave dpkg half-configured; recover first.
-            [ "$attempt" -gt 1 ] && sudo dpkg --configure -a >/dev/null 2>&1 || true
+            if [ "$attempt" -gt 1 ]; then
+              sudo dpkg --configure -a >/dev/null 2>&1 || true
+            fi
             if timeout -k 15 150 sudo bash -c 'apt-get update && apt-get install -y build-essential autoconf automake libtool'; then
               exit 0
             fi
@@ -242,7 +244,9 @@ jobs:
           EOF
           for attempt in 1 2 3; do
             # A timeout kill can leave dpkg half-configured; recover first.
-            [ "$attempt" -gt 1 ] && dpkg --configure -a >/dev/null 2>&1 || true
+            if [ "$attempt" -gt 1 ]; then
+              dpkg --configure -a >/dev/null 2>&1 || true
+            fi
             if timeout -k 15 150 bash -c 'apt-get update && apt-get install -y libpcap-dev libpcap-dev:arm64'; then
               exit 0
             fi

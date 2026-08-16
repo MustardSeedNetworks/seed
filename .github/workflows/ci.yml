@@ -629,7 +629,9 @@ jobs:
           EOF
           for attempt in 1 2 3; do
             # A timeout kill can leave dpkg half-configured; recover first.
-            [ "$attempt" -gt 1 ] && sudo dpkg --configure -a >/dev/null 2>&1 || true
+            if [ "$attempt" -gt 1 ]; then
+              sudo dpkg --configure -a >/dev/null 2>&1 || true
+            fi
             if timeout -k 15 150 sudo bash -c 'apt-get update && apt-get install -y \
               clang-18 clang-tidy-18 clang-format-18 cppcheck bear gcc-13'; then
               break
@@ -978,7 +980,9 @@ jobs:
           EOF
           for attempt in 1 2 3; do
             # A timeout kill can leave dpkg half-configured; recover first.
-            [ "$attempt" -gt 1 ] && sudo dpkg --configure -a >/dev/null 2>&1 || true
+            if [ "$attempt" -gt 1 ]; then
+              sudo dpkg --configure -a >/dev/null 2>&1 || true
+            fi
             if timeout -k 15 150 sudo bash -c 'apt-get update || true; apt-get install -y gcc-aarch64-linux-gnu linux-libc-dev:arm64 libpcap-dev:arm64 libpcap0.8-dev:arm64 pkg-config'; then
               break
             fi
