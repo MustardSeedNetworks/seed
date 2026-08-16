@@ -43,7 +43,7 @@ runs:
     # discriminates the cache by path so workspace-GOCACHE jobs don't collide
     # with default-path jobs on a shared key.
     - name: Cache Go build and module caches
-      uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+      uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
       with:
         path: |
           ${{ steps.go-cache-paths.outputs.build }}
@@ -55,3 +55,17 @@ runs:
     - name: Download Go modules
       shell: bash
       run: go mod download
+
+    # Save only from the default branch. GitHub scopes caches per ref, so a PR
+    # that saves writes its OWN ~840MB copy that is useless the moment it
+    # merges — 28 of seed's 43 caches were exactly that, pushing the repo past
+    # the 10GB ceiling where entries evict each other and restores fail with
+    # `tar` exit 2. PRs still READ main's cache; they simply stop littering.
+    - name: Save Go cache (default branch only)
+      if: github.ref == format('refs/heads/{0}', github.event.repository.default_branch)
+      uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+      with:
+        path: |
+          ${{ steps.go-cache-paths.outputs.build }}
+          ${{ steps.go-cache-paths.outputs.mod }}
+        key: ${{ runner.os }}-go-${{ steps.go-cache-paths.outputs.tag }}-${{ hashFiles('**/go.sum') }}

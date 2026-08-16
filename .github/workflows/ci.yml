@@ -1117,9 +1117,12 @@ jobs:
       - name: Build backend
         run: make --no-print-directory build-backend-quiet
 
-      - name: Cache Playwright browsers
+      # Restore always; save only from the default branch. Caches are scoped
+      # per ref, so a PR that saves writes its own ~360MB copy that dies on
+      # merge. See the comment in .github/actions/setup-go for the incident.
+      - name: Restore Playwright browsers
         id: playwright-cache
-        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: ~/.cache/ms-playwright
           key: ${{ runner.os }}-playwright-${{ hashFiles('ui/package-lock.json') }}
@@ -1165,6 +1168,13 @@ jobs:
         # Per E2E_CONVENTIONS: chromium (Chrome+Edge) and webkit (Safari).
         # --with-deps omitted — OS deps are installed unconditionally above.
         run: npx playwright install chromium webkit
+
+      - name: Save Playwright browsers (default branch only)
+        if: steps.playwright-cache.outputs.cache-hit != 'true' && github.ref == format('refs/heads/{0}', github.event.repository.default_branch)
+        uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ~/.cache/ms-playwright
+          key: ${{ runner.os }}-playwright-${{ hashFiles('ui/package-lock.json') }}
 
       - name: Run Playwright E2E tests (full suite minus smoke)
         env:
@@ -1237,9 +1247,12 @@ jobs:
       - name: Build backend
         run: make --no-print-directory build-backend-quiet
 
-      - name: Cache Playwright browsers
+      # Restore always; save only from the default branch. Caches are scoped
+      # per ref, so a PR that saves writes its own ~360MB copy that dies on
+      # merge. See the comment in .github/actions/setup-go for the incident.
+      - name: Restore Playwright browsers
         id: playwright-cache
-        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: ~/.cache/ms-playwright
           key: ${{ runner.os }}-playwright-${{ hashFiles('ui/package-lock.json') }}
@@ -1285,6 +1298,13 @@ jobs:
         # Per E2E_CONVENTIONS: chromium (Chrome+Edge) and webkit (Safari).
         # --with-deps omitted — OS deps are installed unconditionally above.
         run: npx playwright install chromium webkit
+
+      - name: Save Playwright browsers (default branch only)
+        if: steps.playwright-cache.outputs.cache-hit != 'true' && github.ref == format('refs/heads/{0}', github.event.repository.default_branch)
+        uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ~/.cache/ms-playwright
+          key: ${{ runner.os }}-playwright-${{ hashFiles('ui/package-lock.json') }}
 
       - name: Run Playwright @smoke tests
         env:
