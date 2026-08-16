@@ -1088,9 +1088,36 @@ jobs:
 
       - name: Install Playwright OS dependencies
         working-directory: ui
+        timeout-minutes: 8
         # apt packages only, not cacheable — runs unconditionally regardless of
-        # whether the browser binaries were restored from the cache above.
-        run: npx playwright install-deps
+        # whether the browser binaries were restored from the cache above. Not
+        # removable: the runner image ships none of webkit's GStreamer/font
+        # stack (181 packages, 114 MB on a clean run).
+        #
+        # A stalled Ubuntu mirror can hang apt for the whole job budget without
+        # running a test (stem job 95068053052), because apt waits forever on a
+        # dead connection by default. Bound apt's own network waits, then retry
+        # the transient case.
+        run: |
+          sudo tee /etc/apt/apt.conf.d/99-ci-timeouts >/dev/null <<'EOF'
+          Acquire::http::Timeout "20";
+          Acquire::https::Timeout "20";
+          Acquire::Retries "2";
+          DPkg::Lock::Timeout "60";
+          EOF
+          for attempt in 1 2 3; do
+            if [ "$attempt" -gt 1 ]; then
+              # A timeout kill can leave dpkg half-configured; recover first.
+              sudo dpkg --configure -a >/dev/null 2>&1 || true
+            fi
+            if timeout -k 15 120 npx playwright install-deps; then
+              exit 0
+            fi
+            echo "playwright install-deps attempt ${attempt} failed; retrying in $((attempt * 10))s..."
+            sleep $((attempt * 10))
+          done
+          echo "::error::playwright install-deps failed after 3 attempts"
+          exit 1
 
       - name: Install Playwright browsers
         if: steps.playwright-cache.outputs.cache-hit != 'true'
@@ -1181,9 +1208,36 @@ jobs:
 
       - name: Install Playwright OS dependencies
         working-directory: ui
+        timeout-minutes: 8
         # apt packages only, not cacheable — runs unconditionally regardless of
-        # whether the browser binaries were restored from the cache above.
-        run: npx playwright install-deps
+        # whether the browser binaries were restored from the cache above. Not
+        # removable: the runner image ships none of webkit's GStreamer/font
+        # stack (181 packages, 114 MB on a clean run).
+        #
+        # A stalled Ubuntu mirror can hang apt for the whole job budget without
+        # running a test (stem job 95068053052), because apt waits forever on a
+        # dead connection by default. Bound apt's own network waits, then retry
+        # the transient case.
+        run: |
+          sudo tee /etc/apt/apt.conf.d/99-ci-timeouts >/dev/null <<'EOF'
+          Acquire::http::Timeout "20";
+          Acquire::https::Timeout "20";
+          Acquire::Retries "2";
+          DPkg::Lock::Timeout "60";
+          EOF
+          for attempt in 1 2 3; do
+            if [ "$attempt" -gt 1 ]; then
+              # A timeout kill can leave dpkg half-configured; recover first.
+              sudo dpkg --configure -a >/dev/null 2>&1 || true
+            fi
+            if timeout -k 15 120 npx playwright install-deps; then
+              exit 0
+            fi
+            echo "playwright install-deps attempt ${attempt} failed; retrying in $((attempt * 10))s..."
+            sleep $((attempt * 10))
+          done
+          echo "::error::playwright install-deps failed after 3 attempts"
+          exit 1
 
       - name: Install Playwright browsers
         if: steps.playwright-cache.outputs.cache-hit != 'true'
