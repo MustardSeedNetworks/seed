@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.212.8](https://github.com/MustardSeedNetworks/seed/compare/v0.212.7...v0.212.8) (2026-08-16)
+
+
+### Bug Fixes
+
+* **release:** skip apt when the build toolchain is already present ([#1881](https://github.com/MustardSeedNetworks/seed/issues/1881)) ([8669da4](https://github.com/MustardSeedNetworks/seed/commit/8669da4db02fc9d6f79207808a4af40153f77fd9))
+
 ## [0.212.7](https://github.com/MustardSeedNetworks/seed/compare/v0.212.6...v0.212.7) (2026-08-16)
 
 
