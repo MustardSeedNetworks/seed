@@ -24,6 +24,10 @@ on:
     branches: [main]
   pull_request:
     branches: [main]
+  # Required for the merge queue: `CI Complete` is a required status check, so
+  # it must report on merge_group events too. Without this the queue would
+  # accept PRs and then wait forever for a check that never fires.
+  merge_group:
   workflow_dispatch:
 
 concurrency:
@@ -47,15 +51,19 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 5
     outputs:
-      backend: ${{ steps.filter.outputs.backend }}
-      frontend: ${{ steps.filter.outputs.frontend }}
-      c: ${{ steps.filter.outputs.c }}
-      docs: ${{ steps.filter.outputs.docs }}
-      workflows: ${{ steps.filter.outputs.workflows }}
+      # merge_group has no PR base to diff against, and the queue exists to test
+      # the merged result — so every filter reports true there and the full
+      # suite runs. Path filtering stays in effect for pull_request/push.
+      backend: ${{ github.event_name == 'merge_group' && 'true' || steps.filter.outputs.backend }}
+      frontend: ${{ github.event_name == 'merge_group' && 'true' || steps.filter.outputs.frontend }}
+      c: ${{ github.event_name == 'merge_group' && 'true' || steps.filter.outputs.c }}
+      docs: ${{ github.event_name == 'merge_group' && 'true' || steps.filter.outputs.docs }}
+      workflows: ${{ github.event_name == 'merge_group' && 'true' || steps.filter.outputs.workflows }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - uses: dorny/paths-filter@ceb8a2b8f2d89434be7ff52d3de7ec3738c5cc9d # v4.0.3
         id: filter
+        if: github.event_name != 'merge_group'
         with:
           filters: |
             backend:
