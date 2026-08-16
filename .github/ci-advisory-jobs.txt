@@ -1,0 +1,10 @@
+# Jobs that deliberately do NOT gate a merge, each with a reason.
+# Format: job-key | why it is advisory
+#
+# check-ci-conformance.py (MustardSeedNetworks/.github) fails on any job that is
+# neither in ci-complete's needs: nor listed here. That is the point: niac's
+# i18n job validated banned vocabulary while being absent from needs:, so it
+# ran, could go red, and blocked nothing. A job is now either a gate, or it is
+# documented here with a reason.
+
+lighthouse | performance budget; informational trend, not a pass/fail contract
