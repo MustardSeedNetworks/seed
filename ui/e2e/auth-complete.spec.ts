@@ -82,24 +82,29 @@ test.describe('Complete Authentication Lifecycle', () => {
       expect(page.url()).not.toBe('http://localhost:5173/');
     });
 
-    test('should clear password field on failed login', async ({ page }) => {
+    // Was 'should clear password field on failed login', asserting
+    // `expect(passwordValue.length >= 0).toBe(true)` — a string's length is
+    // never negative, so it passed unconditionally. It masked the fact that
+    // LoginForm's onSubmit awaits onLogin and never resets the form, i.e. the
+    // password is NOT cleared and the title asserted a contract that does not
+    // exist. Whether it should clear is a product decision (clearing costs a
+    // retype on a typo, and the value is in the DOM either way), so this now
+    // asserts the behaviour the app actually has and that matters: a rejected
+    // login leaves the user unauthenticated with their username intact to
+    // retry.
+    test('failed login keeps the user on the login surface', async ({ page }) => {
       await page.goto('/');
 
-      // Attempt login with invalid credentials
       await page.getByLabel(/username/i).fill(TEST_CREDENTIALS.username);
       await page.getByLabel(/password/i).fill('wrongpassword');
       await page.getByTestId('login-submit').click();
 
-      // Wait for error
-      await expect(page.getByRole('alert')).toBeVisible({
-        timeout: 5000,
-      });
+      await expect(page.getByRole('alert')).toBeVisible({ timeout: 5000 });
 
-      // Verify password field is empty or clearable for security
-      const passwordField = page.getByLabel(/password/i);
-      const passwordValue = await passwordField.inputValue();
-      // Either cleared automatically or user can clear it
-      expect(passwordValue.length >= 0).toBe(true);
+      // Still unauthenticated — no redirect past the login surface.
+      await expect(page.getByTestId('login-title')).toBeVisible();
+      // Username survives so the user can correct just the password.
+      await expect(page.getByLabel(/username/i)).toHaveValue(TEST_CREDENTIALS.username);
     });
   });
 

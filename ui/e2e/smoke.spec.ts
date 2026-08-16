@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { AUTH_STORAGE_STATE, sidebarHelpButton, sidebarSettingsButton } from './helpers/auth';
+import { AUTH_STORAGE_STATE } from './helpers/auth';
 
 const VERSION_KEYS = ['version', 'commit', 'buildTime', 'uiBuildHash'] as const;
 
@@ -31,36 +31,22 @@ test.describe('smoke @ authenticated', { tag: '@smoke' }, () => {
     await expect(page.getByTestId('card').first()).toBeVisible();
   });
 
-  // No top-level theme-toggle smoke test: seed's data-testid="theme-toggle"
-  // lives on AppearanceSettings.tsx — only mounted when the settings
-  // drawer is open. Theme behaviour is covered by theme-and-help.spec.ts
-  // at the @smoke tier (reached through the drawer). Putting a deep-link
-  // assertion at the top-level smoke tier was a mis-port of stem's smoke
-  // shape (stem has header-theme-toggle at the chrome level).
-
-  test('settings drawer opens from sidebar', async ({ page }) => {
-    await page.goto('/');
-    await expect(page.getByTestId('page-header-title')).toBeVisible({ timeout: 10000 });
-    await sidebarSettingsButton(page).click();
-    await expect(page.getByTestId('settings-drawer')).toBeVisible();
-    await page.getByTestId('settings-drawer-close').click();
-    await expect(page.getByTestId('settings-drawer')).toBeHidden();
-  });
-
-  test('help drawer opens from sidebar', async ({ page }) => {
-    await page.goto('/');
-    await expect(page.getByTestId('page-header-title')).toBeVisible({ timeout: 10000 });
-    await sidebarHelpButton(page).click();
-    await expect(page.getByTestId('help-drawer')).toBeVisible();
-    await expect(page.getByTestId('help-drawer-content')).toBeVisible();
-    await page.getByTestId('help-drawer-close').click();
-    await expect(page.getByTestId('help-drawer')).toBeHidden();
-  });
-
-  test('profile dropdown reveals logout control', async ({ page }) => {
-    await page.goto('/');
-    await expect(page.getByTestId('page-header-title')).toBeVisible({ timeout: 10000 });
-    await page.getByTestId('header-profile').click();
-    await expect(page.getByTestId('header-logout')).toBeVisible({ timeout: 5000 });
-  });
+  // Deliberately no drawer, theme or logout tests here. Each was a second
+  // copy of a behaviour already owned elsewhere, and two of them ran in this
+  // very job:
+  //
+  //   settings drawer open/close -> settings.spec.ts opens it in beforeEach
+  //                                 and closes it in its own test
+  //   help drawer open/close     -> theme-and-help.spec.ts, whose describe is
+  //                                 itself tagged @smoke, so its 14 theme and
+  //                                 help tests already run in this job — and
+  //                                 assert role, aria-modal, the TOC and ESC,
+  //                                 which the copy here did not
+  //   profile -> logout          -> auth-complete.spec.ts drives the same
+  //                                 header-profile click as its logout setup
+  //
+  // What stays is what nothing else covers: the build-metadata contract, the
+  // unauthenticated login surface, and that an authenticated dashboard paints.
+  // A smoke tier earns its place by being the fast boot check, not by being a
+  // sample of the full suite.
 });
