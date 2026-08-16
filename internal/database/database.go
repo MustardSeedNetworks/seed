@@ -1,5 +1,4 @@
-package database
-
+// Package database is seed's persistence layer.
 //
 // It handles connection pooling, schema migrations, and provides a clean
 // interface for data persistence operations. Uses modernc.org/sqlite for
@@ -22,6 +21,7 @@ package database
 //	// Use repositories for data access
 //	profiles := db.Profiles()
 //	metrics := db.Metrics()
+package database
 
 import (
 	"context"

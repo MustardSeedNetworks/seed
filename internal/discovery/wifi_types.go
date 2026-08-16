@@ -14,6 +14,7 @@ import "time"
 // WiFiBand represents the WiFi frequency band.
 type WiFiBand string
 
+// Supported Wi-Fi frequency bands.
 const (
 	WiFiBand24GHz WiFiBand = "2.4GHz"
 	WiFiBand5GHz  WiFiBand = "5GHz"
@@ -23,6 +24,7 @@ const (
 // WiFiSecurityType represents WiFi security protocol.
 type WiFiSecurityType string
 
+// Wi-Fi security protocol values, weakest to strongest.
 const (
 	WiFiSecurityOpen WiFiSecurityType = "open"
 	WiFiSecurityWEP  WiFiSecurityType = "wep"
@@ -34,6 +36,7 @@ const (
 // WiFiAuthorizationStatus indicates if a network/device is authorized.
 type WiFiAuthorizationStatus string
 
+// Wi-Fi authorization status values.
 const (
 	WiFiAuthAuthorized   WiFiAuthorizationStatus = "authorized"
 	WiFiAuthUnauthorized WiFiAuthorizationStatus = "unauthorized"

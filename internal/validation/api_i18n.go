@@ -99,9 +99,9 @@ func WriteJSONErrorI18nWithData(
 	}
 }
 
-// ValidateLoginRequestI18n validates a login request and returns field-level errors with i18n keys.
-//
-
+// ValidateLoginRequestI18n is ValidateLoginRequest's i18n counterpart: same
+// checks, but each FieldErrorWithKey carries a translation key instead of a
+// hardcoded English message, for callers that localize the response.
 func ValidateLoginRequestI18n(req *LoginRequest) []FieldErrorWithKey {
 	var errors []FieldErrorWithKey
 
@@ -199,9 +199,9 @@ func ValidateHTTPEndpointI18n(ep *HTTPEndpointRequest) []FieldErrorWithKey {
 	return errors
 }
 
-// ValidatePingTargetI18n validates a ping target with i18n support.
-//
-
+// ValidatePingTargetI18n is ValidatePingTarget's i18n counterpart: same
+// checks, but each FieldErrorWithKey carries a translation key instead of a
+// hardcoded English message, for callers that localize the response.
 func ValidatePingTargetI18n(pt *PingTargetRequest) []FieldErrorWithKey {
 	var errors []FieldErrorWithKey
 

@@ -1,7 +1,4 @@
-package speedtest
-
-//
-// This package wraps the showwin/speedtest-go library to provide internet speed testing
+// Package speedtest wraps the showwin/speedtest-go library to provide internet speed testing
 // with progress tracking and server selection. Tests measure upload/download bandwidth
 // and latency to speedtest.net servers worldwide.
 //
@@ -17,7 +14,7 @@ package speedtest
 //   - Optional manual server selection via server ID
 //   - Real-time progress updates via Status
 //   - Thread-safe concurrent access to status and results
-//   - Cancellable via context.Context
+//   - Cancellable via [context.Context]
 //
 // Performance considerations:
 //   - Tests consume significant bandwidth (multiple MB of data transfer)
@@ -39,6 +36,7 @@ package speedtest
 //	    log.Fatal(err)
 //	}
 //	fmt.Printf("Download: %.2f Mbps, Upload: %.2f Mbps\n", result.Download, result.Upload)
+package speedtest
 
 import (
 	"context"

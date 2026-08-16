@@ -1,3 +1,6 @@
+// Package probemap converts between the legacy health-check endpoint
+// configuration shapes and the probe.Probe rows that are now the store of
+// record for health checks (ADR-0027 P2).
 package probemap
 
 // healthcheckmapping.go converts between the health-check endpoint

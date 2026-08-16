@@ -1,3 +1,6 @@
+// Package resolve turns discovered addresses into device names using mDNS
+// (Apple/Linux), NetBIOS (Windows), and IEEE OUI vendor lookup, so the
+// discovery kernel can label devices without relying on reverse DNS.
 package resolve
 
 // This file implements mDNS/Bonjour name resolution for Apple/Linux device discovery.

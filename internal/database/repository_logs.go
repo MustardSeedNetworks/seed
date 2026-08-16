@@ -97,9 +97,8 @@ type LogListOptions struct {
 	Offset    int       // Pagination offset
 }
 
-// List retrieves log entries matching the criteria.
-//
-
+// List retrieves log entries matching opts (level, layer, component,
+// request ID, time range, message search, limit/offset), newest first.
 func (r *LogRepository) List(ctx context.Context, opts LogListOptions) ([]*LogEntry, error) {
 	query := `
 		SELECT id, timestamp, level, layer, message, component, request_id, session_id, duration_ms, metadata_json, stack

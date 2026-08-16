@@ -66,9 +66,8 @@ func (r *MetricsRepository) RecordBatch(ctx context.Context, metrics []*Metric) 
 	})
 }
 
-// Query retrieves metrics matching the given criteria.
-//
-
+// Query retrieves metrics matching opts (interface, metric type, time
+// range, limit/offset), newest first.
 func (r *MetricsRepository) Query(ctx context.Context, opts MetricQueryOptions) ([]*Metric, error) {
 	query := `
 		SELECT id, interface_name, metric_type, value, unit, timestamp, metadata_json
@@ -173,9 +172,8 @@ func (r *MetricsRepository) GetLatest(
 	return &m, nil
 }
 
-// GetAggregates returns aggregated metrics over a time range.
-//
-
+// GetAggregates computes count/avg/min/max/sum over metrics matching opts'
+// interface, metric type, and time range in a single SQL aggregate query.
 func (r *MetricsRepository) GetAggregates(
 	ctx context.Context,
 	opts MetricAggregateOptions,

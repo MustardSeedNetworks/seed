@@ -13,6 +13,8 @@ import "net"
 // from association/data frames; surface deauth/disassoc for anomaly rules).
 type Kind uint8
 
+// Frame kind values; KindOther is the zero value for frames the decoder
+// doesn't classify further.
 const (
 	KindOther Kind = iota
 	KindBeacon
@@ -82,6 +84,8 @@ func (k Kind) IsManagement() bool {
 // RSN/vendor-WPA information elements and the Privacy capability bit.
 type Security uint8
 
+// Security suite values, weakest to strongest (SecurityUnknown is the zero
+// value for a BSS whose IEs haven't been decoded yet).
 const (
 	SecurityUnknown  Security = iota
 	SecurityOpen              // no encryption
@@ -120,6 +124,8 @@ func (s Security) String() string {
 // generation is a table addition, not a rewrite.
 type Standard uint8
 
+// Standard values, oldest to newest generation (StandardUnknown is the zero
+// value for a BSS whose IEs haven't been decoded yet).
 const (
 	StandardUnknown Standard = iota
 	Standard80211a
@@ -161,6 +167,8 @@ func (s Standard) String() string {
 // Band is the frequency band a channel sits in.
 type Band uint8
 
+// Band values (BandUnknown is the zero value for a channel that hasn't been
+// mapped to a band yet).
 const (
 	BandUnknown Band = iota
 	Band24GHz

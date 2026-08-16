@@ -1,3 +1,8 @@
+// Command verify-release-assets cross-checks a GoReleaser dist/ output
+// against the frozen release-asset manifest: every manifest entry must
+// resolve to exactly one built artifact with a matching checksum, and it
+// writes the verified subjects file that SLSA provenance signing consumes.
+// It exits non-zero on any mismatch, so CI fails before a bad release ships.
 package main
 
 import (

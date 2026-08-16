@@ -1,3 +1,7 @@
+// Package config loads, validates, and persists seed's on-disk configuration.
+// It applies defaults, rejects settings that would start an insecure listener
+// (default credentials, disabled TLS), and guards concurrent access to the
+// in-memory Config via Lock/RLock so API handlers never race on updates.
 package config
 
 // config.go holds the top-level Config struct, its mutex helpers, and the

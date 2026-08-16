@@ -436,9 +436,11 @@ type CollectorResult struct {
 	Error error         `json:"error,omitempty"`
 }
 
-// CollectBatch collects SNMP data from multiple devices concurrently.
-//
-
+// CollectBatch collects SNMP data from multiple devices concurrently, bounded
+// by maxConcurrent in-flight requests (defaulting to 10 when <= 0). It blocks
+// until every IP has a result and returns them in the same order as ips; a
+// per-device failure populates that result's Error rather than aborting the
+// batch.
 func (c *SNMPCollector) CollectBatch(
 	ctx context.Context,
 	ips []string,

@@ -38,8 +38,6 @@ func (h *StreamingHandler) Enabled(ctx context.Context, level slog.Level) bool {
 }
 
 // Handle processes a log record, broadcasting it to clients and passing to the wrapped handler.
-//
-
 func (h *StreamingHandler) Handle(ctx context.Context, r slog.Record) error {
 	// First, let the wrapped handler process the record
 	if err := h.wrapped.Handle(ctx, r); err != nil {

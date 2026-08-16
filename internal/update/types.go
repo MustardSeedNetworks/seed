@@ -67,6 +67,8 @@ type UpdateStatus struct {
 //nolint:revive // Type name stuttering is acceptable for API clarity.
 type UpdateState string
 
+// Update state machine values, in the order an update normally transitions
+// through (StateFailed and StateRolledBack are the two terminal error exits).
 const (
 	StateIdle        UpdateState = "idle"
 	StateChecking    UpdateState = "checking"

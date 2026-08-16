@@ -79,9 +79,8 @@ func (r *DeviceRepository) GetByMAC(ctx context.Context, mac string) (*Device, e
 	return r.scanDevice(row)
 }
 
-// List retrieves all devices matching the criteria.
-//
-
+// List retrieves devices matching opts (active-only, device type, vendor,
+// seen-after, limit/offset), most recently seen first.
 func (r *DeviceRepository) List(ctx context.Context, opts DeviceListOptions) ([]*Device, error) {
 	query := `
 		SELECT id, ip_address, mac_address, hostname, vendor, device_type, os_family,
