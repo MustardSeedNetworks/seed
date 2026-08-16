@@ -615,16 +615,35 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
       - name: Install C23 tools (clang-tidy, cppcheck, bear)
+        timeout-minutes: 6
+        # A stalled Ubuntu mirror can hang apt for the whole job budget without
+        # running a test (stem job 95068053052), because apt waits forever on a
+        # dead connection by default. Bound apt's own network waits, then retry
+        # the transient case.
         run: |
-          sudo apt-get update
-          sudo apt-get install -y \
-            clang-18 \
-            clang-tidy-18 \
-            clang-format-18 \
-            cppcheck \
-            bear \
-            gcc-13
-          
+          sudo tee /etc/apt/apt.conf.d/99-ci-timeouts >/dev/null <<'EOF'
+          Acquire::http::Timeout "20";
+          Acquire::https::Timeout "20";
+          Acquire::Retries "2";
+          DPkg::Lock::Timeout "60";
+          EOF
+          for attempt in 1 2 3; do
+            # A timeout kill can leave dpkg half-configured; recover first.
+            if [ "$attempt" -gt 1 ]; then
+              sudo dpkg --configure -a >/dev/null 2>&1 || true
+            fi
+            if timeout -k 15 150 sudo bash -c 'apt-get update && apt-get install -y \
+              clang-18 clang-tidy-18 clang-format-18 cppcheck bear gcc-13'; then
+              break
+            fi
+            if [ "$attempt" -eq 3 ]; then
+              echo "::error::C23 tools install failed after 3 attempts"
+              exit 1
+            fi
+            echo "C23 tools install attempt ${attempt} failed; retrying in $((attempt * 10))s..."
+            sleep $((attempt * 10))
+          done
+
           # Set clang-18 as default
           sudo update-alternatives --install /usr/bin/clang clang /usr/bin/clang-18 100
           sudo update-alternatives --install /usr/bin/clang-tidy clang-tidy /usr/bin/clang-tidy-18 100
@@ -925,6 +944,11 @@ jobs:
             -o seed-linux-amd64 ./cmd/seed
 
       - name: Install arm64 cross-build dependencies
+        timeout-minutes: 8
+        # A stalled Ubuntu mirror can hang apt for the whole job budget without
+        # running a test (stem job 95068053052), because apt waits forever on a
+        # dead connection by default. Bound apt's own network waits, then retry
+        # the transient case.
         run: |
           sudo dpkg --add-architecture arm64
           sudo rm -f /etc/apt/sources.list.d/ubuntu.sources
@@ -948,8 +972,27 @@ jobs:
           deb [arch=arm64] http://ports.ubuntu.com/ubuntu-ports noble-backports main universe multiverse restricted
           EOF
 
-          sudo apt-get update || true
-          sudo apt-get install -y gcc-aarch64-linux-gnu linux-libc-dev:arm64 libpcap-dev:arm64 libpcap0.8-dev:arm64 pkg-config
+          sudo tee /etc/apt/apt.conf.d/99-ci-timeouts >/dev/null <<'EOF'
+          Acquire::http::Timeout "20";
+          Acquire::https::Timeout "20";
+          Acquire::Retries "2";
+          DPkg::Lock::Timeout "60";
+          EOF
+          for attempt in 1 2 3; do
+            # A timeout kill can leave dpkg half-configured; recover first.
+            if [ "$attempt" -gt 1 ]; then
+              sudo dpkg --configure -a >/dev/null 2>&1 || true
+            fi
+            if timeout -k 15 150 sudo bash -c 'apt-get update || true; apt-get install -y gcc-aarch64-linux-gnu linux-libc-dev:arm64 libpcap-dev:arm64 libpcap0.8-dev:arm64 pkg-config'; then
+              break
+            fi
+            if [ "$attempt" -eq 3 ]; then
+              echo "::error::arm64 cross-build dependency install failed after 3 attempts"
+              exit 1
+            fi
+            echo "arm64 cross-build dependency install attempt ${attempt} failed; retrying in $((attempt * 10))s..."
+            sleep $((attempt * 10))
+          done
 
       - name: Build Go binary (arm64)
         env:
