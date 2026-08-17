@@ -5,6 +5,24 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.212.11](https://github.com/MustardSeedNetworks/seed/compare/v0.212.10...v0.212.11) (2026-08-17)
+
+
+### Tests
+
+* **e2e:** drop duplicated smoke coverage and a test that could not fail ([#1913](https://github.com/MustardSeedNetworks/seed/issues/1913)) ([4f48ce4](https://github.com/MustardSeedNetworks/seed/commit/4f48ce4aa788623be1d95a05c7b93d2266c3c827))
+* **storybook:** gate all passing stories instead of one synthetic story ([#1917](https://github.com/MustardSeedNetworks/seed/issues/1917)) ([a0d2daa](https://github.com/MustardSeedNetworks/seed/commit/a0d2daa11da18f36b24d1d2aea162f025adb1b57))
+
+
+### Continuous Integration
+
+* drop Lighthouse ([#1912](https://github.com/MustardSeedNetworks/seed/issues/1912)) ([bacf0b4](https://github.com/MustardSeedNetworks/seed/commit/bacf0b4cce493032cec14bb90a98dba428d2bdcf))
+
+
+### Miscellaneous
+
+* **deps:** update module github.com/google/go-licenses to v2 ([#1910](https://github.com/MustardSeedNetworks/seed/issues/1910)) ([4968dc5](https://github.com/MustardSeedNetworks/seed/commit/4968dc5eb9683a86d2a2144600eb0f462d01b4c6))
+
 ## [0.212.10](https://github.com/MustardSeedNetworks/seed/compare/v0.212.9...v0.212.10) (2026-08-16)
 
 
