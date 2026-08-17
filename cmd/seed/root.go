@@ -46,7 +46,7 @@ func newCLIState() *cliState {
 A comprehensive network diagnostic tool that provides:`, version.GetVersion()) + `
 
   - Network device discovery and monitoring
-  - WiFi site surveys and heatmaps
+  - WiFi troubleshooting (signal/SNR, neighbor scan, channel utilization)
   - Speed testing and performance analysis
   - DHCP rogue detection
   - Vulnerability scanning

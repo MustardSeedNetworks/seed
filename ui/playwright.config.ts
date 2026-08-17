@@ -10,7 +10,7 @@ import { AUTH_STORAGE_STATE } from './e2e/helpers/auth';
  * - Dashboard card rendering
  * - Settings save/load
  * - Network discovery
- * - WiFi survey
+ * - WiFi troubleshooting
  * - Speed testing
  * - WebSocket connectivity
  *

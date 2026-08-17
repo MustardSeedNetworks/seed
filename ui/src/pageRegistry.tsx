@@ -86,7 +86,7 @@ export const pages: PageConfig[] = [
     path: '/wifi',
     label: 'Wi-Fi',
     title: 'Wi-Fi',
-    description: 'Wi-Fi link, channel survey, and channel-overlap visualisation.',
+    description: 'Wi-Fi link, channel utilization, and channel-overlap visualisation.',
     icon: Wifi,
     component: WifiPage,
   },

@@ -56,7 +56,7 @@ export interface ProfileSettings {
   // ============================================================================
   // 4. WiFi Settings (matches WiFiSettings section - WiFi mode only)
   // ============================================================================
-  /** WiFi settings (interface selection, survey options) */
+  /** WiFi settings (interface selection, signal threshold) */
   wifi?: WiFiSettingsConfig;
 
   // ============================================================================
@@ -138,7 +138,6 @@ export interface CardSettingsConfig {
 
   // WiFi cards
   wifi?: CardOptionConfig;
-  wifiSurvey?: CardOptionConfig;
 
   // Diagnostic/analysis cards
   healthChecks?: CardOptionConfig;
@@ -324,8 +323,6 @@ export interface SpeedtestConfig {
 /** WiFi settings configuration. */
 export interface WiFiSettingsConfig {
   interface?: string;
-  surveyEnabled?: boolean;
-  surveyIntervalMs?: number;
   signalThreshold?: number;
 }
 

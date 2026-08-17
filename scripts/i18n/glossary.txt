@@ -151,7 +151,6 @@ Mustard Seed Networks
 The Seed
 The Stem
 NIAC
-AirMapper
 
 # --- Seed modules
 Roots

@@ -36,7 +36,6 @@ export const LogComponents = {
   DISCOVERY: 'discovery',
   DEVICES: 'devices',
   NETWORK: 'network',
-  SURVEY: 'survey',
   WEBSOCKET: 'websocket',
   SSE: 'sse', // Server-Sent Events (replaces WebSocket)
   SPEEDTEST: 'speedtest',

@@ -338,14 +338,14 @@ export const helpSections: HelpSection[] = [
     ],
   },
   {
-    id: 'wifiSurvey',
-    titleKey: 'sections.wifiSurvey',
+    id: 'wifiTroubleshooting',
+    titleKey: 'sections.wifiTroubleshooting',
     icon: <Signal className={ICON} />,
-    keywords: ['wifi survey', 'site survey', 'channel utilization', 'neighbor', 'snr', 'canopy'],
+    keywords: ['wifi troubleshooting', 'channel utilization', 'neighbor', 'snr', 'canopy'],
     blocks: [
       {
         kind: 'paragraph',
-        text: 'The Wi-Fi Site Survey scans visible wireless networks to help troubleshoot the local wireless environment: neighbor access points, the channels in use, and how busy each channel is. It is a visibility and troubleshooting tool focused on diagnosing wireless problems.',
+        text: 'Wi-Fi troubleshooting scans visible wireless networks to help diagnose the local wireless environment: neighbor access points, the channels in use, and how busy each channel is. It is a visibility and troubleshooting tool, not a survey/planning tool.',
       },
       {
         kind: 'terms',
@@ -867,7 +867,7 @@ export const helpSections: HelpSection[] = [
     id: 'howTo',
     titleKey: 'sections.howTo',
     icon: <Lightbulb className={ICON} />,
-    keywords: ['how to', 'guide', 'diagnose', 'survey', 'health checks', 'walkthrough'],
+    keywords: ['how to', 'guide', 'diagnose', 'health checks', 'walkthrough'],
     blocks: [
       {
         kind: 'paragraph',
@@ -893,7 +893,7 @@ export const helpSections: HelpSection[] = [
           },
           {
             description:
-              'For Wi-Fi, run a site survey to check channel congestion and interference.',
+              'For Wi-Fi, check the channel graph and neighbor AP scan for congestion and interference.',
           },
         ],
       },

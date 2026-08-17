@@ -27,7 +27,6 @@ import enGlossary from '@locales/en/glossary.json';
 import enHelp from '@locales/en/help.json';
 import enSettings from '@locales/en/settings.json';
 import enSetup from '@locales/en/setup.json';
-import enSurvey from '@locales/en/survey.json';
 // Import Spanish locale files
 import esCards from '@locales/es/cards.json';
 import esCommon from '@locales/es/common.json';
@@ -36,7 +35,6 @@ import esGlossary from '@locales/es/glossary.json';
 import esHelp from '@locales/es/help.json';
 import esSettings from '@locales/es/settings.json';
 import esSetup from '@locales/es/setup.json';
-import esSurvey from '@locales/es/survey.json';
 import i18n from 'i18next';
 import LanguageDetector from 'i18next-browser-languagedetector';
 import { initReactI18next } from 'react-i18next';
@@ -62,7 +60,6 @@ export const namespaces = [
   'glossary',
   'help',
   'setup',
-  'survey',
 ] as const;
 
 export type Namespace = (typeof namespaces)[number];
@@ -84,7 +81,6 @@ const resources: { en: Record<string, unknown>; es: Record<string, unknown> } = 
     glossary: enGlossary,
     help: enHelp,
     setup: enSetup,
-    survey: enSurvey,
   },
   es: {
     common: esCommon,
@@ -94,7 +90,6 @@ const resources: { en: Record<string, unknown>; es: Record<string, unknown> } = 
     glossary: esGlossary,
     help: esHelp,
     setup: esSetup,
-    survey: esSurvey,
   },
 };
 

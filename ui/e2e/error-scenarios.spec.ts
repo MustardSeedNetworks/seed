@@ -22,7 +22,7 @@ import { skipSetupWizard, TEST_CREDENTIALS } from './helpers/auth';
  * - Invalid messages
  *
  * Resource Error Scenarios:
- * - Empty states (no devices, surveys, vulnerabilities)
+ * - Empty states (no devices, vulnerabilities)
  * - Backend service unavailable
  *
  * Edge Cases:

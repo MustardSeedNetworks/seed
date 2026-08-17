@@ -29,13 +29,11 @@ import { SystemHealthCard } from '../cards/SystemHealthCard';
 import { WiFiCard } from '../cards/WiFiCard';
 import type { ChannelGraphResponse } from '../cards/WiFiChannelGraph';
 import { WifiChannelGraph } from '../cards/WiFiChannelGraph';
-import { WiFiSurveyCard } from '../cards/WiFiSurveyCard';
 
 interface AppDashboardProps {
   cards: CardState;
   loading: boolean;
   isWifi: boolean;
-  currentInterface: string;
   cardSettings: CardSettings;
   displayOptions: DisplayOptions;
   networkDiscovery: NetworkDiscoveryData | null;
@@ -49,7 +47,6 @@ export function AppDashboard({
   cards,
   loading,
   isWifi,
-  currentInterface,
   cardSettings,
   displayOptions,
   networkDiscovery,
@@ -166,10 +163,6 @@ export function AppDashboard({
               onRegisterTraceHandler={registerTraceHopHandler}
             />
           )}
-
-          {/* WiFi-only: WiFi Survey for heatmaps and site surveys */}
-          {/* Fix #572: Pass current interface to avoid hardcoded "wlan0" */}
-          {isWifi ? <WiFiSurveyCard isWifi={isWifi} currentInterface={currentInterface} /> : null}
 
           {/* WiFi-only: Channel Graph for visualizing channel overlap */}
           {isWifi ? (

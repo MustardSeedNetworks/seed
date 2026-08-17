@@ -24,7 +24,6 @@ import type enGlossary from '@locales/en/glossary.json';
 import type enHelp from '@locales/en/help.json';
 import type enSettings from '@locales/en/settings.json';
 import type enSetup from '@locales/en/setup.json';
-import type enSurvey from '@locales/en/survey.json';
 
 /**
  * Type definitions for each namespace.
@@ -36,7 +35,6 @@ export type ErrorsTranslations = typeof enErrors;
 export type GlossaryTranslations = typeof enGlossary;
 export type HelpTranslations = typeof enHelp;
 export type SetupTranslations = typeof enSetup;
-export type SurveyTranslations = typeof enSurvey;
 
 /**
  * All translations combined.
@@ -49,7 +47,6 @@ export interface Translations {
   glossary: GlossaryTranslations;
   help: HelpTranslations;
   setup: SetupTranslations;
-  survey: SurveyTranslations;
 }
 
 /**
