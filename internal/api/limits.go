@@ -15,14 +15,6 @@ const (
 	// Standard limit for most API endpoints.
 	MaxBodySizeJSON int64 = 256 * 1024
 
-	// MaxBodySizeFloorPlan is for floor plan image uploads (10 MB).
-	// Allows for high-quality floor plan images.
-	MaxBodySizeFloorPlan int64 = 10 * 1024 * 1024
-
-	// MaxBodySizeAirMapper is for AirMapper survey imports (50 MB).
-	// Large limit for importing complete survey data with metadata.
-	MaxBodySizeAirMapper int64 = 50 * 1024 * 1024
-
 	// MaxBodySizeDefault is the default limit for unspecified endpoints (1 MB).
 	// Safe default for general use.
 	MaxBodySizeDefault int64 = 1 * 1024 * 1024

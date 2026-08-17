@@ -25,12 +25,6 @@ const (
 	// MaxFilenameLength is the maximum length of a filename on most filesystems.
 	MaxFilenameLength = 255
 
-	// MaxSurveyIDLength is the maximum length of a survey ID.
-	MaxSurveyIDLength = 64
-
-	// DataURLPartCount is the expected number of parts when splitting a data URL by comma.
-	DataURLPartCount = 2
-
 	// DialerTimeout is the timeout for establishing connections.
 	DialerTimeout = 10 * time.Second
 
@@ -377,74 +371,6 @@ func ValidateFilename(filename, fieldName string) error {
 	// Block dangerous filenames
 	if filename == "." || filename == ".." {
 		return fmt.Errorf("%s is not a valid filename", fieldName)
-	}
-
-	return nil
-}
-
-// ValidateSurveyID validates a survey ID (fixes #695).
-// Survey IDs must be alphanumeric with hyphens/underscores only.
-func ValidateSurveyID(id string) error {
-	if id == "" {
-		return errors.New("survey ID is required")
-	}
-
-	if len(id) > MaxSurveyIDLength {
-		return errors.New("survey ID too long (max 64 characters)")
-	}
-
-	// Check for valid characters
-	for _, r := range id {
-		isValid := (r >= 'a' && r <= 'z') ||
-			(r >= 'A' && r <= 'Z') ||
-			(r >= '0' && r <= '9') ||
-			r == '-' || r == '_'
-		if !isValid {
-			return errors.New(
-				"survey ID contains invalid characters (use only letters, numbers, hyphens, underscores)",
-			)
-		}
-	}
-
-	return nil
-}
-
-// ValidateImageDataURL validates a data URL for image uploads (fixes #695).
-// Ensures it's a valid data URL with an allowed image MIME type.
-func ValidateImageDataURL(dataURL string, maxSizeBytes int) error {
-	if dataURL == "" {
-		return errors.New("image data is required")
-	}
-
-	// Check for data URL prefix
-	if !strings.HasPrefix(dataURL, "data:") {
-		return errors.New("invalid image data format (must be a data URL)")
-	}
-
-	// Extract MIME type
-	parts := strings.SplitN(dataURL, ",", DataURLPartCount)
-	if len(parts) != DataURLPartCount {
-		return errors.New("invalid image data format")
-	}
-
-	// Validate MIME type
-	mimeSection := parts[0]
-	allowedTypes := []string{"image/png", "image/jpeg", "image/jpg", "image/gif", "image/webp"}
-	validType := false
-	for _, allowed := range allowedTypes {
-		if strings.Contains(mimeSection, allowed) {
-			validType = true
-			break
-		}
-	}
-
-	if !validType {
-		return errors.New("unsupported image type (allowed: PNG, JPEG, GIF, WebP)")
-	}
-
-	// Check size (rough estimate: base64 is ~1.33x larger than binary)
-	if len(dataURL) > maxSizeBytes {
-		return fmt.Errorf("image data too large (max %d bytes)", maxSizeBytes)
 	}
 
 	return nil

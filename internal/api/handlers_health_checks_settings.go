@@ -447,12 +447,6 @@ type statusResponse struct {
 	Message string `json:"message"`
 }
 
-// Common JSON status-field values reused across ack-style responses.
-const (
-	statusDeleted     = "deleted"
-	statusSampleAdded = "sample added"
-)
-
 // Common JSON field-name keys reused across many SSE / response payloads.
 const (
 	jsonKeyInterface = "interface"

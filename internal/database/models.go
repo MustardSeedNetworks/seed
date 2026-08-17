@@ -101,24 +101,6 @@ type SpeedTestResult struct {
 	Metadata       string    `json:"metadata,omitempty"`
 }
 
-// SurveySample represents a WiFi survey data point.
-type SurveySample struct {
-	ID           int64     `json:"id"`
-	SurveyID     string    `json:"surveyId"`
-	X            float64   `json:"x"`
-	Y            float64   `json:"y"`
-	SignalDBm    *int      `json:"signalDbm,omitempty"`
-	NoiseDBm     *int      `json:"noiseDbm,omitempty"`
-	SNRDB        *int      `json:"snrDb,omitempty"`
-	Channel      *int      `json:"channel,omitempty"`
-	FrequencyMHz *int      `json:"frequencyMhz,omitempty"`
-	BSSID        string    `json:"bssid,omitempty"`
-	SSID         string    `json:"ssid,omitempty"`
-	Timestamp    time.Time `json:"timestamp"`
-	NetworksJSON string    `json:"networks,omitempty"` // JSON array of visible networks
-	Metadata     string    `json:"metadata,omitempty"`
-}
-
 // DNSResult represents a DNS test result.
 type DNSResult struct {
 	ID             int64     `json:"id"`

@@ -57,7 +57,7 @@ type reg struct {
 // POLICY (RE_ARCHITECTURE_BLUEPRINT.md Phase 2 — flat + self-contained): a DTO
 // belongs here iff it is flat or nests only local, purpose-built transport
 // sub-structs in internal/api. DTOs that put an internal domain type on the
-// wire (discovery.*/dhcp.*/netif.*/logging.*/survey.*/config), carry
+// wire (discovery.*/dhcp.*/netif.*/logging.*/config), carry
 // [json.RawMessage], or self-recurse (a field typed as the DTO itself) are
 // deferred to Phase 3, where they get hand-designed flat transport DTOs — e.g.
 // GatewayResponse's recursive ipv6 field was split out into the flat
@@ -183,16 +183,7 @@ func schemaTargets() []schemaTarget {
 		{&api.LogStatsResponse{}, "log-stats-response.schema.json"},
 		{&api.SNMPv3CredentialResponse{}, "snmpv3-credential-response.schema.json"},
 
-		// Survey (Wi-Fi) request DTOs + profile-import response.
-		{&api.CreateSurveyRequest{}, "create-survey-request.schema.json"},
-		{&api.AddFloorRequest{}, "add-floor-request.schema.json"},
-		{&api.UpdateFloorRequest{}, "update-floor-request.schema.json"},
-		{&api.UpdateFloorPlanRequest{}, "update-floor-plan-request.schema.json"},
-		{&api.SetActiveFloorRequest{}, "set-active-floor-request.schema.json"},
-		{&api.AddFloorSampleRequest{}, "add-floor-sample-request.schema.json"},
-		{&api.AddSampleRequest{}, "add-sample-request.schema.json"},
-		{&api.UpdateSurveySettingsRequest{}, "update-survey-settings-request.schema.json"},
-		{&api.GenerateReportRequest{}, "generate-report-request.schema.json"},
+		// Profile-import response.
 		{&api.ProfileImportResponse{}, "profile-import-response.schema.json"},
 
 		// Settings composers: top-level DTOs whose entire transitive closure is
@@ -222,7 +213,6 @@ func schemaTargets() []schemaTarget {
 		{&api.WiFiDiscoveryAPsResponse{}, "wifi-discovery-aps-response.schema.json"},
 		{&api.WiFiDiscoveryStatsResponse{}, "wifi-discovery-stats-response.schema.json"},
 		{&api.PathResponse{}, "path-response.schema.json"},
-		{&api.UpdateSurveyImportedDataRequest{}, "update-survey-imported-data-request.schema.json"},
 
 		// Profile envelope DTOs. The backend treats the per-profile Config as an
 		// opaque JSON blob (json.RawMessage) — it only ever inspects the

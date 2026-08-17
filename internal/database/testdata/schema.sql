@@ -488,15 +488,6 @@ CREATE INDEX idx_speedtest_results_client ON speedtest_results(client_id);
 -- index: idx_speedtest_timestamp
 CREATE INDEX idx_speedtest_timestamp ON speedtest_results(timestamp);
 
--- index: idx_survey_samples_client
-CREATE INDEX idx_survey_samples_client ON survey_samples(client_id);
-
--- index: idx_survey_samples_coords
-CREATE INDEX idx_survey_samples_coords ON survey_samples(x, y);
-
--- index: idx_survey_samples_survey
-CREATE INDEX idx_survey_samples_survey ON survey_samples(survey_id);
-
 -- index: idx_topology_interfaces_last_seen
 CREATE INDEX idx_topology_interfaces_last_seen ON topology_interfaces(last_seen);
 
@@ -1363,24 +1354,6 @@ CREATE TABLE speedtest_results (
 				jitter_ms REAL,
 				packet_loss REAL,
 				timestamp TEXT NOT NULL,
-				metadata_json TEXT
-			, client_id TEXT NOT NULL DEFAULT 'default' REFERENCES clients(id)) STRICT;
-
--- table: survey_samples
-CREATE TABLE survey_samples (
-				id INTEGER PRIMARY KEY AUTOINCREMENT,
-				survey_id TEXT NOT NULL,
-				x REAL NOT NULL,
-				y REAL NOT NULL,
-				signal_dbm INTEGER,
-				noise_dbm INTEGER,
-				snr_db INTEGER,
-				channel INTEGER,
-				frequency_mhz INTEGER,
-				bssid TEXT,
-				ssid TEXT,
-				timestamp TEXT NOT NULL,
-				networks_json TEXT,
 				metadata_json TEXT
 			, client_id TEXT NOT NULL DEFAULT 'default' REFERENCES clients(id)) STRICT;
 

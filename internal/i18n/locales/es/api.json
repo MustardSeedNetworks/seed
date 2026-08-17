@@ -43,10 +43,6 @@
   "dhcp": {
     "serversCleared": "Lista de servidores detectados limpiada"
   },
-  "survey": {
-    "sampleAdded": "muestra agregada",
-    "floorPlanUpdated": "plano de piso actualizado"
-  },
   "auth": {
     "loggedOut": "sesión cerrada"
   },
