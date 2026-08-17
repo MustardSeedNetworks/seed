@@ -1,0 +1,11 @@
+<!-- Mustard Seed Networks corporate mark. Vendored verbatim from
+     mustardseednetworks.com/public/logo.svg — the canonical asset. Do not
+     redraw it here; update it there and re-copy so the four products and
+     the marketing site cannot drift apart. Its colours are fixed brand
+     values, which is why this is an asset rather than tokenised markup. -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none">
+  <circle cx="32" cy="40" r="14" fill="#d4a017"/>
+  <path d="M32 26C32 16 38 8 48 6C46 16 40 22 32 26Z" fill="#4caf50"/>
+  <path d="M32 26C32 16 26 8 16 6C18 16 24 22 32 26Z" fill="#2d7a3e"/>
+  <circle cx="32" cy="40" r="6" fill="#855c0e"/>
+</svg>

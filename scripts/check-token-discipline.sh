@@ -164,7 +164,7 @@ advise FAMILY_CONST_ON_BRAND \
 # theme/ is where colour values are allowed to exist.
 css_hex=$(grep -rInE '#([0-9a-fA-F]{6}([0-9a-fA-F]{2})?|[0-9a-fA-F]{0,3}[a-fA-F][0-9a-fA-F]{0,3})\b' \
   "$TARGET" --include='*.css' 2>/dev/null \
-  | grep -v "$TARGET/theme/" \
+  | grep -v "$TARGET/theme/" | grep -v "/assets/" \
   | grep -vE ':[0-9]+:\s*(\*|//|/\*)' || true)
 if [ -n "$css_hex" ]; then
   echo "[warn: FAMILY_RAW_HEX_CSS] $(printf '%s\n' "$css_hex" | grep -c .) occurrence(s) — raw hex in CSS outside theme/"
