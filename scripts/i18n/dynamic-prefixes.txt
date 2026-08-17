@@ -221,3 +221,18 @@ api:vulnerabilities.
 # validation.* — form validation message namespace.
 validation:rules.
 validation:fields.
+
+# pages.<route>.* — the page registry (ui/src/pageRegistry.tsx) builds
+# the route table via t(`${i18nKey}.label`) / .title / .description /
+# .eyebrow, so the static analyzer never sees these as literal keys.
+pages:alerts.
+pages:link.
+pages:logs.
+pages:network.
+pages:path.
+pages:performance.
+pages:pollingTargets.
+pages:reports.
+pages:security.
+pages:topology.
+pages:wifi.

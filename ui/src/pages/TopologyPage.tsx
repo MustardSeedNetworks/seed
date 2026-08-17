@@ -10,31 +10,19 @@
  * is in-page state to avoid pushing a new route per click).
  */
 
-import { Activity, Cable, Network, RefreshCw } from 'lucide-react';
+import { Activity, Cable, RefreshCw } from 'lucide-react';
 import { type JSX, useState } from 'react';
 import { useTopologyNode, useTopologyNodes } from '../hooks/useTopology';
 import type { TopologyInterface, TopologyLink, TopologyNode } from '../types/topology';
-import { Breadcrumbs } from '../ui/Breadcrumbs';
-import { PageHeader } from '../ui/PageHeader';
 
 export function TopologyPage(): JSX.Element {
   const [selectedID, setSelectedID] = useState<string>('');
 
   return (
-    <section className="stack-xl">
-      <Breadcrumbs />
-      <PageHeader
-        icon={Network}
-        title="Topology"
-        description="Devices polled and edges learned from LLDP/CDP/FDP neighbor discovery."
-        iconColorClass="text-module-security"
-      />
-
-      <div className="grid gap-4 lg:grid-cols-[1fr_2fr]">
-        <NodeList selectedID={selectedID} onSelect={setSelectedID} />
-        <NodeDetail id={selectedID} onClear={(): void => setSelectedID('')} />
-      </div>
-    </section>
+    <div className="grid gap-4 lg:grid-cols-[1fr_2fr]">
+      <NodeList selectedID={selectedID} onSelect={setSelectedID} />
+      <NodeDetail id={selectedID} onClear={(): void => setSelectedID('')} />
+    </div>
   );
 }
 

@@ -17,12 +17,10 @@
  *      acts on alerts as they arrive.
  */
 
-import { Plus, Server, X } from 'lucide-react';
+import { Plus, X } from 'lucide-react';
 import { type FormEvent, type JSX, useState } from 'react';
 import { usePollingTargets } from '../hooks/usePollingTargets';
 import type { PollingTarget, PollingTargetInput } from '../types/polling';
-import { Breadcrumbs } from '../ui/Breadcrumbs';
-import { PageHeader } from '../ui/PageHeader';
 
 export function PollingTargetsPage(): JSX.Element {
   const { targets, loading, error, create, update, remove } = usePollingTargets();
@@ -30,15 +28,7 @@ export function PollingTargetsPage(): JSX.Element {
   const [showCreate, setShowCreate] = useState<boolean>(false);
 
   return (
-    <section className="stack-xl">
-      <Breadcrumbs />
-      <PageHeader
-        icon={Server}
-        title="Polling targets"
-        description="SNMP-polled devices. New targets pick up the default collector chain and start polling on the next tick."
-        iconColorClass="text-module-security"
-      />
-
+    <>
       {error ? (
         <div className="rounded-md border border-status-error/40 bg-status-error/10 p-3 text-sm text-status-error">
           {error}
@@ -92,7 +82,7 @@ export function PollingTargetsPage(): JSX.Element {
           }}
         />
       ) : null}
-    </section>
+    </>
   );
 }
 

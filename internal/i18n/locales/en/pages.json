@@ -1,0 +1,58 @@
+{
+  "alerts": {
+    "description": "Events emitted by the listener + observation pipelines.",
+    "label": "Alerts",
+    "title": "Alerts"
+  },
+  "link": {
+    "description": "Physical link state, cable diagnostics, and Wi-Fi association for the active interface.",
+    "label": "Link",
+    "title": "Link"
+  },
+  "logs": {
+    "description": "Live log stream and system health for the daemon.",
+    "label": "Logs",
+    "title": "Logs"
+  },
+  "network": {
+    "description": "DHCP, gateway, DNS, public IP, and upstream switch detection.",
+    "eyebrow": "Diagnostics",
+    "label": "Network",
+    "title": "Network"
+  },
+  "path": {
+    "description": "L2/L3 path discovery, traceroute hops, and on-link device discovery.",
+    "label": "Path Analysis",
+    "title": "Path Analysis"
+  },
+  "performance": {
+    "description": "Active throughput tests (speedtest, iperf3) and health-check probes.",
+    "label": "Performance",
+    "title": "Performance"
+  },
+  "pollingTargets": {
+    "description": "SNMP-polled devices. New targets pick up the default collector chain and start polling on the next tick.",
+    "label": "Polling targets",
+    "title": "Polling targets"
+  },
+  "reports": {
+    "description": "Aggregated SLA dashboard, compliance tracking, and historical reporting.",
+    "label": "Reports",
+    "title": "Reports"
+  },
+  "security": {
+    "description": "Guest network isolation audit and security posture checks.",
+    "label": "Security",
+    "title": "Security"
+  },
+  "topology": {
+    "description": "Devices polled and edges learned from LLDP/CDP/FDP neighbor discovery.",
+    "label": "Topology",
+    "title": "Topology"
+  },
+  "wifi": {
+    "description": "Wireless link, channel survey, and channel-overlap visualisation.",
+    "label": "Wi-Fi",
+    "title": "Wi-Fi"
+  }
+}

@@ -9,12 +9,10 @@
  * reflect whoever clicked the button.
  */
 
-import { Bell, Check, CheckCircle2 } from 'lucide-react';
+import { Check, CheckCircle2 } from 'lucide-react';
 import type { JSX } from 'react';
 import { useAlerts } from '../hooks/useAlerts';
 import type { Alert } from '../types/alerts';
-import { Breadcrumbs } from '../ui/Breadcrumbs';
-import { PageHeader } from '../ui/PageHeader';
 
 export function AlertsPage(): JSX.Element {
   const { alerts, loading, error, filter, setFilter, acknowledge, resolve } = useAlerts({
@@ -22,15 +20,7 @@ export function AlertsPage(): JSX.Element {
   });
 
   return (
-    <section className="stack-xl">
-      <Breadcrumbs />
-      <PageHeader
-        icon={Bell}
-        title="Alerts"
-        description="Events emitted by the listener + observation pipelines."
-        iconColorClass="text-module-security"
-      />
-
+    <>
       <FilterBar filter={filter} onChange={setFilter} count={alerts.length} loading={loading} />
 
       {error ? (
@@ -48,7 +38,7 @@ export function AlertsPage(): JSX.Element {
           void resolve(id);
         }}
       />
-    </section>
+    </>
   );
 }
 

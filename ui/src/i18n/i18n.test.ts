@@ -29,6 +29,7 @@ describe('i18n configuration', () => {
       'help',
       'setup',
       'survey',
+      'pages',
     ]);
   });
 

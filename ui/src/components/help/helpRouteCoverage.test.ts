@@ -8,8 +8,10 @@
  * The route→section map is explicit (not a heuristic) so renames and additions
  * are visible in PR review rather than buried in a regex.
  */
+import { renderHook } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
-import { pages } from '../../pageRegistry';
+import '../../i18n'; // initialise i18next before hooks run
+import { usePages } from '../../pageRegistry';
 import { helpSections } from './helpDrawerContent';
 
 const ROUTE_TO_HELP: Record<string, string> = {
@@ -27,6 +29,8 @@ const ROUTE_TO_HELP: Record<string, string> = {
 };
 
 describe('GUI help — route coverage', () => {
+  const { result } = renderHook(() => usePages());
+  const pages = result.current;
   const sectionIds = new Set(helpSections.map((s) => s.id));
 
   it('every route in pageRegistry has an explicit help section mapping', () => {

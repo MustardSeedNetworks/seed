@@ -1,0 +1,58 @@
+{
+  "alerts": {
+    "description": "Eventos emitidos por los procesos de escucha y observación.",
+    "label": "Alertas",
+    "title": "Alertas"
+  },
+  "link": {
+    "description": "Estado del enlace físico, diagnóstico de cableado y asociación Wi-Fi de la interfaz activa.",
+    "label": "Enlace",
+    "title": "Enlace"
+  },
+  "logs": {
+    "description": "Flujo de registros en vivo y estado del sistema del daemon.",
+    "label": "Registros",
+    "title": "Registros"
+  },
+  "network": {
+    "description": "DHCP, puerta de enlace, DNS, IP pública y detección del switch ascendente.",
+    "eyebrow": "Diagnóstico",
+    "label": "Red",
+    "title": "Red"
+  },
+  "path": {
+    "description": "Descubrimiento de rutas L2/L3, saltos de traceroute y descubrimiento de dispositivos en el enlace.",
+    "label": "Análisis de ruta",
+    "title": "Análisis de ruta"
+  },
+  "performance": {
+    "description": "Pruebas activas de rendimiento (speedtest, iperf3) y sondas de estado.",
+    "label": "Rendimiento",
+    "title": "Rendimiento"
+  },
+  "pollingTargets": {
+    "description": "Dispositivos sondeados por SNMP. Los destinos nuevos adoptan la cadena de colectores predeterminada y comienzan a sondear en el siguiente ciclo.",
+    "label": "Destinos de sondeo",
+    "title": "Destinos de sondeo"
+  },
+  "reports": {
+    "description": "Panel de SLA agregado, seguimiento de cumplimiento e informes históricos.",
+    "label": "Informes",
+    "title": "Informes"
+  },
+  "security": {
+    "description": "Auditoría de aislamiento de la red de invitados y comprobaciones de postura de seguridad.",
+    "label": "Seguridad",
+    "title": "Seguridad"
+  },
+  "topology": {
+    "description": "Dispositivos sondeados y enlaces aprendidos mediante el descubrimiento de vecinos LLDP/CDP/FDP.",
+    "label": "Topología",
+    "title": "Topología"
+  },
+  "wifi": {
+    "description": "Enlace inalámbrico, sondeo de canales y visualización de solapamiento de canales.",
+    "label": "Wi-Fi",
+    "title": "Wi-Fi"
+  }
+}
