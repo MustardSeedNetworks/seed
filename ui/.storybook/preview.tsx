@@ -4,6 +4,8 @@
  * Global decorators that wrap all stories with required providers:
  * - I18nextProvider: For translation support (useTranslation)
  * - ProfileProvider: For profile and settings context (useSettings, useProfileContext)
+ * - RoleProvider: For the active stem role (useRole)
+ * - LicenseProvider: For tier gating (useLicense)
  * - Theme wrapper: For dark/light mode support
  *
  * This ensures all components work correctly in isolation without
@@ -15,7 +17,9 @@ import type { Preview, ReactRenderer } from '@storybook/react-vite';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { type JSX, type ReactNode, Suspense, useEffect, useState } from 'react';
 import { I18nextProvider } from 'react-i18next';
+import { LicenseProvider } from '../src/contexts/LicenseContext';
 import { ProfileProvider } from '../src/contexts/profileContext';
+import { RoleProvider } from '../src/contexts/RoleContext';
 import i18n from '../src/i18n';
 import '../src/index.css';
 
@@ -68,7 +72,11 @@ function StoryProviders({ children, profile }: { children: ReactNode; profile: b
     <I18nextProvider i18n={i18n}>
       {profile ? (
         <QueryClientProvider client={queryClient}>
-          <ProfileProvider>{content}</ProfileProvider>
+          <ProfileProvider>
+            <RoleProvider>
+              <LicenseProvider>{content}</LicenseProvider>
+            </RoleProvider>
+          </ProfileProvider>
         </QueryClientProvider>
       ) : (
         content
