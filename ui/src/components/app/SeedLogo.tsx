@@ -38,7 +38,11 @@ export function SeedLogo({
     return (
       <div
         className={cn(
-          'rounded-lg bg-gradient-to-br from-brand-primary to-brand-accent flex-center',
+          // Family chip shape: flat brand-primary at 11px, matching the ST and
+          // NI monogram chips. Seed keeps its glyph rather than taking a two
+          // letter monogram — it has a canonical mark and the monogram rule
+          // exists to stop single initials, not to replace real ones.
+          'rounded-[11px] bg-brand-primary flex-center',
           badgeClassName,
         )}
       >
@@ -46,7 +50,7 @@ export function SeedLogo({
           viewBox="0 0 24 24"
           fill="currentColor"
           aria-hidden="true"
-          className={cn('text-text-inverse', glyphClassName)}
+          className={cn('text-on-brand', glyphClassName)}
         >
           <path d={SEED_GLYPH_PATH} />
         </svg>
