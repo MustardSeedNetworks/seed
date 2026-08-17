@@ -66,9 +66,15 @@ func (c *LLDPCapture) Start() error {
 		return nil
 	}
 
-	// LLDP frames carry EtherType 0x88cc.
+	// LLDP frames carry EtherType 0x88cc. On a trunk that type field sits behind
+	// an 802.1Q tag, where `ether proto` — a bare load at offset 12 — cannot see
+	// it, so the second branch matches the tagged form. The untagged branch comes
+	// first because the `vlan` keyword shifts the offsets of everything after it.
+	// CDP and EDP need no equivalent: they filter on destination MAC, which a tag
+	// does not move.
 	handle, linkType, err := openProtocolCapture(
-		c.opener, c.interfaceName, pcapSnapshotLengthLLDP, "ether proto 0x88cc",
+		c.opener, c.interfaceName, pcapSnapshotLengthLLDP,
+		"ether proto 0x88cc or (vlan and ether proto 0x88cc)",
 	)
 	if err != nil {
 		c.mu.Unlock()
