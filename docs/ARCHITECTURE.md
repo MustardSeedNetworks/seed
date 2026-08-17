@@ -60,9 +60,9 @@
 │  └─────────────────────────────────────────┘   │   │   │  │ RFC MIB Support                  │  │   │
 │                                                 │   │   │  └──────────────────────────────────┘  │   │
 │  ┌─────────────────────────────────────────┐   │   │   └─────────────────────────────────────────┘   │
-│  │         CANOPY (WiFi Planning)          │   │   │                                                 │
+│  │      CANOPY (WiFi Troubleshooting)      │   │   │                                                 │
 │  │  ┌──────────┐ ┌──────────┐ ┌──────────┐ │   │   │   ┌─────────────────────────────────────────┐   │
-│  │  │ WiFi    │ │ Scanner  │ │ Survey   │ │   │   │   │            HEALTH                       │   │
+│  │  │ WiFi    │ │ Scanner  │ │ Neighbor │ │   │   │   │            HEALTH                       │   │
 │  │  │ Manager │ │          │ │ Manager  │ │   │   │   │  ┌──────────────────────────────────┐  │   │
 │  │  └──────────┘ └──────────┘ └──────────┘ │   │   │   │  │ SLA Tracker, Anomaly Detector   │  │   │
 │  └─────────────────────────────────────────┘   │   │   │  │ Dependency Manager, Scoring     │  │   │
@@ -106,7 +106,7 @@
 | Module | Purpose | Color |
 |--------|---------|-------|
 | **Roots** | Path analysis (traceroute, public IP) | Amber #b45309 |
-| **Canopy** | Wi-Fi planning (surveys, channel analysis) | Green #2d7a3e |
+| **Canopy** | Wi-Fi troubleshooting (neighbor scan, channel analysis) | Green #2d7a3e |
 | **Shell** | Security posture (discovery, vulnerabilities) | Orange #ea580c |
 | **Sap** | Live telemetry (DNS, DHCP, speed tests) | Cyan #0891b2 |
 | **Harvest** | Reporting (scheduled reports, export) | Gold #d4a017 |

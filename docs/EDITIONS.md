@@ -28,7 +28,7 @@ This document defines the **two hardware/software profiles** Seed ships under, t
 | Capability | Lite | Pro |
 |------------|:----:|:---:|
 | Core diagnostics (link, DHCP, DNS, gateway, basic perf) | ✓ | ✓ |
-| Wi-Fi survey | ✓ | ✓ |
+| Wi-Fi troubleshooting (signal/SNR, neighbor scan, channel utilization) | ✓ | ✓ |
 | iperf3 client + bundled server | ✓ | ✓ (heavier presets) |
 | Headless onboarding (AP mode, captive portal) | ✓ | — |
 | Continuous monitoring + alerting | — | ✓ |
@@ -134,7 +134,7 @@ Wire into existing settings drawer under a new "License" section.
 ## 5. UX Considerations
 
 - **Minimum supported width:** 480px (Lite portable case — phone landscape). Comfortable target: 768px+.
-- **Headless first:** the Setup Wizard, Survey, and Settings drawer must work without a mouse — Lite users typically reach the box from a phone/tablet over the AP-mode SSID.
+- **Headless first:** the Setup Wizard and Settings drawer must work without a mouse — Lite users typically reach the box from a phone/tablet over the AP-mode SSID.
 - **Settings drawer focus bug:** tracked separately under #230; do not block packaging on it.
 
 ---
