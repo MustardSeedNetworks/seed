@@ -1,9 +1,16 @@
-<!-- Mustard Seed Networks corporate mark. Vendored verbatim from
-     mustardseednetworks.com/public/logo.svg — the canonical asset. Do not
-     redraw it here; update it there and re-copy so the four products and
-     the marketing site cannot drift apart. Its colours are fixed brand
-     values, which is why this is an asset rather than tokenised markup. -->
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none">
+<!-- Mustard Seed Networks corporate mark. The geometry is the canonical asset
+     from mustardseednetworks.com/public/logo.svg; do not redraw it here, update
+     it there and re-copy so the four products and the marketing site cannot
+     drift apart. Its colours are fixed brand values, which is why this is an
+     asset rather than tokenised markup.
+
+     One deliberate difference from the source: a <title>. The source has none,
+     which fails the a11y lint that every product runs. MsnMark renders this
+     decoratively (aria-hidden, empty alt) because the wordmark beside it
+     carries the meaning, but the asset should still describe itself. Worth
+     pushing back to the marketing site rather than leaving the two to diverge. -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none" role="img" aria-labelledby="msn-logo-title">
+  <title id="msn-logo-title">Mustard Seed Networks</title>
   <circle cx="32" cy="40" r="14" fill="#d4a017"/>
   <path d="M32 26C32 16 38 8 48 6C46 16 40 22 32 26Z" fill="#4caf50"/>
   <path d="M32 26C32 16 26 8 16 6C18 16 24 22 32 26Z" fill="#2d7a3e"/>
