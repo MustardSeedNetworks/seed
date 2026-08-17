@@ -33,6 +33,10 @@ type CDPNeighbor struct {
 	TTL               int       `json:"ttl"`
 	LastSeen          time.Time `json:"lastSeen"`
 	SourceMAC         string    `json:"sourceMAC"`
+	// ObservedVLAN is the 802.1Q VLAN the advertisement arrived on, or
+	// VLANUntagged when the frame carried no tag. On a trunk port this is the
+	// only way to tell which VLAN a neighbour advertises into.
+	ObservedVLAN uint16 `json:"observedVlan,omitempty"`
 }
 
 // CDPCapture handles CDP frame capture on an interface.
@@ -126,23 +130,23 @@ func (c *CDPCapture) captureLoop(ctx context.Context, handle capture.Handle, lin
 		return
 	}
 
-	packetSource := gopacket.NewPacketSource(handle, linkType)
+	packets := readTaggedPackets(handle, linkType)
 
 	for {
 		select {
 		case <-ctx.Done():
 			return
-		case packet, ok := <-packetSource.Packets():
+		case tp, ok := <-packets:
 			if !ok {
 				return
 			}
-			c.processPacket(packet)
+			c.processPacket(tp.Packet, tp.VLAN)
 		}
 	}
 }
 
 // processPacket extracts CDP information from a captured packet.
-func (c *CDPCapture) processPacket(packet gopacket.Packet) {
+func (c *CDPCapture) processPacket(packet gopacket.Packet, vlan uint16) {
 	// Check for CDP layer
 	cdpLayer := packet.Layer(layers.LayerTypeCiscoDiscovery)
 	if cdpLayer == nil {
@@ -164,6 +168,7 @@ func (c *CDPCapture) processPacket(packet gopacket.Packet) {
 	if eth, ethOK := ethLayer.(*layers.Ethernet); ethOK {
 		neighbor.SourceMAC = eth.SrcMAC.String()
 	}
+	neighbor.ObservedVLAN = vlan
 
 	// Parse CDP TLVs from the Info layer
 	populateCDPInfoFields(packet, neighbor)

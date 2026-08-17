@@ -31,6 +31,10 @@ type LLDPNeighbor struct {
 	LastSeen           time.Time         `json:"lastSeen"`
 	SourceMAC          string            `json:"sourceMAC"`
 	CustomTLVs         map[string]string `json:"customTLVs,omitempty"`
+	// ObservedVLAN is the 802.1Q VLAN the advertisement arrived on, or
+	// VLANUntagged when the frame carried no tag. On a trunk port this is the
+	// only way to tell which VLAN a neighbour advertises into.
+	ObservedVLAN uint16 `json:"observedVlan,omitempty"`
 }
 
 // LLDPCapture handles LLDP frame capture on an interface.
@@ -130,23 +134,23 @@ func (c *LLDPCapture) captureLoop(ctx context.Context, handle capture.Handle, li
 		return
 	}
 
-	packetSource := gopacket.NewPacketSource(handle, linkType)
+	packets := readTaggedPackets(handle, linkType)
 
 	for {
 		select {
 		case <-ctx.Done():
 			return
-		case packet, ok := <-packetSource.Packets():
+		case tp, ok := <-packets:
 			if !ok {
 				return
 			}
-			c.processPacket(packet)
+			c.processPacket(tp.Packet, tp.VLAN)
 		}
 	}
 }
 
 // processPacket extracts LLDP information from a captured packet.
-func (c *LLDPCapture) processPacket(packet gopacket.Packet) {
+func (c *LLDPCapture) processPacket(packet gopacket.Packet, vlan uint16) {
 	lldpLayer := packet.Layer(layers.LayerTypeLinkLayerDiscovery)
 	if lldpLayer == nil {
 		return
@@ -167,6 +171,7 @@ func (c *LLDPCapture) processPacket(packet gopacket.Packet) {
 	if eth, ethOK := ethLayer.(*layers.Ethernet); ethOK {
 		neighbor.SourceMAC = eth.SrcMAC.String()
 	}
+	neighbor.ObservedVLAN = vlan
 
 	// Parse Chassis ID
 	neighbor.ChassisID = string(lldp.ChassisID.ID)

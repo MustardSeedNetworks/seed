@@ -16,40 +16,73 @@ const dot1qTagLength = 4
 // ethernetTypeOffset is where the type field sits in an untagged Ethernet frame.
 const ethernetTypeOffset = 12
 
-// vlanStripper removes a single 802.1Q tag from each Ethernet frame before the
-// decoder sees it.
+// dot1qVLANMask selects the 12-bit VLAN ID out of the TCI, discarding the
+// 3-bit priority and the drop-eligible flag above it.
+const dot1qVLANMask = 0x0FFF
+
+// VLANUntagged is the ObservedVLAN of a neighbour heard on an untagged frame.
+// 0 is not a usable VLAN ID (802.1Q reserves it for priority tagging), so it
+// doubles as "no tag" without needing a second field.
+const VLANUntagged = 0
+
+// taggedPacket is a decoded frame plus the VLAN it arrived on.
+type taggedPacket struct {
+	Packet gopacket.Packet
+	VLAN   uint16
+}
+
+// stripDot1Q removes a single 802.1Q tag and reports the VLAN it carried.
 //
 // gopacket's Dot1Q layer passes its inner type field straight to
 // EthernetType.LayerType(). The Ethernet layer treats a value below 0x0600 as an
 // 802.3 length and continues into LLC, but Dot1Q has no such branch, so a tagged
 // frame carrying LLC/SNAP — which is how CDP and EDP are framed — stops at Dot1Q
 // with its payload undecoded. Removing the tag restores the untagged layout the
-// Ethernet decoder already handles correctly, and keeps the source address that
-// the neighbour records report.
+// Ethernet decoder already handles, and keeps the source address the neighbour
+// records report.
 //
 // Only one tag is removed. QinQ (0x88a8, 0x9100) is out of scope: no product
-// surface consumes a second tag, and the lab trunk carries single tags only.
-type vlanStripper struct {
-	capture.Handle
-}
-
-func (s vlanStripper) ReadPacketData() ([]byte, gopacket.CaptureInfo, error) {
-	data, info, err := s.Handle.ReadPacketData()
-	if err != nil {
-		return data, info, err
-	}
-
+// surface consumes a second tag.
+func stripDot1Q(data []byte) ([]byte, uint16) {
 	if !isDot1QTagged(data) {
-		return data, info, nil
+		return data, VLANUntagged
 	}
+
+	vlan := (uint16(data[ethernetTypeOffset+2])<<8 | uint16(data[ethernetTypeOffset+3])) & dot1qVLANMask
 
 	stripped := make([]byte, 0, len(data)-dot1qTagLength)
 	stripped = append(stripped, data[:ethernetTypeOffset]...)
 	stripped = append(stripped, data[ethernetTypeOffset+dot1qTagLength:]...)
+	return stripped, vlan
+}
 
-	info.CaptureLength -= dot1qTagLength
-	info.Length -= dot1qTagLength
-	return stripped, info, nil
+// readTaggedPackets decodes frames off handle until it errors, forwarding each
+// with the VLAN it arrived on.
+//
+// This replaces gopacket.PacketSource because the tag has to be read and removed
+// in the same step that decodes the frame — a PacketSource would hand back a
+// packet with the VLAN already discarded, and pairing them afterwards would race.
+// The channel closes when the handle does, which is what Stop relies on.
+func readTaggedPackets(handle capture.Handle, linkType layers.LinkType) <-chan taggedPacket {
+	out := make(chan taggedPacket)
+	go func() {
+		defer close(out)
+		for {
+			data, _, err := handle.ReadPacketData()
+			if err != nil {
+				return
+			}
+			frame, vlan := data, uint16(VLANUntagged)
+			if linkType == layers.LinkTypeEthernet {
+				frame, vlan = stripDot1Q(data)
+			}
+			out <- taggedPacket{
+				Packet: gopacket.NewPacket(frame, linkType, gopacket.Default),
+				VLAN:   vlan,
+			}
+		}
+	}()
+	return out
 }
 
 // isDot1QTagged reports whether data is an Ethernet frame long enough to carry a
@@ -83,9 +116,5 @@ func openProtocolCapture(
 		return nil, 0, fmt.Errorf("failed to set BPF filter: %w", filterErr)
 	}
 
-	linkType := handle.LinkType()
-	if linkType == layers.LinkTypeEthernet {
-		return vlanStripper{Handle: handle}, linkType, nil
-	}
-	return handle, linkType, nil
+	return handle, handle.LinkType(), nil
 }
