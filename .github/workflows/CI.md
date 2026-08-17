@@ -29,7 +29,6 @@ without adding it to `ci-complete`'s `needs:` list makes that job advisory.
 | `build`         | Build verification       | Multi-arch binaries with full ldflags, UIBuildHash verified            |
 | `e2e`           | Browser tests            | Playwright, chromium + webkit, 2 shards each                           |
 | `e2e-smoke`     | Smoke tests              | Fast critical-path Playwright run                                      |
-| `lighthouse`    | Frontend performance     | Lighthouse budgets                                                     |
 | `ci-complete`   | Aggregate gate           | The required status check                                              |
 
 ### Other Workflows
@@ -54,7 +53,7 @@ without adding it to `ci-complete`'s `needs:` list makes that job advisory.
 
 `build-ui` runs the Vite build once and publishes `internal/api/ui/` as an
 artifact. Jobs that need embedded assets — `backend`, `race`, `build`, `e2e`,
-`e2e-smoke` and `lighthouse` — download it rather than rebuilding.
+`e2e-smoke` — download it rather than rebuilding.
 
 `frontend` does not run the Vite build at all; it typechecks, lints and unit
 tests. It still declares `needs: build-ui` so a broken build fails the pipeline
