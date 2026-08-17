@@ -12,6 +12,7 @@ package orchestrator
 
 import (
 	"errors"
+	"fmt"
 	"log/slog"
 	"time"
 
@@ -40,6 +41,12 @@ type Config struct {
 	ClientFactory snmp.ClientFactory
 	Logger        *slog.Logger
 	Now           func() time.Time
+
+	// Credentials and Decrypter resolve each target's stored secrets at poll
+	// time. Both are required: a poller without them cannot authenticate, and
+	// polling unauthenticated is a security failure rather than a degraded mode.
+	Credentials snmp.CredentialStore
+	Decrypter   snmp.SecretDecrypter
 }
 
 // Build returns a *snmp.Poller with all eleven default collectors
@@ -61,6 +68,12 @@ func Build(cfg Config) (*snmp.Poller, error) {
 	if cfg.ClientFactory == nil {
 		return nil, errors.New("orchestrator: ClientFactory required")
 	}
+	if cfg.Credentials == nil {
+		return nil, errors.New("orchestrator: Credentials required")
+	}
+	if cfg.Decrypter == nil {
+		return nil, errors.New("orchestrator: Decrypter required")
+	}
 
 	logger := cfg.Logger
 	if logger == nil {
@@ -73,6 +86,12 @@ func Build(cfg Config) (*snmp.Poller, error) {
 
 	persistSink := sink.New(cfg.Observations, logger, now)
 	poller := snmp.NewPoller(cfg.Targets, cfg.Scheduler, logger)
+
+	resolver, err := snmp.NewCredentialResolver(cfg.Credentials, cfg.Decrypter)
+	if err != nil {
+		return nil, fmt.Errorf("orchestrator: %w", err)
+	}
+	poller.SetCredentialResolver(resolver)
 
 	// Register every collector. cdp + fdp share a Publisher (CDP),
 	// distinguished downstream by Observation.TablePrefix.

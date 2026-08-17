@@ -81,6 +81,28 @@ func TestBuild_AllRequiredFieldsValidated(t *testing.T) {
 				Scheduler:    sched,
 			},
 		},
+		{
+			// A poller without these cannot authenticate, so Build must refuse
+			// rather than produce one that polls unauthenticated.
+			"missing Credentials",
+			orchestrator.Config{
+				Targets:       db.PollingTargets(),
+				Observations:  db.SNMPObservations(),
+				Scheduler:     sched,
+				ClientFactory: nopClientFactory,
+				Decrypter:     nopDecrypter{},
+			},
+		},
+		{
+			"missing Decrypter",
+			orchestrator.Config{
+				Targets:       db.PollingTargets(),
+				Observations:  db.SNMPObservations(),
+				Scheduler:     sched,
+				ClientFactory: nopClientFactory,
+				Credentials:   db.DeviceCredentials(),
+			},
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -104,6 +126,8 @@ func TestBuild_ReturnsPollerWithEngineName(t *testing.T) {
 		ClientFactory: nopClientFactory,
 		Logger:        silentLogger(),
 		Now:           at,
+		Credentials:   db.DeviceCredentials(),
+		Decrypter:     nopDecrypter{},
 	})
 	if err != nil {
 		t.Fatalf("Build: %v", err)
@@ -125,6 +149,8 @@ func TestBuild_PollerStartLoadsZeroTargetsCleanly(t *testing.T) {
 		ClientFactory: nopClientFactory,
 		Logger:        silentLogger(),
 		Now:           at,
+		Credentials:   db.DeviceCredentials(),
+		Decrypter:     nopDecrypter{},
 	})
 	if err != nil {
 		t.Fatalf("Build: %v", err)
@@ -167,6 +193,8 @@ func TestBuild_RegistersAllElevenCollectorChainKinds(t *testing.T) {
 		ClientFactory: nopClientFactory,
 		Logger:        silentLogger(),
 		Now:           at,
+		Credentials:   db.DeviceCredentials(),
+		Decrypter:     nopDecrypter{},
 	})
 	if err != nil {
 		t.Fatalf("Build: %v", err)
@@ -178,3 +206,9 @@ func TestBuild_RegistersAllElevenCollectorChainKinds(t *testing.T) {
 		t.Fatalf("Stop: %v", stopErr)
 	}
 }
+
+// nopDecrypter satisfies the decrypter seam for wiring tests; credential
+// decryption itself is covered in internal/polling/snmp.
+type nopDecrypter struct{}
+
+func (nopDecrypter) DecryptValue(encrypted string) (string, error) { return encrypted, nil }

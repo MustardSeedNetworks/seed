@@ -54,6 +54,13 @@ func (c *Config) ensureKeyring() (*Keyring, error) {
 	return kr, nil
 }
 
+// CredentialKeyring exposes the credential DEK keyring so components that
+// decrypt stored secrets at use time — the SNMP poller's credential resolver —
+// share the one keyring rather than each loading their own.
+func (c *Config) CredentialKeyring() (*Keyring, error) {
+	return c.ensureKeyring()
+}
+
 // EncryptCredentialValue encrypts a single credential value with the active DEK
 // version (ADR-0015). This is the one legitimate path from operator-supplied
 // plaintext to stored ciphertext; it is called by the API and CLI handlers when

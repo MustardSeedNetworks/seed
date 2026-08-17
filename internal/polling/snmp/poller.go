@@ -3,6 +3,7 @@ package snmp
 import (
 	"context"
 	"errors"
+	"fmt"
 	"log/slog"
 	"sync"
 	"time"
@@ -45,9 +46,10 @@ type pollerScheduler interface {
 // and the scheduler dispatches the per-target collector chain at
 // each target's configured cadence.
 type Poller struct {
-	logger    *slog.Logger
-	storage   PollerStorage
-	scheduler pollerScheduler
+	logger      *slog.Logger
+	storage     PollerStorage
+	scheduler   pollerScheduler
+	credentials *CredentialResolver
 
 	mu         sync.RWMutex
 	collectors map[string]Collector
@@ -65,6 +67,9 @@ type Poller struct {
 
 // NewPoller returns an unstarted Poller. Pass nil logger to use
 // [slog.Default].
+//
+// A poller built without SetCredentialResolver cannot authenticate and will
+// refuse every target rather than polling it unauthenticated.
 func NewPoller(storage PollerStorage, sched pollerScheduler, logger *slog.Logger) *Poller {
 	if logger == nil {
 		logger = slog.Default()
@@ -75,6 +80,14 @@ func NewPoller(storage PollerStorage, sched pollerScheduler, logger *slog.Logger
 		scheduler:  sched,
 		collectors: make(map[string]Collector),
 	}
+}
+
+// SetCredentialResolver supplies the resolver used to decrypt each target's
+// credentials at poll time. Without it every poll fails closed.
+func (p *Poller) SetCredentialResolver(r *CredentialResolver) {
+	p.mu.Lock()
+	defer p.mu.Unlock()
+	p.credentials = r
 }
 
 // RegisterCollector adds a Collector. Replaces any prior collector
@@ -201,11 +214,22 @@ func (p *Poller) Stop(ctx context.Context) error {
 // last_polled_at are recorded.
 func (p *Poller) runChain(ctx context.Context, target *polling.Target) {
 	p.recordChainStart()
-	creds := credentialsForTarget(target)
 
 	wt := wireTarget(target)
 	var firstErr error
 	defer func() { p.recordChainEnd(firstErr) }()
+
+	// Resolve before running any collector. A target whose credentials cannot be
+	// decrypted is misconfigured, and polling it unauthenticated would either
+	// fail obscurely or reach a device on a default community.
+	creds, credErr := p.credentialsForTarget(ctx, target)
+	if credErr != nil {
+		p.logger.ErrorContext(ctx, "snmp poller: credentials unresolved, skipping target",
+			"target_id", target.ID, "error", credErr)
+		firstErr = credErr
+		p.recordPollOutcome(ctx, target, credErr)
+		return
+	}
 	for _, name := range target.CollectorChain {
 		p.mu.RLock()
 		c, ok := p.collectors[name]
@@ -229,11 +253,18 @@ func (p *Poller) runChain(ctx context.Context, target *polling.Target) {
 		}
 	}
 
+	p.recordPollOutcome(ctx, target, firstErr)
+}
+
+// recordPollOutcome writes last_status / last_error for a target. Shared by the
+// normal chain exit and the credential-failure path, so an unpollable target
+// surfaces its reason to the operator instead of just going quiet.
+func (p *Poller) recordPollOutcome(ctx context.Context, target *polling.Target, pollErr error) {
 	status := pollStatusOK
 	errMsg := ""
-	if firstErr != nil {
+	if pollErr != nil {
 		status = pollStatusError
-		errMsg = firstErr.Error()
+		errMsg = pollErr.Error()
 	}
 	if updErr := p.storage.UpdateLastPoll(ctx, target.ID, status, errMsg); updErr != nil {
 		p.logger.WarnContext(ctx, "snmp poller: update last_poll failed",
@@ -241,12 +272,21 @@ func (p *Poller) runChain(ctx context.Context, target *polling.Target) {
 	}
 }
 
-// credentialsForTarget resolves the decrypted credentials for a
-// polling target. V1.0 ships with a no-credentials stub — Stage
-// A3.x adds the device_credentials decryption via
-// license.Manager.DecryptSecret.
-func credentialsForTarget(_ *polling.Target) ResolvedCredentials {
-	return ResolvedCredentials{}
+// credentialsForTarget resolves the decrypted credentials for a polling target.
+//
+// With no resolver configured the poller cannot authenticate to anything, so it
+// reports that rather than handing collectors empty credentials — which is what
+// it used to do, silently.
+func (p *Poller) credentialsForTarget(ctx context.Context, target *polling.Target) (ResolvedCredentials, error) {
+	p.mu.RLock()
+	resolver := p.credentials
+	p.mu.RUnlock()
+
+	if resolver == nil {
+		return ResolvedCredentials{}, fmt.Errorf(
+			"%w: no credential resolver configured", ErrCredentialsUnresolved)
+	}
+	return resolver.Resolve(ctx, target)
 }
 
 // wireTarget converts a polling.Target into the Target shape that
