@@ -262,7 +262,7 @@ test.describe('Theme Toggle and Help Modal', { tag: '@smoke' }, () => {
       // Narrow to a single section, then confirm the TOC shrank.
       const tocButtons = drawer.locator('nav button');
       const allCount = await tocButtons.count();
-      await searchInput.fill('wifi survey');
+      await searchInput.fill('wifi troubleshooting');
       await expect.poll(async () => tocButtons.count()).toBeLessThan(allCount);
       expect(await tocButtons.count()).toBeGreaterThan(0);
     });

@@ -12,7 +12,7 @@
     "link": "Link Status",
     "cable": "Cable Test",
     "wifi": "WiFi Status",
-    "wifiSurvey": "WiFi Site Survey",
+    "wifiTroubleshooting": "Wi-Fi Troubleshooting",
     "network": "Network & DHCP",
     "gateway": "Gateway",
     "dns": "DNS Tests",
@@ -637,63 +637,6 @@
         ]
       }
     },
-    "wifiSurvey": {
-      "description": "WiFi Site Survey provides detailed analysis of wireless network coverage and interference.",
-      "overview": {
-        "title": "Site Survey Overview",
-        "description": "The WiFi Site Survey scans all available wireless networks, measures signal strength, identifies channel utilization, and helps optimize WiFi deployment."
-      },
-      "terms": {
-        "coverage": {
-          "term": "Coverage Analysis",
-          "description": "Maps signal strength across the area. Green indicates strong signal (-50 dBm or better), yellow is fair (-70 dBm), red is weak (-80 dBm or worse)."
-        },
-        "channelUtilization": {
-          "term": "Channel Utilization",
-          "description": "Shows how busy each WiFi channel is. High utilization (>50%) indicates congestion and potential interference."
-        },
-        "coChannelInterference": {
-          "term": "Co-Channel Interference",
-          "description": "When multiple access points use the same channel, they must share airtime, reducing throughput. Survey identifies overlapping networks."
-        },
-        "adjacentChannelInterference": {
-          "term": "Adjacent Channel Interference",
-          "description": "In 2.4 GHz, only channels 1, 6, and 11 are non-overlapping. Using other channels causes interference with neighbors."
-        },
-        "noiseFloor": {
-          "term": "Noise Floor",
-          "description": "Background radio noise level. Higher noise reduces effective signal quality (SNR). Typical values are -90 to -100 dBm."
-        }
-      },
-      "bands": {
-        "title": "Frequency Bands",
-        "2.4GHz": {
-          "name": "2.4 GHz Band",
-          "pros": "Better wall penetration, longer range, universal device support",
-          "cons": "Only 3 non-overlapping channels, more congested, slower speeds",
-          "bestFor": "IoT devices, coverage in large areas, older devices"
-        },
-        "5GHz": {
-          "name": "5 GHz Band",
-          "pros": "Many non-overlapping channels, less interference, faster speeds",
-          "cons": "Shorter range, more affected by walls, not all devices support",
-          "bestFor": "High-bandwidth applications, dense deployments, modern devices"
-        },
-        "6GHz": {
-          "name": "6 GHz Band (WiFi 6E/7)",
-          "pros": "Completely uncongested, widest channels (up to 320 MHz), lowest latency",
-          "cons": "Shortest range, requires WiFi 6E/7 devices, limited penetration",
-          "bestFor": "High-performance applications, AR/VR, enterprise deployments"
-        }
-      },
-      "recommendations": {
-        "title": "Channel Recommendations",
-        "description": "Based on the survey results, The Seed recommends optimal channel assignments to minimize interference.",
-        "2.4GHzTip": "In 2.4 GHz, always use channels 1, 6, or 11. Never use channels 2-5 or 7-10 as they overlap with adjacent channels.",
-        "5GHzTip": "In 5 GHz, prefer DFS channels (52-144) when available - they're less congested. Avoid channels near weather radar if interference is detected.",
-        "widthTip": "Use 80 MHz channel width for best balance of speed and reliability. 160 MHz offers higher speeds but more prone to interference."
-      }
-    },
     "rtspChecks": {
       "description": "Monitor RTSP (Real Time Streaming Protocol) endpoints for IP camera and video surveillance systems.",
       "overview": {
@@ -946,7 +889,7 @@
             },
             {
               "step": "Check for Interference",
-              "description": "For WiFi, run a Site Survey to check for channel congestion and interference."
+              "description": "For WiFi, check the channel graph and neighbor AP scan for congestion and interference."
             },
             {
               "step": "Review Discovery Results",
@@ -1071,39 +1014,6 @@
             {
               "step": "Export Backup",
               "description": "Export the profile as backup before leaving the client site."
-            }
-          ]
-        },
-        "runWifiSurvey": {
-          "title": "How to Perform a WiFi Site Survey",
-          "steps": [
-            {
-              "step": "Select WiFi Interface",
-              "description": "Ensure a WiFi adapter is selected in the interface dropdown. Internal laptop WiFi or USB adapter both work."
-            },
-            {
-              "step": "Navigate to Survey",
-              "description": "Open the WiFi Site Survey card or go to Tools → WiFi Survey."
-            },
-            {
-              "step": "Start Scanning",
-              "description": "Click 'Start Survey' to begin capturing all visible WiFi networks. Walk to different locations while scanning."
-            },
-            {
-              "step": "Analyze 2.4 GHz Band",
-              "description": "Check channel graph for overlapping networks. Ensure your network uses channel 1, 6, or 11 only."
-            },
-            {
-              "step": "Analyze 5 GHz Band",
-              "description": "Verify adequate coverage. Check for DFS channel availability. Note any radar interference indicators."
-            },
-            {
-              "step": "Review Recommendations",
-              "description": "Check the Recommendations tab for suggested channel changes and access point adjustments."
-            },
-            {
-              "step": "Export Report",
-              "description": "Export survey results for documentation or client presentation."
             }
           ]
         }

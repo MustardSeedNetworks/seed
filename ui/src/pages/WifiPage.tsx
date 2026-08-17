@@ -1,7 +1,6 @@
 import { Wifi } from 'lucide-react';
 import { WiFiCard } from '../components/cards/WiFiCard';
 import { WifiChannelGraph } from '../components/cards/WiFiChannelGraph';
-import { WiFiSurveyCard } from '../components/cards/WiFiSurveyCard';
 import { BetaBadge } from '../components/ui/BetaBadge';
 import { Card } from '../components/ui/card';
 import { RequireFeature } from '../components/ui/RequireFeature';
@@ -13,8 +12,7 @@ import { Breadcrumbs } from '../ui/Breadcrumbs';
 import { PageHeader } from '../ui/PageHeader';
 
 export function WifiPage() {
-  const { cards, loading, isWifi, currentInterface, channelGraphData, channelGraphLoading } =
-    useAppContext();
+  const { cards, loading, isWifi, channelGraphData, channelGraphLoading } = useAppContext();
 
   return (
     <section className="stack-xl">
@@ -22,12 +20,11 @@ export function WifiPage() {
       <PageHeader
         icon={Wifi}
         title="Wi-Fi"
-        description="Wireless link, channel survey, and channel-overlap visualisation."
+        description="Wireless link, channel utilization, and channel-overlap visualisation."
         iconColorClass="text-module-wifi"
       />
       <div className={layout.grid.cards}>
         {isWifi ? <WiFiCard data={cards.wifi} loading={loading} visible={true} /> : null}
-        {isWifi ? <WiFiSurveyCard isWifi={isWifi} currentInterface={currentInterface} /> : null}
         {isWifi ? (
           <WifiChannelGraph
             data={channelGraphData}

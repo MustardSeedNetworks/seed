@@ -316,11 +316,15 @@ export const SimpleWithSections: StoryObj<typeof HelpModal> = {
 
     return (
       <div className="min-h-screen bg-surface-base">
-        <HelpModal isOpen={isOpen} onClose={() => setIsOpen(false)} title="WiFi Survey Help">
-          <HelpSection title="What is a WiFi Survey?">
+        <HelpModal
+          isOpen={isOpen}
+          onClose={() => setIsOpen(false)}
+          title="WiFi Troubleshooting Help"
+        >
+          <HelpSection title="What does WiFi troubleshooting show?">
             <p className="body-small text-text-secondary">
-              A WiFi survey maps wireless signal coverage across different locations. Use it to
-              identify dead zones and optimize access point placement.
+              The WiFi card reports the connected SSID, signal strength, and neighbor access points.
+              Use it to diagnose weak signal and channel congestion.
             </p>
           </HelpSection>
 
@@ -354,11 +358,10 @@ export const SimpleWithSections: StoryObj<typeof HelpModal> = {
                 spacing.stack.sm,
               )}
             >
-              <li>Click "Start Survey" to begin</li>
-              <li>Upload a floor plan image (optional)</li>
-              <li>Walk to different locations and click "Add Sample"</li>
-              <li>View the heatmap to identify coverage gaps</li>
-              <li>Click "Complete" when finished</li>
+              <li>Switch to the WiFi interface from the header</li>
+              <li>Check the WiFi card for signal strength and SNR</li>
+              <li>Review the channel graph for co-channel and adjacent-channel overlap</li>
+              <li>Check the neighbor AP scan for congestion sources</li>
             </ol>
           </HelpSection>
         </HelpModal>

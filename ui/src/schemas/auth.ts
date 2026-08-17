@@ -99,7 +99,7 @@ export const SetupWizardSchema = v.pipe(
   v.check((c) => c.password === c.confirmPassword, 'Passwords do not match'),
 );
 
-/** Profile editor: name + optional description for survey/path profiles. */
+/** Profile editor: name + optional description for network profiles. */
 export const ProfileEditorSchema = v.object({
   name: v.pipe(
     v.string('Name is required'),
@@ -110,17 +110,6 @@ export const ProfileEditorSchema = v.object({
   description: v.pipe(v.string(), v.maxLength(256, 'Description is too long (max 256 chars)')),
   isDefault: v.boolean(),
   notes: v.pipe(v.string(), v.maxLength(2048, 'Notes are too long (max 2048 chars)')),
-});
-
-/** Wi-Fi survey creation form. */
-export const CreateSurveySchema = v.object({
-  name: v.pipe(
-    v.string('Survey name is required'),
-    v.trim(),
-    v.minLength(1, 'Survey name is required'),
-    v.maxLength(128, 'Survey name is too long (max 128 chars)'),
-  ),
-  surveyType: v.picklist(['passive', 'active', 'throughput']),
 });
 
 /**

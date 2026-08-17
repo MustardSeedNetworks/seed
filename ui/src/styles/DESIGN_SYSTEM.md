@@ -32,8 +32,7 @@ Component   components/ui/* (<Button>, <Card>, <Input> …)        ← consumes 
 read the value at runtime from `styles/tokens.ts` (`token('brandPrimary')`),
 which reads the CSS variable — so there's still a single source of truth.
 
-**Legitimate exceptions** (allowlisted): `styles/tokens.ts`,
-`utils/reportRenderer.ts`, `components/survey/FloorPlanCanvas.tsx`, and named
+**Legitimate exceptions** (allowlisted): `styles/tokens.ts` and named
 domain-palette maps (e.g. T568B Ethernet wire colors), which represent physical
 reality and are intentionally outside the brand palette.
 

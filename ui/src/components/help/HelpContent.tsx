@@ -152,11 +152,11 @@ export const HARDWARE_HELP: Record<string, string> = {
   cableTesting:
     "Test if your NIC supports TDR: 'sudo ethtool --cable-test eth0'. If you see 'Operation not supported', your NIC cannot perform cable diagnostics.",
   wifiDiagnostics:
-    'Advanced Wi-Fi diagnostics (monitor mode, site surveys) require nl80211-compatible chipsets. Built-in laptop Wi-Fi may have limited capabilities.',
+    'Advanced Wi-Fi diagnostics (monitor mode, management-frame capture) require nl80211-compatible chipsets. Built-in laptop Wi-Fi may have limited capabilities.',
   wifiRecommended:
     'Intel AX200/AX210 (Wi-Fi 6/6E), Atheros AR9271 (USB). Broadcom, Realtek have limited support. Apple Silicon built-in Wi-Fi not supported on Linux.',
   wifiCapabilities:
-    'Monitor mode allows packet capture and site surveys. Injection enables advanced testing. Check chipset compatibility before purchasing adapters.',
+    'Monitor mode allows packet capture for airspace visibility and anomaly detection. Injection enables advanced testing. Check chipset compatibility before purchasing adapters.',
   hardwareGuide:
     'See HARDWARE.md in the repository for complete compatibility matrix, testing procedures, and recommended hardware bundles by use case.',
 };

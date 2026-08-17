@@ -87,7 +87,6 @@ const DEFAULT_CARD_SETTINGS: CardSettingsConfig = {
   dns: { enabled: true, autoRunOnLink: true },
   publicIp: { enabled: true, autoRunOnLink: true },
   wifi: { enabled: true, autoRunOnLink: true },
-  wifiSurvey: { enabled: true, autoRunOnLink: true },
   healthChecks: { enabled: true, autoRunOnLink: true },
   networkDiscovery: { enabled: true, autoRunOnLink: true },
   pathDiscovery: { enabled: true, autoRunOnLink: true },

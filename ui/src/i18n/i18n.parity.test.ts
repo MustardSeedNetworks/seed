@@ -24,7 +24,6 @@ import enGlossary from '@locales/en/glossary.json';
 import enHelp from '@locales/en/help.json';
 import enSettings from '@locales/en/settings.json';
 import enSetup from '@locales/en/setup.json';
-import enSurvey from '@locales/en/survey.json';
 import enValidation from '@locales/en/validation.json';
 import esApi from '@locales/es/api.json';
 import esCards from '@locales/es/cards.json';
@@ -34,7 +33,6 @@ import esGlossary from '@locales/es/glossary.json';
 import esHelp from '@locales/es/help.json';
 import esSettings from '@locales/es/settings.json';
 import esSetup from '@locales/es/setup.json';
-import esSurvey from '@locales/es/survey.json';
 import esValidation from '@locales/es/validation.json';
 import { describe, expect, it } from 'vitest';
 
@@ -49,7 +47,6 @@ const FIXTURES: { ns: string; en: Json; es: Json }[] = [
   { ns: 'help', en: enHelp as Json, es: esHelp as Json },
   { ns: 'settings', en: enSettings as Json, es: esSettings as Json },
   { ns: 'setup', en: enSetup as Json, es: esSetup as Json },
-  { ns: 'survey', en: enSurvey as Json, es: esSurvey as Json },
   { ns: 'validation', en: enValidation as Json, es: esValidation as Json },
 ];
 
