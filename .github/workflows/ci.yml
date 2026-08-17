@@ -518,6 +518,18 @@ jobs:
     permissions:
       contents: read
 
+  # Asserts this repo's own gates are wired to gate: every job below is either
+  # in ci-complete's needs or documented in .github/ci-advisory-jobs.txt, the
+  # enabled linters meet the declared tier, and tool installs are pinned. Two
+  # such gaps were found by hand on 2026-08-16; both arrived via a merge, which
+  # is why this runs per PR rather than on a schedule.
+  # Defined once in MustardSeedNetworks/.github (fleet-shared); ci-complete
+  # still needs: [ci-conformance].
+  ci-conformance:
+    uses: MustardSeedNetworks/.github/.github/workflows/ci-conformance.yml@20eb29355b0448c791677c167164282da49d130f # v1.3.0
+    permissions:
+      contents: read
+
   # ===========================================================================
   # Code Quality Checks
   # ===========================================================================
@@ -1377,6 +1389,7 @@ jobs:
       - storybook
       - security
       - semgrep
+      - ci-conformance
       - quality
       - c-lint
       - i18n
