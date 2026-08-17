@@ -1,7 +1,7 @@
 package api
 
 // server_init.go contains the per-subsystem initialisation helpers that
-// NewServer composes: DNS/discovery/survey, additional subnets, database +
+// NewServer composes: DNS/discovery, additional subnets, database +
 // migration, MIB DB, SSE + log broadcaster, discovery pipeline, vulnerability
 // scanner, and CORS origin policy.
 
@@ -23,10 +23,9 @@ import (
 	"github.com/MustardSeedNetworks/seed/internal/platform/events"
 	"github.com/MustardSeedNetworks/seed/internal/platform/jobs"
 	"github.com/MustardSeedNetworks/seed/internal/platform/outbox"
-	"github.com/MustardSeedNetworks/seed/internal/wifi/survey"
 )
 
-// initNetworkServices initializes DNS servers, device discovery subnets, and survey manager.
+// initNetworkServices initializes DNS servers and device discovery subnets.
 func (s *Server) initNetworkServices(cfg *config.Config) {
 	// Initialize DNS tester with configured servers from config
 	if len(cfg.DNS.Servers) > 0 {
@@ -42,18 +41,6 @@ func (s *Server) initNetworkServices(cfg *config.Config) {
 
 	// Initialize device discovery with configured additional subnets
 	s.initAdditionalSubnets(cfg)
-
-	// Initialize survey manager
-	surveyStoragePath := "data/surveys"
-	s.surveyMgr = survey.NewManager(
-		surveyStoragePath,
-		s.wifiScanner(),
-		s.wifiManager(),
-		s.iperfManager(),
-	)
-	if err := s.surveyManager().LoadSurveys(); err != nil {
-		logging.GetLogger().Warn("Failed to load surveys", "error", err)
-	}
 }
 
 // initAdditionalSubnets configures device discovery with additional subnets from config.
