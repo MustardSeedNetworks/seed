@@ -152,6 +152,7 @@ func TestPoller_Start_RegistersJobsForEachEnabledTarget(t *testing.T) {
 	}
 	sched := newFakeScheduler()
 	p := snmp.NewPoller(storage, sched, silentLogger())
+	p.SetCredentialResolver(testResolver(t))
 
 	if err := p.Start(context.Background()); err != nil {
 		t.Fatalf("Start: %v", err)
@@ -174,6 +175,7 @@ func TestPoller_Start_Idempotent(t *testing.T) {
 	}
 	sched := newFakeScheduler()
 	p := snmp.NewPoller(storage, sched, silentLogger())
+	p.SetCredentialResolver(testResolver(t))
 
 	if err := p.Start(context.Background()); err != nil {
 		t.Fatalf("first Start: %v", err)
@@ -191,6 +193,7 @@ func TestPoller_Start_PropagatesListError(t *testing.T) {
 	storage := &fakeStorage{listErr: errors.New("DB down")}
 	sched := newFakeScheduler()
 	p := snmp.NewPoller(storage, sched, silentLogger())
+	p.SetCredentialResolver(testResolver(t))
 	if err := p.Start(context.Background()); err == nil {
 		t.Error("Start should propagate List error")
 	}
@@ -205,6 +208,7 @@ func TestPoller_Stop_UnregistersJobsAndStopsScheduler(t *testing.T) {
 	}
 	sched := newFakeScheduler()
 	p := snmp.NewPoller(storage, sched, silentLogger())
+	p.SetCredentialResolver(testResolver(t))
 
 	if err := p.Start(context.Background()); err != nil {
 		t.Fatalf("Start: %v", err)
@@ -232,12 +236,13 @@ func TestPoller_RunChain_InvokesEveryCollectorInOrder(t *testing.T) {
 	t.Parallel()
 	target := &polling.Target{
 		ID: "t-1", Name: "router-1", IPAddress: "10.0.0.1",
-		Enabled: true, PollIntervalSec: 60,
+		Enabled: true, PollIntervalSec: 60, CredentialsID: "cred-1",
 		CollectorChain: []string{"sys_info", "if_table"},
 	}
 	storage := &fakeStorage{targets: []*polling.Target{target}}
 	sched := newFakeScheduler()
 	p := snmp.NewPoller(storage, sched, silentLogger())
+	p.SetCredentialResolver(testResolver(t))
 
 	sys := &stubCollector{name: "sys_info"}
 	ift := &stubCollector{name: "if_table"}
@@ -272,12 +277,13 @@ func TestPoller_RunChain_UnknownCollectorIsSkipped(t *testing.T) {
 	t.Parallel()
 	target := &polling.Target{
 		ID: "t-1", IPAddress: "10.0.0.1", Enabled: true,
-		PollIntervalSec: 60,
-		CollectorChain:  []string{"unknown_kind", "sys_info"},
+		PollIntervalSec: 60, CredentialsID: "cred-1",
+		CollectorChain: []string{"unknown_kind", "sys_info"},
 	}
 	storage := &fakeStorage{targets: []*polling.Target{target}}
 	sched := newFakeScheduler()
 	p := snmp.NewPoller(storage, sched, silentLogger())
+	p.SetCredentialResolver(testResolver(t))
 
 	sys := &stubCollector{name: "sys_info"}
 	p.RegisterCollector(sys)
@@ -299,12 +305,13 @@ func TestPoller_RunChain_CollectorErrorCapturedInLastError(t *testing.T) {
 	t.Parallel()
 	target := &polling.Target{
 		ID: "t-1", IPAddress: "10.0.0.1", Enabled: true,
-		PollIntervalSec: 60,
-		CollectorChain:  []string{"sys_info"},
+		PollIntervalSec: 60, CredentialsID: "cred-1",
+		CollectorChain: []string{"sys_info"},
 	}
 	storage := &fakeStorage{targets: []*polling.Target{target}}
 	sched := newFakeScheduler()
 	p := snmp.NewPoller(storage, sched, silentLogger())
+	p.SetCredentialResolver(testResolver(t))
 
 	sys := &stubCollector{name: "sys_info", err: errors.New("snmp timeout")}
 	p.RegisterCollector(sys)
@@ -334,6 +341,7 @@ func TestPoller_TargetJob_NextRunCadence(t *testing.T) {
 	storage := &fakeStorage{targets: []*polling.Target{target}}
 	sched := newFakeScheduler()
 	p := snmp.NewPoller(storage, sched, silentLogger())
+	p.SetCredentialResolver(testResolver(t))
 	p.RegisterCollector(&stubCollector{name: "sys_info"})
 
 	_ = p.Start(context.Background())
@@ -351,5 +359,61 @@ func TestPoller_TargetJob_NextRunCadence(t *testing.T) {
 	second := job.NextRun(now)
 	if !second.After(first) {
 		t.Errorf("second NextRun = %v, want after first %v", second, first)
+	}
+}
+
+// testResolver builds a resolver that always succeeds, so poller tests exercise
+// the collector chain rather than credential resolution. Resolution itself —
+// including its fail-closed behaviour — is covered in credentials_test.go.
+func testResolver(t *testing.T) *snmp.CredentialResolver {
+	t.Helper()
+	r, err := snmp.NewCredentialResolver(
+		&fakeCredStore{creds: &polling.Credentials{SNMPCommunityCT: "enc:v1:public"}},
+		fakeDecrypter{},
+	)
+	if err != nil {
+		t.Fatalf("NewCredentialResolver: %v", err)
+	}
+	return r
+}
+
+// TestPoller_RunChain_SkipsTargetWhenCredentialsUnresolved pins the security
+// contract: a target whose credentials cannot be resolved must not have any
+// collector run against it. Before this, resolution returned empty credentials
+// with no error and the whole chain ran unauthenticated.
+func TestPoller_RunChain_SkipsTargetWhenCredentialsUnresolved(t *testing.T) {
+	t.Parallel()
+	target := &polling.Target{
+		ID: "t-1", IPAddress: "10.0.0.1", Enabled: true,
+		PollIntervalSec: 60, CredentialsID: "",
+		CollectorChain: []string{"sys_info"},
+	}
+	storage := &fakeStorage{targets: []*polling.Target{target}}
+	sched := newFakeScheduler()
+	p := snmp.NewPoller(storage, sched, silentLogger())
+	p.SetCredentialResolver(testResolver(t))
+
+	sys := &stubCollector{name: "sys_info"}
+	p.RegisterCollector(sys)
+
+	if err := p.Start(context.Background()); err != nil {
+		t.Fatalf("Start: %v", err)
+	}
+	job := sched.firstJob()
+	if job == nil {
+		t.Fatal("expected job snmp:t-1")
+	}
+	_ = job.Run(context.Background())
+
+	if sys.callCount() != 0 {
+		t.Errorf("collector ran %d times against a target with unresolved credentials",
+			sys.callCount())
+	}
+	if len(storage.updates) != 1 {
+		t.Fatalf("UpdateLastPoll called %d times, want 1", len(storage.updates))
+	}
+	if storage.updates[0].status != "error" {
+		t.Errorf("status = %q, want error so the operator sees why it is not polling",
+			storage.updates[0].status)
 	}
 }

@@ -624,12 +624,26 @@ func (s *Server) initSNMPPoller(db *database.DB) {
 	logger := logging.GetLogger()
 	sched := scheduler.New(snmpPollerSchedulerTick)
 	factory := snmpclient.NewFactory(snmpclient.Options{})
+	// Without a config there is no keyring, so no target could be authenticated.
+	// Skip the poller rather than registering one that refuses every target.
+	if s.config == nil {
+		logger.Warn("snmp poller init skipped: no config, so no credential keyring")
+		return
+	}
+	keyring, err := s.config.CredentialKeyring()
+	if err != nil {
+		logger.Warn("snmp poller init failed: credential keyring unavailable", "error", err)
+		return
+	}
+
 	poller, err := snmporchestrator.Build(snmporchestrator.Config{
 		Targets:       db.PollingTargets(),
 		Observations:  db.SNMPObservations(),
 		Scheduler:     sched,
 		ClientFactory: factory,
 		Logger:        logger,
+		Credentials:   db.DeviceCredentials(),
+		Decrypter:     keyring,
 	})
 	if err != nil {
 		logger.Warn("snmp poller init failed", "error", err)
