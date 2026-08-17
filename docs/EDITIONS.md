@@ -6,27 +6,32 @@
 **Last updated:** 2026-05-17
 
 Companion to [DISTRIBUTION.md](DISTRIBUTION.md) (commercial channels and license tiers).
-This document defines the **two hardware/software profiles** Seed ships under, the **licensing hooks** to build now while keeping behaviour permissive, and the **distribution mechanics** for each.
+This document defines the **two hardware/software profiles** Seed ships under, the
+**licensing hooks** to build now while keeping behaviour permissive, and the
+**distribution mechanics** for each.
 
 ---
 
 ## 1. Hardware Profiles
 
 | Profile | Target Hardware | Form Factor | Power | Audience |
-|---------|-----------------|-------------|-------|----------|
+| --------- | ----------------- | ------------- | ------- | ---------- |
 | **Lite (portable)** | Raspberry Pi 4/5 or comparable SBC; 1 GbE native; optional USB 2.5G NIC (not guaranteed); on-board Wi-Fi for AP-mode onboarding | Small enclosure, battery-pack friendly, status LED + reset button | 5W typical | Field techs, walk-around audits, MSP truck rolls |
 | **Pro (stationary)** | Fanless x86 mini PC (Intel N100 / N5105 class), dual 2.5 GbE, 8–16 GB RAM | Desk/rack 1U-half | 12W typical | Permanent rack install, continuous monitoring, fleet pilots |
 
 ### Why two profiles
-- A single SKU forces a compromise: Pi-class hardware can't drive 2.5G iperf, and an x86 mini PC isn't battery-friendly or pocketable.
-- Differentiating up front lets us build/ship/license each profile cleanly without per-feature run-time checks scattered across the codebase.
+
+- A single SKU forces a compromise: Pi-class hardware can't drive 2.5G iperf, and an
+  x86 mini PC isn't battery-friendly or pocketable.
+- Differentiating up front lets us build/ship/license each profile cleanly, without
+  per-feature run-time checks scattered across the codebase.
 
 ---
 
 ## 2. Software Differentiation
 
 | Capability | Lite | Pro |
-|------------|:----:|:---:|
+| ------------ | ------ | ----- |
 | Core diagnostics (link, DHCP, DNS, gateway, basic perf) | ✓ | ✓ |
 | Wi-Fi troubleshooting (signal/SNR, neighbor scan, channel utilization) | ✓ | ✓ |
 | iperf3 client + bundled server | ✓ | ✓ (heavier presets) |
@@ -37,16 +42,21 @@ This document defines the **two hardware/software profiles** Seed ships under, t
 | Signed installer artifacts (.deb/.rpm/.pkg/Docker) | community-grade | signed |
 | Pi OS image (write-to-SD) | ✓ | — |
 
-A capability marked `—` does **not** mean compiled out — it means **license-gated**. Run-time checks live in one place: `license.IsPro()`.
+A capability marked `—` does **not** mean compiled out — it means **license-gated**.
+Run-time checks live in one place: `license.IsPro()`.
 
 ### Implementation rule
-Anywhere we would write `if cfg.Foo.Enabled` for a Pro-only knob, write `if license.IsPro() && cfg.Foo.Enabled`. The flag stays user-controllable on every edition; the gate is the license check.
+
+Anywhere we would write `if cfg.Foo.Enabled` for a Pro-only knob, write
+`if license.IsPro() && cfg.Foo.Enabled`. The flag stays user-controllable on every
+edition; the gate is the license check.
 
 ---
 
 ## 3. Licensing Hooks (build now, leave permissive)
 
-Tracked under epic #245. This section is the **wiring plan** so that turning licensing on later is a config flip, not a refactor.
+Tracked under epic #245. This section is the **wiring plan**, so that turning
+licensing on later is a config flip rather than a refactor.
 
 ### 3.1 Config surface
 
@@ -57,7 +67,7 @@ license:
   edition: "community"    # "community"|"lite"|"pro"
   expires: ""             # RFC3339; "" = never
   lastCheck: ""           # RFC3339 of last validate() attempt
-```
+```text
 
 Add to `internal/config/config_types.go` (or appropriate split file) and to `internal/config/schema.json` `$defs`. Default values keep the app fully usable.
 
@@ -89,7 +99,7 @@ func IsPro() bool { ... }
 // Fingerprint returns hash(machine-id + primary MAC). Only the hash is
 // persisted; raw machine identifiers stay on the device.
 func Fingerprint() string { ... }
-```
+```text
 
 ### 3.3 API surface
 
@@ -142,7 +152,7 @@ Wire into existing settings drawer under a new "License" section.
 ## 6. Open Questions (do not block the plan)
 
 | Question | Owner | Needed by |
-|----------|-------|-----------|
+| -------- | ----- | --------- |
 | Exact Community vs Pro feature split | Product | First Pro paid pilot |
 | Pricing bands for Lite vs Pro hardware bundles | Product | Same |
 | Self-serve license rebind flow (when a board dies) | Eng + Support | First RMA |

@@ -2,7 +2,7 @@
 
 ## High-Level Architecture
 
-```
+```text
                                     ┌─────────────────────────────────────────────────────────────────┐
                                     │                         FRONTEND (React)                        │
                                     │  ┌─────────────┐ ┌─────────────┐ ┌─────────────┐ ┌──────────┐  │
@@ -99,12 +99,12 @@
 │  │   └───────────────┘ └───────────────┘ └───────────────┘ └───────────────┘                           │  │
 │  └─────────────────────────────────────────────────────────────────────────────────────────────────────┘  │
 └───────────────────────────────────────────────────────────────────────────────────────────────────────────┘
-```
+```text
 
 ## Module Color Reference
 
 | Module | Purpose | Color |
-|--------|---------|-------|
+| -------- | --------- | ------- |
 | **Roots** | Path analysis (traceroute, public IP) | Amber #b45309 |
 | **Canopy** | Wi-Fi troubleshooting (neighbor scan, channel analysis) | Green #2d7a3e |
 | **Shell** | Security posture (discovery, vulnerabilities) | Orange #ea580c |
@@ -113,7 +113,7 @@
 
 ## Data Flow
 
-```
+```text
 ┌──────────┐     HTTP/SSE/WS      ┌───────────┐     Service Calls     ┌──────────────┐
 │ Frontend │ ◄──────────────────► │  HTTP API │ ◄──────────────────► │   Modules    │
 │  (React) │                      │  (Go)     │                      │ (Shell/Sap)  │
@@ -125,11 +125,12 @@
                                 │  SQLite   │◄───────────────────────│ SNMP/Network │
                                 │ Database  │                        │   Queries    │
                                 └───────────┘                        └──────────────┘
-```
+```text
 
 ## Key Packages
 
 ### HTTP API Layer (`internal/httpapi/`)
+
 - `server.go` - Server initialization, routes, middleware
 - `services.go` - ServiceContainer dependency injection
 - `handlers_*.go` - Request handlers by domain
@@ -137,6 +138,7 @@
 - `websocket.go` - WebSocket support (deprecated, prefer SSE)
 
 ### Discovery System (`internal/discovery/`)
+
 - `engine.go` - Unified DiscoveryEngine (primary)
 - `registry.go` - Device registry with deduplication
 - `pipeline.go` - Multi-phase discovery pipeline
@@ -146,16 +148,19 @@
 - `problem_detector.go` - Network problem detection
 
 ### Data Layer (`internal/database/`)
+
 - `database.go` - DB connection and pooling
 - `migrations.go` - Schema migrations
 - `repository_*.go` - Data access by domain
 
 ### Network (`internal/network/`)
+
 - `manager.go` - Interface management
 - `interfaces.go` - Interface detection
 - `link.go` - Link state monitoring
 
 ### SNMP (`internal/snmp/`)
+
 - `snmp.go` - Core query functions
 - `interface.go` - IF-MIB operations
 - `lldp.go` - LLDP-MIB operations
@@ -167,7 +172,7 @@
 
 The Discovery Engine is the central orchestrator for all device discovery, enrichment, and assessment.
 
-```
+```text
                                     ┌─────────────────────────────────────────────────────────────┐
                                     │                    DISCOVERY ENGINE                          │
                                     │                      (engine.go)                             │
@@ -238,13 +243,13 @@ The Discovery Engine is the central orchestrator for all device discovery, enric
 │  └────────────────────────────────────┘  │
 │                                          │
 └──────────────────────────────────────────┘
-```
+```text
 
 ### Discovery Pipeline (Multi-Phase Execution)
 
 The pipeline executes discovery in sequential phases:
 
-```
+```text
 ┌──────────────┐     ┌──────────────┐     ┌──────────────┐     ┌──────────────┐
 │  ENUMERATION │────►│  RESOLUTION  │────►│   SCANNING   │────►│  ASSESSMENT  │
 │              │     │              │     │              │     │              │
@@ -266,12 +271,12 @@ The pipeline executes discovery in sequential phases:
                           │ - device_discovered   │
                           │ - pipeline_completed  │
                           └───────────────────────┘
-```
+```text
 
 ### Scan Profiles
 
 | Profile | Probe Delay | Host Delay | Concurrent | Phase Timeout |
-|---------|-------------|------------|------------|---------------|
+| --------- | ------------- | ------------ | ------------ | --------------- |
 | **Polite** | 200ms | 100ms | 5 | 30 min |
 | **Normal** | 50ms | 20ms | 20 | 10 min |
 | **Aggressive** | 10ms | 5ms | 100 | 5 min |
@@ -279,7 +284,7 @@ The pipeline executes discovery in sequential phases:
 ### Key Files
 
 | File | Purpose |
-|------|---------|
+| ------ | --------- |
 | `engine.go` | Central orchestrator, scan coordination |
 | `registry.go` | Single source of truth for devices |
 | `events.go` | Event bus for real-time updates |
@@ -296,21 +301,26 @@ The pipeline executes discovery in sequential phases:
 ### Event Types
 
 **Device Lifecycle:**
+
 - `device.discovered` - New device found
 - `device.updated` - Device data changed
 - `device.lost` - Device offline
 - `device.merged` - Duplicate devices consolidated
 
 **Discovery Sources:**
+
 - `wired.arp`, `wired.ndp`, `wired.lldp`, `wired.cdp`, `wired.mdns`
 - `wifi.ap.discovered`, `wifi.ap.updated`, `wifi.client.discovered`
 - `bt.device.discovered`, `bt.device.updated`
 
 **Enrichment:**
+
 - `enrichment.port`, `enrichment.snmp`, `enrichment.profile`, `enrichment.name`
 
 **Assessment:**
+
 - `assessment.vuln`, `assessment.resolved`
 
 **Scan Lifecycle:**
+
 - `scan.started`, `scan.progress`, `scan.completed`, `scan.failed`, `scan.canceled`
