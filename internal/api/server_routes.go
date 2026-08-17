@@ -751,12 +751,9 @@ func (s *Server) setupWiFiRoutes() {
 	op := database.RoleOperator
 	get := []string{http.MethodGet}
 	post := []string{http.MethodPost}
-	put := []string{http.MethodPut}
 	del := []string{http.MethodDelete}
 	getPut := []string{http.MethodGet, http.MethodPut}
 	getPostPut := []string{http.MethodGet, http.MethodPost, http.MethodPut}
-	floorBody := MaxBodySizeFloorPlan // 10 MB — floor-plan image uploads.
-	airBody := MaxBodySizeAirMapper   // 50 MB — AirMapper survey imports.
 	s.registerAll([]route{
 		{path: APIVersionPrefix + "/wifi/wifi", handler: s.handleWiFi, methods: getPostPut},
 		{path: APIVersionPrefix + "/wifi/wifi/scan", handler: s.handleWiFiScan, methods: get},
@@ -809,122 +806,6 @@ func (s *Server) setupWiFiRoutes() {
 			handler: s.handleWiFiForgetNetwork,
 			methods: del,
 			minRole: op,
-		},
-		{
-			path:    APIVersionPrefix + "/wifi/survey/create",
-			handler: s.createSurvey,
-			methods: post,
-			minRole: op,
-		},
-		{path: APIVersionPrefix + "/wifi/survey/list", handler: s.listSurveys, methods: get},
-		{path: APIVersionPrefix + "/wifi/survey", handler: s.getSurvey, methods: get},
-		{
-			path:    APIVersionPrefix + "/wifi/survey/delete",
-			handler: s.deleteSurvey,
-			methods: del,
-			minRole: op,
-		},
-		{
-			path:    APIVersionPrefix + "/wifi/survey/start",
-			handler: s.startSurvey,
-			methods: post,
-			minRole: op,
-		},
-		{
-			path:    APIVersionPrefix + "/wifi/survey/pause",
-			handler: s.pauseSurvey,
-			methods: post,
-			minRole: op,
-		},
-		{
-			path:    APIVersionPrefix + "/wifi/survey/complete",
-			handler: s.completeSurvey,
-			methods: post,
-			minRole: op,
-		},
-		{
-			path:    APIVersionPrefix + "/wifi/survey/sample",
-			handler: s.addSurveySample,
-			methods: post,
-			minRole: op,
-		},
-		{
-			path:         APIVersionPrefix + "/wifi/survey/floorplan",
-			handler:      s.updateSurveyFloorPlan,
-			methods:      put,
-			minRole:      op,
-			maxBodyBytes: floorBody,
-		},
-		{
-			path:    APIVersionPrefix + "/wifi/survey/settings",
-			handler: s.updateSurveySettings,
-			methods: put,
-			minRole: op,
-		},
-		{
-			path:    APIVersionPrefix + "/wifi/survey/imported-data",
-			handler: s.updateSurveyImportedData,
-			methods: put,
-			minRole: op,
-		},
-		// AirMapper baseline-diff (Pro, LICENSE_STRATEGY §2): imports an AirMapper
-		// survey JSON and diffs it against the floor-plan baseline; rate-limited.
-		{
-			path:         APIVersionPrefix + "/wifi/survey/import/airmapper",
-			handler:      s.importAirMapper,
-			methods:      post,
-			minRole:      op,
-			feature:      "airmapper_baseline_diff",
-			rateLimited:  true,
-			maxBodyBytes: airBody,
-		},
-		{
-			path:        APIVersionPrefix + "/wifi/survey/heatmap",
-			handler:     s.getSurveyHeatmap,
-			methods:     get,
-			rateLimited: true,
-		},
-		{
-			path:    APIVersionPrefix + "/wifi/survey/dead-zones",
-			handler: s.getSurveyDeadZones,
-			methods: get,
-		},
-		{
-			path:    APIVersionPrefix + "/wifi/survey/floors",
-			handler: s.handleSurveyFloors,
-			methods: getPostPut,
-			minRole: op,
-		},
-		{
-			path:    APIVersionPrefix + "/wifi/survey/floor",
-			handler: s.handleSurveyFloor,
-			methods: getPostPut,
-			minRole: op,
-		},
-		{
-			path:         APIVersionPrefix + "/wifi/survey/floor/floorplan",
-			handler:      s.updateFloorFloorPlan,
-			methods:      put,
-			minRole:      op,
-			maxBodyBytes: floorBody,
-		},
-		{
-			path:    APIVersionPrefix + "/wifi/survey/floor/sample",
-			handler: s.addFloorSample,
-			methods: post,
-			minRole: op,
-		},
-		{
-			path:    APIVersionPrefix + "/wifi/survey/active-floor",
-			handler: s.setActiveFloor,
-			methods: put,
-			minRole: op,
-		},
-		{
-			path:        APIVersionPrefix + "/wifi/survey/report",
-			handler:     s.generateSurveyReport,
-			methods:     post,
-			rateLimited: true,
 		},
 	})
 }

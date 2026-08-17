@@ -272,7 +272,6 @@ func TestComponentConstants(t *testing.T) {
 		"ComponentDiscovery": logging.ComponentDiscovery,
 		"ComponentDevices":   logging.ComponentDevices,
 		"ComponentNetwork":   logging.ComponentNetwork,
-		"ComponentSurvey":    logging.ComponentSurvey,
 		"ComponentWebSocket": logging.ComponentWebSocket,
 		"ComponentSpeedtest": logging.ComponentSpeedtest,
 		"ComponentIperf":     logging.ComponentIperf,

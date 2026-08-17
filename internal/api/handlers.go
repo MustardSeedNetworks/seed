@@ -11,7 +11,7 @@ package api
 //   - handlers_tools.go     - Advanced diagnostic tools (TCP probe, traceroute, port scan, fingerprinting)
 //   - handlers_security.go  - Security features (rogue DHCP detection, SNMP settings)
 //   - handlers_tests.go     - Network testing (DNS, custom tests, speedtest, iperf)
-//   - handlers_discovery.go - Device discovery, public IP, LLDP/CDP, WiFi survey
+//   - handlers_discovery.go - Device discovery, public IP, LLDP/CDP, WiFi scan
 //
 // Route registration and server setup are handled in server.go.
 //

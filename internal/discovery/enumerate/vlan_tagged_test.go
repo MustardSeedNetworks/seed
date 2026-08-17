@@ -101,6 +101,12 @@ func TestCDPCaptureDecodesVLANTaggedFrames(t *testing.T) {
 	if got := neighbors[0].SourceMAC; got != "00:00:0c:00:01:01" {
 		t.Errorf("SourceMAC = %q, want %q", got, "00:00:0c:00:01:01")
 	}
+	// The fixtures are VLAN 203 and 200; whichever arrived last wins the map
+	// entry, but it must be one of them and never zero — a trunk neighbour with
+	// no recorded VLAN is the gap #1929 closed.
+	if got := neighbors[0].ObservedVLAN; got != 203 && got != 200 {
+		t.Errorf("ObservedVLAN = %d, want 203 or 200", got)
+	}
 }
 
 // TestVLANStripperLeavesUntaggedFramesIntact guards the other direction: the
@@ -134,5 +140,8 @@ func TestVLANStripperLeavesUntaggedFramesIntact(t *testing.T) {
 	}
 	if got := neighbors[0].DeviceID; got != "LAB-EDGE-R1" {
 		t.Errorf("DeviceID = %q, want %q", got, "LAB-EDGE-R1")
+	}
+	if got := neighbors[0].ObservedVLAN; got != enumerate.VLANUntagged {
+		t.Errorf("ObservedVLAN = %d, want VLANUntagged for a frame with no tag", got)
 	}
 }

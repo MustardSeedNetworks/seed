@@ -27,7 +27,6 @@ const (
 	ComponentDiscovery = "discovery"       // Network protocol discovery (LLDP/CDP/EDP)
 	ComponentDevices   = "devices"         // Device scanning and management
 	ComponentNetwork   = "network"         // Network interface management
-	ComponentSurvey    = "survey"          // WiFi survey operations
 	ComponentWebSocket = "websocket"       // WebSocket connections and messaging
 	ComponentSpeedtest = "speedtest"       // Speed testing
 	ComponentIperf     = "iperf"           // iPerf3 operations
