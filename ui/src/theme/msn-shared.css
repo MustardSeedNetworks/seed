@@ -1,0 +1,156 @@
+/* ==========================================================================
+   MSN shared interface theme — the values every product shares
+   ==========================================================================
+   Drop-in replacement for the colour half of each repo's ui/src/index.css
+   (`:root` and `.dark` blocks). Token NAMES are unchanged, so nothing that
+   already consumes them needs editing: the @theme mappings, the
+   @layer components block (.btn-*, .card, .table, .status-badge …), the TS
+   class-token objects in styles/, Sidebar.tsx and PageHeader.tsx all keep
+   working. Only the VALUES move, plus a small number of additions at the end.
+
+   Import order in each repo's index.css:
+
+       @import "tailwindcss";
+       @import "./theme/msn-shared.css";      ← this file
+       @import "./theme/product-<name>.css";  ← the 3 brand values
+
+   Why the values changed (2026-08-17):
+
+   1. Dark surfaces went colder and darker (#0e1612 → #060d13 base). The
+      botanical green-black tinted every neutral, so status colours had to
+      shout to separate from it. On the new base a single coloured pixel
+      reads as meaningful.
+   2. Card borders became hairlines. A 1px solid #2b3a31 on every card drew a
+      grid of boxes; the eye counted containers instead of reading content.
+      surface-border keeps its old role for form controls and dividers, where
+      a visible edge IS the point, and the new hairline tokens carry panels.
+   3. Light mode kept its warm-cream character but darkened two values that
+      failed WCAG AA at the 10–11px label sizes this system uses heavily
+      (text-muted and brand-gold). Small labels are normal-size text under
+      WCAG: 4.5:1 applies.
+   4. Figures are monospaced, everywhere, via --font-family-mono. Every value
+      that changes on refresh — a rate, a latency, an address, a VMID — is
+      compared against its previous reading, and proportional digits make
+      that harder than it needs to be. The mono stack is native: no product
+      may fetch a font.
+
+   Status colours are unchanged and stay constant across products and modes.
+   ========================================================================== */
+
+:root {
+  /* ---- surfaces (light: warm cream, unchanged in character) ---------- */
+  --color-surface-base: #fbfaf5;
+  --color-surface-raised: #ffffff;
+  --color-surface-border: #d9d2bd; /* form controls, dividers */
+  --color-surface-hover: #f3efe2;
+  --color-surface-sunken: #e9e3ce;
+  --color-surface-deep: #efe9d8;
+
+  /* ---- text ---------------------------------------------------------- */
+  --color-text-primary: #1a2520;
+  --color-text-secondary: #4a5650;
+  /* was #6b766f — 4.52:1, technically passing but with no margin at 10px */
+  --color-text-muted: #5f6a63;
+  --color-text-inverse: #ffffff;
+  --color-text-disabled: #8a938c;
+
+  /* ---- status (constant across products and modes) ------------------- */
+  --color-status-success: #2f7d4f;
+  --color-status-warning: #8a6208; /* darkened from #d4a017: 3.82:1 → 5.1:1 */
+  --color-status-error: #b93a3a;
+  --color-status-info: #1263a8;
+
+  /* ---- log levels (Syslog/RFC 5424, constant) ------------------------ */
+  --color-log-trace: #64748b;
+  --color-log-debug: #0e7490;
+  --color-log-info: #1d4ed8;
+  --color-log-warn: #a16207;
+  --color-log-error: #b91c1c;
+  --color-log-fatal: #991b1b;
+
+  /* ---- constants ----------------------------------------------------- */
+  --color-scrim: #000000;
+  --color-knob: #ffffff;
+
+  /* ---- additions ----------------------------------------------------- */
+  /* Panel boundaries. Hairlines, not borders. */
+  --color-hairline: rgba(26, 37, 32, 0.1);
+  --color-hairline-strong: rgba(26, 37, 32, 0.18);
+  /* Navigation rail gradient. */
+  --color-rail-from: #f7f4ea;
+  --color-rail-to: #efe9d8;
+}
+
+.dark {
+  --color-surface-base: #060d13;
+  --color-surface-raised: #0e1a22;
+  --color-surface-border: #54798b;
+  --color-surface-hover: #142430;
+  --color-surface-sunken: #0b151d;
+  --color-surface-deep: #081118;
+
+  --color-text-primary: #eef4f6;
+  --color-text-secondary: #c3d2d9;
+  --color-text-muted: #93a8b2;
+  --color-text-inverse: #08100c;
+  --color-text-disabled: #6f8794;
+
+  --color-status-success: #62c48d;
+  --color-status-warning: #f5c451;
+  --color-status-error: #ef6b73;
+  --color-status-info: #7dd3fc;
+
+  --color-log-trace: #94a3b8;
+  --color-log-debug: #22d3ee;
+  --color-log-info: #60a5fa;
+  --color-log-warn: #fbbf24;
+  --color-log-error: #f87171;
+  --color-log-fatal: #ef4444;
+
+  --color-hairline: rgba(148, 180, 196, 0.14);
+  --color-hairline-strong: rgba(148, 180, 196, 0.22);
+  --color-rail-from: #0b151d;
+  --color-rail-to: #081118;
+}
+
+/* Third label tier. The old scale had heading-1…4 plus section-title, and
+ * every product ended up hand-rolling the 10px uppercase kicker that labels
+ * a panel. Name it once. */
+@layer components {
+  .kicker {
+    font-size: 0.625rem; /* 10px */
+    font-weight: 800;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--color-text-muted);
+  }
+
+  .kicker-accent {
+    color: var(--color-brand-gold);
+  }
+
+  /* Figures: any value that changes on refresh. */
+  .figure {
+    font-family: var(--font-family-mono);
+    font-variant-numeric: tabular-nums;
+    letter-spacing: 0;
+  }
+
+  /* Panels are hairline-bounded; .card keeps the old solid border for
+	 * anything that must read as an input surface. */
+  .panel {
+    border: 1px solid var(--color-hairline);
+    border-radius: 1rem;
+    background: var(--color-surface-raised);
+  }
+
+  .panel-hover:hover {
+    border-color: color-mix(in oklab, var(--color-brand-primary) 50%, transparent);
+    background: var(--color-surface-hover);
+  }
+
+  /* 44px minimum interactive target — was enforced per product, now shared. */
+  .target {
+    min-height: 2.75rem;
+  }
+}
