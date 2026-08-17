@@ -134,6 +134,42 @@ advise RAW_HEADING_PAIR \
 advise RAW_FLEX_BETWEEN 'flex items-center justify-between' 'Use flex-between'
 advise RAW_FLEX_CENTER 'flex items-center justify-center' 'Use flex-center'
 
+# ── ADVISORY: MSN product-family rules (2026-08-17) ─────────────────────────
+# Added with the family theme rollout. Advisory on purpose: these describe debt
+# that predates the theme and is cleared as each component is rewritten in the
+# later steps, so making them blocking now would red every commit in four repos
+# for work that has not started.
+#
+# Rules the repo already blocks (primitive palettes, bare white/black) are NOT
+# repeated here. Only what the family system adds is below.
+#
+# Note on FAMILY_RAW_HEX: a colour literal is 6 or 8 hex digits, or a short form
+# containing at least one a-f. Matching any '#' plus 3-8 hex characters also
+# matches issue references — "extracted to hook #889", "Wave 5 / #636" — which
+# fired on every repo for comments containing no colour at all.
+advise FAMILY_RAW_HEX \
+  '#([0-9a-fA-F]{6}([0-9a-fA-F]{2})?|[0-9a-fA-F]{0,3}[a-fA-F][0-9a-fA-F]{0,3})\b' \
+  'Raw hex outside theme/ — define it in ui/src/theme and reference the token'
+advise FAMILY_OPACITY_DIM \
+  '\bopacity-(0|5|10|20|25|30|40|50|60)\b' \
+  'Dim the colour token, not the layer — a dimmed label fails contrast while it explains itself'
+advise FAMILY_SMALL_TARGET \
+  '\b(w|h)-(2|3|4|5|6|7|8|9|10)\b(?=[^"`]*(?:onClick|role="button"|<button|<input))' \
+  'Interactive target under 44px — add .target or min-h-11'
+advise FAMILY_CONST_ON_BRAND \
+  '\b(bg-(brand-primary|brand-accent|status-error|status-success))\b[^"`]*\btext-(white|black)\b' \
+  'Constant text colour on a brand fill — use text-on-brand / text-on-danger / text-on-success'
+
+# advise() scans .ts/.tsx only, so raw hex in a stylesheet would slip past it.
+# theme/ is where colour values are allowed to exist.
+css_hex=$(grep -rInE '#([0-9a-fA-F]{6}([0-9a-fA-F]{2})?|[0-9a-fA-F]{0,3}[a-fA-F][0-9a-fA-F]{0,3})\b' \
+  "$TARGET" --include='*.css' 2>/dev/null \
+  | grep -v "$TARGET/theme/" \
+  | grep -vE ':[0-9]+:\s*(\*|//|/\*)' || true)
+if [ -n "$css_hex" ]; then
+  echo "[warn: FAMILY_RAW_HEX_CSS] $(printf '%s\n' "$css_hex" | grep -c .) occurrence(s) — raw hex in CSS outside theme/"
+fi
+
 if [ "$FAIL_COUNT" -gt 0 ] && [ "$REPORT_MODE" -eq 0 ]; then
   echo "============================================================"
   echo "FAIL: $FAIL_COUNT blocking color-token violation(s) above."
