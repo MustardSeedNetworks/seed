@@ -5,6 +5,46 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.213.0](https://github.com/MustardSeedNetworks/seed/compare/v0.212.11...v0.213.0) (2026-08-17)
+
+
+### ⚠ BREAKING CHANGES
+
+* **wifi:** remove survey API runtime and survey_samples table ([#1934](https://github.com/MustardSeedNetworks/seed/issues/1934))
+
+### Features
+
+* **discovery:** record the VLAN each neighbour was heard on ([#1935](https://github.com/MustardSeedNetworks/seed/issues/1935)) ([c0042dd](https://github.com/MustardSeedNetworks/seed/commit/c0042dde587d4c3fdd3b5fb526612f541659c924)), closes [#1929](https://github.com/MustardSeedNetworks/seed/issues/1929)
+* **polling:** resolve SNMP credentials and fail closed without them ([#1933](https://github.com/MustardSeedNetworks/seed/issues/1933)) ([26b0b09](https://github.com/MustardSeedNetworks/seed/commit/26b0b09c604de758c8becf7e75f52e42f90cb3c1))
+
+
+### Bug Fixes
+
+* **deps:** update module github.com/stretchr/testify to v1.12.0 ([#1926](https://github.com/MustardSeedNetworks/seed/issues/1926)) ([b343797](https://github.com/MustardSeedNetworks/seed/commit/b343797fd253c9faa42427a23e6403d83b441125))
+* **discovery:** decode LLDP and CDP on 802.1Q trunks ([#1923](https://github.com/MustardSeedNetworks/seed/issues/1923)) ([49bbb09](https://github.com/MustardSeedNetworks/seed/commit/49bbb095484e669104e84fff15e4fca15ceea054)), closes [#1922](https://github.com/MustardSeedNetworks/seed/issues/1922)
+* **discovery:** parse the real EDP header, not an invented one ([#1938](https://github.com/MustardSeedNetworks/seed/issues/1938)) ([68f08e2](https://github.com/MustardSeedNetworks/seed/commit/68f08e2a22b7db1ba8eed145dd2e517100cab060)), closes [#1937](https://github.com/MustardSeedNetworks/seed/issues/1937)
+
+
+### Code Refactoring
+
+* **wifi:** remove survey API runtime and survey_samples table ([#1934](https://github.com/MustardSeedNetworks/seed/issues/1934)) ([5736509](https://github.com/MustardSeedNetworks/seed/commit/573650946f8fac17cb63d8572df77c367461f6ce))
+
+
+### Documentation
+
+* drop Lighthouse from the CI job reference ([#1931](https://github.com/MustardSeedNetworks/seed/issues/1931)) ([ef1b346](https://github.com/MustardSeedNetworks/seed/commit/ef1b34684b9b56ddcae35341c57ef47b8ae7a152)), closes [#1911](https://github.com/MustardSeedNetworks/seed/issues/1911)
+
+
+### Continuous Integration
+
+* make CI conformance a blocking gate ([#1924](https://github.com/MustardSeedNetworks/seed/issues/1924)) ([a725441](https://github.com/MustardSeedNetworks/seed/commit/a725441450bdf9abe248f62b3d851e8a06ceb218))
+
+
+### Miscellaneous
+
+* **deps:** lock file maintenance ([#1919](https://github.com/MustardSeedNetworks/seed/issues/1919)) ([95e1b78](https://github.com/MustardSeedNetworks/seed/commit/95e1b780f428964b3d9d09d378a2232bd005cdce))
+* remove dead SNMPCollector.CollectBatch and CollectorResult ([#1930](https://github.com/MustardSeedNetworks/seed/issues/1930)) ([c73087c](https://github.com/MustardSeedNetworks/seed/commit/c73087c5b736fc3f64acff6121e28f570970e57d))
+
 ## [0.212.11](https://github.com/MustardSeedNetworks/seed/compare/v0.212.10...v0.212.11) (2026-08-17)
 
 
