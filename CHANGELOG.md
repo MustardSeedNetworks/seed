@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.213.1](https://github.com/MustardSeedNetworks/seed/compare/v0.213.0...v0.213.1) (2026-08-18)
+
+
+### Features
+
+* **ui:** point the header's help at the drawer and add the List + detail archetype ([#1948](https://github.com/MustardSeedNetworks/seed/issues/1948)) ([650c779](https://github.com/MustardSeedNetworks/seed/commit/650c77908dcded91b5e536493a0c71d6fbe28554))
+
 ## [0.213.0](https://github.com/MustardSeedNetworks/seed/compare/v0.212.11...v0.213.0) (2026-08-17)
 
 
