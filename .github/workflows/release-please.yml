@@ -7,7 +7,22 @@
 #
 # Trigger pattern (shared with seed, stem, niac):
 #   - workflow_run on CI completion: real trigger; gated on success
+#   - schedule: reconciles a release that a flaky CI run skipped
 #   - workflow_dispatch: manual debug / force trigger
+#
+# Why the schedule exists (stem#662): the workflow_run gate means a TRANSIENT
+# CI failure on main does not merely go red, it skips the release outright and
+# says nothing — a merged release PR, no tag, and a workflow that "succeeded"
+# by skipping. That fired for real on 2026-08-18 (stem v0.24.14 and seed the
+# same day) and was only caught because someone was watching.
+#
+# The fix is convergence, not alerting. release-please is idempotent: with
+# nothing to release it does nothing, so a periodic run is free of false
+# positives — unlike a "release was skipped" alarm, which cannot tell a
+# skipped release from a main CI failure on a commit that was never going to
+# release anything. A skipped release now self-heals within the interval
+# instead of waiting to be noticed. workflow_dispatch remains for recovering
+# it immediately.
 #
 # The tag release-please pushes is what starts release.yml — there is no
 # explicit hand-off job. This works ONLY because the tag is pushed with the
@@ -34,14 +49,18 @@ on:
     workflows: ["CI"]
     branches: [main]
     types: [completed]
+  # Offset from the hour so the fleet's four repos do not all fire at :00.
+  schedule:
+    - cron: '07 */3 * * *'
   workflow_dispatch:
 
 permissions: {}
 
 jobs:
   release-please:
-    # Only run if CI workflow succeeded (or this is a manual dispatch).
-    if: ${{ github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success' }}
+    # Only run if CI succeeded — or if this is the reconciling schedule or a
+    # manual dispatch, neither of which carries a workflow_run to gate on.
+    if: ${{ github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success' }}
     name: Release Please
     runs-on: ubuntu-latest
     permissions:
