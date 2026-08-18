@@ -350,12 +350,6 @@ func TestBufferSizeConstants(t *testing.T) {
 	if api.MaxBodySizeJSON <= 0 {
 		t.Error("MaxBodySizeJSON should be positive")
 	}
-	if api.MaxBodySizeFloorPlan <= 0 {
-		t.Error("MaxBodySizeFloorPlan should be positive")
-	}
-	if api.MaxBodySizeAirMapper <= 0 {
-		t.Error("MaxBodySizeAirMapper should be positive")
-	}
 	if api.MaxBodySizeDefault <= 0 {
 		t.Error("MaxBodySizeDefault should be positive")
 	}
@@ -363,10 +357,5 @@ func TestBufferSizeConstants(t *testing.T) {
 	// Auth limit should be smaller than config limit
 	if api.MaxBodySizeAuth >= api.MaxBodySizeConfig {
 		t.Error("MaxBodySizeAuth should be smaller than MaxBodySizeConfig")
-	}
-
-	// Default limit should be reasonable
-	if api.MaxBodySizeDefault > api.MaxBodySizeAirMapper {
-		t.Error("MaxBodySizeDefault should not exceed MaxBodySizeAirMapper")
 	}
 }

@@ -116,6 +116,19 @@ func (db *DB) PollingTargets() *PollingTargetRepository {
 	return db.pollingTargets
 }
 
+// DeviceCredentials returns the device-credential repository. Rows hold
+// versioned ciphertext; decryption happens at poll time in
+// internal/polling/snmp, which owns the keyring seam.
+func (db *DB) DeviceCredentials() *DeviceCredentialRepository {
+	db.mu.Lock()
+	defer db.mu.Unlock()
+
+	if db.deviceCredentials == nil {
+		db.deviceCredentials = &DeviceCredentialRepository{db: db}
+	}
+	return db.deviceCredentials
+}
+
 // SNMPObservations returns the unified SNMP observations repository
 // (Stage A3.5b). Every collector Publisher writes one row per poll;
 // Stage A4 topology + the listener pipeline read kind-filtered rows

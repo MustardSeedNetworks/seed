@@ -465,7 +465,7 @@ export const HeaderBar: React.FC<HeaderBarProps> = memo(function headerBar({
             ) : null}
           </div>
 
-          {/* Wi-Fi interface selector - always visible for survey mode */}
+          {/* Wi-Fi interface selector - always visible, even without WiFi hardware */}
           <div className="relative">
             <button
               type="button"
@@ -475,15 +475,15 @@ export const HeaderBar: React.FC<HeaderBarProps> = memo(function headerBar({
               )}
               onClick={(): void => {
                 // Always use switchToInterfaceType to properly set Wi-Fi mode.
-                // This handles both real Wi-Fi interfaces and survey mode
-                // (no-hardware): Wi-Fi is troubleshooting/survey, not planning.
+                // This handles both real Wi-Fi interfaces and the no-hardware
+                // fallback view of the Wi-Fi troubleshooting page.
                 switchToInterfaceType('wifi');
               }}
-              aria-label={t('accessibility.selectWifi', 'Select Wi-Fi / Survey Mode')}
+              aria-label={t('accessibility.selectWifi', 'Select Wi-Fi')}
               title={
                 hasWifiInterface
                   ? t('interface.wifi', 'Wi-Fi')
-                  : t('interface.wifiSurvey', 'Wi-Fi Survey Mode')
+                  : t('interface.wifiNoHardware', 'Wi-Fi (no hardware)')
               }
             >
               {/* WiFi signal icon */}
@@ -495,7 +495,7 @@ export const HeaderBar: React.FC<HeaderBarProps> = memo(function headerBar({
               {!hasWifiInterface && (
                 <span
                   className="absolute -bottom-0.5 -right-0.5 w-2 h-2 bg-status-warning rounded-full"
-                  title={t('interface.noWifiHardware', 'No Wi-Fi hardware — Survey mode')}
+                  title={t('interface.noWifiHardware', 'No Wi-Fi hardware')}
                 />
               )}
             </button>

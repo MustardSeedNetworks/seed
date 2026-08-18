@@ -12,7 +12,7 @@
     "link": "Estado del enlace",
     "cable": "Prueba de cable",
     "wifi": "Estado WiFi",
-    "wifiSurvey": "Estudio de sitio WiFi",
+    "wifiTroubleshooting": "Solución de problemas de Wi-Fi",
     "network": "Red y DHCP",
     "gateway": "Puerta de enlace",
     "dns": "Pruebas DNS",
@@ -637,63 +637,6 @@
         ]
       }
     },
-    "wifiSurvey": {
-      "description": "El estudio de sitio WiFi proporciona análisis detallado de la cobertura de red inalámbrica e interferencias.",
-      "overview": {
-        "title": "Descripción del estudio de sitio",
-        "description": "El estudio de sitio WiFi escanea todas las redes inalámbricas disponibles, mide la intensidad de la señal, identifica la utilización de canales y ayuda a optimizar el despliegue WiFi."
-      },
-      "terms": {
-        "coverage": {
-          "term": "Análisis de cobertura",
-          "description": "Mapea la intensidad de la señal en el área. Verde indica señal fuerte (-50 dBm o mejor), amarillo es regular (-70 dBm), rojo es débil (-80 dBm o peor)."
-        },
-        "channelUtilization": {
-          "term": "Utilización de canal",
-          "description": "Muestra qué tan ocupado está cada canal WiFi. Alta utilización (>50%) indica congestión e interferencia potencial."
-        },
-        "coChannelInterference": {
-          "term": "Interferencia co-canal",
-          "description": "Cuando múltiples puntos de acceso usan el mismo canal, deben compartir tiempo de aire, reduciendo el throughput. El estudio identifica redes superpuestas."
-        },
-        "adjacentChannelInterference": {
-          "term": "Interferencia de canal adyacente",
-          "description": "En 2.4 GHz, solo los canales 1, 6 y 11 no se superponen. Usar otros canales causa interferencia con vecinos."
-        },
-        "noiseFloor": {
-          "term": "Piso de ruido",
-          "description": "Nivel de ruido de radio de fondo. Mayor ruido reduce la calidad efectiva de la señal (SNR). Los valores típicos son -90 a -100 dBm."
-        }
-      },
-      "bands": {
-        "title": "Bandas de frecuencia",
-        "2.4GHz": {
-          "name": "Banda 2.4 GHz",
-          "pros": "Mejor penetración de paredes, mayor alcance, soporte universal de dispositivos",
-          "cons": "Solo 3 canales sin superposición, más congestionada, velocidades más lentas",
-          "bestFor": "Dispositivos IoT, cobertura en áreas grandes, dispositivos antiguos"
-        },
-        "5GHz": {
-          "name": "Banda 5 GHz",
-          "pros": "Muchos canales sin superposición, menos interferencia, velocidades más rápidas",
-          "cons": "Menor alcance, más afectada por paredes, no todos los dispositivos la soportan",
-          "bestFor": "Aplicaciones de alto ancho de banda, despliegues densos, dispositivos modernos"
-        },
-        "6GHz": {
-          "name": "Banda 6 GHz (WiFi 6E/7)",
-          "pros": "Completamente sin congestión, canales más anchos (hasta 320 MHz), menor latency",
-          "cons": "Menor alcance, requiere dispositivos WiFi 6E/7, penetración limitada",
-          "bestFor": "Aplicaciones de alto rendimiento, AR/VR, despliegues empresariales"
-        }
-      },
-      "recommendations": {
-        "title": "Recomendaciones de canal",
-        "description": "Basándose en los resultados del estudio, The Seed recomienda asignaciones óptimas de canal para minimizar interferencias.",
-        "2.4GHzTip": "En 2.4 GHz, siempre use canales 1, 6 u 11. Nunca use canales 2-5 o 7-10 ya que se superponen con canales adyacentes.",
-        "5GHzTip": "En 5 GHz, prefiera canales DFS (52-144) cuando estén disponibles - están menos congestionados. Evite canales cerca de radar meteorológico si se detecta interferencia.",
-        "widthTip": "Use ancho de canal de 80 MHz para el mejor equilibrio entre velocidad y confiabilidad. 160 MHz ofrece velocidades más altas pero es más propenso a interferencias."
-      }
-    },
     "rtspChecks": {
       "description": "Monitoree endpoints RTSP (Real Time Streaming Protocol) para cámaras IP y sistemas de videovigilancia.",
       "overview": {
@@ -1071,39 +1014,6 @@
             {
               "step": "Exportar respaldo",
               "description": "Exporte el perfil como respaldo antes de dejar el sitio del cliente."
-            }
-          ]
-        },
-        "runWifiSurvey": {
-          "title": "Cómo realizar un estudio de sitio WiFi",
-          "steps": [
-            {
-              "step": "Seleccionar interfaz WiFi",
-              "description": "Asegure que un adaptador WiFi esté seleccionado en el menú de interfaz. WiFi interno de laptop o adaptador USB ambos funcionan."
-            },
-            {
-              "step": "Navegar al estudio",
-              "description": "Abra la tarjeta de Estudio de sitio WiFi o vaya a Herramientas → Estudio WiFi."
-            },
-            {
-              "step": "Iniciar escaneo",
-              "description": "Haga clic en 'Iniciar estudio' para comenzar a capturar todas las redes WiFi visibles. Camine a diferentes ubicaciones mientras escanea."
-            },
-            {
-              "step": "Analizar banda 2.4 GHz",
-              "description": "Revise gráfico de canal para redes superpuestas. Asegure que su red use solo canal 1, 6 u 11."
-            },
-            {
-              "step": "Analizar banda 5 GHz",
-              "description": "Verifique cobertura adecuada. Revise disponibilidad de canal DFS. Note cualquier indicador de interferencia de radar."
-            },
-            {
-              "step": "Revisar recomendaciones",
-              "description": "Revise la pestaña de Recomendaciones para cambios de canal sugeridos y ajustes de puntos de acceso."
-            },
-            {
-              "step": "Exportar informe",
-              "description": "Exporte resultados del estudio para documentación o presentación al cliente."
             }
           ]
         }

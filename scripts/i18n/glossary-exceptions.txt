@@ -16,12 +16,3 @@
 
 # --- "Pro" used as adjective "professional", not the tier brand
 help.content.gettingStarted.proTips.title
-
-# --- "Measure" used as verb "to measure", not the Stem module name
-survey.config.goals.throughputDesc
-survey.scalePanel.measureDistance
-
-# --- "Enterprise" used as 802.11 auth mode (WPA2/WPA3-Enterprise),
-#     not the deprecated license-tier brand
-survey.heatmaps.security.wpa2-enterprise
-survey.heatmaps.security.wpa3-enterprise

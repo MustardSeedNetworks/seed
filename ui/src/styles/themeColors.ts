@@ -206,7 +206,7 @@ export const moduleColor = {
     badge: 'bg-module-path/20 text-module-path',
     border: 'border-module-path/30',
   },
-  // Wi-Fi - visibility, surveys, coverage
+  // Wi-Fi - visibility, troubleshooting, coverage
   wifi: {
     icon: 'text-module-wifi', // Matches brand primary
     badge: 'bg-module-wifi/20 text-module-wifi',

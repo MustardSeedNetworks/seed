@@ -57,7 +57,7 @@
     "title": "Topología"
   },
   "wifi": {
-    "description": "Enlace inalámbrico, sondeo de canales y visualización de solapamiento de canales.",
+    "description": "Enlace inalámbrico, utilización de canales y visualización de solapamiento de canales.",
     "label": "Wi-Fi",
     "title": "Wi-Fi"
   }

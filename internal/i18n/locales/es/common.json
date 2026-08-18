@@ -259,11 +259,6 @@
     "save": "Guardar",
     "saving": "Guardando…"
   },
-  "criteria": {
-    "criteriaPassed": "criterios superados",
-    "statusPass": "PASS",
-    "statusFail": "FAIL"
-  },
   "device": {
     "manualEntry": "Entrada manual",
     "manualIpEntry": "Ingrese la dirección IP manualmente",
@@ -318,7 +313,7 @@
     "recommended": "Recomendado",
     "switchTo": "Cambiar a {{name}}",
     "wifi": "Wi-Fi",
-    "wifiSurvey": "Modo de encuesta Wi-Fi"
+    "wifiNoHardware": "Wi-Fi (sin hardware)"
   },
   "pathDiscovery": {
     "completed": "Completado",
@@ -330,19 +325,6 @@
     "switches": "switches",
     "to": "a",
     "trunk": "Troncal"
-  },
-  "report": {
-    "apInventory": "Inventario de AP",
-    "criteriaResults": "Resultados de criterios",
-    "date": "Fecha",
-    "executiveSummary": "Resumen ejecutivo",
-    "facilitySize": "Tamaño de la instalación",
-    "generatedBy": "Generado por",
-    "heatmapVisualizations": "Visualizaciones de mapa de calor",
-    "overallStatus": "Estado general",
-    "recommendations": "Recomendaciones",
-    "samplePoints": "Puntos de muestreo",
-    "surveyType": "Tipo de encuesta"
   },
   "tooltips": {
     "header": {

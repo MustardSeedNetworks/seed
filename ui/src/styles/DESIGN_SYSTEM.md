@@ -10,7 +10,7 @@ centralized theme tokens and component utilities.
 
 Three tiers, **one** source of truth for values, **one** derivation direction:
 
-```
+```text
 Primitive   Tailwind's built-in palette (green-500 = #4caf50)   ← never referenced directly in app code
    ↓ alias
 Semantic    index.css @theme + :root/.dark                      ← THE source of truth for VALUES
@@ -19,7 +19,7 @@ Semantic    index.css @theme + :root/.dark                      ← THE source o
    ↓ alias
 Component   components/ui/* (<Button>, <Card>, <Input> …)        ← consumes semantic tokens
             + TS class-token objects in styles/theme (status.*, layout.* …)
-```
+```text
 
 **Two invariants (enforced by lint):**
 
@@ -32,8 +32,7 @@ Component   components/ui/* (<Button>, <Card>, <Input> …)        ← consumes 
 read the value at runtime from `styles/tokens.ts` (`token('brandPrimary')`),
 which reads the CSS variable — so there's still a single source of truth.
 
-**Legitimate exceptions** (allowlisted): `styles/tokens.ts`,
-`utils/reportRenderer.ts`, `components/survey/FloorPlanCanvas.tsx`, and named
+**Legitimate exceptions** (allowlisted): `styles/tokens.ts` and named
 domain-palette maps (e.g. T568B Ethernet wire colors), which represent physical
 reality and are intentionally outside the brand palette.
 

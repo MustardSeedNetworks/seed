@@ -29,7 +29,6 @@ export interface CardSettingsDefaults {
   dns: CardOptionDefaults;
   publicIp: CardOptionDefaults;
   wifi: CardOptionDefaults;
-  wifiSurvey: CardOptionDefaults;
   healthChecks: CardOptionDefaults;
   networkDiscovery: CardOptionDefaults;
   pathDiscovery: CardOptionDefaults;

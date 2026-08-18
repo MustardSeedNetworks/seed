@@ -328,7 +328,7 @@ The setup wizard will:
 
 ## Step 5: Explore Features
 
-### WiFi Survey
+### WiFi Troubleshooting
 1. Click **"WiFi"** in sidebar
 2. View detected access points, signal strength, channels
 
@@ -513,7 +513,6 @@ The Seed is a source-available network diagnostic platform that combines wired a
 
 - **Healthcare IT:** Hospitals, clinics (HIPAA compliance built-in)
 - **SMB Network Admins:** Small/medium businesses (50-500 employees)
-- **WiFi Consultants:** Site surveys and planning
 - **MSPs:** Managed service providers
 
 ### Is The Seed free?
@@ -553,23 +552,6 @@ Yes! The Seed is a web application:
 - Access UI from any browser on your network
 
 ## Features
-
-### Can The Seed plan WiFi BEFORE a site survey?
-
-**Yes!** This is unique to The Seed.
-
-Upload a floor plan, place virtual APs, get instant coverage prediction. No competitor offers this.
-
-### How accurate is predictive WiFi planning?
-
-**85-95%** compared to real-world surveys.
-
-Good enough for:
-- Estimating AP count
-- Budget planning
-- Initial design
-
-Not a replacement for final validation in complex RF environments.
 
 ### Does The Seed replace SolarWinds/PRTG?
 

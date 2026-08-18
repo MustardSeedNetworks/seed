@@ -82,7 +82,7 @@ func TestNewCLIStateLongDescription(t *testing.T) {
 	// Verify the long description mentions key features
 	features := []string{
 		"Network device discovery",
-		"WiFi site surveys",
+		"WiFi troubleshooting",
 		"Speed testing",
 		"DHCP rogue detection",
 		"Vulnerability scanning",

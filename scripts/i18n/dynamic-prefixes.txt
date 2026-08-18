@@ -56,25 +56,9 @@ cards:pathDiscovery.
 cards:mfa.
 cards:guestAudit.
 cards:slaDashboard.
-cards:survey.
 cards:switch.
 cards:system.
 cards:vlan.
-
-# survey.* — WiFi survey reports (heatmaps, criteria evaluation, AP
-# placement, environment templates, analysis sections) all use
-# data-driven label resolution via t(`survey:${section}.${id}`).
-survey:heatmaps.
-survey:criteria.
-survey:report.
-survey:analysis.
-survey:apPlacement.
-survey:environments.
-survey:config.
-survey:import.
-survey:results.
-survey:wizard.
-survey:errors.
 
 # settings.* — Settings sections render via field-schema → label
 # lookups: t(`settings:${section}.${field}`).
@@ -116,7 +100,6 @@ errors:wifi.
 errors:rateLimited.
 errors:throttled.
 errors:subnet.
-errors:survey.
 
 # common.or — used as a separator literal in OR-logic UI strings.
 common:or
@@ -146,13 +129,6 @@ settings:title
 # rule descriptions via t(`setup:${section}.${field}`).
 setup:password.
 setup:username.
-
-# survey.buttons.* / survey.scalePanel.* / survey.wifi.* — toolbar
-# button labels + scale-conversion picker + Wi-Fi adapter messages
-# in the survey UI.
-survey:buttons.
-survey:scalePanel.
-survey:wifi.
 
 # validation.* — field-validation messages indexed by field type +
 # rule. Form library resolves t(`validation:${field}.${rule}`).
@@ -191,12 +167,10 @@ common:discovery.
 common:device.
 common:health.
 common:interface.
-common:report.
 common:recovery.
 common:tooltips.
 common:pathDiscovery.
 common:errors.
-common:criteria.
 
 # api.* — API metadata namespace (response schema labels). Consumed
 # by api-aware error renderer + form validation + status message
@@ -213,7 +187,6 @@ api:messages.
 api:settings.
 api:speedtest.
 api:status.
-api:survey.
 api:tests.
 api:vlan.
 api:vulnerabilities.

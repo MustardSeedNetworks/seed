@@ -1,6 +1,5 @@
 import { WiFiCard } from '../components/cards/WiFiCard';
 import { WifiChannelGraph } from '../components/cards/WiFiChannelGraph';
-import { WiFiSurveyCard } from '../components/cards/WiFiSurveyCard';
 import { BetaBadge } from '../components/ui/BetaBadge';
 import { Card } from '../components/ui/card';
 import { RequireFeature } from '../components/ui/RequireFeature';
@@ -10,13 +9,11 @@ import { useAppContext } from '../contexts/AppContext';
 import { layout } from '../styles/theme';
 
 export function WifiPage() {
-  const { cards, loading, isWifi, currentInterface, channelGraphData, channelGraphLoading } =
-    useAppContext();
+  const { cards, loading, isWifi, channelGraphData, channelGraphLoading } = useAppContext();
 
   return (
     <div className={layout.grid.cards}>
       {isWifi ? <WiFiCard data={cards.wifi} loading={loading} visible={true} /> : null}
-      {isWifi ? <WiFiSurveyCard isWifi={isWifi} currentInterface={currentInterface} /> : null}
       {isWifi ? (
         <WifiChannelGraph data={channelGraphData} loading={channelGraphLoading} visible={isWifi} />
       ) : null}

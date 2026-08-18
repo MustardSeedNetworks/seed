@@ -57,7 +57,7 @@
     "title": "Topology"
   },
   "wifi": {
-    "description": "Wireless link, channel survey, and channel-overlap visualisation.",
+    "description": "Wireless link, channel utilization, and channel-overlap visualisation.",
     "label": "Wi-Fi",
     "title": "Wi-Fi"
   }

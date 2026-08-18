@@ -99,11 +99,6 @@
     "notFound": "Subred no encontrada",
     "cidrRequired": "Parámetro CIDR requerido"
   },
-  "survey": {
-    "nameRequired": "Nombre de encuesta requerido",
-    "idRequired": "ID de encuesta requerido",
-    "notFound": "Encuesta no encontrada"
-  },
   "wifi": {
     "notWireless": "La interfaz actual no es un adaptador inalámbrico",
     "notConnected": "No conectado a una red inalámbrica"

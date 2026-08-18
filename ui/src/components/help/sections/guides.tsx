@@ -79,7 +79,7 @@ export const guidesSections: HelpSection[] = [
     id: 'howTo',
     titleKey: 'sections.howTo',
     icon: <Lightbulb className={ICON} />,
-    keywords: ['how to', 'guide', 'diagnose', 'survey', 'health checks', 'walkthrough'],
+    keywords: ['how to', 'guide', 'diagnose', 'health checks', 'walkthrough'],
     blocks: [
       {
         kind: 'paragraph',
@@ -105,7 +105,7 @@ export const guidesSections: HelpSection[] = [
           },
           {
             description:
-              'For Wi-Fi, run a site survey to check channel congestion and interference.',
+              'For Wi-Fi, check the channel-overlap view for congestion and interference.',
           },
         ],
       },

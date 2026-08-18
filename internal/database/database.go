@@ -75,6 +75,7 @@ type DB struct {
 	clients           *ClientRepository
 	probes            *ProbeRepository
 	pollingTargets    *PollingTargetRepository
+	deviceCredentials *DeviceCredentialRepository
 	jobs              *JobRepository
 	outbox            *OutboxRepository
 	snmpObservations  *SNMPObservationsRepository

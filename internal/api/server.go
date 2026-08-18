@@ -78,7 +78,6 @@ import (
 	"github.com/MustardSeedNetworks/seed/internal/update"
 	"github.com/MustardSeedNetworks/seed/internal/update/lifecycle"
 	"github.com/MustardSeedNetworks/seed/internal/wifi"
-	"github.com/MustardSeedNetworks/seed/internal/wifi/survey"
 	"github.com/MustardSeedNetworks/seed/internal/wifi/troubleshooting"
 )
 
@@ -214,10 +213,9 @@ type Server struct {
 	// to off.
 	anomalyCoord *anomaly.Coordinator
 
-	// --- Wi-Fi visibility (scan, manage, survey) ---
-	wifiMgr   *wifi.Manager
-	wifiScan  *wifi.Scanner
-	surveyMgr *survey.Manager
+	// --- Wi-Fi visibility (scan, manage) ---
+	wifiMgr  *wifi.Manager
+	wifiScan *wifi.Scanner
 
 	// --- Real-time communication ---
 	sse          *SSEHub                 // SSE hub for real-time updates
@@ -329,7 +327,7 @@ func NewServer(
 	// Set up link state change callback
 	s.linkMonitor().OnStateChange(s.onLinkStateChange)
 
-	// Initialize network services (DNS, device discovery subnets, survey manager)
+	// Initialize network services (DNS, device discovery subnets)
 	s.initNetworkServices(cfg)
 
 	// Initialize OAuth manager for SSO
@@ -626,12 +624,26 @@ func (s *Server) initSNMPPoller(db *database.DB) {
 	logger := logging.GetLogger()
 	sched := scheduler.New(snmpPollerSchedulerTick)
 	factory := snmpclient.NewFactory(snmpclient.Options{})
+	// Without a config there is no keyring, so no target could be authenticated.
+	// Skip the poller rather than registering one that refuses every target.
+	if s.config == nil {
+		logger.Warn("snmp poller init skipped: no config, so no credential keyring")
+		return
+	}
+	keyring, err := s.config.CredentialKeyring()
+	if err != nil {
+		logger.Warn("snmp poller init failed: credential keyring unavailable", "error", err)
+		return
+	}
+
 	poller, err := snmporchestrator.Build(snmporchestrator.Config{
 		Targets:       db.PollingTargets(),
 		Observations:  db.SNMPObservations(),
 		Scheduler:     sched,
 		ClientFactory: factory,
 		Logger:        logger,
+		Credentials:   db.DeviceCredentials(),
+		Decrypter:     keyring,
 	})
 	if err != nil {
 		logger.Warn("snmp poller init failed", "error", err)
@@ -851,9 +863,6 @@ func (s *Server) WiFiManager() *wifi.Manager { return s.wifiMgr }
 // WiFiScanner returns the WiFi scanner.
 func (s *Server) WiFiScanner() *wifi.Scanner { return s.wifiScan }
 
-// SurveyManager returns the survey manager.
-func (s *Server) SurveyManager() *survey.Manager { return s.surveyMgr }
-
 // SSEHub returns the SSE hub.
 func (s *Server) SSEHub() *SSEHub { return s.sse }
 
@@ -951,7 +960,6 @@ func (s *Server) cableTester() *cable.Tester                    { return s.cable
 func (s *Server) publicipChecker() *publicip.Checker            { return s.publicIP }
 func (s *Server) wifiManager() *wifi.Manager                    { return s.wifiMgr }
 func (s *Server) wifiScanner() *wifi.Scanner                    { return s.wifiScan }
-func (s *Server) surveyManager() *survey.Manager                { return s.surveyMgr }
 func (s *Server) sseHub() *SSEHub                               { return s.sse }
 func (s *Server) logBroadcaster() *logging.LogBroadcaster       { return s.logBroadcast }
 func (s *Server) eventBus() *events.Bus                         { return s.bus }

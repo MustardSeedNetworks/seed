@@ -35,7 +35,9 @@ const (
 
 // EDP protocol parsing constants.
 const (
-	edpMinHeaderSize    = 8    // Minimum EDP header size
+	edpHeaderSize       = 16   // EDP header: version..machine ID inclusive
+	edpMachineIDOffset  = 10   // machine ID (MAC) offset within the header
+	edpVersion          = 0x01 // EDP protocol version this parser accepts
 	edpTLVHeaderSize    = 4    // TLV header size (marker + type + length)
 	edpTLVMarker        = 0x99 // TLV marker byte
 	edpInfoSlotPortSize = 4    // Slot + port field size
@@ -62,6 +64,9 @@ type EDPNeighbor struct {
 	// VLANUntagged when the frame carried no tag. On a trunk port this is the
 	// only way to tell which VLAN a neighbour advertises into.
 	ObservedVLAN uint16 `json:"observedVlan,omitempty"`
+	// MachineID is the MAC from the EDP header, used as the device identity
+	// when the advertisement carries no Display TLV.
+	MachineID string `json:"machineId,omitempty"`
 }
 
 // EDPCapture handles EDP frame capture on an interface.
@@ -188,52 +193,43 @@ func (c *EDPCapture) processPacket(packet gopacket.Packet, vlan uint16) {
 	}
 	neighbor.ObservedVLAN = vlan
 
-	// EDP uses LLC/SNAP encapsulation
-	// We need to parse the payload manually
-	llcLayer := packet.Layer(layers.LayerTypeLLC)
-	if llcLayer == nil {
+	// EDP rides on 802.3 + LLC/SNAP (OUI 00:E0:2B, PID 0x00BB), so the EDP
+	// header starts at the SNAP payload. gopacket decodes the SNAP layer itself;
+	// falling back to the LLC payload would leave the 5-byte SNAP header in
+	// front of the version byte.
+	snapLayer := packet.Layer(layers.LayerTypeSNAP)
+	if snapLayer == nil {
+		return
+	}
+	payload := snapLayer.LayerPayload()
+	if len(payload) < edpHeaderSize {
 		return
 	}
 
-	// Get the payload after LLC header
-	payload := llcLayer.LayerPayload()
-	if len(payload) < edpMinHeaderSize {
+	// EDP header, 16 bytes:
+	//   0      version (1)
+	//   1      reserved (1)
+	//   2-3    length (2)
+	//   4-5    checksum (2)
+	//   6-7    sequence (2)
+	//   8-9    machine ID type (2)
+	//   10-15  machine ID (6, a MAC when the type is 0)
+	// then 0x99-marker TLVs.
+	if payload[0] != edpVersion {
 		return
 	}
 
-	// EDP header structure:
-	// Bytes 0-1: Protocol version (0x0001)
-	// Bytes 2-3: Reserved
-	// Bytes 4-5: Sequence number
-	// Bytes 6-7: Machine ID length
-	// Then: Machine ID, followed by TLVs
+	neighbor.MachineID = net.HardwareAddr(payload[edpMachineIDOffset:edpHeaderSize]).String()
 
-	// Skip SNAP header if present (5 bytes: 3 OUI + 2 protocol ID)
-	if len(payload) > 5 && payload[0] == 0x00 && payload[1] == 0xe0 && payload[2] == 0x2b {
-		payload = payload[5:]
+	c.parseEDPTLVs(payload[edpHeaderSize:], neighbor)
+
+	// The Display TLV carries the operator-facing name; the header only has a
+	// MAC. Fall back to that MAC so a neighbour without a Display TLV is still
+	// identifiable rather than keyed on an empty string.
+	neighbor.DeviceID = neighbor.DisplayName
+	if neighbor.DeviceID == "" {
+		neighbor.DeviceID = neighbor.MachineID
 	}
-
-	// Parse EDP header
-	if len(payload) < edpMinHeaderSize {
-		return
-	}
-
-	// Check version (should be 1)
-	version := binary.BigEndian.Uint16(payload[0:2])
-	if version != 1 {
-		return
-	}
-
-	machineIDLen := binary.BigEndian.Uint16(payload[6:8])
-	if len(payload) < edpMinHeaderSize+int(machineIDLen) {
-		return
-	}
-
-	neighbor.DeviceID = string(payload[edpMinHeaderSize : edpMinHeaderSize+machineIDLen])
-
-	// Parse TLVs starting after machine ID
-	tlvOffset := edpMinHeaderSize + int(machineIDLen)
-	c.parseEDPTLVs(payload[tlvOffset:], neighbor)
 
 	// Store neighbor (keyed by DeviceID + SourceMAC if no PortID)
 	key := neighbor.DeviceID + ":" + neighbor.SourceMAC
@@ -252,18 +248,10 @@ func (c *EDPCapture) parseEDPTLVs(data []byte, neighbor *EDPNeighbor) {
 	for offset+edpTLVHeaderSize <= len(data) {
 		// TLV header: 1 byte marker (0x99), 1 byte type, 2 bytes length
 		if data[offset] != edpTLVMarker {
-			// Try alternative format: 1 byte type, 1 byte reserved, 2 bytes length
-			tlvType := data[offset]
-			tlvLen := binary.BigEndian.Uint16(data[offset+2 : offset+edpTLVHeaderSize])
-
-			if tlvLen < 4 || offset+int(tlvLen) > len(data) {
-				break
-			}
-
-			tlvData := data[offset+4 : offset+int(tlvLen)]
-			c.parseEDPTLV(tlvType, tlvData, neighbor)
-			offset += int(tlvLen)
-			continue
+			// Every EDP TLV is marker-prefixed. A byte here that is not 0x99
+			// means the walk has derailed, so stop rather than guess at an
+			// alternative framing.
+			break
 		}
 
 		// Standard format with 0x99 marker

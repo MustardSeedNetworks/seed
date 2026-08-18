@@ -60,7 +60,7 @@
     "mtu": "MTU",
     "displayOptions": "Opciones de visualización",
     "measurementSystem": "Sistema de medición",
-    "measurementDescription": "Unidades para distancias (encuestas, cables)",
+    "measurementDescription": "Unidades para distancias (cables)",
     "showPublicIp": "Mostrar IP pública",
     "displayInNetworkCard": "Mostrar en tarjeta de red",
     "vlanTag": "Etiqueta VLAN (802.1Q)",

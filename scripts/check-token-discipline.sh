@@ -22,8 +22,6 @@
 #   - token definition sites (styles/, constants/)
 #   - documented fixed-palette exceptions (intentional, not theme colors):
 #       components/cards/cableWire.ts          physical T568B wire colors
-#       utils/reportRenderer.ts                self-contained light print CSS
-#       components/survey/FloorPlanCanvas.tsx  canvas drawing over imagery
 #       lib/logger.ts                          devtools console %c colors
 #
 # Portability: BLOCKING rules use POSIX ERE (GNU + BSD/macOS grep). ADVISORY
@@ -47,7 +45,7 @@ else
 fi
 
 # Definition sites, tests, and the documented fixed-palette exceptions.
-EXCLUDE_RE='\.(test|spec|stories|mock)\.(ts|tsx):|/styles/|/constants/|/cableWire\.ts:|/reportRenderer\.ts:|/FloorPlanCanvas\.tsx:|/HeatmapLegend\.tsx:|/logger\.ts:'
+EXCLUDE_RE='\.(test|spec|stories|mock)\.(ts|tsx):|/styles/|/constants/|/cableWire\.ts:|/logger\.ts:'
 
 FAIL_COUNT=0
 

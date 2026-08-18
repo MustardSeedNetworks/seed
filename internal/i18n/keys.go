@@ -132,9 +132,6 @@ const (
 
 	APIDHCPServersCleared = "api.dhcp.serversCleared"
 
-	APISurveySampleAdded      = "api.survey.sampleAdded"
-	APISurveyFloorPlanUpdated = "api.survey.floorPlanUpdated"
-
 	APIAuthLoggedOut = "api.auth.loggedOut"
 
 	APIVulnerabilitiesScanStarted = "api.vulnerabilities.scanStarted"

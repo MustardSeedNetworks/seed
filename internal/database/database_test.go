@@ -420,7 +420,6 @@ func TestStageA11ClientsArtifacts(t *testing.T) {
 	tables := []string{
 		"profiles", "alerts", "metrics",
 		"speedtest_results", "dns_results", "gateway_results",
-		"survey_samples",
 		"discovered_devices", "discovery_interfaces",
 		"wifi_networks", "wifi_access_points", "channel_utilization",
 		"discovery_history", "bluetooth_devices", "bluetooth_scan_history",
