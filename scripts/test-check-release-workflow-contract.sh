@@ -83,7 +83,7 @@ if RELEASE_REPO_ROOT="$fixture_dir/empty" "$checker" >/dev/null 2>&1; then
 fi
 assert_rejected \
   "new-mutable-action" \
-  $'    steps:\n      - name: Install build dependencies' \
-  $'    steps:\n      - uses: example/untrusted-action@main\n      - name: Install build dependencies'
+  $'    steps:\n      - name: Probe for build dependencies' \
+  $'    steps:\n      - uses: example/untrusted-action@main\n      - name: Probe for build dependencies'
 
 echo "release workflow contract mutation tests passed."
