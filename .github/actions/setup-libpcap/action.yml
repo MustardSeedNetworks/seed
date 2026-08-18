@@ -24,21 +24,21 @@ runs:
         Acquire::http::Timeout "20";
         Acquire::https::Timeout "20";
         Acquire::Retries "2";
-        DPkg::Lock::Timeout "60";
+        DPkg::Lock::Timeout "240";
         EOF
-        for attempt in 1 2 3; do
+        for attempt in 1 2; do
           if [ "$attempt" -gt 1 ]; then
             # A timeout kill can leave dpkg half-configured; recover first.
             sudo dpkg --configure -a >/dev/null 2>&1 || true
           fi
           if [ "${{ steps.cache-apt.outputs.cache-hit }}" != "true" ]; then
-            timeout -k 15 120 sudo apt-get update || true
+            timeout -k 15 270 sudo apt-get update || true
           fi
-          if timeout -k 15 120 sudo apt-get install -y libpcap-dev; then
+          if timeout -k 15 270 sudo apt-get install -y libpcap-dev; then
             exit 0
           fi
           echo "libpcap-dev install attempt ${attempt} failed; retrying in $((attempt * 10))s..."
           sleep $((attempt * 10))
         done
-        echo "::error::libpcap-dev install failed after 3 attempts"
+        echo "::error::libpcap-dev install failed after 2 attempts"
         exit 1
