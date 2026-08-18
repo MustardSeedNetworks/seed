@@ -5,6 +5,19 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.213.2](https://github.com/MustardSeedNetworks/seed/compare/v0.213.1...v0.213.2) (2026-08-18)
+
+
+### Bug Fixes
+
+* **ci:** replace the hand-rolled apt wrappers with the fleet composite ([#1958](https://github.com/MustardSeedNetworks/seed/issues/1958)) ([12568ec](https://github.com/MustardSeedNetworks/seed/commit/12568ec742d1d77e29460aa805f3ed654c565637))
+* **ci:** wait out dpkg lock contention instead of retrying into it ([#1956](https://github.com/MustardSeedNetworks/seed/issues/1956)) ([4c7c429](https://github.com/MustardSeedNetworks/seed/commit/4c7c42956981ed38a6523fa6383194f1a83b33cc))
+
+
+### Code Refactoring
+
+* **ui:** delete the dead card type model and settle the status vocabulary ([#1953](https://github.com/MustardSeedNetworks/seed/issues/1953)) ([ba21e98](https://github.com/MustardSeedNetworks/seed/commit/ba21e98bbdea94e32dcbfa96602ca35322986bbe))
+
 ## [0.213.1](https://github.com/MustardSeedNetworks/seed/compare/v0.213.0...v0.213.1) (2026-08-18)
 
 
