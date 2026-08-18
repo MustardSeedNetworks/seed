@@ -22,7 +22,7 @@ import {
   Shield,
   Wifi,
 } from 'lucide-react';
-import { type FC, lazy, type ReactNode } from 'react';
+import { type FC, lazy } from 'react';
 import { useTranslation } from 'react-i18next';
 
 // Eager — the default landing pages.
@@ -68,8 +68,13 @@ export interface PageConfig {
   icon: LucideIcon;
   iconColorClass?: string;
   component: FC;
-  /** Rich help shown in the header's side panel. Omit to hide the (?) button. */
-  help?: ReactNode;
+  /**
+   * Id of the HelpDrawer section this page's (?) opens. Omit to hide the
+   * button. Kept explicit rather than derived from i18nKey so a page may
+   * point at a shared section, and so additions are visible in review —
+   * helpRouteCoverage.test.ts holds every route to having one.
+   */
+  help?: string;
 }
 
 /**
@@ -101,7 +106,7 @@ interface PageDef {
   icon: LucideIcon;
   iconColorClass?: string;
   component: FC;
-  help?: ReactNode;
+  help?: string;
 }
 
 const staticPages: PageDef[] = [
@@ -111,6 +116,7 @@ const staticPages: PageDef[] = [
     icon: Network,
     iconColorClass: 'text-module-telemetry',
     component: LinkPage,
+    help: 'link',
   },
   {
     path: '/network',
@@ -118,20 +124,7 @@ const staticPages: PageDef[] = [
     icon: Server,
     iconColorClass: 'text-module-telemetry',
     component: NetworkPage,
-    help: (
-      <div className="stack-md">
-        <p>
-          The Network page shows the diagnostic state of the upstream link: DHCP lease, default
-          gateway, DNS resolvers, the public IP the gateway uses, and (when wired) the
-          directly-attached switch and its VLAN configuration.
-        </p>
-        <p>
-          Each card refreshes on its own schedule and reflects the active interface selected in the
-          header. If a card shows "no data", either the interface has not yet been probed, or that
-          piece of the upstream config is not present (e.g., no IPv6 gateway).
-        </p>
-      </div>
-    ),
+    help: 'network',
   },
   {
     path: '/path',
@@ -139,6 +132,7 @@ const staticPages: PageDef[] = [
     icon: Route,
     iconColorClass: 'text-module-path',
     component: PathAnalysisPage,
+    help: 'path',
   },
   {
     path: '/wifi',
@@ -146,6 +140,7 @@ const staticPages: PageDef[] = [
     icon: Wifi,
     iconColorClass: 'text-module-wifi',
     component: WifiPage,
+    help: 'wifi',
   },
   {
     path: '/security',
@@ -153,14 +148,22 @@ const staticPages: PageDef[] = [
     icon: Shield,
     iconColorClass: 'text-module-security',
     component: SecurityPage,
+    help: 'security',
   },
-  { path: '/performance', i18nKey: 'performance', icon: Activity, component: PerformancePage },
+  {
+    path: '/performance',
+    i18nKey: 'performance',
+    icon: Activity,
+    component: PerformancePage,
+    help: 'performance',
+  },
   {
     path: '/reports',
     i18nKey: 'reports',
     icon: BarChart3,
     iconColorClass: 'text-module-reporting',
     component: ReportsPage,
+    help: 'reports',
   },
   {
     path: '/logs',
@@ -168,6 +171,7 @@ const staticPages: PageDef[] = [
     icon: ScrollText,
     iconColorClass: 'text-module-reporting',
     component: LogsPage,
+    help: 'logs',
   },
   {
     path: '/polling-targets',
@@ -175,6 +179,7 @@ const staticPages: PageDef[] = [
     icon: ServerCog,
     iconColorClass: 'text-module-security',
     component: PollingTargetsPage,
+    help: 'pollingTargets',
   },
   {
     path: '/topology',
@@ -182,6 +187,7 @@ const staticPages: PageDef[] = [
     icon: Network,
     iconColorClass: 'text-module-security',
     component: TopologyPage,
+    help: 'topology',
   },
   {
     path: '/alerts',
@@ -189,6 +195,7 @@ const staticPages: PageDef[] = [
     icon: Bell,
     iconColorClass: 'text-module-security',
     component: AlertsPage,
+    help: 'alerts',
   },
 ];
 

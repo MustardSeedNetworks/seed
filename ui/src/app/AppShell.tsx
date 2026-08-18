@@ -69,6 +69,7 @@ export function AppShell({ orchestration, logout }: AppShellProps): JSX.Element 
     profilesOpen,
     settingsOpen,
     helpOpen,
+    helpSection,
     openProfiles,
     closeProfiles,
     openSettings,
@@ -140,7 +141,7 @@ export function AppShell({ orchestration, logout }: AppShellProps): JSX.Element 
               </Route>
               {pages.map((page) => (
                 <Route key={page.path} path={page.path}>
-                  <PageWithHeader page={page}>
+                  <PageWithHeader page={page} onOpenHelp={openHelp}>
                     <page.component />
                   </PageWithHeader>
                 </Route>
@@ -164,7 +165,12 @@ export function AppShell({ orchestration, logout }: AppShellProps): JSX.Element 
       />
 
       {/* Help Drawer - data-driven, with TOC, search, and real content */}
-      <HelpDrawer isOpen={helpOpen} onClose={closeHelp} version={appVersion} />
+      <HelpDrawer
+        isOpen={helpOpen}
+        onClose={closeHelp}
+        version={appVersion}
+        section={helpSection}
+      />
 
       {/* Profile Management Modal (#754) */}
       {profilesOpen ? <ProfileManagement onClose={closeProfiles} /> : null}
@@ -193,7 +199,16 @@ export function AppShell({ orchestration, logout }: AppShellProps): JSX.Element 
  * breadcrumbs plus the page header — from the registry entry rather
  * than from the page body. Pages render only their own content.
  */
-function PageWithHeader({ page, children }: { page: PageConfig; children: ReactNode }) {
+function PageWithHeader({
+  page,
+  onOpenHelp,
+  children,
+}: {
+  page: PageConfig;
+  onOpenHelp: (section: string) => void;
+  children: ReactNode;
+}) {
+  const helpSection = page.help;
   return (
     <section className="stack-xl">
       <Breadcrumbs />
@@ -203,7 +218,7 @@ function PageWithHeader({ page, children }: { page: PageConfig; children: ReactN
         eyebrow={page.eyebrow}
         title={page.title}
         description={page.description}
-        help={page.help}
+        onHelp={helpSection ? () => onOpenHelp(helpSection) : undefined}
       />
       {children}
     </section>

@@ -1,6 +1,6 @@
 /**
  * PageHeader — page-level title bar with optional breadcrumbs, actions,
- * and a slide-out help panel.
+ * and a help entry point.
  *
  * Shared shell pattern — kept visually and behaviorally consistent across
  * seed / stem / niac by convention; each repo owns this file independently
@@ -13,12 +13,12 @@
  *     icon={ServerIcon}
  *     breadcrumbs={[{ label: 'Home', href: '/' }, { label: 'Devices' }]}
  *     actions={<Button>Add device</Button>}
- *     help={<p>Detailed help content shown in a side panel.</p>}
+ *     onHelp={() => openHelp('devices')}
  *   />
  */
 import type { LucideIcon } from 'lucide-react';
-import { ChevronRight, HelpCircle, X } from 'lucide-react';
-import { createElement, type FC, type ReactNode, useEffect, useState } from 'react';
+import { ChevronRight, HelpCircle } from 'lucide-react';
+import { createElement, type FC, type ReactNode } from 'react';
 import { Link } from 'wouter';
 import { iconSizes } from '../constants/sizes';
 
@@ -43,10 +43,11 @@ interface PageHeaderProps {
   actions?: ReactNode;
   breadcrumbs?: BreadcrumbItem[];
   /**
-   * Rich help content shown in a side-panel when the user clicks the (?) icon.
-   * Pass any ReactNode (paragraphs, lists, links). Omit to hide the button.
+   * Opens the application's help drawer on this page's section. The (?)
+   * button renders only when this is supplied — a page with no help
+   * content in the drawer shows no entry point to it.
    */
-  help?: ReactNode;
+  onHelp?: () => void;
   className?: string;
 }
 
@@ -75,58 +76,6 @@ const Breadcrumb: FC<BreadcrumbProps> = ({ items, className = '' }) => (
   </nav>
 );
 
-interface HelpPanelProps {
-  title: string;
-  children: ReactNode;
-  onClose: () => void;
-}
-
-/**
- * HelpPanel — fixed side panel triggered by the PageHeader's (?) button.
- * Closes on Escape, overlay click, or X. Content is opaque ReactNode so
- * each page can ship its own help with formatting/links/inline code.
- */
-const HelpPanel: FC<HelpPanelProps> = ({ title, children, onClose }) => {
-  useEffect(() => {
-    const onKey = (e: KeyboardEvent): void => {
-      if (e.key === 'Escape') onClose();
-    };
-    window.addEventListener('keydown', onKey);
-    return (): void => window.removeEventListener('keydown', onKey);
-  }, [onClose]);
-
-  return (
-    <div
-      className="fixed inset-0 z-50 flex justify-end bg-scrim/40 backdrop-blur-sm"
-      role="dialog"
-      aria-modal="true"
-      aria-label={`Help: ${title}`}
-    >
-      <button
-        type="button"
-        aria-label="Close help (overlay)"
-        className="absolute inset-0 cursor-default"
-        onClick={onClose}
-      />
-      <aside className="relative h-full w-full max-w-md overflow-y-auto bg-surface-raised pad-lg shadow-2xl">
-        <div className="mb-content flex-between">
-          <h2 className="heading-3">{title}</h2>
-          <button
-            type="button"
-            onClick={onClose}
-            aria-label="Close help"
-            data-testid="page-header-help-close"
-            className="rounded p-1 text-text-muted hover:bg-surface-hover hover:text-text-primary"
-          >
-            <X className={iconSizes.lg} />
-          </button>
-        </div>
-        <div className="text-text-primary">{children}</div>
-      </aside>
-    </div>
-  );
-};
-
 export const PageHeader: FC<PageHeaderProps> = ({
   title,
   eyebrow,
@@ -136,11 +85,9 @@ export const PageHeader: FC<PageHeaderProps> = ({
   iconColorClass = 'text-brand-primary',
   actions,
   breadcrumbs,
-  help,
+  onHelp,
   className = '',
 }) => {
-  const [helpOpen, setHelpOpen] = useState(false);
-
   return (
     <div className={`mb-section animate-fade-in ${className}`}>
       {breadcrumbs && breadcrumbs.length > 0 && (
@@ -172,10 +119,10 @@ export const PageHeader: FC<PageHeaderProps> = ({
             </div>
           ) : null}
           {actions}
-          {help ? (
+          {onHelp ? (
             <button
               type="button"
-              onClick={() => setHelpOpen(true)}
+              onClick={onHelp}
               aria-label={`Open help for ${title}`}
               title={`What is ${title}?`}
               data-testid="page-header-help-button"
@@ -186,11 +133,6 @@ export const PageHeader: FC<PageHeaderProps> = ({
           ) : null}
         </div>
       </div>
-      {help && helpOpen ? (
-        <HelpPanel title={title} onClose={() => setHelpOpen(false)}>
-          {help}
-        </HelpPanel>
-      ) : null}
     </div>
   );
 };

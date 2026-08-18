@@ -244,7 +244,7 @@ const SidebarFooter: FC<SidebarFooterProps> = ({
       {onOpenHelp ? (
         <FooterIconButton
           collapsed={collapsed}
-          onClick={onOpenHelp}
+          onClick={() => onOpenHelp()}
           icon={HelpCircle}
           label="Help"
           title="Open help"
