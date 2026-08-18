@@ -142,14 +142,20 @@ test.describe('Gateway Help', () => {
     });
   });
 
-  test('should open the page-header help panel', async ({ page }) => {
-    // Previously matched the help open button by /help/i regex, and
-    // the gateway help section by /gateway/i. Both miss under es.
-    // Replaced with stable testids on PageHeader: page-header-help-
-    // button opens the panel; page-header-help-close dismisses it.
+  test("should open the help drawer on this page's section", async ({ page }) => {
+    // The header no longer carries its own panel: the drawer owns help
+    // content and the (?) is the entry point into it (#1943). Selected by
+    // test id rather than by /help/i or /gateway/i regexes, both of which
+    // miss under es.
     await page.getByTestId('page-header-help-button').first().click();
-    await expect(page.getByRole('dialog')).toBeVisible({ timeout: 5000 });
-    await page.getByTestId('page-header-help-close').click();
-    await expect(page.getByRole('dialog')).toBeHidden();
+
+    const drawer = page.getByTestId('help-drawer');
+    await expect(drawer).toBeVisible({ timeout: 5000 });
+    // Opened from /network, so it lands on that section rather than on the
+    // drawer's default.
+    await expect(page.getByTestId('help-drawer-content')).toContainText(/network/i);
+
+    await page.getByTestId('help-drawer-close').click();
+    await expect(drawer).toBeHidden();
   });
 });
