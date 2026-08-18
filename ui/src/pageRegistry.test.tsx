@@ -2,20 +2,12 @@
  * Guards the registry's locale contract: every route resolves real copy
  * in both locales, and the eyebrow slot stays opt-in — a page has one
  * only when its locale namespace declares it.
- *
- * src/test/setup.ts mocks react-i18next globally with a fixed lookup
- * table, which would make every key resolve to itself. This file opts
- * out so the assertions run against the real i18next instance and the
- * real pages.json, which is the whole point of the test.
  */
 import { renderHook } from '@testing-library/react';
-import { afterEach, describe, expect, it, vi } from 'vitest';
-
-vi.unmock('react-i18next');
-
-const { default: i18n } = await import('./i18n');
-const { usePages } = await import('./pageRegistry');
-const { useNavGroups } = await import('./navGroups');
+import { afterEach, describe, expect, it } from 'vitest';
+import i18n from './i18n';
+import { useNavGroups } from './navGroups';
+import { usePages } from './pageRegistry';
 
 describe('page registry translations', () => {
   afterEach(async () => {

@@ -1,7 +1,6 @@
 import { renderHook } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
 
-import './i18n'; // initialise i18next before hooks run
 import { useNavGroups } from './navGroups';
 import { usePages } from './pageRegistry';
 

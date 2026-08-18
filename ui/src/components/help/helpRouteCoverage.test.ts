@@ -10,7 +10,6 @@
  */
 import { renderHook } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
-import '../../i18n'; // initialise i18next before hooks run
 import { usePages } from '../../pageRegistry';
 import { helpSections } from './helpDrawerContent';
 
