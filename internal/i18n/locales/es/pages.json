@@ -4,6 +4,12 @@
     "label": "Alertas",
     "title": "Alertas"
   },
+  "groups": {
+    "diagnostics": "Diagnóstico",
+    "liveTelemetry": "Telemetría en vivo",
+    "monitoring": "Monitorización",
+    "reporting": "Informes"
+  },
   "link": {
     "description": "Estado del enlace físico, diagnóstico de cableado y asociación Wi-Fi de la interfaz activa.",
     "label": "Enlace",

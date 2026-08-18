@@ -9,7 +9,7 @@
  */
 
 import type { JSX } from 'react';
-import { memo, type ReactNode, Suspense } from 'react';
+import { type ReactNode, Suspense } from 'react';
 import { Redirect, Route, Switch } from 'wouter';
 import { AppFooter } from '../components/app/AppFooter';
 import { CapabilityWarnings } from '../components/app/CapabilityWarnings';
@@ -20,7 +20,7 @@ import { SettingsDrawer } from '../components/settings/SettingsDrawer';
 import { CommandPalette } from '../components/ui/CommandPalette';
 import { Fab } from '../components/ui/fab';
 import { AppContext, type AppContextValue } from '../contexts/AppContext';
-import { navGroups } from '../navGroups';
+import { useNavGroups } from '../navGroups';
 import { type PageConfig, usePages } from '../pageRegistry';
 import { cn, section } from '../styles/theme';
 import { Breadcrumbs } from '../ui/Breadcrumbs';
@@ -35,6 +35,7 @@ interface AppShellProps {
 }
 
 export function AppShell({ orchestration, logout }: AppShellProps): JSX.Element {
+  const navGroups = useNavGroups();
   const pages = usePages();
   const {
     cards,
@@ -192,19 +193,19 @@ export function AppShell({ orchestration, logout }: AppShellProps): JSX.Element 
  * breadcrumbs plus the page header — from the registry entry rather
  * than from the page body. Pages render only their own content.
  */
-const PageWithHeader = memo(({ page, children }: { page: PageConfig; children: ReactNode }) => (
-  <section className="stack-xl">
-    <Breadcrumbs />
-    <PageHeader
-      icon={page.icon}
-      iconColorClass={page.iconColorClass}
-      eyebrow={page.eyebrow}
-      title={page.title}
-      description={page.description}
-      help={page.help}
-    />
-    {children}
-  </section>
-));
-
-PageWithHeader.displayName = 'PageWithHeader';
+function PageWithHeader({ page, children }: { page: PageConfig; children: ReactNode }) {
+  return (
+    <section className="stack-xl">
+      <Breadcrumbs />
+      <PageHeader
+        icon={page.icon}
+        iconColorClass={page.iconColorClass}
+        eyebrow={page.eyebrow}
+        title={page.title}
+        description={page.description}
+        help={page.help}
+      />
+      {children}
+    </section>
+  );
+}

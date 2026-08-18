@@ -15,6 +15,7 @@ vi.unmock('react-i18next');
 
 const { default: i18n } = await import('./i18n');
 const { usePages } = await import('./pageRegistry');
+const { useNavGroups } = await import('./navGroups');
 
 describe('page registry translations', () => {
   afterEach(async () => {
@@ -40,5 +41,41 @@ describe('page registry translations', () => {
 
     expect(withEyebrow.map((page) => page.path)).toEqual(['/network']);
     expect(withEyebrow[0]?.eyebrow).toBe('Diagnostics');
+  });
+});
+
+describe('rail <-> header label agreement', () => {
+  afterEach(async () => {
+    await i18n.changeLanguage('en');
+  });
+
+  it.each(['en', 'es'])(
+    'labels a route the same in the rail and the registry in %s',
+    async (language) => {
+      await i18n.changeLanguage(language);
+      const pages = renderHook(() => usePages()).result.current;
+      const rail = renderHook(() => useNavGroups()).result.current;
+
+      const railLabel = new Map(
+        rail.flatMap((group) => group.items.map((item) => [item.path, item.label] as const)),
+      );
+      for (const page of pages) {
+        expect(railLabel.get(page.path), `${page.path} rail label`).toBe(page.label);
+      }
+    },
+  );
+
+  it('translates the rail into the active locale', async () => {
+    await i18n.changeLanguage('es');
+    const rail = renderHook(() => useNavGroups()).result.current;
+    const byPath = new Map(
+      rail.flatMap((group) => group.items.map((item) => [item.path, item.label] as const)),
+    );
+
+    expect(byPath.get('/logs')).toBe('Registros');
+    expect(byPath.get('/topology')).toBe('Topología');
+    // Wi-Fi is a standard term and reads the same in every locale.
+    expect(byPath.get('/wifi')).toBe('Wi-Fi');
+    expect(rail[0]?.label).toBe('Telemetría en vivo');
   });
 });

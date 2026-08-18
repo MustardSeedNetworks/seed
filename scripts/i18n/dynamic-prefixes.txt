@@ -226,6 +226,7 @@ validation:fields.
 # the route table via t(`${i18nKey}.label`) / .title / .description /
 # .eyebrow, so the static analyzer never sees these as literal keys.
 pages:alerts.
+pages:groups.
 pages:link.
 pages:logs.
 pages:network.

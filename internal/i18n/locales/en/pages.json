@@ -4,6 +4,12 @@
     "label": "Alerts",
     "title": "Alerts"
   },
+  "groups": {
+    "diagnostics": "Diagnostics",
+    "liveTelemetry": "Live Telemetry",
+    "monitoring": "Monitoring",
+    "reporting": "Reporting"
+  },
   "link": {
     "description": "Physical link state, cable diagnostics, and Wi-Fi association for the active interface.",
     "label": "Link",
