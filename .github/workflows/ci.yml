@@ -663,6 +663,18 @@ jobs:
         #
         # Worst case is 270 + 10 + 270 = 550s, which the step budget covers.
         run: |
+          # Waiting for the lock is necessary but not sufficient. Queue run
+          # 32151357882 waited the full DPkg::Lock::Timeout and still exited 100:
+          # the runner's own periodic apt units held the lock for the entire
+          # ~8.7-minute step (process 7051; 7020 in an earlier run — it recurs).
+          # Those units keep a long-lived host patched and have no purpose on a
+          # single-use CI runner, so stop them before contending rather than
+          # waiting on work we do not want done. The patient wait below stays as
+          # the backstop for anything else that holds the lock.
+          sudo systemctl stop --no-block apt-daily.timer apt-daily-upgrade.timer apt-daily.service apt-daily-upgrade.service unattended-upgrades.service >/dev/null 2>&1 || true
+          # Stopping apt mid-transaction can leave dpkg half-configured.
+          sudo dpkg --configure -a >/dev/null 2>&1 || true
+
           sudo tee /etc/apt/apt.conf.d/99-ci-timeouts >/dev/null <<'EOF'
           Acquire::http::Timeout "20";
           Acquire::https::Timeout "20";
@@ -1017,6 +1029,18 @@ jobs:
           deb [arch=arm64] http://ports.ubuntu.com/ubuntu-ports noble-backports main universe multiverse restricted
           EOF
 
+          # Waiting for the lock is necessary but not sufficient. Queue run
+          # 32151357882 waited the full DPkg::Lock::Timeout and still exited 100:
+          # the runner's own periodic apt units held the lock for the entire
+          # ~8.7-minute step (process 7051; 7020 in an earlier run — it recurs).
+          # Those units keep a long-lived host patched and have no purpose on a
+          # single-use CI runner, so stop them before contending rather than
+          # waiting on work we do not want done. The patient wait below stays as
+          # the backstop for anything else that holds the lock.
+          sudo systemctl stop --no-block apt-daily.timer apt-daily-upgrade.timer apt-daily.service apt-daily-upgrade.service unattended-upgrades.service >/dev/null 2>&1 || true
+          # Stopping apt mid-transaction can leave dpkg half-configured.
+          sudo dpkg --configure -a >/dev/null 2>&1 || true
+
           sudo tee /etc/apt/apt.conf.d/99-ci-timeouts >/dev/null <<'EOF'
           Acquire::http::Timeout "20";
           Acquire::https::Timeout "20";
@@ -1204,6 +1228,18 @@ jobs:
         #
         # Worst case is 270 + 10 + 270 = 550s, which the step budget covers.
         run: |
+          # Waiting for the lock is necessary but not sufficient. Queue run
+          # 32151357882 waited the full DPkg::Lock::Timeout and still exited 100:
+          # the runner's own periodic apt units held the lock for the entire
+          # ~8.7-minute step (process 7051; 7020 in an earlier run — it recurs).
+          # Those units keep a long-lived host patched and have no purpose on a
+          # single-use CI runner, so stop them before contending rather than
+          # waiting on work we do not want done. The patient wait below stays as
+          # the backstop for anything else that holds the lock.
+          sudo systemctl stop --no-block apt-daily.timer apt-daily-upgrade.timer apt-daily.service apt-daily-upgrade.service unattended-upgrades.service >/dev/null 2>&1 || true
+          # Stopping apt mid-transaction can leave dpkg half-configured.
+          sudo dpkg --configure -a >/dev/null 2>&1 || true
+
           sudo tee /etc/apt/apt.conf.d/99-ci-timeouts >/dev/null <<'EOF'
           Acquire::http::Timeout "20";
           Acquire::https::Timeout "20";
@@ -1348,6 +1384,18 @@ jobs:
         #
         # Worst case is 270 + 10 + 270 = 550s, which the step budget covers.
         run: |
+          # Waiting for the lock is necessary but not sufficient. Queue run
+          # 32151357882 waited the full DPkg::Lock::Timeout and still exited 100:
+          # the runner's own periodic apt units held the lock for the entire
+          # ~8.7-minute step (process 7051; 7020 in an earlier run — it recurs).
+          # Those units keep a long-lived host patched and have no purpose on a
+          # single-use CI runner, so stop them before contending rather than
+          # waiting on work we do not want done. The patient wait below stays as
+          # the backstop for anything else that holds the lock.
+          sudo systemctl stop --no-block apt-daily.timer apt-daily-upgrade.timer apt-daily.service apt-daily-upgrade.service unattended-upgrades.service >/dev/null 2>&1 || true
+          # Stopping apt mid-transaction can leave dpkg half-configured.
+          sudo dpkg --configure -a >/dev/null 2>&1 || true
+
           sudo tee /etc/apt/apt.conf.d/99-ci-timeouts >/dev/null <<'EOF'
           Acquire::http::Timeout "20";
           Acquire::https::Timeout "20";
