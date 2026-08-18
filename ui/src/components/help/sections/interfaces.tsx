@@ -9,7 +9,7 @@
  * @copyright 2026 Mustard Seed Networks. All rights reserved.
  */
 
-import { Activity, Cable, Wifi } from '../../ui/icons';
+import { Activity, Cable, Signal, Wifi } from '../../ui/icons';
 import type { HelpSection } from '../helpModel';
 
 const ICON = 'w-4 h-4';
@@ -144,6 +144,64 @@ export const interfaceSections: HelpSection[] = [
               'Radio band — 2.4 GHz has better range; 5 GHz offers higher speeds and less interference.',
           },
         ],
+      },
+    ],
+  },
+  {
+    id: 'wifiTroubleshooting',
+    titleKey: 'sections.wifiTroubleshooting',
+    icon: <Signal className={ICON} />,
+    keywords: ['wifi troubleshooting', 'channel utilization', 'neighbor', 'snr', 'canopy'],
+    blocks: [
+      {
+        kind: 'paragraph',
+        text: 'Wi-Fi troubleshooting scans visible wireless networks to help diagnose the local wireless environment: neighbor access points, the channels in use, and how busy each channel is. It is a visibility and troubleshooting tool, not a survey/planning tool.',
+      },
+      {
+        kind: 'terms',
+        heading: 'Terms',
+        items: [
+          {
+            term: 'Neighbor AP scan',
+            description:
+              'Lists the access points the adapter can hear, with their SSID, BSSID, band, channel, and signal level.',
+          },
+          {
+            term: 'Channel utilization',
+            description:
+              'Indicates how busy each Wi-Fi channel is. High utilization (over ~50%) points to congestion and likely interference.',
+          },
+          {
+            term: 'Co-channel interference',
+            description:
+              'When multiple access points share the same channel they must share airtime, which reduces throughput.',
+          },
+          {
+            term: 'Signal / SNR',
+            description:
+              'Signal level in dBm and the signal-to-noise ratio of the connection. A higher SNR means a cleaner, more reliable link.',
+          },
+        ],
+      },
+      {
+        kind: 'terms',
+        heading: 'Bands',
+        items: [
+          {
+            term: '2.4 GHz',
+            description:
+              'Better range and wall penetration, but only three non-overlapping channels (1, 6, 11) and more congestion.',
+          },
+          {
+            term: '5 GHz',
+            description:
+              'Many non-overlapping channels, less interference, and faster speeds, but shorter range.',
+          },
+        ],
+      },
+      {
+        kind: 'note',
+        text: 'Advanced Wi-Fi scanning depends on adapter capabilities; built-in laptop Wi-Fi may report a limited view of the environment.',
       },
     ],
   },

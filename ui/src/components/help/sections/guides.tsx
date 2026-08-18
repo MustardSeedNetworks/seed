@@ -105,7 +105,7 @@ export const guidesSections: HelpSection[] = [
           },
           {
             description:
-              'For Wi-Fi, check the channel-overlap view for congestion and interference.',
+              'For Wi-Fi, check the channel graph and neighbor AP scan for congestion and interference.',
           },
         ],
       },
