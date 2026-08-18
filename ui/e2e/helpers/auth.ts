@@ -122,9 +122,9 @@ export async function loginAndAwaitDashboard(
 /**
  * Settings / Help live in the sidebar footer, not the header (Phase 2 —
  * see components/app/HeaderBar.tsx and the sidebar's FooterIconButton).
- * The buttons carry the hardcoded English aria-labels "Open settings" /
- * "Open help" (not i18n keys), so getByRole on the accessible name is
- * stable across locales.
+ * Selected by test id rather than accessible name: the page header's (?)
+ * reads "Open help for <page>", and Playwright matches names by substring,
+ * so "Open help" is no longer unique.
  *
  * The shell renders the sidebar twice — a mobile drawer (`lg:hidden`)
  * and a desktop rail (`hidden lg:flex`). Only one is in the a11y tree at
@@ -133,11 +133,11 @@ export async function loginAndAwaitDashboard(
  * drawer behind the hamburger — call revealSidebar() first there.
  */
 export function sidebarSettingsButton(page: Page): Locator {
-  return page.getByRole('button', { name: 'Open settings' }).filter({ visible: true });
+  return page.getByTestId('sidebar-settings-button').filter({ visible: true });
 }
 
 export function sidebarHelpButton(page: Page): Locator {
-  return page.getByRole('button', { name: 'Open help' }).filter({ visible: true });
+  return page.getByTestId('sidebar-help-button').filter({ visible: true });
 }
 
 /**
