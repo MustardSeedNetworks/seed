@@ -1,12 +1,9 @@
 /**
- * PollingTargetsPage
+ * PollingTargetsPage — List + detail.
  *
- * Operator-facing CRUD over /api/v1/polling-targets. Renders the
- * current list of SNMP-polled devices, lets operators add a new
- * target, edit an existing one, and remove targets they're done
- * with. New targets pick up the default collector chain
- * (sys_info, if_table, lldp, arp, fdb) and start polling on the
- * next snmp-poller tick (~5s).
+ * Operator-facing CRUD over /api/v1/polling-targets. Targets are the records:
+ * the list carries identity, address and the last poll; the detail pane
+ * carries the full configuration and the collector chain that runs against it.
  *
  * This is the entry point for the V1.0 NMS workflow:
  *   1. Operator adds a target here.
@@ -17,15 +14,74 @@
  *      acts on alerts as they arrive.
  */
 
-import { Plus, X } from 'lucide-react';
-import { type FormEvent, type JSX, useState } from 'react';
+import { Plus } from 'lucide-react';
+import { type JSX, useState } from 'react';
 import { usePollingTargets } from '../hooks/usePollingTargets';
-import type { PollingTarget, PollingTargetInput } from '../types/polling';
+import type { PollingTarget } from '../types/polling';
+import {
+  DetailEmpty,
+  DetailFacts,
+  DetailPane,
+  FilterChip,
+  ListDetail,
+  RecordPane,
+  RecordRow,
+  type RecordState,
+} from '../ui/ListDetail';
+import { emptyInput, TargetForm, targetToInput } from './pollingTargets/TargetForm';
+
+type Facet = 'all' | 'failing' | 'paused';
+
+/**
+ * A target that is not enabled is not being polled, so its health is not
+ * merely fine — it is unmeasured, and says so rather than showing green.
+ * A target that has never completed a poll is in the same position.
+ */
+function targetState(target: PollingTarget): RecordState {
+  if (!target.enabled) {
+    return 'unknown';
+  }
+  if (!target.lastPolledAt) {
+    return 'unknown';
+  }
+  return target.lastStatus === 'ok' ? 'ok' : 'crit';
+}
+
+/** The figure worth seeing without selecting the row: when it last succeeded. */
+function lastPollFigure(target: PollingTarget): string {
+  if (!target.lastPolledAt) {
+    return '—';
+  }
+  return new Date(target.lastPolledAt).toLocaleTimeString();
+}
+
+function matchesFacet(target: PollingTarget, facet: Facet): boolean {
+  if (facet === 'failing') {
+    return targetState(target) === 'crit';
+  }
+  if (facet === 'paused') {
+    return !target.enabled;
+  }
+  return true;
+}
 
 export function PollingTargetsPage(): JSX.Element {
   const { targets, loading, error, create, update, remove } = usePollingTargets();
   const [editing, setEditing] = useState<PollingTarget | null>(null);
   const [showCreate, setShowCreate] = useState<boolean>(false);
+  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [facet, setFacet] = useState<Facet>('all');
+  const [query, setQuery] = useState('');
+
+  const needle = query.trim().toLowerCase();
+  const shown = targets.filter(
+    (t) =>
+      matchesFacet(t, facet) &&
+      (!needle ||
+        t.name.toLowerCase().includes(needle) ||
+        t.ipAddress.toLowerCase().includes(needle)),
+  );
+  const selected = shown.find((t) => t.id === selectedId) ?? shown[0] ?? null;
 
   return (
     <>
@@ -35,8 +91,8 @@ export function PollingTargetsPage(): JSX.Element {
         </div>
       ) : null}
 
-      <div className="flex items-center justify-between">
-        <p className="text-sm text-text-muted">
+      <div className="flex-between">
+        <p className="body-small">
           {loading ? 'Loading…' : `${targets.length} target${targets.length === 1 ? '' : 's'}`}
         </p>
         <button
@@ -49,15 +105,117 @@ export function PollingTargetsPage(): JSX.Element {
         </button>
       </div>
 
-      <TargetTable
-        targets={targets}
-        onEdit={(t): void => setEditing(t)}
-        onDelete={(t): void => {
-          if (window.confirm(`Delete polling target "${t.name}"?`)) {
-            void remove(t.id);
+      <ListDetail>
+        <RecordPane
+          filter={
+            <input
+              type="search"
+              value={query}
+              onChange={(e): void => setQuery(e.target.value)}
+              placeholder={`Filter ${targets.length} targets`}
+              aria-label="Filter polling targets"
+              className="w-full rounded-lg border border-surface-border bg-surface-sunken px-3 py-2 text-sm text-text-primary placeholder:text-text-muted focus:border-brand-primary focus:outline-none"
+            />
           }
-        }}
-      />
+          chips={
+            <>
+              <FilterChip
+                label="All"
+                count={targets.length}
+                active={facet === 'all'}
+                onClick={(): void => setFacet('all')}
+              />
+              <FilterChip
+                label="Failing"
+                count={targets.filter((t) => targetState(t) === 'crit').length}
+                active={facet === 'failing'}
+                onClick={(): void => setFacet('failing')}
+              />
+              <FilterChip
+                label="Paused"
+                count={targets.filter((t) => !t.enabled).length}
+                active={facet === 'paused'}
+                onClick={(): void => setFacet('paused')}
+              />
+            </>
+          }
+          empty={
+            targets.length === 0
+              ? 'No polling targets yet. Add one to start polling a device.'
+              : 'No target matches this filter.'
+          }
+        >
+          {shown.map((t) => (
+            <RecordRow
+              key={t.id}
+              data-testid={`target-row-${t.id}`}
+              name={t.name}
+              meta={`${t.ipAddress} · SNMP ${t.snmpVersion}`}
+              value={lastPollFigure(t)}
+              state={targetState(t)}
+              selected={selected?.id === t.id}
+              onSelect={(): void => setSelectedId(t.id)}
+            />
+          ))}
+        </RecordPane>
+
+        {selected ? (
+          <DetailPane
+            eyebrow="Selected target"
+            title={selected.name}
+            meta={`${selected.ipAddress} · SNMP ${selected.snmpVersion} · every ${selected.pollIntervalSeconds}s`}
+            status={<TargetStatus target={selected} />}
+            actions={
+              <>
+                <button
+                  type="button"
+                  onClick={(): void => setEditing(selected)}
+                  className="rounded-md border border-surface-border px-3 py-2 text-sm text-text-primary hover:bg-surface-hover"
+                >
+                  Edit
+                </button>
+                <button
+                  type="button"
+                  onClick={(): void => {
+                    if (window.confirm(`Delete polling target "${selected.name}"?`)) {
+                      void remove(selected.id);
+                      setSelectedId(null);
+                    }
+                  }}
+                  className="rounded-md px-3 py-2 text-sm text-status-error hover:bg-status-error/10"
+                >
+                  Delete
+                </button>
+              </>
+            }
+          >
+            <DetailFacts
+              items={[
+                { label: 'Poll interval', value: `${selected.pollIntervalSeconds}s` },
+                { label: 'Enabled', value: selected.enabled ? 'yes' : 'no' },
+                {
+                  label: 'Last poll',
+                  value: selected.lastPolledAt
+                    ? new Date(selected.lastPolledAt).toLocaleString()
+                    : 'never',
+                },
+                {
+                  label: 'Last status',
+                  value: selected.lastError || selected.lastStatus || '—',
+                  prose: Boolean(selected.lastError),
+                },
+              ]}
+            />
+            <CollectorChain chain={selected.collectorChain} />
+          </DetailPane>
+        ) : (
+          <DetailEmpty>
+            {targets.length === 0
+              ? 'Add a target to see its polling detail here.'
+              : 'Select a target to see its configuration and collector chain.'}
+          </DetailEmpty>
+        )}
+      </ListDetail>
 
       {showCreate ? (
         <TargetForm
@@ -86,271 +244,51 @@ export function PollingTargetsPage(): JSX.Element {
   );
 }
 
-interface TargetTableProps {
-  targets: PollingTarget[];
-  onEdit: (t: PollingTarget) => void;
-  onDelete: (t: PollingTarget) => void;
+/** The record's own state, spelled out rather than left to the colour bar. */
+function TargetStatus({ target }: { target: PollingTarget }): JSX.Element {
+  const state = targetState(target);
+  if (state === 'crit') {
+    return (
+      <span className="rounded-lg border border-status-error/40 bg-status-error/10 px-3 py-1.5 text-xs font-semibold text-status-error">
+        {target.lastError || 'Last poll failed'}
+      </span>
+    );
+  }
+  if (state === 'unknown') {
+    return (
+      <span className="rounded-lg border border-surface-border bg-surface-sunken px-3 py-1.5 text-xs font-semibold text-text-muted">
+        {target.enabled ? 'No poll completed yet' : 'Polling paused'}
+      </span>
+    );
+  }
+  return (
+    <span className="rounded-lg border border-surface-border px-3 py-1.5 text-xs font-semibold text-text-secondary">
+      Polling normally
+    </span>
+  );
 }
 
-function TargetTable({ targets, onEdit, onDelete }: TargetTableProps): JSX.Element {
-  if (targets.length === 0) {
+/** The collector chain is the sub-table the archetype calls for. */
+function CollectorChain({ chain }: { chain: string[] }): JSX.Element {
+  if (chain.length === 0) {
     return (
-      <div className="rounded-md border border-surface-border bg-surface-raised p-6 text-center text-sm text-text-muted">
-        No polling targets yet. Click <strong>Add target</strong> to start polling a device.
+      <div className="stack-xs">
+        <p className="caption">Collector chain</p>
+        <p className="body-small">Using the default chain for this SNMP version.</p>
       </div>
     );
   }
   return (
-    <div className="overflow-hidden rounded-lg border border-surface-border bg-surface-raised">
-      <table className="w-full text-sm">
-        <thead className="text-left text-xs uppercase tracking-wide text-text-muted">
-          <tr>
-            <th className="px-4 py-2">Name</th>
-            <th className="px-4 py-2">IP</th>
-            <th className="px-4 py-2">SNMP</th>
-            <th className="px-4 py-2">Interval</th>
-            <th className="px-4 py-2">Enabled</th>
-            <th className="px-4 py-2">Last poll</th>
-            <th className="px-4 py-2 text-right">Actions</th>
-          </tr>
-        </thead>
-        <tbody className="divide-y divide-surface-border">
-          {targets.map((t) => (
-            <tr key={t.id} data-testid={`target-row-${t.id}`}>
-              <td className="px-4 py-2 font-medium text-text-primary">{t.name}</td>
-              <td className="px-4 py-2 font-mono text-text-secondary">{t.ipAddress}</td>
-              <td className="px-4 py-2 text-text-secondary">{t.snmpVersion}</td>
-              <td className="px-4 py-2 text-text-secondary">{t.pollIntervalSeconds}s</td>
-              <td className="px-4 py-2">
-                <EnabledBadge enabled={t.enabled} />
-              </td>
-              <td className="px-4 py-2 text-text-muted">
-                <LastPoll target={t} />
-              </td>
-              <td className="px-4 py-2 text-right">
-                <button
-                  type="button"
-                  onClick={(): void => onEdit(t)}
-                  className="mr-2 text-sm text-status-info hover:text-status-info/80"
-                >
-                  Edit
-                </button>
-                <button
-                  type="button"
-                  onClick={(): void => onDelete(t)}
-                  className="text-sm text-status-error hover:text-status-error/80"
-                >
-                  Delete
-                </button>
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
+    <div className="stack-xs">
+      <p className="caption">Collector chain</p>
+      <ol className="divide-y divide-surface-border overflow-hidden rounded-lg border border-surface-border">
+        {chain.map((collector, index) => (
+          <li key={collector} className="flex items-center gap-default px-cell py-2">
+            <span className="figure text-xs text-text-muted">{index + 1}</span>
+            <span className="figure text-sm text-text-primary">{collector}</span>
+          </li>
+        ))}
+      </ol>
     </div>
   );
-}
-
-function EnabledBadge({ enabled }: { enabled: boolean }): JSX.Element {
-  return (
-    <span
-      className={
-        enabled
-          ? 'rounded-full bg-status-success/20 px-2 py-0.5 text-xs font-medium text-status-success'
-          : 'rounded-full bg-surface-sunken px-2 py-0.5 text-xs font-medium text-text-muted'
-      }
-    >
-      {enabled ? 'Enabled' : 'Disabled'}
-    </span>
-  );
-}
-
-function LastPoll({ target }: { target: PollingTarget }): JSX.Element {
-  if (!target.lastPolledAt) {
-    return <span className="text-text-muted">never</span>;
-  }
-  const when = new Date(target.lastPolledAt).toLocaleString();
-  const ok = target.lastStatus === 'ok';
-  return (
-    <span title={target.lastError || target.lastStatus}>
-      <span className={ok ? 'text-status-success' : 'text-status-error'}>●</span> {when}
-    </span>
-  );
-}
-
-interface TargetFormProps {
-  mode: 'create' | 'edit';
-  initial: PollingTargetInput;
-  onSubmit: (input: PollingTargetInput) => Promise<void>;
-  onCancel: () => void;
-}
-
-function TargetForm({ mode, initial, onSubmit, onCancel }: TargetFormProps): JSX.Element {
-  const [form, setForm] = useState<PollingTargetInput>(initial);
-  const [submitting, setSubmitting] = useState<boolean>(false);
-  const [formError, setFormError] = useState<string | null>(null);
-
-  function update<K extends keyof PollingTargetInput>(key: K, value: PollingTargetInput[K]): void {
-    setForm((prev) => ({ ...prev, [key]: value }));
-  }
-
-  async function handleSubmit(e: FormEvent<HTMLFormElement>): Promise<void> {
-    e.preventDefault();
-    if (!form.name.trim() || !form.ipAddress.trim()) {
-      setFormError('Name and IP address are required.');
-      return;
-    }
-    setSubmitting(true);
-    setFormError(null);
-    try {
-      await onSubmit(form);
-    } catch (err) {
-      setFormError(err instanceof Error ? err.message : 'Failed to save');
-    } finally {
-      setSubmitting(false);
-    }
-  }
-
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-scrim/60">
-      <form
-        onSubmit={(e): void => {
-          void handleSubmit(e);
-        }}
-        className="w-full max-w-md rounded-lg border border-surface-border bg-surface-raised p-6 shadow-xl"
-      >
-        <div className="flex items-center justify-between border-b border-surface-border pb-3">
-          <h2 className="text-lg font-semibold text-text-primary">
-            {mode === 'create' ? 'Add polling target' : 'Edit polling target'}
-          </h2>
-          <button
-            type="button"
-            onClick={onCancel}
-            className="text-text-muted hover:text-text-primary"
-            aria-label="Close"
-          >
-            <X className="h-5 w-5" />
-          </button>
-        </div>
-
-        {formError ? (
-          <div className="mt-3 rounded-md border border-status-error/40 bg-status-error/10 p-2 text-sm text-status-error">
-            {formError}
-          </div>
-        ) : null}
-
-        <div className="mt-4 space-y-3">
-          <Field label="Name">
-            <input
-              type="text"
-              value={form.name}
-              onChange={(e): void => update('name', e.target.value)}
-              required
-              className={inputClass}
-            />
-          </Field>
-          <Field label="IP address">
-            <input
-              type="text"
-              value={form.ipAddress}
-              onChange={(e): void => update('ipAddress', e.target.value)}
-              required
-              placeholder="10.0.0.1"
-              className={inputClass}
-            />
-          </Field>
-          <Field label="SNMP version">
-            <select
-              value={form.snmpVersion}
-              onChange={(e): void => update('snmpVersion', e.target.value)}
-              className={inputClass}
-            >
-              <option value="v2c">v2c</option>
-              <option value="v3">v3</option>
-            </select>
-          </Field>
-          <Field label="Poll interval (seconds)">
-            <input
-              type="number"
-              min={10}
-              max={3600}
-              value={form.pollIntervalSeconds ?? 300}
-              onChange={(e): void => update('pollIntervalSeconds', Number(e.target.value))}
-              className={inputClass}
-            />
-          </Field>
-          <label className="flex items-center gap-2 text-sm text-text-secondary">
-            <input
-              type="checkbox"
-              checked={form.enabled}
-              onChange={(e): void => update('enabled', e.target.checked)}
-            />
-            Enabled (polled on next tick)
-          </label>
-        </div>
-
-        <div className="mt-5 flex justify-end gap-2 border-t border-surface-border pt-4">
-          <button
-            type="button"
-            onClick={onCancel}
-            className="rounded-md px-3 py-2 text-sm text-text-muted hover:text-text-primary"
-          >
-            Cancel
-          </button>
-          <button
-            type="submit"
-            disabled={submitting}
-            className="rounded-md bg-brand-primary px-3 py-2 text-sm font-medium text-on-brand hover:bg-brand-accent disabled:opacity-60"
-          >
-            {submitting ? 'Saving…' : mode === 'create' ? 'Add target' : 'Save changes'}
-          </button>
-        </div>
-      </form>
-    </div>
-  );
-}
-
-function Field({ label, children }: { label: string; children: JSX.Element }): JSX.Element {
-  // Using a div wrapper rather than a bare label avoids the
-  // a11y/noLabelWithoutControl warning when children is a select or
-  // a wrapped composite — the inner input element is itself a
-  // labelable element which screen readers find via the surrounding
-  // <span> text.
-  return (
-    <div className="block">
-      <span className="block text-xs font-medium uppercase tracking-wide text-text-muted">
-        {label}
-      </span>
-      <span className="mt-1 block">{children}</span>
-    </div>
-  );
-}
-
-const inputClass: string =
-  'w-full rounded-md border border-surface-border bg-surface-sunken px-3 py-2 text-sm text-text-primary placeholder:text-text-muted focus:border-brand-primary focus:outline-none';
-
-/** emptyInput is the create-form default. Mirrors the server defaults
- * but explicit so the operator sees them in the form before submit. */
-function emptyInput(): PollingTargetInput {
-  return {
-    name: '',
-    ipAddress: '',
-    snmpVersion: 'v2c',
-    pollIntervalSeconds: 300,
-    enabled: true,
-    collectorChain: [],
-  };
-}
-
-/** targetToInput strips audit columns the server manages. */
-function targetToInput(t: PollingTarget): PollingTargetInput {
-  return {
-    name: t.name,
-    ipAddress: t.ipAddress,
-    snmpVersion: t.snmpVersion,
-    credentialsId: t.credentialsId || undefined,
-    pollIntervalSeconds: t.pollIntervalSeconds,
-    enabled: t.enabled,
-    collectorChain: t.collectorChain,
-  };
 }
