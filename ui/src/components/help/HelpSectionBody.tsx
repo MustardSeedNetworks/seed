@@ -3,14 +3,14 @@
  *
  * Generic renderer for a HelpSection's typed `HelpBlock[]`. One switch on the
  * block `kind` covers every section, so adding or editing content only means
- * editing `helpDrawerContent.tsx` — no new JSX. Uses Seed theme tokens only.
+ * editing a module under `sections/` — no new JSX. Uses Seed theme tokens only.
  *
  * @copyright 2026 Mustard Seed Networks. All rights reserved.
  */
 
 import type { ReactElement } from 'react';
 import { cn, layout, radius, spacing } from '../../styles/theme';
-import type { HelpBlock } from './helpDrawerContent';
+import type { HelpBlock } from './helpModel';
 
 interface HelpSectionBodyProps {
   blocks: HelpBlock[];

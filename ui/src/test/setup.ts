@@ -1,5 +1,4 @@
 // biome-ignore-all lint/nursery/useExplicitType: Test utilities - types inferred from defaults
-import type React from 'react';
 /**
  * Test Setup and Utilities
  *
@@ -31,58 +30,14 @@ import '@testing-library/jest-dom';
 import { afterEach, beforeEach, vi } from 'vitest';
 
 // ============================================================
-// Mock react-i18next
+// Real i18n
 // ============================================================
-vi.mock(
-  'react-i18next',
-  (): Record<string, unknown> => ({
-    useTranslation: (): {
-      t: (key: string) => string;
-      i18n: { language: string; changeLanguage: ReturnType<typeof vi.fn> };
-    } => ({
-      t: (key: string): string => {
-        // Return common translations for tests
-        const translations: Record<string, string> = {
-          // Common namespace
-          'app.title': 'The Seed',
-          'app.tagline': 'Network Diagnostics by Mustard Seed Networks',
-          'buttons.login': 'Login',
-          'buttons.logout': 'Logout',
-          'status.loggingIn': 'Logging in...',
-          'labels.username': 'Username',
-          'labels.password': 'Password',
-          'login.defaultCredentials': 'Default: admin / seed',
-          'status.error': 'Error',
-          'status.noDataAvailable': 'No data available',
-          'accessibility.openHelp': 'Open help',
-          'accessibility.openSettings': 'Open settings',
-          'accessibility.switchToLightMode': 'Switch to light mode',
-          'accessibility.switchToDarkMode': 'Switch to dark mode',
-          'accessibility.selectInterface': 'Select network interface',
-          'accessibility.selectEthernet': 'Select Ethernet interface',
-          'accessibility.selectWifi': 'Select WiFi interface',
-          'accessibility.selectProfile': 'Select profile',
-          // Cards namespace
-          'system.title': 'System Health',
-          'system.cpu': 'CPU',
-          'system.memory': 'Memory',
-          'system.disk': 'Disk',
-          'system.uptime': 'Uptime',
-          'system.load1m': 'Load (1m)',
-          'system.goroutines': 'Goroutines',
-          'system.processMem': 'Process Memory',
-        };
-        return translations[key] || key;
-      },
-      i18n: {
-        language: 'en',
-        changeLanguage: vi.fn(),
-      },
-    }),
-    Trans: ({ children }: { children: React.ReactNode }) => children,
-    initReactI18next: { type: '3rdParty', init: vi.fn() },
-  }),
-);
+// Initialising the real i18next (rather than mocking react-i18next with a
+// fixed table) means a test that asserts on user-visible text is asserting
+// on the actual locale files. The mock this replaces returned the key
+// itself for anything not in its table and ignored t()'s options argument
+// entirely, so defaultValue and interpolation silently vanished.
+import '../i18n';
 
 // ============================================================
 // JSDoM polyfills — common browser APIs not implemented by JSDoM

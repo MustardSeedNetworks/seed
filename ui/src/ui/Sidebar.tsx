@@ -28,6 +28,7 @@ import { SeedLogo } from '../components/app/SeedLogo';
 import { iconSizes } from '../constants/sizes';
 import { prefetchRoute } from '../utils/prefetch';
 import { safeGetItem, safeSetItem } from '../utils/storage';
+import { MsnMark } from './MsnMark';
 
 export interface SidebarNavItem {
   path: string;
@@ -86,13 +87,23 @@ const NavItemButton: FC<NavItemButtonProps> = ({ item, active, collapsed, onNavi
     type="button"
     onClick={() => onNavigate(item.path)}
     onMouseEnter={() => prefetchRoute(item.path)}
-    className={`group flex items-center gap-default w-full px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 ${
+    aria-current={active ? 'page' : undefined}
+    /* 44px minimum target, 11px radius, and a 3px left bar for the active
+       route. The bar carries the state rather than a gradient fill: a filled
+       row competes with status colour, and the rail is chrome. */
+    className={`group relative flex items-center gap-default w-full min-h-11 px-3 py-2.5 rounded-[11px] text-sm font-medium transition-all duration-200 ${
       active
-        ? 'bg-gradient-to-r from-brand-primary/30 to-brand-primary/20 text-text-primary shadow-edge-highlight'
+        ? 'bg-[color-mix(in_oklab,var(--color-brand-primary)_16%,transparent)] text-text-primary'
         : 'text-text-muted hover:text-text-primary hover:bg-surface-hover'
     }`}
     title={collapsed ? item.label : undefined}
   >
+    {active ? (
+      <span
+        aria-hidden="true"
+        className="absolute inset-y-1 left-0 w-[3px] rounded-full bg-brand-primary"
+      />
+    ) : null}
     {createElement(item.icon, {
       // Module accent (M1 follow-up): the icon carries the per-module brand
       // colour the function-first nav moved off the group headers — dimmed at
@@ -104,7 +115,7 @@ const NavItemButton: FC<NavItemButtonProps> = ({ item, active, collapsed, onNavi
             ? item.accent
             : `${item.accent} opacity-60 group-hover:opacity-100`
           : active
-            ? 'text-brand-accent'
+            ? 'text-brand-primary'
             : 'text-text-muted group-hover:text-text-secondary'
       }`,
     })}
@@ -127,6 +138,9 @@ interface FooterIconButtonProps {
   icon: LucideIcon;
   label: string;
   title: string;
+  /** E2E hook. The accessible name is no longer unique — the page header's
+   *  (?) reads "Open help for <page>", which contains "Open help". */
+  testId: string;
 }
 
 const FooterIconButton: FC<FooterIconButtonProps> = ({
@@ -135,10 +149,12 @@ const FooterIconButton: FC<FooterIconButtonProps> = ({
   icon,
   label,
   title,
+  testId,
 }) => (
   <button
     type="button"
     onClick={onClick}
+    data-testid={testId}
     className={`${collapsed ? 'w-full' : 'flex-1'} flex items-center ${
       collapsed ? 'justify-center' : 'gap-compact'
     } px-3 py-row rounded-lg text-text-muted hover:text-text-primary hover:bg-surface-hover transition-colors text-sm font-medium`}
@@ -233,9 +249,10 @@ const SidebarFooter: FC<SidebarFooterProps> = ({
       {onOpenHelp ? (
         <FooterIconButton
           collapsed={collapsed}
-          onClick={onOpenHelp}
+          onClick={() => onOpenHelp()}
           icon={HelpCircle}
           label="Help"
+          testId="sidebar-help-button"
           title="Open help"
         />
       ) : null}
@@ -245,6 +262,7 @@ const SidebarFooter: FC<SidebarFooterProps> = ({
           onClick={onOpenSettings}
           icon={Settings}
           label="Settings"
+          testId="sidebar-settings-button"
           title="Open settings"
         />
       ) : null}
@@ -274,6 +292,9 @@ const SidebarFooter: FC<SidebarFooterProps> = ({
         <span>{version}</span>
       </div>
     ) : null}
+    {/* Whose tool this is, under what it is. Quiet by design: the product mark
+        at the top of the rail is the one that has to be recognised. */}
+    <MsnMark collapsed={collapsed} className="mt-3" />
     {collapsed ? (
       <button
         type="button"
@@ -456,8 +477,8 @@ export const SidebarLayout: FC<SidebarLayoutProps> = ({
       </aside>
 
       <aside
-        className={`hidden lg:flex fixed top-0 left-0 z-40 h-full flex-col bg-surface-raised/80 backdrop-blur-xl border-r border-surface-border transition-all duration-300 ease-in-out ${
-          collapsed ? 'w-16' : 'w-64'
+        className={`hidden lg:flex fixed top-0 left-0 z-40 h-full flex-col bg-gradient-to-b from-rail-from to-rail-to backdrop-blur-xl border-r border-hairline transition-all duration-300 ease-in-out ${
+          collapsed ? 'w-16' : 'w-[252px]'
         }`}
       >
         {body}

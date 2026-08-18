@@ -22,6 +22,12 @@
  * from the sidebar; navGroups.test.ts asserts that parity (guards H3 drift).
  * The sibling projects (niac, stem) ship the same shape via their own
  * navGroups files; mirror this function-first move there as separate PRs.
+ *
+ * Item labels resolve from the same pages.{i18nKey}.label keys the page
+ * registry uses, so the rail and the page header cannot disagree and a
+ * translator sees one canonical label per route. Group headings live at
+ * pages.groups.* rather than common.sections.*, whose keys name a grouping
+ * this file stopped using.
  */
 import {
   Activity,
@@ -36,44 +42,68 @@ import {
   Target,
   Wifi,
 } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import type { SidebarNavGroup } from './ui/Sidebar';
 
-export const navGroups: SidebarNavGroup[] = [
-  {
-    label: 'Live Telemetry',
-    items: [
-      { path: '/link', label: 'Link', icon: Network, accent: 'text-module-telemetry' },
-      { path: '/network', label: 'Network', icon: Server, accent: 'text-module-telemetry' },
-      {
-        path: '/performance',
-        label: 'Performance',
-        icon: Activity,
-        accent: 'text-module-telemetry',
-      },
-    ],
-  },
-  {
-    label: 'Diagnostics',
-    items: [
-      { path: '/path', label: 'Path Analysis', icon: Route, accent: 'text-module-path' },
-      { path: '/wifi', label: 'Wi-Fi', icon: Wifi, accent: 'text-module-wifi' },
-      { path: '/security', label: 'Security', icon: Shield, accent: 'text-module-security' },
-    ],
-  },
-  {
-    // NMS pages have no botanical module; they keep the neutral colouring.
-    label: 'Monitoring',
-    items: [
-      { path: '/topology', label: 'Topology', icon: Share2 },
-      { path: '/alerts', label: 'Alerts', icon: Bell },
-      { path: '/polling-targets', label: 'Polling Targets', icon: Target },
-    ],
-  },
-  {
-    label: 'Reporting',
-    items: [
-      { path: '/reports', label: 'Reports', icon: BarChart3, accent: 'text-module-reporting' },
-      { path: '/logs', label: 'Logs', icon: ScrollText, accent: 'text-module-reporting' },
-    ],
-  },
-];
+export function useNavGroups(): SidebarNavGroup[] {
+  const { t } = useTranslation('pages');
+  return [
+    {
+      label: t('groups.liveTelemetry'),
+      items: [
+        { path: '/link', label: t('link.label'), icon: Network, accent: 'text-module-telemetry' },
+        {
+          path: '/network',
+          label: t('network.label'),
+          icon: Server,
+          accent: 'text-module-telemetry',
+        },
+        {
+          path: '/performance',
+          label: t('performance.label'),
+          icon: Activity,
+          accent: 'text-module-telemetry',
+        },
+      ],
+    },
+    {
+      label: t('groups.diagnostics'),
+      items: [
+        { path: '/path', label: t('path.label'), icon: Route, accent: 'text-module-path' },
+        { path: '/wifi', label: t('wifi.label'), icon: Wifi, accent: 'text-module-wifi' },
+        {
+          path: '/security',
+          label: t('security.label'),
+          icon: Shield,
+          accent: 'text-module-security',
+        },
+      ],
+    },
+    {
+      // NMS pages have no botanical module; they keep the neutral colouring.
+      label: t('groups.monitoring'),
+      items: [
+        { path: '/topology', label: t('topology.label'), icon: Share2 },
+        { path: '/alerts', label: t('alerts.label'), icon: Bell },
+        { path: '/polling-targets', label: t('pollingTargets.label'), icon: Target },
+      ],
+    },
+    {
+      label: t('groups.reporting'),
+      items: [
+        {
+          path: '/reports',
+          label: t('reports.label'),
+          icon: BarChart3,
+          accent: 'text-module-reporting',
+        },
+        {
+          path: '/logs',
+          label: t('logs.label'),
+          icon: ScrollText,
+          accent: 'text-module-reporting',
+        },
+      ],
+    },
+  ];
+}

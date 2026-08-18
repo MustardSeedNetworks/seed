@@ -1,0 +1,48 @@
+/* Seed — product brand values. The only per-product colour file.
+ *
+ * Seed's anchor stays green: it is the growth/monitoring product and the
+ * green was chosen deliberately deeper than Material's #4caf50 so it does
+ * not read as "success" when used as brand. Light and dark differ because a
+ * single green cannot be both AA on cream and AA on ink.
+ *
+ * on-brand is the text colour on a filled brand surface. Do not replace it
+ * with text-white or a constant: the light-mode anchor is dark and the
+ * dark-mode anchor is light, so a constant fails AA in one mode.
+ */
+
+:root {
+  --color-brand-primary: #2f7d3a;
+  --color-brand-accent: #256630;
+  --color-brand-gold: #8a6208;
+  --color-text-accent: #256630;
+  --color-on-brand: #ffffff;
+  --color-on-danger: #ffffff;
+  --color-on-success: #ffffff;
+
+  /* Seed's five module accents. Same role change as Stem's six: badges and
+	 * chart series, not button fills. Hues kept; light-mode values darkened
+	 * where they are used as TEXT on cream (module-reporting measured 2.9:1),
+	 * and module-wifi pushed away from brand-primary so a legend cannot
+	 * confuse the two. */
+  --color-module-path: #96450a;
+  --color-module-wifi: #1f6b32;
+  --color-module-security: #a14a12;
+  --color-module-telemetry: #0e6f80;
+  --color-module-reporting: #8a6208;
+}
+
+.dark {
+  --color-brand-primary: #6cc472;
+  --color-brand-accent: #8ad48f;
+  --color-brand-gold: #f5c451;
+  --color-text-accent: #8ad48f;
+  --color-on-brand: #08100c;
+  --color-on-danger: #08100c;
+  --color-on-success: #08100c;
+
+  --color-module-path: #fbbf24;
+  --color-module-wifi: #81c784;
+  --color-module-security: #fb923c;
+  --color-module-telemetry: #22d3ee;
+  --color-module-reporting: #f5c451;
+}

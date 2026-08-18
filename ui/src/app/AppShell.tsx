@@ -9,7 +9,7 @@
  */
 
 import type { JSX } from 'react';
-import { Suspense } from 'react';
+import { type ReactNode, Suspense } from 'react';
 import { Redirect, Route, Switch } from 'wouter';
 import { AppFooter } from '../components/app/AppFooter';
 import { CapabilityWarnings } from '../components/app/CapabilityWarnings';
@@ -20,9 +20,11 @@ import { SettingsDrawer } from '../components/settings/SettingsDrawer';
 import { CommandPalette } from '../components/ui/CommandPalette';
 import { Fab } from '../components/ui/fab';
 import { AppContext, type AppContextValue } from '../contexts/AppContext';
-import { navGroups } from '../navGroups';
-import { pages } from '../pageRegistry';
+import { useNavGroups } from '../navGroups';
+import { type PageConfig, usePages } from '../pageRegistry';
 import { cn, section } from '../styles/theme';
+import { Breadcrumbs } from '../ui/Breadcrumbs';
+import { PageHeader } from '../ui/PageHeader';
 import { PageLoader } from '../ui/PageLoader';
 import { SidebarLayout } from '../ui/Sidebar';
 import type { AppOrchestration } from './useAppOrchestration';
@@ -33,6 +35,8 @@ interface AppShellProps {
 }
 
 export function AppShell({ orchestration, logout }: AppShellProps): JSX.Element {
+  const navGroups = useNavGroups();
+  const pages = usePages();
   const {
     cards,
     loading,
@@ -65,6 +69,7 @@ export function AppShell({ orchestration, logout }: AppShellProps): JSX.Element 
     profilesOpen,
     settingsOpen,
     helpOpen,
+    helpSection,
     openProfiles,
     closeProfiles,
     openSettings,
@@ -136,7 +141,9 @@ export function AppShell({ orchestration, logout }: AppShellProps): JSX.Element 
               </Route>
               {pages.map((page) => (
                 <Route key={page.path} path={page.path}>
-                  <page.component />
+                  <PageWithHeader page={page} onOpenHelp={openHelp}>
+                    <page.component />
+                  </PageWithHeader>
                 </Route>
               ))}
               <Route>
@@ -158,7 +165,12 @@ export function AppShell({ orchestration, logout }: AppShellProps): JSX.Element 
       />
 
       {/* Help Drawer - data-driven, with TOC, search, and real content */}
-      <HelpDrawer isOpen={helpOpen} onClose={closeHelp} version={appVersion} />
+      <HelpDrawer
+        isOpen={helpOpen}
+        onClose={closeHelp}
+        version={appVersion}
+        section={helpSection}
+      />
 
       {/* Profile Management Modal (#754) */}
       {profilesOpen ? <ProfileManagement onClose={closeProfiles} /> : null}
@@ -179,5 +191,36 @@ export function AppShell({ orchestration, logout }: AppShellProps): JSX.Element 
         isDark={isDark}
       />
     </AppContext.Provider>
+  );
+}
+
+/**
+ * PageWithHeader renders the section frame every routed page shares —
+ * breadcrumbs plus the page header — from the registry entry rather
+ * than from the page body. Pages render only their own content.
+ */
+function PageWithHeader({
+  page,
+  onOpenHelp,
+  children,
+}: {
+  page: PageConfig;
+  onOpenHelp: (section: string) => void;
+  children: ReactNode;
+}) {
+  const helpSection = page.help;
+  return (
+    <section className="stack-xl">
+      <Breadcrumbs />
+      <PageHeader
+        icon={page.icon}
+        iconColorClass={page.iconColorClass}
+        eyebrow={page.eyebrow}
+        title={page.title}
+        description={page.description}
+        onHelp={helpSection ? () => onOpenHelp(helpSection) : undefined}
+      />
+      {children}
+    </section>
   );
 }

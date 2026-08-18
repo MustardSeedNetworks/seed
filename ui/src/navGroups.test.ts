@@ -1,12 +1,16 @@
+import { renderHook } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
 
-import { navGroups } from './navGroups';
-import { pages } from './pageRegistry';
+import { useNavGroups } from './navGroups';
+import { usePages } from './pageRegistry';
 
 // Guards finding H3 (nav/route drift): a page reachable by URL but absent from
 // the sidebar is a discoverability bug. These assertions fail the build if the
 // route table and the sidebar ever diverge again.
 describe('navGroups <-> pageRegistry parity', () => {
+  const pages = renderHook(() => usePages()).result.current;
+  const navGroups = renderHook(() => useNavGroups()).result.current;
+
   const navPaths = new Set(navGroups.flatMap((group) => group.items.map((item) => item.path)));
   const routePaths = new Set(pages.map((page) => page.path));
 

@@ -16,5 +16,6 @@
 declare module "react-dom/client";
 
 // Side-effect-only font CSS imports — no exports needed.
+declare module "@fontsource-variable/manrope";
 declare module "@fontsource-variable/inter";
 declare module "@fontsource-variable/jetbrains-mono";

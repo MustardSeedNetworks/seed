@@ -28,6 +28,7 @@ describe('i18n configuration', () => {
       'glossary',
       'help',
       'setup',
+      'pages',
     ]);
   });
 

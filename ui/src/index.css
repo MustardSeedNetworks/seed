@@ -1,4 +1,6 @@
 @import "tailwindcss";
+@import "./theme/msn-shared.css";
+@import "./theme/product-seed.css";
 
 /* Tailwind v4 CSS-first configuration */
 @theme {
@@ -20,8 +22,10 @@
   --max-height-modal: 85vh;
 
   /* Font families */
-  --font-family-display: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
-  --font-family-body: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-family-display:
+    "Manrope Variable", "Manrope", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-family-body:
+    "Manrope Variable", "Manrope", system-ui, -apple-system, "Segoe UI", sans-serif;
   --font-family-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
 
   /* Brand Colors - Mustard Seed Networks */
@@ -150,11 +154,6 @@
   /* Brand Colors — constant across light/dark (canonical 2026-05-22).
    * Seed product anchor sits between seed-500 and seed-600. Foreground variants
    * for AA on light surfaces use text-accent (below) which carries seed-600. */
-  --color-brand-primary: #3d9942; /* Seed anchor — deliberately deeper than
-   * status-success #4caf50 (L1): a primary fill must not read as a "success"
-   * state. Keeps AA with on-brand near-black (#18181b → 4.92:1). buttons, focus, glows. */
-  --color-brand-accent: #81c784; /* Lighter sibling (seed-300) — hover states */
-  --color-brand-gold: #d4a017; /* Mustard cross-brand accent (mustard-500) */
 
   /* Legacy: Soil Brown (commented out - uncomment to restore)
   --color-brand-secondary: #5c4033;
@@ -162,52 +161,20 @@
   */
 
   /* Surface Colors - Botanical-earth: warm cream palette (canonical 2026-05-22) */
-  --color-surface-base: #fbfaf5; /* Warm cream - page background */
-  --color-surface-raised: #ffffff; /* Pure white - cards, modals */
-  --color-surface-border: #e1d9c4; /* Warm tan - borders, dividers */
-  --color-surface-hover: #f3efe2; /* Light cream - hover backgrounds */
-  --color-surface-sunken: #e9e3ce; /* Deeper cream - inset areas */
 
   /* Text Colors - Botanical-earth (WCAG AA against warm cream surfaces) */
-  --color-text-primary: #1a2520; /* Deep botanical - main text */
-  --color-text-secondary: #4a5650; /* Muted botanical - secondary text */
-  --color-text-muted: #6b766f; /* Subtle botanical - tertiary text */
-  --color-text-accent: #2d7a3e; /* Seed-600 (canonical) — links on light surfaces (AA) */
-  --color-text-inverse: #ffffff; /* Pure White - text on colored backgrounds */
 
   /* Status Colors - canonical anchors, constant across modes (2026-05-22) */
-  --color-status-success: #4caf50; /* Material green = seed-500 */
-  --color-status-warning: #d4a017; /* Mustard = mustard-500 brand accent */
-  --color-status-error: #ef4444; /* Coral red */
-  --color-status-info: #1976d2; /* Material blue = stem-500 */
 
   /* Module Accent Colors - for icons/badges only, not backgrounds */
-  --color-module-path: #b45309; /* Amber/Brown - foundation, path analysis */
-  --color-module-wifi: #2d7a3e; /* Green - coverage, WiFi (matches brand) */
-  --color-module-security: #ea580c; /* Orange - security, protection */
-  --color-module-telemetry: #0891b2; /* Cyan - telemetry, data flow */
-  --color-module-reporting: #d4a017; /* Gold - reports, results */
 
   /* Deeper surface — gradient terminus for the shell. */
-  --color-surface-deep: #d9d2bd;
 
   /* Log level colors (Syslog/RFC 5424) — constant across light/dark. */
-  --color-log-trace: #64748b;
-  --color-log-debug: #06b6d4;
-  --color-log-info: #3b82f6;
-  --color-log-warn: #f59e0b;
-  --color-log-error: #ef4444;
-  --color-log-fatal: #dc2626;
 
   /* Constant-across-modes utility colors. */
-  --color-scrim: #000000;
-  --color-knob: #ffffff;
 
   /* On-color foregrounds — constant across modes (no .dark override). */
-  --color-on-brand: #18181b; /* zinc-900 — foreground on brand/success fills.
-   * AA-verified (VL2), theme-constant: 4.92:1 on brand-primary #3d9942,
-   * 7.55:1 on status-success #4caf50. Both >= WCAG AA 4.5. */
-  --color-on-danger: #ffffff; /* white — AA on status-error fills */
   --color-on-info: #ffffff; /* white — AA on status-info fills */
 
   /* Categorical data-viz palette — LIGHT (≈600 weight, AA on warm cream). */
@@ -261,32 +228,12 @@
   */
 
   /* Surface Colors - Botanical-earth: deep green-black palette */
-  --color-surface-base: #0e1612; /* Deep botanical - page background */
-  --color-surface-raised: #1a2520; /* Card botanical - cards, modals */
-  --color-surface-border: #2b3a31; /* Forest border */
-  --color-surface-hover: #16201b; /* Subtle elevation - hover backgrounds */
-  --color-surface-sunken: #1f2c25; /* Sunken botanical - inset areas */
-  --color-surface-deep: #080d0a; /* Deeper than surface-base — gradient terminus */
 
   /* Text Colors - Botanical-earth (WCAG AA against deep green-black surfaces) */
-  --color-text-primary: #e8eee9; /* Botanical white - main text */
-  --color-text-secondary: #a3b1a7; /* Muted botanical - secondary text */
-  --color-text-muted: #9aa297; /* Subtle botanical - tertiary text (AA vs surface) */
-  --color-text-accent: #81c784; /* Lighter Seed Green - links, highlights */
-  --color-text-inverse: #1a2520; /* Card botanical - text on colored backgrounds */
 
   /* Status Colors - canonical anchors (same as light, constant by design) */
-  --color-status-success: #4caf50;
-  --color-status-warning: #d4a017;
-  --color-status-error: #ef4444;
-  --color-status-info: #1976d2;
 
   /* Module Accent Colors - Lightened for dark backgrounds */
-  --color-module-path: #fbbf24; /* Lighter Amber - foundation, path analysis */
-  --color-module-wifi: #81c784; /* Lighter Green - coverage, WiFi */
-  --color-module-security: #fb923c; /* Lighter Orange - security, protection */
-  --color-module-telemetry: #22d3ee; /* Lighter Cyan - telemetry, data flow */
-  --color-module-reporting: #fbbf24; /* Lighter Gold - reports, results */
 
   /* Categorical data-viz palette — DARK (≈400 weight, AA on deep green-black). */
   --color-cat-1: #60a5fa; /* blue */
@@ -321,7 +268,7 @@
 }
 
 body {
-  font-family: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+  font-family: "Manrope Variable", "Manrope", system-ui, -apple-system, "Segoe UI", sans-serif;
   /* Botanical atmospheric: mustard + brand-primary radial gradients over surface.
    * surface-base auto-flips light↔dark via :root/.dark var swap; no .dark body needed. */
   background:
@@ -829,4 +776,13 @@ body {
     transition-duration: 0.01ms;
     scroll-behavior: auto;
   }
+}
+
+/* Family tokens promoted to Tailwind utilities (bg-hairline, border-hairline,
+ * from-rail-from). Added by the MSN family rollout; see ui/src/theme/. */
+@theme {
+  --color-hairline: var(--color-hairline);
+  --color-hairline-strong: var(--color-hairline-strong);
+  --color-rail-from: var(--color-rail-from);
+  --color-rail-to: var(--color-rail-to);
 }

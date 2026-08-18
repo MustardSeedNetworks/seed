@@ -3,8 +3,8 @@
  *
  * Right-side help drawer for The Seed. Replaces the old ImprovedHelpModal,
  * which rendered no body content (every section had `content: null`). This
- * version is data-driven: section metadata + typed content live in
- * `helpDrawerContent.tsx` and are rendered generically by `HelpSectionBody`.
+ * version is data-driven: the content model lives in `helpModel.ts`, the
+ * sections in `sections/`, and `HelpSectionBody` renders them generically.
  *
  * Architecture mirrors niac's HelpDrawer (drawer chrome + section nav +
  * search filter) and Seed's SettingsDrawer chrome (overlay/backdrop,
@@ -25,19 +25,39 @@ import { useFocusTrap } from '../../hooks/useFocusTrap';
 import { button, cn, icon as iconTokens, layout, radius, spacing } from '../../styles/theme';
 import { Search, X } from '../ui/icons';
 import { HelpSectionBody } from './HelpSectionBody';
-import { helpSections, sectionSearchText } from './helpDrawerContent';
+import { sectionSearchText } from './helpModel';
+import { helpSections } from './helpSections';
 
 interface HelpDrawerProps {
   isOpen: boolean;
   onClose: () => void;
   /** Application version from backend, shown in the header. */
   version?: string;
+  /**
+   * Section this open was requested on — supplied by a page header's (?).
+   * The shell clears it on close, so clicking (?) always lands on the page's
+   * own section even if the reader browsed elsewhere during the last open.
+   */
+  section?: string;
 }
 
-export function HelpDrawer({ isOpen, onClose, version }: HelpDrawerProps): ReactElement | null {
+export function HelpDrawer({
+  isOpen,
+  onClose,
+  version,
+  section,
+}: HelpDrawerProps): ReactElement | null {
   const { t } = useTranslation('help');
-  const [activeSection, setActiveSection] = useState<string>('about');
+  const [activeSection, setActiveSection] = useState<string>(section ?? 'about');
+  const [requestedSection, setRequestedSection] = useState(section);
   const [searchQuery, setSearchQuery] = useState('');
+
+  if (section !== requestedSection) {
+    setRequestedSection(section);
+    if (section) {
+      setActiveSection(section);
+    }
+  }
 
   // Focus trap: ESC to close, Tab cycling, and focus restore on close.
   const drawerRef = useFocusTrap<HTMLDivElement>({

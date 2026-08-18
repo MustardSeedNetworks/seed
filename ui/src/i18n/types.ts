@@ -22,6 +22,7 @@ import type enCommon from '@locales/en/common.json';
 import type enErrors from '@locales/en/errors.json';
 import type enGlossary from '@locales/en/glossary.json';
 import type enHelp from '@locales/en/help.json';
+import type enPages from '@locales/en/pages.json';
 import type enSettings from '@locales/en/settings.json';
 import type enSetup from '@locales/en/setup.json';
 
@@ -34,6 +35,7 @@ export type SettingsTranslations = typeof enSettings;
 export type ErrorsTranslations = typeof enErrors;
 export type GlossaryTranslations = typeof enGlossary;
 export type HelpTranslations = typeof enHelp;
+export type PagesTranslations = typeof enPages;
 export type SetupTranslations = typeof enSetup;
 
 /**
@@ -46,6 +48,7 @@ export interface Translations {
   errors: ErrorsTranslations;
   glossary: GlossaryTranslations;
   help: HelpTranslations;
+  pages: PagesTranslations;
   setup: SetupTranslations;
 }
 

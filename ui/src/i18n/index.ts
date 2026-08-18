@@ -25,6 +25,7 @@ import enCommon from '@locales/en/common.json';
 import enErrors from '@locales/en/errors.json';
 import enGlossary from '@locales/en/glossary.json';
 import enHelp from '@locales/en/help.json';
+import enPages from '@locales/en/pages.json';
 import enSettings from '@locales/en/settings.json';
 import enSetup from '@locales/en/setup.json';
 // Import Spanish locale files
@@ -33,6 +34,7 @@ import esCommon from '@locales/es/common.json';
 import esErrors from '@locales/es/errors.json';
 import esGlossary from '@locales/es/glossary.json';
 import esHelp from '@locales/es/help.json';
+import esPages from '@locales/es/pages.json';
 import esSettings from '@locales/es/settings.json';
 import esSetup from '@locales/es/setup.json';
 import i18n from 'i18next';
@@ -60,6 +62,7 @@ export const namespaces = [
   'glossary',
   'help',
   'setup',
+  'pages',
 ] as const;
 
 export type Namespace = (typeof namespaces)[number];
@@ -80,6 +83,7 @@ const resources: { en: Record<string, unknown>; es: Record<string, unknown> } = 
     errors: enErrors,
     glossary: enGlossary,
     help: enHelp,
+    pages: enPages,
     setup: enSetup,
   },
   es: {
@@ -89,6 +93,7 @@ const resources: { en: Record<string, unknown>; es: Record<string, unknown> } = 
     errors: esErrors,
     glossary: esGlossary,
     help: esHelp,
+    pages: esPages,
     setup: esSetup,
   },
 };
