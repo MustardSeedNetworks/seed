@@ -122,6 +122,14 @@ interface RecordRowProps {
   meta?: string;
   /** The one figure worth seeing without selecting the record. */
   value?: string;
+  /**
+   * Defaults to `unknown`, not `ok`. The bar is always painted, so an `ok`
+   * default would mean "a caller that forgot to pass state renders green" —
+   * a record asserted healthy because nobody said otherwise. That is the exact
+   * failure this archetype exists to prevent, and it is live elsewhere in the
+   * fleet (MustardSeedNetworks/niac-go#1352, where every topology node is
+   * green from a hardcoded literal). Absent knowledge is `unknown`.
+   */
   state?: RecordState;
   selected?: boolean;
   onSelect: () => void;
@@ -133,7 +141,7 @@ export function RecordRow({
   nameKind = 'figure',
   meta,
   value,
-  state = 'ok',
+  state = 'unknown',
   selected = false,
   onSelect,
   'data-testid': testId,
