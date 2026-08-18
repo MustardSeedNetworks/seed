@@ -152,6 +152,7 @@ jobs:
 
       - name: Install libpcap-dev
         uses: ./.github/actions/setup-libpcap
+        timeout-minutes: 10
 
       - name: Set up Node.js
         uses: ./.github/actions/setup-node
@@ -282,6 +283,7 @@ jobs:
 
       - name: Install libpcap-dev
         uses: ./.github/actions/setup-libpcap
+        timeout-minutes: 10
 
       - name: Download built UI assets
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
@@ -343,7 +345,7 @@ jobs:
     runs-on: ubuntu-latest
     needs: changes
     if: needs.changes.outputs.frontend == 'true' || needs.changes.outputs.workflows == 'true'
-    timeout-minutes: 15
+    timeout-minutes: 25
     defaults:
       run:
         working-directory: ui
@@ -357,8 +359,24 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      # Split from the browser download because `--with-deps` runs apt, and
+      # bundling them left the apt half with no step budget, no
+      # Acquire::*::Timeout and no dpkg lock bound. It consumed this job's
+      # whole 15-minute budget on 2026-08-18 (run 32161702107) and ejected a
+      # release PR from the merge queue — the same orphaned-apt-get cause as
+      # #1950, in the one job every audit missed because `--with-deps` matches
+      # neither `install-deps` nor `apt-get`.
+      - name: Install Chromium OS dependencies
+        uses: MustardSeedNetworks/.github/.github/actions/apt-install@37513d7fbaacf4a7adaab1ac1514f021115868d1 # v1.4.0
+        timeout-minutes: 10
+        with:
+          # cd ui explicitly: the job's defaults.run.working-directory does not
+          # reach inside a composite action's own steps.
+          command: cd ui && node ./node_modules/playwright/cli.js install-deps chromium
+
       - name: Install Chromium
-        run: node ./node_modules/playwright/cli.js install --with-deps chromium
+        timeout-minutes: 10
+        run: node ./node_modules/playwright/cli.js install chromium
 
       - name: Run interaction and accessibility tests
         env:
@@ -396,6 +414,7 @@ jobs:
 
       - name: Install libpcap-dev
         uses: ./.github/actions/setup-libpcap
+        timeout-minutes: 10
 
       - name: Run govulncheck
         run: make security-backend-quiet
@@ -643,55 +662,25 @@ jobs:
 
       - name: Install C23 tools (clang-tidy, cppcheck, bear)
         if: steps.check-c.outputs.has_c == 'true'
+        uses: MustardSeedNetworks/.github/.github/actions/apt-install@37513d7fbaacf4a7adaab1ac1514f021115868d1 # v1.4.0
         timeout-minutes: 10
-        # Two distinct failures are bounded here, and they pull in opposite
-        # directions.
-        #
-        # A stalled Ubuntu mirror can hang apt for the whole job budget without
-        # running a test (stem job 95068053052), because apt waits forever on a
-        # dead connection by default. Acquire::*::Timeout bounds that, so a dead
-        # mirror still fails in seconds no matter how long the outer timeout is.
-        #
-        # Contention for the runner's dpkg lock is the opposite problem: the
-        # right response is to WAIT, not to retry. This failed four times on
-        # 2026-08-18 (seed#1950), twice ejecting a merge queue and once skipping
-        # a release, because three 60s waits all landed inside one window where
-        # another apt-get held the lock for ~3 minutes. Retrying into a held
-        # lock cannot succeed. Hence one patient wait (DPkg::Lock::Timeout 240)
-        # rather than several short ones, and two attempts rather than three —
-        # the second attempt is for a transient mirror error, not the lock.
-        #
-        # Worst case is 270 + 10 + 270 = 550s, which the step budget covers.
-        run: |
-          sudo tee /etc/apt/apt.conf.d/99-ci-timeouts >/dev/null <<'EOF'
-          Acquire::http::Timeout "20";
-          Acquire::https::Timeout "20";
-          Acquire::Retries "2";
-          DPkg::Lock::Timeout "240";
-          EOF
-          for attempt in 1 2; do
-            # A timeout kill can leave dpkg half-configured; recover first.
-            if [ "$attempt" -gt 1 ]; then
-              sudo dpkg --configure -a >/dev/null 2>&1 || true
-            fi
-            if timeout -k 15 270 sudo bash -c 'apt-get update && apt-get install -y \
-              clang-18 clang-tidy-18 clang-format-18 cppcheck bear gcc-13'; then
-              break
-            fi
-            if [ "$attempt" -eq 3 ]; then
-              echo "::error::C23 tools install failed after 2 attempts"
-              exit 1
-            fi
-            echo "C23 tools install attempt ${attempt} failed; retrying in $((attempt * 10))s..."
-            sleep $((attempt * 10))
-          done
+        # The hand-rolled wrapper this replaces could not reap the root-owned
+        # apt-get it started, so a killed attempt left it alive holding the
+        # dpkg lock and the retry blocked on it (#1950). It also swallowed
+        # total failure: the exit branch tested `attempt -eq 3` inside a
+        # `for attempt in 1 2` loop, so when both attempts failed the loop
+        # simply ended and the step went on to update-alternatives and
+        # reported success. The composite exits non-zero.
+        with:
+          packages: clang-18 clang-tidy-18 clang-format-18 cppcheck bear gcc-13
 
-          # Set clang-18 as default
+      - name: Select clang-18 as the default toolchain
+        if: steps.check-c.outputs.has_c == 'true'
+        run: |
           sudo update-alternatives --install /usr/bin/clang clang /usr/bin/clang-18 100
           sudo update-alternatives --install /usr/bin/clang-tidy clang-tidy /usr/bin/clang-tidy-18 100
           sudo update-alternatives --install /usr/bin/clang-format clang-format /usr/bin/clang-format-18 100
-          
-          # Verify versions
+
           clang --version
           clang-tidy --version
           gcc-13 --version
@@ -930,7 +919,7 @@ jobs:
     name: Build Verification
     runs-on: ubuntu-latest
     needs: [changes, backend, frontend]
-    timeout-minutes: 20
+    timeout-minutes: 25
     # Build needs the frontend-dist artifact; only runs when frontend ran.
     # The always() guard lets this job evaluate even when `backend` was
     # skipped (skipped upstream would otherwise skip this job implicitly).
@@ -953,6 +942,7 @@ jobs:
 
       - name: Install libpcap-dev
         uses: ./.github/actions/setup-libpcap
+        timeout-minutes: 10
 
       - name: Build Go binary (amd64)
         env:
@@ -974,26 +964,14 @@ jobs:
               -X github.com/MustardSeedNetworks/seed/internal/version.UIBuildHash=${UI_BUILD_HASH}" \
             -o seed-linux-amd64 ./cmd/seed
 
-      - name: Install arm64 cross-build dependencies
+      - name: Configure arm64 apt sources
         timeout-minutes: 10
-        # Two distinct failures are bounded here, and they pull in opposite
-        # directions.
-        #
-        # A stalled Ubuntu mirror can hang apt for the whole job budget without
-        # running a test (stem job 95068053052), because apt waits forever on a
-        # dead connection by default. Acquire::*::Timeout bounds that, so a dead
-        # mirror still fails in seconds no matter how long the outer timeout is.
-        #
-        # Contention for the runner's dpkg lock is the opposite problem: the
-        # right response is to WAIT, not to retry. This failed four times on
-        # 2026-08-18 (seed#1950), twice ejecting a merge queue and once skipping
-        # a release, because three 60s waits all landed inside one window where
-        # another apt-get held the lock for ~3 minutes. Retrying into a held
-        # lock cannot succeed. Hence one patient wait (DPkg::Lock::Timeout 240)
-        # rather than several short ones, and two attempts rather than three —
-        # the second attempt is for a transient mirror error, not the lock.
-        #
-        # Worst case is 270 + 10 + 270 = 550s, which the step budget covers.
+        # Stays a run step because it rewrites the runner's source lists, which
+        # the composite has no business doing. It writes the same apt.conf
+        # drop-in the composite writes so its own tolerant refresh below is
+        # bounded too — a stalled mirror otherwise blocks forever (stem job
+        # 95068053052). The package install itself is delegated to the
+        # composite in the following step.
         run: |
           sudo dpkg --add-architecture arm64
           sudo rm -f /etc/apt/sources.list.d/ubuntu.sources
@@ -1023,21 +1001,26 @@ jobs:
           Acquire::Retries "2";
           DPkg::Lock::Timeout "240";
           EOF
-          for attempt in 1 2; do
-            # A timeout kill can leave dpkg half-configured; recover first.
-            if [ "$attempt" -gt 1 ]; then
-              sudo dpkg --configure -a >/dev/null 2>&1 || true
-            fi
-            if timeout -k 15 270 sudo bash -c 'apt-get update || true; apt-get install -y gcc-aarch64-linux-gnu linux-libc-dev:arm64 libpcap-dev:arm64 libpcap0.8-dev:arm64 pkg-config'; then
-              break
-            fi
-            if [ "$attempt" -eq 3 ]; then
-              echo "::error::arm64 cross-build dependency install failed after 2 attempts"
-              exit 1
-            fi
-            echo "arm64 cross-build dependency install attempt ${attempt} failed; retrying in $((attempt * 10))s..."
-            sleep $((attempt * 10))
-          done
+          # Tolerated deliberately: with both amd64 and arm64 sources active a
+          # partial refresh is normal, and the install below is what must
+          # succeed. Run as root so the bound can reap it.
+          sudo timeout -k 15 270 apt-get update || true
+
+      # Installed via the composite rather than a hand-rolled retry: the
+      # wrapper this replaces could not reap the root-owned apt-get it
+      # started, so a killed attempt left it holding the dpkg lock for the
+      # retry to block on (#1950). It also swallowed total failure — the exit
+      # branch tested `attempt -eq 3` inside a `for attempt in 1 2` loop, so
+      # two failed attempts fell out of the loop and reported success.
+      # update: false because the refresh above is deliberately tolerant.
+      - name: Install arm64 cross-build dependencies
+        uses: MustardSeedNetworks/.github/.github/actions/apt-install@37513d7fbaacf4a7adaab1ac1514f021115868d1 # v1.4.0
+        timeout-minutes: 10
+        with:
+          update: 'false'
+          packages: >-
+            gcc-aarch64-linux-gnu linux-libc-dev:arm64 libpcap-dev:arm64
+            libpcap0.8-dev:arm64 pkg-config
 
       - name: Build Go binary (arm64)
         env:
@@ -1106,7 +1089,7 @@ jobs:
     name: E2E Browser Tests (${{ matrix.browser }} ${{ matrix.shard }}/2)
     runs-on: ubuntu-latest
     needs: [changes, backend, frontend]
-    timeout-minutes: 20
+    timeout-minutes: 25
     # Blocking tier — "CI Complete" gates on this job (see ci-complete.needs).
     # 2 shards × 2 browsers = 4 jobs. This was 4 × 2 = 8; per-shard wall-clock
     # was indeed ~3–5 min, but the 8 shards did not start together — measured
@@ -1151,6 +1134,7 @@ jobs:
 
       - name: Install libpcap-dev
         uses: ./.github/actions/setup-libpcap
+        timeout-minutes: 10
 
       - name: Download frontend build
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
@@ -1178,51 +1162,22 @@ jobs:
             ${{ runner.os }}-playwright-
 
       - name: Install Playwright OS dependencies
-        working-directory: ui
+        uses: MustardSeedNetworks/.github/.github/actions/apt-install@37513d7fbaacf4a7adaab1ac1514f021115868d1 # v1.4.0
         timeout-minutes: 10
         # apt packages only, not cacheable — runs unconditionally regardless of
         # whether the browser binaries were restored from the cache above. Not
         # removable: the runner image ships none of webkit's GStreamer/font
         # stack (181 packages, 114 MB on a clean run).
         #
-        # Two distinct failures are bounded here, and they pull in opposite
-        # directions.
-        #
-        # A stalled Ubuntu mirror can hang apt for the whole job budget without
-        # running a test (stem job 95068053052), because apt waits forever on a
-        # dead connection by default. Acquire::*::Timeout bounds that, so a dead
-        # mirror still fails in seconds no matter how long the outer timeout is.
-        #
-        # Contention for the runner's dpkg lock is the opposite problem: the
-        # right response is to WAIT, not to retry. This failed four times on
-        # 2026-08-18 (seed#1950), twice ejecting a merge queue and once skipping
-        # a release, because three 60s waits all landed inside one window where
-        # another apt-get held the lock for ~3 minutes. Retrying into a held
-        # lock cannot succeed. Hence one patient wait (DPkg::Lock::Timeout 240)
-        # rather than several short ones, and two attempts rather than three —
-        # the second attempt is for a transient mirror error, not the lock.
-        #
-        # Worst case is 270 + 10 + 270 = 550s, which the step budget covers.
-        run: |
-          sudo tee /etc/apt/apt.conf.d/99-ci-timeouts >/dev/null <<'EOF'
-          Acquire::http::Timeout "20";
-          Acquire::https::Timeout "20";
-          Acquire::Retries "2";
-          DPkg::Lock::Timeout "240";
-          EOF
-          for attempt in 1 2; do
-            if [ "$attempt" -gt 1 ]; then
-              # A timeout kill can leave dpkg half-configured; recover first.
-              sudo dpkg --configure -a >/dev/null 2>&1 || true
-            fi
-            if timeout -k 15 270 npx playwright install-deps; then
-              exit 0
-            fi
-            echo "playwright install-deps attempt ${attempt} failed; retrying in $((attempt * 10))s..."
-            sleep $((attempt * 10))
-          done
-          echo "::error::playwright install-deps failed after 2 attempts"
-          exit 1
+        # The composite bounds a stalled mirror (Acquire::*::Timeout) and waits
+        # out dpkg lock contention instead of retrying into it. Critically it
+        # also does the thing the hand-rolled wrapper here could not: it runs
+        # timeout as root, so a killed attempt cannot leave an apt-get alive
+        # holding /var/lib/dpkg/lock-frontend for the next attempt to block on.
+        # That orphan was the actual cause of #1950. Worst case 2 x 270 + 10 =
+        # 550s, which the step budget covers.
+        with:
+          command: cd ui && npx playwright install-deps
 
       - name: Install Playwright browsers
         if: steps.playwright-cache.outputs.cache-hit != 'true'
@@ -1277,7 +1232,7 @@ jobs:
     name: E2E Smoke
     runs-on: ubuntu-latest
     needs: [changes, backend, frontend]
-    timeout-minutes: 20
+    timeout-minutes: 25
     if: |
       always() &&
       (github.event_name != 'pull_request' || github.event.pull_request.draft == false) &&
@@ -1295,6 +1250,7 @@ jobs:
 
       - name: Install libpcap-dev
         uses: ./.github/actions/setup-libpcap
+        timeout-minutes: 10
 
       - name: Download frontend build
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
@@ -1322,51 +1278,22 @@ jobs:
             ${{ runner.os }}-playwright-
 
       - name: Install Playwright OS dependencies
-        working-directory: ui
+        uses: MustardSeedNetworks/.github/.github/actions/apt-install@37513d7fbaacf4a7adaab1ac1514f021115868d1 # v1.4.0
         timeout-minutes: 10
         # apt packages only, not cacheable — runs unconditionally regardless of
         # whether the browser binaries were restored from the cache above. Not
         # removable: the runner image ships none of webkit's GStreamer/font
         # stack (181 packages, 114 MB on a clean run).
         #
-        # Two distinct failures are bounded here, and they pull in opposite
-        # directions.
-        #
-        # A stalled Ubuntu mirror can hang apt for the whole job budget without
-        # running a test (stem job 95068053052), because apt waits forever on a
-        # dead connection by default. Acquire::*::Timeout bounds that, so a dead
-        # mirror still fails in seconds no matter how long the outer timeout is.
-        #
-        # Contention for the runner's dpkg lock is the opposite problem: the
-        # right response is to WAIT, not to retry. This failed four times on
-        # 2026-08-18 (seed#1950), twice ejecting a merge queue and once skipping
-        # a release, because three 60s waits all landed inside one window where
-        # another apt-get held the lock for ~3 minutes. Retrying into a held
-        # lock cannot succeed. Hence one patient wait (DPkg::Lock::Timeout 240)
-        # rather than several short ones, and two attempts rather than three —
-        # the second attempt is for a transient mirror error, not the lock.
-        #
-        # Worst case is 270 + 10 + 270 = 550s, which the step budget covers.
-        run: |
-          sudo tee /etc/apt/apt.conf.d/99-ci-timeouts >/dev/null <<'EOF'
-          Acquire::http::Timeout "20";
-          Acquire::https::Timeout "20";
-          Acquire::Retries "2";
-          DPkg::Lock::Timeout "240";
-          EOF
-          for attempt in 1 2; do
-            if [ "$attempt" -gt 1 ]; then
-              # A timeout kill can leave dpkg half-configured; recover first.
-              sudo dpkg --configure -a >/dev/null 2>&1 || true
-            fi
-            if timeout -k 15 270 npx playwright install-deps; then
-              exit 0
-            fi
-            echo "playwright install-deps attempt ${attempt} failed; retrying in $((attempt * 10))s..."
-            sleep $((attempt * 10))
-          done
-          echo "::error::playwright install-deps failed after 2 attempts"
-          exit 1
+        # The composite bounds a stalled mirror (Acquire::*::Timeout) and waits
+        # out dpkg lock contention instead of retrying into it. Critically it
+        # also does the thing the hand-rolled wrapper here could not: it runs
+        # timeout as root, so a killed attempt cannot leave an apt-get alive
+        # holding /var/lib/dpkg/lock-frontend for the next attempt to block on.
+        # That orphan was the actual cause of #1950. Worst case 2 x 270 + 10 =
+        # 550s, which the step budget covers.
+        with:
+          command: cd ui && npx playwright install-deps
 
       - name: Install Playwright browsers
         if: steps.playwright-cache.outputs.cache-hit != 'true'
