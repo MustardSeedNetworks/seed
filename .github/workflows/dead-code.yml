@@ -43,29 +43,43 @@ jobs:
 
       - name: Install libpcap-dev
         timeout-minutes: 8
+        # Two distinct failures are bounded here, and they pull in opposite
+        # directions.
+        #
         # A stalled Ubuntu mirror can hang apt for the whole job budget without
         # running a test (stem job 95068053052), because apt waits forever on a
-        # dead connection by default. Bound apt's own network waits, then retry
-        # the transient case.
+        # dead connection by default. Acquire::*::Timeout bounds that, so a dead
+        # mirror still fails in seconds no matter how long the outer timeout is.
+        #
+        # Contention for the runner's dpkg lock is the opposite problem: the
+        # right response is to WAIT, not to retry. This failed four times on
+        # 2026-08-18 (seed#1950), twice ejecting a merge queue and once skipping
+        # a release, because three 60s waits all landed inside one window where
+        # another apt-get held the lock for ~3 minutes. Retrying into a held
+        # lock cannot succeed. Hence one patient wait (DPkg::Lock::Timeout 240)
+        # rather than several short ones, and two attempts rather than three —
+        # the second attempt is for a transient mirror error, not the lock.
+        #
+        # Worst case is 270 + 10 + 270 = 550s, which the step budget covers.
         run: |
           sudo tee /etc/apt/apt.conf.d/99-ci-timeouts >/dev/null <<'EOF'
           Acquire::http::Timeout "20";
           Acquire::https::Timeout "20";
           Acquire::Retries "2";
-          DPkg::Lock::Timeout "60";
+          DPkg::Lock::Timeout "240";
           EOF
-          for attempt in 1 2 3; do
+          for attempt in 1 2; do
             # A timeout kill can leave dpkg half-configured; recover first.
             if [ "$attempt" -gt 1 ]; then
               sudo dpkg --configure -a >/dev/null 2>&1 || true
             fi
-            if timeout -k 15 120 sudo bash -c 'apt-get update && apt-get install -y libpcap-dev'; then
+            if timeout -k 15 270 sudo bash -c 'apt-get update && apt-get install -y libpcap-dev'; then
               exit 0
             fi
             echo "libpcap-dev install attempt ${attempt} failed; retrying in $((attempt * 10))s..."
             sleep $((attempt * 10))
           done
-          echo "::error::libpcap-dev install failed after 3 attempts"
+          echo "::error::libpcap-dev install failed after 2 attempts"
           exit 1
 
       - name: Run staticcheck for unused code
