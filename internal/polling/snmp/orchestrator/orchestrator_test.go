@@ -8,6 +8,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/MustardSeedNetworks/seed/internal/config"
 	"github.com/MustardSeedNetworks/seed/internal/database"
 	"github.com/MustardSeedNetworks/seed/internal/polling/snmp"
 	"github.com/MustardSeedNetworks/seed/internal/polling/snmp/orchestrator"
@@ -40,52 +41,43 @@ func nopClientFactory(_ snmp.Target, _ snmp.ResolvedCredentials) (snmp.Client, e
 	return nil, errors.New("orchestrator test: client factory not used")
 }
 
+// validConfig is a fully populated Config; each validation case blanks the
+// one field it is exercising so the error is attributable to that field.
+func validConfig(db *database.DB, sched *scheduler.Scheduler) orchestrator.Config {
+	return orchestrator.Config{
+		Targets:       db.PollingTargets(),
+		Credentials:   db.DeviceCredentials(),
+		Decryptor:     &config.Config{},
+		Observations:  db.SNMPObservations(),
+		Scheduler:     sched,
+		ClientFactory: nopClientFactory,
+		Logger:        silentLogger(),
+		Now:           at,
+	}
+}
+
 func TestBuild_AllRequiredFieldsValidated(t *testing.T) {
 	t.Parallel()
 	db := openTestDB(t)
 	sched := newSchedulerForTest()
 
 	tests := []struct {
-		name string
-		cfg  orchestrator.Config
+		name  string
+		blank func(*orchestrator.Config)
 	}{
-		{
-			"missing Targets",
-			orchestrator.Config{
-				Observations:  db.SNMPObservations(),
-				Scheduler:     sched,
-				ClientFactory: nopClientFactory,
-			},
-		},
-		{
-			"missing Observations",
-			orchestrator.Config{
-				Targets:       db.PollingTargets(),
-				Scheduler:     sched,
-				ClientFactory: nopClientFactory,
-			},
-		},
-		{
-			"missing Scheduler",
-			orchestrator.Config{
-				Targets:       db.PollingTargets(),
-				Observations:  db.SNMPObservations(),
-				ClientFactory: nopClientFactory,
-			},
-		},
-		{
-			"missing ClientFactory",
-			orchestrator.Config{
-				Targets:      db.PollingTargets(),
-				Observations: db.SNMPObservations(),
-				Scheduler:    sched,
-			},
-		},
+		{"missing Targets", func(c *orchestrator.Config) { c.Targets = nil }},
+		{"missing Credentials", func(c *orchestrator.Config) { c.Credentials = nil }},
+		{"missing Decryptor", func(c *orchestrator.Config) { c.Decryptor = nil }},
+		{"missing Observations", func(c *orchestrator.Config) { c.Observations = nil }},
+		{"missing Scheduler", func(c *orchestrator.Config) { c.Scheduler = nil }},
+		{"missing ClientFactory", func(c *orchestrator.Config) { c.ClientFactory = nil }},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-			if _, err := orchestrator.Build(tt.cfg); err == nil {
+			cfg := validConfig(db, sched)
+			tt.blank(&cfg)
+			if _, err := orchestrator.Build(cfg); err == nil {
 				t.Errorf("Build(%s) should have returned error", tt.name)
 			}
 		})
@@ -97,14 +89,7 @@ func TestBuild_ReturnsPollerWithEngineName(t *testing.T) {
 	db := openTestDB(t)
 	sched := newSchedulerForTest()
 
-	poller, err := orchestrator.Build(orchestrator.Config{
-		Targets:       db.PollingTargets(),
-		Observations:  db.SNMPObservations(),
-		Scheduler:     sched,
-		ClientFactory: nopClientFactory,
-		Logger:        silentLogger(),
-		Now:           at,
-	})
+	poller, err := orchestrator.Build(validConfig(db, sched))
 	if err != nil {
 		t.Fatalf("Build: %v", err)
 	}
@@ -118,14 +103,7 @@ func TestBuild_PollerStartLoadsZeroTargetsCleanly(t *testing.T) {
 	db := openTestDB(t)
 	sched := newSchedulerForTest()
 
-	poller, err := orchestrator.Build(orchestrator.Config{
-		Targets:       db.PollingTargets(),
-		Observations:  db.SNMPObservations(),
-		Scheduler:     sched,
-		ClientFactory: nopClientFactory,
-		Logger:        silentLogger(),
-		Now:           at,
-	})
+	poller, err := orchestrator.Build(validConfig(db, sched))
 	if err != nil {
 		t.Fatalf("Build: %v", err)
 	}
@@ -160,14 +138,7 @@ func TestBuild_RegistersAllElevenCollectorChainKinds(t *testing.T) {
 		t.Fatalf("seed target: %v", err)
 	}
 
-	poller, err := orchestrator.Build(orchestrator.Config{
-		Targets:       db.PollingTargets(),
-		Observations:  db.SNMPObservations(),
-		Scheduler:     sched,
-		ClientFactory: nopClientFactory,
-		Logger:        silentLogger(),
-		Now:           at,
-	})
+	poller, err := orchestrator.Build(validConfig(db, sched))
 	if err != nil {
 		t.Fatalf("Build: %v", err)
 	}

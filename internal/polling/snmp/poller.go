@@ -32,6 +32,12 @@ type PollerStorage interface {
 	UpdateLastPoll(ctx context.Context, id, status, errMsg string) error
 }
 
+// credentialResolver resolves a target's decrypted SNMP credentials at poll
+// time. Satisfied by [*CredentialResolver]; tests inject a fake.
+type credentialResolver interface {
+	Resolve(ctx context.Context, target *polling.Target) (ResolvedCredentials, error)
+}
+
 // pollerScheduler is the narrowed scheduler surface for tests.
 type pollerScheduler interface {
 	Register(j scheduler.Job)
@@ -45,9 +51,10 @@ type pollerScheduler interface {
 // and the scheduler dispatches the per-target collector chain at
 // each target's configured cadence.
 type Poller struct {
-	logger    *slog.Logger
-	storage   PollerStorage
-	scheduler pollerScheduler
+	logger      *slog.Logger
+	storage     PollerStorage
+	scheduler   pollerScheduler
+	credentials credentialResolver
 
 	mu         sync.RWMutex
 	collectors map[string]Collector
@@ -64,16 +71,23 @@ type Poller struct {
 }
 
 // NewPoller returns an unstarted Poller. Pass nil logger to use
-// [slog.Default].
-func NewPoller(storage PollerStorage, sched pollerScheduler, logger *slog.Logger) *Poller {
+// [slog.Default]. creds is required — a poller without a credential
+// resolver would poll every target anonymously.
+func NewPoller(
+	storage PollerStorage,
+	sched pollerScheduler,
+	creds credentialResolver,
+	logger *slog.Logger,
+) *Poller {
 	if logger == nil {
 		logger = slog.Default()
 	}
 	return &Poller{
-		logger:     logger,
-		storage:    storage,
-		scheduler:  sched,
-		collectors: make(map[string]Collector),
+		logger:      logger,
+		storage:     storage,
+		scheduler:   sched,
+		credentials: creds,
+		collectors:  make(map[string]Collector),
 	}
 }
 
@@ -195,17 +209,47 @@ func (p *Poller) Stop(ctx context.Context) error {
 	return nil
 }
 
-// runChain walks the target's collector chain. Each collector is
-// invoked sequentially; failures are logged and the chain
-// continues. After the chain runs, last_status / last_error /
-// last_polled_at are recorded.
+// runChain resolves the target's credentials and walks its collector chain.
+// Each collector is invoked sequentially; a collector failure is logged and
+// the chain continues, but a credential-resolution failure skips the chain
+// outright. Either way last_status / last_error / last_polled_at are recorded.
 func (p *Poller) runChain(ctx context.Context, target *polling.Target) {
 	p.recordChainStart()
-	creds := credentialsForTarget(target)
 
-	wt := wireTarget(target)
 	var firstErr error
 	defer func() { p.recordChainEnd(firstErr) }()
+
+	creds, credErr := p.credentials.Resolve(ctx, target)
+	if credErr != nil {
+		// Without credentials every collector could only time out, so skip
+		// the chain and let last_error carry the real cause.
+		p.logger.WarnContext(ctx, "snmp poller: credential resolution failed",
+			"target_id", target.ID, "error", credErr)
+		firstErr = credErr
+	} else {
+		firstErr = p.runCollectors(ctx, target, creds)
+	}
+
+	status := pollStatusOK
+	errMsg := ""
+	if firstErr != nil {
+		status = pollStatusError
+		errMsg = firstErr.Error()
+	}
+	if updErr := p.storage.UpdateLastPoll(ctx, target.ID, status, errMsg); updErr != nil {
+		p.logger.WarnContext(ctx, "snmp poller: update last_poll failed",
+			"target_id", target.ID, "error", updErr)
+	}
+}
+
+// runCollectors invokes every collector in the target's chain and returns the
+// first failure, having run the whole chain regardless.
+func (p *Poller) runCollectors(
+	ctx context.Context, target *polling.Target, creds ResolvedCredentials,
+) error {
+	wt := wireTarget(target)
+	var firstErr error
+
 	for _, name := range target.CollectorChain {
 		p.mu.RLock()
 		c, ok := p.collectors[name]
@@ -228,25 +272,7 @@ func (p *Poller) runChain(ctx context.Context, target *polling.Target) {
 			}
 		}
 	}
-
-	status := pollStatusOK
-	errMsg := ""
-	if firstErr != nil {
-		status = pollStatusError
-		errMsg = firstErr.Error()
-	}
-	if updErr := p.storage.UpdateLastPoll(ctx, target.ID, status, errMsg); updErr != nil {
-		p.logger.WarnContext(ctx, "snmp poller: update last_poll failed",
-			"target_id", target.ID, "error", updErr)
-	}
-}
-
-// credentialsForTarget resolves the decrypted credentials for a
-// polling target. V1.0 ships with a no-credentials stub — Stage
-// A3.x adds the device_credentials decryption via
-// license.Manager.DecryptSecret.
-func credentialsForTarget(_ *polling.Target) ResolvedCredentials {
-	return ResolvedCredentials{}
+	return firstErr
 }
 
 // wireTarget converts a polling.Target into the Target shape that

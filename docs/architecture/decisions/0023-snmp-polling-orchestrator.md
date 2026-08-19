@@ -80,10 +80,16 @@ instance that schedules and runs an **ordered, per-target collector chain**.
   collectors above against a persisting sink.
 - **`internal/polling/snmp/collectors/*`** — one package per collector.
 - **Wiring** — registered with the engine registry from `internal/api/server.go`.
-- **Credential decryption is a STUB.** `credentialsForTarget()` (`poller.go`)
-  returns an empty `ResolvedCredentials{}`; nothing yet decrypts a target's
-  `CredentialsID` against the `device_credentials` store. Until Stage A3.x wires the
-  secret/license manager in, the poller schedules and runs chains but cannot
-  authenticate against real SNMPv2c/v3 devices — this path is scaffolding, not a
-  shipped feature. The poll loop, chaining, status write-back, and persistence are
-  real and tested with fake clients; only the credential resolution is missing.
+- **Credential resolution** — `CredentialResolver` (`credentials.go`) reads the
+  target's `device_credentials` row (scoped by `client_id` as well as `id`) and
+  decrypts `snmp_community_enc` / `snmp_v3_auth_enc` / `snmp_v3_priv_enc` with the
+  credential DEK (ADR-0015) on every poll, so a rotated credential takes effect on
+  the next poll rather than at the next restart. A target with no `credentials_id`
+  resolves to empty credentials and polls on — the column is `ON DELETE SET NULL`.
+  A non-empty id that misses, belongs to another client, or fails to decrypt skips
+  the chain and records the cause in `polling_targets.last_error`; polling on with
+  a silently empty community would surface only as an SNMP timeout. Decrypted
+  material reaches the collector chain and nothing else — never a log line, never
+  an error string. Credential CRUD (the write path) is not implemented; the
+  `*_enc` BLOB columns hold the ASCII `enc:v<N>:...` string produced by
+  `Config.EncryptCredentialValue`, and any future writer must follow that form.

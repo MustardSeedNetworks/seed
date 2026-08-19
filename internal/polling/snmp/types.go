@@ -22,7 +22,8 @@ type Target struct {
 
 // ResolvedCredentials carries the plaintext SNMP auth material a
 // Collector consumes. Decrypted at poll time from device_credentials
-// via license.Manager.DecryptSecret; never persisted in plaintext.
+// by [CredentialResolver] via the credential DEK (ADR-0015); never
+// persisted in plaintext, never logged, never put in an error.
 type ResolvedCredentials struct {
 	SNMPCommunity    string
 	SNMPv3User       string

@@ -35,6 +35,8 @@ import (
 // back to [slog.Default] and [time.Now].UTC respectively.
 type Config struct {
 	Targets       snmp.PollerStorage
+	Credentials   snmp.CredentialStore
+	Decryptor     snmp.Decryptor
 	Observations  sink.ObservationsStore
 	Scheduler     *scheduler.Scheduler
 	ClientFactory snmp.ClientFactory
@@ -51,6 +53,12 @@ type Config struct {
 func Build(cfg Config) (*snmp.Poller, error) {
 	if cfg.Targets == nil {
 		return nil, errors.New("orchestrator: Targets required")
+	}
+	if cfg.Credentials == nil {
+		return nil, errors.New("orchestrator: Credentials required")
+	}
+	if cfg.Decryptor == nil {
+		return nil, errors.New("orchestrator: Decryptor required")
 	}
 	if cfg.Observations == nil {
 		return nil, errors.New("orchestrator: Observations required")
@@ -72,7 +80,8 @@ func Build(cfg Config) (*snmp.Poller, error) {
 	}
 
 	persistSink := sink.New(cfg.Observations, logger, now)
-	poller := snmp.NewPoller(cfg.Targets, cfg.Scheduler, logger)
+	resolver := snmp.NewCredentialResolver(cfg.Credentials, cfg.Decryptor)
+	poller := snmp.NewPoller(cfg.Targets, cfg.Scheduler, resolver, logger)
 
 	// Register every collector. cdp + fdp share a Publisher (CDP),
 	// distinguished downstream by Observation.TablePrefix.

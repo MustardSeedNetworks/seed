@@ -15,6 +15,15 @@ import (
 
 func silentLogger() *slog.Logger { return slog.New(slog.DiscardHandler) }
 
+// noCredentials is the resolver for targets that carry no credentials_id —
+// the tests below exercise scheduling and chain behaviour, not credentials.
+func noCredentials() *snmp.CredentialResolver {
+	return snmp.NewCredentialResolver(
+		&fakeCredentialStore{byID: map[string]*polling.Credential{}},
+		testDecryptor(),
+	)
+}
+
 // fakeStorage mirrors a tiny subset of database.PollingTargetRepository.
 type fakeStorage struct {
 	mu      sync.Mutex
@@ -107,6 +116,7 @@ type stubCollector struct {
 	name  string
 	err   error
 	calls []snmp.Target
+	creds []snmp.ResolvedCredentials
 }
 
 func (s *stubCollector) Name() string { return s.name }
@@ -114,11 +124,12 @@ func (s *stubCollector) Name() string { return s.name }
 func (s *stubCollector) Collect(
 	_ context.Context,
 	t snmp.Target,
-	_ snmp.ResolvedCredentials,
+	c snmp.ResolvedCredentials,
 ) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	s.calls = append(s.calls, t)
+	s.creds = append(s.creds, c)
 	return s.err
 }
 
@@ -151,7 +162,7 @@ func TestPoller_Start_RegistersJobsForEachEnabledTarget(t *testing.T) {
 		},
 	}
 	sched := newFakeScheduler()
-	p := snmp.NewPoller(storage, sched, silentLogger())
+	p := snmp.NewPoller(storage, sched, noCredentials(), silentLogger())
 
 	if err := p.Start(context.Background()); err != nil {
 		t.Fatalf("Start: %v", err)
@@ -173,7 +184,7 @@ func TestPoller_Start_Idempotent(t *testing.T) {
 		},
 	}
 	sched := newFakeScheduler()
-	p := snmp.NewPoller(storage, sched, silentLogger())
+	p := snmp.NewPoller(storage, sched, noCredentials(), silentLogger())
 
 	if err := p.Start(context.Background()); err != nil {
 		t.Fatalf("first Start: %v", err)
@@ -190,7 +201,7 @@ func TestPoller_Start_PropagatesListError(t *testing.T) {
 	t.Parallel()
 	storage := &fakeStorage{listErr: errors.New("DB down")}
 	sched := newFakeScheduler()
-	p := snmp.NewPoller(storage, sched, silentLogger())
+	p := snmp.NewPoller(storage, sched, noCredentials(), silentLogger())
 	if err := p.Start(context.Background()); err == nil {
 		t.Error("Start should propagate List error")
 	}
@@ -204,7 +215,7 @@ func TestPoller_Stop_UnregistersJobsAndStopsScheduler(t *testing.T) {
 		},
 	}
 	sched := newFakeScheduler()
-	p := snmp.NewPoller(storage, sched, silentLogger())
+	p := snmp.NewPoller(storage, sched, noCredentials(), silentLogger())
 
 	if err := p.Start(context.Background()); err != nil {
 		t.Fatalf("Start: %v", err)
@@ -222,7 +233,7 @@ func TestPoller_Stop_UnregistersJobsAndStopsScheduler(t *testing.T) {
 
 func TestPoller_Stop_NotStartedReturnsNil(t *testing.T) {
 	t.Parallel()
-	p := snmp.NewPoller(&fakeStorage{}, newFakeScheduler(), silentLogger())
+	p := snmp.NewPoller(&fakeStorage{}, newFakeScheduler(), noCredentials(), silentLogger())
 	if err := p.Stop(context.Background()); err != nil {
 		t.Errorf("Stop without Start = %v, want nil", err)
 	}
@@ -237,7 +248,7 @@ func TestPoller_RunChain_InvokesEveryCollectorInOrder(t *testing.T) {
 	}
 	storage := &fakeStorage{targets: []*polling.Target{target}}
 	sched := newFakeScheduler()
-	p := snmp.NewPoller(storage, sched, silentLogger())
+	p := snmp.NewPoller(storage, sched, noCredentials(), silentLogger())
 
 	sys := &stubCollector{name: "sys_info"}
 	ift := &stubCollector{name: "if_table"}
@@ -277,7 +288,7 @@ func TestPoller_RunChain_UnknownCollectorIsSkipped(t *testing.T) {
 	}
 	storage := &fakeStorage{targets: []*polling.Target{target}}
 	sched := newFakeScheduler()
-	p := snmp.NewPoller(storage, sched, silentLogger())
+	p := snmp.NewPoller(storage, sched, noCredentials(), silentLogger())
 
 	sys := &stubCollector{name: "sys_info"}
 	p.RegisterCollector(sys)
@@ -304,7 +315,7 @@ func TestPoller_RunChain_CollectorErrorCapturedInLastError(t *testing.T) {
 	}
 	storage := &fakeStorage{targets: []*polling.Target{target}}
 	sched := newFakeScheduler()
-	p := snmp.NewPoller(storage, sched, silentLogger())
+	p := snmp.NewPoller(storage, sched, noCredentials(), silentLogger())
 
 	sys := &stubCollector{name: "sys_info", err: errors.New("snmp timeout")}
 	p.RegisterCollector(sys)
@@ -333,7 +344,7 @@ func TestPoller_TargetJob_NextRunCadence(t *testing.T) {
 	}
 	storage := &fakeStorage{targets: []*polling.Target{target}}
 	sched := newFakeScheduler()
-	p := snmp.NewPoller(storage, sched, silentLogger())
+	p := snmp.NewPoller(storage, sched, noCredentials(), silentLogger())
 	p.RegisterCollector(&stubCollector{name: "sys_info"})
 
 	_ = p.Start(context.Background())
