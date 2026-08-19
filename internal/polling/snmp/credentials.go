@@ -15,10 +15,10 @@ import (
 // operator never authorised.
 var ErrCredentialsUnresolved = errors.New("snmp credentials unresolved")
 
-// CredentialStore reads stored device credentials. Implemented by
-// database.DeviceCredentialRepository.
+// CredentialStore reads stored device credentials, scoped to the client that
+// owns them. Implemented by database.DeviceCredentialRepository.
 type CredentialStore interface {
-	Get(ctx context.Context, id string) (*polling.Credentials, error)
+	Get(ctx context.Context, id, clientID string) (*polling.Credentials, error)
 }
 
 // SecretDecrypter turns versioned ciphertext back into plaintext. Implemented
@@ -59,7 +59,7 @@ func (r *CredentialResolver) Resolve(ctx context.Context, target *polling.Target
 			"%w: target %s references no credentials", ErrCredentialsUnresolved, target.ID)
 	}
 
-	stored, err := r.store.Get(ctx, target.CredentialsID)
+	stored, err := r.store.Get(ctx, target.CredentialsID, target.ClientID)
 	if err != nil {
 		return ResolvedCredentials{}, fmt.Errorf("%w: %w", ErrCredentialsUnresolved, err)
 	}
