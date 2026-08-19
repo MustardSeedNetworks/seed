@@ -20,16 +20,22 @@ type DeviceCredentialRepository struct {
 	db *DB
 }
 
-// Get returns one credentials row. A miss is polling.ErrCredentialsNotFound so
-// callers can distinguish "no such credential" from a storage failure — the
-// difference decides whether a poll is misconfigured or the database is down.
-func (r *DeviceCredentialRepository) Get(ctx context.Context, id string) (*polling.Credentials, error) {
+// Get returns one credentials row, scoped to the client that owns it. A miss
+// is polling.ErrCredentialsNotFound so callers can distinguish "no such
+// credential" from a storage failure — the difference decides whether a poll is
+// misconfigured or the database is down.
+//
+// The client_id predicate is the invariant polling_targets.credentials_id
+// cannot carry: the FK proves the row exists, not that it belongs to the
+// target's client. Without it a target in one client would resolve and use
+// another client's community string and v3 secrets.
+func (r *DeviceCredentialRepository) Get(ctx context.Context, id, clientID string) (*polling.Credentials, error) {
 	const query = `
 		SELECT id, client_id, name, snmp_community_enc, snmp_v3_user,
 			snmp_v3_auth_enc, snmp_v3_priv_enc, snmp_v3_auth_proto,
 			snmp_v3_priv_proto, created_at, updated_at
 		FROM device_credentials
-		WHERE id = ?
+		WHERE id = ? AND client_id = ?
 	`
 
 	var (
@@ -38,7 +44,7 @@ func (r *DeviceCredentialRepository) Get(ctx context.Context, id string) (*polli
 		user, authProto, privProto  sql.NullString
 		createdAt, updatedAt        string
 	)
-	err := r.db.QueryRow(ctx, query, id).Scan(
+	err := r.db.QueryRow(ctx, query, id, clientID).Scan(
 		&c.ID, &c.ClientID, &c.Name, &community, &user,
 		&authSec, &privSec, &authProto, &privProto,
 		&createdAt, &updatedAt,
