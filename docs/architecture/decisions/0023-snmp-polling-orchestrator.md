@@ -80,10 +80,24 @@ instance that schedules and runs an **ordered, per-target collector chain**.
   collectors above against a persisting sink.
 - **`internal/polling/snmp/collectors/*`** — one package per collector.
 - **Wiring** — registered with the engine registry from `internal/api/server.go`.
-- **Credential decryption is a STUB.** `credentialsForTarget()` (`poller.go`)
-  returns an empty `ResolvedCredentials{}`; nothing yet decrypts a target's
-  `CredentialsID` against the `device_credentials` store. Until Stage A3.x wires the
-  secret/license manager in, the poller schedules and runs chains but cannot
-  authenticate against real SNMPv2c/v3 devices — this path is scaffolding, not a
-  shipped feature. The poll loop, chaining, status write-back, and persistence are
-  real and tested with fake clients; only the credential resolution is missing.
+- **Credential resolution** — `CredentialResolver` (`credentials.go`) reads the
+  target's `device_credentials` row and decrypts `snmp_community_enc` /
+  `snmp_v3_auth_enc` / `snmp_v3_priv_enc` through the config keyring (ADR-0015)
+  on every poll, so a rotated credential takes effect on the next poll rather
+  than at the next restart. Two properties are load-bearing:
+  - **Fail closed.** Empty credentials are never a valid outcome — v1/v2c needs a
+    community and v3 needs a user — so a target with no `credentials_id`, an id
+    that misses, or a value that will not decrypt skips its chain and records the
+    reason in `polling_targets.last_error`. Polling on unauthenticated would
+    either fail obscurely or succeed against a device the operator never
+    authorised via a permissive default community.
+  - **Scoped to the owning client.** The read is `WHERE id = ? AND client_id = ?`.
+    `polling_targets.credentials_id` is a bare FK, so it proves the row exists but
+    not that it belongs to the target's client; without the predicate a target in
+    one client would resolve another client's secrets.
+
+  Plaintext exists only for the duration of a poll: the repository moves
+  ciphertext verbatim, the domain type holds ciphertext only, and the keyring
+  seam lives in `internal/polling/snmp`. Credential CRUD (the write path) is not
+  implemented; the `*_enc` BLOB columns hold the versioned `enc:v<N>:...` string
+  the config keyring produces, and any future writer must follow that form.
