@@ -19,7 +19,7 @@ Two cross-cutting constraints shaped the replacement:
 
 2. **The protocol primitives already have an owner.** `internal/protocols/snmp`
    owns OID definitions, gosnmp session wrappers, and MIB parsing. The poller must
-   *use* that, not re-implement wire-level SNMP, and must keep CGO/transport
+   _use_ that, not re-implement wire-level SNMP, and must keep CGO/transport
    concerns out of the orchestration logic.
 
 ## Decision
@@ -36,7 +36,7 @@ instance that schedules and runs an **ordered, per-target collector chain**.
 - **Parallel across targets, serial within a chain.** Each target is an independent
   scheduler job, so targets poll concurrently; within a single target the collector
   chain runs sequentially. One slow device never blocks another; one slow collector
-  only delays later collectors for the *same* device.
+  only delays later collectors for the _same_ device.
 
 - **`Collector` is a pluggable port.** `Name() string` + `Collect(ctx, Target,
   ResolvedCredentials) error`. A target's `collector_chain` is a JSON array of
