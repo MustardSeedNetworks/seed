@@ -228,6 +228,37 @@ describe('TopologyPage — list and selection', () => {
   });
 });
 
+describe('TopologyPage — archetype rules', () => {
+  beforeEach(reset);
+
+  // The shared parts enforce that a record's colour comes from its state and
+  // never its category. The old page coloured a vendor badge from a cat-* ramp,
+  // which read as status to anyone scanning the column.
+  it('does not colour a row by vendor', () => {
+    render(<TopologyPage />);
+
+    const row = screen.getByTestId('node-row-core');
+    expect(row.className).not.toMatch(/cat-/);
+    expect(row.innerHTML).not.toMatch(/cat-/);
+  });
+
+  // A node the reconcilers have never dated is unmeasured, not healthy. Green
+  // on a node that was never seen is exactly the reassuring-when-it-knows-
+  // nothing failure the shell exists to prevent.
+  it('marks a never-seen node unknown rather than ok', () => {
+    state.nodes = [
+      node({ id: 'seen', displayName: 'seen-01', lastSeen: '2026-08-19T10:00:00Z' }),
+      node({ id: 'unseen', displayName: 'unseen-01', lastSeen: '' }),
+    ];
+    render(<TopologyPage />);
+
+    const bar = (id: string) =>
+      screen.getByTestId(`node-row-${id}`).querySelector('span[aria-hidden="true"]');
+    expect(bar('seen')?.className).toContain('bg-status-success');
+    expect(bar('unseen')?.className).toContain('bg-text-disabled');
+  });
+});
+
 describe('TopologyPage — degraded backends', () => {
   beforeEach(reset);
 
