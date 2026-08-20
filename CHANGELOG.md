@@ -5,6 +5,17 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.213.4](https://github.com/MustardSeedNetworks/seed/compare/v0.213.3...v0.213.4) (2026-08-20)
+
+
+### Bug Fixes
+
+* **deps:** bump golang.org/x/mod to v0.40.0 for CVE-2026-56864/56865 ([#1983](https://github.com/MustardSeedNetworks/seed/issues/1983)) ([5eb06cb](https://github.com/MustardSeedNetworks/seed/commit/5eb06cbf41787f4fec9abff0e1f9af76b8f7fc83)), closes [#1982](https://github.com/MustardSeedNetworks/seed/issues/1982)
+* **lint:** scope Biome's dist, build and coverage excludes to where they land ([#1980](https://github.com/MustardSeedNetworks/seed/issues/1980)) ([36c309c](https://github.com/MustardSeedNetworks/seed/commit/36c309c9cf404dc94d883c3984d2d1e529fec5b4))
+* **polling:** fail closed at the SNMP dialer, not just at the resolver ([#1977](https://github.com/MustardSeedNetworks/seed/issues/1977)) ([7fb42ab](https://github.com/MustardSeedNetworks/seed/commit/7fb42abd60b9d8ac0d691db315f650e1414c52b2)), closes [#1798](https://github.com/MustardSeedNetworks/seed/issues/1798)
+* **test:** give the airspace fixture the BSSView field it claims to have ([#1985](https://github.com/MustardSeedNetworks/seed/issues/1985)) ([ca893a2](https://github.com/MustardSeedNetworks/seed/commit/ca893a2af04f27f7968b4f17c0f17cefa5a6900f)), closes [#1984](https://github.com/MustardSeedNetworks/seed/issues/1984)
+* **ui:** let a whole-page absence fill the page instead of one grid cell ([#1978](https://github.com/MustardSeedNetworks/seed/issues/1978)) ([802dc3a](https://github.com/MustardSeedNetworks/seed/commit/802dc3aee73dda598fec8f6398b4e34c0e725175))
+
 ## [0.213.3](https://github.com/MustardSeedNetworks/seed/compare/v0.213.2...v0.213.3) (2026-08-20)
 
 
