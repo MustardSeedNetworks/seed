@@ -61,4 +61,15 @@ describe('CardAbsent', () => {
     expect(note).toHaveTextContent('Roam analysis');
     expect(note).toHaveTextContent('Available on Seed Pro.');
   });
+
+  /* A page that is entirely inapplicable renders the note instead of the
+     grid, so it fills the page rather than sitting in one column of four
+     empty ones — which reads as a card that failed to load. */
+  it('carries no grid-cell sizing, so it fills whatever contains it', () => {
+    const { container } = render(
+      <CardAbsent label="Wireless data" reason="This interface is wired." />,
+    );
+    const note = container.firstElementChild;
+    expect(note?.className).not.toMatch(/\bw-|\bcol-span-|\bmax-w-/);
+  });
 });

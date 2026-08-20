@@ -98,7 +98,10 @@ interface CardAbsentProps {
  *
  * Exported for the cases where the card is withheld by something other than a
  * boolean the page holds — a licence gate's `fallback`, for instance, where
- * there are no children to guard.
+ * there are no children to guard. It also stands alone outside the grid, for
+ * a page that is entirely inapplicable: a lone tile in a four-column grid
+ * reads as a card that failed to load, where a full-width note reads as the
+ * page saying why it is empty.
  *
  * Dashed rather than solid: it occupies the grid without claiming to be a
  * reading.

@@ -25,14 +25,14 @@ const TIER_HINT = 'Available on Seed Pro. Run `seed license trial` for a 14-day 
 export function WifiPage() {
   const { cards, loading, isWifi, channelGraphData, channelGraphLoading } = useAppContext();
 
+  /* Not one absent card among others — the whole page is inapplicable, so
+     the note is the page rather than a lone tile in a four-column grid. */
   if (!isWifi) {
     return (
-      <CardGrid>
-        <CardAbsent
-          label="Wireless data"
-          reason="This interface is wired. Switch to a Wi-Fi interface from the header to see signal, channels and airspace."
-        />
-      </CardGrid>
+      <CardAbsent
+        label="Wireless data"
+        reason="This interface is wired. Switch to a Wi-Fi interface from the header to see signal, channels and airspace."
+      />
     );
   }
 
