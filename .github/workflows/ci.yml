@@ -199,6 +199,12 @@ jobs:
       - name: Filename-policy gate — no monolith naming outside internal/api
         run: ./scripts/check-filename-policy.sh
 
+      # The four products each own their tsconfig, so the strictness flags
+      # drift silently — a missing one never announces itself, it just checks
+      # less than its sibling does.
+      - name: TypeScript strictness contract
+        run: python3 scripts/check-tsconfig-flags.py
+
       - name: Check formatting
         run: test -z "$(git ls-files '*.go' | xargs gofmt -l)"
 
