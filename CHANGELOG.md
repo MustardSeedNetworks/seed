@@ -5,6 +5,42 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.213.3](https://github.com/MustardSeedNetworks/seed/compare/v0.213.2...v0.213.3) (2026-08-20)
+
+
+### Features
+
+* **ui:** adopt the Card grid archetype and make card absence explain itself ([#1976](https://github.com/MustardSeedNetworks/seed/issues/1976)) ([95891d2](https://github.com/MustardSeedNetworks/seed/commit/95891d2ca9834133aced87c613ea1c7a705aab86))
+
+
+### Bug Fixes
+
+* **ci:** run the E2E jobs in Playwright's container image ([#1961](https://github.com/MustardSeedNetworks/seed/issues/1961)) ([bf22ddb](https://github.com/MustardSeedNetworks/seed/commit/bf22ddb8df79b587699547276ea42581aa4d0137))
+* **deps:** update module github.com/stretchr/testify to v1.12.1 ([#1970](https://github.com/MustardSeedNetworks/seed/issues/1970)) ([b190b47](https://github.com/MustardSeedNetworks/seed/commit/b190b47adeee6c488380eb1efecf24f210dd7b0d))
+* **deps:** update module modernc.org/sqlite to v1.57.0 ([#1967](https://github.com/MustardSeedNetworks/seed/issues/1967)) ([dd8f0d3](https://github.com/MustardSeedNetworks/seed/commit/dd8f0d32885ff8f0f25c58d9daebd9b2ce7eb228))
+* **polling:** scope SNMP credential reads to the target's client ([#1971](https://github.com/MustardSeedNetworks/seed/issues/1971)) ([0ec99c2](https://github.com/MustardSeedNetworks/seed/commit/0ec99c2c29cc9867b6693975ccc7872c8ca56855))
+
+
+### Code Refactoring
+
+* **topology:** adopt the List + detail archetype ([#1973](https://github.com/MustardSeedNetworks/seed/issues/1973)) ([9017b27](https://github.com/MustardSeedNetworks/seed/commit/9017b2704187415b900ee4242dcdcfb8f6dfebd7))
+
+
+### Tests
+
+* **topology:** cover TopologyPage before the archetype refactor touches it ([#1960](https://github.com/MustardSeedNetworks/seed/issues/1960)) ([8c3ac62](https://github.com/MustardSeedNetworks/seed/commit/8c3ac620d1aa9fe699e16be946bf56e2530c6a28))
+
+
+### Continuous Integration
+
+* reconcile skipped releases with a 3-hourly release-please run ([#1959](https://github.com/MustardSeedNetworks/seed/issues/1959)) ([555a3e2](https://github.com/MustardSeedNetworks/seed/commit/555a3e2d2c1e2a6ab97332a0c8a15f30e05f5039))
+
+
+### Miscellaneous
+
+* **deps:** lock file maintenance ([#1963](https://github.com/MustardSeedNetworks/seed/issues/1963)) ([1ad5d08](https://github.com/MustardSeedNetworks/seed/commit/1ad5d0873c25f0b2515afbce6023bbec72c81ad2))
+* **deps:** update module github.com/golangci/golangci-lint/v2/cmd/golangci-lint to v2.13.0 ([#1975](https://github.com/MustardSeedNetworks/seed/issues/1975)) ([659d9c7](https://github.com/MustardSeedNetworks/seed/commit/659d9c71e26ab3735e739bcaf78d3c74a12b633f))
+
 ## [0.213.2](https://github.com/MustardSeedNetworks/seed/compare/v0.213.1...v0.213.2) (2026-08-18)
 
 
