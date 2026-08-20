@@ -4,9 +4,16 @@ import { NetworkCard } from '../components/cards/NetworkCard';
 import { PublicIpCard } from '../components/cards/PublicIpCard';
 import { SwitchCard } from '../components/cards/SwitchCard';
 import { useAppContext } from '../contexts/AppContext';
-import { layout } from '../styles/theme';
+import { CardGrid, CardSlot } from '../ui/CardGrid';
 import { type RollupState, StatusRollup } from '../ui/StatusRollup';
 
+/**
+ * Network — Card grid, with the rollup it already had.
+ *
+ * Converted with the archetype so the one card that is conditional here says
+ * why it is missing: switch and VLAN discovery reads the wire, and a wireless
+ * interface has no port to ask.
+ */
 export function NetworkPage() {
   const { cards, loading, isWifi, displayOptions } = useAppContext();
 
@@ -49,7 +56,10 @@ export function NetworkPage() {
         ]}
       />
 
-      <div className={layout.grid.cards}>
+      <CardGrid>
+        {/* On a wireless interface these wait for the Wi-Fi payload rather
+            than rendering four cards about an interface not yet identified.
+            That absence is transient, so it is quiet. */}
         {(!isWifi || cards.wifi) && (
           <>
             <NetworkCard
@@ -63,8 +73,17 @@ export function NetworkPage() {
             <PublicIpCard data={cards.publicip} loading={loading} />
           </>
         )}
-        {!isWifi && <SwitchCard data={cards.switch} vlanData={cards.vlan} loading={loading} />}
-      </div>
+        <CardSlot
+          present={!isWifi}
+          absence={{
+            label: 'Switch and VLAN',
+            reason:
+              'Neighbour discovery reads LLDP and CDP from the wire. A wireless interface has no switch port to ask.',
+          }}
+        >
+          <SwitchCard data={cards.switch} vlanData={cards.vlan} loading={loading} />
+        </CardSlot>
+      </CardGrid>
     </>
   );
 }

@@ -6,34 +6,66 @@ import { RequireFeature } from '../components/ui/RequireFeature';
 import { WiFiAirspaceCard } from '../components/wifi/WiFiAirspaceCard';
 import { WiFiAnomaliesCard } from '../components/wifi/WiFiAnomaliesCard';
 import { useAppContext } from '../contexts/AppContext';
-import { layout } from '../styles/theme';
+import { CardAbsent, CardGrid } from '../ui/CardGrid';
+
+/**
+ * Wi-Fi — Card grid.
+ *
+ * No rollup: each card carries its own state, and a band above them would
+ * only restate whichever one is loudest.
+ *
+ * Two kinds of conditional membership meet here. A wired interface cannot
+ * produce any of it, which the page says once rather than five times. The
+ * Pro-gated cards are absent for a different reason — the licence, not the
+ * hardware — and say so, because "this needs a tier you do not have" and
+ * "this needs a radio you do not have" have different fixes.
+ */
+const TIER_HINT = 'Available on Seed Pro. Run `seed license trial` for a 14-day trial.';
 
 export function WifiPage() {
   const { cards, loading, isWifi, channelGraphData, channelGraphLoading } = useAppContext();
 
+  if (!isWifi) {
+    return (
+      <CardGrid>
+        <CardAbsent
+          label="Wireless data"
+          reason="This interface is wired. Switch to a Wi-Fi interface from the header to see signal, channels and airspace."
+        />
+      </CardGrid>
+    );
+  }
+
   return (
-    <div className={layout.grid.cards}>
-      {isWifi ? <WiFiCard data={cards.wifi} loading={loading} visible={true} /> : null}
-      {isWifi ? (
-        <WifiChannelGraph data={channelGraphData} loading={channelGraphLoading} visible={isWifi} />
-      ) : null}
+    <CardGrid>
+      <WiFiCard data={cards.wifi} loading={loading} visible={true} />
+      <WifiChannelGraph data={channelGraphData} loading={channelGraphLoading} visible={true} />
 
       {/* Wi-Fi visibility (W5/W6): live airspace tree + anomaly stream from
           802.11 management-frame capture (internal/wifi/visibility). Each card
           is Pro-gated and degrades to an empty/last-observed view when no
           monitor-capable interface is feeding the capture loop. */}
-      <RequireFeature feature="wifi_management_capture">
+      <RequireFeature
+        feature="wifi_management_capture"
+        fallback={<CardAbsent label="Airspace" reason={TIER_HINT} />}
+      >
         <WiFiAirspaceCard />
       </RequireFeature>
 
-      <RequireFeature feature="wifi_association_forensics">
+      <RequireFeature
+        feature="wifi_association_forensics"
+        fallback={<CardAbsent label="Association anomalies" reason={TIER_HINT} />}
+      >
         <WiFiAnomaliesCard />
       </RequireFeature>
 
       {/* Phase 2.5 scaffolding — fills with real data when per-client roam
           correlation lands. See
           msn-docs-internal/01-Strategy/SEED_NMS_EXPANSION.md. */}
-      <RequireFeature feature="wifi_roam_analysis">
+      <RequireFeature
+        feature="wifi_roam_analysis"
+        fallback={<CardAbsent label="Roam analysis" reason={TIER_HINT} />}
+      >
         <Card
           title="Roam Analysis"
           subtitle="Disassoc/(re)assoc correlation per client MAC with 802.11r FT detection."
@@ -45,12 +77,6 @@ export function WifiPage() {
           </p>
         </Card>
       </RequireFeature>
-
-      {!isWifi && (
-        <div data-testid="wifi-wired-fallback" className="col-span-full text-sm text-text-muted">
-          Switch to Wi-Fi mode from the header to view wireless data.
-        </div>
-      )}
-    </div>
+    </CardGrid>
   );
 }
