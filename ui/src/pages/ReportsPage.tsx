@@ -1,7 +1,17 @@
 import { SLADashboardCard } from '../components/cards/SlaDashboardCard';
 import { RequireFeature } from '../components/ui/RequireFeature';
-import { layout } from '../styles/theme';
+import { CardGrid } from '../ui/CardGrid';
 
+/**
+ * Reports — Card grid.
+ *
+ * One card today, and still a grid rather than a bare div: the page's shape is
+ * "facets of the system's reporting", and the second one should land next to
+ * the first without a layout rewrite.
+ *
+ * No rollup — the licence gate below is the page's state, and it already says
+ * what is missing and how to fix it.
+ */
 export function ReportsPage() {
   return (
     <RequireFeature
@@ -18,9 +28,9 @@ export function ReportsPage() {
         </div>
       }
     >
-      <div className={layout.grid.cards}>
+      <CardGrid>
         <SLADashboardCard />
-      </div>
+      </CardGrid>
     </RequireFeature>
   );
 }
