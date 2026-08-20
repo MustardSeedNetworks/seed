@@ -33,6 +33,7 @@ const group: SSIDGroup = {
           hasBssLoad: false,
           signalDbm: -50,
           beacons: 10,
+          recentDeauths: 0,
           lastSeen: '2026-01-01T00:00:00Z',
           stations: [
             {
