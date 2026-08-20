@@ -111,8 +111,9 @@ export function useProfileInterfaces(
       const result = await updateInterfaceConfig((interfaces) => {
         const ethernet = [...(interfaces.ethernet ?? [])];
         const existingIdx = ethernet.findIndex((i) => i.name === name);
-        if (existingIdx >= 0) {
-          ethernet[existingIdx] = { ...ethernet[existingIdx], enabled };
+        const existing = ethernet.at(existingIdx);
+        if (existing) {
+          ethernet[existingIdx] = { ...existing, enabled };
         } else {
           ethernet.push({ name, enabled });
         }
@@ -134,8 +135,9 @@ export function useProfileInterfaces(
       const result = await updateInterfaceConfig((interfaces) => {
         const wifi = [...(interfaces.wifi ?? [])];
         const existingIdx = wifi.findIndex((i) => i.name === name);
-        if (existingIdx >= 0) {
-          wifi[existingIdx] = { ...wifi[existingIdx], enabled };
+        const existing = wifi.at(existingIdx);
+        if (existing) {
+          wifi[existingIdx] = { ...existing, enabled };
         } else {
           wifi.push({ name, enabled });
         }
@@ -157,8 +159,9 @@ export function useProfileInterfaces(
       const result = await updateInterfaceConfig((interfaces) => {
         const ethernet = [...(interfaces.ethernet ?? [])];
         const existingIdx = ethernet.findIndex((i) => i.name === name);
-        if (existingIdx >= 0) {
-          ethernet[existingIdx] = { ...ethernet[existingIdx], enabled };
+        const existing = ethernet.at(existingIdx);
+        if (existing) {
+          ethernet[existingIdx] = { ...existing, enabled };
         } else {
           ethernet.push({ name, enabled });
         }
@@ -180,8 +183,9 @@ export function useProfileInterfaces(
       const result = await updateInterfaceConfig((interfaces) => {
         const wifi = [...(interfaces.wifi ?? [])];
         const existingIdx = wifi.findIndex((i) => i.name === name);
-        if (existingIdx >= 0) {
-          wifi[existingIdx] = { ...wifi[existingIdx], enabled };
+        const existing = wifi.at(existingIdx);
+        if (existing) {
+          wifi[existingIdx] = { ...existing, enabled };
         } else {
           wifi.push({ name, enabled });
         }

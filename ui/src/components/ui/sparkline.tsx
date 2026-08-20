@@ -114,23 +114,25 @@ function generatePath(
     return { x, y };
   });
 
-  // Create smooth curve using quadratic bezier
-  let path = `M ${points[0].x} ${points[0].y}`;
-
-  for (let i = 0; i < points.length - 1; i++) {
-    const current = points[i];
-    const next = points[i + 1];
-    const midX = (current.x + next.x) / 2;
-
-    // Use quadratic bezier for smooth curves
-    path += ` Q ${current.x} ${current.y} ${midX} ${(current.y + next.y) / 2}`;
+  // Smooth curve using quadratic beziers. Walking the points and carrying the
+  // previous one expresses "each segment joins two adjacent points" directly,
+  // where indexing i and i+1 relied on a bound the type system cannot see —
+  // and leaves the final point already in hand for the closing line.
+  const [start, ...rest] = points;
+  if (!start) {
+    return '';
   }
 
-  // Connect to last point
-  const last = points.at(-1);
-  if (last) {
-    path += ` L ${last.x} ${last.y}`;
+  let path = `M ${start.x} ${start.y}`;
+  let previous = start;
+
+  for (const point of rest) {
+    const midX = (previous.x + point.x) / 2;
+    path += ` Q ${previous.x} ${previous.y} ${midX} ${(previous.y + point.y) / 2}`;
+    previous = point;
   }
+
+  path += ` L ${previous.x} ${previous.y}`;
 
   return path;
 }
@@ -179,7 +181,11 @@ function SparklineComponent({
       };
     }
 
-    const [first] = data;
+    const first = data.at(0);
+    if (first === undefined) {
+      return { minValue: 0, maxValue: 100, currentValue: 0, trendDirection: 'stable' as const };
+    }
+
     let min = first;
     let max = first;
     let sum = 0;

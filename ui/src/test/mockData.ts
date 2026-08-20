@@ -19,7 +19,11 @@ const profileFor = (deviceType: string, ports: number[]) => ({
   profiledAt: new Date().toISOString(),
 });
 
-export const mockNetworkDiscoveryData: Record<string, NetworkDiscoveryData> = {
+/* `satisfies` rather than an annotation: Record<string, T> says any key may be
+   absent, so under noUncheckedIndexedAccess every fixture read is possibly
+   undefined even though these keys are right here. This checks each entry
+   against the type while keeping the key set the object actually has. */
+export const mockNetworkDiscoveryData = {
   withDevices: {
     devices: [
       {
@@ -89,4 +93,4 @@ export const mockNetworkDiscoveryData: Record<string, NetworkDiscoveryData> = {
       interface: 'eth0',
     },
   } satisfies NetworkDiscoveryData,
-};
+} satisfies Record<string, NetworkDiscoveryData>;

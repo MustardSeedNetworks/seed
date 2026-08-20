@@ -361,10 +361,10 @@ export function useNetworkDiscoveryAutoScan(
     let index = 0;
 
     const triggerNext = (): void => {
-      if (index >= devicesToVulnScan.length) {
+      const device = devicesToVulnScan.at(index);
+      if (!device) {
         return;
       }
-      const device = devicesToVulnScan[index];
       triggerVulnScan(device.ip, device).catch(() => {
         // Errors handled in triggerVulnScan
       });
