@@ -87,14 +87,20 @@ export function calculateNetworkAddress(cidr: string): string {
     return cidr;
   }
 
-  const octets = ip.split('.').map(Number);
-  if (octets.length !== 4 || octets.some(Number.isNaN)) {
+  const [a, b, c, d] = ip.split('.').map(Number);
+  // Four separate checks rather than .some(): a predicate over the array does
+  // not narrow the individual octets, and the shift arithmetic below needs
+  // each one to be a number.
+  if (a === undefined || b === undefined || c === undefined || d === undefined) {
+    return cidr;
+  }
+  if ([a, b, c, d].some(Number.isNaN)) {
     return cidr;
   }
 
   // Calculate network mask and apply to IP
   const netmask = (0xffffffff << (32 - mask)) >>> 0;
-  const ipInt = ((octets[0] << 24) | (octets[1] << 16) | (octets[2] << 8) | octets[3]) >>> 0;
+  const ipInt = ((a << 24) | (b << 16) | (c << 8) | d) >>> 0;
   const networkInt = (ipInt & netmask) >>> 0;
 
   const networkOctets = [
