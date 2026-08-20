@@ -159,17 +159,25 @@ func (c *client) dial(ctx context.Context) (*gosnmp.GoSNMP, error) {
 }
 
 // applyAuth picks SNMPv2c or SNMPv3 based on Target.SNMPVersion +
-// credentials. An empty SNMPv3User in v3 mode falls back to v2c
-// because most agents reject anonymous v3 attempts before we'd see
-// a useful error.
+// credentials.
+//
+// Everything here fails closed. The resolver already refuses to hand back a
+// credential a target is not entitled to, and this is the dialer that would
+// otherwise undo that: substituting a default community, or quietly picking a
+// protocol the operator did not configure, sends packets the operator never
+// authorised. A missing or unrecognised credential is an error before the
+// socket opens, not a guess on the wire.
 func applyAuth(g *gosnmp.GoSNMP, version string, creds snmp.ResolvedCredentials) error {
 	switch strings.ToLower(strings.TrimSpace(version)) {
 	case "", "v2c", "2c", "v2":
+		if creds.SNMPCommunity == "" {
+			// "public" is the community every scanner tries first. Falling
+			// back to it turns a target with no configured credential into a
+			// probe of somebody's default-configured agent.
+			return errors.New("snmpclient: no SNMP community resolved for target")
+		}
 		g.Version = gosnmp.Version2c
 		g.Community = creds.SNMPCommunity
-		if g.Community == "" {
-			g.Community = "public"
-		}
 		return nil
 	case "v3", "3":
 		if creds.SNMPv3User == "" {
@@ -182,7 +190,11 @@ func applyAuth(g *gosnmp.GoSNMP, version string, creds snmp.ResolvedCredentials)
 		}
 		flags := gosnmp.NoAuthNoPriv
 		if creds.SNMPv3AuthSecret != "" {
-			usm.AuthenticationProtocol = pickAuthProto(creds.SNMPv3AuthProto)
+			authProto, authErr := authProtocol(creds.SNMPv3AuthProto)
+			if authErr != nil {
+				return authErr
+			}
+			usm.AuthenticationProtocol = authProto
 			usm.AuthenticationPassphrase = creds.SNMPv3AuthSecret
 			flags = gosnmp.AuthNoPriv
 		}
@@ -190,7 +202,11 @@ func applyAuth(g *gosnmp.GoSNMP, version string, creds snmp.ResolvedCredentials)
 			if creds.SNMPv3AuthSecret == "" {
 				return errors.New("snmpclient: SNMPv3 priv requires auth")
 			}
-			usm.PrivacyProtocol = pickPrivProto(creds.SNMPv3PrivProto)
+			privProto, privErr := privProtocol(creds.SNMPv3PrivProto)
+			if privErr != nil {
+				return privErr
+			}
+			usm.PrivacyProtocol = privProto
 			usm.PrivacyPassphrase = creds.SNMPv3PrivSecret
 			flags = gosnmp.AuthPriv
 		}
@@ -202,37 +218,50 @@ func applyAuth(g *gosnmp.GoSNMP, version string, creds snmp.ResolvedCredentials)
 	}
 }
 
-func pickAuthProto(name string) gosnmp.SnmpV3AuthProtocol {
+// authProtocol maps a configured authentication protocol name.
+//
+// An empty name means the operator did not choose one, so SHA is the default
+// they get. A name we do not recognise is different: it is a typo or a
+// protocol this build cannot speak, and defaulting it produced an
+// authentication failure that reads exactly like a wrong password. Say which
+// problem it is instead.
+func authProtocol(name string) (gosnmp.SnmpV3AuthProtocol, error) {
 	switch strings.ToUpper(strings.TrimSpace(name)) {
+	case "":
+		return gosnmp.SHA, nil
 	case "MD5":
-		return gosnmp.MD5
+		return gosnmp.MD5, nil
 	case "SHA", "SHA1":
-		return gosnmp.SHA
+		return gosnmp.SHA, nil
 	case "SHA224":
-		return gosnmp.SHA224
+		return gosnmp.SHA224, nil
 	case "SHA256":
-		return gosnmp.SHA256
+		return gosnmp.SHA256, nil
 	case "SHA384":
-		return gosnmp.SHA384
+		return gosnmp.SHA384, nil
 	case "SHA512":
-		return gosnmp.SHA512
+		return gosnmp.SHA512, nil
 	default:
-		return gosnmp.SHA // safe modern default
+		return 0, fmt.Errorf("snmpclient: unsupported SNMPv3 auth protocol %q", name)
 	}
 }
 
-func pickPrivProto(name string) gosnmp.SnmpV3PrivProtocol {
+// privProtocol maps a configured privacy protocol name, on the same terms as
+// authProtocol: unset means AES, unrecognised is an error rather than AES.
+func privProtocol(name string) (gosnmp.SnmpV3PrivProtocol, error) {
 	switch strings.ToUpper(strings.TrimSpace(name)) {
+	case "":
+		return gosnmp.AES, nil
 	case "DES":
-		return gosnmp.DES
+		return gosnmp.DES, nil
 	case "AES", "AES128":
-		return gosnmp.AES
+		return gosnmp.AES, nil
 	case "AES192":
-		return gosnmp.AES192
+		return gosnmp.AES192, nil
 	case "AES256":
-		return gosnmp.AES256
+		return gosnmp.AES256, nil
 	default:
-		return gosnmp.AES // safe modern default
+		return 0, fmt.Errorf("snmpclient: unsupported SNMPv3 privacy protocol %q", name)
 	}
 }
 
