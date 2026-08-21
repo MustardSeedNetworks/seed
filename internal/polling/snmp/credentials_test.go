@@ -12,9 +12,13 @@ import (
 type fakeCredStore struct {
 	creds *polling.Credentials
 	err   error
+
+	gotID       string
+	gotClientID string
 }
 
-func (f *fakeCredStore) Get(context.Context, string) (*polling.Credentials, error) {
+func (f *fakeCredStore) Get(_ context.Context, id, clientID string) (*polling.Credentials, error) {
+	f.gotID, f.gotClientID = id, clientID
 	if f.err != nil {
 		return nil, f.err
 	}
@@ -154,5 +158,29 @@ func TestNewCredentialResolverRejectsNilDependencies(t *testing.T) {
 	}
 	if _, err := snmp.NewCredentialResolver(&fakeCredStore{}, nil); err == nil {
 		t.Error("nil decrypter accepted")
+	}
+}
+
+// TestResolveScopesTheReadToTheTargetsClient pins the predicate the store must
+// receive: polling_targets.credentials_id is a bare FK, so the id alone would
+// let a target in one client resolve another client's credential.
+func TestResolveScopesTheReadToTheTargetsClient(t *testing.T) {
+	t.Parallel()
+
+	store := &fakeCredStore{creds: &polling.Credentials{
+		ID: "cred-1", SNMPCommunityCT: "enc:v1:community",
+	}}
+
+	_, err := newResolver(t, store, fakeDecrypter{}).Resolve(context.Background(), &polling.Target{
+		ID: "t-1", ClientID: "tenant-a", CredentialsID: "cred-1",
+	})
+	if err != nil {
+		t.Fatalf("Resolve: %v", err)
+	}
+	if store.gotID != "cred-1" {
+		t.Errorf("store received id %q, want cred-1", store.gotID)
+	}
+	if store.gotClientID != "tenant-a" {
+		t.Errorf("store received client %q, want the target's client tenant-a", store.gotClientID)
 	}
 }

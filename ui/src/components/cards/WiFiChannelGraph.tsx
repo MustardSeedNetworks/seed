@@ -399,8 +399,9 @@ export function WifiChannelGraph({
   }, [data]);
 
   // Auto-select first available band
-  if (availableBands.length > 0 && !availableBands.includes(selectedBand)) {
-    setSelectedBand(availableBands[0]);
+  const firstBand = availableBands.at(0);
+  if (firstBand && !availableBands.includes(selectedBand)) {
+    setSelectedBand(firstBand);
   }
 
   // Don't render if not visible (e.g., no WiFi adapter)

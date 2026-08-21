@@ -63,8 +63,9 @@ func assertInvalidChildrenRejected(t *testing.T, connections []*sql.Conn) {
 	t.Helper()
 	for i, conn := range connections {
 		_, err := conn.ExecContext(t.Context(), `
-			INSERT INTO device_credentials (id, name, created_at, updated_at, client_id)
-			VALUES (?, 'orphan', ?, ?, 'missing-client')`,
+			INSERT INTO device_credentials
+				(id, name, kind, snmp_community_enc, created_at, updated_at, client_id)
+			VALUES (?, 'orphan', 'v2c', CAST('enc:v1:x' AS BLOB), ?, ?, 'missing-client')`,
 			fmt.Sprintf("orphan-%d", i), time.Now(), time.Now())
 		require.ErrorContains(t, err, "FOREIGN KEY constraint failed", "connection %d", i+1)
 	}
@@ -78,8 +79,10 @@ func insertClientWithCredential(t *testing.T, db *database.DB) {
 		VALUES (?, 'FK parent', 'fk-parent', ?, ?)`, foreignKeyTestClientID, now, now)
 	require.NoError(t, err)
 	_, err = db.Exec(t.Context(), `
-		INSERT INTO device_credentials (id, name, created_at, updated_at, client_id)
-		VALUES ('fk-child', 'FK child', ?, ?, ?)`, now, now, foreignKeyTestClientID)
+		INSERT INTO device_credentials
+			(id, name, kind, snmp_community_enc, created_at, updated_at, client_id)
+		VALUES ('fk-child', 'FK child', 'v2c', CAST('enc:v1:x' AS BLOB), ?, ?, ?)`,
+		now, now, foreignKeyTestClientID)
 	require.NoError(t, err)
 }
 

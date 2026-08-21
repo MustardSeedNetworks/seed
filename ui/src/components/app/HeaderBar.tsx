@@ -45,7 +45,7 @@ function getFriendlyInterfaceName(name: string, isWifi: boolean): string {
   // Ethernet interfaces: eth0, enp0s1, ens33, etc.
   // Extract any trailing number for multi-interface systems
   const numMatch = /(\d+)$/.exec(name);
-  if (numMatch) {
+  if (numMatch?.[1]) {
     const num = Number.parseInt(numMatch[1], 10);
     if (num > 0) {
       return `Ethernet ${num + 1}`;

@@ -74,7 +74,7 @@ func (s *Server) Handler() http.Handler {
 					bodyLimitMiddleware(
 						corsMiddleware(
 							i18n.Middleware()(
-								apiTokenMiddleware(s.apiTokens,
+								apiTokenMiddleware(s.apiTokens, s.resolveClientID,
 									s.authManager().Middleware(
 										s.csrfManager().CSRFMiddleware(s.mux))))))))))
 }

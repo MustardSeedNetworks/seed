@@ -39,7 +39,7 @@ export function findBestInterface(
   if (candidates.length === 0) {
     return null;
   }
-  return candidates.find((iface) => iface.up) ?? candidates[0];
+  return candidates.find((iface) => iface.up) ?? candidates.at(0) ?? null;
 }
 
 /**

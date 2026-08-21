@@ -11,9 +11,9 @@
     "includes": [
       "**",
       "!**/node_modules",
-      "!**/dist",
-      "!**/build",
-      "!**/coverage",
+      "!dist",
+      "!build",
+      "!coverage",
       "!**/.next",
       "!**/storybook-static",
       "!**/playwright-report",

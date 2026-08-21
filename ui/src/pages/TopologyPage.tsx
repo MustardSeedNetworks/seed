@@ -1,28 +1,41 @@
 /**
  * TopologyPage
  *
- * Renders the fat-Node graph the Stage A4 reconcilers maintain.
- * Two views in one route — when no node is selected, the page shows
- * the list of every node visible to this session; clicking a node
- * loads /topology/nodes/{id} for the detail panel (interfaces +
- * links). State lives in this component (no router-state because
- * the rest of the app uses path-based navigation; node detail
- * is in-page state to avoid pushing a new route per click).
+ * Renders the fat-Node graph the Stage A4 reconcilers maintain: the list of
+ * every node visible to this session, and the selected node's interfaces and
+ * links from /topology/nodes/{id}.
+ *
+ * Despite the route name this is not the Topology archetype — there is no
+ * graph here, and seed carries no graph library. It is List + detail, which is
+ * what the shared parts in ui/ListDetail.tsx model, so it uses those rather
+ * than a second hand-rolled two-pane layout.
+ *
+ * Selection is in-page state, not router state: the rest of the app navigates
+ * by path, and pushing a route per click would put node ids in history for a
+ * pane the user is scanning.
  */
 
 import { Activity, Cable, RefreshCw } from 'lucide-react';
 import { type JSX, useState } from 'react';
 import { useTopologyNode, useTopologyNodes } from '../hooks/useTopology';
-import type { TopologyInterface, TopologyLink, TopologyNode } from '../types/topology';
+import type { TopologyInterface, TopologyLink } from '../types/topology';
+import {
+  DetailEmpty,
+  DetailFacts,
+  DetailPane,
+  ListDetail,
+  RecordPane,
+  RecordRow,
+} from '../ui/ListDetail';
 
 export function TopologyPage(): JSX.Element {
   const [selectedID, setSelectedID] = useState<string>('');
 
   return (
-    <div className="grid gap-4 lg:grid-cols-[1fr_2fr]">
+    <ListDetail>
       <NodeList selectedID={selectedID} onSelect={setSelectedID} />
       <NodeDetail id={selectedID} onClear={(): void => setSelectedID('')} />
-    </div>
+    </ListDetail>
   );
 }
 
@@ -35,74 +48,52 @@ function NodeList({ selectedID, onSelect }: NodeListProps): JSX.Element {
   const { nodes, loading, error, refresh } = useTopologyNodes();
 
   return (
-    <div className="rounded-lg border border-surface-border bg-surface-raised">
-      <div className="flex items-center justify-between border-b border-surface-border px-4 py-2">
-        <span className="text-xs font-medium uppercase tracking-wide text-text-muted">
-          {loading ? 'Loading…' : `${nodes.length} node${nodes.length === 1 ? '' : 's'}`}
-        </span>
-        <button
-          type="button"
-          onClick={(): void => {
-            void refresh();
-          }}
-          className="text-text-muted hover:text-text-primary"
-          aria-label="Refresh"
-        >
-          <RefreshCw className="h-4 w-4" />
-        </button>
-      </div>
-      {error ? (
-        <div className="p-3 text-sm text-status-error">{error}</div>
-      ) : nodes.length === 0 ? (
-        <div className="p-4 text-sm text-text-muted">
-          No nodes yet. Add a polling target and wait a poll cycle.
+    <RecordPane
+      filter={
+        <div className="flex items-center justify-between">
+          <span className="kicker">
+            {loading ? 'Loading…' : `${nodes.length} node${nodes.length === 1 ? '' : 's'}`}
+          </span>
+          <button
+            type="button"
+            onClick={(): void => {
+              void refresh();
+            }}
+            className="text-text-muted hover:text-text-primary"
+            aria-label="Refresh"
+          >
+            <RefreshCw className="h-4 w-4" />
+          </button>
         </div>
-      ) : (
-        <ul className="divide-y divide-surface-border">
-          {nodes.map((n) => (
-            <li key={n.id}>
-              <button
-                type="button"
-                onClick={(): void => onSelect(n.id)}
-                data-testid={`node-row-${n.id}`}
-                className={`flex w-full items-center justify-between gap-3 px-4 py-3 text-left text-sm transition hover:bg-surface-hover ${
-                  selectedID === n.id ? 'bg-surface-hover' : ''
-                }`}
-              >
-                <span className="flex-1 truncate">
-                  <span className="font-medium text-text-primary">
-                    {n.displayName || n.sysName}
-                  </span>
-                  {n.primaryIp ? (
-                    <span className="ml-2 font-mono text-xs text-text-muted">{n.primaryIp}</span>
-                  ) : null}
-                </span>
-                <DeviceTypeBadge type={n.deviceType} />
-              </button>
-            </li>
+      }
+      empty={
+        error ? (
+          <span className="text-status-error">{error}</span>
+        ) : (
+          'No nodes yet. Add a polling target and wait a poll cycle.'
+        )
+      }
+    >
+      {error || nodes.length === 0
+        ? null
+        : nodes.map((n) => (
+            <RecordRow
+              key={n.id}
+              data-testid={`node-row-${n.id}`}
+              // A hostname is a figure, not prose — it is an identifier the
+              // operator matches against other screens character by character.
+              name={n.displayName || n.sysName}
+              meta={n.primaryIp || undefined}
+              value={n.deviceType || 'n/a'}
+              // A node the reconcilers have never dated is not healthy or
+              // unhealthy; it is unmeasured, and the bar says so rather than
+              // showing the green that "seen" would imply.
+              state={n.lastSeen ? 'ok' : 'unknown'}
+              selected={selectedID === n.id}
+              onSelect={(): void => onSelect(n.id)}
+            />
           ))}
-        </ul>
-      )}
-    </div>
-  );
-}
-
-function DeviceTypeBadge({ type }: { type: string }): JSX.Element {
-  // Coarse color hints for at-a-glance scanning — matches the
-  // device_type values produced by topology.deviceTypeFromObjectID
-  // (cisco / juniper / arista / linux / mikrotik / unknown). The
-  // vendor palette uses the categorical data-viz tokens (cat-*),
-  // which are theme-aware in both light and dark.
-  const palette: Record<string, string> = {
-    cisco: 'bg-cat-1/20 text-cat-1',
-    juniper: 'bg-cat-2/20 text-cat-2',
-    arista: 'bg-cat-3/20 text-cat-3',
-    linux: 'bg-cat-4/20 text-cat-4',
-    mikrotik: 'bg-cat-5/20 text-cat-5',
-  };
-  const cls = palette[type] ?? 'bg-surface-sunken text-text-muted';
-  return (
-    <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${cls}`}>{type || 'n/a'}</span>
+    </RecordPane>
   );
 }
 
@@ -115,53 +106,29 @@ function NodeDetail({ id, onClear }: NodeDetailProps): JSX.Element {
   const { detail, loading, error } = useTopologyNode(id);
 
   if (!id) {
-    return (
-      <div className="flex min-h-[300px] items-center justify-center rounded-lg border border-surface-border bg-surface-raised text-sm text-text-muted">
-        Select a node to see interfaces and links.
-      </div>
-    );
+    return <DetailEmpty>Select a node to see interfaces and links.</DetailEmpty>;
   }
   if (loading) {
-    return (
-      <div className="rounded-lg border border-surface-border bg-surface-raised p-6 text-sm text-text-muted">
-        Loading node…
-      </div>
-    );
+    return <DetailEmpty>Loading node…</DetailEmpty>;
   }
   if (error) {
     return (
-      <div className="rounded-lg border border-status-error/40 bg-status-error/10 p-6 text-sm text-status-error">
+      <div className="rounded-2xl border border-status-error/40 bg-status-error/10 pad-lg text-sm text-status-error">
         {error}
       </div>
     );
   }
   if (!detail) {
-    return (
-      <div className="rounded-lg border border-surface-border bg-surface-raised p-6 text-sm text-text-muted">
-        Node not found.
-      </div>
-    );
+    return <DetailEmpty>Node not found.</DetailEmpty>;
   }
 
+  const { node } = detail;
   return (
-    <div className="space-y-4">
-      <NodeSummary node={detail.node} onClear={onClear} />
-      <InterfacesPanel interfaces={detail.interfaces} />
-      <LinksPanel links={detail.links} nodeID={detail.node.id} />
-    </div>
-  );
-}
-
-function NodeSummary({ node, onClear }: { node: TopologyNode; onClear: () => void }): JSX.Element {
-  return (
-    <div className="rounded-lg border border-surface-border bg-surface-raised p-4">
-      <div className="flex items-start justify-between gap-3">
-        <div>
-          <h2 className="text-lg font-semibold text-text-primary">
-            {node.displayName || node.sysName}
-          </h2>
-          <p className="text-xs text-text-muted">{node.id}</p>
-        </div>
+    <DetailPane
+      eyebrow="Selected node"
+      title={node.displayName || node.sysName}
+      meta={node.id}
+      actions={
         <button
           type="button"
           onClick={onClear}
@@ -169,33 +136,23 @@ function NodeSummary({ node, onClear }: { node: TopologyNode; onClear: () => voi
         >
           Clear
         </button>
-      </div>
-      <dl className="mt-3 grid grid-cols-2 gap-x-4 gap-y-1 text-sm text-text-secondary">
-        <SummaryRow label="Device type" value={node.deviceType || 'n/a'} />
-        <SummaryRow label="Sys name" value={node.sysName || 'n/a'} />
-        <SummaryRow label="Primary MAC" value={node.primaryMac || 'n/a'} mono />
-        <SummaryRow label="Primary IP" value={node.primaryIp || 'n/a'} mono />
-        <SummaryRow label="First seen" value={fmtTime(node.firstSeen)} />
-        <SummaryRow label="Last seen" value={fmtTime(node.lastSeen)} />
-      </dl>
-    </div>
-  );
-}
-
-function SummaryRow({
-  label,
-  value,
-  mono,
-}: {
-  label: string;
-  value: string;
-  mono?: boolean;
-}): JSX.Element {
-  return (
-    <>
-      <dt className="text-xs uppercase tracking-wide text-text-muted">{label}</dt>
-      <dd className={mono ? 'font-mono text-text-secondary' : 'text-text-secondary'}>{value}</dd>
-    </>
+      }
+    >
+      <DetailFacts
+        items={[
+          // Device type and sys name are names, not measurements — prose, so
+          // they do not sit in the monospace column with the addresses.
+          { label: 'Device type', value: node.deviceType || 'n/a', prose: true },
+          { label: 'Sys name', value: node.sysName || 'n/a', prose: true },
+          { label: 'Primary MAC', value: node.primaryMac || 'n/a' },
+          { label: 'Primary IP', value: node.primaryIp || 'n/a' },
+          { label: 'First seen', value: fmtTime(node.firstSeen) },
+          { label: 'Last seen', value: fmtTime(node.lastSeen) },
+        ]}
+      />
+      <InterfacesPanel interfaces={detail.interfaces} />
+      <LinksPanel links={detail.links} nodeID={node.id} />
+    </DetailPane>
   );
 }
 

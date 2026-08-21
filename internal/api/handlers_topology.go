@@ -2,7 +2,14 @@ package api
 
 // Topology read-only endpoints (Stage A5.1) expose the fat-Node
 // graph that the Stage A4 reconcilers maintain. All handlers are
-// GET-only and respect the authenticated session's client_id.
+// GET-only.
+//
+// They do NOT yet respect the authenticated session's client — the client
+// filter is read from the `client_id` query parameter below, so a caller
+// names its own tenant. The session now carries an unforgeable client claim
+// (internal/auth/client_context.go); converting these reads to it is #1797's
+// job, which replaces the whole conflated seam rather than patching the
+// filter here.
 //
 //   GET /api/v1/topology/nodes            — list nodes
 //   GET /api/v1/topology/nodes/{id}       — single node with interfaces + links

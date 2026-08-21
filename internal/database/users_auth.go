@@ -112,6 +112,31 @@ func (db *DB) IsUserLocked(ctx context.Context, username string) (bool, error) {
 	return time.Now().Before(lockTime), nil
 }
 
+// GetClientID returns the id of the client that owns a user. It is the
+// source of truth the session's client claim is minted from, so it never
+// substitutes a default: an unknown user is ErrUserNotFound, not tenant zero.
+func (db *DB) GetClientID(ctx context.Context, username string) (string, error) {
+	db.mu.RLock()
+	defer db.mu.RUnlock()
+
+	if db.closed {
+		return "", errors.New("database is closed")
+	}
+
+	var clientID string
+	err := db.conn.QueryRowContext(ctx, `
+		SELECT client_id FROM users WHERE username = ?
+	`, username).Scan(&clientID)
+
+	if errors.Is(err, sql.ErrNoRows) {
+		return "", ErrUserNotFound
+	}
+	if err != nil {
+		return "", fmt.Errorf("failed to get client id: %w", err)
+	}
+	return clientID, nil
+}
+
 // GetTokenVersion returns the current token version for a user.
 func (db *DB) GetTokenVersion(ctx context.Context, username string) (int, error) {
 	db.mu.RLock()

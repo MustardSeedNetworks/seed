@@ -101,6 +101,7 @@ type Claims struct {
 	Username     string `json:"username"`
 	TokenVersion int    `json:"token_version"` // For token revocation (fixes #525)
 	TokenType    string `json:"token_type"`    // "access" or "refresh"
+	ClientID     string `json:"client_id"`     // Owning tenant; see client_context.go
 }
 
 // UserStore provides user lookup and management operations.
@@ -110,6 +111,8 @@ type UserStore interface {
 	GetPasswordHash(ctx context.Context, username string) (string, error)
 	// GetTokenVersion returns the current token version for a user.
 	GetTokenVersion(ctx context.Context, username string) (int, error)
+	// GetClientID returns the id of the client that owns a user.
+	GetClientID(ctx context.Context, username string) (string, error)
 	// UpdatePassword updates a user's password hash.
 	UpdatePassword(ctx context.Context, username, hash string) error
 	// RecordLoginSuccess records a successful login.
@@ -494,11 +497,23 @@ func (m *Manager) generateTokenWithType(
 
 	// If we have a UserStore, get the token version from the database
 	// This ensures tokens are generated with the correct version (fixes #927)
+	//
+	// The client claim resolves from the same store. Unlike the token version
+	// there is no in-memory fallback to degrade to, so a store that cannot
+	// answer fails the mint rather than issuing a token that claims the
+	// default tenant on a deployment that has more than one.
+	clientID := DefaultClientID
 	if userStore != nil && username != "" {
-		if dbVersion, err := userStore.GetTokenVersion(ctx, username); err == nil {
+		if dbVersion, versionErr := userStore.GetTokenVersion(ctx, username); versionErr == nil {
 			currentVersion = dbVersion
 		}
 		// On error, fall back to in-memory version
+
+		resolved, clientErr := userStore.GetClientID(ctx, username)
+		if clientErr != nil {
+			return "", fmt.Errorf("failed to resolve client for %q: %w", username, clientErr)
+		}
+		clientID = resolved
 	}
 
 	now := time.Now()
@@ -506,6 +521,7 @@ func (m *Manager) generateTokenWithType(
 		Username:     username,
 		TokenVersion: currentVersion, // Include version for revocation
 		TokenType:    tokenType,
+		ClientID:     clientID,
 		RegisteredClaims: jwt.RegisteredClaims{
 			ExpiresAt: jwt.NewNumericDate(now.Add(duration)),
 			IssuedAt:  jwt.NewNumericDate(now),
@@ -736,6 +752,7 @@ func (m *Manager) Middleware(next http.Handler) http.Handler {
 
 		// Add claims to request context
 		ctx := logging.WithUserID(r.Context(), claims.Username)
+		ctx = WithClientID(ctx, claims.ClientID)
 		r.Header.Set("X-Username", claims.Username) // Keep this for other potential uses
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})

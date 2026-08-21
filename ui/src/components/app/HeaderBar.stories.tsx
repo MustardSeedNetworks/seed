@@ -56,7 +56,7 @@ export const Connected: Story = {
     wsStatus: 'connected',
     onReconnect: () => {},
     profiles,
-    activeProfile: profiles[0],
+    activeProfile: profiles.at(0) ?? null,
     profilesLoading: false,
     onProfileSwitch: async () => true,
     onProfileManage: () => {},

@@ -29,7 +29,12 @@ var ErrCollectorNotRegistered = errors.New("collector not registered")
 // PollerStorage is the narrowed surface the Poller needs from the
 // database layer. Tests inject a fake.
 type PollerStorage interface {
-	List(ctx context.Context, clientID string) ([]*polling.Target, error)
+	// ListEnabled is the scheduler's own read: enabled targets across every
+	// client. It is deliberately separate from the management seam, which
+	// cannot cross a tenant boundary — the poller runs on behalf of the
+	// system, not of a caller, and that difference is now in the method name
+	// rather than in an empty-string argument.
+	ListEnabled(ctx context.Context) ([]*polling.Target, error)
 	UpdateLastPoll(ctx context.Context, id, status, errMsg string) error
 }
 
@@ -168,7 +173,7 @@ func (p *Poller) Start(ctx context.Context) error {
 		return nil
 	}
 
-	targets, err := p.storage.List(ctx, "")
+	targets, err := p.storage.ListEnabled(ctx)
 	if err != nil {
 		return err
 	}

@@ -85,9 +85,13 @@ export function HelpDrawer({
 
   // Keep the active section valid as the filter narrows the list.
   const currentSection =
-    helpSections.find((s) => s.id === activeSection) ?? filteredSections[0] ?? helpSections[0];
+    helpSections.find((s) => s.id === activeSection) ??
+    filteredSections.at(0) ??
+    helpSections.at(0);
 
-  if (!isOpen) {
+  // No sections at all means the drawer has nothing to show. Rendering it
+  // anyway produced a header for a section that does not exist.
+  if (!(isOpen && currentSection)) {
     return null;
   }
 

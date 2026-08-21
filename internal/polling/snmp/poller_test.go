@@ -1,9 +1,11 @@
 package snmp_test
 
 import (
+	"bytes"
 	"context"
 	"errors"
 	"log/slog"
+	"strings"
 	"sync"
 	"testing"
 	"time"
@@ -31,7 +33,7 @@ type updateRecord struct {
 	errMsg string
 }
 
-func (f *fakeStorage) List(_ context.Context, _ string) ([]*polling.Target, error) {
+func (f *fakeStorage) ListEnabled(_ context.Context) ([]*polling.Target, error) {
 	if f.listErr != nil {
 		return nil, f.listErr
 	}
@@ -375,6 +377,76 @@ func testResolver(t *testing.T) *snmp.CredentialResolver {
 		t.Fatalf("NewCredentialResolver: %v", err)
 	}
 	return r
+}
+
+// secretPlaintext is what the decrypter below yields for the two columns that
+// do decrypt. It must never appear in a log line, an error, or last_error.
+const secretPlaintext = "s3cr3t-community"
+
+// partialDecrypter decrypts the community but fails on the v3 priv secret, so
+// the resolver holds recovered plaintext at the moment it returns an error —
+// the state in which a careless wrap or log would leak it.
+type partialDecrypter struct{}
+
+func (partialDecrypter) DecryptValue(encrypted string) (string, error) {
+	if encrypted == "enc:v1:priv" {
+		return "", errors.New("invalid ciphertext: authentication failed")
+	}
+	return secretPlaintext, nil
+}
+
+// TestPoller_RunChain_CredentialFailureLeaksNoSecret pins the other half of the
+// contract: when resolution fails partway, nothing the poller writes carries the
+// plaintext it had already recovered — not the log, not the error, not the
+// last_error the operator reads.
+func TestPoller_RunChain_CredentialFailureLeaksNoSecret(t *testing.T) {
+	t.Parallel()
+	target := &polling.Target{
+		ID: "t-1", ClientID: "default", IPAddress: "10.0.0.1", Enabled: true,
+		PollIntervalSec: 60, CredentialsID: "cred-1",
+		CollectorChain: []string{"sys_info"},
+	}
+	storage := &fakeStorage{targets: []*polling.Target{target}}
+	sched := newFakeScheduler()
+
+	var logBuf bytes.Buffer
+	logger := slog.New(slog.NewTextHandler(&logBuf, &slog.HandlerOptions{Level: slog.LevelDebug}))
+
+	resolver, err := snmp.NewCredentialResolver(
+		&fakeCredStore{creds: &polling.Credentials{
+			ID:              "cred-1",
+			SNMPCommunityCT: "enc:v1:community",
+			SNMPv3AuthCT:    "enc:v1:auth",
+			SNMPv3PrivCT:    "enc:v1:priv",
+		}},
+		partialDecrypter{},
+	)
+	if err != nil {
+		t.Fatalf("NewCredentialResolver: %v", err)
+	}
+
+	p := snmp.NewPoller(storage, sched, logger)
+	p.SetCredentialResolver(resolver)
+	p.RegisterCollector(&stubCollector{name: "sys_info"})
+
+	if startErr := p.Start(context.Background()); startErr != nil {
+		t.Fatalf("Start: %v", startErr)
+	}
+	_ = sched.firstJob().Run(context.Background())
+
+	if strings.Contains(logBuf.String(), secretPlaintext) {
+		t.Errorf("decrypted secret leaked into the poller log: %s", logBuf.String())
+	}
+	if len(storage.updates) != 1 {
+		t.Fatalf("UpdateLastPoll called %d times, want 1", len(storage.updates))
+	}
+	if strings.Contains(storage.updates[0].errMsg, secretPlaintext) {
+		t.Errorf("decrypted secret leaked into last_error: %s", storage.updates[0].errMsg)
+	}
+	if !strings.Contains(logBuf.String(), "t-1") {
+		t.Error("the failure log should still name the target, so suppressing the " +
+			"secret does not also suppress the diagnosis")
+	}
 }
 
 // TestPoller_RunChain_SkipsTargetWhenCredentialsUnresolved pins the security

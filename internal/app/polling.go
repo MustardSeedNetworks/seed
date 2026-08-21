@@ -33,20 +33,22 @@ func (a pollingTargetRepo) repo() (*database.PollingTargetRepository, error) {
 	return db.PollingTargets(), nil
 }
 
-func (a pollingTargetRepo) List(ctx context.Context, clientID string) ([]*polling.Target, error) {
+func (a pollingTargetRepo) ListAll(ctx context.Context, clientID string) ([]*polling.Target, error) {
 	repo, err := a.repo()
 	if err != nil {
 		return nil, err
 	}
-	return repo.List(ctx, clientID)
+	return repo.ListAll(ctx, clientID)
 }
 
-func (a pollingTargetRepo) Get(ctx context.Context, id string) (*polling.Target, error) {
+func (a pollingTargetRepo) Get(
+	ctx context.Context, clientID, id string,
+) (*polling.Target, error) {
 	repo, err := a.repo()
 	if err != nil {
 		return nil, err
 	}
-	return repo.Get(ctx, id)
+	return repo.Get(ctx, clientID, id)
 }
 
 func (a pollingTargetRepo) Create(ctx context.Context, t *polling.Target) error {
@@ -57,18 +59,18 @@ func (a pollingTargetRepo) Create(ctx context.Context, t *polling.Target) error 
 	return repo.Create(ctx, t)
 }
 
-func (a pollingTargetRepo) Update(ctx context.Context, t *polling.Target) error {
+func (a pollingTargetRepo) Update(ctx context.Context, clientID string, t *polling.Target) error {
 	repo, err := a.repo()
 	if err != nil {
 		return err
 	}
-	return repo.Update(ctx, t)
+	return repo.Update(ctx, clientID, t)
 }
 
-func (a pollingTargetRepo) Delete(ctx context.Context, id string) error {
+func (a pollingTargetRepo) Delete(ctx context.Context, clientID, id string) error {
 	repo, err := a.repo()
 	if err != nil {
 		return err
 	}
-	return repo.Delete(ctx, id)
+	return repo.Delete(ctx, clientID, id)
 }

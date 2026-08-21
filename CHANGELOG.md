@@ -5,6 +5,78 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.213.5](https://github.com/MustardSeedNetworks/seed/compare/v0.213.4...v0.213.5) (2026-08-21)
+
+
+### Features
+
+* **auth:** carry the session's owning client as an unforgeable claim ([#1992](https://github.com/MustardSeedNetworks/seed/issues/1992)) ([f14cf1c](https://github.com/MustardSeedNetworks/seed/commit/f14cf1c24808b4ce793ae42f6846928de3d1c80a)), closes [#1797](https://github.com/MustardSeedNetworks/seed/issues/1797)
+* **build:** enable the React Compiler, keeping every existing memo ([#1993](https://github.com/MustardSeedNetworks/seed/issues/1993)) ([87cf357](https://github.com/MustardSeedNetworks/seed/commit/87cf3570622fbdc2bf32389e753837c20c91cdb7))
+
+
+### Bug Fixes
+
+* **test:** run the React Compiler in vitest, so tests exercise what ships ([#1995](https://github.com/MustardSeedNetworks/seed/issues/1995)) ([421beef](https://github.com/MustardSeedNetworks/seed/commit/421beeffd424a5ee7d999f26573a2b7b6f667bc4))
+
+
+### Code Refactoring
+
+* **polling:** separate scheduler and tenant-scoped management seams ([#1996](https://github.com/MustardSeedNetworks/seed/issues/1996)) ([1cf668c](https://github.com/MustardSeedNetworks/seed/commit/1cf668c91db314438502ef985e03c2757acbcbba))
+
+
+### Miscellaneous
+
+* **deps:** update module github.com/golangci/golangci-lint/v2/cmd/golangci-lint to v2.13.1 ([#1989](https://github.com/MustardSeedNetworks/seed/issues/1989)) ([82080d1](https://github.com/MustardSeedNetworks/seed/commit/82080d1cb997e585cf40e42dfab74ca72441e2f1))
+* **deps:** update module honnef.co/go/tools to v0.8.0 ([#1990](https://github.com/MustardSeedNetworks/seed/issues/1990)) ([ffea7e7](https://github.com/MustardSeedNetworks/seed/commit/ffea7e7e4091d9234d2df45155a11bbad14153bb))
+* **ts:** adopt verbatimModuleSyntax and gate the fleet's strictness contract ([#1988](https://github.com/MustardSeedNetworks/seed/issues/1988)) ([6d2c696](https://github.com/MustardSeedNetworks/seed/commit/6d2c6965cbb9e635b0e8da74eb9ccc534a8265fa))
+
+## [0.213.4](https://github.com/MustardSeedNetworks/seed/compare/v0.213.3...v0.213.4) (2026-08-20)
+
+
+### Bug Fixes
+
+* **deps:** bump golang.org/x/mod to v0.40.0 for CVE-2026-56864/56865 ([#1983](https://github.com/MustardSeedNetworks/seed/issues/1983)) ([5eb06cb](https://github.com/MustardSeedNetworks/seed/commit/5eb06cbf41787f4fec9abff0e1f9af76b8f7fc83)), closes [#1982](https://github.com/MustardSeedNetworks/seed/issues/1982)
+* **lint:** scope Biome's dist, build and coverage excludes to where they land ([#1980](https://github.com/MustardSeedNetworks/seed/issues/1980)) ([36c309c](https://github.com/MustardSeedNetworks/seed/commit/36c309c9cf404dc94d883c3984d2d1e529fec5b4))
+* **polling:** fail closed at the SNMP dialer, not just at the resolver ([#1977](https://github.com/MustardSeedNetworks/seed/issues/1977)) ([7fb42ab](https://github.com/MustardSeedNetworks/seed/commit/7fb42abd60b9d8ac0d691db315f650e1414c52b2)), closes [#1798](https://github.com/MustardSeedNetworks/seed/issues/1798)
+* **test:** give the airspace fixture the BSSView field it claims to have ([#1985](https://github.com/MustardSeedNetworks/seed/issues/1985)) ([ca893a2](https://github.com/MustardSeedNetworks/seed/commit/ca893a2af04f27f7968b4f17c0f17cefa5a6900f)), closes [#1984](https://github.com/MustardSeedNetworks/seed/issues/1984)
+* **ui:** let a whole-page absence fill the page instead of one grid cell ([#1978](https://github.com/MustardSeedNetworks/seed/issues/1978)) ([802dc3a](https://github.com/MustardSeedNetworks/seed/commit/802dc3aee73dda598fec8f6398b4e34c0e725175))
+
+## [0.213.3](https://github.com/MustardSeedNetworks/seed/compare/v0.213.2...v0.213.3) (2026-08-20)
+
+
+### Features
+
+* **ui:** adopt the Card grid archetype and make card absence explain itself ([#1976](https://github.com/MustardSeedNetworks/seed/issues/1976)) ([95891d2](https://github.com/MustardSeedNetworks/seed/commit/95891d2ca9834133aced87c613ea1c7a705aab86))
+
+
+### Bug Fixes
+
+* **ci:** run the E2E jobs in Playwright's container image ([#1961](https://github.com/MustardSeedNetworks/seed/issues/1961)) ([bf22ddb](https://github.com/MustardSeedNetworks/seed/commit/bf22ddb8df79b587699547276ea42581aa4d0137))
+* **deps:** update module github.com/stretchr/testify to v1.12.1 ([#1970](https://github.com/MustardSeedNetworks/seed/issues/1970)) ([b190b47](https://github.com/MustardSeedNetworks/seed/commit/b190b47adeee6c488380eb1efecf24f210dd7b0d))
+* **deps:** update module modernc.org/sqlite to v1.57.0 ([#1967](https://github.com/MustardSeedNetworks/seed/issues/1967)) ([dd8f0d3](https://github.com/MustardSeedNetworks/seed/commit/dd8f0d32885ff8f0f25c58d9daebd9b2ce7eb228))
+* **polling:** scope SNMP credential reads to the target's client ([#1971](https://github.com/MustardSeedNetworks/seed/issues/1971)) ([0ec99c2](https://github.com/MustardSeedNetworks/seed/commit/0ec99c2c29cc9867b6693975ccc7872c8ca56855))
+
+
+### Code Refactoring
+
+* **topology:** adopt the List + detail archetype ([#1973](https://github.com/MustardSeedNetworks/seed/issues/1973)) ([9017b27](https://github.com/MustardSeedNetworks/seed/commit/9017b2704187415b900ee4242dcdcfb8f6dfebd7))
+
+
+### Tests
+
+* **topology:** cover TopologyPage before the archetype refactor touches it ([#1960](https://github.com/MustardSeedNetworks/seed/issues/1960)) ([8c3ac62](https://github.com/MustardSeedNetworks/seed/commit/8c3ac620d1aa9fe699e16be946bf56e2530c6a28))
+
+
+### Continuous Integration
+
+* reconcile skipped releases with a 3-hourly release-please run ([#1959](https://github.com/MustardSeedNetworks/seed/issues/1959)) ([555a3e2](https://github.com/MustardSeedNetworks/seed/commit/555a3e2d2c1e2a6ab97332a0c8a15f30e05f5039))
+
+
+### Miscellaneous
+
+* **deps:** lock file maintenance ([#1963](https://github.com/MustardSeedNetworks/seed/issues/1963)) ([1ad5d08](https://github.com/MustardSeedNetworks/seed/commit/1ad5d0873c25f0b2515afbce6023bbec72c81ad2))
+* **deps:** update module github.com/golangci/golangci-lint/v2/cmd/golangci-lint to v2.13.0 ([#1975](https://github.com/MustardSeedNetworks/seed/issues/1975)) ([659d9c7](https://github.com/MustardSeedNetworks/seed/commit/659d9c71e26ab3735e739bcaf78d3c74a12b633f))
+
 ## [0.213.2](https://github.com/MustardSeedNetworks/seed/compare/v0.213.1...v0.213.2) (2026-08-18)
 
 

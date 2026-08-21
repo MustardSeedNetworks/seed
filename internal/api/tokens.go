@@ -23,6 +23,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/MustardSeedNetworks/seed/internal/auth"
 	"github.com/MustardSeedNetworks/seed/internal/database"
 	"github.com/MustardSeedNetworks/seed/internal/i18n"
 	"github.com/MustardSeedNetworks/seed/internal/identity/tokens"
@@ -375,7 +376,15 @@ func resolveAPIToken(ctx context.Context, repo *database.APITokenRepository, pla
 // This middleware is part of the PAT authentication seam — it takes
 // *database.APITokenRepository directly and is wired in server_lifecycle.go.
 // It is intentionally excluded from the use-case strangle (ADR-0024).
-func apiTokenMiddleware(repo *database.APITokenRepository, next http.Handler) http.Handler {
+// clientResolver answers which client owns a user. It is a function rather
+// than an interface because the server's database handle is created after the
+// middleware chain is built, and a nil *database.DB boxed in an interface is
+// a non-nil interface that panics on call.
+type clientResolver func(ctx context.Context, username string) (string, error)
+
+func apiTokenMiddleware(
+	repo *database.APITokenRepository, resolveClient clientResolver, next http.Handler,
+) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		// Only attempt token auth for API paths; static assets and
 		// auth endpoints are handled by the existing JWT bypass.
@@ -405,7 +414,26 @@ func apiTokenMiddleware(repo *database.APITokenRepository, next http.Handler) ht
 				"Invalid or revoked API token")
 			return
 		}
+		// A PAT's tenancy is its owner's, resolved now rather than stored on
+		// the token: one source of truth, and moving a user between clients
+		// cannot leave their automation pointed at the old one.
+		clientID, clientErr := resolveClient(r.Context(), rec.OwnerUsername)
+		if clientErr != nil {
+			logging.FromContext(r.Context()).WarnContext(r.Context(),
+				"Rejecting API token whose owner has no resolvable client",
+				"event", "auth.unauthorized",
+				"username", rec.OwnerUsername,
+				"client_ip", GetClientIP(r),
+				"path", r.URL.Path,
+				"method", r.Method,
+				"error", clientErr,
+			)
+			writeAPITokenError(w, r, http.StatusUnauthorized, ErrCodeUnauthorized,
+				"Invalid or revoked API token")
+			return
+		}
 		ctx := logging.WithUserID(r.Context(), rec.OwnerUsername)
+		ctx = auth.WithClientID(ctx, clientID)
 		r.Header.Set("X-Username", rec.OwnerUsername)
 		// #1255: thread the per-token scope so callerRole can clamp the
 		// effective role at min(owner.role, token.scope). Empty scope
@@ -424,4 +452,15 @@ func writeAPITokenError(w http.ResponseWriter, r *http.Request, status int, code
 	logger := logging.FromContext(r.Context())
 	_ = i18n.FromRequest(r) // reserved for future localization
 	sendErrorResponseWithDetails(w, logger, status, code, message, "")
+}
+
+// resolveClientID answers which client owns a user, for the PAT seam. It fails
+// closed when the database is absent: a request that cannot be attributed to a
+// tenant is unauthenticated, not a request belonging to the default tenant.
+func (s *Server) resolveClientID(ctx context.Context, username string) (string, error) {
+	db := s.db()
+	if db == nil {
+		return "", errors.New("client identity unavailable: no database")
+	}
+	return db.GetClientID(ctx, username)
 }
