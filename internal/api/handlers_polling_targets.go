@@ -89,12 +89,12 @@ func (s *Server) handlePollingTargetByID(w http.ResponseWriter, r *http.Request)
 func (s *Server) callerClient(w http.ResponseWriter, r *http.Request) (string, bool) {
 	clientID, err := auth.ClientIDFromContext(r.Context())
 	if err != nil {
+		// method, path, client_ip and user_agent are already on the "http
+		// request" line for this request id (internal/logging/middleware.go),
+		// so this one carries only what that line does not: why it was denied.
 		logging.FromContext(r.Context()).WarnContext(r.Context(),
 			"Request carries no client claim",
 			"event", "auth.unauthorized",
-			"client_ip", GetClientIP(r),
-			"path", r.URL.Path,
-			"method", r.Method,
 		)
 		writeAPITokenError(w, r, http.StatusUnauthorized, ErrCodeUnauthorized,
 			"Authentication required")
