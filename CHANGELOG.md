@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.213.8](https://github.com/MustardSeedNetworks/seed/compare/v0.213.7...v0.213.8) (2026-08-21)
+
+
+### Miscellaneous
+
+* **deps:** sweep the frontend dependencies in one change ([#2005](https://github.com/MustardSeedNetworks/seed/issues/2005)) ([191b5bb](https://github.com/MustardSeedNetworks/seed/commit/191b5bb0521c4b1fa8ac343e09f70b519efa165c))
+
 ## [0.213.7](https://github.com/MustardSeedNetworks/seed/compare/v0.213.6...v0.213.7) (2026-08-21)
 
 
