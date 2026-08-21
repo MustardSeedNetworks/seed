@@ -5,6 +5,31 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.213.5](https://github.com/MustardSeedNetworks/seed/compare/v0.213.4...v0.213.5) (2026-08-21)
+
+
+### Features
+
+* **auth:** carry the session's owning client as an unforgeable claim ([#1992](https://github.com/MustardSeedNetworks/seed/issues/1992)) ([f14cf1c](https://github.com/MustardSeedNetworks/seed/commit/f14cf1c24808b4ce793ae42f6846928de3d1c80a)), closes [#1797](https://github.com/MustardSeedNetworks/seed/issues/1797)
+* **build:** enable the React Compiler, keeping every existing memo ([#1993](https://github.com/MustardSeedNetworks/seed/issues/1993)) ([87cf357](https://github.com/MustardSeedNetworks/seed/commit/87cf3570622fbdc2bf32389e753837c20c91cdb7))
+
+
+### Bug Fixes
+
+* **test:** run the React Compiler in vitest, so tests exercise what ships ([#1995](https://github.com/MustardSeedNetworks/seed/issues/1995)) ([421beef](https://github.com/MustardSeedNetworks/seed/commit/421beeffd424a5ee7d999f26573a2b7b6f667bc4))
+
+
+### Code Refactoring
+
+* **polling:** separate scheduler and tenant-scoped management seams ([#1996](https://github.com/MustardSeedNetworks/seed/issues/1996)) ([1cf668c](https://github.com/MustardSeedNetworks/seed/commit/1cf668c91db314438502ef985e03c2757acbcbba))
+
+
+### Miscellaneous
+
+* **deps:** update module github.com/golangci/golangci-lint/v2/cmd/golangci-lint to v2.13.1 ([#1989](https://github.com/MustardSeedNetworks/seed/issues/1989)) ([82080d1](https://github.com/MustardSeedNetworks/seed/commit/82080d1cb997e585cf40e42dfab74ca72441e2f1))
+* **deps:** update module honnef.co/go/tools to v0.8.0 ([#1990](https://github.com/MustardSeedNetworks/seed/issues/1990)) ([ffea7e7](https://github.com/MustardSeedNetworks/seed/commit/ffea7e7e4091d9234d2df45155a11bbad14153bb))
+* **ts:** adopt verbatimModuleSyntax and gate the fleet's strictness contract ([#1988](https://github.com/MustardSeedNetworks/seed/issues/1988)) ([6d2c696](https://github.com/MustardSeedNetworks/seed/commit/6d2c6965cbb9e635b0e8da74eb9ccc534a8265fa))
+
 ## [0.213.4](https://github.com/MustardSeedNetworks/seed/compare/v0.213.3...v0.213.4) (2026-08-20)
 
 
