@@ -1185,14 +1185,17 @@ func TestCookieNameConstants(t *testing.T) {
 type mockUserStore struct {
 	passwords     map[string]string
 	tokenVersions map[string]int
+	clientIDs     map[string]string
 	locked        map[string]bool
 	updateErr     error
+	clientErr     error
 }
 
 func newMockUserStore() *mockUserStore {
 	return &mockUserStore{
 		passwords:     make(map[string]string),
 		tokenVersions: make(map[string]int),
+		clientIDs:     make(map[string]string),
 		locked:        make(map[string]bool),
 	}
 }
@@ -1209,6 +1212,16 @@ func (m *mockUserStore) GetTokenVersion(_ context.Context, username string) (int
 		return v, nil
 	}
 	return 0, nil
+}
+
+func (m *mockUserStore) GetClientID(_ context.Context, username string) (string, error) {
+	if m.clientErr != nil {
+		return "", m.clientErr
+	}
+	if c, ok := m.clientIDs[username]; ok {
+		return c, nil
+	}
+	return auth.DefaultClientID, nil
 }
 
 func (m *mockUserStore) UpdatePassword(_ context.Context, username, hash string) error {

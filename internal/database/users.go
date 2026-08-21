@@ -23,6 +23,7 @@ type User struct {
 	ExternalID     string // IdP subject claim (OIDC 'sub' / MS Graph 'id'); empty for local users
 	Email          string // display + cross-provider matching
 	DisplayName    string // optional human name returned by the IdP
+	ClientID       string // owning tenant; the session's client claim is minted from this
 	CreatedAt      time.Time
 	UpdatedAt      time.Time
 }
@@ -76,14 +77,14 @@ func (db *DB) GetUser(ctx context.Context, username string) (*User, error) {
 	err := db.conn.QueryRowContext(ctx, `
 		SELECT id, username, password_hash, role, is_active, last_login,
 		       failed_attempts, locked_until, token_version,
-		       auth_provider, external_id, email, display_name,
+		       auth_provider, external_id, email, display_name, client_id,
 		       created_at, updated_at
 		FROM users
 		WHERE username = ?
 	`, username).Scan(
 		&user.ID, &user.Username, &user.PasswordHash, &user.Role, &user.IsActive,
 		&lastLogin, &user.FailedAttempts, &lockedUntil, &user.TokenVersion,
-		&user.AuthProvider, &externalID, &email, &displayName,
+		&user.AuthProvider, &externalID, &email, &displayName, &user.ClientID,
 		&createdAt, &updatedAt,
 	)
 
@@ -238,7 +239,7 @@ func (db *DB) ListUsers(ctx context.Context) ([]*User, error) {
 	rows, err := db.conn.QueryContext(ctx, `
 		SELECT id, username, password_hash, role, is_active, last_login,
 		       failed_attempts, locked_until, token_version,
-		       auth_provider, external_id, email, display_name,
+		       auth_provider, external_id, email, display_name, client_id,
 		       created_at, updated_at
 		FROM users
 		ORDER BY username
@@ -256,7 +257,7 @@ func (db *DB) ListUsers(ctx context.Context) ([]*User, error) {
 		if scanErr := rows.Scan(
 			&u.ID, &u.Username, &u.PasswordHash, &u.Role, &u.IsActive,
 			&lastLogin, &u.FailedAttempts, &lockedUntil, &u.TokenVersion,
-			&u.AuthProvider, &externalID, &email, &displayName,
+			&u.AuthProvider, &externalID, &email, &displayName, &u.ClientID,
 			&createdAt, &updatedAt,
 		); scanErr != nil {
 			return nil, fmt.Errorf("failed to scan user row: %w", scanErr)
