@@ -30,11 +30,11 @@ func (e ValidationError) Error() string { return e.Msg }
 // polling-target repository; the adapter satisfies it over
 // database.PollingTargetRepository and surfaces ErrUnavailable when no DB is wired.
 type Repository interface {
-	List(ctx context.Context, clientID string) ([]*polling.Target, error)
-	Get(ctx context.Context, id string) (*polling.Target, error)
+	ListAll(ctx context.Context, clientID string) ([]*polling.Target, error)
+	Get(ctx context.Context, clientID, id string) (*polling.Target, error)
 	Create(ctx context.Context, t *polling.Target) error
-	Update(ctx context.Context, t *polling.Target) error
-	Delete(ctx context.Context, id string) error
+	Update(ctx context.Context, clientID string, t *polling.Target) error
+	Delete(ctx context.Context, clientID, id string) error
 }
 
 // Service is the polling-targets CRUD use-case.
@@ -45,14 +45,16 @@ type Service struct {
 // NewService builds the use-case over its Repository port.
 func NewService(repo Repository) *Service { return &Service{repo: repo} }
 
-// List returns the polling targets for clientID ("" for all).
-func (s *Service) List(ctx context.Context, clientID string) ([]*polling.Target, error) {
-	return s.repo.List(ctx, clientID)
+// ListAll returns every polling target owned by clientID, enabled or not.
+// There is no "all clients" spelling: the scheduler reads its own seam on the
+// repository, and a management caller only ever sees its own tenant.
+func (s *Service) ListAll(ctx context.Context, clientID string) ([]*polling.Target, error) {
+	return s.repo.ListAll(ctx, clientID)
 }
 
 // Get returns one target, mapping the repository's not-found to ErrNotFound.
-func (s *Service) Get(ctx context.Context, id string) (*polling.Target, error) {
-	t, err := s.repo.Get(ctx, id)
+func (s *Service) Get(ctx context.Context, clientID, id string) (*polling.Target, error) {
+	t, err := s.repo.Get(ctx, clientID, id)
 	return t, mapNotFound(err)
 }
 
@@ -70,19 +72,21 @@ func (s *Service) Create(ctx context.Context, t *polling.Target) error {
 // Update applies a full update and returns the freshly-read row so the caller
 // sees the refreshed audit columns; on a re-read miss it returns the written
 // value. Maps the repository's not-found to ErrNotFound.
-func (s *Service) Update(ctx context.Context, t *polling.Target) (*polling.Target, error) {
-	if err := mapNotFound(s.repo.Update(ctx, t)); err != nil {
+func (s *Service) Update(
+	ctx context.Context, clientID string, t *polling.Target,
+) (*polling.Target, error) {
+	if err := mapNotFound(s.repo.Update(ctx, clientID, t)); err != nil {
 		return nil, err
 	}
-	if current, err := s.repo.Get(ctx, t.ID); err == nil && current != nil {
+	if current, err := s.repo.Get(ctx, clientID, t.ID); err == nil && current != nil {
 		return current, nil
 	}
 	return t, nil
 }
 
 // Delete removes a target, mapping the repository's not-found to ErrNotFound.
-func (s *Service) Delete(ctx context.Context, id string) error {
-	return mapNotFound(s.repo.Delete(ctx, id))
+func (s *Service) Delete(ctx context.Context, clientID, id string) error {
+	return mapNotFound(s.repo.Delete(ctx, clientID, id))
 }
 
 // mapNotFound normalizes the repository's not-found sentinel to ErrNotFound,

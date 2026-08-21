@@ -9,6 +9,7 @@ import (
 	"testing"
 
 	"github.com/MustardSeedNetworks/seed/internal/app"
+	"github.com/MustardSeedNetworks/seed/internal/auth"
 	"github.com/MustardSeedNetworks/seed/internal/database"
 	"github.com/MustardSeedNetworks/seed/internal/polling"
 )
@@ -24,10 +25,27 @@ func newPollingTargetsTestServer(t *testing.T) *Server {
 	return s
 }
 
+// testClientID is the tenant every request in this file is authenticated as.
+const testClientID = database.DefaultClientID
+
+// withClaim attaches the test session's client claim, which every
+// polling-targets route now requires. A request without one is a 401, so this
+// helper is what makes a test request represent an authenticated caller rather
+// than an anonymous one. Tests that want the anonymous case simply skip it.
+func withClaim(req *http.Request) *http.Request {
+	return req.WithContext(auth.WithClientID(req.Context(), testClientID))
+}
+
 // seedTarget inserts a polling target via the repo and returns it.
 func seedTarget(t *testing.T, db *database.DB, name string) *polling.Target {
+	return seedTargetFor(t, db, testClientID, name)
+}
+
+// seedTargetFor inserts a polling target owned by clientID.
+func seedTargetFor(t *testing.T, db *database.DB, clientID, name string) *polling.Target {
 	t.Helper()
 	target := &polling.Target{
+		ClientID:        clientID,
 		Name:            name,
 		IPAddress:       "10.0.0.1",
 		SNMPVersion:     "v2c",
@@ -49,7 +67,7 @@ func postJSON(t *testing.T, body any) *http.Request {
 	}
 	req := httptest.NewRequest(http.MethodPost, APIVersionPrefix+"/polling-targets", buf)
 	req.Header.Set("Content-Type", "application/json")
-	return req
+	return withClaim(req)
 }
 
 func TestHandlePollingTargets_GETReturnsList(t *testing.T) {
@@ -57,7 +75,7 @@ func TestHandlePollingTargets_GETReturnsList(t *testing.T) {
 	seedTarget(t, s.db(), "router-1")
 	seedTarget(t, s.db(), "router-2")
 
-	req := httptest.NewRequest(http.MethodGet, APIVersionPrefix+"/polling-targets", http.NoBody)
+	req := withClaim(httptest.NewRequest(http.MethodGet, APIVersionPrefix+"/polling-targets", http.NoBody))
 	w := httptest.NewRecorder()
 	s.handlePollingTargets(w, req)
 
@@ -100,7 +118,7 @@ func TestHandlePollingTargets_POSTCreates(t *testing.T) {
 		t.Errorf("response = %+v", resp)
 	}
 	// Confirm the row landed in the DB.
-	list, _ := s.db().PollingTargets().List(context.Background(), "")
+	list, _ := s.db().PollingTargets().ListAll(context.Background(), testClientID)
 	if len(list) != 1 {
 		t.Errorf("db rows = %d, want 1", len(list))
 	}
@@ -131,7 +149,9 @@ func TestHandlePollingTargets_POSTUnknownFieldsReturns400(t *testing.T) {
 	// "extra" isn't a known input field; the disallow-unknown-fields
 	// decoder rejects the request.
 	body := []byte(`{"name":"r","ipAddress":"10.0.0.1","extra":true}`)
-	req := httptest.NewRequest(http.MethodPost, APIVersionPrefix+"/polling-targets", bytes.NewReader(body))
+	req := withClaim(
+		httptest.NewRequest(http.MethodPost, APIVersionPrefix+"/polling-targets", bytes.NewReader(body)),
+	)
 	req.Header.Set("Content-Type", "application/json")
 	w := httptest.NewRecorder()
 	s.handlePollingTargets(w, req)
@@ -142,7 +162,7 @@ func TestHandlePollingTargets_POSTUnknownFieldsReturns400(t *testing.T) {
 
 func TestHandlePollingTargets_UnknownMethodReturns405(t *testing.T) {
 	s := newPollingTargetsTestServer(t)
-	req := httptest.NewRequest(http.MethodPatch, APIVersionPrefix+"/polling-targets", http.NoBody)
+	req := withClaim(httptest.NewRequest(http.MethodPatch, APIVersionPrefix+"/polling-targets", http.NoBody))
 	w := httptest.NewRecorder()
 	s.handlePollingTargets(w, req)
 	if w.Code != http.StatusMethodNotAllowed {
@@ -154,7 +174,9 @@ func TestHandlePollingTargetByID_GET(t *testing.T) {
 	s := newPollingTargetsTestServer(t)
 	target := seedTarget(t, s.db(), "router-1")
 
-	req := httptest.NewRequest(http.MethodGet, APIVersionPrefix+"/polling-targets/"+target.ID, http.NoBody)
+	req := withClaim(
+		httptest.NewRequest(http.MethodGet, APIVersionPrefix+"/polling-targets/"+target.ID, http.NoBody),
+	)
 	w := httptest.NewRecorder()
 	s.handlePollingTargetByID(w, req)
 	if w.Code != http.StatusOK {
@@ -169,7 +191,9 @@ func TestHandlePollingTargetByID_GET(t *testing.T) {
 
 func TestHandlePollingTargetByID_GETUnknownReturns404(t *testing.T) {
 	s := newPollingTargetsTestServer(t)
-	req := httptest.NewRequest(http.MethodGet, APIVersionPrefix+"/polling-targets/no-such-id", http.NoBody)
+	req := withClaim(
+		httptest.NewRequest(http.MethodGet, APIVersionPrefix+"/polling-targets/no-such-id", http.NoBody),
+	)
 	w := httptest.NewRecorder()
 	s.handlePollingTargetByID(w, req)
 	if w.Code != http.StatusNotFound {
@@ -190,7 +214,7 @@ func TestHandlePollingTargetByID_PUTUpdates(t *testing.T) {
 		"enabled":             false,
 		"collectorChain":      []string{"sys_info", "if_table"},
 	})
-	req := httptest.NewRequest(http.MethodPut, APIVersionPrefix+"/polling-targets/"+target.ID, buf)
+	req := withClaim(httptest.NewRequest(http.MethodPut, APIVersionPrefix+"/polling-targets/"+target.ID, buf))
 	req.Header.Set("Content-Type", "application/json")
 	w := httptest.NewRecorder()
 	s.handlePollingTargetByID(w, req)
@@ -199,7 +223,7 @@ func TestHandlePollingTargetByID_PUTUpdates(t *testing.T) {
 		t.Fatalf("status = %d, body=%s", w.Code, w.Body.String())
 	}
 	// Re-fetch from DB to confirm.
-	got, _ := s.db().PollingTargets().Get(context.Background(), target.ID)
+	got, _ := s.db().PollingTargets().Get(context.Background(), testClientID, target.ID)
 	if got.Name != "new-name" || got.IPAddress != "10.0.0.99" {
 		t.Errorf("update didn't persist: %+v", got)
 	}
@@ -215,7 +239,7 @@ func TestHandlePollingTargetByID_PUTUnknownReturns404(t *testing.T) {
 		"name":      "x",
 		"ipAddress": "10.0.0.1",
 	})
-	req := httptest.NewRequest(http.MethodPut, APIVersionPrefix+"/polling-targets/no-such-id", buf)
+	req := withClaim(httptest.NewRequest(http.MethodPut, APIVersionPrefix+"/polling-targets/no-such-id", buf))
 	req.Header.Set("Content-Type", "application/json")
 	w := httptest.NewRecorder()
 	s.handlePollingTargetByID(w, req)
@@ -228,21 +252,25 @@ func TestHandlePollingTargetByID_DELETERemoves(t *testing.T) {
 	s := newPollingTargetsTestServer(t)
 	target := seedTarget(t, s.db(), "to-delete")
 
-	req := httptest.NewRequest(http.MethodDelete, APIVersionPrefix+"/polling-targets/"+target.ID, http.NoBody)
+	req := withClaim(
+		httptest.NewRequest(http.MethodDelete, APIVersionPrefix+"/polling-targets/"+target.ID, http.NoBody),
+	)
 	w := httptest.NewRecorder()
 	s.handlePollingTargetByID(w, req)
 	if w.Code != http.StatusNoContent {
 		t.Errorf("status = %d, want 204", w.Code)
 	}
 
-	if _, err := s.db().PollingTargets().Get(context.Background(), target.ID); err == nil {
+	if _, err := s.db().PollingTargets().Get(context.Background(), testClientID, target.ID); err == nil {
 		t.Error("target should be deleted from DB")
 	}
 }
 
 func TestHandlePollingTargetByID_DELETEUnknownReturns404(t *testing.T) {
 	s := newPollingTargetsTestServer(t)
-	req := httptest.NewRequest(http.MethodDelete, APIVersionPrefix+"/polling-targets/no-such-id", http.NoBody)
+	req := withClaim(
+		httptest.NewRequest(http.MethodDelete, APIVersionPrefix+"/polling-targets/no-such-id", http.NoBody),
+	)
 	w := httptest.NewRecorder()
 	s.handlePollingTargetByID(w, req)
 	if w.Code != http.StatusNotFound {
@@ -253,7 +281,7 @@ func TestHandlePollingTargetByID_DELETEUnknownReturns404(t *testing.T) {
 func TestHandlePollingTargetByID_BadPathReturns400(t *testing.T) {
 	s := newPollingTargetsTestServer(t)
 	// trailing-slash-only path = empty id.
-	req := httptest.NewRequest(http.MethodGet, APIVersionPrefix+"/polling-targets/", http.NoBody)
+	req := withClaim(httptest.NewRequest(http.MethodGet, APIVersionPrefix+"/polling-targets/", http.NoBody))
 	w := httptest.NewRecorder()
 	s.handlePollingTargetByID(w, req)
 	if w.Code != http.StatusBadRequest {
@@ -264,7 +292,9 @@ func TestHandlePollingTargetByID_BadPathReturns400(t *testing.T) {
 func TestHandlePollingTargetByID_PATCHRejected(t *testing.T) {
 	s := newPollingTargetsTestServer(t)
 	target := seedTarget(t, s.db(), "r-1")
-	req := httptest.NewRequest(http.MethodPatch, APIVersionPrefix+"/polling-targets/"+target.ID, http.NoBody)
+	req := withClaim(
+		httptest.NewRequest(http.MethodPatch, APIVersionPrefix+"/polling-targets/"+target.ID, http.NoBody),
+	)
 	w := httptest.NewRecorder()
 	s.handlePollingTargetByID(w, req)
 	if w.Code != http.StatusMethodNotAllowed {

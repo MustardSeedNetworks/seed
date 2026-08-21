@@ -19,24 +19,45 @@ type PollingTargetRepository struct {
 	db *DB
 }
 
-// List returns all enabled polling targets for a client. Empty
-// clientID returns enabled targets across every client (useful for
-// the system-wide poller loop).
-func (r *PollingTargetRepository) List(ctx context.Context, clientID string) ([]*polling.Target, error) {
-	query := `
-		SELECT id, client_id, name, ip_address, snmp_version,
-			credentials_id, poll_interval_seconds, enabled, collector_chain,
-			last_polled_at, last_status, last_error, created_at, updated_at
-		FROM polling_targets
-		WHERE enabled = 1
-	`
-	args := []any{}
-	if clientID != "" {
-		query += " AND client_id = ?"
-		args = append(args, clientID)
-	}
-	query += " ORDER BY name ASC"
+// selectPollingTarget is the column list every read shares, so a schema change
+// cannot leave one query scanning a different shape from the others.
+const selectPollingTarget = `
+	SELECT id, client_id, name, ip_address, snmp_version,
+		credentials_id, poll_interval_seconds, enabled, collector_chain,
+		last_polled_at, last_status, last_error, created_at, updated_at
+	FROM polling_targets
+`
 
+// ListEnabled returns the enabled targets across every client. This is the
+// scheduler's seam and the only read that deliberately crosses tenants: the
+// poller runs on behalf of the system, not a caller. Management reads use
+// ListAll, which cannot cross a tenant boundary at all.
+func (r *PollingTargetRepository) ListEnabled(ctx context.Context) ([]*polling.Target, error) {
+	return r.queryTargets(ctx, selectPollingTarget+`
+		WHERE enabled = 1
+		ORDER BY name ASC
+	`)
+}
+
+// ListAll returns every target owned by clientID, enabled or not. Management
+// surfaces need the disabled ones — they are exactly what an operator came to
+// re-enable — which the scheduler's read hides. An empty clientID is an error
+// rather than "every client": the caller's tenant comes from its session
+// claim, and a missing claim is a bug, not a licence to read the fleet.
+func (r *PollingTargetRepository) ListAll(ctx context.Context, clientID string) ([]*polling.Target, error) {
+	if clientID == "" {
+		return nil, errors.New("polling_targets: client id required for ListAll")
+	}
+	return r.queryTargets(ctx, selectPollingTarget+`
+		WHERE client_id = ?
+		ORDER BY name ASC
+	`, clientID)
+}
+
+// queryTargets runs a select over the shared column list and scans every row.
+func (r *PollingTargetRepository) queryTargets(
+	ctx context.Context, query string, args ...any,
+) ([]*polling.Target, error) {
 	rows, err := r.db.Query(ctx, query, args...)
 	if err != nil {
 		return nil, fmt.Errorf("list polling_targets: %w", err)
@@ -57,14 +78,19 @@ func (r *PollingTargetRepository) List(ctx context.Context, clientID string) ([]
 	return out, nil
 }
 
-// Get returns one polling target by id.
-func (r *PollingTargetRepository) Get(ctx context.Context, id string) (*polling.Target, error) {
-	row := r.db.QueryRow(ctx, `
-		SELECT id, client_id, name, ip_address, snmp_version,
-			credentials_id, poll_interval_seconds, enabled, collector_chain,
-			last_polled_at, last_status, last_error, created_at, updated_at
-		FROM polling_targets WHERE id = ?
-	`, id)
+// Get returns one polling target owned by clientID. A target belonging to
+// another client is indistinguishable from one that does not exist — the
+// predicate is in the WHERE clause, not in a check after the read, so there is
+// no window in which the row is loaded before being rejected.
+func (r *PollingTargetRepository) Get(
+	ctx context.Context, clientID, id string,
+) (*polling.Target, error) {
+	if clientID == "" {
+		return nil, errors.New("polling_targets: client id required for Get")
+	}
+	row := r.db.QueryRow(ctx, selectPollingTarget+`
+		WHERE id = ? AND client_id = ?
+	`, id, clientID)
 	return scanPollingTarget(row.Scan)
 }
 
@@ -83,7 +109,10 @@ func (r *PollingTargetRepository) Create(ctx context.Context, t *polling.Target)
 		t.ID = "tgt-" + randomID()
 	}
 	if t.ClientID == "" {
-		t.ClientID = "default"
+		// No default. The owning client comes from the caller's session claim;
+		// substituting one here is how a target ends up in a tenant nobody
+		// chose.
+		return errors.New("polling_targets: ClientID required")
 	}
 	if t.SNMPVersion == "" {
 		t.SNMPVersion = "v2c"
@@ -123,15 +152,20 @@ func (r *PollingTargetRepository) Create(ctx context.Context, t *polling.Target)
 	return nil
 }
 
-// Update modifies the writable fields (name, ip, snmp version, poll
+// Update modifies the writable fields of a target owned by clientID (name, ip, snmp version, poll
 // interval, enabled, collector chain, credentials_id). Read-only
 // audit columns (created_at, last_polled_at, last_status, last_error)
 // stay untouched. Returns [polling.ErrTargetNotFound] when id is
 // absent — distinguishes a missing target from a SQL-level
 // [sql.ErrNoRows] surface so handlers can map it to HTTP 404.
-func (r *PollingTargetRepository) Update(ctx context.Context, t *polling.Target) error {
+func (r *PollingTargetRepository) Update(
+	ctx context.Context, clientID string, t *polling.Target,
+) error {
 	if t.ID == "" {
 		return errors.New("polling_targets: ID required for Update")
+	}
+	if clientID == "" {
+		return errors.New("polling_targets: client id required for Update")
 	}
 	chainJSON, _ := json.Marshal(t.CollectorChain)
 	enabled := 0
@@ -143,13 +177,13 @@ func (r *PollingTargetRepository) Update(ctx context.Context, t *polling.Target)
 			name = ?, ip_address = ?, snmp_version = ?,
 			credentials_id = ?, poll_interval_seconds = ?, enabled = ?,
 			collector_chain = ?, updated_at = ?
-		WHERE id = ?
+		WHERE id = ? AND client_id = ?
 	`,
 		t.Name, t.IPAddress, t.SNMPVersion,
 		toNullString(t.CredentialsID),
 		t.PollIntervalSec, enabled, string(chainJSON),
 		time.Now().UTC().Format(time.RFC3339Nano),
-		t.ID,
+		t.ID, clientID,
 	)
 	if err != nil {
 		return fmt.Errorf("update polling_target: %w", err)
@@ -161,14 +195,18 @@ func (r *PollingTargetRepository) Update(ctx context.Context, t *polling.Target)
 	return nil
 }
 
-// Delete removes a polling target by id. Cascades via foreign-key
+// Delete removes a polling target owned by clientID. Cascades via foreign-key
 // chain on dependent rows (none today). Returns
 // polling.ErrTargetNotFound when no row matched.
-func (r *PollingTargetRepository) Delete(ctx context.Context, id string) error {
+func (r *PollingTargetRepository) Delete(ctx context.Context, clientID, id string) error {
 	if id == "" {
 		return errors.New("polling_targets: ID required for Delete")
 	}
-	res, err := r.db.Exec(ctx, `DELETE FROM polling_targets WHERE id = ?`, id)
+	if clientID == "" {
+		return errors.New("polling_targets: client id required for Delete")
+	}
+	res, err := r.db.Exec(ctx,
+		`DELETE FROM polling_targets WHERE id = ? AND client_id = ?`, id, clientID)
 	if err != nil {
 		return fmt.Errorf("delete polling_target: %w", err)
 	}
