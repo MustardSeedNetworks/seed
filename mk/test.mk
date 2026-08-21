@@ -10,13 +10,20 @@
 # =============================================================================
 
 .PHONY: test test-all test-backend test-backend-quiet test-fast test-frontend test-frontend-quiet \
-        test-e2e test-e2e-ui test-e2e-install test-coverage
+        test-e2e test-e2e-ui test-e2e-install test-coverage check-stale-tests
 
 # =============================================================================
 # Main Test Targets
 # =============================================================================
 
-test: ## Run unit tests (backend + frontend)
+# check-stale-tests refuses to start while orphaned test binaries from an
+# earlier run are still holding the machine. Go's -test.timeout cannot kill a
+# binary stuck in a cgo call, so they accumulate silently and make every
+# subsequent timing meaningless — see the script for what that cost once.
+check-stale-tests:
+	@./scripts/check-stale-tests.sh
+
+test: check-stale-tests ## Run unit tests (backend + frontend)
 	@printf "$(BOLD)$(CYAN)┌─ Unit Tests ─────────────────────────────────────────────────────────────────┐$(RESET)\n"
 	@printf "$(CYAN)│$(RESET) $(BOLD)[1/2]$(RESET) Backend (Go)                                                          $(CYAN)│$(RESET)\n"
 	$(call timer-start,test-backend)
@@ -28,7 +35,7 @@ test: ## Run unit tests (backend + frontend)
 	$(call timer-end,test-frontend,Frontend tests)
 	@printf "$(CYAN)└──────────────────────────────────────────────────────────────────────────────┘$(RESET)\n"
 
-test-all: ## Run ALL tests (unit + E2E)
+test-all: check-stale-tests ## Run ALL tests (unit + E2E)
 	@printf "$(BOLD)$(CYAN)┌─ Full Test Suite ────────────────────────────────────────────────────────────┐$(RESET)\n"
 	@printf "$(CYAN)│$(RESET) $(BOLD)[1/3]$(RESET) Backend unit tests                                                    $(CYAN)│$(RESET)\n"
 	$(call timer-start,test-backend)
@@ -48,7 +55,7 @@ test-all: ## Run ALL tests (unit + E2E)
 # Backend Tests
 # =============================================================================
 
-test-backend: ## Run Go tests with progress
+test-backend: check-stale-tests ## Run Go tests with progress
 	@printf "\n$(BOLD)🧪 Running backend tests...$(RESET)\n"
 	@PKGS=$$(go list ./... | grep -v '/cmd/' | grep -v '/ui$$' | grep -v '/i18n$$' | grep -v '/mcp$$' | grep -v '/oauth$$'); \
 	PKG_COUNT=$$(echo "$$PKGS" | wc -l | tr -d ' '); \
@@ -85,7 +92,7 @@ test-backend-quiet:
 # iterating, at the cost of the race detector and the real-capture package
 # (both still covered by `make test` and CI). The cgo-tagged pcap package has no
 # buildable files under CGO=0, so it is excluded explicitly.
-test-fast: ## Fast libpcap-free backend tests (CGO=0, null capture, no -race)
+test-fast: check-stale-tests ## Fast libpcap-free backend tests (CGO=0, null capture, no -race)
 	@printf "\n$(BOLD)🏃 Fast backend tests (CGO=0, no libpcap, no -race)...$(RESET)\n"
 	@PKGS=$$(go list ./... 2>/dev/null | grep -v '/cmd/' | grep -v '/ui$$' | grep -v '/i18n$$' | grep -v '/oauth$$' | grep -v '/capture/pcap$$'); \
 	CGO_ENABLED=0 go test $$PKGS
