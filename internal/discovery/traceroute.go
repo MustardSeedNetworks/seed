@@ -139,10 +139,8 @@ func (t *Tracer) setHopFromPeer(hop *TracerouteHop, peer net.Addr) {
 
 // isConnectionRefused checks if an error indicates a TCP connection was refused.
 func (*Tracer) isConnectionRefused(err error) bool {
-	var opErr *net.OpError
-	if errors.As(err, &opErr) {
-		var sysErr *syscall.Errno
-		if errors.As(opErr.Err, &sysErr) {
+	if opErr, ok := errors.AsType[*net.OpError](err); ok {
+		if sysErr, sysOK := errors.AsType[*syscall.Errno](opErr.Err); sysOK {
 			return *sysErr == syscall.ECONNREFUSED
 		}
 	}

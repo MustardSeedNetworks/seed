@@ -83,8 +83,7 @@ func (v *SchemaValidator) ValidateConfig(cfg *Config) []ValidationError {
 	var validationErrs []ValidationError
 	// Parse the validation error to extract path and message
 	// The jsonschema library returns structured errors
-	var validationErr *jsonschema.ValidationError
-	if errors.As(err, &validationErr) {
+	if validationErr, ok := errors.AsType[*jsonschema.ValidationError](err); ok {
 		validationErrs = extractValidationErrors(validationErr)
 	} else {
 		validationErrs = []ValidationError{{Path: "", Message: err.Error()}}

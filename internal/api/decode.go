@@ -33,8 +33,7 @@ func decodeJSONStrict(w http.ResponseWriter, r *http.Request, dst any, maxSize i
 
 	if err := decoder.Decode(dst); err != nil {
 		logger := logging.FromContext(r.Context())
-		var maxBytesErr *http.MaxBytesError
-		if errors.As(err, &maxBytesErr) {
+		if _, ok := errors.AsType[*http.MaxBytesError](err); ok {
 			sendErrorResponseWithDetails(
 				w, logger,
 				http.StatusRequestEntityTooLarge,
@@ -134,9 +133,8 @@ func decodeJSONStrictLocalizedWith(
 	decoder.DisallowUnknownFields()
 
 	if err := decoder.Decode(dst); err != nil {
-		var maxBytesErr *http.MaxBytesError
 		status := http.StatusBadRequest
-		if errors.As(err, &maxBytesErr) {
+		if _, ok := errors.AsType[*http.MaxBytesError](err); ok {
 			status = http.StatusRequestEntityTooLarge
 		}
 		attrs := append([]any{"error", err}, extraAttrs...)
