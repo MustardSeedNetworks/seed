@@ -12,7 +12,7 @@ func TestSeverityRankOrdering(t *testing.T) {
 				ordered[i-1], ordered[i-1].rank(), ordered[i], ordered[i].rank())
 		}
 	}
-	if (Severity("nope")).rank() != rankNone {
+	if Severity("nope").rank() != rankNone {
 		t.Errorf("unknown severity rank = %d, want rankNone(%d)", Severity("nope").rank(), rankNone)
 	}
 }
@@ -24,7 +24,7 @@ func TestSeverityValid(t *testing.T) {
 			t.Errorf("%q should be valid", s)
 		}
 	}
-	if (Severity("nope")).valid() {
+	if Severity("nope").valid() {
 		t.Error(`"nope" should be invalid`)
 	}
 }

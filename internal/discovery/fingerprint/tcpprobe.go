@@ -114,8 +114,7 @@ func analyzeDialError(err error, result *TCPProbeResult) {
 	if !errors.As(err, &opErr) {
 		return
 	}
-	var syscallErr *syscall.Errno
-	if errors.As(opErr.Err, &syscallErr) {
+	if syscallErr, ok := errors.AsType[*syscall.Errno](opErr.Err); ok {
 		//nolint:exhaustive // syscall.Errno has too many cases, default handles the rest
 		switch *syscallErr {
 		case syscall.ECONNREFUSED:

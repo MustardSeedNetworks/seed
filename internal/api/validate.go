@@ -54,9 +54,8 @@ func validateStruct(
 ) bool {
 	if err := dtoValidator.Struct(dto); err != nil {
 		logger := logging.FromContext(r.Context())
-		var verrs validator.ValidationErrors
 		details := ""
-		if errors.As(err, &verrs) {
+		if verrs, ok := errors.AsType[validator.ValidationErrors](err); ok {
 			details = formatValidationErrors(verrs)
 		}
 		logger.WarnContext(

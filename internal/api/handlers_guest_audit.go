@@ -29,8 +29,7 @@ func (s *Server) writeGuestAuditError(w http.ResponseWriter, r *http.Request, er
 	logger := logging.FromContext(r.Context())
 	localizer := i18n.FromRequest(r)
 
-	var vErr secsettings.GuestAuditValidationError
-	if errors.As(err, &vErr) {
+	if vErr, ok := errors.AsType[secsettings.GuestAuditValidationError](err); ok {
 		msgKey := "errors.guestAudit.invalidTarget"
 		detail := vErr.Value
 		if vErr.Kind == "port" {

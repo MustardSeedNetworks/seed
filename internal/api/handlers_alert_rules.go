@@ -127,8 +127,7 @@ func (s *Server) createAlertRule(w http.ResponseWriter, r *http.Request) {
 	}
 	rule, createErr := s.alertRules.Create(r.Context(), inputToRule(in))
 	if createErr != nil {
-		var ve *rules.ValidationError
-		if errors.As(createErr, &ve) {
+		if ve, ok := errors.AsType[*rules.ValidationError](createErr); ok {
 			http.Error(w, ve.Msg, http.StatusBadRequest)
 			return
 		}

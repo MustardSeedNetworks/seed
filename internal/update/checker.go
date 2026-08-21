@@ -207,8 +207,8 @@ func compareVersions(v1, v2 string) int {
 	v2 = strings.TrimPrefix(v2, "v")
 
 	// Remove any suffix like -dirty, -alpha, etc for comparison
-	v1Base := strings.Split(v1, "-")[0]
-	v2Base := strings.Split(v2, "-")[0]
+	v1Base, _, _ := strings.Cut(v1, "-")
+	v2Base, _, _ := strings.Cut(v2, "-")
 
 	parts1 := strings.Split(v1Base, ".")
 	parts2 := strings.Split(v2Base, ".")
