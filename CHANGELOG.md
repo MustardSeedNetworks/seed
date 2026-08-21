@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.213.6](https://github.com/MustardSeedNetworks/seed/compare/v0.213.5...v0.213.6) (2026-08-21)
+
+
+### Code Refactoring
+
+* **database:** canonicalize SNMP device credentials ([#1998](https://github.com/MustardSeedNetworks/seed/issues/1998)) ([ad11d26](https://github.com/MustardSeedNetworks/seed/commit/ad11d260ed5ab938b67c2390eafd4884e220c874))
+
+
+### Continuous Integration
+
+* refuse to start tests while orphaned test binaries are running ([#1997](https://github.com/MustardSeedNetworks/seed/issues/1997)) ([c39a7ae](https://github.com/MustardSeedNetworks/seed/commit/c39a7ae170c5ce01747b34568879803d46a5e076))
+
 ## [0.213.5](https://github.com/MustardSeedNetworks/seed/compare/v0.213.4...v0.213.5) (2026-08-21)
 
 
