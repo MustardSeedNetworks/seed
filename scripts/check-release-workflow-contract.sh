@@ -50,7 +50,7 @@ require "if: \${{ !cancelled() && ((inputs.provenance_only && needs.goreleaser-b
 require "if: \${{ !inputs.dry_run && !inputs.provenance_only }}"
 require 'IPERF3_VERSION: "3.21"'
 require 'IPERF3_SHA256: "656e4405ebd620121de7ceca3eaf43a88f79ea1b857d041a6a0b1314801acdd8"'
-require 'image: goreleaser/goreleaser-cross:v1.26.5@sha256:0cf2b7f757b40397d2bef5423adb88d0ac63899e88a9f0c4bbb370d3fb7b2fb5'
+require 'image: goreleaser/goreleaser-cross:v1.27.0@sha256:3ce3506ee9179c4122ba0b5dc13ab564ff259fb65f45bfad005ddd5e4a3d326d'
 require 'SYFT_VERSION: "1.51.0"'
 require 'SYFT_SHA256: "2a2e837a2c8d59ec9af5472ee22d3b04ee463c4e44476ecf993fd1e5ab6ebc7f"'
 require 'COSIGN_VERSION: "v3.1.3"'
