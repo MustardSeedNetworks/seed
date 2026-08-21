@@ -5,6 +5,21 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.213.7](https://github.com/MustardSeedNetworks/seed/compare/v0.213.6...v0.213.7) (2026-08-21)
+
+
+### Bug Fixes
+
+* **deps:** update dependency @hookform/resolvers to v5.9.1 ([#1987](https://github.com/MustardSeedNetworks/seed/issues/1987)) ([f00df75](https://github.com/MustardSeedNetworks/seed/commit/f00df75e328e1a7720880cf0a4ceaa26fd84e340))
+* **deps:** update dependency immer to v11.1.17 ([#1965](https://github.com/MustardSeedNetworks/seed/issues/1965)) ([4588564](https://github.com/MustardSeedNetworks/seed/commit/4588564ab4647e06b1d0dc811b7b6ad9a286f935))
+* **deps:** update dependency lucide-react to v1.32.0 ([#2000](https://github.com/MustardSeedNetworks/seed/issues/2000)) ([ee90789](https://github.com/MustardSeedNetworks/seed/commit/ee9078948d932f64f6838c67d0af3b91a0b46519))
+
+
+### Miscellaneous
+
+* **deps:** update module honnef.co/go/tools to v0.8.1 ([#2004](https://github.com/MustardSeedNetworks/seed/issues/2004)) ([74ae649](https://github.com/MustardSeedNetworks/seed/commit/74ae64946351544c903ec509a1be23d0121ce4f6))
+* **deps:** update storybook monorepo to v10.5.9 ([#1855](https://github.com/MustardSeedNetworks/seed/issues/1855)) ([7e0a1b5](https://github.com/MustardSeedNetworks/seed/commit/7e0a1b5d291495969762f91fed9349302ba7a8e2))
+
 ## [0.213.6](https://github.com/MustardSeedNetworks/seed/compare/v0.213.5...v0.213.6) (2026-08-21)
 
 
