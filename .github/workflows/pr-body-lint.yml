@@ -28,14 +28,23 @@ jobs:
           script: |
             const body = context.payload.pull_request.body || "";
             const errors = [];
+            // Headings are matched on their own line. `includes` would accept a
+            // heading that only appears inside a fenced code block, which is a
+            // description of a PR body rather than one.
             const requiredHeadings = ["## Summary", "## Linked Issue", "## Testing Evidence", "## Security and Release Checklist"];
             for (const heading of requiredHeadings) {
-              if (!body.includes(heading)) errors.push(`Missing ${heading}`);
+              if (!new RegExp(`^${heading}\\s*$`, "m").test(body)) errors.push(`Missing ${heading}`);
             }
             if (!/(Fixes|Closes|Resolves|Related to)\s+#\d+/i.test(body)) {
               errors.push("Link the tracked issue with Fixes #123, Closes #123, Resolves #123, or Related to #123.");
             }
-            const testing = body.split("## Testing Evidence")[1]?.split("## ")[0] || "";
+            // Slice the section on line-anchored level-2 headings. Splitting on
+            // a bare "## " matched it anywhere, including inside a fenced block:
+            // an evidence block containing "### RED" was cut mid-fence, so the
+            // regex below saw an unterminated code block and reported missing
+            // evidence on a PR that had two full command transcripts.
+            const afterHeading = body.split(/^## Testing Evidence\s*$/m)[1] ?? "";
+            const testing = afterHeading.split(/^## /m)[0];
             if (!/```[\s\S]*\S[\s\S]*```/.test(testing) && !/not run/i.test(testing)) {
               errors.push("Testing Evidence must include command output or an explicit not-run reason.");
             }
