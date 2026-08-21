@@ -141,7 +141,7 @@ CREATE INDEX idx_clients_slug ON clients(slug);
 CREATE INDEX idx_device_credentials_client ON device_credentials(client_id);
 
 -- index: idx_device_credentials_name
-CREATE INDEX idx_device_credentials_name ON device_credentials(name);
+CREATE INDEX idx_device_credentials_name   ON device_credentials(name);
 
 -- index: idx_device_interfaces_device
 CREATE INDEX idx_device_interfaces_device ON device_interfaces(device_id);
@@ -399,13 +399,13 @@ CREATE INDEX idx_pipeline_runs_started ON pipeline_runs(started_at);
 CREATE INDEX idx_pipeline_runs_status ON pipeline_runs(status);
 
 -- index: idx_polling_targets_client
-CREATE INDEX idx_polling_targets_client ON polling_targets(client_id);
+CREATE INDEX idx_polling_targets_client  ON polling_targets(client_id);
 
 -- index: idx_polling_targets_enabled
 CREATE INDEX idx_polling_targets_enabled ON polling_targets(enabled);
 
 -- index: idx_polling_targets_ip
-CREATE INDEX idx_polling_targets_ip ON polling_targets(ip_address);
+CREATE INDEX idx_polling_targets_ip      ON polling_targets(ip_address);
 
 -- index: idx_probe_results_client
 CREATE INDEX idx_probe_results_client ON probe_results(client_id);
@@ -853,18 +853,64 @@ CREATE TABLE clients (
 			) STRICT;
 
 -- table: device_credentials
-CREATE TABLE device_credentials (
-				id TEXT PRIMARY KEY,
-				name TEXT NOT NULL,
+CREATE TABLE "device_credentials" (
+				id                 TEXT NOT NULL,
+				client_id          TEXT NOT NULL DEFAULT 'default' REFERENCES clients(id),
+				name               TEXT NOT NULL,
+				kind               TEXT NOT NULL CHECK (kind IN ('v2c','v3')),
+				security_level     TEXT CHECK (security_level IS NULL OR security_level IN ('noAuthNoPriv','authNoPriv','authPriv')),
 				snmp_community_enc BLOB,
-				snmp_v3_user TEXT,
-				snmp_v3_auth_enc BLOB,
-				snmp_v3_priv_enc BLOB,
-				snmp_v3_auth_proto TEXT,
-				snmp_v3_priv_proto TEXT,
-				created_at TEXT NOT NULL,
-				updated_at TEXT NOT NULL
-			, client_id TEXT NOT NULL DEFAULT 'default' REFERENCES clients(id)) STRICT;
+				snmp_v3_user       TEXT,
+				snmp_v3_auth_enc   BLOB,
+				snmp_v3_priv_enc   BLOB,
+				snmp_v3_auth_proto TEXT CHECK (snmp_v3_auth_proto IS NULL OR snmp_v3_auth_proto IN ('SHA','SHA224','SHA256','SHA384','SHA512')),
+				snmp_v3_priv_proto TEXT CHECK (snmp_v3_priv_proto IS NULL OR snmp_v3_priv_proto IN ('DES','AES','AES192','AES256')),
+				created_at         TEXT NOT NULL,
+				updated_at         TEXT NOT NULL,
+				PRIMARY KEY (id),
+				UNIQUE (client_id, id),
+
+				-- Every stored secret is versioned ciphertext. The legacy
+				-- unversioned "enc:…" fails this too, on purpose: the key that
+				-- produced it is unknown, so it cannot be rotated.
+				CHECK (snmp_community_enc IS NULL OR CAST(snmp_community_enc AS TEXT) GLOB 'enc:v[0-9]*:*'),
+				CHECK (snmp_v3_auth_enc   IS NULL OR CAST(snmp_v3_auth_enc   AS TEXT) GLOB 'enc:v[0-9]*:*'),
+				CHECK (snmp_v3_priv_enc   IS NULL OR CAST(snmp_v3_priv_enc   AS TEXT) GLOB 'enc:v[0-9]*:*'),
+
+				-- v2c is a community string and nothing else.
+				CHECK (kind <> 'v2c' OR (
+					snmp_community_enc IS NOT NULL
+					AND security_level IS NULL
+					AND snmp_v3_user     IS NULL
+					AND snmp_v3_auth_enc IS NULL
+					AND snmp_v3_priv_enc IS NULL
+					AND snmp_v3_auth_proto IS NULL
+					AND snmp_v3_priv_proto IS NULL
+				)),
+
+				-- v3 is a user plus a security level, and no community.
+				CHECK (kind <> 'v3' OR (
+					snmp_community_enc IS NULL
+					AND snmp_v3_user IS NOT NULL AND snmp_v3_user <> ''
+					AND security_level IS NOT NULL
+				)),
+
+				-- The security level and the secrets present cannot disagree,
+				-- which is what makes "privacy without authentication"
+				-- unrepresentable rather than merely discouraged.
+				CHECK (security_level <> 'noAuthNoPriv' OR (
+					snmp_v3_auth_enc IS NULL AND snmp_v3_priv_enc IS NULL
+					AND snmp_v3_auth_proto IS NULL AND snmp_v3_priv_proto IS NULL
+				)),
+				CHECK (security_level <> 'authNoPriv' OR (
+					snmp_v3_auth_enc IS NOT NULL AND snmp_v3_auth_proto IS NOT NULL
+					AND snmp_v3_priv_enc IS NULL AND snmp_v3_priv_proto IS NULL
+				)),
+				CHECK (security_level <> 'authPriv' OR (
+					snmp_v3_auth_enc IS NOT NULL AND snmp_v3_auth_proto IS NOT NULL
+					AND snmp_v3_priv_enc IS NOT NULL AND snmp_v3_priv_proto IS NOT NULL
+				))
+			) STRICT;
 
 -- table: device_interfaces
 CREATE TABLE device_interfaces (
@@ -1205,7 +1251,7 @@ CREATE TABLE pipeline_runs (
 			) STRICT;
 
 -- table: polling_targets
-CREATE TABLE polling_targets (
+CREATE TABLE "polling_targets" (
 				id TEXT PRIMARY KEY,
 				name TEXT NOT NULL,
 				ip_address TEXT NOT NULL,
@@ -1217,9 +1263,12 @@ CREATE TABLE polling_targets (
 				last_status TEXT,
 				last_error TEXT,
 				created_at TEXT NOT NULL,
-				updated_at TEXT NOT NULL
-			, client_id TEXT NOT NULL DEFAULT 'default' REFERENCES clients(id), collector_chain TEXT NOT NULL DEFAULT '["sys_info","if_table","lldp","arp","fdb"]',
-				FOREIGN KEY (credentials_id) REFERENCES device_credentials(id) ON DELETE SET NULL) STRICT;
+				updated_at TEXT NOT NULL,
+				client_id TEXT NOT NULL DEFAULT 'default' REFERENCES clients(id),
+				collector_chain TEXT NOT NULL DEFAULT '["sys_info","if_table","lldp","arp","fdb"]',
+				FOREIGN KEY (client_id, credentials_id)
+					REFERENCES device_credentials(client_id, id) ON DELETE RESTRICT
+			) STRICT;
 
 -- table: probe_results
 CREATE TABLE probe_results (

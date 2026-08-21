@@ -19,10 +19,9 @@ func insertCredential(t *testing.T, db *database.DB, id, clientID string) {
 	now := time.Now().UTC().Format(time.RFC3339)
 	_, err := db.Exec(context.Background(), `
 		INSERT INTO device_credentials
-			(id, client_id, name, snmp_community_enc, snmp_v3_user,
-			 snmp_v3_auth_proto, snmp_v3_priv_proto, created_at, updated_at)
-		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-	`, id, clientID, "cred-"+id, []byte("enc:v1:community"), "operator", "SHA", "AES", now, now)
+			(id, client_id, name, kind, snmp_community_enc, created_at, updated_at)
+		VALUES (?, ?, ?, 'v2c', ?, ?, ?)
+	`, id, clientID, "cred-"+id, []byte("enc:v1:community"), now, now)
 	require.NoError(t, err)
 }
 
@@ -38,7 +37,12 @@ func TestDeviceCredentialsGetReturnsCiphertextForTheOwningClient(t *testing.T) {
 	require.Equal(t, "cred-1", got.ID)
 	require.Equal(t, database.DefaultClientID, got.ClientID)
 	require.Equal(t, "enc:v1:community", got.SNMPCommunityCT)
-	require.Equal(t, "operator", got.SNMPv3User)
+	// The fixture used to carry a v3 user alongside the community string. The
+	// canonical schema has no name for that combination and rejects it, so the
+	// v2c fixture now asserts what a v2c credential actually is.
+	require.Equal(t, polling.CredentialKindV2c, got.Kind)
+	require.Empty(t, got.SNMPv3User)
+	require.Empty(t, got.SecurityLevel)
 }
 
 // TestDeviceCredentialsGetRefusesAnotherClientsRow is the invariant
