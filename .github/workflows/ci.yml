@@ -173,7 +173,7 @@ jobs:
       - name: Run golangci-lint
         uses: golangci/golangci-lint-action@ba0d7d2ec06a0ea1cb5fa41b2e4a3ab91d21278a # v9.3.0
         with:
-          version: v2.12.2
+          version: v2.13.1
           # Full-tree lint verified clean on 2026-08-14. Keep CI aligned with
           # the repository-wide zero-warning policy.
           args: --timeout=5m
@@ -448,7 +448,7 @@ jobs:
           args: "-fmt sarif -out gosec-results.sarif ./..."
 
       - name: Upload gosec results
-        uses: github/codeql-action/upload-sarif@ff2f1c621b7f889edc0d3c761ac2e6a3f8cdb0dd # v4.37.7
+        uses: github/codeql-action/upload-sarif@db488ddef3bf6cb639b32c2e9a7c0a7ea8271d28 # v4.37.8
         if: always() && hashFiles('gosec-results.sarif') != ''
         continue-on-error: true
         with:
@@ -495,7 +495,7 @@ jobs:
           exit-code: "0"
 
       - name: Upload Trivy results
-        uses: github/codeql-action/upload-sarif@ff2f1c621b7f889edc0d3c761ac2e6a3f8cdb0dd # v4.37.7
+        uses: github/codeql-action/upload-sarif@db488ddef3bf6cb639b32c2e9a7c0a7ea8271d28 # v4.37.8
         if: always() && hashFiles('trivy-results.sarif') != ''
         continue-on-error: true
         with:
@@ -539,7 +539,7 @@ jobs:
   # Defined once in MustardSeedNetworks/.github (fleet-shared); ci-complete
   # still needs: [semgrep]. Edit the pinned version / config policy there.
   semgrep:
-    uses: MustardSeedNetworks/.github/.github/workflows/semgrep.yml@762b756e6fb5803443b9bcfdba03b88596c18e04 # v1.0.0
+    uses: MustardSeedNetworks/.github/.github/workflows/semgrep.yml@37513d7fbaacf4a7adaab1ac1514f021115868d1 # v1.4.0
     permissions:
       contents: read
 
@@ -551,7 +551,7 @@ jobs:
   # Defined once in MustardSeedNetworks/.github (fleet-shared); ci-complete
   # still needs: [ci-conformance].
   ci-conformance:
-    uses: MustardSeedNetworks/.github/.github/workflows/ci-conformance.yml@20eb29355b0448c791677c167164282da49d130f # v1.3.0
+    uses: MustardSeedNetworks/.github/.github/workflows/ci-conformance.yml@37513d7fbaacf4a7adaab1ac1514f021115868d1 # v1.4.0
     permissions:
       contents: read
 
