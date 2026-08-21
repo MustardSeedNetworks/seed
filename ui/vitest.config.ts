@@ -34,11 +34,19 @@
  */
 
 import { fileURLToPath, URL } from 'node:url';
-import react from '@vitejs/plugin-react';
+import babel from '@rolldown/plugin-babel';
+import react, { reactCompilerPreset } from '@vitejs/plugin-react';
 import { defineConfig } from 'vitest/config';
 
 export default defineConfig({
-  plugins: [react()],
+  plugins: [
+    react(),
+    // The React Compiler, matching vite.config.ts. Without it the suite
+    // exercises un-compiled components while the shipped bundle is compiled —
+    // so a memo the compiler subsumes looks required here, and a compiler
+    // regression could never fail a test.
+    babel({ presets: [reactCompilerPreset()] }),
+  ],
   resolve: {
     alias: {
       '@': fileURLToPath(new URL('./src', import.meta.url)),
