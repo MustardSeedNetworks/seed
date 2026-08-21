@@ -527,6 +527,9 @@ CREATE INDEX idx_topology_target_nodes_node ON topology_target_nodes(node_id);
 -- index: idx_users_active
 CREATE INDEX idx_users_active               ON users(is_active);
 
+-- index: idx_users_client
+CREATE INDEX idx_users_client               ON users(client_id);
+
 -- index: idx_users_email
 CREATE INDEX idx_users_email                ON users(email);
 
@@ -1447,6 +1450,7 @@ CREATE TABLE "users" (
 				external_id     TEXT,
 				email           TEXT,
 				display_name    TEXT,
+				client_id       TEXT    NOT NULL DEFAULT 'default' REFERENCES clients(id),
 				created_at      TEXT    NOT NULL,
 				updated_at      TEXT    NOT NULL,
 				UNIQUE (auth_provider, external_id)

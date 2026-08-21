@@ -248,7 +248,7 @@ func TestAPITokenMiddlewareResolvesValidToken(t *testing.T) {
 	next := http.HandlerFunc(func(_ http.ResponseWriter, r *http.Request) {
 		capturedUser = r.Header.Get("X-Username")
 	})
-	mw := apiTokenMiddleware(s.apiTokens, next)
+	mw := apiTokenMiddleware(s.apiTokens, s.resolveClientID, next)
 
 	req := httptest.NewRequest(http.MethodGet, APIVersionPrefix+"/anything", http.NoBody)
 	req.Header.Set("Authorization", "Bearer "+plaintext)
@@ -266,7 +266,7 @@ func TestAPITokenMiddlewareRejectsBadToken(t *testing.T) {
 
 	called := false
 	next := http.HandlerFunc(func(_ http.ResponseWriter, _ *http.Request) { called = true })
-	mw := apiTokenMiddleware(s.apiTokens, next)
+	mw := apiTokenMiddleware(s.apiTokens, s.resolveClientID, next)
 
 	req := httptest.NewRequest(http.MethodGet, APIVersionPrefix+"/anything", http.NoBody)
 	req.Header.Set("Authorization", "Bearer "+APITokenPrefix+"deadbeef")
@@ -287,7 +287,7 @@ func TestAPITokenMiddlewareFallsThroughForJWT(t *testing.T) {
 
 	called := false
 	next := http.HandlerFunc(func(_ http.ResponseWriter, _ *http.Request) { called = true })
-	mw := apiTokenMiddleware(s.apiTokens, next)
+	mw := apiTokenMiddleware(s.apiTokens, s.resolveClientID, next)
 
 	req := httptest.NewRequest(http.MethodGet, APIVersionPrefix+"/anything", http.NoBody)
 	req.Header.Set("Authorization", "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.fake.fake")
@@ -305,7 +305,7 @@ func TestAPITokenMiddlewareSkipsNonAPI(t *testing.T) {
 
 	called := false
 	next := http.HandlerFunc(func(_ http.ResponseWriter, _ *http.Request) { called = true })
-	mw := apiTokenMiddleware(s.apiTokens, next)
+	mw := apiTokenMiddleware(s.apiTokens, s.resolveClientID, next)
 
 	req := httptest.NewRequest(http.MethodGet, "/static/app.js", http.NoBody)
 	req.Header.Set("Authorization", "Bearer "+APITokenPrefix+"anything")

@@ -48,6 +48,11 @@ func (a *UserStoreAdapter) GetTokenVersion(ctx context.Context, username string)
 	return a.db.GetTokenVersion(ctx, username)
 }
 
+// GetClientID returns the id of the client that owns a user.
+func (a *UserStoreAdapter) GetClientID(ctx context.Context, username string) (string, error) {
+	return a.db.GetClientID(ctx, username)
+}
+
 // UpdatePassword updates a user's password hash.
 func (a *UserStoreAdapter) UpdatePassword(ctx context.Context, username, hash string) error {
 	return a.db.UpdateUserPassword(ctx, username, hash)
