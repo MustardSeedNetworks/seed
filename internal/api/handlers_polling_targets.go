@@ -5,7 +5,7 @@ package api
 // tick (Enabled=true) and the chain reconcilers fold the resulting
 // observations into the topology graph.
 //
-//   GET    /api/v1/polling-targets         list (filter by ?client_id)
+//   GET    /api/v1/polling-targets         list (this session's client only)
 //   POST   /api/v1/polling-targets         create
 //   GET    /api/v1/polling-targets/{id}    fetch one
 //   PUT    /api/v1/polling-targets/{id}    full update
@@ -13,6 +13,12 @@ package api
 //
 // List is read-only; the mutating routes go through writeGated so
 // only operator+ roles can add/edit/remove devices to poll.
+//
+// Every route is scoped to the client on the caller's session claim
+// (internal/auth/client_context.go). There is no ?client_id filter and no
+// clientId body field: the tenant is not something a caller gets to name, and
+// a request that carries no claim is refused rather than defaulted. A target
+// owned by another client is indistinguishable from one that does not exist.
 
 import (
 	"encoding/json"
@@ -20,6 +26,7 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/MustardSeedNetworks/seed/internal/auth"
 	"github.com/MustardSeedNetworks/seed/internal/logging"
 	"github.com/MustardSeedNetworks/seed/internal/polling"
 	"github.com/MustardSeedNetworks/seed/internal/polling/targets"
@@ -33,7 +40,6 @@ const (
 // pollingTargetInput is the request body for POST + PUT. Mirrors the
 // repo struct minus the audit columns the server fills in.
 type pollingTargetInput struct {
-	ClientID        string   `json:"clientId,omitempty"`
 	Name            string   `json:"name"`
 	IPAddress       string   `json:"ipAddress"`
 	SNMPVersion     string   `json:"snmpVersion,omitempty"`
@@ -77,9 +83,33 @@ func (s *Server) handlePollingTargetByID(w http.ResponseWriter, r *http.Request)
 	}
 }
 
+// callerClient resolves the session's client, or writes the denial and reports
+// false. A request that cannot be attributed to a tenant is unauthenticated,
+// not a request belonging to the default tenant.
+func (s *Server) callerClient(w http.ResponseWriter, r *http.Request) (string, bool) {
+	clientID, err := auth.ClientIDFromContext(r.Context())
+	if err != nil {
+		logging.FromContext(r.Context()).WarnContext(r.Context(),
+			"Request carries no client claim",
+			"event", "auth.unauthorized",
+			"client_ip", GetClientIP(r),
+			"path", r.URL.Path,
+			"method", r.Method,
+		)
+		writeAPITokenError(w, r, http.StatusUnauthorized, ErrCodeUnauthorized,
+			"Authentication required")
+		return "", false
+	}
+	return clientID, true
+}
+
 func (s *Server) listPollingTargets(w http.ResponseWriter, r *http.Request) {
 	logger := logging.FromContext(r.Context())
-	list, err := s.pollingTargets.List(r.Context(), r.URL.Query().Get("client_id"))
+	clientID, ok := s.callerClient(w, r)
+	if !ok {
+		return
+	}
+	list, err := s.pollingTargets.ListAll(r.Context(), clientID)
 	if err != nil {
 		logger.ErrorContext(r.Context(), "list polling_targets failed", "error", err)
 		writePollingError(w, err, "Failed to list polling targets")
@@ -93,7 +123,11 @@ func (s *Server) listPollingTargets(w http.ResponseWriter, r *http.Request) {
 
 func (s *Server) getPollingTarget(w http.ResponseWriter, r *http.Request, id string) {
 	logger := logging.FromContext(r.Context())
-	target, err := s.pollingTargets.Get(r.Context(), id)
+	clientID, ok := s.callerClient(w, r)
+	if !ok {
+		return
+	}
+	target, err := s.pollingTargets.Get(r.Context(), clientID, id)
 	if err != nil {
 		logger.ErrorContext(r.Context(), "get polling_target failed", "id", id, "error", err)
 		writePollingError(w, err, "Failed to load target")
@@ -104,12 +138,16 @@ func (s *Server) getPollingTarget(w http.ResponseWriter, r *http.Request, id str
 
 func (s *Server) createPollingTarget(w http.ResponseWriter, r *http.Request) {
 	logger := logging.FromContext(r.Context())
+	clientID, ok := s.callerClient(w, r)
+	if !ok {
+		return
+	}
 	in, err := decodePollingTargetInput(r)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
-	target := inputToTarget(in, "")
+	target := inputToTarget(in, "", clientID)
 	if createErr := s.pollingTargets.Create(r.Context(), target); createErr != nil {
 		logger.ErrorContext(r.Context(), "create polling_target failed", "error", createErr)
 		writePollingError(w, createErr, "Failed to create target")
@@ -121,12 +159,16 @@ func (s *Server) createPollingTarget(w http.ResponseWriter, r *http.Request) {
 
 func (s *Server) updatePollingTarget(w http.ResponseWriter, r *http.Request, id string) {
 	logger := logging.FromContext(r.Context())
+	clientID, ok := s.callerClient(w, r)
+	if !ok {
+		return
+	}
 	in, err := decodePollingTargetInput(r)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
-	current, updErr := s.pollingTargets.Update(r.Context(), inputToTarget(in, id))
+	current, updErr := s.pollingTargets.Update(r.Context(), clientID, inputToTarget(in, id, clientID))
 	if updErr != nil {
 		logger.ErrorContext(r.Context(), "update polling_target failed", "id", id, "error", updErr)
 		writePollingError(w, updErr, "Failed to update target")
@@ -137,7 +179,11 @@ func (s *Server) updatePollingTarget(w http.ResponseWriter, r *http.Request, id 
 
 func (s *Server) deletePollingTarget(w http.ResponseWriter, r *http.Request, id string) {
 	logger := logging.FromContext(r.Context())
-	if err := s.pollingTargets.Delete(r.Context(), id); err != nil {
+	clientID, ok := s.callerClient(w, r)
+	if !ok {
+		return
+	}
+	if err := s.pollingTargets.Delete(r.Context(), clientID, id); err != nil {
 		logger.ErrorContext(r.Context(), "delete polling_target failed", "id", id, "error", err)
 		writePollingError(w, err, "Failed to delete target")
 		return
@@ -185,11 +231,13 @@ func decodePollingTargetInput(r *http.Request) (*pollingTargetInput, error) {
 
 // inputToTarget maps the wire shape into the domain struct. id ==
 // "" means "let the repo generate one" (Create); a non-empty id is
-// used for Update.
-func inputToTarget(in *pollingTargetInput, id string) *polling.Target {
+// used for Update. The owning client comes from the caller's session, never
+// from the body — pollingTargetInput has no field for it, and the decoder
+// rejects unknown fields, so a request that tries to name a tenant gets a 400.
+func inputToTarget(in *pollingTargetInput, id, clientID string) *polling.Target {
 	return &polling.Target{
 		ID:              id,
-		ClientID:        in.ClientID,
+		ClientID:        clientID,
 		Name:            in.Name,
 		IPAddress:       in.IPAddress,
 		SNMPVersion:     in.SNMPVersion,

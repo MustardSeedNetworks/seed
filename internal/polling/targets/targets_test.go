@@ -16,7 +16,7 @@ type fakeRepo struct {
 
 func newFakeRepo() *fakeRepo { return &fakeRepo{store: map[string]*polling.Target{}} }
 
-func (f *fakeRepo) List(context.Context, string) ([]*polling.Target, error) {
+func (f *fakeRepo) ListAll(context.Context, string) ([]*polling.Target, error) {
 	out := make([]*polling.Target, 0, len(f.store))
 	for _, t := range f.store {
 		out = append(out, t)
@@ -24,7 +24,7 @@ func (f *fakeRepo) List(context.Context, string) ([]*polling.Target, error) {
 	return out, nil
 }
 
-func (f *fakeRepo) Get(_ context.Context, id string) (*polling.Target, error) {
+func (f *fakeRepo) Get(_ context.Context, _ string, id string) (*polling.Target, error) {
 	if t, ok := f.store[id]; ok {
 		return t, nil
 	}
@@ -42,7 +42,7 @@ func (f *fakeRepo) Create(_ context.Context, t *polling.Target) error {
 	return nil
 }
 
-func (f *fakeRepo) Update(_ context.Context, t *polling.Target) error {
+func (f *fakeRepo) Update(_ context.Context, _ string, t *polling.Target) error {
 	if _, ok := f.store[t.ID]; !ok {
 		return polling.ErrTargetNotFound
 	}
@@ -50,7 +50,7 @@ func (f *fakeRepo) Update(_ context.Context, t *polling.Target) error {
 	return nil
 }
 
-func (f *fakeRepo) Delete(_ context.Context, id string) error {
+func (f *fakeRepo) Delete(_ context.Context, _ string, id string) error {
 	if _, ok := f.store[id]; !ok {
 		return polling.ErrTargetNotFound
 	}
@@ -75,10 +75,10 @@ func TestCreateClassifiesRepoValidationError(t *testing.T) {
 
 func TestGetAndDeleteMapNotFound(t *testing.T) {
 	svc := targets.NewService(newFakeRepo())
-	if _, err := svc.Get(context.Background(), "missing"); !errors.Is(err, targets.ErrNotFound) {
+	if _, err := svc.Get(context.Background(), "acme", "missing"); !errors.Is(err, targets.ErrNotFound) {
 		t.Errorf("Get: want ErrNotFound, got %v", err)
 	}
-	if err := svc.Delete(context.Background(), "missing"); !errors.Is(err, targets.ErrNotFound) {
+	if err := svc.Delete(context.Background(), "acme", "missing"); !errors.Is(err, targets.ErrNotFound) {
 		t.Errorf("Delete: want ErrNotFound, got %v", err)
 	}
 }
@@ -88,7 +88,7 @@ func TestUpdateEchoesFreshRowAndMapsNotFound(t *testing.T) {
 	repo.store["t1"] = &polling.Target{ID: "t1", Name: "old"}
 	svc := targets.NewService(repo)
 
-	got, err := svc.Update(context.Background(), &polling.Target{ID: "t1", Name: "new"})
+	got, err := svc.Update(context.Background(), "acme", &polling.Target{ID: "t1", Name: "new"})
 	if err != nil {
 		t.Fatalf("Update: %v", err)
 	}
@@ -96,7 +96,7 @@ func TestUpdateEchoesFreshRowAndMapsNotFound(t *testing.T) {
 		t.Errorf("Update did not echo the fresh row: %+v", got)
 	}
 
-	_, err = svc.Update(context.Background(), &polling.Target{ID: "nope"})
+	_, err = svc.Update(context.Background(), "acme", &polling.Target{ID: "nope"})
 	if !errors.Is(err, targets.ErrNotFound) {
 		t.Errorf("Update missing: want ErrNotFound, got %v", err)
 	}

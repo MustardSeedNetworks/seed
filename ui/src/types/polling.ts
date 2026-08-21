@@ -21,7 +21,13 @@ export interface PollingTarget {
   updatedAt: string;
 }
 
-/** Wire shape for POST/PUT — omits server-managed audit columns. */
+/**
+ * Wire shape for POST/PUT — omits server-managed audit columns.
+ *
+ * Deliberately carries no `clientId`: the owning tenant comes from the
+ * session on the server side, and the handler rejects unknown fields, so
+ * adding one here would turn every create into a 400.
+ */
 export interface PollingTargetInput {
   name: string;
   ipAddress: string;

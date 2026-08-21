@@ -33,7 +33,7 @@ type updateRecord struct {
 	errMsg string
 }
 
-func (f *fakeStorage) List(_ context.Context, _ string) ([]*polling.Target, error) {
+func (f *fakeStorage) ListEnabled(_ context.Context) ([]*polling.Target, error) {
 	if f.listErr != nil {
 		return nil, f.listErr
 	}
