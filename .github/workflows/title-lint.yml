@@ -53,7 +53,13 @@ jobs:
   lint-issue-title:
     name: Lint Issue Title
     runs-on: ubuntu-latest
-    if: github.event_name == 'issues'
+    # Bots are exempt, for the same reason pr-body-lint exempts them: Renovate
+    # owns the Dependency Dashboard issue and re-edits it constantly, and its
+    # title is fixed by Renovate rather than by us. Without this the job fails
+    # on every edit and main carries a permanent red that means nothing.
+    if: >-
+      github.event_name == 'issues'
+      && github.event.issue.user.type != 'Bot'
     permissions:
       issues: write
     steps:
