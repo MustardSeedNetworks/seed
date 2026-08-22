@@ -5,6 +5,25 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.213.11](https://github.com/MustardSeedNetworks/seed/compare/v0.213.10...v0.213.11) (2026-08-22)
+
+
+### Bug Fixes
+
+* **deps:** update dependency i18next to v26.4.0 ([#1841](https://github.com/MustardSeedNetworks/seed/issues/1841)) ([318f27e](https://github.com/MustardSeedNetworks/seed/commit/318f27e3600008b3e4c7095bee43a04cd22ea93f))
+* **deps:** update dependency immer to v11.1.18 ([#2016](https://github.com/MustardSeedNetworks/seed/issues/2016)) ([33b6637](https://github.com/MustardSeedNetworks/seed/commit/33b66370d9c7cc883749d8d848050de585d6200f))
+* **deps:** update dependency lucide-react to v1.33.0 ([#2017](https://github.com/MustardSeedNetworks/seed/issues/2017)) ([b638a03](https://github.com/MustardSeedNetworks/seed/commit/b638a03ed619ce8a5ef19b544e15c64f501878f0))
+* **deps:** update dependency react-i18next to v17.0.12 ([#1843](https://github.com/MustardSeedNetworks/seed/issues/1843)) ([e9cbb33](https://github.com/MustardSeedNetworks/seed/commit/e9cbb33d6507589ccdf72a6d7f24ba4d51648027))
+
+
+### Miscellaneous
+
+* **deps:** lock file maintenance ([#2019](https://github.com/MustardSeedNetworks/seed/issues/2019)) ([738ff0c](https://github.com/MustardSeedNetworks/seed/commit/738ff0ce1f85ee48e0aa2a371bf687e64c1ae6a3))
+* **deps:** update dependency @biomejs/biome to v2.5.10 ([#2013](https://github.com/MustardSeedNetworks/seed/issues/2013)) ([1c02bba](https://github.com/MustardSeedNetworks/seed/commit/1c02bbad925593890fd12cfa56cd71ef5b27e15c))
+* **deps:** update dependency @vitejs/plugin-react to v6.1.0 ([#1838](https://github.com/MustardSeedNetworks/seed/issues/1838)) ([6ab2e29](https://github.com/MustardSeedNetworks/seed/commit/6ab2e29db7c36fee34126605a31cbebdd4fc56e9))
+* **deps:** update frontend toolchain ([#2014](https://github.com/MustardSeedNetworks/seed/issues/2014)) ([ed89fbe](https://github.com/MustardSeedNetworks/seed/commit/ed89fbeeac87a5caeabf7315d7157c6185f984c6))
+* **deps:** update storybook monorepo to v10.5.10 ([#2015](https://github.com/MustardSeedNetworks/seed/issues/2015)) ([fcff300](https://github.com/MustardSeedNetworks/seed/commit/fcff300aa7ff8355a9db3e60821f9a89770818cf))
+
 ## [0.213.10](https://github.com/MustardSeedNetworks/seed/compare/v0.213.9...v0.213.10) (2026-08-22)
 
 
