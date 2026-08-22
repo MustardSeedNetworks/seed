@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.213.10](https://github.com/MustardSeedNetworks/seed/compare/v0.213.9...v0.213.10) (2026-08-22)
+
+
+### Bug Fixes
+
+* **deps:** let npm regenerate the lockfile, which unblocks Renovate ([#2011](https://github.com/MustardSeedNetworks/seed/issues/2011)) ([8665e36](https://github.com/MustardSeedNetworks/seed/commit/8665e36bbd7db3853ef6e385a105c9c7d871354c))
+
 ## [0.213.9](https://github.com/MustardSeedNetworks/seed/compare/v0.213.8...v0.213.9) (2026-08-22)
 
 
