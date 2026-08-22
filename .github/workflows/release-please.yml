@@ -54,6 +54,20 @@ on:
     - cron: '07 */3 * * *'
   workflow_dispatch:
 
+# Serialise the runs. All three triggers can fire close together — a burst of
+# merges produces a workflow_run each, and the reconciling schedule lands on
+# top — and two overlapping runs both force-update
+# heads/release-please--branches--main. One wins, the other dies with
+# "Error updating ref", which is a red build for a race rather than a problem.
+# It happened on stem, trellis and niac during a 29-PR drain on 2026-08-22.
+#
+# cancel-in-progress is false on purpose: cancelling a run mid-release is a
+# worse failure than queueing behind it. release-please is idempotent, so a
+# queued run simply converges on whatever main looks like when it starts.
+concurrency:
+  group: release-please-${{ github.ref }}
+  cancel-in-progress: false
+
 permissions: {}
 
 jobs:
