@@ -297,8 +297,8 @@ func TestReporter_TypeAssertion_EngineWithReporter(t *testing.T) {
 		Inflight:  2,
 	}
 	var e engine.Engine = &reportingFakeEngine{
-		fakeEngine: fakeEngine{name: "with-reporter"},
-		status:     custom,
+		name:   "with-reporter",
+		status: custom,
 	}
 	rep, ok := e.(engine.Reporter)
 	if !ok {
@@ -325,8 +325,8 @@ func TestRegistry_HoldsMixedEngines(t *testing.T) {
 		t.Fatalf("register plain: %v", err)
 	}
 	if err := r.Register(&reportingFakeEngine{
-		fakeEngine: fakeEngine{name: "reporting"},
-		status:     engine.StatusOK(),
+		name:   "reporting",
+		status: engine.StatusOK(),
 	}); err != nil {
 		t.Fatalf("register reporting: %v", err)
 	}

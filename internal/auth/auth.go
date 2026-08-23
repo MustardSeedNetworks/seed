@@ -522,13 +522,11 @@ func (m *Manager) generateTokenWithType(
 		TokenVersion: currentVersion, // Include version for revocation
 		TokenType:    tokenType,
 		ClientID:     clientID,
-		RegisteredClaims: jwt.RegisteredClaims{
-			ExpiresAt: jwt.NewNumericDate(now.Add(duration)),
-			IssuedAt:  jwt.NewNumericDate(now),
-			NotBefore: jwt.NewNumericDate(now),
-			Issuer:    "The Seed",
-			Subject:   username,
-		},
+		ExpiresAt:    jwt.NewNumericDate(now.Add(duration)),
+		IssuedAt:     jwt.NewNumericDate(now),
+		NotBefore:    jwt.NewNumericDate(now),
+		Issuer:       "The Seed",
+		Subject:      username,
 	}
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
