@@ -5,6 +5,20 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.213.17](https://github.com/MustardSeedNetworks/seed/compare/v0.213.16...v0.213.17) (2026-08-23)
+
+
+### Bug Fixes
+
+* **deps:** update dependency react-i18next to v17.0.12 ([#2038](https://github.com/MustardSeedNetworks/seed/issues/2038)) ([8431d7b](https://github.com/MustardSeedNetworks/seed/commit/8431d7b7bb7d8ec4dcc251d59472d8229703f608))
+
+
+### Miscellaneous
+
+* **deps:** lock file maintenance ([#2040](https://github.com/MustardSeedNetworks/seed/issues/2040)) ([90714bb](https://github.com/MustardSeedNetworks/seed/commit/90714bbce76be286a86e09148590ad347393e161))
+* **deps:** update dependency @vitejs/plugin-react to v6.1.0 ([#2034](https://github.com/MustardSeedNetworks/seed/issues/2034)) ([a321e5e](https://github.com/MustardSeedNetworks/seed/commit/a321e5e6c0a5e6bde21ca0f525e657049d536b90))
+* **deps:** update storybook monorepo to v10.5.10 ([#2037](https://github.com/MustardSeedNetworks/seed/issues/2037)) ([d924bc5](https://github.com/MustardSeedNetworks/seed/commit/d924bc5c3bfc13ee8cdb8115427ee5d649e1bcf8))
+
 ## [0.213.16](https://github.com/MustardSeedNetworks/seed/compare/v0.213.15...v0.213.16) (2026-08-23)
 
 
