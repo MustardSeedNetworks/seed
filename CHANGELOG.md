@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.213.16](https://github.com/MustardSeedNetworks/seed/compare/v0.213.15...v0.213.16) (2026-08-23)
+
+
+### Miscellaneous
+
+* **deps:** update dependency vite to v8.2.2 ([#2033](https://github.com/MustardSeedNetworks/seed/issues/2033)) ([631af76](https://github.com/MustardSeedNetworks/seed/commit/631af7610ca85d3fd48804c6bd486f7a5fa3daf6))
+
 ## [0.213.15](https://github.com/MustardSeedNetworks/seed/compare/v0.213.14...v0.213.15) (2026-08-23)
 
 
