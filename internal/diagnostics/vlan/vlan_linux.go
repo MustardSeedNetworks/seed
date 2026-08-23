@@ -90,11 +90,9 @@ func createVlanInterfacePlatform(parentIface string, vlanID int) error {
 
 	// Create VLAN link
 	vlan := &netlink.Vlan{
-		LinkAttrs: netlink.LinkAttrs{
-			Name:        vlanIface,
-			ParentIndex: parent.Attrs().Index,
-		},
-		VlanId: vlanID,
+		Name:        vlanIface,
+		ParentIndex: parent.Attrs().Index,
+		VlanId:      vlanID,
 	}
 
 	if addErr := netlink.LinkAdd(vlan); addErr != nil {

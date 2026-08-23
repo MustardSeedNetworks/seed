@@ -312,11 +312,9 @@ func (s *Server) handleGateway(w http.ResponseWriter, r *http.Request) {
 		// If link is down, return disconnected status
 		if !s.linkMonitor().IsUp() {
 			resp := GatewayResponse{
-				GatewayPingResult: GatewayPingResult{
-					Gateway:   "",
-					Reachable: false,
-					Status:    "disconnected",
-				},
+				Gateway:   "",
+				Reachable: false,
+				Status:    "disconnected",
 			}
 			sendJSONResponse(w, logger, http.StatusOK, resp)
 			return
@@ -327,18 +325,16 @@ func (s *Server) handleGateway(w http.ResponseWriter, r *http.Request) {
 	stats := s.gatewayTester().Test()
 
 	resp := GatewayResponse{
-		GatewayPingResult: GatewayPingResult{
-			Gateway:     stats.Gateway,
-			Reachable:   stats.Reachable,
-			Sent:        stats.Sent,
-			Received:    stats.Received,
-			LossPercent: stats.LossPercent,
-			MinTime:     stats.MinTime,
-			MaxTime:     stats.MaxTime,
-			AvgTime:     stats.AvgTime,
-			LastTime:    stats.LastTime,
-			Status:      string(stats.Status),
-		},
+		Gateway:     stats.Gateway,
+		Reachable:   stats.Reachable,
+		Sent:        stats.Sent,
+		Received:    stats.Received,
+		LossPercent: stats.LossPercent,
+		MinTime:     stats.MinTime,
+		MaxTime:     stats.MaxTime,
+		AvgTime:     stats.AvgTime,
+		LastTime:    stats.LastTime,
+		Status:      string(stats.Status),
 	}
 
 	// Detect and ping IPv6 gateway if available

@@ -55,13 +55,11 @@ func (m *Manager) GenerateMFAPendingToken(_ context.Context, username string) (s
 	claims := &MFAPendingClaims{
 		Username:  username,
 		TokenType: mfaPendingTokenType,
-		RegisteredClaims: jwt.RegisteredClaims{
-			ExpiresAt: jwt.NewNumericDate(now.Add(MFAPendingTTL)),
-			IssuedAt:  jwt.NewNumericDate(now),
-			NotBefore: jwt.NewNumericDate(now),
-			Issuer:    "The Seed",
-			Subject:   username,
-		},
+		ExpiresAt: jwt.NewNumericDate(now.Add(MFAPendingTTL)),
+		IssuedAt:  jwt.NewNumericDate(now),
+		NotBefore: jwt.NewNumericDate(now),
+		Issuer:    "The Seed",
+		Subject:   username,
 	}
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
