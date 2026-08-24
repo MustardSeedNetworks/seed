@@ -94,17 +94,24 @@ func getVlanInfo(ifname string) (string, int) {
 	return parent, int(req.vlanTag)
 }
 
-// createVlanInterfacePlatform creates a VLAN interface on macOS.
+// createSupportedPlatform reports that macOS cannot create VLAN subinterfaces.
+//
+// Doing so requires a Network preferences change that no API available to a
+// daemon can make; it is not something we can perform on the operator's behalf.
+func createSupportedPlatform() bool { return false }
+
+// createVlanInterfacePlatform reports that macOS cannot create a VLAN
+// subinterface.
+//
+// This previously returned nil, which reported success for work that was never
+// performed: callers saw a created VLAN that did not exist.
 func createVlanInterfacePlatform(_ string, _ int) error {
-	// On macOS, we need to create a vlan interface first
-	// This typically requires networksetup or manual configuration
-	// For now, return nil as this is advanced functionality
-	return nil
+	return ErrUnsupported
 }
 
-// deleteVlanInterfacePlatform removes a VLAN interface on macOS.
+// deleteVlanInterfacePlatform reports that macOS cannot remove a VLAN
+// subinterface. It previously returned nil for the same reason, with the same
+// consequence.
 func deleteVlanInterfacePlatform(_ string, _ int) error {
-	// On macOS, VLAN removal requires networksetup
-	// For now, return nil as this is advanced functionality
-	return nil
+	return ErrUnsupported
 }
