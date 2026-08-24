@@ -2,7 +2,10 @@
  * Settings Type Definitions
  *
  * All settings-related interfaces used by SettingsContext and SettingsDrawer.
- * These types define the shape of settings stored in localStorage and backend API.
+ *
+ * Settings persist to the backend via `/api/v1/settings` and live in the
+ * config file. The single deliberate exception is the theme preference, which
+ * is client-only by design — see `useTheme.ts` for the rationale.
  */
 
 // ============================================================================
@@ -702,14 +705,3 @@ export const DEFAULT_VULNERABILITY_SETTINGS: VulnerabilityScanSettings = {
   maxConcurrent: 5,
   autoScan: true, // Auto-scan after device discovery
 };
-
-// ============================================================================
-// localStorage Keys
-// ============================================================================
-
-export const STORAGE_KEYS = {
-  cardSettings: 'seed-card-settings',
-  displayOptions: 'seed-display-options',
-  iperfSettings: 'seed-iperf-settings',
-  theme: 'seed-theme',
-} as const;

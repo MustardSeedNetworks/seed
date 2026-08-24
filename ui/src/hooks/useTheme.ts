@@ -13,6 +13,14 @@
  * The theme is applied by adding/removing the 'dark' class on the document root element,
  * which Tailwind CSS uses for dark mode styling.
  *
+ * Persistence — deliberate exception (#458). Every other setting persists to
+ * the backend via `/api/v1/settings`; theme does not, and stays per-browser in
+ * localStorage. Seed is a portable diagnostic driven from whatever laptop or
+ * phone is to hand, so a light/dark choice made on a phone in a dim IDF should
+ * not follow the operator to a bright office monitor. Cross-device sync would
+ * make that behaviour worse, not better. Do not "fix" this by moving it into
+ * the settings API without revisiting that decision.
+ *
  * Usage:
  * ```typescript
  * const { theme, isDark, toggleTheme, setTheme } = useTheme();
