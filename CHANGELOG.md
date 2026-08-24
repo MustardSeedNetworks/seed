@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.213.23](https://github.com/MustardSeedNetworks/seed/compare/v0.213.22...v0.213.23) (2026-08-24)
+
+
+### Features
+
+* **wifi:** replace darwin airport and networksetup with CoreWLAN ([#2056](https://github.com/MustardSeedNetworks/seed/issues/2056)) ([e0a4a05](https://github.com/MustardSeedNetworks/seed/commit/e0a4a05c761630a5f4303640c415d47ac702e2b1))
+
+
+### Miscellaneous
+
+* **deps:** lock file maintenance ([#2054](https://github.com/MustardSeedNetworks/seed/issues/2054)) ([4f53ba3](https://github.com/MustardSeedNetworks/seed/commit/4f53ba3132756fa954ba0e9a2e1195cbd55363a6))
+
 ## [0.213.22](https://github.com/MustardSeedNetworks/seed/compare/v0.213.21...v0.213.22) (2026-08-24)
 
 
