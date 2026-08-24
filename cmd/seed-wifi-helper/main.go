@@ -1,3 +1,5 @@
+//go:build darwin
+
 // Command seed-wifi-helper answers the seed daemon's Wi-Fi requests from within
 // a user's login session.
 //
