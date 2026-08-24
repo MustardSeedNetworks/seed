@@ -111,11 +111,11 @@
     "portDesc": "Port Desc",
     "systemDesc": "System Desc",
     "capabilities": "Capabilities",
-    "mgmtIp": "Mgmt IP",
+    "mgmtIp": "Mgmt IP:",
     "deviceId": "Device ID",
     "platform": "Platform",
     "software": "Software",
-    "nativeVlan": "Native VLAN",
+    "nativeVlan": "Native VLAN:",
     "displayName": "Display Name",
     "vlan": "VLAN",
     "title2": "Title",
@@ -468,5 +468,14 @@
     "flagTrusted": "Trusted",
     "flagConnectable": "Connectable",
     "lastSeen": "Last seen"
+  },
+  "logViewer": {
+    "requestId": "Request ID:"
+  },
+  "systemHealth": {
+    "topConsumers": "Top consumers:"
+  },
+  "wifiChannel": {
+    "signalDbm": "Signal (dBm)"
   }
 }

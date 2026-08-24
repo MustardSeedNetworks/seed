@@ -328,12 +328,12 @@ export const WiFiSettings: React.NamedExoticComponent<WiFiSettingsProps> = memo(
 
                 {/* Loading state when no networks yet */}
                 {networks.length === 0 && scanning && (
-                  <p className="caption text-text-muted mt-inline">Scanning for networks...</p>
+                  <p className="caption text-text-muted mt-inline">{t('wifi.scanning')}</p>
                 )}
 
                 {/* No networks found */}
                 {networks.length === 0 && !scanning && !scanError && (
-                  <p className="caption text-text-muted mt-inline">No networks found</p>
+                  <p className="caption text-text-muted mt-inline">{t('wifi.noNetworks')}</p>
                 )}
 
                 {/* Network List */}
@@ -499,7 +499,7 @@ export const WiFiSettings: React.NamedExoticComponent<WiFiSettingsProps> = memo(
               {savedNetworks.length > 0 ? (
                 <div className="border-t border-surface-border pt-heading">
                   <span className="body-small font-medium text-text-primary block mb-2">
-                    Saved Networks
+                    {t('wifi.savedNetworks')}
                   </span>
                   <div
                     className={cn(

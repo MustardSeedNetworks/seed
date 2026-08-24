@@ -261,7 +261,9 @@ export function DeviceRow({
               {/* Open Ports */}
               {openPorts.length > 0 ? (
                 <div>
-                  <h4 className="text-xs font-semibold text-text-secondary mb-tight">Open Ports</h4>
+                  <h4 className="text-xs font-semibold text-text-secondary mb-tight">
+                    {t('discovery.openPorts')}
+                  </h4>
                   <div className="flex flex-wrap gap-compact">
                     {openPorts.map((port: OpenPort) => (
                       <span
@@ -297,7 +299,7 @@ export function DeviceRow({
                     </div>
                     {device.lldpInfo.managementAddress ? (
                       <div>
-                        <span className="text-text-muted">Mgmt IP:</span>{' '}
+                        <span className="text-text-muted">{t('discovery.mgmtIp')}</span>{' '}
                         {device.lldpInfo.managementAddress}
                       </div>
                     ) : null}
@@ -326,7 +328,7 @@ export function DeviceRow({
                     </div>
                     {device.cdpInfo.nativeVlan ? (
                       <div>
-                        <span className="text-text-muted">Native VLAN:</span>{' '}
+                        <span className="text-text-muted">{t('discovery.nativeVlan')}</span>{' '}
                         {device.cdpInfo.nativeVlan}
                       </div>
                     ) : null}

@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 import type { APGroup, BSSView, SSIDGroup } from '../../types/generated/wifi-airspace-response';
 
 interface WiFiAirspaceTreeProps {
@@ -50,10 +51,11 @@ function BSSRows({ ap }: { ap: APGroup }) {
  * standards) are shown verbatim.
  */
 export function WiFiAirspaceTree({ ssids }: WiFiAirspaceTreeProps) {
+  const { t } = useTranslation('pages');
   if (ssids.length === 0) {
     return (
       <p data-testid="wifi-airspace-empty" className="text-sm text-text-muted">
-        No Wi-Fi networks observed yet.
+        {t('wifi.noNetworksObserved')}
       </p>
     );
   }

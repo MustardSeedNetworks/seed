@@ -273,7 +273,10 @@
     "noWireless": "No wireless interface detected",
     "scanInterval": "Scan Interval",
     "showHidden": "Show Hidden Networks",
-    "signalThreshold": "Signal Threshold"
+    "signalThreshold": "Signal Threshold",
+    "scanning": "Scanning for networks...",
+    "noNetworks": "No networks found",
+    "savedNetworks": "Saved Networks"
   },
   "snmp": {
     "title": "SNMP",
@@ -524,6 +527,21 @@
       "github": "GitHub"
     },
     "confirmDelete": "Delete user {{username}}?",
-    "confirmDeletePrompt": "This will revoke all of {{username}}'s sessions and API tokens. Cannot be undone."
+    "confirmDeletePrompt": "This will revoke all of {{username}}'s sessions and API tokens. Cannot be undone.",
+    "none": "No users."
+  },
+  "apiTokens": {
+    "currentTier": "Current tier:",
+    "created": "Token created — copy it now. It will not be shown again.",
+    "tokenName": "Token name",
+    "createToken": "Create token",
+    "none": "No API tokens yet.",
+    "lastUsed": "Last used",
+    "description": "Personal-access tokens for programmatic API calls (scripts, monitoring, CI). Available on the <strong>Pro</strong> tier. The web UI works on every tier without a token.",
+    "tierWarning": "Current tier: <tier>{{tier}}</tier>. Minting API tokens requires Pro. Start a 14-day trial with <code>seed license trial</code>, or activate a Pro key with <code2>seed license activate -k &lt;KEY&gt;</code2>.",
+    "colName": "Name",
+    "colPrefix": "Prefix",
+    "colCreated": "Created",
+    "colStatus": "Status"
   }
 }

@@ -12,6 +12,7 @@
 
 import { Check, CheckCircle2 } from 'lucide-react';
 import { type JSX, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useAlerts } from '../hooks/useAlerts';
 import type { Alert } from '../types/alerts';
 import {
@@ -51,6 +52,7 @@ function fmtTime(iso?: string): string {
 }
 
 export function AlertsPage(): JSX.Element {
+  const { t } = useTranslation('pages');
   const { alerts, loading, error, filter, setFilter, acknowledge, resolve } = useAlerts({
     unresolvedOnly: true,
   });
@@ -182,7 +184,7 @@ export function AlertsPage(): JSX.Element {
             <AlertMetadata metadata={selected.metadata} />
           </DetailPane>
         ) : (
-          <DetailEmpty>Select an alert to see its detail and act on it.</DetailEmpty>
+          <DetailEmpty>{t('alerts.selectPrompt')}</DetailEmpty>
         )}
       </ListDetail>
     </>
@@ -214,13 +216,14 @@ function AlertState({ alert }: { alert: Alert }): JSX.Element {
 
 /** The rule's own payload — the sub-table the archetype calls for. */
 function AlertMetadata({ metadata }: { metadata: Record<string, unknown> }): JSX.Element | null {
+  const { t } = useTranslation('pages');
   const entries = Object.entries(metadata ?? {});
   if (entries.length === 0) {
     return null;
   }
   return (
     <div className="stack-xs">
-      <p className="caption">Alert payload</p>
+      <p className="caption">{t('alerts.payload')}</p>
       <dl className="divide-y divide-surface-border overflow-hidden rounded-lg border border-surface-border">
         {entries.map(([key, value]) => (
           <div key={key} className="flex items-start gap-default px-cell py-2">

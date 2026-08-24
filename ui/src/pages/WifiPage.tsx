@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 import { WiFiCard } from '../components/cards/WiFiCard';
 import { WifiChannelGraph } from '../components/cards/WiFiChannelGraph';
 import { BetaBadge } from '../components/ui/BetaBadge';
@@ -23,6 +24,7 @@ import { CardAbsent, CardGrid } from '../ui/CardGrid';
 const TIER_HINT = 'Available on Seed Pro. Run `seed license trial` for a 14-day trial.';
 
 export function WifiPage() {
+  const { t } = useTranslation('pages');
   const { cards, loading, isWifi, channelGraphData, channelGraphLoading } = useAppContext();
 
   /* Not one absent card among others — the whole page is inapplicable, so
@@ -73,7 +75,7 @@ export function WifiPage() {
           headerAction={<BetaBadge />}
         >
           <p data-testid="wifi-roam-analysis-pending" className="text-sm text-text-muted">
-            Capture lands in Seed v1.0 — see release notes when Phase 2.5 ships.
+            {t('wifi.capturePlanned')}
           </p>
         </Card>
       </RequireFeature>

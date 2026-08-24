@@ -12,6 +12,7 @@
 import { Command } from 'cmdk';
 import { HelpCircle, Moon, Search, Settings as SettingsIcon, Sun } from 'lucide-react';
 import { type FC, useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useLocation } from 'wouter';
 import type { SidebarNavGroup } from '../../ui/Sidebar';
 
@@ -51,6 +52,7 @@ export const CommandPalette: FC<CommandPaletteProps> = ({
   isDark,
 }) => {
   const [, navigate] = useLocation();
+  const { t } = useTranslation('common');
   const [value, setValue] = useState('');
 
   // Global ⌘K / Ctrl+K keybinding.
@@ -107,7 +109,7 @@ export const CommandPalette: FC<CommandPaletteProps> = ({
         </div>
         <Command.List className="max-h-[60vh] overflow-y-auto px-cell py-row text-sm">
           <Command.Empty className="px-3 py-6 text-center text-text-muted">
-            No matches.
+            {t('labels.noMatches')}
           </Command.Empty>
 
           {groups.map((group) => (
@@ -152,7 +154,7 @@ export const CommandPalette: FC<CommandPaletteProps> = ({
                 className="flex cursor-pointer items-center gap-default rounded-md px-3 py-row text-text-primary aria-selected:bg-surface-hover"
               >
                 <SettingsIcon className="h-4 w-4 text-text-muted" aria-hidden="true" />
-                <span>Open Settings</span>
+                <span>{t('accessibility.openSettings')}</span>
               </Command.Item>
             ) : null}
             {onOpenHelp ? (
@@ -162,7 +164,7 @@ export const CommandPalette: FC<CommandPaletteProps> = ({
                 className="flex cursor-pointer items-center gap-default rounded-md px-3 py-row text-text-primary aria-selected:bg-surface-hover"
               >
                 <HelpCircle className="h-4 w-4 text-text-muted" aria-hidden="true" />
-                <span>Open Help</span>
+                <span>{t('accessibility.openHelp')}</span>
               </Command.Item>
             ) : null}
             {onToggleTheme ? (

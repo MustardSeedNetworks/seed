@@ -8,6 +8,7 @@
 
 import { X } from 'lucide-react';
 import { type FormEvent, type JSX, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import type { PollingTarget, PollingTargetInput } from '../../types/polling';
 
 export interface TargetFormProps {
@@ -18,6 +19,7 @@ export interface TargetFormProps {
 }
 
 export function TargetForm({ mode, initial, onSubmit, onCancel }: TargetFormProps): JSX.Element {
+  const { t } = useTranslation('pages');
   const [form, setForm] = useState<PollingTargetInput>(initial);
   const [submitting, setSubmitting] = useState<boolean>(false);
   const [formError, setFormError] = useState<string | null>(null);
@@ -117,7 +119,7 @@ export function TargetForm({ mode, initial, onSubmit, onCancel }: TargetFormProp
               checked={form.enabled}
               onChange={(e): void => update('enabled', e.target.checked)}
             />
-            Enabled (polled on next tick)
+            {t('pollingTargets.enabledHint')}
           </label>
         </div>
 

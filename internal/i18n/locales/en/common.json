@@ -84,7 +84,8 @@
     "duplex": "Duplex",
     "carrier": "Carrier",
     "autoNeg": "Auto-Neg",
-    "lastSeen": "Last Seen"
+    "lastSeen": "Last Seen",
+    "noMatches": "No matches."
   },
   "time": {
     "seconds": "{{count}}s",
@@ -111,7 +112,8 @@
     "profileList": "Profile list",
     "selectDevice": "Select device",
     "selectEthernet": "Select Ethernet interface",
-    "selectWifi": "Select Wi-Fi interface"
+    "selectWifi": "Select Wi-Fi interface",
+    "skipToMainContent": "Skip to main content"
   },
   "sections": {
     "connectivity": "Connectivity",
@@ -178,7 +180,8 @@
   },
   "dataTable": {
     "clearAll": "Clear all",
-    "showingResults": "Showing {{shown}} of {{total}} results"
+    "showingResults": "Showing {{shown}} of {{total}} results",
+    "loadingData": "Loading data..."
   },
   "capabilities": {
     "warning": {

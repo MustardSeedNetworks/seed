@@ -2,7 +2,9 @@
   "alerts": {
     "description": "Eventos emitidos por los procesos de escucha y observación.",
     "label": "Alertas",
-    "title": "Alertas"
+    "title": "Alertas",
+    "selectPrompt": "Seleccione una alerta para ver su detalle y actuar sobre ella.",
+    "payload": "Contenido de la alerta"
   },
   "groups": {
     "diagnostics": "Diagnóstico",
@@ -29,7 +31,8 @@
   "path": {
     "description": "Descubrimiento de rutas L2/L3, saltos de traceroute y descubrimiento de dispositivos en el enlace.",
     "label": "Análisis de ruta",
-    "title": "Análisis de ruta"
+    "title": "Análisis de ruta",
+    "proGate": "El análisis de rutas es una función del nivel Pro. Inicie una prueba Pro de 14 días con <code>seed license trial</code> o active una clave Pro con <code2>seed license activate -k &lt;KEY&gt;</code2>."
   },
   "performance": {
     "description": "Pruebas activas de rendimiento (speedtest, iperf3) y sondas de estado.",
@@ -39,12 +42,18 @@
   "pollingTargets": {
     "description": "Dispositivos sondeados por SNMP. Los destinos nuevos adoptan la cadena de colectores predeterminada y comienzan a sondear en el siguiente ciclo.",
     "label": "Destinos de sondeo",
-    "title": "Destinos de sondeo"
+    "title": "Destinos de sondeo",
+    "addTarget": "Agregar destino",
+    "pollingNormally": "Sondeo normal",
+    "collectorChain": "Cadena de recolectores",
+    "defaultChain": "Usando la cadena predeterminada para esta versión de SNMP.",
+    "enabledHint": "Habilitado (sondeado en el próximo ciclo)"
   },
   "reports": {
     "description": "Panel de SLA agregado, seguimiento de cumplimiento e informes históricos.",
     "label": "Informes",
-    "title": "Informes"
+    "title": "Informes",
+    "tierGate": "Los informes requieren el nivel Starter o superior. Inicie una prueba Pro de 14 días con <code>seed license trial</code> o active una clave Starter / Pro con <code2>seed license activate -k &lt;KEY&gt;</code2>."
   },
   "security": {
     "description": "Auditoría de aislamiento de la red de invitados y comprobaciones de postura de seguridad.",
@@ -54,11 +63,26 @@
   "topology": {
     "description": "Dispositivos sondeados y enlaces aprendidos mediante el descubrimiento de vecinos LLDP/CDP/FDP.",
     "label": "Topología",
-    "title": "Topología"
+    "title": "Topología",
+    "selectNode": "Seleccione un nodo para ver las interfaces y los enlaces.",
+    "loadingNode": "Cargando el nodo…",
+    "nodeNotFound": "Nodo no encontrado.",
+    "noInterfaceData": "Aún no hay datos de interfaz. El reconciliador if_table los incorpora en el próximo sondeo.",
+    "adminOper": "Admin / Oper",
+    "noEdges": "Aún no hay enlaces. LLDP/CDP/FDP necesita que ambos extremos sean nodos conocidos."
   },
   "wifi": {
     "description": "Enlace inalámbrico, utilización de canales y visualización de solapamiento de canales.",
     "label": "Wi-Fi",
-    "title": "Wi-Fi"
+    "title": "Wi-Fi",
+    "airspaceLoading": "Cargando el espacio radioeléctrico…",
+    "airspaceUnavailable": "Los datos del espacio radioeléctrico no están disponibles.",
+    "noNetworksObserved": "Aún no se han observado redes Wi-Fi.",
+    "anomaliesLoading": "Cargando anomalías…",
+    "anomaliesUnavailable": "Los datos de anomalías no están disponibles.",
+    "noAnomalies": "No se detectaron anomalías de Wi-Fi.",
+    "capturePlanned": "La captura llega en Seed v1.0 — consulte las notas de la versión cuando se publique la fase 2.5.",
+    "liveCaptureOn": "Captura en vivo en <src>{{source}}</src>",
+    "captureInactive": "Captura de monitor inactiva — mostrando el último espacio radioeléctrico observado"
   }
 }

@@ -17,6 +17,7 @@
 
 import { Activity, Cable, RefreshCw } from 'lucide-react';
 import { type JSX, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useTopologyNode, useTopologyNodes } from '../hooks/useTopology';
 import type { TopologyInterface, TopologyLink } from '../types/topology';
 import {
@@ -103,13 +104,14 @@ interface NodeDetailProps {
 }
 
 function NodeDetail({ id, onClear }: NodeDetailProps): JSX.Element {
+  const { t } = useTranslation('pages');
   const { detail, loading, error } = useTopologyNode(id);
 
   if (!id) {
-    return <DetailEmpty>Select a node to see interfaces and links.</DetailEmpty>;
+    return <DetailEmpty>{t('topology.selectNode')}</DetailEmpty>;
   }
   if (loading) {
-    return <DetailEmpty>Loading node…</DetailEmpty>;
+    return <DetailEmpty>{t('topology.loadingNode')}</DetailEmpty>;
   }
   if (error) {
     return (
@@ -119,7 +121,7 @@ function NodeDetail({ id, onClear }: NodeDetailProps): JSX.Element {
     );
   }
   if (!detail) {
-    return <DetailEmpty>Node not found.</DetailEmpty>;
+    return <DetailEmpty>{t('topology.nodeNotFound')}</DetailEmpty>;
   }
 
   const { node } = detail;
@@ -157,6 +159,7 @@ function NodeDetail({ id, onClear }: NodeDetailProps): JSX.Element {
 }
 
 function InterfacesPanel({ interfaces }: { interfaces: TopologyInterface[] }): JSX.Element {
+  const { t } = useTranslation('pages');
   return (
     <div className="rounded-lg border border-surface-border bg-surface-raised">
       <div className="flex items-center gap-2 border-b border-surface-border px-4 py-2">
@@ -166,16 +169,14 @@ function InterfacesPanel({ interfaces }: { interfaces: TopologyInterface[] }): J
         </span>
       </div>
       {interfaces.length === 0 ? (
-        <div className="p-4 text-sm text-text-muted">
-          No interface data yet. The if_table reconciler folds these in on the next poll.
-        </div>
+        <div className="p-4 text-sm text-text-muted">{t('topology.noInterfaceData')}</div>
       ) : (
         <table className="w-full text-sm">
           <thead className="text-left text-xs uppercase tracking-wide text-text-muted">
             <tr>
               <th className="px-4 py-2">Index</th>
               <th className="px-4 py-2">Name</th>
-              <th className="px-4 py-2">Admin / Oper</th>
+              <th className="px-4 py-2">{t('topology.adminOper')}</th>
               <th className="px-4 py-2">Speed</th>
               <th className="px-4 py-2">MAC</th>
             </tr>
@@ -220,6 +221,7 @@ function IfStatusPair({ admin, oper }: { admin: number; oper: number }): JSX.Ele
 }
 
 function LinksPanel({ links, nodeID }: { links: TopologyLink[]; nodeID: string }): JSX.Element {
+  const { t } = useTranslation('pages');
   return (
     <div className="rounded-lg border border-surface-border bg-surface-raised">
       <div className="flex items-center gap-2 border-b border-surface-border px-4 py-2">
@@ -229,9 +231,7 @@ function LinksPanel({ links, nodeID }: { links: TopologyLink[]; nodeID: string }
         </span>
       </div>
       {links.length === 0 ? (
-        <div className="p-4 text-sm text-text-muted">
-          No edges yet. LLDP/CDP/FDP needs both endpoints to be known nodes.
-        </div>
+        <div className="p-4 text-sm text-text-muted">{t('topology.noEdges')}</div>
       ) : (
         <ul className="divide-y divide-surface-border">
           {links.map((l) => {

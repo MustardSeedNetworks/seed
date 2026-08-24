@@ -13,6 +13,7 @@
 
 import type React from 'react';
 import { useCallback, useEffect, useState } from 'react';
+import { Trans, useTranslation } from 'react-i18next';
 import { api } from '../../../api/client';
 import { useLicense } from '../../../contexts/LicenseContext';
 import { useRole } from '../../../contexts/RoleContext';
@@ -54,6 +55,7 @@ function formatDate(value: string | undefined): string {
 }
 
 export function ApiTokensSettings(): React.ReactElement {
+  const { t } = useTranslation(['settings', 'common']);
   // License state is sourced from the shared LicenseProvider so every
   // tier-aware UI surface stays in sync; this panel used to fetch it
   // inline (pre-PR-A4).
@@ -135,15 +137,21 @@ export function ApiTokensSettings(): React.ReactElement {
     >
       <div className="stack-sm">
         <p className="text-sm text-text-secondary">
-          Personal-access tokens for programmatic API calls (scripts, monitoring, CI). Available on
-          the <strong>Pro</strong> tier. The web UI works on every tier without a token.
+          <Trans
+            i18nKey="apiTokens.description"
+            ns="settings"
+            components={{ strong: <strong /> }}
+          />
         </p>
 
         {!canMint && (
           <div className="rounded-lg border border-status-warning/30 bg-status-warning/5 pad-sm text-sm text-status-warning">
-            Current tier: <strong>{tierLabel}</strong>. Minting API tokens requires Pro. Start a
-            14-day trial with <code>seed license trial</code>, or activate a Pro key with{' '}
-            <code>seed license activate -k &lt;KEY&gt;</code>.
+            <Trans
+              i18nKey="apiTokens.tierWarning"
+              ns="settings"
+              values={{ tier: tierLabel }}
+              components={{ tier: <strong />, code: <code />, code2: <code /> }}
+            />
           </div>
         )}
 
@@ -155,9 +163,7 @@ export function ApiTokensSettings(): React.ReactElement {
 
         {mintedToken && (
           <div className="rounded-lg border border-status-success/40 bg-status-success/5 pad-sm stack-xs">
-            <div className="text-sm font-medium text-status-success">
-              Token created — copy it now. It will not be shown again.
-            </div>
+            <div className="text-sm font-medium text-status-success">{t('apiTokens.created')}</div>
             <code className="block break-all rounded bg-surface-raised px-cell py-compact text-xs">
               {mintedToken.token}
             </code>
@@ -180,7 +186,7 @@ export function ApiTokensSettings(): React.ReactElement {
         <div className="flex items-end gap-compact">
           <div className="flex-1">
             <label className="block text-xs text-text-muted mb-tight" htmlFor="api-token-name">
-              Token name
+              {t('apiTokens.tokenName')}
             </label>
             <Input
               id="api-token-name"
@@ -207,23 +213,23 @@ export function ApiTokensSettings(): React.ReactElement {
             }
             onClick={() => void handleMint()}
           >
-            Create token
+            {t('apiTokens.createToken')}
           </Button>
         </div>
 
         {loading ? (
-          <div className="text-sm text-text-muted">Loading…</div>
+          <div className="text-sm text-text-muted">{t('common:status.loading')}</div>
         ) : tokens.length === 0 ? (
-          <div className="text-sm text-text-muted">No API tokens yet.</div>
+          <div className="text-sm text-text-muted">{t('apiTokens.none')}</div>
         ) : (
           <table className="w-full text-sm">
             <thead className="text-xs text-text-muted text-left">
               <tr>
-                <th className="py-row pr-2">Name</th>
-                <th className="py-row pr-2">Prefix</th>
-                <th className="py-row pr-2">Created</th>
-                <th className="py-row pr-2">Last used</th>
-                <th className="py-row pr-2">Status</th>
+                <th className="py-row pr-2">{t('apiTokens.colName')}</th>
+                <th className="py-row pr-2">{t('apiTokens.colPrefix')}</th>
+                <th className="py-row pr-2">{t('apiTokens.colCreated')}</th>
+                <th className="py-row pr-2">{t('apiTokens.lastUsed')}</th>
+                <th className="py-row pr-2">{t('apiTokens.colStatus')}</th>
                 <th className="py-row" />
               </tr>
             </thead>

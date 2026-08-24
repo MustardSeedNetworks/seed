@@ -303,7 +303,7 @@ export function DataTable<T>({
           aria-label="Loading data"
         >
           <span className="inline-block animate-spin mr-2">◐</span>
-          Loading data...
+          {t('dataTable.loadingData')}
         </div>
       ) : null}
       {/* Search and Filter Bar */}

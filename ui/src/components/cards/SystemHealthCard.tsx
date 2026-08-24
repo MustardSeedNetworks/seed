@@ -132,6 +132,7 @@ function ResourceBar({
   topProcesses?: ProcessInfo[];
   type: 'cpu' | 'memory' | 'disk';
 }): React.ReactElement {
+  const { t } = useTranslation('cards');
   const status = getResourceStatus(percent);
   const barColor = ((): string => {
     switch (status) {
@@ -167,7 +168,7 @@ function ResourceBar({
       ) : null}
       {showConsumers ? (
         <div className="caption text-text-muted pl-3 mt-tight">
-          <div>Top consumers:</div>
+          <div>{t('systemHealth.topConsumers')}</div>
           {topProcesses.slice(0, 3).map((proc) => (
             <div key={proc.pid} className="pl-2">
               - {proc.name} ({Math.round(proc.memoryMb)} MB)
