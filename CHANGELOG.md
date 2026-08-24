@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.213.25](https://github.com/MustardSeedNetworks/seed/compare/v0.213.24...v0.213.25) (2026-08-24)
+
+
+### Bug Fixes
+
+* **i18n:** drop --ratchet and fix everything it was hiding ([#2067](https://github.com/MustardSeedNetworks/seed/issues/2067)) ([40922ea](https://github.com/MustardSeedNetworks/seed/commit/40922ea4d04e0e4fcf738060b381de267da3ea81))
+
+
+### Miscellaneous
+
+* **deps:** lock file maintenance ([#2068](https://github.com/MustardSeedNetworks/seed/issues/2068)) ([b3081b3](https://github.com/MustardSeedNetworks/seed/commit/b3081b3503734c637c6352bcee56b9b166d34569))
+
 ## [0.213.24](https://github.com/MustardSeedNetworks/seed/compare/v0.213.23...v0.213.24) (2026-08-24)
 
 
