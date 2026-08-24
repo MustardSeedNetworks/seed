@@ -9,6 +9,7 @@ package api
 
 import (
 	"context"
+	"io"
 	"net"
 	"net/http"
 	"net/url"
@@ -217,6 +218,10 @@ type Server struct {
 	wifiMgr  *wifi.Manager
 	wifiScan *wifi.Scanner
 
+	// wifiHelper is the macOS Wi-Fi helper socket, nil elsewhere. Held as an
+	// io.Closer because its concrete type only exists on darwin.
+	wifiHelper io.Closer
+
 	// --- Real-time communication ---
 	sse          *SSEHub                 // SSE hub for real-time updates
 	logBroadcast *logging.LogBroadcaster // log streaming
@@ -411,6 +416,7 @@ func (s *Server) initTelemetryAndWiFiServices(cfg *config.Config) {
 
 	s.wifiMgr = wifi.NewManager(cfg.Interface.Default)
 	s.wifiScan = wifi.NewScanner(cfg.Interface.Default)
+	s.startWiFiHelper()
 }
 
 // initSettingsUseCases wires the ADR-0020 settings, profiles, network-IP, and

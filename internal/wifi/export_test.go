@@ -36,7 +36,7 @@ func IsWirelessPlatform(iface string) bool {
 
 // GetInfoPlatform exports getInfoPlatform for testing.
 func GetInfoPlatform(iface string) *Info {
-	return getInfoPlatform(iface)
+	return getInfoPlatform(iface, nil)
 }
 
 // InterfaceName returns the interface name for a Manager (getter for testing).

@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>CFBundleIdentifier</key>
+    <string>net.mustardseed.seed.wifihelper</string>
+
+    <key>CFBundleName</key>
+    <string>Seed Wi-Fi Helper</string>
+
+    <key>CFBundleDisplayName</key>
+    <string>Seed Wi-Fi Helper</string>
+
+    <key>CFBundleExecutable</key>
+    <string>seed-wifi-helper</string>
+
+    <key>CFBundlePackageType</key>
+    <string>APPL</string>
+
+    <key>CFBundleShortVersionString</key>
+    <string>0.0.0</string>
+
+    <key>CFBundleVersion</key>
+    <string>0.0.0</string>
+
+    <key>LSMinimumSystemVersion</key>
+    <string>13.0</string>
+
+    <!-- A background agent, so no Dock icon or menu bar presence. -->
+    <key>LSUIElement</key>
+    <true/>
+
+    <!-- macOS redacts Wi-Fi network names and BSSIDs from any process without
+         Location Services authorization. This string is what an operator reads
+         when deciding whether to grant it. -->
+    <key>NSLocationWhenInUseUsageDescription</key>
+    <string>Seed needs your location permission to read Wi-Fi network names and BSSIDs. macOS hides this information from applications that do not have it. Your location is never recorded, stored, or transmitted.</string>
+</dict>
+</plist>

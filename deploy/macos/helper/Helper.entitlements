@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <!-- Required to read Wi-Fi network names and BSSIDs.
+
+         Under the hardened runtime, locationd refuses to show the authorization
+         prompt at all without this entitlement, and logs:
+
+           "Client has supported the hardened runtime but doesn't have the
+            entitlement, not sending #AuthPrompt message to #CoreLocationAgent"
+
+         The bundle stays registered and can still be enabled by hand in System
+         Settings, which is why its absence looks like "macOS never prompts
+         background agents" rather than a signing defect. -->
+    <key>com.apple.security.personal-information.location</key>
+    <true/>
+</dict>
+</plist>

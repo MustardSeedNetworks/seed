@@ -36,7 +36,7 @@ func isWirelessPlatform(iface string) bool {
 }
 
 // getInfoPlatform gets Wi-Fi info on Windows using netsh wlan.
-func getInfoPlatform(iface string) *Info {
+func getInfoPlatform(iface string, _ Helper) *Info {
 	ctx, cancel := context.WithTimeout(context.Background(), netshWlanTimeoutSeconds*time.Second)
 	defer cancel()
 
@@ -211,7 +211,7 @@ func disconnectPlatform(iface string) (*ConnectionResult, error) {
 }
 
 // getSavedNetworksPlatform returns saved WiFi networks on Windows using netsh.
-func getSavedNetworksPlatform() ([]SavedNetwork, error) {
+func getSavedNetworksPlatform(_ Helper) ([]SavedNetwork, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), netshWlanTimeoutSeconds*time.Second)
 	defer cancel()
 

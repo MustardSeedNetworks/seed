@@ -30,15 +30,28 @@ const (
 // returns every SSID and BSSID emptied — so the binding reports that as
 // [corewlan.ErrLocationDenied] and it is surfaced here rather than looking like
 // an empty airspace.
-func scanPlatform(_ string) ([]*ScannedNetwork, error) {
+func scanPlatform(_ string, h Helper) ([]*ScannedNetwork, error) {
 	found, err := corewlan.Scan()
-	if err != nil {
+	if err == nil {
+		networks := make([]*ScannedNetwork, 0, len(found))
+		for _, n := range found {
+			networks = append(networks, networkFromCoreWLAN(n))
+		}
+		return networks, nil
+	}
+
+	if h == nil || !shouldDelegate(err) {
 		return nil, fmt.Errorf("wifi scan: %w", err)
 	}
 
-	networks := make([]*ScannedNetwork, 0, len(found))
-	for _, n := range found {
-		networks = append(networks, networkFromCoreWLAN(n))
+	viaHelper, helperErr := h.Scan()
+	if helperErr != nil {
+		return nil, fmt.Errorf("wifi scan via helper: %w", helperErr)
+	}
+
+	networks := make([]*ScannedNetwork, 0, len(viaHelper))
+	for _, n := range viaHelper {
+		networks = append(networks, networkFromHelper(n))
 	}
 	return networks, nil
 }

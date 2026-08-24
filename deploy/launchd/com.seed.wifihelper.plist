@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>Label</key>
+    <string>net.mustardseed.seed.wifihelper</string>
+
+    <!-- A LaunchAgent, not a LaunchDaemon. Location Services authorization is
+         granted per user inside a login session, which is the whole reason this
+         process exists separately from the seed daemon. -->
+    <key>ProgramArguments</key>
+    <array>
+        <string>/Library/Application Support/Seed/Seed Wi-Fi Helper.app/Contents/MacOS/seed-wifi-helper</string>
+        <string>-socket</string>
+        <string>/var/run/seed/wifi-helper.sock</string>
+    </array>
+
+    <key>RunAtLoad</key>
+    <true/>
+
+    <key>KeepAlive</key>
+    <true/>
+
+    <!-- The agent may start before the daemon is listening, which is normal at
+         login; it retries rather than exiting, so throttle restarts modestly. -->
+    <key>ThrottleInterval</key>
+    <integer>10</integer>
+
+    <key>ProcessType</key>
+    <string>Background</string>
+
+    <key>StandardOutPath</key>
+    <string>/tmp/seed-wifi-helper.log</string>
+
+    <key>StandardErrorPath</key>
+    <string>/tmp/seed-wifi-helper.error.log</string>
+</dict>
+</plist>

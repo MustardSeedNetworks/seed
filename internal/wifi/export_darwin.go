@@ -2,7 +2,11 @@
 
 package wifi
 
-import "github.com/MustardSeedNetworks/foundation/pkg/corewlan"
+import (
+	"github.com/MustardSeedNetworks/foundation/pkg/corewlan"
+
+	"github.com/MustardSeedNetworks/seed/internal/wifi/wifihelper"
+)
 
 // NetworkFromCoreWLAN exports networkFromCoreWLAN for testing.
 func NetworkFromCoreWLAN(n corewlan.Network) *ScannedNetwork {
@@ -32,4 +36,19 @@ func AssociationResult(ssid string, err error) *ConnectionResult {
 // DisassociationResult exports disassociationResult for testing.
 func DisassociationResult(err error) *ConnectionResult {
 	return disassociationResult(err)
+}
+
+// ShouldDelegate exports shouldDelegate for testing.
+func ShouldDelegate(err error) bool {
+	return shouldDelegate(err)
+}
+
+// NetworkFromHelper exports networkFromHelper for testing.
+func NetworkFromHelper(n wifihelper.Network) *ScannedNetwork {
+	return networkFromHelper(n)
+}
+
+// CurrentHelper exports currentHelper for testing.
+func (s *Scanner) CurrentHelper() Helper {
+	return s.currentHelper()
 }

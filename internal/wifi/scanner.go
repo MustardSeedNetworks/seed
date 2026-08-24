@@ -28,6 +28,7 @@ type Scanner struct {
 	mu            sync.RWMutex
 	lastScan      time.Time
 	networks      map[string]*ScannedNetwork // key is BSSID
+	helper        Helper                     // nil except on macOS
 }
 
 // NewScanner creates a new WiFi scanner.
@@ -53,7 +54,7 @@ func (s *Scanner) Scan() ([]*ScannedNetwork, error) {
 	s.mu.Unlock()
 
 	// Perform platform-specific scan
-	networks, err := scanPlatform(iface)
+	networks, err := scanPlatform(iface, s.currentHelper())
 	if err != nil {
 		return nil, err
 	}

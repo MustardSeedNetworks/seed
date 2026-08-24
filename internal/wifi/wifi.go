@@ -36,6 +36,7 @@ type Info struct {
 type Manager struct {
 	interfaceName string
 	mu            sync.RWMutex
+	helper        Helper // nil except on macOS
 }
 
 // NewManager creates a new Wi-Fi manager.
@@ -67,7 +68,7 @@ func (m *Manager) GetInfo() *Info {
 	iface := m.interfaceName
 	m.mu.RUnlock()
 
-	return getInfoPlatform(iface)
+	return getInfoPlatform(iface, m.currentHelper())
 }
 
 // mapSecurityType maps security protocol to display string.
@@ -159,7 +160,7 @@ func (m *Manager) Disconnect() (*ConnectionResult, error) {
 
 // GetSavedNetworks returns a list of saved/known WiFi networks.
 func (m *Manager) GetSavedNetworks() ([]SavedNetwork, error) {
-	return getSavedNetworksPlatform()
+	return getSavedNetworksPlatform(m.currentHelper())
 }
 
 // ForgetNetwork removes a saved WiFi network.
