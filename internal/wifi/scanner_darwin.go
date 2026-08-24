@@ -3,138 +3,112 @@
 package wifi
 
 import (
-	"bytes"
-	"context"
 	"fmt"
-	"os/exec"
-	"regexp"
-	"strconv"
-	"strings"
-	"time"
+
+	"github.com/MustardSeedNetworks/foundation/pkg/corewlan"
 )
 
-// Security protocol constants.
+// defaultNoiseFloorDBm is used when CoreWLAN reports no noise measurement for a
+// scanned network, which it omits on some adapters. Reporting 0 dBm instead
+// would make the derived SNR nonsense.
+const defaultNoiseFloorDBm = -95
+
+// freq6GHzChannel1 is the frequency of 6 GHz channel 1, in MHz.
+const freq6GHzChannel1 = 5950
+
+// Frequency bands, in GHz, as reported by the driver.
 const (
-	securityWPA  = "WPA"
-	securityWPA2 = "WPA2"
-	securityWPA3 = "WPA3"
+	band24GHz = 2
+	band5GHz  = 5
+	band6GHz  = 6
 )
 
-// Scanner constants.
-const (
-	scanTimeoutSeconds        = 30  // Timeout for WiFi scanning operations
-	airportParseMinMatchCount = 7   // Minimum regex match count for valid airport output
-	defaultNoiseFloorDBm      = -95 // Typical noise floor estimate in dBm
-)
-
-// scanPlatform performs a WiFi scan on macOS using the airport utility.
+// scanPlatform performs a Wi-Fi scan on macOS via CoreWLAN.
+//
+// The `airport` utility this previously shelled out to was removed in macOS 26.
+// A scan without Location Services authorization does not fail — CoreWLAN
+// returns every SSID and BSSID emptied — so the binding reports that as
+// [corewlan.ErrLocationDenied] and it is surfaced here rather than looking like
+// an empty airspace.
 func scanPlatform(_ string) ([]*ScannedNetwork, error) {
-	// Use airport utility for scanning
-	// /System/Library/PrivateFrameworks/Apple80211.framework/Versions/Current/Resources/airport
-	airportPath := "/System/Library/PrivateFrameworks/Apple80211.framework/Versions/Current/Resources/airport"
-
-	ctx, cancel := context.WithTimeout(context.Background(), scanTimeoutSeconds*time.Second)
-	defer cancel()
-	cmd := exec.CommandContext(ctx, airportPath, "-s")
-	var out bytes.Buffer
-	cmd.Stdout = &out
-	if err := cmd.Run(); err != nil {
-		return nil, fmt.Errorf("failed to run airport scan: %w", err)
+	found, err := corewlan.Scan()
+	if err != nil {
+		return nil, fmt.Errorf("wifi scan: %w", err)
 	}
 
-	// Parse output
-	// Format:
-	//                         SSID BSSID             RSSI CHANNEL HT CC SECURITY
-	//           MyNetwork      aa:bb:cc:dd:ee:ff -45  6       Y  -- WPA2(PSK/AES/AES)
-	networks := make([]*ScannedNetwork, 0)
-	lines := strings.Split(out.String(), "\n")
-
-	// Skip header line
-	for i, line := range lines {
-		if i == 0 || strings.TrimSpace(line) == "" {
-			continue
-		}
-
-		network := parseAirportLine(line)
-		if network != nil {
-			networks = append(networks, network)
-		}
+	networks := make([]*ScannedNetwork, 0, len(found))
+	for _, n := range found {
+		networks = append(networks, networkFromCoreWLAN(n))
 	}
-
 	return networks, nil
 }
 
-// parseAirportLine parses a single line from airport -s output.
-func parseAirportLine(line string) *ScannedNetwork {
-	// Use regex to extract fields including HT flag
-	// Example: "           MyNetwork      aa:bb:cc:dd:ee:ff -45  6       Y  -- WPA2(PSK/AES/AES)"
-	// Fields: SSID, BSSID, RSSI, CHANNEL, HT, CC, SECURITY
-	re := regexp.MustCompile(
-		`^\s*(\S.*?)\s+([0-9a-f:]{17})\s+(-?\d+)\s+(\d+)\s+([YN-])\s+.*?(Open|WEP|WPA|WPA2|WPA3)`,
-	)
-	matches := re.FindStringSubmatch(line)
-
-	if len(matches) < airportParseMinMatchCount {
-		return nil
+// networkFromCoreWLAN maps a CoreWLAN observation onto the scanner's model.
+func networkFromCoreWLAN(n corewlan.Network) *ScannedNetwork {
+	noise := n.Noise
+	if noise == 0 {
+		noise = defaultNoiseFloorDBm
 	}
 
-	ssid := strings.TrimSpace(matches[1])
-	bssid := matches[2]
-	signal, _ := strconv.Atoi(matches[3])
-	channel, _ := strconv.Atoi(matches[4])
-	htFlag := matches[5]
-	security := matches[6]
-
-	// Extract just the main security type
-	//nolint:gocritic // ifElseChain: order matters for security type detection (WPA3 before WPA2 before WPA)
-	if strings.Contains(security, securityWPA3) {
-		security = securityWPA3
-	} else if strings.Contains(security, securityWPA2) {
-		security = securityWPA2
-	} else if strings.Contains(security, securityWPA) {
-		security = securityWPA
+	width := n.ChannelWidth
+	if width == 0 {
+		width = ChannelWidth20MHz
 	}
 
-	// Determine channel width and HT mode from HT flag
-	// Y = 802.11n capable (40MHz), N = legacy (20MHz)
-	channelWidth := ChannelWidth20MHz
-	htMode := "HT20"
-	if htFlag == "Y" {
-		channelWidth = ChannelWidth40MHz
-		htMode = "HT40"
+	return &ScannedNetwork{
+		SSID:         n.SSID,
+		BSSID:        n.BSSID,
+		Signal:       n.RSSI,
+		Channel:      n.Channel,
+		Frequency:    channelToFrequencyInBand(n.Channel, int(n.Band)),
+		Security:     mapSecurityType(n.Security),
+		ChannelWidth: width,
+		NoiseFloor:   noise,
+		SNR:          n.RSSI - noise,
+		HTMode:       htModeForWidth(width),
+		IsDFS:        n.Band == corewlan.Band5GHz && isDFSChannel(n.Channel),
 	}
-
-	// Estimate noise floor (typical range: -90 to -100 dBm)
-	// In practice, this should be obtained from 'airport -I' but we'll use a conservative estimate
-	noiseFloor := defaultNoiseFloorDBm
-
-	// Calculate SNR (Signal-to-Noise Ratio)
-	snr := signal - noiseFloor
-
-	// Determine if this is a DFS channel
-	isDFS := isDFSChannel(channel)
-
-	network := &ScannedNetwork{
-		SSID:         ssid,
-		BSSID:        bssid,
-		Signal:       signal,
-		Channel:      channel,
-		Frequency:    channelToFrequency(channel),
-		Security:     mapSecurityType(security),
-		ChannelWidth: channelWidth,
-		NoiseFloor:   noiseFloor,
-		SNR:          snr,
-		HTMode:       htMode,
-		IsDFS:        isDFS,
-	}
-
-	return network
 }
 
-// isDFSChannel checks if a given channel is a DFS (Dynamic Frequency Selection) channel.
-// DFS channels are in the 5GHz band and require radar detection:
-// - 52-64 (UNII-2).
-// - 100-144 (UNII-2 Extended).
+// htModeForWidth names the widest PHY that carries a given channel width, using
+// the vocabulary detectChannelWidth already parses.
+func htModeForWidth(width int) string {
+	switch width {
+	case ChannelWidth40MHz:
+		return "HT40"
+	case ChannelWidth80MHz:
+		return "VHT80"
+	case ChannelWidth160MHz:
+		return "HE160"
+	case ChannelWidth320MHz:
+		return "EHT320"
+	default:
+		return "HT20"
+	}
+}
+
+// channelToFrequencyInBand converts a channel to MHz using the band reported by
+// the driver. Channel numbers collide across bands — 6 GHz channel 1 is 5955 MHz
+// while 2.4 GHz channel 1 is 2412 MHz — so a channel number alone cannot be
+// resolved. Falls back to [channelToFrequency] when the band is unknown.
+func channelToFrequencyInBand(channel, bandGHz int) int {
+	switch bandGHz {
+	case band24GHz:
+		if channel == channel14 {
+			return freq24GHzChannel14
+		}
+		return freq24GHzBaseOffset + (channel * channelSpacingMHz)
+	case band5GHz:
+		return freq5GHzBaseOffset + (channel * channelSpacingMHz)
+	case band6GHz:
+		return freq6GHzChannel1 + (channel * channelSpacingMHz)
+	default:
+		return channelToFrequency(channel)
+	}
+}
+
+// isDFSChannel reports whether a 5 GHz channel requires radar detection:
+// 52-64 (UNII-2) and 100-144 (UNII-2 Extended).
 func isDFSChannel(channel int) bool {
 	return (channel >= 52 && channel <= 64) || (channel >= 100 && channel <= 144)
 }
