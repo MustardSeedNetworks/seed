@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.213.19](https://github.com/MustardSeedNetworks/seed/compare/v0.213.18...v0.213.19) (2026-08-24)
+
+
+### Bug Fixes
+
+* **deps:** update module github.com/showwin/speedtest-go to v1.8.1 ([#2043](https://github.com/MustardSeedNetworks/seed/issues/2043)) ([d55c988](https://github.com/MustardSeedNetworks/seed/commit/d55c988e7945462a948184a966b7183867c996c7))
+
 ## [0.213.18](https://github.com/MustardSeedNetworks/seed/compare/v0.213.17...v0.213.18) (2026-08-23)
 
 
