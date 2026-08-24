@@ -80,7 +80,7 @@ require (
 	github.com/safchain/ethtool v0.7.0
 	github.com/santhosh-tekuri/jsonschema/v6 v6.0.3
 	github.com/shirou/gopsutil/v4 v4.26.7
-	github.com/showwin/speedtest-go v1.7.11
+	github.com/showwin/speedtest-go v1.8.1
 	github.com/spf13/cobra v1.10.2
 	github.com/spf13/pflag v1.0.10
 	github.com/stretchr/testify v1.12.1
