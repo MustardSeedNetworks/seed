@@ -242,6 +242,18 @@ func (s *Server) createVLANInterface(
 		return
 	}
 
+	if !vlan.CreateSupported() {
+		sendErrorResponseWithDetails(
+			w,
+			logger,
+			http.StatusNotImplemented,
+			ErrCodeNotImplemented,
+			localizer.T("errors.vlan.notSupportedOnPlatform"),
+			"",
+		)
+		return
+	}
+
 	if err := vlan.CreateVlanInterface(iface, vlanID); err != nil {
 		logger.ErrorContext(r.Context(),
 			"Failed to create VLAN interface",
@@ -282,6 +294,18 @@ func (s *Server) deleteVLANInterface(
 ) {
 	iface, vlanID, ok := s.parseVLANRequest(w, r, logger, localizer)
 	if !ok {
+		return
+	}
+
+	if !vlan.CreateSupported() {
+		sendErrorResponseWithDetails(
+			w,
+			logger,
+			http.StatusNotImplemented,
+			ErrCodeNotImplemented,
+			localizer.T("errors.vlan.notSupportedOnPlatform"),
+			"",
+		)
 		return
 	}
 

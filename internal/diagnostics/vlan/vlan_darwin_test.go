@@ -133,19 +133,28 @@ func TestDetectVlanSubinterfacesDarwin(t *testing.T) {
 	}
 }
 
+// macOS cannot create VLAN subinterfaces. This used to return nil, reporting
+// success for work that was never performed, and this test asserted that —
+// codifying a caller-visible lie rather than catching it.
 func TestCreateVlanInterfaceDarwin(t *testing.T) {
-	// On macOS, this currently returns nil (not implemented).
 	err := vlan.ExportCreateVlanInterfacePlatform("en0", 100)
-	if err != nil {
-		t.Errorf("expected nil error, got %v", err)
+	if !errors.Is(err, vlan.ErrUnsupported) {
+		t.Errorf("expected ErrUnsupported, got %v", err)
 	}
 }
 
 func TestDeleteVlanInterfaceDarwin(t *testing.T) {
-	// On macOS, this currently returns nil (not implemented).
 	err := vlan.ExportDeleteVlanInterfacePlatform("en0", 100)
-	if err != nil {
-		t.Errorf("expected nil error, got %v", err)
+	if !errors.Is(err, vlan.ErrUnsupported) {
+		t.Errorf("expected ErrUnsupported, got %v", err)
+	}
+}
+
+// The capability must be reported honestly so callers can decline up front
+// instead of attempting an operation that cannot succeed.
+func TestCreateNotSupportedOnDarwin(t *testing.T) {
+	if vlan.CreateSupported() {
+		t.Error("CreateSupported() = true on macOS, which cannot manage VLAN subinterfaces")
 	}
 }
 
@@ -214,18 +223,19 @@ func TestCreateDeleteVlanInterfaceTableDriven(t *testing.T) {
 		wantCreate error
 		wantDelete error
 	}{
-		{"typical VLAN 100 on en0", "en0", 100, nil, nil},
-		{"VLAN 1 on en0", "en0", 1, nil, nil},
-		{"max VLAN 4094 on en0", "en0", 4094, nil, nil},
-		{"VLAN on en1", "en1", 200, nil, nil},
-		{"VLAN 0", "en0", 0, nil, nil},
-		{"empty parent interface", "", 100, nil, nil},
-		{"VLAN on nonexistent", "nonexistent0", 100, nil, nil},
+		// Every input is refused identically: the platform cannot do this at
+		// all, so no argument makes it succeed.
+		{"typical VLAN 100 on en0", "en0", 100, vlan.ErrUnsupported, vlan.ErrUnsupported},
+		{"VLAN 1 on en0", "en0", 1, vlan.ErrUnsupported, vlan.ErrUnsupported},
+		{"max VLAN 4094 on en0", "en0", 4094, vlan.ErrUnsupported, vlan.ErrUnsupported},
+		{"VLAN on en1", "en1", 200, vlan.ErrUnsupported, vlan.ErrUnsupported},
+		{"VLAN 0", "en0", 0, vlan.ErrUnsupported, vlan.ErrUnsupported},
+		{"empty parent interface", "", 100, vlan.ErrUnsupported, vlan.ErrUnsupported},
+		{"VLAN on nonexistent", "nonexistent0", 100, vlan.ErrUnsupported, vlan.ErrUnsupported},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			// On macOS, these return nil (not implemented).
 			err := vlan.ExportCreateVlanInterfacePlatform(tt.parentIf, tt.vlanID)
 			if !errors.Is(err, tt.wantCreate) {
 				t.Errorf("CreateVlanInterfacePlatform() error = %v, want %v", err, tt.wantCreate)

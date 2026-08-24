@@ -80,7 +80,8 @@
     "failedToCreate": "Failed to create VLAN",
     "failedToDelete": "Failed to delete VLAN",
     "invalidId": "VLAN ID must be 1-4094",
-    "alreadyExists": "VLAN already exists"
+    "alreadyExists": "VLAN already exists",
+    "notSupportedOnPlatform": "VLAN subinterfaces cannot be managed on this operating system"
   },
   "mtu": {
     "invalidRange": "MTU must be 68-9000"

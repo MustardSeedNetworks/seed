@@ -3,6 +3,7 @@
 package vlan_test
 
 import (
+	"errors"
 	"sync"
 	"testing"
 
@@ -226,14 +227,18 @@ func TestCreateDeleteVlanInterfacePlatformMultiple(t *testing.T) {
 			t.Run(iface+"_"+itoa(vlanID), func(t *testing.T) {
 				t.Parallel()
 
+				// No interface or VLAN ID makes this succeed on macOS: the
+				// platform cannot manage subinterfaces at all.
 				err := vlan.ExportCreateVlanInterfacePlatform(iface, vlanID)
-				if err != nil {
-					t.Errorf("CreateVlanInterfacePlatform(%q, %d) = %v, want nil", iface, vlanID, err)
+				if !errors.Is(err, vlan.ErrUnsupported) {
+					t.Errorf("CreateVlanInterfacePlatform(%q, %d) = %v, want ErrUnsupported",
+						iface, vlanID, err)
 				}
 
 				err = vlan.ExportDeleteVlanInterfacePlatform(iface, vlanID)
-				if err != nil {
-					t.Errorf("DeleteVlanInterfacePlatform(%q, %d) = %v, want nil", iface, vlanID, err)
+				if !errors.Is(err, vlan.ErrUnsupported) {
+					t.Errorf("DeleteVlanInterfacePlatform(%q, %d) = %v, want ErrUnsupported",
+						iface, vlanID, err)
 				}
 			})
 		}
