@@ -3,380 +3,178 @@
 package wifi_test
 
 import (
+	"errors"
+	"strings"
 	"testing"
+
+	"github.com/MustardSeedNetworks/foundation/pkg/corewlan"
 
 	"github.com/MustardSeedNetworks/seed/internal/wifi"
 )
 
-// airportLineTestCase defines a test case for ParseAirportLine.
-type airportLineTestCase struct {
-	name       string
-	line       string
-	wantNil    bool
-	wantSSID   string
-	wantBSSID  string
-	wantSignal int
-	wantChan   int
-	wantSec    string
-	wantWidth  int
-	wantHTMode string
-	wantDFS    bool
-}
+func TestNetworkFromCoreWLAN(t *testing.T) {
+	t.Parallel()
 
-// assertNetworkNil verifies the network is nil when expected.
-func assertNetworkNil(t *testing.T, network *wifi.ScannedNetwork, tc airportLineTestCase) bool {
-	t.Helper()
-	if tc.wantNil {
-		if network != nil {
-			t.Errorf("ParseAirportLine() = %+v, want nil", network)
-		}
-		return true
-	}
-	if network == nil {
-		t.Fatal("ParseAirportLine() = nil, want non-nil")
-	}
-	return false
-}
-
-// assertNetworkFields verifies all network fields match expected values.
-func assertNetworkFields(t *testing.T, network *wifi.ScannedNetwork, tc airportLineTestCase) {
-	t.Helper()
-
-	if network.SSID != tc.wantSSID {
-		t.Errorf("SSID = %q, want %q", network.SSID, tc.wantSSID)
-	}
-	if network.BSSID != tc.wantBSSID {
-		t.Errorf("BSSID = %q, want %q", network.BSSID, tc.wantBSSID)
-	}
-	if network.Signal != tc.wantSignal {
-		t.Errorf("Signal = %d, want %d", network.Signal, tc.wantSignal)
-	}
-	if network.Channel != tc.wantChan {
-		t.Errorf("Channel = %d, want %d", network.Channel, tc.wantChan)
-	}
-	if network.Security != tc.wantSec {
-		t.Errorf("Security = %q, want %q", network.Security, tc.wantSec)
-	}
-	if network.ChannelWidth != tc.wantWidth {
-		t.Errorf("ChannelWidth = %d, want %d", network.ChannelWidth, tc.wantWidth)
-	}
-	if network.HTMode != tc.wantHTMode {
-		t.Errorf("HTMode = %q, want %q", network.HTMode, tc.wantHTMode)
-	}
-	if network.IsDFS != tc.wantDFS {
-		t.Errorf("IsDFS = %v, want %v", network.IsDFS, tc.wantDFS)
-	}
-}
-
-// assertSNRAndFrequency verifies calculated SNR and frequency fields.
-func assertSNRAndFrequency(t *testing.T, network *wifi.ScannedNetwork, wantSignal, wantChan int) {
-	t.Helper()
-
-	expectedSNR := wantSignal - network.NoiseFloor
-	if network.SNR != expectedSNR {
-		t.Errorf("SNR = %d, want %d (Signal %d - NoiseFloor %d)",
-			network.SNR, expectedSNR, wantSignal, network.NoiseFloor)
-	}
-
-	expectedFreq := wifi.ChannelToFrequency(wantChan)
-	if network.Frequency != expectedFreq {
-		t.Errorf("Frequency = %d, want %d", network.Frequency, expectedFreq)
-	}
-}
-
-func TestParseAirportLine(t *testing.T) {
-	// Note: The regex uses alternation (Open|WEP|WPA|WPA2|WPA3) which matches leftmost first
-	// When the line contains "WPA2" or "WPA3", the regex matches "WPA" first due to non-greedy .*?
-	// The code then uses strings.Contains to refine, but it only has access to what was matched
-	// So we need to test the actual behavior where WPA2/WPA3 may be parsed as WPA
-	tests := []airportLineTestCase{
+	tests := []struct {
+		name string
+		in   corewlan.Network
+		want wifi.ScannedNetwork
+	}{
 		{
-			name:       "Valid WPA network with HT",
-			line:       "           MyNetwork      aa:bb:cc:dd:ee:ff -45  6       Y  -- WPA(PSK/AES/AES)",
-			wantNil:    false,
-			wantSSID:   "MyNetwork",
-			wantBSSID:  "aa:bb:cc:dd:ee:ff",
-			wantSignal: -45,
-			wantChan:   6,
-			wantSec:    "WPA",
-			wantWidth:  40, // Y = HT enabled = 40 MHz
-			wantHTMode: "HT40",
-			wantDFS:    false,
-		},
-		// Note: Due to regex alternation order, WPA3 and WPA2 get captured as just "WPA"
-		// The strings.Contains logic in the code can't help since the regex only captures "WPA"
-		// This is a known limitation of the current implementation
-		{
-			name:       "WPA3 explicit (parsed as WPA due to regex)",
-			line:       "           SecureNet      11:22:33:44:55:66 -55  36      Y  US WPA3",
-			wantNil:    false,
-			wantSSID:   "SecureNet",
-			wantBSSID:  "11:22:33:44:55:66",
-			wantSignal: -55,
-			wantChan:   36,
-			wantSec:    "WPA", // Note: matched as WPA due to regex alternation order
-			wantWidth:  40,
-			wantHTMode: "HT40",
-			wantDFS:    false,
+			name: "5GHz 802.11ax",
+			in: corewlan.Network{
+				SSID: "Neuroplasticity", BSSID: "24:5a:4c:6b:b5:c9",
+				RSSI: -54, Noise: -87, Channel: 149, ChannelWidth: 40,
+				Band: corewlan.Band5GHz, Security: "wpa3Transition",
+			},
+			want: wifi.ScannedNetwork{
+				SSID: "Neuroplasticity", BSSID: "24:5a:4c:6b:b5:c9",
+				Signal: -54, Channel: 149, Frequency: 5745, Security: "WPA3",
+				ChannelWidth: 40, NoiseFloor: -87, SNR: 33, HTMode: "HT40", IsDFS: false,
+			},
 		},
 		{
-			name:       "WPA2 explicit (parsed as WPA due to regex)",
-			line:       "           Home5G         aa:bb:cc:dd:ee:00 -50  149     Y  US WPA2",
-			wantNil:    false,
-			wantSSID:   "Home5G",
-			wantBSSID:  "aa:bb:cc:dd:ee:00",
-			wantSignal: -50,
-			wantChan:   149,
-			wantSec:    "WPA", // Note: matched as WPA due to regex alternation order
-			wantWidth:  40,
-			wantHTMode: "HT40",
-			wantDFS:    false,
+			// Channel numbers collide across bands: 6 GHz channel 1 is 5955 MHz,
+			// not the 2.4 GHz 2412 MHz. Band must drive the conversion.
+			name: "6GHz channel 1 does not collide with 2.4GHz",
+			in: corewlan.Network{
+				BSSID: "aa:bb:cc:dd:ee:01", RSSI: -60, Noise: -90,
+				Channel: 1, ChannelWidth: 160, Band: corewlan.Band6GHz, Security: "wpa3Personal",
+			},
+			want: wifi.ScannedNetwork{
+				BSSID: "aa:bb:cc:dd:ee:01", Signal: -60, Channel: 1, Frequency: 5955,
+				Security: "WPA3", ChannelWidth: 160, NoiseFloor: -90, SNR: 30,
+				HTMode: "HE160", IsDFS: false,
+			},
 		},
 		{
-			name:       "Valid WPA network without HT",
-			line:       "           OldNetwork     aa:bb:cc:dd:ee:00 -70  11      N  -- WPA(PSK/TKIP)",
-			wantNil:    false,
-			wantSSID:   "OldNetwork",
-			wantBSSID:  "aa:bb:cc:dd:ee:00",
-			wantSignal: -70,
-			wantChan:   11,
-			wantSec:    "WPA",
-			wantWidth:  20, // N = no HT = 20 MHz
-			wantHTMode: "HT20",
-			wantDFS:    false,
+			name: "2.4GHz channel 1",
+			in: corewlan.Network{
+				SSID: "TMOBILE-3F7A", BSSID: "18:a5:ff:85:3f:7c", RSSI: -45, Noise: -92,
+				Channel: 1, ChannelWidth: 20, Band: corewlan.Band2GHz, Security: "wpa2Personal",
+			},
+			want: wifi.ScannedNetwork{
+				SSID: "TMOBILE-3F7A", BSSID: "18:a5:ff:85:3f:7c", Signal: -45,
+				Channel: 1, Frequency: 2412, Security: "WPA2", ChannelWidth: 20,
+				NoiseFloor: -92, SNR: 47, HTMode: "HT20",
+			},
 		},
 		{
-			name:       "Open network",
-			line:       "           OpenGuest      00:11:22:33:44:55 -60  1       Y  -- Open",
-			wantNil:    false,
-			wantSSID:   "OpenGuest",
-			wantBSSID:  "00:11:22:33:44:55",
-			wantSignal: -60,
-			wantChan:   1,
-			wantSec:    "Open",
-			wantWidth:  40,
-			wantHTMode: "HT40",
-			wantDFS:    false,
+			// CoreWLAN omits the noise floor for scanned networks on some adapters.
+			// Fall back to the conservative estimate rather than reporting 0 dBm,
+			// which would make SNR nonsense.
+			name: "unreported noise falls back to estimate",
+			in: corewlan.Network{
+				SSID: "NoNoise", BSSID: "aa:bb:cc:dd:ee:02", RSSI: -50,
+				Channel: 36, ChannelWidth: 80, Band: corewlan.Band5GHz, Security: "wpa2Personal",
+			},
+			want: wifi.ScannedNetwork{
+				SSID: "NoNoise", BSSID: "aa:bb:cc:dd:ee:02", Signal: -50,
+				Channel: 36, Frequency: 5180, Security: "WPA2", ChannelWidth: 80,
+				NoiseFloor: -95, SNR: 45, HTMode: "VHT80",
+			},
 		},
 		{
-			name:       "WEP network",
-			line:       "           LegacyNet      aa:bb:cc:00:11:22 -75  3       N  -- WEP",
-			wantNil:    false,
-			wantSSID:   "LegacyNet",
-			wantBSSID:  "aa:bb:cc:00:11:22",
-			wantSignal: -75,
-			wantChan:   3,
-			wantSec:    "WEP",
-			wantWidth:  20,
-			wantHTMode: "HT20",
-			wantDFS:    false,
-		},
-		{
-			name:       "DFS channel 52",
-			line:       "           DFSNetwork     bb:cc:dd:ee:ff:00 -50  52      Y  US WPA",
-			wantNil:    false,
-			wantSSID:   "DFSNetwork",
-			wantBSSID:  "bb:cc:dd:ee:ff:00",
-			wantSignal: -50,
-			wantChan:   52,
-			wantSec:    "WPA",
-			wantWidth:  40,
-			wantHTMode: "HT40",
-			wantDFS:    true, // Channel 52 is DFS
-		},
-		{
-			name:       "DFS channel 100",
-			line:       "           DFSNetwork2    cc:dd:ee:ff:00:11 -55  100     Y  US WPA",
-			wantNil:    false,
-			wantSSID:   "DFSNetwork2",
-			wantBSSID:  "cc:dd:ee:ff:00:11",
-			wantSignal: -55,
-			wantChan:   100,
-			wantSec:    "WPA",
-			wantWidth:  40,
-			wantHTMode: "HT40",
-			wantDFS:    true, // Channel 100 is DFS
-		},
-		{
-			name:       "DFS channel 140",
-			line:       "           DFSNetwork3    dd:ee:ff:00:11:22 -48  140     Y  JP WPA",
-			wantNil:    false,
-			wantSSID:   "DFSNetwork3",
-			wantBSSID:  "dd:ee:ff:00:11:22",
-			wantSignal: -48,
-			wantChan:   140,
-			wantSec:    "WPA",
-			wantWidth:  40,
-			wantHTMode: "HT40",
-			wantDFS:    true, // Channel 140 is DFS
-		},
-		{
-			name:    "Invalid line - empty",
-			line:    "",
-			wantNil: true,
-		},
-		{
-			name:    "Invalid line - header",
-			line:    "                         SSID BSSID             RSSI CHANNEL HT CC SECURITY",
-			wantNil: true,
-		},
-		{
-			name:    "Invalid line - whitespace only",
-			line:    "          ",
-			wantNil: true,
-		},
-		{
-			name:    "Invalid line - malformed BSSID",
-			line:    "           BadNetwork      not-a-bssid -45  6       Y  -- WPA2",
-			wantNil: true,
+			name: "DFS channel flagged",
+			in: corewlan.Network{
+				SSID: "Radar", BSSID: "aa:bb:cc:dd:ee:03", RSSI: -70, Noise: -95,
+				Channel: 52, ChannelWidth: 20, Band: corewlan.Band5GHz, Security: "none",
+			},
+			want: wifi.ScannedNetwork{
+				SSID: "Radar", BSSID: "aa:bb:cc:dd:ee:03", Signal: -70, Channel: 52,
+				Frequency: 5260, Security: "Open", ChannelWidth: 20, NoiseFloor: -95,
+				SNR: 25, HTMode: "HT20", IsDFS: true,
+			},
 		},
 	}
 
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			network := wifi.ParseAirportLine(tt.line)
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
 
-			if assertNetworkNil(t, network, tt) {
-				return
+			got := wifi.NetworkFromCoreWLAN(tc.in)
+			if got == nil {
+				t.Fatal("NetworkFromCoreWLAN() = nil")
 			}
-
-			assertNetworkFields(t, network, tt)
-			assertSNRAndFrequency(t, network, tt.wantSignal, tt.wantChan)
+			got.LastSeen = tc.want.LastSeen // set from the clock; not under test
+			if *got != tc.want {
+				t.Errorf("NetworkFromCoreWLAN()\n got = %+v\nwant = %+v", *got, tc.want)
+			}
 		})
 	}
 }
 
-func TestIsDFSChannel(t *testing.T) {
+func TestChannelToFrequencyInBand(t *testing.T) {
+	t.Parallel()
+
 	tests := []struct {
 		name    string
 		channel int
-		want    bool
+		band    int
+		want    int
 	}{
-		// Non-DFS 2.4 GHz channels
-		{"Channel 1 (2.4GHz)", 1, false},
-		{"Channel 6 (2.4GHz)", 6, false},
-		{"Channel 11 (2.4GHz)", 11, false},
-		{"Channel 14 (2.4GHz Japan)", 14, false},
-
-		// Non-DFS 5 GHz UNII-1 channels
-		{"Channel 36 (UNII-1)", 36, false},
-		{"Channel 40 (UNII-1)", 40, false},
-		{"Channel 44 (UNII-1)", 44, false},
-		{"Channel 48 (UNII-1)", 48, false},
-
-		// DFS UNII-2 channels (52-64)
-		{"Channel 52 (UNII-2 DFS)", 52, true},
-		{"Channel 56 (UNII-2 DFS)", 56, true},
-		{"Channel 60 (UNII-2 DFS)", 60, true},
-		{"Channel 64 (UNII-2 DFS)", 64, true},
-
-		// Boundary check
-		{"Channel 51 (not DFS)", 51, false},
-		{"Channel 65 (not DFS)", 65, false},
-
-		// DFS UNII-2 Extended channels (100-144)
-		{"Channel 100 (UNII-2E DFS)", 100, true},
-		{"Channel 104 (UNII-2E DFS)", 104, true},
-		{"Channel 108 (UNII-2E DFS)", 108, true},
-		{"Channel 112 (UNII-2E DFS)", 112, true},
-		{"Channel 116 (UNII-2E DFS)", 116, true},
-		{"Channel 120 (UNII-2E DFS)", 120, true},
-		{"Channel 124 (UNII-2E DFS)", 124, true},
-		{"Channel 128 (UNII-2E DFS)", 128, true},
-		{"Channel 132 (UNII-2E DFS)", 132, true},
-		{"Channel 136 (UNII-2E DFS)", 136, true},
-		{"Channel 140 (UNII-2E DFS)", 140, true},
-		{"Channel 144 (UNII-2E DFS)", 144, true},
-
-		// Boundary check for UNII-2E
-		{"Channel 99 (not DFS)", 99, false},
-		{"Channel 145 (not DFS)", 145, false},
-
-		// Non-DFS UNII-3 channels
-		{"Channel 149 (UNII-3)", 149, false},
-		{"Channel 153 (UNII-3)", 153, false},
-		{"Channel 157 (UNII-3)", 157, false},
-		{"Channel 161 (UNII-3)", 161, false},
-		{"Channel 165 (UNII-3)", 165, false},
-
-		// Edge cases
-		{"Channel 0 (invalid)", 0, false},
-		{"Channel -1 (invalid)", -1, false},
+		{"2.4GHz ch1", 1, 2, 2412},
+		{"2.4GHz ch14", 14, 2, 2484},
+		{"5GHz ch36", 36, 5, 5180},
+		{"5GHz ch149", 149, 5, 5745},
+		{"6GHz ch1", 1, 6, 5955},
+		{"6GHz ch233", 233, 6, 7115},
+		// An unknown band cannot be resolved from the channel number alone.
+		{"unknown band falls back", 149, 0, 5745},
 	}
 
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			got := wifi.IsDFSChannel(tt.channel)
-			if got != tt.want {
-				t.Errorf("IsDFSChannel(%d) = %v, want %v", tt.channel, got, tt.want)
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
+			if got := wifi.ChannelToFrequencyInBand(tc.channel, tc.band); got != tc.want {
+				t.Errorf("ChannelToFrequencyInBand(%d, %d) = %d, want %d", tc.channel, tc.band, got, tc.want)
 			}
 		})
 	}
 }
 
-func TestParseAirportLineEdgeCases(t *testing.T) {
-	tests := []struct {
-		name    string
-		line    string
-		wantNil bool
-	}{
-		{
-			name:    "Network with spaces in name",
-			line:    "      My Home Network      aa:bb:cc:dd:ee:ff -45  6       Y  -- WPA2(PSK/AES)",
-			wantNil: false,
-		},
-		{
-			name:    "Network with strong signal",
-			line:    "           StrongNet      aa:bb:cc:dd:ee:ff -20  6       Y  -- WPA2(PSK/AES)",
-			wantNil: false,
-		},
-		{
-			name:    "Network with very weak signal",
-			line:    "           WeakNet        aa:bb:cc:dd:ee:ff -95  6       N  -- Open",
-			wantNil: false,
-		},
-		{
-			name:    "Channel 14 (Japan)",
-			line:    "           JapanNet       aa:bb:cc:dd:ee:ff -50  14      N  JP WPA2(PSK/AES)",
-			wantNil: false,
-		},
-		{
-			name:    "5GHz non-DFS channel 149",
-			line:    "           FastNet5G      aa:bb:cc:dd:ee:ff -40  149     Y  US WPA3(SAE)",
-			wantNil: false,
-		},
-	}
+func TestAssociationResult(t *testing.T) {
+	t.Parallel()
 
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			network := wifi.ParseAirportLine(tt.line)
-			if tt.wantNil && network != nil {
-				t.Errorf("ParseAirportLine() = %+v, want nil", network)
-			}
-			if !tt.wantNil && network == nil {
-				t.Error("ParseAirportLine() = nil, want non-nil")
-			}
-		})
-	}
+	t.Run("success", func(t *testing.T) {
+		t.Parallel()
+
+		got := wifi.AssociationResult("Neuroplasticity", nil)
+		if !got.Success || got.SSID != "Neuroplasticity" {
+			t.Errorf("AssociationResult() = %+v, want success for the named network", got)
+		}
+	})
+
+	// A refused association is an outcome the caller renders, not a Go error.
+	t.Run("failure carries the reason", func(t *testing.T) {
+		t.Parallel()
+
+		got := wifi.AssociationResult("Ghost", errors.New("network Ghost not found in range"))
+		if got.Success {
+			t.Error("AssociationResult() reported success for a failed join")
+		}
+		if !strings.Contains(got.Message, "not found in range") {
+			t.Errorf("AssociationResult() message = %q, want the underlying reason", got.Message)
+		}
+		if got.SSID != "Ghost" {
+			t.Errorf("AssociationResult() SSID = %q, want %q", got.SSID, "Ghost")
+		}
+	})
 }
 
-func TestParseAirportLineNoiseFloor(t *testing.T) {
-	line := "           TestNet        aa:bb:cc:dd:ee:ff -60  6       Y  -- WPA2(PSK/AES)"
-	network := wifi.ParseAirportLine(line)
+func TestDisassociationResult(t *testing.T) {
+	t.Parallel()
 
-	if network == nil {
-		t.Fatal("ParseAirportLine() = nil, want non-nil")
+	if got := wifi.DisassociationResult(nil); !got.Success {
+		t.Errorf("DisassociationResult(nil) = %+v, want success", got)
 	}
 
-	// Default noise floor should be -95 dBm
-	const expectedNoiseFloor = -95
-	if network.NoiseFloor != expectedNoiseFloor {
-		t.Errorf("NoiseFloor = %d, want %d", network.NoiseFloor, expectedNoiseFloor)
+	got := wifi.DisassociationResult(errors.New("no Wi-Fi interface"))
+	if got.Success {
+		t.Error("DisassociationResult() reported success despite an error")
 	}
-
-	// SNR should be Signal - NoiseFloor = -60 - (-95) = 35
-	expectedSNR := network.Signal - expectedNoiseFloor
-	if network.SNR != expectedSNR {
-		t.Errorf("SNR = %d, want %d", network.SNR, expectedSNR)
+	if !strings.Contains(got.Message, "no Wi-Fi interface") {
+		t.Errorf("DisassociationResult() message = %q, want the underlying reason", got.Message)
 	}
 }

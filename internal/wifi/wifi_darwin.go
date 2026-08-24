@@ -3,202 +3,105 @@
 package wifi
 
 import (
-	"context"
+	"errors"
 	"fmt"
-	"os/exec"
-	"strconv"
-	"strings"
-	"time"
+	"slices"
+
+	"github.com/MustardSeedNetworks/foundation/pkg/corewlan"
 )
 
-// Darwin platform constants.
-const (
-	infoTimeoutSeconds       = 5  // Timeout for WiFi info retrieval operations
-	connectTimeoutSeconds    = 30 // Timeout for WiFi connection operations
-	disconnectTimeoutSeconds = 10 // Timeout for WiFi disconnect operations
-	keyValuePairCount        = 2  // Expected number of parts when splitting key:value pairs
-)
-
-// isWirelessPlatform checks if interface is wireless on macOS.
-// macOS requires exec-based approach as there's no nl80211 equivalent.
+// isWirelessPlatform reports whether the named interface is the Wi-Fi adapter.
 func isWirelessPlatform(iface string) bool {
-	// On macOS, Wi-Fi interface is typically en0 or starts with en
-	// We can use networksetup to check
-	ctx, cancel := context.WithTimeout(context.Background(), infoTimeoutSeconds*time.Second)
-	defer cancel()
-	cmd := exec.CommandContext(ctx, "networksetup", "-listallhardwareports")
-	output, err := cmd.Output()
+	names, err := corewlan.Interfaces()
 	if err != nil {
-		return strings.HasPrefix(iface, "en")
+		return false
 	}
-
-	lines := strings.Split(string(output), "\n")
-	foundWiFi := false
-	for _, line := range lines {
-		if strings.Contains(line, "Wi-Fi") {
-			foundWiFi = true
-		}
-		if foundWiFi && strings.Contains(line, "Device:") {
-			device := strings.TrimPrefix(line, "Device: ")
-			device = strings.TrimSpace(device)
-			if device == iface {
-				return true
-			}
-			foundWiFi = false
-		}
-	}
-	return false
+	return slices.Contains(names, iface)
 }
 
-// getInfoPlatform gets Wi-Fi info on macOS.
-// macOS requires exec-based approach using airport utility.
+// getInfoPlatform reports the current association on macOS.
+//
+// Returns nil when the interface is not associated, when the host has no Wi-Fi
+// adapter, or when Location Services authorization is missing — CoreWLAN
+// redacts the SSID and BSSID without it, and a record identifying no network is
+// worse than none.
 func getInfoPlatform(_ string) *Info {
-	// Use airport command for Wi-Fi info
-	airportPath := "/System/Library/PrivateFrameworks/Apple80211.framework/Versions/Current/Resources/airport"
-	ctx, cancel := context.WithTimeout(context.Background(), infoTimeoutSeconds*time.Second)
-	defer cancel()
-	cmd := exec.CommandContext(ctx, airportPath, "-I")
-	output, err := cmd.Output()
+	current, err := corewlan.Current()
 	if err != nil {
 		return nil
 	}
 
-	info := &Info{}
-	lines := strings.SplitSeq(string(output), "\n")
-
-	for line := range lines {
-		line = strings.TrimSpace(line)
-		parts := strings.SplitN(line, ":", keyValuePairCount)
-		if len(parts) != keyValuePairCount {
-			continue
-		}
-
-		key := strings.TrimSpace(parts[0])
-		value := strings.TrimSpace(parts[1])
-
-		switch key {
-		case "SSID":
-			info.SSID = value
-		case "BSSID":
-			info.BSSID = value
-		case "agrCtlRSSI":
-			if sig, parseErr := strconv.Atoi(value); parseErr == nil {
-				info.Signal = sig
-			}
-		case "channel":
-			// Format can be "6" or "6,1" (for 80MHz channels)
-			chParts := strings.Split(value, ",")
-			if ch, chErr := strconv.Atoi(chParts[0]); chErr == nil {
-				info.Channel = ch
-			}
-		case "link auth":
-			info.Security = mapSecurityType(value)
-		}
+	return &Info{
+		SSID:      current.SSID,
+		BSSID:     current.BSSID,
+		Signal:    current.RSSI,
+		Channel:   current.Channel,
+		Frequency: channelToFrequencyInBand(current.Channel, int(current.Band)),
+		Security:  mapSecurityType(current.Security),
 	}
-
-	// Calculate frequency from channel if we got a channel
-	if info.Channel > 0 {
-		info.Frequency = channelToFrequency(info.Channel)
-	}
-
-	// If no security info, try to get it another way
-	if info.Security == "" && info.SSID != "" {
-		info.Security = "WPA2" // Default assumption
-	}
-
-	if info.SSID == "" {
-		return nil
-	}
-
-	return info
 }
 
-// connectPlatform connects to a WiFi network on macOS.
-// Uses networksetup command for connection management.
-func connectPlatform(iface, ssid, password string) (*ConnectionResult, error) {
-	// macOS uses networksetup to connect to networks
-	ctx, cancel := context.WithTimeout(context.Background(), connectTimeoutSeconds*time.Second)
-	defer cancel()
+// connectPlatform joins a Wi-Fi network on macOS. Pass an empty password for an
+// open network.
+func connectPlatform(_, ssid, password string) (*ConnectionResult, error) {
+	return associationResult(ssid, corewlan.Associate(ssid, password)), nil
+}
 
-	var cmd *exec.Cmd
-	if password != "" {
-		cmd = exec.CommandContext(ctx, "networksetup", "-setairportnetwork", iface, ssid, password)
-	} else {
-		cmd = exec.CommandContext(ctx, "networksetup", "-setairportnetwork", iface, ssid)
-	}
-
-	output, err := cmd.CombinedOutput()
-	outputStr := strings.TrimSpace(string(output))
-
+// associationResult reports a join outcome. A refused association is an outcome
+// callers render, not a Go error, which is the contract every platform shares.
+func associationResult(ssid string, err error) *ConnectionResult {
 	if err != nil {
-		if strings.Contains(outputStr, "Could not find network") {
-			return &ConnectionResult{
-				Success: false,
-				Message: "Network not found. Make sure the network is in range.",
-				SSID:    ssid,
-			}, nil
-		}
-		return &ConnectionResult{
-			Success: false,
-			Message: outputStr,
-			SSID:    ssid,
-		}, nil
+		return &ConnectionResult{Success: false, Message: err.Error(), SSID: ssid}
 	}
-
-	// Empty output usually means success on macOS
-	if outputStr == "" {
-		return &ConnectionResult{
-			Success: true,
-			Message: "Successfully connected to " + ssid,
-			SSID:    ssid,
-		}, nil
-	}
-
-	return &ConnectionResult{
-		Success: false,
-		Message: outputStr,
-		SSID:    ssid,
-	}, nil
-}
-
-// disconnectPlatform disconnects from WiFi on macOS.
-func disconnectPlatform(iface string) (*ConnectionResult, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), disconnectTimeoutSeconds*time.Second)
-	defer cancel()
-
-	cmd := exec.CommandContext(ctx, "networksetup", "-setairportpower", iface, "off")
-	if _, err := cmd.CombinedOutput(); err != nil {
-		return &ConnectionResult{
-			Success: false,
-			Message: "Failed to disconnect",
-		}, nil
-	}
-
-	// Turn WiFi back on (just disconnected from network)
-	cmd = exec.CommandContext(ctx, "networksetup", "-setairportpower", iface, "on")
-	_, _ = cmd.CombinedOutput()
-
 	return &ConnectionResult{
 		Success: true,
-		Message: "Successfully disconnected",
-	}, nil
+		Message: "Successfully connected to " + ssid,
+		SSID:    ssid,
+	}
 }
 
-// getSavedNetworksPlatform returns saved WiFi networks on macOS.
+// disconnectPlatform leaves the current network on macOS.
+//
+// This disassociates rather than cycling the radio: the previous implementation
+// powered Wi-Fi off and back on, which drops every interface consumer to achieve
+// a disconnect.
+func disconnectPlatform(_ string) (*ConnectionResult, error) {
+	return disassociationResult(corewlan.Disassociate()), nil
+}
+
+// disassociationResult reports a leave outcome, on the same contract as
+// [associationResult].
+func disassociationResult(err error) *ConnectionResult {
+	if err != nil {
+		return &ConnectionResult{Success: false, Message: err.Error()}
+	}
+	return &ConnectionResult{Success: true, Message: "Successfully disconnected"}
+}
+
+// getSavedNetworksPlatform returns the networks macOS remembers.
 func getSavedNetworksPlatform() ([]SavedNetwork, error) {
-	// macOS doesn't have an easy way to list saved networks via command line
-	// Would need to use CoreWLAN framework or parse preference files
-	return []SavedNetwork{}, nil
+	names, err := corewlan.SavedNetworks()
+	if err != nil {
+		if errors.Is(err, corewlan.ErrNoInterface) {
+			return []SavedNetwork{}, nil
+		}
+		return nil, fmt.Errorf("read saved networks: %w", err)
+	}
+
+	saved := make([]SavedNetwork, 0, len(names))
+	for _, name := range names {
+		saved = append(saved, SavedNetwork{SSID: name})
+	}
+	return saved, nil
 }
 
-// forgetNetworkPlatform removes a saved WiFi network on macOS.
+// forgetNetworkPlatform removes a remembered network on macOS.
+//
+// Rewriting the stored configuration is an administrative operation, so this
+// fails without the system-configuration right rather than appearing to succeed.
 func forgetNetworkPlatform(ssid string) error {
-	ctx, cancel := context.WithTimeout(context.Background(), disconnectTimeoutSeconds*time.Second)
-	defer cancel()
-
-	cmd := exec.CommandContext(ctx, "networksetup", "-removepreferredwirelessnetwork", "en0", ssid)
-	if output, err := cmd.CombinedOutput(); err != nil {
-		return fmt.Errorf("failed to forget network: %s", strings.TrimSpace(string(output)))
+	if err := corewlan.Forget(ssid); err != nil {
+		return fmt.Errorf("failed to forget network: %w", err)
 	}
 	return nil
 }
