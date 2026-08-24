@@ -86,9 +86,33 @@ log_step "2/6 Copying binary..."
 cp "$BINARY_PATH" "$BUILD_DIR/payload$INSTALL_LOCATION/$PKG_NAME"
 chmod 755 "$BUILD_DIR/payload$INSTALL_LOCATION/$PKG_NAME"
 
-# Copy launchd plist
+# Copy launchd plists (daemon + Wi-Fi helper agent)
 log_step "3/6 Copying launchd configuration..."
 cp "$REPO_ROOT/deploy/launchd/com.seed.plist" "$BUILD_DIR/payload$INSTALL_LOCATION/launchd/"
+cp "$REPO_ROOT/deploy/launchd/com.seed.wifihelper.plist" "$BUILD_DIR/payload$INSTALL_LOCATION/launchd/"
+
+# Build and stage the Wi-Fi helper application bundle.
+#
+# macOS redacts Wi-Fi network names and BSSIDs from any process without
+# Location Services authorization, which is granted per user, in a login
+# session, to a signed bundle. The root daemon cannot hold it, so without this
+# helper every macOS scan reports no networks. It must be signed with the
+# identity the daemon's code requirement names; an unsigned helper is refused
+# at runtime, so shipping one would be worse than shipping none.
+if [[ "${SEED_SKIP_WIFI_HELPER:-0}" == "1" ]]; then
+    log_warn "SEED_SKIP_WIFI_HELPER=1 — packaging without the Wi-Fi helper."
+    log_warn "Wi-Fi scanning will report no networks on the installed system."
+else
+    log_step "3b/6 Building Wi-Fi helper bundle..."
+    HELPER_SUPPORT_DIR="$BUILD_DIR/payload/Library/Application Support/Seed"
+    mkdir -p "$HELPER_SUPPORT_DIR"
+    if ! "$SCRIPT_DIR/build-helper.sh" "$VERSION" "$HELPER_SUPPORT_DIR"; then
+        log_error "Wi-Fi helper build failed."
+        log_error "Set SEED_SKIP_WIFI_HELPER=1 to package without it, accepting that"
+        log_error "Wi-Fi scanning will report no networks on macOS."
+        exit 1
+    fi
+fi
 
 # Copy scripts
 log_step "4/6 Preparing installation scripts..."
