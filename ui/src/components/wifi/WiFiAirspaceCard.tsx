@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 import { useWifiAirspace } from '../../hooks/useWifiVisibility';
 import { Card } from '../ui/card';
 import { WiFiAirspaceTree } from './WiFiAirspaceTree';
@@ -9,6 +10,7 @@ import { WiFiCaptureStatus } from './WiFiCaptureStatus';
  * SSID -> AP -> BSSID -> client hierarchy.
  */
 export function WiFiAirspaceCard() {
+  const { t } = useTranslation('pages');
   const { data, isLoading, isError } = useWifiAirspace();
 
   const status = data?.status.captureActive ? 'success' : 'unknown';
@@ -21,11 +23,11 @@ export function WiFiAirspaceCard() {
     >
       {isLoading ? (
         <p data-testid="wifi-airspace-loading" className="text-sm text-text-muted">
-          Loading airspace…
+          {t('wifi.airspaceLoading')}
         </p>
       ) : isError || !data ? (
         <p data-testid="wifi-airspace-error" className="text-sm text-text-muted">
-          Airspace data is unavailable.
+          {t('wifi.airspaceUnavailable')}
         </p>
       ) : (
         <div className="stack-md">

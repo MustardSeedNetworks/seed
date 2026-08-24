@@ -31,6 +31,8 @@ export const MsnMark: FC<MsnMarkProps> = ({ collapsed = false, className = '' })
   >
     <img src={msnLogo} alt="" aria-hidden="true" className="h-4 w-4 shrink-0" />
     {!collapsed ? (
+      /* allow-hardcoded: a company name is a proper noun, not copy — the
+         glossary rule keeps product and brand names verbatim in every locale. */
       <span className="text-[10px] font-semibold tracking-wide text-text-muted">
         Mustard Seed Networks
       </span>

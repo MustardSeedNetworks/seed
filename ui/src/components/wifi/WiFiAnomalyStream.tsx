@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 import type { Anomaly } from '../../types/generated/wifi-anomalies-response';
 import { severityStyle } from './severity';
 
@@ -12,10 +13,11 @@ interface WiFiAnomalyStreamProps {
  * (SSID, BSSID, 802.11, WPA3) are shown verbatim.
  */
 export function WiFiAnomalyStream({ anomalies }: WiFiAnomalyStreamProps) {
+  const { t } = useTranslation('pages');
   if (anomalies.length === 0) {
     return (
       <p data-testid="wifi-anomalies-empty" className="text-sm text-text-muted">
-        No Wi-Fi anomalies detected.
+        {t('wifi.noAnomalies')}
       </p>
     );
   }

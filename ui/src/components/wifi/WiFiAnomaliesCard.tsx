@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 import { useWifiAnomalies } from '../../hooks/useWifiVisibility';
 import type { Anomaly } from '../../types/generated/wifi-anomalies-response';
 import { Card } from '../ui/card';
@@ -22,6 +23,7 @@ function cardStatus(anomalies: Anomaly[]): Status {
  * Pro-gated /wifi/anomalies endpoint and renders the severity-ranked detections.
  */
 export function WiFiAnomaliesCard() {
+  const { t } = useTranslation('pages');
   const { data, isLoading, isError } = useWifiAnomalies();
 
   return (
@@ -32,11 +34,11 @@ export function WiFiAnomaliesCard() {
     >
       {isLoading ? (
         <p data-testid="wifi-anomalies-loading" className="text-sm text-text-muted">
-          Loading anomalies…
+          {t('wifi.anomaliesLoading')}
         </p>
       ) : isError || !data ? (
         <p data-testid="wifi-anomalies-error" className="text-sm text-text-muted">
-          Anomaly data is unavailable.
+          {t('wifi.anomaliesUnavailable')}
         </p>
       ) : (
         <WiFiAnomalyStream anomalies={data.anomalies} />

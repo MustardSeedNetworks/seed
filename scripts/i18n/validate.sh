@@ -342,29 +342,22 @@ check_plural_completeness() {
 # Check: hardcoded English text in JSX (warn-only — regex is fuzzy)
 # -----------------------------------------------------------------------------
 check_hardcoded_jsx() {
-  section "Hardcoded English JSX text (warn-only)"
+  section "Hardcoded English JSX text"
   [ ! -d "$UI_SRC_DIR" ] && { warn "UI_SRC_DIR missing; skipping"; return; }
 
-  # Heuristic: JSX text nodes starting with an uppercase letter followed by
-  # lowercase letters and a space — typical English sentence pattern.
-  # Allowlist common technical strings (single capitalized word, glossary terms).
-  local hits
-  hits=$(grep -rnE ">[A-Z][a-z]+ [a-zA-Z]" "$UI_SRC_DIR" \
-    --include='*.tsx' 2>/dev/null \
-    | grep -v "// allow-hardcoded" \
-    | grep -v ".stories.tsx" \
-    | grep -v "/test/" \
-    | grep -v ".test.tsx") || true
-
-  if [ -n "$hits" ]; then
-    local count
-    count=$(echo "$hits" | wc -l | tr -d ' ')
-    warn "$count possible hardcoded JSX strings (heuristic; manual review needed):"
-    echo "$hits" | head -10 | sed 's/^/      /'
-    [ "$count" -gt 10 ] && printf "      ... and %d more\n" $((count - 10))
-  else
-    ok "no hardcoded JSX text detected"
+  # Was a warn-only grep that only matched text beginning on the same line as
+  # the closing `>`, so JSX text on its own line was invisible: it reported 25
+  # of the 48 strings actually present. check-source.py blanks comments and
+  # matches across lines, and this blocks — no baseline file, because after the
+  # cleanup there is nothing left to suppress.
+  local out
+  if ! out=$(python3 scripts/i18n/check-source.py 2>&1); then
+    fail "hardcoded English JSX text:"
+    echo "$out" | grep -v "^::error file" | sed 's/^/      /' | head -40
+    echo "$out" | grep "^::error file" || true
+    return
   fi
+  ok "no hardcoded English JSX text"
 }
 
 # -----------------------------------------------------------------------------
@@ -464,7 +457,7 @@ run_check check_interpolation_parity
 run_check check_plural_completeness
 run_check check_key_usage
 run_check check_locked_versions
-[ "$QUICK" -eq 0 ] && run_check check_hardcoded_jsx
+run_check check_hardcoded_jsx
 
 # -----------------------------------------------------------------------------
 # Summary

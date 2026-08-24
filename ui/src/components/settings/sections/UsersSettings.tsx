@@ -258,7 +258,7 @@ export function UsersSettings(): React.ReactElement {
         {loading ? (
           <div className="text-sm text-text-muted">{t('common:status.loading')}</div>
         ) : users.length === 0 ? (
-          <div className="text-sm text-text-muted">No users.</div>
+          <div className="text-sm text-text-muted">{t('settings:users.none')}</div>
         ) : (
           <table className="w-full text-sm" data-testid="users-table">
             <thead className="text-xs text-text-muted text-left">

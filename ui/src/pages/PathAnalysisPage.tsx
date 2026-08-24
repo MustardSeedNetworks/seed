@@ -1,3 +1,4 @@
+import { Trans } from 'react-i18next';
 import { NetworkDiscoveryCard } from '../components/cards/NetworkDiscoveryCard';
 import { PathDiscoveryCard } from '../components/cards/PathDiscoveryCard';
 import { RequireFeature } from '../components/ui/RequireFeature';
@@ -20,13 +21,14 @@ export function PathAnalysisPage() {
       feature="path_analysis"
       fallback={
         <div className="rounded-lg border border-status-warning/30 bg-status-warning/5 pad text-sm text-status-warning">
-          Path Analysis is a Pro-tier feature. Start a 14-day Pro trial with
-          <code className="mx-1 px-1 rounded bg-surface-raised">seed license trial</code>
-          or activate a Pro key with
-          <code className="ml-tight px-1 rounded bg-surface-raised">
-            seed license activate -k &lt;KEY&gt;
-          </code>
-          .
+          <Trans
+            i18nKey="path.proGate"
+            ns="pages"
+            components={{
+              code: <code className="mx-1 px-1 rounded bg-surface-raised" />,
+              code2: <code className="ml-tight px-1 rounded bg-surface-raised" />,
+            }}
+          />
         </div>
       }
     >

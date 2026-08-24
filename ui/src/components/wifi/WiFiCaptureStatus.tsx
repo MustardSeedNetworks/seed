@@ -1,3 +1,4 @@
+import { Trans, useTranslation } from 'react-i18next';
 import type { Status } from '../../types/generated/wifi-airspace-response';
 
 interface WiFiCaptureStatusProps {
@@ -15,6 +16,7 @@ interface Stat {
  * it states so plainly rather than implying an empty network.
  */
 export function WiFiCaptureStatus({ status }: WiFiCaptureStatusProps) {
+  const { t } = useTranslation('pages');
   const stats: Stat[] = [
     { label: 'SSIDs', value: status.ssids },
     { label: 'APs', value: status.aps },
@@ -33,11 +35,14 @@ export function WiFiCaptureStatus({ status }: WiFiCaptureStatusProps) {
         />
         <span className="text-sm text-text-secondary">
           {status.captureActive ? (
-            <>
-              Live capture on <span className="font-medium text-text-primary">{status.source}</span>
-            </>
+            <Trans
+              i18nKey="wifi.liveCaptureOn"
+              ns="pages"
+              values={{ source: status.source }}
+              components={{ src: <span className="font-medium text-text-primary" /> }}
+            />
           ) : (
-            'Monitor capture inactive — showing the last observed airspace'
+            t('wifi.captureInactive')
           )}
         </span>
       </div>

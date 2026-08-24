@@ -78,6 +78,7 @@ interface LogEntryRowProps {
 }
 
 function LogEntryRow({ entry, expanded, onToggle, onClose }: LogEntryRowProps): React.JSX.Element {
+  const { t: tCards } = useTranslation('cards');
   const colors = LOG_LEVEL_COLORS[entry.level];
 
   return (
@@ -237,7 +238,8 @@ function LogEntryRow({ entry, expanded, onToggle, onClose }: LogEntryRowProps): 
             ) : null}
             {entry.requestId ? (
               <div>
-                <strong className="text-text-primary">Request ID:</strong> {entry.requestId}
+                <strong className="text-text-primary">{tCards('logViewer.requestId')}</strong>{' '}
+                {entry.requestId}
               </div>
             ) : null}
             {entry.durationMs !== undefined ? (

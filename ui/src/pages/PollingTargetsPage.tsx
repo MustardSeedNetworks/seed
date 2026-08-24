@@ -16,6 +16,7 @@
 
 import { Plus } from 'lucide-react';
 import { type JSX, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { usePollingTargets } from '../hooks/usePollingTargets';
 import type { PollingTarget } from '../types/polling';
 import {
@@ -66,6 +67,7 @@ function matchesFacet(target: PollingTarget, facet: Facet): boolean {
 }
 
 export function PollingTargetsPage(): JSX.Element {
+  const { t } = useTranslation('pages');
   const { targets, loading, error, create, update, remove } = usePollingTargets();
   const [editing, setEditing] = useState<PollingTarget | null>(null);
   const [showCreate, setShowCreate] = useState<boolean>(false);
@@ -101,7 +103,7 @@ export function PollingTargetsPage(): JSX.Element {
           className="inline-flex items-center gap-2 rounded-md bg-brand-primary px-3 py-2 text-sm font-medium text-on-brand hover:bg-brand-accent"
         >
           <Plus className="h-4 w-4" />
-          Add target
+          {t('pollingTargets.addTarget')}
         </button>
       </div>
 
@@ -246,6 +248,7 @@ export function PollingTargetsPage(): JSX.Element {
 
 /** The record's own state, spelled out rather than left to the colour bar. */
 function TargetStatus({ target }: { target: PollingTarget }): JSX.Element {
+  const { t } = useTranslation('pages');
   const state = targetState(target);
   if (state === 'crit') {
     return (
@@ -263,24 +266,25 @@ function TargetStatus({ target }: { target: PollingTarget }): JSX.Element {
   }
   return (
     <span className="rounded-lg border border-surface-border px-3 py-1.5 text-xs font-semibold text-text-secondary">
-      Polling normally
+      {t('pollingTargets.pollingNormally')}
     </span>
   );
 }
 
 /** The collector chain is the sub-table the archetype calls for. */
 function CollectorChain({ chain }: { chain: string[] }): JSX.Element {
+  const { t } = useTranslation('pages');
   if (chain.length === 0) {
     return (
       <div className="stack-xs">
-        <p className="caption">Collector chain</p>
-        <p className="body-small">Using the default chain for this SNMP version.</p>
+        <p className="caption">{t('pollingTargets.collectorChain')}</p>
+        <p className="body-small">{t('pollingTargets.defaultChain')}</p>
       </div>
     );
   }
   return (
     <div className="stack-xs">
-      <p className="caption">Collector chain</p>
+      <p className="caption">{t('pollingTargets.collectorChain')}</p>
       <ol className="divide-y divide-surface-border overflow-hidden rounded-lg border border-surface-border">
         {chain.map((collector, index) => (
           <li key={collector} className="flex items-center gap-default px-cell py-2">

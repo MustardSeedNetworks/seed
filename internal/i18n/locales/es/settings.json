@@ -273,7 +273,10 @@
     "noWireless": "No se detectó interfaz inalámbrica",
     "scanInterval": "Intervalo de escaneo",
     "showHidden": "Mostrar redes ocultas",
-    "signalThreshold": "Umbral de señal"
+    "signalThreshold": "Umbral de señal",
+    "scanning": "Buscando redes...",
+    "noNetworks": "No se encontraron redes",
+    "savedNetworks": "Redes guardadas"
   },
   "snmp": {
     "title": "SNMP",
@@ -524,6 +527,21 @@
       "github": "GitHub"
     },
     "confirmDelete": "¿Eliminar al usuario {{username}}?",
-    "confirmDeletePrompt": "Esto revocará todas las sesiones y los tokens de API de {{username}}. No se puede deshacer."
+    "confirmDeletePrompt": "Esto revocará todas las sesiones y los tokens de API de {{username}}. No se puede deshacer.",
+    "none": "No hay usuarios."
+  },
+  "apiTokens": {
+    "currentTier": "Nivel actual:",
+    "created": "Token creado — cópielo ahora. No se mostrará de nuevo.",
+    "tokenName": "Nombre del token",
+    "createToken": "Crear token",
+    "none": "Aún no hay tokens de API.",
+    "lastUsed": "Último uso",
+    "description": "Tokens de acceso personal para llamadas programáticas a la API (scripts, monitoreo, CI). Disponible en el nivel <strong>Pro</strong>. La interfaz web funciona en todos los niveles sin token.",
+    "tierWarning": "Nivel actual: <tier>{{tier}}</tier>. La creación de tokens de API requiere Pro. Inicie una prueba de 14 días con <code>seed license trial</code>, o active una clave Pro con <code2>seed license activate -k &lt;KEY&gt;</code2>.",
+    "colName": "Nombre",
+    "colPrefix": "Prefijo",
+    "colCreated": "Creado",
+    "colStatus": "Estado"
   }
 }

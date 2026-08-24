@@ -290,7 +290,7 @@ function ChannelGraph({
           transform={`rotate(-90, ${padding.left / 2}, ${height / 2})`}
           className="body-small text-text-muted"
         >
-          Signal (dBm)
+          {tCards('wifiChannel.signalDbm')}
         </text>
         <text
           x={width / 2}
