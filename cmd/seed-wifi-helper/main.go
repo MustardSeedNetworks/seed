@@ -30,9 +30,10 @@ import (
 const (
 	defaultSocketPath = "/var/run/seed/wifi-helper.sock"
 
-	// authorizationWait bounds the startup permission request. A GUI session
-	// that is going to prompt does so promptly; a background agent will not
-	// prompt at all and should not stall behind the wait.
+	// authorizationWait bounds the startup permission request. The prompt
+	// appears within a second or two when it appears at all, and a decision may
+	// never come — the operator can leave the dialog sitting — so this only
+	// bounds how long startup blocks, not how long the grant takes.
 	authorizationWait = 5 * time.Second
 
 	// reconnectDelay paces retries when the daemon is not listening yet, which
@@ -57,9 +58,15 @@ func main() {
 //
 // Requesting is what registers this bundle with locationd, which is what makes
 // it appear in System Settings at all — so it is called on every start even
-// when the answer is already known. A background agent will not be prompted, so
-// a not-determined result means an operator has to enable the permission by
-// hand; that is logged plainly rather than surfacing later as an empty scan.
+// when the answer is already known.
+//
+// A background agent does get prompted, provided the bundle carries the
+// com.apple.security.personal-information.location entitlement. Without it
+// locationd registers the client and then declines to ask, which looks
+// identical to macOS refusing to prompt agents. A not-determined result here
+// therefore means either the operator dismissed the dialog or the bundle was
+// signed without that entitlement; both are logged rather than surfacing later
+// as an empty scan.
 func reportAuthorization(ctx context.Context, log *slog.Logger) {
 	status := corewlan.RequestAuthorization(authorizationWait)
 	if status == corewlan.AuthAuthorized {

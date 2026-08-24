@@ -34,6 +34,9 @@ BINARY_NAME="seed-wifi-helper"
 # the resulting helper at runtime.
 SIGN_IDENTITY="${SEED_SIGN_IDENTITY:-Developer ID Application}"
 
+# Only used to print the notarization instructions below.
+TEAM_ID="${SEED_TEAM_ID:-X6JWYP43HG}"
+
 RED='\033[0;31m'
 GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
@@ -62,9 +65,12 @@ if ! security find-identity -v -p codesigning | grep -q "$SIGN_IDENTITY"; then
     exit 1
 fi
 
-# The hardened runtime is required for notarization, which is what lets macOS
-# offer the Location permission for this bundle in the first place.
+# The hardened runtime is required for notarization. Under it, locationd will
+# not show the authorization prompt without the location entitlement — it
+# registers the client, then silently declines to ask. Signing without the
+# entitlements file produces a bundle that looks correct and can never prompt.
 codesign --force --timestamp --options runtime \
+    --entitlements "$SCRIPT_DIR/helper/Helper.entitlements" \
     --identifier "$BUNDLE_ID" \
     --sign "$SIGN_IDENTITY" \
     "$BUNDLE"
@@ -74,11 +80,31 @@ codesign --verify --strict --verbose=2 "$BUNDLE"
 echo -e "${GREEN}Built and signed:${NC} $BUNDLE"
 echo
 echo -e "${YELLOW}Not done here — notarization.${NC}"
-echo "Notarizing requires Apple credentials this script deliberately does not handle:"
+echo "Notarizing requires Apple credentials this script deliberately does not handle."
 echo
-echo "  xcrun notarytool submit \"$BUNDLE\" --keychain-profile <profile> --wait"
+echo "One-time setup, if you have no keychain profile yet. It will prompt for an"
+echo "app-specific credential generated at appleid.apple.com. That is not the same"
+echo "as your Apple ID sign-in, and this script never sees or stores it."
+echo
+echo "  xcrun notarytool store-credentials seed-notary \\"
+echo "      --apple-id YOUR_APPLE_ID_EMAIL --team-id $TEAM_ID"
+echo
+echo "Then, for this bundle on its own. notarytool takes an ARCHIVE, never a bare"
+echo ".app, so it has to be zipped first — and the staple goes back onto the .app:"
+echo
+echo "  ditto -c -k --keepParent \"$BUNDLE\" \"$OUTPUT_DIR/helper.zip\""
+echo "  xcrun notarytool submit \"$OUTPUT_DIR/helper.zip\" --keychain-profile seed-notary --wait"
 echo "  xcrun stapler staple \"$BUNDLE\""
 echo
-echo "Until the bundle is notarized, macOS may not present the Location Services"
-echo "prompt at all, and an operator has to enable the permission by hand in"
-echo "System Settings > Privacy & Security > Location Services."
+echo "For release, notarize the installer instead — it carries this bundle, and"
+echo "one submission covers both. That needs a Developer ID *Installer*"
+echo "certificate, which is a different certificate from the Application one"
+echo "used above:"
+echo
+echo "  productsign --sign \"Developer ID Installer: YOUR NAME ($TEAM_ID)\" seed-VERSION.pkg seed-VERSION-signed.pkg"
+echo "  xcrun notarytool submit seed-VERSION-signed.pkg --keychain-profile seed-notary --wait"
+echo "  xcrun stapler staple seed-VERSION-signed.pkg"
+echo
+echo "Notarization is required for distribution. It is not what enables the"
+echo "Location Services prompt — the entitlement above is. A signed, entitled,"
+echo "un-notarized build prompts correctly on the machine that built it."

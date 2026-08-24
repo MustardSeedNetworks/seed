@@ -167,7 +167,8 @@ else
     log "  Open System Settings > Privacy & Security > Location Services"
     log "  and enable 'Seed Wi-Fi Helper'."
     log "  macOS hides Wi-Fi network names from applications without this"
-    log "  permission, and does not prompt for background agents."
+    log "  permission. The helper asks for it at login, so a dialog may appear"
+    log "  on its own; enable it there or in System Settings."
 fi
 
 log "Post-install complete"
