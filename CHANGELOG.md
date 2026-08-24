@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.213.24](https://github.com/MustardSeedNetworks/seed/compare/v0.213.23...v0.213.24) (2026-08-24)
+
+
+### Bug Fixes
+
+* **deps:** update module github.com/mustardseednetworks/foundation to v0.5.0 ([#2057](https://github.com/MustardSeedNetworks/seed/issues/2057)) ([97a793e](https://github.com/MustardSeedNetworks/seed/commit/97a793e972b4420fcb6ba02c4979d92858c27d48))
+
+
+### Miscellaneous
+
+* **deps:** update dependency @biomejs/biome to v2.5.10 ([#2064](https://github.com/MustardSeedNetworks/seed/issues/2064)) ([7e87dd1](https://github.com/MustardSeedNetworks/seed/commit/7e87dd1c94b492c336babcf800f3c71fc91b3b3b))
+
 ## [0.213.23](https://github.com/MustardSeedNetworks/seed/compare/v0.213.22...v0.213.23) (2026-08-24)
 
 
