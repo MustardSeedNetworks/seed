@@ -1,0 +1,44 @@
+# Structural i18n rules, run by scripts/i18n/validate.sh.
+#
+# These replace hand-written regex. Every text-based attempt at this check has
+# had a blind spot: the original grep could not see the multiline t(\n 'key',\n
+# 'fallback',\n) form (10 sites), nor a fallback whose quote style it did not
+# own. A Python rewrite fixed those and still missed fallbacks passed as
+# *variables* — RoleChip and RoleGuard held English copy in
+# confirmTitleDefault/confirmMessageDefault consts and handed them to t().
+#
+# Semgrep parses TypeScript rather than scanning lines, and does constant
+# propagation, so it sees all of those. Semgrep is already a fleet CI tool.
+rules:
+  - id: i18n-fallback-string-arg
+    languages: [typescript]
+    severity: ERROR
+    message: >-
+      Banned t('key', 'fallback'). i18next returns the locale value whenever the
+      key resolves, so the fallback never renders. It hides a missing key, and
+      the extra argument matches i18next's loose defaultValue overload, which
+      switches off the typed key union at this call site.
+    patterns:
+      - pattern-either:
+          - pattern: '$T($KEY, "...")'
+          - pattern: '$T($KEY, "...", $OPTS)'
+      - metavariable-regex:
+          metavariable: $T
+          regex: ^t([A-Z][A-Za-z]*)?$
+
+  - id: i18n-fallback-default-value
+    languages: [typescript]
+    severity: ERROR
+    message: >-
+      Banned defaultValue fallback. Put the copy in the locale file. An *empty*
+      defaultValue is allowed and deliberately not matched here - it is an
+      opt-in probe (a page has an eyebrow when its namespace declares one) and
+      cannot mask missing copy, because it renders nothing.
+    patterns:
+      - pattern: '$T($KEY, {..., defaultValue: "$V", ...})'
+      - metavariable-regex:
+          metavariable: $T
+          regex: ^t([A-Z][A-Za-z]*)?$
+      - metavariable-regex:
+          metavariable: $V
+          regex: ^.+$

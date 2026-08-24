@@ -847,6 +847,12 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
+      # The t()-fallback rules are semgrep rules, not grep — every text-based
+      # version had a blind spot. Pinned exact, per the dependency policy; the
+      # fleet SAST job pins its own copy separately.
+      - name: Install semgrep
+        run: pipx install semgrep==1.168.0
+
       - name: Run shared i18n validator
         # Replaces the prior inline stub (which used the wrong path
         # `locales/en/*.json` — should be `internal/i18n/locales/en/`
