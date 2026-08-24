@@ -102,6 +102,36 @@ fi
 
 # Step 2: Remove launchd plist
 log_step "2/3 Removing launchd configuration..."
+# The Wi-Fi helper runs as a per-user LaunchAgent, so it has to be booted out
+# of the console user's GUI session before its plist is removed.
+HELPER_LABEL="net.mustardseed.seed.wifihelper"
+HELPER_PLIST_PATH="/Library/LaunchAgents/$HELPER_LABEL.plist"
+HELPER_APP="/Library/Application Support/Seed/Seed Wi-Fi Helper.app"
+
+CONSOLE_USER=$(stat -f%Su /dev/console 2>/dev/null || echo "root")
+if [[ "$CONSOLE_USER" != "root" && -n "$CONSOLE_USER" ]]; then
+    CONSOLE_UID=$(id -u "$CONSOLE_USER" 2>/dev/null || echo "")
+    if [[ -n "$CONSOLE_UID" ]]; then
+        launchctl bootout "gui/$CONSOLE_UID/$HELPER_LABEL" 2>/dev/null || true
+    fi
+fi
+
+if [[ -f "$HELPER_PLIST_PATH" ]]; then
+    rm -f "$HELPER_PLIST_PATH"
+    log_info "Removed $HELPER_PLIST_PATH"
+fi
+
+if [[ -d "$HELPER_APP" ]]; then
+    rm -rf "$HELPER_APP"
+    log_info "Removed $HELPER_APP"
+fi
+
+# The Location Services entry survives removing the bundle; macOS keeps it
+# until the user clears it themselves, so say so rather than leave it puzzling.
+log_info "Note: 'Seed Wi-Fi Helper' may remain listed in System Settings >"
+log_info "      Privacy & Security > Location Services. macOS keeps that entry;"
+log_info "      it can be removed there."
+
 if [[ -f "$PLIST_PATH" ]]; then
     rm -f "$PLIST_PATH"
     log_info "Removed $PLIST_PATH"

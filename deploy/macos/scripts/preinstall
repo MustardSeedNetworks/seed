@@ -24,6 +24,16 @@ log() {
 log "Starting pre-install for The Seed..."
 
 # Stop existing service if running
+# Stop the Wi-Fi helper agent before replacing its bundle, or the running
+# process keeps the old executable mapped.
+CONSOLE_USER=$(stat -f%Su /dev/console 2>/dev/null || echo "root")
+if [ "$CONSOLE_USER" != "root" ] && [ -n "$CONSOLE_USER" ]; then
+    CONSOLE_UID=$(id -u "$CONSOLE_USER" 2>/dev/null || echo "")
+    if [ -n "$CONSOLE_UID" ]; then
+        launchctl bootout "gui/$CONSOLE_UID/net.mustardseed.seed.wifihelper" 2>/dev/null || true
+    fi
+fi
+
 if launchctl list 2>/dev/null | grep -q "com.seed"; then
     log "Stopping existing service for upgrade..."
     launchctl unload "$PLIST_DEST" 2>/dev/null || true
