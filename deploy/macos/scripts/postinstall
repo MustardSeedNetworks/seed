@@ -113,5 +113,62 @@ else
     log "Warning: Failed to load launchd service"
 fi
 
+# ---------------------------------------------------------------------------
+# Wi-Fi helper agent
+# ---------------------------------------------------------------------------
+# macOS grants Location Services authorization — which is what un-redacts Wi-Fi
+# network names and BSSIDs — per user, inside a login session, to a signed
+# application bundle. The daemon above runs as root outside any session and
+# cannot hold it, so the helper runs as a LaunchAgent in the user's session.
+HELPER_APP="/Library/Application Support/Seed/Seed Wi-Fi Helper.app"
+HELPER_PLIST_NAME="com.seed.wifihelper.plist"
+HELPER_PLIST_SOURCE="$INSTALL_DIR/launchd/$HELPER_PLIST_NAME"
+HELPER_PLIST_DEST="/Library/LaunchAgents/net.mustardseed.seed.wifihelper.plist"
+
+if [ ! -d "$HELPER_APP" ]; then
+    log "Wi-Fi helper not present in this package - skipping"
+    log "Wi-Fi scanning will report no networks on macOS"
+else
+    log "Installing Wi-Fi helper agent..."
+    chown -R root:wheel "$HELPER_APP"
+
+    mkdir -p /Library/LaunchAgents
+    cp "$HELPER_PLIST_SOURCE" "$HELPER_PLIST_DEST"
+    chmod 644 "$HELPER_PLIST_DEST"
+    chown root:wheel "$HELPER_PLIST_DEST"
+
+    # The daemon owns this directory and creates the socket inside it. Creating
+    # it here root-owned means an unprivileged process cannot get there first
+    # and put its own socket at the path the daemon will advertise.
+    mkdir -p /var/run/seed
+    chown root:wheel /var/run/seed
+    chmod 755 /var/run/seed
+
+    # An agent has to be loaded into a specific user's GUI session, so bootstrap
+    # it for whoever is at the console. Other users pick it up at their next
+    # login; installing while nobody is logged in is not an error.
+    CONSOLE_USER=$(stat -f%Su /dev/console 2>/dev/null || echo "root")
+    if [ "$CONSOLE_USER" != "root" ] && [ -n "$CONSOLE_USER" ]; then
+        CONSOLE_UID=$(id -u "$CONSOLE_USER" 2>/dev/null || echo "")
+        if [ -n "$CONSOLE_UID" ]; then
+            launchctl bootout "gui/$CONSOLE_UID/net.mustardseed.seed.wifihelper" 2>/dev/null || true
+            if launchctl bootstrap "gui/$CONSOLE_UID" "$HELPER_PLIST_DEST" 2>/dev/null; then
+                log "Wi-Fi helper started for $CONSOLE_USER"
+            else
+                log "Warning: could not start Wi-Fi helper for $CONSOLE_USER; it will start at next login"
+            fi
+        fi
+    else
+        log "No console user - Wi-Fi helper will start at next login"
+    fi
+
+    log ""
+    log "ACTION REQUIRED for Wi-Fi scanning:"
+    log "  Open System Settings > Privacy & Security > Location Services"
+    log "  and enable 'Seed Wi-Fi Helper'."
+    log "  macOS hides Wi-Fi network names from applications without this"
+    log "  permission, and does not prompt for background agents."
+fi
+
 log "Post-install complete"
 exit 0
