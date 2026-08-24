@@ -11,4 +11,4 @@ char *peer_verify(int fd, const char *requirement);
 
 void peer_free(char *s);
 
-#endif // SEED_WIFIHELPER_PEER_H
+#endif  // SEED_WIFIHELPER_PEER_H

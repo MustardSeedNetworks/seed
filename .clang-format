@@ -2,10 +2,17 @@
 # clang-format configuration for C23 (NOT C++)
 # This project uses pure C with C23 standard features.
 # Reference: https://clang.llvm.org/docs/ClangFormatStyleOptions.html
+#
+# Language must be Cpp, not C. clang-format only gained a distinct "C" language
+# in LLVM 19, and CI pins clang-format-18; Cpp is the historical name covering
+# the C/C++/Objective-C family and is what every version accepts.
+#
+# Standard likewise takes C++ standard names, so C23 cannot be named here. It is
+# the compiler's business anyway — this file only governs formatting.
 
-Language: C
+Language: Cpp
 BasedOnStyle: LLVM
-Standard: c23
+Standard: Latest
 
 # Basic formatting
 IndentWidth: 4
@@ -99,7 +106,10 @@ SortIncludes: CaseSensitive
 SpaceAfterCStyleCast: false
 SpaceAfterLogicalNot: false
 SpaceBeforeAssignmentOperators: true
-SpaceBeforeParens:
+# SpaceBeforeParens is an enum; the per-case mapping belongs under
+# SpaceBeforeParensOptions and only applies when this is Custom.
+SpaceBeforeParens: Custom
+SpaceBeforeParensOptions:
   AfterControlStatements: true
   AfterForeachMacros: true
   AfterFunctionDeclarationName: false
