@@ -80,14 +80,16 @@ Build it first: $SCRIPT_DIR/build-helper.sh"
     spctl -a -vv -t exec "$BUNDLE" 2>&1 | head -3 || true
 
     echo
-    note "Now test whether the Location prompt fires on its own:"
-    note "  1. tccutil reset Location net.mustardseed.seed.wifihelper"
-    note "  2. open \"$BUNDLE\""
-    note "  3. Watch for a Location Services prompt."
-    note "     Prompt appears  -> notarization fixes onboarding."
-    note "     No prompt       -> manual System Settings step is permanent."
-    note "  Check the result:"
+    note "Verify the Location grant (the prompt comes from the entitlement, not"
+    note "from notarization):"
+    note "  open \"$BUNDLE\""
     note "  plutil -p /var/db/locationd/clients.plist | grep -A4 seed.wifihelper"
+    note "  Authorized => true  means scans return network names."
+    note "If no prompt appears, check that locationd is not refusing it:"
+    note "  log show --last 2m --predicate 'process == \"locationd\"' --info \\"
+    note "    | grep -i wifihelper"
+    note "  \"doesn'\''t have the entitlement\" means the bundle was signed without"
+    note "  Helper.entitlements."
 }
 
 case "${1:-notarize}" in

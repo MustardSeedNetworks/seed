@@ -65,9 +65,12 @@ if ! security find-identity -v -p codesigning | grep -q "$SIGN_IDENTITY"; then
     exit 1
 fi
 
-# The hardened runtime is required for notarization, which is what lets macOS
-# offer the Location permission for this bundle in the first place.
+# The hardened runtime is required for notarization. Under it, locationd will
+# not show the authorization prompt without the location entitlement — it
+# registers the client, then silently declines to ask. Signing without the
+# entitlements file produces a bundle that looks correct and can never prompt.
 codesign --force --timestamp --options runtime \
+    --entitlements "$SCRIPT_DIR/helper/Helper.entitlements" \
     --identifier "$BUNDLE_ID" \
     --sign "$SIGN_IDENTITY" \
     "$BUNDLE"
@@ -102,6 +105,6 @@ echo "  productsign --sign \"Developer ID Installer: YOUR NAME ($TEAM_ID)\" seed
 echo "  xcrun notarytool submit seed-VERSION-signed.pkg --keychain-profile seed-notary --wait"
 echo "  xcrun stapler staple seed-VERSION-signed.pkg"
 echo
-echo "Until the bundle is notarized, macOS may not present the Location Services"
-echo "prompt at all, and an operator has to enable the permission by hand in"
-echo "System Settings > Privacy & Security > Location Services."
+echo "Notarization is required for distribution. It is not what enables the"
+echo "Location Services prompt — the entitlement above is. A signed, entitled,"
+echo "un-notarized build prompts correctly on the machine that built it."
