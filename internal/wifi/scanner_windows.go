@@ -19,7 +19,7 @@ const (
 )
 
 // scanPlatform performs a WiFi scan on Windows using netsh wlan.
-func scanPlatform(iface string) ([]*ScannedNetwork, error) {
+func scanPlatform(iface string, _ Helper) ([]*ScannedNetwork, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), netshWlanTimeoutSeconds*time.Second)
 	defer cancel()
 

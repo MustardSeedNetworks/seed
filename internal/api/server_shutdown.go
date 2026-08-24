@@ -83,6 +83,10 @@ func (s *Server) onLinkStateChange(event netif.LinkEvent) {
 func (s *Server) Shutdown(ctx context.Context) error {
 	logging.GetLogger().InfoContext(ctx, "Shutting down server...")
 
+	if err := s.stopWiFiHelper(); err != nil {
+		logging.GetLogger().WarnContext(ctx, "Failed to close Wi-Fi helper socket", "error", err)
+	}
+
 	// Stop all services (fixes #524 - services will complete gracefully)
 	logging.GetLogger().InfoContext(ctx, "Stopping SSE hub...")
 	s.sseHub().Shutdown()

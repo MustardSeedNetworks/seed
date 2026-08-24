@@ -25,10 +25,22 @@ func isWirelessPlatform(iface string) bool {
 // adapter, or when Location Services authorization is missing — CoreWLAN
 // redacts the SSID and BSSID without it, and a record identifying no network is
 // worse than none.
-func getInfoPlatform(_ string) *Info {
+func getInfoPlatform(_ string, h Helper) *Info {
 	current, err := corewlan.Current()
 	if err != nil {
-		return nil
+		if h == nil || !shouldDelegate(err) {
+			return nil
+		}
+
+		viaHelper, helperErr := h.Current()
+		if helperErr != nil {
+			return nil
+		}
+		current = &corewlan.Network{
+			SSID: viaHelper.SSID, BSSID: viaHelper.BSSID, RSSI: viaHelper.RSSI,
+			Channel: viaHelper.Channel, Band: corewlan.Band(viaHelper.Band),
+			Security: viaHelper.Security,
+		}
 	}
 
 	return &Info{
@@ -79,13 +91,19 @@ func disassociationResult(err error) *ConnectionResult {
 }
 
 // getSavedNetworksPlatform returns the networks macOS remembers.
-func getSavedNetworksPlatform() ([]SavedNetwork, error) {
+func getSavedNetworksPlatform(h Helper) ([]SavedNetwork, error) {
 	names, err := corewlan.SavedNetworks()
 	if err != nil {
 		if errors.Is(err, corewlan.ErrNoInterface) {
 			return []SavedNetwork{}, nil
 		}
-		return nil, fmt.Errorf("read saved networks: %w", err)
+
+		if h == nil || !shouldDelegate(err) {
+			return nil, fmt.Errorf("read saved networks: %w", err)
+		}
+		if names, err = h.Saved(); err != nil {
+			return nil, fmt.Errorf("read saved networks via helper: %w", err)
+		}
 	}
 
 	saved := make([]SavedNetwork, 0, len(names))

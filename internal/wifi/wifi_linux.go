@@ -52,7 +52,7 @@ func isWirelessPlatform(iface string) bool {
 }
 
 // getInfoPlatform gets Wi-Fi info on Linux using nl80211.
-func getInfoPlatform(iface string) *Info {
+func getInfoPlatform(iface string, _ Helper) *Info {
 	client, err := wifi.New()
 	if err != nil {
 		return nil
@@ -233,7 +233,7 @@ func disconnectPlatform(iface string) (*ConnectionResult, error) {
 }
 
 // getSavedNetworksPlatform returns saved WiFi networks on Linux using nmcli.
-func getSavedNetworksPlatform() ([]SavedNetwork, error) {
+func getSavedNetworksPlatform(_ Helper) ([]SavedNetwork, error) {
 	// List saved WiFi connections
 	output, err := outputNMCLI("-t", "-f", "NAME,UUID,TYPE,DEVICE", "connection", "show")
 	if err != nil {

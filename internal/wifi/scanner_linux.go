@@ -31,7 +31,7 @@ const (
 
 // scanPlatform performs a WiFi scan on Linux using nmcli.
 // nmcli doesn't require root privileges unlike iw scan.
-func scanPlatform(iface string) ([]*ScannedNetwork, error) {
+func scanPlatform(iface string, _ Helper) ([]*ScannedNetwork, error) {
 	logger := logging.GetLogger()
 
 	// nmcli rescan can hang on stuck Wi-Fi stacks; bound to wifiCmdTimeout.
