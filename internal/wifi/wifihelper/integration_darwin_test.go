@@ -33,8 +33,7 @@ func TestSignedTrip(t *testing.T) {
 		t.Skip("set SEED_HELPER_BUNDLE to the built Seed Wi-Fi Helper.app to run this")
 	}
 
-	binary := filepath.Join(bundle, "Contents", "MacOS", "seed-wifi-helper")
-	if _, err := os.Stat(binary); err != nil {
+	if _, err := os.Stat(filepath.Join(bundle, "Contents", "MacOS", "seed-wifi-helper")); err != nil {
 		t.Skipf("helper binary not present: %v", err)
 	}
 
@@ -49,7 +48,11 @@ func TestSignedTrip(t *testing.T) {
 	}
 	t.Cleanup(func() { _ = srv.Close() })
 
-	cmd := exec.Command(binary, "-socket", socket)
+	// Launched through LaunchServices, not by executing the inner binary.
+	// CoreWLAN attributes a directly-executed binary to a different client than
+	// its bundle, and that client holds no grant — the scan then succeeds and
+	// returns nothing identifiable. This mirrors what the LaunchAgent does.
+	cmd := exec.Command("/usr/bin/open", "-W", "-a", bundle, "--args", "-socket", socket)
 	if startErr := cmd.Start(); startErr != nil {
 		t.Fatalf("start helper: %v", startErr)
 	}
@@ -74,13 +77,25 @@ func TestSignedTrip(t *testing.T) {
 		t.Fatal("signed helper never connected, or was rejected by peer verification")
 	}
 
-	// Whether the scan itself succeeds depends on the Location grant, which a
-	// freshly built bundle will not hold. Either outcome proves the exchange:
-	// what must not happen is the helper being refused, or an empty result
-	// standing in for a permission problem.
+	// Whether the scan succeeds depends on the Location grant, which a freshly
+	// built bundle does not hold. Either outcome proves the exchange. What must
+	// not happen is a *successful* scan that names nothing: that is the silent
+	// failure this whole arrangement exists to prevent, and it is what a
+	// directly-executed helper produces.
 	if scanErr != nil {
 		t.Logf("helper connected and answered with: %v", scanErr)
-	} else {
-		t.Log("helper connected and returned a scan")
+		return
 	}
+
+	networks, err := srv.Scan()
+	if err != nil {
+		t.Fatalf("second scan failed: %v", err)
+	}
+	for i, n := range networks {
+		if n.BSSID == "" {
+			t.Fatalf("network %d has no BSSID: the scan succeeded but was redacted, "+
+				"which means the helper was not attributed to its bundle", i)
+		}
+	}
+	t.Logf("helper connected and returned %d named networks", len(networks))
 }
