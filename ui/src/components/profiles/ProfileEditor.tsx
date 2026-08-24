@@ -69,12 +69,12 @@ export function ProfileEditor({
 
   const getButtonLabel = (): string => {
     if (isLoading) {
-      return t('common.saving', 'Saving...');
+      return t('common.saving');
     }
     if (isEditing) {
-      return t('common.save', 'Save');
+      return t('common.save');
     }
-    return t('common.create', 'Create');
+    return t('common.create');
   };
 
   return (
@@ -90,7 +90,7 @@ export function ProfileEditor({
         {/* Header */}
         <div className={cn(spacing.pad.default, 'border-b border-surface-border')}>
           <h2 className="heading-2 text-text-primary">
-            {isEditing ? t('profile.edit', 'Edit Profile') : t('profile.create', 'Create Profile')}
+            {isEditing ? t('profile.edit') : t('profile.create')}
           </h2>
         </div>
 
@@ -103,7 +103,7 @@ export function ProfileEditor({
                 htmlFor="profile-name"
                 className="block body-small font-medium text-text-primary mb-tight"
               >
-                {t('profile.name', 'Name')} *
+                {t('profile.name')} *
               </label>
               <input
                 id="profile-name"
@@ -115,7 +115,7 @@ export function ProfileEditor({
                   radius.md,
                   'border border-surface-border bg-surface-base text-text-primary focus:outline-none focus:ring-2 focus:ring-brand-primary',
                 )}
-                placeholder={t('profile.namePlaceholder', 'e.g., Client A')}
+                placeholder={t('profile.namePlaceholder')}
               />
               {errors.name ? (
                 <p className="caption mt-tight text-status-error">{errors.name.message}</p>
@@ -128,7 +128,7 @@ export function ProfileEditor({
                 htmlFor="profile-description"
                 className="block body-small font-medium text-text-primary mb-tight"
               >
-                {t('profile.description', 'Description')}
+                {t('profile.description')}
               </label>
               <input
                 id="profile-description"
@@ -140,7 +140,7 @@ export function ProfileEditor({
                   radius.md,
                   'border border-surface-border bg-surface-base text-text-primary focus:outline-none focus:ring-2 focus:ring-brand-primary',
                 )}
-                placeholder={t('profile.descriptionPlaceholder', 'Brief description')}
+                placeholder={t('profile.descriptionPlaceholder')}
               />
               {errors.description ? (
                 <p className="caption mt-tight text-status-error">{errors.description.message}</p>
@@ -153,7 +153,7 @@ export function ProfileEditor({
                 htmlFor="profile-notes"
                 className="block body-small font-medium text-text-primary mb-tight"
               >
-                {t('profile.notes', 'Notes')}
+                {t('profile.notes')}
               </label>
               <textarea
                 id="profile-notes"
@@ -165,7 +165,7 @@ export function ProfileEditor({
                   radius.md,
                   'border border-surface-border bg-surface-base text-text-primary focus:outline-none focus:ring-2 focus:ring-brand-primary resize-none',
                 )}
-                placeholder={t('profile.notesPlaceholder', 'Contact info, VPN requirements, etc.')}
+                placeholder={t('profile.notesPlaceholder')}
               />
             </div>
 
@@ -177,9 +177,7 @@ export function ProfileEditor({
                 onChange={(e) => setValue('isDefault', e.target.checked, { shouldDirty: true })}
                 className="w-4 h-4 rounded border-surface-border text-brand-primary focus:ring-brand-primary"
               />
-              <span className="body-small text-text-primary">
-                {t('profile.setAsDefault', 'Set as default profile')}
-              </span>
+              <span className="body-small text-text-primary">{t('profile.setAsDefault')}</span>
             </label>
           </div>
 
@@ -201,7 +199,7 @@ export function ProfileEditor({
                 'border border-surface-border bg-surface-base hover:bg-surface-hover text-text-primary body-small font-medium disabled:opacity-50',
               )}
             >
-              {t('common.cancel', 'Cancel')}
+              {t('common.cancel')}
             </button>
             <button
               type="submit"

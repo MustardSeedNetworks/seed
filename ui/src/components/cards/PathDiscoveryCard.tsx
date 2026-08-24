@@ -305,7 +305,7 @@ export const PathDiscoveryCard: React.NamedExoticComponent<PathDiscoveryCardProp
 
     return (
       <Card
-        title={t('pathDiscovery.title', 'Path Discovery')}
+        title={t('pathDiscovery.title')}
         icon={<Route className={iconTokens.size.md} />}
         status={cardStatus}
       >
@@ -320,7 +320,7 @@ export const PathDiscoveryCard: React.NamedExoticComponent<PathDiscoveryCardProp
             <input
               type="text"
               {...register('target')}
-              placeholder={t('pathDiscovery.enterTarget', 'Enter IP or hostname...')}
+              placeholder={t('pathDiscovery.enterTarget')}
               disabled={loading}
               className={cn(
                 'flex-1 min-w-0',
@@ -343,7 +343,7 @@ export const PathDiscoveryCard: React.NamedExoticComponent<PathDiscoveryCardProp
                   inputTokens.size.sm,
                   'w-20 body-small cursor-pointer',
                 )}
-                title={t('pathDiscovery.protocol', 'Traceroute protocol')}
+                title={t('pathDiscovery.protocol')}
               >
                 <option value="icmp">ICMP</option>
                 <option value="udp">UDP</option>
@@ -379,7 +379,7 @@ export const PathDiscoveryCard: React.NamedExoticComponent<PathDiscoveryCardProp
                   'whitespace-nowrap',
                 )}
               >
-                {loading ? '...' : t('pathDiscovery.trace', 'Trace')}
+                {loading ? '...' : t('pathDiscovery.trace')}
               </button>
             </div>
           </div>
@@ -392,9 +392,7 @@ export const PathDiscoveryCard: React.NamedExoticComponent<PathDiscoveryCardProp
 
           {/* Quick Targets - Wrap on small screens */}
           <div className="flex items-center gap-compact flex-wrap">
-            <span className="caption text-text-muted shrink-0">
-              {t('pathDiscovery.quick', 'Quick')}:
-            </span>
+            <span className="caption text-text-muted shrink-0">{t('pathDiscovery.quick')}:</span>
             <div className="flex items-center gap-1.5 flex-wrap">
               <button
                 type="button"
@@ -407,7 +405,7 @@ export const PathDiscoveryCard: React.NamedExoticComponent<PathDiscoveryCardProp
                   'caption whitespace-nowrap',
                 )}
               >
-                {t('pathDiscovery.gateway', 'Gateway')}
+                {t('pathDiscovery.gateway')}
               </button>
               <button
                 type="button"
@@ -420,7 +418,7 @@ export const PathDiscoveryCard: React.NamedExoticComponent<PathDiscoveryCardProp
                   'caption whitespace-nowrap',
                 )}
               >
-                {t('pathDiscovery.dns', 'DNS')}
+                {t('pathDiscovery.dns')}
               </button>
               <button
                 type="button"
@@ -433,7 +431,7 @@ export const PathDiscoveryCard: React.NamedExoticComponent<PathDiscoveryCardProp
                   'caption whitespace-nowrap',
                 )}
               >
-                {t('pathDiscovery.internet', 'Internet')}
+                {t('pathDiscovery.internet')}
               </button>
             </div>
           </div>
@@ -445,10 +443,10 @@ export const PathDiscoveryCard: React.NamedExoticComponent<PathDiscoveryCardProp
             <CardValue
               value={
                 streamingHops.length > 0
-                  ? t('pathDiscovery.tracingHops', 'Tracing... {{count}} hops', {
+                  ? t('pathDiscovery.tracingHops', {
                       count: streamingHops.length,
                     })
-                  : t('pathDiscovery.tracing', 'Tracing path...')
+                  : t('pathDiscovery.tracing')
               }
               size="lg"
             />
@@ -513,7 +511,7 @@ export const PathDiscoveryCard: React.NamedExoticComponent<PathDiscoveryCardProp
                   'caption',
                 )}
               >
-                {t('pathDiscovery.exportJSON', 'Export JSON')}
+                {t('pathDiscovery.exportJSON')}
               </button>
               <button
                 type="button"
@@ -525,7 +523,7 @@ export const PathDiscoveryCard: React.NamedExoticComponent<PathDiscoveryCardProp
                   'caption',
                 )}
               >
-                {t('pathDiscovery.exportCSV', 'Export CSV')}
+                {t('pathDiscovery.exportCSV')}
               </button>
               <button
                 type="button"
@@ -537,7 +535,7 @@ export const PathDiscoveryCard: React.NamedExoticComponent<PathDiscoveryCardProp
                   'caption',
                 )}
               >
-                {t('pathDiscovery.copy', 'Copy')}
+                {t('pathDiscovery.copy')}
               </button>
               <button
                 type="button"
@@ -554,7 +552,7 @@ export const PathDiscoveryCard: React.NamedExoticComponent<PathDiscoveryCardProp
                   'caption',
                 )}
               >
-                {t('pathDiscovery.rerun', 'Re-run')}
+                {t('pathDiscovery.rerun')}
               </button>
             </div>
           </div>
@@ -573,15 +571,8 @@ export const PathDiscoveryCard: React.NamedExoticComponent<PathDiscoveryCardProp
             <div className="text-text-muted mb-2">
               <Route className={cn(iconTokens.size.lg, 'mx-auto opacity-40')} />
             </div>
-            <p className="body-small text-text-muted">
-              {t('pathDiscovery.enterTarget', 'Select a target to trace')}
-            </p>
-            <p className="caption text-text-muted mt-tight">
-              {t(
-                'pathDiscovery.emptyHint',
-                'Enter an IP address or hostname, or use the quick buttons above',
-              )}
-            </p>
+            <p className="body-small text-text-muted">{t('pathDiscovery.enterTarget')}</p>
+            <p className="caption text-text-muted mt-tight">{t('pathDiscovery.emptyHint')}</p>
           </div>
         )}
       </Card>

@@ -860,7 +860,7 @@ jobs:
         # --ratchet demotes the new check_key_usage from error → warn
         # while seed's 329 pre-existing wrong-namespace t() calls
         # are queued for cleanup. Drop --ratchet once they're gone.
-        run: ./scripts/i18n/validate.sh --ratchet
+        run: ./scripts/i18n/validate.sh
 
   # ===========================================================================
   # Documentation Checks

@@ -100,12 +100,12 @@ export const CableTestSettings: React.NamedExoticComponent<CableTestSettingsProp
 
     const getStatusLabel = (): string => {
       if (checkingSupport) {
-        return t('cableTest.checkingSupport', 'Checking TDR support...');
+        return t('cableTest.checkingSupport');
       }
       if (tdrSupport?.supported) {
-        return t('cableTest.supported', 'TDR Supported');
+        return t('cableTest.supported');
       }
-      return t('cableTest.notSupported', 'TDR Not Supported');
+      return t('cableTest.notSupported');
     };
 
     return (
@@ -113,7 +113,7 @@ export const CableTestSettings: React.NamedExoticComponent<CableTestSettingsProp
         title={
           <div className={layout.inline.default}>
             <Cable className={iconTokens.size.sm} />
-            <span>{t('sections.cableTest', 'Cable Test')}</span>
+            <span>{t('sections.cableTest')}</span>
             <AutoSaveIndicator status={cableTestStatus} />
           </div>
         }
@@ -144,12 +144,12 @@ export const CableTestSettings: React.NamedExoticComponent<CableTestSettingsProp
                 disabled={checkingSupport}
                 className="caption text-text-muted hover:text-text-primary"
               >
-                {checkingSupport ? '...' : t('common.refresh', 'Refresh')}
+                {checkingSupport ? '...' : t('common.refresh')}
               </button>
             </div>
             {tdrSupport?.driver ? (
               <p className={cn('caption text-text-muted', spacing.margin.top.tight)}>
-                {t('cableTest.driver', 'Driver')}: {tdrSupport.driver}
+                {t('cableTest.driver')}: {tdrSupport.driver}
               </p>
             ) : null}
             {!tdrSupport?.supported && tdrSupport?.message ? (
@@ -171,11 +171,9 @@ export const CableTestSettings: React.NamedExoticComponent<CableTestSettingsProp
           >
             <div>
               <span className="body-small text-text-primary font-medium">
-                {t('cableTest.enableCard', 'Show Cable Test Card')}
+                {t('cableTest.enableCard')}
               </span>
-              <p className="caption text-text-muted">
-                {t('cableTest.enableCardDesc', 'Display cable test card on dashboard')}
-              </p>
+              <p className="caption text-text-muted">{t('cableTest.enableCardDesc')}</p>
             </div>
             <input
               type="checkbox"
@@ -193,10 +191,7 @@ export const CableTestSettings: React.NamedExoticComponent<CableTestSettingsProp
           {/* Auto-Run on Link Down */}
           {/* Note: Auto-run is automatic when link down + PHY supports TDR - no toggle needed */}
           <p className={cn('caption text-text-muted', spacing.margin.top.inline)}>
-            {t(
-              'cableTest.tdrNote',
-              'TDR cable testing requires compatible network hardware and drivers. Cable test runs automatically when link is down and PHY supports TDR. Length units are controlled by global Display Options.',
-            )}
+            {t('cableTest.tdrNote')}
           </p>
         </div>
       </CollapsibleSection>

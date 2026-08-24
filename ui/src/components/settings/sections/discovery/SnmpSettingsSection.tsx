@@ -147,7 +147,7 @@ export const SnmpSettingsSection: React.NamedExoticComponent<SnmpSettingsSection
           </span>
         </div>
         <p className={cn('caption text-text-muted', spacing.margin.bottom.inline)}>
-          {t('snmp.description', 'Configure SNMP credentials for enhanced device discovery')}
+          {t('snmp.description')}
         </p>
         {/* SNMP Port */}
         <div className={spacing.margin.bottom.inline}>

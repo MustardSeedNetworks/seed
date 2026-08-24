@@ -29,19 +29,15 @@ export function AppFooter({ appVersion }: AppFooterProps): JSX.Element {
         {/* Product Info */}
         <div>
           <h3 className="heading-4 text-text-primary mb-2">{t('app.title')}</h3>
-          <p className="body-small text-text-muted mb-tight">
-            {t('footer.byCompany', 'by Mustard Seed Networks')}
-          </p>
+          <p className="body-small text-text-muted mb-tight">{t('footer.byCompany')}</p>
           <p className="caption text-text-muted">
-            {t('footer.version', 'Version')} {appVersion}
+            {t('footer.version')} {appVersion}
           </p>
         </div>
 
         {/* Contact */}
         <div>
-          <h4 className="body-small font-medium text-text-primary mb-2">
-            {t('footer.contact', 'Contact')}
-          </h4>
+          <h4 className="body-small font-medium text-text-primary mb-2">{t('footer.contact')}</h4>
           <div className="stack-xs">
             <a
               href="mailto:support@mustardseednetworks.com"
@@ -60,9 +56,7 @@ export function AppFooter({ appVersion }: AppFooterProps): JSX.Element {
 
         {/* Website */}
         <div>
-          <h4 className="body-small font-medium text-text-primary mb-2">
-            {t('footer.website', 'Website')}
-          </h4>
+          <h4 className="body-small font-medium text-text-primary mb-2">{t('footer.website')}</h4>
           <a
             href="https://www.mustardseednetworks.com"
             target="_blank"
@@ -75,18 +69,16 @@ export function AppFooter({ appVersion }: AppFooterProps): JSX.Element {
 
         {/* Legal */}
         <div>
-          <h4 className="body-small font-medium text-text-primary mb-2">
-            {t('footer.legal', 'Legal')}
-          </h4>
+          <h4 className="body-small font-medium text-text-primary mb-2">{t('footer.legal')}</h4>
           <div className="flex flex-wrap gap-x-3 gap-y-1">
             <a href="/terms" className="body-small text-text-muted hover:text-brand-primary">
-              {t('footer.tos', 'Terms of Service')}
+              {t('footer.tos')}
             </a>
             <a href="/privacy" className="body-small text-text-muted hover:text-brand-primary">
-              {t('footer.privacy', 'Privacy')}
+              {t('footer.privacy')}
             </a>
             <a href="/license" className="body-small text-text-muted hover:text-brand-primary">
-              {t('footer.license', 'License')}
+              {t('footer.license')}
             </a>
           </div>
         </div>
@@ -94,8 +86,7 @@ export function AppFooter({ appVersion }: AppFooterProps): JSX.Element {
       {/* Copyright */}
       <div className="mt-6 pt-section border-t border-surface-border text-center">
         <p className="caption text-text-muted">
-          &copy; {new Date().getFullYear()}{' '}
-          {t('footer.copyright', 'Mustard Seed Networks. All rights reserved.')}
+          &copy; {new Date().getFullYear()} {t('footer.copyright')}
         </p>
       </div>
     </footer>

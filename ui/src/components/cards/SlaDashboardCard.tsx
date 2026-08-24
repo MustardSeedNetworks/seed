@@ -78,8 +78,8 @@ export const SLADashboardCard: React.NamedExoticComponent<SLADashboardCardProps>
 
     return (
       <Card
-        title={t('slaDashboard.title', 'Active Anomalies')}
-        subtitle={t('slaDashboard.subtitle', 'Detected by active monitoring')}
+        title={t('slaDashboard.title')}
+        subtitle={t('slaDashboard.subtitle')}
         icon={<Shield className={iconTokens.size.md} />}
         status={overallStatus()}
         className={className}
@@ -95,7 +95,7 @@ export const SLADashboardCard: React.NamedExoticComponent<SLADashboardCardProps>
         {loading || error ? null : (
           <div className={cn('stack-lg', spacing.pad.default)}>
             <div>
-              <h4 className="caption mb-2">{t('slaDashboard.anomalies', 'Anomalies')}</h4>
+              <h4 className="caption mb-2">{t('slaDashboard.anomalies')}</h4>
               <div className="flex items-center gap-compact">
                 <span
                   className={cn(
@@ -112,7 +112,7 @@ export const SLADashboardCard: React.NamedExoticComponent<SLADashboardCardProps>
                       radius.full,
                     )}
                   >
-                    {t('slaDashboard.detected', 'detected')}
+                    {t('slaDashboard.detected')}
                   </span>
                 ) : null}
               </div>

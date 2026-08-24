@@ -52,7 +52,7 @@ export const BluetoothCard: React.NamedExoticComponent = memo(
 
     return (
       <Card
-        title={t('bluetooth.title', { defaultValue: 'Bluetooth' })}
+        title={t('bluetooth.title')}
         icon={<Bluetooth className={iconTokens.size.md} />}
         status={cardStatus}
         headerAction={
@@ -66,28 +66,20 @@ export const BluetoothCard: React.NamedExoticComponent = memo(
               radius.md,
               'hover:bg-surface-hover disabled:opacity-40 disabled:cursor-not-allowed',
             )}
-            aria-label={t('bluetooth.viewAll', { defaultValue: 'View all devices' })}
+            aria-label={t('bluetooth.viewAll')}
           >
             <Maximize2 className={iconTokens.size.sm} />
           </button>
         }
       >
         <div className="stack-sm">
-          <p className="body-small text-text-muted">
-            {t('bluetooth.description', {
-              defaultValue:
-                'Scan for nearby Bluetooth and BLE devices and decode what they advertise.',
-            })}
-          </p>
+          <p className="body-small text-text-muted">{t('bluetooth.description')}</p>
 
           {hasResult ? (
             <div className="flex items-baseline gap-tight" data-testid="bluetooth-device-count">
               <span className="heading-2 text-text-primary">{devices.length}</span>
               <span className="body-small text-text-muted">
-                {t('bluetooth.devicesFound', {
-                  count: devices.length,
-                  defaultValue: 'devices found',
-                })}
+                {t('bluetooth.devicesFound', { count: devices.length })}
                 {stats && stats.connectedDevices > 0
                   ? ` · ${t('bluetooth.connectedCount', {
                       count: stats.connectedDevices,
@@ -101,9 +93,7 @@ export const BluetoothCard: React.NamedExoticComponent = memo(
           {running ? (
             <div className="flex items-center gap-compact" data-testid="bluetooth-scanning">
               <Loader className={cn(iconTokens.size.sm, 'text-brand-primary animate-spin')} />
-              <span className="body-small text-text-secondary">
-                {t('bluetooth.scanning', { defaultValue: 'Scanning…' })}
-              </span>
+              <span className="body-small text-text-secondary">{t('bluetooth.scanning')}</span>
               <button
                 type="button"
                 onClick={() => cancelScan().catch(() => undefined)}
@@ -114,12 +104,10 @@ export const BluetoothCard: React.NamedExoticComponent = memo(
                   button.variant.secondary,
                   'ml-auto flex items-center gap-tight',
                 )}
-                aria-label={t('bluetooth.cancel', { defaultValue: 'Cancel' })}
+                aria-label={t('bluetooth.cancel')}
               >
                 <X className={iconTokens.size.xs} />
-                <span className="hidden sm:inline">
-                  {t('bluetooth.cancel', { defaultValue: 'Cancel' })}
-                </span>
+                <span className="hidden sm:inline">{t('bluetooth.cancel')}</span>
               </button>
             </div>
           ) : (
@@ -134,7 +122,7 @@ export const BluetoothCard: React.NamedExoticComponent = memo(
                 'font-medium hover:bg-brand-primary/90 disabled:opacity-50',
               )}
             >
-              {t('bluetooth.scanButton', { defaultValue: 'Scan for devices' })}
+              {t('bluetooth.scanButton')}
             </button>
           )}
 
