@@ -151,34 +151,21 @@ check_no_empty_values() {
 # Check: no fallback patterns (t('key', 'English fallback'))
 # -----------------------------------------------------------------------------
 check_no_fallback_patterns() {
-  section "No t('key', 'fallback') patterns in $UI_SRC_DIR"
+  section "Structural i18n (t() fallbacks)"
   [ ! -d "$UI_SRC_DIR" ] && { warn "UI_SRC_DIR=$UI_SRC_DIR does not exist; skipping"; return; }
 
-  # Match t('key', '...something...') with single OR double quotes for both
-  # arguments. Ignore: t(key) [single arg], t('key', { interpolation }) [object].
-  # The interpolation form starts with { not a quote.
-  # Word-boundary `\bt\(` so identifiers ending in `t` (e.g.
-  # headers.set('Accept', 'application/json')) don't false-match.
-  local hits
-  hits=$(grep -rnE "\\bt\\(\\s*['\"][^'\"]+['\"]\\s*,\\s*['\"]" "$UI_SRC_DIR" \
-    --include='*.ts' --include='*.tsx' 2>/dev/null \
-    | grep -v "// allow-fallback") || true
-
-  if [ -n "$hits" ]; then
-    local count
-    count=$(echo "$hits" | wc -l | tr -d ' ')
-    fail "$count fallback pattern(s) t('key', 'string') — banned per I18N_CONVENTIONS:"
-    echo "$hits" | sed 's/^/      /'
-    while IFS= read -r line; do
-      local file
-      file=$(echo "$line" | cut -d: -f1)
-      local lineno
-      lineno=$(echo "$line" | cut -d: -f2)
-      annotate "$file" "line $lineno: fallback pattern banned — add key to locale file instead"
-    done <<<"$hits"
-  else
-    ok "no fallback patterns"
+  # Was a grep. TypeScript is not line-oriented and the grep missed the
+  # multiline call form, a fallback quoted with the other delimiter, and
+  # English copy assigned to a const and passed as the argument. Semgrep
+  # parses TS and propagates constants, so it sees all three.
+  local out
+  if ! out=$(python3 scripts/i18n/semgrep-i18n.py 2>&1); then
+    fail "banned t() fallback patterns:"
+    echo "$out" | sed 's/^/      /' | head -40
+    return
   fi
+  [ -n "$out" ] && warn "$out"
+  ok "no t() fallback patterns"
 }
 
 # -----------------------------------------------------------------------------
