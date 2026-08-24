@@ -7,10 +7,22 @@
 
     <!-- A LaunchAgent, not a LaunchDaemon. Location Services authorization is
          granted per user inside a login session, which is the whole reason this
-         process exists separately from the seed daemon. -->
+         process exists separately from the seed daemon.
+
+         Launched through LaunchServices rather than by naming the executable
+         inside the bundle. CoreWLAN redacts SSID and BSSID according to the
+         calling process's client identity, and a directly-executed inner binary
+         registers as com.apple.locationd.executable-<path> — a different client
+         from the bundle, holding no grant. The scan then succeeds and returns
+         nothing identifiable. `open -W` keeps launchd's view of the process
+         lifetime correct, and --args passes through to the binary. -->
     <key>ProgramArguments</key>
     <array>
-        <string>/Library/Application Support/Seed/Seed Wi-Fi Helper.app/Contents/MacOS/seed-wifi-helper</string>
+        <string>/usr/bin/open</string>
+        <string>-W</string>
+        <string>-a</string>
+        <string>/Library/Application Support/Seed/Seed Wi-Fi Helper.app</string>
+        <string>--args</string>
         <string>-socket</string>
         <string>/var/run/seed/wifi-helper.sock</string>
     </array>

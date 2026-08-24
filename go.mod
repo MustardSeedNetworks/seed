@@ -63,7 +63,7 @@ require (
 )
 
 require (
-	github.com/MustardSeedNetworks/foundation v0.5.1
+	github.com/MustardSeedNetworks/foundation v0.5.2
 	github.com/go-pdf/fpdf v0.9.0
 	github.com/go-playground/validator/v10 v10.30.3
 	github.com/go-webauthn/webauthn v0.17.4
