@@ -8,6 +8,7 @@
  * layers read as a single end-to-end path.
  */
 
+import type { TFunction } from 'i18next';
 import type React from 'react';
 import { memo, useCallback } from 'react';
 import { cn, icon as iconTokens, radius } from '../../styles/theme';
@@ -15,7 +16,10 @@ import type { L2Hop, PathResponse, PortInfo, TracerouteHop } from '../../types';
 import { ChevronDown, ChevronUp, Globe, HardDrive, Network, Router } from '../ui/icons';
 import { formatRtt, getRttBarColor, getSourceColor } from './pathDiscoveryHelpers';
 
-type Translate = (key: string, fallback: string) => string;
+/* The parent passes i18next's own t. The previous hand-rolled signature
+   made the fallback argument *mandatory*, which is how the banned pattern
+   ended up baked into this component's contract. */
+type Translate = TFunction<'cards'>;
 
 interface PathTimelineProps {
   result: PathResponse;
@@ -61,9 +65,9 @@ export const PATH_TIMELINE: React.NamedExoticComponent<PathTimelineProps> = memo
           <div className="flex items-center gap-compact">
             <HardDrive className={cn(iconTokens.size.sm, 'text-text-secondary')} />
             <span className="body-small font-medium text-text-primary">
-              {t('pathDiscovery.thisDevice', 'This device')}
+              {t('pathDiscovery.thisDevice')}
             </span>
-            <span className="caption text-text-muted">{t('pathDiscovery.source', 'Source')}</span>
+            <span className="caption text-text-muted">{t('pathDiscovery.source')}</span>
           </div>
         </TIMELINE_ROW>
 
@@ -87,10 +91,7 @@ export const PATH_TIMELINE: React.NamedExoticComponent<PathTimelineProps> = memo
           ) : (
             <TIMELINE_ROW dotKind="l2-empty">
               <span data-testid="l2-empty" className="caption text-text-muted">
-                {t(
-                  'pathDiscovery.noL2Hops',
-                  'No L2 switch hops — needs LLDP/CDP neighbors or SNMP',
-                )}
+                {t('pathDiscovery.noL2Hops')}
               </span>
             </TIMELINE_ROW>
           )
@@ -114,9 +115,7 @@ export const PATH_TIMELINE: React.NamedExoticComponent<PathTimelineProps> = memo
               <span className="body-small font-medium text-text-primary font-mono truncate">
                 {destination}
               </span>
-              <span className="caption text-text-muted">
-                {t('pathDiscovery.destination', 'Destination')}
-              </span>
+              <span className="caption text-text-muted">{t('pathDiscovery.destination')}</span>
             </div>
           </TIMELINE_ROW>
         ) : null}
@@ -215,7 +214,7 @@ const L3_TIMELINE_HOP: React.NamedExoticComponent<L3HopProps> = memo(function l3
           />
         ) : null}
       </div>
-      <span className="sr-only">{t('pathDiscovery.layerL3', 'Layer 3 hop')}</span>
+      <span className="sr-only">{t('pathDiscovery.layerL3')}</span>
     </div>
   );
 });
@@ -267,16 +266,8 @@ const L2_TIMELINE_HOP: React.NamedExoticComponent<L2HopProps> = memo(function l2
       {isExpanded ? (
         <div className="px-tight pb-tight bg-surface-base border-t border-surface-border">
           <div className="grid grid-cols-2 gap-comfortable pt-tight">
-            <PORT_DETAIL
-              label={t('pathDiscovery.ingressPort', 'Ingress Port')}
-              port={hop.ingressPort}
-              t={t}
-            />
-            <PORT_DETAIL
-              label={t('pathDiscovery.egressPort', 'Egress Port')}
-              port={hop.egressPort}
-              t={t}
-            />
+            <PORT_DETAIL label={t('pathDiscovery.ingressPort')} port={hop.ingressPort} t={t} />
+            <PORT_DETAIL label={t('pathDiscovery.egressPort')} port={hop.egressPort} t={t} />
           </div>
         </div>
       ) : null}
@@ -307,9 +298,7 @@ const PORT_DETAIL: React.NamedExoticComponent<PortDetailProps> = memo(function p
             {port.speed ? <span className="caption text-text-secondary">{port.speed}</span> : null}
             {port.duplex ? <span className="caption text-text-muted">{port.duplex}</span> : null}
             {port.isTrunk ? (
-              <span className="caption text-brand-primary">
-                {t('pathDiscovery.trunk', 'Trunk')}
-              </span>
+              <span className="caption text-brand-primary">{t('pathDiscovery.trunk')}</span>
             ) : null}
           </div>
           {port.vlans && port.vlans.length > 0 ? (

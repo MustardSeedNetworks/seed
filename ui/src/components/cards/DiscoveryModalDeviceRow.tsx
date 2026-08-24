@@ -338,7 +338,7 @@ export function DeviceRow({
               {device.snmpData ? (
                 <div className="stack-sm">
                   <h4 className="text-xs font-semibold text-text-secondary">
-                    {t('discovery.snmpInfo', 'SNMP Details')}
+                    {t('discovery.snmpInfo')}
                   </h4>
 
                   {/* System Info */}

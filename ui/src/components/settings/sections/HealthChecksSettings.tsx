@@ -135,11 +135,9 @@ export const HealthChecksSettings: React.NamedExoticComponent<HealthChecksSettin
             >
               <div>
                 <span className="body-small text-text-primary font-medium">
-                  {t('common.showCard', 'Show Card')}
+                  {t('common.showCard')}
                 </span>
-                <p className="caption text-text-muted">
-                  {t('common.showCardDesc', 'Display this card on the dashboard')}
-                </p>
+                <p className="caption text-text-muted">{t('common.showCardDesc')}</p>
               </div>
               <input
                 type="checkbox"
@@ -166,11 +164,9 @@ export const HealthChecksSettings: React.NamedExoticComponent<HealthChecksSettin
             >
               <div>
                 <span className="body-small text-text-primary font-medium">
-                  {t('common.runOnFab', 'Include in Run All')}
+                  {t('common.runOnFab')}
                 </span>
-                <p className="caption text-text-muted">
-                  {t('common.runOnFabDesc', 'Run when FAB button is clicked')}
-                </p>
+                <p className="caption text-text-muted">{t('common.runOnFabDesc')}</p>
               </div>
               <input
                 type="checkbox"

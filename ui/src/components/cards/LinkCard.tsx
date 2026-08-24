@@ -230,27 +230,27 @@ export const LinkCard: React.MemoExoticComponent<(props: LinkCardProps) => JSX.E
                           spacing.margin.bottom.tight,
                         )}
                       >
-                        {t('link.poe', 'Power over Ethernet')}
+                        {t('link.poe')}
                       </p>
                       <CardRow
-                        label={t('link.poeStandard', 'Standard')}
+                        label={t('link.poeStandard')}
                         value={linkData.poe.standard || 'Unknown'}
                       />
                       {linkData.poe.className !== undefined && (
                         <CardRow
-                          label={t('link.poeClass', 'Class')}
+                          label={t('link.poeClass')}
                           value={linkData.poe.className.toString()}
                         />
                       )}
                       {linkData.poe.powerMw !== undefined && (
                         <CardRow
-                          label={t('link.poePower', 'Power')}
+                          label={t('link.poePower')}
                           value={`${(linkData.poe.powerMw / 1000).toFixed(1)} W`}
                         />
                       )}
                       {linkData.poe.voltage !== undefined && (
                         <CardRow
-                          label={t('link.poeVoltage', 'Voltage')}
+                          label={t('link.poeVoltage')}
                           value={`${linkData.poe.voltage.toFixed(1)} V`}
                         />
                       )}
@@ -267,26 +267,23 @@ export const LinkCard: React.MemoExoticComponent<(props: LinkCardProps) => JSX.E
                           spacing.margin.bottom.tight,
                         )}
                       >
-                        {t('link.sfp', 'SFP Module')}
+                        {t('link.sfp')}
                       </p>
                       {linkData.sfp.vendor ? (
-                        <CardRow
-                          label={t('link.sfpVendor', 'Vendor')}
-                          value={linkData.sfp.vendor}
-                        />
+                        <CardRow label={t('link.sfpVendor')} value={linkData.sfp.vendor} />
                       ) : null}
                       {linkData.sfp.type ? (
-                        <CardRow label={t('link.sfpType', 'Type')} value={linkData.sfp.type} />
+                        <CardRow label={t('link.sfpType')} value={linkData.sfp.type} />
                       ) : null}
                       {linkData.sfp.wavelength ? (
                         <CardRow
-                          label={t('link.sfpWavelength', 'Wavelength')}
+                          label={t('link.sfpWavelength')}
                           value={`${linkData.sfp.wavelength} nm`}
                         />
                       ) : null}
                       {linkData.sfp.distance ? (
                         <CardRow
-                          label={t('link.sfpDistance', 'Max Distance')}
+                          label={t('link.sfpDistance')}
                           value={`${linkData.sfp.distance} m`}
                         />
                       ) : null}
@@ -300,22 +297,22 @@ export const LinkCard: React.MemoExoticComponent<(props: LinkCardProps) => JSX.E
                               spacing.margin.bottom.tight,
                             )}
                           >
-                            {t('link.ddm', 'DDM Readings')}
+                            {t('link.ddm')}
                           </p>
                           <CardRow
-                            label={t('link.ddmTemp', 'Temperature')}
+                            label={t('link.ddmTemp')}
                             value={`${linkData.sfp.ddm.temperature.toFixed(1)}°C`}
                           />
                           <CardRow
-                            label={t('link.ddmVoltage', 'Voltage')}
+                            label={t('link.ddmVoltage')}
                             value={`${linkData.sfp.ddm.voltage.toFixed(2)} V`}
                           />
                           <CardRow
-                            label={t('link.ddmTxPower', 'TX Power')}
+                            label={t('link.ddmTxPower')}
                             value={`${linkData.sfp.ddm.txPowerDbm.toFixed(1)} dBm`}
                           />
                           <CardRow
-                            label={t('link.ddmRxPower', 'RX Power')}
+                            label={t('link.ddmRxPower')}
                             value={`${linkData.sfp.ddm.rxPowerDbm.toFixed(1)} dBm`}
                           />
                           {linkData.sfp.ddm.alarms && linkData.sfp.ddm.alarms.length > 0 && (

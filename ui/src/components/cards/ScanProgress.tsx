@@ -50,7 +50,7 @@ export const ScanProgress: React.NamedExoticComponent<ScanProgressProps> = memo(
                     phase: phaseLabel,
                     defaultValue: `Scanning — ${phaseLabel}`,
                   })
-                : t('discovery.scanning', { defaultValue: 'Scanning…' })}
+                : t('discovery.scanning')}
             </span>
           </div>
           {onCancel ? (
@@ -64,12 +64,10 @@ export const ScanProgress: React.NamedExoticComponent<ScanProgressProps> = memo(
                 button.variant.secondary,
                 'flex items-center gap-tight',
               )}
-              aria-label={t('pipeline.cancel', { defaultValue: 'Cancel' })}
+              aria-label={t('pipeline.cancel')}
             >
               <X className={iconTokens.size.xs} />
-              <span className="hidden sm:inline">
-                {t('pipeline.cancel', { defaultValue: 'Cancel' })}
-              </span>
+              <span className="hidden sm:inline">{t('pipeline.cancel')}</span>
             </button>
           ) : null}
         </div>

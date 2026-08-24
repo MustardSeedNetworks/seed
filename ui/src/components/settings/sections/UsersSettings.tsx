@@ -65,7 +65,7 @@ function statusOf(u: UserRow, t: StatusT): string {
 }
 
 export function UsersSettings(): React.ReactElement {
-  const { t } = useTranslation(['settings', 'errors']);
+  const { t } = useTranslation(['settings', 'errors', 'common']);
   const { status: licenseStatus, refresh: refreshLicense } = useLicense();
 
   const [users, setUsers] = useState<UserRow[]>([]);
@@ -256,7 +256,7 @@ export function UsersSettings(): React.ReactElement {
         )}
 
         {loading ? (
-          <div className="text-sm text-text-muted">{t('common:status.loading', 'Loading…')}</div>
+          <div className="text-sm text-text-muted">{t('common:status.loading')}</div>
         ) : users.length === 0 ? (
           <div className="text-sm text-text-muted">No users.</div>
         ) : (

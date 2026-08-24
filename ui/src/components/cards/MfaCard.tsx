@@ -112,23 +112,23 @@ export function MfaCard(): JSX.Element {
 
   const statusLine = ((): string => {
     if (!status) {
-      return t('mfa.loading', 'Loading…');
+      return t('mfa.loading');
     }
     if (status.totpEnabled && status.webauthnEnabled) {
-      return t('mfa.bothEnabled', 'TOTP + Passkey enabled');
+      return t('mfa.bothEnabled');
     }
     if (status.totpEnabled) {
-      return t('mfa.totpEnabled', 'TOTP enabled');
+      return t('mfa.totpEnabled');
     }
     if (status.webauthnEnabled) {
-      return t('mfa.passkeyEnabled', 'Passkey enabled');
+      return t('mfa.passkeyEnabled');
     }
-    return t('mfa.none', 'No second factor enrolled');
+    return t('mfa.none');
   })();
 
   return (
     <Card
-      title={t('mfa.title', 'Multi-factor authentication')}
+      title={t('mfa.title')}
       icon={<Shield className={iconTokens.size.md} />}
       status={status?.totpEnabled || status?.webauthnEnabled ? 'success' : 'unknown'}
     >
@@ -145,21 +145,19 @@ export function MfaCard(): JSX.Element {
               startTotp().catch(() => undefined);
             }}
           >
-            {t('mfa.setupTotp', 'Set up TOTP')}
+            {t('mfa.setupTotp')}
           </button>
         ) : null}
 
         {setup ? (
           <div className="stack-sm">
             <img
-              alt={t('mfa.qrAlt', 'TOTP QR code')}
+              alt={t('mfa.qrAlt')}
               src={`data:image/png;base64,${setup.qrCodePngBase64}`}
               width={200}
               height={200}
             />
-            <p className="body-small text-text-muted">
-              {t('mfa.scanAndEnter', 'Scan with an authenticator app, then enter a code')}
-            </p>
+            <p className="body-small text-text-muted">{t('mfa.scanAndEnter')}</p>
             <input
               type="text"
               inputMode="numeric"
@@ -178,7 +176,7 @@ export function MfaCard(): JSX.Element {
                 verifyTotp().catch(() => undefined);
               }}
             >
-              {t('mfa.verifyAndEnable', 'Verify and enable')}
+              {t('mfa.verifyAndEnable')}
             </button>
           </div>
         ) : null}
@@ -191,7 +189,7 @@ export function MfaCard(): JSX.Element {
             addPasskey().catch(() => undefined);
           }}
         >
-          {t('mfa.addPasskey', 'Add passkey')}
+          {t('mfa.addPasskey')}
         </button>
       </div>
     </Card>

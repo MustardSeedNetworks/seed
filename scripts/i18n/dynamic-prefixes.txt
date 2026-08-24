@@ -210,3 +210,18 @@ pages:reports.
 pages:security.
 pages:topology.
 pages:wifi.
+
+# Help-drawer section titles are resolved through a variable:
+#   HelpDrawer.tsx: t(section.titleKey)
+# where titleKey is declared per section in components/help/sections/*.tsx
+# (e.g. titleKey: 'sections.troubleshooting'). No static analyzer can follow
+# the indirection; deleting these blanks every section title in the drawer.
+help:sections.
+
+# Role, auth-provider and SSO-provider labels are looked up by value:
+#   t(`settings:users.roles.${r}`)
+#   t(`settings:users.providers.${u.authProvider}`)
+#   t(`settings:sso.providers.${name}`)
+settings:users.roles.
+settings:users.providers.
+settings:sso.providers.

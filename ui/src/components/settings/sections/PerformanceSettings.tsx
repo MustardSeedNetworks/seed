@@ -184,12 +184,7 @@ export const PerformanceSettings: React.NamedExoticComponent<PerformanceSettings
             <span className="caption text-text-muted font-medium">
               {t('performance.autoRunOnLink')}
             </span>
-            <p className="caption text-text-muted mt-tight">
-              {t(
-                'performance.autoRunOnLinkDesc',
-                'Controls which tests run when FAB button is clicked',
-              )}
-            </p>
+            <p className="caption text-text-muted mt-tight">{t('performance.autoRunOnLinkDesc')}</p>
             <div className={cn(spacing.margin.top.inline, 'stack-sm')}>
               <label
                 className={cn(

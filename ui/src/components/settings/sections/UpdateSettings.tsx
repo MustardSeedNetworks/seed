@@ -136,7 +136,7 @@ export const UpdateSettings: React.NamedExoticComponent<UpdateSettingsProps> = m
         title={
           <div className={layout.inline.default}>
             <Download className={iconTokens.size.sm} />
-            <span>{t('sections.updates', 'Updates')}</span>
+            <span>{t('sections.updates')}</span>
           </div>
         }
         defaultOpen={false}
@@ -152,9 +152,7 @@ export const UpdateSettings: React.NamedExoticComponent<UpdateSettingsProps> = m
               'border border-surface-border',
             )}
           >
-            <span className="body-small text-text-primary">
-              {t('updates.currentVersion', 'Current Version')}
-            </span>
+            <span className="body-small text-text-primary">{t('updates.currentVersion')}</span>
             <span className="body-small text-text-secondary font-mono">
               {currentVersion || updateInfo?.currentVersion || 'Unknown'}
             </span>
@@ -177,9 +175,7 @@ export const UpdateSettings: React.NamedExoticComponent<UpdateSettingsProps> = m
               'disabled:opacity-50 disabled:cursor-not-allowed',
             )}
           >
-            <span className="body-small text-text-primary">
-              {t('updates.checkForUpdates', 'Check for Updates')}
-            </span>
+            <span className="body-small text-text-primary">{t('updates.checkForUpdates')}</span>
             {isChecking ? (
               <Loader className={cn(iconTokens.size.sm, 'animate-spin')} />
             ) : (
@@ -212,7 +208,7 @@ export const UpdateSettings: React.NamedExoticComponent<UpdateSettingsProps> = m
             >
               <div className={layout.flex.between}>
                 <span className="body-small text-status-success font-medium">
-                  {t('updates.updateAvailable', 'Update Available')}
+                  {t('updates.updateAvailable')}
                 </span>
                 <span className="body-small text-status-success font-mono">
                   v{updateInfo.latestVersion}
@@ -221,13 +217,13 @@ export const UpdateSettings: React.NamedExoticComponent<UpdateSettingsProps> = m
 
               {updateInfo.publishedAt ? (
                 <div className="body-small text-text-secondary">
-                  {t('updates.releasedOn', 'Released')}: {formatDate(updateInfo.publishedAt)}
+                  {t('updates.releasedOn')}: {formatDate(updateInfo.publishedAt)}
                 </div>
               ) : null}
 
               {updateInfo.downloadSize ? (
                 <div className="body-small text-text-secondary">
-                  {t('updates.downloadSize', 'Size')}: {formatBytes(updateInfo.downloadSize)}
+                  {t('updates.downloadSize')}: {formatBytes(updateInfo.downloadSize)}
                 </div>
               ) : null}
 
@@ -259,16 +255,12 @@ export const UpdateSettings: React.NamedExoticComponent<UpdateSettingsProps> = m
                   {isDownloading ? (
                     <>
                       <Loader className={cn(iconTokens.size.sm, 'animate-spin')} />
-                      <span className="body-small">
-                        {t('updates.downloading', 'Downloading...')}
-                      </span>
+                      <span className="body-small">{t('updates.downloading')}</span>
                     </>
                   ) : (
                     <>
                       <Download className={iconTokens.size.sm} />
-                      <span className="body-small">
-                        {t('updates.downloadUpdate', 'Download Update')}
-                      </span>
+                      <span className="body-small">{t('updates.downloadUpdate')}</span>
                     </>
                   )}
                 </button>
@@ -296,14 +288,12 @@ export const UpdateSettings: React.NamedExoticComponent<UpdateSettingsProps> = m
                   {isApplying ? (
                     <>
                       <Loader className={cn(iconTokens.size.sm, 'animate-spin')} />
-                      <span className="body-small">{t('updates.applying', 'Applying...')}</span>
+                      <span className="body-small">{t('updates.applying')}</span>
                     </>
                   ) : (
                     <>
                       <CheckCircle className={iconTokens.size.sm} />
-                      <span className="body-small">
-                        {t('updates.applyUpdate', 'Apply Update & Restart')}
-                      </span>
+                      <span className="body-small">{t('updates.applyUpdate')}</span>
                     </>
                   )}
                 </button>
@@ -324,16 +314,14 @@ export const UpdateSettings: React.NamedExoticComponent<UpdateSettingsProps> = m
               )}
             >
               <CheckCircle className={cn(iconTokens.size.sm, 'text-status-success')} />
-              <span className="body-small text-text-secondary">
-                {t('updates.upToDate', "You're up to date!")}
-              </span>
+              <span className="body-small text-text-secondary">{t('updates.upToDate')}</span>
             </div>
           ) : null}
 
           {/* Last Check Time */}
           {status?.lastCheck ? (
             <div className="body-small text-text-muted text-center">
-              {t('updates.lastChecked', 'Last checked')}: {formatDate(status.lastCheck)}
+              {t('updates.lastChecked')}: {formatDate(status.lastCheck)}
             </div>
           ) : null}
 
@@ -351,9 +339,7 @@ export const UpdateSettings: React.NamedExoticComponent<UpdateSettingsProps> = m
                   'border border-surface-border cursor-pointer',
                 )}
               >
-                <span className="body-small text-text-primary">
-                  {t('updates.autoCheck', 'Automatic Update Checks')}
-                </span>
+                <span className="body-small text-text-primary">{t('updates.autoCheck')}</span>
                 <input
                   type="checkbox"
                   checked={localConfig.enabled}
@@ -373,9 +359,7 @@ export const UpdateSettings: React.NamedExoticComponent<UpdateSettingsProps> = m
                   'border border-surface-border cursor-pointer',
                 )}
               >
-                <span className="body-small text-text-primary">
-                  {t('updates.autoDownload', 'Auto-Download Updates')}
-                </span>
+                <span className="body-small text-text-primary">{t('updates.autoDownload')}</span>
                 <input
                   type="checkbox"
                   checked={localConfig.autoDownload}
@@ -396,7 +380,7 @@ export const UpdateSettings: React.NamedExoticComponent<UpdateSettingsProps> = m
                 )}
               >
                 <span className="body-small text-text-primary">
-                  {t('updates.includePrerelease', 'Include Pre-release Versions')}
+                  {t('updates.includePrerelease')}
                 </span>
                 <input
                   type="checkbox"
@@ -426,9 +410,7 @@ export const UpdateSettings: React.NamedExoticComponent<UpdateSettingsProps> = m
                   'text-status-warning',
                 )}
               >
-                <span className="body-small">
-                  {t('updates.rollback', 'Rollback to Previous Version')}
-                </span>
+                <span className="body-small">{t('updates.rollback')}</span>
                 <RotateCcw className={iconTokens.size.sm} />
               </button>
             </>

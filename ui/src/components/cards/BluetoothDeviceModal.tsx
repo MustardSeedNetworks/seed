@@ -61,54 +61,36 @@ function DetailRow({
 
 function expandedDetail(d: BluetoothDevice, t: TFunction<'cards'>): React.ReactElement {
   const flags = [
-    d.isConnected ? t('bluetooth.flagConnected', { defaultValue: 'Connected' }) : null,
-    d.isPaired ? t('bluetooth.flagPaired', { defaultValue: 'Paired' }) : null,
-    d.isTrusted ? t('bluetooth.flagTrusted', { defaultValue: 'Trusted' }) : null,
-    d.isConnectable ? t('bluetooth.flagConnectable', { defaultValue: 'Connectable' }) : null,
+    d.isConnected ? t('bluetooth.flagConnected') : null,
+    d.isPaired ? t('bluetooth.flagPaired') : null,
+    d.isTrusted ? t('bluetooth.flagTrusted') : null,
+    d.isConnectable ? t('bluetooth.flagConnectable') : null,
   ].filter(Boolean) as string[];
 
   return (
     <div className={cn('stack-xs', spacing.pad.sm)} data-testid="bluetooth-device-detail">
       {d.appearanceLabel ? (
-        <DetailRow
-          label={t('bluetooth.appearance', { defaultValue: 'Appearance' })}
-          value={d.appearanceLabel}
-        />
+        <DetailRow label={t('bluetooth.appearance')} value={d.appearanceLabel} />
       ) : null}
       {d.serviceNames && d.serviceNames.length > 0 ? (
-        <DetailRow
-          label={t('bluetooth.services', { defaultValue: 'Services' })}
-          value={d.serviceNames.join(', ')}
-        />
+        <DetailRow label={t('bluetooth.services')} value={d.serviceNames.join(', ')} />
       ) : null}
       {d.manufacturerId ? (
         <DetailRow
-          label={t('bluetooth.manufacturerId', { defaultValue: 'Manufacturer ID' })}
+          label={t('bluetooth.manufacturerId')}
           value={`0x${d.manufacturerId.toString(16).toUpperCase().padStart(4, '0')}`}
         />
       ) : null}
       {d.deviceClass ? (
-        <DetailRow
-          label={t('bluetooth.deviceClass', { defaultValue: 'Device class' })}
-          value={d.deviceClass}
-        />
+        <DetailRow label={t('bluetooth.deviceClass')} value={d.deviceClass} />
       ) : null}
       {d.txPower !== 0 ? (
-        <DetailRow
-          label={t('bluetooth.txPower', { defaultValue: 'TX Power' })}
-          value={`${d.txPower} dBm`}
-        />
+        <DetailRow label={t('bluetooth.txPower')} value={`${d.txPower} dBm`} />
       ) : null}
       {flags.length > 0 ? (
-        <DetailRow
-          label={t('bluetooth.flags', { defaultValue: 'Flags' })}
-          value={flags.join(' · ')}
-        />
+        <DetailRow label={t('bluetooth.flags')} value={flags.join(' · ')} />
       ) : null}
-      <DetailRow
-        label={t('bluetooth.lastSeen', { defaultValue: 'Last seen' })}
-        value={d.lastSeen}
-      />
+      <DetailRow label={t('bluetooth.lastSeen')} value={d.lastSeen} />
     </div>
   );
 }
@@ -125,7 +107,7 @@ export const BluetoothDeviceModal: React.NamedExoticComponent<BluetoothDeviceMod
     const columns: Column<BluetoothDevice>[] = [
       {
         key: 'name',
-        header: t('bluetooth.colName', { defaultValue: 'Name' }),
+        header: t('bluetooth.colName'),
         accessor: (d) => displayName(d),
         sortable: true,
         render: (d) => (
@@ -141,34 +123,34 @@ export const BluetoothDeviceModal: React.NamedExoticComponent<BluetoothDeviceMod
       },
       {
         key: 'address',
-        header: t('bluetooth.colAddress', { defaultValue: 'Address' }),
+        header: t('bluetooth.colAddress'),
         accessor: (d) => d.address,
         sortable: true,
       },
       {
         key: 'type',
-        header: t('bluetooth.colType', { defaultValue: 'Type' }),
+        header: t('bluetooth.colType'),
         accessor: (d) => d.type,
         sortable: true,
         hiddenOnMobile: true,
       },
       {
         key: 'company',
-        header: t('bluetooth.colManufacturer', { defaultValue: 'Manufacturer' }),
+        header: t('bluetooth.colManufacturer'),
         accessor: (d) => d.companyName || d.vendor || '',
         sortable: true,
         hiddenOnMobile: true,
       },
       {
         key: 'rssi',
-        header: t('bluetooth.colSignal', { defaultValue: 'Signal' }),
+        header: t('bluetooth.colSignal'),
         accessor: (d) => d.rssi,
         sortable: true,
         render: (d) => <span className="text-text-secondary">{rssiLabel(d.rssi)}</span>,
       },
       {
         key: 'distance',
-        header: t('bluetooth.colDistance', { defaultValue: 'Distance' }),
+        header: t('bluetooth.colDistance'),
         accessor: (d) => d.estDistanceM,
         sortable: true,
         hiddenOnMobile: true,
@@ -177,28 +159,14 @@ export const BluetoothDeviceModal: React.NamedExoticComponent<BluetoothDeviceMod
     ];
 
     return (
-      <Modal
-        isOpen={isOpen}
-        onClose={onClose}
-        size="full"
-        title={t('bluetooth.modalTitle', { defaultValue: 'Bluetooth Devices' })}
-      >
+      <Modal isOpen={isOpen} onClose={onClose} size="full" title={t('bluetooth.modalTitle')}>
         <div className="stack-md" data-testid="bluetooth-modal">
           {stats ? (
             <div className={cn('flex flex-wrap gap-default', spacing.margin.bottom.inline)}>
-              <StatChip
-                label={t('bluetooth.statTotal', { defaultValue: 'Total' })}
-                value={stats.totalDevices}
-              />
+              <StatChip label={t('bluetooth.statTotal')} value={stats.totalDevices} />
               <StatChip label="BLE" value={stats.bleDevices} />
-              <StatChip
-                label={t('bluetooth.statClassic', { defaultValue: 'Classic' })}
-                value={stats.classicDevices}
-              />
-              <StatChip
-                label={t('bluetooth.statConnected', { defaultValue: 'Connected' })}
-                value={stats.connectedDevices}
-              />
+              <StatChip label={t('bluetooth.statClassic')} value={stats.classicDevices} />
+              <StatChip label={t('bluetooth.statConnected')} value={stats.connectedDevices} />
             </div>
           ) : null}
           <div data-testid="bluetooth-device-table">
@@ -207,12 +175,8 @@ export const BluetoothDeviceModal: React.NamedExoticComponent<BluetoothDeviceMod
               columns={columns}
               keyExtractor={(d) => d.id || d.address}
               searchKeys={['name', 'alias', 'address', 'companyName', 'vendor']}
-              searchPlaceholder={t('bluetooth.searchPlaceholder', {
-                defaultValue: 'Search devices…',
-              })}
-              emptyMessage={t('bluetooth.empty', {
-                defaultValue: 'No Bluetooth devices found. Run a scan to discover nearby devices.',
-              })}
+              searchPlaceholder={t('bluetooth.searchPlaceholder')}
+              emptyMessage={t('bluetooth.empty')}
               expandedContent={(d) => expandedDetail(d, t)}
               maxHeight="max-h-[60vh]"
             />

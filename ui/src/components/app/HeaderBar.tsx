@@ -158,15 +158,15 @@ export const HeaderBar: React.FC<HeaderBarProps> = memo(function headerBar({
   const getStatusTooltip = (): string => {
     switch (wsStatus) {
       case 'connected':
-        return t('status.connected', 'Connected');
+        return t('status.connected');
       case 'connecting':
-        return t('status.connecting', 'Connecting...');
+        return t('status.connecting');
       case 'disconnected':
-        return t('status.disconnected', 'Disconnected');
+        return t('status.disconnected');
       case 'error':
-        return t('status.error', 'Connection Error');
+        return t('status.error');
       default:
-        return t('status.error', 'Connection Error');
+        return t('status.error');
     }
   };
 
@@ -226,11 +226,7 @@ export const HeaderBar: React.FC<HeaderBarProps> = memo(function headerBar({
           )}
           onClick={wsStatus !== 'connected' ? onReconnect : undefined}
           title={getStatusTooltip()}
-          aria-label={
-            wsStatus !== 'connected'
-              ? t('status.clickToReconnect', 'Click to reconnect')
-              : getStatusTooltip()
-          }
+          aria-label={wsStatus !== 'connected' ? t('status.clickToReconnect') : getStatusTooltip()}
         >
           {/* Seed brand mark — color indicates connection status */}
           <SeedLogo
@@ -255,11 +251,11 @@ export const HeaderBar: React.FC<HeaderBarProps> = memo(function headerBar({
               data-testid="header-profile"
               className={iconButtonClass}
               onClick={(): void => setProfileDropdownOpen(!profileDropdownOpen)}
-              aria-label={t('accessibility.selectProfile', 'Select profile')}
+              aria-label={t('accessibility.selectProfile')}
               title={
                 activeProfile
-                  ? `${t('profile.current', 'Profile')}: ${activeProfile.name}`
-                  : t('profile.select', 'Select Profile')
+                  ? `${t('profile.current')}: ${activeProfile.name}`
+                  : t('profile.select')
               }
             >
               {profilesLoading ? (
@@ -285,15 +281,13 @@ export const HeaderBar: React.FC<HeaderBarProps> = memo(function headerBar({
                   className={cn(spacing.pad.sm, 'border-b border-surface-border bg-surface-base')}
                 >
                   <span className="caption font-medium text-text-muted uppercase tracking-wide">
-                    {t('profile.switch', 'Switch Profile')}
+                    {t('profile.switch')}
                   </span>
                 </div>
                 <div className="max-h-60 overflow-y-auto">
                   {profiles.length === 0 ? (
                     <div className={cn(spacing.pad.default, 'text-center')}>
-                      <span className="caption text-text-muted">
-                        {t('profile.noProfiles', 'No profiles')}
-                      </span>
+                      <span className="caption text-text-muted">{t('profile.noProfiles')}</span>
                     </div>
                   ) : (
                     profiles.map((profile) => (
@@ -340,7 +334,7 @@ export const HeaderBar: React.FC<HeaderBarProps> = memo(function headerBar({
                     )}
                   >
                     <Settings className={iconTokens.size.sm} aria-hidden="true" />
-                    <span className="body-small font-medium">{t('profile.manage', 'Manage')}</span>
+                    <span className="body-small font-medium">{t('profile.manage')}</span>
                   </button>
                 </div>
                 <div className="border-t border-surface-border">
@@ -359,7 +353,7 @@ export const HeaderBar: React.FC<HeaderBarProps> = memo(function headerBar({
                     )}
                   >
                     <LogOut className={iconTokens.size.sm} aria-hidden="true" />
-                    <span className="body-small font-medium">{t('buttons.logout', 'Logout')}</span>
+                    <span className="body-small font-medium">{t('buttons.logout')}</span>
                   </button>
                 </div>
               </div>
@@ -375,8 +369,8 @@ export const HeaderBar: React.FC<HeaderBarProps> = memo(function headerBar({
                 !isWifi && 'ring-2 ring-brand-primary ring-offset-1 ring-offset-surface-raised',
               )}
               onClick={(): void => setInterfaceDropdownOpen(!interfaceDropdownOpen)}
-              aria-label={t('accessibility.selectEthernet', 'Select Ethernet interface')}
-              title={t('interface.ethernet', 'Ethernet')}
+              aria-label={t('accessibility.selectEthernet')}
+              title={t('interface.ethernet')}
             >
               {/* RJ45 Ethernet jack icon */}
               <EthernetPort className={iconTokens.size.md} aria-hidden="true" />
@@ -395,15 +389,13 @@ export const HeaderBar: React.FC<HeaderBarProps> = memo(function headerBar({
                   className={cn(spacing.pad.sm, 'border-b border-surface-border bg-surface-base')}
                 >
                   <span className="caption font-medium text-text-muted uppercase tracking-wide">
-                    {t('interface.ethernetInterfaces', 'Ethernet Interfaces')}
+                    {t('interface.ethernetInterfaces')}
                   </span>
                 </div>
                 <div className="max-h-60 overflow-y-auto">
                   {interfaces.filter((i) => i.type !== 'wifi').length === 0 ? (
                     <div className={cn(spacing.pad.default, 'text-center')}>
-                      <span className="caption text-text-muted">
-                        {t('interface.noEthernet', 'No Ethernet interfaces')}
-                      </span>
+                      <span className="caption text-text-muted">{t('interface.noEthernet')}</span>
                     </div>
                   ) : (
                     interfaces
@@ -435,7 +427,7 @@ export const HeaderBar: React.FC<HeaderBarProps> = memo(function headerBar({
                                       iconTokens.size.xs,
                                       'text-status-success shrink-0',
                                     )}
-                                    aria-label={t('interface.recommended', 'Recommended')}
+                                    aria-label={t('interface.recommended')}
                                   />
                                 )}
                               </div>
@@ -479,12 +471,8 @@ export const HeaderBar: React.FC<HeaderBarProps> = memo(function headerBar({
                 // fallback view of the Wi-Fi troubleshooting page.
                 switchToInterfaceType('wifi');
               }}
-              aria-label={t('accessibility.selectWifi', 'Select Wi-Fi')}
-              title={
-                hasWifiInterface
-                  ? t('interface.wifi', 'Wi-Fi')
-                  : t('interface.wifiNoHardware', 'Wi-Fi (no hardware)')
-              }
+              aria-label={t('accessibility.selectWifi')}
+              title={hasWifiInterface ? t('interface.wifi') : t('interface.wifiNoHardware')}
             >
               {/* WiFi signal icon */}
               <Wifi
@@ -495,7 +483,7 @@ export const HeaderBar: React.FC<HeaderBarProps> = memo(function headerBar({
               {!hasWifiInterface && (
                 <span
                   className="absolute -bottom-0.5 -right-0.5 w-2 h-2 bg-status-warning rounded-full"
-                  title={t('interface.noWifiHardware', 'No Wi-Fi hardware')}
+                  title={t('interface.noWifiHardware')}
                 />
               )}
             </button>
@@ -510,9 +498,7 @@ export const HeaderBar: React.FC<HeaderBarProps> = memo(function headerBar({
               isDark ? t('accessibility.switchToLightMode') : t('accessibility.switchToDarkMode')
             }
             title={
-              isDark
-                ? t('accessibility.switchToLightMode', 'Light mode')
-                : t('accessibility.switchToDarkMode', 'Dark mode')
+              isDark ? t('accessibility.switchToLightMode') : t('accessibility.switchToDarkMode')
             }
           >
             {isDark ? (
@@ -549,12 +535,12 @@ export const HeaderBar: React.FC<HeaderBarProps> = memo(function headerBar({
             {wsStatus === 'connecting' ? (
               <>
                 <Loader className={cn(iconTokens.size.sm, 'animate-spin')} aria-hidden="true" />
-                {t('status.connecting', 'Connecting...')}
+                {t('status.connecting')}
               </>
             ) : (
               <>
                 <span>●</span>
-                {t('status.tapToReconnect', 'Tap to reconnect')}
+                {t('status.tapToReconnect')}
               </>
             )}
           </button>
