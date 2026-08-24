@@ -130,6 +130,49 @@ jobs:
           retention-days: 1
 
   # ===========================================================================
+  # macOS Backend Checks
+  # ===========================================================================
+  # Every darwin-only file is behind //go:build darwin, so the ubuntu backend
+  # job never compiles it. The macOS Wi-Fi path is CoreWLAN through cgo and
+  # Objective-C; a break in it would leave every other check green. This job
+  # builds the real thing.
+  backend-darwin:
+    name: Backend (macOS)
+    runs-on: macos-latest
+    needs: changes
+    if: needs.changes.outputs.backend == 'true' || needs.changes.outputs.workflows == 'true'
+    timeout-minutes: 20
+    env:
+      GOMODCACHE: ${{ github.workspace }}/.cache/go/pkg/mod
+      GOCACHE: ${{ github.workspace }}/.cache/go/build
+
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Set up Go
+        uses: ./.github/actions/setup-go
+
+      # No libpcap step: macOS ships it, and the UI embed is satisfied by the
+      # tracked .gitkeep because the directive is `all:ui`, which matches
+      # dotfiles. So this needs neither the apt composite nor the UI artifact.
+      - name: Build
+        run: go build ./...
+
+      - name: Vet
+        run: go vet ./...
+
+      # Linking, not just compiling, is what proves the -framework LDFLAGS
+      # resolve: building a library package stops after the Objective-C compile.
+      # The wifi test binaries link the darwin implementation, covering both.
+      # These tests are pure mapping and protocol logic, so the runner needs no
+      # Wi-Fi adapter and no Location Services grant.
+      - name: Test
+        run: go test -race ./internal/wifi/...
+
+  # ===========================================================================
   # Go Backend Checks
   # ===========================================================================
   backend:
@@ -1341,6 +1384,7 @@ jobs:
       - build-ui
       - workflow-lint
       - backend
+      - backend-darwin
       - race
       - frontend
       - storybook

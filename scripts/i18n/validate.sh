@@ -422,29 +422,33 @@ check_key_usage() {
 # Check: locked package versions (matches I18N_CONVENTIONS.md)
 # -----------------------------------------------------------------------------
 check_locked_versions() {
-  section "i18n package versions (pinned exact, per dependency policy)"
+  section "i18n package versions (pinned exact)"
   local pkg="${UI_SRC_DIR%/src}/package.json"
   [ ! -f "$pkg" ] && { warn "package.json not found at $pkg; skipping"; return; }
   local issues=0
-  # POSIX-compatible parallel arrays (no `declare -A` — macOS bash 3.x).
+  # Exact pins only — deliberately no hardcoded target version here.
+  #
+  # Under always-latest, Renovate moves these packages and any literal written
+  # into this script rots on the very next bump: the gate then demands a
+  # downgrade, which is how all three repos ended up asserting a version older
+  # than the one they shipped. The version itself is Renovate's call. What a
+  # single repo *can* verify locally is that nobody reintroduced a range —
+  # a `^` here is what would let the three repos drift apart between installs.
   local names=(i18next react-i18next i18next-browser-languagedetector)
-  local wants=(26.3.0 17.0.8 8.2.1)
-  local i=0
-  while [ "$i" -lt "${#names[@]}" ]; do
-    local name="${names[$i]}"
-    local want="${wants[$i]}"
-    local actual
+  local name actual
+  for name in "${names[@]}"; do
     actual=$(jq -r --arg n "$name" '.dependencies[$n] // .devDependencies[$n] // empty' "$pkg")
     if [ -z "$actual" ]; then
       warn "$name not installed in $pkg"
-    elif [ "$actual" != "$want" ]; then
-      ratchet_fail "$name pinned to $actual but lockstep target is $want"
-      annotate "$pkg" "$name should be pinned to $want (always-latest policy + I18N_CONVENTIONS.md)"
+      continue
+    fi
+    if ! printf '%s' "$actual" | grep -qE '^[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z.-]+)?$'; then
+      fail "$name pinned as '$actual' — must be an exact version, not a range"
+      annotate "$pkg" "$name must be pinned exactly (no ^, ~ or range); got '$actual'"
       issues=$((issues + 1))
     fi
-    i=$((i + 1))
   done
-  [ "$issues" -eq 0 ] && ok "all i18n packages on locked versions"
+  [ "$issues" -eq 0 ] && ok "all i18n packages pinned exact"
 }
 
 # -----------------------------------------------------------------------------
