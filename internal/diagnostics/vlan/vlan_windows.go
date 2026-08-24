@@ -84,22 +84,27 @@ func parseVlanCsv(output, parentIface string) []int {
 	return vlanIDs
 }
 
+// createSupportedPlatform reports that Windows cannot create VLAN
+// subinterfaces. Consumer NICs do not expose VLAN configuration to the OS, and
+// enterprise NICs use vendor tools rather than any Windows API.
+func createSupportedPlatform() bool { return false }
+
 // createVlanInterfacePlatform creates a VLAN interface on Windows.
 // This is not supported through standard Windows APIs for most NICs.
 func createVlanInterfacePlatform(parentIface string, vlanID int) error {
-	return fmt.Errorf("VLAN creation on Windows requires vendor-specific tools (Intel PROSet, Broadcom BACS) "+
+	return fmt.Errorf("%w: VLAN creation on Windows requires vendor-specific tools (Intel PROSet, Broadcom BACS) "+
 		"or Hyper-V virtual switch configuration via PowerShell. "+
 		"Standard Windows APIs do not support VLAN interface creation for interface %s with VLAN ID %d. "+
-		"See HARDWARE.md for platform-specific VLAN requirements", parentIface, vlanID)
+		"See HARDWARE.md for platform-specific VLAN requirements", ErrUnsupported, parentIface, vlanID)
 }
 
 // deleteVlanInterfacePlatform deletes a VLAN interface on Windows.
 // This is not supported through standard Windows APIs for most NICs.
 func deleteVlanInterfacePlatform(parentIface string, vlanID int) error {
-	return fmt.Errorf("VLAN deletion on Windows requires vendor-specific tools (Intel PROSet, Broadcom BACS) "+
+	return fmt.Errorf("%w: VLAN deletion on Windows requires vendor-specific tools (Intel PROSet, Broadcom BACS) "+
 		"or Hyper-V virtual switch configuration via PowerShell. "+
 		"Standard Windows APIs do not support VLAN interface deletion for interface %s with VLAN ID %d. "+
-		"See HARDWARE.md for platform-specific VLAN requirements", parentIface, vlanID)
+		"See HARDWARE.md for platform-specific VLAN requirements", ErrUnsupported, parentIface, vlanID)
 }
 
 // IsVLANSupported checks if the system supports VLAN configuration.

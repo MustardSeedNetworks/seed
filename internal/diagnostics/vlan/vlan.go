@@ -1,6 +1,9 @@
 package vlan
 
-import "sync"
+import (
+	"errors"
+	"sync"
+)
 
 // Info contains VLAN information for an interface.
 type Info struct {
@@ -78,14 +81,31 @@ func (m *Manager) detectVlanSubinterfaces(iface string) []int {
 	return detectVlanSubinterfacesPlatform(iface)
 }
 
+// ErrUnsupported means this platform cannot create or remove VLAN
+// subinterfaces. Callers should refuse the request rather than attempt it.
+var ErrUnsupported = errors.New("vlan: subinterface management is not supported on this platform")
+
+// CreateSupported reports whether this platform can create and remove 802.1Q
+// subinterfaces at all.
+//
+// Only Linux can. macOS and Windows both require configuration outside any API
+// the OS exposes to us, so an endpoint that offers it there can only fail —
+// callers should decline up front instead of attempting and reporting a runtime
+// error.
+func CreateSupported() bool {
+	return createSupportedPlatform()
+}
+
 // CreateVlanInterface creates an 802.1Q VLAN subinterface.
 // Implementation is platform-specific (vlan_linux.go, vlan_darwin.go).
+// Returns [ErrUnsupported] where the platform cannot do it.
 func CreateVlanInterface(parentIface string, vlanID int) error {
 	return createVlanInterfacePlatform(parentIface, vlanID)
 }
 
 // DeleteVlanInterface removes an 802.1Q VLAN subinterface.
 // Implementation is platform-specific (vlan_linux.go, vlan_darwin.go).
+// Returns [ErrUnsupported] where the platform cannot do it.
 func DeleteVlanInterface(parentIface string, vlanID int) error {
 	return deleteVlanInterfacePlatform(parentIface, vlanID)
 }

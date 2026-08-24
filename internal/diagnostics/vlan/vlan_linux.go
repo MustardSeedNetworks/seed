@@ -78,6 +78,10 @@ func detectVlansFromProc(iface string) []int {
 	return vlans
 }
 
+// createSupportedPlatform reports that Linux can manage VLAN subinterfaces,
+// via netlink below.
+func createSupportedPlatform() bool { return true }
+
 // createVlanInterfacePlatform creates a VLAN interface on Linux using netlink.
 func createVlanInterfacePlatform(parentIface string, vlanID int) error {
 	// Get parent link
