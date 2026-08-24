@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.213.26](https://github.com/MustardSeedNetworks/seed/compare/v0.213.25...v0.213.26) (2026-08-24)
+
+
+### Features
+
+* **macos:** add a reliable Location Services status check ([#2077](https://github.com/MustardSeedNetworks/seed/issues/2077)) ([e7badcd](https://github.com/MustardSeedNetworks/seed/commit/e7badcd80eeaa8e26682371870a216b9e67970fe))
+
 ## [0.213.25](https://github.com/MustardSeedNetworks/seed/compare/v0.213.24...v0.213.25) (2026-08-24)
 
 
