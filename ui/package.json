@@ -53,7 +53,7 @@
   },
   "devDependencies": {
     "@babel/core": "8.0.1",
-    "@biomejs/biome": "2.5.9",
+    "@biomejs/biome": "2.5.10",
     "@chromatic-com/storybook": "5.3.0",
     "@playwright/test": "1.62.1",
     "@rolldown/plugin-babel": "0.2.3",
