@@ -42,7 +42,6 @@
   },
   "errors": {
     "passwordTooShort": "Password must be at least 12 characters and contain uppercase, lowercase, numbers, and special characters.",
-    "passwordMismatch": "Passwords do not match",
     "setupFailed": "Failed to complete setup",
     "loginFailed": "Setup complete but login failed. Please log in manually.",
     "networkError": "Network error. Please try again."

@@ -155,12 +155,8 @@ export function RecoveryForm({
           <div className={cn('w-16 h-16 mx-auto text-status-warning', layout.flex.center)}>
             <KeyRound className={icon.size['2xl']} />
           </div>
-          <h1 className={cn('heading-1', spacing.margin.top.heading)}>
-            {t('recovery.title', 'Password Recovery')}
-          </h1>
-          <p className={cn('body-small', spacing.margin.top.inline)}>
-            {t('recovery.subtitle', 'Reset your password using filesystem access')}
-          </p>
+          <h1 className={cn('heading-1', spacing.margin.top.heading)}>{t('recovery.title')}</h1>
+          <p className={cn('body-small', spacing.margin.top.inline)}>{t('recovery.subtitle')}</p>
         </div>
 
         {/* Timer Warning */}
@@ -175,7 +171,7 @@ export function RecoveryForm({
           >
             <Timer className={icon.size.sm} />
             <span className="ml-inline">
-              {t('recovery.timeRemaining', 'Time remaining')}: {formatTime(remainingTime)}
+              {t('recovery.timeRemaining')}: {formatTime(remainingTime)}
             </span>
           </div>
         ) : null}
@@ -191,7 +187,7 @@ export function RecoveryForm({
             )}
           >
             <h3 className={cn('heading-4', spacing.margin.bottom.inline)}>
-              {t('recovery.instructions.title', 'Recovery Instructions')}
+              {t('recovery.instructions.title')}
             </h3>
             <ol className="body-small text-text-secondary stack-xs list-decimal list-inside">
               {instructions.steps.map((step) => (
@@ -200,8 +196,7 @@ export function RecoveryForm({
             </ol>
             {tokenFilePath ? (
               <p className={cn('caption text-text-muted', spacing.margin.top.inline)}>
-                {t('recovery.tokenLocation', 'Token file')}:{' '}
-                <code className="code">{tokenFilePath}</code>
+                {t('recovery.tokenLocation')}: <code className="code">{tokenFilePath}</code>
               </p>
             ) : null}
           </div>
@@ -222,7 +217,7 @@ export function RecoveryForm({
               htmlFor="recovery-token"
               className={cn('label block', spacing.margin.bottom.inline)}
             >
-              {t('recovery.tokenLabel', 'Recovery Token')}
+              {t('recovery.tokenLabel')}
             </label>
             <div className="relative">
               <KeyRound
@@ -243,10 +238,7 @@ export function RecoveryForm({
                   'border border-surface-border bg-surface-base text-text-primary',
                   'focus:outline-none focus:border-brand-primary font-mono',
                 )}
-                placeholder={t(
-                  'recovery.tokenPlaceholder',
-                  'Paste token from .recovery-token file',
-                )}
+                placeholder={t('recovery.tokenPlaceholder')}
                 autoComplete="off"
                 spellCheck={false}
               />
@@ -262,7 +254,7 @@ export function RecoveryForm({
               htmlFor="recovery-password"
               className={cn('label block', spacing.margin.bottom.inline)}
             >
-              {t('recovery.newPasswordLabel', 'New Password')}
+              {t('recovery.newPasswordLabel')}
             </label>
             <div className="relative">
               <Lock
@@ -306,7 +298,7 @@ export function RecoveryForm({
               <p className="caption mt-tight text-status-error">{errors.password.message}</p>
             ) : (
               <p className="caption mt-tight text-text-muted">
-                {t('recovery.passwordRequirement', 'Minimum {{min}} characters', {
+                {t('recovery.passwordRequirement', {
                   min: MIN_PASSWORD_LENGTH,
                 })}
               </p>
@@ -319,7 +311,7 @@ export function RecoveryForm({
               htmlFor="recovery-confirm-password"
               className={cn('label block', spacing.margin.bottom.inline)}
             >
-              {t('recovery.confirmPasswordLabel', 'Confirm Password')}
+              {t('recovery.confirmPasswordLabel')}
             </label>
             <div className="relative">
               <Lock
@@ -397,9 +389,7 @@ export function RecoveryForm({
               'disabled:opacity-50 disabled:cursor-not-allowed',
             )}
           >
-            {isSubmitting
-              ? t('recovery.submitting', 'Resetting Password...')
-              : t('recovery.submit', 'Reset Password')}
+            {isSubmitting ? t('recovery.submitting') : t('recovery.submit')}
           </button>
 
           {/* Back to Login Link */}
@@ -413,16 +403,13 @@ export function RecoveryForm({
               'focus:outline-none focus:underline',
             )}
           >
-            {t('recovery.backToLogin', 'Back to Login')}
+            {t('recovery.backToLogin')}
           </button>
         </form>
 
         {/* Security Note */}
         <p className={cn('caption text-text-muted text-center', spacing.margin.top.section)}>
-          {t(
-            'recovery.securityNote',
-            'Recovery tokens are single-use and expire after 15 minutes.',
-          )}
+          {t('recovery.securityNote')}
         </p>
       </div>
     </div>

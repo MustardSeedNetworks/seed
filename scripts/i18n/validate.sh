@@ -167,7 +167,7 @@ check_no_fallback_patterns() {
   if [ -n "$hits" ]; then
     local count
     count=$(echo "$hits" | wc -l | tr -d ' ')
-    ratchet_fail "$count fallback pattern(s) t('key', 'string') — banned per I18N_CONVENTIONS:"
+    fail "$count fallback pattern(s) t('key', 'string') — banned per I18N_CONVENTIONS:"
     echo "$hits" | sed 's/^/      /'
     while IFS= read -r line; do
       local file
@@ -396,14 +396,8 @@ check_key_usage() {
     warn "python3 not found; skipping check-keys.py"
     return
   fi
-  # Propagate --ratchet so newly-added repos can absorb check-keys.py
-  # without an immediate cleanup burden. Use a plain string instead of
-  # an array because bash 3.2 (macOS default) errors on `${empty[@]}`
-  # under `set -u`.
-  local extra=""
-  [ "$RATCHET" -eq 1 ] && extra="--ratchet"
   local out
-  if ! out=$(python3 "$script" $extra 2>&1); then
+  if ! out=$(python3 "$script" 2>&1); then
     fail "check-keys.py found t() calls referencing missing keys:"
     echo "$out" | head -40 | sed 's/^/      /'
     return
@@ -415,7 +409,7 @@ check_key_usage() {
     wcount=$(echo "$out" | grep -c "^  [^✓]" || echo 0)
     warn "$wcount unused EN locale key(s) (informational; not failing — too noisy until catch-up)"
   fi
-  ok "every t() call resolves to an EN locale key (or all errors demoted under --ratchet)"
+  ok "every t() call resolves to an EN locale key"
 }
 
 # -----------------------------------------------------------------------------
@@ -455,12 +449,10 @@ check_locked_versions() {
 # Main
 # -----------------------------------------------------------------------------
 QUICK=0
-RATCHET=0
 ONLY_CHECK=""
 while [ $# -gt 0 ]; do
   case "$1" in
     --quick)   QUICK=1; shift ;;
-    --ratchet) RATCHET=1; shift ;;
     --check)   ONLY_CHECK="$2"; shift 2 ;;
     --help|-h)
       sed -n '2,30p' "$0"
@@ -469,15 +461,6 @@ while [ $# -gt 0 ]; do
     *) echo "Unknown arg: $1"; exit 2 ;;
   esac
 done
-
-# Helper used by the two ratchet-eligible checks to downgrade fail → warn.
-ratchet_fail() {
-  if [ "$RATCHET" -eq 1 ]; then
-    warn "$1"
-  else
-    fail "$1"
-  fi
-}
 
 run_check() {
   local fn="$1"

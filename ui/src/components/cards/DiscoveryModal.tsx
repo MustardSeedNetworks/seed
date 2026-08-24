@@ -314,10 +314,10 @@ export function DiscoveryModal({
         <div className="flex-between mb-content pb-4 border-b border-surface-border">
           <div>
             <h2 id="discovery-modal-title" className="heading-2 text-text-primary">
-              {t('discovery.title', 'Network Discovery')}
+              {t('discovery.title')}
             </h2>
             <p className="text-sm text-text-muted mt-tight">
-              {t('discovery.modalSubtitle', '{{total}} devices ({{local}} local)', {
+              {t('discovery.modalSubtitle', {
                 total: deviceCount,
                 local: localCount,
               })}
@@ -409,7 +409,7 @@ export function DiscoveryModal({
               onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>
                 setSearchQuery(e.target.value)
               }
-              placeholder={t('discovery.searchPlaceholder', 'Search IP, hostname, MAC, vendor...')}
+              placeholder={t('discovery.searchPlaceholder')}
               className={cn(
                 'w-full pl-10 pr-4 py-row',
                 'text-sm bg-surface-base border border-surface-border',
@@ -422,8 +422,8 @@ export function DiscoveryModal({
                 type="button"
                 onClick={(): void => setSearchQuery('')}
                 className="absolute right-3 top-1/2 -translate-y-1/2 text-text-muted hover:text-text-primary"
-                aria-label={t('discovery.clearSearch', 'Clear search')}
-                title={t('discovery.clearSearch', 'Clear search')}
+                aria-label={t('discovery.clearSearch')}
+                title={t('discovery.clearSearch')}
               >
                 <X className={iconTokens.size.sm} />
               </button>
@@ -444,7 +444,7 @@ export function DiscoveryModal({
                   : 'bg-surface-hover text-text-secondary hover:text-text-primary',
               )}
             >
-              {t('discovery.localOnly', 'Local Only')}
+              {t('discovery.localOnly')}
             </button>
           </div>
 
@@ -460,7 +460,7 @@ export function DiscoveryModal({
             <thead className="bg-surface-base sticky top-0">
               <tr className="border-b border-surface-border">
                 <SortableHeader
-                  label={t('discovery.tableIp', 'IP Address')}
+                  label={t('discovery.tableIp')}
                   field="ip"
                   currentField={sortField}
                   direction={sortDirection}
@@ -468,7 +468,7 @@ export function DiscoveryModal({
                   className="w-40"
                 />
                 <SortableHeader
-                  label={t('discovery.tableHostname', 'Hostname')}
+                  label={t('discovery.tableHostname')}
                   field="hostname"
                   currentField={sortField}
                   direction={sortDirection}
@@ -476,7 +476,7 @@ export function DiscoveryModal({
                   className="w-40"
                 />
                 <SortableHeader
-                  label={t('discovery.tableMac', 'MAC')}
+                  label={t('discovery.tableMac')}
                   field="mac"
                   currentField={sortField}
                   direction={sortDirection}
@@ -484,7 +484,7 @@ export function DiscoveryModal({
                   className="w-36"
                 />
                 <SortableHeader
-                  label={t('discovery.tableVendor', 'Vendor')}
+                  label={t('discovery.tableVendor')}
                   field="vendor"
                   currentField={sortField}
                   direction={sortDirection}
@@ -492,16 +492,16 @@ export function DiscoveryModal({
                   className="w-32"
                 />
                 <th className="px-3 py-row text-left text-xs font-semibold uppercase tracking-wider w-28">
-                  {t('discovery.tableDiscovery', 'Discovery')}
+                  {t('discovery.tableDiscovery')}
                 </th>
                 <th className="px-3 py-row text-left text-xs font-semibold uppercase tracking-wider w-20">
-                  {t('discovery.tablePorts', 'Ports')}
+                  {t('discovery.tablePorts')}
                 </th>
                 <th className="px-3 py-row text-left text-xs font-semibold uppercase tracking-wider w-20">
-                  {t('discovery.tableVulns', 'CVEs')}
+                  {t('discovery.tableVulns')}
                 </th>
                 <SortableHeader
-                  label={t('discovery.tableLastSeen', 'Last Seen')}
+                  label={t('discovery.tableLastSeen')}
                   field="lastSeen"
                   currentField={sortField}
                   direction={sortDirection}
@@ -509,7 +509,7 @@ export function DiscoveryModal({
                   className="w-24"
                 />
                 <th className="px-3 py-row text-left text-xs font-semibold uppercase tracking-wider w-24">
-                  {t('discovery.tableActions', 'Actions')}
+                  {t('discovery.tableActions')}
                 </th>
               </tr>
             </thead>
@@ -533,9 +533,7 @@ export function DiscoveryModal({
           {/* Empty state */}
           {filteredDevices.length === 0 ? (
             <div className="text-center py-centered text-text-muted">
-              {searchQuery || showLocalOnly
-                ? t('discovery.noResults', 'No devices match your filters')
-                : t('discovery.noDevices', 'No devices discovered yet')}
+              {searchQuery || showLocalOnly ? t('discovery.noResults') : t('discovery.noDevices')}
             </div>
           ) : null}
         </div>

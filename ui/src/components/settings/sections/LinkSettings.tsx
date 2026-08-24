@@ -90,7 +90,7 @@ export const LinkSettings: React.NamedExoticComponent<LinkSettingsProps> = memo(
         title={
           <div className={layout.inline.default}>
             <PlugZap className={iconTokens.size.sm} />
-            <span>{t('sections.link', 'Link')}</span>
+            <span>{t('sections.link')}</span>
             <AutoSaveIndicator status={linkStatus} />
           </div>
         }
@@ -110,11 +110,9 @@ export const LinkSettings: React.NamedExoticComponent<LinkSettingsProps> = memo(
             >
               <div>
                 <span className="body-small text-text-primary font-medium">
-                  {t('common.showCard', 'Show Card')}
+                  {t('common.showCard')}
                 </span>
-                <p className="caption text-text-muted">
-                  {t('common.showCardDesc', 'Display this card on the dashboard')}
-                </p>
+                <p className="caption text-text-muted">{t('common.showCardDesc')}</p>
               </div>
               <input
                 type="checkbox"
@@ -138,11 +136,9 @@ export const LinkSettings: React.NamedExoticComponent<LinkSettingsProps> = memo(
             >
               <div>
                 <span className="body-small text-text-primary font-medium">
-                  {t('common.runOnFab', 'Include in Run All')}
+                  {t('common.runOnFab')}
                 </span>
-                <p className="caption text-text-muted">
-                  {t('common.runOnFabDesc', 'Run when FAB button is clicked')}
-                </p>
+                <p className="caption text-text-muted">{t('common.runOnFabDesc')}</p>
               </div>
               <input
                 type="checkbox"
@@ -160,7 +156,7 @@ export const LinkSettings: React.NamedExoticComponent<LinkSettingsProps> = memo(
           {/* Combined Speed/Duplex Dropdown */}
           <div>
             <label className="caption text-text-muted font-medium" htmlFor="link-mode">
-              {t('link.speedDuplex', 'Speed / Duplex')}
+              {t('link.speedDuplex')}
             </label>
             <select
               id="link-mode"
@@ -188,10 +184,7 @@ export const LinkSettings: React.NamedExoticComponent<LinkSettingsProps> = memo(
           {/* Warning for manual settings */}
           {isManualMode ? (
             <p className={cn('caption text-status-warning', spacing.margin.top.inline)}>
-              {t(
-                'link.manualWarning',
-                'Manual speed/duplex may cause link issues if mismatched with switch',
-              )}
+              {t('link.manualWarning')}
             </p>
           ) : null}
 
@@ -199,7 +192,7 @@ export const LinkSettings: React.NamedExoticComponent<LinkSettingsProps> = memo(
           {linkSettings.availableModes.length > 0 ? (
             <div className={cn('border-t border-surface-border', spacing.padding.top.heading)}>
               <span className="caption text-text-muted font-medium">
-                {t('link.availableModes', 'Supported Modes')}
+                {t('link.availableModes')}
               </span>
               <div className={cn('flex flex-wrap', spacing.gap.tight, spacing.margin.top.inline)}>
                 {linkSettings.availableModes.map((mode) => (
@@ -220,7 +213,7 @@ export const LinkSettings: React.NamedExoticComponent<LinkSettingsProps> = memo(
           ) : null}
 
           <p className={cn('caption text-text-muted', spacing.margin.top.inline)}>
-            {t('link.requiresRoot', 'Changing link settings requires root privileges')}
+            {t('link.requiresRoot')}
           </p>
         </div>
       </CollapsibleSection>

@@ -59,7 +59,7 @@ function defaultRedirectUrl(): string {
 }
 
 export function SsoSettings(): React.ReactElement {
-  const { t } = useTranslation(['settings', 'errors']);
+  const { t } = useTranslation(['settings', 'errors', 'common']);
   const { status: licenseStatus } = useLicense();
 
   const [providers, setProviders] = useState<Record<ProviderName, ProviderConfig>>(() => ({
@@ -170,7 +170,7 @@ export function SsoSettings(): React.ReactElement {
         )}
 
         {loading ? (
-          <div className="text-sm text-text-muted">{t('common:status.loading', 'Loading…')}</div>
+          <div className="text-sm text-text-muted">{t('common:status.loading')}</div>
         ) : (
           <div className="stack-sm">
             <ProviderCard

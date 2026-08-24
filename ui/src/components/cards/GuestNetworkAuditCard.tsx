@@ -52,26 +52,16 @@ export function GuestNetworkAuditCard(): JSX.Element | null {
 
   return (
     <Card
-      title={t('guestAudit.title', 'Guest Network Audit')}
+      title={t('guestAudit.title')}
       icon={<Shield className={iconTokens.size.md} />}
       status={status}
     >
       <div className="stack-sm">
         {!hasTargets ? (
-          <p className="body-small text-text-muted">
-            {t(
-              'guestAudit.noTargets',
-              'Add sensitive internal IP addresses (EMR, PACS, etc.) in Settings → Security to enable this audit.',
-            )}
-          </p>
+          <p className="body-small text-text-muted">{t('guestAudit.noTargets')}</p>
         ) : (
           <>
-            <p className="body-small text-text-muted">
-              {t(
-                'guestAudit.description',
-                'Probe configured internal hosts to confirm guest-network isolation. Connect to the guest network before running.',
-              )}
-            </p>
+            <p className="body-small text-text-muted">{t('guestAudit.description')}</p>
             <button
               type="button"
               onClick={(): void => {
@@ -86,7 +76,7 @@ export function GuestNetworkAuditCard(): JSX.Element | null {
               )}
             >
               {running
-                ? t('guestAudit.running', 'Running audit...')
+                ? t('guestAudit.running')
                 : t('guestAudit.runButton', `Run audit (${settings.targets.length} targets)`)}
             </button>
 
@@ -109,18 +99,14 @@ export function GuestNetworkAuditCard(): JSX.Element | null {
                 <div className={cn('flex items-center', spacing.gap.compact)}>
                   <AlertTriangle className={cn(iconTokens.size.sm, statusColor.text.error)} />
                   <span className="body-small font-semibold text-status-error">
-                    {t(
-                      'guestAudit.criticalAlert',
-                      'Critical: Guest network isolation is not configured correctly.',
-                    )}
+                    {t('guestAudit.criticalAlert')}
                   </span>
                 </div>
                 <p className="caption text-text-secondary">
-                  {t(
-                    'guestAudit.criticalDetail',
-                    '{{count}} of {{total}} internal hosts are reachable from the guest network.',
-                    { count: report.reachableTargets, total: report.totalTargets },
-                  )}
+                  {t('guestAudit.criticalDetail', {
+                    count: report.reachableTargets,
+                    total: report.totalTargets,
+                  })}
                 </p>
                 <ul className="stack-xs caption">
                   {report.results
@@ -129,9 +115,9 @@ export function GuestNetworkAuditCard(): JSX.Element | null {
                       <li key={r.target.ip}>
                         <strong>{r.target.label || r.target.ip}</strong>
                         {r.target.label ? <> ({r.target.ip})</> : null}
-                        {r.pingResponded ? <> · {t('guestAudit.ping', 'ping')}</> : null}
+                        {r.pingResponded ? <> · {t('guestAudit.ping')}</> : null}
                         {r.openPorts.length > 0
-                          ? ` · ${t('guestAudit.openPorts', 'open ports')}: ${r.openPorts.join(', ')}`
+                          ? ` · ${t('guestAudit.openPorts')}: ${r.openPorts.join(', ')}`
                           : null}
                       </li>
                     ))}
@@ -151,11 +137,7 @@ export function GuestNetworkAuditCard(): JSX.Element | null {
                 <div className={cn('flex items-center', spacing.gap.compact)}>
                   <CheckCircle className={cn(iconTokens.size.sm, statusColor.text.success)} />
                   <span className="body-small font-medium text-status-success">
-                    {t(
-                      'guestAudit.passed',
-                      'Isolation verified - none of the {{total}} internal hosts are reachable.',
-                      { total: report.totalTargets },
-                    )}
+                    {t('guestAudit.passed', { total: report.totalTargets })}
                   </span>
                 </div>
               </div>

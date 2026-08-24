@@ -139,7 +139,8 @@
     "tableLastSeen": "Last Seen",
     "tableActions": "Actions",
     "viewAllDevices": "View All Devices",
-    "snmpInfo": "SNMP Details"
+    "snmpInfo": "SNMP Details",
+    "scanningPhase": "Scanning — {{phase}}"
   },
   "pipeline": {
     "phaseProgress": "Phase {{current}} of {{total}}",

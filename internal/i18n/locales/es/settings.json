@@ -498,13 +498,10 @@
     "title": "Usuarios",
     "description": "Administre cuentas de usuario locales e identidades vinculadas por SSO.",
     "addUser": "Agregar usuario",
-    "editUser": "Editar usuario",
     "deleteUser": "Eliminar usuario",
-    "resetPassword": "Restablecer contraseña",
     "currentUser": "(tú)",
     "columns": {
       "username": "Nombre de usuario",
-      "email": "Correo",
       "role": "Rol",
       "lastLogin": "Último acceso",
       "status": "Estado",
@@ -527,7 +524,6 @@
       "github": "GitHub"
     },
     "confirmDelete": "¿Eliminar al usuario {{username}}?",
-    "confirmDeletePrompt": "Esto revocará todas las sesiones y los tokens de API de {{username}}. No se puede deshacer.",
-    "neverLoggedIn": "Nunca"
+    "confirmDeletePrompt": "Esto revocará todas las sesiones y los tokens de API de {{username}}. No se puede deshacer."
   }
 }

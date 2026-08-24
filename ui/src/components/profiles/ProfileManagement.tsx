@@ -166,11 +166,9 @@ export function ProfileManagement({ onClose }: ProfileManagementProps): React.Re
           >
             <div>
               <h2 id="profile-modal-title" className="heading-2">
-                {t('profile.management', 'Profile Management')}
+                {t('profile.management')}
               </h2>
-              <p className="body-small text-text-muted mt-tight">
-                {t('profile.managementDesc', 'Create and manage client-specific configurations')}
-              </p>
+              <p className="body-small text-text-muted mt-tight">{t('profile.managementDesc')}</p>
             </div>
             <button
               type="button"
@@ -182,7 +180,7 @@ export function ProfileManagement({ onClose }: ProfileManagementProps): React.Re
                 radius.md,
                 'hover:bg-surface-hover active:bg-surface-hover text-text-muted touch-manipulation focus:outline-none focus:ring-2 focus:ring-brand-primary',
               )}
-              aria-label={t('common.close', 'Close')}
+              aria-label={t('common.close')}
             >
               <svg
                 className={iconTokens.size.lg}
@@ -233,7 +231,7 @@ export function ProfileManagement({ onClose }: ProfileManagementProps): React.Re
                     d="M12 4v16m8-8H4"
                   />
                 </svg>
-                {t('profile.create', 'Create Profile')}
+                {t('profile.create')}
               </button>
             </WriteGate>
             <button
@@ -245,7 +243,7 @@ export function ProfileManagement({ onClose }: ProfileManagementProps): React.Re
                 radius.md,
                 'border border-surface-border bg-surface-raised hover:bg-surface-hover text-text-primary body-small font-medium flex items-center gap-compact',
               )}
-              title={t('profile.export', 'Export All')}
+              title={t('profile.export')}
             >
               <svg
                 className="w-4 h-4"
@@ -261,7 +259,7 @@ export function ProfileManagement({ onClose }: ProfileManagementProps): React.Re
                   d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"
                 />
               </svg>
-              {t('profile.export', 'Export')}
+              {t('profile.export')}
             </button>
 
             {/* Search bar */}
@@ -282,7 +280,7 @@ export function ProfileManagement({ onClose }: ProfileManagementProps): React.Re
               </svg>
               <input
                 type="text"
-                placeholder={t('profile.searchPlaceholder', 'Search profiles...')}
+                placeholder={t('profile.searchPlaceholder')}
                 value={searchQuery}
                 onChange={(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>): void =>
                   setSearchQuery(e.target.value)
@@ -316,9 +314,7 @@ export function ProfileManagement({ onClose }: ProfileManagementProps): React.Re
             {isLoading && profiles.length === 0 ? (
               <div className="text-center py-centered">
                 <div className="inline-block animate-spin rounded-full h-6 w-6 border-b-2 border-brand-primary" />
-                <p className="mt-heading body-small text-text-muted">
-                  {t('common.loading', 'Loading...')}
-                </p>
+                <p className="mt-heading body-small text-text-muted">{t('common.loading')}</p>
               </div>
             ) : null}
 
@@ -340,14 +336,10 @@ export function ProfileManagement({ onClose }: ProfileManagementProps): React.Re
                   />
                 </svg>
                 <h3 className="body font-medium text-text-primary mb-2">
-                  {searchQuery
-                    ? t('profile.noResults', 'No profiles found')
-                    : t('profile.noProfiles', 'No profiles yet')}
+                  {searchQuery ? t('profile.noResults') : t('profile.noProfiles')}
                 </h3>
                 <p className="body-small text-text-muted mb-section">
-                  {searchQuery
-                    ? t('profile.noResultsDesc', 'Try adjusting your search criteria')
-                    : t('profile.noProfilesDesc', 'Create your first profile to get started')}
+                  {searchQuery ? t('profile.noResultsDesc') : t('profile.noProfilesDesc')}
                 </p>
                 {searchQuery ? null : (
                   <WriteGate>
@@ -361,7 +353,7 @@ export function ProfileManagement({ onClose }: ProfileManagementProps): React.Re
                         'bg-brand-primary hover:bg-brand-accent text-on-brand body-small font-medium',
                       )}
                     >
-                      {t('profile.createFirst', 'Create Your First Profile')}
+                      {t('profile.createFirst')}
                     </button>
                   </WriteGate>
                 )}
@@ -452,12 +444,12 @@ function ProfileCard({
               <h3 className="body-small font-medium text-text-primary truncate">{profile.name}</h3>
               {profile.isDefault ? (
                 <span className="caption px-1.5 py-0.5 rounded bg-brand-primary/10 text-brand-primary font-medium">
-                  {t('profile.default', 'Default')}
+                  {t('profile.default')}
                 </span>
               ) : null}
               {isActive ? (
                 <span className="caption px-1.5 py-0.5 rounded bg-status-success/10 text-status-success font-medium">
-                  {t('profile.active', 'Active')}
+                  {t('profile.active')}
                 </span>
               ) : null}
             </div>
@@ -469,7 +461,7 @@ function ProfileCard({
 
         {/* Updated date */}
         <p className="caption text-text-muted mb-heading">
-          {t('profile.updated', 'Updated')} {new Date(profile.updatedAt).toLocaleDateString()}
+          {t('profile.updated')} {new Date(profile.updatedAt).toLocaleDateString()}
         </p>
 
         {/* Action buttons - hidden for viewers (#1226). */}
@@ -484,7 +476,7 @@ function ProfileCard({
                 radius.md,
                 'border border-surface-border bg-surface-base hover:bg-surface-hover text-text-primary caption font-medium flex items-center gap-1.5',
               )}
-              title={t('common.edit', 'Edit')}
+              title={t('common.edit')}
             >
               <svg
                 className="w-3.5 h-3.5"
@@ -500,7 +492,7 @@ function ProfileCard({
                   d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
                 />
               </svg>
-              {t('common.edit', 'Edit')}
+              {t('common.edit')}
             </button>
 
             {/* Clone/Duplicate button */}
@@ -512,7 +504,7 @@ function ProfileCard({
                 radius.md,
                 'border border-surface-border bg-surface-base hover:bg-surface-hover text-text-primary caption font-medium flex items-center gap-1.5',
               )}
-              title={t('common.clone', 'Clone')}
+              title={t('common.clone')}
             >
               <svg
                 className="w-3.5 h-3.5"
@@ -528,7 +520,7 @@ function ProfileCard({
                   d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"
                 />
               </svg>
-              {t('common.clone', 'Clone')}
+              {t('common.clone')}
             </button>
 
             {/* Delete button - only if not default and not active */}
@@ -541,7 +533,7 @@ function ProfileCard({
                   radius.md,
                   'border border-status-error/30 bg-status-error/5 hover:bg-status-error/10 text-status-error caption font-medium flex items-center gap-1.5',
                 )}
-                title={t('common.delete', 'Delete')}
+                title={t('common.delete')}
               >
                 <svg
                   className="w-3.5 h-3.5"
@@ -557,7 +549,7 @@ function ProfileCard({
                     d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
                   />
                 </svg>
-                {t('common.delete', 'Delete')}
+                {t('common.delete')}
               </button>
             )}
 
@@ -571,7 +563,7 @@ function ProfileCard({
                   radius.md,
                   'bg-brand-primary hover:bg-brand-accent text-on-brand caption font-medium flex items-center gap-1.5 ml-auto',
                 )}
-                title={t('profile.activate', 'Activate')}
+                title={t('profile.activate')}
               >
                 <svg
                   className="w-3.5 h-3.5"
@@ -587,7 +579,7 @@ function ProfileCard({
                     d="M5 13l4 4L19 7"
                   />
                 </svg>
-                {t('profile.activate', 'Activate')}
+                {t('profile.activate')}
               </button>
             )}
           </div>
@@ -621,15 +613,9 @@ function DeleteConfirmModal({
     <div className={cn(modal.overlay, 'z-60')}>
       <div className={modal.backdrop} onClick={onCancel} aria-hidden="true" />
       <div className={cn('relative', modal.content, modal.size.sm, modal.padding.md)}>
-        <h3 className="heading-2 text-text-primary mb-2">
-          {t('profile.deleteConfirm', 'Delete Profile?')}
-        </h3>
+        <h3 className="heading-2 text-text-primary mb-2">{t('profile.deleteConfirm')}</h3>
         <p className="body-small text-text-secondary mb-section">
-          {t(
-            'profile.deleteConfirmDesc',
-            'Are you sure you want to delete "{{name}}"? This action cannot be undone.',
-            { name: profileName },
-          )}
+          {t('profile.deleteConfirmDesc', { name: profileName })}
         </p>
         <div className="flex justify-end gap-default">
           <button
@@ -643,7 +629,7 @@ function DeleteConfirmModal({
               'border border-surface-border bg-surface-base hover:bg-surface-hover text-text-primary body-small font-medium disabled:opacity-50',
             )}
           >
-            {t('common.cancel', 'Cancel')}
+            {t('common.cancel')}
           </button>
           <button
             type="button"
@@ -656,7 +642,7 @@ function DeleteConfirmModal({
               'bg-status-error hover:bg-status-error/90 text-text-inverse body-small font-medium disabled:opacity-50',
             )}
           >
-            {isLoading ? t('common.deleting', 'Deleting...') : t('common.delete', 'Delete')}
+            {isLoading ? t('common.deleting') : t('common.delete')}
           </button>
         </div>
       </div>

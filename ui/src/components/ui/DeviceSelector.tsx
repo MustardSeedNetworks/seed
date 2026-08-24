@@ -180,37 +180,37 @@ function DeviceSelectorComponent({
     if (!searchTerm.trim()) {
       return [
         {
-          label: t('device.routers', 'Routers'),
+          label: t('device.routers'),
           icon: Router,
           devices: groupedDevices.routers,
         },
         {
-          label: t('device.switches', 'Switches'),
+          label: t('device.switches'),
           icon: Router,
           devices: groupedDevices.switches,
         },
         {
-          label: t('device.servers', 'Servers'),
+          label: t('device.servers'),
           icon: Server,
           devices: groupedDevices.servers,
         },
         {
-          label: t('device.workstations', 'Workstations'),
+          label: t('device.workstations'),
           icon: Monitor,
           devices: groupedDevices.workstations,
         },
         {
-          label: t('device.printers', 'Printers'),
+          label: t('device.printers'),
           icon: Printer,
           devices: groupedDevices.printers,
         },
         {
-          label: t('device.phones', 'Phones'),
+          label: t('device.phones'),
           icon: Smartphone,
           devices: groupedDevices.phones,
         },
         {
-          label: t('device.other', 'Other'),
+          label: t('device.other'),
           icon: HardDrive,
           devices: groupedDevices.other,
         },
@@ -229,7 +229,7 @@ function DeviceSelectorComponent({
     if (filtered.length > 0) {
       return [
         {
-          label: t('device.searchResults', 'Search Results'),
+          label: t('device.searchResults'),
           icon: Search,
           devices: filtered,
         },
@@ -295,7 +295,7 @@ function DeviceSelectorComponent({
         )}
         aria-haspopup="listbox"
         aria-expanded={isOpen}
-        aria-label={t('accessibility.selectDevice', 'Select network device')}
+        aria-label={t('accessibility.selectDevice')}
       >
         {/* Device icon or search icon */}
         {getDeviceButtonIcon()}
@@ -338,7 +338,7 @@ function DeviceSelectorComponent({
             'border border-surface-border bg-surface-raised shadow-lg z-50 overflow-hidden',
           )}
           role="listbox"
-          aria-label={t('accessibility.deviceList', 'Available devices')}
+          aria-label={t('accessibility.deviceList')}
         >
           {/* Search box */}
           {!manualEntry && (
@@ -357,7 +357,7 @@ function DeviceSelectorComponent({
                   onChange={(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>): void =>
                     setSearchTerm(e.target.value)
                   }
-                  placeholder={t('device.search', 'Search by IP, name, or vendor')}
+                  placeholder={t('device.search')}
                   className={cn(
                     'w-full pl-8 pr-3 py-compact-md',
                     'body-small text-text-primary placeholder-text-muted',
@@ -374,7 +374,7 @@ function DeviceSelectorComponent({
           {manualEntry ? (
             <div className={cn(spacing.pad.sm, 'bg-surface-base border-b border-surface-border')}>
               <div className="caption font-semibold text-text-muted uppercase tracking-wide mb-2">
-                {t('device.manualEntry', 'Manual IP Entry')}
+                {t('device.manualEntry')}
               </div>
               <input
                 ref={manualInputRef}
@@ -406,7 +406,7 @@ function DeviceSelectorComponent({
                     'hover:bg-brand-primary/90 focus:outline-none focus:ring-2 focus:ring-brand-primary',
                   )}
                 >
-                  {t('device.select', 'Select')}
+                  {t('device.select')}
                 </button>
                 <button
                   type="button"
@@ -419,7 +419,7 @@ function DeviceSelectorComponent({
                     'hover:bg-surface-hover focus:outline-none focus:ring-2 focus:ring-brand-primary',
                   )}
                 >
-                  {t('common.cancel', 'Cancel')}
+                  {t('common.cancel')}
                 </button>
               </div>
             </div>
@@ -437,9 +437,7 @@ function DeviceSelectorComponent({
               {!error && filteredGroups.length === 0 && !isLoading ? (
                 <div className={cn(spacing.pad.default, 'text-center')}>
                   <span className="caption text-text-muted">
-                    {searchTerm
-                      ? t('device.noResults', 'No devices found')
-                      : t('device.noDevices', 'No devices discovered')}
+                    {searchTerm ? t('device.noResults') : t('device.noDevices')}
                   </span>
                 </div>
               ) : null}
@@ -525,9 +523,7 @@ function DeviceSelectorComponent({
                 )}
               >
                 <Edit className={iconTokens.size.sm} />
-                <span className="body-small font-medium">
-                  {t('device.manualIpEntry', 'Manual IP Entry')}
-                </span>
+                <span className="body-small font-medium">{t('device.manualIpEntry')}</span>
               </button>
             </div>
           )}

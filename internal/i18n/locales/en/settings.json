@@ -498,13 +498,10 @@
     "title": "Users",
     "description": "Manage local user accounts and SSO-linked identities.",
     "addUser": "Add user",
-    "editUser": "Edit user",
     "deleteUser": "Delete user",
-    "resetPassword": "Reset password",
     "currentUser": "(you)",
     "columns": {
       "username": "Username",
-      "email": "Email",
       "role": "Role",
       "lastLogin": "Last login",
       "status": "Status",
@@ -527,7 +524,6 @@
       "github": "GitHub"
     },
     "confirmDelete": "Delete user {{username}}?",
-    "confirmDeletePrompt": "This will revoke all of {{username}}'s sessions and API tokens. Cannot be undone.",
-    "neverLoggedIn": "Never"
+    "confirmDeletePrompt": "This will revoke all of {{username}}'s sessions and API tokens. Cannot be undone."
   }
 }

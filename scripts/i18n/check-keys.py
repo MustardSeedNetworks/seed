@@ -72,6 +72,34 @@ def normalize_plural(key: str) -> str:
     return key
 
 
+GO_T_CALL = re.compile(r"""\.T\(\s*"((?:errors|[a-z][\w]*)\.[\w.]+)"\s*[,)]""")
+
+
+def extract_go_keys() -> set[tuple[str, str]]:
+    """Return {(namespace, key)} for every localizer.T("ns.key") in Go source.
+
+    internal/i18n/locales is embedded by the Go backend as well as bundled by
+    the UI, so scanning only ui/src reports every backend-only string as an
+    unused key. seed alone has 207 localizer.T call sites; errors.settings.conflict
+    is reported unused while handlers_settings.go depends on it.
+
+    Go addresses keys as "namespace.rest", flattened, rather than "ns:rest".
+    """
+    hits: set[tuple[str, str]] = set()
+    for path in ROOT.rglob("*.go"):
+        if "/vendor/" in str(path):
+            continue
+        try:
+            text = path.read_text()
+        except (UnicodeDecodeError, OSError):
+            continue
+        for m in GO_T_CALL.finditer(text):
+            ns, _, rest = m.group(1).partition(".")
+            if rest:
+                hits.add((ns, rest))
+    return hits
+
+
 def extract_t_calls() -> set[tuple[str, str, int, str]]:
     """Walk ui/src/**/*.{ts,tsx} and yield (file, line, key) tuples for
     every t('…') call. Returns a set of (namespace, key, line, file).
@@ -86,15 +114,19 @@ def extract_t_calls() -> set[tuple[str, str, int, str]]:
     #   const { t } = useTranslation('common');           → alias 't' -> 'common'
     #   const { t: tDevices } = useTranslation('devices'); → 'tDevices' -> 'devices'
     USE_TRANSLATION = re.compile(
-        r"""const\s*\{\s*t(?:\s*:\s*([A-Za-z]+))?\s*[,}].*?useTranslation\s*\(\s*['"]([a-z]+)['"]""",
+        r"""const\s*\{\s*t(?:\s*:\s*([A-Za-z]+))?\s*[,}]"""
+        r"""(?:(?!useTranslation).)*?useTranslation\s*\(\s*(\[[^\]]*\]|['"][a-z]+['"])""",
         re.DOTALL,
     )
+    NS_LITERAL = re.compile(r"""['"]([a-z]+)['"]""")
     # Tighter T_CALL that captures the alias function name (group 1)
     # plus the literal key (group 2).
     T_CALL_LOCAL = re.compile(
         r"""\b(t(?:[A-Z][A-Za-z]*)?)\s*\(\s*['"`]([a-zA-Z][\w-]*[.:][\w.:-]+)['"`]""",
         re.MULTILINE,
     )
+
+    all_namespaces = set(load_locale_keys().keys())
 
     hits: set[tuple[str, str, int, str]] = set()
     for path in UI_SRC.rglob("*.ts*"):
@@ -116,12 +148,28 @@ def extract_t_calls() -> set[tuple[str, str, int, str]]:
         alias_to_namespaces: dict[str, set[str]] = {}
         for m in USE_TRANSLATION.finditer(text):
             alias = m.group(1) or "t"
-            ns = m.group(2)
-            alias_to_namespaces.setdefault(alias, set()).add(ns)
+            # i18next treats the first array entry as the default namespace,
+            # but a bare key may resolve against any of them, and the lookup
+            # below already tries every candidate. The array form used to
+            # match nothing at all, so every bare key in such a file fell
+            # through to the global default namespace.
+            for ns in NS_LITERAL.findall(m.group(2)):
+                alias_to_namespaces.setdefault(alias, set()).add(ns)
         if "t" not in alias_to_namespaces:
-            # Default: bare `t(` outside any useTranslation call falls back
-            # to common, mirroring i18next's defaultNamespace.
-            alias_to_namespaces["t"] = {"common"}
+            if "useTranslation" in text:
+                # The file binds a namespace somewhere this regex did not
+                # attribute to the bare alias; common is i18next's default.
+                alias_to_namespaces["t"] = {"common"}
+            else:
+                # No useTranslation in the file at all: `t` arrived as a prop
+                # or a parameter, and its namespace is genuinely unknowable
+                # without following the caller. Asserting "common" here is how
+                # PathDiscoveryTimeline's keys were reported missing from
+                # common.json while sitting in cards.json. Verify the key
+                # exists *somewhere* instead of pinning a namespace we cannot
+                # know — that still catches typos and deletions, and invents
+                # no false positives.
+                alias_to_namespaces["t"] = set(all_namespaces)
 
         rel = path.relative_to(ROOT)
 
@@ -219,10 +267,14 @@ def main() -> int:
 
     all_prefixes = tuple(BUILTIN_DYNAMIC_PREFIXES + repo_prefixes)
 
+    go_keys = extract_go_keys()
+
     unused: list[tuple[str, str]] = []
     for ns, keys in locale.items():
         for k in keys:
             if k in used_keys.get(ns, set()):
+                continue
+            if (ns, k) in go_keys:
                 continue
             # Match either `key.path` or `<namespace>:key.path`
             qualified = f"{ns}:{k}"
@@ -231,16 +283,13 @@ def main() -> int:
             unused.append((ns, k))
 
     # Report.
-    ratchet = "--ratchet" in sys.argv
     code = 0
     if missing:
-        level = "warning" if ratchet else "error"
-        print(f"::{level}::{len(missing)} t() call(s) reference keys missing from EN locale:")
+        print(f"::error::{len(missing)} t() call(s) reference keys missing from EN locale:")
         for ns, key, line, file in sorted(missing)[:30]:
             print(f"  {file}:{line}: t('{ns}:{key}') — not in {ns}.json")
         if len(missing) > 30:
             print(f"  … and {len(missing) - 30} more")
-        if not ratchet:
             code = 1
     else:
         print("✓ every t() call has a matching EN locale key")
@@ -252,15 +301,11 @@ def main() -> int:
         # PR time. To allow a genuinely dynamic-lookup key that the
         # static analyzer can't see, add a prefix entry to
         # dynamic-prefixes.txt with a one-line WHY comment.
-        # --ratchet downgrades to warn for callers that want to defer
-        # cleanup; the validator passes --ratchet through.
-        level = "warning" if ratchet else "error"
-        print(f"::{level}::{len(unused)} EN locale key(s) not referenced by any t() call:")
+        print(f"::error::{len(unused)} EN locale key(s) not referenced by any t() call:")
         for ns, key in sorted(unused)[:30]:
             print(f"  {ns}.json: {key}")
         if len(unused) > 30:
             print(f"  … and {len(unused) - 30} more")
-        if not ratchet:
             code = 1
     else:
         print("✓ every EN locale key is referenced by at least one t() call")

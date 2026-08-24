@@ -111,7 +111,7 @@ function ProfileSelectorComponent({
     if (activeProfile) {
       return activeProfile.name;
     }
-    return t('profile.none', 'No Profile');
+    return t('profile.none');
   };
 
   // Profile icon
@@ -135,7 +135,7 @@ function ProfileSelectorComponent({
   // Default indicator
   const DEFAULT_BADGE = (): React.JSX.Element => (
     <span className="caption px-1.5 py-0.5 rounded bg-brand-primary/10 text-brand-primary font-medium">
-      {t('profile.default', 'Default')}
+      {t('profile.default')}
     </span>
   );
 
@@ -159,14 +159,14 @@ function ProfileSelectorComponent({
         )}
         aria-haspopup="listbox"
         aria-expanded={isOpen}
-        aria-label={t('accessibility.selectProfile', 'Select profile')}
+        aria-label={t('accessibility.selectProfile')}
       >
         {/* Profile icon */}
         <PROFILE_ICON />
 
         {/* Current profile name */}
         <span className="body-small font-medium text-text-primary truncate max-w-24 sm:max-w-32">
-          {loading ? t('profile.loading', 'Loading...') : getProfileDisplayName()}
+          {loading ? t('profile.loading') : getProfileDisplayName()}
         </span>
 
         {/* Loading/switching indicator */}
@@ -219,14 +219,14 @@ function ProfileSelectorComponent({
             'border border-surface-border bg-surface-raised shadow-lg z-50 overflow-hidden',
           )}
           role="listbox"
-          aria-label={t('accessibility.profileList', 'Available profiles')}
+          aria-label={t('accessibility.profileList')}
         >
           {/* Profiles section */}
           {profiles.length > 0 && (
             <div>
               <div className={cn(spacing.pad.sm, 'bg-surface-base border-b border-surface-border')}>
                 <span className="caption font-semibold text-text-muted uppercase tracking-wide">
-                  {t('profile.profiles', 'Profiles')}
+                  {t('profile.profiles')}
                 </span>
               </div>
               <div className="max-h-60 overflow-y-auto">
@@ -291,9 +291,7 @@ function ProfileSelectorComponent({
           {/* Empty state */}
           {profiles.length === 0 ? (
             <div className={cn(spacing.pad.default, 'text-center')}>
-              <span className="caption text-text-muted">
-                {t('profile.noProfiles', 'No profiles found')}
-              </span>
+              <span className="caption text-text-muted">{t('profile.noProfiles')}</span>
             </div>
           ) : null}
 
@@ -330,9 +328,7 @@ function ProfileSelectorComponent({
                   d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
                 />
               </svg>
-              <span className="body-small font-medium">
-                {t('profile.manage', 'Manage Profiles')}
-              </span>
+              <span className="body-small font-medium">{t('profile.manage')}</span>
             </button>
           </div>
         </div>
