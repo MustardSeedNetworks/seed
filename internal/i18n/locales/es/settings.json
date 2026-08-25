@@ -531,7 +531,6 @@
     "none": "No hay usuarios."
   },
   "apiTokens": {
-    "currentTier": "Nivel actual:",
     "created": "Token creado — cópielo ahora. No se mostrará de nuevo.",
     "tokenName": "Nombre del token",
     "createToken": "Crear token",
