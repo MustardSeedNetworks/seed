@@ -5,6 +5,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.213.27](https://github.com/MustardSeedNetworks/seed/compare/v0.213.26...v0.213.27) (2026-08-25)
+
+
+### Bug Fixes
+
+* **i18n:** localize the last 48 hardcoded strings and make the check block ([#2079](https://github.com/MustardSeedNetworks/seed/issues/2079)) ([a3b1188](https://github.com/MustardSeedNetworks/seed/commit/a3b11889452de849a367b2b00407dba9981a3655))
+* **vlan:** stop reporting success for VLAN work macOS never performs ([#2078](https://github.com/MustardSeedNetworks/seed/issues/2078)) ([620b43b](https://github.com/MustardSeedNetworks/seed/commit/620b43b25672e188163154181a02e815d1039f52))
+* **wifi:** launch the helper through LaunchServices, not by path ([#2081](https://github.com/MustardSeedNetworks/seed/issues/2081)) ([90bdc37](https://github.com/MustardSeedNetworks/seed/commit/90bdc37ac9b3fb3a3fd096570b8c22e6d8953047))
+
 ## [0.213.26](https://github.com/MustardSeedNetworks/seed/compare/v0.213.25...v0.213.26) (2026-08-24)
 
 
