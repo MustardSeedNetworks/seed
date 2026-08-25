@@ -28,15 +28,12 @@ import { act, renderHook, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { useAuth } from './useAuth';
 
-// Mock localStorage
-interface MockLocalStorage {
-  getItem: ReturnType<typeof vi.fn>;
-  setItem: ReturnType<typeof vi.fn>;
-  removeItem: ReturnType<typeof vi.fn>;
-  clear: () => void;
-}
-
-const mockLocalStorage: MockLocalStorage = (() => {
+/* Inferred rather than annotated. `ReturnType<typeof vi.fn>` is
+   `Mock<Constructable | Procedure>`, which is not callable with arguments, so
+   the annotation made every `mockLocalStorage.setItem('k', 'v')` below a type
+   error — invisible while test files were outside the typecheck graph (#1946).
+   Inference gives each member its real signature. */
+const mockLocalStorage = (() => {
   let store: Record<string, string> = {};
   return {
     getItem: vi.fn((key: string) => store[key] || null),
@@ -56,9 +53,10 @@ Object.defineProperty(window, 'localStorage', {
   value: mockLocalStorage,
 });
 
-// Mock fetch
-const mockFetch: ReturnType<typeof vi.fn> = vi.fn();
-global.fetch = mockFetch;
+// Mock fetch. The cast belongs on the assignment, not the binding: annotating
+// the binding hides vi.fn()'s mock methods from every call site below.
+const mockFetch = vi.fn();
+global.fetch = mockFetch as unknown as typeof fetch;
 
 describe('useAuth', () => {
   beforeEach(() => {
@@ -139,7 +137,7 @@ describe('useAuth', () => {
       json: () => Promise.resolve({ token: 'access-token', expires: 3600 }),
     });
 
-    let loginResult: boolean;
+    let loginResult = false;
     await act(async () => {
       loginResult = await result.current.login('admin', 'password');
     });
@@ -200,7 +198,7 @@ describe('useAuth', () => {
       status: 401,
     });
 
-    let loginResult: boolean;
+    let loginResult = false;
     await act(async () => {
       loginResult = await result.current.login('admin', 'wrongpassword');
     });
@@ -219,7 +217,7 @@ describe('useAuth', () => {
 
     mockFetch.mockRejectedValueOnce(new Error('Network error'));
 
-    let loginResult: boolean;
+    let loginResult = false;
     await act(async () => {
       loginResult = await result.current.login('admin', 'password');
     });

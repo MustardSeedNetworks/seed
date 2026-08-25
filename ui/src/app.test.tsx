@@ -60,9 +60,10 @@ Object.defineProperty(window, 'localStorage', {
   value: mockLocalStorage,
 });
 
-// Mock fetch
-const mockFetch: typeof fetch = vi.fn();
-global.fetch = mockFetch;
+// Mock fetch. The binding keeps vi.fn()'s mock type — annotating it as
+// `typeof fetch` hides mockImplementation, which the tests use throughout.
+const mockFetch = vi.fn();
+global.fetch = mockFetch as unknown as typeof fetch;
 
 // Mock WebSocket
 class MockWebSocket {
@@ -497,7 +498,7 @@ describe('App', () => {
     });
 
     it('disables login button while loading', async () => {
-      let resolveLogin: (value: unknown) => void;
+      let resolveLogin!: (value: unknown) => void;
       mockFetch.mockImplementation((url: string) => {
         if (url.includes('/api/v1/setup/status')) {
           return Promise.resolve({

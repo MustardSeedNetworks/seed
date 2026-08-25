@@ -9,11 +9,15 @@
 import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it } from 'vitest';
+import { must } from '../../test/must';
 import { HelpDrawer } from './HelpDrawer';
 
 // The pane's first heading is the section title; block headings follow it.
 const heading = (): string =>
-  within(screen.getByTestId('help-drawer-content')).getAllByRole('heading')[0].textContent ?? '';
+  must(
+    within(screen.getByTestId('help-drawer-content')).getAllByRole('heading')[0],
+    'first heading',
+  ).textContent ?? '';
 
 describe('HelpDrawer — section targeting', () => {
   it('opens on the requested section', () => {

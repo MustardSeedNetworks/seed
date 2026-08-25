@@ -139,8 +139,13 @@ export { mockLocalStorage };
 // ============================================================
 // Mock fetch
 // ============================================================
-export const mockFetch: ReturnType<typeof vi.fn> = vi.fn();
-global.fetch = mockFetch;
+/* `vi.fn()` keeps its mock type; the cast is applied at the assignment rather
+   than to the binding, so callers still see `.mockImplementation`. Typing the
+   binding as `typeof fetch` — as this and app.test.tsx both did — hides every
+   mock method, which only went unnoticed because test files were excluded from
+   the typecheck graph (#1946). */
+export const mockFetch = vi.fn();
+global.fetch = mockFetch as unknown as typeof fetch;
 
 /** Mock response type */
 interface MockResponse<T> {
