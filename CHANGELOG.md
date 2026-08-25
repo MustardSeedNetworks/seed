@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.213.28](https://github.com/MustardSeedNetworks/seed/compare/v0.213.27...v0.213.28) (2026-08-25)
+
+
+### Features
+
+* **macos:** sign the daemon and add installer notarization ([#2084](https://github.com/MustardSeedNetworks/seed/issues/2084)) ([932c86e](https://github.com/MustardSeedNetworks/seed/commit/932c86ed0fe59b8a6c79cdee43fe3be60c456d35))
+
 ## [0.213.27](https://github.com/MustardSeedNetworks/seed/compare/v0.213.26...v0.213.27) (2026-08-25)
 
 
