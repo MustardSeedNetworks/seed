@@ -224,7 +224,7 @@ func defaultThresholdsConfig() ThresholdsConfig {
 		},
 		DNS: Threshold{
 			Warning:  thresholdDNSWarningMs * time.Millisecond,
-			Critical: thresholdDHCPTotalWarningMs * time.Millisecond,
+			Critical: thresholdDNSCriticalMs * time.Millisecond,
 		},
 		Ping: Threshold{
 			Warning:  thresholdPingWarningMs * time.Millisecond,
