@@ -20,6 +20,7 @@ vi.mock('./useJobEvents', () => ({
 }));
 
 import { cancelJob, submitJob } from '../lib/jobsClient';
+import { must } from '../test/must';
 
 const queuedJob: JobResponse = { id: 'bt-1', kind: 'bluetooth-scan', state: 'queued', progress: 0 };
 
@@ -88,7 +89,7 @@ describe('useBluetoothScan', () => {
     });
 
     expect(submitJob).toHaveBeenCalledTimes(1);
-    const [req] = vi.mocked(submitJob).mock.calls[0];
+    const [req] = must(vi.mocked(submitJob).mock.calls[0], 'submitJob call');
     expect(req.kind).toBe('bluetooth-scan');
     expect(req.params).toBeUndefined();
     expect(result.current.running).toBe(true);
@@ -110,8 +111,8 @@ describe('useBluetoothScan', () => {
     expect(result.current.status.percentComplete).toBe(100);
     expect(result.current.running).toBe(false);
     expect(result.current.devices).toHaveLength(1);
-    expect(result.current.devices[0].companyName).toBe('Google');
-    expect(result.current.devices[0].serviceNames).toEqual(['Battery']);
+    expect(must(result.current.devices[0], 'device').companyName).toBe('Google');
+    expect(must(result.current.devices[0], 'device').serviceNames).toEqual(['Battery']);
     expect(result.current.stats?.bleDevices).toBe(1);
   });
 
@@ -131,7 +132,7 @@ describe('useBluetoothScan', () => {
 
     expect(result.current.status.state).toBe('complete');
     expect(result.current.devices).toHaveLength(1);
-    expect(result.current.devices[0].companyName).toBe('Google');
+    expect(must(result.current.devices[0], 'device').companyName).toBe('Google');
   });
 
   it('shows 0% while running (scan reports no intermediate progress)', async () => {

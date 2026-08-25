@@ -13,6 +13,7 @@
 import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { must } from '../test/must';
 import type {
   TopologyInterface,
   TopologyLink,
@@ -221,7 +222,7 @@ describe('TopologyPage — list and selection', () => {
   });
 
   it('counts nodes with correct pluralisation', () => {
-    state.nodes = [nodes[0]];
+    state.nodes = [must(nodes[0], 'first node')];
     render(<TopologyPage />);
 
     expect(screen.getByText('1 node')).toBeTruthy();

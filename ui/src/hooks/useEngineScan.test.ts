@@ -19,6 +19,7 @@ vi.mock('./useJobEvents', () => ({
 }));
 
 import { cancelJob, submitJob } from '../lib/jobsClient';
+import { must } from '../test/must';
 
 const queuedJob: JobResponse = { id: 'job-1', kind: 'engine-scan', state: 'queued', progress: 0 };
 
@@ -43,7 +44,7 @@ describe('useEngineScan', () => {
     });
 
     expect(submitJob).toHaveBeenCalledTimes(1);
-    const [req] = vi.mocked(submitJob).mock.calls[0];
+    const [req] = must(vi.mocked(submitJob).mock.calls[0], 'submitJob call');
     expect(req.kind).toBe('engine-scan');
     const params = req.params as Record<string, unknown>;
     expect(params.includeNameRes).toBe(true);

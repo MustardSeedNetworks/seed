@@ -1,5 +1,6 @@
 import { act, renderHook } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { must } from '../test/must';
 import type { JobResponse } from '../types/generated/job-response';
 import { useJobEvents } from './useJobEvents';
 
@@ -73,14 +74,16 @@ describe('useJobEvents', () => {
     renderHook(() => useJobEvents(vi.fn()));
 
     expect(FakeEventSource.instances).toHaveLength(1);
-    expect(FakeEventSource.instances[0].url).toContain('/api/v1/jobs/events');
+    expect(must(FakeEventSource.instances[0], 'EventSource').url).toContain('/api/v1/jobs/events');
   });
 
   it('invokes onJob with the parsed job for each `job` frame', () => {
     const onJob = vi.fn();
     renderHook(() => useJobEvents(onJob));
 
-    FakeEventSource.instances[0].emit('job', { data: JSON.stringify(runningJob) });
+    must(FakeEventSource.instances[0], 'EventSource').emit('job', {
+      data: JSON.stringify(runningJob),
+    });
 
     expect(onJob).toHaveBeenCalledWith(runningJob);
   });
@@ -89,7 +92,7 @@ describe('useJobEvents', () => {
     const { result } = renderHook(() => useJobEvents(vi.fn()));
 
     expect(result.current.status).toBe('connecting');
-    act(() => FakeEventSource.instances[0].emit('open', {}));
+    act(() => must(FakeEventSource.instances[0], 'EventSource').emit('open', {}));
     expect(result.current.status).toBe('open');
   });
 
@@ -97,13 +100,15 @@ describe('useJobEvents', () => {
     const onJob = vi.fn();
     renderHook(() => useJobEvents(onJob));
 
-    expect(() => FakeEventSource.instances[0].emit('job', { data: 'not json' })).not.toThrow();
+    expect(() =>
+      must(FakeEventSource.instances[0], 'EventSource').emit('job', { data: 'not json' }),
+    ).not.toThrow();
     expect(onJob).not.toHaveBeenCalled();
   });
 
   it('closes the stream on unmount', () => {
     const { unmount } = renderHook(() => useJobEvents(vi.fn()));
-    const source = FakeEventSource.instances[0];
+    const source = must(FakeEventSource.instances[0], 'EventSource');
 
     unmount();
 

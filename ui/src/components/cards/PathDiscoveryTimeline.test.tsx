@@ -6,12 +6,19 @@
  */
 
 import { fireEvent, render, within } from '@testing-library/react';
+import type { ComponentProps } from 'react';
 import { describe, expect, it, vi } from 'vitest';
 
 import type { PathResponse } from '../../types';
 import { PATH_TIMELINE } from './PathDiscoveryTimeline';
 
-const t = (_key: string, fallback: string): string => fallback;
+/* The component's `t` prop is `TFunction<'cards'>`; this stand-in has the
+   two-argument shape the tests need and none of the rest, so it is cast at the
+   definition rather than at each of the four call sites. That it never
+   typechecked before is #1946. */
+const t = ((_key: string, fallback: string): string => fallback) as unknown as ComponentProps<
+  typeof PATH_TIMELINE
+>['t'];
 
 function makeResult(overrides: Partial<PathResponse> = {}): PathResponse {
   return {

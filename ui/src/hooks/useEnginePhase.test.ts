@@ -1,5 +1,6 @@
 import { act, renderHook } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { must } from '../test/must';
 import { useEnginePhase } from './useEnginePhase';
 
 // Controllable EventSource fake (same shape as the useJobEvents suite).
@@ -52,40 +53,63 @@ describe('useEnginePhase', () => {
   it('opens the engine events stream', () => {
     renderHook(() => useEnginePhase());
     expect(FakeEventSource.instances).toHaveLength(1);
-    expect(FakeEventSource.instances[0].url).toContain('/api/v1/discovery/engine/events');
+    expect(must(FakeEventSource.instances[0], 'EventSource').url).toContain(
+      '/api/v1/discovery/engine/events',
+    );
   });
 
   it('tracks the latest scan.progress phase', () => {
     const { result } = renderHook(() => useEnginePhase());
     expect(result.current.phase).toBe('');
 
-    act(() => FakeEventSource.instances[0].emit('scan.progress', progressFrame('discovery', 0.2)));
+    act(() =>
+      must(FakeEventSource.instances[0], 'EventSource').emit(
+        'scan.progress',
+        progressFrame('discovery', 0.2),
+      ),
+    );
     expect(result.current.phase).toBe('discovery');
 
-    act(() => FakeEventSource.instances[0].emit('scan.progress', progressFrame('enrichment', 0.8)));
+    act(() =>
+      must(FakeEventSource.instances[0], 'EventSource').emit(
+        'scan.progress',
+        progressFrame('enrichment', 0.8),
+      ),
+    );
     expect(result.current.phase).toBe('enrichment');
   });
 
   it('resets the phase on scan.started', () => {
     const { result } = renderHook(() => useEnginePhase());
-    act(() => FakeEventSource.instances[0].emit('scan.progress', progressFrame('assessment', 1)));
+    act(() =>
+      must(FakeEventSource.instances[0], 'EventSource').emit(
+        'scan.progress',
+        progressFrame('assessment', 1),
+      ),
+    );
     expect(result.current.phase).toBe('assessment');
 
-    act(() => FakeEventSource.instances[0].emit('scan.started', { data: '{}' }));
+    act(() =>
+      must(FakeEventSource.instances[0], 'EventSource').emit('scan.started', { data: '{}' }),
+    );
     expect(result.current.phase).toBe('');
   });
 
   it('ignores a malformed frame without throwing', () => {
     const { result } = renderHook(() => useEnginePhase());
     expect(() =>
-      act(() => FakeEventSource.instances[0].emit('scan.progress', { data: 'not json' })),
+      act(() =>
+        must(FakeEventSource.instances[0], 'EventSource').emit('scan.progress', {
+          data: 'not json',
+        }),
+      ),
     ).not.toThrow();
     expect(result.current.phase).toBe('');
   });
 
   it('closes the stream on unmount', () => {
     const { unmount } = renderHook(() => useEnginePhase());
-    const source = FakeEventSource.instances[0];
+    const source = must(FakeEventSource.instances[0], 'EventSource');
     unmount();
     expect(source.closed).toBe(true);
   });
