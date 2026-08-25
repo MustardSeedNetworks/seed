@@ -14,9 +14,6 @@
         "request": {
           "type": "integer"
         },
-        "ack": {
-          "type": "integer"
-        },
         "total": {
           "type": "integer"
         }
@@ -27,7 +24,6 @@
         "discover",
         "offer",
         "request",
-        "ack",
         "total"
       ]
     },

@@ -470,9 +470,6 @@ func TestTimingMsZeroValues(t *testing.T) {
 	if ms.Request != 0 {
 		t.Errorf("Request = %d, want 0", ms.Request)
 	}
-	if ms.Ack != 0 {
-		t.Errorf("Ack = %d, want 0", ms.Ack)
-	}
 	if ms.Total != 0 {
 		t.Errorf("Total = %d, want 0", ms.Total)
 	}
@@ -575,26 +572,4 @@ func TestMonitorConcurrentOperations(t *testing.T) {
 	}
 
 	// Verify no panics occurred
-}
-
-// TestSimulateTimingConsistency tests SimulateTiming returns consistent values.
-func TestSimulateTimingConsistency(t *testing.T) {
-	timing1 := dhcp.SimulateTiming()
-	timing2 := dhcp.SimulateTiming()
-
-	if timing1.Discover != timing2.Discover {
-		t.Error("SimulateTiming should return consistent Discover")
-	}
-	if timing1.Offer != timing2.Offer {
-		t.Error("SimulateTiming should return consistent Offer")
-	}
-	if timing1.Request != timing2.Request {
-		t.Error("SimulateTiming should return consistent Request")
-	}
-	if timing1.Total != timing2.Total {
-		t.Error("SimulateTiming should return consistent Total")
-	}
-	if timing1.Complete != timing2.Complete {
-		t.Error("SimulateTiming should return consistent Complete")
-	}
 }

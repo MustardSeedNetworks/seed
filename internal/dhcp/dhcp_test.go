@@ -141,7 +141,6 @@ func TestTimingMsFields(t *testing.T) {
 		Discover: 50,
 		Offer:    20,
 		Request:  15,
-		Ack:      5,
 		Total:    90,
 	}
 
@@ -153,9 +152,6 @@ func TestTimingMsFields(t *testing.T) {
 	}
 	if ms.Request != 15 {
 		t.Errorf("expected Request 15, got %d", ms.Request)
-	}
-	if ms.Ack != 5 {
-		t.Errorf("expected Ack 5, got %d", ms.Ack)
 	}
 	if ms.Total != 90 {
 		t.Errorf("expected Total 90, got %d", ms.Total)
@@ -194,29 +190,6 @@ func TestTransactionFields(t *testing.T) {
 	}
 	if !tx.Complete {
 		t.Error("expected Complete to be true")
-	}
-}
-
-func TestSimulateTiming(t *testing.T) {
-	timing := dhcp.SimulateTiming()
-
-	if timing == nil {
-		t.Fatal("expected non-nil timing")
-	}
-	if !timing.Complete {
-		t.Error("expected Complete to be true")
-	}
-	if timing.Discover != 50*time.Millisecond {
-		t.Errorf("expected Discover 50ms, got %v", timing.Discover)
-	}
-	if timing.Offer != 10*time.Millisecond {
-		t.Errorf("expected Offer 10ms, got %v", timing.Offer)
-	}
-	if timing.Request != 45*time.Millisecond {
-		t.Errorf("expected Request 45ms, got %v", timing.Request)
-	}
-	if timing.Total != 105*time.Millisecond {
-		t.Errorf("expected Total 105ms, got %v", timing.Total)
 	}
 }
 
