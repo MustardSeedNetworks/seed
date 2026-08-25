@@ -166,13 +166,26 @@ const (
 	thresholdDHCPPhaseWarningMs = 200
 
 	// thresholdDNSWarningMs is the warning threshold for DNS resolution.
-	thresholdDNSWarningMs = 100
+	// 100ms is a reasonable bar for a public resolver and a poor one for the
+	// local or corporate resolver most deployments actually use.
+	thresholdDNSWarningMs = 50
+
+	// thresholdDNSCriticalMs is the critical threshold for DNS resolution.
+	// Previously this borrowed thresholdDHCPTotalWarningMs, so DNS's critical
+	// bar was 500ms for no reason other than DHCP's warning bar being 500ms —
+	// and editing the DHCP constant would have moved it.
+	thresholdDNSCriticalMs = 200
 
 	// thresholdPingWarningMs is the warning threshold for ping latency.
-	thresholdPingWarningMs = 50
+	// This measures the *gateway*, one hop away: a wired LAN answers in well
+	// under a millisecond and Wi-Fi in a few, so 50ms was lenient enough to
+	// report a healthy status over a link with real problems.
+	thresholdPingWarningMs = 10
 
 	// thresholdPingCriticalMs is the critical threshold for ping latency.
-	thresholdPingCriticalMs = 200
+	// 50ms to your own gateway is not slow, it is broken — bufferbloat, a
+	// saturated uplink, or a Wi-Fi link that should be re-associated.
+	thresholdPingCriticalMs = 50
 
 	// thresholdCustomPingCriticalMs is the critical threshold for custom ping tests.
 	thresholdCustomPingCriticalMs = 100

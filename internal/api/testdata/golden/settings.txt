@@ -84,7 +84,7 @@ body:
       "warning": 2000
     },
     "customPing": {
-      "good": 50,
+      "good": 10,
       "warning": 100
     },
     "customTcp": {
@@ -92,16 +92,16 @@ body:
       "warning": 500
     },
     "dns": {
-      "good": 100,
-      "warning": 500
-    },
-    "gateway": {
       "good": 50,
       "warning": 200
     },
+    "gateway": {
+      "good": 10,
+      "warning": 50
+    },
     "httpTimings": {
       "dns": {
-        "good": 100,
+        "good": 50,
         "warning": 500
       },
       "tcp": {

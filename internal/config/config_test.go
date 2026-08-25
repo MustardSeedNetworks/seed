@@ -137,9 +137,24 @@ func TestThresholdDefaults(t *testing.T) {
 		t.Errorf("expected DHCP total critical 2s, got %v", cfg.Thresholds.DHCP.Total.Critical)
 	}
 
-	// DNS thresholds
-	if cfg.Thresholds.DNS.Warning != 100*time.Millisecond {
-		t.Errorf("expected DNS warning 100ms, got %v", cfg.Thresholds.DNS.Warning)
+	// DNS thresholds. Critical is asserted because it used to borrow
+	// thresholdDHCPTotalWarningMs, so editing a DHCP constant moved it.
+	if cfg.Thresholds.DNS.Warning != 50*time.Millisecond {
+		t.Errorf("expected DNS warning 50ms, got %v", cfg.Thresholds.DNS.Warning)
+	}
+	if cfg.Thresholds.DNS.Critical != 200*time.Millisecond {
+		t.Errorf("expected DNS critical 200ms, got %v", cfg.Thresholds.DNS.Critical)
+	}
+
+	// Gateway ping thresholds. These had no assertion at all, which is how
+	// defaults lenient enough to call a struggling link "good" survived: the
+	// gateway is one hop away, so 50ms warning / 200ms critical were bars a
+	// genuinely broken link could clear.
+	if cfg.Thresholds.Ping.Warning != 10*time.Millisecond {
+		t.Errorf("expected ping warning 10ms, got %v", cfg.Thresholds.Ping.Warning)
+	}
+	if cfg.Thresholds.Ping.Critical != 50*time.Millisecond {
+		t.Errorf("expected ping critical 50ms, got %v", cfg.Thresholds.Ping.Critical)
 	}
 
 	// WiFi thresholds
