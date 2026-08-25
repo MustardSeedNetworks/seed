@@ -125,6 +125,16 @@ def extract_t_calls() -> set[tuple[str, str, int, str]]:
         r"""\b(t(?:[A-Z][A-Za-z]*)?)\s*\(\s*['"`]([a-zA-Z][\w-]*[.:][\w.:-]+)['"`]""",
         re.MULTILINE,
     )
+    # <Trans i18nKey="…"> references a key exactly as t('…') does, and this
+    # checker only ever scanned t() calls — so a key rendered solely through
+    # <Trans> read as unreferenced. <Trans> is the required form for copy that
+    # wraps an inline component, so the blind spot covered exactly the strings
+    # most likely to be rich text. Covering it here also catches a <Trans>
+    # pointing at a key that does not exist, which nothing checked before.
+    TRANS_I18NKEY = re.compile(
+        r"""\bi18nKey\s*=\s*\{?\s*['"`]([a-zA-Z][\w-]*[.:][\w.:-]+)['"`]""",
+        re.MULTILINE,
+    )
 
     all_namespaces = set(load_locale_keys().keys())
 
@@ -186,6 +196,18 @@ def extract_t_calls() -> set[tuple[str, str, int, str]]:
                 # call as "found" if the key exists in any of them.
                 candidates = alias_to_namespaces.get(alias, {"common"})
                 for ns in candidates:
+                    hits.add((ns, raw, line, str(rel)))
+
+        for m in TRANS_I18NKEY.finditer(text):
+            raw = m.group(1)
+            line = text[: m.start()].count("\n") + 1
+            if ":" in raw:
+                ns, key = raw.split(":", 1)
+                hits.add((ns, key, line, str(rel)))
+            else:
+                # <Trans> has no alias of its own; it resolves against the
+                # namespaces the file binds, same superset the bare `t` uses.
+                for ns in alias_to_namespaces.get("t", {"common"}):
                     hits.add((ns, raw, line, str(rel)))
     return hits
 
@@ -290,7 +312,7 @@ def main() -> int:
             print(f"  {file}:{line}: t('{ns}:{key}') — not in {ns}.json")
         if len(missing) > 30:
             print(f"  … and {len(missing) - 30} more")
-            code = 1
+        code = 1
     else:
         print("✓ every t() call has a matching EN locale key")
 
@@ -306,7 +328,7 @@ def main() -> int:
             print(f"  {ns}.json: {key}")
         if len(unused) > 30:
             print(f"  … and {len(unused) - 30} more")
-            code = 1
+        code = 1
     else:
         print("✓ every EN locale key is referenced by at least one t() call")
 
