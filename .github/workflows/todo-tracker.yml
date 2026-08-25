@@ -44,15 +44,30 @@ jobs:
           # Create output file
           TODOS_FILE=$(mktemp)
 
+          # The marker must sit inside a comment, and `XXX` is not a marker.
+          #
+          # The previous pattern was a bare `TODO\|FIXME\|HACK\|XXX`, which
+          # matched Go's own `context.TODO()` idiom, every `XXXX-XXXX-XXXX-XXXX`
+          # licence-key placeholder, the `XXX-XX-XXXX` SSN format in the
+          # redaction regex, and interface examples like `vethXXX`. Eleven of the
+          # twelve items in the last weekly issue were that: the report asked a
+          # human to triage false positives, weekly, forever.
+          #
+          # Anchoring on a comment opener removes `context.TODO()`, and `\b`
+          # around the word removes the `XXXX…` placeholders. `XXX` is dropped
+          # entirely — as a marker it is rare, and as a placeholder it is
+          # everywhere.
+          MARKER='(//|/\*|^[[:space:]]*\*|#).*\b(TODO|FIXME|HACK)\b'
+
           # Scan Go files
-          grep -rn "TODO\|FIXME\|HACK\|XXX" \
+          grep -rnE "$MARKER" \
             --include="*.go" \
             --exclude-dir=vendor \
             --exclude-dir=.git \
             . >> "$TODOS_FILE" 2>/dev/null || true
 
           # Scan TypeScript/JavaScript files
-          grep -rn "TODO\|FIXME\|HACK\|XXX" \
+          grep -rnE "$MARKER" \
             --include="*.ts" \
             --include="*.tsx" \
             --include="*.js" \
@@ -98,7 +113,7 @@ jobs:
           git diff --name-only HEAD~1 HEAD 2>/dev/null | while read -r file; do
             if [[ "$file" =~ \.(go|ts|tsx|js|jsx)$ ]]; then
               # Check for TODOs in changed lines
-              git diff HEAD~1 HEAD -- "$file" | grep "^+" | grep -i "TODO\|FIXME" && \
+              git diff HEAD~1 HEAD -- "$file" | grep "^+" | grep -E '(//|/\*|^\+[[:space:]]*\*).*\b(TODO|FIXME|HACK)\b' && \
                 echo "::warning file=$file::New TODO found in $file"
             fi
           done || true
@@ -141,3 +156,16 @@ jobs:
             --title "TODO Summary $WEEK: ${{ steps.todos.outputs.count }} items" \
             --body "$BODY" \
             --label "todo,status: needs-triage"
+
+          # Each week's report supersedes the last: it is a fresh snapshot of
+          # the same scan, not a new body of work. Nothing closed them, so they
+          # accumulated one open issue per week — four were open when this was
+          # written, all describing the same TODOs. Close the previous ones now
+          # that this week's is filed.
+          gh issue list --label "todo" --state open --json number,title \
+            --jq '.[] | select(.title | startswith("TODO Summary")) | select(.title | contains("'"$WEEK"'") | not) | .number' \
+          | while read -r stale; do
+              [ -n "$stale" ] || continue
+              gh issue close "$stale" \
+                --comment "Superseded by this week's scan (\`$WEEK\`). Each report is a snapshot of the same codebase scan rather than distinct work, so only the newest is kept open."
+            done
