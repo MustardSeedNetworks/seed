@@ -276,14 +276,16 @@ func TestDHCPTimingInfo(t *testing.T) {
 		Discover: 10,
 		Offer:    20,
 		Request:  15,
-		Ack:      5,
-		Total:    50,
+		Total:    45,
 	}
 
-	if timing.Total != 50 {
-		t.Errorf("expected total 50, got %d", timing.Total)
+	if timing.Total != 45 {
+		t.Errorf("expected total 45, got %d", timing.Total)
 	}
-	if timing.Discover+timing.Offer+timing.Request+timing.Ack != timing.Total {
+	// Three intervals, and they are the whole transaction — the fourth term
+	// this used to add was the phantom Ack, permanently 0, which made the sum
+	// hold for the wrong reason.
+	if timing.Discover+timing.Offer+timing.Request != timing.Total {
 		t.Error("timing phases should sum to total")
 	}
 }

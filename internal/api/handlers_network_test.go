@@ -609,8 +609,7 @@ func TestIPConfigResponseFields(t *testing.T) {
 			Discover: 10,
 			Offer:    20,
 			Request:  30,
-			Ack:      10,
-			Total:    70,
+			Total:    60,
 		},
 	}
 
@@ -636,8 +635,8 @@ func TestIPConfigResponseFields(t *testing.T) {
 	}
 	if resp.Timing == nil {
 		t.Error("Expected Timing to be set")
-	} else if resp.Timing.Total != 70 {
-		t.Errorf("Expected Timing.Total 70, got %d", resp.Timing.Total)
+	} else if resp.Timing.Total != 60 {
+		t.Errorf("Expected Timing.Total 60, got %d", resp.Timing.Total)
 	}
 }
 

@@ -79,18 +79,6 @@ const (
 const (
 	// transactionCleanupInterval is how often to clean up stale transactions.
 	transactionCleanupInterval = 30 * time.Second
-
-	// simulatedDiscoverTime is the simulated DHCP discover duration for testing.
-	simulatedDiscoverTime = 50 * time.Millisecond
-
-	// simulatedOfferTime is the simulated DHCP offer duration for testing.
-	simulatedOfferTime = 10 * time.Millisecond
-
-	// simulatedRequestTime is the simulated DHCP request duration for testing.
-	simulatedRequestTime = 45 * time.Millisecond
-
-	// simulatedTotalTime is the simulated total DHCP transaction time for testing.
-	simulatedTotalTime = 105 * time.Millisecond
 )
 
 // Timing contains timing information for a complete DHCP transaction.
@@ -103,11 +91,14 @@ type Timing struct {
 }
 
 // TimingMs contains timing in milliseconds for JSON serialization.
+// Four DORA packets yield three intervals, and calculateTiming computes
+// exactly those three. There was a fourth field, Ack, that nothing could
+// populate — ToMs never assigned it, so it serialized as 0 on every response
+// and claimed to be a measurement of a phase that does not exist.
 type TimingMs struct {
 	Discover int64 `json:"discover"`
 	Offer    int64 `json:"offer"`
 	Request  int64 `json:"request"`
-	Ack      int64 `json:"ack"`
 	Total    int64 `json:"total"`
 }
 
@@ -509,16 +500,4 @@ func (m *Monitor) calculateTiming(tx *Transaction) {
 
 	// Cleanup old transaction
 	delete(m.transactions, tx.XID)
-}
-
-// SimulateTiming creates simulated timing data for testing.
-// This is useful when packet capture isn't available.
-func SimulateTiming() *Timing {
-	return &Timing{
-		Discover: simulatedDiscoverTime,
-		Offer:    simulatedOfferTime,
-		Request:  simulatedRequestTime,
-		Total:    simulatedTotalTime,
-		Complete: true,
-	}
 }

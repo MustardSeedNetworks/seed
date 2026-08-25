@@ -35,8 +35,7 @@ import { SimpleBaseCard } from './BaseCard';
 export interface DhcpTiming {
   discover: number; // Time for DISCOVER phase (ms)
   offer: number; // Time for OFFER phase (ms)
-  request: number; // Time for REQUEST phase (ms)
-  ack: number; // Time for ACK phase (ms)
+  request: number; // Time from REQUEST to ACK (ms)
   total: number; // Total DHCP negotiation time (ms)
 }
 
@@ -301,7 +300,6 @@ export function NetworkCard({
         getTimingStatus(timing.discover, th.perPhase),
         getTimingStatus(timing.offer, th.perPhase),
         getTimingStatus(timing.request, th.perPhase),
-        getTimingStatus(timing.ack, th.perPhase),
         getTimingStatus(timing.total, th.total),
       ];
 

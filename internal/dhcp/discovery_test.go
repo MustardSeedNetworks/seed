@@ -536,32 +536,6 @@ func TestFindDHCPMessageTypeComprehensive(t *testing.T) {
 	}
 }
 
-// TestSimulateTimingValues tests the simulated timing values.
-func TestSimulateTimingValues(t *testing.T) {
-	timing := dhcp.SimulateTiming()
-
-	if timing == nil {
-		t.Fatal("expected non-nil timing")
-	}
-	if !timing.Complete {
-		t.Error("simulated timing should be complete")
-	}
-
-	// Check expected values (from constants)
-	if timing.Discover != 50*time.Millisecond {
-		t.Errorf("Discover = %v, want 50ms", timing.Discover)
-	}
-	if timing.Offer != 10*time.Millisecond {
-		t.Errorf("Offer = %v, want 10ms", timing.Offer)
-	}
-	if timing.Request != 45*time.Millisecond {
-		t.Errorf("Request = %v, want 45ms", timing.Request)
-	}
-	if timing.Total != 105*time.Millisecond {
-		t.Errorf("Total = %v, want 105ms", timing.Total)
-	}
-}
-
 // TestTimingToMsComprehensive tests ToMs conversion with various timing values.
 func TestTimingToMsComprehensive(t *testing.T) {
 	tests := []struct {

@@ -120,11 +120,15 @@ type IPv6Info struct {
 }
 
 // DHCPTimingInfo represents DHCP transaction timing.
+//
+// Three intervals, not four: DORA's four packets yield Discover->Offer,
+// Offer->Request and Request->Ack. There was an Ack field here that nothing
+// could populate — applyDHCPTiming never set it — so it went out as 0 on every
+// response, describing a phase that does not exist.
 type DHCPTimingInfo struct {
-	Discover int64 `json:"discover"` // ms
-	Offer    int64 `json:"offer"`
-	Request  int64 `json:"request"`
-	Ack      int64 `json:"ack"`
+	Discover int64 `json:"discover"` // ms, Discover -> Offer
+	Offer    int64 `json:"offer"`    // Offer -> Request
+	Request  int64 `json:"request"`  // Request -> Ack
 	Total    int64 `json:"total"`
 }
 

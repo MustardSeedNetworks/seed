@@ -31,6 +31,5 @@ export interface DHCPTimingInfo {
   discover: number;
   offer: number;
   request: number;
-  ack: number;
   total: number;
 }
