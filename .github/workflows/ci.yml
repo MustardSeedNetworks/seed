@@ -850,27 +850,16 @@ jobs:
       # The t()-fallback rules are semgrep rules, not grep — every text-based
       # version had a blind spot. Pinned exact, per the dependency policy; the
       # fleet SAST job pins its own copy separately.
-      - name: Install semgrep
-        run: pipx install semgrep==1.168.0
-
-      # The gate itself needs a gate: check-keys.py printed `::error::`
-      # annotations while returning 0 for any finding count at or below 30,
-      # and an annotation does not fail a job — the same inert-gate shape the
-      # file-size check was fixed for above. Runs before the validator so a
-      # broken checker is reported as a broken checker.
-      - name: Self-test the i18n key checker
-        run: python3 scripts/i18n/test-check-keys.py
-
+      # The checks live once in MustardSeedNetworks/.github; this repo keeps
+      # only its glossary, banned vocabulary, glossary exceptions and
+      # dynamic-prefix allow-list. The action installs semgrep, self-tests the
+      # key checker, then enforces I18N_CONVENTIONS.md: key parity, no empty
+      # values, no t('key', 'fallback') patterns, locale vocabulary, glossary
+      # preservation, interpolation parity, plural completeness, t()/<Trans>
+      # key cross-reference, locked versions, and a blocking hardcoded-JSX
+      # check.
       - name: Run shared i18n validator
-        # Replaces the prior inline stub (which used the wrong path
-        # `locales/en/*.json` — should be `internal/i18n/locales/en/`
-        # — so it never actually ran). The shared script enforces
-        # I18N_CONVENTIONS.md across all 3 products: key parity, no
-        # empty values, no t('key', 'fallback') patterns, locale
-        # vocabulary, glossary preservation, interpolation parity,
-        # plural completeness, t()→key cross-reference, locked
-        # versions, and a blocking hardcoded-JSX check.
-        run: ./scripts/i18n/validate.sh
+        uses: MustardSeedNetworks/.github/.github/actions/i18n-validate@e6d74ebd42168c9b89f2b93f14841f58b90edece # v1.5.0
 
   # ===========================================================================
   # Documentation Checks
