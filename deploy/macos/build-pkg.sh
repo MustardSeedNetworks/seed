@@ -86,6 +86,23 @@ log_step "2/6 Copying binary..."
 cp "$BINARY_PATH" "$BUILD_DIR/payload$INSTALL_LOCATION/$PKG_NAME"
 chmod 755 "$BUILD_DIR/payload$INSTALL_LOCATION/$PKG_NAME"
 
+# Sign the daemon. Notarization rejects a package containing an unsigned
+# executable, and the three things it checks are all set here: a Developer ID
+# signature, the hardened runtime, and a secure timestamp. Skipped only when no
+# identity is present, so a local dev build still works — such a package cannot
+# be notarized, which is stated rather than discovered at submission.
+SIGN_IDENTITY="${SEED_SIGN_IDENTITY:-Developer ID Application}"
+if security find-identity -v -p codesigning | grep -q "$SIGN_IDENTITY"; then
+    log_step "2b/6 Signing binary..."
+    codesign --force --timestamp --options runtime \
+        --sign "$SIGN_IDENTITY" \
+        "$BUILD_DIR/payload$INSTALL_LOCATION/$PKG_NAME"
+    codesign --verify --strict "$BUILD_DIR/payload$INSTALL_LOCATION/$PKG_NAME"
+else
+    log_warn "No '$SIGN_IDENTITY' identity — shipping an unsigned daemon."
+    log_warn "This package cannot be notarized and macOS will refuse to install it."
+fi
+
 # Copy launchd plists (daemon + Wi-Fi helper agent)
 log_step "3/6 Copying launchd configuration..."
 cp "$REPO_ROOT/deploy/launchd/com.seed.plist" "$BUILD_DIR/payload$INSTALL_LOCATION/launchd/"
