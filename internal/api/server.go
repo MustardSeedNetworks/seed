@@ -63,6 +63,7 @@ import (
 	"github.com/MustardSeedNetworks/seed/internal/pipeline/publicip"
 	"github.com/MustardSeedNetworks/seed/internal/platform/events"
 	"github.com/MustardSeedNetworks/seed/internal/platform/jobs"
+	"github.com/MustardSeedNetworks/seed/internal/polling/credentials"
 	snmporchestrator "github.com/MustardSeedNetworks/seed/internal/polling/snmp/orchestrator"
 	"github.com/MustardSeedNetworks/seed/internal/polling/snmp/snmpclient"
 	"github.com/MustardSeedNetworks/seed/internal/polling/targets"
@@ -262,6 +263,7 @@ type Server struct {
 	networkProblems    *problems.Service           // Network problem-detection use-case (ADR-0020)
 	topologyQueries    *topology.Queries           // Topology read use-case (ADR-0020)
 	pollingTargets     *targets.Service            // Polling-targets CRUD use-case (ADR-0020)
+	deviceCredentials  *credentials.Service        // Device-credential CRUD use-case (#1799)
 	alertInbox         *inbox.Service              // Alert-inbox (list/ack/resolve) use-case (ADR-0020)
 	configBackups      *backups.Service            // Config backup/restore use-case (ADR-0020)
 	exportService      *export.Service             // Diagnostic-export use-case (ADR-0020)
@@ -1002,6 +1004,16 @@ func (s *Server) initDiscoveryUseCases() {
 	s.exportService = export.NewService(serverExportSources{s: s})
 	s.logQuery = app.NewLogQuery(s.db)
 	s.pollingTargets = app.NewPollingTargets(s.db)
+	// The credential vault needs the keyring that owns the DEK. Without a
+	// config there is none, so the use-case stays nil and its handlers report
+	// 503 — the alternative is a CRUD surface that would persist plaintext.
+	if s.config != nil {
+		if keyring, err := s.config.CredentialKeyring(); err == nil {
+			if svc, credErr := app.NewDeviceCredentials(s.db, keyring); credErr == nil {
+				s.deviceCredentials = svc
+			}
+		}
+	}
 	s.alertInbox = app.NewAlertInbox(s.db)
 	s.bluetoothScans = app.NewBluetooth(s.bluetoothScanner)
 }

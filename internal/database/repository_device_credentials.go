@@ -153,6 +153,14 @@ func (r *DeviceCredentialRepository) Upsert(ctx context.Context, c *polling.Cred
 		return err
 	}
 
+	// A blank id means create, matching PollingTargetRepository.Create. The id
+	// is generated here rather than in the handler so it cannot be supplied by
+	// a caller: a client that chose its own would be able to guess or collide
+	// with another tenant's.
+	if c.ID == "" {
+		c.ID = "cred-" + randomID()
+	}
+
 	const query = `
 		INSERT INTO device_credentials (
 			id, client_id, name, kind, security_level,
