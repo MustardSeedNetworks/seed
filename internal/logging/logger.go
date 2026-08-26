@@ -2,6 +2,21 @@
 //
 // This package wraps Go's log/slog with automatic sensitive data redaction,
 // request ID correlation, and configurable output formats (text/JSON).
+//
+// # Attacker-controlled values are safe to log
+//
+// Callers may pass request-derived values — paths, user agents, usernames —
+// as attributes without sanitizing them first. Every record leaves the process
+// through an encoder that escapes control characters: [slog.TextHandler] or
+// [slog.JSONHandler] for the file and stdout sinks, and encoding/json for the
+// UI stream via [LogBroadcaster]. A value carrying a newline is escaped, not
+// emitted raw, so it cannot become a log line of its own.
+//
+// This is why seed's CodeQL go/log-injection alerts are dismissed as false
+// positives: the query does not model the encoder. The property is pinned by
+// TestLogValuesCannotForgeAnEntry and TestStreamedLogValuesCannotForgeAnEntry
+// in log_injection_test.go — a handler that wrote values through unescaped
+// would fail both. Do not add a sink that bypasses those encoders.
 package logging
 
 import (
