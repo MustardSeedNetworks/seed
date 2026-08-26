@@ -19,14 +19,21 @@ COUNT="${COUNT:-6}"
 # Directories holding at least one benchmark. Listing them beats ./..., which
 # still builds and runs a test binary for every package and spends minutes
 # producing nothing.
+# git ls-files, not a recursive grep of the working directory. CI sets
+# GOMODCACHE to $GITHUB_WORKSPACE/.cache/go/pkg/mod — inside the checkout — so a
+# `grep -r .` there walks the entire module cache and finds every dependency's
+# benchmarks: 486 packages instead of 4, and then `go test` on packages outside
+# this module fails with "updates to go.mod needed". Tracked files only.
+#
 # Deliberately not mapfile: macOS ships bash 3.2, and a script the CI gate
 # depends on has to be runnable on the machine where it is being changed.
 pkgs=()
 while IFS= read -r dir; do
   [ -n "$dir" ] && pkgs+=("./$dir")
 done < <(
-  grep -rl --include='*_test.go' '^func Benchmark' . \
-    | sed 's|/[^/]*$||; s|^\./||' \
+  git ls-files '*_test.go' \
+    | xargs grep -l '^func Benchmark' 2>/dev/null \
+    | sed 's|/[^/]*$||' \
     | sort -u
 )
 
