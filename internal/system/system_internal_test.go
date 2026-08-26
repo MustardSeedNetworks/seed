@@ -1,7 +1,6 @@
 package system
 
 import (
-	"sync"
 	"testing"
 	"time"
 )
@@ -65,134 +64,6 @@ func TestGetTopProcessesInternalSorting(t *testing.T) {
 				topMemory[i].MemoryMB, topMemory[i-1].MemoryMB, i)
 		}
 	}
-}
-
-func TestGetCachedProcesses(t *testing.T) {
-	// First call should trigger background update
-	topCPU1, topMemory1 := getCachedProcesses()
-
-	// Initial call may return empty (cache not yet populated)
-	t.Logf("First call - TopCPU: %d, TopMemory: %d", len(topCPU1), len(topMemory1))
-
-	// Wait for background update to complete
-	time.Sleep(200 * time.Millisecond)
-
-	// Second call should return cached data
-	topCPU2, topMemory2 := getCachedProcesses()
-	t.Logf("Second call - TopCPU: %d, TopMemory: %d", len(topCPU2), len(topMemory2))
-
-	// Should be able to call multiple times without error
-	for i := range 5 {
-		cpuProcs, memProcs := getCachedProcesses()
-		if cpuProcs == nil && memProcs == nil {
-			t.Logf("Call %d returned nil slices (expected for initial state)", i+1)
-		}
-	}
-}
-
-func TestGetCachedProcessesConcurrency(_ *testing.T) {
-	// Test concurrent calls to getCachedProcesses
-	const numGoroutines = 20
-	var wg sync.WaitGroup
-
-	wg.Add(numGoroutines)
-	for range numGoroutines {
-		go func() {
-			defer wg.Done()
-			cpuProcs, memProcs := getCachedProcesses()
-			// Just verify no panic
-			_ = cpuProcs
-			_ = memProcs
-		}()
-	}
-
-	wg.Wait()
-}
-
-func TestProcessCacheSingleton(t *testing.T) {
-	// Verify singleton returns a valid instance
-	// Note: Due to the sync.OnceValue pattern used, each call creates a new OnceValue
-	// wrapper, but the inner function only executes once per wrapper. The current
-	// implementation returns new instances on each call.
-	state := processCacheSingleton()
-	if state == nil {
-		t.Error("processCacheSingleton should return a non-nil instance")
-	}
-}
-
-func TestCPUCacheSingleton(t *testing.T) {
-	// Verify singleton returns a valid instance
-	// Note: Due to the sync.OnceValue pattern used, each call creates a new OnceValue
-	// wrapper, but the inner function only executes once per wrapper. The current
-	// implementation returns new instances on each call.
-	state := cpuCacheSingleton()
-	if state == nil {
-		t.Error("cpuCacheSingleton should return a non-nil instance")
-	}
-}
-
-func TestGetCachedCPUPercent(t *testing.T) {
-	// First call starts the sampler
-	pct1 := getCachedCPUPercent()
-
-	// Should return a valid percentage (0 initially, then updated)
-	if pct1 < 0 || pct1 > 100 {
-		t.Errorf("getCachedCPUPercent returned invalid percentage: %f", pct1)
-	}
-
-	// Wait for sampler to potentially update
-	time.Sleep(150 * time.Millisecond)
-
-	// Subsequent call should still work
-	pct2 := getCachedCPUPercent()
-	if pct2 < 0 || pct2 > 100 {
-		t.Errorf("getCachedCPUPercent returned invalid percentage on second call: %f", pct2)
-	}
-}
-
-func TestGetCachedCPUPercentConcurrency(t *testing.T) {
-	// Test concurrent calls to getCachedCPUPercent
-	const numGoroutines = 20
-	var wg sync.WaitGroup
-
-	wg.Add(numGoroutines)
-	for range numGoroutines {
-		go func() {
-			defer wg.Done()
-			pct := getCachedCPUPercent()
-			if pct < 0 || pct > 100 {
-				t.Errorf("Invalid CPU percentage: %f", pct)
-			}
-		}()
-	}
-
-	wg.Wait()
-}
-
-func TestProcessCacheStateFields(_ *testing.T) {
-	// Test that processCacheState has expected fields
-	state := processCacheSingleton()
-
-	// Lock and verify fields exist
-	state.cacheMu.RLock()
-	_ = state.top5
-	_ = state.mem5
-	_ = state.cacheTime
-	state.cacheMu.RUnlock()
-
-	state.updateMu.Lock()
-	_ = state.updateInFly
-	state.updateMu.Unlock()
-}
-
-func TestCPUCacheStateFields(_ *testing.T) {
-	// Test that cpuCacheState has expected fields
-	state := cpuCacheSingleton()
-
-	// Lock and verify fields exist
-	state.mu.RLock()
-	_ = state.percent
-	state.mu.RUnlock()
 }
 
 func TestProcessInfoStructValues(t *testing.T) {
@@ -310,44 +181,6 @@ func TestConstants(t *testing.T) {
 	}
 }
 
-func TestGetCachedProcessesBackgroundUpdate(t *testing.T) {
-	// Force cache to be stale by waiting
-	if testing.Short() {
-		t.Skip("Skipping long-running test in short mode")
-	}
-
-	// Get initial cached data
-	_, _ = getCachedProcesses()
-
-	// Wait longer than cache TTL
-	time.Sleep(processCacheTTL + 100*time.Millisecond)
-
-	// This call should trigger a background update
-	topCPU, topMemory := getCachedProcesses()
-
-	// Wait for background update
-	time.Sleep(300 * time.Millisecond)
-
-	// Get updated data
-	topCPU2, topMemory2 := getCachedProcesses()
-
-	t.Logf("After TTL - TopCPU: %d->%d, TopMemory: %d->%d",
-		len(topCPU), len(topCPU2), len(topMemory), len(topMemory2))
-}
-
-func TestCPUSamplerMultipleCalls(t *testing.T) {
-	// Make multiple calls to ensure the sampler stays stable
-	var lastPct float64
-	for i := range 10 {
-		pct := getCachedCPUPercent()
-		if pct < 0 || pct > 100 {
-			t.Errorf("Call %d: invalid CPU percentage %f", i+1, pct)
-		}
-		lastPct = pct
-	}
-	t.Logf("Last CPU percentage: %f", lastPct)
-}
-
 func TestGetTopProcessesInternalNoDuplicates(t *testing.T) {
 	topCPU, topMemory := getTopProcessesInternal()
 
@@ -389,64 +222,8 @@ func TestGetTopProcessesInternalProcessNames(t *testing.T) {
 	}
 }
 
-func TestProcessCacheUpdateFlag(t *testing.T) {
-	state := processCacheSingleton()
-
-	// Check initial state of updateInFly
-	state.updateMu.Lock()
-	initialFlag := state.updateInFly
-	state.updateMu.Unlock()
-
-	t.Logf("Initial updateInFly: %v", initialFlag)
-
-	// Trigger a cache refresh by calling getCachedProcesses
-	// when cache is stale
-	_, _ = getCachedProcesses()
-
-	// The flag might be true if update is in progress
-	state.updateMu.Lock()
-	afterFlag := state.updateInFly
-	state.updateMu.Unlock()
-
-	t.Logf("After getCachedProcesses updateInFly: %v", afterFlag)
-}
-
 func BenchmarkGetTopProcessesInternal(b *testing.B) {
 	for b.Loop() {
 		_, _ = getTopProcessesInternal()
-	}
-}
-
-func BenchmarkGetCachedProcesses(b *testing.B) {
-	// Warm up
-	_, _ = getCachedProcesses()
-	time.Sleep(200 * time.Millisecond)
-
-	b.ResetTimer()
-	for b.Loop() {
-		_, _ = getCachedProcesses()
-	}
-}
-
-func BenchmarkGetCachedCPUPercent(b *testing.B) {
-	// Warm up
-	_ = getCachedCPUPercent()
-	time.Sleep(150 * time.Millisecond)
-
-	b.ResetTimer()
-	for b.Loop() {
-		_ = getCachedCPUPercent()
-	}
-}
-
-func BenchmarkCPUCacheSingleton(b *testing.B) {
-	for b.Loop() {
-		_ = cpuCacheSingleton()
-	}
-}
-
-func BenchmarkProcessCacheSingleton(b *testing.B) {
-	for b.Loop() {
-		_ = processCacheSingleton()
 	}
 }

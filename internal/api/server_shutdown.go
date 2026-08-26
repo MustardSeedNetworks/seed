@@ -116,6 +116,11 @@ func (s *Server) Shutdown(ctx context.Context) error {
 
 	s.drainJobSubstrate(ctx)
 
+	logging.GetLogger().InfoContext(ctx, "Stopping host health sampler...")
+	if err := s.health.Close(); err != nil {
+		logging.GetLogger().WarnContext(ctx, "Failed to stop host health sampler", "error", err)
+	}
+
 	logging.GetLogger().InfoContext(ctx, "Stopping rate limiters...")
 	s.loginRateLimiter().Stop()
 	s.endpointRateLimiter().Stop()

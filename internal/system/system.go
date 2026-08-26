@@ -32,68 +32,39 @@ const (
 // topProcessCount is the number of top processes to return.
 const topProcessCount = 5
 
-// cpuCacheState holds the CPU sampling state.
-type cpuCacheState struct {
+// cpuCache holds the most recent CPU sample, written by the Collector's
+// background sampler and read by Health.
+type cpuCache struct {
 	mu      sync.RWMutex
 	percent float64
-	once    sync.Once
-	stop    chan struct{}
 }
 
-// cpuCacheSingleton holds the singleton CPU cache state using [sync.OnceValue].
-// This pattern satisfies gochecknoglobals by using a function rather than a variable.
-func cpuCacheSingleton() *cpuCacheState {
-	return sync.OnceValue(func() *cpuCacheState {
-		return &cpuCacheState{}
-	})()
+// cpuPercent returns the most recent sample. Zero until the sampler has taken
+// its first reading, which happens within cpuSampleInterval of NewCollector.
+func (c *cpuCache) cpuPercent() float64 {
+	c.mu.RLock()
+	defer c.mu.RUnlock()
+	return c.percent
 }
 
-// getCachedCPUPercent returns the cached CPU percentage.
-func getCachedCPUPercent() float64 {
-	state := cpuCacheSingleton()
-
-	startSampler := func() {
-		state.stop = make(chan struct{})
-		go func() {
-			// Take initial sample immediately
-			if pct, err := cpu.Percent(cpuSampleInterval, false); err == nil && len(pct) > 0 {
-				state.mu.Lock()
-				state.percent = pct[0]
-				state.mu.Unlock()
-			}
-
-			ticker := time.NewTicker(cpuTickerInterval)
-			defer ticker.Stop()
-
-			for {
-				select {
-				case <-state.stop:
-					return
-				case <-ticker.C:
-					if pct, err := cpu.Percent(cpuSampleInterval, false); err == nil &&
-						len(pct) > 0 {
-						state.mu.Lock()
-						state.percent = pct[0]
-						state.mu.Unlock()
-					}
-				}
-			}
-		}()
+// sample takes one reading and stores it. A failed sample leaves the previous
+// value in place, which is a better answer than reporting zero load.
+func (c *cpuCache) sample() {
+	pct, err := cpu.Percent(cpuSampleInterval, false)
+	if err != nil || len(pct) == 0 {
+		return
 	}
-
-	// Ensure sampler is started
-	state.once.Do(startSampler)
-
-	state.mu.RLock()
-	defer state.mu.RUnlock()
-	return state.percent
+	c.mu.Lock()
+	c.percent = pct[0]
+	c.mu.Unlock()
 }
 
 // processCacheTTL is how long process info remains valid.
 const processCacheTTL = 5 * time.Second
 
-// processCacheState holds the process cache state.
-type processCacheState struct {
+// processCache holds the last process snapshot plus the single-flight flag that
+// keeps concurrent readers from each launching their own enumeration.
+type processCache struct {
 	cacheMu     sync.RWMutex
 	top5        []ProcessInfo
 	mem5        []ProcessInfo
@@ -102,44 +73,38 @@ type processCacheState struct {
 	updateInFly bool
 }
 
-// processCacheSingleton holds the singleton process cache state using [sync.OnceValue].
-func processCacheSingleton() *processCacheState {
-	return sync.OnceValue(func() *processCacheState {
-		return &processCacheState{}
-	})()
-}
+// processes returns the cached snapshot without blocking, refreshing it in the
+// background when stale. Enumerating processes costs hundreds of milliseconds
+// and pins an OS thread in cgo, so at most one refresh runs at a time —
+// updateInFly is what enforces that, and it only works because the cache is
+// owned by a Collector rather than rebuilt on every call.
+func (p *processCache) processes() ([]ProcessInfo, []ProcessInfo) {
+	p.cacheMu.RLock()
+	cacheAge := time.Since(p.cacheTime)
+	topCPU := p.top5
+	topMemory := p.mem5
+	p.cacheMu.RUnlock()
 
-// getCachedProcesses returns cached top processes (non-blocking).
-func getCachedProcesses() ([]ProcessInfo, []ProcessInfo) {
-	state := processCacheSingleton()
-
-	state.cacheMu.RLock()
-	cacheAge := time.Since(state.cacheTime)
-	topCPU := state.top5
-	topMemory := state.mem5
-	state.cacheMu.RUnlock()
-
-	// If cache is stale, trigger background update (non-blocking)
 	if cacheAge > processCacheTTL {
-		state.updateMu.Lock()
-		if !state.updateInFly {
-			state.updateInFly = true
+		p.updateMu.Lock()
+		if !p.updateInFly {
+			p.updateInFly = true
 			go func() {
 				defer func() {
-					state.updateMu.Lock()
-					state.updateInFly = false
-					state.updateMu.Unlock()
+					p.updateMu.Lock()
+					p.updateInFly = false
+					p.updateMu.Unlock()
 				}()
 
 				cpuProcs, memProcs := getTopProcessesInternal()
-				state.cacheMu.Lock()
-				state.top5 = cpuProcs
-				state.mem5 = memProcs
-				state.cacheTime = time.Now()
-				state.cacheMu.Unlock()
+				p.cacheMu.Lock()
+				p.top5 = cpuProcs
+				p.mem5 = memProcs
+				p.cacheTime = time.Now()
+				p.cacheMu.Unlock()
 			}()
 		}
-		state.updateMu.Unlock()
+		p.updateMu.Unlock()
 	}
 
 	return topCPU, topMemory
@@ -260,8 +225,36 @@ func getTopProcessesInternal() ([]ProcessInfo, []ProcessInfo) {
 	return topCPU, topMemory
 }
 
-// GetHealth collects current system health metrics.
-func GetHealth() (*Health, error) {
+// Collector samples host health. It owns the CPU sampler and the process-list
+// cache, so construct one and keep it for the process lifetime — a Collector
+// per request would start a sampler per request and never reuse a cache.
+type Collector struct {
+	cpu  cpuCache
+	proc processCache
+	stop chan struct{}
+	done chan struct{}
+}
+
+// NewCollector starts the background CPU sampler and returns a ready Collector.
+// Close stops the sampler.
+func NewCollector() *Collector {
+	c := &Collector{
+		stop: make(chan struct{}),
+		done: make(chan struct{}),
+	}
+	go c.sampleCPU()
+	return c
+}
+
+// Close stops the background sampler and waits for it to exit.
+func (c *Collector) Close() error {
+	close(c.stop)
+	<-c.done
+	return nil
+}
+
+// Health collects current system health metrics.
+func (c *Collector) Health() (*Health, error) {
 	h := &Health{
 		Goroutines: runtime.NumGoroutine(),
 		OS:         runtime.GOOS,
@@ -275,7 +268,7 @@ func GetHealth() (*Health, error) {
 	}
 
 	// CPU percentage (from background sampler - non-blocking)
-	h.CPUPercent = getCachedCPUPercent()
+	h.CPUPercent = c.cpu.cpuPercent()
 
 	// Memory stats
 	if vmStat, err := mem.VirtualMemory(); err == nil {
@@ -312,7 +305,7 @@ func GetHealth() (*Health, error) {
 	// Uses cached data for fast response (non-blocking)
 	const warningThreshold = 75.0
 	if h.CPUPercent >= warningThreshold || h.MemoryPercent >= warningThreshold {
-		topCPU, topMemory := getCachedProcesses()
+		topCPU, topMemory := c.proc.processes()
 		if h.CPUPercent >= warningThreshold {
 			h.TopCPUProcesses = topCPU
 		}
@@ -322,4 +315,25 @@ func GetHealth() (*Health, error) {
 	}
 
 	return h, nil
+}
+
+// sampleCPU takes a reading immediately and then every cpuTickerInterval until
+// Close. cpu.Percent blocks for cpuSampleInterval, so this runs off the request
+// path and Health only ever reads the last stored value.
+func (c *Collector) sampleCPU() {
+	defer close(c.done)
+
+	c.cpu.sample()
+
+	ticker := time.NewTicker(cpuTickerInterval)
+	defer ticker.Stop()
+
+	for {
+		select {
+		case <-c.stop:
+			return
+		case <-ticker.C:
+			c.cpu.sample()
+		}
+	}
 }

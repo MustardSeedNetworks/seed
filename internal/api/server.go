@@ -75,6 +75,7 @@ import (
 	securitysettings "github.com/MustardSeedNetworks/seed/internal/security/settings"
 	"github.com/MustardSeedNetworks/seed/internal/settings/management"
 	"github.com/MustardSeedNetworks/seed/internal/settings/persistence"
+	"github.com/MustardSeedNetworks/seed/internal/system"
 	"github.com/MustardSeedNetworks/seed/internal/timeseries/retention"
 	"github.com/MustardSeedNetworks/seed/internal/topology"
 	"github.com/MustardSeedNetworks/seed/internal/update"
@@ -249,6 +250,7 @@ type Server struct {
 	startTime          time.Time                   // Application start time for uptime tracking (fixes #540)
 	setupModeStartTime time.Time                   // Security fix #891: Track when setup mode started
 	background         *BackgroundComponents       // Long-lived components with background lifecycle (report scheduler)
+	health             *system.Collector           // Host health sampler; owns the CPU sampler and process cache
 	wifiQueries        *troubleshooting.Queries    // Wi-Fi visibility read use-case (ADR-0020)
 	wifiManagement     *troubleshooting.Management // Wi-Fi settings/scan/status/connect use-case (ADR-0020)
 	wifiDiscovery      *troubleshooting.Discovery  // Enhanced Wi-Fi discovery use-case (ADR-0020)
@@ -297,6 +299,7 @@ func NewServer(
 		icmpAvailable: icmpAvailable,
 		startTime:     time.Now(),
 		background:    background,
+		health:        system.NewCollector(),
 		engines:       engine.NewRegistry(nil),
 	}
 
