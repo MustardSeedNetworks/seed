@@ -104,6 +104,14 @@ jobs:
           # real issues, which release-please never does.
           permission-contents: write
           permission-pull-requests: write
+          # release-please creates the release branch and the version tag. When a
+          # workflow file has changed since the last release those refs carry a
+          # .github/workflows/** diff, and GitHub refuses the ref write without
+          # this scope — every release stalled fleet-wide until it was added.
+          # create-github-app-token scopes the minted token to exactly these
+          # inputs, so granting the installation the permission is necessary but
+          # not sufficient; it has to be requested here too.
+          permission-workflows: write
       - name: Run Release Please
         id: release
         uses: googleapis/release-please-action@45996ed1f6d02564a971a2fa1b5860e934307cf7 # v5.0.0
