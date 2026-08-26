@@ -8,7 +8,7 @@
 # not theoretical — stem carried 2,800 lines across two packages that no binary
 # reached, past a weekly dead-code job that reported success every time.
 #
-# `go list -deps ./cmd/...` answers it directly and in about a second.
+# `go list -deps` over every main package answers it directly, in a second.
 #
 # Packages already unreachable when this gate was adopted are recorded in
 # scripts/package-reachability-baseline.txt with a note. They are debt, not
@@ -25,7 +25,13 @@ MODULE=$(go list -m)
 # way to make a gate untrustworthy.
 reachable=$(
     for goos in linux darwin windows; do
-        GOOS=$goos go list -deps ./cmd/... 2>/dev/null
+        # Every main package, not just ./cmd/... — niac reaches one of its
+        # packages only from ./tools/, and hardcoding ./cmd would report that
+        # as dead.
+        mains=$(GOOS=$goos go list -f '{{if eq .Name "main"}}{{.ImportPath}}{{end}}' ./... 2>/dev/null)
+        [ -z "$mains" ] && continue
+        # shellcheck disable=SC2086 # deliberate word splitting of the package list
+        GOOS=$goos go list -deps $mains 2>/dev/null
     done | sort -u
 )
 
@@ -69,7 +75,7 @@ for pkg in "${new_unreachable[@]}"; do
     echo "  $pkg"
 done
 echo
-echo "Nothing in ./cmd/... can reach these, so they are not in any shipped"
+echo "No main package can reach these, so they are not in any shipped"
 echo "binary. Either wire them up, delete them, or — if a package is"
 echo "deliberately test-only or platform-gated — add it to $BASELINE_FILE"
 echo "with a line saying which."
