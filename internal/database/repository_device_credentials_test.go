@@ -64,3 +64,66 @@ func TestDeviceCredentialsGetRefusesAnotherClientsRow(t *testing.T) {
 	_, err = db.DeviceCredentials().Get(ctx, "no-such-cred", database.DefaultClientID)
 	require.ErrorIs(t, err, polling.ErrCredentialsNotFound)
 }
+
+// TestDeviceCredentialsListIsScopedToTheClient is the same tenancy invariant
+// Get carries, on the path discovery will use. Discovery sweeps hosts it has
+// never seen and tries each stored credential in turn, so a List that leaked
+// across clients would try one client's community against another's devices.
+func TestDeviceCredentialsListIsScopedToTheClient(t *testing.T) {
+	db, cleanup := testDB(t)
+	defer cleanup()
+	ctx := context.Background()
+
+	insertCredential(t, db, "cred-mine-1", database.DefaultClientID)
+	insertCredential(t, db, "cred-mine-2", database.DefaultClientID)
+
+	// device_credentials.client_id is a real FK, so the second tenant has to
+	// exist before it can own anything.
+	now := time.Now().UTC()
+	_, err := db.Exec(ctx, `
+		INSERT INTO clients (id, name, slug, created_at, updated_at)
+		VALUES ('other-client', 'Other', 'other', ?, ?)`, now, now)
+	require.NoError(t, err)
+	insertCredential(t, db, "cred-theirs", "other-client")
+
+	got, err := db.DeviceCredentials().List(ctx, database.DefaultClientID)
+	require.NoError(t, err)
+	require.Len(t, got, 2)
+
+	ids := []string{got[0].ID, got[1].ID}
+	require.ElementsMatch(t, []string{"cred-mine-1", "cred-mine-2"}, ids)
+	for _, c := range got {
+		require.Equal(t, database.DefaultClientID, c.ClientID)
+	}
+}
+
+// TestDeviceCredentialsListCarriesCiphertext confirms the rows arrive with
+// their secrets so the resolver can decrypt at point of use. The domain type
+// marks every secret field `json:"-"`, which is what keeps a handler from
+// serialising one.
+func TestDeviceCredentialsListCarriesCiphertext(t *testing.T) {
+	db, cleanup := testDB(t)
+	defer cleanup()
+	ctx := context.Background()
+
+	insertCredential(t, db, "cred-1", database.DefaultClientID)
+
+	got, err := db.DeviceCredentials().List(ctx, database.DefaultClientID)
+	require.NoError(t, err)
+	require.Len(t, got, 1)
+	require.Equal(t, "enc:v1:community", got[0].SNMPCommunityCT)
+	require.Equal(t, polling.CredentialKindV2c, got[0].Kind)
+}
+
+// TestDeviceCredentialsListEmptyForUnknownClient — an empty result is not an
+// error. Discovery must be able to tell "this client has no credentials" from
+// "the database is down", because the first means skip SNMP and the second
+// means stop.
+func TestDeviceCredentialsListEmptyForUnknownClient(t *testing.T) {
+	db, cleanup := testDB(t)
+	defer cleanup()
+
+	got, err := db.DeviceCredentials().List(context.Background(), "no-such-client")
+	require.NoError(t, err)
+	require.Empty(t, got)
+}

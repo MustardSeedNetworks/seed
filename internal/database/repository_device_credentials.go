@@ -73,6 +73,70 @@ func (r *DeviceCredentialRepository) Get(ctx context.Context, id, clientID strin
 	return &c, nil
 }
 
+// List returns every credential belonging to one client, newest first.
+//
+// Discovery needs this and Get cannot serve it: polling knows which credential
+// a target references, but discovery sweeps hosts it has never seen and has to
+// try each stored credential in turn — the same shape the plaintext
+// config.Communities list used to provide (#1799).
+//
+// Ciphertext comes back with the rows. The domain type marks every secret
+// field `json:"-"`, so a handler that serialises the result cannot leak one,
+// and decryption stays at point of use.
+func (r *DeviceCredentialRepository) List(
+	ctx context.Context,
+	clientID string,
+) ([]*polling.Credentials, error) {
+	const query = `
+		SELECT id, client_id, name, kind, security_level,
+			snmp_community_enc, snmp_v3_user,
+			snmp_v3_auth_enc, snmp_v3_priv_enc, snmp_v3_auth_proto,
+			snmp_v3_priv_proto, created_at, updated_at
+		FROM device_credentials
+		WHERE client_id = ?
+		ORDER BY created_at DESC, id
+	`
+
+	rows, queryErr := r.db.Query(ctx, query, clientID)
+	if queryErr != nil {
+		return nil, fmt.Errorf("list device_credentials: %w", queryErr)
+	}
+	defer func() { _ = rows.Close() }()
+
+	var out []*polling.Credentials
+	for rows.Next() {
+		var (
+			c                           polling.Credentials
+			community, authSec, privSec []byte
+			level                       sql.NullString
+			user, authProto, privProto  sql.NullString
+			createdAt, updatedAt        string
+		)
+		if scanErr := rows.Scan(
+			&c.ID, &c.ClientID, &c.Name, &c.Kind, &level,
+			&community, &user,
+			&authSec, &privSec, &authProto, &privProto,
+			&createdAt, &updatedAt,
+		); scanErr != nil {
+			return nil, fmt.Errorf("scan device_credentials: %w", scanErr)
+		}
+		c.SecurityLevel = level.String
+		c.SNMPCommunityCT = string(community)
+		c.SNMPv3AuthCT = string(authSec)
+		c.SNMPv3PrivCT = string(privSec)
+		c.SNMPv3User = user.String
+		c.SNMPv3AuthProto = authProto.String
+		c.SNMPv3PrivProto = privProto.String
+		c.CreatedAt = parseCredentialTime(createdAt)
+		c.UpdatedAt = parseCredentialTime(updatedAt)
+		out = append(out, &c)
+	}
+	if iterErr := rows.Err(); iterErr != nil {
+		return nil, fmt.Errorf("iterate device_credentials: %w", iterErr)
+	}
+	return out, nil
+}
+
 // Upsert writes a credentials row. The caller supplies already-encrypted
 // secrets; passing plaintext here would persist it, so the parameter names
 // carry the CT suffix the domain type uses.
