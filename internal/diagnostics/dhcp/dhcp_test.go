@@ -8,19 +8,86 @@ import (
 	"github.com/MustardSeedNetworks/seed/internal/diagnostics/dhcp"
 )
 
-func TestDefaultThresholds(t *testing.T) {
-	thresholds := dhcp.DefaultThresholds()
-
-	if thresholds.Warning != 500*time.Millisecond {
-		t.Errorf("expected warning threshold 500ms, got %v", thresholds.Warning)
+// TestLeaseStatus covers what the status now means: whether the lease this
+// interface holds is complete.
+//
+// It used to grade elapsed time against Thresholds, which measured the wrong
+// thing — neither platform performs a DHCP exchange, so the duration was how
+// long it took to read local state. A slow disk reported a DHCP warning and a
+// genuinely slow server reported success.
+func TestLeaseStatus(t *testing.T) {
+	complete := func() *dhcp.TestResult {
+		return &dhcp.TestResult{
+			OfferedIP:  "192.168.1.50",
+			SubnetMask: "255.255.255.0",
+			Gateway:    "192.168.1.1",
+			DNSServers: []string{"192.168.1.1"},
+		}
 	}
-	if thresholds.Critical != 2000*time.Millisecond {
-		t.Errorf("expected critical threshold 2000ms, got %v", thresholds.Critical)
+
+	for _, tc := range []struct {
+		name     string
+		mutate   func(*dhcp.TestResult)
+		hasError bool
+		want     dhcp.Status
+	}{
+		{"a complete lease", func(*dhcp.TestResult) {}, false, dhcp.StatusSuccess},
+		{
+			// Common and worth flagging: an address with no way off the subnet.
+			name:   "no gateway",
+			mutate: func(r *dhcp.TestResult) { r.Gateway = "" },
+			want:   dhcp.StatusWarning,
+		},
+		{
+			name:   "no resolver",
+			mutate: func(r *dhcp.TestResult) { r.DNSServers = nil },
+			want:   dhcp.StatusWarning,
+		},
+		{
+			name:   "no subnet mask",
+			mutate: func(r *dhcp.TestResult) { r.SubnetMask = "" },
+			want:   dhcp.StatusWarning,
+		},
+		{
+			// No address at all is a failure, not a degraded lease.
+			name:   "no address",
+			mutate: func(r *dhcp.TestResult) { r.OfferedIP = "" },
+			want:   dhcp.StatusError,
+		},
+		{
+			name:     "the platform reported an error",
+			mutate:   func(*dhcp.TestResult) {},
+			hasError: true,
+			want:     dhcp.StatusError,
+		},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			result := complete()
+			tc.mutate(result)
+			if got := dhcp.LeaseStatus(result, tc.hasError); got != tc.want {
+				t.Errorf("LeaseStatus = %v, want %v", got, tc.want)
+			}
+		})
+	}
+}
+
+// TestLeaseStatusIgnoresTiming pins the correction directly: a lease is graded
+// on its contents, and no elapsed time can change the answer.
+func TestLeaseStatusIgnoresTiming(t *testing.T) {
+	result := &dhcp.TestResult{
+		OfferedIP:    "192.168.1.50",
+		SubnetMask:   "255.255.255.0",
+		Gateway:      "192.168.1.1",
+		DNSServers:   []string{"192.168.1.1"},
+		ResponseTime: 30 * time.Second,
+	}
+	if got := dhcp.LeaseStatus(result, false); got != dhcp.StatusSuccess {
+		t.Errorf("a complete lease graded %v because the read was slow", got)
 	}
 }
 
 func TestNewTester(t *testing.T) {
-	tester := dhcp.NewTester("eth0", dhcp.DefaultThresholds())
+	tester := dhcp.NewTester("eth0")
 	if tester == nil {
 		t.Fatal("NewTester returned nil")
 	}
@@ -34,7 +101,7 @@ func TestNewTester(t *testing.T) {
 }
 
 func TestNewTesterEmptyInterface(t *testing.T) {
-	tester := dhcp.NewTester("", dhcp.DefaultThresholds())
+	tester := dhcp.NewTester("")
 	if tester == nil {
 		t.Fatal("NewTester returned nil")
 	}
@@ -45,7 +112,7 @@ func TestNewTesterEmptyInterface(t *testing.T) {
 }
 
 func TestSetInterface(t *testing.T) {
-	tester := dhcp.NewTester("eth0", dhcp.DefaultThresholds())
+	tester := dhcp.NewTester("eth0")
 	tester.SetInterface("en0")
 
 	if tester.GetInterface() != "en0" {
@@ -54,7 +121,7 @@ func TestSetInterface(t *testing.T) {
 }
 
 func TestGetInterface(t *testing.T) {
-	tester := dhcp.NewTester("wlan0", dhcp.DefaultThresholds())
+	tester := dhcp.NewTester("wlan0")
 
 	if tester.GetInterface() != "wlan0" {
 		t.Errorf("expected interface 'wlan0', got %s", tester.GetInterface())
@@ -62,7 +129,7 @@ func TestGetInterface(t *testing.T) {
 }
 
 func TestSetTimeout(t *testing.T) {
-	tester := dhcp.NewTester("eth0", dhcp.DefaultThresholds())
+	tester := dhcp.NewTester("eth0")
 
 	err := tester.SetTimeout(5 * time.Second)
 	if err != nil {
@@ -75,7 +142,7 @@ func TestSetTimeout(t *testing.T) {
 }
 
 func TestSetTimeoutInvalid(t *testing.T) {
-	tester := dhcp.NewTester("eth0", dhcp.DefaultThresholds())
+	tester := dhcp.NewTester("eth0")
 
 	tests := []struct {
 		name    string
@@ -99,27 +166,8 @@ func TestSetTimeoutInvalid(t *testing.T) {
 	}
 }
 
-func TestSetThresholds(t *testing.T) {
-	tester := dhcp.NewTester("eth0", dhcp.DefaultThresholds())
-
-	newThresholds := dhcp.Thresholds{
-		Warning:  300 * time.Millisecond,
-		Critical: 1000 * time.Millisecond,
-	}
-
-	tester.SetThresholds(newThresholds)
-	got := tester.GetThresholds()
-
-	if got.Warning != newThresholds.Warning {
-		t.Errorf("expected warning %v, got %v", newThresholds.Warning, got.Warning)
-	}
-	if got.Critical != newThresholds.Critical {
-		t.Errorf("expected critical %v, got %v", newThresholds.Critical, got.Critical)
-	}
-}
-
 func TestGetLastResultNil(t *testing.T) {
-	tester := dhcp.NewTester("eth0", dhcp.DefaultThresholds())
+	tester := dhcp.NewTester("eth0")
 
 	result := tester.GetLastResult()
 	if result != nil {
@@ -127,83 +175,8 @@ func TestGetLastResultNil(t *testing.T) {
 	}
 }
 
-func TestGetStatus(t *testing.T) {
-	thresholds := dhcp.Thresholds{
-		Warning:  500 * time.Millisecond,
-		Critical: 2000 * time.Millisecond,
-	}
-	tester := dhcp.NewTester("eth0", thresholds)
-
-	tests := []struct {
-		name     string
-		duration time.Duration
-		hasError bool
-		expected dhcp.Status
-	}{
-		{
-			name:     "success - fast",
-			duration: 200 * time.Millisecond,
-			hasError: false,
-			expected: dhcp.StatusSuccess,
-		},
-		{
-			name:     "warning - slow",
-			duration: 800 * time.Millisecond,
-			hasError: false,
-			expected: dhcp.StatusWarning,
-		},
-		{
-			name:     "error - very slow",
-			duration: 2500 * time.Millisecond,
-			hasError: false,
-			expected: dhcp.StatusError,
-		},
-		{
-			name:     "error - has error",
-			duration: 200 * time.Millisecond,
-			hasError: true,
-			expected: dhcp.StatusError,
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			status := tester.GetStatus(tt.duration, tt.hasError)
-			if status != tt.expected {
-				t.Errorf("expected status %s, got %s", tt.expected, status)
-			}
-		})
-	}
-}
-
-func TestGetStatusEdgeCases(t *testing.T) {
-	thresholds := dhcp.Thresholds{
-		Warning:  500 * time.Millisecond,
-		Critical: 2000 * time.Millisecond,
-	}
-	tester := dhcp.NewTester("eth0", thresholds)
-
-	// Exactly at warning threshold
-	status := tester.GetStatus(500*time.Millisecond, false)
-	if status != dhcp.StatusWarning {
-		t.Errorf("expected StatusWarning at warning threshold, got %v", status)
-	}
-
-	// Exactly at critical threshold
-	status = tester.GetStatus(2000*time.Millisecond, false)
-	if status != dhcp.StatusError {
-		t.Errorf("expected StatusError at critical threshold, got %v", status)
-	}
-
-	// Just below warning
-	status = tester.GetStatus(499*time.Millisecond, false)
-	if status != dhcp.StatusSuccess {
-		t.Errorf("expected StatusSuccess just below warning, got %v", status)
-	}
-}
-
 func TestTestNoInterface(t *testing.T) {
-	tester := dhcp.NewTester("", dhcp.DefaultThresholds())
+	tester := dhcp.NewTester("")
 	ctx := context.Background()
 
 	result := tester.Test(ctx)
@@ -223,7 +196,7 @@ func TestTestNoInterface(t *testing.T) {
 }
 
 func TestTestInvalidInterface(t *testing.T) {
-	tester := dhcp.NewTester("nonexistent-interface-xyz", dhcp.DefaultThresholds())
+	tester := dhcp.NewTester("nonexistent-interface-xyz")
 	ctx := context.Background()
 
 	result := tester.Test(ctx)
@@ -311,21 +284,6 @@ func TestDHCPTimeoutConstants(t *testing.T) {
 	}
 	if dhcp.MaxDHCPTimeout != 60*time.Second {
 		t.Errorf("MaxDHCPTimeout = %v, want 60s", dhcp.MaxDHCPTimeout)
-	}
-}
-
-func TestThresholdConstants(t *testing.T) {
-	if dhcp.DefaultWarningThresholdMs != 500 {
-		t.Errorf(
-			"DefaultWarningThresholdMs = %d, want 500",
-			dhcp.DefaultWarningThresholdMs,
-		)
-	}
-	if dhcp.DefaultCriticalThresholdMs != 2000 {
-		t.Errorf(
-			"DefaultCriticalThresholdMs = %d, want 2000",
-			dhcp.DefaultCriticalThresholdMs,
-		)
 	}
 }
 
@@ -457,20 +415,6 @@ func TestTestResultFields(t *testing.T) {
 	}
 	if result.TestedAt != now {
 		t.Errorf("expected TestedAt %v, got %v", now, result.TestedAt)
-	}
-}
-
-func TestThresholdsFields(t *testing.T) {
-	thresholds := dhcp.Thresholds{
-		Warning:  300 * time.Millisecond,
-		Critical: 1500 * time.Millisecond,
-	}
-
-	if thresholds.Warning != 300*time.Millisecond {
-		t.Errorf("expected Warning 300ms, got %v", thresholds.Warning)
-	}
-	if thresholds.Critical != 1500*time.Millisecond {
-		t.Errorf("expected Critical 1500ms, got %v", thresholds.Critical)
 	}
 }
 
@@ -661,7 +605,7 @@ func TestCalculateBroadcastAddress(t *testing.T) {
 
 func TestConcurrentTesterAccess(t *testing.T) {
 	t.Parallel()
-	tester := dhcp.NewTester("eth0", dhcp.DefaultThresholds())
+	tester := dhcp.NewTester("eth0")
 
 	done := make(chan bool)
 	for i := range 10 {
@@ -670,7 +614,6 @@ func TestConcurrentTesterAccess(t *testing.T) {
 				tester.SetInterface("eth" + string(rune('0'+id)))
 				_ = tester.GetInterface()
 				_ = tester.GetTimeout()
-				_ = tester.GetThresholds()
 				_ = tester.GetLastResult()
 			}
 			done <- true
@@ -683,7 +626,7 @@ func TestConcurrentTesterAccess(t *testing.T) {
 }
 
 func TestMultipleInterfaceChanges(t *testing.T) {
-	tester := dhcp.NewTester("eth0", dhcp.DefaultThresholds())
+	tester := dhcp.NewTester("eth0")
 
 	interfaces := []string{"eth0", "eth1", "en0", "wlan0", ""}
 	for _, iface := range interfaces {
@@ -691,28 +634,6 @@ func TestMultipleInterfaceChanges(t *testing.T) {
 		if got := tester.GetInterface(); got != iface {
 			t.Errorf("expected interface %q, got %q", iface, got)
 		}
-	}
-}
-
-func TestThresholdsZeroValues(t *testing.T) {
-	thresholds := dhcp.Thresholds{}
-
-	if thresholds.Warning != 0 {
-		t.Error("expected Warning 0")
-	}
-	if thresholds.Critical != 0 {
-		t.Error("expected Critical 0")
-	}
-}
-
-func TestTesterWithZeroThresholds(t *testing.T) {
-	thresholds := dhcp.Thresholds{}
-	tester := dhcp.NewTester("eth0", thresholds)
-
-	// With zero thresholds, any latency >= 0 should be critical
-	status := tester.GetStatus(1*time.Millisecond, false)
-	if status != dhcp.StatusError {
-		t.Errorf("expected StatusError with zero thresholds, got %v", status)
 	}
 }
 
@@ -772,7 +693,7 @@ func TestTestResultZeroValues(t *testing.T) {
 }
 
 func TestGetCurrentLeaseNoInterface(t *testing.T) {
-	tester := dhcp.NewTester("", dhcp.DefaultThresholds())
+	tester := dhcp.NewTester("")
 
 	lease, err := tester.GetCurrentLease()
 	if err == nil {
@@ -784,7 +705,7 @@ func TestGetCurrentLeaseNoInterface(t *testing.T) {
 }
 
 func TestGetCurrentLeaseInvalidInterface(t *testing.T) {
-	tester := dhcp.NewTester("nonexistent-interface-xyz", dhcp.DefaultThresholds())
+	tester := dhcp.NewTester("nonexistent-interface-xyz")
 
 	lease, err := tester.GetCurrentLease()
 	if err == nil {
@@ -796,7 +717,7 @@ func TestGetCurrentLeaseInvalidInterface(t *testing.T) {
 }
 
 func TestTestWithContextCancellation(t *testing.T) {
-	tester := dhcp.NewTester("lo0", dhcp.DefaultThresholds())
+	tester := dhcp.NewTester("lo0")
 
 	ctx, cancel := context.WithCancel(context.Background())
 	cancel() // Cancel immediately
@@ -813,7 +734,7 @@ func TestTestWithContextCancellation(t *testing.T) {
 }
 
 func TestTesterSetTestTimeoutDirect(t *testing.T) {
-	tester := dhcp.NewTester("eth0", dhcp.DefaultThresholds())
+	tester := dhcp.NewTester("eth0")
 
 	// Use the test helper to bypass validation
 	tester.TesterSetTestTimeout(30 * time.Second)
@@ -877,7 +798,7 @@ func TestDefaultTestTimeout(t *testing.T) {
 }
 
 func TestTesterCopyResult(t *testing.T) {
-	tester := dhcp.NewTester("nonexistent-interface", dhcp.DefaultThresholds())
+	tester := dhcp.NewTester("nonexistent-interface")
 	ctx := context.Background()
 
 	// Run a test to populate lastResult

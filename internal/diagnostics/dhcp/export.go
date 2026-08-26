@@ -12,13 +12,6 @@ func (t *Tester) TesterInterfaceName() string {
 	return t.interfaceName
 }
 
-// TesterThresholds returns the thresholds for testing.
-func (t *Tester) TesterThresholds() Thresholds {
-	t.mu.RLock()
-	defer t.mu.RUnlock()
-	return t.thresholds
-}
-
 // TesterTestTimeout returns the test timeout for testing.
 func (t *Tester) TesterTestTimeout() time.Duration {
 	t.mu.RLock()
@@ -38,9 +31,9 @@ func (t *Tester) TesterMu() *sync.RWMutex {
 	return &t.mu
 }
 
-// GetStatus is exported for testing.
-func (t *Tester) GetStatus(duration time.Duration, hasError bool) Status {
-	return t.getStatus(duration, hasError)
+// LeaseStatus is exported for testing.
+func LeaseStatus(result *TestResult, hasError bool) Status {
+	return leaseStatus(result, hasError)
 }
 
 // ExportIsContiguousMask is exported for testing.

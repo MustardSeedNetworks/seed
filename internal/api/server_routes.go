@@ -402,6 +402,16 @@ func (s *Server) setupTelemetryRoutes() {
 			minRole: op,
 		},
 		{path: APIVersionPrefix + "/telemetry/gateway", handler: s.handleGateway, methods: get},
+		// Reads the lease this host already holds — no DISCOVER is sent and no
+		// target is supplied, so it is a read of local state rather than an
+		// active scan. Rate limited all the same: it shells out to a platform
+		// command, and there is no reason to allow that in a tight loop.
+		{
+			path:        APIVersionPrefix + "/telemetry/dhcp/lease",
+			handler:     s.handleDHCPLease,
+			methods:     getPost,
+			rateLimited: true,
+		},
 		{
 			path:    APIVersionPrefix + "/telemetry/dhcp/rogue",
 			handler: s.handleRogueDHCP,
