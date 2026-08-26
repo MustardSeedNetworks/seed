@@ -73,6 +73,23 @@ func (s *Server) setupTopologyRoutes() {
 			methods: getPutDelete,
 			minRole: op,
 		},
+		// Device-credential vault CRUD (#1799). Operator+ on the mutating
+		// routes, matching /polling-targets: a credential is polling
+		// configuration, and an operator who can add targets but not the
+		// credentials they reference cannot do the job. Secrets go in and
+		// never come back out.
+		{
+			path:    APIVersionPrefix + "/device-credentials",
+			handler: s.handleDeviceCredentials,
+			methods: getPost,
+			minRole: op,
+		},
+		{
+			path:    APIVersionPrefix + "/device-credentials/",
+			handler: s.handleDeviceCredentialByID,
+			methods: getPutDelete,
+			minRole: op,
+		},
 		// A5.8 read-only engine registry surface.
 		{path: APIVersionPrefix + "/engines", handler: s.handleEngines, methods: get},
 		// A5.10 operator-defined alert rules: both writeGated.

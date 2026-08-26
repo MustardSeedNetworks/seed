@@ -1151,6 +1151,25 @@ body:
   {
     "maxBodyBytes": 262144,
     "methods": [
+      "GET",
+      "POST"
+    ],
+    "minRole": "operator",
+    "path": "/api/v1/device-credentials"
+  },
+  {
+    "maxBodyBytes": 262144,
+    "methods": [
+      "GET",
+      "PUT",
+      "DELETE"
+    ],
+    "minRole": "operator",
+    "path": "/api/v1/device-credentials/"
+  },
+  {
+    "maxBodyBytes": 262144,
+    "methods": [
       "GET"
     ],
     "path": "/api/v1/engines"
