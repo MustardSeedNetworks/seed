@@ -44,16 +44,12 @@ func configureStaticIPPlatform(iface string, cfg *StaticIPConfig) error {
 		return fmt.Errorf("invalid gateway address: %s", cfg.Gateway)
 	}
 
-	// Convert CIDR to dotted netmask if needed
-	netmask := cfg.Netmask
-	if net.ParseIP(netmask) == nil {
-		// It's a CIDR prefix, convert to dotted
-		var prefix int
-		if _, scanErr := fmt.Sscanf(netmask, "%d", &prefix); scanErr != nil {
-			return fmt.Errorf("invalid netmask prefix %q: %w", netmask, scanErr)
-		}
-		netmask = cidrToNetmask(prefix)
+	// netsh wants dotted decimal, so normalise whichever form was given.
+	prefix, ok := parseNetmask(cfg.Netmask)
+	if !ok {
+		return fmt.Errorf("invalid netmask: %s", cfg.Netmask)
 	}
+	netmask := cidrToNetmask(prefix)
 
 	ctx, cancel := context.WithTimeout(context.Background(), netshTimeoutSeconds*time.Second)
 	defer cancel()
