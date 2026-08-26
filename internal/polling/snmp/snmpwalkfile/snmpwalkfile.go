@@ -127,7 +127,10 @@ func decodeValue(typeName, raw string) any {
 	raw = strings.TrimSpace(raw)
 	switch typeName {
 	case "INTEGER":
-		if n, err := strconv.ParseInt(firstField(raw), 10, 64); err == nil {
+		// 32, not 64: SMIv2 INTEGER is Integer32, and parsing wider then
+		// narrowing to int would truncate on a 32-bit build (CodeQL
+		// go/incorrect-integer-conversion). gosnmp decodes this as int.
+		if n, err := strconv.ParseInt(firstField(raw), 10, 32); err == nil {
 			return int(n)
 		}
 	case "Gauge32", "Counter32", "UInteger32":
