@@ -25,6 +25,7 @@ import (
 	"encoding/json"
 	"errors"
 	"net/http"
+	"regexp"
 	"strings"
 
 	"github.com/MustardSeedNetworks/seed/internal/logging"
@@ -52,6 +53,21 @@ type deviceCredentialInput struct {
 	V3PrivProto  string `json:"snmpV3PrivProto,omitempty"`
 }
 
+// credentialIDPattern is the shape the repository generates: "cred-" and
+// twelve hex characters.
+var credentialIDPattern = regexp.MustCompile(`^cred-[0-9a-f]{12}$`)
+
+// validCredentialID rejects anything the server did not generate.
+//
+// The id arrives from the URL path, so it is caller-controlled. Validating the
+// shape is worth doing on its own — a lookup for a malformed id can only miss —
+// but it is also what makes the id safe to put in a log line: an unvalidated
+// value could carry newlines and forge log entries (CodeQL js/log-injection on
+// the first revision of this file).
+func validCredentialID(id string) bool {
+	return credentialIDPattern.MatchString(id)
+}
+
 // handleDeviceCredentials routes the collection endpoint (GET / POST).
 func (s *Server) handleDeviceCredentials(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {
@@ -67,7 +83,7 @@ func (s *Server) handleDeviceCredentials(w http.ResponseWriter, r *http.Request)
 // handleDeviceCredentialByID routes the resource endpoint (GET / PUT / DELETE).
 func (s *Server) handleDeviceCredentialByID(w http.ResponseWriter, r *http.Request) {
 	id := strings.TrimPrefix(r.URL.Path, deviceCredentialsPathPrefix)
-	if id == "" || strings.Contains(id, "/") {
+	if !validCredentialID(id) {
 		http.Error(w, "Missing or invalid credential id", http.StatusBadRequest)
 		return
 	}

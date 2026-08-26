@@ -130,6 +130,45 @@ func TestCredentialStoreUnavailableIs503(t *testing.T) {
 	}
 }
 
+// TestCredentialIDMustBeServerGenerated — the id arrives from the URL path, so
+// it is caller-controlled. Validating its shape means a lookup cannot be
+// steered, and it is what makes the id safe to log: an unvalidated value can
+// carry newlines and forge log entries, which is what CodeQL flagged on the
+// first revision of this handler.
+func TestCredentialIDMustBeServerGenerated(t *testing.T) {
+	s := newDeviceCredentialsTestServer(t)
+
+	for _, id := range []string{
+		"",
+		"not-a-credential",
+		"cred-XYZ",
+		"cred-0123456789ab\ninjected log line",
+		"cred-0123456789abcdef",
+		"../../etc/passwd",
+	} {
+		// The path is set after construction: httptest.NewRequest refuses to
+		// build a target containing a newline, but a raw client can send one,
+		// and by the time the mux dispatches, it is just a string field.
+		req := withClaim(httptest.NewRequest(http.MethodGet, deviceCredentialsPath, nil))
+		req.URL.Path = deviceCredentialsPathPrefix + id
+		rec := httptest.NewRecorder()
+		s.handleDeviceCredentialByID(rec, req)
+		if rec.Code != http.StatusBadRequest {
+			t.Errorf("id %q: status %d, want 400", id, rec.Code)
+		}
+	}
+
+	// The generated shape is accepted — 404 because it does not exist, which
+	// is the point: it got past validation and was actually looked up.
+	req := withClaim(httptest.NewRequest(http.MethodGet,
+		deviceCredentialsPathPrefix+"cred-0123456789ab", nil))
+	rec := httptest.NewRecorder()
+	s.handleDeviceCredentialByID(rec, req)
+	if rec.Code != http.StatusNotFound {
+		t.Errorf("well-formed id: status %d, want 404", rec.Code)
+	}
+}
+
 func TestCredentialDeleteReturns204(t *testing.T) {
 	s := newDeviceCredentialsTestServer(t)
 	created := postCredential(t, s, `{"name":"gone","community":"c"}`)
