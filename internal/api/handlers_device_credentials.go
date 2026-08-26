@@ -168,11 +168,12 @@ func (s *Server) saveDeviceCredential(w http.ResponseWriter, r *http.Request, id
 		SNMPv3PrivProto: in.V3PrivProto,
 	})
 	if err != nil {
-		// Deliberately not logging the request body: it is the one place in
-		// this package that holds plaintext secrets.
+		// No credential_id field: the logging middleware already records
+		// r.URL.Path, which is where the id came from. And no request body —
+		// it is the one place in this package that holds plaintext secrets.
 		logging.FromContext(r.Context()).WarnContext(r.Context(),
 			"save device_credential failed",
-			"event", "credential.save.failed", "credential_id", id)
+			"event", "credential.save.failed")
 		writeCredentialError(w, r, err)
 		return
 	}
