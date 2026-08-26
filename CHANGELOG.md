@@ -5,6 +5,37 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.213.29](https://github.com/MustardSeedNetworks/seed/compare/v0.213.28...v0.213.29) (2026-08-26)
+
+
+### Bug Fixes
+
+* **ci:** ratchet the vitest coverage thresholds, and actually run them ([#2102](https://github.com/MustardSeedNetworks/seed/issues/2102)) ([40224aa](https://github.com/MustardSeedNetworks/seed/commit/40224aa5c9671bd4d869289851821ff055a902f8)), closes [#485](https://github.com/MustardSeedNetworks/seed/issues/485)
+* **ci:** request the workflows scope for the release-please token ([#2107](https://github.com/MustardSeedNetworks/seed/issues/2107)) ([ed5a98d](https://github.com/MustardSeedNetworks/seed/commit/ed5a98d6f96d4597870687190938d9eb625d791d))
+* **ci:** stop the TODO tracker reporting placeholders and piling up issues ([#2092](https://github.com/MustardSeedNetworks/seed/issues/2092)) ([5bbda36](https://github.com/MustardSeedNetworks/seed/commit/5bbda366e3fb6fd052610f456237b968533f2eeb)), closes [#2091](https://github.com/MustardSeedNetworks/seed/issues/2091)
+* **config:** tighten the gateway ping and DNS default thresholds ([#2097](https://github.com/MustardSeedNetworks/seed/issues/2097)) ([b83b5a0](https://github.com/MustardSeedNetworks/seed/commit/b83b5a0a47587a4deccfbbf9d7d18cbcae74a114)), closes [#341](https://github.com/MustardSeedNetworks/seed/issues/341)
+* **deps:** update dependency @tanstack/react-query to v5.102.0 ([#2105](https://github.com/MustardSeedNetworks/seed/issues/2105)) ([aa0d14a](https://github.com/MustardSeedNetworks/seed/commit/aa0d14a20646c203c83e9f23e12873b79d5d2551))
+* **deps:** update module github.com/showwin/speedtest-go to v1.8.2 ([#2083](https://github.com/MustardSeedNetworks/seed/issues/2083)) ([f6761aa](https://github.com/MustardSeedNetworks/seed/commit/f6761aaf014637657d089dbae5b5ebbaf02ab9bb))
+* **i18n:** fail the key gate on any finding, and see &lt;Trans&gt; keys ([#2086](https://github.com/MustardSeedNetworks/seed/issues/2086)) ([091e6ef](https://github.com/MustardSeedNetworks/seed/commit/091e6eff776ebe5f8f08b9987a07514ff5033475)), closes [#2085](https://github.com/MustardSeedNetworks/seed/issues/2085)
+* **test:** stop the axe helper silently skipping rules it cannot evaluate ([#2098](https://github.com/MustardSeedNetworks/seed/issues/2098)) ([611607d](https://github.com/MustardSeedNetworks/seed/commit/611607d74afc6b6a2daeeb87e6d9b3cad1e73c03)), closes [#2051](https://github.com/MustardSeedNetworks/seed/issues/2051)
+* **ts:** typecheck the test files, and fix the 39 errors that surfaced ([#2094](https://github.com/MustardSeedNetworks/seed/issues/2094)) ([da02764](https://github.com/MustardSeedNetworks/seed/commit/da027647ebdc3f7295fd2222d559e8f6c4c4f14d)), closes [#1946](https://github.com/MustardSeedNetworks/seed/issues/1946)
+
+
+### Tests
+
+* **dhcp:** replay DHCP OFFER frames through the rogue detector ([#2103](https://github.com/MustardSeedNetworks/seed/issues/2103)) ([7d492e3](https://github.com/MustardSeedNetworks/seed/commit/7d492e3b9985682966b2b86630aa4da425aa016c)), closes [#498](https://github.com/MustardSeedNetworks/seed/issues/498)
+* **discovery:** cover the socket-free half of the ICMP pinger ([#2101](https://github.com/MustardSeedNetworks/seed/issues/2101)) ([8244d55](https://github.com/MustardSeedNetworks/seed/commit/8244d5525e271150723f34b47bf86ca4ec2b955e)), closes [#211](https://github.com/MustardSeedNetworks/seed/issues/211)
+* **i18n:** assert real locale copy on the two login-path surfaces ([#2100](https://github.com/MustardSeedNetworks/seed/issues/2100)) ([559a3ec](https://github.com/MustardSeedNetworks/seed/commit/559a3ec05c53bb1dae5b2bca3ae422016815f9ce))
+
+
+### Miscellaneous
+
+* **deps:** lock file maintenance ([#2090](https://github.com/MustardSeedNetworks/seed/issues/2090)) ([956dfb9](https://github.com/MustardSeedNetworks/seed/commit/956dfb98f11b72606ed66028bc5b5dba5e4d7f05))
+* **deps:** lock file maintenance ([#2106](https://github.com/MustardSeedNetworks/seed/issues/2106)) ([4b6e15c](https://github.com/MustardSeedNetworks/seed/commit/4b6e15c48d53086bab8a37cef15c125ee7ebab92))
+* **deps:** lock file maintenance ([#2108](https://github.com/MustardSeedNetworks/seed/issues/2108)) ([864ec71](https://github.com/MustardSeedNetworks/seed/commit/864ec719b0d02f0eda1de027856a4e34c19f97ec))
+* **dhcp:** remove the phantom Ack timing field ([#2095](https://github.com/MustardSeedNetworks/seed/issues/2095)) ([25b3f73](https://github.com/MustardSeedNetworks/seed/commit/25b3f735048d5446173e7343ab52d4f71c35032e)), closes [#2052](https://github.com/MustardSeedNetworks/seed/issues/2052)
+* **i18n:** adopt the shared gate from MustardSeedNetworks/.github ([#2088](https://github.com/MustardSeedNetworks/seed/issues/2088)) ([e7b1627](https://github.com/MustardSeedNetworks/seed/commit/e7b16279fba027dcc02bb08e4b55cdc9f5645fe0)), closes [#2073](https://github.com/MustardSeedNetworks/seed/issues/2073)
+
 ## [0.213.28](https://github.com/MustardSeedNetworks/seed/compare/v0.213.27...v0.213.28) (2026-08-25)
 
 
