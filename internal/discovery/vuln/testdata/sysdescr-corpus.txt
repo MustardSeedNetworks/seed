@@ -1,0 +1,125 @@
+3Com SuperStack 3
+3Com SuperStack 3 Switch 4500 50-Port Software Version 3Com OS V3.01.00s56p01
+3Com Switch 7758
+Alcatel-Lucent OS6850-P48X 6.4.4.373.R01 Service Release, August 02, 2011.
+Alcatel-Lucent OS9600/OS9700-CFM 6.4.3.779.R01 Service Release, June 24, 2011.
+Alcatel-Lucent OS9616/OS9716-CFM2 6.4.3.520.R01 GA, April 08, 2010.
+Alcatel-Lucent OS9800-CFM 6.4.3.779.R01 Service Release, June 24, 2011.
+Alcatel-Lucent OS9800E-CFM 6.4.3.520.R01 GA, April 08, 2010.
+Arista Networks EOS version 4.28.3M
+Aruba CX 6300 48G 4SFP56 Switch, ArubaOS-CX FL.10.10.1010
+Aruba CX 8360-48Y8C Switch, ArubaOS-CX FL.10.10.1010
+Brocade Communications Systems, Inc. FWS648G-POE, IronWare Version 07.0.01cT7e1 Compiled on Apr 19 2010 at 16:30:00 labeled as FGSL07001c
+Brocade Communications Systems, Inc. ICX6430-24-HPOE, IronWare Version 08.0.10dT311 Compiled on Jul 25 2014 at 11:45:37 labeled as ICX64S08010d
+Brocade Communications Systems, Inc. ICX6610-24F, IronWare Version 07.4.00cT7f3 Compiled on Feb 07 2013 at 11:31:26 labeled as FCXR07400c
+Brocade Communications Systems, Inc. Stacking System ICX6450-48-HPOE, IronWare Version 08.0.00aT313 Compiled on Jun 22 2013 at 18:24:15 labeled as ICX64R08000a
+Cisco Controller
+Cisco IOS Software [Gibraltar], Catalyst L3 Switch Software (CAT9K_IOSXE), Version 17.6.3, RELEASE SOFTWARE (fc4)
+Cisco IOS Software, 1841 Software (C1841-ADVENTERPRISEK9-M), Version 12.4(13a), RELEASE SOFTWARE (fc1)..Technical Support: http://www.cisco.com/techsupport..Copyright (c) 1986-2007 by Cisco Systems, Inc...Compiled Tue 06-Mar-07 14:51 by prod_rel_team
+Cisco IOS Software, 1841 Software (C1841-ADVENTERPRISEK9-M), Version 12.4(13a), RELEASE SOFTWARE (fc1)..Technical Support: http://www.cisco.niac-go.com/techsupport..Copyright (c) 1986-2007 by Cisco Systems, Inc...Compiled Tue 06-Mar-07 14:51 by prod_rel_team
+Cisco IOS Software, 2600 Software (C2691-ENTSERVICESK9-M), Version 12.4(13b), RELEASE SOFTWARE (fc3)
+Cisco IOS Software, 2800 Software (C2800NM-ADVENTERPRISEK9-M), Version 12.4(22)T1, RELEASE SOFTWARE (fc5)..Technical Support: http://www.cisco.com/techsupport..Copyright (c) 1986-2009 by Cisco Systems, Inc...Compiled Thu 26-Feb-09 19:47 by prod_rel_team
+Cisco IOS Software, 2800 Software (C2800NM-ADVENTERPRISEK9-M), Version 12.4(22)T1, RELEASE SOFTWARE (fc5)..Technical Support: http://www.cisco.niac-go.com/techsupport..Copyright (c) 1986-2009 by Cisco Systems, Inc...Compiled Thu 26-Feb-09 19:47 by prod_rel_team
+Cisco IOS Software, 2800 Software (C2800NM-ADVENTERPRISEK9-M), Version 12.4(24)T, RELEASE SOFTWARE (fc1)..Technical Support: http://www.cisco.com/techsupport..Copyright (c) 1986-2009 by Cisco Systems, Inc...Compiled Wed 25-Feb-09 17:54 by prod_rel_team
+Cisco IOS Software, 2800 Software (C2800NM-ADVENTERPRISEK9-M), Version 12.4(24)T, RELEASE SOFTWARE (fc1)..Technical Support: http://www.cisco.niac-go.com/techsupport..Copyright (c) 1986-2009 by Cisco Systems, Inc...Compiled Wed 25-Feb-09 17:54 by prod_rel_team
+Cisco IOS Software, 2800 Software (C2800NM-ADVENTERPRISEK9-M), Version 12.4(24)T2, RELEASE SOFTWARE (fc2)..Technical Support: http://www.cisco.com/techsupport..Copyright (c) 1986-2009 by Cisco Systems, Inc...Compiled Mon 19-Oct-09 17:38 by prod_rel_team
+Cisco IOS Software, 2800 Software (C2800NM-ADVENTERPRISEK9-M), Version 12.4(24)T2, RELEASE SOFTWARE (fc2)..Technical Support: http://www.cisco.niac-go.com/techsupport..Copyright (c) 1986-2009 by Cisco Systems, Inc...Compiled Mon 19-Oct-09 17:38 by prod_rel_team
+Cisco IOS Software, 3600 Software (C3640-IK9O3S-M), Version 12.4(13), RELEASE SOFTWARE (fc1)
+Cisco IOS Software, 3600 Software (C3660-JK9O3S-M), Version 12.4(12), RELEASE SOFTWARE (fc1)
+Cisco IOS Software, 3600 Software (C3660-JK9O3S-M), Version 12.4(25d), RELEASE SOFTWARE (fc1)
+Cisco IOS Software, 3700 Software (C3725-ADVENTERPRISEK9-M), Version 12.4(15)T14, RELEASE SOFTWARE (fc2)
+Cisco IOS Software, 3700 Software (C3725-ADVENTERPRISEK9-M), Version 12.4(15)T7, RELEASE SOFTWARE (fc3)
+Cisco IOS Software, 3700 Software (C3725-ADVSECURITYK9-M), Version 12.4(15)T12, RELEASE SOFTWARE (fc3)
+Cisco IOS Software, 3700 Software (C3745-ADVIPSERVICESK9-M), Version 12.4(25d), RELEASE SOFTWARE (fc1)
+Cisco IOS Software, 7200 Software (C7200-ADVENTERPRISEK9-M), Version 12.4(15)T13, RELEASE SOFTWARE (fc3)
+Cisco IOS Software, 7200 Software (C7200-ADVENTERPRISEK9-M), Version 12.4(24)T, RELEASE SOFTWARE (fc1)
+Cisco IOS Software, 7200 Software (C7200-ADVENTERPRISEK9-M), Version 15.2(4)M5, RELEASE SOFTWARE (fc2)
+Cisco IOS Software, 7200 Software (C7200-ADVENTERPRISEK9-M), Version 15.2(4)S5, RELEASE SOFTWARE (fc1)
+Cisco IOS Software, 7200 Software (C7200-ADVIPSERVICESK9-M), Version 12.2(33)SRE2, RELEASE SOFTWARE (fc1)
+Cisco IOS Software, 7200 Software (C7200-ADVIPSERVICESK9-M), Version 15.2(4)S5, RELEASE SOFTWARE (fc1)
+Cisco IOS Software, 7200 Software (C7200-JK9S-M), Version 12.4(13b), RELEASE SOFTWARE (fc3)
+Cisco IOS Software, C1200 Software (C1200-K9W7-M), Version 12.3(7)JA3, RELEASE SOFTWARE (fc1)..Technical Support: http://www.cisco.com/techsupport..Copyright (c) 1986-2006 by Cisco Systems, Inc...Compiled Tue 21-Mar-06 14:18 by ccai
+Cisco IOS Software, C1200 Software (C1200-K9W7-M), Version 12.3(7)JA3, RELEASE SOFTWARE (fc1)..Technical Support: http://www.cisco.niac-go.com/techsupport..Copyright (c) 1986-2006 by Cisco Systems, Inc...Compiled Tue 21-Mar-06 14:18 by ccai
+Cisco IOS Software, C1700 Software (C1700-ADVENTERPRISEK9-M), Version 12.4(8), RELEASE SOFTWARE (fc1)
+Cisco IOS Software, C2960 Software (C2960-LANBASEK9-M), Version 12.2(44)SE6, RELEASE SOFTWARE (fc1)..Copyright (c) 1986-2009 by Cisco Systems, Inc...Compiled Mon 09-Mar-09 18:10 by gereddy
+Cisco IOS Software, C2960 Software (C2960-LANBASEK9-M), Version 12.2(50)SE1, RELEASE SOFTWARE (fc2)..Copyright (c) 1986-2009 by Cisco Systems, Inc...Compiled Mon 06-Apr-09 08:36 by amvarma
+Cisco IOS Software, C3550 Software (C3550-IPSERVICESK9-M), Version 12.2(50)SE, RELEASE SOFTWARE (fc1)..Copyright (c) 1986-2009 by Cisco Systems, Inc...Compiled Sat 28-Feb-09 04:04 by weiliu
+Cisco IOS Software, C3560 Software (C3560-IPSERVICESK9-M), Version 12.2(50)SE1, RELEASE SOFTWARE (fc2)..Copyright (c) 1986-2009 by Cisco Systems, Inc...Compiled Mon 06-Apr-09 08:00 by amvarma
+Cisco IOS Software, C3560E Software (C3560E-UNIVERSALK9-M), Version 12.2(50)SE4, RELEASE SOFTWARE (fc1)..Technical Support: http://www.cisco.com/techsupport..Copyright (c) 1986-2010 by Cisco Systems, Inc...Compiled Fri 26-Mar-10 07:53 by prod_rel_team
+Cisco IOS Software, C3560E Software (C3560E-UNIVERSALK9-M), Version 12.2(50)SE4, RELEASE SOFTWARE (fc1)..Technical Support: http://www.cisco.niac-go.com/techsupport..Copyright (c) 1986-2010 by Cisco Systems, Inc...Compiled Fri 26-Mar-10 07:53 by prod_rel_team
+Cisco IOS Software, C3650 Software (C3650-UNIVERSALK9-M), Version 16.12.4, RELEASE SOFTWARE (fc5)
+Cisco IOS Software, C3750 Software (C3750-IPBASE-M), Version 12.2(25)SEE3, RELEASE SOFTWARE (fc2)..Copyright (c) 1986-2007 by Cisco Systems, Inc...Compiled Thu 22-Feb-07 15:04 by myl
+Cisco IOS Software, C3750 Software (C3750-IPSERVICESK9-M), Version 12.2(50)SE2, RELEASE SOFTWARE (fc2)..Copyright (c) 1986-2009 by Cisco Systems, Inc...Compiled Fri 15-May-09 21:29 by nachen
+Cisco IOS Software, C3750 Software (C3750-IPSERVICESK9-M), Version 12.2(55)SE3, RELEASE SOFTWARE (fc1)..Technical Support: http://www.cisco.com/techsupport..Copyright (c) 1986-2011 by Cisco Systems, Inc...Compiled Thu 05-May-11 16:29 by prod_rel_team
+Cisco IOS Software, C3750 Software (C3750-IPSERVICESK9-M), Version 12.2(55)SE3, RELEASE SOFTWARE (fc1)..Technical Support: http://www.cisco.niac-go.com/techsupport..Copyright (c) 1986-2011 by Cisco Systems, Inc...Compiled Thu 05-May-11 16:29 by prod_rel_team
+Cisco IOS Software, C3850 Software (C3850-UNIVERSALK9-M), Version 16.12.4, RELEASE SOFTWARE (fc5)
+Cisco IOS Software, C3900 Software (C3900-UNIVERSALK9-M), Version 15.2(4)M1, RELEASE SOFTWARE (fc1)..Technical Support: http://www.cisco.com/techsupport..Copyright (c) 1986-2012 by Cisco Systems, Inc...Compiled Thu 26-Jul-12 23:35 by prod_rel_team
+Cisco IOS Software, C3900 Software (C3900-UNIVERSALK9-M), Version 15.2(4)M1, RELEASE SOFTWARE (fc1)..Technical Support: http://www.cisco.niac-go.com/techsupport..Copyright (c) 1986-2012 by Cisco Systems, Inc...Compiled Thu 26-Jul-12 23:35 by prod_rel_team
+Cisco IOS Software, Catalyst 4500 L3 Switch Software (cat4500e-UNIVERSAL-M), Version 15.0(1)XO1, RELEASE SOFTWARE (fc1)..Technical Support: http://www.cisco.com/techsupport..Copyright (c) 1986-2010 by Cisco Systems, Inc...Compiled Tue 14-Dec-10 21:30 by p
+Cisco IOS Software, Catalyst 4500 L3 Switch Software (cat4500e-UNIVERSAL-M), Version 15.0(1)XO1, RELEASE SOFTWARE (fc1)..Technical Support: http://www.cisco.niac-go.com/techsupport..Copyright (c) 1986-2010 by Cisco Systems, Inc...Compiled Tue 14-Dec-10 21:30 by p
+Cisco IOS Software, IES Software (IES-LANBASEK9-M), Version 12.2(58)SE2, RELEASE SOFTWARE (fc1)..Technical Support: http://www.cisco.com/techsupport..Copyright (c) 1986-2011 by Cisco Systems, Inc...Compiled Thu 21-Jul-11 00:59 by prod_rel_team
+Cisco IOS Software, IES Software (IES-LANBASEK9-M), Version 12.2(58)SE2, RELEASE SOFTWARE (fc1)..Technical Support: http://www.cisco.niac-go.com/techsupport..Copyright (c) 1986-2011 by Cisco Systems, Inc...Compiled Thu 21-Jul-11 00:59 by prod_rel_team
+Cisco IOS Software, IOSv Software (VIOS-ADVENTERPRISEK9-M), Version 15.9(3)M6, RELEASE SOFTWARE (fc1)
+Cisco IOS Software, Linux Software (I86BI_LINUX-ADVENTERPRISEK9-M), Version 15.4(2)T, DEVELOPMENT TEST SOFTWARE
+Cisco IOS Software, Linux Software (I86BI_LINUX-ADVENTERPRISEK9-M), Version 15.5(2)T, DEVELOPMENT TEST SOFTWARE
+Cisco IOS Software, Linux Software (I86BI_LINUXL2-ADVIPSERVICESK9-M), Version 15.2(CML_NIGHTLY_20151103)FLO_DSGS7, EARLY DEPLOYMENT DEVELOPMENT BUILD, synced to  FLO_DSGS7_POSTCOLLAPSE_TEAM_TRACK_DSGS_PI5
+Cisco IOS Software, Solaris Software (I86BI_LINUXL2-ADVENTERPRISEK9-M), Experimental Version 15.1(20130726:213425) [dstivers-july26-2013-team_track 104]
+Cisco IOS Software, s2t54 Software (s2t54-IPBASEK9-M), Version 15.0(1)SY1, RELEASE SOFTWARE (fc4)..Technical Support: http://www.cisco.com/techsupport..Copyright (c) 1986-2012 by Cisco Systems, Inc...Compiled Thu 16-Feb-12 21:36 by prod_rel_team
+Cisco IOS Software, s2t54 Software (s2t54-IPBASEK9-M), Version 15.0(1)SY1, RELEASE SOFTWARE (fc4)..Technical Support: http://www.cisco.niac-go.com/techsupport..Copyright (c) 1986-2012 by Cisco Systems, Inc...Compiled Thu 16-Feb-12 21:36 by prod_rel_team
+Cisco IOS Software, s72033_rp Software (s72033_rp-ADVIPSERVICESK9_WAN-M), Version 12.2(33)SXI3, RELEASE SOFTWARE (fc2)..Technical Support: http://www.cisco.com/techsupport..Copyright (c) 1986-2009 by Cisco Systems, Inc...Compiled Tue 27-Oct-09 11:11 by pr
+Cisco IOS Software, s72033_rp Software (s72033_rp-ADVIPSERVICESK9_WAN-M), Version 12.2(33)SXI3, RELEASE SOFTWARE (fc2)..Technical Support: http://www.cisco.niac-go.com/techsupport..Copyright (c) 1986-2009 by Cisco Systems, Inc...Compiled Tue 27-Oct-09 11:11 by pr
+Cisco IOS Software, vios_l2 Software (vios_l2-ADVENTERPRISEK9-M), Experimental Version 15.2(20200924:215240) [sweickge-sep24-2020-l2iol-release 135]
+Cisco Internetwork Operating System Software ..IOS (tm) C2600 Software (C2600-IK9O3S3-M), Version 12.3(26), RELEASE SOFTWARE (fc2)..Technical Support: http://www.cisco.com/techsupport..Copyright (c) 1986-2008 by cisco Systems, Inc...Compiled Mon 17-Mar-08
+Cisco Internetwork Operating System Software ..IOS (tm) C2600 Software (C2600-IK9O3S3-M), Version 12.3(26), RELEASE SOFTWARE (fc2)..Technical Support: http://www.cisco.niac-go.com/techsupport..Copyright (c) 1986-2008 by cisco Systems, Inc...Compiled Mon 17-Mar-08
+Cisco Internetwork Operating System Software ..IOS (tm) C2900XL Software (C2900XL-C3H2S-M), Version 12.0(5)WC17, RELEASE SOFTWARE (fc1)..Copyright (c) 1986-2007 by cisco Systems, Inc...Compiled Tue 13-Feb-07 15:27 by antonino
+Cisco Internetwork Operating System Software ..IOS (tm) C2950 Software (C2950-I6K2L2Q4-M), Version 12.1(22)EA13, RELEASE SOFTWARE (fc2)..Technical Support: http://www.cisco.com/techsupport..Copyright (c) 1986-2009 by cisco Systems, Inc...Compiled Fri 27-F
+Cisco Internetwork Operating System Software ..IOS (tm) C2950 Software (C2950-I6K2L2Q4-M), Version 12.1(22)EA13, RELEASE SOFTWARE (fc2)..Technical Support: http://www.cisco.niac-go.com/techsupport..Copyright (c) 1986-2009 by cisco Systems, Inc...Compiled Fri 27-F
+Cisco Internetwork Operating System Software ..IOS (tm) C3500XL Software (C3500XL-C3H2S-M), Version 12.0(5)WC17, RELEASE SOFTWARE (fc1)..Copyright (c) 1986-2007 by cisco Systems, Inc...Compiled Tue 13-Feb-07 15:04 by antonino
+Cisco Internetwork Operating System Software ..IOS (tm) C3500XL Software (C3500XL-C3H2S-M), Version 12.0(5)WC9, RELEASE SOFTWARE (fc1)..Copyright (c) 1986-2003 by cisco Systems, Inc...Compiled Fri 19-Sep-03 10:01 by antonino
+Cisco Meraki MS390-48UXB Cloud-Managed Aggregation Switch, firmware 15.21
+Cisco Meraki MS425-48 Cloud-Managed Aggregation Switch, firmware 15.21
+Cisco NX-OS(tm) n4000, Software (n4000-bk9), Version 4.1(2)E1(1d), RELEASE SOFTWARE Copyright (c) 2002-2008 by Cisco Systems, Inc. Device Manager Version nms.sro not found,  Compiled 6/4/2010 16:00:00
+Cisco NX-OS(tm) n5000, Software (n5000-uk9), Version 4.2(1)N1(1), RELEASE SOFTWARE Copyright (c) 2002-2010 by Cisco Systems, Inc. Device Manager Version 5.0(1a),  Compiled 4/29/2010 19:00:00
+Cisco NX-OS(tm) n5000, Software (n5000-uk9), Version 5.0(2)N2(1), RELEASE SOFTWARE Copyright (c) 2002-2010 by Cisco Systems, Inc. Device Manager Version 5.0(4a),  Compiled 12/18/2010 23:00:00
+Cisco NX-OS(tm) n7000, Software (n7000-s1-dk9), Version 5.1(3), RELEASE SOFTWARE Copyright (c) 2002-2010 by Cisco Systems, Inc. Compiled 1/21/2011 19:00:00
+Cisco Nexus Operating System (NX-OS) Software, Version 9.3(8)
+Cisco Systems, Inc. WS-C2948.Cisco Catalyst Operating System Software, Version 6.3(7).Copyright (c) 1995-2002 by Cisco Systems, Inc..
+Dell EMC Networking N3248TE-ON, OS10 Enterprise 10.5.3.4
+Dell EMC Networking S5248F-ON, OS10 Enterprise 10.5.3.4
+Dell Force10 OS..Operating System Version: 1.0..Application Software Version: 8.3.5.3..Series: S55..Copyright (c) 1999-2012 by Dell Inc. All Rights Reserved...Build Time: Fri Nov 30 15:23:43 2012
+ExtremeXOS (BD-8810) version 15.3.3.5 v1533b5-patch1-3 by release-manager on Fri Jan 17 21:17:43 EST 2014
+ExtremeXOS (X440-8p) version 15.3.3.5 v1533b5-patch1-3 by release-manager on Fri Jan 17 21:12:32 EST 2014
+ExtremeXOS (X460-48p) version 15.3.3.5 v1533b5-patch1-3 by release-manager on Fri Jan 17 21:12:32 EST 2014
+ExtremeXOS (X465-48W) version 32.3.1.4 by release-manager on Thu Nov  4 19:18:03 EDT 2021
+Force10 Networks Real Time Operating System Software..Force10 Operating System Version: 1.0..Force10 Application Software Version: 7.8.1.3..Copyright (c) 1999-2008 by Force10 Networks, Inc...Build Time: Fri Aug 14 12:23:41 PDT 2009
+FortiSwitch-448E-FPOE v7.2.3,build0517,221201 (GA)
+FortiSwitch-548D-FPOE v7.2.3,build0517,221201 (GA)
+GS110TP
+GS2 Firewall
+GSM7212 L2 Managed Gigabit Switch
+H3C Comware Platform Software, Software Version 5.20, Feature 1209L22..H3C S10508..Copyright (c) 2004-2015 Hangzhou H3C Tech. Co., Ltd. All rights reserved.
+HP J4850A ProCurve Switch 5304XL, revision E.10.74, ROM E.05.05 (/sw/code/build/alpmo(m35))
+HP J9574A 3800-48G-PoE+-4SFP+ Switch, revision KA.15.10.0013m, ROM KA.15.09 (/ws/swbuildm/KA_maint_irvine_m_qaoff/code/build/tam(swbuildm_KA_maint_irvine_m_qaoff_maint_irvine_m)) (Formerly ProCurve)
+HPE Aruba 2930F 48G 4SFP+ Switch, FL.16.11.0009
+HPE Aruba CX 6300M 48G Class 4 PoE 4SFP56 Switch, ArubaOS-CX FL.10.11.1020
+Hardware:7816H3, 1 Intel(R) Celeron(R) D CPU 3.20GHz, 2048 MB Memory: Software:UCOS 3.0.0.0-42
+Huawei Versatile Routing Platform Software Version 3.10..Quidway S3050C Product Version 3050C-0020..Copyright (c) 2000-2004 By HUAWEI TECH CO., LTD...Compiled Jul 22 2004 11:42:51, RELEASE SOFTWARE..
+Juniper Networks, Inc. ex3200-24t internet router, kernel JUNOS 10.0R2.10 #0: 2009-12-12 15:43:41 UTC     builder@ormonth.juniper.net:/volume/build/junos/10.0/release/10.0R2.10/obj-powerpc/bsd/sys/compile/JUNIPER-EX Build date: 2009-12-12 15:18:42 UTC Co
+Juniper Networks, Inc. ex3200-24t internet router, kernel JUNOS 10.0R2.10 #0: 2009-12-12 15:43:41 UTC     builder@ormonth.juniper.niac-go.com:/volume/build/junos/10.0/release/10.0R2.10/obj-powerpc/bsd/sys/compile/JUNIPER-EX Build date: 2009-12-12 15:18:42 UTC Co
+Juniper Networks, Inc. ex4300-48p Ethernet Switch, kernel JUNOS 20.4R3.8, Build date: 2021-10-15
+Juniper Networks, Inc. qfx5100-48s-6q Ethernet Switch, kernel JUNOS 20.4R3.8
+Linux COS-LAB-VH1.localdomain.local 2.4.21-57.ELvmnix #1 Tue Aug 12 17:28:03 PDT 2008 i686
+Linux COS-LAB-VH1.localdomain.niac-go.local 2.4.21-57.ELvmnix #1 Tue Aug 12 17:28:03 PDT 2008 i686
+Linux Oracle Server 2.6.32-504.3.3.el6.x86_64 #1 SMP Wed Dec 17 01:55:02 UTC 2014 x86_64
+Meraki MS42P Cloud Managed 48 Port GigE POE Switch
+Palo Alto Networks PA-440 firewall, PAN-OS 10.2.3
+PowerConnect 5224
+PowerConnect 6224, 3.3.4.1, VxWorks 6.5
+ProCurve J4850A Switch 5304XL, revision E.11.38, ROM E.05.05 (/sw/code/build/alpmo)
+RouterOS CHR
+RouterOS RB750
+SG500-28 28-Port Gigabit Stackable Managed Switch
+VMware ESXi 5.5.0 build-1331820 VMware, Inc. x86_64
+ZXR10 ROS Version V4.08.23 ZXR10 6902 Software, Version ZXR10 G-Series&8900&6900 V2.8.02.C.32.P11 Copyright (c) 2001-2009 by ZTE Corporation Compiled May 28 2010, 11:14:23
+jp-exxre-00
+niac-core-dev-41

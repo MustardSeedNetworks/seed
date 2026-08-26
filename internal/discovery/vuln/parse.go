@@ -15,7 +15,11 @@ const (
 )
 
 // parseCDPVersion extracts product and version from Cisco CDP info
-// Example: Platform="Cisco 2960", Version="15.2(4)E" → "cisco-ios", "15.2(4)E".
+// Example: Platform="cisco WS-C2960-24TT-L",
+// Version="Cisco IOS Software, Version 12.2(58)SE2" → "cisco-ios", "12.2(58)SE2".
+// A platform with no OS named in either field stays "cisco-device": CDP does not
+// promise to say which OS is running, and guessing would file the device's CVEs
+// under the wrong product.
 func parseCDPVersion(platform, softwareVersion string) (string, string) {
 	if softwareVersion == "" {
 		return "", ""
@@ -37,11 +41,11 @@ func parseCDPVersion(platform, softwareVersion string) (string, string) {
 		}
 	}
 
-	// Extract version number (e.g., "15.2(4)E" from "Cisco IOS Software, Version 15.2(4)E")
-	versionPattern := regexp.MustCompile(`\d+\.\d+[\(\)\w]*`)
-	matches := versionPattern.FindString(softwareVersion)
-	if matches != "" {
-		return product, matches
+	// Shared extractor rather than a local pattern: the one that used to live
+	// here could not cross a second dot, so "16.9.4" was reported as "16.9" and
+	// looked up against the wrong release's CVEs.
+	if version := extractVersion(softwareVersion); version != "" {
+		return product, version
 	}
 
 	return product, softwareVersion
@@ -54,13 +58,12 @@ func parseEDPVersion(softwareVersion string) (string, string) {
 		return "", ""
 	}
 
-	// Pattern: "ProductName X.Y.Z.W"
-	pattern := regexp.MustCompile(`^(\w+)\s+([\d.]+)`)
+	// Product name first, version from the shared extractor.
+	pattern := regexp.MustCompile(`^(\w+)\s`)
 	matches := pattern.FindStringSubmatch(softwareVersion)
-	if len(matches) >= vulnRegexMatchCount3 {
-		product := strings.ToLower(matches[1])
-		version := matches[2]
-		return product, version
+	if version := extractVersion(softwareVersion); version != "" &&
+		len(matches) >= vulnRegexMatchCount2 {
+		return strings.ToLower(matches[1]), version
 	}
 
 	return "extreme-device", softwareVersion
@@ -68,8 +71,10 @@ func parseEDPVersion(softwareVersion string) (string, string) {
 
 // parseSNMPSysDescr extracts product and version from SNMP sysDescr
 // Example formats:
-// - "Cisco IOS Software, Version 15.2(4)M" → "cisco-ios", "15.2(4)M".
-// - "HP J9729A 2920-48G Switch, revision WB.16.04.0008" → "hp-2920", "WB.16.04.0008".
+// - "Cisco IOS Software, Version 15.2(4)M" → "cisco-ios", "15.2(4)m".
+// - "HP J9729A 2920-48G Switch, revision WB.16.04.0008" → "hp-2920", "wb.16.04.0008".
+// Output is lowercased: sysDescr is folded before matching, and CPE lookups
+// are case-insensitive.
 // snmpVendorMatcher defines a pattern for extracting product/version from SNMP sysDescr.
 type snmpVendorMatcher struct {
 	keywords      []string
@@ -91,21 +96,26 @@ func getSNMPVendorMatchers() []snmpVendorMatcher {
 		},
 		{
 			[]string{"hp"},
-			regexp.MustCompile(`(\d+\w*)\s+switch.*?revision\s+([\w.]+)`),
+			// (\d+)[\w-]* rather than (\d+\w*): \w does not cross the hyphen in
+			// "2920-48g", so the engine backtracked and captured "48g" — the port
+			// count — as the model number.
+			regexp.MustCompile(`(\d+)[\w-]*\s+switch.*?revision\s+([\w.]+)`),
 			"hp-switch",
 			2,
 			"hp-",
 		},
 		{
 			[]string{"aruba"},
-			regexp.MustCompile(`(\d+\w*)\s+switch.*?revision\s+([\w.]+)`),
+			regexp.MustCompile(`(\d+)[\w-]*\s+switch.*?revision\s+([\w.]+)`),
 			"hp-switch",
 			2,
 			"hp-",
 		},
 		{
 			[]string{"juniper", "junos"},
-			regexp.MustCompile(`junos\s+([\d.X-]+)`),
+			// parseSNMPSysDescr lowercases before matching, so an uppercase X in
+			// the class never matched and "12.1X47-D15.4" was truncated to "12.1".
+			regexp.MustCompile(`junos\s+(\d[\w.-]*)`),
 			"juniper-junos",
 			1,
 			"",
@@ -114,25 +124,33 @@ func getSNMPVendorMatchers() []snmpVendorMatcher {
 }
 
 // matchVendorKeywords checks if all keywords match in the sysDescr.
+//
+// Word-delimited, not substring: [strings.Contains] matched "hp" inside
+// "ICX6430-24-HPOE", so every Brocade switch in the corpus was reported as an
+// HP switch and looked up against the wrong vendor's CVEs.
 func matchVendorKeywords(sysDescr string, keywords []string) bool {
 	for _, kw := range keywords {
-		if !strings.Contains(sysDescr, kw) {
+		if !containsWord(sysDescr, kw) {
 			return false
 		}
 	}
 	return true
 }
 
-// extractVendorProductVersion extracts product and version from a matcher's pattern match.
-func extractVendorProductVersion(m snmpVendorMatcher, matches []string) (string, string) {
-	if len(matches) > m.versionGroup {
-		productName := m.product
-		if m.productPrefix != "" && len(matches) > 1 {
-			productName = m.productPrefix + matches[1]
-		}
-		return productName, matches[m.versionGroup]
+// extractVendorProductVersion names the product from a matcher's model capture
+// and takes the version from the shared extractor.
+//
+// The matchers used to carry their own version capture group, which is where
+// the per-vendor version bugs lived — an uppercase X against lowercased input,
+// a class that could not cross a second dot, a pattern that only fired on the
+// one keyword its author expected. The model is vendor-shaped and stays here;
+// the version is not, and does not.
+func extractVendorProductVersion(m snmpVendorMatcher, matches []string, sysDescr string) (string, string) {
+	productName := m.product
+	if m.productPrefix != "" && len(matches) > 1 {
+		productName = m.productPrefix + matches[1]
 	}
-	return m.product, ""
+	return productName, extractVersion(sysDescr)
 }
 
 // matchSNMPVendor attempts to match sysDescr against vendor-specific patterns.
@@ -143,7 +161,7 @@ func matchSNMPVendor(sysDescr string) (string, string, bool) {
 			continue
 		}
 		matches := m.pattern.FindStringSubmatch(sysDescr)
-		product, version := extractVendorProductVersion(m, matches)
+		product, version := extractVendorProductVersion(m, matches, sysDescr)
 		return product, version, true
 	}
 	return "", "", false
@@ -152,31 +170,31 @@ func matchSNMPVendor(sysDescr string) (string, string, bool) {
 // extractGenericVendorVersion extracts version from sysDescr for known generic vendors.
 // Returns vendor, version, and whether a match was found.
 func extractGenericVendorVersion(sysDescr string) (string, string, bool) {
-	vendors := []string{"cisco", "juniper", "arista", "dell", "fortinet", "paloalto", "mikrotik"}
-	versionPattern := regexp.MustCompile(`\b(v?[\d.]+[\d.a-zA-Z()-]*)\b`)
+	// Every entry below appears in testdata/sysdescr-corpus.txt. This list is
+	// data-driven on purpose: adding vendors nobody has actually seen is how a
+	// table like this turns into speculation nobody can verify.
+	//
+	// Order matters where one name contains another — "extremexos" must be
+	// tried before "extreme", or an ExtremeXOS switch is reported as the
+	// less specific product.
+	vendors := []string{
+		"extremexos", "arubaos-cx", "arubaos", "pan-os", "palo alto",
+		"fortiswitch", "fortigate", "fortios", "fortinet",
+		"cisco", "juniper", "arista", "dell", "mikrotik", "routeros",
+		"brocade", "extreme", "netgear", "ubiquiti", "zte", "alcatel-lucent",
+		"huawei", "vmware", "3com", "force10", "h3c", "linux",
+	}
 
 	for _, vendor := range vendors {
-		if !strings.Contains(sysDescr, vendor) {
+		if !containsWord(sysDescr, vendor) {
 			continue
 		}
-		version := findValidVersion(versionPattern, sysDescr)
-		return vendor, version, true
+		return vendor, extractVersion(sysDescr), true
 	}
 	return "", "", false
 }
 
-// findValidVersion searches for a valid version string in sysDescr.
-func findValidVersion(pattern *regexp.Regexp, sysDescr string) string {
-	matches := pattern.FindAllStringSubmatch(sysDescr, -1)
-	for _, match := range matches {
-		if len(match[1]) > 2 && strings.Contains(match[1], ".") {
-			return match[1]
-		}
-	}
-	return ""
-}
-
-// - "Juniper Networks, Inc. srx240h2 internet router, kernel JUNOS 12.1X47-D15.4" → "juniper-junos", "12.1X47-D15.4".
+// - "Juniper ... kernel JUNOS 12.1X47-D15.4" → "juniper-junos", "12.1x47-d15.4".
 func parseSNMPSysDescr(sysDescr string) (string, string) {
 	if sysDescr == "" {
 		return "", ""
@@ -197,7 +215,7 @@ func parseSNMPSysDescr(sysDescr string) (string, string) {
 }
 
 // parseLLDPDescription extracts product and version from LLDP system description
-// Example: "ProCurve J9850A Switch 2910al-48G, revision WB.16.04" → "procurve-2910", "WB.16.04".
+// Example: "ProCurve J9850A Switch 2910al-48G, revision WB.16.04" → "procurve-2910", "wb.16.04".
 func parseLLDPDescription(description string) (string, string) {
 	if description == "" {
 		return "", ""
@@ -205,29 +223,22 @@ func parseLLDPDescription(description string) (string, string) {
 
 	description = strings.ToLower(description)
 
-	// HP/Aruba ProCurve pattern
-	if strings.Contains(description, "procurve") {
-		pattern := regexp.MustCompile(`procurve.*?(\d+\w*),.*?revision\s+([\w.]+)`)
-		matches := pattern.FindStringSubmatch(description)
-		if len(matches) >= vulnRegexMatchCount3 {
-			return "procurve-" + matches[1], matches[2]
+	version := extractVersion(description)
+
+	// HP/Aruba ProCurve: the model number identifies the product.
+	if containsWord(description, "procurve") {
+		pattern := regexp.MustCompile(`procurve.*?(\d+)[\w-]*,`)
+		if matches := pattern.FindStringSubmatch(description); len(matches) >= vulnRegexMatchCount2 {
+			return "procurve-" + matches[1], version
 		}
 	}
 
-	// Juniper pattern: "Juniper Networks, Inc. ex2200-48t-4g Ethernet Switch, kernel JUNOS 12.3R12.4"
-	if strings.Contains(description, "juniper") || strings.Contains(description, "junos") {
-		pattern := regexp.MustCompile(`junos\s+([\d.R]+)`)
-		matches := pattern.FindStringSubmatch(description)
-		if len(matches) >= vulnRegexMatchCount2 {
-			return "junos", matches[1]
-		}
+	if containsWord(description, "juniper") || containsWord(description, "junos") {
+		return "junos", version
 	}
 
-	// Generic version pattern
-	versionPattern := regexp.MustCompile(`version\s+([\d.]+)`)
-	matches := versionPattern.FindStringSubmatch(description)
-	if len(matches) >= vulnRegexMatchCount2 {
-		return "network-device", matches[1]
+	if version != "" {
+		return "network-device", version
 	}
 
 	return "", ""
@@ -308,7 +319,9 @@ func parseOSGuess(osGuess string) (string, string) {
 		pattern := regexp.MustCompile(`linux\s+([\d.]+)`)
 		matches := pattern.FindStringSubmatch(osGuess)
 		if len(matches) >= vulnRegexMatchCount2 {
-			version := strings.TrimSuffix(matches[1], ".x")
+			// TrimRight, not TrimSuffix(".x"): [\d.]+ already consumed the dot
+			// and stopped before the x, so the capture is "2.6." not "2.6.x".
+			version := strings.TrimRight(matches[1], ".")
 			return "linux-kernel", version
 		}
 		return "linux-kernel", ""
