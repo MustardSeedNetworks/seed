@@ -11,20 +11,26 @@ import (
 )
 
 func TestGetHealth(t *testing.T) {
-	health, err := system.GetHealth()
+	c := system.NewCollector()
+	defer func() { _ = c.Close() }()
+
+	health, err := c.Health()
 	if err != nil {
-		t.Fatalf("GetHealth() returned error: %v", err)
+		t.Fatalf("Health() returned error: %v", err)
 	}
 
 	if health == nil {
-		t.Fatal("GetHealth() returned nil health")
+		t.Fatal("Health() returned nil health")
 	}
 }
 
 func TestGetHealthRuntimeFields(t *testing.T) {
-	health, err := system.GetHealth()
+	c := system.NewCollector()
+	defer func() { _ = c.Close() }()
+
+	health, err := c.Health()
 	if err != nil {
-		t.Fatalf("GetHealth() returned error: %v", err)
+		t.Fatalf("Health() returned error: %v", err)
 	}
 
 	tests := []struct {
@@ -85,9 +91,12 @@ func TestGetHealthRuntimeFields(t *testing.T) {
 }
 
 func TestGetHealthRuntimeValuesMatchGo(t *testing.T) {
-	health, err := system.GetHealth()
+	c := system.NewCollector()
+	defer func() { _ = c.Close() }()
+
+	health, err := c.Health()
 	if err != nil {
-		t.Fatalf("GetHealth() returned error: %v", err)
+		t.Fatalf("Health() returned error: %v", err)
 	}
 
 	// Verify runtime values match Go runtime
@@ -110,9 +119,12 @@ func TestGetHealthRuntimeValuesMatchGo(t *testing.T) {
 }
 
 func TestGetHealthMetricsInRange(t *testing.T) {
-	health, err := system.GetHealth()
+	c := system.NewCollector()
+	defer func() { _ = c.Close() }()
+
+	health, err := c.Health()
 	if err != nil {
-		t.Fatalf("GetHealth() returned error: %v", err)
+		t.Fatalf("Health() returned error: %v", err)
 	}
 
 	tests := []struct {
@@ -136,9 +148,12 @@ func TestGetHealthMetricsInRange(t *testing.T) {
 }
 
 func TestGetHealthMemoryStats(t *testing.T) {
-	health, err := system.GetHealth()
+	c := system.NewCollector()
+	defer func() { _ = c.Close() }()
+
+	health, err := c.Health()
 	if err != nil {
-		t.Fatalf("GetHealth() returned error: %v", err)
+		t.Fatalf("Health() returned error: %v", err)
 	}
 
 	// Memory stats may not be available in all environments (containers, sandboxes)
@@ -159,9 +174,12 @@ func TestGetHealthMemoryStats(t *testing.T) {
 }
 
 func TestGetHealthDiskStats(t *testing.T) {
-	health, err := system.GetHealth()
+	c := system.NewCollector()
+	defer func() { _ = c.Close() }()
+
+	health, err := c.Health()
 	if err != nil {
-		t.Fatalf("GetHealth() returned error: %v", err)
+		t.Fatalf("Health() returned error: %v", err)
 	}
 
 	// Disk used should be less than or equal to total
@@ -176,9 +194,12 @@ func TestGetHealthDiskStats(t *testing.T) {
 }
 
 func TestGetHealthLoadAverages(t *testing.T) {
-	health, err := system.GetHealth()
+	c := system.NewCollector()
+	defer func() { _ = c.Close() }()
+
+	health, err := c.Health()
 	if err != nil {
-		t.Fatalf("GetHealth() returned error: %v", err)
+		t.Fatalf("Health() returned error: %v", err)
 	}
 
 	// Load averages should be non-negative
@@ -196,9 +217,12 @@ func TestGetHealthLoadAverages(t *testing.T) {
 }
 
 func TestGetHealthUptime(t *testing.T) {
-	health, err := system.GetHealth()
+	c := system.NewCollector()
+	defer func() { _ = c.Close() }()
+
+	health, err := c.Health()
 	if err != nil {
-		t.Fatalf("GetHealth() returned error: %v", err)
+		t.Fatalf("Health() returned error: %v", err)
 	}
 
 	// Uptime should be greater than 0 (system has been running for some time)
@@ -210,13 +234,16 @@ func TestGetHealthUptime(t *testing.T) {
 func TestGetHealthMultipleCalls(t *testing.T) {
 	// Test that multiple calls don't panic or error
 	for i := range 5 {
-		health, err := system.GetHealth()
+		c := system.NewCollector()
+		defer func() { _ = c.Close() }()
+
+		health, err := c.Health()
 		if err != nil {
-			t.Fatalf("GetHealth() call %d returned error: %v", i+1, err)
+			t.Fatalf("Health() call %d returned error: %v", i+1, err)
 		}
 
 		if health == nil {
-			t.Fatalf("GetHealth() call %d returned nil", i+1)
+			t.Fatalf("Health() call %d returned nil", i+1)
 		}
 	}
 }
@@ -503,7 +530,10 @@ func TestGetHealthConcurrency(t *testing.T) {
 	for range numGoroutines {
 		go func() {
 			defer wg.Done()
-			health, err := system.GetHealth()
+			c := system.NewCollector()
+			defer func() { _ = c.Close() }()
+
+			health, err := c.Health()
 			if err != nil {
 				errChan <- err
 				return
@@ -520,21 +550,24 @@ func TestGetHealthConcurrency(t *testing.T) {
 
 	for err := range errChan {
 		if err != nil {
-			t.Errorf("Concurrent GetHealth() call failed: %v", err)
+			t.Errorf("Concurrent Health() call failed: %v", err)
 		}
 	}
 }
 
 func TestGetHealthConsistency(t *testing.T) {
 	// Test that GetHealth returns consistent static values
-	health1, err := system.GetHealth()
+	c := system.NewCollector()
+	defer func() { _ = c.Close() }()
+
+	health1, err := c.Health()
 	if err != nil {
-		t.Fatalf("First GetHealth() call failed: %v", err)
+		t.Fatalf("First Health() call failed: %v", err)
 	}
 
-	health2, err := system.GetHealth()
+	health2, err := c.Health()
 	if err != nil {
-		t.Fatalf("Second GetHealth() call failed: %v", err)
+		t.Fatalf("Second Health() call failed: %v", err)
 	}
 
 	// These values should be identical between calls
@@ -557,18 +590,21 @@ func TestGetHealthCPUSampling(t *testing.T) {
 	// This exercises the background CPU sampler
 
 	// First call initializes the sampler
-	health1, err := system.GetHealth()
+	c := system.NewCollector()
+	defer func() { _ = c.Close() }()
+
+	health1, err := c.Health()
 	if err != nil {
-		t.Fatalf("First GetHealth() call failed: %v", err)
+		t.Fatalf("First Health() call failed: %v", err)
 	}
 
 	// Wait a bit for the sampler to potentially update
 	time.Sleep(150 * time.Millisecond)
 
 	// Second call should return cached or updated CPU value
-	health2, err := system.GetHealth()
+	health2, err := c.Health()
 	if err != nil {
-		t.Fatalf("Second GetHealth() call failed: %v", err)
+		t.Fatalf("Second Health() call failed: %v", err)
 	}
 
 	// Both should have valid CPU percentages in range
@@ -590,9 +626,12 @@ func TestGetHealthCPUSamplerTicker(t *testing.T) {
 
 	// Make several calls spaced out to exercise the sampler
 	for i := range 3 {
-		health, err := system.GetHealth()
+		c := system.NewCollector()
+		defer func() { _ = c.Close() }()
+
+		health, err := c.Health()
 		if err != nil {
-			t.Fatalf("GetHealth() call %d failed: %v", i+1, err)
+			t.Fatalf("Health() call %d failed: %v", i+1, err)
 		}
 
 		if health.CPUPercent < 0 || health.CPUPercent > 100 {
@@ -607,9 +646,12 @@ func TestGetHealthCPUSamplerTicker(t *testing.T) {
 
 func TestGetHealthProcessMemory(t *testing.T) {
 	// Test that ProcessMemory (Go runtime memory) is reported correctly
-	health, err := system.GetHealth()
+	c := system.NewCollector()
+	defer func() { _ = c.Close() }()
+
+	health, err := c.Health()
 	if err != nil {
-		t.Fatalf("GetHealth() failed: %v", err)
+		t.Fatalf("Health() failed: %v", err)
 	}
 
 	// ProcessMemory should be positive (we're using memory right now)
@@ -621,9 +663,9 @@ func TestGetHealthProcessMemory(t *testing.T) {
 	data := make([]byte, 10*1024*1024) // 10MB
 	_ = data[0]                        // Prevent optimization
 
-	health2, err := system.GetHealth()
+	health2, err := c.Health()
 	if err != nil {
-		t.Fatalf("Second GetHealth() failed: %v", err)
+		t.Fatalf("Second Health() failed: %v", err)
 	}
 
 	// ProcessMemory should still be positive
@@ -634,9 +676,12 @@ func TestGetHealthProcessMemory(t *testing.T) {
 
 func TestHealthFieldTypes(t *testing.T) {
 	// Verify that Health struct fields have correct types by using them
-	health, err := system.GetHealth()
+	c := system.NewCollector()
+	defer func() { _ = c.Close() }()
+
+	health, err := c.Health()
 	if err != nil {
-		t.Fatalf("GetHealth() failed: %v", err)
+		t.Fatalf("Health() failed: %v", err)
 	}
 
 	// Use type assertions to verify field types compile correctly
@@ -681,9 +726,12 @@ func TestGetHealthGoroutineCount(t *testing.T) {
 	// Test that goroutine count is reasonable
 	initialGoroutines := runtime.NumGoroutine()
 
-	health, err := system.GetHealth()
+	c := system.NewCollector()
+	defer func() { _ = c.Close() }()
+
+	health, err := c.Health()
 	if err != nil {
-		t.Fatalf("GetHealth() failed: %v", err)
+		t.Fatalf("Health() failed: %v", err)
 	}
 
 	// Health goroutine count should be close to actual count
@@ -742,21 +790,27 @@ func TestGetHealthRapidCalls(t *testing.T) {
 	const numCalls = 100
 
 	for i := range numCalls {
-		health, err := system.GetHealth()
+		c := system.NewCollector()
+		defer func() { _ = c.Close() }()
+
+		health, err := c.Health()
 		if err != nil {
-			t.Fatalf("GetHealth() call %d failed: %v", i+1, err)
+			t.Fatalf("Health() call %d failed: %v", i+1, err)
 		}
 		if health == nil {
-			t.Fatalf("GetHealth() call %d returned nil", i+1)
+			t.Fatalf("Health() call %d returned nil", i+1)
 		}
 	}
 }
 
 func TestHealthAllFieldsPopulated(t *testing.T) {
 	// Test that a real GetHealth call populates important fields
-	health, err := system.GetHealth()
+	c := system.NewCollector()
+	defer func() { _ = c.Close() }()
+
+	health, err := c.Health()
 	if err != nil {
-		t.Fatalf("GetHealth() failed: %v", err)
+		t.Fatalf("Health() failed: %v", err)
 	}
 
 	// Runtime fields should always be populated
@@ -783,9 +837,12 @@ func TestHealthAllFieldsPopulated(t *testing.T) {
 
 func TestGetHealthBoundaryConditions(t *testing.T) {
 	// Test boundary conditions for metrics
-	health, err := system.GetHealth()
+	c := system.NewCollector()
+	defer func() { _ = c.Close() }()
+
+	health, err := c.Health()
 	if err != nil {
-		t.Fatalf("GetHealth() failed: %v", err)
+		t.Fatalf("Health() failed: %v", err)
 	}
 
 	// Percentages should be in valid range
@@ -894,24 +951,26 @@ func TestProcessInfoJSONTagNames(t *testing.T) {
 
 // Benchmarks
 
-func BenchmarkGetHealth(b *testing.B) {
-	// Warm up
-	_, _ = system.GetHealth()
+func BenchmarkHealth(b *testing.B) {
+	c := system.NewCollector()
+	b.Cleanup(func() { _ = c.Close() })
+	_, _ = c.Health() // warm up
 
 	b.ResetTimer()
 	for b.Loop() {
-		_, _ = system.GetHealth()
+		_, _ = c.Health()
 	}
 }
 
-func BenchmarkGetHealthParallel(b *testing.B) {
-	// Warm up
-	_, _ = system.GetHealth()
+func BenchmarkHealthParallel(b *testing.B) {
+	c := system.NewCollector()
+	b.Cleanup(func() { _ = c.Close() })
+	_, _ = c.Health() // warm up
 
 	b.ResetTimer()
 	b.RunParallel(func(pb *testing.PB) {
 		for pb.Next() {
-			_, _ = system.GetHealth()
+			_, _ = c.Health()
 		}
 	})
 }

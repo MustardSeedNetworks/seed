@@ -7,7 +7,6 @@ import (
 	"time"
 
 	"github.com/MustardSeedNetworks/seed/internal/logging"
-	"github.com/MustardSeedNetworks/seed/internal/system"
 	"github.com/MustardSeedNetworks/seed/internal/version"
 )
 
@@ -140,7 +139,7 @@ func (s *Server) handleHealth(w http.ResponseWriter, r *http.Request) {
 func (s *Server) handleSystemHealth(w http.ResponseWriter, r *http.Request) {
 	logger := logging.FromContext(r.Context())
 	// Get system health metrics
-	health, err := system.GetHealth()
+	health, err := s.health.Health()
 	if err != nil {
 		logger.ErrorContext(r.Context(), "Failed to get system health", "error", err)
 		sendJSONResponse(w, logger, http.StatusInternalServerError, map[string]string{
