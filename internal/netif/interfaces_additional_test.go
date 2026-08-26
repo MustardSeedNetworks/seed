@@ -247,11 +247,24 @@ func TestValidNetmaskDottedDecimal(t *testing.T) {
 		{"16", true},
 		{"24", true},
 		{"32", true},
-		// Dotted notation - Sscanf matches first number (e.g., 255 > 32 = invalid)
-		{"255.255.255.0", false},
-		{"255.255.0.0", false},
-		// Special case: 0.0.0.0 would match "0" which is valid CIDR
+		// Dotted notation, which validateIPConfig's doc comment has always
+		// promised. These asserted false until #50: fmt.Sscanf("%d") succeeds
+		// on "255.255.255.0" by reading 255 and stopping at the dot, so every
+		// dotted mask took the CIDR branch and was rejected for exceeding 32.
+		{"255.255.255.0", true},
+		{"255.255.0.0", true},
+		{"255.0.0.0", true},
+		{"255.255.255.128", true},
+		// The slash form, which neither validation nor any apply path used to
+		// accept.
+		{"/24", true},
+		{"/16", true},
+		// A non-contiguous mask is not a mask.
+		{"255.0.255.0", false},
+		// Valid, and consistent with prefix "0" above being accepted.
 		{"0.0.0.0", true},
+		// Not an IPv4 address at all.
+		{"not-a-mask", false},
 	}
 
 	for _, tt := range tests {

@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"net"
+	"strconv"
 	"strings"
 	"sync"
 
@@ -71,6 +72,11 @@ type Manager struct {
 	// Callback management for interface change notifications
 	callbackMu sync.RWMutex
 	callbacks  []InterfaceChangeCallback
+
+	// Seams for ConfigureStaticIP's rollback path, so it can be tested without
+	// reconfiguring a live interface. Nil means the real implementations.
+	snapshotter configSnapshotter
+	applier     configApplier
 }
 
 // NewManager creates a new network manager.
@@ -267,13 +273,44 @@ type StaticIPConfig struct {
 // ConfigureStaticIP applies a static IP configuration to an interface.
 // Requires root/administrator privileges.
 // Implementation is platform-specific (interfaces_linux.go, interfaces_darwin.go).
+//
+// The previous configuration is captured first and restored if any step of the
+// apply fails. Each platform applies address, gateway and DNS in sequence and
+// returns on the first error, so without this a failure partway through leaves
+// the interface on its new address with its old default route — unreachable,
+// and needing physical access to recover (#50).
+//
+// Snapshotting is best-effort: an interface with no current address has nothing
+// to restore, and the apply proceeds without a rollback rather than being
+// refused, since configuring an unconfigured interface is the ordinary case.
 func (m *Manager) ConfigureStaticIP(iface string, cfg *StaticIPConfig) error {
 	// Validate input
 	if err := validateIPConfig(cfg); err != nil {
 		return err
 	}
 
-	return configureStaticIPPlatform(iface, cfg)
+	previous, err := m.snapshotFor().Snapshot(iface)
+	if err != nil {
+		previous = nil
+	}
+
+	return applyWithRollback(m.applierFor(), iface, cfg, previous)
+}
+
+// snapshotFor returns the configured snapshotter, defaulting to the real one.
+func (m *Manager) snapshotFor() configSnapshotter {
+	if m.snapshotter != nil {
+		return m.snapshotter
+	}
+	return systemSnapshotter{manager: m}
+}
+
+// applierFor returns the configured applier, defaulting to the platform one.
+func (m *Manager) applierFor() configApplier {
+	if m.applier != nil {
+		return m.applier
+	}
+	return platformApplier{}
 }
 
 // ConfigureDHCP switches an interface to DHCP mode.
@@ -334,16 +371,53 @@ func validateIPConfig(cfg *StaticIPConfig) error {
 
 // isValidNetmask checks if the netmask is valid (CIDR or dotted notation).
 func isValidNetmask(netmask string) bool {
-	// Check if it's a CIDR prefix (e.g., "24")
-	var prefix int
-	_, err := fmt.Sscanf(netmask, "%d", &prefix)
-	if err == nil {
-		return prefix >= 0 && prefix <= ipv4BitLength
+	_, ok := parseNetmask(netmask)
+	return ok
+}
+
+// parseNetmask converts any of the three forms an operator may reasonably type
+// into a prefix length. All three are accepted everywhere:
+//
+//	"24"              a bare prefix
+//	"/24"             a prefix with the separator, as it appears in CIDR
+//	"255.255.255.0"   dotted decimal
+//
+// One parser, used by validation and by every platform's apply path, because
+// the two disagreeing is how a netmask passes validation and then fails to
+// apply. Both halves previously used [fmt.Sscanf] with "%d", which succeeds on
+// "255.255.255.0" by reading 255 and stopping at the dot — so dotted masks were
+// rejected as "invalid CIDR prefix: 255" despite being the documented form.
+func parseNetmask(netmask string) (int, bool) {
+	netmask = strings.TrimSpace(netmask)
+	if netmask == "" {
+		return 0, false
 	}
 
-	// Check if it's dotted notation (e.g., "255.255.255.0")
+	// strconv.Atoi, not fmt.Sscanf: Atoi requires the whole string to be the
+	// number, which is what keeps a dotted mask out of this branch.
+	if prefix, err := strconv.Atoi(strings.TrimPrefix(netmask, "/")); err == nil {
+		if prefix < 0 || prefix > ipv4BitLength {
+			return 0, false
+		}
+		return prefix, true
+	}
+
 	ip := net.ParseIP(netmask)
-	return ip != nil && ip.To4() != nil
+	if ip == nil {
+		return 0, false
+	}
+	v4 := ip.To4()
+	if v4 == nil {
+		return 0, false
+	}
+
+	// A netmask is a contiguous run of ones. Size reports (0, 0) for a
+	// non-contiguous mask such as 255.0.255.0, which is what rejects it.
+	ones, bits := net.IPMask(v4).Size()
+	if bits != ipv4BitLength {
+		return 0, false
+	}
+	return ones, true
 }
 
 // cidrToNetmask converts a CIDR prefix to dotted decimal netmask.

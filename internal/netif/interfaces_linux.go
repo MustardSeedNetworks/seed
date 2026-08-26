@@ -21,34 +21,11 @@ const dhcpCommandTimeout = 30 * time.Second
 
 // netmaskToCIDR converts a dotted decimal netmask to CIDR prefix length.
 func netmaskToCIDR(netmask string) (int, error) {
-	// Check if it's already a CIDR prefix (e.g., "24")
-	var prefix int
-	if _, err := fmt.Sscanf(netmask, "%d", &prefix); err == nil {
-		if prefix >= 0 && prefix <= ipv4BitLength {
-			return prefix, nil
-		}
-		return 0, fmt.Errorf("invalid CIDR prefix: %d", prefix)
-	}
-
-	// Parse as dotted decimal (e.g., "255.255.255.0")
-	ip := net.ParseIP(netmask)
-	if ip == nil {
+	prefix, ok := parseNetmask(netmask)
+	if !ok {
 		return 0, fmt.Errorf("invalid netmask: %s", netmask)
 	}
-
-	ip4 := ip.To4()
-	if ip4 == nil {
-		return 0, fmt.Errorf("not an IPv4 netmask: %s", netmask)
-	}
-
-	// Convert to prefix length
-	mask := net.IPMask(ip4)
-	ones, bits := mask.Size()
-	if bits != ipv4BitLength {
-		return 0, fmt.Errorf("invalid netmask: %s", netmask)
-	}
-
-	return ones, nil
+	return prefix, nil
 }
 
 // updateResolvConf updates /etc/resolv.conf with DNS servers.
