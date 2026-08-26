@@ -26,7 +26,7 @@ against **identical code** on an idle M2 laptop, then comparing the two runs
 with `benchstat`:
 
 | metric | worst spread | benchmarks benchstat called "significantly changed" |
-|---|---|---|
+| --- | --- | --- |
 | `sec/op` | ±612% | **10 of 40** |
 | `B/op` | ±4% | 3 of 40 |
 | `allocs/op` | ±1% | 3 of 40 |
@@ -50,7 +50,7 @@ hot path is a real regression worth blocking.
 live process list, which allocates per process — so their allocation counts move
 with whatever else is running on the machine. They are named in `HOST_DEPENDENT`
 in `scripts/bench-compare.py` rather than covered by a wide blanket tolerance,
-so that a genuinely unstable *new* benchmark is not silently absorbed.
+so that a genuinely unstable _new_ benchmark is not silently absorbed.
 
 ### Threshold
 

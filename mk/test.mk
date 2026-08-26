@@ -152,27 +152,15 @@ test-coverage: ## Generate coverage report
 # Benchmarks
 # =============================================================================
 
-# BENCH_PKGS is the set of packages that actually contain benchmarks. Listing
-# them beats ./... because `go test -bench` still builds and runs the test
-# binary for every package it is handed, so ./... spends minutes producing
-# nothing. Regenerate with:
-#   rg -t go -l '^func Benchmark' | sed 's|/[^/]*$$||' | sort -u
-BENCH_PKGS := ./internal/diagnostics/link/... \
-              ./internal/diagnostics/vlan/... \
-              ./internal/reporting/aggregator/... \
-              ./internal/system/...
-
-# 200ms rather than the 1s default: the full six-count sweep drops from roughly
-# five minutes to one, and the metric the CI gate reads (allocs/op) does not
-# care how long each iteration ran. -count=6 gives benchstat enough samples to
-# say something about variance.
-BENCH_FLAGS := -bench=. -benchmem -run='^$$' -benchtime=200ms -count=6
-
+# Discovery, flags and the go invocation all live in scripts/bench-run.sh, not
+# here: the CI gate benchmarks the merge base as well as the head, and the merge
+# base usually predates whatever the head added — so a make target is exactly
+# what is not available there. One script, pointed at either tree.
 bench: ## Run benchmarks and print results
-	go test $(BENCH_FLAGS) $(BENCH_PKGS)
+	./scripts/bench-run.sh
 
 bench-save: ## Run benchmarks and write results to $(BENCH_OUT) (default bench.txt)
-	go test $(BENCH_FLAGS) $(BENCH_PKGS) > $(or $(BENCH_OUT),bench.txt)
+	./scripts/bench-run.sh > $(or $(BENCH_OUT),bench.txt)
 	@echo "Wrote $(or $(BENCH_OUT),bench.txt)"
 
 bench-compare: ## Compare two saved runs; fails on an allocation regression

@@ -398,17 +398,38 @@ jobs:
         run: go install golang.org/x/perf/cmd/benchstat@v0.0.0-20260825160852-19be9d8e6c70
 
       - name: Benchmark head
-        run: make bench-save BENCH_OUT="$RUNNER_TEMP/head.txt"
+        run: ./scripts/bench-run.sh > "$RUNNER_TEMP/head.txt"
 
       # The merge base, not the base branch tip: comparing against a moving tip
-      # would attribute someone else's change to this PR. Results go to
-      # RUNNER_TEMP so the checkout dance never has to reason about them.
+      # would attribute someone else's change to this PR.
+      #
+      # The runner script is copied out of the worktree first, because the merge
+      # base generally predates it — running `make bench-save` over there failed
+      # with exit 2 for exactly that reason. The copy discovers whatever
+      # benchmarks that tree has, so a package added by this PR is simply absent
+      # from the baseline rather than fatal.
+      #
+      # BASE_REF goes through env, not through ${{ }} interpolation: a branch
+      # name is attacker-influenceable and expanding it into a shell command is
+      # a template injection (zizmor template-injection).
       - name: Benchmark merge base
+        env:
+          BASE_REF: ${{ github.event.pull_request.base.ref || 'main' }}
         run: |
-          base=$(git merge-base HEAD "origin/${{ github.event.pull_request.base.ref || 'main' }}")
+          cp scripts/bench-run.sh "$RUNNER_TEMP/bench-run.sh"
+          base=$(git merge-base HEAD "origin/$BASE_REF")
           echo "merge base: $base"
           git checkout --detach "$base"
-          make bench-save BENCH_OUT="$RUNNER_TEMP/base.txt"
+          if ! "$RUNNER_TEMP/bench-run.sh" > "$RUNNER_TEMP/base.txt"; then
+            git checkout -
+            echo "::error::The benchmark baseline could not be measured at $base."
+            echo "That is a problem with the base commit, not with this PR — but"
+            echo "without a baseline there is nothing to compare against, so this"
+            echo "job cannot tell a regression from a clean run. Failing loudly"
+            echo "rather than passing on no evidence."
+            tail -30 "$RUNNER_TEMP/base.txt" || true
+            exit 1
+          fi
           git checkout -
 
       - name: Compare
