@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/MustardSeedNetworks/seed/internal/config"
 	"github.com/MustardSeedNetworks/seed/internal/discovery"
 	"github.com/MustardSeedNetworks/seed/internal/discovery/fingerprint"
 	"github.com/MustardSeedNetworks/seed/internal/i18n"
@@ -327,6 +328,27 @@ type PortScanRequest struct {
 	Workers int    `json:"workers,omitempty"` // Concurrent workers (default: 20)
 }
 
+// defaultPortScanWorkers is the concurrency used when a caller does not ask
+// for a specific number.
+const defaultPortScanWorkers = 20
+
+// portScanWorkers clamps a caller-supplied worker count to something sane.
+func portScanWorkers(requested int) int {
+	if requested <= 0 {
+		return defaultPortScanWorkers
+	}
+	return requested
+}
+
+// insecurePorts returns the TCP ports the "insecure" profile scans: the
+// legacy and cleartext services a technician wants flagged on a site check.
+//
+// Parsed from the same config constant the discovery preset uses, so the two
+// cannot drift into disagreeing about what "insecure" means.
+func insecurePorts() []int {
+	return config.ParsePortList(config.PortsInsecureTCP)
+}
+
 // handlePortScan handles port scanning with service detection.
 func (s *Server) handlePortScan(w http.ResponseWriter, r *http.Request) {
 	logger := logging.FromContext(r.Context())
@@ -375,17 +397,21 @@ func (s *Server) handlePortScan(w http.ResponseWriter, r *http.Request) {
 
 	// Determine scan type
 	if len(req.Ports) > 0 {
-		workers := req.Workers
-		if workers <= 0 {
-			workers = 20
-		}
-		result = scanner.ScanWithBanners(ctx, req.Target, req.Ports, workers)
+		result = scanner.ScanWithBanners(
+			ctx, req.Target, req.Ports, portScanWorkers(req.Workers))
 	} else {
 		switch req.Profile {
 		case "web":
 			result = scanner.WebScan(ctx, req.Target)
 		case "full":
 			result = scanner.FullScan(ctx, req.Target)
+		case "insecure":
+			// The legacy/cleartext services a technician wants flagged on a
+			// site check. The list lives in internal/config beside the
+			// discovery preset that already uses it, rather than being
+			// duplicated here or hardcoded in the client (#347).
+			result = scanner.ScanWithBanners(
+				ctx, req.Target, insecurePorts(), portScanWorkers(req.Workers))
 		default: // "quick" or unspecified
 			result = scanner.QuickScan(ctx, req.Target)
 		}
