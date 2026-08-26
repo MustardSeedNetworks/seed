@@ -36,7 +36,8 @@ lint-backend: ## Run Go linter
 		printf "📦 Installing golangci-lint v2...\n"; \
 		go install github.com/golangci/golangci-lint/v2/cmd/golangci-lint@v2.13.1; \
 	fi; \
-	$$GOLANGCI_LINT run
+	$$GOLANGCI_LINT run && \
+	GOOS=windows CGO_ENABLED=0 go vet ./internal/api/...
 	@printf "$(GREEN)✓ Backend lint complete$(RESET)\n"
 
 lint-backend-quiet:
@@ -48,6 +49,9 @@ lint-backend-quiet:
 	LINTER_COUNT=$$(grep -c "^    - " .golangci.yml 2>/dev/null || echo "30+"); \
 	printf "   Running $$LINTER_COUNT linters...\n"; \
 	OUT="$$($$GOLANGCI_LINT run 2>&1)"; STATUS=$$?; \
+	echo "$$OUT" | head -20; \
+	if [ $$STATUS -ne 0 ]; then exit $$STATUS; fi; \
+	OUT="$$(GOOS=windows CGO_ENABLED=0 go vet ./internal/api/... 2>&1)"; STATUS=$$?; \
 	echo "$$OUT" | head -20; \
 	exit $$STATUS
 

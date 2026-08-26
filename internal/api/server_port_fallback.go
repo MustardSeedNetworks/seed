@@ -5,14 +5,16 @@ package api
 // is already in use. This keeps `seed` runnable for developers who have
 // another service squatting on 8443 without changing the documented
 // default port (see #69).
+//
+// isAddrInUse, the "is this bind error actually address-in-use" predicate,
+// is platform-specific and lives in server_port_fallback_unix.go /
+// server_port_fallback_windows.go (see #2096).
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"net"
 	"strconv"
-	"syscall"
 
 	"github.com/MustardSeedNetworks/seed/internal/logging"
 )
@@ -56,35 +58,4 @@ func bindWithFallback(ctx context.Context, host string, port int) (net.Listener,
 		"bind %s:%d and +1..+%d all in use",
 		host, port, portFallbackMaxOffset,
 	)
-}
-
-// isAddrInUse reports whether err indicates the address-in-use condition.
-// It checks [syscall.EADDRINUSE] via [errors.Is] (works on Linux/macOS) and
-// falls back to a string match for platforms whose listener wrapping does
-// not unwrap to the syscall errno.
-func isAddrInUse(err error) bool {
-	if errors.Is(err, syscall.EADDRINUSE) {
-		return true
-	}
-	var opErr *net.OpError
-	if errors.As(err, &opErr) && opErr.Err != nil {
-		return containsAddrInUse(opErr.Err.Error())
-	}
-	return false
-}
-
-// containsAddrInUse looks for the canonical address-in-use substring.
-// Split out so it can be unit-tested independently of platform errno
-// behaviour.
-func containsAddrInUse(msg string) bool {
-	const needle = "address already in use"
-	if len(msg) < len(needle) {
-		return false
-	}
-	for i := 0; i+len(needle) <= len(msg); i++ {
-		if msg[i:i+len(needle)] == needle {
-			return true
-		}
-	}
-	return false
 }

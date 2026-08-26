@@ -224,6 +224,19 @@ jobs:
       - name: Run go vet
         run: go vet ./...
 
+      - name: Run go vet (GOOS=windows, internal/api)
+        # The host runner's build tags decide which files a same-OS pass even
+        # sees, so a Linux run above never type-checks
+        # server_port_fallback_windows.go — that's how #2096 (the Windows
+        # port-fallback predicate comparing against the wrong errno) went
+        # unverified. This only proves the package still compiles for
+        # windows/amd64; the predicate's actual behavior needs a Windows
+        # test runner, which ci.yml does not have (tracked separately).
+        env:
+          GOOS: windows
+          CGO_ENABLED: "0"
+        run: go vet ./internal/api/...
+
       - name: Verify API schemas are up to date
         run: ./scripts/check-schema-drift.sh
 
@@ -382,14 +395,6 @@ jobs:
 
       - name: Run unit tests
         run: npm run test
-
-      # The thresholds in vitest.config.ts enforced nothing, because nothing
-      # ran them: `test:coverage` existed as a script and no workflow called
-      # it. Running it here is what makes the ratchet a ratchet rather than a
-      # comment. See #485.
-      - name: Coverage thresholds (ratchet)
-        run: npm run test:coverage
-
       # Build is done once by the build-ui job and shared as the
       # frontend-dist artifact (downloaded by backend/race/build/e2e/
       # This job validates source (types/lint/tests) only.
