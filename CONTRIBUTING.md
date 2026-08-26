@@ -27,7 +27,7 @@ cd seed
 go mod download
 
 # Install frontend dependencies
-cd web && npm install && cd ..
+cd ui && npm install && cd ..
 
 # Run tests
 make test
@@ -42,7 +42,7 @@ For production or test deployments on Linux with systemd:
 
 ```bash
 # Build the binary
-cd web && npm run build && cd ..
+cd ui && npm run build && cd ..
 go build -o seed ./cmd/seed
 
 # Install as systemd service (requires root)
@@ -173,10 +173,10 @@ We use [Storybook](https://storybook.js.org/) for developing and documenting UI 
 
 ```bash
 # Start Storybook development server
-cd web && npm run storybook
+cd ui && npm run storybook
 
 # Build Storybook static site
-cd web && npm run build-storybook
+cd ui && npm run build-storybook
 ```bash
 
 When creating new UI components:
@@ -209,14 +209,47 @@ go test -coverprofile=coverage.out ./...
 go test -race ./...
 
 # Frontend tests
-cd web && npm test
+cd ui && npm test
 
 # Frontend tests with coverage
-cd web && npm test -- --coverage
+cd ui && npm test -- --coverage
 
 # E2E tests (requires running server)
 make test-e2e
-```go
+```
+
+### SNMP integration suite
+
+The unit tests drive the SNMP collectors through a fake client. That is the
+right shape for behaviour, but a fake returns whatever Go value the test author
+picked, while a real agent returns whatever BER it encodes — so wire-format
+divergence (Counter64 vs Counter32, an OID vs an OCTET STRING, an empty table vs
+`noSuchObject`) is invisible to it. The `integration` build tag covers that gap
+against a live net-snmp agent.
+
+Start a seeded agent on loopback, then point the suite at it:
+
+```bash
+snmpd -C -c internal/polling/snmp/snmpclient/testdata/snmpd.conf \
+      -Lf /tmp/snmpd.log -p /tmp/snmpd.pid
+
+SEED_SNMP_ADDR=127.0.0.1:1161 \
+  go test -tags integration ./internal/polling/snmp/...
+
+kill "$(cat /tmp/snmpd.pid)"
+```
+
+Without `SEED_SNMP_ADDR` the suite skips, which is right locally and wrong in
+CI — a job that skips everything reports green. The workflow therefore also
+sets `SEED_SNMP_REQUIRED=1`, which turns a missing address into a failure.
+
+Nightly and on-demand via `.github/workflows/snmp-integration.yml`; not on every
+PR, since it needs an agent and adds no signal to a typical change.
+
+**One caveat on macOS.** `/usr/sbin/snmpd` there is net-snmp 5.6.2.1, which
+accepts any community string regardless of `rocommunity`. A local pass therefore
+says nothing about community handling — it exercises the wire format, which is
+the point. CI runs a current net-snmp from apt.
 
 ### Test Requirements
 

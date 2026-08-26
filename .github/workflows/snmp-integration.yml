@@ -1,0 +1,92 @@
+# SNMP integration suite — the collectors against a real net-snmp agent.
+#
+# The unit tests drive collectors through a fake Client, which is the right
+# shape for behaviour but cannot catch wire-format divergence: a fake returns
+# whatever Go value the test author picked, a real agent returns whatever BER
+# it encodes. Counter64 vs Counter32, OID vs OCTET STRING, an empty table vs
+# noSuchObject — those only appear against something that speaks the protocol.
+#
+# Nightly and on demand rather than per-PR: it needs a service container and
+# adds no signal to a typical change, and #510's lesson applies — a slow gate
+# on every PR is a gate people route around.
+name: SNMP Integration
+
+on:
+  schedule:
+    # 04:17 UTC — off the hour, so it does not pile onto the top-of-hour rush.
+    - cron: '17 4 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: snmp-integration-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  integration:
+    name: Collectors against net-snmp
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      GOMODCACHE: ${{ github.workspace }}/.cache/go/pkg/mod
+      GOCACHE: ${{ github.workspace }}/.cache/go/build
+
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Set up Go
+        uses: ./.github/actions/setup-go
+
+      - name: Install libpcap-dev
+        uses: ./.github/actions/setup-libpcap
+        timeout-minutes: 10
+
+      # Installed rather than containerised: the suite needs the agent on a
+      # known loopback port with our seeded config, and apt's net-snmp is both
+      # current and simpler to point at a config file than a service container
+      # whose image would need pinning by digest.
+      - name: Install net-snmp
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends snmpd snmp
+          snmpd --version 2>&1 | head -2 || true
+
+      - name: Start the seeded agent
+        run: |
+          sudo systemctl stop snmpd 2>/dev/null || true
+          snmpd -C -c internal/polling/snmp/snmpclient/testdata/snmpd.conf \
+                -Lf "$RUNNER_TEMP/snmpd.log" -p "$RUNNER_TEMP/snmpd.pid"
+
+      # Preflight, not decoration. Without it a broken agent makes every test
+      # skip, and a job that skips everything reports green.
+      - name: Verify the agent answers
+        run: |
+          for attempt in 1 2 3 4 5; do
+            if snmpget -v2c -c public -t 2 -r 1 127.0.0.1:1161 \
+                 1.3.6.1.2.1.1.5.0 2>&1 | tee "$RUNNER_TEMP/preflight.txt" \
+                 | grep -q 'seed-snmp-fixture'; then
+              echo "agent is up and serving the seeded sysName"
+              exit 0
+            fi
+            echo "attempt $attempt: no answer yet"
+            sleep 2
+          done
+          echo "::error::The seeded net-snmp agent never answered on 127.0.0.1:1161"
+          cat "$RUNNER_TEMP/preflight.txt" || true
+          cat "$RUNNER_TEMP/snmpd.log" || true
+          exit 1
+
+      - name: Run the integration suite
+        env:
+          SEED_SNMP_ADDR: 127.0.0.1:1161
+          SEED_SNMP_COMMUNITY: public
+          # Turns "no agent" from a skip into a failure, so a misconfigured
+          # job cannot report green while testing nothing.
+          SEED_SNMP_REQUIRED: "1"
+        run: go test -tags integration -v -count=1 ./internal/polling/snmp/...
+
+      - name: Agent log
+        if: failure()
+        run: cat "$RUNNER_TEMP/snmpd.log" || true
