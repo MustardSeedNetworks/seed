@@ -147,3 +147,26 @@ test-coverage: ## Generate coverage report
 	go test -race -coverprofile=coverage.out $$PKGS
 	go tool cover -html=coverage.out -o coverage.html
 	@echo "Coverage report: coverage.html"
+
+# =============================================================================
+# Benchmarks
+# =============================================================================
+
+# Discovery, flags and the go invocation all live in scripts/bench-run.sh, not
+# here: the CI gate benchmarks the merge base as well as the head, and the merge
+# base usually predates whatever the head added — so a make target is exactly
+# what is not available there. One script, pointed at either tree.
+bench: ## Run benchmarks and print results
+	./scripts/bench-run.sh
+
+bench-save: ## Run benchmarks and write results to $(BENCH_OUT) (default bench.txt)
+	./scripts/bench-run.sh > $(or $(BENCH_OUT),bench.txt)
+	@echo "Wrote $(or $(BENCH_OUT),bench.txt)"
+
+bench-compare: ## Compare two saved runs; fails on an allocation regression
+	@test -n "$(BASE)" -a -n "$(HEAD)" || \
+		{ echo "usage: make bench-compare BASE=base.txt HEAD=head.txt" >&2; exit 2; }
+	benchstat $(BASE) $(HEAD) > bench-compare.txt
+	@cat bench-compare.txt
+	@echo
+	python3 scripts/bench-compare.py bench-compare.txt
