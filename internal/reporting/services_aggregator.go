@@ -103,10 +103,74 @@ func (s *AggregatorService) aggregateTopIssues(ctx context.Context, data *Aggreg
 	data.TopIssues = append(data.TopIssues, issues...)
 }
 
-// GetTrends retrieves trend data for a metric.
+// TrendSummary describes where a metric's series has been and where it is
+// heading, alongside the series itself.
+//
+// A bare series answers "what were the numbers"; a reader still has to work out
+// whether anything is moving. These are the three questions that get asked of
+// one in practice: what does the tail look like (P95), what does it look like
+// with the noise taken out (Smoothed), and is it climbing (Change).
+type TrendSummary struct {
+	Points []DataPoint `json:"points"`
+
+	// P50 and P95 over the whole window. Absent when the series is empty.
+	P50 float64 `json:"p50"`
+	P95 float64 `json:"p95"`
+
+	// Smoothed is a moving average over smoothingWindow points, or nil when
+	// the series is shorter than the window.
+	Smoothed []float64 `json:"smoothed,omitempty"`
+
+	// Change is the proportional change between consecutive points, so a
+	// reader can see acceleration rather than inferring it from the shape.
+	Change []float64 `json:"change,omitempty"`
+}
+
+const (
+	// smoothingWindow is the moving-average window for trend smoothing. Five
+	// points takes the jitter out of a series without hiding a real step change.
+	smoothingWindow = 5
+	// medianPercentile and tailPercentile are the two the summary reports: the
+	// middle of the series and its tail.
+	medianPercentile = 50
+	tailPercentile   = 95
+)
+
+// GetTrends retrieves trend data for a metric, with the summary statistics a
+// chart or a report needs alongside it.
 func (s *AggregatorService) GetTrends(
 	ctx context.Context,
 	metric, period string,
-) ([]DataPoint, error) {
-	return s.metrics.Trends(ctx, metric, period)
+) (*TrendSummary, error) {
+	points, err := s.metrics.Trends(ctx, metric, period)
+	if err != nil {
+		return nil, err
+	}
+
+	summary := &TrendSummary{Points: points}
+	if len(points) == 0 {
+		return summary, nil
+	}
+
+	values := make([]float64, len(points))
+	for i, point := range points {
+		values[i] = point.Value
+	}
+
+	// Percentiles are defined for any non-empty series, so an error here is
+	// not possible and is not worth propagating as though it were.
+	summary.P50, _ = Percentile(values, medianPercentile)
+	summary.P95, _ = Percentile(values, tailPercentile)
+
+	// The smoothing and rate calculations need a minimum number of points and
+	// simply do not apply to a shorter series. A series too short to smooth is
+	// not an error — it is a series you can read directly.
+	if smoothed, smoothErr := MovingAverage(values, smoothingWindow); smoothErr == nil {
+		summary.Smoothed = smoothed
+	}
+	if change, changeErr := RateOfChange(values); changeErr == nil {
+		summary.Change = change
+	}
+
+	return summary, nil
 }

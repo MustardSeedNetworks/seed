@@ -71,14 +71,58 @@ func TestAggregatorService_Aggregate_NoDB(t *testing.T) {
 	assert.Len(t, data.TopIssues, 1)
 }
 
-// TestAggregatorService_GetTrends_NoDB confirms GetTrends delegates straight to
-// the metrics port.
+// TestAggregatorService_GetTrends_NoDB confirms GetTrends passes the series
+// through from the metrics port.
 func TestAggregatorService_GetTrends_NoDB(t *testing.T) {
 	metrics := &fakeMetricsRepo{trends: []reporting.DataPoint{{Value: 1.5}}}
 	as := reporting.NewAggregatorService(testConfig(), metrics)
 
-	points, err := as.GetTrends(context.Background(), "latency", reporting.PeriodDaily)
+	summary, err := as.GetTrends(context.Background(), "latency", reporting.PeriodDaily)
 	require.NoError(t, err)
-	require.Len(t, points, 1)
-	assert.InEpsilon(t, 1.5, points[0].Value, 0.0001)
+	require.Len(t, summary.Points, 1)
+	assert.InEpsilon(t, 1.5, summary.Points[0].Value, 0.0001)
+
+	// One point has percentiles but nothing to smooth and no rate: a series
+	// too short to analyse is not an error, it is a series you read directly.
+	assert.InEpsilon(t, 1.5, summary.P50, 0.0001)
+	assert.InEpsilon(t, 1.5, summary.P95, 0.0001)
+	assert.Empty(t, summary.Smoothed)
+	assert.Empty(t, summary.Change)
+}
+
+// TestAggregatorService_GetTrends_Summarises covers a series long enough for
+// every statistic to apply.
+func TestAggregatorService_GetTrends_Summarises(t *testing.T) {
+	var points []reporting.DataPoint
+	for _, v := range []float64{10, 12, 14, 16, 18, 20, 22} {
+		points = append(points, reporting.DataPoint{Value: v})
+	}
+	as := reporting.NewAggregatorService(testConfig(), &fakeMetricsRepo{trends: points})
+
+	summary, err := as.GetTrends(context.Background(), "latency", reporting.PeriodDaily)
+	require.NoError(t, err)
+
+	assert.InEpsilon(t, 16.0, summary.P50, 0.0001)
+
+	// A five-point window over seven points leaves three averages.
+	require.Len(t, summary.Smoothed, 3)
+	assert.InEpsilon(t, 14.0, summary.Smoothed[0], 0.0001)
+
+	// Six gaps between seven points, each a rise.
+	require.Len(t, summary.Change, 6)
+	for i, change := range summary.Change {
+		assert.Positive(t, change, "gap %d should be a rise", i)
+	}
+}
+
+// TestAggregatorService_GetTrends_Empty pins that no data is not an error. A
+// metric with no samples yet is an ordinary state, not a failure.
+func TestAggregatorService_GetTrends_Empty(t *testing.T) {
+	as := reporting.NewAggregatorService(testConfig(), &fakeMetricsRepo{})
+
+	summary, err := as.GetTrends(context.Background(), "latency", reporting.PeriodDaily)
+	require.NoError(t, err)
+	assert.Empty(t, summary.Points)
+	assert.Zero(t, summary.P50)
+	assert.Empty(t, summary.Smoothed)
 }
