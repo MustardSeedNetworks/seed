@@ -382,6 +382,14 @@ jobs:
 
       - name: Run unit tests
         run: npm run test
+
+      # The thresholds in vitest.config.ts enforced nothing, because nothing
+      # ran them: `test:coverage` existed as a script and no workflow called
+      # it. Running it here is what makes the ratchet a ratchet rather than a
+      # comment. See #485.
+      - name: Coverage thresholds (ratchet)
+        run: npm run test:coverage
+
       # Build is done once by the build-ui job and shared as the
       # frontend-dist artifact (downloaded by backend/race/build/e2e/
       # This job validates source (types/lint/tests) only.

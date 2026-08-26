@@ -7,6 +7,7 @@ package enumerate
 
 import (
 	"net"
+	"time"
 
 	"github.com/MustardSeedNetworks/seed/internal/discovery/resolve"
 )
@@ -104,4 +105,69 @@ type DeviceDiscoveryTestAccessor struct {
 // GetProtoManager returns the discovery's protocol manager.
 func (d *DeviceDiscoveryTestAccessor) GetProtoManager() *Manager {
 	return d.Discovery.protoManager
+}
+
+// ICMPPingerTestAccessor exposes the ICMP pinger's socket-free logic.
+//
+// NewICMPPinger opens a raw socket, which needs root or CAP_NET_RAW, so none
+// of this file's 25 functions had any coverage at all (#211). The parsing and
+// bookkeeping below do not touch the socket and are the parts most likely to
+// be wrong, so they get a constructor that skips it.
+type ICMPPingerTestAccessor struct {
+	Pinger *ICMPPinger
+}
+
+// NewICMPPingerWithoutSocket builds a pinger with no connection, for testing
+// the logic that never reaches one.
+func NewICMPPingerWithoutSocket(id int) *ICMPPingerTestAccessor {
+	return &ICMPPingerTestAccessor{
+		Pinger: &ICMPPinger{
+			timeout: time.Second,
+			id:      id,
+			pending: make(map[int]*pendingPing),
+			stopCh:  make(chan struct{}),
+		},
+	}
+}
+
+// NextSeq exposes nextSeq.
+func (a *ICMPPingerTestAccessor) NextSeq() int { return a.Pinger.nextSeq() }
+
+// HandleReadError exposes handleReadError, returning (shouldExit, continueLoop).
+func (a *ICMPPingerTestAccessor) HandleReadError(err error) (bool, bool) {
+	res, cont := a.Pinger.handleReadError(err)
+	return res.shouldExit, cont
+}
+
+// ExtractEchoReplySeq exposes extractEchoReply, returning the sequence number
+// and whether the message was a valid echo reply for this pinger.
+func (a *ICMPPingerTestAccessor) ExtractEchoReplySeq(data []byte) (int, bool) {
+	echo, ok := a.Pinger.extractEchoReply(data)
+	if !ok {
+		return 0, false
+	}
+	return echo.Seq, true
+}
+
+// AddPending registers a pending ping under seq.
+func (a *ICMPPingerTestAccessor) AddPending(seq int, ip string) {
+	a.Pinger.pendingMu.Lock()
+	defer a.Pinger.pendingMu.Unlock()
+	a.Pinger.pending[seq] = &pendingPing{ip: ip, seq: seq, start: time.Now()}
+}
+
+// CompletePendingPing exposes completePendingPing, returning the IP it held.
+func (a *ICMPPingerTestAccessor) CompletePendingPing(seq int) (string, bool) {
+	pp, found := a.Pinger.completePendingPing(seq)
+	if !found {
+		return "", false
+	}
+	return pp.ip, true
+}
+
+// PendingCount reports how many pings are still outstanding.
+func (a *ICMPPingerTestAccessor) PendingCount() int {
+	a.Pinger.pendingMu.Lock()
+	defer a.Pinger.pendingMu.Unlock()
+	return len(a.Pinger.pending)
 }

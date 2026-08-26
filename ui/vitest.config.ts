@@ -66,11 +66,21 @@ export default defineConfig({
       // Ratchet up toward the CLAUDE.md mandatory minimum of 50% as
       // coverage improves. Current: lines 31, branches 17, functions
       // 22, stmts 31.
+      // Ratchet only. Measured 2026-08-25 at statements 32.11 / branches 26.45
+      // / functions 27.54 / lines 34.51, so each floor sits just under the real
+      // number with a little margin for run-to-run drift.
+      //
+      // Branches had the most slack — a 14% floor against 26% actual meant
+      // roughly half the branch coverage the suite already had could be
+      // deleted without the gate noticing.
+      //
+      // Raise these when coverage rises; never lower them to make a change
+      // pass.
       thresholds: {
-        lines: 28,
-        branches: 14,
-        functions: 18,
-        statements: 28,
+        lines: 34,
+        branches: 26,
+        functions: 27,
+        statements: 32,
       },
     },
   },

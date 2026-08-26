@@ -3,6 +3,7 @@ package dhcp
 import (
 	"time"
 
+	"github.com/gopacket/gopacket"
 	"github.com/gopacket/gopacket/layers"
 )
 
@@ -368,4 +369,20 @@ func (m *MockDHCPv4) ToLayers() *layers.DHCPv4 {
 		}
 	}
 	return dhcp
+}
+
+// RogueProcessPacket replays one decoded frame through the detector's parse
+// path, which is otherwise reachable only from a live pcap handle.
+//
+// The nine existing rogue tests all drive the state API; not one feeds a packet
+// through the parser, so server-identifier extraction — the security-relevant
+// part — had no coverage (#498).
+func (rd *RogueDetector) RogueProcessPacket(packet gopacket.Packet) {
+	rd.processPacket(packet)
+}
+
+// RogueServerIdentifier exposes getServerIdentifier for direct assertions,
+// including on frames that carry no option 54.
+func (rd *RogueDetector) RogueServerIdentifier(dhcp *layers.DHCPv4) string {
+	return rd.getServerIdentifier(dhcp)
 }
