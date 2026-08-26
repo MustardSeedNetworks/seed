@@ -35,23 +35,14 @@ func GetInterfaceCounters(
 		return nil, errors.New("SNMP config is nil")
 	}
 
-	// Try SNMPv3 credentials first.
-	for i := range cfg.V3Credentials {
-		counters, err := walkCountersV3(ctx, ip, &cfg.V3Credentials[i], cfg)
-		if err == nil {
-			return counters, nil
-		}
-	}
-
-	// Fall back to v2c community strings.
-	for _, community := range cfg.Communities {
-		counters, err := walkCounters(ctx, ip, community, cfg)
-		if err == nil {
-			return counters, nil
-		}
-	}
-
-	return nil, errors.New("failed to query interface counters with all configured credentials")
+	return sweepCredentials(ctx, cfg, "failed to query interface counters with all configured credentials",
+		func(cred *config.SNMPv3Credential) (map[int]*InterfaceCounters, error) {
+			return walkCountersV3(ctx, ip, cred, cfg)
+		},
+		func(community string) (map[int]*InterfaceCounters, error) {
+			return walkCounters(ctx, ip, community, cfg)
+		},
+	)
 }
 
 // walkCounters walks interface counters using SNMPv2c.

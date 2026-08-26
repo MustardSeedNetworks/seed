@@ -37,45 +37,27 @@ func getMACTableQBridge(
 	ip string,
 	cfg *config.SNMPConfig,
 ) ([]MACEntry, error) {
-	// Try SNMPv3 credentials first (more secure).
-	for i := range cfg.V3Credentials {
-		entries, err := walkMACTableQBridgeV3(ctx, ip, &cfg.V3Credentials[i], cfg)
-		if err == nil {
-			return entries, nil
-		}
-	}
-
-	// Fall back to v2c community strings if v3 fails or not configured.
-	for _, community := range cfg.Communities {
-		entries, err := walkMACTableQBridge(ctx, ip, community, cfg)
-		if err == nil {
-			return entries, nil
-		}
-	}
-
-	return nil, errors.New("failed to query Q-BRIDGE MAC table with all configured credentials")
+	return sweepCredentials(ctx, cfg, "failed to query Q-BRIDGE MAC table with all configured credentials",
+		func(cred *config.SNMPv3Credential) ([]MACEntry, error) {
+			return walkMACTableQBridgeV3(ctx, ip, cred, cfg)
+		},
+		func(community string) ([]MACEntry, error) {
+			return walkMACTableQBridge(ctx, ip, community, cfg)
+		},
+	)
 }
 
 // getMACTableBridge retrieves MAC table using BRIDGE-MIB (non-VLAN-aware).
 // Security: SNMPv3 is preferred over v2c when both are configured.
 func getMACTableBridge(ctx context.Context, ip string, cfg *config.SNMPConfig) ([]MACEntry, error) {
-	// Try SNMPv3 credentials first (more secure).
-	for i := range cfg.V3Credentials {
-		entries, err := walkMACTableBridgeV3(ctx, ip, &cfg.V3Credentials[i], cfg)
-		if err == nil {
-			return entries, nil
-		}
-	}
-
-	// Fall back to v2c community strings if v3 fails or not configured.
-	for _, community := range cfg.Communities {
-		entries, err := walkMACTableBridge(ctx, ip, community, cfg)
-		if err == nil {
-			return entries, nil
-		}
-	}
-
-	return nil, errors.New("failed to query BRIDGE MAC table with all configured credentials")
+	return sweepCredentials(ctx, cfg, "failed to query BRIDGE MAC table with all configured credentials",
+		func(cred *config.SNMPv3Credential) ([]MACEntry, error) {
+			return walkMACTableBridgeV3(ctx, ip, cred, cfg)
+		},
+		func(community string) ([]MACEntry, error) {
+			return walkMACTableBridge(ctx, ip, community, cfg)
+		},
+	)
 }
 
 // walkMACTableQBridge walks Q-BRIDGE-MIB MAC table using SNMPv2c.

@@ -91,44 +91,26 @@ func getInetCidrRoutes(
 	ip string,
 	cfg *config.SNMPConfig,
 ) ([]RouteEntry, error) {
-	// Try SNMPv3 credentials first (more secure).
-	for i := range cfg.V3Credentials {
-		routes, err := walkInetCidrRoutesV3(ctx, ip, &cfg.V3Credentials[i], cfg)
-		if err == nil {
-			return routes, nil
-		}
-	}
-
-	// Fall back to v2c community strings if v3 fails or not configured.
-	for _, community := range cfg.Communities {
-		routes, err := walkInetCidrRoutes(ctx, ip, community, cfg)
-		if err == nil {
-			return routes, nil
-		}
-	}
-
-	return nil, errors.New("failed to query inetCidrRouteTable with all configured credentials")
+	return sweepCredentials(ctx, cfg, "failed to query inetCidrRouteTable with all configured credentials",
+		func(cred *config.SNMPv3Credential) ([]RouteEntry, error) {
+			return walkInetCidrRoutesV3(ctx, ip, cred, cfg)
+		},
+		func(community string) ([]RouteEntry, error) {
+			return walkInetCidrRoutes(ctx, ip, community, cfg)
+		},
+	)
 }
 
 // getIPCidrRoutes retrieves routes from the legacy ipCidrRouteTable.
 func getIPCidrRoutes(ctx context.Context, ip string, cfg *config.SNMPConfig) ([]RouteEntry, error) {
-	// Try SNMPv3 credentials first (more secure).
-	for i := range cfg.V3Credentials {
-		routes, err := walkIPCidrRoutesV3(ctx, ip, &cfg.V3Credentials[i], cfg)
-		if err == nil {
-			return routes, nil
-		}
-	}
-
-	// Fall back to v2c community strings if v3 fails or not configured.
-	for _, community := range cfg.Communities {
-		routes, err := walkIPCidrRoutes(ctx, ip, community, cfg)
-		if err == nil {
-			return routes, nil
-		}
-	}
-
-	return nil, errors.New("failed to query ipCidrRouteTable with all configured credentials")
+	return sweepCredentials(ctx, cfg, "failed to query ipCidrRouteTable with all configured credentials",
+		func(cred *config.SNMPv3Credential) ([]RouteEntry, error) {
+			return walkIPCidrRoutesV3(ctx, ip, cred, cfg)
+		},
+		func(community string) ([]RouteEntry, error) {
+			return walkIPCidrRoutes(ctx, ip, community, cfg)
+		},
+	)
 }
 
 // walkInetCidrRoutes walks the modern inetCidrRouteTable using SNMPv2c.
