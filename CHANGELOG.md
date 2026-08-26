@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.213.30](https://github.com/MustardSeedNetworks/seed/compare/v0.213.29...v0.213.30) (2026-08-26)
+
+
+### Bug Fixes
+
+* **api:** detect an in-use port by the Winsock errno on Windows ([#2111](https://github.com/MustardSeedNetworks/seed/issues/2111)) ([37f594a](https://github.com/MustardSeedNetworks/seed/commit/37f594a147a3f0055507b47def65705d6861f031)), closes [#2096](https://github.com/MustardSeedNetworks/seed/issues/2096)
+
 ## [0.213.29](https://github.com/MustardSeedNetworks/seed/compare/v0.213.28...v0.213.29) (2026-08-26)
 
 
