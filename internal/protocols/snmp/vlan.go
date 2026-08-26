@@ -58,23 +58,14 @@ func GetVLANs(ctx context.Context, ip string, cfg *config.SNMPConfig) ([]VLANInf
 		return nil, errors.New("SNMP config is nil")
 	}
 
-	// Try SNMPv3 credentials first (more secure).
-	for i := range cfg.V3Credentials {
-		vlans, err := walkVLANsV3(ctx, ip, &cfg.V3Credentials[i], cfg)
-		if err == nil {
-			return vlans, nil
-		}
-	}
-
-	// Fall back to v2c community strings if v3 fails or not configured.
-	for _, community := range cfg.Communities {
-		vlans, err := walkVLANs(ctx, ip, community, cfg)
-		if err == nil {
-			return vlans, nil
-		}
-	}
-
-	return nil, errors.New("failed to query Q-BRIDGE VLANs with all configured credentials")
+	return sweepCredentials(ctx, cfg, "failed to query Q-BRIDGE VLANs with all configured credentials",
+		func(cred *config.SNMPv3Credential) ([]VLANInfo, error) {
+			return walkVLANsV3(ctx, ip, cred, cfg)
+		},
+		func(community string) ([]VLANInfo, error) {
+			return walkVLANs(ctx, ip, community, cfg)
+		},
+	)
 }
 
 // walkVLANs walks the Q-BRIDGE VLAN tables using SNMPv2c.

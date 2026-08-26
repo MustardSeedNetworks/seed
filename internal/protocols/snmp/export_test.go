@@ -1,6 +1,8 @@
 package snmp
 
 import (
+	"context"
+
 	"github.com/gosnmp/gosnmp"
 
 	"github.com/MustardSeedNetworks/seed/internal/config"
@@ -173,4 +175,17 @@ func ExportParseBridgePort(pdu gosnmp.SnmpPDU) (int, bool) {
 // ExportCollectMACEntries exports collectMACEntries for testing.
 func ExportCollectMACEntries(macToEntry map[string]*MACEntry) []MACEntry {
 	return collectMACEntries(macToEntry)
+}
+
+// SweepCredentials exposes sweepCredentials, the credential sweep the fourteen
+// collectors share, so its ordering and cancellation behaviour can be asserted
+// directly rather than through one of them.
+func SweepCredentials[T any](
+	ctx context.Context,
+	cfg *config.SNMPConfig,
+	what string,
+	v3 func(cred *config.SNMPv3Credential) (T, error),
+	v2c func(community string) (T, error),
+) (T, error) {
+	return sweepCredentials(ctx, cfg, what, v3, v2c)
 }

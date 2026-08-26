@@ -203,23 +203,14 @@ func GetAllInterfaces(
 		return nil, errors.New("SNMP config is nil")
 	}
 
-	// Try SNMPv3 credentials first (more secure).
-	for i := range cfg.V3Credentials {
-		interfaces, err := walkInterfacesV3(ctx, ip, &cfg.V3Credentials[i], cfg)
-		if err == nil {
-			return interfaces, nil
-		}
-	}
-
-	// Fall back to v2c community strings if v3 fails or not configured.
-	for _, community := range cfg.Communities {
-		interfaces, err := walkInterfaces(ctx, ip, community, cfg)
-		if err == nil {
-			return interfaces, nil
-		}
-	}
-
-	return nil, errors.New("failed to query interfaces with all configured credentials")
+	return sweepCredentials(ctx, cfg, "failed to query interfaces with all configured credentials",
+		func(cred *config.SNMPv3Credential) ([]InterfaceInfo, error) {
+			return walkInterfacesV3(ctx, ip, cred, cfg)
+		},
+		func(community string) ([]InterfaceInfo, error) {
+			return walkInterfaces(ctx, ip, community, cfg)
+		},
+	)
 }
 
 // walkInterfaces performs a bulk walk of interface table using SNMPv2c.

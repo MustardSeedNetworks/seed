@@ -65,23 +65,14 @@ func GetPhysicalEntities(
 		return nil, errors.New("SNMP config is nil")
 	}
 
-	// Try SNMPv3 credentials first (more secure).
-	for i := range cfg.V3Credentials {
-		entities, err := walkEntityTableV3(ctx, ip, &cfg.V3Credentials[i], cfg)
-		if err == nil {
-			return entities, nil
-		}
-	}
-
-	// Fall back to v2c community strings if v3 fails or not configured.
-	for _, community := range cfg.Communities {
-		entities, err := walkEntityTable(ctx, ip, community, cfg)
-		if err == nil {
-			return entities, nil
-		}
-	}
-
-	return nil, errors.New("failed to query ENTITY-MIB with all configured credentials")
+	return sweepCredentials(ctx, cfg, "failed to query ENTITY-MIB with all configured credentials",
+		func(cred *config.SNMPv3Credential) ([]PhysicalEntity, error) {
+			return walkEntityTableV3(ctx, ip, cred, cfg)
+		},
+		func(community string) ([]PhysicalEntity, error) {
+			return walkEntityTable(ctx, ip, community, cfg)
+		},
+	)
 }
 
 // walkEntityTable walks the entPhysicalTable using SNMPv2c.

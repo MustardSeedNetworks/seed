@@ -62,23 +62,14 @@ func Query(ctx context.Context, ip, oid string, cfg *config.SNMPConfig) (string,
 		return "", errors.New("SNMP config is nil")
 	}
 
-	// Try SNMPv3 credentials first (more secure)
-	for i := range cfg.V3Credentials {
-		result, err := queryWithV3(ctx, ip, oid, &cfg.V3Credentials[i], cfg)
-		if err == nil {
-			return result, nil
-		}
-	}
-
-	// Fall back to v2c community strings if v3 fails or not configured
-	for _, community := range cfg.Communities {
-		result, err := queryWithCommunity(ctx, ip, oid, community, cfg)
-		if err == nil {
-			return result, nil
-		}
-	}
-
-	return "", errors.New("SNMP query failed for all configured credentials")
+	return sweepCredentials(ctx, cfg, "SNMP query failed for all configured credentials",
+		func(cred *config.SNMPv3Credential) (string, error) {
+			return queryWithV3(ctx, ip, oid, cred, cfg)
+		},
+		func(community string) (string, error) {
+			return queryWithCommunity(ctx, ip, oid, community, cfg)
+		},
+	)
 }
 
 // QueryMultiple performs multiple SNMP GET queries in a single request.
@@ -93,23 +84,14 @@ func QueryMultiple(
 		return nil, errors.New("SNMP config is nil")
 	}
 
-	// Try SNMPv3 credentials first (more secure)
-	for i := range cfg.V3Credentials {
-		results, err := queryMultipleWithV3(ctx, ip, oids, &cfg.V3Credentials[i], cfg)
-		if err == nil {
-			return results, nil
-		}
-	}
-
-	// Fall back to v2c community strings if v3 fails or not configured
-	for _, community := range cfg.Communities {
-		results, err := queryMultipleWithCommunity(ctx, ip, oids, community, cfg)
-		if err == nil {
-			return results, nil
-		}
-	}
-
-	return nil, errors.New("SNMP query failed for all configured credentials")
+	return sweepCredentials(ctx, cfg, "SNMP query failed for all configured credentials",
+		func(cred *config.SNMPv3Credential) (map[string]string, error) {
+			return queryMultipleWithV3(ctx, ip, oids, cred, cfg)
+		},
+		func(community string) (map[string]string, error) {
+			return queryMultipleWithCommunity(ctx, ip, oids, community, cfg)
+		},
+	)
 }
 
 // GetSystemInfo retrieves standard SNMP system information.

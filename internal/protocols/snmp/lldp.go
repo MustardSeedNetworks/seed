@@ -79,23 +79,14 @@ func GetLLDPNeighbors(
 		return nil, errors.New("SNMP config is nil")
 	}
 
-	// Try SNMPv3 credentials first (more secure).
-	for i := range cfg.V3Credentials {
-		neighbors, err := walkLLDPV3(ctx, ip, &cfg.V3Credentials[i], cfg)
-		if err == nil {
-			return neighbors, nil
-		}
-	}
-
-	// Fall back to v2c community strings if v3 fails or not configured.
-	for _, community := range cfg.Communities {
-		neighbors, err := walkLLDP(ctx, ip, community, cfg)
-		if err == nil {
-			return neighbors, nil
-		}
-	}
-
-	return nil, errors.New("failed to query LLDP neighbors with all configured credentials")
+	return sweepCredentials(ctx, cfg, "failed to query LLDP neighbors with all configured credentials",
+		func(cred *config.SNMPv3Credential) ([]LLDPNeighbor, error) {
+			return walkLLDPV3(ctx, ip, cred, cfg)
+		},
+		func(community string) ([]LLDPNeighbor, error) {
+			return walkLLDP(ctx, ip, community, cfg)
+		},
+	)
 }
 
 // walkLLDP walks the LLDP-MIB tables using SNMPv2c.

@@ -91,23 +91,14 @@ func getIPAddrTable(
 	ip string,
 	cfg *config.SNMPConfig,
 ) ([]IPAddressEntry, error) {
-	// Try SNMPv3 credentials first (more secure).
-	for i := range cfg.V3Credentials {
-		entries, err := walkIPAddrTableV3(ctx, ip, &cfg.V3Credentials[i], cfg)
-		if err == nil {
-			return entries, nil
-		}
-	}
-
-	// Fall back to v2c community strings if v3 fails or not configured.
-	for _, community := range cfg.Communities {
-		entries, err := walkIPAddrTable(ctx, ip, community, cfg)
-		if err == nil {
-			return entries, nil
-		}
-	}
-
-	return nil, errors.New("failed to query ipAddrTable with all configured credentials")
+	return sweepCredentials(ctx, cfg, "failed to query ipAddrTable with all configured credentials",
+		func(cred *config.SNMPv3Credential) ([]IPAddressEntry, error) {
+			return walkIPAddrTableV3(ctx, ip, cred, cfg)
+		},
+		func(community string) ([]IPAddressEntry, error) {
+			return walkIPAddrTable(ctx, ip, community, cfg)
+		},
+	)
 }
 
 // walkIPAddrTable walks the legacy ipAddrTable using SNMPv2c.
@@ -225,23 +216,14 @@ func getIPAddressTable(
 	ip string,
 	cfg *config.SNMPConfig,
 ) ([]IPAddressEntry, error) {
-	// Try SNMPv3 credentials first (more secure).
-	for i := range cfg.V3Credentials {
-		entries, err := walkIPAddressTableV3(ctx, ip, &cfg.V3Credentials[i], cfg)
-		if err == nil {
-			return entries, nil
-		}
-	}
-
-	// Fall back to v2c community strings if v3 fails or not configured.
-	for _, community := range cfg.Communities {
-		entries, err := walkIPAddressTable(ctx, ip, community, cfg)
-		if err == nil {
-			return entries, nil
-		}
-	}
-
-	return nil, errors.New("failed to query ipAddressTable with all configured credentials")
+	return sweepCredentials(ctx, cfg, "failed to query ipAddressTable with all configured credentials",
+		func(cred *config.SNMPv3Credential) ([]IPAddressEntry, error) {
+			return walkIPAddressTableV3(ctx, ip, cred, cfg)
+		},
+		func(community string) ([]IPAddressEntry, error) {
+			return walkIPAddressTable(ctx, ip, community, cfg)
+		},
+	)
 }
 
 // walkIPAddressTable walks the modern ipAddressTable using SNMPv2c.

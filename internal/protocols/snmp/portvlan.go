@@ -26,23 +26,14 @@ func GetPortVLANs(
 		return nil, errors.New("SNMP config is nil")
 	}
 
-	// Try SNMPv3 credentials first (more secure).
-	for i := range cfg.V3Credentials {
-		vlans, err := getPortVLANsWithV3(ctx, ip, ifIndex, &cfg.V3Credentials[i], cfg)
-		if err == nil {
-			return vlans, nil
-		}
-	}
-
-	// Fall back to v2c community strings if v3 fails or not configured.
-	for _, community := range cfg.Communities {
-		vlans, err := getPortVLANsWithCommunity(ctx, ip, ifIndex, community, cfg)
-		if err == nil {
-			return vlans, nil
-		}
-	}
-
-	return nil, errors.New("failed to query port VLANs with all configured credentials")
+	return sweepCredentials(ctx, cfg, "failed to query port VLANs with all configured credentials",
+		func(cred *config.SNMPv3Credential) ([]int, error) {
+			return getPortVLANsWithV3(ctx, ip, ifIndex, cred, cfg)
+		},
+		func(community string) ([]int, error) {
+			return getPortVLANsWithCommunity(ctx, ip, ifIndex, community, cfg)
+		},
+	)
 }
 
 // getPortVLANsWithCommunity retrieves port VLANs using SNMPv2c.
