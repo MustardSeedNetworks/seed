@@ -535,10 +535,18 @@ func (s *Server) setupSecurityRoutes() {
 			handler: s.handleTCPProbe,
 			methods: post,
 		},
+		// Port scanning is an active, outbound operation against an
+		// operator-supplied target. Every sibling active scan in this file
+		// carries rateLimited, and vulnerabilities/scan adds a feature gate;
+		// this route had neither, so a viewer could scan arbitrary hosts at
+		// will. Operator+ matches the other routes that act on the network
+		// rather than read from it (#347).
 		{
-			path:    APIVersionPrefix + "/security/discovery/portscan",
-			handler: s.handlePortScan,
-			methods: post,
+			path:        APIVersionPrefix + "/security/discovery/portscan",
+			handler:     s.handlePortScan,
+			methods:     post,
+			minRole:     op,
+			rateLimited: true,
 		},
 		{
 			path:    APIVersionPrefix + "/security/discovery/options",

@@ -670,7 +670,9 @@ body:
     "methods": [
       "POST"
     ],
-    "path": "/api/v1/security/discovery/portscan"
+    "minRole": "operator",
+    "path": "/api/v1/security/discovery/portscan",
+    "rateLimited": true
   },
   {
     "maxBodyBytes": 262144,
