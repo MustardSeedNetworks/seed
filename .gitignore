@@ -141,3 +141,6 @@ coverage.out
 # developer's global gitignore ignores *.sql (the repo must be self-contained).
 !internal/database/testdata/*.sql
 !internal/database/migrations/*.sql
+
+# Written by `make bench-compare`
+bench-compare.txt
