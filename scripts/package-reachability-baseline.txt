@@ -1,0 +1,35 @@
+# Internal packages that no binary reaches, recorded when
+# scripts/check-package-reachability.sh was adopted.
+#
+# This is debt, not permission. The list may shrink and must not grow — the
+# gate fails on anything not listed here. Every entry carries the reason it is
+# unreachable, because a bare list tells the next person nothing about whether
+# it is safe to delete.
+#
+# Verified unreachable under GOOS=linux, darwin and windows, so none of these
+# is a build-tag artefact. Each also has zero importers outside its own tests.
+#
+# Before deleting any of them: check for consumers Go tooling cannot see. A
+# frontend importing a directory inside a Go package is invisible to go build,
+# which is how stem's live locale files came to sit inside a dead package.
+#
+# format: <package path>   # reason
+
+# Test-only by design. A recorded-walk replayer used by collector tests; it has
+# no place in a shipped binary.
+internal/polling/snmp/snmpwalkfile   # test helper, intentionally not shipped
+
+# Unwired. These compile and have their own tests, but nothing in ./cmd/...
+# imports them, so none of this code runs in the product today. Each needs a
+# decision: wire it up, or delete it.
+internal/constants                   # unwired — 1 file
+internal/diagnostics/dhcp            # unwired — 9 files, has its own tests
+internal/diagnostics/link            # unwired — 9 files, has its own tests and benchmarks
+internal/diagnostics/performance     # unwired — 2 files
+internal/diagnostics/snmp            # unwired — 4 files
+internal/diagnostics/telemetry       # unwired — 1 file
+internal/orchestration               # unwired — 4 files
+internal/reporting/aggregator        # unwired — 5 files, has its own tests and benchmarks
+internal/reporting/generator         # unwired — 2 files
+internal/reporting/scheduler         # unwired — 2 files
+internal/reporting/templates         # unwired — 3 files
