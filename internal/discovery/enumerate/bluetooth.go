@@ -23,6 +23,7 @@ package enumerate
 import (
 	"context"
 	"fmt"
+	"math"
 	"sync"
 	"time"
 
@@ -40,6 +41,8 @@ const (
 	defaultMinRSSI = -90
 	// closeProximityDistance is the distance returned when device is very close.
 	closeProximityDistance = 0.1
+	// logBase is the base of the log-distance path-loss model.
+	logBase = 10.0
 	// pathLossMultiplier is the multiplier for path loss calculation (10 * n).
 	pathLossMultiplier = 10
 	// codMajorClassMask is the mask for extracting major class from Class of Device.
@@ -301,17 +304,14 @@ func estimateDistance(txPower, rssi int) float64 {
 	if rssi >= txPower {
 		return closeProximityDistance // Very close
 	}
+
+	// math.Pow rather than a decade loop plus a 10^0.1 interpolation: the loop
+	// advanced its fractional part by adding 0.1 repeatedly, which accumulates
+	// float error and drops the final partial step, so every estimate came out
+	// low — 15.85 m against 17.38 m at -90 dBm, roughly 9% short across the
+	// range. The formula is unchanged; only its evaluation is.
 	ratio := float64(txPower-rssi) / (pathLossMultiplier * pathLossExponent)
-	distance := 1.0
-	for range int(ratio) {
-		distance *= 10
-	}
-	// Interpolate for fractional part
-	frac := ratio - float64(int(ratio))
-	for f := 0.1; f <= frac; f += 0.1 {
-		distance *= 1.258925 // 10^0.1
-	}
-	return distance
+	return math.Pow(logBase, ratio)
 }
 
 // ClassOfDeviceToClass converts Bluetooth Class of Device to our class enum.
@@ -361,7 +361,10 @@ func getBLEAppearanceCategoryMap() map[uint16]BluetoothDeviceClass {
 		12: BluetoothClassHealth,     // Thermometer
 		13: BluetoothClassHealth,     // Heart rate
 		14: BluetoothClassHealth,     // Blood pressure
-		15: BluetoothClassHealth,     // HID
+		// Human Interface Device — a keyboard, mouse or similar. It was
+		// classified as Health, which put every Bluetooth keyboard in range
+		// under the medical-device heading.
+		15: BluetoothClassPeripheral, // HID
 		16: BluetoothClassHealth,     // Glucose
 		17: BluetoothClassHealth,     // Running/walking
 		18: BluetoothClassHealth,     // Cycling
