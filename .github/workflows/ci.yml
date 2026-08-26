@@ -353,11 +353,21 @@ jobs:
           name: frontend-dist
           path: internal/api/ui/
 
+      # No -short. The race detector is most useful on exactly the paths
+      # -short skips, and skipping them made a green race run mean less than it
+      # read as: internal/discovery/resolve, for one, measures 20.1% covered
+      # normally and 15.7% under -short.
+      #
+      # The cost was measured before removing it, not assumed: `go test -race
+      # ./...` over the whole tree is about three minutes and 107 packages.
+      # An earlier measurement suggested tens of minutes, but that was taken on
+      # a machine already saturated by other work — worth remembering that a
+      # timing taken under load is not a timing.
       - name: Run tests with race detector
         env:
           SKIP_IPERF_TEST: "1"
           SKIP_NETWORK_TESTS: "1"
-        run: go test -short -race ./...
+        run: go test -race ./...
 
   # ===========================================================================
   # Benchmark regression gate
