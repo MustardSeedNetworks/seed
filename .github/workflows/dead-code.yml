@@ -16,6 +16,17 @@
 # - Files: orphaned files not imported anywhere
 # =============================================================================
 
+# Dead-code analysis.
+#
+# One step gates: "Check package reachability" fails the job when an internal
+# package is reachable from no binary and is not recorded in
+# scripts/package-reachability-baseline.txt.
+#
+# Every other step in this workflow is advisory by design — staticcheck's
+# unused checks and ts-prune both produce false positives on interfaces,
+# generated code and platform-gated files, so they write to the step summary
+# and do not fail. A green run on this workflow therefore means "no NEW
+# unreachable packages", not "no dead code".
 name: Dead Code Detection
 
 on:
@@ -51,6 +62,20 @@ jobs:
         # blocked on the process the previous attempt leaked. See #1950.
         with:
           packages: libpcap-dev
+
+      # The one step in this workflow that can fail. Everything below reports
+      # into the step summary and returns success regardless, which is
+      # defensible for a fuzzy signal like "possibly unused export" but meant
+      # this job reported success weekly while two packages totalling 2,800
+      # lines sat unreachable in stem (stem#798).
+      #
+      # Reachability is not a fuzzy signal. Either a binary can reach a package
+      # or it cannot, `go list -deps` says which in about a second, and
+      # staticcheck's unused checks structurally cannot: they find unused
+      # identifiers inside a package being compiled, and a package nobody
+      # imports still looks used from within its own tests.
+      - name: Check package reachability
+        run: ./scripts/check-package-reachability.sh
 
       - name: Run staticcheck for unused code
         run: |
