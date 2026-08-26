@@ -1,9 +1,12 @@
-package scheduler_test
+package reporting_test
+
+// The scheduler suite. It lived in internal/reporting/scheduler, a package
+// containing nothing but a doc.go — the code it exercises is here, in
+// internal/reporting and internal/reporting/store. Moved so the tests sit with
+// what they test, and so the empty package could go.
 
 import (
 	"context"
-	"os"
-	"path/filepath"
 	"sync"
 	"testing"
 	"time"
@@ -11,34 +14,9 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/MustardSeedNetworks/seed/internal/config"
-	"github.com/MustardSeedNetworks/seed/internal/database"
 	"github.com/MustardSeedNetworks/seed/internal/reporting"
 	"github.com/MustardSeedNetworks/seed/internal/reporting/store"
 )
-
-// testDB creates a temporary database for testing.
-func testDB(t *testing.T) (*database.DB, func()) {
-	t.Helper()
-
-	tmpDir := t.TempDir()
-	dbPath := filepath.Join(tmpDir, "test.db")
-
-	db, err := database.Open(dbPath)
-	require.NoError(t, err, "failed to open database")
-
-	cleanup := func() {
-		_ = db.Close()
-		_ = os.Remove(dbPath)
-	}
-
-	return db, cleanup
-}
-
-// testConfig creates a default config for testing.
-func testConfig() *config.Config {
-	return config.DefaultConfig()
-}
 
 // setupSchedulerService creates all required services for scheduler testing.
 func setupSchedulerService(t *testing.T) (
