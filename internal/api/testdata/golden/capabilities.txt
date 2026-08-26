@@ -483,6 +483,15 @@ body:
       "GET",
       "POST"
     ],
+    "path": "/api/v1/telemetry/dhcp/lease",
+    "rateLimited": true
+  },
+  {
+    "maxBodyBytes": 262144,
+    "methods": [
+      "GET",
+      "POST"
+    ],
     "path": "/api/v1/telemetry/dhcp/rogue"
   },
   {

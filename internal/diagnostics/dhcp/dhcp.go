@@ -25,10 +25,7 @@ const (
 )
 
 // Default threshold values for DHCP response times.
-const (
-	DefaultWarningThresholdMs  = 500  // milliseconds - response times above this trigger warning
-	DefaultCriticalThresholdMs = 2000 // milliseconds - response times above this trigger critical
-)
+const ()
 
 // DefaultTestTimeout is the default timeout for DHCP tests.
 const DefaultTestTimeout = 10 * time.Second
@@ -97,34 +94,18 @@ type TestResult struct {
 	TestedAt     time.Time     `json:"testedAt"`
 }
 
-// Thresholds defines timing thresholds for DHCP responses.
-type Thresholds struct {
-	Warning  time.Duration
-	Critical time.Duration
-}
-
-// DefaultThresholds returns reasonable default thresholds for DHCP.
-func DefaultThresholds() Thresholds {
-	return Thresholds{
-		Warning:  DefaultWarningThresholdMs * time.Millisecond,
-		Critical: DefaultCriticalThresholdMs * time.Millisecond,
-	}
-}
-
 // Tester performs DHCP tests.
 type Tester struct {
 	interfaceName string
-	thresholds    Thresholds
 	testTimeout   time.Duration
 	lastResult    *TestResult
 	mu            sync.RWMutex
 }
 
 // NewTester creates a new DHCP tester.
-func NewTester(interfaceName string, thresholds Thresholds) *Tester {
+func NewTester(interfaceName string) *Tester {
 	return &Tester{
 		interfaceName: interfaceName,
-		thresholds:    thresholds,
 		testTimeout:   DefaultTestTimeout,
 	}
 }
@@ -161,20 +142,6 @@ func (t *Tester) GetTimeout() time.Duration {
 	return t.testTimeout
 }
 
-// SetThresholds updates the timing thresholds.
-func (t *Tester) SetThresholds(thresholds Thresholds) {
-	t.mu.Lock()
-	defer t.mu.Unlock()
-	t.thresholds = thresholds
-}
-
-// GetThresholds returns the current timing thresholds.
-func (t *Tester) GetThresholds() Thresholds {
-	t.mu.RLock()
-	defer t.mu.RUnlock()
-	return t.thresholds
-}
-
 // GetLastResult returns the last test result.
 func (t *Tester) GetLastResult() *TestResult {
 	t.mu.RLock()
@@ -187,20 +154,23 @@ func (t *Tester) GetLastResult() *TestResult {
 	return &result
 }
 
-// getStatus determines status based on timing and thresholds.
-func (t *Tester) getStatus(duration time.Duration, hasError bool) Status {
-	if hasError {
+// leaseStatus grades the lease this interface actually holds.
+//
+// It used to grade the elapsed time against Thresholds, which measured the
+// wrong thing entirely: neither platform performs a DHCP exchange. macOS reads
+// the cached packet with `ipconfig getpacket` and Linux parses the lease file,
+// so the duration is how long it took to read local state — around 11ms on a
+// warm machine. A slow disk would have reported a DHCP warning, and a
+// genuinely slow DHCP server would have reported success.
+//
+// What the operator can be told truthfully is whether the lease is complete.
+// A lease with no gateway or no resolver is a real and common misconfiguration,
+// and it is invisible in a "success" that only meant a file was read quickly.
+func leaseStatus(result *TestResult, hasError bool) Status {
+	if hasError || result.OfferedIP == "" {
 		return StatusError
 	}
-
-	t.mu.RLock()
-	th := t.thresholds
-	t.mu.RUnlock()
-
-	if duration >= th.Critical {
-		return StatusError
-	}
-	if duration >= th.Warning {
+	if result.Gateway == "" || len(result.DNSServers) == 0 || result.SubnetMask == "" {
 		return StatusWarning
 	}
 	return StatusSuccess
@@ -272,8 +242,8 @@ func (t *Tester) Test(ctx context.Context) *TestResult {
 	result.ResponseTime = elapsed
 	result.ResponseMs = float64(elapsed.Microseconds()) / microsecondsPerMillisecond
 
-	// Determine status
-	result.Status = t.getStatus(elapsed, !result.Success)
+	// Grade the lease, not the clock — see leaseStatus.
+	result.Status = leaseStatus(result, !result.Success)
 
 	// Store result
 	t.mu.Lock()
