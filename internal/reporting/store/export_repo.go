@@ -48,7 +48,7 @@ func (r *ExportRepo) ExportDevices(ctx context.Context) ([]map[string]any, error
 			&firstSeen,
 			&lastSeen,
 		); scanErr != nil {
-			continue
+			return nil, fmt.Errorf("scanning device row: %w", scanErr)
 		}
 		devices = append(devices, map[string]any{
 			"id":          id,
@@ -61,6 +61,9 @@ func (r *ExportRepo) ExportDevices(ctx context.Context) ([]map[string]any, error
 			"last_seen":   lastSeen,
 		})
 	}
+	if rowsErr := rows.Err(); rowsErr != nil {
+		return nil, fmt.Errorf("iterating devices: %w", rowsErr)
+	}
 
 	return devices, nil
 }
@@ -68,10 +71,10 @@ func (r *ExportRepo) ExportDevices(ctx context.Context) ([]map[string]any, error
 // ExportVulnerabilities returns all vulnerability rows joined to device IPs.
 func (r *ExportRepo) ExportVulnerabilities(ctx context.Context) ([]map[string]any, error) {
 	rows, err := r.db.Query(ctx, `
-		SELECT dv.id, dv.device_id, dv.cve_id, dv.severity, dv.description, dv.discovered_at, d.ip_address
+		SELECT dv.id, dv.device_id, dv.cve_id, dv.severity, dv.notes, dv.detected_at, d.ip_address
 		FROM device_vulnerabilities dv
 		LEFT JOIN devices d ON dv.device_id = d.id
-		ORDER BY dv.severity DESC, dv.discovered_at DESC
+		ORDER BY dv.severity DESC, dv.detected_at DESC
 	`)
 	if err != nil {
 		return nil, fmt.Errorf("querying vulnerabilities: %w", err)
@@ -81,20 +84,27 @@ func (r *ExportRepo) ExportVulnerabilities(ctx context.Context) ([]map[string]an
 	var vulns []map[string]any
 	for rows.Next() {
 		var id int
-		var deviceID, cveID, severity, desc, discoveredAt string
-		var ipAddr *string
-		if scanErr := rows.Scan(&id, &deviceID, &cveID, &severity, &desc, &discoveredAt, &ipAddr); scanErr != nil {
-			continue
+		var deviceID, cveID, detectedAt string
+		// severity, notes and the joined ip_address are all nullable: the first
+		// two by schema, the third because the join is a LEFT JOIN.
+		var severity, notes, ipAddr *string
+		if scanErr := rows.Scan(
+			&id, &deviceID, &cveID, &severity, &notes, &detectedAt, &ipAddr,
+		); scanErr != nil {
+			return nil, fmt.Errorf("scanning vulnerability row: %w", scanErr)
 		}
 		vulns = append(vulns, map[string]any{
-			"id":            id,
-			"device_id":     deviceID,
-			"cve_id":        cveID,
-			"severity":      severity,
-			"description":   desc,
-			"discovered_at": discoveredAt,
-			"device_ip":     ipAddr,
+			"id":          id,
+			"device_id":   deviceID,
+			"cve_id":      cveID,
+			"severity":    severity,
+			"notes":       notes,
+			"detected_at": detectedAt,
+			"device_ip":   ipAddr,
 		})
+	}
+	if rowsErr := rows.Err(); rowsErr != nil {
+		return nil, fmt.Errorf("iterating vulnerabilities: %w", rowsErr)
 	}
 
 	return vulns, nil

@@ -781,14 +781,11 @@ func TestExportVulnerabilities_Internal(t *testing.T) {
 	}
 
 	data, count, err := gs.ExportExportVulnerabilities(ctx, req)
-	// Note: This may error due to schema differences between services.go query
-	// and actual database schema. The important thing is that the function
-	// is exercised and handles errors.
-	if err != nil {
-		t.Logf("ExportVulnerabilities returned error (expected for schema mismatch): %v", err)
-		return
-	}
-	assert.GreaterOrEqual(t, count, 0)
+	require.NoError(t, err)
+	// setupVulnerabilityData inserts four rows, and the export must return all
+	// of them: the query used to name two columns the table does not have, and
+	// scan failures were skipped row-by-row rather than reported.
+	assert.Equal(t, 4, count)
 	assert.NotNil(t, data)
 }
 
@@ -998,9 +995,7 @@ func setupDeviceData(t *testing.T, ctx context.Context, db *database.DB) {
 		`, d.id, d.ip, d.mac, d.hostname, d.vendor, d.deviceType,
 			time.Now().Add(-24*time.Hour).Format(time.RFC3339),
 			time.Now().Format(time.RFC3339))
-		if err != nil {
-			t.Logf("Could not insert device %s: %v", d.id, err)
-		}
+		require.NoError(t, err)
 	}
 }
 
@@ -1026,9 +1021,7 @@ func setupVulnerabilityData(t *testing.T, ctx context.Context, db *database.DB) 
 			INSERT OR REPLACE INTO device_vulnerabilities (device_id, cve_id, severity, cvss_score, detected_at)
 			VALUES (?, ?, ?, ?, ?)
 		`, v.deviceID, v.cveID, v.severity, v.cvssScore, time.Now().Format(time.RFC3339))
-		if err != nil {
-			t.Logf("Could not insert vulnerability %s: %v", v.cveID, err)
-		}
+		require.NoError(t, err)
 	}
 }
 
@@ -1039,25 +1032,21 @@ func setupPerformanceData(t *testing.T, ctx context.Context, db *database.DB) {
 	// Insert gateway results
 	for i := range 5 {
 		_, err := db.Exec(ctx, `
-			INSERT OR REPLACE INTO gateway_results (gateway_ip, latency_ms, packet_loss, success, timestamp)
-			VALUES (?, ?, ?, ?, ?)
-		`, "192.168.1.1", 10.0+float64(i), 0.1*float64(i), 1,
+			INSERT OR REPLACE INTO gateway_results (interface_name, gateway, latency_ms, packet_loss, reachable, timestamp)
+			VALUES (?, ?, ?, ?, ?, ?)
+		`, "eth0", "192.168.1.1", 10.0+float64(i), 0.1*float64(i), 1,
 			time.Now().Add(-time.Duration(i)*time.Hour).Format(time.RFC3339))
-		if err != nil {
-			t.Logf("Could not insert gateway result: %v", err)
-		}
+		require.NoError(t, err)
 	}
 
 	// Insert speedtest results
 	for i := range 3 {
 		_, err := db.Exec(ctx, `
-			INSERT OR REPLACE INTO speedtest_results (download_mbps, upload_mbps, latency_ms, timestamp)
-			VALUES (?, ?, ?, ?)
-		`, 100.0+float64(i*10), 50.0+float64(i*5), 20.0+float64(i),
+			INSERT OR REPLACE INTO speedtest_results (interface_name, download_mbps, upload_mbps, latency_ms, timestamp)
+			VALUES (?, ?, ?, ?, ?)
+		`, "eth0", 100.0+float64(i*10), 50.0+float64(i*5), 20.0+float64(i),
 			time.Now().Add(-time.Duration(i)*time.Hour).Format(time.RFC3339))
-		if err != nil {
-			t.Logf("Could not insert speedtest result: %v", err)
-		}
+		require.NoError(t, err)
 	}
 }
 
