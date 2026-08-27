@@ -116,9 +116,11 @@ job for weeks. "Must stay in step" was the previous rule here, and a rule that
 depends on someone remembering is not a mechanism.
 
 The remaining pair that can disagree is `.nvmrc` and the `engines` field in
-`package.json`. `engine-strict=true` in `ui/.npmrc` makes that a hard failure at
-`npm ci` rather than a warning, so the two are checked on every install instead
-of being trusted.
+`package.json`. Making that a hard failure (`engine-strict=true`) is the obvious
+next step and is deliberately **not** taken yet: Homebrew's newest `node` is
+26.7.0, so 26.8.1 is not installable through the fleet's normal channel, and
+turning the mismatch fatal would block local development in all four repos. See
+the linked issue.
 
 The npm version is still declared in the composite; `packageManager` in
 `package.json` is what `engines` checks it against.
