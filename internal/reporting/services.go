@@ -18,6 +18,7 @@ import (
 	"github.com/google/uuid"
 
 	"github.com/MustardSeedNetworks/seed/internal/config"
+	"github.com/MustardSeedNetworks/seed/internal/logging"
 )
 
 // DefaultReportsPath is the default directory for storing generated reports.
@@ -168,8 +169,14 @@ func (s *GeneratorService) Generate(
 func (s *GeneratorService) generateReport(ctx context.Context, report *Report) {
 	s.mu.Lock()
 	report.Status = StatusGenerating
-	_ = s.saveReport(ctx, report)
+	live := s.updateReport(ctx, report)
 	s.mu.Unlock()
+
+	// Deleted between Generate returning and this goroutine starting: stop
+	// rather than do the work and write a row nobody asked to keep.
+	if !live {
+		return
+	}
 
 	// Aggregate data for the report
 	dateRange := PeriodWeekly
@@ -225,7 +232,7 @@ func (s *GeneratorService) generateReport(ctx context.Context, report *Report) {
 	report.ExpiresAt = &expires
 	report.FileSize = int64(len(content))
 
-	_ = s.saveReport(ctx, report)
+	s.updateReport(ctx, report)
 }
 
 func (s *GeneratorService) saveReportFile(report *Report, content []byte) error {
@@ -254,9 +261,26 @@ func (s *GeneratorService) failReport(ctx context.Context, report *Report, errMs
 
 	report.Status = StatusFailed
 	report.Error = errMsg
-	_ = s.saveReport(ctx, report)
+	s.updateReport(ctx, report)
 }
 
 func (s *GeneratorService) saveReport(ctx context.Context, report *Report) error {
 	return s.reports.SaveReport(ctx, report)
+}
+
+// updateReport persists a status change from the generation goroutine. It
+// reports whether the report still exists: generation outlives the request that
+// started it, so a caller may have deleted the report in between. Writing it
+// back with SaveReport would resurrect the row (#2154).
+func (s *GeneratorService) updateReport(ctx context.Context, report *Report) bool {
+	live, err := s.reports.UpdateReport(ctx, report)
+	if err != nil {
+		logging.FromContext(ctx).ErrorContext(ctx, "persisting report status failed",
+			"event", "report.update.failed",
+			"report_id", report.ID,
+			"status", string(report.Status),
+			"error", err)
+		return false
+	}
+	return live
 }

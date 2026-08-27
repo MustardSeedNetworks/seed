@@ -20,6 +20,11 @@ type ReportRepo interface {
 	ListReports(ctx context.Context) ([]Report, error)
 	// SaveReport upserts a report row.
 	SaveReport(ctx context.Context, r *Report) error
+	// UpdateReport updates an existing report row and reports whether one was
+	// matched. Generation runs asynchronously and writes status several times
+	// after Generate has returned, so those writes must not recreate a report
+	// the caller deleted in the meantime.
+	UpdateReport(ctx context.Context, r *Report) (bool, error)
 	// DeleteReport removes the report row only; file cleanup is the service's
 	// orchestration concern.
 	DeleteReport(ctx context.Context, id string) error

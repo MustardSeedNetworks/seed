@@ -35,6 +35,18 @@ func (f *fakeReportRepo) GetReport(_ context.Context, id string) (*reporting.Rep
 	return &clone, nil
 }
 
+func (f *fakeReportRepo) UpdateReport(_ context.Context, r *reporting.Report) (bool, error) {
+	if f.saveErr != nil {
+		return false, f.saveErr
+	}
+	if _, ok := f.reports[r.ID]; !ok {
+		return false, nil
+	}
+	clone := *r
+	f.reports[r.ID] = &clone
+	return true, nil
+}
+
 func (f *fakeReportRepo) ListReports(_ context.Context) ([]reporting.Report, error) {
 	out := make([]reporting.Report, 0, len(f.reports))
 	for _, r := range f.reports {
@@ -97,4 +109,41 @@ func TestGeneratorService_SaveReportError(t *testing.T) {
 
 	err := gs.ExportSaveReport(context.Background(), &reporting.Report{ID: "r1", CreatedAt: time.Now()})
 	require.ErrorContains(t, err, "disk full")
+}
+
+// TestGeneratorService_DeletedReportIsNotResurrected pins the race that wiring
+// the DELETE endpoint makes reachable (#2154).
+//
+// Generate returns as soon as the initial row is written and finishes the work
+// in a goroutine that writes status again afterwards. Those writes used to go
+// through SaveReport, an INSERT OR REPLACE, so a report deleted while it was
+// still generating came back with whatever status the goroutine wrote next.
+func TestGeneratorService_DeletedReportIsNotResurrected(t *testing.T) {
+	repo := newFakeReportRepo()
+	gs := reporting.NewGeneratorService(testConfig(), repo, nil, nil, nil)
+	ctx := context.Background()
+
+	rep := &reporting.Report{
+		ID:        "generating-1",
+		Name:      "In flight",
+		Type:      reporting.ReportTypeExecutive,
+		Format:    reporting.FormatJSON,
+		Status:    reporting.StatusGenerating,
+		CreatedAt: time.Now(),
+	}
+	require.NoError(t, gs.ExportSaveReport(ctx, rep))
+	require.NoError(t, gs.DeleteReport(ctx, rep.ID))
+
+	// The generation goroutine's next write lands here, after the delete.
+	rep.Status = reporting.StatusComplete
+	live, err := repo.UpdateReport(ctx, rep)
+	require.NoError(t, err)
+	assert.False(t, live, "update matched a row that was deleted")
+
+	_, err = gs.GetReport(ctx, rep.ID)
+	require.Error(t, err, "deleted report came back after the generator wrote to it")
+
+	list, err := gs.ListReports(ctx)
+	require.NoError(t, err)
+	assert.Empty(t, list)
 }
