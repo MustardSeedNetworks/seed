@@ -133,7 +133,8 @@ jobs:
         run: npm ci
 
       - name: Install ts-prune
-        run: npm install -g ts-prune
+        # Floating installs mean the gate's verdict depends on when it ran.
+        run: npm install -g ts-prune@0.10.3
 
       - name: Check for unused exports
         working-directory: ui
@@ -144,7 +145,12 @@ jobs:
           # Run ts-prune to find unused exports
           ts-prune --error 2>&1 | tee ts-prune-output.txt || true
 
-          UNUSED_COUNT=$(grep -c "unused" ts-prune-output.txt || echo "0")
+          # grep -c PRINTS 0 and EXITS 1 when nothing matches, so `|| echo "0"`
+          # appended a second line and the substitution became "0\n0" —
+          # which is what made the comparison below report
+          # "integer expression expected".
+          UNUSED_COUNT=$(grep -c "unused" ts-prune-output.txt || true)
+          UNUSED_COUNT=${UNUSED_COUNT:-0}
           echo "Found $UNUSED_COUNT potentially unused exports" >> "$GITHUB_STEP_SUMMARY"
 
           if [ "$UNUSED_COUNT" -gt 0 ]; then
@@ -160,10 +166,11 @@ jobs:
           echo "" >> "$GITHUB_STEP_SUMMARY"
           echo "### Unused npm Dependencies" >> "$GITHUB_STEP_SUMMARY"
 
-          npx depcheck --json 2>/dev/null | tee depcheck-output.json || true
+          npx --yes depcheck@1.4.7 --json 2>/dev/null | tee depcheck-output.json || true
 
           # Parse results
-          UNUSED=$(jq -r '.dependencies[]' depcheck-output.json 2>/dev/null | wc -l || echo "0")
+          UNUSED=$(jq -r '.dependencies[]' depcheck-output.json 2>/dev/null | wc -l | tr -d ' ')
+          UNUSED=${UNUSED:-0}
           DEV_UNUSED=$(jq -r '.devDependencies[]' depcheck-output.json 2>/dev/null | wc -l || echo "0")
 
           if [ "$UNUSED" -gt 0 ] || [ "$DEV_UNUSED" -gt 0 ]; then

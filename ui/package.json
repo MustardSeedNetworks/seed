@@ -18,7 +18,7 @@
     "lint": "biome check src/",
     "lint:fix": "biome check --write src/",
     "format": "biome format --write src/",
-    "test": "node --disable-warning=DEP0205 ./node_modules/vitest/vitest.mjs run --reporter=verbose --passWithNoTests",
+    "test": "node --disable-warning=DEP0205 ./node_modules/vitest/vitest.mjs run --reporter=verbose",
     "test:watch": "node --disable-warning=DEP0205 ./node_modules/vitest/vitest.mjs --reporter=dot",
     "test:coverage": "node --disable-warning=DEP0205 ./node_modules/vitest/vitest.mjs run --coverage --reporter=verbose",
     "test:e2e": "NO_COLOR= node --disable-warning=DEP0205 ./node_modules/playwright/cli.js test --reporter=list",
