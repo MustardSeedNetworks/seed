@@ -1152,15 +1152,9 @@ func TestGeneratorService_ListReports(t *testing.T) {
 	// Wait for reports to be saved
 	time.Sleep(100 * time.Millisecond)
 
-	// List reports - may fail due to database schema differences in test environment
 	reports, err := gs.ListReports(ctx)
-	if err != nil {
-		// This is expected if the database schema doesn't match production
-		t.Logf("ListReports failed (may be expected in test): %v", err)
-		return
-	}
-	// If no error, verify reports list is returned
-	assert.NotNil(t, reports)
+	require.NoError(t, err)
+	assert.Len(t, reports, 3)
 }
 
 func TestGeneratorService_GetReport(t *testing.T) {
@@ -1183,15 +1177,13 @@ func TestGeneratorService_GetReport(t *testing.T) {
 	// Wait for it to be saved
 	time.Sleep(50 * time.Millisecond)
 
-	// Get the report - may have scan issues in test environment
 	retrieved, err := gs.GetReport(ctx, report.ID)
-	if err != nil {
-		// Expected in test environment due to schema differences
-		t.Logf("GetReport failed (may be expected): %v", err)
-	} else {
-		assert.Equal(t, report.ID, retrieved.ID)
-		assert.Equal(t, report.Type, retrieved.Type)
-	}
+	require.NoError(t, err)
+	assert.Equal(t, report.ID, retrieved.ID)
+	assert.Equal(t, report.Type, retrieved.Type)
+	// created_at survives the round trip: it is written as RFC3339 and must be
+	// parsed back, which is the read that used to fail outright.
+	assert.WithinDuration(t, report.CreatedAt, retrieved.CreatedAt, time.Second)
 
 	// Get non-existent report - should always error
 	_, err = gs.GetReport(ctx, "nonexistent-id")
@@ -1218,14 +1210,9 @@ func TestGeneratorService_DeleteReport(t *testing.T) {
 	// Wait for it to be saved
 	time.Sleep(50 * time.Millisecond)
 
-	// Delete it - may fail in test environment due to scan issues
 	err = gs.DeleteReport(ctx, report.ID)
-	if err != nil {
-		t.Logf("DeleteReport failed (may be expected): %v", err)
-		return
-	}
+	require.NoError(t, err)
 
-	// If delete succeeded, verify it's gone
 	_, err = gs.GetReport(ctx, report.ID)
 	require.Error(t, err)
 }
@@ -1592,20 +1579,12 @@ func TestDatabaseInteraction_Reports(t *testing.T) {
 	// Wait for all reports to be saved
 	time.Sleep(200 * time.Millisecond)
 
-	// List all reports - may fail in test due to scan issues
 	reports, err := gs.ListReports(ctx)
-	if err != nil {
-		t.Logf("ListReports failed (may be expected): %v", err)
-	} else {
-		assert.NotNil(t, reports)
-	}
+	require.NoError(t, err)
+	assert.Len(t, reports, 5)
 
-	// Try to delete test reports (cleanup)
 	for _, id := range reportIDs {
-		delErr := gs.DeleteReport(ctx, id)
-		if delErr != nil {
-			t.Logf("Could not delete report %s: %v", id, delErr)
-		}
+		require.NoError(t, gs.DeleteReport(ctx, id))
 	}
 }
 
