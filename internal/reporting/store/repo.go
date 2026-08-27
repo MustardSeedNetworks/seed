@@ -93,6 +93,46 @@ func (r *ReportRepo) SaveReport(ctx context.Context, report *reporting.Report) e
 	return nil
 }
 
+// UpdateReport updates an existing report row, reporting whether one matched.
+// Unlike SaveReport this never inserts: the generator writes status updates
+// after Generate has returned, and an INSERT there would resurrect a report the
+// caller had already deleted.
+func (r *ReportRepo) UpdateReport(ctx context.Context, report *reporting.Report) (bool, error) {
+	paramsJSON, err := json.Marshal(report.Parameters)
+	if err != nil {
+		return false, fmt.Errorf("marshaling report parameters: %w", err)
+	}
+
+	var completedAt, expiresAt *string
+	if report.CompletedAt != nil {
+		t := report.CompletedAt.Format(time.RFC3339)
+		completedAt = &t
+	}
+	if report.ExpiresAt != nil {
+		t := report.ExpiresAt.Format(time.RFC3339)
+		expiresAt = &t
+	}
+
+	res, err := r.db.Exec(ctx, `
+		UPDATE reports
+		SET name = ?, type = ?, format = ?, template = ?, status = ?, file_path = ?,
+		    file_size = ?, parameters_json = ?, error = ?, completed_at = ?, expires_at = ?
+		WHERE id = ?
+	`, report.Name, report.Type, report.Format, report.Template, report.Status,
+		report.FilePath, report.FileSize, string(paramsJSON), report.Error,
+		completedAt, expiresAt, report.ID)
+	if err != nil {
+		return false, fmt.Errorf("updating report in database: %w", err)
+	}
+
+	affected, err := res.RowsAffected()
+	if err != nil {
+		return false, fmt.Errorf("reading update result for report %s: %w", report.ID, err)
+	}
+
+	return affected > 0, nil
+}
+
 // DeleteReport removes the report row (the file is removed by the service).
 func (r *ReportRepo) DeleteReport(ctx context.Context, id string) error {
 	_, err := r.db.Exec(ctx, "DELETE FROM reports WHERE id = ?", id)

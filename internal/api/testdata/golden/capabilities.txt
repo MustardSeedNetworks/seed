@@ -750,6 +750,34 @@ body:
     "path": "/api/v1/security/devices/subnets"
   },
   {
+    "feature": "export_csv_json",
+    "maxBodyBytes": 262144,
+    "methods": [
+      "GET"
+    ],
+    "path": "/api/v1/reports"
+  },
+  {
+    "feature": "export_csv_json",
+    "maxBodyBytes": 262144,
+    "methods": [
+      "POST"
+    ],
+    "minRole": "operator",
+    "path": "/api/v1/reports/generate",
+    "rateLimited": true
+  },
+  {
+    "feature": "export_csv_json",
+    "maxBodyBytes": 262144,
+    "methods": [
+      "GET",
+      "DELETE"
+    ],
+    "minRole": "operator",
+    "path": "/api/v1/reports/"
+  },
+  {
     "feature": "compliance_advanced",
     "maxBodyBytes": 262144,
     "methods": [

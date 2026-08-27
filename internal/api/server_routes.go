@@ -598,6 +598,35 @@ func (s *Server) setupSecurityRoutes() {
 			methods: crud,
 			minRole: op, // POST/PUT/DELETE mutate persisted subnet entries (writeGated: operator+)
 		},
+		// Reports (#2154). export_csv_json is Starter+ (license/policy.go), the
+		// same gate ReportsPage already applies -- but the page gate is
+		// cosmetic on its own, so it belongs here too.
+		//
+		// Generation sits on its own path rather than POST /reports because
+		// rateLimited wraps the whole route and the shared endpoint limiter is
+		// 5 requests/minute: on the collection it would throttle list reads.
+		// ServeMux prefers the exact pattern over the /reports/ prefix.
+		{
+			path:    APIVersionPrefix + "/reports",
+			handler: s.handleReports,
+			methods: get,
+			feature: "export_csv_json",
+		},
+		{
+			path:        APIVersionPrefix + "/reports/generate",
+			handler:     s.handleReportGenerate,
+			methods:     post,
+			minRole:     op,
+			feature:     "export_csv_json",
+			rateLimited: true,
+		},
+		{
+			path:    APIVersionPrefix + "/reports/",
+			handler: s.handleReportByID,
+			methods: []string{http.MethodGet, http.MethodDelete},
+			minRole: op, // gates DELETE only; GET stays open to viewers
+			feature: "export_csv_json",
+		},
 		// Vulnerability scan + guest-audit run are compliance_advanced (Pro,
 		// LICENSE_STRATEGY §2); read-only results/status/settings stay open so prior
 		// scan output remains visible to lower tiers.

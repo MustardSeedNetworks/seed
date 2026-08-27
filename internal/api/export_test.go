@@ -11,6 +11,7 @@ import (
 	"github.com/MustardSeedNetworks/seed/internal/config/backups"
 	"github.com/MustardSeedNetworks/seed/internal/engine"
 	"github.com/MustardSeedNetworks/seed/internal/i18n"
+	"github.com/MustardSeedNetworks/seed/internal/license"
 )
 
 // ExportSplitCIDR exposes splitCIDR for testing.
@@ -458,4 +459,15 @@ type TLSFingerprintCache = tlsFingerprintCache
 // ExportWebAuthnConfigFromServer exposes WebAuthn origin derivation for testing.
 func ExportWebAuthnConfigFromServer(cfg *config.Config, listenerPort int) auth.WebAuthnConfig {
 	return webAuthnConfigFromServer(cfg, listenerPort)
+}
+
+// SetLicenseManagerForTest replaces the server's license manager.
+//
+// NewServer builds its manager with license.NewManager(), which persists
+// activation state in the real user config directory. A test that activates or
+// starts a trial through it writes to the developer's machine and leaks the
+// grant into every later test in the run. Tests pass a manager built with
+// license.NewManagerWithDir(t.TempDir()) instead.
+func (s *Server) SetLicenseManagerForTest(m *license.Manager) {
+	s.licenseMgr = m
 }

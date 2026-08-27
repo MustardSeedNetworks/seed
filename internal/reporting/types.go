@@ -219,3 +219,32 @@ type ExportResult struct {
 	ExpiresAt   time.Time    `json:"expiresAt"`
 	DownloadURL string       `json:"downloadUrl,omitempty"`
 }
+
+// IsValidReportType reports whether t is one of the defined report types.
+// Report generation is reachable over HTTP (#2154), so the type has to be
+// checked before it reaches the generator's format switch.
+func IsValidReportType(t ReportType) bool {
+	switch t {
+	case ReportTypeExecutive, ReportTypeDetailed, ReportTypeVulnerability,
+		ReportTypeCompliance, ReportTypeInventory, ReportTypePerformance,
+		ReportTypeIncident, ReportTypeCustom:
+		return true
+	default:
+		return false
+	}
+}
+
+// IsValidExportFormat reports whether f is one of the defined export formats.
+//
+// FormatExcel and FormatMarkdown are defined but unimplemented: the generator's
+// switch rejects them at runtime. They are accepted here because "defined" and
+// "implemented" are separate questions, and the generator already answers the
+// second one with a clear error.
+func IsValidExportFormat(f ExportFormat) bool {
+	switch f {
+	case FormatPDF, FormatHTML, FormatCSV, FormatJSON, FormatExcel, FormatMarkdown:
+		return true
+	default:
+		return false
+	}
+}

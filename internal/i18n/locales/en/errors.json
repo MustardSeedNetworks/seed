@@ -121,5 +121,14 @@
   },
   "settings": {
     "conflict": "This setting was changed by another user since you loaded it. Reload and apply your changes again."
+  },
+  "reports": {
+    "unavailable": "Reporting service is not available",
+    "listFailed": "Failed to list reports",
+    "generateFailed": "Failed to generate report",
+    "invalidRequest": "Unknown report type or format",
+    "invalidID": "Missing or invalid report id",
+    "notFound": "Report not found",
+    "notReady": "Report file is not available yet"
   }
 }
