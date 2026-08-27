@@ -1,10 +1,6 @@
 name: 'Setup Node.js'
 description: 'Set up Node.js with npm caching'
 inputs:
-  node-version:
-    description: 'Node.js version'
-    required: false
-    default: '26.7.0'
   working-directory:
     description: 'Working directory for npm'
     required: false
@@ -25,7 +21,15 @@ runs:
     - name: Set up Node.js
       uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
       with:
-        node-version: ${{ inputs.node-version }}
+        # .nvmrc is the single source of truth for the Node version. This
+        # used to be a `node-version` input defaulting to a literal, which is
+        # a second copy of a value that already lives in .nvmrc and
+        # package.json engines — and it drifted: Renovate bumps the manifests
+        # it can see and cannot see a default buried in a composite, so CI ran
+        # 26.7.0 against manifests demanding 26.8.1 and logged EBADENGINE on
+        # every job. The input is deleted rather than corrected, so no caller
+        # can reintroduce the divergence.
+        node-version-file: '.nvmrc'
         # Built-in caching is deliberately OFF. setup-node saves its cache
         # unconditionally in post-job, including on pull requests — and caches
         # are scoped per ref, so every PR left behind its own ~140MB copy that

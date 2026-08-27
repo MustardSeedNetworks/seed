@@ -104,11 +104,24 @@ keep it at `error` — neither uses `await act(`.
 
 ## The Node.js pin lives in one file
 
-Every workflow that needs Node uses `./.github/actions/setup-node`; none pin a
-`node-version:` literal. The composite is the single place the Node and npm
-versions are declared, and it must stay in step with `.nvmrc` and the `engines` /
-`packageManager` fields in `package.json`. Release and CI therefore build on the
-same Node version by construction rather than by convention.
+`.nvmrc` is the single source of truth for the Node version. Every workflow that
+needs Node uses `./.github/actions/setup-node`, and that composite reads
+`.nvmrc` via `node-version-file` — it has **no `node-version` input**, so no
+caller can override it and no second copy of the version can exist.
+
+That input used to default to a literal, and it drifted: Renovate bumps the
+manifests it can see and cannot see a default buried inside a composite, so CI
+ran 26.7.0 against manifests demanding 26.8.1 and logged EBADENGINE on every
+job for weeks. "Must stay in step" was the previous rule here, and a rule that
+depends on someone remembering is not a mechanism.
+
+The remaining pair that can disagree is `.nvmrc` and the `engines` field in
+`package.json`. `engine-strict=true` in `ui/.npmrc` makes that a hard failure at
+`npm ci` rather than a warning, so the two are checked on every install instead
+of being trusted.
+
+The npm version is still declared in the composite; `packageManager` in
+`package.json` is what `engines` checks it against.
 
 ## CI Must Pass Before Merge
 
