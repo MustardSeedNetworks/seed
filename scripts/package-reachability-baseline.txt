@@ -1,0 +1,20 @@
+# Internal packages that no binary reaches.
+#
+# This is debt, not permission. The list may shrink and must not grow — the
+# gate fails on anything not listed here. Every entry carries the reason it is
+# unreachable, because a bare list tells the next person nothing about whether
+# it is safe to delete.
+#
+# Verified unreachable across GOOS=linux, darwin and windows, and against every
+# main package rather than just ./cmd/..., so nothing here is a build-tag or
+# entry-point artefact.
+#
+# Before deleting any of them: check for consumers Go tooling cannot see. A
+# frontend importing a directory inside a Go package is invisible to go build,
+# which is how stem's live locale files came to sit inside a dead package.
+#
+# format: <package path>   # reason
+
+# Test-only by design: a recorded-walk replayer that serves fixtures to the
+# collector tests. It has no place in a shipped binary and should stay here.
+internal/polling/snmp/snmpwalkfile   # test helper, intentionally not shipped
