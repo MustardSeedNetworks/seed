@@ -110,6 +110,7 @@ func schemaTargets() []schemaTarget {
 		{&api.RogueDHCPResponse{}, "rogue-dhcp-response.schema.json"},
 		{&api.IPConfigResponse{}, "ipconfig-response.schema.json"},
 		{&api.DiscoveryResponse{}, "discovery-response.schema.json"},
+		{&api.ReportsResponse{}, "reports-response.schema.json"},
 		{&api.NetworkProblemsResponse{}, "network-problems-response.schema.json"},
 		{&api.ProblemScanResponse{}, "problem-scan-response.schema.json"},
 		{&api.GatewayResponse{}, "gateway-response.schema.json"},

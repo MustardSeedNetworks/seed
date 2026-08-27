@@ -1,6 +1,8 @@
 import { Trans } from 'react-i18next';
+import { ReportsCard } from '../components/cards/ReportsCard';
 import { SLADashboardCard } from '../components/cards/SlaDashboardCard';
 import { RequireFeature } from '../components/ui/RequireFeature';
+import { useReports } from '../hooks/useReports';
 import { CardGrid } from '../ui/CardGrid';
 
 /**
@@ -13,6 +15,21 @@ import { CardGrid } from '../ui/CardGrid';
  * No rollup — the licence gate below is the page's state, and it already says
  * what is missing and how to fix it.
  */
+function ReportsCardContainer() {
+  const { reports, loading, error, generating, generate, remove } = useReports();
+
+  return (
+    <ReportsCard
+      reports={reports}
+      loading={loading}
+      error={error}
+      generating={generating}
+      onGenerate={() => void generate('executive', 'pdf')}
+      onDelete={(id) => void remove(id)}
+    />
+  );
+}
+
 export function ReportsPage() {
   return (
     <RequireFeature
@@ -32,6 +49,7 @@ export function ReportsPage() {
     >
       <CardGrid>
         <SLADashboardCard />
+        <ReportsCardContainer />
       </CardGrid>
     </RequireFeature>
   );
