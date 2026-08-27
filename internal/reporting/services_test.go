@@ -1357,10 +1357,7 @@ func setupTestData(t *testing.T, ctx context.Context, db *database.DB) {
 		VALUES (?, ?, ?, ?, ?, ?, ?, ?)
 	`, "test-device-1", "192.168.1.100", "00:11:22:33:44:55", "test-host", "TestVendor", "workstation",
 		time.Now().Add(-24*time.Hour).Format(time.RFC3339), time.Now().Format(time.RFC3339))
-	if err != nil {
-		// Table might not exist or have different schema, skip
-		t.Logf("Could not insert test device: %v", err)
-	}
+	require.NoError(t, err)
 }
 
 // ----------------------------------------------------------------------------
