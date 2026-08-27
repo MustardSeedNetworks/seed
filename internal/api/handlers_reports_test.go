@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
+	"net/url"
 	"path/filepath"
 	"strings"
 	"testing"
@@ -230,10 +231,14 @@ func TestReports_GenerateRejectsUnknownTypeAndFormat(t *testing.T) {
 	}
 }
 
+// absentReportID is a syntactically valid report id that names no report, so a
+// 404 here means "no such report" rather than "malformed id".
+const absentReportID = "00000000-0000-0000-0000-000000000000"
+
 func TestReports_UnknownIDIsNotFound(t *testing.T) {
 	s := reportsTestServer(t)
 
-	rec := reportsDo(t, s, http.MethodGet, "/api/v1/reports/no-such-report", "")
+	rec := reportsDo(t, s, http.MethodGet, "/api/v1/reports/"+absentReportID, "")
 
 	assert.Equal(t, http.StatusNotFound, rec.Code)
 }
@@ -246,6 +251,13 @@ func TestReports_ByIDRejectsMalformedPaths(t *testing.T) {
 	for _, path := range []string{
 		"/api/v1/reports/",
 		"/api/v1/reports/a/b",
+		// Not a UUID: a report id names a uuid.New() value and nothing else.
+		"/api/v1/reports/no-such-report",
+		// r.URL.Path arrives percent-decoded, so %0A is a real newline by the
+		// time the handler sees it. Logging that verbatim would let a caller
+		// forge log lines (CodeQL go/log-injection).
+		"/api/v1/reports/" + url.PathEscape("00000000-0000-0000-0000-000000000000\nFAKE audit entry"),
+		"/api/v1/reports/" + url.PathEscape("../../etc/passwd"),
 	} {
 		t.Run(path, func(t *testing.T) {
 			rec := reportsDo(t, s, http.MethodGet, path, "")
@@ -274,7 +286,7 @@ func TestReports_DownloadDistinguishesPendingFromMissing(t *testing.T) {
 	assert.Contains(t, []int{http.StatusOK, http.StatusConflict}, dl.Code,
 		"body: %s", dl.Body.String())
 
-	missing := reportsDo(t, s, http.MethodGet, "/api/v1/reports/no-such-report/download", "")
+	missing := reportsDo(t, s, http.MethodGet, "/api/v1/reports/"+absentReportID+"/download", "")
 	assert.Equal(t, http.StatusNotFound, missing.Code)
 }
 

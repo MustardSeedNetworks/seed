@@ -4,6 +4,7 @@ import (
 	"errors"
 	"io"
 	"net/http"
+	"regexp"
 	"strings"
 	"time"
 
@@ -19,6 +20,13 @@ const reportsPathPrefix = APIVersionPrefix + "/reports/"
 // downloadSuffix marks the variant of GET /reports/{id} that streams the file
 // rather than returning the record.
 const downloadSuffix = "/download"
+
+// reportIDPattern matches the uuid.New().String() ids Generate assigns.
+//
+// r.URL.Path arrives percent-decoded, so without this an id could carry a
+// newline and forge log lines. It is also plain input validation: nothing but a
+// UUID can name a report.
+var reportIDPattern = regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)
 
 // ReportInfo is a generated report as the API presents it.
 //
@@ -167,7 +175,7 @@ func (s *Server) handleReportByID(w http.ResponseWriter, r *http.Request) {
 	rest := strings.TrimPrefix(r.URL.Path, reportsPathPrefix)
 	download := strings.HasSuffix(rest, downloadSuffix)
 	id := strings.TrimSuffix(rest, downloadSuffix)
-	if id == "" || strings.Contains(id, "/") {
+	if !reportIDPattern.MatchString(id) {
 		sendErrorResponseWithDetails(w, logger, http.StatusBadRequest,
 			ErrCodeValidation, i18n.FromRequest(r).T("errors.reports.invalidID"), "")
 		return
@@ -223,8 +231,9 @@ func (s *Server) deleteReport(
 		return
 	}
 
-	logger.InfoContext(r.Context(), "report deleted",
-		"event", "report.deleted", "report_id", id)
+	// No report_id field: the logging middleware already records r.URL.Path,
+	// which is where the id came from.
+	logger.InfoContext(r.Context(), "report deleted", "event", "report.deleted")
 
 	w.WriteHeader(http.StatusNoContent)
 }
@@ -255,7 +264,6 @@ func (s *Server) downloadReport(
 		}
 		logger.WarnContext(r.Context(), "report download failed",
 			"event", "report.download.failed",
-			"report_id", id,
 			"status", string(report.Status),
 			"error", err)
 		sendErrorResponseWithDetails(w, logger, status,
@@ -274,7 +282,7 @@ func (s *Server) downloadReport(
 	if _, copyErr := io.Copy(w, body); copyErr != nil && !errors.Is(copyErr, http.ErrBodyNotAllowed) {
 		// Headers are already out, so there is no error response left to send.
 		logger.WarnContext(r.Context(), "report download truncated",
-			"event", "report.download.truncated", "report_id", id, "error", copyErr)
+			"event", "report.download.truncated", "error", copyErr)
 	}
 }
 
