@@ -5,6 +5,17 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.213.33](https://github.com/MustardSeedNetworks/seed/compare/v0.213.32...v0.213.33) (2026-08-27)
+
+
+### Continuous Integration
+
+* adopt shared-workflow v1.8.0 ([#2163](https://github.com/MustardSeedNetworks/seed/issues/2163)) ([1ee66df](https://github.com/MustardSeedNetworks/seed/commit/1ee66df4260a44e599c7af77983d6860c2ef7892))
+* fix the dead-code counter, drop an ineffective cache, stop passing on no tests ([#2169](https://github.com/MustardSeedNetworks/seed/issues/2169)) ([c8646a8](https://github.com/MustardSeedNetworks/seed/commit/c8646a81e0566b8d910b44471c11081b754ccd79))
+* make .nvmrc the only source for the Node version ([#2165](https://github.com/MustardSeedNetworks/seed/issues/2165)) ([7da1f45](https://github.com/MustardSeedNetworks/seed/commit/7da1f456117a258b9cb2bd3edc79ed08a1dc0aaa))
+* make gate implementations trigger the gates they implement ([#2160](https://github.com/MustardSeedNetworks/seed/issues/2160)) ([ca29d0a](https://github.com/MustardSeedNetworks/seed/commit/ca29d0a1096c0b7847dca32f4d523ff8b29eb595))
+* refuse to release a tag whose commit never passed CI ([#2167](https://github.com/MustardSeedNetworks/seed/issues/2167)) ([5dd8be5](https://github.com/MustardSeedNetworks/seed/commit/5dd8be5ffc0e2cf9e904a71aef80d477b98047a7))
+
 ## [0.213.32](https://github.com/MustardSeedNetworks/seed/compare/v0.213.31...v0.213.32) (2026-08-27)
 
 
