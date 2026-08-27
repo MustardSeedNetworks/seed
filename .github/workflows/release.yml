@@ -62,6 +62,46 @@ permissions:
   contents: read
 
 jobs:
+  # A v* tag is enough to start a release: no ruleset restricts tag creation in
+  # any fleet repo (verified 2026-08-27 — the only ruleset present is
+  # merge-queue, and it targets branches). Until tag protection lands, this is
+  # the gate. It refuses to build a tag whose commit never passed CI, so an
+  # accidental or unauthorised tag fails here instead of producing signed,
+  # published artifacts.
+  #
+  # The assertion is skipped for workflow_dispatch, which is the deliberate
+  # dry-run path and carries no tag — but the job itself still runs and
+  # succeeds, so nothing downstream is skipped.
+  verify-tag:
+    name: Verify tagged commit passed CI
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      checks: read
+      contents: read
+    steps:
+      # The condition is on the step, not the job. A job-level `if:` that
+      # evaluated false would leave this SKIPPED, and a skipped `needs:` entry
+      # skips everything downstream through the implicit success() — the whole
+      # dry-run path would silently do nothing. As a step, the job still
+      # reports success and dependents run normally.
+      - name: Assert CI Complete succeeded for this commit
+        if: github.event_name == 'push'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          # index() returns 0 for a first-element match, and jq's // only fires
+          # on null/false — so a match at position 0 still prints 0 and passes.
+          found=$(gh api \
+            "repos/${GITHUB_REPOSITORY}/commits/${GITHUB_SHA}/check-runs?per_page=100" \
+            --jq '[.check_runs[] | select(.name == "CI Complete") | .conclusion] | index("success") // empty')
+          if [ -z "$found" ]; then
+            echo "::error::No successful 'CI Complete' check run for ${GITHUB_SHA}. Refusing to release an unvalidated commit."
+            exit 1
+          fi
+          echo "CI Complete succeeded for ${GITHUB_SHA}"
+
   # =========================================================================
   # iperf3 binaries — same matrix as release.yml's build-iperf3 job.
   # Built on native runners; goreleaser picks them up from bin/.
@@ -69,6 +109,7 @@ jobs:
   build-iperf3:
     name: Build iperf3 (${{ matrix.arch }})
     if: ${{ !inputs.provenance_only }}
+    needs: [verify-tag]
     runs-on: ${{ matrix.runner }}
     env:
       IPERF3_VERSION: "3.21"
@@ -147,6 +188,7 @@ jobs:
   build-ui:
     name: Build UI
     if: ${{ !inputs.provenance_only }}
+    needs: [verify-tag]
     runs-on: ubuntu-latest
     outputs:
       ui_hash: ${{ steps.ui-hash.outputs.hash }}
