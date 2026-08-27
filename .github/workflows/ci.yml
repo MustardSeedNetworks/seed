@@ -58,7 +58,7 @@ jobs:
       frontend: ${{ github.event_name == 'merge_group' && 'true' || steps.filter.outputs.frontend }}
       c: ${{ github.event_name == 'merge_group' && 'true' || steps.filter.outputs.c }}
       docs: ${{ github.event_name == 'merge_group' && 'true' || steps.filter.outputs.docs }}
-      workflows: ${{ github.event_name == 'merge_group' && 'true' || steps.filter.outputs.workflows }}
+      ci_infra: ${{ github.event_name == 'merge_group' && 'true' || steps.filter.outputs.ci_infra }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - uses: dorny/paths-filter@ceb8a2b8f2d89434be7ff52d3de7ec3738c5cc9d # v4.0.3
@@ -77,12 +77,8 @@ jobs:
               # the Go suite even when no .go file moves.
               - 'internal/database/migrations/**'
               - 'internal/database/testdata/**'
-              - '.github/actions/setup-go/**'
-              - '.github/actions/setup-libpcap/**'
             frontend:
               - 'ui/**'
-              - 'scripts/test-storybook-contract.sh'
-              - '.github/actions/setup-node/**'
             c:
               - 'src/**'
               - 'include/**'
@@ -91,8 +87,22 @@ jobs:
               - '.clang-format'
             docs:
               - '**/*.md'
-            workflows:
+            # Everything that *implements* a CI gate, not just the workflow
+            # that calls it. This class previously named three composite
+            # actions and one script individually; seed has 47 scripts under
+            # scripts/, most of them gate implementations (check-schema-drift,
+            # check-output-escaping, check-route-policy and friends), and the
+            # rest matched no filter. A PR could rewrite a gate, run no job
+            # that used it, and merge green — CI Complete accepts `skipped`.
+            # Naming them one at a time is the failure mode; this is the
+            # directory class that replaces it.
+            ci_infra:
               - '.github/workflows/**'
+              - '.github/actions/**'
+              - 'scripts/**'
+              - '.golangci.yml'
+              - 'biome.json'
+              - 'ui/biome.json'
 
   # ===========================================================================
   # Build UI once, shared via artifact
@@ -105,7 +115,7 @@ jobs:
     name: Build UI (shared artifact)
     runs-on: ubuntu-latest
     needs: changes
-    if: needs.changes.outputs.backend == 'true' || needs.changes.outputs.frontend == 'true' || needs.changes.outputs.workflows == 'true'
+    if: needs.changes.outputs.backend == 'true' || needs.changes.outputs.frontend == 'true' || needs.changes.outputs.ci_infra == 'true'
     timeout-minutes: 10
 
     steps:
@@ -140,7 +150,7 @@ jobs:
     name: Backend (macOS)
     runs-on: macos-latest
     needs: changes
-    if: needs.changes.outputs.backend == 'true' || needs.changes.outputs.workflows == 'true'
+    if: needs.changes.outputs.backend == 'true' || needs.changes.outputs.ci_infra == 'true'
     timeout-minutes: 20
     env:
       GOMODCACHE: ${{ github.workspace }}/.cache/go/pkg/mod
@@ -179,7 +189,7 @@ jobs:
     name: Backend (Go)
     runs-on: ubuntu-latest
     needs: [changes, build-ui]
-    if: needs.changes.outputs.backend == 'true' || needs.changes.outputs.frontend == 'true' || needs.changes.outputs.workflows == 'true'
+    if: needs.changes.outputs.backend == 'true' || needs.changes.outputs.frontend == 'true' || needs.changes.outputs.ci_infra == 'true'
     timeout-minutes: 20
     env:
       GOMODCACHE: ${{ github.workspace }}/.cache/go/pkg/mod
@@ -331,7 +341,7 @@ jobs:
     name: Backend (race detector)
     runs-on: ubuntu-latest
     needs: [changes, build-ui]
-    if: needs.changes.outputs.backend == 'true' || needs.changes.outputs.frontend == 'true' || needs.changes.outputs.workflows == 'true'
+    if: needs.changes.outputs.backend == 'true' || needs.changes.outputs.frontend == 'true' || needs.changes.outputs.ci_infra == 'true'
     timeout-minutes: 20
     env:
       GOMODCACHE: ${{ github.workspace }}/.cache/go/pkg/mod
@@ -386,7 +396,7 @@ jobs:
     name: Benchmarks
     runs-on: ubuntu-latest
     needs: [changes]
-    if: needs.changes.outputs.backend == 'true' || needs.changes.outputs.workflows == 'true'
+    if: needs.changes.outputs.backend == 'true' || needs.changes.outputs.ci_infra == 'true'
     timeout-minutes: 25
     env:
       GOMODCACHE: ${{ github.workspace }}/.cache/go/pkg/mod
@@ -471,7 +481,7 @@ jobs:
     name: Frontend (React/TypeScript)
     runs-on: ubuntu-latest
     needs: [changes, build-ui]
-    if: needs.changes.outputs.frontend == 'true' || needs.changes.outputs.workflows == 'true'
+    if: needs.changes.outputs.frontend == 'true' || needs.changes.outputs.ci_infra == 'true'
     timeout-minutes: 15
     defaults:
       run:
@@ -511,7 +521,7 @@ jobs:
     name: Storybook interactions and accessibility
     runs-on: ubuntu-latest
     needs: changes
-    if: needs.changes.outputs.frontend == 'true' || needs.changes.outputs.workflows == 'true'
+    if: needs.changes.outputs.frontend == 'true' || needs.changes.outputs.ci_infra == 'true'
     timeout-minutes: 25
     defaults:
       run:
@@ -815,7 +825,7 @@ jobs:
     name: C Lint (C23)
     runs-on: ubuntu-latest
     needs: changes
-    if: needs.changes.outputs.c == 'true' || needs.changes.outputs.workflows == 'true'
+    if: needs.changes.outputs.c == 'true' || needs.changes.outputs.ci_infra == 'true'
     timeout-minutes: 16
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -932,7 +942,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     needs: changes
-    if: needs.changes.outputs.workflows == 'true'
+    if: needs.changes.outputs.ci_infra == 'true'
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
@@ -964,7 +974,7 @@ jobs:
     name: i18n Validation
     runs-on: ubuntu-latest
     needs: changes
-    if: needs.changes.outputs.frontend == 'true' || needs.changes.outputs.workflows == 'true'
+    if: needs.changes.outputs.frontend == 'true' || needs.changes.outputs.ci_infra == 'true'
     timeout-minutes: 10
 
     steps:
