@@ -185,6 +185,50 @@ jobs:
   # ===========================================================================
   # Go Backend Checks
   # ===========================================================================
+  # ===========================================================================
+  # Backend (Windows)
+  # ===========================================================================
+  # Windows is a supported target with 19 `*_windows.go` files across cmd/seed
+  # and internal/{diagnostics,discovery,netif,phy,security,truststore,wifi},
+  # and until now not one of them was compiled by CI -- only internal/api was
+  # cross-vetted. A break in any of the others surfaced at release time.
+  #
+  # The cross-`GOOS=windows` vet elsewhere in this file stays as the cheap
+  # fast-fail, but it is deliberately NOT the gate: cross-vet catches compile
+  # errors, not the #2096 class, where syscall.EADDRINUSE simply is not
+  # WSAEADDRINUSE and only a real Winsock error object proves it. That is what
+  # TestIsAddrInUse_RecognisesWSAEADDRINUSE asserts, and this job is the first
+  # thing that has ever executed it.
+  #
+  # CGO_ENABLED=0: this runner has no Npcap, so anything reaching libpcap
+  # cannot link here. Build and vet still cover every package compiling; the
+  # test step is scoped to the port-fallback tests, which are the ones with
+  # Windows-specific behaviour to exercise.
+  backend-windows:
+    name: Backend (Windows)
+    runs-on: windows-latest
+    timeout-minutes: 20
+    needs: changes
+    if: needs.changes.outputs.backend == 'true' || needs.changes.outputs.ci_infra == 'true'
+    env:
+      CGO_ENABLED: "0"
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Set up Go
+        uses: ./.github/actions/setup-go
+
+      - name: Build
+        run: go build ./...
+
+      - name: Vet
+        run: go vet ./...
+
+      - name: Test (port fallback)
+        run: go test ./internal/api/ -run 'IsAddrInUse|BindWithFallback' -v
+
   backend:
     name: Backend (Go)
     runs-on: ubuntu-latest
@@ -1521,6 +1565,7 @@ jobs:
       - workflow-lint
       - backend
       - backend-darwin
+      - backend-windows
       - race
       - bench
       - frontend
