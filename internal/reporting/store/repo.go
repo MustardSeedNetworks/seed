@@ -105,12 +105,24 @@ func (r *ReportRepo) DeleteReport(ctx context.Context, id string) error {
 // scanReport materializes a Report from a QueryRow or Rows scanner.
 func scanReport(row interface{ Scan(...any) error }) (*reporting.Report, error) {
 	var r reporting.Report
-	var paramsJSON, completedAt, expiresAt *string
+	var paramsJSON, createdAt, completedAt, expiresAt *string
 
+	// created_at is written as an RFC3339 string (see Save), so it has to be
+	// read back as one. Scanning it straight into a time.Time made every read
+	// fail with "unsupported Scan, storing driver.Value type string into type
+	// *time.Time" -- the two sibling columns below already did this correctly.
 	err := row.Scan(&r.ID, &r.Name, &r.Type, &r.Format, &r.Template, &r.Status,
-		&r.FilePath, &r.FileSize, &paramsJSON, &r.Error, &r.CreatedAt, &completedAt, &expiresAt)
+		&r.FilePath, &r.FileSize, &paramsJSON, &r.Error, &createdAt, &completedAt, &expiresAt)
 	if err != nil {
 		return nil, fmt.Errorf("scanning report: %w", err)
+	}
+
+	if createdAt != nil {
+		t, parseErr := time.Parse(time.RFC3339, *createdAt)
+		if parseErr != nil {
+			return nil, fmt.Errorf("parsing report created_at %q: %w", *createdAt, parseErr)
+		}
+		r.CreatedAt = t
 	}
 
 	if paramsJSON != nil {
