@@ -477,5 +477,14 @@
   },
   "wifiChannel": {
     "signalDbm": "Signal (dBm)"
+  },
+  "reports": {
+    "title": "Reports",
+    "generate": "Generate",
+    "empty": "No reports yet. Generate one to get started.",
+    "status": "Status",
+    "error": "Error",
+    "download": "Download",
+    "delete": "Delete"
   }
 }
