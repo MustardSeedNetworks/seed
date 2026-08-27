@@ -1,7 +1,11 @@
 //go:build windows
 
 // Windows-specific NDP (IPv6 Neighbor Discovery Protocol) implementation.
-// Uses GetIpNetTable2 to read IPv6 neighbor entries from Windows.
+//
+// This does NOT read the IPv6 neighbour table -- see #2174. The GetIpNetTable2
+// scaffolding that used to sit here had no callers and carried two `go vet`
+// unsafe.Pointer findings, so it was removed rather than left looking like a
+// working implementation.
 package enumerate
 
 import (
@@ -10,62 +14,7 @@ import (
 	"net"
 	"sync"
 	"time"
-	"unsafe"
 )
-
-// Windows IP Helper API structures for IPv6.
-const (
-	// NL_NEIGHBOR_STATE constants from nldef.h
-	nlnsUnreachable = 0
-	nlnsIncomplete  = 1
-	nlnsProbe       = 2
-	nlnsDelay       = 3
-	nlnsStale       = 4
-	nlnsReachable   = 5
-	nlnsPermanent   = 6
-)
-
-// afINET6 is the Windows address family constant for IPv6.
-const afINET6 = 23
-
-var (
-	iphlpapiDLL        = syscallNewLazyDLL("iphlpapi.dll")
-	procGetIpNetTable2 = iphlpapiDLL.NewProc("GetIpNetTable2")
-	procFreeMibTable   = iphlpapiDLL.NewProc("FreeMibTable")
-)
-
-// syscallNewLazyDLL creates a lazy-loaded DLL handle.
-// This is a wrapper to avoid import cycle with golang.org/x/sys/windows.
-func syscallNewLazyDLL(name string) *lazyDLL {
-	return &lazyDLL{name: name}
-}
-
-// lazyDLL represents a lazy-loaded DLL.
-type lazyDLL struct {
-	name string
-	dll  uintptr
-}
-
-// NewProc returns a procedure from the DLL.
-func (d *lazyDLL) NewProc(name string) *lazyProc {
-	return &lazyProc{dll: d, name: name}
-}
-
-// lazyProc represents a procedure in a lazy-loaded DLL.
-type lazyProc struct {
-	dll  *lazyDLL
-	name string
-	addr uintptr
-}
-
-// Call calls the procedure.
-// This is a minimal implementation - actual syscall would use windows.NewLazySystemDLL.
-func (p *lazyProc) Call(args ...uintptr) (uintptr, uintptr, error) {
-	// Note: This is a stub. The actual implementation uses golang.org/x/sys/windows.
-	// For Windows builds, this should use:
-	//   windows.NewLazySystemDLL("iphlpapi.dll").NewProc("GetIpNetTable2")
-	return 0, 0, fmt.Errorf("not implemented: requires golang.org/x/sys/windows")
-}
 
 // NDPScanner scans for IPv6 neighbors using the kernel's neighbor table.
 type NDPScanner struct {
@@ -244,103 +193,5 @@ func (ns *NDPScanner) CleanupStale(maxAge time.Duration) {
 		if now.Sub(neighbor.LastSeen) > maxAge {
 			delete(ns.neighbors, ipv6)
 		}
-	}
-}
-
-// mibIPNetRow2 represents a single IPv6 neighbor entry from GetIpNetTable2.
-// Reserved for future use when proper Windows API bindings are available.
-type mibIPNetRow2 struct {
-	Address          [28]byte // SOCKADDR_INET (28 bytes)
-	InterfaceIndex   uint32
-	InterfaceLuid    uint64
-	PhysicalAddress  [32]byte
-	PhysicalAddrLen  uint32
-	State            uint32
-	Flags            uint8
-	_                [3]byte // padding
-	ReachabilityTime uint32
-}
-
-// readIPv6NeighborTable reads IPv6 neighbors using Windows API.
-// This is reserved for future implementation with proper Windows bindings.
-func readIPv6NeighborTable() ([]*NDPNeighbor, error) {
-	var tablePtr uintptr
-	ret, _, _ := procGetIpNetTable2.Call(uintptr(afINET6), uintptr(unsafe.Pointer(&tablePtr)))
-	if ret != 0 {
-		return nil, fmt.Errorf("GetIpNetTable2 failed: %d", ret)
-	}
-
-	if tablePtr == 0 {
-		return []*NDPNeighbor{}, nil
-	}
-
-	// Free table when done
-	defer procFreeMibTable.Call(tablePtr)
-
-	// Parse table structure
-	// First uint32 is count, then array of mibIPNetRow2
-	numEntries := *(*uint32)(unsafe.Pointer(tablePtr))
-	if numEntries == 0 {
-		return []*NDPNeighbor{}, nil
-	}
-
-	neighbors := make([]*NDPNeighbor, 0, numEntries)
-	rowSize := unsafe.Sizeof(mibIPNetRow2{})
-	rowsStart := tablePtr + 8 // Skip count + padding
-
-	for i := uint32(0); i < numEntries; i++ {
-		rowPtr := rowsStart + uintptr(i)*rowSize
-		row := (*mibIPNetRow2)(unsafe.Pointer(rowPtr))
-
-		// Parse IPv6 address from SOCKADDR_INET
-		// Offset 4 in SOCKADDR_INET is where sin6_addr starts for AF_INET6
-		ip := net.IP(row.Address[8:24])
-		if ip == nil || ip.To4() != nil {
-			continue // Skip non-IPv6
-		}
-
-		mac := formatMACAddress(row.PhysicalAddress[:row.PhysicalAddrLen])
-		state := ndpStateToString(row.State)
-
-		neighbors = append(neighbors, &NDPNeighbor{
-			IPv6:     ip.String(),
-			MAC:      mac,
-			IsRouter: false, // Would need to check flags
-			State:    state,
-			LastSeen: time.Now(),
-		})
-	}
-
-	return neighbors, nil
-}
-
-// formatMACAddress formats a byte slice as a MAC address.
-func formatMACAddress(mac []byte) string {
-	if len(mac) < 6 {
-		return ""
-	}
-	return fmt.Sprintf("%02x:%02x:%02x:%02x:%02x:%02x",
-		mac[0], mac[1], mac[2], mac[3], mac[4], mac[5])
-}
-
-// ndpStateToString converts Windows NL_NEIGHBOR_STATE to string.
-func ndpStateToString(state uint32) string {
-	switch state {
-	case nlnsReachable:
-		return "REACHABLE"
-	case nlnsStale:
-		return "STALE"
-	case nlnsDelay:
-		return "DELAY"
-	case nlnsProbe:
-		return "PROBE"
-	case nlnsPermanent:
-		return "PERMANENT"
-	case nlnsIncomplete:
-		return "INCOMPLETE"
-	case nlnsUnreachable:
-		return "UNREACHABLE"
-	default:
-		return "UNKNOWN"
 	}
 }
