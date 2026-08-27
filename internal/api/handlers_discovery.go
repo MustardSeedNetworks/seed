@@ -24,7 +24,7 @@ type DiscoveryResponse struct {
 // Information is gathered from link-layer discovery protocol advertisements (LLDP/CDP/EDP).
 // Not all fields are present in every protocol - optional fields are omitted when empty.
 type DiscoveryNeighborInfo struct {
-	Protocol          string   `json:"protocol"`                    // "LLDP", "CDP", or "EDP"
+	Protocol          string   `json:"protocol"`                    // "lldp", "cdp", or "edp" (lowercase; FDP arrives via SNMP, not this endpoint)
 	ChassisID         string   `json:"chassisId"`                   // Unique identifier for the neighbor device
 	PortID            string   `json:"portId"`                      // Port/interface identifier on the neighbor
 	PortDescription   string   `json:"portDescription,omitempty"`   // Human-readable port description

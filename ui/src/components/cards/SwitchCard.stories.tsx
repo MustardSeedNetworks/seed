@@ -1,5 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import type { JSX } from 'react';
+import { expect, within } from 'storybook/test';
 import { SwitchCard } from './SwitchCard';
 
 /**
@@ -36,6 +37,31 @@ export default meta;
 type Story = StoryObj<typeof meta>;
 
 /**
+ * Asserts the fields a reader actually uses to identify the switch. The stories
+ * are the only place the rendered output is checked -- addon-vitest otherwise
+ * just proves the card does not throw, so a wrong protocol badge or a dropped
+ * management IP would ship green (#486).
+ *
+ * Only literal values are asserted: row labels come from i18n, but the badge
+ * text and the data itself do not, so these hold in any locale.
+ */
+function expectSwitchFields(
+  canvasElement: HTMLElement,
+  expected: { name: string; port: string; badge: string; managementIp?: string },
+): void {
+  const canvas = within(canvasElement);
+
+  expect(canvas.getByText(expected.name)).toBeInTheDocument();
+  expect(canvas.getByText(expected.port)).toBeInTheDocument();
+  expect(canvas.getByText(expected.badge)).toBeInTheDocument();
+
+  if (expected.managementIp === undefined) {
+    return;
+  }
+  expect(canvas.getByText(expected.managementIp)).toBeInTheDocument();
+}
+
+/**
  * Cisco switch discovered via CDP.
  * Shows comprehensive Cisco switch information with VLANs.
  */
@@ -59,6 +85,14 @@ export const CiscoSwitch: Story = {
       },
     },
     loading: false,
+  },
+  play: ({ canvasElement }) => {
+    expectSwitchFields(canvasElement, {
+      name: 'CORE-SW-01',
+      port: 'GigabitEthernet1/0/24',
+      badge: 'CDP',
+      managementIp: '10.0.1.1',
+    });
   },
 };
 
@@ -86,6 +120,14 @@ export const GenericLldp: Story = {
       },
     },
     loading: false,
+  },
+  play: ({ canvasElement }) => {
+    expectSwitchFields(canvasElement, {
+      name: 'access-switch-02',
+      port: 'eth1/12',
+      badge: 'LLDP',
+      managementIp: '192.168.1.250',
+    });
   },
 };
 
@@ -241,6 +283,16 @@ export const NoManagementIp: Story = {
     vlanData: null,
     loading: false,
   },
+  play: ({ canvasElement }) => {
+    expectSwitchFields(canvasElement, {
+      name: 'unmanaged-switch-01',
+      port: 'Port 5',
+      badge: 'LLDP',
+    });
+    // The row is hidden rather than rendered empty when the switch has no
+    // management address.
+    expect(within(canvasElement).queryByText('10.0.1.1')).not.toBeInTheDocument();
+  },
 };
 
 /**
@@ -330,5 +382,13 @@ export const FoundryFdp: Story = {
       },
     },
     loading: false,
+  },
+  play: ({ canvasElement }) => {
+    expectSwitchFields(canvasElement, {
+      name: 'BROCADE-ICX-01',
+      port: '1/1/24',
+      badge: 'FDP',
+      managementIp: '10.10.1.1',
+    });
   },
 };

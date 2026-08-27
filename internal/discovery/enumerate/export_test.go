@@ -9,6 +9,8 @@ import (
 	"net"
 	"time"
 
+	"github.com/gopacket/gopacket/layers"
+
 	"github.com/MustardSeedNetworks/seed/internal/discovery/resolve"
 )
 
@@ -170,4 +172,61 @@ func (a *ICMPPingerTestAccessor) PendingCount() int {
 	a.Pinger.pendingMu.Lock()
 	defer a.Pinger.pendingMu.Unlock()
 	return len(a.Pinger.pending)
+}
+
+// ExportParseCDPCapabilities exposes parseCDPCapabilities for testing.
+func ExportParseCDPCapabilities(caps layers.CDPCapabilities) []string {
+	return parseCDPCapabilities(caps)
+}
+
+// ExportParseSystemCapabilities exposes parseSystemCapabilities for testing.
+func ExportParseSystemCapabilities(caps layers.LLDPCapabilities) []string {
+	return parseSystemCapabilities(caps)
+}
+
+// ExportTrimNull exposes trimNull for testing.
+func ExportTrimNull(s string) string {
+	return trimNull(s)
+}
+
+// ExportParseEDPTLV exposes parseEDPTLV for testing. The receiver holds no
+// state the TLV walk reads, so a zero capture is enough.
+func ExportParseEDPTLV(tlvType uint8, data []byte, neighbor *EDPNeighbor) {
+	(&EDPCapture{}).parseEDPTLV(tlvType, data, neighbor)
+}
+
+// NewManagerWithNeighbors builds a Manager whose per-protocol captures already
+// hold the given neighbours, so GetNeighbors' mapping can be exercised without
+// a live capture. This is the seam that pins decoder output to the shape the
+// API hands the UI (#486).
+func NewManagerWithNeighbors(
+	lldp []*LLDPNeighbor,
+	cdp []*CDPNeighbor,
+	edp []*EDPNeighbor,
+) *Manager {
+	// Each capture's GetNeighbors drops entries older than their TTL, so a
+	// zero-valued fixture would be filtered out before the mapping runs.
+	// Callers care about the mapping, not expiry, so unset TTLs are made live.
+	const liveTTL = 120
+
+	m := NewManager("lo")
+	for _, n := range lldp {
+		if n.TTL == 0 {
+			n.TTL, n.LastSeen = liveTTL, time.Now()
+		}
+		m.lldp.neighbors[n.ChassisID+n.PortID] = n
+	}
+	for _, n := range cdp {
+		if n.TTL == 0 {
+			n.TTL, n.LastSeen = liveTTL, time.Now()
+		}
+		m.cdp.neighbors[n.DeviceID+n.PortID] = n
+	}
+	for _, n := range edp {
+		if n.TTL == 0 {
+			n.TTL, n.LastSeen = liveTTL, time.Now()
+		}
+		m.edp.neighbors[n.DeviceID+n.PortID] = n
+	}
+	return m
 }
