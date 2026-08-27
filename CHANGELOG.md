@@ -5,6 +5,60 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.213.31](https://github.com/MustardSeedNetworks/seed/compare/v0.213.30...v0.213.31) (2026-08-27)
+
+
+### Features
+
+* **api:** device-credential vault CRUD endpoints ([#2116](https://github.com/MustardSeedNetworks/seed/issues/2116)) ([3d30ced](https://github.com/MustardSeedNetworks/seed/commit/3d30ced388c8312661dbcbca2f0c0f26328c4db7))
+* **api:** gate the port scanner, and add the insecure-ports preset ([#2134](https://github.com/MustardSeedNetworks/seed/issues/2134)) ([9eb7d4b](https://github.com/MustardSeedNetworks/seed/commit/9eb7d4b42bc4c9b15d081e6945b64c183a0eba95))
+* **ci:** run the fifty benchmarks, and gate on allocations rather than time ([#2125](https://github.com/MustardSeedNetworks/seed/issues/2125)) ([f8fb441](https://github.com/MustardSeedNetworks/seed/commit/f8fb441d4aa3ffbe3538ff9b2a57c0cfcda6e8fc))
+* **credentials:** device-credential CRUD use-case with write-only secrets ([#2114](https://github.com/MustardSeedNetworks/seed/issues/2114)) ([c873968](https://github.com/MustardSeedNetworks/seed/commit/c8739687eeab6ed9224883c6463ea85321389023))
+* **database:** list a client's device credentials ([#2113](https://github.com/MustardSeedNetworks/seed/issues/2113)) ([ee7a33f](https://github.com/MustardSeedNetworks/seed/commit/ee7a33f602ab3eb63dc669a36de058e5afc6aa96))
+* **dhcp:** expose the DHCP lease, and stop grading it on a stopwatch ([#2137](https://github.com/MustardSeedNetworks/seed/issues/2137)) ([4cead74](https://github.com/MustardSeedNetworks/seed/commit/4cead743e655ebc4e22c119e23bdc9ec94a7fa26))
+
+
+### Bug Fixes
+
+* **ci:** restore the reachability baseline, which merged empty ([#2144](https://github.com/MustardSeedNetworks/seed/issues/2144)) ([45f159e](https://github.com/MustardSeedNetworks/seed/commit/45f159e1e88f69ff68c5c5d6edbeba5991aa8e07))
+* **deps:** update dependency @tanstack/react-query to v5.102.1 ([#2120](https://github.com/MustardSeedNetworks/seed/issues/2120)) ([a260166](https://github.com/MustardSeedNetworks/seed/commit/a26016649920e8440697245d43be23cc0ff5001c))
+* **deps:** update dependency @tanstack/react-query to v5.102.2 ([#2129](https://github.com/MustardSeedNetworks/seed/issues/2129)) ([65293fb](https://github.com/MustardSeedNetworks/seed/commit/65293fb55348d79d018f7eb174edcec832ffe031))
+* **enumerate:** classify HID as a peripheral, and compute distance correctly ([#2133](https://github.com/MustardSeedNetworks/seed/issues/2133)) ([8599a35](https://github.com/MustardSeedNetworks/seed/commit/8599a35080ce03922013257ae54b7c52b0e814c3))
+* **netif:** accept every netmask form, and roll back a partial apply ([#2132](https://github.com/MustardSeedNetworks/seed/issues/2132)) ([14a1323](https://github.com/MustardSeedNetworks/seed/commit/14a13231080ffd081954ba38bb26e065069d6e17))
+* **system:** make the health caches real, so /api/system/health stops leaking threads ([#2123](https://github.com/MustardSeedNetworks/seed/issues/2123)) ([021c56f](https://github.com/MustardSeedNetworks/seed/commit/021c56f3487b4127f6dfb802a7792c330ff0ec89))
+* **vuln:** extract versions programmatically instead of per-vendor regexes ([#2128](https://github.com/MustardSeedNetworks/seed/issues/2128)) ([23a354c](https://github.com/MustardSeedNetworks/seed/commit/23a354c620353a8c2b2acde71027a26fb55c351d))
+
+
+### Code Refactoring
+
+* **reporting:** lift the statistical primitives, drop the package ([#2139](https://github.com/MustardSeedNetworks/seed/issues/2139)) ([2aede4d](https://github.com/MustardSeedNetworks/seed/commit/2aede4d7132fe99e3e873eb9c9c394ed8c9e51d8))
+* **snmp:** collapse fourteen copies of the credential sweep ([#2117](https://github.com/MustardSeedNetworks/seed/issues/2117)) ([a13fba0](https://github.com/MustardSeedNetworks/seed/commit/a13fba068aa5abe21af328a7639c2954738f7cc4))
+
+
+### Tests
+
+* **lldp:** cover the packet decoder, which had no tests at all ([#2143](https://github.com/MustardSeedNetworks/seed/issues/2143)) ([0d40508](https://github.com/MustardSeedNetworks/seed/commit/0d405082148689d06dfa31dd4ff9d64253898214))
+* **logging:** pin that log values cannot forge a log entry ([#2122](https://github.com/MustardSeedNetworks/seed/issues/2122)) ([b45d96b](https://github.com/MustardSeedNetworks/seed/commit/b45d96b43d595a9c8fcc4f59ccb8bd010bde0163))
+* **resolve:** cover the mDNS and NetBIOS wire paths ([#2127](https://github.com/MustardSeedNetworks/seed/issues/2127)) ([50ed277](https://github.com/MustardSeedNetworks/seed/commit/50ed277bd1ea3a3c9f82e258b1397b1248e4096f))
+* **snmp:** exercise the client against a real net-snmp agent ([#2126](https://github.com/MustardSeedNetworks/seed/issues/2126)) ([939b9f5](https://github.com/MustardSeedNetworks/seed/commit/939b9f5bcfdc15436721ea778cb8586361f61607))
+* **snmp:** replay recorded vendor walks through the collector chain ([#2130](https://github.com/MustardSeedNetworks/seed/issues/2130)) ([3f1c425](https://github.com/MustardSeedNetworks/seed/commit/3f1c425ec0c019dd5913ddbc3e0bd26d04c00009))
+
+
+### Continuous Integration
+
+* **dead-code:** make one step actually gate, on reachability ([#2135](https://github.com/MustardSeedNetworks/seed/issues/2135)) ([93f407a](https://github.com/MustardSeedNetworks/seed/commit/93f407aa2cf83d52775f1ecfa15b203c5e714515))
+* drop -short from the race job ([#2142](https://github.com/MustardSeedNetworks/seed/issues/2142)) ([349cba1](https://github.com/MustardSeedNetworks/seed/commit/349cba1a089cf3f230e55a400be571c2d9461156))
+
+
+### Miscellaneous
+
+* **deps:** lock file maintenance ([#2121](https://github.com/MustardSeedNetworks/seed/issues/2121)) ([74c03cd](https://github.com/MustardSeedNetworks/seed/commit/74c03cd46323bbab96cf5799febc58b27b374997))
+* **deps:** lock file maintenance ([#2145](https://github.com/MustardSeedNetworks/seed/issues/2145)) ([032c2a2](https://github.com/MustardSeedNetworks/seed/commit/032c2a205dfe758a126b970d8377cd8d64730b9d))
+* **deps:** update dependency @types/react-dom to v19.2.5 ([#2140](https://github.com/MustardSeedNetworks/seed/issues/2140)) ([d670aa1](https://github.com/MustardSeedNetworks/seed/commit/d670aa108e0d89e154038ee39d03f052a2b059a2))
+* **deps:** update node.js to v26.8.0 ([#2124](https://github.com/MustardSeedNetworks/seed/issues/2124)) ([6b5abbb](https://github.com/MustardSeedNetworks/seed/commit/6b5abbbc6fb270c7bf862b38c8e160c3bc759312))
+* **deps:** update node.js to v26.8.1 ([#2141](https://github.com/MustardSeedNetworks/seed/issues/2141)) ([b8e6d16](https://github.com/MustardSeedNetworks/seed/commit/b8e6d168705c6a2683737a62558a641644cd2316))
+* remove five superseded packages and three empty ones ([#2136](https://github.com/MustardSeedNetworks/seed/issues/2136)) ([a361e41](https://github.com/MustardSeedNetworks/seed/commit/a361e41afc54d02e7de055510832b45613843997))
+
 ## [0.213.30](https://github.com/MustardSeedNetworks/seed/compare/v0.213.29...v0.213.30) (2026-08-26)
 
 
