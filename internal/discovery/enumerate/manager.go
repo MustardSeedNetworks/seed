@@ -29,6 +29,7 @@ package enumerate
 //   - TTL-based automatic expiration prevents unbounded growth
 
 import (
+	"strings"
 	"sync"
 	"time"
 
@@ -275,7 +276,7 @@ func (m *Manager) GetNeighbors() []*Neighbor {
 			ChassisID:         n.DeviceID,
 			PortID:            n.PortID,
 			SystemName:        n.DeviceID,
-			SystemDescription: n.Platform + " " + n.SoftwareVersion,
+			SystemDescription: strings.TrimSpace(n.Platform + " " + n.SoftwareVersion),
 			Capabilities:      n.Capabilities,
 			ManagementAddress: n.ManagementAddress,
 			VLAN:              n.NativeVLAN,
@@ -296,7 +297,7 @@ func (m *Manager) GetNeighbors() []*Neighbor {
 			ChassisID:         n.DeviceID,
 			PortID:            n.PortID,
 			SystemName:        systemName,
-			SystemDescription: n.Platform + " " + n.SoftwareVersion,
+			SystemDescription: strings.TrimSpace(n.Platform + " " + n.SoftwareVersion),
 			ManagementAddress: n.ManagementAddress,
 			VLAN:              n.VLAN,
 			TTL:               n.TTL,
