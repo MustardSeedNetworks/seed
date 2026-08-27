@@ -1,18 +1,8 @@
 name: 'Setup libpcap'
-description: 'Install libpcap-dev with caching'
+description: 'Install libpcap-dev'
 runs:
   using: composite
   steps:
-    - name: Cache apt packages
-      uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
-      id: cache-apt
-      with:
-        path: |
-          /var/cache/apt/archives/*.deb
-        key: apt-libpcap-${{ runner.os }}-${{ runner.arch }}
-        restore-keys: |
-          apt-libpcap-${{ runner.os }}-
-
     # Delegates to the fleet composite rather than hand-rolling the wrapper.
     # The hand-rolled version this replaces ran `timeout … sudo apt-get`, which
     # cannot reap the root-owned apt-get it starts: an unprivileged uid may not
