@@ -5,6 +5,32 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.213.32](https://github.com/MustardSeedNetworks/seed/compare/v0.213.31...v0.213.32) (2026-08-27)
+
+
+### Features
+
+* **reports:** expose the reporting service over the API ([#2156](https://github.com/MustardSeedNetworks/seed/issues/2156)) ([7ddba61](https://github.com/MustardSeedNetworks/seed/commit/7ddba617c0c72d2e29bff3fbaa48a9b0351ea8a8))
+* **reports:** make the Reports page actually list and manage reports ([#2157](https://github.com/MustardSeedNetworks/seed/issues/2157)) ([3ff4f9d](https://github.com/MustardSeedNetworks/seed/commit/3ff4f9dbbab342270849666aa85631604998cbce)), closes [#2154](https://github.com/MustardSeedNetworks/seed/issues/2154)
+
+
+### Bug Fixes
+
+* **deps:** update module github.com/go-webauthn/webauthn to v0.18.0 ([#2152](https://github.com/MustardSeedNetworks/seed/issues/2152)) ([a64bb45](https://github.com/MustardSeedNetworks/seed/commit/a64bb458434fa647976aff4eb35b97423a321fcd))
+* **reporting:** parse created_at instead of scanning a string into time.Time ([#2149](https://github.com/MustardSeedNetworks/seed/issues/2149)) ([35c946f](https://github.com/MustardSeedNetworks/seed/commit/35c946fe4e6692fb3be18a44af1e42ec49a39510)), closes [#2148](https://github.com/MustardSeedNetworks/seed/issues/2148) [#1261](https://github.com/MustardSeedNetworks/seed/issues/1261)
+* **reporting:** query columns that exist, and stop dropping rows in silence ([#2153](https://github.com/MustardSeedNetworks/seed/issues/2153)) ([7df918b](https://github.com/MustardSeedNetworks/seed/commit/7df918b7a5d95dc5e016af426e318bcd40cf2e40)), closes [#2151](https://github.com/MustardSeedNetworks/seed/issues/2151)
+
+
+### Tests
+
+* **discovery:** pin the decoder-to-UI seam, and fix the blank description it exposed ([#2147](https://github.com/MustardSeedNetworks/seed/issues/2147)) ([b0fd38f](https://github.com/MustardSeedNetworks/seed/commit/b0fd38f3daee29db02429f3084ee2ec06edd14ee)), closes [#486](https://github.com/MustardSeedNetworks/seed/issues/486)
+
+
+### Miscellaneous
+
+* **deps:** lock file maintenance ([#2158](https://github.com/MustardSeedNetworks/seed/issues/2158)) ([79294fd](https://github.com/MustardSeedNetworks/seed/commit/79294fd5daef15c73a41d532b198b80f1e27b02f))
+* **deps:** update actions/upload-artifact action to v7 ([#2131](https://github.com/MustardSeedNetworks/seed/issues/2131)) ([d011bef](https://github.com/MustardSeedNetworks/seed/commit/d011befa6778ae2cf40f524c13460e2d5c17ed46))
+
 ## [0.213.31](https://github.com/MustardSeedNetworks/seed/compare/v0.213.30...v0.213.31) (2026-08-27)
 
 
