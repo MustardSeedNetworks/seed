@@ -552,8 +552,15 @@ jobs:
       - name: Design token discipline (Phase 0 gate)
         run: ../scripts/check-token-discipline.sh
 
-      - name: Run unit tests
-        run: npm run test
+      # test:coverage, not test. The thresholds in ui/vitest.config.ts were
+      # never evaluated by CI because `npm run test` does not enable coverage --
+      # so the floors were decorative and coverage could regress past all four
+      # while the job stayed green. Measured before switching: statements 32.74
+      # (floor 32), branches 27.17 (26), functions 28.66 (27), lines 35.43 (34).
+      # Already clearing them, so this needs no new tests; it stops the next
+      # regression instead. Ratchet the floors up, never down.
+      - name: Run unit tests with coverage thresholds
+        run: npm run test:coverage
       # Build is done once by the build-ui job and shared as the
       # frontend-dist artifact (downloaded by backend/race/build/e2e/
       # This job validates source (types/lint/tests) only.
