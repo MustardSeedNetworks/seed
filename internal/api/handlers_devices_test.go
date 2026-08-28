@@ -30,30 +30,24 @@ func TestHandleDevicesGET(t *testing.T) {
 
 	server.Mux().ServeHTTP(w, req)
 
-	// Test server doesn't initialize discovery service (slow OUI database loading).
-	// Accept either 200 (discovery available) or 503 (discovery unavailable).
-	if w.Code != http.StatusOK && w.Code != http.StatusServiceUnavailable {
-		t.Errorf("Expected status %d or %d, got %d: %s",
-			http.StatusOK, http.StatusServiceUnavailable, w.Code, w.Body.String())
+	// The test server deliberately leaves discovery nil (OUI loading is slow),
+	// so this is the no-discovery contract, asserted rather than skipped. It
+	// used to accept 200-or-503 and then t.Skip on the 503 -- which is the only
+	// value the test server can produce, so the test never ran anywhere and
+	// never could fail. Asserting the real response catches a panic, a bare 200
+	// with no data, or a non-JSON body. The 200 path needs an injectable
+	// discovery stub and is tracked separately.
+	if w.Code != http.StatusServiceUnavailable {
+		t.Fatalf("expected %d without a discovery service, got %d: %s",
+			http.StatusServiceUnavailable, w.Code, w.Body.String())
 	}
 
-	// Skip response verification if discovery unavailable
-	if w.Code == http.StatusServiceUnavailable {
-		t.Skip("Discovery service not available in test server")
+	var errResp map[string]any
+	if err := json.NewDecoder(w.Body).Decode(&errResp); err != nil {
+		t.Fatalf("503 body is not JSON: %v", err)
 	}
-
-	// Verify JSON response structure
-	var resp map[string]any
-	if err := json.NewDecoder(w.Body).Decode(&resp); err != nil {
-		t.Fatalf("Failed to decode response: %v", err)
-	}
-
-	// Should have devices and status keys
-	if _, ok := resp["devices"]; !ok {
-		t.Error("Expected 'devices' key in response")
-	}
-	if _, ok := resp["status"]; !ok {
-		t.Error("Expected 'status' key in response")
+	if errResp["error"] == nil && errResp["message"] == nil && errResp["code"] == nil {
+		t.Errorf("503 body carries no error/message/code field: %v", errResp)
 	}
 }
 
@@ -94,30 +88,24 @@ func TestHandleDevicesScanPOST(t *testing.T) {
 
 	server.Mux().ServeHTTP(w, req)
 
-	// Test server doesn't initialize discovery service (slow OUI database loading).
-	// Accept either 200 (discovery available) or 503 (discovery unavailable).
-	if w.Code != http.StatusOK && w.Code != http.StatusServiceUnavailable {
-		t.Errorf("Expected status %d or %d, got %d: %s",
-			http.StatusOK, http.StatusServiceUnavailable, w.Code, w.Body.String())
+	// The test server deliberately leaves discovery nil (OUI loading is slow),
+	// so this is the no-discovery contract, asserted rather than skipped. It
+	// used to accept 200-or-503 and then t.Skip on the 503 -- which is the only
+	// value the test server can produce, so the test never ran anywhere and
+	// never could fail. Asserting the real response catches a panic, a bare 200
+	// with no data, or a non-JSON body. The 200 path needs an injectable
+	// discovery stub and is tracked separately.
+	if w.Code != http.StatusServiceUnavailable {
+		t.Fatalf("expected %d without a discovery service, got %d: %s",
+			http.StatusServiceUnavailable, w.Code, w.Body.String())
 	}
 
-	// Skip response verification if discovery unavailable
-	if w.Code == http.StatusServiceUnavailable {
-		t.Skip("Discovery service not available in test server")
+	var errResp map[string]any
+	if err := json.NewDecoder(w.Body).Decode(&errResp); err != nil {
+		t.Fatalf("503 body is not JSON: %v", err)
 	}
-
-	// Verify JSON response
-	var resp map[string]any
-	if err := json.NewDecoder(w.Body).Decode(&resp); err != nil {
-		t.Fatalf("Failed to decode response: %v", err)
-	}
-
-	// Should have message and scanning keys
-	if _, ok := resp["message"]; !ok {
-		t.Error("Expected 'message' key in response")
-	}
-	if _, ok := resp["scanning"]; !ok {
-		t.Error("Expected 'scanning' key in response")
+	if errResp["error"] == nil && errResp["message"] == nil && errResp["code"] == nil {
+		t.Errorf("503 body carries no error/message/code field: %v", errResp)
 	}
 }
 
@@ -158,22 +146,24 @@ func TestHandleDevicesStatusGET(t *testing.T) {
 
 	server.Mux().ServeHTTP(w, req)
 
-	// Test server doesn't initialize discovery service (slow OUI database loading).
-	// Accept either 200 (discovery available) or 503 (discovery unavailable).
-	if w.Code != http.StatusOK && w.Code != http.StatusServiceUnavailable {
-		t.Errorf("Expected status %d or %d, got %d: %s",
-			http.StatusOK, http.StatusServiceUnavailable, w.Code, w.Body.String())
+	// The test server deliberately leaves discovery nil (OUI loading is slow),
+	// so this is the no-discovery contract, asserted rather than skipped. It
+	// used to accept 200-or-503 and then t.Skip on the 503 -- which is the only
+	// value the test server can produce, so the test never ran anywhere and
+	// never could fail. Asserting the real response catches a panic, a bare 200
+	// with no data, or a non-JSON body. The 200 path needs an injectable
+	// discovery stub and is tracked separately.
+	if w.Code != http.StatusServiceUnavailable {
+		t.Fatalf("expected %d without a discovery service, got %d: %s",
+			http.StatusServiceUnavailable, w.Code, w.Body.String())
 	}
 
-	// Skip response verification if discovery unavailable
-	if w.Code == http.StatusServiceUnavailable {
-		t.Skip("Discovery service not available in test server")
+	var errResp map[string]any
+	if err := json.NewDecoder(w.Body).Decode(&errResp); err != nil {
+		t.Fatalf("503 body is not JSON: %v", err)
 	}
-
-	// Verify JSON response
-	var resp map[string]any
-	if err := json.NewDecoder(w.Body).Decode(&resp); err != nil {
-		t.Fatalf("Failed to decode response: %v", err)
+	if errResp["error"] == nil && errResp["message"] == nil && errResp["code"] == nil {
+		t.Errorf("503 body carries no error/message/code field: %v", errResp)
 	}
 }
 
