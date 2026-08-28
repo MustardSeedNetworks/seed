@@ -270,7 +270,7 @@ jobs:
       - name: Run golangci-lint
         uses: golangci/golangci-lint-action@ba0d7d2ec06a0ea1cb5fa41b2e4a3ab91d21278a # v9.3.0
         with:
-          version: v2.13.1
+          version: v2.13.2
           # Full-tree lint verified clean on 2026-08-14. Keep CI aligned with
           # the repository-wide zero-warning policy.
           args: --timeout=5m
@@ -588,7 +588,7 @@ jobs:
       # #1950, in the one job every audit missed because `--with-deps` matches
       # neither `install-deps` nor `apt-get`.
       - name: Install Chromium OS dependencies
-        uses: MustardSeedNetworks/.github/.github/actions/apt-install@37513d7fbaacf4a7adaab1ac1514f021115868d1 # v1.4.0
+        uses: MustardSeedNetworks/.github/.github/actions/apt-install@a146506fd53fe5e01fdc01892dd838c10081d183 # v1.9.0
         timeout-minutes: 10
         with:
           # cd ui explicitly: the job's defaults.run.working-directory does not
@@ -657,13 +657,13 @@ jobs:
       # promoted to blocking — that would gate on the known FP-prone rule set the
       # golangci-lint gate intentionally excludes.
       - name: Run gosec (SARIF visibility only — gate is golangci-lint)
-        uses: securego/gosec@9e75c0576c9878035d4221392108d458abe10fc3 # v2.28.0
+        uses: securego/gosec@deb54465fea23d19a77f037e11e6589021f8501d # v2.29.0
         continue-on-error: true
         with:
           args: "-fmt sarif -out gosec-results.sarif ./..."
 
       - name: Upload gosec results
-        uses: github/codeql-action/upload-sarif@db488ddef3bf6cb639b32c2e9a7c0a7ea8271d28 # v4.37.8
+        uses: github/codeql-action/upload-sarif@cdf488f595d80d6e07e03d4674febd5ab45fa938 # v4.37.9
         if: always() && hashFiles('gosec-results.sarif') != ''
         continue-on-error: true
         with:
@@ -710,7 +710,7 @@ jobs:
           exit-code: "0"
 
       - name: Upload Trivy results
-        uses: github/codeql-action/upload-sarif@db488ddef3bf6cb639b32c2e9a7c0a7ea8271d28 # v4.37.8
+        uses: github/codeql-action/upload-sarif@cdf488f595d80d6e07e03d4674febd5ab45fa938 # v4.37.9
         if: always() && hashFiles('trivy-results.sarif') != ''
         continue-on-error: true
         with:
@@ -754,7 +754,7 @@ jobs:
   # Defined once in MustardSeedNetworks/.github (fleet-shared); ci-complete
   # still needs: [semgrep]. Edit the pinned version / config policy there.
   semgrep:
-    uses: MustardSeedNetworks/.github/.github/workflows/semgrep.yml@3c9b3aadab847d2faab5116c6af07eb05d978d62 # v1.8.0
+    uses: MustardSeedNetworks/.github/.github/workflows/semgrep.yml@a146506fd53fe5e01fdc01892dd838c10081d183 # v1.9.0
     permissions:
       contents: read
       # v1.8.0 publishes the all-severity SARIF to code scanning. The
@@ -770,7 +770,7 @@ jobs:
   # Defined once in MustardSeedNetworks/.github (fleet-shared); ci-complete
   # still needs: [ci-conformance].
   ci-conformance:
-    uses: MustardSeedNetworks/.github/.github/workflows/ci-conformance.yml@3c9b3aadab847d2faab5116c6af07eb05d978d62 # v1.8.0
+    uses: MustardSeedNetworks/.github/.github/workflows/ci-conformance.yml@a146506fd53fe5e01fdc01892dd838c10081d183 # v1.9.0
     permissions:
       contents: read
 
@@ -892,7 +892,7 @@ jobs:
 
       - name: Install C23 tools (clang-tidy, cppcheck, bear)
         if: steps.check-c.outputs.has_c == 'true'
-        uses: MustardSeedNetworks/.github/.github/actions/apt-install@37513d7fbaacf4a7adaab1ac1514f021115868d1 # v1.4.0
+        uses: MustardSeedNetworks/.github/.github/actions/apt-install@a146506fd53fe5e01fdc01892dd838c10081d183 # v1.9.0
         timeout-minutes: 10
         # The hand-rolled wrapper this replaces could not reap the root-owned
         # apt-get it started, so a killed attempt left it alive holding the
@@ -1040,7 +1040,7 @@ jobs:
       # key cross-reference, locked versions, and a blocking hardcoded-JSX
       # check.
       - name: Run shared i18n validator
-        uses: MustardSeedNetworks/.github/.github/actions/i18n-validate@e6d74ebd42168c9b89f2b93f14841f58b90edece # v1.5.0
+        uses: MustardSeedNetworks/.github/.github/actions/i18n-validate@a146506fd53fe5e01fdc01892dd838c10081d183 # v1.9.0
 
   # ===========================================================================
   # Documentation Checks
@@ -1243,7 +1243,7 @@ jobs:
       # two failed attempts fell out of the loop and reported success.
       # update: false because the refresh above is deliberately tolerant.
       - name: Install arm64 cross-build dependencies
-        uses: MustardSeedNetworks/.github/.github/actions/apt-install@37513d7fbaacf4a7adaab1ac1514f021115868d1 # v1.4.0
+        uses: MustardSeedNetworks/.github/.github/actions/apt-install@a146506fd53fe5e01fdc01892dd838c10081d183 # v1.9.0
         timeout-minutes: 10
         with:
           update: 'false'
