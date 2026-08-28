@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.213.36](https://github.com/MustardSeedNetworks/seed/compare/v0.213.35...v0.213.36) (2026-08-28)
+
+
+### Tests
+
+* assert the no-discovery contract instead of skipping it ([#2196](https://github.com/MustardSeedNetworks/seed/issues/2196)) ([8133a92](https://github.com/MustardSeedNetworks/seed/commit/8133a9278d0ac53c8cda00da0d5fdb7c64755612)), closes [#2195](https://github.com/MustardSeedNetworks/seed/issues/2195)
+
+
+### Continuous Integration
+
+* actually evaluate the frontend coverage thresholds ([#2198](https://github.com/MustardSeedNetworks/seed/issues/2198)) ([76545b0](https://github.com/MustardSeedNetworks/seed/commit/76545b08c2003ea6dd7dd574cac215edf1ca3c3b)), closes [#2197](https://github.com/MustardSeedNetworks/seed/issues/2197)
+
 ## [0.213.35](https://github.com/MustardSeedNetworks/seed/compare/v0.213.34...v0.213.35) (2026-08-28)
 
 
