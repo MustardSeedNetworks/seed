@@ -5,6 +5,21 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.213.35](https://github.com/MustardSeedNetworks/seed/compare/v0.213.34...v0.213.35) (2026-08-28)
+
+
+### Continuous Integration
+
+* fail loudly when a SARIF upload fails ([#2187](https://github.com/MustardSeedNetworks/seed/issues/2187)) ([2edef64](https://github.com/MustardSeedNetworks/seed/commit/2edef64cd678bdf8891f184de1906b113d8b75bb)), closes [#2186](https://github.com/MustardSeedNetworks/seed/issues/2186)
+
+
+### Miscellaneous
+
+* **deps:** lock file maintenance ([#2188](https://github.com/MustardSeedNetworks/seed/issues/2188)) ([61fbc80](https://github.com/MustardSeedNetworks/seed/commit/61fbc800700e4e8c9afaa384e532617561629148))
+* **deps:** lock file maintenance ([#2191](https://github.com/MustardSeedNetworks/seed/issues/2191)) ([4341e66](https://github.com/MustardSeedNetworks/seed/commit/4341e66f60e3b4ab040722a6aadbcade0e93c659))
+* **deps:** lock file maintenance ([#2192](https://github.com/MustardSeedNetworks/seed/issues/2192)) ([de09116](https://github.com/MustardSeedNetworks/seed/commit/de09116cd9fd9f27d99375e936334b3eba6bf41f))
+* **deps:** update dependency js-yaml to v5.4.0 ([#2190](https://github.com/MustardSeedNetworks/seed/issues/2190)) ([efa7e8f](https://github.com/MustardSeedNetworks/seed/commit/efa7e8f5dc9ed5a53fb8488fac9a6f0630d947d6))
+
 ## [0.213.34](https://github.com/MustardSeedNetworks/seed/compare/v0.213.33...v0.213.34) (2026-08-28)
 
 
