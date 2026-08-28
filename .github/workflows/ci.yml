@@ -1460,7 +1460,7 @@ jobs:
       # Runs after the upload so the report is retained even when this fails.
       - name: Enforce flake budget
         if: always()
-        uses: MustardSeedNetworks/.github/.github/actions/flake-budget@a146506fd53fe5e01fdc01892dd838c10081d183 # v1.9.0
+        uses: MustardSeedNetworks/.github/.github/actions/flake-budget@75858ef449c9dd62c96b91429e44a8c4b4161af2 # v1.10.0
         with:
           report: ui/playwright-report/results.json
           budget: "0"
@@ -1566,7 +1566,7 @@ jobs:
       # Runs after the upload so the report is retained even when this fails.
       - name: Enforce flake budget
         if: always()
-        uses: MustardSeedNetworks/.github/.github/actions/flake-budget@a146506fd53fe5e01fdc01892dd838c10081d183 # v1.9.0
+        uses: MustardSeedNetworks/.github/.github/actions/flake-budget@75858ef449c9dd62c96b91429e44a8c4b4161af2 # v1.10.0
         with:
           report: ui/playwright-report/results.json
           budget: "0"
