@@ -1,6 +1,7 @@
 package api
 
 import (
+	"errors"
 	"fmt"
 	"log/slog"
 	"net/http"
@@ -236,8 +237,13 @@ func (s *Server) handleRefreshToken(w http.ResponseWriter, r *http.Request) {
 	// Get refresh token from cookie
 	refreshToken, err := auth.GetRefreshTokenFromCookie(r)
 	if err != nil {
-		// Security audit log: refresh token not found (fixes #697)
-		s.loginRateLimiter().RecordAttempt(clientIP, false)
+		// Deliberately NOT charged to the login limiter. Having no refresh
+		// cookie is the normal state of any unauthenticated page load, not a
+		// credential-guessing attempt, and refresh shares login's per-IP bucket
+		// (#1224). Charging it meant ordinary browsing spent the login budget:
+		// see #2178, where E2E workers all share 127.0.0.1 and roughly three
+		// tests' worth of absent-cookie refreshes locked the next login out
+		// with a 429.
 		logger.WarnContext(r.Context(), "Token refresh failed - token not found",
 			"client_ip", clientIP,
 			"event", "auth.refresh.failed",
@@ -251,8 +257,14 @@ func (s *Server) handleRefreshToken(w http.ResponseWriter, r *http.Request) {
 	// Generate new access token
 	newAccessToken, err := s.authManager().RefreshAccessToken(r.Context(), refreshToken)
 	if err != nil {
-		// Security audit log: invalid/expired refresh token (fixes #697)
-		s.loginRateLimiter().RecordAttempt(clientIP, false)
+		// Charge the limiter only for a token that is *wrong*, never for one
+		// that merely aged out. A forged or malformed token is someone probing;
+		// an expired one is a session that ended normally, which every idle tab
+		// produces. Both used to count, so normal use drained the login budget
+		// this bucket exists to protect (#2178).
+		if !errors.Is(err, auth.ErrTokenExpired) {
+			s.loginRateLimiter().RecordAttempt(clientIP, false)
+		}
 		logger.WarnContext(r.Context(), "Token refresh failed - invalid or expired token",
 			"client_ip", clientIP,
 			"event", "auth.refresh.failed",

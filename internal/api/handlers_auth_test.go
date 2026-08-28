@@ -341,6 +341,36 @@ func TestHandleSetupStatus(t *testing.T) {
 	}
 }
 
+// TestRefreshToken_MissingCookieDoesNotChargeLoginBudget is the #2178
+// regression test. Refresh shares login's per-IP bucket (#1224), and having no
+// refresh cookie is the normal state of any unauthenticated page load -- not a
+// credential-guessing attempt. Charging it meant ordinary browsing drained the
+// login budget: in E2E every worker shares 127.0.0.1, so roughly three tests'
+// worth of absent-cookie refreshes locked the next login out with a 429, which
+// is what made auth-complete.spec.ts flaky on the heaviest shard.
+//
+// Ten attempts against a limit of five: if these were charged, the sixth would
+// be a 429.
+func TestRefreshToken_MissingCookieDoesNotChargeLoginBudget(t *testing.T) {
+	server := api.NewTestServer()
+	defer server.Close()
+
+	const attempts = 10
+	for i := range attempts {
+		req := httptest.NewRequest(http.MethodPost, "/api/v1/auth/refresh", http.NoBody)
+		w := httptest.NewRecorder()
+		server.HandleRefreshToken(w, req)
+
+		if w.Code == http.StatusTooManyRequests {
+			t.Fatalf("attempt %d: an absent refresh cookie consumed the login budget "+
+				"(got 429); unauthenticated page loads must not lock out login", i+1)
+		}
+		if w.Code != http.StatusUnauthorized {
+			t.Fatalf("attempt %d: expected 401, got %d", i+1, w.Code)
+		}
+	}
+}
+
 // TestRefreshToken_RateLimited is the #1224 regression test: repeated
 // failed refreshes from one IP must trip the shared login rate limiter
 // (5 attempts/window) and return 429, not an unbounded stream of 401s.
