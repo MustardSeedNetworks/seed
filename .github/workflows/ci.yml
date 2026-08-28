@@ -1436,9 +1436,13 @@ jobs:
           path: ui/playwright-report/
           retention-days: 7
 
-      - name: Upload server logs on failure
+      # always(), not failure(). A flaky test passes on retry, so the JOB
+      # succeeds and failure() discards the server log -- exactly when it is
+      # needed. #2178 could not be confirmed from CI for that reason: the
+      # retry-pass threw away the only evidence explaining it.
+      - name: Upload server logs
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
-        if: failure()
+        if: always()
         with:
           name: server-logs-${{ matrix.browser }}-shard-${{ matrix.shard }}
           path: server.log
@@ -1522,9 +1526,10 @@ jobs:
           path: ui/playwright-report/
           retention-days: 7
 
-      - name: Upload server logs on smoke failure
+      # always(), for the same reason as the sharded job above.
+      - name: Upload smoke server logs
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
-        if: failure()
+        if: always()
         with:
           name: smoke-server-logs
           path: server.log
