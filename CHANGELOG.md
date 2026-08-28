@@ -5,6 +5,29 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.213.34](https://github.com/MustardSeedNetworks/seed/compare/v0.213.33...v0.213.34) (2026-08-28)
+
+
+### Bug Fixes
+
+* **deps:** update dependency @tanstack/react-query to v5.102.3 ([#2171](https://github.com/MustardSeedNetworks/seed/issues/2171)) ([e429fa4](https://github.com/MustardSeedNetworks/seed/commit/e429fa4b9c065b1b556386d2430c7840017cfada))
+
+
+### Continuous Integration
+
+* compile and test Windows, and delete the dead NDP scaffolding it found ([#2176](https://github.com/MustardSeedNetworks/seed/issues/2176)) ([9c6e724](https://github.com/MustardSeedNetworks/seed/commit/9c6e72464f624eeb16202583cc63bee004afcbbb)), closes [#2175](https://github.com/MustardSeedNetworks/seed/issues/2175)
+* use the App Client ID instead of the deprecated app-id input ([#2181](https://github.com/MustardSeedNetworks/seed/issues/2181)) ([4949c6f](https://github.com/MustardSeedNetworks/seed/commit/4949c6f9c971b29f82d0e6b958ca9b567d1a4d44))
+
+
+### Miscellaneous
+
+* **deps:** lock file maintenance ([#2173](https://github.com/MustardSeedNetworks/seed/issues/2173)) ([27f9af8](https://github.com/MustardSeedNetworks/seed/commit/27f9af84ec7638a8a501ce41f2a1883b1d0abe34))
+* **deps:** lock file maintenance ([#2182](https://github.com/MustardSeedNetworks/seed/issues/2182)) ([8691f55](https://github.com/MustardSeedNetworks/seed/commit/8691f5538e75e419236798af68a0831f6bb42c1e))
+* **deps:** lock file maintenance ([#2183](https://github.com/MustardSeedNetworks/seed/issues/2183)) ([f4e7214](https://github.com/MustardSeedNetworks/seed/commit/f4e72148281db437c64453c8f3e30ede264c4fb6))
+* **deps:** update dependency @types/node to v26.3.0 ([#2172](https://github.com/MustardSeedNetworks/seed/issues/2172)) ([be93d4b](https://github.com/MustardSeedNetworks/seed/commit/be93d4baffcd4e5d30e6e33aa6b01235076cdfa3))
+* **deps:** update github actions ([#2180](https://github.com/MustardSeedNetworks/seed/issues/2180)) ([7c8c954](https://github.com/MustardSeedNetworks/seed/commit/7c8c95463e0f3d832a8a9ae6caa1ecb96891d766))
+* **deps:** update module github.com/golangci/golangci-lint/v2/cmd/golangci-lint to v2.13.2 ([#2177](https://github.com/MustardSeedNetworks/seed/issues/2177)) ([144eac5](https://github.com/MustardSeedNetworks/seed/commit/144eac5a0f6ab83291247cc76114f55ab65a1b5e))
+
 ## [0.213.33](https://github.com/MustardSeedNetworks/seed/compare/v0.213.32...v0.213.33) (2026-08-27)
 
 
