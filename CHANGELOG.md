@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.213.37](https://github.com/MustardSeedNetworks/seed/compare/v0.213.36...v0.213.37) (2026-08-28)
+
+
+### Bug Fixes
+
+* **ui:** guard the vulnerabilities dereference in the details modal ([#2202](https://github.com/MustardSeedNetworks/seed/issues/2202)) ([6c735c2](https://github.com/MustardSeedNetworks/seed/commit/6c735c2a8aaf01897b952b9501bc3d2ec5568da2)), closes [#2201](https://github.com/MustardSeedNetworks/seed/issues/2201)
+
 ## [0.213.36](https://github.com/MustardSeedNetworks/seed/compare/v0.213.35...v0.213.36) (2026-08-28)
 
 
