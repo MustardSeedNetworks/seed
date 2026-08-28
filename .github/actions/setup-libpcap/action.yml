@@ -15,7 +15,7 @@ runs:
     # step-level timeout of at least 10 minutes as the outer backstop —
     # the composite's own worst case is 2 x 270 + 10 = 550s.
     - name: Install libpcap-dev
-      uses: MustardSeedNetworks/.github/.github/actions/apt-install@37513d7fbaacf4a7adaab1ac1514f021115868d1 # v1.4.0
+      uses: MustardSeedNetworks/.github/.github/actions/apt-install@a146506fd53fe5e01fdc01892dd838c10081d183 # v1.9.0
       with:
         packages: libpcap-dev
         update: ${{ steps.cache-apt.outputs.cache-hit != 'true' }}
