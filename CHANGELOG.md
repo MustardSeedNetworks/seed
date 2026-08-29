@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.213.39](https://github.com/MustardSeedNetworks/seed/compare/v0.213.38...v0.213.39) (2026-08-29)
+
+
+### Bug Fixes
+
+* **auth:** give every minted token a unique id ([#2215](https://github.com/MustardSeedNetworks/seed/issues/2215)) ([7b03248](https://github.com/MustardSeedNetworks/seed/commit/7b0324861b86543120d479cb082df8213d2b26b3)), closes [#2214](https://github.com/MustardSeedNetworks/seed/issues/2214)
+
+
+### Continuous Integration
+
+* adopt the flake budget now the auth flake's cause is fixed ([#2194](https://github.com/MustardSeedNetworks/seed/issues/2194)) ([f8d4c7f](https://github.com/MustardSeedNetworks/seed/commit/f8d4c7f5211169366771dd9f41aeecf9ad79c512))
+
 ## [0.213.38](https://github.com/MustardSeedNetworks/seed/compare/v0.213.37...v0.213.38) (2026-08-29)
 
 
