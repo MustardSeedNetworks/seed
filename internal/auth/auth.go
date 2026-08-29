@@ -516,12 +516,23 @@ func (m *Manager) generateTokenWithType(
 		clientID = resolved
 	}
 
+	// A unique id per mint. Without it every claim is identical for two logins
+	// by the same user in the same second -- NewNumericDate truncates to
+	// seconds -- so the tokens are byte-identical. The blacklist keys on
+	// sha256 of the whole token, so revoking one session would revoke every
+	// other session minted in that second (#2214).
+	tokenUniqueID, idErr := newTokenID()
+	if idErr != nil {
+		return "", fmt.Errorf("failed to generate token id: %w", idErr)
+	}
+
 	now := time.Now()
 	claims := &Claims{
 		Username:     username,
 		TokenVersion: currentVersion, // Include version for revocation
 		TokenType:    tokenType,
 		ClientID:     clientID,
+		ID:           tokenUniqueID,
 		ExpiresAt:    jwt.NewNumericDate(now.Add(duration)),
 		IssuedAt:     jwt.NewNumericDate(now),
 		NotBefore:    jwt.NewNumericDate(now),
@@ -1008,6 +1019,16 @@ func IsDefaultPasswordHash(hash string) bool {
 
 // tokenFingerprint generates a short, unique identifier for a JWT token.
 // Uses SHA-256 hash of the token string for efficient blacklist storage.
+// newTokenID returns a random JWT id (jti), making every minted token unique
+// even when two are issued in the same second with otherwise identical claims.
+func newTokenID() (string, error) {
+	var raw [16]byte
+	if _, err := rand.Read(raw[:]); err != nil {
+		return "", err
+	}
+	return hex.EncodeToString(raw[:]), nil
+}
+
 func tokenFingerprint(token string) string {
 	hash := sha256.Sum256([]byte(token))
 	return hex.EncodeToString(hash[:])
