@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.213.38](https://github.com/MustardSeedNetworks/seed/compare/v0.213.37...v0.213.38) (2026-08-29)
+
+
+### Bug Fixes
+
+* **auth:** do not let a stale 401 expire the session that replaced it ([#2208](https://github.com/MustardSeedNetworks/seed/issues/2208)) ([9a2ef06](https://github.com/MustardSeedNetworks/seed/commit/9a2ef067fe0f0572534a5efd8541b7fa29a29833)), closes [#2204](https://github.com/MustardSeedNetworks/seed/issues/2204)
+
+
+### Continuous Integration
+
+* drop the Codecov upload, keep the local coverage gate ([#2207](https://github.com/MustardSeedNetworks/seed/issues/2207)) ([6639e19](https://github.com/MustardSeedNetworks/seed/commit/6639e19ff4eb84c765b8abd6d5d3a6177d137f3a)), closes [#2206](https://github.com/MustardSeedNetworks/seed/issues/2206)
+
 ## [0.213.37](https://github.com/MustardSeedNetworks/seed/compare/v0.213.36...v0.213.37) (2026-08-28)
 
 
