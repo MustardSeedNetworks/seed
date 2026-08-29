@@ -37,7 +37,7 @@
  */
 
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { clearCSRFToken } from '../api';
+import { beginSession, clearCSRFToken } from '../api';
 import { LogComponents, logger } from '../lib/logger';
 
 /** Internal authentication state */
@@ -233,6 +233,11 @@ export function useAuth(): UseAuthReturn {
       }
 
       const data: LoginResponse = await (response.json() as Promise<LoginResponse>);
+
+      // Open a new session generation before any request can be issued against
+      // it, so a 401 still in flight from the previous session cannot expire
+      // this one (#2204).
+      beginSession();
 
       // Backend sets httpOnly cookies automatically
       // Store access token in memory ONLY for SSE/WebSocket connections

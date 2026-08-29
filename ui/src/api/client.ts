@@ -36,6 +36,17 @@ type SessionExpiredCallback = () => void;
 /** Global session expired callback - set via setSessionExpiredCallback */
 let onSessionExpired: SessionExpiredCallback | null = null;
 
+/**
+ * Monotonic session generation, incremented by beginSession() on every
+ * successful login.
+ *
+ * A 401 is only evidence that *the session the request was issued under* is
+ * gone. Without this counter a response that lands after the user has logged in
+ * again expires the session that replaced it — the user is returned to the login
+ * form reading "Session expired" moments after a successful login (#2204).
+ */
+let sessionGeneration = 0;
+
 /** Promise to track ongoing refresh attempts and prevent race conditions */
 let refreshPromise: Promise<boolean> | null = null;
 
@@ -133,6 +144,15 @@ export function clearCSRFToken(): void {
 }
 
 /**
+ * Marks the start of a new authenticated session. Call on every successful
+ * login so that in-flight requests from the previous session can no longer
+ * expire this one.
+ */
+export function beginSession(): void {
+  sessionGeneration++;
+}
+
+/**
  * Handles API response processing including error handling and JSON parsing.
  *
  * Automatically attempts token refresh on 401 responses (except for auth endpoints).
@@ -147,7 +167,8 @@ export function clearCSRFToken(): void {
 async function handleResponse<T>(
   response: Response,
   isAuthEndpoint: boolean,
-  retryRequest?: () => Promise<Response>,
+  retryRequest: (() => Promise<Response>) | undefined,
+  issuedGeneration: number,
 ): Promise<T> {
   // Check for unauthorized access (token expired)
   if (response.status === 401 && !isAuthEndpoint) {
@@ -162,8 +183,12 @@ async function handleResponse<T>(
       }
     }
 
-    // Refresh failed or retry failed - session truly expired
-    onSessionExpired?.();
+    // Refresh failed or retry failed. Only expire the session this request was
+    // issued under: if the user has logged in since, this 401 is a straggler
+    // from the old session and must not tear down the new one.
+    if (issuedGeneration === sessionGeneration) {
+      onSessionExpired?.();
+    }
     throw new Error('Session expired');
   }
 
@@ -191,6 +216,7 @@ export const api = {
    */
   async get<T>(endpoint: string, init?: RequestInit): Promise<T> {
     const isAuthEndpoint: boolean = endpoint.includes('/api/v1/auth/');
+    const issuedGeneration = sessionGeneration;
     const makeRequest = (): Promise<Response> =>
       fetch(`${API_BASE}${endpoint}`, {
         ...init,
@@ -200,7 +226,7 @@ export const api = {
       });
 
     const response = await makeRequest();
-    return handleResponse<T>(response, isAuthEndpoint, makeRequest);
+    return handleResponse<T>(response, isAuthEndpoint, makeRequest, issuedGeneration);
   },
 
   /**
@@ -215,6 +241,7 @@ export const api = {
    */
   async post<T>(endpoint: string, body?: unknown, init?: RequestInit): Promise<T> {
     const isAuthEndpoint: boolean = endpoint.includes('/api/v1/auth/');
+    const issuedGeneration = sessionGeneration;
     // Get CSRF token for non-auth endpoints (state-changing requests)
     const token: string | null = isAuthEndpoint ? null : await getCsrfToken();
 
@@ -237,7 +264,7 @@ export const api = {
     };
 
     const response = await makeRequest();
-    return handleResponse<T>(response, isAuthEndpoint, makeRequest);
+    return handleResponse<T>(response, isAuthEndpoint, makeRequest, issuedGeneration);
   },
 
   /**
@@ -252,6 +279,7 @@ export const api = {
    */
   async put<T>(endpoint: string, body?: unknown, init?: RequestInit): Promise<T> {
     const isAuthEndpoint: boolean = endpoint.includes('/api/v1/auth/');
+    const issuedGeneration = sessionGeneration;
     // Get CSRF token for non-auth endpoints (state-changing requests)
     const token: string | null = isAuthEndpoint ? null : await getCsrfToken();
 
@@ -274,7 +302,7 @@ export const api = {
     };
 
     const response = await makeRequest();
-    return handleResponse<T>(response, isAuthEndpoint, makeRequest);
+    return handleResponse<T>(response, isAuthEndpoint, makeRequest, issuedGeneration);
   },
 
   /**
@@ -289,6 +317,7 @@ export const api = {
    */
   async patch<T>(endpoint: string, body?: unknown, init?: RequestInit): Promise<T> {
     const isAuthEndpoint: boolean = endpoint.includes('/api/v1/auth/');
+    const issuedGeneration = sessionGeneration;
     // Get CSRF token for non-auth endpoints (state-changing requests)
     const token: string | null = isAuthEndpoint ? null : await getCsrfToken();
 
@@ -311,7 +340,7 @@ export const api = {
     };
 
     const response = await makeRequest();
-    return handleResponse<T>(response, isAuthEndpoint, makeRequest);
+    return handleResponse<T>(response, isAuthEndpoint, makeRequest, issuedGeneration);
   },
 
   /**
@@ -325,6 +354,7 @@ export const api = {
    */
   async delete<T>(endpoint: string, init?: RequestInit): Promise<T> {
     const isAuthEndpoint: boolean = endpoint.includes('/api/v1/auth/');
+    const issuedGeneration = sessionGeneration;
     // Get CSRF token for non-auth endpoints (state-changing requests)
     const token: string | null = isAuthEndpoint ? null : await getCsrfToken();
 
@@ -343,7 +373,7 @@ export const api = {
     };
 
     const response = await makeRequest();
-    return handleResponse<T>(response, isAuthEndpoint, makeRequest);
+    return handleResponse<T>(response, isAuthEndpoint, makeRequest, issuedGeneration);
   },
 
   /**
