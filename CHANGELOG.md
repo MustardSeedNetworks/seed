@@ -36,6 +36,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 * drop the Codecov upload, keep the local coverage gate ([#2207](https://github.com/MustardSeedNetworks/seed/issues/2207)) ([6639e19](https://github.com/MustardSeedNetworks/seed/commit/6639e19ff4eb84c765b8abd6d5d3a6177d137f3a)), closes [#2206](https://github.com/MustardSeedNetworks/seed/issues/2206)
 
+### Also shipped in this release
+
+<!-- Added by scripts/check-release-changelog.py: these commits are
+     contained in the tag but were absent from the generated
+     changelog, because they merged after release-please last
+     regenerated the release PR. -->
+
+* fail the nightly SNMP suite when it tests nothing ([#2211](https://github.com/MustardSeedNetworks/seed/issues/2211)) ([a195d4dd](https://github.com/MustardSeedNetworks/seed/commit/a195d4dde8b900765e6503abc5ff2a89bbab70c4)) — _Continuous Integration_
+
 ## [0.213.37](https://github.com/MustardSeedNetworks/seed/compare/v0.213.36...v0.213.37) (2026-08-28)
 
 
