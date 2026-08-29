@@ -203,6 +203,14 @@ func TestWalkHandlesCounter64(t *testing.T) {
 		t.Fatalf("Walk ifHCInOctets: %v", err)
 	}
 	if len(octets) == 0 {
+		// Counter64 handling is the specific thing this suite exists to prove,
+		// so an agent that exposes no ifXTable means the run tested nothing --
+		// not that there was nothing to test. Under SEED_SNMP_REQUIRED that is
+		// a failure; locally it stays a skip.
+		if os.Getenv("SEED_SNMP_REQUIRED") != "" {
+			t.Fatal("SEED_SNMP_REQUIRED is set but the agent exposes no ifXTable — " +
+				"the Counter64 assertion had nothing to run against")
+		}
 		t.Skip("agent exposes no ifXTable; nothing to assert about Counter64")
 	}
 	for _, v := range octets {

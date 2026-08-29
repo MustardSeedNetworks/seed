@@ -85,7 +85,30 @@ jobs:
           # Turns "no agent" from a skip into a failure, so a misconfigured
           # job cannot report green while testing nothing.
           SEED_SNMP_REQUIRED: "1"
-        run: go test -tags integration -v -count=1 ./internal/polling/snmp/...
+        run: |
+          set -o pipefail
+          # -json so the next step can tell "ran and passed" from "never ran".
+          # The raw stream is kept in the log as well: it is verbose, but this
+          # is a nightly job and the failure it exists to catch is a wire-format
+          # difference that needs the actual values.
+          go test -json -tags integration -count=1 ./internal/polling/snmp/... \
+            | tee "$RUNNER_TEMP/integration.json"
+
+      # `go test` exits 0 when the build tag matches no test file and 0 when
+      # every test skips: both report green having proved nothing, which is the
+      # --passWithNoTests failure mode on a nightly loop. Counting tests is not
+      # enough either -- this package also holds unit tests, so a tag mistake
+      # that drops every integration test still leaves a healthy-looking count.
+      # The guard therefore names the tests that must have passed.
+      - name: Verify the integration tests actually ran
+        run: |
+          scripts/check-integration-ran.sh \
+            TestGetReadsTheSystemGroup \
+            TestWalkReadsTheInterfaceTable \
+            TestWalkHandlesCounter64 \
+            TestWalkOfAnEmptySubtreeIsNotAnError \
+            TestGetOfAnAbsentOIDDoesNotFailTheRequest \
+            < "$RUNNER_TEMP/integration.json"
 
       - name: Agent log
         if: failure()
