@@ -38,6 +38,19 @@ import babel from '@rolldown/plugin-babel';
 import react, { reactCompilerPreset } from '@vitejs/plugin-react';
 import { defineConfig } from 'vitest/config';
 
+// Node's own experimental webstorage global is read once per test file while
+// the jsdom environment is set up, and each read prints
+// "localStorage is not available because --localstorage-file was not provided".
+// Nothing here uses it -- `localStorage` in a test resolves to jsdom's
+// MemoryStorage on a proper http://localhost origin -- so the feature is turned
+// off rather than the message silenced. Workers do not inherit the parent's
+// CLI flags and worker_threads ignores execArgv for process-level options, so
+// NODE_OPTIONS is the only channel that reaches them; setting it here rather
+// than in the npm script keeps it working on Windows shells too.
+process.env.NODE_OPTIONS = [process.env.NODE_OPTIONS, '--no-experimental-webstorage']
+  .filter(Boolean)
+  .join(' ');
+
 export default defineConfig({
   plugins: [
     react(),
