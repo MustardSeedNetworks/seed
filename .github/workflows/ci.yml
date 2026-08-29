@@ -1436,7 +1436,11 @@ jobs:
         # avoid duplicate runtime. See seed#1053.
         # Both chromium and webkit run per E2E_CONVENTIONS — the projects
         # array in playwright.config.ts is now exactly [chromium, webkit].
-        run: ./scripts/run-e2e.sh --reporter=html --project=${{ matrix.browser }} --grep-invert "@smoke" --shard=${{ matrix.shard }}/2
+        # No --reporter here on purpose: passing one REPLACES the config's
+        # reporter array, and the config is what writes the JSON report the
+        # flake budget below reads. `--reporter=html` silently produced no
+        # results.json at all. The config already emits html + list + json.
+        run: ./scripts/run-e2e.sh --project=${{ matrix.browser }} --grep-invert "@smoke" --shard=${{ matrix.shard }}/2
 
       - name: Upload Playwright report
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
@@ -1445,6 +1449,21 @@ jobs:
           name: playwright-report-${{ matrix.browser }}-shard-${{ matrix.shard }}
           path: ui/playwright-report/
           retention-days: 7
+
+      # A test that fails then passes on retry reports `flaky` and the job exits
+      # 0, so a retry-pass looks exactly like a pass. That is how #1524 and
+      # #1593 were each closed against auth-complete.spec.ts while it kept
+      # flaking -- nothing ever failed. The cause turned out to be real (#2178:
+      # refresh was charging the login rate-limit bucket), and it was fixed
+      # before this gate was switched on, so budget 0 is achievable now.
+      #
+      # Runs after the upload so the report is retained even when this fails.
+      - name: Enforce flake budget
+        if: always()
+        uses: MustardSeedNetworks/.github/.github/actions/flake-budget@75858ef449c9dd62c96b91429e44a8c4b4161af2 # v1.10.0
+        with:
+          report: ui/playwright-report/results.json
+          budget: "0"
 
       # always(), not failure(). A flaky test passes on retry, so the JOB
       # succeeds and failure() discards the server log -- exactly when it is
@@ -1526,7 +1545,8 @@ jobs:
           E2E_SERVER_LOG: server.log
         # Both chromium and webkit run; smoke tier on both browsers per PR
         # per E2E_CONVENTIONS.
-        run: ./scripts/run-e2e.sh --reporter=html --grep "@smoke"
+        # No --reporter, for the same reason as the sharded job above.
+        run: ./scripts/run-e2e.sh --grep "@smoke"
 
       - name: Upload Playwright smoke report
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
@@ -1535,6 +1555,21 @@ jobs:
           name: playwright-smoke-report
           path: ui/playwright-report/
           retention-days: 7
+
+      # A test that fails then passes on retry reports `flaky` and the job exits
+      # 0, so a retry-pass looks exactly like a pass. That is how #1524 and
+      # #1593 were each closed against auth-complete.spec.ts while it kept
+      # flaking -- nothing ever failed. The cause turned out to be real (#2178:
+      # refresh was charging the login rate-limit bucket), and it was fixed
+      # before this gate was switched on, so budget 0 is achievable now.
+      #
+      # Runs after the upload so the report is retained even when this fails.
+      - name: Enforce flake budget
+        if: always()
+        uses: MustardSeedNetworks/.github/.github/actions/flake-budget@75858ef449c9dd62c96b91429e44a8c4b4161af2 # v1.10.0
+        with:
+          report: ui/playwright-report/results.json
+          budget: "0"
 
       # always(), for the same reason as the sharded job above.
       - name: Upload smoke server logs
