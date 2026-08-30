@@ -140,15 +140,20 @@ test.describe('API Error Scenarios', () => {
         // The previous assertion was `errorShown || usernameField.isVisible()`,
         // which passed whichever happened: the username field is always visible
         // on a page that never navigates, so it could not fail.
-        await expect(page.getByRole('alert')).toBeVisible({ timeout: 20000 });
+        // Matched on the timeout copy specifically, not on any role="alert":
+        // a stale session-expired banner is also an alert and is already on
+        // the page, so a bare getByRole('alert') passes at once and the
+        // assertion proves nothing about the deadline.
+        await expect(page.getByText(/did not respond/i)).toBeVisible({ timeout: 20000 });
 
         if (timeoutHandle) {
           clearTimeout(timeoutHandle);
         }
 
         // And the operator can retry: a submit button still disabled is the
-        // stuck state this exists to catch.
-        await expect(page.getByTestId('login-submit')).toBeEnabled();
+        // stuck state this exists to catch. By now the deadline has fired, so
+        // this needs no long wait of its own.
+        await expect(page.getByTestId('login-submit')).toBeEnabled({ timeout: 5000 });
       });
     });
 
