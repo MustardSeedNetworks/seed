@@ -6,6 +6,9 @@ import (
 	"testing"
 	"time"
 
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+
 	"github.com/MustardSeedNetworks/seed/internal/diagnostics/speedtest"
 )
 
@@ -887,27 +890,29 @@ func TestTesterWithConfigInitialization(t *testing.T) {
 	}
 }
 
-// TestRunTestContextCancellation tests behavior when context is cancelled.
-// Note: The current implementation ignores context, but this test documents expected behavior.
-// This test is skipped by default as it makes network calls and the upstream speedtest-go library
-// has race conditions in its internal data structures.
+// TestRunTestContextCancellation asserts that a cancelled context stops the
+// test before it starts.
+//
+// This used to skip, on the grounds that RunTest ignored ctx and would make
+// network calls into a racy upstream library. Both halves are now stale:
+// RunTest checks ctx at every phase boundary, and the first of those checks
+// comes before findTestServer, so a pre-cancelled context never reaches the
+// network or the upstream data manager at all. The skip was hiding the fact
+// that production had implemented the very behaviour the comment said was
+// missing.
 func TestRunTestContextCancellation(t *testing.T) {
-	t.Skip("Skipped: upstream speedtest-go library has race conditions in data_manager.go")
-
 	tester := speedtest.NewTester()
 
-	// Create a pre-cancelled context
 	ctx, cancel := context.WithCancel(context.Background())
 	cancel()
 
-	// Note: Current implementation ignores context, so this will fail during findTestServer
-	// This test documents that context cancellation is not yet implemented
-	_, err := tester.RunTest(ctx)
+	result, err := tester.RunTest(ctx)
 
-	// We expect an error (either from context or from network)
-	if err == nil {
-		t.Log("Note: Context cancellation may not be implemented yet")
-	}
+	// context.Canceled specifically, not "some error": a network or upstream
+	// failure would also be an error, and accepting either is what made the
+	// original assertion meaningless.
+	require.ErrorIs(t, err, context.Canceled)
+	assert.Nil(t, result)
 }
 
 // TestResultTimestamp tests that result timestamp is set correctly.

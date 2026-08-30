@@ -2,6 +2,8 @@ package reporting_test
 
 import (
 	"context"
+	"encoding/json"
+	"io"
 	"os"
 	"path/filepath"
 	"testing"
@@ -1667,21 +1669,30 @@ func TestGeneratorService_DownloadReport(t *testing.T) {
 	report, err := gs.Generate(ctx, reporting.ReportTypeExecutive, reporting.FormatJSON, nil)
 	require.NoError(t, err)
 
-	// Wait for generation to complete
-	time.Sleep(500 * time.Millisecond)
+	// Synchronise on the report's own status rather than on a fixed sleep: a
+	// slow machine used to make this test log the failure and pass, so a
+	// download that never worked was indistinguishable from one that did.
+	require.EventuallyWithT(t, func(c *assert.CollectT) {
+		current, getErr := gs.GetReport(ctx, report.ID)
+		assert.NoError(c, getErr)
+		if getErr != nil {
+			return
+		}
+		assert.Equal(c, reporting.StatusComplete, current.Status,
+			"report %s ended in status %q", report.ID, current.Status)
+	}, 10*time.Second, 20*time.Millisecond)
 
-	// Try to download (may fail if file not created yet or report failed)
 	reader, err := gs.DownloadReport(ctx, report.ID)
-	if err == nil {
-		defer reader.Close()
-		// Read some content to verify it's valid
-		buf := make([]byte, 100)
-		n, _ := reader.Read(buf)
-		assert.Positive(t, n)
-	} else {
-		// Expected if report generation failed or file doesn't exist
-		t.Logf("Download failed (expected for async generation): %v", err)
-	}
+	require.NoError(t, err)
+	defer func() { _ = reader.Close() }()
+
+	// The report is JSON, so the first byte is structural. Reading content and
+	// asserting on it is the point -- a zero-length read used to be reported as
+	// an expected outcome.
+	content, err := io.ReadAll(reader)
+	require.NoError(t, err)
+	assert.NotEmpty(t, content)
+	assert.True(t, json.Valid(content), "downloaded report is not valid JSON: %q", content)
 
 	// Download non-existent report should fail
 	_, err = gs.DownloadReport(ctx, "nonexistent-id")
