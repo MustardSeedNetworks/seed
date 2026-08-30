@@ -3,7 +3,6 @@ package iperf_test
 import (
 	"context"
 	"net"
-	"os"
 	"path/filepath"
 	"slices"
 	"strings"
@@ -605,64 +604,48 @@ func TestGetLegacyPathsContent(t *testing.T) {
 	}
 }
 
-// TestValidateBinaryWithRealBinary tests binary validation with real binaries if available.
-func TestValidateBinaryWithRealBinary(t *testing.T) {
-	t.Parallel()
+// TestFindIperf3BinaryUsesTheCache pins the caching contract without needing a
+// real iperf3: a cached path short-circuits the search and is returned as-is.
+//
+// The previous version cleared the cache and then searched for real, skipping
+// when nothing was found — so on a machine without iperf3 it asserted nothing,
+// and on one with iperf3 it asserted only that a search succeeded.
+func TestFindIperf3BinaryUsesTheCache(t *testing.T) {
+	original := iperf.IperfBinaryPath()
+	t.Cleanup(func() { iperf.SetIperfBinaryPath(original) })
 
-	// Skip if iperf3 is not installed
-	if os.Getenv("SKIP_IPERF_TEST") == "1" {
-		t.Skip("Skipping real binary test (SKIP_IPERF_TEST=1)")
-	}
+	const cached = "/nonexistent/cached/iperf3"
+	iperf.SetIperfBinaryPath(cached)
 
-	// Try to find a real iperf3 binary
-	path, err := iperf.FindSystemIperf3()
-	if err != nil {
-		t.Skip("iperf3 not found in system PATH")
-	}
-
-	if !iperf.ValidateBinary(path) {
-		t.Errorf("ValidateBinary(%q) should return true for real iperf3", path)
-	}
-}
-
-// TestFindIperf3BinaryWithCacheClear tests finding binary after cache clear.
-func TestFindIperf3BinaryWithCacheClear(t *testing.T) {
-	if os.Getenv("SKIP_IPERF_TEST") == "1" {
-		t.Skip("Skipping iperf test (SKIP_IPERF_TEST=1)")
-	}
-
-	// Save original path
-	originalPath := iperf.IperfBinaryPath()
-	defer iperf.SetIperfBinaryPath(originalPath)
-
-	// Clear cache
-	iperf.ClearIperfBinaryPath()
-
-	// Try to find binary
 	path, err := iperf.FindIperf3Binary()
 	if err != nil {
-		t.Skipf("iperf3 not found: %v", err)
+		t.Fatalf("FindIperf3Binary with a cached path: %v", err)
 	}
-
-	if path == "" {
-		t.Error("FindIperf3Binary returned empty path without error")
-	}
-
-	// Verify cache was updated
-	if iperf.IperfBinaryPath() != path {
-		t.Error("Cache should be updated after finding binary")
+	if path != cached {
+		t.Errorf("path = %q, want the cached %q", path, cached)
 	}
 }
 
-// TestManagerRunClientCancelledContext tests client with cancelled context.
-func TestManagerRunClientCancelledContext(t *testing.T) {
-	if os.Getenv("SKIP_IPERF_TEST") == "1" {
-		t.Skip("Skipping iperf test (SKIP_IPERF_TEST=1)")
-	}
+// TestClearIperfBinaryPathEmptiesTheCache is the other half: after clearing,
+// the cache no longer reports a path, so the next call performs a real search.
+func TestClearIperfBinaryPathEmptiesTheCache(t *testing.T) {
+	original := iperf.IperfBinaryPath()
+	t.Cleanup(func() { iperf.SetIperfBinaryPath(original) })
 
+	iperf.SetIperfBinaryPath("/nonexistent/cached/iperf3")
+	iperf.ClearIperfBinaryPath()
+
+	if got := iperf.IperfBinaryPath(); got != "" {
+		t.Errorf("cached path = %q after clearing, want empty", got)
+	}
+}
+
+// TestManagerRunClientCancelledContext pins that an already-cancelled context
+// is refused rather than run. It needs no iperf3: the cancellation is decided
+// before any transfer could begin, which is why this no longer carries a skip.
+func TestManagerRunClientCancelledContext(t *testing.T) {
 	manager := iperf.NewManager()
 
-	// Create already cancelled context
 	ctx, cancel := context.WithCancel(context.Background())
 	cancel()
 
@@ -670,10 +653,12 @@ func TestManagerRunClientCancelledContext(t *testing.T) {
 		Server: "localhost",
 		Port:   5201,
 	})
-
-	// Should fail due to cancelled context or connection failure
 	if err == nil {
-		t.Error("Expected error with cancelled context")
+		t.Error("RunClient with a cancelled context returned nil, want an error")
+	}
+
+	if status := manager.GetClientStatus(); status.Running {
+		t.Error("client reports Running after a refused run")
 	}
 }
 

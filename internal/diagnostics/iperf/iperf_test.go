@@ -722,59 +722,6 @@ func TestManagerSetResult(t *testing.T) {
 	}
 }
 
-// TestIperf3BinaryRequired validates that iperf3 binary can be found (build-time check).
-func TestIperf3BinaryRequired(t *testing.T) {
-	// Check if we're in CI or test environment where iperf3 may not be available
-	if os.Getenv("SKIP_IPERF_TEST") == "1" {
-		t.Skip("Skipping iperf3 binary test (SKIP_IPERF_TEST=1)")
-	}
-
-	path, err := iperf.FindIperf3Binary()
-	if err != nil {
-		t.Fatalf(
-			"iperf3 binary not found: %v\n\nTo fix this:\n1. Run scripts/build-iperf3.sh to build bundled binary\n2. Or install system-wide: apt-get install iperf3 (Ubuntu) or brew install iperf3 (macOS)\n3. Or set SKIP_IPERF_TEST=1 to skip this test in CI",
-			err,
-		)
-	}
-
-	t.Logf("Found iperf3 at: %s", path)
-
-	// Verify it's executable
-	info, err := os.Stat(path)
-	if err != nil {
-		t.Fatalf("Failed to stat iperf3 binary: %v", err)
-	}
-
-	if info.Mode()&0o111 == 0 {
-		t.Fatalf("iperf3 binary is not executable: %s", path)
-	}
-}
-
-// TestIperf3VersionRequired validates the iperf3 version meets requirements (build-time check).
-func TestIperf3VersionRequired(t *testing.T) {
-	if os.Getenv("SKIP_IPERF_TEST") == "1" {
-		t.Skip("Skipping iperf3 version test (SKIP_IPERF_TEST=1)")
-	}
-
-	version, err := iperf.GetVersion()
-	if err != nil {
-		t.Fatalf("Failed to get iperf3 version: %v", err)
-	}
-
-	t.Logf("iperf3 version: %s", version)
-
-	// Validate minimum version
-	err = iperf.ValidateVersion()
-	if err != nil {
-		t.Fatalf(
-			"iperf3 version validation failed: %v\n\nRequired version: %s or higher\nFound version: %s",
-			err,
-			iperf.MinSupportedVersion,
-			version,
-		)
-	}
-}
-
 // TestVersionComparison tests the version comparison logic.
 func TestVersionComparison(t *testing.T) {
 	tests := []struct {

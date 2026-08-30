@@ -320,7 +320,6 @@ jobs:
 
       - name: Run tests
         env:
-          SKIP_IPERF_TEST: "1"
           SKIP_NETWORK_TESTS: "1"
         run: go test -v -coverprofile=coverage.out ./...
 
@@ -412,7 +411,6 @@ jobs:
       # timing taken under load is not a timing.
       - name: Run tests with race detector
         env:
-          SKIP_IPERF_TEST: "1"
           SKIP_NETWORK_TESTS: "1"
         run: go test -race ./...
 
@@ -1594,6 +1592,52 @@ jobs:
   # private repos) and license-check reports without blocking. The
   # `semgrep` job in this file is the required SAST gate (blocking on
   # ERROR severity).
+  # ===========================================================================
+  # iperf3 boundary — the tests that need a real iperf3 and a real transfer
+  # ===========================================================================
+  # internal/diagnostics/iperf is otherwise driven through the cached-binary
+  # seam against a stand-in process, so the manager's spawn, port wait, PID,
+  # Wait monitor and Kill are all covered in the jobs above without iperf3.
+  # What that cannot cover is iperf3 itself: the version the product refuses
+  # below, and a transfer that actually moves bytes.
+  #
+  # Behind the `iperf3` build tag, so the default `go test ./...` never picks it
+  # up. Nothing in it skips: a missing binary, a rejected version, or a transfer
+  # reporting zero throughput is a failure. Until this job existed, `ci.yml` set
+  # SKIP_IPERF_TEST=1 in both Go jobs, so none of it ran anywhere.
+  iperf3:
+    name: iperf3 boundary (Linux)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    needs: changes
+    if: needs.changes.outputs.backend == 'true' || needs.changes.outputs.ci_infra == 'true'
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Set up Go
+        uses: ./.github/actions/setup-go
+
+      - name: Install iperf3
+        uses: MustardSeedNetworks/.github/.github/actions/apt-install@a146506fd53fe5e01fdc01892dd838c10081d183 # v1.9.0
+        timeout-minutes: 10
+        with:
+          packages: iperf3
+
+      # Fail here, with the version printed, rather than inside a test: a
+      # missing or too-old iperf3 is a job-setup problem and should read as one.
+      - name: Verify iperf3 is present
+        run: |
+          set -euo pipefail
+          iperf3 --version
+          command -v iperf3
+
+      - name: Run the iperf3 boundary suite
+        env:
+          SEED_IPERF3_TESTS: "1"
+        run: go test -count=1 -tags iperf3 -run 'TestReal_' -v ./internal/diagnostics/iperf/
+
   # Fails the build on any open High/Critical CodeQL alert on the default
   # branch. The CodeQL job itself reports success when the *analysis* succeeds,
   # regardless of what it found, so without this a repository can carry open
@@ -1629,6 +1673,7 @@ jobs:
       - backend-darwin
       - backend-windows
       - race
+      - iperf3
       - bench
       - frontend
       - storybook
