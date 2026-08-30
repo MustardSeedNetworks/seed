@@ -3,6 +3,7 @@ package reporting_test
 
 import (
 	"context"
+	"fmt"
 	"os"
 	"path/filepath"
 	"testing"
@@ -739,7 +740,7 @@ func TestExportDevices_Internal(t *testing.T) {
 	ctx := context.Background()
 
 	// Setup device data
-	setupDeviceData(t, ctx, db)
+	wantHostnames := setupDeviceData(t, ctx, db)
 
 	cfg := testConfigHelper()
 	ts := reporting.NewTemplateService(cfg)
@@ -755,8 +756,21 @@ func TestExportDevices_Internal(t *testing.T) {
 
 	data, count, err := gs.ExportExportDevices(ctx, req)
 	require.NoError(t, err)
-	assert.GreaterOrEqual(t, count, 0)
-	assert.NotNil(t, data)
+
+	// setupDeviceData inserts exactly three devices. `count >= 0` was
+	// satisfied by an export that returned nothing at all, so a broken query
+	// and a working one looked identical.
+	require.Equal(t, len(wantHostnames), count)
+
+	rows, ok := data.([]map[string]any)
+	require.True(t, ok, "export returned %T, not the row slice callers marshal", data)
+	require.Len(t, rows, count)
+
+	hostnames := make([]string, 0, len(rows))
+	for _, row := range rows {
+		hostnames = append(hostnames, fmt.Sprint(row["hostname"]))
+	}
+	assert.ElementsMatch(t, wantHostnames, hostnames)
 }
 
 func TestExportVulnerabilities_Internal(t *testing.T) {
@@ -976,8 +990,11 @@ func testConfigHelper() *config.Config {
 	return config.DefaultConfig()
 }
 
+// setupDeviceData inserts the fixture devices and returns their hostnames, so
+// a caller can assert on what it inserted rather than on a bound it cannot fail.
+//
 //nolint:revive // t comes before ctx for testing helper convention
-func setupDeviceData(t *testing.T, ctx context.Context, db *database.DB) {
+func setupDeviceData(t *testing.T, ctx context.Context, db *database.DB) []string {
 	t.Helper()
 
 	devices := []struct {
@@ -997,6 +1014,12 @@ func setupDeviceData(t *testing.T, ctx context.Context, db *database.DB) {
 			time.Now().Format(time.RFC3339))
 		require.NoError(t, err)
 	}
+
+	hostnames := make([]string, 0, len(devices))
+	for _, d := range devices {
+		hostnames = append(hostnames, d.hostname)
+	}
+	return hostnames
 }
 
 //nolint:revive // t comes before ctx for testing helper convention
