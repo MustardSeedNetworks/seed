@@ -90,19 +90,19 @@ assert_rejected \
   $'      - name: Run goreleaser (publish)\n        if: ${{ !inputs.dry_run }}'
 assert_rejected \
   "publish-release-job-without-push-event" \
-  "if: \${{ github.event_name == 'push' && !inputs.dry_run && !inputs.provenance_only }}" \
-  "if: \${{ !inputs.dry_run && !inputs.provenance_only }}"
+  $'  publish-release:\n    name: Publish verified release\n    if: ${{ github.event_name == \'push\' && !inputs.dry_run }}' \
+  $'  publish-release:\n    name: Publish verified release\n    if: ${{ !inputs.dry_run }}'
 assert_rejected \
   "provenance-without-push-event" \
-  "(github.event_name == 'push' && !inputs.provenance_only && !inputs.dry_run && needs.goreleaser.result == 'success')" \
-  "(!inputs.provenance_only && !inputs.dry_run && needs.goreleaser.result == 'success')"
+  "if: \${{ !cancelled() && github.event_name == 'push' && !inputs.dry_run && needs.goreleaser.result == 'success' }}" \
+  "if: \${{ !cancelled() && !inputs.dry_run && needs.goreleaser.result == 'success' }}"
 assert_rejected \
   "snapshot-no-longer-complements-publish" \
   $'      - name: Run goreleaser (snapshot/dry-run)\n        if: ${{ github.event_name != \'push\' || inputs.dry_run }}' \
   $'      - name: Run goreleaser (snapshot/dry-run)\n        if: inputs.dry_run'
 assert_rejected \
   "dispatch-publish-refusal-removed" \
-  "if: \${{ github.event_name == 'workflow_dispatch' && !inputs.dry_run && !inputs.provenance_only }}" \
+  "if: \${{ github.event_name == 'workflow_dispatch' && !inputs.dry_run }}" \
   "if: false"
 
 assert_rejected \

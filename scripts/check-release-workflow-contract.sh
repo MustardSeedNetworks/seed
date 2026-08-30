@@ -35,6 +35,24 @@ require_step_condition() {
   fi
 }
 
+# require_job_condition pins a condition to the job that must carry it, the way
+# require_step_condition does for steps. A bare `require` cannot distinguish a
+# job-level `if:` from an identical one on a step elsewhere in the file.
+require_job_condition() {
+  local job="$1"
+  local condition="$2"
+
+  if ! awk -v job="  $job:" -v cond="$condition" '
+    $0 == job { in_job = 1; next }
+    in_job && index($0, cond) { found = 1 }
+    in_job && /^  [a-z0-9-]+:$/ { exit }
+    END { exit !found }
+  ' "$workflow"; then
+    echo "release workflow contract: job \"$job\" is missing its condition: $condition" >&2
+    exit 1
+  fi
+}
+
 # Every external action reachable from the release path must be SHA-pinned.
 # Local composites are followed rather than skipped: the Node/npm pin lives in
 # .github/actions/setup-node, so skipping them would leave the actions it calls
@@ -63,9 +81,7 @@ validate_action_pins() {
   done < <(grep -E '^[[:space:]]*(-[[:space:]]+)?uses:' "$file")
 }
 
-require "if: \${{ !inputs.provenance_only }}"
-require "if: \${{ !cancelled() && ((inputs.provenance_only && needs.goreleaser-backfill-hashes.result == 'success') || (github.event_name == 'push' && !inputs.provenance_only && !inputs.dry_run && needs.goreleaser.result == 'success')) }}"
-require "if: \${{ github.event_name == 'push' && !inputs.dry_run && !inputs.provenance_only }}"
+require "if: \${{ !cancelled() && github.event_name == 'push' && !inputs.dry_run && needs.goreleaser.result == 'success' }}"
 # Publishing is reserved for pushed tags: only a push can satisfy the
 # verify-tag assertion that the commit passed CI Complete, and a v* tag can be
 # created on any commit. Both halves are pinned -- the publish predicate and the
@@ -80,7 +96,9 @@ require_step_condition "Run goreleaser (snapshot/dry-run)" \
 require_step_condition "Upload dry-run artifact bundle for inspection" \
   "if: \${{ github.event_name != 'push' || inputs.dry_run }}"
 require_step_condition "Refuse a manual dispatch that asks to publish" \
-  "if: \${{ github.event_name == 'workflow_dispatch' && !inputs.dry_run && !inputs.provenance_only }}"
+  "if: \${{ github.event_name == 'workflow_dispatch' && !inputs.dry_run }}"
+require_job_condition "publish-release" \
+  "if: \${{ github.event_name == 'push' && !inputs.dry_run }}"
 require 'IPERF3_VERSION: "3.21"'
 require 'IPERF3_SHA256: "656e4405ebd620121de7ceca3eaf43a88f79ea1b857d041a6a0b1314801acdd8"'
 require 'image: goreleaser/goreleaser-cross:v1.27.0@sha256:3ce3506ee9179c4122ba0b5dc13ab564ff259fb65f45bfad005ddd5e4a3d326d'
@@ -164,23 +182,19 @@ publishes() {
 refuses() {
   local event="$1"
   local dry_run="$2"
-  local provenance_only="$3"
 
-  [[ "$event" == workflow_dispatch && "$dry_run" != true && "$provenance_only" != true ]]
+  [[ "$event" == workflow_dispatch && "$dry_run" != true ]]
 }
 
-# attests mirrors the provenance job. The backfill arm stays reachable from a
-# dispatch: it runs no build and only attests assets an existing release already
-# published.
+# attests mirrors the provenance job. Only a pushed, non-dry-run tag whose
+# goreleaser job succeeded produces an attestation -- a snapshot has nothing
+# published to attest against.
 attests() {
   local event="$1"
-  local provenance_only="$2"
-  local dry_run="$3"
-  local goreleaser="$4"
-  local backfill="$5"
+  local dry_run="$2"
+  local goreleaser="$3"
 
-  [[ "$provenance_only" == true && "$backfill" == success ]] ||
-    [[ "$event" == push && "$provenance_only" != true && "$dry_run" != true && "$goreleaser" == success ]]
+  [[ "$event" == push && "$dry_run" != true && "$goreleaser" == success ]]
 }
 
 assert_mode() {
@@ -207,15 +221,13 @@ assert_mode publishes "pushed tag" true push false
 assert_mode publishes "dispatch asking to publish" false workflow_dispatch false
 assert_mode publishes "dispatch dry-run" false workflow_dispatch true
 
-assert_mode refuses "dispatch asking to publish" true workflow_dispatch false false
-assert_mode refuses "dispatch dry-run" false workflow_dispatch true false
-assert_mode refuses "provenance-only backfill" false workflow_dispatch false true
-assert_mode refuses "pushed tag" false push false false
+assert_mode refuses "dispatch asking to publish" true workflow_dispatch false
+assert_mode refuses "dispatch dry-run" false workflow_dispatch true
+assert_mode refuses "pushed tag" false push false
 
-assert_mode attests "dispatch dry-run" false workflow_dispatch false true success skipped
-assert_mode attests "dispatch asking to publish" false workflow_dispatch false false success skipped
-assert_mode attests "normal release" true push false false success skipped
-assert_mode attests "provenance-only default dry-run" true workflow_dispatch true true skipped success
-assert_mode attests "failed provenance-only backfill" false workflow_dispatch true true skipped failure
+assert_mode attests "normal release" true push false success
+assert_mode attests "dispatch dry-run" false workflow_dispatch true success
+assert_mode attests "dispatch asking to publish" false workflow_dispatch false success
+assert_mode attests "pushed tag whose goreleaser failed" false push false failure
 
 echo "release workflow contract: modes, checksums, pins, and permissions verified."
