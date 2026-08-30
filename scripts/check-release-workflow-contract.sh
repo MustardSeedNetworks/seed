@@ -17,6 +17,24 @@ require() {
   fi
 }
 
+# require_step_condition pins a condition to the step that must carry it.
+# A bare `require` cannot: the publish predicate appears on more than one step,
+# so dropping it from one of them would still match elsewhere and pass.
+require_step_condition() {
+  local step="$1"
+  local condition="$2"
+
+  if ! awk -v step="- name: $step" -v cond="$condition" '
+    index($0, step) { in_step = 1; next }
+    in_step && index($0, cond) { found = 1 }
+    in_step && /^      - name:/ { exit }
+    END { exit !found }
+  ' "$workflow"; then
+    echo "release workflow contract: step \"$step\" is missing its condition: $condition" >&2
+    exit 1
+  fi
+}
+
 # Every external action reachable from the release path must be SHA-pinned.
 # Local composites are followed rather than skipped: the Node/npm pin lives in
 # .github/actions/setup-node, so skipping them would leave the actions it calls
@@ -46,8 +64,23 @@ validate_action_pins() {
 }
 
 require "if: \${{ !inputs.provenance_only }}"
-require "if: \${{ !cancelled() && ((inputs.provenance_only && needs.goreleaser-backfill-hashes.result == 'success') || (!inputs.provenance_only && !inputs.dry_run && needs.goreleaser.result == 'success')) }}"
-require "if: \${{ !inputs.dry_run && !inputs.provenance_only }}"
+require "if: \${{ !cancelled() && ((inputs.provenance_only && needs.goreleaser-backfill-hashes.result == 'success') || (github.event_name == 'push' && !inputs.provenance_only && !inputs.dry_run && needs.goreleaser.result == 'success')) }}"
+require "if: \${{ github.event_name == 'push' && !inputs.dry_run && !inputs.provenance_only }}"
+# Publishing is reserved for pushed tags: only a push can satisfy the
+# verify-tag assertion that the commit passed CI Complete, and a v* tag can be
+# created on any commit. Both halves are pinned -- the publish predicate and the
+# snapshot predicate that must be its exact complement -- so a change that drops
+# the event check from one of them cannot pass silently.
+require_step_condition "Run goreleaser (publish)" \
+  "if: \${{ github.event_name == 'push' && !inputs.dry_run }}"
+require_step_condition "Capture artifact hashes for SLSA provenance" \
+  "if: \${{ github.event_name == 'push' && !inputs.dry_run }}"
+require_step_condition "Run goreleaser (snapshot/dry-run)" \
+  "if: \${{ github.event_name != 'push' || inputs.dry_run }}"
+require_step_condition "Upload dry-run artifact bundle for inspection" \
+  "if: \${{ github.event_name != 'push' || inputs.dry_run }}"
+require_step_condition "Refuse a manual dispatch that asks to publish" \
+  "if: \${{ github.event_name == 'workflow_dispatch' && !inputs.dry_run && !inputs.provenance_only }}"
 require 'IPERF3_VERSION: "3.21"'
 require 'IPERF3_SHA256: "656e4405ebd620121de7ceca3eaf43a88f79ea1b857d041a6a0b1314801acdd8"'
 require 'image: goreleaser/goreleaser-cross:v1.27.0@sha256:3ce3506ee9179c4122ba0b5dc13ab564ff259fb65f45bfad005ddd5e4a3d326d'
@@ -113,35 +146,76 @@ if ! awk '
   exit 1
 fi
 
-attests() {
-  local provenance_only="$1"
+# The three models below mirror the workflow's own predicates. They are what
+# turns this file from a string check into a statement about behaviour: a change
+# to a condition has to be reflected here, and the mode assertions then say
+# whether the new behaviour is the intended one.
+
+# publishes mirrors the "Run goreleaser (publish)" step.
+publishes() {
+  local event="$1"
   local dry_run="$2"
-  local goreleaser="$3"
-  local backfill="$4"
+
+  [[ "$event" == push && "$dry_run" != true ]]
+}
+
+# refuses mirrors the verify-tag step that rejects a dispatch asking to publish,
+# rather than silently downgrading it to a snapshot.
+refuses() {
+  local event="$1"
+  local dry_run="$2"
+  local provenance_only="$3"
+
+  [[ "$event" == workflow_dispatch && "$dry_run" != true && "$provenance_only" != true ]]
+}
+
+# attests mirrors the provenance job. The backfill arm stays reachable from a
+# dispatch: it runs no build and only attests assets an existing release already
+# published.
+attests() {
+  local event="$1"
+  local provenance_only="$2"
+  local dry_run="$3"
+  local goreleaser="$4"
+  local backfill="$5"
 
   [[ "$provenance_only" == true && "$backfill" == success ]] ||
-    [[ "$provenance_only" != true && "$dry_run" != true && "$goreleaser" == success ]]
+    [[ "$event" == push && "$provenance_only" != true && "$dry_run" != true && "$goreleaser" == success ]]
 }
 
 assert_mode() {
-  local name="$1"
-  local expected="$2"
-  shift 2
+  local model="$1"
+  local name="$2"
+  local expected="$3"
+  shift 3
 
-  if attests "$@"; then
+  if "$model" "$@"; then
     actual=true
   else
     actual=false
   fi
   if [[ "$actual" != "$expected" ]]; then
-    echo "release workflow contract failed for $name: got $actual, want $expected" >&2
+    echo "release workflow contract failed for $model/$name: got $actual, want $expected" >&2
     exit 1
   fi
 }
 
-assert_mode "dry-run" false false true success skipped
-assert_mode "normal release" true false false success skipped
-assert_mode "provenance-only default dry-run" true true true skipped success
-assert_mode "failed provenance-only backfill" false true true skipped failure
+# Only a pushed tag publishes. The dispatch rows are the regression this guard
+# exists for: before #2228 a dispatch with dry_run=false published without the
+# CI Complete assertion ever running.
+assert_mode publishes "pushed tag" true push false
+assert_mode publishes "dispatch asking to publish" false workflow_dispatch false
+assert_mode publishes "dispatch dry-run" false workflow_dispatch true
+
+assert_mode refuses "dispatch asking to publish" true workflow_dispatch false false
+assert_mode refuses "dispatch dry-run" false workflow_dispatch true false
+assert_mode refuses "provenance-only backfill" false workflow_dispatch false true
+assert_mode refuses "pushed tag" false push false false
+
+assert_mode attests "dispatch dry-run" false workflow_dispatch false true success skipped
+assert_mode attests "dispatch asking to publish" false workflow_dispatch false false success skipped
+assert_mode attests "normal release" true push false false success skipped
+assert_mode attests "provenance-only default dry-run" true workflow_dispatch true true skipped success
+assert_mode attests "failed provenance-only backfill" false workflow_dispatch true true skipped failure
 
 echo "release workflow contract: modes, checksums, pins, and permissions verified."

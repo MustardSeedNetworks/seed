@@ -81,6 +81,30 @@ if RELEASE_REPO_ROOT="$fixture_dir/empty" "$checker" >/dev/null 2>&1; then
   echo "release workflow contract accepted a missing composite" >&2
   exit 1
 fi
+# The publish bypass fixed in #2228: dropping the event check from any of the
+# publishing predicates must be rejected, or the guard would not have caught the
+# defect it was extended for.
+assert_rejected \
+  "publish-without-push-event" \
+  $'      - name: Run goreleaser (publish)\n        if: ${{ github.event_name == \'push\' && !inputs.dry_run }}' \
+  $'      - name: Run goreleaser (publish)\n        if: ${{ !inputs.dry_run }}'
+assert_rejected \
+  "publish-release-job-without-push-event" \
+  "if: \${{ github.event_name == 'push' && !inputs.dry_run && !inputs.provenance_only }}" \
+  "if: \${{ !inputs.dry_run && !inputs.provenance_only }}"
+assert_rejected \
+  "provenance-without-push-event" \
+  "(github.event_name == 'push' && !inputs.provenance_only && !inputs.dry_run && needs.goreleaser.result == 'success')" \
+  "(!inputs.provenance_only && !inputs.dry_run && needs.goreleaser.result == 'success')"
+assert_rejected \
+  "snapshot-no-longer-complements-publish" \
+  $'      - name: Run goreleaser (snapshot/dry-run)\n        if: ${{ github.event_name != \'push\' || inputs.dry_run }}' \
+  $'      - name: Run goreleaser (snapshot/dry-run)\n        if: inputs.dry_run'
+assert_rejected \
+  "dispatch-publish-refusal-removed" \
+  "if: \${{ github.event_name == 'workflow_dispatch' && !inputs.dry_run && !inputs.provenance_only }}" \
+  "if: false"
+
 assert_rejected \
   "new-mutable-action" \
   $'    steps:\n      - name: Probe for build dependencies' \
