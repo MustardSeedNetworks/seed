@@ -47,6 +47,10 @@ func (m *Manager) StartServer(port int) error {
 		// Kill the process if port check fails
 		if cmd.Process != nil {
 			_ = cmd.Process.Kill()
+			// Reap it. Kill alone leaves a zombie for the life of the daemon:
+			// nothing else calls Wait on this path, since the monitoring
+			// goroutine below is only started once the server is up.
+			_ = cmd.Wait()
 		}
 		cancel()
 		return fmt.Errorf("iperf3 server failed to start listening: %w", portErr)

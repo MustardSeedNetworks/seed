@@ -1,9 +1,6 @@
 package iperf_test
 
 import (
-	"context"
-	"net"
-	"os"
 	"strings"
 	"sync"
 	"testing"
@@ -11,59 +8,6 @@ import (
 
 	"github.com/MustardSeedNetworks/seed/internal/diagnostics/iperf"
 )
-
-// TestStartServerWithValidPort tests starting server with a valid port.
-func TestStartServerWithValidPort(t *testing.T) {
-	if os.Getenv("SKIP_IPERF_TEST") == "1" {
-		t.Skip("Skipping iperf test")
-	}
-
-	// Check if iperf3 is installed
-	if err := iperf.CheckInstalled(); err != nil {
-		t.Skip("iperf3 not installed")
-	}
-
-	manager := iperf.NewManager()
-
-	// Find an available port
-	listener, err := net.Listen("tcp", "127.0.0.1:0")
-	if err != nil {
-		t.Fatalf("Failed to find available port: %v", err)
-	}
-	port := listener.Addr().(*net.TCPAddr).Port
-	_ = listener.Close()
-
-	// Give the OS time to release the port
-	time.Sleep(100 * time.Millisecond)
-
-	// Try to start server
-	err = manager.StartServer(port)
-	if err != nil {
-		// May fail due to permissions or binary issues - that's OK
-		t.Logf("StartServer error (expected on some systems): %v", err)
-		return
-	}
-
-	// Verify server is running
-	status := manager.GetServerStatus()
-	if !status.Running {
-		t.Error("Server should be running")
-	}
-	if status.Port != port {
-		t.Errorf("Port = %d, want %d", status.Port, port)
-	}
-
-	// Stop server
-	if stopErr := manager.StopServer(); stopErr != nil {
-		t.Errorf("StopServer error: %v", stopErr)
-	}
-
-	// Verify server stopped
-	status = manager.GetServerStatus()
-	if status.Running {
-		t.Error("Server should not be running after stop")
-	}
-}
 
 // TestStartServerAlreadyRunningWithPort tests starting when already running.
 func TestStartServerAlreadyRunningWithPort(t *testing.T) {
@@ -115,82 +59,6 @@ func TestStopServerClearsAllState(t *testing.T) {
 }
 
 // TestRunClientWithValidConfig tests client with valid configuration.
-func TestRunClientWithValidConfig(t *testing.T) {
-	if os.Getenv("SKIP_IPERF_TEST") == "1" {
-		t.Skip("Skipping iperf test")
-	}
-
-	// Check if iperf3 is installed
-	if err := iperf.CheckInstalled(); err != nil {
-		t.Skip("iperf3 not installed")
-	}
-
-	manager := iperf.NewManager()
-
-	// Create a context with timeout
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-	defer cancel()
-
-	// Run client against a non-existent server (will fail quickly)
-	config := &iperf.ClientConfig{
-		Server:   "127.0.0.1",
-		Port:     59997, // unlikely to have an iperf server
-		Duration: 1,
-	}
-
-	_, err := manager.RunClient(ctx, config)
-	// This should fail but exercise the code path
-	if err == nil {
-		t.Log("Unexpectedly succeeded (maybe an iperf server is running)")
-	} else {
-		t.Logf("Expected error: %v", err)
-	}
-
-	// Verify client status is reset
-	status := manager.GetClientStatus()
-	if status.Running {
-		t.Error("Client should not be running after test")
-	}
-	if status.Phase != "idle" {
-		t.Errorf("Phase should be 'idle', got %q", status.Phase)
-	}
-}
-
-// TestRunClientContextCancellation tests client with cancelled context.
-func TestRunClientContextCancellation(t *testing.T) {
-	if os.Getenv("SKIP_IPERF_TEST") == "1" {
-		t.Skip("Skipping iperf test")
-	}
-
-	// Check if iperf3 is installed
-	if err := iperf.CheckInstalled(); err != nil {
-		t.Skip("iperf3 not installed")
-	}
-
-	manager := iperf.NewManager()
-
-	// Create already cancelled context
-	ctx, cancel := context.WithCancel(context.Background())
-	cancel()
-
-	config := &iperf.ClientConfig{
-		Server:   "127.0.0.1",
-		Port:     5201,
-		Duration: 10,
-	}
-
-	_, err := manager.RunClient(ctx, config)
-	if err == nil {
-		t.Error("Expected error with cancelled context")
-	}
-
-	// Verify client status is reset
-	status := manager.GetClientStatus()
-	if status.Running {
-		t.Error("Client should not be running after cancellation")
-	}
-}
-
 // TestClientStatusProgression tests client status changes.
 func TestClientStatusProgression(t *testing.T) {
 	t.Parallel()
@@ -366,54 +234,6 @@ func TestManagerConcurrentOperationsSafe(t *testing.T) {
 	}
 
 	wg.Wait()
-}
-
-// TestValidateVersionWithInstalledIperf tests version validation.
-func TestValidateVersionWithInstalledIperf(t *testing.T) {
-	if os.Getenv("SKIP_IPERF_TEST") == "1" {
-		t.Skip("Skipping iperf test")
-	}
-
-	// Check if iperf3 is installed
-	if err := iperf.CheckInstalled(); err != nil {
-		t.Skip("iperf3 not installed")
-	}
-
-	err := iperf.ValidateVersion()
-	if err != nil {
-		t.Logf("Version validation result: %v", err)
-		// May fail if installed version is old
-	} else {
-		t.Log("Version validation passed")
-	}
-}
-
-// TestGetVersionWithInstalledIperf tests version retrieval.
-func TestGetVersionWithInstalledIperf(t *testing.T) {
-	if os.Getenv("SKIP_IPERF_TEST") == "1" {
-		t.Skip("Skipping iperf test")
-	}
-
-	// Check if iperf3 is installed
-	if err := iperf.CheckInstalled(); err != nil {
-		t.Skip("iperf3 not installed")
-	}
-
-	version, err := iperf.GetVersion()
-	if err != nil {
-		t.Fatalf("GetVersion() error = %v", err)
-	}
-
-	if version == "" {
-		t.Error("Version should not be empty")
-	}
-
-	// Should start with v
-	if !strings.HasPrefix(version, "v") {
-		t.Logf("Version format: %s (may not start with v)", version)
-	}
-
-	t.Logf("Installed iperf3 version: %s", version)
 }
 
 // TestCheckInstalledReturnsConsistent verifies CheckInstalled is

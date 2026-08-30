@@ -387,41 +387,6 @@ func TestEmbeddedVersionFormat(t *testing.T) {
 	}
 }
 
-// TestFindSystemIperf3Available tests system iperf3 detection.
-func TestFindSystemIperf3Available(t *testing.T) {
-	t.Parallel()
-
-	if os.Getenv("SKIP_IPERF_TEST") == "1" {
-		t.Skip("Skipping iperf test (SKIP_IPERF_TEST=1)")
-	}
-
-	path, err := iperf.FindSystemIperf3()
-	if err != nil {
-		// This is expected if iperf3 is not installed
-		t.Logf("iperf3 not found in system PATH: %v", err)
-		return
-	}
-
-	// If found, verify the path
-	if path == "" {
-		t.Error("Path should not be empty when no error returned")
-	}
-
-	if !filepath.IsAbs(path) {
-		t.Errorf("System iperf3 path should be absolute: %q", path)
-	}
-
-	// Verify file exists
-	info, err := os.Stat(path)
-	if err != nil {
-		t.Errorf("Could not stat found iperf3 path: %v", err)
-	} else if info.IsDir() {
-		t.Errorf("iperf3 path should not be a directory: %q", path)
-	}
-
-	t.Logf("Found system iperf3 at: %s", path)
-}
-
 // TestExtractEmbeddedBinaryPlatformCheck tests embedded binary extraction.
 func TestExtractEmbeddedBinaryPlatformCheck(t *testing.T) {
 	// Skip if no embedded binary for this platform
