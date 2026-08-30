@@ -329,4 +329,70 @@ describe('useAuth', () => {
     // Should still clear local state
     expect(result.current.isAuthenticated).toBe(false);
   });
+
+  describe('login request timeout', () => {
+    it('sends an abort signal with the login request', async () => {
+      mockFetch.mockResolvedValueOnce({ ok: false });
+      const { result } = renderHook(() => useAuth());
+      await waitFor(() => expect(result.current.isLoading).toBe(false));
+
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve({ token: 'access-token', expires: 3600 }),
+      });
+
+      await act(async () => {
+        await result.current.login('admin', 'password');
+      });
+
+      // Without a signal a server that accepts the connection and never answers
+      // leaves the promise pending forever.
+      const init = mockFetch.mock.calls.at(-1)?.[1] as RequestInit;
+      expect(init.signal).toBeInstanceOf(AbortSignal);
+    });
+
+    it('reports a hung server instead of staying disabled forever', async () => {
+      mockFetch.mockResolvedValueOnce({ ok: false });
+      const { result } = renderHook(() => useAuth());
+      await waitFor(() => expect(result.current.isLoading).toBe(false));
+
+      // What a hung server looks like to fetch: the AbortSignal fires and the
+      // promise rejects with a TimeoutError.
+      mockFetch.mockImplementationOnce(() => {
+        const err = new Error('signal timed out');
+        err.name = 'TimeoutError';
+
+        return Promise.reject(err);
+      });
+
+      let loginResult = true;
+      await act(async () => {
+        loginResult = await result.current.login('admin', 'password');
+      });
+
+      expect(loginResult).toBe(false);
+      // isLoading returning to false is what re-enables the submit button; a
+      // form the operator cannot retry is the defect this guards.
+      expect(result.current.isLoading).toBe(false);
+      expect(result.current.isAuthenticated).toBe(false);
+      // Not the raw "signal timed out", which means nothing to an operator.
+      expect(result.current.error).toBe(
+        'The server did not respond. Check the connection and try again.',
+      );
+    });
+
+    it('still reports an ordinary failure in its own words', async () => {
+      mockFetch.mockResolvedValueOnce({ ok: false });
+      const { result } = renderHook(() => useAuth());
+      await waitFor(() => expect(result.current.isLoading).toBe(false));
+
+      mockFetch.mockResolvedValueOnce({ ok: false, status: 401 });
+
+      await act(async () => {
+        await result.current.login('admin', 'wrong');
+      });
+
+      expect(result.current.error).toBe('Invalid credentials');
+    });
+  });
 });

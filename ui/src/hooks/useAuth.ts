@@ -103,6 +103,14 @@ function clearLegacyStorage(): void {
  *
  * @returns Authentication state and control functions
  */
+/**
+ * How long a login request may hang before it is abandoned.
+ *
+ * Long enough for a slow but working server, short enough that an operator
+ * facing an unresponsive one gets an error rather than a form that never
+ * re-enables.
+ */
+const LOGIN_TIMEOUT_MS = 15_000;
 export function useAuth(): UseAuthReturn {
   // Internal authentication state
   const [state, setState] = useState<AuthState>({
@@ -226,6 +234,11 @@ export function useAuth(): UseAuthReturn {
         },
         credentials: 'include', // Receive httpOnly cookies
         body: JSON.stringify({ username, password }),
+        // Without a deadline a server that accepts the connection and never
+        // answers leaves this promise pending, so isLoading stays true, the
+        // submit button stays disabled and no error is ever shown -- the form
+        // is simply stuck, with no way to retry.
+        signal: AbortSignal.timeout(LOGIN_TIMEOUT_MS),
       });
 
       if (!response.ok) {
@@ -253,7 +266,14 @@ export function useAuth(): UseAuthReturn {
       });
       return true;
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Login failed';
+      // AbortSignal.timeout rejects with a TimeoutError, whose own message
+      // ("signal timed out") means nothing to an operator.
+      const timedOut = err instanceof Error && err.name === 'TimeoutError';
+      const errorMessage = timedOut
+        ? 'The server did not respond. Check the connection and try again.'
+        : err instanceof Error
+          ? err.message
+          : 'Login failed';
       setError(errorMessage);
       // fixes #678 - added structured error logging for login failures
       logger.error(LogComponents.AUTH, 'Login failed', err, {

@@ -132,18 +132,23 @@ test.describe('API Error Scenarios', () => {
         await page.getByLabel(/password/i).fill(TEST_CREDENTIALS.password);
         await page.getByTestId('login-submit').click();
 
-        // Should show timeout or error message. Old form raced .isVisible({15s})
-        // against a 100ms hard sleep — the sleep branch always won, defeating
-        // the race. Direct isVisible with the desired timeout is equivalent and
-        // honest about what we're waiting for.
-        const errorShown = await page.getByRole('alert').isVisible({ timeout: 15000 });
+        // The login request carries AbortSignal.timeout(15s), so a server that
+        // accepts the connection and never answers must surface an error rather
+        // than leaving the form disabled. Waiting slightly longer than the
+        // client's own deadline, since that deadline is the thing under test.
+        //
+        // The previous assertion was `errorShown || usernameField.isVisible()`,
+        // which passed whichever happened: the username field is always visible
+        // on a page that never navigates, so it could not fail.
+        await expect(page.getByRole('alert')).toBeVisible({ timeout: 20000 });
 
         if (timeoutHandle) {
           clearTimeout(timeoutHandle);
         }
 
-        // Either error shown or loading state ended
-        expect(errorShown || (await page.getByLabel(/username/i).isVisible())).toBeTruthy();
+        // And the operator can retry: a submit button still disabled is the
+        // stuck state this exists to catch.
+        await expect(page.getByTestId('login-submit')).toBeEnabled();
       });
     });
 
@@ -395,11 +400,17 @@ test.describe('Error Recovery Mechanisms', () => {
       timeout: 5000,
     });
 
-    // Retry
+    // Retry. The point of the test is that the second attempt actually reaches
+    // the server and succeeds, so wait for the app shell rather than for the
+    // click to return.
     await page.getByTestId('login-submit').click();
 
-    // Should eventually succeed or allow retry
+    await expect(page.getByTestId('page-header-title')).toBeVisible({ timeout: 15000 });
+    await expect(page.getByRole('alert')).toBeHidden();
 
-    expect(attemptCount).toBeGreaterThan(0);
+    // Exactly two: the failure and the retry. `toBeGreaterThan(0)` was true
+    // after the first attempt alone, so it passed whether or not the retry
+    // happened at all -- which is the thing being tested.
+    expect(attemptCount).toBe(2);
   });
 });
