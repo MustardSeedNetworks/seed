@@ -1594,6 +1594,18 @@ jobs:
   # private repos) and license-check reports without blocking. The
   # `semgrep` job in this file is the required SAST gate (blocking on
   # ERROR severity).
+  # Fails the build on any open High/Critical CodeQL alert on the default
+  # branch. The CodeQL job itself reports success when the *analysis* succeeds,
+  # regardless of what it found, so without this a repository can carry open
+  # High alerts with every check green. Scoped to CodeQL rather than "any High
+  # alert": the code-scanning tab also carries Scorecard *scores* at High
+  # severity, several of which encode deliberate decisions.
+  codeql-alert-gate:
+    name: CodeQL Alert Gate
+    uses: MustardSeedNetworks/.github/.github/workflows/codeql-alert-gate.yml@cd60ad04e0f305b3706481580091dc7f3e1863aa # v1.11.0
+    permissions:
+      security-events: read
+
   ci-complete:
     name: CI Complete
     runs-on: ubuntu-latest
@@ -1630,6 +1642,7 @@ jobs:
       - build
       - e2e
       - e2e-smoke
+      - codeql-alert-gate
     if: always()
     steps:
       - name: Verify upstream results
