@@ -18,12 +18,6 @@
 #   - workflow_dispatch: snapshot only, whatever dry_run says — no publish or
 #     attestation upload; artifacts are signed, coverage-verified, and uploaded
 #     for inspection. dry_run=false is rejected outright.
-#   - workflow_dispatch with provenance_only=true (ref=<existing tag>):
-#     skips goreleaser entirely, recomputes artifact subjects from the
-#     already-published checksums.txt on that tag's GitHub release, then
-#     runs attest-build-provenance + uploads the .intoto.jsonl. Used to
-#     retroactively attest tags that shipped before the provenance job
-#     existed. provenance_only takes precedence over dry_run.
 #
 # Toolchain notes:
 #   The goreleaser-cross Docker image ships:
@@ -53,14 +47,6 @@ on:
         description: "Must stay true: a manual run is always snapshot-only. Publishing requires pushing a v* tag."
         type: boolean
         default: true
-      provenance_only:
-        description: "Backfill: skip build, recompute subjects from the existing release's checksums.txt, attest + upload bundle"
-        type: boolean
-        default: false
-      target_tag:
-        description: "Backfill target tag (e.g. v0.190.0). Required when provenance_only=true — workflow_dispatch must be issued against main since older tags don't have these inputs."
-        type: string
-        default: ""
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -99,7 +85,7 @@ jobs:
       # refuse here as well so an operator who asks for one is told, rather than
       # getting a snapshot they may mistake for a release.
       - name: Refuse a manual dispatch that asks to publish
-        if: ${{ github.event_name == 'workflow_dispatch' && !inputs.dry_run && !inputs.provenance_only }}
+        if: ${{ github.event_name == 'workflow_dispatch' && !inputs.dry_run }}
         env:
           EVENT: ${{ github.event_name }}
         run: |
@@ -129,7 +115,6 @@ jobs:
   # =========================================================================
   build-iperf3:
     name: Build iperf3 (${{ matrix.arch }})
-    if: ${{ !inputs.provenance_only }}
     needs: [verify-tag]
     runs-on: ${{ matrix.runner }}
     env:
@@ -208,7 +193,6 @@ jobs:
   # =========================================================================
   build-ui:
     name: Build UI
-    if: ${{ !inputs.provenance_only }}
     needs: [verify-tag]
     runs-on: ubuntu-latest
     outputs:
@@ -255,7 +239,6 @@ jobs:
   # =========================================================================
   goreleaser:
     name: goreleaser ${{ (github.event_name == 'push' && !inputs.dry_run) && '(release)' || '(snapshot)' }}
-    if: ${{ !inputs.provenance_only }}
     runs-on: ubuntu-latest
     needs: [build-iperf3, build-ui]
     permissions:
@@ -404,54 +387,6 @@ jobs:
           retention-days: 14
 
   # =========================================================================
-  # SLSA provenance backfill — recomputes the subject list from a tag's
-  # already-published checksums.txt instead of running goreleaser. Used
-  # to retroactively attest tags that shipped before the provenance job
-  # existed (issue #75). Only fires under workflow_dispatch with
-  # provenance_only=true; on a push or normal dispatch this job is
-  # skipped and the regular `goreleaser` job feeds the provenance job.
-  # =========================================================================
-  goreleaser-backfill-hashes:
-    name: goreleaser (backfill subjects from existing release)
-    if: ${{ inputs.provenance_only }}
-    runs-on: ubuntu-latest
-    outputs:
-      # Same base64-subjects contract as the goreleaser job's `hashes`
-      # output. Provenance job picks whichever upstream produced one.
-      hashes: ${{ steps.hashes.outputs.hashes }}
-    steps:
-      - name: Download checksums.txt from existing release
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          TARGET_TAG: ${{ inputs.target_tag }}
-        shell: bash
-        run: |
-          set -euo pipefail
-          if [ -z "$TARGET_TAG" ]; then
-            echo "::error::provenance_only=true requires target_tag to identify which existing release to attest"
-            exit 1
-          fi
-          gh release download "$TARGET_TAG" \
-            --repo "${GITHUB_REPOSITORY}" \
-            --pattern 'checksums.txt' \
-            --dir .
-          echo "checksums.txt contents:"
-          cat checksums.txt
-
-      - name: Convert checksums.txt to base64 subjects
-        id: hashes
-        shell: bash
-        run: |
-          # checksums.txt is the standard goreleaser format:
-          #   <sha256>  <filename>
-          # The attest-build-provenance `subject-checksums` input takes
-          # exactly that format. We base64-encode here so the output
-          # contract matches the goreleaser job's `hashes` output.
-          set -euo pipefail
-          hashes=$(base64 -w0 < checksums.txt)
-          echo "hashes=${hashes}" >> "$GITHUB_OUTPUT"
-
-  # =========================================================================
   # SLSA L3 provenance — runs on real releases (not dry-run).
   #
   # Uses GitHub's first-party `actions/attest-build-provenance` rather than
@@ -463,18 +398,14 @@ jobs:
   # keyless OIDC), surfaces it on the release's GitHub Attestations panel,
   # AND attaches the bundle file to the release as a downloadable asset.
   #
-  # Two upstream paths feed this job (only one runs per invocation):
-  #   - normal release:  needs.goreleaser produces subjects from artifacts.json
-  #   - provenance_only: needs.goreleaser-backfill-hashes produces subjects
-  #                      from the existing release's checksums.txt
   # =========================================================================
   provenance:
     name: SLSA provenance
-    # Skip on dry-run snapshots; require one of the two upstreams to have
-    # succeeded. `!cancelled()` lets this job run even though one of the
-    # two `needs` is intentionally skipped per dispatch path.
-    if: ${{ !cancelled() && ((inputs.provenance_only && needs.goreleaser-backfill-hashes.result == 'success') || (github.event_name == 'push' && !inputs.provenance_only && !inputs.dry_run && needs.goreleaser.result == 'success')) }}
-    needs: [goreleaser, goreleaser-backfill-hashes]
+    # Only a real release attests: a snapshot has nothing published to attest
+    # against. `!cancelled()` is kept so a cancelled upstream is distinguishable
+    # from a failed one.
+    if: ${{ !cancelled() && github.event_name == 'push' && !inputs.dry_run && needs.goreleaser.result == 'success' }}
+    needs: [goreleaser]
     runs-on: ubuntu-latest
     permissions:
       id-token: write       # Sigstore OIDC signing
@@ -487,7 +418,7 @@ jobs:
         run: |
           set -euo pipefail
           # Pick whichever upstream ran. The unused one is empty.
-          echo "${{ needs.goreleaser.outputs.hashes || needs.goreleaser-backfill-hashes.outputs.hashes }}" \
+          echo "${{ needs.goreleaser.outputs.hashes }}" \
             | base64 -d > subjects.txt
           echo "Subjects:"
           cat subjects.txt
@@ -501,7 +432,7 @@ jobs:
       - name: Attach attestation bundle to release
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          TARGET_TAG: ${{ inputs.target_tag || github.ref_name }}
+          TARGET_TAG: ${{ github.ref_name }}
         shell: bash
         run: |
           set -euo pipefail
@@ -512,7 +443,7 @@ jobs:
 
   publish-release:
     name: Publish verified release
-    if: ${{ github.event_name == 'push' && !inputs.dry_run && !inputs.provenance_only }}
+    if: ${{ github.event_name == 'push' && !inputs.dry_run }}
     needs: [goreleaser, provenance]
     runs-on: ubuntu-latest
     permissions:
