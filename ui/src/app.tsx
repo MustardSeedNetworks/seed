@@ -53,7 +53,13 @@ function App(): JSX.Element {
   // god component.
   const orchestration = useAppOrchestration({ isAuthenticated });
 
-  const authError = sessionExpired ? 'Session expired. Please log in again.' : error;
+  // The current attempt's own error wins over the session-expired banner.
+  // Clearing the flag at the start of the attempt (below) is not enough: a
+  // background 401 — the refresh the login page keeps retrying — sets it again
+  // while the login request is still in flight, and the banner then masks what
+  // actually happened to the request the user is waiting on. A real expiry
+  // still surfaces, because expireSession() sets `error` as well.
+  const authError = error ?? (sessionExpired ? 'Session expired. Please log in again.' : null);
 
   const handleLogin = useCallback(
     async (username: string, password: string) => {
