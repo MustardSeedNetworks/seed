@@ -1619,19 +1619,49 @@ jobs:
       - name: Set up Go
         uses: ./.github/actions/setup-go
 
-      - name: Install iperf3
-        uses: MustardSeedNetworks/.github/.github/actions/apt-install@a146506fd53fe5e01fdc01892dd838c10081d183 # v1.9.0
-        timeout-minutes: 10
-        with:
-          packages: iperf3
+      # Built from source, not apt. Ubuntu's package is iperf3 3.16, and the
+      # product refuses anything below 3.17 (minSupportedVersion) -- so the very
+      # first run of this job failed on `ValidateVersion rejected the installed
+      # iperf3 (v3.16)`. Installing a version the product will not use would
+      # test nothing. Same version and checksum as the release workflow builds
+      # and ships, so this job exercises what users actually get.
+      - name: Build iperf3
+        shell: bash
+        env:
+          IPERF3_VERSION: "3.21"
+          # SHA-256 of the upstream release tarball; rotate with IPERF3_VERSION.
+          IPERF3_SHA256: "656e4405ebd620121de7ceca3eaf43a88f79ea1b857d041a6a0b1314801acdd8"
+        run: |
+          set -euo pipefail
+          build_dir=$(mktemp -d)
+          trap 'rm -rf "$build_dir"' EXIT
+          curl -sSfL -o "$build_dir/iperf3.tar.gz" \
+            "https://github.com/esnet/iperf/releases/download/${IPERF3_VERSION}/iperf-${IPERF3_VERSION}.tar.gz"
+          echo "${IPERF3_SHA256}  $build_dir/iperf3.tar.gz" | sha256sum -c -
+          tar -xzf "$build_dir/iperf3.tar.gz" -C "$build_dir"
+          cd "$build_dir/iperf-${IPERF3_VERSION}"
+          ./configure --prefix=/usr/local --disable-shared --enable-static-bin
+          make -j"$(nproc)"
+          sudo make install
+          sudo ldconfig || true
 
       # Fail here, with the version printed, rather than inside a test: a
       # missing or too-old iperf3 is a job-setup problem and should read as one.
-      - name: Verify iperf3 is present
+      - name: Verify iperf3 is present and new enough
         run: |
           set -euo pipefail
-          iperf3 --version
           command -v iperf3
+          iperf3 --version
+          version=$(iperf3 --version | head -1 | grep -oE '[0-9]+\.[0-9]+(\.[0-9]+)?' | head -1)
+          minimum=$(grep -oE 'minSupportedVersion = "[0-9.]+"' internal/diagnostics/iperf/iperf.go \
+            | grep -oE '[0-9.]+')
+          echo "installed=$version product-minimum=$minimum"
+          # sort -V puts the lower version first; if that is not the minimum,
+          # the installed one is older than the product will accept.
+          if [ "$(printf '%s\n%s\n' "$minimum" "$version" | sort -V | head -1)" != "$minimum" ]; then
+            echo "::error::iperf3 $version is below the product minimum $minimum"
+            exit 1
+          fi
 
       - name: Run the iperf3 boundary suite
         env:
