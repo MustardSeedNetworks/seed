@@ -19,7 +19,9 @@ const (
 	dhcpTimeParts  = 3
 )
 
-func linuxLeaseFilePaths() []string {
+// leaseFilePathTemplates returns the lease-file locations searched for an
+// interface, each with a %s where the interface name goes.
+func leaseFilePathTemplates() []string {
 	return []string{
 		"/var/lib/dhcp/dhclient.%s.leases",
 		"/var/lib/dhclient/dhclient-%s.leases",
@@ -88,9 +90,50 @@ func testDHCPPlatform(ctx context.Context, interfaceName string) *TestResult {
 	return result
 }
 
+// hostInterfaceName returns the host's own spelling of the named interface, or
+// an error when the host has no such interface.
+//
+// The point is the source of the returned string: it comes from the kernel's
+// interface list, not from the caller. findAndParseLeaseFile interpolates it
+// into a lease-file path, so a caller-supplied name carrying traversal segments
+// would otherwise steer [os.Stat] and [os.Open] outside the lease directories.
+// Returning the matched entry means the value that reaches the path can only
+// ever be a real interface name.
+func hostInterfaceName(name string) (string, error) {
+	interfaces, err := net.Interfaces()
+	if err != nil {
+		return "", &InterfaceError{Message: "failed to list interfaces: " + err.Error()}
+	}
+
+	for _, iface := range interfaces {
+		if iface.Name == name {
+			return iface.Name, nil
+		}
+	}
+
+	return "", &InterfaceError{Message: "interface not found: " + name}
+}
+
 // findAndParseLeaseFile finds and parses the DHCP lease file for an interface.
-func findAndParseLeaseFile(interfaceName string) (*LeaseInfo, error) {
-	for _, pathTemplate := range linuxLeaseFilePaths() {
+//
+// The name is resolved against the host's interface list first. The API handler
+// checks this too, but the guarantee belongs here: this is the function that
+// builds the path, and a second caller that forgets the check must not turn it
+// into an arbitrary-file read.
+func findAndParseLeaseFile(requestedName string) (*LeaseInfo, error) {
+	return findLeaseFileIn(leaseFilePathTemplates(), requestedName)
+}
+
+// findLeaseFileIn is findAndParseLeaseFile over a given set of path templates.
+// The templates are a parameter so a test can point the search at a temp
+// directory and demonstrate the traversal the name check prevents.
+func findLeaseFileIn(templates []string, requestedName string) (*LeaseInfo, error) {
+	interfaceName, resolveErr := hostInterfaceName(requestedName)
+	if resolveErr != nil {
+		return nil, resolveErr
+	}
+
+	for _, pathTemplate := range templates {
 		path := strings.ReplaceAll(pathTemplate, "%s", interfaceName)
 		if _, err := os.Stat(path); err == nil {
 			return parseLeaseFile(path, interfaceName)
