@@ -114,15 +114,7 @@ test.describe('API Error Scenarios', () => {
   test.describe('Network Timeout', () => {
     test.describe('on login form', () => {
       test.use({ storageState: { cookies: [], origins: [] } });
-      test('should handle API timeout gracefully', async ({ page, browserName }) => {
-        // Chromium only, deliberately and visibly. On WebKit the request IS
-        // cancelled at the deadline -- Playwright reports failed=cancelled at
-        // 15s -- but the fetch promise never settles, so the catch never runs
-        // and no error reaches the operator. That is a real Safari defect,
-        // tracked in seed#2256; asserting something weaker here would pass on
-        // both engines while proving nothing on either.
-        test.skip(browserName === 'webkit', 'seed#2256: WebKit never settles the aborted fetch');
-
+      test('should handle API timeout gracefully', async ({ page }) => {
         await page.goto('/');
 
         // Mock login endpoint that never responds (simulates timeout).

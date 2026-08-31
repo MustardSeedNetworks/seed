@@ -351,19 +351,12 @@ describe('useAuth', () => {
       expect(init.signal).toBeInstanceOf(AbortSignal);
     });
 
-    it('reports a hung server instead of staying disabled forever', async () => {
+    it('re-enables the form when the request fails', async () => {
       mockFetch.mockResolvedValueOnce({ ok: false });
       const { result } = renderHook(() => useAuth());
       await waitFor(() => expect(result.current.isLoading).toBe(false));
 
-      // What a hung server looks like to fetch: the AbortSignal fires and the
-      // promise rejects with a TimeoutError.
-      mockFetch.mockImplementationOnce(() => {
-        const err = new Error('signal timed out');
-        err.name = 'TimeoutError';
-
-        return Promise.reject(err);
-      });
+      mockFetch.mockRejectedValueOnce(new TypeError('Failed to fetch'));
 
       let loginResult = true;
       await act(async () => {
@@ -375,11 +368,16 @@ describe('useAuth', () => {
       // form the operator cannot retry is the defect this guards.
       expect(result.current.isLoading).toBe(false);
       expect(result.current.isAuthenticated).toBe(false);
-      // Not the raw "signal timed out", which means nothing to an operator.
-      expect(result.current.error).toBe(
-        'The server did not respond. Check the connection and try again.',
-      );
+      expect(result.current.error).toBe('Failed to fetch');
     });
+
+    // The deadline copy is NOT asserted here. It used to be, by hand-building
+    // an Error named TimeoutError -- a shape neither engine actually produces
+    // for an aborted fetch (Chromium raises TimeoutError, WebKit AbortError),
+    // so the test agreed with an implementation that was wrong on Safari and
+    // shipped it. Whether a real deadline produces the operator-facing message
+    // is asserted in e2e/error-scenarios.spec.ts against both engines, where
+    // the abort is real.
 
     it('still reports an ordinary failure in its own words', async () => {
       mockFetch.mockResolvedValueOnce({ ok: false });

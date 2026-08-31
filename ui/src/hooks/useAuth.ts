@@ -226,6 +226,13 @@ export function useAuth(): UseAuthReturn {
     setIsLoading(true);
     setError(null);
 
+    // Declared outside the try so the catch can ask the signal whether OUR
+    // deadline fired. The rejection's name is not reliable for this: Chromium
+    // raises TimeoutError, WebKit raises AbortError, and matching on the name
+    // meant Safari users got WebKit's internal "Fetch is aborted" text instead
+    // of the sentence written for them. Nothing else can abort this signal.
+    const deadline = AbortSignal.timeout(LOGIN_TIMEOUT_MS);
+
     try {
       const response = await fetch(`${API_BASE}/api/v1/auth/login`, {
         method: 'POST',
@@ -238,7 +245,7 @@ export function useAuth(): UseAuthReturn {
         // answers leaves this promise pending, so isLoading stays true, the
         // submit button stays disabled and no error is ever shown -- the form
         // is simply stuck, with no way to retry.
-        signal: AbortSignal.timeout(LOGIN_TIMEOUT_MS),
+        signal: deadline,
       });
 
       if (!response.ok) {
@@ -266,9 +273,7 @@ export function useAuth(): UseAuthReturn {
       });
       return true;
     } catch (err) {
-      // AbortSignal.timeout rejects with a TimeoutError, whose own message
-      // ("signal timed out") means nothing to an operator.
-      const timedOut = err instanceof Error && err.name === 'TimeoutError';
+      const timedOut = deadline.aborted;
       const errorMessage = timedOut
         ? 'The server did not respond. Check the connection and try again.'
         : err instanceof Error
