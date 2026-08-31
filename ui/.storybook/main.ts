@@ -14,6 +14,14 @@ const config: StorybookConfig = {
     '@storybook/addon-docs',
     '@storybook/addon-onboarding',
   ],
+  // Serves .storybook/public, which holds msw's generated service worker.
+  //
+  // It lived in ui/public and Vite copies that directory verbatim into
+  // internal/api/ui, so the mock worker was being embedded in the seed binary
+  // and served to operators. CodeQL caught it: the worker has a postMessage
+  // handler with no origin check, which is fine for a test double and not
+  // something to ship. Storybook is the only thing that should ever see it.
+  staticDirs: ['./public'],
   framework: '@storybook/react-vite',
   viteFinal: (viteConfig: UserConfig): UserConfig => {
     // OVERRIDE — don't merge aliases. The main vite.config.ts declares
