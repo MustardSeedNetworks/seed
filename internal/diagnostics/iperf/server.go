@@ -66,12 +66,34 @@ func (m *Manager) StartServer(port int) error {
 	// Monitor the server process
 	go func() {
 		waitErr := cmd.Wait()
+
+		m.mu.RLock()
+		phase := m.monitorPhase
+		m.mu.RUnlock()
+		if phase != nil {
+			phase("waited")
+			defer phase("done")
+		}
+
 		m.mu.Lock()
+		defer m.mu.Unlock()
+
+		// Only report on the server this goroutine was started for.
+		//
+		// StopServer kills the process, which makes Wait return here, and the
+		// operator's next StartServer can publish Running: true before this
+		// goroutine gets the lock. Without this check the stale monitor then
+		// clears the status of the server that replaced it: StopServer answers
+		// "server not running" while an iperf3 process is very much running and
+		// holding the port, and the UI shows stopped for a server that is up.
+		if m.serverCmd != cmd {
+			return
+		}
+
 		m.serverStatus.Running = false
 		if waitErr != nil && ctx.Err() == nil {
 			m.serverStatus.Error = waitErr.Error()
 		}
-		m.mu.Unlock()
 	}()
 
 	return nil

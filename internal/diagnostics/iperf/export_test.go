@@ -145,3 +145,19 @@ const DirectionBidirectional = directionBidirectional
 
 // BytesToMegabits exposes the conversion constant for testing.
 const BytesToMegabits = bytesToMegabits
+
+// SetMonitorPhaseHook installs a callback the server monitor goroutine runs
+// with "waited" after cmd.Wait returns and before it takes the lock, and with
+// "done" once it has finished updating the status.
+//
+// The interleaving this makes reachable — a monitor from the previous server
+// clearing the status of the one that replaced it — cannot be provoked by
+// timing alone. "waited" holds the stale monitor while the next server starts;
+// "done" is what lets the test wait for it to finish rather than racing it to
+// the assertion, which is how the first version of this test passed with the
+// guard removed.
+func (m *Manager) SetMonitorPhaseHook(hook func(phase string)) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	m.monitorPhase = hook
+}

@@ -8,6 +8,7 @@ import (
 	"runtime"
 	"strconv"
 	"strings"
+	"sync"
 	"testing"
 	"time"
 
@@ -268,6 +269,75 @@ func TestStopServer_OnAStoppedManager(t *testing.T) {
 
 	if err := manager.StopServer(); err == nil {
 		t.Fatal("StopServer on a manager that never started returned nil, want an error")
+	}
+}
+
+// TestStartServer_StaleMonitorDoesNotClearStatus pins the invariant the
+// restart loop below can only catch by luck.
+//
+// StopServer kills the process, which is what makes the previous server's
+// monitor goroutine return from cmd.Wait(). That goroutine then takes the lock
+// and reports the process as stopped. If the operator has already restarted,
+// it clears the status of the server that replaced it: StopServer answers
+// "server not running" while an iperf3 process is up and holding the port, and
+// the UI shows stopped for a server that is running.
+//
+// The hook holds the stale monitor at exactly that point so the ordering is
+// decided by the test rather than by the scheduler. Restarting quickly and
+// hoping is not a test: it passes whether or not the guard is there.
+func TestStartServer_StaleMonitorDoesNotClearStatus(t *testing.T) {
+	useFakeIperf3(t)
+	manager := iperf.NewManager()
+	port := freePort(t)
+	t.Cleanup(func() { _ = manager.StopServer() })
+
+	release := make(chan struct{})
+	held := make(chan struct{})
+	finished := make(chan struct{})
+	var heldOnce, doneOnce sync.Once
+	manager.SetMonitorPhaseHook(func(phase string) {
+		switch phase {
+		case "waited":
+			// Only the first monitor is held; later ones run straight through.
+			first := false
+			heldOnce.Do(func() { first = true })
+			if !first {
+				return
+			}
+			close(held)
+			<-release
+		case "done":
+			doneOnce.Do(func() { close(finished) })
+		}
+	})
+
+	if err := manager.StartServer(port); err != nil {
+		t.Fatalf("StartServer(%d): %v", port, err)
+	}
+	if err := manager.StopServer(); err != nil {
+		t.Fatalf("StopServer: %v", err)
+	}
+
+	// The first monitor is now parked between Wait and the lock.
+	<-held
+	waitUntil(t, "the port to be released", func() bool { return !portAccepts(port) })
+
+	if err := manager.StartServer(port); err != nil {
+		t.Fatalf("restart StartServer(%d): %v", port, err)
+	}
+
+	// Let the stale monitor proceed, now that a different server is current,
+	// and wait for it to finish. Asserting straight after close(release)
+	// races the monitor to the check and passes with the guard removed --
+	// which is exactly what the first version of this test did.
+	close(release)
+	<-finished
+
+	if status := manager.GetServerStatus(); !status.Running {
+		t.Fatal("a stale monitor cleared the restarted server's Running status")
+	}
+	if err := manager.StopServer(); err != nil {
+		t.Fatalf("StopServer after restart: %v", err)
 	}
 }
 
