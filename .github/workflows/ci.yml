@@ -32,7 +32,14 @@ on:
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
+  # Never on main. A cancelled run is not a failed one, but release-please is
+  # gated on `workflow_run.conclusion == 'success'`, so a run cancelled by the
+  # next merge makes the release silently not happen — no red check, just a
+  # missing tag. That is exactly how stem's v0.24.47 went missing while its
+  # three siblings released from the same batch.
+  #
+  # Superseded PR runs are still waste and still get cancelled.
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
 
 permissions:
   contents: read
