@@ -5,6 +5,50 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.213.41](https://github.com/MustardSeedNetworks/seed/compare/v0.213.40...v0.213.41) (2026-08-31)
+
+
+### Bug Fixes
+
+* **auth:** give the login request a deadline ([#2248](https://github.com/MustardSeedNetworks/seed/issues/2248)) ([70ea683](https://github.com/MustardSeedNetworks/seed/commit/70ea68356da481d66a81ff9042289c091dd68fa3))
+* **deps:** update dependency @tanstack/react-query to v5.102.6 ([#2225](https://github.com/MustardSeedNetworks/seed/issues/2225)) ([69e3097](https://github.com/MustardSeedNetworks/seed/commit/69e30979334f1c5438f366e0f01a1b2676e2b89c))
+* **deps:** update dependency @tanstack/react-query to v5.102.7 ([#2232](https://github.com/MustardSeedNetworks/seed/issues/2232)) ([c156565](https://github.com/MustardSeedNetworks/seed/commit/c15656501cb8841e2d7cfb4244cf3d817c6f69bb))
+* **deps:** update dependency @tanstack/react-query to v5.102.8 ([#2240](https://github.com/MustardSeedNetworks/seed/issues/2240)) ([c52555c](https://github.com/MustardSeedNetworks/seed/commit/c52555cf942ede56179a1203db23e2f6056774bf))
+* **dhcp:** resolve the interface name before it reaches the lease-file path ([#2231](https://github.com/MustardSeedNetworks/seed/issues/2231)) ([d92d570](https://github.com/MustardSeedNetworks/seed/commit/d92d570a1ae422b1c8fbf691ac9155371761e9ef)), closes [#2230](https://github.com/MustardSeedNetworks/seed/issues/2230)
+* **e2e:** stop pointing the local run at a port nothing listens on ([#2250](https://github.com/MustardSeedNetworks/seed/issues/2250)) ([a4e8c5a](https://github.com/MustardSeedNetworks/seed/commit/a4e8c5acc881cb7dbfedf4d5d2e12b6c4fdf1597))
+* **iperf:** reap the child a failed server start kills, and test the manager ([#2239](https://github.com/MustardSeedNetworks/seed/issues/2239)) ([45de564](https://github.com/MustardSeedNetworks/seed/commit/45de564c33f76269a4c54ab302ae2ce00b99b26d))
+* **iperf:** stop a stale monitor clearing the restarted server's status ([#2259](https://github.com/MustardSeedNetworks/seed/issues/2259)) ([8aa1cd1](https://github.com/MustardSeedNetworks/seed/commit/8aa1cd1129c985ab8a2590424967e1aebe9d0f43))
+
+
+### Tests
+
+* make three unfailable seed tests fail on the behaviour they name ([#2255](https://github.com/MustardSeedNetworks/seed/issues/2255)) ([d2cc826](https://github.com/MustardSeedNetworks/seed/commit/d2cc8263deafb176b1b7691da089e77b7b0e278a))
+* turn off Node's unused webstorage global instead of warning per file ([#2219](https://github.com/MustardSeedNetworks/seed/issues/2219)) ([3112d96](https://github.com/MustardSeedNetworks/seed/commit/3112d9666783df389c22ca6e9d36a3fce3bd0354)), closes [#2218](https://github.com/MustardSeedNetworks/seed/issues/2218)
+
+
+### Continuous Integration
+
+* delete the provenance-backfill release path ([#2235](https://github.com/MustardSeedNetworks/seed/issues/2235)) ([44e6c4c](https://github.com/MustardSeedNetworks/seed/commit/44e6c4c78b32c32fe9c81fa9751b75ef4f51b4bf)), closes [#2234](https://github.com/MustardSeedNetworks/seed/issues/2234)
+* fail the build on open High CodeQL alerts ([#2237](https://github.com/MustardSeedNetworks/seed/issues/2237)) ([c8c6c22](https://github.com/MustardSeedNetworks/seed/commit/c8c6c22ecc551237aa8f52a606df4626b2171d16)), closes [#2236](https://github.com/MustardSeedNetworks/seed/issues/2236)
+* make release builds reproducible ([#2261](https://github.com/MustardSeedNetworks/seed/issues/2261)) ([f2e02b1](https://github.com/MustardSeedNetworks/seed/commit/f2e02b138c4569e26d7ff55d6c4643426832fff0))
+* mock the Storybook provider bootstrap and gate on console noise ([#2257](https://github.com/MustardSeedNetworks/seed/issues/2257)) ([b528978](https://github.com/MustardSeedNetworks/seed/commit/b5289787d7a2341a67141b879a597b044e83ee27))
+* reconcile the changelog against the commits each tag contains ([#2220](https://github.com/MustardSeedNetworks/seed/issues/2220)) ([6b399f0](https://github.com/MustardSeedNetworks/seed/commit/6b399f09dc4bce729a96cfc720f0dee1ecd7ba85)), closes [#2213](https://github.com/MustardSeedNetworks/seed/issues/2213)
+* require a pushed tag for a real release ([#2229](https://github.com/MustardSeedNetworks/seed/issues/2229)) ([c4aa777](https://github.com/MustardSeedNetworks/seed/commit/c4aa777378df443ea3216c6cbd6161b5b9905aea)), closes [#2228](https://github.com/MustardSeedNetworks/seed/issues/2228)
+* stop checkout persisting credentials into the workspace ([#2242](https://github.com/MustardSeedNetworks/seed/issues/2242)) ([9196341](https://github.com/MustardSeedNetworks/seed/commit/9196341f55f4a9d337b2a3212808f7e580cd20e2)), closes [#2241](https://github.com/MustardSeedNetworks/seed/issues/2241)
+
+
+### Miscellaneous
+
+* **deps:** lock file maintenance ([#2221](https://github.com/MustardSeedNetworks/seed/issues/2221)) ([167aa9a](https://github.com/MustardSeedNetworks/seed/commit/167aa9ababbb04b763cc2b32556cf80ec58c0bef))
+* **deps:** lock file maintenance ([#2223](https://github.com/MustardSeedNetworks/seed/issues/2223)) ([d8efacc](https://github.com/MustardSeedNetworks/seed/commit/d8efaccec5ac66020dbe57e38587eb1b6e1362a1))
+* **deps:** update actions/checkout action to v5.1.0 ([#2253](https://github.com/MustardSeedNetworks/seed/issues/2253)) ([e7d38db](https://github.com/MustardSeedNetworks/seed/commit/e7d38db5ae445c15174ced115f429029566dd999))
+* **deps:** update dependency @biomejs/biome to v2.5.11 ([#2251](https://github.com/MustardSeedNetworks/seed/issues/2251)) ([4580213](https://github.com/MustardSeedNetworks/seed/commit/45802137c68b084919cf66f95578e517923e58bb))
+* **deps:** update dependency @biomejs/biome to v2.5.11 ([#2252](https://github.com/MustardSeedNetworks/seed/issues/2252)) ([4165c9f](https://github.com/MustardSeedNetworks/seed/commit/4165c9f83549b619548261fe9fa313ccca3912a8))
+* **deps:** update dependency @types/node to v26.4.0 ([#2226](https://github.com/MustardSeedNetworks/seed/issues/2226)) ([8cc2d8b](https://github.com/MustardSeedNetworks/seed/commit/8cc2d8b7a0adebee1eed9cfb8685d4f0059629b7))
+* **deps:** update dependency js-yaml to v5.4.1 ([#2224](https://github.com/MustardSeedNetworks/seed/issues/2224)) ([2bc73d5](https://github.com/MustardSeedNetworks/seed/commit/2bc73d532d42ed506bcb6260dec5bd3384b706a8))
+* **deps:** update dependency lint-staged to v17.4.1 ([#2233](https://github.com/MustardSeedNetworks/seed/issues/2233)) ([1158935](https://github.com/MustardSeedNetworks/seed/commit/115893566a1a2578c76f020b11dff25b5e3fe625))
+* **npm:** soak package releases for seven days before resolving them ([#2246](https://github.com/MustardSeedNetworks/seed/issues/2246)) ([6232407](https://github.com/MustardSeedNetworks/seed/commit/6232407aee696223cd9cbed295eea670718d958c))
+
 ## [0.213.40](https://github.com/MustardSeedNetworks/seed/compare/v0.213.39...v0.213.40) (2026-08-29)
 
 
