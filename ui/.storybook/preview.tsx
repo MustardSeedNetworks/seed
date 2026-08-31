@@ -15,13 +15,32 @@
 import type { DecoratorFunction, StoryContext } from '@storybook/csf';
 import type { Preview, ReactRenderer } from '@storybook/react-vite';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { setupWorker } from 'msw/browser';
 import { type JSX, type ReactNode, Suspense, useEffect, useState } from 'react';
 import { I18nextProvider } from 'react-i18next';
 import { LicenseProvider } from '../src/contexts/LicenseContext';
 import { ProfileProvider } from '../src/contexts/profileContext';
 import { RoleProvider } from '../src/contexts/RoleContext';
 import i18n from '../src/i18n';
+import { handlers } from './msw/handlers';
 import '../src/index.css';
+
+// msw intercepts the provider bootstrap calls every story makes. Storybook has
+// no daemon behind it, so without this they hit the dev server's HTML fallback
+// and React Query parses `<!doctype` as JSON -- 60 error lines in a passing
+// run, in which a real regression is indistinguishable from the noise (#2203).
+const worker = setupWorker(...handlers);
+const workerReady = worker.start({
+  // Unhandled requests pass through, unannounced. `warn` was tried first and
+  // is worse than the disease: it logs a line per unhandled call, which took
+  // the run from 60 noisy lines to 397. Endpoints beyond the provider
+  // bootstrap still reach the dev server's HTML fallback exactly as they did
+  // before this change; silencing those needs their own handlers, and the
+  // console-error gate cannot land until it does (#2203).
+  onUnhandledRequest: 'bypass',
+  quiet: true,
+  serviceWorker: { url: './mockServiceWorker.js' },
+});
 
 /**
  * Theme wrapper that applies dark/light class to document.
@@ -86,6 +105,9 @@ function StoryProviders({ children, profile }: { children: ReactNode; profile: b
 }
 
 const preview: Preview = {
+  // Awaited before any story renders, so the first story is mocked like every
+  // other one rather than racing the worker's registration.
+  loaders: [async (): Promise<void> => void (await workerReady)],
   parameters: {
     controls: {
       matchers: {

@@ -1,0 +1,226 @@
+{
+  "cardSettings": {
+    "link": {
+      "enabled": true,
+      "autoRunOnLink": true
+    },
+    "switch": {
+      "enabled": true,
+      "autoRunOnLink": true
+    },
+    "vlan": {
+      "enabled": true,
+      "autoRunOnLink": true
+    },
+    "network": {
+      "enabled": true,
+      "autoRunOnLink": true
+    },
+    "gateway": {
+      "enabled": true,
+      "autoRunOnLink": true
+    },
+    "dns": {
+      "enabled": true,
+      "autoRunOnLink": true
+    },
+    "healthChecks": {
+      "enabled": true,
+      "autoRunOnLink": true
+    },
+    "networkDiscovery": {
+      "enabled": true,
+      "autoRunOnLink": true
+    },
+    "performance": {
+      "enabled": true,
+      "autoRunOnLink": true,
+      "speedtest": {
+        "enabled": true,
+        "autoRunOnLink": true
+      },
+      "iperf": {
+        "enabled": true,
+        "autoRunOnLink": false
+      }
+    }
+  },
+  "displayOptions": {
+    "showPublicIP": true,
+    "unitSystem": "sae"
+  },
+  "thresholds": {
+    "dns": {
+      "good": 50,
+      "warning": 200
+    },
+    "gateway": {
+      "good": 10,
+      "warning": 50
+    },
+    "wifi": {
+      "good": -70,
+      "warning": -80
+    },
+    "customPing": {
+      "good": 10,
+      "warning": 100
+    },
+    "customTcp": {
+      "good": 100,
+      "warning": 500
+    },
+    "customHttp": {
+      "good": 500,
+      "warning": 2000
+    },
+    "httpTimings": {
+      "dns": {
+        "good": 50,
+        "warning": 500
+      },
+      "tcp": {
+        "good": 100,
+        "warning": 500
+      },
+      "tls": {
+        "good": 150,
+        "warning": 500
+      },
+      "ttfb": {
+        "good": 500,
+        "warning": 2000
+      }
+    }
+  },
+  "iperf": {
+    "server": "",
+    "port": 5201,
+    "protocol": "tcp",
+    "direction": "download",
+    "duration": 10,
+    "serverPort": 5201,
+    "enableServer": true,
+    "autoRunOnLink": false
+  },
+  "tests": {
+    "dnsHostname": "google.com",
+    "pingTargets": [
+      {
+        "id": "ping-default-2026-0",
+        "name": "Google DNS",
+        "host": "8.8.8.8",
+        "enabled": true,
+        "count": 3
+      },
+      {
+        "id": "ping-default-2026-1",
+        "name": "Cloudflare",
+        "host": "1.1.1.1",
+        "enabled": true,
+        "count": 3
+      }
+    ],
+    "httpEndpoints": [
+      {
+        "id": "http-default-2026-0",
+        "name": "Google HTTPS",
+        "url": "https://www.google.com",
+        "expectedStatus": 200,
+        "enabled": true
+      },
+      {
+        "id": "http-default-2026-1",
+        "name": "Cloudflare",
+        "url": "https://www.cloudflare.com",
+        "expectedStatus": 200,
+        "enabled": true
+      },
+      {
+        "id": "http-default-2026-2",
+        "name": "Example HTTP",
+        "url": "http://example.com",
+        "expectedStatus": 200,
+        "enabled": true
+      }
+    ],
+    "runPerformance": true,
+    "runSpeedtest": true,
+    "runIperf": true,
+    "runDiscovery": true,
+    "speedtest": {
+      "serverId": "",
+      "autoRunOnLink": true
+    }
+  },
+  "networkDiscovery": {
+    "enabled": true,
+    "arpScanWorkers": 50,
+    "pingTimeoutMs": 500,
+    "scanTimeoutMs": 30000,
+    "autoScan": true,
+    "scanIntervalMs": 0,
+    "ipv6Enabled": true,
+    "options": {
+      "passiveProtocols": {
+        "lldp": true,
+        "cdp": true,
+        "edp": true,
+        "ndp": true
+      },
+      "arpScan": true,
+      "icmpScan": true,
+      "portScan": {
+        "enabled": false,
+        "preset": "common",
+        "tcpPorts": "",
+        "udpPorts": "",
+        "bannerTimeoutMs": 2000
+      },
+      "tcpProbe": {
+        "timeoutMs": 2000,
+        "workers": 20
+      },
+      "traceroute": false,
+      "snmpQuery": false
+    },
+    "timing": {
+      "probeIntervalMs": 75,
+      "rescanIntervalMs": 600000,
+      "workers": 50
+    },
+    "profiler": {
+      "enabled": true,
+      "timeoutMs": 2000,
+      "maxConcurrent": 5,
+      "quickPorts": [22, 80, 443, 8080]
+    },
+    "fingerprinting": {
+      "enabled": false,
+      "osDetection": false,
+      "serviceProbes": false
+    }
+  },
+  "snmp": {
+    "communities": ["public"],
+    "timeoutMs": 5000,
+    "retries": 2,
+    "port": 161
+  },
+  "link": {
+    "mode": "auto",
+    "availableModes": []
+  },
+  "cableTest": {
+    "enabled": true
+  },
+  "vulnerability": {
+    "enabled": true,
+    "cveDatabase": "nvd",
+    "nvdApiKey": "",
+    "updateInterval": 86400,
+    "severityThreshold": "medium",
+    "maxConcurrent": 5,
+    "autoScan": true
+  }
+}

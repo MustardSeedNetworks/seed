@@ -24,9 +24,10 @@
     "test:e2e": "NO_COLOR= node --disable-warning=DEP0205 ./node_modules/playwright/cli.js test --reporter=list",
     "storybook": "storybook dev -p 6006",
     "build-storybook": "storybook build",
-    "test:storybook": "npm run build-storybook && npm run test:storybook:run",
+    "test:storybook": "npm run build-storybook && npm run test:storybook:gated",
     "test:storybook:run": "node --disable-warning=DEP0205 ./node_modules/vitest/vitest.mjs run --config vitest.storybook.config.ts --project=storybook",
-    "test:storybook:contract": "../scripts/test-storybook-contract.sh"
+    "test:storybook:contract": "../scripts/test-storybook-contract.sh",
+    "test:storybook:gated": "set -o pipefail; npm run test:storybook:run 2>&1 | tee /tmp/storybook-run.log && ../scripts/check-storybook-console.sh /tmp/storybook-run.log"
   },
   "dependencies": {
     "@fontsource-variable/inter": "5.3.0",
@@ -79,6 +80,7 @@
     "jscodeshift": "17.4.0",
     "jsdom": "30.0.1",
     "json-schema-to-typescript": "15.0.4",
+    "msw": "2.15.0",
     "playwright": "1.62.1",
     "postcss": "8.5.26",
     "rollup-plugin-visualizer": "7.1.1",
@@ -94,5 +96,10 @@
     "js-yaml": "5.4.1",
     "nanoid": "6.0.1"
   },
-  "packageManager": "npm@12.0.2"
+  "packageManager": "npm@12.0.2",
+  "msw": {
+    "workerDirectory": [
+      "public"
+    ]
+  }
 }
