@@ -291,6 +291,17 @@ type Manager struct {
 	lastResult   *Result
 	serverCmd    *exec.Cmd
 	serverCancel context.CancelFunc
+
+	// monitorPhase, when set, is called by the server monitor goroutine with
+	// "waited" after cmd.Wait returns and before it takes the lock, and with
+	// "done" once it has finished updating the status. nil in production.
+	//
+	// It exists because the interleaving this guards against -- a stale
+	// monitor clearing the status of the server that replaced it -- is a race
+	// no test can provoke by timing alone. "waited" lets a test hold the stale
+	// monitor while the next server starts; "done" lets it wait for that
+	// monitor to finish before asserting, instead of racing it to the check.
+	monitorPhase func(phase string)
 }
 
 // NewManager creates a new iperf3 manager.
