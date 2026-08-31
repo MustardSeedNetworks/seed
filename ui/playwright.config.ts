@@ -17,6 +17,26 @@ import { AUTH_STORAGE_STATE } from './e2e/helpers/auth';
  * Browsers: Chromium, Firefox, WebKit (Safari), Edge
  * Viewports: Desktop, Tablet, Mobile
  */
+/**
+ * The suite needs a running seed daemon, not a bare dev server, so there is no
+ * sensible default to fall back to. Failing here with the command to run beats
+ * pointing every spec at a port nothing is listening on and reporting a wall
+ * of "element(s) not found".
+ */
+function requireBaseURL(): string {
+  const fromEnv = process.env.E2E_BASE_URL;
+  if (fromEnv) {
+    return fromEnv;
+  }
+  throw new Error(
+    'E2E_BASE_URL is not set. Run the suite through ./scripts/run-e2e.sh, which ' +
+      'builds seed, starts it on a free port and exports E2E_BASE_URL:\n\n' +
+      '  ./scripts/run-e2e.sh --project=chromium\n\n' +
+      'To use a daemon you already have running, set it yourself:\n\n' +
+      '  E2E_BASE_URL=https://127.0.0.1:8443 npx playwright test\n',
+  );
+}
+
 export default defineConfig({
   testDir: './e2e',
   fullyParallel: true,
@@ -45,7 +65,7 @@ export default defineConfig({
     ['json', { outputFile: 'playwright-report/results.json' }],
   ],
   use: {
-    baseURL: process.env.E2E_BASE_URL || 'http://localhost:5173',
+    baseURL: requireBaseURL(),
     trace: 'on-first-retry',
     screenshot: 'only-on-failure',
     video: 'on-first-retry',
@@ -75,13 +95,14 @@ export default defineConfig({
       use: { ...devices['Desktop Safari'] },
     },
   ],
-  // Run local dev server before tests if not in CI
-  webServer: process.env.CI || process.env.E2E_BASE_URL
-    ? undefined
-    : {
-        command: 'npm run dev',
-        url: 'http://localhost:5173',
-        reuseExistingServer: !process.env.CI,
-        timeout: 120000,
-      },
+  // No webServer. There used to be one starting `npm run dev` and waiting on
+  // http://localhost:5173 — a URL nothing ever listened on, since vite.config
+  // pins the dev server to port 3000. It could only ever time out after two
+  // minutes, and it would not have worked at the right port either: the dev
+  // server proxies nothing to the backend, while global-setup calls
+  // /api/v1/setup/status against a real seed daemon.
+  //
+  // scripts/run-e2e.sh is the entry point. It builds the frontend and backend,
+  // starts seed on a free port, waits for /__version, and exports
+  // E2E_BASE_URL — which is why CI never hit any of this.
 });
