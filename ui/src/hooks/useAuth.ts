@@ -215,6 +215,12 @@ export function useAuth(): UseAuthReturn {
         setConnected(false);
       })
       .finally(() => {
+        // A login that started after this probe owns the loading flag too, not
+        // just the auth state above: clearing it here re-enables the submit
+        // button and stops the spinner while the login is still in flight.
+        if (loginSupersededProbeRef.current) {
+          return;
+        }
         setIsLoading(false);
       });
   }, []);
