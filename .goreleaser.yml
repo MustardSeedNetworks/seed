@@ -46,6 +46,7 @@ before:
 builds:
   - id: seed-linux
     main: ./cmd/seed
+    mod_timestamp: "{{ .CommitTimestamp }}"
     binary: seed
     env:
       - CGO_ENABLED=1
@@ -58,7 +59,7 @@ builds:
       - -s -w
       - -X github.com/MustardSeedNetworks/seed/internal/version.Version={{.Version}}
       - -X github.com/MustardSeedNetworks/seed/internal/version.Commit={{.Commit}}
-      - -X github.com/MustardSeedNetworks/seed/internal/version.BuildTime={{.Date}}
+      - -X github.com/MustardSeedNetworks/seed/internal/version.BuildTime={{.CommitDate}}
       - -X github.com/MustardSeedNetworks/seed/internal/version.UIBuildHash={{.Env.UI_BUILD_HASH}}
     # Per-target cross-compile settings. goreleaser-cross has all of
     # these toolchains preinstalled; without them, building linux/arm64
@@ -72,6 +73,7 @@ builds:
 
   - id: seed-darwin
     main: ./cmd/seed
+    mod_timestamp: "{{ .CommitTimestamp }}"
     binary: seed
     env:
       - CGO_ENABLED=1
@@ -93,6 +95,7 @@ builds:
 
   - id: seed-windows
     main: ./cmd/seed
+    mod_timestamp: "{{ .CommitTimestamp }}"
     binary: seed
     # Windows: CGO disabled (gopacket/pcap fork handles arm64 build without
     # native libpcap-windows toolchain). Matches release.yml.
