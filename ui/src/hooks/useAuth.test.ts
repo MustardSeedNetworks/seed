@@ -186,6 +186,52 @@ describe('useAuth', () => {
     expect(result.current.isAuthenticated).toBe(true);
   });
 
+  it('a mount /status probe resolving mid-login does not re-enable the form (seed#2256)', async () => {
+    // The probe's own `finally` clears isLoading unconditionally. When a login
+    // started first, that clears the LOGIN's loading flag: the submit button
+    // re-enables and the spinner stops while the request is still in flight.
+    // loginSupersededProbeRef already guards the probe's state updates; the
+    // finally was left outside it.
+    let resolveProbe!: (value: { ok: boolean; status: number }) => void;
+    const pendingProbe = new Promise<{ ok: boolean; status: number }>((res) => {
+      resolveProbe = res;
+    });
+    mockFetch.mockReturnValueOnce(pendingProbe); // mount /status — stays in flight
+
+    const { result } = renderHook(() => useAuth());
+
+    // Start a login that stays in flight for the rest of the test.
+    let resolveLogin!: (value: unknown) => void;
+    mockFetch.mockReturnValueOnce(
+      new Promise((res) => {
+        resolveLogin = res;
+      }),
+    );
+    let loginCall!: Promise<boolean>;
+    act(() => {
+      loginCall = result.current.login('admin', 'password');
+    });
+    expect(result.current.isLoading).toBe(true);
+
+    // The stale mount probe now resolves. It must not clear the login's flag.
+    await act(async () => {
+      resolveProbe({ ok: false, status: 401 });
+      await pendingProbe;
+    });
+    expect(result.current.isLoading).toBe(true);
+
+    // Let the login finish, so the flag is cleared by its owner and the hook
+    // is not left mid-flight.
+    await act(async () => {
+      resolveLogin({
+        ok: true,
+        json: () => Promise.resolve({ token: 'access-token', expires: 3600 }),
+      });
+      await loginCall;
+    });
+    expect(result.current.isLoading).toBe(false);
+  });
+
   it('login sets error on failure', async () => {
     mockFetch.mockResolvedValueOnce({ ok: false }); // Initial status check
 
