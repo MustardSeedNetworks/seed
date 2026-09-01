@@ -432,7 +432,7 @@ type SubnetResponse struct {
 	Enabled bool   `json:"enabled"`
 }
 
-// handleDevicesSubnets handles GET/POST/DELETE for additional subnets (fixes #702 - uses r.Context()).
+// handleDevicesSubnets handles GET/POST/DELETE for target networks (fixes #702 - uses r.Context()).
 func (s *Server) handleDevicesSubnets(w http.ResponseWriter, r *http.Request) {
 	logger := logging.FromContext(r.Context())
 	switch r.Method {
@@ -456,7 +456,7 @@ func (s *Server) handleDevicesSubnets(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-// getDevicesSubnets lists the configured additional subnets. Thin transport.
+// getDevicesSubnets lists the configured target networks. Thin transport.
 func (s *Server) getDevicesSubnets(w http.ResponseWriter, r *http.Request) {
 	logger := logging.FromContext(r.Context())
 	cfgSubnets := s.discoverySettings.Subnets()

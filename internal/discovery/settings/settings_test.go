@@ -25,7 +25,7 @@ func (f *fakeStore) SaveDiscovery(c config.NetworkDiscoveryConfig) error {
 // fakeSink records the last subnet set pushed to the scanner.
 type fakeSink struct{ last []string }
 
-func (f *fakeSink) SetAdditionalSubnets(cidrs []string) error { f.last = cidrs; return nil }
+func (f *fakeSink) SetTargetNetworks(cidrs []string) error { f.last = cidrs; return nil }
 
 // fakeApplier records reload calls and can be made to fail.
 type fakeApplier struct {
@@ -122,8 +122,8 @@ func TestAddSubnet(t *testing.T) {
 	if err := svc.AddSubnet(config.SubnetConfig{CIDR: "10.0.0.0/24", Name: "lan", Enabled: true}); err != nil {
 		t.Fatalf("AddSubnet: %v", err)
 	}
-	if len(st.cfg.AdditionalSubnets) != 1 {
-		t.Fatalf("want 1 subnet, got %d", len(st.cfg.AdditionalSubnets))
+	if len(st.cfg.TargetNetworks) != 1 {
+		t.Fatalf("want 1 subnet, got %d", len(st.cfg.TargetNetworks))
 	}
 	if len(sk.last) != 1 || sk.last[0] != "10.0.0.0/24" {
 		t.Errorf("enabled subnet not synced to scanner: %v", sk.last)
@@ -141,14 +141,14 @@ func TestAddSubnet(t *testing.T) {
 
 func TestUpdateAndDeleteSubnet(t *testing.T) {
 	svc, st, sk := newService(config.NetworkDiscoveryConfig{
-		AdditionalSubnets: []config.SubnetConfig{{CIDR: "192.168.1.0/24", Name: "old", Enabled: true}},
+		TargetNetworks: []config.SubnetConfig{{CIDR: "192.168.1.0/24", Name: "old", Enabled: true}},
 	})
 
 	if err := svc.UpdateSubnet(config.SubnetConfig{CIDR: "192.168.1.0/24", Name: "new", Enabled: false}); err != nil {
 		t.Fatalf("UpdateSubnet: %v", err)
 	}
-	if st.cfg.AdditionalSubnets[0].Name != "new" || st.cfg.AdditionalSubnets[0].Enabled {
-		t.Errorf("subnet not updated: %+v", st.cfg.AdditionalSubnets[0])
+	if st.cfg.TargetNetworks[0].Name != "new" || st.cfg.TargetNetworks[0].Enabled {
+		t.Errorf("subnet not updated: %+v", st.cfg.TargetNetworks[0])
 	}
 	// Disabled subnet is excluded from the scanner sync.
 	if len(sk.last) != 0 {
@@ -162,8 +162,8 @@ func TestUpdateAndDeleteSubnet(t *testing.T) {
 	if err := svc.DeleteSubnet("192.168.1.0/24"); err != nil {
 		t.Fatalf("DeleteSubnet: %v", err)
 	}
-	if len(st.cfg.AdditionalSubnets) != 0 {
-		t.Errorf("subnet not deleted: %+v", st.cfg.AdditionalSubnets)
+	if len(st.cfg.TargetNetworks) != 0 {
+		t.Errorf("subnet not deleted: %+v", st.cfg.TargetNetworks)
 	}
 	if err := svc.DeleteSubnet("192.168.1.0/24"); !errors.Is(err, settings.ErrSubnetNotFound) {
 		t.Errorf("delete missing: want ErrSubnetNotFound, got %v", err)

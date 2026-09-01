@@ -19,8 +19,8 @@ func (s *ARPScanner) Scan(ctx context.Context) error {
 		return errors.New("scan already in progress")
 	}
 	s.scanning = true
-	s.pingResponders = nil                   // Clear previous ping responders
-	additionalSubnets := s.additionalSubnets // Copy while holding lock
+	s.pingResponders = nil             // Clear previous ping responders
+	targetNetworks := s.targetNetworks // Copy while holding lock
 	s.mu.Unlock()
 
 	defer func() {
@@ -54,19 +54,19 @@ func (s *ARPScanner) Scan(ctx context.Context) error {
 			"error", result.LastError)
 	}
 
-	// Perform ping sweep on additional subnets with retry logic
-	for _, additionalSubnet := range additionalSubnets {
+	// Perform ping sweep on target networks with retry logic
+	for _, additionalSubnet := range targetNetworks {
 		select {
 		case <-ctx.Done():
 			return fmt.Errorf("ping sweep cancelled: %w", ctx.Err())
 		default:
-			// Retry logic for additional subnets - continue even if some fail
+			// Retry logic for target networks - continue even if some fail
 			subnetCopy := additionalSubnet // Capture for closure
 			subnetResult := discovery.RetryWithBackoff(ctx, discovery.NetworkRetryConfig(), func() error {
 				return s.pingSweep(ctx, subnetCopy)
 			})
 			if !subnetResult.Successful {
-				logging.GetLogger().WarnContext(ctx, "Ping sweep failed for additional subnet after retries",
+				logging.GetLogger().WarnContext(ctx, "Ping sweep failed for target network after retries",
 					"subnet", additionalSubnet,
 					"attempts", subnetResult.Attempts,
 					"duration", subnetResult.TotalTime,
@@ -82,7 +82,7 @@ func (s *ARPScanner) Scan(ctx context.Context) error {
 	}
 
 	// Mark ARP entries based on whether they're in the primary subnet
-	// Note: ARP can capture entries from additional subnets if they're routed through us
+	// Note: ARP can capture entries from target networks if they're routed through us
 	for _, entry := range entries {
 		entry.IsLocal = s.isInLocalSubnet(entry.IP)
 	}

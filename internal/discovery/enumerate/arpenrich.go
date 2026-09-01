@@ -14,7 +14,7 @@ func (s *ARPScanner) readARPTable() ([]*ARPEntry, error) {
 	return s.readARPTablePlatform()
 }
 
-// isInSubnet checks if an IP is in the current subnet or any additional subnets.
+// isInSubnet checks if an IP is in the current subnet or any target networks.
 func (s *ARPScanner) isInSubnet(ipStr string) bool {
 	ip := net.ParseIP(ipStr)
 	if ip == nil {
@@ -26,18 +26,18 @@ func (s *ARPScanner) isInSubnet(ipStr string) bool {
 		return true
 	}
 
-	// Check additional subnets
-	for _, subnet := range s.additionalSubnets {
+	// Check target networks
+	for _, subnet := range s.targetNetworks {
 		if subnet.Contains(ip) {
 			return true
 		}
 	}
 
 	// If no subnets configured, accept all (fallback)
-	return s.subnet == nil && len(s.additionalSubnets) == 0
+	return s.subnet == nil && len(s.targetNetworks) == 0
 }
 
-// isInLocalSubnet checks if an IP is in the PRIMARY subnet only (not additional subnets).
+// isInLocalSubnet checks if an IP is in the PRIMARY subnet only (not target networks).
 // This is used to determine if a device should be shown in "Local Network" vs "Extended Networks".
 func (s *ARPScanner) isInLocalSubnet(ipStr string) bool {
 	ip := net.ParseIP(ipStr)
@@ -45,7 +45,7 @@ func (s *ARPScanner) isInLocalSubnet(ipStr string) bool {
 		return false
 	}
 
-	// Only check primary subnet - additional subnets are "extended" networks
+	// Only check primary subnet - target networks are "extended" networks
 	return s.subnet != nil && s.subnet.Contains(ip)
 }
 

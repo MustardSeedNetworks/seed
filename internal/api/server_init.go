@@ -1,7 +1,7 @@
 package api
 
 // server_init.go contains the per-subsystem initialisation helpers that
-// NewServer composes: DNS/discovery, additional subnets, database +
+// NewServer composes: DNS/discovery, target networks, database +
 // migration, MIB DB, SSE + log broadcaster, discovery pipeline, vulnerability
 // scanner, and CORS origin policy.
 
@@ -39,13 +39,13 @@ func (s *Server) initNetworkServices(cfg *config.Config) {
 		s.dnsTester().SetConfiguredServers(configuredServers)
 	}
 
-	// Initialize device discovery with configured additional subnets
-	s.initAdditionalSubnets(cfg)
+	// Initialize device discovery with configured target networks
+	s.initTargetNetworks(cfg)
 }
 
-// initAdditionalSubnets configures device discovery with additional subnets from config.
-func (s *Server) initAdditionalSubnets(cfg *config.Config) {
-	if len(cfg.NetworkDiscovery.AdditionalSubnets) == 0 {
+// initTargetNetworks configures device discovery with target networks from config.
+func (s *Server) initTargetNetworks(cfg *config.Config) {
+	if len(cfg.NetworkDiscovery.TargetNetworks) == 0 {
 		return
 	}
 
@@ -54,18 +54,18 @@ func (s *Server) initAdditionalSubnets(cfg *config.Config) {
 		return
 	}
 
-	if err := s.deviceDiscovery().SetAdditionalSubnets(enabledCIDRs); err != nil {
-		logging.GetLogger().Warn("Failed to set additional subnets", "error", err)
+	if err := s.deviceDiscovery().SetTargetNetworks(enabledCIDRs); err != nil {
+		logging.GetLogger().Warn("Failed to set target networks", "error", err)
 		return
 	}
 
-	logging.GetLogger().Info("Configured additional subnets for scanning", "count", len(enabledCIDRs))
+	logging.GetLogger().Info("Configured target networks for scanning", "count", len(enabledCIDRs))
 }
 
 // collectEnabledSubnets extracts enabled subnet CIDRs from configuration.
 func (s *Server) collectEnabledSubnets(cfg *config.Config) []string {
-	enabledCIDRs := make([]string, 0, len(cfg.NetworkDiscovery.AdditionalSubnets))
-	for _, subnet := range cfg.NetworkDiscovery.AdditionalSubnets {
+	enabledCIDRs := make([]string, 0, len(cfg.NetworkDiscovery.TargetNetworks))
+	for _, subnet := range cfg.NetworkDiscovery.TargetNetworks {
 		if subnet.Enabled {
 			enabledCIDRs = append(enabledCIDRs, subnet.CIDR)
 		}

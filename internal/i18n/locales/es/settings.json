@@ -104,7 +104,7 @@
     "profileStandard": "Estándar",
     "profileStandardDesc": "Pasivo + escaneo ARP/ICMP en subred local",
     "profileFullScan": "Escaneo completo",
-    "profileFullScanDesc": "Todos los métodos incluyendo escaneo de puertos y subredes adicionales",
+    "profileFullScanDesc": "Todos los métodos incluyendo escaneo de puertos y redes objetivo",
     "profileCustom": "Personalizado",
     "profileCustomDesc": "Control detallado sobre métodos de descubrimiento individuales",
     "customOptions": "Opciones de descubrimiento personalizado",
@@ -142,10 +142,10 @@
     "targetNetworksDesc": "Agregar subredes más allá de la interfaz local para escanear dispositivos (ej., VLANs de servidor, redes remotas).",
     "cidrPlaceholder": "CIDR (ej., 10.0.0.0/24)",
     "namePlaceholder": "Nombre (opcional, ej., VLAN de servidor)",
-    "addSubnet": "+ Agregar subred",
-    "enableSubnet": "Habilitar subred",
-    "disableSubnet": "Deshabilitar subred",
-    "removeSubnet": "Eliminar subred",
+    "addNetwork": "+ Agregar red",
+    "enableNetwork": "Habilitar red",
+    "disableNetwork": "Deshabilitar red",
+    "removeNetwork": "Eliminar red",
     "serviceStatus": {
       "scanning": "Escaneando...",
       "running": "Ejecutando",
@@ -165,8 +165,8 @@
     "probeInterval": "Intervalo de sondeo",
     "slower": "Más lento",
     "workers": "Cantidad de trabajadores",
-    "enableSubnetNamed": "Habilitar subred {{cidr}}",
-    "disableSubnetNamed": "Deshabilitar subred {{cidr}}"
+    "enableNetworkNamed": "Habilitar red {{cidr}}",
+    "disableNetworkNamed": "Deshabilitar red {{cidr}}"
   },
   "performance": {
     "title": "Rendimiento",

@@ -324,7 +324,7 @@
       "required": [
         "options",
         "timing",
-        "additional_subnets",
+        "target_networks",
         "enabled",
         "arp_scan_workers",
         "ping_timeout",
@@ -343,9 +343,9 @@
         "timing": {
           "$ref": "#/$defs/DiscoveryTiming"
         },
-        "additional_subnets": {
+        "target_networks": {
           "type": "array",
-          "description": "Additional subnets to scan in full_scan or custom mode",
+          "description": "Target networks to scan in full_scan or custom mode",
           "items": {
             "$ref": "#/$defs/SubnetConfig"
           },

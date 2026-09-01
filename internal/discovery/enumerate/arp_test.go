@@ -49,41 +49,41 @@ func TestARPScanner_SetInterface(t *testing.T) {
 	}
 }
 
-func TestARPScanner_SetAdditionalSubnets(t *testing.T) {
+func TestARPScanner_SetTargetNetworks(t *testing.T) {
 	oui := resolve.NewOUIDatabase()
 	scanner := enumerate.NewARPScanner("lo", oui)
 
 	// Valid CIDRs
-	err := scanner.SetAdditionalSubnets([]string{"192.168.1.0/24", "10.0.0.0/8"})
+	err := scanner.SetTargetNetworks([]string{"192.168.1.0/24", "10.0.0.0/8"})
 	if err != nil {
-		t.Fatalf("SetAdditionalSubnets failed: %v", err)
+		t.Fatalf("SetTargetNetworks failed: %v", err)
 	}
 
-	subnets := scanner.GetAdditionalSubnets()
+	subnets := scanner.GetTargetNetworks()
 	if len(subnets) != 2 {
 		t.Errorf("Expected 2 subnets, got %d", len(subnets))
 	}
 
 	// Invalid CIDR
-	err = scanner.SetAdditionalSubnets([]string{"invalid"})
+	err = scanner.SetTargetNetworks([]string{"invalid"})
 	if err == nil {
 		t.Error("Expected error for invalid CIDR")
 	}
 }
 
-func TestARPScanner_GetAdditionalSubnets(t *testing.T) {
+func TestARPScanner_GetTargetNetworks(t *testing.T) {
 	oui := resolve.NewOUIDatabase()
 	scanner := enumerate.NewARPScanner("lo", oui)
 
 	// Empty initially
-	subnets := scanner.GetAdditionalSubnets()
+	subnets := scanner.GetTargetNetworks()
 	if len(subnets) != 0 {
 		t.Errorf("Expected 0 subnets initially, got %d", len(subnets))
 	}
 
 	// After setting
-	_ = scanner.SetAdditionalSubnets([]string{"172.16.0.0/16"})
-	subnets = scanner.GetAdditionalSubnets()
+	_ = scanner.SetTargetNetworks([]string{"172.16.0.0/16"})
+	subnets = scanner.GetTargetNetworks()
 	if len(subnets) != 1 {
 		t.Errorf("Expected 1 subnet, got %d", len(subnets))
 	}

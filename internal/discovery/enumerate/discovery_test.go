@@ -322,17 +322,17 @@ func TestGetSubnetInfo(t *testing.T) {
 	t.Logf("Subnet: %s, LocalIP: %s", subnet, localIP)
 }
 
-func TestSetAdditionalSubnets(t *testing.T) {
+func TestSetTargetNetworks(t *testing.T) {
 	dd := enumerate.NewDeviceDiscovery("lo")
 
-	// Test setting additional subnets
-	err := dd.SetAdditionalSubnets([]string{"192.168.1.0/24"})
+	// Test setting target networks
+	err := dd.SetTargetNetworks([]string{"192.168.1.0/24"})
 	if err != nil {
-		t.Errorf("SetAdditionalSubnets returned error: %v", err)
+		t.Errorf("SetTargetNetworks returned error: %v", err)
 	}
 
-	// Test getting additional subnets
-	subnets := dd.GetAdditionalSubnets()
+	// Test getting target networks
+	subnets := dd.GetTargetNetworks()
 	if len(subnets) != 1 {
 		t.Errorf("Expected 1 subnet, got %d", len(subnets))
 	}

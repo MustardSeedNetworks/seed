@@ -153,8 +153,8 @@ type NetworkDiscoveryConfig struct {
 	// Timing controls the "chattiness" of active scans.
 	Timing DiscoveryTiming `json:"timing"`
 
-	// AdditionalSubnets to scan in full_scan or custom mode.
-	AdditionalSubnets []SubnetConfig `json:"additional_subnets"`
+	// TargetNetworks to scan in full_scan or custom mode.
+	TargetNetworks []SubnetConfig `json:"target_networks"`
 
 	// Legacy fields (kept for backward compatibility, will be deprecated)
 	Enabled        bool          `json:"enabled"`          // Enable network discovery

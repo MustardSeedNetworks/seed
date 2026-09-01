@@ -79,7 +79,7 @@ func (s discoverySettingsStore) Discovery() config.NetworkDiscoveryConfig {
 	nd := s.cfg.NetworkDiscovery
 	// Copy the subnet slice so the service can mutate its working copy without
 	// touching the live config's backing array before SaveDiscovery commits.
-	nd.AdditionalSubnets = append([]config.SubnetConfig(nil), nd.AdditionalSubnets...)
+	nd.TargetNetworks = append([]config.SubnetConfig(nil), nd.TargetNetworks...)
 	return nd
 }
 
@@ -98,12 +98,12 @@ type discoverySubnetSink struct {
 	dd func() *enumerate.DeviceDiscovery
 }
 
-func (a discoverySubnetSink) SetAdditionalSubnets(cidrs []string) error {
+func (a discoverySubnetSink) SetTargetNetworks(cidrs []string) error {
 	d := a.dd()
 	if d == nil {
 		return nil
 	}
-	return d.SetAdditionalSubnets(cidrs)
+	return d.SetTargetNetworks(cidrs)
 }
 
 // discoveryOptionsApplier implements settings.OptionsApplier over the enumeration

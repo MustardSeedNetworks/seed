@@ -29,7 +29,7 @@ all — they are a deliberately distinct, curated UI view:**
     wifi, link, custom_tests}`.
   - `HealthChecksConfig` — hand: 3 fields (`pingTargets, tcpChecks, httpChecks`);
     generated: 18 fields (every endpoint protocol + run-flags).
-  - `DiscoveryConfig` — hand: `{additionalSubnets, scanIntervalSeconds}`;
+  - `DiscoveryConfig` — hand: `{targetNetworks, scanIntervalSeconds}`;
     generated: `{protocol, timeout}` (entirely different fields).
 
 So the UI types are a **simplified, camelCase, UI-shaped** projection — not a

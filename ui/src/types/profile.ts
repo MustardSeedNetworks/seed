@@ -521,7 +521,7 @@ export interface ThresholdsConfig {
  * DiscoveryConfig defines custom discovery settings.
  */
 export interface DiscoveryConfig {
-  additionalSubnets?: string[];
+  targetNetworks?: string[];
   scanIntervalSeconds?: number;
 }
 

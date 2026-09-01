@@ -104,7 +104,7 @@
     "profileStandard": "Standard",
     "profileStandardDesc": "Passive + ARP/ICMP scanning on local subnet",
     "profileFullScan": "Full Scan",
-    "profileFullScanDesc": "All methods including port scanning and additional subnets",
+    "profileFullScanDesc": "All methods including port scanning and target networks",
     "profileCustom": "Custom",
     "profileCustomDesc": "Fine-grained control over individual discovery methods",
     "customOptions": "Custom Discovery Options",
@@ -142,10 +142,10 @@
     "targetNetworksDesc": "Add subnets beyond the local interface to scan for devices (e.g., server VLANs, remote networks).",
     "cidrPlaceholder": "CIDR (e.g., 10.0.0.0/24)",
     "namePlaceholder": "Name (optional, e.g., Server VLAN)",
-    "addSubnet": "+ Add Subnet",
-    "enableSubnet": "Enable subnet",
-    "disableSubnet": "Disable subnet",
-    "removeSubnet": "Remove subnet",
+    "addNetwork": "+ Add Network",
+    "enableNetwork": "Enable network",
+    "disableNetwork": "Disable network",
+    "removeNetwork": "Remove network",
     "serviceStatus": {
       "scanning": "Scanning...",
       "running": "Running",
@@ -165,8 +165,8 @@
     "probeInterval": "Probe interval",
     "slower": "Slower",
     "workers": "Worker count",
-    "enableSubnetNamed": "Enable subnet {{cidr}}",
-    "disableSubnetNamed": "Disable subnet {{cidr}}"
+    "enableNetworkNamed": "Enable network {{cidr}}",
+    "disableNetworkNamed": "Disable network {{cidr}}"
   },
   "performance": {
     "title": "Performance",
