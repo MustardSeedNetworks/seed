@@ -1,8 +1,12 @@
+import { isValidNumber } from '../../lib/format';
 import { status as statusColor } from '../../styles/theme';
 import type { TracerouteHop } from '../../types';
 
 export function formatRtt(ns: number): string {
-  if (ns <= 0) {
+  // `NaN <= 0` is false, so a NaN used to fall through every branch below and
+  // render as "NaNms" (#775). An absent rtt in an API payload arrives as
+  // undefined and reaches here as NaN through the arithmetic.
+  if (!isValidNumber(ns) || ns <= 0) {
     return '---';
   }
   const ms = ns / 1_000_000;

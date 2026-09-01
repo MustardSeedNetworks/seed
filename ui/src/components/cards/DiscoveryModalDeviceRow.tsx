@@ -8,6 +8,7 @@
 import type React from 'react';
 import type { JSX } from 'react';
 import { useTranslation } from 'react-i18next';
+import { isValidNumber } from '../../lib/format';
 import {
   cn,
   discoveryMethod as discoveryMethodTheme,
@@ -30,6 +31,13 @@ export function MethodBadge({ method }: { method: DiscoveryMethod }): JSX.Elemen
 
 // Format SNMP sysUpTime (in hundredths of a second) to human-readable duration
 export function formatUptime(ticks: number): string {
+  // A device that does not report sysUpTime rendered as "NaNm", and an
+  // infinite value as "Infinityd NaNh NaNm" (#775). Neither comparison below
+  // rejects those, so they have to be tested for.
+  if (!isValidNumber(ticks) || ticks < 0) {
+    return '---';
+  }
+
   const seconds = Math.floor(ticks / 100);
   const days = Math.floor(seconds / 86400);
   const hours = Math.floor((seconds % 86400) / 3600);
