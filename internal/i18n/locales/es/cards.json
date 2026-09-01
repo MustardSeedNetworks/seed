@@ -35,6 +35,7 @@
     "address": "Dirección",
     "gateway": "Puerta de enlace",
     "dhcpServer": "Servidor DHCP",
+    "dns": "DNS",
     "lease": "Arrendamiento",
     "dhcpTiming": "Tiempos DHCP",
     "discoverOffer": "Discover → Offer",
