@@ -27,7 +27,6 @@
  */
 
 import '@testing-library/jest-dom';
-import { afterEach, beforeEach, vi } from 'vitest';
 
 // ============================================================
 // Real i18n
@@ -37,7 +36,51 @@ import { afterEach, beforeEach, vi } from 'vitest';
 // on the actual locale files. The mock this replaces returned the key
 // itself for anything not in its table and ignored t()'s options argument
 // entirely, so defaultValue and interpolation silently vanished.
+import i18next from 'i18next';
+import { afterEach, beforeEach, vi } from 'vitest';
 import '../i18n';
+
+// Loading the real locale files is only half of it. Corrupting every string in
+// both locales -- all 4,290 of them -- still leaves 285 of 311 tests passing,
+// because almost nothing asserts on rendered copy (#1942).
+//
+// Asserting copy string by string is not the answer; a human reviews wording.
+// What no human catches is a key that does not resolve, because i18next then
+// renders the key itself and `settings.mode.reflector` appears in the UI as
+// though it were a label.
+//
+// So every test becomes a missing-key detector: i18next reports each miss and
+// the test that provoked it fails. That turns the whole suite into the gate
+// rather than adding one test that guards one string.
+const missingI18nKeys = new Set<string>();
+
+// missingKeyHandler rather than the `missingKey` event: only the handler is
+// told whether a defaultValue was supplied. An optional lookup -- one passing
+// an explicit empty defaultValue -- is deliberate
+// rather than a defect: pageRegistry does this for the eyebrow of every page
+// that has none, and reporting those seven would be noise that trains people
+// to ignore the gate.
+i18next.options.missingKeyHandler = (_lngs, namespace, key, _fallback, _update, options) => {
+  if (options?.defaultValue !== undefined) {
+    return;
+  }
+  missingI18nKeys.add(`${namespace}:${key}`);
+};
+
+beforeEach(() => {
+  missingI18nKeys.clear();
+});
+
+afterEach(() => {
+  if (missingI18nKeys.size === 0) {
+    return;
+  }
+  const missed = [...missingI18nKeys].sort();
+  missingI18nKeys.clear();
+  throw new Error(
+    `i18n key(s) did not resolve and would render raw in the UI:\n  ${missed.join('\n  ')}`,
+  );
+});
 
 // ============================================================
 // JSDoM polyfills — common browser APIs not implemented by JSDoM
