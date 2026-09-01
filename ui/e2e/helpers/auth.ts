@@ -146,13 +146,35 @@ export function sidebarHelpButton(page: Page): Locator {
  * scroll-into-view under parallel CI load, hanging clicks on deep
  * elements (e.g. the theme-toggle) until the 30s test timeout. Must be
  * called before page.goto so the style is installed on every navigation.
+ *
+ * The style is installed as soon as <html> is parsed rather than
+ * unconditionally at document start. An init script runs before the
+ * document element exists, so the previous
+ * `document.documentElement.appendChild(style)` threw
+ * "null is not an object" on every navigation and the style was never
+ * installed — animations have in fact been running throughout the suite
+ * on both engines. On WebKit the throw was worse than a no-op: it aborts
+ * the remaining init scripts registered on the same page, silently
+ * voiding anything a spec set up after calling this helper.
  */
 export async function disableAnimations(page: Page): Promise<void> {
   await page.addInitScript(() => {
-    const style = document.createElement('style');
-    style.textContent =
-      '*,*::before,*::after{transition:none!important;animation:none!important;scroll-behavior:auto!important}';
-    document.documentElement.appendChild(style);
+    const install = (): void => {
+      const style = document.createElement('style');
+      style.textContent =
+        '*,*::before,*::after{transition:none!important;animation:none!important;scroll-behavior:auto!important}';
+      (document.head ?? document.documentElement).appendChild(style);
+    };
+    if (document.documentElement) {
+      install();
+      return;
+    }
+    new MutationObserver((_records, observer) => {
+      if (document.documentElement) {
+        observer.disconnect();
+        install();
+      }
+    }).observe(document, { childList: true });
   });
 }
 

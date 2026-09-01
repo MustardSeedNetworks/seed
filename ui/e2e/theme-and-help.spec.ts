@@ -1,4 +1,4 @@
-import { expect, test } from '@playwright/test';
+import { expect, type Page, test } from '@playwright/test';
 import {
   disableAnimations,
   sidebarHelpButton,
@@ -14,8 +14,7 @@ import {
  * Theme Toggle:
  * - Toggle between light and dark themes
  * - Verify document root class changes
- * - Theme persistence in localStorage
- * - Theme persistence after page reload
+ * - Stored preference applied on load and left unmodified
  * - Cards render correctly in both themes
  * - System theme preference (if implemented)
  *
@@ -29,6 +28,60 @@ import {
  * - Real content rendering (bug-fix regression)
  */
 
+/** Theme modes accepted by the `seed-theme` key (hooks/useTheme.ts). */
+type Theme = 'light' | 'dark' | 'system';
+
+/**
+ * Pre-seed the `seed-theme` preference so the very first navigation already
+ * carries it. Must be called before page.goto.
+ *
+ * This replaces an `evaluate(setItem)` + `page.reload()` pattern that was
+ * intermittently failing on WebKit with "WebKit encountered an internal error"
+ * out of `page.reload`, ejecting PRs from the merge queue. The localStorage
+ * write was never the race — `page.evaluate` awaits a synchronous `setItem`,
+ * so the value was committed before the reload was issued. Two things were
+ * wrong underneath:
+ *
+ *  1. `disableAnimations()` threw at document start (see helpers/auth.ts), so
+ *     the suite's animations were never actually disabled. Every reload here
+ *     landed on a page mid-transition — the app-wide re-theme plus the drawer
+ *     transitions — which is what WebKit turned into an internal error.
+ *  2. Each reload fired the moment the header painted, while the dashboard's
+ *     data fetches, the /ws socket and the `skipSetupWizard` route
+ *     interception were all still in flight.
+ *
+ * The helper fix addresses (1). Seeding before the first navigation addresses
+ * (2) by removing the second navigation altogether: every theme test below is
+ * one page, one `goto`, with nothing left in flight to abort — which is also
+ * how a real operator meets the app, with the preference already in storage
+ * when the document loads.
+ *
+ * Note this must be called *after* `disableAnimations()` has been fixed to
+ * stop throwing: on WebKit an init script that throws aborts the init scripts
+ * registered after it, which silently dropped this write.
+ */
+async function seedTheme(page: Page, theme: Theme): Promise<void> {
+  await page.addInitScript((value) => {
+    localStorage.setItem('seed-theme', value);
+  }, theme);
+}
+
+/** Load the dashboard and wait for it to mount. */
+async function gotoDashboard(page: Page): Promise<void> {
+  await page.goto('/');
+  await expect(page.getByTestId('page-header-title')).toBeVisible({ timeout: 10000 });
+}
+
+/** Assert the document root reflects the given effective theme. */
+async function expectTheme(page: Page, theme: 'light' | 'dark'): Promise<void> {
+  const html = page.locator('html');
+  if (theme === 'dark') {
+    await expect(html).toHaveClass(/dark/);
+  } else {
+    await expect(html).not.toHaveClass(/dark/);
+  }
+}
+
 test.describe('Theme Toggle and Help Modal', { tag: '@smoke' }, () => {
   // Run this file's tests sequentially in a single worker. Toggling the theme
   // re-renders every theme consumer app-wide; under the 2-worker CI split the
@@ -36,67 +89,51 @@ test.describe('Theme Toggle and Help Modal', { tag: '@smoke' }, () => {
   // timeout. These tests pass reliably one-at-a-time.
   test.describe.configure({ mode: 'serial' });
 
+  // The fixture page is prepared here but deliberately left un-navigated:
+  // theme tests must seed `seed-theme` before the first navigation, so each
+  // one owns its single page.goto. Tests that do not care about the theme
+  // navigate via the describe-level beforeEach below.
   test.beforeEach(async ({ page }) => {
     await skipSetupWizard(page);
     await disableAnimations(page);
-    await page.goto('/');
-    await expect(page.getByTestId('page-header-title')).toBeVisible({
-      timeout: 10000,
-    });
   });
 
   test.describe('Theme Toggle', () => {
-    test('should apply and persist the saved theme preference', async ({ page }) => {
-      // Theme is driven by the `seed-theme` localStorage key (hooks/useTheme.ts).
-      // We set it directly and reload rather than driving the settings drawer's
-      // theme <select>: that control sits ~10 sections deep in a scrollable
-      // drawer and, under the 2-worker CI split, Playwright's scroll-into-view
-      // stalls past the test timeout. The drawer's <select> binding itself is
-      // covered in settings.spec.ts (full E2E tier). This asserts the behavior
-      // that actually matters for smoke: the app reads, applies, and persists
-      // the stored preference.
-      const html = page.locator('html');
+    // Theme is driven by the `seed-theme` localStorage key (hooks/useTheme.ts).
+    // We seed it directly rather than driving the settings drawer's theme
+    // <select>: that control sits ~10 sections deep in a scrollable drawer
+    // and, under the 2-worker CI split, Playwright's scroll-into-view stalls
+    // past the test timeout. The drawer's <select> binding itself is covered
+    // in settings.spec.ts (full E2E tier). These assert the behavior that
+    // actually matters for smoke: the app reads, applies and keeps the stored
+    // preference, and the dashboard renders under either theme.
+    //
+    // One test per theme rather than one test walking both, so that each needs
+    // exactly one navigation — see seedTheme() for why that matters.
+    for (const theme of ['dark', 'light'] as const) {
+      test(`should apply and keep the saved ${theme} theme preference`, async ({ page }) => {
+        await seedTheme(page, theme);
+        await gotoDashboard(page);
 
-      await page.evaluate(() => localStorage.setItem('seed-theme', 'dark'));
-      await page.reload();
-      await expect(page.getByTestId('page-header-title')).toBeVisible();
-      await expect(html).toHaveClass(/dark/);
+        await expectTheme(page, theme);
+        // The app applies the stored preference without rewriting it, so a
+        // later load finds the same value and resolves to the same theme.
+        expect(await page.evaluate(() => localStorage.getItem('seed-theme'))).toBe(theme);
+      });
 
-      await page.evaluate(() => localStorage.setItem('seed-theme', 'light'));
-      await page.reload();
-      await expect(page.getByTestId('page-header-title')).toBeVisible();
-      await expect(html).not.toHaveClass(/dark/);
+      test(`should keep cards rendered in the ${theme} theme`, async ({ page }) => {
+        await seedTheme(page, theme);
+        await gotoDashboard(page);
 
-      // Preference survives a further reload with no change.
-      await page.reload();
-      await expect(page.getByTestId('page-header-title')).toBeVisible();
-      await expect(html).not.toHaveClass(/dark/);
-    });
-
-    test('should keep cards rendered in both themes', async ({ page }) => {
-      const html = page.locator('html');
-      const initialCards = await page.getByTestId('card').count();
-      expect(initialCards).toBeGreaterThan(0);
-
-      // Drive the theme deterministically via localStorage + reload rather
-      // than through the settings drawer: this test asserts the *dashboard*
-      // renders in both themes, and the drawer's close button is momentarily
-      // unresponsive during the app-wide re-theme (the toggle UI itself is
-      // covered by the dedicated theme-toggle tests above).
-      await page.evaluate(() => localStorage.setItem('seed-theme', 'dark'));
-      await page.reload();
-      await expect(html).toHaveClass(/dark/);
-      await expect(page.getByTestId('page-header-title')).toBeVisible();
-      expect(await page.getByTestId('card').count()).toBeGreaterThanOrEqual(initialCards - 1);
-
-      await page.evaluate(() => localStorage.setItem('seed-theme', 'light'));
-      await page.reload();
-      await expect(html).not.toHaveClass(/dark/);
-      await expect(page.getByTestId('page-header-title')).toBeVisible();
-      expect(await page.getByTestId('card').count()).toBeGreaterThanOrEqual(initialCards - 1);
-    });
+        await expectTheme(page, theme);
+        // Cards mount as their data resolves, so poll rather than count once.
+        await expect.poll(() => page.getByTestId('card').count()).toBeGreaterThan(0);
+      });
+    }
 
     test('should maintain theme toggle state in settings', async ({ page }) => {
+      await gotoDashboard(page);
+
       // Open settings
       const settingsButton = sidebarSettingsButton(page);
 
@@ -131,27 +168,30 @@ test.describe('Theme Toggle and Help Modal', { tag: '@smoke' }, () => {
       // (hardcoded 'dark') and compared the resulting html class
       // against window.matchMedia — only passed when the host
       // happened to also be dark. This rewrite forces theme=system
-      // explicitly via localStorage and uses Playwright's
-      // colorScheme emulation to drive both branches
-      // deterministically.
-
-      // Emulate dark system preference and load with theme=system.
+      // explicitly and uses Playwright's colorScheme emulation to
+      // drive both branches deterministically. The emulation changes
+      // need no navigation: the hook's matchMedia listener re-themes
+      // the live document.
       await page.emulateMedia({ colorScheme: 'dark' });
-      await page.evaluate(() => localStorage.setItem('seed-theme', 'system'));
-      await page.reload();
-      await expect(page.locator('html')).toHaveClass(/dark/);
+      await seedTheme(page, 'system');
+      await gotoDashboard(page);
+      await expectTheme(page, 'dark');
 
       // Live system theme change: app should follow.
       await page.emulateMedia({ colorScheme: 'light' });
-      await expect(page.locator('html')).not.toHaveClass(/dark/);
+      await expectTheme(page, 'light');
 
       // Back to dark to confirm the listener is bidirectional.
       await page.emulateMedia({ colorScheme: 'dark' });
-      await expect(page.locator('html')).toHaveClass(/dark/);
+      await expectTheme(page, 'dark');
     });
   });
 
   test.describe('Help Drawer', () => {
+    test.beforeEach(async ({ page }) => {
+      await gotoDashboard(page);
+    });
+
     test('should open help drawer when clicking help button', async ({ page }) => {
       const helpButton = sidebarHelpButton(page);
       await helpButton.click();
@@ -309,27 +349,25 @@ test.describe('Theme Toggle and Help Modal', { tag: '@smoke' }, () => {
       const scrollPosition = await content.evaluate((el) => el.scrollTop);
       expect(scrollPosition, 'content scroll should reset to top on reopen').toBe(0);
     });
+  });
 
-    test('should display help drawer in light and dark themes', async ({ page }) => {
-      const helpButton = sidebarHelpButton(page);
-      const drawer = page.getByTestId('help-drawer');
-      const html = page.locator('html');
+  // Separate from the Help Drawer describe above because these seed a theme
+  // before the first navigation, so they cannot inherit its navigating
+  // beforeEach. One test per theme keeps each to a single page.goto.
+  test.describe('Help Drawer theming', () => {
+    for (const theme of ['light', 'dark'] as const) {
+      test(`should display help drawer in the ${theme} theme`, async ({ page }) => {
+        await seedTheme(page, theme);
+        await gotoDashboard(page);
+        await expectTheme(page, theme);
 
-      await page.evaluate(() => localStorage.setItem('seed-theme', 'light'));
-      await page.reload();
-      await expect(page.getByTestId('page-header-title')).toBeVisible();
-      await expect(html).not.toHaveClass(/dark/);
-      await helpButton.click();
-      await expect(drawer).toBeVisible();
-      await page.keyboard.press('Escape');
-      await expect(drawer).not.toBeVisible();
+        const drawer = page.getByTestId('help-drawer');
+        await sidebarHelpButton(page).click();
+        await expect(drawer).toBeVisible();
 
-      await page.evaluate(() => localStorage.setItem('seed-theme', 'dark'));
-      await page.reload();
-      await expect(page.getByTestId('page-header-title')).toBeVisible();
-      await expect(html).toHaveClass(/dark/);
-      await helpButton.click();
-      await expect(drawer).toBeVisible();
-    });
+        await page.keyboard.press('Escape');
+        await expect(drawer).not.toBeVisible();
+      });
+    }
   });
 });
