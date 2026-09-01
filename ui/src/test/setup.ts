@@ -55,10 +55,11 @@ import '../i18n';
 const missingI18nKeys = new Set<string>();
 
 // missingKeyHandler rather than the `missingKey` event: only the handler is
-// told whether a defaultValue was supplied. `t('x.eyebrow', {defaultValue: ''})`
-// is a deliberate optional lookup -- pageRegistry uses it for pages that have
-// no eyebrow -- and reporting those would be noise that trains people to
-// ignore the gate.
+// told whether a defaultValue was supplied. An optional lookup -- one passing
+// an explicit empty defaultValue -- is deliberate
+// rather than a defect: pageRegistry does this for the eyebrow of every page
+// that has none, and reporting those seven would be noise that trains people
+// to ignore the gate.
 i18next.options.missingKeyHandler = (_lngs, namespace, key, _fallback, _update, options) => {
   if (options?.defaultValue !== undefined) {
     return;
