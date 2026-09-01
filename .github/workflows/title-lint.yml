@@ -68,14 +68,38 @@ jobs:
         with:
           script: |
             const title = context.payload.issue.title || "";
-            const valid = /^(Defect|Feature|Chore|Docs|Security|Epic):\s\S.{2,}$/;
+            // Two conventions were in tension and both express the same thing: a
+            // category plus a specific subject. Commits and PRs use
+            // conventional-commit prefixes, so requiring `Feature:` here
+            // flagged `feat(dhcp): force DHCP lease renewal` for being the
+            // house style everywhere else.
+            const valid =
+              /^((Defect|Feature|Chore|Docs|Security|Epic)|(feat|fix|chore|docs|refactor|perf|test|ci|build|style|revert|security)(\([a-z0-9._\/-]+\))?!?):\s\S.{2,}$/;
             const placeholder = /^\[(BUG|FEATURE|CHORE|DOCS|SECURITY|EPIC)\]\s*$/i;
+            const label = "status: needs-info";
+            const flagged = (context.payload.issue.labels || []).some(
+              (l) => (l.name || l) === label,
+            );
+
             if (!valid.test(title) || placeholder.test(title)) {
               await github.rest.issues.addLabels({
                 owner: context.repo.owner,
                 repo: context.repo.repo,
                 issue_number: context.payload.issue.number,
-                labels: ["status: needs-info"],
+                labels: [label],
               });
-              core.setFailed("Issue titles must use 'Defect:', 'Feature:', 'Chore:', 'Docs:', 'Security:', or 'Epic:' followed by a specific subject.");
+              core.setFailed("Issue titles need a category and a specific subject: either 'Defect:', 'Feature:', 'Chore:', 'Docs:', 'Security:', 'Epic:', or a conventional-commit prefix such as 'feat(scope):'.");
+              return;
+            }
+
+            // The label used to be write-only -- nothing ever removed it, so a
+            // corrected title stayed flagged for good and the count could only
+            // grow. Clearing it here is what makes the label mean something.
+            if (flagged) {
+              await github.rest.issues.removeLabel({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.payload.issue.number,
+                name: label,
+              });
             }
