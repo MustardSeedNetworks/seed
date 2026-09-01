@@ -257,11 +257,16 @@ export const Toggle: FC<ToggleProps> = ({
   ...props
 }) => {
   const toggleId = id || label.toLowerCase().replace(/\s+/g, '-');
+  // The visible control is the button, but the <label> is bound to the hidden
+  // checkbox, so the button itself had no accessible name and a screen reader
+  // announced a bare "switch" (axe button-name). Point it at the same visible
+  // text rather than duplicating the string into an aria-label.
+  const toggleLabelId = `${toggleId}-label`;
 
   return (
     <div className={`flex-between gap-comfortable ${containerClassName}`}>
       <div>
-        <label htmlFor={toggleId} className="label cursor-pointer">
+        <label id={toggleLabelId} htmlFor={toggleId} className="label cursor-pointer">
           {label}
         </label>
         {description ? <p className="text-sm text-text-muted mt-0.5">{description}</p> : null}
@@ -270,6 +275,7 @@ export const Toggle: FC<ToggleProps> = ({
         type="button"
         role="switch"
         aria-checked={checked}
+        aria-labelledby={toggleLabelId}
         onClick={() => {
           const input = document.getElementById(toggleId) as HTMLInputElement;
           if (input) {

@@ -80,6 +80,16 @@ export const SubnetManager: React.NamedExoticComponent<SubnetManagerProps> = mem
                     title={
                       subnet.enabled ? t('discovery.disableSubnet') : t('discovery.enableSubnet')
                     }
+                    // title alone does not name a form control (axe
+                    // label-title-only). The name carries the CIDR because
+                    // every row would otherwise announce the same words, and
+                    // a screen-reader user picking one of several identical
+                    // "Enable subnet" checkboxes cannot tell which is which.
+                    aria-label={
+                      subnet.enabled
+                        ? t('discovery.disableSubnetNamed', { cidr: subnet.cidr })
+                        : t('discovery.enableSubnetNamed', { cidr: subnet.cidr })
+                    }
                   />
                   <button
                     type="button"

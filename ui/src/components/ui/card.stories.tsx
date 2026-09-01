@@ -141,6 +141,12 @@ export const Interactive: Story = {
 // Card with header action
 export const WithHeaderAction: Story = {
   args: {
+    // A card that owns an interactive control must not itself be a button:
+    // the meta's `onClick: { action: 'clicked' }` injects a handler into every
+    // story, which makes Card render role="button" and nests the Refresh
+    // button inside it (axe nested-interactive). Clearing it here states the
+    // constraint rather than working around the symptom.
+    onClick: undefined,
     title: 'DNS Status',
     subtitle: 'Primary',
     status: 'success',

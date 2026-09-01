@@ -164,7 +164,9 @@
     "performanceTimingDesc": "Adjust scan aggressiveness vs network impact.",
     "probeInterval": "Probe interval",
     "slower": "Slower",
-    "workers": "Worker count"
+    "workers": "Worker count",
+    "enableSubnetNamed": "Enable subnet {{cidr}}",
+    "disableSubnetNamed": "Disable subnet {{cidr}}"
   },
   "performance": {
     "title": "Performance",

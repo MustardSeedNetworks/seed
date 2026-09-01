@@ -396,9 +396,9 @@ export const SimpleCustomContent: StoryObj<typeof HelpModal> = {
                 spacing.pad.default,
               )}
             >
-              <h4 className={cn('font-semibold text-brand-primary', spacing.margin.bottom.inline)}>
+              <h3 className={cn('font-semibold text-brand-primary', spacing.margin.bottom.inline)}>
                 Understanding Your Results
-              </h4>
+              </h3>
               <p className="body-small text-text-secondary">
                 Speed test results show your connection's maximum throughput under ideal conditions.
                 Real-world performance may vary based on network congestion, server load, and
@@ -413,9 +413,9 @@ export const SimpleCustomContent: StoryObj<typeof HelpModal> = {
                 spacing.pad.default,
               )}
             >
-              <h4 className={cn('font-semibold text-status-warning', spacing.margin.bottom.inline)}>
+              <h3 className={cn('font-semibold text-status-warning', spacing.margin.bottom.inline)}>
                 Factors Affecting Speed
-              </h4>
+              </h3>
               <ul
                 className={cn(
                   'list-disc list-inside body-small text-text-secondary',
@@ -437,9 +437,9 @@ export const SimpleCustomContent: StoryObj<typeof HelpModal> = {
                 spacing.pad.default,
               )}
             >
-              <h4 className={cn('font-semibold text-status-success', spacing.margin.bottom.inline)}>
+              <h3 className={cn('font-semibold text-status-success', spacing.margin.bottom.inline)}>
                 Improving Speed
-              </h4>
+              </h3>
               <p className="body-small text-text-secondary">
                 Move closer to the router, switch to 5GHz band, reduce device count, or upgrade your
                 internet plan for better performance.

@@ -21,6 +21,13 @@ export interface ModalProps {
    * assistive technology announces only that a dialog opened.
    */
   ariaLabel?: string;
+  /**
+   * Id of the caller's own heading, for the ModalHeader/Body/Footer
+   * composition. Preferred over `ariaLabel` when the heading is on screen:
+   * the name then comes from the visible text instead of a second copy of it
+   * that can drift as the heading is edited.
+   */
+  ariaLabelledBy?: string;
   children: ReactNode;
   size?: ModalSize;
   showCloseButton?: boolean;
@@ -42,6 +49,7 @@ export const Modal: FC<ModalProps> = ({
   onClose,
   title,
   ariaLabel,
+  ariaLabelledBy,
   children,
   size = 'md',
   showCloseButton = true,
@@ -90,8 +98,8 @@ export const Modal: FC<ModalProps> = ({
         className={`mx-4 w-full ${sizeClasses[size]} rounded-2xl border border-surface-border bg-bg-surface/95 shadow-2xl ${className}`}
         role="dialog"
         aria-modal="true"
-        aria-labelledby={title ? 'modal-title' : undefined}
-        aria-label={title ? undefined : ariaLabel}
+        aria-labelledby={title ? 'modal-title' : ariaLabelledBy}
+        aria-label={title || ariaLabelledBy ? undefined : ariaLabel}
         onKeyDown={handleContentKeyDown}
       >
         {title || showCloseButton ? (

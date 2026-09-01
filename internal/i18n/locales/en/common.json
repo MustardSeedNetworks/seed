@@ -181,7 +181,9 @@
   "dataTable": {
     "clearAll": "Clear all",
     "showingResults": "Showing {{shown}} of {{total}} results",
-    "loadingData": "Loading data..."
+    "loadingData": "Loading data...",
+    "actionsColumn": "Actions",
+    "scrollRegion": "Table contents"
   },
   "capabilities": {
     "warning": {

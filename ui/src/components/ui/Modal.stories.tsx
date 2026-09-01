@@ -58,9 +58,11 @@ export const Closed: Story = {
 export const WithSlots: Story = {
   name: 'With ModalHeader/Body/Footer',
   render: () => (
-    <Modal isOpen={true} onClose={() => undefined} size="lg">
+    <Modal isOpen={true} onClose={() => undefined} size="lg" ariaLabelledBy="dhcp-profile-heading">
       <ModalHeader>
-        <h2 className="text-lg font-semibold text-text-primary">Edit DHCP profile</h2>
+        <h2 id="dhcp-profile-heading" className="text-lg font-semibold text-text-primary">
+          Edit DHCP profile
+        </h2>
         <p className="text-sm text-text-muted">
           Changes apply to all interfaces using this profile.
         </p>

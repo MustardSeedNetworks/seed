@@ -123,16 +123,15 @@ const preview: Preview = {
       ],
     },
     layout: 'centered',
-    // Wave 5 / seed-W5-3: activate the axe-core a11y addon. 'todo'
-    // surfaces WCAG 2.1 AA violations in the Storybook UI as a
-    // catalog without failing CI yet. After a baseline pass through
-    // existing stories, raise to 'error' to gate new violations.
+    // Wave 5 / seed-W5-3: the axe-core a11y addon gates the build.
+    //
+    // 'error' since #2099. It sat on 'todo' because flipping it surfaced ten
+    // WCAG violations across nine components; those are now fixed, the suite
+    // is 443/443 with the gate on, and a new violation fails CI rather than
+    // being catalogued and ignored. Do not lower this to catalogue a
+    // regression -- fix the story or the component.
     a11y: {
-      // Still 'todo': flipping this to 'error' surfaces ten remaining WCAG
-      // violations across nine components (#2099 lists them). Ten were fixed
-      // here; the rest each need their own component change, and shipping a
-      // permanently red required job would train people to ignore it.
-      test: 'todo',
+      test: 'error',
       config: {
         rules: [
           // color-contrast can flake on Tailwind tokens whose runtime

@@ -57,6 +57,9 @@ export const WithIcon: Story = {
     children: (
       <button
         type="button"
+        // Tooltip wires aria-describedby, which describes the trigger rather
+        // than naming it, so an icon-only button still needs its own name.
+        aria-label="Settings"
         className={cn(spacing.pad.xs, 'rounded-lg bg-surface-raised hover:bg-surface-hover')}
       >
         <Settings className="w-5 h-5 text-text-secondary" />
