@@ -77,13 +77,13 @@ export function PollingTargetsPage(): JSX.Element {
 
   const needle = query.trim().toLowerCase();
   const shown = targets.filter(
-    (t) =>
-      matchesFacet(t, facet) &&
+    (target) =>
+      matchesFacet(target, facet) &&
       (!needle ||
-        t.name.toLowerCase().includes(needle) ||
-        t.ipAddress.toLowerCase().includes(needle)),
+        target.name.toLowerCase().includes(needle) ||
+        target.ipAddress.toLowerCase().includes(needle)),
   );
-  const selected = shown.find((t) => t.id === selectedId) ?? shown[0] ?? null;
+  const selected = shown.find((target) => target.id === selectedId) ?? shown[0] ?? null;
 
   return (
     <>
@@ -129,13 +129,13 @@ export function PollingTargetsPage(): JSX.Element {
               />
               <FilterChip
                 label="Failing"
-                count={targets.filter((t) => targetState(t) === 'crit').length}
+                count={targets.filter((target) => targetState(target) === 'crit').length}
                 active={facet === 'failing'}
                 onClick={(): void => setFacet('failing')}
               />
               <FilterChip
                 label="Paused"
-                count={targets.filter((t) => !t.enabled).length}
+                count={targets.filter((target) => !target.enabled).length}
                 active={facet === 'paused'}
                 onClick={(): void => setFacet('paused')}
               />
@@ -147,16 +147,16 @@ export function PollingTargetsPage(): JSX.Element {
               : 'No target matches this filter.'
           }
         >
-          {shown.map((t) => (
+          {shown.map((target) => (
             <RecordRow
-              key={t.id}
-              data-testid={`target-row-${t.id}`}
-              name={t.name}
-              meta={`${t.ipAddress} · SNMP ${t.snmpVersion}`}
-              value={lastPollFigure(t)}
-              state={targetState(t)}
-              selected={selected?.id === t.id}
-              onSelect={(): void => setSelectedId(t.id)}
+              key={target.id}
+              data-testid={`target-row-${target.id}`}
+              name={target.name}
+              meta={`${target.ipAddress} · SNMP ${target.snmpVersion}`}
+              value={lastPollFigure(target)}
+              state={targetState(target)}
+              selected={selected?.id === target.id}
+              onSelect={(): void => setSelectedId(target.id)}
             />
           ))}
         </RecordPane>

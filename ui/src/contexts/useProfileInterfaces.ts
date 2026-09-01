@@ -95,7 +95,7 @@ export function useProfileInterfaces(
         setActiveProfile({ ...currentProfile, config: updatedConfig });
 
         const queryClient = getQueryClient();
-        queryClient.invalidateQueries({ queryKey: profileKeys.active() });
+        await queryClient.invalidateQueries({ queryKey: profileKeys.active() });
 
         return true;
       } catch (err) {

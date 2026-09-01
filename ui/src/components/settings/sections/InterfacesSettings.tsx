@@ -126,14 +126,14 @@ export function InterfacesSettings(): React.ReactElement {
           </div>
         )}
 
-        {error && (
+        {error ? (
           <div
             className="rounded-lg border border-status-error/30 bg-status-error/5 pad-sm text-sm text-status-error"
             data-testid="interfaces-error"
           >
             {error}
           </div>
-        )}
+        ) : null}
 
         <InterfaceGroup
           kind="ethernet"

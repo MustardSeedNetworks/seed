@@ -181,14 +181,14 @@ export function UsersSettings(): React.ReactElement {
           </div>
         )}
 
-        {error && (
+        {error ? (
           <div
             className="rounded-lg border border-status-error/30 bg-status-error/5 p-3 text-sm text-status-error"
             data-testid="users-settings-error"
           >
             {error}
           </div>
-        )}
+        ) : null}
 
         {isAdmin && (
           <div className="flex flex-wrap items-end gap-2">

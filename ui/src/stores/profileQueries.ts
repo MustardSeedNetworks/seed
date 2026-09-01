@@ -205,8 +205,9 @@ export function useCreateProfileMutation(): UseMutationResult<Profile, Error, Pr
       return created;
     },
     onSuccess: () => {
-      // Invalidate profile list to refetch
-      queryClient.invalidateQueries({ queryKey: profileKeys.list() });
+      // Returned rather than fired and forgotten: React Query awaits it, so the
+      // mutation does not settle while the list is still stale.
+      return queryClient.invalidateQueries({ queryKey: profileKeys.list() });
     },
     onError: (err: Error) => {
       logger.error(LogComponents.PROFILES, 'Failed to create profile', err);
@@ -240,9 +241,12 @@ export function useUpdateProfileMutation(): UseMutationResult<
       if (activeProfile?.id === updated.id) {
         setActiveProfile(updated);
       }
-      // Invalidate queries
-      queryClient.invalidateQueries({ queryKey: profileKeys.list() });
-      queryClient.invalidateQueries({ queryKey: profileKeys.detail(updated.id) });
+      // Invalidate queries. Returned so React Query awaits both refetches
+      // before the mutation settles, rather than dropping the promises.
+      return Promise.all([
+        queryClient.invalidateQueries({ queryKey: profileKeys.list() }),
+        queryClient.invalidateQueries({ queryKey: profileKeys.detail(updated.id) }),
+      ]);
     },
     onError: (err: Error) => {
       logger.error(LogComponents.PROFILES, 'Failed to update profile', err);
@@ -263,8 +267,10 @@ export function useDeleteProfileMutation(): UseMutationResult<string, Error, str
       return id;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: profileKeys.list() });
-      queryClient.invalidateQueries({ queryKey: profileKeys.active() });
+      return Promise.all([
+        queryClient.invalidateQueries({ queryKey: profileKeys.list() }),
+        queryClient.invalidateQueries({ queryKey: profileKeys.active() }),
+      ]);
     },
     onError: (err: Error) => {
       logger.error(LogComponents.PROFILES, 'Failed to delete profile', err);
@@ -305,7 +311,7 @@ export function useSwitchProfileMutation(): UseMutationResult<
       });
 
       // Invalidate queries to ensure fresh data on next access
-      queryClient.invalidateQueries({ queryKey: profileKeys.all });
+      return queryClient.invalidateQueries({ queryKey: profileKeys.all });
     },
     onError: (err: Error) => {
       logger.error(LogComponents.PROFILES, 'Failed to switch profile', err);
@@ -329,7 +335,7 @@ export function useDuplicateProfileMutation(): UseMutationResult<Profile, Error,
       return duplicated;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: profileKeys.list() });
+      return queryClient.invalidateQueries({ queryKey: profileKeys.list() });
     },
     onError: (err: Error) => {
       logger.error(LogComponents.PROFILES, 'Failed to duplicate profile', err);
@@ -358,7 +364,7 @@ export function useImportProfilesMutation(): UseMutationResult<
       return result;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: profileKeys.list() });
+      return queryClient.invalidateQueries({ queryKey: profileKeys.list() });
     },
     onError: (err: Error) => {
       logger.error(LogComponents.PROFILES, 'Failed to import profiles', err);
@@ -417,7 +423,7 @@ export function useSaveSettingsMutation(): UseMutationResult<
       setTimeout(() => setSettingsStatus('idle'), 2000);
 
       // Invalidate to ensure consistency
-      queryClient.invalidateQueries({ queryKey: profileKeys.active() });
+      return queryClient.invalidateQueries({ queryKey: profileKeys.active() });
     },
     onError: (err: Error) => {
       setSettingsStatus('error');

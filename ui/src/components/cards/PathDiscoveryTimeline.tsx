@@ -43,7 +43,7 @@ export const PATH_TIMELINE: React.NamedExoticComponent<PathTimelineProps> = memo
     onToggleL2Hop,
     t,
   }: PathTimelineProps): React.ReactElement {
-    const l2Path = result.l2Path;
+    const { l2Path } = result;
     const l2Hops = l2Path?.hops ?? [];
     const l3Hops = result.l3Path?.hops ?? [];
     const destination = result.l3Path?.target ?? '';

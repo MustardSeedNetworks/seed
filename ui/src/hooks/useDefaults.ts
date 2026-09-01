@@ -60,7 +60,7 @@ export function useDefaults(): UseDefaultsResult {
 
     // If already fetching, wait for that promise
     const existingPromise: Promise<DefaultSettings> | null = fetchPromise;
-    if (existingPromise) {
+    if (existingPromise !== null) {
       try {
         const result: DefaultSettings = await existingPromise;
         if (isMountedRef.current) {
