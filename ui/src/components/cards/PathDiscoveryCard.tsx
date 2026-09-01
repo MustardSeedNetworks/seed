@@ -344,6 +344,10 @@ export const PathDiscoveryCard: React.NamedExoticComponent<PathDiscoveryCardProp
                   'w-20 body-small cursor-pointer',
                 )}
                 title={t('pathDiscovery.protocol')}
+                // title alone does not name a form control (axe
+                // label-title-only); the inline layout has no room for a
+                // visible label beside a 20-wide select.
+                aria-label={t('pathDiscovery.protocol')}
               >
                 <option value="icmp">ICMP</option>
                 <option value="udp">UDP</option>

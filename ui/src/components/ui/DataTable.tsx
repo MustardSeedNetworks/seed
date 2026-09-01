@@ -412,7 +412,19 @@ export function DataTable<T>({
         </p>
       ) : null}
       {/* Table */}
-      <div className={cn('overflow-y-auto', maxHeight)}>
+      {/* A region that scrolls must be reachable by keyboard, or a
+          keyboard-only user cannot reach the rows below the fold (axe
+          scrollable-region-focusable). It is named and given a role rather
+          than left as a bare focusable div: an unnamed tab stop is its own
+          problem, and Biome rejects tabIndex on a non-interactive element.
+          Only when maxHeight is set, since that is the only time it scrolls
+          -- every other table would otherwise gain a pointless tab stop. */}
+      <div
+        className={cn('overflow-y-auto', maxHeight)}
+        {...(maxHeight
+          ? { tabIndex: 0, role: 'region', 'aria-label': t('dataTable.scrollRegion') }
+          : {})}
+      >
         <table className="w-full body-small">
           <thead className="sticky top-0 bg-surface-raised z-10">
             <tr className={border.divider}>
@@ -441,7 +453,13 @@ export function DataTable<T>({
                 </th>
               ))}
               {actions ? (
-                <th className={cn(spacing.cell.px, spacing.compact.pyMd, 'w-16')} />
+                <th className={cn(spacing.cell.px, spacing.compact.pyMd, 'w-16')}>
+                  {/* A header cell with no text leaves the actions column
+                      unannounced (axe empty-table-header). It is named for
+                      assistive technology only; the column is visually blank
+                      by design. */}
+                  <span className="sr-only">{t('dataTable.actionsColumn')}</span>
+                </th>
               ) : null}
             </tr>
           </thead>

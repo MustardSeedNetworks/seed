@@ -18,6 +18,7 @@
   --color-on-brand: #ffffff;
   --color-on-danger: #ffffff;
   --color-on-success: #ffffff;
+  --color-on-info: #ffffff;
 
   /* Seed's five module accents. Same role change as Stem's six: badges and
 	 * chart series, not button fills. Hues kept; light-mode values darkened
@@ -39,6 +40,10 @@
   --color-on-brand: #08100c;
   --color-on-danger: #08100c;
   --color-on-success: #08100c;
+  /* status-info flips from #1263a8 to #7dd3fc in dark, so the foreground has
+	 * to flip with it. on-info was the one on-* token defined in a single
+	 * place for both themes, which left white text on a light-blue fill. */
+  --color-on-info: #08100c;
 
   --color-module-path: #fbbf24;
   --color-module-wifi: #81c784;

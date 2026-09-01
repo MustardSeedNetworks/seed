@@ -175,7 +175,6 @@
   /* Constant-across-modes utility colors. */
 
   /* On-color foregrounds — constant across modes (no .dark override). */
-  --color-on-info: #ffffff; /* white — AA on status-info fills */
 
   /* Categorical data-viz palette — LIGHT (≈600 weight, AA on warm cream). */
   --color-cat-1: #2563eb; /* blue */

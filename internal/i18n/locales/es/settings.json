@@ -164,7 +164,9 @@
     "performanceTimingDesc": "Ajuste la agresividad del escaneo frente al impacto en la red.",
     "probeInterval": "Intervalo de sondeo",
     "slower": "Más lento",
-    "workers": "Cantidad de trabajadores"
+    "workers": "Cantidad de trabajadores",
+    "enableSubnetNamed": "Habilitar subred {{cidr}}",
+    "disableSubnetNamed": "Deshabilitar subred {{cidr}}"
   },
   "performance": {
     "title": "Rendimiento",
