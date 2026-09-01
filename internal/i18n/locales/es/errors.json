@@ -130,5 +130,10 @@
     "invalidID": "Falta el id del informe o no es válido",
     "notFound": "Informe no encontrado",
     "notReady": "El archivo del informe aún no está disponible"
+  },
+  "dhcp": {
+    "renewNotSupported": "La renovación forzada de la concesión DHCP no es compatible con este sistema operativo",
+    "renewFailed": "No se pudo renovar la concesión DHCP",
+    "interfaceRequired": "Se requiere un nombre de interfaz para renovar una concesión DHCP"
   }
 }

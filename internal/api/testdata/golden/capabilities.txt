@@ -489,6 +489,15 @@ body:
   {
     "maxBodyBytes": 262144,
     "methods": [
+      "POST"
+    ],
+    "minRole": "operator",
+    "path": "/api/v1/telemetry/dhcp/renew",
+    "rateLimited": true
+  },
+  {
+    "maxBodyBytes": 262144,
+    "methods": [
       "GET",
       "POST"
     ],

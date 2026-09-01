@@ -413,6 +413,16 @@ func (s *Server) setupTelemetryRoutes() {
 			rateLimited: true,
 		},
 		{
+			// Operator+ and rate-limited: this restarts the DHCP client on a
+			// live interface, so it is a persistent write in every sense that
+			// matters even though nothing is written to disk (#170).
+			path:        APIVersionPrefix + "/telemetry/dhcp/renew",
+			handler:     s.handleRenewDHCPLease,
+			methods:     post,
+			minRole:     op,
+			rateLimited: true,
+		},
+		{
 			path:    APIVersionPrefix + "/telemetry/dhcp/rogue",
 			handler: s.handleRogueDHCP,
 			methods: getPost,

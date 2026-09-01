@@ -130,5 +130,10 @@
     "invalidID": "Missing or invalid report id",
     "notFound": "Report not found",
     "notReady": "Report file is not available yet"
+  },
+  "dhcp": {
+    "renewNotSupported": "Forcing a DHCP lease renewal is not supported on this operating system",
+    "renewFailed": "Failed to renew the DHCP lease",
+    "interfaceRequired": "An interface name is required to renew a DHCP lease"
   }
 }
