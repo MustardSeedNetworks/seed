@@ -120,3 +120,40 @@ func TestHandleRenewDHCPLease_ReportsARealFailureAs500(t *testing.T) {
 		t.Errorf("command detail leaked into the response: %s", w.Body.String())
 	}
 }
+
+func TestHandleRenewDHCPLease_RejectsNamesThatCouldForgeALogEntry(t *testing.T) {
+	// The handler logs the interface name on both its success and failure
+	// paths, straight from the request body (CodeQL 402/403/404, CWE-117).
+	// A name carrying a newline would let a caller append a second, invented
+	// log line -- which matters here because the fleet's SIEM rules parse
+	// those lines. The charset guard is what makes that unrepresentable.
+	//
+	// The names are JSON string escapes on purpose: that is how a real caller
+	// would deliver a control character through the request body.
+	cases := map[string]string{
+		"newline":         `en0\nlevel=INFO msg="DHCP lease renewed" interface=forged`,
+		"carriage return": `en0\rlevel=ERROR msg=forged`,
+		"tab":             `en0\tforged`,
+		"space":           `en0 forged`,
+		"shell metachar":  `en0; reboot`,
+		"too long":        `aaaaaaaaaaaaaaaaaaaaaaaa`,
+	}
+
+	for name, iface := range cases {
+		t.Run(name, func(t *testing.T) {
+			var called string
+			s := serverWithStubbedRenew(true, nil, &called)
+
+			w := postRenew(t, s, `{"interface":"`+iface+`"}`)
+
+			if w.Code != http.StatusBadRequest {
+				t.Errorf("status = %d, want 400 for %q", w.Code, iface)
+			}
+			// The load-bearing assertion: a rejected name must not reach the
+			// renewal, which is what runs a command against the interface.
+			if called != "" {
+				t.Errorf("rejected name still reached the renewal as %q", called)
+			}
+		})
+	}
+}

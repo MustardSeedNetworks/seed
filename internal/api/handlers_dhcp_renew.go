@@ -8,6 +8,7 @@ import (
 	"github.com/MustardSeedNetworks/seed/internal/diagnostics/dhcp"
 	"github.com/MustardSeedNetworks/seed/internal/i18n"
 	"github.com/MustardSeedNetworks/seed/internal/logging"
+	"github.com/MustardSeedNetworks/seed/internal/validation"
 )
 
 // RenewDHCPLeaseRequest asks for a forced DHCP renewal on one interface.
@@ -46,6 +47,19 @@ func (s *Server) handleRenewDHCPLease(w http.ResponseWriter, r *http.Request) {
 	if req.Interface == "" {
 		sendErrorResponseWithDetails(w, logger, http.StatusBadRequest,
 			ErrCodeValidation, localizer.T("errors.dhcp.interfaceRequired"), "")
+
+		return
+	}
+	// The name is logged on both the success and failure paths below, and it
+	// arrives straight from the request body. validInterfaceRegex admits only
+	// alphanumerics, hyphens and underscores within 16 characters, so a caller
+	// cannot smuggle a newline through and forge a second log entry (CWE-117).
+	// The rejection itself deliberately logs err and not the value, which would
+	// reintroduce exactly what this guards against.
+	if err := validation.ValidateInterface(req.Interface); err != nil {
+		logger.WarnContext(r.Context(), "Invalid interface", "error", err)
+		sendErrorResponseWithDetails(w, logger, http.StatusBadRequest,
+			ErrCodeValidation, localizer.T("errors.network.invalidInterface"), "")
 
 		return
 	}
