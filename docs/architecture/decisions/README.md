@@ -1,13 +1,13 @@
 # Architecture Decision Records
 
-ADRs capture *why* a structural decision was made, so the reasoning survives the
+ADRs capture _why_ a structural decision was made, so the reasoning survives the
 re-architecture. Format: Context → Decision → Consequences. Status values:
 Proposed · Accepted · Superseded.
 
 See the [Re-Architecture Blueprint](../RE_ARCHITECTURE_BLUEPRINT.md) for the full picture.
 
 | ADR | Title | Status |
-|---|---|---|
+| --- | --- | --- |
 | [0001](0001-modulith-hexagon.md) | Modulith hexagon structure | Accepted |
 | [0002](0002-capability-registry.md) | Capability registry for route policy | Accepted |
 | [0003](0003-contract-first-boundary.md) | Contract boundary — code-first; OpenAPI deferred | Amended |

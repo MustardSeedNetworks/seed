@@ -35,7 +35,7 @@ every shell-out currently in the tree.
 ### Neighbour caches (ARP / NDP)
 
 | Platform | API path | Verdict |
-|---|---|---|
+| --- | --- | --- |
 | Linux | netlink via `vishvananda/netlink` | **native** — already used, no shell |
 | macOS | routing socket (`route.FetchRIB`) | **does not work**, see below |
 | Windows | `GetIpNetTable2` | **not bound** in `golang.org/x/sys/windows` |
@@ -44,7 +44,7 @@ every shell-out currently in the tree.
 Fetched every way the API allows and parsed with `route.ParseRIB` — the typed
 parser, not the hand-rolled byte offsets that previously mangled the addresses:
 
-```
+```text
 AF_UNSPEC RIBTypeRoute arg=0             bytes=11004  msgs=62   llinfo v4=0 v6=4
 AF_INET   RIBTypeRoute arg=0             bytes=1344   msgs=9    llinfo v4=0 v6=0
 AF_INET6  RIBTypeRoute arg=0             bytes=9660   msgs=53   llinfo v4=0 v6=4
@@ -61,8 +61,8 @@ That is why `ndp_darwin.go` shells out, and the comment there says so.
 **Windows.** `x/sys/windows` binds `GetIpForwardTable`, `GetIpInterfaceTable`
 and `GetUnicastIpAddressTable`, but not `GetIpNetTable2`. Using it means a
 hand-rolled `LazyDLL` binding — which existed once, had no callers, and carried
-two `possible misuse of unsafe.Pointer` vet findings before being removed under
-#2174. Reintroducing it is defensible, but it is a deliberate piece of work with
+two `possible misuse of unsafe.Pointer` vet findings before being removed
+under #2174. Reintroducing it is defensible, but it is a deliberate piece of work with
 a real risk surface, not a cleanup. `Get-NetNeighbor` with `ConvertTo-Csv` is
 the current path; it is structured output rather than localised prose, which is
 why it was chosen over `netsh`.
