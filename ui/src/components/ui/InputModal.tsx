@@ -55,7 +55,7 @@ export const InputModal: FC<InputModalProps> = ({
   };
 
   return (
-    <Modal isOpen={isOpen} onClose={onCancel} size="sm" showCloseButton={false}>
+    <Modal isOpen={isOpen} onClose={onCancel} size="sm" showCloseButton={false} ariaLabel={title}>
       <div className="stack-lg">
         <div>
           <h2 className="heading-3 text-text-primary">{title}</h2>

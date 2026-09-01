@@ -15,6 +15,12 @@ export interface ModalProps {
   isOpen: boolean;
   onClose: () => void;
   title?: string;
+  /**
+   * Accessible name for callers that render their own heading in the body
+   * rather than passing `title`. A dialog must have a name; without one,
+   * assistive technology announces only that a dialog opened.
+   */
+  ariaLabel?: string;
   children: ReactNode;
   size?: ModalSize;
   showCloseButton?: boolean;
@@ -35,6 +41,7 @@ export const Modal: FC<ModalProps> = ({
   isOpen,
   onClose,
   title,
+  ariaLabel,
   children,
   size = 'md',
   showCloseButton = true,
@@ -84,6 +91,7 @@ export const Modal: FC<ModalProps> = ({
         role="dialog"
         aria-modal="true"
         aria-labelledby={title ? 'modal-title' : undefined}
+        aria-label={title ? undefined : ariaLabel}
         onKeyDown={handleContentKeyDown}
       >
         {title || showCloseButton ? (
