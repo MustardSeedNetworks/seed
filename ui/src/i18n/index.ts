@@ -127,6 +127,12 @@ i18n
 
     // Debug mode in development
     debug: import.meta.env.DEV,
+
+    // Report keys that do not resolve. i18next renders the key itself when a
+    // lookup fails, so `settings.mode.reflector` appears in the UI as though
+    // it were a label. Reporting costs nothing here -- nothing is persisted --
+    // and the test setup turns each report into a failing test (#1942).
+    saveMissing: true,
   });
 
 // Keep the document's lang attribute in sync with the active locale.
