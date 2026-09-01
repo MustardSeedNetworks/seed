@@ -2,21 +2,13 @@
 
 package dns
 
-import (
-	"bufio"
-	"os"
-	"strings"
-)
-
-const nameserverFieldCount = 2
-
 // getSystemDNSPlatform reads DNS servers on Linux from /etc/resolv.conf
 // and systemd-resolved config files.
 func getSystemDNSPlatform() []string {
 	servers := []string{}
 
 	// First try /etc/resolv.conf
-	if s := parseResolvConf("/etc/resolv.conf"); len(s) > 0 {
+	if s := parseResolvConf(resolvConfPath); len(s) > 0 {
 		// If only systemd-resolved stub is found, try to get real servers
 		if len(s) == 1 && s[0] == "127.0.0.53" {
 			if realServers := getSystemdResolvedDNS(); len(realServers) > 0 {
@@ -24,35 +16,6 @@ func getSystemDNSPlatform() []string {
 			}
 		}
 		return s
-	}
-
-	return servers
-}
-
-// parseResolvConf reads nameserver entries from a resolv.conf file.
-func parseResolvConf(path string) []string {
-	servers := []string{}
-
-	file, err := os.Open(path)
-	if err != nil {
-		return servers
-	}
-	defer file.Close()
-
-	scanner := bufio.NewScanner(file)
-	for scanner.Scan() {
-		line := strings.TrimSpace(scanner.Text())
-		// Skip comments
-		if strings.HasPrefix(line, "#") {
-			continue
-		}
-		// Parse nameserver lines
-		if strings.HasPrefix(line, "nameserver") {
-			parts := strings.Fields(line)
-			if len(parts) >= nameserverFieldCount {
-				servers = append(servers, parts[1])
-			}
-		}
 	}
 
 	return servers

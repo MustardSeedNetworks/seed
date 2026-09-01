@@ -10,6 +10,7 @@ import (
 	"net/http"
 
 	"github.com/MustardSeedNetworks/seed/internal/dhcp"
+	"github.com/MustardSeedNetworks/seed/internal/diagnostics/dns"
 	"github.com/MustardSeedNetworks/seed/internal/i18n"
 	"github.com/MustardSeedNetworks/seed/internal/logging"
 	"github.com/MustardSeedNetworks/seed/internal/netif"
@@ -1009,9 +1010,8 @@ func isUniqueLocal(addr string) bool {
 	return (c == 'f' || c == 'F') && (c2 == 'c' || c2 == 'C' || c2 == 'd' || c2 == 'D')
 }
 
+// getSystemDNS returns the host's configured resolvers, used as the IP config
+// fallback when a DHCP lease carries none of its own.
 func getSystemDNS() []string {
-	// This is platform-specific. For now, return common defaults.
-	// A full implementation would read /etc/resolv.conf on Linux
-	// or use scutil on macOS.
-	return []string{}
+	return dns.GetSystemDNS()
 }

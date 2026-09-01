@@ -249,6 +249,7 @@ export function NetworkCard({
   const ipv4 = data?.ipv4 ?? null;
   const ipv6List = useMemo(() => data?.ipv6 ?? [], [data?.ipv6]);
   const timing = data?.timing ?? null;
+  const dnsServers = useMemo(() => data?.dns ?? [], [data?.dns]);
   const hasIpv4 = ipv4 !== null;
   const hasIpv6 = ipv6List.length > 0;
   const globalIpv6 = ipv6List.filter((ip) => ip.scope === 'global');
@@ -410,6 +411,25 @@ export function NetworkCard({
                   </div>
                 ))}
               </div>
+            </>
+          ) : null}
+
+          {/* DNS servers, from the lease or the host resolver config (#93) */}
+          {dnsServers.length > 0 ? (
+            <>
+              <CardDivider />
+              <p className={cn('caption font-medium', spacing.margin.bottom.tight)}>
+                {tr('network.dns')}
+              </p>
+              {dnsServers.map((server) => (
+                <CardRow
+                  key={server}
+                  label={tr('network.address')}
+                  value={server}
+                  wrap={true}
+                  mono={true}
+                />
+              ))}
             </>
           ) : null}
 
