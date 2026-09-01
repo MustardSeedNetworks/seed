@@ -5,6 +5,43 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.213.42](https://github.com/MustardSeedNetworks/seed/compare/v0.213.41...v0.213.42) (2026-09-01)
+
+
+### Bug Fixes
+
+* **a11y:** name the modals and the channel-graph paths ([#2280](https://github.com/MustardSeedNetworks/seed/issues/2280)) ([1715881](https://github.com/MustardSeedNetworks/seed/commit/1715881f0e58e19bc7ce3554f89b08acaa38e766)), closes [#2099](https://github.com/MustardSeedNetworks/seed/issues/2099)
+* **api:** keep licence activation state out of the real config directory ([#2267](https://github.com/MustardSeedNetworks/seed/issues/2267)) ([2f80dc8](https://github.com/MustardSeedNetworks/seed/commit/2f80dc8cccaf4407aa724f4169615a2d96439afa)), closes [#2155](https://github.com/MustardSeedNetworks/seed/issues/2155)
+* **auth:** stop the mount probe clearing a login's loading state ([#2266](https://github.com/MustardSeedNetworks/seed/issues/2266)) ([fcded18](https://github.com/MustardSeedNetworks/seed/commit/fcded1868d3dcb68d514af10dbf2200936766522)), closes [#2256](https://github.com/MustardSeedNetworks/seed/issues/2256)
+* **ci:** make the issue-title gate clear itself and accept the house style ([#2269](https://github.com/MustardSeedNetworks/seed/issues/2269)) ([cce3f09](https://github.com/MustardSeedNetworks/seed/commit/cce3f09b83f1a4b2df9100697b45742dc5df84d4))
+* **discovery:** read the IPv6 neighbour table on macOS ([#2271](https://github.com/MustardSeedNetworks/seed/issues/2271)) ([c9af7bc](https://github.com/MustardSeedNetworks/seed/commit/c9af7bc1bc0ba693498a4a96b22ef8ae717c31aa)), closes [#2089](https://github.com/MustardSeedNetworks/seed/issues/2089)
+* **discovery:** read the real IPv6 neighbour table on Windows ([#2270](https://github.com/MustardSeedNetworks/seed/issues/2270)) ([dcaa6af](https://github.com/MustardSeedNetworks/seed/commit/dcaa6afb6124f062f2cb857332db9c9ff1e90b2e)), closes [#2174](https://github.com/MustardSeedNetworks/seed/issues/2174)
+* **ui:** stop NaN and Infinity reaching the screen as text ([#2268](https://github.com/MustardSeedNetworks/seed/issues/2268)) ([4c5ff0d](https://github.com/MustardSeedNetworks/seed/commit/4c5ff0deca82108b66f36a4851c9949e3e63026b)), closes [#775](https://github.com/MustardSeedNetworks/seed/issues/775)
+
+
+### Documentation
+
+* **adr:** record that syscalls are preferred over shelling out ([#2277](https://github.com/MustardSeedNetworks/seed/issues/2277)) ([ef839aa](https://github.com/MustardSeedNetworks/seed/commit/ef839aaaaf9025e42e3ec384945621a9b27f4d06))
+
+
+### Tests
+
+* **discovery:** cover the scoping, chunking and copy invariants ([#2278](https://github.com/MustardSeedNetworks/seed/issues/2278)) ([5436959](https://github.com/MustardSeedNetworks/seed/commit/543695934b504e16bec17b4cb9d72e0a409ae698)), closes [#55](https://github.com/MustardSeedNetworks/seed/issues/55)
+* **i18n:** fail the test that renders an unresolved key ([#2279](https://github.com/MustardSeedNetworks/seed/issues/2279)) ([250ea52](https://github.com/MustardSeedNetworks/seed/commit/250ea527757ae3623167e0a38187e016849f7a09))
+
+
+### Continuous Integration
+
+* never cancel a CI run on main ([#2264](https://github.com/MustardSeedNetworks/seed/issues/2264)) ([aeac902](https://github.com/MustardSeedNetworks/seed/commit/aeac902f0d935b8e519f2b946daaea4d0605a45d))
+* retry the benchstat install and prove the retry fails closed ([#2273](https://github.com/MustardSeedNetworks/seed/issues/2273)) ([16484ab](https://github.com/MustardSeedNetworks/seed/commit/16484ab3d6ee484d1ec1d23315b1d63ba9a9743f)), closes [#2159](https://github.com/MustardSeedNetworks/seed/issues/2159)
+* run the package-reachability gate on pull requests ([#2274](https://github.com/MustardSeedNetworks/seed/issues/2274)) ([0223f53](https://github.com/MustardSeedNetworks/seed/commit/0223f53f5013c1a06c6ab1993d831f81ba265b5a)), closes [#2138](https://github.com/MustardSeedNetworks/seed/issues/2138)
+
+
+### Miscellaneous
+
+* **deps:** lock file maintenance ([#2243](https://github.com/MustardSeedNetworks/seed/issues/2243)) ([aee9960](https://github.com/MustardSeedNetworks/seed/commit/aee99602044a36e022ca85dbb3435ddda2335779))
+* **deps:** lock file maintenance ([#2281](https://github.com/MustardSeedNetworks/seed/issues/2281)) ([d579cb7](https://github.com/MustardSeedNetworks/seed/commit/d579cb7f09a046f97cfc60ce5238a754c9a74a71))
+
 ## [0.213.41](https://github.com/MustardSeedNetworks/seed/compare/v0.213.40...v0.213.41) (2026-08-31)
 
 
