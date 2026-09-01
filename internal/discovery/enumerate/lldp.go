@@ -2,9 +2,11 @@ package enumerate
 
 import (
 	"context"
+	"encoding/hex"
 	"net"
 	"sync"
 	"time"
+	"unicode/utf8"
 
 	"github.com/gopacket/gopacket"
 	"github.com/gopacket/gopacket/layers"
@@ -174,11 +176,11 @@ func (c *LLDPCapture) processPacket(packet gopacket.Packet, vlan uint16) {
 	neighbor.ObservedVLAN = vlan
 
 	// Parse Chassis ID
-	neighbor.ChassisID = string(lldp.ChassisID.ID)
+	neighbor.ChassisID = formatLLDPChassisID(lldp.ChassisID)
 	neighbor.ChassisIDType = lldp.ChassisID.Subtype.String()
 
 	// Parse Port ID
-	neighbor.PortID = string(lldp.PortID.ID)
+	neighbor.PortID = formatLLDPPortID(lldp.PortID)
 	neighbor.PortIDType = lldp.PortID.Subtype.String()
 
 	// Parse TTL
@@ -260,4 +262,99 @@ func (c *LLDPCapture) IsRunning() bool {
 	c.mu.RLock()
 	defer c.mu.RUnlock()
 	return c.started
+}
+
+// LLDP identifiers are only text for some subtypes. For macAddress and
+// networkAddress the TLV carries raw bytes, and casting those to a string put
+// unprintable data straight into the API responses (#1932). The subtype is
+// decoded already, so the formatting below reads it rather than guessing from
+// the bytes.
+const (
+	// lldpMACLen and lldpEUI64Len are the two link-layer address widths a
+	// macAddress subtype may carry.
+	lldpMACLen   = 6
+	lldpEUI64Len = 8
+
+	// An IANA address-family byte prefixes a networkAddress value.
+	lldpAddrFamilyIPv4 = 1
+	lldpAddrFamilyIPv6 = 2
+	lldpIPv4Len        = 4
+	lldpIPv6Len        = 16
+)
+
+// formatLLDPChassisID renders a chassis ID according to its subtype.
+func formatLLDPChassisID(id layers.LLDPChassisID) string {
+	switch id.Subtype {
+	case layers.LLDPChassisIDSubTypeMACAddr:
+		return formatLLDPMAC(id.ID)
+	case layers.LLDPChassisIDSubTypeNetworkAddr:
+		return formatLLDPNetworkAddr(id.ID)
+	case layers.LLDPChassisIDSubTypeChassisComp,
+		layers.LLDPChassisIDSubtypeIfaceAlias,
+		layers.LLDPChassisIDSubTypePortComp,
+		layers.LLDPChassisIDSubtypeIfaceName,
+		layers.LLDPChassisIDSubTypeLocal,
+		layers.LLDPChassisIDSubTypeReserved:
+		return formatLLDPText(id.ID)
+	default:
+		return formatLLDPText(id.ID)
+	}
+}
+
+// formatLLDPPortID renders a port ID according to its subtype.
+func formatLLDPPortID(id layers.LLDPPortID) string {
+	switch id.Subtype {
+	case layers.LLDPPortIDSubtypeMACAddr:
+		return formatLLDPMAC(id.ID)
+	case layers.LLDPPortIDSubtypeNetworkAddr:
+		return formatLLDPNetworkAddr(id.ID)
+	case layers.LLDPPortIDSubtypeIfaceAlias,
+		layers.LLDPPortIDSubtypePortComp,
+		layers.LLDPPortIDSubtypeIfaceName,
+		layers.LLDPPortIDSubtypeAgentCircuitID,
+		layers.LLDPPortIDSubtypeLocal,
+		layers.LLDPPortIDSubtypeReserved:
+		return formatLLDPText(id.ID)
+	default:
+		return formatLLDPText(id.ID)
+	}
+}
+
+// formatLLDPMAC renders a link-layer address the way the rest of this package
+// does. A value that is not an address width falls back to hex rather than
+// being dropped: an identifier we cannot name is still an identifier.
+func formatLLDPMAC(raw []byte) string {
+	if len(raw) == lldpMACLen || len(raw) == lldpEUI64Len {
+		return net.HardwareAddr(raw).String()
+	}
+
+	return hex.EncodeToString(raw)
+}
+
+// formatLLDPNetworkAddr renders a networkAddress value, which IEEE 802.1AB
+// prefixes with an IANA address-family byte.
+func formatLLDPNetworkAddr(raw []byte) string {
+	if len(raw) < 1 {
+		return ""
+	}
+
+	addr := raw[1:]
+	switch {
+	case raw[0] == lldpAddrFamilyIPv4 && len(addr) == lldpIPv4Len,
+		raw[0] == lldpAddrFamilyIPv6 && len(addr) == lldpIPv6Len:
+		return net.IP(addr).String()
+	default:
+		return hex.EncodeToString(raw)
+	}
+}
+
+// formatLLDPText renders a subtype whose value is text. A device that
+// advertises a text subtype with bytes that are not text still exists, and hex
+// beats the replacement characters JSON encoding would otherwise produce.
+func formatLLDPText(raw []byte) string {
+	if !utf8.Valid(raw) {
+		return hex.EncodeToString(raw)
+	}
+
+	return string(raw)
 }
