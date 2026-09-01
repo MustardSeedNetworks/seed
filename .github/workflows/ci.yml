@@ -279,6 +279,14 @@ jobs:
         working-directory: ui
         run: npm ci
 
+      # The same gate dead-code.yml runs, moved onto the PR path as well.
+      # There it runs weekly, so a package could go unreachable and stay that
+      # way for up to seven days on a job nothing is blocked by -- which is how
+      # stem carried 2,800 unreachable lines for months (#2138). It costs about
+      # a second and needs only the Go toolchain, already set up above.
+      - name: Check package reachability
+        run: ./scripts/check-package-reachability.sh
+
       - name: Run golangci-lint
         uses: golangci/golangci-lint-action@ba0d7d2ec06a0ea1cb5fa41b2e4a3ab91d21278a # v9.3.0
         with:
