@@ -320,8 +320,9 @@ function ChannelGraph({
                 className="transition-all cursor-pointer"
                 onMouseEnter={(): void => setHoveredNetwork(network)}
                 onMouseLeave={(): void => setHoveredNetwork(null)}
-                aria-label={`Network ${network.ssid || network.bssid} on channel ${network.channel}`}
-              />
+              >
+                <title>{`Network ${network.ssid || network.bssid} on channel ${network.channel}`}</title>
+              </path>
             );
           })}
         </g>

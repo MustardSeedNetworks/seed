@@ -37,7 +37,7 @@ export const ConfirmModal: FC<ConfirmModalProps> = ({
   confirmTone = 'red',
   icon,
 }) => (
-  <Modal isOpen={isOpen} onClose={onCancel} size="sm" showCloseButton={false}>
+  <Modal isOpen={isOpen} onClose={onCancel} size="sm" showCloseButton={false} ariaLabel={title}>
     <div className="stack-lg">
       <div className="flex items-center gap-default">
         {icon ?? <AlertTriangle className={`${iconSizes.xl} ${iconColorClass[confirmTone]}`} />}

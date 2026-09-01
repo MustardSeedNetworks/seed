@@ -128,6 +128,10 @@ const preview: Preview = {
     // catalog without failing CI yet. After a baseline pass through
     // existing stories, raise to 'error' to gate new violations.
     a11y: {
+      // Still 'todo': flipping this to 'error' surfaces ten remaining WCAG
+      // violations across nine components (#2099 lists them). Ten were fixed
+      // here; the rest each need their own component change, and shipping a
+      // permanently red required job would train people to ignore it.
       test: 'todo',
       config: {
         rules: [
