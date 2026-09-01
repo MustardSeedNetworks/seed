@@ -292,7 +292,9 @@ describe('useAuth', () => {
     mockFetch.mockReturnValueOnce(loginPromise);
 
     act(() => {
-      result.current.login('admin', 'password');
+      // Deliberately not awaited: the assertion below is about the state
+      // while the login is still in flight.
+      void result.current.login('admin', 'password');
     });
 
     // Should be loading

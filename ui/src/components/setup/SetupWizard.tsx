@@ -164,15 +164,19 @@ export function SetupWizard({
     setSubmitError(null);
   };
 
+  // The submitted value is named apart from the watched `password` above it.
+  // They hold the same string, but a shadow here means the three uses below
+  // silently read whichever binding won, which is the sort of thing that only
+  // stays correct by luck.
   const onSubmit: SubmitHandler<{ password: string; confirmPassword: string }> = async ({
-    password,
+    password: submittedPassword,
   }) => {
     setSubmitError(null);
 
     // Fixes #723: enforce complexity rules, not just length. The
     // resolver only checks length + confirmation match; the policy
     // evaluator gates submit on the broader rule set.
-    const policy = evaluatePassword(password);
+    const policy = evaluatePassword(submittedPassword);
     if (!policy.valid) {
       setSubmitError(t('errors.passwordTooShort'));
       logger.warn(LogComponents.SETUP, 'Setup rejected - password policy not met', {
@@ -189,7 +193,7 @@ export function SetupWizard({
       const response = await fetch(`${API_BASE}/api/v1/setup/complete`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ password, setupToken }),
+        body: JSON.stringify({ password: submittedPassword, setupToken }),
       });
 
       if (!response.ok) {
@@ -205,7 +209,7 @@ export function SetupWizard({
 
       logger.info(LogComponents.SETUP, 'Setup complete request succeeded', { username });
 
-      const loginSuccess = await onLogin(username, password);
+      const loginSuccess = await onLogin(username, submittedPassword);
       if (!loginSuccess) {
         setSubmitError(t('errors.loginFailed'));
         logger.error(LogComponents.SETUP, 'Auto-login after setup failed', null, { username });

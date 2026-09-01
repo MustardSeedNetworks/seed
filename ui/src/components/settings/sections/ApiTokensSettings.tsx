@@ -155,13 +155,13 @@ export function ApiTokensSettings(): React.ReactElement {
           </div>
         )}
 
-        {error && (
+        {error ? (
           <div className="rounded-lg border border-status-error/30 bg-status-error/5 pad-sm text-sm text-status-error">
             {error}
           </div>
-        )}
+        ) : null}
 
-        {mintedToken && (
+        {mintedToken ? (
           <div className="rounded-lg border border-status-success/40 bg-status-success/5 pad-sm stack-xs">
             <div className="text-sm font-medium text-status-success">{t('apiTokens.created')}</div>
             <code className="block break-all rounded bg-surface-raised px-cell py-compact text-xs">
@@ -181,7 +181,7 @@ export function ApiTokensSettings(): React.ReactElement {
               </Button>
             </div>
           </div>
-        )}
+        ) : null}
 
         <div className="flex items-end gap-compact">
           <div className="flex-1">
@@ -234,14 +234,14 @@ export function ApiTokensSettings(): React.ReactElement {
               </tr>
             </thead>
             <tbody>
-              {tokens.map((t) => {
-                const revoked = !isZeroTime(t.revokedAt);
+              {tokens.map((token) => {
+                const revoked = !isZeroTime(token.revokedAt);
                 return (
-                  <tr key={t.id} className="border-t border-surface-border">
-                    <td className="py-row pr-2">{t.name}</td>
-                    <td className="py-row pr-2 font-mono text-xs">{t.prefix}…</td>
-                    <td className="py-row pr-2">{formatDate(t.createdAt)}</td>
-                    <td className="py-row pr-2">{formatDate(t.lastUsedAt)}</td>
+                  <tr key={token.id} className="border-t border-surface-border">
+                    <td className="py-row pr-2">{token.name}</td>
+                    <td className="py-row pr-2 font-mono text-xs">{token.prefix}…</td>
+                    <td className="py-row pr-2">{formatDate(token.createdAt)}</td>
+                    <td className="py-row pr-2">{formatDate(token.lastUsedAt)}</td>
                     <td className="py-row pr-2">
                       {revoked ? (
                         <span className="text-status-error">revoked</span>
@@ -262,7 +262,7 @@ export function ApiTokensSettings(): React.ReactElement {
                               ? undefined
                               : 'Read-only — operator role required to revoke tokens'
                           }
-                          onClick={() => void handleRevoke(t)}
+                          onClick={() => void handleRevoke(token)}
                         >
                           Revoke
                         </Button>

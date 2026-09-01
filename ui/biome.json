@@ -66,7 +66,8 @@
         "noNegationElse": "off",
         "noSubstr": "off",
         "useFilenamingConvention": "off",
-        "useSpreadOverApply": "error"
+        "useSpreadOverApply": "error",
+        "useDestructuring": "error"
       },
       "suspicious": {
         "noArrayIndexKey": "off",
@@ -81,7 +82,10 @@
         "noImportCycles": "warn",
         "noDuplicatedSpreadProps": "error",
         "noParametersOnlyUsedInRecursion": "error",
-        "useArraySortCompare": "error"
+        "useArraySortCompare": "error",
+        "noLeakedRender": "error",
+        "noShadow": "error",
+        "noEqualsToNull": "error"
       },
       "performance": {
         "noBarrelFile": "error",
@@ -96,7 +100,10 @@
       },
       "nursery": {
         "useAwaitThenable": "off",
-        "useExhaustiveSwitchCases": "error"
+        "useExhaustiveSwitchCases": "error",
+        "noFloatingPromises": "error",
+        "noMisusedPromises": "error",
+        "useRegexpExec": "error"
       }
     }
   },

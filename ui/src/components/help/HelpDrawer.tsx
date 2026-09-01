@@ -73,12 +73,12 @@ export function HelpDrawer({
     if (!query) {
       return helpSections;
     }
-    return helpSections.filter((section) => {
-      const title = t(section.titleKey).toLowerCase();
+    return helpSections.filter((candidate) => {
+      const title = t(candidate.titleKey).toLowerCase();
       return (
         title.includes(query) ||
-        section.id.toLowerCase().includes(query) ||
-        sectionSearchText(section).includes(query)
+        candidate.id.toLowerCase().includes(query) ||
+        sectionSearchText(candidate).includes(query)
       );
     });
   }, [query, t]);
@@ -179,25 +179,25 @@ export function HelpDrawer({
               {filteredSections.length === 0 ? (
                 <p className={cn('caption', spacing.chip.lg)}>{t('modal.searchPlaceholder')}</p>
               ) : (
-                filteredSections.map((section) => (
+                filteredSections.map((entry) => (
                   <button
                     type="button"
-                    key={section.id}
-                    onClick={(): void => setActiveSection(section.id)}
+                    key={entry.id}
+                    onClick={(): void => setActiveSection(entry.id)}
                     className={cn(
                       'w-full flex items-center',
                       spacing.gap.default,
                       spacing.tab,
                       radius.default,
                       'body-small transition-colors text-left',
-                      currentSection.id === section.id
+                      currentSection.id === entry.id
                         ? 'bg-brand-primary/10 text-brand-primary font-medium'
                         : 'text-text-secondary hover:bg-surface-hover hover:text-text-primary',
                     )}
-                    aria-current={currentSection.id === section.id ? 'true' : undefined}
+                    aria-current={currentSection.id === entry.id ? 'true' : undefined}
                   >
-                    {section.icon}
-                    <span>{t(section.titleKey)}</span>
+                    {entry.icon}
+                    <span>{t(entry.titleKey)}</span>
                   </button>
                 ))
               )}

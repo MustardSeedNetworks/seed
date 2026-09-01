@@ -154,20 +154,20 @@ export function SsoSettings(): React.ReactElement {
           </div>
         )}
 
-        {error && (
+        {error ? (
           <div
             className="rounded-lg border border-status-error/30 bg-status-error/5 pad-sm text-sm text-status-error"
             data-testid="sso-error"
           >
             {error}
           </div>
-        )}
+        ) : null}
 
-        {saveStatus && (
+        {saveStatus ? (
           <div className="rounded-lg border border-status-success/30 bg-status-success/5 pad-sm text-sm text-status-success">
             {saveStatus}
           </div>
-        )}
+        ) : null}
 
         {loading ? (
           <div className="text-sm text-text-muted">{t('common:status.loading')}</div>
