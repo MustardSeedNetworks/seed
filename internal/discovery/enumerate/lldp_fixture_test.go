@@ -59,7 +59,10 @@ func TestLLDPCaptureDecodesAdvertisement(t *testing.T) {
 	n := neighbors[0]
 
 	for _, tc := range []struct{ field, got, want string }{
-		{"ChassisID", n.ChassisID, "\x00\x1bT\xc1>\x0f"},
+		// Chassis subtype 4 is a MAC, and it is the same address SourceMAC
+		// reports below. It used to be pinned here as the raw bytes it arrives
+		// as -- "\x00\x1bT\xc1>\x0f" -- which is #1932.
+		{"ChassisID", n.ChassisID, "00:1b:54:c1:3e:0f"},
 		{"PortID", n.PortID, "GigabitEthernet1/0/24"},
 		{"PortDescription", n.PortDescription, "Uplink to core"},
 		{"SystemName", n.SystemName, "access-sw-01"},
