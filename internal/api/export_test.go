@@ -471,3 +471,8 @@ func ExportWebAuthnConfigFromServer(cfg *config.Config, listenerPort int) auth.W
 func (s *Server) SetLicenseManagerForTest(m *license.Manager) {
 	s.licenseMgr = m
 }
+
+// ExportGetSystemDNS exposes getSystemDNS for testing.
+func ExportGetSystemDNS() []string {
+	return getSystemDNS()
+}

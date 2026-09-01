@@ -3,16 +3,10 @@
 package dns
 
 import (
-	"bufio"
 	"net"
 	"os"
 	"path/filepath"
-	"strings"
 )
-
-// minNameserverParts is the minimum number of fields required for a valid nameserver line.
-// A nameserver line must have at least 2 parts: "nameserver" and the IP address.
-const minNameserverParts = 2
 
 // getSystemDNSPlatform reads DNS servers on macOS from resolver config files.
 // This reads the resolver configuration directly instead of calling scutil.
@@ -21,7 +15,7 @@ func getSystemDNSPlatform() []string {
 	seen := make(map[string]bool)
 
 	// Read from /etc/resolv.conf first
-	if s := parseResolvConfDarwin("/etc/resolv.conf"); len(s) > 0 {
+	if s := parseResolvConf(resolvConfPath); len(s) > 0 {
 		for _, server := range s {
 			if !seen[server] {
 				seen[server] = true
@@ -39,7 +33,7 @@ func getSystemDNSPlatform() []string {
 				continue
 			}
 			path := filepath.Join(resolverDir, entry.Name())
-			for _, server := range parseResolvConfDarwin(path) {
+			for _, server := range parseResolvConf(path) {
 				if !seen[server] {
 					seen[server] = true
 					servers = append(servers, server)
@@ -51,35 +45,6 @@ func getSystemDNSPlatform() []string {
 	// If we still have no servers, try to get from network interface config
 	if len(servers) == 0 {
 		servers = getDNSFromInterfaces()
-	}
-
-	return servers
-}
-
-// parseResolvConfDarwin reads nameserver entries from a resolv.conf-style file.
-func parseResolvConfDarwin(path string) []string {
-	servers := []string{}
-
-	file, err := os.Open(path)
-	if err != nil {
-		return servers
-	}
-	defer func() { _ = file.Close() }()
-
-	scanner := bufio.NewScanner(file)
-	for scanner.Scan() {
-		line := strings.TrimSpace(scanner.Text())
-		// Skip comments
-		if strings.HasPrefix(line, "#") {
-			continue
-		}
-		// Parse nameserver lines
-		if strings.HasPrefix(line, "nameserver") {
-			parts := strings.Fields(line)
-			if len(parts) >= minNameserverParts {
-				servers = append(servers, parts[1])
-			}
-		}
 	}
 
 	return servers
