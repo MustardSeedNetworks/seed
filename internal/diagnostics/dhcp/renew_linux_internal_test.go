@@ -13,17 +13,18 @@ import (
 // 26.04 is exactly that shape -- dhcpcd present, dhclient absent,
 // systemd-networkd active.
 func TestSelectRenewCommand_PrefersTheManagingClient(t *testing.T) {
-	original := renewCommands
-	t.Cleanup(func() { renewCommands = original })
-
-	renewCommands = []renewCommand{
-		{name: "sh", available: func() bool { return false },
-			args: func(string) []string { return []string{"unmanaged"} }},
-		{name: "sh", available: func() bool { return true },
-			args: func(string) []string { return []string{"managing"} }},
-	}
-
-	got, ok := selectRenewCommand()
+	got, ok := selectRenewCommandFrom([]renewCommand{
+		{
+			name:      "sh",
+			available: func() bool { return false },
+			args:      func(string) []string { return []string{"unmanaged"} },
+		},
+		{
+			name:      "sh",
+			available: func() bool { return true },
+			args:      func(string) []string { return []string{"managing"} },
+		},
+	})
 	if !ok {
 		t.Fatal("no command selected although one is available")
 	}
@@ -33,27 +34,20 @@ func TestSelectRenewCommand_PrefersTheManagingClient(t *testing.T) {
 }
 
 func TestSelectRenewCommand_SkipsAbsentBinaries(t *testing.T) {
-	original := renewCommands
-	t.Cleanup(func() { renewCommands = original })
-
-	renewCommands = []renewCommand{
-		{name: "definitely-not-a-real-binary-xyz", available: func() bool { return true },
-			args: func(string) []string { return nil }},
+	candidates := []renewCommand{
+		{
+			name:      "definitely-not-a-real-binary-xyz",
+			available: func() bool { return true },
+			args:      func(string) []string { return nil },
+		},
 	}
 
-	if _, ok := selectRenewCommand(); ok {
+	if _, ok := selectRenewCommandFrom(candidates); ok {
 		t.Error("selected a command whose binary is not on PATH")
 	}
 }
 
 func TestRenewLease_RefusesWithoutAnInterface(t *testing.T) {
-	original := renewCommands
-	t.Cleanup(func() { renewCommands = original })
-	renewCommands = []renewCommand{
-		{name: "true", available: func() bool { return true },
-			args: func(string) []string { return nil }},
-	}
-
 	if err := RenewLease(t.Context(), ""); err == nil {
 		t.Error("an empty interface name must be refused, not applied to everything")
 	}
