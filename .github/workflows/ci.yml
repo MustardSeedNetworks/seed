@@ -465,7 +465,16 @@ jobs:
         timeout-minutes: 10
 
       - name: Install benchstat
-        run: go install golang.org/x/perf/cmd/benchstat@v0.0.0-20260825160852-19be9d8e6c70
+        # One unretried module fetch is enough to turn a required check red and
+        # hold a PR out of the merge queue, which is what happened on #2156
+        # (#2159). The pin is fine -- the same command installs cleanly locally.
+        #
+        # The loop exits non-zero when every attempt fails. #1950 records a
+        # hand-rolled retry here that got that wrong: its exit branch tested
+        # `attempt -eq 3` inside a `for attempt in 1 2` loop, so two failures
+        # fell out of the loop and reported success. Both paths are covered by
+        # scripts/test-retry-install.sh.
+        run: ./scripts/retry-install-benchstat.sh
 
       - name: Benchmark head
         run: ./scripts/bench-run.sh > "$RUNNER_TEMP/head.txt"
@@ -837,6 +846,12 @@ jobs:
 
       - name: Verify release workflow dispatch contract
         run: ./scripts/test-check-release-workflow-contract.sh
+
+      # In quality rather than bench: the retry's failure path is the half that
+      # was wrong last time (#1950) and the half CI never reaches, so it needs
+      # running on every PR rather than only when benchmarks do.
+      - name: Verify the benchstat install retry fails closed
+        run: ./scripts/test-retry-install.sh
 
       - name: Check for sensitive files
         run: |
