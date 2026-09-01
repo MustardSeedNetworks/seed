@@ -16,8 +16,8 @@ import (
 // Command timeout for DHCP operations.
 const dhcpTimeoutSeconds = 60
 
-// DHCPInfo contains DHCP lease information.
-type DHCPInfo struct {
+// dhcpInfo contains DHCP lease information.
+type dhcpInfo struct {
 	Enabled     bool      `json:"enabled"`
 	Server      string    `json:"server,omitempty"`
 	LeaseStart  time.Time `json:"lease_start,omitempty"`
@@ -26,8 +26,8 @@ type DHCPInfo struct {
 	DNS         []string  `json:"dns,omitempty"`
 }
 
-// GetDHCPInfo retrieves DHCP lease information for an interface on Windows.
-func GetDHCPInfo(iface string) (*DHCPInfo, error) {
+// getDHCPInfo retrieves DHCP lease information for an interface on Windows.
+func getDHCPInfo(iface string) (*dhcpInfo, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), dhcpTimeoutSeconds*time.Second)
 	defer cancel()
 
@@ -40,8 +40,8 @@ func GetDHCPInfo(iface string) (*DHCPInfo, error) {
 }
 
 // parseDHCPInfo parses ipconfig /all output for DHCP information.
-func parseDHCPInfo(output, targetIface string) *DHCPInfo {
-	info := &DHCPInfo{}
+func parseDHCPInfo(output, targetIface string) *dhcpInfo {
+	info := &dhcpInfo{}
 
 	lines := strings.Split(output, "\n")
 	inTargetAdapter := false
@@ -113,24 +113,6 @@ func parseWindowsDate(s string) time.Time {
 	return time.Time{}
 }
 
-// ReleaseDHCP releases the DHCP lease for an interface.
-func ReleaseDHCP(iface string) error {
-	ctx, cancel := context.WithTimeout(context.Background(), dhcpTimeoutSeconds*time.Second)
-	defer cancel()
-
-	args := []string{"/release"}
-	if iface != "" {
-		args = append(args, iface)
-	}
-
-	output, err := exec.CommandContext(ctx, "ipconfig", args...).CombinedOutput()
-	if err != nil {
-		return fmt.Errorf("ipconfig /release failed: %s", strings.TrimSpace(string(output)))
-	}
-
-	return nil
-}
-
 // RenewDHCP renews the DHCP lease for an interface.
 func RenewDHCP(iface string) error {
 	ctx, cancel := context.WithTimeout(context.Background(), dhcpTimeoutSeconds*time.Second)
@@ -144,19 +126,6 @@ func RenewDHCP(iface string) error {
 	output, err := exec.CommandContext(ctx, "ipconfig", args...).CombinedOutput()
 	if err != nil {
 		return fmt.Errorf("ipconfig /renew failed: %s", strings.TrimSpace(string(output)))
-	}
-
-	return nil
-}
-
-// FlushDNS flushes the DNS resolver cache on Windows.
-func FlushDNS() error {
-	ctx, cancel := context.WithTimeout(context.Background(), dhcpTimeoutSeconds*time.Second)
-	defer cancel()
-
-	output, err := exec.CommandContext(ctx, "ipconfig", "/flushdns").CombinedOutput()
-	if err != nil {
-		return fmt.Errorf("ipconfig /flushdns failed: %s", strings.TrimSpace(string(output)))
 	}
 
 	return nil
@@ -225,7 +194,7 @@ func testDHCPPlatform(ctx context.Context, interfaceName string) *TestResult {
 
 // getCurrentLeasePlatform retrieves the current DHCP lease on Windows.
 func getCurrentLeasePlatform(interfaceName string) (*LeaseInfo, error) {
-	info, err := GetDHCPInfo(interfaceName)
+	info, err := getDHCPInfo(interfaceName)
 	if err != nil {
 		return nil, err
 	}
