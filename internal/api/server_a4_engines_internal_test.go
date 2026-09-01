@@ -1,9 +1,12 @@
 package api
 
 import (
+	"os"
+	"path/filepath"
 	"testing"
 
 	"github.com/MustardSeedNetworks/seed/internal/engine"
+	"github.com/MustardSeedNetworks/seed/internal/license"
 )
 
 // These tests exercise the wire-up before the Stage A5.9 tier
@@ -65,10 +68,15 @@ func TestInitAlertPipelines_RegistersOnPro(t *testing.T) {
 }
 
 func TestInitDatabaseDependentServices_GatesByFreeLicense(t *testing.T) {
-	// initLicenseAndAPITokens wires a Free-tier license.Manager,
-	// so the tier gate filters out everything Starter+ during the
-	// full init pass. probe + retention are Free-tier and survive.
-	s := &Server{engines: engine.NewRegistry(nil)}
+	// An empty licenseDir means no activation, so the manager reports Free and
+	// the tier gate filters out everything Starter+. probe + retention are
+	// Free-tier and survive.
+	//
+	// The directory is set explicitly because the default is the developer's
+	// real ~/.config/seed: this assertion used to depend on whether the machine
+	// running it happened to have a licence activated, and was green in CI only
+	// because runners start clean (#2155).
+	s := &Server{engines: engine.NewRegistry(nil), licenseDir: t.TempDir()}
 	s.initDatabaseDependentServices(newTestDB(t))
 
 	names := make(map[string]bool)
@@ -85,6 +93,43 @@ func TestInitDatabaseDependentServices_GatesByFreeLicense(t *testing.T) {
 	for _, n := range []string{"snmp-poller", "topology-sysinfo-reconciler"} {
 		if names[n] {
 			t.Errorf("Starter+ engine %q should be gated out on Free tier; got %v", n, names)
+		}
+	}
+}
+
+// The gate above only means something if licenseDir is actually honoured --
+// an ignored field would leave every run on the ambient state it is meant to
+// replace. Start a trial in a temp directory, point the server at it, and the
+// tier gate must open for Starter+ engines.
+func TestInitDatabaseDependentServices_HonoursLicenseDir(t *testing.T) {
+	dir := t.TempDir()
+
+	mgr, mgrErr := license.NewManagerWithDir(dir)
+	if mgrErr != nil {
+		t.Fatalf("NewManagerWithDir: %v", mgrErr)
+	}
+	if res := mgr.StartTrial(); res == nil || !res.Success {
+		t.Fatalf("StartTrial did not activate: %+v", res)
+	}
+
+	s := &Server{engines: engine.NewRegistry(nil), licenseDir: dir}
+	s.initDatabaseDependentServices(newTestDB(t))
+
+	names := make(map[string]bool)
+	for _, e := range s.engines.Engines() {
+		names[e.Name()] = true
+	}
+	// The Free-tier test above asserts this same engine is gated OUT, so the
+	// pair brackets the behaviour: absent without a licence, present with one.
+	if !names["topology-sysinfo-reconciler"] {
+		t.Errorf("a trial licence must admit Starter+ engines; got %v", names)
+	}
+
+	// And the real config directory was left alone.
+	home, homeErr := os.UserHomeDir()
+	if homeErr == nil {
+		if _, statErr := os.Stat(filepath.Join(home, ".config", "seed", ".license")); statErr == nil {
+			t.Error("the test wrote activation state to the real user config directory")
 		}
 	}
 }

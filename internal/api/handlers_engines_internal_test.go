@@ -32,7 +32,9 @@ func (*reportingEngine) Stop(_ context.Context) error  { return nil }
 func (r *reportingEngine) Status() engine.Status       { return r.status }
 
 func TestHandleEngines_ReturnsRegistryContents(t *testing.T) {
-	s := &Server{engines: engine.NewRegistry(nil)}
+	// licenseDir keeps activation state out of the developer's real config
+	// directory; see #2155.
+	s := &Server{engines: engine.NewRegistry(nil), licenseDir: t.TempDir()}
 	s.initDatabaseDependentServices(newTestDB(t))
 	s.initEngineUseCases()
 

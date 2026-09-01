@@ -166,6 +166,13 @@ type Server struct {
 	licenseMgr *license.Manager             // offline license manager (Phase D-2); nil in tests
 	apiTokens  *database.APITokenRepository // personal-access tokens (Phase D-2)
 
+	// licenseDir is where activation state is persisted. Empty means the real
+	// user config directory, which is what production wants and what a test
+	// must never get: license.NewManager() resolves ~/.config/seed, so a test
+	// that starts a trial writes to the developer's machine and every later
+	// test in the run reads it back. Tests set this to t.TempDir().
+	licenseDir string
+
 	// --- Rate limiting ---
 	loginLimiter    *RateLimiter
 	endpointLimiter *EndpointRateLimiter
@@ -490,13 +497,23 @@ func (s *Server) initDatabaseDependentServices(db *database.DB) {
 // behaves as if no paid license is present (rejects with 402).
 func (s *Server) initLicenseAndAPITokens(db *database.DB) {
 	s.apiTokens = database.NewAPITokenRepository(db)
-	lm, lmErr := license.NewManager()
+	lm, lmErr := s.newLicenseManager()
 	if lmErr != nil {
 		logging.GetLogger().Warn("license manager init failed; minting will be disabled",
 			"error", lmErr)
 		return
 	}
 	s.licenseMgr = lm
+}
+
+// newLicenseManager builds the manager against s.licenseDir, falling back to
+// the real user config directory when it is unset.
+func (s *Server) newLicenseManager() (*license.Manager, error) {
+	if s.licenseDir != "" {
+		return license.NewManagerWithDir(s.licenseDir)
+	}
+
+	return license.NewManager()
 }
 
 // initProbeEngine constructs the unified probe.Engine, wires it to
