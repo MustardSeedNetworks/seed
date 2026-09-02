@@ -1,5 +1,6 @@
 import { DnsCard } from '../components/cards/DnsCard';
 import { GatewayCard } from '../components/cards/GatewayCard';
+import { NeighbourCacheCard } from '../components/cards/NeighbourCacheCard';
 import { NetworkCard } from '../components/cards/NetworkCard';
 import { PublicIpCard } from '../components/cards/PublicIpCard';
 import { SwitchCard } from '../components/cards/SwitchCard';
@@ -70,6 +71,7 @@ export function NetworkPage() {
             />
             <GatewayCard data={cards.gateway} loading={loading} />
             <DnsCard data={cards.dns} loading={loading} />
+            <NeighbourCacheCard />
             <PublicIpCard data={cards.publicip} loading={loading} />
           </>
         )}

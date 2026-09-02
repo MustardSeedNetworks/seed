@@ -31,7 +31,8 @@
     "staticConfigFailed": "Failed to configure static IP",
     "dhcpConfigFailed": "Failed to configure DHCP",
     "invalidMode": "Mode must be 'dhcp' or 'static'",
-    "invalidConfig": "The network configuration cannot work as requested."
+    "invalidConfig": "The network configuration cannot work as requested.",
+    "neighbourCacheFailed": "Failed to read the neighbour cache."
   },
   "license": {
     "tierTooLow": "This feature requires the {{tier}} tier",

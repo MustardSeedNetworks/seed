@@ -14,6 +14,10 @@ import (
 	"github.com/MustardSeedNetworks/seed/internal/logging"
 )
 
+// errDiscoveryUnavailable is returned when a caller asks the service for
+// something that needs the device-discovery subsystem and it is not running.
+var errDiscoveryUnavailable = errors.New("device discovery is not available")
+
 // Service is the unified discovery orchestrator that applies direct
 // configuration settings to control which discovery methods are active.
 type Service struct {
@@ -554,4 +558,16 @@ func (e *Error) Error() string {
 
 func (e *Error) Unwrap() error {
 	return e.Cause
+}
+
+// ReadNeighbourCache returns this device's own neighbour cache (#328).
+//
+// Distinct from GET /api/v1/topology/arp, which serves SNMP-harvested bindings
+// from remote nodes. This is what the box in front of the operator can see.
+func (s *Service) ReadNeighbourCache() ([]*ARPEntry, error) {
+	if s.deviceDiscovery == nil {
+		return nil, errDiscoveryUnavailable
+	}
+
+	return s.deviceDiscovery.ReadNeighbourCache()
 }

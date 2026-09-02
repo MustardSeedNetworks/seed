@@ -1,0 +1,57 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/MustardSeedNetworks/seed/main/docs/schemas/api/neighbour-cache-response.schema.json",
+  "$ref": "#/$defs/NeighbourCacheResponse",
+  "$defs": {
+    "NeighbourCacheResponse": {
+      "properties": {
+        "entries": {
+          "items": {
+            "$ref": "#/$defs/NeighbourEntry"
+          },
+          "type": "array"
+        },
+        "total": {
+          "type": "integer"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "entries",
+        "total"
+      ]
+    },
+    "NeighbourEntry": {
+      "properties": {
+        "ip": {
+          "type": "string"
+        },
+        "mac": {
+          "type": "string"
+        },
+        "vendor": {
+          "type": "string"
+        },
+        "interface": {
+          "type": "string"
+        },
+        "state": {
+          "type": "string"
+        },
+        "family": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "ip",
+        "mac",
+        "family"
+      ]
+    }
+  },
+  "title": "NeighbourCacheResponse",
+  "description": "NeighbourCacheResponse — generated from the Go struct in internal/api; refresh with `make schema` after struct changes."
+}

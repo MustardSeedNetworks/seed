@@ -226,6 +226,16 @@ func (d *DeviceDiscovery) SetTargetNetworks(cidrs []string) error {
 	return d.arpScanner.SetTargetNetworks(cidrs)
 }
 
+// ReadNeighbourCache returns this device's own neighbour cache as the kernel
+// holds it right now (#328).
+//
+// Unfiltered on purpose: an operator debugging why an IP is not resolving to a
+// MAC needs to see what is actually in the cache, including entries outside the
+// configured discovery scope.
+func (d *DeviceDiscovery) ReadNeighbourCache() ([]*ARPEntry, error) {
+	return d.arpScanner.ReadNeighbourCache()
+}
+
 // GetTargetNetworks returns the configured target networks.
 func (d *DeviceDiscovery) GetTargetNetworks() []string {
 	return d.arpScanner.GetTargetNetworks()

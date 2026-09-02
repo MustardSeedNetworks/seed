@@ -9,6 +9,11 @@ import (
 )
 
 // readARPTablePlatform reads the ARP/neighbor table on Linux using netlink.
+//
+// Returns everything the kernel holds. Subnet filtering belongs to the caller:
+// discovery wants only its configured scope, while the neighbour-cache endpoint
+// (#328) wants the whole table, and a filter buried in three platform files
+// cannot serve both.
 func (s *ARPScanner) readARPTablePlatform() ([]*ARPEntry, error) {
 	// Get all neighbors (ARP entries) using netlink
 	neighbors, err := netlink.NeighList(0, netlink.FAMILY_V4)
@@ -42,11 +47,6 @@ func (s *ARPScanner) readARPTablePlatform() ([]*ARPEntry, error) {
 			if linkErr == nil {
 				ifaceName = link.Attrs().Name
 			}
-		}
-
-		// Check if this IP is in our target subnets
-		if !s.isInSubnet(neigh.IP.String()) {
-			continue
 		}
 
 		mac := normalizeMac(neigh.HardwareAddr.String())

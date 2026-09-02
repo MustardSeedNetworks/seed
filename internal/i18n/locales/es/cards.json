@@ -487,5 +487,17 @@
     "error": "Error",
     "download": "Descargar",
     "delete": "Eliminar"
+  },
+  "neighbours": {
+    "title": "Caché de vecinos",
+    "description": "Lo que este dispositivo ve actualmente en su propio enlace. No es la tabla ARP que informa un switch remoto.",
+    "empty": "La caché de vecinos está vacía. Todavía no se ha resuelto nada en este enlace.",
+    "tableCaption": "Entradas locales de la caché de vecinos ARP y NDP",
+    "address": "Dirección",
+    "mac": "MAC",
+    "vendor": "Fabricante",
+    "interface": "Interfaz",
+    "state": "Estado",
+    "refresh": "Actualizar"
   }
 }
