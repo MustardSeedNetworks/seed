@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.213.44](https://github.com/MustardSeedNetworks/seed/compare/v0.213.43...v0.213.44) (2026-09-02)
+
+
+### Features
+
+* **security:** add the guest-network audit target editor ([#2301](https://github.com/MustardSeedNetworks/seed/issues/2301)) ([c3132c1](https://github.com/MustardSeedNetworks/seed/commit/c3132c13a5685a0831391cfffdb7cd847def55ca))
+
+
+### Bug Fixes
+
+* **config:** size interface lists without an overflowable expression ([#2306](https://github.com/MustardSeedNetworks/seed/issues/2306)) ([a4e05f9](https://github.com/MustardSeedNetworks/seed/commit/a4e05f973eb6bd6d8f426844b515498629db7955))
+
 ## [0.213.43](https://github.com/MustardSeedNetworks/seed/compare/v0.213.42...v0.213.43) (2026-09-02)
 
 
