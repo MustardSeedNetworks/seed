@@ -424,12 +424,17 @@ func TestValidateIPConfigEdgeCases(t *testing.T) {
 			wantErr: false,
 		},
 		{
+			// 0.0.0.0/0 parses, and used to be accepted on that basis alone.
+			// It is the unspecified address; assigning it as a static IP
+			// leaves the interface with no usable address, which is the
+			// class of configuration #50 asks to be caught before it is
+			// applied.
 			name: "zero CIDR prefix",
 			cfg: &netif.StaticIPConfig{
 				Address: "0.0.0.0",
 				Netmask: "0",
 			},
-			wantErr: false,
+			wantErr: true,
 		},
 		{
 			name: "netmask out of range",

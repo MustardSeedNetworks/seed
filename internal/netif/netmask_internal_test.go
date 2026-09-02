@@ -70,10 +70,12 @@ func TestValidationAndApplyAgree(t *testing.T) {
 		"30", "/30", "255.255.255.252",
 	} {
 		t.Run(mask, func(t *testing.T) {
+			// No gateway: this test is about the mask, and 192.168.1.1 is
+			// outside the /30 that 192.168.1.10 lands in, which the #50
+			// reachability check now rejects for its own reasons.
 			cfg := &StaticIPConfig{
 				Address: "192.168.1.10",
 				Netmask: mask,
-				Gateway: "192.168.1.1",
 			}
 			if err := validateIPConfig(cfg); err != nil {
 				t.Fatalf("validateIPConfig rejected %q: %v", mask, err)

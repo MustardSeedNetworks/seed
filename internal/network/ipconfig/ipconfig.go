@@ -8,7 +8,10 @@
 // satisfying the ports live in the composition root (internal/app).
 package ipconfig
 
-import "errors"
+import (
+	"errors"
+	"fmt"
+)
 
 // IP modes.
 const (
@@ -20,10 +23,14 @@ const (
 var (
 	ErrInvalidMode  = errors.New("invalid ip mode")
 	ErrStaticConfig = errors.New("static ip configuration failed")
-	ErrDHCPConfig   = errors.New("dhcp configuration failed")
-	ErrSave         = errors.New("failed to save configuration")
-	ErrRefresh      = errors.New("failed to refresh interfaces")
-	ErrSetMTU       = errors.New("failed to set mtu")
+	// ErrInvalidConfig is a configuration the hardware refused before applying
+	// anything — bad input, not a failed apply, so it is a 400 rather than a
+	// 500 and the reason is worth showing (#50).
+	ErrInvalidConfig = errors.New("invalid ip configuration")
+	ErrDHCPConfig    = errors.New("dhcp configuration failed")
+	ErrSave          = errors.New("failed to save configuration")
+	ErrRefresh       = errors.New("failed to refresh interfaces")
+	ErrSetMTU        = errors.New("failed to set mtu")
 )
 
 // StaticIP is the use-case static-IP model.
@@ -85,6 +92,13 @@ func (s *Service) Apply(iface, mode string, ip StaticIP) error {
 	switch mode {
 	case ModeStatic:
 		if err := s.hw.ConfigureStaticIP(iface, ip); err != nil {
+			// The reason is joined on, not swallowed: pre-flight validation
+			// that reports "static ip configuration failed" tells the operator
+			// nothing about which field is wrong.
+			if errors.Is(err, ErrInvalidConfig) {
+				return fmt.Errorf("%w: %w", ErrInvalidConfig, err)
+			}
+
 			return ErrStaticConfig
 		}
 		if err := s.store.PersistStatic(ip); err != nil {

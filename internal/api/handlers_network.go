@@ -275,7 +275,7 @@ func (s *Server) handleInterfaces(w http.ResponseWriter, r *http.Request) {
 			logger,
 			http.StatusInternalServerError,
 			ErrCodeInternal,
-			localizer.T("errors.netif.refreshFailed"),
+			localizer.T("errors.network.refreshFailed"),
 			"",
 		)
 		return
@@ -455,7 +455,7 @@ func (s *Server) handlePutInterface(
 			logger,
 			http.StatusBadRequest,
 			ErrCodeBadRequest,
-			localizer.T("errors.netif.invalidInterface"),
+			localizer.T("errors.network.invalidInterface"),
 			"",
 		)
 		return
@@ -474,7 +474,7 @@ func (s *Server) handlePutInterface(
 			logger,
 			http.StatusBadRequest,
 			ErrCodeBadRequest,
-			localizer.T("errors.netif.invalidInterface"),
+			localizer.T("errors.network.invalidInterface"),
 			"",
 		)
 		return
@@ -591,7 +591,7 @@ func (s *Server) handleLink(w http.ResponseWriter, r *http.Request) {
 	if err := s.netManager().RefreshInterfaces(); err != nil {
 		logger.ErrorContext(r.Context(), "Failed to refresh interfaces", "error", err)
 		sendErrorResponseWithDetails(w, logger, http.StatusInternalServerError,
-			ErrCodeInternal, localizer.T("errors.netif.refreshFailed"), "")
+			ErrCodeInternal, localizer.T("errors.network.refreshFailed"), "")
 		return
 	}
 
@@ -600,7 +600,7 @@ func (s *Server) handleLink(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		logger.WarnContext(r.Context(), "Interface not found", "error", err, "interface", currentIface)
 		sendErrorResponseWithDetails(w, logger, http.StatusNotFound,
-			ErrCodeNotFound, localizer.T("errors.netif.interfaceNotFound"), "")
+			ErrCodeNotFound, localizer.T("errors.network.interfaceNotFound"), "")
 		return
 	}
 
@@ -655,7 +655,7 @@ func (s *Server) handleIPConfig(w http.ResponseWriter, r *http.Request) {
 			logger,
 			http.StatusInternalServerError,
 			ErrCodeInternal,
-			localizer.T("errors.netif.refreshFailed"),
+			localizer.T("errors.network.refreshFailed"),
 			"",
 		)
 		return
@@ -672,7 +672,7 @@ func (s *Server) handleIPConfig(w http.ResponseWriter, r *http.Request) {
 			logger,
 			http.StatusNotFound,
 			ErrCodeNotFound,
-			localizer.T("errors.netif.interfaceNotFound"),
+			localizer.T("errors.network.interfaceNotFound"),
 			"",
 		)
 		return
@@ -789,13 +789,19 @@ func (s *Server) writeIPApplyError(
 	switch {
 	case errors.Is(err, ipconfig.ErrInvalidMode):
 		sendErrorResponseWithDetails(w, logger, http.StatusBadRequest,
-			ErrCodeValidation, localizer.T("errors.netif.invalidMode"), "")
+			ErrCodeValidation, localizer.T("errors.network.invalidMode"), "")
+	case errors.Is(err, ipconfig.ErrInvalidConfig):
+		// Rejected before anything was applied, so it is the request that is
+		// wrong, not the server. The reason names the offending field and is
+		// the only way the operator learns which one (#50).
+		sendErrorResponseWithDetails(w, logger, http.StatusBadRequest,
+			ErrCodeValidation, localizer.T("errors.network.invalidConfig"), err.Error())
 	case errors.Is(err, ipconfig.ErrStaticConfig):
 		sendErrorResponseWithDetails(w, logger, http.StatusInternalServerError,
-			ErrCodeInternal, localizer.T("errors.netif.staticConfigFailed"), "")
+			ErrCodeInternal, localizer.T("errors.network.staticConfigFailed"), "")
 	case errors.Is(err, ipconfig.ErrDHCPConfig):
 		sendErrorResponseWithDetails(w, logger, http.StatusInternalServerError,
-			ErrCodeInternal, localizer.T("errors.netif.dhcpConfigFailed"), "")
+			ErrCodeInternal, localizer.T("errors.network.dhcpConfigFailed"), "")
 	case errors.Is(err, ipconfig.ErrSave):
 		logger.ErrorContext(r.Context(), "Failed to save config", "error", err)
 		sendErrorResponseWithDetails(w, logger, http.StatusInternalServerError,
@@ -803,7 +809,7 @@ func (s *Server) writeIPApplyError(
 	default: // ErrRefresh
 		logger.ErrorContext(r.Context(), "Failed to refresh interfaces", "error", err)
 		sendErrorResponseWithDetails(w, logger, http.StatusInternalServerError,
-			ErrCodeInternal, localizer.T("errors.netif.refreshFailed"), "")
+			ErrCodeInternal, localizer.T("errors.network.refreshFailed"), "")
 	}
 }
 
