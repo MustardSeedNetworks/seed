@@ -77,6 +77,11 @@ schema: ## Regenerate docs/schemas/api/*.json from internal/api Go DTOs
 	@go run ./cmd/seed-schema -o docs/schemas/api
 	@printf "$(GREEN)Wrote $$(ls -1 docs/schemas/api/*.json 2>/dev/null | wc -l | tr -d ' ') schema(s) to docs/schemas/api/$(RESET)\n"
 
+hardware-matrix: ## Regenerate HARDWARE.md's Platform Support Matrix from internal/capabilities
+	@printf "$(BOLD)Generating the platform support matrix...$(RESET)\n"
+	@go run ./cmd/seed-hardware -file HARDWARE.md
+	@printf "$(GREEN)HARDWARE.md matrix is current$(RESET)\n"
+
 build-frontend: frontend-deps ## Build React frontend
 	@printf "$(BOLD)🔨 Building frontend...$(RESET)\n"
 	@cd ui && npm run build

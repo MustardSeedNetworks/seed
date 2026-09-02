@@ -4,8 +4,10 @@ This document describes hardware requirements and platform-specific limitations 
 
 ## Platform Support Matrix
 
+<!-- BEGIN GENERATED MATRIX -->
+
 | Feature | Linux | macOS | Windows |
-|---------|-------|-------|---------|
+|---------|-------|-------|-------|
 | Interface listing | Full | Full | Full |
 | Static IP configuration | Full | Full | Full |
 | DHCP configuration | Full | Full | Full |
@@ -14,7 +16,7 @@ This document describes hardware requirements and platform-specific limitations 
 | Speed/duplex detection | Full | Partial | Full |
 | Wi-Fi scanning | Full | Full | Full |
 | Wi-Fi connect/disconnect | Full | Full | Full |
-| ARP table reading | Full | Full | Full |
+| ARP table reading | Full | None | Full |
 | IPv6 NDP discovery | Full | Full | Full |
 | Bluetooth scanning | Full | Partial | Limited |
 | Gateway detection | Full | Full | Full |
@@ -22,15 +24,48 @@ This document describes hardware requirements and platform-specific limitations 
 | DHCP lease info | Full | Full | Full |
 | VLAN detection | Full | Partial | Limited |
 | VLAN creation/deletion | Full | Limited | None |
-| Cable diagnostics (TDR) | Full* | None | None |
+| Cable diagnostics (TDR) | Partial | None | None |
 | PHY layer info | Full | Partial | Partial |
-| Digital Optical Monitoring | Full* | None | None |
+| Digital Optical Monitoring | Partial | None | None |
 
 **Legend:**
 - **Full**: Complete feature support through standard OS APIs
 - **Partial**: Limited functionality through available APIs
 - **Limited**: Requires vendor-specific tools or drivers
 - **None**: Not available through standard APIs
+
+### Linux caveats
+
+- **Cable diagnostics (TDR)**: Needs a NIC driver that implements ethtool's cable test.
+- **Digital Optical Monitoring**: Needs an SFP/QSFP transceiver that reports diagnostics over ethtool.
+
+### macOS caveats
+
+- **Speed/duplex detection**: Reports negotiated speed; duplex is not exposed.
+- **ARP table reading**: The IPv4 neighbour table is not readable by the daemon on macOS 27 (#2272). IPv6 via NDP works.
+- **Bluetooth scanning**: Discovery only; no service enumeration.
+- **VLAN detection**: Detects tagged interfaces; does not enumerate the VLANs a trunk carries.
+- **VLAN creation/deletion**: Needs networksetup and an operator-created VLAN service.
+- **Cable diagnostics (TDR)**: No macOS API exposes TDR.
+- **PHY layer info**: Link speed and media type only.
+- **Digital Optical Monitoring**: No macOS API exposes transceiver diagnostics.
+
+### Windows caveats
+
+- **Bluetooth scanning**: Needs a vendor stack; the built-in APIs do not expose discovery.
+- **VLAN detection**: Depends on the NIC vendor's driver exposing tagged interfaces.
+- **VLAN creation/deletion**: No supported API outside Hyper-V (#2104).
+- **Cable diagnostics (TDR)**: No Windows API exposes TDR.
+- **PHY layer info**: Link speed only.
+- **Digital Optical Monitoring**: No Windows API exposes transceiver diagnostics.
+
+<!-- END GENERATED MATRIX -->
+
+> Generated from `internal/capabilities`. Do not edit between the markers —
+> run `make hardware-matrix`. CI fails when the document and the code disagree,
+> because a hand-written matrix drifted: it listed macOS ARP reading as Full
+> while it returned nothing (#2272), and macOS Wi-Fi scanning as Full while it
+> shelled a binary Apple had removed (#2031).
 
 *Requires compatible hardware (see sections below)
 

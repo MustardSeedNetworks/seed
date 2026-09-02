@@ -1,6 +1,7 @@
 status: 200
 body:
 {
+  "capabilities": "\u003cvolatile\u003e",
   "icmpAvailable": false,
   "interface": "lo",
   "isWireless": false,

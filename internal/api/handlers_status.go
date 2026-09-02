@@ -6,6 +6,8 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/MustardSeedNetworks/seed/internal/capabilities"
+
 	"github.com/MustardSeedNetworks/seed/internal/logging"
 	"github.com/MustardSeedNetworks/seed/internal/version"
 )
@@ -18,12 +20,19 @@ const (
 
 // StatusResponse represents the system status.
 type StatusResponse struct {
-	Status        string `json:"status"`
-	Version       string `json:"version"`
-	Uptime        int64  `json:"uptime"`
-	Interface     string `json:"interface"`
-	IsWireless    bool   `json:"isWireless"`
-	ICMPAvailable bool   `json:"icmpAvailable"`
+	Status     string `json:"status"`
+	Version    string `json:"version"`
+	Uptime     int64  `json:"uptime"`
+	Interface  string `json:"interface"`
+	IsWireless bool   `json:"isWireless"`
+	// ICMPAvailable is a privilege check, not a platform one: whether this
+	// process can open a raw socket. Kept distinct from Capabilities, which
+	// answers whether the operating system supports a feature at all.
+	ICMPAvailable bool `json:"icmpAvailable"`
+	// Capabilities is what this platform can do, from internal/capabilities
+	// (#749). The same source renders HARDWARE.md's matrix, so the UI and the
+	// document cannot disagree.
+	Capabilities []capabilities.Entry `json:"capabilities"`
 }
 
 // handleStatus returns the system status (fixes #544 - split from handlers.go).
@@ -41,6 +50,7 @@ func (s *Server) handleStatus(w http.ResponseWriter, r *http.Request) {
 		Interface:     s.defaultInterface(),
 		IsWireless:    isWireless,
 		ICMPAvailable: s.icmpAvailable,
+		Capabilities:  capabilities.Report(),
 	}
 
 	sendJSONResponse(w, logger, http.StatusOK, resp)

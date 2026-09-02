@@ -60,8 +60,15 @@ func goldenRoutes() []goldenRoute {
 }
 
 // isVolatileKey reports whether a JSON object key holds a value that varies
-// run-to-run (build stamps, clocks, durations, tokens). Such values are replaced
-// with a sentinel so the snapshot stays deterministic while still proving shape.
+// run-to-run (build stamps, clocks, durations, tokens) or machine-to-machine
+// (the platform capability matrix). Such values are replaced with a sentinel so
+// the snapshot stays deterministic while still proving shape.
+//
+// "capabilities" is the second kind: it is stable for a given OS and different
+// on every OS, so pinning it would mean a golden that passes on the developer's
+// Mac and fails in Linux CI. What the snapshot is for here is that the key is
+// present and is an array; internal/capabilities owns the contents and has its
+// own tests for them.
 func isVolatileKey(k string) bool {
 	switch strings.ToLower(k) {
 	case "version", "commit", "buildtime", "build_time",
@@ -69,7 +76,8 @@ func isVolatileKey(k string) bool {
 		"timestamp", "time", "startedat", "started_at", "started",
 		"requestid", "request_id", "csrftoken", "csrf_token", "token",
 		"duration", "durationms", "latency", "latencyms",
-		"now", "date", "generatedat", "generated_at":
+		"now", "date", "generatedat", "generated_at",
+		"capabilities":
 		return true
 	default:
 		return false
