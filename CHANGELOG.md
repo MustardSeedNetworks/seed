@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.213.45](https://github.com/MustardSeedNetworks/seed/compare/v0.213.44...v0.213.45) (2026-09-02)
+
+
+### Bug Fixes
+
+* **ui:** show a viewer one explanation instead of an unreadable drawer ([#2308](https://github.com/MustardSeedNetworks/seed/issues/2308)) ([7fab154](https://github.com/MustardSeedNetworks/seed/commit/7fab154c6d93121b3c8e86ea71c01101073cf866))
+
 ## [0.213.44](https://github.com/MustardSeedNetworks/seed/compare/v0.213.43...v0.213.44) (2026-09-02)
 
 
