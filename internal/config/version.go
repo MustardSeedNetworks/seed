@@ -5,7 +5,7 @@ package config
 //
 // Version history:
 //   - 1: Initial versioned config (2025-12-16)
-const ConfigVersion = 1
+const ConfigVersion = 2
 
 // MinSupportedVersion is the minimum config version that can be migrated.
 // Configs older than this version cannot be automatically upgraded.

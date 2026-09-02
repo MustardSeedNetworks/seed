@@ -13,6 +13,10 @@ import (
 	"github.com/MustardSeedNetworks/seed/internal/logging"
 )
 
+// configFileMode is the permission the config is written with: owner-only,
+// because it carries credentials.
+const configFileMode = 0o600
+
 // Load reads configuration from a JSON file.
 // If the config has no version or an older version, it will be updated.
 func Load(path string) (*Config, error) {
@@ -26,10 +30,8 @@ func Load(path string) (*Config, error) {
 		if !os.IsNotExist(readErr) {
 			return nil, fmt.Errorf("read config file: %w", readErr)
 		}
-	} else {
-		if unmarshalErr := json.Unmarshal(data, cfg); unmarshalErr != nil {
-			return nil, fmt.Errorf("parse config JSON: %w", unmarshalErr)
-		}
+	} else if decodeErr := decodeAndMigrate(data, cfg); decodeErr != nil {
+		return nil, decodeErr
 	}
 
 	// Handle unversioned configs (version 0 means unversioned)
@@ -43,6 +45,26 @@ func Load(path string) (*Config, error) {
 	}
 
 	return cfg, nil
+}
+
+// decodeAndMigrate brings the document forward to the current schema version
+// and decodes it.
+//
+// Deliberately in memory only. Writing back would give Load a side effect on
+// the file it was asked to read, and it is not needed: the migration is
+// idempotent and costs a map walk, and the first Save after this writes the
+// new spelling anyway. So an install that never changes a setting keeps its
+// file as the operator left it, and one that does self-heals.
+func decodeAndMigrate(data []byte, cfg *Config) error {
+	migrated, _, err := migrateJSON(data)
+	if err != nil {
+		return err
+	}
+	if unmarshalErr := json.Unmarshal(migrated, cfg); unmarshalErr != nil {
+		return fmt.Errorf("parse config JSON: %w", unmarshalErr)
+	}
+
+	return nil
 }
 
 func readHTTPSPortEnvironment() (int, bool, error) {
@@ -86,7 +108,7 @@ func (c *Config) Save(path string) error {
 	if err != nil {
 		return fmt.Errorf("marshal config JSON: %w", err)
 	}
-	if writeErr := os.WriteFile(path, data, 0o600); writeErr != nil {
+	if writeErr := os.WriteFile(path, data, configFileMode); writeErr != nil {
 		return fmt.Errorf("write config file: %w", writeErr)
 	}
 	return nil
