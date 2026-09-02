@@ -499,5 +499,41 @@
     "interface": "Interface",
     "state": "State",
     "refresh": "Refresh"
+  },
+  "insecurePorts": {
+    "title": "Insecure Port Scan",
+    "description": "Checks one host for legacy, cleartext and remote-administration services that should not be reachable.",
+    "target": "Target address",
+    "targetPlaceholder": "192.0.2.10",
+    "scan": "Scan",
+    "scanning": "Scanning...",
+    "none": "No insecure ports open on {{target}}.",
+    "found": "{{count}} insecure port(s) open",
+    "portLabel": "Port {{port}} — {{service}}",
+    "unknownService": "unidentified service",
+    "readOnly": "Read-only — operator role required to run a scan",
+    "risks": {
+      "ftp": "FTP sends credentials and file contents in cleartext. Use SFTP or FTPS.",
+      "telnet": "Telnet sends credentials and every keystroke in cleartext. Use SSH.",
+      "smtp": "SMTP without TLS carries mail and often credentials in cleartext, and an open relay can be abused to send spam.",
+      "tftp": "TFTP has no authentication at all. Anyone who can reach it can read and often write files, including device configurations.",
+      "http": "HTTP sends pages, session cookies and form data in cleartext. Redirect to HTTPS.",
+      "pop3": "POP3 without TLS sends mailbox credentials in cleartext.",
+      "rpcbind": "rpcbind enumerates the RPC services a host runs, which maps the attack surface for anyone who can reach it. It is also a well-known reflection amplifier.",
+      "msrpc": "MSRPC exposes Windows service endpoints and is a common lateral-movement path. It should not be reachable across a network boundary.",
+      "netbios": "NetBIOS leaks host and share names, and its authentication is weak enough to relay. It should not cross a network boundary.",
+      "imap": "IMAP without TLS sends mailbox credentials in cleartext.",
+      "smb": "SMB exposes file shares and is the usual path for ransomware to spread. It should never be reachable from an untrusted network.",
+      "rexec": "rexec sends credentials in cleartext and has no integrity protection. It was superseded by SSH decades ago.",
+      "rlogin": "rlogin trusts the client host and sends the session in cleartext. Use SSH.",
+      "rsh": "rsh runs commands with no encryption and host-based trust. On some systems this port is syslog instead, which accepts unauthenticated log injection.",
+      "rmi": "Java RMI has repeatedly allowed remote code execution through deserialisation. It should not be exposed.",
+      "nfs": "NFS exports filesystems with host-based trust and, in older versions, no authentication. Anyone who can reach it may be able to mount the share.",
+      "rdp": "RDP is a direct interactive login and a constant target for credential stuffing. Put it behind a VPN and require MFA.",
+      "vncHttp": "This is VNC over HTTP — a remote desktop served to a browser, usually with a weak password and no transport encryption.",
+      "vnc": "VNC has an 8-character password limit and no transport encryption by default. Tunnel it over SSH or a VPN.",
+      "x11": "An open X11 display lets anyone who can reach it read the screen and inject keystrokes.",
+      "generic": "This port is on the insecure list because the service behind it is typically unencrypted, unauthenticated, or an administrative interface."
+    }
   }
 }
