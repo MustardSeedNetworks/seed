@@ -49,9 +49,11 @@ func RenderMatrix() string {
 	for _, p := range platforms {
 		fmt.Fprintf(&b, " %s |", displayPlatform(p))
 	}
-	b.WriteString("\n|---------|")
+	// "| --- |" rather than "|-----|": markdownlint's MD060 compact style wants
+	// a space either side of every pipe, and HARDWARE.md is linted.
+	b.WriteString("\n| --- |")
 	for range platforms {
-		b.WriteString("-------|")
+		b.WriteString(" --- |")
 	}
 	b.WriteString("\n")
 
@@ -67,7 +69,8 @@ func RenderMatrix() string {
 		b.WriteString("\n")
 	}
 
-	b.WriteString("\n**Legend:**\n")
+	// Blank line before the list: MD032 wants lists surrounded by them.
+	b.WriteString("\n**Legend:**\n\n")
 	b.WriteString("- **Full**: Complete feature support through standard OS APIs\n")
 	b.WriteString("- **Partial**: Limited functionality through available APIs\n")
 	b.WriteString("- **Limited**: Requires vendor-specific tools or drivers\n")
