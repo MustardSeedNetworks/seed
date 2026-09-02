@@ -528,7 +528,7 @@ export const HeaderBar: React.FC<HeaderBarProps> = memo(function headerBar({
             type="button"
             onClick={onReconnect}
             className={cn(
-              'caption flex items-center gap-1.5',
+              'caption flex items-center gap-tight.5',
               wsStatus === 'connecting' ? statusColor.text.warning : statusColor.text.error,
             )}
           >

@@ -17,7 +17,7 @@ function StationRows({ bss }: { bss: BSSView }) {
     return null;
   }
   return (
-    <ul className="ml-4 stack-2xs">
+    <ul className="ml-content stack-2xs">
       {bss.stations.map((s) => (
         <li key={s.mac} data-testid="wifi-station" className="text-xs text-text-muted">
           <span className="font-mono">{s.mac}</span> · {s.signalDbm} dBm · {s.frames} frames
@@ -29,7 +29,7 @@ function StationRows({ bss }: { bss: BSSView }) {
 
 function BSSRows({ ap }: { ap: APGroup }) {
   return (
-    <ul className="ml-4 stack-2xs">
+    <ul className="ml-content stack-2xs">
       {ap.bsses.map((b) => (
         <li key={b.bssid} data-testid="wifi-bss" className="stack-2xs">
           <p className="text-xs text-text-secondary">
@@ -66,7 +66,7 @@ export function WiFiAirspaceTree({ ssids }: WiFiAirspaceTreeProps) {
         <details
           key={ssidLabel(g) + g.bssCount}
           data-testid="wifi-ssid-group"
-          className="rounded-md border border-surface-border bg-surface-base p-2"
+          className="rounded-md border border-surface-border bg-surface-base pad-xs"
         >
           <summary className="cursor-pointer text-sm font-medium text-text-primary">
             {ssidLabel(g)}{' '}
@@ -74,7 +74,7 @@ export function WiFiAirspaceTree({ ssids }: WiFiAirspaceTreeProps) {
               ({g.apCount} AP / {g.bssCount} BSSID / {g.stationCount} clients)
             </span>
           </summary>
-          <div className="mt-2 stack-xs">
+          <div className="mt-inline stack-xs">
             {g.aps.map((ap) => (
               <div key={ap.key} data-testid="wifi-ap-group" className="stack-2xs">
                 <p className="text-xs font-medium text-text-secondary">

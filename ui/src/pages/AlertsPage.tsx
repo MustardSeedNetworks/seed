@@ -63,7 +63,7 @@ export function AlertsPage(): JSX.Element {
   return (
     <>
       {error ? (
-        <div className="rounded-md border border-status-error/40 bg-status-error/10 p-3 text-sm text-status-error">
+        <div className="rounded-md border border-status-error/40 bg-status-error/10 pad-sm text-sm text-status-error">
           {error}
         </div>
       ) : null}
@@ -72,8 +72,8 @@ export function AlertsPage(): JSX.Element {
         <p className="body-small">
           {loading ? 'Loading…' : `${alerts.length} alert${alerts.length === 1 ? '' : 's'}`}
         </p>
-        <div className="flex items-center gap-3">
-          <label className="flex items-center gap-1 text-xs text-text-secondary">
+        <div className="flex items-center gap-default">
+          <label className="flex items-center gap-tight text-xs text-text-secondary">
             <input
               type="checkbox"
               checked={filter.unacknowledgedOnly}
@@ -81,7 +81,7 @@ export function AlertsPage(): JSX.Element {
             />
             unacknowledged only
           </label>
-          <label className="flex items-center gap-1 text-xs text-text-secondary">
+          <label className="flex items-center gap-tight text-xs text-text-secondary">
             <input
               type="checkbox"
               checked={filter.unresolvedOnly}
@@ -141,7 +141,7 @@ export function AlertsPage(): JSX.Element {
                     onClick={(): void => {
                       void acknowledge(selected.id);
                     }}
-                    className="inline-flex items-center gap-1 rounded-md border border-surface-border px-3 py-2 text-sm text-text-primary hover:bg-surface-hover"
+                    className="inline-flex items-center gap-tight rounded-md border border-surface-border px-3 py-2 text-sm text-text-primary hover:bg-surface-hover"
                   >
                     <Check className="h-3.5 w-3.5" />
                     Acknowledge
@@ -153,7 +153,7 @@ export function AlertsPage(): JSX.Element {
                     onClick={(): void => {
                       void resolve(selected.id);
                     }}
-                    className="inline-flex items-center gap-1 rounded-md border border-surface-border px-3 py-2 text-sm text-text-primary hover:bg-surface-hover"
+                    className="inline-flex items-center gap-tight rounded-md border border-surface-border px-3 py-2 text-sm text-text-primary hover:bg-surface-hover"
                   >
                     <CheckCircle2 className="h-3.5 w-3.5" />
                     Resolve

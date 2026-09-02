@@ -165,7 +165,7 @@ export function UsersSettings(): React.ReactElement {
   return (
     <CollapsibleSection
       title={
-        <div className="inline-flex items-center gap-2">
+        <div className="inline-flex items-center gap-compact">
           <Users className="w-4 h-4" />
           <span>{t('settings:users.title')}</span>
         </div>
@@ -176,14 +176,14 @@ export function UsersSettings(): React.ReactElement {
         <p className="text-sm text-text-secondary">{t('settings:users.description')}</p>
 
         {isAdmin && !canCreate && (
-          <div className="rounded-lg border border-status-warning/30 bg-status-warning/5 p-3 text-sm text-status-warning">
+          <div className="rounded-lg border border-status-warning/30 bg-status-warning/5 pad-sm text-sm text-status-warning">
             {t('errors:users.featureRequired')} <strong>{tierLabel}</strong>
           </div>
         )}
 
         {error ? (
           <div
-            className="rounded-lg border border-status-error/30 bg-status-error/5 p-3 text-sm text-status-error"
+            className="rounded-lg border border-status-error/30 bg-status-error/5 pad-sm text-sm text-status-error"
             data-testid="users-settings-error"
           >
             {error}
@@ -191,9 +191,9 @@ export function UsersSettings(): React.ReactElement {
         ) : null}
 
         {isAdmin && (
-          <div className="flex flex-wrap items-end gap-2">
+          <div className="flex flex-wrap items-end gap-compact">
             <div className="flex-1 min-w-[12rem]">
-              <label className="block text-xs text-text-muted mb-1" htmlFor="new-username">
+              <label className="block text-xs text-text-muted mb-tight" htmlFor="new-username">
                 {t('settings:users.columns.username')}
               </label>
               <Input
@@ -207,7 +207,7 @@ export function UsersSettings(): React.ReactElement {
               />
             </div>
             <div className="flex-1 min-w-[12rem]">
-              <label className="block text-xs text-text-muted mb-1" htmlFor="new-password">
+              <label className="block text-xs text-text-muted mb-tight" htmlFor="new-password">
                 Password
               </label>
               <Input
@@ -221,7 +221,7 @@ export function UsersSettings(): React.ReactElement {
               />
             </div>
             <div className="min-w-[8rem]">
-              <label className="block text-xs text-text-muted mb-1" htmlFor="new-role">
+              <label className="block text-xs text-text-muted mb-tight" htmlFor="new-role">
                 {t('settings:users.columns.role')}
               </label>
               <select
@@ -229,7 +229,7 @@ export function UsersSettings(): React.ReactElement {
                 value={newRole}
                 onChange={(e) => setNewRole(e.target.value as Role)}
                 disabled={!canCreate || creating}
-                className="w-full rounded-lg border border-surface-border bg-surface-raised px-2 py-1.5 text-sm"
+                className="w-full rounded-lg border border-surface-border bg-surface-raised px-cell py-1.5 text-sm"
                 data-testid="new-role-select"
               >
                 {ROLES.map((r) => (
@@ -283,7 +283,7 @@ export function UsersSettings(): React.ReactElement {
                     <td className="py-2 pr-2">
                       {u.username}
                       {isSelf && (
-                        <span className="ml-1 text-xs text-text-muted">
+                        <span className="ml-tight text-xs text-text-muted">
                           {t('settings:users.currentUser')}
                         </span>
                       )}

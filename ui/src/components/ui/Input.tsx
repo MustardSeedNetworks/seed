@@ -67,7 +67,7 @@ export const Input: FC<InputProps> = ({
         ) : null}
       </div>
       {error || hint ? (
-        <p className={`mt-1.5 text-sm ${hasError ? 'text-status-error' : 'text-text-muted'}`}>
+        <p className={`mt-tight.5 text-sm ${hasError ? 'text-status-error' : 'text-text-muted'}`}>
           {error || hint}
         </p>
       ) : null}
@@ -115,7 +115,7 @@ export const Textarea: FC<TextareaProps> = ({
         {...props}
       />
       {error || hint ? (
-        <p className={`mt-1.5 text-sm ${hasError ? 'text-status-error' : 'text-text-muted'}`}>
+        <p className={`mt-tight.5 text-sm ${hasError ? 'text-status-error' : 'text-text-muted'}`}>
           {error || hint}
         </p>
       ) : null}
@@ -189,7 +189,7 @@ export const Select: FC<SelectProps> = ({
         ))}
       </select>
       {error || hint ? (
-        <p className={`mt-1.5 text-sm ${hasError ? 'text-status-error' : 'text-text-muted'}`}>
+        <p className={`mt-tight.5 text-sm ${hasError ? 'text-status-error' : 'text-text-muted'}`}>
           {error || hint}
         </p>
       ) : null}

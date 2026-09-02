@@ -98,7 +98,7 @@ export const PageHeader: FC<PageHeaderProps> = ({
           {icon ? createElement(icon, { className: `h-8 w-8 ${iconColorClass}` }) : null}
           <div>
             {eyebrow ? (
-              <p className="kicker mb-1" data-testid="page-header-eyebrow">
+              <p className="kicker mb-tight" data-testid="page-header-eyebrow">
                 {eyebrow}
               </p>
             ) : null}

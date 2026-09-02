@@ -397,7 +397,7 @@ export const PathDiscoveryCard: React.NamedExoticComponent<PathDiscoveryCardProp
           {/* Quick Targets - Wrap on small screens */}
           <div className="flex items-center gap-compact flex-wrap">
             <span className="caption text-text-muted shrink-0">{t('pathDiscovery.quick')}:</span>
-            <div className="flex items-center gap-1.5 flex-wrap">
+            <div className="flex items-center gap-tight.5 flex-wrap">
               <button
                 type="button"
                 onClick={traceGateway}

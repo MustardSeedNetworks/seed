@@ -26,7 +26,7 @@ interface MsnMarkProps {
 
 export const MsnMark: FC<MsnMarkProps> = ({ collapsed = false, className = '' }) => (
   <div
-    className={`flex items-center gap-2 ${collapsed ? 'justify-center' : ''} ${className}`}
+    className={`flex items-center gap-compact ${collapsed ? 'justify-center' : ''} ${className}`}
     data-testid="msn-mark"
   >
     <img src={msnLogo} alt="" aria-hidden="true" className="h-4 w-4 shrink-0" />

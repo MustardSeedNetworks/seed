@@ -294,7 +294,7 @@ const SidebarFooter: FC<SidebarFooterProps> = ({
     ) : null}
     {/* Whose tool this is, under what it is. Quiet by design: the product mark
         at the top of the rail is the one that has to be recognised. */}
-    <MsnMark collapsed={collapsed} className="mt-3" />
+    <MsnMark collapsed={collapsed} className="mt-heading" />
     {collapsed ? (
       <button
         type="button"

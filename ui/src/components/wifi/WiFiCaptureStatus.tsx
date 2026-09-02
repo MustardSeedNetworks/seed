@@ -26,7 +26,7 @@ export function WiFiCaptureStatus({ status }: WiFiCaptureStatusProps) {
 
   return (
     <div data-testid="wifi-capture-status" className="stack-sm">
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-compact">
         <span
           data-testid="wifi-capture-indicator"
           className={`inline-block h-2 w-2 rounded-full ${
@@ -46,9 +46,9 @@ export function WiFiCaptureStatus({ status }: WiFiCaptureStatusProps) {
           )}
         </span>
       </div>
-      <dl className="flex flex-wrap gap-4">
+      <dl className="flex flex-wrap gap-comfortable">
         {stats.map((s) => (
-          <div key={s.label} className="flex items-baseline gap-1">
+          <div key={s.label} className="flex items-baseline gap-tight">
             <dd className="text-base font-semibold text-text-primary">{s.value}</dd>
             <dt className="text-xs text-text-muted">{s.label}</dt>
           </div>

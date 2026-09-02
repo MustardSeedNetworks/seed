@@ -77,7 +77,7 @@ export function ReportsCard({
           <CardRow label={report.name} value={report.format.toUpperCase()} />
           <CardRow label={t('reports.status')} value={report.status} />
           {report.error ? <CardRow label={t('reports.error')} value={report.error} /> : null}
-          <div className={cn('flex gap-2', spacing.margin.top.inline)}>
+          <div className={cn('flex gap-compact', spacing.margin.top.inline)}>
             {/* A report that has not finished has no file to fetch yet. */}
             {report.status === 'complete' ? (
               <a

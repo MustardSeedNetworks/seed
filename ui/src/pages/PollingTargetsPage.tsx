@@ -88,7 +88,7 @@ export function PollingTargetsPage(): JSX.Element {
   return (
     <>
       {error ? (
-        <div className="rounded-md border border-status-error/40 bg-status-error/10 p-3 text-sm text-status-error">
+        <div className="rounded-md border border-status-error/40 bg-status-error/10 pad-sm text-sm text-status-error">
           {error}
         </div>
       ) : null}
@@ -100,7 +100,7 @@ export function PollingTargetsPage(): JSX.Element {
         <button
           type="button"
           onClick={(): void => setShowCreate(true)}
-          className="inline-flex items-center gap-2 rounded-md bg-brand-primary px-3 py-2 text-sm font-medium text-on-brand hover:bg-brand-accent"
+          className="inline-flex items-center gap-compact rounded-md bg-brand-primary px-3 py-2 text-sm font-medium text-on-brand hover:bg-brand-accent"
         >
           <Plus className="h-4 w-4" />
           {t('pollingTargets.addTarget')}
