@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.213.46](https://github.com/MustardSeedNetworks/seed/compare/v0.213.45...v0.213.46) (2026-09-02)
+
+
+### Features
+
+* **capabilities:** make the platform support matrix a build artifact ([#2310](https://github.com/MustardSeedNetworks/seed/issues/2310)) ([6e31aad](https://github.com/MustardSeedNetworks/seed/commit/6e31aad15365be6a51797a2835c02bf44ced8826))
+
+
+### Bug Fixes
+
+* **e2e:** navigate instead of reloading in the auth-persistence test ([#2312](https://github.com/MustardSeedNetworks/seed/issues/2312)) ([a76c667](https://github.com/MustardSeedNetworks/seed/commit/a76c667b8119e36b93d418f5bbdac0e55a8b5c5f))
+
 ## [0.213.45](https://github.com/MustardSeedNetworks/seed/compare/v0.213.44...v0.213.45) (2026-09-02)
 
 
