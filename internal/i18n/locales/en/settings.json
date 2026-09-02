@@ -544,5 +544,26 @@
     "colPrefix": "Prefix",
     "colCreated": "Created",
     "colStatus": "Status"
+  },
+  "guestAudit": {
+    "title": "Guest Network Audit",
+    "description": "Probe hosts that a guest network must not reach. A reachable target means guest isolation is not holding.",
+    "enabled": "Run the audit",
+    "noTargets": "No targets yet. Add the addresses guest clients must not be able to reach.",
+    "targetIp": "Target address",
+    "targetIpPlaceholder": "192.0.2.10",
+    "targetLabel": "Label (optional)",
+    "targetLabelPlaceholder": "File server",
+    "addTarget": "Add target",
+    "removeTarget": "Remove",
+    "removeTargetNamed": "Remove target {{ip}}",
+    "invalidIp": "Enter an IPv4 address, for example 192.0.2.10.",
+    "duplicateIp": "That address is already a target.",
+    "ports": "Ports to probe",
+    "invalidPort": "{{value}} is not a port between 1 and 65535.",
+    "restoreDefaultPorts": "Restore the default ports",
+    "save": "Save",
+    "saving": "Saving...",
+    "readOnly": "Read-only — operator role required to change the audit"
   }
 }

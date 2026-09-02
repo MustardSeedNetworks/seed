@@ -167,6 +167,12 @@ export const handlers = [
   http.get('*/api/v1/security/devices/settings', () =>
     HttpResponse.json(settingsDefaults.networkDiscovery),
   ),
+  // guestaudit.Settings. Disabled with no targets is the shipped default and
+  // the state GuestNetworkAuditSettings exists to move an operator out of.
+  http.get('*/api/v1/security/guest-audit/settings', () =>
+    HttpResponse.json({ enabled: false, targets: [] }),
+  ),
+
   http.get('*/api/v1/reporting/logs', () => HttpResponse.json({ logs: [], total: 0 })),
 
   // useSubnetSettings expects a bare array (it checks Array.isArray and falls
