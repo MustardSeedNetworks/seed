@@ -50,7 +50,7 @@ import type {
   WiFiSettings as WiFiSettingsType,
 } from '../../types/settings';
 import { ReadOnlyView } from '../ui/ReadOnlyView';
-import { RequireAdmin } from '../ui/RequireRole';
+import { RequireAdmin, RequireRole } from '../ui/RequireRole';
 import { SettingsDrawerFooter } from './SettingsDrawerFooter';
 import { SettingsDrawerNetworkSection } from './SettingsDrawerNetworkSection';
 import { ApiTokensSettings } from './sections/ApiTokensSettings';
@@ -697,8 +697,13 @@ export const SettingsDrawer: React.MemoExoticComponent<
               <UsersSettings />
             </RequireAdmin>
 
-            {/* SSO admin panel (seed#1198) */}
-            <SsoSettings />
+            {/* SSO admin panel (seed#1198). Operator-gated to match the
+                backend: GET /sso/settings and PUT /sso/update are both
+                minRole: op, so a viewer sees an identity-federation panel
+                whose every request 403s (#1254). */}
+            <RequireRole min="operator">
+              <SsoSettings />
+            </RequireRole>
 
             {/* Network Interfaces (multi_interface, seed#1192) */}
             <InterfacesSettings />
