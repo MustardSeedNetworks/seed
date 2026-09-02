@@ -1157,7 +1157,7 @@
         "timing": {
           "$ref": "#/$defs/DiscoveryTiming"
         },
-        "additional_subnets": {
+        "target_networks": {
           "items": {
             "$ref": "#/$defs/SubnetConfig"
           },
@@ -1202,7 +1202,7 @@
       "required": [
         "options",
         "timing",
-        "additional_subnets",
+        "target_networks",
         "enabled",
         "arp_scan_workers",
         "ping_timeout",

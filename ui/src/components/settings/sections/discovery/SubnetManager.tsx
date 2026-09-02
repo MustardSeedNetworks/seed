@@ -78,7 +78,7 @@ export const SubnetManager: React.NamedExoticComponent<SubnetManagerProps> = mem
                     }
                     className={iconTokens.size.sm}
                     title={
-                      subnet.enabled ? t('discovery.disableSubnet') : t('discovery.enableSubnet')
+                      subnet.enabled ? t('discovery.disableNetwork') : t('discovery.enableNetwork')
                     }
                     // title alone does not name a form control (axe
                     // label-title-only). The name carries the CIDR because
@@ -87,15 +87,15 @@ export const SubnetManager: React.NamedExoticComponent<SubnetManagerProps> = mem
                     // "Enable subnet" checkboxes cannot tell which is which.
                     aria-label={
                       subnet.enabled
-                        ? t('discovery.disableSubnetNamed', { cidr: subnet.cidr })
-                        : t('discovery.enableSubnetNamed', { cidr: subnet.cidr })
+                        ? t('discovery.disableNetworkNamed', { cidr: subnet.cidr })
+                        : t('discovery.enableNetworkNamed', { cidr: subnet.cidr })
                     }
                   />
                   <button
                     type="button"
                     onClick={(): void => deleteSubnet(subnet.cidr)}
                     className="text-status-error hover:text-status-error/70 body-small"
-                    title={t('discovery.removeSubnet')}
+                    title={t('discovery.removeNetwork')}
                   >
                     X
                   </button>
@@ -149,7 +149,7 @@ export const SubnetManager: React.NamedExoticComponent<SubnetManagerProps> = mem
               'body-small',
             )}
           >
-            {t('discovery.addSubnet')}
+            {t('discovery.addNetwork')}
           </button>
         </div>
       </div>

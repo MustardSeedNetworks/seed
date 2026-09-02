@@ -18,7 +18,7 @@ intending to replace the twins with the generated type.
 all — they are a deliberately distinct, curated UI view:**
 
 - **Naming convention differs.** `config.Config` carries **snake_case** JSON tags
-  (141 snake_case vs 9 camelCase) because it is the config *file* format; the
+  (141 snake_case vs 9 camelCase) because it is the config _file_ format; the
   generated `Config` type is therefore snake_case (`available_modes`,
   `custom_tests`, `ping_targets`). The entire rest of the seed API and the UI use
   **camelCase**. The hand types are camelCase.
@@ -29,7 +29,7 @@ all — they are a deliberately distinct, curated UI view:**
     wifi, link, custom_tests}`.
   - `HealthChecksConfig` — hand: 3 fields (`pingTargets, tcpChecks, httpChecks`);
     generated: 18 fields (every endpoint protocol + run-flags).
-  - `DiscoveryConfig` — hand: `{additionalSubnets, scanIntervalSeconds}`;
+  - `DiscoveryConfig` — hand: `{targetNetworks, scanIntervalSeconds}`;
     generated: `{protocol, timeout}` (entirely different fields).
 
 So the UI types are a **simplified, camelCase, UI-shaped** projection — not a
@@ -44,7 +44,7 @@ duplicate types** to delete.
   are not retired; the "twin" framing was inaccurate — they are not a stale mirror
   but a distinct projection.
 - **DEFERRED #3 (retire the profile/settings twins) is resolved as "keep the
-  view."** The original drift concern is addressed structurally: the *backend*
+  view."** The original drift concern is addressed structurally: the _backend_
   contract now has a canonical, code-first, drift-gated representation
   (`config.Config` → `docs/schemas/api/config.schema.json` →
   `ui/src/types/generated/config.ts`, enforced by `check-types-drift.sh`). The

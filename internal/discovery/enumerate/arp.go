@@ -23,8 +23,8 @@ package enumerate
 //   - Works across routers (Layer 3)
 //   - Slower than ARP but supports remote networks
 //
-// Additional subnets:
-//   - Configure via Discovery.AdditionalSubnets in config
+// Target networks:
+//   - Configure via Discovery.TargetNetworks in config
 //   - Automatically selects ICMP for remote subnets (beyond local broadcast domain)
 //   - Results are merged with local ARP results
 //   - Marked with IsLocal flag to distinguish origin
@@ -76,7 +76,7 @@ type ARPEntry struct {
 	OSGuess      string    `json:"osGuess,omitempty"`
 	LastSeen     time.Time `json:"lastSeen"`
 	ResponseTime int64     `json:"responseTime,omitempty"` // in milliseconds
-	IsLocal      bool      `json:"isLocal"`                // true if on local subnet, false for additional subnets
+	IsLocal      bool      `json:"isLocal"`                // true if on local subnet, false for target networks
 }
 
 // DefaultMaxHostsPerSubnet is the default limit for hosts scanned per subnet.
@@ -117,7 +117,7 @@ type ARPScanner struct {
 	entries           map[string]*ARPEntry // Key by IP
 	subnet            *net.IPNet
 	localIP           net.IP
-	additionalSubnets []*net.IPNet          // Additional subnets to scan
+	targetNetworks    []*net.IPNet          // Target networks to scan
 	pingResponders    []string              // IPs that responded to ping (for remote subnets)
 	pingResults       map[string]PingResult // Cached ping results with TTL info
 	pinger            *ICMPPinger           // Raw socket ICMP pinger
@@ -169,29 +169,29 @@ func (s *ARPScanner) SetInterface(name string) {
 	s.localIP = nil
 }
 
-// SetAdditionalSubnets configures extra subnets to scan.
-func (s *ARPScanner) SetAdditionalSubnets(cidrs []string) error {
+// SetTargetNetworks configures extra subnets to scan.
+func (s *ARPScanner) SetTargetNetworks(cidrs []string) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
-	s.additionalSubnets = nil
+	s.targetNetworks = nil
 	for _, cidr := range cidrs {
 		_, subnet, err := net.ParseCIDR(cidr)
 		if err != nil {
 			return fmt.Errorf("invalid CIDR %s: %w", cidr, err)
 		}
-		s.additionalSubnets = append(s.additionalSubnets, subnet)
+		s.targetNetworks = append(s.targetNetworks, subnet)
 	}
 	return nil
 }
 
-// GetAdditionalSubnets returns the configured additional subnets.
-func (s *ARPScanner) GetAdditionalSubnets() []string {
+// GetTargetNetworks returns the configured target networks.
+func (s *ARPScanner) GetTargetNetworks() []string {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 
-	result := make([]string, len(s.additionalSubnets))
-	for i, subnet := range s.additionalSubnets {
+	result := make([]string, len(s.targetNetworks))
+	for i, subnet := range s.targetNetworks {
 		result[i] = subnet.String()
 	}
 	return result

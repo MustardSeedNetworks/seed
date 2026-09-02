@@ -221,14 +221,14 @@ func (d *DeviceDiscovery) SetInterface(name string) error {
 	return d.protoManager.SetInterface(name)
 }
 
-// SetAdditionalSubnets configures extra subnets to scan.
-func (d *DeviceDiscovery) SetAdditionalSubnets(cidrs []string) error {
-	return d.arpScanner.SetAdditionalSubnets(cidrs)
+// SetTargetNetworks configures extra subnets to scan.
+func (d *DeviceDiscovery) SetTargetNetworks(cidrs []string) error {
+	return d.arpScanner.SetTargetNetworks(cidrs)
 }
 
-// GetAdditionalSubnets returns the configured additional subnets.
-func (d *DeviceDiscovery) GetAdditionalSubnets() []string {
-	return d.arpScanner.GetAdditionalSubnets()
+// GetTargetNetworks returns the configured target networks.
+func (d *DeviceDiscovery) GetTargetNetworks() []string {
+	return d.arpScanner.GetTargetNetworks()
 }
 
 // GetDevices returns all discovered devices.

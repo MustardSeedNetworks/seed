@@ -36,7 +36,7 @@ type Store interface {
 // SubnetSink pushes the active (enabled) subnet set to the live device-discovery
 // scanner so a config change reconfigures scanning. A nil-backed sink is a no-op.
 type SubnetSink interface {
-	SetAdditionalSubnets(cidrs []string) error
+	SetTargetNetworks(cidrs []string) error
 }
 
 // OptionsApplier applies a discovery-options change to the running enumeration
@@ -88,9 +88,9 @@ func (s *Service) SetOptions(opts config.DiscoveryOptions) error {
 	return s.applier.ReloadOptions()
 }
 
-// Subnets returns the configured additional subnets.
+// Subnets returns the configured target networks.
 func (s *Service) Subnets() []config.SubnetConfig {
-	return s.store.Discovery().AdditionalSubnets
+	return s.store.Discovery().TargetNetworks
 }
 
 // AddSubnet validates and appends a subnet, then persists and re-syncs the
@@ -101,12 +101,12 @@ func (s *Service) AddSubnet(in config.SubnetConfig) error {
 		return ErrInvalidCIDR
 	}
 	cur := s.store.Discovery()
-	for _, existing := range cur.AdditionalSubnets {
+	for _, existing := range cur.TargetNetworks {
 		if existing.CIDR == in.CIDR {
 			return ErrSubnetExists
 		}
 	}
-	cur.AdditionalSubnets = append(cur.AdditionalSubnets, in)
+	cur.TargetNetworks = append(cur.TargetNetworks, in)
 	return s.saveAndSync(cur)
 }
 
@@ -118,10 +118,10 @@ func (s *Service) UpdateSubnet(in config.SubnetConfig) error {
 	}
 	cur := s.store.Discovery()
 	found := false
-	for i := range cur.AdditionalSubnets {
-		if cur.AdditionalSubnets[i].CIDR == in.CIDR {
-			cur.AdditionalSubnets[i].Name = in.Name
-			cur.AdditionalSubnets[i].Enabled = in.Enabled
+	for i := range cur.TargetNetworks {
+		if cur.TargetNetworks[i].CIDR == in.CIDR {
+			cur.TargetNetworks[i].Name = in.Name
+			cur.TargetNetworks[i].Enabled = in.Enabled
 			found = true
 			break
 		}
@@ -136,9 +136,9 @@ func (s *Service) UpdateSubnet(in config.SubnetConfig) error {
 // if absent.
 func (s *Service) DeleteSubnet(cidr string) error {
 	cur := s.store.Discovery()
-	kept := make([]config.SubnetConfig, 0, len(cur.AdditionalSubnets))
+	kept := make([]config.SubnetConfig, 0, len(cur.TargetNetworks))
 	found := false
-	for _, existing := range cur.AdditionalSubnets {
+	for _, existing := range cur.TargetNetworks {
 		if existing.CIDR == cidr {
 			found = true
 			continue
@@ -148,7 +148,7 @@ func (s *Service) DeleteSubnet(cidr string) error {
 	if !found {
 		return ErrSubnetNotFound
 	}
-	cur.AdditionalSubnets = kept
+	cur.TargetNetworks = kept
 	return s.saveAndSync(cur)
 }
 
@@ -158,13 +158,13 @@ func (s *Service) saveAndSync(cur config.NetworkDiscoveryConfig) error {
 	if err := s.store.SaveDiscovery(cur); err != nil {
 		return err
 	}
-	enabled := make([]string, 0, len(cur.AdditionalSubnets))
-	for _, sn := range cur.AdditionalSubnets {
+	enabled := make([]string, 0, len(cur.TargetNetworks))
+	for _, sn := range cur.TargetNetworks {
 		if sn.Enabled {
 			enabled = append(enabled, sn.CIDR)
 		}
 	}
-	_ = s.sink.SetAdditionalSubnets(enabled)
+	_ = s.sink.SetTargetNetworks(enabled)
 	return nil
 }
 

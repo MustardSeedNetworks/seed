@@ -65,7 +65,7 @@ export interface DiscoveryConfig {
 export interface NetworkDiscoveryConfig {
   options: DiscoveryOptions;
   timing: DiscoveryTiming;
-  additional_subnets: SubnetConfig[];
+  target_networks: SubnetConfig[];
   enabled: boolean;
   arp_scan_workers: number;
   ping_timeout: number;

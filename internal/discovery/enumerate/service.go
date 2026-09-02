@@ -170,16 +170,16 @@ func (s *Service) applyOptions(opts *config.DiscoveryOptions) error {
 		}
 	}
 
-	// Configure additional subnets if any active scanning is enabled
+	// Configure target networks if any active scanning is enabled
 	if opts.ARPScan || opts.ICMPScan || opts.PortScan.Enabled {
 		cidrs := make([]string, 0)
-		for _, subnet := range s.cfg.NetworkDiscovery.AdditionalSubnets {
+		for _, subnet := range s.cfg.NetworkDiscovery.TargetNetworks {
 			if subnet.Enabled && subnet.CIDR != "" {
 				cidrs = append(cidrs, subnet.CIDR)
 			}
 		}
-		if err := s.deviceDiscovery.SetAdditionalSubnets(cidrs); err != nil {
-			logging.GetLogger().Warn("Failed to set additional subnets", "error", err)
+		if err := s.deviceDiscovery.SetTargetNetworks(cidrs); err != nil {
+			logging.GetLogger().Warn("Failed to set target networks", "error", err)
 		}
 	}
 
@@ -439,7 +439,7 @@ func (s *Service) GetStatus() *ServiceStatus {
 	if deviceStatus.Subnet != "" {
 		subnets = append(subnets, deviceStatus.Subnet)
 	}
-	subnets = append(subnets, s.deviceDiscovery.GetAdditionalSubnets()...)
+	subnets = append(subnets, s.deviceDiscovery.GetTargetNetworks()...)
 
 	status := &ServiceStatus{
 		Running:        running,

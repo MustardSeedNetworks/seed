@@ -52,7 +52,7 @@
       "rescan_interval": 600000000000,
       "workers": 50
     },
-    "additional_subnets": [],
+    "target_networks": [],
     "enabled": true,
     "arp_scan_workers": 50,
     "ping_timeout": 500000000,

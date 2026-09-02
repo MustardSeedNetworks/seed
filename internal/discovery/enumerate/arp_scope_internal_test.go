@@ -40,14 +40,14 @@ func TestIsInSubnet_PrimarySubnetExcludesOutsiders(t *testing.T) {
 	}
 }
 
-func TestIsInSubnet_AdditionalSubnetsWidenTheScope(t *testing.T) {
+func TestIsInSubnet_TargetNetworksWidenTheScope(t *testing.T) {
 	scanner := &ARPScanner{
-		subnet:            mustCIDR(t, "10.44.20.0/24"),
-		additionalSubnets: []*net.IPNet{mustCIDR(t, "192.168.5.0/24")},
+		subnet:         mustCIDR(t, "10.44.20.0/24"),
+		targetNetworks: []*net.IPNet{mustCIDR(t, "192.168.5.0/24")},
 	}
 
 	if !scanner.isInSubnet("192.168.5.9") {
-		t.Error("an address in an additional subnet was rejected")
+		t.Error("an address in a target network was rejected")
 	}
 	// The fallback must not fire once any subnet is configured.
 	if scanner.isInSubnet("8.8.8.8") {
@@ -55,8 +55,8 @@ func TestIsInSubnet_AdditionalSubnetsWidenTheScope(t *testing.T) {
 	}
 }
 
-func TestIsInSubnet_AdditionalSubnetsAloneDisableTheFallback(t *testing.T) {
-	scanner := &ARPScanner{additionalSubnets: []*net.IPNet{mustCIDR(t, "192.168.5.0/24")}}
+func TestIsInSubnet_TargetNetworksAloneDisableTheFallback(t *testing.T) {
+	scanner := &ARPScanner{targetNetworks: []*net.IPNet{mustCIDR(t, "192.168.5.0/24")}}
 
 	if !scanner.isInSubnet("192.168.5.9") {
 		t.Error("an address in the only configured subnet was rejected")
@@ -73,11 +73,11 @@ func TestIsInSubnet_MalformedAddressIsNeverInScope(t *testing.T) {
 }
 
 // isInLocalSubnet is what separates "Local Network" from "Extended Networks"
-// in the UI, so an address in an additional subnet must not read as local.
-func TestIsInLocalSubnet_ExcludesAdditionalSubnets(t *testing.T) {
+// in the UI, so an address in a target network must not read as local.
+func TestIsInLocalSubnet_ExcludesTargetNetworks(t *testing.T) {
 	s := &ARPScanner{
-		subnet:            mustCIDR(t, "10.44.20.0/24"),
-		additionalSubnets: []*net.IPNet{mustCIDR(t, "192.168.5.0/24")},
+		subnet:         mustCIDR(t, "10.44.20.0/24"),
+		targetNetworks: []*net.IPNet{mustCIDR(t, "192.168.5.0/24")},
 	}
 
 	if !s.isInLocalSubnet("10.44.20.5") {
