@@ -235,7 +235,7 @@ function ProviderCard({
     >
       <div className="flex-between">
         <h4 className="text-sm font-medium">{t(`settings:sso.providers.${name}`)}</h4>
-        <label className="inline-flex items-center gap-tight.5 text-xs">
+        <label className="inline-flex items-center gap-1.5 text-xs">
           <input
             type="checkbox"
             checked={cfg.enabled}

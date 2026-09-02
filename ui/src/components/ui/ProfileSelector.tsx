@@ -258,7 +258,7 @@ function ProfileSelectorComponent({
 
                     {/* Profile info */}
                     <div className="flex-1 min-w-0 text-left">
-                      <div className="flex items-center gap-tight.5">
+                      <div className="flex items-center gap-1.5">
                         <span className="body-small font-medium text-text-primary truncate">
                           {profile.name}
                         </span>
