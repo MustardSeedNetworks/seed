@@ -474,7 +474,7 @@ function ProfileCard({
               className={cn(
                 spacing.chip.sm,
                 radius.md,
-                'border border-surface-border bg-surface-base hover:bg-surface-hover text-text-primary caption font-medium flex items-center gap-tight.5',
+                'border border-surface-border bg-surface-base hover:bg-surface-hover text-text-primary caption font-medium flex items-center gap-1.5',
               )}
               title={t('common.edit')}
             >
@@ -502,7 +502,7 @@ function ProfileCard({
               className={cn(
                 spacing.chip.sm,
                 radius.md,
-                'border border-surface-border bg-surface-base hover:bg-surface-hover text-text-primary caption font-medium flex items-center gap-tight.5',
+                'border border-surface-border bg-surface-base hover:bg-surface-hover text-text-primary caption font-medium flex items-center gap-1.5',
               )}
               title={t('common.clone')}
             >
@@ -531,7 +531,7 @@ function ProfileCard({
                 className={cn(
                   spacing.chip.sm,
                   radius.md,
-                  'border border-status-error/30 bg-status-error/5 hover:bg-status-error/10 text-status-error caption font-medium flex items-center gap-tight.5',
+                  'border border-status-error/30 bg-status-error/5 hover:bg-status-error/10 text-status-error caption font-medium flex items-center gap-1.5',
                 )}
                 title={t('common.delete')}
               >
@@ -561,7 +561,7 @@ function ProfileCard({
                 className={cn(
                   spacing.chip.sm,
                   radius.md,
-                  'bg-brand-primary hover:bg-brand-accent text-on-brand caption font-medium flex items-center gap-tight.5 ml-auto',
+                  'bg-brand-primary hover:bg-brand-accent text-on-brand caption font-medium flex items-center gap-1.5 ml-auto',
                 )}
                 title={t('profile.activate')}
               >

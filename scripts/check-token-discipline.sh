@@ -114,18 +114,25 @@ else
 fi
 
 # ── ADVISORY: spacing / typography / flex (warn-only) ───────────────────────
-advise RAW_SPACE_Y '(?<![-\w])space-y-(1|2|3|4|6)(?![-\w])' 'Use stack-xs/sm/[default]/lg/xl'
-advise RAW_GAP '(?<![-\w])gap-(1|2|3|4|6)(?![-\w])' 'Use gap-tight/compact/default/comfortable/spacious'
-advise RAW_P '(?<![-\w])p-(2|3|4|6|8)(?![-\w])' 'Use pad-xs/sm/[default]/lg/xl'
-advise RAW_MB '(?<![-\w])mb-(1|3|4|6|8)(?![-\w])' 'Use mb-tight/heading/content/section/section-lg'
-advise RAW_MT '(?<![-\w])mt-(1|2|3|4|8)(?![-\w])' 'Use mt-tight/inline/heading/content/section'
-advise RAW_ML '(?<![-\w])ml-(1|2|4|6)(?![-\w])' 'Use ml-tight/inline/content/spacious'
-advise RAW_PT '(?<![-\w])pt-(1|3|4)(?![-\w])' 'Use pt-tight/heading/section'
-advise RAW_PB '(?<![-\w])pb-(1|2)(?![-\w])' 'Use pb-tight/inline'
-advise RAW_PX_2 '(?<![-\w])px-2(?![-\w])' 'Use px-cell'
-advise RAW_PR '(?<![-\w])pr-(8|10)(?![-\w])' 'Use pr-tight/icon'
-advise RAW_PL_5 '(?<![-\w])pl-5(?![-\w])' 'Use pl-indent'
-advise RAW_PY_12 '(?<![-\w])py-12(?![-\w])' 'Use py-centered'
+#
+# The trailing lookahead excludes '.' as well as [-\w]. Without it `gap-1`
+# matches inside `gap-1.5`, and the advice is wrong: there is no family class
+# for a fractional step, so the only way to satisfy it is to write something
+# invalid. That is not hypothetical -- #2297 took the advice literally and
+# produced `gap-tight.5` in eleven places, a class Tailwind never generates, so
+# those gaps silently became zero.
+advise RAW_SPACE_Y '(?<![-\w])space-y-(1|2|3|4|6)(?![-\w.])' 'Use stack-xs/sm/[default]/lg/xl'
+advise RAW_GAP '(?<![-\w])gap-(1|2|3|4|6)(?![-\w.])' 'Use gap-tight/compact/default/comfortable/spacious'
+advise RAW_P '(?<![-\w])p-(2|3|4|6|8)(?![-\w.])' 'Use pad-xs/sm/[default]/lg/xl'
+advise RAW_MB '(?<![-\w])mb-(1|3|4|6|8)(?![-\w.])' 'Use mb-tight/heading/content/section/section-lg'
+advise RAW_MT '(?<![-\w])mt-(1|2|3|4|8)(?![-\w.])' 'Use mt-tight/inline/heading/content/section'
+advise RAW_ML '(?<![-\w])ml-(1|2|4|6)(?![-\w.])' 'Use ml-tight/inline/content/spacious'
+advise RAW_PT '(?<![-\w])pt-(1|3|4)(?![-\w.])' 'Use pt-tight/heading/section'
+advise RAW_PB '(?<![-\w])pb-(1|2)(?![-\w.])' 'Use pb-tight/inline'
+advise RAW_PX_2 '(?<![-\w])px-2(?![-\w.])' 'Use px-cell'
+advise RAW_PR '(?<![-\w])pr-(8|10)(?![-\w.])' 'Use pr-tight/icon'
+advise RAW_PL_5 '(?<![-\w])pl-5(?![-\w.])' 'Use pl-indent'
+advise RAW_PY_12 '(?<![-\w])py-12(?![-\w.])' 'Use py-centered'
 advise RAW_HEADING_PAIR \
   '(text-2xl[^"`]*font-bold|font-bold[^"`]*text-2xl|text-xl[^"`]*font-semibold|font-semibold[^"`]*text-xl|text-lg[^"`]*font-semibold|font-semibold[^"`]*text-lg)' \
   'Use heading-1/2/3 (or heading-4 for text-base font-medium)'

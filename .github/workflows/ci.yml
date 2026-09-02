@@ -314,6 +314,9 @@ jobs:
       - name: Hardware matrix drift
         run: ./scripts/check-hardware-matrix.sh
 
+      - name: Malformed Tailwind classes
+        run: ./scripts/check-tailwind-classes.sh
+
       - name: Verify API schemas are up to date
         run: ./scripts/check-schema-drift.sh
 
