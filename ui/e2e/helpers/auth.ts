@@ -120,28 +120,31 @@ export async function loginAndAwaitDashboard(
 }
 
 /**
- * Reload and wait for the dashboard to come back.
+ * Load the app afresh and wait for the dashboard, preserving the session.
  *
- * A bare `page.reload()` followed by a 10s assertion on the header is the
- * shape that made auth-complete.spec.ts flake on WebKit and eject the release
- * PR from the merge queue. Two things are wrong with it, and both are already
- * documented on loginAndAwaitDashboard above:
+ * Used by the "auth survives a page load" test, and it has now failed twice on
+ * WebKit for two different reasons:
  *
- *  1. The post-reload chain is the *same* SPA mount → first data fetch →
- *     header paint chain that was measured as occasionally exceeding 10s on
- *     the contended shard. Asserting it at 10s after a reload while the login
- *     path allows 20s is the same race with half the budget.
- *  2. The reload fires while the dashboard's first fetches are still in
- *     flight, because the header painting is what loginAndAwaitDashboard
- *     waits for — not the data behind it. `waitUntil: 'domcontentloaded'`
- *     makes the navigation resolve on its own terms rather than on a `load`
- *     event that those aborted requests can hold open.
+ *  1. A bare `page.reload()` plus a 10s assertion timed out. The post-load
+ *     chain — SPA mount, first data fetch, header paint — is the same one
+ *     `loginAndAwaitDashboard` documents as occasionally exceeding 10s on the
+ *     contended shard, which is why that helper allows 20s. Fixed by matching
+ *     the budget.
+ *  2. `page.reload({ waitUntil: 'domcontentloaded' })` then failed with
+ *     "WebKit encountered an internal error". That was my fix for (1) and it
+ *     addressed when the promise resolves, not the race underneath: the
+ *     navigation still starts while the dashboard's first fetches are in
+ *     flight, and WebKit's reload path does not survive that.
  *
- * This is #2285's audit landing on the one reload the suite cannot simply
- * drop: persisting auth across a reload is the behaviour under test.
+ * So this does not reload. `goto` is a fresh document load, which is what the
+ * test actually cares about — the session has to survive the app starting
+ * again — and it never enters the reload path that breaks. The distinction
+ * between "reload" and "navigate to the same URL" is not one the behaviour
+ * under test depends on; both discard the SPA's memory and re-bootstrap
+ * against whatever cookies remain.
  */
 export async function reloadAndAwaitDashboard(page: Page): Promise<void> {
-  await page.reload({ waitUntil: 'domcontentloaded' });
+  await page.goto('/', { waitUntil: 'domcontentloaded' });
   await expect(page.getByTestId('page-header-title')).toBeVisible({ timeout: 20000 });
 }
 
