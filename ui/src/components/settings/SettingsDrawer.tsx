@@ -59,6 +59,7 @@ import { CableTestSettings } from './sections/CableTestSettings';
 import { ConfigBackupsSection } from './sections/ConfigBackupsSection';
 import { DiscoverySettings } from './sections/DiscoverySettings';
 import { DnsSettings } from './sections/DnsSettings';
+import { GuestNetworkAuditSettings } from './sections/GuestNetworkAuditSettings';
 import { HealthChecksSettings } from './sections/HealthChecksSettings';
 import { InterfacesSettings } from './sections/InterfacesSettings';
 import { LinkSettings } from './sections/LinkSettings';
@@ -696,6 +697,13 @@ export const SettingsDrawer: React.MemoExoticComponent<
             <RequireAdmin>
               <UsersSettings />
             </RequireAdmin>
+
+            {/* Guest-network isolation audit target list (#1004). Its route
+                is minRole: op, so the whole section is operator-gated rather
+                than only its save button. */}
+            <RequireRole min="operator">
+              <GuestNetworkAuditSettings />
+            </RequireRole>
 
             {/* SSO admin panel (seed#1198). Operator-gated to match the
                 backend: GET /sso/settings and PUT /sso/update are both

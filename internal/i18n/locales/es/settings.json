@@ -544,5 +544,26 @@
     "colPrefix": "Prefijo",
     "colCreated": "Creado",
     "colStatus": "Estado"
+  },
+  "guestAudit": {
+    "title": "Auditoría de red de invitados",
+    "description": "Sondea hosts que una red de invitados no debe alcanzar. Un objetivo alcanzable significa que el aislamiento no se está manteniendo.",
+    "enabled": "Ejecutar la auditoría",
+    "noTargets": "Aún no hay objetivos. Agregue las direcciones que los clientes invitados no deben poder alcanzar.",
+    "targetIp": "Dirección objetivo",
+    "targetIpPlaceholder": "192.0.2.10",
+    "targetLabel": "Etiqueta (opcional)",
+    "targetLabelPlaceholder": "Servidor de archivos",
+    "addTarget": "Agregar objetivo",
+    "removeTarget": "Eliminar",
+    "removeTargetNamed": "Eliminar objetivo {{ip}}",
+    "invalidIp": "Ingrese una dirección IPv4, por ejemplo 192.0.2.10.",
+    "duplicateIp": "Esa dirección ya es un objetivo.",
+    "ports": "Puertos a sondear",
+    "invalidPort": "{{value}} no es un puerto entre 1 y 65535.",
+    "restoreDefaultPorts": "Restaurar los puertos predeterminados",
+    "save": "Guardar",
+    "saving": "Guardando...",
+    "readOnly": "Solo lectura — se requiere el rol de operador para cambiar la auditoría"
   }
 }
