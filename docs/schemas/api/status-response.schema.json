@@ -3,6 +3,29 @@
   "$id": "https://raw.githubusercontent.com/MustardSeedNetworks/seed/main/docs/schemas/api/status-response.schema.json",
   "$ref": "#/$defs/StatusResponse",
   "$defs": {
+    "Entry": {
+      "properties": {
+        "capability": {
+          "type": "string"
+        },
+        "title": {
+          "type": "string"
+        },
+        "level": {
+          "type": "string"
+        },
+        "note": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "capability",
+        "title",
+        "level"
+      ]
+    },
     "StatusResponse": {
       "properties": {
         "status": {
@@ -22,6 +45,12 @@
         },
         "icmpAvailable": {
           "type": "boolean"
+        },
+        "capabilities": {
+          "items": {
+            "$ref": "#/$defs/Entry"
+          },
+          "type": "array"
         }
       },
       "additionalProperties": false,
@@ -32,7 +61,8 @@
         "uptime",
         "interface",
         "isWireless",
-        "icmpAvailable"
+        "icmpAvailable",
+        "capabilities"
       ]
     }
   },

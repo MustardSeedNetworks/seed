@@ -311,6 +311,9 @@ jobs:
           CGO_ENABLED: "0"
         run: go vet ./internal/api/...
 
+      - name: Hardware matrix drift
+        run: ./scripts/check-hardware-matrix.sh
+
       - name: Verify API schemas are up to date
         run: ./scripts/check-schema-drift.sh
 

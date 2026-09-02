@@ -12,4 +12,11 @@ export interface StatusResponse {
   interface: string;
   isWireless: boolean;
   icmpAvailable: boolean;
+  capabilities: Entry[];
+}
+export interface Entry {
+  capability: string;
+  title: string;
+  level: string;
+  note?: string;
 }
