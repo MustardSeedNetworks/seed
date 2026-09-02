@@ -120,6 +120,32 @@ export async function loginAndAwaitDashboard(
 }
 
 /**
+ * Reload and wait for the dashboard to come back.
+ *
+ * A bare `page.reload()` followed by a 10s assertion on the header is the
+ * shape that made auth-complete.spec.ts flake on WebKit and eject the release
+ * PR from the merge queue. Two things are wrong with it, and both are already
+ * documented on loginAndAwaitDashboard above:
+ *
+ *  1. The post-reload chain is the *same* SPA mount → first data fetch →
+ *     header paint chain that was measured as occasionally exceeding 10s on
+ *     the contended shard. Asserting it at 10s after a reload while the login
+ *     path allows 20s is the same race with half the budget.
+ *  2. The reload fires while the dashboard's first fetches are still in
+ *     flight, because the header painting is what loginAndAwaitDashboard
+ *     waits for — not the data behind it. `waitUntil: 'domcontentloaded'`
+ *     makes the navigation resolve on its own terms rather than on a `load`
+ *     event that those aborted requests can hold open.
+ *
+ * This is #2285's audit landing on the one reload the suite cannot simply
+ * drop: persisting auth across a reload is the behaviour under test.
+ */
+export async function reloadAndAwaitDashboard(page: Page): Promise<void> {
+  await page.reload({ waitUntil: 'domcontentloaded' });
+  await expect(page.getByTestId('page-header-title')).toBeVisible({ timeout: 20000 });
+}
+
+/**
  * Settings / Help live in the sidebar footer, not the header (Phase 2 —
  * see components/app/HeaderBar.tsx and the sidebar's FooterIconButton).
  * Selected by test id rather than accessible name: the page header's (?)
