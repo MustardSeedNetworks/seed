@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.213.47](https://github.com/MustardSeedNetworks/seed/compare/v0.213.46...v0.213.47) (2026-09-02)
+
+
+### Bug Fixes
+
+* **ui:** restore the fractional spacing classes [#2297](https://github.com/MustardSeedNetworks/seed/issues/2297) corrupted ([#2316](https://github.com/MustardSeedNetworks/seed/issues/2316)) ([2d9b327](https://github.com/MustardSeedNetworks/seed/commit/2d9b32726ed235338f74069182be2ea8cc824130))
+
 ## [0.213.46](https://github.com/MustardSeedNetworks/seed/compare/v0.213.45...v0.213.46) (2026-09-02)
 
 
