@@ -25,6 +25,7 @@ import type React from 'react';
 import { memo, useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { api } from '../../../api';
+import { useRole } from '../../../contexts/RoleContext';
 import {
   cn,
   icon as iconTokens,
@@ -37,6 +38,9 @@ import type { SaveStatus, WiFiSettings as WiFiSettingsType } from '../../../type
 import { CollapsibleSection } from '../../ui/CollapsibleSection';
 import { Wifi } from '../../ui/icons';
 import { AutoSaveIndicator } from './AutoSaveIndicator';
+
+/** Shown on every Wi-Fi action a viewer cannot perform (#1254). */
+const READ_ONLY_REASON = 'Read-only — operator role required to change the Wi-Fi connection';
 
 // Types for WiFi scanning and connection
 interface ScannedNetwork {
@@ -71,6 +75,69 @@ interface WiFiSettingsProps {
 /**
  * Settings section for WiFi scanning configuration, adapter selection, and connection management.
  */
+/**
+ * SavedNetworks — the remembered-network list and its Forget controls.
+ *
+ * Split out of WiFiSettings because that component sits at the cognitive
+ * complexity ceiling: adding the role check to the three action controls
+ * pushed it from 40 to 41. The list is self-contained, so extracting it is
+ * the fix rather than raising the ceiling.
+ */
+function SavedNetworks({
+  networks,
+  canWrite,
+  readOnlyReason,
+  onForget,
+}: {
+  networks: SavedNetwork[];
+  canWrite: boolean;
+  readOnlyReason: string;
+  onForget: (ssid: string) => void;
+}): React.ReactElement | null {
+  const { t } = useTranslation('settings');
+
+  if (networks.length === 0) {
+    return null;
+  }
+
+  return (
+    <div className="border-t border-surface-border pt-heading">
+      <span className="body-small font-medium text-text-primary block mb-2">
+        {t('wifi.savedNetworks')}
+      </span>
+      <div
+        className={cn(
+          'max-h-32 overflow-y-auto',
+          'border border-surface-border',
+          radius.default,
+          'bg-surface-base',
+        )}
+      >
+        {networks.map((network) => (
+          <div
+            key={network.uuid || network.ssid}
+            className={cn(
+              'flex-between px-3 py-row',
+              'border-b border-surface-border last:border-b-0',
+            )}
+          >
+            <span className="body-small text-text-primary">{network.ssid}</span>
+            <button
+              type="button"
+              onClick={(): void => onForget(network.ssid)}
+              disabled={!canWrite}
+              title={canWrite ? undefined : readOnlyReason}
+              className="caption text-status-error hover:underline disabled:opacity-50 disabled:no-underline"
+            >
+              Forget
+            </button>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 export const WiFiSettings: React.NamedExoticComponent<WiFiSettingsProps> = memo(
   function wiFiSettings({ wifiSettings, setWifiSettings, wifiStatus }: WiFiSettingsProps) {
     const { t } = useTranslation('settings');
@@ -79,6 +146,11 @@ export const WiFiSettings: React.NamedExoticComponent<WiFiSettingsProps> = memo(
     const [networks, setNetworks] = useState<ScannedNetwork[]>([]);
     const [scanning, setScanning] = useState(false);
     const [scanError, setScanError] = useState<string | null>(null);
+    // connect / disconnect / forget all POST or DELETE against routes the
+    // backend registers with minRole: op, so a viewer's click can only 403
+    // (#1254). Disabled with a reason rather than hidden, matching the
+    // API-tokens section beside it.
+    const { canWrite } = useRole();
     const [connecting, setConnecting] = useState(false);
     const [connectionStatus, setConnectionStatus] = useState<string | null>(null);
     const [selectedNetwork, setSelectedNetwork] = useState<ScannedNetwork | null>(null);
@@ -444,7 +516,12 @@ export const WiFiSettings: React.NamedExoticComponent<WiFiSettingsProps> = memo(
                     <button
                       type="button"
                       onClick={connectToNetwork}
-                      disabled={connecting || (selectedNetwork.security !== 'Open' && !password)}
+                      disabled={
+                        !canWrite ||
+                        connecting ||
+                        (selectedNetwork.security !== 'Open' && !password)
+                      }
+                      title={canWrite ? undefined : READ_ONLY_REASON}
                       className={cn(
                         'w-full',
                         'body-small font-medium',
@@ -481,7 +558,8 @@ export const WiFiSettings: React.NamedExoticComponent<WiFiSettingsProps> = memo(
                   <button
                     type="button"
                     onClick={disconnectNetwork}
-                    disabled={connecting}
+                    disabled={!canWrite || connecting}
+                    title={canWrite ? undefined : READ_ONLY_REASON}
                     className={cn(
                       'caption font-medium',
                       spacing.chip.md,
@@ -495,43 +573,14 @@ export const WiFiSettings: React.NamedExoticComponent<WiFiSettingsProps> = memo(
                 </div>
               </div>
 
-              {/* Saved Networks */}
-              {savedNetworks.length > 0 ? (
-                <div className="border-t border-surface-border pt-heading">
-                  <span className="body-small font-medium text-text-primary block mb-2">
-                    {t('wifi.savedNetworks')}
-                  </span>
-                  <div
-                    className={cn(
-                      'max-h-32 overflow-y-auto',
-                      'border border-surface-border',
-                      radius.default,
-                      'bg-surface-base',
-                    )}
-                  >
-                    {savedNetworks.map((network) => (
-                      <div
-                        key={network.uuid || network.ssid}
-                        className={cn(
-                          'flex-between px-3 py-row',
-                          'border-b border-surface-border last:border-b-0',
-                        )}
-                      >
-                        <span className="body-small text-text-primary">{network.ssid}</span>
-                        <button
-                          type="button"
-                          onClick={(): void => {
-                            forgetNetwork(network.ssid).catch(() => undefined);
-                          }}
-                          className="caption text-status-error hover:underline"
-                        >
-                          Forget
-                        </button>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              ) : null}
+              <SavedNetworks
+                networks={savedNetworks}
+                canWrite={canWrite}
+                readOnlyReason={READ_ONLY_REASON}
+                onForget={(ssid): void => {
+                  forgetNetwork(ssid).catch(() => undefined);
+                }}
+              />
             </>
           ) : null}
         </div>
