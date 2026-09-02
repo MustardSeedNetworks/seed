@@ -565,5 +565,9 @@
     "save": "Guardar",
     "saving": "Guardando...",
     "readOnly": "Solo lectura — se requiere el rol de operador para cambiar la auditoría"
+  },
+  "viewerOnly": {
+    "title": "Cuenta de solo lectura",
+    "description": "Cambiar la configuración requiere el rol de operador. Consulte a un administrador si necesita acceso."
   }
 }

@@ -565,5 +565,9 @@
     "save": "Save",
     "saving": "Saving...",
     "readOnly": "Read-only — operator role required to change the audit"
+  },
+  "viewerOnly": {
+    "title": "Read-only account",
+    "description": "Changing settings needs the operator role. Ask an administrator if you need access."
   }
 }
