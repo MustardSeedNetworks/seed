@@ -30,7 +30,8 @@
     "invalidInterface": "Invalid interface",
     "staticConfigFailed": "Failed to configure static IP",
     "dhcpConfigFailed": "Failed to configure DHCP",
-    "invalidMode": "Mode must be 'dhcp' or 'static'"
+    "invalidMode": "Mode must be 'dhcp' or 'static'",
+    "invalidConfig": "The network configuration cannot work as requested."
   },
   "license": {
     "tierTooLow": "This feature requires the {{tier}} tier",

@@ -359,14 +359,17 @@ func validateIPConfig(cfg *StaticIPConfig) error {
 		}
 	}
 
-	// Validate DNS servers if provided
+	// Validate DNS servers if provided. A resolver may be anywhere, on-subnet
+	// or not, so it gets no reachability check.
 	for _, dns := range cfg.DNS {
 		if net.ParseIP(dns) == nil {
 			return fmt.Errorf("invalid DNS server: %s", dns)
 		}
 	}
 
-	return nil
+	// Everything above confirms the fields parse. This confirms the
+	// configuration can work at all (#50).
+	return preflightStaticIP(cfg)
 }
 
 // isValidNetmask checks if the netmask is valid (CIDR or dotted notation).

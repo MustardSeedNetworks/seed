@@ -1,6 +1,9 @@
 package app
 
 import (
+	"errors"
+	"fmt"
+
 	"github.com/MustardSeedNetworks/seed/internal/config"
 	"github.com/MustardSeedNetworks/seed/internal/netif"
 	"github.com/MustardSeedNetworks/seed/internal/network/ipconfig"
@@ -24,12 +27,20 @@ type networkHardware struct {
 }
 
 func (a networkHardware) ConfigureStaticIP(iface string, ip ipconfig.StaticIP) error {
-	return a.mgr().ConfigureStaticIP(iface, &netif.StaticIPConfig{
+	err := a.mgr().ConfigureStaticIP(iface, &netif.StaticIPConfig{
 		Address: ip.Address,
 		Netmask: ip.Netmask,
 		Gateway: ip.Gateway,
 		DNS:     ip.DNS,
 	})
+	// The driver's "you asked for something that cannot work" becomes the
+	// domain's. Translating here keeps ipconfig free of netif, which is the
+	// point of the port.
+	if errors.Is(err, netif.ErrInvalidConfig) {
+		return fmt.Errorf("%w: %w", ipconfig.ErrInvalidConfig, err)
+	}
+
+	return err
 }
 
 func (a networkHardware) ConfigureDHCP(iface string) error { return a.mgr().ConfigureDHCP(iface) }
