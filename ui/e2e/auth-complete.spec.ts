@@ -3,6 +3,7 @@ import {
   AUTH_STORAGE_STATE,
   disableAnimations,
   loginAndAwaitDashboard,
+  reloadAndAwaitDashboard,
   TEST_CREDENTIALS,
 } from './helpers/auth';
 
@@ -333,13 +334,9 @@ test.describe('Complete Authentication Lifecycle', () => {
       await page.goto('/');
       await loginAndAwaitDashboard(page);
 
-      // Reload page
-      await page.reload();
-
-      // Should still be authenticated (cookies persist)
-      await expect(page.getByTestId('page-header-title')).toBeVisible({
-        timeout: 10000,
-      });
+      // Reload and wait for the dashboard the same way the login path does;
+      // a bare reload plus a 10s assertion is the WebKit flake (#2285).
+      await reloadAndAwaitDashboard(page);
 
       // Should NOT show login form
       const loginForm = page.getByLabel(/username/i);
