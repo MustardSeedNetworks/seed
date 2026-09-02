@@ -47,8 +47,17 @@ type InterfaceConfig struct {
 // legacy single-interface workflow remains the canonical "primary." The
 // returned slice may be empty if neither field is populated.
 func (c *InterfaceConfig) AllEthernet() []string {
-	seen := make(map[string]struct{}, len(c.Ethernet)+1)
-	out := make([]string, 0, len(c.Ethernet)+1)
+	// Sized to len(Ethernet), not len(Ethernet)+1. The +1 anticipated Default
+	// being folded in below, but it made the allocation size an arithmetic
+	// expression over a value that comes straight from operator config, which
+	// CodeQL's go/allocation-size-overflow taint query reports as high
+	// (alerts 407-408). Overflowing would need a slice of MaxInt strings, so
+	// the finding is not reachable — but the +1 was only a capacity hint, and
+	// dropping it costs at most one re-allocation in the one case where
+	// Default is set. Cheaper than carrying a dismissal that the next query
+	// update would raise again.
+	seen := make(map[string]struct{}, len(c.Ethernet))
+	out := make([]string, 0, len(c.Ethernet))
 	if c.Default != "" {
 		seen[c.Default] = struct{}{}
 		out = append(out, c.Default)
@@ -70,8 +79,10 @@ func (c *InterfaceConfig) AllEthernet() []string {
 // operator configured. WiFi is folded in as the first element so the
 // legacy single-interface workflow remains the canonical "primary".
 func (c *InterfaceConfig) AllWiFi() []string {
-	seen := make(map[string]struct{}, len(c.WiFiList)+1)
-	out := make([]string, 0, len(c.WiFiList)+1)
+	// Sized without the +1 for the same reason as AllEthernet above
+	// (CodeQL alerts 409-410).
+	seen := make(map[string]struct{}, len(c.WiFiList))
+	out := make([]string, 0, len(c.WiFiList))
 	if c.WiFi != "" {
 		seen[c.WiFi] = struct{}{}
 		out = append(out, c.WiFi)
