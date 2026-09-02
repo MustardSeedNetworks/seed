@@ -36,6 +36,8 @@ import esSetup from '@locales/es/setup.json';
 import esValidation from '@locales/es/validation.json';
 import { describe, expect, it } from 'vitest';
 
+import { DNT_TERMS } from './dnt';
+
 type Json = string | number | boolean | null | Json[] | { [k: string]: Json };
 
 const FIXTURES: { ns: string; en: Json; es: Json }[] = [
@@ -48,46 +50,6 @@ const FIXTURES: { ns: string; en: Json; es: Json }[] = [
   { ns: 'settings', en: enSettings as Json, es: esSettings as Json },
   { ns: 'setup', en: enSetup as Json, es: esSetup as Json },
   { ns: 'validation', en: enValidation as Json, es: esValidation as Json },
-];
-
-/**
- * Standard terms that must NEVER be translated. Acronyms / RFC numbers /
- * protocol names / metric names / units / product+module names. Keep aligned
- * with the cross-repo memory: feedback_no_translate_standard_terms.
- */
-const DNT_TERMS = [
-  // Standards
-  'RFC 2544',
-  'Y.1564',
-  'Y.1731',
-  'RFC 2889',
-  'RFC 6349',
-  'MEF',
-  'TSN',
-  // Protocols & acronyms
-  'ARP',
-  'DHCP',
-  'DNS',
-  'BGP',
-  'OSPF',
-  'SNMP',
-  'VLAN',
-  'WebSocket',
-  // Metrics, abbreviations, units
-  'SNR',
-  'FLR',
-  'FDV',
-  'CIR',
-  'EIR',
-  'Mbps',
-  'dBm',
-  'jitter',
-  'throughput',
-  'latency',
-  // Product names
-  'Seed',
-  'Stem',
-  'NIAC',
 ];
 
 function flatKeyPaths(node: Json, prefix = ''): string[] {
