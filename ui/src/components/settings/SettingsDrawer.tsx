@@ -49,7 +49,6 @@ import type {
   TestsSettings,
   WiFiSettings as WiFiSettingsType,
 } from '../../types/settings';
-import { ReadOnlyView } from '../ui/ReadOnlyView';
 import { RequireAdmin, RequireRole } from '../ui/RequireRole';
 import { SettingsDrawerFooter } from './SettingsDrawerFooter';
 import { SettingsDrawerNetworkSection } from './SettingsDrawerNetworkSection';
@@ -83,6 +82,27 @@ interface SettingsDrawerProps {
   version?: string;
   /** Whether currently viewing WiFi mode (shows WiFi settings instead of Link/Cable). */
   isWifi?: boolean;
+}
+
+/**
+ * ViewerSettingsNotice — what a viewer sees in place of the settings panels.
+ *
+ * Not an error state. The account is working exactly as configured; there is
+ * simply nothing on this surface it is entitled to read (#1254).
+ */
+function ViewerSettingsNotice(): React.ReactElement {
+  const { t } = useTranslation('settings');
+
+  return (
+    <div
+      role="status"
+      data-testid="settings-viewer-notice"
+      className="rounded-lg border border-status-info/30 bg-status-info/5 pad-sm stack-xs"
+    >
+      <p className="body-small font-medium text-status-info">{t('viewerOnly.title')}</p>
+      <p className="caption text-text-secondary">{t('viewerOnly.description')}</p>
+    </div>
+  );
 }
 
 export const SettingsDrawer: React.MemoExoticComponent<
@@ -564,13 +584,21 @@ export const SettingsDrawer: React.MemoExoticComponent<
           className={cn(spacing.drawerPad, 'section-gap body-small leading-relaxed')}
           ref={scrollRef}
         >
-          {/* #1254: viewers see every panel read-only via one wrap. The
-              fieldset inside ReadOnlyView propagates `disabled` to every
-              descendant input/button so each section needn't gate its own
-              controls. ApiTokensSettings still composes its license+role
-              tooltips per-control inside; ReadOnlyView's disabled is
-              idempotent with those, so no conflict. */}
-          <ReadOnlyView>
+          {/* #1254: a viewer sees one explanation instead of the panels.
+              The disabled-fieldset wrap this replaces was the right idea at
+              the wrong layer: it made every control read-only, but the data
+              behind them never arrives. Eight of the drawer's ten loader endpoints are
+              registered minRole: op and gate GET, not just the writes --
+              /settings, /settings/link, /settings/cable, /wifi/wifi/settings,
+              /telemetry/{ipconfig,probes,snmp}/settings and
+              /security/devices/settings. So a viewer got a read-only view of
+              nothing: a banner over fifteen empty or errored sections.
+
+              Appearance and display are no exception -- they persist through
+              PATCH /profiles/{id}/settings, which is operator-gated too. There
+              is no subset of this drawer a viewer can actually read, so there
+              is nothing to render read-only. */}
+          <RequireRole min="operator" fallback={<ViewerSettingsNotice />}>
             {/* Settings sections ordered to match dashboard card order */}
             {/* Link Settings - always visible for ethernet interface config */}
             <LinkSettings
@@ -729,7 +757,7 @@ export const SettingsDrawer: React.MemoExoticComponent<
               logError={logError}
               logPreview={logPreview}
             />
-          </ReadOnlyView>
+          </RequireRole>
         </div>
       </div>
     </>
