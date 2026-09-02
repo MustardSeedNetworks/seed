@@ -60,7 +60,8 @@ function NodeList({ selectedID, onSelect }: NodeListProps): JSX.Element {
             onClick={(): void => {
               void refresh();
             }}
-            className="text-text-muted hover:text-text-primary"
+            // Icon-only, so the icon's 16px was the whole target (#244).
+            className="target flex-center text-text-muted hover:text-text-primary"
             aria-label="Refresh"
           >
             <RefreshCw className="h-4 w-4" />
