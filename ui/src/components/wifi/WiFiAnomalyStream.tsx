@@ -32,13 +32,13 @@ export function WiFiAnomalyStream({ anomalies }: WiFiAnomalyStreamProps) {
         <li
           key={`${a.defKey}:${a.subject.kind}:${a.subject.id}`}
           data-testid="wifi-anomaly-row"
-          className="rounded-md border border-surface-border bg-surface-base p-3 stack-2xs"
+          className="rounded-md border border-surface-border bg-surface-base pad-sm stack-2xs"
         >
-          <div className="flex items-center justify-between gap-2">
-            <div className="flex items-center gap-2">
+          <div className="flex-between gap-compact">
+            <div className="flex items-center gap-compact">
               <span
                 data-testid="wifi-anomaly-severity"
-                className={`rounded-full px-2 py-0.5 text-xs font-medium uppercase ${severityStyle(a.severity).badge}`}
+                className={`rounded-full px-cell py-0.5 text-xs font-medium uppercase ${severityStyle(a.severity).badge}`}
               >
                 {a.severity}
               </span>

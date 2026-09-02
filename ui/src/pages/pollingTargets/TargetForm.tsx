@@ -46,14 +46,14 @@ export function TargetForm({ mode, initial, onSubmit, onCancel }: TargetFormProp
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-scrim/60">
+    <div className="fixed inset-0 z-50 flex-center bg-scrim/60">
       <form
         onSubmit={(e): void => {
           void handleSubmit(e);
         }}
-        className="w-full max-w-md rounded-lg border border-surface-border bg-surface-raised p-6 shadow-xl"
+        className="w-full max-w-md rounded-lg border border-surface-border bg-surface-raised pad-lg shadow-xl"
       >
-        <div className="flex items-center justify-between border-b border-surface-border pb-3">
+        <div className="flex-between border-b border-surface-border pb-3">
           <h2 className="text-lg font-semibold text-text-primary">
             {mode === 'create' ? 'Add polling target' : 'Edit polling target'}
           </h2>
@@ -68,12 +68,12 @@ export function TargetForm({ mode, initial, onSubmit, onCancel }: TargetFormProp
         </div>
 
         {formError ? (
-          <div className="mt-3 rounded-md border border-status-error/40 bg-status-error/10 p-2 text-sm text-status-error">
+          <div className="mt-heading rounded-md border border-status-error/40 bg-status-error/10 pad-xs text-sm text-status-error">
             {formError}
           </div>
         ) : null}
 
-        <div className="mt-4 space-y-3">
+        <div className="mt-content stack">
           <Field label="Name">
             <input
               type="text"
@@ -113,7 +113,7 @@ export function TargetForm({ mode, initial, onSubmit, onCancel }: TargetFormProp
               className={inputClass}
             />
           </Field>
-          <label className="flex items-center gap-2 text-sm text-text-secondary">
+          <label className="flex items-center gap-compact text-sm text-text-secondary">
             <input
               type="checkbox"
               checked={form.enabled}
@@ -123,7 +123,7 @@ export function TargetForm({ mode, initial, onSubmit, onCancel }: TargetFormProp
           </label>
         </div>
 
-        <div className="mt-5 flex justify-end gap-2 border-t border-surface-border pt-4">
+        <div className="mt-5 flex justify-end gap-compact border-t border-surface-border pt-section">
           <button
             type="button"
             onClick={onCancel}
@@ -155,7 +155,7 @@ function Field({ label, children }: { label: string; children: JSX.Element }): J
       <span className="block text-xs font-medium uppercase tracking-wide text-text-muted">
         {label}
       </span>
-      <span className="mt-1 block">{children}</span>
+      <span className="mt-tight block">{children}</span>
     </div>
   );
 }

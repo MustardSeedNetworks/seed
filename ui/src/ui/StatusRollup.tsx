@@ -107,9 +107,9 @@ export const StatusRollup: FC<StatusRollupProps> = ({
       {/* 3px status edge down the left. */}
       <span aria-hidden="true" className={`absolute inset-y-0 left-0 w-[3px] ${styles.edge}`} />
 
-      <div className="flex flex-col gap-6 p-6 pl-7 lg:flex-row lg:items-start lg:justify-between">
+      <div className="flex flex-col gap-spacious pad-lg pl-7 lg:flex-row lg:items-start lg:justify-between">
         <div className="min-w-0">
-          <p className="kicker flex items-center gap-2">
+          <p className="kicker flex items-center gap-compact">
             {/* motion-safe: the pulse is decoration, and a reader who has asked
                 for less motion should not have to watch it to read the state. */}
             <span
@@ -118,11 +118,13 @@ export const StatusRollup: FC<StatusRollupProps> = ({
             />
             <span className={styles.kicker}>{STATE_LABELS[state]}</span>
           </p>
-          <h2 className="mt-2 text-xl font-extrabold tracking-[-0.02em] text-text-primary">
+          <h2 className="mt-inline text-xl font-extrabold tracking-[-0.02em] text-text-primary">
             {headline}
           </h2>
-          {body ? <p className="mt-2 max-w-prose text-sm text-text-secondary">{body}</p> : null}
-          {actions ? <div className="mt-4 flex flex-wrap gap-2">{actions}</div> : null}
+          {body ? (
+            <p className="mt-inline max-w-prose text-sm text-text-secondary">{body}</p>
+          ) : null}
+          {actions ? <div className="mt-content flex flex-wrap gap-compact">{actions}</div> : null}
         </div>
 
         {shown.length > 0 ? (
@@ -132,7 +134,7 @@ export const StatusRollup: FC<StatusRollupProps> = ({
                 <dd className="figure text-2xl font-bold leading-none text-text-primary">
                   {state === 'unknown' ? '—' : figure.value}
                 </dd>
-                <dt className="kicker mt-2">{figure.label}</dt>
+                <dt className="kicker mt-inline">{figure.label}</dt>
               </div>
             ))}
           </dl>

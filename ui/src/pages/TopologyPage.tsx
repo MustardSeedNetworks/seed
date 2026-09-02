@@ -51,7 +51,7 @@ function NodeList({ selectedID, onSelect }: NodeListProps): JSX.Element {
   return (
     <RecordPane
       filter={
-        <div className="flex items-center justify-between">
+        <div className="flex-between">
           <span className="kicker">
             {loading ? 'Loading…' : `${nodes.length} node${nodes.length === 1 ? '' : 's'}`}
           </span>
@@ -162,14 +162,14 @@ function InterfacesPanel({ interfaces }: { interfaces: TopologyInterface[] }): J
   const { t } = useTranslation('pages');
   return (
     <div className="rounded-lg border border-surface-border bg-surface-raised">
-      <div className="flex items-center gap-2 border-b border-surface-border px-4 py-2">
+      <div className="flex items-center gap-compact border-b border-surface-border px-4 py-2">
         <Activity className="h-4 w-4 text-status-success" />
         <span className="text-sm font-medium text-text-primary">
           Interfaces ({interfaces.length})
         </span>
       </div>
       {interfaces.length === 0 ? (
-        <div className="p-4 text-sm text-text-muted">{t('topology.noInterfaceData')}</div>
+        <div className="pad text-sm text-text-muted">{t('topology.noInterfaceData')}</div>
       ) : (
         <table className="w-full text-sm">
           <thead className="text-left text-xs uppercase tracking-wide text-text-muted">
@@ -206,7 +206,7 @@ function IfStatusPair({ admin, oper }: { admin: number; oper: number }): JSX.Ele
   // RFC 2233 values — 1=up, 2=down, anything else lands in the
   // catch-all dim color.
   return (
-    <span className="flex items-center gap-1 text-xs">
+    <span className="flex items-center gap-tight text-xs">
       <span className={admin === 1 ? 'text-status-success' : 'text-text-muted'}>admin</span>
       <span className="text-text-muted">/</span>
       <span
@@ -224,20 +224,20 @@ function LinksPanel({ links, nodeID }: { links: TopologyLink[]; nodeID: string }
   const { t } = useTranslation('pages');
   return (
     <div className="rounded-lg border border-surface-border bg-surface-raised">
-      <div className="flex items-center gap-2 border-b border-surface-border px-4 py-2">
+      <div className="flex items-center gap-compact border-b border-surface-border px-4 py-2">
         <Cable className="h-4 w-4 text-status-info" />
         <span className="text-sm font-medium text-text-primary">
           Neighbor links ({links.length})
         </span>
       </div>
       {links.length === 0 ? (
-        <div className="p-4 text-sm text-text-muted">{t('topology.noEdges')}</div>
+        <div className="pad text-sm text-text-muted">{t('topology.noEdges')}</div>
       ) : (
         <ul className="divide-y divide-surface-border">
           {links.map((l) => {
             const otherEnd = l.sourceNodeId === nodeID ? l.targetNodeId : l.sourceNodeId;
             return (
-              <li key={l.id} className="flex items-center justify-between px-4 py-2 text-sm">
+              <li key={l.id} className="flex-between px-4 py-2 text-sm">
                 <span className="text-text-primary">↔ {otherEnd}</span>
                 <span className="text-xs text-text-muted">
                   {l.linkType} · {fmtTime(l.lastSeen)}

@@ -99,12 +99,12 @@ export function FilterChip({ label, count, active = false, onClick }: FilterChip
       onClick={onClick}
       aria-pressed={active}
       className={cn(
-        'kicker rounded-md px-2 py-1 transition-colors',
+        'kicker rounded-md px-cell py-1 transition-colors',
         active ? 'bg-surface-sunken text-text-primary' : 'text-text-muted hover:text-text-primary',
       )}
     >
       {label}
-      {count === undefined ? null : <span className="figure ml-1">{count}</span>}
+      {count === undefined ? null : <span className="figure ml-tight">{count}</span>}
     </button>
   );
 }
