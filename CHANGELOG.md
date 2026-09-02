@@ -5,6 +5,37 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.213.43](https://github.com/MustardSeedNetworks/seed/compare/v0.213.42...v0.213.43) (2026-09-02)
+
+
+### Features
+
+* **dhcp:** expose forced lease renewal ([#2276](https://github.com/MustardSeedNetworks/seed/issues/2276)) ([e1ae3ac](https://github.com/MustardSeedNetworks/seed/commit/e1ae3ace2b6f7258f41c63db1bfda57249c8bfc4))
+* **netif:** reject static IP configurations that cannot work ([#2300](https://github.com/MustardSeedNetworks/seed/issues/2300)) ([6cf36d2](https://github.com/MustardSeedNetworks/seed/commit/6cf36d26610197090122a01cc1a99630919c15c4)), closes [#50](https://github.com/MustardSeedNetworks/seed/issues/50)
+
+
+### Bug Fixes
+
+* **config:** migrate renamed keys instead of refusing to start ([#2303](https://github.com/MustardSeedNetworks/seed/issues/2303)) ([1870f82](https://github.com/MustardSeedNetworks/seed/commit/1870f8216f608835b55347d5abea0f9aae3691a5)), closes [#2302](https://github.com/MustardSeedNetworks/seed/issues/2302)
+* **discovery:** format LLDP chassis and port ids by their subtype ([#2289](https://github.com/MustardSeedNetworks/seed/issues/2289)) ([c4e2507](https://github.com/MustardSeedNetworks/seed/commit/c4e25075266d48ba9ca614e66b6883866af9effe)), closes [#1932](https://github.com/MustardSeedNetworks/seed/issues/1932)
+* **e2e:** reload through the same settle the login path already uses ([#2304](https://github.com/MustardSeedNetworks/seed/issues/2304)) ([735dfcf](https://github.com/MustardSeedNetworks/seed/commit/735dfcf67e900911a3adc6a5f00968f631025edf)), closes [#2285](https://github.com/MustardSeedNetworks/seed/issues/2285)
+* **e2e:** repair disableAnimations and drop reloads from theme spec ([#2283](https://github.com/MustardSeedNetworks/seed/issues/2283)) ([81974b1](https://github.com/MustardSeedNetworks/seed/commit/81974b1f3a883f84058168136afd7d59a86aae07))
+* **network:** return and render the host's real DNS servers ([#2288](https://github.com/MustardSeedNetworks/seed/issues/2288)) ([da4d161](https://github.com/MustardSeedNetworks/seed/commit/da4d161f156fc6b3a7494c92d7ee6f6c48d91b85))
+* **ui:** gate the SSO panel and the Wi-Fi connection controls by role ([#2298](https://github.com/MustardSeedNetworks/seed/issues/2298)) ([745ce03](https://github.com/MustardSeedNetworks/seed/commit/745ce034bda52cc840b6d4e71000411213186786))
+
+
+### Tests
+
+* **i18n:** assert real locale copy on the cards an operator reads first ([#2295](https://github.com/MustardSeedNetworks/seed/issues/2295)) ([6289194](https://github.com/MustardSeedNetworks/seed/commit/6289194b1f1b56483bad72bf8ed8c8ca046813de))
+
+
+### Miscellaneous
+
+* **dhcp:** drop the Windows DHCP helpers nothing calls ([#2290](https://github.com/MustardSeedNetworks/seed/issues/2290)) ([6b6b690](https://github.com/MustardSeedNetworks/seed/commit/6b6b69097f16cd4fae7d1567a616332283ab7395)), closes [#2275](https://github.com/MustardSeedNetworks/seed/issues/2275)
+* rename additionalSubnets to targetNetworks throughout ([#2293](https://github.com/MustardSeedNetworks/seed/issues/2293)) ([348a675](https://github.com/MustardSeedNetworks/seed/commit/348a675ce05dc90fb394dec57e6ebe89738336e0))
+* **ui:** re-enable the biome rules [#1070](https://github.com/MustardSeedNetworks/seed/issues/1070) turned off to go green ([#2292](https://github.com/MustardSeedNetworks/seed/issues/2292)) ([473fae1](https://github.com/MustardSeedNetworks/seed/commit/473fae13679ae2f4e46e79bf9fe01cd3b8fef9c5)), closes [#1087](https://github.com/MustardSeedNetworks/seed/issues/1087)
+* **ui:** use the spacing and flex family classes instead of raw utilities ([#2297](https://github.com/MustardSeedNetworks/seed/issues/2297)) ([df5b52c](https://github.com/MustardSeedNetworks/seed/commit/df5b52c5a20bab6429fa54c6403aa8440074229b))
+
 ## [0.213.42](https://github.com/MustardSeedNetworks/seed/compare/v0.213.41...v0.213.42) (2026-09-01)
 
 
