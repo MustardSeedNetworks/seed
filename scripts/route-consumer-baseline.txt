@@ -1,0 +1,47 @@
+# Route ⇄ consumer ratchet; see check-route-consumers.py.
+# Plain lines: registered routes with no UI or CLI consumer.
+# `404 <path>` lines: requests the UI or CLI makes that no route serves.
+# Optional `# reason`. Remove a line when it stops being true — the gate fails on stale entries.
+/api/v1/alert-rules
+/api/v1/alert-rules/
+/api/v1/device-credentials
+/api/v1/device-credentials/
+/api/v1/discovery/engine
+/api/v1/discovery/engine/capabilities
+/api/v1/discovery/engine/device/
+/api/v1/discovery/engine/events
+/api/v1/discovery/engine/full
+/api/v1/discovery/engine/quick
+/api/v1/discovery/engine/scan
+/api/v1/discovery/engine/stats
+/api/v1/engines
+/api/v1/events
+/api/v1/health
+/api/v1/path/traceroute
+/api/v1/reporting/logs/query
+/api/v1/security/bluetooth/devices
+/api/v1/security/bluetooth/scan
+/api/v1/security/bluetooth/stats
+/api/v1/security/bluetooth/status
+/api/v1/security/discovery/fingerprint
+/api/v1/security/discovery/probe
+/api/v1/security/problems
+/api/v1/security/problems/scan
+/api/v1/security/problems/thresholds
+/api/v1/security/wifi/discovery/aps
+/api/v1/security/wifi/discovery/networks
+/api/v1/security/wifi/discovery/scan
+/api/v1/security/wifi/discovery/stats
+/api/v1/telemetry/dhcp/lease
+/api/v1/telemetry/dhcp/renew
+/api/v1/telemetry/dhcp/rogue
+/api/v1/telemetry/dhcp/rogue/config
+/api/v1/telemetry/dhcp/rogue/servers
+/api/v1/telemetry/dns/security
+/api/v1/telemetry/dns/security/settings
+/api/v1/telemetry/vlan/traffic
+/api/v1/topology/arp
+/api/v1/topology/links
+/api/v1/wifi/wifi/status
+404 /api/events  # seed#2326 dashboard SSE opens a pre-versioning path
+404 /api/v1/telemetry/cable/support  # seed#2326 only /telemetry/cable is registered
