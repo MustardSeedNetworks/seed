@@ -173,6 +173,74 @@ export const handlers = [
     HttpResponse.json({ enabled: false, targets: [] }),
   ),
 
+  // StatusResponse. usePlatformCapabilities reads the capabilities array from
+  // here (#749/#750), and without a handler every story that renders a gated
+  // surface logged "Failed to read platform capabilities" and failed the
+  // console gate.
+  //
+  // Linux's row set, because that is the platform with nothing degraded — a
+  // story should show the feature rather than the "not available here" notice
+  // unless it overrides this deliberately.
+  http.get('*/api/v1/status', () =>
+    HttpResponse.json({
+      status: 'ok',
+      version: '0.0.0-storybook',
+      uptime: 0,
+      interface: 'eth0',
+      isWireless: false,
+      icmpAvailable: true,
+      capabilities: [
+        { capability: 'interface_listing', title: 'Interface listing', level: 'full' },
+        { capability: 'static_ip', title: 'Static IP configuration', level: 'full' },
+        { capability: 'dhcp_config', title: 'DHCP configuration', level: 'full' },
+        { capability: 'mtu_config', title: 'MTU configuration', level: 'full' },
+        { capability: 'link_monitoring', title: 'Link status monitoring', level: 'full' },
+        { capability: 'speed_duplex', title: 'Speed/duplex detection', level: 'full' },
+        { capability: 'wifi_scanning', title: 'Wi-Fi scanning', level: 'full' },
+        { capability: 'wifi_connection', title: 'Wi-Fi connect/disconnect', level: 'full' },
+        { capability: 'arp_table', title: 'ARP table reading', level: 'full' },
+        { capability: 'ndp_discovery', title: 'IPv6 NDP discovery', level: 'full' },
+        { capability: 'bluetooth_scanning', title: 'Bluetooth scanning', level: 'full' },
+        { capability: 'gateway_detection', title: 'Gateway detection', level: 'full' },
+        { capability: 'dns_detection', title: 'DNS server detection', level: 'full' },
+        { capability: 'dhcp_lease_info', title: 'DHCP lease info', level: 'full' },
+        { capability: 'vlan_detection', title: 'VLAN detection', level: 'full' },
+        { capability: 'vlan_management', title: 'VLAN creation/deletion', level: 'full' },
+        {
+          capability: 'cable_diagnostics',
+          title: 'Cable diagnostics (TDR)',
+          level: 'partial',
+          note: "Needs a NIC driver that implements ethtool's cable test.",
+        },
+        { capability: 'phy_info', title: 'PHY layer info', level: 'full' },
+        {
+          capability: 'optical_monitoring',
+          title: 'Digital Optical Monitoring',
+          level: 'partial',
+          note: 'Needs an SFP/QSFP transceiver that reports diagnostics over ethtool.',
+        },
+        { capability: 'driver_statistics', title: 'Driver error counters', level: 'full' },
+      ],
+    }),
+  ),
+
+  // The driver counters the card curates (#416).
+  http.get('*/api/v1/telemetry/interface/driver-stats', () =>
+    HttpResponse.json({
+      interface: 'eth0',
+      total: 84,
+      counters: [
+        {
+          key: 'rx_crc_errors',
+          label: 'CRC errors',
+          value: 0,
+          meaning:
+            'Frames arrived corrupted. Usually cabling, a bad port, or a duplex mismatch — not congestion.',
+        },
+      ],
+    }),
+  ),
+
   http.get('*/api/v1/reporting/logs', () => HttpResponse.json({ logs: [], total: 0 })),
 
   // useSubnetSettings expects a bare array (it checks Array.isArray and falls

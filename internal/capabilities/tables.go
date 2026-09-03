@@ -44,6 +44,7 @@ func levelsByPlatform() map[string]map[Capability]Level {
 			CableDiagnostics:  LevelPartial,
 			PHYInfo:           LevelFull,
 			OpticalMonitoring: LevelPartial,
+			DriverStatistics:  LevelFull,
 		},
 		"darwin": {
 			InterfaceListing:  LevelFull,
@@ -65,6 +66,7 @@ func levelsByPlatform() map[string]map[Capability]Level {
 			CableDiagnostics:  LevelNone,
 			PHYInfo:           LevelPartial,
 			OpticalMonitoring: LevelNone,
+			DriverStatistics:  LevelNone,
 		},
 		"windows": {
 			InterfaceListing:  LevelFull,
@@ -86,6 +88,7 @@ func levelsByPlatform() map[string]map[Capability]Level {
 			CableDiagnostics:  LevelNone,
 			PHYInfo:           LevelPartial,
 			OpticalMonitoring: LevelNone,
+			DriverStatistics:  LevelNone,
 		},
 	}
 }
@@ -121,6 +124,7 @@ func notesByPlatform() map[string]map[Capability]string {
 			PHYInfo:           "Link speed and media type only.",
 			CableDiagnostics:  "No macOS API exposes TDR.",
 			OpticalMonitoring: "No macOS API exposes transceiver diagnostics.",
+			DriverStatistics:  "ethtool is a Linux ioctl interface; macOS has no equivalent, so driver error counters cannot be read.",
 		},
 		"windows": {
 			BluetoothScanning: "Needs a vendor stack; the built-in APIs do not expose discovery.",
@@ -129,6 +133,7 @@ func notesByPlatform() map[string]map[Capability]string {
 			PHYInfo:           "Link speed only.",
 			CableDiagnostics:  "No Windows API exposes TDR.",
 			OpticalMonitoring: "No Windows API exposes transceiver diagnostics.",
+			DriverStatistics:  "ethtool is a Linux ioctl interface; Windows has no equivalent, so driver error counters cannot be read.",
 		},
 	}
 }

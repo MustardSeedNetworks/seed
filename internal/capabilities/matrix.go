@@ -22,6 +22,37 @@ func displayLevel() map[Level]string {
 	}
 }
 
+// maxLineLength is markdownlint's MD013 limit for the generated document.
+const maxLineLength = 120
+
+// wrapBullet folds a caveat onto continuation lines so a long note cannot push
+// the generated document past MD013.
+//
+// Without this the generator and the markdown linter fight: the linter wants
+// the line shorter, the drift gate wants it exactly as generated, and a note
+// long enough to trip one is a permanent red build. Continuation lines are
+// indented two spaces, which keeps them part of the list item.
+func wrapBullet(line string) string {
+	const continuation = "  "
+
+	var b strings.Builder
+	current := ""
+	for word := range strings.FieldsSeq(line) {
+		switch {
+		case current == "":
+			current = word
+		case len(current)+1+len(word) <= maxLineLength:
+			current += " " + word
+		default:
+			b.WriteString(current + "\n")
+			current = continuation + word
+		}
+	}
+	b.WriteString(current + "\n")
+
+	return b.String()
+}
+
 // displayPlatform is the column heading for a GOOS value.
 func displayPlatform(goos string) string {
 	switch goos {
@@ -96,7 +127,7 @@ func renderNotes(b *strings.Builder, platforms []string, rows []Capability) {
 			if !ok {
 				continue
 			}
-			fmt.Fprintf(b, "- **%s**: %s\n", Title(capability), note)
+			b.WriteString(wrapBullet(fmt.Sprintf("- **%s**: %s", Title(capability), note)))
 		}
 	}
 }

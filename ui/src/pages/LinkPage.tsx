@@ -1,4 +1,5 @@
 import { CableCard } from '../components/cards/CableCard';
+import { DriverStatsCard } from '../components/cards/DriverStatsCard';
 import { LinkCard, type LinkData } from '../components/cards/LinkCard';
 import { WiFiCard } from '../components/cards/WiFiCard';
 import { useAppContext } from '../contexts/AppContext';
@@ -53,6 +54,12 @@ export function LinkPage() {
         <CardSlot present={!isWifi && cards.link?.linkUp === false} absence="quiet">
           <CableCard data={cards.cable} loading={loading} unitSystem={displayOptions.unitSystem} />
         </CardSlot>
+
+        {/* Driver counters apply to whichever interface is selected, wired or
+            wireless, so this sits at grid level rather than in either slot. It
+            gates itself: on a platform without ethtool the card explains why
+            instead of showing an empty table. */}
+        <DriverStatsCard />
       </CardGrid>
     </>
   );

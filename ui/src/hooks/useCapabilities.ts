@@ -13,6 +13,18 @@ import { LogComponents, logger } from '../lib/logger';
 
 const API_BASE = '';
 
+/**
+ * PlatformShortfall is one capability the platform does not fully support, as
+ * internal/capabilities reports it. Structural rather than imported so this
+ * hook stays independent of the platform hook.
+ */
+export interface PlatformShortfall {
+  capability: string;
+  title: string;
+  level: string;
+  note?: string;
+}
+
 export interface Capabilities {
   /** Whether raw ICMP sockets are available (requires root or CAP_NET_RAW) */
   icmpAvailable: boolean;
@@ -85,22 +97,49 @@ export function useCapabilities(): UseCapabilitiesResult {
  * Returns a list of missing capabilities with descriptions.
  * Useful for displaying warnings to users.
  */
-export function getMissingCapabilities(capabilities: Capabilities | null): Array<{
+export interface MissingCapability {
   id: string;
   title: string;
   description: string;
   remediation: string;
-}> {
-  if (!capabilities) {
-    return [];
+}
+
+/**
+ * getMissingCapabilities lists what this install cannot do, across both axes.
+ *
+ * The two are kept apart in the remediation, because they are not the same
+ * problem: a privilege gap is fixed by running Seed differently on this machine,
+ * a platform gap is not fixable here at all (#750). Telling an operator to
+ * re-run with sudo when the answer is "macOS has no API for this" wastes their
+ * afternoon.
+ *
+ * Licence tier is a third axis and deliberately absent — it has its own
+ * components and its own copy.
+ */
+export function getMissingCapabilities(
+  capabilities: Capabilities | null,
+  platform: PlatformShortfall[] = [],
+): MissingCapability[] {
+  const missing: MissingCapability[] = [];
+
+  for (const entry of platform) {
+    missing.push({
+      id: `platform-${entry.capability}`,
+      title: entry.title,
+      // The backend wrote the explanation next to the level that says so, in
+      // internal/capabilities, so the same words appear here, in the generated
+      // HARDWARE.md and in the API response.
+      description: entry.note ?? '',
+      remediation:
+        entry.level === 'none'
+          ? 'This operating system does not provide an API for it. Running Seed on a different platform is the only way to use it.'
+          : 'This works here, but not completely. Some fields may be empty or approximate.',
+    });
   }
 
-  const missing: Array<{
-    id: string;
-    title: string;
-    description: string;
-    remediation: string;
-  }> = [];
+  if (!capabilities) {
+    return missing;
+  }
 
   if (!capabilities.icmpAvailable) {
     missing.push({

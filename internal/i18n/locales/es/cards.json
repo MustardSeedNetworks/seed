@@ -535,5 +535,12 @@
       "x11": "Una pantalla X11 abierta permite a cualquiera que la alcance leer la pantalla e inyectar pulsaciones de teclas.",
       "generic": "Este puerto está en la lista de inseguros porque el servicio detrás de él suele no estar cifrado, no estar autenticado, o ser una interfaz administrativa."
     }
+  },
+  "driverStats": {
+    "title": "Contadores de errores del controlador",
+    "description": "Lo que el propio controlador de la interfaz está contando. Un enlace puede estar activo y aun así descartar tramas; estos indican de qué problema se trata.",
+    "noCounters": "Este controlador no expone ninguno de los contadores que vale la pena vigilar.",
+    "curated": "Mostrando {{shown}} de {{total}} contadores que informa el controlador.",
+    "refresh": "Actualizar"
   }
 }

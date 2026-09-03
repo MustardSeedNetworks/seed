@@ -411,6 +411,13 @@ func (s *Server) setupTelemetryRoutes() {
 	s.registerAll([]route{
 		{path: APIVersionPrefix + "/telemetry/link", handler: s.handleLink, methods: get},
 		{path: APIVersionPrefix + "/telemetry/cable", handler: s.handleCable, methods: get},
+		// The NIC driver's own error counters (#416). Linux only; the handler
+		// refuses elsewhere with a 501 that names the reason.
+		{
+			path:    APIVersionPrefix + "/telemetry/interface/driver-stats",
+			handler: s.handleDriverStats,
+			methods: get,
+		},
 		{path: APIVersionPrefix + "/telemetry/dns", handler: s.handleDNS, methods: getPost},
 		{
 			path:    APIVersionPrefix + "/telemetry/dns/security",

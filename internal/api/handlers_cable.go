@@ -6,6 +6,7 @@ package api
 import (
 	"net/http"
 
+	"github.com/MustardSeedNetworks/seed/internal/capabilities"
 	"github.com/MustardSeedNetworks/seed/internal/diagnostics/cable"
 	"github.com/MustardSeedNetworks/seed/internal/i18n"
 	"github.com/MustardSeedNetworks/seed/internal/logging"
@@ -54,6 +55,13 @@ type CablePinout struct {
 func (s *Server) handleCable(w http.ResponseWriter, r *http.Request) {
 	logger := logging.FromContext(r.Context())
 	localizer := i18n.FromRequest(r)
+
+	// TDR has no API on macOS or Windows, and on Linux it needs a driver that
+	// implements ethtool's cable test. Refusing with a 501 that names the
+	// reason beats a service-unavailable the caller cannot act on (#750).
+	if !s.requirePlatform(w, r, capabilities.CableDiagnostics) {
+		return
+	}
 
 	if s.cableTester() == nil {
 		sendErrorResponseWithDetails(

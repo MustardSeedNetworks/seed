@@ -48,12 +48,29 @@ func TestRenderMatrixIsDeterministic(t *testing.T) {
 func TestRenderMatrixIncludesEveryNote(t *testing.T) {
 	t.Parallel()
 
-	rendered := RenderMatrix()
+	// Compared with whitespace collapsed: a long note is wrapped onto
+	// continuation lines to stay inside MD013, so it is not present verbatim.
+	// What matters is that the words reached the document.
+	rendered := strings.Join(strings.Fields(RenderMatrix()), " ")
 	for _, platform := range Platforms() {
 		for _, note := range notesByPlatform()[platform] {
-			if !strings.Contains(rendered, note) {
+			if !strings.Contains(rendered, strings.Join(strings.Fields(note), " ")) {
 				t.Errorf("%s note %q is not in the rendered document", platform, note)
 			}
+		}
+	}
+}
+
+// A note long enough to trip MD013 must be wrapped by the generator, not left
+// for a human to notice. Otherwise the linter and the drift gate fight: one
+// wants the line shorter, the other wants it exactly as generated.
+func TestRenderMatrixWrapsLongNotes(t *testing.T) {
+	t.Parallel()
+
+	for i, line := range strings.Split(RenderMatrix(), "\n") {
+		if len(line) > maxLineLength {
+			t.Errorf("line %d is %d characters, over the %d limit:\n%s",
+				i+1, len(line), maxLineLength, line)
 		}
 	}
 }
