@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"log/slog"
+	"net/netip"
 	"sync"
 	"time"
 
@@ -238,7 +239,15 @@ func (r *ARPReconciler) applyObservation(
 			"target_id", obs.TargetID, "error", err)
 		return 0, 0
 	}
-	bindings, backfills := 0, 0
+	bindings := 0
+	// primary_ip is chosen once per node at the end rather than written per
+	// binding. The write is an unconditional overwrite, so writing on every
+	// binding means the last one processed wins -- which was harmless while
+	// every binding was IPv4, and stops being harmless now that a device can
+	// report a link-local fe80:: address for the same MAC (#1371). An address
+	// nothing can route to is not the address to reach a node by.
+	best := make(map[string]string)
+
 	for _, e := range p.Entries {
 		if e.IPAddress == "" || e.MACAddress == "" {
 			continue
@@ -266,14 +275,69 @@ func (r *ARPReconciler) applyObservation(
 		if lookupErr != nil {
 			continue
 		}
-		if setErr := r.store.SetNodePrimaryIP(ctx, matchedNodeID, e.IPAddress); setErr != nil {
+		if preferAddress(best[matchedNodeID], e.IPAddress) {
+			best[matchedNodeID] = e.IPAddress
+		}
+	}
+
+	return bindings, r.backfillPrimaryIPs(ctx, best)
+}
+
+// backfillPrimaryIPs writes the chosen address for each node.
+func (r *ARPReconciler) backfillPrimaryIPs(ctx context.Context, best map[string]string) int {
+	backfills := 0
+	for nodeID, ip := range best {
+		if err := r.store.SetNodePrimaryIP(ctx, nodeID, ip); err != nil {
 			r.logger.WarnContext(ctx, "arp: primary_ip backfill failed",
-				"node_id", matchedNodeID, "ip", e.IPAddress, "error", setErr)
+				"node_id", nodeID, "ip", ip, "error", err)
 			continue
 		}
 		backfills++
 	}
-	return bindings, backfills
+	return backfills
+}
+
+// addressRank orders candidate addresses by how useful each is for reaching a
+// node. Higher is better.
+//
+// A globally routable address beats a unique-local one, which beats a
+// link-local -- fe80:: needs a zone index to be usable at all, and storing one
+// as a node's primary address produces something no caller can dial. IPv4 and
+// global IPv6 rank equally: preferring one family over the other would be a
+// policy decision this reconciler has no basis to make, so among equals the
+// first seen wins and the result stays stable.
+func addressRank(ip string) int {
+	address, err := netip.ParseAddr(ip)
+	if err != nil {
+		return 0
+	}
+
+	const (
+		rankUnusable    = 0
+		rankLinkLocal   = 1
+		rankUniqueLocal = 2
+		rankGlobal      = 3
+	)
+
+	switch {
+	case address.IsUnspecified(), address.IsMulticast(), address.IsLoopback():
+		return rankUnusable
+	case address.IsLinkLocalUnicast():
+		return rankLinkLocal
+	case address.Is6() && address.IsPrivate():
+		// fc00::/7. Routable within a site, but a global address is better.
+		return rankUniqueLocal
+	default:
+		return rankGlobal
+	}
+}
+
+// preferAddress reports whether candidate should replace current.
+func preferAddress(current, candidate string) bool {
+	if current == "" {
+		return addressRank(candidate) > 0
+	}
+	return addressRank(candidate) > addressRank(current)
 }
 
 func (r *ARPReconciler) loadHighWater(ctx context.Context) (time.Time, error) {

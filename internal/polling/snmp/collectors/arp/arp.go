@@ -49,10 +49,19 @@ const (
 // often shadow dynamic entries — Stage A4 uses MediaType to flag
 // configured-vs-learned bindings in the topology UI.
 type Entry struct {
-	IfIndex    uint32
+	IfIndex uint32
+
+	// IPAddress is IPv4 or IPv6. Rows from ipNetToMediaTable are always IPv4;
+	// ipNetToPhysicalTable carries both (#1371).
 	IPAddress  string
 	MACAddress string
 	MediaType  int
+
+	// State is the neighbour's reachability from ipNetToPhysicalTable. Zero
+	// means the agent did not report one, which is every row that came from
+	// ipNetToMediaTable -- that table has no such column, so the state is
+	// genuinely unavailable rather than unknown-the-enum-value.
+	State int
 }
 
 // Observation is the per-poll ARP cache snapshot.
@@ -86,7 +95,15 @@ func New(factory snmp.ClientFactory, publisher Publisher, now func() time.Time) 
 // Name implements snmp.Collector.
 func (*Collector) Name() string { return Name }
 
-// Collect walks ipNetToMediaTable and publishes the assembled cache.
+// Collect walks the target's neighbour tables and publishes the assembled
+// cache.
+//
+// ipNetToPhysicalTable is walked first because RFC 4293 supersedes RFC 1213's
+// ipNetToMediaTable and carries strictly more: neighbour state, and IPv6 at
+// all. The legacy table is walked only when the modern one produced no IPv4
+// rows, which covers both an agent too old to have it and one that keeps IPv4
+// in the old table while reporting IPv6 in the new -- without paying for a
+// second walk on the devices that implement RFC 4293 properly.
 func (c *Collector) Collect(ctx context.Context, target snmp.Target, creds snmp.ResolvedCredentials) error {
 	if c.newClient == nil {
 		return errors.New("arp: client factory not configured")
@@ -101,23 +118,51 @@ func (c *Collector) Collect(ctx context.Context, target snmp.Target, creds snmp.
 	}
 
 	observedAt := c.now()
-	vbs, err := client.Walk(ctx, tablePrefix)
+	entries, err := c.collectEntries(ctx, client)
 	if err != nil {
-		return fmt.Errorf("arp: walk ipNetToMediaTable: %w", err)
+		return err
 	}
 
 	if pubErr := c.publisher.PublishARP(ctx, Observation{
 		ClientID:   target.ClientID,
 		TargetID:   target.ID,
 		ObservedAt: observedAt,
-		Entries:    buildEntries(vbs),
+		Entries:    entries,
 	}); pubErr != nil {
 		return fmt.Errorf("arp: publish: %w", pubErr)
 	}
 	return nil
 }
 
-// rowKey identifies one ipNetToMediaTable row.
+// collectEntries walks whichever neighbour tables the target implements.
+//
+// A device with no ipNetToPhysicalTable answers the walk with an error or an
+// empty result depending on the agent, so neither is treated as a failure --
+// only both tables failing is.
+func (c *Collector) collectEntries(ctx context.Context, client snmp.Client) ([]Entry, error) {
+	var physical []Entry
+	physicalVBs, physicalErr := client.Walk(ctx, physicalTablePrefix)
+	if physicalErr == nil {
+		physical = buildPhysicalEntries(physicalVBs)
+	}
+
+	if hasIPv4(physical) {
+		return physical, nil
+	}
+
+	mediaVBs, mediaErr := client.Walk(ctx, tablePrefix)
+	if mediaErr != nil {
+		if physicalErr != nil {
+			return nil, fmt.Errorf("arp: walk neighbour tables: %w", mediaErr)
+		}
+		// The modern table answered; the legacy one is allowed to be absent.
+		return physical, nil
+	}
+
+	return mergeEntries(physical, buildEntries(mediaVBs)), nil
+}
+
+// rowKey identifies one neighbour-table row.
 type rowKey struct {
 	ifIndex uint32
 	ip      string // dotted-quad IPv4
