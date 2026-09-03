@@ -401,7 +401,7 @@ test.describe('Error Recovery Mechanisms', () => {
     await page.getByTestId('login-submit').click();
 
     // Should show error
-    await expect(page.getByRole('alert')).toBeVisible({
+    await expect(page.getByTestId('login-error')).toBeVisible({
       timeout: 5000,
     });
 
@@ -411,7 +411,10 @@ test.describe('Error Recovery Mechanisms', () => {
     await page.getByTestId('login-submit').click();
 
     await expect(page.getByTestId('page-header-title')).toBeVisible({ timeout: 15000 });
-    await expect(page.getByRole('alert')).toBeHidden();
+    // The login error specifically, not any alert: the dashboard legitimately
+    // renders a role=alert capability-degradation banner (#2315) on a host
+    // whose platform cannot do everything, which a CI container never can.
+    await expect(page.getByTestId('login-error')).toBeHidden();
 
     // Exactly two: the failure and the retry. `toBeGreaterThan(0)` was true
     // after the first attempt alone, so it passed whether or not the retry

@@ -297,6 +297,10 @@ export function LoginForm({ onLogin, isLoading, error }: LoginFormProps): JSX.El
             <div
               role="alert"
               aria-live="assertive"
+              // The capability-degradation banner (#2315) is also role=alert,
+              // so "the login failed" needs an identity of its own -- asserting
+              // on the role alone conflates the two.
+              data-testid="login-error"
               className={cn(
                 'pad-sm bg-status-error/10 border border-status-error/20',
                 radius.md,
