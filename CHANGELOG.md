@@ -5,6 +5,47 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.213.48](https://github.com/MustardSeedNetworks/seed/compare/v0.213.47...v0.213.48) (2026-09-03)
+
+
+### Features
+
+* **discovery:** accumulate repeated traces, and match replies to probes ([#2319](https://github.com/MustardSeedNetworks/seed/issues/2319)) ([69a4402](https://github.com/MustardSeedNetworks/seed/commit/69a4402af5969fa8909647cfdd5a2b59ff636fcd))
+* **discovery:** discover the path MTU, and say when the answer is a guess ([#2321](https://github.com/MustardSeedNetworks/seed/issues/2321)) ([d6840d6](https://github.com/MustardSeedNetworks/seed/commit/d6840d6ad007879f19747ed43d8ebf944a453ae3))
+* **discovery:** enumerate the routes a load balancer is actually using ([#2323](https://github.com/MustardSeedNetworks/seed/issues/2323)) ([26f4b24](https://github.com/MustardSeedNetworks/seed/commit/26f4b2466890652daa3cc4ef3d8eb365d70a060a))
+* **network:** expose this device's own neighbour cache ([#2313](https://github.com/MustardSeedNetworks/seed/issues/2313)) ([b2bda1e](https://github.com/MustardSeedNetworks/seed/commit/b2bda1e07ad05913d76acc0a84b65f1e896ab892))
+* **path:** run continuous path monitoring as a cancellable job ([#2320](https://github.com/MustardSeedNetworks/seed/issues/2320)) ([baffb8c](https://github.com/MustardSeedNetworks/seed/commit/baffb8c529b71afaa1bef84acf84904e3c1f10bf))
+* **security:** add the insecure port scan card ([#2309](https://github.com/MustardSeedNetworks/seed/issues/2309)) ([fb140b3](https://github.com/MustardSeedNetworks/seed/commit/fb140b39e173d32e8417a9a074848715adba4422)), closes [#347](https://github.com/MustardSeedNetworks/seed/issues/347)
+* **snmp:** discover IPv6 neighbours, and pick an address worth storing ([#2329](https://github.com/MustardSeedNetworks/seed/issues/2329)) ([acfb02a](https://github.com/MustardSeedNetworks/seed/commit/acfb02a65a6e79714a628e5fd7365133befad649)), closes [#1371](https://github.com/MustardSeedNetworks/seed/issues/1371)
+* **ui:** hold the UI to the 480px minimum it publishes ([#2317](https://github.com/MustardSeedNetworks/seed/issues/2317)) ([ef2793f](https://github.com/MustardSeedNetworks/seed/commit/ef2793f80a25392964592b89c913255bced25d62))
+
+
+### Bug Fixes
+
+* **api:** route the profiles API to its handler ([#2331](https://github.com/MustardSeedNetworks/seed/issues/2331)) ([50d2546](https://github.com/MustardSeedNetworks/seed/commit/50d2546e78e94cb33b06541d324df78561c96433)), closes [#2330](https://github.com/MustardSeedNetworks/seed/issues/2330)
+* **discovery:** read the macOS IPv4 neighbour cache ([#2341](https://github.com/MustardSeedNetworks/seed/issues/2341)) ([0dc43f4](https://github.com/MustardSeedNetworks/seed/commit/0dc43f46af81219f8490e20dfd9bbe769a0a9db5))
+* **discovery:** stop closing the L2 capture at the moment it matters ([#2324](https://github.com/MustardSeedNetworks/seed/issues/2324)) ([8ad9d62](https://github.com/MustardSeedNetworks/seed/commit/8ad9d622e56c92b8df7093c37faf00f02bd96377)), closes [#323](https://github.com/MustardSeedNetworks/seed/issues/323)
+
+
+### Tests
+
+* **ui:** assert the API token panel's copy in both locales ([#2342](https://github.com/MustardSeedNetworks/seed/issues/2342)) ([c4e64f0](https://github.com/MustardSeedNetworks/seed/commit/c4e64f0f896d7036f1bad151de32991759dbbfaa))
+
+
+### Continuous Integration
+
+* route-consumer and feature-catalog gates ([#2328](https://github.com/MustardSeedNetworks/seed/issues/2328)) ([341cb74](https://github.com/MustardSeedNetworks/seed/commit/341cb7479876220c83d7e00c3c932ab1968e7cf9))
+
+
+### Miscellaneous
+
+* **deps:** lock file maintenance ([#2332](https://github.com/MustardSeedNetworks/seed/issues/2332)) ([cdc1443](https://github.com/MustardSeedNetworks/seed/commit/cdc144351aee6d7d58c9ab636c3524fc45baf354))
+* **deps:** lock file maintenance ([#2333](https://github.com/MustardSeedNetworks/seed/issues/2333)) ([fdafa33](https://github.com/MustardSeedNetworks/seed/commit/fdafa332f6fbc5fe227617e72ec6e9c66dee7a1b))
+* **deps:** lock file maintenance ([#2340](https://github.com/MustardSeedNetworks/seed/issues/2340)) ([ec1c55d](https://github.com/MustardSeedNetworks/seed/commit/ec1c55d2d0f3715e12b20a2be25f972b9ccf7e78))
+* **deps:** refresh Go and Node dependencies to latest ([#2335](https://github.com/MustardSeedNetworks/seed/issues/2335)) ([6da45a4](https://github.com/MustardSeedNetworks/seed/commit/6da45a46c822d4f41ebadc4287781374d1961974)), closes [#2334](https://github.com/MustardSeedNetworks/seed/issues/2334)
+* **deps:** update dependency @biomejs/biome to v2.5.11 ([#2338](https://github.com/MustardSeedNetworks/seed/issues/2338)) ([fcdb294](https://github.com/MustardSeedNetworks/seed/commit/fcdb2940bbd8610f663070b604cac8163d4eab00))
+* **deps:** update dependency lint-staged to v17.4.1 ([#2339](https://github.com/MustardSeedNetworks/seed/issues/2339)) ([568cd4a](https://github.com/MustardSeedNetworks/seed/commit/568cd4a148e14e3dcfe5fe056e1d95756a6864bd))
+
 ## [0.213.47](https://github.com/MustardSeedNetworks/seed/compare/v0.213.46...v0.213.47) (2026-09-02)
 
 
