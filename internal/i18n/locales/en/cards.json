@@ -487,5 +487,17 @@
     "error": "Error",
     "download": "Download",
     "delete": "Delete"
+  },
+  "neighbours": {
+    "title": "Neighbour Cache",
+    "description": "What this device currently sees on its own link. Not the ARP table a remote switch reports.",
+    "empty": "The neighbour cache is empty. Nothing on this link has been resolved yet.",
+    "tableCaption": "Local ARP and NDP neighbour cache entries",
+    "address": "Address",
+    "mac": "MAC",
+    "vendor": "Vendor",
+    "interface": "Interface",
+    "state": "State",
+    "refresh": "Refresh"
   }
 }

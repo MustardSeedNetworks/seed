@@ -52,6 +52,14 @@ func (s *Server) setupTopologyRoutes() {
 		},
 		{path: APIVersionPrefix + "/topology/links", handler: s.handleTopologyLinks, methods: get},
 		{path: APIVersionPrefix + "/topology/arp", handler: s.handleTopologyARP, methods: get},
+		// This device's own neighbour cache, not a remote node's (#328). The
+		// path deliberately does not sit under /topology/ — the two are easy
+		// to confuse and answer different questions.
+		{
+			path:    APIVersionPrefix + "/network/neighbours",
+			handler: s.handleNeighbourCache,
+			methods: get,
+		},
 		// A5.2 alerts: GET read-only; the action endpoint is operator-gated.
 		{path: APIVersionPrefix + "/alerts", handler: s.handleAlerts, methods: get},
 		{

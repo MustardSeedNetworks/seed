@@ -64,17 +64,8 @@ func (s *ARPScanner) readARPTablePlatform() ([]*ARPEntry, error) {
 		return nil, fmt.Errorf("FetchRIB: %w", err)
 	}
 
-	entries := parseARPMessages(rib)
-
-	// Filter by subnet if configured
-	var filtered []*ARPEntry
-	for _, entry := range entries {
-		if s.isInSubnet(entry.IP) {
-			filtered = append(filtered, entry)
-		}
-	}
-
-	return filtered, nil
+	// Everything the kernel holds; the caller filters. See arp_linux.go.
+	return parseARPMessages(rib), nil
 }
 
 // parseARPMessages parses the routing information base for ARP entries.

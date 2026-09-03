@@ -96,11 +96,6 @@ func (s *ARPScanner) readARPTablePlatform() ([]*ARPEntry, error) {
 			byte(row.dwAddr>>24),
 		)
 
-		// Check if this IP is in our target subnets
-		if !s.isInSubnet(ip.String()) {
-			continue
-		}
-
 		// Format MAC address
 		mac := formatMAC(row.bPhysAddr[:row.dwPhysAddrLen])
 		if mac == "" || mac == "00:00:00:00:00:00" {

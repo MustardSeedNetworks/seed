@@ -6,12 +6,76 @@ import (
 	"strings"
 	"sync"
 	"time"
+
+	"github.com/MustardSeedNetworks/seed/internal/discovery/resolve"
 )
 
-// readARPTable reads the system ARP table.
-// Uses netlink on Linux, exec commands on macOS.
+// readARPTable reads the system ARP table, narrowed to the scanner's
+// configured scope.
+//
+// The platform readers return the whole kernel table; the subnet filter lives
+// here rather than repeated in three build-tagged files, because #328 needs the
+// same read *without* it. Discovery's behaviour is unchanged: it called this,
+// and this still filters.
 func (s *ARPScanner) readARPTable() ([]*ARPEntry, error) {
-	return s.readARPTablePlatform()
+	entries, err := s.readARPTablePlatform()
+	if err != nil {
+		return nil, err
+	}
+
+	filtered := make([]*ARPEntry, 0, len(entries))
+	for _, entry := range entries {
+		if s.isInSubnet(entry.IP) {
+			filtered = append(filtered, entry)
+		}
+	}
+
+	return filtered, nil
+}
+
+// ReadNeighbourCache returns this device's own neighbour cache as the kernel
+// holds it right now — every entry, unfiltered, vendor-enriched.
+//
+// Deliberately not the same thing as GET /api/v1/topology/arp, which serves
+// SNMP-harvested bindings from remote nodes and answers "what does that switch
+// think its ARP table is". This answers "what does this box see on the wire in
+// front of it", which is what an operator needs when an IP is not resolving to
+// a MAC on the segment they are plugged into (#328).
+func (s *ARPScanner) ReadNeighbourCache() ([]*ARPEntry, error) {
+	entries, err := s.readARPTablePlatform()
+	if err != nil {
+		return nil, err
+	}
+
+	for _, entry := range entries {
+		entry.Vendor = vendorFor(s.oui, entry.MAC)
+	}
+
+	return entries, nil
+}
+
+// vendorFor names the manufacturer behind a MAC, or says why it cannot.
+//
+// A locally administered address has no manufacturer to look up — it was
+// assigned by software, which is what a randomised client MAC looks like — so
+// it is labelled rather than reported as an unknown vendor.
+func vendorFor(db *resolve.OUIDatabase, mac string) string {
+	if mac == "" {
+		return ""
+	}
+	// Checked before the database, not inside it: whether a MAC is locally
+	// administered is a property of the address, and stays true whether or not
+	// an OUI database happens to be loaded. The previous code only reached this
+	// branch when one was, so a randomised client MAC on a host with no OUI
+	// data was reported as having no vendor rather than as software-assigned.
+	if isLocallyAdministeredMAC(mac) {
+		return "LAA"
+	}
+	if db == nil {
+		return ""
+	}
+
+	return db.LookupWithDefault(mac, "Unknown")
 }
 
 // isInSubnet checks if an IP is in the current subnet or any target networks.
@@ -60,14 +124,7 @@ func (s *ARPScanner) enrichEntries(ctx context.Context, entries []*ARPEntry) {
 	newEntries := make(map[string]*ARPEntry)
 
 	for _, entry := range entries {
-		// OUI lookup - but first check if it's a locally administered address
-		if s.oui != nil {
-			if isLocallyAdministeredMAC(entry.MAC) {
-				entry.Vendor = "LAA"
-			} else {
-				entry.Vendor = s.oui.LookupWithDefault(entry.MAC, "Unknown")
-			}
-		}
+		entry.Vendor = vendorFor(s.oui, entry.MAC)
 
 		// Use TTL from cached ping results (already collected during ping sweep)
 		if pr, ok := pingResults[entry.IP]; ok && pr.Reachable && pr.TTL > 0 {

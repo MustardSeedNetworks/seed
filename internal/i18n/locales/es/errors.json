@@ -31,7 +31,8 @@
     "staticConfigFailed": "Error al configurar IP estática",
     "dhcpConfigFailed": "Error al configurar DHCP",
     "invalidMode": "El modo debe ser 'dhcp' o 'static'",
-    "invalidConfig": "La configuración de red no puede funcionar como se solicitó."
+    "invalidConfig": "La configuración de red no puede funcionar como se solicitó.",
+    "neighbourCacheFailed": "No se pudo leer la caché de vecinos."
   },
   "license": {
     "tierTooLow": "Esta función requiere el nivel {{tier}}",
