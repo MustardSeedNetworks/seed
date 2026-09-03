@@ -406,23 +406,6 @@
     "requiresRoot": "Requiere root para cambiar la configuración del enlace",
     "speedDuplex": "Velocidad / Dúplex"
   },
-  "updates": {
-    "applyUpdate": "Aplicar actualización",
-    "applying": "Aplicando…",
-    "autoCheck": "Comprobar actualizaciones automáticamente",
-    "autoDownload": "Descargar actualizaciones automáticamente",
-    "checkForUpdates": "Comprobar actualizaciones",
-    "currentVersion": "Versión actual",
-    "downloadSize": "Tamaño de descarga",
-    "downloadUpdate": "Descargar actualización",
-    "downloading": "Descargando…",
-    "includePrerelease": "Incluir versiones preliminares",
-    "lastChecked": "Última comprobación",
-    "releasedOn": "Publicado el",
-    "rollback": "Volver a la versión anterior",
-    "upToDate": "Actualizado",
-    "updateAvailable": "Actualización disponible"
-  },
   "vulnerability": {
     "apiKey": "Clave API NVD",
     "apiKeyPlaceholder": "Pegar clave API NVD",

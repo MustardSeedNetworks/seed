@@ -65,7 +65,6 @@ import { LinkSettings } from './sections/LinkSettings';
 import { PerformanceSettings } from './sections/PerformanceSettings';
 import { SsoSettings } from './sections/SsoSettings';
 import { ThresholdsSettings } from './sections/ThresholdsSettings';
-import { UpdateSettings } from './sections/UpdateSettings';
 import { UsersSettings } from './sections/UsersSettings';
 import { VulnerabilitySettings } from './sections/VulnerabilitySettings';
 import { WiFiSettings } from './sections/WiFiSettings';
@@ -748,7 +747,6 @@ export const SettingsDrawer: React.MemoExoticComponent<
             <ConfigBackupsSection />
 
             {/* Updates Section (implements #862) */}
-            <UpdateSettings currentVersion={version} />
 
             <SettingsDrawerFooter
               version={version}
