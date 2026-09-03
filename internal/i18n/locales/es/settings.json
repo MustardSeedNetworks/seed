@@ -543,7 +543,21 @@
     "colName": "Nombre",
     "colPrefix": "Prefijo",
     "colCreated": "Creado",
-    "colStatus": "Estado"
+    "colStatus": "Estado",
+    "title": "Tokens de API",
+    "namePlaceholder": "p. ej. monitoreo-prod",
+    "copy": "Copiar",
+    "saved": "Ya lo guardé",
+    "revoke": "Revocar",
+    "statusActive": "activo",
+    "statusRevoked": "revocado",
+    "confirmRevoke": "¿Revocar el token «{{name}}»? Cualquier script que lo use dejará de funcionar de inmediato.",
+    "mintNeedsOperator": "Solo lectura: se requiere el rol de operador para crear tokens de API.",
+    "mintNeedsPro": "La creación de tokens de API requiere el nivel Pro.",
+    "revokeNeedsOperator": "Solo lectura: se requiere el rol de operador para revocar tokens.",
+    "loadFailed": "No se pudieron cargar los tokens de API.",
+    "mintFailed": "No se pudo crear el token.",
+    "revokeFailed": "No se pudo revocar el token."
   },
   "guestAudit": {
     "title": "Auditoría de red de invitados",

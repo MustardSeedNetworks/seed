@@ -78,11 +78,11 @@ export function ApiTokensSettings(): React.ReactElement {
       ]);
       setTokens(tokenList ?? []);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to load API tokens');
+      setError(err instanceof Error ? err.message : t('apiTokens.loadFailed'));
     } finally {
       setLoading(false);
     }
-  }, [refreshLicense]);
+  }, [refreshLicense, t]);
 
   useEffect(() => {
     void refresh();
@@ -99,27 +99,25 @@ export function ApiTokensSettings(): React.ReactElement {
       setNewTokenName('');
       await refresh();
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to mint token');
+      setError(err instanceof Error ? err.message : t('apiTokens.mintFailed'));
     } finally {
       setMinting(false);
     }
-  }, [newTokenName, refresh]);
+  }, [newTokenName, refresh, t]);
 
   const handleRevoke = useCallback(
     async (token: ApiToken): Promise<void> => {
-      const ok = window.confirm(
-        `Revoke token "${token.name}"? Any script using it will stop working immediately.`,
-      );
+      const ok = window.confirm(t('apiTokens.confirmRevoke', { name: token.name }));
       if (!ok) return;
       setError(null);
       try {
         await api.delete(`/api/v1/tokens/${token.id}`);
         await refresh();
       } catch (err) {
-        setError(err instanceof Error ? err.message : 'Failed to revoke token');
+        setError(err instanceof Error ? err.message : t('apiTokens.revokeFailed'));
       }
     },
-    [refresh],
+    [refresh, t],
   );
 
   const canMint = licenseStatus?.canMintTokens ?? false;
@@ -130,7 +128,7 @@ export function ApiTokensSettings(): React.ReactElement {
       title={
         <div className="inline-flex items-center gap-compact">
           <Key className="w-4 h-4" />
-          <span>API Tokens</span>
+          <span>{t('apiTokens.title')}</span>
         </div>
       }
       defaultOpen={false}
@@ -174,10 +172,10 @@ export function ApiTokensSettings(): React.ReactElement {
                 size="sm"
                 onClick={() => void navigator.clipboard?.writeText(mintedToken.token)}
               >
-                Copy
+                {t('apiTokens.copy')}
               </Button>
               <Button variant="ghost" tone="gray" size="sm" onClick={() => setMintedToken(null)}>
-                I&apos;ve saved it
+                {t('apiTokens.saved')}
               </Button>
             </div>
           </div>
@@ -192,7 +190,7 @@ export function ApiTokensSettings(): React.ReactElement {
               id="api-token-name"
               value={newTokenName}
               onChange={(e) => setNewTokenName(e.target.value)}
-              placeholder="e.g. monitoring-prod"
+              placeholder={t('apiTokens.namePlaceholder')}
               maxLength={64}
               disabled={!canMint || !canWrite || minting}
             />
@@ -206,9 +204,9 @@ export function ApiTokensSettings(): React.ReactElement {
             loading={minting}
             title={
               !canWrite
-                ? 'Read-only — operator role required to mint API tokens'
+                ? t('apiTokens.mintNeedsOperator')
                 : !canMint
-                  ? 'API token minting requires the Pro tier'
+                  ? t('apiTokens.mintNeedsPro')
                   : undefined
             }
             onClick={() => void handleMint()}
@@ -244,9 +242,9 @@ export function ApiTokensSettings(): React.ReactElement {
                     <td className="py-row pr-2">{formatDate(token.lastUsedAt)}</td>
                     <td className="py-row pr-2">
                       {revoked ? (
-                        <span className="text-status-error">revoked</span>
+                        <span className="text-status-error">{t('apiTokens.statusRevoked')}</span>
                       ) : (
-                        <span className="text-status-success">active</span>
+                        <span className="text-status-success">{t('apiTokens.statusActive')}</span>
                       )}
                     </td>
                     <td className="py-row text-right">
@@ -257,14 +255,10 @@ export function ApiTokensSettings(): React.ReactElement {
                           size="xs"
                           leftIcon={<Trash2 className="w-3 h-3" />}
                           disabled={!canWrite}
-                          title={
-                            canWrite
-                              ? undefined
-                              : 'Read-only — operator role required to revoke tokens'
-                          }
+                          title={canWrite ? undefined : t('apiTokens.revokeNeedsOperator')}
                           onClick={() => void handleRevoke(token)}
                         >
-                          Revoke
+                          {t('apiTokens.revoke')}
                         </Button>
                       )}
                     </td>
