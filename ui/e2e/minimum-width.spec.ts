@@ -62,9 +62,7 @@ for (const { name: widthName, width } of WIDTHS) {
         // Wait for the layout to stop moving before measuring. A chart or a
         // virtualised list can be transiently wide while it sizes itself, and
         // the header painting says nothing about that. Two consecutive equal
-        // readings is the cheapest definition of settled — and CI saw exactly
-        // this: the logs page passed at 480px and failed at 768px in the same
-        // run, which is a timing shape rather than a layout one.
+        // readings is the cheapest definition of settled.
         await page.waitForFunction(
           () => {
             const current = document.documentElement.scrollWidth;
@@ -83,35 +81,52 @@ for (const { name: widthName, width } of WIDTHS) {
         // than its overflowing children and report no overflow at all.
         const overflow = await page.evaluate(() => {
           const root = document.documentElement;
+          const limit = root.clientWidth + 1;
 
-          // Bounding-rect right alone is not enough. CI reported a 1610px
-          // overflow with an empty offender list, which is useless exactly when
-          // it is needed: an element that is translated, or whose own content
-          // overflows with nothing to scroll it, does not itself extend past
-          // the viewport. Each candidate is judged on position and content.
-          const offenders = Array.from(document.querySelectorAll('*'))
-            .map((el) => {
+          // Bounding-rect right alone is not enough: an element that is
+          // translated, or whose own content overflows with nothing to scroll
+          // it, does not itself extend past the viewport. Each candidate is
+          // judged on position and content.
+          const candidates = Array.from(document.querySelectorAll('*')).filter((el) => {
+            const rect = el.getBoundingClientRect();
+
+            return (
+              rect.right > limit ||
+              rect.width > limit ||
+              (el.scrollWidth > limit && window.getComputedStyle(el).overflowX === 'visible')
+            );
+          });
+
+          // Report only the deepest ones. Every ancestor of a wide element is
+          // itself wide, so ranking by width puts html, body and the layout
+          // shell at the top and buries the element actually causing it —
+          // which is what CI saw: five ancestors all reporting the same 2378px
+          // and no word about where it came from.
+          const deepest = candidates.filter(
+            (el) => !candidates.some((other) => other !== el && el.contains(other)),
+          );
+
+          return {
+            scrollWidth: root.scrollWidth,
+            clientWidth: root.clientWidth,
+            offenders: deepest.slice(0, 5).map((el) => {
               const rect = el.getBoundingClientRect();
-              const { overflowX } = window.getComputedStyle(el);
+              const classes =
+                typeof el.className === 'string' && el.className !== ''
+                  ? `.${el.className.trim().split(/\s+/).slice(0, 4).join('.')}`
+                  : '';
 
               return {
-                selector: `${el.tagName.toLowerCase()}${typeof el.className === 'string' && el.className !== '' ? `.${el.className.split(' ').slice(0, 3).join('.')}` : ''}`,
+                selector: `${el.tagName.toLowerCase()}${classes}`,
+                testId: el.getAttribute('data-testid') ?? undefined,
+                text: (el.textContent ?? '').trim().slice(0, 80),
                 right: Math.round(rect.right),
                 width: Math.round(rect.width),
                 scrollWidth: el.scrollWidth,
-                overflowX,
+                overflowX: window.getComputedStyle(el).overflowX,
               };
-            })
-            .filter(
-              (entry) =>
-                entry.right > root.clientWidth + 1 ||
-                entry.width > root.clientWidth + 1 ||
-                (entry.scrollWidth > root.clientWidth + 1 && entry.overflowX === 'visible'),
-            )
-            .sort((a, b) => Math.max(b.right, b.scrollWidth) - Math.max(a.right, a.scrollWidth))
-            .slice(0, 5);
-
-          return { scrollWidth: root.scrollWidth, clientWidth: root.clientWidth, offenders };
+            }),
+          };
         });
 
         expect(
