@@ -543,7 +543,21 @@
     "colName": "Name",
     "colPrefix": "Prefix",
     "colCreated": "Created",
-    "colStatus": "Status"
+    "colStatus": "Status",
+    "title": "API Tokens",
+    "namePlaceholder": "e.g. monitoring-prod",
+    "copy": "Copy",
+    "saved": "I've saved it",
+    "revoke": "Revoke",
+    "statusActive": "active",
+    "statusRevoked": "revoked",
+    "confirmRevoke": "Revoke token \"{{name}}\"? Any script using it will stop working immediately.",
+    "mintNeedsOperator": "Read-only — the operator role is required to mint API tokens.",
+    "mintNeedsPro": "Minting API tokens requires the Pro tier.",
+    "revokeNeedsOperator": "Read-only — the operator role is required to revoke tokens.",
+    "loadFailed": "The API tokens could not be loaded.",
+    "mintFailed": "The token could not be created.",
+    "revokeFailed": "The token could not be revoked."
   },
   "guestAudit": {
     "title": "Guest Network Audit",
