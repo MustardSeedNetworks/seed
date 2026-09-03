@@ -1,0 +1,56 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/MustardSeedNetworks/seed/main/docs/schemas/api/driver-stats-response.schema.json",
+  "$ref": "#/$defs/DriverStatsResponse",
+  "$defs": {
+    "CuratedCounter": {
+      "properties": {
+        "key": {
+          "type": "string"
+        },
+        "label": {
+          "type": "string"
+        },
+        "value": {
+          "type": "integer"
+        },
+        "meaning": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "key",
+        "label",
+        "value",
+        "meaning"
+      ]
+    },
+    "DriverStatsResponse": {
+      "properties": {
+        "interface": {
+          "type": "string"
+        },
+        "counters": {
+          "items": {
+            "$ref": "#/$defs/CuratedCounter"
+          },
+          "type": "array"
+        },
+        "total": {
+          "type": "integer"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "interface",
+        "counters",
+        "total"
+      ]
+    }
+  },
+  "title": "DriverStatsResponse",
+  "description": "DriverStatsResponse — generated from the Go struct in internal/api; refresh with `make schema` after struct changes."
+}

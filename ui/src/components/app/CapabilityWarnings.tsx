@@ -12,6 +12,7 @@ import type { JSX } from 'react';
 import { useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { type Capabilities, getMissingCapabilities } from '../../hooks/useCapabilities';
+import { usePlatformCapabilities } from '../../hooks/usePlatformCapabilities';
 import { cn, radius, spacing } from '../../styles/theme';
 
 interface CapabilityWarningsProps {
@@ -22,6 +23,17 @@ interface CapabilityWarningsProps {
 }
 
 /**
+ * The banner covers both axes now (#750): what this process lacks the privilege
+ * to do, and what this operating system cannot do at all. It was privileges
+ * only — one capability, `icmpAvailable` — which is why a platform gap
+ * previously surfaced as a silent failure or a cryptic error.
+ *
+ * Licence tier stays out. It has its own components and its own copy, and an
+ * operator who cannot tell "buy something" from "run it elsewhere" is worse off
+ * than one who was told nothing.
+ */
+
+/**
  * Displays a collapsible warning banner for missing network capabilities.
  * Only shows when there are actual missing capabilities.
  */
@@ -30,10 +42,11 @@ export function CapabilityWarnings({
   onDismiss,
 }: CapabilityWarningsProps): JSX.Element | null {
   const { t } = useTranslation('common');
+  const { degraded } = usePlatformCapabilities();
   const [expanded, setExpanded] = useState(false);
   const [dismissed, setDismissed] = useState(false);
 
-  const missingCapabilities = getMissingCapabilities(capabilities);
+  const missingCapabilities = getMissingCapabilities(capabilities, degraded);
 
   const handleDismiss = useCallback(() => {
     setDismissed(true);

@@ -535,5 +535,12 @@
       "x11": "An open X11 display lets anyone who can reach it read the screen and inject keystrokes.",
       "generic": "This port is on the insecure list because the service behind it is typically unencrypted, unauthenticated, or an administrative interface."
     }
+  },
+  "driverStats": {
+    "title": "Driver Error Counters",
+    "description": "What the interface driver itself is counting. A link can be up and still dropping frames; these say which problem it is.",
+    "noCounters": "This driver exposes none of the counters worth watching.",
+    "curated": "Showing {{shown}} of {{total}} counters the driver reports.",
+    "refresh": "Refresh"
   }
 }

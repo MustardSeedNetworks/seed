@@ -27,6 +27,7 @@ This document describes hardware requirements and platform-specific limitations 
 | Cable diagnostics (TDR) | Partial | None | None |
 | PHY layer info | Full | Partial | Partial |
 | Digital Optical Monitoring | Partial | None | None |
+| Driver error counters | Full | None | None |
 
 **Legend:**
 
@@ -50,6 +51,8 @@ This document describes hardware requirements and platform-specific limitations 
 - **Cable diagnostics (TDR)**: No macOS API exposes TDR.
 - **PHY layer info**: Link speed and media type only.
 - **Digital Optical Monitoring**: No macOS API exposes transceiver diagnostics.
+- **Driver error counters**: ethtool is a Linux ioctl interface; macOS has no equivalent, so driver error counters
+  cannot be read.
 
 ### Windows caveats
 
@@ -59,6 +62,8 @@ This document describes hardware requirements and platform-specific limitations 
 - **Cable diagnostics (TDR)**: No Windows API exposes TDR.
 - **PHY layer info**: Link speed only.
 - **Digital Optical Monitoring**: No Windows API exposes transceiver diagnostics.
+- **Driver error counters**: ethtool is a Linux ioctl interface; Windows has no equivalent, so driver error counters
+  cannot be read.
 
 <!-- END GENERATED MATRIX -->
 

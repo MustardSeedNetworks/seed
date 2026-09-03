@@ -32,7 +32,8 @@
     "dhcpConfigFailed": "Error al configurar DHCP",
     "invalidMode": "El modo debe ser 'dhcp' o 'static'",
     "invalidConfig": "La configuración de red no puede funcionar como se solicitó.",
-    "neighbourCacheFailed": "No se pudo leer la caché de vecinos."
+    "neighbourCacheFailed": "No se pudo leer la caché de vecinos.",
+    "driverStatsFailed": "No se pudieron leer las estadísticas del controlador de la interfaz."
   },
   "license": {
     "tierTooLow": "Esta función requiere el nivel {{tier}}",
@@ -137,5 +138,11 @@
     "renewNotSupported": "La renovación forzada de la concesión DHCP no es compatible con este sistema operativo",
     "renewFailed": "No se pudo renovar la concesión DHCP",
     "interfaceRequired": "Se requiere un nombre de interfaz para renovar una concesión DHCP"
+  },
+  "platform": {
+    "unavailableTitle": "{{feature}} no está disponible en esta plataforma",
+    "unavailableGeneric": "Este sistema operativo no ofrece una API para ello. Ejecutar Seed en otra plataforma es la única forma de usarlo.",
+    "limitedGeneric": "Esto funciona aquí, pero no por completo. Algunos campos pueden estar vacíos o ser aproximados.",
+    "capabilityUnsupported": "Este sistema operativo no admite esa función."
   }
 }

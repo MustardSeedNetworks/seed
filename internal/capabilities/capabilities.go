@@ -61,6 +61,7 @@ const (
 	CableDiagnostics  Capability = "cable_diagnostics"
 	PHYInfo           Capability = "phy_info"
 	OpticalMonitoring Capability = "optical_monitoring"
+	DriverStatistics  Capability = "driver_statistics"
 )
 
 // titles are the human-readable names, shared by the API response and the
@@ -86,6 +87,7 @@ func titles() map[Capability]string {
 		CableDiagnostics:  "Cable diagnostics (TDR)",
 		PHYInfo:           "PHY layer info",
 		OpticalMonitoring: "Digital Optical Monitoring",
+		DriverStatistics:  "Driver error counters",
 	}
 }
 
@@ -97,7 +99,7 @@ func order() []Capability {
 		SpeedDuplex, WiFiScanning, WiFiConnection, ARPTable, NDPDiscovery,
 		BluetoothScanning, GatewayDetection, DNSDetection, DHCPLeaseInfo,
 		VLANDetection, VLANManagement, CableDiagnostics, PHYInfo,
-		OpticalMonitoring,
+		OpticalMonitoring, DriverStatistics,
 	}
 }
 

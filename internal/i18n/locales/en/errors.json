@@ -32,7 +32,8 @@
     "dhcpConfigFailed": "Failed to configure DHCP",
     "invalidMode": "Mode must be 'dhcp' or 'static'",
     "invalidConfig": "The network configuration cannot work as requested.",
-    "neighbourCacheFailed": "Failed to read the neighbour cache."
+    "neighbourCacheFailed": "Failed to read the neighbour cache.",
+    "driverStatsFailed": "Failed to read the interface driver statistics."
   },
   "license": {
     "tierTooLow": "This feature requires the {{tier}} tier",
@@ -137,5 +138,11 @@
     "renewNotSupported": "Forcing a DHCP lease renewal is not supported on this operating system",
     "renewFailed": "Failed to renew the DHCP lease",
     "interfaceRequired": "An interface name is required to renew a DHCP lease"
+  },
+  "platform": {
+    "unavailableTitle": "{{feature}} is not available on this platform",
+    "unavailableGeneric": "This operating system does not provide an API for it. Running Seed on a different platform is the only way to use it.",
+    "limitedGeneric": "This works here, but not completely. Some fields may be empty or approximate.",
+    "capabilityUnsupported": "This operating system does not support that feature."
   }
 }

@@ -89,6 +89,7 @@ func schemaTargets() []schemaTarget {
 		// Auth / status / recovery / config responses.
 		{&api.StatusResponse{}, "status-response.schema.json"},
 		{&api.NeighbourCacheResponse{}, "neighbour-cache-response.schema.json"},
+		{&api.DriverStatsResponse{}, "driver-stats-response.schema.json"},
 		{&api.LoginResponse{}, "login-response.schema.json"},
 		{&api.CSRFTokenResponse{}, "csrf-token-response.schema.json"},
 		{&api.SetupStatusResponse{}, "setup-status-response.schema.json"},
