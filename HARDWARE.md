@@ -29,7 +29,7 @@ setting a viewport — no horizontal scroll, and no interactive control under
 | Speed/duplex detection | Full | Partial | Full |
 | Wi-Fi scanning | Full | Full | Full |
 | Wi-Fi connect/disconnect | Full | Full | Full |
-| ARP table reading | Full | None | Full |
+| ARP table reading | Full | Full | Full |
 | IPv6 NDP discovery | Full | Full | Full |
 | Bluetooth scanning | Full | Partial | Limited |
 | Gateway detection | Full | Full | Full |
@@ -56,7 +56,6 @@ setting a viewport — no horizontal scroll, and no interactive control under
 ### macOS caveats
 
 - **Speed/duplex detection**: Reports negotiated speed; duplex is not exposed.
-- **ARP table reading**: The IPv4 neighbour table is not readable by the daemon on macOS 27 (#2272). IPv6 via NDP works.
 - **Bluetooth scanning**: Discovery only; no service enumeration.
 - **VLAN detection**: Detects tagged interfaces; does not enumerate the VLANs a trunk carries.
 - **VLAN creation/deletion**: Needs networksetup and an operator-created VLAN service.

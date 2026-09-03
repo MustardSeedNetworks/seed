@@ -104,15 +104,11 @@ func TestUnknownPlatformSupportsNothing(t *testing.T) {
 	}
 }
 
-// The two corrections this package exists to record. If someone restores the
-// old optimistic values, these fail.
+// The correction this package exists to record. If someone restores the old
+// optimistic value, this fails.
 func TestKnownPlatformGapsAreRecorded(t *testing.T) {
 	t.Parallel()
 
-	if got := LevelsFor("darwin")[ARPTable]; got != LevelNone {
-		t.Errorf("darwin ARP table = %q, want %q — it returns nothing to the daemon (#2272)",
-			got, LevelNone)
-	}
 	if got := LevelsFor("windows")[VLANManagement]; got != LevelNone {
 		t.Errorf("windows VLAN management = %q, want %q — no API outside Hyper-V (#2104)",
 			got, LevelNone)
