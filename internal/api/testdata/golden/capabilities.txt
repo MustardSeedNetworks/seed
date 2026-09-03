@@ -385,66 +385,6 @@ body:
     "methods": [
       "GET"
     ],
-    "path": "GET /api/v1/updates/check"
-  },
-  {
-    "maxBodyBytes": 262144,
-    "methods": [
-      "GET"
-    ],
-    "path": "GET /api/v1/updates/status"
-  },
-  {
-    "maxBodyBytes": 262144,
-    "methods": [
-      "GET"
-    ],
-    "path": "GET /api/v1/updates/info"
-  },
-  {
-    "maxBodyBytes": 262144,
-    "methods": [
-      "POST"
-    ],
-    "minRole": "operator",
-    "path": "POST /api/v1/updates/download"
-  },
-  {
-    "maxBodyBytes": 262144,
-    "methods": [
-      "POST"
-    ],
-    "minRole": "operator",
-    "path": "POST /api/v1/updates/apply"
-  },
-  {
-    "maxBodyBytes": 262144,
-    "methods": [
-      "POST"
-    ],
-    "minRole": "operator",
-    "path": "POST /api/v1/updates/rollback"
-  },
-  {
-    "maxBodyBytes": 262144,
-    "methods": [
-      "GET"
-    ],
-    "path": "GET /api/v1/updates/config"
-  },
-  {
-    "maxBodyBytes": 262144,
-    "methods": [
-      "PATCH"
-    ],
-    "minRole": "operator",
-    "path": "PATCH /api/v1/updates/config"
-  },
-  {
-    "maxBodyBytes": 262144,
-    "methods": [
-      "GET"
-    ],
     "path": "/api/v1/telemetry/link"
   },
   {
