@@ -5,6 +5,20 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.213.50](https://github.com/MustardSeedNetworks/seed/compare/v0.213.49...v0.213.50) (2026-09-03)
+
+
+### Bug Fixes
+
+* **license:** delete eight catalogue strings with no boundary behind them ([#2350](https://github.com/MustardSeedNetworks/seed/issues/2350)) ([850bbff](https://github.com/MustardSeedNetworks/seed/commit/850bbff77740f4921fdbc76bc13047ed321a8626))
+
+
+### Miscellaneous
+
+* delete the update service ([#2354](https://github.com/MustardSeedNetworks/seed/issues/2354)) ([5bdfe4d](https://github.com/MustardSeedNetworks/seed/commit/5bdfe4d72dcc740adec04b3dd5f607cb6864cd22))
+* **deps:** lock file maintenance ([#2344](https://github.com/MustardSeedNetworks/seed/issues/2344)) ([c7b47a4](https://github.com/MustardSeedNetworks/seed/commit/c7b47a403a6fe926ccb9463275c7893224e924cb))
+* **deps:** update dependency @testing-library/react to v16.3.3 ([#2349](https://github.com/MustardSeedNetworks/seed/issues/2349)) ([a39f6ff](https://github.com/MustardSeedNetworks/seed/commit/a39f6ff3f577b14ac7d316d42aca73506f918c53))
+
 ## [0.213.49](https://github.com/MustardSeedNetworks/seed/compare/v0.213.48...v0.213.49) (2026-09-03)
 
 
