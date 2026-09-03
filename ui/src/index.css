@@ -474,6 +474,25 @@ body {
     @apply grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4;
   }
 
+  /* Interactive target floor.
+     check-token-discipline.sh's FAMILY_SMALL_TARGET advisory has told authors
+     to "add .target or min-h-11" since it was written, and .target did not
+     exist -- advice nobody could take. It does now.
+     44px is the advisory's number and the iOS guideline; WCAG 2.5.8 AA puts the
+     floor at 24, which is what the E2E check enforces. Using this class clears
+     both. */
+  .target {
+    @apply min-h-11 min-w-11;
+  }
+
+  /* A text link that is its own line rather than part of a sentence: footer
+     navigation, contact details, legal links. WCAG 2.5.8 exempts a target
+     inside running text, but these are standalone and were 19-23px tall, so
+     they were simply small (#244). 24px is the AA floor. */
+  .link-target {
+    @apply flex items-center min-h-6;
+  }
+
   /* Common patterns */
   .flex-center {
     @apply flex items-center justify-center;

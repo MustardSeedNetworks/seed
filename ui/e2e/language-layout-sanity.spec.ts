@@ -1,4 +1,4 @@
-import { type Page, expect, test } from '@playwright/test';
+import { expect, type Page, test } from '@playwright/test';
 
 /**
  * Language layout sanity (ES overflow detection)
@@ -47,9 +47,7 @@ const noClippedText = async (page: Page, selector: string): Promise<void> => {
       })
       .map((el) => (el as HTMLElement).innerText.trim().slice(0, 80)),
   );
-  expect(clipped, `${selector} elements with clipped text:\n  ${clipped.join('\n  ')}`).toEqual(
-    [],
-  );
+  expect(clipped, `${selector} elements with clipped text:\n  ${clipped.join('\n  ')}`).toEqual([]);
 };
 
 test.describe('Language layout sanity', () => {

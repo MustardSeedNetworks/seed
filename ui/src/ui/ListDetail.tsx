@@ -99,7 +99,9 @@ export function FilterChip({ label, count, active = false, onClick }: FilterChip
       onClick={onClick}
       aria-pressed={active}
       className={cn(
-        'kicker rounded-md px-cell py-1 transition-colors',
+        // min-h-6 rather than more py: the chips sit in a row and growing the
+        // padding would push them apart as well as taller (#244).
+        'kicker rounded-md px-cell py-1 min-h-6 inline-flex items-center transition-colors',
         active ? 'bg-surface-sunken text-text-primary' : 'text-text-muted hover:text-text-primary',
       )}
     >

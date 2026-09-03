@@ -73,7 +73,7 @@ export function AlertsPage(): JSX.Element {
           {loading ? 'Loading…' : `${alerts.length} alert${alerts.length === 1 ? '' : 's'}`}
         </p>
         <div className="flex items-center gap-default">
-          <label className="flex items-center gap-tight text-xs text-text-secondary">
+          <label className="flex items-center gap-tight min-h-6 text-xs text-text-secondary">
             <input
               type="checkbox"
               checked={filter.unacknowledgedOnly}
@@ -81,7 +81,7 @@ export function AlertsPage(): JSX.Element {
             />
             unacknowledged only
           </label>
-          <label className="flex items-center gap-tight text-xs text-text-secondary">
+          <label className="flex items-center gap-tight min-h-6 text-xs text-text-secondary">
             <input
               type="checkbox"
               checked={filter.unresolvedOnly}

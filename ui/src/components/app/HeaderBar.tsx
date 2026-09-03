@@ -528,7 +528,8 @@ export const HeaderBar: React.FC<HeaderBarProps> = memo(function headerBar({
             type="button"
             onClick={onReconnect}
             className={cn(
-              'caption flex items-center gap-1.5',
+              // "Tap to reconnect" was 18px tall, which is not tappable (#244).
+              'caption flex items-center gap-1.5 min-h-6',
               wsStatus === 'connecting' ? statusColor.text.warning : statusColor.text.error,
             )}
           >
