@@ -6,11 +6,13 @@ package api
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net/http"
 	"time"
 
 	"github.com/MustardSeedNetworks/seed/internal/database"
+	"github.com/MustardSeedNetworks/seed/internal/discovery/enumerate"
 	"github.com/MustardSeedNetworks/seed/internal/logging"
 	"github.com/MustardSeedNetworks/seed/internal/netif"
 	"github.com/MustardSeedNetworks/seed/internal/timeseries/retention"
@@ -30,11 +32,7 @@ func (s *Server) onLinkStateChange(event netif.LinkEvent) {
 
 	switch event.State {
 	case netif.LinkStateUp:
-		// Link came up - reload discovery service to restart protocol capture
-		logging.GetLogger().Info("Link up - reloading discovery service")
-		if err := s.discoveryService().Reload(); err != nil {
-			logging.GetLogger().Warn("Failed to reload discovery service", "error", err)
-		}
+		s.rescanAfterLinkUp()
 
 		// Notify clients with linkState message (SSE primary, WebSocket for backwards compat)
 		linkStateMsg := Message{
@@ -77,6 +75,44 @@ func (s *Server) onLinkStateChange(event netif.LinkEvent) {
 		// Unknown state - log but don't take action
 		logging.GetLogger().Warn("Link state unknown", "interface", event.Interface)
 	}
+}
+
+// linkUpScanTimeout bounds the rescan a link-up triggers, so a scan of an
+// unresponsive network cannot outlive the link event that asked for it.
+const linkUpScanTimeout = 2 * time.Minute
+
+// rescanAfterLinkUp re-enumerates the network a newly-connected link leads to.
+//
+// This used to call discoveryService().Reload(), which stopped and restarted
+// device discovery -- and device discovery owns the LLDP/CDP/EDP packet
+// captures, so the pcap handles were closed and reopened at exactly the moment
+// they were needed. A switch advertises LLDP the instant a port comes up; a
+// handle that is closed during that window misses the frame and waits out the
+// full transmit interval, 30 seconds for LLDP and 60 for CDP, before it sees
+// the neighbour it was plugged into (#323).
+//
+// The capture does not need restarting: a pcap handle stays valid across a
+// carrier transition and simply delivers nothing while the link is down. What
+// genuinely does need redoing is the active scan, because the link may lead to
+// a different network than it did before -- so that is what happens now, and
+// the passive captures are left alone.
+func (s *Server) rescanAfterLinkUp() {
+	logging.GetLogger().Info("Link up - rescanning; passive capture was never stopped")
+
+	go func() {
+		ctx, cancel := context.WithTimeout(context.Background(), linkUpScanTimeout)
+		defer cancel()
+
+		if err := s.discoveryService().Scan(ctx); err != nil {
+			// A scan already in flight is the expected outcome of a link that
+			// flaps, not a failure worth warning about.
+			if errors.Is(err, enumerate.ErrScanInProgress) {
+				logging.GetLogger().Debug("Link up - a scan was already running")
+				return
+			}
+			logging.GetLogger().Warn("Link up - rescan failed", "error", err)
+		}
+	}()
 }
 
 // Shutdown gracefully shuts down the server (fixes #515, #524).
