@@ -31,14 +31,23 @@ on:
   workflow_dispatch:
 
 concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  # Never on main. A cancelled run is not a failed one, but release-please is
-  # gated on `workflow_run.conclusion == 'success'`, so a run cancelled by the
-  # next merge makes the release silently not happen — no red check, just a
-  # missing tag. That is exactly how stem's v0.24.47 went missing while its
-  # three siblings released from the same batch.
+  # Main gets a concurrency group per commit; PRs share one group per ref.
+  #
+  # cancel-in-progress off on main protects a *running* main build. It does
+  # not protect a pending one: GitHub keeps at most one pending run per
+  # concurrency group and cancels the older pending run as soon as a newer one
+  # arrives. A merge-queue burst pushes several commits to main within
+  # minutes, so intermediate main runs were cancelled while still queued —
+  # zero jobs, no red check, nothing to retry. release-please is gated on
+  # `workflow_run.conclusion == 'success'`, so it was skipped for every one of
+  # those commits and they released nothing. That is how stem's v0.24.47 went
+  # missing while its three siblings released from the same batch.
+  #
+  # Keying main by SHA gives every commit its own group, so no main run is
+  # ever pending behind another and none can be cancelled.
   #
   # Superseded PR runs are still waste and still get cancelled.
+  group: ${{ github.workflow }}-${{ github.ref }}${{ github.ref == 'refs/heads/main' && format('-{0}', github.sha) || '' }}
   cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
 
 permissions:
