@@ -2,6 +2,19 @@
 
 This document describes hardware requirements and platform-specific limitations for The Seed network diagnostic tool.
 
+## Browser and viewport support
+
+The UI is a browser surface, and it carries a **minimum supported width of
+480px** (comfortable target 768px+) — see `EDITIONS.md` §5. A Lite unit is
+reached from a phone or tablet over its AP-mode SSID, so narrow viewports are a
+supported case rather than an accident.
+
+That is a _responsive-layout_ commitment on the desktop browsers already under
+test, not a mobile-device one: there is no phone app and no mobile-browser
+matrix. `ui/e2e/minimum-width.spec.ts` enforces it on chromium and webkit by
+setting a viewport — no horizontal scroll, and no interactive control under
+24×24 (WCAG 2.5.8 AA).
+
 ## Platform Support Matrix
 
 <!-- BEGIN GENERATED MATRIX -->

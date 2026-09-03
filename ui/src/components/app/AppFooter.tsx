@@ -41,13 +41,13 @@ export function AppFooter({ appVersion }: AppFooterProps): JSX.Element {
           <div className="stack-xs">
             <a
               href="mailto:support@mustardseednetworks.com"
-              className="body-small text-brand-primary hover:underline block"
+              className="body-small text-brand-primary hover:underline link-target"
             >
               support@mustardseednetworks.com
             </a>
             <a
               href="tel:+17194403079"
-              className="body-small text-text-muted hover:text-text-primary block"
+              className="body-small text-text-muted hover:text-text-primary link-target"
             >
               719.440.3079
             </a>
@@ -61,7 +61,7 @@ export function AppFooter({ appVersion }: AppFooterProps): JSX.Element {
             href="https://www.mustardseednetworks.com"
             target="_blank"
             rel="noopener noreferrer"
-            className="body-small text-brand-primary hover:underline"
+            className="body-small text-brand-primary hover:underline link-target"
           >
             www.mustardseednetworks.com
           </a>
@@ -71,13 +71,22 @@ export function AppFooter({ appVersion }: AppFooterProps): JSX.Element {
         <div>
           <h4 className="body-small font-medium text-text-primary mb-2">{t('footer.legal')}</h4>
           <div className="flex flex-wrap gap-x-3 gap-y-1">
-            <a href="/terms" className="body-small text-text-muted hover:text-brand-primary">
+            <a
+              href="/terms"
+              className="body-small text-text-muted hover:text-brand-primary link-target"
+            >
               {t('footer.tos')}
             </a>
-            <a href="/privacy" className="body-small text-text-muted hover:text-brand-primary">
+            <a
+              href="/privacy"
+              className="body-small text-text-muted hover:text-brand-primary link-target"
+            >
               {t('footer.privacy')}
             </a>
-            <a href="/license" className="body-small text-text-muted hover:text-brand-primary">
+            <a
+              href="/license"
+              className="body-small text-text-muted hover:text-brand-primary link-target"
+            >
               {t('footer.license')}
             </a>
           </div>

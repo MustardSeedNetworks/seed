@@ -43,7 +43,9 @@ export const Breadcrumbs: FC = () => {
     >
       <Link
         to="/"
-        className="flex items-center gap-tight hover:text-text-primary transition-colors"
+        // The icon is 14px; without a floor the whole link is a 14x14 target,
+        // which fails WCAG 2.5.8 at any width and is simply hard to hit (#244).
+        className="target flex-center hover:text-text-primary transition-colors"
         aria-label="Home"
       >
         <Home className={iconSizes.sm} />

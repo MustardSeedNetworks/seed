@@ -84,6 +84,7 @@ func (s *Server) registerJobKinds() {
 	s.registerEngineScanKind(func() engineScanner { return s.discoveryEngine() })
 	s.registerBluetoothScanKind(func() bluetoothScannerService { return s.bluetoothScanner() })
 	s.registerWiFiDiscoveryScanKind(func() wifiDiscoveryBridge { return s.wifiBridge() })
+	s.registerPathMonitorKind(defaultPathTracer)
 	s.registerDeviceScanKind(func() deviceScanService { return s.deviceDiscovery() })
 }
 
