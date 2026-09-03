@@ -21,7 +21,6 @@ func (s *Server) setupRoutes() {
 	s.mux.HandleFunc("/__capabilities", s.handleCapabilities)
 	s.setupCoreRoutes()
 	s.setupAPITokenRoutes()
-	s.registerUpdateRoutes()
 	s.setupTelemetryRoutes()
 	s.setupSecurityRoutes()
 	s.setupPathRoutes()

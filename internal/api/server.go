@@ -78,8 +78,6 @@ import (
 	"github.com/MustardSeedNetworks/seed/internal/system"
 	"github.com/MustardSeedNetworks/seed/internal/timeseries/retention"
 	"github.com/MustardSeedNetworks/seed/internal/topology"
-	"github.com/MustardSeedNetworks/seed/internal/update"
-	"github.com/MustardSeedNetworks/seed/internal/update/lifecycle"
 	"github.com/MustardSeedNetworks/seed/internal/wifi"
 	"github.com/MustardSeedNetworks/seed/internal/wifi/troubleshooting"
 )
@@ -251,7 +249,6 @@ type Server struct {
 	retentionStopCh chan struct{}
 
 	// --- Update service ---
-	updateSvc *update.Service
 
 	// engines is the lifecycle registry every long-running engine (probe,
 	// retention, snmp-poller, listeners, discovery) registers with. Start
@@ -287,7 +284,6 @@ type Server struct {
 	bluetoothScans     *bluetooth.Service          // Bluetooth-discovery use-case (ADR-0020)
 	healthMonitoring   *monitoring.Service         // Health-monitoring use-case (ADR-0020)
 	healthSettings     *healthsettings.Service     // Health-checks settings use-case (ADR-0020)
-	updateLifecycle    *lifecycle.Service          // Update-lifecycle use-case (ADR-0020)
 	engineStatus       *enginestatus.Service       // Engine-status use-case (ADR-0020)
 	identityUsers      *users.Service              // User-management use-case (ADR-0020, ADR-0024)
 	identityTokens     *tokens.Service             // PAT mint/list/revoke use-case (ADR-0020, ADR-0024)
@@ -1003,7 +999,6 @@ func (s *Server) jobIdempotency() jobIdempotencyStore           { return s.jobId
 func (s *Server) db() *database.DB                              { return s.dbConn }
 func (s *Server) apiTokenRepo() *database.APITokenRepository    { return s.apiTokens }
 func (s *Server) licenseManager() *license.Manager              { return s.licenseMgr }
-func (s *Server) updateService() *update.Service                { return s.updateSvc }
 func (s *Server) engineRegistry() *engine.Registry              { return s.engines }
 
 // initWiFiUseCases wires the Wi-Fi troubleshooting use-cases (ADR-0020) from the
@@ -1089,7 +1084,6 @@ func (s *Server) rescheduleProbeEngine(ctx context.Context) error {
 // composition root over the server's lazy accessor for the update service, so
 // a nil or later-set service (the test harness) is honored.
 func (s *Server) initUpdateUseCases() {
-	s.updateLifecycle = app.NewUpdateLifecycle(s.updateService)
 }
 
 // initEngineUseCases wires the engine-status use-case (ADR-0020) from the

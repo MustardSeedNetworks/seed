@@ -13,7 +13,6 @@
     "thresholds": "Thresholds",
     "cableTest": "Cable Test",
     "link": "Link",
-    "updates": "Updates",
     "vulnerability": "Vulnerability Scanning"
   },
   "common": {
@@ -405,23 +404,6 @@
     "manualWarning": "Manually forcing speed/duplex may cause link instability if the peer is set to autoneg.",
     "requiresRoot": "Requires root to change link settings",
     "speedDuplex": "Speed / Duplex"
-  },
-  "updates": {
-    "applyUpdate": "Apply update",
-    "applying": "Applying…",
-    "autoCheck": "Automatically check for updates",
-    "autoDownload": "Automatically download updates",
-    "checkForUpdates": "Check for updates",
-    "currentVersion": "Current version",
-    "downloadSize": "Download size",
-    "downloadUpdate": "Download update",
-    "downloading": "Downloading…",
-    "includePrerelease": "Include pre-release builds",
-    "lastChecked": "Last checked",
-    "releasedOn": "Released on",
-    "rollback": "Rollback to previous version",
-    "upToDate": "Up to date",
-    "updateAvailable": "Update available"
   },
   "vulnerability": {
     "apiKey": "NVD API Key",
