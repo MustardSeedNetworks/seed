@@ -20,7 +20,9 @@ func keyCall() *regexp.Regexp {
 
 // knownUnresolved is the debt this test found and does not fix.
 //
-// 57 of the API's 106 distinct literal keys have no message in either locale.
+// 39 of the API's 106 distinct literal keys have no message in either locale.
+// (57 when this list was written; the profile keys were written in #2331,
+// where the router fix meant an operator could reach those errors at all.)
 // Writing the copy is its own piece of work in two languages, tracked
 // separately. The list is exact rather than a count so that fixing one is
 // noticed here: an entry that starts resolving fails this test and has to be
@@ -49,24 +51,6 @@ func knownUnresolvedKeys() []string {
 		"errors.health.speedtestNotAvailable",
 		"errors.logs.notInitialized",
 		"errors.methodNotAllowed",
-		"errors.profile.activeNotFound",
-		"errors.profile.cannotDeleteActive",
-		"errors.profile.cannotDeleteDefault",
-		"errors.profile.createFailed",
-		"errors.profile.dbNotAvailable",
-		"errors.profile.deleteFailed",
-		"errors.profile.duplicateFailed",
-		"errors.profile.getActiveFailed",
-		"errors.profile.getDefaultFailed",
-		"errors.profile.getFailed",
-		"errors.profile.idRequired",
-		"errors.profile.listFailed",
-		"errors.profile.nameExists",
-		"errors.profile.nameRequired",
-		"errors.profile.noActiveOrDefault",
-		"errors.profile.notFound",
-		"errors.profile.setActiveFailed",
-		"errors.profile.updateFailed",
 		"errors.security.failedToEncryptAuth",
 		"errors.security.failedToEncryptPriv",
 		"errors.security.gatewayTesterUnavailable",

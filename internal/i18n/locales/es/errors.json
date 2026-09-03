@@ -111,9 +111,28 @@
     "pathNotConfigured": "Ruta no configurada"
   },
   "profile": {
+    "activeNotFound": "El perfil activo ya no existe.",
+    "cannotDeleteActive": "No se puede eliminar el perfil activo. Cambie primero a otro perfil.",
+    "cannotDeleteDefault": "No se puede eliminar el perfil predeterminado. Establezca primero otro perfil como predeterminado.",
+    "conflict": "Otro usuario modificó este perfil desde que lo cargó. Recárguelo y vuelva a aplicar sus cambios.",
+    "createFailed": "No se pudo crear el perfil.",
+    "dbNotAvailable": "Los perfiles no están disponibles porque la base de datos no está en ejecución.",
+    "deleteFailed": "No se pudo eliminar el perfil.",
+    "duplicateFailed": "No se pudo duplicar el perfil.",
+    "getActiveFailed": "No se pudo leer el perfil activo.",
+    "getDefaultFailed": "No se pudo leer el perfil predeterminado.",
+    "getFailed": "No se pudo leer el perfil.",
+    "idRequired": "Se requiere un ID de perfil.",
+    "invalidConfig": "La configuración del perfil no es JSON válido.",
+    "listFailed": "No se pudieron listar los perfiles.",
     "multiClientRequired": "Las licencias Free y Starter permiten 1 perfil. Actualice a Pro para administrar configuraciones de varios clientes desde una sola instancia de Seed.",
     "multiInterfaceRequired": "Las licencias Free y Starter permiten como máximo 1 interfaz ethernet + 1 Wi-Fi por perfil. Actualice a Pro para interfaces concurrentes ilimitadas.",
-    "conflict": "Otro usuario modificó este perfil desde que lo cargó. Recárguelo y vuelva a aplicar sus cambios."
+    "nameExists": "Ya existe un perfil con ese nombre.",
+    "nameRequired": "Se requiere un nombre de perfil.",
+    "noActiveOrDefault": "Ningún perfil está activo y ninguno está marcado como predeterminado.",
+    "notFound": "Ese perfil no existe.",
+    "setActiveFailed": "No se pudo cambiar a ese perfil.",
+    "updateFailed": "No se pudo actualizar el perfil."
   },
   "sso": {
     "featureRequired": "La configuración de Single Sign-On requiere una licencia Pro. Los proveedores existentes siguen aceptando inicios de sesión en cualquier nivel; solo se bloquea habilitar o editar proveedores."

@@ -111,9 +111,28 @@
     "pathNotConfigured": "Path not configured"
   },
   "profile": {
+    "activeNotFound": "The active profile no longer exists.",
+    "cannotDeleteActive": "The active profile cannot be deleted. Switch to another profile first.",
+    "cannotDeleteDefault": "The default profile cannot be deleted. Make another profile the default first.",
+    "conflict": "This profile was changed by another user since you loaded it. Reload and apply your changes again.",
+    "createFailed": "Failed to create the profile.",
+    "dbNotAvailable": "Profiles are unavailable because the database is not running.",
+    "deleteFailed": "Failed to delete the profile.",
+    "duplicateFailed": "Failed to duplicate the profile.",
+    "getActiveFailed": "Failed to read the active profile.",
+    "getDefaultFailed": "Failed to read the default profile.",
+    "getFailed": "Failed to read the profile.",
+    "idRequired": "A profile ID is required.",
+    "invalidConfig": "The profile configuration is not valid JSON.",
+    "listFailed": "Failed to list profiles.",
     "multiClientRequired": "Free and Starter licenses allow 1 profile. Upgrade to Pro to manage configurations for multiple clients from a single Seed instance.",
     "multiInterfaceRequired": "Free and Starter licenses allow at most 1 ethernet + 1 Wi-Fi interface per profile. Upgrade to Pro for unlimited concurrent interfaces.",
-    "conflict": "This profile was changed by another user since you loaded it. Reload and apply your changes again."
+    "nameExists": "A profile with that name already exists.",
+    "nameRequired": "A profile name is required.",
+    "noActiveOrDefault": "No profile is active and none is marked as the default.",
+    "notFound": "That profile does not exist.",
+    "setActiveFailed": "Failed to switch to that profile.",
+    "updateFailed": "Failed to update the profile."
   },
   "sso": {
     "featureRequired": "Single Sign-On configuration requires a Pro license. Existing providers continue to accept logins on any tier; only enabling or editing providers is blocked."
