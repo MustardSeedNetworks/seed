@@ -59,32 +59,65 @@ for (const { name: widthName, width } of WIDTHS) {
         await page.goto(page_.path, { waitUntil: 'domcontentloaded' });
         await expect(page.getByTestId('page-header-title')).toBeVisible({ timeout: 20000 });
 
+        // Wait for the layout to stop moving before measuring. A chart or a
+        // virtualised list can be transiently wide while it sizes itself, and
+        // the header painting says nothing about that. Two consecutive equal
+        // readings is the cheapest definition of settled — and CI saw exactly
+        // this: the logs page passed at 480px and failed at 768px in the same
+        // run, which is a timing shape rather than a layout one.
+        await page.waitForFunction(
+          () => {
+            const current = document.documentElement.scrollWidth;
+            const store = window as unknown as { __lastWidth?: number };
+            const previous = store.__lastWidth;
+            store.__lastWidth = current;
+
+            return previous === current;
+          },
+          undefined,
+          { timeout: 10000, polling: 250 },
+        );
+
         // scrollWidth beyond clientWidth is the definition of sideways scroll.
         // Compared on documentElement rather than body: body can be narrower
         // than its overflowing children and report no overflow at all.
         const overflow = await page.evaluate(() => {
           const root = document.documentElement;
 
-          return {
-            scrollWidth: root.scrollWidth,
-            clientWidth: root.clientWidth,
-            // The widest offending element, so a failure names what to fix
-            // rather than only that something is too wide.
-            widest: Array.from(document.querySelectorAll('*'))
-              .map((el) => ({
-                selector: `${el.tagName.toLowerCase()}${el.className && typeof el.className === 'string' ? `.${el.className.split(' ').slice(0, 3).join('.')}` : ''}`,
-                right: el.getBoundingClientRect().right,
-              }))
-              .filter((entry) => entry.right > root.clientWidth + 1)
-              .sort((a, b) => b.right - a.right)
-              .slice(0, 3),
-          };
+          // Bounding-rect right alone is not enough. CI reported a 1610px
+          // overflow with an empty offender list, which is useless exactly when
+          // it is needed: an element that is translated, or whose own content
+          // overflows with nothing to scroll it, does not itself extend past
+          // the viewport. Each candidate is judged on position and content.
+          const offenders = Array.from(document.querySelectorAll('*'))
+            .map((el) => {
+              const rect = el.getBoundingClientRect();
+              const { overflowX } = window.getComputedStyle(el);
+
+              return {
+                selector: `${el.tagName.toLowerCase()}${typeof el.className === 'string' && el.className !== '' ? `.${el.className.split(' ').slice(0, 3).join('.')}` : ''}`,
+                right: Math.round(rect.right),
+                width: Math.round(rect.width),
+                scrollWidth: el.scrollWidth,
+                overflowX,
+              };
+            })
+            .filter(
+              (entry) =>
+                entry.right > root.clientWidth + 1 ||
+                entry.width > root.clientWidth + 1 ||
+                (entry.scrollWidth > root.clientWidth + 1 && entry.overflowX === 'visible'),
+            )
+            .sort((a, b) => Math.max(b.right, b.scrollWidth) - Math.max(a.right, a.scrollWidth))
+            .slice(0, 5);
+
+          return { scrollWidth: root.scrollWidth, clientWidth: root.clientWidth, offenders };
         });
 
         expect(
           overflow.scrollWidth,
           `${page_.name} overflows ${width}px by ${overflow.scrollWidth - overflow.clientWidth}px. ` +
-            `Widest offenders: ${JSON.stringify(overflow.widest)}`,
+            `Widest offenders: ${JSON.stringify(overflow.offenders, null, 2)}`,
         ).toBeLessThanOrEqual(overflow.clientWidth + 1);
       });
     }
