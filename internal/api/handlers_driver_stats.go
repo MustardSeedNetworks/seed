@@ -18,6 +18,7 @@ import (
 	"github.com/MustardSeedNetworks/seed/internal/i18n"
 	"github.com/MustardSeedNetworks/seed/internal/logging"
 	"github.com/MustardSeedNetworks/seed/internal/netif"
+	"github.com/MustardSeedNetworks/seed/internal/validation"
 )
 
 // DriverStatsResponse is the curated counter set for one interface.
@@ -42,7 +43,16 @@ func (s *Server) handleDriverStats(w http.ResponseWriter, r *http.Request) {
 	if name == "" {
 		name = s.defaultInterface()
 	}
-	if name == "" {
+	// The name arrives from the query string and is logged on the failure path
+	// below, so it is validated before either use. validInterfaceRegex admits
+	// only alphanumerics, hyphens and underscores within 16 characters, so a
+	// caller cannot smuggle a newline through and forge a second log entry
+	// (CWE-117). The rejection logs err rather than the value, which would
+	// reintroduce exactly what this guards against. Same shape as
+	// handlers_dhcp_renew.go, and it also keeps an unchecked name out of the
+	// ethtool call.
+	if err := validation.ValidateInterface(name); err != nil {
+		logger.WarnContext(r.Context(), "Invalid interface", "error", err)
 		sendErrorResponseWithDetails(w, logger, http.StatusBadRequest,
 			ErrCodeValidation, localizer.T("errors.network.invalidInterface"), "")
 
