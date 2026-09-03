@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.213.49](https://github.com/MustardSeedNetworks/seed/compare/v0.213.48...v0.213.49) (2026-09-03)
+
+
+### Features
+
+* **ui:** tell the operator when a platform cannot do something ([#2315](https://github.com/MustardSeedNetworks/seed/issues/2315)) ([3167902](https://github.com/MustardSeedNetworks/seed/commit/316790225032f7978d9ff7fbfecc5b686df53298))
+
 ## [0.213.48](https://github.com/MustardSeedNetworks/seed/compare/v0.213.47...v0.213.48) (2026-09-03)
 
 
