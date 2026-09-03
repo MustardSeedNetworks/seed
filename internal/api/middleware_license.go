@@ -41,32 +41,54 @@ type FeatureGateResponse struct {
 // the gating layer never breaks local development workflows.
 func (s *Server) requireFeature(feature string, next http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		mgr := s.licenseManager()
-		if mgr == nil || mgr.HasFeature(feature) {
+		if s.hasFeature(feature) {
 			next(w, r)
+
 			return
 		}
 
-		// Resolve current tier for the response body. State may be nil
-		// (no license activated) — present that as "Free".
-		tierName := license.TierFree.String()
+		s.sendFeatureGate(w, r, feature)
+	}
+}
+
+// hasFeature reports whether the active license includes `feature`.
+//
+// A nil license manager is treated as "license disabled" (developer builds,
+// tests with no manager wired) and permits everything, matching requireFeature.
+func (s *Server) hasFeature(feature string) bool {
+	mgr := s.licenseManager()
+
+	return mgr == nil || mgr.HasFeature(feature)
+}
+
+// sendFeatureGate writes the 402 a gated surface answers with.
+//
+// Split out of requireFeature because not every entitlement boundary is a whole
+// route: a report is Pro because of the format it asks for, not because of the
+// path it was posted to, so the handler has to be able to answer the same way
+// the middleware would.
+func (s *Server) sendFeatureGate(w http.ResponseWriter, r *http.Request, feature string) {
+	// Resolve current tier for the response body. State may be nil
+	// (no license activated) — present that as "Free".
+	tierName := license.TierFree.String()
+	if mgr := s.licenseManager(); mgr != nil {
 		if st := mgr.GetState(); st != nil {
 			tierName = license.Tier(st.Tier).String()
 		}
+	}
 
-		resp := FeatureGateResponse{
-			Error:           "Feature requires a higher tier",
-			Code:            errCodeTierTooLow,
-			RequiredFeature: feature,
-			CurrentTier:     tierName,
-			UpgradeMessage: "Start a 14-day Pro trial with `seed license trial` " +
-				"or activate a Pro key with `seed license activate -k <KEY>`.",
-		}
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusPaymentRequired)
-		if encErr := json.NewEncoder(w).Encode(resp); encErr != nil {
-			logging.FromContext(r.Context()).ErrorContext(r.Context(),
-				"failed to encode feature-gate response", "error", encErr)
-		}
+	resp := FeatureGateResponse{
+		Error:           "Feature requires a higher tier",
+		Code:            errCodeTierTooLow,
+		RequiredFeature: feature,
+		CurrentTier:     tierName,
+		UpgradeMessage: "Start a 14-day Pro trial with `seed license trial` " +
+			"or activate a Pro key with `seed license activate -k <KEY>`.",
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusPaymentRequired)
+	if encErr := json.NewEncoder(w).Encode(resp); encErr != nil {
+		logging.FromContext(r.Context()).ErrorContext(r.Context(),
+			"failed to encode feature-gate response", "error", encErr)
 	}
 }
