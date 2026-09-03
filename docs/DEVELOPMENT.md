@@ -2,9 +2,9 @@
 
 ## Prerequisites
 
-- Go 1.25.5+
-- Node.js 25.2.1+
-- npm 11.7.0+
+- Go 1.27.0+
+- Node.js 26.8.1+
+- npm 12.0.2+
 
 ## Setup
 
@@ -44,7 +44,7 @@ See [ARCHITECTURE.md](./ARCHITECTURE.md) for detailed architecture documentation
 ## Common Tasks
 
 | Task | Command |
-|------|---------|
+| ---- | ------- |
 | Build all | `make build` |
 | Run tests | `make test` |
 | Lint | `make lint` |
