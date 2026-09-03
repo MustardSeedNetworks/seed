@@ -11,13 +11,6 @@ import (
 	"time"
 )
 
-// Traceroute hop state constants.
-const (
-	HopStateReply       = "reply"
-	HopStateTimeout     = "timeout"
-	HopStateUnreachable = "unreachable"
-)
-
 // Traceroute timing constants.
 const (
 	traceDNSResolveTimeoutS = 5 // Timeout in seconds for DNS resolution
@@ -150,7 +143,7 @@ func (t *Tracer) TraceICMP(ctx context.Context, target string) *TracerouteResult
 
 		hop := TracerouteHop{
 			TTL:   ttl,
-			State: HopStateTimeout,
+			State: hopStateTimeout,
 		}
 
 		// Try TCP connect with timeout as a proxy for reachability
@@ -162,7 +155,7 @@ func (t *Tracer) TraceICMP(ctx context.Context, target string) *TracerouteResult
 		if err == nil {
 			conn.Close()
 			hop.IP = result.TargetIP
-			hop.State = HopStateReply
+			hop.State = hopStateReply
 			hop.Hostname = t.resolveHostname(hop.IP)
 			result.Hops = append(result.Hops, hop)
 			result.Completed = true
@@ -173,10 +166,10 @@ func (t *Tracer) TraceICMP(ctx context.Context, target string) *TracerouteResult
 		var opErr *net.OpError
 		if errors.As(err, &opErr) {
 			if opErr.Timeout() {
-				hop.State = HopStateTimeout
+				hop.State = hopStateTimeout
 			} else {
 				// Got some kind of response
-				hop.State = HopStateReply
+				hop.State = hopStateReply
 				hop.IP = result.TargetIP
 			}
 		}
@@ -220,7 +213,7 @@ func (t *Tracer) TraceICMPStreaming(ctx context.Context, target string, onHop Ho
 
 		hop := TracerouteHop{
 			TTL:   ttl,
-			State: HopStateTimeout,
+			State: hopStateTimeout,
 		}
 
 		start := time.Now()
@@ -231,7 +224,7 @@ func (t *Tracer) TraceICMPStreaming(ctx context.Context, target string, onHop Ho
 		if err == nil {
 			conn.Close()
 			hop.IP = result.TargetIP
-			hop.State = HopStateReply
+			hop.State = hopStateReply
 			hop.Hostname = t.resolveHostname(hop.IP)
 			result.Hops = append(result.Hops, hop)
 			result.Completed = true
@@ -244,9 +237,9 @@ func (t *Tracer) TraceICMPStreaming(ctx context.Context, target string, onHop Ho
 		var opErr *net.OpError
 		if errors.As(err, &opErr) {
 			if opErr.Timeout() {
-				hop.State = HopStateTimeout
+				hop.State = hopStateTimeout
 			} else {
-				hop.State = HopStateReply
+				hop.State = hopStateReply
 				hop.IP = result.TargetIP
 			}
 		}
@@ -300,7 +293,7 @@ func (t *Tracer) TraceUDP(ctx context.Context, target string, port int) *Tracero
 
 		hop := TracerouteHop{
 			TTL:   ttl,
-			State: HopStateTimeout,
+			State: hopStateTimeout,
 		}
 
 		start := time.Now()
@@ -311,7 +304,7 @@ func (t *Tracer) TraceUDP(ctx context.Context, target string, port int) *Tracero
 		if err == nil {
 			conn.Close()
 			hop.IP = result.TargetIP
-			hop.State = HopStateReply
+			hop.State = hopStateReply
 			hop.Hostname = t.resolveHostname(hop.IP)
 			result.Hops = append(result.Hops, hop)
 			result.Completed = true
@@ -355,7 +348,7 @@ func (t *Tracer) TraceTCP(ctx context.Context, target string, port int) *Tracero
 
 		hop := TracerouteHop{
 			TTL:   ttl,
-			State: HopStateTimeout,
+			State: hopStateTimeout,
 		}
 
 		start := time.Now()
@@ -366,7 +359,7 @@ func (t *Tracer) TraceTCP(ctx context.Context, target string, port int) *Tracero
 		if err == nil {
 			conn.Close()
 			hop.IP = result.TargetIP
-			hop.State = HopStateReply
+			hop.State = hopStateReply
 			hop.Hostname = t.resolveHostname(hop.IP)
 			result.Hops = append(result.Hops, hop)
 			result.Completed = true
@@ -377,9 +370,9 @@ func (t *Tracer) TraceTCP(ctx context.Context, target string, port int) *Tracero
 		var opErr *net.OpError
 		if errors.As(err, &opErr) {
 			if opErr.Timeout() {
-				hop.State = HopStateTimeout
+				hop.State = hopStateTimeout
 			} else if strings.Contains(err.Error(), "refused") {
-				hop.State = HopStateReply
+				hop.State = hopStateReply
 				hop.IP = result.TargetIP
 				result.Completed = true
 			}

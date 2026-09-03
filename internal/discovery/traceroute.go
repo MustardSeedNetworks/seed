@@ -8,21 +8,19 @@ package discovery
 
 import (
 	"context"
+	"crypto/rand"
+	"encoding/binary"
 	"errors"
 	"fmt"
+	"math"
 	"net"
 	"syscall"
 	"time"
 )
 
-// Traceroute hop state and status constants.
-const (
-	hopStateReply         = "reply"
-	hopStateTimeout       = "timeout"
-	hopStateError         = "error"
-	hopStateUnreachable   = "unreachable"
-	errTracerouteCanceled = "traceroute canceled"
-)
+// errTracerouteCanceled is the error a traceroute reports when its context is
+// cancelled. Hop states live in hopstate.go, shared with the Windows tracer.
+const errTracerouteCanceled = "traceroute canceled"
 
 // Traceroute timing and buffer constants.
 const (
@@ -65,6 +63,7 @@ type Tracer struct {
 	maxHops    int
 	retries    int
 	resolvePtr bool
+	flowID     int
 }
 
 // HopCallback is called for each hop discovered during streaming traceroute.
@@ -85,13 +84,44 @@ func NewTracer(timeout time.Duration, maxHops int) *Tracer {
 		maxHops:    maxHops,
 		retries:    1,     // Reduced from 2 - one retry is usually enough
 		resolvePtr: false, // Disabled by default - PTR lookups can be slow
+		flowID:     newFlowID(),
 	}
+}
+
+// newFlowID returns an ICMP echo identifier for one tracer.
+//
+// Two tracers running at once share the host's raw ICMP socket, so the
+// identifier is what lets each recognise its own replies. Unpredictability is
+// not the point, but the identifier is drawn from crypto/rand anyway: it costs
+// one 16-bit read per tracer, and it keeps a security linter from having an
+// opinion about a field an off-host observer can read off the wire regardless.
+func newFlowID() int {
+	var buf [2]byte
+	if _, err := rand.Read(buf[:]); err != nil {
+		// crypto/rand does not fail on any supported platform; if it ever
+		// does, a fixed identifier still traces correctly, it only loses the
+		// ability to tell two concurrent tracers apart.
+		return 1
+	}
+	return 1 + int(binary.BigEndian.Uint16(buf[:]))%math.MaxUint16
 }
 
 // NewTracerWithPTR creates a Tracer with reverse DNS lookups enabled.
 func NewTracerWithPTR(timeout time.Duration, maxHops int) *Tracer {
 	t := NewTracer(timeout, maxHops)
 	t.resolvePtr = true
+	return t
+}
+
+// WithFlowID fixes the tracer's ICMP echo identifier.
+//
+// Holding it constant keeps every probe of one trace on a single path through
+// a load balancer that hashes on it; varying it between traces is how #395
+// enumerates the alternatives. Routers differ in what they hash -- many use
+// only the address pair, in which case this changes nothing -- so it is a
+// lever, not a guarantee.
+func (t *Tracer) WithFlowID(id int) *Tracer {
+	t.flowID = id
 	return t
 }
 

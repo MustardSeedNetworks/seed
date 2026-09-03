@@ -4,6 +4,7 @@ package discovery
 
 import (
 	"context"
+	"encoding/binary"
 	"fmt"
 	"net"
 	"time"
@@ -11,6 +12,10 @@ import (
 	"golang.org/x/net/icmp"
 	"golang.org/x/net/ipv4"
 )
+
+// protocolICMP is the IANA protocol number for ICMP, which icmp.ParseMessage
+// needs to pick a decoder.
+const protocolICMP = 1
 
 // icmpProbeResult represents the outcome of a single ICMP probe attempt.
 type icmpProbeResult struct {
@@ -20,21 +25,16 @@ type icmpProbeResult struct {
 	messageType ipv4.ICMPType
 }
 
-// hopOutcome represents the final outcome after processing an ICMP response.
-type hopOutcome int
-
-const (
-	hopOutcomeContinue hopOutcome = iota // Continue to next TTL
-	hopOutcomeComplete                   // Traceroute completed (destination reached or unreachable)
-)
-
-// buildICMPEchoRequest creates an ICMP echo request message.
-func buildICMPEchoRequest(seq int) ([]byte, error) {
+// buildICMPEchoRequest creates an ICMP echo request carrying the tracer's flow
+// identifier. ID and Seq together are what a reply must echo back for us to
+// claim it, and ID is also the only field a load-balancing router can hash on
+// that we control -- see Tracer.flowID.
+func buildICMPEchoRequest(flowID, seq int) ([]byte, error) {
 	msg := &icmp.Message{
 		Type: ipv4.ICMPTypeEcho,
 		Code: 0,
 		Body: &icmp.Echo{
-			ID:   1,
+			ID:   flowID,
 			Seq:  seq,
 			Data: []byte("SEED"),
 		},
@@ -42,11 +42,56 @@ func buildICMPEchoRequest(seq int) ([]byte, error) {
 	return msg.Marshal(nil)
 }
 
-// sendICMPProbe sends an ICMP probe and waits for a response.
+// echoIDSeq extracts the echo identifier and sequence a reply refers to, and
+// reports whether the message carries one at all.
+//
+// An echo reply carries them directly. A time-exceeded or destination-
+// unreachable carries the *original* datagram we sent -- an IP header plus at
+// least its first 8 bytes, which for ICMP is the echo header -- so the probe it
+// answers is recoverable from the quotation.
+func echoIDSeq(msg *icmp.Message) (int, int, bool) {
+	switch body := msg.Body.(type) {
+	case *icmp.Echo:
+		return body.ID, body.Seq, true
+	case *icmp.TimeExceeded:
+		return quotedEchoIDSeq(body.Data)
+	case *icmp.DstUnreach:
+		return quotedEchoIDSeq(body.Data)
+	default:
+		return 0, 0, false
+	}
+}
+
+// quotedEchoIDSeq reads the echo ID and sequence out of the original datagram
+// quoted back inside an ICMP error.
+func quotedEchoIDSeq(quoted []byte) (int, int, bool) {
+	header, err := icmp.ParseIPv4Header(quoted)
+	if err != nil {
+		return 0, 0, false
+	}
+	inner := quoted[header.Len:]
+	// Type, code, checksum, ID, sequence -- the 8 bytes an ICMP error is
+	// obliged to quote. Anything shorter cannot identify a probe.
+	const icmpEchoHeaderLen = 8
+	if len(inner) < icmpEchoHeaderLen {
+		return 0, 0, false
+	}
+	return int(binary.BigEndian.Uint16(inner[4:6])), int(binary.BigEndian.Uint16(inner[6:8])), true
+}
+
+// sendICMPProbe sends one ICMP probe and waits for the reply to *that* probe.
+//
+// The socket is a raw ICMP listener, so it receives every ICMP packet the host
+// sees -- including replies to a ping running in another process. Reading one
+// packet and calling it the answer misattributes those: a foreign echo reply
+// would end a traceroute early, and a foreign error would name the wrong hop.
+// So non-matching packets are discarded and the read is retried until the
+// deadline the timeout sets.
 func (t *Tracer) sendICMPProbe(
 	conn *icmp.PacketConn,
 	dst *net.IPAddr,
 	msgBytes []byte,
+	seq int,
 ) icmpProbeResult {
 	start := time.Now()
 
@@ -54,66 +99,42 @@ func (t *Tracer) sendICMPProbe(
 		return icmpProbeResult{}
 	}
 
-	if err := conn.SetReadDeadline(time.Now().Add(t.timeout)); err != nil {
-		return icmpProbeResult{}
-	}
-
+	deadline := start.Add(t.timeout)
 	reply := make([]byte, traceICMPBufferSize)
-	n, peer, err := conn.ReadFrom(reply)
-	rtt := time.Since(start)
 
-	if err != nil {
-		return icmpProbeResult{}
+	for {
+		if err := conn.SetReadDeadline(deadline); err != nil {
+			return icmpProbeResult{}
+		}
+
+		n, peer, err := conn.ReadFrom(reply)
+		if err != nil {
+			return icmpProbeResult{}
+		}
+		rtt := time.Since(start)
+
+		rm, err := icmp.ParseMessage(protocolICMP, reply[:n])
+		if err != nil {
+			continue
+		}
+
+		msgType, ok := rm.Type.(ipv4.ICMPType)
+		if !ok {
+			continue
+		}
+
+		id, replySeq, ok := echoIDSeq(rm)
+		if !ok || id != t.flowID || replySeq != seq {
+			continue
+		}
+
+		return icmpProbeResult{
+			success:     true,
+			rtt:         rtt,
+			peer:        peer,
+			messageType: msgType,
+		}
 	}
-
-	rm, err := icmp.ParseMessage(1, reply[:n])
-	if err != nil {
-		return icmpProbeResult{}
-	}
-
-	msgType, ok := rm.Type.(ipv4.ICMPType)
-	if !ok {
-		return icmpProbeResult{}
-	}
-
-	return icmpProbeResult{
-		success:     true,
-		rtt:         rtt,
-		peer:        peer,
-		messageType: msgType,
-	}
-}
-
-// processICMPResponse updates hop state based on ICMP response type.
-// Returns the outcome indicating whether to continue or complete the traceroute.
-func (t *Tracer) processICMPResponse(
-	hop *TracerouteHop,
-	probe icmpProbeResult,
-	result *TracerouteResult,
-) hopOutcome {
-	hop.RTT = probe.rtt
-	t.setHopFromPeer(hop, probe.peer)
-
-	// Using if-else instead of switch to avoid exhaustive enum check on external type
-	if probe.messageType == ipv4.ICMPTypeEchoReply {
-		hop.State = hopStateReply
-		result.Hops = append(result.Hops, *hop)
-		result.Completed = true
-		return hopOutcomeComplete
-	}
-
-	if probe.messageType == ipv4.ICMPTypeDestinationUnreachable {
-		hop.State = hopStateUnreachable
-		result.Hops = append(result.Hops, *hop)
-		result.Completed = true
-		return hopOutcomeComplete
-	}
-
-	if probe.messageType == ipv4.ICMPTypeTimeExceeded {
-		hop.State = hopStateReply
-	}
-
-	return hopOutcomeContinue
 }
 
 // createICMPConnection creates an ICMP connection for traceroute.
@@ -135,11 +156,11 @@ func (t *Tracer) probeWithRetries(
 ) icmpProbeResult {
 	for range t.retries {
 		*seq++
-		msgBytes, err := buildICMPEchoRequest(*seq)
+		msgBytes, err := buildICMPEchoRequest(t.flowID, *seq)
 		if err != nil {
 			continue
 		}
-		probe := t.sendICMPProbe(conn, dst, msgBytes)
+		probe := t.sendICMPProbe(conn, dst, msgBytes, *seq)
 		if probe.success {
 			return probe
 		}
@@ -203,51 +224,12 @@ func finalizeStreamingHop(
 }
 
 // TraceICMP performs an ICMP-based traceroute.
+//
+// It is TraceICMPStreaming without a listener: the two loops were duplicates
+// that had already drifted apart, and invokeCallback treats a nil callback as
+// "keep going".
 func (t *Tracer) TraceICMP(ctx context.Context, target string) *TracerouteResult {
-	result := t.initTracerouteResult(target, "icmp", 0)
-
-	targetIP := resolveTracerouteTarget(target, result)
-	if targetIP == nil {
-		return result
-	}
-
-	conn := createICMPConnection(result)
-	if conn == nil {
-		return result
-	}
-	defer func() { _ = conn.Close() }()
-
-	pconn := conn.IPv4PacketConn()
-	dst := &net.IPAddr{IP: targetIP}
-	seq := 0
-
-	for ttl := 1; ttl <= t.maxHops; ttl++ {
-		if checkContextCanceled(ctx, result) {
-			return result
-		}
-
-		hop := TracerouteHop{TTL: ttl, State: hopStateTimeout}
-
-		if err := pconn.SetTTL(ttl); err != nil {
-			hop.State = hopStateError
-			result.Hops = append(result.Hops, hop)
-			continue
-		}
-
-		probe := t.probeWithRetries(conn, dst, &seq)
-		if probe.success {
-			outcome := t.processICMPResponse(&hop, probe, result)
-			if outcome == hopOutcomeComplete {
-				return result
-			}
-		}
-
-		if finalizeHop(hop, result, targetIP.String()) {
-			return result
-		}
-	}
-
-	return result
+	return t.TraceICMPStreaming(ctx, target, nil)
 }
 
 // TraceICMPStreaming performs an ICMP-based traceroute with per-hop callbacks.
