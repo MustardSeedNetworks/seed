@@ -335,6 +335,16 @@ jobs:
       - name: Filename-policy gate — no monolith naming outside internal/api
         run: ./scripts/check-filename-policy.sh
 
+      - name: Route-consumer gate — every route has a caller, every call has a route
+        run: |
+          python3 scripts/test-check-route-consumers.py
+          python3 scripts/check-route-consumers.py
+
+      - name: Feature-catalog gate — every sold feature has a gate in code
+        run: |
+          python3 scripts/test-check-feature-catalog.py
+          python3 scripts/check-feature-catalog.py
+
       # The four products each own their tsconfig, so the strictness flags
       # drift silently — a missing one never announces itself, it just checks
       # less than its sibling does.

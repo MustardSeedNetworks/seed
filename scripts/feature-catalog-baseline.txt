@@ -1,0 +1,20 @@
+# Sold features (starterFeatures/proFeatures in policy.go) with no gating reference in Go.
+# Ratchet; see check-feature-catalog.py. One feature per line, optional `# reason`.
+# Remove a line when the feature gains a gate or leaves the catalog.
+airmapper_baseline_diff  # seed#2327 / plan S1-3
+audit_pdf  # seed#2327 / plan S1-3
+bgp_monitoring  # seed#2327 / plan S1-3
+compliance_basic  # seed#2327 / plan S1-3
+dns_monitoring  # seed#2327 / plan S1-3
+estate_polling  # seed#2327 / plan S1-3
+extended_retention  # seed#2327 / plan S1-3
+monitoring_scheduled  # seed#2327 / plan S1-3
+scheduled_reports  # seed#2327 / plan S1-3
+server_monitoring  # seed#2327 / plan S1-3
+ssl_cert_monitoring  # seed#2327 / plan S1-3
+topology_estate  # seed#2327 / plan S1-3
+topology_local  # seed#2327 / plan S1-3
+white_label  # seed#2327 / plan S1-3
+wifi_roam_analysis  # seed#2327 / plan S1-3
+wifi_rogue_detection  # seed#2327 / plan S1-3
+wifi_visibility_basic  # seed#2327 / plan S1-3
