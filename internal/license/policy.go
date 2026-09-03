@@ -80,17 +80,16 @@ func (t Tier) String() string {
 // As of keygen v2.1.0 (2026-05-26) multi_interface moved Starter → Pro:
 // Free/Starter are capped at 1 ethernet + 1 wifi; Pro is unlimited.
 //
-// V1.0 NMS expansion (2026-05-30) added three Starter flags:
-// topology_local (local-jack LLDP/CDP view), dns_monitoring (5-target
-// cap), ssl_cert_monitoring (5-cert cap). See
-// msn-docs-internal/01-Strategy/SEED_NMS_EXPANSION.md.
+// dns_monitoring and ssl_cert_monitoring are count caps, not switches: Free
+// keeps recurring probes (the probe engine is Free in server_engine_tiers.go)
+// and Starter raises the ceiling. monitoring_scheduled, compliance_basic and
+// wifi_visibility_basic left on 2026-09-03 (#2327) because each named
+// something Free already does and nothing distinguished the paid version --
+// selling a string with no boundary behind it is what this catalogue keeps
+// getting wrong.
 func starterFeatures() []string {
 	return []string{
-		"monitoring_scheduled",
-		"wifi_visibility_basic",
-		"compliance_basic",
 		"export_csv_json",
-		"topology_local",
 		"dns_monitoring",
 		"ssl_cert_monitoring",
 	}
@@ -111,7 +110,6 @@ func starterFeatures() []string {
 // capability is reachable.
 func proFeatures() []string {
 	pro := []string{
-		"wifi_roam_analysis",
 		"wifi_association_forensics",
 		"anomaly_detection",
 		"path_analysis",
@@ -123,23 +121,22 @@ func proFeatures() []string {
 		"multi_client",
 		"sso",
 		"rest_api",
-		// V1.0 NMS expansion (Phase 0 anchor, 2026-05-30). Every string
-		// below has a real implementation, verified 2026-09-03 rather than
-		// asserted: bgp4 and hostresources are registered collectors
-		// (internal/polling/snmp/orchestrator), the topology reconcilers
-		// build the cross-device view, and retention horizons vary by tier
-		// (internal/timeseries/retention). What none of them have is a gate:
-		// the capability ships to every tier. That is #2327's remaining half
-		// and it is an owner decision per tier, not a mechanical fix, because
-		// adding the gate takes the capability away from installs that have
-		// it today.
-		"topology_estate",
+		// Each of these has a real implementation, verified rather than
+		// asserted: bgp4 and hostresources are registered collectors in
+		// internal/polling/snmp/orchestrator, and estate_polling is the
+		// number of devices being polled. Their gates land next (#2327).
+		//
+		// topology_estate and extended_retention left on 2026-09-03: the
+		// topology reconcilers are already Starter-gated in
+		// server_engine_tiers.go and retention.tierHorizons already varies
+		// by tier, so both boundaries existed and neither needed a second
+		// mechanism. wifi_roam_analysis and wifi_rogue_detection left too --
+		// both are surfaced by GET /wifi/anomalies, which is already Pro via
+		// wifi_association_forensics. Three strings for one boundary.
 		"estate_polling",
 		"server_monitoring",
-		"extended_retention",
 		"bgp_monitoring",
 		"wifi_management_capture",
-		"wifi_rogue_detection",
 	}
 	return append(starterFeatures(), pro...)
 }

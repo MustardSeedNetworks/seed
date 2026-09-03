@@ -1,8 +1,5 @@
-import { useTranslation } from 'react-i18next';
 import { WiFiCard } from '../components/cards/WiFiCard';
 import { WifiChannelGraph } from '../components/cards/WiFiChannelGraph';
-import { BetaBadge } from '../components/ui/BetaBadge';
-import { Card } from '../components/ui/card';
 import { RequireFeature } from '../components/ui/RequireFeature';
 import { WiFiAirspaceCard } from '../components/wifi/WiFiAirspaceCard';
 import { WiFiAnomaliesCard } from '../components/wifi/WiFiAnomaliesCard';
@@ -24,7 +21,6 @@ import { CardAbsent, CardGrid } from '../ui/CardGrid';
 const TIER_HINT = 'Available on Seed Pro. Run `seed license trial` for a 14-day trial.';
 
 export function WifiPage() {
-  const { t } = useTranslation('pages');
   const { cards, loading, isWifi, channelGraphData, channelGraphLoading } = useAppContext();
 
   /* Not one absent card among others — the whole page is inapplicable, so
@@ -59,25 +55,6 @@ export function WifiPage() {
         fallback={<CardAbsent label="Association anomalies" reason={TIER_HINT} />}
       >
         <WiFiAnomaliesCard />
-      </RequireFeature>
-
-      {/* Phase 2.5 scaffolding — fills with real data when per-client roam
-          correlation lands. See
-          msn-docs-internal/01-Strategy/SEED_NMS_EXPANSION.md. */}
-      <RequireFeature
-        feature="wifi_roam_analysis"
-        fallback={<CardAbsent label="Roam analysis" reason={TIER_HINT} />}
-      >
-        <Card
-          title="Roam Analysis"
-          subtitle="Disassoc/(re)assoc correlation per client MAC with 802.11r FT detection."
-          status="unknown"
-          headerAction={<BetaBadge />}
-        >
-          <p data-testid="wifi-roam-analysis-pending" className="text-sm text-text-muted">
-            {t('wifi.capturePlanned')}
-          </p>
-        </Card>
       </RequireFeature>
     </CardGrid>
   );
