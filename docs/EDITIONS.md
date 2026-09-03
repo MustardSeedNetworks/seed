@@ -1,171 +1,97 @@
-# Editions: Lite vs Pro Packaging
+# Editions
 
 **Product:** Seed
-**Status:** Plan of record (#251)
+**Status:** Current
 **Owner:** Mustard Seed Networks
-**Last updated:** 2026-05-17
+**Last updated:** 2026-09-03
 
-Companion to [DISTRIBUTION.md](DISTRIBUTION.md) (commercial channels and license tiers).
-This document defines the **two hardware/software profiles** Seed ships under, the
-**licensing hooks** to build now while keeping behaviour permissive, and the
-**distribution mechanics** for each.
+Companion to [DISTRIBUTION.md](DISTRIBUTION.md), which covers how builds reach
+an operator.
 
----
+Seed ships as **one binary on three tiers**. There is no separate build, no
+separate hardware SKU, and no edition string: what a deployment can do is
+decided by the key it holds, and by nothing else.
 
-## 1. Hardware Profiles
-
-| Profile | Target Hardware | Form Factor | Power | Audience |
-| --------- | ----------------- | ------------- | ------- | ---------- |
-| **Lite (portable)** | Raspberry Pi 4/5 or comparable SBC; 1 GbE native; optional USB 2.5G NIC (not guaranteed); on-board Wi-Fi for AP-mode onboarding | Small enclosure, battery-pack friendly, status LED + reset button | 5W typical | Field techs, walk-around audits, MSP truck rolls |
-| **Pro (stationary)** | Fanless x86 mini PC (Intel N100 / N5105 class), dual 2.5 GbE, 8–16 GB RAM | Desk/rack 1U-half | 12W typical | Permanent rack install, continuous monitoring, fleet pilots |
-
-### Why two profiles
-
-- A single SKU forces a compromise: Pi-class hardware can't drive 2.5G iperf, and an
-  x86 mini PC isn't battery-friendly or pocketable.
-- Differentiating up front lets us build/ship/license each profile cleanly, without
-  per-feature run-time checks scattered across the codebase.
+> This document replaces a two-hardware-profile plan that described an
+> `Edition` type, an `IsPro()` helper and a matching config field. None of
+> that was ever built, and following it would have bypassed the enforcement
+> that was (#2294).
 
 ---
 
-## 2. Software Differentiation
+## 1. Tiers
 
-| Capability | Lite | Pro |
-| ------------ | ------ | ----- |
-| Core diagnostics (link, DHCP, DNS, gateway, basic perf) | ✓ | ✓ |
-| Wi-Fi troubleshooting (signal/SNR, neighbor scan, channel utilization) | ✓ | ✓ |
-| iperf3 client + bundled server | ✓ | ✓ (heavier presets) |
-| Headless onboarding (AP mode, captive portal) | ✓ | — |
-| Continuous monitoring + alerting | — | ✓ |
-| SNMP polling at scale (>50 devices) | — | ✓ |
-| Auto-update channel | — | ✓ |
-| Signed installer artifacts (.deb/.rpm/.pkg/Docker) | community-grade | signed |
-| Pi OS image (write-to-SD) | ✓ | — |
+| Tier | Price | Key required |
+| --- | --- | --- |
+| **Free** | — | No. This is what an unlicensed install runs as. |
+| **Starter** | $299/yr | Yes |
+| **Pro** | $999/yr | Yes |
 
-A capability marked `—` does **not** mean compiled out — it means **license-gated**.
-Run-time checks live in one place: `license.IsPro()`.
+`Tier` is defined in [`internal/license/policy.go`](../internal/license/policy.go)
+as `TierInvalid` / `TierFree` / `TierStarter` / `TierPro`. A signed key carries
+a wire tier and a product code; Free carries no key, so an unrecognised or
+unsigned token grants nothing rather than falling back to a paid tier.
 
-### Implementation rule
+A **14-day trial** grants Pro (`TrialDays`, `TrialTier`).
 
-Anywhere we would write `if cfg.Foo.Enabled` for a Pro-only knob, write
-`if license.IsPro() && cfg.Foo.Enabled`. The flag stays user-controllable on every
-edition; the gate is the license check.
+Commercial arrangements — custom terms, volume licensing, net-30 — are not a
+fourth tier. They are the same binary and the same tiers, arranged through
+`/contact`.
 
----
+## 2. How entitlement is enforced
 
-## 3. Licensing Hooks (build now, leave permissive)
+Two mechanisms, and only two:
 
-Tracked under epic #245. This section is the **wiring plan**, so that turning
-licensing on later is a config flip rather than a refactor.
+- **`requireFeature`** ([`internal/api/middleware_license.go`](../internal/api/middleware_license.go))
+  wraps a route with a feature name. Without the feature the route answers 402;
+  the handler is never reached.
+- **The feature catalogue** in `internal/license/policy.go` maps each tier to
+  the feature names it grants. `starterFeatures()` is a list;
+  `proFeatures()` is that list plus the Pro additions, so Pro is a superset by
+  construction rather than by remembering to copy entries.
 
-### 3.1 Config surface
+Write a Pro-only route as a `requireFeature("...")` at registration. Do not
+add a tier check inside a handler: an entitlement decision that is not at the
+route is one that a second caller can miss.
 
-```yaml
-license:
-  key: ""                 # paste-in key, empty = Community
-  status: ""              # "valid"|"expired"|"invalid"|"" (filled by validator)
-  edition: "community"    # "community"|"lite"|"pro"
-  expires: ""             # RFC3339; "" = never
-  lastCheck: ""           # RFC3339 of last validate() attempt
-```text
+**The catalogue is not a feature list you can quote to a customer.** An audit
+on 2026-09-02 found catalogue strings with no gating reference anywhere in Go —
+some name capabilities that exist but are ungated, others name capabilities
+that do not exist at all. Reconciling it, and adding a CI gate so it cannot
+drift again, is #2327. Until that lands, read the catalogue as "what the
+keygen and the binary agree on", not as "what Seed does".
 
-Add to `internal/config/config_types.go` (or appropriate split file) and to `internal/config/schema.json` `$defs`. Default values keep the app fully usable.
+## 3. Validation is local
 
-### 3.2 Code surface
+Keys are validated **offline**, against a device fingerprint, using the shared
+crypto in [`foundation/pkg/license`](https://github.com/MustardSeedNetworks/foundation).
+Seed does not contact a licence server, at startup or ever. That is a
+requirement rather than a preference: air-gapped clinical, industrial and
+government deployments are a target, and a phone-home would disqualify Seed
+from all three.
 
-Create `internal/license` package with the following minimum surface:
+Consequences worth knowing:
 
-```go
-package license
+- No grace window, because there is nothing to be unreachable.
+- Rebinding a key to new hardware is an operator action through the portal, not
+  something the daemon negotiates.
+- `/__version` reports build metadata only. It does not report the tier, and a
+  client must not infer entitlement from anything it can read without
+  authenticating.
 
-type Edition string
+## 4. UX considerations
 
-const (
-    EditionCommunity Edition = "community"
-    EditionLite      Edition = "lite"
-    EditionPro       Edition = "pro"
-)
+- **Minimum supported width: 480px.** Comfortable target: 768px+. This is the
+  authoritative statement of that number and it is enforced by the E2E suite
+  (#244) rather than only asserted here.
+- **The first-run wizard and Settings must work without a mouse.** An operator
+  who has just plugged the box in is often on a phone or tablet, on a network
+  that is the reason they are there.
 
-// Validate checks a license key against the local fingerprint. Network
-// validation is best-effort; offline runs accept a cached "valid" up to a
-// 7-day grace window.
-func Validate(key, fingerprint string) (Status, error) { ... }
-
-// IsPro returns true when the current edition is Pro. Returns false in
-// Community mode AND when no license has been entered — Community is the
-// safe default.
-func IsPro() bool { ... }
-
-// Fingerprint returns hash(machine-id + primary MAC). Only the hash is
-// persisted; raw machine identifiers stay on the device.
-func Fingerprint() string { ... }
-```text
-
-### 3.3 API surface
-
-`GET /api/license` — returns redacted status (`edition`, `expires`, `status`, `lastCheck`). Never echoes the key back.
-`PUT /api/license` — accepts `{ key: "..." }`. Validates, stores, returns the redacted status.
-
-Wire into existing settings drawer under a new "License" section.
-
-### 3.4 Behaviour rules
-
-- **No hard-fail when unlicensed.** Community runs every shipped feature except the Pro-gated ones.
-- **Startup log line.** `INFO license edition=community status=` — operators must be able to tell at a glance.
-- **Grace window.** Cached `valid` status from network validation is honoured for 7 days when the validator endpoint is unreachable. After that, the edition drops back to Community.
-- **Fingerprint is one-way.** Only the hash is sent to the validator endpoint.
-
----
-
-## 4. Distribution Mechanics
-
-### 4.1 Lite
-
-- **Primary delivery:** custom Pi OS image (`.img`/`.img.xz`). Hardware-locked at flash time.
-- **Secondary delivery:** `.deb` for Pi running stock Raspberry Pi OS.
-- **Iperf3:** bundled in the image; `PATH` includes `/usr/local/bin` and `./bin/iperf3`.
-- **Onboarding:** boots into AP mode (`seed-setup` SSID) when no Ethernet link is detected; captive portal serves the Setup Wizard.
-
-### 4.2 Pro
-
-- **Primary delivery:** signed `.deb` (Debian/Ubuntu), `.rpm` (RHEL/Fedora), `.pkg` (macOS for dev), Docker image.
-- **Signing:** binaries and packages signed with Mustard Seed Networks code-signing cert (deferred until the cert is in place).
-- **Auto-update:** opt-in channel pulls from the customer portal; verifies signature before install.
-- **Service PATH:** systemd unit prepends `/usr/local/bin` so bundled iperf3 wins over a stale system copy.
-
-### 4.3 Shared
-
-- **Versioning:** single source of truth = git tags. `make build` embeds via `ldflags`.
-- **`__version` endpoint:** returns `version`, `commit`, `buildTime`, `uiBuildHash`, and `edition` (#251). The edition string is **observable but not enforceable** — clients must not trust it for gating.
-- **Artifacts:** every package filename includes the version.
-
----
-
-## 5. UX Considerations
-
-- **Minimum supported width:** 480px (Lite portable case — phone landscape). Comfortable target: 768px+.
-- **Headless first:** the Setup Wizard and Settings drawer must work without a mouse — Lite users typically reach the box from a phone/tablet over the AP-mode SSID.
-- **Settings drawer focus bug:** tracked separately under #230; do not block packaging on it.
-
----
-
-## 6. Open Questions (do not block the plan)
+## 5. Open questions
 
 | Question | Owner | Needed by |
-| -------- | ----- | --------- |
-| Exact Community vs Pro feature split | Product | First Pro paid pilot |
-| Pricing bands for Lite vs Pro hardware bundles | Product | Same |
-| Self-serve license rebind flow (when a board dies) | Eng + Support | First RMA |
-| Whether the Pi OS image ships before or after first Pro release | Eng | Lite pilot |
-
----
-
-## 7. Acceptance Criteria Mapping
-
-From issue #251:
-
-- [x] Two distinct hardware profiles defined — §1
-- [x] Software features aligned with profiles — §2 + `license.IsPro()` gating rule
-- [x] Licensing hooks planned (permissive, no hard-fail) — §3
-- [x] Packaging and distribution methods planned for both editions — §4
-- [x] UX considerations documented for different form factors — §5
+| --- | --- | --- |
+| Catalogue reconciliation: which unbacked strings are deleted and which get gates | Product | #2327 |
+| Whether a Raspberry Pi image ships as a supported artifact | Eng | #22 |
+| Self-serve key rebind when a device is replaced | Eng + Support | First replacement |

@@ -1,114 +1,100 @@
-# Distribution & Licensing Roadmap
+# Distribution
 
 **Product:** Seed
-**Model:** Commercial (paid license)
-**Status:** Development - NOT FOR PUBLIC DISTRIBUTION
+**Status:** Current
+**Last updated:** 2026-09-03
 
-> Companion: [EDITIONS.md](EDITIONS.md) — Lite vs Pro hardware profiles, software differentiation, and licensing hooks (#251).
+Companion to [EDITIONS.md](EDITIONS.md), which covers what a tier grants.
+This document covers how a build reaches an operator.
+
+> This replaces a document that described distribution as locked down and
+> listed a Trial/Standard/Professional/OEM tier table. Neither was true: the
+> repository is public, every tagged release has been published, and the tier
+> model is the one in EDITIONS.md (#2294).
 
 ---
 
-## Current State (Development)
+## 1. What ships
 
-All distribution channels are **locked down**:
+Releases are public on GitHub. Every tag produces, for each target:
 
-| Channel | Status | Notes |
-|---------|--------|-------|
-| Container registry | DISABLED | No `container-push` target |
-| Public downloads | DISABLED | No public artifacts |
-| Package repos | DISABLED | .deb/.rpm stay local |
+| Target | Artifact |
+| --- | --- |
+| Linux amd64 / arm64 | `.deb`, `.rpm`, `.tar.gz` |
+| macOS arm64 | `.tar.gz` |
+| Windows amd64 / arm64 | `.zip` |
 
-### Local Development Only
+Alongside each artifact:
+
+- a **cosign bundle** (`.cosign.bundle`) — keyless OIDC signature;
+- an **SBOM** (`.sbom.json`, itself signed);
+- `checksums.txt` and its bundle;
+- one `seed-slsa-provenance.intoto.jsonl` for the release.
+
+There is **no macOS x86-64 build**, **no container image** and **no Homebrew
+tap**. The `brews:` block was removed on 2026-05-18 because the tap token was
+never provisioned, and the reason is recorded in `.goreleaser.yml` so that
+restoring it is a decision rather than an archaeology exercise.
+
+## 2. How it is built
+
+`release.yml` on a tag push, inside `goreleaser/goreleaser-cross:v1.27.0`
+pinned by digest. The frontend is built outside the container and embedded, so
+every published binary reports a non-empty `uiBuildHash` at `/__version` —
+that field is how you tell a release build from a bare `go build`.
+
+Versions come from git tags, and tags come from
+[release-please](https://github.com/googleapis/release-please) reading
+conventional commits. Nothing is tagged by hand.
+
+**There is no local packaging target.** `make build` produces a host binary;
+`.deb`, `.rpm`, `.tar.gz` and `.zip` are produced only by the release
+workflow. A locally built package would not carry the release ldflags, the
+signature or the SBOM, which is why the targets that used to exist were
+removed rather than kept as a convenience.
+
+## 3. Installing
 
 ```bash
-make container   # Builds locally only
-make deb         # Creates dist/seed_*.deb (local)
-make rpm         # Creates dist/seed_*.rpm (local)
+# Debian / Ubuntu
+sudo dpkg -i seed_<version>_amd64.deb
+
+# RHEL / Fedora
+sudo rpm -i seed-<version>-1.x86_64.rpm
 ```
 
----
+Both install a systemd unit. Seed listens on `https://<host>:8443` and has
+no plaintext listener; a browser sent to `http://` gets connection refused,
+which is intended.
 
-## Distribution Strategy
-
-### License Validation Required
-
-Before any public/commercial distribution:
-
-1. **License server integration** or offline license validation
-2. **Hardware fingerprinting** (optional, for appliance model)
-3. **Expiration/renewal** handling
-4. **Feature gating** by license tier
-
-### Proposed License Tiers
-
-| Tier | Features | Target |
-|------|----------|--------|
-| Trial | Full features, 30-day limit | Evaluation |
-| Standard | Core diagnostics | SMB |
-| Professional | Full features + API | Enterprise |
-| OEM | White-label, volume | Partners |
-
----
-
-## Deployment Channels (Future)
-
-When ready for commercial release:
-
-### 1. Private Container Registry
-```bash
-# Future - requires auth
-CONTAINER_REGISTRY=registry.mustardseednetworks.com
-make container-push
-```
-
-### 2. Customer Portal
-- Authenticated download of .deb/.rpm/.pkg
-- License key provisioning
-- Update notifications
-
-### 3. Appliance Image
-- Pre-installed on Dell Mini PC
-- Hardware-locked license
-- Factory reset capability
-
----
-
-## Pre-Release Checklist
-
-- [ ] License validation implemented (`internal/license/`)
-- [ ] License server deployed (or offline validation)
-- [ ] Private registry configured
-- [ ] Customer portal ready
-- [ ] EULA/Terms of Service finalized
-- [ ] Pricing determined
-- [ ] Support infrastructure ready
-
----
-
-## Version Strategy
-
-**Single source of truth:** Git tags
+Verify what you installed before trusting it:
 
 ```bash
-git tag v1.0.0          # Creates version
-make build              # Embeds version via ldflags
-./bin/seed --version    # Shows v1.0.0
+cosign verify-blob --bundle seed_<version>_amd64.deb.cosign.bundle \
+  --certificate-identity-regexp 'https://github.com/MustardSeedNetworks/seed/.*' \
+  --certificate-oidc-issuer https://token.actions.githubusercontent.com \
+  seed_<version>_amd64.deb
+
+curl -sk https://localhost:8443/__version | jq
 ```
 
-- `package.json` version is `0.0.0` (ignored, real version from API)
-- Container tags match git tags
-- All artifacts include version in filename
+`/__version` needs no authentication and returns `version`, `commit`,
+`buildTime` and `uiBuildHash`. An empty `uiBuildHash` means the binary was not
+built by the release pipeline.
 
----
+## 4. Licensing at install time
 
-## Security Considerations
+Nothing to do. An unlicensed install runs as Free, and a key is applied
+afterwards through the UI or `seed license`. Validation is local, so a Seed
+that never reaches the internet works exactly like one that does — see
+[EDITIONS.md §3](EDITIONS.md#3-validation-is-local).
 
-1. **No secrets in containers** - Config injected at runtime
-2. **License validation on startup** - App won't run without valid license
-3. **Tamper detection** - Binary signing (future)
-4. **Update mechanism** - Secure, authenticated updates
+## 5. Not yet true
 
----
+Tracked rather than described as though it ships:
 
-*Last updated: 2025-01-19*
-*Status: Development lockdown*
+| Item | Issue |
+| --- | --- |
+| Raspberry Pi deployment documentation | #22 |
+| Install verified from published artifacts on every supported platform | S7-1 in the v1 plan |
+| Windows install validation (no host granted) | #2104 |
