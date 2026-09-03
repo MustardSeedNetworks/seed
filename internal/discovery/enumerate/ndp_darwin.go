@@ -71,11 +71,12 @@ const (
 
 // GetNeighbors returns the IPv6 neighbours read from the kernel's table.
 //
-// This used to return an empty map (#2089). The route-RIB path the ARP scanner
-// uses is not an option here: on this macOS it returns zero bytes unless the
-// sysctl arg is RTF_LLINFO, and even then it yields four malformed lo0 entries
-// whose link-layer addresses are all 02:00:00:00:00:00. `ndp -an` is the
-// documented interface to the same table and is what `arp -an` is for IPv4.
+// This used to return an empty map (#2089). It shells out where the ARP scanner
+// reads the routing socket, and that asymmetry is no longer justified: the
+// measurement it rested on was taken from a process the Go tool spawned, which
+// macOS answers with placeholder link-layer addresses (#2272). Closing the gap
+// means reconciling what the RIB reports against what `ndp -an` does, which is
+// #2336 rather than a change to make in passing.
 func (ns *NDPScanner) GetNeighbors() map[string]*NDPNeighbor {
 	ctx, cancel := context.WithTimeout(context.Background(), ndpCommandTimeout)
 	defer cancel()

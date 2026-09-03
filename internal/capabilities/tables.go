@@ -54,7 +54,7 @@ func levelsByPlatform() map[string]map[Capability]Level {
 			SpeedDuplex:       LevelPartial,
 			WiFiScanning:      LevelFull,
 			WiFiConnection:    LevelFull,
-			ARPTable:          LevelNone,
+			ARPTable:          LevelFull,
 			NDPDiscovery:      LevelFull,
 			BluetoothScanning: LevelPartial,
 			GatewayDetection:  LevelFull,
@@ -96,10 +96,10 @@ func levelsByPlatform() map[string]map[Capability]Level {
 // Two rows are corrections to what HARDWARE.md published, and both were found
 // by running the product rather than reading the table:
 //
-//   - macOS ARP reading was Full. It returns nothing -- `arp -an` yields zero
-//     bytes to the daemon while a shell on the same machine gets a populated
-//     table (#2272). Recorded as None: Partial would still promise a result the
-//     caller does not get.
+//   - macOS ARP reading was published as Full while the reader asked the
+//     routing socket for routes with no flags and got zero bytes. It is fixed
+//     now and stands at Full on measurement (#2272) -- but it stood at Full
+//     while returning nothing, which is the argument for generating this.
 //   - macOS Wi-Fi scanning was Full while it shelled `airport`, which Apple
 //     removed in macOS 27 (#2031). It is fixed now and stands at Full -- but it
 //     stood at Full while broken, which is the argument for generating this.
@@ -115,7 +115,6 @@ func notesByPlatform() map[string]map[Capability]string {
 		},
 		"darwin": {
 			SpeedDuplex:       "Reports negotiated speed; duplex is not exposed.",
-			ARPTable:          "The IPv4 neighbour table is not readable by the daemon on macOS 27 (#2272). IPv6 via NDP works.",
 			BluetoothScanning: "Discovery only; no service enumeration.",
 			VLANDetection:     "Detects tagged interfaces; does not enumerate the VLANs a trunk carries.",
 			VLANManagement:    "Needs networksetup and an operator-created VLAN service.",

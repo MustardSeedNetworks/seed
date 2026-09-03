@@ -37,26 +37,44 @@ every shell-out currently in the tree.
 | Platform | API path | Verdict |
 | --- | --- | --- |
 | Linux | netlink via `vishvananda/netlink` | **native** — already used, no shell |
-| macOS | routing socket (`route.FetchRIB`) | **does not work**, see below |
+| macOS | routing socket (`route.FetchRIB`) | **native** for IPv4; IPv6 still shells `ndp`, see below |
 | Windows | `GetIpNetTable2` | **not bound** in `golang.org/x/sys/windows` |
 
-**macOS.** The routing socket does not carry the neighbour cache on Darwin 27.
-Fetched every way the API allows and parsed with `route.ParseRIB` — the typed
-parser, not the hand-rolled byte offsets that previously mangled the addresses:
+**macOS.** The routing socket does carry the neighbour cache, and the read has
+two halves that both have to be right. The family must be `AF_INET`, and the
+`NET_RT_FLAGS` argument must be `RTF_LLINFO` — that sysctl filters on the flag
+it is handed, so asking for `0` asks for routes with no flags and the kernel
+returns zero bytes. Measured on Darwin 27.0.0, 2026-09-03, parsed with
+`route.ParseRIB`:
 
 ```text
-AF_UNSPEC RIBTypeRoute arg=0             bytes=11004  msgs=62   llinfo v4=0 v6=4
-AF_INET   RIBTypeRoute arg=0             bytes=1344   msgs=9    llinfo v4=0 v6=0
-AF_INET6  RIBTypeRoute arg=0             bytes=9660   msgs=53   llinfo v4=0 v6=4
-AF_UNSPEC NET_RT_FLAGS RTF_LLINFO        bytes=2024   msgs=12   llinfo v4=0 v6=4
+AF_INET   NET_RT_FLAGS arg=0            bytes=0
+AF_INET   NET_RT_FLAGS arg=RTF_LLINFO   bytes=1292  9 entries, byte-identical to `arp -an`
+AF_INET6  NET_RT_FLAGS arg=RTF_LLINFO   bytes=3032  18 entries, 10 with a resolved link address
 ```
 
-Four entries, every one with a placeholder `02:00:00:00:00:00` link address,
-including duplicates — against **12 resolved unicast neighbours** that `ndp -an`
-reports on the same machine at the same moment. IPv4 yields nothing at all.
+That is why `arp_darwin.go` is native as of #2272.
 
-So `ndp -an` is not a shortcut here; it is the only source that has the data.
-That is why `ndp_darwin.go` shells out, and the comment there says so.
+**The earlier measurements in this ADR were wrong, and the reason matters.**
+They were taken from a process the `go` tool had spawned, and macOS answers such
+a process with a filtered neighbour cache — zero bytes for IPv4, and every IPv6
+link-layer address replaced by the placeholder `02:00:00:00:00:00`. Those
+placeholders were read here as a broken parser. The same binary, run from a
+shell rather than by `go run` or `go test`, reads the table:
+
+```text
+go run .        AF_INET NET_RT_FLAGS RTF_LLINFO -> 0 bytes
+./probe         AF_INET NET_RT_FLAGS RTF_LLINFO -> 1292 bytes
+sh -c ./probe   AF_INET NET_RT_FLAGS RTF_LLINFO -> 1292 bytes
+env -i ./probe  AF_INET NET_RT_FLAGS RTF_LLINFO -> 1292 bytes
+```
+
+So a measurement taken under `go test` is not evidence about what the shipped
+daemon can see.
+
+**macOS IPv6.** `ndp_darwin.go` still shells out, and the measurement above says
+it probably need not. Reconciling the RIB's 10 resolved addresses against
+`ndp -an`'s 17 rows is #2336, not a claim this ADR should make either way.
 
 **Windows.** `x/sys/windows` binds `GetIpForwardTable`, `GetIpInterfaceTable`
 and `GetUnicastIpAddressTable`, but not `GetIpNetTable2`. Using it means a
@@ -80,11 +98,10 @@ No platform offers this through a Go-bindable API today:
 
 ### Unresolved
 
-`arp -an` returns **zero bytes when spawned from a Go process** and ten lines
-from an interactive shell — same binary, back to back, with sandboxing disabled
-and from a compiled binary rather than `go run`. `ndp -an` works from that same
-process. Tracked in #2272; until it is understood, macOS has no working path to
-the IPv4 neighbour cache at all, native or otherwise.
+Why `/usr/sbin/arp -an` returns zero bytes when spawned from a Go process is
+still not fully explained — the gate is per-process and the discriminator is the
+parent, but no TCC denial was logged. It is no longer load-bearing: nothing in
+the tree shells `arp`.
 
 ## Consequences
 
