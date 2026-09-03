@@ -339,9 +339,23 @@ func (s *Server) setupCoreRoutes() {
 			methods: get,
 		},
 		{
+			// The UI switches profiles by posting {profileId} here, which is
+			// exactly what /profiles/active accepts. Registered as its own
+			// route rather than handled inside the prefix route because a
+			// route the registry can see is a route the capability manifest
+			// and the route-consumer gate can see.
+			path:    APIVersionPrefix + "/profiles/switch",
+			handler: s.handleSetActiveProfile,
+			methods: post,
+			minRole: op,
+		},
+		{
+			// PATCH is here and not in crud because only this route accepts
+			// one: /profiles/{id}/settings is a partial update, and the
+			// collection routes have nothing to patch.
 			path:    APIVersionPrefix + "/profiles/",
 			handler: s.handleProfiles,
-			methods: crud,
+			methods: append(append([]string{}, crud...), http.MethodPatch),
 			minRole: op,
 		},
 		{path: APIVersionPrefix + "/setup/status", handler: s.handleSetupStatus, methods: get},

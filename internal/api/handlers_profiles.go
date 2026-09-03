@@ -73,8 +73,16 @@ func (s *Server) handleProfiles(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Extract profile ID from path if present
-	path := strings.TrimPrefix(r.URL.Path, "/api/profiles")
+	// Extract profile ID from path if present.
+	//
+	// The prefix is derived from the constant the routes are registered with.
+	// It was written out as "/api/profiles" while the registry mounted
+	// "/api/v1/profiles", so nothing was ever trimmed: every request fell
+	// through to the by-ID cases carrying "api/v1/profiles" as the id, and
+	// every profile operation had been failing through the router since the
+	// versioned prefix landed (#754). A literal is how that drifted, so this
+	// one cannot drift again.
+	path := strings.TrimPrefix(r.URL.Path, APIVersionPrefix+"/profiles")
 	path = strings.TrimPrefix(path, "/")
 
 	switch {
@@ -84,6 +92,8 @@ func (s *Server) handleProfiles(w http.ResponseWriter, r *http.Request) {
 		s.handleCreateProfile(w, r)
 	case strings.HasSuffix(path, "/duplicate") && r.Method == http.MethodPost:
 		s.handleDuplicateProfile(w, r)
+	case strings.HasSuffix(path, "/settings") && r.Method == http.MethodPatch:
+		s.handleUpdateProfileSettings(w, r, strings.TrimSuffix(path, "/settings"))
 	case path != "" && r.Method == http.MethodGet:
 		s.handleGetProfile(w, r, path)
 	case path != "" && r.Method == http.MethodPut:
@@ -99,6 +109,110 @@ func (s *Server) handleProfiles(w http.ResponseWriter, r *http.Request) {
 			localizer.T("errors.api.methodNotAllowed"),
 			"",
 		) // fixes #694
+	}
+}
+
+// handleUpdateProfileSettings replaces the settings block of a profile's
+// config, leaving the rest of the profile alone.
+//
+// It is a read-modify-write rather than a call straight through to Update,
+// because Update assigns Description and IsDefault unconditionally: handing it
+// only the new config would blank a profile's description and silently clear
+// its default flag every time a setting changed.
+func (s *Server) handleUpdateProfileSettings(w http.ResponseWriter, r *http.Request, id string) {
+	logger := logging.FromContext(r.Context())
+	localizer := i18n.FromRequest(r)
+
+	var settings json.RawMessage
+	if !decodeJSONStrictLocalized(w, r, &settings, MaxBodySizeJSON, logger, localizer) {
+		return
+	}
+
+	current, err := s.profiles.Get(r.Context(), id)
+	if err != nil {
+		s.sendProfileLookupError(w, r, err)
+		return
+	}
+
+	merged, err := mergeProfileSettings(current.ConfigJSON, settings)
+	if err != nil {
+		sendErrorResponseWithDetails(w, logger, http.StatusBadRequest,
+			ErrCodeValidation, localizer.T("errors.profile.invalidConfig"), "")
+		return
+	}
+
+	update := catalog.ProfileUpdate{
+		Name:        current.Name,
+		Description: current.Description,
+		IsDefault:   current.IsDefault,
+		ConfigJSON:  &merged,
+	}
+
+	// The settings drawer saves as the operator types and sends no If-Match,
+	// so this is deliberately unconditional -- the same as PUT without the
+	// header. parseIfMatch still honours one when a caller supplies it.
+	profile, err := s.profiles.Update(r.Context(), id, update, parseIfMatch(r))
+	if err != nil {
+		s.sendProfileUpdateError(w, r, err)
+		return
+	}
+
+	w.Header().Set("ETag", profileETag(profile))
+	sendJSONResponse(w, logger, http.StatusOK, profileToResponse(profile))
+}
+
+// mergeProfileSettings replaces the "settings" key of a profile config,
+// preserving every other key. The rest of the config -- interfaces, health
+// checks, thresholds -- belongs to other surfaces and is not this endpoint's
+// to rewrite.
+func mergeProfileSettings(configJSON string, settings json.RawMessage) (string, error) {
+	config := map[string]json.RawMessage{}
+	if strings.TrimSpace(configJSON) != "" {
+		if err := json.Unmarshal([]byte(configJSON), &config); err != nil {
+			return "", err
+		}
+	}
+	config["settings"] = settings
+
+	merged, err := json.Marshal(config)
+	if err != nil {
+		return "", err
+	}
+	return string(merged), nil
+}
+
+// sendProfileLookupError maps a Get failure onto a response.
+func (s *Server) sendProfileLookupError(w http.ResponseWriter, r *http.Request, err error) {
+	logger := logging.FromContext(r.Context())
+	localizer := i18n.FromRequest(r)
+
+	if errors.Is(err, catalog.ErrNotFound) {
+		sendErrorResponseWithDetails(w, logger, http.StatusNotFound,
+			ErrCodeNotFound, localizer.T("errors.profile.notFound"), "")
+		return
+	}
+	sendErrorResponseWithDetails(w, logger, http.StatusInternalServerError,
+		ErrCodeInternal, localizer.T("errors.profile.getFailed"), "")
+}
+
+// sendProfileUpdateError maps an Update failure onto a response.
+func (s *Server) sendProfileUpdateError(w http.ResponseWriter, r *http.Request, err error) {
+	logger := logging.FromContext(r.Context())
+	localizer := i18n.FromRequest(r)
+
+	switch {
+	case errors.Is(err, catalog.ErrNotFound):
+		sendErrorResponseWithDetails(w, logger, http.StatusNotFound,
+			ErrCodeNotFound, localizer.T("errors.profile.notFound"), "")
+	case errors.Is(err, catalog.ErrNameExists):
+		sendErrorResponseWithDetails(w, logger, http.StatusConflict,
+			ErrCodeConflict, localizer.T("errors.profile.nameExists"), "")
+	case errors.Is(err, catalog.ErrConflict):
+		sendErrorResponseWithDetails(w, logger, http.StatusPreconditionFailed,
+			ErrCodeConflict, localizer.T("errors.profile.conflict"), "")
+	default:
+		sendErrorResponseWithDetails(w, logger, http.StatusInternalServerError,
+			ErrCodeInternal, localizer.T("errors.profile.updateFailed"), "")
 	}
 }
 

@@ -235,10 +235,19 @@ body:
   {
     "maxBodyBytes": 262144,
     "methods": [
+      "POST"
+    ],
+    "minRole": "operator",
+    "path": "/api/v1/profiles/switch"
+  },
+  {
+    "maxBodyBytes": 262144,
+    "methods": [
       "GET",
       "POST",
       "PUT",
-      "DELETE"
+      "DELETE",
+      "PATCH"
     ],
     "minRole": "operator",
     "path": "/api/v1/profiles/"
