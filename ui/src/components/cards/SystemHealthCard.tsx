@@ -170,7 +170,12 @@ function ResourceBar({
         <div className="caption text-text-muted pl-3 mt-tight">
           <div>{t('systemHealth.topConsumers')}</div>
           {topProcesses.slice(0, 3).map((proc) => (
-            <div key={proc.pid} className="pl-2">
+            // A process name is a command line, and a browser or a JVM can
+            // produce one thousands of characters long with no space to break
+            // at. Left to itself it pushes the whole page sideways — which is
+            // what the 480px suite caught on CI, where chrome-headless-shell
+            // runs with a 1600px argument list.
+            <div key={proc.pid} className="pl-2 wrap-break-word">
               - {proc.name} ({Math.round(proc.memoryMb)} MB)
             </div>
           ))}
