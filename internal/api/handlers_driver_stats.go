@@ -12,13 +12,13 @@ package api
 // (#749, #750).
 
 import (
+	"net"
 	"net/http"
 
 	"github.com/MustardSeedNetworks/seed/internal/capabilities"
 	"github.com/MustardSeedNetworks/seed/internal/i18n"
 	"github.com/MustardSeedNetworks/seed/internal/logging"
 	"github.com/MustardSeedNetworks/seed/internal/netif"
-	"github.com/MustardSeedNetworks/seed/internal/validation"
 )
 
 // DriverStatsResponse is the curated counter set for one interface.
@@ -43,15 +43,21 @@ func (s *Server) handleDriverStats(w http.ResponseWriter, r *http.Request) {
 	if name == "" {
 		name = s.defaultInterface()
 	}
-	// The name arrives from the query string and is logged on the failure path
-	// below, so it is validated before either use. validInterfaceRegex admits
-	// only alphanumerics, hyphens and underscores within 16 characters, so a
-	// caller cannot smuggle a newline through and forge a second log entry
-	// (CWE-117). The rejection logs err rather than the value, which would
-	// reintroduce exactly what this guards against. Same shape as
-	// handlers_dhcp_renew.go, and it also keeps an unchecked name out of the
-	// ethtool call.
-	if err := validation.ValidateInterface(name); err != nil {
+	// The query string is not a source of interface names; the kernel is. The
+	// request's name is resolved against the host's own interface list and
+	// what the kernel hands back is used from here on, so the value reaching
+	// the log line and the ethtool call has the kernel as its provenance and a
+	// caller cannot smuggle a newline through to forge a log entry (CWE-117,
+	// CodeQL go/log-injection). A regex validator admits the same characters
+	// and is still carrying the caller's own string, which is why the first
+	// attempt at this did not clear the alert.
+	//
+	// It is also the more accurate answer: an interface that does not exist is
+	// a bad request, not the internal error the ethtool call used to produce.
+	// The rejection logs err rather than the name, which would reintroduce
+	// exactly what this guards against.
+	iface, err := net.InterfaceByName(name)
+	if err != nil {
 		logger.WarnContext(r.Context(), "Invalid interface", "error", err)
 		sendErrorResponseWithDetails(w, logger, http.StatusBadRequest,
 			ErrCodeValidation, localizer.T("errors.network.invalidInterface"), "")
@@ -59,10 +65,10 @@ func (s *Server) handleDriverStats(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	raw, err := netif.DriverStats(name)
+	raw, err := netif.DriverStats(iface.Name)
 	if err != nil {
 		logger.WarnContext(r.Context(), "Failed to read driver statistics",
-			"interface", name, "error", err)
+			"interface", iface.Name, "error", err)
 		sendErrorResponseWithDetails(w, logger, http.StatusInternalServerError,
 			ErrCodeInternal, localizer.T("errors.network.driverStatsFailed"), "")
 
@@ -70,7 +76,7 @@ func (s *Server) handleDriverStats(w http.ResponseWriter, r *http.Request) {
 	}
 
 	sendJSONResponse(w, logger, http.StatusOK, DriverStatsResponse{
-		Interface: name,
+		Interface: iface.Name,
 		Counters:  netif.Curate(raw),
 		Total:     len(raw),
 	})

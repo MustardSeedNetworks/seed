@@ -15,6 +15,11 @@ import (
 // process-wide one, so capturing it would mean mutating global state in a test
 // that otherwise runs in parallel. What matters is that a name carrying a
 // newline never gets far enough to be written at all.
+//
+// "nosuchif0" is in the table deliberately. It is short enough and plain
+// enough to pass any character-and-length validator, so it only fails because
+// the handler resolves the name against the kernel's interface list. Before
+// that it reached ethtool and came back a 500.
 func TestDriverStatsRejectsAnInterfaceNameThatCouldForgeALogEntry(t *testing.T) {
 	t.Parallel()
 
@@ -27,6 +32,7 @@ func TestDriverStatsRejectsAnInterfaceNameThatCouldForgeALogEntry(t *testing.T) 
 		"eth0 level=ERROR",
 		"../../etc/passwd",
 		"an-interface-name-far-longer-than-sixteen",
+		"nosuchif0",
 	} {
 		t.Run(name, func(t *testing.T) {
 			t.Parallel()
