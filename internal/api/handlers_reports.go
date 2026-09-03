@@ -134,11 +134,6 @@ func (s *Server) handleReports(w http.ResponseWriter, r *http.Request) {
 func (s *Server) handleReportGenerate(w http.ResponseWriter, r *http.Request) {
 	logger := logging.FromContext(r.Context())
 
-	gen, ok := s.reportGenerator(w, r)
-	if !ok {
-		return
-	}
-
 	var req GenerateReportRequest
 	if !decodeJSONStrictLocalized(w, r, &req, MaxBodySizeJSON, logger, i18n.FromRequest(r)) {
 		return
@@ -149,6 +144,23 @@ func (s *Server) handleReportGenerate(w http.ResponseWriter, r *http.Request) {
 	if !reporting.IsValidReportType(reportType) || !reporting.IsValidExportFormat(format) {
 		sendErrorResponseWithDetails(w, logger, http.StatusBadRequest,
 			ErrCodeValidation, i18n.FromRequest(r).T("errors.reports.invalidRequest"), "")
+		return
+	}
+
+	// The route is gated on export_csv_json, which is Starter. The PDF audit
+	// report is sold as Pro (audit_pdf), and PDF is a value of `format` rather
+	// than a path of its own, so the route gate cannot express it and a Starter
+	// licence could generate one (#2327).
+	if format == reporting.FormatPDF && !s.hasFeature("audit_pdf") {
+		s.sendFeatureGate(w, r, "audit_pdf")
+
+		return
+	}
+
+	// Availability is resolved after entitlement so the answer to "may I" does
+	// not depend on whether the reporting service happens to be up.
+	gen, ok := s.reportGenerator(w, r)
+	if !ok {
 		return
 	}
 

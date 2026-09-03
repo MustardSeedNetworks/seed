@@ -100,36 +100,39 @@ func starterFeatures() []string {
 // code 4002). Includes every Starter feature plus the Pro additions.
 // Mirrors keygen's productCatalog (anchor: v2.3.0, 2026-05-30).
 //
-// V1.0 NMS expansion (2026-05-30) added 11 Pro flags:
-// topology_estate, estate_polling, microburst_detection,
-// voip_mos_scoring, server_monitoring, extended_retention,
-// bgp_monitoring, wifi_management_capture, wifi_rogue_detection,
-// config_backup_diff (V1.1), netflow_collection (V1.1).
+// Removed 2026-09-03 (#2327) because nothing a customer can reach delivers
+// them: airmapper_baseline_diff has no implementation at all and the survey
+// import it named belongs to another product; white_label has a clients table
+// with a branding_json column and a repository, and db.Clients() has no caller,
+// no route and nothing that reads the branding; scheduled_reports has a working
+// tick engine that Start() runs at boot, and no route through which anyone can
+// ever create a schedule for it to find. The code stays where it is useful --
+// what is deleted is the claim that it is for sale. Re-add each string when the
+// capability is reachable.
 func proFeatures() []string {
 	pro := []string{
 		"wifi_roam_analysis",
 		"wifi_association_forensics",
-		"airmapper_baseline_diff",
 		"anomaly_detection",
 		"path_analysis",
 		"live_telemetry",
 		"compliance_advanced",
-		"scheduled_reports",
 		"audit_pdf",
 		"multi_interface",
 		"multi_user",
 		"multi_client",
 		"sso",
-		"white_label",
 		"rest_api",
-		// V1.0 NMS expansion (Phase 0 anchor, 2026-05-30). Only features
-		// with a real backing implementation are listed — see the SNMP
-		// collector orchestrator (bgp4, hostresources) for bgp_monitoring /
-		// server_monitoring. microburst_detection, voip_mos_scoring,
-		// netflow_collection and config_backup_diff were removed 2026-07-10:
-		// they were sold in the Pro catalog with zero backing code (a
-		// verified audit found no collector, listener, or handler for any of
-		// them). Re-add each only when it is actually implemented.
+		// V1.0 NMS expansion (Phase 0 anchor, 2026-05-30). Every string
+		// below has a real implementation, verified 2026-09-03 rather than
+		// asserted: bgp4 and hostresources are registered collectors
+		// (internal/polling/snmp/orchestrator), the topology reconcilers
+		// build the cross-device view, and retention horizons vary by tier
+		// (internal/timeseries/retention). What none of them have is a gate:
+		// the capability ships to every tier. That is #2327's remaining half
+		// and it is an owner decision per tier, not a mechanical fix, because
+		// adding the gate takes the capability away from installs that have
+		// it today.
 		"topology_estate",
 		"estate_polling",
 		"server_monitoring",
