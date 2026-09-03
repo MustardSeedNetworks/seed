@@ -499,5 +499,41 @@
     "interface": "Interfaz",
     "state": "Estado",
     "refresh": "Actualizar"
+  },
+  "insecurePorts": {
+    "title": "Escaneo de puertos inseguros",
+    "description": "Comprueba un host en busca de servicios heredados, sin cifrar o de administración remota que no deberían ser alcanzables.",
+    "target": "Dirección objetivo",
+    "targetPlaceholder": "192.0.2.10",
+    "scan": "Escanear",
+    "scanning": "Escaneando...",
+    "none": "No hay puertos inseguros abiertos en {{target}}.",
+    "found": "{{count}} puerto(s) inseguro(s) abierto(s)",
+    "portLabel": "Puerto {{port}} — {{service}}",
+    "unknownService": "servicio no identificado",
+    "readOnly": "Solo lectura — se requiere el rol de operador para ejecutar un escaneo",
+    "risks": {
+      "ftp": "FTP envía credenciales y contenido de archivos sin cifrar. Use SFTP o FTPS.",
+      "telnet": "Telnet envía credenciales y cada pulsación de tecla sin cifrar. Use SSH.",
+      "smtp": "SMTP sin TLS transporta correo y a menudo credenciales sin cifrar, y un relay abierto puede usarse para enviar spam.",
+      "tftp": "TFTP no tiene autenticación alguna. Cualquiera que lo alcance puede leer y con frecuencia escribir archivos, incluidas configuraciones de dispositivos.",
+      "http": "HTTP envía páginas, cookies de sesión y datos de formularios sin cifrar. Redirija a HTTPS.",
+      "pop3": "POP3 sin TLS envía las credenciales del buzón sin cifrar.",
+      "rpcbind": "rpcbind enumera los servicios RPC que ejecuta un host, lo que mapea la superficie de ataque para cualquiera que lo alcance. También es un amplificador de reflexión conocido.",
+      "msrpc": "MSRPC expone puntos finales de servicios de Windows y es una vía habitual de movimiento lateral. No debería ser alcanzable a través de un límite de red.",
+      "netbios": "NetBIOS filtra nombres de host y de recursos compartidos, y su autenticación es lo bastante débil como para poder retransmitirse. No debería cruzar un límite de red.",
+      "imap": "IMAP sin TLS envía las credenciales del buzón sin cifrar.",
+      "smb": "SMB expone recursos compartidos de archivos y es la vía habitual de propagación del ransomware. Nunca debería ser alcanzable desde una red no confiable.",
+      "rexec": "rexec envía credenciales sin cifrar y no protege la integridad. SSH lo reemplazó hace décadas.",
+      "rlogin": "rlogin confía en el host cliente y envía la sesión sin cifrar. Use SSH.",
+      "rsh": "rsh ejecuta comandos sin cifrado y con confianza basada en el host. En algunos sistemas este puerto es syslog, que acepta inyección de registros sin autenticar.",
+      "rmi": "Java RMI ha permitido repetidamente la ejecución remota de código mediante deserialización. No debería exponerse.",
+      "nfs": "NFS exporta sistemas de archivos con confianza basada en el host y, en versiones antiguas, sin autenticación. Cualquiera que lo alcance podría montar el recurso.",
+      "rdp": "RDP es un inicio de sesión interactivo directo y un objetivo constante de ataques de credenciales. Colóquelo detrás de una VPN y exija MFA.",
+      "vncHttp": "Esto es VNC sobre HTTP: un escritorio remoto servido a un navegador, normalmente con una contraseña débil y sin cifrado de transporte.",
+      "vnc": "VNC tiene un límite de contraseña de 8 caracteres y no cifra el transporte de forma predeterminada. Túnelo sobre SSH o una VPN.",
+      "x11": "Una pantalla X11 abierta permite a cualquiera que la alcance leer la pantalla e inyectar pulsaciones de teclas.",
+      "generic": "Este puerto está en la lista de inseguros porque el servicio detrás de él suele no estar cifrado, no estar autenticado, o ser una interfaz administrativa."
+    }
   }
 }
