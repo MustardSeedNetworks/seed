@@ -14,7 +14,7 @@
  */
 
 import type { JSX } from 'react';
-import { useCallback, useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { setSessionExpiredCallback } from './api';
 import { AppShell } from './app/AppShell';
@@ -29,52 +29,38 @@ import { useSetupState } from './hooks/useSetupState';
  */
 function App(): JSX.Element {
   const { t } = useTranslation('common');
-  const { isAuthenticated, login, completeSecondFactor, logout, isLoading, error } = useAuth();
-
-  const [sessionExpired, setSessionExpired] = useState(false);
+  const { isAuthenticated, login, completeSecondFactor, logout, expireSession, isLoading, error } =
+    useAuth();
 
   // Setup wizard state (extracted to hook #889)
   const { needsSetup, suggestedPassword, setupUsername, setupToken, completeSetup } =
     useSetupState();
 
-  // Handle session expiration via API client callback
+  // Handle session expiration via API client callback.
+  //
+  // Calls expireSession() (clears state, sets the error banner), NOT logout():
+  // a 401 that survived a refresh attempt already means the server considers
+  // the session gone, so logout()'s POST /api/v1/auth/logout has nothing left
+  // to invalidate. Sending it anyway was actively harmful — background
+  // fetches issued before authentication settles (RoleProvider, LicenseProvider)
+  // 401 on the login screen and fire this callback, and logout()'s real
+  // network call could land *after* a concurrent re-login's response, its
+  // Set-Cookie clearing the session the fresh login had just established
+  // (seed#2407 CI flake in e2e/auth-complete.spec.ts "should allow re-login
+  // after session expiry"). expireSession() only ever touches client state.
   useEffect(() => {
     setSessionExpiredCallback(() => {
-      setSessionExpired(true);
-      logout();
+      expireSession();
     });
     return (): void => {
       setSessionExpiredCallback(null);
     };
-  }, [logout]);
+  }, [expireSession]);
 
   // All authenticated runtime wiring. Called unconditionally (before any gating
   // return) so hook order is stable and effect timing matches the pre-refactor
   // god component.
   const orchestration = useAppOrchestration({ isAuthenticated });
-
-  // The current attempt's own error wins over the session-expired banner.
-  // Clearing the flag at the start of the attempt (below) is not enough: a
-  // background 401 — the refresh the login page keeps retrying — sets it again
-  // while the login request is still in flight, and the banner then masks what
-  // actually happened to the request the user is waiting on. A real expiry
-  // still surfaces, because expireSession() sets `error` as well.
-  const authError = error ?? (sessionExpired ? 'Session expired. Please log in again.' : null);
-
-  const handleLogin = useCallback(
-    async (username: string, password: string) => {
-      // Clear the "session expired" banner at the START of every attempt
-      // — not only on success. Otherwise a stale session-expired flag
-      // (set by the previous logout/timeout) masks the real "Invalid
-      // credentials" error from the new attempt, because authError
-      // prioritizes sessionExpired over error. The user clicked Login,
-      // so they're acknowledging the stale-session notice; whatever
-      // happens next should reflect THIS attempt.
-      setSessionExpired(false);
-      return login(username, password);
-    },
-    [login],
-  );
 
   // Show setup wizard if needed (before auth check)
   if (needsSetup === true) {
@@ -101,10 +87,10 @@ function App(): JSX.Element {
   if (!isAuthenticated) {
     return (
       <LoginForm
-        onLogin={handleLogin}
+        onLogin={login}
         onSecondFactor={completeSecondFactor}
         isLoading={isLoading}
-        error={authError}
+        error={error}
       />
     );
   }
