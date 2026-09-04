@@ -1,8 +1,9 @@
 //go:build windows
 
+package dhcp
+
 // Windows-specific DHCP implementation.
 // Uses ipconfig and netsh commands for DHCP operations.
-package dhcp
 
 import (
 	"context"
@@ -16,12 +17,16 @@ import (
 // Command timeout for DHCP operations.
 const dhcpTimeoutSeconds = 60
 
+// colonSplitParts caps SplitN at 2 pieces when parsing "key: value"
+// ipconfig output lines, so a value containing ':' is not split further.
+const colonSplitParts = 2
+
 // dhcpInfo contains DHCP lease information.
 type dhcpInfo struct {
 	Enabled     bool      `json:"enabled"`
 	Server      string    `json:"server,omitempty"`
-	LeaseStart  time.Time `json:"lease_start,omitempty"`
-	LeaseExpiry time.Time `json:"lease_expiry,omitempty"`
+	LeaseStart  time.Time `json:"lease_start,omitzero"`
+	LeaseExpiry time.Time `json:"lease_expiry,omitzero"`
 	Gateway     string    `json:"gateway,omitempty"`
 	DNS         []string  `json:"dns,omitempty"`
 }
@@ -45,7 +50,6 @@ func parseDHCPInfo(output, targetIface string) *dhcpInfo {
 
 	lines := strings.Split(output, "\n")
 	inTargetAdapter := false
-	adapterName := ""
 
 	for _, line := range lines {
 		trimmed := strings.TrimSpace(line)
@@ -53,7 +57,7 @@ func parseDHCPInfo(output, targetIface string) *dhcpInfo {
 		// Detect adapter sections
 		if strings.HasSuffix(line, ":") && !strings.HasPrefix(line, " ") {
 			// New adapter section
-			adapterName = strings.TrimSuffix(strings.TrimSpace(line), ":")
+			adapterName := strings.TrimSuffix(strings.TrimSpace(line), ":")
 			inTargetAdapter = targetIface == "" || strings.Contains(adapterName, targetIface)
 			continue
 		}
@@ -62,38 +66,57 @@ func parseDHCPInfo(output, targetIface string) *dhcpInfo {
 			continue
 		}
 
-		// Parse DHCP-related fields
-		if strings.Contains(trimmed, "DHCP Enabled") || strings.Contains(trimmed, "DHCP 有効") {
+		switch {
+		case strings.Contains(trimmed, "DHCP Enabled") || strings.Contains(trimmed, "DHCP 有効"):
 			info.Enabled = strings.Contains(trimmed, "Yes") || strings.Contains(trimmed, "はい")
-		} else if strings.Contains(trimmed, "DHCP Server") || strings.Contains(trimmed, "DHCP サーバー") {
-			parts := strings.SplitN(trimmed, ":", 2)
-			if len(parts) == 2 {
-				info.Server = strings.TrimSpace(parts[1])
-			}
-		} else if strings.Contains(trimmed, "Lease Obtained") || strings.Contains(trimmed, "リース取得") {
-			parts := strings.SplitN(trimmed, ":", 2)
-			if len(parts) == 2 {
-				// Parse Windows date format
-				info.LeaseStart = parseWindowsDate(strings.TrimSpace(parts[1]))
-			}
-		} else if strings.Contains(trimmed, "Lease Expires") || strings.Contains(trimmed, "リース期限") {
-			parts := strings.SplitN(trimmed, ":", 2)
-			if len(parts) == 2 {
-				info.LeaseExpiry = parseWindowsDate(strings.TrimSpace(parts[1]))
-			}
-		} else if strings.Contains(trimmed, "Default Gateway") || strings.Contains(trimmed, "デフォルト ゲートウェイ") {
-			parts := strings.SplitN(trimmed, ":", 2)
-			if len(parts) == 2 {
-				info.Gateway = strings.TrimSpace(parts[1])
-			}
+		case strings.Contains(trimmed, "DHCP Server") || strings.Contains(trimmed, "DHCP サーバー"):
+			parseDHCPServerLine(trimmed, info)
+		case strings.Contains(trimmed, "Lease Obtained") || strings.Contains(trimmed, "リース取得"):
+			parseDHCPLeaseStartLine(trimmed, info)
+		case strings.Contains(trimmed, "Lease Expires") || strings.Contains(trimmed, "リース期限"):
+			parseDHCPLeaseExpiryLine(trimmed, info)
+		case strings.Contains(trimmed, "Default Gateway") || strings.Contains(trimmed, "デフォルト ゲートウェイ"):
+			parseDHCPGatewayLine(trimmed, info)
 		}
 	}
 
 	return info
 }
 
+// parseDHCPServerLine reads the DHCP Server field into info.
+func parseDHCPServerLine(trimmed string, info *dhcpInfo) {
+	parts := strings.SplitN(trimmed, ":", colonSplitParts)
+	if len(parts) == colonSplitParts {
+		info.Server = strings.TrimSpace(parts[1])
+	}
+}
+
+// parseDHCPLeaseStartLine reads the Lease Obtained field into info.
+func parseDHCPLeaseStartLine(trimmed string, info *dhcpInfo) {
+	parts := strings.SplitN(trimmed, ":", colonSplitParts)
+	if len(parts) == colonSplitParts {
+		info.LeaseStart = parseWindowsDate(strings.TrimSpace(parts[1]))
+	}
+}
+
+// parseDHCPLeaseExpiryLine reads the Lease Expires field into info.
+func parseDHCPLeaseExpiryLine(trimmed string, info *dhcpInfo) {
+	parts := strings.SplitN(trimmed, ":", colonSplitParts)
+	if len(parts) == colonSplitParts {
+		info.LeaseExpiry = parseWindowsDate(strings.TrimSpace(parts[1]))
+	}
+}
+
+// parseDHCPGatewayLine reads the Default Gateway field into info.
+func parseDHCPGatewayLine(trimmed string, info *dhcpInfo) {
+	parts := strings.SplitN(trimmed, ":", colonSplitParts)
+	if len(parts) == colonSplitParts {
+		info.Gateway = strings.TrimSpace(parts[1])
+	}
+}
+
 // parseWindowsDate parses Windows ipconfig date format.
-// Example: "Wednesday, January 15, 2025 10:30:00 AM"
+// Example: "Wednesday, January 15, 2025 10:30:00 AM".
 func parseWindowsDate(s string) time.Time {
 	// Try common Windows formats
 	formats := []string{
@@ -133,6 +156,30 @@ func RenewDHCP(iface string) error {
 
 // testDHCPPlatform performs platform-specific DHCP testing on Windows.
 // Uses ipconfig /all to query the current DHCP lease information.
+// interfaceIPAndMask returns the first IPv4 address and subnet mask bound to
+// the named interface, or two empty strings if the interface or its
+// addresses cannot be read. Both testDHCPPlatform and getCurrentLeasePlatform
+// use ipconfig for lease timing but read the live address off the interface
+// itself, since ipconfig's own address line is harder to parse reliably.
+func interfaceIPAndMask(interfaceName string) (string, string) {
+	iface, err := net.InterfaceByName(interfaceName)
+	if err != nil {
+		return "", ""
+	}
+	addrs, err := iface.Addrs()
+	if err != nil || len(addrs) == 0 {
+		return "", ""
+	}
+	ip, ipNet, err := net.ParseCIDR(addrs[0].String())
+	if err != nil || ip == nil {
+		return "", ""
+	}
+	if ipNet == nil {
+		return ip.String(), ""
+	}
+	return ip.String(), net.IP(ipNet.Mask).String()
+}
+
 func testDHCPPlatform(ctx context.Context, interfaceName string) *TestResult {
 	start := time.Now()
 	result := &TestResult{
@@ -167,17 +214,7 @@ func testDHCPPlatform(ctx context.Context, interfaceName string) *TestResult {
 		result.DNSServers = info.DNS
 
 		// Parse offered IP from interface
-		if iface, err := net.InterfaceByName(interfaceName); err == nil {
-			if addrs, err := iface.Addrs(); err == nil && len(addrs) > 0 {
-				ip, ipNet, _ := net.ParseCIDR(addrs[0].String())
-				if ip != nil {
-					result.OfferedIP = ip.String()
-					if ipNet != nil {
-						result.SubnetMask = net.IP(ipNet.Mask).String()
-					}
-				}
-			}
-		}
+		result.OfferedIP, result.SubnetMask = interfaceIPAndMask(interfaceName)
 
 		if !info.LeaseExpiry.IsZero() && !info.LeaseStart.IsZero() {
 			result.LeaseTime = info.LeaseExpiry.Sub(info.LeaseStart)
@@ -222,17 +259,7 @@ func getCurrentLeasePlatform(interfaceName string) (*LeaseInfo, error) {
 	}
 
 	// Get IP address from interface
-	if iface, err := net.InterfaceByName(interfaceName); err == nil {
-		if addrs, err := iface.Addrs(); err == nil && len(addrs) > 0 {
-			ip, ipNet, _ := net.ParseCIDR(addrs[0].String())
-			if ip != nil {
-				lease.IPAddress = ip.String()
-				if ipNet != nil {
-					lease.SubnetMask = net.IP(ipNet.Mask).String()
-				}
-			}
-		}
-	}
+	lease.IPAddress, lease.SubnetMask = interfaceIPAndMask(interfaceName)
 
 	if lease.IPAddress == "" && lease.ServerIP == "" {
 		return nil, &InterfaceError{Message: "no DHCP lease found for " + interfaceName}

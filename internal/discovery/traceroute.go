@@ -22,6 +22,13 @@ import (
 // cancelled. Hop states live in hopstate.go, shared with the Windows tracer.
 const errTracerouteCanceled = "traceroute canceled"
 
+// errNoIPv4ForTarget is reported when a hostname resolves to no IPv4 address.
+// Windows has its own tracer (traceroute_windows.go) and never resolves
+// through this path, so the constant lives here rather than in the
+// platform-independent kernel file, where it was unused dead code under
+// GOOS=windows.
+const errNoIPv4ForTarget = "no IPv4 address found for target"
+
 // Traceroute timing and buffer constants.
 const (
 	traceDNSResolveTimeoutS = 5    // Timeout in seconds for DNS resolution

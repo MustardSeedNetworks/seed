@@ -1,5 +1,7 @@
 //go:build windows
 
+package enumerate
+
 // Windows-specific Bluetooth discovery implementation.
 // Provides the platform-specific scanPlatform method for the BluetoothScanner.
 //
@@ -8,11 +10,10 @@
 //   - Limited compared to Linux BlueZ capabilities
 //   - May require administrator privileges for some operations
 //   - Full BLE scanning requires Windows Runtime API (WinRT)
-package enumerate
 
 import (
 	"context"
-	"fmt"
+	"errors"
 )
 
 // scanPlatform performs Bluetooth device discovery on Windows.
@@ -24,8 +25,8 @@ import (
 // For now, return a platform limitation error with guidance.
 func (s *BluetoothScanner) scanPlatform(
 	ctx context.Context,
-	adapter string,
-	config *BluetoothScanConfig,
+	_ string,
+	_ *BluetoothScanConfig,
 ) ([]BluetoothDevice, error) {
 	// Check for context cancellation
 	select {
@@ -36,7 +37,7 @@ func (s *BluetoothScanner) scanPlatform(
 
 	// Windows Bluetooth scanning requires WinRT or WMI which is complex in pure Go.
 	// Return informative error directing user to platform requirements.
-	return nil, fmt.Errorf("bluetooth scanning on Windows requires additional setup: " +
+	return nil, errors.New("bluetooth scanning on Windows requires additional setup: " +
 		"the Windows Bluetooth APIs require Windows Runtime (WinRT) integration. " +
 		"See HARDWARE.md for platform-specific Bluetooth requirements and alternatives")
 }

@@ -1,11 +1,13 @@
 //go:build windows
 
+package enumerate
+
 // Windows-specific ARP table implementation using Windows IP Helper API.
 // Uses GetIpNetTable to read the ARP cache entries.
-package enumerate
 
 import (
 	"fmt"
+	"math"
 	"net"
 	"time"
 	"unsafe"
@@ -22,6 +24,9 @@ const (
 	mibIPNetTypeStatic  = 4
 )
 
+// macAddrLen is the length of an Ethernet hardware address in bytes.
+const macAddrLen = 6
+
 // mibIPNetRow represents a single ARP table entry from GetIpNetTable.
 type mibIPNetRow struct {
 	dwIndex       uint32
@@ -37,17 +42,18 @@ type mibIPNetTable struct {
 	table        [1]mibIPNetRow // Variable-length array
 }
 
-var (
-	iphlpapi            = windows.NewLazySystemDLL("iphlpapi.dll")
-	procGetIpNetTable   = iphlpapi.NewProc("GetIpNetTable")
-	procGetAdaptersInfo = iphlpapi.NewProc("GetAdaptersInfo")
-)
-
 // readARPTablePlatform reads the ARP table on Windows using GetIpNetTable.
 func (s *ARPScanner) readARPTablePlatform() ([]*ARPEntry, error) {
+	// NewLazySystemDLL/NewProc only resolve on first Call, and the OS loader
+	// itself caches an already-loaded DLL by name, so building these locally
+	// rather than caching them in a package-level var costs a lookup, not a
+	// reload -- cheap next to the scan interval this runs on, and it keeps
+	// the syscall handle out of package state between calls.
+	procGetIPNetTable := windows.NewLazySystemDLL("iphlpapi.dll").NewProc("GetIpNetTable")
+
 	// First call to get required buffer size
 	var size uint32
-	ret, _, _ := procGetIpNetTable.Call(0, uintptr(unsafe.Pointer(&size)), 0)
+	ret, _, _ := procGetIPNetTable.Call(0, uintptr(unsafe.Pointer(&size)), 0)
 
 	// ERROR_INSUFFICIENT_BUFFER (122) is expected on first call
 	if ret != 0 && ret != 122 {
@@ -61,7 +67,7 @@ func (s *ARPScanner) readARPTablePlatform() ([]*ARPEntry, error) {
 
 	// Allocate buffer and make second call
 	buf := make([]byte, size)
-	ret, _, _ = procGetIpNetTable.Call(
+	ret, _, _ = procGetIPNetTable.Call(
 		uintptr(unsafe.Pointer(&buf[0])),
 		uintptr(unsafe.Pointer(&size)),
 		0,
@@ -78,9 +84,9 @@ func (s *ARPScanner) readARPTablePlatform() ([]*ARPEntry, error) {
 	// Get interface index to name mapping
 	ifaceMap := buildInterfaceMap()
 
-	for i := uint32(0); i < table.dwNumEntries; i++ {
+	for i := range table.dwNumEntries {
 		// Calculate offset for each row
-		rowPtr := unsafe.Pointer(uintptr(unsafe.Pointer(&table.table[0])) + uintptr(i)*unsafe.Sizeof(mibIPNetRow{}))
+		rowPtr := unsafe.Add(unsafe.Pointer(&table.table[0]), uintptr(i)*unsafe.Sizeof(mibIPNetRow{}))
 		row := (*mibIPNetRow)(rowPtr)
 
 		// Skip invalid entries
@@ -88,12 +94,14 @@ func (s *ARPScanner) readARPTablePlatform() ([]*ARPEntry, error) {
 			continue
 		}
 
-		// Convert IP address from network byte order
+		// Convert IP address from network byte order. Each conversion is
+		// masked to a single byte so it can never overflow, regardless of
+		// the width gosec assumes for a bare byte(uint32) truncation.
 		ip := net.IPv4(
-			byte(row.dwAddr),
-			byte(row.dwAddr>>8),
-			byte(row.dwAddr>>16),
-			byte(row.dwAddr>>24),
+			byte(row.dwAddr&byteMask),
+			byte((row.dwAddr>>byteShift8)&byteMask),
+			byte((row.dwAddr>>byteShift16)&byteMask),
+			byte((row.dwAddr>>byteShift24)&byteMask),
 		)
 
 		// Format MAC address
@@ -136,7 +144,7 @@ func arpTypeToState(arpType uint32) string {
 
 // formatMAC formats a byte slice as a MAC address string.
 func formatMAC(mac []byte) string {
-	if len(mac) < 6 {
+	if len(mac) < macAddrLen {
 		return ""
 	}
 	return fmt.Sprintf("%02x:%02x:%02x:%02x:%02x:%02x",
@@ -153,6 +161,12 @@ func buildInterfaceMap() map[uint32]string {
 	}
 
 	for _, iface := range interfaces {
+		// net.Interface.Index is platform-defined as a small positive
+		// number; out of that range would mean the OS itself is broken, not
+		// something to convert around, so it is skipped rather than wrapped.
+		if iface.Index < 0 || iface.Index > math.MaxUint32 {
+			continue
+		}
 		m[uint32(iface.Index)] = iface.Name
 	}
 

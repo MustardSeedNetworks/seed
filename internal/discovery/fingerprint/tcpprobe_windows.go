@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"net"
+	"slices"
 	"strings"
 	"sync"
 	"time"
@@ -48,7 +49,7 @@ type TCPProber struct {
 }
 
 // NewTCPProber creates a new TCP prober.
-// On Windows, this uses standard Go net.Dial which works without elevated privileges.
+// On Windows, this uses standard Go [net.Dial] which works without elevated privileges.
 func NewTCPProber(timeout time.Duration) (*TCPProber, error) {
 	if timeout == 0 {
 		timeout = defaultProbeTimeout
@@ -164,6 +165,33 @@ func (p *TCPProber) ProbeTCP(ctx context.Context, ipStr string, port int) TCPPro
 	return result
 }
 
+// drainPortChannel is one ScanPorts worker: it reads ports from portCh until
+// the channel closes or the context/stop signal fires, probing each and
+// recording the result at that port's index in results.
+func (p *TCPProber) drainPortChannel(
+	ctx context.Context,
+	ipStr string,
+	ports []int,
+	portCh <-chan int,
+	results []TCPProbeResult,
+) {
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case <-p.stopCh:
+			return
+		case port, ok := <-portCh:
+			if !ok {
+				return
+			}
+			if idx := slices.Index(ports, port); idx >= 0 {
+				results[idx] = p.ProbeTCP(ctx, ipStr, port)
+			}
+		}
+	}
+}
+
 // ScanPorts probes multiple ports on a single IP concurrently.
 func (p *TCPProber) ScanPorts(
 	ctx context.Context,
@@ -180,37 +208,22 @@ func (p *TCPProber) ScanPorts(
 	portCh := make(chan int, len(ports))
 
 	// Start workers
-	for i := 0; i < workers; i++ {
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
-			for {
-				select {
-				case <-ctx.Done():
-					return
-				case <-p.stopCh:
-					return
-				case port, ok := <-portCh:
-					if !ok {
-						return
-					}
-					// Find the index for this port
-					for idx, prt := range ports {
-						if prt == port {
-							results[idx] = p.ProbeTCP(ctx, ipStr, port)
-							break
-						}
-					}
-				}
-			}
-		}()
+	for range workers {
+		wg.Go(func() {
+			p.drainPortChannel(ctx, ipStr, ports, portCh, results)
+		})
 	}
 
-	// Send ports to workers
+	// Send ports to workers. The bare break in a select only exits the
+	// select, not this loop (SA4011) -- an already-cancelled context left the
+	// loop sending the remaining ports to a channel every worker had already
+	// stopped draining, filling portCh's buffer and then blocking here for
+	// good. The label breaks the loop itself.
+sendLoop:
 	for _, port := range ports {
 		select {
 		case <-ctx.Done():
-			break
+			break sendLoop
 		case portCh <- port:
 		}
 	}
@@ -234,7 +247,7 @@ func GetWebPorts() []int {
 }
 
 // CheckTCPPrivileges checks if we have sufficient privileges for TCP probing.
-// On Windows with standard net.Dial, no special privileges are required.
+// On Windows with standard [net.Dial], no special privileges are required.
 func CheckTCPPrivileges() error {
 	return nil
 }

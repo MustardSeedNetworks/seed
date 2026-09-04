@@ -149,11 +149,11 @@ func (t *Tracer) TraceICMP(ctx context.Context, target string) *TracerouteResult
 		// Try TCP connect with timeout as a proxy for reachability
 		start := time.Now()
 		dialer := net.Dialer{Timeout: t.timeout}
-		conn, err := dialer.DialContext(ctx, "tcp", fmt.Sprintf("%s:80", result.TargetIP))
+		conn, dialErr := dialer.DialContext(ctx, "tcp", fmt.Sprintf("%s:80", result.TargetIP))
 		hop.RTT = time.Since(start)
 
-		if err == nil {
-			conn.Close()
+		if dialErr == nil {
+			_ = conn.Close()
 			hop.IP = result.TargetIP
 			hop.State = hopStateReply
 			hop.Hostname = t.resolveHostname(hop.IP)
@@ -163,8 +163,7 @@ func (t *Tracer) TraceICMP(ctx context.Context, target string) *TracerouteResult
 		}
 
 		// Check if we got a response (even if error)
-		var opErr *net.OpError
-		if errors.As(err, &opErr) {
+		if opErr, ok := errors.AsType[*net.OpError](dialErr); ok {
 			if opErr.Timeout() {
 				hop.State = hopStateTimeout
 			} else {
@@ -218,11 +217,11 @@ func (t *Tracer) TraceICMPStreaming(ctx context.Context, target string, onHop Ho
 
 		start := time.Now()
 		dialer := net.Dialer{Timeout: t.timeout}
-		conn, err := dialer.DialContext(ctx, "tcp", fmt.Sprintf("%s:80", result.TargetIP))
+		conn, dialErr := dialer.DialContext(ctx, "tcp", fmt.Sprintf("%s:80", result.TargetIP))
 		hop.RTT = time.Since(start)
 
-		if err == nil {
-			conn.Close()
+		if dialErr == nil {
+			_ = conn.Close()
 			hop.IP = result.TargetIP
 			hop.State = hopStateReply
 			hop.Hostname = t.resolveHostname(hop.IP)
@@ -234,8 +233,7 @@ func (t *Tracer) TraceICMPStreaming(ctx context.Context, target string, onHop Ho
 			break
 		}
 
-		var opErr *net.OpError
-		if errors.As(err, &opErr) {
+		if opErr, ok := errors.AsType[*net.OpError](dialErr); ok {
 			if opErr.Timeout() {
 				hop.State = hopStateTimeout
 			} else {
@@ -298,11 +296,11 @@ func (t *Tracer) TraceUDP(ctx context.Context, target string, port int) *Tracero
 
 		start := time.Now()
 		dialer := net.Dialer{Timeout: t.timeout}
-		conn, err := dialer.DialContext(ctx, "udp", fmt.Sprintf("%s:%d", result.TargetIP, port))
+		conn, dialErr := dialer.DialContext(ctx, "udp", fmt.Sprintf("%s:%d", result.TargetIP, port))
 		hop.RTT = time.Since(start)
 
-		if err == nil {
-			conn.Close()
+		if dialErr == nil {
+			_ = conn.Close()
 			hop.IP = result.TargetIP
 			hop.State = hopStateReply
 			hop.Hostname = t.resolveHostname(hop.IP)
@@ -353,11 +351,11 @@ func (t *Tracer) TraceTCP(ctx context.Context, target string, port int) *Tracero
 
 		start := time.Now()
 		dialer := net.Dialer{Timeout: t.timeout}
-		conn, err := dialer.DialContext(ctx, "tcp", fmt.Sprintf("%s:%d", result.TargetIP, port))
+		conn, dialErr := dialer.DialContext(ctx, "tcp", fmt.Sprintf("%s:%d", result.TargetIP, port))
 		hop.RTT = time.Since(start)
 
-		if err == nil {
-			conn.Close()
+		if dialErr == nil {
+			_ = conn.Close()
 			hop.IP = result.TargetIP
 			hop.State = hopStateReply
 			hop.Hostname = t.resolveHostname(hop.IP)
@@ -367,11 +365,10 @@ func (t *Tracer) TraceTCP(ctx context.Context, target string, port int) *Tracero
 		}
 
 		// Analyze error
-		var opErr *net.OpError
-		if errors.As(err, &opErr) {
+		if opErr, ok := errors.AsType[*net.OpError](dialErr); ok {
 			if opErr.Timeout() {
 				hop.State = hopStateTimeout
-			} else if strings.Contains(err.Error(), "refused") {
+			} else if strings.Contains(dialErr.Error(), "refused") {
 				hop.State = hopStateReply
 				hop.IP = result.TargetIP
 				result.Completed = true
