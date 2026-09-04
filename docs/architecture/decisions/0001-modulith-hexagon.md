@@ -5,13 +5,13 @@
 > **Amendment (2026-06-01):** the `internal/modules/<botanical>` + `internal/
 > adapters/` rings this ADR proposed were found to be dead parallel wiring (the
 > api consumes feature packages directly, not the module facades). The structural
-> intent — *dependencies point inward, infra behind ports, depguard-enforced
-> direction* — is **retained**, but realized as a **capability-first modular
+> intent — _dependencies point inward, infra behind ports, depguard-enforced
+> direction_ — is **retained**, but realized as a **capability-first modular
 > monolith**: flat `internal/<feature>` packages (`wifi`, `diagnostics`,
 > `security`, `reporting`), one composition root, **ports as a technique at real
 > I/O seams** (not a dedicated `adapters/` folder ring). The botanical module
 > facades + the `modules/`/`adapters/` rings are being removed. depguard now
-> enforces *direction*, not folder layout.
+> enforces _direction_, not folder layout.
 
 **Status (original):** Accepted — 2026-05-31
 
@@ -36,7 +36,7 @@ Adopt the **modulith hybrid**:
 
 - `internal/modules/<m>/` — pure domain logic + `ports.go`, no `net/http`/`database/sql`.
 - `internal/platform/` — cross-cutting spine (config, logging, lifecycle, events, jobs, …).
-- `internal/adapters/{http,cli,store,net}/` — infra ring, grouped by technology, organized by module *inside*.
+- `internal/adapters/{http,cli,store,net}/` — infra ring, grouped by technology, organized by module _inside_.
 - `internal/app/` — single composition root.
 
 Dependencies point inward, enforced by `depguard`. Modules never import each other.

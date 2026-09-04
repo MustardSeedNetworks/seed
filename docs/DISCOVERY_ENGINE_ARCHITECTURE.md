@@ -7,7 +7,7 @@ correlation, and enrichment across wired, WiFi, and Bluetooth networks.
 
 ## Proposed Architecture
 
-```
+```text
 ┌─────────────────────────────────────────────────────────────────────────────────┐
 │                           DISCOVERY ENGINE (NEW)                                 │
 │                                                                                  │
@@ -219,7 +219,7 @@ type AssessmentEngine struct {
 ## Key Improvements Over Current
 
 | Aspect | Current | Proposed |
-|--------|---------|----------|
+| -------- | --------- | ---------- |
 | **Device Store** | Each subsystem has own list | Single DeviceRegistry |
 | **Correlation** | Only at scan time | Real-time via EventBus |
 | **ARP Scanning** | Done twice (DeviceDiscovery + Pipeline) | Once via WiredCollector |
@@ -259,31 +259,36 @@ stats := engine.GetStats()
 ## Migration Path
 
 ### Phase 1: Create Engine Shell
+
 - Create `engine.go` with DiscoveryEngine struct
 - Create `registry.go` with DeviceRegistry
 - Create `events.go` with EventBus
 
 ### Phase 2: Refactor Collectors
+
 - Wrap existing ARPScanner, WiFiBridge, BluetoothScanner
 - Have them emit events instead of storing state
 
 ### Phase 3: Consolidate Enrichment
+
 - Merge port scanning into single component
 - Connect SNMP collector to event system
 
 ### Phase 4: Wire Everything Together
+
 - Engine orchestrates collectors
 - Registry receives all events
 - Correlation happens automatically
 
 ### Phase 5: Deprecate Old Code
+
 - Mark Service, UnifiedDiscoveryService as deprecated
 - Update API handlers to use Engine
 - Remove redundant code
 
 ## File Structure (Proposed)
 
-```
+```text
 internal/discovery/
 ├── engine.go           # DiscoveryEngine (main orchestrator)
 ├── registry.go         # DeviceRegistry (unified store)

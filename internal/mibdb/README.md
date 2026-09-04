@@ -10,7 +10,7 @@ It is stored in SQLite and loaded on application startup with 918+ built-in OID 
 ### MIB Categories
 
 | Category | Count | Description |
-|----------|-------|-------------|
+| ---------- | ------- | ------------- |
 | MIB-II (RFC 1213) | 277 | Standard interface, IP, ICMP, TCP, UDP, SNMP objects |
 | Layer 2 (CDP, LLDP, VLAN) | 94 | Cisco CDP, IEEE LLDP, 802.1Q VLAN objects |
 | Other/Enterprise | 547 | Vendor-specific MIBs (Cisco, Synoptics, etc.) |

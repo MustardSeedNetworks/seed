@@ -1,15 +1,18 @@
 # GitHub Issues - Seed (2026-01-26)
 
 ## Security / Error Handling
+
 - Title: Panic on crypto/rand failure in JWT secret generation
   Labels: security, backend
   File: internal/auth/auth.go:222
-  Body: `GenerateJWTSecret` panics if crypto/rand fails after retries. Consider returning an error and failing startup with explicit messaging instead of runtime panic. Repro: see panic path in `GenerateJWTSecret`.
+  Body: `GenerateJWTSecret` panics if crypto/rand fails after retries. Consider returning an error and failing startup
+  with explicit messaging instead of runtime panic. Repro: see panic path in `GenerateJWTSecret`.
 
 - Title: Panic on request ID generation failure
   Labels: security, backend
   File: internal/logging/middleware.go:62
-  Body: `generateRequestID` panics on crypto/rand failure. Consider returning 503 or fallback ID to avoid crashing request handling.
+  Body: `generateRequestID` panics on crypto/rand failure. Consider returning 503 or fallback ID to avoid crashing
+  request handling.
 
 - Title: MustMarshal panics on marshal errors
   Labels: backend
@@ -17,6 +20,7 @@
   Body: `MustMarshal` panics on JSON errors. Ensure only static data uses this helper or replace with error returns.
 
 ## Incomplete Implementations
+
 - Title: Vulnerability status updates are unimplemented
   Labels: backend, incomplete
   File: internal/services/shell/services.go:283
@@ -48,12 +52,14 @@
   Body: `GetSnapshot` and `GetHistory` return `ErrNotImplemented`. Implement DB retrieval or remove endpoints.
 
 ## Integration / UX
+
 - Title: Logs query total count is inaccurate
   Labels: backend, integration
   File: internal/api/handlers_logs.go:226
   Body: `TotalCount` returns `len(dbLogs)` with TODO. Return actual total count for pagination accuracy.
 
 ## Lint / Hygiene
+
 - Title: Extract repeated "linux" string constant
   Labels: lint, backend
   File: cmd/seed/cmd_uninstall.go:230

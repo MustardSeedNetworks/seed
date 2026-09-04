@@ -18,6 +18,7 @@ uniform surface: `POST /jobs` (kind + params), `GET /jobs/{id}`, `DELETE /jobs/{
 traceroute, pipeline become **job kinds**.
 
 Semantics:
+
 - Persisted (survive restart or fail cleanly); retention + cleanup.
 - Bounded concurrency; reject with `503` under overload (appliance backpressure).
 - Cancellation via ctx; progress reporting; result stored in `store`.
@@ -49,8 +50,8 @@ Shipped:
 
 Deviations / deferred from the original decision:
 
-- **Persistence is in-memory v1** (fail-cleanly-on-restart), not durable. — *Updated
-  (Phase 5c, 2026-06-03):* the **durable job store landed** (#1481–#1485): write-through
+- **Persistence is in-memory v1** (fail-cleanly-on-restart), not durable. — _Updated
+  (Phase 5c, 2026-06-03):_ the **durable job store landed** (#1481–#1485): write-through
   persistence + Get fallback (`jobs.Store` / `dbJobStore` over the `jobs` table),
   boot recovery (`Recover` → in-flight jobs reconciled to failed), durable
   Idempotency-Key dedup, and a retention sweep on the maintenance loop. The
@@ -62,7 +63,7 @@ Deviations / deferred from the original decision:
   completes when the frontend consumes `/jobs` in **Phase 7**, at which point the legacy
   pairs retire.
 - **survey is NOT a job kind.** `create → add-floors → add-samples → generate-report` is a
-  stateful interactive *session*, not a one-shot long-op; it stays a session. (Its
+  stateful interactive _session_, not a one-shot long-op; it stays a session. (Its
   `generate-report` step may later become a job.)
 - **pipeline deferred to Phase 6.** The discovery `pipeline` duplicates the discovery
   `engine` (both orchestrate discover→enrich→assess). Rather than enshrine the redundancy

@@ -8,7 +8,7 @@ active-monitoring anomaly source. Builds on [ADR-0005](0005-unified-jobs.md) (jo
 
 ## Context
 
-ADR-0021 converged anomaly *persistence* and deleted the never-fed bespoke
+ADR-0021 converged anomaly _persistence_ and deleted the never-fed bespoke
 `internal/health.AnomalyDetector`, repointing the `/telemetry/health-checks/anomalies` read at the
 unified SQL store. It deliberately stopped short of building a health **producer**, because doing so
 surfaced an unresolved architecture question and a dormant subsystem:
@@ -42,7 +42,7 @@ anomaly store under `source=probe`. The dormant health-check stack is legacy to 
 ### 1. Probe vs jobs — the boundary
 
 | | **Probe** (`internal/probe`, ADR-0011/0021/this) | **Jobs** (`internal/platform/jobs`, ADR-0005) |
-|---|---|---|
+| --- | --- | --- |
 | Trigger | Declarative + **recurring** on a fixed interval (the scheduler) | Imperative + **one-shot**, user/system requested |
 | Examples | DNS/TLS/ping/HTTP/RTSP/DICOM monitors of a target | speedtest, iperf, a discovery scan, a vuln scan, a survey |
 | Output | `probe_results` time series + threshold `Breach`es → **anomalies** | a `Job{State, Progress, Result}` record + state events |
@@ -50,7 +50,7 @@ anomaly store under `source=probe`. The dormant health-check stack is legacy to 
 
 A **recurring monitor is a probe**; a **one-shot diagnostic is a job**. They are not merged: a probe is
 not "a job kind," and a job is not "a probe run." The one bridge is `Engine.RunNow(probeID)` — the probe
-engine's primitive for "evaluate this *configured monitor* immediately" (used by AutoTest sequences and
+engine's primitive for "evaluate this _configured monitor_ immediately" (used by AutoTest sequences and
 manual UI refresh). That is an on-demand evaluation of an existing probe definition, not a general job;
 it shares the probe's threshold/breach/anomaly path, so an on-demand check raises and clears the same
 anomaly an interval run would. Jobs never produce anomalies; they produce job results.
@@ -75,13 +75,14 @@ pattern the Wi-Fi visibility producer uses, applied to a push channel rather tha
   default; `Field`/`Threshold`/`Actual`/`Kind`/`Target` become the detection evidence.
 
 **As-built (2026-06-11) — cert-expiry is the first kind-specific threshold beyond latency/success.**
-Catalog growth must ship *with* a real breach-emission path (defs matching emitted breaches, not
+Catalog growth must ship _with_ a real breach-emission path (defs matching emitted breaches, not
 speculative stubs). The probe engine previously emitted only `success` (bool) and `latency_ms` (float)
 breaches; the TLS checker computed certificate days-remaining into `Result.Metadata.days_remaining` but
 never threshold-evaluated it. This slice closes that gap end-to-end:
+
 - `genericThreshold` gains `cert_days_remaining` (int) in the per-probe `Warning`/`Critical` JSON,
   evaluated centrally in `evaluateThresholds` like `latency_ms` — but **inverted**: a breach fires when
-  remaining days fall *below* the bound (fewer is worse; a negative value is an already-expired cert).
+  remaining days fall _below_ the bound (fewer is worse; a negative value is an already-expired cert).
 - The actual value is read from `Result.Metadata.days_remaining` via a pointer field, so "absent"
   (a non-TLS probe) is distinct from a real zero/negative — the gate **auto-scopes** to cert-bearing
   probes without the engine knowing about TLS. The JSON field name is the only coupling (the contract
@@ -141,7 +142,7 @@ compat, so the rename is free when it happens).
 - **Resolve probe anomalies only by exact recovery signal (clean result).** Was deferred; **now shipped
   as an additive fast-path alongside** TTL-on-silence (see §3 as-built). The clean-result signal resolves
   immediately when a probe reports healthy; TTL-on-silence still backstops a probe that stops reporting
-  entirely. Resolving *only* by clean result remains rejected — a deleted/disabled probe never sends one.
+  entirely. Resolving _only_ by clean result remains rejected — a deleted/disabled probe never sends one.
 
 ## Consequences
 

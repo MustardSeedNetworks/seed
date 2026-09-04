@@ -25,7 +25,7 @@ list.
      (idle/running/partial). Cross-component (FAB, app shell, cards) signalling
      with zero React context. The reference example for "ephemeral global".
    - `stores/profileStore` — replaced a 48-hook profile context; persists only
-     the active profile *id*.
+     the active profile _id_.
 
 3. **Is it a cross-cutting capability** scoped to the authenticated app —
    identity, permissions, or a small derived bundle handed to a subtree?

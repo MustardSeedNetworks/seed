@@ -5,7 +5,7 @@
 ## Context
 
 The frontend/backend contract is the single largest latent-bug surface: most
-request/response types are hand-typed on *both* the Go and TS sides — the two
+request/response types are hand-typed on _both_ the Go and TS sides — the two
 largest, `profile.ts` (~601 LOC) and `settings.ts` (~757 LOC), are hand-maintained
 in TS with no enforced link to their Go counterparts, so the contract drifts silently.
 
@@ -17,7 +17,7 @@ hand-authored **OpenAPI-first** boundary (author specs in `contract/`, add
 exists. On actually reading `cmd/seed-schema`, there is already a working, CI-gated
 **code-first** pipeline:
 
-```
+```text
 Go DTO ──seed-schema (invopop/jsonschema)──► docs/schemas/api/*.schema.json
                                                    │ json-schema-to-typescript (ui/scripts/gen-types.mjs)
                                                    ▼

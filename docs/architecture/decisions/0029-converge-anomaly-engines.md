@@ -10,7 +10,7 @@ after ADR-0028 (daily-rollup census), which is independent of this convergence.
 
 ADR-0021 locked a single source-neutral `anomaly.Engine` + SQL store, with source as a first-class
 correlation dimension. The Phase 1–4 work shipped the persistence `Coordinator`, the SQL store, and
-**two** long-lived producers — but each owns its *own* engine and Coordinator:
+**two** long-lived producers — but each owns its _own_ engine and Coordinator:
 
 - `internal/wifi/visibility.Service` — engine over the Wi-Fi catalog, `Coordinator(source=wifi)`, a
   5 s eval loop that observes + flushes + prunes (idle retention 5 m), load-on-start. Owned by
@@ -70,7 +70,7 @@ read path — so a shared engine holding every source never leaks the wrong sour
 
 The server calls `Coordinator.Load()` once during init (before any producer starts observing), over
 the merged engine. No per-source cross-contamination, because one catalog holds every def — the
-Phase-1 `Restore` "skip orphan defs" guard no longer silently drops the *other* producer's rows. The
+Phase-1 `Restore` "skip orphan defs" guard no longer silently drops the _other_ producer's rows. The
 two duplicate load-on-start paths in the producers are removed. A final `Flush` on shutdown stays.
 
 ### 6. `troubleshooting.AnalyzeBSSes` stays a transient one-shot — out of scope

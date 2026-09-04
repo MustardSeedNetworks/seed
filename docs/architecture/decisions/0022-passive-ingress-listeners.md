@@ -4,7 +4,7 @@
 
 ## Context
 
-The active diagnostics path *initiates* network conversations: the SNMP poller
+The active diagnostics path _initiates_ network conversations: the SNMP poller
 (ADR-0023) reaches out to targets, discovery probes hosts. But an NMS also has to
 receive **unsolicited** signals — syslog messages, SNMP traps, later NetFlow/IPFIX
 — that devices push at us over UDP with no request on our side. These arrive

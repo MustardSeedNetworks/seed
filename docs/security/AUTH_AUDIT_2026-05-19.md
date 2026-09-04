@@ -13,17 +13,17 @@ prioritize from the findings below.
 
 ## Summary
 
-| Category                  | Result |
-|---------------------------|--------|
-| Password hashing          | WARN — bcrypt cost 12 (Argon2id is target per RFC 9106) |
-| Session token storage     | PASS — httpOnly cookies, refresh rotation, blacklist on logout |
-| CSRF protection           | PASS — SameSite=Strict, 32-byte tokens, constant-time compare |
-| Rate limiting             | PASS — per-IP, sliding window, adaptive cleanup |
-| Account lockout           | PASS — via UserStore (5 attempts / 15 min) |
-| Error messages            | PASS — login always returns `errors.auth.invalidCredentials` |
-| Password policy           | WARN — length+class only; no breach-corpus check |
-| Setup wizard token        | PASS — 32 bytes, single-use, 15 min expiry, constant-time |
-| Audit logging             | WARN — login events logged; password change events partial |
+| Category              | Result                                                         |
+| --------------------- | -------------------------------------------------------------- |
+| Password hashing      | WARN — bcrypt cost 12 (Argon2id is target per RFC 9106)        |
+| Session token storage | PASS — httpOnly cookies, refresh rotation, blacklist on logout |
+| CSRF protection       | PASS — SameSite=Strict, 32-byte tokens, constant-time compare  |
+| Rate limiting         | PASS — per-IP, sliding window, adaptive cleanup                |
+| Account lockout       | PASS — via UserStore (5 attempts / 15 min)                     |
+| Error messages        | PASS — login always returns `errors.auth.invalidCredentials`   |
+| Password policy       | WARN — length+class only; no breach-corpus check               |
+| Setup wizard token    | PASS — 32 bytes, single-use, 15 min expiry, constant-time      |
+| Audit logging         | WARN — login events logged; password change events partial     |
 
 Totals: 6 PASS, 3 WARN, 0 FAIL.
 
@@ -32,6 +32,7 @@ Totals: 6 PASS, 3 WARN, 0 FAIL.
 ## Checklist
 
 ### Password hashing algorithm
+
 - **Result**: WARN
 - **Where**: `internal/auth/auth.go:476-483`
 - **Detail**: `HashPassword` uses bcrypt with cost factor 12. bcrypt is
@@ -40,6 +41,7 @@ Totals: 6 PASS, 3 WARN, 0 FAIL.
   re-hash on next successful login. Migration, not a fix.
 
 ### Session token storage
+
 - **Result**: PASS
 - **Where**:
   - JWT signing: `internal/auth/auth.go:335-375` (HS256, 32-byte secret)
@@ -53,6 +55,7 @@ Totals: 6 PASS, 3 WARN, 0 FAIL.
     change.
 
 ### CSRF protection
+
 - **Result**: PASS
 - **Where**: `internal/auth/csrf.go:80-167`
 - **Detail**: 32-byte token, `subtle.ConstantTimeCompare`, 24-hr expiry,
@@ -61,6 +64,7 @@ Totals: 6 PASS, 3 WARN, 0 FAIL.
   goroutine.
 
 ### Rate limiting
+
 - **Result**: PASS
 - **Where**: `internal/api/ratelimit.go:79-114`
 - **Detail**: 5 attempts per 15-min window per IP for login; 5/min for
@@ -70,6 +74,7 @@ Totals: 6 PASS, 3 WARN, 0 FAIL.
   (`ratelimit.go:298-313`).
 
 ### Account lockout
+
 - **Result**: PASS
 - **Where**: `internal/auth/auth.go:255-291` (UserStore path checks
   `IsLocked` then records failure/success).
@@ -78,6 +83,7 @@ Totals: 6 PASS, 3 WARN, 0 FAIL.
   relies on the IP rate limiter only.
 
 ### Error messages
+
 - **Result**: PASS
 - **Where**: `internal/auth/auth.go:267-281`,
   `internal/api/handlers_auth.go:65-92`
@@ -87,6 +93,7 @@ Totals: 6 PASS, 3 WARN, 0 FAIL.
   No user-enumeration leak.
 
 ### Password policy
+
 - **Result**: WARN
 - **Where**: `internal/auth/auth.go:603-627`
 - **Detail**: Min length 12 + uppercase + lowercase + digit + symbol.
@@ -96,6 +103,7 @@ Totals: 6 PASS, 3 WARN, 0 FAIL.
   password set (filed as followup, not in scope here).
 
 ### Setup wizard token
+
 - **Result**: PASS
 - **Where**: `internal/api/setup_token.go:36-103`
 - **Detail**: 32-byte base64url token, single-use (cleared after
@@ -104,6 +112,7 @@ Totals: 6 PASS, 3 WARN, 0 FAIL.
   `handlers_auth.go:454-463`.
 
 ### Audit logging
+
 - **Result**: WARN
 - **Where**: `internal/api/handlers_auth.go:48-208` (login + logout +
   refresh events tagged `event=auth.*` with IP + outcome).

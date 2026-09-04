@@ -85,13 +85,13 @@ These colors identify The Seed's feature modules. Use for icons and small badges
 canonical hex; surrounding surface/border provides the contrast. The pre-2026-05-22 dark variants
 (`#fbbf24` for Roots and Harvest) made them indistinguishable from each other and from `brand-gold`.
 
-| Token                    | Value     | Module                                              |
-| ------------------------ | --------- | --------------------------------------------------- |
-| `--color-module-roots`   | `#b45309` | Roots — path analysis, traceroute, deep connectivity |
+| Token                    | Value     | Module                                                                    |
+| ------------------------ | --------- | ------------------------------------------------------------------------- |
+| `--color-module-roots`   | `#b45309` | Roots — path analysis, traceroute, deep connectivity                      |
 | `--color-module-canopy`  | `#2d7a3e` | Canopy — Wi-Fi visibility, neighbor scan (matches `brand-primary-strong`) |
-| `--color-module-shell`   | `#ea580c` | Shell — security posture, hardening                 |
-| `--color-module-sap`     | `#0891b2` | Sap — live telemetry, monitoring                    |
-| `--color-module-harvest` | `#d4a017` | Harvest — reports, compliance (matches `brand-gold`) |
+| `--color-module-shell`   | `#ea580c` | Shell — security posture, hardening                                       |
+| `--color-module-sap`     | `#0891b2` | Sap — live telemetry, monitoring                                          |
+| `--color-module-harvest` | `#d4a017` | Harvest — reports, compliance (matches `brand-gold`)                      |
 
 ```tsx
 import { moduleColor } from '../styles/theme';

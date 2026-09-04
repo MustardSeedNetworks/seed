@@ -3,7 +3,7 @@
 ## Quick Reference
 
 | Command | Purpose |
-|---------|---------|
+| --------- | --------- |
 | `make build` | Build all (Go backend) |
 | `make test` | Run all Go tests |
 | `make lint` | Run golangci-lint |
@@ -32,6 +32,7 @@ go test -v ./internal/discovery/...  # Test specific package
 ## Pre-commit
 
 The project has pre-commit hooks that run:
+
 - Secret detection (gitleaks)
 - Go linting
 - Sensitive file checks

@@ -30,7 +30,7 @@ replacement must preserve fully-offline verification.
 Adopt the cross-product `MSN1` signed-token format (frozen in
 `internal/license/signing.go`, identical across seed/stem/niac):
 
-```
+```text
 MSN1.<base64url(payload)>.<base64url(signature)>
 ```
 

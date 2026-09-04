@@ -68,6 +68,7 @@ ADR-0011's architecture; it implements its persistence clause and enforces its s
      acknowledged_at TEXT
    ) STRICT;
    ```
+
 3. **Converge sources.** Delete the bespoke `internal/health.AnomalyDetector` (pre-alpha, no
    compat) and route health/latency detections through the general engine as `anomaly.Detection`s,
    exactly as Wi-Fi does. Wired/link, SNMP, Bluetooth, security, and AutoTest sources register the
@@ -84,11 +85,11 @@ ADR-0011's architecture; it implements its persistence clause and enforces its s
    keep active anomalies indefinitely; TTL-age resolved ones (default 90d) with daily per-(def,subject)
    rollups** mirroring `health_check_rollups_*`, for bounded growth on appliances.
 
-6. **Catalog model & severity (per ADR-0011's `AnomalyDef`).** Each anomaly *type* is a catalog
+6. **Catalog model & severity (per ADR-0011's `AnomalyDef`).** Each anomaly _type_ is a catalog
    entry that gives the operator a guided answer, not just a flag: a one-line **title** (the
    tooltip), an optional longer **description**, **impact** (what it affects and how), and a
    **recommendation** (how to resolve), plus **standards** (IEEE/RFC citations). Citations are a
-   **structured field** *and* are surfaced in the displayed detail (not metadata-only), so the
+   **structured field** _and_ are surfaced in the displayed detail (not metadata-only), so the
    cite shows in the copy while anomalies stay filterable/linkable by standard. **Follow-ups**
    are capability-gated (ADR-0002): where seed has a narrowing tool/test for the diagnosis it
    runs it **automatically**; where it does not, it **prompts** the user. Copy is authored
@@ -102,7 +103,7 @@ ADR-0011's architecture; it implements its persistence clause and enforces its s
    at startup into the validated, id-keyed `Catalog` (ADR-0011, fails-fast); every lookup is then
    an in-memory `map[defKey]Def` (O(1), no SQL/disk) — faster than any database, which buys
    nothing for a small, static, read-only-after-load dataset. This is the inverse of detected
-   *instances* (many/mutable/filtered/persistent → SQL): **access pattern decides storage.** YAML
+   _instances_ (many/mutable/filtered/persistent → SQL): **access pattern decides storage.** YAML
    over Go literals so copy + citations are editable and diff-reviewed without touching detection
    logic; YAML over a DB because no operator/runtime catalog editing is required, so no
    catalog-management UI or seed/override layer is built. CI validates that every detector
@@ -175,16 +176,17 @@ so the "keep active forever, age out resolved at 90d" decision is enforced in pr
 table growth on appliances. Active rows are structurally safe (their `resolved_at` is NULL, so the
 predicate never matches them). Two items the original phase-2 sketch bundled were **re-sequenced**,
 deliberately:
+
 - **Daily rollups → deferred (own design pass).** The `timeseries/retention.RollupSource` framework
-  is a poor fit for mutable anomaly *instances* (its `PurgeRaw(cutoff)` would age out active rows, and
+  is a poor fit for mutable anomaly _instances_ (its `PurgeRaw(cutoff)` would age out active rows, and
   its 7-day raw floor / hourly tier don't apply). The legacy health-style rollup is the right model,
   but health's own `CreateDailyRollup` has no scheduled caller today — rollups need a dedicated
   design that doesn't copy that latent gap. The TTL purge already delivers the growth-bounding win;
   rollups are long-term history, separable.
 - **Load-on-start → folded into the producer phase.** Repopulating the in-memory engine from
   `LoadActive` is only meaningful once a long-lived, server-owned `Coordinator` exists (the per-request
-  Wi-Fi engines are transient). Persistence already satisfies the "anomalies survive restart" *query*
-  promise; engine count/escalation *continuity* is secondary, so load-on-start lands with the server
+  Wi-Fi engines are transient). Persistence already satisfies the "anomalies survive restart" _query_
+  promise; engine count/escalation _continuity_ is secondary, so load-on-start lands with the server
   Coordinator + producers rather than in isolation. **Note for that phase:** persisted `severity` is
   the effective (post-escalation) value; on reload the engine seeds `baseSeverity` from it, which can
   let an already-escalated instance bump one further level on continued recurrence after a restart — an
@@ -209,8 +211,8 @@ now read the unified store's source=health slice through a new
 unified model carries evidence + count + lifecycle instead). The frontend consumes only `activeCount`,
 so no frontend type migration was required. No migration → no schema-golden change.
 
-- **Health *producer* deliberately NOT built in this slice — blocked on architecture.** Phase 4 wires
-  the *read* path; it does not invent a health *write* path, because there is no live health data source
+- **Health _producer_ deliberately NOT built in this slice — blocked on architecture.** Phase 4 wires
+  the _read_ path; it does not invent a health _write_ path, because there is no live health data source
   to feed one. The health-check subsystem is **dormant**: `HealthCheckRepository.Record`/`RecordBatch`
   have zero production callers, so scoring/SLA/alerts/anomalies all read a table nothing writes. The only
   live latency-evaluating subsystem is `internal/probe` (its engine evaluates `latency_ms` thresholds),

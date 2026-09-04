@@ -4,7 +4,7 @@ This directory contains integration, smoke, and load tests for The Seed.
 
 ## Directory Structure
 
-```
+```text
 tests/
 ├── integration/    # Full system integration tests
 ├── smoke/          # Quick sanity checks for deployments
@@ -30,19 +30,25 @@ cd ui && npm run e2e
 ## Test Categories
 
 ### Integration Tests (`integration/`)
+
 Tests that verify multiple components work together correctly.
+
 - Database integration
 - API endpoint testing
 - Service-to-service communication
 
 ### Smoke Tests (`smoke/`)
+
 Fast sanity checks to verify basic functionality after deployment.
+
 - Health endpoints respond
 - Basic CRUD operations work
 - Critical user flows function
 
 ### Load Tests (`load/`)
+
 Performance testing to verify the system handles expected load.
+
 - Concurrent user simulation
 - API throughput benchmarks
 - Memory/CPU profiling under load

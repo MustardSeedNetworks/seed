@@ -1,6 +1,7 @@
 # Audit Suite - Seed (2026-01-26)
 
 ## Commands Run
+
 - `golangci-lint run ./...`
 - `govulncheck ./...`
 - `npm audit --production` (root and `ui/`)
@@ -9,6 +10,7 @@
 - `rg -n "(?i)(password|passwd|secret|api[_-]?key|token|private key|AKIA[0-9A-Z]{16})"`
 
 ## 01 - Initial Audit (Security/Quality)
+
 [SEVERITY: MEDIUM]
 [CATEGORY: Incomplete]
 [FILE: internal/services/shell/services.go:283]
@@ -59,6 +61,7 @@
 [RECOMMENDATION: Return total count from DB for correct pagination]
 
 ## 02 - Lint Remediation
+
 [SEVERITY: LOW]
 [CATEGORY: Backend]
 [FILE: cmd/seed/cmd_uninstall.go:230]
@@ -88,6 +91,7 @@
 [RECOMMENDATION: Rename to `_` or remove]
 
 ## 03 - Error Handling
+
 [SEVERITY: MEDIUM]
 [CATEGORY: Backend]
 [FILE: internal/auth/auth.go:222]
@@ -110,80 +114,108 @@
 [RECOMMENDATION: Ensure only static data uses this helper or replace with error returns]
 
 ## 04 - Input Validation
-No concrete defects found via automated scan. Manual validation of all request payloads still required (form schemas, size limits, normalization).
+
+No concrete defects found via automated scan. Manual validation of all request payloads still required (form schemas,
+size limits, normalization).
 
 ## 05 - Auth Hardening
+
 No concrete defects found via automated scan. Manual review needed for password reset, token revocation, CSRF flows.
 
 ## 06 - Database Security
+
 No concrete defects found via automated scan. Manual review needed for query construction and transaction boundaries.
 
 ## 07 - API Contracts
+
 Not fully assessed. Requires route-by-route tracing of API handlers against UI calls.
 
 ## 08 - Dependency Audit
+
 - `govulncheck ./...`: No vulnerabilities found.
 - `npm audit --production`: No vulnerabilities found (root and `ui/`).
 
 ## 09 - Secrets Audit
-No hardcoded secrets detected by pattern scan. Verified configs use empty/default placeholders (e.g., `configs/seed.yaml` uses empty `jwt_secret` with auto-generation).
+
+No hardcoded secrets detected by pattern scan. Verified configs use empty/default placeholders (e.g.,
+`configs/seed.yaml` uses empty `jwt_secret` with auto-generation).
 
 ## 10 - Frontend Robustness
+
 Not fully assessed. Requires UI route inspection and runtime testing.
 
 ## 11 - Test Coverage
+
 Not fully assessed. Requires coverage data and critical-path mapping.
 
 ## 12 - Concurrency Audit
+
 Not fully assessed. Requires race detector and review of goroutine lifecycles.
 
 ## 13 - Logging & Observability
+
 Not fully assessed. Requires log coverage, metrics, and alerting review.
 
 ## 14 - Performance Audit
+
 Not fully assessed. Requires profiling and resource leak review.
 
 ## 15 - Documentation & Maintainability
+
 Not fully assessed.
 
 ## 16 - Configuration Management
+
 Not fully assessed. Requires environment variable and config drift review.
 
 ## 17 - API Design
+
 Not fully assessed.
 
 ## 18 - CI/CD Audit
+
 Not fully assessed.
 
 ## 19 - Final Sweep
+
 Pending after fixes.
 
 ## 20 - Rate Limiting
+
 Not fully assessed.
 
 ## 21 - Internationalization
+
 Not fully assessed.
 
 ## 22 - Accessibility
+
 Not fully assessed.
 
 ## 23 - Responsive Design
+
 Not fully assessed.
 
 ## 24 - SSE Security
+
 Not fully assessed.
 
 ## 25 - File Upload Security
+
 Not fully assessed.
 
 ## 26 - GraphQL Security
+
 Not applicable unless GraphQL is introduced.
 
 ## 27 - Architecture Audit
+
 Not fully assessed. See existing architecture docs for baseline.
 
 ## 28 - Dead Code Audit
+
 Partial: multiple TODOs indicate stubs; full dead-code sweep pending.
 
 ## 29 - Code Duplication Audit
+
 Not fully assessed.

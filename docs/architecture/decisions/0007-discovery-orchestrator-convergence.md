@@ -1,6 +1,7 @@
 # ADR-0007: Discovery orchestrator convergence — engine vs pipeline, deferred to Phase 7
 
-**Status:** Accepted — 2026-06-03 · partially superseded by [ADR-0008](0008-pure-data-discovery-types-in-schema.md) (2026-06-04) on the schema/types-extraction deferral; the Pipeline→Engine fold still stands
+**Status:** Accepted — 2026-06-03 · partially superseded by [ADR-0008](0008-pure-data-discovery-types-in-schema.md)
+(2026-06-04) on the schema/types-extraction deferral; the Pipeline→Engine fold still stands
 
 ## Context
 
@@ -9,7 +10,7 @@ carries **four** overlapping orchestrators, discovered while scoping the Phase 6
 split:
 
 | Type | File | Role | Owned by |
-|---|---|---|---|
+| --- | --- | --- | --- |
 | **Engine** | `engine.go` | "primary" unified orchestrator; `DeviceRegistry` is the single source of truth; distributes events | composition root |
 | **Service** | `service.go` | older direct-settings orchestrator; holds the Pipeline via `SetPipeline` | composition root |
 | **Pipeline** | `pipeline.go` + `pipeline_*.go` | sequential phased model (enumeration → resolution → scanning → assessment); own `currentRun` state | Service |

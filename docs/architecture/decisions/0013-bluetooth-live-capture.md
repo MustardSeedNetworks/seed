@@ -1,13 +1,15 @@
 # ADR-0013: Bluetooth live-scan capture port
 
-**Status:** Accepted — 2026-06-05 · `Scanner` port + data types defined (`internal/discovery/bluetooth`); per-OS live-scan drivers (CoreBluetooth / BlueZ D-Bus / WinRT) not yet implemented, so live BLE advertisement sweep remains pending.
+**Status:** Accepted — 2026-06-05 · `Scanner` port + data types defined (`internal/discovery/bluetooth`); per-OS
+live-scan drivers (CoreBluetooth / BlueZ D-Bus / WinRT) not yet implemented, so live BLE advertisement sweep remains
+pending.
 
 ## Context
 
 Seed already ships a Bluetooth visibility UI — decode tables (manufacturer ID →
 company, service UUID → GATT name, appearance → label), a `useBluetoothScan`
 hook on the unified jobs spine (`bluetooth-scan` kind), and a card + full-screen
-device modal. What it lacks is a real *live* scan: the scanner backend
+device modal. What it lacks is a real _live_ scan: the scanner backend
 (`internal/discovery/bluetooth_{darwin,linux,windows}.go`) is uneven —
 
 - **macOS**: `system_profiler` (+ optional `blueutil`) → only paired/connected

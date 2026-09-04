@@ -36,16 +36,16 @@ just not expressed as package or interface boundaries.
 ADR-0007 deferred the discovery **orchestrator convergence** (Engine vs Pipeline)
 to Phase 7, gated on two facts that are **no longer true**:
 
-- *"the shipping UX rides Pipeline, the preferred Engine has no users."* The
+- _"the shipping UX rides Pipeline, the preferred Engine has no users."_ The
   `/api/v1/security/pipeline/*` endpoints have since been **retired**; only
   `/api/v1/discovery/engine/*` remains, and **Engine is the canonical
   orchestrator**. The Pipeline→Engine fold already happened.
-- *"discovery is a hot shared workstream needing coordination."* The owner now
+- _"discovery is a hot shared workstream needing coordination."_ The owner now
   holds **sole ownership** of discovery; there is no parallel session to coordinate
   with.
 
-This ADR is about a **different, complementary axis** than ADR-0007: not *which
-orchestrator wins* (settled — Engine), but *how the capability code is packaged*
+This ADR is about a **different, complementary axis** than ADR-0007: not _which
+orchestrator wins_ (settled — Engine), but _how the capability code is packaged_
 (by stage, behind ports). With both of ADR-0007's gates gone, the Phase-6 stage
 split proceeds.
 
@@ -58,7 +58,7 @@ HTTP harness — **byte-identical wire output at every step**.
 
 ### Target structure
 
-```
+```text
 internal/discovery/
   model/        — leaf: DiscoveredDevice + all inter-stage data types, enums, ports
   enumerate/    — ARP/ICMP/NDP/mDNS-listen/NetBIOS/WoL/Bluetooth/LLDP/CDP/EDP/Wi-Fi/L2/manager/devices
@@ -95,7 +95,7 @@ type Assessor interface {
 }
 ```
 
-The interfaces stay ≤ a few methods (interfacebloat-safe). Stage *constructors*
+The interfaces stay ≤ a few methods (interfacebloat-safe). Stage _constructors_
 take the existing capability dependencies (e.g. `Assessor` takes a `CVEProvider`).
 
 ### The facade — preserve the external surface
@@ -117,7 +117,7 @@ them at the subpackages directly once the dust settles.
    enums, the inter-stage DTOs (`DeviceProfile`, SNMP data, `DeviceVulnerabilities`,
    `WiFiPresence`, `BluetoothPresence`, `ScanOptions`/`ScanResult`/`EngineStats`),
    and the stage port interfaces into `internal/discovery/model`. Add aliases in the
-   root. Golden + schema unchanged. *(No depguard rule yet — nothing to enforce.)*
+   root. Golden + schema unchanged. _(No depguard rule yet — nothing to enforce.)_
 2. **vuln.** Move `vulnerability.go`, `cve_*.go`, `problem*.go` → `discovery/vuln`
    (it already has the `CVEProvider` port; pure leaf). Engine calls the `Assessor`
    port. depguard: `vuln → model` only.
@@ -135,7 +135,7 @@ them at the subpackages directly once the dust settles.
 ### Invariants held at every step
 
 - **Golden HTTP harness byte-identical** (`TestGoldenHTTP*`); regenerate with
-  `UPDATE_GOLDEN` only when a change is *intended* and reviewed.
+  `UPDATE_GOLDEN` only when a change is _intended_ and reviewed.
 - **Schema drift gate green** — regenerate `docs/schemas/api` + TS types if a moved
   type's reflection changes; aliases are chosen specifically to avoid that.
 - **`make test-fast` (CGO=0) locally**; `-race` + real capture run in CI.
@@ -170,7 +170,7 @@ structs). Moving those result types into a `model` leaf is therefore impossible
 without either moving the whole cluster or creating an import cycle. So instead of
 a `model` leaf + facade aliases, the **root `discovery` package is the kernel**:
 it keeps `DiscoveredDevice` + all result types + the stage **port interfaces**;
-each stage *subpackage* will import the kernel for those types and implement its
+each stage _subpackage_ will import the kernel for those types and implement its
 port; the kernel does **not** import the stages (the orchestrator holds the ports
 as interfaces, and the composition root injects the concrete stages). `depguard`
 enforces `stages → kernel`, never the reverse, and no sibling-to-sibling imports.
@@ -186,54 +186,54 @@ orchestrates the ports. Per-stage subpackage relocation + depguard follow.
 ## Implementation status
 
 - [x] 0. stage ports + stage types in-package; Engine orchestrates ports
-      (`stages.go`); behaviour-preserving, golden byte-identical
+  (`stages.go`); behaviour-preserving, golden byte-identical
 - [x] 1. `vuln` stage → `discovery/vuln` subpackage + depguard. `VulnerabilityScanner`
-      + CVE providers (NVD/local/KEV) + the assess `Stage` moved; result types
-      (`Vulnerability`/`DeviceVulnerabilities`) stay in the kernel (DiscoveredDevice
-      fields) and are aliased in the stage. Engine holds the injected `Assessor`
-      port; `internal/api` wires `vuln.NewStage(scanner, engine.Registry(),
-      engine.EventBus())`. depguard rule `discovery-stage-direction` bans the kernel
-      from importing the stage. Golden byte-identical, schema unchanged.
+  and CVE providers (NVD/local/KEV) + the assess `Stage` moved; result types
+  (`Vulnerability`/`DeviceVulnerabilities`) stay in the kernel (DiscoveredDevice
+  fields) and are aliased in the stage. Engine holds the injected `Assessor`
+  port; `internal/api` wires `vuln.NewStage(scanner, engine.Registry(),
+  engine.EventBus())`. depguard rule `discovery-stage-direction` bans the kernel
+  from importing the stage. Golden byte-identical, schema unchanged.
 - [x] 2. `fingerprint` stage → `discovery/fingerprint` + depguard. **DONE — scoped to
-      the port-scan leaf cluster (PortScanner + TCPProber), NOT the whole enrich cluster.**
+  the port-scan leaf cluster (PortScanner + TCPProber), NOT the whole enrich cluster.**
 
-      **Why the original "atomic ~9-file move" plan was wrong (discovered during
-      implementation, 2026-06-08):** the plan rested on *"`DeviceProfiler` embeds
-      `*SNMPCollector` + `*PortScanner`, so the three enrich components are mutually
-      coupled."* The first half is false in the code: `DeviceProfiler` embeds only
-      `*SNMPCollector` and does its own `net.Dial` port scanning — it holds **no**
-      `PortScanner`. So the enrich code is two *independent* clusters:
-      (A) `SNMPCollector` ← `DeviceProfiler`, and (B) `TCPProber` ← `PortScanner`.
+  **Why the original "atomic ~9-file move" plan was wrong (discovered during
+  implementation, 2026-06-08):** the plan rested on _"`DeviceProfiler` embeds
+  `*SNMPCollector` + `*PortScanner`, so the three enrich components are mutually
+  coupled."_ The first half is false in the code: `DeviceProfiler` embeds only
+  `*SNMPCollector` and does its own `net.Dial` port scanning — it holds **no**
+  `PortScanner`. So the enrich code is two _independent_ clusters:
+  (A) `SNMPCollector` ← `DeviceProfiler`, and (B) `TCPProber` ← `PortScanner`.
 
-      **Why cluster A (profiler/SNMP) STAYS kernel-resident, by design:** the kernel
-      orchestrator `discovery.Service` co-owns the `DeviceProfiler` lifecycle — it
-      constructs it and drives ~11 methods (`Start/Stop/QueueProfile/GetProfile/
-      IsProfiling/GetSNMPData/GetResolvedNames/GetProfilingStatus/Clear{Profiles,
-      SNMPData,ResolvedNames}`), and the Engine adds `ScanConfigSnapshot/UpdateScanConfig`.
-      `Service` cannot move to a stage subpackage (it reaches into `DeviceDiscovery`'s
-      unexported `protoManager`). Moving `DeviceProfiler` out while `Service` stays
-      would force a ~13-method union "ProfilerPort" that trips `interfacebloat` and is a
-      1:1 mirror of the struct — a header-interface anti-pattern that hides nothing and
-      adds only indirection. The profiler is genuinely orchestrator-coupled, not a leaf;
-      forcing it behind a port fights that reality. It stays in the kernel until/unless
-      a deliberate redesign gives `Service` a narrow profiler contract.
+  **Why cluster A (profiler/SNMP) STAYS kernel-resident, by design:** the kernel
+  orchestrator `discovery.Service` co-owns the `DeviceProfiler` lifecycle — it
+  constructs it and drives ~11 methods (`Start/Stop/QueueProfile/GetProfile/
+  IsProfiling/GetSNMPData/GetResolvedNames/GetProfilingStatus/Clear{Profiles,
+  SNMPData,ResolvedNames}`), and the Engine adds `ScanConfigSnapshot/UpdateScanConfig`.
+  `Service` cannot move to a stage subpackage (it reaches into `DeviceDiscovery`'s
+  unexported `protoManager`). Moving `DeviceProfiler` out while `Service` stays
+  would force a ~13-method union "ProfilerPort" that trips `interfacebloat` and is a
+  1:1 mirror of the struct — a header-interface anti-pattern that hides nothing and
+  adds only indirection. The profiler is genuinely orchestrator-coupled, not a leaf;
+  forcing it behind a port fights that reality. It stays in the kernel until/unless
+  a deliberate redesign gives `Service` a narrow profiler contract.
 
-      **What moved (cluster B — a clean leaf with a narrow seam):** `portscan.go`,
-      `tcpprobe.go`, `tcpprobe_windows.go` (+ their tests) → `internal/discovery/fingerprint`.
-      The kernel gains one narrow port `PortScannerPort{QuickScan}` (stages.go); the
-      `enrichStage`/`Engine` `portScanner` field + `SetPortScanner` take that interface;
-      the composition root injects the concrete `fingerprint.PortScanner`.
-      `Engine.GetCapabilities` keeps its nil-check on the interface field → identical wire.
-      **Result types STAY in the kernel (`portscan_types.go`), aliased in fingerprint:**
-      `PortState` (+ `PortOpen/PortClosed/PortFiltered`), `ServiceInfo`, `PortScanResult`
-      (they sit in the `QuickScan` signature). `TCPProbeResult` moved to fingerprint (no
-      kernel port uses it). Two unexported strings (`serviceUnknown`, `errNoIPv4ForTarget`)
-      stay in the kernel for staying callers (the classifier / traceroute) with private
-      copies in fingerprint. api re-points `New{PortScanner,TCPProber}` → `fingerprint.*`
-      and keeps `discovery.PortScanResult` (kernel result type). depguard
-      `discovery-stage-direction` extended to ban the kernel from importing fingerprint.
-      Golden byte-identical, schema unchanged. `Fingerprinter` + `Tracer` were never in
-      the enrich path and remain kernel-resident.
+  **What moved (cluster B — a clean leaf with a narrow seam):** `portscan.go`,
+  `tcpprobe.go`, `tcpprobe_windows.go` (+ their tests) → `internal/discovery/fingerprint`.
+  The kernel gains one narrow port `PortScannerPort{QuickScan}` (stages.go); the
+  `enrichStage`/`Engine` `portScanner` field + `SetPortScanner` take that interface;
+  the composition root injects the concrete `fingerprint.PortScanner`.
+  `Engine.GetCapabilities` keeps its nil-check on the interface field → identical wire.
+  **Result types STAY in the kernel (`portscan_types.go`), aliased in fingerprint:**
+  `PortState` (+ `PortOpen/PortClosed/PortFiltered`), `ServiceInfo`, `PortScanResult`
+  (they sit in the `QuickScan` signature). `TCPProbeResult` moved to fingerprint (no
+  kernel port uses it). Two unexported strings (`serviceUnknown`, `errNoIPv4ForTarget`)
+  stay in the kernel for staying callers (the classifier / traceroute) with private
+  copies in fingerprint. api re-points `New{PortScanner,TCPProber}` → `fingerprint.*`
+  and keeps `discovery.PortScanResult` (kernel result type). depguard
+  `discovery-stage-direction` extended to ban the kernel from importing fingerprint.
+  Golden byte-identical, schema unchanged. `Fingerprinter` + `Tracer` were never in
+  the enrich path and remain kernel-resident.
 - [ ] 3. `resolve` stage → `discovery/resolve` + depguard
 - [ ] 4. `enumerate` stage → `discovery/enumerate` + depguard
 - [ ] 5. direction-lock depguard + cleanup + §16 doc

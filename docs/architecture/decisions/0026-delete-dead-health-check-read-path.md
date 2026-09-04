@@ -18,7 +18,7 @@ that table — **legacy to delete, not revive**. This ADR carries out that delet
 A read-only audit (2026-06-11) confirmed the stack is entirely dead:
 
 | Surface | State | Evidence |
-|---|---|---|
+| --- | --- | --- |
 | `health_check_results`, `health_check_rollups_hourly`, `health_check_rollups_daily` | **written by nothing** | `HealthCheckRepository.Record`/`RecordBatch` have zero production callers |
 | `GET /telemetry/health-checks/results`, `/history` | **dead** | zero frontend callers **and** an empty backing table |
 | `/scores`, `/sla` | **dead** | `health.ScoringService` / `health.SLATracker` read the empty table → always zero; the only consumer (`SlaDashboardCard`) renders all-zeros |
@@ -90,7 +90,7 @@ the family to `/telemetry/probes/*` rides the future migration of `run`/`setting
   all-zeros dashboard are gone. The `monitoring` use-case now has a single honest concern.
 - `SlaDashboardCard` shows only live data (probe-sourced active anomalies). Its name becomes a slight
   misnomer; a later rename/relocation rides the SLA-on-probe feature if it lands.
-- A debt is made explicit and *not* silently carried as a stub: SLA/scoring/alerting on `probe_results`
+- A debt is made explicit and _not_ silently carried as a stub: SLA/scoring/alerting on `probe_results`
   is a future feature, owned by a future ADR, only if prioritized.
 - The live ad-hoc `/run` + `/settings` health-check feature is untouched; its own eventual migration
   onto probe (and the family path rename) is separate, larger work.
