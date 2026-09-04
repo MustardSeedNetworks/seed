@@ -1,5 +1,38 @@
-# path maximum-lines
-#
-# Files already over the red-flag threshold when the gate was adopted. A listed
-# file may not grow past its recorded maximum; new or increased red-flag files
-# fail CI. Shrink these and lower the number — never raise it without review.
+# Files over the size limit, with the maximum they may not grow past.
+# Seeded by ci/file-size-one-tier; shrink-only. One line: <path> <lines>
+internal/api/handlers_network.go 1023
+internal/api/server.go 1157
+internal/api/server_routes.go 984
+internal/auth/auth.go 1085
+internal/auth/auth_test.go 1489
+internal/config/config_test.go 1386
+internal/database/database_test.go 1827
+internal/dhcp/dhcp_helpers_test.go 1860
+internal/dhcp/lease_parsing_test.go 1115
+internal/diagnostics/gateway/gateway_test.go 1496
+internal/diagnostics/iperf/iperf_test.go 1621
+internal/diagnostics/speedtest/speedtest_comprehensive_test.go 1031
+internal/diagnostics/speedtest/speedtest_test.go 1207
+internal/diagnostics/speedtest/speedtest_unit_test.go 1024
+internal/diagnostics/vlan/vlan_test.go 1509
+internal/mibdb/builtin_oids.go 927
+internal/netif/interfaces_test.go 1022
+internal/protocols/snmp/snmp_extended_test.go 1979
+internal/reporting/internal_test.go 1488
+internal/reporting/scheduler_suite_test.go 1342
+internal/reporting/services_test.go 1709
+ui/src/app.test.tsx 787
+ui/src/app/useAppOrchestration.ts 649
+ui/src/components/cards/LogViewerModal.tsx 765
+ui/src/components/cards/PerformanceCard.tsx 776
+ui/src/components/profiles/ProfileManagement.tsx 653
+ui/src/components/settings/SettingsDrawer.tsx 751
+ui/src/components/settings/sections/HealthChecksSettingsSpecialty.tsx 636
+ui/src/components/settings/sections/PerformanceSettings.tsx 639
+ui/src/components/settings/sections/SnmpSettings.tsx 611
+ui/src/components/settings/sections/ThresholdsSettings.tsx 778
+ui/src/components/settings/sections/discovery/DiscoveryCustomOptions.tsx 770
+ui/src/components/ui/HelpModal.stories.tsx 619
+ui/src/components/ui/SpeedGauge.stories.tsx 676
+ui/src/hooks/useNetworkFetchers.ts 608
+ui/src/types/settings.ts 707
