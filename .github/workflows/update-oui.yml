@@ -11,6 +11,15 @@
 #
 # It opens a PR (not a direct push to main) so the data change stays reviewed,
 # version-controlled, and reproducible. Runs monthly + on demand.
+#
+# The branch push and the PR are authored by the msn-ci-bot App, not by
+# GITHUB_TOKEN, for two reasons. The org forbids Actions from creating pull
+# requests, so `gh pr create` under GITHUB_TOKEN fails outright with "GitHub
+# Actions is not permitted to create or approve pull requests" -- that is what
+# broke the 2026-09-01 run, which pushed its branch and then died with no PR
+# and nothing watching. An App installation token is not subject to that
+# restriction. Second, GITHUB_TOKEN-authored refs do not trigger workflows, so
+# even a successful create would have produced a refresh PR with no CI on it.
 # =============================================================================
 
 name: Refresh OUI Database
@@ -21,9 +30,9 @@ on:
     - cron: '0 6 1 * *'
   workflow_dispatch:
 
-permissions:
-  contents: write
-  pull-requests: write
+# Nothing here uses GITHUB_TOKEN: the App token carries the write access, and
+# it is scoped by the mint step rather than by this block.
+permissions: {}
 
 concurrency:
   group: update-oui
@@ -37,8 +46,32 @@ jobs:
   refresh-oui:
     name: Refresh embedded OUI registry
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
+      - name: Mint GitHub App token
+        id: app-token
+        uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3.2.0
+        with:
+          client-id: ${{ secrets.APP_CLIENT_ID }}
+          private-key: ${{ secrets.APP_PRIVATE_KEY }}
+          # Exactly what this workflow does: push a data branch (contents) and
+          # open/update/label the refresh PR (pull-requests). Do NOT add
+          # permission-issues -- the msn-ci-bot installation does not grant it
+          # and create-github-app-token hard-fails on a permission the
+          # installation lacks; `--label` on a pull request is covered by
+          # pull-requests. permission-workflows is not needed either: the PR
+          # only ever touches oui.txt.
+          permission-contents: write
+          permission-pull-requests: write
+
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          # The App token has to be the persisted credential, not just the one
+          # `gh pr create` sees: when the refresh branch already exists this
+          # run window the job pushes to an open PR, and a GITHUB_TOKEN-authored
+          # push fires no `synchronize`, so the PR's CI would go stale.
+          token: ${{ steps.app-token.outputs.token }}
 
       - name: Download latest IEEE OUI registry
         run: |
@@ -101,15 +134,20 @@ jobs:
       - name: Open refresh PR
         if: steps.diff.outputs.changed == 'true'
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+          APP_SLUG: ${{ steps.app-token.outputs.app-slug }}
         run: |
           set -euo pipefail
           stamp="$(date -u +%Y%m%d)"
           branch="chore/oui-refresh-${stamp}"
           entries="$(grep -c '(hex)' "$OUI_PATH" || echo '?')"
 
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          # Commit as the App that pushes and opens the PR, so author and
+          # actor agree. The numeric id is what makes the noreply address
+          # resolve to the bot account.
+          app_id="$(gh api "/users/${APP_SLUG}[bot]" --jq .id)"
+          git config user.name "${APP_SLUG}[bot]"
+          git config user.email "${app_id}+${APP_SLUG}[bot]@users.noreply.github.com"
 
           # Reuse an open refresh branch if it already exists this run window.
           git switch -c "$branch" 2>/dev/null || git switch "$branch"
