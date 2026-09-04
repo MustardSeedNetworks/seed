@@ -115,8 +115,8 @@ func TestRemovedKeysAreStripped(t *testing.T) {
 			if writeErr := os.WriteFile(path, encoded, 0o600); writeErr != nil {
 				t.Fatalf("write: %v", writeErr)
 			}
-			if _, err := config.Load(path); err != nil {
-				t.Errorf("Load with a removed key present: %v", err)
+			if _, loadErr := config.Load(path); loadErr != nil {
+				t.Errorf("Load with a removed key present: %v", loadErr)
 			}
 		})
 	}
