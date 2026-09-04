@@ -1,101 +1,92 @@
 #!/bin/bash
 # scripts/check-file-size.sh
-# Checks Go source files don't exceed maximum line count
-# Part of CI quality gates
+# One size limit per file type, enforced. Part of CI quality gates.
 #
-# Files above the red-flag threshold fail unless their current debt is listed
-# in scripts/file-size-baseline.txt. A baselined file may not grow.
+# A file over its limit fails the build unless scripts/file-size-baseline.txt
+# grants it an accepted maximum, and a granted file may not grow past it. That
+# is the whole rule: debt is explicit, reviewed, and shrink-only.
+#
+# There used to be two tiers -- an advisory warning at 600 Go / 400 TS lines
+# and a failing "red flag" at 1200 / 800. The warning tier changed nothing
+# between January and September 2026: it printed on every run, blocked nothing,
+# and trained everyone to scroll past it. A gate that cannot fail is not a
+# gate, so the advisory tier is gone and the enforced limit moved to where the
+# warning used to be pointing (900 Go / 600 TS) rather than staying at a
+# number nobody would ever hit deliberately.
 
 set -euo pipefail
 
 SCAN_ROOT=${SCAN_ROOT:-.}
-MAX_GO_LINES=${MAX_GO_LINES:-600}
+MAX_GO_LINES=${MAX_GO_LINES:-900}
 MAX_TEST_LINES=${MAX_TEST_LINES:-1000}
-MAX_TS_LINES=${MAX_TS_LINES:-400}
-RED_FLAG_GO=${RED_FLAG_GO:-1200}
-RED_FLAG_TS=${RED_FLAG_TS:-800}
+MAX_TS_LINES=${MAX_TS_LINES:-600}
 BASELINE_FILE=${BASELINE_FILE:-scripts/file-size-baseline.txt}
 VIOLATIONS=0
-WARNINGS=0
+BASELINED=0
 
 cd "$SCAN_ROOT"
 
 baseline_limit() {
     local file=$1
+    # No baseline file is a valid state -- it means nothing has been granted
+    # size debt. Reading it unconditionally made the first violation die in
+    # awk instead of being reported.
+    [ -f "$BASELINE_FILE" ] || return 0
     awk -v target="$file" '$1 == target { print $2; exit }' "$BASELINE_FILE"
 }
 
-record_red_flag() {
-    local file=$1
-    local lines=$2
-    local threshold=$3
-    local limit
-    limit=$(baseline_limit "$file")
-    if [ -n "$limit" ] && [ "$lines" -le "$limit" ]; then
-        echo "⚠️  $file ($lines lines, baselined maximum: $limit)"
-        WARNINGS=$((WARNINGS + 1))
-        return
+check() {
+    local file=$1 lines=$2 limit=$3 granted
+    [ "$lines" -le "$limit" ] && return 0
+    granted=$(baseline_limit "$file")
+    if [ -n "$granted" ] && [ "$lines" -le "$granted" ]; then
+        echo "📎 $file ($lines lines, baselined at $granted — may not grow)"
+        BASELINED=$((BASELINED + 1))
+        return 0
     fi
-    echo "❌ $file ($lines lines, red flag: >${threshold})"
+    if [ -n "$granted" ]; then
+        echo "❌ $file ($lines lines) grew past its baselined maximum of $granted"
+    else
+        echo "❌ $file ($lines lines, limit ${limit})"
+    fi
     VIOLATIONS=$((VIOLATIONS + 1))
 }
 
 echo "Checking file sizes:"
-echo "  Go source: max ${MAX_GO_LINES}, red flag >${RED_FLAG_GO}"
+echo "  Go source: max ${MAX_GO_LINES}"
 echo "  Go tests:  max ${MAX_TEST_LINES}"
-echo "  TS/TSX:    max ${MAX_TS_LINES}, red flag >${RED_FLAG_TS}"
-echo "  Baseline:  ${BASELINE_FILE}"
+echo "  TS/TSX:    max ${MAX_TS_LINES}"
+echo "  Baseline:  ${BASELINE_FILE} (shrink-only)"
 echo "==========================================================================="
 
-# Check Go non-test files
 while IFS= read -r -d '' file; do
     file=${file#./}
-    lines=$(wc -l < "$file" | tr -d ' ')
-    if [ "$lines" -gt "$RED_FLAG_GO" ]; then
-        record_red_flag "$file" "$lines" "$RED_FLAG_GO"
-    elif [ "$lines" -gt "$MAX_GO_LINES" ]; then
-        echo "⚠️  $file ($lines lines, max: $MAX_GO_LINES)"
-        WARNINGS=$((WARNINGS + 1))
-    fi
+    check "$file" "$(wc -l < "$file" | tr -d ' ')" "$MAX_GO_LINES"
 done < <(find . -name "*.go" -not -name "*_test.go" -not -path "./vendor/*" -print0 2>/dev/null || true)
 
-# Check Go test files (allow more lines)
 while IFS= read -r -d '' file; do
     file=${file#./}
-    lines=$(wc -l < "$file" | tr -d ' ')
-    if [ "$lines" -gt "$MAX_TEST_LINES" ]; then
-        echo "⚠️  $file ($lines lines, max: $MAX_TEST_LINES)"
-        WARNINGS=$((WARNINGS + 1))
-    fi
+    check "$file" "$(wc -l < "$file" | tr -d ' ')" "$MAX_TEST_LINES"
 done < <(find . -name "*_test.go" -not -path "./vendor/*" -print0 2>/dev/null || true)
 
-# Check TS/TSX files
 if [ -d "ui/src" ]; then
     while IFS= read -r -d '' file; do
         file=${file#./}
-        lines=$(wc -l < "$file" | tr -d ' ')
-        if [ "$lines" -gt "$RED_FLAG_TS" ]; then
-            record_red_flag "$file" "$lines" "$RED_FLAG_TS"
-        elif [ "$lines" -gt "$MAX_TS_LINES" ]; then
-            echo "⚠️  $file ($lines lines, max: $MAX_TS_LINES)"
-            WARNINGS=$((WARNINGS + 1))
-        fi
-    done < <(find ui/src -name "*.ts" -o -name "*.tsx" | tr '\n' '\0' 2>/dev/null || true)
+        check "$file" "$(wc -l < "$file" | tr -d ' ')" "$MAX_TS_LINES"
+    done < <(find ui/src \( -name "*.ts" -o -name "*.tsx" \) -print0 2>/dev/null || true)
 fi
 
 echo "==========================================================================="
 
-if [ "$VIOLATIONS" -eq 0 ] && [ "$WARNINGS" -eq 0 ]; then
-    echo "✅ All files within size limits"
-    exit 0
-fi
-
-echo "📊 Found $VIOLATIONS red flag(s), $WARNINGS warning(s)"
-
 if [ "$VIOLATIONS" -gt 0 ]; then
-    echo "❌ Failing due to new or increased red-flag files"
-    echo "Split the file or update the reviewed baseline with its accepted maximum."
+    echo "❌ $VIOLATIONS file(s) failed the size gate"
+    echo "Split the file, or record its accepted maximum in ${BASELINE_FILE}."
+    echo "A file already listed there may shrink but never grow."
     exit 1
 fi
 
-echo "ℹ️  Warnings are existing size debt below the enforced red-flag boundary"
+if [ "$BASELINED" -gt 0 ]; then
+    echo "✅ Within limits — ${BASELINED} baselined file(s), none grown"
+else
+    echo "✅ All files within size limits"
+fi
