@@ -414,22 +414,36 @@ func TestLogBroadcaster_SetDBWriter(t *testing.T) {
 	}
 }
 
-func TestLogBroadcaster_Stop(_ *testing.T) {
+func TestLogBroadcaster_Stop(t *testing.T) {
 	lb := logging.NewLogBroadcaster(100)
 	mw := &mockDBWriter{}
 	lb.SetDBWriter(mw)
 
-	for range 10 {
-		entry := logging.NewLogEntry("INFO", "test")
-		lb.Write(entry)
+	const entries = 10
+	for range entries {
+		lb.Write(logging.NewLogEntry("INFO", "test"))
 	}
 
-	// Stop should flush remaining entries
+	// Stop flushes the pending batch; that flush is the contract under test.
 	lb.Stop()
 
-	// Multiple Stop calls should not panic
+	mw.mu.Lock()
+	written := mw.writeCount + mw.batchCount
+	mw.mu.Unlock()
+	if written != entries {
+		t.Errorf("writer saw %d entries after Stop, want %d", written, entries)
+	}
+
+	// Stop is idempotent and must not double-flush.
 	lb.Stop()
 	lb.Stop()
+
+	mw.mu.Lock()
+	written = mw.writeCount + mw.batchCount
+	mw.mu.Unlock()
+	if written != entries {
+		t.Errorf("writer saw %d entries after repeated Stop, want %d", written, entries)
+	}
 }
 
 func TestInitBroadcaster(t *testing.T) {

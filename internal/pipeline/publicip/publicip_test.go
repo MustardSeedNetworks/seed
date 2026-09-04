@@ -401,27 +401,32 @@ func TestResult_OmitEmpty(t *testing.T) {
 	}
 }
 
-func TestChecker_ConcurrentAccess(_ *testing.T) {
+func TestChecker_ConcurrentAccess(t *testing.T) {
 	c := publicip.NewChecker()
 
-	// Pre-populate cache.
+	// Pre-populate cache so every reader takes the cache path and no goroutine
+	// reaches the network.
 	c.CheckerSetCache(&publicip.Result{
 		IPv4:        "192.0.2.1",
 		LastChecked: time.Now(),
 	}, time.Now())
 
-	// Access cache concurrently.
-	done := make(chan bool, 10)
-	for range 10 {
+	const readers = 10
+	results := make(chan *publicip.Result, readers)
+	for range readers {
 		go func() {
-			_ = c.GetPublicIP(context.Background())
-			done <- true
+			results <- c.GetPublicIP(context.Background())
 		}()
 	}
 
-	// Wait for all goroutines.
-	for range 10 {
-		<-done
+	for range readers {
+		got := <-results
+		if got == nil {
+			t.Fatal("GetPublicIP() returned nil, want the cached result")
+		}
+		if got.IPv4 != "192.0.2.1" {
+			t.Errorf("GetPublicIP().IPv4 = %q, want %q", got.IPv4, "192.0.2.1")
+		}
 	}
 }
 

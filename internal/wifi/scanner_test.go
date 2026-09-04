@@ -3,7 +3,6 @@
 package wifi_test
 
 import (
-	"sync"
 	"testing"
 	"time"
 
@@ -150,46 +149,6 @@ func TestScannerGetLastScanTime(t *testing.T) {
 	if !lastScan.Equal(expectedTime) {
 		t.Errorf("GetLastScanTime() = %v, want %v", lastScan, expectedTime)
 	}
-}
-
-func TestScannerConcurrentAccess(_ *testing.T) {
-	scanner := wifi.NewScanner("en0")
-	scanTime := time.Now()
-
-	// Prepare test data
-	testNetworks := map[string]*wifi.ScannedNetwork{
-		"00:11:22:33:44:55": {
-			SSID:      "ConcurrentNet",
-			BSSID:     "00:11:22:33:44:55",
-			Signal:    -55,
-			Channel:   11,
-			Frequency: 2462,
-		},
-	}
-	scanner.SetCachedNetworks(testNetworks, scanTime)
-
-	var wg sync.WaitGroup
-	const numGoroutines = 10
-	const numIterations = 50
-
-	// Run concurrent operations
-	for i := range numGoroutines {
-		wg.Add(1)
-		go func(id int) {
-			defer wg.Done()
-			for range numIterations {
-				// Mix of read and write operations
-				_ = scanner.ScannerInterfaceName()
-				_ = scanner.GetCachedNetworks()
-				_ = scanner.GetLastScanTime()
-				if id%2 == 0 {
-					scanner.SetInterface("en" + string(rune('0'+id%10)))
-				}
-			}
-		}(i)
-	}
-
-	wg.Wait()
 }
 
 func TestScannedNetworkFields(t *testing.T) {

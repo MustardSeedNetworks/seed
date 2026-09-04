@@ -194,27 +194,6 @@ func TestStatusPhases(t *testing.T) {
 	}
 }
 
-func TestConcurrentStatusAccess(_ *testing.T) {
-	tester := speedtest.NewTester()
-
-	// Test concurrent reads don't cause race conditions.
-	done := make(chan bool)
-	for range 10 {
-		go func() {
-			for range 100 {
-				_ = tester.GetStatus()
-				_ = tester.GetLastResult()
-			}
-			done <- true
-		}()
-	}
-
-	// Wait for all goroutines.
-	for range 10 {
-		<-done
-	}
-}
-
 func TestProgressRange(t *testing.T) {
 	tester := speedtest.NewTester()
 
@@ -226,27 +205,6 @@ func TestProgressRange(t *testing.T) {
 		if status.Progress != progress {
 			t.Errorf("expected Progress %v, got %v", progress, status.Progress)
 		}
-	}
-}
-
-func TestTesterMuLocking(_ *testing.T) {
-	tester := speedtest.NewTester()
-
-	// Test concurrent writes don't cause race conditions.
-	done := make(chan bool)
-	for i := range 5 {
-		go func(id int) {
-			for j := range 50 {
-				tester.SetStatus("phase"+string(rune('0'+id)), float64(j))
-				tester.SetRunning(j%2 == 0)
-				tester.SetServerID("server" + string(rune('0'+id)))
-			}
-			done <- true
-		}(i)
-	}
-
-	for range 5 {
-		<-done
 	}
 }
 
@@ -794,12 +752,13 @@ func TestResultTimestampAndDuration(t *testing.T) {
 	}
 }
 
-func TestTesterConcurrentWriteOperations(_ *testing.T) {
+// TestTesterConcurrentWriteOperations is a race-detector exerciser: every
+// setter is written while the getters read.
+func TestTesterConcurrentWriteOperations(t *testing.T) {
 	tester := speedtest.NewTester()
 
 	done := make(chan bool)
 
-	// Helper to spawn concurrent writers.
 	spawnStatusWriters(tester, done, 5)
 	spawnRunningWriters(tester, done, 5)
 	spawnSpeedWriters(tester, done, 5)
@@ -809,6 +768,11 @@ func TestTesterConcurrentWriteOperations(_ *testing.T) {
 	// Wait for all goroutines (5 groups x 5 goroutines each).
 	for range 25 {
 		<-done
+	}
+
+	// The status must be one whole value written by one writer, not a mix.
+	if status := tester.GetStatus(); status.Phase == "" {
+		t.Errorf("GetStatus() = %+v after concurrent writes, want a phase", status)
 	}
 }
 
@@ -868,40 +832,6 @@ func spawnReaders(tester *speedtest.Tester, done chan bool, count int) {
 			}
 			done <- true
 		}()
-	}
-}
-
-func TestTesterMixedReadWriteOperations(_ *testing.T) {
-	tester := speedtest.NewTester()
-
-	done := make(chan bool)
-
-	// Writer goroutine.
-	go func() {
-		for i := range 100 {
-			tester.SetStatus("testing", float64(i))
-			tester.SetRunning(true)
-			tester.SetCurrentSpeeds(float64(i*10), float64(i*5))
-			tester.SetServerID("server" + string(rune('0'+i%10)))
-		}
-		done <- true
-	}()
-
-	// Multiple reader goroutines.
-	for range 10 {
-		go func() {
-			for range 100 {
-				_ = tester.GetStatus()
-				_ = tester.GetLastResult()
-				_ = tester.TesterServerID()
-			}
-			done <- true
-		}()
-	}
-
-	// Wait for all goroutines.
-	for range 11 {
-		<-done
 	}
 }
 

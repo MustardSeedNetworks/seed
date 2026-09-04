@@ -54,32 +54,6 @@ func TestManagerSetInterfaceMultiple(t *testing.T) {
 	}
 }
 
-// TestManagerConcurrentSetAndGet tests concurrent access to Manager.
-func TestManagerConcurrentSetAndGet(_ *testing.T) {
-	manager := wifi.NewManager("en0")
-
-	var wg sync.WaitGroup
-	const numGoroutines = 20
-	const numIterations = 100
-
-	for i := range numGoroutines {
-		wg.Add(1)
-		go func(id int) {
-			defer wg.Done()
-			for j := range numIterations {
-				// Mix of read and write operations
-				if j%2 == 0 {
-					manager.SetInterface("iface" + string(rune('0'+id%10)))
-				}
-				_ = manager.InterfaceName()
-				_ = manager.IsWireless()
-			}
-		}(i)
-	}
-
-	wg.Wait()
-}
-
 // TestScannerCreation tests various Scanner creation scenarios.
 func TestScannerCreation(t *testing.T) {
 	tests := []struct {
@@ -181,7 +155,7 @@ func TestScannerCachePersistence(t *testing.T) {
 }
 
 // TestScannerConcurrentReadWrite tests concurrent access to Scanner cache.
-func TestScannerConcurrentReadWrite(_ *testing.T) {
+func TestScannerConcurrentReadWrite(t *testing.T) {
 	scanner := wifi.NewScanner("en0")
 	scanTime := time.Now()
 
@@ -231,6 +205,15 @@ func TestScannerConcurrentReadWrite(_ *testing.T) {
 	}
 
 	wg.Wait()
+
+	// A writer wrote last, so the cache must hold exactly the one network that
+	// writer published — a torn map would show a different count.
+	if got := len(scanner.GetCachedNetworks()); got != 1 {
+		t.Errorf("GetCachedNetworks() holds %d networks after concurrent writes, want 1", got)
+	}
+	if scanner.GetLastScanTime().IsZero() {
+		t.Error("GetLastScanTime() is zero after concurrent writes")
+	}
 }
 
 // TestInterfaceNamePatterns tests various interface name patterns.

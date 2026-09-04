@@ -28,20 +28,6 @@ func TestManagerSetInterface(t *testing.T) {
 	}
 }
 
-func TestManagerIsWireless(_ *testing.T) {
-	manager := wifi.NewManager("en0")
-
-	// Result depends on system, just verify it doesn't panic
-	_ = manager.IsWireless()
-}
-
-func TestManagerGetInfo(_ *testing.T) {
-	manager := wifi.NewManager("en0")
-
-	// Result depends on system, just verify it doesn't panic
-	_ = manager.GetInfo()
-}
-
 func TestInfoFields(t *testing.T) {
 	info := wifi.Info{
 		SSID:      "TestNetwork",
@@ -184,42 +170,6 @@ func TestChannelFrequencyRoundTrip(t *testing.T) {
 			t.Errorf("roundtrip failed: channel %d -> freq %d -> channel %d", ch, freq, result)
 		}
 	}
-}
-
-func TestConcurrentManagerAccess(_ *testing.T) {
-	manager := wifi.NewManager("en0")
-
-	done := make(chan bool)
-	for i := range 10 {
-		go func(id int) {
-			for range 50 {
-				manager.SetInterface("en" + string(rune('0'+id)))
-				_ = manager.IsWireless()
-			}
-			done <- true
-		}(i)
-	}
-
-	for range 10 {
-		<-done
-	}
-}
-
-func TestIsWirelessPlatform(_ *testing.T) {
-	// This will vary by system, just verify it doesn't panic
-	_ = wifi.IsWirelessPlatform("en0")
-}
-
-func TestGetInfoPlatform(_ *testing.T) {
-	// This will vary by system, just verify it doesn't panic
-	_ = wifi.GetInfoPlatform("en0")
-}
-
-func TestGetInfo(_ *testing.T) {
-	manager := wifi.NewManager("en0")
-	info := manager.GetInfo()
-	// Just verify it doesn't panic - result depends on system
-	_ = info
 }
 
 func TestInfoAllFields(t *testing.T) {
@@ -376,16 +326,31 @@ func TestManagerInterface(t *testing.T) {
 	}
 }
 
-func TestIsWirelessResult(_ *testing.T) {
-	manager := wifi.NewManager("lo0")
+// nonWirelessIface cannot exist on a test host, so both the sysfs and the
+// nl80211 lookup in isWirelessPlatform must miss it.
+const nonWirelessIface = "seed-test-noiface0"
 
-	// Loopback is not wireless
-	result := manager.IsWireless()
-	// Result depends on system, just verify it returns a boolean
-	_ = result
+func TestIsWirelessResult(t *testing.T) {
+	if wifi.NewManager(nonWirelessIface).IsWireless() {
+		t.Errorf("IsWireless(%q) = true, want false", nonWirelessIface)
+	}
+	if wifi.IsWirelessPlatform(nonWirelessIface) {
+		t.Errorf("IsWirelessPlatform(%q) = true, want false", nonWirelessIface)
+	}
 }
 
-func TestConcurrentWifiManagerAccess(_ *testing.T) {
+func TestGetInfoUnknownInterface(t *testing.T) {
+	if info := wifi.NewManager(nonWirelessIface).GetInfo(); info != nil {
+		t.Errorf("GetInfo(%q) = %+v, want nil", nonWirelessIface, info)
+	}
+	if info := wifi.GetInfoPlatform(nonWirelessIface); info != nil {
+		t.Errorf("GetInfoPlatform(%q) = %+v, want nil", nonWirelessIface, info)
+	}
+}
+
+// TestConcurrentWifiManagerAccess is a race-detector exerciser: the interface
+// name is written while IsWireless and GetInfo read it.
+func TestConcurrentWifiManagerAccess(t *testing.T) {
 	manager := wifi.NewManager("en0")
 
 	done := make(chan bool)
@@ -402,6 +367,10 @@ func TestConcurrentWifiManagerAccess(_ *testing.T) {
 
 	for range 5 {
 		<-done
+	}
+
+	if got := manager.InterfaceName(); got != "wlan0" {
+		t.Errorf("InterfaceName() = %q after concurrent writes, want %q", got, "wlan0")
 	}
 }
 

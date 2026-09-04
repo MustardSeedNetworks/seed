@@ -170,9 +170,13 @@ func TestGetVlanInfoEdgeCases(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(_ *testing.T) {
-			// Just ensure it doesn't panic.
-			_, _ = vlan.ExportGetVlanInfo(tt.ifname)
+		t.Run(tt.name, func(t *testing.T) {
+			// None of these names can name a real VLAN subinterface, so the
+			// ioctl must fail and the zero value must come back.
+			parent, id := vlan.ExportGetVlanInfo(tt.ifname)
+			if parent != "" || id != 0 {
+				t.Errorf("ExportGetVlanInfo(%q) = (%q, %d), want (\"\", 0)", tt.ifname, parent, id)
+			}
 		})
 	}
 }

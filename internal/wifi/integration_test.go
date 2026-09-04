@@ -3,6 +3,7 @@
 package wifi_test
 
 import (
+	"strings"
 	"sync"
 	"testing"
 	"time"
@@ -191,7 +192,7 @@ func TestFrequencyChannelConsistency(t *testing.T) {
 }
 
 // TestConcurrentManagerAndScanner tests concurrent access to Manager and Scanner.
-func TestConcurrentManagerAndScanner(_ *testing.T) {
+func TestConcurrentManagerAndScanner(t *testing.T) {
 	manager := wifi.NewManager("en0")
 	scanner := wifi.NewScanner("en0")
 
@@ -237,6 +238,15 @@ func TestConcurrentManagerAndScanner(_ *testing.T) {
 	}
 
 	wg.Wait()
+
+	// Both names were written concurrently from every goroutine; each must land
+	// as a whole value from its own writer set, not a mix of the two.
+	if got := manager.InterfaceName(); !strings.HasPrefix(got, "en") {
+		t.Errorf("Manager.InterfaceName() = %q, want an en* name", got)
+	}
+	if got := scanner.ScannerInterfaceName(); !strings.HasPrefix(got, "wlan") {
+		t.Errorf("Scanner.ScannerInterfaceName() = %q, want a wlan* name", got)
+	}
 }
 
 // TestChannelGraphDataWithMixedSignals tests graph data with varying signal strengths.
@@ -353,55 +363,6 @@ func TestAllBandsChannelGraphData(t *testing.T) {
 	}
 	if len(data.Networks6GHz) > 0 && data.Networks6GHz[0].Band != "6GHz" {
 		t.Errorf("6 GHz network has wrong band: %q", data.Networks6GHz[0].Band)
-	}
-}
-
-// TestManagerIsWirelessWithDifferentInterfaces tests wireless detection for various interfaces.
-func TestManagerIsWirelessWithDifferentInterfaces(t *testing.T) {
-	tests := []struct {
-		name  string
-		iface string
-	}{
-		{"macOS primary WiFi", "en0"},
-		{"macOS secondary WiFi", "en1"},
-		{"Linux wlan0", "wlan0"},
-		{"Linux wlan1", "wlan1"},
-		{"Linux predictable", "wlp2s0"},
-		{"Loopback", "lo0"},
-		{"Ethernet", "eth0"},
-		{"Empty", ""},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(_ *testing.T) {
-			manager := wifi.NewManager(tt.iface)
-
-			// Just verify it doesn't panic
-			_ = manager.IsWireless()
-		})
-	}
-}
-
-// TestManagerGetInfoWithDifferentInterfaces tests info retrieval for various interfaces.
-func TestManagerGetInfoWithDifferentInterfaces(t *testing.T) {
-	tests := []struct {
-		name  string
-		iface string
-	}{
-		{"macOS primary WiFi", "en0"},
-		{"macOS secondary WiFi", "en1"},
-		{"Linux wlan0", "wlan0"},
-		{"Empty", ""},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(_ *testing.T) {
-			manager := wifi.NewManager(tt.iface)
-
-			// Just verify it doesn't panic
-			// Result depends on actual system state
-			_ = manager.GetInfo()
-		})
 	}
 }
 

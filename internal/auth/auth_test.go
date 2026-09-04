@@ -1244,22 +1244,6 @@ func (m *mockUserStore) IsLocked(_ context.Context, username string) (bool, erro
 	return m.locked[username], nil
 }
 
-func TestSetUserStore(_ *testing.T) {
-	defaults := testutil.GetTestDefaults()
-	m := auth.NewManager(
-		defaults.Auth.JWTSecret,
-		time.Hour,
-		defaults.Auth.Username,
-		defaults.Auth.PasswordHash,
-	)
-
-	store := newMockUserStore()
-	m.SetUserStore(store)
-
-	// Verify the store was set (can't directly access, but we can verify behavior)
-	// Setting user store should not cause panic
-}
-
 func TestAuthenticateWithUserStore(t *testing.T) {
 	defaults := testutil.GetTestDefaults()
 	m := auth.NewManager(

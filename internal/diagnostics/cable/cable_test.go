@@ -1,6 +1,7 @@
 package cable_test
 
 import (
+	"runtime"
 	"testing"
 
 	"github.com/MustardSeedNetworks/seed/internal/diagnostics/cable"
@@ -52,13 +53,20 @@ func TestTesterSetInterface(t *testing.T) {
 	}
 }
 
-func TestTesterIsSupported(_ *testing.T) {
-	tester := cable.NewTester("eth0")
+func TestTesterIsSupported(t *testing.T) {
+	// TDR needs ethtool on a real Linux NIC; an interface that cannot exist is
+	// never supported, on any platform.
+	const noSuchIface = "seed-test-noiface0"
 
-	// This will return false on non-Linux systems or without ethtool.
-	supported := tester.IsSupported()
-	// Just verify it doesn't panic.
-	_ = supported
+	if cable.NewTester(noSuchIface).IsSupported() {
+		t.Errorf("IsSupported() = true for %q, want false", noSuchIface)
+	}
+	if cable.ExportIsSupportedPlatform(noSuchIface) {
+		t.Errorf("ExportIsSupportedPlatform(%q) = true, want false", noSuchIface)
+	}
+	if runtime.GOOS != "linux" && cable.NewTester("eth0").IsSupported() {
+		t.Errorf("IsSupported() = true on %s, where TDR has no implementation", runtime.GOOS)
+	}
 }
 
 func TestTesterTest(t *testing.T) {
@@ -129,7 +137,9 @@ func TestTestResultNoLength(t *testing.T) {
 	}
 }
 
-func TestConcurrentTesterAccess(_ *testing.T) {
+// TestConcurrentTesterAccess is a race-detector exerciser: the interface name
+// is written while IsSupported reads it.
+func TestConcurrentTesterAccess(t *testing.T) {
 	tester := cable.NewTester("eth0")
 
 	done := make(chan bool)
@@ -146,13 +156,10 @@ func TestConcurrentTesterAccess(_ *testing.T) {
 	for range 10 {
 		<-done
 	}
-}
 
-func TestIsSupportedPlatform(_ *testing.T) {
-	// Test the platform-specific function.
-	result := cable.ExportIsSupportedPlatform("eth0")
-	// Just verify it doesn't panic - result depends on system.
-	_ = result
+	if got := tester.TesterInterfaceName(); len(got) != 4 || got[:3] != "eth" {
+		t.Errorf("TesterInterfaceName() = %q after concurrent writes, want an eth<n> name", got)
+	}
 }
 
 func TestTestPlatform(t *testing.T) {

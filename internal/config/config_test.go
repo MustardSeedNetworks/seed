@@ -1,13 +1,16 @@
 package config_test
 
 import (
+	"bytes"
 	"errors"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 	"time"
 
 	"github.com/MustardSeedNetworks/seed/internal/config"
+	"github.com/MustardSeedNetworks/seed/internal/logging"
 )
 
 func TestDefaultConfig(t *testing.T) {
@@ -833,13 +836,22 @@ func TestWarnDeprecatedSNMPSettings(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(_ *testing.T) {
+		t.Run(tt.name, func(t *testing.T) {
+			var buf bytes.Buffer
+			if err := logging.InitLogger(&logging.LoggingConfig{Level: "warn", Writer: &buf}); err != nil {
+				t.Fatalf("InitLogger: %v", err)
+			}
+
 			cfg := config.DefaultConfig()
 			cfg.SNMP.V3Credentials = tt.credentials
 
-			// WarnDeprecatedSNMPSettings logs warnings but doesn't return errors.
-			// This test verifies it doesn't panic and can be called safely.
+			// The function reports through the log, not a return value.
 			cfg.WarnDeprecatedSNMPSettings()
+
+			warned := strings.Contains(buf.String(), "SNMP MD5 authentication is deprecated")
+			if warned != tt.expectWarn {
+				t.Errorf("warned = %t, want %t (log: %s)", warned, tt.expectWarn, buf.String())
+			}
 		})
 	}
 }

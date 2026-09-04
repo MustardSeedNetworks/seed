@@ -76,7 +76,8 @@ func getLeaseInfoDarwin(interfaceName string) (*LeaseInfo, error) {
 		}
 	}
 
-	return &LeaseInfo{}, nil
+	//nolint:nilnil // No lease file for this interface is "no lease", not an error
+	return nil, nil
 }
 
 // parseDarwinLeaseFile parses a macOS DHCP lease file (plist-like format).
@@ -256,8 +257,6 @@ func hexToIP(hexStr string) string {
 
 // getLeaseInfoLinux reads DHCP info on Linux from lease files.
 func getLeaseInfoLinux(interfaceName string) (*LeaseInfo, error) {
-	info := &LeaseInfo{}
-
 	// Try NetworkManager lease file first
 	nmLeasePath := "/var/lib/NetworkManager/internal-" + interfaceName + ".lease"
 	if _, err := os.Stat(nmLeasePath); err == nil {
@@ -291,7 +290,8 @@ func getLeaseInfoLinux(interfaceName string) (*LeaseInfo, error) {
 		}
 	}
 
-	return info, nil
+	//nolint:nilnil // No lease file for this interface is "no lease", not an error
+	return nil, nil
 }
 
 // parseDHClientLeaseLine parses a single line from a dhclient lease file.

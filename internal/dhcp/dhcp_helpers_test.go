@@ -1374,15 +1374,6 @@ func TestUpdateExistingServerMACNotOverwritten(t *testing.T) {
 	}
 }
 
-// TestGetLeaseInfoUnsupportedPlatform tests that GetLeaseInfo returns nil for unsupported platforms.
-// This test verifies the behavior when the function is called - the actual return depends on [runtime.GOOS].
-func TestGetLeaseInfoUnsupportedPlatform(_ *testing.T) {
-	// This test just ensures no panic - return value depends on platform
-	info, err := dhcp.GetLeaseInfo("nonexistent999")
-	_ = info
-	_ = err
-}
-
 // TestPruneExpiredServersDoesNothing tests that pruning does nothing when under threshold.
 func TestPruneExpiredServersDoesNothing(t *testing.T) {
 	rd := dhcp.NewRogueDetector(nil)
@@ -1409,14 +1400,16 @@ func TestPruneExpiredServersDoesNothing(t *testing.T) {
 	}
 }
 
-// TestRogueDetectorConcurrentAccess tests concurrent access to RogueDetector.
-func TestRogueDetectorConcurrentAccess(_ *testing.T) {
+// TestRogueDetectorConcurrentAccess is a race-detector exerciser: servers are
+// recorded while the two server lists are read.
+func TestRogueDetectorConcurrentAccess(t *testing.T) {
 	rd := dhcp.NewRogueDetector(nil)
 
+	const writers, perWriter = 10, 50
 	done := make(chan bool)
-	for i := range 10 {
+	for i := range writers {
 		go func(id int) {
-			for j := range 50 {
+			for j := range perWriter {
 				ip := "192.168." + string(rune('0'+id)) + "." + string(rune('0'+j%10))
 				rd.RecordDetectedServer(ip, "aa:bb:cc:dd:ee:ff")
 				_ = rd.GetDetectedServers()
@@ -1427,11 +1420,15 @@ func TestRogueDetectorConcurrentAccess(_ *testing.T) {
 		}(i)
 	}
 
-	for range 10 {
+	for range writers {
 		<-done
 	}
 
-	// Just verify no panics or deadlocks occurred
+	// Each writer publishes ten distinct addresses; a lost update under
+	// contention would leave fewer than the full set recorded.
+	if got := len(rd.GetDetectedServers()); got != writers*10 {
+		t.Errorf("GetDetectedServers() holds %d servers, want %d", got, writers*10)
+	}
 }
 
 // TestLeaseFieldMappingFields tests the LeaseFieldMapping struct fields.
@@ -1750,25 +1747,6 @@ func TestParseDarwinLeaseFileSingleDNS(t *testing.T) {
 	if len(result.DNS) > 0 && result.DNS[0] != "8.8.8.8" {
 		t.Errorf("DNS[0] = %q, want %q", result.DNS[0], "8.8.8.8")
 	}
-}
-
-// TestGetLeaseInfoDarwinWithRealInterface tests getLeaseInfoDarwin with a real interface.
-func TestGetLeaseInfoDarwinWithRealInterface(_ *testing.T) {
-	// This test just ensures the function doesn't panic when called with en0
-	// The actual result depends on the system configuration
-	info, err := dhcp.GetLeaseInfoDarwin("en0")
-	_ = info
-	_ = err
-	// No assertions - just checking for no panic
-}
-
-// TestGetLeaseInfoLinuxWithRealInterface tests getLeaseInfoLinux with a real interface.
-func TestGetLeaseInfoLinuxWithRealInterface(_ *testing.T) {
-	// This test just ensures the function doesn't panic
-	info, err := dhcp.GetLeaseInfoLinux("eth0")
-	_ = info
-	_ = err
-	// No assertions - just checking for no panic
 }
 
 // TestMonitorStopNotRunning tests Stop when monitor is not running.
