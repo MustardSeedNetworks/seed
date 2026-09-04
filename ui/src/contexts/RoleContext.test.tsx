@@ -18,7 +18,7 @@ vi.mock('../api/client', () => ({
 }));
 
 const wrapper = ({ children }: { children: React.ReactNode }): React.ReactElement => (
-  <RoleProvider>{children}</RoleProvider>
+  <RoleProvider isAuthenticated={true}>{children}</RoleProvider>
 );
 
 const user = (role: CurrentUser['role'], isActive = true): CurrentUser => ({
@@ -103,6 +103,52 @@ describe('RoleContext / useRole', () => {
   });
 });
 
+describe('RoleProvider auth gating', () => {
+  beforeEach(() => {
+    mockGet.mockReset();
+  });
+  afterEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it('does not fetch /users/me while unauthenticated', () => {
+    render(
+      <RoleProvider isAuthenticated={false}>
+        <span>child</span>
+      </RoleProvider>,
+    );
+    expect(mockGet).not.toHaveBeenCalled();
+  });
+
+  it('fetches /users/me exactly once when rendered authenticated', async () => {
+    mockGet.mockResolvedValueOnce(user('admin'));
+    render(
+      <RoleProvider isAuthenticated={true}>
+        <span>child</span>
+      </RoleProvider>,
+    );
+    await waitFor(() => expect(mockGet).toHaveBeenCalledTimes(1));
+    expect(mockGet).toHaveBeenCalledWith('/api/v1/users/me');
+  });
+
+  it('fetches exactly once when isAuthenticated flips from false to true', async () => {
+    mockGet.mockResolvedValueOnce(user('admin'));
+    const { rerender } = render(
+      <RoleProvider isAuthenticated={false}>
+        <span>child</span>
+      </RoleProvider>,
+    );
+    expect(mockGet).not.toHaveBeenCalled();
+
+    rerender(
+      <RoleProvider isAuthenticated={true}>
+        <span>child</span>
+      </RoleProvider>,
+    );
+    await waitFor(() => expect(mockGet).toHaveBeenCalledTimes(1));
+  });
+});
+
 describe('<WriteGate>', () => {
   beforeEach(() => {
     mockGet.mockReset();
@@ -111,7 +157,7 @@ describe('<WriteGate>', () => {
   it('renders children for operator', async () => {
     mockGet.mockResolvedValueOnce(user('operator'));
     const { findByText } = render(
-      <RoleProvider>
+      <RoleProvider isAuthenticated={true}>
         <WriteGate fallback={<span>blocked</span>}>
           <span>writable</span>
         </WriteGate>
@@ -123,7 +169,7 @@ describe('<WriteGate>', () => {
   it('renders fallback for viewer', async () => {
     mockGet.mockResolvedValueOnce(user('viewer'));
     const { findByText } = render(
-      <RoleProvider>
+      <RoleProvider isAuthenticated={true}>
         <WriteGate fallback={<span>blocked</span>}>
           <span>writable</span>
         </WriteGate>

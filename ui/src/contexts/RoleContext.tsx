@@ -63,6 +63,16 @@ const RoleContext = createContext<RoleContextValue | null>(null);
 
 interface RoleProviderProps {
   children: ReactNode;
+  /**
+   * Gates the /users/me fetch to authenticated sessions. Required, not
+   * defaulted: an unauthenticated render (the login screen, or any
+   * component that mounts before auth settles) must never issue this
+   * request. It 401s otherwise, which — via the API client's automatic
+   * refresh-then-session-expired handling — fired real logout traffic
+   * with no session to log out of and could race a concurrent real
+   * login (seed#2422).
+   */
+  isAuthenticated: boolean;
 }
 
 const ROLE_RANK: Record<Role, number> = { viewer: 1, operator: 2, admin: 3 };
@@ -78,9 +88,9 @@ export function meetsRole(user: CurrentUser | null, min: Role): boolean {
   return user?.isActive === true && ROLE_RANK[user.role] >= ROLE_RANK[min];
 }
 
-export function RoleProvider({ children }: RoleProviderProps): React.ReactElement {
+export function RoleProvider({ children, isAuthenticated }: RoleProviderProps): React.ReactElement {
   const [user, setUser] = useState<CurrentUser | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const refresh = useCallback(async (): Promise<void> => {
@@ -97,8 +107,17 @@ export function RoleProvider({ children }: RoleProviderProps): React.ReactElemen
   }, []);
 
   useEffect(() => {
+    if (!isAuthenticated) {
+      // Logged out (or never logged in): nothing to fetch, and the
+      // previous session's role must not leak into the next one.
+      setUser(null);
+      setError(null);
+      setLoading(false);
+      return;
+    }
+    setLoading(true);
     void refresh();
-  }, [refresh]);
+  }, [isAuthenticated, refresh]);
 
   const canWrite = meetsRole(user, 'operator');
   const isAdmin = meetsRole(user, 'admin');

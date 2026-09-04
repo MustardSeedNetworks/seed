@@ -45,7 +45,7 @@ function asUser(role: CurrentUser['role']): void {
 
 function renderSettings(): ReactElement {
   const node = (
-    <RoleProvider>
+    <RoleProvider isAuthenticated={true}>
       <WiFiSettings
         wifiSettings={{ interface: 'wlan0', availableWifi: ['wlan0'], isWireless: true }}
         setWifiSettings={(): void => undefined}

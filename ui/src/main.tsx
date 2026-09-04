@@ -20,15 +20,18 @@ import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import App from './app';
 import { ErrorBoundary } from './components/ErrorBoundary';
-import { LicenseProvider } from './contexts/LicenseContext';
 import { ProfileProvider } from './contexts/profileContext';
-import { RoleProvider } from './contexts/RoleContext';
 import { getQueryClient } from './lib/queryClient';
 import './index.css';
 
 // Mount the React application to the root DOM element
 // QueryClientProvider enables React Query for API caching and deduplication
 // ProfileProvider now manages both profiles AND all user settings
+//
+// LicenseProvider/RoleProvider are NOT wired here: they live inside <App>
+// itself now, gated on `isAuthenticated` (seed#2422 follow-up). Only App
+// knows that value, and gating on it is what stops GET /api/v1/users/me
+// and GET /api/v1/license from firing before the user is authenticated.
 const rootElement: HTMLElement | null = document.getElementById('root');
 if (!rootElement) {
   throw new Error('Root element not found');
@@ -37,13 +40,9 @@ createRoot(rootElement).render(
   <StrictMode>
     <ErrorBoundary>
       <QueryClientProvider client={getQueryClient()}>
-        <LicenseProvider>
-          <RoleProvider>
-            <ProfileProvider>
-              <App />
-            </ProfileProvider>
-          </RoleProvider>
-        </LicenseProvider>
+        <ProfileProvider>
+          <App />
+        </ProfileProvider>
       </QueryClientProvider>
     </ErrorBoundary>
   </StrictMode>,

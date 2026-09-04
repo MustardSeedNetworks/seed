@@ -21,6 +21,8 @@ import { AppShell } from './app/AppShell';
 import { LoginForm } from './app/LoginForm';
 import { useAppOrchestration } from './app/useAppOrchestration';
 import { SetupWizard } from './components/setup/SetupWizard';
+import { LicenseProvider } from './contexts/LicenseContext';
+import { RoleProvider } from './contexts/RoleContext';
 import { useAuth } from './hooks/useAuth';
 import { useSetupState } from './hooks/useSetupState';
 
@@ -63,8 +65,9 @@ function App(): JSX.Element {
   const orchestration = useAppOrchestration({ isAuthenticated });
 
   // Show setup wizard if needed (before auth check)
+  let content: JSX.Element;
   if (needsSetup === true) {
-    return (
+    content = (
       <SetupWizard
         onComplete={completeSetup}
         onLogin={login}
@@ -73,19 +76,15 @@ function App(): JSX.Element {
         setupToken={setupToken} // Security fix #724, #758
       />
     );
-  }
-
-  // Show loading while checking setup status
-  if (needsSetup === null) {
-    return (
+  } else if (needsSetup === null) {
+    // Show loading while checking setup status
+    content = (
       <div className="min-h-screen flex-center">
         <div className="text-text-muted">{t('status.loading')}</div>
       </div>
     );
-  }
-
-  if (!isAuthenticated) {
-    return (
+  } else if (!isAuthenticated) {
+    content = (
       <LoginForm
         onLogin={login}
         onSecondFactor={completeSecondFactor}
@@ -93,9 +92,23 @@ function App(): JSX.Element {
         error={error}
       />
     );
+  } else {
+    content = <AppShell orchestration={orchestration} logout={logout} />;
   }
 
-  return <AppShell orchestration={orchestration} logout={logout} />;
+  // RoleProvider/LicenseProvider live here — not in main.tsx wrapping <App>
+  // from the outside — because only App knows `isAuthenticated`. Gating
+  // their fetches on it stops GET /api/v1/users/me and GET /api/v1/license
+  // from ever firing while unauthenticated (the setup wizard, the loading
+  // screen, and the login form all render above); previously both fetched
+  // unconditionally on mount, 401ing on the login screen and — via the API
+  // client's automatic refresh-then-session-expired handling — firing real
+  // logout traffic that could race a concurrent real login (seed#2422).
+  return (
+    <LicenseProvider isAuthenticated={isAuthenticated}>
+      <RoleProvider isAuthenticated={isAuthenticated}>{content}</RoleProvider>
+    </LicenseProvider>
+  );
 }
 
 export default App;

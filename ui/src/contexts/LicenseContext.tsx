@@ -63,11 +63,24 @@ const LicenseContext = createContext<LicenseContextValue | null>(null);
 
 interface LicenseProviderProps {
   children: ReactNode;
+  /**
+   * Gates the /license fetch to authenticated sessions. Required, not
+   * defaulted: an unauthenticated render (the login screen, or any
+   * component that mounts before auth settles) must never issue this
+   * request. It 401s otherwise, which — via the API client's automatic
+   * refresh-then-session-expired handling — fired real logout traffic
+   * with no session to log out of and could race a concurrent real
+   * login (seed#2422).
+   */
+  isAuthenticated: boolean;
 }
 
-export function LicenseProvider({ children }: LicenseProviderProps): React.ReactElement {
+export function LicenseProvider({
+  children,
+  isAuthenticated,
+}: LicenseProviderProps): React.ReactElement {
   const [status, setStatus] = useState<LicenseStatus | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const refresh = useCallback(async (): Promise<void> => {
@@ -83,8 +96,17 @@ export function LicenseProvider({ children }: LicenseProviderProps): React.React
   }, []);
 
   useEffect(() => {
+    if (!isAuthenticated) {
+      // Logged out (or never logged in): nothing to fetch, and the
+      // previous session's license status must not leak into the next.
+      setStatus(null);
+      setError(null);
+      setLoading(false);
+      return;
+    }
+    setLoading(true);
     void refresh();
-  }, [refresh]);
+  }, [isAuthenticated, refresh]);
 
   const hasFeature = useCallback(
     (feature: string): boolean => Boolean(status?.features?.includes(feature)),

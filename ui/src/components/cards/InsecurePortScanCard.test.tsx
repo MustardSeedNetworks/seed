@@ -40,7 +40,7 @@ function asUser(role: CurrentUser['role']): void {
 
 function renderCard(): void {
   render(
-    <RoleProvider>
+    <RoleProvider isAuthenticated={true}>
       <InsecurePortScanCard />
     </RoleProvider>,
   );
