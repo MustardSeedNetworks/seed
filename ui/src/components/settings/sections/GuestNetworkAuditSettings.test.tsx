@@ -43,7 +43,7 @@ function asUser(role: CurrentUser['role'], targets: { ip: string; label?: string
 
 async function renderOpened(): Promise<void> {
   render(
-    <RoleProvider>
+    <RoleProvider isAuthenticated={true}>
       <GuestNetworkAuditSettings />
     </RoleProvider>,
   );

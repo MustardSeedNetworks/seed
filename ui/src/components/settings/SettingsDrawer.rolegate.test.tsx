@@ -40,7 +40,7 @@ function renderGate(): void {
   const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   const node: ReactNode = (
     <QueryClientProvider client={queryClient}>
-      <RoleProvider>
+      <RoleProvider isAuthenticated={true}>
         <RequireRole min="operator" fallback={<p>Read-only account</p>}>
           <p>Link Settings</p>
         </RequireRole>

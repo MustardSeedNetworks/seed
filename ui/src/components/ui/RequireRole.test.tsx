@@ -25,7 +25,7 @@ const user = (role: CurrentUser['role'], isActive = true): CurrentUser => ({
 });
 
 function renderGated(node: React.ReactNode): ReturnType<typeof render> {
-  return render(<RoleProvider>{node}</RoleProvider>);
+  return render(<RoleProvider isAuthenticated={true}>{node}</RoleProvider>);
 }
 
 describe('RequireRole / RequireAdmin', () => {

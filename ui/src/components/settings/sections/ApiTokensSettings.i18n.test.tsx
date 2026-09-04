@@ -61,8 +61,8 @@ function withOneToken(): void {
 async function renderOpened(language: string): Promise<void> {
   await i18n.changeLanguage(language);
   render(
-    <LicenseProvider>
-      <RoleProvider>
+    <LicenseProvider isAuthenticated={true}>
+      <RoleProvider isAuthenticated={true}>
         <ApiTokensSettings />
       </RoleProvider>
     </LicenseProvider>,
