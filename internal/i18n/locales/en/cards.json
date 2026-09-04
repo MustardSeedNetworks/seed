@@ -410,7 +410,8 @@
     "qrAlt": "TOTP QR code",
     "scanAndEnter": "Scan with an authenticator app, then enter a code",
     "verifyAndEnable": "Verify and enable",
-    "addPasskey": "Add passkey"
+    "addPasskey": "Add passkey",
+    "passkeyUnsupported": "This browser does not support passkeys."
   },
   "pathDiscovery": {
     "copy": "Copy",
