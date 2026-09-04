@@ -98,7 +98,12 @@ func initializeDatabase(cfg *config.Config) *database.DB {
 
 	db, err := database.OpenWithAutoRebuild(dbPath)
 	if err != nil {
-		logging.GetLogger().Error("Failed to open database", "path", dbPath, "error", err)
+		// Not fatal: the server runs in a documented degraded mode without a
+		// database. Say what that costs, because the bare "failed to open"
+		// reads like a warning and is in fact most of the product (#2380).
+		logging.GetLogger().Error(
+			"Failed to open database — reporting, history and stored users are unavailable",
+			"path", dbPath, "error", err)
 		return nil
 	}
 
@@ -110,9 +115,19 @@ func initializeDatabase(cfg *config.Config) *database.DB {
 func initializeBackgroundComponents(cfg *config.Config, db *database.DB) *api.BackgroundComponents {
 	components := &api.BackgroundComponents{}
 
-	// Reporting: report generation, templates, scheduling
-	components.Reporting = app.NewReporting(cfg, db)
-	logging.GetLogger().Info("Reporting module initialized")
+	// Reporting: report generation, templates, scheduling.
+	//
+	// Every one of its stores is the database; with no handle its scheduler
+	// dereferences nil on the first schedule load and takes the daemon down
+	// before it binds a listener (#2380). internal/api treats a nil database as
+	// a supported degraded mode throughout, so this honours the same contract
+	// rather than inventing a second one here.
+	if db != nil {
+		components.Reporting = app.NewReporting(cfg, db)
+		logging.GetLogger().Info("Reporting module initialized")
+	} else {
+		logging.GetLogger().Warn("Reporting module disabled: no database is available")
+	}
 
 	// Wi-Fi airspace visibility: holds the live airspace + Wi-Fi detector, fed by
 	// the monitor-mode capture source. It is a producer into the shared anomaly

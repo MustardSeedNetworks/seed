@@ -29,6 +29,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"path/filepath"
 	"strings"
 	"sync"
 	"time"
@@ -270,6 +271,17 @@ func restrictDBFileMode(path string) error {
 func OpenWithConfig(cfg Config) (*DB, error) {
 	if cfg.Path == "" {
 		return nil, errors.New("database path is required")
+	}
+
+	// The default path is data/seed.db, relative to the working directory, and
+	// nothing else creates data/. SQLite will not create a missing parent, and
+	// the failure surfaces as an opaque "unable to open database file (14)" from
+	// the first pragma, so a first run on a clean machine looks like corruption
+	// (#2380). Owner-only: this file holds credentials and history.
+	if dir := filepath.Dir(cfg.Path); dir != "" && dir != "." {
+		if err := os.MkdirAll(dir, 0o700); err != nil {
+			return nil, fmt.Errorf("create database directory %q: %w", dir, err)
+		}
 	}
 
 	// Build connection string with pragmas
