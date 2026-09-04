@@ -506,9 +506,14 @@ func (s *Server) setupTelemetryRoutes() {
 			methods: get,
 		},
 		{
+			// POST, not GET: handleIperfServer answers 405 to anything else, and
+			// the route declared `get`, so the methodGate and the handler
+			// refused opposite halves and NOTHING worked — start and stop were
+			// both dead on every role. Operator+, because it binds a listener.
 			path:    APIVersionPrefix + "/telemetry/iperf/server",
 			handler: s.handleIperfServer,
-			methods: get,
+			methods: post,
+			minRole: op,
 		},
 		{
 			path:    APIVersionPrefix + "/telemetry/iperf/server/status",

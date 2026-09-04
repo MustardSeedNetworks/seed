@@ -540,8 +540,9 @@ body:
   {
     "maxBodyBytes": 262144,
     "methods": [
-      "GET"
+      "POST"
     ],
+    "minRole": "operator",
     "path": "/api/v1/telemetry/iperf/server"
   },
   {
