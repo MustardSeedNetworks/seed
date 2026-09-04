@@ -297,10 +297,17 @@ func TestTesterStartStopContinuousNotRunning(t *testing.T) {
 	}
 }
 
+// The detectors report "no default route found" as an empty string with a nil
+// error, on every platform. What must always hold is that a non-empty result
+// is a real address of the right family — an empty one reaching a pinger would
+// be a defect, and handlers_security.go guards on exactly that.
 func TestDetectGateway(t *testing.T) {
 	gw, err := gateway.DetectGateway()
 	if err != nil {
-		t.Skipf("no default IPv4 gateway on this host: %v", err)
+		t.Skipf("gateway detection unavailable on this host: %v", err)
+	}
+	if gw == "" {
+		t.Skip("host has no default IPv4 route")
 	}
 	addr, parseErr := netip.ParseAddr(gw)
 	if parseErr != nil {
@@ -918,7 +925,10 @@ func TestPingErrorMessage(t *testing.T) {
 func TestDetectGatewayIPv6(t *testing.T) {
 	gw, err := gateway.DetectGatewayIPv6()
 	if err != nil {
-		t.Skipf("no default IPv6 gateway on this host: %v", err)
+		t.Skipf("IPv6 gateway detection unavailable on this host: %v", err)
+	}
+	if gw == "" {
+		t.Skip("host has no default IPv6 route")
 	}
 	addr, parseErr := netip.ParseAddr(gw)
 	if parseErr != nil {
