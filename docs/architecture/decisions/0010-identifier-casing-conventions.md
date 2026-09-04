@@ -1,6 +1,7 @@
 # ADR-0010: Identifier casing conventions (camelCase JSON wire, snake_case files/SQL)
 
-**Status:** Accepted — 2026-06-05 · **Revised 2026-06-14** (see "Revision" at end — wire is now 100% camelCase; the config-blob and external-key wire exceptions are removed in favour of boundary mapping)
+**Status:** Accepted — 2026-06-05 · **Revised 2026-06-14** (see "Revision" at end — wire is now 100% camelCase; the
+config-blob and external-key wire exceptions are removed in favour of boundary mapping)
 
 ## Context
 
@@ -9,7 +10,7 @@ codebase's **JSON wire casing is inconsistent**, while Go identifiers, SQL colum
 TypeScript identifiers are consistent and idiomatic:
 
 | Layer | Convention in use | State |
-|---|---|---|
+| --- | --- | --- |
 | Go identifiers | PascalCase exported / camelCase unexported | consistent (gofumpt/revive) |
 | TypeScript identifiers | camelCase | consistent (Biome) |
 | SQL columns | snake_case | consistent (DB norm) |
@@ -24,7 +25,7 @@ Measured JSON-tag casing (non-test):
 
 The UI also leaks snake_case object keys (`last_seen`, `client_id`, `is_default`, …) where
 it echoes backend snake fields. The acute pain point surfaced in S6: the per-profile config
-blob is *both* a config-file format (snake) *and* an API payload, so the two conventions
+blob is _both_ a config-file format (snake) _and_ an API payload, so the two conventions
 collide.
 
 ## Decision
@@ -51,14 +52,14 @@ A full naming audit confirmed these are already followed everywhere; recorded he
 stay that way:
 
 | Artifact | Convention | Example |
-|---|---|---|
+| --- | --- | --- |
 | Go source files | snake_case | `config_types_network.go` |
 | Go packages / directories | short, lowercase, no underscores | `internal/discovery` |
 | Go command directories | kebab-case allowed (binary name) | `cmd/seed-schema` |
 | SQL migration files | goose `NNNNN_snake.sql` | `00003_job_idempotency.sql` |
 | SQL tables / columns | snake_case | `polling_targets.credentials_id` |
 | Shell scripts | kebab-case | `check-json-casing.sh` |
-| Config files (on disk) | on-disk *format* is a per-product best-practice choice; seed = JSON (`.json`), snake_case keys | `configs/seed.json`, `"jwt_secret"` (amended 2026-06-05 — see below) |
+| Config files (on disk) | on-disk _format_ is a per-product best-practice choice; seed = JSON (`.json`), snake_case keys | `configs/seed.json`, `"jwt_secret"` (amended 2026-06-05 — see below) |
 | Generated JSON schema files | kebab-case | `engine-discovery-response.schema.json` |
 | UI React components (`.tsx`) | PascalCase | `NetworkDiscoveryCard.tsx` |
 | UI hooks (`.ts`) | `useXxx` camelCase | `useEngineScan.ts` |
@@ -77,9 +78,9 @@ already conforms.
   (tsc + grep) → golden regen → verify. Sequenced in `SEED_PHASE8_CASING_PLAN.md`.
 - This ADR is the standard new code is held to; the gate makes it enforceable rather than
   aspirational (the lesson from the design-token gate).
-- stem and niac adopt the same *casing* convention + gate during their re-architectures (the
+- stem and niac adopt the same _casing_ convention + gate during their re-architectures (the
   seed template is mirrored, per the no-master, harmonized-by-convention rule). On-disk config
-  *format* (JSON vs YAML) is decided per product on its own merits — see the amendment below.
+  _format_ (JSON vs YAML) is decided per product on its own merits — see the amendment below.
 
 ## Amendment (2026-06-05) — config on-disk format is JSON for seed, decided per product
 
@@ -95,30 +96,31 @@ seed.yaml` was real YAML the JSON loader could not parse, and `internal/paths` r
 **Correction:** for **seed**, the on-disk config format is **JSON** (`seed.json`), aligning
 docs/paths/deploy/sample to what the engine actually does (JSON Schema validation and the
 casing gate are JSON-native too). The casing rule is **unchanged and universal**: config-file
-keys stay **snake_case** (`"jwt_secret"`), distinct from the camelCase JSON *wire* convention.
+keys stay **snake_case** (`"jwt_secret"`), distinct from the camelCase JSON _wire_ convention.
 
 On-disk format is **not** a harmonized-across-products decision. Each product chooses on its
 own merits: seed is machine-managed (setup wizard + API write the file) and env-var-dominated,
 so JSON fits; a product with hand-authored, comment-heavy config (e.g. NIAC simulation
-scenarios) may legitimately choose YAML. Only the *casing* convention is mirrored fleet-wide.
+scenarios) may legitimately choose YAML. Only the _casing_ convention is mirrored fleet-wide.
 
 ## Revision (2026-06-14) — pure boundary mapping; the wire is 100% camelCase, no exceptions
 
 The original Decision carried two snake-case exceptions **on the wire**: the config-blob "snake
 by design" payload (§2, last sentence) and the protocol/external-key allow-list (§5). On review
 they are **pragmatic shortcuts, not best practice**, and they conflict with our own
-**ADR-0020 (clean hexagonal API foundation)**: a ports-and-adapters boundary presents *one*
+**ADR-0020 (clean hexagonal API foundation)**: a ports-and-adapters boundary presents _one_
 uniform contract and maps everything foreign at the edge. We are pre-`v1.0.0` (no wire-compat
 burden), so we fix this now rather than grandfather it.
 
 **Revised rule — supersedes §2's wire clause and §5 entirely:**
 
 > **Every field our API emits or accepts is camelCase. There are no wire-level snake_case
-> exceptions and no wire allow-list / baseline.** snake_case exists only *off* the wire:
+> exceptions and no wire allow-list / baseline.** snake_case exists only _off_ the wire:
+>
 > 1. **Config files on disk** (snake keys, e.g. `"jwt_secret"`) — unchanged.
 > 2. **SQL columns** — unchanged.
-> 3. **Internal adapters that talk to an external system** — the structs that *parse* an
->    external tool's output (iperf3 `-json`, macOS `system_profiler`) or *call* an external
+> 3. **Internal adapters that talk to an external system** — the structs that _parse_ an
+>    external tool's output (iperf3 `-json`, macOS `system_profiler`) or _call_ an external
 >    spec (OAuth `client_id`) match that system's casing **inside the adapter package only**,
 >    and are **mapped to camelCase before crossing our API boundary**. They are never
 >    re-emitted verbatim and never on a type the API serializes.
@@ -131,10 +133,11 @@ burden), so we fix this now rather than grandfather it.
 **What stays the same:** §1 (camelCase wire), §3 (SQL snake), §4 (Go/TS identifiers), the
 on-disk config-file snake rule, and the **file/directory naming table** — in particular
 **Go source files remain snake_case** (`config_types_network.go`); that is idiomatic Go and is
-*not* affected by this revision. The only naming work is killing monolith *stutter prefixes*
+_not_ affected by this revision. The only naming work is killing monolith _stutter prefixes_
 during decomposition (ADR-0016), which `check-filename-policy.sh` already enforces.
 
 **Consequences of the revision (tracked, per repo):**
+
 - **seed** — map the ~13 macOS `system_profiler` keys (`internal/discovery`) and any config-blob
   fields to camelCase at the API edge; the snake parsing structs stay inside the adapter. Then
   **empty `scripts/json-casing-baseline.txt`** and drop the allow-list language from the gate.

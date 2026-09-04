@@ -4,7 +4,8 @@
 
 ## Linked Issue
 
-<!-- Use Fixes #123, Closes #123, or Related to #123. Every PR should point at tracked work unless it is emergency maintenance. -->
+<!-- Use Fixes #123, Closes #123, or Related to #123. Every PR should point at tracked work unless it is emergency
+maintenance. -->
 
 Fixes #
 

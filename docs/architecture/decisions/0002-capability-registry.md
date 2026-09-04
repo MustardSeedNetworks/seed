@@ -47,7 +47,7 @@ enforced by `register()`:
 
 - **Method**: `register()` installs a `methodGate` that returns `405` + an
   `Allow` header for any method outside the declared set (using the project's
-  JSON error envelope), composed *before* feature/role checks. Routes that use a
+  JSON error envelope), composed _before_ feature/role checks. Routes that use a
   Go 1.22 method-prefixed path (`"GET /api/v1/..."`) are enforced natively by
   ServeMux and leave `methods` empty.
 - **Body limit**: `register()` wraps every route in a `MaxBytesReader` at

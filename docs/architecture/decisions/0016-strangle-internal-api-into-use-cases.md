@@ -13,15 +13,15 @@ Phase 0–7 re-architecture:
 - **#2 — god layer.** `internal/api` is ~100 non-test files and ~30k LOC.
   Individual handlers run 600–1100 lines and interleave four concerns in one
   function: request decoding, authorization/validation, business logic, and
-  response encoding. The capability registry (ADR-0002) already made *routing*
-  policy declarative, but the *handlers* behind the routes are still fat.
+  response encoding. The capability registry (ADR-0002) already made _routing_
+  policy declarative, but the _handlers_ behind the routes are still fat.
 - **#3 — bag-of-services DI.** `ServiceContainer` (`internal/api/services.go`)
   exposes db / discovery / diagnostics / auth / jobs / health / update / wifi to
   every handler at once. Handlers also reach into `Server.background` directly
   (e.g. `s.background.WiFiVisibility`). A handler can touch anything, so nothing
   is isolated and the blast radius of a change is the whole package.
 
-The Phase 0–7 work established the target for the *domain* layer:
+The Phase 0–7 work established the target for the _domain_ layer:
 capability-first `internal/<feature>` packages that are persistence-free, with
 ports at the I/O seam and a composition root in `internal/app`. `internal/api`
 never got the same treatment.
@@ -38,7 +38,7 @@ Adopt the **thin-handler → use-case → encode** shape, backed by per-domain
 
 ### Target structure
 
-```
+```text
 internal/api/handlers_*.go      thin: decode request → call a use-case → encode response
         │  depends on (narrow interface, defined HERE at the consumer)
         ▼
@@ -66,7 +66,7 @@ Rules:
    same way `BackgroundComponents` are built today.
 5. **Behavior is pinned by the goldens** — every phase keeps
    `TestGoldenHTTP*` byte-identical (or updates them as a reviewed diff only
-   when behavior is *intended* to change).
+   when behavior is _intended_ to change).
 
 ### Phasing
 

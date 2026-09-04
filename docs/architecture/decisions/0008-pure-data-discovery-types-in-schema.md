@@ -43,9 +43,9 @@ Three facts, established while scoping Phase 7 S2, change the calculus:
 2. **The contract is already coupled at runtime.** The live
    `GET /api/v1/discovery/engine` endpoint already serializes
    `discovery.DiscoveredDevice` (and the whole cluster) to JSON on the wire.
-   Registering a schema does not *create* coupling between the wire shape and
+   Registering a schema does not _create_ coupling between the wire shape and
    `discovery`'s struct layout — that coupling already ships. A schema only
-   *documents* it and lets us generate the TypeScript types the Phase 7
+   _documents_ it and lets us generate the TypeScript types the Phase 7
    frontend needs.
 
 3. **The cluster is pure data.** Every reachable struct is plain data

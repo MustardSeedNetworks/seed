@@ -26,7 +26,7 @@ today; the registry makes it explicit per route.
 ## Summary
 
 | Metric | Count |
-|---|---|
+| --- | --- |
 | API routes | **183** (+1 SPA static `/`) |
 | Operator-gated (`writeGated`) | 54 |
 | Feature-gated (`requireFeature`) | 9 routes across 7 features |
@@ -42,7 +42,7 @@ today; the registry makes it explicit per route.
 ## Routes
 
 | Path | Handler | Min role | Feature | Rate-limit |
-|------|---------|----------|---------|-----------|
+| ------ | --------- | ---------- | --------- | ----------- |
 | `None` | `handleUpdateCheck` | — | — | — |
 | `None` | `handleUpdateStatus` | — | — | — |
 | `None` | `handleUpdateInfo` | — | — | — |

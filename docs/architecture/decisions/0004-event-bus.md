@@ -6,7 +6,7 @@ Outbox deferred (Phase 5c) — 2026-06-03 · Outbox built (ADR-0017) — 2026-06
 ## Context
 
 ADR-0001 forbids modules importing each other (the distributed-monolith guard,
-`depguard`-enforced). But modules genuinely need to react to one another: Shell
+`depguard`-enforced). But modules genuinely need to React to one another: Shell
 discovers a device → Sap/health should monitor it, Harvest should record it,
 Sap/alerts should evaluate thresholds. A seam is required. Options: an event bus,
 or explicit app-layer orchestration via interfaces.
@@ -17,9 +17,10 @@ A **`platform/events` in-process domain event bus.** Modules publish/subscribe t
 events; they never call each other directly.
 
 Semantics:
+
 - In-process, single binary — no broker.
 - **Events are facts, past-tense** (`DeviceDiscovered`) — never commands. They
-  notify/react; they do not request/respond.
+  notify/React; they do not request/respond.
 - Async, at-least-once, ordered per-topic. A panicking subscriber must not fail the publisher.
 - Ephemeral by default; **audit-class events are durable** (→ `platform/audit`).
 - Subscribers registered before publishers start (supervisor ordering) so startup events aren't lost.
@@ -49,8 +50,8 @@ persistence, boot recovery, durable idempotency, retention), we deliberately
 **defer** the outbox rather than build it now. This is a recorded decision, not an
 omission.
 
-**Why defer.** The transactional outbox exists to prevent a *dual-write
-inconsistency* between the database and an **external or durable** consumer (a
+**Why defer.** The transactional outbox exists to prevent a _dual-write
+inconsistency_ between the database and an **external or durable** consumer (a
 message broker, another process, a persistent worker): "state committed but the
 event to an outside party was lost." seed has no such consumer today:
 

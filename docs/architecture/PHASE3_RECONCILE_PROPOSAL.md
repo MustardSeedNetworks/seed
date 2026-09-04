@@ -9,10 +9,11 @@
 ## 0. Execution status (2026-06-01 checkpoint) — RESUME HERE
 
 Owner approved Reconcile + **capability-first** layout + descriptive **code**
-names (botanical names OK for *marketing*, separate brand call). `main` is clean
+names (botanical names OK for _marketing_, separate brand call). `main` is clean
 and green; all items below are merged.
 
 **Done:**
+
 - R1/R2 — all four dead facades deleted: roots (#1439), shell (#1441, kept
   `guestaudit`), canopy (#1442, kept wifi/survey), sap (#1443, kept all
   diagnostic subpkgs; its "monitors" were no-ops / a duplicate LinkMonitor).
@@ -62,8 +63,9 @@ and green; all items below are merged.
     (not overridden); the code-vs-brand split is now fully realized.
 
 **Remaining:**
+
 1. **Phase 3.x — IA & API-taxonomy redesign (DEFERRED, tracked).** This pass was a
-   1:1 *rename*; a deliberate later phase may re-group the sidebar information
+   1:1 _rename_; a deliberate later phase may re-group the sidebar information
    architecture and restructure the `/api/v1/*` taxonomy. Out of scope here.
 2. **(Optional, if the brand is ever retired)** a deliberate brand-removal step
    (sidebar labels + glossary) gated on a LICENSE_STRATEGY brand decision.
@@ -110,7 +112,7 @@ structure" (under-engineering).
 ## 2. Audit — facade-by-facade
 
 | Area (botanical) | Facade | `Start()` does | HTTP api consumes the facade? | Real impl the api actually uses | Verdict |
-|---|---|---|---|---|---|
+| --- | --- | --- | --- | --- | --- |
 | **roots** | `internal/modules/roots` | (was no-op) | No | `handleTraceroute`/`handlePath` → `discovery` directly | **Dead — DELETED (#1439)** |
 | **sap** | `internal/services` (`Module`) | starts link/gateway/telemetry **monitors on its own instances** | No | `SapServices`: `dns.Tester`, `dhcp.Monitor`, `gateway.Tester`, `vlan.Manager`, `speedtest`, `iperf`, `cable`, `publicip` — all `New`'d directly in `server.go` | **Redundant parallel build**; background monitors disconnected from served data (possible wasted goroutines) |
 | **shell** | `internal/services/shell` | no-op TODO | No | security/discovery handlers directly | **Dead facade** (like roots) |
@@ -131,14 +133,14 @@ Two objective issues (independent of taste):
 1. **Non-descriptive:** `internal/canopy` requires memorizing canopy=Wi-Fi,
    sap=telemetry, harvest=reporting, roots=path-analysis, shell=security. A
    permanent translation tax on every reader.
-2. **Collide with technical terms:** `shell` = command shell (and a *second*
+2. **Collide with technical terms:** `shell` = command shell (and a _second_
    `internal/services/shell` exists), `sap` = SAP ERP, `roots` = fs/math roots,
    `harvest` = data scraping. The names mislead, not just under-inform.
 
 **Proposed code names (by function):**
 
 | Botanical | → Code | Concern |
-|---|---|---|
+| --- | --- | --- |
 | roots | `pathanalysis` (or `netpath`) | traceroute / topology / IP enrichment |
 | canopy | `wifi` | Wi-Fi visibility & troubleshooting |
 | shell | `security` (or `posture`) | security posture & vulnerability |
@@ -149,12 +151,12 @@ The api's own groupings already mix descriptive (`Auth`/`Network`/`Discovery`/
 `Database`/`Health`/`Probe`/`RealTime`) with botanical (`Sap`/`Canopy`/`Roots`) —
 so the rename lands there too.
 
-**Marketing names** are a *separate, deliberate* decision (they're baked into
+**Marketing names** are a _separate, deliberate_ decision (they're baked into
 `LICENSE_STRATEGY.md`, the development-policy tables, brand, UI colors). Engineering
 recommendation: **decouple** — code is descriptive regardless; keep the botanical
 theme as decoration (product name "The Seed", per-area colors) if brand wants it,
-but for a network-engineer buyer, descriptive feature labels (*Wi-Fi · Path
-Analysis · Security · Telemetry · Reports*) read better than a metaphor. **Owner's
+but for a network-engineer buyer, descriptive feature labels (_Wi-Fi · Path
+Analysis · Security · Telemetry · Reports_) read better than a metaphor. **Owner's
 call** — flagged, not assumed.
 
 ---
@@ -164,7 +166,7 @@ call** — flagged, not assumed.
 1. **Feature-grouped packages** (`wifi`, `survey`, `dns`, `dhcp`, `gateway`,
    `discovery`, `database`, the report generator, …) — **keep**. Good structure.
 2. **One composition root.** `internal/app` (created in the harvest pilot) becomes
-   *the* place that constructs and lifecycle-manages everything. The api's
+   _the_ place that constructs and lifecycle-manages everything. The api's
    `services.go` groupings are folded into / fed by it. No second root.
 3. **A component (with `Start/Stop`) only where there is owned state/lifecycle** —
    the telemetry monitors, the report scheduler, the discovery engine, polling,
@@ -176,7 +178,7 @@ call** — flagged, not assumed.
    CGO isolation (the `discovery`/CGO seam coordinated with Phase 6).
 5. **Delete the redundant module facades.**
 
-```
+```text
                 internal/app  (THE composition root: build + Start/Stop)
                       │
         ┌─────────────┼───────────────────────────┐
@@ -220,7 +222,7 @@ Order rationale: cold/dead first (R1), then the highest-duplication live area
 
 - **harvest ports + `internal/adapters/store` ring** — good practice, sits on the
   live scheduler path; the `*Repo` pattern is the template for R2/R3 DB seams.
-- **`internal/app` composition root** — becomes *the* root in this model.
+- **`internal/app` composition root** — becomes _the_ root in this model.
 - **depguard discipline, CI Go-cache fix (#1433), golden HTTP harness, the
   capability registry** — all still load-bearing.
 - The roots relocate+cleanup+delete (#1435/#1438/#1439) — the autopsy that

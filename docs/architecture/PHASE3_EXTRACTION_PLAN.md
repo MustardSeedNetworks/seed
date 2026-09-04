@@ -1,8 +1,8 @@
 # Phase 3 — Domain Core / Hexagon Extraction Plan
 
 > ⛔ **SUPERSEDED (2026-06-01) — DO NOT FOLLOW THE "extract every feature into a
-> Module" DIRECTION BELOW.** Execution proved the module facades were *dead
-> parallel wiring* the HTTP request path never consumes (the api uses fat
+> Module" DIRECTION BELOW.** Execution proved the module facades were _dead
+> parallel wiring_ the HTTP request path never consumes (the api uses fat
 > handlers + `internal/api/services.go` groupings → feature packages directly).
 > The plan of record is now **`PHASE3_RECONCILE_PROPOSAL.md`**: delete the dead
 > facades, one composition root, capability-first descriptive names, ports only
@@ -33,7 +33,7 @@ module declares the interfaces it needs (`ports.go`); infrastructure
 Direction is enforced by `depguard`: `adapters → modules → platform → stdlib`,
 and **modules never import each other**.
 
-Non-goal for Phase 3: the full platform/adapters *spine rehome* (moving
+Non-goal for Phase 3: the full platform/adapters _spine rehome_ (moving
 `auth`/`config`/`logging`/`api`/`database` wholesale). See §6 — deferred.
 
 ---
@@ -53,7 +53,7 @@ Non-goal for Phase 3: the full platform/adapters *spine rehome* (moving
 ### 2.1 Concurrent-session map (collision risk, measured 2026-06-01)
 
 | Area | Commits/14d | Phase-3 disposition |
-|---|---|---|
+| --- | --- | --- |
 | `polling` | 16 | **HOT** — do not touch (active NMS workstream) |
 | `alerts` | 6 | **HOT** — do not touch |
 | `services/discovery` | 4 | HOT-ish — defer to Phase 6 anyway |
@@ -75,13 +75,13 @@ creates only the structure the pilot needs and grows it module-by-module.
    **not** pre-create or pre-fill `internal/platform/` and `internal/adapters/`
    by moving existing spine packages — wire the pilot against the packages where
    they live today (`internal/config`, `internal/database`, `internal/api`).
-   The hexagon ring names are a *destination*, reached package-by-package; the
-   pilot proves the dependency *direction* (inward) without broad structural moves.
+   The hexagon ring names are a _destination_, reached package-by-package; the
+   pilot proves the dependency _direction_ (inward) without broad structural moves.
 2. **Pilot one cold, self-contained module end-to-end** (harvest) — §4.
 3. **Roll the rest cold→hot** — §5.
 4. **Rehome the spine last, coordinated** — §6.
 
-> Pragmatic note on `app/`: the pilot introduces a *partial* composition root that
+> Pragmatic note on `app/`: the pilot introduces a _partial_ composition root that
 > builds the harvest module from its `Deps`, used alongside the existing
 > `ServiceContainer` wiring. `app` absorbs the rest of the graph as later modules
 > extract; the 60-field `ServiceContainer` is retired only when the last module
@@ -97,13 +97,13 @@ creates only the structure the pilot needs and grows it module-by-module.
   → minimal blast radius and near-zero rebase risk against concurrent work.
 - Already service-structured (`services_*.go` + a `Module` facade) and **I/O-light**:
   no direct `net/http` or `database/sql`. It is the closest existing package to
-  the target shape, so it best isolates "did the *pattern* work" from "did a big
+  the target shape, so it best isolates "did the _pattern_ work" from "did a big
   messy move work".
 
 ### 4.2 Current dependencies (→ become ports)
 
 | harvest uses today | Becomes | Notes |
-|---|---|---|
+| --- | --- | --- |
 | `internal/database` (8 files) | `ReportRepo` port | report/template/schedule CRUD + the metric aggregation queries; implemented in `adapters/store` (today: `internal/database`) |
 | filesystem (`os`, `path/filepath`) + `gofpdf` | `ReportStore` + `Exporter` ports | save/read report files; render PDF/HTML/CSV/JSON |
 | `time` / `uuid` | `Clock` + `IDGen` ports | makes async generate + scheduler deterministic in tests |
@@ -112,7 +112,7 @@ creates only the structure the pilot needs and grows it module-by-module.
 
 ### 4.3 Target layout
 
-```
+```text
 internal/modules/harvest/
   service.go        # GeneratorService orchestration (async generate, save, fail) — I/O-free
   ports.go          # ReportRepo, ReportStore, Exporter, Clock, IDGen, HealthSource
@@ -149,9 +149,9 @@ deny `net/http`, `database/sql`, `internal/adapters/**`, and the other four
 - [x] `internal/app/harvest.go` builds the module from `Deps`; `internal/api/modules.go`
       consumes the module through the same surface (no behavior change).
 - [x] The harvest→health coupling is gone (it was dead code — deleted, #1428).
-- [x] Docs synced (§7): `THE_SEED_ARCHITECTURE` *Hexagon Structure* section
+- [x] Docs synced (§7): `THE_SEED_ARCHITECTURE` _Hexagon Structure_ section
       (ring diagram + harvest folder tree), `THE_SEED_BACKEND_ARCHITECTURE`
-      *Repository ports* subsection, and a `platform-architecture.md` note —
+      _Repository ports_ subsection, and a `platform-architecture.md` note —
       msn-docs #18.
 
 **Pilot complete (2026-06-01).** All §4.5 criteria green. harvest is the proven
@@ -170,7 +170,7 @@ Resliced during execution into atomic PRs:
    `statusCritical` into `types.go`.
 3. ✅ **1b-iii enforce purity** (#1429): `depguard` `modules-domain-purity`
    (deny `net/http`/`database/sql`/`internal/adapters` on `internal/modules/**`)
-   + `harvest-module-independence` (deny sibling module roots). RED-proven.
+   and `harvest-module-independence` (deny sibling module roots). RED-proven.
 4. ✅ **1b-iv ReportRepo** (see §4.7): report-record SQL (`GetReport`/
    `ListReports`/`scanReport`/`saveReport`/`DeleteReport` row) lifted verbatim
    into `internal/adapters/store/harvest_repo.go` behind the `harvest.ReportRepo`
@@ -206,6 +206,7 @@ Goal: move report-record SQL out of the module behind a port; harvest depends on
 an interface, the SQL lives in `internal/adapters/store`.
 
 1. **Port** — `internal/modules/harvest/ports.go` (new):
+
    ```go
    type ReportRepo interface {
        GetReport(ctx context.Context, id string) (*Report, error)
@@ -214,6 +215,7 @@ an interface, the SQL lives in `internal/adapters/store`.
        DeleteReport(ctx context.Context, id string) error // row only
    }
    ```
+
 2. **Adapter** — `internal/adapters/store/harvest_repo.go` (new pkg `store`):
    `type ReportRepo struct { db *database.DB }` + `NewReportRepo(db)`. Move the
    SQL + scanning verbatim from `services_reports.go` (`GetReport`/`ListReports`/
@@ -245,7 +247,7 @@ an interface, the SQL lives in `internal/adapters/store`.
 ## 5. Rollout order (cold → hot)
 
 | # | Module | From | Risk | Notes |
-|---|---|---|---|---|
+| --- | --- | --- | --- | --- |
 | 1 | **harvest** | `internal/harvest` | low | pilot — proves the pattern |
 | 2 | **roots** | `internal/pipeline/{analysis,enrichment,publicip,topology,traceroute}` | low-med | cold; **designs the flat `PathResponse` transport DTO deferred in Phase 2** + the `GatewayResponse` non-recursive split |
 | 3 | **canopy** | `internal/canopy/{,channel,survey,wifi,data}` | med | 14 importers; warm — extract after pattern is set |
@@ -283,7 +285,7 @@ registry — refreshed as modules land.
 ## 8. Risks & mitigations
 
 | Risk | Mitigation |
-|---|---|
+| --- | --- |
 | Collision with hot zones (polling/alerts/discovery/auth) | strategy is skeleton-light + cold-first; spine rehome deferred (§6); re-check the §2.1 map before each PR |
 | `ServiceContainer` ↔ `app` coexistence confusion | `app` grows additively; `ServiceContainer` retired only after the last module; documented in `app/` package doc |
 | Hidden cross-module imports surface mid-lift | expected (harvest→health is the first) — convert to a query port, log it for the Phase-4 event migration |
@@ -296,5 +298,5 @@ registry — refreshed as modules land.
 
 - **2026-06-01:** Pilot = `harvest` (lowest risk: cold, 1 importer, I/O-light).
   Approach = strangler, skeleton-light, spine rehome deferred. Plan-doc-first
-  before any code moves. (Owner directive: best-practice code *and* architecture
+  before any code moves. (Owner directive: best-practice code _and_ architecture
   throughout.)

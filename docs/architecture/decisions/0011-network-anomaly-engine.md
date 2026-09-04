@@ -1,6 +1,8 @@
 # ADR-0011: Network-wide anomaly engine (one typed stream, data-driven catalog)
 
-**Status:** Accepted — 2026-06-05 · in-memory engine (`internal/anomaly`) + Wi-Fi source implemented; SQL persistence and health-source convergence deferred to [ADR-0021](0021-persist-and-converge-anomaly-engine.md). The bespoke `internal/health.AnomalyDetector` is an unfed stub that ADR-0021 removes.
+**Status:** Accepted — 2026-06-05 · in-memory engine (`internal/anomaly`) + Wi-Fi source implemented; SQL persistence
+and health-source convergence deferred to [ADR-0021](0021-persist-and-converge-anomaly-engine.md). The bespoke
+`internal/health.AnomalyDetector` is an unfed stub that ADR-0021 removes.
 
 ## Context
 
@@ -9,11 +11,12 @@ APs, vendor mismatch within an SSID, security mismatch, Pineapple/KARMA) but exp
 spanning much more: a NetAlly-style catalog that covers Wi-Fi **and** wired/SNMP network
 health (CPU/mem/disk, interface errors/FCS/discards, half-duplex, spanning-tree change,
 duplicate IP, bad mask, SNMPv3-answering-v1/v2) **and** connectivity-test outcomes. The
-detections must be *guided*: each carries a precise description (cite IEEE/802.11 where it
+detections must be _guided_: each carries a precise description (cite IEEE/802.11 where it
 applies), a concrete fix recommendation, and — where one observation is ambiguous — a way to
 **narrow the diagnosis**, either by auto-running a deeper test or prompting the user.
 
 Two failure modes to avoid:
+
 1. **Three sibling buckets** ("Network / Wi-Fi / Security Anomalies"). They overlap so heavily
    (a Pineapple is all three) that users hunt across lists for one problem, and detections get
    split. The owner agreed this is "a pain in the ass."
@@ -24,13 +27,13 @@ Two failure modes to avoid:
 ## Decision
 
 One **general `internal/anomaly` engine**, network-wide — NOT a Wi-Fi-only or per-subsystem
-detector. "Network Anomalies" is the umbrella; Wi-Fi is its first rule *source*.
+detector. "Network Anomalies" is the umbrella; Wi-Fi is its first rule _source_.
 
 - **One typed instance.** `Anomaly{ id, defKey, category, severity, subjectRef (SSID/BSSID/
   client/device/interface), title, detail, evidence (measured values), firstSeen, lastSeen,
-  count }`. `category` encodes the *domain* (e.g. `security`, `rf`, `roaming`, `capacity`,
+  count }`. `category` encodes the _domain_ (e.g. `security`, `rf`, `roaming`, `capacity`,
   `nethealth`, `authorization`) — there is exactly one stream, filterable by category + severity.
-- **Data-driven catalog (`AnomalyDef`).** Each anomaly *type* is a catalog entry, separate from
+- **Data-driven catalog (`AnomalyDef`).** Each anomaly _type_ is a catalog entry, separate from
   its detections: `{ id, category, defaultSeverity, standards []string (cite IEEE/802.11, e.g.
   "IEEE 802.11w-2009"), title, description, impact, recommendation, followUps []FollowUp }`.
   Copy is **authored originally** (the competitor's analysis prose is copyrighted and must not be
@@ -58,7 +61,7 @@ detector. "Network Anomalies" is the umbrella; Wi-Fi is its first rule *source*.
 - Cross-source correlation becomes possible (rogue-AP-on-LAN, IP/MAC conflicts) because all
   detections land in one engine.
 - Reuses Alerts/severity/events rather than inventing a parallel notification path.
-- The catalog being *data* lets us tune descriptions, IEEE citations, thresholds, and severities
+- The catalog being _data_ lets us tune descriptions, IEEE citations, thresholds, and severities
   without redeploying logic, and makes the catalog reviewable in one place.
 - New responsibilities to design carefully: detection **dedup + TTL + clear**, severity
   escalation on recurrence, and the follow-up **capability registration** for active diagnostics.

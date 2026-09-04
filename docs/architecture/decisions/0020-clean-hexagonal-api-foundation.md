@@ -1,4 +1,6 @@
-# ADR-0020: Clean-hexagonal `internal/api` foundation — domain-meaningful use-case packages, adapters in the composition root
+# ADR-0020: Clean-hexagonal `internal/api` foundation
+
+Domain-meaningful use-case packages, adapters in the composition root.
 
 **Status:** Accepted — 2026-06-09
 
@@ -14,13 +16,13 @@ the first implementations drifted as a result:
 
 1. **Package naming.** ADR-0016 §Naming mandated the `<domain>app` suffix
    (`networkapp`, `wifiapp`, …) purely to dodge an import-alias clash with the
-   `internal/app` composition root. The suffix names the *layer*, not what the
-   package *provides* — the opposite of idiomatic Go (`net/http`, not
+   `internal/app` composition root. The suffix names the _layer_, not what the
+   package _provides_ — the opposite of idiomatic Go (`net/http`, not
    `net/httplayer`). It was a workaround, not a convention worth keeping.
 
 2. **Adapter placement.** ADR-0016 §Decision rule 4 says the composition root
    wires the use-cases. In practice the network/settings/profiles/alerts
-   adapters were defined *inside* `internal/api` in `<domain>_usecases.go` files
+   adapters were defined _inside_ `internal/api` in `<domain>_usecases.go` files
    (`networkHardware`, `networkConfigStore`, `initNetworkUseCase`, …). That keeps
    concrete knowledge of `netif`, the config store, and the database in the
    transport layer — exactly the coupling the strangle is meant to remove. The
@@ -110,7 +112,7 @@ Wave-4/5 invariant. Each PR verifies the route-policy manifest is byte-identical
 
 `TestGoldenHTTP*` stays byte-identical across a structural move. Because we carry
 no backwards-compatibility burden pre-v1.0.0, a genuinely wrong status code or
-response shape *is* fixed when found — but every golden diff is reviewed and
+response shape _is_ fixed when found — but every golden diff is reviewed and
 intended, never blindly re-baselined to lock in cruft.
 
 ## Consequences

@@ -84,7 +84,6 @@ Out of scope:
   `<file>.cosign.bundle` shipped with each release; each archive also
   ships a CycloneDX SBOM.
 
-
 ## Acknowledgments
 
 We appreciate security researchers who help keep The Seed secure.

@@ -9,7 +9,7 @@
 > `docs/architecture/route-inventory.md` snapshot, and the four frontend fetch sites
 > (`HealthCheckCard` `/run`, `SlaDashboardCard` `/anomalies`, the two settings-drawer hooks
 > `/settings`). No `/telemetry/probes/*` path existed before, so there was no collision. **Scope
-> deviation from the original §5 plan:** the *user-facing* "Health Checks" feature name and the
+> deviation from the original §5 plan:** the _user-facing_ "Health Checks" feature name and the
 > `HealthCheck*` component/type/i18n identifiers were **kept** — the transport path saying "probes"
 > is an API-consistency concern (the data comes from the probe engine), whereas the feature's product
 > name is a separate decision and renaming ~6 components + ~80 i18n keys would be churn with no user
@@ -21,7 +21,7 @@
 > **ADR-0027 is complete.** The on-demand health-check stack runs on one engine, one config store
 > (the `probes` table), one transport family (`/telemetry/probes/*`). The only loose end is the noted
 > `config.HealthChecks` endpoint-list cleanup (a `HealthChecksConfig` type split), tracked separately.
-
+>
 > **P3+P4 cutover as-built (2026-06-11).** `/telemetry/health-checks/run` now dispatches the
 > operator's configured probes through `Engine.RunNow` (load from the `probes` table → dispatch
 > → persist → same breach/anomaly path a scheduled run uses, ADR-0025 §1) and maps the probe
@@ -39,7 +39,8 @@
 > actually renders** (host/port/url, min/maxLatency, certCommonName, and the never-populated vertical
 > detail fields were dropped). This also **fixed a pre-existing drift**: the old backend emitted
 > `industryResults` + top-level `dicomResults`/`rtspResults`, but the card reads `industrialResults`
-> + nested `medicalResults.dicomResults`/`videoResults.rtspResults` — those sections were silently
+>
+> and nested `medicalResults.dicomResults`/`videoResults.rtspResults` — those sections were silently
 > empty before and now populate.
 >
 > No regression: an audit confirmed the vertical "rich" fields the probe checkers don't emit
@@ -51,15 +52,15 @@
 > `internal/probe/checkers/metadata.go` (the package that owns the snake_case metadata format), not
 > the API layer, so the camelCase wire-tag gate stays clean.
 >
-> **Deferred (noted, not silent):** the `config.HealthChecks` endpoint *lists* are now loaded-from-file
+> **Deferred (noted, not silent):** the `config.HealthChecks` endpoint _lists_ are now loaded-from-file
 > but unread (settings + /run both read the `probes` table); removing them needs splitting the
 > `HealthChecksConfig` type (still the settings transport shape) and is a separate cleanup. P5 (the
 > `/telemetry/health-checks/*` → `/telemetry/probes/*` transport rename) is the only remaining phase.
-
+>
 > **P3a checker-enrichment as-built (2026-06-11).** A read-only audit before the P3 cutover
 > found that the probe checkers emit thinner `Result.Metadata` than the legacy `/run` surfaced
 > on the health-check card — so rewiring `/run` onto the engine as-is would have **regressed**
-> the rendered diagnostics. (This also corrects the P1 note below: the HTTP checker was *not* a
+> the rendered diagnostics. (This also corrects the P1 note below: the HTTP checker was _not_ a
 > faithful port — it was a status/body-match reachability check.) P3a closes the gap for the
 > dominant case: the HTTP/HTTPS checker now publishes a **per-phase timing breakdown**
 > (`timings_ms`: dns/tcp/tls/ttfb via `httptrace`) and, for HTTPS, a **leaf-cert summary**
@@ -69,15 +70,15 @@
 > (HL7 `ack_code`, FHIR `fhir_version`/`resource_count`, Modbus `register_value`, etc.), so
 > after P3a the probe metadata carries the rich data the card renders. **Deliberate non-ports**
 > (documented, not silent regressions): (a) extended-ping loss/jitter/min/max — a multi-sample
-> *on-demand snapshot* concept that does not belong in a continuously-scheduled probe (the
+> _on-demand snapshot_ concept that does not belong in a continuously-scheduled probe (the
 > engine samples once per interval; jitter/loss emerge from the time series, or from a future
 > `/run` multi-sample mode, not from N rapid dials baked into the checker); (b) deep vertical
 > fields (SQL driver-version/query timing, LDAP bind/search/entries, OPC-UA session state,
 > FileShare read/write IO) — these need a real driver/library or a stateful protocol session
 > and were already dead/stub in the legacy stack (see the P1 note), so omitting them is honest.
-> Cert *status* (`success`/`warning`/`error`) stays a consumer concern (it needs the config
+> Cert _status_ (`success`/`warning`/`error`) stays a consumer concern (it needs the config
 > expiry thresholds), derived in the P3/P4 mapping rather than baked into the checker.
-
+>
 > **P2 as-built (2026-06-11).** The `/telemetry/health-checks/settings` endpoint is now
 > store-of-record backed by the `probes` table for all fourteen health-check kinds.
 > `internal/api/healthcheckmapping.go` maps each `config.*Endpoint` ⇄ a `database.Probe`
@@ -91,7 +92,7 @@
 > deleted health scoring) was **removed outright** rather than given a home. `/run` is fed from
 > the probes table via a thin best-effort hydrate snapshot; P3 deletes that. No schema
 > migration was needed. (Landed in #1642.)
-
+>
 > **First-run seeding follow-up (2026-06-11).** Making the `probes` table the store of
 > record left a gap P2 did not close: nothing populated it on a fresh install, so the
 > health-check card came up empty out-of-box (the pre-ADR-0027 `/run` path read factory
@@ -102,7 +103,7 @@
 > (`health_checks.seeded`) so deleting every probe does not re-seed on the next restart.
 > An install that already holds health-check probes (the upgrade path, marker absent) is
 > marked seeded and left untouched.
-
+>
 > **P1 as-built (2026-06-11).** The eight vertical checkers landed as `probe.Checker`
 > implementations under `internal/probe/checkers/` (`hl7.go`, `fhir.go`, `sql.go`,
 > `fileshare.go`, `ldap.go`, `lti.go`, `opcua.go`, `modbus.go`), each registered in the
@@ -121,7 +122,7 @@
 ## Context
 
 ADR-0025 made `internal/probe` the recurring-observation engine and the active-monitoring
-anomaly producer; ADR-0026 deleted the dead health-check *read* path (scoring/SLA/results).
+anomaly producer; ADR-0026 deleted the dead health-check _read_ path (scoring/SLA/results).
 Both deliberately **kept three live routes** under `/telemetry/health-checks/*` and deferred
 renaming the transport family until the survivors moved onto probe:
 
@@ -150,9 +151,9 @@ which is what this ADR provides. The direction is already constrained by two pri
   PING, TCP, UDP, HTTP, HTTPS, RTSP, DICOM, **HL7, FHIR, LTI, LDAP, OPCUA, MODBUS**, NTP, SIP, 802.1X,
   cable, multi-step transactions — plus `internal/api/health_checks_*.go` as the **parallel stack to
   absorb** (SEED_ARCHITECTURE §3.1, Stage A1).
-- **ADR-0025 §1** already drew the probe-vs-jobs boundary: a *recurring monitor is a probe*; a
-  *one-shot diagnostic is a job*; and the one bridge is the engine's run-now primitive — "evaluate this
-  *configured monitor* immediately," which shares the probe's threshold/breach/anomaly path. Both
+- **ADR-0025 §1** already drew the probe-vs-jobs boundary: a _recurring monitor is a probe_; a
+  _one-shot diagnostic is a job_; and the one bridge is the engine's run-now primitive — "evaluate this
+  _configured monitor_ immediately," which shares the probe's threshold/breach/anomaly path. Both
   `Engine.RunDefinition` (ad-hoc) and `Engine.RunNow` (load a stored definition, dispatch, persist)
   exist today.
 
@@ -173,7 +174,7 @@ protocol.
 ### 2. On-demand `/run` is a probe run-now, not a job
 
 Per ADR-0025 §1, on-demand "run all my checks now" is **not** a `platform/jobs` job (jobs are one-shot
-operations that produce a `Job{Result}` and *never* anomalies). It is the engine's on-demand evaluation
+operations that produce a `Job{Result}` and _never_ anomalies). It is the engine's on-demand evaluation
 of the operator's **configured probe definitions** — `RunNow` per definition — sharing the same
 checker → `Breach` → anomaly path an interval run uses. So an on-demand check **raises and clears the
 same anomaly** a scheduled run would. `/run` is rewired to fan `RunNow` over the configured probes and
@@ -211,7 +212,7 @@ component/type/i18n identifiers. The `/anomalies` path rename rides along here.
 Each phase is its own PR; the behavioral migration (1–4) **must precede** the rename (5).
 
 | Phase | Scope | Notes |
-|---|---|---|
+| --- | --- | --- |
 | **P1** | Vertical checkers — HL7, FHIR, SQL, FileShare, LDAP, LTI, OPC-UA, Modbus as `probe.Checker`s, registered in the engine. | The bulk of the work; can be split per-kind or batched. Each needs its kind-specific threshold shape (à la cert-expiry). New files are single-word lowercase per the existing `internal/probe/checkers/` convention — `hl7.go`, `fhir.go`, `sql.go`, `fileshare.go`, `ldap.go`, `lti.go`, `opcua.go`, `modbus.go` — **no underscores** (the repo filename policy allows `_` only in `_test.go`). |
 | **P2** ✅ | `/settings` storage migration: `config.Config.HealthChecks` target lists → `probes` table; a goose migration if the `probes` schema needs new columns. **As-built: `criticality` was removed outright** (unread since ADR-0026), not mapped; no migration was needed. | Settling the config→DB move; the scheduler now monitors these targets continuously. |
 | **P3** ✅ | Rewire `/run` to fan `Engine.RunNow` over the configured probes; **delete** the legacy protocol files + `run*Tests()`/`Run*Checks()` methods. **As-built: ~3,600 LOC deleted** (combined with P4 — see the as-built note). Config-file-list plumbing left as a noted follow-up. | The deletion landed here once P3a covered the rendered metadata. |
@@ -222,7 +223,7 @@ Each phase is its own PR; the behavioral migration (1–4) **must precede** the 
 
 - **On-demand `/run` becomes a `platform/jobs` job kind.** Rejected — ADR-0025 §1: jobs are one-shot
   operations producing a `Job{Result}` and never anomalies; `/run` is an on-demand evaluation of
-  *configured monitors* that must raise/clear the same anomalies an interval run does. It is a probe
+  _configured monitors_ that must raise/clear the same anomalies an interval run does. It is a probe
   run-now, not a job. (A genuinely long batch could later gain progress via SSE, but that does not make
   it a job — the engine already bounds concurrency.)
 - **Rename the transport now, migrate behavior later.** Rejected — a `/telemetry/probes/*` path serving

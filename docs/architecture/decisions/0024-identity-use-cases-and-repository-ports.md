@@ -1,6 +1,7 @@
 # ADR-0024: Identity decomposition — users / oauth / tokens use-cases over repository ports
 
-**Status:** Accepted — 2026-06-10 · applies ADR-0020 to the identity surface (C4, the final `internal/api` strangle slice before the `ServiceContainer` deletion)
+**Status:** Accepted — 2026-06-10 · applies ADR-0020 to the identity surface (C4, the final `internal/api` strangle
+slice before the `ServiceContainer` deletion)
 
 ## Context
 
@@ -24,7 +25,7 @@ settings, profiles, wifi, discovery, health, update):
    use-case — yet `callerRole` and the PAT middleware each read a store directly.
 
 2. **OAuth is mostly transport.** The SSO login/callback handlers are a cookie /
-   CSRF-state / code-exchange / redirect dance. Their *only* domain data operation
+   CSRF-state / code-exchange / redirect dance. Their _only_ domain data operation
    is `UpsertSSOUser`, which writes the **users** table — SSO is not a third
    independent store, it is a second writer of the user store. Session-token
    issuance in the callback belongs to the auth subsystem (`authManager()`), a
@@ -68,7 +69,7 @@ transport in `internal/api` (ADR-0020 shape). Repository ports replace every raw
 `callerRole` / `callerIsAdmin` / `requireRole` / `requireAdmin` / `writeGated` and
 `apiTokenMiddleware` / `resolveAPIToken` **remain `internal/api` constructs** — they
 are policy, and moving them would both create an import cycle and violate ADR-0020
-§5. Their *decision logic is unchanged* (role ranking, the "no user DB ⇒ admin"
+§5. Their _decision logic is unchanged_ (role ranking, the "no user DB ⇒ admin"
 dev tolerance, PAT scope clamping). What changes is only the **data fetch**:
 `callerRole`'s user lookup routes through the `users` repository seam instead of
 raw `s.services.Database.DB`, so that after C4 **no raw user-store handle is held

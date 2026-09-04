@@ -1,7 +1,9 @@
 # ADR-0015: Separate the credential data-encryption key from `Auth.JWTSecret`
 
 **Status:** Accepted — 2026-06-06; amended 2026-06-10 (pre-alpha cleanup: legacy v0 path deleted, plaintext rejected)
-**(Owner greenlit for v1. Cross-workstream sign-off satisfied — see "Coordination" below. Implemented: `internal/config/keyring.go` + `crypto.go`. Pre-alpha amendment (2026-06-10): the legacy v0/JWT-derived path has been deleted entirely and plaintext credential values are now rejected — see "Amendment" below.)**
+**(Owner greenlit for v1. Cross-workstream sign-off satisfied — see "Coordination" below. Implemented:
+`internal/config/keyring.go` + `crypto.go`. Pre-alpha amendment (2026-06-10): the legacy v0/JWT-derived path has been
+deleted entirely and plaintext credential values are now rejected — see "Amendment" below.)**
 
 ## Context
 
@@ -11,7 +13,7 @@ before being persisted into the config (`#518`). The implementation in
 architecture review (2026-06-05, finding #4, verified true) flagged as the
 highest-severity item on the hardening list:
 
-1. **The master key *is* the JWT signing secret.** Every call site derives the
+1. **The master key _is_ the JWT signing secret.** Every call site derives the
    encryption key from `c.Auth.JWTSecret`:
    - `crypto.go` — `EncryptSNMPCredentials` / `DecryptSNMPPassword`
    - `internal/api/handlers_security.go:522,534` — `EncryptCredential(..., s.config.Auth.JWTSecret)`
@@ -19,10 +21,10 @@ highest-severity item on the hardening list:
    This couples two unrelated security domains: **session-token signing** (owned
    by the `internal/auth` / `internal/oauth` workstream) and **data-at-rest
    encryption** (owned by config). The coupling has concrete failure modes:
-   - Rotating `JWTSecret` (a routine, *expected* auth operation — e.g. on
+   - Rotating `JWTSecret` (a routine, _expected_ auth operation — e.g. on
      suspected token-forgery) silently makes every stored SNMP credential
      **undecryptable**. There is no migration path; the data is simply lost.
-   - A single secret leak compromises *both* domains at once instead of one.
+   - A single secret leak compromises _both_ domains at once instead of one.
    - The two domains have different rotation cadences, blast radii, and owners,
      yet share one value — an SRP violation at the security layer.
 
@@ -41,17 +43,17 @@ highest-severity item on the hardening list:
 Constraints this decision operates under:
 
 - **No phone-home / air-gapped support is mandatory** (`LICENSE_STRATEGY.md`).
-  No external KMS may be *required*; the default must work fully offline on a
+  No external KMS may be _required_; the default must work fully offline on a
   diagnostic appliance.
 - The config file is persisted as JSON (`config_load.go`). Today `JWTSecret`
-  *and* the ciphertext it protects both live in that one file — so at-rest
-  encryption currently protects only against *partial* leakage (a log line, a
+  _and_ the ciphertext it protects both live in that one file — so at-rest
+  encryption currently protects only against _partial_ leakage (a log line, a
   truncated backup), not against anyone who has the whole config file. Any fix
   that keeps the key in the same file inherits that weakness.
 
 Out of scope: `internal/license/activation.go`'s `deriveKey` is a **separate,
 intentionally device-fingerprint-bound** key domain (license state at rest,
-keyed to `fingerprint.Hash() + salt`). It is not data-at-rest *credential*
+keyed to `fingerprint.Hash() + salt`). It is not data-at-rest _credential_
 encryption, is not coupled to `JWTSecret`, and is unaffected by this ADR.
 
 ## Decision
@@ -62,11 +64,11 @@ credential encryption, fully decoupled from `Auth.JWTSecret`.
 ### 1. Dedicated key material, stored separately from the data it protects
 
 - The DEK is **32 bytes of CSPRNG output**, generated on first use.
-- It is persisted in a **dedicated key file**, *not* in `config.json` — default
+- It is persisted in a **dedicated key file**, _not_ in `config.json` — default
   `<datadir>/credential.key`, mode `0600`, owned by the `seed` service user.
   Storing the key in the same file as the ciphertext (as `JWTSecret` is today)
   gives no defence against full-file leakage; a separate, tighter-permissioned
-  file means a leaked *config* backup no longer leaks the key.
+  file means a leaked _config_ backup no longer leaks the key.
 - Override order (first present wins), for 12-factor and BYO-KMS deployments:
   1. `SEED_CREDENTIAL_KEY` — base64-encoded 32-byte key (operator-/secrets-
      manager-supplied; never written to disk).
@@ -82,7 +84,7 @@ credential encryption, fully decoupled from `Auth.JWTSecret`.
   (`"seed:snmp-credential-encryption:v<N>"`).
 - HKDF is the correct primitive here because the input is **high-entropy random
   key material**, not a human passphrase. Argon2id is reserved for the single
-  case where the master is supplied as a low-entropy operator *passphrase*
+  case where the master is supplied as a low-entropy operator _passphrase_
   (a future option, not the default); the keyring records which was used.
 - The salt provides multi-target defence and clean separation from any other
   key ever derived from the same material.
@@ -92,7 +94,7 @@ credential encryption, fully decoupled from `Auth.JWTSecret`.
 - New format: **`enc:v<N>:base64(nonce‖ciphertext‖tag)`**, where `<N>` selects
   the keyring entry (and thus its salt) used to derive the key.
 - Legacy **`enc:base64(...)`** (no version segment) is interpreted as **v0** —
-  the JWT-derived, unsalted path — and remains *decryptable* (read-only) for
+  the JWT-derived, unsalted path — and remains _decryptable_ (read-only) for
   migration.
 - The keyring records the **active version** (used for all new encryption) and
   retains older versions for decryption, so rotation = "add v(N+1), make it
@@ -182,7 +184,7 @@ immediately with an actionable message pointing operators to the API/CLI.
 
 The status line records this amendment (`Accepted — 2026-06-06; amended
 2026-06-10`), and the ADR index (`docs/architecture/decisions/README.md`) marks
-ADR-0015 as *Amended*.
+ADR-0015 as _Amended_.
 
 ## Consequences
 
@@ -197,7 +199,7 @@ ADR-0015 as *Amended*.
   `SEED_CREDENTIAL_KEY` is the path for stricter environments.
 - **Migration cost is bounded and transparent** — lazy re-encryption on
   load/save; no operator step; legacy read path removed one release later.
-- **New operational surface**: a key file to back up *and protect*. Losing it
+- **New operational surface**: a key file to back up _and protect_. Losing it
   makes stored credentials unrecoverable (by design — that is what
   encryption-at-rest means). Documented in the operator setup checklist;
   re-entry of SNMP v3 credentials is the recovery path.

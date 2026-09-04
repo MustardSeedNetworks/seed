@@ -16,12 +16,12 @@ restart, or an event carrying information not reconstructable from durable state
 
 The decision now is to **build the outbox** to close out the Phase-5 persistence
 track and complete the re-architecture — providing the durable-delivery seam
-*ahead of* the first triggering consumer rather than scrambling to retrofit it
+_ahead of_ the first triggering consumer rather than scrambling to retrofit it
 when one lands. Two constraints shape the design:
 
 1. **No regression to the live path.** The jobs runner already survives restart
    (durable store + `Recover`, ADR-0005) and re-derives state on reconnect. The
-   amendment correctly warned that rewriting the runner to publish *through* the
+   amendment correctly warned that rewriting the runner to publish _through_ the
    outbox would add a relay, poll cadence, and ordering concerns "for no present
    benefit." So the outbox must be **additive**, not a rewrite of the direct
    `bus.Publish` path the runner uses today.
@@ -37,7 +37,7 @@ A **transactional outbox with a post-commit relay**, layered under
 `internal/platform/outbox`, additive to the existing bus.
 
 **Write side (atomic with the domain change).** A producer that needs durable
-delivery enqueues the event *in the same transaction* as its domain write:
+delivery enqueues the event _in the same transaction_ as its domain write:
 
 ```go
 err := db.WithTx(ctx, func(tx *sql.Tx) error {
@@ -84,7 +84,7 @@ does not promise cross-topic global order — events are independent facts.
   the bus; its durability is its store + `Recover`, not the outbox. Migrating it
   to publish through the outbox would be a rewrite with no behavioural gain and is
   explicitly out of scope (the ADR-0004 amendment's reasoning stands for that
-  path). The outbox is for *new* producers that need cross-restart durable
+  path). The outbox is for _new_ producers that need cross-restart durable
   delivery.
 - At-least-once + idempotent consumers is a weaker contract than exactly-once, but
   exactly-once is unavailable to an in-process async bus without a transactional

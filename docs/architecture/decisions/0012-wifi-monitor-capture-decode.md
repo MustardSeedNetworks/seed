@@ -1,6 +1,9 @@
 # ADR-0012: Wi-Fi monitor-mode capture port + 802.11 decode pipeline
 
-**Status:** Accepted — 2026-06-05 · capture port + CGO-free 802.11 decode (`internal/wifi/{capture,dot11,visibility}`) + SSID→AP→BSSID airspace hierarchy implemented; opt-in and unreleased (monitor capture activates only when `SEED_WIFI_MONITOR_IFACE` is set, empty airspace otherwise). Full client-tracking + W1–W6 feature surface still pending.
+**Status:** Accepted — 2026-06-05 · capture port + CGO-free 802.11 decode
+(`internal/wifi/{capture,dot11,visibility}`) + SSID→AP→BSSID airspace hierarchy implemented; opt-in and unreleased
+(monitor capture activates only when `SEED_WIFI_MONITOR_IFACE` is set, empty airspace otherwise). Full
+client-tracking + W1–W6 feature surface still pending.
 
 ## Context
 
@@ -59,7 +62,7 @@ concerns so the OS-specific surface stays tiny:
   becomes the first rule source for the anomaly engine (ADR-0011).
 - Keeping decode/model/anomaly CGO-free means the bulk of the subsystem is fast, deterministic,
   and unit-tested on any dev machine; only the live capture handle needs libpcap.
-- The only OS-specific code is monitor-mode *enablement*, isolated behind a small helper with a
+- The only OS-specific code is monitor-mode _enablement_, isolated behind a small helper with a
   BYO-interface fallback — so Windows/macOS third-party adapters use the identical engine, with
   success gated on the user's driver, not on our code.
 - **Validation needs real monitor-mode hardware** (Linux box / CI), exactly like the wired pcap

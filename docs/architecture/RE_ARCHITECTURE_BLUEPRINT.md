@@ -2,13 +2,13 @@
 
 > ⚠️ **AMENDED 2026-06-01 — Phase 3 pivoted.** The "modulith hexagon" with one
 > `internal/modules/<botanical>` package per product module (Roots/Canopy/Shell/
-> Sap/Harvest) proved, during execution, to be *dead parallel wiring* the HTTP
+> Sap/Harvest) proved, during execution, to be _dead parallel wiring_ the HTTP
 > request path never consumed. Phase 3's live plan of record is now
 > **`PHASE3_RECONCILE_PROPOSAL.md`**: a right-sized modular monolith — fat
 > handlers + api `ServiceContainer` groupings → **capability-first** feature
 > packages (`internal/wifi`, `internal/diagnostics`, `internal/security`,
 > `internal/reporting`), one composition root, ports only at real I/O seams, and
-> **descriptive code names** (botanical names retained for *marketing* only). The
+> **descriptive code names** (botanical names retained for _marketing_ only). The
 > module facades have been deleted. Phases 0–2 (registry, code-first contract,
 > golden harness) stand. Read the RECONCILE proposal for current direction.
 
@@ -24,9 +24,9 @@
 > RFC2544 / ITU-T Y.1564 active throughput testing (that is **Stem**). Where this blueprint
 > mentions scans/jobs (discovery, vulnerability, port), they are **user-initiated diagnostics**,
 > not passive-vs-active performance testing.
-
+>
 > This is the single source of truth for the Seed re-architecture. It supersedes
-> ad-hoc structure decisions. The *shape* defined here is harmonized across
+> ad-hoc structure decisions. The _shape_ defined here is harmonized across
 > seed / stem / niac (see [Harmonization](#13-harmonization-across-the-three-products));
 > each repo owns its own implementation — there is **no master repo**.
 
@@ -52,13 +52,13 @@ clean breaks everywhere:
 - Collapse the 2,079-line migration history into one clean baseline schema.
 - Delete dead code / deprecated aliases / no-op env vars on sight.
 - Fix the crypto smell (JWT-secret-as-cipher-key) with no migration path.
-- Design the API we *want*, not the one we have.
+- Design the API we _want_, not the one we have.
 
-**Caveat that bounds the ambition:** "no customers" means *no back-compat*, **not**
-*rewrite-from-scratch*. The 119K LOC is valuable because it is **debugged** — every
+**Caveat that bounds the ambition:** "no customers" means _no back-compat_, **not**
+_rewrite-from-scratch_. The 119K LOC is valuable because it is **debugged** — every
 `// fixes #NNN` edge case is hard-won knowledge a clean-room rewrite would silently
 lose. The play is **move-and-preserve the working logic, drop every compatibility
-shim**. Strangler stays as a *safety* technique; it sheds its *compatibility* baggage.
+shim**. Strangler stays as a _safety_ technique; it sheds its _compatibility_ baggage.
 
 **"main stays green" still holds** — not for customers, but for the **team**
 (concurrent development sessions run on this repo; a broken `main` blocks them).
@@ -69,13 +69,15 @@ Green now means "builds + tests pass," not "preserves the old API."
 ## 2. Goals & non-goals
 
 ### Goals
-1. Move from "enforcement & contracts by *convention*" to "by *construction*."
+
+1. Move from "enforcement & contracts by _convention_" to "by _construction_."
 2. Make the product's five-module mental model structural and consistent.
 3. A pure, I/O-free domain core that unit-tests without HTTP or SQLite.
 4. One frontend/backend contract, generated, never hand-maintained twice.
 5. A harmonized structure shared across seed / stem / niac.
 
 ### Non-goals
+
 - Microservices. Seed is and stays a **modulith** (one binary, one DB, one server).
 - An implicit DI framework. Wiring stays explicit, in one composition root.
 - A rich product CLI for seed (see [§12](#12-cli-scope)).
@@ -86,17 +88,21 @@ Green now means "builds + tests pass," not "preserves the old API."
 ## 3. Principles (best practices we hold — and reject)
 
 **Hold:**
+
 - **Package by domain, not by layer.** No top-level `services/`, `models/`, `handlers/`.
 - **`internal/`-only.** Seed is an application, not a library. Everything unimportable from outside.
 - **Dependencies point inward.** Domain imports nothing from http/sql/infra. Enforced by `depguard` in CI ([§4.3](#43-dependency-rules-enforced)).
 - **No `utils` / `common` / `shared` junk drawers.** Packages are named for what they provide.
 - **No stutter.** `canopy.Service`, never `canopy.CanopyService`.
-- **One concept per package.** The 24.5K-LOC discovery package and the `api` god-package both violated this; the new structure fixes both.
+- **One concept per package.** The 24.5K-LOC discovery package and the `api` god-package both violated this; the new
+  structure fixes both.
 - **Events are facts, not commands.** ([§6](#6-cross-module-events))
 
 **Reject (cargo-cult):**
+
 - `golang-standards/project-layout`'s `pkg/` directory — folklore, not Go-team guidance. We stay `internal/`-only.
-- Per-module `adapters/app/domain/ports` quadruple-nesting (microservice style) — ceremony without the isolation payoff for a single-binary modulith.
+- Per-module `adapters/app/domain/ports` quadruple-nesting (microservice style) — ceremony without the isolation
+  payoff for a single-binary modulith.
 
 ---
 
@@ -104,7 +110,7 @@ Green now means "builds + tests pass," not "preserves the old API."
 
 ### 4.1 The rings
 
-```
+```text
                     ┌─────────────────────────────────────────────┐
                     │  contract/  (OpenAPI 3.1 — source of truth)  │
                     │  → generates Go transport DTOs + TS client   │
@@ -140,7 +146,7 @@ on `platform/`. The `app` composition root wires them. `cmd/seed` is a shell.
 
 ### 4.2 Folder structure & migration map
 
-```
+```text
 seed/
 ├── cmd/seed/                 # thin cobra entrypoint
 ├── contract/                 # OpenAPI specs + codegen config (NEW)
@@ -183,11 +189,11 @@ seed/
 > the I/O seam (e.g. `internal/reporting/store`) and `depguard` enforcing direction.
 > This table is kept only as a record of the original plan. Concretely:
 > `internal/services/discovery` relocated to **`internal/discovery`** (Phase 6 S3,
-> #1489), *not* `internal/modules/shell/*`; `internal/harvest` stayed flat (not
+> #1489), _not_ `internal/modules/shell/*`; `internal/harvest` stayed flat (not
 > `internal/modules/harvest`). Treat the rows below as historical, not the target.
 
 | Current | → Target |
-|---|---|
+| --- | --- |
 | `internal/canopy/{,channel,survey,wifi,data}` | `internal/modules/canopy/…` |
 | `internal/harvest/{aggregator,generator,scheduler,templates,data}` | `internal/modules/harvest/…` |
 | `internal/services/{link,cable,dns,gateway,iperf,vlan,speedtest,performance,telemetry,snmp,dhcp}` | `internal/modules/sap/…` |
@@ -286,10 +292,10 @@ Manual, explicit wiring in **one home** instead of ten.
 
 ## 5. Cross-cutting systems
 
-### 5.1 Capability / route registry *(the keystone)*
+### 5.1 Capability / route registry _(the keystone)_
 
 **Problem killed:** today role-gating (`writeGated`), license-gating
-(`requireFeature`), and rate-limiting are applied by *remembering* to wrap each
+(`requireFeature`), and rate-limiting are applied by _remembering_ to wrap each
 route, in inconsistent nesting order (Roots, Canopy, and Harvest each nest
 differently). "Add a mutating route without the wrapper" is a documented
 regression class. Auth + CSRF are already global (`server_lifecycle.go`) and stay so.
@@ -316,26 +322,27 @@ func (s *Server) register(rt Route) { /* … */ s.manifest = append(s.manifest, 
 ```
 
 **Deliverables:**
+
 1. `Route` + `register` + canonical wrapper order (incidentally fixes the nesting bugs).
 2. All ~120 routes converted to per-module tables.
 3. `GET /__capabilities` (or build-time JSON) emitting the manifest — the fleet-audit surface.
 4. **CI gate `check-route-policy.sh`:** fail if any handler is registered outside
    `register()`, or if a mutating route (`POST/PUT/DELETE/PATCH`) has neither
-   `MinRole` nor an explicit `{Auth: Public}`. *This is where "forgot the wrapper"
-   becomes impossible.*
+   `MinRole` nor an explicit `{Auth: Public}`. _This is where "forgot the wrapper"
+   becomes impossible._
 
 Greenfield bonus: normalize the gating-order divergences directly — no preserve-and-flag ceremony.
 
 ### 5.2 Contract boundary — code-first (ADR-0003, amended)
 
-**Problem killed:** most request/response types are hand-typed *twice* (the
+**Problem killed:** most request/response types are hand-typed _twice_ (the
 ~1,300 LOC Profile/Settings types worst of all) with no enforced link → silent drift.
 
 **Change (corrected from the original OpenAPI-first plan — see ADR-0003):** there is
-already a working, CI-gated **code-first** pipeline; the fix is *coverage*, not new
+already a working, CI-gated **code-first** pipeline; the fix is _coverage_, not new
 tooling.
 
-```
+```text
 Go DTO ──seed-schema──► docs/schemas/api/*.schema.json ──gen-types──► ui generated TS
    gated by check-schema-drift.sh + check-types-drift.sh
 ```
@@ -391,8 +398,8 @@ Seed has **two** config sources that must not be conflated:
   via the API at runtime (thresholds, display options, feature toggles). Owned by the
   relevant module behind a repo port; never read from the file.
 
-Rule: anything an operator edits in the UI is a *runtime setting* (DB); anything needed
-to start the process is *bootstrap config* (file/env).
+Rule: anything an operator edits in the UI is a _runtime setting_ (DB); anything needed
+to start the process is _bootstrap config_ (file/env).
 
 ### 5.6 Secrets (`platform/secret`)
 
@@ -409,20 +416,20 @@ Seed runs work that isn't request/response. Today five subsystems (`scheduler`,
 kinds** and must not share a model:
 
 | Kind | What | Home | Lifecycle |
-|---|---|---|---|
+| --- | --- | --- | --- |
 | **One-shot async** | user-initiated scans/tests (speedtest, discovery, vuln, survey, traceroute) | `platform/jobs` (§8) | created per request, runs to completion, emits events |
 | **Recurring scheduled** | retention cleanup, scheduled reports, health-check cadence | `platform/scheduler` (cron-like) | registered at boot, fires on schedule, each tick may enqueue a job |
 | **Continuous ingestion** | SNMP polling, syslog + snmptrap listeners | supervised `Component`s (§5.3) in their module (`modules/sap`) | run for the whole process lifetime, ingest external data, emit events |
 
-Rule: jobs are *finite and user-initiated*; the scheduler is *recurring and time-driven*;
-ingestion daemons are *continuous and externally-driven*. All three are owned by the
+Rule: jobs are _finite and user-initiated_; the scheduler is _recurring and time-driven_;
+ingestion daemons are _continuous and externally-driven_. All three are owned by the
 component supervisor and publish to the event bus; none reach across modules directly.
 
 ### 5.8 Request lifecycle & validation
 
 A handler in `adapters/http` is a thin pipeline with named stages — no business logic:
 
-```
+```text
 decode (generated DTO + OpenAPI request validation)   ← syntactic validation
    → map DTO → domain input
    → core call (modules/<m>.Service method, ctx-first)  ← semantic validation lives in the domain
@@ -446,15 +453,16 @@ Decision: **in-process domain event bus** (ADR-0004). Modules never import each
 other; they publish/subscribe typed events.
 
 **Semantics (load-bearing — specify or it becomes hidden coupling):**
+
 - **In-process, single binary** — no broker.
-- **Events are facts, past-tense** (`DeviceDiscovered`, `SurveyCompleted`) — *never*
-  commands. Rule: events notify/react; they do not request/respond. This is the
+- **Events are facts, past-tense** (`DeviceDiscovered`, `SurveyCompleted`) — _never_
+  commands. Rule: events notify/React; they do not request/respond. This is the
   guardrail against spaghetti control-flow.
 - **Async, at-least-once, ordered per-topic.** A panicking subscriber must not fail
   the publisher.
 - **Ephemeral by default**; **audit events are durable** (→ `platform/audit`).
 - **Subscribers registered before publishers start** (supervisor ordering).
-- **Transactional outbox** (→ [§7](#7-persistence)): events emit only *after* the DB
+- **Transactional outbox** (→ [§7](#7-persistence)): events emit only _after_ the DB
   commit, so a rolled-back op never fires an "it happened" event. **DONE (ADR-0017,
   2026-06-07):** `internal/platform/outbox` — producers `Enqueue` in-transaction,
   the `Relay` republishes post-commit onto this bus on the original topic;
@@ -499,19 +507,19 @@ between modules.
 > confirmed).
 
 - Repo **interfaces defined in the domain** (`modules/*/ports.go`), implemented in
-  `adapters/store`. Eager-constructed at boot (kills the lazy-init race). *(Piloted
-  in `reporting/store`; generalize on demand, not wholesale.)*
-- **UnitOfWork / Tx** abstraction for multi-table atomicity. *(`DB.WithTx` exists;
-  a typed UnitOfWork over the domain ports is the open generalization.)*
+  `adapters/store`. Eager-constructed at boot (kills the lazy-init race). _(Piloted
+  in `reporting/store`; generalize on demand, not wholesale.)_
+- **UnitOfWork / Tx** abstraction for multi-table atomicity. _(`DB.WithTx` exists;
+  a typed UnitOfWork over the domain ports is the open generalization.)_
 - **Transactional outbox** table: domain writes + the event row commit together;
-  a relay publishes to the bus post-commit. *(DONE — ADR-0017. `outbox` table
+  a relay publishes to the bus post-commit. _(DONE — ADR-0017. `outbox` table
   (migration `00005`) + `internal/platform/outbox.Relay`; the durability layer for
-  `platform/events`, additive and dormant until a producer enqueues.)*
+  `platform/events`, additive and dormant until a producer enqueues.)_
 - **Optimistic concurrency:** version/ETag + `If-Match` on mutable resources.
-  *(DONE — profiles via `row_version` (migration `00004`, #1559 + hardening);
+  _(DONE — profiles via `row_version` (migration `00004`, #1559 + hardening);
   settings via a mutable-subset content-hash (`config.SettingsETag`, #1560). Both
   tokens are exact; an absent `If-Match` stays unconditional, so existing clients
-  are unaffected.)*
+  are unaffected.)_
 - **Reference data** (OUI vendor DB, MIB defs, default config, NVD cache) is
   **embedded read-only**, never rows in the mutable DB.
 
@@ -526,7 +534,7 @@ between modules.
 
 Today the schema lives as raw SQL **inside Go string literals** (`migrations.go`,
 2,190 lines, ~40 tables; up-only homegrown runner; version = slice index+1). The
-*connection setup* (`database.go`) is already sound and is **ported verbatim**:
+_connection setup_ (`database.go`) is already sound and is **ported verbatim**:
 `foreign_keys=ON`, `journal_mode=WAL`, `synchronous=NORMAL`, `busy_timeout`,
 `cache_size`, `temp_store=MEMORY`, pool limits, WAL-checkpoint on close, auto-rebuild.
 
@@ -546,7 +554,7 @@ Target (best practice):
   types instead of SQLite's permissive default. Free safety upgrade in a clean baseline.
 - **Explicit constraints in the baseline** — FKs on every relationship, `CHECK` for
   enums/states, `NOT NULL` discipline, `UNIQUE` where implied; standardized timestamps
-  (one of TEXT ISO-8601 *or* INTEGER epoch, uniformly).
+  (one of TEXT ISO-8601 _or_ INTEGER epoch, uniformly).
 - **Data-model review:** straighten the denormalized tables (the 1,157-line
   `repository_discovery.go` hints at it) in the baseline rather than carrying them forward.
 - **Forward-only in production**, down-migrations for dev/rollback; no business logic in
@@ -583,6 +591,7 @@ type Job struct {
 ```
 
 **Semantics:**
+
 - **Persisted** (survive restart, or fail cleanly); retention + cleanup.
 - **Bounded concurrency** (max parallel scans); **reject with 503 under overload** —
   appliance backpressure, not an unbounded queue.
@@ -652,17 +661,17 @@ be worse versions of the UI). But the CLI is not deletable — part of it is the
 **operational/lifecycle surface** that cannot live in the web UI:
 
 | Command | Why it can't be web-only |
-|---|---|
+| --- | --- |
 | `seed serve` | the launcher — no server to serve a UI until it runs |
 | `seed install` / `uninstall` / `service` | systemd / launchd / Windows service registration |
-| `seed install-ca` | trust the self-signed cert *before* the browser loads the UI |
+| `seed install-ca` | trust the self-signed cert _before_ the browser loads the UI |
 | `seed setup` / `reset` | first-run admin bootstrap / factory reset |
 | `seed license activate` / `trial` | air-gapped boxes activate offline at the terminal |
 | `seed validate` | config check without booting |
 
 Rule: **the CLI stays thin and operational, not a domain mirror.** Where an ops
 command touches domain logic (`license`, `export`, `setup`), it goes through core via
-`adapters/cli` for parity — but it does *not* expose scans/surveys/telemetry.
+`adapters/cli` for parity — but it does _not_ expose scans/surveys/telemetry.
 
 Harmonization note: `adapters/cli` is **thin in seed**, **thick in stem/niac**
 (genuinely CLI-first products — `stem test -t throughput`). Same slot, product-appropriate weight.
@@ -672,19 +681,19 @@ Harmonization note: `adapters/cli` is **thin in seed**, **thick in stem/niac**
 ## 13. Harmonization across the three products
 
 The spine and rings are the **same shape** in all three; only `modules/` differs.
-Per the standing rule — *harmonization, not a master repo* — the *shape* is shared
-and documented; each repo *implements* its own.
+Per the standing rule — _harmonization, not a master repo_ — the _shape_ is shared
+and documented; each repo _implements_ its own.
 
 | Path | seed | stem | niac |
-|---|---|---|---|
+| --- | --- | --- | --- |
 | `internal/modules/` | sap, shell, canopy, roots, harvest | reflector, benchmark, servicetest, trafficgen, measure, certify | protocols/{arp,dhcp,dns,bgp,ospf,snmp} |
-| `internal/platform/` | config, logging, license, auth, lifecycle, events, jobs, audit, version | *(identical set)* | *(identical set)* |
+| `internal/platform/` | config, logging, license, auth, lifecycle, events, jobs, audit, version | _(identical set)_ | _(identical set)_ |
 | `internal/adapters/` | http, cli, store, net | http, cli, store, net (+ `src/dataplane` C stays separate) | http, cli, store, net |
 | `contract/`, `cmd/<p>/`, `ui/` | ✓ | ✓ | ✓ |
 | `adapters/cli` weight | thin (ops) | thick (product) | thick (product) |
 
 Land each pattern in seed first as the reference implementation, then port the
-*pattern* (not the file) to stem and niac.
+_pattern_ (not the file) to stem and niac.
 
 ---
 
@@ -694,10 +703,14 @@ Mirror the backend rigor:
 
 - **Generated typed client** from the `contract/` OpenAPI — delete hand-written `client.ts` and hand-maintained types.
 - **React Query as the single server-state layer.** Zustand for UI-only state; finish retiring the legacy `profileContext`.
-- **SSE is the single realtime transport.** WebSocket is not used as a backend transport (only `/events` SSE exists); the stale `/ws` policy reference is retired. **One SSE manager → React Query cache** (the unified job/event stream from §8). Cards just `useQuery`; no per-card `EventSource` dance.
-- **Route-level auth/role guards** sourced from the **same capability manifest** as the backend registry — single source of truth for "who can see this."
+- **SSE is the single realtime transport.** WebSocket is not used as a backend transport (only `/events` SSE exists);
+  the stale `/ws` policy reference is retired. **One SSE manager → React Query cache** (the unified job/event stream
+  from §8). Cards just `useQuery`; no per-card `EventSource` dance.
+- **Route-level auth/role guards** sourced from the **same capability manifest** as the backend registry — single
+  source of truth for "who can see this."
 - **Error boundaries + suspense per module** so one card's failure doesn't blank the dashboard.
-- **Design-token SSoT** — lands the existing token-consolidation / brand-token-map work; the re-arch executes it, doesn't relitigate it.
+- **Design-token SSoT** — lands the existing token-consolidation / brand-token-map work; the re-arch executes it,
+  doesn't relitigate it.
 - **Form/validation via Valibot** mirroring the contract schemas; **optimistic updates** through React Query.
 - **Per-module route code-splitting** (lazy `import()`); enforce the existing `lighthouserc` budget in CI.
 
@@ -708,11 +721,14 @@ Mirror the backend rigor:
 - **Unit** — domain (`modules/*`), zero I/O, **hand-written fakes for ports** (not mock frameworks), table tests.
 - **Integration** — adapters against a real in-memory SQLite; `net` adapters against fakes.
 - **Contract** — validate handlers against the OpenAPI spec (request/response conform).
-- **Golden / characterization** — snapshot `(status, headers, body)` for representative routes; **our** refactor-safety net (greenfield → update freely when current behavior is wrong).
+- **Golden / characterization** — snapshot `(status, headers, body)` for representative routes; **our**
+  refactor-safety net (greenfield → update freely when current behavior is wrong).
 - **Arch-fitness** — the route-policy CI gate (runtime side of depguard).
 - **E2E** — Playwright, `getByTestId` selectors (per house rule).
-- **Determinism** — `Clock` port injected everywhere; Go 1.26 `testing/synctest` for time-dependent logic (retention, SLA, health windows).
-- **Hard CI gates** — `go test -race`; benchmark-regression on hot paths (packet/discovery) per `PERFORMANCE_GUIDELINES.md`; the existing schema/output-escaping/govulncheck gates retained.
+- **Determinism** — `Clock` port injected everywhere; Go 1.26 `testing/synctest` for time-dependent logic (retention,
+  SLA, health windows).
+- **Hard CI gates** — `go test -race`; benchmark-regression on hot paths (packet/discovery) per
+  `PERFORMANCE_GUIDELINES.md`; the existing schema/output-escaping/govulncheck gates retained.
 
 ---
 
@@ -723,7 +739,7 @@ protected-branch flow. Greenfield → bigger PRs are fine (slice for reviewabili
 not back-compat). Each behavior-preserving phase rides on the golden tests.
 
 | Phase | Outcome | Effort | Risk | Depends |
-|---|---|---|---|---|
+| --- | --- | --- | --- | --- |
 | **0** Prep & hygiene | purge tracked binaries (146MB `seed`, 157MB embed dir, `coverage.out`); golden-test harness; route inventory; **skeleton + spine rehome** (mechanical `git mv` of unambiguous leaf pkgs → `platform/`, `adapters/`) | 0.5 wk | none | — |
 | **1** Capability registry | "forgot the wrapper" impossible; `/__capabilities` manifest; `check-route-policy.sh` | 1–1.5 wk | low | 0 |
 | **2** Contract-first (per module) | one generated source of truth; Spectral lint; Redoc | 1.5 wk + roll | low-med | 0 |
@@ -735,7 +751,7 @@ not back-compat). Each behavior-preserving phase rides on the golden tests.
 
 **Folder migration is not a big-bang.** Phase 0 establishes the skeleton and moves
 only unambiguous leaf packages (mechanical, golden-test-guarded). Domain modules move
-*with* their Phase-3 extraction (never twice). `depguard` rules turn on per-directory,
+_with_ their Phase-3 extraction (never twice). `depguard` rules turn on per-directory,
 warn→deny, as each package is cleaned.
 
 **Lowest-regret stop point:** after Phases 1–2 the two largest latent-defect surfaces
@@ -750,23 +766,25 @@ unit test for new behavior) that must pass before the phase is done.
 
 Documentation is a **phase gate, not an end-of-project pass**: each phase's PR updates the
 msn-docs it invalidates and adds/updates diagrams, so docs never lag the code by more than
-one phase. (Decisions, 2026-05-31: *blueprint supersedes prior plans*; *per-phase gate cadence*.)
+one phase. (Decisions, 2026-05-31: _blueprint supersedes prior plans_; _per-phase gate cadence_.)
 
 **Why this blueprint supersedes the prior plans:** modern software should be built on current
 best-practice design — ports-and-adapters, contract-first boundaries, policy-by-construction,
-event-driven decoupling. The legacy plans normalized the *existing* layer-grouped layout
+event-driven decoupling. The legacy plans normalized the _existing_ layer-grouped layout
 (`api/`, `services/`, `pipeline/`) or a flat by-module variant; neither carries the hexagon,
 the registry, contract-first codegen, the event bus, or unified jobs. The blueprint does, so
 it is canonical:
 
-- `msn-docs-internal/05-Engineering/PROJECT_STRUCTURE_MIGRATION_PLAN.md` — **superseded for structure** (cross-repo; migration mechanics retained). Banner added 2026-05-31.
+- `msn-docs-internal/05-Engineering/PROJECT_STRUCTURE_MIGRATION_PLAN.md` — **superseded for structure** (cross-repo;
+  migration mechanics retained). Banner added 2026-05-31.
 - `msn-docs-internal/05-Engineering/REFACTOR_PLAN.md` — **superseded** (flat-by-module target). Banner added 2026-05-31.
-- `msn-docs-internal/02-The-Seed/THE_SEED_ARCHITECTURE.md` v2.0 — **rewritten to match at Phase 3** (forward-pointer added 2026-05-31).
+- `msn-docs-internal/02-The-Seed/THE_SEED_ARCHITECTURE.md` v2.0 — **rewritten to match at Phase 3** (forward-pointer
+  added 2026-05-31).
 
 **Per-phase msn-doc sync map:**
 
 | Phase | msn docs to align |
-|---|---|
+| --- | --- |
 | 0–1 registry | `API_DESIGN_GUIDELINES`, `SECURITY_ARCHITECTURE`, `CI_CD_CONFIGURATION`, `architecture/product-boundaries` |
 | 2 contract | `API_DESIGN_GUIDELINES`, `API_REFERENCE`, `ERROR_HANDLING` |
 | 3 hexagon | `THE_SEED_ARCHITECTURE` (+`_BACKEND_ARCHITECTURE`), `CODING_STANDARDS`, `architecture/platform-architecture`; finalize supersede of the two legacy plans |
@@ -783,7 +801,7 @@ each repo's `docs/architecture/` holds its own instance (no master repo).
 
 ---
 
-## 18. Open items (implementation detail, decided *in* the work)
+## 18. Open items (implementation detail, decided _in_ the work)
 
 Deliberately **not** in this blueprint — these are detail, not architecture:
 specific rate-limit numbers per `RateClass`, exact baseline-schema columns,
@@ -795,7 +813,7 @@ allow-lists, the exact event catalog entries. Each is decided in its phase.
 ## 19. Decision log (ADRs)
 
 | ADR | Decision |
-|---|---|
+| --- | --- |
 | [0001](decisions/0001-modulith-hexagon.md) | Modulith hexagon (modules / platform / adapters), not microservices, not layer-first |
 | [0002](decisions/0002-capability-registry.md) | Capability registry — authz/feature/rate-limit by construction |
 | [0003](decisions/0003-contract-first-boundary.md) | Contract boundary — code-first (Go DTOs → schema → TS); OpenAPI deferred (amended) |

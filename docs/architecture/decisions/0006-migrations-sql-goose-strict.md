@@ -23,7 +23,7 @@ The connection setup (`database.go`) is, by contrast, already sound: `foreign_ke
 `temp_store=MEMORY`, pool limits, WAL checkpoint on close, corruption auto-rebuild.
 
 Greenfield (no production data) + the schema-collapse already decided in the blueprint
-make this the right moment to change *how* the schema is expressed.
+make this the right moment to change _how_ the schema is expressed.
 
 ## Decision
 

@@ -36,7 +36,7 @@ one-line `Register(src)`:
    (`internal/timeseries/retention/types.go`) is `RollupHour → RollupDay → PurgeRaw/Hourly/Daily`
    over **immutable, timestamped raw rows** (`probe_results`, `metrics`): each raw row belongs to
    exactly one bucket forever, so `INSERT OR REPLACE ... GROUP BY` is faithful and idempotent. An
-   anomaly instance belongs to *every* day between `first_seen` and `last_seen` and **keeps
+   anomaly instance belongs to _every_ day between `first_seen` and `last_seen` and **keeps
    mutating** — it has no hourly tier and no raw stream the engine could purge (the Phase-2 TTL
    cleanup already owns deletion of resolved rows). Forcing anomalies through `RollupSource` would
    mean a no-op `RollupHour`, a `PurgeRaw` that double-owns the TTL purge, and a `RollupDay` that
@@ -50,7 +50,7 @@ Because the table is coalesced, the only faithful daily artifact is a **census**
 one row per (def, subject) whose lifecycle **intersects that day**, snapshotting the facts the live
 row still holds. The purpose (per ADR-0021) is long-term trend that survives the 90-day TTL purge of
 resolved rows — so the census must capture enough that, after the live row is gone, history still
-answers *"on day D, def=X subject=Y was active at severity=S, cumulative count C, resolved=?"*.
+answers _"on day D, def=X subject=Y was active at severity=S, cumulative count C, resolved=?"_.
 
 A day "intersects" an anomaly when `day_bucket` falls in `[trunc(first_seen), trunc(last_seen)]`
 (active anomaly) or equals `trunc(resolved_at)` (the day it cleared). In practice the scheduled pass
@@ -63,7 +63,7 @@ pass** — see §3.
 - **The census step is folded into the same maintenance pass that already runs the Phase-2 TTL
   `RunCleanup`** (the data-retention goroutine in `internal/api/server_shutdown.go`), so there is
   **one owner** of anomaly-table maintenance and one ordering guarantee: **census first, purge
-  second** — the rollup must read resolved rows *before* TTL deletes them, or a resolved anomaly
+  second** — the rollup must read resolved rows _before_ TTL deletes them, or a resolved anomaly
   purged at 90d would never be censused on its resolution day.
 - **Purge of the census table itself** is governed by the `DailyDays` tier horizon
   (`TierHorizons`), matching how `probe_rollups_daily` is bounded. Free/Starter keep zero; Pro keeps
@@ -87,7 +87,7 @@ that never ran. The discipline this ADR mandates:
 One row per (day, def, subject). Proposed columns:
 
 | Column | Type | Notes |
-|---|---|---|
+| --- | --- | --- |
 | `day_bucket` | TEXT | `YYYY-MM-DD` UTC, matches `retention.dayFormat` |
 | `def_key` | TEXT | catalog key |
 | `source` | TEXT | `wifi\|wired\|snmp\|…` — carried for source-scoped trend queries |
@@ -141,7 +141,7 @@ recurrence counting would require snapshotting at each day boundary and is defer
 - **Implement `RollupSource` for anomalies.** Rejected: no immutable raw stream, no hourly tier, and
   `PurgeRaw` would collide with the Phase-2 TTL ownership. Forces three of six interface methods to
   lie.
-- **Append an immutable `anomaly_events` log and roll *that* up** (true event-sourced rollups).
+- **Append an immutable `anomaly_events` log and roll _that_ up** (true event-sourced rollups).
   Faithful to per-day occurrence counts, and a natural `RollupSource`. Rejected for V1.0: it doubles
   the write path of the busiest producer (Wi-Fi scan bursts) precisely after ADR-0021 chose
   write-through-on-material-change specifically to avoid a per-observation write storm. Revisit if
