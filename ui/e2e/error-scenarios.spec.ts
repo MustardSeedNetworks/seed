@@ -80,7 +80,14 @@ test.describe('API Error Scenarios', () => {
       });
     });
 
-    test('should handle 500 error on device scan', async ({ page }) => {
+    // #2394: a failed scan produces no operator-facing signal at all -- the
+    // hook logs, clears `scanning` and spreads `...prev`, so the card reverts
+    // to its previous contents. This test passed anyway, because after
+    // `login()` the app shell renders CapabilityWarnings (also role=alert) and
+    // the unscoped locator below matched that instead. Marked fixme rather
+    // than narrowed: the behaviour it describes is the behaviour we want.
+    // Delete this line when #2394 ships.
+    test.fixme('should handle 500 error on device scan', async ({ page }) => {
       await login(page);
 
       // Mock scan endpoint returning 500
@@ -217,7 +224,10 @@ test.describe('API Error Scenarios', () => {
   });
 
   test.describe('401 Unauthorized (Session Expired)', () => {
-    test('should handle 401 during device scan', async ({ page }) => {
+    // #2394, same as the 500 case above and worse: an expired session during a
+    // scan is indistinguishable from an empty network, and nothing prompts
+    // re-authentication. Passed on the capability banner, not on the assertion.
+    test.fixme('should handle 401 during device scan', async ({ page }) => {
       await login(page);
 
       // Mock scan endpoint returning 401

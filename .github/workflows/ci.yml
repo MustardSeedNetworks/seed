@@ -1475,9 +1475,11 @@ jobs:
     # runner concurrency costs both time and billing. Re-measure before
     # widening this axis again.
     #
-    # continue-on-error was REMOVED once the suite went flake-free (the rotating
-    # post-login dashboard flake was fixed in #1588; full-suite main runs are 0
-    # hard failures / 0 flaky). The flag had masked real failures from the
+    # continue-on-error was REMOVED so this suite could gate merge; do not
+    # re-add it. The claim that used to sit here -- flake-free after #1588, 0
+    # hard failures / 0 flaky -- has not held, and a count in a comment goes
+    # stale silently. The flake budget step below is the live number; read that
+    # instead. The flag had masked real failures from the
     # ci-complete aggregator, so the full E2E suite could not gate merge.
     # Tradeoff now made explicit: a genuine E2E failure flips the CI workflow_run
     # conclusion to failure, which defers release-please's workflow_run success
@@ -1806,8 +1808,9 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 5
     # The full E2E browser suite (e2e) and E2E Smoke now gate merge through
-    # this aggregator — the suite went flake-free after #1588, so it can be
-    # trusted to block. Branch protection requires ONLY "CI Complete" (plus
+    # this aggregator. It blocks because a merge gate that ignores E2E is not a
+    # gate; that is the reason, not an (outdated) claim that the suite never
+    # flakes. See the flake budget in the e2e job for the live number. Branch protection requires ONLY "CI Complete" (plus
     # "Lint PR Title" / "Lint PR Body"), NOT the individual E2E shard names:
     # enumerating "E2E Browser Tests (webkit 3/4)" ×8 in branch protection is
     # brittle (a reshard silently breaks every required entry) and was also
