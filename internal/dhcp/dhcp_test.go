@@ -1,6 +1,7 @@
 package dhcp_test
 
 import (
+	"errors"
 	"testing"
 	"time"
 
@@ -238,12 +239,29 @@ func TestExtractValue(t *testing.T) {
 	}
 }
 
-func TestGetLeaseInfo(_ *testing.T) {
-	// On different platforms and network configurations, this may return nil or populated LeaseInfo.
-	// The test only verifies that GetLeaseInfo does not panic or crash.
-	info, err := dhcp.GetLeaseInfo("eth0")
-	_ = info
-	_ = err
+// noSuchIface cannot be present on a test host, so every lease lookup for it
+// must report no lease rather than a lease with no fields set.
+const noSuchIface = "seed-test-noiface0"
+
+func TestGetLeaseInfoUnknownInterface(t *testing.T) {
+	info, err := dhcp.GetLeaseInfo(noSuchIface)
+	if info != nil {
+		t.Errorf("GetLeaseInfo(%q) = %+v, want nil", noSuchIface, info)
+	}
+	if err == nil {
+		t.Errorf("GetLeaseInfo(%q) returned no error, want one reporting the absent lease", noSuchIface)
+	}
+
+	// Both platform entry points are reachable from any host and must agree
+	// that no lease file means no lease.
+	darwinInfo, darwinErr := dhcp.GetLeaseInfoDarwin(noSuchIface)
+	if darwinInfo != nil || darwinErr == nil {
+		t.Errorf("GetLeaseInfoDarwin(%q) = (%+v, %v), want (nil, error)", noSuchIface, darwinInfo, darwinErr)
+	}
+	linuxInfo, linuxErr := dhcp.GetLeaseInfoLinux(noSuchIface)
+	if linuxInfo != nil || !errors.Is(linuxErr, dhcp.ErrNoLease) {
+		t.Errorf("GetLeaseInfoLinux(%q) = (%+v, %v), want (nil, ErrNoLease)", noSuchIface, linuxInfo, linuxErr)
+	}
 }
 
 func TestCalculateTimingIncomplete(t *testing.T) {
@@ -290,7 +308,9 @@ func TestCalculateTimingComplete(t *testing.T) {
 	}
 }
 
-func TestConcurrentMonitorAccess(_ *testing.T) {
+// TestConcurrentMonitorAccess is a race-detector exerciser: phases are recorded
+// while the timing and running state are read.
+func TestConcurrentMonitorAccess(t *testing.T) {
 	monitor := dhcp.NewMonitor("eth0")
 
 	done := make(chan bool)
@@ -308,22 +328,10 @@ func TestConcurrentMonitorAccess(_ *testing.T) {
 	for range 10 {
 		<-done
 	}
-}
 
-func TestGetLeaseInfoDarwin(_ *testing.T) {
-	// This test is only meaningful on macOS; skip or ignore on other platforms.
-	info, err := dhcp.GetLeaseInfoDarwin("en0")
-	// Just verify it doesn't panic
-	_ = info
-	_ = err
-}
-
-func TestGetLeaseInfoLinux(_ *testing.T) {
-	// This test is only meaningful on Linux; on other platforms it is effectively skipped.
-	info, err := dhcp.GetLeaseInfoLinux("eth0")
-	// Just verify it doesn't panic
-	_ = info
-	_ = err
+	if monitor.IsRunning() {
+		t.Error("IsRunning() = true, but the monitor was never started")
+	}
 }
 
 func TestParseDHClientLeaseFile(t *testing.T) {

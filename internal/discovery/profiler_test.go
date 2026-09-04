@@ -274,19 +274,29 @@ func TestDeviceProfiler_ClearProfiles(t *testing.T) {
 	}
 }
 
-func TestDeviceProfiler_StartStop(_ *testing.T) {
+func TestDeviceProfiler_StartStop(t *testing.T) {
 	cfg := discovery.DefaultProfilerConfig()
 	snmpCfg := &config.SNMPConfig{Communities: []string{"public"}}
 
 	profiler := discovery.NewDeviceProfiler(cfg, snmpCfg)
 
-	// Start profiler
+	// QueueProfile is the observable for started/stopped: it refuses work
+	// whenever the worker pool is down (#930).
+	if err := profiler.QueueProfile("192.0.2.10"); err == nil {
+		t.Error("QueueProfile() before Start returned nil, want an error")
+	}
+
 	profiler.Start()
+	if err := profiler.QueueProfile("192.0.2.11"); err != nil {
+		t.Errorf("QueueProfile() while started: %v", err)
+	}
 
-	// Stop profiler
 	profiler.Stop()
+	if err := profiler.QueueProfile("192.0.2.12"); err == nil {
+		t.Error("QueueProfile() after Stop returned nil, want an error")
+	}
 
-	// Should be safe to stop multiple times
+	// Stop is idempotent.
 	profiler.Stop()
 }
 

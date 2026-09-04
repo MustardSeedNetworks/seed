@@ -1,6 +1,7 @@
 package gateway_test
 
 import (
+	"net/netip"
 	"sync"
 	"testing"
 	"time"
@@ -296,12 +297,25 @@ func TestTesterStartStopContinuousNotRunning(t *testing.T) {
 	}
 }
 
-func TestDetectGateway(_ *testing.T) {
-	// This may or may not find a gateway depending on system config.
+// The detectors report "no default route found" as an empty string with a nil
+// error, on every platform. What must always hold is that a non-empty result
+// is a real address of the right family — an empty one reaching a pinger would
+// be a defect, and handlers_security.go guards on exactly that.
+func TestDetectGateway(t *testing.T) {
 	gw, err := gateway.DetectGateway()
-	// Just verify it doesn't panic.
-	_ = gw
-	_ = err
+	if err != nil {
+		t.Skipf("gateway detection unavailable on this host: %v", err)
+	}
+	if gw == "" {
+		t.Skip("host has no default IPv4 route")
+	}
+	addr, parseErr := netip.ParseAddr(gw)
+	if parseErr != nil {
+		t.Fatalf("DetectGateway() = %q, which does not parse as an address: %v", gw, parseErr)
+	}
+	if !addr.Is4() {
+		t.Errorf("DetectGateway() = %q, want an IPv4 address", gw)
+	}
 }
 
 // Note: Platform-specific gateway detection tests removed - now in platform files.
@@ -467,7 +481,9 @@ func TestDetermineStatusEdgeCases(t *testing.T) {
 	}
 }
 
-func TestConcurrentTesterAccess(_ *testing.T) {
+// TestConcurrentTesterAccess is a race-detector exerciser: the gateway address
+// is written while the getters read it.
+func TestConcurrentTesterAccess(t *testing.T) {
 	tester := gateway.NewTester(gateway.DefaultThresholds())
 
 	done := make(chan bool)
@@ -485,6 +501,11 @@ func TestConcurrentTesterAccess(_ *testing.T) {
 
 	for range 10 {
 		<-done
+	}
+
+	// Each writer sets a whole address; a torn read would not parse.
+	if _, err := netip.ParseAddr(tester.GetGateway()); err != nil {
+		t.Errorf("GetGateway() = %q after concurrent writes: %v", tester.GetGateway(), err)
 	}
 }
 
@@ -901,12 +922,21 @@ func TestPingErrorMessage(t *testing.T) {
 	}
 }
 
-func TestDetectGatewayIPv6(_ *testing.T) {
-	// Test IPv6 gateway detection - may or may not find one.
+func TestDetectGatewayIPv6(t *testing.T) {
 	gw, err := gateway.DetectGatewayIPv6()
-	// Just verify it doesn't panic and returns valid types.
-	_ = gw
-	_ = err
+	if err != nil {
+		t.Skipf("IPv6 gateway detection unavailable on this host: %v", err)
+	}
+	if gw == "" {
+		t.Skip("host has no default IPv6 route")
+	}
+	addr, parseErr := netip.ParseAddr(gw)
+	if parseErr != nil {
+		t.Fatalf("DetectGatewayIPv6() = %q, which does not parse as an address: %v", gw, parseErr)
+	}
+	if addr.Is4() {
+		t.Errorf("DetectGatewayIPv6() = %q, want an IPv6 address", gw)
+	}
 }
 
 func TestTesterClose(t *testing.T) {

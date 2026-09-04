@@ -3,6 +3,7 @@
 package dhcp_test
 
 import (
+	"reflect"
 	"testing"
 	"time"
 
@@ -207,10 +208,15 @@ func TestParseDHCPLineMalformed(t *testing.T) {
 	}
 
 	for _, line := range lines {
-		t.Run(line, func(_ *testing.T) {
+		t.Run(line, func(t *testing.T) {
 			result := &dhcp.TestResult{}
-			// Should not panic - no assertions needed, just verify no panic
 			dhcp.ExportParseDHCPLine(line, result)
+
+			// A line that matches no pattern must leave the result untouched
+			// rather than record an empty address or an empty DNS entry.
+			if want := (dhcp.TestResult{}); !reflect.DeepEqual(*result, want) {
+				t.Errorf("ExportParseDHCPLine(%q) wrote %+v into an empty result", line, *result)
+			}
 		})
 	}
 }

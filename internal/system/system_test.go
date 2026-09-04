@@ -248,48 +248,6 @@ func TestGetHealthMultipleCalls(t *testing.T) {
 	}
 }
 
-func TestHealthStructFields(_ *testing.T) {
-	// Test that the Health struct has all expected fields
-	health := &system.Health{
-		CPUPercent:    50.0,
-		MemoryPercent: 60.0,
-		MemoryUsed:    1000,
-		MemoryTotal:   2000,
-		DiskPercent:   70.0,
-		DiskUsed:      5000,
-		DiskTotal:     10000,
-		Uptime:        3600,
-		LoadAvg1:      1.0,
-		LoadAvg5:      1.5,
-		LoadAvg15:     2.0,
-		Goroutines:    10,
-		ProcessMemory: 50000,
-		Hostname:      "test-host",
-		OS:            "linux",
-		Arch:          "amd64",
-		NumCPU:        4,
-	}
-
-	// Verify all fields are accessible
-	_ = health.CPUPercent
-	_ = health.MemoryPercent
-	_ = health.MemoryUsed
-	_ = health.MemoryTotal
-	_ = health.DiskPercent
-	_ = health.DiskUsed
-	_ = health.DiskTotal
-	_ = health.Uptime
-	_ = health.LoadAvg1
-	_ = health.LoadAvg5
-	_ = health.LoadAvg15
-	_ = health.Goroutines
-	_ = health.ProcessMemory
-	_ = health.Hostname
-	_ = health.OS
-	_ = health.Arch
-	_ = health.NumCPU
-}
-
 func TestHealthStructWithProcessInfoFields(t *testing.T) {
 	// Test Health struct with TopCPUProcesses and TopMemoryProcesses fields
 	procs := []system.ProcessInfo{
@@ -672,54 +630,6 @@ func TestGetHealthProcessMemory(t *testing.T) {
 	if health2.ProcessMemory == 0 {
 		t.Error("ProcessMemory should be > 0 after allocation")
 	}
-}
-
-func TestHealthFieldTypes(t *testing.T) {
-	// Verify that Health struct fields have correct types by using them
-	c := system.NewCollector()
-	defer func() { _ = c.Close() }()
-
-	health, err := c.Health()
-	if err != nil {
-		t.Fatalf("Health() failed: %v", err)
-	}
-
-	// Use type assertions to verify field types compile correctly
-	_ = health.CPUPercent + 0.0
-	_ = health.MemoryPercent + 0.0
-	_ = health.MemoryUsed + 0
-	_ = health.MemoryTotal + 0
-	_ = health.DiskPercent + 0.0
-	_ = health.DiskUsed + 0
-	_ = health.DiskTotal + 0
-	_ = health.Uptime + 0
-	_ = health.LoadAvg1 + 0.0
-	_ = health.LoadAvg5 + 0.0
-	_ = health.LoadAvg15 + 0.0
-	_ = health.Goroutines + 0
-	_ = health.ProcessMemory + 0
-	_ = health.Hostname + ""
-	_ = health.OS + ""
-	_ = health.Arch + ""
-	_ = health.NumCPU + 0
-	_ = append(health.TopCPUProcesses, system.ProcessInfo{})
-	_ = append(health.TopMemoryProcesses, system.ProcessInfo{})
-}
-
-func TestProcessInfoFieldTypes(_ *testing.T) {
-	// Verify ProcessInfo struct field types
-	proc := system.ProcessInfo{
-		Name:       "test",
-		PID:        1,
-		CPUPercent: 50.0,
-		MemoryMB:   100.0,
-	}
-
-	// Use operations to verify field types compile correctly
-	_ = proc.Name + ""
-	_ = proc.PID + 0
-	_ = proc.CPUPercent + 0.0
-	_ = proc.MemoryMB + 0.0
 }
 
 func TestGetHealthGoroutineCount(t *testing.T) {

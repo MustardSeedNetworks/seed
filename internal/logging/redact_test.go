@@ -1,7 +1,10 @@
 package logging_test
 
 import (
+	"bytes"
+	"log/slog"
 	"net/http"
+	"strings"
 	"testing"
 
 	"github.com/MustardSeedNetworks/seed/internal/logging"
@@ -324,39 +327,100 @@ func TestGetClientIP(t *testing.T) {
 }
 
 func TestLogf(t *testing.T) {
-	// Test that Logf doesn't panic with various argument types
-	t.Run("string argument", func(_ *testing.T) {
-		logging.Logf("test message: %s", "password=secret")
-	})
+	tests := []struct {
+		name      string
+		format    string
+		args      []any
+		wantOut   []string
+		wantNotIn []string
+	}{
+		{
+			name:      "string argument",
+			format:    "test message: %s",
+			args:      []any{"password=secret"},
+			wantOut:   []string{"test message:", "[REDACTED]"},
+			wantNotIn: []string{"secret"},
+		},
+		{
+			name:      "http.Header argument",
+			format:    "headers: %v",
+			args:      []any{http.Header{"Authorization": []string{"Bearer token"}}},
+			wantOut:   []string{"Authorization"},
+			wantNotIn: []string{"Bearer token"},
+		},
+		{
+			name:      "map argument",
+			format:    "data: %v",
+			args:      []any{map[string]any{"password": "secret", "user": "admin"}},
+			wantOut:   []string{"admin"},
+			wantNotIn: []string{"secret"},
+		},
+		{
+			name:    "int argument",
+			format:  "count: %d",
+			args:    []any{42},
+			wantOut: []string{"count: 42"},
+		},
+		{
+			name:    "mixed arguments",
+			format:  "user=%s count=%d",
+			args:    []any{"admin", 10},
+			wantOut: []string{"user=admin count=10"},
+		},
+	}
 
-	t.Run("http.Header argument", func(_ *testing.T) {
-		h := http.Header{"Authorization": []string{"Bearer token"}}
-		logging.Logf("headers: %v", h)
-	})
+	var buf bytes.Buffer
+	logging.ExportSetGlobalLogger(slog.New(slog.NewTextHandler(&buf, &slog.HandlerOptions{
+		Level: slog.LevelDebug,
+	})))
+	defer logging.ExportClearGlobalLogger()
 
-	t.Run("map argument", func(_ *testing.T) {
-		m := map[string]any{"password": "secret", "user": "admin"}
-		logging.Logf("data: %v", m)
-	})
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			buf.Reset()
+			logging.Logf(tt.format, tt.args...)
 
-	t.Run("int argument", func(_ *testing.T) {
-		logging.Logf("count: %d", 42)
-	})
-
-	t.Run("mixed arguments", func(_ *testing.T) {
-		logging.Logf("user=%s count=%d", "admin", 10)
-	})
+			out := buf.String()
+			for _, want := range tt.wantOut {
+				if !strings.Contains(out, want) {
+					t.Errorf("Logf output is missing %q: %s", want, out)
+				}
+			}
+			for _, leak := range tt.wantNotIn {
+				if strings.Contains(out, leak) {
+					t.Errorf("Logf leaked %q: %s", leak, out)
+				}
+			}
+		})
+	}
 }
 
-func TestLogRequest(_ *testing.T) {
-	// Just verify it doesn't panic
-	req, _ := http.NewRequest(http.MethodPost, "/api/login", http.NoBody)
+func TestLogRequest(t *testing.T) {
+	var buf bytes.Buffer
+	logging.ExportSetGlobalLogger(slog.New(slog.NewTextHandler(&buf, &slog.HandlerOptions{
+		Level: slog.LevelDebug,
+	})))
+	defer logging.ExportClearGlobalLogger()
+
+	req, err := http.NewRequest(http.MethodPost, "/api/login", http.NoBody)
+	if err != nil {
+		t.Fatalf("NewRequest: %v", err)
+	}
 	req.Header.Set("Authorization", "Bearer secret-token")
 	req.Header.Set("Content-Type", "application/json")
 	req.RemoteAddr = "192.168.1.100:54321"
 
-	// This should log but not panic
 	logging.LogRequest(req, "test request")
+
+	out := buf.String()
+	if strings.Contains(out, "secret-token") {
+		t.Errorf("LogRequest wrote the bearer token to the log: %s", out)
+	}
+	for _, want := range []string{"test request", http.MethodPost, "/api/login", "192.168.1.100"} {
+		if !strings.Contains(out, want) {
+			t.Errorf("LogRequest output is missing %q: %s", want, out)
+		}
+	}
 }
 
 func TestRedactMapWithNonStringValues(t *testing.T) {

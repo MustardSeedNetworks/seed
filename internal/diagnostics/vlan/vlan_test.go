@@ -3,6 +3,7 @@
 package vlan_test
 
 import (
+	"strings"
 	"testing"
 
 	"github.com/MustardSeedNetworks/seed/internal/diagnostics/vlan"
@@ -197,10 +198,11 @@ func TestContains(t *testing.T) {
 	}
 }
 
-func TestConcurrentManagerAccess(_ *testing.T) {
+// TestConcurrentManagerAccess is a race-detector exerciser: the interface name
+// and the configured state are written while GetInfo reads them.
+func TestConcurrentManagerAccess(t *testing.T) {
 	manager := vlan.NewManager("eth0")
 
-	// Test concurrent access doesn't cause race conditions.
 	done := make(chan bool)
 	for i := range 10 {
 		go func(id int) {
@@ -213,9 +215,12 @@ func TestConcurrentManagerAccess(_ *testing.T) {
 		}(i)
 	}
 
-	// Wait for all goroutines.
 	for range 10 {
 		<-done
+	}
+
+	if got := manager.ManagerInterfaceName(); len(got) != 4 || got[:3] != "eth" {
+		t.Errorf("ManagerInterfaceName() = %q after concurrent writes, want an eth<n> name", got)
 	}
 }
 
@@ -227,25 +232,29 @@ func TestDetectVlanSubinterfacesPlatform(t *testing.T) {
 	}
 }
 
-func TestCreateVlanInterface(_ *testing.T) {
-	// This requires root privileges, so just verify it doesn't panic.
-	err := vlan.CreateVlanInterface("eth0", 100)
-	// Error is expected on non-Linux or without root.
-	_ = err
-}
+// TestVlanInterfaceOnUnknownParent pins the behaviour that holds regardless of
+// privileges: a VLAN cannot be created on or removed from a parent that does
+// not exist, because the netlink parent lookup fails before any write.
+func TestVlanInterfaceOnUnknownParent(t *testing.T) {
+	const noSuchIface = "seed-test-noiface0"
 
-func TestCreateVlanInterfacePlatform(_ *testing.T) {
-	// This requires root privileges on Linux.
-	err := vlan.ExportCreateVlanInterfacePlatform("eth0", 100)
-	// Error is expected without root or on macOS (returns nil).
-	_ = err
-}
-
-func TestDeleteVlanInterface(_ *testing.T) {
-	// This requires root privileges.
-	err := vlan.DeleteVlanInterface("eth0", 100)
-	// Error is expected on non-Linux or without root.
-	_ = err
+	for _, tc := range []struct {
+		name string
+		call func() error
+	}{
+		{"CreateVlanInterface", func() error { return vlan.CreateVlanInterface(noSuchIface, 100) }},
+		{"DeleteVlanInterface", func() error { return vlan.DeleteVlanInterface(noSuchIface, 100) }},
+		{"createVlanInterfacePlatform", func() error {
+			return vlan.ExportCreateVlanInterfacePlatform(noSuchIface, 100)
+		}},
+		{"deleteVlanInterfacePlatform", func() error {
+			return vlan.ExportDeleteVlanInterfacePlatform(noSuchIface, 100)
+		}},
+	} {
+		if err := tc.call(); err == nil {
+			t.Errorf("%s(%q, 100) = nil, want an error", tc.name, noSuchIface)
+		}
+	}
 }
 
 func TestDetectVlanSubinterfaces(t *testing.T) {
@@ -526,32 +535,13 @@ func TestTrafficStructFields(t *testing.T) {
 	}
 }
 
-func TestConcurrentTrafficMonitorAccess(_ *testing.T) {
-	monitor := vlan.NewTrafficMonitor("eth0")
-
-	done := make(chan bool)
-	for i := range 10 {
-		go func(_ int) {
-			for range 100 {
-				_ = monitor.GetStats()
-				_ = monitor.IsRunning()
-			}
-			done <- true
-		}(i)
-	}
-
-	// Wait for all goroutines.
-	for range 10 {
-		<-done
-	}
-}
-
-func TestConcurrentTrafficMonitorStatsAndReset(_ *testing.T) {
+// TestConcurrentTrafficMonitorStatsAndReset is a race-detector exerciser: the
+// stats map is replaced, read and reset from three goroutines at once.
+func TestConcurrentTrafficMonitorStatsAndReset(t *testing.T) {
 	monitor := vlan.NewTrafficMonitor("eth0")
 
 	done := make(chan bool)
 
-	// Writer goroutine.
 	go func() {
 		for i := range 50 {
 			testStats := map[int]*vlan.Traffic{
@@ -562,15 +552,20 @@ func TestConcurrentTrafficMonitorStatsAndReset(_ *testing.T) {
 		done <- true
 	}()
 
-	// Reader goroutine.
 	go func() {
 		for range 50 {
-			_ = monitor.GetStats()
+			// The writer publishes one entry per round with Packets == ID
+			// and Bytes == ID*100; a reader must never see those torn apart.
+			for _, tr := range monitor.GetStats() {
+				if tr.Packets != uint64(tr.ID) || tr.Bytes != uint64(tr.ID*100) {
+					done <- false
+					return
+				}
+			}
 		}
 		done <- true
 	}()
 
-	// Reset goroutine.
 	go func() {
 		for range 50 {
 			monitor.Reset()
@@ -578,9 +573,10 @@ func TestConcurrentTrafficMonitorStatsAndReset(_ *testing.T) {
 		done <- true
 	}()
 
-	// Wait for all goroutines.
 	for range 3 {
-		<-done
+		if !<-done {
+			t.Fatal("GetStats() returned an entry whose counters do not match its ID")
+		}
 	}
 }
 
@@ -636,13 +632,6 @@ func TestTrafficMonitorStartWithInvalidInterface(t *testing.T) {
 	} else {
 		t.Logf("Start correctly failed with: %v", err)
 	}
-}
-
-func TestDeleteVlanInterfacePlatform(_ *testing.T) {
-	// Test the exported delete function.
-	err := vlan.ExportDeleteVlanInterfacePlatform("eth0", 100)
-	// Error is expected on most systems without root or the interface.
-	_ = err
 }
 
 func TestManagerWithEmptyInterfaceName(t *testing.T) {
@@ -845,12 +834,13 @@ func TestTrafficStatsWithTimestamp(t *testing.T) {
 	}
 }
 
-func TestManagerInterfaceNameThread(_ *testing.T) {
+// TestManagerInterfaceNameThread checks that a reader never observes a torn
+// interface name while a writer is replacing it.
+func TestManagerInterfaceNameThread(t *testing.T) {
 	manager := vlan.NewManager("initial")
 
 	results := make(chan string, 100)
 
-	// Multiple readers.
 	for range 10 {
 		go func() {
 			for range 10 {
@@ -859,16 +849,17 @@ func TestManagerInterfaceNameThread(_ *testing.T) {
 		}()
 	}
 
-	// Single writer.
 	go func() {
 		for i := range 10 {
 			manager.SetInterface("interface" + string(rune('0'+i)))
 		}
 	}()
 
-	// Collect results (no race conditions).
 	for range 100 {
-		<-results
+		got := <-results
+		if got != "initial" && !strings.HasPrefix(got, "interface") {
+			t.Fatalf("ManagerInterfaceName() = %q, want %q or an interface<n> name", got, "initial")
+		}
 	}
 }
 
@@ -1221,29 +1212,6 @@ func TestTrafficMonitorStopAfterSetInterface(t *testing.T) {
 
 	if monitor.IsRunning() {
 		t.Error("expected IsRunning false after Stop")
-	}
-}
-
-func TestCreateAndDeleteVlanInterfaceTableDriven(t *testing.T) {
-	tests := []struct {
-		name       string
-		parentIf   string
-		vlanID     int
-		wantCreate bool // We can't verify if it works without root
-		wantDelete bool
-	}{
-		{"valid interface and VLAN", "eth0", 100, true, true},
-		{"valid interface max VLAN", "eth0", 4094, true, true},
-		{"valid interface VLAN 1", "eth0", 1, true, true},
-		{"empty interface", "", 100, true, true},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(_ *testing.T) {
-			// Just verify these don't panic.
-			_ = vlan.CreateVlanInterface(tt.parentIf, tt.vlanID)
-			_ = vlan.DeleteVlanInterface(tt.parentIf, tt.vlanID)
-		})
 	}
 }
 

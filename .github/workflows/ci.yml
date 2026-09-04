@@ -374,14 +374,22 @@ jobs:
           echo "Current coverage: ${COVERAGE}%"
 
           # Minimum coverage threshold. Acts as an anti-regression floor.
-          # Actual coverage is 54.0%, so the old floor of 42 left a 12pp hole a
-          # regression could fall through unnoticed. 50 is the fleet minimum
-          # and matches stem and niac.
+          # Measured 59.4% on ubuntu-latest, which is this job's runner, on
+          # 2026-09-03 (#2374) — the 54.0% the previous comment recorded was
+          # stale, and the floor of 50 left a 9pp hole a regression could fall
+          # through unnoticed. 55 keeps ~4pp of headroom for ordinary variance
+          # while closing most of that gap.
+          #
+          # Measure the same way this job does before moving it: on Linux, with
+          # SKIP_NETWORK_TESTS=1 and the full package set. A darwin run reads
+          # several points lower because the build-tagged *_linux.go tests never
+          # compile there.
+          #
           # Ratchet plan (see #959):
-          #   2026-Q3: 50 (current — fleet minimum)
+          #   2026-Q3: 55 (current)
           #   2027-Q2: 60
           #   long-term: 70
-          MIN_COVERAGE=50
+          MIN_COVERAGE=55
 
           if (( $(echo "$COVERAGE < $MIN_COVERAGE" | bc -l) )); then
             echo "ERROR: Coverage ${COVERAGE}% is below minimum threshold of ${MIN_COVERAGE}%"

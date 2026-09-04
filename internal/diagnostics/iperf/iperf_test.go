@@ -268,13 +268,6 @@ func TestManagerServerAlreadyRunning(t *testing.T) {
 	manager.SetManagerServerStatusRunning(false, 0)
 }
 
-func TestCheckInstalled(_ *testing.T) {
-	// This test may fail if iperf3 is not installed, which is okay
-	err := iperf.CheckInstalled()
-	// Just check it doesn't panic - the result depends on system configuration
-	_ = err
-}
-
 func TestGetVersion(t *testing.T) {
 	// Skip if iperf3 not installed
 	if err := iperf.CheckInstalled(); err != nil {
@@ -301,16 +294,27 @@ func TestIperfJSONFields(t *testing.T) {
 	}
 }
 
-func TestFindIperf3Binary(_ *testing.T) {
-	// Reset the cached path to test finding
+func TestFindIperf3Binary(t *testing.T) {
+	// Clear the cache so the lookup actually runs.
 	originalPath := iperf.IperfBinaryPath()
 	iperf.SetIperfBinaryPath("")
 	defer func() { iperf.SetIperfBinaryPath(originalPath) }()
 
 	path, err := iperf.FindIperf3Binary()
-	// Just verify it doesn't panic - result depends on system
-	_ = path
-	_ = err
+
+	// CheckInstalled is defined as this lookup's error, so the two must agree
+	// and a successful lookup must yield a usable path.
+	iperf.SetIperfBinaryPath("")
+	installed := iperf.CheckInstalled()
+	if (err == nil) != (installed == nil) {
+		t.Errorf("FindIperf3Binary() err = %v but CheckInstalled() = %v", err, installed)
+	}
+	if err == nil && path == "" {
+		t.Error("FindIperf3Binary() returned no error and an empty path")
+	}
+	if err != nil && path != "" {
+		t.Errorf("FindIperf3Binary() returned error %v and path %q, want an empty path", err, path)
+	}
 }
 
 func TestFindIperf3BinaryCached(t *testing.T) {
@@ -427,23 +431,32 @@ func TestClientStatusPhases(t *testing.T) {
 	}
 }
 
-func TestConcurrentManagerAccess(_ *testing.T) {
+// TestConcurrentManagerAccess is a race-detector exerciser: the status structs
+// are written while the getters read them.
+func TestConcurrentManagerAccess(t *testing.T) {
 	manager := iperf.NewManager()
 
 	done := make(chan bool)
-	for range 10 {
-		go func() {
+	for i := range 10 {
+		go func(id int) {
 			for range 50 {
+				manager.SetManagerServerStatusRunning(id%2 == 0, 5201)
+				manager.SetManagerClientStatusRunning(id%2 == 1)
 				_ = manager.GetServerStatus()
 				_ = manager.GetClientStatus()
 				_ = manager.GetLastResult()
 			}
 			done <- true
-		}()
+		}(i)
 	}
 
 	for range 10 {
 		<-done
+	}
+
+	// A torn write would leave the port from one writer without its flag.
+	if got := manager.GetServerStatus().Port; got != 5201 {
+		t.Errorf("GetServerStatus().Port = %d after concurrent writes, want 5201", got)
 	}
 }
 
@@ -618,26 +631,6 @@ func TestManagerStatusMethods(t *testing.T) {
 	}
 	if clientStatus.Phase != "idle" {
 		t.Errorf("expected phase 'idle', got %q", clientStatus.Phase)
-	}
-}
-
-func TestManagerConcurrentStatusAccess(_ *testing.T) {
-	manager := iperf.NewManager()
-
-	done := make(chan bool)
-	for range 10 {
-		go func() {
-			for range 50 {
-				_ = manager.GetServerStatus()
-				_ = manager.GetClientStatus()
-				_ = manager.GetLastResult()
-			}
-			done <- true
-		}()
-	}
-
-	for range 10 {
-		<-done
 	}
 }
 

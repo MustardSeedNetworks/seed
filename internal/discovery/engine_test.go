@@ -2,6 +2,7 @@ package discovery_test
 
 import (
 	"context"
+	"sync"
 	"testing"
 	"time"
 
@@ -47,11 +48,12 @@ func TestEngineStartStop(t *testing.T) {
 	}
 }
 
-func TestEngineSetCollectors(_ *testing.T) {
+func TestEngineSetCollectors(t *testing.T) {
 	engine := discovery.NewEngine(nil)
 	defer engine.Stop()
 
-	// Test that setters don't panic (collectors can be nil for testing)
+	// Every collector-backed capability must read false once its collector is
+	// cleared, whatever the config says.
 	engine.SetWiredCollector(nil)
 	engine.SetWiFiCollector(nil)
 	engine.SetBluetoothCollector(nil)
@@ -59,6 +61,16 @@ func TestEngineSetCollectors(_ *testing.T) {
 	engine.SetPortScanner(nil)
 	engine.SetProfiler(nil)
 	engine.SetAssessor(nil)
+
+	caps := engine.GetCapabilities()
+	for _, name := range []string{"wired", "wifi", "bluetooth", "snmp", "portScan", "profiling", "vulnScan", "nameRes"} {
+		if caps[name] {
+			t.Errorf("GetCapabilities()[%q] = true with no collector set, want false", name)
+		}
+	}
+	if !caps["correlation"] {
+		t.Error(`GetCapabilities()["correlation"] = false, want true — it needs no collector`)
+	}
 }
 
 func TestEngineGetCapabilities(t *testing.T) {
@@ -169,32 +181,68 @@ func TestEngineScanReportsPhaseProgress(t *testing.T) {
 	}
 }
 
-func TestEngineScanAlreadyInProgress(_ *testing.T) {
+// blockingWiredCollector holds the enumerate stage open until released, so a
+// second Scan is guaranteed to arrive while the first still owns the engine.
+type blockingWiredCollector struct {
+	entered chan struct{}
+	release chan struct{}
+	once    sync.Once
+}
+
+func (c *blockingWiredCollector) Scan(ctx context.Context) error {
+	c.once.Do(func() { close(c.entered) })
+	select {
+	case <-c.release:
+	case <-ctx.Done():
+	}
+	return nil
+}
+
+func (*blockingWiredCollector) GetDevices() []*discovery.DiscoveredDevice { return nil }
+func (*blockingWiredCollector) ResolveNetBIOSNames(context.Context)       {}
+func (*blockingWiredCollector) ResolveMDNSNames(context.Context)          {}
+
+func TestEngineScanAlreadyInProgress(t *testing.T) {
 	engine := discovery.NewEngine(&discovery.EngineConfig{
 		ScanTimeout: 5 * time.Second,
+		EnableWired: true,
 	})
 	defer engine.Stop()
 
+	collector := &blockingWiredCollector{
+		entered: make(chan struct{}),
+		release: make(chan struct{}),
+	}
+	engine.SetWiredCollector(collector)
+
 	ctx := context.Background()
 
-	// Start first scan in goroutine (it will wait on timeout)
 	done := make(chan struct{})
 	go func() {
+		defer close(done)
 		_, _ = engine.Scan(ctx, &discovery.ScanOptions{
-			Timeout: 100 * time.Millisecond,
+			Timeout:        5 * time.Second,
+			IncludeWired:   true,
+			FreshWiredScan: true,
 		})
-		close(done)
 	}()
 
-	// Give time for first scan to start
-	time.Sleep(10 * time.Millisecond)
+	select {
+	case <-collector.entered:
+	case <-time.After(5 * time.Second):
+		t.Fatal("first scan never reached the wired collector")
+	}
 
-	// Try second scan - should fail if first is still running
-	// But since our scan is fast, it might complete
-	// This test is mainly to ensure no panics
-	_, _ = engine.Scan(ctx, discovery.DefaultQuickScanOpts())
+	if _, err := engine.Scan(ctx, discovery.DefaultQuickScanOpts()); err == nil {
+		t.Error("Scan() while a scan is in progress returned no error, want a refusal")
+	}
 
+	close(collector.release)
 	<-done
+
+	if engine.IsScanning() {
+		t.Error("IsScanning() = true after the scan returned")
+	}
 }
 
 func TestEngineQuickScan(t *testing.T) {

@@ -206,14 +206,18 @@ func TestGetClientIP(t *testing.T) {
 	}
 }
 
-func TestRateLimiterStop(_ *testing.T) {
+func TestRateLimiterStop(t *testing.T) {
 	rl := api.NewRateLimiter(api.DefaultRateLimitConfig())
 
-	// Record some attempts
 	rl.RecordAttempt("1.2.3.4", false)
+	before := rl.RemainingAttempts("1.2.3.4")
 
-	// Stop should not panic
+	// Stop ends the cleanup loop; it must not discard recorded state.
 	rl.Stop()
+
+	if got := rl.RemainingAttempts("1.2.3.4"); got != before {
+		t.Errorf("RemainingAttempts() = %d after Stop, want %d", got, before)
+	}
 }
 
 func TestDefaultRateLimitConfig(t *testing.T) {
