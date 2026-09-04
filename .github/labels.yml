@@ -124,3 +124,6 @@
 - name: "release: tagged"
   color: EDEDED
   description: "Release automation tagged this change."
+- name: "release: hold"
+  color: EDEDED
+  description: "Hold this release PR: release-please.yml skips arming auto-merge on it."
