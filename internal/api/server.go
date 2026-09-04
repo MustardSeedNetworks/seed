@@ -164,12 +164,12 @@ type Server struct {
 	licenseMgr *license.Manager             // offline license manager (Phase D-2); nil in tests
 	apiTokens  *database.APITokenRepository // personal-access tokens (Phase D-2)
 
-	// renewSupportedFn and renewLeaseFn are the DHCP-renewal seam. Nil in
-	// production, where the dhcp package is called directly; a test sets them
-	// because the real renewal would restart the DHCP client on the machine
-	// running the tests.
+	// renewSupportedFn/renewLeaseFn are the DHCP-renewal seam; vlanSeam is the
+	// analogous VLAN seam (handlers_vlan.go). Nil/zero in production; a test
+	// sets them since the real calls would modify the machine running the tests.
 	renewSupportedFn func() bool
 	renewLeaseFn     func(ctx context.Context, interfaceName string) error
+	vlanSeam         vlanSeam
 
 	// licenseDir is where activation state is persisted. Empty means the real
 	// user config directory, which is what production wants and what a test
