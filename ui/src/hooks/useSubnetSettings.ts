@@ -10,6 +10,7 @@
 
 import { useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { api } from '../api';
 import { LogComponents, logger } from '../lib/logger';
 import type { SaveStatus, SubnetConfig } from '../types/settings';
 
@@ -62,37 +63,21 @@ export function useSubnetSettings(): UseSubnetSettingsResult {
     setSubnetsStatus('saving');
 
     try {
-      const response = await fetch(`${API_BASE}/api/v1/security/devices/subnets`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify({
-          cidr: newSubnetCidr.trim(),
-          name: newSubnetName.trim() || newSubnetCidr.trim(),
-          enabled: true,
-        }),
+      await api.post('/api/v1/security/devices/subnets', {
+        cidr: newSubnetCidr.trim(),
+        name: newSubnetName.trim() || newSubnetCidr.trim(),
+        enabled: true,
       });
 
-      if (response.ok) {
-        setNewSubnetCidr('');
-        setNewSubnetName('');
-        setSubnetsStatus('saved');
-        setTimeout(() => setSubnetsStatus('idle'), 2000);
-        await fetchSubnets();
-      } else {
-        // Handle both JSON and plain text error responses
-        const contentType = response.headers.get('content-type');
-        if (contentType?.includes('application/json')) {
-          const errorData = await (response.json() as Promise<{ error?: string }>);
-          setSubnetError(errorData.error || 'Failed to add subnet');
-        } else {
-          const errorText = await (response.text() as Promise<string>);
-          setSubnetError(errorText || 'Failed to add subnet');
-        }
-        setSubnetsStatus('error');
-      }
+      setNewSubnetCidr('');
+      setNewSubnetName('');
+      setSubnetsStatus('saved');
+      setTimeout(() => setSubnetsStatus('idle'), 2000);
+      await fetchSubnets();
     } catch (err) {
-      setSubnetError(err instanceof Error ? err.message : 'Network error adding subnet');
+      // The client carries the server's own message through, which is what the
+      // hand-rolled branch above used to dig out of the body.
+      setSubnetError(err instanceof Error ? err.message : 'Failed to add subnet');
       setSubnetsStatus('error');
     }
   }, [newSubnetCidr, newSubnetName, fetchSubnets, t]);
@@ -101,20 +86,11 @@ export function useSubnetSettings(): UseSubnetSettingsResult {
     async (cidr: string, enabled: boolean): Promise<void> => {
       setSubnetsStatus('saving');
       try {
-        const response = await fetch(`${API_BASE}/api/v1/security/devices/subnets`, {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          credentials: 'include',
-          body: JSON.stringify({ cidr, enabled }),
-        });
+        await api.put('/api/v1/security/devices/subnets', { cidr, enabled });
 
-        if (response.ok) {
-          setSubnetsStatus('saved');
-          setTimeout(() => setSubnetsStatus('idle'), 2000);
-          await fetchSubnets();
-        } else {
-          setSubnetsStatus('error');
-        }
+        setSubnetsStatus('saved');
+        setTimeout(() => setSubnetsStatus('idle'), 2000);
+        await fetchSubnets();
       } catch {
         setSubnetsStatus('error');
       }
@@ -127,21 +103,11 @@ export function useSubnetSettings(): UseSubnetSettingsResult {
       setSubnetsStatus('saving');
       try {
         // Backend expects CIDR as query parameter, not in body
-        const response = await fetch(
-          `${API_BASE}/api/v1/security/devices/subnets?cidr=${encodeURIComponent(cidr)}`,
-          {
-            method: 'DELETE',
-            credentials: 'include',
-          },
-        );
+        await api.delete(`/api/v1/security/devices/subnets?cidr=${encodeURIComponent(cidr)}`);
 
-        if (response.ok) {
-          setSubnetsStatus('saved');
-          setTimeout(() => setSubnetsStatus('idle'), 2000);
-          await fetchSubnets();
-        } else {
-          setSubnetsStatus('error');
-        }
+        setSubnetsStatus('saved');
+        setTimeout(() => setSubnetsStatus('idle'), 2000);
+        await fetchSubnets();
       } catch {
         setSubnetsStatus('error');
       }

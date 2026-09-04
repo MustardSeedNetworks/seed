@@ -9,6 +9,7 @@
 
 import type React from 'react';
 import { useCallback } from 'react';
+import { api } from '../api';
 import { normalizeTestsSettingsForSave } from '../components/settings/settingsDrawerNormalizer';
 import type {
   CableTestSettings as CableTestSettingsType,
@@ -20,8 +21,6 @@ import type {
   TestsSettings,
   WiFiSettings as WiFiSettingsType,
 } from '../types/settings';
-
-const API_BASE: string = import.meta.env.VITE_API_BASE || '';
 
 interface UseSettingsDrawerSaversArgs {
   thresholds: SettingsThresholds;
@@ -71,18 +70,9 @@ export function useSettingsDrawerSavers({
   const saveThresholds = useCallback(async () => {
     setThresholdsStatus('saving');
     try {
-      const response = await fetch(`${API_BASE}/api/v1/settings`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify({ thresholds }),
-      });
-      if (response.ok) {
-        setThresholdsStatus('saved');
-        setTimeout(() => setThresholdsStatus('idle'), 2000);
-      } else {
-        setThresholdsStatus('error');
-      }
+      await api.put('/api/v1/settings', { thresholds });
+      setThresholdsStatus('saved');
+      setTimeout(() => setThresholdsStatus('idle'), 2000);
     } catch {
       setThresholdsStatus('error');
     }
@@ -92,19 +82,10 @@ export function useSettingsDrawerSavers({
     setTestsStatus('saving');
     try {
       const payload = normalizeTestsSettingsForSave(testsSettings);
-      const response = await fetch(`${API_BASE}/api/v1/telemetry/probes/settings`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify(payload),
-      });
-      if (response.ok) {
-        setTestsStatus('saved');
-        setTimeout(() => setTestsStatus('idle'), 2000);
-        testsSettingsChangedRef.current = true;
-      } else {
-        setTestsStatus('error');
-      }
+      await api.put('/api/v1/telemetry/probes/settings', payload);
+      setTestsStatus('saved');
+      setTimeout(() => setTestsStatus('idle'), 2000);
+      testsSettingsChangedRef.current = true;
     } catch {
       setTestsStatus('error');
     }
@@ -113,18 +94,9 @@ export function useSettingsDrawerSavers({
   const saveWifiSettings = useCallback(async () => {
     setWifiStatus('saving');
     try {
-      const response = await fetch(`${API_BASE}/api/v1/wifi/wifi/settings`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify({ interface: wifiSettings.interface }),
-      });
-      if (response.ok) {
-        setWifiStatus('saved');
-        setTimeout(() => setWifiStatus('idle'), 2000);
-      } else {
-        setWifiStatus('error');
-      }
+      await api.put('/api/v1/wifi/wifi/settings', { interface: wifiSettings.interface });
+      setWifiStatus('saved');
+      setTimeout(() => setWifiStatus('idle'), 2000);
     } catch {
       setWifiStatus('error');
     }
@@ -133,21 +105,12 @@ export function useSettingsDrawerSavers({
   const saveLinkSettings = useCallback(async () => {
     setLinkStatus('saving');
     try {
-      const response = await fetch(`${API_BASE}/api/v1/settings/link`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify({
-          mode: linkSettings.mode,
-          availableModes: linkSettings.availableModes,
-        }),
+      await api.put('/api/v1/settings/link', {
+        mode: linkSettings.mode,
+        availableModes: linkSettings.availableModes,
       });
-      if (response.ok) {
-        setLinkStatus('saved');
-        setTimeout(() => setLinkStatus('idle'), 2000);
-      } else {
-        setLinkStatus('error');
-      }
+      setLinkStatus('saved');
+      setTimeout(() => setLinkStatus('idle'), 2000);
     } catch {
       setLinkStatus('error');
     }
@@ -156,18 +119,9 @@ export function useSettingsDrawerSavers({
   const saveCableTestSettings = useCallback(async () => {
     setCableTestStatus('saving');
     try {
-      const response = await fetch(`${API_BASE}/api/v1/settings/cable`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify({ enabled: cableTestSettings.enabled }),
-      });
-      if (response.ok) {
-        setCableTestStatus('saved');
-        setTimeout(() => setCableTestStatus('idle'), 2000);
-      } else {
-        setCableTestStatus('error');
-      }
+      await api.put('/api/v1/settings/cable', { enabled: cableTestSettings.enabled });
+      setCableTestStatus('saved');
+      setTimeout(() => setCableTestStatus('idle'), 2000);
     } catch {
       setCableTestStatus('error');
     }
@@ -176,18 +130,9 @@ export function useSettingsDrawerSavers({
   const saveNetworkDiscoverySettings = useCallback(async () => {
     setNetworkDiscoveryStatus('saving');
     try {
-      const response = await fetch(`${API_BASE}/api/v1/security/devices/settings`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify(networkDiscoverySettings),
-      });
-      if (response.ok) {
-        setNetworkDiscoveryStatus('saved');
-        setTimeout(() => setNetworkDiscoveryStatus('idle'), 2000);
-      } else {
-        setNetworkDiscoveryStatus('error');
-      }
+      await api.put('/api/v1/security/devices/settings', networkDiscoverySettings);
+      setNetworkDiscoveryStatus('saved');
+      setTimeout(() => setNetworkDiscoveryStatus('idle'), 2000);
     } catch {
       setNetworkDiscoveryStatus('error');
     }
@@ -196,18 +141,9 @@ export function useSettingsDrawerSavers({
   const saveSnmpSettings = useCallback(async () => {
     setSnmpStatus('saving');
     try {
-      const response = await fetch(`${API_BASE}/api/v1/telemetry/snmp/settings`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify(snmpSettings),
-      });
-      if (response.ok) {
-        setSnmpStatus('saved');
-        setTimeout(() => setSnmpStatus('idle'), 2000);
-      } else {
-        setSnmpStatus('error');
-      }
+      await api.put('/api/v1/telemetry/snmp/settings', snmpSettings);
+      setSnmpStatus('saved');
+      setTimeout(() => setSnmpStatus('idle'), 2000);
     } catch {
       setSnmpStatus('error');
     }

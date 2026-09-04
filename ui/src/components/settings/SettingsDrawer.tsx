@@ -29,6 +29,7 @@
 import type React from 'react';
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { api } from '../../api';
 import { useSettings } from '../../contexts/useSettings';
 import { useDebouncedAutoSave } from '../../hooks/useDebouncedAutoSave';
 import { useFocusTrap } from '../../hooks/useFocusTrap';
@@ -72,8 +73,6 @@ import {
   INLINE_DEFAULT_CABLE_TEST_SETTINGS,
   INLINE_DEFAULT_LINK_SETTINGS,
 } from './settingsDrawerNormalizer';
-
-const API_BASE: string = import.meta.env.VITE_API_BASE || '';
 
 interface SettingsDrawerProps {
   isOpen: boolean;
@@ -422,29 +421,18 @@ export const SettingsDrawer: React.MemoExoticComponent<
         .map((s) => s.trim())
         .filter((s) => s.length > 0);
 
-      const response = await fetch(`${API_BASE}/api/v1/telemetry/ipconfig/settings`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        credentials: 'include',
-        body: JSON.stringify({
-          mode: ipSettings.mode,
-          address: ipSettings.address,
-          netmask: ipSettings.netmask,
-          gateway: ipSettings.gateway,
-          dns,
-        }),
+      await api.put('/api/v1/telemetry/ipconfig/settings', {
+        mode: ipSettings.mode,
+        address: ipSettings.address,
+        netmask: ipSettings.netmask,
+        gateway: ipSettings.gateway,
+        dns,
       });
-      if (response.ok) {
-        setIpMessage('IP settings applied');
-        setTimeout(() => setIpMessage(null), 3000);
-      } else {
-        const error = await (response.text() as Promise<string>);
-        setIpMessage(`Failed: ${error}`);
-      }
-    } catch {
-      setIpMessage('Error applying IP settings');
+      setIpMessage('IP settings applied');
+      setTimeout(() => setIpMessage(null), 3000);
+    } catch (err) {
+      // The client carries the server's own message through.
+      setIpMessage(`Failed: ${err instanceof Error ? err.message : 'Error applying IP settings'}`);
     } finally {
       setSavingIp(false);
     }

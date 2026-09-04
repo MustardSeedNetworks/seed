@@ -24,6 +24,7 @@
 import type React from 'react';
 import { memo, useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { api } from '../../../api';
 import { formatBytes } from '../../../lib/format';
 import { button, cn, icon as iconTokens, layout, radius, spacing } from '../../../styles/theme';
 import { CollapsibleSection } from '../../ui/CollapsibleSection';
@@ -91,17 +92,10 @@ export const ConfigBackupsSection: React.NamedExoticComponent<Record<string, nev
       setActionLoading('create');
       setError(null);
       try {
-        const response = await fetch(`${API_BASE}/api/v1/config/backup`, {
-          method: 'POST',
-          credentials: 'include',
-        });
-        if (response.ok) {
-          await fetchBackups();
-        } else {
-          setError(t('configBackups.createError'));
-        }
-      } catch {
-        setError(t('configBackups.networkError'));
+        await api.post('/api/v1/config/backup');
+        await fetchBackups();
+      } catch (err) {
+        setError(err instanceof Error ? err.message : t('configBackups.createError'));
       } finally {
         setActionLoading(null);
       }
@@ -111,22 +105,14 @@ export const ConfigBackupsSection: React.NamedExoticComponent<Record<string, nev
       setActionLoading(backupName);
       setError(null);
       try {
-        const response = await fetch(`${API_BASE}/api/v1/config/restore`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          credentials: 'include',
-          body: JSON.stringify({ backupName }),
-        });
-        if (response.ok) {
-          setRestoreConfirm(null);
-          // Reload page to apply restored config
-          window.location.reload();
-        } else {
-          const text = await response.text();
-          setError(text || t('configBackups.restoreError'));
-        }
-      } catch {
-        setError(t('configBackups.networkError'));
+        await api.post('/api/v1/config/restore', { backupName });
+        setRestoreConfirm(null);
+        // Reload page to apply restored config
+        window.location.reload();
+      } catch (err) {
+        // The client carries the server's own message, which the raw branch
+        // used to read out of the body itself.
+        setError(err instanceof Error ? err.message : t('configBackups.restoreError'));
       } finally {
         setActionLoading(null);
       }
@@ -136,20 +122,10 @@ export const ConfigBackupsSection: React.NamedExoticComponent<Record<string, nev
       setActionLoading(backupName);
       setError(null);
       try {
-        const response = await fetch(
-          `${API_BASE}/api/v1/config/backup/delete?name=${encodeURIComponent(backupName)}`,
-          {
-            method: 'DELETE',
-            credentials: 'include',
-          },
-        );
-        if (response.ok) {
-          await fetchBackups();
-        } else {
-          setError(t('configBackups.deleteError'));
-        }
-      } catch {
-        setError(t('configBackups.networkError'));
+        await api.delete(`/api/v1/config/backup/delete?name=${encodeURIComponent(backupName)}`);
+        await fetchBackups();
+      } catch (err) {
+        setError(err instanceof Error ? err.message : t('configBackups.deleteError'));
       } finally {
         setActionLoading(null);
       }
