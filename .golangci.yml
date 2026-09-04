@@ -794,6 +794,14 @@ linters:
       # the standalone gosec step in ci.yml still reports it as SARIF.
       - text: 'G204'
         linters: [ gosec ]
+      # G702 is gosec's taint-analysis twin of G204: same tainted-subprocess
+      # heuristic, emitted at the same position, hidden behind G204 by
+      # golangci's default uniq-by-line until 2026-09-04. Subprocess taint is
+      # advisory-only in this repo (SARIF via the standalone gosec step), so
+      # G702 is excluded for the same reason G204 is. Owner decision:
+      # MustardSeedNetworks/seed#2410, recommendation 1.
+      - text: 'G702'
+        linters: [ gosec ]
       # revive's package-comment and exported-comment rules are NOT excluded:
       # they were, which made revive look like a gate it was not. The findings
       # they surface were fixed rather than suppressed.
