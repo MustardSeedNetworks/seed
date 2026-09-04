@@ -410,7 +410,8 @@
     "qrAlt": "Código QR de TOTP",
     "scanAndEnter": "Escanee con una aplicación de autenticación y luego ingrese un código",
     "verifyAndEnable": "Verificar y activar",
-    "addPasskey": "Añadir llave de acceso"
+    "addPasskey": "Añadir llave de acceso",
+    "passkeyUnsupported": "Este navegador no admite claves de acceso."
   },
   "pathDiscovery": {
     "copy": "Copiar",

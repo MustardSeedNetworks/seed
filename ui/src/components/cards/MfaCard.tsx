@@ -21,6 +21,7 @@ import type { JSX } from 'react';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { api } from '../../api';
+import { isPasskeySupported, registerPasskey } from '../../lib/webauthn';
 import { icon as iconTokens } from '../../styles/theme';
 import { Card } from '../ui/card';
 import { Shield } from '../ui/icons';
@@ -94,14 +95,12 @@ export function MfaCard(): JSX.Element {
     setError('');
     setBusy(true);
     try {
-      const opts = await api.post<unknown>('/api/v1/auth/webauthn/register/begin', {});
-      // The browser WebAuthn API is wired up at the page level so the
-      // card stays presentational. We hand off to a global helper
-      // that's been registered by the surrounding page.
-      const w = window as unknown as { seedWebAuthnRegister?: (o: unknown) => Promise<void> };
-      if (w.seedWebAuthnRegister) {
-        await w.seedWebAuthnRegister(opts);
-      }
+      // registerPasskey runs the whole ceremony: begin, navigator.credentials
+      // .create, finish. This used to call begin and then look for a
+      // window.seedWebAuthnRegister helper that was defined nowhere, so the
+      // guard was always false, nothing was enrolled and the card still
+      // reported success.
+      await registerPasskey();
       await refresh();
     } catch (err) {
       setError((err as Error).message);
@@ -184,7 +183,10 @@ export function MfaCard(): JSX.Element {
         <button
           type="button"
           className="btn btn-secondary"
-          disabled={busy}
+          // A browser without WebAuthn cannot enrol, and an enabled button that
+          // silently does nothing is what this card shipped with.
+          disabled={busy || !isPasskeySupported()}
+          title={isPasskeySupported() ? undefined : t('mfa.passkeyUnsupported')}
           onClick={() => {
             addPasskey().catch(() => undefined);
           }}
