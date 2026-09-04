@@ -751,7 +751,8 @@ jobs:
       - name: Run npm audit
         run: |
           cd ui && npm ci
-          cd .. && make security-frontend-quiet
+          cd .. && ./scripts/test-npm-audit-retry.sh
+          make security-frontend-quiet
 
       # gitleaks-action requires a paid licence for organization repos. Use the
       # MIT-licensed gitleaks CLI directly instead — same engine, same config,
