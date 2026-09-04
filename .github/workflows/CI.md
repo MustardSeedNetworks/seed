@@ -11,25 +11,25 @@ without adding it to `ci-complete`'s `needs:` list makes that job advisory.
 
 ### ci.yml - Main CI Pipeline
 
-| Job             | Description              | Checks                                                                 |
-| --------------- | ------------------------ | ---------------------------------------------------------------------- |
-| `changes`       | Path filtering           | Decides which downstream jobs run                                      |
-| `build-ui`      | Shared frontend build    | Builds `internal/api/ui/` once and uploads it as an artifact           |
-| `backend`       | Go checks                | lint, vet, staticcheck, fmt, tests, coverage floor (50%)               |
-| `race`          | Go race detector         | `go test -race`, split from `backend` so it fails distinctly           |
-| `frontend`      | React/TS checks          | tsc typecheck, Biome, design-token gate, Vitest, lockfile integrity    |
-| `storybook`     | Component tests          | Storybook interactions and axe accessibility                           |
-| `security`      | Security scans           | govulncheck (hard gate), gosec, npm audit, gitleaks, Trivy             |
-| `semgrep`       | SAST                     | Semgrep rules                                                          |
-| `quality`       | Code quality gates       | banned vocabulary, file size ratchet, output escaping, sensitive files |
-| `c-lint`        | C lint (C23)             | clang-format, clang-tidy                                               |
-| `workflow-lint` | Workflow static analysis | actionlint; zizmor (blocks on High)                                    |
-| `i18n`          | Internationalization     | Catalog completeness, no translated standard terms                     |
-| `docs`          | Documentation            | Markdown lint (blocking, scoped to changed files)                      |
-| `build`         | Build verification       | Multi-arch binaries with full ldflags, UIBuildHash verified            |
-| `e2e`           | Browser tests            | Playwright, chromium + webkit, 2 shards each                           |
-| `e2e-smoke`     | Smoke tests              | Fast critical-path Playwright run                                      |
-| `ci-complete`   | Aggregate gate           | The required status check                                              |
+| Job             | Description              | Checks                                                                                                                                                   |
+| --------------- | ------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `changes`       | Path filtering           | Decides which downstream jobs run                                                                                                                        |
+| `build-ui`      | Shared frontend build    | Builds `internal/api/ui/` once and uploads it as an artifact                                                                                             |
+| `backend`       | Go checks                | lint, vet, staticcheck, fmt, tests, coverage floor (50%)                                                                                                 |
+| `race`          | Go race detector         | `go test -race`, split from `backend` so it fails distinctly                                                                                             |
+| `frontend`      | React/TS checks          | tsc typecheck, Biome, design-token gate, Vitest, lockfile integrity                                                                                      |
+| `storybook`     | Component tests          | Storybook interactions and axe accessibility                                                                                                             |
+| `security`      | Security scans           | govulncheck (hard gate), gosec via golangci-lint (blocking gate; G103/G204/G304/G702 are SARIF-only via the standalone step), npm audit, gitleaks, Trivy |
+| `semgrep`       | SAST                     | Semgrep rules                                                                                                                                            |
+| `quality`       | Code quality gates       | banned vocabulary, file size ratchet, output escaping, sensitive files                                                                                   |
+| `c-lint`        | C lint (C23)             | clang-format, clang-tidy                                                                                                                                 |
+| `workflow-lint` | Workflow static analysis | actionlint; zizmor (blocks on High)                                                                                                                      |
+| `i18n`          | Internationalization     | Catalog completeness, no translated standard terms                                                                                                       |
+| `docs`          | Documentation            | Markdown lint (blocking, scoped to changed files)                                                                                                        |
+| `build`         | Build verification       | Multi-arch binaries with full ldflags, UIBuildHash verified                                                                                              |
+| `e2e`           | Browser tests            | Playwright, chromium + webkit, 2 shards each                                                                                                             |
+| `e2e-smoke`     | Smoke tests              | Fast critical-path Playwright run                                                                                                                        |
+| `ci-complete`   | Aggregate gate           | The required status check                                                                                                                                |
 
 ### Other Workflows
 
@@ -150,7 +150,7 @@ make test-e2e  # Playwright E2E
 make lint-backend      # golangci-lint v2.13.2
 make test-backend      # Go tests
 make test-coverage     # Coverage report
-make security-backend  # gosec + govulncheck
+make security-backend  # gosec (blocking via golangci-lint; G103/G204/G304/G702 SARIF-only) + govulncheck
 ```
 
 ### Frontend
