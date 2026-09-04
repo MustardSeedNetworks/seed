@@ -19,6 +19,7 @@
 import type React from 'react';
 import { memo, useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { api } from '../../../api';
 import {
   cn,
   icon as iconTokens,
@@ -35,8 +36,6 @@ import { CollapsibleSection } from '../../ui/CollapsibleSection';
 import { Cable } from '../../ui/icons';
 import { AutoSaveIndicator } from './AutoSaveIndicator';
 
-const API_BASE: string = import.meta.env.VITE_API_BASE || '';
-
 interface CableTestSettingsProps {
   cableTestSettings: CableTestSettingsType;
   setCableTestSettings: React.Dispatch<React.SetStateAction<CableTestSettingsType>>;
@@ -47,6 +46,36 @@ interface TdrSupportStatus {
   supported: boolean;
   driver?: string;
   message?: string;
+}
+
+/** One entry of the platform capability report carried by GET /api/v1/status. */
+interface CapabilityEntry {
+  capability: string;
+  title: string;
+  level: string;
+  note?: string;
+}
+
+/**
+ * tdrSupportFromCapabilities reads TDR support out of the platform capability
+ * report (#749/#750), which is the canonical answer to "can this host do it".
+ *
+ * This used to GET /api/v1/telemetry/cable/support, a route that has never been
+ * registered, so every response was a 404 and support always read as
+ * unavailable — on Linux hosts that do support TDR as much as anywhere else.
+ * The only cable route is GET /api/v1/telemetry/cable, which runs a test rather
+ * than reporting whether one is possible.
+ */
+function tdrSupportFromCapabilities(entries: readonly CapabilityEntry[]): TdrSupportStatus {
+  const entry = entries.find((candidate) => candidate.capability === 'cable_diagnostics');
+  if (!entry) {
+    return { supported: false, message: 'Platform capability report did not mention TDR' };
+  }
+
+  return {
+    supported: entry.level === 'full',
+    message: entry.level === 'full' ? undefined : entry.note,
+  };
 }
 
 /**
@@ -67,15 +96,8 @@ export const CableTestSettings: React.NamedExoticComponent<CableTestSettingsProp
     const checkTdrSupport = useCallback(async (): Promise<void> => {
       setCheckingSupport(true);
       try {
-        const response = await fetch(`${API_BASE}/api/v1/telemetry/cable/support`, {
-          credentials: 'include',
-        });
-        if (response.ok) {
-          const data = (await response.json()) as TdrSupportStatus;
-          setTdrSupport(data);
-        } else {
-          setTdrSupport({ supported: false, message: 'Unable to check support' });
-        }
+        const status = await api.get<{ capabilities?: CapabilityEntry[] }>('/api/v1/status');
+        setTdrSupport(tdrSupportFromCapabilities(status.capabilities ?? []));
       } catch {
         setTdrSupport({ supported: false, message: 'Network error' });
       } finally {

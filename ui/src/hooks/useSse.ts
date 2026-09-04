@@ -20,7 +20,7 @@
  * Usage:
  * ```typescript
  * const { status, reconnect } = useSse({
- *   url: '/api/events',
+ *   url: '/api/v1/events',
  *   onMessage: handleMessage,
  *   onCardUpdate: handleCardUpdate
  * });
