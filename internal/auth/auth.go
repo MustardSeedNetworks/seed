@@ -12,6 +12,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"slices"
 	"strings"
 	"sync"
 	"time"
@@ -674,21 +675,35 @@ func extractTokenFromSubprotocol(protocols string) string {
 	return ""
 }
 
+// preSessionPaths are the API paths reachable before the caller holds an access
+// token: the login exchange and its second factor, first-run setup, and the
+// recovery that rescues a locked-out account (#478, and #85 for the second
+// factor).
+//
+// Every one of these that accepts a mutating method must also be on
+// isCSRFExemptPath. They have no session, so the CSRF middleware would find no
+// session ID and answer 401 — not protection, a wall. That divergence made
+// TOTP enrolment a permanent lockout (#2391), which is why
+// TestPreSessionPathsAreCSRFExempt now derives one list from the other.
+func preSessionPaths() []string {
+	return []string{
+		"/api/v1/auth/login",
+		"/api/v1/auth/refresh",
+		"/api/v1/setup/status",
+		"/api/v1/setup/complete",
+		"/api/v1/recovery/status",
+		"/api/v1/recovery/complete",
+		"/api/v1/recovery/instructions",
+		"/api/v1/auth/login/totp",
+		"/api/v1/auth/webauthn/login/begin",
+		"/api/v1/auth/webauthn/login/finish",
+	}
+}
+
 // shouldBypassAuth checks if the given path should skip authentication.
 // Returns true for login, refresh, setup, recovery, SSO endpoints and static files.
 func shouldBypassAuth(path string) bool {
-	// Skip auth for login, refresh, setup, recovery, and SSO endpoints (fixes #478)
-	// Note: API routes use /api/v1/ prefix
-	switch path {
-	case "/api/v1/auth/login", "/api/v1/auth/refresh",
-		"/api/v1/setup/status", "/api/v1/setup/complete",
-		"/api/v1/recovery/status", "/api/v1/recovery/complete", "/api/v1/recovery/instructions",
-		// Wave 3 (#85): second-factor login + passkey ceremonies happen
-		// before the user has a real access token, so they bypass the
-		// JWT middleware.
-		"/api/v1/auth/login/totp",
-		"/api/v1/auth/webauthn/login/begin",
-		"/api/v1/auth/webauthn/login/finish":
+	if slices.Contains(preSessionPaths(), path) {
 		return true
 	}
 	if strings.HasPrefix(path, "/api/v1/sso/") {

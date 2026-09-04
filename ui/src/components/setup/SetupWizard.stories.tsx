@@ -1,5 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { useState } from 'react';
+import type { LoginOutcome } from '../../hooks/useAuth';
 import { cn, radius, spacing } from '../../styles/theme';
 import { SetupWizard } from './SetupWizard';
 
@@ -43,7 +44,7 @@ export const CustomPasswordMode: Story = {
     onComplete: () => {
       // Handle setup completion
     },
-    onLogin: async (_username: string, _password: string) => true,
+    onLogin: async (_username: string, _password: string) => ({ status: 'ok' }) as const,
   },
 };
 
@@ -56,7 +57,7 @@ export const WithSuggestedPassword: Story = {
     onComplete: () => {
       // Handle setup completion
     },
-    onLogin: async (_username: string, _password: string) => true,
+    onLogin: async (_username: string, _password: string) => ({ status: 'ok' }) as const,
     suggestedPassword: 'Xk9mP#2vL@q7Tn4w',
   },
 };
@@ -73,7 +74,7 @@ export const GeneratedPasswordSelected: Story = {
           onComplete={() => {
             // Handle setup completion
           }}
-          onLogin={async () => true}
+          onLogin={async () => ({ status: 'ok' }) as const}
           suggestedPassword="Xk9mP#2vL@q7Tn4w"
         />
       </div>
@@ -93,7 +94,7 @@ export const ValidationErrorTooShort: Story = {
           onComplete={() => {
             // Handle setup completion
           }}
-          onLogin={async () => true}
+          onLogin={async () => ({ status: 'ok' }) as const}
         />
       );
     };
@@ -114,7 +115,7 @@ export const ValidationErrorMismatch: Story = {
           onComplete={() => {
             // Handle setup completion
           }}
-          onLogin={async () => true}
+          onLogin={async () => ({ status: 'ok' }) as const}
         />
       );
     };
@@ -144,8 +145,8 @@ export const SubmittingSetup: Story = {
             // Handle setup completion
           }}
           onLogin={async () =>
-            new Promise((resolve) => {
-              setTimeout(() => resolve(true), 3000);
+            new Promise<LoginOutcome>((resolve) => {
+              setTimeout(() => resolve({ status: 'ok' }), 3000);
             })
           }
         />
@@ -176,7 +177,7 @@ export const NetworkError: Story = {
 export const SetupCompleteLoginFailed: Story = {
   args: {
     onComplete: noop,
-    onLogin: async () => false,
+    onLogin: async () => ({ status: 'error' }) as const,
   },
 };
 
@@ -192,7 +193,7 @@ export const PasswordVisible: Story = {
           onComplete={() => {
             // Handle setup completion
           }}
-          onLogin={async () => true}
+          onLogin={async () => ({ status: 'ok' }) as const}
         />
       );
     };
@@ -217,7 +218,7 @@ export const MobileViewport: Story = {
     onComplete: () => {
       // Handle setup completion
     },
-    onLogin: async () => true,
+    onLogin: async () => ({ status: 'ok' }) as const,
     suggestedPassword: 'Xk9mP#2vL@q7Tn4w',
   },
   parameters: {
@@ -236,7 +237,7 @@ export const TabletViewport: Story = {
     onComplete: () => {
       // Handle setup completion
     },
-    onLogin: async () => true,
+    onLogin: async () => ({ status: 'ok' }) as const,
     suggestedPassword: 'Xk9mP#2vL@q7Tn4w',
   },
   parameters: {
@@ -290,10 +291,10 @@ export const InteractiveSetupFlow: Story = {
     return (
       <SetupWizard
         onComplete={() => setSetupComplete(true)}
-        onLogin={async (_username: string, _password: string): Promise<boolean> => {
+        onLogin={async (_username: string, _password: string): Promise<{ status: 'ok' }> => {
           // Simulate API delay
           await new Promise((resolve) => setTimeout(resolve, 1000));
-          return true;
+          return { status: 'ok' } as const;
         }}
         suggestedPassword="Xk9mP#2vL@q7Tn4w"
       />

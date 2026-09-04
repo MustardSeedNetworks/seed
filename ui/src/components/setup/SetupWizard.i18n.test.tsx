@@ -18,7 +18,7 @@ function renderWizard() {
   return render(
     <SetupWizard
       onComplete={() => {}}
-      onLogin={async () => true}
+      onLogin={async () => ({ status: 'ok' }) as const}
       suggestedPassword="Correct-Horse-Battery-9"
     />,
   );

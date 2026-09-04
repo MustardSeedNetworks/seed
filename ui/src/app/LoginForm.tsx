@@ -24,6 +24,7 @@ import { useEffect, useState } from 'react';
 import { type SubmitHandler, useForm } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
 import { RecoveryForm } from '../components/login/RecoveryForm';
+import type { LoginOutcome } from '../hooks/useAuth';
 import { LoginSchema } from '../schemas/auth';
 import { button, cn, input, layout, radius, spacing } from '../styles/theme';
 
@@ -31,7 +32,13 @@ import { button, cn, input, layout, radius, spacing } from '../styles/theme';
 const API_BASE: string = import.meta.env.VITE_API_BASE || '';
 
 export interface LoginFormProps {
-  onLogin: (username: string, password: string) => Promise<boolean>;
+  onLogin: (username: string, password: string) => Promise<LoginOutcome>;
+  /**
+   * onSecondFactor completes a login that came back needing one. Without it the
+   * form could take a password, be told a second factor is required, and have
+   * nowhere to go — which is what locked accounts out (#2391).
+   */
+  onSecondFactor: (mfaToken: string, code: string) => Promise<boolean>;
   isLoading: boolean;
   error: string | null;
 }
@@ -61,7 +68,12 @@ interface RecoveryStatus {
   instructions?: string;
 }
 
-export function LoginForm({ onLogin, isLoading, error }: LoginFormProps): JSX.Element {
+export function LoginForm({
+  onLogin,
+  onSecondFactor,
+  isLoading,
+  error,
+}: LoginFormProps): JSX.Element {
   const { t } = useTranslation('common');
   const {
     register,
@@ -78,6 +90,10 @@ export function LoginForm({ onLogin, isLoading, error }: LoginFormProps): JSX.El
   const [ssoProviders, setSsoProviders] = useState<SsoProvider[]>([]);
   // Password recovery mode state
   const [recoveryStatus, setRecoveryStatus] = useState<RecoveryStatus | null>(null);
+  // Held between the password step and the code step. The password is gone by
+  // this point; the mfaToken is the whole of what carries the login forward.
+  const [pendingMfa, setPendingMfa] = useState<{ mfaToken: string; username: string } | null>(null);
+  const [mfaCode, setMfaCode] = useState('');
   const [showRecoveryForm, setShowRecoveryForm] = useState(false);
 
   // Fetch recovery status on mount
@@ -113,7 +129,21 @@ export function LoginForm({ onLogin, isLoading, error }: LoginFormProps): JSX.El
     username,
     password,
   }) => {
-    await onLogin(username, password);
+    const outcome = await onLogin(username, password);
+    if (outcome.status === 'mfa-required') {
+      setPendingMfa({ mfaToken: outcome.mfaToken, username: outcome.username });
+    }
+  };
+
+  const onSubmitSecondFactor = async (event: React.FormEvent<HTMLFormElement>): Promise<void> => {
+    event.preventDefault();
+    if (!pendingMfa) {
+      return;
+    }
+    const accepted = await onSecondFactor(pendingMfa.mfaToken, mfaCode.trim());
+    if (!accepted) {
+      setMfaCode('');
+    }
   };
 
   // Handle recovery completion - reload to get fresh login state
@@ -125,6 +155,68 @@ export function LoginForm({ onLogin, isLoading, error }: LoginFormProps): JSX.El
   const handleBackToLogin = (): void => {
     setShowRecoveryForm(false);
   };
+
+  // Second factor: the password was accepted and the server is waiting for a
+  // code. Rendered instead of the password form, not beside it, so there is one
+  // obvious thing to do.
+  if (pendingMfa) {
+    return (
+      <div className={cn('min-h-screen', layout.flex.center, 'pad')}>
+        <form onSubmit={onSubmitSecondFactor} className="w-full max-w-sm stack">
+          <div className="text-center">
+            <h1 className="heading-2 text-text-primary">{t('login.secondFactor.title')}</h1>
+            <p className={cn('body-small text-text-muted', spacing.margin.top.inline)}>
+              {t('login.secondFactor.prompt')}
+            </p>
+          </div>
+
+          <label htmlFor="mfa-code" className="body-small font-medium text-text-primary">
+            {t('login.secondFactor.codeLabel')}
+          </label>
+          <input
+            id="mfa-code"
+            data-testid="mfa-code-input"
+            value={mfaCode}
+            onChange={(event): void => setMfaCode(event.target.value)}
+            inputMode="numeric"
+            autoComplete="one-time-code"
+            maxLength={6}
+            // The field is the only thing on this screen; taking focus saves a
+            // click and matches what an authenticator app user expects.
+            // biome-ignore lint/a11y/noAutofocus: sole control on a dedicated step
+            autoFocus
+            className={cn('input', 'text-center tracking-widest')}
+          />
+
+          {error ? (
+            <p role="alert" className="body-small text-status-error">
+              {error}
+            </p>
+          ) : null}
+
+          <button
+            type="submit"
+            data-testid="mfa-submit"
+            disabled={isLoading || mfaCode.trim().length === 0}
+            className="btn-primary"
+          >
+            {isLoading ? t('status.loggingIn') : t('login.secondFactor.verify')}
+          </button>
+
+          <button
+            type="button"
+            className="caption text-text-muted hover:text-text-primary"
+            onClick={(): void => {
+              setPendingMfa(null);
+              setMfaCode('');
+            }}
+          >
+            {t('login.secondFactor.back')}
+          </button>
+        </form>
+      </div>
+    );
+  }
 
   // Show recovery form when active
   if (showRecoveryForm && recoveryStatus?.active) {

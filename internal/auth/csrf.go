@@ -74,7 +74,31 @@ func isCSRFExemptPath(path string) bool {
 		"/api/v1/auth/logout",           // safe/idempotent session teardown
 		"/api/v1/setup/status",          // first-run, pre-auth
 		"/api/v1/setup/complete",        // first-run, pre-auth
-		"/api/v1/reporting/logs/client": // logger runs before CSRF tokens exist
+		"/api/v1/reporting/logs/client", // logger runs before CSRF tokens exist
+
+		// The second half of a login, and the recovery that rescues one. All
+		// three already bypass the JWT middleware (shouldBypassAuth) because
+		// they run before the user holds an access token — so requiring a CSRF
+		// token here is not protection, it is a wall: the middleware finds no
+		// session, answers 401, and the login can never be completed. Enrolling
+		// TOTP locked the account permanently, and recovery failed the same way
+		// (#2391).
+		//
+		// Exempting them is not a loosening. CSRF defends against riding an
+		// authenticated browser's cookie, and there is no session to ride; the
+		// mfaToken or recovery token in the body IS the credential, and an
+		// attacker who has it does not need the victim's browser. That is the
+		// same reasoning that already exempts login, refresh and setup.
+		// The recovery reads are GETs, which CSRF skips by method anyway.
+		// They are listed so the rule stays "everything pre-session is exempt":
+		// if one of them ever accepts a POST, it works instead of silently
+		// answering 401.
+		"/api/v1/auth/login/totp",
+		"/api/v1/auth/webauthn/login/begin",
+		"/api/v1/auth/webauthn/login/finish",
+		"/api/v1/recovery/status",
+		"/api/v1/recovery/complete",
+		"/api/v1/recovery/instructions":
 		return true
 	}
 	// SSO handshake endpoints are pre-session.
