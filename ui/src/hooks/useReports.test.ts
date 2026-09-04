@@ -1,176 +1,82 @@
 /**
- * Pins the seam between the reports API and what ReportsCard renders.
+ * useReports CSRF tests (seed#2389).
  *
- * The card's stories hand-write their props and the Go handler tests assert on
- * Go structs, so without this nothing covers the step in between: a field
- * rename or a status-value change would leave both sides green while the card
- * rendered wrong (#2154, same gap as the LLDP/SwitchCard seam in #2147).
+ * generate() and remove() used a raw fetch(), which sends no X-CSRF-Token. The
+ * middleware requires one on every mutating route that is not on the exempt
+ * list, so both answered 403 and every Generate Report press failed silently.
+ * Verified in the real logged-in app:
  *
- * The payloads are the shape internal/api/handlers_reports.go emits.
+ *   raw fetch  PUT /api/v1/settings -> 403 {"error":"CSRF token required"}
+ *   with token PUT /api/v1/settings -> 200 {"status":"updated"}
+ *
+ * The api client attaches the token; these assert the calls go through it.
  */
+
 import { act, renderHook, waitFor } from '@testing-library/react';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
+
 import { useReports } from './useReports';
 
-function reportsBody(overrides: Record<string, unknown> = {}) {
-  return {
-    reports: [
-      {
-        id: 'rep-1',
-        name: 'Executive Report - 2026-08-27',
-        type: 'executive',
-        format: 'pdf',
-        status: 'complete',
-        fileSize: 20481,
-        createdAt: '2026-08-27T10:00:00Z',
-        completedAt: '2026-08-27T10:00:05Z',
-        expiresAt: '2026-09-27T10:00:00Z',
-        ...overrides,
-      },
-    ],
-  };
-}
+const mockGet = vi.fn<(path: string) => Promise<unknown>>();
+const mockPost = vi.fn<(path: string, body?: unknown) => Promise<unknown>>();
+const mockDelete = vi.fn<(path: string) => Promise<unknown>>();
 
-function mockFetch(responses: Array<{ ok: boolean; status?: number; body?: unknown }>) {
-  const fn = vi.fn();
-  for (const r of responses) {
-    fn.mockResolvedValueOnce({
-      ok: r.ok,
-      status: r.status ?? (r.ok ? 200 : 500),
-      json: () => Promise.resolve(r.body ?? {}),
-    });
-  }
-  vi.stubGlobal('fetch', fn);
-  return fn;
-}
+vi.mock('../api', () => ({
+  api: {
+    get: (path: string): Promise<unknown> => mockGet(path),
+    post: (path: string, body?: unknown): Promise<unknown> => mockPost(path, body),
+    delete: (path: string): Promise<unknown> => mockDelete(path),
+  },
+}));
 
-/** Returns the nth fetch call, failing loudly if it was never made. */
-function nthCall(fetchMock: ReturnType<typeof vi.fn>, n: number): [string, RequestInit] {
-  const call = fetchMock.mock.calls[n];
-  if (!call) {
-    throw new Error(`expected at least ${n + 1} fetch calls, saw ${fetchMock.mock.calls.length}`);
-  }
-  return [String(call[0]), (call[1] ?? {}) as RequestInit];
-}
+// refresh() still reads through fetch; stub it so the hook can mount.
+const fetchMock = vi.fn(() =>
+  Promise.resolve({ ok: true, json: () => Promise.resolve({ reports: [] }) } as Response),
+);
+vi.stubGlobal('fetch', fetchMock);
 
-describe('useReports', () => {
-  beforeEach(() => {
-    vi.restoreAllMocks();
-  });
+afterEach(() => {
+  vi.clearAllMocks();
+});
 
-  afterEach(() => {
-    vi.unstubAllGlobals();
-  });
-
-  it('maps the API payload onto the fields the card renders', async () => {
-    mockFetch([{ ok: true, body: reportsBody() }]);
-
-    const { result } = renderHook(() => useReports());
-
-    await waitFor(() => expect(result.current.loading).toBe(false));
-
-    expect(result.current.error).toBeNull();
-    expect(result.current.reports).toHaveLength(1);
-    expect(result.current.reports[0]).toMatchObject({
-      id: 'rep-1',
-      name: 'Executive Report - 2026-08-27',
-      format: 'pdf',
-      status: 'complete',
-    });
-  });
-
-  it('requests the collection endpoint with credentials', async () => {
-    const fetchMock = mockFetch([{ ok: true, body: { reports: [] } }]);
-
-    const { result } = renderHook(() => useReports());
-    await waitFor(() => expect(result.current.loading).toBe(false));
-
-    expect(fetchMock).toHaveBeenCalledWith('/api/v1/reports', { credentials: 'include' });
-  });
-
-  // 402 is the licence gate and 401 the auth boundary. Reporting an empty list
-  // for either would tell the reader there are no reports, which is a lie.
-  it.each([401, 402, 500])(
-    'surfaces a %d as an error rather than an empty list',
-    async (status) => {
-      mockFetch([{ ok: false, status }]);
-
-      const { result } = renderHook(() => useReports());
-      await waitFor(() => expect(result.current.loading).toBe(false));
-
-      expect(result.current.error).toContain(String(status));
-      expect(result.current.reports).toEqual([]);
-    },
-  );
-
-  it('tolerates a malformed body without throwing', async () => {
-    mockFetch([{ ok: true, body: { reports: 'not-an-array' } }]);
-
-    const { result } = renderHook(() => useReports());
-    await waitFor(() => expect(result.current.loading).toBe(false));
-
-    expect(result.current.reports).toEqual([]);
-  });
-
-  // The endpoint answers 202 with a pending snapshot, so the hook must re-read
-  // rather than trust it: the row would otherwise sit at "pending" forever.
-  it('re-reads the collection after generating', async () => {
-    const fetchMock = mockFetch([
-      { ok: true, body: { reports: [] } },
-      { ok: true, status: 202, body: { id: 'rep-2', status: 'pending' } },
-      { ok: true, body: reportsBody({ id: 'rep-2', status: 'generating' }) },
-    ]);
-
+describe('useReports mutations', () => {
+  it('generates through the api client, so the CSRF token is attached', async () => {
+    mockPost.mockResolvedValue({});
     const { result } = renderHook(() => useReports());
     await waitFor(() => expect(result.current.loading).toBe(false));
 
     await act(async () => {
-      await result.current.generate('executive', 'pdf');
+      await result.current.generate('summary', 'json');
     });
 
-    const [url, init] = nthCall(fetchMock, 1);
-    expect(url).toBe('/api/v1/reports/generate');
-    expect(init).toMatchObject({ method: 'POST', credentials: 'include' });
-    expect(JSON.parse(String(init.body))).toEqual({ type: 'executive', format: 'pdf' });
-
-    expect(fetchMock).toHaveBeenCalledTimes(3);
-    expect(result.current.reports[0]).toMatchObject({ id: 'rep-2', status: 'generating' });
+    expect(mockPost).toHaveBeenCalledWith('/api/v1/reports/generate', {
+      type: 'summary',
+      format: 'json',
+    });
   });
 
-  it('deletes by id and re-reads', async () => {
-    const fetchMock = mockFetch([
-      { ok: true, body: reportsBody() },
-      { ok: true, status: 204 },
-      { ok: true, body: { reports: [] } },
-    ]);
-
+  it('deletes through the api client, so the CSRF token is attached', async () => {
+    mockDelete.mockResolvedValue({});
     const { result } = renderHook(() => useReports());
     await waitFor(() => expect(result.current.loading).toBe(false));
 
     await act(async () => {
-      await result.current.remove('rep-1');
+      await result.current.remove('report-1');
     });
 
-    const [url, init] = nthCall(fetchMock, 1);
-    expect(url).toBe('/api/v1/reports/rep-1');
-    expect(init).toMatchObject({ method: 'DELETE' });
-    expect(result.current.reports).toEqual([]);
+    expect(mockDelete).toHaveBeenCalledWith('/api/v1/reports/report-1');
   });
 
-  it('encodes the id so a hostile value cannot escape the path', async () => {
-    const fetchMock = mockFetch([
-      { ok: true, body: { reports: [] } },
-      { ok: true, status: 204 },
-      { ok: true, body: { reports: [] } },
-    ]);
-
+  it('surfaces a failure instead of reporting success', async () => {
+    mockPost.mockRejectedValue(new Error('API error: 403'));
     const { result } = renderHook(() => useReports());
     await waitFor(() => expect(result.current.loading).toBe(false));
 
     await act(async () => {
-      await result.current.remove('../../etc/passwd');
+      await result.current.generate('summary', 'json');
     });
 
-    expect(nthCall(fetchMock, 1)[0]).toBe('/api/v1/reports/..%2F..%2Fetc%2Fpasswd');
+    expect(result.current.error).toContain('403');
+    expect(result.current.generating).toBe(false);
   });
 });

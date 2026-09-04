@@ -349,6 +349,9 @@ jobs:
           python3 scripts/test-check-route-consumers.py
           python3 scripts/check-route-consumers.py
 
+      - name: UI fetch gate — mutating calls go through the CSRF-bearing api client
+        run: python3 scripts/check-ui-fetch.py
+
       - name: Feature-catalog gate — every sold feature has a gate in code
         run: |
           python3 scripts/test-check-feature-catalog.py
