@@ -26,6 +26,7 @@
 
 import { act, renderHook, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import type { LoginOutcome } from './useAuth';
 import { useAuth } from './useAuth';
 
 /* Inferred rather than annotated. `ReturnType<typeof vi.fn>` is
@@ -139,7 +140,7 @@ describe('useAuth', () => {
 
     let loginResult = false;
     await act(async () => {
-      loginResult = await result.current.login('admin', 'password');
+      loginResult = (await result.current.login('admin', 'password')).status === 'ok';
     });
 
     expect(loginResult).toBe(true);
@@ -207,7 +208,7 @@ describe('useAuth', () => {
         resolveLogin = res;
       }),
     );
-    let loginCall!: Promise<boolean>;
+    let loginCall!: Promise<LoginOutcome>;
     act(() => {
       loginCall = result.current.login('admin', 'password');
     });
@@ -246,7 +247,7 @@ describe('useAuth', () => {
 
     let loginResult = false;
     await act(async () => {
-      loginResult = await result.current.login('admin', 'wrongpassword');
+      loginResult = (await result.current.login('admin', 'wrongpassword')).status === 'ok';
     });
 
     expect(loginResult).toBe(false);
@@ -265,7 +266,7 @@ describe('useAuth', () => {
 
     let loginResult = false;
     await act(async () => {
-      loginResult = await result.current.login('admin', 'password');
+      loginResult = (await result.current.login('admin', 'password')).status === 'ok';
     });
 
     expect(loginResult).toBe(false);
@@ -408,7 +409,7 @@ describe('useAuth', () => {
 
       let loginResult = true;
       await act(async () => {
-        loginResult = await result.current.login('admin', 'password');
+        loginResult = (await result.current.login('admin', 'password')).status === 'ok';
       });
 
       expect(loginResult).toBe(false);

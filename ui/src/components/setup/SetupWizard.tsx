@@ -29,6 +29,7 @@ import type React from 'react';
 import { useEffect, useState } from 'react';
 import { type SubmitHandler, useForm } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
+import type { LoginOutcome } from '../../hooks/useAuth';
 import { LogComponents, logger } from '../../lib/logger';
 import { evaluatePassword, type PasswordRule } from '../../lib/passwordPolicy';
 import { SetupWizardSchema } from '../../schemas/auth';
@@ -54,7 +55,7 @@ interface SetupWizardProps {
   /** Callback invoked when setup is complete and user is logged in */
   onComplete: () => void;
   /** Function to attempt login after password is set */
-  onLogin: (username: string, password: string) => Promise<boolean>;
+  onLogin: (username: string, password: string) => Promise<LoginOutcome>;
   /** Optional pre-generated password suggestion to offer user */
   suggestedPassword?: string;
   /** Username from config (fixes #768 - no hardcoded 'admin') */
@@ -209,7 +210,9 @@ export function SetupWizard({
 
       logger.info(LogComponents.SETUP, 'Setup complete request succeeded', { username });
 
-      const loginSuccess = await onLogin(username, submittedPassword);
+      // First run cannot have a second factor enrolled yet, so anything other
+      // than a finished login is a failure here.
+      const loginSuccess = (await onLogin(username, submittedPassword)).status === 'ok';
       if (!loginSuccess) {
         setSubmitError(t('errors.loginFailed'));
         logger.error(LogComponents.SETUP, 'Auto-login after setup failed', null, { username });

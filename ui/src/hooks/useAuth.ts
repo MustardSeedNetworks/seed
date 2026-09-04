@@ -39,19 +39,29 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { beginSession, clearCSRFToken } from '../api';
 import { LogComponents, logger } from '../lib/logger';
+import type { LoginResponse } from '../types/generated/login-response';
 
 /** Internal authentication state */
+/**
+ * LoginOutcome distinguishes a finished login from one that still needs a
+ * second factor. A boolean could not: `mfaRequired` comes back on a 200 with no
+ * access token, so "not an error" and "logged in" are different answers.
+ */
+export type LoginOutcome =
+  | { status: 'ok' }
+  | { status: 'mfa-required'; mfaToken: string; username: string }
+  | { status: 'error' };
+
 interface AuthState {
   isAuthenticated: boolean;
   token: string | null; // Access token for WebSocket connections (short-lived)
   username: string | null;
 }
 
-/** Login API response structure */
-interface LoginResponse {
-  token: string; // JWT authentication token
-  expires: number; // Token expiration timestamp (Unix seconds)
-}
+// The generated type, not a hand-written copy. The local one declared only
+// token and expires, so `data.mfaRequired` would not compile — the second
+// factor was unimplementable here without anyone noticing the type was the
+// reason (#2391, and the class of #2385's hand-typed wire interfaces).
 
 /** Return value from useAuth hook */
 interface UseAuthReturn {
@@ -61,7 +71,12 @@ interface UseAuthReturn {
   /** Whether connected to the backend */
   connected: boolean;
   /** Attempt to login with credentials. Returns true on success. */
-  login: (username: string, password: string) => Promise<boolean>;
+  login: (username: string, password: string) => Promise<LoginOutcome>;
+  /**
+   * completeSecondFactor finishes a login that returned mfaRequired, exchanging
+   * the one-time mfaToken and a TOTP code for a real session.
+   */
+  completeSecondFactor: (mfaToken: string, code: string) => Promise<boolean>;
   /** Logout and clear authentication state */
   logout: () => void;
   /** Expire the session with an optional message (clears state, shows error) */
@@ -225,7 +240,7 @@ export function useAuth(): UseAuthReturn {
       });
   }, []);
 
-  const login = useCallback(async (username: string, password: string): Promise<boolean> => {
+  const login = useCallback(async (username: string, password: string): Promise<LoginOutcome> => {
     // From here on, the mount-time /status probe must not override our result:
     // an explicit login is authoritative even if the probe resolves later.
     loginSupersededProbeRef.current = true;
@@ -260,6 +275,19 @@ export function useAuth(): UseAuthReturn {
 
       const data: LoginResponse = await (response.json() as Promise<LoginResponse>);
 
+      // A user with a second factor enrolled gets no access token here, only a
+      // one-time mfaToken to exchange. Treating that as a successful login left
+      // the app "authenticated" with an empty token, so every request failed
+      // and the account looked bricked (#2391).
+      if (data.mfaRequired === true) {
+        if (!data.mfaToken) {
+          setError('The server asked for a second factor but issued no token to complete it.');
+          return { status: 'error' };
+        }
+        logger.info(LogComponents.AUTH, 'Login requires a second factor', { username });
+        return { status: 'mfa-required', mfaToken: data.mfaToken, username };
+      }
+
       // Open a new session generation before any request can be issued against
       // it, so a 401 still in flight from the previous session cannot expire
       // this one (#2204).
@@ -269,7 +297,7 @@ export function useAuth(): UseAuthReturn {
       // Store access token in memory ONLY for SSE/WebSocket connections
       setState({
         isAuthenticated: true,
-        token: data.token, // Access token for SSE (short-lived, 15min)
+        token: data.token ?? null, // Access token for SSE (short-lived, 15min)
         username,
       });
       setConnected(true);
@@ -277,7 +305,7 @@ export function useAuth(): UseAuthReturn {
       logger.info(LogComponents.AUTH, 'User logged in successfully', {
         username,
       });
-      return true;
+      return { status: 'ok' };
     } catch (err) {
       const timedOut = deadline.aborted;
       const errorMessage = timedOut
@@ -291,11 +319,52 @@ export function useAuth(): UseAuthReturn {
         endpoint: '/api/v1/auth/login',
         username,
       });
-      return false;
+      return { status: 'error' };
     } finally {
       setIsLoading(false);
     }
   }, []);
+
+  const completeSecondFactor = useCallback(
+    async (mfaToken: string, code: string): Promise<boolean> => {
+      setIsLoading(true);
+      setError(null);
+      try {
+        const response = await fetch(`${API_BASE}/api/v1/auth/login/totp`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify({ mfaToken, code }),
+          signal: AbortSignal.timeout(LOGIN_TIMEOUT_MS),
+        });
+        if (!response.ok) {
+          throw new Error('Invalid verification code');
+        }
+
+        const data: LoginResponse = await (response.json() as Promise<LoginResponse>);
+        if (!data.token) {
+          throw new Error('Invalid verification code');
+        }
+
+        beginSession();
+        setState({ isAuthenticated: true, token: data.token, username: '' });
+        setConnected(true);
+        logger.info(LogComponents.AUTH, 'Second factor accepted');
+
+        return true;
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Verification failed');
+        logger.error(LogComponents.AUTH, 'Second factor failed', err, {
+          endpoint: '/api/v1/auth/login/totp',
+        });
+
+        return false;
+      } finally {
+        setIsLoading(false);
+      }
+    },
+    [],
+  );
 
   const logout = useCallback(() => {
     const currentUsername = state.username;
@@ -375,14 +444,25 @@ export function useAuth(): UseAuthReturn {
 
       const data: LoginResponse = await (response.json() as Promise<LoginResponse>);
 
-      // Update state with new token
+      // The generated type makes token optional, because a login that needs a
+      // second factor returns none. A refresh that answers without one has not
+      // refreshed anything, so treat it as a failure rather than storing null.
+      if (!data.token) {
+        logger.warn(LogComponents.AUTH, 'Token refresh returned no token');
+        clearAuthState();
+
+        return null;
+      }
+      const refreshedToken = data.token;
+
       setState((prev) => ({
         ...prev,
-        token: data.token,
+        token: refreshedToken,
       }));
 
       logger.info(LogComponents.AUTH, 'Token refreshed successfully');
-      return data.token;
+
+      return refreshedToken;
     } catch (err) {
       logger.error(LogComponents.AUTH, 'Token refresh error', err);
       clearAuthState();
@@ -396,6 +476,7 @@ export function useAuth(): UseAuthReturn {
     username: state.username,
     connected,
     login,
+    completeSecondFactor,
     logout,
     expireSession,
     refreshToken,

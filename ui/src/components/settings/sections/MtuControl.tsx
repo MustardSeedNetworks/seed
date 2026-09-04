@@ -19,9 +19,8 @@
 import type React from 'react';
 import { memo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { api } from '../../../api';
 import { button, cn, input, layout, radius, status as statusColor } from '../../../styles/theme';
-
-const API_BASE: string = import.meta.env.VITE_API_BASE || '';
 
 export const MtuControl: React.NamedExoticComponent<Record<string, never>> = memo(
   function MtuControlComponent(): React.ReactElement {
@@ -42,26 +41,18 @@ export const MtuControl: React.NamedExoticComponent<Record<string, never>> = mem
       setLoading(true);
       setMessage(null);
       try {
-        const response = await fetch(`${API_BASE}/api/v1/network/mtu`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          credentials: 'include',
-          body: JSON.stringify({ mtu: mtuVal }),
+        await api.post('/api/v1/network/mtu', { mtu: mtuVal });
+        setMessage({
+          text: t('network.mtuControl.setSuccess', { value: mtuVal }),
+          isError: false,
         });
-        if (response.ok) {
-          setMessage({
-            text: t('network.mtuControl.setSuccess', { value: mtuVal }),
-            isError: false,
-          });
-        } else {
-          const text = await response.text();
-          setMessage({
-            text: text || t('network.mtuControl.setFailed'),
-            isError: true,
-          });
-        }
-      } catch {
-        setMessage({ text: t('network.mtuControl.networkError'), isError: true });
+      } catch (err) {
+        // The client carries the server's own message, which the raw branch
+        // used to read out of the body itself.
+        setMessage({
+          text: err instanceof Error ? err.message : t('network.mtuControl.networkError'),
+          isError: true,
+        });
       } finally {
         setLoading(false);
         setTimeout((): void => setMessage(null), 3000);

@@ -158,7 +158,14 @@
     "streamingHint": "Pause log streaming"
   },
   "login": {
-    "defaultCredentials": "Default: admin / seed"
+    "defaultCredentials": "Default: admin / seed",
+    "secondFactor": {
+      "title": "Two-step verification",
+      "prompt": "Enter the 6-digit code from your authenticator app.",
+      "codeLabel": "Verification code",
+      "verify": "Verify",
+      "back": "Use a different account"
+    }
   },
   "footer": {
     "runTestsHint": "Tap the play button to run all tests.",

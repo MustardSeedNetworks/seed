@@ -158,7 +158,14 @@
     "streamingHint": "Pausar la transmisión de registros"
   },
   "login": {
-    "defaultCredentials": "Predeterminado: admin / seed"
+    "defaultCredentials": "Predeterminado: admin / seed",
+    "secondFactor": {
+      "title": "Verificación en dos pasos",
+      "prompt": "Introduce el código de 6 dígitos de tu aplicación de autenticación.",
+      "codeLabel": "Código de verificación",
+      "verify": "Verificar",
+      "back": "Usar otra cuenta"
+    }
   },
   "footer": {
     "runTestsHint": "Toca el botón de reproducción para ejecutar todas las pruebas.",

@@ -13,13 +13,16 @@
 # This list may only shrink. scripts/check-ui-fetch.py fails on a new site and
 # on an entry that no longer matches, so it cannot drift into fiction.
 #
-# The MUTATING entries are the live defects, tracked as seed#2389.
+# No MUTATING entries remain: every mutating call outside the exempt set now
+# goes through the api client (seed#2389). The read-only ones are the
+# remaining debt — they bypass the client 401 refresh/retry.
 
 ui/src/components/setup/setupApi.ts:28  # read-only — bypasses the client 401 refresh/retry
-ui/src/hooks/useAuth.ts:173  # read-only — bypasses the client 401 refresh/retry
-ui/src/hooks/useAuth.ts:243  # mutating but CSRF-exempt by design (isCSRFExemptPath) — correct as a raw fetch
-ui/src/hooks/useAuth.ts:329  # mutating but CSRF-exempt by design (isCSRFExemptPath) — correct as a raw fetch
-ui/src/hooks/useAuth.ts:363  # mutating but CSRF-exempt by design (isCSRFExemptPath) — correct as a raw fetch
+ui/src/hooks/useAuth.ts:188  # read-only — bypasses the client 401 refresh/retry
+ui/src/hooks/useAuth.ts:258  # mutating but CSRF-exempt by design (isCSRFExemptPath) — correct as a raw fetch
+ui/src/hooks/useAuth.ts:333  # mutating but CSRF-exempt by design (isCSRFExemptPath) — correct as a raw fetch
+ui/src/hooks/useAuth.ts:398  # mutating but CSRF-exempt by design (isCSRFExemptPath) — correct as a raw fetch
+ui/src/hooks/useAuth.ts:432  # mutating but CSRF-exempt by design (isCSRFExemptPath) — correct as a raw fetch
 ui/src/hooks/useCapabilities.ts:55  # read-only — bypasses the client 401 refresh/retry
 ui/src/hooks/useLogs.ts:167  # read-only — bypasses the client 401 refresh/retry
 ui/src/hooks/useLogs.ts:187  # read-only — bypasses the client 401 refresh/retry
@@ -49,22 +52,11 @@ ui/src/hooks/useSettingsDrawerLoaders.ts:274  # read-only — bypasses the clien
 ui/src/hooks/useSettingsDrawerLoaders.ts:294  # read-only — bypasses the client 401 refresh/retry
 ui/src/hooks/useSettingsDrawerLoaders.ts:318  # read-only — bypasses the client 401 refresh/retry
 ui/src/hooks/useSettingsDrawerLoaders.ts:336  # read-only — bypasses the client 401 refresh/retry
-ui/src/hooks/useSettingsDrawerSavers.ts:74  # MUTATING, 403s today — /api/v1/settings
-ui/src/hooks/useSettingsDrawerSavers.ts:95  # MUTATING, 403s today — /api/v1/telemetry/probes/settings
-ui/src/hooks/useSettingsDrawerSavers.ts:116  # MUTATING, 403s today — /api/v1/wifi/wifi/settings
-ui/src/hooks/useSettingsDrawerSavers.ts:136  # MUTATING, 403s today — /api/v1/settings/link
-ui/src/hooks/useSettingsDrawerSavers.ts:159  # MUTATING, 403s today — /api/v1/settings/cable
-ui/src/hooks/useSettingsDrawerSavers.ts:179  # MUTATING, 403s today — /api/v1/security/devices/settings
-ui/src/hooks/useSettingsDrawerSavers.ts:199  # MUTATING, 403s today — /api/v1/telemetry/snmp/settings
-ui/src/hooks/useSubnetSettings.ts:43  # read-only — bypasses the client 401 refresh/retry
-ui/src/hooks/useSubnetSettings.ts:65  # MUTATING, 403s today — /api/v1/security/devices/subnets
-ui/src/hooks/useSubnetSettings.ts:104  # MUTATING, 403s today — /api/v1/security/devices/subnets
-ui/src/hooks/useSubnetSettings.ts:130  # MUTATING, 403s today — /api/v1/security/devices/subnets?cidr=${encodeURIComponent(cidr
-ui/src/hooks/useVulnerabilitySettings.ts:43  # read-only — bypasses the client 401 refresh/retry
-ui/src/hooks/useVulnerabilitySettings.ts:80  # MUTATING, 403s today — /api/v1/security/vulnerabilities/settings
+ui/src/hooks/useSubnetSettings.ts:44  # read-only — bypasses the client 401 refresh/retry
+ui/src/hooks/useVulnerabilitySettings.ts:44  # read-only — bypasses the client 401 refresh/retry
 ui/src/lib/logger.ts:254  # mutating but CSRF-exempt by design (isCSRFExemptPath) — correct as a raw fetch
-ui/src/app/LoginForm.tsx:85  # read-only — bypasses the client 401 refresh/retry
-ui/src/app/LoginForm.tsx:99  # read-only — bypasses the client 401 refresh/retry
+ui/src/app/LoginForm.tsx:101  # read-only — bypasses the client 401 refresh/retry
+ui/src/app/LoginForm.tsx:115  # read-only — bypasses the client 401 refresh/retry
 ui/src/components/cards/HealthCheckCard.tsx:68  # read-only — bypasses the client 401 refresh/retry
 ui/src/components/cards/PerformanceCard.tsx:197  # read-only — bypasses the client 401 refresh/retry
 ui/src/components/cards/PerformanceCard.tsx:213  # read-only — bypasses the client 401 refresh/retry
@@ -77,17 +69,11 @@ ui/src/components/cards/PerformanceCard.tsx:361  # read-only — bypasses the cl
 ui/src/components/cards/SlaDashboardCard.tsx:46  # read-only — bypasses the client 401 refresh/retry
 ui/src/components/cards/SystemHealthCard.tsx:204  # read-only — bypasses the client 401 refresh/retry
 ui/src/components/login/RecoveryForm.tsx:83  # read-only — bypasses the client 401 refresh/retry
-ui/src/components/login/RecoveryForm.tsx:121  # MUTATING, 403s today — /api/v1/recovery/complete
-ui/src/components/settings/SettingsDrawer.tsx:425  # MUTATING, 403s today — /api/v1/telemetry/ipconfig/settings
+ui/src/components/login/RecoveryForm.tsx:121  # mutating but CSRF-exempt by design (isCSRFExemptPath) — correct as a raw fetch
 ui/src/components/settings/sections/CableTestSettings.tsx:70  # read-only — bypasses the client 401 refresh/retry
-ui/src/components/settings/sections/ConfigBackupsSection.tsx:65  # read-only — bypasses the client 401 refresh/retry
 ui/src/components/settings/sections/ConfigBackupsSection.tsx:66  # read-only — bypasses the client 401 refresh/retry
-ui/src/components/settings/sections/ConfigBackupsSection.tsx:94  # MUTATING, 403s today — /api/v1/config/backup
-ui/src/components/settings/sections/ConfigBackupsSection.tsx:114  # MUTATING, 403s today — /api/v1/config/restore
-ui/src/components/settings/sections/ConfigBackupsSection.tsx:139  # MUTATING, 403s today — /api/v1/config/backup/delete?name=${encodeURIComponent(backupName
+ui/src/components/settings/sections/ConfigBackupsSection.tsx:67  # read-only — bypasses the client 401 refresh/retry
 ui/src/components/settings/sections/DiscoverySettings.tsx:84  # read-only — bypasses the client 401 refresh/retry
-ui/src/components/settings/sections/MtuControl.tsx:45  # MUTATING, 403s today — /api/v1/network/mtu
-ui/src/components/settings/sections/VulnerabilitySettings.tsx:80  # MUTATING, 403s today — /api/v1/security/vulnerabilities/validate-api-key
-ui/src/components/settings/sections/VulnerabilitySettings.tsx:121  # read-only — bypasses the client 401 refresh/retry
-ui/src/components/setup/SetupWizard.tsx:111  # read-only — bypasses the client 401 refresh/retry
-ui/src/components/setup/SetupWizard.tsx:193  # mutating but CSRF-exempt by design (isCSRFExemptPath) — correct as a raw fetch
+ui/src/components/settings/sections/VulnerabilitySettings.tsx:118  # read-only — bypasses the client 401 refresh/retry
+ui/src/components/setup/SetupWizard.tsx:112  # read-only — bypasses the client 401 refresh/retry
+ui/src/components/setup/SetupWizard.tsx:194  # mutating but CSRF-exempt by design (isCSRFExemptPath) — correct as a raw fetch

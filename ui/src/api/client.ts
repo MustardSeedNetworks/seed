@@ -192,9 +192,24 @@ async function handleResponse<T>(
     throw new Error('Session expired');
   }
 
-  // Handle non-success responses
+  // Handle non-success responses.
+  //
+  // The server's own message is carried through. Callers that used a raw fetch
+  // read it out of the body themselves and showed it — "CIDR overlaps an
+  // existing subnet" is worth more to the operator than "API error: 400" — so
+  // dropping it would have made the migration off raw fetch a regression. The
+  // `API error: N` prefix is kept so anything matching on it still matches.
   if (!response.ok) {
-    throw new Error(`API error: ${response.status}`);
+    let detail = '';
+    try {
+      const body = (await response.clone().json()) as { error?: string; message?: string };
+      detail = body.error ?? body.message ?? '';
+    } catch {
+      // Not JSON, or already consumed. The status alone will have to do.
+    }
+    throw new Error(
+      detail ? `API error: ${response.status}: ${detail}` : `API error: ${response.status}`,
+    );
   }
 
   // Parse and return JSON response

@@ -29,7 +29,7 @@ import { useSetupState } from './hooks/useSetupState';
  */
 function App(): JSX.Element {
   const { t } = useTranslation('common');
-  const { isAuthenticated, login, logout, isLoading, error } = useAuth();
+  const { isAuthenticated, login, completeSecondFactor, logout, isLoading, error } = useAuth();
 
   const [sessionExpired, setSessionExpired] = useState(false);
 
@@ -99,7 +99,14 @@ function App(): JSX.Element {
   }
 
   if (!isAuthenticated) {
-    return <LoginForm onLogin={handleLogin} isLoading={isLoading} error={authError} />;
+    return (
+      <LoginForm
+        onLogin={handleLogin}
+        onSecondFactor={completeSecondFactor}
+        isLoading={isLoading}
+        error={authError}
+      />
+    );
   }
 
   return <AppShell orchestration={orchestration} logout={logout} />;

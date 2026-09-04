@@ -63,3 +63,8 @@ func (m *Manager) ManagerSessionTimeout() any {
 func (m *Manager) ManagerJWTSecret() []byte {
 	return m.jwtSecret
 }
+
+// ExportPreSessionPaths exposes preSessionPaths for testing.
+func ExportPreSessionPaths() []string {
+	return preSessionPaths()
+}
