@@ -832,6 +832,33 @@ jobs:
       # required, not optional.
       security-events: write
 
+  # Refuses a PR that INTRODUCES a Go dependency carrying a High advisory,
+  # whether or not the vulnerable symbol is ever called.
+  #
+  # The gap it closes is narrower than "nothing checks new dependencies", and
+  # worth stating precisely: `npm audit --audit-level=high` already gates the
+  # npm tree on *presence*, while govulncheck gates Go on *reachability* — it
+  # passes a vulnerable module until something calls into it. The two halves of
+  # the tree are held to different standards, so a Go dependency with a High
+  # advisory can land unreachable and then fail CI on whatever unrelated PR
+  # first calls into it. This gates the Go side on presence too, at the one
+  # point where the fix is still "pick a different version". The shared
+  # workflow's deny-licenses half duplicates license-check.yml — defence in
+  # depth, not new coverage.
+  #
+  # pull_request only. The action diffs the PR's dependency manifests against
+  # the base, so there is nothing for it to compare on a push or a merge_group;
+  # ci-complete accepts success-or-skipped, so the skip on those events is not
+  # a deadlock. Defined once in MustardSeedNetworks/.github (fleet-shared);
+  # ci-complete still needs: [dependency-review].
+  dependency-review:
+    if: github.event_name == 'pull_request'
+    uses: MustardSeedNetworks/.github/.github/workflows/dependency-review.yml@048d173dd72ca0f9e5fa832fb5b9fd2a6447e5e9 # v1.13.0
+    permissions:
+      contents: read
+      # Only to post the findings comment when it fails.
+      pull-requests: write
+
   # Asserts this repo's own gates are wired to gate: every job below is either
   # in ci-complete's needs or documented in .github/ci-advisory-jobs.txt, the
   # enabled linters meet the declared tier, and tool installs are pinned. Two
@@ -1791,6 +1818,7 @@ jobs:
       - storybook
       - security
       - semgrep
+      - dependency-review
       - ci-conformance
       - quality
       - c-lint
