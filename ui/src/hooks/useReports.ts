@@ -5,6 +5,7 @@
  * the mapping from the wire shape to those props has somewhere to be tested.
  */
 import { useCallback, useEffect, useState } from 'react';
+import { api } from '../api';
 import { LogComponents, logger } from '../lib/logger';
 import type { ReportInfo, ReportsResponse } from '../types/generated/reports-response';
 
@@ -64,16 +65,11 @@ export function useReports(): UseReportsResult {
     async (type: string, format: ReportFormat) => {
       setGenerating(true);
       try {
-        const res = await fetch(`${reportsEndpoint}/generate`, {
-          method: 'POST',
-          credentials: 'include',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ type, format }),
-        });
-        if (!res.ok) {
-          setError(`report generation failed (${res.status})`);
-          return;
-        }
+        // Through the api client, not a raw fetch: the client attaches the
+        // X-CSRF-Token this route requires. A raw fetch omits it, and the
+        // middleware answers 403 "CSRF token required" — so Generate Report
+        // failed every time it was pressed.
+        await api.post(`${reportsEndpoint}/generate`, { type, format });
         // 202: the record exists, the file does not yet. Re-read rather than
         // trusting the snapshot, so the row shows its real current status.
         await refresh();
@@ -90,14 +86,7 @@ export function useReports(): UseReportsResult {
   const remove = useCallback(
     async (id: string) => {
       try {
-        const res = await fetch(`${reportsEndpoint}/${encodeURIComponent(id)}`, {
-          method: 'DELETE',
-          credentials: 'include',
-        });
-        if (!res.ok) {
-          setError(`report delete failed (${res.status})`);
-          return;
-        }
+        await api.delete(`${reportsEndpoint}/${encodeURIComponent(id)}`);
         await refresh();
       } catch (err) {
         logger.error(LogComponents.EXPORT, 'Failed to delete report', err);
