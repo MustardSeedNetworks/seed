@@ -1,13 +1,15 @@
 /**
  * useDeviceScan - triggers and polls a network device scan.
  *
- * Owns the scan poll interval and timeout refs and tears them down on
- * unmount. Returns a stable trigger callback for App.tsx and other
- * callers to kick off a /api/v1/security/devices/scan run.
+ * Owns the scan poll interval and timeout refs, and now the scan's own
+ * error state (#2394), tearing all of it down on unmount. Returns a stable
+ * trigger callback plus whether the most recent attempt failed, for
+ * App.tsx and other callers to kick off a /api/v1/security/devices/scan
+ * run and show its outcome.
  */
 
-import { useCallback, useEffect, useRef } from 'react';
-import { api } from '../api';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { api, SessionExpiredError } from '../api';
 import type { NetworkDiscoveryData } from '../components/cards/NetworkDiscoveryCard';
 import { LogComponents, logger } from '../lib/logger';
 
@@ -18,12 +20,26 @@ interface UseDeviceScanArgs {
   ) => void;
 }
 
+interface UseDeviceScanReturn {
+  triggerDeviceScan: () => Promise<void>;
+  /**
+   * Whether the most recent scan attempt failed, so the card can show it
+   * instead of silently reverting to its previous contents (#2394). Not set
+   * for a session-expiry 401: that is already handled by the global
+   * session-expired flow (api client's onSessionExpired callback), and a
+   * second, generic error here would be redundant noise on a card that is
+   * about to unmount.
+   */
+  scanError: boolean;
+}
+
 export function useDeviceScan({
   fetchNetworkDiscovery,
   setNetworkDiscovery,
-}: UseDeviceScanArgs): () => Promise<void> {
+}: UseDeviceScanArgs): UseDeviceScanReturn {
   const scanPollIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const scanTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [scanError, setScanError] = useState(false);
 
   const triggerDeviceScan = useCallback(async () => {
     try {
@@ -36,6 +52,9 @@ export function useDeviceScan({
         clearTimeout(scanTimeoutRef.current);
         scanTimeoutRef.current = null;
       }
+
+      // A fresh attempt supersedes whatever error the last one left behind.
+      setScanError(false);
 
       // Update status to show scanning
       setNetworkDiscovery((prev) =>
@@ -82,6 +101,9 @@ export function useDeviceScan({
             }
           : null,
       );
+      if (!(err instanceof SessionExpiredError)) {
+        setScanError(true);
+      }
     }
   }, [fetchNetworkDiscovery, setNetworkDiscovery]);
 
@@ -98,5 +120,5 @@ export function useDeviceScan({
     [],
   );
 
-  return triggerDeviceScan;
+  return { triggerDeviceScan, scanError };
 }

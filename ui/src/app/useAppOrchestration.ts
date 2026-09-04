@@ -187,9 +187,8 @@ export function useAppOrchestration({ isAuthenticated }: UseAppOrchestrationArgs
     userSetWifiModeRef,
     networkDiscoveryAbortRef,
     prevLinkUpRef,
-    // #756: Pass setters for recommended interfaces
-    setRecommendedEthernet,
-    setRecommendedWifi,
+    setRecommendedEthernet, // #756
+    setRecommendedWifi, // #756
   });
 
   // Channel graph data for WiFi visualization (extracted to hook #889)
@@ -206,8 +205,8 @@ export function useAppOrchestration({ isAuthenticated }: UseAppOrchestrationArgs
     [],
   );
 
-  // Trigger network device scan (hook owns poll/timeout refs and cleanup)
-  const triggerDeviceScan = useDeviceScan({
+  // Trigger network device scan (hook owns poll/timeout refs, cleanup, scan error -- #2394)
+  const { triggerDeviceScan, scanError } = useDeviceScan({
     fetchNetworkDiscovery,
     setNetworkDiscovery,
   });
@@ -621,6 +620,7 @@ export function useAppOrchestration({ isAuthenticated }: UseAppOrchestrationArgs
     // network state
     interfaces,
     networkDiscovery,
+    scanError,
     appVersion,
     recommendedEthernet,
     recommendedWifi,

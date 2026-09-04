@@ -58,6 +58,7 @@
     "deviceFound": "{{count}} device found",
     "devicesFound": "{{count}} devices found",
     "noDevices": "No devices discovered. Click Scan to discover network devices.",
+    "scanError": "The scan failed. Try again.",
     "localNetwork": "Local Network",
     "extendedNetworks": "Extended Networks",
     "routers": "Routers",
