@@ -33,6 +33,20 @@ const API_BASE: string = import.meta.env.VITE_API_BASE || '';
 /** Callback function invoked when session expires (401 response after refresh attempt) */
 type SessionExpiredCallback = () => void;
 
+/**
+ * Thrown by {@link handleResponse} when a 401 survives a refresh attempt (or
+ * refresh itself fails). Callers that need to distinguish "the session ended,
+ * the global session-expired flow is already handling it" from any other
+ * request failure should check `instanceof SessionExpiredError` rather than
+ * matching on the error message.
+ */
+export class SessionExpiredError extends Error {
+  constructor() {
+    super('Session expired');
+    this.name = 'SessionExpiredError';
+  }
+}
+
 /** Global session expired callback - set via setSessionExpiredCallback */
 let onSessionExpired: SessionExpiredCallback | null = null;
 
@@ -189,7 +203,7 @@ async function handleResponse<T>(
     if (issuedGeneration === sessionGeneration) {
       onSessionExpired?.();
     }
-    throw new Error('Session expired');
+    throw new SessionExpiredError();
   }
 
   // Handle non-success responses.

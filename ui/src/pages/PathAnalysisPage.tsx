@@ -12,6 +12,7 @@ export function PathAnalysisPage() {
     isWifi,
     cardSettings,
     networkDiscovery,
+    scanError,
     triggerDeviceScan,
     registerTraceHopHandler,
   } = useAppContext();
@@ -44,6 +45,7 @@ export function PathAnalysisPage() {
           <NetworkDiscoveryCard
             data={networkDiscovery}
             loading={loading}
+            scanError={scanError}
             onScan={triggerDeviceScan}
           />
         )}

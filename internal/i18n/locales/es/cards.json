@@ -58,6 +58,7 @@
     "deviceFound": "{{count}} dispositivo encontrado",
     "devicesFound": "{{count}} dispositivos encontrados",
     "noDevices": "No se encontraron dispositivos. Haga clic en Escanear para descubrir dispositivos en la red.",
+    "scanError": "El escaneo falló. Inténtelo de nuevo.",
     "localNetwork": "Red local",
     "extendedNetworks": "Redes extendidas",
     "routers": "Enrutadores",

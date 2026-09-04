@@ -5,7 +5,14 @@ import { useTranslation } from 'react-i18next';
 import { useEnginePhase } from '../../hooks/useEnginePhase';
 import { useEngineScan } from '../../hooks/useEngineScan';
 import { useNetworkDiscoveryAutoScan } from '../../hooks/useNetworkDiscoveryAutoScan';
-import { button, cn, icon as iconTokens, radius, spacing } from '../../styles/theme';
+import {
+  button,
+  cn,
+  icon as iconTokens,
+  radius,
+  spacing,
+  status as statusColor,
+} from '../../styles/theme';
 import { Card, CardValue, type Status } from '../ui/card';
 import { Maximize2, RefreshCw, ScanSearch } from '../ui/icons';
 import { DiscoveryModal } from './DiscoveryModal';
@@ -37,9 +44,24 @@ export type {
   SnmpVlan,
 } from './networkDiscoveryCardTypes';
 
+/** ScanErrorBanner renders the failed-scan alert shared by both card states. */
+function ScanErrorBanner({ message }: { message: string }): React.ReactElement {
+  return (
+    <div
+      className={cn(spacing.pad.sm, statusColor.bg.errorSoft, radius.md)}
+      role="alert"
+      data-testid="discovery-scan-error"
+    >
+      <span className="body-small text-status-error">{message}</span>
+    </div>
+  );
+}
+
 interface NetworkDiscoveryCardProps {
   data: _NetworkDiscoveryData | null;
   loading?: boolean;
+  /** Whether the most recent scan attempt failed (#2394). */
+  scanError?: boolean;
   onScan?: () => void;
 }
 
@@ -47,6 +69,7 @@ export const NetworkDiscoveryCard: React.NamedExoticComponent<NetworkDiscoveryCa
   function networkDiscoveryCard({
     data,
     loading,
+    scanError,
     onScan,
   }: NetworkDiscoveryCardProps): React.ReactElement | null {
     const { t } = useTranslation('cards');
@@ -101,7 +124,7 @@ export const NetworkDiscoveryCard: React.NamedExoticComponent<NetworkDiscoveryCa
         <Card
           title={t('discovery.title')}
           icon={<ScanSearch className={iconTokens.size.md} />}
-          status="unknown"
+          status={scanError ? 'error' : 'unknown'}
           enableLiveRegion={true}
           ariaLabel="Network discovery - no data available"
         >
@@ -124,6 +147,11 @@ export const NetworkDiscoveryCard: React.NamedExoticComponent<NetworkDiscoveryCa
               {t('discovery.startScan')}
             </button>
           ) : null}
+          {scanError ? (
+            <div className={spacing.margin.top.heading}>
+              <ScanErrorBanner message={t('discovery.scanError')} />
+            </div>
+          ) : null}
         </Card>
       );
     }
@@ -134,6 +162,9 @@ export const NetworkDiscoveryCard: React.NamedExoticComponent<NetworkDiscoveryCa
     const getOverallStatus = (): Status => {
       if (status.scanning || running) {
         return 'loading';
+      }
+      if (scanError) {
+        return 'error';
       }
       if (deviceCount === 0) {
         return 'warning';
@@ -219,6 +250,11 @@ export const NetworkDiscoveryCard: React.NamedExoticComponent<NetworkDiscoveryCa
           onCancelScan={cancelScan}
           t={t}
         />
+        {scanError ? (
+          <div className={spacing.margin.top.heading}>
+            <ScanErrorBanner message={t('discovery.scanError')} />
+          </div>
+        ) : null}
         {deviceCount === 0 && !status.scanning && !running ? (
           <p className={cn('body-small text-text-muted text-center', spacing.pad.default)}>
             {t('discovery.noDevices')}

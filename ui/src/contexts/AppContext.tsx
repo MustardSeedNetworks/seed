@@ -24,6 +24,8 @@ export interface AppContextValue {
   cardSettings: CardSettings;
   displayOptions: DisplayOptions;
   networkDiscovery: NetworkDiscoveryData | null;
+  /** Whether the most recent device scan attempt failed (#2394). */
+  scanError: boolean;
   triggerDeviceScan: () => Promise<void>;
   registerTraceHopHandler: (handler: (msg: TraceHopMessage) => void) => () => void;
   channelGraphData: ChannelGraphResponse | null;

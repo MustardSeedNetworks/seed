@@ -1,5 +1,5 @@
 import { expect, type Page, test } from '@playwright/test';
-import { skipSetupWizard, TEST_CREDENTIALS } from './helpers/auth';
+import { loginAndAwaitDashboard, skipSetupWizard, TEST_CREDENTIALS } from './helpers/auth';
 
 /**
  * Comprehensive Error Scenario E2E Tests
@@ -80,18 +80,38 @@ test.describe('API Error Scenarios', () => {
       });
     });
 
-    // #2394: a failed scan produces no operator-facing signal at all -- the
-    // hook logs, clears `scanning` and spreads `...prev`, so the card reverts
-    // to its previous contents. This test passed anyway, because after
-    // `login()` the app shell renders CapabilityWarnings (also role=alert) and
-    // the unscoped locator below matched that instead. Marked fixme rather
-    // than narrowed: the behaviour it describes is the behaviour we want.
-    // Delete this line when #2394 ships.
+    // #2394's fix landed (useDeviceScan / NetworkDiscoveryCard now surface a
+    // failed scan via discovery-scan-error) but this test still cannot reach
+    // it live: NetworkDiscoveryCard's only mount point is /path, gated by
+    // <RequireFeature feature="path_analysis"> (Pro tier -- see
+    // internal/api/server_routes.go's setupPathRoutes), and the E2E suite
+    // runs unlicensed (Free). Confirmed against a live daemon: navigating to
+    // /path renders "Path Analysis is a Pro-tier feature... seed license
+    // trial", not the card, so discovery-scan-button never exists. Same
+    // blocker reports-page.spec.ts documents for export_csv_json (Starter+)
+    // and defers as "needs a licensed fixture, out of scope". The card's own
+    // backend routes (/api/v1/security/devices*) carry no `feature:` gate --
+    // network discovery is a Free-tier-capable feature trapped behind a
+    // Pro-only page, a placement accident from the router refactor
+    // (68130b0b) rather than a deliberate gate; filed separately.
+    //
+    // The route glob and testid scoping below are the real fix, kept for
+    // when a licensed E2E fixture exists. Real coverage of the fix lives in
+    // ui/src/hooks/useDeviceScan.test.ts (the error state) and
+    // ui/src/components/cards/NetworkDiscoveryCard.test.tsx (the banner).
     test.fixme('should handle 500 error on device scan', async ({ page }) => {
       await login(page);
+      await page.goto('/path');
+      await expect(page.getByTestId('page-header-title')).toBeVisible({
+        timeout: 10000,
+      });
 
-      // Mock scan endpoint returning 500
-      await page.route('**/api/devices/scan', async (route) => {
+      // Mock scan endpoint returning 500. The real endpoint is
+      // /api/v1/security/devices/scan -- the previous glob
+      // (**/api/devices/scan) does not match that path (no `/v1/security`
+      // segment), so the route was never intercepted and the request always
+      // reached the real backend.
+      await page.route('**/api/v1/security/devices/scan', async (route) => {
         await route.fulfill({
           status: 500,
           contentType: 'application/json',
@@ -103,18 +123,22 @@ test.describe('API Error Scenarios', () => {
 
       // Try to trigger a scan
       const scanButton = page.getByTestId('discovery-scan-button');
+      await expect(scanButton).toBeVisible({ timeout: 5000 });
+      await scanButton.click();
 
-      if (await scanButton.isVisible({ timeout: 5000 })) {
-        await scanButton.click();
+      // Should show the scan's own error banner, scoped by testid -- an
+      // unscoped getByRole('alert') also matches AppShell's always-present
+      // CapabilityWarnings banner in a CI container, which is why this
+      // assertion could not fail before (#2394).
+      const scanError = page.getByTestId('discovery-scan-error');
+      await expect(scanError).toBeVisible({ timeout: 5000 });
+      await expect(scanError).toHaveAttribute('role', 'alert');
 
-        // Should show error message
-        await expect(page.getByRole('alert')).toBeVisible({
-          timeout: 5000,
-        });
+      // App should remain functional
+      await expect(page.getByTestId('page-header-title')).toBeVisible();
 
-        // App should remain functional
-        await expect(page.getByTestId('page-header-title')).toBeVisible();
-      }
+      // And the operator can retry without reloading.
+      await expect(scanButton).toBeEnabled();
     });
   });
 
@@ -224,44 +248,65 @@ test.describe('API Error Scenarios', () => {
   });
 
   test.describe('401 Unauthorized (Session Expired)', () => {
-    // #2394, same as the 500 case above and worse: an expired session during a
-    // scan is indistinguishable from an empty network, and nothing prompts
-    // re-authentication. Passed on the capability banner, not on the assertion.
-    test.fixme('should handle 401 during device scan', async ({ page }) => {
-      await login(page);
+    // Isolated from the suite-wide shared storageState: this test forces a
+    // real session-expiry logout, which blacklists the shared token
+    // server-side and poisons `login()` for every later shared-state test in
+    // the worker (observed: iPerf3/speedtest/retry-login tests failed with
+    // ERR_CONNECTION_REFUSED and a re-run's `page-header-title` wait timed
+    // out, downstream of this test's own POST /api/v1/auth/logout going
+    // through against the shared token). Same isolation
+    // auth-complete.spec.ts's own 401 test uses.
+    test.use({ storageState: { cookies: [], origins: [] } });
 
-      // Mock scan endpoint returning 401
-      await page.route('**/api/devices/scan', async (route) => {
+    // See the 500 case above (#2394) for why this is fixme: the discovery
+    // card only mounts on /path, gated Pro-tier, and the suite runs
+    // unlicensed. Kept for when a licensed E2E fixture exists.
+    test.fixme('should handle 401 during device scan', async ({ page }) => {
+      await page.goto('/');
+      await loginAndAwaitDashboard(page);
+      await page.goto('/path');
+      await expect(page.getByTestId('page-header-title')).toBeVisible({
+        timeout: 10000,
+      });
+
+      // Mock scan endpoint returning 401. The real endpoint is
+      // /api/v1/security/devices/scan (see the 500 case above for why the
+      // old glob never matched it). The api client reacts to a 401 by
+      // attempting POST /api/v1/auth/refresh before giving up -- that must
+      // also fail, or the refresh would hit the real backend with a still-
+      // valid session cookie, succeed, and silently retry the scan instead
+      // of expiring the session. Same idiom as auth-complete.spec.ts's
+      // "should handle 401 unauthorized response gracefully".
+      await page.route('**/api/v1/security/devices/scan', async (route) => {
         await route.fulfill({
           status: 401,
           contentType: 'application/json',
-          body: JSON.stringify({
-            error: 'Unauthorized',
-          }),
+          body: JSON.stringify({ error: 'Unauthorized' }),
+        });
+      });
+      await page.route('**/api/v1/auth/refresh', async (route) => {
+        await route.fulfill({
+          status: 401,
+          contentType: 'application/json',
+          body: JSON.stringify({ error: 'Unauthorized' }),
         });
       });
 
       const scanButton = page.getByTestId('discovery-scan-button');
+      await expect(scanButton).toBeVisible({ timeout: 5000 });
+      await scanButton.click();
 
-      if (await scanButton.isVisible({ timeout: 5000 })) {
-        await scanButton.click();
-
-        // Should show unauthorized error or redirect to login
-
-        // Old form raced two isVisible probes against a 250ms timeout — the
-        // 250ms branch always won. Replaced with parallel short-timeout probes
-        // ORed together for the same semantics, no race.
-        const [authTextSeen, loginFieldSeen] = await Promise.all([
-          page.getByRole('alert').isVisible({ timeout: 1000 }),
-          page
-            .getByLabel(/username|password/i)
-            .first()
-            .isVisible({ timeout: 1000 }),
-        ]);
-        const handled = authTextSeen || loginFieldSeen;
-
-        expect(handled).toBeTruthy();
-      }
+      // A session-expiry 401 is routed into the app's existing re-auth
+      // flow (api client -> onSessionExpired -> logout -> LoginForm),
+      // rather than the scan's own generic error banner: the operator
+      // needs to log back in, not retry the scan. Scoped to the login
+      // form's own alert -- an unscoped getByRole('alert') also matches
+      // AppShell's always-present CapabilityWarnings banner in a CI
+      // container, which is why this could not fail before (#2394).
+      await expect(page.getByTestId('login-title')).toBeVisible({
+        timeout: 10000,
+      });
+      await expect(page.getByTestId('login-error')).toBeVisible();
     });
   });
 
