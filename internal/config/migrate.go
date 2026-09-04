@@ -1,6 +1,7 @@
 package config
 
-// migrate.go moves an on-disk config forward when a persisted key is renamed.
+// migrate.go moves an on-disk config forward when a persisted key is renamed or
+// removed.
 //
 // Config.UnmarshalJSON rejects unknown fields on purpose: pre-v1, a stale or
 // misspelled setting is an error rather than something silently ignored. That
@@ -13,10 +14,19 @@ package config
 // This is a migration, not a compatibility alias. The old spelling is rewritten
 // once and is not accepted afterwards, which is what "migrate every caller in
 // the same change" asks for when the caller is a file on disk.
+//
+// Removal has the same consequence and needed the same treatment. A config
+// written by v0.200.0 — a real released version — still carried `pipeline` and
+// `server.https`, and the strict decode killed the daemon on both. A removed key
+// is stripped and reported, never silently ignored: the operator is told the
+// setting is gone and where its replacement lives. An unknown key that is NOT on
+// the table is still fatal, so this does not weaken the typo-catching the strict
+// decode exists for.
 
 import (
 	"encoding/json"
 	"fmt"
+	"strings"
 )
 
 // renamedKey is one persisted key that changed spelling.
@@ -34,6 +44,42 @@ type renamedKey struct {
 // networkDiscovery.additional_subnets to target_networks (#377).
 const versionTargetNetworks = 2
 
+// removedKey is one persisted key the schema no longer has.
+//
+// Unlike a rename, this is not gated on ConfigVersion. A key the schema does not
+// have is never valid at any version, and the version was not always bumped when
+// one was dropped — gating on it would leave exactly the configs that need the
+// migration unmigrated.
+type removedKey struct {
+	// path is the chain of objects containing the key, outermost first.
+	path []string
+	key  string
+	// replacement tells the operator where the setting went, or that it is gone.
+	// It is the whole value of reporting rather than silently dropping.
+	replacement string
+}
+
+// String renders the key the way it appears in the file.
+func (r removedKey) String() string {
+	return strings.Join(append(append([]string{}, r.path...), r.key), ".")
+}
+
+// removedKeys is every key the loader strips rather than choking on.
+func removedKeys() []removedKey {
+	return []removedKey{
+		{
+			key: "pipeline",
+			replacement: "discovery pipeline settings now live under networkDiscovery " +
+				"(options, timing, profiler) and snmp; re-apply them there",
+		},
+		{
+			path:        []string{"server"},
+			key:         "https",
+			replacement: "Seed always serves HTTPS; there is nothing to switch off",
+		},
+	}
+}
+
 // renamedKeys is every rename the loader knows how to apply, oldest first.
 func renamedKeys() []renamedKey {
 	return []renamedKey{
@@ -46,17 +92,21 @@ func renamedKeys() []renamedKey {
 	}
 }
 
-// migrateJSON applies every rename the config is behind, returning the rewritten
-// document and whether anything changed.
+// migrateJSON applies every rename and removal the config is behind, returning
+// the rewritten document, the removed keys it stripped, and whether anything
+// changed.
 //
 // It rewrites the operator's own JSON rather than re-marshalling a Config, so a
 // five-line config stays five lines instead of gaining every default.
-func migrateJSON(data []byte) ([]byte, bool, error) {
+//
+// The stripped keys come back rather than being logged here so the migration
+// stays a pure function of the document; Load reports them.
+func migrateJSON(data []byte) ([]byte, []removedKey, bool, error) {
 	var document map[string]any
 	if err := json.Unmarshal(data, &document); err != nil {
 		// Not an object, or not JSON at all. The strict decode that follows
 		// will report it far better than this can.
-		return data, false, nil //nolint:nilerr // the decoder owns this error
+		return data, nil, false, nil //nolint:nilerr // the decoder owns this error
 	}
 
 	version := versionOf(document)
@@ -69,17 +119,46 @@ func migrateJSON(data []byte) ([]byte, bool, error) {
 			changed = true
 		}
 	}
+
+	var stripped []removedKey
+	for _, removed := range removedKeys() {
+		if applyRemoval(document, removed) {
+			stripped = append(stripped, removed)
+			changed = true
+		}
+	}
+
 	if !changed {
-		return data, false, nil
+		return data, nil, false, nil
 	}
 
 	document["version"] = ConfigVersion
 	migrated, err := json.MarshalIndent(document, "", "  ")
 	if err != nil {
-		return nil, false, fmt.Errorf("re-encode migrated config: %w", err)
+		return nil, nil, false, fmt.Errorf("re-encode migrated config: %w", err)
 	}
 
-	return migrated, true, nil
+	return migrated, stripped, true, nil
+}
+
+// applyRemoval deletes one key from its containing object, reporting whether it
+// was there to delete.
+func applyRemoval(document map[string]any, removed removedKey) bool {
+	container := document
+	for _, segment := range removed.path {
+		next, ok := container[segment].(map[string]any)
+		if !ok {
+			return false
+		}
+		container = next
+	}
+
+	if _, present := container[removed.key]; !present {
+		return false
+	}
+	delete(container, removed.key)
+
+	return true
 }
 
 // versionOf reads the document's version, treating absent or malformed as 0 —

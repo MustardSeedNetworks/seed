@@ -56,9 +56,16 @@ func Load(path string) (*Config, error) {
 // new spelling anyway. So an install that never changes a setting keeps its
 // file as the operator left it, and one that does self-heals.
 func decodeAndMigrate(data []byte, cfg *Config) error {
-	migrated, _, err := migrateJSON(data)
+	migrated, stripped, _, err := migrateJSON(data)
 	if err != nil {
 		return err
+	}
+	for _, removed := range stripped {
+		// One line per key, naming where the setting went. Without this the
+		// operator would find the setting quietly absent after an upgrade.
+		logging.GetLogger().Warn("Dropped a setting this version no longer has",
+			"key", removed.String(),
+			"replacement", removed.replacement)
 	}
 	if unmarshalErr := json.Unmarshal(migrated, cfg); unmarshalErr != nil {
 		return fmt.Errorf("parse config JSON: %w", unmarshalErr)
