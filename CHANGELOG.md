@@ -5,6 +5,50 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.213.51](https://github.com/MustardSeedNetworks/seed/compare/v0.213.50...v0.213.51) (2026-09-04)
+
+
+### Bug Fixes
+
+* **api:** the iperf server route answered 405 to every method it declared ([#2397](https://github.com/MustardSeedNetworks/seed/issues/2397)) ([748a71b](https://github.com/MustardSeedNetworks/seed/commit/748a71b3810e0de0d0c11bd7531dbdb4c3e63db5)), closes [#1254](https://github.com/MustardSeedNetworks/seed/issues/1254)
+* **auth:** emit reason=role on auth.forbidden so the fleet SIEM split works ([#2386](https://github.com/MustardSeedNetworks/seed/issues/2386)) ([055300b](https://github.com/MustardSeedNetworks/seed/commit/055300b4e316e8d1bd1c506024ab1156305e139c)), closes [#2385](https://github.com/MustardSeedNetworks/seed/issues/2385)
+* **cmd:** create the database directory and never build reporting without one ([#2382](https://github.com/MustardSeedNetworks/seed/issues/2382)) ([7885284](https://github.com/MustardSeedNetworks/seed/commit/78852842c432a827c547813410f4ac2b98dc0a38)), closes [#2380](https://github.com/MustardSeedNetworks/seed/issues/2380)
+* **config:** strip removed keys instead of crash-looping the daemon on upgrade ([#2381](https://github.com/MustardSeedNetworks/seed/issues/2381)) ([fa435d5](https://github.com/MustardSeedNetworks/seed/commit/fa435d521b48c991bbbcbd926ffaa652f55695a2))
+* **e2e:** assert the login error, not any alert ([#2360](https://github.com/MustardSeedNetworks/seed/issues/2360)) ([91d97d7](https://github.com/MustardSeedNetworks/seed/commit/91d97d733f9a50c61a9ef653cd5d11331b0f255e)), closes [#2359](https://github.com/MustardSeedNetworks/seed/issues/2359)
+* **ui,auth:** unbrick MFA login and route every mutating call through the CSRF client ([#2392](https://github.com/MustardSeedNetworks/seed/issues/2392)) ([4cfcbd0](https://github.com/MustardSeedNetworks/seed/commit/4cfcbd0d3879eacb971b3b412e97db3f3fdaed30))
+* **ui:** implement the WebAuthn ceremony, so "Add a passkey" enrols something ([#2398](https://github.com/MustardSeedNetworks/seed/issues/2398)) ([82ba8d1](https://github.com/MustardSeedNetworks/seed/commit/82ba8d160c25b60cbc74b0d8f1277970704b3d65)), closes [#2391](https://github.com/MustardSeedNetworks/seed/issues/2391)
+* **ui:** send the CSRF token on report generate and delete, and ratchet raw fetch ([#2390](https://github.com/MustardSeedNetworks/seed/issues/2390)) ([1f10fcc](https://github.com/MustardSeedNetworks/seed/commit/1f10fcc916c5e2fecb68792b5d2e19ce6b8cfa3b)), closes [#2389](https://github.com/MustardSeedNetworks/seed/issues/2389)
+
+
+### Documentation
+
+* **ci:** correct the golangci-lint version CI.md tells you to run ([#2370](https://github.com/MustardSeedNetworks/seed/issues/2370)) ([7dc16ec](https://github.com/MustardSeedNetworks/seed/commit/7dc16ecf2b18168d0b6ae4714f86709499f7997c)), closes [#2369](https://github.com/MustardSeedNetworks/seed/issues/2369)
+* clear the markdown debt that fails the docs gate on any touched file ([#2402](https://github.com/MustardSeedNetworks/seed/issues/2402)) ([b62478a](https://github.com/MustardSeedNetworks/seed/commit/b62478aedba35e2f6403594492300feda97ec06b)), closes [#2401](https://github.com/MustardSeedNetworks/seed/issues/2401)
+
+
+### Tests
+
+* **api:** drive one session end to end over the production TLS listener ([#2379](https://github.com/MustardSeedNetworks/seed/issues/2379)) ([803b007](https://github.com/MustardSeedNetworks/seed/commit/803b007d0b40de7a5b7bdff0a2ba9601d1cd8353)), closes [#2378](https://github.com/MustardSeedNetworks/seed/issues/2378)
+* make the 52 tests that could not fail actually assert something ([#2376](https://github.com/MustardSeedNetworks/seed/issues/2376)) ([3e88abd](https://github.com/MustardSeedNetworks/seed/commit/3e88abdb15ffcd14f87806a343375d921633da06))
+
+
+### Continuous Integration
+
+* give each main commit its own concurrency group ([#2357](https://github.com/MustardSeedNetworks/seed/issues/2357)) ([80dc220](https://github.com/MustardSeedNetworks/seed/commit/80dc2206fca64368a7bc83fb30817be8a66baa8e)), closes [#2356](https://github.com/MustardSeedNetworks/seed/issues/2356)
+* **oui:** open the refresh PR with the msn-ci-bot App token ([#2364](https://github.com/MustardSeedNetworks/seed/issues/2364)) ([993975a](https://github.com/MustardSeedNetworks/seed/commit/993975a86da19d53f9d53402de4fe53b04c6225e)), closes [#2362](https://github.com/MustardSeedNetworks/seed/issues/2362)
+* retry npm audit when the advisory endpoint is the thing that failed ([#2396](https://github.com/MustardSeedNetworks/seed/issues/2396)) ([50d1004](https://github.com/MustardSeedNetworks/seed/commit/50d10044972ebd25667f7db348000dbf9ed15e9b)), closes [#2387](https://github.com/MustardSeedNetworks/seed/issues/2387)
+* wire the shared dependency-review gate into CI ([#2368](https://github.com/MustardSeedNetworks/seed/issues/2368)) ([561b456](https://github.com/MustardSeedNetworks/seed/commit/561b456559d14ad776ecc5625ee26be098756d46)), closes [#2367](https://github.com/MustardSeedNetworks/seed/issues/2367)
+
+
+### Miscellaneous
+
+* **deps:** lock file maintenance ([#2355](https://github.com/MustardSeedNetworks/seed/issues/2355)) ([0f83dfa](https://github.com/MustardSeedNetworks/seed/commit/0f83dfa500b321689411f618a9e9d9d0ddf6ce85))
+* **deps:** lock file maintenance ([#2373](https://github.com/MustardSeedNetworks/seed/issues/2373)) ([8afd30c](https://github.com/MustardSeedNetworks/seed/commit/8afd30c1a0b5186e933f2b845d00df8871cdeefa))
+* **deps:** lock file maintenance ([#2400](https://github.com/MustardSeedNetworks/seed/issues/2400)) ([87ca6ad](https://github.com/MustardSeedNetworks/seed/commit/87ca6adaac0df7fd95c54db3ee348c674c1643bd))
+* **deps:** lock file maintenance ([#2404](https://github.com/MustardSeedNetworks/seed/issues/2404)) ([b973dcc](https://github.com/MustardSeedNetworks/seed/commit/b973dccf39425fc3dfa6f94df584b6232704ece1))
+* **deps:** update dependency @biomejs/biome to v2.5.11 ([#2358](https://github.com/MustardSeedNetworks/seed/issues/2358)) ([38dfc3f](https://github.com/MustardSeedNetworks/seed/commit/38dfc3f283225e486c7b0bbb161ec6e64dfe1224))
+* **deps:** update dependency @vitejs/plugin-react to v6.1.1 ([#2384](https://github.com/MustardSeedNetworks/seed/issues/2384)) ([c069866](https://github.com/MustardSeedNetworks/seed/commit/c06986688cd69b542e3d5b51af679ebf28be7eb7))
+
 ## [0.213.50](https://github.com/MustardSeedNetworks/seed/compare/v0.213.49...v0.213.50) (2026-09-03)
 
 
