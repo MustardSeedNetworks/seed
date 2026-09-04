@@ -489,9 +489,11 @@ func (s *Server) callerIsAdmin(r *http.Request) bool {
 //
 // Denials emit structured `event=auth.unauthorized` / `event=auth.forbidden`
 // records (#1257) so SIEM pipelines across seed/stem/niac can filter
-// authorization failures uniformly. The fields mirror what niac emits on
-// scope mismatch: required role/scope, actual role (if resolved), client
-// IP, request path + method, and the caller username.
+// authorization failures uniformly. The forbidden record carries reason=role,
+// against niac's reason=scope, so one rule matches both and a detection can
+// still split on mechanism. The rest mirrors what niac emits: required
+// role/scope, actual role (if resolved), client IP, request path + method, and
+// the caller username.
 func (s *Server) requireRole(w http.ResponseWriter, r *http.Request, minRole string) bool {
 	role, ok := s.callerRole(r)
 	if !ok {
@@ -510,6 +512,10 @@ func (s *Server) requireRole(w http.ResponseWriter, r *http.Request, minRole str
 		logging.FromContext(r.Context()).WarnContext(r.Context(),
 			"Forbidden: insufficient role",
 			"event", "auth.forbidden",
+			// niac emits reason=scope on the same event; seed's denial is
+			// role-based. One SIEM rule filters event=auth.forbidden across the
+			// fleet, and reason splits the mechanism when a detection needs to.
+			"reason", "role",
 			"required_role", minRole,
 			"actual_role", role,
 			"username", usernameFromContext(r),

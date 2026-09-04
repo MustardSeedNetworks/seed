@@ -70,10 +70,16 @@ func TestRequireRole_EmitsForbiddenEvent(t *testing.T) {
 	if forbidden == nil {
 		t.Fatalf("expected an event=auth.forbidden record, got %v", records)
 	}
-	for _, field := range []string{"required_role", "actual_role", "username", "path", "method", "client_ip"} {
+	for _, field := range []string{"reason", "required_role", "actual_role", "username", "path", "method", "client_ip"} {
 		if _, ok := forbidden[field]; !ok {
 			t.Errorf("event=auth.forbidden missing field %q: %v", field, forbidden)
 		}
+	}
+	// reason splits seed's role-based denial from niac's scope-based one while
+	// event=auth.forbidden matches both. CLAUDE.md's security invariant names
+	// this pair; niac asserts the other half.
+	if forbidden["reason"] != "role" {
+		t.Errorf("reason = %v, want role", forbidden["reason"])
 	}
 	if forbidden["required_role"] != database.RoleOperator {
 		t.Errorf("required_role = %v, want operator", forbidden["required_role"])
