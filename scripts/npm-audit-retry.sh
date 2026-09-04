@@ -15,42 +15,83 @@
 # outage: if every attempt fails, so does the build. A gate that passes when it
 # could not run is not a gate — see the decision recorded on #2387.
 #
+# The first cut of this script (#2396) told the two cases apart by grepping
+# npm's human-readable text for outage-sounding prose, ending in the bare word
+# "network". A genuine High finding whose package name or advisory title
+# happened to contain "network" matched that pattern too, so it was retried
+# three times and reported as an unreachable endpoint instead of a
+# vulnerability (#2416) — the opposite of #2387's fix, and worse: the gate
+# still failed, but the message pointed away from the real finding.
+#
+# `npm audit --json` gives a deterministic signal instead: a transport failure
+# returns a top-level "error" key, a completed audit returns
+# "metadata.vulnerabilities". Decide on that, never on prose. Converges with
+# stem#1004 / trellis#315, which implement the same distinction.
+#
 # Usage: scripts/npm-audit-retry.sh [audit-level]
-set -euo pipefail
+set -uo pipefail
 
 LEVEL="${1:-high}"
 ATTEMPTS="${NPM_AUDIT_ATTEMPTS:-3}"
 DELAY="${NPM_AUDIT_RETRY_DELAY:-15}"
 
-cd "$(dirname "$0")/../ui"
+cd "$(dirname "$0")/../ui" || exit 1
 
-for attempt in $(seq 1 "$ATTEMPTS"); do
-    set +e
-    OUT="$(npm audit --audit-level="$LEVEL" 2>&1)"
-    STATUS=$?
-    set -e
-
-    if [ "$STATUS" -eq 0 ]; then
-        echo "$OUT" | grep -E "(found|vulnerabilities)" | head -3 ||
-            printf "   No vulnerabilities found\n"
-        exit 0
+# verdict decides pass/fail from a completed `npm audit --json` payload (no
+# top-level "error" key) on stdin — never from npm's prose. Exposed as a
+# function, not inlined into main, so tests can pipe synthetic JSON straight
+# at the decision without shelling out to npm or a registry. By the time
+# verdict runs, main has already proven the audit completed, so a finding
+# whose package or advisory title contains a transport-sounding word (the
+# bare "network" that misfired in #2416) cannot be misread as an outage.
+verdict() {
+    local out vulns high critical total
+    out="$(cat)"
+    vulns="$(jq -e '.metadata.vulnerabilities' <<<"$out" 2>/dev/null)" || {
+        printf '::error::npm audit returned no metadata.vulnerabilities -- unexpected output, failing closed\n' >&2
+        printf '%s\n' "$out" >&2
+        return 1
+    }
+    high="$(jq -r '.high // 0' <<<"$vulns")"
+    critical="$(jq -r '.critical // 0' <<<"$vulns")"
+    total="$(jq -r '.total // 0' <<<"$vulns")"
+    printf 'npm audit: %s vulnerabilities found (%s high, %s critical)\n' "$total" "$high" "$critical"
+    if [ "$((high + critical))" -gt 0 ]; then
+        jq -r '(.vulnerabilities // {}) | to_entries[] | select(.value.severity == "high" or .value.severity == "critical") | "  \(.value.severity): \(.key) (\(.value.range // "unknown range"))"' <<<"$out"
+        return 1
     fi
+    return 0
+}
 
-    # Distinguish "the endpoint is down" from "we have vulnerabilities". Only the
-    # former is worth retrying; a real finding will not fix itself in 15 seconds.
-    if ! grep -qE "audit endpoint returned an error|Service Unavailable|ECONNRESET|ETIMEDOUT|socket hang up|network" <<<"$OUT"; then
-        echo "$OUT" | tail -40
-        exit "$STATUS"
-    fi
+main() {
+    local out endpoint attempt
+    for attempt in $(seq 1 "$ATTEMPTS"); do
+        out="$(npm audit --json --audit-level="$LEVEL" || true)"
 
-    printf "   npm's advisory endpoint did not answer (attempt %d/%d)\n" "$attempt" "$ATTEMPTS"
-    if [ "$attempt" -lt "$ATTEMPTS" ]; then
-        sleep "$((DELAY * attempt))"
-    fi
-done
+        if ! jq -e 'has("error")' >/dev/null 2>&1 <<<"$out"; then
+            verdict <<<"$out"
+            return $?
+        fi
 
-echo "$OUT" | tail -40
-printf "::error::npm audit could not reach the advisory endpoint after %d attempts. " "$ATTEMPTS"
-printf "This is npm's availability, not a finding about our dependencies — but the "
-printf "audit did not run, so the build fails rather than claiming a clean scan (#2387).\n"
-exit 1
+        endpoint="$(jq -r '(.error.summary | select(. != "")) // .message // "registry.npmjs.org advisory endpoint"' <<<"$out" 2>/dev/null)"
+        endpoint="${endpoint:-registry.npmjs.org advisory endpoint}"
+
+        if [ "$attempt" -lt "$ATTEMPTS" ]; then
+            printf '   npm audit could not reach the advisory endpoint (attempt %d/%d): %s\n' \
+                "$attempt" "$ATTEMPTS" "$endpoint"
+            sleep "$((DELAY * attempt))"
+            continue
+        fi
+
+        printf '::error::npm audit could not reach the advisory endpoint (registry.npmjs.org) after %d attempts: %s -- this is not a dependency finding, but the audit did not run so the gate fails rather than claiming a clean scan (#2387)\n' \
+            "$ATTEMPTS" "$endpoint"
+        return 1
+    done
+}
+
+# Sourcing the script (as the test suite does, to call `verdict` directly on
+# synthetic JSON) must not also run `main` against the real registry.
+if [ "${BASH_SOURCE[0]}" = "${0}" ]; then
+    main
+    exit $?
+fi
