@@ -10,14 +10,34 @@ import (
 	"github.com/MustardSeedNetworks/seed/internal/config"
 )
 
+// TestLoadAndConfigureConfigForServiceReportsRemovedSetting covers the half of
+// server.https that still has to be fatal.
+//
+// `https: false` asks for plaintext, which Seed cannot serve, so accepting the
+// config would leave the operator believing something untrue. `https: true` is
+// a different case: it asks for what Seed already does, it is what every
+// v0.200.0 config carries, and treating it as fatal crash-loops the upgrade
+// (#2377). That one is migrated away with a warning instead.
 func TestLoadAndConfigureConfigForServiceReportsRemovedSetting(t *testing.T) {
 	path := filepath.Join(t.TempDir(), "seed.json")
-	if err := os.WriteFile(path, []byte(`{"server":{"https":true}}`), 0o600); err != nil {
+	if err := os.WriteFile(path, []byte(`{"server":{"https":false}}`), 0o600); err != nil {
 		t.Fatal(err)
 	}
 	_, err := loadAndConfigureConfigForService(path)
 	if err == nil || !strings.Contains(err.Error(), `unknown field "https"`) {
 		t.Fatalf("expected removed-setting error, got %v", err)
+	}
+}
+
+// TestLoadAndConfigureConfigForServiceMigratesSatisfiedHTTPSToggle is the other
+// half: the service loader must start on a config that only asks for HTTPS.
+func TestLoadAndConfigureConfigForServiceMigratesSatisfiedHTTPSToggle(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "seed.json")
+	if err := os.WriteFile(path, []byte(`{"server":{"https":true}}`), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := loadAndConfigureConfigForService(path); err != nil {
+		t.Fatalf("a config asking only for HTTPS must load: %v", err)
 	}
 }
 
