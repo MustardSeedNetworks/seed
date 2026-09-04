@@ -290,17 +290,32 @@ func getLeaseInfoLinux(interfaceName string) (*LeaseInfo, error) {
 		}
 	}
 
-	// Try systemd-networkd lease file
-	networkdPath := "/run/systemd/netif/leases/"
-	if entries, err := os.ReadDir(networkdPath); err == nil {
-		for _, entry := range entries {
-			if lease := parseNetworkdLeaseFile(networkdPath + entry.Name()); lease != nil {
-				return lease, nil
-			}
+	// Try the systemd-networkd lease, which is named by interface index.
+	//
+	// This used to walk the directory and return the first lease that parsed,
+	// whatever interface it belonged to — so asking about eth1 on a host whose
+	// eth0 had a lease answered with eth0's gateway, DHCP server and DNS. On a
+	// CI runner it even answered for an interface that does not exist.
+	if iface, err := net.InterfaceByName(interfaceName); err == nil {
+		leasePath := filepath.Join("/run/systemd/netif/leases", strconv.Itoa(iface.Index))
+		if lease := parseNetworkdLeaseFile(leasePath); lease != nil {
+			return lease, nil
 		}
 	}
 
 	return nil, ErrNoLease
+}
+
+// dhclientLeaseInterface reads the `interface "eth0";` line that opens every
+// dhclient lease block, reporting whether the line was one.
+func dhclientLeaseInterface(line string) (string, bool) {
+	const prefix = "interface "
+	if !strings.HasPrefix(line, prefix) {
+		return "", false
+	}
+	value := strings.TrimSuffix(strings.TrimSpace(line[len(prefix):]), ";")
+
+	return strings.Trim(value, `"`), true
 }
 
 // parseDHClientLeaseLine parses a single line from a dhclient lease file.
@@ -328,25 +343,39 @@ func parseDHClientLeaseLine(line string, info *LeaseInfo) {
 	}
 }
 
-// parseDHClientLeaseFile parses a dhclient lease file.
-func parseDHClientLeaseFile(path, _ string) *LeaseInfo {
+// parseDHClientLeaseFile parses a dhclient lease file, returning the last lease
+// block belonging to interfaceName.
+//
+// The interface filter is the point: /var/lib/dhcp/dhclient.leases is shared by
+// every interface on the host, and each block names its own with
+// `interface "eth0";`. This function took the name and ignored it, so the shared
+// file answered with whichever block happened to come last.
+//
+// Only a block that names a different interface is excluded. A block with no
+// interface line is unattributed and still matches, which keeps the
+// per-interface files (dhclient.eth0.leases) working — their filename selects
+// the interface, and their blocks do not always carry the line.
+func parseDHClientLeaseFile(path, interfaceName string) *LeaseInfo {
 	file, err := os.Open(path)
 	if err != nil {
 		return nil
 	}
 	defer func() { _ = file.Close() }()
 
+	var matched *LeaseInfo
 	info := &LeaseInfo{}
 	scanner := bufio.NewScanner(file)
 	inLease := false
+	blockIface := ""
 
-	// Parse the last lease block for the interface
+	// Keep the last block that names this interface.
 	for scanner.Scan() {
 		line := strings.TrimSpace(scanner.Text())
 
 		if strings.HasPrefix(line, "lease {") {
 			inLease = true
 			info = &LeaseInfo{} // Reset for each lease block
+			blockIface = ""
 			continue
 		}
 		if !inLease {
@@ -354,9 +383,25 @@ func parseDHClientLeaseFile(path, _ string) *LeaseInfo {
 		}
 		if line == "}" {
 			inLease = false
+			// A block that names no interface is unattributed, and the
+			// per-interface files (dhclient.eth0.leases) rely on their filename
+			// rather than the line. Those still match; only a block that names
+			// a DIFFERENT interface is excluded, which is the leak.
+			if interfaceName == "" || blockIface == "" || blockIface == interfaceName {
+				matched = info
+			}
+			continue
+		}
+		if name, ok := dhclientLeaseInterface(line); ok {
+			blockIface = name
 			continue
 		}
 		parseDHClientLeaseLine(line, info)
+	}
+
+	info = matched
+	if info == nil {
+		return nil
 	}
 
 	if info.DHCPServer != "" || info.Gateway != "" {
