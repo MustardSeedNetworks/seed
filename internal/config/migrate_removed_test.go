@@ -92,6 +92,10 @@ func TestLoadConfigRejectsUnknownKey(t *testing.T) {
 
 // TestRemovedKeysAreStripped names the two keys that block a v0.200.0 upgrade,
 // so a future change that drops the table fails here rather than in the field.
+//
+// The companion is TestLoadRejectsRemovedTLSServerSettings in tls_config_test.go:
+// `server.https: false` must still be fatal. Stripping a key is only right when
+// the value on disk asks for something the product still does.
 func TestRemovedKeysAreStripped(t *testing.T) {
 	for _, tc := range []struct {
 		name     string
@@ -102,7 +106,7 @@ func TestRemovedKeysAreStripped(t *testing.T) {
 			document: map[string]any{"pipeline": map[string]any{"phases": map[string]any{}}},
 		},
 		{
-			name:     "server.https",
+			name:     "server.https when it is already satisfied",
 			document: map[string]any{"server": map[string]any{"https": true}},
 		},
 	} {
@@ -117,6 +121,40 @@ func TestRemovedKeysAreStripped(t *testing.T) {
 			}
 			if _, loadErr := config.Load(path); loadErr != nil {
 				t.Errorf("Load with a removed key present: %v", loadErr)
+			}
+		})
+	}
+}
+
+// TestRemovedKeyIsNotStrippedWhenItCountermands is the boundary between the two:
+// the same key is dropped when it agrees with current behaviour and fatal when
+// it does not.
+func TestRemovedKeyIsNotStrippedWhenItCountermands(t *testing.T) {
+	for _, tc := range []struct {
+		name      string
+		https     bool
+		wantError bool
+	}{
+		{name: "https true is satisfied and dropped", https: true, wantError: false},
+		{name: "https false asks for plaintext and is refused", https: false, wantError: true},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			encoded, err := json.MarshalIndent(
+				map[string]any{"server": map[string]any{"https": tc.https}}, "", "  ")
+			if err != nil {
+				t.Fatalf("encode: %v", err)
+			}
+			path := filepath.Join(t.TempDir(), "legacy.json")
+			if writeErr := os.WriteFile(path, encoded, 0o600); writeErr != nil {
+				t.Fatalf("write: %v", writeErr)
+			}
+
+			_, loadErr := config.Load(path)
+			if tc.wantError && loadErr == nil {
+				t.Error("Load accepted server.https: false; a plaintext request must not be silently ignored")
+			}
+			if !tc.wantError && loadErr != nil {
+				t.Errorf("Load rejected server.https: true, which current behaviour satisfies: %v", loadErr)
 			}
 		})
 	}

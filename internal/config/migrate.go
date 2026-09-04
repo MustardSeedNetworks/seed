@@ -57,6 +57,18 @@ type removedKey struct {
 	// replacement tells the operator where the setting went, or that it is gone.
 	// It is the whole value of reporting rather than silently dropping.
 	replacement string
+	// stripWhen decides, from the value on disk, whether this key can be
+	// dropped. nil means always.
+	//
+	// The distinction it draws is between a key that is merely obsolete and one
+	// that carries an instruction the product can no longer honour.
+	// `server.https: true` is the former: HTTPS is what Seed does, so the
+	// setting is satisfied and dropping it changes nothing. `server.https:
+	// false` is the latter — the operator asked for plaintext, and quietly
+	// serving TLS while pretending the key was noise would be worse than
+	// refusing to start. That one stays fatal, and
+	// TestLoadRejectsRemovedTLSServerSettings pins it.
+	stripWhen func(value any) bool
 }
 
 // String renders the key the way it appears in the file.
@@ -75,7 +87,11 @@ func removedKeys() []removedKey {
 		{
 			path:        []string{"server"},
 			key:         "https",
-			replacement: "Seed always serves HTTPS; there is nothing to switch off",
+			replacement: "Seed always serves HTTPS; there is nothing to switch on",
+			stripWhen: func(value any) bool {
+				enabled, ok := value.(bool)
+				return ok && enabled
+			},
 		},
 	}
 }
@@ -153,7 +169,13 @@ func applyRemoval(document map[string]any, removed removedKey) bool {
 		container = next
 	}
 
-	if _, present := container[removed.key]; !present {
+	value, present := container[removed.key]
+	if !present {
+		return false
+	}
+	if removed.stripWhen != nil && !removed.stripWhen(value) {
+		// Left in place on purpose: the strict decode refuses it, and that
+		// refusal is the point.
 		return false
 	}
 	delete(container, removed.key)
