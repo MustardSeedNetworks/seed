@@ -7,6 +7,7 @@ package dhcp
 import (
 	"bufio"
 	"encoding/hex"
+	"errors"
 	"net"
 	"os"
 	"path/filepath"
@@ -14,6 +15,16 @@ import (
 	"strconv"
 	"strings"
 )
+
+// ErrNoLease reports that the host holds no DHCP lease for the named
+// interface. It is the answer to a question, not a failure: callers fall back
+// to system configuration or omit the lease from their output. Returning it
+// rather than an empty [LeaseInfo] keeps "no lease" distinguishable from "a
+// lease whose every field is blank".
+var ErrNoLease = errors.New("dhcp: no lease for interface")
+
+// ErrUnsupportedPlatform reports that this platform has no lease reader.
+var ErrUnsupportedPlatform = errors.New("dhcp: reading lease files is not implemented on this platform")
 
 // LeaseInfo contains DHCP lease information from the system.
 type LeaseInfo struct {
@@ -23,8 +34,9 @@ type LeaseInfo struct {
 	DNS        []string
 }
 
-// GetLeaseInfo retrieves DHCP lease information for an interface.
-// Returns (nil, nil) for unsupported platforms - this is not an error.
+// GetLeaseInfo retrieves DHCP lease information for an interface. It reports
+// [ErrNoLease] when the host holds no lease for it and
+// [ErrUnsupportedPlatform] where no reader exists.
 func GetLeaseInfo(interfaceName string) (*LeaseInfo, error) {
 	switch runtime.GOOS {
 	case "darwin":
@@ -32,8 +44,7 @@ func GetLeaseInfo(interfaceName string) (*LeaseInfo, error) {
 	case "linux":
 		return getLeaseInfoLinux(interfaceName)
 	default:
-		//nolint:nilnil // Unsupported platform returns no info, not an error
-		return nil, nil
+		return nil, ErrUnsupportedPlatform
 	}
 }
 
@@ -76,8 +87,7 @@ func getLeaseInfoDarwin(interfaceName string) (*LeaseInfo, error) {
 		}
 	}
 
-	//nolint:nilnil // No lease file for this interface is "no lease", not an error
-	return nil, nil
+	return nil, ErrNoLease
 }
 
 // parseDarwinLeaseFile parses a macOS DHCP lease file (plist-like format).
@@ -290,8 +300,7 @@ func getLeaseInfoLinux(interfaceName string) (*LeaseInfo, error) {
 		}
 	}
 
-	//nolint:nilnil // No lease file for this interface is "no lease", not an error
-	return nil, nil
+	return nil, ErrNoLease
 }
 
 // parseDHClientLeaseLine parses a single line from a dhclient lease file.

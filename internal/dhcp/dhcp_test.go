@@ -1,7 +1,7 @@
 package dhcp_test
 
 import (
-	"runtime"
+	"errors"
 	"testing"
 	"time"
 
@@ -240,7 +240,7 @@ func TestExtractValue(t *testing.T) {
 }
 
 // noSuchIface cannot be present on a test host, so every lease lookup for it
-// must come back empty rather than reporting a lease with no fields set.
+// must report no lease rather than a lease with no fields set.
 const noSuchIface = "seed-test-noiface0"
 
 func TestGetLeaseInfoUnknownInterface(t *testing.T) {
@@ -248,8 +248,8 @@ func TestGetLeaseInfoUnknownInterface(t *testing.T) {
 	if info != nil {
 		t.Errorf("GetLeaseInfo(%q) = %+v, want nil", noSuchIface, info)
 	}
-	if runtime.GOOS == "darwin" && err == nil {
-		t.Errorf("GetLeaseInfo(%q) on darwin returned no error for an interface that does not exist", noSuchIface)
+	if err == nil {
+		t.Errorf("GetLeaseInfo(%q) returned no error, want one reporting the absent lease", noSuchIface)
 	}
 
 	// Both platform entry points are reachable from any host and must agree
@@ -259,8 +259,8 @@ func TestGetLeaseInfoUnknownInterface(t *testing.T) {
 		t.Errorf("GetLeaseInfoDarwin(%q) = (%+v, %v), want (nil, error)", noSuchIface, darwinInfo, darwinErr)
 	}
 	linuxInfo, linuxErr := dhcp.GetLeaseInfoLinux(noSuchIface)
-	if linuxInfo != nil || linuxErr != nil {
-		t.Errorf("GetLeaseInfoLinux(%q) = (%+v, %v), want (nil, nil)", noSuchIface, linuxInfo, linuxErr)
+	if linuxInfo != nil || !errors.Is(linuxErr, dhcp.ErrNoLease) {
+		t.Errorf("GetLeaseInfoLinux(%q) = (%+v, %v), want (nil, ErrNoLease)", noSuchIface, linuxInfo, linuxErr)
 	}
 }
 
