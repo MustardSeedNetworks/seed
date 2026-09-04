@@ -64,7 +64,7 @@ func configureStaticIPPlatform(iface string, cfg *StaticIPConfig) error {
 		args = append(args, cfg.Gateway)
 	}
 
-	//nolint:gosec // G204: netsh is a known Windows system binary, args are validated
+	// netsh is a known Windows system binary, args are validated
 	if err := exec.CommandContext(ctx, "netsh", args...).Run(); err != nil {
 		return fmt.Errorf("failed to set static IP: %w", err)
 	}
@@ -93,7 +93,7 @@ func configureWindowsDNS(ctx context.Context, iface string, dnsServers []string)
 		iface, "static", dnsServers[0],
 	}
 
-	//nolint:gosec // G204: netsh is a known Windows system binary, args are validated
+	// netsh is a known Windows system binary, args are validated
 	if err := exec.CommandContext(ctx, "netsh", args...).Run(); err != nil {
 		return fmt.Errorf("failed to set primary DNS: %w", err)
 	}
@@ -106,7 +106,7 @@ func configureWindowsDNS(ctx context.Context, iface string, dnsServers []string)
 			iface, dnsServers[i], fmt.Sprintf("index=%d", i+1),
 		}
 
-		//nolint:gosec // G204: netsh is a known Windows system binary, args are validated
+		// netsh is a known Windows system binary, args are validated
 		if err := exec.CommandContext(ctx, "netsh", addArgs...).Run(); err != nil {
 			return fmt.Errorf("failed to add DNS server %s: %w", dnsServers[i], err)
 		}
@@ -127,23 +127,23 @@ func configureDHCPPlatform(iface string) error {
 
 	// Enable DHCP for IP address
 	// Example: netsh interface ip set address "Ethernet" dhcp
-	//nolint:gosec // G204: netsh is a known Windows system binary, args are validated
+	// netsh is a known Windows system binary, args are validated
 	if err := exec.CommandContext(ctx, "netsh", "interface", "ip", "set", "address", iface, "dhcp").Run(); err != nil {
 		return fmt.Errorf("failed to enable DHCP for IP: %w", err)
 	}
 
 	// Enable DHCP for DNS
 	// Example: netsh interface ip set dns "Ethernet" dhcp
-	//nolint:gosec // G204: netsh is a known Windows system binary, args are validated
+	// netsh is a known Windows system binary, args are validated
 	if err := exec.CommandContext(ctx, "netsh", "interface", "ip", "set", "dns", iface, "dhcp").Run(); err != nil {
 		return fmt.Errorf("failed to enable DHCP for DNS: %w", err)
 	}
 
 	// Force DHCP renewal using ipconfig
-	//nolint:gosec // G204: ipconfig is a known Windows system binary
+	// ipconfig is a known Windows system binary
 	_ = exec.CommandContext(ctx, "ipconfig", "/release", iface).Run()
 
-	//nolint:gosec // G204: ipconfig is a known Windows system binary
+	// ipconfig is a known Windows system binary
 	if err := exec.CommandContext(ctx, "ipconfig", "/renew", iface).Run(); err != nil {
 		// Non-fatal: DHCP renewal may fail if network is not connected
 		// The interface is already configured for DHCP
@@ -170,7 +170,7 @@ func setMTUPlatform(iface string, mtu int) error {
 
 	// Set MTU using netsh
 	// Example: netsh interface ipv4 set subinterface "Ethernet" mtu=1500 store=persistent
-	//nolint:gosec // G204: netsh is a known Windows system binary, args are validated
+	// netsh is a known Windows system binary, args are validated
 	if err := exec.CommandContext(ctx, "netsh", "interface", "ipv4", "set", "subinterface",
 		iface, fmt.Sprintf("mtu=%d", mtu), "store=persistent").Run(); err != nil {
 		return fmt.Errorf("failed to set MTU: %w", err)
