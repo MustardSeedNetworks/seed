@@ -16,7 +16,10 @@ func TestLoadRejectsRemovedTLSServerSettings(t *testing.T) {
 		name    string
 		setting string
 	}{
-		{name: "HTTPS toggle", setting: `"https": false`},
+		// Only the countermanding value. `"https": true` asks for what Seed
+		// already does and is migrated away instead — see
+		// TestRemovedKeyIsNotStrippedWhenItCountermands in migrate_removed_test.go.
+		{name: "HTTPS toggle asking for plaintext", setting: `"https": false`},
 		{name: "HTTP redirect port", setting: `"http_redirect_port": 8080`},
 		{name: "ACME", setting: `"acme": {"enabled": true}`},
 	}
