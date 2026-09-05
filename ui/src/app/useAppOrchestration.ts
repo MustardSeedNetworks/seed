@@ -478,14 +478,7 @@ export function useAppOrchestration({ isAuthenticated }: UseAppOrchestrationArgs
     });
   });
 
-  // SSE connection for real-time updates (simpler than WebSocket).
-  //
-  // The registered route is /api/v1/events; this asked for /api/events, which
-  // 404s, and EventSource treats a non-2xx as fatal rather than retrying — so
-  // the dashboard has never received a live card update on any tier. On Free
-  // and Starter the correct path answers 402, since the live stream is Pro
-  // (`live_telemetry`); EventSource closes on that too, which is the intended
-  // outcome — one clean disconnect, not a reconnect loop.
+  // /api/v1/events, not /api/events: the latter 404s and EventSource never retries (seed#2326).
   const { status: sseStatus, reconnect } = useSse({
     url: '/api/v1/events',
     isAuthenticated,

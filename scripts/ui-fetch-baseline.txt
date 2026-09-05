@@ -70,7 +70,6 @@ ui/src/components/cards/SlaDashboardCard.tsx:46  # read-only — bypasses the cl
 ui/src/components/cards/SystemHealthCard.tsx:204  # read-only — bypasses the client 401 refresh/retry
 ui/src/components/login/RecoveryForm.tsx:83  # read-only — bypasses the client 401 refresh/retry
 ui/src/components/login/RecoveryForm.tsx:121  # mutating but CSRF-exempt by design (isCSRFExemptPath) — correct as a raw fetch
-ui/src/components/settings/sections/CableTestSettings.tsx:70  # read-only — bypasses the client 401 refresh/retry
 ui/src/components/settings/sections/ConfigBackupsSection.tsx:66  # read-only — bypasses the client 401 refresh/retry
 ui/src/components/settings/sections/ConfigBackupsSection.tsx:67  # read-only — bypasses the client 401 refresh/retry
 ui/src/components/settings/sections/DiscoverySettings.tsx:84  # read-only — bypasses the client 401 refresh/retry
