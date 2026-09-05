@@ -151,6 +151,10 @@ jobs:
       #
       # `--auto` with no method on purpose: the merge queue owns the strategy
       # and `--auto --squash` is refused outright.
+      # This job performs no checkout (see the workflow_run note at the top), so
+      # gh has no repository to infer: without --repo both calls died with
+      # "failed to run git: fatal: not a git repository" on every scheduled
+      # tick after this step landed, and the job went red fleet-wide.
       - name: Arm auto-merge on the release PR
         env:
           GH_TOKEN: ${{ steps.app-token.outputs.token }}
@@ -160,7 +164,7 @@ jobs:
           # with no open release PR, `.[0]` is null and `.labels` on null is a
           # jq error, which under `set -e` would redden release-please on
           # every quiet tick. Filter the array, then take the first.
-          pr="$(gh pr list --head release-please--branches--main --state open \
+          pr="$(gh pr list --repo "${GITHUB_REPOSITORY}" --head release-please--branches--main --state open \
                   --json number,labels \
                   --jq '[.[] | select((.labels | map(.name) | index("release: hold")) | not) | .number] | first // empty')"
           if [ -z "${pr}" ]; then
@@ -170,7 +174,7 @@ jobs:
           echo "Arming auto-merge on #${pr}"
           # Already queued is the steady state on the second and later ticks,
           # and is not a failure.
-          gh pr merge "${pr}" --auto 2>&1 | tee /tmp/arm.log || {
+          gh pr merge --repo "${GITHUB_REPOSITORY}" "${pr}" --auto 2>&1 | tee /tmp/arm.log || {
             grep -q "already queued to merge" /tmp/arm.log || exit 1
           }
 
