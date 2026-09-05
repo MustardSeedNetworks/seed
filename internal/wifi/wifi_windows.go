@@ -1,5 +1,7 @@
 //go:build windows
 
+package wifi
+
 // Windows-specific Wi-Fi implementation using Windows WLAN API.
 // Uses wlanapi.dll for Wi-Fi operations including scanning, connecting, and management.
 //
@@ -7,11 +9,11 @@
 //   - Requires Windows WLAN AutoConfig service (WlanSvc) running
 //   - Some operations require administrator privileges
 //   - Limited signal strength granularity compared to Linux nl80211
-package wifi
 
 import (
 	"context"
 	"fmt"
+	"os"
 	"os/exec"
 	"strings"
 	"time"
@@ -19,6 +21,15 @@ import (
 
 // Command timeout for netsh wlan operations.
 const netshWlanTimeoutSeconds = 30
+
+// Radio-type-to-band estimate: netsh does not report frequency directly, so
+// 802.11a/802.11n-on-a-high-channel is guessed as 5 GHz and everything else
+// as 2.4 GHz.
+const (
+	maxChannel24GHz   = 14
+	band5GHzEstimate  = 5000
+	band24GHzEstimate = 2400
+)
 
 // isWirelessPlatform checks if interface is wireless on Windows.
 func isWirelessPlatform(iface string) bool {
@@ -58,15 +69,15 @@ func getInfoPlatform(iface string, _ Helper) *Info {
 func parseNetshWlanOutput(output, targetIface string) *Info {
 	info := &Info{}
 	inTargetInterface := false
-	lines := strings.Split(output, "\n")
+	lines := strings.SplitSeq(output, "\n")
 
-	for _, line := range lines {
+	for line := range lines {
 		line = strings.TrimSpace(line)
 
 		// Check for interface name
 		if strings.HasPrefix(line, "Name") || strings.HasPrefix(line, "名前") {
-			parts := strings.SplitN(line, ":", 2)
-			if len(parts) == 2 {
+			parts := strings.SplitN(line, ":", colonSplitParts)
+			if len(parts) == colonSplitParts {
 				name := strings.TrimSpace(parts[1])
 				inTargetInterface = (targetIface == "" || strings.EqualFold(name, targetIface))
 			}
@@ -77,53 +88,83 @@ func parseNetshWlanOutput(output, targetIface string) *Info {
 			continue
 		}
 
-		// Parse fields
-		if strings.HasPrefix(line, "SSID") && !strings.HasPrefix(line, "BSSID") {
-			parts := strings.SplitN(line, ":", 2)
-			if len(parts) == 2 {
-				info.SSID = strings.TrimSpace(parts[1])
-			}
-		} else if strings.HasPrefix(line, "BSSID") {
-			parts := strings.SplitN(line, ":", 2)
-			if len(parts) == 2 {
-				info.BSSID = strings.TrimSpace(parts[1])
-			}
-		} else if strings.HasPrefix(line, "Channel") {
-			parts := strings.SplitN(line, ":", 2)
-			if len(parts) == 2 {
-				fmt.Sscanf(strings.TrimSpace(parts[1]), "%d", &info.Channel)
-			}
-		} else if strings.HasPrefix(line, "Signal") {
-			parts := strings.SplitN(line, ":", 2)
-			if len(parts) == 2 {
-				// Windows shows signal as percentage
-				var pct int
-				fmt.Sscanf(strings.TrimSpace(parts[1]), "%d%%", &pct)
-				// Convert percentage to dBm (rough approximation)
-				// 100% ≈ -30 dBm, 0% ≈ -100 dBm
-				info.Signal = -100 + (pct * 70 / 100)
-			}
-		} else if strings.HasPrefix(line, "Radio type") || strings.HasPrefix(line, "無線の種類") {
-			parts := strings.SplitN(line, ":", 2)
-			if len(parts) == 2 {
-				radioType := strings.TrimSpace(parts[1])
-				// Determine frequency from radio type
-				if strings.Contains(radioType, "802.11a") ||
-					strings.Contains(radioType, "802.11n") && info.Channel > 14 {
-					info.Frequency = 5000 // 5 GHz band
-				} else {
-					info.Frequency = 2400 // 2.4 GHz band
-				}
-			}
-		} else if strings.HasPrefix(line, "Authentication") || strings.HasPrefix(line, "認証") {
-			parts := strings.SplitN(line, ":", 2)
-			if len(parts) == 2 {
-				info.Security = strings.TrimSpace(parts[1])
-			}
+		switch {
+		case strings.HasPrefix(line, "SSID") && !strings.HasPrefix(line, "BSSID"):
+			parseInterfaceSSID(line, info)
+		case strings.HasPrefix(line, "BSSID"):
+			parseInterfaceBSSID(line, info)
+		case strings.HasPrefix(line, "Channel"):
+			parseInterfaceChannel(line, info)
+		case strings.HasPrefix(line, "Signal"):
+			parseInterfaceSignal(line, info)
+		case strings.HasPrefix(line, "Radio type") || strings.HasPrefix(line, "無線の種類"):
+			parseInterfaceRadioType(line, info)
+		case strings.HasPrefix(line, "Authentication") || strings.HasPrefix(line, "認証"):
+			parseInterfaceAuth(line, info)
 		}
 	}
 
 	return info
+}
+
+// parseInterfaceSSID reads the SSID field of "netsh wlan show interfaces"
+// into info.
+func parseInterfaceSSID(line string, info *Info) {
+	parts := strings.SplitN(line, ":", colonSplitParts)
+	if len(parts) == colonSplitParts {
+		info.SSID = strings.TrimSpace(parts[1])
+	}
+}
+
+// parseInterfaceBSSID reads the BSSID field into info.
+func parseInterfaceBSSID(line string, info *Info) {
+	parts := strings.SplitN(line, ":", colonSplitParts)
+	if len(parts) == colonSplitParts {
+		info.BSSID = strings.TrimSpace(parts[1])
+	}
+}
+
+// parseInterfaceChannel reads the Channel field into info.
+func parseInterfaceChannel(line string, info *Info) {
+	parts := strings.SplitN(line, ":", colonSplitParts)
+	if len(parts) == colonSplitParts {
+		_, _ = fmt.Sscanf(strings.TrimSpace(parts[1]), "%d", &info.Channel) // best-effort; zero value is fine
+	}
+}
+
+// parseInterfaceSignal reads the Signal field, converting netsh's percentage
+// to an approximate dBm reading (100% =~ -30 dBm, 0% =~ -100 dBm).
+func parseInterfaceSignal(line string, info *Info) {
+	parts := strings.SplitN(line, ":", colonSplitParts)
+	if len(parts) == colonSplitParts {
+		var pct int
+		_, _ = fmt.Sscanf(strings.TrimSpace(parts[1]), "%d%%", &pct) // best-effort; zero value is fine
+		info.Signal = signalDbmFloor + (pct * signalDbmRange / signalPercentScale)
+	}
+}
+
+// parseInterfaceRadioType reads the Radio type field and estimates the band
+// (2.4 vs 5 GHz) from it, since netsh does not report frequency directly.
+func parseInterfaceRadioType(line string, info *Info) {
+	parts := strings.SplitN(line, ":", colonSplitParts)
+	if len(parts) != colonSplitParts {
+		return
+	}
+	radioType := strings.TrimSpace(parts[1])
+	if strings.Contains(radioType, "802.11a") ||
+		strings.Contains(radioType, "802.11n") && info.Channel > maxChannel24GHz {
+		info.Frequency = band5GHzEstimate
+	} else {
+		info.Frequency = band24GHzEstimate
+	}
+}
+
+// parseInterfaceAuth reads the Authentication field into info's Security.
+func parseInterfaceAuth(line string, info *Info) {
+	parts := strings.SplitN(line, ":", colonSplitParts)
+	if len(parts) == colonSplitParts {
+		info.Security = strings.TrimSpace(parts[1])
+	}
 }
 
 // connectPlatform connects to a WiFi network on Windows using netsh.
@@ -139,8 +180,18 @@ func connectPlatform(iface, ssid, password string) (*ConnectionResult, error) {
 		profileXML := generateWlanProfile(ssid, password)
 
 		// Create temporary profile
+		profilePath, tmpErr := createTempProfileFile(profileXML)
+		if tmpErr != nil {
+			return &ConnectionResult{
+				Success: false,
+				Message: fmt.Sprintf("Failed to prepare profile: %s", tmpErr),
+				SSID:    ssid,
+			}, nil
+		}
+		defer os.Remove(profilePath)
+
 		addProfileCmd := exec.CommandContext(ctx, "netsh", "wlan", "add", "profile",
-			fmt.Sprintf("filename=%s", createTempProfileFile(profileXML)))
+			fmt.Sprintf("filename=%s", profilePath))
 		output, err = addProfileCmd.CombinedOutput()
 		if err != nil {
 			return &ConnectionResult{
@@ -221,14 +272,14 @@ func getSavedNetworksPlatform(_ Helper) ([]SavedNetwork, error) {
 	}
 
 	var networks []SavedNetwork
-	lines := strings.Split(string(output), "\n")
+	lines := strings.SplitSeq(string(output), "\n")
 
-	for _, line := range lines {
+	for line := range lines {
 		line = strings.TrimSpace(line)
 		// Look for "All User Profile" or "User Profile" lines
 		if strings.Contains(line, "Profile") && strings.Contains(line, ":") {
-			parts := strings.SplitN(line, ":", 2)
-			if len(parts) == 2 {
+			parts := strings.SplitN(line, ":", colonSplitParts)
+			if len(parts) == colonSplitParts {
 				ssid := strings.TrimSpace(parts[1])
 				if ssid != "" {
 					networks = append(networks, SavedNetwork{
@@ -287,9 +338,20 @@ func generateWlanProfile(ssid, password string) string {
 </WLANProfile>`, ssid, ssid, password)
 }
 
-// createTempProfileFile creates a temporary file with the profile XML.
-func createTempProfileFile(profileXML string) string {
-	// For security, this should use a proper temp file
-	// This is a placeholder - actual implementation should use os.CreateTemp
-	return "profile.xml"
+// createTempProfileFile writes the profile XML to a real temporary file and
+// returns its path so netsh has an actual profile to read, rather than a
+// literal "profile.xml" that only existed by coincidence if the working
+// directory happened to contain one.
+func createTempProfileFile(profileXML string) (string, error) {
+	f, err := os.CreateTemp("", "seed-wlan-profile-*.xml")
+	if err != nil {
+		return "", fmt.Errorf("failed to create temporary profile file: %w", err)
+	}
+	defer f.Close()
+
+	if _, writeErr := f.WriteString(profileXML); writeErr != nil {
+		return "", fmt.Errorf("failed to write temporary profile file: %w", writeErr)
+	}
+
+	return f.Name(), nil
 }

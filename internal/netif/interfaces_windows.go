@@ -1,16 +1,16 @@
 //go:build windows
 
+package netif
+
 // Windows-specific interface configuration module uses netsh command-line tool and
 // Windows IP Helper API for interface configuration, static IP assignment, DHCP management,
 // and DNS setup on Windows systems.
-package netif
 
 import (
 	"context"
 	"fmt"
 	"net"
 	"os/exec"
-	"strings"
 	"time"
 
 	"github.com/MustardSeedNetworks/seed/internal/validation"
@@ -177,34 +177,4 @@ func setMTUPlatform(iface string, mtu int) error {
 	}
 
 	return nil
-}
-
-// getNetworkAdapterName attempts to get the Windows adapter "friendly name" for an interface.
-// Windows often uses names like "Ethernet", "Wi-Fi", "Local Area Connection" instead of
-// the interface index-based names used internally.
-func getNetworkAdapterName(iface string) (string, error) {
-	// First check if the name works directly (user may have provided friendly name)
-	netIface, err := net.InterfaceByName(iface)
-	if err == nil {
-		return netIface.Name, nil
-	}
-
-	// Try to find interface by iterating all interfaces
-	interfaces, err := net.Interfaces()
-	if err != nil {
-		return "", fmt.Errorf("failed to list interfaces: %w", err)
-	}
-
-	// Look for partial match or index match
-	for _, netIface := range interfaces {
-		if strings.EqualFold(netIface.Name, iface) {
-			return netIface.Name, nil
-		}
-		// Check if it's an index
-		if fmt.Sprintf("%d", netIface.Index) == iface {
-			return netIface.Name, nil
-		}
-	}
-
-	return "", fmt.Errorf("network adapter not found: %s", iface)
 }

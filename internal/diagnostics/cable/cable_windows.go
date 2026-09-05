@@ -1,5 +1,7 @@
 //go:build windows
 
+package cable
+
 // Windows-specific cable diagnostics implementation.
 // TDR (Time Domain Reflectometry) cable testing on Windows requires vendor-specific
 // drivers and tools. This file provides stubs with informative error messages.
@@ -10,11 +12,10 @@
 //   - Broadcom NICs: Use Broadcom Advanced Control Suite (BACS)
 //   - Realtek NICs: Limited/no TDR support
 //   - Most consumer NICs don't support cable diagnostics at all
-package cable
 
 // isSupportedPlatform checks if cable diagnostics are supported on Windows.
 // Returns false as Windows doesn't have a standard API for TDR.
-func isSupportedPlatform(iface string) bool {
+func isSupportedPlatform(_ string) bool {
 	// Windows doesn't provide standard TDR API access
 	// Enterprise NICs from Intel/Broadcom have proprietary tools
 	return false
@@ -22,7 +23,7 @@ func isSupportedPlatform(iface string) bool {
 
 // testPlatform performs cable test on Windows.
 // This returns a result indicating TDR is not supported through standard APIs.
-func testPlatform(iface string) *TestResult {
+func testPlatform(_ string) *TestResult {
 	return &TestResult{
 		Supported: false,
 		Status:    StatusUnknown,

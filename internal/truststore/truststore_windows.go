@@ -8,6 +8,10 @@ import (
 	"os/exec"
 )
 
+// hexBase renders the certificate serial number the same way certutil
+// expects it: hexadecimal, no prefix.
+const hexBase = 16
+
 // installPlatform installs the cert into the LocalMachine ROOT store using
 // the built-in certutil.exe. Requires an elevated shell.
 func installPlatform(ctx context.Context, certPath string) (Result, error) {
@@ -28,7 +32,7 @@ func uninstallPlatform(ctx context.Context, certPath string) (Result, error) {
 	if err != nil {
 		return Result{}, err
 	}
-	serial := cert.SerialNumber.Text(16)
+	serial := cert.SerialNumber.Text(hexBase)
 	cmd := exec.CommandContext(ctx, "certutil.exe", "-delstore", "Root", serial)
 	out, err := cmd.CombinedOutput()
 	if err != nil {

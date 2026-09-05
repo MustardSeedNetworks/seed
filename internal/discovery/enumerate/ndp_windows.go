@@ -1,27 +1,37 @@
 //go:build windows
 
+package enumerate
+
 // Windows-specific NDP (IPv6 Neighbor Discovery Protocol) implementation.
 //
 // Reads the IPv6 neighbour table through Get-NetNeighbor. The GetIpNetTable2
 // scaffolding that used to sit here had no callers and carried two `go vet`
 // unsafe.Pointer findings, so it was removed rather than left looking like a
 // working implementation.
-package enumerate
 
 import (
 	"context"
+	"errors"
 	"fmt"
-	"log/slog"
 	"net"
 	"os/exec"
 	"strings"
 	"sync"
 	"time"
+
+	"github.com/MustardSeedNetworks/seed/internal/logging"
 )
 
 // neighborQueryTimeout bounds each PowerShell call. A hung query must not
 // stall the scan loop, which runs on a ticker.
 const neighborQueryTimeout = 20 * time.Second
+
+// neighborScanInterval is how often the neighbour table is re-read.
+const neighborScanInterval = 30 * time.Second
+
+// neighborCSVFieldCount is the number of columns Get-NetNeighbor's CSV
+// carries: InterfaceAlias, IPAddress, LinkLayerAddress, State.
+const neighborCSVFieldCount = 4
 
 // NDPScanner scans for IPv6 neighbors using the kernel's neighbor table.
 type NDPScanner struct {
@@ -55,7 +65,7 @@ func (ns *NDPScanner) Start() error {
 	defer ns.mu.Unlock()
 
 	if ns.running {
-		return fmt.Errorf("NDP scanner already running")
+		return errors.New("NDP scanner already running")
 	}
 
 	ns.running = true
@@ -65,7 +75,7 @@ func (ns *NDPScanner) Start() error {
 	// copy; matches the linux build.
 	go ns.scanLoop(ns.stopChan)
 
-	slog.Info("IPv6 NDP scanner started", "interface", ns.interfaceName)
+	logging.GetLogger().Info("IPv6 NDP scanner started", "interface", ns.interfaceName)
 	return nil
 }
 
@@ -81,7 +91,7 @@ func (ns *NDPScanner) Stop() error {
 	close(ns.stopChan)
 	ns.running = false
 
-	slog.Info("IPv6 NDP scanner stopped")
+	logging.GetLogger().Info("IPv6 NDP scanner stopped")
 	return nil
 }
 
@@ -112,10 +122,10 @@ func (ns *NDPScanner) GetNeighbors() map[string]*NDPNeighbor {
 func (ns *NDPScanner) scanLoop(stopChan <-chan struct{}) {
 	// Initial scan
 	if err := ns.scanNeighborTable(); err != nil {
-		slog.Error("IPv6 neighbor scan error", "error", err)
+		logging.GetLogger().Error("IPv6 neighbor scan error", "error", err)
 	}
 
-	ticker := time.NewTicker(30 * time.Second)
+	ticker := time.NewTicker(neighborScanInterval)
 	defer ticker.Stop()
 
 	for {
@@ -124,7 +134,7 @@ func (ns *NDPScanner) scanLoop(stopChan <-chan struct{}) {
 			return
 		case <-ticker.C:
 			if err := ns.scanNeighborTable(); err != nil {
-				slog.Error("IPv6 neighbor scan error", "error", err)
+				logging.GetLogger().Error("IPv6 neighbor scan error", "error", err)
 			}
 		}
 	}
@@ -195,7 +205,7 @@ func (ns *NDPScanner) readDefaultRouters(ctx context.Context) map[string]bool {
 	if err != nil {
 		return routers
 	}
-	for _, line := range strings.Split(string(out), "\n") {
+	for line := range strings.SplitSeq(string(out), "\n") {
 		if hop := strings.TrimSpace(line); hop != "" && hop != "::" {
 			routers[strings.ToLower(hop)] = true
 		}
@@ -216,7 +226,7 @@ func parseNetNeighbors(csvOut, ifaceName string, routers map[string]bool) []NDPN
 			continue // header
 		}
 		fields := splitCSVRow(strings.TrimRight(line, "\r"))
-		if len(fields) < 4 {
+		if len(fields) < neighborCSVFieldCount {
 			continue
 		}
 		alias, addr, mac, state := fields[0], fields[1], fields[2], fields[3]

@@ -9,18 +9,19 @@ package discovery
 // also previously lived (duplicated) in the build-tagged tcpprobe files; it is
 // platform-independent, so consolidating it here removes that duplication.
 //
-// Two unexported strings also stay here because staying kernel code references
-// them (they originated in the relocated portscan.go): serviceUnknown (used by
-// the device-type classifier in profiler_infer.go) and errNoIPv4ForTarget (used
-// by traceroute.go). The fingerprint scanner keeps its own private copies.
+// One unexported string also stays here because staying kernel code
+// references it (it originated in the relocated portscan.go): serviceUnknown,
+// used by the device-type classifier in profiler_infer.go. The fingerprint
+// scanner keeps its own private copy. errNoIPv4ForTarget, the other constant
+// that used to live here, moved to traceroute.go: it is !windows-only, and a
+// platform-independent file is the wrong home for a constant only a
+// platform-scoped file uses -- it read as unused dead code under
+// GOOS=windows.
 
 import "time"
 
 // Shared port-scan string constants retained in the kernel for staying callers.
 const (
-	// errNoIPv4ForTarget is reported when a hostname resolves to no IPv4 address.
-	// Referenced by traceroute.go.
-	errNoIPv4ForTarget = "no IPv4 address found for target"
 	// serviceUnknown is the placeholder service name. Referenced by the device
 	// classifier in profiler_infer.go.
 	serviceUnknown = "unknown"

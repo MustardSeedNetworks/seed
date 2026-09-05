@@ -1,9 +1,9 @@
 //go:build windows
 
-// Package detection provides intelligent network interface auto-detection.
+package detection
+
 // Windows-specific speed detection module uses PowerShell and WMI for
 // interface speed detection and driver information.
-package detection
 
 import (
 	"context"
@@ -16,6 +16,16 @@ import (
 
 // Command timeout for Windows detection operations.
 const detectionTimeoutSeconds = 15
+
+// Bits-per-second scale factors for the units PowerShell/WMI report speed in.
+const (
+	bpsPerGbps = 1_000_000_000
+	bpsPerMbps = 1_000_000
+	bpsPerKbps = 1_000
+)
+
+// minCSVLines is a header plus at least one data row.
+const minCSVLines = 2
 
 // getInterfaceSpeed returns the interface speed in bits per second.
 func getInterfaceSpeed(name string) int64 {
@@ -40,7 +50,7 @@ func getInterfaceSpeed(name string) int64 {
 	output, err = exec.CommandContext(ctx, "powershell", "-NoProfile", "-Command", psCmd).Output()
 	if err == nil {
 		speedStr := strings.TrimSpace(string(output))
-		if speed, err := strconv.ParseInt(speedStr, 10, 64); err == nil && speed > 0 {
+		if speed, parseErr := strconv.ParseInt(speedStr, 10, 64); parseErr == nil && speed > 0 {
 			return speed
 		}
 	}
@@ -65,8 +75,8 @@ func parseSpeedStringWindows(s string) int64 {
 
 	// Try "10Gbps" format (no space)
 	for _, suffix := range []string{"gbps", "mbps", "kbps", "bps"} {
-		if strings.HasSuffix(s, suffix) {
-			numPart := strings.TrimSuffix(s, suffix)
+		if before, ok := strings.CutSuffix(s, suffix); ok {
+			numPart := before
 			if v, err := strconv.ParseFloat(numPart, 64); err == nil {
 				return convertSpeedToBps(v, suffix)
 			}
@@ -87,11 +97,11 @@ func convertSpeedToBps(value float64, unit string) int64 {
 
 	switch {
 	case strings.HasPrefix(unit, "gbps") || strings.HasPrefix(unit, "gb"):
-		return int64(value * 1_000_000_000)
+		return int64(value * bpsPerGbps)
 	case strings.HasPrefix(unit, "mbps") || strings.HasPrefix(unit, "mb"):
-		return int64(value * 1_000_000)
+		return int64(value * bpsPerMbps)
 	case strings.HasPrefix(unit, "kbps") || strings.HasPrefix(unit, "kb"):
-		return int64(value * 1_000)
+		return int64(value * bpsPerKbps)
 	case strings.HasPrefix(unit, "bps") || strings.HasPrefix(unit, "b"):
 		return int64(value)
 	}
@@ -114,7 +124,7 @@ func (db *ChipsetDatabase) identifyByPlatformUncached(name string) *ChipsetInfo 
 	}
 
 	lines := strings.Split(string(output), "\n")
-	if len(lines) < 2 {
+	if len(lines) < minCSVLines {
 		return nil
 	}
 
@@ -146,7 +156,7 @@ func (db *ChipsetDatabase) identifyByPlatformUncached(name string) *ChipsetInfo 
 	}
 
 	lines = strings.Split(string(output), "\n")
-	if len(lines) < 2 {
+	if len(lines) < minCSVLines {
 		return nil
 	}
 

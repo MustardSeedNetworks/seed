@@ -1,5 +1,7 @@
 //go:build windows
 
+package vlan
+
 // Windows-specific VLAN implementation.
 // Windows VLAN support varies by NIC driver - most consumer NICs don't support VLANs
 // through the OS. Enterprise NICs from Intel, Broadcom, etc. use their own management
@@ -10,7 +12,6 @@
 //   - Consumer NICs typically don't expose VLAN configuration to Windows
 //   - Enterprise NICs use vendor-specific tools, not standard Windows APIs
 //   - Hyper-V virtual switches support VLANs via PowerShell, not covered here
-package vlan
 
 import (
 	"context"
@@ -22,6 +23,10 @@ import (
 
 // Command timeout for VLAN operations.
 const vlanTimeoutSeconds = 15
+
+// vlanCSVFieldCount is the column count of Get-NetAdapterVlan's CSV
+// output: Name, InterfaceDescription, VlanID.
+const vlanCSVFieldCount = 3
 
 // detectVlanSubinterfacesPlatform detects VLAN subinterfaces on Windows.
 // Windows doesn't have a standard VLAN subinterface naming convention like Linux (eth0.100).
@@ -61,13 +66,13 @@ func parseVlanCsv(output, parentIface string) []int {
 
 		// CSV format: "Name","InterfaceDescription","VlanID"
 		parts := strings.Split(line, ",")
-		if len(parts) >= 3 {
+		if len(parts) >= vlanCSVFieldCount {
 			name := strings.Trim(parts[0], "\"")
 			description := strings.Trim(parts[1], "\"")
 			vlanIDStr := strings.Trim(parts[2], "\"")
 
 			var vlanID int
-			fmt.Sscanf(vlanIDStr, "%d", &vlanID)
+			_, _ = fmt.Sscanf(vlanIDStr, "%d", &vlanID) // best-effort; zero value is fine
 
 			if vlanID > 0 {
 				// Filter by parent interface if specified

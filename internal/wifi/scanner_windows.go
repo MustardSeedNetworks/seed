@@ -1,8 +1,9 @@
 //go:build windows
 
+package wifi
+
 // Windows-specific Wi-Fi scanner implementation using netsh wlan.
 // Scans for available wireless networks and parses their properties.
-package wifi
 
 import (
 	"context"
@@ -16,6 +17,33 @@ import (
 // Scanner constants for Windows.
 const (
 	defaultNoiseFloorDbmWindows = -95 // Typical noise floor estimate in dBm
+
+	// scanSettleDelay gives netsh's triggered scan time to populate results
+	// before the follow-up list command reads them.
+	scanSettleDelay = 500 * time.Millisecond
+
+	// colonSplitParts caps SplitN at 2 pieces when parsing "key: value"
+	// netsh output lines, so a value containing ':' is not split further.
+	colonSplitParts = 2
+
+	// Percentage-to-dBm approximation: netsh reports signal as 0-100%;
+	// signalDbmFloor is 0%, signalDbmFloor+signalDbmRange is 100%.
+	signalDbmFloor     = -100
+	signalDbmRange     = 70
+	signalPercentScale = 100
+
+	// channelToFrequencyWindows band constants, MHz.
+	channel14         = 14
+	freq24GHzBase     = 2407
+	freq24GHzCh14     = 2484
+	freq24GHzSpacing  = 5
+	band5GHzLowStart  = 36
+	band5GHzLowBase   = 5180
+	band5GHzMidStart  = 100
+	band5GHzMidBase   = 5500
+	band5GHzHighStart = 149
+	band5GHzHighBase  = 5745
+	band5GHzSpacing   = 5
 )
 
 // scanPlatform performs a WiFi scan on Windows using netsh wlan.
@@ -27,7 +55,7 @@ func scanPlatform(iface string, _ Helper) ([]*ScannedNetwork, error) {
 	_ = exec.CommandContext(ctx, "netsh", "wlan", "show", "networks", "mode=bssid").Run()
 
 	// Small delay to allow scan to complete
-	time.Sleep(500 * time.Millisecond)
+	time.Sleep(scanSettleDelay)
 
 	// Get network list with BSSID details
 	args := []string{"wlan", "show", "networks", "mode=bssid"}
@@ -48,8 +76,8 @@ func parseScannedNetworks(output string) []*ScannedNetwork {
 	var networks []*ScannedNetwork
 	var current *ScannedNetwork
 
-	lines := strings.Split(output, "\n")
-	for _, line := range lines {
+	lines := strings.SplitSeq(output, "\n")
+	for line := range lines {
 		line = strings.TrimSpace(line)
 
 		// New network starts with SSID
@@ -60,8 +88,8 @@ func parseScannedNetworks(output string) []*ScannedNetwork {
 			current = &ScannedNetwork{
 				NoiseFloor: defaultNoiseFloorDbmWindows,
 			}
-			parts := strings.SplitN(line, ":", 2)
-			if len(parts) == 2 {
+			parts := strings.SplitN(line, ":", colonSplitParts)
+			if len(parts) == colonSplitParts {
 				current.SSID = strings.TrimSpace(parts[1])
 			}
 		}
@@ -70,39 +98,17 @@ func parseScannedNetworks(output string) []*ScannedNetwork {
 			continue
 		}
 
-		// Parse fields
-		if strings.HasPrefix(line, "BSSID") {
-			parts := strings.SplitN(line, ":", 2)
-			if len(parts) == 2 {
-				current.BSSID = strings.TrimSpace(parts[1])
-			}
-		} else if strings.HasPrefix(line, "Signal") {
-			parts := strings.SplitN(line, ":", 2)
-			if len(parts) == 2 {
-				var pct int
-				fmt.Sscanf(strings.TrimSpace(parts[1]), "%d%%", &pct)
-				// Convert percentage to dBm (approximation)
-				current.Signal = -100 + (pct * 70 / 100)
-				current.SNR = current.Signal - current.NoiseFloor
-			}
-		} else if strings.HasPrefix(line, "Channel") {
-			parts := strings.SplitN(line, ":", 2)
-			if len(parts) == 2 {
-				current.Channel, _ = strconv.Atoi(strings.TrimSpace(parts[1]))
-				current.Frequency = channelToFrequencyWindows(current.Channel)
-				current.IsDFS = isDFSChannelWindows(current.Channel)
-			}
-		} else if strings.HasPrefix(line, "Authentication") || strings.HasPrefix(line, "認証") {
-			parts := strings.SplitN(line, ":", 2)
-			if len(parts) == 2 {
-				current.Security = mapSecurityType(strings.TrimSpace(parts[1]))
-			}
-		} else if strings.HasPrefix(line, "Radio type") || strings.HasPrefix(line, "無線の種類") {
-			parts := strings.SplitN(line, ":", 2)
-			if len(parts) == 2 {
-				radioType := strings.TrimSpace(parts[1])
-				current.HTMode, current.ChannelWidth = parseRadioType(radioType)
-			}
+		switch {
+		case strings.HasPrefix(line, "BSSID"):
+			parseScannedBSSID(line, current)
+		case strings.HasPrefix(line, "Signal"):
+			parseScannedSignal(line, current)
+		case strings.HasPrefix(line, "Channel"):
+			parseScannedChannel(line, current)
+		case strings.HasPrefix(line, "Authentication") || strings.HasPrefix(line, "認証"):
+			parseScannedAuth(line, current)
+		case strings.HasPrefix(line, "Radio type") || strings.HasPrefix(line, "無線の種類"):
+			parseScannedRadioType(line, current)
 		}
 	}
 
@@ -147,7 +153,7 @@ func ScanNetworks(iface string) ([]*Network, error) {
 	_ = exec.CommandContext(ctx, "netsh", "wlan", "show", "networks", "mode=bssid").Run()
 
 	// Small delay to allow scan to complete
-	time.Sleep(500 * time.Millisecond)
+	time.Sleep(scanSettleDelay)
 
 	// Get network list
 	args := []string{"wlan", "show", "networks", "mode=bssid"}
@@ -174,13 +180,63 @@ type Network struct {
 	RadioType string `json:"radioType"`
 }
 
+// parseScannedBSSID reads the BSSID field of a "netsh wlan show networks
+// mode=bssid" record into current.
+func parseScannedBSSID(line string, current *ScannedNetwork) {
+	parts := strings.SplitN(line, ":", colonSplitParts)
+	if len(parts) == colonSplitParts {
+		current.BSSID = strings.TrimSpace(parts[1])
+	}
+}
+
+// parseScannedSignal reads the Signal field, converting netsh's percentage to
+// an approximate dBm reading and deriving SNR from the scanner's noise floor.
+func parseScannedSignal(line string, current *ScannedNetwork) {
+	parts := strings.SplitN(line, ":", colonSplitParts)
+	if len(parts) == colonSplitParts {
+		var pct int
+		_, _ = fmt.Sscanf(strings.TrimSpace(parts[1]), "%d%%", &pct) // best-effort; zero value is fine
+		current.Signal = signalDbmFloor + (pct * signalDbmRange / signalPercentScale)
+		current.SNR = current.Signal - current.NoiseFloor
+	}
+}
+
+// parseScannedChannel reads the Channel field and derives frequency and DFS
+// status from it.
+func parseScannedChannel(line string, current *ScannedNetwork) {
+	parts := strings.SplitN(line, ":", colonSplitParts)
+	if len(parts) == colonSplitParts {
+		current.Channel, _ = strconv.Atoi(strings.TrimSpace(parts[1]))
+		current.Frequency = channelToFrequencyWindows(current.Channel)
+		current.IsDFS = isDFSChannelWindows(current.Channel)
+	}
+}
+
+// parseScannedAuth reads the Authentication field into current's Security.
+func parseScannedAuth(line string, current *ScannedNetwork) {
+	parts := strings.SplitN(line, ":", colonSplitParts)
+	if len(parts) == colonSplitParts {
+		current.Security = mapSecurityType(strings.TrimSpace(parts[1]))
+	}
+}
+
+// parseScannedRadioType reads the Radio type field into current's HTMode and
+// ChannelWidth.
+func parseScannedRadioType(line string, current *ScannedNetwork) {
+	parts := strings.SplitN(line, ":", colonSplitParts)
+	if len(parts) == colonSplitParts {
+		radioType := strings.TrimSpace(parts[1])
+		current.HTMode, current.ChannelWidth = parseRadioType(radioType)
+	}
+}
+
 // parseNetworkList parses the output of "netsh wlan show networks mode=bssid".
 func parseNetworkList(output string) []*Network {
 	var networks []*Network
 	var current *Network
 
-	lines := strings.Split(output, "\n")
-	for _, line := range lines {
+	lines := strings.SplitSeq(output, "\n")
+	for line := range lines {
 		line = strings.TrimSpace(line)
 
 		// New network starts with SSID
@@ -189,8 +245,8 @@ func parseNetworkList(output string) []*Network {
 				networks = append(networks, current)
 			}
 			current = &Network{}
-			parts := strings.SplitN(line, ":", 2)
-			if len(parts) == 2 {
+			parts := strings.SplitN(line, ":", colonSplitParts)
+			if len(parts) == colonSplitParts {
 				current.SSID = strings.TrimSpace(parts[1])
 			}
 		}
@@ -199,37 +255,17 @@ func parseNetworkList(output string) []*Network {
 			continue
 		}
 
-		// Parse fields
-		if strings.HasPrefix(line, "BSSID") {
-			parts := strings.SplitN(line, ":", 2)
-			if len(parts) == 2 {
-				current.BSSID = strings.TrimSpace(parts[1])
-			}
-		} else if strings.HasPrefix(line, "Signal") {
-			parts := strings.SplitN(line, ":", 2)
-			if len(parts) == 2 {
-				var pct int
-				fmt.Sscanf(strings.TrimSpace(parts[1]), "%d%%", &pct)
-				// Convert percentage to dBm
-				current.Signal = -100 + (pct * 70 / 100)
-			}
-		} else if strings.HasPrefix(line, "Channel") {
-			parts := strings.SplitN(line, ":", 2)
-			if len(parts) == 2 {
-				current.Channel, _ = strconv.Atoi(strings.TrimSpace(parts[1]))
-				// Estimate frequency from channel
-				current.Frequency = channelToFrequencyWindows(current.Channel)
-			}
-		} else if strings.HasPrefix(line, "Authentication") || strings.HasPrefix(line, "認証") {
-			parts := strings.SplitN(line, ":", 2)
-			if len(parts) == 2 {
-				current.Security = strings.TrimSpace(parts[1])
-			}
-		} else if strings.HasPrefix(line, "Radio type") || strings.HasPrefix(line, "無線の種類") {
-			parts := strings.SplitN(line, ":", 2)
-			if len(parts) == 2 {
-				current.RadioType = strings.TrimSpace(parts[1])
-			}
+		switch {
+		case strings.HasPrefix(line, "BSSID"):
+			parseNetworkBSSID(line, current)
+		case strings.HasPrefix(line, "Signal"):
+			parseNetworkSignal(line, current)
+		case strings.HasPrefix(line, "Channel"):
+			parseNetworkChannel(line, current)
+		case strings.HasPrefix(line, "Authentication") || strings.HasPrefix(line, "認証"):
+			parseNetworkAuth(line, current)
+		case strings.HasPrefix(line, "Radio type") || strings.HasPrefix(line, "無線の種類"):
+			parseNetworkRadioType(line, current)
 		}
 	}
 
@@ -241,26 +277,71 @@ func parseNetworkList(output string) []*Network {
 	return networks
 }
 
+// parseNetworkBSSID reads the BSSID field of a "netsh wlan show networks
+// mode=bssid" record into current.
+func parseNetworkBSSID(line string, current *Network) {
+	parts := strings.SplitN(line, ":", colonSplitParts)
+	if len(parts) == colonSplitParts {
+		current.BSSID = strings.TrimSpace(parts[1])
+	}
+}
+
+// parseNetworkSignal reads the Signal field, converting netsh's percentage to
+// an approximate dBm reading.
+func parseNetworkSignal(line string, current *Network) {
+	parts := strings.SplitN(line, ":", colonSplitParts)
+	if len(parts) == colonSplitParts {
+		var pct int
+		_, _ = fmt.Sscanf(strings.TrimSpace(parts[1]), "%d%%", &pct) // best-effort; zero value is fine
+		current.Signal = signalDbmFloor + (pct * signalDbmRange / signalPercentScale)
+	}
+}
+
+// parseNetworkChannel reads the Channel field and estimates frequency from it.
+func parseNetworkChannel(line string, current *Network) {
+	parts := strings.SplitN(line, ":", colonSplitParts)
+	if len(parts) == colonSplitParts {
+		current.Channel, _ = strconv.Atoi(strings.TrimSpace(parts[1]))
+		current.Frequency = channelToFrequencyWindows(current.Channel)
+	}
+}
+
+// parseNetworkAuth reads the Authentication field into current's Security.
+func parseNetworkAuth(line string, current *Network) {
+	parts := strings.SplitN(line, ":", colonSplitParts)
+	if len(parts) == colonSplitParts {
+		current.Security = strings.TrimSpace(parts[1])
+	}
+}
+
+// parseNetworkRadioType reads the Radio type field into current's RadioType.
+func parseNetworkRadioType(line string, current *Network) {
+	parts := strings.SplitN(line, ":", colonSplitParts)
+	if len(parts) == colonSplitParts {
+		current.RadioType = strings.TrimSpace(parts[1])
+	}
+}
+
 // channelToFrequencyWindows converts Wi-Fi channel to frequency in MHz.
 // Named differently to avoid conflict with shared function if present.
 func channelToFrequencyWindows(channel int) int {
 	// 2.4 GHz band
 	if channel >= 1 && channel <= 13 {
-		return 2407 + channel*5
+		return freq24GHzBase + channel*freq24GHzSpacing
 	}
-	if channel == 14 {
-		return 2484
+	if channel == channel14 {
+		return freq24GHzCh14
 	}
 
 	// 5 GHz band
-	if channel >= 36 && channel <= 64 {
-		return 5180 + (channel-36)*5
+	if channel >= band5GHzLowStart && channel <= 64 {
+		return band5GHzLowBase + (channel-band5GHzLowStart)*band5GHzSpacing
 	}
-	if channel >= 100 && channel <= 144 {
-		return 5500 + (channel-100)*5
+	if channel >= band5GHzMidStart && channel <= 144 {
+		return band5GHzMidBase + (channel-band5GHzMidStart)*band5GHzSpacing
 	}
-	if channel >= 149 && channel <= 165 {
-		return 5745 + (channel-149)*5
+	if channel >= band5GHzHighStart && channel <= 165 {
+		return band5GHzHighBase + (channel-band5GHzHighStart)*band5GHzSpacing
 	}
 
 	return 0

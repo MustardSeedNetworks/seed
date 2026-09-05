@@ -4,6 +4,7 @@ package api
 // Split from handlers_network.go for code organization (Plan F).
 
 import (
+	"errors"
 	"log/slog"
 	"net/http"
 
@@ -229,75 +230,62 @@ func (s *Server) parseVLANRequest(
 }
 
 // createVLANInterface creates an 802.1Q VLAN subinterface.
-//
-
 func (s *Server) createVLANInterface(
 	w http.ResponseWriter,
 	r *http.Request,
 	logger *slog.Logger,
 	localizer *i18n.Localizer,
 ) {
-	iface, vlanID, ok := s.parseVLANRequest(w, r, logger, localizer)
-	if !ok {
-		return
-	}
-
-	if !vlan.CreateSupported() {
-		sendErrorResponseWithDetails(
-			w,
-			logger,
-			http.StatusNotImplemented,
-			ErrCodeNotImplemented,
-			localizer.T("errors.vlan.notSupportedOnPlatform"),
-			"",
-		)
-		return
-	}
-
-	if err := vlan.CreateVlanInterface(iface, vlanID); err != nil {
-		logger.ErrorContext(r.Context(),
-			"Failed to create VLAN interface",
-			"error",
-			err,
-			"interface",
-			iface,
-			"vlanID",
-			vlanID,
-		)
-		sendErrorResponseWithDetails(
-			w,
-			logger,
-			http.StatusInternalServerError,
-			ErrCodeInternal,
-			localizer.T("errors.vlan.failedToCreate"),
-			"",
-		)
-		return
-	}
-
-	sendJSONResponse(w, nil, http.StatusOK, map[string]any{
-		"status":    statusSuccess,
-		"message":   "VLAN interface created",
-		"interface": iface,
-		"vlanId":    vlanID,
+	s.applyVLANOp(w, r, logger, localizer, vlanOp{
+		fn:         s.vlanCreate,
+		logMsg:     "Failed to create VLAN interface",
+		failureKey: "errors.vlan.failedToCreate",
+		successMsg: "VLAN interface created",
 	})
 }
 
 // deleteVLANInterface removes an 802.1Q VLAN subinterface.
-//
-
 func (s *Server) deleteVLANInterface(
 	w http.ResponseWriter,
 	r *http.Request,
 	logger *slog.Logger,
 	localizer *i18n.Localizer,
 ) {
+	s.applyVLANOp(w, r, logger, localizer, vlanOp{
+		fn:         s.vlanDelete,
+		logMsg:     "Failed to delete VLAN interface",
+		failureKey: "errors.vlan.failedToDelete",
+		successMsg: "VLAN interface deleted",
+	})
+}
+
+// vlanOp names the create/delete-specific pieces applyVLANOp needs: the
+// platform call itself and what to say about it on failure and success.
+type vlanOp struct {
+	fn         func(parentIface string, vlanID int) error
+	logMsg     string
+	failureKey string
+	successMsg string
+}
+
+// applyVLANOp is the shared body of createVLANInterface and
+// deleteVLANInterface: parse the request, decline up front on a platform that
+// cannot do this at all, run the operation, and map its result to a response.
+// An unsupported platform can also surface from the attempt itself when the
+// up-front check and the attempt disagree; that is still a 501, not a 500.
+func (s *Server) applyVLANOp(
+	w http.ResponseWriter,
+	r *http.Request,
+	logger *slog.Logger,
+	localizer *i18n.Localizer,
+	op vlanOp,
+) {
 	iface, vlanID, ok := s.parseVLANRequest(w, r, logger, localizer)
 	if !ok {
 		return
 	}
 
-	if !vlan.CreateSupported() {
+	if !s.vlanCreateSupported() {
 		sendErrorResponseWithDetails(
 			w,
 			logger,
@@ -309,31 +297,66 @@ func (s *Server) deleteVLANInterface(
 		return
 	}
 
-	if err := vlan.DeleteVlanInterface(iface, vlanID); err != nil {
-		logger.ErrorContext(r.Context(),
-			"Failed to delete VLAN interface",
-			"error",
-			err,
-			"interface",
-			iface,
-			"vlanID",
-			vlanID,
-		)
-		sendErrorResponseWithDetails(
-			w,
-			logger,
-			http.StatusInternalServerError,
-			ErrCodeInternal,
-			localizer.T("errors.vlan.failedToDelete"),
-			"",
-		)
+	if err := op.fn(iface, vlanID); err != nil {
+		status, code := http.StatusInternalServerError, ErrCodeInternal
+		message := localizer.T(op.failureKey)
+		if errors.Is(err, vlan.ErrUnsupported) {
+			status, code = http.StatusNotImplemented, ErrCodeNotImplemented
+			message = localizer.T("errors.vlan.notSupportedOnPlatform")
+		}
+
+		logger.ErrorContext(r.Context(), op.logMsg,
+			"error", err, "interface", iface, "vlanID", vlanID)
+		sendErrorResponseWithDetails(w, logger, status, code, message, "")
 		return
 	}
 
 	sendJSONResponse(w, nil, http.StatusOK, map[string]any{
 		"status":    statusSuccess,
-		"message":   "VLAN interface deleted",
+		"message":   op.successMsg,
 		"interface": iface,
 		"vlanId":    vlanID,
 	})
+}
+
+// vlanSeam is the VLAN create/delete test seam, held as a single Server
+// field (server.go) rather than three -- that file is baselined by the
+// file-size gate and may not grow. Zero value means production, where the
+// vlan package is called directly; a test sets createSupported/create/delete
+// because the real functions would create or remove an 802.1Q subinterface
+// on the machine running the tests.
+type vlanSeam struct {
+	createSupported func() bool
+	create          func(parentIface string, vlanID int) error
+	delete          func(parentIface string, vlanID int) error
+}
+
+// vlanCreateSupported reports platform support, through the server's seam
+// when a test has set one.
+func (s *Server) vlanCreateSupported() bool {
+	if s.vlanSeam.createSupported != nil {
+		return s.vlanSeam.createSupported()
+	}
+
+	return vlan.CreateSupported()
+}
+
+// vlanCreate creates the subinterface, through the server's seam when a test
+// has set one.
+func (s *Server) vlanCreate(parentIface string, vlanID int) error {
+	if s.vlanSeam.create != nil {
+		return s.vlanSeam.create(parentIface, vlanID)
+	}
+
+	return vlan.CreateVlanInterface(parentIface, vlanID)
+}
+
+// vlanDelete removes the subinterface, through the server's seam when a test
+// has set one.
+func (s *Server) vlanDelete(parentIface string, vlanID int) error {
+	if s.vlanSeam.delete != nil {
+		return s.vlanSeam.delete(parentIface, vlanID)
+	}
+
+	return vlan.DeleteVlanInterface(parentIface, vlanID)
 }

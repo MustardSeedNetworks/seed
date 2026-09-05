@@ -320,8 +320,8 @@ func runWindowsService(state *cliState) {
 		os.Exit(1)
 	}
 
-	if err := svc.Run(); err != nil {
-		fmt.Fprintf(os.Stderr, "Service run failed: %v\n", err)
+	if runErr := svc.Run(); runErr != nil {
+		fmt.Fprintf(os.Stderr, "Service run failed: %v\n", runErr)
 		os.Exit(1)
 	}
 }
@@ -334,19 +334,19 @@ func installWindowsService() {
 		os.Exit(1)
 	}
 
-	if err := svc.Install(); err != nil {
-		fmt.Fprintf(os.Stderr, "Failed to install service: %v\n", err)
+	if installErr := svc.Install(); installErr != nil {
+		fmt.Fprintf(os.Stderr, "Failed to install service: %v\n", installErr)
 		os.Exit(1)
 	}
 
-	fmt.Println("Service installed successfully.")
-	fmt.Println("")
-	fmt.Println("To start the service:")
-	fmt.Println("  seed service start")
-	fmt.Println("  or: sc start SeedNetworkDiagnostics")
-	fmt.Println("")
-	fmt.Println("To configure automatic startup:")
-	fmt.Println("  sc config SeedNetworkDiagnostics start= auto")
+	fmt.Fprintln(os.Stdout, "Service installed successfully.")
+	fmt.Fprintln(os.Stdout, "")
+	fmt.Fprintln(os.Stdout, "To start the service:")
+	fmt.Fprintln(os.Stdout, "  seed service start")
+	fmt.Fprintln(os.Stdout, "  or: sc start SeedNetworkDiagnostics")
+	fmt.Fprintln(os.Stdout, "")
+	fmt.Fprintln(os.Stdout, "To configure automatic startup:")
+	fmt.Fprintln(os.Stdout, "  sc config SeedNetworkDiagnostics start= auto")
 }
 
 func uninstallWindowsService() {
@@ -360,12 +360,12 @@ func uninstallWindowsService() {
 	// Stop service first if running
 	_ = svc.Stop()
 
-	if err := svc.Uninstall(); err != nil {
-		fmt.Fprintf(os.Stderr, "Failed to uninstall service: %v\n", err)
+	if uninstallErr := svc.Uninstall(); uninstallErr != nil {
+		fmt.Fprintf(os.Stderr, "Failed to uninstall service: %v\n", uninstallErr)
 		os.Exit(1)
 	}
 
-	fmt.Println("Service uninstalled successfully.")
+	fmt.Fprintln(os.Stdout, "Service uninstalled successfully.")
 }
 
 func controlWindowsService(action string) {
@@ -378,17 +378,17 @@ func controlWindowsService(action string) {
 
 	switch action {
 	case "start":
-		if err := svc.Start(); err != nil {
-			fmt.Fprintf(os.Stderr, "Failed to start service: %v\n", err)
+		if startErr := svc.Start(); startErr != nil {
+			fmt.Fprintf(os.Stderr, "Failed to start service: %v\n", startErr)
 			os.Exit(1)
 		}
-		fmt.Println("Service started.")
+		fmt.Fprintln(os.Stdout, "Service started.")
 	case "stop":
-		if err := svc.Stop(); err != nil {
-			fmt.Fprintf(os.Stderr, "Failed to stop service: %v\n", err)
+		if stopErr := svc.Stop(); stopErr != nil {
+			fmt.Fprintf(os.Stderr, "Failed to stop service: %v\n", stopErr)
 			os.Exit(1)
 		}
-		fmt.Println("Service stopped.")
+		fmt.Fprintln(os.Stdout, "Service stopped.")
 	}
 }
 
@@ -416,6 +416,6 @@ func showWindowsServiceStatus() {
 		statusStr = "Unknown (service may not be installed)"
 	}
 
-	fmt.Printf("Service: %s\n", windowsDisplayName)
-	fmt.Printf("Status:  %s\n", statusStr)
+	fmt.Fprintf(os.Stdout, "Service: %s\n", windowsDisplayName)
+	fmt.Fprintf(os.Stdout, "Status:  %s\n", statusStr)
 }
