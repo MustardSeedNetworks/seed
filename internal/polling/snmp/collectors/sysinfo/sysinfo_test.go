@@ -276,3 +276,23 @@ func TestCollect_UnknownValueTypeClampsToZero(t *testing.T) {
 		t.Errorf("negative SysUpTime should clamp to 0, got %d", pub.got[0].SysUpTimeTicks)
 	}
 }
+
+// gosnmp renders an OBJECT IDENTIFIER value with a leading dot. The
+// observation must carry the canonical form, or the topology reconciler's
+// vendor-prefix match never fires and every polled device is "unknown".
+func TestCollect_StripsLeadingDotFromSysObjectID(t *testing.T) {
+	t.Parallel()
+	fc := &fakeClient{getResponse: []snmp.Varbind{
+		{OID: "1.3.6.1.2.1.1.2.0", Value: ".1.3.6.1.4.1.9.1.525"},
+		{OID: "1.3.6.1.2.1.1.5.0", Value: "MED-WAP-B01-F01-01"},
+	}}
+	pub := &fakePublisher{}
+	c := sysinfo.New(staticFactory(fc), pub, fixedClock)
+	target := snmp.Target{ID: "t-1", ClientID: "default"}
+	if err := c.Collect(context.Background(), target, snmp.ResolvedCredentials{}); err != nil {
+		t.Fatalf("Collect: %v", err)
+	}
+	if got := pub.got[0].SysObjectID; got != "1.3.6.1.4.1.9.1.525" {
+		t.Errorf("SysObjectID = %q, want the OID without its leading dot", got)
+	}
+}
