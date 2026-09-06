@@ -9,6 +9,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/MustardSeedNetworks/seed/internal/polling/snmp"
@@ -118,7 +119,7 @@ func buildObservation(target snmp.Target, observedAt time.Time, vbs []snmp.Varbi
 		case oidSysDescr:
 			obs.SysDescr = stringValue(vb.Value)
 		case oidSysObjectID:
-			obs.SysObjectID = stringValue(vb.Value)
+			obs.SysObjectID = canonicalOID(stringValue(vb.Value))
 		case oidSysUpTime:
 			obs.SysUpTimeTicks = uint32Value(vb.Value)
 		case oidSysContact:
@@ -130,6 +131,14 @@ func buildObservation(target snmp.Target, observedAt time.Time, vbs []snmp.Varbi
 		}
 	}
 	return obs
+}
+
+// canonicalOID strips the leading dot gosnmp puts on an OBJECT
+// IDENTIFIER value. Every OID seed compares against is written without
+// it, so a dotted sysObjectID never matched a vendor prefix and every
+// polled device classified as unknown (seed#2458).
+func canonicalOID(oid string) string {
+	return strings.TrimPrefix(oid, ".")
 }
 
 // stringValue extracts a string from a varbind. SNMP OCTET STRINGs
