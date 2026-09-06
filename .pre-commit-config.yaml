@@ -114,12 +114,13 @@ repos:
   # ===========================================================================
   # Markdown Checks
   # ===========================================================================
-  - repo: https://github.com/igorshubovych/markdownlint-cli
-    rev: v0.47.0
+  # Same tool and version as the CI docs gate (markdownlint-cli2-action). The
+  # old markdownlint-cli hook ran a different linter with --fix, so a commit
+  # could pass locally and fail MD060 in CI.
+  - repo: https://github.com/DavidAnson/markdownlint-cli2
+    rev: v0.23.2
     hooks:
-      - id: markdownlint
-        args: [--fix]
-        exclude: ^node_modules/|^ui/node_modules/
+      - id: markdownlint-cli2
 
   # ===========================================================================
   # Build Verification

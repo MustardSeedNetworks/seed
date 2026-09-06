@@ -1,0 +1,40 @@
+name: Main Retry
+
+# Retry a failed main-branch CI run exactly once.
+#
+# PR runs keep the zero flake budget, so a flaky spec still fails the PR that
+# carries it and gets fixed there. main is different: a run that goes red on
+# main skips release-please (workflow_run is gated on success) and makes
+# release.yml's verify-tag refuse the release, so one known-flaky shard can
+# hold a release for hours with nobody watching. This gives main one second
+# attempt. If attempt 2 fails too, main stays red — a real regression is never
+# masked, and the second failure is the one to read.
+#
+# workflow_run is the only event that observes another workflow's conclusion.
+# The job checks out nothing, runs no repository code, and holds only
+# actions:write for the rerun call, so the trigger carries no injection surface.
+on:
+  workflow_run: # zizmor: ignore[dangerous-triggers]
+    workflows: [CI]
+    types: [completed]
+    branches: [main]
+
+permissions: {}
+
+jobs:
+  retry:
+    name: Retry main once
+    if: >-
+      ${{ github.event.workflow_run.conclusion == 'failure'
+          && github.event.workflow_run.run_attempt == 1
+          && github.event.workflow_run.head_branch == 'main' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      actions: write
+    steps:
+      - name: Re-run the failed jobs
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RUN_ID: ${{ github.event.workflow_run.id }}
+        run: gh run rerun "$RUN_ID" --failed -R "$GITHUB_REPOSITORY"
