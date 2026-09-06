@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.214.5](https://github.com/MustardSeedNetworks/seed/compare/v0.214.4...v0.214.5) (2026-09-06)
+
+
+### Bug Fixes
+
+* **deps:** update dependency react-hook-form to v7.87.0 ([#2443](https://github.com/MustardSeedNetworks/seed/issues/2443)) ([52e42a0](https://github.com/MustardSeedNetworks/seed/commit/52e42a054cc1b8ec9e88354726d33bdf0f3b93af))
+
+
+### Continuous Integration
+
+* install the pinned golangci-lint when the local version differs ([#2445](https://github.com/MustardSeedNetworks/seed/issues/2445)) ([60ecde6](https://github.com/MustardSeedNetworks/seed/commit/60ecde66ac1d0b2c5f13324f58390f503d7d8cce))
+
 ## [0.214.4](https://github.com/MustardSeedNetworks/seed/compare/v0.214.3...v0.214.4) (2026-09-06)
 
 
