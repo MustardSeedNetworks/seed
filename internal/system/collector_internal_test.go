@@ -64,18 +64,27 @@ func TestCollectorSamplesCPU(t *testing.T) {
 // TestCollectorCloseStopsTheSampler pins that Close is not advisory. Without it
 // a long-lived process accumulates one ticker goroutine per Collector, each
 // waking every cpuTickerInterval to burn cpuSampleInterval measuring CPU.
+//
+// It used to compare [runtime.NumGoroutine] either side of Close. That number is
+// process-global, so any goroutine another test happened to be running counted
+// against this one — it failed on healthy code under -race (seed#2361), and it
+// could equally pass while this collector leaked, as long as something else
+// finished at the same moment.
+//
+// sampleCPU closes done as it returns, so that channel says precisely what this
+// test means: the sampler goroutine is gone. Reading it after Close also proves
+// Close waited, rather than merely signalling and returning.
 func TestCollectorCloseStopsTheSampler(t *testing.T) {
-	before := runtime.NumGoroutine()
-
 	c := NewCollector()
 	time.Sleep(cpuSampleInterval + 50*time.Millisecond)
 	if err := c.Close(); err != nil {
 		t.Fatalf("Close: %v", err)
 	}
 
-	if after := runtime.NumGoroutine(); after > before {
-		t.Errorf("goroutines %d -> %d after Close; the sampler outlived it",
-			before, after)
+	select {
+	case <-c.done:
+	default:
+		t.Error("Close returned while the sampler goroutine was still running")
 	}
 }
 
