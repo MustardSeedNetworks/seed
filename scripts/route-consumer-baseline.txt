@@ -15,7 +15,6 @@
 /api/v1/discovery/engine/scan
 /api/v1/discovery/engine/stats
 /api/v1/engines
-/api/v1/events
 /api/v1/health
 /api/v1/path/traceroute
 /api/v1/reporting/logs/query
@@ -43,5 +42,3 @@
 /api/v1/topology/arp
 /api/v1/topology/links
 /api/v1/wifi/wifi/status
-404 /api/events  # seed#2326 dashboard SSE opens a pre-versioning path
-404 /api/v1/telemetry/cable/support  # seed#2326 only /telemetry/cable is registered

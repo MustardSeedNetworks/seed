@@ -478,9 +478,9 @@ export function useAppOrchestration({ isAuthenticated }: UseAppOrchestrationArgs
     });
   });
 
-  // SSE connection for real-time updates (simpler than WebSocket)
+  // /api/v1/events, not /api/events: the latter 404s and EventSource never retries (seed#2326).
   const { status: sseStatus, reconnect } = useSse({
-    url: '/api/events',
+    url: '/api/v1/events',
     isAuthenticated,
     onMessage: handleMessage,
     onCardUpdate: handleCardUpdate,
