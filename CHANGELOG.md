@@ -5,6 +5,25 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.214.4](https://github.com/MustardSeedNetworks/seed/compare/v0.214.3...v0.214.4) (2026-09-06)
+
+
+### Bug Fixes
+
+* **system:** stop TestCollectorCloseStopsTheSampler failing on healthy code ([#2438](https://github.com/MustardSeedNetworks/seed/issues/2438)) ([60de470](https://github.com/MustardSeedNetworks/seed/commit/60de470bd82febbb6833a65ac48fe12d0d5e52bf)), closes [#2361](https://github.com/MustardSeedNetworks/seed/issues/2361)
+* **ui:** stop calling two paths that no route serves ([#2388](https://github.com/MustardSeedNetworks/seed/issues/2388)) ([e8cf318](https://github.com/MustardSeedNetworks/seed/commit/e8cf318e409e337c5fb62cbbc8a702952711f82a))
+
+
+### Continuous Integration
+
+* retry a failed main run once so a flake cannot hold a release ([#2431](https://github.com/MustardSeedNetworks/seed/issues/2431)) ([8a18d09](https://github.com/MustardSeedNetworks/seed/commit/8a18d099edc7e8746428812a06754ea0cd3b9df8))
+
+
+### Miscellaneous
+
+* **deps:** update pre-commit hook gitleaks/gitleaks to v8.30.1 ([#2439](https://github.com/MustardSeedNetworks/seed/issues/2439)) ([1617ec8](https://github.com/MustardSeedNetworks/seed/commit/1617ec84dda517bb31ff1f3310e97daa94a315a8))
+* **deps:** update pre-commit hook koalaman/shellcheck-precommit to v0.11.0 ([#2441](https://github.com/MustardSeedNetworks/seed/issues/2441)) ([c2d05bc](https://github.com/MustardSeedNetworks/seed/commit/c2d05bc19d40bffa07f649491265b3e995a2db44))
+
 ## [0.214.3](https://github.com/MustardSeedNetworks/seed/compare/v0.214.2...v0.214.3) (2026-09-05)
 
 
