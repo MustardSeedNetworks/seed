@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.214.7](https://github.com/MustardSeedNetworks/seed/compare/v0.214.6...v0.214.7) (2026-09-06)
+
+
+### Documentation
+
+* **audits:** seed against the niac hospital pack, first S4-4 run ([#2457](https://github.com/MustardSeedNetworks/seed/issues/2457)) ([49f701c](https://github.com/MustardSeedNetworks/seed/commit/49f701cbae6ddacec0fbee0f4182321fc0ddcaf1))
+
+
+### Miscellaneous
+
+* **deps:** lock file maintenance ([#2451](https://github.com/MustardSeedNetworks/seed/issues/2451)) ([5e9f875](https://github.com/MustardSeedNetworks/seed/commit/5e9f87552a1dc23ca425ab71af452213b5bc2644))
+
 ## [0.214.6](https://github.com/MustardSeedNetworks/seed/compare/v0.214.5...v0.214.6) (2026-09-06)
 
 
