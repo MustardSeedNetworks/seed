@@ -157,7 +157,7 @@ jobs:
       # apt-get it started (#1950).
       - name: Install missing build dependencies
         if: steps.probe-build-deps.outputs.needed == 'true'
-        uses: MustardSeedNetworks/.github/.github/actions/apt-install@a146506fd53fe5e01fdc01892dd838c10081d183 # v1.9.0
+        uses: MustardSeedNetworks/.github/.github/actions/apt-install@cd60ad04e0f305b3706481580091dc7f3e1863aa # v1.11.0
         timeout-minutes: 10
         with:
           packages: build-essential autoconf automake libtool
@@ -288,7 +288,7 @@ jobs:
       # on (#1950). `update` stays on and strict, so an arch-mismatch drift
       # still fails loud rather than silently shipping a broken cross-build.
       - name: Install libpcap headers for amd64 + arm64
-        uses: MustardSeedNetworks/.github/.github/actions/apt-install@a146506fd53fe5e01fdc01892dd838c10081d183 # v1.9.0
+        uses: MustardSeedNetworks/.github/.github/actions/apt-install@cd60ad04e0f305b3706481580091dc7f3e1863aa # v1.11.0
         timeout-minutes: 10
         with:
           packages: libpcap-dev libpcap-dev:arm64

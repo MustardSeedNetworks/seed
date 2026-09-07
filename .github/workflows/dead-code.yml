@@ -55,7 +55,7 @@ jobs:
           cache: true
 
       - name: Install libpcap-dev
-        uses: MustardSeedNetworks/.github/.github/actions/apt-install@a146506fd53fe5e01fdc01892dd838c10081d183 # v1.9.0
+        uses: MustardSeedNetworks/.github/.github/actions/apt-install@cd60ad04e0f305b3706481580091dc7f3e1863aa # v1.11.0
         timeout-minutes: 10
         # The hand-rolled wrapper this replaces ran `timeout ... sudo apt-get`,
         # which cannot reap the root-owned apt-get it starts: an unprivileged
