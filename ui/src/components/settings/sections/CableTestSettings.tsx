@@ -20,6 +20,7 @@ import type React from 'react';
 import { memo, useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { api } from '../../../api';
+import { useRole } from '../../../contexts/RoleContext';
 import {
   cn,
   icon as iconTokens,
@@ -89,6 +90,9 @@ export const CableTestSettings: React.NamedExoticComponent<CableTestSettingsProp
     cableTestStatus,
   }: CableTestSettingsProps): React.ReactElement {
     const { t } = useTranslation('settings');
+    // Per-control rather than a read-only fieldset: the support Refresh below
+    // is a read, and a disabled fieldset would take it with the checkbox.
+    const { canWrite } = useRole();
     const [tdrSupport, setTdrSupport] = useState<TdrSupportStatus | null>(null);
     const [checkingSupport, setCheckingSupport] = useState(false);
 
@@ -206,6 +210,8 @@ export const CableTestSettings: React.NamedExoticComponent<CableTestSettingsProp
                   enabled: e.target.checked,
                 }))
               }
+              disabled={!canWrite}
+              title={canWrite ? undefined : t('common.readOnly')}
               className={iconTokens.size.sm}
             />
           </label>

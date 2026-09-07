@@ -14,6 +14,7 @@ import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
+import { RoleProvider } from '../../../contexts/RoleContext';
 import type { CableTestSettings as CableTestSettingsType } from '../../../types/settings';
 import { CableTestSettings } from './CableTestSettings';
 
@@ -34,12 +35,18 @@ function renderWithCapability(entry: unknown): void {
     return Promise.reject(new Error(`unexpected request to ${path}`));
   });
 
+  // The section reads the caller's role to gate its one write control, so it
+  // needs the provider. Unauthenticated is enough here and fetches nothing:
+  // these cases are about the capability report, and the role half has its own
+  // suite in settings-sections.rolegate.test.tsx.
   render(
-    <CableTestSettings
-      cableTestSettings={settings}
-      setCableTestSettings={vi.fn()}
-      cableTestStatus="idle"
-    />,
+    <RoleProvider isAuthenticated={false}>
+      <CableTestSettings
+        cableTestSettings={settings}
+        setCableTestSettings={vi.fn()}
+        cableTestStatus="idle"
+      />
+    </RoleProvider>,
   );
 }
 

@@ -17,14 +17,20 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { type CurrentUser, RoleProvider } from '../../../contexts/RoleContext';
 import {
+  DEFAULT_CABLE_TEST_SETTINGS,
   DEFAULT_CARD_SETTINGS,
   DEFAULT_DISPLAY_OPTIONS,
   DEFAULT_LINK_SETTINGS,
+  DEFAULT_NETWORK_DISCOVERY_SETTINGS,
+  DEFAULT_SNMP_SETTINGS,
   DEFAULT_TESTS_SETTINGS,
   type IpSettings,
 } from '../../../types/settings';
 import { SettingsDrawerNetworkSection } from '../SettingsDrawerNetworkSection';
 import { AppearanceSettings } from './AppearanceSettings';
+import { CableTestSettings } from './CableTestSettings';
+import { ConfigBackupsSection } from './ConfigBackupsSection';
+import { DiscoverySettings } from './DiscoverySettings';
 import { DnsSettings } from './DnsSettings';
 import { HealthChecksSettings } from './HealthChecksSettings';
 import { InterfacesSettings } from './InterfacesSettings';
@@ -162,6 +168,11 @@ const SECTIONS: { name: string; header: RegExp; render: () => ReactElement }[] =
     ),
   },
   { name: 'SsoSettings', header: /sign-on|sso/i, render: () => <SsoSettings /> },
+  {
+    name: 'ConfigBackupsSection',
+    header: /configuration backups/i,
+    render: () => <ConfigBackupsSection />,
+  },
   { name: 'InterfacesSettings', header: /interface/i, render: () => <InterfacesSettings /> },
 ];
 
@@ -185,10 +196,35 @@ async function openSection(header: RegExp): Promise<HTMLElement> {
   return button.closest('section') as HTMLElement;
 }
 
+/**
+ * Three sections read their status banner with the global `fetch` rather than
+ * the api client (a GET, so the raw-fetch gate allows it). Without the banner
+ * the Refresh button never renders and the read half of the case cannot be
+ * asserted at all, so the stub answers each status route with a running one.
+ */
+const RAW_GET_BODIES: Record<string, unknown> = {
+  '/api/v1/security/discovery/service/status': { running: true, scanning: false, deviceCount: 1 },
+  '/api/v1/config/backups': {
+    backups: [{ name: 'b1', createdAt: '2026-09-07T00:00:00Z', size: 1 }],
+  },
+  '/api/v1/config/version': { current: '1', needsMigration: false },
+};
+
 beforeEach(() => {
   mockGet.mockReset();
+  vi.stubGlobal('fetch', (input: RequestInfo | URL) => {
+    const url = String(input);
+    const key = Object.keys(RAW_GET_BODIES).find((path) => url.includes(path));
+
+    return Promise.resolve({
+      ok: key !== undefined,
+      status: key === undefined ? 404 : 200,
+      json: () => Promise.resolve(key === undefined ? {} : RAW_GET_BODIES[key]),
+    } as Response);
+  });
 });
 afterEach(() => {
+  vi.unstubAllGlobals();
   vi.clearAllMocks();
 });
 
@@ -228,3 +264,137 @@ describe.each(SECTIONS)('$name — viewer read-only', ({ header, render: renderS
     });
   });
 });
+
+/**
+ * Slice 2 (#2467): the sections that also carry a *read* action.
+ *
+ * A disabled `<fieldset>` over the whole body would take the read with it —
+ * a viewer could no longer refresh the scanner status or the discovery
+ * service. These sections gate their write controls only, and the case below
+ * asserts both halves at once: the read control stays usable, every write
+ * control does not. Asserting only "everything is disabled" is what would let
+ * the read regress silently.
+ */
+const MIXED_SECTIONS: {
+  name: string;
+  header: RegExp;
+  /** The control that reads and must stay usable for a viewer. */
+  readControl: RegExp;
+  /** Further read-only controls that must survive the gate, by accessible name. */
+  alsoUsable?: RegExp[];
+  render: () => ReactElement;
+}[] = [
+  {
+    name: 'CableTestSettings',
+    header: /cable test/i,
+    readControl: /^refresh$/i,
+    render: () => (
+      <CableTestSettings
+        cableTestSettings={DEFAULT_CABLE_TEST_SETTINGS}
+        setCableTestSettings={noop}
+        cableTestStatus="idle"
+      />
+    ),
+  },
+  {
+    name: 'DiscoverySettings',
+    header: /^discovery$/i,
+    readControl: /^refresh$/i,
+    alsoUsable: [/lab-v3/],
+    render: () => (
+      <DiscoverySettings
+        networkDiscoverySettings={DEFAULT_NETWORK_DISCOVERY_SETTINGS}
+        setNetworkDiscoverySettings={noop}
+        networkDiscoveryStatus="idle"
+        subnets={[]}
+        subnetsStatus="idle"
+        newSubnetCidr=""
+        setNewSubnetCidr={noop}
+        newSubnetName=""
+        setNewSubnetName={noop}
+        subnetError={null}
+        setSubnetError={noop}
+        addSubnet={noop}
+        toggleSubnet={noop}
+        deleteSubnet={noop}
+        snmpSettings={{ ...DEFAULT_SNMP_SETTINGS, v3Credentials: [V3_CREDENTIAL] }}
+        setSnmpSettings={noop}
+        snmpStatus="idle"
+        cardSettings={DEFAULT_CARD_SETTINGS}
+        updateCardSettings={noop}
+      />
+    ),
+  },
+];
+
+/**
+ * One SNMPv3 credential, so the credential row renders. Its accordion header is
+ * a `<div role="button">` — the row that named it a "non-form clickable the
+ * fieldset would never catch" read it as a missed write control; it is a read
+ * (expand/collapse), and it cannot become a real `<button>` because it contains
+ * one. Leaving it enabled is correct and is asserted below; the Remove button
+ * inside it is the write, and the fieldset does disable that.
+ */
+const V3_CREDENTIAL = {
+  id: 'cred-1',
+  name: 'lab-v3',
+  username: 'operator',
+  authProtocol: 'SHA',
+  authPassword: '',
+  privProtocol: 'AES',
+  privPassword: '',
+  contextName: '',
+  securityLevel: 'authPriv',
+};
+
+/** Write controls of a section: everything interactive but the header and the read. */
+function writeControls(section: HTMLElement, reads: HTMLElement[]): HTMLElement[] {
+  const header = section.querySelector('button');
+
+  return [
+    ...within(section).queryAllByRole('textbox'),
+    ...within(section).queryAllByRole('checkbox'),
+    ...within(section).queryAllByRole('combobox'),
+    ...within(section).queryAllByRole('spinbutton'),
+    ...within(section).queryAllByRole('button'),
+  ].filter((el) => el !== header && !reads.includes(el));
+}
+
+describe.each(MIXED_SECTIONS)(
+  '$name — viewer read-only with a live read',
+  ({ header, readControl, alsoUsable = [], render: renderSection }) => {
+    async function reads(section: HTMLElement): Promise<HTMLElement[]> {
+      const found = [await within(section).findByRole('button', { name: readControl })];
+      for (const name of alsoUsable) {
+        found.push(within(section).getByRole('button', { name }));
+      }
+      for (const control of found) {
+        expect(control).toBeEnabled();
+      }
+
+      return found;
+    }
+
+    it('keeps the reads usable for a viewer and disables every write control', async () => {
+      asUser('viewer');
+      render(<RoleProvider isAuthenticated={true}>{renderSection()}</RoleProvider>);
+
+      const section = await openSection(header);
+      const controls = writeControls(section, await reads(section));
+      expect(controls.length).toBeGreaterThan(0);
+      for (const control of controls) {
+        expect(control).toBeDisabled();
+      }
+    });
+
+    it('leaves every control usable for an operator', async () => {
+      asUser('operator');
+      render(<RoleProvider isAuthenticated={true}>{renderSection()}</RoleProvider>);
+
+      const section = await openSection(header);
+      for (const control of writeControls(section, await reads(section))) {
+        expect(control).toBeEnabled();
+      }
+    });
+  },
+);

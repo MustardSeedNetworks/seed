@@ -25,6 +25,7 @@ import type React from 'react';
 import { memo, useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { api } from '../../../api';
+import { useRole } from '../../../contexts/RoleContext';
 import { formatBytes } from '../../../lib/format';
 import { button, cn, icon as iconTokens, layout, radius, spacing } from '../../../styles/theme';
 import { CollapsibleSection } from '../../ui/CollapsibleSection';
@@ -51,6 +52,7 @@ interface ConfigVersion {
 export const ConfigBackupsSection: React.NamedExoticComponent<Record<string, never>> = memo(
   function ConfigBackupsSectionComponent(): React.ReactElement {
     const { t } = useTranslation('settings');
+    const { canWrite } = useRole();
     const [backups, setBackups] = useState<BackupInfo[]>([]);
     const [version, setVersion] = useState<ConfigVersion | null>(null);
     const [loading, setLoading] = useState(false);
@@ -264,6 +266,7 @@ export const ConfigBackupsSection: React.NamedExoticComponent<Record<string, nev
             <span>{t('configBackups.title')}</span>
           </div>
         }
+        readOnlyReason={canWrite ? undefined : t('common.readOnly')}
       >
         <div className="stack-sm">
           {/* Version Info */}
