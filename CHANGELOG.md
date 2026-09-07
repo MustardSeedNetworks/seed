@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.214.19](https://github.com/MustardSeedNetworks/seed/compare/v0.214.18...v0.214.19) (2026-09-07)
+
+
+### Bug Fixes
+
+* **ui:** the topology, alerts and polling targets pages rendered English under es ([#2492](https://github.com/MustardSeedNetworks/seed/issues/2492)) ([e4ba725](https://github.com/MustardSeedNetworks/seed/commit/e4ba7255a44fdedca634633f037ecd8af1ecf1f6))
+
 ## [0.214.18](https://github.com/MustardSeedNetworks/seed/compare/v0.214.17...v0.214.18) (2026-09-07)
 
 
