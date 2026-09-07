@@ -53,6 +53,21 @@ interface CollapsibleSectionProps {
   /** Use compact styling for inside cards */
   variant?: 'default' | 'compact';
   /**
+   * Why this section is read-only, or `undefined` when it is writable (#1254).
+   *
+   * When set, the body renders inside a disabled `<fieldset>` and the reason
+   * appears in the header. The header button stays outside that fieldset, so a
+   * viewer can still open the section and read it — the failure of both the
+   * `RequireRole` wrapper this replaces (which showed a viewer nothing) and of
+   * wrapping the whole section (which would lock the section shut).
+   *
+   * Only for a section whose every control writes. A section that also carries
+   * a read action — a Refresh, a download — gates its controls individually on
+   * `useRole().canWrite` instead, the way ApiTokensSettings does, so the read
+   * stays available.
+   */
+  readOnlyReason?: string;
+  /**
    * Stable test selector for E2E. Landed on the root `<section>` so the
    * section is queryable whether collapsed or expanded — call sites that
    * previously relied on `getByText(/title-substring/i)` were i18n-unsafe
@@ -72,11 +87,17 @@ export function CollapsibleSection({
   count,
   status,
   variant = 'default',
+  readOnlyReason,
   'data-testid': dataTestId,
 }: CollapsibleSectionProps): React.JSX.Element {
   const [isOpen, setIsOpen] = useState(defaultOpen);
 
   const isCompact = variant === 'compact';
+  const bodyClass = cn(
+    isCompact
+      ? cn(spacing.indent, spacing.padding.bottom.inline, 'stack-xs')
+      : cn(spacing.pad.sm, 'border-t border-surface-border bg-surface-raised stack'),
+  );
 
   return (
     <section
@@ -122,17 +143,22 @@ export function CollapsibleSection({
             ) : null}
           </span>
         </div>
+        {readOnlyReason !== undefined ? (
+          <span className={cn('caption text-text-muted', spacing.margin.left.tight)}>
+            {readOnlyReason}
+          </span>
+        ) : null}
       </button>
-      {isOpen ? (
-        <div
-          className={cn(
-            isCompact
-              ? cn(spacing.indent, spacing.padding.bottom.inline, 'stack-xs')
-              : cn(spacing.pad.sm, 'border-t border-surface-border bg-surface-raised stack'),
-          )}
-        >
+      {isOpen && readOnlyReason === undefined ? <div className={bodyClass}>{children}</div> : null}
+      {isOpen && readOnlyReason !== undefined ? (
+        // min-w-0 undoes the UA `min-inline-size: min-content` on fieldset,
+        // which otherwise makes a long child overflow its flex parent. Nothing
+        // else is needed: Tailwind preflight already zeroes the UA border,
+        // margin and padding, and `border-0` here would defeat the body's own
+        // `border-t` through tailwind-merge.
+        <fieldset disabled className={cn(bodyClass, 'min-w-0')}>
           {children}
-        </div>
+        </fieldset>
       ) : null}
     </section>
   );

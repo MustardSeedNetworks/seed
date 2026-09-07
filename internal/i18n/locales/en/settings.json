@@ -25,6 +25,7 @@
     "enabled": "Enabled",
     "hideHelp": "Hide help",
     "needKey": "Requires an API key",
+    "readOnly": "Read-only — operator role required to change these settings.",
     "refresh": "Refresh",
     "runOnFab": "Run on fabric",
     "runOnFabDesc": "Run this card against every host on the fabric, not just the gateway.",
