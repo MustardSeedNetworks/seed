@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"log/slog"
+	"slices"
 	"sync"
 	"time"
 
@@ -63,6 +64,10 @@ type Poller struct {
 	started bool
 	stopped bool
 	jobIDs  []string
+	// registered mirrors what the scheduler holds, keyed by job ID, so
+	// Reload can diff the table against the live set instead of
+	// re-registering everything on every API change.
+	registered map[string]*polling.Target
 
 	statusMu      sync.Mutex
 	lastChainAt   time.Time
@@ -178,10 +183,9 @@ func (p *Poller) Start(ctx context.Context) error {
 		return err
 	}
 
+	p.registered = make(map[string]*polling.Target, len(targets))
 	for _, t := range targets {
-		job := &targetJob{poller: p, target: t}
-		p.scheduler.Register(job)
-		p.jobIDs = append(p.jobIDs, job.ID())
+		p.registerLocked(t)
 	}
 
 	p.scheduler.Start(ctx)
@@ -191,6 +195,84 @@ func (p *Poller) Start(ctx context.Context) error {
 		"collectors", len(p.collectors),
 	)
 	return nil
+}
+
+// Reload re-reads the enabled targets and brings the scheduler in line:
+// targets that appeared are registered, targets that disappeared or were
+// disabled are unregistered, and targets whose polling identity changed
+// (address, version, credentials, interval, chain) are re-registered so
+// the next run uses the new values. Before this, the poller read the
+// table once at Start and an operator who added a target through the API
+// waited for a restart that nothing told them was needed (seed#2452).
+// A poller that has not started has nothing to reconcile.
+func (p *Poller) Reload(ctx context.Context) error {
+	p.runMu.Lock()
+	defer p.runMu.Unlock()
+
+	if !p.started {
+		return nil
+	}
+
+	targets, err := p.storage.ListEnabled(ctx)
+	if err != nil {
+		return err
+	}
+
+	desired := make(map[string]*polling.Target, len(targets))
+	for _, t := range targets {
+		desired[targetJobID(t.ID)] = t
+	}
+
+	added, removed, changed := 0, 0, 0
+	for id, current := range p.registered {
+		want, ok := desired[id]
+		switch {
+		case !ok:
+			p.unregisterLocked(id)
+			removed++
+		case pollingIdentityChanged(current, want):
+			p.unregisterLocked(id)
+			p.registerLocked(want)
+			changed++
+		}
+	}
+	for id, t := range desired {
+		if _, ok := p.registered[id]; !ok {
+			p.registerLocked(t)
+			added++
+		}
+	}
+
+	p.logger.InfoContext(ctx, "snmp poller reloaded targets",
+		"registered", len(p.registered), "added", added, "removed", removed, "changed", changed)
+	return nil
+}
+
+func targetJobID(targetID string) string {
+	return "snmp:" + targetID
+}
+
+func (p *Poller) registerLocked(t *polling.Target) {
+	job := &targetJob{poller: p, target: t}
+	p.scheduler.Register(job)
+	p.jobIDs = append(p.jobIDs, job.ID())
+	p.registered[job.ID()] = t
+}
+
+func (p *Poller) unregisterLocked(id string) {
+	p.scheduler.Unregister(id)
+	delete(p.registered, id)
+	p.jobIDs = slices.DeleteFunc(p.jobIDs, func(candidate string) bool { return candidate == id })
+}
+
+// pollingIdentityChanged reports whether an update to a target changes
+// what or how the job polls. Name and status columns do not.
+func pollingIdentityChanged(a, b *polling.Target) bool {
+	return a.IPAddress != b.IPAddress ||
+		a.SNMPVersion != b.SNMPVersion ||
+		a.CredentialsID != b.CredentialsID ||
+		a.PollIntervalSec != b.PollIntervalSec ||
+		!slices.Equal(a.CollectorChain, b.CollectorChain)
 }
 
 // Stop unregisters all jobs and stops the scheduler.
@@ -206,6 +288,7 @@ func (p *Poller) Stop(ctx context.Context) error {
 		p.scheduler.Unregister(id)
 	}
 	p.jobIDs = nil
+	p.registered = nil
 	p.scheduler.Stop()
 	p.started = false
 	p.stopped = true
@@ -324,7 +407,7 @@ type targetJob struct {
 
 // ID is the scheduler key for this target.
 func (j *targetJob) ID() string {
-	return "snmp:" + j.target.ID
+	return targetJobID(j.target.ID)
 }
 
 // NextRun returns now on first call, then lastRun + interval.

@@ -64,8 +64,7 @@ import (
 	"github.com/MustardSeedNetworks/seed/internal/platform/events"
 	"github.com/MustardSeedNetworks/seed/internal/platform/jobs"
 	"github.com/MustardSeedNetworks/seed/internal/polling/credentials"
-	snmporchestrator "github.com/MustardSeedNetworks/seed/internal/polling/snmp/orchestrator"
-	"github.com/MustardSeedNetworks/seed/internal/polling/snmp/snmpclient"
+	snmppoller "github.com/MustardSeedNetworks/seed/internal/polling/snmp"
 	"github.com/MustardSeedNetworks/seed/internal/polling/targets"
 	"github.com/MustardSeedNetworks/seed/internal/probe"
 	probeanomaly "github.com/MustardSeedNetworks/seed/internal/probe/anomaly"
@@ -276,6 +275,7 @@ type Server struct {
 	networkProblems    *problems.Service           // Network problem-detection use-case (ADR-0020)
 	topologyQueries    *topology.Queries           // Topology read use-case (ADR-0020)
 	pollingTargets     *targets.Service            // Polling-targets CRUD use-case (ADR-0020)
+	snmpPoller         *snmppoller.Poller          // Live poller, reloaded when targets change (seed#2452)
 	deviceCredentials  *credentials.Service        // Device-credential CRUD use-case (#1799)
 	alertInbox         *inbox.Service              // Alert-inbox (list/ack/resolve) use-case (ADR-0020)
 	configBackups      *backups.Service            // Config backup/restore use-case (ADR-0020)
@@ -635,55 +635,6 @@ func (s *Server) initListeners(db *database.DB) {
 // the default-cadence targets and is plenty fast for the 60s
 // cadence operators typically use on high-priority devices.
 const snmpPollerSchedulerTick = 5 * time.Second
-
-// initSNMPPoller wires the orchestrator-built [*snmp.Poller] into
-// the engine registry. Three things have to be true for the poller
-// to do useful work:
-//
-//  1. The orchestrator needs a [snmp.ClientFactory] — we supply
-//     the production gosnmp-backed one from internal/polling/snmp/
-//     snmpclient.
-//  2. There needs to be at least one row in polling_targets —
-//     V1.0 operators populate this via the A5.3 CRUD API. With
-//     zero rows the poller still starts (idempotent) but does
-//     no work.
-//  3. The scheduler needs a tick interval; snmpPollerSchedulerTick
-//     defaults to 5s — see the doc comment for the rationale.
-//
-// V1.0 NMS expansion — Stage A5.4.
-func (s *Server) initSNMPPoller(db *database.DB) {
-	logger := logging.GetLogger()
-	sched := scheduler.New(snmpPollerSchedulerTick)
-	factory := snmpclient.NewFactory(snmpclient.Options{})
-	// Without a config there is no keyring, so no target could be authenticated.
-	// Skip the poller rather than registering one that refuses every target.
-	if s.config == nil {
-		logger.Warn("snmp poller init skipped: no config, so no credential keyring")
-		return
-	}
-	keyring, err := s.config.CredentialKeyring()
-	if err != nil {
-		logger.Warn("snmp poller init failed: credential keyring unavailable", "error", err)
-		return
-	}
-
-	poller, err := snmporchestrator.Build(snmporchestrator.Config{
-		Targets:       db.PollingTargets(),
-		Observations:  db.SNMPObservations(),
-		Scheduler:     sched,
-		ClientFactory: factory,
-		Logger:        logger,
-		Credentials:   db.DeviceCredentials(),
-		Decrypter:     keyring,
-	})
-	if err != nil {
-		logger.Warn("snmp poller init failed", "error", err)
-		return
-	}
-	if regErr := s.registerEngineIfLicensed(poller); regErr != nil {
-		logger.Warn("snmp poller registry registration failed", "error", regErr)
-	}
-}
 
 // initTopologyReconcilers wires the four Stage A4 reconcilers
 // (sysinfo, iftable, edge, arp) into the engine registry. They
