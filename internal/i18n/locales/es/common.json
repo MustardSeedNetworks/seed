@@ -31,7 +31,8 @@
     "signInWithGoogle": "Iniciar sesión con Google",
     "signInWithMicrosoft": "Iniciar sesión con Microsoft",
     "signInWithGitHub": "Iniciar sesión con GitHub",
-    "copied": "Copiado"
+    "copied": "Copiado",
+    "edit": "Editar"
   },
   "or": "o",
   "status": {
@@ -60,7 +61,10 @@
     "unknown": "Desconocido",
     "unavailable": "No disponible",
     "clickToReconnect": "Haga clic para reconectar",
-    "tapToReconnect": "Toque para reconectar"
+    "tapToReconnect": "Toque para reconectar",
+    "notApplicable": "n/d",
+    "yes": "sí",
+    "no": "no"
   },
   "labels": {
     "username": "Usuario",

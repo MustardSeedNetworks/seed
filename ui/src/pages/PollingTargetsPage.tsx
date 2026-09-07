@@ -68,7 +68,7 @@ function matchesFacet(target: PollingTarget, facet: Facet): boolean {
 }
 
 export function PollingTargetsPage(): JSX.Element {
-  const { t } = useTranslation('pages');
+  const { t } = useTranslation(['pages', 'common']);
   const { canWrite } = useRole();
   const { targets, loading, error, create, update, remove } = usePollingTargets();
   const [editing, setEditing] = useState<PollingTarget | null>(null);
@@ -102,7 +102,9 @@ export function PollingTargetsPage(): JSX.Element {
 
       <div className="flex-between">
         <p className="body-small">
-          {loading ? 'Loading…' : `${targets.length} target${targets.length === 1 ? '' : 's'}`}
+          {loading
+            ? t('common:status.loading')
+            : t('pollingTargets.targetCount', { count: targets.length })}
         </p>
         <button
           type="button"
@@ -124,38 +126,34 @@ export function PollingTargetsPage(): JSX.Element {
               type="search"
               value={query}
               onChange={(e): void => setQuery(e.target.value)}
-              placeholder={`Filter ${targets.length} targets`}
-              aria-label="Filter polling targets"
+              placeholder={t('pollingTargets.filterPlaceholder', { count: targets.length })}
+              aria-label={t('pollingTargets.filterLabel')}
               className="w-full rounded-lg border border-surface-border bg-surface-sunken px-3 py-2 text-sm text-text-primary placeholder:text-text-muted focus:border-brand-primary focus:outline-none"
             />
           }
           chips={
             <>
               <FilterChip
-                label="All"
+                label={t('pollingTargets.facetAll')}
                 count={targets.length}
                 active={facet === 'all'}
                 onClick={(): void => setFacet('all')}
               />
               <FilterChip
-                label="Failing"
+                label={t('pollingTargets.facetFailing')}
                 count={targets.filter((target) => targetState(target) === 'crit').length}
                 active={facet === 'failing'}
                 onClick={(): void => setFacet('failing')}
               />
               <FilterChip
-                label="Paused"
+                label={t('pollingTargets.facetPaused')}
                 count={targets.filter((target) => !target.enabled).length}
                 active={facet === 'paused'}
                 onClick={(): void => setFacet('paused')}
               />
             </>
           }
-          empty={
-            targets.length === 0
-              ? 'No polling targets yet. Add one to start polling a device.'
-              : 'No target matches this filter.'
-          }
+          empty={targets.length === 0 ? t('pollingTargets.noTargets') : t('pollingTargets.noMatch')}
         >
           {shown.map((target) => (
             <RecordRow
@@ -173,9 +171,9 @@ export function PollingTargetsPage(): JSX.Element {
 
         {selected ? (
           <DetailPane
-            eyebrow="Selected target"
+            eyebrow={t('pollingTargets.selectedTarget')}
             title={selected.name}
-            meta={`${selected.ipAddress} · SNMP ${selected.snmpVersion} · every ${selected.pollIntervalSeconds}s`}
+            meta={`${selected.ipAddress} · SNMP ${selected.snmpVersion} · ${t('pollingTargets.everySeconds', { seconds: selected.pollIntervalSeconds })}`}
             status={<TargetStatus target={selected} />}
             actions={
               <>
@@ -187,12 +185,14 @@ export function PollingTargetsPage(): JSX.Element {
                   data-testid="target-edit"
                   className="rounded-md border border-surface-border px-3 py-2 text-sm text-text-primary hover:bg-surface-hover disabled:cursor-not-allowed disabled:opacity-50"
                 >
-                  Edit
+                  {t('common:buttons.edit')}
                 </button>
                 <button
                   type="button"
                   onClick={(): void => {
-                    if (window.confirm(`Delete polling target "${selected.name}"?`)) {
+                    if (
+                      window.confirm(t('pollingTargets.confirmDelete', { name: selected.name }))
+                    ) {
                       void remove(selected.id);
                       setSelectedId(null);
                     }
@@ -202,23 +202,29 @@ export function PollingTargetsPage(): JSX.Element {
                   data-testid="target-delete"
                   className="rounded-md px-3 py-2 text-sm text-status-error hover:bg-status-error/10 disabled:cursor-not-allowed disabled:opacity-50"
                 >
-                  Delete
+                  {t('common:buttons.delete')}
                 </button>
               </>
             }
           >
             <DetailFacts
               items={[
-                { label: 'Poll interval', value: `${selected.pollIntervalSeconds}s` },
-                { label: 'Enabled', value: selected.enabled ? 'yes' : 'no' },
                 {
-                  label: 'Last poll',
-                  value: selected.lastPolledAt
-                    ? new Date(selected.lastPolledAt).toLocaleString()
-                    : 'never',
+                  label: t('pollingTargets.labelInterval'),
+                  value: `${selected.pollIntervalSeconds}s`,
                 },
                 {
-                  label: 'Last status',
+                  label: t('pollingTargets.labelEnabled'),
+                  value: selected.enabled ? t('common:status.yes') : t('common:status.no'),
+                },
+                {
+                  label: t('pollingTargets.labelLastPoll'),
+                  value: selected.lastPolledAt
+                    ? new Date(selected.lastPolledAt).toLocaleString()
+                    : t('common:status.never'),
+                },
+                {
+                  label: t('pollingTargets.labelLastStatus'),
                   value: selected.lastError || selected.lastStatus || '—',
                   prose: Boolean(selected.lastError),
                 },
@@ -229,8 +235,8 @@ export function PollingTargetsPage(): JSX.Element {
         ) : (
           <DetailEmpty>
             {targets.length === 0
-              ? 'Add a target to see its polling detail here.'
-              : 'Select a target to see its configuration and collector chain.'}
+              ? t('pollingTargets.emptyAddPrompt')
+              : t('pollingTargets.emptySelectPrompt')}
           </DetailEmpty>
         )}
       </ListDetail>
@@ -264,19 +270,19 @@ export function PollingTargetsPage(): JSX.Element {
 
 /** The record's own state, spelled out rather than left to the colour bar. */
 function TargetStatus({ target }: { target: PollingTarget }): JSX.Element {
-  const { t } = useTranslation('pages');
+  const { t } = useTranslation(['pages', 'common']);
   const state = targetState(target);
   if (state === 'crit') {
     return (
       <span className="rounded-lg border border-status-error/40 bg-status-error/10 px-3 py-1.5 text-xs font-semibold text-status-error">
-        {target.lastError || 'Last poll failed'}
+        {target.lastError || t('pollingTargets.lastPollFailed')}
       </span>
     );
   }
   if (state === 'unknown') {
     return (
       <span className="rounded-lg border border-surface-border bg-surface-sunken px-3 py-1.5 text-xs font-semibold text-text-muted">
-        {target.enabled ? 'No poll completed yet' : 'Polling paused'}
+        {target.enabled ? t('pollingTargets.noPollYet') : t('pollingTargets.pollingPaused')}
       </span>
     );
   }
@@ -289,7 +295,7 @@ function TargetStatus({ target }: { target: PollingTarget }): JSX.Element {
 
 /** The collector chain is the sub-table the archetype calls for. */
 function CollectorChain({ chain }: { chain: string[] }): JSX.Element {
-  const { t } = useTranslation('pages');
+  const { t } = useTranslation(['pages', 'common']);
   if (chain.length === 0) {
     return (
       <div className="stack-xs">
