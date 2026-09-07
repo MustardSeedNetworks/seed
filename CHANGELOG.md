@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.214.9](https://github.com/MustardSeedNetworks/seed/compare/v0.214.8...v0.214.9) (2026-09-07)
+
+
+### Bug Fixes
+
+* **ui:** let a viewer read the settings sections without mutating them ([#2468](https://github.com/MustardSeedNetworks/seed/issues/2468)) ([6de3c78](https://github.com/MustardSeedNetworks/seed/commit/6de3c784e93ed43009bc0f2f5eeb7ec5f12cba74)), closes [#2467](https://github.com/MustardSeedNetworks/seed/issues/2467)
+
 ## [0.214.8](https://github.com/MustardSeedNetworks/seed/compare/v0.214.7...v0.214.8) (2026-09-07)
 
 
