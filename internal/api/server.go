@@ -64,6 +64,7 @@ import (
 	"github.com/MustardSeedNetworks/seed/internal/platform/events"
 	"github.com/MustardSeedNetworks/seed/internal/platform/jobs"
 	"github.com/MustardSeedNetworks/seed/internal/polling/credentials"
+	snmppoller "github.com/MustardSeedNetworks/seed/internal/polling/snmp"
 	snmporchestrator "github.com/MustardSeedNetworks/seed/internal/polling/snmp/orchestrator"
 	"github.com/MustardSeedNetworks/seed/internal/polling/snmp/snmpclient"
 	"github.com/MustardSeedNetworks/seed/internal/polling/targets"
@@ -276,6 +277,7 @@ type Server struct {
 	networkProblems    *problems.Service           // Network problem-detection use-case (ADR-0020)
 	topologyQueries    *topology.Queries           // Topology read use-case (ADR-0020)
 	pollingTargets     *targets.Service            // Polling-targets CRUD use-case (ADR-0020)
+	snmpPoller         *snmppoller.Poller          // Live poller, reloaded when targets change (seed#2452)
 	deviceCredentials  *credentials.Service        // Device-credential CRUD use-case (#1799)
 	alertInbox         *inbox.Service              // Alert-inbox (list/ack/resolve) use-case (ADR-0020)
 	configBackups      *backups.Service            // Config backup/restore use-case (ADR-0020)
@@ -682,6 +684,20 @@ func (s *Server) initSNMPPoller(db *database.DB) {
 	}
 	if regErr := s.registerEngineIfLicensed(poller); regErr != nil {
 		logger.Warn("snmp poller registry registration failed", "error", regErr)
+		return
+	}
+	s.snmpPoller = poller
+}
+
+// reloadSNMPPoller asks the live poller to re-read polling_targets after a
+// create, update or delete. A server without a poller (Free tier, no
+// keyring, tests) has nothing to reload.
+func (s *Server) reloadSNMPPoller(ctx context.Context) {
+	if s.snmpPoller == nil {
+		return
+	}
+	if err := s.snmpPoller.Reload(ctx); err != nil {
+		logging.FromContext(ctx).WarnContext(ctx, "snmp poller reload failed", "error", err)
 	}
 }
 
