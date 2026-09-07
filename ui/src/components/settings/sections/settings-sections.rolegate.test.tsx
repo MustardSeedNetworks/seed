@@ -20,10 +20,13 @@ import {
   DEFAULT_CABLE_TEST_SETTINGS,
   DEFAULT_CARD_SETTINGS,
   DEFAULT_DISPLAY_OPTIONS,
+  DEFAULT_IPERF_SETTINGS,
   DEFAULT_LINK_SETTINGS,
   DEFAULT_NETWORK_DISCOVERY_SETTINGS,
   DEFAULT_SNMP_SETTINGS,
   DEFAULT_TESTS_SETTINGS,
+  DEFAULT_THRESHOLDS,
+  DEFAULT_VULNERABILITY_SETTINGS,
   type IpSettings,
 } from '../../../types/settings';
 import { SettingsDrawerNetworkSection } from '../SettingsDrawerNetworkSection';
@@ -35,7 +38,10 @@ import { DnsSettings } from './DnsSettings';
 import { HealthChecksSettings } from './HealthChecksSettings';
 import { InterfacesSettings } from './InterfacesSettings';
 import { LinkSettings } from './LinkSettings';
+import { PerformanceSettings } from './PerformanceSettings';
 import { SsoSettings } from './SsoSettings';
+import { ThresholdsSettings } from './ThresholdsSettings';
+import { VulnerabilitySettings } from './VulnerabilitySettings';
 
 const READ_ONLY = 'Read-only — operator role required to change these settings.';
 
@@ -174,6 +180,17 @@ const SECTIONS: { name: string; header: RegExp; render: () => ReactElement }[] =
     render: () => <ConfigBackupsSection />,
   },
   { name: 'InterfacesSettings', header: /interface/i, render: () => <InterfacesSettings /> },
+  {
+    name: 'ThresholdsSettings',
+    header: /thresholds/i,
+    render: () => (
+      <ThresholdsSettings
+        thresholds={DEFAULT_THRESHOLDS}
+        setThresholds={noop}
+        thresholdsStatus="idle"
+      />
+    ),
+  },
 ];
 
 function asUser(role: CurrentUser['role']): void {
@@ -208,6 +225,9 @@ const RAW_GET_BODIES: Record<string, unknown> = {
     backups: [{ name: 'b1', createdAt: '2026-09-07T00:00:00Z', size: 1 }],
   },
   '/api/v1/config/version': { current: '1', needsMigration: false },
+  // Without a status body the vulnerability banner never renders, and with it
+  // the Refresh button that is the read half of that case.
+  '/api/v1/security/vulnerabilities/status': { running: false, lastScan: null },
 };
 
 beforeEach(() => {
@@ -322,6 +342,45 @@ const MIXED_SECTIONS: {
         snmpStatus="idle"
         cardSettings={DEFAULT_CARD_SETTINGS}
         updateCardSettings={noop}
+      />
+    ),
+  },
+  {
+    name: 'PerformanceSettings',
+    header: /^performance$/i,
+    // A viewer may still scan the LAN for public iperf servers: the button is
+    // a read. It sits between the server-address input and the suggestion
+    // chips, both writes, which is why this section gates per group.
+    readControl: /find iperf hosts/i,
+    render: () => (
+      <PerformanceSettings
+        testsSettings={DEFAULT_TESTS_SETTINGS}
+        setTestsSettings={noop}
+        iperfSettings={DEFAULT_IPERF_SETTINGS}
+        setIperfSettings={noop}
+        iperfStatus="idle"
+        iperfSuggestions={[{ host: '10.0.0.5', hostname: 'lab-iperf' }]}
+        iperfSuggestionsStatus="idle"
+        iperfSuggestionsError={null}
+        fetchIperfSuggestions={noop}
+        cardSettings={DEFAULT_CARD_SETTINGS}
+        updateCardSettings={noop}
+      />
+    ),
+  },
+  {
+    name: 'VulnerabilitySettings',
+    header: /vulnerability/i,
+    // Two reads: the scanner-status Refresh, and the API-key help toggle that
+    // sits directly above the key input. The second is why the NVD group gates
+    // per control rather than behind a fieldset.
+    readControl: /^refresh$/i,
+    alsoUsable: [/requires an api key/i],
+    render: () => (
+      <VulnerabilitySettings
+        settings={DEFAULT_VULNERABILITY_SETTINGS}
+        setSettings={noop}
+        status="idle"
       />
     ),
   },
