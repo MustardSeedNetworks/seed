@@ -572,19 +572,19 @@ export const SettingsDrawer: React.MemoExoticComponent<
           ref={scrollRef}
         >
           {/* #1254: a viewer sees one explanation instead of the panels.
-              The disabled-fieldset wrap this replaces was the right idea at
-              the wrong layer: it made every control read-only, but the data
-              behind them never arrives. Eight of the drawer's ten loader endpoints are
-              registered minRole: op and gate GET, not just the writes --
-              /settings, /settings/link, /settings/cable, /wifi/wifi/settings,
-              /telemetry/{ipconfig,probes,snmp}/settings and
-              /security/devices/settings. So a viewer got a read-only view of
-              nothing: a banner over fifteen empty or errored sections.
+              The premise of that -- "eight of the drawer's ten loaders are
+              minRole: op and gate GET" -- is false. minRole is applied through
+              writeGated, which passes GET for every role, and
+              TestViewerCanReadEveryRoleGatedRoute walks every one of them as a
+              viewer: all 200. The data does arrive, so there is a read-only
+              view to render, which is the owner's 2026-09-04 decision.
 
-              Appearance and display are no exception -- they persist through
-              PATCH /profiles/{id}/settings, which is operator-gated too. There
-              is no subset of this drawer a viewer can actually read, so there
-              is nothing to render read-only. */}
+              Coming off in the last slice of S1-8b. It stays until every
+              section is read-only for a viewer, because unwrapping earlier
+              would put an ungated Save back in front of one -- the defect
+              #2464 fixed. A converted section passes readOnlyReason to
+              CollapsibleSection (see its prop docs); one with a read action of
+              its own gates per control, the way ApiTokensSettings does. */}
           <RequireRole min="operator" fallback={<ViewerSettingsNotice />}>
             {/* Settings sections ordered to match dashboard card order */}
             {/* Link Settings - always visible for ethernet interface config */}

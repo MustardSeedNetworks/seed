@@ -28,6 +28,7 @@
 import type React from 'react';
 import { memo } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useRole } from '../../../contexts/RoleContext';
 import i18n, { languages } from '../../../i18n';
 import { cn, icon as iconTokens, layout, radius, spacing } from '../../../styles/theme';
 import { CollapsibleSection } from '../../ui/CollapsibleSection';
@@ -54,6 +55,8 @@ export const AppearanceSettings: React.NamedExoticComponent<AppearanceSettingsPr
     setUnitSystem,
   }: AppearanceSettingsProps): React.ReactElement {
     const { t } = useTranslation('settings');
+    const { canWrite } = useRole();
+    const readOnlyReason = canWrite ? undefined : t('common.readOnly');
     // Normalize language code (e.g., "en-US" -> "en") and validate against supported languages
     const detectedLanguage = i18n.language?.split('-')[0] || 'en';
     const supportedCodes = languages.map((l) => l.code);
@@ -69,6 +72,7 @@ export const AppearanceSettings: React.NamedExoticComponent<AppearanceSettingsPr
 
     return (
       <CollapsibleSection
+        readOnlyReason={readOnlyReason}
         data-testid="appearance-settings-section"
         title={
           <div className={layout.inline.default}>

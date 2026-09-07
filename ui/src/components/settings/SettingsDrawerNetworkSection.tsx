@@ -10,6 +10,7 @@
 import type React from 'react';
 import type { JSX } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useRole } from '../../contexts/RoleContext';
 import {
   button,
   cn,
@@ -53,9 +54,12 @@ export function SettingsDrawerNetworkSection({
   isValidIp,
 }: SettingsDrawerNetworkSectionProps): JSX.Element {
   const { t } = useTranslation('settings');
+  const { canWrite } = useRole();
+  const readOnlyReason = canWrite ? undefined : t('common.readOnly');
 
   return (
     <CollapsibleSection
+      readOnlyReason={readOnlyReason}
       title={
         <div className={cn('flex items-center', spacing.gap.compact)}>
           <Network className={iconTokens.size.sm} />

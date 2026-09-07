@@ -19,6 +19,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { api } from '../../../api/client';
 import { useLicense } from '../../../contexts/LicenseContext';
+import { useRole } from '../../../contexts/RoleContext';
 import { Button } from '../../ui/Button';
 import { CollapsibleSection } from '../../ui/CollapsibleSection';
 import { Input } from '../../ui/Input';
@@ -60,6 +61,8 @@ function defaultRedirectUrl(): string {
 
 export function SsoSettings(): React.ReactElement {
   const { t } = useTranslation(['settings', 'errors', 'common']);
+  const { canWrite } = useRole();
+  const readOnlyReason = canWrite ? undefined : t('settings:common.readOnly');
   const { status: licenseStatus } = useLicense();
 
   const [providers, setProviders] = useState<Record<ProviderName, ProviderConfig>>(() => ({
@@ -137,6 +140,7 @@ export function SsoSettings(): React.ReactElement {
 
   return (
     <CollapsibleSection
+      readOnlyReason={readOnlyReason}
       title={
         <div className="inline-flex items-center gap-compact">
           <Key className="w-4 h-4" />

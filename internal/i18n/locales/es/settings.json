@@ -25,6 +25,7 @@
     "enabled": "Habilitado",
     "hideHelp": "Ocultar ayuda",
     "needKey": "Requiere una clave API",
+    "readOnly": "Solo lectura: se requiere el rol de operador para cambiar esta configuración.",
     "refresh": "Actualizar",
     "runOnFab": "Ejecutar en la fábrica",
     "runOnFabDesc": "Ejecutar esta tarjeta en cada host de la fábrica, no solo en la puerta de enlace.",

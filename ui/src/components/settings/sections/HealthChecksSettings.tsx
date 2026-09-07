@@ -34,6 +34,7 @@
 import type React from 'react';
 import { memo } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useRole } from '../../../contexts/RoleContext';
 import { useArrayItem } from '../../../hooks/useArrayItem';
 import { cn, icon as iconTokens, input, layout, radius, spacing } from '../../../styles/theme';
 import type { CardSettings, SaveStatus, TestsSettings } from '../../../types/settings';
@@ -62,6 +63,8 @@ export const HealthChecksSettings: React.NamedExoticComponent<HealthChecksSettin
     updateCardSettings,
   }: HealthChecksSettingsProps) {
     const { t } = useTranslation('settings');
+    const { canWrite } = useRole();
+    const readOnlyReason = canWrite ? undefined : t('common.readOnly');
 
     // Ping target CRUD helpers
     const {
@@ -113,6 +116,7 @@ export const HealthChecksSettings: React.NamedExoticComponent<HealthChecksSettin
 
     return (
       <CollapsibleSection
+        readOnlyReason={readOnlyReason}
         title={
           <div className={layout.inline.default}>
             <HeartPulse className={iconTokens.size.sm} />

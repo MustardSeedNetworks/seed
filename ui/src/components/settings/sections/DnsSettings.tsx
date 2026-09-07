@@ -30,6 +30,7 @@
 import type React from 'react';
 import { memo, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useRole } from '../../../contexts/RoleContext';
 import {
   cn,
   icon as iconTokens,
@@ -64,6 +65,8 @@ export const DnsSettings: React.NamedExoticComponent<DnsSettingsProps> = memo(
     updateCardSettings,
   }: DnsSettingsProps): React.ReactElement {
     const { t } = useTranslation('settings');
+    const { canWrite } = useRole();
+    const readOnlyReason = canWrite ? undefined : t('common.readOnly');
 
     const addDnsServer = useCallback((): void => {
       setTestsSettings((prev) => ({
@@ -94,6 +97,7 @@ export const DnsSettings: React.NamedExoticComponent<DnsSettingsProps> = memo(
 
     return (
       <CollapsibleSection
+        readOnlyReason={readOnlyReason}
         data-testid="dns-settings-section"
         title={
           <div className={layout.inline.default}>

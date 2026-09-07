@@ -18,6 +18,7 @@
 import type React from 'react';
 import { memo } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useRole } from '../../../contexts/RoleContext';
 import { cn, icon as iconTokens, layout, radius, spacing } from '../../../styles/theme';
 import type {
   CardSettings,
@@ -73,6 +74,8 @@ export const LinkSettings: React.NamedExoticComponent<LinkSettingsProps> = memo(
     updateCardSettings,
   }: LinkSettingsProps): React.ReactElement {
     const { t } = useTranslation('settings');
+    const { canWrite } = useRole();
+    const readOnlyReason = canWrite ? undefined : t('common.readOnly');
 
     // Handle mode change
     const handleModeChange = (mode: string): void => {
@@ -87,6 +90,7 @@ export const LinkSettings: React.NamedExoticComponent<LinkSettingsProps> = memo(
 
     return (
       <CollapsibleSection
+        readOnlyReason={readOnlyReason}
         title={
           <div className={layout.inline.default}>
             <PlugZap className={iconTokens.size.sm} />

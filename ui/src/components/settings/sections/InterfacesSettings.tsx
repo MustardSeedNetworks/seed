@@ -19,6 +19,7 @@ import { useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useLicense } from '../../../contexts/LicenseContext';
 import { useProfileContext } from '../../../contexts/profileContext';
+import { useRole } from '../../../contexts/RoleContext';
 import { Button } from '../../ui/Button';
 import { CollapsibleSection } from '../../ui/CollapsibleSection';
 import { Input } from '../../ui/Input';
@@ -28,6 +29,8 @@ type IfaceKind = 'ethernet' | 'wifi';
 
 export function InterfacesSettings(): React.ReactElement {
   const { t } = useTranslation(['settings', 'errors']);
+  const { canWrite } = useRole();
+  const readOnlyReason = canWrite ? undefined : t('settings:common.readOnly');
   const { status: licenseStatus } = useLicense();
   const {
     getAllEthernetInterfaces,
@@ -109,6 +112,7 @@ export function InterfacesSettings(): React.ReactElement {
 
   return (
     <CollapsibleSection
+      readOnlyReason={readOnlyReason}
       title={
         <div className="inline-flex items-center gap-compact">
           <Wifi className="w-4 h-4" />
