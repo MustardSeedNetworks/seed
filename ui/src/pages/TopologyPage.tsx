@@ -16,6 +16,7 @@
  */
 
 import { Activity, Cable, RefreshCw } from 'lucide-react';
+import type { TFunction } from 'i18next';
 import { type JSX, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useTopologyNode, useTopologyNodes } from '../hooks/useTopology';
@@ -46,6 +47,7 @@ interface NodeListProps {
 }
 
 function NodeList({ selectedID, onSelect }: NodeListProps): JSX.Element {
+  const { t } = useTranslation('pages');
   const { nodes, loading, error, refresh } = useTopologyNodes();
 
   return (
@@ -53,7 +55,7 @@ function NodeList({ selectedID, onSelect }: NodeListProps): JSX.Element {
       filter={
         <div className="flex-between">
           <span className="kicker">
-            {loading ? 'Loading…' : `${nodes.length} node${nodes.length === 1 ? '' : 's'}`}
+            {loading ? t('common:status.loading') : t('topology.nodeCount', { count: nodes.length })}
           </span>
           <button
             type="button"
@@ -62,7 +64,7 @@ function NodeList({ selectedID, onSelect }: NodeListProps): JSX.Element {
             }}
             // Icon-only, so the icon's 16px was the whole target (#244).
             className="target flex-center text-text-muted hover:text-text-primary"
-            aria-label="Refresh"
+            aria-label={t('common:buttons.refresh')}
           >
             <RefreshCw className="h-4 w-4" />
           </button>
@@ -72,7 +74,7 @@ function NodeList({ selectedID, onSelect }: NodeListProps): JSX.Element {
         error ? (
           <span className="text-status-error">{error}</span>
         ) : (
-          'No nodes yet. Add a polling target and wait a poll cycle.'
+          t('topology.noNodes')
         )
       }
     >
@@ -86,7 +88,7 @@ function NodeList({ selectedID, onSelect }: NodeListProps): JSX.Element {
               // operator matches against other screens character by character.
               name={n.displayName || n.sysName}
               meta={n.primaryIp || undefined}
-              value={n.deviceType || 'n/a'}
+              value={n.deviceType || t('common:status.notApplicable')}
               // A node the reconcilers have never dated is not healthy or
               // unhealthy; it is unmeasured, and the bar says so rather than
               // showing the green that "seen" would imply.
@@ -126,9 +128,10 @@ function NodeDetail({ id, onClear }: NodeDetailProps): JSX.Element {
   }
 
   const { node } = detail;
+  const na = t('common:status.notApplicable');
   return (
     <DetailPane
-      eyebrow="Selected node"
+      eyebrow={t('topology.selectedNode')}
       title={node.displayName || node.sysName}
       meta={node.id}
       actions={
@@ -137,7 +140,7 @@ function NodeDetail({ id, onClear }: NodeDetailProps): JSX.Element {
           onClick={onClear}
           className="text-xs text-text-muted hover:text-text-primary"
         >
-          Clear
+          {t('common:buttons.clear')}
         </button>
       }
     >
@@ -145,12 +148,12 @@ function NodeDetail({ id, onClear }: NodeDetailProps): JSX.Element {
         items={[
           // Device type and sys name are names, not measurements — prose, so
           // they do not sit in the monospace column with the addresses.
-          { label: 'Device type', value: node.deviceType || 'n/a', prose: true },
-          { label: 'Sys name', value: node.sysName || 'n/a', prose: true },
-          { label: 'Primary MAC', value: node.primaryMac || 'n/a' },
-          { label: 'Primary IP', value: node.primaryIp || 'n/a' },
-          { label: 'First seen', value: fmtTime(node.firstSeen) },
-          { label: 'Last seen', value: fmtTime(node.lastSeen) },
+          { label: t('topology.deviceType'), value: node.deviceType || na, prose: true },
+          { label: t('topology.sysName'), value: node.sysName || na, prose: true },
+          { label: t('topology.primaryMac'), value: node.primaryMac || na },
+          { label: t('topology.primaryIp'), value: node.primaryIp || na },
+          { label: t('topology.firstSeen'), value: fmtTime(node.firstSeen, t) },
+          { label: t('topology.lastSeen'), value: fmtTime(node.lastSeen, t) },
         ]}
       />
       <InterfacesPanel interfaces={detail.interfaces} />
@@ -166,7 +169,7 @@ function InterfacesPanel({ interfaces }: { interfaces: TopologyInterface[] }): J
       <div className="flex items-center gap-compact border-b border-surface-border px-4 py-2">
         <Activity className="h-4 w-4 text-status-success" />
         <span className="text-sm font-medium text-text-primary">
-          Interfaces ({interfaces.length})
+          {t('topology.interfacesCount', { count: interfaces.length })}
         </span>
       </div>
       {interfaces.length === 0 ? (
@@ -175,10 +178,10 @@ function InterfacesPanel({ interfaces }: { interfaces: TopologyInterface[] }): J
         <table className="w-full text-sm">
           <thead className="text-left text-xs uppercase tracking-wide text-text-muted">
             <tr>
-              <th className="px-4 py-2">Index</th>
-              <th className="px-4 py-2">Name</th>
+              <th className="px-4 py-2">{t('topology.colIndex')}</th>
+              <th className="px-4 py-2">{t('common:labels.name')}</th>
               <th className="px-4 py-2">{t('topology.adminOper')}</th>
-              <th className="px-4 py-2">Speed</th>
+              <th className="px-4 py-2">{t('topology.colSpeed')}</th>
               <th className="px-4 py-2">MAC</th>
             </tr>
           </thead>
@@ -228,7 +231,7 @@ function LinksPanel({ links, nodeID }: { links: TopologyLink[]; nodeID: string }
       <div className="flex items-center gap-compact border-b border-surface-border px-4 py-2">
         <Cable className="h-4 w-4 text-status-info" />
         <span className="text-sm font-medium text-text-primary">
-          Neighbor links ({links.length})
+          {t('topology.neighborLinksCount', { count: links.length })}
         </span>
       </div>
       {links.length === 0 ? (
@@ -241,7 +244,7 @@ function LinksPanel({ links, nodeID }: { links: TopologyLink[]; nodeID: string }
               <li key={l.id} className="flex-between px-4 py-2 text-sm">
                 <span className="text-text-primary">↔ {otherEnd}</span>
                 <span className="text-xs text-text-muted">
-                  {l.linkType} · {fmtTime(l.lastSeen)}
+                  {l.linkType} · {fmtTime(l.lastSeen, t)}
                 </span>
               </li>
             );
@@ -252,8 +255,13 @@ function LinksPanel({ links, nodeID }: { links: TopologyLink[]; nodeID: string }
   );
 }
 
-function fmtTime(iso: string): string {
-  if (!iso) return 'never';
+/**
+ * fmtTime takes `t` rather than calling useTranslation because it is used from
+ * the row bodies of two panels; passing it keeps the "never" word in the
+ * locale files without turning the helper into a component.
+ */
+function fmtTime(iso: string, t: TFunction<'pages'>): string {
+  if (!iso) return t('common:status.never');
   return new Date(iso).toLocaleString();
 }
 

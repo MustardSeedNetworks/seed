@@ -60,7 +60,8 @@
     "unknown": "Unknown",
     "unavailable": "Unavailable",
     "clickToReconnect": "Click to reconnect",
-    "tapToReconnect": "Tap to reconnect"
+    "tapToReconnect": "Tap to reconnect",
+    "notApplicable": "n/a"
   },
   "labels": {
     "username": "Username",

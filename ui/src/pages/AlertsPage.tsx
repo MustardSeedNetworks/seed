@@ -78,7 +78,7 @@ export function AlertsPage(): JSX.Element {
 
       <div className="flex-between">
         <p className="body-small">
-          {loading ? 'Loading…' : `${alerts.length} alert${alerts.length === 1 ? '' : 's'}`}
+          {loading ? t('common:status.loading') : t('alerts.alertCount', { count: alerts.length })}
         </p>
         <div className="flex items-center gap-default">
           <label className="flex items-center gap-tight min-h-6 text-xs text-text-secondary">
@@ -87,7 +87,7 @@ export function AlertsPage(): JSX.Element {
               checked={filter.unacknowledgedOnly}
               onChange={(e): void => setFilter({ ...filter, unacknowledgedOnly: e.target.checked })}
             />
-            unacknowledged only
+            {t('alerts.unacknowledgedOnly')}
           </label>
           <label className="flex items-center gap-tight min-h-6 text-xs text-text-secondary">
             <input
@@ -95,7 +95,7 @@ export function AlertsPage(): JSX.Element {
               checked={filter.unresolvedOnly}
               onChange={(e): void => setFilter({ ...filter, unresolvedOnly: e.target.checked })}
             />
-            unresolved only
+            {t('alerts.unresolvedOnly')}
           </label>
         </div>
       </div>
@@ -105,21 +105,21 @@ export function AlertsPage(): JSX.Element {
           chips={
             <>
               <FilterChip
-                label="All"
+                label={t('alerts.filterAll')}
                 active={filter.severity === ''}
                 onClick={(): void => setFilter({ ...filter, severity: '' })}
               />
               {SEVERITIES.map((severity) => (
                 <FilterChip
                   key={severity}
-                  label={severity}
+                  label={t(`alerts.severity.${severity}`)}
                   active={filter.severity === severity}
                   onClick={(): void => setFilter({ ...filter, severity })}
                 />
               ))}
             </>
           }
-          empty="No alerts match the current filter. Either nothing's misbehaving or your filter is too strict."
+          empty={t('alerts.noAlerts')}
         >
           {alerts.map((a) => (
             <RecordRow
@@ -127,7 +127,7 @@ export function AlertsPage(): JSX.Element {
               data-testid={`alert-row-${a.id}`}
               name={a.title}
               nameKind="prose"
-              meta={`${a.source || 'unknown source'} · ${fmtTime(a.createdAt)}`}
+              meta={`${a.source || t('alerts.unknownSource')} · ${fmtTime(a.createdAt)}`}
               state={alertState(a)}
               selected={selected?.id === a.id}
               onSelect={(): void => setSelectedId(a.id)}
@@ -137,7 +137,7 @@ export function AlertsPage(): JSX.Element {
 
         {selected ? (
           <DetailPane
-            eyebrow="Selected alert"
+            eyebrow={t('alerts.selectedAlert')}
             title={selected.title}
             meta={selected.message || undefined}
             status={<AlertState alert={selected} />}
@@ -155,7 +155,7 @@ export function AlertsPage(): JSX.Element {
                     className="inline-flex items-center gap-tight rounded-md border border-surface-border px-3 py-2 text-sm text-text-primary hover:bg-surface-hover disabled:cursor-not-allowed disabled:opacity-50"
                   >
                     <Check className="h-3.5 w-3.5" />
-                    Acknowledge
+                    {t('alerts.acknowledge')}
                   </button>
                 ) : null}
                 {!selected.resolved ? (
@@ -170,7 +170,7 @@ export function AlertsPage(): JSX.Element {
                     className="inline-flex items-center gap-tight rounded-md border border-surface-border px-3 py-2 text-sm text-text-primary hover:bg-surface-hover disabled:cursor-not-allowed disabled:opacity-50"
                   >
                     <CheckCircle2 className="h-3.5 w-3.5" />
-                    Resolve
+                    {t('alerts.resolve')}
                   </button>
                 ) : null}
               </>
@@ -178,20 +178,36 @@ export function AlertsPage(): JSX.Element {
           >
             <DetailFacts
               items={[
-                { label: 'Severity', value: selected.severity || 'unknown' },
-                { label: 'Type', value: selected.type || '—' },
-                { label: 'Source', value: selected.source || '—' },
-                { label: 'Raised', value: fmtTime(selected.createdAt) },
                 {
-                  label: 'Acknowledged',
+                  label: t('alerts.labelSeverity'),
+                  value: selected.severity
+                    ? t(`alerts.severity.${selected.severity}`, {
+                        defaultValue: selected.severity,
+                      })
+                    : t('common:status.unknown'),
+                },
+                // Type and source are the rule author's own identifiers, so
+                // they stay exactly as the rule wrote them.
+                { label: t('alerts.labelType'), value: selected.type || '—' },
+                { label: t('alerts.labelSource'), value: selected.source || '—' },
+                { label: t('alerts.labelRaised'), value: fmtTime(selected.createdAt) },
+                {
+                  label: t('alerts.labelAcknowledged'),
                   value: selected.acknowledged
-                    ? `${fmtTime(selected.acknowledgedAt)}${selected.acknowledgedBy ? ` by ${selected.acknowledgedBy}` : ''}`
-                    : 'no',
+                    ? selected.acknowledgedBy
+                      ? t('alerts.acknowledgedByAt', {
+                          time: fmtTime(selected.acknowledgedAt),
+                          user: selected.acknowledgedBy,
+                        })
+                      : fmtTime(selected.acknowledgedAt)
+                    : t('alerts.valueNo'),
                   prose: true,
                 },
                 {
-                  label: 'Resolved',
-                  value: selected.resolved ? fmtTime(selected.resolvedAt) : 'no',
+                  label: t('alerts.labelResolved'),
+                  value: selected.resolved
+                    ? fmtTime(selected.resolvedAt)
+                    : t('alerts.valueNo'),
                 },
               ]}
             />
@@ -207,23 +223,24 @@ export function AlertsPage(): JSX.Element {
 
 /** Where the alert is in its lifecycle, said in words rather than by colour. */
 function AlertState({ alert }: { alert: Alert }): JSX.Element {
+  const { t } = useTranslation('pages');
   if (alert.resolved) {
     return (
       <span className="rounded-lg border border-surface-border px-3 py-1.5 text-xs font-semibold text-text-secondary">
-        Resolved
+        {t('alerts.stateResolved')}
       </span>
     );
   }
   if (alert.acknowledged) {
     return (
       <span className="rounded-lg border border-status-info/40 bg-status-info/10 px-3 py-1.5 text-xs font-semibold text-status-info">
-        Acknowledged
+        {t('alerts.stateAcknowledged')}
       </span>
     );
   }
   return (
     <span className="rounded-lg border border-status-warning/40 bg-status-warning/10 px-3 py-1.5 text-xs font-semibold text-status-warning">
-      Open
+      {t('alerts.stateOpen')}
     </span>
   );
 }

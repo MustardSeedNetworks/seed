@@ -175,12 +175,14 @@ describe('TopologyPage — honest state', () => {
     expect(screen.queryByText('0 bps')).toBeNull();
   });
 
-  it("says 'never' for an absent timestamp rather than inventing an epoch date", async () => {
+  it("says 'Never' for an absent timestamp rather than inventing an epoch date", async () => {
     render(<TopologyPage />);
     await userEvent.click(screen.getByTestId('node-row-core'));
 
     // firstSeen and lastSeen are both empty on this fixture.
-    expect(screen.getAllByText('never')).toHaveLength(2);
+    // The word comes from common:status.never (#1942/S1-14), so it is
+    // capitalised and it moves with the locale.
+    expect(screen.getAllByText('Never')).toHaveLength(2);
     expect(screen.queryByText(/1970/)).toBeNull();
   });
 });
