@@ -1,44 +1,18 @@
 /**
- * PerformanceSettings Component (~421 lines)
+ * Performance testing configuration: which tests run automatically, and the
+ * speedtest.net server to use. The iperf3 (LAN speed) half lives in
+ * `PerformanceIperfSection`, split out so this file could take the viewer
+ * read-only gate (#2467) without growing past the size baseline.
  *
- * Purpose: Comprehensive performance testing configuration including speedtest.net and iperf3 settings.
- * Allows users to configure test intervals, timeouts, and iperf3 server suggestions.
- *
- * Key Features:
- * - Speedtest.net configuration: enable/disable, interval, timeout settings
- * - iperf3 configuration: enable/disable, server setup, port configuration
- * - Test interval: frequency of performance tests (in seconds)
- * - Timeout settings: maximum duration for tests
- * - iperf3 server suggestions: fetches and displays recommended public iperf servers
- * - Server validation: validates iperf server addresses and ports
- * - Port configuration: custom port for iperf3 tests
- * - Bandwidth limits: configurable upload/download limits
- * - Protocol selection: TCP/UDP selection for iperf tests
- * - AutoSaveIndicator: shows persistent save status
- * - Gauge icon: visual indicator in settings menu
- *
- * Usage:
- * ```typescript
- * <PerformanceSettings
- *   testsSettings={settings}
- *   setTestsSettings={updateSettings}
- *   iperfSettings={iperfSettings}
- *   setIperfSettings={updateIperf}
- *   iperfStatus={saveStatus}
- *   iperfSuggestions={suggestions}
- *   iperfSuggestionsStatus={fetchStatus}
- *   iperfSuggestionsError={error}
- *   fetchIperfSuggestions={fetchSuggestions}
- * />
- * ```
- *
- * Dependencies: CollapsibleSection, AutoSaveIndicator, Gauge icon, settings types
- * State: Manages speedtest, iperf, and suggestion configurations
+ * Everything this file renders is a write, but the gate is a fieldset around
+ * the body rather than `readOnlyReason` on the CollapsibleSection: that
+ * fieldset would reach into the iperf child and disable its "find hosts" read.
  */
 
 import type React from 'react';
 import { memo } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useRole } from '../../../contexts/RoleContext';
 import {
   cn,
   icon as iconTokens,
@@ -57,6 +31,7 @@ import type {
 import { CollapsibleSection } from '../../ui/CollapsibleSection';
 import { Gauge } from '../../ui/icons';
 import { AutoSaveIndicator } from './AutoSaveIndicator';
+import { PerformanceIperfSection } from './PerformanceIperfSection';
 
 interface PerformanceSettingsProps {
   testsSettings: TestsSettings;
@@ -93,20 +68,11 @@ export const PerformanceSettings: React.NamedExoticComponent<PerformanceSettings
     updateCardSettings,
   }: PerformanceSettingsProps) {
     const { t } = useTranslation('settings');
-
-    // Get translated direction label
-    const getDirectionLabel = (direction: string): string => {
-      switch (direction) {
-        case 'download':
-          return t('performance.download');
-        case 'upload':
-          return t('performance.upload');
-        case 'bidirectional':
-          return t('performance.both');
-        default:
-          return direction;
-      }
-    };
+    const { canWrite } = useRole();
+    // Not `readOnlyReason` on the CollapsibleSection: that fieldset would cover
+    // the whole body, and the iperf child carries a read (find hosts) a viewer
+    // keeps. The write groups here take their own fieldset instead.
+    const readOnlyReason = canWrite ? undefined : t('common.readOnly');
 
     return (
       <CollapsibleSection
@@ -121,71 +87,9 @@ export const PerformanceSettings: React.NamedExoticComponent<PerformanceSettings
         defaultOpen={false}
       >
         <div className="stack">
-          {/* Enable/Disable Toggles */}
-          <div className="stack-sm">
-            <label
-              className={cn(
-                layout.flex.between,
-                spacing.pad.sm,
-                'bg-surface-base',
-                radius.default,
-                'border border-surface-border',
-              )}
-            >
-              <div>
-                <span className="body-small text-text-primary font-medium">
-                  {t('performance.enableSpeedtest')}
-                </span>
-                <p className="caption text-text-muted">{t('performance.speedtestDesc')}</p>
-              </div>
-              <input
-                type="checkbox"
-                checked={testsSettings.runSpeedtest}
-                onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>
-                  setTestsSettings((prev) => ({
-                    ...prev,
-                    runSpeedtest: e.target.checked,
-                  }))
-                }
-                className={iconTokens.size.sm}
-              />
-            </label>
-            <label
-              className={cn(
-                layout.flex.between,
-                spacing.pad.sm,
-                'bg-surface-base',
-                radius.default,
-                'border border-surface-border',
-              )}
-            >
-              <div>
-                <span className="body-small text-text-primary font-medium">
-                  {t('performance.enableIperf')}
-                </span>
-                <p className="caption text-text-muted">{t('performance.iperfDesc')}</p>
-              </div>
-              <input
-                type="checkbox"
-                checked={testsSettings.runIperf}
-                onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>
-                  setTestsSettings((prev) => ({
-                    ...prev,
-                    runIperf: e.target.checked,
-                  }))
-                }
-                className={iconTokens.size.sm}
-              />
-            </label>
-          </div>
-
-          {/* Auto-Run on Link Up (FAB button) */}
-          <div className={cn('border-t border-surface-border', spacing.padding.top.heading)}>
-            <span className="caption text-text-muted font-medium">
-              {t('performance.autoRunOnLink')}
-            </span>
-            <p className="caption text-text-muted mt-tight">{t('performance.autoRunOnLinkDesc')}</p>
-            <div className={cn(spacing.margin.top.inline, 'stack-sm')}>
+          <fieldset disabled={!canWrite} title={readOnlyReason} className="stack min-w-0">
+            {/* Enable/Disable Toggles */}
+            <div className="stack-sm">
               <label
                 className={cn(
                   layout.flex.between,
@@ -195,385 +99,62 @@ export const PerformanceSettings: React.NamedExoticComponent<PerformanceSettings
                   'border border-surface-border',
                 )}
               >
-                <span className="body-small text-text-primary">{t('performance.speedtest')}</span>
+                <div>
+                  <span className="body-small text-text-primary font-medium">
+                    {t('performance.enableSpeedtest')}
+                  </span>
+                  <p className="caption text-text-muted">{t('performance.speedtestDesc')}</p>
+                </div>
                 <input
                   type="checkbox"
-                  checked={cardSettings.performance.speedtest.autoRunOnLink}
+                  checked={testsSettings.runSpeedtest}
                   onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>
-                    updateCardSettings({
-                      performance: {
-                        ...cardSettings.performance,
-                        speedtest: {
-                          ...cardSettings.performance.speedtest,
-                          autoRunOnLink: e.target.checked,
-                        },
-                      },
-                    })
-                  }
-                  className={iconTokens.size.sm}
-                />
-              </label>
-              <label
-                className={cn(
-                  layout.flex.between,
-                  spacing.pad.sm,
-                  'bg-surface-base',
-                  radius.default,
-                  'border border-surface-border',
-                )}
-              >
-                <span className="body-small text-text-primary">{t('performance.iperf')}</span>
-                <input
-                  type="checkbox"
-                  checked={cardSettings.performance.iperf.autoRunOnLink}
-                  onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>
-                    updateCardSettings({
-                      performance: {
-                        ...cardSettings.performance,
-                        iperf: {
-                          ...cardSettings.performance.iperf,
-                          autoRunOnLink: e.target.checked,
-                        },
-                      },
-                    })
-                  }
-                  className={iconTokens.size.sm}
-                />
-              </label>
-            </div>
-          </div>
-
-          {/* Internet Speed (Speedtest) Subsection */}
-          <div className={cn('border-t border-surface-border', spacing.padding.top.heading)}>
-            <h4
-              className={cn(
-                'body-small font-semibold text-text-primary',
-                spacing.margin.bottom.inline,
-                'uppercase tracking-wide',
-              )}
-            >
-              {t('performance.internetSpeed')}
-            </h4>
-            <div className="stack">
-              <div>
-                <label
-                  htmlFor="speedtest-server-id"
-                  className="caption text-text-muted font-medium"
-                >
-                  {t('performance.serverId')}
-                </label>
-                <input
-                  id="speedtest-server-id"
-                  type="text"
-                  value={testsSettings.speedtest.serverId}
-                  onChange={(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>): void =>
                     setTestsSettings((prev) => ({
                       ...prev,
-                      speedtest: {
-                        ...prev.speedtest,
-                        serverId: e.target.value,
-                      },
+                      runSpeedtest: e.target.checked,
                     }))
                   }
-                  placeholder={t('performance.autoClosestServer')}
-                  className={cn(
-                    inputTokens.base,
-                    inputTokens.state.default,
-                    inputTokens.size.md,
-                    'w-full',
-                    spacing.margin.top.tight,
-                    'body-small',
-                  )}
+                  className={iconTokens.size.sm}
                 />
-                <div className={cn(layout.flex.between, spacing.margin.top.tight)}>
-                  <p className="caption text-text-muted">{t('performance.autoSelectDesc')}</p>
-                  <button
-                    type="button"
-                    onClick={(): void =>
-                      setTestsSettings((prev) => ({
-                        ...prev,
-                        speedtest: { ...prev.speedtest, serverId: '' },
-                      }))
-                    }
-                    className="caption text-brand-primary hover:underline"
-                  >
-                    {t('performance.resetToAuto')}
-                  </button>
+              </label>
+              <label
+                className={cn(
+                  layout.flex.between,
+                  spacing.pad.sm,
+                  'bg-surface-base',
+                  radius.default,
+                  'border border-surface-border',
+                )}
+              >
+                <div>
+                  <span className="body-small text-text-primary font-medium">
+                    {t('performance.enableIperf')}
+                  </span>
+                  <p className="caption text-text-muted">{t('performance.iperfDesc')}</p>
                 </div>
-              </div>
+                <input
+                  type="checkbox"
+                  checked={testsSettings.runIperf}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>
+                    setTestsSettings((prev) => ({
+                      ...prev,
+                      runIperf: e.target.checked,
+                    }))
+                  }
+                  className={iconTokens.size.sm}
+                />
+              </label>
             </div>
-          </div>
 
-          {/* LAN Speed (iperf3) Subsection */}
-          <div>
-            <h4
-              className={cn(
-                'body-small font-semibold text-text-primary',
-                spacing.margin.bottom.inline,
-                'uppercase tracking-wide',
-              )}
-            >
-              {t('performance.lanSpeed')}
-            </h4>
-            <div className="stack">
-              <p className="caption text-text-muted">{t('performance.lanSpeedDesc')}</p>
-
-              {/* Server Address */}
-              <div>
-                <label
-                  htmlFor="iperf-server-address"
-                  className="caption text-text-muted font-medium"
-                >
-                  {t('performance.serverAddress')}
-                </label>
-                <input
-                  id="iperf-server-address"
-                  type="text"
-                  value={iperfSettings.server}
-                  onChange={(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>): void =>
-                    setIperfSettings((prev) => ({
-                      ...prev,
-                      server: e.target.value,
-                    }))
-                  }
-                  placeholder="192.168.1.100"
-                  className={cn(
-                    inputTokens.base,
-                    inputTokens.state.default,
-                    inputTokens.size.md,
-                    'w-full',
-                    spacing.margin.top.tight,
-                    'body-small disabled:opacity-60',
-                  )}
-                />
-                <div className={cn(layout.flex.between, spacing.margin.top.inline)}>
-                  <button
-                    type="button"
-                    disabled={iperfSuggestionsStatus === 'loading'}
-                    onClick={fetchIperfSuggestions}
-                    className="caption text-brand-primary hover:underline disabled:opacity-60 disabled:cursor-not-allowed"
-                  >
-                    {iperfSuggestionsStatus === 'loading'
-                      ? t('performance.scanning')
-                      : t('performance.findIperfHosts')}
-                  </button>
-                  {iperfSuggestionsStatus === 'loading' && (
-                    <svg
-                      className={cn(iconTokens.size.sm, 'animate-spin text-text-muted')}
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      aria-hidden="true"
-                    >
-                      <circle
-                        className="opacity-25"
-                        cx="12"
-                        cy="12"
-                        r="10"
-                        stroke="currentColor"
-                        strokeWidth="4"
-                      />
-                      <path
-                        className="opacity-75"
-                        fill="currentColor"
-                        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                      />
-                    </svg>
-                  )}
-                </div>
-                {iperfSuggestionsStatus === 'error' && (
-                  <p className={cn('caption text-status-warning', spacing.margin.top.tight)}>
-                    {iperfSuggestionsError || t('performance.noIperfHosts')}
-                  </p>
-                )}
-                {iperfSuggestions.length > 0 && (
-                  <div
-                    className={cn('flex flex-wrap', spacing.gap.compact, spacing.margin.top.inline)}
-                  >
-                    {iperfSuggestions.map((sugg) => (
-                      <button
-                        type="button"
-                        key={`${sugg.host}-${sugg.hostname || ''}`}
-                        className={cn(
-                          spacing.chip.sm,
-                          radius.full,
-                          'border border-surface-border bg-surface-base caption text-text-primary hover:bg-surface-hover',
-                        )}
-                        onClick={(): void =>
-                          setIperfSettings((prev) => ({
-                            ...prev,
-                            server: sugg.host,
-                          }))
-                        }
-                      >
-                        <span className="font-medium">{sugg.hostname || sugg.host}</span>
-                        <span className={cn('text-text-muted', spacing.margin.left.tight)}>
-                          {sugg.hostname ? `(${sugg.host})` : ''}
-                          {sugg.latencyMs !== undefined ? ` · ${Math.round(sugg.latencyMs)}ms` : ''}
-                        </span>
-                      </button>
-                    ))}
-                  </div>
-                )}
-              </div>
-
-              {/* Port */}
-              <div>
-                <label className="caption text-text-muted font-medium" htmlFor="iperf-port">
-                  {t('performance.port')}
-                </label>
-                <input
-                  id="iperf-port"
-                  type="number"
-                  value={iperfSettings.port}
-                  onChange={(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>): void =>
-                    setIperfSettings((prev) => ({
-                      ...prev,
-                      port: Number.parseInt(e.target.value, 10) || 5201,
-                    }))
-                  }
-                  className={cn(
-                    inputTokens.base,
-                    inputTokens.state.default,
-                    inputTokens.size.md,
-                    'w-full',
-                    spacing.margin.top.tight,
-                    'body-small disabled:opacity-60',
-                  )}
-                />
-              </div>
-
-              {/* Protocol Toggle */}
-              <div>
-                <span
-                  className={cn(
-                    'caption text-text-muted font-medium block',
-                    spacing.margin.bottom.inline,
-                  )}
-                >
-                  {t('performance.protocol')}
-                </span>
-                <div
-                  className={cn('flex flex-wrap', spacing.gap.compact)}
-                  role="radiogroup"
-                  aria-label="Protocol selection"
-                >
-                  {(['tcp', 'udp'] as const).map((proto) => {
-                    const checked = iperfSettings.protocol === proto;
-                    return (
-                      <label
-                        key={proto}
-                        className={cn(
-                          'cursor-pointer',
-                          spacing.chip.md,
-                          radius.full,
-                          'border body-small font-medium transition-colors',
-                          checked
-                            ? 'bg-brand-primary text-on-brand border-brand-primary'
-                            : 'bg-surface-base border-surface-border text-text-primary hover:bg-surface-hover',
-                        )}
-                      >
-                        <input
-                          type="radio"
-                          name="iperf-protocol"
-                          value={proto}
-                          checked={checked}
-                          onChange={(): void =>
-                            setIperfSettings((prev) => ({
-                              ...prev,
-                              protocol: proto,
-                            }))
-                          }
-                          className="sr-only"
-                          aria-label={`${proto.toUpperCase()} protocol`}
-                        />
-                        {proto.toUpperCase()}
-                      </label>
-                    );
-                  })}
-                </div>
-              </div>
-
-              {/* Direction Toggle */}
-              <div>
-                <span
-                  className={cn(
-                    'caption text-text-muted font-medium block',
-                    spacing.margin.bottom.inline,
-                  )}
-                >
-                  {t('performance.direction')}
-                </span>
-                <div
-                  className={cn('flex flex-wrap', spacing.gap.compact)}
-                  role="radiogroup"
-                  aria-label="Direction selection"
-                >
-                  {(['download', 'upload', 'bidirectional'] as const).map((direction) => {
-                    const checked = iperfSettings.direction === direction;
-                    return (
-                      <label
-                        key={direction}
-                        className={cn(
-                          'cursor-pointer',
-                          spacing.chip.md,
-                          radius.full,
-                          'border body-small font-medium transition-colors',
-                          checked
-                            ? 'bg-brand-primary text-on-brand border-brand-primary'
-                            : 'bg-surface-base border-surface-border text-text-primary hover:bg-surface-hover',
-                        )}
-                      >
-                        <input
-                          type="radio"
-                          name="iperf-direction"
-                          value={direction}
-                          checked={checked}
-                          onChange={(): void =>
-                            setIperfSettings((prev) => ({
-                              ...prev,
-                              direction: direction,
-                            }))
-                          }
-                          className="sr-only"
-                          aria-label={`${getDirectionLabel(direction)} direction`}
-                        />
-                        {getDirectionLabel(direction)}
-                      </label>
-                    );
-                  })}
-                </div>
-              </div>
-
-              {/* Duration */}
-              <div>
-                <label className="caption text-text-muted font-medium" htmlFor="iperf-duration">
-                  {t('performance.duration')}
-                </label>
-                <input
-                  id="iperf-duration"
-                  type="number"
-                  value={iperfSettings.duration}
-                  onChange={(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>): void =>
-                    setIperfSettings((prev) => ({
-                      ...prev,
-                      duration: Number.parseInt(e.target.value, 10) || 10,
-                    }))
-                  }
-                  min={1}
-                  max={60}
-                  className={cn(
-                    inputTokens.base,
-                    inputTokens.state.default,
-                    inputTokens.size.md,
-                    'w-full',
-                    spacing.margin.top.tight,
-                    'body-small disabled:opacity-60',
-                  )}
-                />
-              </div>
-
-              {/* Server Mode */}
-              <div className={cn('border-t border-surface-border', spacing.padding.top.heading)}>
+            {/* Auto-Run on Link Up (FAB button) */}
+            <div className={cn('border-t border-surface-border', spacing.padding.top.heading)}>
+              <span className="caption text-text-muted font-medium">
+                {t('performance.autoRunOnLink')}
+              </span>
+              <p className="caption text-text-muted mt-tight">
+                {t('performance.autoRunOnLinkDesc')}
+              </p>
+              <div className={cn(spacing.margin.top.inline, 'stack-sm')}>
                 <label
                   className={cn(
                     layout.flex.between,
@@ -581,57 +162,126 @@ export const PerformanceSettings: React.NamedExoticComponent<PerformanceSettings
                     'bg-surface-base',
                     radius.default,
                     'border border-surface-border',
-                    spacing.margin.bottom.inline,
                   )}
                 >
-                  <span className="body-small text-text-primary">
-                    {t('performance.enableServer')}
-                  </span>
+                  <span className="body-small text-text-primary">{t('performance.speedtest')}</span>
                   <input
                     type="checkbox"
-                    checked={iperfSettings.enableServer}
+                    checked={cardSettings.performance.speedtest.autoRunOnLink}
                     onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>
-                      setIperfSettings((prev) => ({
-                        ...prev,
-                        enableServer: e.target.checked,
-                      }))
+                      updateCardSettings({
+                        performance: {
+                          ...cardSettings.performance,
+                          speedtest: {
+                            ...cardSettings.performance.speedtest,
+                            autoRunOnLink: e.target.checked,
+                          },
+                        },
+                      })
                     }
                     className={iconTokens.size.sm}
                   />
                 </label>
+                <label
+                  className={cn(
+                    layout.flex.between,
+                    spacing.pad.sm,
+                    'bg-surface-base',
+                    radius.default,
+                    'border border-surface-border',
+                  )}
+                >
+                  <span className="body-small text-text-primary">{t('performance.iperf')}</span>
+                  <input
+                    type="checkbox"
+                    checked={cardSettings.performance.iperf.autoRunOnLink}
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>
+                      updateCardSettings({
+                        performance: {
+                          ...cardSettings.performance,
+                          iperf: {
+                            ...cardSettings.performance.iperf,
+                            autoRunOnLink: e.target.checked,
+                          },
+                        },
+                      })
+                    }
+                    className={iconTokens.size.sm}
+                  />
+                </label>
+              </div>
+            </div>
+
+            {/* Internet Speed (Speedtest) Subsection */}
+            <div className={cn('border-t border-surface-border', spacing.padding.top.heading)}>
+              <h4
+                className={cn(
+                  'body-small font-semibold text-text-primary',
+                  spacing.margin.bottom.inline,
+                  'uppercase tracking-wide',
+                )}
+              >
+                {t('performance.internetSpeed')}
+              </h4>
+              <div className="stack">
                 <div>
                   <label
+                    htmlFor="speedtest-server-id"
                     className="caption text-text-muted font-medium"
-                    htmlFor="iperf-server-port"
                   >
-                    {t('performance.serverPort')}
+                    {t('performance.serverId')}
                   </label>
                   <input
-                    id="iperf-server-port"
-                    type="number"
-                    value={iperfSettings.serverPort}
+                    id="speedtest-server-id"
+                    type="text"
+                    value={testsSettings.speedtest.serverId}
                     onChange={(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>): void =>
-                      setIperfSettings((prev) => ({
+                      setTestsSettings((prev) => ({
                         ...prev,
-                        serverPort: Number.parseInt(e.target.value, 10) || 5201,
+                        speedtest: {
+                          ...prev.speedtest,
+                          serverId: e.target.value,
+                        },
                       }))
                     }
+                    placeholder={t('performance.autoClosestServer')}
                     className={cn(
                       inputTokens.base,
                       inputTokens.state.default,
                       inputTokens.size.md,
                       'w-full',
                       spacing.margin.top.tight,
-                      'body-small disabled:opacity-60',
+                      'body-small',
                     )}
                   />
+                  <div className={cn(layout.flex.between, spacing.margin.top.tight)}>
+                    <p className="caption text-text-muted">{t('performance.autoSelectDesc')}</p>
+                    <button
+                      type="button"
+                      onClick={(): void =>
+                        setTestsSettings((prev) => ({
+                          ...prev,
+                          speedtest: { ...prev.speedtest, serverId: '' },
+                        }))
+                      }
+                      className="caption text-brand-primary hover:underline"
+                    >
+                      {t('performance.resetToAuto')}
+                    </button>
+                  </div>
                 </div>
-                <p className={cn('caption text-text-muted', spacing.margin.top.tight)}>
-                  {t('performance.serverAutoStart')}
-                </p>
               </div>
             </div>
-          </div>
+          </fieldset>
+
+          <PerformanceIperfSection
+            iperfSettings={iperfSettings}
+            setIperfSettings={setIperfSettings}
+            iperfSuggestions={iperfSuggestions}
+            iperfSuggestionsStatus={iperfSuggestionsStatus}
+            iperfSuggestionsError={iperfSuggestionsError}
+            fetchIperfSuggestions={fetchIperfSuggestions}
+          />
         </div>
       </CollapsibleSection>
     );
