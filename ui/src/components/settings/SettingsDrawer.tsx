@@ -30,6 +30,7 @@ import type React from 'react';
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { api } from '../../api';
+import { useRole } from '../../contexts/RoleContext';
 import { useSettings } from '../../contexts/useSettings';
 import { useDebouncedAutoSave } from '../../hooks/useDebouncedAutoSave';
 import { useFocusTrap } from '../../hooks/useFocusTrap';
@@ -50,7 +51,7 @@ import type {
   TestsSettings,
   WiFiSettings as WiFiSettingsType,
 } from '../../types/settings';
-import { RequireAdmin, RequireRole } from '../ui/RequireRole';
+import { RequireAdmin } from '../ui/RequireRole';
 import { SettingsDrawerFooter } from './SettingsDrawerFooter';
 import { SettingsDrawerNetworkSection } from './SettingsDrawerNetworkSection';
 import { ApiTokensSettings } from './sections/ApiTokensSettings';
@@ -82,27 +83,6 @@ interface SettingsDrawerProps {
   isWifi?: boolean;
 }
 
-/**
- * ViewerSettingsNotice — what a viewer sees in place of the settings panels.
- *
- * Not an error state. The account is working exactly as configured; there is
- * simply nothing on this surface it is entitled to read (#1254).
- */
-function ViewerSettingsNotice(): React.ReactElement {
-  const { t } = useTranslation('settings');
-
-  return (
-    <div
-      role="status"
-      data-testid="settings-viewer-notice"
-      className="rounded-lg border border-status-info/30 bg-status-info/5 pad-sm stack-xs"
-    >
-      <p className="body-small font-medium text-status-info">{t('viewerOnly.title')}</p>
-      <p className="caption text-text-secondary">{t('viewerOnly.description')}</p>
-    </div>
-  );
-}
-
 export const SettingsDrawer: React.MemoExoticComponent<
   (props: SettingsDrawerProps) => React.ReactElement | null
 > = memo(function settingsDrawer({
@@ -112,6 +92,7 @@ export const SettingsDrawer: React.MemoExoticComponent<
   isWifi = false,
 }: SettingsDrawerProps): React.ReactElement | null {
   const { t } = useTranslation('settings');
+  const { canWrite } = useRole();
   const { theme, setTheme, isDark } = useTheme();
 
   // Get settings from context - single source of truth
@@ -438,19 +419,21 @@ export const SettingsDrawer: React.MemoExoticComponent<
     }
   };
 
-  // Debounced auto-save effects for every settings group
-  useDebouncedAutoSave(saveThresholds, thresholdsInitRef, thresholdsTimerRef);
-  useDebouncedAutoSave(saveTestsSettings, testsInitRef, testsTimerRef);
-  useDebouncedAutoSave(saveWifiSettings, wifiInitRef, wifiTimerRef);
-  useDebouncedAutoSave(saveLinkSettings, linkInitRef, linkTimerRef);
-  useDebouncedAutoSave(saveCableTestSettings, cableTestInitRef, cableTestTimerRef);
+  // Debounced auto-save effects for every settings group. Every save behind
+  // them is minRole: op, so a viewer arms none of them (#2467).
+  useDebouncedAutoSave(saveThresholds, thresholdsInitRef, thresholdsTimerRef, canWrite);
+  useDebouncedAutoSave(saveTestsSettings, testsInitRef, testsTimerRef, canWrite);
+  useDebouncedAutoSave(saveWifiSettings, wifiInitRef, wifiTimerRef, canWrite);
+  useDebouncedAutoSave(saveLinkSettings, linkInitRef, linkTimerRef, canWrite);
+  useDebouncedAutoSave(saveCableTestSettings, cableTestInitRef, cableTestTimerRef, canWrite);
   useDebouncedAutoSave(
     saveNetworkDiscoverySettings,
     networkDiscoveryInitRef,
     networkDiscoveryTimerRef,
+    canWrite,
   );
-  useDebouncedAutoSave(saveSnmpSettings, snmpInitRef, snmpTimerRef);
-  useDebouncedAutoSave(saveVulnSettings, vulnInitRef, vulnTimerRef);
+  useDebouncedAutoSave(saveSnmpSettings, snmpInitRef, snmpTimerRef, canWrite);
+  useDebouncedAutoSave(saveVulnSettings, vulnInitRef, vulnTimerRef, canWrite);
 
   // Fixes #917: Master cleanup effect for all timer refs on unmount
   // Individual useEffects clean up on re-render, but this ensures cleanup on unmount
@@ -571,179 +554,156 @@ export const SettingsDrawer: React.MemoExoticComponent<
           className={cn(spacing.drawerPad, 'section-gap body-small leading-relaxed')}
           ref={scrollRef}
         >
-          {/* #1254: a viewer sees one explanation instead of the panels.
-              The premise of that -- "eight of the drawer's ten loaders are
-              minRole: op and gate GET" -- is false. minRole is applied through
-              writeGated, which passes GET for every role, and
-              TestViewerCanReadEveryRoleGatedRoute walks every one of them as a
-              viewer: all 200. The data does arrive, so there is a read-only
-              view to render, which is the owner's 2026-09-04 decision.
+          {/* Settings sections ordered to match dashboard card order */}
+          {/* Link Settings - always visible for ethernet interface config */}
+          <LinkSettings
+            linkSettings={linkSettings}
+            setLinkSettings={setLinkSettings}
+            linkStatus={linkStatus}
+            cardSettings={cardSettings}
+            updateCardSettings={updateCardSettings}
+          />
 
-              Coming off in the last slice of S1-8b. It stays until every
-              section is read-only for a viewer, because unwrapping earlier
-              would put an ungated Save back in front of one -- the defect
-              #2464 fixed. A converted section passes readOnlyReason to
-              CollapsibleSection (see its prop docs); one with a read action of
-              its own gates per control, the way ApiTokensSettings does. */}
-          <RequireRole min="operator" fallback={<ViewerSettingsNotice />}>
-            {/* Settings sections ordered to match dashboard card order */}
-            {/* Link Settings - always visible for ethernet interface config */}
-            <LinkSettings
-              linkSettings={linkSettings}
-              setLinkSettings={setLinkSettings}
-              linkStatus={linkStatus}
-              cardSettings={cardSettings}
-              updateCardSettings={updateCardSettings}
+          {/* Cable Test Settings - always visible for cable diagnostics */}
+          <CableTestSettings
+            cableTestSettings={cableTestSettings}
+            setCableTestSettings={setCableTestSettings}
+            cableTestStatus={cableTestStatus}
+          />
+
+          {/* Network Section - IP/DHCP config (third) */}
+          <SettingsDrawerNetworkSection
+            ipSettings={ipSettings}
+            setIpSettings={setIpSettings}
+            dnsInput={dnsInput}
+            setDnsInput={setDnsInput}
+            saveIpSettings={saveIpSettings}
+            savingIp={savingIp}
+            ipMessage={ipMessage}
+            displayOptions={displayOptions}
+            setDisplayOptions={setDisplayOptions}
+            displayStatus={displayStatus}
+            isValidIp={isValidIp}
+          />
+
+          {/* WiFi Settings - only shown in WiFi mode (#754) */}
+          {isWifi ? (
+            <WiFiSettings
+              wifiSettings={wifiSettings}
+              setWifiSettings={setWifiSettings}
+              wifiStatus={wifiStatus}
             />
+          ) : null}
 
-            {/* Cable Test Settings - always visible for cable diagnostics */}
-            <CableTestSettings
-              cableTestSettings={cableTestSettings}
-              setCableTestSettings={setCableTestSettings}
-              cableTestStatus={cableTestStatus}
-            />
+          {/* DNS Settings - matches DnsCard position */}
+          <DnsSettings
+            testsSettings={testsSettings}
+            setTestsSettings={setTestsSettings}
+            testsStatus={testsStatus}
+            cardSettings={cardSettings}
+            updateCardSettings={updateCardSettings}
+          />
 
-            {/* Network Section - IP/DHCP config (third) */}
-            <SettingsDrawerNetworkSection
-              ipSettings={ipSettings}
-              setIpSettings={setIpSettings}
-              dnsInput={dnsInput}
-              setDnsInput={setDnsInput}
-              saveIpSettings={saveIpSettings}
-              savingIp={savingIp}
-              ipMessage={ipMessage}
-              displayOptions={displayOptions}
-              setDisplayOptions={setDisplayOptions}
-              displayStatus={displayStatus}
-              isValidIp={isValidIp}
-            />
+          <HealthChecksSettings
+            testsSettings={testsSettings}
+            setTestsSettings={setTestsSettings}
+            testsStatus={testsStatus}
+            cardSettings={cardSettings}
+            updateCardSettings={updateCardSettings}
+          />
 
-            {/* WiFi Settings - only shown in WiFi mode (#754) */}
-            {isWifi ? (
-              <WiFiSettings
-                wifiSettings={wifiSettings}
-                setWifiSettings={setWifiSettings}
-                wifiStatus={wifiStatus}
-              />
-            ) : null}
+          <PerformanceSettings
+            testsSettings={testsSettings}
+            setTestsSettings={setTestsSettings}
+            iperfSettings={iperfSettings}
+            setIperfSettings={setIperfSettings}
+            iperfStatus={iperfStatus}
+            iperfSuggestions={iperfSuggestions}
+            iperfSuggestionsStatus={iperfSuggestionsStatus}
+            iperfSuggestionsError={iperfSuggestionsError}
+            fetchIperfSuggestions={fetchIperfSuggestions}
+            cardSettings={cardSettings}
+            updateCardSettings={updateCardSettings}
+          />
 
-            {/* DNS Settings - matches DnsCard position */}
-            <DnsSettings
-              testsSettings={testsSettings}
-              setTestsSettings={setTestsSettings}
-              testsStatus={testsStatus}
-              cardSettings={cardSettings}
-              updateCardSettings={updateCardSettings}
-            />
+          <DiscoverySettings
+            networkDiscoverySettings={networkDiscoverySettings}
+            setNetworkDiscoverySettings={setNetworkDiscoverySettings}
+            networkDiscoveryStatus={networkDiscoveryStatus}
+            subnets={subnets}
+            subnetsStatus={subnetsStatus}
+            newSubnetCidr={newSubnetCidr}
+            setNewSubnetCidr={setNewSubnetCidr}
+            newSubnetName={newSubnetName}
+            setNewSubnetName={setNewSubnetName}
+            subnetError={subnetError}
+            setSubnetError={setSubnetError}
+            addSubnet={addSubnet}
+            toggleSubnet={toggleSubnet}
+            deleteSubnet={deleteSubnet}
+            snmpSettings={snmpSettings}
+            setSnmpSettings={setSnmpSettings}
+            snmpStatus={snmpStatus}
+            cardSettings={cardSettings}
+            updateCardSettings={updateCardSettings}
+          />
 
-            <HealthChecksSettings
-              testsSettings={testsSettings}
-              setTestsSettings={setTestsSettings}
-              testsStatus={testsStatus}
-              cardSettings={cardSettings}
-              updateCardSettings={updateCardSettings}
-            />
+          <VulnerabilitySettings
+            settings={vulnSettings}
+            setSettings={setVulnSettings}
+            status={vulnStatus}
+          />
 
-            <PerformanceSettings
-              testsSettings={testsSettings}
-              setTestsSettings={setTestsSettings}
-              iperfSettings={iperfSettings}
-              setIperfSettings={setIperfSettings}
-              iperfStatus={iperfStatus}
-              iperfSuggestions={iperfSuggestions}
-              iperfSuggestionsStatus={iperfSuggestionsStatus}
-              iperfSuggestionsError={iperfSuggestionsError}
-              fetchIperfSuggestions={fetchIperfSuggestions}
-              cardSettings={cardSettings}
-              updateCardSettings={updateCardSettings}
-            />
+          <ThresholdsSettings
+            thresholds={thresholds}
+            setThresholds={setThresholds}
+            thresholdsStatus={thresholdsStatus}
+          />
 
-            <DiscoverySettings
-              networkDiscoverySettings={networkDiscoverySettings}
-              setNetworkDiscoverySettings={setNetworkDiscoverySettings}
-              networkDiscoveryStatus={networkDiscoveryStatus}
-              subnets={subnets}
-              subnetsStatus={subnetsStatus}
-              newSubnetCidr={newSubnetCidr}
-              setNewSubnetCidr={setNewSubnetCidr}
-              newSubnetName={newSubnetName}
-              setNewSubnetName={setNewSubnetName}
-              subnetError={subnetError}
-              setSubnetError={setSubnetError}
-              addSubnet={addSubnet}
-              toggleSubnet={toggleSubnet}
-              deleteSubnet={deleteSubnet}
-              snmpSettings={snmpSettings}
-              setSnmpSettings={setSnmpSettings}
-              snmpStatus={snmpStatus}
-              cardSettings={cardSettings}
-              updateCardSettings={updateCardSettings}
-            />
+          {/* Appearance Section */}
+          <AppearanceSettings
+            theme={theme}
+            setTheme={setTheme}
+            isDark={isDark}
+            unitSystem={displayOptions.unitSystem || 'sae'}
+            setUnitSystem={(unit: 'sae' | 'metric'): void =>
+              setDisplayOptions((prev) => ({ ...prev, unitSystem: unit }))
+            }
+          />
 
-            <VulnerabilitySettings
-              settings={vulnSettings}
-              setSettings={setVulnSettings}
-              status={vulnStatus}
-            />
+          {/* API tokens (Phase D-2 LICENSE_STRATEGY) */}
+          <ApiTokensSettings />
 
-            <ThresholdsSettings
-              thresholds={thresholds}
-              setThresholds={setThresholds}
-              thresholdsStatus={thresholdsStatus}
-            />
-
-            {/* Appearance Section */}
-            <AppearanceSettings
-              theme={theme}
-              setTheme={setTheme}
-              isDark={isDark}
-              unitSystem={displayOptions.unitSystem || 'sae'}
-              setUnitSystem={(unit: 'sae' | 'metric'): void =>
-                setDisplayOptions((prev) => ({ ...prev, unitSystem: unit }))
-              }
-            />
-
-            {/* API tokens (Phase D-2 LICENSE_STRATEGY) */}
-            <ApiTokensSettings />
-
-            {/* Users CRUD (multi_user, seed#1191) — admin-only section, so an
+          {/* Users CRUD (multi_user, seed#1191) — admin-only section, so an
                 operator/viewer never sees user management at all (#1254). The
                 in-section buttons stay isAdmin-gated as defense-in-depth. */}
-            <RequireAdmin>
-              <UsersSettings />
-            </RequireAdmin>
+          <RequireAdmin>
+            <UsersSettings />
+          </RequireAdmin>
 
-            {/* Guest-network isolation audit target list (#1004). Its route
-                is minRole: op, so the whole section is operator-gated rather
-                than only its save button. */}
-            <RequireRole min="operator">
-              <GuestNetworkAuditSettings />
-            </RequireRole>
+          {/* Guest-network isolation audit target list (#1004). */}
+          <GuestNetworkAuditSettings />
 
-            {/* SSO admin panel (seed#1198). Operator-gated to match the
-                backend: GET /sso/settings and PUT /sso/update are both
-                minRole: op, so a viewer sees an identity-federation panel
-                whose every request 403s (#1254). */}
-            <RequireRole min="operator">
-              <SsoSettings />
-            </RequireRole>
+          {/* SSO admin panel (seed#1198). GET /sso/settings is readable by
+                every role; PUT /sso/update is minRole: op and the section
+                disables its own controls for a viewer. */}
+          <SsoSettings />
 
-            {/* Network Interfaces (multi_interface, seed#1192) */}
-            <InterfacesSettings />
+          {/* Network Interfaces (multi_interface, seed#1192) */}
+          <InterfacesSettings />
 
-            {/* Config Backups Section (implements #494) */}
-            <ConfigBackupsSection />
+          {/* Config Backups Section (implements #494) */}
+          <ConfigBackupsSection />
 
-            {/* Updates Section (implements #862) */}
+          {/* Updates Section (implements #862) */}
 
-            <SettingsDrawerFooter
-              version={version}
-              fetchLogPreview={fetchLogPreview}
-              logLoading={logLoading}
-              logError={logError}
-              logPreview={logPreview}
-            />
-          </RequireRole>
+          <SettingsDrawerFooter
+            version={version}
+            fetchLogPreview={fetchLogPreview}
+            logLoading={logLoading}
+            logError={logError}
+            logPreview={logPreview}
+          />
         </div>
       </div>
     </>

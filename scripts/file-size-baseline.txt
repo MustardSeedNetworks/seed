@@ -26,7 +26,7 @@ ui/src/app/useAppOrchestration.ts 649
 ui/src/components/cards/LogViewerModal.tsx 765
 ui/src/components/cards/PerformanceCard.tsx 704
 ui/src/components/profiles/ProfileManagement.tsx 653
-ui/src/components/settings/SettingsDrawer.tsx 751
+ui/src/components/settings/SettingsDrawer.tsx 711
 ui/src/components/ui/HelpModal.stories.tsx 619
 ui/src/components/ui/SpeedGauge.stories.tsx 676
 ui/src/hooks/useNetworkFetchers.ts 608
