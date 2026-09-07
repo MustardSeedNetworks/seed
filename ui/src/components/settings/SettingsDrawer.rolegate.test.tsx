@@ -1,24 +1,50 @@
 /**
- * SettingsDrawer role-gating tests (#1254).
+ * SettingsDrawer role-gating tests (#1254, #2467, owner decision 2026-09-04).
  *
- * Eight of the drawer's ten loader endpoints are registered `minRole: op` and
- * gate GET, not just the writes. A viewer therefore cannot read the drawer at
- * all — including appearance and display, which persist through the
- * operator-gated PATCH /profiles/{id}/settings. So the panels are hidden and
- * one explanation takes their place, rather than a read-only view of nothing.
+ * The drawer used to hide every panel from a viewer behind one notice, on the
+ * premise that its loader routes gate GET. They do not: `minRole` is applied
+ * through `writeGated`, which passes GET for every role, and
+ * `TestViewerCanReadEveryRoleGatedRoute` asserts that server-side. So a viewer
+ * reads the whole drawer and every write control inside it is disabled — the
+ * gating each section now carries itself.
+ *
+ * This renders the real SettingsDrawer, not a stand-in for its gate: the defect
+ * this covers is a section reaching a viewer with a live control, which only
+ * the real composition can show.
  */
 
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { render, screen, waitFor } from '@testing-library/react';
-import type { ReactNode } from 'react';
+import type { ReactElement } from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { ProfileProvider } from '../../contexts/profileContext';
 import { type CurrentUser, RoleProvider } from '../../contexts/RoleContext';
-import { RequireRole } from '../ui/RequireRole';
+import { SettingsDrawer } from './SettingsDrawer';
 
 const mockGet = vi.fn<(path: string) => Promise<unknown>>();
 vi.mock('../../api/client', () => ({
-  api: { get: (path: string): Promise<unknown> => mockGet(path) },
+  api: {
+    get: (path: string): Promise<unknown> => mockGet(path),
+    post: (): Promise<unknown> => Promise.resolve({}),
+    put: (): Promise<unknown> => Promise.resolve({}),
+    patch: (): Promise<unknown> => Promise.resolve({}),
+    delete: (): Promise<unknown> => Promise.resolve({}),
+  },
+}));
+vi.mock('../../api', () => ({
+  api: {
+    get: (path: string): Promise<unknown> => mockGet(path),
+    post: (): Promise<unknown> => Promise.resolve({}),
+    put: (): Promise<unknown> => Promise.resolve({}),
+    patch: (): Promise<unknown> => Promise.resolve({}),
+    delete: (): Promise<unknown> => Promise.resolve({}),
+  },
+}));
+vi.mock('../../contexts/LicenseContext', () => ({
+  useLicense: (): { status: { features: string[] } } => ({
+    status: { features: ['sso', 'multi_interface', 'multi_user', 'api_tokens'] },
+  }),
 }));
 
 function asUser(role: CurrentUser['role']): void {
@@ -31,23 +57,18 @@ function asUser(role: CurrentUser['role']): void {
   });
 }
 
-/**
- * The gate as the drawer composes it. Rendering the whole SettingsDrawer needs
- * a dozen providers and every loader stubbed; what is under test is the gate
- * and its fallback, so this exercises exactly that pairing.
- */
-function renderGate(): void {
+function renderDrawer(): void {
   const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
-  const node: ReactNode = (
+  const node: ReactElement = (
     <QueryClientProvider client={queryClient}>
-      <RoleProvider isAuthenticated={true}>
-        <RequireRole min="operator" fallback={<p>Read-only account</p>}>
-          <p>Link Settings</p>
-        </RequireRole>
-      </RoleProvider>
+      <ProfileProvider>
+        <RoleProvider isAuthenticated={true}>
+          <SettingsDrawer isOpen={true} onClose={(): void => undefined} version="1.0.0" />
+        </RoleProvider>
+      </ProfileProvider>
     </QueryClientProvider>
   );
-  render(node as ReactNode as React.ReactElement);
+  render(node);
 }
 
 beforeEach(() => {
@@ -57,31 +78,90 @@ afterEach(() => {
   vi.clearAllMocks();
 });
 
-describe('SettingsDrawer — viewer gating', () => {
-  it('shows a viewer the notice and none of the panels', async () => {
-    asUser('viewer');
-    renderGate();
+/**
+ * Every section the drawer mounts for a viewer. The two this slice unwrapped —
+ * SSO and the guest-network audit — are in the list with the rest, because a
+ * gate coming back in another shape would drop any of them silently.
+ */
+const VIEWER_SECTIONS = [
+  'Link',
+  'Cable Test',
+  'Network',
+  'DNS',
+  'Health Checks',
+  'Performance',
+  'Discovery',
+  'Vulnerability Scanning',
+  'Thresholds',
+  'Appearance',
+  'API Tokens',
+  'Guest Network Audit',
+  'Single Sign-On',
+  'Network Interfaces',
+  'Configuration Backups',
+];
 
-    expect(await screen.findByText('Read-only account')).toBeInTheDocument();
-    expect(screen.queryByText('Link Settings')).not.toBeInTheDocument();
+function sectionHeaders(): string[] {
+  return screen.queryAllByRole('button').map((el) => {
+    const heading = el.querySelector('h3, h4, span');
+
+    return (heading?.textContent ?? '').trim();
   });
+}
 
-  it('shows an operator the panels and not the notice', async () => {
-    asUser('operator');
-    renderGate();
+describe('SettingsDrawer — viewer gating', () => {
+  it('gives a viewer every panel, not a notice in place of them', async () => {
+    asUser('viewer');
+    renderDrawer();
 
     await waitFor(() => {
-      expect(screen.getByText('Link Settings')).toBeInTheDocument();
+      expect(screen.getByText('Link')).toBeInTheDocument();
     });
-    expect(screen.queryByText('Read-only account')).not.toBeInTheDocument();
+
+    expect(screen.queryByTestId('settings-viewer-notice')).not.toBeInTheDocument();
+    const headers = sectionHeaders();
+    for (const name of VIEWER_SECTIONS) {
+      expect(headers).toContain(name);
+    }
   });
 
-  it('fails closed while the role is still loading', () => {
-    asUser('operator');
-    renderGate();
+  it('marks the sections a viewer cannot change read-only', async () => {
+    asUser('viewer');
+    renderDrawer();
 
-    // Synchronously, before /users/me resolves: the panels must not flash.
-    expect(screen.queryByText('Link Settings')).not.toBeInTheDocument();
-    expect(screen.getByText('Read-only account')).toBeInTheDocument();
+    await waitFor(() => {
+      expect(screen.getByText('Link')).toBeInTheDocument();
+    });
+
+    // The all-write sections carry the badge on the header itself; the ones
+    // with a read of their own gate per control and are covered by
+    // sections/settings-sections.rolegate.test.tsx.
+    expect(screen.getAllByText(/read-only/i).length).toBeGreaterThan(0);
+  });
+
+  it('keeps user management out of a viewer drawer', async () => {
+    asUser('viewer');
+    renderDrawer();
+
+    await waitFor(() => {
+      expect(screen.getByText('Link')).toBeInTheDocument();
+    });
+
+    expect(sectionHeaders()).not.toContain('User Management');
+  });
+
+  it('gives an operator the same sections with no read-only marking', async () => {
+    asUser('operator');
+    renderDrawer();
+
+    await waitFor(() => {
+      expect(screen.getByText('Link')).toBeInTheDocument();
+    });
+
+    const headers = sectionHeaders();
+    for (const name of VIEWER_SECTIONS) {
+      expect(headers).toContain(name);
+    }
+    expect(screen.queryByText(/read-only/i)).not.toBeInTheDocument();
   });
 });
