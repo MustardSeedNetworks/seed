@@ -53,7 +53,7 @@ function fmtTime(iso?: string): string {
 }
 
 export function AlertsPage(): JSX.Element {
-  const { t } = useTranslation('pages');
+  const { t } = useTranslation(['pages', 'common']);
   const { canWrite } = useRole();
   const { alerts, loading, error, filter, setFilter, acknowledge, resolve } = useAlerts({
     unresolvedOnly: true,
@@ -205,9 +205,7 @@ export function AlertsPage(): JSX.Element {
                 },
                 {
                   label: t('alerts.labelResolved'),
-                  value: selected.resolved
-                    ? fmtTime(selected.resolvedAt)
-                    : t('alerts.valueNo'),
+                  value: selected.resolved ? fmtTime(selected.resolvedAt) : t('alerts.valueNo'),
                 },
               ]}
             />
@@ -223,7 +221,7 @@ export function AlertsPage(): JSX.Element {
 
 /** Where the alert is in its lifecycle, said in words rather than by colour. */
 function AlertState({ alert }: { alert: Alert }): JSX.Element {
-  const { t } = useTranslation('pages');
+  const { t } = useTranslation(['pages', 'common']);
   if (alert.resolved) {
     return (
       <span className="rounded-lg border border-surface-border px-3 py-1.5 text-xs font-semibold text-text-secondary">
@@ -247,7 +245,7 @@ function AlertState({ alert }: { alert: Alert }): JSX.Element {
 
 /** The rule's own payload — the sub-table the archetype calls for. */
 function AlertMetadata({ metadata }: { metadata: Record<string, unknown> }): JSX.Element | null {
-  const { t } = useTranslation('pages');
+  const { t } = useTranslation(['pages', 'common']);
   const entries = Object.entries(metadata ?? {});
   if (entries.length === 0) {
     return null;

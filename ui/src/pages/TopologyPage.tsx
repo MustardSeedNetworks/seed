@@ -15,8 +15,8 @@
  * pane the user is scanning.
  */
 
-import { Activity, Cable, RefreshCw } from 'lucide-react';
 import type { TFunction } from 'i18next';
+import { Activity, Cable, RefreshCw } from 'lucide-react';
 import { type JSX, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useTopologyNode, useTopologyNodes } from '../hooks/useTopology';
@@ -47,7 +47,7 @@ interface NodeListProps {
 }
 
 function NodeList({ selectedID, onSelect }: NodeListProps): JSX.Element {
-  const { t } = useTranslation('pages');
+  const { t } = useTranslation(['pages', 'common']);
   const { nodes, loading, error, refresh } = useTopologyNodes();
 
   return (
@@ -55,7 +55,9 @@ function NodeList({ selectedID, onSelect }: NodeListProps): JSX.Element {
       filter={
         <div className="flex-between">
           <span className="kicker">
-            {loading ? t('common:status.loading') : t('topology.nodeCount', { count: nodes.length })}
+            {loading
+              ? t('common:status.loading')
+              : t('topology.nodeCount', { count: nodes.length })}
           </span>
           <button
             type="button"
@@ -70,13 +72,7 @@ function NodeList({ selectedID, onSelect }: NodeListProps): JSX.Element {
           </button>
         </div>
       }
-      empty={
-        error ? (
-          <span className="text-status-error">{error}</span>
-        ) : (
-          t('topology.noNodes')
-        )
-      }
+      empty={error ? <span className="text-status-error">{error}</span> : t('topology.noNodes')}
     >
       {error || nodes.length === 0
         ? null
@@ -107,7 +103,7 @@ interface NodeDetailProps {
 }
 
 function NodeDetail({ id, onClear }: NodeDetailProps): JSX.Element {
-  const { t } = useTranslation('pages');
+  const { t } = useTranslation(['pages', 'common']);
   const { detail, loading, error } = useTopologyNode(id);
 
   if (!id) {
@@ -163,7 +159,7 @@ function NodeDetail({ id, onClear }: NodeDetailProps): JSX.Element {
 }
 
 function InterfacesPanel({ interfaces }: { interfaces: TopologyInterface[] }): JSX.Element {
-  const { t } = useTranslation('pages');
+  const { t } = useTranslation(['pages', 'common']);
   return (
     <div className="rounded-lg border border-surface-border bg-surface-raised">
       <div className="flex items-center gap-compact border-b border-surface-border px-4 py-2">
@@ -225,7 +221,7 @@ function IfStatusPair({ admin, oper }: { admin: number; oper: number }): JSX.Ele
 }
 
 function LinksPanel({ links, nodeID }: { links: TopologyLink[]; nodeID: string }): JSX.Element {
-  const { t } = useTranslation('pages');
+  const { t } = useTranslation(['pages', 'common']);
   return (
     <div className="rounded-lg border border-surface-border bg-surface-raised">
       <div className="flex items-center gap-compact border-b border-surface-border px-4 py-2">
@@ -260,7 +256,7 @@ function LinksPanel({ links, nodeID }: { links: TopologyLink[]; nodeID: string }
  * the row bodies of two panels; passing it keeps the "never" word in the
  * locale files without turning the helper into a component.
  */
-function fmtTime(iso: string, t: TFunction<'pages'>): string {
+function fmtTime(iso: string, t: TFunction<['pages', 'common']>): string {
   if (!iso) return t('common:status.never');
   return new Date(iso).toLocaleString();
 }

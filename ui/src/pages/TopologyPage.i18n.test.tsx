@@ -154,7 +154,9 @@ describe('TopologyPage — real locale copy', () => {
 
     expect(screen.getByText('1 nodo')).toBeVisible();
     expect(screen.getByRole('button', { name: 'Actualizar' })).toBeVisible();
-    expect(screen.getByText('Seleccione un nodo para ver las interfaces y los enlaces.')).toBeVisible();
+    expect(
+      screen.getByText('Seleccione un nodo para ver las interfaces y los enlaces.'),
+    ).toBeVisible();
 
     await userEvent.click(screen.getByTestId('node-row-core'));
 
