@@ -21,13 +21,18 @@ afterEach(() => {
   vi.useRealTimers();
 });
 
-function arm(enabled: boolean, saveFn: () => void): void {
-  renderHook(() => {
-    const isInit = useRef(false);
-    const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
+function arm(enabled: boolean, saveFn: () => void): { rerender: (props: boolean) => void } {
+  const view = renderHook(
+    (canWrite: boolean) => {
+      const isInit = useRef(false);
+      const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-    useDebouncedAutoSave(saveFn, isInit, timer, enabled);
-  });
+      useDebouncedAutoSave(saveFn, isInit, timer, canWrite);
+    },
+    { initialProps: enabled },
+  );
+
+  return { rerender: view.rerender };
 }
 
 describe('useDebouncedAutoSave', () => {
@@ -35,6 +40,19 @@ describe('useDebouncedAutoSave', () => {
     const saveFn = vi.fn();
     arm(false, saveFn);
 
+    vi.advanceTimersByTime(5000);
+
+    expect(saveFn).not.toHaveBeenCalled();
+  });
+
+  it('does not save on the role alone becoming writable', () => {
+    // RoleProvider clears the user whenever /users/me fails and sets it again
+    // on the next success, so canWrite flips false -> true with nothing the
+    // user did. That must not schedule a save of values nobody edited.
+    const saveFn = vi.fn();
+    const view = arm(false, saveFn);
+
+    view.rerender(true);
     vi.advanceTimersByTime(5000);
 
     expect(saveFn).not.toHaveBeenCalled();

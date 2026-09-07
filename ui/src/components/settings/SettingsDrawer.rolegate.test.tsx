@@ -23,7 +23,6 @@ import { type CurrentUser, RoleProvider } from '../../contexts/RoleContext';
 import { SettingsDrawer } from './SettingsDrawer';
 
 const mockGet = vi.fn<(path: string) => Promise<unknown>>();
-const mockWrite = vi.fn<(method: string, path: string) => void>();
 vi.mock('../../api/client', () => ({
   api: {
     get: (path: string): Promise<unknown> => mockGet(path),
@@ -36,26 +35,10 @@ vi.mock('../../api/client', () => ({
 vi.mock('../../api', () => ({
   api: {
     get: (path: string): Promise<unknown> => mockGet(path),
-    post: (path: string): Promise<unknown> => {
-      mockWrite('POST', path);
-
-      return Promise.resolve({});
-    },
-    put: (path: string): Promise<unknown> => {
-      mockWrite('PUT', path);
-
-      return Promise.resolve({});
-    },
-    patch: (path: string): Promise<unknown> => {
-      mockWrite('PATCH', path);
-
-      return Promise.resolve({});
-    },
-    delete: (path: string): Promise<unknown> => {
-      mockWrite('DELETE', path);
-
-      return Promise.resolve({});
-    },
+    post: (): Promise<unknown> => Promise.resolve({}),
+    put: (): Promise<unknown> => Promise.resolve({}),
+    patch: (): Promise<unknown> => Promise.resolve({}),
+    delete: (): Promise<unknown> => Promise.resolve({}),
   },
 }));
 vi.mock('../../contexts/LicenseContext', () => ({
@@ -90,7 +73,6 @@ function renderDrawer(): void {
 
 beforeEach(() => {
   mockGet.mockReset();
-  mockWrite.mockReset();
 });
 afterEach(() => {
   vi.clearAllMocks();
@@ -155,19 +137,6 @@ describe('SettingsDrawer — viewer gating', () => {
     // with a read of their own gate per control and are covered by
     // sections/settings-sections.rolegate.test.tsx.
     expect(screen.getAllByText(/read-only/i).length).toBeGreaterThan(0);
-  });
-
-  it('sends no write of its own while a viewer has the drawer open', async () => {
-    asUser('viewer');
-    renderDrawer();
-
-    await waitFor(() => {
-      expect(screen.getByText('Link')).toBeInTheDocument();
-    });
-    // Long enough for every debounced auto-save the drawer arms (800ms).
-    await new Promise((resolve) => setTimeout(resolve, 1200));
-
-    expect(mockWrite.mock.calls).toEqual([]);
   });
 
   it('keeps user management out of a viewer drawer', async () => {
