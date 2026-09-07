@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.214.11](https://github.com/MustardSeedNetworks/seed/compare/v0.214.10...v0.214.11) (2026-09-07)
+
+
+### Bug Fixes
+
+* **snmp:** reload the poller when polling targets change through the API ([#2461](https://github.com/MustardSeedNetworks/seed/issues/2461)) ([2e7c33d](https://github.com/MustardSeedNetworks/seed/commit/2e7c33d2a011dd281f666f7fa4fd7d7190b860ed))
+
 ## [0.214.10](https://github.com/MustardSeedNetworks/seed/compare/v0.214.9...v0.214.10) (2026-09-07)
 
 
