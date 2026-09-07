@@ -3,9 +3,10 @@
  * actually drew: a target nobody is polling must not read as healthy. Green
  * for "we have not looked" is the one failure this shell exists to prevent.
  */
-import { render, screen, within } from '@testing-library/react';
+import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { type CurrentUser, RoleProvider } from '../contexts/RoleContext';
 import type { PollingTarget } from '../types/polling';
 
 const targets: PollingTarget[] = [
@@ -53,11 +54,31 @@ vi.mock('../hooks/usePollingTargets', () => ({
   }),
 }));
 
+const mockGet = vi.fn<(path: string) => Promise<unknown>>();
+vi.mock('../api/client', () => ({
+  api: { get: (path: string): Promise<unknown> => mockGet(path) },
+}));
+
 const { PollingTargetsPage } = await import('./PollingTargetsPage');
+
+/** The page reads its role from context; useRole throws without a provider. */
+function renderAs(role: CurrentUser['role']): void {
+  mockGet.mockImplementation((path: string) =>
+    path.includes('/users/me')
+      ? Promise.resolve({ username: 'u', role, isActive: true })
+      : Promise.resolve({}),
+  );
+  render(
+    <RoleProvider isAuthenticated={true}>
+      <PollingTargetsPage />
+    </RoleProvider>,
+  );
+}
 
 describe('PollingTargetsPage — list + detail', () => {
   beforeEach(() => {
-    render(<PollingTargetsPage />);
+    mockGet.mockReset();
+    renderAs('operator');
   });
 
   it('prints an em dash rather than a figure for a target never polled', () => {
@@ -86,5 +107,48 @@ describe('PollingTargetsPage — list + detail', () => {
 
     expect(screen.queryByTestId('target-row-healthy')).toBeNull();
     expect(screen.getByTestId('target-row-paused')).toBeTruthy();
+  });
+});
+
+/**
+ * The whole /polling-targets collection is minRole: op (#1254), so add, edit
+ * and delete could only 403 for a viewer. The list and detail stay readable —
+ * writeGated passes GET for every role, which
+ * TestViewerCanReadEveryRoleGatedRoute asserts on the server side.
+ */
+describe('PollingTargetsPage — viewer gating', () => {
+  beforeEach(() => {
+    mockGet.mockReset();
+  });
+
+  it('disables add, edit and delete for a viewer and says why', async () => {
+    renderAs('viewer');
+    await userEvent.click(screen.getByTestId('target-row-healthy'));
+
+    await waitFor(() => {
+      expect(screen.getByTestId('target-add')).toBeDisabled();
+    });
+    expect(screen.getByTestId('target-edit')).toBeDisabled();
+    expect(screen.getByTestId('target-delete')).toBeDisabled();
+    expect(screen.getByTestId('target-add').title).toContain('operator role');
+  });
+
+  it('still lets a viewer read the target detail', async () => {
+    renderAs('viewer');
+    await userEvent.click(screen.getByTestId('target-row-healthy'));
+
+    expect(screen.getByText('Selected target')).toBeTruthy();
+    expect(screen.getByText('sys_info')).toBeTruthy();
+  });
+
+  it('leaves all three live for an operator', async () => {
+    renderAs('operator');
+    await userEvent.click(screen.getByTestId('target-row-healthy'));
+
+    await waitFor(() => {
+      expect(screen.getByTestId('target-add')).toBeEnabled();
+    });
+    expect(screen.getByTestId('target-edit')).toBeEnabled();
+    expect(screen.getByTestId('target-delete')).toBeEnabled();
   });
 });

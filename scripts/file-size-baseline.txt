@@ -24,7 +24,7 @@ internal/reporting/services_test.go 1709
 ui/src/app.test.tsx 787
 ui/src/app/useAppOrchestration.ts 649
 ui/src/components/cards/LogViewerModal.tsx 765
-ui/src/components/cards/PerformanceCard.tsx 776
+ui/src/components/cards/PerformanceCard.tsx 704
 ui/src/components/profiles/ProfileManagement.tsx 653
 ui/src/components/settings/SettingsDrawer.tsx 751
 ui/src/components/settings/sections/HealthChecksSettingsSpecialty.tsx 636

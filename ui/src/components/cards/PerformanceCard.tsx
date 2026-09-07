@@ -30,10 +30,11 @@
  */
 
 import type React from 'react';
-import { memo, useCallback, useEffect, useRef, useState } from 'react';
+import { memo, useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { api } from '../../api';
 import { useSettings } from '../../contexts/useSettings';
+import { type IperfServerStatus, useIperfServerSync } from '../../hooks/useIperfServerSync';
 import { LogComponents, logger } from '../../lib/logger';
 import { useTestRunSignal, useTestRunStore } from '../../stores/testRunStore';
 import {
@@ -101,13 +102,6 @@ interface IperfClientStatus {
   phase: string;
   progress: number;
   last?: IperfResult;
-}
-
-interface IperfServerStatus {
-  running: boolean;
-  port: number;
-  pid: number;
-  error?: string;
 }
 
 interface PerformanceCardProps {
@@ -187,24 +181,6 @@ export const PerformanceCard: React.NamedExoticComponent<PerformanceCardProps> =
     const [iperfError, setIperfError] = useState<string | null>(null);
     const [iperfClientRunning, setIperfClientRunning] = useState(false);
 
-    // Start/stop iperf server based on settings
-    const manageIperfServer = useCallback(async (shouldRun: boolean, port: number) => {
-      try {
-        const action = shouldRun ? 'start' : 'stop';
-        // Use api.post() for CSRF token inclusion (#CSRF-FIX)
-        // api.post throws on non-2xx, so reaching the next line implies success.
-        await api.post('/api/v1/telemetry/iperf/server', { action, port });
-        const statusRes = await fetch('/api/v1/telemetry/iperf/server/status', {
-          credentials: 'include',
-        });
-        if (statusRes.ok) {
-          setIperfServerStatus(await statusRes.json());
-        }
-      } catch (err) {
-        logger.error(LogComponents.IPERF, 'Failed to manage iperf server', err);
-      }
-    }, []);
-
     // Fetch initial status
     useEffect(() => {
       const fetchStatus = async (): Promise<void> => {
@@ -259,60 +235,12 @@ export const PerformanceCard: React.NamedExoticComponent<PerformanceCardProps> =
       });
     }, []);
 
-    // Track if we've done initial server sync
-    const initialServerSyncDone = useRef(false);
-
-    // Sync iperf server state on initial load and when settings change
-    useEffect(() => {
-      if (!iperfInfo?.installed) {
-        return;
-      }
-
-      // On initial load or settings change, ensure server state matches settings
-      if (!initialServerSyncDone.current || iperfSettings.enableServer) {
-        // Check current server status and sync if needed
-        const syncServerState = async (): Promise<void> => {
-          try {
-            const res = await fetch('/api/v1/telemetry/iperf/server/status', {
-              credentials: 'include',
-            });
-            if (res.ok) {
-              const data = await res.json();
-              const serverRunning = data.running === true;
-              const shouldBeRunning = iperfSettings.enableServer;
-
-              // If state doesn't match settings, fix it
-              if (shouldBeRunning && !serverRunning) {
-                await manageIperfServer(true, iperfSettings.serverPort);
-              } else if (!shouldBeRunning && serverRunning) {
-                await manageIperfServer(false, iperfSettings.serverPort);
-              }
-            }
-          } catch {
-            // If we can't check status and server should be running, try to start it
-            if (iperfSettings.enableServer) {
-              manageIperfServer(true, iperfSettings.serverPort).catch(() => {
-                // Error already logged
-              });
-            }
-          }
-          initialServerSyncDone.current = true;
-        };
-        syncServerState().catch(() => {
-          // Error already logged
-        });
-      } else if (!iperfSettings.enableServer) {
-        // Server should be stopped
-        manageIperfServer(false, iperfSettings.serverPort).catch(() => {
-          // Error already logged
-        });
-      }
-    }, [
-      iperfSettings.enableServer,
-      iperfSettings.serverPort,
-      iperfInfo?.installed,
-      manageIperfServer,
-    ]);
+    useIperfServerSync({
+      installed: iperfInfo?.installed === true,
+      enableServer: iperfSettings.enableServer,
+      serverPort: iperfSettings.serverPort,
+      onStatus: setIperfServerStatus,
+    });
 
     // Poll speedtest status while running (300ms for smooth gauge updates)
     useEffect(() => {

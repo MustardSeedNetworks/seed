@@ -2,6 +2,7 @@ import { Trans } from 'react-i18next';
 import { ReportsCard } from '../components/cards/ReportsCard';
 import { SLADashboardCard } from '../components/cards/SlaDashboardCard';
 import { RequireFeature } from '../components/ui/RequireFeature';
+import { useRole } from '../contexts/RoleContext';
 import { useReports } from '../hooks/useReports';
 import { CardGrid } from '../ui/CardGrid';
 
@@ -16,16 +17,21 @@ import { CardGrid } from '../ui/CardGrid';
  * what is missing and how to fix it.
  */
 function ReportsCardContainer() {
+  const { canWrite } = useRole();
   const { reports, loading, error, generating, generate, remove } = useReports();
 
+  // ReportsCard already documents that an absent handler means the action is
+  // unavailable; nothing implemented it. POST /reports/generate and
+  // DELETE /reports/{id} are both minRole: op, so a viewer's click could only
+  // 403 (#1254).
   return (
     <ReportsCard
       reports={reports}
       loading={loading}
       error={error}
       generating={generating}
-      onGenerate={() => void generate('executive', 'pdf')}
-      onDelete={(id) => void remove(id)}
+      onGenerate={canWrite ? (): void => void generate('executive', 'pdf') : undefined}
+      onDelete={canWrite ? (id): void => void remove(id) : undefined}
     />
   );
 }

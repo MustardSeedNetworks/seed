@@ -17,6 +17,7 @@
 import { Plus } from 'lucide-react';
 import { type JSX, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useRole } from '../contexts/RoleContext';
 import { usePollingTargets } from '../hooks/usePollingTargets';
 import type { PollingTarget } from '../types/polling';
 import {
@@ -68,6 +69,7 @@ function matchesFacet(target: PollingTarget, facet: Facet): boolean {
 
 export function PollingTargetsPage(): JSX.Element {
   const { t } = useTranslation('pages');
+  const { canWrite } = useRole();
   const { targets, loading, error, create, update, remove } = usePollingTargets();
   const [editing, setEditing] = useState<PollingTarget | null>(null);
   const [showCreate, setShowCreate] = useState<boolean>(false);
@@ -85,6 +87,11 @@ export function PollingTargetsPage(): JSX.Element {
   );
   const selected = shown.find((target) => target.id === selectedId) ?? shown[0] ?? null;
 
+  // The whole /polling-targets collection is minRole: op, so for a viewer add,
+  // edit and delete could only 403 (#1254). The list and detail stay readable:
+  // writeGated passes GET for every role.
+  const readOnlyReason = canWrite ? undefined : t('pollingTargets.readOnly');
+
   return (
     <>
       {error ? (
@@ -100,7 +107,10 @@ export function PollingTargetsPage(): JSX.Element {
         <button
           type="button"
           onClick={(): void => setShowCreate(true)}
-          className="inline-flex items-center gap-compact rounded-md bg-brand-primary px-3 py-2 text-sm font-medium text-on-brand hover:bg-brand-accent"
+          disabled={!canWrite}
+          title={readOnlyReason}
+          data-testid="target-add"
+          className="inline-flex items-center gap-compact rounded-md bg-brand-primary px-3 py-2 text-sm font-medium text-on-brand hover:bg-brand-accent disabled:cursor-not-allowed disabled:opacity-50"
         >
           <Plus className="h-4 w-4" />
           {t('pollingTargets.addTarget')}
@@ -172,7 +182,10 @@ export function PollingTargetsPage(): JSX.Element {
                 <button
                   type="button"
                   onClick={(): void => setEditing(selected)}
-                  className="rounded-md border border-surface-border px-3 py-2 text-sm text-text-primary hover:bg-surface-hover"
+                  disabled={!canWrite}
+                  title={readOnlyReason}
+                  data-testid="target-edit"
+                  className="rounded-md border border-surface-border px-3 py-2 text-sm text-text-primary hover:bg-surface-hover disabled:cursor-not-allowed disabled:opacity-50"
                 >
                   Edit
                 </button>
@@ -184,7 +197,10 @@ export function PollingTargetsPage(): JSX.Element {
                       setSelectedId(null);
                     }
                   }}
-                  className="rounded-md px-3 py-2 text-sm text-status-error hover:bg-status-error/10"
+                  disabled={!canWrite}
+                  title={readOnlyReason}
+                  data-testid="target-delete"
+                  className="rounded-md px-3 py-2 text-sm text-status-error hover:bg-status-error/10 disabled:cursor-not-allowed disabled:opacity-50"
                 >
                   Delete
                 </button>
