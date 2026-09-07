@@ -4,7 +4,8 @@
     "label": "Alertas",
     "title": "Alertas",
     "selectPrompt": "Seleccione una alerta para ver su detalle y actuar sobre ella.",
-    "payload": "Contenido de la alerta"
+    "payload": "Contenido de la alerta",
+    "readOnly": "Solo lectura — se requiere el rol de operador para reconocer o resolver una alerta"
   },
   "groups": {
     "diagnostics": "Diagnóstico",
@@ -47,7 +48,8 @@
     "pollingNormally": "Sondeo normal",
     "collectorChain": "Cadena de recolectores",
     "defaultChain": "Usando la cadena predeterminada para esta versión de SNMP.",
-    "enabledHint": "Habilitado (sondeado en el próximo ciclo)"
+    "enabledHint": "Habilitado (sondeado en el próximo ciclo)",
+    "readOnly": "Solo lectura — se requiere el rol de operador para añadir, editar o eliminar un objetivo"
   },
   "reports": {
     "description": "Panel de SLA agregado, seguimiento de cumplimiento e informes históricos.",

@@ -13,6 +13,7 @@
 import { Check, CheckCircle2 } from 'lucide-react';
 import { type JSX, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useRole } from '../contexts/RoleContext';
 import { useAlerts } from '../hooks/useAlerts';
 import type { Alert } from '../types/alerts';
 import {
@@ -53,10 +54,17 @@ function fmtTime(iso?: string): string {
 
 export function AlertsPage(): JSX.Element {
   const { t } = useTranslation('pages');
+  const { canWrite } = useRole();
   const { alerts, loading, error, filter, setFilter, acknowledge, resolve } = useAlerts({
     unresolvedOnly: true,
   });
   const [selectedId, setSelectedId] = useState<number | null>(null);
+
+  // POST /alerts/{id}/{acknowledge,resolve} is minRole: op, so for a viewer
+  // both buttons could only 403 (#1254). Disabled with the reason rather than
+  // hidden: the actions are part of the alert's lifecycle, and a viewer who
+  // cannot see them cannot tell whether anyone has acted.
+  const readOnlyReason = canWrite ? undefined : t('alerts.readOnly');
 
   const selected = alerts.find((a) => a.id === selectedId) ?? alerts[0] ?? null;
 
@@ -141,7 +149,10 @@ export function AlertsPage(): JSX.Element {
                     onClick={(): void => {
                       void acknowledge(selected.id);
                     }}
-                    className="inline-flex items-center gap-tight rounded-md border border-surface-border px-3 py-2 text-sm text-text-primary hover:bg-surface-hover"
+                    disabled={!canWrite}
+                    title={readOnlyReason}
+                    data-testid="alert-acknowledge"
+                    className="inline-flex items-center gap-tight rounded-md border border-surface-border px-3 py-2 text-sm text-text-primary hover:bg-surface-hover disabled:cursor-not-allowed disabled:opacity-50"
                   >
                     <Check className="h-3.5 w-3.5" />
                     Acknowledge
@@ -153,7 +164,10 @@ export function AlertsPage(): JSX.Element {
                     onClick={(): void => {
                       void resolve(selected.id);
                     }}
-                    className="inline-flex items-center gap-tight rounded-md border border-surface-border px-3 py-2 text-sm text-text-primary hover:bg-surface-hover"
+                    disabled={!canWrite}
+                    title={readOnlyReason}
+                    data-testid="alert-resolve"
+                    className="inline-flex items-center gap-tight rounded-md border border-surface-border px-3 py-2 text-sm text-text-primary hover:bg-surface-hover disabled:cursor-not-allowed disabled:opacity-50"
                   >
                     <CheckCircle2 className="h-3.5 w-3.5" />
                     Resolve

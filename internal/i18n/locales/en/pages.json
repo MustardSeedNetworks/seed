@@ -4,7 +4,8 @@
     "label": "Alerts",
     "title": "Alerts",
     "selectPrompt": "Select an alert to see its detail and act on it.",
-    "payload": "Alert payload"
+    "payload": "Alert payload",
+    "readOnly": "Read-only — operator role required to acknowledge or resolve an alert"
   },
   "groups": {
     "diagnostics": "Diagnostics",
@@ -47,7 +48,8 @@
     "pollingNormally": "Polling normally",
     "collectorChain": "Collector chain",
     "defaultChain": "Using the default chain for this SNMP version.",
-    "enabledHint": "Enabled (polled on next tick)"
+    "enabledHint": "Enabled (polled on next tick)",
+    "readOnly": "Read-only — operator role required to add, edit or delete a target"
   },
   "reports": {
     "description": "Aggregated SLA dashboard, compliance tracking, and historical reporting.",
