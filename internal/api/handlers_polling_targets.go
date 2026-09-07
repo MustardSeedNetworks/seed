@@ -153,6 +153,7 @@ func (s *Server) createPollingTarget(w http.ResponseWriter, r *http.Request) {
 		writePollingError(w, createErr, "Failed to create target")
 		return
 	}
+	s.reloadSNMPPoller(r.Context())
 	w.Header().Set("Location", pollingTargetsPathPrefix+target.ID)
 	writeJSON(w, r, encodePollingTarget(target))
 }
@@ -174,6 +175,7 @@ func (s *Server) updatePollingTarget(w http.ResponseWriter, r *http.Request, id 
 		writePollingError(w, updErr, "Failed to update target")
 		return
 	}
+	s.reloadSNMPPoller(r.Context())
 	writeJSON(w, r, encodePollingTarget(current))
 }
 
@@ -188,6 +190,7 @@ func (s *Server) deletePollingTarget(w http.ResponseWriter, r *http.Request, id 
 		writePollingError(w, err, "Failed to delete target")
 		return
 	}
+	s.reloadSNMPPoller(r.Context())
 	w.WriteHeader(http.StatusNoContent)
 }
 
