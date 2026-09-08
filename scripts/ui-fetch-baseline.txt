@@ -17,7 +17,7 @@
 # goes through the api client (seed#2389). The read-only ones are the
 # remaining debt — they bypass the client 401 refresh/retry.
 
-ui/src/components/setup/setupApi.ts:28  # read-only — bypasses the client 401 refresh/retry
+ui/src/components/setup/setupApi.ts:25  # read-only — bypasses the client 401 refresh/retry
 ui/src/hooks/useAuth.ts:188  # read-only — bypasses the client 401 refresh/retry
 ui/src/hooks/useAuth.ts:258  # mutating but CSRF-exempt by design (isCSRFExemptPath) — correct as a raw fetch
 ui/src/hooks/useAuth.ts:333  # mutating but CSRF-exempt by design (isCSRFExemptPath) — correct as a raw fetch
@@ -28,19 +28,19 @@ ui/src/hooks/useLogs.ts:167  # read-only — bypasses the client 401 refresh/ret
 ui/src/hooks/useLogs.ts:187  # read-only — bypasses the client 401 refresh/retry
 ui/src/hooks/useNetworkDiscoveryAutoScan.ts:52  # read-only — bypasses the client 401 refresh/retry
 ui/src/hooks/useNetworkDiscoveryAutoScan.ts:61  # read-only — bypasses the client 401 refresh/retry
-ui/src/hooks/useNetworkFetchers.ts:133  # read-only — bypasses the client 401 refresh/retry
-ui/src/hooks/useNetworkFetchers.ts:185  # read-only — bypasses the client 401 refresh/retry
-ui/src/hooks/useNetworkFetchers.ts:210  # read-only — bypasses the client 401 refresh/retry
-ui/src/hooks/useNetworkFetchers.ts:234  # read-only — bypasses the client 401 refresh/retry
-ui/src/hooks/useNetworkFetchers.ts:251  # read-only — bypasses the client 401 refresh/retry
-ui/src/hooks/useNetworkFetchers.ts:309  # read-only — bypasses the client 401 refresh/retry
-ui/src/hooks/useNetworkFetchers.ts:371  # read-only — bypasses the client 401 refresh/retry
-ui/src/hooks/useNetworkFetchers.ts:399  # read-only — bypasses the client 401 refresh/retry
-ui/src/hooks/useNetworkFetchers.ts:447  # read-only — bypasses the client 401 refresh/retry
-ui/src/hooks/useNetworkFetchers.ts:485  # read-only — bypasses the client 401 refresh/retry
-ui/src/hooks/useNetworkFetchers.ts:508  # read-only — bypasses the client 401 refresh/retry
-ui/src/hooks/useNetworkFetchers.ts:537  # read-only — bypasses the client 401 refresh/retry
-ui/src/hooks/useNetworkFetchers.ts:541  # read-only — bypasses the client 401 refresh/retry
+ui/src/hooks/useNetworkFetchers.ts:112  # read-only — bypasses the client 401 refresh/retry
+ui/src/hooks/useNetworkFetchers.ts:164  # read-only — bypasses the client 401 refresh/retry
+ui/src/hooks/useNetworkFetchers.ts:189  # read-only — bypasses the client 401 refresh/retry
+ui/src/hooks/useNetworkFetchers.ts:213  # read-only — bypasses the client 401 refresh/retry
+ui/src/hooks/useNetworkFetchers.ts:230  # read-only — bypasses the client 401 refresh/retry
+ui/src/hooks/useNetworkFetchers.ts:288  # read-only — bypasses the client 401 refresh/retry
+ui/src/hooks/useNetworkFetchers.ts:350  # read-only — bypasses the client 401 refresh/retry
+ui/src/hooks/useNetworkFetchers.ts:378  # read-only — bypasses the client 401 refresh/retry
+ui/src/hooks/useNetworkFetchers.ts:426  # read-only — bypasses the client 401 refresh/retry
+ui/src/hooks/useNetworkFetchers.ts:464  # read-only — bypasses the client 401 refresh/retry
+ui/src/hooks/useNetworkFetchers.ts:487  # read-only — bypasses the client 401 refresh/retry
+ui/src/hooks/useNetworkFetchers.ts:516  # read-only — bypasses the client 401 refresh/retry
+ui/src/hooks/useNetworkFetchers.ts:520  # read-only — bypasses the client 401 refresh/retry
 ui/src/hooks/useReports.ts:44  # read-only — bypasses the client 401 refresh/retry
 ui/src/hooks/useSettingsDrawerLoaders.ts:93  # read-only — bypasses the client 401 refresh/retry
 ui/src/hooks/useSettingsDrawerLoaders.ts:111  # read-only — bypasses the client 401 refresh/retry
@@ -68,8 +68,8 @@ ui/src/components/cards/SlaDashboardCard.tsx:46  # read-only — bypasses the cl
 ui/src/components/cards/SystemHealthCard.tsx:187  # read-only — bypasses the client 401 refresh/retry
 ui/src/components/login/RecoveryForm.tsx:83  # read-only — bypasses the client 401 refresh/retry
 ui/src/components/login/RecoveryForm.tsx:121  # mutating but CSRF-exempt by design (isCSRFExemptPath) — correct as a raw fetch
-ui/src/components/settings/sections/ConfigBackupsSection.tsx:68  # read-only — bypasses the client 401 refresh/retry
-ui/src/components/settings/sections/ConfigBackupsSection.tsx:69  # read-only — bypasses the client 401 refresh/retry
+ui/src/components/settings/sections/ConfigBackupsSection.tsx:63  # read-only — bypasses the client 401 refresh/retry
+ui/src/components/settings/sections/ConfigBackupsSection.tsx:64  # read-only — bypasses the client 401 refresh/retry
 ui/src/components/settings/sections/DiscoverySettings.tsx:91  # read-only — bypasses the client 401 refresh/retry
 ui/src/components/settings/sections/VulnerabilitySettings.tsx:56  # read-only — bypasses the client 401 refresh/retry
 ui/src/components/setup/SetupWizard.tsx:112  # read-only — bypasses the client 401 refresh/retry

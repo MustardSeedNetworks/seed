@@ -285,3 +285,40 @@ func TestBackupManager_ExtractVersion(t *testing.T) {
 		})
 	}
 }
+
+// TestBackupInfoWireKeysAreCamelCase pins the JSON the backup list emits.
+//
+// BackupInfo is never written to disk — it is derived from the backup
+// directory on every call and serialized straight onto the API — so its tags
+// are wire tags and ADR-0010 makes them camelCase. `created_at` shipped
+// instead, and the Config Backups settings panel reads `backup.createdAt`, so
+// every backup's timestamp rendered from `undefined`. scripts/check-json-casing.sh
+// did not catch it: that gate scans internal/api and internal/discovery only.
+func TestBackupInfoWireKeysAreCamelCase(t *testing.T) {
+	t.Parallel()
+
+	encoded, err := json.Marshal(config.BackupInfo{
+		Name:      "seed.yaml.20260908-120000.bak",
+		Path:      "/var/lib/seed/backups/seed.yaml.20260908-120000.bak",
+		Size:      2048,
+		CreatedAt: time.Date(2026, 9, 8, 12, 0, 0, 0, time.UTC),
+		Version:   3,
+	})
+	if err != nil {
+		t.Fatalf("marshal BackupInfo: %v", err)
+	}
+
+	var wire map[string]any
+	if err = json.Unmarshal(encoded, &wire); err != nil {
+		t.Fatalf("unmarshal wire: %v", err)
+	}
+
+	for _, key := range []string{"name", "path", "size", "createdAt", "version"} {
+		if _, ok := wire[key]; !ok {
+			t.Errorf("wire is missing %q; got %v", key, wire)
+		}
+	}
+	if _, ok := wire["created_at"]; ok {
+		t.Error(`wire still carries snake_case "created_at" (ADR-0010)`)
+	}
+}

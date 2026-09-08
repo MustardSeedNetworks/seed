@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
+import type { InterfaceInfo } from '../../types/generated/categorized-interfaces-response';
 import type { Profile } from '../../types/profile';
-import type { NetworkInterface } from '../ui/InterfaceSelector';
 import { HeaderBar } from './HeaderBar';
 
 const profiles: Profile[] = [
@@ -24,12 +24,16 @@ const profiles: Profile[] = [
   },
 ];
 
-const interfaces: NetworkInterface[] = [
+const interfaces: InterfaceInfo[] = [
   {
     name: 'eth0',
     friendlyName: 'Primary Ethernet',
     type: 'ethernet',
     up: true,
+    running: true,
+    hardwareAddr: '00:1b:21:aa:bb:01',
+    mtu: 1500,
+    addresses: ['192.168.1.10/24'],
     speedDisplay: '1 Gb/s',
   },
   {
@@ -37,7 +41,10 @@ const interfaces: NetworkInterface[] = [
     friendlyName: 'WiFi Adapter',
     type: 'wifi',
     up: true,
-    signalStrength: -47,
+    running: true,
+    hardwareAddr: '00:1b:21:aa:bb:03',
+    mtu: 1500,
+    addresses: ['192.168.1.11/24'],
   },
 ];
 

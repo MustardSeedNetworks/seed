@@ -28,6 +28,11 @@
  */
 
 import type { JSX } from 'react';
+
+import type { CablePairResult, CablePinout } from '../../types/generated/cable-response';
+
+export type { CablePairResult, CablePinout };
+
 import { useTranslation } from 'react-i18next';
 import {
   cn,
@@ -44,21 +49,7 @@ import { SimpleBaseCard } from './BaseCard';
 import { wireColorMap } from './cableWire';
 
 /** Per-pair TDR test result */
-interface CablePairResult {
-  pair: string; // "1-2", "3-6", "4-5", "7-8"
-  pairLetter: string; // "A", "B", "C", "D"
-  status: string; // ok, open, short, etc.
-  lengthM?: number | null;
-  lengthFt?: number | null;
-}
-
 /** Pin-to-color mapping for wiring standard display */
-interface CablePinout {
-  pin: number;
-  color: string;
-  pair: string;
-}
-
 export interface CableData {
   supported: boolean;
   status: 'ok' | 'open' | 'short' | 'impedance_mismatch' | 'crosstalk' | 'split_pair' | 'unknown';

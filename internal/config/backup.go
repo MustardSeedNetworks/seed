@@ -25,7 +25,7 @@ type BackupInfo struct {
 	Name      string    `json:"name"`
 	Path      string    `json:"path"`
 	Size      int64     `json:"size"`
-	CreatedAt time.Time `json:"created_at"`
+	CreatedAt time.Time `json:"createdAt"`
 	Version   int       `json:"version"`
 }
 

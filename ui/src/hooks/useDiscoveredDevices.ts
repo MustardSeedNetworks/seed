@@ -20,21 +20,9 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { api } from '../api';
 import { LogComponents, logger } from '../lib/logger';
+import type { DiscoveredDevice } from '../types/generated/engine-discovery-response';
 
-/** Network device from discovery API with display fields */
-export interface DiscoveredDevice {
-  ip: string;
-  mac: string;
-  hostname?: string;
-  vendor?: string;
-  displayName?: string;
-  deviceType?: string;
-  isRouter?: boolean;
-  lastSeen: string;
-  profile?: {
-    deviceType?: string;
-  };
-}
+export type { DiscoveredDevice };
 
 /** Device discovery status */
 export interface DiscoveryStatus {
@@ -43,8 +31,15 @@ export interface DiscoveryStatus {
   lastScan: string;
 }
 
-/** API response from /api/v1/discovery */
-interface DiscoveryResponse {
+/**
+ * Response from GET /api/v1/security/devices.
+ *
+ * Named for the endpoint it reads: the generated `DiscoveryResponse` describes
+ * /api/v1/discovery, which is the LLDP/CDP neighbour list and a different shape
+ * entirely. The handler emits an untyped map, so there is no DTO to generate
+ * this from (seed#2393).
+ */
+interface SecurityDevicesResponse {
   devices: DiscoveredDevice[];
   status: DiscoveryStatus;
 }
@@ -194,7 +189,7 @@ export function useDiscoveredDevices(autoRefresh: boolean = false): {
       setError(null);
       // Use /api/v1/devices endpoint which returns discovered network devices
       // (not /api/v1/discovery which returns LLDP/CDP protocol neighbors)
-      const data = await api.get<DiscoveryResponse>('/api/v1/security/devices');
+      const data = await api.get<SecurityDevicesResponse>('/api/v1/security/devices');
       setDevices(data.devices || []);
       setStatus(data.status);
     } catch (err) {

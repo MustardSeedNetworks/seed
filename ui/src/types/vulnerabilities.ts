@@ -24,28 +24,13 @@
  * Data Source: Vulnerability scanner API endpoints
  */
 
-export interface Vulnerability {
-  cveId: string;
-  description: string;
-  severity: 'CRITICAL' | 'HIGH' | 'MEDIUM' | 'LOW';
-  score: number;
-  published: string;
-  modified: string;
-  references: string[];
-  affectedCpe: string;
-}
+import type { DeviceVulnerabilities, Vulnerability } from './generated/engine-discovery-response';
 
-export interface DeviceVulnerabilities {
-  deviceIp: string;
-  mac: string;
-  hostname: string;
-  vendor: string;
-  product: string;
-  version: string;
-  vulnerabilities: Vulnerability[];
-  scanTime: string;
-  error?: string;
-}
+// The scanner's own shapes come from the generated wire types. The hand-typed
+// mirrors that used to live here omitted the CISA KEV fields the daemon
+// attaches to every finding — `activelyExploited`, `ransomwareRelated`,
+// `requiredAction`, `dueDate` — so no view could name them (seed#2393).
+export type { DeviceVulnerabilities, Vulnerability };
 
 export interface VulnerabilityScannerStatus {
   enabled: boolean;

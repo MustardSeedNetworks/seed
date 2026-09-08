@@ -30,6 +30,7 @@ import { useSsePolling } from '../hooks/useSsePolling';
 import { useTheme } from '../hooks/useTheme';
 import { LogComponents, logger } from '../lib/logger';
 import { useTestRunSignal, useTestRunStore } from '../stores/testRunStore';
+import type { InterfaceInfo } from '../types/generated/categorized-interfaces-response';
 import {
   applyInterfaceRestoration,
   findBestInterface,
@@ -81,21 +82,7 @@ export function useAppOrchestration({ isAuthenticated }: UseAppOrchestrationArgs
   const [paletteOpen, setPaletteOpen] = useState(false);
 
   // Network state
-  const [interfaces, setInterfaces] = useState<
-    Array<{
-      name: string;
-      friendlyName?: string;
-      description?: string;
-      type: string;
-      up: boolean;
-      speedDisplay?: string;
-      chipsetVendor?: string;
-      chipsetModel?: string;
-      hasTdr?: boolean;
-      hasDom?: boolean;
-      score?: number;
-    }>
-  >([]);
+  const [interfaces, setInterfaces] = useState<InterfaceInfo[]>([]);
   const [networkDiscovery, setNetworkDiscovery] = useState<NetworkDiscoveryData | null>(null);
   const [appVersion, setAppVersion] = useState('dev');
   // #756: Auto-detected recommended interfaces (most capable)

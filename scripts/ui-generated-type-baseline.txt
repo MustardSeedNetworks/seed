@@ -1,0 +1,52 @@
+# Hand-typed UI interfaces that shadow a generated wire type; see check-ui-generated-types.py.
+# One `path:InterfaceName` per line, each with a `# reason` saying why the local
+# declaration is deliberate. The gate fails on a new shadow, on a stale entry,
+# and on an entry with no reason — so this file cannot drift into fiction.
+# Shrink-only: migrate an entry away rather than adding one. seed#2393.
+
+# --- Log records. Two different things share the name.
+ui/src/hooks/useLogs.ts:LogEntry # narrows the wire's `level`/`layer` strings to the LogLevel/LogLayer unions the viewer filters and colours by; the schema carries no enum
+ui/src/lib/logger.ts:LogEntry # the browser-side record the client buffers, not the daemon's log-query row; only its batch payload reaches the wire (client-log-request)
+
+# --- Path analysis. Migrating these would LOSE precision, not gain it: the
+# generator drops pointer nullability (Go `*PortInfo` with no omitempty becomes
+# a required non-null `PortInfo`) and widens the discriminants to `string`.
+# Filed as a schema-generator residual on seed#2393.
+ui/src/types/index.ts:L2Hop # local keeps `ingressPort/egressPort: PortInfo | null` (the Go fields are pointers) and `source: 'lldp'|'cdp'|'snmp'`; generated has neither
+ui/src/types/index.ts:L2PathResult # references the local L2Hop above
+ui/src/types/index.ts:PathResponse # references the local L2PathResult/TracerouteResult above
+ui/src/types/index.ts:PortInfo # referenced by the local L2Hop as a nullable member
+ui/src/types/index.ts:TracerouteHop # local keeps `state: 'reply'|'timeout'|'error'`, which the hop renderer switches on; generated is `string`
+ui/src/types/index.ts:TracerouteResult # references the local TracerouteHop above
+
+# --- Profile settings. These are the profile's *saved settings* tree, not the
+# daemon Config namespace they collide with by name — stated in the tree at
+# ui/src/stores/profileStore.ts. Reconciling the two is a product decision
+# (which of the two shapes a profile actually stores), not a type swap.
+ui/src/types/profile.ts:CableTestConfig # profile settings shape, not the daemon Config namespace
+ui/src/types/profile.ts:DiscoveryConfig # profile settings shape, not the daemon Config namespace
+ui/src/types/profile.ts:DisplayOptionsConfig # profile settings shape, not the daemon Config namespace
+ui/src/types/profile.ts:HealthChecksConfig # profile settings shape, not the daemon Config namespace
+ui/src/types/profile.ts:IperfConfig # profile settings shape, not the daemon Config namespace
+ui/src/types/profile.ts:LinkConfig # profile settings shape, not the daemon Config namespace
+ui/src/types/profile.ts:NetworkDiscoveryConfig # profile settings shape, not the daemon Config namespace
+ui/src/types/profile.ts:SpeedtestConfig # profile settings shape, not the daemon Config namespace
+ui/src/types/profile.ts:ThresholdsConfig # profile settings shape, not the daemon Config namespace
+ui/src/types/profile.ts:ProfileExportResponse # local types `profiles` as the UI's Profile, whose `config` is the settings tree above; generated says `unknown`
+ui/src/types/profile.ts:ProfileImportRequest # same Profile/config narrowing as ProfileExportResponse
+ui/src/types/profile.ts:ProfileListResponse # same Profile/config narrowing as ProfileExportResponse
+ui/src/types/profile.ts:ProfileRequest # same Profile/config narrowing as ProfileExportResponse
+
+# --- Settings drawer view models. Each carries an optional UI-only `id` (the
+# React list key for an editable row) on top of the wire shape, and narrows the
+# wire's strings to the unions the form's <select> offers. A field-by-field
+# reconciliation against the generated Config, not a swap. Slice 2 of seed#2393.
+ui/src/types/settings.ts:DeviceProfilerConfig # settings-drawer view model
+ui/src/types/settings.ts:DiscoveryOptions # settings-drawer view model, composed of the local PortScanConfig/TcpProbeConfig below
+ui/src/types/settings.ts:FileShareEndpoint # settings-drawer view model: UI row `id`, and `protocol` narrowed to 'smb' | 'nfs'
+ui/src/types/settings.ts:FingerprintingConfig # settings-drawer view model
+ui/src/types/settings.ts:ModbusEndpoint # settings-drawer view model: UI row `id`
+ui/src/types/settings.ts:PassiveProtocolConfig # settings-drawer view model
+ui/src/types/settings.ts:PingTarget # settings-drawer view model: UI row `id`
+ui/src/types/settings.ts:PortScanConfig # settings-drawer view model: `preset` narrowed to the PortPreset union the form offers
+ui/src/types/settings.ts:SubnetConfig # settings-drawer view model
