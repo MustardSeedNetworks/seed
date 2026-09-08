@@ -26,7 +26,17 @@ import {
  * starts from a clean unauthenticated context.
  */
 
-test.use({ storageState: { cookies: [], origins: [] } });
+test.use({
+  storageState: { cookies: [], origins: [] },
+  // #2343: the suite-wide `on-first-retry` discards the first attempt's
+  // trace, and the first attempt is the only one this file has ever
+  // failed on -- the retry passes, so every investigation so far has had
+  // a network log of a passing run and none of the failing one. The
+  // failure screenshot cannot substitute: it is taken at teardown after
+  // the test timeout, when a WebKit page already tearing down captures
+  // blank whatever it showed.
+  trace: 'retain-on-failure',
+});
 
 test.describe('Complete Authentication Lifecycle', () => {
   // This is the heaviest auth file and Playwright assigns it to a
