@@ -82,12 +82,12 @@ const STATE_STYLES: Record<
 };
 
 /** The state word above the headline, keyed into `common:status`. */
-const STATE_LABEL_KEYS: Record<RollupState, string> = {
+const STATE_LABEL_KEYS = {
   ok: 'status.rollupOk',
   warn: 'status.rollupWarn',
   crit: 'status.rollupCrit',
   unknown: 'status.rollupNoData',
-};
+} as const satisfies Record<RollupState, string>;
 
 export const StatusRollup: FC<StatusRollupProps> = ({
   state,

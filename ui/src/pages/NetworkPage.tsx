@@ -1,10 +1,10 @@
+import { useTranslation } from 'react-i18next';
 import { DnsCard } from '../components/cards/DnsCard';
 import { GatewayCard } from '../components/cards/GatewayCard';
 import { NeighbourCacheCard } from '../components/cards/NeighbourCacheCard';
 import { NetworkCard } from '../components/cards/NetworkCard';
 import { PublicIpCard } from '../components/cards/PublicIpCard';
 import { SwitchCard } from '../components/cards/SwitchCard';
-import { useTranslation } from 'react-i18next';
 import { useAppContext } from '../contexts/AppContext';
 import { CardGrid, CardSlot } from '../ui/CardGrid';
 import { type RollupState, StatusRollup } from '../ui/StatusRollup';

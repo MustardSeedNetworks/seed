@@ -279,43 +279,45 @@ export const HealthCheckCard: React.MemoExoticComponent<
     // Segment colors are fixed per-phase for consistent identification
     // Using dark mode aware colors from theme
     // Status is indicated only via text color in the legend
-    const segments = [
-      {
-        key: 'dns',
-        label: t('health.timingDns'),
-        value: dns,
-        color: timing.dns.bg,
-        status: result.dnsStatus,
-      },
-      {
-        key: 'tcp',
-        label: t('health.timingTcp'),
-        value: tcp,
-        color: timing.tcp.bg,
-        status: result.tcpStatus,
-      },
-      {
-        key: 'tls',
-        label: t('health.timingTls'),
-        value: tls,
-        color: timing.tls.bg,
-        status: result.tlsStatus,
-      },
-      {
-        key: 'wait',
-        label: t('health.timingWait'),
-        value: ttfb,
-        color: timing.wait.bg,
-        status: result.ttfbStatus,
-      },
-      {
-        key: 'download',
-        label: t('health.timingDownload'),
-        value: download,
-        color: timing.download.bg,
-        status: undefined,
-      },
-    ].filter((s) => s.value > 0 && Number.isFinite(s.value));
+    const segments = (
+      [
+        {
+          helpKey: 'health.timingHelp.dns',
+          label: t('health.timingDns'),
+          value: dns,
+          color: timing.dns.bg,
+          status: result.dnsStatus,
+        },
+        {
+          helpKey: 'health.timingHelp.tcp',
+          label: t('health.timingTcp'),
+          value: tcp,
+          color: timing.tcp.bg,
+          status: result.tcpStatus,
+        },
+        {
+          helpKey: 'health.timingHelp.tls',
+          label: t('health.timingTls'),
+          value: tls,
+          color: timing.tls.bg,
+          status: result.tlsStatus,
+        },
+        {
+          helpKey: 'health.timingHelp.wait',
+          label: t('health.timingWait'),
+          value: ttfb,
+          color: timing.wait.bg,
+          status: result.ttfbStatus,
+        },
+        {
+          helpKey: 'health.timingHelp.download',
+          label: t('health.timingDownload'),
+          value: download,
+          color: timing.download.bg,
+          status: undefined,
+        },
+      ] as const
+    ).filter((s) => s.value > 0 && Number.isFinite(s.value));
 
     if (segments.length === 0) {
       return null;
@@ -355,7 +357,7 @@ export const HealthCheckCard: React.MemoExoticComponent<
           )}
         >
           {segments.map((seg) => (
-            <Tooltip key={seg.label} text={t(`health.timingHelp.${seg.key}`)} side="bottom">
+            <Tooltip key={seg.label} text={t(seg.helpKey)} side="bottom">
               <span
                 className={cn(
                   'inline-flex items-center',

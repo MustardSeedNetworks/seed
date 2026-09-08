@@ -92,10 +92,12 @@ function getResourceStatus(percent: number): Status {
 /**
  * Returns contextual remediation suggestions based on resource type and usage level
  */
-/** The suggestion key for a resource under pressure; 90% is the critical line. */
-function suggestionKey(type: 'cpu' | 'memory' | 'disk', usage: number): string {
-  return `system.suggestion.${type}${usage >= 90 ? 'Critical' : 'High'}`;
-}
+/** The suggestion for a resource under pressure; 90% is the critical line. */
+const SUGGESTION_KEYS = {
+  cpu: ['system.suggestion.cpuHigh', 'system.suggestion.cpuCritical'],
+  memory: ['system.suggestion.memoryHigh', 'system.suggestion.memoryCritical'],
+  disk: ['system.suggestion.diskHigh', 'system.suggestion.diskCritical'],
+} as const;
 
 function ResourceBar({
   label,
@@ -163,7 +165,8 @@ function ResourceBar({
       ) : null}
       {percent >= 75 ? (
         <div className="mt-inline text-xs text-text-muted">
-          <span className="font-medium">{t('system.tip')}</span> {t(suggestionKey(type, percent))}
+          <span className="font-medium">{t('system.tip')}</span>{' '}
+          {t(SUGGESTION_KEYS[type][percent >= 90 ? 1 : 0])}
         </div>
       ) : null}
     </div>
@@ -174,7 +177,7 @@ function ResourceBar({
  * Displays system resource usage with CPU, memory, and disk metrics.
  */
 export function SystemHealthCard(): React.ReactElement {
-  const { t } = useTranslation('cards');
+  const { t } = useTranslation(['cards', 'common']);
   const [data, setData] = useState<SystemHealth | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
