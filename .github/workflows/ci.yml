@@ -286,6 +286,10 @@ jobs:
         with:
           version: v2.13.2
           only-new-issues: true
+          # See the Backend (Go) step below: the action's cache key carries no
+          # GOOS, so this job and that one share one entry while analysing two
+          # different trees. #2511.
+          skip-cache: true
 
   backend:
     name: Backend (Go)
@@ -341,6 +345,19 @@ jobs:
           # Full-tree lint verified clean on 2026-08-14. Keep CI aligned with
           # the repository-wide zero-warning policy.
           args: --timeout=5m
+          # skip-cache, because a restored analysis cache can report findings
+          # that are not in the tree: #2509 failed twice on two `nolintlint`
+          # findings in files it did not touch, survived a plain re-run, and
+          # went green the moment the two `golangci-lint.cache-Linux-*`
+          # entries were deleted -- with a real Linux host at the same Go and
+          # linter versions saying `0 issues` on both main and the branch the
+          # whole time. The key (`golangci-lint.cache-<OS>-<week>-<hash>`)
+          # carries neither GOOS nor the linter config, so the GOOS=windows
+          # job above writes into the same entry. A lint gate whose result can
+          # disagree with the tree is worse than a slower one; the rebuild
+          # costs about a minute against a job that already runs `npm ci`.
+          # #2511.
+          skip-cache: true
 
       - name: Run go vet
         run: go vet ./...

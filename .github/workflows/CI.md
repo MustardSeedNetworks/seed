@@ -88,7 +88,11 @@ Permissions follow least privilege: workflows declare `permissions: {}` (or
 a write scope declares it on the job, never workflow-wide. `release.yml`
 deliberately runs without npm caching, because its output is published and
 attested and a restored cache entry could land inside a signed artifact; it opts
-out by passing `cache: ""` to the `setup-node` composite action.
+out by passing `cache: ""` to the `setup-node` composite action. Both
+`golangci-lint-action` steps opt out too, with `skip-cache: true`: a restored
+analysis cache reported two `nolintlint` findings that were not in the tree and
+survived a re-run (#2511), and its key carries neither `GOOS` nor the linter
+config, so the `GOOS=windows` lint job shares one entry with `Backend (Go)`.
 
 ## Disabled lint rule: `nursery/useAwaitThenable`
 
