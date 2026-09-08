@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.214.25](https://github.com/MustardSeedNetworks/seed/compare/v0.214.24...v0.214.25) (2026-09-08)
+
+
+### Bug Fixes
+
+* **deps:** update go dependencies ([#2516](https://github.com/MustardSeedNetworks/seed/issues/2516)) ([7227453](https://github.com/MustardSeedNetworks/seed/commit/7227453b377bef5248543226bac4ad3b597718a1))
+
 ## [0.214.24](https://github.com/MustardSeedNetworks/seed/compare/v0.214.23...v0.214.24) (2026-09-08)
 
 
