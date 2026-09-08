@@ -177,9 +177,9 @@ func (s *Server) broadcastAllCards() {
 //   - map[string]interface{} containing link status data, or
 //   - nil if network manager is unavailable or interface refresh fails
 //
-// Performance: This function refreshes the interface list on each call, which involves
-// system calls. The 5-second broadcast interval is chosen to balance update frequency
-// with this overhead.
+// Performance: This function refreshes the interface list on each call. Flags and
+// addresses are one kernel read; the per-interface detection pass behind it is
+// cached by netif.Manager, so a broadcast tick never fans out platform helpers.
 func (s *Server) collectLinkData() map[string]any {
 	if s.netManager() == nil {
 		return nil

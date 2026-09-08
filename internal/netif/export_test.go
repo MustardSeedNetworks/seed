@@ -223,3 +223,19 @@ func CreateInterfaceCandidates(ethernetWithIP, wifiWithIP, ethernetUp, wifiUp []
 func (c *interfaceCandidates) SelectBest() string {
 	return c.selectBest()
 }
+
+// InterfaceDetector is the detector port RefreshInterfaces runs behind.
+type InterfaceDetector = interfaceDetector
+
+// DetectionTTL is how long RefreshInterfaces reuses a detection pass.
+const DetectionTTL = detectionTTL
+
+// NewManagerForDetector builds a Manager over det and a clock, without the
+// constructor's initial refresh, so a test can count detection passes.
+func NewManagerForDetector(det InterfaceDetector, now func() time.Time) *Manager {
+	return &Manager{
+		interfaces: make(map[string]*InterfaceInfo),
+		detector:   det,
+		now:        now,
+	}
+}

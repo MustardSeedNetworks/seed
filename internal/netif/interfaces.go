@@ -10,6 +10,7 @@ import (
 	"strconv"
 	"strings"
 	"sync"
+	"time"
 
 	"github.com/MustardSeedNetworks/seed/internal/logging"
 	"github.com/MustardSeedNetworks/seed/internal/netif/detection"
@@ -62,12 +63,30 @@ type LinkStatus struct {
 	AutoNeg    bool     `json:"autoNeg"`    // Auto-negotiation enabled
 }
 
+// detectionTTL bounds how often RefreshInterfaces re-runs interface detection.
+// Detection is the slow per-interface part (speed, chipset, scoring; a helper
+// process per interface on Windows). The flag and address pass that keeps
+// carrier and IP state live is one cheap kernel read and runs on every call.
+const detectionTTL = 10 * time.Second
+
+// interfaceDetector is the detection port RefreshInterfaces runs behind.
+type interfaceDetector interface {
+	DetectAll() ([]detection.InterfaceScore, error)
+}
+
 // Manager handles network interface operations.
 type Manager struct {
 	mu               sync.RWMutex
 	currentInterface string
 	interfaces       map[string]*InterfaceInfo
-	detector         *detection.Detector
+	detector         interfaceDetector
+	now              func() time.Time
+
+	// detectMu serialises detection so a burst of polls that all find the
+	// cache stale runs it once; the rest wait and read the fresh result.
+	detectMu   sync.Mutex
+	detectedAt time.Time
+	detected   map[string]*detection.InterfaceScore
 
 	// Callback management for interface change notifications
 	callbackMu sync.RWMutex
@@ -85,6 +104,7 @@ func NewManager(defaultInterface string) (*Manager, error) {
 		currentInterface: defaultInterface,
 		interfaces:       make(map[string]*InterfaceInfo),
 		detector:         detection.NewDetector(),
+		now:              time.Now,
 	}
 	if err := m.RefreshInterfaces(); err != nil {
 		return nil, fmt.Errorf(
@@ -110,16 +130,7 @@ func (m *Manager) RefreshInterfaces() error {
 		return fmt.Errorf("failed to get interfaces: %w", err)
 	}
 
-	// Get enriched detection data for all interfaces
-	detectedScores, err := m.detector.DetectAll()
-	if err != nil {
-		logging.GetLogger().Warn("interface detection failed", "error", err)
-		// Continue with empty detection - graceful degradation
-	}
-	scoreMap := make(map[string]*detection.InterfaceScore)
-	for i := range detectedScores {
-		scoreMap[detectedScores[i].Name] = &detectedScores[i]
-	}
+	scoreMap := m.detectionScores()
 
 	// Build new map first, then swap under lock
 	newInterfaces := make(map[string]*InterfaceInfo)
@@ -165,6 +176,30 @@ func (m *Manager) RefreshInterfaces() error {
 	m.mu.Unlock()
 
 	return nil
+}
+
+// detectionScores returns the per-interface detection data, re-running the
+// detector only once the last pass is older than detectionTTL. A failed pass
+// keeps whatever the previous one found.
+func (m *Manager) detectionScores() map[string]*detection.InterfaceScore {
+	m.detectMu.Lock()
+	defer m.detectMu.Unlock()
+
+	if m.detected != nil && m.now().Sub(m.detectedAt) < detectionTTL {
+		return m.detected
+	}
+
+	scores, err := m.detector.DetectAll()
+	if err != nil {
+		logging.GetLogger().Warn("interface detection failed", "error", err)
+		return m.detected
+	}
+	m.detected = make(map[string]*detection.InterfaceScore, len(scores))
+	for i := range scores {
+		m.detected[scores[i].Name] = &scores[i]
+	}
+	m.detectedAt = m.now()
+	return m.detected
 }
 
 // GetInterfaces returns all available interfaces.
