@@ -77,7 +77,7 @@ export function GuestNetworkAuditCard(): JSX.Element | null {
             >
               {running
                 ? t('guestAudit.running')
-                : t('guestAudit.runButton', `Run audit (${settings.targets.length} targets)`)}
+                : t('guestAudit.runButton', { count: settings.targets.length })}
             </button>
 
             {error ? (

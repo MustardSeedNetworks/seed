@@ -334,7 +334,17 @@
     "temperature": "Temperature",
     "load1m": "Load (1m)",
     "goroutines": "Goroutines",
-    "processMem": "Process Mem"
+    "processMem": "Process Mem",
+    "tip": "Tip:",
+    "platform": "{{os}}/{{arch}} - {{cpus}} CPUs",
+    "suggestion": {
+      "cpuCritical": "Check for runaway processes or consider upgrading CPU resources",
+      "cpuHigh": "Consider closing unused applications or background tasks",
+      "memoryCritical": "Critical: Restart applications to free memory or add more RAM",
+      "memoryHigh": "Consider increasing system memory or closing memory-intensive applications",
+      "diskCritical": "Critical: Clear temporary files and archive old data immediately",
+      "diskHigh": "Clear temporary files, remove unused applications, or archive old data"
+    }
   },
   "switch": {
     "title": "Nearest Switch",
@@ -393,7 +403,8 @@
     "noTargets": "Add sensitive internal IP addresses (EMR, PACS, etc.) in Settings → Security to enable this audit.",
     "description": "Probe configured internal hosts to confirm guest-network isolation. Connect to the guest network before running.",
     "running": "Running audit...",
-    "runButton": "Run audit ({{count}} targets)",
+    "runButton_one": "Run audit ({{count}} target)",
+    "runButton_other": "Run audit ({{count}} targets)",
     "criticalAlert": "Critical: Guest network isolation is not configured correctly.",
     "criticalDetail": "{{count}} of {{total}} internal hosts are reachable from the guest network.",
     "passed": "Isolation verified - none of the {{total}} internal hosts are reachable.",

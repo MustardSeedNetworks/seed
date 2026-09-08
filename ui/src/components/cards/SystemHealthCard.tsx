@@ -92,29 +92,9 @@ function getResourceStatus(percent: number): Status {
 /**
  * Returns contextual remediation suggestions based on resource type and usage level
  */
-function getSuggestion(type: 'cpu' | 'memory' | 'disk', usage: number): string {
-  if (type === 'cpu') {
-    if (usage >= 90) {
-      return 'Check for runaway processes or consider upgrading CPU resources';
-    }
-    return 'Consider closing unused applications or background tasks';
-  }
-
-  if (type === 'memory') {
-    if (usage >= 90) {
-      return 'Critical: Restart applications to free memory or add more RAM';
-    }
-    return 'Consider increasing system memory or closing memory-intensive applications';
-  }
-
-  if (type === 'disk') {
-    if (usage >= 90) {
-      return 'Critical: Clear temporary files and archive old data immediately';
-    }
-    return 'Clear temporary files, remove unused applications, or archive old data';
-  }
-
-  return '';
+/** The suggestion key for a resource under pressure; 90% is the critical line. */
+function suggestionKey(type: 'cpu' | 'memory' | 'disk', usage: number): string {
+  return `system.suggestion.${type}${usage >= 90 ? 'Critical' : 'High'}`;
 }
 
 function ResourceBar({
@@ -183,7 +163,8 @@ function ResourceBar({
       ) : null}
       {percent >= 75 ? (
         <div className="mt-inline text-xs text-text-muted">
-          <span className="font-medium">Tip:</span> {getSuggestion(type, percent)}
+          <span className="font-medium">{t('system.tip')}</span>{' '}
+          {t(suggestionKey(type, percent))}
         </div>
       ) : null}
     </div>
@@ -298,7 +279,11 @@ export function SystemHealthCard(): React.ReactElement {
           </div>
 
           <div className={cn('caption text-center', spacing.padding.top.tight)}>
-            {health.os ?? 'Unknown'}/{health.arch ?? 'Unknown'} - {health.numCpu ?? 0} CPUs
+            {t('system.platform', {
+              os: health.os ?? t('common:status.unknown'),
+              arch: health.arch ?? t('common:status.unknown'),
+              cpus: health.numCpu ?? 0,
+            })}
           </div>
         </div>
       )}
