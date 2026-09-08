@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.214.28](https://github.com/MustardSeedNetworks/seed/compare/v0.214.27...v0.214.28) (2026-09-08)
+
+
+### Bug Fixes
+
+* **ui:** read the wire, not a hand-typed mirror of it ([#2532](https://github.com/MustardSeedNetworks/seed/issues/2532)) ([56eb3c4](https://github.com/MustardSeedNetworks/seed/commit/56eb3c438a8a769652df7ea04aa12840dea4889a))
+
 ## [0.214.27](https://github.com/MustardSeedNetworks/seed/compare/v0.214.26...v0.214.27) (2026-09-08)
 
 
