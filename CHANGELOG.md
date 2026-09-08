@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.214.24](https://github.com/MustardSeedNetworks/seed/compare/v0.214.23...v0.214.24) (2026-09-08)
+
+
+### Bug Fixes
+
+* **ui:** stop every client log batch being rejected 400 and retried forever ([#2514](https://github.com/MustardSeedNetworks/seed/issues/2514)) ([d25726b](https://github.com/MustardSeedNetworks/seed/commit/d25726bd09f3845feaecb06d16ab39bf5006a530))
+
 ## [0.214.23](https://github.com/MustardSeedNetworks/seed/compare/v0.214.22...v0.214.23) (2026-09-08)
 
 
