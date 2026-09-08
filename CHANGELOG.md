@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.214.27](https://github.com/MustardSeedNetworks/seed/compare/v0.214.26...v0.214.27) (2026-09-08)
+
+
+### Bug Fixes
+
+* **netif:** read macOS link speed from the kernel and cache detection between polls ([#2531](https://github.com/MustardSeedNetworks/seed/issues/2531)) ([8c1b372](https://github.com/MustardSeedNetworks/seed/commit/8c1b372cc508d1abbec7e2f4b8a4293b36e68c57)), closes [#2520](https://github.com/MustardSeedNetworks/seed/issues/2520)
+
+
+### Miscellaneous
+
+* **deps:** lock file maintenance ([#2529](https://github.com/MustardSeedNetworks/seed/issues/2529)) ([1be1cb4](https://github.com/MustardSeedNetworks/seed/commit/1be1cb4cd0d2bfe73adef714e1a211b36f23b103))
+
 ## [0.214.26](https://github.com/MustardSeedNetworks/seed/compare/v0.214.25...v0.214.26) (2026-09-08)
 
 
