@@ -95,12 +95,11 @@ func newDetector(run commandRunner) *Detector {
 // DetectAll discovers and scores all network interfaces.
 // Returns interfaces sorted by score (highest first).
 //
-// Per-interface scoring shells out to platform tools (e.g.
-// `networksetup -getmedia` on macOS, `ethtool` on Linux) and each
-// call carries a multi-second timeout. We score every interface
+// Per-interface scoring asks the platform for speed and chipset
+// (sysfs and ethtool on Linux, the kernel interface table on macOS,
+// a helper process per interface on Windows). Interfaces are scored
 // concurrently so the worst-case wall clock is one interface's
-// timeout, not N×timeout — without this, hosts with many virtual
-// interfaces (utun*, awdl*, bridge*) made test runs unboundedly slow.
+// timeout, not N×timeout, on hosts with many virtual interfaces.
 func (d *Detector) DetectAll() ([]InterfaceScore, error) {
 	ifaces, err := net.Interfaces()
 	if err != nil {
