@@ -88,7 +88,7 @@ export function SsoSettings(): React.ReactElement {
         github: { ...prev.github, enabled: enabledByName.get('github') ?? false },
       }));
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to load SSO settings');
+      setError(err instanceof Error ? err.message : t('errors:sso.loadFailed'));
     } finally {
       setLoading(false);
     }
@@ -130,7 +130,7 @@ export function SsoSettings(): React.ReactElement {
         updateField(name, 'clientSecret', '');
         await refresh();
       } catch (err) {
-        setError(err instanceof Error ? err.message : 'Failed to save SSO provider');
+        setError(err instanceof Error ? err.message : t('errors:sso.saveFailed'));
       } finally {
         setSavingProvider(null);
       }

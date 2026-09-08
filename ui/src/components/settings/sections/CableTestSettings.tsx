@@ -16,6 +16,7 @@
  * State: Manages cable test configuration settings
  */
 
+import type { TFunction } from 'i18next';
 import type React from 'react';
 import { memo, useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -67,10 +68,13 @@ interface CapabilityEntry {
  * The only cable route is GET /api/v1/telemetry/cable, which runs a test rather
  * than reporting whether one is possible.
  */
-function tdrSupportFromCapabilities(entries: readonly CapabilityEntry[]): TdrSupportStatus {
+function tdrSupportFromCapabilities(
+  entries: readonly CapabilityEntry[],
+  t: TFunction<['settings', 'errors']>,
+): TdrSupportStatus {
   const entry = entries.find((candidate) => candidate.capability === 'cable_diagnostics');
   if (!entry) {
-    return { supported: false, message: 'Platform capability report did not mention TDR' };
+    return { supported: false, message: t('cableTest.notReported') };
   }
 
   return {
@@ -89,7 +93,7 @@ export const CableTestSettings: React.NamedExoticComponent<CableTestSettingsProp
     setCableTestSettings,
     cableTestStatus,
   }: CableTestSettingsProps): React.ReactElement {
-    const { t } = useTranslation('settings');
+    const { t } = useTranslation(['settings', 'errors']);
     // Per-control rather than a read-only fieldset: the support Refresh below
     // is a read, and a disabled fieldset would take it with the checkbox.
     const { canWrite } = useRole();
@@ -101,13 +105,13 @@ export const CableTestSettings: React.NamedExoticComponent<CableTestSettingsProp
       setCheckingSupport(true);
       try {
         const status = await api.get<{ capabilities?: CapabilityEntry[] }>('/api/v1/status');
-        setTdrSupport(tdrSupportFromCapabilities(status.capabilities ?? []));
+        setTdrSupport(tdrSupportFromCapabilities(status.capabilities ?? [], t));
       } catch {
-        setTdrSupport({ supported: false, message: 'Network error' });
+        setTdrSupport({ supported: false, message: t('errors:network.networkError') });
       } finally {
         setCheckingSupport(false);
       }
-    }, []);
+    }, [t]);
 
     useEffect((): void => {
       checkTdrSupport().catch(() => undefined);

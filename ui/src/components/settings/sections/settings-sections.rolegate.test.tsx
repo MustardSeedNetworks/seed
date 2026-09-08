@@ -12,36 +12,10 @@
 
 import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import type { ReactElement } from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { type CurrentUser, RoleProvider } from '../../../contexts/RoleContext';
-import {
-  DEFAULT_CABLE_TEST_SETTINGS,
-  DEFAULT_CARD_SETTINGS,
-  DEFAULT_DISPLAY_OPTIONS,
-  DEFAULT_IPERF_SETTINGS,
-  DEFAULT_LINK_SETTINGS,
-  DEFAULT_NETWORK_DISCOVERY_SETTINGS,
-  DEFAULT_SNMP_SETTINGS,
-  DEFAULT_TESTS_SETTINGS,
-  DEFAULT_THRESHOLDS,
-  DEFAULT_VULNERABILITY_SETTINGS,
-  type IpSettings,
-} from '../../../types/settings';
-import { SettingsDrawerNetworkSection } from '../SettingsDrawerNetworkSection';
-import { AppearanceSettings } from './AppearanceSettings';
-import { CableTestSettings } from './CableTestSettings';
-import { ConfigBackupsSection } from './ConfigBackupsSection';
-import { DiscoverySettings } from './DiscoverySettings';
-import { DnsSettings } from './DnsSettings';
-import { HealthChecksSettings } from './HealthChecksSettings';
-import { InterfacesSettings } from './InterfacesSettings';
-import { LinkSettings } from './LinkSettings';
-import { PerformanceSettings } from './PerformanceSettings';
-import { SsoSettings } from './SsoSettings';
-import { ThresholdsSettings } from './ThresholdsSettings';
-import { VulnerabilitySettings } from './VulnerabilitySettings';
+import { MIXED_SECTIONS, RAW_GET_BODIES, SECTIONS } from './settings-sections.fixtures';
 
 const READ_ONLY = 'Read-only — operator role required to change these settings.';
 
@@ -87,112 +61,6 @@ vi.mock('../../../api', () => ({
   },
 }));
 
-const noop = (): void => undefined;
-const ipSettings: IpSettings = {
-  mode: 'dhcp',
-  address: '',
-  netmask: '',
-  gateway: '',
-  dns: [],
-};
-
-/**
- * Each section's props are its own; the fixture list keeps the assertion
- * identical across all of them, which is the point — one missed section is
- * exactly the defect this covers.
- */
-const SECTIONS: { name: string; header: RegExp; render: () => ReactElement }[] = [
-  {
-    name: 'LinkSettings',
-    header: /link/i,
-    render: () => (
-      <LinkSettings
-        linkSettings={DEFAULT_LINK_SETTINGS}
-        setLinkSettings={noop}
-        linkStatus="idle"
-        cardSettings={DEFAULT_CARD_SETTINGS}
-        updateCardSettings={noop}
-      />
-    ),
-  },
-  {
-    name: 'SettingsDrawerNetworkSection',
-    header: /network/i,
-    render: () => (
-      <SettingsDrawerNetworkSection
-        ipSettings={ipSettings}
-        setIpSettings={noop}
-        dnsInput=""
-        setDnsInput={noop}
-        saveIpSettings={(): Promise<void> => Promise.resolve()}
-        savingIp={false}
-        ipMessage={null}
-        displayOptions={DEFAULT_DISPLAY_OPTIONS}
-        setDisplayOptions={noop}
-        displayStatus="idle"
-        isValidIp={(): boolean => true}
-      />
-    ),
-  },
-  {
-    name: 'DnsSettings',
-    header: /dns/i,
-    render: () => (
-      <DnsSettings
-        testsSettings={DEFAULT_TESTS_SETTINGS}
-        setTestsSettings={noop}
-        testsStatus="idle"
-        cardSettings={DEFAULT_CARD_SETTINGS}
-        updateCardSettings={noop}
-      />
-    ),
-  },
-  {
-    name: 'HealthChecksSettings',
-    header: /health/i,
-    render: () => (
-      <HealthChecksSettings
-        testsSettings={DEFAULT_TESTS_SETTINGS}
-        setTestsSettings={noop}
-        testsStatus="idle"
-        cardSettings={DEFAULT_CARD_SETTINGS}
-        updateCardSettings={noop}
-      />
-    ),
-  },
-  {
-    name: 'AppearanceSettings',
-    header: /appearance/i,
-    render: () => (
-      <AppearanceSettings
-        theme="dark"
-        setTheme={noop}
-        isDark={true}
-        unitSystem="sae"
-        setUnitSystem={noop}
-      />
-    ),
-  },
-  { name: 'SsoSettings', header: /sign-on|sso/i, render: () => <SsoSettings /> },
-  {
-    name: 'ConfigBackupsSection',
-    header: /configuration backups/i,
-    render: () => <ConfigBackupsSection />,
-  },
-  { name: 'InterfacesSettings', header: /interface/i, render: () => <InterfacesSettings /> },
-  {
-    name: 'ThresholdsSettings',
-    header: /thresholds/i,
-    render: () => (
-      <ThresholdsSettings
-        thresholds={DEFAULT_THRESHOLDS}
-        setThresholds={noop}
-        thresholdsStatus="idle"
-      />
-    ),
-  },
-];
-
 function asUser(role: CurrentUser['role']): void {
   mockGet.mockImplementation((path: string) => {
     if (path.includes('/users/me')) {
@@ -212,23 +80,6 @@ async function openSection(header: RegExp): Promise<HTMLElement> {
 
   return button.closest('section') as HTMLElement;
 }
-
-/**
- * Three sections read their status banner with the global `fetch` rather than
- * the api client (a GET, so the raw-fetch gate allows it). Without the banner
- * the Refresh button never renders and the read half of the case cannot be
- * asserted at all, so the stub answers each status route with a running one.
- */
-const RAW_GET_BODIES: Record<string, unknown> = {
-  '/api/v1/security/discovery/service/status': { running: true, scanning: false, deviceCount: 1 },
-  '/api/v1/config/backups': {
-    backups: [{ name: 'b1', createdAt: '2026-09-07T00:00:00Z', size: 1 }],
-  },
-  '/api/v1/config/version': { current: '1', needsMigration: false },
-  // Without a status body the vulnerability banner never renders, and with it
-  // the Refresh button that is the read half of that case.
-  '/api/v1/security/vulnerabilities/status': { running: false, lastScan: null },
-};
 
 beforeEach(() => {
   mockGet.mockReset();
@@ -284,127 +135,6 @@ describe.each(SECTIONS)('$name — viewer read-only', ({ header, render: renderS
     });
   });
 });
-
-/**
- * Slice 2 (#2467): the sections that also carry a *read* action.
- *
- * A disabled `<fieldset>` over the whole body would take the read with it —
- * a viewer could no longer refresh the scanner status or the discovery
- * service. These sections gate their write controls only, and the case below
- * asserts both halves at once: the read control stays usable, every write
- * control does not. Asserting only "everything is disabled" is what would let
- * the read regress silently.
- */
-const MIXED_SECTIONS: {
-  name: string;
-  header: RegExp;
-  /** The control that reads and must stay usable for a viewer. */
-  readControl: RegExp;
-  /** Further read-only controls that must survive the gate, by accessible name. */
-  alsoUsable?: RegExp[];
-  render: () => ReactElement;
-}[] = [
-  {
-    name: 'CableTestSettings',
-    header: /cable test/i,
-    readControl: /^refresh$/i,
-    render: () => (
-      <CableTestSettings
-        cableTestSettings={DEFAULT_CABLE_TEST_SETTINGS}
-        setCableTestSettings={noop}
-        cableTestStatus="idle"
-      />
-    ),
-  },
-  {
-    name: 'DiscoverySettings',
-    header: /^discovery$/i,
-    readControl: /^refresh$/i,
-    alsoUsable: [/lab-v3/],
-    render: () => (
-      <DiscoverySettings
-        networkDiscoverySettings={DEFAULT_NETWORK_DISCOVERY_SETTINGS}
-        setNetworkDiscoverySettings={noop}
-        networkDiscoveryStatus="idle"
-        subnets={[]}
-        subnetsStatus="idle"
-        newSubnetCidr=""
-        setNewSubnetCidr={noop}
-        newSubnetName=""
-        setNewSubnetName={noop}
-        subnetError={null}
-        setSubnetError={noop}
-        addSubnet={noop}
-        toggleSubnet={noop}
-        deleteSubnet={noop}
-        snmpSettings={{ ...DEFAULT_SNMP_SETTINGS, v3Credentials: [V3_CREDENTIAL] }}
-        setSnmpSettings={noop}
-        snmpStatus="idle"
-        cardSettings={DEFAULT_CARD_SETTINGS}
-        updateCardSettings={noop}
-      />
-    ),
-  },
-  {
-    name: 'PerformanceSettings',
-    header: /^performance$/i,
-    // A viewer may still scan the LAN for public iperf servers: the button is
-    // a read. It sits between the server-address input and the suggestion
-    // chips, both writes, which is why this section gates per group.
-    readControl: /find iperf hosts/i,
-    render: () => (
-      <PerformanceSettings
-        testsSettings={DEFAULT_TESTS_SETTINGS}
-        setTestsSettings={noop}
-        iperfSettings={DEFAULT_IPERF_SETTINGS}
-        setIperfSettings={noop}
-        iperfStatus="idle"
-        iperfSuggestions={[{ host: '10.0.0.5', hostname: 'lab-iperf' }]}
-        iperfSuggestionsStatus="idle"
-        iperfSuggestionsError={null}
-        fetchIperfSuggestions={noop}
-        cardSettings={DEFAULT_CARD_SETTINGS}
-        updateCardSettings={noop}
-      />
-    ),
-  },
-  {
-    name: 'VulnerabilitySettings',
-    header: /vulnerability/i,
-    // Two reads: the scanner-status Refresh, and the API-key help toggle that
-    // sits directly above the key input. The second is why the NVD group gates
-    // per control rather than behind a fieldset.
-    readControl: /^refresh$/i,
-    alsoUsable: [/requires an api key/i],
-    render: () => (
-      <VulnerabilitySettings
-        settings={DEFAULT_VULNERABILITY_SETTINGS}
-        setSettings={noop}
-        status="idle"
-      />
-    ),
-  },
-];
-
-/**
- * One SNMPv3 credential, so the credential row renders. Its accordion header is
- * a `<div role="button">` — the row that named it a "non-form clickable the
- * fieldset would never catch" read it as a missed write control; it is a read
- * (expand/collapse), and it cannot become a real `<button>` because it contains
- * one. Leaving it enabled is correct and is asserted below; the Remove button
- * inside it is the write, and the fieldset does disable that.
- */
-const V3_CREDENTIAL = {
-  id: 'cred-1',
-  name: 'lab-v3',
-  username: 'operator',
-  authProtocol: 'SHA',
-  authPassword: '',
-  privProtocol: 'AES',
-  privPassword: '',
-  contextName: '',
-  securityLevel: 'authPriv',
-};
 
 /** Write controls of a section: everything interactive but the header and the read. */
 function writeControls(section: HTMLElement, reads: HTMLElement[]): HTMLElement[] {

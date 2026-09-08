@@ -11,7 +11,6 @@ import {
   spacing,
 } from '../../../styles/theme';
 import type { SaveStatus, SettingsThresholds } from '../../../types/settings';
-import { THRESHOLD_HELP } from '../../help/HelpContent';
 import { CollapsibleSection } from '../../ui/CollapsibleSection';
 import { Info, SlidersHorizontal } from '../../ui/icons';
 import { Tooltip } from '../../ui/tooltip';
@@ -34,7 +33,7 @@ export const ThresholdsSettings: React.NamedExoticComponent<ThresholdsSettingsPr
     setThresholds,
     thresholdsStatus,
   }: ThresholdsSettingsProps) {
-    const { t } = useTranslation('settings');
+    const { t } = useTranslation(['settings', 'help']);
     const { canWrite } = useRole();
     const readOnlyReason = canWrite ? undefined : t('common.readOnly');
 
@@ -100,7 +99,7 @@ export const ThresholdsSettings: React.NamedExoticComponent<ThresholdsSettingsPr
               <span className="body-small font-medium text-text-primary">
                 {t('thresholds.dnsLookup')}
               </span>
-              <Tooltip text={THRESHOLD_HELP.dnsLookup} side="top">
+              <Tooltip text={t('help:thresholds.dnsLookup')} side="top">
                 <Info
                   className={cn(
                     iconTokens.size.xs,
@@ -166,7 +165,7 @@ export const ThresholdsSettings: React.NamedExoticComponent<ThresholdsSettingsPr
               <span className="body-small font-medium text-text-primary">
                 {t('thresholds.gatewayPing')}
               </span>
-              <Tooltip text={THRESHOLD_HELP.gatewayPing} side="top">
+              <Tooltip text={t('help:thresholds.gatewayPing')} side="top">
                 <Info
                   className={cn(
                     iconTokens.size.xs,
@@ -232,7 +231,7 @@ export const ThresholdsSettings: React.NamedExoticComponent<ThresholdsSettingsPr
               <span className="body-small font-medium text-text-primary">
                 {t('thresholds.wifiSignal')}
               </span>
-              <Tooltip text={THRESHOLD_HELP.wifiSignal} side="top">
+              <Tooltip text={t('help:thresholds.wifiSignal')} side="top">
                 <Info
                   className={cn(
                     iconTokens.size.xs,
@@ -298,7 +297,7 @@ export const ThresholdsSettings: React.NamedExoticComponent<ThresholdsSettingsPr
               <span className="body-small font-medium text-text-primary">
                 {t('thresholds.healthPing')}
               </span>
-              <Tooltip text={THRESHOLD_HELP.healthCheckPing} side="top">
+              <Tooltip text={t('help:thresholds.healthCheckPing')} side="top">
                 <Info
                   className={cn(
                     iconTokens.size.xs,
@@ -364,7 +363,7 @@ export const ThresholdsSettings: React.NamedExoticComponent<ThresholdsSettingsPr
               <span className="body-small font-medium text-text-primary">
                 {t('thresholds.healthTcp')}
               </span>
-              <Tooltip text={THRESHOLD_HELP.healthCheckTcp} side="top">
+              <Tooltip text={t('help:thresholds.healthCheckTcp')} side="top">
                 <Info
                   className={cn(
                     iconTokens.size.xs,
