@@ -34,6 +34,14 @@ export function TargetForm({ mode, initial, onSubmit, onCancel }: TargetFormProp
       setFormError('Name and IP address are required.');
       return;
     }
+    // The poller refuses this target rather than polling it unauthenticated
+    // (CredentialResolver.Resolve), so saving it enabled buys nothing but an
+    // ErrCredentialsUnresolved every tick. Refused here, where the operator
+    // can still act on it.
+    if (form.enabled && !form.credentialsId) {
+      setFormError(t('pollingTargets.credentialRequired'));
+      return;
+    }
     setSubmitting(true);
     setFormError(null);
     try {
@@ -68,7 +76,10 @@ export function TargetForm({ mode, initial, onSubmit, onCancel }: TargetFormProp
         </div>
 
         {formError ? (
-          <div className="mt-heading rounded-md border border-status-error/40 bg-status-error/10 pad-xs text-sm text-status-error">
+          <div
+            data-testid="target-form-error"
+            className="mt-heading rounded-md border border-status-error/40 bg-status-error/10 pad-xs text-sm text-status-error"
+          >
             {formError}
           </div>
         ) : null}
@@ -80,6 +91,7 @@ export function TargetForm({ mode, initial, onSubmit, onCancel }: TargetFormProp
               value={form.name}
               onChange={(e): void => update('name', e.target.value)}
               required
+              data-testid="target-name"
               className={inputClass}
             />
           </Field>
@@ -89,6 +101,7 @@ export function TargetForm({ mode, initial, onSubmit, onCancel }: TargetFormProp
               value={form.ipAddress}
               onChange={(e): void => update('ipAddress', e.target.value)}
               required
+              data-testid="target-ip"
               placeholder="10.0.0.1"
               className={inputClass}
             />
@@ -121,6 +134,16 @@ export function TargetForm({ mode, initial, onSubmit, onCancel }: TargetFormProp
             />
             {t('pollingTargets.enabledHint')}
           </label>
+          <Field label={t('pollingTargets.collectorChain')}>
+            {/* Read-only: the chain is the server's, and a form that retypes
+                the server's default is the mirror this row exists to remove.
+                An absent chain is filled in on create by the repository. */}
+            <div data-testid="target-chain" className="text-sm text-text-secondary">
+              {form.collectorChain?.length
+                ? form.collectorChain.join(', ')
+                : t('pollingTargets.chainServerDefault')}
+            </div>
+          </Field>
         </div>
 
         <div className="mt-5 flex justify-end gap-compact border-t border-surface-border pt-section">
@@ -134,6 +157,7 @@ export function TargetForm({ mode, initial, onSubmit, onCancel }: TargetFormProp
           <button
             type="submit"
             disabled={submitting}
+            data-testid="target-save"
             className="rounded-md bg-brand-primary px-3 py-2 text-sm font-medium text-on-brand hover:bg-brand-accent disabled:opacity-60"
           >
             {submitting ? 'Saving…' : mode === 'create' ? 'Add target' : 'Save changes'}
@@ -163,16 +187,22 @@ function Field({ label, children }: { label: string; children: JSX.Element }): J
 const inputClass: string =
   'w-full rounded-md border border-surface-border bg-surface-sunken px-3 py-2 text-sm text-text-primary placeholder:text-text-muted focus:border-brand-primary focus:outline-none';
 
-/** emptyInput is the create-form default. Mirrors the server defaults
- * but explicit so the operator sees them in the form before submit. */
+/**
+ * emptyInput is the create-form default.
+ *
+ * It creates disabled: an enabled target needs a credential and this form has
+ * no way to attach one yet (that is SE-2's credential picker), so an enabled
+ * default would be refused on every first submit. The collector chain is
+ * omitted rather than sent empty — the repository fills an absent chain with
+ * its own default, and `[]` is not that default.
+ */
 export function emptyInput(): PollingTargetInput {
   return {
     name: '',
     ipAddress: '',
     snmpVersion: 'v2c',
     pollIntervalSeconds: 300,
-    enabled: true,
-    collectorChain: [],
+    enabled: false,
   };
 }
 
