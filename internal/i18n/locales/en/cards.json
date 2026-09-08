@@ -317,6 +317,13 @@
     "timingTls": "TLS",
     "timingWait": "Wait",
     "timingDownload": "Download",
+    "timingHelp": {
+      "dns": "Time to resolve the hostname to an IP address via DNS lookup. Shows 0 when connection is reused from pool.",
+      "tcp": "Time for TCP 3-way handshake to establish connection. Shows 0 when using an existing connection.",
+      "tls": "TLS/SSL handshake time for certificate exchange and key negotiation. Only applies to HTTPS. Shows 0 when connection is reused.",
+      "wait": "Time to First Byte (TTFB) - time from request sent to first response byte received. Includes server processing time and network latency.",
+      "download": "Time to download the full response body after receiving the first byte."
+    },
     "expired": "EXPIRED",
     "unknown": "Unknown",
     "certExpiry1Day": "1 day",

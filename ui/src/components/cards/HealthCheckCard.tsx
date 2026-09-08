@@ -39,7 +39,6 @@ import {
   status as statusColor,
   timing,
 } from '../../styles/theme';
-import { HTTP_TIMING_HELP } from '../help/HelpContent';
 import { CollapsibleSection } from '../ui/CollapsibleSection';
 import { Card, type Status } from '../ui/card';
 import { HeartPulse } from '../ui/icons';
@@ -215,7 +214,12 @@ export const HealthCheckCard: React.MemoExoticComponent<
     // Extended ping info
     const hasExtendedPing = type === 'ping' && result.packetLoss !== undefined;
     const extendedInfo = hasExtendedPing
-      ? `${result.packetLoss?.toFixed(0)}% loss${result.jitter !== undefined ? `, ${result.jitter.toFixed(1)}ms jitter` : ''}`
+      ? [
+          t('health.packetLoss', { percent: result.packetLoss?.toFixed(0) }),
+          result.jitter !== undefined ? t('health.jitter', { ms: result.jitter.toFixed(1) }) : null,
+        ]
+          .filter(Boolean)
+          .join(', ')
       : null;
 
     return (
@@ -228,7 +232,7 @@ export const HealthCheckCard: React.MemoExoticComponent<
           <span className={cn('inline-flex items-center', spacing.gap.compact)}>
             <StatusBadge status={statusLabel} size="sm" />
             <span className={cn('body-small font-medium', statusClass)}>
-              {result.success ? formatLatency(result.latency) : 'fail'}
+              {result.success ? formatLatency(result.latency) : t('health.fail')}
             </span>
           </span>
         </div>
@@ -277,30 +281,35 @@ export const HealthCheckCard: React.MemoExoticComponent<
     // Status is indicated only via text color in the legend
     const segments = [
       {
+        key: 'dns',
         label: t('health.timingDns'),
         value: dns,
         color: timing.dns.bg,
         status: result.dnsStatus,
       },
       {
+        key: 'tcp',
         label: t('health.timingTcp'),
         value: tcp,
         color: timing.tcp.bg,
         status: result.tcpStatus,
       },
       {
+        key: 'tls',
         label: t('health.timingTls'),
         value: tls,
         color: timing.tls.bg,
         status: result.tlsStatus,
       },
       {
+        key: 'wait',
         label: t('health.timingWait'),
         value: ttfb,
         color: timing.wait.bg,
         status: result.ttfbStatus,
       },
       {
+        key: 'download',
         label: t('health.timingDownload'),
         value: download,
         color: timing.download.bg,
@@ -348,7 +357,7 @@ export const HealthCheckCard: React.MemoExoticComponent<
           {segments.map((seg) => (
             <Tooltip
               key={seg.label}
-              text={HTTP_TIMING_HELP[seg.label.toLowerCase()] || seg.label}
+              text={t(`health.timingHelp.${seg.key}`)}
               side="bottom"
             >
               <span

@@ -317,6 +317,13 @@
     "timingTls": "TLS",
     "timingWait": "Espera",
     "timingDownload": "Descarga",
+    "timingHelp": {
+      "dns": "Tiempo para resolver el nombre de host a una dirección IP mediante una consulta DNS. Muestra 0 cuando se reutiliza una conexión del grupo.",
+      "tcp": "Tiempo del saludo TCP de tres vías para establecer la conexión. Muestra 0 cuando se usa una conexión existente.",
+      "tls": "Tiempo del saludo TLS/SSL para el intercambio de certificados y la negociación de claves. Solo se aplica a HTTPS. Muestra 0 cuando se reutiliza la conexión.",
+      "wait": "Tiempo hasta el primer byte (TTFB): desde que se envía la solicitud hasta que llega el primer byte de la respuesta. Incluye el procesamiento del servidor y la latencia de red.",
+      "download": "Tiempo para descargar el cuerpo completo de la respuesta tras recibir el primer byte."
+    },
     "expired": "EXPIRADO",
     "unknown": "Desconocido",
     "certExpiry1Day": "1 día",
