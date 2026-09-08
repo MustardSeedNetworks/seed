@@ -69,9 +69,12 @@ export const DNT_TERMS = [
   'WPA',
   'WPA2',
   'WPA3',
-  // 'Wi-Fi' is deliberately absent: the tree spells it both "Wi-Fi" and
-  // "WiFi" in both locales, so asserting either as canonical fails today.
-  // Tracked separately.
+  // seed#2296: the tree used to spell it both "Wi-Fi" and "WiFi", so neither
+  // could be asserted as canonical. Every locale *value* is now "Wi-Fi" — the
+  // Wi-Fi Alliance's own spelling — and the term is guarded like any other.
+  // Identifiers (wifiSettings, isWifi, WiFiCard) are code, not copy, and are
+  // deliberately untouched.
+  'Wi-Fi',
   // Quality of service
   'QoS',
   'DSCP',

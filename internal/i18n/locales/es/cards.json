@@ -209,7 +209,7 @@
     "noAAAARecord": "Sin registro AAAA"
   },
   "wifi": {
-    "title": "WiFi",
+    "title": "Wi-Fi",
     "ssid": "SSID",
     "bssid": "BSSID",
     "channel": "Canal",
@@ -222,7 +222,7 @@
     "rxRate": "Tasa RX",
     "band": "Banda",
     "channelGraph": {
-      "title": "Gráfico de canales WiFi",
+      "title": "Gráfico de canales Wi-Fi",
       "otherNetworks": "Otras redes",
       "noNetworksDetected": "No se detectaron redes en la banda {{band}}",
       "tooltipChannel": "Canal {{channel}}"

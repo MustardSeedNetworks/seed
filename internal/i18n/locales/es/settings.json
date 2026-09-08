@@ -8,7 +8,7 @@
     "performance": "Rendimiento",
     "health": "Verificaciones de salud",
     "dns": "DNS",
-    "wifi": "WiFi",
+    "wifi": "Wi-Fi",
     "snmp": "SNMP",
     "thresholds": "Umbrales",
     "cableTest": "Prueba de cable",
@@ -273,8 +273,8 @@
     "customServers": "Servidores personalizados"
   },
   "wifi": {
-    "title": "WiFi",
-    "interface": "Interfaz WiFi",
+    "title": "Wi-Fi",
+    "interface": "Interfaz Wi-Fi",
     "wirelessMonitoring": "Actualmente monitoreando una interfaz inalámbrica",
     "noWireless": "No se detectó interfaz inalámbrica",
     "scanInterval": "Intervalo de escaneo",
@@ -348,7 +348,7 @@
     "dnsLookup": "Búsqueda DNS (ms)",
     "gateway": "Gateway (ms)",
     "gatewayPing": "Ping de Gateway (ms)",
-    "wifiSignal": "Señal WiFi (dBm)",
+    "wifiSignal": "Señal Wi-Fi (dBm)",
     "healthPing": "Verificación: Ping (ms)",
     "healthTcp": "Verificación: TCP (ms)",
     "httpThresholds": "Umbrales HTTP (ms)",

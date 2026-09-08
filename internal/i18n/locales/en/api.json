@@ -32,7 +32,7 @@
   },
   "settings": {
     "snmpUpdated": "SNMP settings updated",
-    "wifiUpdated": "WiFi settings updated",
+    "wifiUpdated": "Wi-Fi settings updated",
     "ipConfigUpdated": "IP configuration updated",
     "mtuUpdated": "MTU updated"
   },
