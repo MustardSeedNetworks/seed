@@ -21,7 +21,7 @@ func TestNewDetector(t *testing.T) {
 }
 
 func TestDetectAll(t *testing.T) {
-	d := detection.NewDetector()
+	d := detection.NewDetectorNoFork()
 
 	scores, err := d.DetectAll()
 	if err != nil {
@@ -50,7 +50,7 @@ func TestDetectAll(t *testing.T) {
 }
 
 func TestDetectBest(t *testing.T) {
-	d := detection.NewDetector()
+	d := detection.NewDetectorNoFork()
 
 	best, err := d.DetectBest()
 	if err != nil {
@@ -64,7 +64,7 @@ func TestDetectBest(t *testing.T) {
 }
 
 func TestScoreInterface(t *testing.T) {
-	d := detection.NewDetector()
+	d := detection.NewDetectorNoFork()
 
 	// Get an actual interface for testing.
 	ifaces, err := net.Interfaces()

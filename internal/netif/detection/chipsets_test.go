@@ -502,7 +502,7 @@ func TestChipsetInfoFields(t *testing.T) {
 }
 
 func TestIdentifyByInterfaceWithMAC(t *testing.T) {
-	db := detection.NewChipsetDatabase()
+	db := detection.NewChipsetDatabaseNoFork()
 
 	// Test with known Intel OUI.
 	info := db.IdentifyByInterface("eth0", "00:1b:21:aa:bb:cc")

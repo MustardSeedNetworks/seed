@@ -8,7 +8,6 @@ package detection
 import (
 	"context"
 	"fmt"
-	"os/exec"
 	"strconv"
 	"strings"
 	"time"
@@ -28,13 +27,13 @@ const (
 const minCSVLines = 2
 
 // getInterfaceSpeed returns the interface speed in bits per second.
-func getInterfaceSpeed(name string) int64 {
+func getInterfaceSpeed(run commandRunner, name string) int64 {
 	ctx, cancel := context.WithTimeout(context.Background(), detectionTimeoutSeconds*time.Second)
 	defer cancel()
 
 	// Try PowerShell Get-NetAdapter first (most reliable on modern Windows)
 	psCmd := fmt.Sprintf(`(Get-NetAdapter -Name '%s' -ErrorAction SilentlyContinue).LinkSpeed`, name)
-	output, err := exec.CommandContext(ctx, "powershell", "-NoProfile", "-Command", psCmd).Output()
+	output, err := run(ctx, "powershell", "-NoProfile", "-Command", psCmd)
 	if err == nil {
 		speedStr := strings.TrimSpace(string(output))
 		if speed := parseSpeedStringWindows(speedStr); speed > 0 {
@@ -47,7 +46,7 @@ func getInterfaceSpeed(name string) int64 {
 		`(Get-WmiObject Win32_NetworkAdapter | Where-Object { $_.NetConnectionID -eq '%s' }).Speed`,
 		name,
 	)
-	output, err = exec.CommandContext(ctx, "powershell", "-NoProfile", "-Command", psCmd).Output()
+	output, err = run(ctx, "powershell", "-NoProfile", "-Command", psCmd)
 	if err == nil {
 		speedStr := strings.TrimSpace(string(output))
 		if speed, parseErr := strconv.ParseInt(speedStr, 10, 64); parseErr == nil && speed > 0 {
@@ -118,7 +117,7 @@ func (db *ChipsetDatabase) identifyByPlatformUncached(name string) *ChipsetInfo 
 	psCmd := fmt.Sprintf(`Get-NetAdapter -Name '%s' -ErrorAction SilentlyContinue | `+
 		`Select-Object DriverName, DriverDescription, InterfaceDescription | ConvertTo-Csv -NoTypeInformation`, name)
 
-	output, err := exec.CommandContext(ctx, "powershell", "-NoProfile", "-Command", psCmd).Output()
+	output, err := db.run(ctx, "powershell", "-NoProfile", "-Command", psCmd)
 	if err != nil {
 		return nil
 	}
@@ -150,7 +149,7 @@ func (db *ChipsetDatabase) identifyByPlatformUncached(name string) *ChipsetInfo 
 		`Where-Object { $_.NetConnectionID -eq '%s' } | `+
 		`Select-Object Name, Manufacturer, ProductName | ConvertTo-Csv -NoTypeInformation`, name)
 
-	output, err = exec.CommandContext(ctx, "powershell", "-NoProfile", "-Command", psCmd).Output()
+	output, err = db.run(ctx, "powershell", "-NoProfile", "-Command", psCmd)
 	if err != nil {
 		return nil
 	}
@@ -185,7 +184,7 @@ func hasTDRCapability(name string) bool {
 
 	// Check driver name for known TDR-capable NICs
 	psCmd := fmt.Sprintf(`(Get-NetAdapter -Name '%s' -ErrorAction SilentlyContinue).DriverDescription`, name)
-	output, err := exec.CommandContext(ctx, "powershell", "-NoProfile", "-Command", psCmd).Output()
+	output, err := execRunner(ctx, "powershell", "-NoProfile", "-Command", psCmd)
 	if err != nil {
 		return false
 	}
@@ -223,7 +222,7 @@ func hasDOMCapability(name string) bool {
 	// Check for SFP-capable NICs (10GbE and above)
 	psCmd := fmt.Sprintf(`Get-NetAdapter -Name '%s' -ErrorAction SilentlyContinue | `+
 		`Select-Object DriverDescription, MediaType | ConvertTo-Csv -NoTypeInformation`, name)
-	output, err := exec.CommandContext(ctx, "powershell", "-NoProfile", "-Command", psCmd).Output()
+	output, err := execRunner(ctx, "powershell", "-NoProfile", "-Command", psCmd)
 	if err != nil {
 		return false
 	}

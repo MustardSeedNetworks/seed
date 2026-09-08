@@ -7,7 +7,6 @@ package detection
 
 import (
 	"context"
-	"os/exec"
 	"regexp"
 	"strconv"
 	"strings"
@@ -45,18 +44,18 @@ const (
 )
 
 // getInterfaceSpeed returns the interface speed in bits per second.
-func getInterfaceSpeed(name string) int64 {
+func getInterfaceSpeed(run commandRunner, name string) int64 {
 	ctx, cancel := context.WithTimeout(context.Background(), networkSetupTimeout)
 	defer cancel()
 
 	// Try networksetup first
-	out, err := exec.CommandContext(ctx, "networksetup", "-getmedia", name).Output()
+	out, err := run(ctx, "networksetup", "-getmedia", name)
 	if err == nil {
 		return parseMediaSpeed(string(out))
 	}
 
 	// Fallback to ifconfig
-	out, err = exec.CommandContext(ctx, "ifconfig", name).Output()
+	out, err = run(ctx, "ifconfig", name)
 	if err == nil {
 		return parseIfconfigSpeed(string(out))
 	}
@@ -122,7 +121,7 @@ func (db *ChipsetDatabase) identifyByPlatformUncached(_ string) *ChipsetInfo {
 	ctx, cancel := context.WithTimeout(context.Background(), systemProfilerTimeout)
 	defer cancel()
 
-	out, err := exec.CommandContext(ctx, "system_profiler", "SPNetworkDataType", "-json").Output()
+	out, err := db.run(ctx, "system_profiler", "SPNetworkDataType", "-json")
 	if err != nil {
 		return nil
 	}
