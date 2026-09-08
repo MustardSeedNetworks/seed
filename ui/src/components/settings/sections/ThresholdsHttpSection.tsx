@@ -19,7 +19,6 @@ import {
   spacing,
 } from '../../../styles/theme';
 import type { SettingsThresholds } from '../../../types/settings';
-import { THRESHOLD_HELP } from '../../help/HelpContent';
 import { Info } from '../../ui/icons';
 import { Tooltip } from '../../ui/tooltip';
 
@@ -40,7 +39,7 @@ export const ThresholdsHttpSection: React.NamedExoticComponent<ThresholdsHttpSec
     setThresholds,
     updateThreshold,
   }: ThresholdsHttpSectionProps) {
-    const { t } = useTranslation('settings');
+    const { t } = useTranslation(['settings', 'help']);
 
     // Type-safe HTTP timing phase getter
     function getHttpTimingPhase(
@@ -96,7 +95,7 @@ export const ThresholdsHttpSection: React.NamedExoticComponent<ThresholdsHttpSec
             <span className="caption font-medium text-text-primary">
               {t('thresholds.totalResponseTime')}
             </span>
-            <Tooltip text={THRESHOLD_HELP.httpTotal} side="top">
+            <Tooltip text={t('help:thresholds.httpTotal')} side="top">
               <Info
                 className={cn(
                   iconTokens.size.xs,
@@ -166,7 +165,7 @@ export const ThresholdsHttpSection: React.NamedExoticComponent<ThresholdsHttpSec
             <span className="caption font-medium text-text-primary">
               {t('thresholds.dnsLookupPhase')}
             </span>
-            <Tooltip text={THRESHOLD_HELP.httpDns} side="top">
+            <Tooltip text={t('help:thresholds.httpDns')} side="top">
               <Info
                 className={cn(
                   iconTokens.size.xs,
@@ -225,7 +224,7 @@ export const ThresholdsHttpSection: React.NamedExoticComponent<ThresholdsHttpSec
             <span className="caption font-medium text-text-primary">
               {t('thresholds.tcpConnect')}
             </span>
-            <Tooltip text={THRESHOLD_HELP.httpTcp} side="top">
+            <Tooltip text={t('help:thresholds.httpTcp')} side="top">
               <Info
                 className={cn(
                   iconTokens.size.xs,
@@ -284,7 +283,7 @@ export const ThresholdsHttpSection: React.NamedExoticComponent<ThresholdsHttpSec
             <span className="caption font-medium text-text-primary">
               {t('thresholds.tlsHandshake')}
             </span>
-            <Tooltip text={THRESHOLD_HELP.httpTls} side="top">
+            <Tooltip text={t('help:thresholds.httpTls')} side="top">
               <Info
                 className={cn(
                   iconTokens.size.xs,
@@ -341,7 +340,7 @@ export const ThresholdsHttpSection: React.NamedExoticComponent<ThresholdsHttpSec
         <div>
           <div className={cn(layout.inline.tight, spacing.margin.bottom.inline)}>
             <span className="caption font-medium text-text-primary">{t('thresholds.ttfb')}</span>
-            <Tooltip text={THRESHOLD_HELP.httpTtfb} side="top">
+            <Tooltip text={t('help:thresholds.httpTtfb')} side="top">
               <Info
                 className={cn(
                   iconTokens.size.xs,

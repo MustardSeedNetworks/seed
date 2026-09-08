@@ -213,7 +213,7 @@ export const PerformanceIperfSection: React.NamedExoticComponent<PerformanceIper
               <div
                 className={cn('flex flex-wrap', spacing.gap.compact)}
                 role="radiogroup"
-                aria-label="Protocol selection"
+                aria-label={t('performance.protocolSelection')}
               >
                 {(['tcp', 'udp'] as const).map((proto) => {
                   const checked = iperfSettings.protocol === proto;
@@ -264,7 +264,7 @@ export const PerformanceIperfSection: React.NamedExoticComponent<PerformanceIper
               <div
                 className={cn('flex flex-wrap', spacing.gap.compact)}
                 role="radiogroup"
-                aria-label="Direction selection"
+                aria-label={t('performance.directionSelection')}
               >
                 {(['download', 'upload', 'bidirectional'] as const).map((direction) => {
                   const checked = iperfSettings.direction === direction;

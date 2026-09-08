@@ -1,0 +1,355 @@
+# Baseline for scripts/check-i18n-copy.py — hardcoded English copy in shapes the
+# shared JSX-text gate cannot see (a copy-bearing prop value, a prose string
+# literal). This file may only SHRINK: a new site fails CI, and an entry that no
+# longer matches must be deleted so the list cannot drift into fiction.
+#
+# Entries are `<file> <kind> <text>` and carry no line number on purpose — the
+# UI-fetch baseline is line-anchored and every split above a baselined site has
+# had to re-point it (seed#2467 slice 3 broke CI that way twice).
+#
+# Grouped by subtree, one reason per group. Cleared so far: everything under
+# ui/src/components/settings except the three protocol field names below
+# (S1-14c). The rest is carved out as S1-14d.
+
+# --- ui/src/components/help/
+# The in-app help tree. Every word of it is English in the source; it has no
+# locale keys at all, so a Spanish operator reads an English manual. Tracked as
+# seed#2497 and scheduled as its own row — it is content, not a leaked label.
+# HelpContent.tsx itself is gone: S1-14c moved THRESHOLD_HELP, its last live
+# export, into help.json, which left the file with no importer at all.
+ui/src/components/help/sections/guides.tsx literal Add each endpoint in Settings with its parameters and set warning/critical thresholds.
+ui/src/components/help/sections/guides.tsx literal Cable faults
+ui/src/components/help/sections/guides.tsx literal Check Link Status shows the expected speed (1 Gbps for gigabit). If it shows 100 Mbps, check cable quality or the switch port.
+ui/src/components/help/sections/guides.tsx literal Check the cable is seated at both ends, the switch/router is powered with an active port LED, and the interface shows UP. Try another cable or port.
+ui/src/components/help/sections/guides.tsx literal Choose a check type: ping for reachability, TCP for service ports, HTTP for web services, RTSP for cameras, DICOM for imaging.
+ui/src/components/help/sections/guides.tsx literal Common symptoms and where to look first.
+ui/src/components/help/sections/guides.tsx literal Configure health checks for critical services
+ui/src/components/help/sections/guides.tsx literal Diagnose slow network speeds
+ui/src/components/help/sections/guides.tsx literal For Wi-Fi, check the channel graph and neighbor AP scan for congestion and interference.
+ui/src/components/help/sections/guides.tsx literal Gateway unreachable
+ui/src/components/help/sections/guides.tsx literal Link problems
+ui/src/components/help/sections/guides.tsx literal Link speed lower than expected
+ui/src/components/help/sections/guides.tsx literal List the services that need monitoring — servers, databases, cloud services, cameras, medical equipment.
+ui/src/components/help/sections/guides.tsx literal No carrier detected
+ui/src/components/help/sections/guides.tsx literal Run a LAN iperf3 test to isolate whether the bottleneck is local or internet-bound.
+ui/src/components/help/sections/guides.tsx literal Run an internet speed test and compare against your ISP plan.
+ui/src/components/help/sections/guides.tsx literal Run the tests manually to confirm connectivity, then enable continuous monitoring and save to the appropriate profile.
+ui/src/components/help/sections/guides.tsx literal Slow internet speed test
+ui/src/components/help/sections/guides.tsx literal Step-by-step guides for common tasks.
+ui/src/components/help/sections/guides.tsx literal Test gateway latency — it should be under 1 ms on a wired connection. High latency here points to a local problem.
+ui/src/components/help/sections/guides.tsx literal Test over a wired connection to rule out Wi-Fi, retry at a different time, and restart the modem and router.
+ui/src/components/help/sections/guides.tsx literal Two wires are touching. Inspect the connector for bent pins and check the cable for crush damage.
+ui/src/components/help/sections/guides.tsx literal Use Cat5e or Cat6 cable for gigabit, run a cable test to confirm all four pairs are OK, and check for an auto-negotiation mismatch.
+ui/src/components/help/sections/guides.tsx literal Verify the gateway IP matches the router LAN IP, check the physical connection, and restart the router if it is unresponsive.
+ui/src/components/help/sections/interfaces.tsx literal Advanced Wi-Fi scanning depends on adapter capabilities; built-in laptop Wi-Fi may report a limited view of the environment.
+ui/src/components/help/sections/interfaces.tsx literal Basic Service Set Identifier — the MAC address of the access point.
+ui/src/components/help/sections/interfaces.tsx literal Better range and wall penetration, but only three non-overlapping channels (1, 6, 11) and more congestion.
+ui/src/components/help/sections/interfaces.tsx literal Cable status
+ui/src/components/help/sections/interfaces.tsx literal Cable testing requires compatible network hardware. Not all NICs support TDR.
+ui/src/components/help/sections/interfaces.tsx literal Channel utilization
+ui/src/components/help/sections/interfaces.tsx literal Co-channel interference
+ui/src/components/help/sections/interfaces.tsx literal Communication mode — full duplex allows simultaneous bidirectional data; half duplex is one direction at a time.
+ui/src/components/help/sections/interfaces.tsx literal Distance to a detected fault in meters, to help locate the physical problem.
+ui/src/components/help/sections/interfaces.tsx literal Encryption protocol protecting the connection (WPA2, WPA3, WEP, or Open).
+ui/src/components/help/sections/interfaces.tsx literal Ethernet cables have four twisted pairs. Gigabit uses all four; Fast Ethernet uses pairs 1-2 and 3-6.
+ui/src/components/help/sections/interfaces.tsx literal Fault distance
+ui/src/components/help/sections/interfaces.tsx literal Indicates how busy each Wi-Fi channel is. High utilization (over ~50%) points to congestion and likely interference.
+ui/src/components/help/sections/interfaces.tsx literal Link Status monitors the physical-layer connection of the selected network interface.
+ui/src/components/help/sections/interfaces.tsx literal Lists the access points the adapter can hear, with their SSID, BSSID, band, channel, and signal level.
+ui/src/components/help/sections/interfaces.tsx literal Many non-overlapping channels, less interference, and faster speeds, but shorter range.
+ui/src/components/help/sections/interfaces.tsx literal Maximum Transmission Unit — the largest packet size (in bytes) that can be sent without fragmentation. Standard is 1500 bytes.
+ui/src/components/help/sections/interfaces.tsx literal Negotiated link speed between your interface and the connected device (for example 1000 Mbps).
+ui/src/components/help/sections/interfaces.tsx literal Neighbor AP scan
+ui/src/components/help/sections/interfaces.tsx literal Radio band — 2.4 GHz has better range; 5 GHz offers higher speeds and less interference.
+ui/src/components/help/sections/interfaces.tsx literal Reports whether each pair is OK, open (disconnected), short (wires touching), or has an impedance mismatch.
+ui/src/components/help/sections/interfaces.tsx literal Sends electrical pulses down the cable and measures reflections to detect faults and estimate length.
+ui/src/components/help/sections/interfaces.tsx literal Signal / SNR
+ui/src/components/help/sections/interfaces.tsx literal Signal level in dBm and the signal-to-noise ratio of the connection. A higher SNR means a cleaner, more reliable link.
+ui/src/components/help/sections/interfaces.tsx literal Signal level in dBm. -30 is excellent, -67 is good, -70 is fair, -80 is weak. Higher (less negative) is better.
+ui/src/components/help/sections/interfaces.tsx literal Signal strength
+ui/src/components/help/sections/interfaces.tsx literal The Cable Test uses Time Domain Reflectometry (TDR) to check cable quality and locate faults.
+ui/src/components/help/sections/interfaces.tsx literal When multiple access points share the same channel they must share airtime, which reduces throughput.
+ui/src/components/help/sections/interfaces.tsx literal Whether speed and duplex were negotiated automatically with the link partner or set manually.
+ui/src/components/help/sections/interfaces.tsx literal Wi-Fi Status monitors the quality and settings of the current wireless connection — Wi-Fi visibility and troubleshooting.
+ui/src/components/help/sections/interfaces.tsx literal Wi-Fi channel number (1-14 for 2.4 GHz, 36-165 for 5 GHz). Overlapping channels cause interference.
+ui/src/components/help/sections/interfaces.tsx literal Wi-Fi troubleshooting scans visible wireless networks to help diagnose the local wireless environment: neighbor access points, the channels in use, and how busy each channel is. It is a visibility and troubleshooting tool, not a survey/planning tool.
+ui/src/components/help/sections/monitoring.tsx literal Add credentials if the camera requires them.
+ui/src/components/help/sections/monitoring.tsx literal Add your own endpoints to monitor in Settings — internal servers, cloud services, or critical infrastructure.
+ui/src/components/help/sections/monitoring.tsx literal An RTSP command that asks the server which methods it supports — a lightweight connectivity check.
+ui/src/components/help/sections/monitoring.tsx literal Application Entity Title — a unique identifier (up to 16 characters) for a DICOM node. Both the calling (local) and called (remote) AE Titles must be configured correctly.
+ui/src/components/help/sections/monitoring.tsx literal Assesses the security posture of network devices — open ports, outdated services, and misconfigurations.
+ui/src/components/help/sections/monitoring.tsx literal Attempts a TCP handshake to a port to verify a service is accepting connections.
+ui/src/components/help/sections/monitoring.tsx literal Check types
+ui/src/components/help/sections/monitoring.tsx literal Checks devices for known issues based on detected services and versions.
+ui/src/components/help/sections/monitoring.tsx literal Common issues
+ui/src/components/help/sections/monitoring.tsx literal Configuring an endpoint
+ui/src/components/help/sections/monitoring.tsx literal Connection refused means the service is not running or not listening on that port.
+ui/src/components/help/sections/monitoring.tsx literal Create an empty .recovery file in the data directory (user mode: ~/.local/share/seed/.recovery; system mode: /var/lib/seed/.recovery).
+ui/src/components/help/sections/monitoring.tsx literal Custom targets
+ui/src/components/help/sections/monitoring.tsx literal Detects unauthorized DHCP servers that could intercept traffic or hand out malicious configuration.
+ui/src/components/help/sections/monitoring.tsx literal Device posture
+ui/src/components/help/sections/monitoring.tsx literal Enter that token on the login page with your new password. The token expires after 15 minutes.
+ui/src/components/help/sections/monitoring.tsx literal Enter the RTSP URL, for example rtsp://192.168.1.100:554/stream1.
+ui/src/components/help/sections/monitoring.tsx literal Health Checks monitor endpoint availability with automated ping, TCP, and HTTP tests.
+ui/src/components/help/sections/monitoring.tsx literal High latency may indicate congestion, routing issues, or an overloaded server.
+ui/src/components/help/sections/monitoring.tsx literal Identifies open ports on discovered devices to help spot unauthorized services or risks.
+ui/src/components/help/sections/monitoring.tsx literal Lobby Camera 1
+ui/src/components/help/sections/monitoring.tsx literal Open Settings and add an RTSP endpoint.
+ui/src/components/help/sections/monitoring.tsx literal Password recovery
+ui/src/components/help/sections/monitoring.tsx literal Password recovery requires filesystem access to the server, which proves you have admin-level access to the machine.
+ui/src/components/help/sections/monitoring.tsx literal Performs a full HTTP request including DNS, TCP, TLS, and response-time measurement.
+ui/src/components/help/sections/monitoring.tsx literal Ping (ICMP)
+ui/src/components/help/sections/monitoring.tsx literal Port scanning
+ui/src/components/help/sections/monitoring.tsx literal Requests the media description (SDP) to confirm the stream exists and is accessible.
+ui/src/components/help/sections/monitoring.tsx literal Rogue DHCP detection
+ui/src/components/help/sections/monitoring.tsx literal Security & Administration covers device scanning, posture assessment, and account administration — security posture for the network.
+ui/src/components/help/sections/monitoring.tsx literal Sends ICMP echo requests to verify reachability and report latency and packet loss.
+ui/src/components/help/sections/monitoring.tsx literal Set the check interval and enable the endpoint to start monitoring.
+ui/src/components/help/sections/monitoring.tsx literal Set warning and critical latency thresholds in Settings to flag degraded endpoints.
+ui/src/components/help/sections/monitoring.tsx literal The address of the stream, typically rtsp://host:port/path. Port 554 is the standard RTSP port.
+ui/src/components/help/sections/monitoring.tsx literal The server detects the file and generates a single-use recovery token in .recovery-token in the same directory.
+ui/src/components/help/sections/monitoring.tsx literal The standard port is 104, but many systems use 11112 or a custom port. Confirm with your PACS administrator.
+ui/src/components/help/sections/monitoring.tsx literal Vulnerability scan
+ui/src/components/help/sections/overview.tsx literal Best practices
+ui/src/components/help/sections/overview.tsx literal Configure thresholds
+ui/src/components/help/sections/overview.tsx literal Default profile
+ui/src/components/help/sections/overview.tsx literal Each card reflects the selected interface. Cards update as the underlying tests run.
+ui/src/components/help/sections/overview.tsx literal Each profile can carry its own thresholds, health-check targets, and discovery settings tailored to that environment.
+ui/src/components/help/sections/overview.tsx literal Export & import
+ui/src/components/help/sections/overview.tsx literal Export a profile as JSON to back it up or move it to another Seed installation, and import profiles from elsewhere.
+ui/src/components/help/sections/overview.tsx literal Export a profile before making major changes so you have a backup.
+ui/src/components/help/sections/overview.tsx literal Export diagnostics for documentation or troubleshooting handoff.
+ui/src/components/help/sections/overview.tsx literal First steps
+ui/src/components/help/sections/overview.tsx literal Keep a baseline default profile with your standard settings.
+ui/src/components/help/sections/overview.tsx literal One profile can be marked as the default and loaded automatically on startup.
+ui/src/components/help/sections/overview.tsx literal Open Settings to set warning and critical levels for metrics such as DNS latency, gateway ping, and Wi-Fi signal strength.
+ui/src/components/help/sections/overview.tsx literal Profiles are saved configuration sets — thresholds, health-check targets, discovery settings, and interface preferences — so you can switch between clients, sites, or test scenarios without reconfiguring.
+ui/src/components/help/sections/overview.tsx literal Quick switching
+ui/src/components/help/sections/overview.tsx literal Review the dashboard
+ui/src/components/help/sections/overview.tsx literal Run tests
+ui/src/components/help/sections/overview.tsx literal Save per-site configuration as a Profile and switch between profiles from the header.
+ui/src/components/help/sections/overview.tsx literal Select a network interface
+ui/src/components/help/sections/overview.tsx literal Site-specific settings
+ui/src/components/help/sections/overview.tsx literal Switch profiles from the header; settings apply immediately without restarting the app.
+ui/src/components/help/sections/overview.tsx literal The Seed is a network diagnostics and monitoring tool by Mustard Seed Networks. It gives you visibility into physical-layer link state, IP configuration, gateway and DNS reachability, device discovery, throughput, Wi-Fi connection quality, and endpoint health from a single dashboard.
+ui/src/components/help/sections/overview.tsx literal The Seed is source-available software (BUSL-1.1). The version, backend commit, and build time are shown in the drawer header and at the /__version endpoint.
+ui/src/components/help/sections/overview.tsx literal The dashboard shows a card for each diagnostic area. Each card displays live information about one aspect of your network and can be opened for detail.
+ui/src/components/help/sections/overview.tsx literal Use Network Discovery to find every device on the local subnet.
+ui/src/components/help/sections/overview.tsx literal Use descriptive profile names that identify the site or client and location.
+ui/src/components/help/sections/overview.tsx literal Use the Run All Tests action to execute speed tests, discovery, and health checks together, or run an individual test from its card.
+ui/src/components/help/sections/overview.tsx literal Use the interface selector in the header to choose which interface to monitor (for example eth0 or wlan0).
+ui/src/components/help/sections/overview.tsx literal What profiles store
+ui/src/components/help/sections/reference.tsx literal Address Resolution Protocol — maps IP addresses to MAC addresses on a local network.
+ui/src/components/help/sections/reference.tsx literal Common terms
+ui/src/components/help/sections/reference.tsx literal Discovery protocols that reveal details about directly connected switches.
+ui/src/components/help/sections/reference.tsx literal Domain Name System — resolves hostnames to IP addresses and back.
+ui/src/components/help/sections/reference.tsx literal Dynamic Host Configuration Protocol — assigns IP configuration to devices automatically.
+ui/src/components/help/sections/reference.tsx literal Maximum Transmission Unit — the largest packet that can be sent without fragmentation.
+ui/src/components/help/sections/reference.tsx literal Real Time Streaming Protocol — used by IP cameras and video systems.
+ui/src/components/help/sections/reference.tsx literal Signal-to-noise ratio — how far a Wi-Fi signal rises above background noise.
+ui/src/components/help/sections/reference.tsx literal The name of a wireless network.
+ui/src/components/help/sections/reference.tsx literal Time Domain Reflectometry — measures cable length and locates faults using signal reflections.
+ui/src/components/help/sections/reference.tsx literal Whether a link can send and receive at the same time (full) or one direction at a time (half).
+ui/src/components/help/sections/reporting.tsx literal Acknowledged by
+ui/src/components/help/sections/reporting.tsx literal Alerts lists the conditions the monitoring pipelines have raised — for example a polled device going unreachable or an interface changing state. Filter by severity, acknowledged, or resolved, then act on each row: acknowledge marks it seen, resolve marks it fixed. The person who clicks is recorded against the alert.
+ui/src/components/help/sections/reporting.tsx literal Collector chain
+ui/src/components/help/sections/reporting.tsx literal Compliance summary
+ui/src/components/help/sections/reporting.tsx literal Daemon health
+ui/src/components/help/sections/reporting.tsx literal Download a slice of the underlying data as CSV or JSON for downstream tooling.
+ui/src/components/help/sections/reporting.tsx literal Gateway hop
+ui/src/components/help/sections/reporting.tsx literal Hops within the same broadcast domain (switches, bridges), discovered via ARP and on-link MAC tables.
+ui/src/components/help/sections/reporting.tsx literal How urgent the condition is. Filter to focus on the most important alerts first.
+ui/src/components/help/sections/reporting.tsx literal Live tail
+ui/src/components/help/sections/reporting.tsx literal Logs streams the seed daemon’s structured log entries live as they are emitted, with filters by level, source, and free-text. Useful for confirming what the backend just did or diagnosing why a test failed.
+ui/src/components/help/sections/reporting.tsx literal Marks an alert as fixed and removes it from the default unresolved view.
+ui/src/components/help/sections/reporting.tsx literal Marks an alert as seen without closing it — signals someone is looking into it.
+ui/src/components/help/sections/reporting.tsx literal On-link discovery
+ui/src/components/help/sections/reporting.tsx literal Path Analysis traces how traffic leaves the local network and reaches a destination. It surfaces every L2 hop on the local segment, every L3 hop on the route off-link, and the on-link devices ARP/ND can see along the way.
+ui/src/components/help/sections/reporting.tsx literal Per-hop IPv4/IPv6 traceroute with round-trip latency to each hop and any AS / reverse-DNS metadata.
+ui/src/components/help/sections/reporting.tsx literal Polling targets is the list of devices Seed polls over SNMP. Add a target to start monitoring it, edit one to change its settings, or remove one you no longer track. A new target picks up the default collector chain and begins polling on the next cycle; the devices and links it discovers appear on the Topology page, and state changes surface as alerts.
+ui/src/components/help/sections/reporting.tsx literal Pro-tier feature that produces a periodic PDF report on a cadence.
+ui/src/components/help/sections/reporting.tsx literal Reports collects the results of Seed’s diagnostic tests over time and exports them as SLA dashboards, compliance summaries, and historical CSV/JSON.
+ui/src/components/help/sections/reporting.tsx literal Rolling availability and latency view derived from health-check probe results.
+ui/src/components/help/sections/reporting.tsx literal Rotating-file usage, error counts, and uptime of the seed process itself.
+ui/src/components/help/sections/reporting.tsx literal Scheduled reports
+ui/src/components/help/sections/reporting.tsx literal Simple Network Management Protocol — the standard used to read device state and tables.
+ui/src/components/help/sections/reporting.tsx literal Snapshot of which checks pass against the active profile’s thresholds — useful for audits.
+ui/src/components/help/sections/reporting.tsx literal Standard severity (debug / info / warn / error). Filter to narrow the view.
+ui/src/components/help/sections/reporting.tsx literal The first L3 hop off the local subnet — usually the router that issued the DHCP lease.
+ui/src/components/help/sections/reporting.tsx literal The internal package emitting the entry (for example discovery, canopy, shell).
+ui/src/components/help/sections/reporting.tsx literal The operator who acknowledged the alert, taken from the signed-in identity.
+ui/src/components/help/sections/reporting.tsx literal The set of SNMP collectors run against a target (system info, interface table, LLDP, ARP, and forwarding-database neighbors).
+ui/src/components/help/sections/reporting.tsx literal Topology shows the network graph reconciled from discovery and SNMP polling: every node visible to your session, with its interfaces and the links between nodes. Select a node to open a detail panel listing its interfaces and discovered links. The graph is built from the same observations that drive polling targets and alerts.
+ui/src/components/help/sections/upstream.tsx literal Default gateway assigned by DHCP for routing traffic off-subnet.
+ui/src/components/help/sections/upstream.tsx literal Default router for IPv4 traffic leaving your local network.
+ui/src/components/help/sections/upstream.tsx literal Default router for IPv6 traffic (may be a link-local address).
+ui/src/components/help/sections/upstream.tsx literal Discovers active devices on the local subnet using ARP and ICMP ping sweeps.
+ui/src/components/help/sections/upstream.tsx literal Download / Upload
+ui/src/components/help/sections/upstream.tsx literal Forward lookup
+ui/src/components/help/sections/upstream.tsx literal Gateway tests reachability and latency to your default gateway.
+ui/src/components/help/sections/upstream.tsx literal How long the current IP address assignment is valid before renewal is required.
+ui/src/components/help/sections/upstream.tsx literal Internet speed test
+ui/src/components/help/sections/upstream.tsx literal Lease time
+ui/src/components/help/sections/upstream.tsx literal Link Layer Discovery Protocol (standard) or Cisco Discovery Protocol — reveal details about directly connected switches.
+ui/src/components/help/sections/upstream.tsx literal Manufacturer identified from the MAC address OUI (first three bytes).
+ui/src/components/help/sections/upstream.tsx literal Maximum download and upload speeds achieved during the test.
+ui/src/components/help/sections/upstream.tsx literal Measures download and upload speed to public speed-test servers — your connection to the internet.
+ui/src/components/help/sections/upstream.tsx literal Measures throughput on the local network using iperf3 against a configured server.
+ui/src/components/help/sections/upstream.tsx literal Network Discovery finds devices on your network and identifies directly connected switches.
+ui/src/components/help/sections/upstream.tsx literal Network mask defining the size of the local subnet.
+ui/src/components/help/sections/upstream.tsx literal Network scan
+ui/src/components/help/sections/upstream.tsx literal Packet loss
+ui/src/components/help/sections/upstream.tsx literal Performance Tests measure network throughput and latency.
+ui/src/components/help/sections/upstream.tsx literal Resolves a hostname to an IPv4 address (A record).
+ui/src/components/help/sections/upstream.tsx literal Resolves a hostname to an IPv6 address (AAAA record).
+ui/src/components/help/sections/upstream.tsx literal Resolves an IP address back to a hostname (PTR record).
+ui/src/components/help/sections/upstream.tsx literal Reverse lookup
+ui/src/components/help/sections/upstream.tsx literal Round-trip time (ping) to the test server.
+ui/src/components/help/sections/upstream.tsx literal Round-trip time to the gateway. It should be under 1 ms on a local network.
+ui/src/components/help/sections/upstream.tsx literal Subnet mask
+ui/src/components/help/sections/upstream.tsx literal The DNS hostname, when a reverse lookup succeeds.
+ui/src/components/help/sections/upstream.tsx literal The Network page shows the diagnostic state of the upstream link: DHCP lease, default gateway, DNS resolvers, the public IP the gateway uses, and (when wired) the directly-attached switch and its VLAN configuration.
+ui/src/components/help/sections/upstream.tsx literal The hardware address of a device interface — a unique identifier.
+ui/src/components/help/sections/upstream.tsx literal Time for the DNS query to complete. Under 50 ms is good for a local resolver.
+ui/src/components/help/sections/upstream.tsx literal Variation in latency over time. Lower is better for real-time traffic such as voice and video.
+ui/src/components/help/sections/upstream.tsx literal Whether the gateway responds to ICMP ping requests.
+
+# --- ui/src/components/cards/
+# Dashboard cards. Slice 2 of S1-14 asserted their copy through the pages that
+# render them; what is left here is the copy no page state reaches.
+ui/src/components/cards/BluetoothDeviceModal.tsx copy-prop label=BLE
+ui/src/components/cards/DiscoveryModal.tsx copy-prop aria-label=Close
+ui/src/components/cards/DiscoveryModal.tsx copy-prop title=Export as CSV
+ui/src/components/cards/DiscoveryModal.tsx copy-prop title=Export as JSON
+ui/src/components/cards/DiscoveryModal.tsx literal Export as CSV
+ui/src/components/cards/DiscoveryModal.tsx literal Export as JSON
+ui/src/components/cards/DiscoveryModalDeviceRow.tsx copy-prop text=Locally Administered Address - MAC assigned locally rather than by manufacturer
+ui/src/components/cards/DiscoveryModalDeviceRow.tsx literal Just now
+ui/src/components/cards/DiscoveryModalDeviceRow.tsx literal Locally Administered Address - MAC assigned locally rather than by manufacturer
+ui/src/components/cards/DnsCard.tsx literal No A record
+ui/src/components/cards/DnsCard.tsx literal No AAAA record
+ui/src/components/cards/HealthCheckCardProtocolSections.tsx copy-prop title=DICOM
+ui/src/components/cards/HealthCheckCardProtocolSections.tsx copy-prop title=FHIR R4
+ui/src/components/cards/HealthCheckCardProtocolSections.tsx copy-prop title=HL7 MLLP
+ui/src/components/cards/HealthCheckCardProtocolSections.tsx copy-prop title=LDAP
+ui/src/components/cards/HealthCheckCardProtocolSections.tsx copy-prop title=LTI/LMS
+ui/src/components/cards/HealthCheckCardProtocolSections.tsx copy-prop title=Modbus TCP
+ui/src/components/cards/HealthCheckCardProtocolSections.tsx copy-prop title=OPC-UA
+ui/src/components/cards/HealthCheckCardProtocolSections.tsx literal Modbus TCP
+ui/src/components/cards/LogViewerModal.tsx copy-prop aria-label=Collapse entry
+ui/src/components/cards/LogViewerModal.tsx literal Collapse entry
+ui/src/components/cards/NetworkDiscoveryCard.tsx copy-prop aria-label=Open full screen view
+ui/src/components/cards/NetworkDiscoveryCard.tsx copy-prop aria-label=Start network discovery scan
+ui/src/components/cards/NetworkDiscoveryCard.tsx copy-prop ariaLabel=Network discovery - no data available
+ui/src/components/cards/NetworkDiscoveryCard.tsx copy-prop ariaLabel=Network discovery scanning in progress
+ui/src/components/cards/NetworkDiscoveryCard.tsx literal Network discovery - no data available
+ui/src/components/cards/NetworkDiscoveryCard.tsx literal Network discovery scanning in progress
+ui/src/components/cards/NetworkDiscoveryCard.tsx literal Open full screen view
+ui/src/components/cards/NetworkDiscoveryCard.tsx literal Scanning network
+ui/src/components/cards/NetworkDiscoveryCard.tsx literal Start network discovery scan
+ui/src/components/cards/NetworkDiscoveryCard.tsx literal Start network scan
+ui/src/components/cards/PathDiscoveryCard.tsx copy-prop placeholder=Port
+ui/src/components/cards/PathDiscoveryCard.tsx literal Device,Device IP,Ingress Port,Egress Port,Source\n
+ui/src/components/cards/PathDiscoveryCard.tsx literal Path discovery failed
+ui/src/components/cards/ScanProgress.tsx literal Name resolution
+ui/src/components/cards/SlaDashboardCard.tsx literal Failed to load anomalies
+ui/src/components/cards/SystemHealthCard.tsx literal Failed to fetch
+
+# --- ui/src/components/settings/
+# DICOM Application Entity title and the Modbus register/unit fields. Standard
+# protocol field names, kept verbatim the way the glossary keeps SSID and MTU.
+ui/src/components/settings/sections/specialty/ClinicalEndpoints.tsx copy-prop placeholder=AE Title
+ui/src/components/settings/sections/specialty/IndustrialEndpoints.tsx copy-prop placeholder=Reg
+ui/src/components/settings/sections/specialty/IndustrialEndpoints.tsx copy-prop placeholder=Unit
+
+# --- ui/src/pages/
+# Page-level copy the S1-14/S1-14b suites did not reach.
+ui/src/pages/pollingTargets/TargetForm.tsx copy-prop aria-label=Close
+ui/src/pages/pollingTargets/TargetForm.tsx copy-prop label=IP address
+ui/src/pages/pollingTargets/TargetForm.tsx copy-prop label=Name
+ui/src/pages/pollingTargets/TargetForm.tsx copy-prop label=Poll interval (seconds)
+ui/src/pages/pollingTargets/TargetForm.tsx copy-prop label=SNMP version
+ui/src/pages/pollingTargets/TargetForm.tsx literal Add polling target
+ui/src/pages/pollingTargets/TargetForm.tsx literal Add target
+ui/src/pages/pollingTargets/TargetForm.tsx literal Edit polling target
+ui/src/pages/pollingTargets/TargetForm.tsx literal Failed to save
+ui/src/pages/pollingTargets/TargetForm.tsx literal Name and IP address are required.
+ui/src/pages/pollingTargets/TargetForm.tsx literal Poll interval (seconds)
+ui/src/pages/pollingTargets/TargetForm.tsx literal Save changes
+
+# --- ui/src/components/ui/
+# Shared UI primitives and app chrome.
+ui/src/components/ui/Alert.tsx copy-prop aria-label=Dismiss alert
+ui/src/components/ui/Alert.tsx literal Dismiss alert
+ui/src/components/ui/Combobox.tsx copy-prop placeholder=Search…
+ui/src/components/ui/Combobox.tsx literal No matches.
+ui/src/components/ui/CommandPalette.tsx copy-prop aria-label=Close command palette
+ui/src/components/ui/CommandPalette.tsx copy-prop heading=Actions
+ui/src/components/ui/CommandPalette.tsx copy-prop label=Command palette
+ui/src/components/ui/CommandPalette.tsx copy-prop placeholder=Search pages and actions…
+ui/src/components/ui/CommandPalette.tsx literal Close command palette
+ui/src/components/ui/CommandPalette.tsx literal Command palette
+ui/src/components/ui/CommandPalette.tsx literal Search pages and actions…
+ui/src/components/ui/CommandPalette.tsx literal Switch to dark mode
+ui/src/components/ui/CommandPalette.tsx literal Switch to light mode
+ui/src/components/ui/DataTable.tsx copy-prop aria-label=Clear search
+ui/src/components/ui/DataTable.tsx copy-prop aria-label=Loading data
+ui/src/components/ui/DataTable.tsx copy-prop title=Toggle filters
+ui/src/components/ui/DataTable.tsx literal Clear search
+ui/src/components/ui/DataTable.tsx literal Loading data
+ui/src/components/ui/DataTable.tsx literal No data found
+ui/src/components/ui/DataTable.tsx literal Toggle filters
+ui/src/components/ui/DeviceSelector.tsx literal Select device
+ui/src/components/ui/HelpModal.tsx copy-prop aria-label=Close help
+ui/src/components/ui/HelpModal.tsx literal Close help
+ui/src/components/ui/Input.tsx copy-prop aria-label=Clear search
+ui/src/components/ui/Input.tsx literal Clear search
+ui/src/components/ui/Modal.tsx copy-prop aria-label=Close modal
+ui/src/components/ui/Modal.tsx literal Close modal
+ui/src/components/ui/fab.tsx literal Run All Tests
+ui/src/components/ui/fab.tsx literal Some checks did not finish — tap to run all tests again
+ui/src/components/ui/sparkline.tsx literal No data available
+ui/src/components/ui/statusConfig.tsx literal Status: error
+ui/src/components/ui/statusConfig.tsx literal Status: loading
+ui/src/components/ui/statusConfig.tsx literal Status: success
+ui/src/components/ui/statusConfig.tsx literal Status: unknown
+ui/src/components/ui/statusConfig.tsx literal Status: warning
+ui/src/components/ui/toast.tsx copy-prop aria-label=Dismiss notification
+ui/src/components/ui/toast.tsx copy-prop aria-label=Notifications
+ui/src/components/ui/toast.tsx literal Dismiss notification
+
+# --- ui/src/ui/
+ui/src/ui/Breadcrumbs.tsx copy-prop aria-label=Breadcrumb
+ui/src/ui/Breadcrumbs.tsx copy-prop aria-label=Home
+ui/src/ui/Breadcrumbs.tsx literal Path Analysis
+ui/src/ui/PageHeader.tsx copy-prop aria-label=Breadcrumb
+ui/src/ui/Sidebar.tsx copy-prop aria-label=Close menu
+ui/src/ui/Sidebar.tsx copy-prop aria-label=Collapse sidebar
+ui/src/ui/Sidebar.tsx copy-prop aria-label=Expand sidebar
+ui/src/ui/Sidebar.tsx copy-prop label=Help
+ui/src/ui/Sidebar.tsx copy-prop label=History
+ui/src/ui/Sidebar.tsx copy-prop label=Manage Profiles
+ui/src/ui/Sidebar.tsx copy-prop label=Settings
+ui/src/ui/Sidebar.tsx copy-prop title=Collapse sidebar
+ui/src/ui/Sidebar.tsx copy-prop title=Create, edit, and delete profiles
+ui/src/ui/Sidebar.tsx copy-prop title=Expand sidebar
+ui/src/ui/Sidebar.tsx copy-prop title=Open help
+ui/src/ui/Sidebar.tsx copy-prop title=Open settings
+ui/src/ui/Sidebar.tsx copy-prop title=Open test history
+ui/src/ui/Sidebar.tsx literal Close menu
+ui/src/ui/Sidebar.tsx literal Collapse sidebar
+ui/src/ui/Sidebar.tsx literal Create, edit, and delete profiles
+ui/src/ui/Sidebar.tsx literal Expand sidebar
+ui/src/ui/Sidebar.tsx literal Manage Profiles
+ui/src/ui/Sidebar.tsx literal Open help
+ui/src/ui/Sidebar.tsx literal Open menu
+ui/src/ui/Sidebar.tsx literal Open settings
+ui/src/ui/Sidebar.tsx literal Open test history
+
+# --- everything else
+# Contexts, hooks and layout that render copy directly.
+ui/src/components/setup/SetupWizard.tsx literal Hide password
+ui/src/components/setup/SetupWizard.tsx literal Show password
+ui/src/contexts/LicenseContext.tsx literal Failed to load license
+ui/src/contexts/RoleContext.tsx literal Failed to load current user
+ui/src/main.tsx literal Root element not found

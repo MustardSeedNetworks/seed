@@ -96,7 +96,7 @@ export function UsersSettings(): React.ReactElement {
         setUsers([meRow]);
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to load users');
+      setError(err instanceof Error ? err.message : t('errors:users.loadFailed'));
     } finally {
       setLoading(false);
     }
@@ -121,7 +121,7 @@ export function UsersSettings(): React.ReactElement {
       setNewRole('viewer');
       await refresh();
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to create user');
+      setError(err instanceof Error ? err.message : t('errors:users.createFailed'));
     } finally {
       setCreating(false);
     }
@@ -135,7 +135,7 @@ export function UsersSettings(): React.ReactElement {
         await api.patch(`/api/v1/users/${target.username}`, { role });
         await refresh();
       } catch (err) {
-        setError(err instanceof Error ? err.message : 'Failed to update role');
+        setError(err instanceof Error ? err.message : t('errors:users.updateRoleFailed'));
       }
     },
     [refresh],
@@ -154,7 +154,7 @@ export function UsersSettings(): React.ReactElement {
         await api.delete(`/api/v1/users/${target.username}`);
         await refresh();
       } catch (err) {
-        setError(err instanceof Error ? err.message : 'Failed to delete user');
+        setError(err instanceof Error ? err.message : t('errors:users.deleteFailed'));
       }
     },
     [refresh, t],

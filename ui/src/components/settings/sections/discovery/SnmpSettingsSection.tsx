@@ -218,7 +218,7 @@ export const SnmpSettingsSection: React.NamedExoticComponent<SnmpSettingsSection
               type="button"
               onClick={addCommunity}
               className="caption text-brand-primary hover:text-brand-accent"
-              aria-label="Add community string"
+              aria-label={t('snmp.addCommunity')}
             >
               {t('common.add')}
             </button>

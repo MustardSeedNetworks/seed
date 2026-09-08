@@ -33,7 +33,8 @@
     "invalidMode": "El modo debe ser 'dhcp' o 'static'",
     "invalidConfig": "La configuración de red no puede funcionar como se solicitó.",
     "neighbourCacheFailed": "No se pudo leer la caché de vecinos.",
-    "driverStatsFailed": "No se pudieron leer las estadísticas del controlador de la interfaz."
+    "driverStatsFailed": "No se pudieron leer las estadísticas del controlador de la interfaz.",
+    "ipFailed": "Error al aplicar la configuración de IP"
   },
   "license": {
     "tierTooLow": "Esta función requiere el nivel {{tier}}",
@@ -105,7 +106,9 @@
   },
   "wifi": {
     "notWireless": "La interfaz actual no es un adaptador inalámbrico",
-    "notConnected": "No conectado a una red inalámbrica"
+    "notConnected": "No conectado a una red inalámbrica",
+    "scanFailed": "Error al buscar redes",
+    "disconnectFailed": "Error al desconectar"
   },
   "file": {
     "failedToRead": "Error al leer archivo",
@@ -136,10 +139,16 @@
     "updateFailed": "No se pudo actualizar el perfil."
   },
   "sso": {
-    "featureRequired": "La configuración de Single Sign-On requiere una licencia Pro. Los proveedores existentes siguen aceptando inicios de sesión en cualquier nivel; solo se bloquea habilitar o editar proveedores."
+    "featureRequired": "La configuración de Single Sign-On requiere una licencia Pro. Los proveedores existentes siguen aceptando inicios de sesión en cualquier nivel; solo se bloquea habilitar o editar proveedores.",
+    "loadFailed": "Error al cargar la configuración de SSO",
+    "saveFailed": "Error al guardar el proveedor de SSO"
   },
   "users": {
-    "featureRequired": "Agregar usuarios adicionales requiere una licencia Pro."
+    "featureRequired": "Agregar usuarios adicionales requiere una licencia Pro.",
+    "loadFailed": "Error al cargar los usuarios",
+    "createFailed": "Error al crear el usuario",
+    "updateRoleFailed": "Error al actualizar el rol",
+    "deleteFailed": "Error al eliminar el usuario"
   },
   "settings": {
     "conflict": "Otro usuario cambió esta configuración desde que la cargaste. Vuelve a cargarla y aplica tus cambios de nuevo."
@@ -163,5 +172,9 @@
     "unavailableGeneric": "Este sistema operativo no ofrece una API para ello. Ejecutar Seed en otra plataforma es la única forma de usarlo.",
     "limitedGeneric": "Esto funciona aquí, pero no por completo. Algunos campos pueden estar vacíos o ser aproximados.",
     "capabilityUnsupported": "Este sistema operativo no admite esa función."
+  },
+  "vulnerability": {
+    "invalidApiKey": "Clave de API inválida",
+    "validateFailed": "Error al validar la clave de API"
   }
 }

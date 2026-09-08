@@ -39,10 +39,10 @@ import { CollapsibleSection } from '../../ui/CollapsibleSection';
 import { Wifi } from '../../ui/icons';
 import { AutoSaveIndicator } from './AutoSaveIndicator';
 
-/** Shown on every Wi-Fi action a viewer cannot perform (#1254). */
-const READ_ONLY_REASON = 'Read-only — operator role required to change the Wi-Fi connection';
-
 // Types for WiFi scanning and connection
+/** The connection banner is red unless the action succeeded. */
+const failed = (text: string): { ok: boolean; text: string } => ({ ok: false, text });
+
 interface ScannedNetwork {
   ssid: string;
   bssid: string;
@@ -94,7 +94,7 @@ function SavedNetworks({
   readOnlyReason: string;
   onForget: (ssid: string) => void;
 }): React.ReactElement | null {
-  const { t } = useTranslation('settings');
+  const { t } = useTranslation(['settings', 'errors']);
 
   if (networks.length === 0) {
     return null;
@@ -140,7 +140,7 @@ function SavedNetworks({
 
 export const WiFiSettings: React.NamedExoticComponent<WiFiSettingsProps> = memo(
   function wiFiSettings({ wifiSettings, setWifiSettings, wifiStatus }: WiFiSettingsProps) {
-    const { t } = useTranslation('settings');
+    const { t } = useTranslation(['settings', 'errors']);
 
     // State for network scanning and connection
     const [networks, setNetworks] = useState<ScannedNetwork[]>([]);
@@ -152,7 +152,12 @@ export const WiFiSettings: React.NamedExoticComponent<WiFiSettingsProps> = memo(
     // API-tokens section beside it.
     const { canWrite } = useRole();
     const [connecting, setConnecting] = useState(false);
-    const [connectionStatus, setConnectionStatus] = useState<string | null>(null);
+    const [connectionStatus, setConnectionStatus] = useState<{
+      ok: boolean;
+      text: string;
+    } | null>(null);
+    /** Shown on every Wi-Fi action a viewer cannot perform (#1254). */
+    const readOnlyReason = t('wifi.readOnlyReason');
     const [selectedNetwork, setSelectedNetwork] = useState<ScannedNetwork | null>(null);
     const [password, setPassword] = useState('');
     const [savedNetworks, setSavedNetworks] = useState<SavedNetwork[]>([]);
@@ -177,7 +182,7 @@ export const WiFiSettings: React.NamedExoticComponent<WiFiSettingsProps> = memo(
           setScanError(response.error);
         }
       } catch {
-        setScanError('Failed to scan networks');
+        setScanError(t('errors:wifi.scanFailed'));
       } finally {
         setScanning(false);
       }
@@ -209,16 +214,19 @@ export const WiFiSettings: React.NamedExoticComponent<WiFiSettingsProps> = memo(
           password: password,
         });
         if (response?.success) {
-          setConnectionStatus(`Connected to ${selectedNetwork.ssid}`);
+          setConnectionStatus({
+            ok: true,
+            text: t('wifi.connectedTo', { ssid: selectedNetwork.ssid }),
+          });
           setSelectedNetwork(null);
           setPassword('');
           // Refresh saved networks
           await loadSavedNetworks();
         } else {
-          setConnectionStatus(response?.message || 'Connection failed');
+          setConnectionStatus(failed(response?.message || t('errors:network.connectionFailed')));
         }
       } catch {
-        setConnectionStatus('Connection failed');
+        setConnectionStatus(failed(t('errors:network.connectionFailed')));
       } finally {
         setConnecting(false);
       }
@@ -230,12 +238,12 @@ export const WiFiSettings: React.NamedExoticComponent<WiFiSettingsProps> = memo(
       try {
         const response = await api.post<ConnectionResult>('/api/v1/wifi/wifi/disconnect', {});
         if (response?.success) {
-          setConnectionStatus('Disconnected');
+          setConnectionStatus({ ok: true, text: t('wifi.disconnected') });
         } else {
-          setConnectionStatus(response?.message || 'Disconnect failed');
+          setConnectionStatus(failed(response?.message || t('errors:wifi.disconnectFailed')));
         }
       } catch {
-        setConnectionStatus('Disconnect failed');
+        setConnectionStatus(failed(t('errors:wifi.disconnectFailed')));
       } finally {
         setConnecting(false);
       }
@@ -489,7 +497,7 @@ export const WiFiSettings: React.NamedExoticComponent<WiFiSettingsProps> = memo(
                           onChange={(
                             e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>,
                           ): void => setPassword(e.target.value)}
-                          placeholder="Password"
+                          placeholder={t('wifi.password')}
                           className={cn(
                             'w-full pr-16',
                             spacing.chip.lg,
@@ -508,7 +516,7 @@ export const WiFiSettings: React.NamedExoticComponent<WiFiSettingsProps> = memo(
                           onClick={(): void => setShowPassword(!showPassword)}
                           className="absolute right-2 top-1/2 -translate-y-1/2 caption text-text-muted hover:text-text-primary"
                         >
-                          {showPassword ? 'Hide' : 'Show'}
+                          {showPassword ? t('wifi.hide') : t('wifi.show')}
                         </button>
                       </div>
                     ) : null}
@@ -521,7 +529,7 @@ export const WiFiSettings: React.NamedExoticComponent<WiFiSettingsProps> = memo(
                         connecting ||
                         (selectedNetwork.security !== 'Open' && !password)
                       }
-                      title={canWrite ? undefined : READ_ONLY_REASON}
+                      title={canWrite ? undefined : readOnlyReason}
                       className={cn(
                         'w-full',
                         'body-small font-medium',
@@ -531,7 +539,7 @@ export const WiFiSettings: React.NamedExoticComponent<WiFiSettingsProps> = memo(
                         'hover:bg-brand-accent disabled:opacity-50',
                       )}
                     >
-                      {connecting ? 'Connecting...' : 'Connect'}
+                      {connecting ? t('wifi.connecting') : t('wifi.connect')}
                     </button>
                   </div>
                 ) : null}
@@ -541,12 +549,10 @@ export const WiFiSettings: React.NamedExoticComponent<WiFiSettingsProps> = memo(
                   <p
                     className={cn(
                       'caption mt-inline',
-                      connectionStatus.includes('Connected')
-                        ? statusColor.text.success
-                        : statusColor.text.error,
+                      connectionStatus.ok ? statusColor.text.success : statusColor.text.error,
                     )}
                   >
-                    {connectionStatus}
+                    {connectionStatus.text}
                   </p>
                 ) : null}
               </div>
@@ -554,12 +560,14 @@ export const WiFiSettings: React.NamedExoticComponent<WiFiSettingsProps> = memo(
               {/* Current Connection / Disconnect */}
               <div className="border-t border-surface-border pt-heading">
                 <div className="flex-between">
-                  <span className="body-small font-medium text-text-primary">Connection</span>
+                  <span className="body-small font-medium text-text-primary">
+                    {t('wifi.connection')}
+                  </span>
                   <button
                     type="button"
                     onClick={disconnectNetwork}
                     disabled={!canWrite || connecting}
-                    title={canWrite ? undefined : READ_ONLY_REASON}
+                    title={canWrite ? undefined : readOnlyReason}
                     className={cn(
                       'caption font-medium',
                       spacing.chip.md,
@@ -576,7 +584,7 @@ export const WiFiSettings: React.NamedExoticComponent<WiFiSettingsProps> = memo(
               <SavedNetworks
                 networks={savedNetworks}
                 canWrite={canWrite}
-                readOnlyReason={READ_ONLY_REASON}
+                readOnlyReason={readOnlyReason}
                 onForget={(ssid): void => {
                   forgetNetwork(ssid).catch(() => undefined);
                 }}

@@ -45,7 +45,9 @@
     "quickToggle": "Cambio rápido",
     "measurementUnits": "Unidades de medida",
     "unitSae": "SAE (pies)",
-    "unitMetric": "Métrico (metros)"
+    "unitMetric": "Métrico (metros)",
+    "switchToDark": "Cambiar al tema oscuro",
+    "switchToLight": "Cambiar al tema claro"
   },
   "network": {
     "title": "Configuración de red",
@@ -198,7 +200,9 @@
     "enableServer": "Habilitar servidor iperf3",
     "serverPort": "Puerto del servidor",
     "serverAutoStart": "Cuando está habilitado, inicia el servidor iperf3 automáticamente",
-    "autoRunOnLinkDesc": "Volver a ejecutar las pruebas de rendimiento cuando cambie el estado del enlace."
+    "autoRunOnLinkDesc": "Volver a ejecutar las pruebas de rendimiento cuando cambie el estado del enlace.",
+    "directionSelection": "Selección de dirección",
+    "protocolSelection": "Selección de protocolo"
   },
   "health": {
     "title": "Verificaciones de salud",
@@ -278,7 +282,16 @@
     "signalThreshold": "Umbral de señal",
     "scanning": "Buscando redes...",
     "noNetworks": "No se encontraron redes",
-    "savedNetworks": "Redes guardadas"
+    "savedNetworks": "Redes guardadas",
+    "password": "Contraseña",
+    "show": "Mostrar",
+    "hide": "Ocultar",
+    "connect": "Conectar",
+    "connecting": "Conectando...",
+    "connection": "Conexión",
+    "connectedTo": "Conectado a {{ssid}}",
+    "disconnected": "Desconectado",
+    "readOnlyReason": "Solo lectura: se requiere el rol operator para cambiar la conexión Wi-Fi"
   },
   "snmp": {
     "title": "SNMP",
@@ -315,7 +328,8 @@
     "noAuthNoPriv": "Sin auth / Sin privacidad",
     "authNoPriv": "Auth / Sin privacidad",
     "authPriv": "Auth / Privacidad",
-    "description": "Cadenas de comunidad SNMP utilizadas para el sondeo y descubrimiento de dispositivos."
+    "description": "Cadenas de comunidad SNMP utilizadas para el sondeo y descubrimiento de dispositivos.",
+    "addCommunity": "Añadir cadena de comunidad"
   },
   "thresholds": {
     "title": "Umbrales",
@@ -398,7 +412,8 @@
     "enableCardDesc": "Mostrar diagnósticos de cable (TDR, estado de pares, longitud, fallos) en el panel.",
     "notSupported": "No compatible con esta interfaz",
     "supported": "Compatible",
-    "tdrNote": "La reflectometría en el dominio del tiempo (TDR) mide la longitud del cable y la ubicación de fallos analizando las señales reflejadas."
+    "tdrNote": "La reflectometría en el dominio del tiempo (TDR) mide la longitud del cable y la ubicación de fallos analizando las señales reflejadas.",
+    "notReported": "El informe de capacidades de la plataforma no menciona TDR"
   },
   "link": {
     "availableModes": "Modos disponibles",
@@ -449,8 +464,8 @@
     },
     "fields": {
       "enabled": "Habilitado",
-      "clientId": "Client ID",
-      "clientSecret": "Client secret",
+      "clientId": "ID de cliente",
+      "clientSecret": "Secreto de cliente",
       "clientSecretMask": "(almacenado — déjelo en blanco para conservar el actual)",
       "redirectUrl": "URL de redirección",
       "redirectUrlHint": "Pegue esta URL en las URL de redirección permitidas de su proveedor de identidad.",

@@ -45,7 +45,9 @@
     "quickToggle": "Quick Toggle",
     "measurementUnits": "Measurement Units",
     "unitSae": "SAE (feet)",
-    "unitMetric": "Metric (meters)"
+    "unitMetric": "Metric (meters)",
+    "switchToDark": "Switch to dark theme",
+    "switchToLight": "Switch to light theme"
   },
   "network": {
     "title": "Network Configuration",
@@ -198,7 +200,9 @@
     "enableServer": "Enable iperf3 Server",
     "serverPort": "Server Port",
     "serverAutoStart": "When enabled, starts iperf3 server automatically",
-    "autoRunOnLinkDesc": "Re-run performance tests whenever the link state changes."
+    "autoRunOnLinkDesc": "Re-run performance tests whenever the link state changes.",
+    "directionSelection": "Direction selection",
+    "protocolSelection": "Protocol selection"
   },
   "health": {
     "title": "Health Checks",
@@ -278,7 +282,16 @@
     "signalThreshold": "Signal Threshold",
     "scanning": "Scanning for networks...",
     "noNetworks": "No networks found",
-    "savedNetworks": "Saved Networks"
+    "savedNetworks": "Saved Networks",
+    "password": "Password",
+    "show": "Show",
+    "hide": "Hide",
+    "connect": "Connect",
+    "connecting": "Connecting...",
+    "connection": "Connection",
+    "connectedTo": "Connected to {{ssid}}",
+    "disconnected": "Disconnected",
+    "readOnlyReason": "Read-only — operator role required to change the Wi-Fi connection"
   },
   "snmp": {
     "title": "SNMP",
@@ -315,7 +328,8 @@
     "noAuthNoPriv": "No Auth / No Privacy",
     "authNoPriv": "Auth / No Privacy",
     "authPriv": "Auth / Privacy",
-    "description": "SNMP community strings used for device polling and discovery."
+    "description": "SNMP community strings used for device polling and discovery.",
+    "addCommunity": "Add community string"
   },
   "thresholds": {
     "title": "Thresholds",
@@ -398,7 +412,8 @@
     "enableCardDesc": "Display cable diagnostics (TDR, pair status, length, faults) on the dashboard.",
     "notSupported": "Not supported on this interface",
     "supported": "Supported",
-    "tdrNote": "Time Domain Reflectometry (TDR) measures cable length and fault location by analyzing reflected signals."
+    "tdrNote": "Time Domain Reflectometry (TDR) measures cable length and fault location by analyzing reflected signals.",
+    "notReported": "Platform capability report did not mention TDR"
   },
   "link": {
     "availableModes": "Available modes",

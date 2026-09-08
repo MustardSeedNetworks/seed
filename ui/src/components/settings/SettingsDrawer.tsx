@@ -91,7 +91,7 @@ export const SettingsDrawer: React.MemoExoticComponent<
   version = 'dev',
   isWifi = false,
 }: SettingsDrawerProps): React.ReactElement | null {
-  const { t } = useTranslation('settings');
+  const { t } = useTranslation(['settings', 'errors']);
   const { canWrite } = useRole();
   const { theme, setTheme, isDark } = useTheme();
 
@@ -413,7 +413,7 @@ export const SettingsDrawer: React.MemoExoticComponent<
       setTimeout(() => setIpMessage(null), 3000);
     } catch (err) {
       // The client carries the server's own message through.
-      setIpMessage(`Failed: ${err instanceof Error ? err.message : 'Error applying IP settings'}`);
+      setIpMessage(`Failed: ${err instanceof Error ? err.message : t('errors:network.ipFailed')}`);
     } finally {
       setSavingIp(false);
     }

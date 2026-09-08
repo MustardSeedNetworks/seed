@@ -1019,5 +1019,17 @@
         }
       }
     }
+  },
+  "thresholds": {
+    "dnsLookup": "Time to resolve hostnames. Good: <50ms for local DNS, <100ms for public DNS. Warning indicates potential resolver issues.",
+    "gatewayPing": "Round-trip time to your default gateway (router). Good: <20ms for local LAN. High latency suggests network congestion or equipment issues.",
+    "wifiSignal": "Signal strength in dBm (negative values). Good: >-50 (excellent), Warning: >-70 (good), below -70 is weak. Higher (less negative) is better.",
+    "healthCheckPing": "ICMP ping latency to configured targets. Adjust based on target distance - local servers should be <50ms, internet hosts may be higher.",
+    "healthCheckTcp": "TCP connection time to configured ports. Includes SYN-ACK round trip. Good: <100ms for local services.",
+    "httpTotal": "Total time for complete HTTP request including DNS, TCP, TLS, and response. Good: <500ms for simple pages.",
+    "httpDns": "DNS resolution phase of HTTP request. Should be fast if using local resolver or cached results.",
+    "httpTcp": "TCP handshake time within HTTP request. High values indicate network latency or congestion.",
+    "httpTls": "TLS/SSL handshake time. Includes certificate exchange and key negotiation. Affected by cipher strength.",
+    "httpTtfb": "Time to First Byte - server processing time. High values indicate slow backend or database queries."
   }
 }

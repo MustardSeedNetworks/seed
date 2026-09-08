@@ -1019,5 +1019,17 @@
         }
       }
     }
+  },
+  "thresholds": {
+    "dnsLookup": "Tiempo para resolver nombres de host. Bueno: <50 ms para DNS local, <100 ms para DNS público. Una advertencia indica posibles problemas del resolutor.",
+    "gatewayPing": "Tiempo de ida y vuelta hasta la puerta de enlace predeterminada (router). Bueno: <20 ms en una LAN local. Una latency alta sugiere congestión de red o problemas de equipamiento.",
+    "wifiSignal": "Intensidad de señal en dBm (valores negativos). Bueno: >-50 (excelente), advertencia: >-70 (aceptable); por debajo de -70 es débil. Cuanto más alto (menos negativo), mejor.",
+    "healthCheckPing": "Latency del ping ICMP hacia los objetivos configurados. Ajústela según la distancia al objetivo: los servidores locales deberían estar por debajo de 50 ms y los hosts de Internet pueden ser más lentos.",
+    "healthCheckTcp": "Tiempo de conexión TCP a los puertos configurados. Incluye el ida y vuelta del SYN-ACK. Bueno: <100 ms para servicios locales.",
+    "httpTotal": "Tiempo total de una petición HTTP completa, incluidos DNS, TCP, TLS y la respuesta. Bueno: <500 ms para páginas simples.",
+    "httpDns": "Fase de resolución DNS de la petición HTTP. Debería ser rápida si se usa un resolutor local o resultados en caché.",
+    "httpTcp": "Tiempo del handshake TCP dentro de la petición HTTP. Los valores altos indican latency o congestión de red.",
+    "httpTls": "Tiempo del handshake TLS/SSL. Incluye el intercambio de certificados y la negociación de claves. Depende de la fuerza del cifrado.",
+    "httpTtfb": "Time to First Byte: tiempo de procesamiento del servidor. Los valores altos indican un backend o consultas de base de datos lentos."
   }
 }

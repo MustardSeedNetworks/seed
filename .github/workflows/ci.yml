@@ -390,6 +390,11 @@ jobs:
       - name: UI fetch gate — mutating calls go through the CSRF-bearing api client
         run: python3 scripts/check-ui-fetch.py
 
+      - name: i18n copy gate — hardcoded copy the shared JSX-text gate cannot see
+        run: |
+          python3 scripts/test-check-i18n-copy.py
+          python3 scripts/check-i18n-copy.py
+
       - name: Feature-catalog gate — every sold feature has a gate in code
         run: |
           python3 scripts/test-check-feature-catalog.py
