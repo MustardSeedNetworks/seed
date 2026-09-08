@@ -17,7 +17,9 @@ const bitsPerMegabit = 1_000_000
 const ethtoolUnknownSpeed = 0xFFFFFFFF
 
 // getInterfaceSpeed returns the interface speed in bits per second.
-func getInterfaceSpeed(run commandRunner, name string) int64 {
+// The runner is unused on Linux: speed comes from sysfs and, failing that, the
+// ethtool ioctl — no process is started, so there is nothing to inject.
+func getInterfaceSpeed(_ commandRunner, name string) int64 {
 	// Try sysfs first (most reliable)
 	speedPath := filepath.Join("/sys/class/net", name, "speed")
 	if data, readErr := os.ReadFile(speedPath); readErr == nil {
