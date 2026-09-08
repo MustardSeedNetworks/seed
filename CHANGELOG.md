@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.214.22](https://github.com/MustardSeedNetworks/seed/compare/v0.214.21...v0.214.22) (2026-09-08)
+
+
+### Tests
+
+* **ui:** assert settings-section copy as a property, and gate the shapes the shared i18n check cannot see ([#2503](https://github.com/MustardSeedNetworks/seed/issues/2503)) ([6b49ddd](https://github.com/MustardSeedNetworks/seed/commit/6b49ddd69dede7b1f8ae42a573d70fefb41c3569)), closes [#2502](https://github.com/MustardSeedNetworks/seed/issues/2502) [#2497](https://github.com/MustardSeedNetworks/seed/issues/2497)
+
 ## [0.214.21](https://github.com/MustardSeedNetworks/seed/compare/v0.214.20...v0.214.21) (2026-09-08)
 
 
