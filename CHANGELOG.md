@@ -5,6 +5,21 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.214.23](https://github.com/MustardSeedNetworks/seed/compare/v0.214.22...v0.214.23) (2026-09-08)
+
+
+### Bug Fixes
+
+* **deps:** update dependency react-i18next to v17.0.13 ([#2508](https://github.com/MustardSeedNetworks/seed/issues/2508)) ([4e1152a](https://github.com/MustardSeedNetworks/seed/commit/4e1152aae84cba0e348eb9a7be9fcd3f31dee97e))
+* **i18n:** spell it Wi-Fi everywhere, and guard the spelling ([#2510](https://github.com/MustardSeedNetworks/seed/issues/2510)) ([446562d](https://github.com/MustardSeedNetworks/seed/commit/446562d57f682036ae0d443c1d7ba4d5b53868ac)), closes [#2296](https://github.com/MustardSeedNetworks/seed/issues/2296)
+* **test:** stop the detection suite forking, and make run-e2e.sh reap its own process group ([#2509](https://github.com/MustardSeedNetworks/seed/issues/2509)) ([cb59bac](https://github.com/MustardSeedNetworks/seed/commit/cb59baca0d2caf6ab402a721171acad10d92d011))
+
+
+### Miscellaneous
+
+* **deps:** update dependency lint-staged to v17.5.0 ([#2512](https://github.com/MustardSeedNetworks/seed/issues/2512)) ([ec104b1](https://github.com/MustardSeedNetworks/seed/commit/ec104b1fa3b34578bd4fab88d74fe3322d8479f0))
+* settle the 2026-09-07 audit bookkeeping ([#2506](https://github.com/MustardSeedNetworks/seed/issues/2506)) ([260e498](https://github.com/MustardSeedNetworks/seed/commit/260e4980cb7089ed6bfbdd883c6a23860e60a076)), closes [#2505](https://github.com/MustardSeedNetworks/seed/issues/2505)
+
 ## [0.214.22](https://github.com/MustardSeedNetworks/seed/compare/v0.214.21...v0.214.22) (2026-09-08)
 
 
