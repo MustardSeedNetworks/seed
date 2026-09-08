@@ -22,26 +22,26 @@ import { VulnerabilityDetailsModal } from './VulnerabilityDetailsModal';
 
 // Re-export public types so existing import paths still resolve.
 export type {
-  CdpInfo,
+  CDPDeviceInfo,
   DeepScanResult,
   DeviceProfile,
   DiscoveredDevice,
   DiscoveryMethod,
   DiscoveryStatus,
-  EdpInfo,
-  HttpInfo,
-  LldpInfo,
-  NdpInfo,
+  EDPDeviceInfo,
+  HTTPInfo,
+  LLDPDeviceInfo,
+  NDPDeviceInfo,
   NetworkDiscoveryData,
   OpenPort,
   PortScanResult,
   ServiceInfo,
-  SnmpEntity,
-  SnmpFullData,
-  SnmpInterface,
-  SnmpIpAddress,
-  SnmpSystemInfo,
-  SnmpVlan,
+  SNMPEntity,
+  SNMPFullData,
+  SNMPInterface,
+  SNMPIPAddress,
+  SNMPVLAN,
+  SystemInfo,
 } from './networkDiscoveryCardTypes';
 
 /** ScanErrorBanner renders the failed-scan alert shared by both card states. */

@@ -12,6 +12,13 @@
  */
 
 import type React from 'react';
+
+import type { MintTokenResponse } from '../../../types/generated/mint-token-response';
+
+// The hand-typed mirror omitted `scope`, so a minted token's scope could not
+// be shown or checked in this view (seed#2393).
+export type { MintTokenResponse };
+
 import { useCallback, useEffect, useState } from 'react';
 import { Trans, useTranslation } from 'react-i18next';
 import { api } from '../../../api/client';
@@ -29,14 +36,6 @@ interface ApiToken {
   createdAt: string;
   lastUsedAt?: string;
   revokedAt?: string;
-}
-
-interface MintTokenResponse {
-  id: string;
-  name: string;
-  token: string;
-  prefix: string;
-  createdAt: string;
 }
 
 const ZERO_TIME_PREFIX = '0001-01-01';

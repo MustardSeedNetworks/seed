@@ -15,13 +15,17 @@ import {
   radius,
   severity as severityTheme,
 } from '../../styles/theme';
+import type { Vulnerability } from '../../types/generated/engine-discovery-response';
 import { AlertTriangle } from '../ui/icons';
 import { Tooltip } from '../ui/tooltip';
 import type { DiscoveredDevice, DiscoveryMethod, OpenPort } from './NetworkDiscoveryCard';
 
 // Discovery method badge
-export function MethodBadge({ method }: { method: DiscoveryMethod }): JSX.Element {
-  const themeClass = discoveryMethodTheme[method] ?? discoveryMethodTheme.arp;
+// `discoveryMethod` is an open string set on the wire — the Go type has no enum
+// and a collector may add one — so the badge takes whatever arrives and falls
+// back to the ARP styling for a method it has no colour for.
+export function MethodBadge({ method }: { method: string }): JSX.Element {
+  const themeClass = discoveryMethodTheme[method as DiscoveryMethod] ?? discoveryMethodTheme.arp;
   return (
     <span className={cn('px-1.5 py-0.5 text-xs font-medium uppercase', radius.md, themeClass)}>
       {method}
@@ -102,6 +106,21 @@ export function getSeverityClasses(severity: string): string {
   return `${severityTheme.low.bg} ${severityTheme.low.text}`;
 }
 
+// Severity order, worst first, matching getSeverityClasses' branches.
+const SEVERITY_ORDER = ['CRITICAL', 'HIGH', 'MEDIUM', 'LOW'] as const;
+
+// The wire carries the findings themselves (DeviceVulnerabilities.vulnerabilities);
+// the count and the worst severity are the row's own summary of them. The
+// hand-typed mirror this file used to carry declared `count`/`highestSeverity`
+// instead, which the daemon has never sent, so the badge read undefined and the
+// column was always "-" (seed#2393).
+export function highestSeverity(vulnerabilities: Vulnerability[] | undefined): string {
+  // `severity` is NVD's `baseSeverity` passed through verbatim (internal/discovery/vuln/cve_nvd.go),
+  // so its casing is the feed's, not ours.
+  const severities = new Set((vulnerabilities ?? []).map((v) => v.severity.toUpperCase()));
+  return SEVERITY_ORDER.find((s) => severities.has(s)) ?? 'LOW';
+}
+
 // Device row component
 // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: Device row handles many device types and states
 export function DeviceRow({
@@ -119,6 +138,7 @@ export function DeviceRow({
 }): JSX.Element {
   const { t } = useTranslation('cards');
   const openPorts = device.profile?.openPorts?.filter((p) => p.isOpen) || [];
+  const vulnCount = device.vulnerabilities?.vulnerabilities?.length ?? 0;
   const hasDetails = Boolean(
     device.lldpInfo ||
       device.cdpInfo ||
@@ -219,16 +239,16 @@ export function DeviceRow({
 
         {/* Vulnerabilities */}
         <td className="px-3 py-row">
-          {device.vulnerabilities && device.vulnerabilities.count > 0 ? (
+          {vulnCount > 0 ? (
             <span
               className={cn(
                 'inline-flex items-center gap-tight text-xs px-1.5 py-0.5',
                 radius.md,
-                getSeverityClasses(device.vulnerabilities.highestSeverity),
+                getSeverityClasses(highestSeverity(device.vulnerabilities?.vulnerabilities)),
               )}
             >
               <AlertTriangle className="w-3 h-3" />
-              {device.vulnerabilities.count}
+              {vulnCount}
             </span>
           ) : (
             <span className="text-xs text-text-muted">-</span>
@@ -483,9 +503,9 @@ export function DeviceRow({
                         {device.snmpData.inventory
                           .filter(
                             (e) =>
-                              e.className === 'chassis' ||
-                              e.className === 'module' ||
-                              e.className === 'powerSupply',
+                              e.class === 'chassis' ||
+                              e.class === 'module' ||
+                              e.class === 'powerSupply',
                           )
                           .slice(0, 4)
                           .map((entity) => (

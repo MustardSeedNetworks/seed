@@ -7,12 +7,9 @@
  */
 
 import { LogComponents, logger } from '../lib/logger';
+import type { InterfaceInfo } from '../types/generated/categorized-interfaces-response';
 
-export interface InterfaceInfo {
-  name: string;
-  type: string;
-  up: boolean;
-}
+export type { InterfaceInfo };
 
 /** Profile interface config from backend (uses snake_case) */
 export interface ProfileInterfacesConfig {

@@ -24,24 +24,10 @@ import type React from 'react';
 import { memo, useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { cn, icon as iconTokens, radius, spacing, status as statusColor } from '../../styles/theme';
-
-export interface NetworkInterface {
-  name: string;
-  friendlyName?: string;
-  description?: string;
-  type: string;
-  up: boolean;
-  speedDisplay?: string;
-  chipsetVendor?: string;
-  chipsetModel?: string;
-  hasTdr?: boolean;
-  hasDom?: boolean;
-  score?: number;
-  signalStrength?: number; // dBm for WiFi interfaces
-}
+import type { InterfaceInfo } from '../../types/generated/categorized-interfaces-response';
 
 interface InterfaceSelectorProps {
-  interfaces: NetworkInterface[];
+  interfaces: InterfaceInfo[];
   currentInterface: string;
   isWifi: boolean;
   onChange: (interfaceName: string) => void;
@@ -136,7 +122,7 @@ function InterfaceSelectorComponent({
   );
 
   // Get display name for an interface
-  const getDisplayName = (iface: NetworkInterface): string => {
+  const getDisplayName = (iface: InterfaceInfo): string => {
     if (iface.friendlyName && iface.friendlyName.toLowerCase() !== iface.name.toLowerCase()) {
       return `${iface.friendlyName} (${iface.name})`;
     }
@@ -147,17 +133,14 @@ function InterfaceSelectorComponent({
   };
 
   // Get status text for an interface
-  const getStatusText = (iface: NetworkInterface): string => {
+  const getStatusText = (iface: InterfaceInfo): string => {
     if (!iface.up) {
       return t('interface.noLink');
-    }
-    if (iface.type === 'wifi' && iface.signalStrength !== undefined) {
-      return `${iface.signalStrength} dBm`;
     }
     return iface.speedDisplay || '';
   };
 
-  const getDetailText = (iface: NetworkInterface): string => {
+  const getDetailText = (iface: InterfaceInfo): string => {
     if (iface.description) {
       return iface.description;
     }

@@ -20,6 +20,31 @@ import { NetworkDiscoveryCard } from './NetworkDiscoveryCard';
  *
  * This story demonstrates various discovery states and device types.
  */
+// The wire sends the findings themselves; the card summarises them. Building the
+// fixture the other way round is what hid seed#2393 — the story rendered a
+// badge from `count`/`highestSeverity`, fields the daemon has never sent.
+function deviceVulnerabilities(deviceIp: string, count: number, severity: string) {
+  return {
+    deviceIp,
+    mac: '',
+    hostname: '',
+    vendor: '',
+    product: '',
+    version: '',
+    scanTime: new Date().toISOString(),
+    vulnerabilities: Array.from({ length: count }, (_, i) => ({
+      cveId: `CVE-2026-${1000 + i}`,
+      description: 'Fixture finding',
+      severity: i === 0 ? severity : 'LOW',
+      score: i === 0 ? 9.8 : 3.1,
+      published: new Date().toISOString(),
+      modified: new Date().toISOString(),
+      references: [],
+      affectedCpe: '',
+    })),
+  };
+}
+
 const meta: Meta<typeof NetworkDiscoveryCard> = {
   title: 'Cards/NetworkDiscoveryCard',
   component: NetworkDiscoveryCard,
@@ -248,10 +273,7 @@ export const DevicesWithVulnerabilities: Story = {
           discoveryMethod: ['arp', 'ping'],
           lastSeen: new Date(Date.now() - 30000).toISOString(),
           isLocal: true,
-          vulnerabilities: {
-            count: 12,
-            highestSeverity: 'CRITICAL',
-          },
+          vulnerabilities: deviceVulnerabilities('192.168.1.50', 12, 'CRITICAL'),
         },
         {
           ip: '192.168.1.51',
@@ -263,10 +285,7 @@ export const DevicesWithVulnerabilities: Story = {
           discoveryMethod: ['arp'],
           lastSeen: new Date(Date.now() - 60000).toISOString(),
           isLocal: true,
-          vulnerabilities: {
-            count: 5,
-            highestSeverity: 'HIGH',
-          },
+          vulnerabilities: deviceVulnerabilities('192.168.1.51', 5, 'HIGH'),
         },
         {
           ip: '192.168.1.52',
@@ -278,10 +297,7 @@ export const DevicesWithVulnerabilities: Story = {
           discoveryMethod: ['arp', 'ping'],
           lastSeen: new Date(Date.now() - 15000).toISOString(),
           isLocal: true,
-          vulnerabilities: {
-            count: 3,
-            highestSeverity: 'MEDIUM',
-          },
+          vulnerabilities: deviceVulnerabilities('192.168.1.52', 3, 'MEDIUM'),
         },
       ],
       status: {

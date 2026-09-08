@@ -14,7 +14,7 @@
         "size": {
           "type": "integer"
         },
-        "created_at": {
+        "createdAt": {
           "type": "string",
           "format": "date-time"
         },
@@ -28,7 +28,7 @@
         "name",
         "path",
         "size",
-        "created_at",
+        "createdAt",
         "version"
       ]
     },

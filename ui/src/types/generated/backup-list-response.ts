@@ -12,6 +12,6 @@ export interface BackupInfo {
   name: string;
   path: string;
   size: number;
-  created_at: string;
+  createdAt: string;
   version: number;
 }

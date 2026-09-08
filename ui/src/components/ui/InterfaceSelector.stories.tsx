@@ -1,24 +1,33 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { useState } from 'react';
-import { InterfaceSelector, type NetworkInterface } from './InterfaceSelector';
+import type { InterfaceInfo } from '../../types/generated/categorized-interfaces-response';
+import { InterfaceSelector } from './InterfaceSelector';
 
-const sampleInterfaces: NetworkInterface[] = [
+const sampleInterfaces: InterfaceInfo[] = [
   {
     name: 'eth0',
     friendlyName: 'Primary Ethernet',
     type: 'ethernet',
     up: true,
+    running: true,
+    hardwareAddr: '00:1b:21:aa:bb:01',
+    mtu: 1500,
+    addresses: ['192.168.1.10/24'],
     speedDisplay: '1 Gb/s',
     chipsetVendor: 'Intel',
     chipsetModel: 'i225',
-    hasTdr: true,
-    hasDom: true,
+    hasTDR: true,
+    hasDOM: true,
   },
   {
     name: 'eth1',
     description: 'Backup NIC',
     type: 'ethernet',
     up: false,
+    running: false,
+    hardwareAddr: '00:1b:21:aa:bb:02',
+    mtu: 1500,
+    addresses: [],
     speedDisplay: '1 Gb/s',
   },
   {
@@ -26,13 +35,19 @@ const sampleInterfaces: NetworkInterface[] = [
     friendlyName: 'WiFi Adapter',
     type: 'wifi',
     up: true,
-    signalStrength: -48,
+    running: true,
+    hardwareAddr: '00:1b:21:aa:bb:03',
+    mtu: 1500,
+    addresses: ['192.168.1.11/24'],
   },
   {
     name: 'wlan1',
     type: 'wifi',
     up: false,
-    signalStrength: -90,
+    running: false,
+    hardwareAddr: '00:1b:21:aa:bb:04',
+    mtu: 1500,
+    addresses: [],
   },
 ];
 

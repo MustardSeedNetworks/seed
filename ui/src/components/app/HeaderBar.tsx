@@ -10,8 +10,8 @@ import {
   spacing,
   status as statusColor,
 } from '../../styles/theme';
+import type { InterfaceInfo } from '../../types/generated/categorized-interfaces-response';
 import type { Profile } from '../../types/profile';
-import type { NetworkInterface } from '../ui/InterfaceSelector';
 import {
   Check,
   EthernetPort,
@@ -62,7 +62,7 @@ interface HeaderBarProps {
   profilesLoading: boolean;
   onProfileSwitch: (profileId: string) => Promise<boolean>;
   onProfileManage: () => void;
-  interfaces: NetworkInterface[];
+  interfaces: InterfaceInfo[];
   currentInterface: string;
   isWifi: boolean;
   onInterfaceChange: (interfaceName: string) => void;

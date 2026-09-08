@@ -12,24 +12,11 @@
  */
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import type { InterfaceInfo } from '../types/generated/categorized-interfaces-response';
 import type { Profile } from '../types/profile';
 
-interface NetworkInterface {
-  name: string;
-  friendlyName?: string;
-  description?: string;
-  type: string;
-  up: boolean;
-  speedDisplay?: string;
-  chipsetVendor?: string;
-  chipsetModel?: string;
-  hasTdr?: boolean;
-  hasDom?: boolean;
-  score?: number;
-}
-
 interface UseInterfaceStateProps {
-  interfaces: NetworkInterface[];
+  interfaces: InterfaceInfo[];
   activeProfile: Profile | null;
   setEthernetInterface: (name: string, enabled?: boolean) => Promise<boolean>;
   setWifiInterface: (name: string, enabled?: boolean) => Promise<boolean>;

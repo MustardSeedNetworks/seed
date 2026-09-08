@@ -23,6 +23,11 @@
  */
 
 import type React from 'react';
+
+import type { LinkHistoryEvent } from '../../types/generated/link-response';
+
+export type { LinkHistoryEvent };
+
 import type { JSX } from 'react';
 import { memo } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -35,11 +40,6 @@ import { BaseCard } from './BaseCard';
 /**
  * Historical link state event
  */
-interface LinkHistoryEvent {
-  state: string; // State change ("up", "down", "flap", etc.)
-  timestamp: string; // ISO 8601 timestamp
-}
-
 /**
  * PoE (Power over Ethernet) status
  */

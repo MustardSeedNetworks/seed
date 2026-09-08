@@ -34,6 +34,10 @@ import type { SwitchData, VlanData } from '../components/cards/SwitchCard';
 import type { WiFiData } from '../components/cards/WiFiCard';
 import { LogComponents, logger } from '../lib/logger';
 import { useTestRunStore } from '../stores/testRunStore';
+import type {
+  CategorizedInterfacesResponse,
+  InterfaceInfo,
+} from '../types/generated/categorized-interfaces-response';
 
 const API_BASE: string = import.meta.env.VITE_API_BASE || '';
 
@@ -49,31 +53,6 @@ interface CardState {
   publicip: PublicIpData | null;
 }
 
-interface NetworkInterface {
-  name: string;
-  friendlyName?: string;
-  description?: string;
-  type: string;
-  up: boolean;
-  speedDisplay?: string;
-  chipsetVendor?: string;
-  chipsetModel?: string;
-  hasTdr?: boolean;
-  hasDom?: boolean;
-  score?: number;
-  signalStrength?: number; // dBm for WiFi interfaces
-}
-
-/** #756: Categorized interfaces response from backend */
-interface CategorizedInterfacesResponse {
-  ethernet: NetworkInterface[];
-  wifi: NetworkInterface[];
-  recommendedEthernet?: string;
-  recommendedWifi?: string;
-  currentInterface: string;
-  currentType: string;
-}
-
 function isPlainObject(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value);
 }
@@ -82,7 +61,7 @@ interface UseNetworkFetchersProps {
   currentInterfaceRef: React.MutableRefObject<string>;
   setCards: React.Dispatch<React.SetStateAction<CardState>>;
   setCurrentInterface: (name: string) => void;
-  setInterfaces: React.Dispatch<React.SetStateAction<NetworkInterface[]>>;
+  setInterfaces: React.Dispatch<React.SetStateAction<InterfaceInfo[]>>;
   setAppVersion: React.Dispatch<React.SetStateAction<string>>;
   setNetworkDiscovery: React.Dispatch<React.SetStateAction<NetworkDiscoveryData | null>>;
   setIsWifi: (wifi: boolean) => void;

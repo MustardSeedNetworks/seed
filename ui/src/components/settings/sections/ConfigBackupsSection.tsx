@@ -28,17 +28,12 @@ import { api } from '../../../api';
 import { useRole } from '../../../contexts/RoleContext';
 import { formatBytes } from '../../../lib/format';
 import { button, cn, icon as iconTokens, layout, radius, spacing } from '../../../styles/theme';
+import type { BackupInfo } from '../../../types/generated/backup-list-response';
 import { CollapsibleSection } from '../../ui/CollapsibleSection';
 
-const API_BASE: string = import.meta.env.VITE_API_BASE || '';
+export type { BackupInfo };
 
-interface BackupInfo {
-  name: string;
-  path: string;
-  size: number;
-  createdAt: string;
-  version: number;
-}
+const API_BASE: string = import.meta.env.VITE_API_BASE || '';
 
 interface ConfigVersion {
   current: number;

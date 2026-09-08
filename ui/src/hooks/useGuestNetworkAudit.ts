@@ -12,13 +12,12 @@
  */
 
 import { useCallback, useEffect, useState } from 'react';
+import type { GuestAuditTarget } from '../types/generated/config';
+
+export type { GuestAuditTarget };
+
 import { api } from '../api';
 import { LogComponents, logger } from '../lib/logger';
-
-export interface GuestAuditTarget {
-  ip: string;
-  label?: string;
-}
 
 export interface GuestAuditSettings {
   enabled: boolean;
