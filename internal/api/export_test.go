@@ -102,6 +102,11 @@ func (s *Server) HandleBuildVersion(w http.ResponseWriter, r *http.Request) {
 	s.handleBuildVersion(w, r)
 }
 
+// HandleClientLogs exports handleClientLogs for testing.
+func (s *Server) HandleClientLogs(w http.ResponseWriter, r *http.Request) {
+	s.handleClientLogs(w, r)
+}
+
 // HandleExport exports handleExport for testing.
 func (s *Server) HandleExport(w http.ResponseWriter, r *http.Request) {
 	s.handleExport(w, r)
