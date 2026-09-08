@@ -109,6 +109,8 @@
     "collectorChain": "Cadena de recolectores",
     "defaultChain": "Usando la cadena predeterminada para esta versión de SNMP.",
     "enabledHint": "Habilitado (sondeado en el próximo ciclo)",
+    "credentialRequired": "Un destino habilitado necesita una credencial: v1/v2c necesita una comunidad y v3 necesita un usuario, así que no hay ninguna versión de SNMP que sondee con credenciales vacías. El sondeador omite ese destino en lugar de intentarlo sin autenticar. Guárdelo deshabilitado.",
+    "chainServerDefault": "El servidor aplica su cadena de colectores predeterminada.",
     "readOnly": "Solo lectura — se requiere el rol de operador para añadir, editar o eliminar un objetivo",
     "targetCount_one": "{{count}} destino",
     "targetCount_other": "{{count}} destinos",

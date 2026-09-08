@@ -109,6 +109,8 @@
     "collectorChain": "Collector chain",
     "defaultChain": "Using the default chain for this SNMP version.",
     "enabledHint": "Enabled (polled on next tick)",
+    "credentialRequired": "An enabled target needs a credential: v1/v2c needs a community and v3 needs a user, so there is no SNMP version that polls with empty credentials. The poller skips such a target rather than trying it unauthenticated. Save it disabled instead.",
+    "chainServerDefault": "The server applies its default collector chain.",
     "readOnly": "Read-only — operator role required to add, edit or delete a target",
     "targetCount_one": "{{count}} target",
     "targetCount_other": "{{count}} targets",
