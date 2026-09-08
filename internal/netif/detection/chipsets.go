@@ -67,13 +67,21 @@ type ChipsetDatabase struct {
 	platformMu       sync.Mutex
 	platformMatches  map[string]*ChipsetInfo
 	identifyPlatform func(string) *ChipsetInfo
+	// run is the seam onto platform helpers; see commandRunner.
+	run commandRunner
 }
 
 // NewChipsetDatabase creates a populated chipset database.
 // Attempts to load from external file first, falls back to embedded data.
 func NewChipsetDatabase() *ChipsetDatabase {
+	return newChipsetDatabase(execRunner)
+}
+
+// newChipsetDatabase builds a database over an explicit runner.
+func newChipsetDatabase(run commandRunner) *ChipsetDatabase {
 	db := &ChipsetDatabase{
 		ouiMap: make(map[string]*ChipsetInfo),
+		run:    run,
 	}
 
 	// Try to load from external file first (allows updates without rebuild)
@@ -110,6 +118,7 @@ func NewChipsetDatabaseFromFile(path string) (*ChipsetDatabase, error) {
 	db := &ChipsetDatabase{
 		chipsets: chipsets,
 		ouiMap:   make(map[string]*ChipsetInfo),
+		run:      execRunner,
 	}
 
 	for i := range db.chipsets {

@@ -187,6 +187,11 @@ export function sidebarHelpButton(page: Page): Locator {
  * voiding anything a spec set up after calling this helper.
  */
 export async function disableAnimations(page: Page): Promise<void> {
+  // `page` here is the spec's fixture page, and that matters: on WebKit with
+  // @playwright/test 1.62.1 an init script registered on a page from
+  // `context.newPage()` silently never runs (seed#2286). Fixture pages are
+  // fine, and `context.addInitScript()` before `newPage()` is fine. Do not
+  // move this onto a hand-made page.
   await page.addInitScript(() => {
     const install = (): void => {
       const style = document.createElement('style');

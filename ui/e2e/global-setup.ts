@@ -112,6 +112,14 @@ async function loginAndPersist(
   // hook's mount-time /api/v1/status probe land while the cookies are
   // valid — if we skipped this step a worker that opens the page
   // before any other request might race the cookie load.
+  // If this ever needs an init script, register it with
+  // `context.addInitScript()` BEFORE this line — never with
+  // `page.addInitScript()` afterwards. On WebKit with @playwright/test 1.62.1,
+  // an init script added to a page created by `context.newPage()` silently
+  // never runs: no error, no warning, the callback simply does not execute
+  // (seed#2286). The fixture `page` in a spec is not affected, which is why
+  // every `addInitScript` in e2e/ is on a fixture page and this one is not
+  // there at all.
   const page = await context.newPage();
   try {
     await page.goto('/');

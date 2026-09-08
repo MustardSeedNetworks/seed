@@ -1,5 +1,10 @@
 package detection
 
+import (
+	"context"
+	"fmt"
+)
+
 // DetectType exposes detectType for testing.
 func DetectType(name string) string {
 	return detectType(name)
@@ -75,4 +80,37 @@ func GetSpeedBonuses() []struct {
 		}
 	}
 	return result
+}
+
+// NewDetectorNoFork builds a detector whose platform helpers are stubbed out, so
+// the suite never starts a process.
+//
+// This is not tidiness. DetectAll calls getInterfaceSpeed once per interface,
+// and on darwin each call forks networksetup and often ifconfig; TestDetectAll,
+// TestDetectBest and TestScoreInterface between them spent ~9.6s of this
+// package's 10.8s doing that against whatever interfaces the developer's
+// machine happens to have. A fork out of a cgo/ObjC process is also the
+// mechanism behind seed#2420: a child stuck before execve carries the parent's
+// argv, so `pgrep -f 'seed --config'` counts it as another daemon.
+//
+// The stub fails rather than returning empty output: every caller treats an
+// error as "this platform did not tell me", which is the path a machine without
+// networksetup already takes, so the code under test sees an input it sees in
+// production. TestParseMediaSpeed and TestParseIfconfigSpeed cover the parsers
+// on real output.
+func NewDetectorNoFork() *Detector {
+	return newDetector(func(_ context.Context, name string, _ ...string) ([]byte, error) {
+		return nil, fmt.Errorf("detection: %s is not run under go test", name)
+	})
+}
+
+// NewChipsetDatabaseNoFork builds a chipset database whose platform lookup is
+// stubbed. IdentifyByInterface falls through to identifyByPlatformUncached when
+// neither OUI nor keyword matches, which forks system_profiler on darwin — the
+// last helper the suite was still starting. Same reasoning as
+// [NewDetectorNoFork].
+func NewChipsetDatabaseNoFork() *ChipsetDatabase {
+	return newChipsetDatabase(func(_ context.Context, name string, _ ...string) ([]byte, error) {
+		return nil, fmt.Errorf("detection: %s is not run under go test", name)
+	})
 }

@@ -17,7 +17,7 @@ const bitsPerMegabit = 1_000_000
 const ethtoolUnknownSpeed = 0xFFFFFFFF
 
 // getInterfaceSpeed returns the interface speed in bits per second.
-func getInterfaceSpeed(name string) int64 {
+func getInterfaceSpeed(run commandRunner, name string) int64 {
 	// Try sysfs first (most reliable)
 	speedPath := filepath.Join("/sys/class/net", name, "speed")
 	if data, readErr := os.ReadFile(speedPath); readErr == nil {

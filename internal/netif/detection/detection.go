@@ -74,12 +74,21 @@ type InterfaceScore struct {
 // Detector provides interface detection and scoring functionality.
 type Detector struct {
 	chipsetDB *ChipsetDatabase
+	// run is the seam onto platform helpers; see commandRunner. Tests build a
+	// detector with a stub so the suite never forks.
+	run commandRunner
 }
 
 // NewDetector creates a new interface detector.
 func NewDetector() *Detector {
+	return newDetector(execRunner)
+}
+
+// newDetector builds a detector over an explicit runner.
+func newDetector(run commandRunner) *Detector {
 	return &Detector{
-		chipsetDB: NewChipsetDatabase(),
+		chipsetDB: newChipsetDatabase(run),
+		run:       run,
 	}
 }
 
@@ -160,7 +169,7 @@ func (d *Detector) ScoreInterface(iface net.Interface) InterfaceScore {
 	score.HasIP = hasRoutableAddress(score.Addresses)
 
 	// Get speed (platform-specific)
-	score.Speed = getInterfaceSpeed(iface.Name)
+	score.Speed = getInterfaceSpeed(d.run, iface.Name)
 	score.SpeedDisplay = formatSpeed(score.Speed)
 
 	// Identify chipset
