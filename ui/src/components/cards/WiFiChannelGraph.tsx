@@ -187,6 +187,7 @@ function ChannelGraph({
 }): React.ReactElement {
   const { t: tCards } = useTranslation('cards');
   const { t: tCommon } = useTranslation('common');
+  const { t: tPages } = useTranslation('pages');
   const [hoveredNetwork, setHoveredNetwork] = useState<ChannelNetwork | null>(null);
 
   const channelRange = getChannelRange(band);
@@ -228,7 +229,7 @@ function ChannelGraph({
         className="w-full"
         viewBox={`0 0 ${width} ${height}`}
         role="img"
-        aria-label="WiFi channel signal graph"
+        aria-label={tPages('wifi.channelGraphAlt')}
       >
         {/* Background grid */}
         <g className="opacity-10">

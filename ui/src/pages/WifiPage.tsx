@@ -3,6 +3,7 @@ import { WifiChannelGraph } from '../components/cards/WiFiChannelGraph';
 import { RequireFeature } from '../components/ui/RequireFeature';
 import { WiFiAirspaceCard } from '../components/wifi/WiFiAirspaceCard';
 import { WiFiAnomaliesCard } from '../components/wifi/WiFiAnomaliesCard';
+import { useTranslation } from 'react-i18next';
 import { useAppContext } from '../contexts/AppContext';
 import { CardAbsent, CardGrid } from '../ui/CardGrid';
 
@@ -18,19 +19,15 @@ import { CardAbsent, CardGrid } from '../ui/CardGrid';
  * hardware — and say so, because "this needs a tier you do not have" and
  * "this needs a radio you do not have" have different fixes.
  */
-const TIER_HINT = 'Available on Seed Pro. Run `seed license trial` for a 14-day trial.';
-
 export function WifiPage() {
+  const { t } = useTranslation('pages');
   const { cards, loading, isWifi, channelGraphData, channelGraphLoading } = useAppContext();
 
   /* Not one absent card among others — the whole page is inapplicable, so
      the note is the page rather than a lone tile in a four-column grid. */
   if (!isWifi) {
     return (
-      <CardAbsent
-        label="Wireless data"
-        reason="This interface is wired. Switch to a Wi-Fi interface from the header to see signal, channels and airspace."
-      />
+      <CardAbsent label={t('wifi.wiredLabel')} reason={t('wifi.wiredReason')} />
     );
   }
 
@@ -45,14 +42,14 @@ export function WifiPage() {
           monitor-capable interface is feeding the capture loop. */}
       <RequireFeature
         feature="wifi_management_capture"
-        fallback={<CardAbsent label="Airspace" reason={TIER_HINT} />}
+        fallback={<CardAbsent label={t('wifi.airspaceLabel')} reason={t('wifi.tierHint')} />}
       >
         <WiFiAirspaceCard />
       </RequireFeature>
 
       <RequireFeature
         feature="wifi_association_forensics"
-        fallback={<CardAbsent label="Association anomalies" reason={TIER_HINT} />}
+        fallback={<CardAbsent label={t('wifi.anomaliesLabel')} reason={t('wifi.tierHint')} />}
       >
         <WiFiAnomaliesCard />
       </RequireFeature>

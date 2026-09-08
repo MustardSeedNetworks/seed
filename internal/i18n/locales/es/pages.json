@@ -148,6 +148,16 @@
     "noAnomalies": "No se detectaron anomalías de Wi-Fi.",
     "capturePlanned": "La captura llega en Seed v1.0 — consulte las notas de la versión cuando se publique la fase 2.5.",
     "liveCaptureOn": "Captura en vivo en <src>{{source}}</src>",
-    "captureInactive": "Captura de monitor inactiva — mostrando el último espacio radioeléctrico observado"
+    "captureInactive": "Captura de monitor inactiva — mostrando el último espacio radioeléctrico observado",
+    "airspaceTitle": "Espacio radioeléctrico Wi-Fi",
+    "airspaceSubtitle": "Mapa en vivo de SSID / AP / BSSID / clientes a partir de la captura de tramas de gestión 802.11.",
+    "anomaliesTitle": "Anomalías de Wi-Fi",
+    "anomaliesSubtitle": "Anomalías de seguridad, RF, itinerancia y estándares detectadas en el espacio radioeléctrico.",
+    "tierHint": "Disponible en Seed Pro. Ejecute `seed license trial` para una prueba de 14 días.",
+    "wiredLabel": "Datos inalámbricos",
+    "wiredReason": "Esta interfaz es cableada. Cambie a una interfaz Wi-Fi desde la cabecera para ver señal, canales y espacio radioeléctrico.",
+    "airspaceLabel": "Espacio radioeléctrico",
+    "anomaliesLabel": "Anomalías de asociación",
+    "channelGraphAlt": "Gráfico de señal por canal Wi-Fi"
   }
 }

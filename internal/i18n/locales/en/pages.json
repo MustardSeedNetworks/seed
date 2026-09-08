@@ -148,6 +148,16 @@
     "noAnomalies": "No Wi-Fi anomalies detected.",
     "capturePlanned": "Capture lands in Seed v1.0 — see release notes when Phase 2.5 ships.",
     "liveCaptureOn": "Live capture on <src>{{source}}</src>",
-    "captureInactive": "Monitor capture inactive — showing the last observed airspace"
+    "captureInactive": "Monitor capture inactive — showing the last observed airspace",
+    "airspaceTitle": "Wi-Fi Airspace",
+    "airspaceSubtitle": "Live SSID / AP / BSSID / client map from 802.11 management-frame capture.",
+    "anomaliesTitle": "Wi-Fi Anomalies",
+    "anomaliesSubtitle": "Security, RF, roaming, and standards anomalies detected in the airspace.",
+    "tierHint": "Available on Seed Pro. Run `seed license trial` for a 14-day trial.",
+    "wiredLabel": "Wireless data",
+    "wiredReason": "This interface is wired. Switch to a Wi-Fi interface from the header to see signal, channels and airspace.",
+    "airspaceLabel": "Airspace",
+    "anomaliesLabel": "Association anomalies",
+    "channelGraphAlt": "Wi-Fi channel signal graph"
   }
 }
