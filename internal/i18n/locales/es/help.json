@@ -11,7 +11,7 @@
     "profiles": "Perfiles",
     "link": "Estado del enlace",
     "cable": "Prueba de cable",
-    "wifi": "Estado WiFi",
+    "wifi": "Estado Wi-Fi",
     "wifiTroubleshooting": "Solución de problemas de Wi-Fi",
     "network": "Red y DHCP",
     "gateway": "Puerta de enlace",
@@ -45,7 +45,7 @@
     "gateway": "Muestra puerta de enlace predeterminada y estado de conectividad",
     "publicIp": "Muestra su dirección IP pública y ubicación",
     "dns": "Prueba resolución DNS y muestra servidores configurados",
-    "wifi": "Muestra detalles de conexión WiFi y fuerza de señal",
+    "wifi": "Muestra detalles de conexión Wi-Fi y fuerza de señal",
     "cable": "Prueba integridad y longitud del cable Ethernet",
     "performance": "Mide throughput de red y latency",
     "healthChecks": "Monitorea disponibilidad de endpoints",
@@ -81,7 +81,7 @@
       "features": {
         "realTimeMonitoring": {
           "title": "Monitoreo en tiempo real",
-          "description": "Monitoree el estado del enlace, intensidad de señal WiFi, alcanzabilidad del gateway y más con actualizaciones en vivo."
+          "description": "Monitoree el estado del enlace, intensidad de señal Wi-Fi, alcanzabilidad del gateway y más con actualizaciones en vivo."
         },
         "networkDiscovery": {
           "title": "Descubrimiento de red",
@@ -120,7 +120,7 @@
         },
         "thresholds": {
           "title": "Configurar umbrales",
-          "description": "Abra Configuración → Umbrales para personalizar niveles de advertencia y críticos para latency DNS, ping del gateway, intensidad de señal WiFi y más."
+          "description": "Abra Configuración → Umbrales para personalizar niveles de advertencia y críticos para latency DNS, ping del gateway, intensidad de señal Wi-Fi y más."
         },
         "runTests": {
           "title": "Ejecutar pruebas",
@@ -205,7 +205,7 @@
         },
         "channel": {
           "term": "Canal",
-          "description": "Número de canal WiFi (1-14 para 2.4GHz, 36-165 para 5GHz). Canales superpuestos causan interferencia."
+          "description": "Número de canal Wi-Fi (1-14 para 2.4GHz, 36-165 para 5GHz). Canales superpuestos causan interferencia."
         },
         "security": {
           "term": "Seguridad",
@@ -565,12 +565,12 @@
             "symptom": "Prueba de velocidad de internet por debajo de lo esperado",
             "causes": [
               "Limitación o congestión del ISP",
-              "Interferencia WiFi o señal débil",
+              "Interferencia Wi-Fi o señal débil",
               "Problemas de router o módem",
               "Hora del día (uso pico)"
             ],
             "solutions": [
-              "Pruebe con conexión cableada para aislar problemas WiFi",
+              "Pruebe con conexión cableada para aislar problemas Wi-Fi",
               "Ejecute pruebas en diferentes horarios",
               "Reinicie módem y router",
               "Contacte al ISP si es consistentemente lento"
@@ -889,7 +889,7 @@
             },
             {
               "step": "Verificar interferencias",
-              "description": "Para WiFi, ejecute un Estudio de sitio para verificar congestión de canal e interferencias."
+              "description": "Para Wi-Fi, ejecute un Estudio de sitio para verificar congestión de canal e interferencias."
             },
             {
               "step": "Revisar resultados de descubrimiento",
@@ -993,7 +993,7 @@
             },
             {
               "step": "Configurar interfaces",
-              "description": "Seleccione las interfaces de red usadas en este sitio del cliente. Establezca interfaces Ethernet y WiFi preferidas."
+              "description": "Seleccione las interfaces de red usadas en este sitio del cliente. Establezca interfaces Ethernet y Wi-Fi preferidas."
             },
             {
               "step": "Establecer umbrales del cliente",

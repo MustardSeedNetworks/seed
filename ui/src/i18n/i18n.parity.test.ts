@@ -115,3 +115,41 @@ describe('i18n DNT — standard terms appear verbatim in es', () => {
     });
   }
 });
+
+/**
+ * Canonical spelling of Wi-Fi (seed#2296).
+ *
+ * The DNT check above cannot do this job. It asserts that a term present in an
+ * en value survives into es — so writing "WiFi" in *both* locales removes the
+ * term from en and the check has nothing left to enforce. Proved: reverting one
+ * en value to "WiFi" left all 18 DNT cases green.
+ *
+ * Spelling needs its own assertion, and it is what made `Wi-Fi` addable to
+ * DNT_TERMS at all: the tree used to carry both spellings, so neither could be
+ * called canonical. "Wi-Fi" is the Wi-Fi Alliance's own, and it is what
+ * pages.json and common.json already used.
+ *
+ * Identifiers are not copy: `wifiSettings`, `isWifi` and `WiFiCard` are code and
+ * are deliberately out of scope. This reads locale *values* only.
+ */
+const NON_CANONICAL_WIFI = /(?:^|[^\w-])(WiFi|WIFI|Wifi|wi-fi)(?:[^\w-]|$)/;
+
+describe('i18n spelling — Wi-Fi is spelled one way', () => {
+  for (const { ns, en, es } of FIXTURES) {
+    it(`${ns}: no locale value spells it any way but "Wi-Fi"`, () => {
+      const offenders: string[] = [];
+      for (const [locale, tree] of [
+        ['en', en],
+        ['es', es],
+      ] as [string, Json][]) {
+        for (const [path, value] of flatStringEntries(tree)) {
+          const found = NON_CANONICAL_WIFI.exec(value);
+          if (found) {
+            offenders.push(`${locale}/${ns} ${path}: "${found[1]}" — write "Wi-Fi"`);
+          }
+        }
+      }
+      expect(offenders).toEqual([]);
+    });
+  }
+});

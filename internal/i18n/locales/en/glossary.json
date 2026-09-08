@@ -2,7 +2,7 @@
   "title": "Glossary of Terms",
   "description": "Technical terms and definitions used throughout The Seed",
   "categories": {
-    "wifi": "WiFi & Wireless",
+    "wifi": "Wi-Fi & Wireless",
     "network": "Network & Protocol",
     "medical": "Medical Protocols",
     "performance": "Performance & Testing",
@@ -12,7 +12,7 @@
     "ssid": {
       "term": "SSID",
       "fullName": "Service Set Identifier",
-      "definition": "The name of a wireless network that devices use to identify and connect to it. Each WiFi network broadcasts its SSID so devices can find it.",
+      "definition": "The name of a wireless network that devices use to identify and connect to it. Each Wi-Fi network broadcasts its SSID so devices can find it.",
       "category": "wifi"
     },
     "bssid": {
@@ -35,32 +35,32 @@
     },
     "channel": {
       "term": "Channel",
-      "fullName": "WiFi Channel",
+      "fullName": "Wi-Fi Channel",
       "definition": "A specific frequency range within the 2.4 GHz or 5 GHz band used for wireless communication. Proper channel selection reduces interference.",
       "category": "wifi"
     },
     "channelWidth": {
       "term": "Channel Width",
       "fullName": "Channel Bandwidth",
-      "definition": "The frequency range used by a WiFi channel (20, 40, 80, or 160 MHz). Wider channels provide higher throughput but are more susceptible to interference.",
+      "definition": "The frequency range used by a Wi-Fi channel (20, 40, 80, or 160 MHz). Wider channels provide higher throughput but are more susceptible to interference.",
       "category": "wifi"
     },
     "802.11ax": {
       "term": "802.11ax",
-      "fullName": "WiFi 6",
+      "fullName": "Wi-Fi 6",
       "definition": "The IEEE standard for high-efficiency wireless LANs, offering improved performance in dense environments through OFDMA and MU-MIMO technologies.",
       "category": "wifi"
     },
     "802.11be": {
       "term": "802.11be",
-      "fullName": "WiFi 7",
+      "fullName": "Wi-Fi 7",
       "definition": "The latest IEEE wireless standard featuring 320 MHz channels, 4096-QAM modulation, and multi-link operation for extremely high throughput.",
       "category": "wifi"
     },
     "mcs": {
       "term": "MCS",
       "fullName": "Modulation and Coding Scheme",
-      "definition": "An index value that defines the modulation type, coding rate, and number of spatial streams used in a WiFi transmission. Higher MCS values indicate faster potential speeds.",
+      "definition": "An index value that defines the modulation type, coding rate, and number of spatial streams used in a Wi-Fi transmission. Higher MCS values indicate faster potential speeds.",
       "category": "wifi"
     },
     "phy": {
@@ -71,20 +71,20 @@
     },
     "wpa2": {
       "term": "WPA2",
-      "fullName": "WiFi Protected Access 2",
-      "definition": "A security protocol using AES encryption to protect wireless networks. The standard security method for most WiFi networks.",
+      "fullName": "Wi-Fi Protected Access 2",
+      "definition": "A security protocol using AES encryption to protect wireless networks. The standard security method for most Wi-Fi networks.",
       "category": "wifi"
     },
     "wpa3": {
       "term": "WPA3",
-      "fullName": "WiFi Protected Access 3",
-      "definition": "The latest WiFi security standard offering stronger encryption, protection against offline dictionary attacks, and improved security for open networks.",
+      "fullName": "Wi-Fi Protected Access 3",
+      "definition": "The latest Wi-Fi security standard offering stronger encryption, protection against offline dictionary attacks, and improved security for open networks.",
       "category": "wifi"
     },
     "dfs": {
       "term": "DFS",
       "fullName": "Dynamic Frequency Selection",
-      "definition": "A mechanism that allows WiFi devices to use 5 GHz channels shared with radar systems by detecting and avoiding radar signals.",
+      "definition": "A mechanism that allows Wi-Fi devices to use 5 GHz channels shared with radar systems by detecting and avoiding radar signals.",
       "category": "wifi"
     },
     "tdr": {

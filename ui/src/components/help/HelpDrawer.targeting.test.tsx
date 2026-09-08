@@ -22,7 +22,7 @@ const heading = (): string =>
 describe('HelpDrawer — section targeting', () => {
   it('opens on the requested section', () => {
     render(<HelpDrawer isOpen={true} onClose={() => {}} section="wifi" />);
-    expect(heading()).toBe('WiFi Status');
+    expect(heading()).toBe('Wi-Fi Status');
   });
 
   it('keeps the last-read section when help is opened without a target', async () => {
@@ -30,7 +30,7 @@ describe('HelpDrawer — section targeting', () => {
     rerender(<HelpDrawer isOpen={false} onClose={() => {}} />);
     rerender(<HelpDrawer isOpen={true} onClose={() => {}} />);
 
-    expect(heading()).toBe('WiFi Status');
+    expect(heading()).toBe('Wi-Fi Status');
   });
 
   it('re-applies the same target after the reader browses away and reopens', async () => {
@@ -44,6 +44,6 @@ describe('HelpDrawer — section targeting', () => {
     rerender(<HelpDrawer isOpen={false} onClose={() => {}} />);
     rerender(<HelpDrawer isOpen={true} onClose={() => {}} section="wifi" />);
 
-    expect(heading()).toBe('WiFi Status');
+    expect(heading()).toBe('Wi-Fi Status');
   });
 });

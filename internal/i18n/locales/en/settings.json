@@ -8,7 +8,7 @@
     "performance": "Performance",
     "health": "Health Checks",
     "dns": "DNS",
-    "wifi": "WiFi",
+    "wifi": "Wi-Fi",
     "snmp": "SNMP",
     "thresholds": "Thresholds",
     "cableTest": "Cable Test",
@@ -273,8 +273,8 @@
     "customServers": "Custom Servers"
   },
   "wifi": {
-    "title": "WiFi",
-    "interface": "WiFi Interface",
+    "title": "Wi-Fi",
+    "interface": "Wi-Fi Interface",
     "wirelessMonitoring": "Currently monitoring a wireless interface",
     "noWireless": "No wireless interface detected",
     "scanInterval": "Scan Interval",

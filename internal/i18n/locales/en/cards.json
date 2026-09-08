@@ -209,7 +209,7 @@
     "noAAAARecord": "No AAAA record"
   },
   "wifi": {
-    "title": "WiFi",
+    "title": "Wi-Fi",
     "ssid": "SSID",
     "bssid": "BSSID",
     "channel": "Channel",
@@ -222,7 +222,7 @@
     "rxRate": "RX Rate",
     "band": "Band",
     "channelGraph": {
-      "title": "WiFi Channel Graph",
+      "title": "Wi-Fi Channel Graph",
       "otherNetworks": "Other Networks",
       "noNetworksDetected": "No networks detected in {{band}} band",
       "tooltipChannel": "Channel {{channel}}"

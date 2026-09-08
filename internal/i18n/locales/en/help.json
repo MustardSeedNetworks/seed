@@ -11,7 +11,7 @@
     "profiles": "Profiles",
     "link": "Link Status",
     "cable": "Cable Test",
-    "wifi": "WiFi Status",
+    "wifi": "Wi-Fi Status",
     "wifiTroubleshooting": "Wi-Fi Troubleshooting",
     "network": "Network & DHCP",
     "gateway": "Gateway",
@@ -45,7 +45,7 @@
     "gateway": "Shows default gateway and connectivity status",
     "publicIp": "Displays your public IP address and location",
     "dns": "Tests DNS resolution and shows configured servers",
-    "wifi": "Shows WiFi connection details and signal strength",
+    "wifi": "Shows Wi-Fi connection details and signal strength",
     "cable": "Tests Ethernet cable integrity and length",
     "performance": "Measures network throughput and latency",
     "healthChecks": "Monitors endpoint availability",
@@ -81,7 +81,7 @@
       "features": {
         "realTimeMonitoring": {
           "title": "Real-time Monitoring",
-          "description": "Monitor link status, WiFi signal strength, gateway reachability, and more with live updates."
+          "description": "Monitor link status, Wi-Fi signal strength, gateway reachability, and more with live updates."
         },
         "networkDiscovery": {
           "title": "Network Discovery",
@@ -120,7 +120,7 @@
         },
         "thresholds": {
           "title": "Configure Thresholds",
-          "description": "Open Settings → Thresholds to customize warning and critical levels for DNS latency, gateway ping, WiFi signal strength, and more."
+          "description": "Open Settings → Thresholds to customize warning and critical levels for DNS latency, gateway ping, Wi-Fi signal strength, and more."
         },
         "runTests": {
           "title": "Run Tests",
@@ -205,7 +205,7 @@
         },
         "channel": {
           "term": "Channel",
-          "description": "WiFi channel number (1-14 for 2.4GHz, 36-165 for 5GHz). Overlapping channels cause interference."
+          "description": "Wi-Fi channel number (1-14 for 2.4GHz, 36-165 for 5GHz). Overlapping channels cause interference."
         },
         "security": {
           "term": "Security",
@@ -565,12 +565,12 @@
             "symptom": "Internet speed test below expected",
             "causes": [
               "ISP throttling or congestion",
-              "WiFi interference or weak signal",
+              "Wi-Fi interference or weak signal",
               "Router or modem issues",
               "Time of day (peak usage)"
             ],
             "solutions": [
-              "Test with wired connection to isolate WiFi issues",
+              "Test with wired connection to isolate Wi-Fi issues",
               "Run test at different times",
               "Restart modem and router",
               "Contact ISP if consistently slow"
@@ -889,7 +889,7 @@
             },
             {
               "step": "Check for Interference",
-              "description": "For WiFi, check the channel graph and neighbor AP scan for congestion and interference."
+              "description": "For Wi-Fi, check the channel graph and neighbor AP scan for congestion and interference."
             },
             {
               "step": "Review Discovery Results",
@@ -993,7 +993,7 @@
             },
             {
               "step": "Configure Interfaces",
-              "description": "Select the network interfaces used at this client site. Set preferred Ethernet and WiFi interfaces."
+              "description": "Select the network interfaces used at this client site. Set preferred Ethernet and Wi-Fi interfaces."
             },
             {
               "step": "Set Client Thresholds",
