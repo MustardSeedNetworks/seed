@@ -92,30 +92,12 @@ function getResourceStatus(percent: number): Status {
 /**
  * Returns contextual remediation suggestions based on resource type and usage level
  */
-function getSuggestion(type: 'cpu' | 'memory' | 'disk', usage: number): string {
-  if (type === 'cpu') {
-    if (usage >= 90) {
-      return 'Check for runaway processes or consider upgrading CPU resources';
-    }
-    return 'Consider closing unused applications or background tasks';
-  }
-
-  if (type === 'memory') {
-    if (usage >= 90) {
-      return 'Critical: Restart applications to free memory or add more RAM';
-    }
-    return 'Consider increasing system memory or closing memory-intensive applications';
-  }
-
-  if (type === 'disk') {
-    if (usage >= 90) {
-      return 'Critical: Clear temporary files and archive old data immediately';
-    }
-    return 'Clear temporary files, remove unused applications, or archive old data';
-  }
-
-  return '';
-}
+/** The suggestion for a resource under pressure; 90% is the critical line. */
+const SUGGESTION_KEYS = {
+  cpu: ['system.suggestion.cpuHigh', 'system.suggestion.cpuCritical'],
+  memory: ['system.suggestion.memoryHigh', 'system.suggestion.memoryCritical'],
+  disk: ['system.suggestion.diskHigh', 'system.suggestion.diskCritical'],
+} as const;
 
 function ResourceBar({
   label,
@@ -183,7 +165,8 @@ function ResourceBar({
       ) : null}
       {percent >= 75 ? (
         <div className="mt-inline text-xs text-text-muted">
-          <span className="font-medium">Tip:</span> {getSuggestion(type, percent)}
+          <span className="font-medium">{t('system.tip')}</span>{' '}
+          {t(SUGGESTION_KEYS[type][percent >= 90 ? 1 : 0])}
         </div>
       ) : null}
     </div>
@@ -194,7 +177,7 @@ function ResourceBar({
  * Displays system resource usage with CPU, memory, and disk metrics.
  */
 export function SystemHealthCard(): React.ReactElement {
-  const { t } = useTranslation('cards');
+  const { t } = useTranslation(['cards', 'common']);
   const [data, setData] = useState<SystemHealth | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -298,7 +281,11 @@ export function SystemHealthCard(): React.ReactElement {
           </div>
 
           <div className={cn('caption text-center', spacing.padding.top.tight)}>
-            {health.os ?? 'Unknown'}/{health.arch ?? 'Unknown'} - {health.numCpu ?? 0} CPUs
+            {t('system.platform', {
+              os: health.os ?? t('common:status.unknown'),
+              arch: health.arch ?? t('common:status.unknown'),
+              cpus: health.numCpu ?? 0,
+            })}
           </div>
         </div>
       )}

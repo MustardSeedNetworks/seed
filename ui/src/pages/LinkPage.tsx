@@ -1,3 +1,5 @@
+import type { TFunction } from 'i18next';
+import { useTranslation } from 'react-i18next';
 import { CableCard } from '../components/cards/CableCard';
 import { DriverStatsCard } from '../components/cards/DriverStatsCard';
 import { LinkCard, type LinkData } from '../components/cards/LinkCard';
@@ -19,8 +21,9 @@ import { type RollupFigure, type RollupState, StatusRollup } from '../ui/StatusR
  * diagnostics on a healthy link) stays quiet.
  */
 export function LinkPage() {
+  const { t } = useTranslation('pages');
   const { cards, loading, isWifi, displayOptions } = useAppContext();
-  const rollup = describeLink({ link: cards.link, loading, isWifi });
+  const rollup = describeLink({ link: cards.link, loading, isWifi, t });
 
   return (
     <>
@@ -41,9 +44,9 @@ export function LinkPage() {
         <CardSlot
           present={!isWifi}
           absence={{
-            label: 'Wired link',
-            reason:
-              'This interface is wireless — carrier, duplex and cable diagnostics come from a wired port.',
+            id: 'wired-link',
+            label: t('link.wiredAbsentLabel'),
+            reason: t('link.wiredAbsentReason'),
           }}
         >
           <LinkCard data={cards.link} loading={loading} />
@@ -69,6 +72,7 @@ interface LinkRollupInput {
   link: LinkData | null;
   loading: boolean;
   isWifi: boolean;
+  t: TFunction<'pages'>;
 }
 
 interface LinkRollup {
@@ -85,33 +89,33 @@ interface LinkRollup {
  * that reads "all clear" while nothing has arrived is the failure the rollup
  * exists to prevent.
  */
-function describeLink({ link, loading, isWifi }: LinkRollupInput): LinkRollup {
+function describeLink({ link, loading, isWifi, t }: LinkRollupInput): LinkRollup {
   if (isWifi) {
     return {
       state: 'unknown',
-      headline: 'This interface is wireless',
-      body: 'Signal, SSID and channel are on the Wi-Fi page; carrier state comes from a wired port.',
+      headline: t('link.rollupWireless'),
+      body: t('link.rollupWirelessBody'),
       figures: [],
     };
   }
   if (loading) {
-    return { state: 'unknown', headline: 'Reading the interface', figures: [] };
+    return { state: 'unknown', headline: t('link.rollupReading'), figures: [] };
   }
   if (!link) {
     return {
       state: 'unknown',
-      headline: 'Link data is not arriving',
-      body: 'The interface has reported nothing. Nothing below is current.',
+      headline: t('link.rollupNoData'),
+      body: t('link.rollupNoDataBody'),
       figures: [],
     };
   }
 
   const figures: RollupFigure[] = [
-    { label: 'Speed', value: link.speed || '—' },
-    { label: 'Duplex', value: link.duplex || '—' },
-    { label: 'MTU', value: link.mtu === undefined ? '—' : String(link.mtu) },
+    { label: t('link.figureSpeed'), value: link.speed || '—' },
+    { label: t('link.figureDuplex'), value: link.duplex || '—' },
+    { label: t('link.figureMtu'), value: link.mtu === undefined ? '—' : String(link.mtu) },
     {
-      label: 'Flaps 24h',
+      label: t('link.figureFlaps'),
       value: link.flapCount24h === undefined ? '—' : String(link.flapCount24h),
     },
   ];
@@ -119,38 +123,38 @@ function describeLink({ link, loading, isWifi }: LinkRollupInput): LinkRollup {
   if (!link.carrier) {
     return {
       state: 'crit',
-      headline: 'No carrier on this interface',
-      body: 'Nothing is detected on the wire. Check the cable and the far-end port; the cable test below reports where the fault is.',
+      headline: t('link.rollupNoCarrier'),
+      body: t('link.rollupNoCarrierBody'),
       figures,
     };
   }
   if (!link.linkUp) {
     return {
       state: 'crit',
-      headline: 'The link is down',
-      body: 'Carrier is present but the interface is not up. Check whether it is administratively disabled.',
+      headline: t('link.rollupDown'),
+      body: t('link.rollupDownBody'),
       figures,
     };
   }
   if (!link.hasIp) {
     return {
       state: 'warn',
-      headline: 'The link is up with no routable address',
-      body: 'Layer 2 is healthy and layer 3 is not. DHCP or the static configuration is the next thing to check.',
+      headline: t('link.rollupNoAddress'),
+      body: t('link.rollupNoAddressBody'),
       figures,
     };
   }
   if (link.duplex && link.duplex.toLowerCase() === 'half') {
     return {
       state: 'warn',
-      headline: 'The link negotiated half duplex',
-      body: 'Half duplex on a switched port is almost always a negotiation mismatch, and it costs throughput.',
+      headline: t('link.rollupHalfDuplex'),
+      body: t('link.rollupHalfDuplexBody'),
       figures,
     };
   }
   return {
     state: 'ok',
-    headline: `The link is up at ${link.speed || 'an unreported speed'}`,
+    headline: t('link.rollupUp', { speed: link.speed || t('link.rollupUnreportedSpeed') }),
     figures,
   };
 }

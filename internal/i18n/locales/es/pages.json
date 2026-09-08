@@ -43,7 +43,28 @@
   "link": {
     "description": "Estado del enlace físico, diagnóstico de cableado y asociación Wi-Fi de la interfaz activa.",
     "label": "Enlace",
-    "title": "Enlace"
+    "title": "Enlace",
+    "rollupWireless": "Esta interfaz es inalámbrica",
+    "rollupWirelessBody": "La señal, el SSID y el canal están en la página Wi-Fi; el estado de portadora proviene de un puerto cableado.",
+    "rollupReading": "Leyendo la interfaz",
+    "rollupNoData": "No llegan datos del enlace",
+    "rollupNoDataBody": "La interfaz no ha informado nada. Nada de lo de abajo está actualizado.",
+    "rollupNoCarrier": "Sin portadora en esta interfaz",
+    "rollupNoCarrierBody": "No se detecta nada en el cable. Revise el cable y el puerto del otro extremo; la prueba de cable de abajo indica dónde está el fallo.",
+    "rollupDown": "El enlace está caído",
+    "rollupDownBody": "Hay portadora pero la interfaz no está activa. Compruebe si está deshabilitada administrativamente.",
+    "rollupNoAddress": "El enlace está activo sin dirección enrutable",
+    "rollupNoAddressBody": "La capa 2 está sana y la capa 3 no. Lo siguiente que hay que revisar es DHCP o la configuración estática.",
+    "rollupHalfDuplex": "El enlace negoció semidúplex",
+    "rollupHalfDuplexBody": "El semidúplex en un puerto conmutado casi siempre es un desajuste de negociación y cuesta rendimiento.",
+    "rollupUp": "El enlace está activo a {{speed}}",
+    "rollupUnreportedSpeed": "una velocidad no informada",
+    "figureSpeed": "Velocidad",
+    "figureDuplex": "Dúplex",
+    "figureMtu": "MTU",
+    "figureFlaps": "Caídas 24 h",
+    "wiredAbsentLabel": "Enlace cableado",
+    "wiredAbsentReason": "Esta interfaz es inalámbrica — la portadora, el dúplex y el diagnóstico de cable provienen de un puerto cableado."
   },
   "logs": {
     "description": "Flujo de registros en vivo y estado del sistema del daemon.",
@@ -54,7 +75,19 @@
     "description": "DHCP, puerta de enlace, DNS, IP pública y detección del switch ascendente.",
     "eyebrow": "Diagnóstico",
     "label": "Red",
-    "title": "Red"
+    "title": "Red",
+    "rollupProbing": "Sondeando el enlace ascendente",
+    "rollupNoGateway": "No se encontró una puerta de enlace predeterminada en esta interfaz",
+    "rollupNoGatewayBody": "Sin una puerta de enlace no se alcanza nada más allá de este segmento. Revise la interfaz seleccionada y la concesión DHCP de abajo.",
+    "rollupNoDns": "Hay una puerta de enlace, pero ningún resolutor DNS respondió",
+    "rollupNoDnsBody": "Los nombres no se resolverán aunque el enrutamiento funcione. La lista de resolutores está en la tarjeta DNS de abajo.",
+    "rollupHealthy": "El enlace ascendente responde",
+    "figureGateway": "Puerta de enlace",
+    "figureDns": "DNS",
+    "figureUp": "Activo",
+    "figureNone": "Ninguna",
+    "switchAbsentLabel": "Switch y VLAN",
+    "switchAbsentReason": "El descubrimiento de vecinos lee LLDP y CDP del cable. Una interfaz inalámbrica no tiene puerto de switch al que preguntar."
   },
   "path": {
     "description": "Descubrimiento de rutas L2/L3, saltos de traceroute y descubrimiento de dispositivos en el enlace.",
@@ -148,6 +181,16 @@
     "noAnomalies": "No se detectaron anomalías de Wi-Fi.",
     "capturePlanned": "La captura llega en Seed v1.0 — consulte las notas de la versión cuando se publique la fase 2.5.",
     "liveCaptureOn": "Captura en vivo en <src>{{source}}</src>",
-    "captureInactive": "Captura de monitor inactiva — mostrando el último espacio radioeléctrico observado"
+    "captureInactive": "Captura de monitor inactiva — mostrando el último espacio radioeléctrico observado",
+    "airspaceTitle": "Espacio radioeléctrico Wi-Fi",
+    "airspaceSubtitle": "Mapa en vivo de SSID / AP / BSSID / clientes a partir de la captura de tramas de gestión 802.11.",
+    "anomaliesTitle": "Anomalías de Wi-Fi",
+    "anomaliesSubtitle": "Anomalías de seguridad, RF, itinerancia y estándares detectadas en el espacio radioeléctrico.",
+    "tierHint": "Disponible en Seed Pro. Ejecute `seed license trial` para una prueba de 14 días.",
+    "wiredLabel": "Datos inalámbricos",
+    "wiredReason": "Esta interfaz es cableada. Cambie a una interfaz Wi-Fi desde la cabecera para ver señal, canales y espacio radioeléctrico.",
+    "airspaceLabel": "Espacio radioeléctrico",
+    "anomaliesLabel": "Anomalías de asociación",
+    "channelGraphAlt": "Gráfico de señal por canal Wi-Fi"
   }
 }

@@ -28,8 +28,8 @@ export function WiFiAnomaliesCard() {
 
   return (
     <Card
-      title="Wi-Fi Anomalies"
-      subtitle="Security, RF, roaming, and standards anomalies detected in the airspace."
+      title={t('wifi.anomaliesTitle')}
+      subtitle={t('wifi.anomaliesSubtitle')}
       status={data ? cardStatus(data.anomalies) : 'unknown'}
     >
       {isLoading ? (

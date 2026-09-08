@@ -317,6 +317,13 @@
     "timingTls": "TLS",
     "timingWait": "Espera",
     "timingDownload": "Descarga",
+    "timingHelp": {
+      "dns": "Tiempo para resolver el nombre de host a una dirección IP mediante una consulta DNS. Muestra 0 cuando se reutiliza una conexión del grupo.",
+      "tcp": "Tiempo del saludo TCP de tres vías para establecer la conexión. Muestra 0 cuando se usa una conexión existente.",
+      "tls": "Tiempo del saludo TLS/SSL para el intercambio de certificados y la negociación de claves. Solo se aplica a HTTPS. Muestra 0 cuando se reutiliza la conexión.",
+      "wait": "Tiempo hasta el primer byte (TTFB): desde que se envía la solicitud hasta que llega el primer byte de la respuesta. Incluye el procesamiento del servidor y la latency de red.",
+      "download": "Tiempo para descargar el cuerpo completo de la respuesta tras recibir el primer byte."
+    },
     "expired": "EXPIRADO",
     "unknown": "Desconocido",
     "certExpiry1Day": "1 día",
@@ -334,7 +341,17 @@
     "temperature": "Temperatura",
     "load1m": "Carga (1m)",
     "goroutines": "Goroutinas",
-    "processMem": "Mem. proceso"
+    "processMem": "Mem. proceso",
+    "tip": "Consejo:",
+    "platform": "{{os}}/{{arch}} - {{cpus}} CPU",
+    "suggestion": {
+      "cpuCritical": "Busque procesos desbocados o considere ampliar los recursos de CPU",
+      "cpuHigh": "Considere cerrar aplicaciones sin usar o tareas en segundo plano",
+      "memoryCritical": "Crítico: reinicie aplicaciones para liberar memoria o añada más RAM",
+      "memoryHigh": "Considere ampliar la memoria del sistema o cerrar aplicaciones que consuman mucha memoria",
+      "diskCritical": "Crítico: borre los archivos temporales y archive los datos antiguos de inmediato",
+      "diskHigh": "Borre los archivos temporales, elimine aplicaciones sin usar o archive los datos antiguos"
+    }
   },
   "switch": {
     "title": "Switch más cercano",
@@ -393,7 +410,8 @@
     "noTargets": "Añada direcciones IP internas sensibles (EMR, PACS, etc.) en Configuración → Seguridad para activar esta auditoría.",
     "description": "Sondear los hosts internos configurados para confirmar el aislamiento de la red de invitados. Conéctese a la red de invitados antes de ejecutar.",
     "running": "Ejecutando auditoría...",
-    "runButton": "Ejecutar auditoría ({{count}} objetivos)",
+    "runButton_one": "Ejecutar auditoría ({{count}} objetivo)",
+    "runButton_other": "Ejecutar auditoría ({{count}} objetivos)",
     "criticalAlert": "Crítico: el aislamiento de la red de invitados no está configurado correctamente.",
     "criticalDetail": "{{count}} de {{total}} hosts internos son accesibles desde la red de invitados.",
     "passed": "Aislamiento verificado: ninguno de los {{total}} hosts internos es accesible.",

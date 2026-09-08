@@ -64,7 +64,11 @@
     "tapToReconnect": "Tap to reconnect",
     "notApplicable": "n/a",
     "yes": "yes",
-    "no": "no"
+    "no": "no",
+    "rollupOk": "All clear",
+    "rollupWarn": "Degraded",
+    "rollupCrit": "Critical",
+    "rollupNoData": "No data"
   },
   "labels": {
     "username": "Username",

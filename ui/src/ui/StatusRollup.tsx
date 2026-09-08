@@ -24,6 +24,7 @@
  *   />
  */
 import type { FC, ReactNode } from 'react';
+import { useTranslation } from 'react-i18next';
 
 export type RollupState = 'ok' | 'warn' | 'crit' | 'unknown';
 
@@ -80,12 +81,13 @@ const STATE_STYLES: Record<
   },
 };
 
-const STATE_LABELS: Record<RollupState, string> = {
-  ok: 'All clear',
-  warn: 'Degraded',
-  crit: 'Critical',
-  unknown: 'No data',
-};
+/** The state word above the headline, keyed into `common:status`. */
+const STATE_LABEL_KEYS = {
+  ok: 'status.rollupOk',
+  warn: 'status.rollupWarn',
+  crit: 'status.rollupCrit',
+  unknown: 'status.rollupNoData',
+} as const satisfies Record<RollupState, string>;
 
 export const StatusRollup: FC<StatusRollupProps> = ({
   state,
@@ -95,6 +97,7 @@ export const StatusRollup: FC<StatusRollupProps> = ({
   actions,
   className = '',
 }) => {
+  const { t } = useTranslation('common');
   const styles = STATE_STYLES[state];
   const shown = figures.slice(0, 4);
 
@@ -116,7 +119,7 @@ export const StatusRollup: FC<StatusRollupProps> = ({
               aria-hidden="true"
               className={`h-2 w-2 rounded-full motion-safe:animate-pulse ${styles.dot}`}
             />
-            <span className={styles.kicker}>{STATE_LABELS[state]}</span>
+            <span className={styles.kicker}>{t(STATE_LABEL_KEYS[state])}</span>
           </p>
           <h2 className="mt-inline text-xl font-extrabold tracking-[-0.02em] text-text-primary">
             {headline}

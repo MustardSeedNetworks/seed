@@ -43,7 +43,28 @@
   "link": {
     "description": "Physical link state, cable diagnostics, and Wi-Fi association for the active interface.",
     "label": "Link",
-    "title": "Link"
+    "title": "Link",
+    "rollupWireless": "This interface is wireless",
+    "rollupWirelessBody": "Signal, SSID and channel are on the Wi-Fi page; carrier state comes from a wired port.",
+    "rollupReading": "Reading the interface",
+    "rollupNoData": "Link data is not arriving",
+    "rollupNoDataBody": "The interface has reported nothing. Nothing below is current.",
+    "rollupNoCarrier": "No carrier on this interface",
+    "rollupNoCarrierBody": "Nothing is detected on the wire. Check the cable and the far-end port; the cable test below reports where the fault is.",
+    "rollupDown": "The link is down",
+    "rollupDownBody": "Carrier is present but the interface is not up. Check whether it is administratively disabled.",
+    "rollupNoAddress": "The link is up with no routable address",
+    "rollupNoAddressBody": "Layer 2 is healthy and layer 3 is not. DHCP or the static configuration is the next thing to check.",
+    "rollupHalfDuplex": "The link negotiated half duplex",
+    "rollupHalfDuplexBody": "Half duplex on a switched port is almost always a negotiation mismatch, and it costs throughput.",
+    "rollupUp": "The link is up at {{speed}}",
+    "rollupUnreportedSpeed": "an unreported speed",
+    "figureSpeed": "Speed",
+    "figureDuplex": "Duplex",
+    "figureMtu": "MTU",
+    "figureFlaps": "Flaps 24h",
+    "wiredAbsentLabel": "Wired link",
+    "wiredAbsentReason": "This interface is wireless — carrier, duplex and cable diagnostics come from a wired port."
   },
   "logs": {
     "description": "Live log stream and system health for the daemon.",
@@ -54,7 +75,19 @@
     "description": "DHCP, gateway, DNS, public IP, and upstream switch detection.",
     "eyebrow": "Diagnostics",
     "label": "Network",
-    "title": "Network"
+    "title": "Network",
+    "rollupProbing": "Probing the upstream link",
+    "rollupNoGateway": "No default gateway was found on this interface",
+    "rollupNoGatewayBody": "Without a gateway nothing beyond this segment is reachable. Check the interface selection and the DHCP lease below.",
+    "rollupNoDns": "A gateway is present but no DNS resolver answered",
+    "rollupNoDnsBody": "Names will not resolve even though routing works. The resolver list is in the DNS card below.",
+    "rollupHealthy": "The upstream link is answering",
+    "figureGateway": "Gateway",
+    "figureDns": "DNS",
+    "figureUp": "Up",
+    "figureNone": "None",
+    "switchAbsentLabel": "Switch and VLAN",
+    "switchAbsentReason": "Neighbour discovery reads LLDP and CDP from the wire. A wireless interface has no switch port to ask."
   },
   "path": {
     "description": "L2/L3 path discovery, traceroute hops, and on-link device discovery.",
@@ -148,6 +181,16 @@
     "noAnomalies": "No Wi-Fi anomalies detected.",
     "capturePlanned": "Capture lands in Seed v1.0 — see release notes when Phase 2.5 ships.",
     "liveCaptureOn": "Live capture on <src>{{source}}</src>",
-    "captureInactive": "Monitor capture inactive — showing the last observed airspace"
+    "captureInactive": "Monitor capture inactive — showing the last observed airspace",
+    "airspaceTitle": "Wi-Fi Airspace",
+    "airspaceSubtitle": "Live SSID / AP / BSSID / client map from 802.11 management-frame capture.",
+    "anomaliesTitle": "Wi-Fi Anomalies",
+    "anomaliesSubtitle": "Security, RF, roaming, and standards anomalies detected in the airspace.",
+    "tierHint": "Available on Seed Pro. Run `seed license trial` for a 14-day trial.",
+    "wiredLabel": "Wireless data",
+    "wiredReason": "This interface is wired. Switch to a Wi-Fi interface from the header to see signal, channels and airspace.",
+    "airspaceLabel": "Airspace",
+    "anomaliesLabel": "Association anomalies",
+    "channelGraphAlt": "Wi-Fi channel signal graph"
   }
 }

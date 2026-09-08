@@ -39,7 +39,6 @@ import {
   status as statusColor,
   timing,
 } from '../../styles/theme';
-import { HTTP_TIMING_HELP } from '../help/HelpContent';
 import { CollapsibleSection } from '../ui/CollapsibleSection';
 import { Card, type Status } from '../ui/card';
 import { HeartPulse } from '../ui/icons';
@@ -215,7 +214,12 @@ export const HealthCheckCard: React.MemoExoticComponent<
     // Extended ping info
     const hasExtendedPing = type === 'ping' && result.packetLoss !== undefined;
     const extendedInfo = hasExtendedPing
-      ? `${result.packetLoss?.toFixed(0)}% loss${result.jitter !== undefined ? `, ${result.jitter.toFixed(1)}ms jitter` : ''}`
+      ? [
+          t('health.packetLoss', { percent: result.packetLoss?.toFixed(0) }),
+          result.jitter !== undefined ? t('health.jitter', { ms: result.jitter.toFixed(1) }) : null,
+        ]
+          .filter(Boolean)
+          .join(', ')
       : null;
 
     return (
@@ -228,7 +232,7 @@ export const HealthCheckCard: React.MemoExoticComponent<
           <span className={cn('inline-flex items-center', spacing.gap.compact)}>
             <StatusBadge status={statusLabel} size="sm" />
             <span className={cn('body-small font-medium', statusClass)}>
-              {result.success ? formatLatency(result.latency) : 'fail'}
+              {result.success ? formatLatency(result.latency) : t('health.fail')}
             </span>
           </span>
         </div>
@@ -275,38 +279,45 @@ export const HealthCheckCard: React.MemoExoticComponent<
     // Segment colors are fixed per-phase for consistent identification
     // Using dark mode aware colors from theme
     // Status is indicated only via text color in the legend
-    const segments = [
-      {
-        label: t('health.timingDns'),
-        value: dns,
-        color: timing.dns.bg,
-        status: result.dnsStatus,
-      },
-      {
-        label: t('health.timingTcp'),
-        value: tcp,
-        color: timing.tcp.bg,
-        status: result.tcpStatus,
-      },
-      {
-        label: t('health.timingTls'),
-        value: tls,
-        color: timing.tls.bg,
-        status: result.tlsStatus,
-      },
-      {
-        label: t('health.timingWait'),
-        value: ttfb,
-        color: timing.wait.bg,
-        status: result.ttfbStatus,
-      },
-      {
-        label: t('health.timingDownload'),
-        value: download,
-        color: timing.download.bg,
-        status: undefined,
-      },
-    ].filter((s) => s.value > 0 && Number.isFinite(s.value));
+    const segments = (
+      [
+        {
+          helpKey: 'health.timingHelp.dns',
+          label: t('health.timingDns'),
+          value: dns,
+          color: timing.dns.bg,
+          status: result.dnsStatus,
+        },
+        {
+          helpKey: 'health.timingHelp.tcp',
+          label: t('health.timingTcp'),
+          value: tcp,
+          color: timing.tcp.bg,
+          status: result.tcpStatus,
+        },
+        {
+          helpKey: 'health.timingHelp.tls',
+          label: t('health.timingTls'),
+          value: tls,
+          color: timing.tls.bg,
+          status: result.tlsStatus,
+        },
+        {
+          helpKey: 'health.timingHelp.wait',
+          label: t('health.timingWait'),
+          value: ttfb,
+          color: timing.wait.bg,
+          status: result.ttfbStatus,
+        },
+        {
+          helpKey: 'health.timingHelp.download',
+          label: t('health.timingDownload'),
+          value: download,
+          color: timing.download.bg,
+          status: undefined,
+        },
+      ] as const
+    ).filter((s) => s.value > 0 && Number.isFinite(s.value));
 
     if (segments.length === 0) {
       return null;
@@ -346,11 +357,7 @@ export const HealthCheckCard: React.MemoExoticComponent<
           )}
         >
           {segments.map((seg) => (
-            <Tooltip
-              key={seg.label}
-              text={HTTP_TIMING_HELP[seg.label.toLowerCase()] || seg.label}
-              side="bottom"
-            >
+            <Tooltip key={seg.label} text={t(seg.helpKey)} side="bottom">
               <span
                 className={cn(
                   'inline-flex items-center',

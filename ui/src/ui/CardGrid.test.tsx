@@ -27,7 +27,7 @@ describe('CardSlot', () => {
       <CardGrid>
         <CardSlot
           present={false}
-          absence={{ label: 'Wired link', reason: 'This interface is wireless.' }}
+          absence={{ id: 'wired-link', label: 'Wired link', reason: 'This interface is wireless.' }}
         >
           <p>Link is up</p>
         </CardSlot>
@@ -56,7 +56,7 @@ describe('CardSlot', () => {
 
 describe('CardAbsent', () => {
   it('is available on its own, for a card withheld by something with no children to guard', () => {
-    render(<CardAbsent label="Roam analysis" reason="Available on Seed Pro." />);
+    render(<CardAbsent id="roam-analysis" label="Roam analysis" reason="Available on Seed Pro." />);
     const note = screen.getByTestId('card-absent-roam-analysis');
     expect(note).toHaveTextContent('Roam analysis');
     expect(note).toHaveTextContent('Available on Seed Pro.');
@@ -67,7 +67,7 @@ describe('CardAbsent', () => {
      empty ones — which reads as a card that failed to load. */
   it('carries no grid-cell sizing, so it fills whatever contains it', () => {
     const { container } = render(
-      <CardAbsent label="Wireless data" reason="This interface is wired." />,
+      <CardAbsent id="wireless-data" label="Wireless data" reason="This interface is wired." />,
     );
     const note = container.firstElementChild;
     expect(note?.className).not.toMatch(/\bw-|\bcol-span-|\bmax-w-/);

@@ -64,7 +64,11 @@
     "tapToReconnect": "Toque para reconectar",
     "notApplicable": "n/d",
     "yes": "sí",
-    "no": "no"
+    "no": "no",
+    "rollupOk": "Todo correcto",
+    "rollupWarn": "Degradado",
+    "rollupCrit": "Crítico",
+    "rollupNoData": "Sin datos"
   },
   "labels": {
     "username": "Usuario",

@@ -16,11 +16,7 @@ export function WiFiAirspaceCard() {
   const status = data?.status.captureActive ? 'success' : 'unknown';
 
   return (
-    <Card
-      title="Wi-Fi Airspace"
-      subtitle="Live SSID / AP / BSSID / client map from 802.11 management-frame capture."
-      status={status}
-    >
+    <Card title={t('wifi.airspaceTitle')} subtitle={t('wifi.airspaceSubtitle')} status={status}>
       {isLoading ? (
         <p data-testid="wifi-airspace-loading" className="text-sm text-text-muted">
           {t('wifi.airspaceLoading')}

@@ -53,6 +53,12 @@ import { cn, layout } from '../styles/theme';
  */
 export type CardAbsence =
   | {
+      /**
+       * Stable identifier for the note, independent of the words in it — the
+       * label is translated, and a testid slugged from it would change with
+       * the locale.
+       */
+      id: string;
       /** What is missing, in the words the card would have worn. */
       label: string;
       /** Why this subject cannot produce it, and where it does come from. */
@@ -83,10 +89,17 @@ export function CardSlot({ present, absence, children }: CardSlotProps) {
   if (absence === 'quiet') {
     return null;
   }
-  return <CardAbsent label={absence.label} reason={absence.reason} />;
+  return <CardAbsent id={absence.id} label={absence.label} reason={absence.reason} />;
 }
 
 interface CardAbsentProps {
+  /**
+   * Stable identifier for the note. The testid is built from this rather than
+   * from `label`, which is translated: slugging the rendered words would make
+   * `card-absent-wired-link` become `card-absent-enlace-cableado` under `es`
+   * and break every `getByTestId` the E2E contract relies on.
+   */
+  id: string;
   /** What is missing, in the words the card would have worn. */
   label: string;
   /** Why this subject cannot produce it, and where it does come from. */
@@ -106,21 +119,14 @@ interface CardAbsentProps {
  * Dashed rather than solid: it occupies the grid without claiming to be a
  * reading.
  */
-export function CardAbsent({ label, reason }: CardAbsentProps) {
+export function CardAbsent({ id, label, reason }: CardAbsentProps) {
   return (
     <section
-      data-testid={`card-absent-${slug(label)}`}
+      data-testid={`card-absent-${id}`}
       className="rounded-lg border border-dashed border-border-subtle pad"
     >
       <h3 className="text-sm font-semibold text-text-secondary">{label}</h3>
       <p className="mt-tight text-sm text-text-muted">{reason}</p>
     </section>
   );
-}
-
-function slug(label: string): string {
-  return label
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/^-+|-+$/g, '');
 }

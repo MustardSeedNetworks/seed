@@ -317,6 +317,13 @@
     "timingTls": "TLS",
     "timingWait": "Wait",
     "timingDownload": "Download",
+    "timingHelp": {
+      "dns": "Time to resolve the hostname to an IP address via DNS lookup. Shows 0 when connection is reused from pool.",
+      "tcp": "Time for TCP 3-way handshake to establish connection. Shows 0 when using an existing connection.",
+      "tls": "TLS/SSL handshake time for certificate exchange and key negotiation. Only applies to HTTPS. Shows 0 when connection is reused.",
+      "wait": "Time to First Byte (TTFB) - time from request sent to first response byte received. Includes server processing time and network latency.",
+      "download": "Time to download the full response body after receiving the first byte."
+    },
     "expired": "EXPIRED",
     "unknown": "Unknown",
     "certExpiry1Day": "1 day",
@@ -334,7 +341,17 @@
     "temperature": "Temperature",
     "load1m": "Load (1m)",
     "goroutines": "Goroutines",
-    "processMem": "Process Mem"
+    "processMem": "Process Mem",
+    "tip": "Tip:",
+    "platform": "{{os}}/{{arch}} - {{cpus}} CPUs",
+    "suggestion": {
+      "cpuCritical": "Check for runaway processes or consider upgrading CPU resources",
+      "cpuHigh": "Consider closing unused applications or background tasks",
+      "memoryCritical": "Critical: Restart applications to free memory or add more RAM",
+      "memoryHigh": "Consider increasing system memory or closing memory-intensive applications",
+      "diskCritical": "Critical: Clear temporary files and archive old data immediately",
+      "diskHigh": "Clear temporary files, remove unused applications, or archive old data"
+    }
   },
   "switch": {
     "title": "Nearest Switch",
@@ -393,7 +410,8 @@
     "noTargets": "Add sensitive internal IP addresses (EMR, PACS, etc.) in Settings → Security to enable this audit.",
     "description": "Probe configured internal hosts to confirm guest-network isolation. Connect to the guest network before running.",
     "running": "Running audit...",
-    "runButton": "Run audit ({{count}} targets)",
+    "runButton_one": "Run audit ({{count}} target)",
+    "runButton_other": "Run audit ({{count}} targets)",
     "criticalAlert": "Critical: Guest network isolation is not configured correctly.",
     "criticalDetail": "{{count}} of {{total}} internal hosts are reachable from the guest network.",
     "passed": "Isolation verified - none of the {{total}} internal hosts are reachable.",
