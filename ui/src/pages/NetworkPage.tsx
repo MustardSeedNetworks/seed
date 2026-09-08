@@ -4,6 +4,7 @@ import { NeighbourCacheCard } from '../components/cards/NeighbourCacheCard';
 import { NetworkCard } from '../components/cards/NetworkCard';
 import { PublicIpCard } from '../components/cards/PublicIpCard';
 import { SwitchCard } from '../components/cards/SwitchCard';
+import { useTranslation } from 'react-i18next';
 import { useAppContext } from '../contexts/AppContext';
 import { CardGrid, CardSlot } from '../ui/CardGrid';
 import { type RollupState, StatusRollup } from '../ui/StatusRollup';
@@ -16,6 +17,7 @@ import { type RollupState, StatusRollup } from '../ui/StatusRollup';
  * interface has no port to ask.
  */
 export function NetworkPage() {
+  const { t } = useTranslation('pages');
   const { cards, loading, isWifi, displayOptions } = useAppContext();
 
   /* Overview opens with the rollup. The question this page answers is whether
@@ -30,19 +32,19 @@ export function NetworkPage() {
   const state: RollupState = loading ? 'unknown' : !gatewayUp ? 'crit' : !dnsUp ? 'warn' : 'ok';
 
   const headline = loading
-    ? 'Probing the upstream link'
+    ? t('network.rollupProbing')
     : !gatewayUp
-      ? 'No default gateway was found on this interface'
+      ? t('network.rollupNoGateway')
       : !dnsUp
-        ? 'A gateway is present but no DNS resolver answered'
-        : 'The upstream link is answering';
+        ? t('network.rollupNoDns')
+        : t('network.rollupHealthy');
 
   const body = loading
     ? undefined
     : !gatewayUp
-      ? 'Without a gateway nothing beyond this segment is reachable. Check the interface selection and the DHCP lease below.'
+      ? t('network.rollupNoGatewayBody')
       : !dnsUp
-        ? 'Names will not resolve even though routing works. The resolver list is in the DNS card below.'
+        ? t('network.rollupNoDnsBody')
         : undefined;
 
   return (
@@ -52,8 +54,14 @@ export function NetworkPage() {
         headline={headline}
         body={body}
         figures={[
-          { label: 'Gateway', value: gatewayUp ? 'Up' : 'None' },
-          { label: 'DNS', value: dnsUp ? 'Up' : 'None' },
+          {
+            label: t('network.figureGateway'),
+            value: gatewayUp ? t('network.figureUp') : t('network.figureNone'),
+          },
+          {
+            label: t('network.figureDns'),
+            value: dnsUp ? t('network.figureUp') : t('network.figureNone'),
+          },
         ]}
       />
 
@@ -78,9 +86,8 @@ export function NetworkPage() {
         <CardSlot
           present={!isWifi}
           absence={{
-            label: 'Switch and VLAN',
-            reason:
-              'Neighbour discovery reads LLDP and CDP from the wire. A wireless interface has no switch port to ask.',
+            label: t('network.switchAbsentLabel'),
+            reason: t('network.switchAbsentReason'),
           }}
         >
           <SwitchCard data={cards.switch} vlanData={cards.vlan} loading={loading} />

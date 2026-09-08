@@ -54,7 +54,19 @@
     "description": "DHCP, puerta de enlace, DNS, IP pública y detección del switch ascendente.",
     "eyebrow": "Diagnóstico",
     "label": "Red",
-    "title": "Red"
+    "title": "Red",
+    "rollupProbing": "Sondeando el enlace ascendente",
+    "rollupNoGateway": "No se encontró una puerta de enlace predeterminada en esta interfaz",
+    "rollupNoGatewayBody": "Sin una puerta de enlace no se alcanza nada más allá de este segmento. Revise la interfaz seleccionada y la concesión DHCP de abajo.",
+    "rollupNoDns": "Hay una puerta de enlace, pero ningún resolutor DNS respondió",
+    "rollupNoDnsBody": "Los nombres no se resolverán aunque el enrutamiento funcione. La lista de resolutores está en la tarjeta DNS de abajo.",
+    "rollupHealthy": "El enlace ascendente responde",
+    "figureGateway": "Puerta de enlace",
+    "figureDns": "DNS",
+    "figureUp": "Activo",
+    "figureNone": "Ninguna",
+    "switchAbsentLabel": "Switch y VLAN",
+    "switchAbsentReason": "El descubrimiento de vecinos lee LLDP y CDP del cable. Una interfaz inalámbrica no tiene puerto de switch al que preguntar."
   },
   "path": {
     "description": "Descubrimiento de rutas L2/L3, saltos de traceroute y descubrimiento de dispositivos en el enlace.",

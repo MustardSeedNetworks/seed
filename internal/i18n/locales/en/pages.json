@@ -54,7 +54,19 @@
     "description": "DHCP, gateway, DNS, public IP, and upstream switch detection.",
     "eyebrow": "Diagnostics",
     "label": "Network",
-    "title": "Network"
+    "title": "Network",
+    "rollupProbing": "Probing the upstream link",
+    "rollupNoGateway": "No default gateway was found on this interface",
+    "rollupNoGatewayBody": "Without a gateway nothing beyond this segment is reachable. Check the interface selection and the DHCP lease below.",
+    "rollupNoDns": "A gateway is present but no DNS resolver answered",
+    "rollupNoDnsBody": "Names will not resolve even though routing works. The resolver list is in the DNS card below.",
+    "rollupHealthy": "The upstream link is answering",
+    "figureGateway": "Gateway",
+    "figureDns": "DNS",
+    "figureUp": "Up",
+    "figureNone": "None",
+    "switchAbsentLabel": "Switch and VLAN",
+    "switchAbsentReason": "Neighbour discovery reads LLDP and CDP from the wire. A wireless interface has no switch port to ask."
   },
   "path": {
     "description": "L2/L3 path discovery, traceroute hops, and on-link device discovery.",
