@@ -258,12 +258,13 @@ signs:
     artifacts: all
     output: true
 
-# Homebrew tap publishing previously lived here. Removed 2026-05-18
-# because the HOMEBREW_TAP_TOKEN repo secret is unset / lacks scope on
-# MustardSeedNetworks/homebrew-tap, which made every release error out
-# at the brew step with 403, blocking the downstream SLSA attestation
-# job (needs: [goreleaser]). Restore by re-adding the brews: block
-# once the PAT is provisioned — see git history of this file.
+# Homebrew tap publishing previously lived here. Removed 2026-05-18 because
+# the HOMEBREW_TAP_TOKEN repo secret was never provisioned, so every release
+# errored at the brew step with 403 and blocked the downstream SLSA attestation
+# job (needs: [goreleaser]).
+#
+# There is no tap and there will not be one — owner decision, 2026-09-07. Do not
+# re-add a brews: block. macOS is served by the .pkg installer.
 
 release:
   github:
