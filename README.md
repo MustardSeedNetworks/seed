@@ -229,8 +229,8 @@ Conventional commits drive [release-please](https://github.com/googleapis/releas
 Tags trigger `release.yml`, which builds binaries and packages
 (`.deb`/`.rpm`/`.zip`/`.tar.gz`) for linux, macOS and Windows on amd64 and
 arm64, and attaches an SBOM, a cosign bundle and SLSA provenance to each.
-There is no Homebrew tap today; the `brews:` block was removed on 2026-05-18
-and the reason is recorded in `.goreleaser.yml`.
+Seed is not distributed through Homebrew and will not be (owner decision,
+2026-09-07); on macOS the `.pkg` installer is the supported route.
 
 ## License
 

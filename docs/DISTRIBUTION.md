@@ -31,10 +31,11 @@ Alongside each artifact:
 - `checksums.txt` and its bundle;
 - one `seed-slsa-provenance.intoto.jsonl` for the release.
 
-There is **no macOS x86-64 build**, **no container image** and **no Homebrew
-tap**. The `brews:` block was removed on 2026-05-18 because the tap token was
-never provisioned, and the reason is recorded in `.goreleaser.yml` so that
-restoring it is a decision rather than an archaeology exercise.
+There is **no macOS x86-64 build** and **no container image**. There is also
+**no Homebrew tap, and there will not be one** — the `brews:` block was removed
+on 2026-05-18 when the tap token proved never to have been provisioned, and the
+owner closed the question on 2026-09-07: macOS is served by the `.pkg`
+installer. Do not re-add it.
 
 ## 2. How it is built
 
