@@ -16,10 +16,16 @@
 
 export type LogLevel = 'DEBUG' | 'INFO' | 'WARN' | 'ERROR';
 
+/**
+ * One buffered entry. This is the wire shape: `POST
+ * /api/v1/reporting/logs/client` decodes into `internal/api.ClientLogEntry`
+ * with DisallowUnknownFields, so a key the API does not declare rejects the
+ * whole batch with 400. It carries no `layer` — the server stamps
+ * `LayerFrontend` itself and will not take a client's word for it.
+ */
 export interface LogEntry {
   timestamp: string;
   level: LogLevel;
-  layer: 'frontend';
   requestId?: string;
   sessionId?: string;
   message: string;
@@ -83,6 +89,14 @@ const logColors: Map<LogLevel, string> = new Map<LogLevel, string>([
   ['WARN', 'color: #EAB308'], // Yellow
   ['ERROR', 'color: #EF4444'], // Red
 ]);
+
+/**
+ * A 4xx is a verdict on the body, so resending it cannot help — except 429,
+ * where the body is fine and only the timing was wrong.
+ */
+function isPermanentRejection(status: number): boolean {
+  return status >= 400 && status < 500 && status !== 429;
+}
 
 /**
  * Logger class provides structured logging with batch flushing to backend.
@@ -165,7 +179,6 @@ class Logger {
     return {
       timestamp: new Date().toISOString(),
       level,
-      layer: 'frontend',
       sessionId: this.sessionId,
       requestId: this.currentRequestId,
       message,
@@ -262,8 +275,11 @@ class Logger {
         keepalive: true,
       });
 
-      if (!response.ok) {
-        // Put entries back in buffer on failure (but don't retry indefinitely)
+      // Re-queue only what a later flush could still get accepted. Putting a
+      // permanently rejected batch back guarantees the next flush is rejected
+      // too, which is what turned one contract mismatch into a burst of 400s
+      // on every page load (#2513).
+      if (!response.ok && !isPermanentRejection(response.status)) {
         // Fixes #866: Hard cap at 500 entries to prevent unbounded growth
         const maxBufferSize = 500;
         if (
