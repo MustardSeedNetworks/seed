@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.214.20](https://github.com/MustardSeedNetworks/seed/compare/v0.214.19...v0.214.20) (2026-09-08)
+
+
+### Bug Fixes
+
+* **ui:** the eight remaining pages rendered English under es, and their suites could not see it ([#2496](https://github.com/MustardSeedNetworks/seed/issues/2496)) ([5688076](https://github.com/MustardSeedNetworks/seed/commit/56880761c804bd2cea76944c007c962ede450dc0))
+
+
+### Miscellaneous
+
+* **deps:** lock file maintenance ([#2499](https://github.com/MustardSeedNetworks/seed/issues/2499)) ([4cad5cf](https://github.com/MustardSeedNetworks/seed/commit/4cad5cf8e1701790bd0722eae0b7b11c07214a56))
+
 ## [0.214.19](https://github.com/MustardSeedNetworks/seed/compare/v0.214.18...v0.214.19) (2026-09-07)
 
 
