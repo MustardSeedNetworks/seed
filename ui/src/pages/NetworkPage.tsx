@@ -86,6 +86,7 @@ export function NetworkPage() {
         <CardSlot
           present={!isWifi}
           absence={{
+            id: 'switch-and-vlan',
             label: t('network.switchAbsentLabel'),
             reason: t('network.switchAbsentReason'),
           }}

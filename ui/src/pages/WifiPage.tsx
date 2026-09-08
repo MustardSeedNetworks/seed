@@ -26,7 +26,9 @@ export function WifiPage() {
   /* Not one absent card among others — the whole page is inapplicable, so
      the note is the page rather than a lone tile in a four-column grid. */
   if (!isWifi) {
-    return <CardAbsent label={t('wifi.wiredLabel')} reason={t('wifi.wiredReason')} />;
+    return (
+      <CardAbsent id="wireless-data" label={t('wifi.wiredLabel')} reason={t('wifi.wiredReason')} />
+    );
   }
 
   return (
@@ -40,14 +42,22 @@ export function WifiPage() {
           monitor-capable interface is feeding the capture loop. */}
       <RequireFeature
         feature="wifi_management_capture"
-        fallback={<CardAbsent label={t('wifi.airspaceLabel')} reason={t('wifi.tierHint')} />}
+        fallback={
+          <CardAbsent id="airspace" label={t('wifi.airspaceLabel')} reason={t('wifi.tierHint')} />
+        }
       >
         <WiFiAirspaceCard />
       </RequireFeature>
 
       <RequireFeature
         feature="wifi_association_forensics"
-        fallback={<CardAbsent label={t('wifi.anomaliesLabel')} reason={t('wifi.tierHint')} />}
+        fallback={
+          <CardAbsent
+            id="association-anomalies"
+            label={t('wifi.anomaliesLabel')}
+            reason={t('wifi.tierHint')}
+          />
+        }
       >
         <WiFiAnomaliesCard />
       </RequireFeature>

@@ -44,6 +44,7 @@ export function LinkPage() {
         <CardSlot
           present={!isWifi}
           absence={{
+            id: 'wired-link',
             label: t('link.wiredAbsentLabel'),
             reason: t('link.wiredAbsentReason'),
           }}
