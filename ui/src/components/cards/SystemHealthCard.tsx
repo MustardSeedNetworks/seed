@@ -163,8 +163,7 @@ function ResourceBar({
       ) : null}
       {percent >= 75 ? (
         <div className="mt-inline text-xs text-text-muted">
-          <span className="font-medium">{t('system.tip')}</span>{' '}
-          {t(suggestionKey(type, percent))}
+          <span className="font-medium">{t('system.tip')}</span> {t(suggestionKey(type, percent))}
         </div>
       ) : null}
     </div>

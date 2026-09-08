@@ -1,9 +1,9 @@
+import { useTranslation } from 'react-i18next';
 import { WiFiCard } from '../components/cards/WiFiCard';
 import { WifiChannelGraph } from '../components/cards/WiFiChannelGraph';
 import { RequireFeature } from '../components/ui/RequireFeature';
 import { WiFiAirspaceCard } from '../components/wifi/WiFiAirspaceCard';
 import { WiFiAnomaliesCard } from '../components/wifi/WiFiAnomaliesCard';
-import { useTranslation } from 'react-i18next';
 import { useAppContext } from '../contexts/AppContext';
 import { CardAbsent, CardGrid } from '../ui/CardGrid';
 
@@ -26,9 +26,7 @@ export function WifiPage() {
   /* Not one absent card among others — the whole page is inapplicable, so
      the note is the page rather than a lone tile in a four-column grid. */
   if (!isWifi) {
-    return (
-      <CardAbsent label={t('wifi.wiredLabel')} reason={t('wifi.wiredReason')} />
-    );
+    return <CardAbsent label={t('wifi.wiredLabel')} reason={t('wifi.wiredReason')} />;
   }
 
   return (

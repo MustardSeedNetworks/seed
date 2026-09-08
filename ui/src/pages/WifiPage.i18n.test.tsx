@@ -10,7 +10,6 @@
  */
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { render, screen, waitFor } from '@testing-library/react';
-import type { ReactElement } from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { AppContext, type AppContextValue } from '../contexts/AppContext';
@@ -49,22 +48,22 @@ const context = {
   channelGraphData: {
     available: true,
     data: {
-    networks24Ghz: [],
-    networks5Ghz: [
-      {
-        ssid: 'msn-lab',
-        bssid: '02:00:5e:00:00:01',
-        channel: 36,
-        centerFreq: 5180,
-        channelWidth: 80,
-        signal: -55,
-        band: '5GHz',
-        isConnected: true,
-      },
-    ],
-    networks6Ghz: [],
-    connectedBssid: '02:00:5e:00:00:01',
-    scanTime: '2026-09-07T10:00:00Z',
+      networks24Ghz: [],
+      networks5Ghz: [
+        {
+          ssid: 'msn-lab',
+          bssid: '02:00:5e:00:00:01',
+          channel: 36,
+          centerFreq: 5180,
+          channelWidth: 80,
+          signal: -55,
+          band: '5GHz',
+          isConnected: true,
+        },
+      ],
+      networks6Ghz: [],
+      connectedBssid: '02:00:5e:00:00:01',
+      scanTime: '2026-09-07T10:00:00Z',
     },
   },
   channelGraphLoading: false,
@@ -128,9 +127,7 @@ describe('WifiPage — real locale copy', () => {
 
     expect(screen.getByText('Wi-Fi Airspace')).toBeVisible();
     expect(
-      screen.getByText(
-        'Live SSID / AP / BSSID / client map from 802.11 management-frame capture.',
-      ),
+      screen.getByText('Live SSID / AP / BSSID / client map from 802.11 management-frame capture.'),
     ).toBeVisible();
     expect(screen.getByText('Wi-Fi Anomalies')).toBeVisible();
     expect(screen.getByText('Loading airspace…')).toBeVisible();

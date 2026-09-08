@@ -17,7 +17,9 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { RoleProvider } from '../contexts/RoleContext';
 import i18n from '../i18n';
 
-const state = { targets: [{ label: 'EMR', address: '10.0.0.5' }] as { label: string; address: string }[] };
+const state = {
+  targets: [{ label: 'EMR', address: '10.0.0.5' }] as { label: string; address: string }[],
+};
 
 vi.mock('../hooks/useGuestNetworkAudit', () => ({
   useGuestNetworkAudit: () => ({

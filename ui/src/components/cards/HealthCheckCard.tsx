@@ -355,11 +355,7 @@ export const HealthCheckCard: React.MemoExoticComponent<
           )}
         >
           {segments.map((seg) => (
-            <Tooltip
-              key={seg.label}
-              text={t(`health.timingHelp.${seg.key}`)}
-              side="bottom"
-            >
+            <Tooltip key={seg.label} text={t(`health.timingHelp.${seg.key}`)} side="bottom">
               <span
                 className={cn(
                   'inline-flex items-center',
