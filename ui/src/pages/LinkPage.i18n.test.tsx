@@ -93,7 +93,9 @@ describe('LinkPage — real locale copy', () => {
   it('says in English what no carrier means and what to do about it', async () => {
     await renderIn(
       'en',
-      context({ cards: { link: link({ carrier: false, linkUp: false }), cable: null, wifi: null } }),
+      context({
+        cards: { link: link({ carrier: false, linkUp: false }), cable: null, wifi: null },
+      }),
     );
 
     expect(screen.getByText('Critical')).toBeVisible();
@@ -106,7 +108,10 @@ describe('LinkPage — real locale copy', () => {
   });
 
   it('distinguishes half duplex from a healthy link in English', async () => {
-    await renderIn('en', context({ cards: { link: link({ duplex: 'half' }), cable: null, wifi: null } }));
+    await renderIn(
+      'en',
+      context({ cards: { link: link({ duplex: 'half' }), cable: null, wifi: null } }),
+    );
 
     expect(screen.getByText('Degraded')).toBeVisible();
     expect(screen.getByText('The link negotiated half duplex')).toBeVisible();
@@ -115,7 +120,21 @@ describe('LinkPage — real locale copy', () => {
   it('says in English why the wired cards are absent on a radio', async () => {
     await renderIn(
       'en',
-      context({ isWifi: true, cards: { link: null, cable: null, wifi: { ssid: 'msn-lab', bssid: '02:00:5e:00:00:01', channel: 36, signal: -55, frequency: 5180, security: 'WPA2' } } }),
+      context({
+        isWifi: true,
+        cards: {
+          link: null,
+          cable: null,
+          wifi: {
+            ssid: 'msn-lab',
+            bssid: '02:00:5e:00:00:01',
+            channel: 36,
+            signal: -55,
+            frequency: 5180,
+            security: 'WPA2',
+          },
+        },
+      }),
     );
 
     expect(screen.getByText('This interface is wireless')).toBeVisible();
@@ -130,7 +149,9 @@ describe('LinkPage — real locale copy', () => {
   it('renders Spanish under es, with no English left behind', async () => {
     await renderIn(
       'es',
-      context({ cards: { link: link({ carrier: false, linkUp: false }), cable: null, wifi: null } }),
+      context({
+        cards: { link: link({ carrier: false, linkUp: false }), cable: null, wifi: null },
+      }),
     );
 
     for (const english of [
