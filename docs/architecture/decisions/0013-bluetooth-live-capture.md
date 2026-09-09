@@ -1,8 +1,10 @@
 # ADR-0013: Bluetooth live-scan capture port
 
-**Status:** Accepted — 2026-06-05 · `Scanner` port + data types defined (`internal/discovery/bluetooth`); per-OS
-live-scan drivers (CoreBluetooth / BlueZ D-Bus / WinRT) not yet implemented, so live BLE advertisement sweep remains
-pending.
+**Status:** Accepted — 2026-06-05 · per-OS live-scan drivers (CoreBluetooth / BlueZ D-Bus / WinRT) not yet
+implemented, so live BLE advertisement sweep remains pending. The `Scanner` port this ADR calls for is the per-OS
+capture source; it is still unbuilt. (The unrelated ADR-0020 use-case port that once lived at
+`internal/discovery/bluetooth` was deleted with the legacy `/security/bluetooth/*` routes it served — see #2564. The
+consumed path this ADR builds on, the `bluetooth-scan` job kind plus card and modal, is unchanged.)
 
 ## Context
 
