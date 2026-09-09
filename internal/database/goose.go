@@ -38,7 +38,7 @@ func gooseProvider(conn *sql.DB) (*goose.Provider, error) {
 // migrate brings the schema up to date by applying all embedded migrations. It
 // runs during Open before the DB is shared, so it takes no lock.
 func (db *DB) migrate() error {
-	provider, err := gooseProvider(db.conn)
+	provider, err := gooseProvider(db.writeConn)
 	if err != nil {
 		return err
 	}
@@ -64,7 +64,7 @@ func (db *DB) MigrationStatus(ctx context.Context) ([]MigrationInfo, error) {
 		return nil, errors.New("database is closed")
 	}
 
-	provider, err := gooseProvider(db.conn)
+	provider, err := gooseProvider(db.writeConn)
 	if err != nil {
 		return nil, err
 	}
@@ -93,7 +93,7 @@ func (db *DB) SchemaVersion(ctx context.Context) (int, error) {
 		return 0, errors.New("database is closed")
 	}
 
-	provider, err := gooseProvider(db.conn)
+	provider, err := gooseProvider(db.writeConn)
 	if err != nil {
 		return 0, err
 	}

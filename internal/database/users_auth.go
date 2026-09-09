@@ -19,7 +19,7 @@ func (db *DB) RecordLoginSuccess(ctx context.Context, username string) error {
 
 	now := time.Now().UTC().Format(time.RFC3339)
 
-	_, err := db.conn.ExecContext(ctx, `
+	_, err := db.writeConn.ExecContext(ctx, `
 		UPDATE users
 		SET last_login = ?, failed_attempts = 0, locked_until = NULL, updated_at = ?
 		WHERE username = ?
@@ -48,7 +48,7 @@ func (db *DB) RecordLoginFailure(
 
 	// Get current failed attempts
 	var failedAttempts int
-	err := db.conn.QueryRowContext(ctx, `
+	err := db.readConn.QueryRowContext(ctx, `
 		SELECT failed_attempts FROM users WHERE username = ?
 	`, username).Scan(&failedAttempts)
 
@@ -67,7 +67,7 @@ func (db *DB) RecordLoginFailure(
 		lockedUntil = &lockTime
 	}
 
-	_, err = db.conn.ExecContext(ctx, `
+	_, err = db.writeConn.ExecContext(ctx, `
 		UPDATE users
 		SET failed_attempts = ?, locked_until = ?, updated_at = ?
 		WHERE username = ?
@@ -89,7 +89,7 @@ func (db *DB) IsUserLocked(ctx context.Context, username string) (bool, error) {
 	}
 
 	var lockedUntil sql.NullString
-	err := db.conn.QueryRowContext(ctx, `
+	err := db.readConn.QueryRowContext(ctx, `
 		SELECT locked_until FROM users WHERE username = ?
 	`, username).Scan(&lockedUntil)
 
@@ -124,7 +124,7 @@ func (db *DB) GetClientID(ctx context.Context, username string) (string, error) 
 	}
 
 	var clientID string
-	err := db.conn.QueryRowContext(ctx, `
+	err := db.readConn.QueryRowContext(ctx, `
 		SELECT client_id FROM users WHERE username = ?
 	`, username).Scan(&clientID)
 
@@ -147,7 +147,7 @@ func (db *DB) GetTokenVersion(ctx context.Context, username string) (int, error)
 	}
 
 	var version int
-	err := db.conn.QueryRowContext(ctx, `
+	err := db.readConn.QueryRowContext(ctx, `
 		SELECT token_version FROM users WHERE username = ?
 	`, username).Scan(&version)
 
@@ -172,7 +172,7 @@ func (db *DB) IncrementTokenVersion(ctx context.Context, username string) error 
 
 	now := time.Now().UTC().Format(time.RFC3339)
 
-	_, err := db.conn.ExecContext(ctx, `
+	_, err := db.writeConn.ExecContext(ctx, `
 		UPDATE users
 		SET token_version = token_version + 1, updated_at = ?
 		WHERE username = ?

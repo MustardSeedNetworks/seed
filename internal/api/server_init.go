@@ -112,7 +112,7 @@ func (s *Server) initDatabaseServices(cfg *config.Config, db *database.DB) {
 // initMibDatabase initializes the MIB database and loads built-in OID definitions.
 func (s *Server) initMibDatabase(db *database.DB) {
 	// Create MIB database interface using the underlying SQL connection
-	mibDB := mibdb.New(db.Conn())
+	mibDB := mibdb.New(db.WriteConn())
 	s.mibDB = mibDB
 
 	// Load built-in OID definitions (918+ standard OIDs from RFC MIBs)

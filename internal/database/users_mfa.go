@@ -43,7 +43,7 @@ func (db *DB) SetTOTPSecret(ctx context.Context, username, secret string) error 
 	}
 
 	now := time.Now().UTC().Format(time.RFC3339)
-	res, err := db.conn.ExecContext(ctx, `
+	res, err := db.writeConn.ExecContext(ctx, `
 		UPDATE users
 		SET totp_secret = ?, totp_enabled = 0, updated_at = ?
 		WHERE username = ?
@@ -68,7 +68,7 @@ func (db *DB) EnableTOTP(ctx context.Context, username string) error {
 	}
 
 	now := time.Now().UTC().Format(time.RFC3339)
-	res, err := db.conn.ExecContext(ctx, `
+	res, err := db.writeConn.ExecContext(ctx, `
 		UPDATE users
 		SET totp_enabled = 1, updated_at = ?
 		WHERE username = ? AND totp_secret IS NOT NULL AND totp_secret != ''
@@ -92,7 +92,7 @@ func (db *DB) DisableTOTP(ctx context.Context, username string) error {
 	}
 
 	now := time.Now().UTC().Format(time.RFC3339)
-	res, err := db.conn.ExecContext(ctx, `
+	res, err := db.writeConn.ExecContext(ctx, `
 		UPDATE users
 		SET totp_secret = NULL, totp_enabled = 0, updated_at = ?
 		WHERE username = ?
@@ -119,7 +119,7 @@ func (db *DB) GetTOTP(ctx context.Context, username string) (string, bool, error
 
 	var sec sql.NullString
 	var en sql.NullInt64
-	scanErr := db.conn.QueryRowContext(ctx, `
+	scanErr := db.readConn.QueryRowContext(ctx, `
 		SELECT totp_secret, totp_enabled FROM users WHERE username = ?
 	`, username).Scan(&sec, &en)
 	if errors.Is(scanErr, sql.ErrNoRows) {
@@ -143,7 +143,7 @@ func (db *DB) AddWebAuthnCredential(
 	}
 
 	now := time.Now().UTC().Format(time.RFC3339)
-	res, err := db.conn.ExecContext(ctx, `
+	res, err := db.writeConn.ExecContext(ctx, `
 		INSERT INTO webauthn_credentials (
 			user_id, credential_id, public_key, sign_count,
 			attestation_type, transports, aaguid, created_at
@@ -170,7 +170,7 @@ func (db *DB) ListWebAuthnCredentials(
 		return nil, errors.New("database is closed")
 	}
 
-	rows, err := db.conn.QueryContext(ctx, `
+	rows, err := db.readConn.QueryContext(ctx, `
 		SELECT id, user_id, credential_id, public_key, sign_count,
 		       attestation_type, transports, aaguid, created_at, last_used_at
 		FROM webauthn_credentials
@@ -236,7 +236,7 @@ func (db *DB) UpdateWebAuthnSignCount(
 	}
 
 	now := time.Now().UTC().Format(time.RFC3339)
-	res, err := db.conn.ExecContext(ctx, `
+	res, err := db.writeConn.ExecContext(ctx, `
 		UPDATE webauthn_credentials
 		SET sign_count = ?, last_used_at = ?
 		WHERE credential_id = ?
@@ -262,7 +262,7 @@ func (db *DB) DeleteWebAuthnCredential(
 		return errors.New("database is closed")
 	}
 
-	res, err := db.conn.ExecContext(ctx, `
+	res, err := db.writeConn.ExecContext(ctx, `
 		DELETE FROM webauthn_credentials WHERE id = ? AND user_id = ?
 	`, credentialDBID, userID)
 	if err != nil {

@@ -55,7 +55,7 @@ func (db *DB) UpsertSSOUser(ctx context.Context, in SSOUserInput) (*User, error)
 	if existing != nil {
 		// Refresh email + display name from latest IdP response.
 		now := time.Now().UTC().Format(time.RFC3339)
-		if _, err := db.conn.ExecContext(ctx, `
+		if _, err := db.writeConn.ExecContext(ctx, `
 			UPDATE users SET email = ?, display_name = ?, updated_at = ? WHERE id = ?
 		`, in.Email, in.DisplayName, now, existing.ID); err != nil {
 			return nil, fmt.Errorf("failed to refresh SSO user: %w", err)
@@ -67,7 +67,7 @@ func (db *DB) UpsertSSOUser(ctx context.Context, in SSOUserInput) (*User, error)
 
 	// New user. Decide initial role.
 	var totalUsers int
-	if cntErr := db.conn.QueryRowContext(ctx, `SELECT COUNT(*) FROM users`).Scan(&totalUsers); cntErr != nil {
+	if cntErr := db.readConn.QueryRowContext(ctx, `SELECT COUNT(*) FROM users`).Scan(&totalUsers); cntErr != nil {
 		return nil, fmt.Errorf("failed to count users for SSO bootstrap: %w", cntErr)
 	}
 	role := RoleViewer
@@ -82,7 +82,7 @@ func (db *DB) UpsertSSOUser(ctx context.Context, in SSOUserInput) (*User, error)
 	// "!" prefix is not in bcrypt's alphabet so this value never matches.
 	const ssoSentinelHash = "!sso-no-password"
 
-	res, err := db.conn.ExecContext(ctx, `
+	res, err := db.writeConn.ExecContext(ctx, `
 		INSERT INTO users
 			(username, password_hash, role, is_active, token_version,
 			 auth_provider, external_id, email, display_name,
@@ -121,7 +121,7 @@ func (db *DB) lookupSSOUserLocked(ctx context.Context, provider, externalID stri
 	var lastLogin, lockedUntil, email, displayName sql.NullString
 	var createdAt, updatedAt string
 
-	err := db.conn.QueryRowContext(ctx, `
+	err := db.readConn.QueryRowContext(ctx, `
 		SELECT id, username, password_hash, role, is_active, last_login,
 		       failed_attempts, locked_until, token_version,
 		       auth_provider, external_id, email, display_name,

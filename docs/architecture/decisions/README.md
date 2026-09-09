@@ -38,3 +38,4 @@ See the [Re-Architecture Blueprint](../RE_ARCHITECTURE_BLUEPRINT.md) for the ful
 | [0028](0028-anomaly-daily-rollups.md) | Daily rollups for the anomaly store — a daily census of mutable instances, not a RollupSource | Proposed |
 | [0029](0029-converge-anomaly-engines.md) | Converge the per-producer anomaly engines into one server-owned engine | Accepted |
 | [0030](0030-prefer-syscalls-over-shelling-out.md) | Prefer syscalls and OS APIs over shelling out | Accepted |
+| [0031](0031-single-writer-sqlite-connection.md) | One SQLite write connection, a pool for reads | Accepted |
