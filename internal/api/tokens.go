@@ -434,6 +434,10 @@ func apiTokenMiddleware(
 		}
 		ctx := logging.WithUserID(r.Context(), rec.OwnerUsername)
 		ctx = auth.WithClientID(ctx, clientID)
+		// #2450: tell the JWT and CSRF middlewares downstream that this
+		// request is already authenticated. Without it the JWT middleware
+		// validates the `sd_pat_…` bearer as a JWT and rejects it.
+		ctx = auth.WithAPITokenAuth(ctx)
 		r.Header.Set("X-Username", rec.OwnerUsername)
 		// #1255: thread the per-token scope so callerRole can clamp the
 		// effective role at min(owner.role, token.scope). Empty scope

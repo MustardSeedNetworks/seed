@@ -50,6 +50,9 @@ type tlsSession struct {
 	baseURL    string
 	client     *http.Client
 	configPath string
+	// server is the live instance, so a test can reach the seams
+	// export_test.go exposes (the PAT test injects a license manager).
+	server *api.Server
 }
 
 func TestAuthLifecycleOverProductionTLSListener(t *testing.T) {
@@ -275,7 +278,7 @@ func newTLSSession(t *testing.T) *tlsSession {
 		},
 	}
 
-	s := &tlsSession{client: client, configPath: configPath}
+	s := &tlsSession{client: client, configPath: configPath, server: server}
 	s.baseURL = waitForLifecycleListener(t, client, port)
 	return s
 }
