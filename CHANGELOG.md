@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.214.35](https://github.com/MustardSeedNetworks/seed/compare/v0.214.34...v0.214.35) (2026-09-09)
+
+
+### Bug Fixes
+
+* **auth:** let a personal access token survive the middleware chain ([#2556](https://github.com/MustardSeedNetworks/seed/issues/2556)) ([175f381](https://github.com/MustardSeedNetworks/seed/commit/175f3813ce93b391513f4bab5fe755a8ffe93f4b)), closes [#2450](https://github.com/MustardSeedNetworks/seed/issues/2450)
+
 ## [0.214.34](https://github.com/MustardSeedNetworks/seed/compare/v0.214.33...v0.214.34) (2026-09-09)
 
 
