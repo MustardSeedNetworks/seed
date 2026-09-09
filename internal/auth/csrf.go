@@ -133,6 +133,17 @@ func (m *CSRFManager) CSRFMiddleware(next http.Handler) http.Handler {
 			return
 		}
 
+		// #2450: a personal access token is not an ambient credential. A
+		// cross-site page cannot set an Authorization header, so a
+		// PAT-authenticated request carries no CSRF risk — and it has no
+		// session to key a token on, so requiring one made every mutating
+		// PAT request 401. The marker is set by the PAT middleware after the
+		// store resolved the token, never derived from the bearer's shape.
+		if IsAPITokenAuth(r.Context()) {
+			next.ServeHTTP(w, r)
+			return
+		}
+
 		// Derive the per-session key from the request's authenticated JWT.
 		sessionID := GetSessionIDFromRequest(r)
 
@@ -179,12 +190,13 @@ func (m *CSRFManager) CSRFMiddleware(next http.Handler) http.Handler {
 func GetSessionIDFromRequest(r *http.Request) string {
 	token, _ := GetTokenFromRequest(r)
 	// Only a JWT-shaped bearer (a browser session token) is CSRF-relevant.
-	// A malformed value or a non-JWT bearer (e.g. an API token, which a
-	// cross-site attacker cannot set) gets no session key, so the request is
-	// handled by the auth layer instead of being rejected here for a missing
-	// CSRF token. This mirrors the pre-migration gate (the old payload-segment
-	// extraction returned "" for a non-JWT), changing only the key derivation
-	// to sha256(bearer).
+	// A malformed value or a non-JWT bearer gets no session key. That is a
+	// rejection, not a pass: an empty session ID makes the middleware answer
+	// 401. A resolved API token skips this middleware entirely on the
+	// IsAPITokenAuth marker (#2450); anything else with a non-JWT bearer has
+	// not authenticated at all. This mirrors the pre-migration gate (the old
+	// payload-segment extraction returned "" for a non-JWT), changing only the
+	// key derivation to sha256(bearer).
 	const jwtMinParts = 2
 	if len(strings.Split(token, ".")) < jwtMinParts {
 		return ""

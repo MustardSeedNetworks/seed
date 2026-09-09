@@ -3,6 +3,7 @@ package auth_test
 import (
 	"errors"
 	"net/http"
+	"net/http/httptest"
 	"testing"
 
 	"github.com/MustardSeedNetworks/foundation/pkg/csrf"
@@ -77,5 +78,45 @@ func TestGetSessionIDFromRequest_HashedKeying(t *testing.T) {
 	empty, _ := http.NewRequest(http.MethodPost, "/api/v1/x", nil)
 	if k := auth.GetSessionIDFromRequest(empty); k != "" {
 		t.Errorf("no-token request should yield empty key, got %q", k)
+	}
+}
+
+// TestCSRFMiddlewareExemptionIsMarkerGated pins the shape of the #2450 fix: the
+// CSRF middleware lets a mutating request through only when the PAT middleware
+// resolved a token and marked the context. A bearer that merely looks like a
+// PAT is not enough — the prefix is caller-controlled, and shape-gating the
+// exemption would let any request opt out of CSRF by naming its token
+// `sd_pat_…`.
+func TestCSRFMiddlewareExemptionIsMarkerGated(t *testing.T) {
+	manager := auth.NewCSRFManager()
+	defer manager.Stop()
+
+	reached := false
+	handler := manager.CSRFMiddleware(http.HandlerFunc(func(http.ResponseWriter, *http.Request) {
+		reached = true
+	}))
+
+	request := func(marked bool) *http.Request {
+		r, _ := http.NewRequest(http.MethodPut, "/api/v1/settings", nil)
+		r.Header.Set("Authorization", "Bearer sd_pat_deadbeef")
+		if marked {
+			r = r.WithContext(auth.WithAPITokenAuth(r.Context()))
+		}
+		return r
+	}
+
+	rec := httptest.NewRecorder()
+	handler.ServeHTTP(rec, request(false))
+	if reached {
+		t.Error("an unmarked PAT-shaped bearer reached the handler; the exemption is shape-gated")
+	}
+	if rec.Code != http.StatusUnauthorized {
+		t.Errorf("unmarked PAT-shaped bearer = %d, want %d", rec.Code, http.StatusUnauthorized)
+	}
+
+	rec = httptest.NewRecorder()
+	handler.ServeHTTP(rec, request(true))
+	if !reached {
+		t.Errorf("a PAT-authenticated write was refused: %d %s", rec.Code, rec.Body.String())
 	}
 }
