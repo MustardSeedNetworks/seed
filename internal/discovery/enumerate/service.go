@@ -68,8 +68,13 @@ func NewService(
 	profiler *DeviceProfiler,
 	opts ...Option,
 ) *Service {
+	// A Service built without a profiler has no SNMP credential source: the
+	// vault is reached through the composition root, which always supplies the
+	// shared profiler. This fallback exists for callers that do not do SNMP at
+	// all, and it probes none rather than falling back to file-config
+	// communities (#2118).
 	if profiler == nil {
-		profiler = discovery.NewDeviceProfiler(discovery.DefaultProfilerConfig(), &cfg.SNMP)
+		profiler = discovery.NewDeviceProfiler(discovery.DefaultProfilerConfig(), nil)
 	}
 	return &Service{
 		cfg:           cfg,

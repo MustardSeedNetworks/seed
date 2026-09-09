@@ -8,7 +8,6 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/MustardSeedNetworks/seed/internal/config"
 	"github.com/MustardSeedNetworks/seed/internal/logging"
 	"github.com/MustardSeedNetworks/seed/internal/protocols/snmp"
 )
@@ -50,17 +49,17 @@ type DeviceLocator interface {
 // L2PathBuilder builds Layer 2 paths between devices using LLDP/CDP and SNMP.
 type L2PathBuilder struct {
 	deviceDiscovery DeviceLocator
-	snmpConfig      *config.SNMPConfig
+	snmpCreds       SNMPCredentialProvider
 }
 
 // NewL2PathBuilder creates a new L2 path builder.
 func NewL2PathBuilder(
 	deviceDiscovery DeviceLocator,
-	snmpConfig *config.SNMPConfig,
+	snmpCreds SNMPCredentialProvider,
 ) *L2PathBuilder {
 	return &L2PathBuilder{
 		deviceDiscovery: deviceDiscovery,
-		snmpConfig:      snmpConfig,
+		snmpCreds:       snmpCreds,
 	}
 }
 
@@ -226,7 +225,7 @@ func (b *L2PathBuilder) findNextHop(
 	destDevice *DiscoveredDevice,
 ) *L2Hop {
 	// Query SNMP for more detailed port information if available
-	if currentHop.DeviceIP != "" && b.snmpConfig != nil {
+	if currentHop.DeviceIP != "" && b.snmpCreds != nil {
 		b.enrichHopWithSNMP(ctx, currentHop)
 	}
 
@@ -243,14 +242,22 @@ func (b *L2PathBuilder) enrichHopWithSNMP(ctx context.Context, hop *L2Hop) {
 		return
 	}
 
-	// Check if SNMP is configured (has communities or v3 credentials)
-	if b.snmpConfig == nil ||
-		(len(b.snmpConfig.Communities) == 0 && len(b.snmpConfig.V3Credentials) == 0) {
+	if b.snmpCreds == nil {
+		return
+	}
+	snmpCfg, credErr := b.snmpCreds.SNMPConfig(ctx)
+	if credErr != nil {
+		logging.GetLogger().WarnContext(ctx,
+			"L2 path SNMP enrichment skipped - credentials unresolved",
+			"device", hop.DeviceIP, "error", credErr)
+		return
+	}
+	if len(snmpCfg.Communities) == 0 && len(snmpCfg.V3Credentials) == 0 {
 		return
 	}
 
 	// Try to get system info to confirm device identity
-	systemInfo, err := snmp.GetSystemInfo(ctx, hop.DeviceIP, b.snmpConfig)
+	systemInfo, err := snmp.GetSystemInfo(ctx, hop.DeviceIP, snmpCfg)
 	if err != nil {
 		logging.GetLogger().
 			DebugContext(ctx, "Failed to get SNMP system info", "device", hop.DeviceIP, "error", err)

@@ -214,10 +214,12 @@ func (s *Server) initSSEAndLogging(db *database.DB) {
 // initDiscovery initializes the shared discovery profiler, port scanner, and
 // the discovery service. (The legacy pipeline orchestrator was retired in
 // Phase 7 — discovery now runs through the engine + jobs spine.)
-func (s *Server) initDiscovery(cfg *config.Config) {
+func (s *Server) initDiscovery(cfg *config.Config, db *database.DB) {
+	s.snmpCreds = newDiscoverySNMPCredentials(cfg, db)
+
 	// Create SHARED DeviceProfiler - used by Service and Engine
 	// This ensures port scan results and SNMP data are consistent across the system
-	sharedProfiler := discovery.NewDeviceProfiler(discovery.DefaultProfilerConfig(), &cfg.SNMP)
+	sharedProfiler := discovery.NewDeviceProfiler(discovery.DefaultProfilerConfig(), s.snmpCreds)
 	s.profiler = sharedProfiler
 
 	// Create PortScanner for Engine
@@ -356,4 +358,51 @@ func (s *Server) logWildcardOriginWarning(cfg *config.Config) {
 		"recommendation",
 		"Configure explicit allowed origins in Security.AllowedOrigins",
 	)
+}
+
+// clientIDLister adapts database.ClientRepository to discovery.ClientLister:
+// discovery needs the deployment's client ids to decide whose credentials it
+// may use, and nothing more of a client record than that.
+type clientIDLister struct {
+	repo *database.ClientRepository
+}
+
+func (l clientIDLister) ListClientIDs(ctx context.Context) ([]string, error) {
+	clients, err := l.repo.List(ctx)
+	if err != nil {
+		return nil, err
+	}
+	ids := make([]string, 0, len(clients))
+	for _, c := range clients {
+		ids = append(ids, c.ID)
+	}
+	return ids, nil
+}
+
+// newDiscoverySNMPCredentials builds discovery's vault-backed credential
+// source (#2118). It returns nil — and discovery then probes no SNMP at all —
+// when there is no database or no keyring to decrypt with, because the only
+// other way to answer an SNMP probe would be the plaintext file-config
+// communities #1799 removed.
+func newDiscoverySNMPCredentials(
+	cfg *config.Config,
+	db *database.DB,
+) discovery.SNMPCredentialProvider {
+	if cfg == nil || db == nil {
+		logging.GetLogger().Warn("SNMP discovery disabled: no credential vault available")
+		return nil
+	}
+	keyring, err := cfg.CredentialKeyring()
+	if err != nil {
+		logging.GetLogger().Warn("SNMP discovery disabled: no credential keyring", "error", err)
+		return nil
+	}
+	creds, err := discovery.NewVaultSNMPCredentials(
+		clientIDLister{repo: db.Clients()}, db.DeviceCredentials(), keyring, &cfg.SNMP,
+	)
+	if err != nil {
+		logging.GetLogger().Warn("SNMP discovery disabled", "error", err)
+		return nil
+	}
+	return creds
 }

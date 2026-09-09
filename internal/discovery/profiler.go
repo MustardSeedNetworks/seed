@@ -18,7 +18,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/MustardSeedNetworks/seed/internal/config"
 	"github.com/MustardSeedNetworks/seed/internal/discovery/resolve"
 	"github.com/MustardSeedNetworks/seed/internal/logging"
 )
@@ -26,7 +25,7 @@ import (
 // DeviceProfiler automatically profiles newly discovered devices.
 type DeviceProfiler struct {
 	config          *ProfilerConfig
-	snmpConfig      *config.SNMPConfig
+	snmpCreds       SNMPCredentialProvider
 	snmpCollector   *SNMPCollector           // For full MIB collection
 	netbiosResolver *resolve.NetBIOSResolver // For NetBIOS name queries
 	mdnsResolver    *resolve.MDNSResolver    // For mDNS name queries
@@ -44,7 +43,11 @@ type DeviceProfiler struct {
 }
 
 // NewDeviceProfiler creates a new device profiler.
-func NewDeviceProfiler(cfg *ProfilerConfig, snmpCfg *config.SNMPConfig) *DeviceProfiler {
+//
+// snmpCreds resolves SNMP credentials from the vault at probe time (#2118); a
+// nil provider means this deployment has no credential source and every SNMP
+// probe is skipped rather than attempted unauthenticated.
+func NewDeviceProfiler(cfg *ProfilerConfig, snmpCreds SNMPCredentialProvider) *DeviceProfiler {
 	if cfg == nil {
 		cfg = DefaultProfilerConfig()
 	}
@@ -57,9 +60,9 @@ func NewDeviceProfiler(cfg *ProfilerConfig, snmpCfg *config.SNMPConfig) *DeviceP
 	}
 
 	p := &DeviceProfiler{
-		config:     cfg,
-		snmpConfig: snmpCfg,
-		transport:  transport, // Store for cleanup (fixes #825)
+		config:    cfg,
+		snmpCreds: snmpCreds,
+		transport: transport, // Store for cleanup (fixes #825)
 		httpClient: &http.Client{
 			Timeout:   cfg.Timeout,
 			Transport: transport,
@@ -74,8 +77,12 @@ func NewDeviceProfiler(cfg *ProfilerConfig, snmpCfg *config.SNMPConfig) *DeviceP
 		queue:         make(chan string, profilerQueueSize),
 	}
 
-	// Initialize SNMP collector if credentials are configured and collection is enabled
-	if cfg.EnableSNMPCollection && snmpCfg != nil && p.hasSNMPCredentials() {
+	// The collector is built whenever a credential source exists. Whether that
+	// source currently holds any credential is a question for probe time, not
+	// startup: the vault is a database the operator writes to while the daemon
+	// runs, and the old startup-time count meant a credential added afterwards
+	// was never used until a restart.
+	if cfg.EnableSNMPCollection && snmpCreds != nil {
 		mibConfig := SNMPMIBSelection{
 			System:      true,
 			Interfaces:  true,
@@ -87,10 +94,8 @@ func NewDeviceProfiler(cfg *ProfilerConfig, snmpCfg *config.SNMPConfig) *DeviceP
 		if cfg.SNMPMIBs != nil {
 			mibConfig = *cfg.SNMPMIBs
 		}
-		p.snmpCollector = NewSNMPCollector(snmpCfg, mibConfig)
-		logging.GetLogger().Info("SNMP collector initialized for automatic MIB polling",
-			"communities", len(snmpCfg.Communities),
-			"v3creds", len(snmpCfg.V3Credentials))
+		p.snmpCollector = NewSNMPCollector(snmpCreds, mibConfig)
+		logging.GetLogger().Info("SNMP collector initialized for automatic MIB polling")
 	}
 
 	// Initialize name resolvers if enabled

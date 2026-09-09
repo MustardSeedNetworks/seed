@@ -79,7 +79,10 @@ func TestSetInterface(t *testing.T) {
 
 func TestDeviceProfiler(t *testing.T) {
 	cfg := testutil.NewConfigBuilder().Build()
-	profiler := discovery.NewDeviceProfiler(discovery.DefaultProfilerConfig(), &cfg.SNMP)
+	profiler := discovery.NewDeviceProfiler(
+		discovery.DefaultProfilerConfig(),
+		testutil.StaticSNMPCredentials{Config: &cfg.SNMP},
+	)
 
 	if profiler == nil {
 		t.Fatal("NewDeviceProfiler returned nil")
