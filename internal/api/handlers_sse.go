@@ -19,7 +19,6 @@ package api
 //   - card_update: Real-time dashboard card updates
 //   - pipeline: Discovery pipeline events
 //   - traceHop: Path tracing hop updates
-//   - log_entry: Real-time log streaming
 //
 // Security:
 //   - Cookie-based authentication (httpOnly cookies)
@@ -233,14 +232,6 @@ func (h *SSEHub) ClientCount() int {
 	return len(h.clients)
 }
 
-// BroadcastLogEntry sends a log entry to all connected clients.
-func (h *SSEHub) BroadcastLogEntry(entry any) {
-	h.Broadcast(Message{
-		Type:    "log_entry",
-		Payload: entry,
-	})
-}
-
 // newSSEClient creates a new SSE client.
 func (h *SSEHub) newClient() *SSEClient {
 	h.mu.Lock()
@@ -390,16 +381,4 @@ func (s *Server) sendSSEInitialState(w http.ResponseWriter, flusher http.Flusher
 		return
 	}
 	flusher.Flush()
-}
-
-// sseLogBroadcastAdapter wraps the SSEHub to implement logging.Broadcaster interface.
-type sseLogBroadcastAdapter struct {
-	hub *SSEHub
-}
-
-// BroadcastLogEntry implements logging.Broadcaster interface.
-func (a *sseLogBroadcastAdapter) BroadcastLogEntry(entry *logging.LogEntry) {
-	if a.hub != nil {
-		a.hub.BroadcastLogEntry(entry)
-	}
 }

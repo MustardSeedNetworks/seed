@@ -29,20 +29,6 @@ type VLANResponse struct {
 	} `json:"configured"`
 }
 
-// VLANTrafficResponse represents the VLAN traffic statistics for the API.
-type VLANTrafficResponse struct {
-	VLANs   []VLANTrafficEntry `json:"vlans"`
-	Running bool               `json:"running"`
-}
-
-// VLANTrafficEntry represents traffic statistics for a single VLAN.
-type VLANTrafficEntry struct {
-	ID       int    `json:"id"`
-	Packets  uint64 `json:"packets"`
-	Bytes    uint64 `json:"bytes"`
-	LastSeen string `json:"lastSeen"`
-}
-
 // VLANInterfaceRequest represents the request to create/delete a VLAN interface.
 type VLANInterfaceRequest struct {
 	Interface string `json:"interface"`
@@ -112,45 +98,6 @@ func (s *Server) getVLANsFromDiscovery() (*int, *int) {
 	}
 
 	return nativeVlan, voiceVlan
-}
-
-// handleVLANTraffic returns VLAN traffic statistics from frame capture.
-func (s *Server) handleVLANTraffic(w http.ResponseWriter, r *http.Request) {
-	logger := logging.FromContext(r.Context())
-	localizer := i18n.FromRequest(r)
-
-	if s.vlanTrafficMonitor() == nil {
-		sendErrorResponseWithDetails(
-			w,
-			logger,
-			http.StatusServiceUnavailable,
-			ErrCodeServiceUnavail,
-			localizer.TWithData(
-				"errors.service.notAvailable",
-				map[string]any{"service": "VLAN traffic monitor"},
-			),
-			"",
-		)
-		return
-	}
-
-	stats := s.vlanTrafficMonitor().GetStats()
-	entries := make([]VLANTrafficEntry, 0, len(stats))
-	for _, stat := range stats {
-		entries = append(entries, VLANTrafficEntry{
-			ID:       stat.ID,
-			Packets:  stat.Packets,
-			Bytes:    stat.Bytes,
-			LastSeen: stat.LastSeen.Format("2006-01-02T15:04:05Z07:00"),
-		})
-	}
-
-	resp := VLANTrafficResponse{
-		VLANs:   entries,
-		Running: s.vlanTrafficMonitor().IsRunning(),
-	}
-
-	sendJSONResponse(w, nil, http.StatusOK, resp)
 }
 
 // ============================================================================

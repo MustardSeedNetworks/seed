@@ -2,43 +2,52 @@
 # Plain lines: registered routes with no UI or CLI consumer.
 # `404 <path>` lines: requests the UI or CLI makes that no route serves.
 # Optional `# reason`. Remove a line when it stops being true — the gate fails on stale entries.
-/api/v1/alert-rules
-/api/v1/alert-rules/
-/api/v1/device-credentials
-/api/v1/device-credentials/
-/api/v1/discovery/engine
-/api/v1/discovery/engine/capabilities
-/api/v1/discovery/engine/device/
-/api/v1/discovery/engine/events
-/api/v1/discovery/engine/full
-/api/v1/discovery/engine/quick
-/api/v1/discovery/engine/scan
-/api/v1/discovery/engine/stats
-/api/v1/engines
-/api/v1/health
-/api/v1/path/traceroute
-/api/v1/reporting/logs/query
-/api/v1/security/bluetooth/devices
-/api/v1/security/bluetooth/scan
-/api/v1/security/bluetooth/stats
-/api/v1/security/bluetooth/status
-/api/v1/security/discovery/fingerprint
-/api/v1/security/discovery/probe
-/api/v1/security/problems
-/api/v1/security/problems/scan
-/api/v1/security/problems/thresholds
-/api/v1/security/wifi/discovery/aps
-/api/v1/security/wifi/discovery/networks
-/api/v1/security/wifi/discovery/scan
-/api/v1/security/wifi/discovery/stats
-/api/v1/telemetry/dhcp/lease
-/api/v1/telemetry/dhcp/renew
-/api/v1/telemetry/dhcp/rogue
-/api/v1/telemetry/dhcp/rogue/config
-/api/v1/telemetry/dhcp/rogue/servers
-/api/v1/telemetry/dns/security
-/api/v1/telemetry/dns/security/settings
-/api/v1/telemetry/vlan/traffic
-/api/v1/topology/arp
-/api/v1/topology/links
-/api/v1/wifi/wifi/status
+#
+# Every line carries its disposition (owner decision 2026-09-04, amended
+# 2026-09-08; seed-v1-plan S1-12). Four dispositions are in use:
+#   PAT-only    — deliberate API-only surface, no UI is planned
+#   scheduled   — a wave item or plan row owns the missing consumer
+#   non-UI      — a consumer exists that this gate does not scan
+#   delete      — unclaimed by the wave schedule; the owner's 2026-09-08
+#                 re-application of the default (delete what no wave item
+#                 claims) reaches these. Each fronts a subsystem, so each is
+#                 its own change; reason on the line
+/api/v1/alert-rules                       # PAT-only allow-list (owner 2026-09-04)
+/api/v1/alert-rules/                      # PAT-only allow-list (owner 2026-09-04)
+/api/v1/device-credentials                # PAT-only until SE-2 (#2523) lands the vault picker
+/api/v1/device-credentials/               # PAT-only until SE-2 (#2523) lands the vault picker
+/api/v1/discovery/engine                  # PAT-only allow-list (owner 2026-09-04)
+/api/v1/discovery/engine/capabilities     # PAT-only allow-list (owner 2026-09-04)
+/api/v1/discovery/engine/device/          # PAT-only allow-list (owner 2026-09-04)
+/api/v1/discovery/engine/events           # PAT-only allow-list (owner 2026-09-04)
+/api/v1/discovery/engine/full             # PAT-only allow-list (owner 2026-09-04)
+/api/v1/discovery/engine/quick            # PAT-only allow-list (owner 2026-09-04)
+/api/v1/discovery/engine/scan             # PAT-only allow-list (owner 2026-09-04)
+/api/v1/discovery/engine/stats            # PAT-only allow-list (owner 2026-09-04)
+/api/v1/engines                           # PAT-only allow-list (owner 2026-09-04)
+/api/v1/health                            # non-UI: tests/smoke/run_smoke_tests.sh asserts it is authenticated
+/api/v1/path/traceroute                   # scheduled: Wave 4 path cluster (#165 #395 #435), one traceroute engine
+/api/v1/reporting/logs/query              # PAT-only allow-list (owner 2026-09-04)
+/api/v1/security/bluetooth/devices        # delete: unclaimed; the routes front a whole subsystem, queued behind an owner check
+/api/v1/security/bluetooth/scan           # delete: unclaimed; see /security/bluetooth/devices
+/api/v1/security/bluetooth/stats          # delete: unclaimed; see /security/bluetooth/devices
+/api/v1/security/bluetooth/status         # delete: unclaimed; see /security/bluetooth/devices
+/api/v1/security/discovery/fingerprint    # delete: only reader of discovery.Fingerprinter (423 lines); ADR-0018 moves the package, it does not give it a caller
+/api/v1/security/discovery/probe          # delete: only reader of fingerprint.TCPProber
+/api/v1/security/problems                 # delete: unclaimed. S6-3's vehicle is anomaly.Catalog, not discovery.ProblemDetector, and nothing calls AddListener — these three routes are the detector's only reader. Queued with bluetooth behind one owner sentence
+/api/v1/security/problems/scan            # delete: see /security/problems
+/api/v1/security/problems/thresholds      # delete: see /security/problems
+/api/v1/security/wifi/discovery/aps       # scheduled: Wave 9 (#356 #365), pre-v1 by owner decision 2026-09-04
+/api/v1/security/wifi/discovery/networks  # scheduled: Wave 9, see /security/wifi/discovery/aps
+/api/v1/security/wifi/discovery/scan      # scheduled: Wave 9, see /security/wifi/discovery/aps
+/api/v1/security/wifi/discovery/stats     # scheduled: Wave 9, see /security/wifi/discovery/aps
+/api/v1/telemetry/dhcp/lease              # scheduled: #170 landed the backend (PR #2276); the UI consumer is the remaining half
+/api/v1/telemetry/dhcp/renew              # scheduled: #170, see /telemetry/dhcp/lease
+/api/v1/telemetry/dhcp/rogue              # delete: unclaimed. Rogue DHCP is a NetAlly problem type, but no wave item claims it and these routes are dhcp.RogueDetector's only reader — nothing starts it, AlertOnDetection reaches no alert path. Queued with bluetooth
+/api/v1/telemetry/dhcp/rogue/config       # delete: see /telemetry/dhcp/rogue
+/api/v1/telemetry/dhcp/rogue/servers      # delete: see /telemetry/dhcp/rogue
+/api/v1/telemetry/dns/security            # delete: unclaimed; the two routes are dns.SecurityScanner's only reader. Queued with bluetooth
+/api/v1/telemetry/dns/security/settings   # delete: see /telemetry/dns/security
+/api/v1/topology/arp                      # scheduled: Wave 3 #328 (this is the SNMP-harvested remote table, not the local cache)
+/api/v1/topology/links                    # non-UI: the S4-4 cross-product harness reads it per node (fleet rule 8); the UI reads node detail
+/api/v1/wifi/wifi/status                  # scheduled: Wave 9 #360 connection management (connect/disconnect/forget/status)

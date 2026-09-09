@@ -170,7 +170,6 @@ func (s *Server) handleSystemHealth(w http.ResponseWriter, r *http.Request) {
 			"discovery_service": s.discoveryService() != nil && s.discoveryService().IsRunning(),
 			"link_monitor":      s.linkMonitor() != nil,
 			"sse_hub":           s.sseHub() != nil,
-			"vlan_monitor":      s.vlanTrafficMonitor() != nil,
 		},
 	}
 

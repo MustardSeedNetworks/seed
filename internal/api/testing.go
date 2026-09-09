@@ -140,7 +140,6 @@ func NewTestServerWithConfig(cfg *config.Config) *Server {
 	s.dhcpMon = dhcp.NewMonitor(cfg.Interface.Default)
 	s.gatewayTest = gateway.NewTester(gateway.DefaultThresholds())
 	s.vlanMgr = vlan.NewManager(cfg.Interface.Default)
-	s.vlanTraffic = vlan.NewTrafficMonitor(cfg.Interface.Default)
 	s.speedtestTest = speedtest.NewTesterWithConfig(cfg.Speedtest.ServerID)
 	s.iperfMgr = iperf.NewManager()
 	s.cableTest = cable.NewTester(cfg.Interface.Default)
