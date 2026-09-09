@@ -1,6 +1,7 @@
 # ADR-0015: Separate the credential data-encryption key from `Auth.JWTSecret`
 
-**Status:** Accepted — 2026-06-06; amended 2026-06-10 (pre-alpha cleanup: legacy v0 path deleted, plaintext rejected)
+**Status:** Accepted — 2026-06-06; amended 2026-06-10 (pre-alpha cleanup: legacy v0 path deleted, plaintext rejected);
+amended 2026-09-09 (#1799: config no longer stores SNMP credentials at all — see "Amendment 2" below)
 **(Owner greenlit for v1. Cross-workstream sign-off satisfied — see "Coordination" below. Implemented:
 `internal/config/keyring.go` + `crypto.go`. Pre-alpha amendment (2026-06-10): the legacy v0/JWT-derived path has been
 deleted entirely and plaintext credential values are now rejected — see "Amendment" below.)**
@@ -206,3 +207,29 @@ ADR-0015 as _Amended_.
 - **Not microservices, not external-KMS-required** — consistent with the
   capability-first modular-monolith direction and the air-gapped constraint;
   KMS is opt-in, not assumed.
+
+## Amendment 2 (2026-09-09, #1799): the config credential store is gone
+
+This ADR's whole subject — SNMP credentials persisted in `seed.json` and
+encrypted at rest with a DEK — no longer exists. `config.SNMPConfig` carries
+transport settings only; community strings and v3 secrets live in the encrypted
+device-credential vault (`internal/database/repository_device_credentials.go`),
+and are resolved into an `snmp.Session` at use time.
+
+The keyring this ADR argued for is unchanged and is still the thing that
+protects them: the vault encrypts and decrypts through
+`Config.CredentialKeyring()`, so the DEK separation, the versioned ciphertext
+format, the `0600` key file and BYO-KMS via `SEED_CREDENTIAL_KEY` all still
+hold. What went are the config-shaped wrappers around it, which had no callers
+left once the config fields did:
+
+- `Config.EncryptCredentialValue` and `Config.DecryptSNMPPassword` — the vault
+  calls `Keyring.EncryptValue` / `DecryptValue` directly.
+- `ErrPlaintextCredential` and `Config.Validate`'s `validateSNMPCredentials`
+  gate — there is no config field left for a plaintext value to sit in.
+- `Config.WarnDeprecatedSNMPSettings` — `internal/protocols/snmp` already warns
+  about MD5 at use time, where the credential actually is.
+
+Read this ADR for _why the DEK is separate from `Auth.JWTSecret`_, which is
+still load-bearing. Its references to config-stored credentials, and to the
+symbols above, describe a shape that no longer ships.
