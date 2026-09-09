@@ -4,8 +4,6 @@ import (
 	"context"
 
 	"github.com/gosnmp/gosnmp"
-
-	"github.com/MustardSeedNetworks/seed/internal/config"
 )
 
 // ExportFormatSNMPValue exports formatSNMPValue for testing.
@@ -24,7 +22,7 @@ func ExportGetPrivProtocol(protocol string) gosnmp.SnmpV3PrivProtocol {
 }
 
 // ExportGetMaxRepetitions exports getMaxRepetitions for testing.
-func ExportGetMaxRepetitions(cfg *config.SNMPConfig) uint32 {
+func ExportGetMaxRepetitions(cfg *Session) uint32 {
 	return getMaxRepetitions(cfg)
 }
 
@@ -182,9 +180,9 @@ func ExportCollectMACEntries(macToEntry map[string]*MACEntry) []MACEntry {
 // directly rather than through one of them.
 func SweepCredentials[T any](
 	ctx context.Context,
-	cfg *config.SNMPConfig,
+	cfg *Session,
 	what string,
-	v3 func(cred *config.SNMPv3Credential) (T, error),
+	v3 func(cred *V3Credential) (T, error),
 	v2c func(community string) (T, error),
 ) (T, error) {
 	return sweepCredentials(ctx, cfg, what, v3, v2c)

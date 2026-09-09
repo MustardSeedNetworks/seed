@@ -113,14 +113,5 @@ func redactSecrets(cfg *config.Config) *config.Config {
 	// Redact vulnerability scanning API key
 	redacted.Security.VulnerabilityScanning.NVDAPIKey = redactedValue
 
-	// Redact SNMP credentials
-	newCreds := make([]config.SNMPv3Credential, len(redacted.SNMP.V3Credentials))
-	for i := range redacted.SNMP.V3Credentials {
-		newCreds[i] = redacted.SNMP.V3Credentials[i]
-		newCreds[i].AuthPassword = redactedValue
-		newCreds[i].PrivPassword = redactedValue
-	}
-	redacted.SNMP.V3Credentials = newCreds
-
 	return &redacted
 }

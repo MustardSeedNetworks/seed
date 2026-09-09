@@ -118,14 +118,6 @@ func (c *Config) cloneFields() *Config {
 		clone.Security.AllowedOrigins = make([]string, len(c.Security.AllowedOrigins))
 		copy(clone.Security.AllowedOrigins, c.Security.AllowedOrigins)
 	}
-	if len(c.SNMP.Communities) > 0 {
-		clone.SNMP.Communities = make([]string, len(c.SNMP.Communities))
-		copy(clone.SNMP.Communities, c.SNMP.Communities)
-	}
-	if len(c.SNMP.V3Credentials) > 0 {
-		clone.SNMP.V3Credentials = make([]SNMPv3Credential, len(c.SNMP.V3Credentials))
-		copy(clone.SNMP.V3Credentials, c.SNMP.V3Credentials)
-	}
 
 	return clone
 }

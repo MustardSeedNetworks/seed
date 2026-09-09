@@ -256,8 +256,6 @@ export const SettingsDrawer: React.MemoExoticComponent<
     });
   // SNMP settings
   const [snmpSettings, setSnmpSettings] = useState<SnmpSettingsType>({
-    communities: ['public'],
-    v3Credentials: [],
     timeout: 5000,
     retries: 2,
     port: 161,

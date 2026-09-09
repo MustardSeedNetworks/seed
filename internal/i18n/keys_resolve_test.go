@@ -51,8 +51,6 @@ func knownUnresolvedKeys() []string {
 		"errors.health.speedtestNotAvailable",
 		"errors.logs.notInitialized",
 		"errors.methodNotAllowed",
-		"errors.security.failedToEncryptAuth",
-		"errors.security.failedToEncryptPriv",
 		"errors.security.gatewayTesterUnavailable",
 		"errors.security.invalidAction",
 		"errors.security.nullOriginForbidden",

@@ -399,22 +399,10 @@ export interface RogueDetectionConfig {
   alert_on_detection: boolean;
 }
 export interface SNMPConfig {
-  communities: string[];
-  v3_credentials?: SNMPv3Credential[];
   timeout: number;
   retries: number;
   port: number;
   max_repetitions: number;
-}
-export interface SNMPv3Credential {
-  name: string;
-  username: string;
-  auth_protocol: string;
-  auth_password: string;
-  priv_protocol: string;
-  priv_password: string;
-  context_name: string;
-  security_level: string;
 }
 export interface FABOptionsConfig {
   run_link: boolean;

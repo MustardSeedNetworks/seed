@@ -194,7 +194,6 @@ export interface NetworkDiscoveryDefaults {
 // ============================================================================
 
 export interface SnmpDefaults {
-  communities: string[];
   timeoutMs: number;
   retries: number;
   port: number;

@@ -64,8 +64,6 @@ export const defaultSettings: NetworkDiscoverySettings = {
 };
 
 export const defaultSnmpSettings: SnmpSettings = {
-  communities: ['public'],
-  v3Credentials: [],
   timeout: 5000,
   retries: 2,
   port: 161,

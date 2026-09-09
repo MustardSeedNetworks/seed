@@ -25,6 +25,7 @@ import (
 
 	"github.com/MustardSeedNetworks/seed/internal/config"
 	"github.com/MustardSeedNetworks/seed/internal/polling"
+	"github.com/MustardSeedNetworks/seed/internal/protocols/snmp"
 )
 
 // ErrDiscoveryTenantAmbiguous reports that the deployment has no single client
@@ -57,7 +58,7 @@ type SecretDecrypter interface {
 // startup so a credential added after the daemon booted is used by the next
 // sweep.
 type SNMPCredentialProvider interface {
-	SNMPConfig(ctx context.Context) (*config.SNMPConfig, error)
+	SNMPSession(ctx context.Context) (*snmp.Session, error)
 }
 
 // VaultSNMPCredentials resolves discovery's SNMP credentials from the
@@ -72,9 +73,9 @@ type VaultSNMPCredentials struct {
 // NewVaultSNMPCredentials builds the provider over the client list, the
 // credential vault and the keyring.
 //
-// transport supplies timeout, retries, port and MaxRepetitions only; its
-// Communities and V3Credentials are ignored, because the whole point of #1799
-// is that those no longer reach the wire.
+// transport supplies timeout, retries, port and MaxRepetitions; it no longer
+// carries credentials at all, which is the point of #1799 — the community
+// strings and v3 passwords live in the encrypted vault and are read here.
 //
 // Every dependency is required. A nil one would degrade discovery to
 // unauthenticated SNMP, which either fails obscurely or succeeds against a
@@ -106,11 +107,11 @@ func NewVaultSNMPCredentials(
 	return v, nil
 }
 
-// SNMPConfig resolves the client, reads its credentials and decrypts them.
+// SNMPSession resolves the client, reads its credentials and decrypts them.
 //
-// The returned config carries plaintext secrets and is built fresh per call,
+// The returned session carries plaintext secrets and is built fresh per call,
 // so it lives for one exchange and is never stored.
-func (v *VaultSNMPCredentials) SNMPConfig(ctx context.Context) (*config.SNMPConfig, error) {
+func (v *VaultSNMPCredentials) SNMPSession(ctx context.Context) (*snmp.Session, error) {
 	clientID, err := v.clientID(ctx)
 	if err != nil {
 		return nil, err
@@ -121,13 +122,13 @@ func (v *VaultSNMPCredentials) SNMPConfig(ctx context.Context) (*config.SNMPConf
 		return nil, fmt.Errorf("list discovery credentials: %w", err)
 	}
 
-	out := v.transport
+	out := snmp.NewSession(&v.transport)
 	for _, cred := range stored {
-		if credErr := v.append(&out, cred); credErr != nil {
+		if credErr := v.append(out, cred); credErr != nil {
 			return nil, credErr
 		}
 	}
-	return &out, nil
+	return out, nil
 }
 
 // clientID returns the id of the deployment's single client.
@@ -148,7 +149,7 @@ func (v *VaultSNMPCredentials) clientID(ctx context.Context) (string, error) {
 // are populated: the column is NOT NULL under a CHECK of ('v2c','v3'), so it
 // is the row's own answer, and a v3 row whose user is still blank would
 // otherwise be silently read as a v2c row with no community.
-func (v *VaultSNMPCredentials) append(out *config.SNMPConfig, cred *polling.Credentials) error {
+func (v *VaultSNMPCredentials) append(out *snmp.Session, cred *polling.Credentials) error {
 	if cred == nil {
 		return nil
 	}
@@ -162,7 +163,7 @@ func (v *VaultSNMPCredentials) append(out *config.SNMPConfig, cred *polling.Cred
 		if err != nil {
 			return fmt.Errorf("credential %s: v3 priv secret: %w", cred.ID, err)
 		}
-		out.V3Credentials = append(out.V3Credentials, config.SNMPv3Credential{
+		out.V3Credentials = append(out.V3Credentials, snmp.V3Credential{
 			Name:          cred.Name,
 			Username:      cred.SNMPv3User,
 			AuthProtocol:  cred.SNMPv3AuthProto,

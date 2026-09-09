@@ -6,16 +6,15 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/MustardSeedNetworks/seed/internal/config"
 	snmppkg "github.com/MustardSeedNetworks/seed/internal/protocols/snmp"
 )
 
-func testCfg(communities []string, v3 int) *config.SNMPConfig {
-	creds := make([]config.SNMPv3Credential, v3)
+func testCfg(communities []string, v3 int) *snmppkg.Session {
+	creds := make([]snmppkg.V3Credential, v3)
 	for i := range creds {
 		creds[i].Username = "user"
 	}
-	return &config.SNMPConfig{Communities: communities, V3Credentials: creds}
+	return &snmppkg.Session{Communities: communities, V3Credentials: creds}
 }
 
 // TestSweepPrefersV3 — a device that answers both should be talked to over the
@@ -23,7 +22,7 @@ func testCfg(communities []string, v3 int) *config.SNMPConfig {
 func TestSweepPrefersV3(t *testing.T) {
 	var order []string
 	got, err := snmppkg.SweepCredentials(context.Background(), testCfg([]string{"public"}, 1), "x",
-		func(*config.SNMPv3Credential) (string, error) {
+		func(*snmppkg.V3Credential) (string, error) {
 			order = append(order, "v3")
 			return "v3-result", nil
 		},
@@ -46,7 +45,7 @@ func TestSweepFallsBackToEveryCommunity(t *testing.T) {
 	tried := 0
 	got, err := snmppkg.SweepCredentials(context.Background(),
 		testCfg([]string{"wrong-1", "wrong-2", "right"}, 1), "x",
-		func(*config.SNMPv3Credential) (string, error) {
+		func(*snmppkg.V3Credential) (string, error) {
 			return "", errors.New("v3 refused")
 		},
 		func(community string) (string, error) {
@@ -74,7 +73,7 @@ func TestSweepStopsOnCancelledContext(t *testing.T) {
 
 	attempts := 0
 	_, err := snmppkg.SweepCredentials(ctx, testCfg([]string{"a", "b", "c"}, 2), "x",
-		func(*config.SNMPv3Credential) (string, error) {
+		func(*snmppkg.V3Credential) (string, error) {
 			attempts++
 			return "", errors.New("nope")
 		},
@@ -96,7 +95,7 @@ func TestSweepStopsOnCancelledContext(t *testing.T) {
 func TestSweepExhaustedErrorNamesNoSecrets(t *testing.T) {
 	_, err := snmppkg.SweepCredentials(context.Background(),
 		testCfg([]string{"s3cret-community"}, 0), "query LLDP neighbors",
-		func(*config.SNMPv3Credential) (string, error) { return "", errors.New("no") },
+		func(*snmppkg.V3Credential) (string, error) { return "", errors.New("no") },
 		func(string) (string, error) { return "", errors.New("no") },
 	)
 	if !errors.Is(err, snmppkg.ErrNoCredentialSucceeded) {

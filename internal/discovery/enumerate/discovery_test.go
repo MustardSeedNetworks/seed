@@ -7,6 +7,7 @@ import (
 
 	"github.com/MustardSeedNetworks/seed/internal/discovery"
 	"github.com/MustardSeedNetworks/seed/internal/discovery/enumerate"
+	"github.com/MustardSeedNetworks/seed/internal/protocols/snmp"
 	"github.com/MustardSeedNetworks/seed/internal/testutil"
 )
 
@@ -81,7 +82,7 @@ func TestDeviceProfiler(t *testing.T) {
 	cfg := testutil.NewConfigBuilder().Build()
 	profiler := discovery.NewDeviceProfiler(
 		discovery.DefaultProfilerConfig(),
-		testutil.StaticSNMPCredentials{Config: &cfg.SNMP},
+		testutil.StaticSNMPCredentials{Session: snmp.NewSession(&cfg.SNMP)},
 	)
 
 	if profiler == nil {

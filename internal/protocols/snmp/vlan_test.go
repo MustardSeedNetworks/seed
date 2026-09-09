@@ -5,7 +5,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/MustardSeedNetworks/seed/internal/config"
 	"github.com/MustardSeedNetworks/seed/internal/protocols/snmp"
 )
 
@@ -196,7 +195,7 @@ func TestGetVLANs(t *testing.T) {
 	})
 
 	t.Run("empty communities", func(t *testing.T) {
-		cfg := &config.SNMPConfig{
+		cfg := &snmp.Session{
 			Communities: []string{},
 			Port:        161,
 			Timeout:     100 * time.Millisecond,

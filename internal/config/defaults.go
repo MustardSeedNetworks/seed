@@ -232,10 +232,9 @@ type NetworkDiscoveryDefaults struct {
 
 // SNMPDefaults contains default SNMP settings.
 type SNMPDefaults struct {
-	Communities []string `json:"communities"`
-	TimeoutMs   int64    `json:"timeoutMs"`
-	Retries     int      `json:"retries"`
-	Port        int      `json:"port"`
+	TimeoutMs int64 `json:"timeoutMs"`
+	Retries   int   `json:"retries"`
+	Port      int   `json:"port"`
 }
 
 // LinkDefaults contains default link settings.
@@ -291,10 +290,9 @@ func GetDefaultSettings() *DefaultSettings {
 		Tests:            buildTestsDefaults(cfg),
 		NetworkDiscovery: buildNetworkDiscoveryDefaults(cfg),
 		SNMP: SNMPDefaults{
-			Communities: cfg.SNMP.Communities,
-			TimeoutMs:   cfg.SNMP.Timeout.Milliseconds(),
-			Retries:     cfg.SNMP.Retries,
-			Port:        cfg.SNMP.Port,
+			TimeoutMs: cfg.SNMP.Timeout.Milliseconds(),
+			Retries:   cfg.SNMP.Retries,
+			Port:      cfg.SNMP.Port,
 		},
 		Link:      LinkDefaults{Mode: "auto", AvailableModes: []string{}},
 		CableTest: CableTestDefaults{Enabled: true},

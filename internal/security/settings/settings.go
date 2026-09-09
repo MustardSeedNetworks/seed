@@ -7,26 +7,11 @@
 package settings
 
 import (
-	"errors"
-	"fmt"
 	"strconv"
 	"time"
 
 	"github.com/MustardSeedNetworks/seed/internal/config"
 	"github.com/MustardSeedNetworks/seed/internal/validation"
-)
-
-// PasswordPlaceholder is the masked value returned for stored SNMP passwords. A
-// PUT carrying the placeholder for a credential leaves that stored password
-// unchanged (never re-encrypts the mask).
-const PasswordPlaceholder = "*****"
-
-// Sentinel errors the transport layer maps to HTTP status / i18n messages.
-var (
-	// ErrEncryptAuth wraps a failure to encrypt an SNMPv3 auth password.
-	ErrEncryptAuth = errors.New("settings: encrypt auth password")
-	// ErrEncryptPriv wraps a failure to encrypt an SNMPv3 priv password.
-	ErrEncryptPriv = errors.New("settings: encrypt priv password")
 )
 
 // Store reads and persists the live config. Read runs fn under the config RLock;
@@ -67,139 +52,43 @@ func NewService(store Store, detector RogueDetector) *Service {
 // SNMP
 // ---------------------------------------------------------------------------
 
-// SNMPv3Credential is the wire-neutral SNMPv3 credential. On read, AuthPassword/
-// PrivPassword carry PasswordPlaceholder when a stored password exists; on write,
-// the placeholder means "keep the stored password".
-type SNMPv3Credential struct {
-	Name          string
-	Username      string
-	AuthProtocol  string
-	AuthPassword  string
-	PrivProtocol  string
-	PrivPassword  string
-	ContextName   string
-	SecurityLevel string
-}
-
-// SNMPView is the SNMP settings read model (passwords masked).
+// SNMPView is the SNMP settings read model. It carries transport settings only:
+// credentials live in the device-credential vault, which has its own API
+// (#1799), and were never safe to return here.
 type SNMPView struct {
-	Communities   []string
-	V3Credentials []SNMPv3Credential
-	TimeoutMs     int
-	Retries       int
-	Port          int
+	TimeoutMs int
+	Retries   int
+	Port      int
 }
 
 // SNMPUpdate is the SNMP settings write model.
 type SNMPUpdate struct {
-	Communities   []string
-	V3Credentials []SNMPv3Credential
-	TimeoutMs     int
-	Retries       int
-	Port          int
+	TimeoutMs int
+	Retries   int
+	Port      int
 }
 
-// SNMP returns the SNMP settings with passwords masked — actual stored passwords
-// are never returned.
+// SNMP returns the SNMP transport settings.
 func (s *Service) SNMP() SNMPView {
 	var view SNMPView
 	s.store.Read(func(cfg *config.Config) {
-		creds := make([]SNMPv3Credential, len(cfg.SNMP.V3Credentials))
-		for i := range cfg.SNMP.V3Credentials {
-			c := &cfg.SNMP.V3Credentials[i]
-			creds[i] = SNMPv3Credential{
-				Name:          c.Name,
-				Username:      c.Username,
-				AuthProtocol:  c.AuthProtocol,
-				AuthPassword:  maskIfSet(c.AuthPassword),
-				PrivProtocol:  c.PrivProtocol,
-				PrivPassword:  maskIfSet(c.PrivPassword),
-				ContextName:   c.ContextName,
-				SecurityLevel: c.SecurityLevel,
-			}
-		}
 		view = SNMPView{
-			Communities:   cfg.SNMP.Communities,
-			V3Credentials: creds,
-			TimeoutMs:     int(cfg.SNMP.Timeout.Milliseconds()),
-			Retries:       cfg.SNMP.Retries,
-			Port:          cfg.SNMP.Port,
+			TimeoutMs: int(cfg.SNMP.Timeout.Milliseconds()),
+			Retries:   cfg.SNMP.Retries,
+			Port:      cfg.SNMP.Port,
 		}
 	})
 	return view
 }
 
-// UpdateSNMP encrypts any newly-supplied passwords (preserving stored ones sent as
-// the placeholder) and persists the settings. Encryption runs under the write
-// lock; the save happens after the lock is released. Returns ErrEncryptAuth /
-// ErrEncryptPriv when a password cannot be encrypted.
+// UpdateSNMP persists the SNMP transport settings.
 func (s *Service) UpdateSNMP(in SNMPUpdate) error {
 	return s.store.Write(func(cfg *config.Config) error {
-		creds := make([]config.SNMPv3Credential, len(in.V3Credentials))
-		for i := range in.V3Credentials {
-			var existing *config.SNMPv3Credential
-			if i < len(cfg.SNMP.V3Credentials) {
-				existing = &cfg.SNMP.V3Credentials[i]
-			}
-			converted, err := convertCredential(cfg, in.V3Credentials[i], existing)
-			if err != nil {
-				return err
-			}
-			creds[i] = converted
-		}
-		cfg.SNMP.Communities = in.Communities
-		cfg.SNMP.V3Credentials = creds
 		cfg.SNMP.Timeout = time.Duration(in.TimeoutMs) * time.Millisecond
 		cfg.SNMP.Retries = in.Retries
 		cfg.SNMP.Port = in.Port
 		return nil
 	})
-}
-
-// convertCredential maps a wire credential to config form, encrypting a freshly
-// supplied password and preserving the stored one when the placeholder is sent.
-func convertCredential(
-	cfg *config.Config, in SNMPv3Credential, existing *config.SNMPv3Credential,
-) (config.SNMPv3Credential, error) {
-	out := config.SNMPv3Credential{
-		Name:          in.Name,
-		Username:      in.Username,
-		AuthProtocol:  in.AuthProtocol,
-		PrivProtocol:  in.PrivProtocol,
-		ContextName:   in.ContextName,
-		SecurityLevel: in.SecurityLevel,
-	}
-
-	switch {
-	case in.AuthPassword != "" && in.AuthPassword != PasswordPlaceholder:
-		enc, err := cfg.EncryptCredentialValue(in.AuthPassword)
-		if err != nil {
-			return out, fmt.Errorf("%w: %w", ErrEncryptAuth, err)
-		}
-		out.AuthPassword = enc
-	case existing != nil:
-		out.AuthPassword = existing.AuthPassword
-	}
-
-	switch {
-	case in.PrivPassword != "" && in.PrivPassword != PasswordPlaceholder:
-		enc, err := cfg.EncryptCredentialValue(in.PrivPassword)
-		if err != nil {
-			return out, fmt.Errorf("%w: %w", ErrEncryptPriv, err)
-		}
-		out.PrivPassword = enc
-	case existing != nil:
-		out.PrivPassword = existing.PrivPassword
-	}
-
-	return out, nil
-}
-
-func maskIfSet(stored string) string {
-	if stored != "" {
-		return PasswordPlaceholder
-	}
-	return ""
 }
 
 // ---------------------------------------------------------------------------

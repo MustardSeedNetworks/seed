@@ -186,16 +186,13 @@ func TestCheckConfigWarningsAllMissing(t *testing.T) {
 		Auth: config.AuthConfig{
 			JWTSecret: "",
 		},
-		SNMP: config.SNMPConfig{
-			Communities: nil,
-		},
 	}
 
 	warnings := checkConfigWarnings(cfg)
 
-	// Should have 3 warnings
-	if len(warnings) != 3 {
-		t.Errorf("Expected 3 warnings, got %d: %v", len(warnings), warnings)
+	// Should have 2 warnings
+	if len(warnings) != 2 {
+		t.Errorf("Expected 2 warnings, got %d: %v", len(warnings), warnings)
 	}
 }
 
@@ -206,9 +203,6 @@ func TestCheckConfigWarningsNoneMissing(t *testing.T) {
 		},
 		Auth: config.AuthConfig{
 			JWTSecret: "secret",
-		},
-		SNMP: config.SNMPConfig{
-			Communities: []string{"public"},
 		},
 	}
 
@@ -236,15 +230,6 @@ func TestRedactSecretsComprehensive(t *testing.T) {
 				NVDAPIKey: "api-key-12345",
 			},
 		},
-		SNMP: config.SNMPConfig{
-			V3Credentials: []config.SNMPv3Credential{
-				{
-					Username:     "snmpuser",
-					AuthPassword: "auth-pass",
-					PrivPassword: "priv-pass",
-				},
-			},
-		},
 	}
 
 	redacted := redactSecrets(cfg)
@@ -260,16 +245,6 @@ func TestRedactSecretsComprehensive(t *testing.T) {
 	// Check security secrets are redacted
 	if redacted.Security.VulnerabilityScanning.NVDAPIKey != GetRedactedValue() {
 		t.Errorf("NVD API key should be redacted: got %q", redacted.Security.VulnerabilityScanning.NVDAPIKey)
-	}
-
-	// Check SNMP secrets are redacted
-	if len(redacted.SNMP.V3Credentials) > 0 {
-		if redacted.SNMP.V3Credentials[0].AuthPassword != GetRedactedValue() {
-			t.Errorf("SNMP auth password should be redacted: got %q", redacted.SNMP.V3Credentials[0].AuthPassword)
-		}
-		if redacted.SNMP.V3Credentials[0].PrivPassword != GetRedactedValue() {
-			t.Errorf("SNMP priv password should be redacted: got %q", redacted.SNMP.V3Credentials[0].PrivPassword)
-		}
 	}
 
 	// Check non-sensitive fields are preserved

@@ -106,9 +106,6 @@ func checkConfigWarnings(cfg *config.Config) []string {
 	if cfg.Auth.JWTSecret == "" {
 		warnings = append(warnings, "JWT secret not set (will be auto-generated)")
 	}
-	if len(cfg.SNMP.Communities) == 0 {
-		warnings = append(warnings, "no SNMP communities configured")
-	}
 
 	return warnings
 }

@@ -5,7 +5,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/MustardSeedNetworks/seed/internal/config"
 	"github.com/MustardSeedNetworks/seed/internal/protocols/snmp"
 )
 
@@ -509,8 +508,8 @@ func TestCollectMACEntriesDefaultType(t *testing.T) {
 func TestAllV3CredentialsFailThenV2cFails(t *testing.T) {
 	ctx := context.Background()
 
-	cfg := &config.SNMPConfig{
-		V3Credentials: []config.SNMPv3Credential{
+	cfg := &snmp.Session{
+		V3Credentials: []snmp.V3Credential{
 			{
 				Name:         "cred1",
 				Username:     "user1",
@@ -546,7 +545,7 @@ func TestContextDeadlineExceeded(t *testing.T) {
 	ctx, cancel := context.WithDeadline(context.Background(), time.Now().Add(-time.Second))
 	defer cancel()
 
-	cfg := &config.SNMPConfig{
+	cfg := &snmp.Session{
 		Communities: []string{"public"},
 		Port:        161,
 		Timeout:     time.Second,
@@ -564,8 +563,8 @@ func TestContextDeadlineExceeded(t *testing.T) {
 func TestEmptyV3CredentialsList(t *testing.T) {
 	ctx := context.Background()
 
-	cfg := &config.SNMPConfig{
-		V3Credentials: []config.SNMPv3Credential{}, // Empty v3
+	cfg := &snmp.Session{
+		V3Credentials: []snmp.V3Credential{}, // Empty v3
 		Communities:   []string{"public"},
 		Port:          161,
 		Timeout:       50 * time.Millisecond,
@@ -583,7 +582,7 @@ func TestEmptyV3CredentialsList(t *testing.T) {
 func TestNilV3Credentials(t *testing.T) {
 	ctx := context.Background()
 
-	cfg := &config.SNMPConfig{
+	cfg := &snmp.Session{
 		V3Credentials: nil, // Nil v3
 		Communities:   []string{"public"},
 		Port:          161,

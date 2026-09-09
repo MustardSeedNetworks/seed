@@ -105,14 +105,10 @@ func TestCheckConfigWarnings(t *testing.T) {
 				Auth: config.AuthConfig{
 					JWTSecret: "",
 				},
-				SNMP: config.SNMPConfig{
-					Communities: nil,
-				},
 			},
 			wantWarnings: []string{
 				"no default interface configured",
 				"JWT secret not set",
-				"no SNMP communities configured",
 			},
 		},
 		{
@@ -124,14 +120,10 @@ func TestCheckConfigWarnings(t *testing.T) {
 				Auth: config.AuthConfig{
 					JWTSecret: "super-secret-key",
 				},
-				SNMP: config.SNMPConfig{
-					Communities: []string{"public"},
-				},
 			},
 			wantNoWarning: []string{
 				"no default interface configured",
 				"JWT secret not set",
-				"no SNMP communities configured",
 			},
 		},
 		{
@@ -143,16 +135,12 @@ func TestCheckConfigWarnings(t *testing.T) {
 				Auth: config.AuthConfig{
 					JWTSecret: "secret",
 				},
-				SNMP: config.SNMPConfig{
-					Communities: []string{"public", "private"},
-				},
 			},
 			wantWarnings: []string{
 				"no default interface configured",
 			},
 			wantNoWarning: []string{
 				"JWT secret not set",
-				"no SNMP communities configured",
 			},
 		},
 		{
@@ -164,37 +152,12 @@ func TestCheckConfigWarnings(t *testing.T) {
 				Auth: config.AuthConfig{
 					JWTSecret: "",
 				},
-				SNMP: config.SNMPConfig{
-					Communities: []string{"community1"},
-				},
 			},
 			wantWarnings: []string{
 				"JWT secret not set",
 			},
 			wantNoWarning: []string{
 				"no default interface configured",
-				"no SNMP communities configured",
-			},
-		},
-		{
-			name: "only SNMP warning",
-			cfg: &config.Config{
-				Interface: config.InterfaceConfig{
-					Default: "enp0s3",
-				},
-				Auth: config.AuthConfig{
-					JWTSecret: "my-jwt-secret",
-				},
-				SNMP: config.SNMPConfig{
-					Communities: []string{},
-				},
-			},
-			wantWarnings: []string{
-				"no SNMP communities configured",
-			},
-			wantNoWarning: []string{
-				"no default interface configured",
-				"JWT secret not set",
 			},
 		},
 	}

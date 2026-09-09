@@ -10,7 +10,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/MustardSeedNetworks/seed/internal/config"
 	"github.com/MustardSeedNetworks/seed/internal/logging"
 	"github.com/MustardSeedNetworks/seed/internal/protocols/snmp"
 )
@@ -146,12 +145,12 @@ type SNMPRoute struct {
 
 // SNMPCollector collects extended SNMP data from network devices.
 //
-// config holds the credentials for one Collect and is nil on the shared
+// session holds the credentials for one Collect and is nil on the shared
 // collector: they are decrypted from the vault per device (#2118) and must not
 // outlive the exchange that uses them.
 type SNMPCollector struct {
 	creds     SNMPCredentialProvider
-	config    *config.SNMPConfig
+	session   *snmp.Session
 	mibConfig SNMPMIBSelection
 	timeout   time.Duration
 }
@@ -182,7 +181,7 @@ func (c *SNMPCollector) Collect(ctx context.Context, ip string) (*SNMPFullData, 
 	if c.creds == nil {
 		return nil, errors.New("SNMP credential provider is nil")
 	}
-	cfg, err := c.creds.SNMPConfig(ctx)
+	cfg, err := c.creds.SNMPSession(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("resolve SNMP credentials: %w", err)
 	}
@@ -190,7 +189,7 @@ func (c *SNMPCollector) Collect(ctx context.Context, ip string) (*SNMPFullData, 
 	// exchange resolved. A value copy binds them to it without a shared
 	// mutable field that a second Collect could overwrite mid-walk.
 	run := *c
-	run.config = cfg
+	run.session = cfg
 
 	data := &SNMPFullData{
 		CollectedAt: time.Now(),
@@ -292,7 +291,7 @@ func (c *SNMPCollector) collectAndStoreSystem(
 	data *SNMPFullData,
 	mu *sync.Mutex,
 ) {
-	sysInfo, err := snmp.GetSystemInfo(ctx, ip, c.config)
+	sysInfo, err := snmp.GetSystemInfo(ctx, ip, c.session)
 	mu.Lock()
 	defer mu.Unlock()
 	if err != nil {

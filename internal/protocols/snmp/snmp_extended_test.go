@@ -7,7 +7,6 @@ import (
 
 	"github.com/gosnmp/gosnmp"
 
-	"github.com/MustardSeedNetworks/seed/internal/config"
 	"github.com/MustardSeedNetworks/seed/internal/protocols/snmp"
 )
 
@@ -232,12 +231,12 @@ func TestSecurityLevelMappings(t *testing.T) {
 
 	tests := []struct {
 		name string
-		cfg  *config.SNMPConfig
+		cfg  *snmp.Session
 	}{
 		{
 			name: "authNoPriv configuration",
-			cfg: &config.SNMPConfig{
-				V3Credentials: []config.SNMPv3Credential{
+			cfg: &snmp.Session{
+				V3Credentials: []snmp.V3Credential{
 					{
 						Name:          "authNoPriv",
 						Username:      "user1",
@@ -255,8 +254,8 @@ func TestSecurityLevelMappings(t *testing.T) {
 		},
 		{
 			name: "noAuthNoPriv configuration",
-			cfg: &config.SNMPConfig{
-				V3Credentials: []config.SNMPv3Credential{
+			cfg: &snmp.Session{
+				V3Credentials: []snmp.V3Credential{
 					{
 						Name:          "noAuthNoPriv",
 						Username:      "user1",
@@ -274,8 +273,8 @@ func TestSecurityLevelMappings(t *testing.T) {
 		},
 		{
 			name: "authPriv configuration with AES192C",
-			cfg: &config.SNMPConfig{
-				V3Credentials: []config.SNMPv3Credential{
+			cfg: &snmp.Session{
+				V3Credentials: []snmp.V3Credential{
 					{
 						Name:          "authPrivAES192C",
 						Username:      "user1",
@@ -328,7 +327,7 @@ func TestGetVendorVersionNilConfig(t *testing.T) {
 func TestQueryMultipleNilOids(t *testing.T) {
 	ctx := context.Background()
 
-	cfg := &config.SNMPConfig{
+	cfg := &snmp.Session{
 		Communities: []string{"public"},
 		Port:        161,
 		Timeout:     100 * time.Millisecond,
@@ -1806,7 +1805,7 @@ func TestFormatIPv6FromOctetsExtended(t *testing.T) {
 func TestGetMaxRepetitionsExtended(t *testing.T) {
 	tests := []struct {
 		name string
-		cfg  *config.SNMPConfig
+		cfg  *snmp.Session
 		want uint32
 	}{
 		{
@@ -1816,22 +1815,22 @@ func TestGetMaxRepetitionsExtended(t *testing.T) {
 		},
 		{
 			name: "zero value returns default",
-			cfg:  &config.SNMPConfig{MaxRepetitions: 0},
+			cfg:  &snmp.Session{MaxRepetitions: 0},
 			want: 10, // defaultMaxRepetitions
 		},
 		{
 			name: "small value returned as-is",
-			cfg:  &config.SNMPConfig{MaxRepetitions: 15},
+			cfg:  &snmp.Session{MaxRepetitions: 15},
 			want: 15,
 		},
 		{
 			name: "value at max",
-			cfg:  &config.SNMPConfig{MaxRepetitions: 50},
+			cfg:  &snmp.Session{MaxRepetitions: 50},
 			want: 50, // maxAllowedRepetitions
 		},
 		{
 			name: "value over max capped",
-			cfg:  &config.SNMPConfig{MaxRepetitions: 150},
+			cfg:  &snmp.Session{MaxRepetitions: 150},
 			want: 50, // maxAllowedRepetitions
 		},
 	}
@@ -1917,7 +1916,7 @@ func TestContextCanceledQuery(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	cancel() // Cancel immediately
 
-	cfg := &config.SNMPConfig{
+	cfg := &snmp.Session{
 		Communities: []string{"public"},
 		Timeout:     1,
 		Retries:     0,
@@ -1934,7 +1933,7 @@ func TestContextCanceledGetSystemInfo(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	cancel()
 
-	cfg := &config.SNMPConfig{
+	cfg := &snmp.Session{
 		Communities: []string{"public"},
 		Timeout:     1,
 		Retries:     0,
@@ -1949,9 +1948,9 @@ func TestContextCanceledGetSystemInfo(t *testing.T) {
 // TestEmptyCommunitiesAndCredentials tests functions with empty communities and credentials.
 func TestEmptyCommunitiesAndCredentials(t *testing.T) {
 	ctx := context.Background()
-	cfg := &config.SNMPConfig{
+	cfg := &snmp.Session{
 		Communities:   []string{},
-		V3Credentials: []config.SNMPv3Credential{},
+		V3Credentials: []snmp.V3Credential{},
 		Timeout:       1,
 		Retries:       0,
 	}

@@ -25,7 +25,6 @@ func DefaultConfig() *Config {
 		},
 		NetworkDiscovery: defaultNetworkDiscoveryConfig(),
 		SNMP: SNMPConfig{
-			Communities:    []string{"public"},
 			Timeout:        defaultSNMPTimeoutSec * time.Second,
 			Retries:        defaultSNMPRetries,
 			Port:           defaultSNMPPort,

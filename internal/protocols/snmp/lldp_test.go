@@ -5,7 +5,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/MustardSeedNetworks/seed/internal/config"
 	"github.com/MustardSeedNetworks/seed/internal/protocols/snmp"
 )
 
@@ -283,7 +282,7 @@ func TestGetLLDPNeighbors(t *testing.T) {
 	tests := []struct {
 		name    string
 		ip      string
-		cfg     *config.SNMPConfig
+		cfg     *snmp.Session
 		wantErr bool
 	}{
 		{
@@ -295,7 +294,7 @@ func TestGetLLDPNeighbors(t *testing.T) {
 		{
 			name: "unreachable host",
 			ip:   "192.0.2.1",
-			cfg: &config.SNMPConfig{
+			cfg: &snmp.Session{
 				Communities: []string{"public"},
 				Port:        161,
 				Timeout:     100 * time.Millisecond,

@@ -6,19 +6,7 @@
  * docs/schemas/api/; the Go DTO source lives at internal/api/.
  */
 export interface SNMPSettingsResponse {
-  communities: string[];
-  v3Credentials: SNMPv3CredentialResponse[];
   timeout: number;
   retries: number;
   port: number;
-}
-export interface SNMPv3CredentialResponse {
-  name: string;
-  username: string;
-  authProtocol: string;
-  authPassword: string;
-  privProtocol: string;
-  privPassword: string;
-  contextName: string;
-  securityLevel: string;
 }

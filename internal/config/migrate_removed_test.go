@@ -90,8 +90,9 @@ func TestLoadConfigRejectsUnknownKey(t *testing.T) {
 	}
 }
 
-// TestRemovedKeysAreStripped names the two keys that block a v0.200.0 upgrade,
-// so a future change that drops the table fails here rather than in the field.
+// TestRemovedKeysAreStripped names every key that blocks an upgrade from a
+// released version, so a future change that drops the table fails here rather
+// than in the field.
 //
 // The companion is TestLoadRejectsRemovedTLSServerSettings in tls_config_test.go:
 // `server.https: false` must still be fatal. Stripping a key is only right when
@@ -108,6 +109,16 @@ func TestRemovedKeysAreStripped(t *testing.T) {
 		{
 			name:     "server.https when it is already satisfied",
 			document: map[string]any{"server": map[string]any{"https": true}},
+		},
+		{
+			name:     "snmp.communities, now the vault's",
+			document: map[string]any{"snmp": map[string]any{"communities": []any{"public"}}},
+		},
+		{
+			name: "snmp.v3_credentials, now the vault's",
+			document: map[string]any{"snmp": map[string]any{
+				"v3_credentials": []any{map[string]any{"name": "lab", "username": "operator"}},
+			}},
 		},
 	} {
 		t.Run(tc.name, func(t *testing.T) {

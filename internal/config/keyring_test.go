@@ -24,20 +24,32 @@ func newKeyedConfig(t *testing.T, dir string) *config.Config {
 	return cfg
 }
 
+// keyringOf returns the config's credential keyring, which is the path
+// production takes: the vault and the SNMP resolver both encrypt and decrypt
+// through it.
+func keyringOf(t *testing.T, cfg *config.Config) *config.Keyring {
+	t.Helper()
+	kr, err := cfg.CredentialKeyring()
+	if err != nil {
+		t.Fatalf("CredentialKeyring failed: %v", err)
+	}
+	return kr
+}
+
 func TestCredentialKeyringRoundtrip(t *testing.T) {
 	cfg := newKeyedConfig(t, t.TempDir())
 
-	enc, err := cfg.EncryptCredentialValue("s3cr3t-snmp-pass")
+	enc, err := keyringOf(t, cfg).EncryptValue("s3cr3t-snmp-pass")
 	if err != nil {
-		t.Fatalf("EncryptCredentialValue failed: %v", err)
+		t.Fatalf("EncryptValue failed: %v", err)
 	}
 	if !strings.HasPrefix(enc, versionedPrefix) {
 		t.Fatalf("ciphertext should carry versioned prefix %q, got %q", versionedPrefix, enc)
 	}
 
-	got, err := cfg.DecryptSNMPPassword(enc)
+	got, err := keyringOf(t, cfg).DecryptValue(enc)
 	if err != nil {
-		t.Fatalf("DecryptSNMPPassword failed: %v", err)
+		t.Fatalf("DecryptValue failed: %v", err)
 	}
 	if got != "s3cr3t-snmp-pass" {
 		t.Fatalf("roundtrip mismatch: got %q", got)
@@ -50,14 +62,14 @@ func TestCredentialKeyringPersistsAcrossReload(t *testing.T) {
 	dir := t.TempDir()
 	cfg1 := newKeyedConfig(t, dir)
 
-	enc, err := cfg1.EncryptCredentialValue("persist-me")
+	enc, err := keyringOf(t, cfg1).EncryptValue("persist-me")
 	if err != nil {
 		t.Fatalf("encrypt failed: %v", err)
 	}
 
 	// A fresh Config pointed at the same dir must decrypt the prior ciphertext.
 	cfg2 := newKeyedConfig(t, dir)
-	got, err := cfg2.DecryptSNMPPassword(enc)
+	got, err := keyringOf(t, cfg2).DecryptValue(enc)
 	if err != nil {
 		t.Fatalf("decrypt after reload failed: %v", err)
 	}
@@ -86,7 +98,7 @@ func TestCredentialEncryptionDecoupledFromJWT(t *testing.T) {
 	dir := t.TempDir()
 	cfg := newKeyedConfig(t, dir)
 
-	enc, err := cfg.EncryptCredentialValue("decoupled")
+	enc, err := keyringOf(t, cfg).EncryptValue("decoupled")
 	if err != nil {
 		t.Fatalf("encrypt failed: %v", err)
 	}
@@ -94,7 +106,7 @@ func TestCredentialEncryptionDecoupledFromJWT(t *testing.T) {
 	// Rotate the JWT signing secret — a routine auth operation.
 	cfg.Auth.JWTSecret = "a-completely-different-rotated-jwt-secret"
 
-	got, err := cfg.DecryptSNMPPassword(enc)
+	got, err := keyringOf(t, cfg).DecryptValue(enc)
 	if err != nil {
 		t.Fatalf("decrypt after JWT rotation failed (still coupled?): %v", err)
 	}
@@ -115,7 +127,7 @@ func TestCredentialKeyEnvOverride(t *testing.T) {
 	t.Setenv("SEED_CREDENTIAL_KEY", base64.StdEncoding.EncodeToString(master))
 
 	cfg := newKeyedConfig(t, dir)
-	enc, err := cfg.EncryptCredentialValue("byo-kms")
+	enc, err := keyringOf(t, cfg).EncryptValue("byo-kms")
 	if err != nil {
 		t.Fatalf("encrypt failed: %v", err)
 	}
@@ -137,7 +149,7 @@ func TestCredentialKeyEnvOverride(t *testing.T) {
 
 	// Reload from env + on-disk salts must still decrypt.
 	cfg2 := newKeyedConfig(t, dir)
-	got, err := cfg2.DecryptSNMPPassword(enc)
+	got, err := keyringOf(t, cfg2).DecryptValue(enc)
 	if err != nil {
 		t.Fatalf("decrypt after env reload failed: %v", err)
 	}

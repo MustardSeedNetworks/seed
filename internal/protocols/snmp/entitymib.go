@@ -9,7 +9,6 @@ import (
 
 	"github.com/gosnmp/gosnmp"
 
-	"github.com/MustardSeedNetworks/seed/internal/config"
 	"github.com/MustardSeedNetworks/seed/internal/logging"
 )
 
@@ -59,14 +58,14 @@ type PhysicalEntity struct {
 func GetPhysicalEntities(
 	ctx context.Context,
 	ip string,
-	cfg *config.SNMPConfig,
+	cfg *Session,
 ) ([]PhysicalEntity, error) {
 	if cfg == nil {
 		return nil, errors.New("SNMP config is nil")
 	}
 
 	return sweepCredentials(ctx, cfg, "failed to query ENTITY-MIB with all configured credentials",
-		func(cred *config.SNMPv3Credential) ([]PhysicalEntity, error) {
+		func(cred *V3Credential) ([]PhysicalEntity, error) {
 			return walkEntityTableV3(ctx, ip, cred, cfg)
 		},
 		func(community string) ([]PhysicalEntity, error) {
@@ -79,7 +78,7 @@ func GetPhysicalEntities(
 func walkEntityTable(
 	ctx context.Context,
 	ip, community string,
-	cfg *config.SNMPConfig,
+	cfg *Session,
 ) ([]PhysicalEntity, error) {
 	params, err := newV2cWalkClient(ctx, ip, community, cfg)
 	if err != nil {
@@ -94,8 +93,8 @@ func walkEntityTable(
 func walkEntityTableV3(
 	ctx context.Context,
 	ip string,
-	cred *config.SNMPv3Credential,
-	cfg *config.SNMPConfig,
+	cred *V3Credential,
+	cfg *Session,
 ) ([]PhysicalEntity, error) {
 	params, err := newV3WalkClient(ctx, ip, cred, cfg)
 	if err != nil {
@@ -256,7 +255,7 @@ func parseEntityClass(value string) string {
 func GetChassisInfo(
 	ctx context.Context,
 	ip string,
-	cfg *config.SNMPConfig,
+	cfg *Session,
 ) (*PhysicalEntity, error) {
 	entities, err := GetPhysicalEntities(ctx, ip, cfg)
 	if err != nil {
@@ -279,7 +278,7 @@ func GetChassisInfo(
 }
 
 // GetModules retrieves all module entities (class=module).
-func GetModules(ctx context.Context, ip string, cfg *config.SNMPConfig) ([]PhysicalEntity, error) {
+func GetModules(ctx context.Context, ip string, cfg *Session) ([]PhysicalEntity, error) {
 	entities, err := GetPhysicalEntities(ctx, ip, cfg)
 	if err != nil {
 		return nil, err
@@ -299,7 +298,7 @@ func GetModules(ctx context.Context, ip string, cfg *config.SNMPConfig) ([]Physi
 func GetPowerSupplies(
 	ctx context.Context,
 	ip string,
-	cfg *config.SNMPConfig,
+	cfg *Session,
 ) ([]PhysicalEntity, error) {
 	entities, err := GetPhysicalEntities(ctx, ip, cfg)
 	if err != nil {
@@ -317,7 +316,7 @@ func GetPowerSupplies(
 }
 
 // GetFans retrieves all fan entities.
-func GetFans(ctx context.Context, ip string, cfg *config.SNMPConfig) ([]PhysicalEntity, error) {
+func GetFans(ctx context.Context, ip string, cfg *Session) ([]PhysicalEntity, error) {
 	entities, err := GetPhysicalEntities(ctx, ip, cfg)
 	if err != nil {
 		return nil, err

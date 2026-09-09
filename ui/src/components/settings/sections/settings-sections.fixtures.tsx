@@ -52,26 +52,6 @@ export interface MixedSectionFixture extends SectionFixture {
   alsoUsable?: RegExp[];
 }
 
-/**
- * One SNMPv3 credential, so the credential row renders. Its accordion header is
- * a `<div role="button">` — the row that named it a "non-form clickable the
- * fieldset would never catch" read it as a missed write control; it is a read
- * (expand/collapse), and it cannot become a real `<button>` because it contains
- * one. Leaving it enabled is correct and is asserted below; the Remove button
- * inside it is the write, and the fieldset does disable that.
- */
-const V3_CREDENTIAL = {
-  id: 'cred-1',
-  name: 'lab-v3',
-  username: 'operator',
-  authProtocol: 'SHA',
-  authPassword: '',
-  privProtocol: 'AES',
-  privPassword: '',
-  contextName: '',
-  securityLevel: 'authPriv',
-};
-
 export const noop = (): void => undefined;
 const ipSettings: IpSettings = {
   mode: 'dhcp',
@@ -195,7 +175,6 @@ export const MIXED_SECTIONS: MixedSectionFixture[] = [
     name: 'DiscoverySettings',
     header: /^discovery$/i,
     readControl: /^refresh$/i,
-    alsoUsable: [/lab-v3/],
     render: () => (
       <DiscoverySettings
         networkDiscoverySettings={DEFAULT_NETWORK_DISCOVERY_SETTINGS}
@@ -212,7 +191,7 @@ export const MIXED_SECTIONS: MixedSectionFixture[] = [
         addSubnet={noop}
         toggleSubnet={noop}
         deleteSubnet={noop}
-        snmpSettings={{ ...DEFAULT_SNMP_SETTINGS, v3Credentials: [V3_CREDENTIAL] }}
+        snmpSettings={DEFAULT_SNMP_SETTINGS}
         setSnmpSettings={noop}
         snmpStatus="idle"
         cardSettings={DEFAULT_CARD_SETTINGS}

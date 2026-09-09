@@ -354,9 +354,3 @@ func parseVersioned(s string) (int, string, bool) {
 	}
 	return n, rest[idx+1:], true
 }
-
-// isVersionedCiphertext reports whether value uses the versioned DEK format.
-func isVersionedCiphertext(value string) bool {
-	_, _, ok := parseVersioned(value)
-	return ok
-}

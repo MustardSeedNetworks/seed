@@ -9,13 +9,12 @@ import (
 
 	"github.com/gosnmp/gosnmp"
 
-	"github.com/MustardSeedNetworks/seed/internal/config"
 	"github.com/MustardSeedNetworks/seed/internal/logging"
 )
 
 // GetMACTable retrieves the MAC address table from a device.
 // It tries Q-BRIDGE-MIB first (VLAN-aware), then falls back to BRIDGE-MIB.
-func GetMACTable(ctx context.Context, ip string, cfg *config.SNMPConfig) ([]MACEntry, error) {
+func GetMACTable(ctx context.Context, ip string, cfg *Session) ([]MACEntry, error) {
 	if cfg == nil {
 		return nil, errors.New("SNMP config is nil")
 	}
@@ -35,10 +34,10 @@ func GetMACTable(ctx context.Context, ip string, cfg *config.SNMPConfig) ([]MACE
 func getMACTableQBridge(
 	ctx context.Context,
 	ip string,
-	cfg *config.SNMPConfig,
+	cfg *Session,
 ) ([]MACEntry, error) {
 	return sweepCredentials(ctx, cfg, "failed to query Q-BRIDGE MAC table with all configured credentials",
-		func(cred *config.SNMPv3Credential) ([]MACEntry, error) {
+		func(cred *V3Credential) ([]MACEntry, error) {
 			return walkMACTableQBridgeV3(ctx, ip, cred, cfg)
 		},
 		func(community string) ([]MACEntry, error) {
@@ -49,9 +48,9 @@ func getMACTableQBridge(
 
 // getMACTableBridge retrieves MAC table using BRIDGE-MIB (non-VLAN-aware).
 // Security: SNMPv3 is preferred over v2c when both are configured.
-func getMACTableBridge(ctx context.Context, ip string, cfg *config.SNMPConfig) ([]MACEntry, error) {
+func getMACTableBridge(ctx context.Context, ip string, cfg *Session) ([]MACEntry, error) {
 	return sweepCredentials(ctx, cfg, "failed to query BRIDGE MAC table with all configured credentials",
-		func(cred *config.SNMPv3Credential) ([]MACEntry, error) {
+		func(cred *V3Credential) ([]MACEntry, error) {
 			return walkMACTableBridgeV3(ctx, ip, cred, cfg)
 		},
 		func(community string) ([]MACEntry, error) {
@@ -64,7 +63,7 @@ func getMACTableBridge(ctx context.Context, ip string, cfg *config.SNMPConfig) (
 func walkMACTableQBridge(
 	ctx context.Context,
 	ip, community string,
-	cfg *config.SNMPConfig,
+	cfg *Session,
 ) ([]MACEntry, error) {
 	params, err := newV2cWalkClient(ctx, ip, community, cfg)
 	if err != nil {
@@ -79,8 +78,8 @@ func walkMACTableQBridge(
 func walkMACTableQBridgeV3(
 	ctx context.Context,
 	ip string,
-	cred *config.SNMPv3Credential,
-	cfg *config.SNMPConfig,
+	cred *V3Credential,
+	cfg *Session,
 ) ([]MACEntry, error) {
 	params, err := newV3WalkClient(ctx, ip, cred, cfg)
 	if err != nil {
@@ -221,7 +220,7 @@ func collectMACEntries(macToEntry map[string]*MACEntry) []MACEntry {
 func walkMACTableBridge(
 	ctx context.Context,
 	ip, community string,
-	cfg *config.SNMPConfig,
+	cfg *Session,
 ) ([]MACEntry, error) {
 	params, err := newV2cWalkClient(ctx, ip, community, cfg)
 	if err != nil {
@@ -236,8 +235,8 @@ func walkMACTableBridge(
 func walkMACTableBridgeV3(
 	ctx context.Context,
 	ip string,
-	cred *config.SNMPv3Credential,
-	cfg *config.SNMPConfig,
+	cred *V3Credential,
+	cfg *Session,
 ) ([]MACEntry, error) {
 	params, err := newV3WalkClient(ctx, ip, cred, cfg)
 	if err != nil {

@@ -10,7 +10,6 @@ import (
 
 	"github.com/gosnmp/gosnmp"
 
-	"github.com/MustardSeedNetworks/seed/internal/config"
 	"github.com/MustardSeedNetworks/seed/internal/logging"
 )
 
@@ -131,7 +130,7 @@ func GetInterfaceInfo(
 	ctx context.Context,
 	ip string,
 	ifIndex int,
-	cfg *config.SNMPConfig,
+	cfg *Session,
 ) (*InterfaceInfo, error) {
 	if cfg == nil {
 		return nil, errors.New("SNMP config is nil")
@@ -197,14 +196,14 @@ func GetInterfaceInfo(
 func GetAllInterfaces(
 	ctx context.Context,
 	ip string,
-	cfg *config.SNMPConfig,
+	cfg *Session,
 ) ([]InterfaceInfo, error) {
 	if cfg == nil {
 		return nil, errors.New("SNMP config is nil")
 	}
 
 	return sweepCredentials(ctx, cfg, "failed to query interfaces with all configured credentials",
-		func(cred *config.SNMPv3Credential) ([]InterfaceInfo, error) {
+		func(cred *V3Credential) ([]InterfaceInfo, error) {
 			return walkInterfacesV3(ctx, ip, cred, cfg)
 		},
 		func(community string) ([]InterfaceInfo, error) {
@@ -217,7 +216,7 @@ func GetAllInterfaces(
 func walkInterfaces(
 	ctx context.Context,
 	ip, community string,
-	cfg *config.SNMPConfig,
+	cfg *Session,
 ) ([]InterfaceInfo, error) {
 	params, err := newV2cWalkClient(ctx, ip, community, cfg)
 	if err != nil {
@@ -232,8 +231,8 @@ func walkInterfaces(
 func walkInterfacesV3(
 	ctx context.Context,
 	ip string,
-	cred *config.SNMPv3Credential,
-	cfg *config.SNMPConfig,
+	cred *V3Credential,
+	cfg *Session,
 ) ([]InterfaceInfo, error) {
 	params, err := newV3WalkClient(ctx, ip, cred, cfg)
 	if err != nil {

@@ -1369,18 +1369,6 @@
     },
     "SNMPConfig": {
       "properties": {
-        "communities": {
-          "items": {
-            "type": "string"
-          },
-          "type": "array"
-        },
-        "v3_credentials": {
-          "items": {
-            "$ref": "#/$defs/SNMPv3Credential"
-          },
-          "type": "array"
-        },
         "timeout": {
           "type": "integer"
         },
@@ -1397,51 +1385,10 @@
       "additionalProperties": false,
       "type": "object",
       "required": [
-        "communities",
         "timeout",
         "retries",
         "port",
         "max_repetitions"
-      ]
-    },
-    "SNMPv3Credential": {
-      "properties": {
-        "name": {
-          "type": "string"
-        },
-        "username": {
-          "type": "string"
-        },
-        "auth_protocol": {
-          "type": "string"
-        },
-        "auth_password": {
-          "type": "string"
-        },
-        "priv_protocol": {
-          "type": "string"
-        },
-        "priv_password": {
-          "type": "string"
-        },
-        "context_name": {
-          "type": "string"
-        },
-        "security_level": {
-          "type": "string"
-        }
-      },
-      "additionalProperties": false,
-      "type": "object",
-      "required": [
-        "name",
-        "username",
-        "auth_protocol",
-        "auth_password",
-        "priv_protocol",
-        "priv_password",
-        "context_name",
-        "security_level"
       ]
     },
     "SQLEndpoint": {

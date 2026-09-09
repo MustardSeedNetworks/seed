@@ -31,56 +31,22 @@ func newService(t *testing.T) (*settings.Service, *config.Config, *fakeDetector)
 	return settings.NewService(&fakeStore{cfg: cfg}, det), cfg, det
 }
 
-func TestSNMPMasksStoredPasswords(t *testing.T) {
+// TestSNMPRoundTripsTransportOnly is the shape #1799 leaves behind: the SNMP
+// settings surface carries port, timeout and retries and nothing a secret could
+// hide in.
+func TestSNMPRoundTripsTransportOnly(t *testing.T) {
 	svc, cfg, _ := newService(t)
-	cfg.SNMP.V3Credentials = []config.SNMPv3Credential{
-		{Name: "c1", Username: "u", AuthPassword: "stored-enc", PrivPassword: ""},
+
+	if err := svc.UpdateSNMP(settings.SNMPUpdate{TimeoutMs: 2000, Retries: 3, Port: 1610}); err != nil {
+		t.Fatalf("UpdateSNMP: %v", err)
 	}
+	if cfg.SNMP.Timeout != 2*time.Second || cfg.SNMP.Retries != 3 || cfg.SNMP.Port != 1610 {
+		t.Errorf("transport fields not applied: %+v", cfg.SNMP)
+	}
+
 	view := svc.SNMP()
-	if len(view.V3Credentials) != 1 {
-		t.Fatalf("want 1 credential, got %d", len(view.V3Credentials))
-	}
-	if view.V3Credentials[0].AuthPassword != settings.PasswordPlaceholder {
-		t.Errorf("stored auth password should be masked, got %q", view.V3Credentials[0].AuthPassword)
-	}
-	if view.V3Credentials[0].PrivPassword != "" {
-		t.Errorf("absent priv password should stay empty, got %q", view.V3Credentials[0].PrivPassword)
-	}
-}
-
-func TestUpdateSNMPEncryptsNewPassword(t *testing.T) {
-	svc, cfg, _ := newService(t)
-	err := svc.UpdateSNMP(settings.SNMPUpdate{
-		Communities:   []string{"public"},
-		V3Credentials: []settings.SNMPv3Credential{{Name: "c1", Username: "u", AuthPassword: "secret"}},
-		TimeoutMs:     2000,
-		Retries:       3,
-		Port:          161,
-	})
-	if err != nil {
-		t.Fatalf("UpdateSNMP: %v", err)
-	}
-	stored := cfg.SNMP.V3Credentials[0].AuthPassword
-	if stored == "" || stored == "secret" {
-		t.Errorf("auth password should be encrypted, got %q", stored)
-	}
-	if cfg.SNMP.Timeout != 2*time.Second || cfg.SNMP.Port != 161 {
-		t.Errorf("scalar fields not applied: %+v", cfg.SNMP)
-	}
-}
-
-func TestUpdateSNMPPlaceholderPreservesStored(t *testing.T) {
-	svc, cfg, _ := newService(t)
-	cfg.SNMP.V3Credentials = []config.SNMPv3Credential{{Name: "c1", AuthPassword: "already-enc"}}
-
-	err := svc.UpdateSNMP(settings.SNMPUpdate{
-		V3Credentials: []settings.SNMPv3Credential{{Name: "c1", AuthPassword: settings.PasswordPlaceholder}},
-	})
-	if err != nil {
-		t.Fatalf("UpdateSNMP: %v", err)
-	}
-	if cfg.SNMP.V3Credentials[0].AuthPassword != "already-enc" {
-		t.Errorf("placeholder should preserve stored password, got %q", cfg.SNMP.V3Credentials[0].AuthPassword)
+	if view.TimeoutMs != 2000 || view.Retries != 3 || view.Port != 1610 {
+		t.Errorf("read model does not match what was written: %+v", view)
 	}
 }
 

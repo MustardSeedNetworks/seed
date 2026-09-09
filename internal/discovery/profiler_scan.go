@@ -307,7 +307,7 @@ func (p *DeviceProfiler) probeSNMP(ctx context.Context, ip string) *SNMPInfo {
 		logging.GetLogger().DebugContext(ctx, "SNMP probe skipped - no credential source", "ip", ip)
 		return nil
 	}
-	snmpCfg, err := p.snmpCreds.SNMPConfig(ctx)
+	snmpCfg, err := p.snmpCreds.SNMPSession(ctx)
 	if err != nil {
 		logging.GetLogger().WarnContext(ctx,
 			"SNMP probe skipped - credentials unresolved", "ip", ip, "error", err)

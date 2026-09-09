@@ -5,7 +5,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/MustardSeedNetworks/seed/internal/config"
 	"github.com/MustardSeedNetworks/seed/internal/protocols/snmp"
 )
 
@@ -17,7 +16,7 @@ func TestGetInterfaceInfo(t *testing.T) {
 		name    string
 		ip      string
 		ifIndex int
-		cfg     *config.SNMPConfig
+		cfg     *snmp.Session
 		wantErr bool
 	}{
 		{
@@ -31,7 +30,7 @@ func TestGetInterfaceInfo(t *testing.T) {
 			name:    "unreachable host",
 			ip:      "192.0.2.1",
 			ifIndex: 1,
-			cfg: &config.SNMPConfig{
+			cfg: &snmp.Session{
 				Communities: []string{"public"},
 				Port:        161,
 				Timeout:     100 * time.Millisecond,
@@ -43,9 +42,9 @@ func TestGetInterfaceInfo(t *testing.T) {
 			name:    "empty communities and credentials",
 			ip:      "192.168.1.1",
 			ifIndex: 1,
-			cfg: &config.SNMPConfig{
+			cfg: &snmp.Session{
 				Communities:   []string{},
-				V3Credentials: []config.SNMPv3Credential{},
+				V3Credentials: []snmp.V3Credential{},
 				Port:          161,
 				Timeout:       time.Second,
 				Retries:       1,
@@ -56,7 +55,7 @@ func TestGetInterfaceInfo(t *testing.T) {
 			name:    "multiple communities all fail",
 			ip:      "192.0.2.1",
 			ifIndex: 1,
-			cfg: &config.SNMPConfig{
+			cfg: &snmp.Session{
 				Communities: []string{"public", "private", "secret"},
 				Port:        161,
 				Timeout:     100 * time.Millisecond,
@@ -68,8 +67,8 @@ func TestGetInterfaceInfo(t *testing.T) {
 			name:    "v3 credentials unreachable",
 			ip:      "192.0.2.1",
 			ifIndex: 1,
-			cfg: &config.SNMPConfig{
-				V3Credentials: []config.SNMPv3Credential{
+			cfg: &snmp.Session{
+				V3Credentials: []snmp.V3Credential{
 					{
 						Name:         "test",
 						Username:     "testuser",
@@ -112,7 +111,7 @@ func TestGetPortVLANs(t *testing.T) {
 		name    string
 		ip      string
 		ifIndex int
-		cfg     *config.SNMPConfig
+		cfg     *snmp.Session
 		wantErr bool
 	}{
 		{
@@ -126,7 +125,7 @@ func TestGetPortVLANs(t *testing.T) {
 			name:    "unreachable host",
 			ip:      "192.0.2.1",
 			ifIndex: 1,
-			cfg: &config.SNMPConfig{
+			cfg: &snmp.Session{
 				Communities: []string{"public"},
 				Port:        161,
 				Timeout:     100 * time.Millisecond,
@@ -138,7 +137,7 @@ func TestGetPortVLANs(t *testing.T) {
 			name:    "empty communities",
 			ip:      "192.168.1.1",
 			ifIndex: 1,
-			cfg: &config.SNMPConfig{
+			cfg: &snmp.Session{
 				Communities: []string{},
 				Port:        161,
 				Timeout:     time.Second,
@@ -150,8 +149,8 @@ func TestGetPortVLANs(t *testing.T) {
 			name:    "v3 with empty username",
 			ip:      "192.0.2.1",
 			ifIndex: 1,
-			cfg: &config.SNMPConfig{
-				V3Credentials: []config.SNMPv3Credential{
+			cfg: &snmp.Session{
+				V3Credentials: []snmp.V3Credential{
 					{
 						Name:         "empty-user",
 						Username:     "",
@@ -189,7 +188,7 @@ func TestContextCancellationAllFunctions(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	cancel() // Cancel immediately
 
-	cfg := &config.SNMPConfig{
+	cfg := &snmp.Session{
 		Communities: []string{"public"},
 		Port:        161,
 		Timeout:     time.Second,
@@ -248,7 +247,7 @@ func TestContextTimeoutFunctions(t *testing.T) {
 	// Allow context to expire
 	time.Sleep(5 * time.Millisecond)
 
-	cfg := &config.SNMPConfig{
+	cfg := &snmp.Session{
 		Communities: []string{"public"},
 		Port:        161,
 		Timeout:     time.Second,
@@ -267,8 +266,8 @@ func TestV3CredentialsFallback(t *testing.T) {
 
 	// Config with both v3 credentials (that fail) and v2c communities (that also fail)
 	// This tests that the code iterates through all options
-	cfg := &config.SNMPConfig{
-		V3Credentials: []config.SNMPv3Credential{
+	cfg := &snmp.Session{
+		V3Credentials: []snmp.V3Credential{
 			{
 				Name:         "cred1",
 				Username:     "user1",
@@ -301,7 +300,7 @@ func TestV3CredentialsFallback(t *testing.T) {
 func TestMACTableFallback(t *testing.T) {
 	ctx := context.Background()
 
-	cfg := &config.SNMPConfig{
+	cfg := &snmp.Session{
 		Communities: []string{"public"},
 		Port:        161,
 		Timeout:     100 * time.Millisecond,
@@ -497,7 +496,7 @@ func TestConfigMaxRepetitionsEdgeCases(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			cfg := &config.SNMPConfig{
+			cfg := &snmp.Session{
 				Communities:    []string{"public"},
 				Port:           161,
 				Timeout:        100 * time.Millisecond,

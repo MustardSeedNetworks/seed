@@ -1263,26 +1263,10 @@
     },
     "SNMPConfig": {
       "type": "object",
-      "description": "SNMP settings for device interrogation",
-      "required": ["communities", "timeout", "retries", "port"],
+      "description": "SNMP transport settings for device interrogation. Credentials live in the encrypted device-credential vault, never here.",
+      "required": ["timeout", "retries", "port"],
       "additionalProperties": false,
       "properties": {
-        "communities": {
-          "type": "array",
-          "description": "SNMP v1/v2c community strings to try (read-only)",
-          "items": {
-            "type": "string"
-          },
-          "default": ["public"]
-        },
-        "v3_credentials": {
-          "type": "array",
-          "description": "SNMP v3 authentication credentials",
-          "items": {
-            "$ref": "#/$defs/SNMPv3Credential"
-          },
-          "default": []
-        },
         "timeout": {
           "$ref": "#/$defs/Duration",
           "description": "SNMP query timeout",
@@ -1299,64 +1283,6 @@
           "$ref": "#/$defs/PortNumber",
           "description": "SNMP port",
           "default": 161
-        }
-      }
-    },
-    "SNMPv3Credential": {
-      "type": "object",
-      "description": "SNMP v3 authentication credentials",
-      "required": [
-        "name",
-        "username",
-        "auth_protocol",
-        "auth_password",
-        "priv_protocol",
-        "priv_password",
-        "context_name",
-        "security_level"
-      ],
-      "additionalProperties": false,
-      "properties": {
-        "name": {
-          "type": "string",
-          "description": "Friendly name for this credential set"
-        },
-        "username": {
-          "type": "string",
-          "description": "Security name (user)"
-        },
-        "auth_protocol": {
-          "type": "string",
-          "description": "Authentication protocol",
-          "enum": ["", "MD5", "SHA", "SHA256", "SHA512"],
-          "default": ""
-        },
-        "auth_password": {
-          "type": "string",
-          "description": "Authentication password",
-          "default": ""
-        },
-        "priv_protocol": {
-          "type": "string",
-          "description": "Privacy protocol",
-          "enum": ["", "DES", "AES", "AES192", "AES256"],
-          "default": ""
-        },
-        "priv_password": {
-          "type": "string",
-          "description": "Privacy password",
-          "default": ""
-        },
-        "context_name": {
-          "type": "string",
-          "description": "Optional SNMP context",
-          "default": ""
-        },
-        "security_level": {
-          "type": "string",
-          "description": "Security level",
-          "enum": ["noAuthNoPriv", "authNoPriv", "authPriv"],
-          "default": "noAuthNoPriv"
         }
       }
     },
