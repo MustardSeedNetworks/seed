@@ -249,8 +249,23 @@ func (d *DeviceDiscovery) mergeEDPResults() {
 
 // mergeNDPResults merges NDP neighbor data (IPv6) into devices. Must be called with mu held.
 func (d *DeviceDiscovery) mergeNDPResults() {
-	for _, ndp := range d.ndpScanner.GetNeighbors() {
+	d.mergeNDPNeighbors(d.ndpScanner.GetNeighbors())
+}
+
+// mergeNDPNeighbors folds a neighbour table into the device map. Split from
+// the scanner so it is testable without a neighbour table in front of it,
+// the same way parseNDPTable is split from the ndp command.
+func (d *DeviceDiscovery) mergeNDPNeighbors(neighbors map[string]*NDPNeighbor) {
+	for _, ndp := range neighbors {
 		mac := normalizeMac(ndp.MAC)
+		// A neighbour whose link layer never resolved is not a device. Every
+		// such row normalises to the same empty MAC, so without this they
+		// collapse into one phantom carrying IPv6 addresses from unrelated
+		// interfaces (#2337).
+		if mac == "" {
+			continue
+		}
+
 		device := d.getOrCreateDevice(mac)
 
 		d.mergeNDPNeighborIntoDevice(device, *ndp)

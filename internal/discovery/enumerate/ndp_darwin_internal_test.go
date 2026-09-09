@@ -97,3 +97,30 @@ func TestGetNeighbors_ReadsTheLiveTable(t *testing.T) {
 		}
 	}
 }
+
+// TestParseNDPLinklayerRejectsPlaceholder covers #2337. macOS prints
+// 02:00:00:00:00:00 for an entry whose link layer never resolved -- the
+// locally-administered bit over an otherwise empty address. It parses as a
+// MAC, so unlike "(incomplete)" it used to survive the parser and reach the
+// operator as a device named after the placeholder.
+func TestParseNDPLinklayerRejectsPlaceholder(t *testing.T) {
+	tests := []struct {
+		name  string
+		field string
+		want  string
+	}{
+		{"macOS unresolved placeholder", "02:00:00:00:00:00", ""},
+		{"all-zero address", "00:00:00:00:00:00", ""},
+		{"unresolved marker", "(incomplete)", ""},
+		{"real unpadded address", "0:c0:17:53:62:6", "00:c0:17:53:62:06"},
+		{"real locally-administered address", "02:00:00:00:00:01", "02:00:00:00:00:01"},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := parseNDPLinklayer(tt.field); got != tt.want {
+				t.Errorf("parseNDPLinklayer(%q) = %q, want %q", tt.field, got, tt.want)
+			}
+		})
+	}
+}

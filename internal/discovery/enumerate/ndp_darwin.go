@@ -67,6 +67,9 @@ const (
 	ndpFlagsField = 5
 	// macOctets is how many octets a link-layer address must split into.
 	macOctets = 6
+	// locallyAdministeredBit is the low-order bit of a MAC's first octet.
+	// macOS sets it alone to stand in for an address it never resolved.
+	locallyAdministeredBit = 0x02
 )
 
 // GetNeighbors returns the IPv6 neighbours read from the kernel's table.
@@ -140,6 +143,7 @@ func parseNDPTable(out, ifaceName string) map[string]*NDPNeighbor {
 // parseNDPLinklayer normalises ndp's link-layer column. It prints
 // "(incomplete)" when unresolved and does not zero-pad octets, so
 // 3a:f0:5a:8b:c5:4 has to be widened before [net.ParseMAC] will take it.
+// An address that carries no information is not an address: see #2337.
 func parseNDPLinklayer(field string) string {
 	if strings.HasPrefix(field, "(") {
 		return ""
@@ -159,7 +163,21 @@ func parseNDPLinklayer(field string) string {
 		return ""
 	}
 
-	return hw.String()
+	// 02:00:00:00:00:00 is what ndp prints for an entry whose link layer
+	// never resolved -- the locally-administered bit over an otherwise empty
+	// address. Unlike "(incomplete)" it parses, so it has to be rejected by
+	// value, the same way the Windows ARP reader rejects the all-zero
+	// address (#2337).
+	for i, octet := range hw {
+		if i == 0 {
+			octet &^= locallyAdministeredBit
+		}
+		if octet != 0 {
+			return hw.String()
+		}
+	}
+
+	return ""
 }
 
 // ndpStateFromFlag maps ndp's single-letter state onto the NUD vocabulary the
