@@ -5,6 +5,19 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.214.37](https://github.com/MustardSeedNetworks/seed/compare/v0.214.36...v0.214.37) (2026-09-09)
+
+
+### Code Refactoring
+
+* **snmp:** retire config credentials and use the canonical vault (S3-2 slice 2) ([#2568](https://github.com/MustardSeedNetworks/seed/issues/2568)) ([34c8985](https://github.com/MustardSeedNetworks/seed/commit/34c89856de8f3c67d26ce07d678c4913513b7093))
+
+
+### Miscellaneous
+
+* **api:** retire the legacy /security/bluetooth/* REST routes ([#2565](https://github.com/MustardSeedNetworks/seed/issues/2565)) ([95f7f3f](https://github.com/MustardSeedNetworks/seed/commit/95f7f3f5b99a4eaf9074bb1250626ac626d657f2))
+* **deps:** lock file maintenance ([#2569](https://github.com/MustardSeedNetworks/seed/issues/2569)) ([925591f](https://github.com/MustardSeedNetworks/seed/commit/925591f0289a22107864ee3636139c5ccb1232c5))
+
 ## [0.214.36](https://github.com/MustardSeedNetworks/seed/compare/v0.214.35...v0.214.36) (2026-09-09)
 
 
