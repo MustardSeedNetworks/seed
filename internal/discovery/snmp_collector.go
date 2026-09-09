@@ -146,7 +146,12 @@ type SNMPRoute struct {
 }
 
 // SNMPCollector collects extended SNMP data from network devices.
+//
+// config holds the credentials for one Collect and is nil on the shared
+// collector: they are decrypted from the vault per device (#2118) and must not
+// outlive the exchange that uses them.
 type SNMPCollector struct {
+	creds      SNMPCredentialProvider
 	config     *config.SNMPConfig
 	mibConfig  SNMPMIBSelection
 	timeout    time.Duration
@@ -154,9 +159,9 @@ type SNMPCollector struct {
 }
 
 // NewSNMPCollector creates a new SNMP collector.
-func NewSNMPCollector(cfg *config.SNMPConfig, mibConfig SNMPMIBSelection) *SNMPCollector {
+func NewSNMPCollector(creds SNMPCredentialProvider, mibConfig SNMPMIBSelection) *SNMPCollector {
 	return &SNMPCollector{
-		config:     cfg,
+		creds:      creds,
 		mibConfig:  mibConfig,
 		timeout:    snmpCollectorTimeoutS * time.Second,
 		maxOIDsReq: snmpCollectorMaxOIDs,
@@ -173,10 +178,6 @@ func (c *SNMPCollector) SetTimeout(timeout time.Duration) {
 // via the SNMPConfig.MaxRepetitions setting when collecting MIB data.
 func (c *SNMPCollector) SetMaxOIDsPerRequest(maxOIDs int) {
 	c.maxOIDsReq = maxOIDs
-	// Update config MaxRepetitions so walks use the new value
-	if c.config != nil && maxOIDs > 0 {
-		c.config.MaxRepetitions = uint32(maxOIDs) // #nosec G115 -- maxOIDs validated to be positive
-	}
 }
 
 // collectionTask represents a single MIB collection operation.
@@ -188,22 +189,35 @@ type collectionTask struct {
 
 // Collect gathers all enabled MIB data from a device.
 func (c *SNMPCollector) Collect(ctx context.Context, ip string) (*SNMPFullData, error) {
-	if c.config == nil {
-		return nil, errors.New("SNMP config is nil")
+	if c.creds == nil {
+		return nil, errors.New("SNMP credential provider is nil")
 	}
+	cfg, err := c.creds.SNMPConfig(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("resolve SNMP credentials: %w", err)
+	}
+	if c.maxOIDsReq > 0 {
+		cfg.MaxRepetitions = uint32(c.maxOIDsReq) // #nosec G115 -- maxOIDsReq is positive here
+	}
+
+	// The tasks below run concurrently and each needs the credentials this
+	// exchange resolved. A value copy binds them to it without a shared
+	// mutable field that a second Collect could overwrite mid-walk.
+	run := *c
+	run.config = cfg
 
 	data := &SNMPFullData{
 		CollectedAt: time.Now(),
 	}
 
-	collectCtx, cancel := context.WithTimeout(ctx, c.timeout)
+	collectCtx, cancel := context.WithTimeout(ctx, run.timeout)
 	defer cancel()
 
 	var wg sync.WaitGroup
 	var mu sync.Mutex
 
-	tasks := c.buildCollectionTasks(collectCtx, ip, data, &mu)
-	c.executeCollectionTasks(&wg, tasks)
+	tasks := run.buildCollectionTasks(collectCtx, ip, data, &mu)
+	run.executeCollectionTasks(&wg, tasks)
 	wg.Wait()
 
 	return data, nil

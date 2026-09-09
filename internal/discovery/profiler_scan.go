@@ -303,14 +303,20 @@ func (p *DeviceProfiler) probeHTTP(
 
 // probeSNMP attempts to retrieve SNMP information from the device.
 func (p *DeviceProfiler) probeSNMP(ctx context.Context, ip string) *SNMPInfo {
-	if p.snmpConfig == nil {
-		logging.GetLogger().DebugContext(ctx, "SNMP probe skipped - no SNMP config", "ip", ip)
+	if p.snmpCreds == nil {
+		logging.GetLogger().DebugContext(ctx, "SNMP probe skipped - no credential source", "ip", ip)
 		return nil
 	}
-	if len(p.snmpConfig.Communities) == 0 && len(p.snmpConfig.V3Credentials) == 0 {
+	snmpCfg, err := p.snmpCreds.SNMPConfig(ctx)
+	if err != nil {
+		logging.GetLogger().WarnContext(ctx,
+			"SNMP probe skipped - credentials unresolved", "ip", ip, "error", err)
+		return nil
+	}
+	if len(snmpCfg.Communities) == 0 && len(snmpCfg.V3Credentials) == 0 {
 		logging.GetLogger().DebugContext(
 			ctx,
-			"SNMP probe skipped - no communities or v3 credentials configured",
+			"SNMP probe skipped - the credential vault holds no SNMP credential",
 			"ip", ip,
 		)
 		return nil
@@ -321,13 +327,13 @@ func (p *DeviceProfiler) probeSNMP(ctx context.Context, ip string) *SNMPInfo {
 		"ip",
 		ip,
 		"communities",
-		len(p.snmpConfig.Communities),
+		len(snmpCfg.Communities),
 		"v3creds",
-		len(p.snmpConfig.V3Credentials),
+		len(snmpCfg.V3Credentials),
 	)
 
 	// Query system information
-	sysInfo, err := snmp.GetSystemInfo(ctx, ip, p.snmpConfig)
+	sysInfo, err := snmp.GetSystemInfo(ctx, ip, snmpCfg)
 	if err != nil {
 		logging.GetLogger().DebugContext(ctx, "SNMP probe failed", "ip", ip, "error", err)
 		return nil

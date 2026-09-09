@@ -197,9 +197,10 @@ type Server struct {
 	problemDet    *discovery.ProblemDetector
 	bluetoothScan *enumerate.BluetoothScanner
 	wifiBridgeSvc *enumerate.WiFiBridge
-	profiler      *discovery.DeviceProfiler // shared profiler for SNMP/ports/fingerprinting
-	portScanner   *fingerprint.PortScanner  // TCP port scanner (fingerprint stage)
-	discoveryEng  *discovery.Engine         // unified discovery engine (primary)
+	profiler      *discovery.DeviceProfiler        // shared profiler for SNMP/ports/fingerprinting
+	snmpCreds     discovery.SNMPCredentialProvider // vault-backed SNMP credentials (#2118)
+	portScanner   *fingerprint.PortScanner         // TCP port scanner (fingerprint stage)
+	discoveryEng  *discovery.Engine                // unified discovery engine (primary)
 
 	// --- On-demand network diagnostics ---
 	dnsTest       *dns.Tester
@@ -360,7 +361,7 @@ func NewServer(
 	s.initSSEAndLogging(db)
 
 	// Initialize discovery service and pipeline
-	s.initDiscovery(cfg)
+	s.initDiscovery(cfg, db)
 
 	// Wire the ADR-0020 use-cases now the discovery components exist.
 	s.initUseCases()
@@ -872,7 +873,6 @@ func (s *Server) loginRateLimiter() *RateLimiter              { return s.loginLi
 func (s *Server) endpointRateLimiter() *EndpointRateLimiter   { return s.endpointLimiter }
 func (s *Server) netManager() *netif.Manager                  { return s.netMgr }
 func (s *Server) defaultInterface() string                    { return s.config.Interface.Default }
-func (s *Server) snmpConfig() *config.SNMPConfig              { return &s.config.SNMP }
 func (s *Server) discoveryScanTimeout() time.Duration         { return s.config.NetworkDiscovery.ScanTimeout }
 func (s *Server) linkMonitor() *netif.LinkMonitor             { return s.linkMon }
 func (s *Server) deviceDiscovery() *enumerate.DeviceDiscovery { return s.deviceDisc }

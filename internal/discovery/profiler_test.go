@@ -7,6 +7,7 @@ import (
 
 	"github.com/MustardSeedNetworks/seed/internal/config"
 	"github.com/MustardSeedNetworks/seed/internal/discovery"
+	"github.com/MustardSeedNetworks/seed/internal/testutil"
 )
 
 func TestDefaultProfilerConfig(t *testing.T) {
@@ -197,7 +198,7 @@ func TestNewDeviceProfiler(t *testing.T) {
 		Timeout:     5 * time.Second,
 	}
 
-	profiler := discovery.NewDeviceProfiler(cfg, snmpCfg)
+	profiler := discovery.NewDeviceProfiler(cfg, testutil.StaticSNMPCredentials{Config: snmpCfg})
 
 	if profiler == nil {
 		t.Fatal("NewDeviceProfiler returned nil")
@@ -212,7 +213,7 @@ func TestDeviceProfiler_QueueProfile(t *testing.T) {
 		Timeout:     100 * time.Millisecond,
 	}
 
-	profiler := discovery.NewDeviceProfiler(cfg, snmpCfg)
+	profiler := discovery.NewDeviceProfiler(cfg, testutil.StaticSNMPCredentials{Config: snmpCfg})
 
 	// Queue should work even without starting
 	_ = profiler.QueueProfile("192.0.2.1") // TEST-NET-1, non-routable
@@ -227,7 +228,7 @@ func TestDeviceProfiler_IsProfiled(t *testing.T) {
 	cfg := discovery.DefaultProfilerConfig()
 	snmpCfg := &config.SNMPConfig{Communities: []string{"public"}}
 
-	profiler := discovery.NewDeviceProfiler(cfg, snmpCfg)
+	profiler := discovery.NewDeviceProfiler(cfg, testutil.StaticSNMPCredentials{Config: snmpCfg})
 
 	// Not profiled initially
 	if profiler.IsProfiled("10.0.0.1") {
@@ -239,7 +240,7 @@ func TestDeviceProfiler_IsProfiling(t *testing.T) {
 	cfg := discovery.DefaultProfilerConfig()
 	snmpCfg := &config.SNMPConfig{Communities: []string{"public"}}
 
-	profiler := discovery.NewDeviceProfiler(cfg, snmpCfg)
+	profiler := discovery.NewDeviceProfiler(cfg, testutil.StaticSNMPCredentials{Config: snmpCfg})
 
 	// Not profiling initially
 	if profiler.IsProfiling("10.0.0.1") {
@@ -251,7 +252,7 @@ func TestDeviceProfiler_GetAllProfiles(t *testing.T) {
 	cfg := discovery.DefaultProfilerConfig()
 	snmpCfg := &config.SNMPConfig{Communities: []string{"public"}}
 
-	profiler := discovery.NewDeviceProfiler(cfg, snmpCfg)
+	profiler := discovery.NewDeviceProfiler(cfg, testutil.StaticSNMPCredentials{Config: snmpCfg})
 
 	profiles := profiler.GetAllProfiles()
 	if len(profiles) != 0 {
@@ -263,7 +264,7 @@ func TestDeviceProfiler_ClearProfiles(t *testing.T) {
 	cfg := discovery.DefaultProfilerConfig()
 	snmpCfg := &config.SNMPConfig{Communities: []string{"public"}}
 
-	profiler := discovery.NewDeviceProfiler(cfg, snmpCfg)
+	profiler := discovery.NewDeviceProfiler(cfg, testutil.StaticSNMPCredentials{Config: snmpCfg})
 
 	// Clear should work even when empty
 	profiler.ClearProfiles()
@@ -278,7 +279,7 @@ func TestDeviceProfiler_StartStop(t *testing.T) {
 	cfg := discovery.DefaultProfilerConfig()
 	snmpCfg := &config.SNMPConfig{Communities: []string{"public"}}
 
-	profiler := discovery.NewDeviceProfiler(cfg, snmpCfg)
+	profiler := discovery.NewDeviceProfiler(cfg, testutil.StaticSNMPCredentials{Config: snmpCfg})
 
 	// QueueProfile is the observable for started/stopped: it refuses work
 	// whenever the worker pool is down (#930).
@@ -304,7 +305,7 @@ func TestDeviceProfiler_GetProfile_NonExistent(t *testing.T) {
 	cfg := discovery.DefaultProfilerConfig()
 	snmpCfg := &config.SNMPConfig{Communities: []string{"public"}}
 
-	profiler := discovery.NewDeviceProfiler(cfg, snmpCfg)
+	profiler := discovery.NewDeviceProfiler(cfg, testutil.StaticSNMPCredentials{Config: snmpCfg})
 
 	profile := profiler.GetProfile("10.255.255.1")
 	if profile != nil {

@@ -47,14 +47,6 @@ func (p *DeviceProfiler) IsProfiling(ip string) bool {
 	return p.profiling[ip]
 }
 
-// hasSNMPCredentials returns true if SNMP credentials are configured.
-func (p *DeviceProfiler) hasSNMPCredentials() bool {
-	if p.snmpConfig == nil {
-		return false
-	}
-	return len(p.snmpConfig.Communities) > 0 || len(p.snmpConfig.V3Credentials) > 0
-}
-
 // GetSNMPData returns the full SNMP MIB data for an IP address.
 func (p *DeviceProfiler) GetSNMPData(ip string) *SNMPFullData {
 	p.mu.RLock()

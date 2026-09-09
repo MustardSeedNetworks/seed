@@ -407,7 +407,7 @@ func (s *Server) performL2Trace(
 	}
 
 	// Build L2 path
-	builder := discovery.NewL2PathBuilder(s.deviceDiscovery(), s.snmpConfig())
+	builder := discovery.NewL2PathBuilder(s.deviceDiscovery(), s.snmpCreds)
 	result, err := builder.BuildPath(ctx, sourceIP, req.Destination)
 	if err != nil {
 		return nil, err
