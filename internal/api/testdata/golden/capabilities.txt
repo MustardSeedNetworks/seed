@@ -486,13 +486,6 @@ body:
   {
     "maxBodyBytes": 262144,
     "methods": [
-      "GET"
-    ],
-    "path": "/api/v1/telemetry/vlan/traffic"
-  },
-  {
-    "maxBodyBytes": 262144,
-    "methods": [
       "GET",
       "POST",
       "PUT"

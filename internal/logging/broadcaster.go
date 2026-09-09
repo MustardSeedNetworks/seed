@@ -25,14 +25,6 @@ const (
 	defaultRingBufferSize = 1000
 )
 
-// Broadcaster defines the interface for broadcasting log entries to connected clients.
-// This interface allows the logging package to broadcast logs without depending on
-// the api package (avoiding circular imports).
-type Broadcaster interface {
-	// BroadcastLogEntry sends a log entry to all subscribed clients.
-	BroadcastLogEntry(entry *LogEntry)
-}
-
 // DBLogWriter defines the interface for persisting logs to a database.
 // This interface allows the logging package to persist logs without depending on
 // the database package (avoiding circular imports).
@@ -143,14 +135,12 @@ func (rb *RingBuffer) Clear() {
 	rb.count = 0
 }
 
-// LogBroadcaster manages broadcasting log entries to WebSocket clients
-// and maintains a buffer of recent logs for new client connections.
-// It also persists logs to a database for durability.
+// LogBroadcaster keeps a ring buffer of recent log entries for the log query
+// surface and persists them to a database for durability.
 type LogBroadcaster struct {
-	buffer      *RingBuffer
-	broadcaster Broadcaster // Injected dependency to avoid circular imports
-	dbWriter    DBLogWriter // Database writer for persistence
-	mu          sync.RWMutex
+	buffer   *RingBuffer
+	dbWriter DBLogWriter // Database writer for persistence
+	mu       sync.RWMutex
 
 	// Batching for efficient database writes
 	batchBuffer []*LogEntry
@@ -168,14 +158,6 @@ func NewLogBroadcaster(bufferSize int) *LogBroadcaster {
 		batchSize:   defaultBatchSize,
 		stopCh:      make(chan struct{}),
 	}
-}
-
-// SetBroadcaster sets the broadcaster implementation (typically the WebSocket hub wrapper).
-// This allows late binding to avoid circular import issues.
-func (lb *LogBroadcaster) SetBroadcaster(b Broadcaster) {
-	lb.mu.Lock()
-	defer lb.mu.Unlock()
-	lb.broadcaster = b
 }
 
 // SetDBWriter sets the database writer for log persistence.
@@ -256,21 +238,15 @@ func (lb *LogBroadcaster) Stop() {
 	lb.flushBatch()
 }
 
-// Write adds a log entry to the buffer and broadcasts it to connected clients.
-// If a database writer is configured, entries are batched and persisted.
+// Write adds a log entry to the buffer. If a database writer is configured,
+// entries are batched and persisted.
 func (lb *LogBroadcaster) Write(entry *LogEntry) {
 	// Add to memory buffer
 	lb.buffer.Add(entry)
 
-	// Broadcast to clients
 	lb.mu.RLock()
-	broadcaster := lb.broadcaster
 	dbWriter := lb.dbWriter
 	lb.mu.RUnlock()
-
-	if broadcaster != nil {
-		broadcaster.BroadcastLogEntry(entry)
-	}
 
 	// Add to batch buffer for database persistence
 	if dbWriter != nil {

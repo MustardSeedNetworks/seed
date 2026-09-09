@@ -468,11 +468,6 @@ func (s *Server) setupTelemetryRoutes() {
 		},
 		{path: APIVersionPrefix + "/telemetry/vlan", handler: s.handleVLAN, methods: get},
 		{
-			path:    APIVersionPrefix + "/telemetry/vlan/traffic",
-			handler: s.handleVLANTraffic,
-			methods: get,
-		},
-		{
 			path:    APIVersionPrefix + "/telemetry/vlan/interface",
 			handler: s.handleVLANInterface,
 			methods: getPostPut,

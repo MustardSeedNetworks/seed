@@ -326,19 +326,6 @@ func TestLogBroadcaster_Write(t *testing.T) {
 			t.Errorf("LogCount() = %d, want 1", lb.LogCount())
 		}
 	})
-
-	t.Run("broadcasts to registered broadcaster", func(t *testing.T) {
-		lb := logging.NewLogBroadcaster(100)
-		mb := &mockBroadcaster{}
-		lb.SetBroadcaster(mb)
-
-		entry := logging.NewLogEntry("INFO", "test message")
-		lb.Write(entry)
-
-		if len(mb.entries) != 1 {
-			t.Errorf("Broadcaster received %d entries, want 1", len(mb.entries))
-		}
-	})
 }
 
 func TestLogBroadcaster_GetRecentLogs(t *testing.T) {
@@ -373,20 +360,6 @@ func TestLogBroadcaster_GetAllLogs(t *testing.T) {
 	entries := lb.GetAllLogs()
 	if len(entries) != 5 {
 		t.Fatalf("GetAllLogs() returned %d entries, want 5", len(entries))
-	}
-}
-
-func TestLogBroadcaster_SetBroadcaster(t *testing.T) {
-	lb := logging.NewLogBroadcaster(100)
-	mb := &mockBroadcaster{}
-
-	lb.SetBroadcaster(mb)
-
-	entry := logging.NewLogEntry("INFO", "test")
-	lb.Write(entry)
-
-	if len(mb.entries) != 1 {
-		t.Errorf("Broadcaster should have received entry")
 	}
 }
 
@@ -472,8 +445,6 @@ func TestGetBroadcaster(t *testing.T) {
 func TestBroadcastLog(t *testing.T) {
 	// Initialize broadcaster
 	lb := logging.InitBroadcaster(100)
-	mb := &mockBroadcaster{}
-	lb.SetBroadcaster(mb)
 
 	metadata := map[string]any{
 		"key": "value",
@@ -481,11 +452,12 @@ func TestBroadcastLog(t *testing.T) {
 
 	logging.BroadcastLog("INFO", "backend", "test-component", "test message", metadata)
 
-	if len(mb.entries) != 1 {
-		t.Fatalf("BroadcastLog should have broadcast 1 entry, got %d", len(mb.entries))
+	entries := lb.GetAllLogs()
+	if len(entries) != 1 {
+		t.Fatalf("BroadcastLog should have buffered 1 entry, got %d", len(entries))
 	}
 
-	entry := mb.entries[0]
+	entry := entries[0]
 	if entry.Level != "INFO" {
 		t.Errorf("Level = %q, want INFO", entry.Level)
 	}
@@ -524,17 +496,6 @@ func TestLogEntryJSON(t *testing.T) {
 }
 
 // Helper types
-
-type mockBroadcaster struct {
-	entries []*logging.LogEntry
-	mu      sync.Mutex
-}
-
-func (m *mockBroadcaster) BroadcastLogEntry(entry *logging.LogEntry) {
-	m.mu.Lock()
-	defer m.mu.Unlock()
-	m.entries = append(m.entries, entry)
-}
 
 type mockDBWriter struct {
 	mu         sync.Mutex

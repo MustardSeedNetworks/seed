@@ -123,7 +123,6 @@ func schemaTargets() []schemaTarget {
 		{&api.SubnetRequest{}, "subnet-request.schema.json"},
 		{&api.SubnetResponse{}, "subnet-response.schema.json"},
 		{&api.VLANInterfaceRequest{}, "vlan-interface-request.schema.json"},
-		{&api.VLANTrafficResponse{}, "vlan-traffic-response.schema.json"},
 		{&api.SpeedtestStatusResponse{}, "speedtest-status-response.schema.json"},
 		{&api.RogueDHCPConfigResponse{}, "rogue-dhcp-config-response.schema.json"},
 		{&api.DNSServerResponse{}, "dns-server-response.schema.json"},

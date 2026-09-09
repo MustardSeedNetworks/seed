@@ -154,14 +154,6 @@ func (s *Server) Start() error {
 		}()
 	}
 
-	// Start VLAN traffic monitor (requires root/CAP_NET_RAW)
-	if err := s.vlanTrafficMonitor().Start(); err != nil {
-		logging.GetLogger().
-			Warn("VLAN traffic monitor failed to start (may require root)", "error", err)
-	} else {
-		logging.GetLogger().Info("VLAN traffic monitor started")
-	}
-
 	s.startBackgroundEngines()
 
 	return s.startHTTPS()

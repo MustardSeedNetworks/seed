@@ -209,7 +209,6 @@ type Server struct {
 	rogueDet      *dhcp.RogueDetector
 	gatewayTest   *gateway.Tester
 	vlanMgr       *vlan.Manager
-	vlanTraffic   *vlan.TrafficMonitor
 	speedtestTest *speedtest.Tester
 	iperfMgr      *iperf.Manager
 	cableTest     *cable.Tester
@@ -470,9 +469,6 @@ func (s *Server) initCaptureServices(cfg *config.Config) {
 		KnownServers:     cfg.DHCP.RogueDetection.KnownServers,
 		AlertOnDetection: cfg.DHCP.RogueDetection.AlertOnDetection,
 	}, dhcp.WithCapture(captureOpener))
-	s.vlanTraffic = vlan.NewTrafficMonitor(
-		cfg.Interface.Default, vlan.WithCapture(captureOpener),
-	)
 }
 
 // initDatabaseDependentServices wires every service that needs a
@@ -825,9 +821,6 @@ func (s *Server) GatewayTester() *gateway.Tester { return s.gatewayTest }
 // VLANManager returns the VLAN manager.
 func (s *Server) VLANManager() *vlan.Manager { return s.vlanMgr }
 
-// VLANTrafficMonitor returns the VLAN traffic monitor.
-func (s *Server) VLANTrafficMonitor() *vlan.TrafficMonitor { return s.vlanTraffic }
-
 // SpeedtestTester returns the speedtest tester.
 func (s *Server) SpeedtestTester() *speedtest.Tester { return s.speedtestTest }
 
@@ -935,7 +928,6 @@ func (s *Server) dhcpMonitor() *dhcp.Monitor                    { return s.dhcpM
 func (s *Server) rogueDetector() *dhcp.RogueDetector            { return s.rogueDet }
 func (s *Server) gatewayTester() *gateway.Tester                { return s.gatewayTest }
 func (s *Server) vlanManager() *vlan.Manager                    { return s.vlanMgr }
-func (s *Server) vlanTrafficMonitor() *vlan.TrafficMonitor      { return s.vlanTraffic }
 func (s *Server) speedtestTester() *speedtest.Tester            { return s.speedtestTest }
 func (s *Server) iperfManager() *iperf.Manager                  { return s.iperfMgr }
 func (s *Server) cableTester() *cable.Tester                    { return s.cableTest }

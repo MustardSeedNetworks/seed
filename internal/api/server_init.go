@@ -140,7 +140,6 @@ func (s *Server) initSSEAndLogging(db *database.DB) {
 
 	// Initialize log broadcaster for real-time log streaming
 	s.logBroadcast = logging.InitBroadcaster(logBroadcasterBufferSize)
-	s.logBroadcaster().SetBroadcaster(&sseLogBroadcastAdapter{hub: s.sseHub()})
 
 	// Initialize the in-process event bus and the unified job runner (ADR-0004 /
 	// ADR-0005). The runner publishes job state changes onto the bus; the

@@ -163,7 +163,6 @@ today; the registry makes it explicit per route.
 | `/api/v1/telemetry/system/health` | `handleSystemHealth` | — | — | — |
 | `/api/v1/telemetry/vlan` | `handleVLAN` | — | — | — |
 | `/api/v1/telemetry/vlan/interface` | `handleVLANInterface` | — | — | — |
-| `/api/v1/telemetry/vlan/traffic` | `handleVLANTraffic` | — | — | — |
 | `/api/v1/settings` | `handleSettings` | operator | — | — |
 | `/api/v1/settings/cable` | `handleCableTestSettings` | operator | — | — |
 | `/api/v1/settings/defaults` | `handleSettingsDefaults` | operator | — | — |

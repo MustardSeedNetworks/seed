@@ -133,9 +133,6 @@ func (s *Server) Shutdown(ctx context.Context) error {
 	logging.GetLogger().InfoContext(ctx, "Stopping discovery service...")
 	s.discoveryService().Stop()
 
-	logging.GetLogger().InfoContext(ctx, "Stopping VLAN traffic monitor...")
-	s.vlanTrafficMonitor().Stop()
-
 	// Stop every engine registered with the lifecycle registry
 	// (probe, retention, snmp-poller, listeners, …) in reverse
 	// registration order. Registry.Stop continues past per-engine
