@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.214.34](https://github.com/MustardSeedNetworks/seed/compare/v0.214.33...v0.214.34) (2026-09-09)
+
+
+### Miscellaneous
+
+* **api:** delete two orphan surfaces and record a disposition for the rest ([#2554](https://github.com/MustardSeedNetworks/seed/issues/2554)) ([57ccd0e](https://github.com/MustardSeedNetworks/seed/commit/57ccd0e347bd6e04be408f4da9d7666447dee7ba))
+
 ## [0.214.33](https://github.com/MustardSeedNetworks/seed/compare/v0.214.32...v0.214.33) (2026-09-09)
 
 
