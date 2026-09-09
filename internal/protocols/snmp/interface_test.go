@@ -7,7 +7,6 @@ import (
 
 	"github.com/gosnmp/gosnmp"
 
-	"github.com/MustardSeedNetworks/seed/internal/config"
 	"github.com/MustardSeedNetworks/seed/internal/protocols/snmp"
 )
 
@@ -350,7 +349,7 @@ func TestGetAllInterfaces(t *testing.T) {
 	tests := []struct {
 		name    string
 		ip      string
-		cfg     *config.SNMPConfig
+		cfg     *snmp.Session
 		wantErr bool
 	}{
 		{
@@ -362,7 +361,7 @@ func TestGetAllInterfaces(t *testing.T) {
 		{
 			name: "unreachable host",
 			ip:   "192.0.2.1",
-			cfg: &config.SNMPConfig{
+			cfg: &snmp.Session{
 				Communities: []string{"public"},
 				Port:        161,
 				Timeout:     100 * time.Millisecond,
@@ -395,7 +394,7 @@ func TestGetMACTable(t *testing.T) {
 	tests := []struct {
 		name    string
 		ip      string
-		cfg     *config.SNMPConfig
+		cfg     *snmp.Session
 		wantErr bool
 	}{
 		{
@@ -407,7 +406,7 @@ func TestGetMACTable(t *testing.T) {
 		{
 			name: "unreachable host",
 			ip:   "192.0.2.1",
-			cfg: &config.SNMPConfig{
+			cfg: &snmp.Session{
 				Communities: []string{"public"},
 				Port:        161,
 				Timeout:     100 * time.Millisecond,

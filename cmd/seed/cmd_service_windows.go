@@ -81,9 +81,6 @@ func (p *seedProgram) run() {
 	cfg := p.config
 	logPath := setupLoggingForService(cfg)
 
-	// Check for deprecated SNMP settings after logging is initialized
-	cfg.WarnDeprecatedSNMPSettings()
-
 	netMgr := setupNetworkInterfaceForService(cfg, configPath)
 
 	// Create trusted proxies configuration

@@ -9,7 +9,6 @@ import (
 
 	"github.com/gosnmp/gosnmp"
 
-	"github.com/MustardSeedNetworks/seed/internal/config"
 	"github.com/MustardSeedNetworks/seed/internal/logging"
 )
 
@@ -67,7 +66,7 @@ type IPAddressEntry struct {
 func GetIPAddresses(
 	ctx context.Context,
 	ip string,
-	cfg *config.SNMPConfig,
+	cfg *Session,
 ) ([]IPAddressEntry, error) {
 	if cfg == nil {
 		return nil, errors.New("SNMP config is nil")
@@ -89,10 +88,10 @@ func GetIPAddresses(
 func getIPAddrTable(
 	ctx context.Context,
 	ip string,
-	cfg *config.SNMPConfig,
+	cfg *Session,
 ) ([]IPAddressEntry, error) {
 	return sweepCredentials(ctx, cfg, "failed to query ipAddrTable with all configured credentials",
-		func(cred *config.SNMPv3Credential) ([]IPAddressEntry, error) {
+		func(cred *V3Credential) ([]IPAddressEntry, error) {
 			return walkIPAddrTableV3(ctx, ip, cred, cfg)
 		},
 		func(community string) ([]IPAddressEntry, error) {
@@ -105,7 +104,7 @@ func getIPAddrTable(
 func walkIPAddrTable(
 	ctx context.Context,
 	ip, community string,
-	cfg *config.SNMPConfig,
+	cfg *Session,
 ) ([]IPAddressEntry, error) {
 	params, err := newV2cWalkClient(ctx, ip, community, cfg)
 	if err != nil {
@@ -120,8 +119,8 @@ func walkIPAddrTable(
 func walkIPAddrTableV3(
 	ctx context.Context,
 	ip string,
-	cred *config.SNMPv3Credential,
-	cfg *config.SNMPConfig,
+	cred *V3Credential,
+	cfg *Session,
 ) ([]IPAddressEntry, error) {
 	params, err := newV3WalkClient(ctx, ip, cred, cfg)
 	if err != nil {
@@ -214,10 +213,10 @@ func walkLegacyIPTable(params *gosnmp.GoSNMP) ([]IPAddressEntry, error) {
 func getIPAddressTable(
 	ctx context.Context,
 	ip string,
-	cfg *config.SNMPConfig,
+	cfg *Session,
 ) ([]IPAddressEntry, error) {
 	return sweepCredentials(ctx, cfg, "failed to query ipAddressTable with all configured credentials",
-		func(cred *config.SNMPv3Credential) ([]IPAddressEntry, error) {
+		func(cred *V3Credential) ([]IPAddressEntry, error) {
 			return walkIPAddressTableV3(ctx, ip, cred, cfg)
 		},
 		func(community string) ([]IPAddressEntry, error) {
@@ -230,7 +229,7 @@ func getIPAddressTable(
 func walkIPAddressTable(
 	ctx context.Context,
 	ip, community string,
-	cfg *config.SNMPConfig,
+	cfg *Session,
 ) ([]IPAddressEntry, error) {
 	params := &gosnmp.GoSNMP{
 		Target:         ip,
@@ -260,8 +259,8 @@ func walkIPAddressTable(
 func walkIPAddressTableV3(
 	ctx context.Context,
 	ip string,
-	cred *config.SNMPv3Credential,
-	cfg *config.SNMPConfig,
+	cred *V3Credential,
+	cfg *Session,
 ) ([]IPAddressEntry, error) {
 	params := &gosnmp.GoSNMP{
 		Target:         ip,

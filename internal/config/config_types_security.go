@@ -92,14 +92,13 @@ type VulnerabilityScanConfig struct {
 	AutoScan          bool   `json:"auto_scan"`          // Auto-scan after device discovery
 }
 
-// SNMPConfig contains SNMP settings for device interrogation.
+// SNMPConfig contains the SNMP transport settings for device interrogation.
+//
+// It deliberately carries no credentials. Community strings and v3 passwords
+// live in the encrypted device-credential vault and are resolved into an
+// snmp.Session at use time (#1799); a credential written here would be
+// plaintext at rest and readable through the settings API.
 type SNMPConfig struct {
-	// Communities is a list of SNMP v1/v2c community strings to try (read-only).
-	Communities []string `json:"communities"`
-
-	// V3Credentials for SNMP v3 authentication.
-	V3Credentials []SNMPv3Credential `json:"v3_credentials,omitempty"`
-
 	// Timeout for SNMP queries.
 	Timeout time.Duration `json:"timeout"`
 
@@ -113,28 +112,4 @@ type SNMPConfig struct {
 	// Lower values reduce memory usage and network load on slow devices.
 	// Default: 10. Range: 1-50.
 	MaxRepetitions uint32 `json:"max_repetitions"`
-}
-
-// SNMPv3Credential contains SNMP v3 authentication credentials.
-type SNMPv3Credential struct {
-	// Friendly name for this credential set.
-	Name string `json:"name"`
-	// Security name (user).
-	Username string `json:"username"`
-	// AuthProtocol specifies the authentication protocol.
-	// Supported values: "SHA", "SHA256", "SHA512", or "" for noAuth.
-	// Note: The "MD5" value is cryptographically broken and will be removed in the next major version.
-	// Use SHA256 or SHA512 instead for secure authentication.
-	// "SHA", "SHA256", "SHA512", or "" for noAuth (MD5 is deprecated).
-	AuthProtocol string `json:"auth_protocol"`
-	// Authentication password.
-	AuthPassword string `json:"auth_password"`
-	// "DES", "AES", "AES192", "AES256", or "" for noPriv.
-	PrivProtocol string `json:"priv_protocol"`
-	// Privacy password.
-	PrivPassword string `json:"priv_password"`
-	// Optional SNMP context.
-	ContextName string `json:"context_name"`
-	// "noAuthNoPriv", "authNoPriv", "authPriv".
-	SecurityLevel string `json:"security_level"`
 }

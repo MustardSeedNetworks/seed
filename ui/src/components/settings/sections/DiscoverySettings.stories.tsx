@@ -10,7 +10,7 @@
  * - Service status: Running, stopped, scanning
  * - With subnets: Additional target networks configured
  * - Timing settings: Workers, timeouts, intervals
- * - SNMP configuration: Communities, v3 credentials, timeout, retries
+ * - SNMP transport: port, timeout
  *
  * Story fixtures (defaultSettings, defaultSnmpSettings, baseArgs) live in
  * DiscoverySettings.fixtures.ts so each story can override only what it
@@ -122,8 +122,6 @@ export const FullDiscovery: Story = {
       },
     },
     snmpSettings: {
-      communities: ['public', 'private'],
-      v3Credentials: [],
       timeout: 5000,
       retries: 3,
       port: 161,
@@ -320,7 +318,7 @@ export const Saving: Story = {
 };
 
 /**
- * SNMP settings with multiple communities and v3 credentials
+ * SNMP transport settings at non-default values
  */
 export const WithSnmpSettings: Story = {
   args: {
@@ -330,19 +328,6 @@ export const WithSnmpSettings: Story = {
       options: { ...defaultSettings.options, snmpQuery: true },
     },
     snmpSettings: {
-      communities: ['public', 'private', 'secret'],
-      v3Credentials: [
-        {
-          name: 'Admin User',
-          username: 'admin',
-          authProtocol: 'SHA',
-          authPassword: 'authpass123',
-          privProtocol: 'AES',
-          privPassword: 'privpass123',
-          contextName: '',
-          securityLevel: 'authPriv',
-        },
-      ],
       timeout: 10000,
       retries: 5,
       port: 161,

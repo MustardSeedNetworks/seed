@@ -7,7 +7,6 @@ import (
 
 	"github.com/gosnmp/gosnmp"
 
-	"github.com/MustardSeedNetworks/seed/internal/config"
 	"github.com/MustardSeedNetworks/seed/internal/protocols/snmp"
 )
 
@@ -18,7 +17,7 @@ func TestQuery(t *testing.T) {
 		name    string
 		ip      string
 		oid     string
-		cfg     *config.SNMPConfig
+		cfg     *snmp.Session
 		wantErr bool
 	}{
 		{
@@ -32,9 +31,9 @@ func TestQuery(t *testing.T) {
 			name: "empty communities",
 			ip:   "192.168.1.1",
 			oid:  snmp.OIDSysDescr,
-			cfg: &config.SNMPConfig{
+			cfg: &snmp.Session{
 				Communities:   []string{},
-				V3Credentials: []config.SNMPv3Credential{},
+				V3Credentials: []snmp.V3Credential{},
 				Port:          161,
 				Timeout:       time.Second,
 				Retries:       1,
@@ -45,7 +44,7 @@ func TestQuery(t *testing.T) {
 			name: "unreachable host",
 			ip:   "192.0.2.1", // TEST-NET-1 (RFC 5737)
 			oid:  snmp.OIDSysDescr,
-			cfg: &config.SNMPConfig{
+			cfg: &snmp.Session{
 				Communities: []string{"public"},
 				Port:        161,
 				Timeout:     100 * time.Millisecond,
@@ -79,7 +78,7 @@ func TestQueryMultiple(t *testing.T) {
 		name    string
 		ip      string
 		oids    []string
-		cfg     *config.SNMPConfig
+		cfg     *snmp.Session
 		wantErr bool
 	}{
 		{
@@ -93,7 +92,7 @@ func TestQueryMultiple(t *testing.T) {
 			name: "empty oids",
 			ip:   "192.168.1.1",
 			oids: []string{},
-			cfg: &config.SNMPConfig{
+			cfg: &snmp.Session{
 				Communities: []string{"public"},
 				Port:        161,
 				Timeout:     time.Second,
@@ -105,7 +104,7 @@ func TestQueryMultiple(t *testing.T) {
 			name: "unreachable host",
 			ip:   "192.0.2.1",
 			oids: []string{snmp.OIDSysDescr, snmp.OIDSysName},
-			cfg: &config.SNMPConfig{
+			cfg: &snmp.Session{
 				Communities: []string{"public"},
 				Port:        161,
 				Timeout:     100 * time.Millisecond,
@@ -138,7 +137,7 @@ func TestGetSystemInfo(t *testing.T) {
 	tests := []struct {
 		name    string
 		ip      string
-		cfg     *config.SNMPConfig
+		cfg     *snmp.Session
 		wantErr bool
 	}{
 		{
@@ -150,7 +149,7 @@ func TestGetSystemInfo(t *testing.T) {
 		{
 			name: "unreachable host",
 			ip:   "192.0.2.1",
-			cfg: &config.SNMPConfig{
+			cfg: &snmp.Session{
 				Communities: []string{"public"},
 				Port:        161,
 				Timeout:     100 * time.Millisecond,
@@ -183,13 +182,13 @@ func TestGetVendorVersion(t *testing.T) {
 	tests := []struct {
 		name    string
 		ip      string
-		cfg     *config.SNMPConfig
+		cfg     *snmp.Session
 		wantErr bool
 	}{
 		{
 			name: "unreachable host",
 			ip:   "192.0.2.1",
-			cfg: &config.SNMPConfig{
+			cfg: &snmp.Session{
 				Communities: []string{"public"},
 				Port:        161,
 				Timeout:     100 * time.Millisecond,
@@ -391,7 +390,7 @@ func TestGetPrivProtocol(t *testing.T) {
 func TestGetMaxRepetitions(t *testing.T) {
 	tests := []struct {
 		name string
-		cfg  *config.SNMPConfig
+		cfg  *snmp.Session
 		want uint32
 	}{
 		{
@@ -401,35 +400,35 @@ func TestGetMaxRepetitions(t *testing.T) {
 		},
 		{
 			name: "zero value returns default",
-			cfg: &config.SNMPConfig{
+			cfg: &snmp.Session{
 				MaxRepetitions: 0,
 			},
 			want: 10, // defaultMaxRepetitions
 		},
 		{
 			name: "value within range",
-			cfg: &config.SNMPConfig{
+			cfg: &snmp.Session{
 				MaxRepetitions: 25,
 			},
 			want: 25,
 		},
 		{
 			name: "value at max allowed",
-			cfg: &config.SNMPConfig{
+			cfg: &snmp.Session{
 				MaxRepetitions: 50,
 			},
 			want: 50, // maxAllowedRepetitions
 		},
 		{
 			name: "value exceeds max allowed",
-			cfg: &config.SNMPConfig{
+			cfg: &snmp.Session{
 				MaxRepetitions: 100,
 			},
 			want: 50, // maxAllowedRepetitions
 		},
 		{
 			name: "value at minimum",
-			cfg: &config.SNMPConfig{
+			cfg: &snmp.Session{
 				MaxRepetitions: 1,
 			},
 			want: 1,
@@ -492,7 +491,7 @@ func TestContextCancellation(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	cancel() // Cancel immediately
 
-	cfg := &config.SNMPConfig{
+	cfg := &snmp.Session{
 		Communities: []string{"public"},
 		Port:        161,
 		Timeout:     time.Second,
@@ -540,7 +539,7 @@ func TestSystemInfo(t *testing.T) {
 func TestSNMPConfigValidation(t *testing.T) {
 	tests := []struct {
 		name  string
-		cfg   *config.SNMPConfig
+		cfg   *snmp.Session
 		valid bool
 	}{
 		{
@@ -550,7 +549,7 @@ func TestSNMPConfigValidation(t *testing.T) {
 		},
 		{
 			name: "valid v2c config",
-			cfg: &config.SNMPConfig{
+			cfg: &snmp.Session{
 				Communities: []string{"public"},
 				Port:        161,
 				Timeout:     time.Second,
@@ -560,9 +559,9 @@ func TestSNMPConfigValidation(t *testing.T) {
 		},
 		{
 			name: "valid v3 config",
-			cfg: &config.SNMPConfig{
+			cfg: &snmp.Session{
 				Communities: []string{},
-				V3Credentials: []config.SNMPv3Credential{
+				V3Credentials: []snmp.V3Credential{
 					{
 						Username:     "snmpuser",
 						AuthProtocol: "SHA",
@@ -579,9 +578,9 @@ func TestSNMPConfigValidation(t *testing.T) {
 		},
 		{
 			name: "empty communities and credentials",
-			cfg: &config.SNMPConfig{
+			cfg: &snmp.Session{
 				Communities:   []string{},
-				V3Credentials: []config.SNMPv3Credential{},
+				V3Credentials: []snmp.V3Credential{},
 				Port:          161,
 				Timeout:       time.Second,
 				Retries:       2,
@@ -614,7 +613,7 @@ func TestMultipleCommunities(t *testing.T) {
 	ctx := context.Background()
 
 	// Config with multiple communities (all will fail, but tests the iteration)
-	cfg := &config.SNMPConfig{
+	cfg := &snmp.Session{
 		Communities: []string{"public", "private", "community"},
 		Port:        161,
 		Timeout:     100 * time.Millisecond,
@@ -635,7 +634,7 @@ func TestMultipleCommunities(t *testing.T) {
 }
 
 func TestV3CredentialFields(t *testing.T) {
-	cred := config.SNMPv3Credential{
+	cred := snmp.V3Credential{
 		Name:          "test-cred",
 		Username:      "snmpuser",
 		AuthProtocol:  "SHA256",
@@ -686,8 +685,8 @@ func TestV3CredentialFields(t *testing.T) {
 func TestV3WithEmptyUsername(t *testing.T) {
 	ctx := context.Background()
 
-	cfg := &config.SNMPConfig{
-		V3Credentials: []config.SNMPv3Credential{
+	cfg := &snmp.Session{
+		V3Credentials: []snmp.V3Credential{
 			{
 				Name:         "test",
 				Username:     "", // Empty username should fail

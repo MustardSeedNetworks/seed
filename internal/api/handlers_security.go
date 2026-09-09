@@ -1,7 +1,6 @@
 package api
 
 import (
-	"errors"
 	"log/slog"
 	"net/http"
 	"strings"
@@ -364,25 +363,14 @@ func (s *Server) handleGateway(w http.ResponseWriter, r *http.Request) {
 
 // VLANResponse represents the VLAN information for the API.
 
-// SNMPSettingsResponse represents the SNMP configuration settings.
+// SNMPSettingsResponse represents the SNMP transport settings. Credentials are
+// not part of it: they belong to the device-credential vault and its own
+// endpoints, and this response used to hand every reader the community strings
+// the daemon put on the wire (#1799).
 type SNMPSettingsResponse struct {
-	Communities   []string                   `json:"communities"`
-	V3Credentials []SNMPv3CredentialResponse `json:"v3Credentials"`
-	Timeout       int                        `json:"timeout"` // milliseconds
-	Retries       int                        `json:"retries"`
-	Port          int                        `json:"port"`
-}
-
-// SNMPv3CredentialResponse represents an SNMPv3 credential for API responses.
-type SNMPv3CredentialResponse struct {
-	Name          string `json:"name"`
-	Username      string `json:"username"`
-	AuthProtocol  string `json:"authProtocol"`
-	AuthPassword  string `json:"authPassword"`
-	PrivProtocol  string `json:"privProtocol"`
-	PrivPassword  string `json:"privPassword"`
-	ContextName   string `json:"contextName"`
-	SecurityLevel string `json:"securityLevel"`
+	Timeout int `json:"timeout"` // milliseconds
+	Retries int `json:"retries"`
+	Port    int `json:"port"`
 }
 
 // handleSNMPSettings handles GET/PUT for SNMP settings.
@@ -413,9 +401,7 @@ func (s *Server) getSNMPSettings(w http.ResponseWriter, r *http.Request) {
 	sendJSONResponse(w, logger, http.StatusOK, snmpViewToResponse(s.securitySettings.SNMP()))
 }
 
-// updateSNMPSettings persists SNMP settings (encrypting new passwords). Thin
-// transport: decode, map to the domain update, delegate to the service, and map
-// the typed encrypt errors to the distinct i18n messages.
+// updateSNMPSettings persists the SNMP transport settings.
 func (s *Server) updateSNMPSettings(w http.ResponseWriter, r *http.Request) {
 	logger := logging.FromContext(r.Context())
 	localizer := i18n.FromRequest(r)
@@ -426,12 +412,6 @@ func (s *Server) updateSNMPSettings(w http.ResponseWriter, r *http.Request) {
 	}
 
 	switch err := s.securitySettings.UpdateSNMP(snmpRequestToUpdate(req)); {
-	case errors.Is(err, securitysettings.ErrEncryptPriv):
-		sendErrorResponseWithDetails(w, logger, http.StatusInternalServerError,
-			ErrCodeInternal, localizer.T("errors.security.failedToEncryptPriv"), "")
-	case errors.Is(err, securitysettings.ErrEncryptAuth):
-		sendErrorResponseWithDetails(w, logger, http.StatusInternalServerError,
-			ErrCodeInternal, localizer.T("errors.security.failedToEncryptAuth"), "")
 	case err != nil:
 		logger.ErrorContext(r.Context(), "Failed to save SNMP settings", "error", err)
 		sendErrorResponseWithDetails(w, logger, http.StatusInternalServerError,
@@ -445,48 +425,10 @@ func (s *Server) updateSNMPSettings(w http.ResponseWriter, r *http.Request) {
 
 // snmpViewToResponse maps the service read model to the wire DTO.
 func snmpViewToResponse(v securitysettings.SNMPView) SNMPSettingsResponse {
-	creds := make([]SNMPv3CredentialResponse, len(v.V3Credentials))
-	for i, c := range v.V3Credentials {
-		creds[i] = SNMPv3CredentialResponse{
-			Name:          c.Name,
-			Username:      c.Username,
-			AuthProtocol:  c.AuthProtocol,
-			AuthPassword:  c.AuthPassword,
-			PrivProtocol:  c.PrivProtocol,
-			PrivPassword:  c.PrivPassword,
-			ContextName:   c.ContextName,
-			SecurityLevel: c.SecurityLevel,
-		}
-	}
-	return SNMPSettingsResponse{
-		Communities:   v.Communities,
-		V3Credentials: creds,
-		Timeout:       v.TimeoutMs,
-		Retries:       v.Retries,
-		Port:          v.Port,
-	}
+	return SNMPSettingsResponse{Timeout: v.TimeoutMs, Retries: v.Retries, Port: v.Port}
 }
 
 // snmpRequestToUpdate maps the wire DTO to the domain update model.
 func snmpRequestToUpdate(req SNMPSettingsResponse) securitysettings.SNMPUpdate {
-	creds := make([]securitysettings.SNMPv3Credential, len(req.V3Credentials))
-	for i, c := range req.V3Credentials {
-		creds[i] = securitysettings.SNMPv3Credential{
-			Name:          c.Name,
-			Username:      c.Username,
-			AuthProtocol:  c.AuthProtocol,
-			AuthPassword:  c.AuthPassword,
-			PrivProtocol:  c.PrivProtocol,
-			PrivPassword:  c.PrivPassword,
-			ContextName:   c.ContextName,
-			SecurityLevel: c.SecurityLevel,
-		}
-	}
-	return securitysettings.SNMPUpdate{
-		Communities:   req.Communities,
-		V3Credentials: creds,
-		TimeoutMs:     req.Timeout,
-		Retries:       req.Retries,
-		Port:          req.Port,
-	}
+	return securitysettings.SNMPUpdate{TimeoutMs: req.Timeout, Retries: req.Retries, Port: req.Port}
 }

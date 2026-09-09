@@ -9,7 +9,6 @@ import (
 
 	"github.com/gosnmp/gosnmp"
 
-	"github.com/MustardSeedNetworks/seed/internal/config"
 	"github.com/MustardSeedNetworks/seed/internal/logging"
 )
 
@@ -70,7 +69,7 @@ type RouteEntry struct {
 
 // GetRoutes retrieves routing table from a device using IP-FORWARD-MIB.
 // It tries the modern inetCidrRouteTable first, then falls back to legacy ipCidrRouteTable.
-func GetRoutes(ctx context.Context, ip string, cfg *config.SNMPConfig) ([]RouteEntry, error) {
+func GetRoutes(ctx context.Context, ip string, cfg *Session) ([]RouteEntry, error) {
 	if cfg == nil {
 		return nil, errors.New("SNMP config is nil")
 	}
@@ -89,10 +88,10 @@ func GetRoutes(ctx context.Context, ip string, cfg *config.SNMPConfig) ([]RouteE
 func getInetCidrRoutes(
 	ctx context.Context,
 	ip string,
-	cfg *config.SNMPConfig,
+	cfg *Session,
 ) ([]RouteEntry, error) {
 	return sweepCredentials(ctx, cfg, "failed to query inetCidrRouteTable with all configured credentials",
-		func(cred *config.SNMPv3Credential) ([]RouteEntry, error) {
+		func(cred *V3Credential) ([]RouteEntry, error) {
 			return walkInetCidrRoutesV3(ctx, ip, cred, cfg)
 		},
 		func(community string) ([]RouteEntry, error) {
@@ -102,9 +101,9 @@ func getInetCidrRoutes(
 }
 
 // getIPCidrRoutes retrieves routes from the legacy ipCidrRouteTable.
-func getIPCidrRoutes(ctx context.Context, ip string, cfg *config.SNMPConfig) ([]RouteEntry, error) {
+func getIPCidrRoutes(ctx context.Context, ip string, cfg *Session) ([]RouteEntry, error) {
 	return sweepCredentials(ctx, cfg, "failed to query ipCidrRouteTable with all configured credentials",
-		func(cred *config.SNMPv3Credential) ([]RouteEntry, error) {
+		func(cred *V3Credential) ([]RouteEntry, error) {
 			return walkIPCidrRoutesV3(ctx, ip, cred, cfg)
 		},
 		func(community string) ([]RouteEntry, error) {
@@ -117,7 +116,7 @@ func getIPCidrRoutes(ctx context.Context, ip string, cfg *config.SNMPConfig) ([]
 func walkInetCidrRoutes(
 	ctx context.Context,
 	ip, community string,
-	cfg *config.SNMPConfig,
+	cfg *Session,
 ) ([]RouteEntry, error) {
 	params, err := newV2cWalkClient(ctx, ip, community, cfg)
 	if err != nil {
@@ -132,8 +131,8 @@ func walkInetCidrRoutes(
 func walkInetCidrRoutesV3(
 	ctx context.Context,
 	ip string,
-	cred *config.SNMPv3Credential,
-	cfg *config.SNMPConfig,
+	cred *V3Credential,
+	cfg *Session,
 ) ([]RouteEntry, error) {
 	params, err := newV3WalkClient(ctx, ip, cred, cfg)
 	if err != nil {
@@ -198,7 +197,7 @@ func walkInetCidrRouteTable(params *gosnmp.GoSNMP) ([]RouteEntry, error) {
 func walkIPCidrRoutes(
 	ctx context.Context,
 	ip, community string,
-	cfg *config.SNMPConfig,
+	cfg *Session,
 ) ([]RouteEntry, error) {
 	params, err := newV2cWalkClient(ctx, ip, community, cfg)
 	if err != nil {
@@ -213,8 +212,8 @@ func walkIPCidrRoutes(
 func walkIPCidrRoutesV3(
 	ctx context.Context,
 	ip string,
-	cred *config.SNMPv3Credential,
-	cfg *config.SNMPConfig,
+	cred *V3Credential,
+	cfg *Session,
 ) ([]RouteEntry, error) {
 	params, err := newV3WalkClient(ctx, ip, cred, cfg)
 	if err != nil {

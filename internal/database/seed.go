@@ -80,7 +80,7 @@ func (db *DB) seedDefaultProfile() error {
 		},
 		"display_options": {"show_public_ip": true, "unit_system": "sae"},
 		"dns": {"test_hostname": "google.com", "timeout_ms": 5000},
-		"snmp": {"communities": ["public"], "timeout_ms": 5000, "retries": 2, "port": 161},
+		"snmp": {"timeout_ms": 5000, "retries": 2, "port": 161},
 		"network_discovery": {"enabled": true, "auto_scan": true, "scan_interval_secs": 600, "ipv6_enabled": true, "fingerprinting": {"enabled": false, "os_detection": false, "service_probes": false}},
 		"link": {"mode": "auto"},
 		"cable_test": {"enabled": true}

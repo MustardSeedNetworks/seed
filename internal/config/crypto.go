@@ -14,13 +14,6 @@ const (
 // ErrInvalidCiphertext is returned when decryption fails due to invalid input.
 var ErrInvalidCiphertext = errors.New("invalid ciphertext")
 
-// ErrPlaintextCredential is returned when a credential value is found in
-// plaintext (not versioned DEK ciphertext) at read time. Credentials must be
-// set via the API or CLI so they are encrypted at rest; hand-editing plaintext
-// into the config is rejected.
-var ErrPlaintextCredential = errors.New("plaintext credential value is not accepted; " +
-	"credentials must be set via the API/CLI so they are encrypted at rest")
-
 // IsEncrypted checks if a credential value is encrypted.
 func IsEncrypted(value string) bool {
 	return strings.HasPrefix(value, encryptedPrefix)
@@ -59,43 +52,4 @@ func (c *Config) ensureKeyring() (*Keyring, error) {
 // share the one keyring rather than each loading their own.
 func (c *Config) CredentialKeyring() (*Keyring, error) {
 	return c.ensureKeyring()
-}
-
-// EncryptCredentialValue encrypts a single credential value with the active DEK
-// version (ADR-0015). This is the one legitimate path from operator-supplied
-// plaintext to stored ciphertext; it is called by the API and CLI handlers when
-// an operator sets a credential. All other credential read paths expect versioned
-// DEK ciphertext and reject anything else.
-func (c *Config) EncryptCredentialValue(plaintext string) (string, error) {
-	kr, err := c.ensureKeyring()
-	if err != nil {
-		return "", err
-	}
-	return kr.EncryptValue(plaintext)
-}
-
-// DecryptSNMPPassword decrypts an SNMP password for use (ADR-0015).
-// Only versioned DEK ciphertext ("enc:v<N>:...") is accepted. Empty values
-// return empty. Plaintext or legacy v0/JWT-derived ciphertext is rejected:
-// credentials must be set via the API/CLI so they are encrypted at rest.
-func (c *Config) DecryptSNMPPassword(encrypted string) (string, error) {
-	if encrypted == "" {
-		return "", nil
-	}
-	if !isVersionedCiphertext(encrypted) {
-		if IsEncrypted(encrypted) {
-			// Legacy v0 (JWT-derived) unversioned "enc:..." format.
-			return "", fmt.Errorf("SNMP v3 credential: legacy v0/JWT-derived ciphertext is no longer "+
-				"supported; re-set the credential via the API/CLI so it is re-encrypted at rest: %w",
-				ErrPlaintextCredential)
-		}
-		// Bare plaintext.
-		return "", fmt.Errorf("SNMP v3 credential: %w", ErrPlaintextCredential)
-	}
-
-	kr, err := c.ensureKeyring()
-	if err != nil {
-		return "", err
-	}
-	return kr.DecryptValue(encrypted)
 }

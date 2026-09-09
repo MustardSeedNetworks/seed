@@ -8,7 +8,6 @@ import (
 
 	"github.com/gosnmp/gosnmp"
 
-	"github.com/MustardSeedNetworks/seed/internal/config"
 	"github.com/MustardSeedNetworks/seed/internal/logging"
 )
 
@@ -53,13 +52,13 @@ type VLANInfo struct {
 
 // GetVLANs retrieves all VLANs from a device using Q-BRIDGE-MIB.
 // Security: SNMPv3 is preferred over v2c when both are configured.
-func GetVLANs(ctx context.Context, ip string, cfg *config.SNMPConfig) ([]VLANInfo, error) {
+func GetVLANs(ctx context.Context, ip string, cfg *Session) ([]VLANInfo, error) {
 	if cfg == nil {
 		return nil, errors.New("SNMP config is nil")
 	}
 
 	return sweepCredentials(ctx, cfg, "failed to query Q-BRIDGE VLANs with all configured credentials",
-		func(cred *config.SNMPv3Credential) ([]VLANInfo, error) {
+		func(cred *V3Credential) ([]VLANInfo, error) {
 			return walkVLANsV3(ctx, ip, cred, cfg)
 		},
 		func(community string) ([]VLANInfo, error) {
@@ -72,7 +71,7 @@ func GetVLANs(ctx context.Context, ip string, cfg *config.SNMPConfig) ([]VLANInf
 func walkVLANs(
 	ctx context.Context,
 	ip, community string,
-	cfg *config.SNMPConfig,
+	cfg *Session,
 ) ([]VLANInfo, error) {
 	params, err := newV2cWalkClient(ctx, ip, community, cfg)
 	if err != nil {
@@ -87,8 +86,8 @@ func walkVLANs(
 func walkVLANsV3(
 	ctx context.Context,
 	ip string,
-	cred *config.SNMPv3Credential,
-	cfg *config.SNMPConfig,
+	cred *V3Credential,
+	cfg *Session,
 ) ([]VLANInfo, error) {
 	params, err := newV3WalkClient(ctx, ip, cred, cfg)
 	if err != nil {

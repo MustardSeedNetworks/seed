@@ -245,7 +245,7 @@ func (b *L2PathBuilder) enrichHopWithSNMP(ctx context.Context, hop *L2Hop) {
 	if b.snmpCreds == nil {
 		return
 	}
-	snmpCfg, credErr := b.snmpCreds.SNMPConfig(ctx)
+	snmpCfg, credErr := b.snmpCreds.SNMPSession(ctx)
 	if credErr != nil {
 		logging.GetLogger().WarnContext(ctx,
 			"L2 path SNMP enrichment skipped - credentials unresolved",

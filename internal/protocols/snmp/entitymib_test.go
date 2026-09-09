@@ -5,7 +5,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/MustardSeedNetworks/seed/internal/config"
 	"github.com/MustardSeedNetworks/seed/internal/protocols/snmp"
 )
 
@@ -163,7 +162,7 @@ func TestGetPhysicalEntities(t *testing.T) {
 	tests := []struct {
 		name    string
 		ip      string
-		cfg     *config.SNMPConfig
+		cfg     *snmp.Session
 		wantErr bool
 	}{
 		{
@@ -175,7 +174,7 @@ func TestGetPhysicalEntities(t *testing.T) {
 		{
 			name: "unreachable host",
 			ip:   "192.0.2.1",
-			cfg: &config.SNMPConfig{
+			cfg: &snmp.Session{
 				Communities: []string{"public"},
 				Port:        161,
 				Timeout:     100 * time.Millisecond,
@@ -208,7 +207,7 @@ func TestGetChassisInfo(t *testing.T) {
 	tests := []struct {
 		name    string
 		ip      string
-		cfg     *config.SNMPConfig
+		cfg     *snmp.Session
 		wantErr bool
 	}{
 		{
@@ -220,7 +219,7 @@ func TestGetChassisInfo(t *testing.T) {
 		{
 			name: "unreachable host",
 			ip:   "192.0.2.1",
-			cfg: &config.SNMPConfig{
+			cfg: &snmp.Session{
 				Communities: []string{"public"},
 				Port:        161,
 				Timeout:     100 * time.Millisecond,
@@ -253,7 +252,7 @@ func TestGetModules(t *testing.T) {
 	tests := []struct {
 		name    string
 		ip      string
-		cfg     *config.SNMPConfig
+		cfg     *snmp.Session
 		wantErr bool
 	}{
 		{
@@ -265,7 +264,7 @@ func TestGetModules(t *testing.T) {
 		{
 			name: "unreachable host",
 			ip:   "192.0.2.1",
-			cfg: &config.SNMPConfig{
+			cfg: &snmp.Session{
 				Communities: []string{"public"},
 				Port:        161,
 				Timeout:     100 * time.Millisecond,
@@ -298,7 +297,7 @@ func TestGetPowerSupplies(t *testing.T) {
 	tests := []struct {
 		name    string
 		ip      string
-		cfg     *config.SNMPConfig
+		cfg     *snmp.Session
 		wantErr bool
 	}{
 		{
@@ -310,7 +309,7 @@ func TestGetPowerSupplies(t *testing.T) {
 		{
 			name: "unreachable host",
 			ip:   "192.0.2.1",
-			cfg: &config.SNMPConfig{
+			cfg: &snmp.Session{
 				Communities: []string{"public"},
 				Port:        161,
 				Timeout:     100 * time.Millisecond,
@@ -343,7 +342,7 @@ func TestGetFans(t *testing.T) {
 	tests := []struct {
 		name    string
 		ip      string
-		cfg     *config.SNMPConfig
+		cfg     *snmp.Session
 		wantErr bool
 	}{
 		{
@@ -355,7 +354,7 @@ func TestGetFans(t *testing.T) {
 		{
 			name: "unreachable host",
 			ip:   "192.0.2.1",
-			cfg: &config.SNMPConfig{
+			cfg: &snmp.Session{
 				Communities: []string{"public"},
 				Port:        161,
 				Timeout:     100 * time.Millisecond,

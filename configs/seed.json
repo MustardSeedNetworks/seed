@@ -338,9 +338,6 @@
     }
   },
   "snmp": {
-    "communities": [
-      "public"
-    ],
     "timeout": 5000000000,
     "retries": 2,
     "port": 161,

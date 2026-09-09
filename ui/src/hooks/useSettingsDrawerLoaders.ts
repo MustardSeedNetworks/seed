@@ -277,8 +277,6 @@ export function useSettingsDrawerLoaders({
       if (response.ok) {
         const data = await (response.json() as Promise<Partial<SnmpSettingsType>>);
         setSnmpSettings({
-          communities: data.communities ?? ['public'],
-          v3Credentials: data.v3Credentials ?? [],
           timeout: data.timeout ?? 5000,
           retries: data.retries ?? 2,
           port: data.port ?? 161,

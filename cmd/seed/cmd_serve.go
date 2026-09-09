@@ -68,9 +68,6 @@ func runServe(_ *cobra.Command, _ []string, state *cliState) {
 	cfg := loadAndConfigureConfig(configPath)
 	logPath := setupLogging(cfg)
 
-	// Check for deprecated SNMP settings after logging is initialized
-	cfg.WarnDeprecatedSNMPSettings()
-
 	netMgr := setupNetworkInterface(cfg, configPath)
 
 	// Create trusted proxies configuration

@@ -11,7 +11,6 @@ import (
 
 	"github.com/gosnmp/gosnmp"
 
-	"github.com/MustardSeedNetworks/seed/internal/config"
 	"github.com/MustardSeedNetworks/seed/internal/logging"
 )
 
@@ -73,14 +72,14 @@ type LLDPNeighbor struct {
 func GetLLDPNeighbors(
 	ctx context.Context,
 	ip string,
-	cfg *config.SNMPConfig,
+	cfg *Session,
 ) ([]LLDPNeighbor, error) {
 	if cfg == nil {
 		return nil, errors.New("SNMP config is nil")
 	}
 
 	return sweepCredentials(ctx, cfg, "failed to query LLDP neighbors with all configured credentials",
-		func(cred *config.SNMPv3Credential) ([]LLDPNeighbor, error) {
+		func(cred *V3Credential) ([]LLDPNeighbor, error) {
 			return walkLLDPV3(ctx, ip, cred, cfg)
 		},
 		func(community string) ([]LLDPNeighbor, error) {
@@ -93,7 +92,7 @@ func GetLLDPNeighbors(
 func walkLLDP(
 	ctx context.Context,
 	ip, community string,
-	cfg *config.SNMPConfig,
+	cfg *Session,
 ) ([]LLDPNeighbor, error) {
 	params, err := newV2cWalkClient(ctx, ip, community, cfg)
 	if err != nil {
@@ -108,8 +107,8 @@ func walkLLDP(
 func walkLLDPV3(
 	ctx context.Context,
 	ip string,
-	cred *config.SNMPv3Credential,
-	cfg *config.SNMPConfig,
+	cred *V3Credential,
+	cfg *Session,
 ) ([]LLDPNeighbor, error) {
 	params, err := newV3WalkClient(ctx, ip, cred, cfg)
 	if err != nil {

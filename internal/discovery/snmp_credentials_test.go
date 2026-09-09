@@ -11,6 +11,7 @@ import (
 	"github.com/MustardSeedNetworks/seed/internal/config"
 	"github.com/MustardSeedNetworks/seed/internal/discovery"
 	"github.com/MustardSeedNetworks/seed/internal/polling"
+	"github.com/MustardSeedNetworks/seed/internal/protocols/snmp"
 )
 
 type fakeClients struct {
@@ -69,12 +70,12 @@ func TestVaultSNMPCredentialsResolvesTheOneClient(t *testing.T) {
 		}},
 	)
 
-	got, err := p.SNMPConfig(context.Background())
+	got, err := p.SNMPSession(context.Background())
 	require.NoError(t, err)
 
 	require.Equal(t, []string{"plain-community"}, got.Communities)
 	require.Len(t, got.V3Credentials, 1)
-	require.Equal(t, config.SNMPv3Credential{
+	require.Equal(t, snmp.V3Credential{
 		Name:          "v3",
 		Username:      "operator",
 		AuthProtocol:  "SHA256",
@@ -99,7 +100,7 @@ func TestVaultSNMPCredentialsKeepsOperatorMaxRepetitions(t *testing.T) {
 	)
 	require.NoError(t, err)
 
-	got, err := p.SNMPConfig(context.Background())
+	got, err := p.SNMPSession(context.Background())
 	require.NoError(t, err)
 	require.Equal(t, uint32(25), got.MaxRepetitions)
 }
@@ -112,7 +113,7 @@ func TestVaultSNMPCredentialsRefusesMoreThanOneClient(t *testing.T) {
 		}},
 	)
 
-	_, err := p.SNMPConfig(context.Background())
+	_, err := p.SNMPSession(context.Background())
 	require.ErrorIs(t, err, discovery.ErrDiscoveryTenantAmbiguous)
 	require.Contains(t, err.Error(), "2 clients exist")
 }
@@ -120,7 +121,7 @@ func TestVaultSNMPCredentialsRefusesMoreThanOneClient(t *testing.T) {
 func TestVaultSNMPCredentialsRefusesNoClient(t *testing.T) {
 	p := newProvider(t, fakeClients{}, fakeVault{})
 
-	_, err := p.SNMPConfig(context.Background())
+	_, err := p.SNMPSession(context.Background())
 	require.ErrorIs(t, err, discovery.ErrDiscoveryTenantAmbiguous)
 }
 
@@ -129,7 +130,7 @@ func TestVaultSNMPCredentialsRefusesNoClient(t *testing.T) {
 func TestVaultSNMPCredentialsEmptyVaultYieldsNoCredential(t *testing.T) {
 	p := newProvider(t, fakeClients{ids: []string{"acme"}}, fakeVault{})
 
-	got, err := p.SNMPConfig(context.Background())
+	got, err := p.SNMPSession(context.Background())
 	require.NoError(t, err)
 	require.Empty(t, got.Communities)
 	require.Empty(t, got.V3Credentials)
@@ -146,7 +147,7 @@ func TestVaultSNMPCredentialsPropagatesDecryptFailure(t *testing.T) {
 	)
 	require.NoError(t, err)
 
-	_, err = p.SNMPConfig(context.Background())
+	_, err = p.SNMPSession(context.Background())
 	require.ErrorContains(t, err, "credential c1: community")
 }
 

@@ -34,7 +34,8 @@ stalled and was papered over:**
    >500. Coverage floor 42% vs 90% goal.
 6. **Pre-v1 no-compat violations:** live `config.ToLegacyConfig()`; `revive`
    stutter `//nolint`s in `logging`/`update` "for backward compatibility";
-   deprecated fields/functions kept (`LinkUp`, `WarnDeprecatedSNMPSettings`).
+   deprecated fields/functions kept (`LinkUp`; `WarnDeprecatedSNMPSettings` was
+   deleted by #1799).
 7. **UI complexity hidden:** 19 `biome-ignore-all noExcessiveCognitiveComplexity`
    file-level blankets on oversized components.
 8. **3 dodge `t.Skip`s** (unimplemented / unwired / upstream-race).
@@ -142,7 +143,8 @@ WS-A (handlers shrink when strangled). Non-handler targets incl. `snmp/interface
 - E1 Remove `config.ToLegacyConfig()` + migrate callers to `SystemConfig`.
 - E2 Resolve `inMemorySuppressionStore` "legacy backend".
 - E3 Rename the `revive`-stutter `//nolint`s away (`logging`, `update/types`) — real renames, delete suppressions.
-- E4 Remove deprecated `netif.LinkUp` field, `WarnDeprecatedSNMPSettings`, assess `survey/migration.go`.
+- E4 Remove deprecated `netif.LinkUp` field, assess `survey/migration.go`.
+  (`WarnDeprecatedSNMPSettings` done — deleted with the config credential store, #1799.)
 - E5 Fix the 4 borderline `//nolint`s (errcheck-without-log, gocyclo-instead-of-decompose).
 
 ### WS-F — Naming/folder conformance sweep

@@ -259,23 +259,8 @@ export interface NetworkDiscoveryConfig {
   fingerprinting?: { enabled?: boolean; osDetection?: boolean; serviceProbes?: boolean };
 }
 
-/** SNMP v3 credential configuration. */
-export interface SnmpV3CredentialConfig {
-  id?: string;
-  name: string;
-  username: string;
-  authProtocol?: string; // "MD5", "SHA", "SHA256", "SHA512", or "" for noAuth
-  authPassword?: string;
-  privProtocol?: string; // "DES", "AES", "AES192", "AES256", or "" for noPriv
-  privPassword?: string;
-  contextName?: string;
-  securityLevel?: string; // "noAuthNoPriv", "authNoPriv", "authPriv"
-}
-
-/** SNMP configuration. */
+/** SNMP transport configuration. Credentials live in the device-credential vault. */
 export interface SnmpConfig {
-  communities?: string[];
-  v3Credentials?: SnmpV3CredentialConfig[];
   timeoutMs?: number;
   retries?: number;
   port?: number;

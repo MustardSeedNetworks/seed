@@ -9,7 +9,6 @@ import (
 
 	"github.com/gosnmp/gosnmp"
 
-	"github.com/MustardSeedNetworks/seed/internal/config"
 	"github.com/MustardSeedNetworks/seed/internal/logging"
 )
 
@@ -20,14 +19,14 @@ func GetPortVLANs(
 	ctx context.Context,
 	ip string,
 	ifIndex int,
-	cfg *config.SNMPConfig,
+	cfg *Session,
 ) ([]int, error) {
 	if cfg == nil {
 		return nil, errors.New("SNMP config is nil")
 	}
 
 	return sweepCredentials(ctx, cfg, "failed to query port VLANs with all configured credentials",
-		func(cred *config.SNMPv3Credential) ([]int, error) {
+		func(cred *V3Credential) ([]int, error) {
 			return getPortVLANsWithV3(ctx, ip, ifIndex, cred, cfg)
 		},
 		func(community string) ([]int, error) {
@@ -42,7 +41,7 @@ func getPortVLANsWithCommunity(
 	ip string,
 	ifIndex int,
 	community string,
-	cfg *config.SNMPConfig,
+	cfg *Session,
 ) ([]int, error) {
 	params, err := newV2cWalkClient(ctx, ip, community, cfg)
 	if err != nil {
@@ -58,8 +57,8 @@ func getPortVLANsWithV3(
 	ctx context.Context,
 	ip string,
 	ifIndex int,
-	cred *config.SNMPv3Credential,
-	cfg *config.SNMPConfig,
+	cred *V3Credential,
+	cfg *Session,
 ) ([]int, error) {
 	params, err := newV3WalkClient(ctx, ip, cred, cfg)
 	if err != nil {

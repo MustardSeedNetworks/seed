@@ -5,18 +5,6 @@
   "$defs": {
     "SNMPSettingsResponse": {
       "properties": {
-        "communities": {
-          "items": {
-            "type": "string"
-          },
-          "type": "array"
-        },
-        "v3Credentials": {
-          "items": {
-            "$ref": "#/$defs/SNMPv3CredentialResponse"
-          },
-          "type": "array"
-        },
         "timeout": {
           "type": "integer"
         },
@@ -30,51 +18,9 @@
       "additionalProperties": false,
       "type": "object",
       "required": [
-        "communities",
-        "v3Credentials",
         "timeout",
         "retries",
         "port"
-      ]
-    },
-    "SNMPv3CredentialResponse": {
-      "properties": {
-        "name": {
-          "type": "string"
-        },
-        "username": {
-          "type": "string"
-        },
-        "authProtocol": {
-          "type": "string"
-        },
-        "authPassword": {
-          "type": "string"
-        },
-        "privProtocol": {
-          "type": "string"
-        },
-        "privPassword": {
-          "type": "string"
-        },
-        "contextName": {
-          "type": "string"
-        },
-        "securityLevel": {
-          "type": "string"
-        }
-      },
-      "additionalProperties": false,
-      "type": "object",
-      "required": [
-        "name",
-        "username",
-        "authProtocol",
-        "authPassword",
-        "privProtocol",
-        "privPassword",
-        "contextName",
-        "securityLevel"
       ]
     }
   },

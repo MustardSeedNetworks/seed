@@ -179,7 +179,6 @@ func schemaTargets() []schemaTarget {
 		{&api.RestoreRequest{}, "restore-request.schema.json"},
 		{&api.ClientLogRequest{}, "client-log-request.schema.json"},
 		{&api.LogStatsResponse{}, "log-stats-response.schema.json"},
-		{&api.SNMPv3CredentialResponse{}, "snmpv3-credential-response.schema.json"},
 
 		// Profile-import response.
 		{&api.ProfileImportResponse{}, "profile-import-response.schema.json"},

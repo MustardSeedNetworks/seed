@@ -10,8 +10,6 @@ import (
 	"net/url"
 	"strconv"
 	"strings"
-
-	"github.com/MustardSeedNetworks/seed/internal/logging"
 )
 
 // Validate checks if the configuration values are valid.
@@ -226,57 +224,7 @@ func (c *Config) validateSNMPConfig() []string {
 	if c.SNMP.Timeout <= 0 {
 		errs = append(errs, "snmp.timeout must be positive")
 	}
-	errs = append(errs, c.validateSNMPCredentials()...)
 	return errs
-}
-
-// validateSNMPCredentials rejects any SNMP v3 credential whose value is not
-// versioned DEK ciphertext. Plaintext and legacy v0/JWT-derived ciphertext are
-// illegal states: credentials must be set via the API/CLI (EncryptCredentialValue)
-// so they are encrypted at rest before being written to config.
-func (c *Config) validateSNMPCredentials() []string {
-	var errs []string
-	for _, cred := range c.SNMP.V3Credentials {
-		if cred.AuthPassword != "" && !isVersionedCiphertext(cred.AuthPassword) {
-			errs = append(errs, fmt.Sprintf(
-				"SNMP v3 credential %q: auth_password must be set via the API/CLI so it is "+
-					"encrypted at rest; plaintext or legacy ciphertext in config is not accepted",
-				cred.Name,
-			))
-		}
-		if cred.PrivPassword != "" && !isVersionedCiphertext(cred.PrivPassword) {
-			errs = append(errs, fmt.Sprintf(
-				"SNMP v3 credential %q: priv_password must be set via the API/CLI so it is "+
-					"encrypted at rest; plaintext or legacy ciphertext in config is not accepted",
-				cred.Name,
-			))
-		}
-	}
-	return errs
-}
-
-// WarnDeprecatedSNMPSettings logs warnings for deprecated SNMP configurations.
-// This function should be called after logging is initialized.
-func (c *Config) WarnDeprecatedSNMPSettings() {
-	c.RLock()
-	defer c.RUnlock()
-
-	// Check for MD5 authentication protocol in SNMPv3 credentials
-	// MD5 is cryptographically broken and will be removed in the next major version
-	for i := range c.SNMP.V3Credentials {
-		cred := &c.SNMP.V3Credentials[i]
-		if cred.AuthProtocol == "MD5" {
-			logging.GetLogger().Warn(
-				"SNMP MD5 authentication is deprecated and will be removed in the next major version",
-				"credential_name",
-				cred.Name,
-				"username",
-				cred.Username,
-				"recommendation",
-				"Use SHA256 or SHA512 for secure authentication",
-			)
-		}
-	}
 }
 
 // validateLoggingConfig checks logging configuration.

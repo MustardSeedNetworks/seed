@@ -85,6 +85,18 @@ func removedKeys() []removedKey {
 				"(options, timing, profiler) and snmp; re-apply them there",
 		},
 		{
+			path: []string{"snmp"},
+			key:  "communities",
+			replacement: "SNMP credentials live in the encrypted device-credential " +
+				"vault; add the community there (Settings > Device credentials)",
+		},
+		{
+			path: []string{"snmp"},
+			key:  "v3_credentials",
+			replacement: "SNMP credentials live in the encrypted device-credential " +
+				"vault; add the v3 credential there (Settings > Device credentials)",
+		},
+		{
 			path:        []string{"server"},
 			key:         "https",
 			replacement: "Seed always serves HTTPS; there is nothing to switch on",

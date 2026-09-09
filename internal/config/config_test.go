@@ -1,16 +1,13 @@
 package config_test
 
 import (
-	"bytes"
 	"errors"
 	"os"
 	"path/filepath"
-	"strings"
 	"testing"
 	"time"
 
 	"github.com/MustardSeedNetworks/seed/internal/config"
-	"github.com/MustardSeedNetworks/seed/internal/logging"
 )
 
 func TestDefaultConfig(t *testing.T) {
@@ -761,101 +758,6 @@ func TestValidateInvalidSNMPRetries(t *testing.T) {
 	}
 }
 
-func TestWarnDeprecatedSNMPSettings(t *testing.T) {
-	tests := []struct {
-		name        string
-		credentials []config.SNMPv3Credential
-		expectWarn  bool
-	}{
-		{
-			name: "MD5 auth protocol triggers warning",
-			credentials: []config.SNMPv3Credential{
-				{
-					Name:         "test-md5",
-					Username:     "snmpuser",
-					AuthProtocol: "MD5",
-					AuthPassword: "password",
-				},
-			},
-			expectWarn: true,
-		},
-		{
-			name: "SHA256 does not trigger warning",
-			credentials: []config.SNMPv3Credential{
-				{
-					Name:         "test-sha256",
-					Username:     "snmpuser",
-					AuthProtocol: "SHA256",
-					AuthPassword: "password",
-				},
-			},
-			expectWarn: false,
-		},
-		{
-			name: "SHA512 does not trigger warning",
-			credentials: []config.SNMPv3Credential{
-				{
-					Name:         "test-sha512",
-					Username:     "snmpuser",
-					AuthProtocol: "SHA512",
-					AuthPassword: "password",
-				},
-			},
-			expectWarn: false,
-		},
-		{
-			name: "SHA does not trigger warning",
-			credentials: []config.SNMPv3Credential{
-				{
-					Name:         "test-sha",
-					Username:     "snmpuser",
-					AuthProtocol: "SHA",
-					AuthPassword: "password",
-				},
-			},
-			expectWarn: false,
-		},
-		{
-			name: "multiple credentials with one MD5",
-			credentials: []config.SNMPv3Credential{
-				{
-					Name:         "test-sha256",
-					Username:     "user1",
-					AuthProtocol: "SHA256",
-					AuthPassword: "password",
-				},
-				{
-					Name:         "test-md5",
-					Username:     "user2",
-					AuthProtocol: "MD5",
-					AuthPassword: "password",
-				},
-			},
-			expectWarn: true,
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			var buf bytes.Buffer
-			if err := logging.InitLogger(&logging.LoggingConfig{Level: "warn", Writer: &buf}); err != nil {
-				t.Fatalf("InitLogger: %v", err)
-			}
-
-			cfg := config.DefaultConfig()
-			cfg.SNMP.V3Credentials = tt.credentials
-
-			// The function reports through the log, not a return value.
-			cfg.WarnDeprecatedSNMPSettings()
-
-			warned := strings.Contains(buf.String(), "SNMP MD5 authentication is deprecated")
-			if warned != tt.expectWarn {
-				t.Errorf("warned = %t, want %t (log: %s)", warned, tt.expectWarn, buf.String())
-			}
-		})
-	}
-}
-
 // ========== Port Preset Tests ==========
 
 func TestPortPresetConstants(t *testing.T) {
@@ -1040,46 +942,9 @@ func TestHTTPEndpointConfig(t *testing.T) {
 
 // ========== SNMP Configuration Tests ==========
 
-func TestSNMPv3CredentialConfig(t *testing.T) {
-	cred := config.SNMPv3Credential{
-		Name:          "Admin",
-		Username:      "snmpv3admin",
-		AuthProtocol:  "SHA",
-		AuthPassword:  "authpass123",
-		PrivProtocol:  "AES",
-		PrivPassword:  "privpass456",
-		SecurityLevel: "authPriv",
-	}
-
-	if cred.Name != "Admin" {
-		t.Errorf("expected name 'Admin', got %q", cred.Name)
-	}
-	if cred.Username != "snmpv3admin" {
-		t.Errorf("expected username 'snmpv3admin', got %q", cred.Username)
-	}
-	if cred.AuthProtocol != "SHA" {
-		t.Errorf("expected auth protocol 'SHA', got %q", cred.AuthProtocol)
-	}
-	if cred.AuthPassword != "authpass123" {
-		t.Errorf("expected auth password 'authpass123', got %q", cred.AuthPassword)
-	}
-	if cred.PrivProtocol != "AES" {
-		t.Errorf("expected priv protocol 'AES', got %q", cred.PrivProtocol)
-	}
-	if cred.PrivPassword != "privpass456" {
-		t.Errorf("expected priv password 'privpass456', got %q", cred.PrivPassword)
-	}
-	if cred.SecurityLevel != "authPriv" {
-		t.Errorf("expected security level 'authPriv', got %q", cred.SecurityLevel)
-	}
-}
-
 func TestDefaultSNMPConfig(t *testing.T) {
 	cfg := config.DefaultConfig()
 
-	if len(cfg.SNMP.Communities) != 1 || cfg.SNMP.Communities[0] != "public" {
-		t.Errorf("expected default community ['public'], got %v", cfg.SNMP.Communities)
-	}
 	if cfg.SNMP.Timeout != 5*time.Second {
 		t.Errorf("expected SNMP timeout 5s, got %v", cfg.SNMP.Timeout)
 	}
@@ -1193,10 +1058,6 @@ func TestConfigClone(t *testing.T) {
 	cfg.Server.Port = 9999
 	cfg.Auth.DefaultUsername = "clonetest"
 	cfg.Security.AllowedOrigins = []string{"https://test.com", "https://dev.com"}
-	cfg.SNMP.Communities = []string{"private", "public"}
-	cfg.SNMP.V3Credentials = []config.SNMPv3Credential{
-		{Name: "test", Username: "user1", AuthProtocol: "SHA"},
-	}
 
 	clone := cfg.Clone()
 
@@ -1215,18 +1076,6 @@ func TestConfigClone(t *testing.T) {
 	clone.Security.AllowedOrigins[0] = "modified"
 	if cfg.Security.AllowedOrigins[0] == "modified" {
 		t.Error("Clone should deep copy AllowedOrigins, but original was modified")
-	}
-
-	// Verify SNMP communities deep copied
-	clone.SNMP.Communities[0] = "modified"
-	if cfg.SNMP.Communities[0] == "modified" {
-		t.Error("Clone should deep copy SNMP.Communities, but original was modified")
-	}
-
-	// Verify SNMP v3 credentials deep copied
-	clone.SNMP.V3Credentials[0].Name = "modified"
-	if cfg.SNMP.V3Credentials[0].Name == "modified" {
-		t.Error("Clone should deep copy SNMP.V3Credentials, but original was modified")
 	}
 
 	// Verify changes to clone don't affect original

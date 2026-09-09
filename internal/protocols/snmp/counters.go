@@ -8,8 +8,6 @@ import (
 	"time"
 
 	"github.com/gosnmp/gosnmp"
-
-	"github.com/MustardSeedNetworks/seed/internal/config"
 )
 
 // InterfaceCounters contains interface traffic counters for bandwidth monitoring.
@@ -29,14 +27,14 @@ type InterfaceCounters struct {
 func GetInterfaceCounters(
 	ctx context.Context,
 	ip string,
-	cfg *config.SNMPConfig,
+	cfg *Session,
 ) (map[int]*InterfaceCounters, error) {
 	if cfg == nil {
 		return nil, errors.New("SNMP config is nil")
 	}
 
 	return sweepCredentials(ctx, cfg, "failed to query interface counters with all configured credentials",
-		func(cred *config.SNMPv3Credential) (map[int]*InterfaceCounters, error) {
+		func(cred *V3Credential) (map[int]*InterfaceCounters, error) {
 			return walkCountersV3(ctx, ip, cred, cfg)
 		},
 		func(community string) (map[int]*InterfaceCounters, error) {
@@ -49,7 +47,7 @@ func GetInterfaceCounters(
 func walkCounters(
 	ctx context.Context,
 	ip, community string,
-	cfg *config.SNMPConfig,
+	cfg *Session,
 ) (map[int]*InterfaceCounters, error) {
 	params, err := newV2cWalkClient(ctx, ip, community, cfg)
 	if err != nil {
@@ -64,8 +62,8 @@ func walkCounters(
 func walkCountersV3(
 	ctx context.Context,
 	ip string,
-	cred *config.SNMPv3Credential,
-	cfg *config.SNMPConfig,
+	cred *V3Credential,
+	cfg *Session,
 ) (map[int]*InterfaceCounters, error) {
 	params, err := newV3WalkClient(ctx, ip, cred, cfg)
 	if err != nil {

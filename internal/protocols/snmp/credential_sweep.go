@@ -10,7 +10,7 @@ package snmp
 // to return the wrong error, or to keep trying after a context cancellation.
 //
 // It also puts the credential source behind one function. #1799 replaces
-// config.SNMPConfig's plaintext Communities and V3Credentials with the
+// Session's plaintext Communities and V3Credentials with the
 // encrypted vault; with the sweep in one place, that becomes a change to what
 // sweepCredentials iterates rather than an edit to every collector.
 
@@ -18,8 +18,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-
-	"github.com/MustardSeedNetworks/seed/internal/config"
 )
 
 // ErrNoCredentialSucceeded reports that every configured credential was tried
@@ -40,9 +38,9 @@ var ErrNoCredentialSucceeded = errors.New("snmp: no configured credential succee
 // timeout into as many timeouts as there are credentials.
 func sweepCredentials[T any](
 	ctx context.Context,
-	cfg *config.SNMPConfig,
+	cfg *Session,
 	what string,
-	v3 func(cred *config.SNMPv3Credential) (T, error),
+	v3 func(cred *V3Credential) (T, error),
 	v2c func(community string) (T, error),
 ) (T, error) {
 	var zero T

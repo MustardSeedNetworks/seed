@@ -11,13 +11,13 @@ import (
 
 // collectInterfaces retrieves interface information from IF-MIB.
 func (c *SNMPCollector) collectInterfaces(ctx context.Context, ip string) ([]SNMPInterface, error) {
-	interfaces, err := snmp.GetAllInterfaces(ctx, ip, c.config)
+	interfaces, err := snmp.GetAllInterfaces(ctx, ip, c.session)
 	if err != nil {
 		return nil, fmt.Errorf("get interfaces: %w", err)
 	}
 
 	// Also collect interface counters for bandwidth monitoring
-	counters, countersErr := snmp.GetInterfaceCounters(ctx, ip, c.config)
+	counters, countersErr := snmp.GetInterfaceCounters(ctx, ip, c.session)
 	if countersErr != nil {
 		logging.GetLogger().DebugContext(ctx, "Failed to get interface counters", "ip", ip, "error", countersErr)
 		// Don't fail - counters are optional enhancement
@@ -63,7 +63,7 @@ func (c *SNMPCollector) collectIPAddresses(
 	ctx context.Context,
 	ip string,
 ) ([]SNMPIPAddress, error) {
-	entries, err := snmp.GetIPAddresses(ctx, ip, c.config)
+	entries, err := snmp.GetIPAddresses(ctx, ip, c.session)
 	if err != nil {
 		return nil, fmt.Errorf("get IP addresses: %w", err)
 	}
@@ -84,7 +84,7 @@ func (c *SNMPCollector) collectIPAddresses(
 
 // collectMACTable retrieves the MAC address table.
 func (c *SNMPCollector) collectMACTable(ctx context.Context, ip string) ([]SNMPMACEntry, error) {
-	macEntries, err := snmp.GetMACTable(ctx, ip, c.config)
+	macEntries, err := snmp.GetMACTable(ctx, ip, c.session)
 	if err != nil {
 		return nil, fmt.Errorf("get MAC table: %w", err)
 	}
@@ -104,7 +104,7 @@ func (c *SNMPCollector) collectMACTable(ctx context.Context, ip string) ([]SNMPM
 
 // collectVLANs retrieves VLAN information from Q-BRIDGE-MIB.
 func (c *SNMPCollector) collectVLANs(ctx context.Context, ip string) ([]SNMPVLAN, error) {
-	vlans, err := snmp.GetVLANs(ctx, ip, c.config)
+	vlans, err := snmp.GetVLANs(ctx, ip, c.session)
 	if err != nil {
 		return nil, fmt.Errorf("get VLANs: %w", err)
 	}
@@ -125,7 +125,7 @@ func (c *SNMPCollector) collectVLANs(ctx context.Context, ip string) ([]SNMPVLAN
 
 // collectInventory retrieves physical inventory from ENTITY-MIB.
 func (c *SNMPCollector) collectInventory(ctx context.Context, ip string) ([]SNMPEntity, error) {
-	entities, err := snmp.GetPhysicalEntities(ctx, ip, c.config)
+	entities, err := snmp.GetPhysicalEntities(ctx, ip, c.session)
 	if err != nil {
 		return nil, fmt.Errorf("get physical entities: %w", err)
 	}
@@ -158,7 +158,7 @@ func (c *SNMPCollector) collectLLDPNeighbors(
 	ctx context.Context,
 	ip string,
 ) ([]SNMPLLDPNeighbor, error) {
-	neighbors, err := snmp.GetLLDPNeighbors(ctx, ip, c.config)
+	neighbors, err := snmp.GetLLDPNeighbors(ctx, ip, c.session)
 	if err != nil {
 		return nil, fmt.Errorf("get LLDP neighbors: %w", err)
 	}
@@ -181,7 +181,7 @@ func (c *SNMPCollector) collectLLDPNeighbors(
 
 // collectRoutes retrieves routing table from IP-FORWARD-MIB.
 func (c *SNMPCollector) collectRoutes(ctx context.Context, ip string) ([]SNMPRoute, error) {
-	routes, err := snmp.GetRoutes(ctx, ip, c.config)
+	routes, err := snmp.GetRoutes(ctx, ip, c.session)
 	if err != nil {
 		return nil, fmt.Errorf("get routes: %w", err)
 	}

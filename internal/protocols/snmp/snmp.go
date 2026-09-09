@@ -8,7 +8,6 @@ import (
 
 	"github.com/gosnmp/gosnmp"
 
-	"github.com/MustardSeedNetworks/seed/internal/config"
 	"github.com/MustardSeedNetworks/seed/internal/logging"
 )
 
@@ -57,13 +56,13 @@ type SystemInfo struct {
 
 // Query performs a single SNMP GET query.
 // Security: SNMPv3 is preferred over v2c when both are configured.
-func Query(ctx context.Context, ip, oid string, cfg *config.SNMPConfig) (string, error) {
+func Query(ctx context.Context, ip, oid string, cfg *Session) (string, error) {
 	if cfg == nil {
 		return "", errors.New("SNMP config is nil")
 	}
 
 	return sweepCredentials(ctx, cfg, "SNMP query failed for all configured credentials",
-		func(cred *config.SNMPv3Credential) (string, error) {
+		func(cred *V3Credential) (string, error) {
 			return queryWithV3(ctx, ip, oid, cred, cfg)
 		},
 		func(community string) (string, error) {
@@ -78,14 +77,14 @@ func QueryMultiple(
 	ctx context.Context,
 	ip string,
 	oids []string,
-	cfg *config.SNMPConfig,
+	cfg *Session,
 ) (map[string]string, error) {
 	if cfg == nil {
 		return nil, errors.New("SNMP config is nil")
 	}
 
 	return sweepCredentials(ctx, cfg, "SNMP query failed for all configured credentials",
-		func(cred *config.SNMPv3Credential) (map[string]string, error) {
+		func(cred *V3Credential) (map[string]string, error) {
 			return queryMultipleWithV3(ctx, ip, oids, cred, cfg)
 		},
 		func(community string) (map[string]string, error) {
@@ -95,7 +94,7 @@ func QueryMultiple(
 }
 
 // GetSystemInfo retrieves standard SNMP system information.
-func GetSystemInfo(ctx context.Context, ip string, cfg *config.SNMPConfig) (*SystemInfo, error) {
+func GetSystemInfo(ctx context.Context, ip string, cfg *Session) (*SystemInfo, error) {
 	oids := []string{
 		OIDSysDescr,
 		OIDSysObjectID,
@@ -125,7 +124,7 @@ func GetSystemInfo(ctx context.Context, ip string, cfg *config.SNMPConfig) (*Sys
 func queryWithCommunity(
 	ctx context.Context,
 	ip, oid, community string,
-	cfg *config.SNMPConfig,
+	cfg *Session,
 ) (string, error) {
 	// Fixes #936: Check context cancellation before establishing connection
 	select {
@@ -167,7 +166,7 @@ func queryMultipleWithCommunity(
 	ip string,
 	oids []string,
 	community string,
-	cfg *config.SNMPConfig,
+	cfg *Session,
 ) (map[string]string, error) {
 	// Fixes #936: Check context cancellation before establishing connection
 	select {
@@ -213,8 +212,8 @@ func queryMultipleWithCommunity(
 func queryWithV3(
 	ctx context.Context,
 	ip, oid string,
-	cred *config.SNMPv3Credential,
-	cfg *config.SNMPConfig,
+	cred *V3Credential,
+	cfg *Session,
 ) (string, error) {
 	// Fixes #943, #944: Check context cancellation before establishing connection
 	select {
@@ -294,8 +293,8 @@ func queryMultipleWithV3(
 	ctx context.Context,
 	ip string,
 	oids []string,
-	cred *config.SNMPv3Credential,
-	cfg *config.SNMPConfig,
+	cred *V3Credential,
+	cfg *Session,
 ) (map[string]string, error) {
 	// Fixes #943, #944: Check context cancellation before establishing connection
 	select {
@@ -452,7 +451,7 @@ func getPrivProtocol(protocol string) gosnmp.SnmpV3PrivProtocol {
 // getMaxRepetitions returns the MaxRepetitions value from config, defaulting to defaultMaxRepetitions.
 // This controls how many OID values are returned per GetBulk request.
 // Lower values reduce memory usage and network load on slow devices.
-func getMaxRepetitions(cfg *config.SNMPConfig) uint32 {
+func getMaxRepetitions(cfg *Session) uint32 {
 	if cfg == nil || cfg.MaxRepetitions == 0 {
 		return defaultMaxRepetitions
 	}
@@ -467,8 +466,8 @@ func getMaxRepetitions(cfg *config.SNMPConfig) uint32 {
 func newV3WalkClient(
 	ctx context.Context,
 	ip string,
-	cred *config.SNMPv3Credential,
-	cfg *config.SNMPConfig,
+	cred *V3Credential,
+	cfg *Session,
 ) (*gosnmp.GoSNMP, error) {
 	select {
 	case <-ctx.Done():
@@ -506,7 +505,7 @@ func newV3WalkClient(
 func newV2cWalkClient(
 	ctx context.Context,
 	ip, community string,
-	cfg *config.SNMPConfig,
+	cfg *Session,
 ) (*gosnmp.GoSNMP, error) {
 	select {
 	case <-ctx.Done():
@@ -532,7 +531,7 @@ func newV2cWalkClient(
 }
 
 // GetVendorVersion attempts to retrieve vendor-specific version information.
-func GetVendorVersion(ctx context.Context, ip string, cfg *config.SNMPConfig) (string, error) {
+func GetVendorVersion(ctx context.Context, ip string, cfg *Session) (string, error) {
 	// Try Cisco
 	version, err := Query(ctx, ip, OIDCiscoVersion, cfg)
 	if err == nil && version != "" {
