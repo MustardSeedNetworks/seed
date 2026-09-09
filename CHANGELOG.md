@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.214.33](https://github.com/MustardSeedNetworks/seed/compare/v0.214.32...v0.214.33) (2026-09-09)
+
+
+### Code Refactoring
+
+* split handlers_network.go and auth.go by concern (S3-3) ([#2549](https://github.com/MustardSeedNetworks/seed/issues/2549)) ([5e59cbd](https://github.com/MustardSeedNetworks/seed/commit/5e59cbdd236e01e3caca87f3a4381549ef021b18))
+
 ## [0.214.32](https://github.com/MustardSeedNetworks/seed/compare/v0.214.31...v0.214.32) (2026-09-09)
 
 
