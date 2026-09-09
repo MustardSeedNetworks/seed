@@ -732,27 +732,6 @@ func (s *Server) setupSecurityRoutes() {
 			methods: getPut,
 			minRole: op,
 		},
-		// Bluetooth discovery.
-		{
-			path:    APIVersionPrefix + "/security/bluetooth/scan",
-			handler: s.handleBluetoothScan,
-			methods: post,
-		},
-		{
-			path:    APIVersionPrefix + "/security/bluetooth/devices",
-			handler: s.handleBluetoothDevices,
-			methods: get,
-		},
-		{
-			path:    APIVersionPrefix + "/security/bluetooth/stats",
-			handler: s.handleBluetoothStats,
-			methods: get,
-		},
-		{
-			path:    APIVersionPrefix + "/security/bluetooth/status",
-			handler: s.handleBluetoothStatus,
-			methods: get,
-		},
 		// Enhanced WiFi discovery (unified).
 		{
 			path:    APIVersionPrefix + "/security/wifi/discovery/scan",

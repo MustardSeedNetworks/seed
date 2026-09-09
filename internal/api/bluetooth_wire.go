@@ -1,25 +1,16 @@
 package api
 
-// handlers_bluetooth.go contains Bluetooth discovery and scanning handlers. The
-// handlers are pure transport (ADR-0020): they map the domain result onto the
-// flat wire DTOs and map a bluetooth use-case sentinel to its HTTP status; the
-// scan orchestration lives in internal/discovery/bluetooth, with the adapter in
-// internal/app.
+// bluetooth_wire.go holds the flat wire DTOs for a Bluetooth scan and the
+// mapping from the discovery domain onto them. The only transport that carries
+// them is the "bluetooth-scan" job kind (ADR-0005, jobs_bluetooth.go); the
+// legacy /security/bluetooth/* REST routes were retired with the rest of the
+// unconsumed route set.
 
 import (
-	"errors"
-	"log/slog"
-	"net/http"
 	"time"
 
 	"github.com/MustardSeedNetworks/seed/internal/discovery"
-	"github.com/MustardSeedNetworks/seed/internal/discovery/bluetooth"
-	"github.com/MustardSeedNetworks/seed/internal/logging"
 )
-
-// ============================================================================
-// Bluetooth Discovery API Handlers
-// ============================================================================
 
 // BluetoothScanResponse contains Bluetooth scan results.
 type BluetoothScanResponse struct {
@@ -29,17 +20,6 @@ type BluetoothScanResponse struct {
 	ScanTime     string                   `json:"scanTime"`
 	ScanDuration int64                    `json:"scanDurationMs"`
 	Stats        *BluetoothDiscoveryStats `json:"stats,omitempty"`
-}
-
-// BluetoothDevicesResponse contains Bluetooth devices.
-type BluetoothDevicesResponse struct {
-	Devices []BluetoothDevice `json:"devices"`
-	Total   int               `json:"total"`
-}
-
-// BluetoothStatsResponse contains Bluetooth statistics.
-type BluetoothStatsResponse struct {
-	Stats *BluetoothDiscoveryStats `json:"stats"`
 }
 
 // BluetoothDevice is the flat transport view of a discovered Bluetooth device,
@@ -152,41 +132,8 @@ func toBluetoothStats(stats *discovery.BluetoothDiscoveryStats) *BluetoothDiscov
 	}
 }
 
-// writeBluetoothUnavailable writes the pre-strangle 503 for an absent scanner.
-func writeBluetoothUnavailable(w http.ResponseWriter, logger *slog.Logger) {
-	sendErrorResponseWithDetails(w, logger, http.StatusServiceUnavailable,
-		ErrCodeServiceUnavail, "Bluetooth scanner not available", "")
-}
-
-// handleBluetoothScan triggers a Bluetooth scan and returns results.
-//
-// POST /api/v1/security/bluetooth/scan
-//
-// Triggers an active Bluetooth scan on the configured adapter.
-// Returns discovered devices including classic and BLE.
-//
-// Response: 200 OK with BluetoothScanResponse.
-func (s *Server) handleBluetoothScan(w http.ResponseWriter, r *http.Request) {
-	logger := logging.FromContext(r.Context())
-
-	scan, err := s.bluetoothScans.Scan(r.Context())
-	if err != nil {
-		if errors.Is(err, bluetooth.ErrUnavailable) {
-			writeBluetoothUnavailable(w, logger)
-			return
-		}
-		logger.ErrorContext(r.Context(), "Bluetooth scan failed", "error", err)
-		sendErrorResponseWithDetails(w, logger, http.StatusInternalServerError,
-			ErrCodeInternal, "Bluetooth scan failed: "+err.Error(), "")
-		return
-	}
-
-	sendJSONResponse(w, logger, http.StatusOK, toBluetoothScanResponse(scan.Result, scan.Stats))
-}
-
-// toBluetoothScanResponse maps a scan result + stats to the API wire shape.
-// Shared by the scan handler and the bluetooth-scan job kind so both paths
-// produce an identical response.
+// toBluetoothScanResponse maps a scan result + stats to the API wire shape the
+// bluetooth-scan job returns as its result.
 func toBluetoothScanResponse(
 	result *discovery.BluetoothScanResult, stats *discovery.BluetoothDiscoveryStats,
 ) BluetoothScanResponse {
@@ -198,81 +145,4 @@ func toBluetoothScanResponse(
 		ScanDuration: result.ScanDuration.Milliseconds(),
 		Stats:        toBluetoothStats(stats),
 	}
-}
-
-// handleBluetoothDevices returns discovered Bluetooth devices.
-//
-// GET /api/v1/security/bluetooth/devices
-//
-// Returns the list of Bluetooth devices from the most recent scan.
-//
-// Response: 200 OK with BluetoothDevicesResponse.
-func (s *Server) handleBluetoothDevices(w http.ResponseWriter, r *http.Request) {
-	logger := logging.FromContext(r.Context())
-
-	lastScan, err := s.bluetoothScans.Devices()
-	if err != nil {
-		writeBluetoothUnavailable(w, logger)
-		return
-	}
-
-	if lastScan == nil {
-		sendJSONResponse(w, logger, http.StatusOK, BluetoothDevicesResponse{
-			Devices: []BluetoothDevice{},
-			Total:   0,
-		})
-		return
-	}
-
-	sendJSONResponse(w, logger, http.StatusOK, BluetoothDevicesResponse{
-		Devices: toBluetoothDevices(lastScan.Devices),
-		Total:   len(lastScan.Devices),
-	})
-}
-
-// handleBluetoothStats returns Bluetooth discovery statistics.
-//
-// GET /api/v1/security/bluetooth/stats
-//
-// Returns aggregated statistics from Bluetooth discovery.
-//
-// Response: 200 OK with BluetoothStatsResponse.
-func (s *Server) handleBluetoothStats(w http.ResponseWriter, r *http.Request) {
-	logger := logging.FromContext(r.Context())
-
-	stats, err := s.bluetoothScans.Stats()
-	if err != nil {
-		writeBluetoothUnavailable(w, logger)
-		return
-	}
-
-	sendJSONResponse(w, logger, http.StatusOK, BluetoothStatsResponse{
-		Stats: toBluetoothStats(stats),
-	})
-}
-
-// handleBluetoothStatus returns the Bluetooth adapter status.
-//
-// GET /api/v1/security/bluetooth/status
-//
-// Returns the current Bluetooth adapter status and availability.
-//
-// Response: 200 OK with status information.
-func (s *Server) handleBluetoothStatus(w http.ResponseWriter, r *http.Request) {
-	logger := logging.FromContext(r.Context())
-
-	status := s.bluetoothScans.Status()
-
-	var lastScanTime string
-	var deviceCount int
-	if status.LastScan != nil {
-		lastScanTime = status.LastScan.ScanTime.Format("2006-01-02T15:04:05Z07:00")
-		deviceCount = len(status.LastScan.Devices)
-	}
-
-	sendJSONResponse(w, logger, http.StatusOK, map[string]any{
-		"available":    status.Available,
-		"lastScanTime": lastScanTime,
-		"deviceCount":  deviceCount,
-	})
 }

@@ -28,10 +28,6 @@
 /api/v1/health                            # non-UI: tests/smoke/run_smoke_tests.sh asserts it is authenticated
 /api/v1/path/traceroute                   # scheduled: Wave 4 path cluster (#165 #395 #435), one traceroute engine
 /api/v1/reporting/logs/query              # PAT-only allow-list (owner 2026-09-04)
-/api/v1/security/bluetooth/devices        # delete: unclaimed; the routes front a whole subsystem, queued behind an owner check
-/api/v1/security/bluetooth/scan           # delete: unclaimed; see /security/bluetooth/devices
-/api/v1/security/bluetooth/stats          # delete: unclaimed; see /security/bluetooth/devices
-/api/v1/security/bluetooth/status         # delete: unclaimed; see /security/bluetooth/devices
 /api/v1/security/discovery/fingerprint    # delete: only reader of discovery.Fingerprinter (423 lines); ADR-0018 moves the package, it does not give it a caller
 /api/v1/security/discovery/probe          # delete: only reader of fingerprint.TCPProber
 /api/v1/security/problems                 # delete: unclaimed. S6-3's vehicle is anomaly.Catalog, not discovery.ProblemDetector, and nothing calls AddListener — these three routes are the detector's only reader. Queued with bluetooth behind one owner sentence
