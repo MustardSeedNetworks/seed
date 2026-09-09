@@ -144,15 +144,16 @@ func (v *VaultSNMPCredentials) clientID(ctx context.Context) (string, error) {
 
 // append decrypts one stored credential onto the sweep list.
 //
-// A row's kind is read from what it holds rather than a label: a v3 credential
-// has a security name, a v2c credential has a community, and the sweep tries
-// v3 first either way.
+// Kind decides which columns are read rather than inferring from which ones
+// are populated: the column is NOT NULL under a CHECK of ('v2c','v3'), so it
+// is the row's own answer, and a v3 row whose user is still blank would
+// otherwise be silently read as a v2c row with no community.
 func (v *VaultSNMPCredentials) append(out *config.SNMPConfig, cred *polling.Credentials) error {
 	if cred == nil {
 		return nil
 	}
 
-	if cred.SNMPv3User != "" {
+	if cred.Kind == polling.CredentialKindV3 {
 		authSecret, err := v.decrypt(cred.SNMPv3AuthCT)
 		if err != nil {
 			return fmt.Errorf("credential %s: v3 auth secret: %w", cred.ID, err)

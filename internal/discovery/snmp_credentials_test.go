@@ -58,9 +58,9 @@ func TestVaultSNMPCredentialsResolvesTheOneClient(t *testing.T) {
 		fakeClients{ids: []string{"acme"}},
 		fakeVault{byClient: map[string][]*polling.Credentials{
 			"acme": {
-				{ID: "c1", Name: "v2c", SNMPCommunityCT: "community"},
+				{ID: "c1", Name: "v2c", Kind: polling.CredentialKindV2c, SNMPCommunityCT: "community"},
 				{
-					ID: "c2", Name: "v3", SNMPv3User: "operator",
+					ID: "c2", Name: "v3", Kind: polling.CredentialKindV3, SNMPv3User: "operator",
 					SNMPv3AuthCT: "auth", SNMPv3PrivCT: "priv",
 					SNMPv3AuthProto: "SHA256", SNMPv3PrivProto: "AES256",
 					SecurityLevel: "authPriv",
@@ -90,11 +90,25 @@ func TestVaultSNMPCredentialsResolvesTheOneClient(t *testing.T) {
 	require.Equal(t, uint32(10), got.MaxRepetitions)
 }
 
+// The operator's max_repetitions reaches the walk. It used to be overwritten
+// by the collector's own default on every collection.
+func TestVaultSNMPCredentialsKeepsOperatorMaxRepetitions(t *testing.T) {
+	p, err := discovery.NewVaultSNMPCredentials(
+		fakeClients{ids: []string{"acme"}}, fakeVault{}, fakeDecrypter{},
+		&config.SNMPConfig{MaxRepetitions: 25},
+	)
+	require.NoError(t, err)
+
+	got, err := p.SNMPConfig(context.Background())
+	require.NoError(t, err)
+	require.Equal(t, uint32(25), got.MaxRepetitions)
+}
+
 func TestVaultSNMPCredentialsRefusesMoreThanOneClient(t *testing.T) {
 	p := newProvider(t,
 		fakeClients{ids: []string{"acme", "globex"}},
 		fakeVault{byClient: map[string][]*polling.Credentials{
-			"acme": {{ID: "c1", SNMPCommunityCT: "community"}},
+			"acme": {{ID: "c1", Kind: polling.CredentialKindV2c, SNMPCommunityCT: "community"}},
 		}},
 	)
 
@@ -125,7 +139,7 @@ func TestVaultSNMPCredentialsPropagatesDecryptFailure(t *testing.T) {
 	p, err := discovery.NewVaultSNMPCredentials(
 		fakeClients{ids: []string{"acme"}},
 		fakeVault{byClient: map[string][]*polling.Credentials{
-			"acme": {{ID: "c1", SNMPCommunityCT: "community"}},
+			"acme": {{ID: "c1", Kind: polling.CredentialKindV2c, SNMPCommunityCT: "community"}},
 		}},
 		fakeDecrypter{err: errors.New("wrong key version")},
 		&config.SNMPConfig{},

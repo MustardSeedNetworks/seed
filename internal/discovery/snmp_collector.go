@@ -18,7 +18,6 @@ import (
 // SNMP collector constants.
 const (
 	snmpCollectorTimeoutS = 30      // Default timeout for SNMP walks in seconds
-	snmpCollectorMaxOIDs  = 10      // Default maximum OIDs per SNMP request
 	snmpSpeedMbpsDivisor  = 1000000 // Divisor to convert speed to Mbps
 )
 
@@ -151,33 +150,24 @@ type SNMPRoute struct {
 // collector: they are decrypted from the vault per device (#2118) and must not
 // outlive the exchange that uses them.
 type SNMPCollector struct {
-	creds      SNMPCredentialProvider
-	config     *config.SNMPConfig
-	mibConfig  SNMPMIBSelection
-	timeout    time.Duration
-	maxOIDsReq int
+	creds     SNMPCredentialProvider
+	config    *config.SNMPConfig
+	mibConfig SNMPMIBSelection
+	timeout   time.Duration
 }
 
 // NewSNMPCollector creates a new SNMP collector.
 func NewSNMPCollector(creds SNMPCredentialProvider, mibConfig SNMPMIBSelection) *SNMPCollector {
 	return &SNMPCollector{
-		creds:      creds,
-		mibConfig:  mibConfig,
-		timeout:    snmpCollectorTimeoutS * time.Second,
-		maxOIDsReq: snmpCollectorMaxOIDs,
+		creds:     creds,
+		mibConfig: mibConfig,
+		timeout:   snmpCollectorTimeoutS * time.Second,
 	}
 }
 
 // SetTimeout sets the timeout for MIB walks.
 func (c *SNMPCollector) SetTimeout(timeout time.Duration) {
 	c.timeout = timeout
-}
-
-// SetMaxOIDsPerRequest sets the maximum OIDs per SNMP request.
-// This value is passed through to the gosnmp MaxRepetitions field
-// via the SNMPConfig.MaxRepetitions setting when collecting MIB data.
-func (c *SNMPCollector) SetMaxOIDsPerRequest(maxOIDs int) {
-	c.maxOIDsReq = maxOIDs
 }
 
 // collectionTask represents a single MIB collection operation.
@@ -196,10 +186,6 @@ func (c *SNMPCollector) Collect(ctx context.Context, ip string) (*SNMPFullData, 
 	if err != nil {
 		return nil, fmt.Errorf("resolve SNMP credentials: %w", err)
 	}
-	if c.maxOIDsReq > 0 {
-		cfg.MaxRepetitions = uint32(c.maxOIDsReq) // #nosec G115 -- maxOIDsReq is positive here
-	}
-
 	// The tasks below run concurrently and each needs the credentials this
 	// exchange resolved. A value copy binds them to it without a shared
 	// mutable field that a second Collect could overwrite mid-walk.
