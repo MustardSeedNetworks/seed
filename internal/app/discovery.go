@@ -1,12 +1,12 @@
 package app
 
 // discovery.go wires the composition root to the discovery application (use-case)
-// services (ADR-0020 clean-hexagonal): the device-inventory engine, the network
-// problem detector, and the Bluetooth scanner. The adapters below implement the
-// narrow ports declared in internal/discovery/{devices,problems,bluetooth} over
-// the concrete collaborators (the discovery engine, the problem detector, the
-// device-discovery service, and the Bluetooth scanner), so the API handlers
-// depend on use-cases instead of reaching into the service container directly.
+// services (ADR-0020 clean-hexagonal): the device-inventory engine and the
+// network problem detector. The adapters below implement the narrow ports
+// declared in internal/discovery/{devices,problems} over the concrete
+// collaborators (the discovery engine, the problem detector and the
+// device-discovery service), so the API handlers depend on use-cases instead of
+// reaching into the service container directly.
 // Collaborators are resolved through lazy accessors on each call so a later-set
 // value (the api test harness) is honored, and a nil collaborator degrades the
 // use-case to its unavailable behavior rather than panicking.
@@ -16,7 +16,6 @@ import (
 
 	"github.com/MustardSeedNetworks/seed/internal/config"
 	"github.com/MustardSeedNetworks/seed/internal/discovery"
-	"github.com/MustardSeedNetworks/seed/internal/discovery/bluetooth"
 	"github.com/MustardSeedNetworks/seed/internal/discovery/devices"
 	"github.com/MustardSeedNetworks/seed/internal/discovery/enumerate"
 	"github.com/MustardSeedNetworks/seed/internal/discovery/problems"
@@ -41,13 +40,6 @@ func NewProblems(
 		problemDetectorAdapter{detector: detector},
 		discoveryDeviceSource{deviceSrc: deviceSrc},
 	)
-}
-
-// NewBluetooth builds the Bluetooth-discovery use-case (ADR-0020) over a lazy
-// accessor for the Bluetooth scanner. A nil scanner makes the scan/devices/stats
-// methods degrade to bluetooth.ErrUnavailable, while Status reports unavailable.
-func NewBluetooth(scanner func() *enumerate.BluetoothScanner) *bluetooth.Service {
-	return bluetooth.NewService(bluetoothScannerAdapter{scanner: scanner})
 }
 
 // NewDiscoverySettings builds the network-discovery settings service (ADR-0020)
@@ -193,23 +185,4 @@ func (a discoveryDeviceSource) Devices() []*discovery.DiscoveredDevice {
 		return nil
 	}
 	return svc.GetDevices()
-}
-
-// bluetoothScannerAdapter implements bluetooth.Scanner over the Bluetooth scanner,
-// resolving it lazily.
-type bluetoothScannerAdapter struct {
-	scanner func() *enumerate.BluetoothScanner
-}
-
-func (a bluetoothScannerAdapter) Available() bool { return a.scanner() != nil }
-func (a bluetoothScannerAdapter) Scan(ctx context.Context) (*discovery.BluetoothScanResult, error) {
-	return a.scanner().Scan(ctx)
-}
-
-func (a bluetoothScannerAdapter) LastScan() *discovery.BluetoothScanResult {
-	return a.scanner().GetLastScan()
-}
-
-func (a bluetoothScannerAdapter) Stats() *discovery.BluetoothDiscoveryStats {
-	return a.scanner().GetStats()
 }

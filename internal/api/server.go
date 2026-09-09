@@ -35,7 +35,6 @@ import (
 	"github.com/MustardSeedNetworks/seed/internal/diagnostics/speedtest"
 	"github.com/MustardSeedNetworks/seed/internal/diagnostics/vlan"
 	"github.com/MustardSeedNetworks/seed/internal/discovery"
-	"github.com/MustardSeedNetworks/seed/internal/discovery/bluetooth"
 	"github.com/MustardSeedNetworks/seed/internal/discovery/devices"
 	"github.com/MustardSeedNetworks/seed/internal/discovery/enumerate"
 	"github.com/MustardSeedNetworks/seed/internal/discovery/fingerprint"
@@ -281,7 +280,6 @@ type Server struct {
 	configBackups      *backups.Service            // Config backup/restore use-case (ADR-0020)
 	exportService      *export.Service             // Diagnostic-export use-case (ADR-0020)
 	logQuery           *logquery.Service           // Log-query use-case (ADR-0020)
-	bluetoothScans     *bluetooth.Service          // Bluetooth-discovery use-case (ADR-0020)
 	healthMonitoring   *monitoring.Service         // Health-monitoring use-case (ADR-0020)
 	healthSettings     *healthsettings.Service     // Health-checks settings use-case (ADR-0020)
 	engineStatus       *enginestatus.Service       // Engine-status use-case (ADR-0020)
@@ -980,7 +978,6 @@ func (s *Server) initDiscoveryUseCases() {
 		}
 	}
 	s.alertInbox = app.NewAlertInbox(s.db)
-	s.bluetoothScans = app.NewBluetooth(s.bluetoothScanner)
 }
 
 // initHealthUseCases wires the health-monitoring use-case (ADR-0020) from the

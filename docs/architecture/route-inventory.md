@@ -169,10 +169,6 @@ today; the registry makes it explicit per route.
 | `/api/v1/settings/link` | `handleLinkSettings` | operator | — | — |
 | `/api/v1/setup/complete` | `handleSetupComplete` | — | — | — |
 | `/api/v1/setup/status` | `handleSetupStatus` | — | — | — |
-| `/api/v1/security/bluetooth/devices` | `handleBluetoothDevices` | — | — | — |
-| `/api/v1/security/bluetooth/scan` | `handleBluetoothScan` | — | — | — |
-| `/api/v1/security/bluetooth/stats` | `handleBluetoothStats` | — | — | — |
-| `/api/v1/security/bluetooth/status` | `handleBluetoothStatus` | — | — | — |
 | `/api/v1/security/devices` | `handleDevices` | — | — | — |
 | `/api/v1/security/devices/scan` | `handleDevicesScan` | — | — | yes |
 | `/api/v1/security/devices/settings` | `handleDevicesSettings` | operator | — | — |

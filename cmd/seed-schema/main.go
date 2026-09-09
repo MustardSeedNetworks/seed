@@ -204,8 +204,6 @@ func schemaTargets() []schemaTarget {
 		{&api.CategorizedInterfacesResponse{}, "categorized-interfaces-response.schema.json"},
 		{&api.LogQueryResponse{}, "log-query-response.schema.json"},
 		{&api.BluetoothScanResponse{}, "bluetooth-scan-response.schema.json"},
-		{&api.BluetoothDevicesResponse{}, "bluetooth-devices-response.schema.json"},
-		{&api.BluetoothStatsResponse{}, "bluetooth-stats-response.schema.json"},
 		{&api.WiFiDiscoveryScanResponse{}, "wifi-discovery-scan-response.schema.json"},
 		{&api.WiFiDiscoveryNetworksResponse{}, "wifi-discovery-networks-response.schema.json"},
 		{&api.WiFiDiscoveryAPsResponse{}, "wifi-discovery-aps-response.schema.json"},

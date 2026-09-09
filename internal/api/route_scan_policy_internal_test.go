@@ -30,7 +30,6 @@ func targetedScanRoutes() []string {
 // separate one from #347.
 func untargetedScanRoutes() []string {
 	return []string{
-		"/security/bluetooth/scan",
 		"/security/wifi/discovery/scan",
 		"/security/problems/scan",
 		"/discovery/engine/scan",

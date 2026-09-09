@@ -828,34 +828,6 @@ body:
     "methods": [
       "POST"
     ],
-    "path": "/api/v1/security/bluetooth/scan"
-  },
-  {
-    "maxBodyBytes": 262144,
-    "methods": [
-      "GET"
-    ],
-    "path": "/api/v1/security/bluetooth/devices"
-  },
-  {
-    "maxBodyBytes": 262144,
-    "methods": [
-      "GET"
-    ],
-    "path": "/api/v1/security/bluetooth/stats"
-  },
-  {
-    "maxBodyBytes": 262144,
-    "methods": [
-      "GET"
-    ],
-    "path": "/api/v1/security/bluetooth/status"
-  },
-  {
-    "maxBodyBytes": 262144,
-    "methods": [
-      "POST"
-    ],
     "path": "/api/v1/security/wifi/discovery/scan"
   },
   {
