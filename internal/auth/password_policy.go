@@ -14,6 +14,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"unicode"
 )
 
 // PasswordRejectReason classifies why a password was refused at
@@ -129,4 +130,37 @@ func EnforcePasswordPolicy(
 		Accepted: true,
 		Strength: strength,
 	}, nil
+}
+
+// PasswordRequirements describes minimum password requirements (fixes #535).
+const (
+	MinPasswordLength = 12 // Increased from 8 for better security
+)
+
+// ValidatePasswordStrength checks if a password meets minimum requirements (fixes #535).
+// Requirements: at least 12 characters, contains uppercase, lowercase, digit, and special character.
+func ValidatePasswordStrength(password string) error {
+	if len(password) < MinPasswordLength {
+		return ErrWeakPassword
+	}
+
+	var hasUpper, hasLower, hasDigit, hasSpecial bool
+	for _, c := range password {
+		switch {
+		case unicode.IsUpper(c):
+			hasUpper = true
+		case unicode.IsLower(c):
+			hasLower = true
+		case unicode.IsDigit(c):
+			hasDigit = true
+		case unicode.IsPunct(c) || unicode.IsSymbol(c):
+			hasSpecial = true
+		}
+	}
+
+	if !hasUpper || !hasLower || !hasDigit || !hasSpecial {
+		return ErrWeakPassword
+	}
+
+	return nil
 }
