@@ -393,6 +393,9 @@ jobs:
       - name: SNMP credential-surface gate (#1799)
         run: ./scripts/check-snmp-credential-surface.sh
 
+      - name: SQLite single-writer gate (#2453)
+        run: ./scripts/check-single-writer.sh
+
       - name: Route-policy gate — capability registry (ADR-0002)
         run: ./scripts/check-route-policy.sh
 

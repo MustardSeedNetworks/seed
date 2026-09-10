@@ -15,7 +15,7 @@ func (db *DB) seedDefaultProfile() error {
 
 	// Check if any profiles exist
 	var count int
-	err := db.conn.QueryRowContext(ctx, `SELECT COUNT(*) FROM profiles`).Scan(&count)
+	err := db.readConn.QueryRowContext(ctx, `SELECT COUNT(*) FROM profiles`).Scan(&count)
 	if err != nil {
 		return fmt.Errorf("failed to count profiles: %w", err)
 	}
@@ -86,7 +86,7 @@ func (db *DB) seedDefaultProfile() error {
 		"cable_test": {"enabled": true}
 	}`
 
-	_, err = db.conn.ExecContext(ctx, `
+	_, err = db.writeConn.ExecContext(ctx, `
 		INSERT INTO profiles (id, name, description, config_json, is_default, created_at, updated_at)
 		VALUES (?, ?, ?, ?, 1, ?, ?)
 	`, "default", "Default", "Default profile created on first run", defaultConfigJSON, now, now)

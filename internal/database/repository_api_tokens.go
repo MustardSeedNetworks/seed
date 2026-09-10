@@ -56,7 +56,7 @@ func (r *APITokenRepository) Insert(ctx context.Context, t APITokenRecord) error
 	if t.Scope != "" {
 		scope = t.Scope
 	}
-	_, err := r.db.conn.ExecContext(ctx, `
+	_, err := r.db.writeConn.ExecContext(ctx, `
 		INSERT INTO api_tokens (id, owner_username, name, token_hash, prefix, created_at, scope)
 		VALUES (?, ?, ?, ?, ?, ?, ?)
 	`, t.ID, t.OwnerUsername, t.Name, t.TokenHash, t.Prefix, t.CreatedAt.UTC().Format(time.RFC3339Nano), scope)
@@ -69,7 +69,7 @@ func (r *APITokenRepository) Insert(ctx context.Context, t APITokenRecord) error
 // FindActiveByHash returns the active (non-revoked) token row matching
 // the given hash, or [sql.ErrNoRows] if no match.
 func (r *APITokenRepository) FindActiveByHash(ctx context.Context, hash string) (APITokenRecord, error) {
-	row := r.db.conn.QueryRowContext(ctx, `
+	row := r.db.readConn.QueryRowContext(ctx, `
 		SELECT id, owner_username, name, token_hash, prefix, created_at,
 		       COALESCE(last_used_at, ''), COALESCE(revoked_at, ''),
 		       COALESCE(scope, '')
@@ -84,7 +84,7 @@ func (r *APITokenRepository) FindActiveByHash(ctx context.Context, hash string) 
 // show "revoked" entries that haven't been deleted; callers filter as
 // needed.
 func (r *APITokenRepository) ListByOwner(ctx context.Context, owner string) ([]APITokenRecord, error) {
-	rows, err := r.db.conn.QueryContext(ctx, `
+	rows, err := r.db.readConn.QueryContext(ctx, `
 		SELECT id, owner_username, name, token_hash, prefix, created_at,
 		       COALESCE(last_used_at, ''), COALESCE(revoked_at, ''),
 		       COALESCE(scope, '')
@@ -115,7 +115,7 @@ func (r *APITokenRepository) ListByOwner(ctx context.Context, owner string) ([]A
 // non-fatal for the caller's auth check but are returned so callers
 // that care can log them.
 func (r *APITokenRepository) TouchLastUsed(ctx context.Context, id string) error {
-	_, err := r.db.conn.ExecContext(ctx, `
+	_, err := r.db.writeConn.ExecContext(ctx, `
 		UPDATE api_tokens SET last_used_at = ? WHERE id = ?
 	`, time.Now().UTC().Format(time.RFC3339Nano), id)
 	if err != nil {
@@ -127,7 +127,7 @@ func (r *APITokenRepository) TouchLastUsed(ctx context.Context, id string) error
 // Revoke marks the token as revoked. Returns [sql.ErrNoRows] if no token
 // with that ID exists for the given owner.
 func (r *APITokenRepository) Revoke(ctx context.Context, id, owner string) error {
-	res, err := r.db.conn.ExecContext(ctx, `
+	res, err := r.db.writeConn.ExecContext(ctx, `
 		UPDATE api_tokens
 		SET revoked_at = ?
 		WHERE id = ? AND owner_username = ? AND revoked_at IS NULL

@@ -74,7 +74,7 @@ func (db *DB) GetUser(ctx context.Context, username string) (*User, error) {
 	var lastLogin, lockedUntil, externalID, email, displayName sql.NullString
 	var createdAt, updatedAt string
 
-	err := db.conn.QueryRowContext(ctx, `
+	err := db.readConn.QueryRowContext(ctx, `
 		SELECT id, username, password_hash, role, is_active, last_login,
 		       failed_attempts, locked_until, token_version,
 		       auth_provider, external_id, email, display_name, client_id,
@@ -132,7 +132,7 @@ func (db *DB) CreateUser(ctx context.Context, username, passwordHash, role strin
 	now := time.Now().UTC()
 	nowStr := now.Format(time.RFC3339)
 
-	result, err := db.conn.ExecContext(ctx, `
+	result, err := db.writeConn.ExecContext(ctx, `
 		INSERT INTO users (username, password_hash, role, is_active, token_version, created_at, updated_at)
 		VALUES (?, ?, ?, 1, 1, ?, ?)
 	`, username, passwordHash, role, nowStr, nowStr)
@@ -170,7 +170,7 @@ func (db *DB) UpdateUserPassword(ctx context.Context, username, passwordHash str
 
 	now := time.Now().UTC().Format(time.RFC3339)
 
-	result, err := db.conn.ExecContext(ctx, `
+	result, err := db.writeConn.ExecContext(ctx, `
 		UPDATE users
 		SET password_hash = ?, token_version = token_version + 1, updated_at = ?
 		WHERE username = ?
@@ -197,7 +197,7 @@ func (db *DB) GetUserCount(ctx context.Context) (int, error) {
 	}
 
 	var count int
-	err := db.conn.QueryRowContext(ctx, `SELECT COUNT(*) FROM users`).Scan(&count)
+	err := db.readConn.QueryRowContext(ctx, `SELECT COUNT(*) FROM users`).Scan(&count)
 	if err != nil {
 		return 0, fmt.Errorf("failed to count users: %w", err)
 	}
@@ -236,7 +236,7 @@ func (db *DB) ListUsers(ctx context.Context) ([]*User, error) {
 		return nil, errors.New("database is closed")
 	}
 
-	rows, err := db.conn.QueryContext(ctx, `
+	rows, err := db.readConn.QueryContext(ctx, `
 		SELECT id, username, password_hash, role, is_active, last_login,
 		       failed_attempts, locked_until, token_version,
 		       auth_provider, external_id, email, display_name, client_id,
@@ -299,7 +299,7 @@ func (db *DB) UpdateUserRole(ctx context.Context, username, role string) error {
 		return errors.New("database is closed")
 	}
 
-	tx, err := db.conn.BeginTx(ctx, nil)
+	tx, err := db.writeConn.BeginTx(ctx, nil)
 	if err != nil {
 		return fmt.Errorf("failed to begin tx: %w", err)
 	}
@@ -363,7 +363,7 @@ func (db *DB) DeleteUser(ctx context.Context, username string) error {
 		return errors.New("database is closed")
 	}
 
-	tx, err := db.conn.BeginTx(ctx, nil)
+	tx, err := db.writeConn.BeginTx(ctx, nil)
 	if err != nil {
 		return fmt.Errorf("failed to begin tx: %w", err)
 	}
@@ -419,7 +419,7 @@ func (db *DB) DeactivateUser(ctx context.Context, username string) error {
 	}
 
 	now := time.Now().UTC().Format(time.RFC3339)
-	res, err := db.conn.ExecContext(ctx, `
+	res, err := db.writeConn.ExecContext(ctx, `
 		UPDATE users
 		SET is_active = 0, token_version = token_version + 1, updated_at = ?
 		WHERE username = ?

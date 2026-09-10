@@ -60,10 +60,14 @@ const (
 
 // DB represents the database connection and provides access to repositories.
 type DB struct {
-	conn   *sql.DB
-	path   string
-	mu     sync.RWMutex
-	closed bool
+	// readConn is the pooled read handle; writeConn serialises every write on a
+	// single connection (see OpenWithConfig for why). Never write through
+	// readConn — scripts/check-single-writer.sh rejects it.
+	readConn  *sql.DB
+	writeConn *sql.DB
+	path      string
+	mu        sync.RWMutex
+	closed    bool
 
 	// Repositories - lazily initialized
 	profiles          *ProfileRepository
@@ -267,6 +271,41 @@ func restrictDBFileMode(path string) error {
 	return nil
 }
 
+// openHandle opens one *[sql.DB] over dsn and sizes its pool. The pragmas are
+// in the DSN, so the driver applies them to every connection it opens.
+func openHandle(
+	dsn string,
+	maxOpen, maxIdle int,
+	maxLifetime time.Duration,
+) (*sql.DB, error) {
+	conn, err := sql.Open("sqlite", dsn)
+	if err != nil {
+		return nil, fmt.Errorf("failed to open database: %w", err)
+	}
+	conn.SetMaxOpenConns(maxOpen)
+	conn.SetMaxIdleConns(maxIdle)
+	conn.SetConnMaxLifetime(maxLifetime)
+
+	ctx, cancel := context.WithTimeout(context.Background(), dbConnTimeoutSeconds*time.Second)
+	defer cancel()
+
+	if pingErr := conn.PingContext(ctx); pingErr != nil {
+		_ = conn.Close()
+		return nil, fmt.Errorf("failed to ping database: %w", pingErr)
+	}
+	return conn, nil
+}
+
+// closeHandles closes both handles, returning the first error.
+func (db *DB) closeHandles() error {
+	writeErr := db.writeConn.Close()
+	readErr := db.readConn.Close()
+	if writeErr != nil {
+		return writeErr
+	}
+	return readErr
+}
+
 // OpenWithConfig creates a new database connection with custom configuration.
 func OpenWithConfig(cfg Config) (*DB, error) {
 	if cfg.Path == "" {
@@ -284,48 +323,45 @@ func OpenWithConfig(cfg Config) (*DB, error) {
 		}
 	}
 
-	// Build connection string with pragmas
-	dsn := fmt.Sprintf("file:%s?_txlock=immediate&_pragma=foreign_keys(1)", cfg.Path)
+	// Every pragma rides the DSN, not an ExecContext after Open. Pragmas are
+	// connection-scoped, so a pragma executed once lands on whichever connection
+	// the pool happened to hand out and every later connection — including the
+	// replacement for one recycled at ConnMaxLifetime — silently reverts to the
+	// SQLite default. On the write handle that matters most: it is one
+	// connection, and losing synchronous=NORMAL there means an fsync per commit.
+	journalMode := "WAL"
+	if !cfg.EnableWAL {
+		journalMode = "DELETE"
+	}
+	dsn := fmt.Sprintf(
+		"file:%s?_txlock=immediate"+
+			"&_pragma=foreign_keys(1)"+
+			"&_pragma=journal_mode(%s)"+
+			"&_pragma=synchronous(NORMAL)"+
+			"&_pragma=cache_size(-64000)"+ // 64MB cache
+			"&_pragma=temp_store(MEMORY)",
+		cfg.Path, journalMode,
+	)
 	if cfg.BusyTimeout > 0 {
 		dsn += fmt.Sprintf("&_busy_timeout=%d", cfg.BusyTimeout)
 	}
 
-	conn, err := sql.Open("sqlite", dsn)
+	// SQLite allows exactly one writer at a time. When several pooled
+	// connections write concurrently the loser is rejected with SQLITE_BUSY once
+	// the busy timeout is spent, and the caller loses the row — ten of 74 SNMP
+	// polling targets lost observations that way on CT313 (#2453). Writes
+	// therefore go through their own single-connection handle, so a competing
+	// writer waits in Go's connection queue (bounded by its own context) instead
+	// of racing at the SQLite level. Reads keep the multi-connection pool: WAL
+	// readers never block the writer.
+	readConn, err := openHandle(dsn, cfg.MaxOpenConns, cfg.MaxIdleConns, cfg.ConnMaxLifetime)
 	if err != nil {
-		return nil, fmt.Errorf("failed to open database: %w", err)
+		return nil, err
 	}
-
-	// Configure connection pool
-	conn.SetMaxOpenConns(cfg.MaxOpenConns)
-	conn.SetMaxIdleConns(cfg.MaxIdleConns)
-	conn.SetConnMaxLifetime(cfg.ConnMaxLifetime)
-
-	// Apply pragmas for performance and safety
-	pragmas := []string{
-		"PRAGMA journal_mode = WAL",
-		"PRAGMA synchronous = NORMAL",
-		"PRAGMA cache_size = -64000", // 64MB cache
-		"PRAGMA temp_store = MEMORY",
-	}
-
-	if !cfg.EnableWAL {
-		pragmas[0] = "PRAGMA journal_mode = DELETE"
-	}
-
-	ctx, cancel := context.WithTimeout(context.Background(), dbConnTimeoutSeconds*time.Second)
-	defer cancel()
-
-	for _, pragma := range pragmas {
-		if _, pragmaErr := conn.ExecContext(ctx, pragma); pragmaErr != nil {
-			_ = conn.Close()
-			return nil, fmt.Errorf("failed to set pragma %q: %w", pragma, pragmaErr)
-		}
-	}
-
-	// Verify connection
-	if pingErr := conn.PingContext(ctx); pingErr != nil {
-		_ = conn.Close()
-		return nil, fmt.Errorf("failed to ping database: %w", pingErr)
+	writeConn, err := openHandle(dsn, 1, 1, cfg.ConnMaxLifetime)
+	if err != nil {
+		_ = readConn.Close()
+		return nil, err
 	}
 
 	// Restrict the database file (and its WAL/SHM sidecars) to owner-only. The
@@ -333,24 +369,26 @@ func OpenWithConfig(cfg Config) (*DB, error) {
 	// them group/world-readable; the DB holds tokens, credentials, and audit
 	// data, so the mode is made explicit rather than left to the environment.
 	if chmodErr := restrictDBFileMode(cfg.Path); chmodErr != nil {
-		_ = conn.Close()
+		_ = writeConn.Close()
+		_ = readConn.Close()
 		return nil, fmt.Errorf("failed to secure database file: %w", chmodErr)
 	}
 
 	db := &DB{
-		conn: conn,
-		path: cfg.Path,
+		readConn:  readConn,
+		writeConn: writeConn,
+		path:      cfg.Path,
 	}
 
 	// Run migrations
 	if migrateErr := db.migrate(); migrateErr != nil {
-		_ = conn.Close()
+		_ = db.closeHandles()
 		return nil, fmt.Errorf("failed to run migrations: %w", migrateErr)
 	}
 
 	// Seed default profile if database is empty
 	if seedErr := db.seedDefaultProfile(); seedErr != nil {
-		_ = conn.Close()
+		_ = db.closeHandles()
 		return nil, fmt.Errorf("failed to seed default profile: %w", seedErr)
 	}
 
@@ -371,12 +409,12 @@ func (db *DB) Close() error {
 	// Checkpoint WAL before closing for clean shutdown
 	ctx, cancel := context.WithTimeout(context.Background(), dbPingTimeoutSeconds*time.Second)
 	defer cancel()
-	if _, err := db.conn.ExecContext(ctx, "PRAGMA wal_checkpoint(TRUNCATE)"); err != nil {
+	if _, err := db.writeConn.ExecContext(ctx, "PRAGMA wal_checkpoint(TRUNCATE)"); err != nil {
 		// Log but don't fail - this is a cleanup operation
 		fmt.Fprintf(os.Stderr, "warning: failed to checkpoint WAL: %v\n", err)
 	}
 
-	if err := db.conn.Close(); err != nil {
+	if err := db.closeHandles(); err != nil {
 		return fmt.Errorf("closing database connection: %w", err)
 	}
 	return nil
@@ -391,8 +429,11 @@ func (db *DB) Ping(ctx context.Context) error {
 		return errors.New("database is closed")
 	}
 
-	if err := db.conn.PingContext(ctx); err != nil {
+	if err := db.readConn.PingContext(ctx); err != nil {
 		return fmt.Errorf("pinging database: %w", err)
+	}
+	if err := db.writeConn.PingContext(ctx); err != nil {
+		return fmt.Errorf("pinging database writer: %w", err)
 	}
 	return nil
 }
@@ -402,15 +443,17 @@ func (db *DB) Path() string {
 	return db.path
 }
 
-// Stats returns database connection statistics.
+// Stats returns read-pool connection statistics. The write handle is a single
+// connection by construction, so its pool has nothing to report.
 func (db *DB) Stats() sql.DBStats {
-	return db.conn.Stats()
+	return db.readConn.Stats()
 }
 
-// Conn returns the underlying *[sql.DB] connection.
-// This is useful for packages that need direct database access (e.g., mibdb).
-func (db *DB) Conn() *sql.DB {
-	return db.conn
+// WriteConn returns the serialised write handle. Its only consumer is mibdb,
+// which fills its OID table at startup and reads it back on the same handle;
+// anything on a hot read path must use the repositories instead.
+func (db *DB) WriteConn() *sql.DB {
+	return db.writeConn
 }
 
 // Exec executes a query without returning any rows.
@@ -422,7 +465,7 @@ func (db *DB) Exec(ctx context.Context, query string, args ...any) (sql.Result, 
 		return nil, errors.New("database is closed")
 	}
 
-	result, err := db.conn.ExecContext(ctx, query, args...)
+	result, err := db.writeConn.ExecContext(ctx, query, args...)
 	if err != nil {
 		return nil, fmt.Errorf("executing query: %w", err)
 	}
@@ -440,7 +483,7 @@ func (db *DB) Query(ctx context.Context, query string, args ...any) (*sql.Rows, 
 	}
 
 	//nolint:sqlclosecheck // Caller is responsible for closing rows
-	rows, err := db.conn.QueryContext(ctx, query, args...)
+	rows, err := db.readConn.QueryContext(ctx, query, args...)
 	if err != nil {
 		return nil, fmt.Errorf("querying database: %w", err)
 	}
@@ -452,7 +495,18 @@ func (db *DB) QueryRow(ctx context.Context, query string, args ...any) *sql.Row 
 	db.mu.RLock()
 	defer db.mu.RUnlock()
 
-	return db.conn.QueryRowContext(ctx, query, args...)
+	return db.readConn.QueryRowContext(ctx, query, args...)
+}
+
+// QueryRowWrite runs a write statement that returns a row (UPDATE ... RETURNING)
+// on the write connection. [DB.QueryRow] must not be used for that: it would put
+// the write on the read pool and reintroduce the lock contention writeConn
+// exists to remove (#2453).
+func (db *DB) QueryRowWrite(ctx context.Context, query string, args ...any) *sql.Row {
+	db.mu.RLock()
+	defer db.mu.RUnlock()
+
+	return db.writeConn.QueryRowContext(ctx, query, args...)
 }
 
 // BeginTx starts a new transaction.
@@ -464,7 +518,7 @@ func (db *DB) BeginTx(ctx context.Context, opts *sql.TxOptions) (*sql.Tx, error)
 		return nil, errors.New("database is closed")
 	}
 
-	tx, err := db.conn.BeginTx(ctx, opts)
+	tx, err := db.writeConn.BeginTx(ctx, opts)
 	if err != nil {
 		return nil, fmt.Errorf("beginning transaction: %w", err)
 	}

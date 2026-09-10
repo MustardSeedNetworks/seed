@@ -40,7 +40,7 @@ func TestSchemaSnapshot(t *testing.T) {
 	}
 	defer func() { _ = db.Close() }()
 
-	got := dumpSchema(t, db.Conn())
+	got := dumpSchema(t, db.WriteConn())
 
 	goldenPath := filepath.Join("testdata", "schema.sql")
 	if os.Getenv("UPDATE_SCHEMA_GOLDEN") == "1" {

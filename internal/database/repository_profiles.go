@@ -121,7 +121,7 @@ func (r *ProfileRepository) List(ctx context.Context) ([]*Profile, error) {
 func (r *ProfileRepository) Update(ctx context.Context, profile *Profile) error {
 	profile.UpdatedAt = time.Now().UTC()
 
-	row := r.db.QueryRow(ctx, `
+	row := r.db.QueryRowWrite(ctx, `
 		UPDATE profiles
 		SET name = ?, description = ?, config_json = ?, is_default = ?, updated_at = ?,
 			row_version = row_version + 1
@@ -158,7 +158,7 @@ func (r *ProfileRepository) UpdateIfMatch(
 ) error {
 	profile.UpdatedAt = time.Now().UTC()
 
-	row := r.db.QueryRow(ctx, `
+	row := r.db.QueryRowWrite(ctx, `
 		UPDATE profiles
 		SET name = ?, description = ?, config_json = ?, is_default = ?, updated_at = ?,
 			row_version = row_version + 1

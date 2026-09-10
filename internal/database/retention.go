@@ -238,7 +238,7 @@ func (db *DB) Vacuum(ctx context.Context) error {
 		return errDatabaseClosed
 	}
 
-	_, err := db.conn.ExecContext(ctx, "VACUUM")
+	_, err := db.writeConn.ExecContext(ctx, "VACUUM")
 	if err != nil {
 		return fmt.Errorf("failed to vacuum database: %w", err)
 	}
@@ -255,7 +255,7 @@ func (db *DB) Analyze(ctx context.Context) error {
 		return errDatabaseClosed
 	}
 
-	_, err := db.conn.ExecContext(ctx, "ANALYZE")
+	_, err := db.writeConn.ExecContext(ctx, "ANALYZE")
 	if err != nil {
 		return fmt.Errorf("failed to analyze database: %w", err)
 	}

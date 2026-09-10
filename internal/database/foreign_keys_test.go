@@ -51,7 +51,7 @@ func holdTwoConnections(t *testing.T, db *database.DB) []*sql.Conn {
 	t.Helper()
 	connections := make([]*sql.Conn, 2)
 	for i := range connections {
-		conn, err := db.Conn().Conn(t.Context())
+		conn, err := db.ReadPoolForTest().Conn(t.Context())
 		require.NoError(t, err)
 		connections[i] = conn
 		t.Cleanup(func() { require.NoError(t, conn.Close()) })
