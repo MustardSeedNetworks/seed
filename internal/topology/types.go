@@ -73,7 +73,7 @@ type Link struct {
 	TargetNodeID    string
 	SourceInterface string
 	TargetInterface string
-	LinkType        string // "lldp", "cdp", "fdp"
+	LinkType        string // "lldp", "cdp", "fdp", "fdb"
 	Status          string // "up", "down", "unknown"
 	SpeedMbps       uint32
 	UtilizationPct  float64

@@ -22,10 +22,9 @@ const ARPReconcilerName = "topology-arp-reconciler"
 const arpHighWaterKey = "topology.arp.high_water"
 
 // arpStore is the narrowed repo surface the ARP reconciler uses.
-// In addition to writing bindings, the reconciler joins MAC values
-// against topology_nodes.primary_mac to backfill primary_ip on
-// nodes whose chassis MAC matches the binding — the bridge between
-// L2 and L3 identity.
+// In addition to writing bindings, the reconciler resolves each
+// binding's MAC to a node to backfill that node's primary_ip — the
+// bridge between L2 and L3 identity.
 type arpStore interface {
 	NodeIDForTarget(ctx context.Context, clientID, targetID string) (string, error)
 	NodeIDForMAC(ctx context.Context, clientID, mac string) (string, error)
@@ -226,8 +225,8 @@ type arpEntry struct {
 }
 
 // applyObservation decodes the arp payload, upserts one binding per
-// entry, and backfills primary_ip on any node whose primary_mac
-// matches an entry's MAC. Returns (bindingCount, backfillCount).
+// entry, and backfills primary_ip on any node an entry's MAC
+// resolves to. Returns (bindingCount, backfillCount).
 func (r *ARPReconciler) applyObservation(
 	ctx context.Context,
 	obs *observation.SNMPObservation,
@@ -268,9 +267,9 @@ func (r *ARPReconciler) applyObservation(
 		}
 		bindings++
 
-		// L2 -> L3 identity bridge: if this binding's MAC matches a
-		// node's primary_mac, that node's primary_ip is this binding's
-		// IP. The fat-Node finally has a network-layer identity.
+		// L2 -> L3 identity bridge: if this binding's MAC belongs to
+		// a known node, that node's primary_ip is this binding's IP.
+		// The fat-Node finally has a network-layer identity.
 		matchedNodeID, lookupErr := r.store.NodeIDForMAC(ctx, obs.ClientID, e.MACAddress)
 		if lookupErr != nil {
 			continue

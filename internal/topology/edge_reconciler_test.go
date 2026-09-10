@@ -20,6 +20,8 @@ type fakeEdgeStore struct {
 	targetMap map[string]string
 	// sys_name -> node_id for remote-neighbor resolution.
 	sysNameMap map[string]string
+	// mac -> node_id / interface name for fdb resolution.
+	macMap map[string]macNode
 
 	links     []*topology.Link
 	upsertErr error
@@ -29,6 +31,7 @@ func newFakeEdgeStore() *fakeEdgeStore {
 	return &fakeEdgeStore{
 		targetMap:  map[string]string{},
 		sysNameMap: map[string]string{},
+		macMap:     map[string]macNode{},
 	}
 }
 
@@ -50,6 +53,38 @@ func (f *fakeEdgeStore) NodeIDForSysName(_ context.Context, _, sysName string) (
 		return "", topology.ErrTopologyNodeNotFound
 	}
 	return id, nil
+}
+
+// macNode is one MAC's resolution: the node that owns it and the
+// name of the interface the MAC belongs to.
+type macNode struct {
+	nodeID string
+	ifName string
+}
+
+func (f *fakeEdgeStore) NodeForMAC(_ context.Context, _, mac string) (string, string, error) {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	m, ok := f.macMap[mac]
+	if !ok {
+		return "", "", topology.ErrTopologyNodeNotFound
+	}
+	return m.nodeID, m.ifName, nil
+}
+
+// ListLinks returns the links already written, the way the
+// repository does — the fdb pass reads them back to find the ports
+// a neighbor protocol has already claimed.
+func (f *fakeEdgeStore) ListLinks(_ context.Context, nodeID string) ([]*topology.Link, error) {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	out := make([]*topology.Link, 0, len(f.links))
+	for _, l := range f.links {
+		if l.SourceNodeID == nodeID || l.TargetNodeID == nodeID {
+			out = append(out, l)
+		}
+	}
+	return out, nil
 }
 
 func (f *fakeEdgeStore) UpsertLink(_ context.Context, link *topology.Link) error {

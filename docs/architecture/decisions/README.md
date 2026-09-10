@@ -39,3 +39,4 @@ See the [Re-Architecture Blueprint](../RE_ARCHITECTURE_BLUEPRINT.md) for the ful
 | [0029](0029-converge-anomaly-engines.md) | Converge the per-producer anomaly engines into one server-owned engine | Accepted |
 | [0030](0030-prefer-syscalls-over-shelling-out.md) | Prefer syscalls and OS APIs over shelling out | Accepted |
 | [0031](0031-single-writer-sqlite-connection.md) | One SQLite write connection, a pool for reads | Accepted |
+| [0032](0032-fdb-access-port-edges.md) | Forwarding-database edges — one MAC on a port no neighbour protocol claims | Accepted |

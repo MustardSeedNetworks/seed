@@ -34,11 +34,15 @@ func neighborKinds() []string { return []string{"lldp", "cdp", "fdp"} }
 type edgeStore interface {
 	NodeIDForTarget(ctx context.Context, clientID, targetID string) (string, error)
 	NodeIDForSysName(ctx context.Context, clientID, sysName string) (string, error)
+	// NodeForMAC resolves a learned MAC to its node and that node's
+	// interface name; the fdb pass has no sysName to work with.
+	NodeForMAC(ctx context.Context, clientID, mac string) (string, string, error)
+	ListLinks(ctx context.Context, nodeID string) ([]*Link, error)
 	UpsertLink(ctx context.Context, link *Link) error
 }
 
-// EdgeReconciler turns lldp/cdp/fdp observations into
-// topology_links. Only emits edges when both endpoints map to a
+// EdgeReconciler turns lldp/cdp/fdp neighbor observations and
+// forwarding-database observations into topology_links. Only emits edges when both endpoints map to a
 // known topology node — orphan neighbors (where the remote isn't
 // polled) are skipped with a debug log. Stage B may introduce
 // "ghost" nodes for orphan neighbors once the operator UI needs
@@ -195,8 +199,13 @@ func (r *EdgeReconciler) reconcileOnceInner(ctx context.Context) error {
 			maxObservedAt = kindMax
 		}
 	}
+	fdbLinks, fdbErr := r.reconcileFDB(ctx)
+	if fdbErr != nil {
+		r.logger.WarnContext(ctx, "edge reconcile fdb failed", "error", fdbErr)
+	}
+	totalLinks += fdbLinks
 	r.logger.DebugContext(ctx, "edge reconcile pass",
-		"links", totalLinks, "max_observed_at", maxObservedAt)
+		"links", totalLinks, "fdb_links", fdbLinks, "max_observed_at", maxObservedAt)
 
 	if !maxObservedAt.IsZero() {
 		if saveErr := r.saveHighWater(ctx, maxObservedAt); saveErr != nil {
@@ -357,7 +366,7 @@ func decodeNeighbors(kind, raw string) ([]neighborRecord, error) {
 		out := make([]neighborRecord, 0, len(p.Neighbors))
 		for _, n := range p.Neighbors {
 			out = append(out, neighborRecord{
-				localInterface:  fmt.Sprintf("ifIndex-%d", n.LocalPortNum),
+				localInterface:  ifIndexLabel(n.LocalPortNum),
 				remoteName:      n.SysName,
 				remoteInterface: firstNonEmpty(n.PortDescription, n.PortID),
 			})
@@ -371,7 +380,7 @@ func decodeNeighbors(kind, raw string) ([]neighborRecord, error) {
 		out := make([]neighborRecord, 0, len(p.Neighbors))
 		for _, n := range p.Neighbors {
 			out = append(out, neighborRecord{
-				localInterface:  fmt.Sprintf("ifIndex-%d", n.LocalIfIndex),
+				localInterface:  ifIndexLabel(n.LocalIfIndex),
 				remoteName:      n.DeviceID,
 				remoteInterface: n.DevicePort,
 			})
@@ -380,6 +389,15 @@ func decodeNeighbors(kind, raw string) ([]neighborRecord, error) {
 	default:
 		return nil, fmt.Errorf("edge reconciler: unknown kind %q", kind)
 	}
+}
+
+// ifIndexLabel renders a local port the one way every pass must
+// render it: the fdb pass compares its own label against the labels
+// the neighbor pass already wrote, so the two cannot be allowed to
+// drift. seed#2455 replaces this with the interface's real name and
+// must do so for both passes at once.
+func ifIndexLabel(ifIndex uint32) string {
+	return fmt.Sprintf("ifIndex-%d", ifIndex)
 }
 
 func firstNonEmpty(values ...string) string {
@@ -392,7 +410,11 @@ func firstNonEmpty(values ...string) string {
 }
 
 func (r *EdgeReconciler) loadHighWater(ctx context.Context) (time.Time, error) {
-	raw, err := r.settings.GetWithDefault(ctx, edgeHighWaterKey, "")
+	return r.loadHighWaterAt(ctx, edgeHighWaterKey)
+}
+
+func (r *EdgeReconciler) loadHighWaterAt(ctx context.Context, key string) (time.Time, error) {
+	raw, err := r.settings.GetWithDefault(ctx, key, "")
 	if err != nil {
 		return time.Time{}, err
 	}
@@ -407,5 +429,9 @@ func (r *EdgeReconciler) loadHighWater(ctx context.Context) (time.Time, error) {
 }
 
 func (r *EdgeReconciler) saveHighWater(ctx context.Context, t time.Time) error {
-	return r.settings.Set(ctx, edgeHighWaterKey, t.UTC().Format(time.RFC3339Nano))
+	return r.saveHighWaterAt(ctx, edgeHighWaterKey, t)
+}
+
+func (r *EdgeReconciler) saveHighWaterAt(ctx context.Context, key string, t time.Time) error {
+	return r.settings.Set(ctx, key, t.UTC().Format(time.RFC3339Nano))
 }
