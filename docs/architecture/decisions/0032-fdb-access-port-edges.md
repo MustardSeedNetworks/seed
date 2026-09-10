@@ -64,6 +64,9 @@ and leave the access layer blank until every switch is polled again.
   cache, and the alternative is an aging model seed cannot observe.
 - An endpoint seed has never polled has no node and therefore no edge, the same
   rule the neighbour pass applies to an unpolled neighbour.
+- An IP phone with a PC daisy-chained behind it is two MACs on one access port
+  and draws no edge. That is the rule working as written, not a defect: a port
+  with more than one MAC cannot say which device is on the cable.
 - Local ports on `fdb` edges are labelled `ifIndex-N`, identical to the
   neighbour pass. #2455 replaces that label with the interface's real name and
   must change both passes together: the uplink test compares its own label
