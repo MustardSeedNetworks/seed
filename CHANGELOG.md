@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.214.39](https://github.com/MustardSeedNetworks/seed/compare/v0.214.38...v0.214.39) (2026-09-10)
+
+
+### Bug Fixes
+
+* **topology:** draw switch-to-endpoint links from the forwarding database ([#2575](https://github.com/MustardSeedNetworks/seed/issues/2575)) ([45b41bc](https://github.com/MustardSeedNetworks/seed/commit/45b41bc7fb1aaedb0968135665d2b66ca5baabfa))
+
+
+### Miscellaneous
+
+* **deps:** lock file maintenance ([#2578](https://github.com/MustardSeedNetworks/seed/issues/2578)) ([0284b19](https://github.com/MustardSeedNetworks/seed/commit/0284b1997e0f0a2639274fa50935fe1630c8b5f9))
+
 ## [0.214.38](https://github.com/MustardSeedNetworks/seed/compare/v0.214.37...v0.214.38) (2026-09-10)
 
 
