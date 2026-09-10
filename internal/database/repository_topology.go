@@ -274,31 +274,48 @@ func (r *TopologyRepository) SetNodePrimaryIP(ctx context.Context, nodeID, ip st
 	return nil
 }
 
-// NodeIDForMAC resolves a MAC address to a node by matching against
-// topology_nodes.primary_mac. Returns topology.ErrTopologyNodeNotFound when
-// no node has that MAC. Used by the ARP reconciler to identify
-// which (if any) node a binding's MAC corresponds to.
+// NodeIDForMAC resolves a MAC address to the node that owns it.
+// Returns topology.ErrTopologyNodeNotFound when no node has that MAC.
+// Used by the ARP reconciler and by the edge reconciler's fdb pass.
 func (r *TopologyRepository) NodeIDForMAC(ctx context.Context, clientID, mac string) (string, error) {
+	id, _, err := r.NodeForMAC(ctx, clientID, mac)
+	return id, err
+}
+
+// NodeForMAC resolves a MAC to its node and, when the match came
+// from an interface row, that interface's name. topology_nodes has a
+// primary_mac column but no producer writes it, so an interface's
+// ifPhysAddress is in practice the only MAC seed knows for a device;
+// both are matched here rather than in two methods, because a second
+// MAC->node lookup over a different table is how the two drift.
+// Both sides render a MAC as lowercase colon-hex ([iftable.macAddressString],
+// [fdb.parseFdbOID]), so the comparison is a plain equality.
+func (r *TopologyRepository) NodeForMAC(
+	ctx context.Context, clientID, mac string,
+) (string, string, error) {
 	if clientID == "" {
 		clientID = "default"
 	}
 	if mac == "" {
-		return "", topology.ErrTopologyNodeNotFound
+		return "", "", topology.ErrTopologyNodeNotFound
 	}
 	row := r.db.QueryRow(ctx, `
-		SELECT id FROM topology_nodes
-		WHERE client_id = ? AND primary_mac = ?
-		ORDER BY last_seen DESC
+		SELECT n.id, COALESCE(NULLIF(i.if_name, ''), i.if_descr, '')
+		FROM topology_nodes n
+		LEFT JOIN topology_interfaces i
+		  ON i.node_id = n.id AND i.if_phys_addr = ?
+		WHERE n.client_id = ? AND (n.primary_mac = ? OR i.id IS NOT NULL)
+		ORDER BY n.last_seen DESC, n.id
 		LIMIT 1
-	`, clientID, mac)
-	var id string
-	if err := row.Scan(&id); err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
-			return "", topology.ErrTopologyNodeNotFound
+	`, mac, clientID, mac)
+	var nodeID, ifName string
+	if scanErr := row.Scan(&nodeID, &ifName); scanErr != nil {
+		if errors.Is(scanErr, sql.ErrNoRows) {
+			return "", "", topology.ErrTopologyNodeNotFound
 		}
-		return "", fmt.Errorf("nodeIDForMAC: %w", err)
+		return "", "", fmt.Errorf("nodeForMAC: %w", scanErr)
 	}
-	return id, nil
+	return nodeID, ifName, nil
 }
 
 // NodeIDForSysName resolves a sys_name back to its node_id by

@@ -9,7 +9,10 @@
   // Globs to ignore
   "ignores": [
     "node_modules/**",
-    "web/node_modules/**",
+    // ui/ and web/ each get their own node_modules from npm ci, and a
+    // full-tree `make lint-md` in a worktree with deps installed would
+    // otherwise fail on a dependency's README.
+    "**/node_modules/**",
     "build/**",
     "dist/**",
     "coverage/**",
