@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.214.38](https://github.com/MustardSeedNetworks/seed/compare/v0.214.37...v0.214.38) (2026-09-10)
+
+
+### Bug Fixes
+
+* **database:** serialise every write on one SQLite connection ([#2571](https://github.com/MustardSeedNetworks/seed/issues/2571)) ([42a4c3a](https://github.com/MustardSeedNetworks/seed/commit/42a4c3a2436f853c8eb969985313ef5a20d887b3))
+
+
+### Miscellaneous
+
+* **deps:** lock file maintenance ([#2572](https://github.com/MustardSeedNetworks/seed/issues/2572)) ([183b1fc](https://github.com/MustardSeedNetworks/seed/commit/183b1fc7069a37cc270e99e8aff149ee09698ceb))
+
 ## [0.214.37](https://github.com/MustardSeedNetworks/seed/compare/v0.214.36...v0.214.37) (2026-09-09)
 
 
