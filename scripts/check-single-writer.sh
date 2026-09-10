@@ -52,7 +52,7 @@ if [ -n "$DML_ON_READ" ]; then
 fi
 
 # The pool size is the guarantee; anything but one connection is not a writer.
-if ! grep -q 'openHandle(dsn, 1, 1, cfg.ConnMaxLifetime, pragmas)' internal/database/database.go; then
+if ! grep -q 'openHandle(dsn, 1, 1, cfg.ConnMaxLifetime)' internal/database/database.go; then
   echo "============================================================"
   echo "[single-writer] the write handle is no longer opened with one connection"
   echo "(expected openHandle(dsn, 1, 1, ...) in internal/database/database.go)."

@@ -271,13 +271,12 @@ func restrictDBFileMode(path string) error {
 	return nil
 }
 
-// openHandle opens one *[sql.DB] over dsn, sizes its pool and applies pragmas.
-// Pragmas are connection-scoped in SQLite, so each handle applies its own.
+// openHandle opens one *[sql.DB] over dsn and sizes its pool. The pragmas are
+// in the DSN, so the driver applies them to every connection it opens.
 func openHandle(
 	dsn string,
 	maxOpen, maxIdle int,
 	maxLifetime time.Duration,
-	pragmas []string,
 ) (*sql.DB, error) {
 	conn, err := sql.Open("sqlite", dsn)
 	if err != nil {
@@ -290,12 +289,6 @@ func openHandle(
 	ctx, cancel := context.WithTimeout(context.Background(), dbConnTimeoutSeconds*time.Second)
 	defer cancel()
 
-	for _, pragma := range pragmas {
-		if _, pragmaErr := conn.ExecContext(ctx, pragma); pragmaErr != nil {
-			_ = conn.Close()
-			return nil, fmt.Errorf("failed to set pragma %q: %w", pragma, pragmaErr)
-		}
-	}
 	if pingErr := conn.PingContext(ctx); pingErr != nil {
 		_ = conn.Close()
 		return nil, fmt.Errorf("failed to ping database: %w", pingErr)
@@ -330,21 +323,27 @@ func OpenWithConfig(cfg Config) (*DB, error) {
 		}
 	}
 
-	// Build connection string with pragmas
-	dsn := fmt.Sprintf("file:%s?_txlock=immediate&_pragma=foreign_keys(1)", cfg.Path)
+	// Every pragma rides the DSN, not an ExecContext after Open. Pragmas are
+	// connection-scoped, so a pragma executed once lands on whichever connection
+	// the pool happened to hand out and every later connection — including the
+	// replacement for one recycled at ConnMaxLifetime — silently reverts to the
+	// SQLite default. On the write handle that matters most: it is one
+	// connection, and losing synchronous=NORMAL there means an fsync per commit.
+	journalMode := "WAL"
+	if !cfg.EnableWAL {
+		journalMode = "DELETE"
+	}
+	dsn := fmt.Sprintf(
+		"file:%s?_txlock=immediate"+
+			"&_pragma=foreign_keys(1)"+
+			"&_pragma=journal_mode(%s)"+
+			"&_pragma=synchronous(NORMAL)"+
+			"&_pragma=cache_size(-64000)"+ // 64MB cache
+			"&_pragma=temp_store(MEMORY)",
+		cfg.Path, journalMode,
+	)
 	if cfg.BusyTimeout > 0 {
 		dsn += fmt.Sprintf("&_busy_timeout=%d", cfg.BusyTimeout)
-	}
-
-	pragmas := []string{
-		"PRAGMA journal_mode = WAL",
-		"PRAGMA synchronous = NORMAL",
-		"PRAGMA cache_size = -64000", // 64MB cache
-		"PRAGMA temp_store = MEMORY",
-	}
-
-	if !cfg.EnableWAL {
-		pragmas[0] = "PRAGMA journal_mode = DELETE"
 	}
 
 	// SQLite allows exactly one writer at a time. When several pooled
@@ -355,11 +354,11 @@ func OpenWithConfig(cfg Config) (*DB, error) {
 	// writer waits in Go's connection queue (bounded by its own context) instead
 	// of racing at the SQLite level. Reads keep the multi-connection pool: WAL
 	// readers never block the writer.
-	readConn, err := openHandle(dsn, cfg.MaxOpenConns, cfg.MaxIdleConns, cfg.ConnMaxLifetime, pragmas)
+	readConn, err := openHandle(dsn, cfg.MaxOpenConns, cfg.MaxIdleConns, cfg.ConnMaxLifetime)
 	if err != nil {
 		return nil, err
 	}
-	writeConn, err := openHandle(dsn, 1, 1, cfg.ConnMaxLifetime, pragmas)
+	writeConn, err := openHandle(dsn, 1, 1, cfg.ConnMaxLifetime)
 	if err != nil {
 		_ = readConn.Close()
 		return nil, err

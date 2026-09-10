@@ -157,3 +157,39 @@ func TestUpdateReturningWaitsForHeldTransaction(t *testing.T) {
 	wg.Wait()
 	require.NoError(t, <-holderErr)
 }
+
+// TestPragmasApplyToEveryConnection guards the DSN placement: pragmas are
+// connection-scoped, so one applied after Open lands on a single pooled
+// connection and every later one — including the replacement for a connection
+// recycled at ConnMaxLifetime — reverts to the SQLite default. On the write
+// handle that would mean an fsync per commit.
+func TestPragmasApplyToEveryConnection(t *testing.T) {
+	cfg := database.DefaultConfig(filepath.Join(t.TempDir(), "seed.db"))
+	cfg.ConnMaxLifetime = time.Millisecond
+	db, err := database.OpenWithConfig(cfg)
+	require.NoError(t, err)
+	t.Cleanup(func() { _ = db.Close() })
+
+	// Long enough that every connection opened at startup is past its lifetime
+	// and the pool must hand out fresh ones.
+	time.Sleep(20 * time.Millisecond)
+
+	for _, want := range []struct {
+		pragma string
+		value  string
+	}{
+		{"journal_mode", "wal"},
+		{"synchronous", "1"}, // NORMAL
+		{"foreign_keys", "1"},
+		{"temp_store", "2"}, // MEMORY
+	} {
+		var got string
+		require.NoError(t, db.QueryRow(context.Background(), "PRAGMA "+want.pragma).Scan(&got),
+			"read %s", want.pragma)
+		require.Equal(t, want.value, got, "read pragma %s", want.pragma)
+
+		require.NoError(t, db.QueryRowWrite(context.Background(), "PRAGMA "+want.pragma).Scan(&got),
+			"write %s", want.pragma)
+		require.Equal(t, want.value, got, "write pragma %s", want.pragma)
+	}
+}
