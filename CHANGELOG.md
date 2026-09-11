@@ -5,6 +5,19 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.214.41](https://github.com/MustardSeedNetworks/seed/compare/v0.214.40...v0.214.41) (2026-09-11)
+
+
+### Bug Fixes
+
+* **deps:** update dependency i18next to v26.4.2 ([#2581](https://github.com/MustardSeedNetworks/seed/issues/2581)) ([cb195f8](https://github.com/MustardSeedNetworks/seed/commit/cb195f81140ad2624bc8ecd8f0b2dcd280d0c0b9))
+* **deps:** update module github.com/go-playground/validator/v10 to v10.30.4 ([#2582](https://github.com/MustardSeedNetworks/seed/issues/2582)) ([712330b](https://github.com/MustardSeedNetworks/seed/commit/712330b6c21302c23b7b84f532abf1e78824bc3d))
+
+
+### Miscellaneous
+
+* **deps:** lock file maintenance ([#2583](https://github.com/MustardSeedNetworks/seed/issues/2583)) ([6c64278](https://github.com/MustardSeedNetworks/seed/commit/6c642782e7b7e20ab14c1fe5e8cd6dc5d42abe86))
+
 ## [0.214.40](https://github.com/MustardSeedNetworks/seed/compare/v0.214.39...v0.214.40) (2026-09-10)
 
 
