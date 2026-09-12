@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.214.42](https://github.com/MustardSeedNetworks/seed/compare/v0.214.41...v0.214.42) (2026-09-12)
+
+
+### Bug Fixes
+
+* **deps:** update dependency wouter to v3.11.0 ([#2588](https://github.com/MustardSeedNetworks/seed/issues/2588)) ([30a11b2](https://github.com/MustardSeedNetworks/seed/commit/30a11b22f937dfb302c418ced7ba324249bd405a))
+
+
+### Tests
+
+* **routing:** pin the NIAC replay contract to real emitted OIDs ([#2586](https://github.com/MustardSeedNetworks/seed/issues/2586)) ([e63680c](https://github.com/MustardSeedNetworks/seed/commit/e63680cc736a7d1115be1d837ece74c39a4c9787))
+
 ## [0.214.41](https://github.com/MustardSeedNetworks/seed/compare/v0.214.40...v0.214.41) (2026-09-11)
 
 
