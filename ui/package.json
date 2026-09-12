@@ -49,7 +49,7 @@
     "tailwind-merge": "3.6.0",
     "tailwindcss": "4.3.3",
     "valibot": "1.4.2",
-    "wouter": "3.10.0",
+    "wouter": "3.11.0",
     "zustand": "5.0.15"
   },
   "devDependencies": {
