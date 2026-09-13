@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.214.43](https://github.com/MustardSeedNetworks/seed/compare/v0.214.42...v0.214.43) (2026-09-13)
+
+
+### Miscellaneous
+
+* **deps:** update dependency lint-staged to v17.5.1 ([#2592](https://github.com/MustardSeedNetworks/seed/issues/2592)) ([2f92f35](https://github.com/MustardSeedNetworks/seed/commit/2f92f35997043ab3d65fc4f2769ad1517ae046f0))
+
 ## [0.214.42](https://github.com/MustardSeedNetworks/seed/compare/v0.214.41...v0.214.42) (2026-09-12)
 
 
