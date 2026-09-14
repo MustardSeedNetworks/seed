@@ -64,6 +64,11 @@ func causeRuleFor(rule string) (string, bool) {
 
 // isCause reports whether alerts from this rule can explain a later alert, and
 // so are worth remembering. It is the range of causeRuleFor.
+//
+// An operator cannot collide with these names: listener rules loaded from the
+// alert_rules table are given ids of the form "db.<row id>"
+// (listener_rules_loader.go), so a rule an operator names "iface.down" cannot
+// be mistaken for the observation pipeline's.
 func isCause(rule string) bool {
 	return rule == ruleInterfaceDown
 }

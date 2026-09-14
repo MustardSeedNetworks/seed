@@ -3,6 +3,7 @@ package database_test
 import (
 	"context"
 	"testing"
+	"time"
 
 	"github.com/MustardSeedNetworks/seed/internal/alerts"
 )
@@ -104,5 +105,85 @@ func TestDeletingTheCauseKeepsTheEffect(t *testing.T) {
 	}
 	if got.RootCauseID != nil {
 		t.Errorf("rootCauseID = %d after the cause was deleted, want nil", *got.RootCauseID)
+	}
+}
+
+// Retention deletes in one statement: DELETE FROM alerts WHERE created_at < ?.
+// A correlated pair that ages out together is therefore a self-referencing
+// foreign key being resolved inside a single multi-row delete, which is
+// exactly where SET NULL on a self-FK can misbehave. If this breaks, retention
+// breaks on every install the first time a correlated pair ages out — and no
+// other test in this package would see it.
+func TestRetentionDeletesACorrelatedPair(t *testing.T) {
+	db, cleanup := testDB(t)
+	defer cleanup()
+	ctx := context.Background()
+	repo := db.Alerts()
+
+	old := time.Now().UTC().Add(-48 * time.Hour)
+	cause := &alerts.Alert{
+		Type: alerts.TypeConnectivity, Severity: alerts.SeverityWarning,
+		Title: "Interface down", Source: "t-1", Rule: "iface.down", CreatedAt: old,
+	}
+	if err := repo.Create(ctx, cause); err != nil {
+		t.Fatalf("create cause: %v", err)
+	}
+	effect := &alerts.Alert{
+		Type: alerts.TypeConnectivity, Severity: alerts.SeverityError,
+		Title: "BGP flap", Source: "t-1", Rule: "bgp.flap",
+		RootCauseID: &cause.ID, CreatedAt: old.Add(2 * time.Second),
+	}
+	if err := repo.Create(ctx, effect); err != nil {
+		t.Fatalf("create effect: %v", err)
+	}
+
+	deleted, err := repo.DeleteOlderThan(ctx, time.Now().UTC().Add(-time.Hour))
+	if err != nil {
+		t.Fatalf("retention failed on a correlated pair: %v", err)
+	}
+	if deleted != 2 {
+		t.Errorf("deleted %d alerts, want 2 (both the cause and the effect)", deleted)
+	}
+	if _, getErr := repo.Get(ctx, effect.ID); getErr == nil {
+		t.Error("the effect survived retention")
+	}
+}
+
+// The other half of the same risk: the cause ages out while the effect is
+// still inside the retention window, so the delete must SET NULL on a row it
+// is not deleting.
+func TestRetentionKeepsAnEffectWhoseCauseAgedOut(t *testing.T) {
+	db, cleanup := testDB(t)
+	defer cleanup()
+	ctx := context.Background()
+	repo := db.Alerts()
+
+	cause := &alerts.Alert{
+		Type: alerts.TypeConnectivity, Severity: alerts.SeverityWarning,
+		Title: "Interface down", Source: "t-1", Rule: "iface.down",
+		CreatedAt: time.Now().UTC().Add(-48 * time.Hour),
+	}
+	if err := repo.Create(ctx, cause); err != nil {
+		t.Fatalf("create cause: %v", err)
+	}
+	effect := &alerts.Alert{
+		Type: alerts.TypeConnectivity, Severity: alerts.SeverityError,
+		Title: "BGP flap", Source: "t-1", Rule: "bgp.flap",
+		RootCauseID: &cause.ID, CreatedAt: time.Now().UTC(),
+	}
+	if err := repo.Create(ctx, effect); err != nil {
+		t.Fatalf("create effect: %v", err)
+	}
+
+	if _, err := repo.DeleteOlderThan(ctx, time.Now().UTC().Add(-time.Hour)); err != nil {
+		t.Fatalf("retention failed: %v", err)
+	}
+
+	got, err := repo.Get(ctx, effect.ID)
+	if err != nil {
+		t.Fatalf("the effect did not survive its cause ageing out: %v", err)
+	}
+	if got.RootCauseID != nil {
+		t.Errorf("rootCauseID = %d, want nil after the cause aged out", *got.RootCauseID)
 	}
 }
