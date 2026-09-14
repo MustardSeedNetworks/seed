@@ -22,8 +22,8 @@ import (
 
 // Environment variables that configure the outbound alert webhook.
 const (
-	alertWebhookURLEnv    = "SEED_ALERT_WEBHOOK_URL"
-	alertWebhookSecretEnv = "SEED_ALERT_WEBHOOK_SECRET" //nolint:gosec // env var name, not a credential
+	alertWebhookURLEnv = "SEED_ALERT_WEBHOOK_URL"
+	alertWebhookKeyEnv = "SEED_ALERT_WEBHOOK_SECRET"
 )
 
 // alertStore returns the writer the alert pipelines emit through: the alert
@@ -51,12 +51,12 @@ func (s *Server) initAlertDelivery(logger *slog.Logger) *alertdelivery.Notifier 
 
 	notifier, err := alertdelivery.New(alertdelivery.Config{
 		URL:    receiver,
-		Secret: os.Getenv(alertWebhookSecretEnv),
+		Secret: os.Getenv(alertWebhookKeyEnv),
 		Logger: logger,
 	})
 	if err != nil {
 		logger.Error("alert webhook not configured; alerts will not be delivered",
-			"error", err, "url_env", alertWebhookURLEnv, "secret_env", alertWebhookSecretEnv)
+			"error", err, "url_env", alertWebhookURLEnv, "key_env", alertWebhookKeyEnv)
 		return nil
 	}
 
