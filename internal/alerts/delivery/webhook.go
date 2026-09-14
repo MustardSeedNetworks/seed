@@ -13,6 +13,10 @@
 //   - Retry is bounded — a fixed, small number of attempts with linear backoff,
 //     not a durable queue. A receiver that is down loses the delivery and leaves
 //     a visible failure in Status, never unbounded growth.
+//   - Every outcome is written back onto the alert it was for, through the
+//     Recorder. The counters alone were invisible — nothing served them on any
+//     route — so a receiver that had been refusing every POST for a week looked
+//     exactly like one that was working.
 package delivery
 
 import (
@@ -65,6 +69,11 @@ type Config struct {
 	URL string
 	// Secret is the HMAC-SHA256 signing material shared with the receiver.
 	Secret string
+	// Recorder persists each delivery's outcome onto the alert it was for, so
+	// a receiver that stopped accepting POSTs is visible in the inbox rather
+	// than only in counters nothing serves. Optional: nil means the outcome
+	// is counted but not written back.
+	Recorder Recorder
 	// Client overrides the HTTP client (tests, proxy-aware deployments).
 	Client *http.Client
 	// MaxAttempts is the total number of tries per alert, retries included.
@@ -77,6 +86,21 @@ type Config struct {
 	QueueSize int
 	Logger    *slog.Logger
 	Now       func() time.Time
+}
+
+// Recorder writes one delivery's outcome onto the alert it was for. It is the
+// narrow half of the alert repository this package needs, declared here so
+// delivery does not import internal/database.
+//
+// status is one of the alerts.Delivery* constants.
+type Recorder interface {
+	RecordDelivery(
+		ctx context.Context,
+		alertID int64,
+		status string,
+		attemptedAt time.Time,
+		deliveryErr string,
+	) error
 }
 
 // Status is the last-delivery picture an operator needs to notice a webhook
@@ -107,6 +131,7 @@ type Notifier struct {
 	backoff     time.Duration
 	logger      *slog.Logger
 	now         func() time.Time
+	recorder    Recorder
 
 	queue chan *alerts.Alert
 
@@ -136,6 +161,7 @@ func New(cfg Config) (*Notifier, error) {
 		backoff:     cfg.Backoff,
 		logger:      cfg.Logger,
 		now:         cfg.Now,
+		recorder:    cfg.Recorder,
 	}
 	if n.client == nil {
 		timeout := cfg.Timeout
@@ -242,22 +268,49 @@ func (n *Notifier) Stop(ctx context.Context) {
 	}
 }
 
-// Deliver queues alert for delivery. It never blocks: when the queue is full
-// the alert is dropped and counted, because the alert pipeline's tick must not
-// wait on someone else's HTTP endpoint.
-func (n *Notifier) Deliver(alert *alerts.Alert) {
+// Deliver queues alert for delivery and reports whether it was queued. It
+// never blocks: when the queue is full the alert is dropped and counted,
+// because the alert pipeline's tick must not wait on someone else's HTTP
+// endpoint.
+//
+// The drop is written back to the alert row here, synchronously, rather than
+// left to the worker — nothing will ever revisit a dropped alert, so a row
+// left reading "pending" would read that way forever.
+func (n *Notifier) Deliver(ctx context.Context, alert *alerts.Alert) bool {
 	if alert == nil {
-		return
+		return false
 	}
 	select {
 	case n.queue <- alert:
+		return true
 	default:
 		n.mu.Lock()
 		n.status.Dropped++
 		n.status.LastError = "delivery queue full"
 		n.mu.Unlock()
-		n.logger.Error("alert webhook queue full; delivery dropped",
+		n.logger.ErrorContext(ctx, "alert webhook queue full; delivery dropped",
 			"alert_id", alert.ID, "queue_size", cap(n.queue))
+		n.recordOnAlert(ctx, alert, alerts.DeliveryDropped, "delivery queue full")
+		return false
+	}
+}
+
+// recordOnAlert writes one outcome onto the alert row. A failure to write is
+// logged and dropped: the delivery itself already happened (or already failed)
+// and the counters hold it, so turning a bookkeeping error into anything more
+// would cost the caller nothing it can act on.
+//
+// The ctx is the caller's — the worker's run context for an attempt, the
+// pipeline's for a drop. At shutdown the run context is already cancelled, so
+// an outcome landing in that window is lost rather than written by a detached
+// context that would outlive the daemon's own deadline.
+func (n *Notifier) recordOnAlert(ctx context.Context, alert *alerts.Alert, status, errText string) {
+	if n.recorder == nil {
+		return
+	}
+	if err := n.recorder.RecordDelivery(ctx, alert.ID, status, n.now().UTC(), errText); err != nil {
+		n.logger.ErrorContext(ctx, "could not record alert delivery status",
+			"error", err, "alert_id", alert.ID, "delivery_status", status)
 	}
 }
 
@@ -282,9 +335,9 @@ func (n *Notifier) run(ctx context.Context) {
 // send makes up to maxAttempts tries, stopping early on success or on a
 // response the receiver will give again for the same body.
 func (n *Notifier) send(ctx context.Context, alert *alerts.Alert) {
-	body, err := json.Marshal(envelope{Alert: alert, SentAt: n.now().UTC()})
+	body, err := json.Marshal(envelope{Alert: forTheWire(alert), SentAt: n.now().UTC()})
 	if err != nil {
-		n.record(false, fmt.Errorf("marshal alert %d: %w", alert.ID, err))
+		n.fail(ctx, alert, fmt.Errorf("marshal alert %d: %w", alert.ID, err))
 		return
 	}
 
@@ -293,7 +346,7 @@ func (n *Notifier) send(ctx context.Context, alert *alerts.Alert) {
 		if attempt > 1 {
 			select {
 			case <-ctx.Done():
-				n.record(false, fmt.Errorf("delivery abandoned at shutdown: %w", lastErr))
+				n.fail(ctx, alert, fmt.Errorf("delivery abandoned at shutdown: %w", lastErr))
 				return
 			case <-time.After(time.Duration(attempt-1) * n.backoff):
 			}
@@ -302,6 +355,7 @@ func (n *Notifier) send(ctx context.Context, alert *alerts.Alert) {
 		permanent, attemptErr := n.post(ctx, alert, body)
 		if attemptErr == nil {
 			n.record(true, nil)
+			n.recordOnAlert(ctx, alert, alerts.DeliveryDelivered, "")
 			return
 		}
 		lastErr = attemptErr
@@ -309,7 +363,31 @@ func (n *Notifier) send(ctx context.Context, alert *alerts.Alert) {
 			break
 		}
 	}
-	n.record(false, lastErr)
+	n.fail(ctx, alert, lastErr)
+}
+
+// fail records one exhausted delivery in both places the outcome is read: the
+// aggregate counters and the alert's own row.
+func (n *Notifier) fail(ctx context.Context, alert *alerts.Alert, err error) {
+	n.record(false, err)
+	text := ""
+	if err != nil {
+		text = err.Error()
+	}
+	n.recordOnAlert(ctx, alert, alerts.DeliveryFailed, text)
+}
+
+// forTheWire strips Seed's own delivery bookkeeping from the copy that goes to
+// the receiver. The alert is stamped "pending" before it is stored, so without
+// this the signed body would carry a field about the very delivery it is part
+// of — meaningless to a receiver, and a wire-contract field nobody wants to be
+// held to later.
+func forTheWire(alert *alerts.Alert) *alerts.Alert {
+	wire := *alert
+	wire.DeliveryStatus = ""
+	wire.DeliveryAttemptedAt = nil
+	wire.DeliveryError = ""
+	return &wire
 }
 
 // post makes one attempt. It reports whether the failure is permanent — a

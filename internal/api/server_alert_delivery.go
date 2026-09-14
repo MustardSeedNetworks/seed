@@ -39,7 +39,7 @@ func (s *Server) alertStore(db *database.DB, logger *slog.Logger) alertdelivery.
 	// — the annotation is worth having whether or not a receiver is
 	// configured, and with no webhook this is the whole of it.
 	store := alertcorrelation.WrapWriter(db.Alerts(), alertcorrelation.Config{})
-	if n := s.initAlertDelivery(logger); n != nil {
+	if n := s.initAlertDelivery(db.Alerts(), logger); n != nil {
 		return alertdelivery.WrapWriter(store, n)
 	}
 	return store
@@ -50,7 +50,10 @@ func (s *Server) alertStore(db *database.DB, logger *slog.Logger) alertdelivery.
 // error level rather than made fatal: a webhook that cannot be built is a lost
 // feature, and refusing to start would turn a typo in an optional integration
 // into an outage of the diagnostics the operator actually installed Seed for.
-func (s *Server) initAlertDelivery(logger *slog.Logger) *alertdelivery.Notifier {
+func (s *Server) initAlertDelivery(
+	recorder alertdelivery.Recorder,
+	logger *slog.Logger,
+) *alertdelivery.Notifier {
 	receiver := os.Getenv(alertWebhookURLEnv)
 	if receiver == "" {
 		return nil
@@ -59,7 +62,11 @@ func (s *Server) initAlertDelivery(logger *slog.Logger) *alertdelivery.Notifier 
 	notifier, err := alertdelivery.New(alertdelivery.Config{
 		URL:    receiver,
 		Secret: os.Getenv(alertWebhookKeyEnv),
-		Logger: logger,
+		// The alert repository is the recorder: each delivery's outcome is
+		// written back onto the alert it was for, so an operator reading the
+		// inbox sees a receiver that stopped accepting POSTs (#368).
+		Recorder: recorder,
+		Logger:   logger,
 	})
 	if err != nil {
 		logger.Error("alert webhook not configured; alerts will not be delivered",

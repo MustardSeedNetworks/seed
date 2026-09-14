@@ -27,13 +27,15 @@ func (r *AlertRepository) Create(ctx context.Context, alert *alerts.Alert) error
 	result, err := r.db.Exec(ctx, `
 		INSERT INTO alerts
 		(type, severity, title, message, source, device_id, acknowledged, acknowledged_by,
-		 acknowledged_at, resolved, resolved_at, created_at, metadata_json, rule, root_cause_id)
-		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+		 acknowledged_at, resolved, resolved_at, created_at, metadata_json, rule, root_cause_id,
+		 delivery_status, delivery_attempted_at, delivery_error)
+		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
 	`, alert.Type, alert.Severity, alert.Title, alert.Message, alert.Source,
 		alert.DeviceID, boolToInt(alert.Acknowledged), alert.AcknowledgedBy,
 		timeToString(alert.AcknowledgedAt), boolToInt(alert.Resolved),
 		timeToString(alert.ResolvedAt), alert.CreatedAt.Format(time.RFC3339), alert.Metadata,
-		alert.Rule, alert.RootCauseID)
+		alert.Rule, alert.RootCauseID,
+		alert.DeliveryStatus, timeToString(alert.DeliveryAttemptedAt), alert.DeliveryError)
 	if err != nil {
 		return fmt.Errorf("failed to create alert: %w", err)
 	}
@@ -51,7 +53,7 @@ func (r *AlertRepository) Get(ctx context.Context, id int64) (*alerts.Alert, err
 	row := r.db.QueryRow(ctx, `
 		SELECT id, type, severity, title, message, source, device_id, acknowledged,
 		       acknowledged_by, acknowledged_at, resolved, resolved_at, created_at, metadata_json,
-		       rule, root_cause_id
+		       rule, root_cause_id, delivery_status, delivery_attempted_at, delivery_error
 		FROM alerts WHERE id = ?
 	`, id)
 
@@ -64,7 +66,7 @@ func (r *AlertRepository) List(ctx context.Context, opts alerts.ListOptions) ([]
 	query := `
 		SELECT id, type, severity, title, message, source, device_id, acknowledged,
 		       acknowledged_by, acknowledged_at, resolved, resolved_at, created_at, metadata_json,
-		       rule, root_cause_id
+		       rule, root_cause_id, delivery_status, delivery_attempted_at, delivery_error
 		FROM alerts
 		WHERE 1=1
 	`
@@ -214,6 +216,32 @@ func (r *AlertRepository) Resolve(ctx context.Context, id int64) error {
 	return nil
 }
 
+// RecordDelivery writes the outcome of one webhook delivery attempt onto the
+// alert it was for (#368). The alert row is where an operator already looks,
+// so it is where a receiver that stopped accepting POSTs becomes visible.
+//
+// A missing row is not an error here. Retention prunes by age, and a delivery
+// that exhausted its bounded retries can finish after the alert it was for was
+// pruned; failing that write would log an error about an alert nobody can see
+// any more. The affected-row count still distinguishes the two cases for a
+// caller that cares.
+func (r *AlertRepository) RecordDelivery(
+	ctx context.Context,
+	id int64,
+	status string,
+	attemptedAt time.Time,
+	deliveryErr string,
+) error {
+	_, err := r.db.Exec(ctx, `
+		UPDATE alerts SET delivery_status = ?, delivery_attempted_at = ?, delivery_error = ?
+		WHERE id = ?
+	`, status, attemptedAt.UTC().Format(time.RFC3339), deliveryErr, id)
+	if err != nil {
+		return fmt.Errorf("failed to record alert delivery: %w", err)
+	}
+	return nil
+}
+
 // Delete removes an alert by ID.
 func (r *AlertRepository) Delete(ctx context.Context, id int64) error {
 	result, err := r.db.Exec(ctx, `DELETE FROM alerts WHERE id = ?`, id)
@@ -317,11 +345,13 @@ func scanAlertInto(scan func(...any) error) (*alerts.Alert, error) {
 	var createdAt string
 	var acked, resolved int
 	var source, deviceID, ackedBy, ackedAt, resolvedAt, metadata, rule sql.NullString
+	var deliveryStatus, deliveryAttemptedAt, deliveryError sql.NullString
 	var rootCauseID sql.NullInt64
 
 	if err := scan(&a.ID, &a.Type, &a.Severity, &a.Title, &a.Message, &source, &deviceID,
 		&acked, &ackedBy, &ackedAt, &resolved, &resolvedAt, &createdAt, &metadata,
-		&rule, &rootCauseID); err != nil {
+		&rule, &rootCauseID,
+		&deliveryStatus, &deliveryAttemptedAt, &deliveryError); err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, err
 		}
@@ -331,6 +361,8 @@ func scanAlertInto(scan func(...any) error) (*alerts.Alert, error) {
 	a.Source = source.String
 	a.Metadata = metadata.String
 	a.Rule = rule.String
+	a.DeliveryStatus = deliveryStatus.String
+	a.DeliveryError = deliveryError.String
 	a.Acknowledged = acked == 1
 	a.Resolved = resolved == 1
 	if t, parseErr := time.Parse(time.RFC3339, createdAt); parseErr == nil {
@@ -354,6 +386,11 @@ func scanAlertInto(scan func(...any) error) (*alerts.Alert, error) {
 	if resolvedAt.Valid {
 		if t, parseErr := time.Parse(time.RFC3339, resolvedAt.String); parseErr == nil {
 			a.ResolvedAt = &t
+		}
+	}
+	if deliveryAttemptedAt.Valid {
+		if t, parseErr := time.Parse(time.RFC3339, deliveryAttemptedAt.String); parseErr == nil {
+			a.DeliveryAttemptedAt = &t
 		}
 	}
 

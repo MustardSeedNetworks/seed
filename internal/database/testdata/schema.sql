@@ -14,6 +14,10 @@ CREATE INDEX idx_alerts_client ON alerts(client_id);
 -- index: idx_alerts_created
 CREATE INDEX idx_alerts_created ON alerts(created_at);
 
+-- index: idx_alerts_delivery_status
+CREATE INDEX idx_alerts_delivery_status
+    ON alerts(delivery_status) WHERE delivery_status != '';
+
 -- index: idx_alerts_device
 CREATE INDEX idx_alerts_device ON alerts(device_id);
 
@@ -697,7 +701,7 @@ CREATE TABLE alerts (
 				resolved INTEGER DEFAULT 0 CHECK (resolved IN (0,1)),
 				resolved_at TEXT,
 				created_at TEXT NOT NULL,
-				metadata_json TEXT, client_id TEXT NOT NULL DEFAULT 'default' REFERENCES clients(id), rule TEXT NOT NULL DEFAULT '', root_cause_id INTEGER REFERENCES alerts(id) ON DELETE SET NULL,
+				metadata_json TEXT, client_id TEXT NOT NULL DEFAULT 'default' REFERENCES clients(id), rule TEXT NOT NULL DEFAULT '', root_cause_id INTEGER REFERENCES alerts(id) ON DELETE SET NULL, delivery_status TEXT NOT NULL DEFAULT '', delivery_attempted_at TEXT, delivery_error TEXT NOT NULL DEFAULT '',
 				FOREIGN KEY (device_id) REFERENCES devices(id) ON DELETE SET NULL
 			) STRICT;
 
