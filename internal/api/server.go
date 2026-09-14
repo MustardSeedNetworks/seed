@@ -17,6 +17,7 @@ import (
 	"strconv"
 	"time"
 
+	alertdelivery "github.com/MustardSeedNetworks/seed/internal/alerts/delivery"
 	"github.com/MustardSeedNetworks/seed/internal/alerts/inbox"
 	alertpipeline "github.com/MustardSeedNetworks/seed/internal/alerts/pipeline"
 	"github.com/MustardSeedNetworks/seed/internal/alerts/rules"
@@ -218,6 +219,9 @@ type Server struct {
 	probeScheduler  *scheduler.Scheduler
 	probeAnomaly    *probeanomaly.Producer
 	retentionEngine *retention.Engine
+
+	// alertDelivery is the outbound alert webhook (#368); nil unless configured.
+	alertDelivery *alertdelivery.Notifier
 
 	// anomalyCoord is the single, server-owned anomaly Coordinator every producer
 	// shares (ADR-0029): one engine over the merged catalog + the unified store.
@@ -688,8 +692,8 @@ func (s *Server) initTopologyReconcilers(db *database.DB) {
 func (s *Server) initAlertPipelines(db *database.DB) {
 	logger := logging.GetLogger()
 	settings := db.Settings()
-	alerts := db.Alerts()
 	suppressions := alertpipeline.NewDBSuppressionStore(db.AlertSuppressions())
+	alerts := s.alertStore(db, logger)
 
 	if p, err := alertpipeline.NewListenerPipeline(alertpipeline.ListenerConfig{
 		Events:       db.ListenerEvents(),
