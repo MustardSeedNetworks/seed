@@ -67,7 +67,8 @@ and leave the access layer blank until every switch is polled again.
 - An IP phone with a PC daisy-chained behind it is two MACs on one access port
   and draws no edge. That is the rule working as written, not a defect: a port
   with more than one MAC cannot say which device is on the cable.
-- Local ports on `fdb` edges are labelled `ifIndex-N`, identical to the
-  neighbour pass. #2455 replaces that label with the interface's real name and
-  must change both passes together: the uplink test compares its own label
-  against the labels the neighbour pass wrote.
+- Local ports on `fdb` edges are named from the source node's `if_table`,
+  identical to the neighbour pass (#2455, which changed both passes together
+  because the uplink test compares its own name against the names the neighbour
+  pass wrote). `ifIndex-N` remains the label when the node has no `if_table`
+  row for that index.

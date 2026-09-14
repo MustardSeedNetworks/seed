@@ -37,6 +37,9 @@ const (
 	fdbAccessPortNum  = 5
 	fdbUplinkPortNum  = 49
 	fdbEndpointIfName = "eth0"
+	// Cisco-shaped: ifDescr is the port name, ifName its abbreviation.
+	fdbAccessPortName = "GigabitEthernet0/5"
+	fdbUplinkPortName = "GigabitEthernet0/49"
 )
 
 func fdbTestTime() time.Time { return time.Date(2026, 9, 9, 12, 0, 0, 0, time.UTC) }
@@ -78,6 +81,24 @@ func buildHospitalAccessLayer(t *testing.T) (*database.DB, string) {
 		}},
 	}); pubErr != nil {
 		t.Fatalf("publish iftable: %v", pubErr)
+	}
+
+	// The access switch's own ifTable is what names its ports; without
+	// it every edge falls back to the ifIndex-N label (seed#2455).
+	if pubErr := s.PublishIfTable(ctx, iftable.Observation{
+		ClientID: "default", TargetID: fdbSwitchTarget, ObservedAt: at,
+		Rows: []iftable.Row{
+			{
+				IfIndex: fdbAccessPortIdx, IfName: "Gi0/5", IfDescr: fdbAccessPortName,
+				IfAdmin: 1, IfOper: 1,
+			},
+			{
+				IfIndex: fdbUplinkPortIdx, IfName: "Gi0/49", IfDescr: fdbUplinkPortName,
+				IfAdmin: 1, IfOper: 1,
+			},
+		},
+	}); pubErr != nil {
+		t.Fatalf("publish switch iftable: %v", pubErr)
 	}
 
 	// The access switch's uplink to the core is an LLDP edge; the
@@ -199,15 +220,24 @@ func TestFDBEdges_EndpointBehindAccessPortBecomesALink(t *testing.T) {
 		switch l.LinkType {
 		case "fdb":
 			fdbLinks++
-			if l.SourceInterface != "ifIndex-5" {
-				t.Errorf("fdb link source interface = %q, want ifIndex-5", l.SourceInterface)
+			// seed#2455: the switch's own if_table names the port.
+			if l.SourceInterface != fdbAccessPortName {
+				t.Errorf("fdb link source interface = %q, want %q",
+					l.SourceInterface, fdbAccessPortName)
 			}
+			// The endpoint end is named by ifName, not ifDescr: on a
+			// NIC, ifDescr describes the hardware ("Ethernet") where
+			// ifName is the interface.
 			if l.TargetInterface != fdbEndpointIfName {
 				t.Errorf("fdb link target interface = %q, want %q",
 					l.TargetInterface, fdbEndpointIfName)
 			}
 		case "lldp":
 			lldpLinks++
+			if l.SourceInterface != fdbUplinkPortName {
+				t.Errorf("lldp link source interface = %q, want %q",
+					l.SourceInterface, fdbUplinkPortName)
+			}
 		}
 	}
 	if lldpLinks != 1 {

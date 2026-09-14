@@ -24,7 +24,7 @@ polling targets through the API, with one credential for the pack community.
 | Extra devices | 0 | 0 | 0 |
 | Links | 88 | 88 | 62 (all 26 missing are switch-to-endpoint; seed has no FDB edges, seed#2454) |
 | Device type | per profile | Switch / Router / WLC / AP / Server / Host | `unknown` for all 74 (seed#2456 and the leading-dot fix) |
-| Interface names on links | both ends | both ends | far end only; near end is `ifIndex-N` (seed#2455) |
+| Interface names on links | both ends | both ends | both ends since #2455 (near end from the source node's `if_table`; `ifIndex-N` only where the node has no row for that index). Re-measured at 62 links, so the count above still predates #2454 |
 
 ## Defects filed on seed
 
@@ -35,7 +35,7 @@ polling targets through the API, with one credential for the pack community.
 | #2452 | Poller loads targets once at start; API-added targets are never polled until restart |
 | #2453 | Collectors fail with SQLITE_BUSY when 74 targets poll at once |
 | #2454 | No switch-to-endpoint links: fdb observations are never reconciled into edges |
-| #2455 | LLDP edges label the local port `ifIndex-N` |
+| #2455 | LLDP edges label the local port `ifIndex-N` — **fixed**; both ends of a link now carry interface names, so the comparator can match them |
 | #2456 | Device type is a vendor label, never a role |
 
 No defect was found on niac from this run: every device seed reached answered
