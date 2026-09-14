@@ -10,6 +10,9 @@
 #   - schedule: reconciles a release that a flaky CI run skipped
 #   - workflow_dispatch: manual debug / force trigger
 #
+# Release cadence (owner 2026-09-14): the release PR is armed only once two or
+# more PRs have merged since the latest release tag; see the arm step.
+#
 # Why the schedule exists (stem#662): the workflow_run gate means a TRANSIENT
 # CI failure on main does not merely go red, it skips the release outright and
 # says nothing — a merged release PR, no tag, and a workflow that "succeeded"
@@ -164,6 +167,32 @@ jobs:
           # with no open release PR, `.[0]` is null and `.labels` on null is a
           # jq error, which under `set -e` would redden release-please on
           # every quiet tick. Filter the array, then take the first.
+          # Cadence (owner 2026-09-14): a release ships after every TWO merged
+          # PRs, not after every merge. Count the commits on main past the
+          # latest release tag (one squash commit per PR); below two, leave the
+          # release PR unarmed so it keeps accumulating. The reconciling
+          # schedule tick still ships a lone PR that has waited more than six
+          # hours, so a single fix never sits unreleased for a day. With no
+          # release yet (a new repo) the gate does not apply.
+          latest="$(gh api "repos/${GITHUB_REPOSITORY}/releases/latest" --jq .tag_name 2>/dev/null || true)"
+          if [ -n "${latest}" ]; then
+            cmp="$(gh api "repos/${GITHUB_REPOSITORY}/compare/${latest}...main" \
+                    --jq '{ahead: .ahead_by, newest: (.commits | last | .commit.committer.date // "")}')"
+            ahead="$(jq -r .ahead <<<"${cmp}")"
+            newest="$(jq -r .newest <<<"${cmp}")"
+            if [ "${ahead}" -lt 2 ]; then
+              age=0
+              if [ -n "${newest}" ]; then
+                age=$(( $(date -u +%s) - $(date -u -d "${newest}" +%s) ))
+              fi
+              if [ "${GITHUB_EVENT_NAME}" = "schedule" ] && [ "${ahead}" -ge 1 ] && [ "${age}" -ge 21600 ]; then
+                echo "One PR since ${latest} has waited ${age}s: the schedule tick ships it."
+              else
+                echo "Holding: ${ahead} of 2 PRs merged since ${latest}; not arming."
+                exit 0
+              fi
+            fi
+          fi
           pr="$(gh pr list --repo "${GITHUB_REPOSITORY}" --head release-please--branches--main --state open \
                   --json number,labels \
                   --jq '[.[] | select((.labels | map(.name) | index("release: hold")) | not) | .number] | first // empty')"
