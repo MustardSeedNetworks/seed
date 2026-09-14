@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.214.45](https://github.com/MustardSeedNetworks/seed/compare/v0.214.44...v0.214.45) (2026-09-14)
+
+
+### Features
+
+* **alerts:** signed outbound alert webhook with bounded retry ([#2599](https://github.com/MustardSeedNetworks/seed/issues/2599)) ([e00b478](https://github.com/MustardSeedNetworks/seed/commit/e00b47837aa2aff62fb1a340ce4dcf48436320a0))
+
+
+### Continuous Integration
+
+* **release:** arm the release PR only after two merged PRs ([#2598](https://github.com/MustardSeedNetworks/seed/issues/2598)) ([0e11399](https://github.com/MustardSeedNetworks/seed/commit/0e11399759998aac184d710c16c21a573ace0062)), closes [#2597](https://github.com/MustardSeedNetworks/seed/issues/2597)
+
 ## [0.214.44](https://github.com/MustardSeedNetworks/seed/compare/v0.214.43...v0.214.44) (2026-09-14)
 
 
