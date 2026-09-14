@@ -125,7 +125,7 @@ tools-go: ## Install Go development tools
 	@printf "  goimports (import formatter)...\n"
 	@go install golang.org/x/tools/cmd/goimports@v0.49.0
 	@printf "  gofumpt (strict formatter)...\n"
-	@go install mvdan.cc/gofumpt@v0.11.0
+	@go install mvdan.cc/gofumpt@v0.12.0
 	@printf "  gitleaks (secret scanner)...\n"
 	@go install github.com/zricethezav/gitleaks/v8@v8.30.1
 	@printf "  deadcode (unused code finder)...\n"
@@ -140,7 +140,7 @@ tools-go-quiet:
 	@printf "   Installing latest versions...\n"
 	@go install github.com/golangci/golangci-lint/v2/cmd/golangci-lint@v2.13.2 2>/dev/null
 	@go install golang.org/x/tools/cmd/goimports@v0.49.0 2>/dev/null
-	@go install mvdan.cc/gofumpt@v0.11.0 2>/dev/null
+	@go install mvdan.cc/gofumpt@v0.12.0 2>/dev/null
 	@go install github.com/zricethezav/gitleaks/v8@v8.30.1 2>/dev/null
 	@go install golang.org/x/tools/cmd/deadcode@v0.49.0 2>/dev/null
 	@go install gotest.tools/gotestsum@v1.13.0 2>/dev/null
