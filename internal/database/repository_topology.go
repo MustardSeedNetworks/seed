@@ -290,6 +290,19 @@ func (r *TopologyRepository) NodeIDForMAC(ctx context.Context, clientID, mac str
 // MAC->node lookup over a different table is how the two drift.
 // Both sides render a MAC as lowercase colon-hex ([iftable.macAddressString],
 // [fdb.parseFdbOID]), so the comparison is a plain equality.
+//
+// ifName first, ifDescr second — deliberately the opposite of
+// topology.portNamer, which names the *local* end of an edge. This
+// end is an endpoint NIC, where ifName is the interface ("eth0") and
+// ifDescr is a description of the hardware ("Ethernet", or an
+// adapter model on Windows); the local end is a switch port, where
+// ifDescr is the port name and ifName its abbreviation. Each
+// population gets the column that actually names it.
+//
+// The name is ifDescr first, ifName second — the same rule the local
+// end of every edge is named by (topology.portNamer, seed#2455), so
+// one link row never carries "GigabitEthernet1/0/11" at one end and
+// "Gi1/0/11" at the other.
 func (r *TopologyRepository) NodeForMAC(
 	ctx context.Context, clientID, mac string,
 ) (string, string, error) {

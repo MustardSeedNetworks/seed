@@ -22,6 +22,8 @@ type fakeEdgeStore struct {
 	sysNameMap map[string]string
 	// mac -> node_id / interface name for fdb resolution.
 	macMap map[string]macNode
+	// node_id -> if_table, the rows every local port is named through.
+	ifaceMap map[string][]*topology.Interface
 
 	links     []*topology.Link
 	upsertErr error
@@ -32,7 +34,23 @@ func newFakeEdgeStore() *fakeEdgeStore {
 		targetMap:  map[string]string{},
 		sysNameMap: map[string]string{},
 		macMap:     map[string]macNode{},
+		ifaceMap:   map[string][]*topology.Interface{},
 	}
+}
+
+// withInterface adds one if_table row, the way the iftable
+// reconciler would have on an earlier poll of the same node.
+func (f *fakeEdgeStore) withInterface(nodeID string, ifIndex uint32, descr, name string) *fakeEdgeStore {
+	f.ifaceMap[nodeID] = append(f.ifaceMap[nodeID], &topology.Interface{
+		NodeID: nodeID, IfIndex: ifIndex, IfDescr: descr, IfName: name,
+	})
+	return f
+}
+
+func (f *fakeEdgeStore) ListInterfaces(_ context.Context, nodeID string) ([]*topology.Interface, error) {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	return f.ifaceMap[nodeID], nil
 }
 
 func (f *fakeEdgeStore) NodeIDForTarget(_ context.Context, clientID, targetID string) (string, error) {

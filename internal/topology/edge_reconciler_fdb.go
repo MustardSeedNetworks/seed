@@ -114,6 +114,7 @@ func (r *EdgeReconciler) applyFDBObservation(
 	}
 
 	claimedPorts, peers := r.neighborClaims(ctx, sourceNodeID)
+	ports := r.portNamesFor(ctx, sourceNodeID)
 
 	count := 0
 	for _, ifIndex := range sortedPorts(macsByPort) {
@@ -121,11 +122,11 @@ func (r *EdgeReconciler) applyFDBObservation(
 		if len(macs) != 1 {
 			continue
 		}
-		if claimedPorts[ifIndexLabel(ifIndex)] {
+		if claimedPorts[ports.name(ifIndex)] {
 			continue
 		}
 		for mac, bridgePort := range macs {
-			count += r.linkFDBEndpoint(ctx, obs, sourceNodeID, ifIndex, bridgePort, mac, peers)
+			count += r.linkFDBEndpoint(ctx, obs, sourceNodeID, ports.name(ifIndex), bridgePort, mac, peers)
 		}
 	}
 	return count
@@ -136,8 +137,8 @@ func (r *EdgeReconciler) applyFDBObservation(
 func (r *EdgeReconciler) linkFDBEndpoint(
 	ctx context.Context,
 	obs *observation.SNMPObservation,
-	sourceNodeID string,
-	ifIndex, bridgePort uint32,
+	sourceNodeID, localPort string,
+	bridgePort uint32,
 	mac string,
 	peers map[string]bool,
 ) int {
@@ -163,7 +164,7 @@ func (r *EdgeReconciler) linkFDBEndpoint(
 		ID:              linkIDFor(sourceNodeID, "", remoteNodeID, ""),
 		SourceNodeID:    sourceNodeID,
 		TargetNodeID:    remoteNodeID,
-		SourceInterface: ifIndexLabel(ifIndex),
+		SourceInterface: localPort,
 		TargetInterface: remoteIface,
 		LinkType:        fdbKind,
 		Status:          "up",

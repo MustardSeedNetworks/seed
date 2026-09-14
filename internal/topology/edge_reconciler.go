@@ -37,6 +37,9 @@ type edgeStore interface {
 	// NodeForMAC resolves a learned MAC to its node and that node's
 	// interface name; the fdb pass has no sysName to work with.
 	NodeForMAC(ctx context.Context, clientID, mac string) (string, string, error)
+	// ListInterfaces is the if_table the local port of every edge is
+	// named through; see [portNamer].
+	ListInterfaces(ctx context.Context, nodeID string) ([]*Interface, error)
 	ListLinks(ctx context.Context, nodeID string) ([]*Link, error)
 	UpsertLink(ctx context.Context, link *Link) error
 }
@@ -268,7 +271,7 @@ func (r *EdgeReconciler) applyObservation(
 	kind string,
 	sourceNodeID string,
 ) int {
-	neighbors, decodeErr := decodeNeighbors(kind, obs.PayloadJSON)
+	neighbors, decodeErr := decodeNeighbors(kind, obs.PayloadJSON, r.portNamesFor(ctx, sourceNodeID))
 	if decodeErr != nil {
 		r.logger.WarnContext(ctx, "edge: decode payload failed",
 			"kind", kind, "target_id", obs.TargetID, "error", decodeErr)
@@ -356,7 +359,7 @@ type cdpPayload struct {
 // decodeNeighbors extracts the per-kind payload and returns a
 // uniform slice of neighborRecord. Unknown kinds yield an error
 // because the reconciler should only see kinds it advertised.
-func decodeNeighbors(kind, raw string) ([]neighborRecord, error) {
+func decodeNeighbors(kind, raw string, ports portNamer) ([]neighborRecord, error) {
 	switch kind {
 	case "lldp":
 		var p lldpPayload
@@ -366,7 +369,7 @@ func decodeNeighbors(kind, raw string) ([]neighborRecord, error) {
 		out := make([]neighborRecord, 0, len(p.Neighbors))
 		for _, n := range p.Neighbors {
 			out = append(out, neighborRecord{
-				localInterface:  ifIndexLabel(n.LocalPortNum),
+				localInterface:  ports.name(n.LocalPortNum),
 				remoteName:      n.SysName,
 				remoteInterface: firstNonEmpty(n.PortDescription, n.PortID),
 			})
@@ -380,7 +383,7 @@ func decodeNeighbors(kind, raw string) ([]neighborRecord, error) {
 		out := make([]neighborRecord, 0, len(p.Neighbors))
 		for _, n := range p.Neighbors {
 			out = append(out, neighborRecord{
-				localInterface:  ifIndexLabel(n.LocalIfIndex),
+				localInterface:  ports.name(n.LocalIfIndex),
 				remoteName:      n.DeviceID,
 				remoteInterface: n.DevicePort,
 			})
@@ -391,12 +394,58 @@ func decodeNeighbors(kind, raw string) ([]neighborRecord, error) {
 	}
 }
 
-// ifIndexLabel renders a local port the one way every pass must
-// render it: the fdb pass compares its own label against the labels
+// portNamer renders a node's local port the one way every pass must
+// render it: the fdb pass compares its own names against the names
 // the neighbor pass already wrote, so the two cannot be allowed to
-// drift. seed#2455 replaces this with the interface's real name and
-// must do so for both passes at once.
-func ifIndexLabel(ifIndex uint32) string {
+// drift (seed#2455). One if_table read per source node per pass —
+// the neighbor and fdb passes each build one and reuse it for every
+// neighbor of that node.
+//
+// The rendering rule is ifDescr first, ifName second, because that
+// is the long form the remote end of the same cable reports
+// (lldpRemPortDesc, cdpCacheDevicePort: "GigabitEthernet1/0/11", not
+// "Gi1/0/11") and the form NetAlly Link-Live shows. [NodeForMAC]
+// resolves the far end of an fdb edge by the same rule, so a link
+// row never mixes the two vocabularies.
+//
+// The index is assumed to be a real ifIndex. It is for the fdb pass
+// (dot1dBasePortIfIndex) and for cdp/fdp (cdpInterfaceIfIndex), and
+// on Cisco for LLDP, where lldpLocPortNum == ifIndex. On HP, Aruba
+// and Juniper lldpLocPortNum is a bridge-port or vendor-local number
+// and resolves to nothing, or worse to the wrong row; the honest fix
+// is to walk lldpLocPortTable and carry lldpLocPortId per neighbor,
+// which the collector does not do today (seed#2602).
+type portNamer struct {
+	names map[uint32]string
+}
+
+// portNamesFor reads the node's if_table once. A read failure or an
+// empty table yields an empty namer, which labels every port
+// ifIndex-N — what every pass did before seed#2455.
+func (r *EdgeReconciler) portNamesFor(ctx context.Context, nodeID string) portNamer {
+	ifaces, err := r.store.ListInterfaces(ctx, nodeID)
+	if err != nil {
+		r.logger.WarnContext(ctx, "edge: interface list failed",
+			"node_id", nodeID, "error", err)
+		return portNamer{}
+	}
+	names := make(map[uint32]string, len(ifaces))
+	for _, iface := range ifaces {
+		if name := firstNonEmpty(iface.IfDescr, iface.IfName); name != "" {
+			names[iface.IfIndex] = name
+		}
+	}
+	return portNamer{names: names}
+}
+
+// name returns the interface's own name, or ifIndex-N when the
+// if_table has no row for that index — an unpolled switch, a port
+// added since the last iftable poll, or a vendor whose
+// lldpLocPortNum is not an ifIndex at all.
+func (p portNamer) name(ifIndex uint32) string {
+	if name, ok := p.names[ifIndex]; ok {
+		return name
+	}
 	return fmt.Sprintf("ifIndex-%d", ifIndex)
 }
 

@@ -82,6 +82,9 @@ func TestFDBReconcile_LearnedMACOnAnAccessPortBecomesALink(t *testing.T) {
 	if l.SourceNodeID != "node-SW" || l.TargetNodeID != "node-PC" {
 		t.Errorf("endpoints = (%s, %s), want (node-SW, node-PC)", l.SourceNodeID, l.TargetNodeID)
 	}
+	// newFDBStore's switch has no if_table, so the port keeps the
+	// ifIndex-N label. The named case is
+	// TestFDBReconcile_SourceInterfaceIsTheInterfaceName.
 	if l.SourceInterface != "ifIndex-5" {
 		t.Errorf("SourceInterface = %q, want ifIndex-5", l.SourceInterface)
 	}
@@ -187,7 +190,9 @@ func TestFDBReconcile_PortClaimedByLLDPIsSkipped(t *testing.T) {
 		}),
 	})
 	if got := len(fdbLinksOf(store)); got != 0 {
-		t.Errorf("fdb links = %d, want 0: LLDP already describes ifIndex-49, "+
+		t.Errorf("fdb links = %d, want 0: LLDP already describes ifIndex-49 "+
+			"(this store has no if_table; the named case is "+
+			"TestFDBReconcile_PortClaimedByLLDPIsSkippedWhenBothResolveToNames), "+
 			"so the MAC behind it is not attached to this port", got)
 	}
 }
