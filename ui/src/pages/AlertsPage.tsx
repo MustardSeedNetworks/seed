@@ -10,6 +10,7 @@
  * reflects whoever clicked the button.
  */
 
+import type { TFunction } from 'i18next';
 import { Check, CheckCircle2 } from 'lucide-react';
 import { type JSX, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -51,6 +52,17 @@ function fmtTime(iso?: string): string {
   }
   return new Date(iso).toLocaleString();
 }
+
+/**
+ * Delivery states that mean the receiver never got the alert. These are the
+ * only ones worth carrying into the list row: the operator is scanning for the
+ * misconfiguration they do not know about, and 'delivered' on every row would
+ * bury it.
+ */
+const UNDELIVERED = ['failed', 'dropped'];
+
+/** The page's own translator, so the helpers below keep its key checking. */
+type AlertsT = TFunction<['pages', 'common']>;
 
 export function AlertsPage(): JSX.Element {
   const { t } = useTranslation(['pages', 'common']);
@@ -127,7 +139,7 @@ export function AlertsPage(): JSX.Element {
               data-testid={`alert-row-${a.id}`}
               name={a.title}
               nameKind="prose"
-              meta={`${a.source || t('alerts.unknownSource')} · ${fmtTime(a.createdAt)}`}
+              meta={rowMeta(t, a)}
               state={alertState(a)}
               selected={selected?.id === a.id}
               onSelect={(): void => setSelectedId(a.id)}
@@ -207,6 +219,19 @@ export function AlertsPage(): JSX.Element {
                   label: t('alerts.labelResolved'),
                   value: selected.resolved ? fmtTime(selected.resolvedAt) : t('alerts.valueNo'),
                 },
+                // Delivery is omitted entirely when nothing tried to send the
+                // alert. Most installs configure no receiver, and a row
+                // reading "not delivered" there would report a failure that
+                // never happened.
+                ...(selected.deliveryStatus
+                  ? [
+                      {
+                        label: t('alerts.labelDelivery'),
+                        value: deliveryText(t, selected),
+                        prose: true,
+                      },
+                    ]
+                  : []),
               ]}
             />
             <AlertMetadata metadata={selected.metadata} />
@@ -217,6 +242,39 @@ export function AlertsPage(): JSX.Element {
       </ListDetail>
     </>
   );
+}
+
+/**
+ * The row's context line, with the delivery failure appended when there is
+ * one. #368's point is that a receiver which stopped accepting POSTs must be
+ * discoverable without opening each alert, and the meta line is the only place
+ * on a row that carries words.
+ */
+function rowMeta(t: AlertsT, alert: Alert): string {
+  const base = `${alert.source || t('alerts.unknownSource')} · ${fmtTime(alert.createdAt)}`;
+  if (alert.deliveryStatus !== undefined && UNDELIVERED.includes(alert.deliveryStatus)) {
+    return `${base} · ${t('alerts.deliveryNotDeliveredShort')}`;
+  }
+  return base;
+}
+
+/**
+ * The delivery fact in words. A failure names the receiver's own reason —
+ * a refused connection and a 401 need different fixes, and the operator should
+ * not have to read the daemon log to tell them apart.
+ */
+function deliveryText(t: AlertsT, alert: Alert): string {
+  const time = fmtTime(alert.deliveryAttemptedAt);
+  switch (alert.deliveryStatus) {
+    case 'delivered':
+      return t('alerts.deliveryDelivered', { time });
+    case 'failed':
+      return t('alerts.deliveryFailed', { time, reason: alert.deliveryError ?? '' });
+    case 'dropped':
+      return t('alerts.deliveryDropped', { time });
+    default:
+      return t('alerts.deliveryPending');
+  }
 }
 
 /** Where the alert is in its lifecycle, said in words rather than by colour. */

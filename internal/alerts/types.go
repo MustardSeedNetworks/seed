@@ -30,7 +30,19 @@ type Alert struct {
 	Rule string `json:"rule,omitempty"`
 	// RootCauseID names an earlier alert that probably caused this one — set
 	// by internal/alerts/correlation, nil when nothing explains it.
-	RootCauseID    *int64     `json:"rootCauseId,omitempty"`
+	RootCauseID *int64 `json:"rootCauseId,omitempty"`
+	// DeliveryStatus is what happened when the outbound webhook (#368) last
+	// tried to send this alert: one of the Delivery* constants, or empty.
+	// Empty means delivery never applied to this alert — no receiver is
+	// configured, or the alert predates the one that is — and must never be
+	// rendered as a failure.
+	DeliveryStatus string `json:"deliveryStatus,omitempty"`
+	// DeliveryAttemptedAt is when the last attempt finished, nil while the
+	// alert is still queued and on every alert delivery never touched.
+	DeliveryAttemptedAt *time.Time `json:"deliveryAttemptedAt,omitempty"`
+	// DeliveryError is the last attempt's error text, so an operator can tell
+	// a refused connection from a 401 without reading the daemon log.
+	DeliveryError  string     `json:"deliveryError,omitempty"`
 	Acknowledged   bool       `json:"acknowledged"`
 	AcknowledgedBy *string    `json:"acknowledgedBy,omitempty"`
 	AcknowledgedAt *time.Time `json:"acknowledgedAt,omitempty"`
@@ -47,6 +59,24 @@ const (
 	TypeConnectivity = "connectivity"
 	TypeSystem       = "system"
 	TypeDiscovery    = "discovery"
+)
+
+// Delivery states for DeliveryStatus. The zero value — the empty string — is
+// deliberately not one of them: an alert nobody tried to send is not a failed
+// delivery, and most installs configure no receiver at all.
+const (
+	// DeliveryPending means the alert is queued for the receiver and no
+	// attempt has finished yet.
+	DeliveryPending = "pending"
+	// DeliveryDelivered means the receiver accepted it.
+	DeliveryDelivered = "delivered"
+	// DeliveryFailed means every bounded attempt failed; the alert is in the
+	// inbox and the receiver never got it.
+	DeliveryFailed = "failed"
+	// DeliveryDropped means the delivery queue was full, so the alert was
+	// never offered to the receiver. Distinct from failed because the cause
+	// is Seed's own backpressure, not the receiver.
+	DeliveryDropped = "dropped"
 )
 
 // Severity constants.

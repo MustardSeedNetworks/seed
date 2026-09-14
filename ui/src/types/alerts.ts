@@ -23,6 +23,17 @@ export interface Alert {
   rule?: string;
   /** An earlier alert that probably caused this one (#409). */
   rootCauseId?: number;
+  /**
+   * What happened when the outbound webhook last tried to send this alert:
+   * 'pending' | 'delivered' | 'failed' | 'dropped', or absent. Absent means
+   * delivery never applied — no receiver is configured, which is the default
+   * — and must never render as a failure.
+   */
+  deliveryStatus?: string;
+  /** When the last delivery attempt finished. */
+  deliveryAttemptedAt?: string;
+  /** The last attempt's error text, so the reason is readable without the log. */
+  deliveryError?: string;
 }
 
 export interface AlertsListResponse {

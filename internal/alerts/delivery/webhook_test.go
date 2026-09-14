@@ -83,7 +83,7 @@ func TestNotifierPostsSignedAlert(t *testing.T) {
 	n.Start()
 	defer n.Stop(context.Background())
 
-	n.Deliver(testAlert())
+	n.Deliver(context.Background(), testAlert())
 
 	select {
 	case r := <-got:
@@ -139,7 +139,7 @@ func TestNotifierRetriesThenReportsFailed(t *testing.T) {
 	n.Start()
 	defer n.Stop(context.Background())
 
-	n.Deliver(testAlert())
+	n.Deliver(context.Background(), testAlert())
 
 	if !waitFor(t, func() bool { return n.Status().Failed == 1 }) {
 		t.Fatalf("delivery never recorded a failure: %+v", n.Status())
@@ -176,7 +176,7 @@ func TestNotifierDoesNotRetryPermanentRejection(t *testing.T) {
 	n.Start()
 	defer n.Stop(context.Background())
 
-	n.Deliver(testAlert())
+	n.Deliver(context.Background(), testAlert())
 
 	if !waitFor(t, func() bool { return n.Status().Failed == 1 }) {
 		t.Fatalf("delivery never recorded a failure: %+v", n.Status())
@@ -210,7 +210,7 @@ func TestNotifierDropsWhenQueueFullAndNeverBlocks(t *testing.T) {
 	go func() {
 		defer close(done)
 		for range 50 {
-			n.Deliver(testAlert())
+			n.Deliver(context.Background(), testAlert())
 		}
 	}()
 

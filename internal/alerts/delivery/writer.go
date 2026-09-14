@@ -33,9 +33,15 @@ type deliveringWriter struct {
 }
 
 func (w *deliveringWriter) Create(ctx context.Context, alert *alerts.Alert) error {
+	// Stamp the state before the insert, not after: one write, and the inbox
+	// never shows a row whose delivery state is missing rather than pending.
+	// The decorator only exists when a receiver is configured, so an alert an
+	// air-gapped install raised keeps the empty state that means "nobody ever
+	// tried to send this".
+	alert.DeliveryStatus = alerts.DeliveryPending
 	if err := w.store.Create(ctx, alert); err != nil {
 		return err
 	}
-	w.notifier.Deliver(alert)
+	w.notifier.Deliver(ctx, alert)
 	return nil
 }
