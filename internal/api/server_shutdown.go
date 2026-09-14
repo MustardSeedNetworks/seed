@@ -147,6 +147,11 @@ func (s *Server) Shutdown(ctx context.Context) error {
 		}
 	}
 
+	if s.alertDelivery != nil {
+		logging.GetLogger().InfoContext(ctx, "Stopping alert webhook delivery...")
+		s.alertDelivery.Stop(ctx)
+	}
+
 	s.drainJobSubstrate(ctx)
 
 	logging.GetLogger().InfoContext(ctx, "Stopping host health sampler...")
