@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.214.46](https://github.com/MustardSeedNetworks/seed/compare/v0.214.45...v0.214.46) (2026-09-14)
+
+
+### Features
+
+* **alerts:** name the alert that probably caused another one ([#2601](https://github.com/MustardSeedNetworks/seed/issues/2601)) ([1306069](https://github.com/MustardSeedNetworks/seed/commit/1306069bd247e155e07838c0d2e4181130e36c36))
+
+
+### Bug Fixes
+
+* **topology:** name the local end of every edge from the node's if_table ([#2603](https://github.com/MustardSeedNetworks/seed/issues/2603)) ([3cfe344](https://github.com/MustardSeedNetworks/seed/commit/3cfe3442bdbb9235d9cd9427535f227895eda703)), closes [#2455](https://github.com/MustardSeedNetworks/seed/issues/2455)
+
 ## [0.214.45](https://github.com/MustardSeedNetworks/seed/compare/v0.214.44...v0.214.45) (2026-09-14)
 
 
