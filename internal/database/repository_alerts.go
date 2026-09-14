@@ -27,12 +27,13 @@ func (r *AlertRepository) Create(ctx context.Context, alert *alerts.Alert) error
 	result, err := r.db.Exec(ctx, `
 		INSERT INTO alerts
 		(type, severity, title, message, source, device_id, acknowledged, acknowledged_by,
-		 acknowledged_at, resolved, resolved_at, created_at, metadata_json)
-		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+		 acknowledged_at, resolved, resolved_at, created_at, metadata_json, rule, root_cause_id)
+		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
 	`, alert.Type, alert.Severity, alert.Title, alert.Message, alert.Source,
 		alert.DeviceID, boolToInt(alert.Acknowledged), alert.AcknowledgedBy,
 		timeToString(alert.AcknowledgedAt), boolToInt(alert.Resolved),
-		timeToString(alert.ResolvedAt), alert.CreatedAt.Format(time.RFC3339), alert.Metadata)
+		timeToString(alert.ResolvedAt), alert.CreatedAt.Format(time.RFC3339), alert.Metadata,
+		alert.Rule, alert.RootCauseID)
 	if err != nil {
 		return fmt.Errorf("failed to create alert: %w", err)
 	}
@@ -49,7 +50,8 @@ func (r *AlertRepository) Create(ctx context.Context, alert *alerts.Alert) error
 func (r *AlertRepository) Get(ctx context.Context, id int64) (*alerts.Alert, error) {
 	row := r.db.QueryRow(ctx, `
 		SELECT id, type, severity, title, message, source, device_id, acknowledged,
-		       acknowledged_by, acknowledged_at, resolved, resolved_at, created_at, metadata_json
+		       acknowledged_by, acknowledged_at, resolved, resolved_at, created_at, metadata_json,
+		       rule, root_cause_id
 		FROM alerts WHERE id = ?
 	`, id)
 
@@ -61,7 +63,8 @@ func (r *AlertRepository) Get(ctx context.Context, id int64) (*alerts.Alert, err
 func (r *AlertRepository) List(ctx context.Context, opts alerts.ListOptions) ([]*alerts.Alert, error) {
 	query := `
 		SELECT id, type, severity, title, message, source, device_id, acknowledged,
-		       acknowledged_by, acknowledged_at, resolved, resolved_at, created_at, metadata_json
+		       acknowledged_by, acknowledged_at, resolved, resolved_at, created_at, metadata_json,
+		       rule, root_cause_id
 		FROM alerts
 		WHERE 1=1
 	`
@@ -287,71 +290,56 @@ func (r *AlertRepository) GetCriticalCount(ctx context.Context) (int64, error) {
 	})
 }
 
-// scanAlert scans an alert from a row.
+// scanAlert scans an alert from a single row, mapping [sql.ErrNoRows] to
+// [ErrAlertNotFound].
 func (r *AlertRepository) scanAlert(row *sql.Row) (*alerts.Alert, error) {
-	var a alerts.Alert
-	var createdAt string
-	var acked, resolved int
-	var source, deviceID, ackedBy, ackedAt, resolvedAt, metadata sql.NullString
-
-	err := row.Scan(&a.ID, &a.Type, &a.Severity, &a.Title, &a.Message, &source, &deviceID,
-		&acked, &ackedBy, &ackedAt, &resolved, &resolvedAt, &createdAt, &metadata)
+	a, err := scanAlertInto(row.Scan)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, ErrAlertNotFound
 		}
-		return nil, fmt.Errorf("failed to scan alert: %w", err)
+		return nil, err
 	}
-
-	a.Source = source.String
-	a.Metadata = metadata.String
-	a.Acknowledged = acked == 1
-	a.Resolved = resolved == 1
-	if t, parseErr := time.Parse(time.RFC3339, createdAt); parseErr == nil {
-		a.CreatedAt = t
-	}
-
-	if deviceID.Valid {
-		a.DeviceID = &deviceID.String
-	}
-	if ackedBy.Valid {
-		a.AcknowledgedBy = &ackedBy.String
-	}
-	if ackedAt.Valid {
-		if t, parseErr := time.Parse(time.RFC3339, ackedAt.String); parseErr == nil {
-			a.AcknowledgedAt = &t
-		}
-	}
-	if resolvedAt.Valid {
-		if t, parseErr := time.Parse(time.RFC3339, resolvedAt.String); parseErr == nil {
-			a.ResolvedAt = &t
-		}
-	}
-
-	return &a, nil
+	return a, nil
 }
 
-// scanAlertFromRows scans an alert from rows.
+// scanAlertFromRows scans an alert from a result set.
 func (r *AlertRepository) scanAlertFromRows(rows *sql.Rows) (*alerts.Alert, error) {
+	return scanAlertInto(rows.Scan)
+}
+
+// scanAlertInto is the one place the alert column list is decoded. Both
+// callers pass their own Scan method so a column added to the SELECTs is
+// added to exactly one scanner; they were separate copies before, which is
+// how a new column drifts into being read by one path and not the other.
+func scanAlertInto(scan func(...any) error) (*alerts.Alert, error) {
 	var a alerts.Alert
 	var createdAt string
 	var acked, resolved int
-	var source, deviceID, ackedBy, ackedAt, resolvedAt, metadata sql.NullString
+	var source, deviceID, ackedBy, ackedAt, resolvedAt, metadata, rule sql.NullString
+	var rootCauseID sql.NullInt64
 
-	err := rows.Scan(&a.ID, &a.Type, &a.Severity, &a.Title, &a.Message, &source, &deviceID,
-		&acked, &ackedBy, &ackedAt, &resolved, &resolvedAt, &createdAt, &metadata)
-	if err != nil {
+	if err := scan(&a.ID, &a.Type, &a.Severity, &a.Title, &a.Message, &source, &deviceID,
+		&acked, &ackedBy, &ackedAt, &resolved, &resolvedAt, &createdAt, &metadata,
+		&rule, &rootCauseID); err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, err
+		}
 		return nil, fmt.Errorf("failed to scan alert: %w", err)
 	}
 
 	a.Source = source.String
 	a.Metadata = metadata.String
+	a.Rule = rule.String
 	a.Acknowledged = acked == 1
 	a.Resolved = resolved == 1
 	if t, parseErr := time.Parse(time.RFC3339, createdAt); parseErr == nil {
 		a.CreatedAt = t
 	}
 
+	if rootCauseID.Valid {
+		a.RootCauseID = &rootCauseID.Int64
+	}
 	if deviceID.Valid {
 		a.DeviceID = &deviceID.String
 	}

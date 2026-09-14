@@ -28,12 +28,18 @@ import (
 
 type recordingStore struct {
 	mu      sync.Mutex
+	nextID  int64
 	created []*alerts.Alert
 }
 
+// Create assigns an id the way the SQLite repository does (LastInsertId), so a
+// decorator that reads alert.ID after the write — correlation does — is
+// exercised against real-looking ids rather than a field left at zero.
 func (r *recordingStore) Create(_ context.Context, a *alerts.Alert) error {
 	r.mu.Lock()
 	defer r.mu.Unlock()
+	r.nextID++
+	a.ID = r.nextID
 	r.created = append(r.created, a)
 	return nil
 }

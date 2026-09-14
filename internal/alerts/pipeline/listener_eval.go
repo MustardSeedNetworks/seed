@@ -48,6 +48,9 @@ func (p *ListenerPipeline) evaluate(ctx context.Context, evt *listener.EventReco
 		if alert == nil {
 			continue
 		}
+		// Same reason as the observation pipeline: the rule, not the title, is
+		// what identifies why this alert fired.
+		alert.Rule = rule.ID
 		if writeErr := p.alerts.Create(ctx, alert); writeErr != nil {
 			p.logger.WarnContext(ctx, "alert create failed",
 				"rule", rule.ID, "source", evt.SourceAddr, "error", writeErr)

@@ -13,12 +13,13 @@ package iperf_test
 
 import (
 	"context"
-	"github.com/MustardSeedNetworks/seed/internal/diagnostics/iperf"
 	"net"
 	"os"
 	"path/filepath"
 	"testing"
 	"time"
+
+	"github.com/MustardSeedNetworks/seed/internal/diagnostics/iperf"
 )
 
 // requireIperf3 fails when the environment this job exists to exercise is
