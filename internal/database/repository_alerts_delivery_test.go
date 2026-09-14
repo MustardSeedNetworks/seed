@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/MustardSeedNetworks/seed/internal/alerts"
+	"github.com/MustardSeedNetworks/seed/internal/alerts/correlation"
 	"github.com/MustardSeedNetworks/seed/internal/alerts/delivery"
 )
 
@@ -144,7 +145,13 @@ func TestFailedDeliveryIsVisibleOnTheStoredAlert(t *testing.T) {
 	notifier.Start()
 	defer notifier.Stop(ctx)
 
-	store := delivery.WrapWriter(repo, notifier)
+	// The composition root's own stacking (Server.alertStore): correlation
+	// annotates inside delivery, and the pending stamp only survives if
+	// correlation passes the same alert pointer through to the repository.
+	store := delivery.WrapWriter(
+		correlation.WrapWriter(repo, correlation.Config{}),
+		notifier,
+	)
 	alert := &alerts.Alert{
 		Type: alerts.TypeConnectivity, Severity: alerts.SeverityError,
 		Title: "Interface eth0 down on t-1", Message: "ifOperStatus up -> down",

@@ -335,7 +335,7 @@ func (n *Notifier) run(ctx context.Context) {
 // send makes up to maxAttempts tries, stopping early on success or on a
 // response the receiver will give again for the same body.
 func (n *Notifier) send(ctx context.Context, alert *alerts.Alert) {
-	body, err := json.Marshal(envelope{Alert: alert, SentAt: n.now().UTC()})
+	body, err := json.Marshal(envelope{Alert: forTheWire(alert), SentAt: n.now().UTC()})
 	if err != nil {
 		n.fail(ctx, alert, fmt.Errorf("marshal alert %d: %w", alert.ID, err))
 		return
@@ -375,6 +375,19 @@ func (n *Notifier) fail(ctx context.Context, alert *alerts.Alert, err error) {
 		text = err.Error()
 	}
 	n.recordOnAlert(ctx, alert, alerts.DeliveryFailed, text)
+}
+
+// forTheWire strips Seed's own delivery bookkeeping from the copy that goes to
+// the receiver. The alert is stamped "pending" before it is stored, so without
+// this the signed body would carry a field about the very delivery it is part
+// of — meaningless to a receiver, and a wire-contract field nobody wants to be
+// held to later.
+func forTheWire(alert *alerts.Alert) *alerts.Alert {
+	wire := *alert
+	wire.DeliveryStatus = ""
+	wire.DeliveryAttemptedAt = nil
+	wire.DeliveryError = ""
+	return &wire
 }
 
 // post makes one attempt. It reports whether the failure is permanent — a

@@ -2,6 +2,8 @@ package delivery_test
 
 import (
 	"context"
+	"encoding/json"
+	"io"
 	"log/slog"
 	"net/http"
 	"net/http/httptest"
@@ -139,12 +141,15 @@ func TestQueueFullIsRecordedAsDroppedNotPending(t *testing.T) {
 	// A receiver that never answers holds the single worker, so the second
 	// alert fills the one-deep queue and the third has nowhere to go.
 	block := make(chan struct{})
-	defer close(block)
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 		<-block
 		w.WriteHeader(http.StatusAccepted)
 	}))
+	// Release the handler BEFORE closing the server: Close waits for every
+	// active connection, so a handler still parked on block would deadlock the
+	// test until the package timeout. Defers run last-registered-first.
 	defer srv.Close()
+	defer close(block)
 
 	recorder := &recordingRecorder{}
 	store := &recordingStore{}
@@ -216,4 +221,48 @@ func newTestWriter(
 	notifier.Start()
 	t.Cleanup(func() { notifier.Stop(context.Background()) })
 	return delivery.WrapWriter(store, notifier)
+}
+
+// The receiver is told about the alert, not about Seed's bookkeeping for the
+// delivery it is itself part of.
+func TestDeliveredPayloadCarriesNoDeliveryBookkeeping(t *testing.T) {
+	got := make(chan []byte, 1)
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		body, err := io.ReadAll(r.Body)
+		if err != nil {
+			t.Errorf("read body: %v", err)
+		}
+		got <- body
+		w.WriteHeader(http.StatusAccepted)
+	}))
+	defer srv.Close()
+
+	writer := newTestWriter(t, &recordingStore{}, &recordingRecorder{},
+		delivery.Config{URL: srv.URL, Secret: signingKey})
+
+	alert := testAlert()
+	alert.ID = 0
+	if err := writer.Create(context.Background(), alert); err != nil {
+		t.Fatalf("Create: %v", err)
+	}
+
+	select {
+	case body := <-got:
+		var payload struct {
+			Alert map[string]any `json:"alert"`
+		}
+		if err := json.Unmarshal(body, &payload); err != nil {
+			t.Fatalf("unmarshal envelope: %v", err)
+		}
+		for _, field := range []string{"deliveryStatus", "deliveryAttemptedAt", "deliveryError"} {
+			if v, present := payload.Alert[field]; present {
+				t.Errorf("delivered payload carries %s = %v; it is Seed's own bookkeeping", field, v)
+			}
+		}
+		if payload.Alert["title"] == "" {
+			t.Error("delivered payload lost the alert itself")
+		}
+	case <-time.After(5 * time.Second):
+		t.Fatal("the alert never reached the receiver")
+	}
 }
