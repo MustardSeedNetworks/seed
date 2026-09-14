@@ -16,13 +16,21 @@ var ErrRuleNotFound = errors.New("alert rule not found")
 
 // Alert represents a system alert.
 type Alert struct {
-	ID             int64      `json:"id"`
-	Type           string     `json:"type"`     // e.g., "security", "performance", "connectivity"
-	Severity       string     `json:"severity"` // "info", "warning", "error", "critical"
-	Title          string     `json:"title"`
-	Message        string     `json:"message"`
-	Source         string     `json:"source,omitempty"` // What generated the alert
-	DeviceID       *string    `json:"deviceId,omitempty"`
+	ID       int64   `json:"id"`
+	Type     string  `json:"type"`     // e.g., "security", "performance", "connectivity"
+	Severity string  `json:"severity"` // "info", "warning", "error", "critical"
+	Title    string  `json:"title"`
+	Message  string  `json:"message"`
+	Source   string  `json:"source,omitempty"` // What generated the alert
+	DeviceID *string `json:"deviceId,omitempty"`
+	// Rule is the pipeline rule that raised this alert ("bgp.flap",
+	// "iface.down", or an operator rule's name). It is the alert's identity
+	// for anything reasoning about *why* it fired: the title is prose meant
+	// for a human and changes when the copy is improved.
+	Rule string `json:"rule,omitempty"`
+	// RootCauseID names an earlier alert that probably caused this one — set
+	// by internal/alerts/correlation, nil when nothing explains it.
+	RootCauseID    *int64     `json:"rootCauseId,omitempty"`
 	Acknowledged   bool       `json:"acknowledged"`
 	AcknowledgedBy *string    `json:"acknowledgedBy,omitempty"`
 	AcknowledgedAt *time.Time `json:"acknowledgedAt,omitempty"`

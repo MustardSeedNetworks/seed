@@ -16,6 +16,7 @@ import (
 	"log/slog"
 	"os"
 
+	alertcorrelation "github.com/MustardSeedNetworks/seed/internal/alerts/correlation"
 	alertdelivery "github.com/MustardSeedNetworks/seed/internal/alerts/delivery"
 	"github.com/MustardSeedNetworks/seed/internal/database"
 )
@@ -31,7 +32,13 @@ const (
 // Wrapping the store rather than each pipeline means a pipeline added later
 // delivers without being taught to.
 func (s *Server) alertStore(db *database.DB, logger *slog.Logger) alertdelivery.Writer {
-	var store alertdelivery.Writer = db.Alerts()
+	// Correlation sits inside delivery: it annotates the alert with the id of
+	// the earlier alert that probably caused it, and it must do so before the
+	// row is written, so the cause is on disk and in the delivered payload
+	// rather than only in the inbox's later reading of it. It is unconditional
+	// — the annotation is worth having whether or not a receiver is
+	// configured, and with no webhook this is the whole of it.
+	store := alertcorrelation.WrapWriter(db.Alerts(), alertcorrelation.Config{})
 	if n := s.initAlertDelivery(logger); n != nil {
 		return alertdelivery.WrapWriter(store, n)
 	}

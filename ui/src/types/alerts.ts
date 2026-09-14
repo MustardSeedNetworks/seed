@@ -19,6 +19,10 @@ export interface Alert {
   acknowledgedBy?: string;
   acknowledgedAt?: string;
   resolvedAt?: string;
+  /** The pipeline rule that raised this alert, e.g. "bgp.flap". */
+  rule?: string;
+  /** An earlier alert that probably caused this one (#409). */
+  rootCauseId?: number;
 }
 
 export interface AlertsListResponse {

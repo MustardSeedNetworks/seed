@@ -212,6 +212,10 @@ func (p *ObservationPipeline) fire(
 	if suppressed {
 		return false
 	}
+	// The rule is the alert's identity for anything asking why it fired —
+	// correlation keys on it. Set here rather than at each call site so a rule
+	// added later cannot forget to.
+	alert.Rule = ruleID
 	if err := p.alerts.Create(ctx, alert); err != nil {
 		p.logger.WarnContext(ctx, "alert create failed",
 			"rule", ruleID, "key", entityKey, "error", err)
