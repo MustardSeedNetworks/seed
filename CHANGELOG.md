@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.214.51](https://github.com/MustardSeedNetworks/seed/compare/v0.214.50...v0.214.51) (2026-09-15)
+
+
+### Features
+
+* **history:** bounded read surface over the tiered rollups ([#175](https://github.com/MustardSeedNetworks/seed/issues/175)) ([#2624](https://github.com/MustardSeedNetworks/seed/issues/2624)) ([f462b27](https://github.com/MustardSeedNetworks/seed/commit/f462b27555fa0c626859db54c8f079ddabcf9a51))
+
 ## [0.214.50](https://github.com/MustardSeedNetworks/seed/compare/v0.214.49...v0.214.50) (2026-09-15)
 
 
