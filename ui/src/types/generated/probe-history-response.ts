@@ -1,0 +1,29 @@
+/**
+ * AUTO-GENERATED FILE. DO NOT EDIT BY HAND.
+ *
+ * Regenerate with: `npm run gen-types` (or `make schema && npm run gen-types`
+ * after Go DTO changes). The schema source of truth lives at
+ * docs/schemas/api/; the Go DTO source lives at internal/api/.
+ */
+export interface ProbeHistoryResponse {
+  probeId: string;
+  window: HistoryWindowResponse;
+  points: ProbeTrendPoint[];
+}
+export interface HistoryWindowResponse {
+  from: string;
+  to: string;
+  days: number;
+  resolution: string;
+  source: string;
+  clamped: boolean;
+  requestedDays: number;
+}
+export interface ProbeTrendPoint {
+  bucket: string;
+  sampleCount: number;
+  successCount: number;
+  avgLatencyMs: number;
+  minLatencyMs: number;
+  maxLatencyMs: number;
+}

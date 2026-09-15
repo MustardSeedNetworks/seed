@@ -1,0 +1,82 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/MustardSeedNetworks/seed/main/docs/schemas/api/anomaly-history-response.schema.json",
+  "$ref": "#/$defs/AnomalyHistoryResponse",
+  "$defs": {
+    "AnomalyDayCount": {
+      "properties": {
+        "day": {
+          "type": "string"
+        },
+        "count": {
+          "type": "integer"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "day",
+        "count"
+      ]
+    },
+    "AnomalyHistoryResponse": {
+      "properties": {
+        "window": {
+          "$ref": "#/$defs/HistoryWindowResponse"
+        },
+        "days": {
+          "items": {
+            "$ref": "#/$defs/AnomalyDayCount"
+          },
+          "type": "array"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "window",
+        "days"
+      ]
+    },
+    "HistoryWindowResponse": {
+      "properties": {
+        "from": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "to": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "days": {
+          "type": "integer"
+        },
+        "resolution": {
+          "type": "string"
+        },
+        "source": {
+          "type": "string"
+        },
+        "clamped": {
+          "type": "boolean"
+        },
+        "requestedDays": {
+          "type": "integer"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "from",
+        "to",
+        "days",
+        "resolution",
+        "source",
+        "clamped",
+        "requestedDays"
+      ]
+    }
+  },
+  "title": "AnomalyHistoryResponse",
+  "description": "AnomalyHistoryResponse — generated from the Go struct in internal/api; refresh with `make schema` after struct changes."
+}

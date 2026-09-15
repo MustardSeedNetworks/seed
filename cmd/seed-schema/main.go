@@ -231,6 +231,8 @@ func schemaTargets() []schemaTarget {
 		// existed; Phase 7 S1 adds the TS /jobs client that consumes these.
 		{&api.CreateJobRequest{}, "create-job-request.schema.json"},
 		{&api.JobResponse{}, "job-response.schema.json"},
+		{&api.ProbeHistoryResponse{}, "probe-history-response.schema.json"},
+		{&api.AnomalyHistoryResponse{}, "anomaly-history-response.schema.json"},
 
 		// Profile/settings config — code-first model of the per-profile
 		// config.Config blob (ADR-0007/0008, Phase 7 S6). The profile Config

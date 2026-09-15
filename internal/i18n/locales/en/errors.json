@@ -176,5 +176,10 @@
   "vulnerability": {
     "invalidApiKey": "Invalid API key",
     "validateFailed": "Failed to validate API key"
+  },
+  "history": {
+    "probeRequired": "A probe id is required",
+    "invalidRange": "Invalid range: use a duration such as 24h or a number of days such as 7d, within the retained window",
+    "readFailed": "Failed to read history"
   }
 }

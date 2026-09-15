@@ -581,6 +581,20 @@ body:
   {
     "maxBodyBytes": 262144,
     "methods": [
+      "GET"
+    ],
+    "path": "/api/v1/history/probes/"
+  },
+  {
+    "maxBodyBytes": 262144,
+    "methods": [
+      "GET"
+    ],
+    "path": "/api/v1/history/anomalies"
+  },
+  {
+    "maxBodyBytes": 262144,
+    "methods": [
       "GET",
       "PUT"
     ],
