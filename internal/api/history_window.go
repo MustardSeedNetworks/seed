@@ -81,3 +81,20 @@ func resolveHistoryWindow(now time.Time, requested time.Duration, h retention.Ti
 	}
 	return w
 }
+
+// resolveAnomalyWindow is resolveHistoryWindow for the anomaly series, which
+// has a different storage shape: the census (ADR-0028) is daily or nothing —
+// there is no hourly anomaly rollup — so the hourly horizon must not count
+// towards what can be served. Without this a Starter deployment, whose hourly
+// horizon is 30 days and whose daily horizon is zero, would resolve a 14-day
+// request to "rollup, not clamped" and read the census table the tier never
+// writes: an always-empty series reported as a complete one.
+//
+// The resolution is likewise daily whatever the span, because the buckets are
+// days in both the census and the live-table fallback.
+func resolveAnomalyWindow(now time.Time, requested time.Duration, h retention.TierHorizons) historyWindow {
+	h.HourlyDays = 0
+	w := resolveHistoryWindow(now, requested, h)
+	w.Resolution = historyResolutionDaily
+	return w
+}

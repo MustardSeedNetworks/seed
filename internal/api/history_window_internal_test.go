@@ -102,3 +102,57 @@ func TestResolveHistoryWindowSubDayRequestKeepsOneDay(t *testing.T) {
 	require.False(t, got.Clamped)
 	require.Equal(t, "raw", got.Source)
 }
+
+// The anomaly series has no hourly rollup, so the hourly horizon must not
+// count towards what it can serve. Before this was separated, a Starter
+// deployment — hourly 30 days, daily zero — resolved a 14-day request to
+// "rollup, not clamped" and read the census table that tier never writes,
+// answering an empty series as though it were complete.
+func TestResolveAnomalyWindowIgnoresTheHourlyHorizon(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name      string
+		tier      license.Tier
+		requested time.Duration
+		days      int
+		source    string
+		clamped   bool
+	}{
+		{
+			name: "starter falls back to its raw horizon and says it clamped",
+			tier: license.TierStarter, requested: 14 * 24 * time.Hour,
+			days: 7, source: historySourceRaw, clamped: true,
+		},
+		{
+			name: "free likewise",
+			tier: license.TierFree, requested: 30 * 24 * time.Hour,
+			days: 7, source: historySourceRaw, clamped: true,
+		},
+		{
+			name: "pro reaches the census",
+			tier: license.TierPro, requested: 14 * 24 * time.Hour,
+			days: 14, source: historySourceRollup,
+		},
+		{
+			name: "pro inside the raw horizon still reads the live table",
+			tier: license.TierPro, requested: 3 * 24 * time.Hour,
+			days: 3, source: historySourceRaw,
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
+			got := resolveAnomalyWindow(historyNow(), tc.requested,
+				retention.HorizonsFor(tc.tier))
+
+			require.Equal(t, tc.days, got.Days)
+			require.Equal(t, tc.source, got.Source)
+			require.Equal(t, tc.clamped, got.Clamped)
+			require.Equal(t, historyResolutionDaily, got.Resolution,
+				"anomaly buckets are days whatever the span")
+		})
+	}
+}

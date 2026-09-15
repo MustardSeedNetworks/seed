@@ -91,7 +91,7 @@ func (s *Server) handleProbeHistory(w http.ResponseWriter, r *http.Request) {
 	if !ok {
 		return
 	}
-	window, ok := s.historyWindow(w, r)
+	window, ok := s.historyWindow(w, r, resolveHistoryWindow)
 	if !ok {
 		return
 	}
@@ -135,7 +135,7 @@ func (s *Server) handleAnomalyHistory(w http.ResponseWriter, r *http.Request) {
 	logger := logging.FromContext(r.Context())
 	localizer := i18n.FromRequest(r)
 
-	window, ok := s.historyWindow(w, r)
+	window, ok := s.historyWindow(w, r, resolveAnomalyWindow)
 	if !ok {
 		return
 	}
@@ -167,9 +167,16 @@ func (s *Server) handleAnomalyHistory(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
+// windowResolver is how a series maps a requested duration onto what its own
+// storage retains. The two series differ: probes have hourly and daily
+// rollups, anomalies only a daily census.
+type windowResolver func(time.Time, time.Duration, retention.TierHorizons) historyWindow
+
 // historyWindow parses ?range= and resolves it against the licence tier's
 // retention horizons, or writes the rejection and reports false.
-func (s *Server) historyWindow(w http.ResponseWriter, r *http.Request) (historyWindow, bool) {
+func (s *Server) historyWindow(
+	w http.ResponseWriter, r *http.Request, resolve windowResolver,
+) (historyWindow, bool) {
 	requested := defaultHistoryRange
 	if raw := r.URL.Query().Get("range"); raw != "" {
 		parsed, err := parseHistoryRange(raw)
@@ -182,7 +189,7 @@ func (s *Server) historyWindow(w http.ResponseWriter, r *http.Request) (historyW
 		requested = parsed
 	}
 
-	return resolveHistoryWindow(time.Now().UTC(), requested,
+	return resolve(time.Now().UTC(), requested,
 		retention.HorizonsFor(s.effectiveTier())), true
 }
 
