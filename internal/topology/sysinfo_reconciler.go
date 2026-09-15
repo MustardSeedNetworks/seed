@@ -283,6 +283,7 @@ type sysInfoPayload struct {
 	SysName     string `json:"SysName"`
 	SysLocation string `json:"SysLocation"`
 	SysContact  string `json:"SysContact"`
+	SysServices uint32 `json:"SysServices"`
 }
 
 // buildNode decodes the observation payload into a Node
@@ -311,6 +312,10 @@ func (r *SysInfoReconciler) buildNode(
 		"sys_descr":    p.SysDescr,
 		"sys_location": p.SysLocation,
 		"sys_contact":  p.SysContact,
+		// The vendor is no longer the device type (seed#2456) but it
+		// is still worth showing, so it moves here rather than being
+		// dropped.
+		"vendor": vendorFromObjectID(p.SysObjectID),
 	})
 
 	node := &Node{
@@ -318,7 +323,7 @@ func (r *SysInfoReconciler) buildNode(
 		ClientID:     obs.ClientID,
 		IdentityHash: hash,
 		DisplayName:  displayName,
-		DeviceType:   deviceTypeFromObjectID(p.SysObjectID),
+		DeviceType:   deviceRoleFrom(p.SysDescr, p.SysServices),
 		SysName:      p.SysName,
 		LastSeen:     obs.ObservedAt,
 		MetadataJSON: string(metadata),
@@ -347,11 +352,17 @@ func identityHashFor(clientID, sysObjectID, sysName, targetID string) string {
 	return hex.EncodeToString(h.Sum(nil))
 }
 
-// deviceTypeFromObjectID maps a few common Cisco/Juniper/Arista
-// enterprise OIDs to coarse device categories. V1.0 ships a small
-// lookup; future iterations replace with a MIB-driven extension
-// table.
-func deviceTypeFromObjectID(oid string) string {
+// vendorFromObjectID maps a few common enterprise OID prefixes to a
+// vendor name. It is NOT the device type: seed#2456 replaced that
+// use with [deviceRoleFrom], because a Catalyst switch, a 9800
+// wireless controller and an 8200 router all sit under enterprise 9.
+// The answer lands in the node's metadata.
+//
+// It is also only as honest as the agent: niac's generated walks
+// advertise a Cisco sysObjectID for nine non-Cisco devices
+// (MustardSeedNetworks/niac-go#2154), which is one more reason the
+// role does not depend on this.
+func vendorFromObjectID(oid string) string {
 	switch {
 	case oid == "":
 		return ""

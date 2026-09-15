@@ -25,7 +25,7 @@ const detail: TopologyNodeDetailResponse = {
     clientId: 'c',
     identityHash: 'h',
     displayName: 'core-01',
-    deviceType: 'cisco',
+    deviceType: 'switch',
     chassisId: '',
     sysName: 'core-01.msn.lab',
     primaryMac: '00:11:22:33:44:55',

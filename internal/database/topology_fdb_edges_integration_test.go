@@ -59,14 +59,30 @@ func buildHospitalAccessLayer(t *testing.T) (*database.DB, string) {
 	at := fdbTestTime()
 	s := sink.New(db.SNMPObservations(), slog.New(slog.DiscardHandler), func() time.Time { return at })
 
-	for _, d := range []struct{ target, name, oid string }{
-		{fdbSwitchTarget, "hosp-access-sw-1", "1.3.6.1.4.1.9.1.100"},
-		{fdbCoreTarget, "hosp-core-sw-1", "1.3.6.1.4.1.9.1.101"},
-		{fdbPumpTarget, "hosp-infusion-pump-1", "1.3.6.1.4.1.4444.1.1"},
+	// sysDescr and sysServices are what the node's role is read from
+	// (seed#2456); the pump reports no layer below 4, which is what
+	// tells it apart from the two switches it hangs off.
+	for _, d := range []struct {
+		target, name, oid, descr string
+		services                 uint32
+	}{
+		{
+			fdbSwitchTarget, "hosp-access-sw-1", "1.3.6.1.4.1.9.1.100",
+			"Cisco IOS Software, C9300 Software", 0x02,
+		},
+		{
+			fdbCoreTarget, "hosp-core-sw-1", "1.3.6.1.4.1.9.1.101",
+			"Cisco IOS Software, C9500 Software", 0x06,
+		},
+		{
+			fdbPumpTarget, "hosp-infusion-pump-1", "1.3.6.1.4.1.4444.1.1",
+			"Baxter Spectrum IQ infusion pump, agent 2.1", 0x48,
+		},
 	} {
 		if pubErr := s.PublishSysInfo(ctx, sysinfo.Observation{
 			ClientID: "default", TargetID: d.target, ObservedAt: at,
 			SysName: d.name, SysObjectID: d.oid,
+			SysDescr: d.descr, SysServices: d.services,
 		}); pubErr != nil {
 			t.Fatalf("publish sysinfo %s: %v", d.target, pubErr)
 		}
@@ -272,4 +288,33 @@ func TestFDBEdges_ARPBackfillGivesTheEndpointItsAddress(t *testing.T) {
 		return
 	}
 	t.Fatal("pump node not found")
+}
+
+// seed#2456: the device type was a vendor label, so an access switch,
+// a core switch and an infusion pump all read "cisco", "cisco" and
+// "unknown". It is now the role, read from sysDescr and sysServices
+// through the real sink and the real sysinfo reconciler.
+func TestFDBEdges_NodesCarryARoleNotAVendor(t *testing.T) {
+	t.Parallel()
+	db, _ := buildHospitalAccessLayer(t)
+	ctx := context.Background()
+
+	nodes, err := db.Topology().List(ctx, topology.ListOptions{ClientID: "default"})
+	if err != nil {
+		t.Fatalf("list nodes: %v", err)
+	}
+	roles := map[string]string{}
+	for _, n := range nodes {
+		roles[n.SysName] = n.DeviceType
+	}
+	want := map[string]string{
+		"hosp-access-sw-1":     topology.RoleSwitch,
+		"hosp-core-sw-1":       topology.RoleSwitch,
+		"hosp-infusion-pump-1": topology.RoleServer,
+	}
+	for sysName, wantRole := range want {
+		if roles[sysName] != wantRole {
+			t.Errorf("%s role = %q, want %q", sysName, roles[sysName], wantRole)
+		}
+	}
 }

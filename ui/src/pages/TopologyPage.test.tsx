@@ -76,7 +76,7 @@ function link(over: Partial<TopologyLink>): TopologyLink {
 }
 
 const nodes: TopologyNode[] = [
-  node({ id: 'core', displayName: 'core-01', deviceType: 'cisco', primaryIp: '10.44.10.2' }),
+  node({ id: 'core', displayName: 'core-01', deviceType: 'switch', primaryIp: '10.44.10.2' }),
   // No displayName and no deviceType: the row must fall back to sysName and
   // the badge to 'n/a' rather than rendering an empty chip.
   node({ id: 'bare', sysName: 'sw-bare' }),
@@ -86,7 +86,9 @@ const detail: TopologyNodeDetailResponse = {
   node: node({
     id: 'core',
     displayName: 'core-01',
-    deviceType: 'cisco',
+    // seed#2456: the type is the role; the vendor rides in metadata.
+    deviceType: 'switch',
+    metadata: { vendor: 'cisco' },
     sysName: 'core-01.msn.lab',
     primaryMac: '00:11:22:33:44:55',
     primaryIp: '10.44.10.2',
@@ -202,6 +204,29 @@ describe('TopologyPage — list and selection', () => {
 
     expect(row.getByText('sw-bare')).toBeTruthy();
     expect(row.getByText('n/a')).toBeTruthy();
+  });
+
+  // seed#2456 split one field into two: the detail panel has to show
+  // the role AND keep showing the vendor that used to sit in its place.
+  // Scoped to the fact's own <dt>/<dd> pair, because the role also
+  // appears as the list row's badge.
+  const factValue = (label: string): string =>
+    must(screen.getByText(label).parentElement, `fact ${label}`).textContent ?? '';
+
+  it('shows the role and the vendor as separate facts', async () => {
+    render(<TopologyPage />);
+    await userEvent.click(screen.getByTestId('node-row-core'));
+
+    expect(factValue('Device type')).toBe('Device typeswitch');
+    expect(factValue('Vendor')).toBe('Vendorcisco');
+  });
+
+  it('shows n/a for a vendor the poll never derived', async () => {
+    state.detail = { ...detail, node: { ...detail.node, metadata: {} } };
+    render(<TopologyPage />);
+    await userEvent.click(screen.getByTestId('node-row-core'));
+
+    expect(factValue('Vendor')).toBe('Vendorn/a');
   });
 
   it('clears the selection back to the empty state', async () => {

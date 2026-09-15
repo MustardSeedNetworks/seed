@@ -26,6 +26,7 @@ const (
 	oidSysContact  = "1.3.6.1.2.1.1.4.0"
 	oidSysName     = "1.3.6.1.2.1.1.5.0"
 	oidSysLocation = "1.3.6.1.2.1.1.6.0"
+	oidSysServices = "1.3.6.1.2.1.1.7.0"
 )
 
 // Observation carries one sys_info snapshot. ObservedAt is set by the
@@ -43,6 +44,11 @@ type Observation struct {
 	SysContact     string
 	SysName        string
 	SysLocation    string
+	// SysServices is the RFC 1213 layer bitmask: bit 1 physical,
+	// 2 datalink, 4 internet, 8 end-to-end, 64 applications. It says
+	// which layers the agent *implements*, which is the only
+	// role evidence MIB-II carries; seed#2456 reads it.
+	SysServices uint32
 }
 
 // Publisher is the consumer-defined seam the sysinfo collector calls
@@ -91,7 +97,7 @@ func (c *Collector) Collect(ctx context.Context, target snmp.Target, creds snmp.
 	observedAt := c.now()
 	vbs, err := client.Get(ctx, []string{
 		oidSysDescr, oidSysObjectID, oidSysUpTime,
-		oidSysContact, oidSysName, oidSysLocation,
+		oidSysContact, oidSysName, oidSysLocation, oidSysServices,
 	})
 	if err != nil {
 		return fmt.Errorf("sysinfo: snmp get: %w", err)
@@ -104,7 +110,7 @@ func (c *Collector) Collect(ctx context.Context, target snmp.Target, creds snmp.
 	return nil
 }
 
-// buildObservation reads the six varbinds returned by Get in the
+// buildObservation reads the seven varbinds returned by Get in the
 // order requested. Missing or wrong-typed values fall back to the
 // zero value of the corresponding field so a partial response still
 // produces a publishable Observation.
@@ -128,6 +134,8 @@ func buildObservation(target snmp.Target, observedAt time.Time, vbs []snmp.Varbi
 			obs.SysName = stringValue(vb.Value)
 		case oidSysLocation:
 			obs.SysLocation = stringValue(vb.Value)
+		case oidSysServices:
+			obs.SysServices = uint32Value(vb.Value)
 		}
 	}
 	return obs
