@@ -77,7 +77,8 @@ make build   # builds the UI, embeds it, and stamps version/commit/uiBuildHash
 
 `make build` is the only build that embeds the frontend and injects the build
 metadata `/__version` reports; a bare `go build` produces a binary whose
-`uiBuildHash` is empty.
+`uiBuildHash` and `version` both read `unknown`
+(`internal/version/version.go`, `GetUIBuildHash`).
 
 ICMP and Wi-Fi features need raw-socket privileges. Either run with `sudo`, or
 grant the capabilities the package grants:
