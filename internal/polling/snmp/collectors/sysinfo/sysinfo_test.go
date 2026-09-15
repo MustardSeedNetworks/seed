@@ -78,7 +78,7 @@ func TestCollector_Name(t *testing.T) {
 	}
 }
 
-func TestCollect_FetchesAllSixSystemOIDs(t *testing.T) {
+func TestCollect_FetchesEverySystemOID(t *testing.T) {
 	t.Parallel()
 	fc := &fakeClient{
 		getResponse: []snmp.Varbind{
@@ -97,6 +97,8 @@ func TestCollect_FetchesAllSixSystemOIDs(t *testing.T) {
 	wantOIDs := []string{
 		"1.3.6.1.2.1.1.1.0", "1.3.6.1.2.1.1.2.0", "1.3.6.1.2.1.1.3.0",
 		"1.3.6.1.2.1.1.4.0", "1.3.6.1.2.1.1.5.0", "1.3.6.1.2.1.1.6.0",
+		// sysServices, the only role evidence MIB-II carries (seed#2456).
+		"1.3.6.1.2.1.1.7.0",
 	}
 	if len(fc.requestedOIDs) != len(wantOIDs) {
 		t.Fatalf("requested %d OIDs, want %d", len(fc.requestedOIDs), len(wantOIDs))

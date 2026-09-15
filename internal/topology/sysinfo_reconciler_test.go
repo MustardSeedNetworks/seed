@@ -107,15 +107,36 @@ func (f *fakeSettings) Set(_ context.Context, key, value string) error {
 	return nil
 }
 
+// payload is a device that bridges and nothing more — sysServices
+// 0x02 — so the node it produces classifies as a switch (seed#2456).
+// Tests that care about the role use [roleObs] instead.
 func payload(client, target, sysName, sysObjectID string) string {
-	b, _ := json.Marshal(map[string]string{
+	b, _ := json.Marshal(map[string]any{
 		"ClientID":    client,
 		"TargetID":    target,
 		"SysName":     sysName,
 		"SysObjectID": sysObjectID,
 		"SysDescr":    "Test Device",
+		"SysServices": 0x02,
 	})
 	return string(b)
+}
+
+// roleObs is one sys_info observation with the two scalars the role
+// is read from.
+func roleObs(target, sysDescr string, sysServices uint32) *observation.SNMPObservation {
+	b, _ := json.Marshal(map[string]any{
+		"ClientID":    "c",
+		"TargetID":    target,
+		"SysName":     target,
+		"SysObjectID": "1.3.6.1.4.1.9.1.1",
+		"SysDescr":    sysDescr,
+		"SysServices": sysServices,
+	})
+	return &observation.SNMPObservation{
+		ClientID: "c", TargetID: target, Kind: "sys_info",
+		ObservedAt: at(), PayloadJSON: string(b),
+	}
 }
 
 func obs(
@@ -191,9 +212,10 @@ func TestReconcileOnce_UpsertsOneNodePerObservation(t *testing.T) {
 	if len(n.upserts) != 2 {
 		t.Fatalf("upserts = %d, want 2", len(n.upserts))
 	}
-	if n.upserts[0].DeviceType != "cisco" {
-		t.Errorf("expected cisco DeviceType from 1.3.6.1.4.1.9 OID, got %q",
-			n.upserts[0].DeviceType)
+	// seed#2456: the type is the role, not the vendor. The fixture
+	// bridges (sysServices 0x02) and nothing else.
+	if n.upserts[0].DeviceType != topology.RoleSwitch {
+		t.Errorf("DeviceType = %q, want %q", n.upserts[0].DeviceType, topology.RoleSwitch)
 	}
 	if n.upserts[0].SysName != "router-1" {
 		t.Errorf("SysName = %q", n.upserts[0].SysName)

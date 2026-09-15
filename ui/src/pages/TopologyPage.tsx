@@ -20,7 +20,7 @@ import { Activity, Cable, RefreshCw } from 'lucide-react';
 import { type JSX, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useTopologyNode, useTopologyNodes } from '../hooks/useTopology';
-import type { TopologyInterface, TopologyLink } from '../types/topology';
+import type { TopologyInterface, TopologyLink, TopologyNode } from '../types/topology';
 import {
   DetailEmpty,
   DetailFacts,
@@ -102,6 +102,15 @@ interface NodeDetailProps {
   onClear: () => void;
 }
 
+// vendorOf reads the vendor the sysinfo reconciler derives from
+// sysObjectID. It lives in metadata rather than in a column of its own
+// because it is one of several scalars the poll carries; metadata is
+// typed as unknown values, so the string check is the narrowing.
+function vendorOf(node: TopologyNode): string {
+  const vendor = node.metadata?.vendor;
+  return typeof vendor === 'string' ? vendor : '';
+}
+
 function NodeDetail({ id, onClear }: NodeDetailProps): JSX.Element {
   const { t } = useTranslation(['pages', 'common']);
   const { detail, loading, error } = useTopologyNode(id);
@@ -145,6 +154,10 @@ function NodeDetail({ id, onClear }: NodeDetailProps): JSX.Element {
           // Device type and sys name are names, not measurements — prose, so
           // they do not sit in the monospace column with the addresses.
           { label: t('topology.deviceType'), value: node.deviceType || na, prose: true },
+          // The vendor stopped being the device type in seed#2456 — it is
+          // still collected, so it keeps a row of its own rather than
+          // disappearing from the screen.
+          { label: t('topology.vendor'), value: vendorOf(node) || na, prose: true },
           { label: t('topology.sysName'), value: node.sysName || na, prose: true },
           { label: t('topology.primaryMac'), value: node.primaryMac || na },
           { label: t('topology.primaryIp'), value: node.primaryIp || na },

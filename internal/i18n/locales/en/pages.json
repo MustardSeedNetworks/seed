@@ -166,6 +166,7 @@
     "noNodes": "No nodes yet. Add a polling target and wait a poll cycle.",
     "selectedNode": "Selected node",
     "deviceType": "Device type",
+    "vendor": "Vendor",
     "sysName": "Sys name",
     "primaryMac": "Primary MAC",
     "primaryIp": "Primary IP",

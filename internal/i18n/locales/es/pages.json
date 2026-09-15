@@ -166,6 +166,7 @@
     "noNodes": "Aún no hay nodos. Añada un destino de sondeo y espere un ciclo de sondeo.",
     "selectedNode": "Nodo seleccionado",
     "deviceType": "Tipo de dispositivo",
+    "vendor": "Fabricante",
     "sysName": "Nombre del sistema",
     "primaryMac": "MAC principal",
     "primaryIp": "IP principal",
