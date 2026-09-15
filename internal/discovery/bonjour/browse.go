@@ -65,45 +65,57 @@ func (b *Browser) SetWindow(d time.Duration) {
 // and address records of each instance, and classifies what it found against
 // the interface's own prefixes.
 //
-// The three stages are separate queries because a responder is entitled to
-// answer a type PTR with the instance PTR alone: macOS's mDNSResponder does
-// exactly that, so a browser that only asked twice would list instances with
-// no host and no port.
+// The four stages are separate queries because a responder answers only what
+// it was asked. Measured against macOS's mDNSResponder on 2026-09-15: it
+// answers a type PTR with the instance PTR alone, so a browser that asked
+// twice lists instances with no host and no port; and it answers SRV without
+// the target's address, so a browser that asked three times classifies every
+// service as OriginUnknown and can never report a reflector. The address
+// stage is what makes the cross-subnet verdict possible at all.
 func (b *Browser) Browse(ctx context.Context) (*BrowseResult, error) {
-	iface, local, err := b.resolveInterface()
+	local, err := b.localPrefixes()
 	if err != nil {
 		return nil, err
 	}
 
-	group := &net.UDPAddr{IP: net.ParseIP(multicastGroupV4), Port: port}
-	conn, err := net.ListenMulticastUDP("udp4", iface, group)
+	// One ephemeral-port socket, not a join of the multicast group on 5353.
+	//
+	// Binding 5353 loses on macOS: mDNSResponder already holds it, the
+	// SO_REUSEPORT the runtime sets makes delivery a coin toss between the
+	// two, and measured on 2026-09-15 seed lost every time — a 15-second
+	// listen on a segment that was actively announcing observed zero packets.
+	// A query from a source port other than 5353 is a legacy query under RFC
+	// 6762 §6.7 and is answered by unicast straight back to that port, which
+	// is how internal/discovery/resolve already resolves names in production.
+	//
+	// The cost is stated rather than hidden: this sees answers to its own
+	// questions, not other stations' spontaneous announcements. For a browse
+	// that is the right trade — a reflector answers queries on behalf of the
+	// segment it forwards for, so the cross-subnet verdict is unaffected.
+	conn, err := net.ListenUDP("udp4", &net.UDPAddr{Port: 0})
 	if err != nil {
 		return nil, err
 	}
 	defer func() { _ = conn.Close() }()
 	_ = conn.SetReadBuffer(readBufferSize)
 
-	sender, err := net.DialUDP("udp4", nil, group)
-	if err != nil {
-		return nil, err
-	}
-	defer func() { _ = sender.Close() }()
-
+	group := &net.UDPAddr{IP: net.ParseIP(multicastGroupV4), Port: port}
 	started := time.Now()
 	collected := newCollector(b.lim)
 	stages := []func() []dnsmessage.Question{
 		func() []dnsmessage.Question { return []dnsmessage.Question{ptrQuestion(dnssdMetaQuery)} },
 		func() []dnsmessage.Question { return typeQuestions(collected) },
 		func() []dnsmessage.Question { return instanceQuestions(collected) },
+		func() []dnsmessage.Question { return addressQuestions(collected) },
 	}
 
 	stageWindow := b.window / time.Duration(len(stages))
 	for _, stage := range stages {
-		questions := stage()
-		if len(questions) == 0 {
-			continue
-		}
-		b.ask(sender, questions)
+		// A stage with nothing to ask still listens: a responder may still be
+		// answering the previous stage, and skipping the listen would give a
+		// quiet segment a quarter of the window the operator asked for and
+		// then a "nothing seen in 1 second" verdict built on it.
+		b.ask(conn, group, stage())
 		b.gather(ctx, conn, collected, time.Now().Add(stageWindow))
 		if ctx.Err() != nil {
 			break
@@ -125,28 +137,28 @@ func (b *Browser) Browse(ctx context.Context) (*BrowseResult, error) {
 	}, nil
 }
 
-// resolveInterface returns the interface to listen on and the prefixes every
-// classification is made against. An unnamed interface classifies against
-// every non-loopback prefix on the host, which is the honest answer when the
-// caller did not say which segment it meant.
-func (b *Browser) resolveInterface() (*net.Interface, []netip.Prefix, error) {
+// localPrefixes returns the prefixes every classification is made against. An
+// unnamed interface classifies against every non-loopback prefix on the host,
+// which is the honest answer when the caller did not say which segment it
+// meant.
+func (b *Browser) localPrefixes() ([]netip.Prefix, error) {
 	if b.interfaceName == "" {
-		return nil, localPrefixesOf(hostPrefixes()), nil
+		return localPrefixesOf(hostPrefixes()), nil
 	}
 	iface, err := net.InterfaceByName(b.interfaceName)
 	if err != nil {
-		return nil, nil, errNoInterface
+		return nil, errNoInterface
 	}
-	return iface, localPrefixesOf(interfacePrefixes(iface)), nil
+	return localPrefixesOf(interfacePrefixes(iface)), nil
 }
 
-func (b *Browser) ask(sender *net.UDPConn, questions []dnsmessage.Question) {
+func (b *Browser) ask(conn *net.UDPConn, group *net.UDPAddr, questions []dnsmessage.Question) {
 	for _, q := range questions {
 		msg, err := packQuery(q)
 		if err != nil {
 			continue
 		}
-		if _, writeErr := sender.Write(msg); writeErr != nil {
+		if _, writeErr := conn.WriteToUDP(msg, group); writeErr != nil {
 			logging.GetLogger().
 				Debug("bonjour: query send failed", "name", q.Name.String(), "error", writeErr)
 			return
@@ -185,8 +197,6 @@ func typeQuestions(c *collector) []dnsmessage.Question {
 }
 
 // instanceQuestions asks for the SRV and TXT of every instance seen so far.
-// The address records ride along in the responder's Additionals, so they are
-// not asked for separately.
 func instanceQuestions(c *collector) []dnsmessage.Question {
 	// Two questions per instance: SRV and TXT.
 	const questionsPerInstance = 2
@@ -199,6 +209,38 @@ func instanceQuestions(c *collector) []dnsmessage.Question {
 		questions = append(questions,
 			dnsmessage.Question{Name: n, Type: dnsmessage.TypeSRV, Class: dnsmessage.ClassINET},
 			dnsmessage.Question{Name: n, Type: dnsmessage.TypeTXT, Class: dnsmessage.ClassINET},
+		)
+	}
+	return questions
+}
+
+// addressQuestions asks for the A and AAAA of every SRV target that has not
+// answered with an address yet. Without this the browse knows a service's
+// host name and nothing about where that host lives, which is the one fact
+// the cross-subnet verdict is made of.
+func addressQuestions(c *collector) []dnsmessage.Question {
+	// A and AAAA per host.
+	const questionsPerHost = 2
+	hosts := make(map[string]struct{}, len(c.instances))
+	for _, inst := range c.instances {
+		if inst.srvHost == "" {
+			continue
+		}
+		if _, known := c.addrs[inst.srvHost]; known {
+			continue
+		}
+		hosts[inst.srvHost] = struct{}{}
+	}
+
+	questions := make([]dnsmessage.Question, 0, len(hosts)*questionsPerHost)
+	for host := range hosts {
+		n, err := dnsmessage.NewName(host + ".")
+		if err != nil {
+			continue
+		}
+		questions = append(questions,
+			dnsmessage.Question{Name: n, Type: dnsmessage.TypeA, Class: dnsmessage.ClassINET},
+			dnsmessage.Question{Name: n, Type: dnsmessage.TypeAAAA, Class: dnsmessage.ClassINET},
 		)
 	}
 	return questions

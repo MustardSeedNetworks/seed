@@ -5,6 +5,8 @@ import (
 	"os"
 	"path/filepath"
 	"testing"
+
+	"golang.org/x/net/dns/dnsmessage"
 )
 
 // segment is the prefix set of a listening interface with IPv4 only — the
@@ -372,5 +374,46 @@ func TestSplitInstanceRejectsWhatIsNotAnInstance(t *testing.T) {
 	instance, serviceType, ok := splitInstance("Living Room._airplay._tcp.local")
 	if !ok || instance != "Living Room" || serviceType != "_airplay._tcp" {
 		t.Errorf("splitInstance = %q/%q/%v, want %q/%q/true", instance, serviceType, ok, "Living Room", "_airplay._tcp")
+	}
+}
+
+func TestAddressStageAsksForEveryUnresolvedSRVTarget(t *testing.T) {
+	// Measured on the wire: a responder answers SRV without the target's
+	// address. Without this stage every service classifies as
+	// OriginUnknown and the cross-subnet verdict can never be reached.
+	c := newCollector(defaultLimits())
+	src := netip.MustParseAddr("192.168.20.77")
+	c.observe(fixture(t, "split-ptr.bin"), src)
+	c.observe(fixture(t, "split-details.bin"), src)
+
+	// split-details carries the address, so nothing is left to ask.
+	if got := len(addressQuestions(c)); got != 0 {
+		t.Errorf("questions = %d, want 0: the address is already known", got)
+	}
+
+	// Drop the address and the host must be asked for again, as A and AAAA.
+	delete(c.addrs, "studio-display.local")
+	questions := addressQuestions(c)
+	if len(questions) != 2 {
+		t.Fatalf("questions = %d, want 2 (A and AAAA)", len(questions))
+	}
+	types := map[dnsmessage.Type]bool{}
+	for _, q := range questions {
+		types[q.Type] = true
+		if q.Name.String() != "studio-display.local." {
+			t.Errorf("question name = %q, want studio-display.local.", q.Name.String())
+		}
+	}
+	if !types[dnsmessage.TypeA] || !types[dnsmessage.TypeAAAA] {
+		t.Errorf("question types = %v, want both A and AAAA", types)
+	}
+}
+
+func TestAddressStageSkipsInstancesWithNoSRV(t *testing.T) {
+	c := newCollector(defaultLimits())
+	c.observe(fixture(t, "split-ptr.bin"), netip.MustParseAddr("192.168.20.88"))
+
+	if got := len(addressQuestions(c)); got != 0 {
+		t.Errorf("questions = %d, want 0: there is no host name to ask about yet", got)
 	}
 }

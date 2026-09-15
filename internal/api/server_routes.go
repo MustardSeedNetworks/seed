@@ -772,11 +772,9 @@ func (s *Server) setupSecurityRoutes() {
 			methods: get,
 		},
 		{
-			// #364's Bonjour browse. Spelled as a literal for the same reason
-			// /history/* is: scripts/check-route-consumers.py matches on the
-			// string in this table, so a const here would hide the route from
-			// the ratchet. Reads the segment and changes nothing, so no role
-			// gate.
+			// #364's Bonjour browse; reads the segment, so no role gate. A
+			// literal, not a const: the route-consumer ratchet matches on the
+			// string in this table (see /history/* above).
 			path:    APIVersionPrefix + "/discovery/bonjour",
 			handler: s.handleBonjourBrowse,
 			methods: get,

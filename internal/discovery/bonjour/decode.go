@@ -220,8 +220,8 @@ func splitInstance(name string) (string, string, bool) {
 // The cost of that library behaviour is real and is not seed's to fix here:
 // a Bonjour instance named "Office No. 5" makes its announcement undecodable,
 // so the service is invisible to this browse and to the name resolution in
-// internal/discovery/resolve, which parses with the same library. Filed
-// separately rather than answered by standing up a second mDNS stack.
+// internal/discovery/resolve, which parses with the same library. Filed as
+// #2626 rather than answered by standing up a second mDNS stack here.
 func splitLabels(name string) []string {
 	if name == "" {
 		return nil
