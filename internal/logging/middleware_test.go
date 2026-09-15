@@ -650,3 +650,51 @@ func TestLoggingMiddleware_DifferentMethods(t *testing.T) {
 		})
 	}
 }
+
+// flushCountingWriter records how many times the chain below it flushed.
+type flushCountingWriter struct {
+	http.ResponseWriter
+
+	flushes int
+}
+
+func (w *flushCountingWriter) Flush() { w.flushes++ }
+
+// TestLoggingMiddlewarePassesFlushThrough pins #2553. Every SSE handler asks
+// `w.([http.Flusher])` and refuses the stream when the assertion fails. The
+// logging middleware wraps every request, and a wrapper only satisfies the
+// interfaces it declares — embedding [http.ResponseWriter] does not carry
+// [http.Flusher] across — so without Flush the wrapped writer failed that
+// assertion and each stream answered 500 instead of opening. This covers all
+// three SSE endpoints (/events, /jobs/events, /discovery/engine/events) at the
+// one place the defect lived.
+func TestLoggingMiddlewarePassesFlushThrough(t *testing.T) {
+	underlying := &flushCountingWriter{ResponseWriter: httptest.NewRecorder()}
+
+	var (
+		sawFlusher bool
+		isFlusher  bool
+	)
+	handler := logging.LoggingMiddleware(http.HandlerFunc(
+		func(w http.ResponseWriter, _ *http.Request) {
+			sawFlusher = true
+			flusher, ok := w.(http.Flusher)
+			isFlusher = ok
+			if ok {
+				flusher.Flush()
+			}
+		}))
+
+	handler.ServeHTTP(underlying, httptest.NewRequest(http.MethodGet, "/api/v1/jobs/events", nil))
+
+	if !sawFlusher {
+		t.Fatal("the handler never ran")
+	}
+	if !isFlusher {
+		t.Fatal("the wrapped ResponseWriter is not an http.Flusher, so every SSE stream refuses to open")
+	}
+	if underlying.flushes != 1 {
+		t.Errorf("underlying flushes = %d, want 1 — Flush was swallowed rather than forwarded",
+			underlying.flushes)
+	}
+}

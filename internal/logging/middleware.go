@@ -160,6 +160,19 @@ func (w *responseWriter) Unwrap() http.ResponseWriter {
 	return w.ResponseWriter
 }
 
+// Flush implements [http.Flusher] so server-sent-event handlers can push each
+// frame as it is produced (fixes #2553). Every SSE handler asks
+// `w.(http.Flusher)` and refuses the stream when the assertion fails; because
+// this wrapper sits in front of every request, omitting Flush made every SSE
+// endpoint answer 500 rather than opening. Embedding [http.ResponseWriter] is not
+// enough — a wrapper only satisfies the interfaces it declares, which is the
+// same reason Hijack below is written out.
+func (w *responseWriter) Flush() {
+	if f, ok := w.ResponseWriter.(http.Flusher); ok {
+		f.Flush()
+	}
+}
+
 // Hijack implements [http.Hijacker] for WebSocket support (fixes #ws-hijacker).
 // This allows the logging middleware to be used with WebSocket endpoints.
 func (w *responseWriter) Hijack() (net.Conn, *bufio.ReadWriter, error) {

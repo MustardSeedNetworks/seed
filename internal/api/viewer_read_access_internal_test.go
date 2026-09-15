@@ -3,12 +3,14 @@
 package api
 
 import (
+	"context"
 	"net/http"
 	"net/http/httptest"
 	"path/filepath"
 	"slices"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/MustardSeedNetworks/seed/internal/database"
 	"github.com/MustardSeedNetworks/seed/internal/netif"
@@ -40,15 +42,34 @@ func routedServer(t *testing.T, username, role string) *Server {
 	return s
 }
 
+// probeBudget bounds one route probe. A streaming route never returns on its
+// own: an SSE handler writes its first frame and then parks until the client
+// goes away, and a [httptest.ResponseRecorder] is neither a client that can go
+// away nor a writer whose Write ever fails. Without a deadline the sweep hangs
+// on /jobs/events and /discovery/engine/events forever.
+//
+// It is only ever a floor. The 405 this helper looks for comes from methodGate,
+// before any handler work, so a short budget cannot turn a real 405 into a
+// miss; it can only cut short a route that was already answering something
+// else, which is the answer the caller wanted anyway.
+const probeBudget = 2 * time.Second
+
 // answersOnlyMethodNotAllowed reports whether every method the route declares
 // comes back 405 — the signature of a route and its handler disagreeing.
 func answersOnlyMethodNotAllowed(t *testing.T, s *Server, path string, methods []string) bool {
 	t.Helper()
 
 	for _, method := range methods {
-		req := bearerRequest(t, s, method, path, "admin")
+		// The deadline is what lets a streaming route be swept at all. Until
+		// #2553 every SSE route answered 500 before it streamed — the logging
+		// middleware's wrapper was not an http.Flusher — so this sweep passed
+		// over them in microseconds and never noticed it could not handle one.
+		// Fixing the wrapper made them stream, and the sweep hung.
+		ctx, cancel := context.WithTimeout(t.Context(), probeBudget)
+		req := bearerRequest(t, s, method, path, "admin").WithContext(ctx)
 		w := httptest.NewRecorder()
 		s.Handler().ServeHTTP(w, req)
+		cancel()
 		if w.Code == http.StatusUnauthorized {
 			t.Fatalf("%s %s answered 401, so the request never reached the method "+
 				"gate and this assertion proves nothing", method, path)
