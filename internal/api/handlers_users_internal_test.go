@@ -15,7 +15,7 @@ import (
 
 // usersTestSetup creates a Server with a temp DB and a pre-seeded
 // admin user named "admin" so the request flow can authenticate as
-// that user via X-Username. The returned license.Manager is fresh
+// that user on the request context (#2632). The returned license.Manager is fresh
 // (no key activated) so tests can opt-in to Pro by calling
 // mgr.StartTrial() when they need it.
 func usersTestSetup(t *testing.T) (*Server, *license.Manager) {
