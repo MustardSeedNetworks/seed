@@ -17,6 +17,24 @@ require() {
   fi
 }
 
+# require_pin asserts the SHAPE of a Renovate-managed version pin rather than
+# its literal value. The value lives in two places — the workflow and this
+# gate — and only the workflow is what Renovate edits, so a literal `require`
+# here made every toolchain bump red by construction and unfixable by a rebase
+# (#2622: PR #2561 sat red from 2026-09-10 for exactly this reason).
+#
+# The gate's purpose survives intact: it exists so nobody silently UN-pins the
+# release toolchain, and "pinned to an exact version and a full digest" is a
+# shape a bump satisfies and an un-pinning does not.
+require_pin() {
+  local what="$1"
+  local pattern="$2"
+  if ! grep -Eq -- "$pattern" "$workflow"; then
+    echo "release workflow contract: $what is missing or no longer pinned (want /$pattern/)" >&2
+    exit 1
+  fi
+}
+
 # require_step_condition pins a condition to the step that must carry it.
 # A bare `require` cannot: the publish predicate appears on more than one step,
 # so dropping it from one of them would still match elsewhere and pass.
@@ -99,13 +117,15 @@ require_step_condition "Refuse a manual dispatch that asks to publish" \
   "if: \${{ github.event_name == 'workflow_dispatch' && !inputs.dry_run }}"
 require_job_condition "publish-release" \
   "if: \${{ github.event_name == 'push' && !inputs.dry_run }}"
-require 'IPERF3_VERSION: "3.21"'
-require 'IPERF3_SHA256: "656e4405ebd620121de7ceca3eaf43a88f79ea1b857d041a6a0b1314801acdd8"'
-require 'image: goreleaser/goreleaser-cross:v1.27.0@sha256:3ce3506ee9179c4122ba0b5dc13ab564ff259fb65f45bfad005ddd5e4a3d326d'
-require 'SYFT_VERSION: "1.51.0"'
-require 'SYFT_SHA256: "2a2e837a2c8d59ec9af5472ee22d3b04ee463c4e44476ecf993fd1e5ab6ebc7f"'
-require 'COSIGN_VERSION: "v3.1.3"'
-require 'COSIGN_SHA256: "4629c757b7618056f8ddd7e2625ae9fdd94c0372a65049520bc7d9df9efc7f71"'
+# Renovate owns these four values; the gate owns their shape. See require_pin.
+require_pin 'IPERF3_VERSION' '^ +IPERF3_VERSION: "[0-9]+\.[0-9]+(\.[0-9]+)?"$'
+require_pin 'IPERF3_SHA256' '^ +IPERF3_SHA256: "[0-9a-f]{64}"$'
+require_pin 'the goreleaser-cross image' \
+  '^ +image: goreleaser/goreleaser-cross:v[0-9]+\.[0-9]+\.[0-9]+(-v[0-9.]+)?@sha256:[0-9a-f]{64}$'
+require_pin 'SYFT_VERSION' '^ +SYFT_VERSION: "[0-9]+\.[0-9]+\.[0-9]+"$'
+require_pin 'SYFT_SHA256' '^ +SYFT_SHA256: "[0-9a-f]{64}"$'
+require_pin 'COSIGN_VERSION' '^ +COSIGN_VERSION: "v[0-9]+\.[0-9]+\.[0-9]+"$'
+require_pin 'COSIGN_SHA256' '^ +COSIGN_SHA256: "[0-9a-f]{64}"$'
 require "syft_dir=\$(mktemp -d)"
 require "trap 'rm -rf \"\$syft_dir\"' EXIT"
 require "cosign_dir=\$(mktemp -d)"
