@@ -181,5 +181,9 @@
     "probeRequired": "Se requiere un identificador de sonda",
     "invalidRange": "Intervalo no válido: use una duración como 24h o un número de días como 7d, dentro de la ventana conservada",
     "readFailed": "No se pudo leer el historial"
+  },
+  "mdns": {
+    "browseUnavailable": "No se pudo unir al grupo de multidifusión mDNS en esta interfaz",
+    "invalidWindow": "La ventana de exploración debe ser un número positivo de segundos"
   }
 }

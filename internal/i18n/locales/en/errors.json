@@ -181,5 +181,9 @@
     "probeRequired": "A probe id is required",
     "invalidRange": "Invalid range: use a duration such as 24h or a number of days such as 7d, within the retained window",
     "readFailed": "Failed to read history"
+  },
+  "mdns": {
+    "browseUnavailable": "Could not join the mDNS multicast group on this interface",
+    "invalidWindow": "Browse window must be a positive number of seconds"
   }
 }

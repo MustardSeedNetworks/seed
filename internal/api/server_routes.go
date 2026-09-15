@@ -771,6 +771,14 @@ func (s *Server) setupSecurityRoutes() {
 			handler: s.handleWiFiDiscoveryStats,
 			methods: get,
 		},
+		{
+			// #364's Bonjour browse; reads the segment, so no role gate. A
+			// literal, not a const: the route-consumer ratchet matches on the
+			// string in this table (see /history/* above).
+			path:    APIVersionPrefix + "/discovery/bonjour",
+			handler: s.handleBonjourBrowse,
+			methods: get,
+		},
 		// Discovery Engine (primary unified discovery system).
 		{
 			path:    APIVersionPrefix + "/discovery/engine",
