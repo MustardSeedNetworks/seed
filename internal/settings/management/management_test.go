@@ -18,7 +18,7 @@ func (f *fakeStore) Write(fn func(*config.Config) error) error { return fn(f.cfg
 func TestGetReturnsSettingsAndETag(t *testing.T) {
 	cfg := &config.Config{}
 	cfg.HealthChecks.RunSpeedtest = true
-	svc := management.NewService(&fakeStore{cfg: cfg})
+	svc := management.NewService(&fakeStore{cfg: cfg}, nil, nil)
 
 	settings, etag := svc.Get()
 	if etag == "" {
@@ -40,7 +40,7 @@ func TestGetReturnsSettingsAndETag(t *testing.T) {
 
 func TestUpdateAppliesChange(t *testing.T) {
 	cfg := &config.Config{}
-	svc := management.NewService(&fakeStore{cfg: cfg})
+	svc := management.NewService(&fakeStore{cfg: cfg}, nil, nil)
 
 	err := svc.Update(map[string]any{
 		"healthChecks": map[string]any{"runSpeedtest": true, "runDiscovery": true},
@@ -54,7 +54,7 @@ func TestUpdateAppliesChange(t *testing.T) {
 }
 
 func TestUpdateETagMismatchConflicts(t *testing.T) {
-	svc := management.NewService(&fakeStore{cfg: &config.Config{}})
+	svc := management.NewService(&fakeStore{cfg: &config.Config{}}, nil, nil)
 	err := svc.Update(map[string]any{"healthChecks": map[string]any{"runSpeedtest": true}}, "stale-etag")
 	if !errors.Is(err, management.ErrConflict) {
 		t.Errorf("stale If-Match: want ErrConflict, got %v", err)
@@ -63,7 +63,7 @@ func TestUpdateETagMismatchConflicts(t *testing.T) {
 
 func TestUpdateInvalidTypeValidation(t *testing.T) {
 	cfg := &config.Config{}
-	svc := management.NewService(&fakeStore{cfg: cfg})
+	svc := management.NewService(&fakeStore{cfg: cfg}, nil, nil)
 	// A string where a boolean is expected must surface as a validation error.
 	err := svc.Update(map[string]any{
 		"healthChecks": map[string]any{"runSpeedtest": "not-a-bool"},
@@ -77,7 +77,7 @@ func TestUpdateInvalidTypeValidation(t *testing.T) {
 }
 
 func TestLinkSettingsDefaultAndUpdate(t *testing.T) {
-	svc := management.NewService(&fakeStore{cfg: config.DefaultConfig()})
+	svc := management.NewService(&fakeStore{cfg: config.DefaultConfig()}, nil, nil)
 
 	// Unset mode defaults to "auto" on read.
 	if got := svc.Link(); got.Mode != "auto" {
@@ -99,7 +99,7 @@ func TestLinkSettingsDefaultAndUpdate(t *testing.T) {
 }
 
 func TestCableTestSettingsRoundTrip(t *testing.T) {
-	svc := management.NewService(&fakeStore{cfg: config.DefaultConfig()})
+	svc := management.NewService(&fakeStore{cfg: config.DefaultConfig()}, nil, nil)
 	in := config.CableTestConfig{Enabled: true}
 	if err := svc.UpdateCableTest(in); err != nil {
 		t.Fatalf("UpdateCableTest: %v", err)
@@ -110,7 +110,7 @@ func TestCableTestSettingsRoundTrip(t *testing.T) {
 }
 
 func TestETagNonEmpty(t *testing.T) {
-	svc := management.NewService(&fakeStore{cfg: config.DefaultConfig()})
+	svc := management.NewService(&fakeStore{cfg: config.DefaultConfig()}, nil, nil)
 	if svc.ETag() == "" {
 		t.Error("ETag should be non-empty")
 	}

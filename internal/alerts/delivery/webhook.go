@@ -145,7 +145,7 @@ type Notifier struct {
 
 // New validates cfg and builds a Notifier. It makes no request.
 func New(cfg Config) (*Notifier, error) {
-	if err := validateURL(cfg.URL); err != nil {
+	if err := ValidateURL(cfg.URL); err != nil {
 		return nil, err
 	}
 	if cfg.Secret == "" {
@@ -190,10 +190,12 @@ func New(cfg Config) (*Notifier, error) {
 	return n, nil
 }
 
-// validateURL rejects anything that cannot be a receiver: this is an outbound
+// ValidateURL rejects anything that cannot be a receiver: this is an outbound
 // request driven by stored configuration, so the value is checked once, at
-// construction, rather than at every send.
-func validateURL(raw string) error {
+// construction, rather than at every send. It is exported because the settings
+// service refuses a bad URL at the API (#2605) rather than storing one that
+// silently never delivers, and both must judge it by the same rule.
+func ValidateURL(raw string) error {
 	if raw == "" {
 		return fmt.Errorf("%w: url is required", ErrInvalidConfig)
 	}
@@ -219,7 +221,7 @@ func validateURL(raw string) error {
 func (n *Notifier) Endpoint() string { return n.endpoint }
 
 // redactURL keeps scheme://host and drops everything after it. The input has
-// already passed validateURL, so a parse failure here is not reachable; the
+// already passed ValidateURL, so a parse failure here is not reachable; the
 // fallback keeps the function total rather than asserting that.
 func redactURL(raw string) string {
 	u, err := url.Parse(raw)
@@ -280,6 +282,14 @@ func (n *Notifier) Deliver(ctx context.Context, alert *alerts.Alert) bool {
 	if alert == nil {
 		return false
 	}
+	// A stopped Notifier has no worker, so an enqueued alert would sit in the
+	// channel reading "pending" for the life of the process. The Manager
+	// replaces a Notifier when the operator re-points the receiver, so this is
+	// reachable by a settings write landing beside an alert.
+	if n.retired() {
+		n.recordOnAlert(ctx, alert, alerts.DeliveryFailed, "receiver was reconfigured before this alert was sent")
+		return false
+	}
 	select {
 	case n.queue <- alert:
 		return true
@@ -293,6 +303,14 @@ func (n *Notifier) Deliver(ctx context.Context, alert *alerts.Alert) bool {
 		n.recordOnAlert(ctx, alert, alerts.DeliveryDropped, "delivery queue full")
 		return false
 	}
+}
+
+// retired reports whether Stop has run, so Deliver can refuse rather than
+// enqueue onto a channel nothing is reading any more.
+func (n *Notifier) retired() bool {
+	n.mu.Lock()
+	defer n.mu.Unlock()
+	return n.stopped
 }
 
 // recordOnAlert writes one outcome onto the alert row. A failure to write is

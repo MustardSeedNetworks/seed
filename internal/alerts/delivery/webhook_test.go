@@ -8,6 +8,7 @@ import (
 	"encoding/json"
 	"errors"
 	"io"
+	"log/slog"
 	"net/http"
 	"net/http/httptest"
 	"strconv"
@@ -268,15 +269,12 @@ func TestWrapWriterDeliversEveryStoredAlert(t *testing.T) {
 	}))
 	defer srv.Close()
 
-	n, err := delivery.New(delivery.Config{URL: srv.URL, Secret: signingKey})
-	if err != nil {
-		t.Fatalf("New: %v", err)
-	}
-	n.Start()
-	defer n.Stop(context.Background())
+	m := delivery.NewManager(nil, slog.New(slog.DiscardHandler))
+	m.Apply(delivery.Config{URL: srv.URL, Secret: signingKey})
+	defer m.Stop(context.Background())
 
 	store := &fakeWriter{}
-	writer := delivery.WrapWriter(store, n)
+	writer := delivery.WrapWriter(store, m)
 
 	if createErr := writer.Create(context.Background(), testAlert()); createErr != nil {
 		t.Fatalf("Create: %v", createErr)
@@ -297,15 +295,12 @@ func TestWrapWriterDoesNotDeliverWhenTheStoreFails(t *testing.T) {
 	}))
 	defer srv.Close()
 
-	n, err := delivery.New(delivery.Config{URL: srv.URL, Secret: signingKey})
-	if err != nil {
-		t.Fatalf("New: %v", err)
-	}
-	n.Start()
-	defer n.Stop(context.Background())
+	m := delivery.NewManager(nil, slog.New(slog.DiscardHandler))
+	m.Apply(delivery.Config{URL: srv.URL, Secret: signingKey})
+	defer m.Stop(context.Background())
 
 	storeErr := errors.New("insert failed")
-	writer := delivery.WrapWriter(&fakeWriter{err: storeErr}, n)
+	writer := delivery.WrapWriter(&fakeWriter{err: storeErr}, m)
 
 	if createErr := writer.Create(context.Background(), testAlert()); !errors.Is(createErr, storeErr) {
 		t.Fatalf("Create error = %v, want the store's error", createErr)

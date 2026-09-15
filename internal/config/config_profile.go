@@ -24,6 +24,7 @@ type ProfileExportFields struct {
 	DisplayOptions   DisplayOptionsConfig   `json:"displayOptions"`
 	DNS              DNSConfig              `json:"dns"`
 	SNMP             SNMPConfig             `json:"snmp"`
+	Alerts           AlertsConfig           `json:"alerts"`
 	NetworkDiscovery NetworkDiscoveryConfig `json:"networkDiscovery"`
 	Link             LinkConfig             `json:"link,omitzero"`
 	CableTest        CableTestConfig        `json:"cableTest,omitzero"`
@@ -41,6 +42,7 @@ func (c *Config) profileExportLocked() ProfileExportFields {
 		DisplayOptions:   c.DisplayOptions,
 		DNS:              c.DNS,
 		SNMP:             c.SNMP,
+		Alerts:           c.Alerts,
 		NetworkDiscovery: c.NetworkDiscovery,
 		Link:             c.Link,
 		CableTest:        c.CableTest,
@@ -111,6 +113,7 @@ func (c *Config) ApplyProfileJSON(jsonStr string) error {
 	c.DisplayOptions = imported.DisplayOptions
 	c.DNS = imported.DNS
 	c.SNMP = imported.SNMP
+	c.Alerts = imported.Alerts
 	c.NetworkDiscovery = imported.NetworkDiscovery
 	c.Link = imported.Link
 	c.CableTest = imported.CableTest

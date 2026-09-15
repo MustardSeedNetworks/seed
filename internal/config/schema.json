@@ -21,6 +21,7 @@
     "security",
     "dhcp",
     "snmp",
+    "alerts",
     "fabOptions",
     "displayOptions",
     "logging",
@@ -78,6 +79,9 @@
     },
     "snmp": {
       "$ref": "#/$defs/SNMPConfig"
+    },
+    "alerts": {
+      "$ref": "#/$defs/AlertsConfig"
     },
     "fabOptions": {
       "$ref": "#/$defs/FABOptionsConfig"
@@ -1949,6 +1953,33 @@
           "minimum": 1,
           "maximum": 50,
           "default": 10
+        }
+      }
+    },
+    "AlertsConfig": {
+      "type": "object",
+      "description": "Alerting settings. Detection and the inbox need no configuration; sending an alert somewhere else does",
+      "additionalProperties": false,
+      "properties": {
+        "webhook": {
+          "$ref": "#/$defs/AlertWebhookConfig"
+        }
+      }
+    },
+    "AlertWebhookConfig": {
+      "type": "object",
+      "description": "Outbound alert receiver. An empty URL means delivery is off and no outbound request is made",
+      "additionalProperties": false,
+      "properties": {
+        "url": {
+          "type": "string",
+          "description": "Absolute http/https receiver URL, no userinfo; empty disables delivery",
+          "default": ""
+        },
+        "secret": {
+          "type": "string",
+          "description": "HMAC signing material held as keyring ciphertext (enc: prefix); never stored or served in plaintext",
+          "default": ""
         }
       }
     },

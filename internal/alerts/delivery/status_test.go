@@ -203,8 +203,8 @@ func TestNoReceiverConfiguredRecordsNothing(t *testing.T) {
 	}
 }
 
-// newTestWriter builds a started Notifier over cfg and returns the wrapped
-// store, stopping the notifier when the test ends.
+// newTestWriter installs cfg's receiver on a Manager and returns the wrapped
+// store, stopping the Manager when the test ends.
 func newTestWriter(
 	t *testing.T,
 	store delivery.Writer,
@@ -212,15 +212,11 @@ func newTestWriter(
 	cfg delivery.Config,
 ) delivery.Writer {
 	t.Helper()
-	cfg.Recorder = recorder
 	cfg.Logger = slog.New(slog.DiscardHandler)
-	notifier, err := delivery.New(cfg)
-	if err != nil {
-		t.Fatalf("New: %v", err)
-	}
-	notifier.Start()
-	t.Cleanup(func() { notifier.Stop(context.Background()) })
-	return delivery.WrapWriter(store, notifier)
+	manager := delivery.NewManager(recorder, cfg.Logger)
+	manager.Apply(cfg)
+	t.Cleanup(func() { manager.Stop(context.Background()) })
+	return delivery.WrapWriter(store, manager)
 }
 
 // The receiver is told about the alert, not about Seed's bookkeeping for the

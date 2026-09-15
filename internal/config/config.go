@@ -39,6 +39,7 @@ type Config struct {
 	Security         SecurityConfig         `json:"security"`
 	DHCP             DHCPConfig             `json:"dhcp"`
 	SNMP             SNMPConfig             `json:"snmp"`
+	Alerts           AlertsConfig           `json:"alerts"`
 	FABOptions       FABOptionsConfig       `json:"fabOptions"`
 	DisplayOptions   DisplayOptionsConfig   `json:"displayOptions"`
 	Logging          LoggingConfig          `json:"logging"`
@@ -105,6 +106,7 @@ func (c *Config) cloneFields() *Config {
 		Security:         c.Security,
 		DHCP:             c.DHCP,
 		SNMP:             c.SNMP,
+		Alerts:           c.Alerts,
 		FABOptions:       c.FABOptions,
 		DisplayOptions:   c.DisplayOptions,
 		Logging:          c.Logging,

@@ -11,8 +11,10 @@ import (
 	"context"
 	"fmt"
 
+	alertdelivery "github.com/MustardSeedNetworks/seed/internal/alerts/delivery"
 	"github.com/MustardSeedNetworks/seed/internal/config"
 	"github.com/MustardSeedNetworks/seed/internal/database"
+	"github.com/MustardSeedNetworks/seed/internal/logging"
 	"github.com/MustardSeedNetworks/seed/internal/settings/management"
 	"github.com/MustardSeedNetworks/seed/internal/settings/persistence"
 )
@@ -81,9 +83,88 @@ func (c settingsConfigSource) ProfileJSON() (string, error) {
 
 // NewSettingsManagement builds the settings-management use-case (ADR-0020,
 // WS-A2) from the live config and the on-disk config path. cfg and path are
-// fixed for the process lifetime.
-func NewSettingsManagement(cfg *config.Config, path string) *management.Service {
-	return management.NewService(managementStore{cfg: cfg, path: path})
+// fixed for the process lifetime. webhook resolves the running alert-delivery
+// Manager, which the service re-points after a write so a Settings edit takes
+// effect without a daemon restart (#2605). It is a getter rather than a value
+// because the Manager is built later than this service, when the database (its
+// delivery recorder) is up; nil, or a getter returning nil, means there is no
+// webhook to re-point.
+func NewSettingsManagement(
+	cfg *config.Config,
+	path string,
+	webhook func() *alertdelivery.Manager,
+) *management.Service {
+	keyring, err := cfg.CredentialKeyring()
+	if err != nil {
+		// The settings service refuses the webhook section without a keyring,
+		// which is the honest outcome: there is nowhere safe to put a secret.
+		logging.GetLogger().Error("credential keyring unavailable; "+
+			"the alert webhook secret cannot be stored", "error", err)
+		keyring = nil
+	}
+	var reconfig management.Reconfigurer
+	if webhook != nil {
+		reconfig = alertReconfigurer{manager: webhook, cfg: cfg}
+	}
+	return management.NewService(managementStore{cfg: cfg, path: path}, keyringOrNil(keyring), reconfig)
+}
+
+// keyringOrNil keeps a nil *config.Keyring from becoming a non-nil interface
+// holding a nil pointer, which would pass the service's nil check and then
+// panic on first use.
+func keyringOrNil(kr *config.Keyring) management.Encrypter {
+	if kr == nil {
+		return nil
+	}
+	return kr
+}
+
+// alertReconfigurer re-points the running alert webhook at what was just
+// written. It is the one place plaintext signing material exists outside the
+// operator's browser: decrypted here, handed to the notifier, never stored.
+type alertReconfigurer struct {
+	manager func() *alertdelivery.Manager
+	cfg     *config.Config
+}
+
+func (a alertReconfigurer) ReconfigureAlerts() {
+	if m := a.manager(); m != nil {
+		ApplyAlertWebhook(a.cfg, m)
+	}
+}
+
+// ApplyAlertWebhook points m at the receiver the config names. It is the one
+// place plaintext signing material exists outside the operator's browser:
+// decrypted here, handed to the notifier, never stored. Startup and every
+// later settings write both come through it, so there is one decision about
+// what a stored webhook means.
+func ApplyAlertWebhook(cfg *config.Config, m *alertdelivery.Manager) {
+	cfg.RLock()
+	webhook := cfg.Alerts.Webhook
+	cfg.RUnlock()
+
+	logger := logging.GetLogger()
+	if webhook.URL == "" {
+		m.Apply(alertdelivery.Config{})
+		return
+	}
+	secret := webhook.Secret
+	if config.IsEncrypted(secret) {
+		keyring, err := cfg.CredentialKeyring()
+		if err == nil {
+			secret, err = keyring.DecryptValue(webhook.Secret)
+		}
+		if err != nil {
+			// A secret this install cannot decrypt — an imported profile from
+			// another deployment, whose keyring is not this one — disables
+			// delivery rather than signing with ciphertext no receiver expects.
+			logger.Error("alert webhook secret could not be decrypted; "+
+				"delivery is off until it is set again", "error", err)
+			m.Apply(alertdelivery.Config{})
+			return
+		}
+	}
+	m.Apply(alertdelivery.Config{URL: webhook.URL, Secret: secret})
 }
 
 // managementStore implements management.Store over the live config, owning

@@ -3,6 +3,7 @@ package api
 import (
 	"net/http"
 
+	alertdelivery "github.com/MustardSeedNetworks/seed/internal/alerts/delivery"
 	"github.com/MustardSeedNetworks/seed/internal/app"
 	"github.com/MustardSeedNetworks/seed/internal/auth"
 	"github.com/MustardSeedNetworks/seed/internal/config"
@@ -156,7 +157,8 @@ func NewTestServerWithConfig(cfg *config.Config) *Server {
 	// wired, so reads return empty results and management/discovery report the
 	// adapter-absent states.
 	s.settingsStore = app.NewSettings(s.db, s.config)
-	s.settingsManagement = app.NewSettingsManagement(s.config, s.configPath)
+	s.settingsManagement = app.NewSettingsManagement(s.config, s.configPath,
+		func() *alertdelivery.Manager { return s.alertDelivery })
 	s.securitySettings = app.NewSecuritySettings(s.config, s.configPath, s.rogueDetector)
 	s.healthSettings = app.NewHealthSettings(
 		s.healthProbeRepo, s.rescheduleProbeEngine,
