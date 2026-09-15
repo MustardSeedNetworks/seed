@@ -36,50 +36,66 @@ make test
 make lint
 ```bash
 
-### Systemd Service Installation (Ubuntu/Linux)
+### Running as a service (Linux)
 
-For production or test deployments on Linux with systemd:
+There is no hand-rolled installer in this repository. A service install is the
+released package, which is the only layout the product is built and tested
+against: `/usr/bin/seed`, `/etc/seed`, `/var/lib/seed`, `/var/log/seed`, a
+system `seed` user, and the unit at `/usr/lib/systemd/system/seed.service`.
 
 ```bash
-# Build the binary
-cd ui && npm run build && cd ..
-go build -o seed ./cmd/seed
+# Ubuntu / Debian
+sudo apt-get install -y ./seed_<version>_<arch>.deb
 
-# Install as systemd service (requires root)
-sudo ./deploy/systemd/install.sh
+# Fedora / RHEL
+sudo dnf install ./seed-<version>-1.<arch>.rpm
 
 # Service management
 sudo systemctl status seed
-sudo systemctl stop seed
-sudo systemctl restart seed
-journalctl -u seed -f      # View logs
-```text
+journalctl -u seed -f
+```
 
-#### First-Boot Credential Retrieval
-
-The install script automatically generates and displays initial admin credentials. If you need to manually generate
-credentials (e.g., for headless deployments):
+Packages for every supported architecture are attached to each
+[release](https://github.com/MustardSeedNetworks/seed/releases). After
+installing, confirm the deployment with:
 
 ```bash
-# Generate credentials and display on stdout
-seed credentials
+./scripts/deploy-validate.sh <host>
+```
 
-# Generate credentials and save to secure file
-seed credentials -file /path/to/credentials.txt
+For day-to-day development, run the binary in the foreground instead — it uses
+your user's config and data directories and needs no root:
 
-# Output as JSON (for scripting)
-seed credentials -json
-```text
+```bash
+cd ui && npm run build && cd ..
+go build -o seed ./cmd/seed
+./seed serve
+```
 
-The credentials file is created with mode 0600 (owner read/write only). **Delete this file immediately after retrieving
-the password.**
+ICMP and Wi-Fi features need raw-socket privileges. Either run with `sudo`, or
+grant the capabilities the package grants:
+
+```bash
+sudo setcap cap_net_raw,cap_net_admin=+ep ./seed
+```
+
+#### First-boot setup
+
+There are no default credentials: the first visit to the web UI runs the setup
+wizard, which sets the admin password. To check whether a deployment still
+needs that wizard — useful on a headless host — run:
+
+```bash
+seed credentials          # status banner
+seed credentials --json   # machine-readable
+```
 
 #### Uninstall
 
 ```bash
-sudo ./deploy/systemd/uninstall.sh          # Keep configs
-sudo ./deploy/systemd/uninstall.sh --purge  # Remove everything
-```text
+sudo apt-get remove seed     # or: sudo apt-get purge seed
+sudo dnf remove seed
+```
 
 ## Development Workflow
 

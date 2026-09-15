@@ -252,7 +252,7 @@ seed --version
 
 ## Running as a Service (systemd)
 
-See [deploy/systemd](https://github.com/MustardSeedNetworks/seed/tree/main/deploy/systemd) for systemd service installation.
+The released `.deb` and `.rpm` install the unit, create the `seed` user and start the service; see [CONTRIBUTING.md](https://github.com/MustardSeedNetworks/seed/blob/main/CONTRIBUTING.md#running-as-a-service-linux).
 
 ## Firewall Configuration
 
