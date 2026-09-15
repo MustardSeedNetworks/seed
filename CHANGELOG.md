@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.214.49](https://github.com/MustardSeedNetworks/seed/compare/v0.214.48...v0.214.49) (2026-09-15)
+
+
+### Performance Improvements
+
+* **test:** migrate the test database once per package, not once per test ([#2615](https://github.com/MustardSeedNetworks/seed/issues/2615)) ([d6f0a12](https://github.com/MustardSeedNetworks/seed/commit/d6f0a12810643bd447de743a86d60a27be463ac2)), closes [#2614](https://github.com/MustardSeedNetworks/seed/issues/2614)
+
+
+### Documentation
+
+* **adr:** demote ADR-0013 Bluetooth live-scan capture to Proposed ([#2617](https://github.com/MustardSeedNetworks/seed/issues/2617)) ([08519b3](https://github.com/MustardSeedNetworks/seed/commit/08519b34fa8ed385693074c68bfc1eb2baeb9cbe)), closes [#2616](https://github.com/MustardSeedNetworks/seed/issues/2616)
+
 ## [0.214.48](https://github.com/MustardSeedNetworks/seed/compare/v0.214.47...v0.214.48) (2026-09-15)
 
 
