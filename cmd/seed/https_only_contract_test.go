@@ -36,12 +36,11 @@ func assertHTTPSOnlyServiceDefinition(t *testing.T, contents, command string) {
 }
 
 func TestPlatformServicesUseHTTPSOnlyEntrypoint(t *testing.T) {
+	// deploy/deb/seed.service is the only Linux unit: it is what the .deb and
+	// .rpm install. deploy/systemd/seed.service was a byte-identical copy that
+	// existed for the hand-rolled installer deleted in #2634.
 	t.Run("Linux DEB", func(t *testing.T) {
 		contents := readRepositoryFile(t, "deploy", "deb", "seed.service")
-		assertHTTPSOnlyServiceDefinition(t, contents, "/usr/bin/seed serve")
-	})
-	t.Run("Linux systemd", func(t *testing.T) {
-		contents := readRepositoryFile(t, "deploy", "systemd", "seed.service")
 		assertHTTPSOnlyServiceDefinition(t, contents, "/usr/bin/seed serve")
 	})
 	t.Run("macOS launchd", func(t *testing.T) {
