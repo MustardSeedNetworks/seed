@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.214.54](https://github.com/MustardSeedNetworks/seed/compare/v0.214.53...v0.214.54) (2026-09-15)
+
+
+### Bug Fixes
+
+* **deps:** update go dependencies ([#2662](https://github.com/MustardSeedNetworks/seed/issues/2662)) ([61734c8](https://github.com/MustardSeedNetworks/seed/commit/61734c8690b0d9dd4976f9fffb2b8c7dd2da7522))
+* **ui:** re-mint the CSRF token after a refresh, so a retry is not a logout ([#2661](https://github.com/MustardSeedNetworks/seed/issues/2661)) ([3bc335e](https://github.com/MustardSeedNetworks/seed/commit/3bc335e3708f9b1566b5cccd01802b20360ce6a7)), closes [#2633](https://github.com/MustardSeedNetworks/seed/issues/2633)
+
 ## [0.214.53](https://github.com/MustardSeedNetworks/seed/compare/v0.214.52...v0.214.53) (2026-09-15)
 
 
