@@ -68,14 +68,9 @@ func TestBGPFlapReachesTheReceiverNamingTheInterfaceThatCausedIt(t *testing.T) {
 	}))
 	defer srv.Close()
 
-	notifier, err := delivery.New(delivery.Config{
-		URL: srv.URL, Secret: signingKey, Logger: slog.New(slog.DiscardHandler),
-	})
-	if err != nil {
-		t.Fatalf("New: %v", err)
-	}
-	notifier.Start()
-	defer notifier.Stop(context.Background())
+	manager := delivery.NewManager(nil, slog.New(slog.DiscardHandler))
+	manager.Apply(delivery.Config{URL: srv.URL, Secret: signingKey})
+	defer manager.Stop(context.Background())
 
 	now := func() time.Time { return time.Date(2026, 9, 14, 12, 0, 0, 0, time.UTC) }
 	store := &recordingStore{}
@@ -84,7 +79,7 @@ func TestBGPFlapReachesTheReceiverNamingTheInterfaceThatCausedIt(t *testing.T) {
 	// order server.alertStore wires.
 	writer := delivery.WrapWriter(
 		correlation.WrapWriter(store, correlation.Config{Now: now}),
-		notifier,
+		manager,
 	)
 
 	p, err := pipeline.NewObservationPipeline(pipeline.ObservationConfig{

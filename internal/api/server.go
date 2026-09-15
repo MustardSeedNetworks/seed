@@ -221,7 +221,7 @@ type Server struct {
 	retentionEngine *retention.Engine
 
 	// alertDelivery is the outbound alert webhook (#368); nil unless configured.
-	alertDelivery *alertdelivery.Notifier
+	alertDelivery *alertdelivery.Manager
 
 	// anomalyCoord is the single, server-owned anomaly Coordinator every producer
 	// shares (ADR-0029): one engine over the merged catalog + the unified store.
@@ -442,7 +442,8 @@ func (s *Server) initTelemetryAndWiFiServices(cfg *config.Config) {
 // keep it under the funlen limit.
 func (s *Server) initSettingsUseCases() {
 	s.settingsStore = app.NewSettings(s.db, s.config)
-	s.settingsManagement = app.NewSettingsManagement(s.config, s.configPath)
+	s.settingsManagement = app.NewSettingsManagement(s.config, s.configPath,
+		func() *alertdelivery.Manager { return s.alertDelivery })
 	s.configBackups = backups.NewService(s.config, s.configPath)
 	s.securitySettings = app.NewSecuritySettings(s.config, s.configPath, s.rogueDetector)
 	s.profiles = app.NewProfiles(s.db, s.config, s.configPath)

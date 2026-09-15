@@ -17,31 +17,37 @@ type Writer interface {
 // delivery. Wrapping the store rather than each pipeline means every alert
 // Seed persists is delivered, including the ones a future pipeline writes.
 //
+// The decorator wraps the Manager, not a Notifier, and is installed whether or
+// not a receiver is configured: the receiver is an operator setting now
+// (#2605), so the chain has to outlive any particular one.
+//
 // An alert the store rejected is never delivered: the inbox is the record of
 // what happened, and a receiver must not learn about an alert an operator
 // cannot then find.
-func WrapWriter(store Writer, n *Notifier) Writer {
-	if n == nil {
+func WrapWriter(store Writer, m *Manager) Writer {
+	if m == nil {
 		return store
 	}
-	return &deliveringWriter{store: store, notifier: n}
+	return &deliveringWriter{store: store, manager: m}
 }
 
 type deliveringWriter struct {
-	store    Writer
-	notifier *Notifier
+	store   Writer
+	manager *Manager
 }
 
 func (w *deliveringWriter) Create(ctx context.Context, alert *alerts.Alert) error {
 	// Stamp the state before the insert, not after: one write, and the inbox
 	// never shows a row whose delivery state is missing rather than pending.
-	// The decorator only exists when a receiver is configured, so an alert an
-	// air-gapped install raised keeps the empty state that means "nobody ever
-	// tried to send this".
-	alert.DeliveryStatus = alerts.DeliveryPending
+	// The stamp is conditional on a receiver existing, so an alert raised while
+	// delivery is off keeps the empty state that means "nobody ever tried to
+	// send this" — the distinction the inbox reads.
+	if w.manager.Enabled() {
+		alert.DeliveryStatus = alerts.DeliveryPending
+	}
 	if err := w.store.Create(ctx, alert); err != nil {
 		return err
 	}
-	w.notifier.Deliver(ctx, alert)
+	w.manager.deliver(ctx, alert)
 	return nil
 }

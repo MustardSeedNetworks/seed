@@ -1,36 +1,33 @@
 package api
 
 // Outbound alert delivery (#368) — the one transport Seed has for sending an
-// alert somewhere else. It is opt-in by environment, the same bring-your-own
-// shape as the Wi-Fi monitor interface: SEED_ALERT_WEBHOOK_URL names the
-// receiver and SEED_ALERT_WEBHOOK_SECRET is the HMAC material it verifies with.
+// alert somewhere else. It is opt-in: an operator names a receiver in Settings
+// and Seed signs every alert it POSTs there.
 //
-// Unset means silent. Nothing is constructed, no goroutine runs, and no request
-// is made, so an air-gapped deployment loses a feature rather than function.
+// No receiver configured means silent. No worker runs and no request is made,
+// so an air-gapped deployment loses a feature rather than function.
 //
-// The secret is read from the environment and never written to the config file:
-// the daemon's environment is operator-owned, and a signing key that round-trips
-// through config.json would be readable wherever that file is backed up.
+// The signing material is never stored in plaintext. It reaches config.json
+// only as keyring ciphertext (ADR-0015, the `enc:` prefix), which answers the
+// objection the environment-variable version of this file recorded — that a
+// key round-tripping through config.json would be readable wherever that file
+// is backed up. It is decrypted once, in the composition root, on its way to
+// the notifier (#2605).
 
 import (
 	"log/slog"
-	"os"
 
 	alertcorrelation "github.com/MustardSeedNetworks/seed/internal/alerts/correlation"
 	alertdelivery "github.com/MustardSeedNetworks/seed/internal/alerts/delivery"
+	"github.com/MustardSeedNetworks/seed/internal/app"
 	"github.com/MustardSeedNetworks/seed/internal/database"
 )
 
-// Environment variables that configure the outbound alert webhook.
-const (
-	alertWebhookURLEnv = "SEED_ALERT_WEBHOOK_URL"
-	alertWebhookKeyEnv = "SEED_ALERT_WEBHOOK_SECRET"
-)
-
 // alertStore returns the writer the alert pipelines emit through: the alert
-// repository, wrapped in the webhook decorator when a receiver is configured.
-// Wrapping the store rather than each pipeline means a pipeline added later
-// delivers without being taught to.
+// repository, wrapped in the webhook decorator. Wrapping the store rather than
+// each pipeline means a pipeline added later delivers without being taught to,
+// and wrapping the delivery Manager rather than a notifier means the receiver
+// behind it can be changed from Settings without rebuilding the chain.
 func (s *Server) alertStore(db *database.DB, logger *slog.Logger) alertdelivery.Writer {
 	// Correlation sits inside delivery: it annotates the alert with the id of
 	// the earlier alert that probably caused it, and it must do so before the
@@ -39,43 +36,25 @@ func (s *Server) alertStore(db *database.DB, logger *slog.Logger) alertdelivery.
 	// — the annotation is worth having whether or not a receiver is
 	// configured, and with no webhook this is the whole of it.
 	store := alertcorrelation.WrapWriter(db.Alerts(), alertcorrelation.Config{})
-	if n := s.initAlertDelivery(db.Alerts(), logger); n != nil {
-		return alertdelivery.WrapWriter(store, n)
-	}
-	return store
+	return alertdelivery.WrapWriter(store, s.initAlertDelivery(db.Alerts(), logger))
 }
 
-// initAlertDelivery builds the webhook notifier when the operator configured
-// one, and returns nil otherwise. A URL that is set but unusable is logged at
-// error level rather than made fatal: a webhook that cannot be built is a lost
-// feature, and refusing to start would turn a typo in an optional integration
-// into an outage of the diagnostics the operator actually installed Seed for.
+// initAlertDelivery builds the delivery Manager and points it at the
+// configured receiver, if there is one. The Manager exists either way: it is
+// the indirection a later settings write re-points, and with no receiver it
+// stores the alert and sends nothing.
 func (s *Server) initAlertDelivery(
 	recorder alertdelivery.Recorder,
 	logger *slog.Logger,
-) *alertdelivery.Notifier {
-	receiver := os.Getenv(alertWebhookURLEnv)
-	if receiver == "" {
-		return nil
+) *alertdelivery.Manager {
+	manager := alertdelivery.NewManager(recorder, logger)
+	s.alertDelivery = manager
+	// Point it at what the config already says, so a receiver configured in a
+	// previous session is live from the first alert rather than from the first
+	// settings write. A Server built without a config — the hand-assembled one
+	// several internal tests use — has no stored receiver to apply.
+	if s.config != nil {
+		app.ApplyAlertWebhook(s.config, manager)
 	}
-
-	notifier, err := alertdelivery.New(alertdelivery.Config{
-		URL:    receiver,
-		Secret: os.Getenv(alertWebhookKeyEnv),
-		// The alert repository is the recorder: each delivery's outcome is
-		// written back onto the alert it was for, so an operator reading the
-		// inbox sees a receiver that stopped accepting POSTs (#368).
-		Recorder: recorder,
-		Logger:   logger,
-	})
-	if err != nil {
-		logger.Error("alert webhook not configured; alerts will not be delivered",
-			"error", err, "url_env", alertWebhookURLEnv, "key_env", alertWebhookKeyEnv)
-		return nil
-	}
-
-	notifier.Start()
-	s.alertDelivery = notifier
-	logger.Info("alert webhook configured", "endpoint", notifier.Endpoint())
-	return notifier
+	return manager
 }

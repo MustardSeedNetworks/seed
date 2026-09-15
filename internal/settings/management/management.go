@@ -19,9 +19,25 @@ var (
 	// settings token (optimistic concurrency, HTTP 412).
 	ErrConflict = errors.New("management: settings ETag mismatch")
 	// ErrValidation is returned when one or more apply helpers reject the
-	// update payload (HTTP 400).
+	// update payload (HTTP 400). Match it with [errors.Is]; the reason an
+	// operator needs is on the ValidationError that wraps it.
 	ErrValidation = errors.New("management: invalid update fields")
 )
+
+// ValidationError carries the apply helpers' own reasons out to the transport,
+// which shows them. The generic "check the server logs" this replaces was a
+// consequence of the reasons being discarded here, not a decision to withhold
+// them: they name a field and never a value ("alerts.webhook.url scheme \"ftp\"
+// is not http or https"), which is what an operator needs to fix the input.
+type ValidationError struct{ Reason error }
+
+func (e ValidationError) Error() string { return e.Reason.Error() }
+
+// Unwrap exposes the joined helper errors.
+func (e ValidationError) Unwrap() error { return e.Reason }
+
+// Is makes every existing [errors.Is](err, ErrValidation) call keep working.
+func (e ValidationError) Is(target error) bool { return target == ErrValidation }
 
 // Store reads and persists the main application settings. Read runs fn under
 // the config read-lock; Write runs fn under the write-lock, then saves to
@@ -35,14 +51,33 @@ type Store interface {
 	Write(fn func(*config.Config) error) error
 }
 
+// Reconfigurer re-points a running component at settings that have just been
+// written, so a Settings edit takes effect without a daemon restart (#2605).
+// Today one component needs it: the outbound alert webhook.
+//
+// It takes no argument and returns none. The implementation reads the live
+// config it already holds, so the component is re-pointed with exactly what
+// was persisted — including a secret this write did not change — and a
+// receiver it cannot build is a lost optional integration it logs, never an
+// error that would suggest the settings were not saved. They were.
+type Reconfigurer interface {
+	ReconfigureAlerts()
+}
+
 // Service is the main-settings application service.
 type Service struct {
-	store Store
+	store    Store
+	encrypt  Encrypter
+	reconfig Reconfigurer
 }
 
 // NewService builds the settings management service over its Store port.
-func NewService(store Store) *Service {
-	return &Service{store: store}
+// encrypt is the keyring seam the alert-webhook secret is stored through;
+// reconfig re-points the webhook after a write. Both may be nil in a
+// composition that has neither — the settings that need them are then refused
+// rather than half-applied.
+func NewService(store Store, encrypt Encrypter, reconfig Reconfigurer) *Service {
+	return &Service{store: store, encrypt: encrypt, reconfig: reconfig}
 }
 
 // Get returns the current settings map and the ETag header value. The map
@@ -78,6 +113,7 @@ func (s *Service) Get() (map[string]any, string) {
 				"direction": cfg.Iperf.Direction, "duration": cfg.Iperf.Duration,
 				"serverPort": cfg.Iperf.ServerPort, "enableServer": cfg.Iperf.EnableServer,
 			},
+			"alerts":       buildAlertSettings(cfg),
 			"cardSettings": buildCardSettings(),
 			"displayOptions": map[string]any{
 				"showPublicIP": cfg.DisplayOptions.ShowPublicIP,
@@ -93,6 +129,18 @@ func (s *Service) Get() (map[string]any, string) {
 // non-empty it is compared to the current ETag; a mismatch returns ErrConflict.
 // A type error in any apply helper returns ErrValidation.
 func (s *Service) Update(updates map[string]any, ifMatch string) error {
+	if err := s.write(updates, ifMatch); err != nil {
+		return err
+	}
+	s.reconfigure()
+	return nil
+}
+
+// write is Update's compare-and-apply half, split out so the reconfigure that
+// follows it runs after the config lock is released: re-pointing the webhook
+// stops the previous receiver, which waits for an in-flight HTTP attempt, and
+// no settings write may hold the config lock for a receiver's timeout.
+func (s *Service) write(updates map[string]any, ifMatch string) error {
 	return s.store.Write(func(cfg *config.Config) error {
 		// Compare-and-apply is atomic under the write lock: a concurrent writer
 		// cannot slip between the ETag check and the mutations below.
@@ -119,12 +167,35 @@ func (s *Service) Update(updates map[string]any, ifMatch string) error {
 		if err := applyDisplayOptionsUpdates(updates, cfg); err != nil {
 			applyErrors = append(applyErrors, err)
 		}
+		if err := s.applyAlerts(updates, cfg); err != nil {
+			applyErrors = append(applyErrors, err)
+		}
 
 		if len(applyErrors) > 0 {
-			return ErrValidation
+			return ValidationError{Reason: errors.Join(applyErrors...)}
 		}
 		return nil
 	})
+}
+
+// applyAlerts applies the alert-webhook section. Without an encrypter there is
+// nowhere safe to put the signing material, so the section is refused rather
+// than written in plaintext.
+func (s *Service) applyAlerts(updates map[string]any, cfg *config.Config) error {
+	if _, present := updates["alerts"]; !present {
+		return nil
+	}
+	if s.encrypt == nil {
+		return errors.New("alerts: no keyring is available to store the webhook secret")
+	}
+	return applyAlertsUpdates(updates, cfg, s.encrypt)
+}
+
+// reconfigure tells the running webhook to re-read what was just persisted.
+func (s *Service) reconfigure() {
+	if s.reconfig != nil {
+		s.reconfig.ReconfigureAlerts()
+	}
 }
 
 // ETag returns the current settings concurrency token (the value the settings

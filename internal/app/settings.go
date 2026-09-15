@@ -11,8 +11,10 @@ import (
 	"context"
 	"fmt"
 
+	alertdelivery "github.com/MustardSeedNetworks/seed/internal/alerts/delivery"
 	"github.com/MustardSeedNetworks/seed/internal/config"
 	"github.com/MustardSeedNetworks/seed/internal/database"
+	"github.com/MustardSeedNetworks/seed/internal/logging"
 	"github.com/MustardSeedNetworks/seed/internal/settings/management"
 	"github.com/MustardSeedNetworks/seed/internal/settings/persistence"
 )
@@ -81,9 +83,87 @@ func (c settingsConfigSource) ProfileJSON() (string, error) {
 
 // NewSettingsManagement builds the settings-management use-case (ADR-0020,
 // WS-A2) from the live config and the on-disk config path. cfg and path are
-// fixed for the process lifetime.
-func NewSettingsManagement(cfg *config.Config, path string) *management.Service {
-	return management.NewService(managementStore{cfg: cfg, path: path})
+// fixed for the process lifetime. webhook resolves the running alert-delivery
+// Manager, which the service re-points after a write so a Settings edit takes
+// effect without a daemon restart (#2605). It is a getter rather than a value
+// because the Manager is built later than this service, when the database (its
+// delivery recorder) is up; nil, or a getter returning nil, means there is no
+// webhook to re-point.
+func NewSettingsManagement(
+	cfg *config.Config,
+	path string,
+	webhook func() *alertdelivery.Manager,
+) *management.Service {
+	var reconfig management.Reconfigurer
+	if webhook != nil {
+		reconfig = alertReconfigurer{manager: webhook, cfg: cfg}
+	}
+	return management.NewService(managementStore{cfg: cfg, path: path}, configKeyring{cfg: cfg}, reconfig)
+}
+
+// configKeyring encrypts through whatever keyring the config holds *at the
+// time of the write*, rather than capturing one at construction. Capturing
+// would be a latent bug wherever this service is built before
+// InitCredentialKeyring runs: ensureKeyring installs an ephemeral keyring on
+// first use, init later replaces it, and every secret written in between would
+// be encrypted with a DEK that dies at restart — decrypting to an error on the
+// next boot, which for the webhook means delivery silently off.
+type configKeyring struct{ cfg *config.Config }
+
+func (k configKeyring) EncryptValue(plaintext string) (string, error) {
+	keyring, err := k.cfg.CredentialKeyring()
+	if err != nil {
+		return "", err
+	}
+	return keyring.EncryptValue(plaintext)
+}
+
+// alertReconfigurer re-points the running alert webhook at what was just
+// written. It is the one place plaintext signing material exists outside the
+// operator's browser: decrypted here, handed to the notifier, never stored.
+type alertReconfigurer struct {
+	manager func() *alertdelivery.Manager
+	cfg     *config.Config
+}
+
+func (a alertReconfigurer) ReconfigureAlerts() {
+	if m := a.manager(); m != nil {
+		ApplyAlertWebhook(a.cfg, m)
+	}
+}
+
+// ApplyAlertWebhook points m at the receiver the config names. It is the one
+// place plaintext signing material exists outside the operator's browser:
+// decrypted here, handed to the notifier, never stored. Startup and every
+// later settings write both come through it, so there is one decision about
+// what a stored webhook means.
+func ApplyAlertWebhook(cfg *config.Config, m *alertdelivery.Manager) {
+	cfg.RLock()
+	webhook := cfg.Alerts.Webhook
+	cfg.RUnlock()
+
+	logger := logging.GetLogger()
+	if webhook.URL == "" {
+		m.Apply(alertdelivery.Config{})
+		return
+	}
+	secret := webhook.Secret
+	if config.IsEncrypted(secret) {
+		keyring, err := cfg.CredentialKeyring()
+		if err == nil {
+			secret, err = keyring.DecryptValue(webhook.Secret)
+		}
+		if err != nil {
+			// A secret this install cannot decrypt — an imported profile from
+			// another deployment, whose keyring is not this one — disables
+			// delivery rather than signing with ciphertext no receiver expects.
+			logger.Error("alert webhook secret could not be decrypted; "+
+				"delivery is off until it is set again", "error", err)
+			m.Apply(alertdelivery.Config{})
+			return
+		}
+	}
+	m.Apply(alertdelivery.Config{URL: webhook.URL, Secret: secret})
 }
 
 // managementStore implements management.Store over the live config, owning

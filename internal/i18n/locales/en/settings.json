@@ -13,7 +13,8 @@
     "thresholds": "Thresholds",
     "cableTest": "Cable Test",
     "link": "Link",
-    "vulnerability": "Vulnerability Scanning"
+    "vulnerability": "Vulnerability Scanning",
+    "alertDelivery": "Alert Delivery"
   },
   "common": {
     "add": "+ Add",
@@ -544,5 +545,16 @@
     "save": "Save",
     "saving": "Saving...",
     "readOnly": "Read-only — operator role required to change the audit"
+  },
+  "alertDelivery": {
+    "description": "Send every alert Seed raises to a receiver of your own — a Slack or Teams incoming webhook, a SIEM, or anything that accepts a signed JSON POST. Leave the URL empty to send nothing.",
+    "save": "Save receiver",
+    "secret": "Signing secret",
+    "secretHelp": "Seed signs each request with this so the receiver can tell the alert came from Seed. It is stored encrypted and never shown again.",
+    "secretPlaceholder": "Shared signing material",
+    "secretStored": "A secret is stored; type to replace it",
+    "url": "Receiver URL",
+    "urlHelp": "An absolute http or https address. Clearing it turns delivery off; no request leaves the host.",
+    "urlPlaceholder": "https://hooks.example.com/services/T000/B000/XXXX"
   }
 }

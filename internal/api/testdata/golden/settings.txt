@@ -1,6 +1,12 @@
 status: 200
 body:
 {
+  "alerts": {
+    "webhook": {
+      "secretSet": false,
+      "url": ""
+    }
+  },
   "cardSettings": {
     "dns": {
       "autoRunOnLink": true,

@@ -13,7 +13,8 @@
     "thresholds": "Umbrales",
     "cableTest": "Prueba de cable",
     "link": "Enlace",
-    "vulnerability": "Escaneo de vulnerabilidades"
+    "vulnerability": "Escaneo de vulnerabilidades",
+    "alertDelivery": "Envío de alertas"
   },
   "common": {
     "add": "+ Agregar",
@@ -544,5 +545,16 @@
     "save": "Guardar",
     "saving": "Guardando...",
     "readOnly": "Solo lectura — se requiere el rol de operador para cambiar la auditoría"
+  },
+  "alertDelivery": {
+    "description": "Envíe cada alerta que Seed genere a un receptor propio: un webhook entrante de Slack o Teams, un SIEM, o cualquier destino que acepte un POST JSON firmado. Deje la URL vacía para no enviar nada.",
+    "save": "Guardar receptor",
+    "secret": "Secreto de firma",
+    "secretHelp": "Seed firma cada petición con esto para que el receptor sepa que la alerta viene de Seed. Se guarda cifrado y no vuelve a mostrarse.",
+    "secretPlaceholder": "Material de firma compartido",
+    "secretStored": "Hay un secreto guardado; escriba para reemplazarlo",
+    "url": "URL del receptor",
+    "urlHelp": "Una dirección http o https absoluta. Al borrarla se desactiva el envío y no sale ninguna petición del equipo.",
+    "urlPlaceholder": "https://hooks.example.com/services/T000/B000/XXXX"
   }
 }

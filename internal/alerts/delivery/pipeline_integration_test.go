@@ -117,16 +117,9 @@ func TestThresholdBreachReachesAnExternalReceiver(t *testing.T) {
 	}))
 	defer srv.Close()
 
-	notifier, err := delivery.New(delivery.Config{
-		URL:    srv.URL,
-		Secret: signingKey,
-		Logger: slog.New(slog.DiscardHandler),
-	})
-	if err != nil {
-		t.Fatalf("New: %v", err)
-	}
-	notifier.Start()
-	defer notifier.Stop(context.Background())
+	manager := delivery.NewManager(nil, slog.New(slog.DiscardHandler))
+	manager.Apply(delivery.Config{URL: srv.URL, Secret: signingKey})
+	defer manager.Stop(context.Background())
 
 	store := &recordingStore{}
 	now := func() time.Time { return time.Date(2026, 9, 14, 12, 0, 0, 0, time.UTC) }
@@ -136,7 +129,7 @@ func TestThresholdBreachReachesAnExternalReceiver(t *testing.T) {
 			storageObservation(now().Add(-time.Minute), 800), // 80% — under the threshold
 			storageObservation(now(), 970),                   // 97% — breach
 		}},
-		Alerts:   delivery.WrapWriter(store, notifier),
+		Alerts:   delivery.WrapWriter(store, manager),
 		Settings: &memorySettings{values: map[string]string{}},
 		Logger:   slog.New(slog.DiscardHandler),
 		Now:      now,

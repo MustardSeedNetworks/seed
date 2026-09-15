@@ -54,6 +54,7 @@ import type {
 import { RequireAdmin } from '../ui/RequireRole';
 import { SettingsDrawerFooter } from './SettingsDrawerFooter';
 import { SettingsDrawerNetworkSection } from './SettingsDrawerNetworkSection';
+import { AlertDeliverySettings } from './sections/AlertDeliverySettings';
 import { ApiTokensSettings } from './sections/ApiTokensSettings';
 import { AppearanceSettings } from './sections/AppearanceSettings';
 import { CableTestSettings } from './sections/CableTestSettings';
@@ -651,6 +652,8 @@ export const SettingsDrawer: React.MemoExoticComponent<
             setSettings={setVulnSettings}
             status={vulnStatus}
           />
+
+          <AlertDeliverySettings />
 
           <ThresholdsSettings
             thresholds={thresholds}

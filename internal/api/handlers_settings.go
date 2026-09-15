@@ -72,9 +72,13 @@ func (s *Server) updateSettings(w http.ResponseWriter, r *http.Request) {
 			ErrCodeConflict, localizer.T("errors.settings.conflict"), "")
 		return
 	case errors.Is(err, management.ErrValidation):
+		// The service's reasons name a field and never a value, so they go to
+		// the operator rather than only to the log: a setting refused without
+		// a reason is indistinguishable from one that was accepted and does
+		// nothing, which is the failure #2606 had to make visible elsewhere.
 		logger.WarnContext(ctx, "Invalid settings format", "error", err)
 		sendErrorResponseWithDetails(w, logger, http.StatusBadRequest,
-			ErrCodeValidation, "Invalid settings format. Check server logs for details.", "")
+			ErrCodeValidation, err.Error(), "")
 		return
 	case err != nil:
 		logger.ErrorContext(ctx, "Failed to save config", "error", err)
