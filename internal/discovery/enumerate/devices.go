@@ -236,6 +236,12 @@ func (d *DeviceDiscovery) ReadNeighbourCache() ([]*ARPEntry, error) {
 	return d.arpScanner.ReadNeighbourCache()
 }
 
+// PingSweepUnavailable reports why the last sweep could not open an ICMP socket,
+// or "" when it could (seed#2629).
+func (d *DeviceDiscovery) PingSweepUnavailable() string {
+	return d.arpScanner.PingSweepUnavailable()
+}
+
 // GetTargetNetworks returns the configured target networks.
 func (d *DeviceDiscovery) GetTargetNetworks() []string {
 	return d.arpScanner.GetTargetNetworks()

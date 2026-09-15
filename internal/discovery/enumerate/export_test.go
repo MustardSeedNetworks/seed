@@ -119,15 +119,27 @@ type ICMPPingerTestAccessor struct {
 	Pinger *ICMPPinger
 }
 
-// NewICMPPingerWithoutSocket builds a pinger with no connection, for testing
-// the logic that never reaches one.
+// NewICMPPingerWithoutSocket builds a raw-socket pinger with no connection, for
+// testing the logic that never reaches one.
 func NewICMPPingerWithoutSocket(id int) *ICMPPingerTestAccessor {
+	return newPingerWithoutSocket(id, true)
+}
+
+// NewDatagramICMPPingerWithoutSocket is the same for the unprivileged datagram
+// socket, whose reply match differs: the kernel assigns the echo ID, so ours is
+// not in the reply to compare against (seed#2629).
+func NewDatagramICMPPingerWithoutSocket(id int) *ICMPPingerTestAccessor {
+	return newPingerWithoutSocket(id, false)
+}
+
+func newPingerWithoutSocket(id int, privileged bool) *ICMPPingerTestAccessor {
 	return &ICMPPingerTestAccessor{
 		Pinger: &ICMPPinger{
-			timeout: time.Second,
-			id:      id,
-			pending: make(map[int]*pendingPing),
-			stopCh:  make(chan struct{}),
+			timeout:    time.Second,
+			id:         id,
+			privileged: privileged,
+			pending:    make(map[int]*pendingPing),
+			stopCh:     make(chan struct{}),
 		},
 	}
 }

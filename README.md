@@ -64,7 +64,8 @@ and security posture in real time. It runs on Linux, macOS and Windows.
 
 See [HARDWARE.md](HARDWARE.md) for the full compatibility matrix.
 
-The Seed needs raw-socket access for diagnostics. On Linux either:
+The Seed needs raw-socket access for ARP scanning and packet capture. On Linux
+either:
 
 ```bash
 # run as root
@@ -74,6 +75,13 @@ sudo ./seed
 sudo setcap cap_net_raw,cap_net_admin=+ep ./seed
 ./seed
 ```
+
+The ICMP ping sweep is the exception: where a raw socket is refused it falls back
+to the unprivileged datagram ICMP socket, which macOS always allows and Linux
+allows for any process whose group is inside `net.ipv4.ping_group_range`. Where
+neither is available the sweep does not run, and the discovery status stops
+listing `icmp` as an active method rather than reporting a scan that never
+happened.
 
 ### Install + run
 

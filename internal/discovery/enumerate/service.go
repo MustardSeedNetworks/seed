@@ -481,6 +481,15 @@ func (s *Service) GetStatus() *ServiceStatus {
 }
 
 // getActiveMethods returns a list of currently active discovery methods.
+// pingSweepAvailable reports whether the last sweep managed to open an ICMP
+// socket. A Service with no collector has not swept anything either.
+func (s *Service) pingSweepAvailable() bool {
+	if s.deviceDiscovery == nil {
+		return false
+	}
+	return s.deviceDiscovery.PingSweepUnavailable() == ""
+}
+
 func (s *Service) getActiveMethods() []string {
 	opts := s.cfg.NetworkDiscovery.Options
 	methods := []string{}
@@ -503,7 +512,11 @@ func (s *Service) getActiveMethods() []string {
 	if opts.ARPScan {
 		methods = append(methods, "arp")
 	}
-	if opts.ICMPScan {
+	// Configuration alone is not evidence: where the last sweep could not open
+	// an ICMP socket it reached no host and no target network, so reporting the
+	// method as active would tell the operator the opposite of what happened
+	// (seed#2629).
+	if opts.ICMPScan && s.pingSweepAvailable() {
 		methods = append(methods, "icmp")
 	}
 	if opts.PortScan.Enabled {
