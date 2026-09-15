@@ -661,10 +661,10 @@ type flushCountingWriter struct {
 func (w *flushCountingWriter) Flush() { w.flushes++ }
 
 // TestLoggingMiddlewarePassesFlushThrough pins #2553. Every SSE handler asks
-// `w.(http.Flusher)` and refuses the stream when the assertion fails. The
+// `w.([http.Flusher])` and refuses the stream when the assertion fails. The
 // logging middleware wraps every request, and a wrapper only satisfies the
-// interfaces it declares — embedding http.ResponseWriter does not carry
-// http.Flusher across — so without Flush the wrapped writer failed that
+// interfaces it declares — embedding [http.ResponseWriter] does not carry
+// [http.Flusher] across — so without Flush the wrapped writer failed that
 // assertion and each stream answered 500 instead of opening. This covers all
 // three SSE endpoints (/events, /jobs/events, /discovery/engine/events) at the
 // one place the defect lived.

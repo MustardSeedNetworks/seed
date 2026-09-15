@@ -40,13 +40,13 @@ func sseServer(t *testing.T) *Server {
 }
 
 // TestJobsEventsStreams pins #2553 (reopened). The SSE handlers ask
-// `w.(http.Flusher)`, and the logging middleware's responseWriter wrapped every
+// `w.([http.Flusher])`, and the logging middleware's responseWriter wrapped every
 // request without implementing it, so the assertion failed and each stream
 // answered 500 "Streaming unsupported" instead of opening.
 //
 // The test runs the whole chain through Handler() and over a real listener,
 // because the defect lives in the chain rather than in the handler: a
-// httptest.ResponseRecorder IS an http.Flusher, so a handler-level test that
+// [httptest.ResponseRecorder] IS an [http.Flusher], so a handler-level test that
 // calls handleJobsEvents directly passes with the defect fully present.
 func TestJobsEventsStreams(t *testing.T) {
 	s := sseServer(t)
@@ -80,9 +80,12 @@ func TestJobsEventsStreams(t *testing.T) {
 		t.Errorf("Content-Type = %q, want text/event-stream", ct)
 	}
 
-	// The ready comment is written and flushed before the pump blocks. Reading
-	// it is the actual proof: without a working Flush it would sit in the
-	// bufio writer until the handler returned, which for a stream is never.
+	// The ready comment is written and flushed before the pump blocks, so
+	// reading it proves the flush reached the wire rather than merely that the
+	// assertion passed. A Flush that exists but forwards nothing fails this
+	// test too: net/http holds the response in its own write buffer until the
+	// handler returns, which for a stream is never, so the request above times
+	// out before a single header arrives.
 	line, err := bufio.NewReader(resp.Body).ReadString('\n')
 	if err != nil {
 		t.Fatalf("read the first frame: %v", err)
