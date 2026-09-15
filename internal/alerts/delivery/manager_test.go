@@ -6,6 +6,8 @@ import (
 	"log/slog"
 	"net/http"
 	"net/http/httptest"
+	"runtime"
+	"strings"
 	"sync/atomic"
 	"testing"
 	"time"
@@ -134,5 +136,76 @@ func TestManagerApplyUnusableConfigDisablesDelivery(t *testing.T) {
 	}
 	if m.Enabled() {
 		t.Fatal("manager reports enabled after an unusable Apply")
+	}
+}
+
+func TestManagerApplyLeavesNoWorkerBehind(t *testing.T) {
+	srv, _ := countingReceiver(t)
+	m := delivery.NewManager(nil, quietLogger())
+	t.Cleanup(func() { m.Stop(context.Background()) })
+
+	// One receiver's worker, as the baseline. Re-pointing repeatedly must not
+	// add to it: a settings write that left the old worker running would leak
+	// a goroutine per edit, and the replaced receiver would still be holding a
+	// connection to an endpoint the operator has moved away from.
+	m.Apply(delivery.Config{URL: srv.URL, Secret: "s3cret"})
+	baseline := runtime.NumGoroutine()
+
+	for range 8 {
+		m.Apply(delivery.Config{URL: srv.URL, Secret: "s3cret"})
+	}
+	if !waitFor(t, func() bool { return runtime.NumGoroutine() <= baseline }) {
+		t.Fatalf("goroutines grew from %d to %d over eight re-points; the replaced "+
+			"receiver is not being stopped", baseline, runtime.NumGoroutine())
+	}
+}
+
+func TestManagerDisablingDeliveryIsNotAnError(t *testing.T) {
+	var logged strings.Builder
+	logger := slog.New(slog.NewTextHandler(&logged, &slog.HandlerOptions{Level: slog.LevelError}))
+	m := delivery.NewManager(nil, logger)
+	t.Cleanup(func() { m.Stop(context.Background()) })
+
+	// Turning delivery off is an operator's choice, not a misconfiguration. An
+	// empty receiver must not reach New, whose job is to refuse an empty URL:
+	// the operator would find an error in the journal for doing what the UI
+	// invited them to do.
+	m.Apply(delivery.Config{})
+	if logged.Len() != 0 {
+		t.Fatalf("clearing the receiver logged an error: %s", logged.String())
+	}
+	if m.Enabled() {
+		t.Fatal("manager reports enabled after an empty Apply")
+	}
+}
+
+func TestStoppedNotifierRefusesRatherThanLeavingAlertsPending(t *testing.T) {
+	srv, hits := countingReceiver(t)
+	recorder := &recordingRecorder{}
+	n, err := delivery.New(delivery.Config{
+		URL: srv.URL, Secret: "s3cret", Recorder: recorder, Logger: quietLogger(),
+	})
+	if err != nil {
+		t.Fatalf("New: %v", err)
+	}
+	n.Start()
+	n.Stop(context.Background())
+
+	// The Manager replaces a Notifier when the operator re-points the receiver,
+	// so an alert can reach one whose worker has already gone. Enqueuing it
+	// would leave the row reading "pending" for the life of the process,
+	// because nothing will ever read that channel again.
+	if n.Deliver(context.Background(), &alerts.Alert{ID: 7}) {
+		t.Error("a stopped notifier accepted an alert it can never send")
+	}
+	last, ok := recorder.last()
+	if !ok {
+		t.Fatal("a stopped notifier recorded no outcome; the alert would read pending forever")
+	}
+	if last.status != alerts.DeliveryFailed {
+		t.Errorf("recorded status %q, want %q", last.status, alerts.DeliveryFailed)
+	}
+	if got := hits.Load(); got != 0 {
+		t.Errorf("receiver saw %d requests from a stopped notifier", got)
 	}
 }
