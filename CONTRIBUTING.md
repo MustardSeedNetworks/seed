@@ -38,9 +38,9 @@ make lint
 
 ### Running as a service (Linux)
 
-There is no hand-rolled installer in this repository. A service install is the
-released package, which is the only layout the product is built and tested
-against: `/usr/bin/seed`, `/etc/seed`, `/var/lib/seed`, `/var/log/seed`, a
+There is no hand-rolled systemd installer in this repository. On Linux a service
+install is the released package, which is the only layout the product is built
+and tested against: `/usr/bin/seed`, `/etc/seed`, `/var/lib/seed`, `/var/log/seed`, a
 system `seed` user, and the unit at `/usr/lib/systemd/system/seed.service`.
 
 ```bash
@@ -57,20 +57,27 @@ journalctl -u seed -f
 
 Packages for every supported architecture are attached to each
 [release](https://github.com/MustardSeedNetworks/seed/releases). After
-installing, confirm the deployment with:
+installing, confirm the deployment reports the version and commit you installed,
+and that its UI was embedded:
 
 ```bash
-./scripts/deploy-validate.sh <host>
+./scripts/deploy-validate.sh <expected-version> <expected-commit> [host] [port]
 ```
 
-For day-to-day development, run the binary in the foreground instead — it uses
-your user's config and data directories and needs no root:
+For day-to-day development, run the binary in the foreground instead. An
+unprivileged run that is not a systemd service resolves to the XDG user
+directories rather than `/etc/seed` and `/var/lib/seed`
+(`internal/paths/paths.go`, `detectActualMode`), so it needs no root and leaves
+a packaged install alone:
 
 ```bash
-cd ui && npm run build && cd ..
-go build -o seed ./cmd/seed
+make build   # builds the UI, embeds it, and stamps version/commit/uiBuildHash
 ./seed serve
 ```
+
+`make build` is the only build that embeds the frontend and injects the build
+metadata `/__version` reports; a bare `go build` produces a binary whose
+`uiBuildHash` is empty.
 
 ICMP and Wi-Fi features need raw-socket privileges. Either run with `sudo`, or
 grant the capabilities the package grants:
