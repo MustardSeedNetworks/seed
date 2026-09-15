@@ -130,7 +130,8 @@ func NewTester(thresholds Thresholds) *Tester {
 		stopCh:      make(chan struct{}),
 	}
 
-	// Try to create ICMP pinger (requires CAP_NET_RAW or root)
+	// Try to create ICMP pinger. Raw needs CAP_NET_RAW or root; the constructor
+	// falls back to the unprivileged datagram socket where it can (seed#2629).
 	pinger, err := enumerate.NewICMPPinger(t.pingTimeout)
 	if err == nil {
 		t.pinger = pinger

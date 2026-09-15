@@ -271,12 +271,14 @@ func (s *ARPScanner) pingSweepChunk(ctx context.Context, subnet *net.IPNet) erro
 	if s.pinger == nil {
 		pinger, err := NewICMPPinger(time.Second)
 		if err != nil {
+			s.pingerErr = err
 			s.mu.Unlock()
 			logging.GetLogger().WarnContext(ctx, "Failed to create ICMP pinger", "error", err)
 			return err
 		}
 		s.pinger = pinger
 	}
+	s.pingerErr = nil
 	pinger := s.pinger // Copy reference under lock
 	s.mu.Unlock()
 

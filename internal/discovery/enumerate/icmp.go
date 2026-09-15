@@ -79,6 +79,11 @@ type ICMPPinger struct {
 	id      int
 	seq     uint32
 
+	// privileged records which socket the constructor got. A datagram socket
+	// has its echo ID rewritten by the kernel, so the reply match and the
+	// destination address type both depend on this.
+	privileged bool
+
 	// Pending pings tracked by sequence number
 	pending   map[int]*pendingPing
 	pendingMu sync.Mutex
@@ -118,7 +123,8 @@ func PoliteSweepConfig() *SweepConfig {
 	}
 }
 
-// NewICMPPinger creates a new ICMP pinger with raw socket.
+// NewICMPPinger creates a new ICMP pinger. It prefers a raw socket and falls
+// back to the unprivileged datagram socket where raw is refused (seed#2629).
 // Requires root privileges or CAP_NET_RAW capability on Linux.
 func NewICMPPinger(timeout time.Duration) (*ICMPPinger, error) {
 	if timeout == 0 {
@@ -132,10 +138,19 @@ func NewICMPPinger(timeout time.Duration) (*ICMPPinger, error) {
 		stopCh:  make(chan struct{}),
 	}
 
-	// Open privileged raw ICMP socket (requires root/CAP_NET_RAW)
+	// A raw socket needs root or CAP_NET_RAW. Where it is refused, fall back to
+	// the datagram ICMP socket, which is unprivileged on macOS and on any Linux
+	// host whose net.ipv4.ping_group_range admits this process (seed#2629).
+	// Without the fallback an unprivileged daemon sweeps nothing at all — and
+	// the target networks an operator configured are reached only by the sweep.
 	conn, err := icmp.ListenPacket("ip4:icmp", "0.0.0.0")
 	if err != nil {
-		return nil, fmt.Errorf("failed to open ICMP socket: %w", err)
+		rawErr := err
+		if conn, err = icmp.ListenPacket("udp4", "0.0.0.0"); err != nil {
+			return nil, fmt.Errorf("failed to open ICMP socket (raw: %w; datagram: %w)", rawErr, err)
+		}
+	} else {
+		p.privileged = true
 	}
 	p.conn = conn
 
@@ -188,6 +203,10 @@ func (p *ICMPPinger) Close() error {
 	}
 	return nil
 }
+
+// Privileged reports whether the pinger holds a raw ICMP socket. False means it
+// fell back to the unprivileged datagram socket (seed#2629).
+func (p *ICMPPinger) Privileged() bool { return p.privileged }
 
 // nextSeq returns the next sequence number.
 func (p *ICMPPinger) nextSeq() int {
@@ -243,7 +262,13 @@ func (p *ICMPPinger) extractEchoReply(data []byte) (*icmp.Echo, bool) {
 	}
 
 	echo, ok := rm.Body.(*icmp.Echo)
-	if !ok || echo.ID != p.id {
+	if !ok {
+		return nil, false
+	}
+	// A raw socket sees every process's replies, so the ID is what tells ours
+	// apart. A datagram socket is demultiplexed by the kernel, which also
+	// assigns the ID it sent — comparing it there rejects every real reply.
+	if p.privileged && echo.ID != p.id {
 		return nil, false
 	}
 
@@ -319,6 +344,15 @@ func (p *ICMPPinger) receiver() {
 	}
 }
 
+// destination returns the address type the pinger's socket accepts: a raw
+// socket writes to an IPAddr, a datagram socket to a UDPAddr (port unused).
+func (p *ICMPPinger) destination(ip net.IP) net.Addr {
+	if p.privileged {
+		return &net.IPAddr{IP: ip}
+	}
+	return &net.UDPAddr{IP: ip}
+}
+
 // Ping sends an ICMP echo request to the specified IP and waits for a reply.
 func (p *ICMPPinger) Ping(ctx context.Context, ipStr string) PingResult {
 	result := PingResult{
@@ -332,7 +366,7 @@ func (p *ICMPPinger) Ping(ctx context.Context, ipStr string) PingResult {
 		return result
 	}
 
-	dst := &net.IPAddr{IP: ip}
+	dst := p.destination(ip)
 	seq := p.nextSeq()
 
 	// Create result channel

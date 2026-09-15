@@ -120,7 +120,8 @@ type ARPScanner struct {
 	targetNetworks    []*net.IPNet          // Target networks to scan
 	pingResponders    []string              // IPs that responded to ping (for remote subnets)
 	pingResults       map[string]PingResult // Cached ping results with TTL info
-	pinger            *ICMPPinger           // Raw socket ICMP pinger
+	pinger            *ICMPPinger           // ICMP pinger (raw socket, or the datagram fallback)
+	pingerErr         error                 // Why the last sweep could not open a socket (seed#2629)
 	scanning          bool
 	lastScan          time.Time
 	maxHostsPerSubnet int // Configurable limit (0 = use default)
@@ -183,6 +184,20 @@ func (s *ARPScanner) SetTargetNetworks(cidrs []string) error {
 		s.targetNetworks = append(s.targetNetworks, subnet)
 	}
 	return nil
+}
+
+// PingSweepUnavailable reports why the last sweep could not probe anything, or
+// "" when it could (or has not run yet). A sweep that cannot open a socket
+// reaches no target network at all, so discovery must stop claiming ICMP as an
+// active method rather than leave the operator reading an empty result as an
+// empty network (seed#2629).
+func (s *ARPScanner) PingSweepUnavailable() string {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+	if s.pingerErr == nil {
+		return ""
+	}
+	return s.pingerErr.Error()
 }
 
 // GetTargetNetworks returns the configured target networks.

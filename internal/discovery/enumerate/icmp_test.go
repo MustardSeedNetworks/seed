@@ -127,6 +127,19 @@ func TestExtractEchoReplyAcceptsOnlyOurReplies(t *testing.T) {
 			t.Errorf("accepted %s", tc.name)
 		}
 	}
+
+	// seed#2629: on the unprivileged datagram socket the kernel assigns the echo
+	// ID, so the reply carries its ID and not ours. Filtering on ours there
+	// rejects every real reply and the sweep finds nothing; the kernel already
+	// demultiplexes that socket, so the sequence number is the whole match.
+	d := enumerate.NewDatagramICMPPingerWithoutSocket(ourID)
+	seq, accepted = d.ExtractEchoReplySeq(echoReply(t, ourID+1, 9, ipv4.ICMPTypeEchoReply))
+	if !accepted || seq != 9 {
+		t.Errorf("datagram reply with a kernel-assigned ID: seq=%d accepted=%v, want 9/true", seq, accepted)
+	}
+	if _, ok := d.ExtractEchoReplySeq(echoReply(t, ourID, 9, ipv4.ICMPTypeEcho)); ok {
+		t.Error("datagram mode accepted an echo request")
+	}
 }
 
 func TestCompletePendingPingRemovesExactlyOnce(t *testing.T) {
