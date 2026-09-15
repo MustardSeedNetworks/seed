@@ -240,3 +240,11 @@ orange slot between warning-yellow and critical-red; critical keeps `status-erro
 `WiFiAnomaliesCard` treats `error` as an elevated card status alongside `critical`. **Catalog growth is
 separate:** existing `Def` defaults are unchanged; assigning `Error` to specific failure modes is
 per-def authoring that lands with each source's catalog work, not in this mechanism slice.
+
+### Note 2026-09-14 — Survey left Seed
+
+Every mention of Survey above is historical. Wi-Fi survey and planning moved to
+Trellis (strategy reset, rule 4: Seed keeps Wi-Fi troubleshooting only); the survey API, UI, CLI help and the
+`survey_samples` table were removed from Seed (#1934, #1936, migration
+`00009_drop_survey_samples.sql`). Nothing here about Survey describes shipped
+Seed behaviour.

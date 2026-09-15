@@ -1,6 +1,6 @@
 # ADR-0019: Replace the forgeable rotor-cipher license key with Ed25519-signed tokens
 
-**Status:** Accepted — 2026-06-08
+**Status:** Accepted — 2026-06-08 · amended 2026-09-14 (implementation moved to `foundation`)
 **(Back-port of stem #409 / niac #802 to seed. seed is the third and final
 product to migrate; the cross-product `MSN1` token format and the pre-launch
 keypair are shared. Implemented: `internal/license/signing.go` +
@@ -84,3 +84,14 @@ seed has concurrent UI/re-architecture sessions; this change is scoped entirely
 to `internal/license/` + this ADR and touches no UI or API surface. The
 issuance side (keygen) and the matching stem/niac validators are tracked in
 `MSN_ED25519_LICENSE_SPEC.md`.
+
+### Amendment 2026-09-14 — the signing core moved to `foundation` (2026-07-10)
+
+`signing.go`, `validator.go` and the `Manager` described above no longer exist
+in this repo. Verification, activation state and the device fingerprint live
+once in `github.com/MustardSeedNetworks/foundation/pkg/license`;
+`internal/license` is `license.go` and `policy.go`, a product-policy layer
+(tiers, product codes, feature catalog) over that module. Stem is the same
+shape; NIAC dropped runtime licensing (niac ADR 0005). The reasoning above for
+replacing the rotor cipher still holds. The "no phone-home" citation is
+qualified by the 2026-09-12 opt-in auto-upgrade decision (see ADR-0015's note).

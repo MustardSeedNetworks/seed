@@ -72,3 +72,8 @@ duplicate types** to delete.
   there would be a latent profile-apply bug, orthogonal to this decision.
 - Supersedes the S6 portion of the blueprint that assumed the generated `Config`
   type would replace `profile.ts` / `settings.ts`.
+
+### Note 2026-09-14
+
+This ADR supersedes the "delete the hand-maintained twins" clause of ADR-0003,
+not only the blueprint's S6 section.

@@ -137,3 +137,11 @@ over-report, so the consumer read switch could not be deferred behind P2. As bui
   correlate. The merged single catalog is simpler and is what ADR-0021 specified.
 - **Unify the resolution window (one prune cutoff).** Rejected: 5 m vs 15 m are correctness-bearing
   (probe's must exceed the probe interval); flattening them would mis-resolve one source.
+
+### Note 2026-09-14 — Survey left Seed
+
+Every mention of Survey above is historical. Wi-Fi survey and planning moved to
+Trellis (strategy reset, rule 4: Seed keeps Wi-Fi troubleshooting only); the survey API, UI, CLI help and the
+`survey_samples` table were removed from Seed (#1934, #1936, migration
+`00009_drop_survey_samples.sql`). Nothing here about Survey describes shipped
+Seed behaviour.

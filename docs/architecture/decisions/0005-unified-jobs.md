@@ -70,3 +70,20 @@ Deviations / deferred from the original decision:
   as a job kind, engine↔pipeline consolidation is folded into the **Phase-6** discovery
   split; the engine (DeviceRegistry-as-SSoT + event distribution) is the canonical
   orchestrator and is already exposed as the `engine-scan` kind.
+
+### Note 2026-09-14 — Survey left Seed
+
+Every mention of Survey above is historical. Wi-Fi survey and planning moved to
+Trellis (strategy reset, rule 4: Seed keeps Wi-Fi troubleshooting only); the survey API, UI, CLI help and the
+`survey_samples` table were removed from Seed (#1934, #1936, migration
+`00009_drop_survey_samples.sql`). Nothing here about Survey describes shipped
+Seed behaviour.
+
+### Note 2026-09-14 — the two motivating examples never migrated
+
+Speedtest and iperf, the ADR's own headline cases, still run on
+`/telemetry/speedtest*` and `/telemetry/iperf/*` and `PerformanceCard.tsx`
+still fetches those paths directly; discovery, Wi-Fi and Bluetooth scans are
+the job kinds that shipped. The "legacy endpoints retained until the frontend
+consumes `/jobs`" clause is open with no plan row; it needs one or an explicit
+decision to leave those two on their own endpoints.

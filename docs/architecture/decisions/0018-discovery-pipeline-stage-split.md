@@ -235,5 +235,5 @@ orchestrates the ports. Per-stage subpackage relocation + depguard follow.
   Golden byte-identical, schema unchanged. `Fingerprinter` + `Tracer` were never in
   the enrich path and remain kernel-resident.
 - [ ] 3. `resolve` stage → `discovery/resolve` + depguard
-- [ ] 4. `enumerate` stage → `discovery/enumerate` + depguard
+- [x] 4. `enumerate` stage → `discovery/enumerate` + depguard
 - [ ] 5. direction-lock depguard + cleanup + §16 doc

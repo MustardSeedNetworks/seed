@@ -233,3 +233,12 @@ left once the config fields did:
 Read this ADR for _why the DEK is separate from `Auth.JWTSecret`_, which is
 still load-bearing. Its references to config-stored credentials, and to the
 symbols above, describe a shape that no longer ships.
+
+### Note 2026-09-14 — "no phone-home" was qualified
+
+The constraint cited above is still the default. On 2026-09-12 the owner
+decided every product gets in-place auto-upgrade as an install-time opt-in,
+default off, with a Settings toggle; an air-gapped install never calls out.
+The credential-key decision here is unaffected; the citation is no longer
+absolute. Seed's own update package was deleted (#2354) before that decision,
+so the opt-in updater is new work (plan row S-U1).

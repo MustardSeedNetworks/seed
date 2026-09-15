@@ -57,3 +57,9 @@ an API that currently serves only our own frontend with no external consumers.
   Phase-1 capability manifest — no rework, no lock-out.
 - New endpoints add their DTO to the `seed-schema` target list; the schema + TS type
   generate from the Go struct.
+
+### Note 2026-09-14 — the "delete the hand-written twins" clause is superseded
+
+ADR-0009 (2026-06-05) keeps `profile.ts` and `settings.ts` as a curated UI
+view rather than deleting them once a DTO is generated. The OpenAPI deferral
+stands; plan row S6-4 tracks the emitter.
