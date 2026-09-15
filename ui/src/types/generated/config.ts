@@ -22,6 +22,7 @@ export interface Config {
   security: SecurityConfig;
   dhcp: DHCPConfig;
   snmp: SNMPConfig;
+  alerts: AlertsConfig;
   fabOptions: FABOptionsConfig;
   displayOptions: DisplayOptionsConfig;
   logging: LoggingConfig;
@@ -403,6 +404,13 @@ export interface SNMPConfig {
   retries: number;
   port: number;
   max_repetitions: number;
+}
+export interface AlertsConfig {
+  webhook: AlertWebhookConfig;
+}
+export interface AlertWebhookConfig {
+  url: string;
+  secret: string;
 }
 export interface FABOptionsConfig {
   run_link: boolean;
