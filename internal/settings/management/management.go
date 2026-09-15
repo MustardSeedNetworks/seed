@@ -19,9 +19,25 @@ var (
 	// settings token (optimistic concurrency, HTTP 412).
 	ErrConflict = errors.New("management: settings ETag mismatch")
 	// ErrValidation is returned when one or more apply helpers reject the
-	// update payload (HTTP 400).
+	// update payload (HTTP 400). Match it with errors.Is; the reason an
+	// operator needs is on the ValidationError that wraps it.
 	ErrValidation = errors.New("management: invalid update fields")
 )
+
+// ValidationError carries the apply helpers' own reasons out to the transport,
+// which shows them. The generic "check the server logs" this replaces was a
+// consequence of the reasons being discarded here, not a decision to withhold
+// them: they name a field and never a value ("alerts.webhook.url scheme \"ftp\"
+// is not http or https"), which is what an operator needs to fix the input.
+type ValidationError struct{ Reason error }
+
+func (e ValidationError) Error() string { return e.Reason.Error() }
+
+// Unwrap exposes the joined helper errors.
+func (e ValidationError) Unwrap() error { return e.Reason }
+
+// Is makes every existing errors.Is(err, ErrValidation) call keep working.
+func (e ValidationError) Is(target error) bool { return target == ErrValidation }
 
 // Store reads and persists the main application settings. Read runs fn under
 // the config read-lock; Write runs fn under the write-lock, then saves to
@@ -156,7 +172,7 @@ func (s *Service) write(updates map[string]any, ifMatch string) error {
 		}
 
 		if len(applyErrors) > 0 {
-			return ErrValidation
+			return ValidationError{Reason: errors.Join(applyErrors...)}
 		}
 		return nil
 	})

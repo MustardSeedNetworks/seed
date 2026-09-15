@@ -51,7 +51,10 @@ func (s *Server) initAlertDelivery(
 	s.alertDelivery = manager
 	// Point it at what the config already says, so a receiver configured in a
 	// previous session is live from the first alert rather than from the first
-	// settings write.
-	app.ApplyAlertWebhook(s.config, manager)
+	// settings write. A Server built without a config — the hand-assembled one
+	// several internal tests use — has no stored receiver to apply.
+	if s.config != nil {
+		app.ApplyAlertWebhook(s.config, manager)
+	}
 	return manager
 }
