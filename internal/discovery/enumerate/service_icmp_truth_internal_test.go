@@ -1,9 +1,12 @@
 package enumerate
 
 import (
+	"context"
 	"errors"
+	"net"
 	"slices"
 	"testing"
+	"time"
 
 	"github.com/MustardSeedNetworks/seed/internal/config"
 )
@@ -52,4 +55,33 @@ func TestPingSweepUnavailableCarriesTheReasonAndClearsOnSuccess(t *testing.T) {
 	if got := s.PingSweepUnavailable(); got != "socket: operation not permitted" {
 		t.Errorf("reason = %q, want the socket error verbatim", got)
 	}
+
+	// The clear matters as much as the record: a daemon that failed once — before
+	// setcap ran, say — would otherwise hide icmp for the rest of its life even
+	// though every later sweep worked.
+	requireAPingSweepIsPossible(t)
+
+	_, loopback, err := net.ParseCIDR("127.0.0.2/31")
+	if err != nil {
+		t.Fatalf("parsing the sweep range: %v", err)
+	}
+	if sweepErr := s.pingSweepChunk(context.Background(), loopback); sweepErr != nil {
+		t.Fatalf("pingSweepChunk: %v", sweepErr)
+	}
+	if got := s.PingSweepUnavailable(); got != "" {
+		t.Errorf("reason survived a sweep that opened a socket: %q", got)
+	}
+}
+
+// requireAPingSweepIsPossible skips where the kernel allows this process neither
+// ICMP socket, which is a stock unprivileged Linux (net.ipv4.ping_group_range
+// defaults to `1 0`). There is no sweep to clear a failure on such a host.
+func requireAPingSweepIsPossible(t *testing.T) {
+	t.Helper()
+
+	p, err := NewICMPPinger(time.Second)
+	if err != nil {
+		t.Skipf("this host allows no ICMP socket to an unprivileged process: %v", err)
+	}
+	_ = p.Close()
 }
