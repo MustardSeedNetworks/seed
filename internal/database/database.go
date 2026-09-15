@@ -88,6 +88,7 @@ type DB struct {
 	topology          *TopologyRepository
 	alertRules        *AlertRulesRepository
 	alertSuppressions *AlertSuppressionsRepository
+	history           *HistoryRepository
 	anomalies         *AnomalyRepository
 }
 

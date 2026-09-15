@@ -542,6 +542,20 @@ func (s *Server) setupTelemetryRoutes() {
 			methods: get,
 			feature: "anomaly_detection",
 		},
+		// #175's bounded history read surface. Reads only, so no role gate;
+		// the window each licence tier can answer is resolved per request
+		// from the retention horizons rather than gated as a feature, so a
+		// Free deployment gets its 7 days rather than a 402.
+		{
+			path:    historyProbesPathPrefix,
+			handler: s.handleProbeHistory,
+			methods: get,
+		},
+		{
+			path:    APIVersionPrefix + "/history/anomalies",
+			handler: s.handleAnomalyHistory,
+			methods: get,
+		},
 		{
 			path:    APIVersionPrefix + "/telemetry/snmp/settings",
 			handler: s.handleSNMPSettings,

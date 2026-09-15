@@ -26,6 +26,7 @@
 /api/v1/discovery/engine/stats            # PAT-only allow-list (owner 2026-09-04)
 /api/v1/engines                           # PAT-only allow-list (owner 2026-09-04)
 /api/v1/health                            # non-UI: tests/smoke/run_smoke_tests.sh asserts it is authenticated
+/api/v1/history/anomalies                 # scheduled: S6-2 #325 is the UI half of #175; the backend read surface landed first
 /api/v1/path/traceroute                   # scheduled: Wave 4 path cluster (#165 #395 #435), one traceroute engine
 /api/v1/reporting/logs/query              # PAT-only allow-list (owner 2026-09-04)
 /api/v1/security/discovery/fingerprint    # delete: only reader of discovery.Fingerprinter (423 lines); ADR-0018 moves the package, it does not give it a caller

@@ -197,6 +197,19 @@ func (db *DB) AlertSuppressions() *AlertSuppressionsRepository {
 	return db.alertSuppressions
 }
 
+// History returns the read-only time-series repository (#175): per-probe
+// trends and per-day anomaly counts over a fixed window. Reads only; the
+// write side is rollup_sources.go and internal/timeseries/retention.
+func (db *DB) History() *HistoryRepository {
+	db.mu.Lock()
+	defer db.mu.Unlock()
+
+	if db.history == nil {
+		db.history = &HistoryRepository{db: db}
+	}
+	return db.history
+}
+
 // Anomalies returns the anomaly repository (ADR-0021, Anomaly Platform). It is
 // the SQL system of record the engine's persistence Coordinator writes detected
 // anomalies through and reads active instances back from on start.
