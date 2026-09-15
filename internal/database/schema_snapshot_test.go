@@ -121,3 +121,44 @@ func dumpSchema(t *testing.T, conn *sql.DB) string {
 	}
 	return b.String()
 }
+
+// The database every test gets from testDB is a copy of a file the
+// migration runner produced once, not a fresh migration run. That is
+// only sound while the copy is indistinguishable from the run — so
+// this compares the two directly, against the same golden the snapshot
+// above gates. It fails if the template is ever built from something
+// other than a full migration, or if copying one file were to lose
+// part of the database.
+func TestTemplateDatabaseMatchesAFreshMigration(t *testing.T) {
+	t.Parallel()
+
+	fresh, err := database.Open(filepath.Join(t.TempDir(), "fresh.db"))
+	if err != nil {
+		t.Fatalf("open fresh db: %v", err)
+	}
+	defer func() { _ = fresh.Close() }()
+
+	fromTemplate, cleanup := testDB(t)
+	defer cleanup()
+
+	if got, want := dumpSchema(t, fromTemplate.WriteConn()), dumpSchema(t, fresh.WriteConn()); got != want {
+		t.Errorf("schema from the copied template differs from a fresh migration run")
+	}
+	if gooseVersion(t, fromTemplate.WriteConn()) != gooseVersion(t, fresh.WriteConn()) {
+		t.Error("migration version from the copied template differs from a fresh migration run")
+	}
+}
+
+// gooseVersion is the highest applied migration, which says the copy
+// carries the runner's bookkeeping too — a schema that matches while
+// the version does not would migrate again on the next open.
+func gooseVersion(t *testing.T, conn *sql.DB) int64 {
+	t.Helper()
+	var version int64
+	if err := conn.QueryRow(
+		`SELECT MAX(version_id) FROM goose_db_version WHERE is_applied = 1`,
+	).Scan(&version); err != nil {
+		t.Fatalf("read goose version: %v", err)
+	}
+	return version
+}

@@ -789,6 +789,16 @@ linters:
     rules:
       - source: 'TODO'
         linters: [ godot ]
+      # internal/database's test binary memoizes the migrated schema in a
+      # package-level sync.Once so 64 tests copy it instead of each running
+      # all 13 migrations -- 5.8s of avoidable work per test under -race
+      # (seed#2614). A package-scoped memo cannot be expressed in Go without
+      # a package-level var, and a test binary's own state is not the mutable
+      # shared global gochecknoglobals exists to catch. Scoped to this one
+      # file rather than to _test.go generally, so the rule still holds
+      # everywhere else.
+      - path: 'internal/database/database_test\.go'
+        linters: [ gochecknoglobals ]
       # G204 in full, not the single wording EXC0007 catches -- see the note on
       # the gosec entry above. Subprocess taint is advisory-only in this repo;
       # the standalone gosec step in ci.yml still reports it as SARIF.
