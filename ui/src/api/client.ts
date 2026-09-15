@@ -67,6 +67,17 @@ let refreshPromise: Promise<boolean> | null = null;
 /** CSRF token cache - fetched once after login, used for all state-changing requests */
 let csrfToken: string | null = null;
 
+/**
+ * In-flight CSRF fetch, so concurrent callers share one mint.
+ *
+ * `GET /auth/csrf` calls foundation's `Manager.Generate`, which *replaces* the
+ * session's stored token, so two concurrent fetches leave the first caller
+ * holding a token the server has already discarded. Two mutations that both
+ * 401 wake from the same refresh and both need a token, which is exactly that
+ * race — so they queue behind one fetch, the way refreshPromise queues refreshes.
+ */
+let csrfFetchPromise: Promise<string | null> | null = null;
+
 /** CSRF token header name - must match backend auth.CSRFHeaderName */
 const CSRF_HEADER_NAME = 'X-CSRF-Token';
 
@@ -102,6 +113,14 @@ async function refreshAccessToken(): Promise<boolean> {
         method: 'POST',
         credentials: 'include', // Send refresh token cookie
       });
+      if (response.ok) {
+        // The server keys CSRF tokens by the bearer (auth.GetSessionIDFromRequest
+        // → csrf.SessionKey), and a refresh mints a new JWT, so the cached token
+        // belongs to a session key that no longer exists. Cleared here rather
+        // than after the await so a second caller waiting on this same promise
+        // cannot resume and reuse it (#2633).
+        csrfToken = null;
+      }
       return response.ok;
     } catch {
       return false;
@@ -122,21 +141,32 @@ async function refreshAccessToken(): Promise<boolean> {
  *
  * @returns Promise resolving to CSRF token or null if fetch fails
  */
-async function fetchCsrfToken(): Promise<string | null> {
-  try {
-    const response = await fetch(`${API_BASE}/api/v1/auth/csrf`, {
-      method: 'GET',
-      credentials: 'include', // Send auth cookies
-    });
-    if (response.ok) {
-      const data: { token: string } = await (response.json() as Promise<{ token: string }>);
-      csrfToken = data.token;
-      return csrfToken;
-    }
-    return null;
-  } catch {
-    return null;
+function fetchCsrfToken(): Promise<string | null> {
+  const existingPromise: Promise<string | null> | null = csrfFetchPromise;
+  if (existingPromise !== null) {
+    return existingPromise;
   }
+
+  const newPromise: Promise<string | null> = (async (): Promise<string | null> => {
+    try {
+      const response = await fetch(`${API_BASE}/api/v1/auth/csrf`, {
+        method: 'GET',
+        credentials: 'include', // Send auth cookies
+      });
+      if (response.ok) {
+        const data: { token: string } = await (response.json() as Promise<{ token: string }>);
+        csrfToken = data.token;
+        return csrfToken;
+      }
+      return null;
+    } catch {
+      return null;
+    } finally {
+      csrfFetchPromise = null;
+    }
+  })();
+  csrfFetchPromise = newPromise;
+  return newPromise;
 }
 
 /**
@@ -155,6 +185,7 @@ function getCsrfToken(): Promise<string | null> {
  */
 export function clearCSRFToken(): void {
   csrfToken = null;
+  csrfFetchPromise = null;
 }
 
 /**
@@ -164,6 +195,28 @@ export function clearCSRFToken(): void {
  */
 export function beginSession(): void {
   sessionGeneration++;
+}
+
+/**
+ * Builds the error for a non-2xx response.
+ *
+ * The server's own message is carried through. Callers that used a raw fetch
+ * read it out of the body themselves and showed it — "CIDR overlaps an
+ * existing subnet" is worth more to the operator than "API error: 400" — so
+ * dropping it would have made the migration off raw fetch a regression. The
+ * `API error: N` prefix is kept so anything matching on it still matches.
+ */
+async function requestError(response: Response): Promise<Error> {
+  let detail = '';
+  try {
+    const body = (await response.clone().json()) as { error?: string; message?: string };
+    detail = body.error ?? body.message ?? '';
+  } catch {
+    // Not JSON, or already consumed. The status alone will have to do.
+  }
+  return new Error(
+    detail ? `API error: ${response.status}: ${detail}` : `API error: ${response.status}`,
+  );
 }
 
 /**
@@ -195,39 +248,73 @@ async function handleResponse<T>(
       if (retryResponse.ok) {
         return retryResponse.json();
       }
+      // The retry reached the server under a live access token, so anything
+      // other than a second 401 is an ordinary request error and must surface
+      // as one. Reporting it as an expired session logged the operator out of
+      // a valid session — a 403 from a stale CSRF token did exactly that
+      // before the cache was cleared on refresh (#2633).
+      if (retryResponse.status !== 401) {
+        throw await requestError(retryResponse);
+      }
     }
 
-    // Refresh failed or retry failed. Only expire the session this request was
-    // issued under: if the user has logged in since, this 401 is a straggler
-    // from the old session and must not tear down the new one.
+    // Refresh failed, or the retry was itself a 401. Only expire the session
+    // this request was issued under: if the user has logged in since, this 401
+    // is a straggler from the old session and must not tear down the new one.
     if (issuedGeneration === sessionGeneration) {
       onSessionExpired?.();
     }
     throw new SessionExpiredError();
   }
 
-  // Handle non-success responses.
-  //
-  // The server's own message is carried through. Callers that used a raw fetch
-  // read it out of the body themselves and showed it — "CIDR overlaps an
-  // existing subnet" is worth more to the operator than "API error: 400" — so
-  // dropping it would have made the migration off raw fetch a regression. The
-  // `API error: N` prefix is kept so anything matching on it still matches.
   if (!response.ok) {
-    let detail = '';
-    try {
-      const body = (await response.clone().json()) as { error?: string; message?: string };
-      detail = body.error ?? body.message ?? '';
-    } catch {
-      // Not JSON, or already consumed. The status alone will have to do.
-    }
-    throw new Error(
-      detail ? `API error: ${response.status}: ${detail}` : `API error: ${response.status}`,
-    );
+    throw await requestError(response);
   }
 
   // Parse and return JSON response
   return response.json();
+}
+
+/**
+ * Issues a state-changing request, attaching the CSRF token the server expects.
+ *
+ * The token is read inside `makeRequest`, not captured before the first
+ * attempt: a 401 retry runs after `refreshAccessToken` has dropped the cached
+ * token, so the retry mints one keyed to the new bearer. Capturing it once sent
+ * the old session's token to the retry and earned a 403 (#2633).
+ */
+async function mutate<T>(
+  method: 'POST' | 'PUT' | 'PATCH' | 'DELETE',
+  endpoint: string,
+  body: unknown,
+  init: RequestInit | undefined,
+): Promise<T> {
+  const isAuthEndpoint: boolean = endpoint.includes('/api/v1/auth/');
+  const issuedGeneration = sessionGeneration;
+
+  const makeRequest = async (): Promise<Response> => {
+    const headers: Headers = new Headers(
+      method === 'DELETE' ? undefined : { 'Content-Type': 'application/json' },
+    );
+    const token: string | null = isAuthEndpoint ? null : await getCsrfToken();
+    if (token) {
+      headers.set(CSRF_HEADER_NAME, token);
+    }
+    for (const [key, value] of new Headers(init?.headers).entries()) {
+      headers.set(key, value);
+    }
+
+    return fetch(`${API_BASE}${endpoint}`, {
+      ...init,
+      method,
+      credentials: 'include', // Send httpOnly cookies
+      headers,
+      body: body === undefined ? undefined : JSON.stringify(body),
+    });
+  };
+
+  const response = await makeRequest();
+  return handleResponse<T>(response, isAuthEndpoint, makeRequest, issuedGeneration);
 }
 
 /**
@@ -268,32 +355,8 @@ export const api = {
    * @example
    * const result = await api.post<Result>('/api/v1/network/scan', { subnet: '192.168.1.0/24' });
    */
-  async post<T>(endpoint: string, body?: unknown, init?: RequestInit): Promise<T> {
-    const isAuthEndpoint: boolean = endpoint.includes('/api/v1/auth/');
-    const issuedGeneration = sessionGeneration;
-    // Get CSRF token for non-auth endpoints (state-changing requests)
-    const token: string | null = isAuthEndpoint ? null : await getCsrfToken();
-
-    const makeRequest = (): Promise<Response> => {
-      const headers: Headers = new Headers({ 'Content-Type': 'application/json' });
-      if (token) {
-        headers.set(CSRF_HEADER_NAME, token);
-      }
-      for (const [key, value] of new Headers(init?.headers).entries()) {
-        headers.set(key, value);
-      }
-
-      return fetch(`${API_BASE}${endpoint}`, {
-        ...init,
-        method: 'POST',
-        credentials: 'include', // Send httpOnly cookies
-        headers,
-        body: body === undefined ? undefined : JSON.stringify(body),
-      });
-    };
-
-    const response = await makeRequest();
-    return handleResponse<T>(response, isAuthEndpoint, makeRequest, issuedGeneration);
+  post<T>(endpoint: string, body?: unknown, init?: RequestInit): Promise<T> {
+    return mutate<T>('POST', endpoint, body, init);
   },
 
   /**
@@ -306,32 +369,8 @@ export const api = {
    * @example
    * await api.put('/api/v1/settings', { theme: 'dark' });
    */
-  async put<T>(endpoint: string, body?: unknown, init?: RequestInit): Promise<T> {
-    const isAuthEndpoint: boolean = endpoint.includes('/api/v1/auth/');
-    const issuedGeneration = sessionGeneration;
-    // Get CSRF token for non-auth endpoints (state-changing requests)
-    const token: string | null = isAuthEndpoint ? null : await getCsrfToken();
-
-    const makeRequest = (): Promise<Response> => {
-      const headers: Headers = new Headers({ 'Content-Type': 'application/json' });
-      if (token) {
-        headers.set(CSRF_HEADER_NAME, token);
-      }
-      for (const [key, value] of new Headers(init?.headers).entries()) {
-        headers.set(key, value);
-      }
-
-      return fetch(`${API_BASE}${endpoint}`, {
-        ...init,
-        method: 'PUT',
-        credentials: 'include', // Send httpOnly cookies
-        headers,
-        body: body === undefined ? undefined : JSON.stringify(body),
-      });
-    };
-
-    const response = await makeRequest();
-    return handleResponse<T>(response, isAuthEndpoint, makeRequest, issuedGeneration);
+  put<T>(endpoint: string, body?: unknown, init?: RequestInit): Promise<T> {
+    return mutate<T>('PUT', endpoint, body, init);
   },
 
   /**
@@ -344,32 +383,8 @@ export const api = {
    * @example
    * await api.patch('/api/v1/settings', { theme: 'dark' });
    */
-  async patch<T>(endpoint: string, body?: unknown, init?: RequestInit): Promise<T> {
-    const isAuthEndpoint: boolean = endpoint.includes('/api/v1/auth/');
-    const issuedGeneration = sessionGeneration;
-    // Get CSRF token for non-auth endpoints (state-changing requests)
-    const token: string | null = isAuthEndpoint ? null : await getCsrfToken();
-
-    const makeRequest = (): Promise<Response> => {
-      const headers: Headers = new Headers({ 'Content-Type': 'application/json' });
-      if (token) {
-        headers.set(CSRF_HEADER_NAME, token);
-      }
-      for (const [key, value] of new Headers(init?.headers).entries()) {
-        headers.set(key, value);
-      }
-
-      return fetch(`${API_BASE}${endpoint}`, {
-        ...init,
-        method: 'PATCH',
-        credentials: 'include', // Send httpOnly cookies
-        headers,
-        body: body === undefined ? undefined : JSON.stringify(body),
-      });
-    };
-
-    const response = await makeRequest();
-    return handleResponse<T>(response, isAuthEndpoint, makeRequest, issuedGeneration);
+  patch<T>(endpoint: string, body?: unknown, init?: RequestInit): Promise<T> {
+    return mutate<T>('PATCH', endpoint, body, init);
   },
 
   /**
@@ -381,28 +396,8 @@ export const api = {
    * @example
    * await api.delete('/api/v1/devices/12345');
    */
-  async delete<T>(endpoint: string, init?: RequestInit): Promise<T> {
-    const isAuthEndpoint: boolean = endpoint.includes('/api/v1/auth/');
-    const issuedGeneration = sessionGeneration;
-    // Get CSRF token for non-auth endpoints (state-changing requests)
-    const token: string | null = isAuthEndpoint ? null : await getCsrfToken();
-
-    const makeRequest = (): Promise<Response> => {
-      const headers: Headers = new Headers(init?.headers);
-      if (token) {
-        headers.set(CSRF_HEADER_NAME, token);
-      }
-
-      return fetch(`${API_BASE}${endpoint}`, {
-        ...init,
-        method: 'DELETE',
-        credentials: 'include', // Send httpOnly cookies
-        headers,
-      });
-    };
-
-    const response = await makeRequest();
-    return handleResponse<T>(response, isAuthEndpoint, makeRequest, issuedGeneration);
+  delete<T>(endpoint: string, init?: RequestInit): Promise<T> {
+    return mutate<T>('DELETE', endpoint, undefined, init);
   },
 
   /**
