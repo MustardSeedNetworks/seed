@@ -1,6 +1,8 @@
 # ADR-0007: Discovery orchestrator convergence — engine vs pipeline, deferred to Phase 7
 
-**Status:** Accepted — 2026-06-03 · partially superseded by [ADR-0008](0008-pure-data-discovery-types-in-schema.md)
+**Status:** Superseded (recorded 2026-09-14) — the Pipeline→Engine fold this ADR deferred to Phase 7
+landed ahead of Phase 6; see [ADR-0018](0018-discovery-pipeline-stage-split.md) Context.
+Originally: Accepted — 2026-06-03 · partially superseded by [ADR-0008](0008-pure-data-discovery-types-in-schema.md)
 (2026-06-04) on the schema/types-extraction deferral; the Pipeline→Engine fold still stands
 
 ## Context
@@ -77,3 +79,11 @@ Engine endpoint — which is the same Phase 7 frontend migration.
 
 Supersedes the Phase-6 portions of the blueprint that implied an in-phase engine↔
 pipeline consolidation and an in-phase `EngineDiscoveryResponse` schema registration.
+
+### Note 2026-09-14 — Survey left Seed
+
+Every mention of Survey above is historical. Wi-Fi survey and planning moved to
+Trellis (strategy reset, rule 4: Seed keeps Wi-Fi troubleshooting only); the survey API, UI, CLI help and the
+`survey_samples` table were removed from Seed (#1934, #1936, migration
+`00009_drop_survey_samples.sql`). Nothing here about Survey describes shipped
+Seed behaviour.

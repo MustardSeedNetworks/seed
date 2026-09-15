@@ -67,3 +67,11 @@ detector. "Network Anomalies" is the umbrella; Wi-Fi is its first rule _source_.
   escalation on recurrence, and the follow-up **capability registration** for active diagnostics.
 - The guided-remediation promise depends on the capability registry being wired for the active
   Linux diagnostics; until then those follow-ups present as prompts everywhere (still useful).
+
+### Note 2026-09-14 — status wording
+
+Everything the status line above calls deferred has landed: SQL persistence
+(ADR-0021), the probe source (ADR-0025), daily rollups (ADR-0028) and engine
+convergence (ADR-0029). `internal/health.AnomalyDetector` is gone. This ADR is
+the foundational record of the typed stream and the catalog, not a description
+of current state.

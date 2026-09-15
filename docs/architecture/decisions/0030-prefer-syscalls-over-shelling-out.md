@@ -112,3 +112,13 @@ the tree shells `arp`.
   concrete to describe.
 - Two candidates for native replacement, neither free: Windows `GetIpNetTable2`
   behind a hand-rolled binding, and Linux DHCP renewal over D-Bus.
+
+## Scope note 2026-09-14
+
+The measurements above cover the ARP/NDP neighbour-cache and DHCP-renewal
+shell-outs. `exec.Command` has 88 call sites across 34 non-test files on
+`main` (Wi-Fi scanning on Linux and Windows, Bluetooth enumeration, the
+truststore, the cable/iperf/gateway/VLAN/DNS diagnostics, install and
+uninstall). Each of those needs the same measure-then-decide treatment before
+this ADR can be read as covering it; until then the claim is scoped to the
+table above. No lint enforces the preference; `forbidigo` bans only `fmt.Print*`.
