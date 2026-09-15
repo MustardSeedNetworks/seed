@@ -547,7 +547,11 @@ func (s *Server) setupTelemetryRoutes() {
 		// from the retention horizons rather than gated as a feature, so a
 		// Free deployment gets its 7 days rather than a 402.
 		{
-			path:    historyProbesPathPrefix,
+			// Spelled as a literal, not the historyProbesPathPrefix const the
+			// handler trims with: scripts/check-route-consumers.py matches on
+			// the string in this table, so a const here hides the route from
+			// the ratchet entirely.
+			path:    APIVersionPrefix + "/history/probes/",
 			handler: s.handleProbeHistory,
 			methods: get,
 		},

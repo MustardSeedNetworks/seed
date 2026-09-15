@@ -174,7 +174,5 @@ func TestAnomalyCountsByDayLive(t *testing.T) {
 	require.Equal(t, 1, byDay["2026-09-10"].Count)
 	require.Equal(t, 1, byDay["2026-09-11"].Count, "still open on the day between")
 	require.Equal(t, 2, byDay["2026-09-12"].Count)
-	require.Equal(t, "warning", byDay["2026-09-12"].MaxSeverity,
-		"MAX over the severity text; both are present that day")
 	require.Equal(t, 0, byDay["2026-09-13"].Count)
 }

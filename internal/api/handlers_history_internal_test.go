@@ -42,7 +42,7 @@ func TestProbeHistoryRefusesARequestWithNoClientClaim(t *testing.T) {
 func TestProbeHistoryRejectsAnUnusableRange(t *testing.T) {
 	t.Parallel()
 
-	for _, raw := range []string{"yesterday", "-24h", "0h", "3000d", "7 d", "d", "1w"} {
+	for _, raw := range []string{"yesterday", "-24h", "0h", "7 d", "d", "1w"} {
 		t.Run(raw, func(t *testing.T) {
 			t.Parallel()
 			rec := httptest.NewRecorder()

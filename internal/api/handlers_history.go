@@ -30,13 +30,9 @@ import (
 // the probe id off, matching the /polling-targets/ idiom.
 const historyProbesPathPrefix = APIVersionPrefix + "/history/probes/"
 
-// errInvalidHistoryRange is returned for a range outside (0, historyMaxRange].
-var errInvalidHistoryRange = errors.New("range outside the retained horizons")
-
-// historyMaxRange caps what a caller may ask for, before the tier horizon is
-// applied. It is the longest horizon any tier retains, so it never overrides
-// the tier's own answer — it only stops an absurd duration reaching the store.
-const historyMaxRange = 730 * hoursPerDay * time.Hour
+// errInvalidHistoryRange is returned for a range that is not a positive
+// duration.
+var errInvalidHistoryRange = errors.New("range must be a positive duration")
 
 // defaultHistoryRange is the window served when the request names none.
 const defaultHistoryRange = 24 * time.Hour
@@ -52,9 +48,11 @@ type HistoryWindowResponse struct {
 	Days int `json:"days"`
 	// Resolution is the bucket width: "hourly" or "daily".
 	Resolution string `json:"resolution"`
-	// Source is "raw" when the series was aggregated from raw rows on read —
-	// in which case the final bucket is still filling — or "rollup" when it
-	// came from a pre-aggregated table, whose buckets are all closed.
+	// Source is "raw" when the series was aggregated from raw rows on read, in
+	// which case the final bucket is still filling, or "rollup" when it came
+	// from a pre-aggregated table. A probe rollup's buckets are all closed; the
+	// anomaly census re-writes the day in progress on every maintenance pass,
+	// so its last bucket is current as of that pass.
 	Source string `json:"source"`
 	// Clamped is true when the licence tier retains less than was asked for.
 	Clamped bool `json:"clamped"`
@@ -189,10 +187,10 @@ func (s *Server) historyWindow(w http.ResponseWriter, r *http.Request) (historyW
 }
 
 // parseHistoryRange accepts a Go duration ("90m", "24h") or a whole number of
-// days ("7d", "90d"), which [time.ParseDuration] does not. Anything longer than
-// the longest retained horizon is refused rather than silently clamped: a
-// caller asking for five years has misunderstood the surface, and the tier
-// clamp exists for the tier, not for typos.
+// days ("7d", "90d"), which [time.ParseDuration] does not. A range longer than
+// the tier retains is NOT refused here: the tier horizon is the single clamp
+// (#175's "degrade cleanly rather than erroring"), and the response says it
+// clamped. Only a range that is not a positive duration is a bad request.
 func parseHistoryRange(raw string) (time.Duration, error) {
 	var d time.Duration
 	if days, ok := parseDaySuffix(raw); ok {
@@ -204,7 +202,7 @@ func parseHistoryRange(raw string) (time.Duration, error) {
 		}
 		d = parsed
 	}
-	if d <= 0 || d > historyMaxRange {
+	if d <= 0 {
 		return 0, errInvalidHistoryRange
 	}
 	return d, nil

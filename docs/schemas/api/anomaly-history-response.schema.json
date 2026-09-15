@@ -10,17 +10,13 @@
         },
         "count": {
           "type": "integer"
-        },
-        "maxSeverity": {
-          "type": "string"
         }
       },
       "additionalProperties": false,
       "type": "object",
       "required": [
         "day",
-        "count",
-        "maxSeverity"
+        "count"
       ]
     },
     "AnomalyHistoryResponse": {

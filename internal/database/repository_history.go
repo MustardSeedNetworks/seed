@@ -38,12 +38,17 @@ type ProbeTrendPoint struct {
 }
 
 // AnomalyDayCount is one day's anomaly census: how many distinct (def,
-// subject) anomalies were open on that day, and the highest severity among
-// them.
+// subject) anomalies were open on that day.
+//
+// Deliberately no severity field. The obvious SQL for one — MAX over the
+// severity column — is a lexical maximum, and "warning" sorts above
+// "critical". The ordering that means anything is anomaly.Severity.rank(),
+// which is unexported and lives a package away; restating it in SQL would be
+// a second source of truth for the escalation order. A client that needs the
+// worst severity on a day asks the anomaly surface for that day.
 type AnomalyDayCount struct {
-	Day         string `json:"day"`
-	Count       int    `json:"count"`
-	MaxSeverity string `json:"maxSeverity"`
+	Day   string `json:"day"`
+	Count int    `json:"count"`
 }
 
 // probeTrendRawSQL aggregates probe_results on read. The bucket expression is
@@ -161,7 +166,7 @@ func scanProbeTrend(rows *sql.Rows, layout, op string) ([]ProbeTrendPoint, error
 // that day; count_cumulative is a per-anomaly running total and summing it
 // across days would double-count (ADR-0028 §4).
 const anomalyCountsRollupSQL = `
-	SELECT day_bucket, COUNT(*), MAX(max_severity)
+	SELECT day_bucket, COUNT(*)
 	FROM anomaly_rollups_daily
 	WHERE day_bucket >= ? AND day_bucket <= ?
 	GROUP BY day_bucket
@@ -192,7 +197,7 @@ const anomalyCountsLiveSQL = `
 		UNION ALL
 		SELECT date(day, '+1 day') FROM days WHERE day < date(?)
 	)
-	SELECT days.day, COUNT(anomalies.id), COALESCE(MAX(anomalies.severity), '')
+	SELECT days.day, COUNT(anomalies.id)
 	FROM days
 	LEFT JOIN anomalies
 	  ON date(anomalies.first_seen) <= days.day
@@ -221,7 +226,7 @@ func scanAnomalyCounts(rows *sql.Rows, op string) ([]AnomalyDayCount, error) {
 	var counts []AnomalyDayCount
 	for rows.Next() {
 		var c AnomalyDayCount
-		if err := rows.Scan(&c.Day, &c.Count, &c.MaxSeverity); err != nil {
+		if err := rows.Scan(&c.Day, &c.Count); err != nil {
 			return nil, fmt.Errorf("%s scan: %w", op, err)
 		}
 		counts = append(counts, c)

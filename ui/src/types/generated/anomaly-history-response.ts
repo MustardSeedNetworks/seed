@@ -21,5 +21,4 @@ export interface HistoryWindowResponse {
 export interface AnomalyDayCount {
   day: string;
   count: number;
-  maxSeverity: string;
 }
