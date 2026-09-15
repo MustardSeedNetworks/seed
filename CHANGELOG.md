@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.214.50](https://github.com/MustardSeedNetworks/seed/compare/v0.214.49...v0.214.50) (2026-09-15)
+
+
+### Features
+
+* **alerts:** configure the webhook receiver in Settings, with a vault-backed secret ([#2621](https://github.com/MustardSeedNetworks/seed/issues/2621)) ([5515b30](https://github.com/MustardSeedNetworks/seed/commit/5515b30452c74b754c69891863dbd5b77fac0252))
+
+
+### Miscellaneous
+
+* **deps:** lock file maintenance ([#2619](https://github.com/MustardSeedNetworks/seed/issues/2619)) ([27ea136](https://github.com/MustardSeedNetworks/seed/commit/27ea136e2ab6271bf95f977bac792d34fc795120))
+
 ## [0.214.49](https://github.com/MustardSeedNetworks/seed/compare/v0.214.48...v0.214.49) (2026-09-15)
 
 
