@@ -133,12 +133,12 @@ func splitAlertActionPath(urlPath string) (int64, string, bool) {
 	return id, parts[1], true
 }
 
-// usernameFromRequest pulls the authenticated user from the X-Username
-// header that the apiTokenMiddleware + JWT middleware set. Falls
-// back to "system" when the surrounding middleware was bypassed
-// (e.g. tests).
+// usernameFromRequest pulls the authenticated user that the apiTokenMiddleware
+// or the JWT middleware stamped on the request context (#2632; it was a
+// spoofable header). Falls back to "system" when the surrounding middleware
+// was bypassed (e.g. tests).
 func (s *Server) usernameFromRequest(r *http.Request) string {
-	if u := r.Header.Get("X-Username"); u != "" {
+	if u := usernameFromContext(r); u != "" {
 		return u
 	}
 	return "system"

@@ -426,7 +426,7 @@ func (s *Server) callerRole(r *http.Request) (string, bool) {
 	if s.identityUsers == nil {
 		return database.RoleAdmin, true
 	}
-	// Production single-user still gets X-Username from the auth middleware,
+	// Production single-user still gets an identity from the auth middleware,
 	// so a wired use-case with a nil underlying store (ErrUnavailable) keeps
 	// the same admin tolerance.
 	u, err := s.identityUsers.Get(r.Context(), caller)
@@ -439,13 +439,13 @@ func (s *Server) callerRole(r *http.Request) (string, bool) {
 	if err != nil || !u.IsActive {
 		return "", false
 	}
-	// #1255: PAT auth sets X-Token-Scope to a per-token role cap. The
+	// #1255: PAT auth records a per-token role cap on the context. The
 	// effective role becomes the lower of the owner's role and the
 	// token's scope so an automation token minted from an admin owner
 	// can't escalate. An invalid/unknown scope value is ignored (rank-0
 	// would lock the token out entirely, the wrong failure mode for a
-	// malformed header).
-	if scope := r.Header.Get("X-Token-Scope"); scope != "" && database.IsValidRole(scope) {
+	// malformed value).
+	if scope := auth.TokenScopeFromContext(r.Context()); scope != "" && database.IsValidRole(scope) {
 		if roleRank(scope) < roleRank(u.Role) {
 			return scope, true
 		}

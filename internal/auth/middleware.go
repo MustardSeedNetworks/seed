@@ -94,16 +94,27 @@ func preSessionPaths() []string {
 		"/api/v1/auth/login/totp",
 		"/api/v1/auth/webauthn/login/begin",
 		"/api/v1/auth/webauthn/login/finish",
+
+		// The OAuth handshake, and only the handshake. These three run before
+		// a session exists: the browser is redirected to them with no bearer.
+		// #2632: this was a `/api/v1/sso/` prefix, which also swallowed
+		// /sso/settings and /sso/update — two operator-gated routes whose role
+		// gate reads an identity this middleware never got to set.
+		"/api/v1/sso/providers",
+		"/api/v1/sso/login",
+		"/api/v1/sso/callback",
 	}
 }
 
-// shouldBypassAuth checks if the given path should skip authentication.
-// Returns true for login, refresh, setup, recovery, SSO endpoints and static files.
-func shouldBypassAuth(path string) bool {
+// ShouldBypassAuth reports whether path skips the JWT middleware entirely:
+// login, refresh, setup, recovery, the OAuth handshake and static files.
+//
+// Exported so internal/api can assert the invariant this predicate has to
+// satisfy — a route carrying a role or feature gate must never be on it,
+// because the gate reads an identity only this middleware establishes
+// (#2632, TestNoGatedRouteBypassesAuth).
+func ShouldBypassAuth(path string) bool {
 	if slices.Contains(preSessionPaths(), path) {
-		return true
-	}
-	if strings.HasPrefix(path, "/api/v1/sso/") {
 		return true
 	}
 	// Skip auth for static files (non-API, non-WebSocket paths)
@@ -167,7 +178,7 @@ func IsAPITokenAuth(ctx context.Context) bool {
 func (m *Manager) Middleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		// Skip auth for bypassed paths (login, refresh, setup, SSO, static files)
-		if shouldBypassAuth(r.URL.Path) {
+		if ShouldBypassAuth(r.URL.Path) {
 			next.ServeHTTP(w, r)
 			return
 		}
@@ -204,7 +215,10 @@ func (m *Manager) Middleware(next http.Handler) http.Handler {
 		// Add claims to request context
 		ctx := logging.WithUserID(r.Context(), claims.Username)
 		ctx = WithClientID(ctx, claims.ClientID)
-		r.Header.Set("X-Username", claims.Username) // Keep this for other potential uses
+		// #2632: the identity travels on the context, not on a header the
+		// caller could have written. Nothing sets X-Username any more, so
+		// there is nothing to spoof.
+		ctx = WithUsername(ctx, claims.Username)
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})
 }

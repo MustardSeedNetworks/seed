@@ -168,8 +168,13 @@ func requirePost(
 // usernameFromContext returns the authenticated username from the
 // request, or empty if no auth middleware ran (e.g. login endpoints
 // that haven't completed yet).
+//
+// #2632: this read X-Username, a header the caller could set. Any route that
+// reached a handler without passing the JWT middleware — /sso/settings and
+// /sso/update did, under the old bypass prefix — handed the role gate an
+// identity the client had chosen.
 func usernameFromContext(r *http.Request) string {
-	return r.Header.Get("X-Username")
+	return auth.UsernameFromContext(r.Context())
 }
 
 // recordMFAAuditEvent emits a structured audit log entry for an MFA

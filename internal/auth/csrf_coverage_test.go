@@ -26,8 +26,12 @@ func TestCSRFExemptList_Golden(t *testing.T) {
 		"/api/v1/setup/status",
 		"/api/v1/setup/complete",
 		"/api/v1/reporting/logs/client",
-		"/api/v1/sso/callback", // prefix match
-		"/api/v1/sso/",
+		// The OAuth handshake, exempt one path at a time since #2632: the
+		// `/api/v1/sso/` prefix also exempted /sso/settings and /sso/update,
+		// two operator-gated routes.
+		"/api/v1/sso/providers",
+		"/api/v1/sso/login",
+		"/api/v1/sso/callback",
 	}
 	for _, p := range exempt {
 		if !auth.ExportIsCSRFExemptPath(p) {
@@ -44,7 +48,10 @@ func TestCSRFExemptList_Golden(t *testing.T) {
 		"/api/v1/users",
 		"/api/v1/auth/loginX",             // not an exact match
 		"/api/v1/reporting/logs/client/x", // exact entry, not a prefix
-		"/api/v1/sso",                     // prefix needs the trailing slash
+		"/api/v1/sso",                     // not one of the three handshake paths
+		"/api/v1/sso/",                    // #2632: the prefix is no longer exempt
+		"/api/v1/sso/settings",            // operator-gated read
+		"/api/v1/sso/update",              // operator-gated, Pro-gated write
 	}
 	for _, p := range protected {
 		if auth.ExportIsCSRFExemptPath(p) {

@@ -7,6 +7,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	"github.com/MustardSeedNetworks/seed/internal/auth"
 	"github.com/MustardSeedNetworks/seed/internal/database"
 )
 
@@ -43,7 +44,7 @@ func TestCallerRole_ClampsOnTokenScope(t *testing.T) {
 	for _, c := range cases {
 		req := newAuthedRequest(http.MethodGet, APIVersionPrefix+"/x", nil, c.owner)
 		if c.scope != "" {
-			req.Header.Set("X-Token-Scope", c.scope)
+			req = req.WithContext(auth.WithTokenScope(req.Context(), c.scope))
 		}
 		role, ok := s.callerRole(req)
 		if ok != c.wantOK || role != c.wantRole {
@@ -70,7 +71,7 @@ func TestWriteGate_ViewerScopedAdminTokenBlocksWrites(t *testing.T) {
 
 	// Same admin caller, but the PAT clamped them to viewer.
 	req = newAuthedRequest(http.MethodPost, APIVersionPrefix+"/probe", nil, "admin")
-	req.Header.Set("X-Token-Scope", database.RoleViewer)
+	req = req.WithContext(auth.WithTokenScope(req.Context(), database.RoleViewer))
 	w = httptest.NewRecorder()
 	if s.requireWriteAccess(w, req) {
 		t.Errorf("admin-owned viewer-scoped token must be blocked by write gate, status=%d", w.Code)
