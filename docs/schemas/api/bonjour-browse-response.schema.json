@@ -1,0 +1,131 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/MustardSeedNetworks/seed/main/docs/schemas/api/bonjour-browse-response.schema.json",
+  "$ref": "#/$defs/BrowseResult",
+  "$defs": {
+    "BrowseResult": {
+      "properties": {
+        "interface": {
+          "type": "string"
+        },
+        "localPrefixes": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "serviceTypes": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "services": {
+          "items": {
+            "$ref": "#/$defs/ServiceInstance"
+          },
+          "type": "array"
+        },
+        "reflector": {
+          "$ref": "#/$defs/ReflectorStatus"
+        },
+        "responsesObserved": {
+          "type": "integer"
+        },
+        "truncated": {
+          "type": "boolean"
+        },
+        "durationMs": {
+          "type": "integer"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "serviceTypes",
+        "services",
+        "reflector",
+        "responsesObserved",
+        "truncated",
+        "durationMs"
+      ]
+    },
+    "ReflectorStatus": {
+      "properties": {
+        "state": {
+          "type": "string"
+        },
+        "remoteSubnets": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "forwardedBy": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "routedFrom": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "state"
+      ]
+    },
+    "ServiceInstance": {
+      "properties": {
+        "instance": {
+          "type": "string"
+        },
+        "type": {
+          "type": "string"
+        },
+        "host": {
+          "type": "string"
+        },
+        "port": {
+          "type": "integer"
+        },
+        "addresses": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "txt": {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "type": "object"
+        },
+        "origin": {
+          "type": "string"
+        },
+        "sourceAddresses": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "instance",
+        "type",
+        "port",
+        "origin"
+      ]
+    }
+  },
+  "title": "BrowseResult",
+  "description": "BrowseResult — generated from the Go struct in internal/api; refresh with `make schema` after struct changes."
+}

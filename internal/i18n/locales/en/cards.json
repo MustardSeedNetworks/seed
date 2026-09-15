@@ -562,5 +562,32 @@
     "noCounters": "This driver exposes none of the counters worth watching.",
     "curated": "Showing {{shown}} of {{total}} counters the driver reports.",
     "refresh": "Refresh"
+  },
+  "bonjour": {
+    "title": "Bonjour services",
+    "description": "What is advertised on this segment, and whether mDNS from another subnet reaches it.",
+    "browse": "Browse",
+    "browsing": "Browsing…",
+    "empty": "No Bonjour services were advertised on this segment.",
+    "tableCaption": "Bonjour services advertised on this segment",
+    "instance": "Name",
+    "type": "Service",
+    "host": "Host",
+    "port": "Port",
+    "origin": "Where",
+    "hostUnknown": "not advertised",
+    "portUnknown": "not advertised",
+    "originValue": {
+      "local": "This segment",
+      "off-segment": "Another subnet",
+      "unknown": "Cannot tell"
+    },
+    "reflector": {
+      "no-traffic": "No mDNS was seen in {{seconds}} seconds. That is not evidence either way: an idle segment and a blocked one look the same from here.",
+      "local-only": "No mDNS from another subnet reached this segment. A reflector is either not configured or not forwarding.",
+      "reflected": "mDNS from {{subnets}} is reaching this segment, re-sent by {{forwarders}}. A reflector is forwarding between these subnets.",
+      "routed": "mDNS arrived from {{sources}}, which is not on this segment. A router is forwarding the multicast rather than a reflector re-sending it — check the router before the reflector.",
+      "unknown": "This build does not recognise the result the server reported. Update seed."
+    }
   }
 }

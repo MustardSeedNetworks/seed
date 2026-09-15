@@ -771,6 +771,16 @@ func (s *Server) setupSecurityRoutes() {
 			handler: s.handleWiFiDiscoveryStats,
 			methods: get,
 		},
+		{
+			// #364's Bonjour browse. Spelled as a literal for the same reason
+			// /history/* is: scripts/check-route-consumers.py matches on the
+			// string in this table, so a const here would hide the route from
+			// the ratchet. Reads the segment and changes nothing, so no role
+			// gate.
+			path:    APIVersionPrefix + "/discovery/bonjour",
+			handler: s.handleBonjourBrowse,
+			methods: get,
+		},
 		// Discovery Engine (primary unified discovery system).
 		{
 			path:    APIVersionPrefix + "/discovery/engine",

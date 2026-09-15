@@ -27,6 +27,7 @@ import (
 
 	"github.com/MustardSeedNetworks/seed/internal/api"
 	"github.com/MustardSeedNetworks/seed/internal/config"
+	"github.com/MustardSeedNetworks/seed/internal/discovery/bonjour"
 )
 
 // schemaTarget pairs a Go DTO with the on-disk schema filename and a
@@ -233,6 +234,11 @@ func schemaTargets() []schemaTarget {
 		{&api.JobResponse{}, "job-response.schema.json"},
 		{&api.ProbeHistoryResponse{}, "probe-history-response.schema.json"},
 		{&api.AnomalyHistoryResponse{}, "anomaly-history-response.schema.json"},
+
+		// #364's Bonjour browse. Registered as the bonjour package's own type
+		// rather than an api mirror of it: a mirror is one more thing to drift
+		// and the handler serves this struct verbatim.
+		{&bonjour.BrowseResult{}, "bonjour-browse-response.schema.json"},
 
 		// Profile/settings config — code-first model of the per-profile
 		// config.Config blob (ADR-0007/0008, Phase 7 S6). The profile Config

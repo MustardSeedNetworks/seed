@@ -1,4 +1,5 @@
 import { useTranslation } from 'react-i18next';
+import { BonjourCard } from '../components/cards/BonjourCard';
 import { DnsCard } from '../components/cards/DnsCard';
 import { GatewayCard } from '../components/cards/GatewayCard';
 import { NeighbourCacheCard } from '../components/cards/NeighbourCacheCard';
@@ -80,6 +81,7 @@ export function NetworkPage() {
             <GatewayCard data={cards.gateway} loading={loading} />
             <DnsCard data={cards.dns} loading={loading} />
             <NeighbourCacheCard />
+            <BonjourCard />
             <PublicIpCard data={cards.publicip} loading={loading} />
           </>
         )}

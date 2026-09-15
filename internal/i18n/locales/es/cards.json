@@ -562,5 +562,32 @@
     "noCounters": "Este controlador no expone ninguno de los contadores que vale la pena vigilar.",
     "curated": "Mostrando {{shown}} de {{total}} contadores que informa el controlador.",
     "refresh": "Actualizar"
+  },
+  "bonjour": {
+    "title": "Servicios Bonjour",
+    "description": "Qué se anuncia en este segmento y si le llega mDNS de otra subred.",
+    "browse": "Explorar",
+    "browsing": "Explorando…",
+    "empty": "No se anunció ningún servicio Bonjour en este segmento.",
+    "tableCaption": "Servicios Bonjour anunciados en este segmento",
+    "instance": "Nombre",
+    "type": "Servicio",
+    "host": "Host",
+    "port": "Puerto",
+    "origin": "Dónde",
+    "hostUnknown": "no anunciado",
+    "portUnknown": "no anunciado",
+    "originValue": {
+      "local": "Este segmento",
+      "off-segment": "Otra subred",
+      "unknown": "No se puede determinar"
+    },
+    "reflector": {
+      "no-traffic": "No se vio mDNS en {{seconds}} segundos. Eso no prueba nada en ningún sentido: desde aquí, un segmento inactivo y uno bloqueado se ven igual.",
+      "local-only": "No llegó mDNS de otra subred a este segmento. El reflector no está configurado o no está reenviando.",
+      "reflected": "Está llegando mDNS de {{subnets}} a este segmento, reenviado por {{forwarders}}. Hay un reflector reenviando entre estas subredes.",
+      "routed": "Llegó mDNS desde {{sources}}, que no está en este segmento. Un router está reenviando la multidifusión en lugar de un reflector reenviándola — revise el router antes que el reflector.",
+      "unknown": "Esta versión no reconoce el resultado que informó el servidor. Actualice seed."
+    }
   }
 }
