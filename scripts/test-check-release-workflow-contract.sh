@@ -44,6 +44,42 @@ assert_rejected \
   "syft-wrong-file" \
   "echo \"\${SYFT_SHA256}  \$syft_dir/syft.tar.gz\" | sha256sum -c -" \
   "echo \"\${SYFT_SHA256}  \$syft_dir/different-file\" | sha256sum -c -"
+# The pin assertions check shape rather than a literal value (#2622), so each
+# needs a case proving the shape still refuses an un-pinning. A bump — the thing
+# the literals used to reject — must pass, which the unmutated "$checker" run
+# above already asserts.
+#
+# Each mutation reads its own source out of the workflow rather than naming a
+# version. Writing "v1.27.1" here would put the value in two places again and
+# break this test on any checkout whose workflow has moved on, which is the
+# exact defect #2622 is about.
+image_pin=$(grep -oE 'goreleaser/goreleaser-cross:[^[:space:]]+' "$source_workflow" | head -1)
+assert_rejected \
+  "goreleaser-cross-no-digest" \
+  "$image_pin" \
+  "${image_pin%%@*}"
+assert_rejected \
+  "goreleaser-cross-floating-tag" \
+  "$image_pin" \
+  "goreleaser/goreleaser-cross:latest@${image_pin#*@}"
+
+cosign_sha=$(grep -oE 'COSIGN_SHA256: "[0-9a-f]{64}"' "$source_workflow" | head -1)
+assert_rejected \
+  "cosign-truncated-sha" \
+  "$cosign_sha" \
+  'COSIGN_SHA256: "4629c757"'
+
+syft_version=$(grep -oE 'SYFT_VERSION: "[^"]+"' "$source_workflow" | head -1)
+assert_rejected \
+  "syft-version-unpinned" \
+  "$syft_version" \
+  'SYFT_VERSION: "latest"'
+
+iperf_sha=$(grep -oE 'IPERF3_SHA256: "[0-9a-f]{64}"' "$source_workflow" | head -1)
+assert_rejected \
+  "iperf-sha-empty" \
+  "$iperf_sha" \
+  'IPERF3_SHA256: ""'
 assert_rejected \
   "mutable-latest-url" \
   "releases/download/\${COSIGN_VERSION}/cosign-linux-amd64" \
