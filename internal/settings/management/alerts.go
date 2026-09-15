@@ -91,8 +91,8 @@ func applyAlertsUpdates(updates map[string]any, cfg *config.Config, encrypt Encr
 		return nil
 	}
 
-	if err := delivery.ValidateURL(next.URL); err != nil {
-		return err
+	if invalid := delivery.ValidateURL(next.URL); invalid != nil {
+		return invalid
 	}
 	if next.Secret == "" {
 		return errors.New("alerts.webhook.secret is required whenever a url is set; " +

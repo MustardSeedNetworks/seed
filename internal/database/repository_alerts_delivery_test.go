@@ -131,26 +131,21 @@ func TestFailedDeliveryIsVisibleOnTheStoredAlert(t *testing.T) {
 	}))
 	defer receiver.Close()
 
-	notifier, err := delivery.New(delivery.Config{
+	manager := delivery.NewManager(repo, slog.New(slog.DiscardHandler))
+	manager.Apply(delivery.Config{
 		URL:         receiver.URL,
 		Secret:      "delivery-signing-material",
-		Recorder:    repo,
 		MaxAttempts: 2,
 		Backoff:     time.Millisecond,
-		Logger:      slog.New(slog.DiscardHandler),
 	})
-	if err != nil {
-		t.Fatalf("new notifier: %v", err)
-	}
-	notifier.Start()
-	defer notifier.Stop(ctx)
+	defer manager.Stop(ctx)
 
 	// The composition root's own stacking (Server.alertStore): correlation
 	// annotates inside delivery, and the pending stamp only survives if
 	// correlation passes the same alert pointer through to the repository.
 	store := delivery.WrapWriter(
 		correlation.WrapWriter(repo, correlation.Config{}),
-		notifier,
+		manager,
 	)
 	alert := &alerts.Alert{
 		Type: alerts.TypeConnectivity, Severity: alerts.SeverityError,
@@ -164,9 +159,10 @@ func TestFailedDeliveryIsVisibleOnTheStoredAlert(t *testing.T) {
 	deadline := time.Now().Add(10 * time.Second)
 	var got *alerts.Alert
 	for {
-		got, err = repo.Get(ctx, alert.ID)
-		if err != nil {
-			t.Fatalf("get: %v", err)
+		var getErr error
+		got, getErr = repo.Get(ctx, alert.ID)
+		if getErr != nil {
+			t.Fatalf("get: %v", getErr)
 		}
 		if got.DeliveryStatus == alerts.DeliveryFailed || time.Now().After(deadline) {
 			break

@@ -94,29 +94,28 @@ func NewSettingsManagement(
 	path string,
 	webhook func() *alertdelivery.Manager,
 ) *management.Service {
-	keyring, err := cfg.CredentialKeyring()
-	if err != nil {
-		// The settings service refuses the webhook section without a keyring,
-		// which is the honest outcome: there is nowhere safe to put a secret.
-		logging.GetLogger().Error("credential keyring unavailable; "+
-			"the alert webhook secret cannot be stored", "error", err)
-		keyring = nil
-	}
 	var reconfig management.Reconfigurer
 	if webhook != nil {
 		reconfig = alertReconfigurer{manager: webhook, cfg: cfg}
 	}
-	return management.NewService(managementStore{cfg: cfg, path: path}, keyringOrNil(keyring), reconfig)
+	return management.NewService(managementStore{cfg: cfg, path: path}, configKeyring{cfg: cfg}, reconfig)
 }
 
-// keyringOrNil keeps a nil *config.Keyring from becoming a non-nil interface
-// holding a nil pointer, which would pass the service's nil check and then
-// panic on first use.
-func keyringOrNil(kr *config.Keyring) management.Encrypter {
-	if kr == nil {
-		return nil
+// configKeyring encrypts through whatever keyring the config holds *at the
+// time of the write*, rather than capturing one at construction. Capturing
+// would be a latent bug wherever this service is built before
+// InitCredentialKeyring runs: ensureKeyring installs an ephemeral keyring on
+// first use, init later replaces it, and every secret written in between would
+// be encrypted with a DEK that dies at restart — decrypting to an error on the
+// next boot, which for the webhook means delivery silently off.
+type configKeyring struct{ cfg *config.Config }
+
+func (k configKeyring) EncryptValue(plaintext string) (string, error) {
+	keyring, err := k.cfg.CredentialKeyring()
+	if err != nil {
+		return "", err
 	}
-	return kr
+	return keyring.EncryptValue(plaintext)
 }
 
 // alertReconfigurer re-points the running alert webhook at what was just

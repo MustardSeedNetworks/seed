@@ -2,7 +2,6 @@ package delivery_test
 
 import (
 	"context"
-	"io"
 	"log/slog"
 	"net/http"
 	"net/http/httptest"
@@ -20,7 +19,7 @@ import (
 // chain is wired once, and the receiver behind it is swapped in place.
 
 func quietLogger() *slog.Logger {
-	return slog.New(slog.NewTextHandler(io.Discard, nil))
+	return slog.New(slog.DiscardHandler)
 }
 
 // countingReceiver is an httptest receiver that reports how many POSTs arrived.
