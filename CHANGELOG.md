@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.214.55](https://github.com/MustardSeedNetworks/seed/compare/v0.214.54...v0.214.55) (2026-09-15)
+
+
+### Bug Fixes
+
+* **deploy:** delete the hand-rolled systemd installer and point CONTRIBUTING at the package ([#2673](https://github.com/MustardSeedNetworks/seed/issues/2673)) ([b1778d7](https://github.com/MustardSeedNetworks/seed/commit/b1778d7bc52a05afc6e52fa0b086c3c4bccb8934))
+* **deps:** update module golang.org/x/net to v0.59.0 ([#2665](https://github.com/MustardSeedNetworks/seed/issues/2665)) ([89edbbe](https://github.com/MustardSeedNetworks/seed/commit/89edbbeff5db7e3ed7429861ff3289b0389f3692))
+
 ## [0.214.54](https://github.com/MustardSeedNetworks/seed/compare/v0.214.53...v0.214.54) (2026-09-15)
 
 
