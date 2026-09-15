@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"golang.org/x/net/dns/dnsmessage"
+	"golang.org/x/net/ipv4"
 
 	"github.com/MustardSeedNetworks/seed/internal/logging"
 )
@@ -73,7 +74,7 @@ func (b *Browser) SetWindow(d time.Duration) {
 // service as OriginUnknown and can never report a reflector. The address
 // stage is what makes the cross-subnet verdict possible at all.
 func (b *Browser) Browse(ctx context.Context) (*BrowseResult, error) {
-	local, err := b.localPrefixes()
+	iface, local, err := b.resolveInterface()
 	if err != nil {
 		return nil, err
 	}
@@ -98,6 +99,22 @@ func (b *Browser) Browse(ctx context.Context) (*BrowseResult, error) {
 	}
 	defer func() { _ = conn.Close() }()
 	_ = conn.SetReadBuffer(readBufferSize)
+
+	// Pin multicast egress to the interface the caller named. A socket bound
+	// to 0.0.0.0 sends to 224.0.0.251 out of whatever interface the kernel's
+	// multicast route picks — normally the default one — while the verdict is
+	// computed against the NAMED interface's prefixes. On a multi-homed host
+	// (CT313's trunked VLAN interfaces are exactly this shape) that pairing
+	// answers with replies from the default segment, none of which fall in the
+	// named interface's prefixes, and reports a confident "routed" that is
+	// simply wrong. Binding a source address would not fix it: multicast
+	// egress follows the group route, not the bound address.
+	if iface != nil {
+		if pinErr := ipv4.NewPacketConn(conn).SetMulticastInterface(iface); pinErr != nil {
+			logging.GetLogger().DebugContext(ctx,
+				"bonjour: could not pin multicast egress", "interface", iface.Name, "error", pinErr)
+		}
+	}
 
 	group := &net.UDPAddr{IP: net.ParseIP(multicastGroupV4), Port: port}
 	started := time.Now()
@@ -137,19 +154,23 @@ func (b *Browser) Browse(ctx context.Context) (*BrowseResult, error) {
 	}, nil
 }
 
-// localPrefixes returns the prefixes every classification is made against. An
-// unnamed interface classifies against every non-loopback prefix on the host,
-// which is the honest answer when the caller did not say which segment it
-// meant.
-func (b *Browser) localPrefixes() ([]netip.Prefix, error) {
+// resolveInterface returns the interface to send from and the prefixes every
+// classification is made against. They must come from the same place: a
+// verdict computed against one interface's prefixes over another interface's
+// replies is worse than no verdict.
+//
+// An unnamed interface leaves egress to the kernel and classifies against
+// every non-loopback prefix on the host, which is the honest answer when the
+// caller did not say which segment it meant.
+func (b *Browser) resolveInterface() (*net.Interface, []netip.Prefix, error) {
 	if b.interfaceName == "" {
-		return localPrefixesOf(hostPrefixes()), nil
+		return nil, localPrefixesOf(hostPrefixes()), nil
 	}
 	iface, err := net.InterfaceByName(b.interfaceName)
 	if err != nil {
-		return nil, errNoInterface
+		return nil, nil, errNoInterface
 	}
-	return localPrefixesOf(interfacePrefixes(iface)), nil
+	return iface, localPrefixesOf(interfacePrefixes(iface)), nil
 }
 
 func (b *Browser) ask(conn *net.UDPConn, group *net.UDPAddr, questions []dnsmessage.Question) {
