@@ -5,6 +5,24 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.214.48](https://github.com/MustardSeedNetworks/seed/compare/v0.214.47...v0.214.48) (2026-09-15)
+
+
+### Bug Fixes
+
+* **topology:** classify a node by its role, not by its vendor ([#2610](https://github.com/MustardSeedNetworks/seed/issues/2610)) ([d7c4ddc](https://github.com/MustardSeedNetworks/seed/commit/d7c4ddcdc7ef30df861de52ef9a9f2b6a48d66c3))
+
+
+### Documentation
+
+* **adr:** record the foundation move, Survey's removal and the 0007→0018 supersession; repair the index ([#2613](https://github.com/MustardSeedNetworks/seed/issues/2613)) ([d33cbeb](https://github.com/MustardSeedNetworks/seed/commit/d33cbeb1591ef962d29dcc5f27d328ae5702ca09)), closes [#2612](https://github.com/MustardSeedNetworks/seed/issues/2612)
+
+
+### Miscellaneous
+
+* **deps:** lock file maintenance ([#2585](https://github.com/MustardSeedNetworks/seed/issues/2585)) ([d1f6412](https://github.com/MustardSeedNetworks/seed/commit/d1f6412fe803fa8787b68c47ed42737a48d65af9))
+* **deps:** lock file maintenance ([#2609](https://github.com/MustardSeedNetworks/seed/issues/2609)) ([a883712](https://github.com/MustardSeedNetworks/seed/commit/a883712d43d93baa404f5a13d264b32ba9fd945e))
+
 ## [0.214.47](https://github.com/MustardSeedNetworks/seed/compare/v0.214.46...v0.214.47) (2026-09-15)
 
 
