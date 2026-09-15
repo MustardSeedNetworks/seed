@@ -675,8 +675,11 @@ jobs:
       - name: Verify package-lock integrity
         run: git diff --exit-code package-lock.json
 
+      # --build, not a bare --noEmit: the bare form checks only the app
+      # project, so a type error in the test project (its own tsconfig) reached
+      # main green. seed#2610 did exactly that.
       - name: Run TypeScript check
-        run: npx tsc --noEmit
+        run: npx tsc --build --noEmit
 
       - name: Run Biome (lint + format)
         run: npm run lint

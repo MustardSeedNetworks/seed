@@ -630,6 +630,26 @@ export interface LinkSettings {
 }
 
 // ============================================================================
+// Alert Delivery Settings
+// ============================================================================
+
+/**
+ * The outbound alert receiver (#2605).
+ *
+ * `secret` is write-only: the server never serves the signing material back,
+ * so this field holds only what the operator has just typed and is empty on
+ * load. `secretSet` is how the UI knows one is stored without seeing it.
+ */
+export interface AlertWebhookSettings {
+  /** Absolute http/https receiver URL. Empty turns delivery off. */
+  url: string;
+  /** Newly entered signing material; empty means leave the stored one alone. */
+  secret: string;
+  /** Whether signing material is already stored. */
+  secretSet: boolean;
+}
+
+// ============================================================================
 // Cable Test Settings
 // ============================================================================
 

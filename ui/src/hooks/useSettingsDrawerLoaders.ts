@@ -60,6 +60,7 @@ interface UseSettingsDrawerLoadersArgs {
   setLogError: (msg: string | null) => void;
   fetchSubnets: () => Promise<void>;
   fetchVulnSettings: () => Promise<void>;
+  fetchAlertWebhook: () => Promise<void>;
 }
 
 interface UseSettingsDrawerLoadersResult {
@@ -87,6 +88,7 @@ export function useSettingsDrawerLoaders({
   setLogError,
   fetchSubnets,
   fetchVulnSettings,
+  fetchAlertWebhook,
 }: UseSettingsDrawerLoadersArgs): UseSettingsDrawerLoadersResult {
   const fetchThresholds = useCallback(async () => {
     try {
@@ -371,6 +373,7 @@ export function useSettingsDrawerLoaders({
     fetchNetworkDiscoverySettings().catch(() => undefined);
     fetchSnmpSettings().catch(() => undefined);
     fetchVulnSettings().catch(() => undefined);
+    fetchAlertWebhook().catch(() => undefined);
     fetchLinkSettings().catch(() => undefined);
     fetchCableTestSettings().catch(() => undefined);
     fetchSubnets().catch(() => undefined);
@@ -398,6 +401,7 @@ export function useSettingsDrawerLoaders({
     fetchNetworkDiscoverySettings,
     fetchSnmpSettings,
     fetchVulnSettings,
+    fetchAlertWebhook,
     fetchLinkSettings,
     fetchCableTestSettings,
     fetchSubnets,

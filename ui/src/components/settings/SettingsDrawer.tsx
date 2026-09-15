@@ -32,6 +32,7 @@ import { useTranslation } from 'react-i18next';
 import { api } from '../../api';
 import { useRole } from '../../contexts/RoleContext';
 import { useSettings } from '../../contexts/useSettings';
+import { useAlertWebhookSettings } from '../../hooks/useAlertWebhookSettings';
 import { useDebouncedAutoSave } from '../../hooks/useDebouncedAutoSave';
 import { useFocusTrap } from '../../hooks/useFocusTrap';
 import { useSettingsDrawerLoaders } from '../../hooks/useSettingsDrawerLoaders';
@@ -54,6 +55,7 @@ import type {
 import { RequireAdmin } from '../ui/RequireRole';
 import { SettingsDrawerFooter } from './SettingsDrawerFooter';
 import { SettingsDrawerNetworkSection } from './SettingsDrawerNetworkSection';
+import { AlertDeliverySettings } from './sections/AlertDeliverySettings';
 import { ApiTokensSettings } from './sections/ApiTokensSettings';
 import { AppearanceSettings } from './sections/AppearanceSettings';
 import { CableTestSettings } from './sections/CableTestSettings';
@@ -296,6 +298,17 @@ export const SettingsDrawer: React.MemoExoticComponent<
     fetchVulnSettings,
     saveVulnSettings,
   } = useVulnerabilitySettings();
+  // The alert receiver saves on an explicit action rather than the drawer's
+  // auto-save debounce: a half-typed signing key must not re-point the live
+  // receiver. See useAlertWebhookSettings.
+  const {
+    webhook: alertWebhook,
+    setWebhook: setAlertWebhook,
+    status: alertWebhookStatus,
+    error: alertWebhookError,
+    fetchWebhook: fetchAlertWebhook,
+    saveWebhook: saveAlertWebhook,
+  } = useAlertWebhookSettings();
   // Status for display, iperf comes from context (settingsStatus)
   const displayStatus = settingsStatus.display;
   const iperfStatus = settingsStatus.iperf;
@@ -361,6 +374,7 @@ export const SettingsDrawer: React.MemoExoticComponent<
     setLogError,
     fetchSubnets,
     fetchVulnSettings,
+    fetchAlertWebhook,
   });
 
   // Per-section save callbacks live in their own hook
@@ -650,6 +664,14 @@ export const SettingsDrawer: React.MemoExoticComponent<
             settings={vulnSettings}
             setSettings={setVulnSettings}
             status={vulnStatus}
+          />
+
+          <AlertDeliverySettings
+            webhook={alertWebhook}
+            setWebhook={setAlertWebhook}
+            status={alertWebhookStatus}
+            error={alertWebhookError}
+            saveWebhook={saveAlertWebhook}
           />
 
           <ThresholdsSettings
