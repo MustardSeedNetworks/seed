@@ -14,21 +14,34 @@ The webhook is off until an operator configures it, and nothing is sent, logged
 or retried while it is off. An air-gapped install loses the feature, never
 function.
 
-Two environment variables on the `seed` daemon turn it on:
+Configure it in **Settings → Alert Delivery**:
 
-| Variable | Meaning |
+| Field | Meaning |
 | --- | --- |
-| `SEED_ALERT_WEBHOOK_URL` | Absolute `http`/`https` receiver URL. No userinfo (`https://user:pw@…` is refused). |
-| `SEED_ALERT_WEBHOOK_SECRET` | Shared signing material for the HMAC. Required whenever the URL is set. |
+| Receiver URL | Absolute `http`/`https` address. No userinfo (`https://user:pw@…` is refused). Clearing it turns delivery off. |
+| Signing secret | Shared material for the HMAC. Required whenever a URL is set. |
 
-With systemd, put them in an `EnvironmentFile` the unit reads, owned by root and
-mode `0600`. The secret is deliberately **not** a config-file field: a signing
-key in `config.json` is a key in every backup of `config.json`.
+The change takes effect immediately — the running daemon re-points itself, and
+no restart is needed. A URL that could never receive a POST is refused at the
+API with the reason, rather than stored as a setting that silently never
+delivers.
 
-If the URL is set but unusable — malformed, wrong scheme, or no secret — Seed
-logs an error at startup and runs without delivery. It does not refuse to start:
-a typo in an optional integration must not take down the diagnostics the box was
-installed for. Look for `alert webhook not configured` in the log.
+The signing secret is stored as keyring ciphertext (the `enc:` prefix,
+ADR-0015), so `config.json` and every backup of it hold the ciphertext and never
+the key. It is never served back: the settings screen reports only that a secret
+is set, and typing a new one replaces it.
+
+Seed read these from `SEED_ALERT_WEBHOOK_URL` and `SEED_ALERT_WEBHOOK_SECRET`
+before v1. Those variables are gone and are not read as a fallback; configure
+the receiver in Settings.
+
+If a stored receiver is unusable — malformed, wrong scheme, or no secret — Seed
+logs an error and runs without delivery. It does not refuse to start: a typo in
+an optional integration must not take down the diagnostics the box was installed
+for. Look for `alert webhook not configured` in the log. The same is true of a
+secret this install cannot decrypt, which is what a profile imported from
+another deployment carries: delivery stays off until the secret is set again
+here.
 
 On a successful start the log line is `alert webhook configured` with an
 `endpoint` field holding scheme and host only. The path and query are withheld

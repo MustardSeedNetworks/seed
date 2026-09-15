@@ -20,6 +20,7 @@ import type React from 'react';
 import { memo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useRole } from '../../../contexts/RoleContext';
+import { useAlertWebhookSettings } from '../../../hooks/useAlertWebhookSettings';
 import {
   button as buttonTokens,
   cn,
@@ -27,28 +28,13 @@ import {
   input as inputTokens,
   layout,
 } from '../../../styles/theme';
-import type { AlertWebhookSettings, SaveStatus } from '../../../types/settings';
 import { CollapsibleSection } from '../../ui/CollapsibleSection';
 import { Bell } from '../../ui/icons';
 import { AutoSaveIndicator } from './AutoSaveIndicator';
 
-interface AlertDeliverySettingsProps {
-  webhook: AlertWebhookSettings;
-  setWebhook: React.Dispatch<React.SetStateAction<AlertWebhookSettings>>;
-  status: SaveStatus;
-  /** The server's own reason when a save was refused. */
-  error: string;
-  saveWebhook: () => Promise<void>;
-}
-
-export const AlertDeliverySettings: React.NamedExoticComponent<AlertDeliverySettingsProps> = memo(
-  function alertDeliverySettings({
-    webhook,
-    setWebhook,
-    status,
-    error,
-    saveWebhook,
-  }: AlertDeliverySettingsProps) {
+export const AlertDeliverySettings: React.NamedExoticComponent = memo(
+  function alertDeliverySettings() {
+    const { webhook, setWebhook, status, error, saveWebhook } = useAlertWebhookSettings();
     const { t } = useTranslation('settings');
     const { canWrite } = useRole();
     const readOnlyReason = canWrite ? undefined : t('common.readOnly');

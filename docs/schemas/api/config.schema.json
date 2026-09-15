@@ -3,6 +3,34 @@
   "$id": "https://raw.githubusercontent.com/MustardSeedNetworks/seed/main/docs/schemas/api/config.schema.json",
   "$ref": "#/$defs/Config",
   "$defs": {
+    "AlertWebhookConfig": {
+      "properties": {
+        "url": {
+          "type": "string"
+        },
+        "secret": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "url",
+        "secret"
+      ]
+    },
+    "AlertsConfig": {
+      "properties": {
+        "webhook": {
+          "$ref": "#/$defs/AlertWebhookConfig"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "webhook"
+      ]
+    },
     "AuthConfig": {
       "properties": {
         "default_username": {
@@ -107,6 +135,9 @@
         "snmp": {
           "$ref": "#/$defs/SNMPConfig"
         },
+        "alerts": {
+          "$ref": "#/$defs/AlertsConfig"
+        },
         "fabOptions": {
           "$ref": "#/$defs/FABOptionsConfig"
         },
@@ -145,6 +176,7 @@
         "security",
         "dhcp",
         "snmp",
+        "alerts",
         "fabOptions",
         "displayOptions",
         "logging",

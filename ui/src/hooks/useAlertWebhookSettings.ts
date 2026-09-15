@@ -12,10 +12,29 @@
  * input on save means "leave the stored secret alone".
  */
 
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { api } from '../api';
 import { LogComponents, logger } from '../lib/logger';
-import type { AlertWebhookSettings, SaveStatus } from '../types/settings';
+import type { SaveStatus } from '../types/settings';
+
+/**
+ * The outbound alert receiver (#2605).
+ *
+ * `secret` is write-only: the server never serves the signing material back,
+ * so this field holds only what the operator has just typed and is empty on
+ * load. `secretSet` is how the UI knows one is stored without seeing it.
+ *
+ * It lives here rather than in types/settings.ts because it is this hook's own
+ * shape — nothing outside the hook and its section reads it.
+ */
+export interface AlertWebhookSettings {
+  /** Absolute http/https receiver URL. Empty turns delivery off. */
+  url: string;
+  /** Newly entered signing material; empty means leave the stored one alone. */
+  secret: string;
+  /** Whether signing material is already stored. */
+  secretSet: boolean;
+}
 
 /** The alerts slice of GET /api/v1/settings. */
 interface AlertsSettingsResponse {
@@ -28,7 +47,6 @@ interface UseAlertWebhookSettingsResult {
   status: SaveStatus;
   /** The receiver's own reason when a save was refused, for display. */
   error: string;
-  fetchWebhook: () => Promise<void>;
   saveWebhook: () => Promise<void>;
 }
 
@@ -83,5 +101,12 @@ export function useAlertWebhookSettings(): UseAlertWebhookSettingsResult {
     }
   }, [webhook]);
 
-  return { webhook, setWebhook, status, error, fetchWebhook, saveWebhook };
+  // The section loads its own state on mount rather than joining the drawer's
+  // open-time orchestration: it is the only section that does not auto-save,
+  // so it has nothing to synchronise with the others.
+  useEffect((): void => {
+    fetchWebhook().catch(() => undefined);
+  }, [fetchWebhook]);
+
+  return { webhook, setWebhook, status, error, saveWebhook };
 }

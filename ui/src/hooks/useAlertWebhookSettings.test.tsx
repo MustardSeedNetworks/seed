@@ -44,8 +44,9 @@ describe('useAlertWebhookSettings', () => {
     });
     const { result } = renderHook(() => useAlertWebhookSettings());
 
-    await act(async () => {
-      await result.current.fetchWebhook();
+    // The hook loads on mount; no caller has to ask it to.
+    await waitFor(() => {
+      expect(result.current.webhook.url).not.toBe('');
     });
 
     expect(result.current.webhook.url).toBe('https://receiver.example.com/hook');
@@ -60,8 +61,8 @@ describe('useAlertWebhookSettings', () => {
       alerts: { webhook: { url: 'https://first.example.com/hook', secretSet: true } },
     });
     const { result } = renderHook(() => useAlertWebhookSettings());
-    await act(async () => {
-      await result.current.fetchWebhook();
+    await waitFor(() => {
+      expect(result.current.webhook.secretSet).toBe(true);
     });
 
     act(() => {
