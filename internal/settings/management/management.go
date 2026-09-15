@@ -19,7 +19,7 @@ var (
 	// settings token (optimistic concurrency, HTTP 412).
 	ErrConflict = errors.New("management: settings ETag mismatch")
 	// ErrValidation is returned when one or more apply helpers reject the
-	// update payload (HTTP 400). Match it with errors.Is; the reason an
+	// update payload (HTTP 400). Match it with [errors.Is]; the reason an
 	// operator needs is on the ValidationError that wraps it.
 	ErrValidation = errors.New("management: invalid update fields")
 )
@@ -36,7 +36,7 @@ func (e ValidationError) Error() string { return e.Reason.Error() }
 // Unwrap exposes the joined helper errors.
 func (e ValidationError) Unwrap() error { return e.Reason }
 
-// Is makes every existing errors.Is(err, ErrValidation) call keep working.
+// Is makes every existing [errors.Is](err, ErrValidation) call keep working.
 func (e ValidationError) Is(target error) bool { return target == ErrValidation }
 
 // Store reads and persists the main application settings. Read runs fn under
