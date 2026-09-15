@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.214.47](https://github.com/MustardSeedNetworks/seed/compare/v0.214.46...v0.214.47) (2026-09-15)
+
+
+### Features
+
+* **alerts:** record each webhook delivery's outcome on the alert it was for ([#2606](https://github.com/MustardSeedNetworks/seed/issues/2606)) ([fc52401](https://github.com/MustardSeedNetworks/seed/commit/fc52401291ce1d4ce24f3fd007261d070ad42495))
+
+
+### Miscellaneous
+
+* **deps:** update module mvdan.cc/gofumpt to v0.12.0 ([#2607](https://github.com/MustardSeedNetworks/seed/issues/2607)) ([a83f47e](https://github.com/MustardSeedNetworks/seed/commit/a83f47e5c761f86ef7997f7ab79d608819f74b8d))
+
 ## [0.214.46](https://github.com/MustardSeedNetworks/seed/compare/v0.214.45...v0.214.46) (2026-09-14)
 
 
