@@ -1,6 +1,10 @@
 # ADR-0013: Bluetooth live-scan capture port
 
-**Status:** Accepted — 2026-06-05 · per-OS live-scan drivers (CoreBluetooth / BlueZ D-Bus / WinRT) not yet
+**Status:** Proposed — demoted 2026-09-14 (owner). Bluetooth stays a discovery-enumeration signal
+(`internal/discovery/enumerate/bluetooth_*.go`); the live-scan capture port below is deferred, is outside the
+locked charter (strategy reset rule 4 names Wi-Fi troubleshooting only) and has no v1 plan row. It returns to
+Accepted only through the feature-scope gate with a named user and pain.
+Originally Accepted — 2026-06-05 · per-OS live-scan drivers (CoreBluetooth / BlueZ D-Bus / WinRT) not yet
 implemented, so live BLE advertisement sweep remains pending. The `Scanner` port this ADR calls for is the per-OS
 capture source; it is still unbuilt. (The unrelated ADR-0020 use-case port that once lived at
 `internal/discovery/bluetooth` was deleted with the legacy `/security/bluetooth/*` routes it served — see #2564. The
