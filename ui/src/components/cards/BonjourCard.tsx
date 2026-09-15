@@ -10,47 +10,63 @@
  * exists in every locale.
  */
 
+import type { TFunction } from 'i18next';
 import type { JSX } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { useBonjourBrowse } from '../../hooks/useBonjourBrowse';
 import { cn, radius } from '../../styles/theme';
-import type { BrowseResult } from '../../types/generated/bonjour-browse-response';
+import type { BrowseResult, ReflectorStatus } from '../../types/generated/bonjour-browse-response';
 import { Button } from '../ui/Button';
 import { Card, type Status } from '../ui/card';
 import { Network } from '../ui/icons';
 
-/**
- * The keys are spelled out rather than built from the state string. A
- * template-literal key is invisible to the i18n extractor, so the string it
- * names is dropped from the locale files and the card renders the key — and
- * the translation gate cannot see it go missing.
- */
 const MS_PER_SECOND = 1000;
 
-const REFLECTOR_KEYS = {
-  'no-traffic': 'bonjour.reflector.no-traffic',
-  'local-only': 'bonjour.reflector.local-only',
-  reflected: 'bonjour.reflector.reflected',
-  routed: 'bonjour.reflector.routed',
-} as const;
-
-const ORIGIN_KEYS = {
-  local: 'bonjour.originValue.local',
-  'off-segment': 'bonjour.originValue.off-segment',
-  unknown: 'bonjour.originValue.unknown',
-} as const;
-
-function reflectorKey(state: string): (typeof REFLECTOR_KEYS)[keyof typeof REFLECTOR_KEYS] | null {
-  return state in REFLECTOR_KEYS ? REFLECTOR_KEYS[state as keyof typeof REFLECTOR_KEYS] : null;
+/**
+ * Every key is a literal inside its own `t()` call, not a value looked up from
+ * a map and not a template literal. Both alternatives are invisible to the
+ * tooling: a template literal is dropped by the extractor, so the string it
+ * names never reaches the locale files, and a map of literals is invisible to
+ * `check-keys.py`, which then reports the keys as unreferenced and cannot warn
+ * when one really does go unused.
+ */
+function reflectorSentence(
+  t: TFunction<'cards'>,
+  reflector: ReflectorStatus,
+  seconds: number,
+): string {
+  const evidence = {
+    seconds,
+    subnets: (reflector.remoteSubnets ?? []).join(', '),
+    forwarders: (reflector.forwardedBy ?? []).join(', '),
+    sources: (reflector.routedFrom ?? []).join(', '),
+  };
+  switch (reflector.state) {
+    case 'no-traffic':
+      return t('bonjour.reflector.no-traffic', evidence);
+    case 'local-only':
+      return t('bonjour.reflector.local-only', evidence);
+    case 'reflected':
+      return t('bonjour.reflector.reflected', evidence);
+    case 'routed':
+      return t('bonjour.reflector.routed', evidence);
+    default:
+      // The server may be newer than this build. Saying so beats rendering a
+      // raw key at the operator.
+      return t('bonjour.reflector.unknown');
+  }
 }
 
-function originKey(origin: string): (typeof ORIGIN_KEYS)[keyof typeof ORIGIN_KEYS] {
-  // An origin this build does not know is reported as undecidable, which is
-  // what an unrecognised classification actually means to the reader.
-  return origin in ORIGIN_KEYS
-    ? ORIGIN_KEYS[origin as keyof typeof ORIGIN_KEYS]
-    : ORIGIN_KEYS.unknown;
+function originLabel(t: TFunction<'cards'>, origin: string): string {
+  switch (origin) {
+    case 'local':
+      return t('bonjour.originValue.local');
+    case 'off-segment':
+      return t('bonjour.originValue.off-segment');
+    default:
+      return t('bonjour.originValue.unknown');
+  }
 }
 
 export function BonjourCard(): JSX.Element {
@@ -104,19 +120,13 @@ export function BonjourCard(): JSX.Element {
 
 function ReflectorVerdict({ result }: { result: BrowseResult }): JSX.Element {
   const { t } = useTranslation('cards');
-  const { state, remoteSubnets, forwardedBy, routedFrom } = result.reflector;
+  const { state } = result.reflector;
 
-  const key = reflectorKey(state);
-  const sentence = key
-    ? t(key, {
-        seconds: Math.round(result.durationMs / MS_PER_SECOND),
-        subnets: (remoteSubnets ?? []).join(', '),
-        forwarders: (forwardedBy ?? []).join(', '),
-        sources: (routedFrom ?? []).join(', '),
-      })
-    : // A state this build does not know about is reported as unknown rather
-      // than rendered as a raw key: the server may be newer than the UI.
-      t('bonjour.reflector.unknown');
+  const sentence = reflectorSentence(
+    t,
+    result.reflector,
+    Math.round(result.durationMs / MS_PER_SECOND),
+  );
 
   return (
     <p className="body-small" data-testid="bonjour-reflector" data-state={state}>
@@ -174,7 +184,7 @@ function ServiceTable({ result }: { result: BrowseResult }): JSX.Element {
                 {/* A zero port means no SRV record was seen, not port 0. */}
                 {service.port === 0 ? t('bonjour.portUnknown') : service.port}
               </td>
-              <td className="px-cell py-row">{t(originKey(service.origin))}</td>
+              <td className="px-cell py-row">{originLabel(t, service.origin)}</td>
             </tr>
           ))}
         </tbody>
