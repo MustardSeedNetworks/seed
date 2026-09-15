@@ -45,28 +45,40 @@ assert_rejected \
   "echo \"\${SYFT_SHA256}  \$syft_dir/syft.tar.gz\" | sha256sum -c -" \
   "echo \"\${SYFT_SHA256}  \$syft_dir/different-file\" | sha256sum -c -"
 # The pin assertions check shape rather than a literal value (#2622), so each
-# one needs a case proving the shape still refuses an un-pinning. A bump — the
-# thing the literals used to reject — must pass, which is what the unmutated
-# `"$checker"` run above already asserts against a workflow Renovate has bumped.
+# needs a case proving the shape still refuses an un-pinning. A bump — the thing
+# the literals used to reject — must pass, which the unmutated "$checker" run
+# above already asserts.
+#
+# Each mutation reads its own source out of the workflow rather than naming a
+# version. Writing "v1.27.1" here would put the value in two places again and
+# break this test on any checkout whose workflow has moved on, which is the
+# exact defect #2622 is about.
+image_pin=$(grep -oE 'goreleaser/goreleaser-cross:[^[:space:]]+' "$source_workflow" | head -1)
 assert_rejected \
   "goreleaser-cross-no-digest" \
-  "image: goreleaser/goreleaser-cross:v1.27.1@sha256:3e196797e92c0490aca745f0aa83ef5898c8e79cf4df94914d0b5a93564806d2" \
-  "image: goreleaser/goreleaser-cross:v1.27.1"
+  "$image_pin" \
+  "${image_pin%%@*}"
 assert_rejected \
   "goreleaser-cross-floating-tag" \
-  "image: goreleaser/goreleaser-cross:v1.27.1@sha256:3e196797e92c0490aca745f0aa83ef5898c8e79cf4df94914d0b5a93564806d2" \
-  "image: goreleaser/goreleaser-cross:latest@sha256:3e196797e92c0490aca745f0aa83ef5898c8e79cf4df94914d0b5a93564806d2"
+  "$image_pin" \
+  "goreleaser/goreleaser-cross:latest@${image_pin#*@}"
+
+cosign_sha=$(grep -oE 'COSIGN_SHA256: "[0-9a-f]{64}"' "$source_workflow" | head -1)
 assert_rejected \
   "cosign-truncated-sha" \
-  'COSIGN_SHA256: "4629c757b7618056f8ddd7e2625ae9fdd94c0372a65049520bc7d9df9efc7f71"' \
+  "$cosign_sha" \
   'COSIGN_SHA256: "4629c757"'
+
+syft_version=$(grep -oE 'SYFT_VERSION: "[^"]+"' "$source_workflow" | head -1)
 assert_rejected \
   "syft-version-unpinned" \
-  'SYFT_VERSION: "1.51.0"' \
+  "$syft_version" \
   'SYFT_VERSION: "latest"'
+
+iperf_sha=$(grep -oE 'IPERF3_SHA256: "[0-9a-f]{64}"' "$source_workflow" | head -1)
 assert_rejected \
   "iperf-sha-empty" \
-  'IPERF3_SHA256: "656e4405ebd620121de7ceca3eaf43a88f79ea1b857d041a6a0b1314801acdd8"' \
+  "$iperf_sha" \
   'IPERF3_SHA256: ""'
 assert_rejected \
   "mutable-latest-url" \
