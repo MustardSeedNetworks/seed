@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"path/filepath"
+	"runtime"
 	"sync"
 	"testing"
 	"time"
@@ -28,11 +29,61 @@ func openWithShortBusyTimeout(t *testing.T) *database.DB {
 
 const (
 	// busyTimeoutForTest is the SQLite busy timeout the contention tests run
-	// with; lockHoldForTest exceeds it, so a second writer that competes for the
-	// lock at the SQLite level is guaranteed to exhaust the timeout.
+	// with. A serialised writer queues in Go and never reaches SQLite, so this
+	// budget should never be spent. Keeping it short is what makes a
+	// regression legible rather than slow: a writer that races SQLite instead
+	// of queueing is rejected after this long with the production symptom of
+	// seed#2453 — "database is locked (5) (SQLITE_BUSY)" — which
+	// [awaitQueuedWriter] then reports, instead of the test waiting out
+	// queueDeadline for a queue entry that is never coming.
 	busyTimeoutForTest = 200 * time.Millisecond
-	lockHoldForTest    = 800 * time.Millisecond
+
+	// queueDeadline bounds the wait for a writer to appear in the pool's
+	// queue. It is a safety net, not a timing assumption: the queue entry is
+	// observable within tens of microseconds, and exceeding this means no
+	// writer ever queued, which is the failure the test exists to catch.
+	queueDeadline = 5 * time.Second
+
+	// blockedWriteDeadline is how long a writer that can never acquire the
+	// connection is given before its own context must end the wait. Any value
+	// proves the same thing — the holder never releases — so it is small.
+	blockedWriteDeadline = 50 * time.Millisecond
 )
+
+// awaitQueuedWriter blocks until one more caller is waiting for the write
+// connection than there was at baseline.
+//
+// This is what "the writer waits" actually means: the write handle has
+// MaxOpenConns 1, so a second writer queues for that connection inside
+// database/sql instead of opening its own and racing the first at the SQLite
+// level, where the loser is rejected with SQLITE_BUSY rather than queued.
+// Observing the queue entry is both faster and stricter than inferring it from
+// elapsed time, which is what these tests did before: they slept past the busy
+// timeout and checked the ordering afterwards.
+// competing is the outcome of the write that should be queueing; passing it in
+// lets a regression report itself with the error SQLite gave rather than as a
+// timeout.
+func awaitQueuedWriter(t *testing.T, db *database.DB, baseline int64, competing <-chan error) {
+	t.Helper()
+	deadline := time.Now().Add(queueDeadline)
+	for time.Now().Before(deadline) {
+		if db.WriteConn().Stats().WaitCount > baseline {
+			return
+		}
+		select {
+		case err := <-competing:
+			// It finished without ever queueing, so it had its own
+			// connection and raced the holder at the SQLite level. That is
+			// seed#2453 exactly, and err is the symptom the field reported.
+			t.Fatalf("the competing write did not queue for the write connection; "+
+				"it raced the held transaction and returned %v", err)
+		default:
+		}
+		runtime.Gosched()
+	}
+	t.Fatalf("no writer queued for the write connection within %s: "+
+		"the competing write is not waiting for the held transaction", queueDeadline)
+}
 
 // TestWriteWaitsForHeldTransaction is the regression for #2453: on CT313 ten of
 // 74 SNMP polling targets ended a cycle in error with
@@ -45,7 +96,7 @@ func TestWriteWaitsForHeldTransaction(t *testing.T) {
 	ctx := context.Background()
 
 	holding := make(chan struct{})
-	released := make(chan struct{})
+	release := make(chan struct{})
 	holderErr := make(chan error, 1)
 	var wg sync.WaitGroup
 	wg.Go(func() {
@@ -57,25 +108,33 @@ func TestWriteWaitsForHeldTransaction(t *testing.T) {
 				return err
 			}
 			close(holding)
-			time.Sleep(lockHoldForTest)
-			close(released)
+			<-release
 			return nil
 		})
 	})
 
 	// The write lock is held only once that first statement has executed.
 	<-holding
+	baseline := db.WriteConn().Stats().WaitCount
 
-	_, err := db.Exec(ctx,
-		`INSERT INTO snmp_observations (client_id, target_id, kind, observed_at, payload_json, ingested_at)
-		 VALUES ('default', 'collector', 'arp', '2026-01-01T00:00:00Z', '{}', '2026-01-01T00:00:00Z')`)
-	require.NoError(t, err, "a collector insert must never be rejected because another write is in flight")
+	collectorErr := make(chan error, 1)
+	go func() {
+		_, err := db.Exec(ctx,
+			`INSERT INTO snmp_observations (client_id, target_id, kind, observed_at, payload_json, ingested_at)
+			 VALUES ('default', 'collector', 'arp', '2026-01-01T00:00:00Z', '{}', '2026-01-01T00:00:00Z')`)
+		collectorErr <- err
+	}()
 
+	awaitQueuedWriter(t, db, baseline, collectorErr)
 	select {
-	case <-released:
+	case err := <-collectorErr:
+		t.Fatalf("the competing insert finished (%v) while the holding transaction still held the lock", err)
 	default:
-		t.Fatal("the competing insert committed before the holding transaction released the lock")
 	}
+
+	close(release)
+	require.NoError(t, <-collectorErr,
+		"a collector insert must never be rejected because another write is in flight")
 	wg.Wait()
 	require.NoError(t, <-holderErr)
 
@@ -109,13 +168,28 @@ func TestWriteWaitIsBoundedByContext(t *testing.T) {
 	})
 	t.Cleanup(func() { close(blocked); wg.Wait() })
 	<-holding
+	baseline := db.WriteConn().Stats().WaitCount
 
-	ctx, cancel := context.WithTimeout(context.Background(), lockHoldForTest)
+	ctx, cancel := context.WithTimeout(context.Background(), blockedWriteDeadline)
 	defer cancel()
-	_, err := db.Exec(ctx,
-		`INSERT INTO snmp_observations (client_id, target_id, kind, observed_at, payload_json, ingested_at)
-		 VALUES ('default', 'late', 'arp', '2026-01-01T00:00:00Z', '{}', '2026-01-01T00:00:00Z')`)
-	require.ErrorIs(t, err, context.DeadlineExceeded)
+	lateErr := make(chan error, 1)
+	go func() {
+		_, err := db.Exec(ctx,
+			`INSERT INTO snmp_observations (client_id, target_id, kind, observed_at, payload_json, ingested_at)
+			 VALUES ('default', 'late', 'arp', '2026-01-01T00:00:00Z', '{}', '2026-01-01T00:00:00Z')`)
+		lateErr <- err
+	}()
+
+	// Both halves are needed, and the second is why the deadline may be
+	// short. DeadlineExceeded alone does not say the writer queued: a writer
+	// racing SQLite on its own connection also fails, and with any deadline
+	// below the busy timeout it fails the same way. Asserting the pool wait
+	// first pins which of the two happened.
+	// No competing channel here: this write is *supposed* to end in an error
+	// while queued, so handing awaitQueuedWriter its result would let a
+	// deadline that fires before the queue is observed read as a regression.
+	awaitQueuedWriter(t, db, baseline, nil)
+	require.ErrorIs(t, <-lateErr, context.DeadlineExceeded)
 }
 
 // TestUpdateReturningWaitsForHeldTransaction covers the write that does not
@@ -128,7 +202,7 @@ func TestUpdateReturningWaitsForHeldTransaction(t *testing.T) {
 	require.NoError(t, repo.Create(ctx, &database.Profile{ID: "p1", Name: "orig", ConfigJSON: "{}"}))
 
 	holding := make(chan struct{})
-	released := make(chan struct{})
+	release := make(chan struct{})
 	holderErr := make(chan error, 1)
 	var wg sync.WaitGroup
 	wg.Go(func() {
@@ -140,20 +214,27 @@ func TestUpdateReturningWaitsForHeldTransaction(t *testing.T) {
 				return err
 			}
 			close(holding)
-			time.Sleep(lockHoldForTest)
-			close(released)
+			<-release
 			return nil
 		})
 	})
 	<-holding
+	baseline := db.WriteConn().Stats().WaitCount
 
-	require.NoError(t, repo.Update(ctx, &database.Profile{ID: "p1", Name: "renamed", ConfigJSON: "{}"}))
+	updateErr := make(chan error, 1)
+	go func() {
+		updateErr <- repo.Update(ctx, &database.Profile{ID: "p1", Name: "renamed", ConfigJSON: "{}"})
+	}()
 
+	awaitQueuedWriter(t, db, baseline, updateErr)
 	select {
-	case <-released:
+	case err := <-updateErr:
+		t.Fatalf("the update finished (%v) while the holding transaction still held the lock", err)
 	default:
-		t.Fatal("the update committed before the holding transaction released the lock")
 	}
+
+	close(release)
+	require.NoError(t, <-updateErr)
 	wg.Wait()
 	require.NoError(t, <-holderErr)
 }
