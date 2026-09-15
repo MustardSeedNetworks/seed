@@ -87,7 +87,7 @@ require (
 	github.com/trustelem/zxcvbn v1.0.1
 	github.com/vishvananda/netlink v1.3.1
 	golang.org/x/crypto v0.57.0
-	golang.org/x/net v0.58.0
+	golang.org/x/net v0.59.0
 	golang.org/x/oauth2 v0.37.0
 	golang.org/x/sys v0.48.0
 	golang.org/x/text v0.42.0
