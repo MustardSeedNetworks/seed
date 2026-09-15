@@ -762,13 +762,10 @@ func TestMiddlewareWithCookie(t *testing.T) {
 	}
 
 	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		// Check that username was set in header
-		if r.Header.Get("X-Username") != defaults.Auth.Username {
-			t.Errorf(
-				"expected X-Username to be %q, got %q",
-				defaults.Auth.Username,
-				r.Header.Get("X-Username"),
-			)
+		// The identity rides the context, not a caller-writable header (#2632).
+		if got := auth.UsernameFromContext(r.Context()); got != defaults.Auth.Username {
+			t.Errorf("expected the context username to be %q, got %q",
+				defaults.Auth.Username, got)
 		}
 		w.WriteHeader(http.StatusOK)
 	})

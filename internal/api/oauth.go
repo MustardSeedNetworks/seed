@@ -467,34 +467,13 @@ type SSOProviderInfo struct {
 }
 
 // handleSSOSettings returns SSO configuration status for the settings UI.
-// Security fix #757: Require authentication to view SSO settings.
+//
+// The route is registered with minRole: op, and since #2632 it no longer sits
+// under an auth-bypass prefix, so the JWT middleware and the role gate have
+// both run by the time this is called. The hand-rolled token check that used
+// to stand in for them (#757) is gone with the bypass that made it necessary.
 func (s *Server) handleSSOSettings(w http.ResponseWriter, r *http.Request) {
 	logger := logging.FromContext(r.Context())
-
-	// Security: Require authentication (fixes #757)
-	token, _ := auth.GetTokenFromRequest(r)
-	if token == "" {
-		sendErrorResponseWithDetails(
-			w,
-			logger,
-			http.StatusUnauthorized,
-			ErrCodeUnauthorized,
-			"Authentication required",
-			"",
-		)
-		return
-	}
-	if _, err := s.authManager().ValidateToken(r.Context(), token); err != nil {
-		sendErrorResponseWithDetails(
-			w,
-			logger,
-			http.StatusUnauthorized,
-			ErrCodeUnauthorized,
-			"Invalid or expired token",
-			"",
-		)
-		return
-	}
 
 	providers := make([]SSOProviderInfo, 0, len(s.config.Auth.SSO.Providers))
 	for _, p := range s.config.Auth.SSO.Providers {
@@ -520,51 +499,6 @@ type ssoUpdateRequest struct {
 	Scopes       []string `json:"scopes,omitempty"`
 }
 
-// requireSSOAuth validates authentication for SSO update operations.
-// Returns true if authentication is valid, false otherwise (response already sent).
-func (s *Server) requireSSOAuth(w http.ResponseWriter, r *http.Request, logger *slog.Logger) bool {
-	token, _ := auth.GetTokenFromRequest(r)
-	if token == "" {
-		clientIP := s.getClientIP(r)
-		logger.WarnContext(r.Context(),
-			"Unauthenticated SSO update attempt",
-			"client_ip",
-			clientIP,
-			"event",
-			"auth.sso.blocked",
-		)
-		sendErrorResponseWithDetails(
-			w,
-			logger,
-			http.StatusUnauthorized,
-			ErrCodeUnauthorized,
-			"Authentication required",
-			"",
-		)
-		return false
-	}
-	if _, err := s.authManager().ValidateToken(r.Context(), token); err != nil {
-		clientIP := s.getClientIP(r)
-		logger.WarnContext(r.Context(),
-			"Invalid token SSO update attempt",
-			"client_ip",
-			clientIP,
-			"event",
-			"auth.sso.blocked",
-		)
-		sendErrorResponseWithDetails(
-			w,
-			logger,
-			http.StatusUnauthorized,
-			ErrCodeUnauthorized,
-			"Invalid or expired token",
-			"",
-		)
-		return false
-	}
-	return true
-}
-
 // updateProviderConfig updates the provider configuration in the config.
 // Returns true if the provider was found and updated.
 func (s *Server) updateProviderConfig(req *ssoUpdateRequest) bool {
@@ -584,14 +518,13 @@ func (s *Server) updateProviderConfig(req *ssoUpdateRequest) bool {
 }
 
 // handleSSOUpdate updates SSO provider configuration.
-// Security fix #757, #760: Require authentication and add body limit + config locking.
+//
+// Registered with minRole: op and feature "sso"; since #2632 the route passes
+// through the JWT, CSRF and role middlewares like every other operator write,
+// which is what authenticates it (#757). Body limit and config locking (#760)
+// stay here.
 func (s *Server) handleSSOUpdate(w http.ResponseWriter, r *http.Request) {
 	logger := logging.FromContext(r.Context())
-
-	// Security: Require authentication (fixes #757)
-	if !s.requireSSOAuth(w, r, logger) {
-		return
-	}
 
 	// Existing handler was English-only — use the non-localized helper.
 	var req ssoUpdateRequest

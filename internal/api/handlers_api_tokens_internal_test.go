@@ -12,6 +12,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/MustardSeedNetworks/seed/internal/auth"
 	"github.com/MustardSeedNetworks/seed/internal/database"
 	"github.com/MustardSeedNetworks/seed/internal/license"
 )
@@ -79,11 +80,11 @@ func newAuthedRequest(method, path string, body []byte, username string) *http.R
 	} else {
 		req = httptest.NewRequest(method, path, http.NoBody)
 	}
-	// X-Username is the contract between the JWT/token middleware and
-	// downstream handlers; setting it directly bypasses the middleware
-	// for unit tests, which is what we want here.
-	req.Header.Set("X-Username", username)
-	return req
+	// The authenticated identity on the request context is the contract
+	// between the JWT/token middleware and downstream handlers (#2632, where
+	// it was a spoofable header); stamping it directly stands in for the
+	// middleware in a unit test, which is what we want here.
+	return req.WithContext(auth.WithUsername(req.Context(), username))
 }
 
 func TestMintRequiresPro_NoLicense(t *testing.T) {
@@ -246,7 +247,7 @@ func TestAPITokenMiddlewareResolvesValidToken(t *testing.T) {
 
 	var capturedUser string
 	next := http.HandlerFunc(func(_ http.ResponseWriter, r *http.Request) {
-		capturedUser = r.Header.Get("X-Username")
+		capturedUser = auth.UsernameFromContext(r.Context())
 	})
 	mw := apiTokenMiddleware(s.apiTokens, s.resolveClientID, next)
 

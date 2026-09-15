@@ -86,8 +86,8 @@ func (s *Server) handleExport(w http.ResponseWriter, r *http.Request) {
 // Security fix #301: Removed insecure LOG_ACCESS_TOKEN - JWT authentication is sufficient.
 func (s *Server) handleLogs(w http.ResponseWriter, r *http.Request) {
 	logger := logging.FromContext(r.Context())
-	// JWT authentication is enforced by the global auth middleware
-	// X-Username header is set by the middleware after validating the JWT
+	// JWT authentication is enforced by the global auth middleware, which
+	// stamps the validated identity on the request context.
 
 	if s.logPath == "" {
 		sendErrorResponseWithDetails(

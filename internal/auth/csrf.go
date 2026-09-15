@@ -60,7 +60,7 @@ func (m *CSRFManager) Stop() {
 }
 
 // isCSRFExemptPath reports whether path is on the curated CSRF exempt-list:
-// pre-session auth/setup endpoints, the client-log sink, and the SSO handshake.
+// pre-session auth/setup endpoints, the client-log sink, and the OAuth handshake.
 // Every entry MUST be safe to serve on a state-changing method without a CSRF
 // token — i.e. pre-session or non-security-state-changing — NEVER a data-mutating
 // route. csrf_coverage_test.go pins this set (#1223): a change here must be
@@ -77,7 +77,7 @@ func isCSRFExemptPath(path string) bool {
 		"/api/v1/reporting/logs/client", // logger runs before CSRF tokens exist
 
 		// The second half of a login, and the recovery that rescues one. All
-		// three already bypass the JWT middleware (shouldBypassAuth) because
+		// three already bypass the JWT middleware (ShouldBypassAuth) because
 		// they run before the user holds an access token — so requiring a CSRF
 		// token here is not protection, it is a wall: the middleware finds no
 		// session, answers 401, and the login can never be completed. Enrolling
@@ -98,11 +98,21 @@ func isCSRFExemptPath(path string) bool {
 		"/api/v1/auth/webauthn/login/finish",
 		"/api/v1/recovery/status",
 		"/api/v1/recovery/complete",
-		"/api/v1/recovery/instructions":
+		"/api/v1/recovery/instructions",
+
+		// The OAuth handshake, and only the handshake: the browser arrives at
+		// these with no bearer, so they bypass the JWT middleware and must be
+		// exempt here for the same reason the login half is. They are GETs,
+		// which CSRF skips by method anyway; listing them keeps the rule
+		// "everything pre-session is exempt" derivable (TestPreSessionPathsAreCSRFExempt).
+		// #2632: this was a `/api/v1/sso/` prefix, which also exempted the
+		// operator-gated /sso/settings and /sso/update.
+		"/api/v1/sso/providers",
+		"/api/v1/sso/login",
+		"/api/v1/sso/callback":
 		return true
 	}
-	// SSO handshake endpoints are pre-session.
-	return strings.HasPrefix(path, "/api/v1/sso/")
+	return false
 }
 
 // CSRFMiddleware returns HTTP middleware that validates CSRF tokens on state-changing requests.

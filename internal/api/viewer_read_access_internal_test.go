@@ -145,9 +145,19 @@ func TestViewerCanReadEveryRoleGatedRoute(t *testing.T) {
 
 // isPreSessionPath reports whether a path is reachable before the caller holds
 // an access token, where a 401 is a legitimate handler answer.
+//
+// #2632: the OAuth entries are the three handshake paths, not a `/api/v1/sso/`
+// prefix. The prefix made this helper tolerate a 401 on /sso/settings and
+// /sso/update — the same over-broad reading that let their role gate trust a
+// client header, surviving in the suite's own definition of "pre-session".
 func isPreSessionPath(path string) bool {
+	if slices.Contains([]string{
+		"/api/v1/sso/providers", "/api/v1/sso/login", "/api/v1/sso/callback",
+	}, path) {
+		return true
+	}
 	for _, prefix := range []string{
-		"/api/v1/auth/", "/api/v1/setup/", "/api/v1/recovery/", "/api/v1/sso/",
+		"/api/v1/auth/", "/api/v1/setup/", "/api/v1/recovery/",
 	} {
 		if strings.HasPrefix(path, prefix) {
 			return true

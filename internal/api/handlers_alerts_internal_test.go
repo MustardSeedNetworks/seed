@@ -11,6 +11,7 @@ import (
 
 	"github.com/MustardSeedNetworks/seed/internal/alerts"
 	"github.com/MustardSeedNetworks/seed/internal/app"
+	"github.com/MustardSeedNetworks/seed/internal/auth"
 	"github.com/MustardSeedNetworks/seed/internal/database"
 )
 
@@ -101,7 +102,7 @@ func TestHandleAlertAction_Acknowledge(t *testing.T) {
 
 	url := APIVersionPrefix + "/alerts/" + strconv.FormatInt(id, 10) + "/acknowledge"
 	req := httptest.NewRequest(http.MethodPost, url, http.NoBody)
-	req.Header.Set("X-Username", "alice")
+	req = req.WithContext(auth.WithUsername(req.Context(), "alice"))
 	w := httptest.NewRecorder()
 	s.handleAlertAction(w, req)
 	if w.Code != http.StatusOK {

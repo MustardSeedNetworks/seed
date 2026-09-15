@@ -369,8 +369,8 @@ func resolveAPIToken(ctx context.Context, repo *database.APITokenRepository, pla
 
 // apiTokenMiddleware sits in front of the existing JWT auth middleware.
 // If the request carries `Authorization: Bearer sd_pat_...`, it looks
-// up the token, sets X-Username, and forwards to `next` so downstream
-// handlers see an authenticated user. Otherwise it falls through to
+// up the token, stamps the owner on the request context, and forwards to
+// `next` so downstream handlers see an authenticated user. Otherwise it falls through to
 // `next` unchanged, letting the JWT middleware handle the request.
 //
 // This middleware is part of the PAT authentication seam — it takes
@@ -438,13 +438,14 @@ func apiTokenMiddleware(
 		// request is already authenticated. Without it the JWT middleware
 		// validates the `sd_pat_…` bearer as a JWT and rejects it.
 		ctx = auth.WithAPITokenAuth(ctx)
-		r.Header.Set("X-Username", rec.OwnerUsername)
+		ctx = auth.WithUsername(ctx, rec.OwnerUsername)
 		// #1255: thread the per-token scope so callerRole can clamp the
 		// effective role at min(owner.role, token.scope). Empty scope
-		// (legacy tokens / no-cap mints) leaves the header unset and
-		// the owner's full role applies.
+		// (legacy tokens / no-cap mints) leaves it unset and the owner's
+		// full role applies. #2632: on the context, not a header — the
+		// same reason the username moved.
 		if rec.Scope != "" {
-			r.Header.Set("X-Token-Scope", rec.Scope)
+			ctx = auth.WithTokenScope(ctx, rec.Scope)
 		}
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})

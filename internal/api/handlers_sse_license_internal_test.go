@@ -8,6 +8,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	"github.com/MustardSeedNetworks/seed/internal/auth"
 	"github.com/MustardSeedNetworks/seed/internal/license"
 )
 
@@ -26,7 +27,7 @@ func TestSSEEventsRequiresLiveTelemetry(t *testing.T) {
 
 	// 1. No license → 402, requiredFeature reports the right key.
 	req := httptest.NewRequest(http.MethodGet, APIVersionPrefix+"/events", http.NoBody)
-	req.Header.Set("X-Username", "alice")
+	req = req.WithContext(auth.WithUsername(req.Context(), "alice"))
 	w := httptest.NewRecorder()
 	s.mux.ServeHTTP(w, req)
 	if w.Code != http.StatusPaymentRequired {
@@ -51,7 +52,7 @@ func TestSSEEventsRequiresLiveTelemetry(t *testing.T) {
 		t.Fatalf("StartTrial: %s", res.Message)
 	}
 	req2 := httptest.NewRequest(http.MethodGet, APIVersionPrefix+"/events", http.NoBody)
-	req2.Header.Set("X-Username", "alice")
+	req2 = req2.WithContext(auth.WithUsername(req2.Context(), "alice"))
 	w2 := httptest.NewRecorder()
 	s.mux.ServeHTTP(w2, req2)
 	if w2.Code == http.StatusPaymentRequired {
@@ -70,7 +71,7 @@ func TestDiscoveryEngineEventsStaysOpen(t *testing.T) {
 	s.setupRoutes()
 
 	req := httptest.NewRequest(http.MethodGet, APIVersionPrefix+"/discovery/engine/events", http.NoBody)
-	req.Header.Set("X-Username", "alice")
+	req = req.WithContext(auth.WithUsername(req.Context(), "alice"))
 	w := httptest.NewRecorder()
 	s.mux.ServeHTTP(w, req)
 	if w.Code == http.StatusPaymentRequired {

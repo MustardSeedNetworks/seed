@@ -14,6 +14,7 @@ import (
 
 	"github.com/MustardSeedNetworks/seed/internal/api"
 	"github.com/MustardSeedNetworks/seed/internal/app"
+	"github.com/MustardSeedNetworks/seed/internal/auth"
 	"github.com/MustardSeedNetworks/seed/internal/config"
 	"github.com/MustardSeedNetworks/seed/internal/database"
 	"github.com/MustardSeedNetworks/seed/internal/license"
@@ -122,7 +123,7 @@ func reportsDo(t *testing.T, s *api.Server, method, path, body string) *httptest
 		req = httptest.NewRequest(method, path, strings.NewReader(body))
 		req.Header.Set("Content-Type", "application/json")
 	}
-	req.Header.Set("X-Username", reportsOperator)
+	req = req.WithContext(auth.WithUsername(req.Context(), reportsOperator))
 
 	rec := httptest.NewRecorder()
 	s.Mux().ServeHTTP(rec, req)
