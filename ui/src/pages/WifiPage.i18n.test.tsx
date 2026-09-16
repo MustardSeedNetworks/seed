@@ -32,6 +32,7 @@ vi.mock('../hooks/useWifiVisibility', () => ({
 }));
 
 const wifi = {
+  status: 'associated',
   ssid: 'msn-lab',
   bssid: '02:00:5e:00:00:01',
   signal: -55,

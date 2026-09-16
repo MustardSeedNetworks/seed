@@ -23,13 +23,40 @@ import (
 
 // WiFiResponse represents the Wi-Fi information for the API.
 type WiFiResponse struct {
-	Interface string `json:"interface"` // WiFi interface used
-	SSID      string `json:"ssid"`
-	BSSID     string `json:"bssid"`
-	Signal    int    `json:"signal"` // dBm
-	Channel   int    `json:"channel"`
-	Frequency int    `json:"frequency"` // MHz
-	Security  string `json:"security"`
+	Interface   string      `json:"interface"`
+	Wireless    bool        `json:"wireless"`
+	Status      wifi.Status `json:"status"                jsonschema:"enum=associated,enum=detailsWithheld,enum=notAssociated"`
+	Connected   *bool       `json:"connected,omitempty"`
+	SSID        string      `json:"ssid,omitempty"`
+	BSSID       string      `json:"bssid,omitempty"`
+	Signal      int         `json:"signal,omitempty"` // dBm
+	Channel     int         `json:"channel,omitempty"`
+	Frequency   int         `json:"frequency,omitempty"` // MHz
+	Security    string      `json:"security,omitempty"`
+	Reason      string      `json:"reason,omitempty"`
+	Remediation string      `json:"remediation,omitempty"`
+}
+
+// A withheld observation cannot establish whether the interface is connected.
+func wiFiStateResponse(iface string, observed wifi.Observation) WiFiResponse {
+	response := WiFiResponse{
+		Interface: iface, Wireless: true, Status: observed.Status,
+		Reason: observed.Reason, Remediation: observed.Remediation,
+	}
+	if observed.Status == wifi.StatusDetailsWithheld {
+		return response
+	}
+	connected := observed.Status == wifi.StatusAssociated
+	response.Connected = &connected
+	if info := observed.Info; info != nil {
+		response.SSID = info.SSID
+		response.BSSID = info.BSSID
+		response.Signal = info.Signal
+		response.Channel = info.Channel
+		response.Frequency = info.Frequency
+		response.Security = info.Security
+	}
+	return response
 }
 
 // WiFiSettingsResponse represents the WiFi configuration settings.
@@ -148,39 +175,14 @@ func (s *Server) handleWiFi(w http.ResponseWriter, r *http.Request) {
 	// Update WiFi manager to use the requested interface
 	s.wifiManager().SetInterface(wlanIface)
 
-	// Check if interface is wireless
 	if !s.wifiManager().IsWireless() {
-		sendJSONResponse(w, nil, http.StatusOK, map[string]any{
-			"interface": wlanIface,
-			"wireless":  false,
-			"message":   "Current interface is not a wireless adapter",
-		})
+		resp := wiFiStateResponse(wlanIface, wifi.Observation{Status: wifi.StatusNotAssociated})
+		resp.Wireless = false
+		sendJSONResponse(w, nil, http.StatusOK, resp)
 		return
 	}
 
-	info := s.wifiManager().GetInfo()
-	if info == nil {
-		w.Header().Set("Content-Type", "application/json")
-		sendJSONResponse(w, nil, http.StatusOK, map[string]any{
-			"interface": wlanIface,
-			"wireless":  true,
-			"connected": false,
-			"message":   "Not connected to a wireless network",
-		})
-		return
-	}
-
-	resp := WiFiResponse{
-		Interface: wlanIface,
-		SSID:      info.SSID,
-		BSSID:     info.BSSID,
-		Signal:    info.Signal,
-		Channel:   info.Channel,
-		Frequency: info.Frequency,
-		Security:  info.Security,
-	}
-
-	sendJSONResponse(w, nil, http.StatusOK, resp)
+	sendJSONResponse(w, nil, http.StatusOK, wiFiStateResponse(wlanIface, s.wifiManager().Observe()))
 }
 
 // ============================================================================
@@ -197,6 +199,9 @@ func (s *Server) handleWiFiScan(w http.ResponseWriter, r *http.Request) {
 		"interface": res.Interface,
 		"available": res.Available,
 		"networks":  res.Networks,
+	}
+	if res.Remediation != "" {
+		resp["remediation"] = res.Remediation
 	}
 	if res.Error != "" {
 		resp["error"] = res.Error
@@ -396,38 +401,14 @@ func (s *Server) handleWiFiForgetNetwork(w http.ResponseWriter, r *http.Request)
 // handleWiFiChannelGraph returns channel overlap graph data for WiFi visualization.
 // It scans available networks and organizes them by frequency band with channel overlap information.
 func (s *Server) handleWiFiChannelGraph(w http.ResponseWriter, r *http.Request) {
-	// Get interface from query param or use current/default
-	wlanIface := s.resolveWiFiInterface(r)
-
-	if s.wifiScanner() == nil {
+	res := s.wifiManagement.Scan(s.getInterfaceFromRequest(r))
+	if !res.Available || res.Error != "" {
 		sendJSONResponse(w, nil, http.StatusOK, map[string]any{
-			"interface": wlanIface,
-			"available": false,
-			"error":     "WiFi scanner not initialized",
-			"data":      nil,
-		})
-		return
-	}
-
-	// Check if interface is wireless
-	if s.wifiManager() == nil || !s.wifiManager().IsWireless() {
-		sendJSONResponse(w, nil, http.StatusOK, map[string]any{
-			"interface": wlanIface,
-			"available": false,
-			"error":     "No wireless adapter available. Connect a WiFi adapter to scan networks.",
-			"data":      nil,
-		})
-		return
-	}
-
-	// Perform scan
-	networks, err := s.wifiScanner().Scan()
-	if err != nil {
-		sendJSONResponse(w, nil, http.StatusOK, map[string]any{
-			"interface": wlanIface,
-			"available": true,
-			"error":     "Wi-Fi scan failed. Check permissions and interface availability.",
-			"data":      nil,
+			"interface":   res.Interface,
+			"available":   res.Available,
+			"error":       res.Error,
+			"remediation": res.Remediation,
+			"data":        nil,
 		})
 		return
 	}
@@ -439,10 +420,10 @@ func (s *Server) handleWiFiChannelGraph(w http.ResponseWriter, r *http.Request) 
 	}
 
 	// Generate channel graph data
-	data := wifi.GetChannelGraphData(networks, connectedBSSID)
+	data := wifi.GetChannelGraphData(res.Networks, connectedBSSID)
 
 	sendJSONResponse(w, nil, http.StatusOK, map[string]any{
-		"interface": wlanIface,
+		"interface": res.Interface,
 		"available": true,
 		"data":      data,
 	})

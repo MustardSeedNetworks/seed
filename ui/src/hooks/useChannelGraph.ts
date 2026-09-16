@@ -35,6 +35,7 @@ export type ChannelGraphData = {
 export type ChannelGraphResponse = {
   available: boolean;
   error?: string;
+  remediation?: string;
   data?: ChannelGraphData;
 };
 
@@ -42,6 +43,7 @@ export type ChannelGraphResponse = {
 type ChannelGraphApiResponse = {
   available: boolean;
   error?: string;
+  remediation?: string;
   data?: Record<string, unknown>;
 };
 

@@ -226,6 +226,11 @@
       "otherNetworks": "Otras redes",
       "noNetworksDetected": "No se detectaron redes en la banda {{band}}",
       "tooltipChannel": "Canal {{channel}}"
+    },
+    "detailsWithheld": {
+      "title": "Detalles de Wi-Fi ocultos",
+      "reason": "Los servicios de localización de macOS ocultaron los detalles de la red a Seed. La conexión Wi-Fi puede seguir activa.",
+      "remediation": "Comprueba la conexión en Ajustes del Sistema > Wi-Fi. Si el asistente de Wi-Fi de Seed está instalado, permite su acceso a los servicios de localización y mantén abierta su sesión de usuario. El archivo independiente no puede solicitar este permiso."
     }
   },
   "cable": {

@@ -12,8 +12,6 @@ import (
 	"github.com/safchain/ethtool"
 )
 
-const bitsPerMegabit = 1_000_000
-
 const ethtoolUnknownSpeed = 0xFFFFFFFF
 
 // getInterfaceSpeed returns the interface speed in bits per second.
