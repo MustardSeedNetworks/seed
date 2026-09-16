@@ -95,6 +95,10 @@ afterEach(async () => {
   await i18n.changeLanguage('en');
 });
 
+// Tooltip mirrors its trigger's text into a portal bubble on document.body, so
+// a bare text query matches the value twice. Only the value on the page counts.
+const notTheTooltip = { ignore: '[role="tooltip"], script, style' } as const;
+
 describe('NetworkPage — real locale copy', () => {
   it('answers the page question in English when the link is healthy', async () => {
     await renderIn('en');
@@ -167,6 +171,6 @@ describe('NetworkPage — real locale copy', () => {
     expect(screen.getAllByText('192.0.2.10').length).toBeGreaterThan(0);
     expect(screen.getAllByText('DNS').length).toBeGreaterThan(0);
     expect(screen.getAllByText('IPv4').length).toBeGreaterThan(0);
-    expect(screen.getByRole('button', { name: '02:00:5e:10:00:00' })).toBeVisible();
+    expect(screen.getByText('02:00:5e:10:00:00', notTheTooltip)).toBeVisible();
   });
 });

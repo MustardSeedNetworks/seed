@@ -170,13 +170,9 @@ export function DeviceRow({
             <span className="font-mono label">{device.ip || t('network.noIP')}</span>
             {device.ipv6 ? (
               <Tooltip text={device.ipv6}>
-                <button
-                  type="button"
-                  aria-label={device.ipv6}
-                  className="font-mono text-xs text-text-muted truncate max-w-40"
-                >
+                <span className="font-mono text-xs text-text-muted truncate max-w-40">
                   {device.ipv6.length > 25 ? `${device.ipv6.substring(0, 25)}...` : device.ipv6}
-                </button>
+                </span>
               </Tooltip>
             ) : null}
           </div>
@@ -187,19 +183,13 @@ export function DeviceRow({
           <Tooltip
             text={device.displayName || device.mdnsName || device.netbiosName || device.hostname}
           >
-            <button
-              type="button"
-              aria-label={
-                device.displayName || device.mdnsName || device.netbiosName || device.hostname
-              }
-              className="text-sm text-text-secondary truncate block max-w-40"
-            >
+            <span className="text-sm text-text-secondary truncate block max-w-40">
               {device.displayName ||
                 device.mdnsName ||
                 device.netbiosName ||
                 device.hostname ||
                 '-'}
-            </button>
+            </span>
           </Tooltip>
         </td>
 
@@ -212,22 +202,15 @@ export function DeviceRow({
         <td className="px-3 py-row">
           {device.vendor === 'LAA' ? (
             <Tooltip text={t('discovery.localMacHint')} side="bottom">
-              <button
-                type="button"
-                className="text-xs text-text-muted underline decoration-dotted cursor-help"
-              >
+              <span className="text-xs text-text-muted underline decoration-dotted cursor-help">
                 LAA
-              </button>
+              </span>
             </Tooltip>
           ) : (
             <Tooltip text={device.vendor}>
-              <button
-                type="button"
-                aria-label={device.vendor}
-                className="text-xs text-text-muted truncate block max-w-28"
-              >
+              <span className="text-xs text-text-muted truncate block max-w-28">
                 {device.vendor || '-'}
-              </button>
+              </span>
             </Tooltip>
           )}
         </td>
@@ -454,9 +437,7 @@ export function DeviceRow({
                             text={`${iface.name} - ${iface.speedMbps ? `${iface.speedMbps} Mbps` : 'N/A'}`}
                             key={iface.name}
                           >
-                            <button
-                              type="button"
-                              aria-label={`${iface.name} - ${iface.speedMbps ? `${iface.speedMbps} Mbps` : 'N/A'}`}
+                            <span
                               className={cn(
                                 'px-1.5 py-0.5 text-xs',
                                 radius.sm,
@@ -473,7 +454,7 @@ export function DeviceRow({
                                     : `${iface.speedMbps}M`}
                                 </span>
                               ) : null}
-                            </button>
+                            </span>
                           </Tooltip>
                         ))}
                         {device.snmpData.interfaces.length > 8 ? (
@@ -494,9 +475,7 @@ export function DeviceRow({
                       <div className="flex flex-wrap gap-tight mt-tight">
                         {device.snmpData.vlans.slice(0, 12).map((vlan) => (
                           <Tooltip text={vlan.name || `VLAN ${vlan.id}`} key={vlan.id}>
-                            <button
-                              type="button"
-                              aria-label={vlan.name || `VLAN ${vlan.id}`}
+                            <span
                               className={cn(
                                 'px-1.5 py-0.5 text-xs bg-brand-primary/10 text-brand-primary',
                                 radius.sm,
@@ -510,7 +489,7 @@ export function DeviceRow({
                                     : vlan.name}
                                 </span>
                               ) : null}
-                            </button>
+                            </span>
                           </Tooltip>
                         ))}
                         {device.snmpData.vlans.length > 12 ? (

@@ -116,9 +116,7 @@ function LookupRow({
         </span>
       </div>
       <Tooltip text={lookup.result}>
-        <button type="button" aria-label={lookup.result} className="body-small truncate">
-          {lookup.result}
-        </button>
+        <span className="body-small truncate">{lookup.result}</span>
       </Tooltip>
     </div>
   );

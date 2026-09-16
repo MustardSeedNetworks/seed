@@ -247,7 +247,6 @@ export function CardRow({
   const resolvedStatus = status ? getStatusConfig(status) : null;
   const statusIcon = resolvedStatus?.icon ?? null;
   const justifyClass = align === 'right' ? 'justify-end' : 'justify-start';
-  const ValueTag = value === '' ? 'span' : 'button';
 
   return (
     <div
@@ -260,9 +259,7 @@ export function CardRow({
     >
       <span className="body-small shrink-0">{label}</span>
       <Tooltip text={String(value)}>
-        <ValueTag
-          type={value === '' ? undefined : 'button'}
-          aria-label={value === '' ? undefined : String(value)}
+        <span
           className={cn(
             'body-small font-medium',
             layout.inline.tight,
@@ -278,7 +275,7 @@ export function CardRow({
             <span className={cn(iconTokens.size.xs, 'shrink-0 text-current')}>{statusIcon}</span>
           ) : null}
           <span>{value}</span>
-        </ValueTag>
+        </span>
       </Tooltip>
     </div>
   );

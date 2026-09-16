@@ -93,7 +93,7 @@ async function renderIn(language: string): Promise<void> {
       <PerformancePage />
     </AppContext.Provider>,
   );
-  await waitFor(() => expect(screen.getByRole('button', { name: '8.8.8.8' })).toBeVisible());
+  await waitFor(() => expect(screen.getByText('8.8.8.8', notTheTooltip)).toBeVisible());
 }
 
 beforeEach(() => {
@@ -108,6 +108,10 @@ afterEach(async () => {
   vi.clearAllMocks();
   await i18n.changeLanguage('en');
 });
+
+// Tooltip mirrors its trigger's text into a portal bubble on document.body, so
+// a bare text query matches the value twice. Only the value on the page counts.
+const notTheTooltip = { ignore: '[role="tooltip"], script, style' } as const;
 
 describe('PerformancePage — real locale copy', () => {
   it('labels both cards and their sections in English', async () => {
@@ -180,7 +184,7 @@ describe('PerformancePage — real locale copy', () => {
     // Ping, HTTP and iperf3 are the names of the things being run.
     expect(screen.getByText('Ping')).toBeVisible();
     expect(screen.getByText('HTTP')).toBeVisible();
-    expect(screen.getByRole('button', { name: '8.8.8.8' })).toBeVisible();
-    expect(screen.getByRole('button', { name: 'db:5432' })).toBeVisible();
+    expect(screen.getByText('8.8.8.8', notTheTooltip)).toBeVisible();
+    expect(screen.getByText(/db:5432/, notTheTooltip)).toBeVisible();
   });
 });

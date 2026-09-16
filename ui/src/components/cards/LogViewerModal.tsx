@@ -127,13 +127,7 @@ function LogEntryRow({ entry, expanded, onToggle, onClose }: LogEntryRowProps): 
 
         {/* Message - larger, don't truncate as aggressively */}
         <Tooltip text={entry.message}>
-          <button
-            type="button"
-            aria-label={entry.message}
-            className={cn(colors.text, 'flex-1 text-base')}
-          >
-            {entry.message}
-          </button>
+          <span className={cn(colors.text, 'flex-1 text-base')}>{entry.message}</span>
         </Tooltip>
 
         {/* Duration badge */}

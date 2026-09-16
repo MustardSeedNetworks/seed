@@ -226,14 +226,10 @@ export const HealthCheckCard: React.MemoExoticComponent<
       <div key={`${type}-${result.name}`} className={spacing.compact.py}>
         <div className={layout.flex.between}>
           <Tooltip text={displayName}>
-            <button
-              type="button"
-              aria-label={displayName}
-              className="body-small text-text-muted truncate flex-1"
-            >
+            <span className="body-small text-text-muted truncate flex-1">
               {displayName}
               {details}
-            </button>
+            </span>
           </Tooltip>
           <span className={cn('inline-flex items-center', spacing.gap.compact)}>
             <StatusBadge status={statusLabel} size="sm" />
@@ -474,14 +470,10 @@ export const HealthCheckCard: React.MemoExoticComponent<
       <div key={`http-${result.name}`} className={spacing.compact.pyMd}>
         <div className={layout.flex.between}>
           <Tooltip text={result.name}>
-            <button
-              type="button"
-              aria-label={result.name}
-              className="body-small text-text-muted truncate flex-1"
-            >
+            <span className="body-small text-text-muted truncate flex-1">
               {result.name}
               {result.status ? ` (${result.status})` : ''}
-            </button>
+            </span>
           </Tooltip>
           <span className={cn('body-small font-medium', statusClass)}>
             {result.success ? formatLatency(result.latency) : 'fail'}
@@ -499,26 +491,14 @@ export const HealthCheckCard: React.MemoExoticComponent<
             {hasTls && hasCertInfo ? <span className="text-text-muted">·</span> : null}
             {hasCertInfo ? (
               <Tooltip text={`Expires: ${result.certExpiry}`}>
-                <button
-                  type="button"
-                  aria-label={`Expires: ${result.certExpiry}`}
-                  className={certColor}
-                >
-                  {formatCertExpiry()}
-                </button>
+                <span className={certColor}>{formatCertExpiry()}</span>
               </Tooltip>
             ) : null}
             {result.certIssuer ? (
               <>
                 <span className="text-text-muted">·</span>
                 <Tooltip text={result.certIssuer}>
-                  <button
-                    type="button"
-                    aria-label={result.certIssuer}
-                    className="text-text-muted truncate"
-                  >
-                    {result.certIssuer}
-                  </button>
+                  <span className="text-text-muted truncate">{result.certIssuer}</span>
                 </Tooltip>
               </>
             ) : null}

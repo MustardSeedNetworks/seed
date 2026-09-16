@@ -493,7 +493,7 @@
             },
             "4": {
               "step": "Verificar interferencias",
-              "description": "Para Wi-Fi, ejecute un Estudio de sitio para verificar congestión de canal e interferencias."
+              "description": "Para Wi-Fi, revise el gráfico de canales y el escaneo de AP vecinos en busca de congestión e interferencias."
             }
           }
         },

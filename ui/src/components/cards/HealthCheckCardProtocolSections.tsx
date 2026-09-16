@@ -194,13 +194,7 @@ export function HealthCheckCardProtocolSections({
                   <StatusBadge status={r.success ? 'success' : 'error'} />
                   <span className="body-small font-medium">{r.name}</span>
                   <Tooltip text={r.url}>
-                    <button
-                      type="button"
-                      aria-label={r.url}
-                      className="caption text-text-muted truncate max-w-48"
-                    >
-                      {r.url}
-                    </button>
+                    <span className="caption text-text-muted truncate max-w-48">{r.url}</span>
                   </Tooltip>
                 </div>
                 {r.success && (r.codec || r.resolution) ? (
@@ -341,13 +335,7 @@ export function HealthCheckCardProtocolSections({
                   <StatusBadge status={r.success ? 'success' : 'error'} />
                   <span className="body-small font-medium">{r.name}</span>
                   <Tooltip text={r.baseUrl}>
-                    <button
-                      type="button"
-                      aria-label={r.baseUrl}
-                      className="caption text-text-muted truncate max-w-48"
-                    >
-                      {r.baseUrl}
-                    </button>
+                    <span className="caption text-text-muted truncate max-w-48">{r.baseUrl}</span>
                   </Tooltip>
                 </div>
                 {r.success && (r.fhirVersion || r.serverName) ? (
@@ -395,13 +383,7 @@ export function HealthCheckCardProtocolSections({
                   <StatusBadge status={r.success ? 'success' : 'error'} />
                   <span className="body-small font-medium">{r.name}</span>
                   <Tooltip text={r.launchUrl}>
-                    <button
-                      type="button"
-                      aria-label={r.launchUrl}
-                      className="caption text-text-muted truncate max-w-48"
-                    >
-                      {r.launchUrl}
-                    </button>
+                    <span className="caption text-text-muted truncate max-w-48">{r.launchUrl}</span>
                   </Tooltip>
                 </div>
                 {r.success && r.ltiVersion ? (
@@ -442,13 +424,9 @@ export function HealthCheckCardProtocolSections({
                   <StatusBadge status={r.success ? 'success' : 'error'} />
                   <span className="body-small font-medium">{r.name}</span>
                   <Tooltip text={r.endpointUrl}>
-                    <button
-                      type="button"
-                      aria-label={r.endpointUrl}
-                      className="caption text-text-muted truncate max-w-48"
-                    >
+                    <span className="caption text-text-muted truncate max-w-48">
                       {r.endpointUrl}
-                    </button>
+                    </span>
                   </Tooltip>
                 </div>
                 {r.success && (r.securityMode || r.productName) ? (

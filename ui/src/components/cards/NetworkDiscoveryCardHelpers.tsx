@@ -378,14 +378,10 @@ export function DiscoverySummary({
         >
           {stats.map(({ icon: ICON, label, count, color }) => (
             <Tooltip text={`${count} ${label}`} key={label}>
-              <button
-                type="button"
-                aria-label={`${count} ${label}`}
-                className={cn('flex items-center', spacing.gap.tight)}
-              >
+              <span className={cn('flex items-center', spacing.gap.tight)}>
                 <ICON className={cn(iconTokens.size.sm, color)} />
                 <span className="caption text-text-secondary">{count}</span>
-              </button>
+              </span>
             </Tooltip>
           ))}
         </div>
