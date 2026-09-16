@@ -31,7 +31,11 @@ const (
 // [corewlan.ErrLocationDenied] and it is surfaced here rather than looking like
 // an empty airspace.
 func scanPlatform(_ string, h Helper) ([]*ScannedNetwork, error) {
-	found, err := corewlan.Scan()
+	return scanCurrent(corewlan.Scan, h)
+}
+
+func scanCurrent(scan func() ([]corewlan.Network, error), h Helper) ([]*ScannedNetwork, error) {
+	found, err := scan()
 	if err == nil {
 		networks := make([]*ScannedNetwork, 0, len(found))
 		for _, n := range found {
@@ -41,12 +45,18 @@ func scanPlatform(_ string, h Helper) ([]*ScannedNetwork, error) {
 	}
 
 	if h == nil || !shouldDelegate(err) {
+		if shouldDelegate(err) {
+			// No helper to ask, so the identifiers stay withheld. Say which
+			// failure this is: callers render it as a permissions state, not
+			// as an empty airspace (#2670).
+			return nil, fmt.Errorf("wifi scan: %w: %w", ErrDetailsWithheld, err)
+		}
 		return nil, fmt.Errorf("wifi scan: %w", err)
 	}
 
 	viaHelper, helperErr := h.Scan()
 	if helperErr != nil {
-		return nil, fmt.Errorf("wifi scan via helper: %w", helperErr)
+		return nil, fmt.Errorf("wifi scan via helper: %w: %w", ErrDetailsWithheld, helperErr)
 	}
 
 	networks := make([]*ScannedNetwork, 0, len(viaHelper))

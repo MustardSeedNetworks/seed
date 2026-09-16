@@ -5,7 +5,9 @@ package detection
 
 import (
 	"net"
+	"slices"
 	"sort"
+	"strconv"
 	"strings"
 	"sync"
 
@@ -169,7 +171,7 @@ func (d *Detector) ScoreInterface(iface net.Interface) InterfaceScore {
 
 	// Get speed (platform-specific)
 	score.Speed = getInterfaceSpeed(d.run, iface.Name)
-	score.SpeedDisplay = formatSpeed(score.Speed)
+	score.SpeedDisplay = formatLinkSpeed(score.Speed, score.Type)
 
 	// Identify chipset
 	chipset := d.chipsetDB.IdentifyByInterface(iface.Name, iface.HardwareAddr.String())
@@ -270,7 +272,10 @@ func (d *Detector) generateFriendlyName(s *InterfaceScore) string {
 		}
 		return "Ethernet Adapter"
 	case ifTypeWifi:
-		return "WiFi Adapter"
+		if s.Name == "" {
+			return "Wi-Fi Adapter"
+		}
+		return "Wi-Fi (" + s.Name + ")"
 	case ifTypeFiber:
 		return "Fiber Adapter"
 	default:
@@ -306,8 +311,28 @@ func (d *Detector) generateDescription(s *InterfaceScore) string {
 	return strings.Join(parts, " ")
 }
 
-// detectType determines interface type from name patterns.
+// detectType determines interface type, preferring what the platform reports
+// over what the name suggests.
+//
+// The name is a heuristic and on macOS it is the wrong one: the Wi-Fi adapter
+// is `en0`, which the Ethernet prefixes below claim. Virtual interfaces are
+// still decided by name first — a `utun` over Wi-Fi is not the Wi-Fi adapter.
 func detectType(name string) string {
+	return detectTypeWithWireless(name, wirelessInterfaces())
+}
+
+func detectTypeWithWireless(name string, wirelessNames []string) string {
+	if t := detectVirtualType(name); t != "" {
+		return t
+	}
+	if slices.Contains(wirelessNames, name) {
+		return ifTypeWifi
+	}
+	return detectTypeByName(name)
+}
+
+// detectVirtualType names an interface the kernel synthesises, or "".
+func detectVirtualType(name string) string {
 	// Virtual interfaces
 	virtualPrefixes := []string{
 		"docker",
@@ -325,6 +350,15 @@ func detectType(name string) string {
 		if strings.HasPrefix(name, prefix) {
 			return ifTypeVirtual
 		}
+	}
+	return ""
+}
+
+// detectTypeByName determines interface type from name patterns alone. It is
+// the whole rule off macOS, and the fallback on it.
+func detectTypeByName(name string) string {
+	if t := detectVirtualType(name); t != "" {
+		return t
 	}
 
 	// WiFi interfaces
@@ -372,7 +406,36 @@ func hasRoutableAddress(addresses []string) bool {
 	return false
 }
 
-// formatSpeed converts bits per second to human-readable format.
+// formatLinkSpeed renders a link rate for display, by interface type.
+//
+// An Ethernet link negotiates one of a few fixed rates, so [formatSpeed]'s
+// buckets name it exactly. A Wi-Fi transmit rate is continuous, and bucketing
+// it down to the nearest Ethernet step reported a 228 Mbps association as
+// "100 Mbps" (#2670).
+func formatLinkSpeed(bps int64, ifType string) string {
+	if ifType == ifTypeWifi {
+		return formatWirelessSpeed(bps)
+	}
+	return formatSpeed(bps)
+}
+
+// formatWirelessSpeed renders a measured wireless rate.
+func formatWirelessSpeed(bps int64) string {
+	switch {
+	case bps >= Speed1Gbps:
+		return strconv.FormatFloat(float64(bps)/float64(Speed1Gbps), 'f', 1, 64) + " Gbps"
+	case bps >= bitsPerMegabit:
+		return strconv.FormatInt((bps+bitsPerMegabit/2)/bitsPerMegabit, 10) + " Mbps"
+	case bps > 0:
+		return "< 1 Mbps"
+	default:
+		return ""
+	}
+}
+
+// bitsPerMegabit is the divisor that turns a rate in bits per second into Mbps.
+const bitsPerMegabit = 1_000_000
+
 func formatSpeed(bps int64) string {
 	switch {
 	case bps >= Speed100Gbps:

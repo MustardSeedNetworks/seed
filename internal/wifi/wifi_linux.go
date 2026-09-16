@@ -283,3 +283,14 @@ func outputNMCLI(args ...string) ([]byte, error) {
 	defer cancel()
 	return exec.CommandContext(ctx, "nmcli", args...).Output()
 }
+
+// observePlatform preserves the existing platform reader's association behavior.
+func observePlatform(iface string, h Helper) Observation {
+	if info := getInfoPlatform(iface, h); info != nil {
+		return Observation{Status: StatusAssociated, Info: info}
+	}
+	return Observation{Status: StatusNotAssociated}
+}
+
+// The existing reader does not report a distinct redacted-details state.
+func withheldExplanationPlatform() (string, string) { return "", "" }

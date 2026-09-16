@@ -5,6 +5,11 @@ import (
 	"fmt"
 )
 
+// DetectTypeByName exposes detectTypeByName for testing.
+func DetectTypeByName(name string) string {
+	return detectTypeByName(name)
+}
+
 // DetectType exposes detectType for testing.
 func DetectType(name string) string {
 	return detectType(name)
@@ -113,4 +118,20 @@ func NewChipsetDatabaseNoFork() *ChipsetDatabase {
 	return newChipsetDatabase(func(_ context.Context, name string, _ ...string) ([]byte, error) {
 		return nil, fmt.Errorf("detection: %s is not run under go test", name)
 	})
+}
+
+// FormatLinkSpeedForTest exports formatLinkSpeed for testing.
+func FormatLinkSpeedForTest(bps int64, ifType string) string {
+	return formatLinkSpeed(bps, ifType)
+}
+
+// FriendlyNameForTest exports generateFriendlyName for testing.
+func FriendlyNameForTest(name, ifType, speedDisplay string) string {
+	return (&Detector{}).generateFriendlyName(&InterfaceScore{
+		Name: name, Type: ifType, SpeedDisplay: speedDisplay,
+	})
+}
+
+func DetectTypeWithWirelessForTest(name string, wireless []string) string {
+	return detectTypeWithWireless(name, wireless)
 }

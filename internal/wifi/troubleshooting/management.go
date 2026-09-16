@@ -89,7 +89,11 @@ type ScanResult struct {
 	Interface string
 	Available bool
 	Error     string
-	Networks  []*wifi.ScannedNetwork
+	// Remediation is set only when the scan failed for a reason an operator can
+	// act on; today that is the macOS state where the OS withholds network
+	// identifiers from this process (#2670).
+	Remediation string
+	Networks    []*wifi.ScannedNetwork
 }
 
 // Scan performs a neighbor-AP scan on the requested interface, falling back to
@@ -117,6 +121,17 @@ func (m *Management) Scan(requestedIface string) ScanResult {
 
 	networks, err := m.hw.Scan()
 	if err != nil {
+		// Withheld scan results cannot establish that the airspace is empty.
+		if errors.Is(err, wifi.ErrDetailsWithheld) {
+			reason, remediation := wifi.WithheldExplanation()
+			return ScanResult{
+				Interface:   iface,
+				Available:   true,
+				Error:       reason,
+				Remediation: remediation,
+				Networks:    empty,
+			}
+		}
 		return ScanResult{
 			Interface: iface,
 			Available: true,

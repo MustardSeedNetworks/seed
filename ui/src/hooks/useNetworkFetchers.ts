@@ -38,6 +38,7 @@ import type {
   CategorizedInterfacesResponse,
   InterfaceInfo,
 } from '../types/generated/categorized-interfaces-response';
+import type { WiFiResponse } from '../types/generated/wifi-response';
 
 const API_BASE: string = import.meta.env.VITE_API_BASE || '';
 
@@ -427,30 +428,34 @@ export function useNetworkFetchers({
         credentials: 'include',
       });
       if (response.ok) {
-        const data = await response.json();
-        // Check if this is a wireless interface with data
-        if (data.ssid) {
-          setCards((prev) => ({
-            ...prev,
-            wifi: {
-              ssid: data.ssid || '',
-              bssid: data.bssid || '',
-              signal: data.signal || 0,
-              channel: data.channel || 0,
-              frequency: data.frequency || 0,
-              security: data.security || 'Unknown',
-            },
-          }));
-          // Only auto-set WiFi mode if user hasn't manually selected
-          if (!userSetWifiModeRef.current) {
-            setIsWifi(true);
-          }
-        } else {
-          setCards((prev) => ({ ...prev, wifi: null }));
-          // Only auto-set WiFi mode if user hasn't manually selected
-          if (!userSetWifiModeRef.current) {
-            setIsWifi(data.wireless === true);
-          }
+        const data: WiFiResponse = await response.json();
+        let wifi: WiFiData;
+        switch (data.status) {
+          case 'associated':
+            wifi = {
+              status: data.status,
+              ssid: data.ssid ?? '',
+              bssid: data.bssid ?? '',
+              signal: data.signal ?? 0,
+              channel: data.channel ?? 0,
+              frequency: data.frequency ?? 0,
+              security: data.security ?? 'Unknown',
+            };
+            break;
+          case 'detailsWithheld':
+            wifi = {
+              status: data.status,
+              reason: data.reason ?? '',
+              remediation: data.remediation ?? '',
+            };
+            break;
+          case 'notAssociated':
+            wifi = { status: data.status };
+            break;
+        }
+        setCards((prev) => ({ ...prev, wifi }));
+        if (!userSetWifiModeRef.current) {
+          setIsWifi(data.wireless);
         }
       }
     } catch (err) {

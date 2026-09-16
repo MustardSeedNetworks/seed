@@ -1,31 +1,3 @@
-/**
- * WiFi Connection Status Card Component
- *
- * Displays current WiFi connection information and signal strength.
- *
- * Features:
- * - SSID (network name) display
- * - BSSID (access point MAC) identification
- * - Signal strength in dBm with visual representation
- * - Signal bars (▂▄▆█) visual indicator
- * - WiFi channel and frequency information
- * - Security protocol display
- * - Threshold-based status coloring
- * - Only visible when connected to WiFi
- *
- * Signal Strength Conversion:
- * - Typical range: -30 dBm (excellent, very close) to -90 dBm (poor, far away)
- * - Displayed as percentage (0-100%) for easy interpretation
- * - Visual bars updated in real-time
- *
- * Status Indicators:
- * - **Success (Green)**: Signal -50 dBm or better (strong signal)
- * - **Warning (Yellow)**: Signal -50 to -70 dBm (acceptable but degrading)
- * - **Error (Red)**: Signal -70 dBm or worse (poor signal)
- *
- * The card is conditionally hidden when not connected to WiFi.
- */
-
 import { useTranslation } from 'react-i18next';
 import { useSettings } from '../../contexts/useSettings';
 import { cn, icon as iconTokens, layout, spacing } from '../../styles/theme';
@@ -36,7 +8,8 @@ import { SimpleBaseCard } from './BaseCard';
 /**
  * Current WiFi connection information
  */
-export interface WiFiData {
+interface WiFiAssociation {
+  status: 'associated';
   ssid: string; // Network name (Service Set Identifier)
   bssid: string; // Access point MAC address
   signal: number; // Signal strength in dBm (negative value)
@@ -44,6 +17,11 @@ export interface WiFiData {
   frequency: number; // Frequency in MHz (2400-2500 or 5000-6000)
   security: string; // Security protocol (WPA2, WPA3, Open, etc.)
 }
+
+export type WiFiData =
+  | WiFiAssociation
+  | { status: 'detailsWithheld'; reason: string; remediation: string }
+  | { status: 'notAssociated' };
 
 /**
  * Props for WiFi Card
@@ -119,7 +97,7 @@ export function WiFiCard({
     return null;
   }
 
-  const status = data ? getSignalStatus(data.signal, th) : 'unknown';
+  const status = data?.status === 'associated' ? getSignalStatus(data.signal, th) : 'unknown';
 
   return (
     <SimpleBaseCard
@@ -129,8 +107,8 @@ export function WiFiCard({
       loading={loading}
       loadingContent={<CardValue value={tc('status.scanning')} size="lg" />}
     >
-      {data ? (
-        <>
+      {data?.status === 'associated' ? (
+        <div data-testid="wifi-associated">
           <CardValue value={data.ssid} size="lg" />
           <div className={cn(layout.inline.default, spacing.margin.top.tight)}>
             <span className="body-large font-mono">{getSignalBars(data.signal)}</span>
@@ -143,9 +121,17 @@ export function WiFiCard({
           <CardRow label={tr('wifi.channel')} value={data.channel.toString()} />
           <CardRow label={tr('wifi.frequency')} value={`${data.frequency} MHz`} />
           <CardRow label={tr('wifi.security')} value={data.security} />
-        </>
+        </div>
+      ) : data?.status === 'detailsWithheld' ? (
+        <div data-testid="wifi-details-withheld" className={spacing.stack.sm}>
+          <CardValue value={tr('wifi.detailsWithheld.title')} size="md" />
+          <p className="body-small text-text-muted">{tr('wifi.detailsWithheld.reason')}</p>
+          <p className="body-small text-text-muted">{tr('wifi.detailsWithheld.remediation')}</p>
+        </div>
       ) : (
-        <CardValue value={tc('status.disconnected')} size="md" />
+        <div data-testid="wifi-not-associated">
+          <CardValue value={tc(data ? 'status.disconnected' : 'status.unavailable')} size="md" />
+        </div>
       )}
     </SimpleBaseCard>
   );

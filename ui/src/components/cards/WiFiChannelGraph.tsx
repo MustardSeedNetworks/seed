@@ -55,6 +55,7 @@ interface ChannelGraphData {
 export interface ChannelGraphResponse {
   available: boolean;
   error?: string;
+  remediation?: string;
   data?: ChannelGraphData;
 }
 
@@ -415,11 +416,11 @@ export function WifiChannelGraph({
     <SimpleBaseCard
       title={tr('wifi.channelGraph.title')}
       icon={<Wifi className={iconTokens.size.md} />}
-      status={getCardStatus(loading, data?.available)}
+      status={getCardStatus(loading, data?.available && !data.error)}
       loading={loading}
       loadingContent={<CardValue value={tc('status.scanning')} size="lg" />}
     >
-      {data?.available ? (
+      {data?.available && !data.error ? (
         <>
           {/* Band selection tabs */}
           {availableBands.length > 1 ? (
@@ -466,7 +467,12 @@ export function WifiChannelGraph({
           </div>
         </>
       ) : (
-        <CardValue value={data?.error || tc('status.unavailable')} size="md" status="error" />
+        <div data-testid="wifi-scan-error" className={spacing.stack.sm}>
+          <CardValue value={data?.error || tc('status.unavailable')} size="md" status="error" />
+          {data?.remediation ? (
+            <p className="body-small text-text-muted">{tr('wifi.detailsWithheld.remediation')}</p>
+          ) : null}
+        </div>
       )}
     </SimpleBaseCard>
   );
