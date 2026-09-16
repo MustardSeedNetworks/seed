@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.214.57](https://github.com/MustardSeedNetworks/seed/compare/v0.214.56...v0.214.57) (2026-09-16)
+
+
+### Bug Fixes
+
+* **wifi:** preserve macOS hidden connection details ([#2681](https://github.com/MustardSeedNetworks/seed/issues/2681)) ([648806a](https://github.com/MustardSeedNetworks/seed/commit/648806a8629078e14dff5f4fcf832a295926a4ee))
+
 ## [0.214.56](https://github.com/MustardSeedNetworks/seed/compare/v0.214.55...v0.214.56) (2026-09-16)
 
 
