@@ -225,13 +225,11 @@ export const CableTestSettings: React.NamedExoticComponent<CableTestSettingsProp
                     disabled={!canWrite}
                     className={iconTokens.size.sm}
                   />
-                  {!canWrite && canWrite ? undefined : !canWrite && canWrite ? undefined : t(
-                      'common.readOnly',
-                    ) ? (
+                  {!canWrite ? (
                     <button
                       type="button"
                       {...description}
-                      aria-label={canWrite ? undefined : t('common.readOnly')}
+                      aria-label={t('common.readOnly')}
                       onClick={(event) => event.preventDefault()}
                       className="inline-flex text-text-muted rounded focus-visible:outline focus-visible:outline-2 focus-visible:outline-brand-primary"
                     >
