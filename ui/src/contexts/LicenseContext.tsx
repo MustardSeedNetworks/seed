@@ -17,30 +17,14 @@
 
 import { createContext, type ReactNode, useCallback, useContext, useEffect, useState } from 'react';
 import { api } from '../api/client';
+import type { LicenseStatusResponse } from '../types/generated/license-status-response';
 
 /**
- * Shape of GET /api/v1/license (see handlers_api_tokens.go
- * LicenseStatusResponse). When the backend adds a feature to the
- * response (e.g. expiry, features array), extend this interface in
- * lockstep.
+ * Shape of GET /api/v1/license, taken from the generated wire type rather
+ * than re-typed here: the hand-written copy carried an optional `features`
+ * the Go DTO never sent, so every gate silently read undefined (#2688).
  */
-export interface LicenseStatus {
-  tier: string;
-  tierValue: number;
-  isTrialMode: boolean;
-  trialDaysLeft?: number;
-  canMintTokens: boolean;
-  activated: boolean;
-  /**
-   * Features granted by the active license. Mirrors keygen's
-   * productCatalog. UI gates use HasFeature() over this slice.
-   *
-   * Backend currently returns canMintTokens as a convenience flag but
-   * not the full feature list — this field is reserved for the
-   * upcoming Phase D-3 follow-up that extends the endpoint.
-   */
-  features?: string[];
-}
+export type LicenseStatus = LicenseStatusResponse;
 
 interface LicenseContextValue {
   /** Latest license fetch, or null while loading / on fetch error. */

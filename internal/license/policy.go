@@ -158,6 +158,18 @@ func featuresForTier(wireTier int) ([]string, string, bool) {
 	}
 }
 
+// FeaturesForTier returns the features Seed grants at t. Free (and any
+// unrecognized tier) grants none. Exported so the API layer can answer the UI
+// with the same catalogue the licence gate reads, rather than a second list
+// that drifts from it (#2688).
+func FeaturesForTier(t Tier) []string {
+	features, _, ok := featuresForTier(int(t))
+	if !ok {
+		return nil
+	}
+	return features
+}
+
 // Policy is Seed's product configuration for the foundation license core.
 func Policy() fnd.ProductPolicy {
 	return fnd.ProductPolicy{

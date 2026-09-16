@@ -26,6 +26,12 @@
         "expiresAt": {
           "type": "string",
           "format": "date-time"
+        },
+        "features": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
         }
       },
       "additionalProperties": false,
@@ -35,7 +41,8 @@
         "tierValue",
         "isTrialMode",
         "canMintTokens",
-        "activated"
+        "activated",
+        "features"
       ]
     }
   },
