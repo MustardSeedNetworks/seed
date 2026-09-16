@@ -152,7 +152,7 @@ export function SwitchCard({ data, vlanData, loading }: SwitchCardProps): React.
                 {vlanData.taggedVlans.map((vlan) => (
                   <span
                     key={vlan}
-                    className={cn('caption', spacing.chip.sm, 'bg-surface-hover', radius.default)}
+                    className={cn('caption text-text-secondary', spacing.chip.sm, 'bg-surface-hover', radius.default)}
                   >
                     {vlan}
                   </span>
