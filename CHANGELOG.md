@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.214.56](https://github.com/MustardSeedNetworks/seed/compare/v0.214.55...v0.214.56) (2026-09-16)
+
+
+### Tests
+
+* **database:** fix the open-hour history query fixture ([#2679](https://github.com/MustardSeedNetworks/seed/issues/2679)) ([a61d89f](https://github.com/MustardSeedNetworks/seed/commit/a61d89fe9df07f0dae1436236136bd7e849f320a))
+* **database:** observe the queued writer instead of sleeping past it ([#2668](https://github.com/MustardSeedNetworks/seed/issues/2668)) ([e597707](https://github.com/MustardSeedNetworks/seed/commit/e59770740a278e5f69a2ef61640d198d8a7f2372))
+
 ## [0.214.55](https://github.com/MustardSeedNetworks/seed/compare/v0.214.54...v0.214.55) (2026-09-15)
 
 
