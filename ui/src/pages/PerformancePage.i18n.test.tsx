@@ -9,11 +9,12 @@
  * (`HelpContent.tsx`) rather than the locale files — so a Spanish label
  * carried an English explanation.
  */
-import { render, screen, waitFor } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { AppContext, type AppContextValue } from '../contexts/AppContext';
 import i18n from '../i18n';
+import { must } from '../test/must';
 
 const cardSettings = {
   healthCheck: { enabled: true },
@@ -92,7 +93,7 @@ async function renderIn(language: string): Promise<void> {
       <PerformancePage />
     </AppContext.Provider>,
   );
-  await waitFor(() => expect(screen.getByText('8.8.8.8')).toBeVisible());
+  await waitFor(() => expect(screen.getByRole('button', { name: '8.8.8.8' })).toBeVisible());
 }
 
 beforeEach(() => {
@@ -130,11 +131,14 @@ describe('PerformancePage — real locale copy', () => {
   it('explains the HTTP timing phases in English', async () => {
     await renderIn('en');
 
+    fireEvent.focus(must(screen.getAllByTestId('http-timing-segment')[0], 'DNS timing'));
     expect(
       screen.getByText(
         'Time to resolve the hostname to an IP address via DNS lookup. Shows 0 when connection is reused from pool.',
       ),
     ).toBeVisible();
+    fireEvent.blur(must(screen.getAllByTestId('http-timing-segment')[0], 'DNS timing'));
+    fireEvent.focus(must(screen.getAllByTestId('http-timing-segment')[4], 'download timing'));
     expect(
       screen.getByText('Time to download the full response body after receiving the first byte.'),
     ).toBeVisible();
@@ -162,6 +166,7 @@ describe('PerformancePage — real locale copy', () => {
     expect(screen.getByText('Pruebas de rendimiento')).toBeVisible();
     expect(screen.getByText('fallo')).toBeVisible();
     expect(screen.getByText('0% pérdida, 1.2ms jitter')).toBeVisible();
+    fireEvent.focus(must(screen.getAllByTestId('http-timing-segment')[4], 'download timing'));
     expect(
       screen.getByText(
         'Tiempo para descargar el cuerpo completo de la respuesta tras recibir el primer byte.',
@@ -175,7 +180,7 @@ describe('PerformancePage — real locale copy', () => {
     // Ping, HTTP and iperf3 are the names of the things being run.
     expect(screen.getByText('Ping')).toBeVisible();
     expect(screen.getByText('HTTP')).toBeVisible();
-    expect(screen.getByText('8.8.8.8')).toBeVisible();
-    expect(screen.getByText(/db:5432/)).toBeVisible();
+    expect(screen.getByRole('button', { name: '8.8.8.8' })).toBeVisible();
+    expect(screen.getByRole('button', { name: 'db:5432' })).toBeVisible();
   });
 });

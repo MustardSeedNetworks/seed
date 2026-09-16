@@ -24,6 +24,7 @@ import {
   User,
   Wifi,
 } from '../ui/icons';
+import { Tooltip } from '../ui/tooltip';
 import { SeedLogo } from './SeedLogo';
 
 type WsStatus = 'connecting' | 'connected' | 'disconnected' | 'error';
@@ -217,53 +218,59 @@ export const HeaderBar: React.FC<HeaderBarProps> = memo(function headerBar({
         )}
       >
         {/* Logo and title */}
-        <button
-          type="button"
-          className={cn(
-            layout.inline.default,
-            'min-w-0 group',
-            wsStatus !== 'connected' && 'cursor-pointer',
-          )}
-          onClick={wsStatus !== 'connected' ? onReconnect : undefined}
-          title={getStatusTooltip()}
-          aria-label={wsStatus !== 'connected' ? t('status.clickToReconnect') : getStatusTooltip()}
-        >
-          {/* Seed brand mark — color indicates connection status */}
-          <SeedLogo
+        <Tooltip text={getStatusTooltip()}>
+          <button
+            type="button"
             className={cn(
-              'w-7 h-7 shrink-0 transition-colors',
-              getSeedColor(),
-              wsStatus === 'connecting' && 'animate-pulse',
-              wsStatus !== 'connected' && 'group-hover:opacity-80',
+              layout.inline.default,
+              'min-w-0 group',
+              wsStatus !== 'connected' && 'cursor-pointer',
             )}
-          />
-          <h1 className="heading-4 hidden xs:block sm:block truncate text-text-primary">
-            {t('app.title')}
-          </h1>
-        </button>
+            onClick={wsStatus !== 'connected' ? onReconnect : undefined}
+            aria-label={
+              wsStatus !== 'connected' ? t('status.clickToReconnect') : getStatusTooltip()
+            }
+          >
+            {/* Seed brand mark — color indicates connection status */}
+            <SeedLogo
+              className={cn(
+                'w-7 h-7 shrink-0 transition-colors',
+                getSeedColor(),
+                wsStatus === 'connecting' && 'animate-pulse',
+                wsStatus !== 'connected' && 'group-hover:opacity-80',
+              )}
+            />
+            <h1 className="heading-4 hidden xs:block sm:block truncate text-text-primary">
+              {t('app.title')}
+            </h1>
+          </button>
+        </Tooltip>
 
         {/* Icon toolbar - all icons, no boxed dropdowns */}
         <div className={cn('flex items-center', spacing.gap.tight)}>
           {/* Profile icon with dropdown */}
           <div ref={profileDropdownRef} className="relative">
-            <button
-              type="button"
-              data-testid="header-profile"
-              className={iconButtonClass}
-              onClick={(): void => setProfileDropdownOpen(!profileDropdownOpen)}
-              aria-label={t('accessibility.selectProfile')}
-              title={
+            <Tooltip
+              text={
                 activeProfile
                   ? `${t('profile.current')}: ${activeProfile.name}`
                   : t('profile.select')
               }
             >
-              {profilesLoading ? (
-                <Loader className={cn(iconTokens.size.md, 'animate-spin')} aria-hidden="true" />
-              ) : (
-                <User className={iconTokens.size.md} aria-hidden="true" />
-              )}
-            </button>
+              <button
+                type="button"
+                data-testid="header-profile"
+                className={iconButtonClass}
+                onClick={(): void => setProfileDropdownOpen(!profileDropdownOpen)}
+                aria-label={t('accessibility.selectProfile')}
+              >
+                {profilesLoading ? (
+                  <Loader className={cn(iconTokens.size.md, 'animate-spin')} aria-hidden="true" />
+                ) : (
+                  <User className={iconTokens.size.md} aria-hidden="true" />
+                )}
+              </button>
+            </Tooltip>
 
             {/* Profile dropdown */}
             {profileDropdownOpen ? (
@@ -362,19 +369,20 @@ export const HeaderBar: React.FC<HeaderBarProps> = memo(function headerBar({
 
           {/* Ethernet interface selector - RJ45 jack icon */}
           <div ref={interfaceDropdownRef} className="relative">
-            <button
-              type="button"
-              className={cn(
-                iconButtonClass,
-                !isWifi && 'ring-2 ring-brand-primary ring-offset-1 ring-offset-surface-raised',
-              )}
-              onClick={(): void => setInterfaceDropdownOpen(!interfaceDropdownOpen)}
-              aria-label={t('accessibility.selectEthernet')}
-              title={t('interface.ethernet')}
-            >
-              {/* RJ45 Ethernet jack icon */}
-              <EthernetPort className={iconTokens.size.md} aria-hidden="true" />
-            </button>
+            <Tooltip text={t('interface.ethernet')}>
+              <button
+                type="button"
+                className={cn(
+                  iconButtonClass,
+                  !isWifi && 'ring-2 ring-brand-primary ring-offset-1 ring-offset-surface-raised',
+                )}
+                onClick={(): void => setInterfaceDropdownOpen(!interfaceDropdownOpen)}
+                aria-label={t('accessibility.selectEthernet')}
+              >
+                {/* RJ45 Ethernet jack icon */}
+                <EthernetPort className={iconTokens.size.md} aria-hidden="true" />
+              </button>
+            </Tooltip>
 
             {/* Ethernet interface dropdown */}
             {interfaceDropdownOpen ? (
@@ -459,54 +467,58 @@ export const HeaderBar: React.FC<HeaderBarProps> = memo(function headerBar({
 
           {/* Wi-Fi interface selector - always visible, even without WiFi hardware */}
           <div className="relative">
-            <button
-              type="button"
-              className={cn(
-                iconButtonClass,
-                isWifi && 'ring-2 ring-brand-primary ring-offset-1 ring-offset-surface-raised',
-              )}
-              onClick={(): void => {
-                // Always use switchToInterfaceType to properly set Wi-Fi mode.
-                // This handles both real Wi-Fi interfaces and the no-hardware
-                // fallback view of the Wi-Fi troubleshooting page.
-                switchToInterfaceType('wifi');
-              }}
-              aria-label={t('accessibility.selectWifi')}
-              title={hasWifiInterface ? t('interface.wifi') : t('interface.wifiNoHardware')}
-            >
-              {/* WiFi signal icon */}
-              <Wifi
-                className={cn(iconTokens.size.md, !hasWifiInterface && 'opacity-60')}
-                aria-hidden="true"
-              />
-              {/* Small indicator when no WiFi hardware */}
-              {!hasWifiInterface && (
-                <span
-                  className="absolute -bottom-0.5 -right-0.5 w-2 h-2 bg-status-warning rounded-full"
-                  title={t('interface.noWifiHardware')}
+            <Tooltip text={hasWifiInterface ? t('interface.wifi') : t('interface.wifiNoHardware')}>
+              <button
+                type="button"
+                className={cn(
+                  iconButtonClass,
+                  isWifi && 'ring-2 ring-brand-primary ring-offset-1 ring-offset-surface-raised',
+                )}
+                onClick={(): void => {
+                  // Always use switchToInterfaceType to properly set Wi-Fi mode.
+                  // This handles both real Wi-Fi interfaces and the no-hardware
+                  // fallback view of the Wi-Fi troubleshooting page.
+                  switchToInterfaceType('wifi');
+                }}
+                aria-label={t('accessibility.selectWifi')}
+              >
+                {/* WiFi signal icon */}
+                <Wifi
+                  className={cn(iconTokens.size.md, !hasWifiInterface && 'opacity-60')}
+                  aria-hidden="true"
                 />
-              )}
-            </button>
+                {/* Small indicator when no WiFi hardware */}
+                {!hasWifiInterface && (
+                  <span
+                    aria-hidden="true"
+                    className="absolute -bottom-0.5 -right-0.5 w-2 h-2 bg-status-warning rounded-full"
+                  />
+                )}
+              </button>
+            </Tooltip>
           </div>
 
           {/* Theme toggle */}
-          <button
-            type="button"
-            className={iconButtonClass}
-            onClick={toggleTheme}
-            aria-label={
-              isDark ? t('accessibility.switchToLightMode') : t('accessibility.switchToDarkMode')
-            }
-            title={
+          <Tooltip
+            text={
               isDark ? t('accessibility.switchToLightMode') : t('accessibility.switchToDarkMode')
             }
           >
-            {isDark ? (
-              <Moon className={iconTokens.size.md} aria-hidden="true" />
-            ) : (
-              <Sun className={iconTokens.size.md} aria-hidden="true" />
-            )}
-          </button>
+            <button
+              type="button"
+              className={iconButtonClass}
+              onClick={toggleTheme}
+              aria-label={
+                isDark ? t('accessibility.switchToLightMode') : t('accessibility.switchToDarkMode')
+              }
+            >
+              {isDark ? (
+                <Moon className={iconTokens.size.md} aria-hidden="true" />
+              ) : (
+                <Sun className={iconTokens.size.md} aria-hidden="true" />
+              )}
+            </button>
+          </Tooltip>
 
           {/* Settings/Help/Logout removed from header (Phase 2):
            *   Settings + Help live in the sidebar footer.

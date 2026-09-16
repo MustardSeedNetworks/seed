@@ -167,6 +167,6 @@ describe('NetworkPage — real locale copy', () => {
     expect(screen.getAllByText('192.0.2.10').length).toBeGreaterThan(0);
     expect(screen.getAllByText('DNS').length).toBeGreaterThan(0);
     expect(screen.getAllByText('IPv4').length).toBeGreaterThan(0);
-    expect(screen.getByText('02:00:5e:10:00:00')).toBeVisible();
+    expect(screen.getByRole('button', { name: '02:00:5e:10:00:00' })).toBeVisible();
   });
 });

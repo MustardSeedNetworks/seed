@@ -1,3 +1,4 @@
+import { Tooltip } from '../ui/tooltip';
 /**
  * LogViewerCard - Dashboard card for system logs.
  *
@@ -110,21 +111,22 @@ export function LogViewerCard({ className = '' }: LogViewerCardProps): JSX.Eleme
           </span>
 
           {/* Full Screen button */}
-          <button
-            type="button"
-            onClick={() => setIsModalOpen(true)}
-            data-testid="logs-card-maximize"
-            className={cn(
-              'p-1.5',
-              'bg-surface-hover text-text-secondary',
-              radius.md,
-              'hover:bg-surface-border hover:text-text-primary transition-colors flex-center cursor-pointer',
-            )}
-            aria-label={t('logs.fullScreen')}
-            title={t('logs.fullScreen')}
-          >
-            <Maximize2 className={iconTokens.size.sm} aria-hidden="true" />
-          </button>
+          <Tooltip text={t('logs.fullScreen')}>
+            <button
+              type="button"
+              onClick={() => setIsModalOpen(true)}
+              data-testid="logs-card-maximize"
+              className={cn(
+                'p-1.5',
+                'bg-surface-hover text-text-secondary',
+                radius.md,
+                'hover:bg-surface-border hover:text-text-primary transition-colors flex-center cursor-pointer',
+              )}
+              aria-label={t('logs.fullScreen')}
+            >
+              <Maximize2 className={iconTokens.size.sm} aria-hidden="true" />
+            </button>
+          </Tooltip>
         </div>
       }
     >

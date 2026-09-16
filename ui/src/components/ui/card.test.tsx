@@ -26,6 +26,7 @@ import { status as statusColor } from '../../styles/theme';
  */
 
 import { fireEvent, render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
 import { Card, CardDivider, CardRow, CardValue } from './card';
 
@@ -162,16 +163,21 @@ describe('CardValue', () => {
 });
 
 describe('CardRow', () => {
+  it('keeps an empty value passive rather than creating an unnamed control', () => {
+    render(<CardRow label="Domain" value="" />);
+    expect(screen.queryByRole('button')).not.toBeInTheDocument();
+  });
+
   it('renders label and value', () => {
     render(<CardRow label="Latency" value="15ms" />);
     expect(screen.getByText('Latency')).toBeInTheDocument();
-    expect(screen.getByText('15ms')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: '15ms' })).toBeInTheDocument();
   });
 
   it('renders numeric value', () => {
     render(<CardRow label="Count" value={42} />);
     expect(screen.getByText('Count')).toBeInTheDocument();
-    expect(screen.getByText('42')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: '42' })).toBeInTheDocument();
   });
 
   it('applies status color to value', () => {
@@ -179,10 +185,14 @@ describe('CardRow', () => {
     expect(screen.getByTestId('card-row-value')).toHaveClass(statusColor.text.error);
   });
 
-  it('sets title attribute for truncation', () => {
+  it('exposes a truncated value through keyboard focus', async () => {
+    const user = userEvent.setup();
     render(<CardRow label="Long Value" value="This is a very long value" />);
     const valueElement = screen.getByTestId('card-row-value');
-    expect(valueElement).toHaveAttribute('title', 'This is a very long value');
+    await user.tab();
+    expect(valueElement).toHaveFocus();
+    expect(valueElement).toHaveAccessibleDescription('This is a very long value');
+    expect(valueElement).not.toHaveAttribute('title');
   });
 });
 

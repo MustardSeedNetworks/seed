@@ -1,3 +1,4 @@
+import { Tooltip } from './tooltip';
 /**
  * InterfaceSelector Component
  *
@@ -222,22 +223,23 @@ function InterfaceSelectorComponent({
               {t('interface.switchTo', { name: suggestedInterface })}
             </button>
           ) : null}
-          <button
-            type="button"
-            onClick={(): void => setShowWarning(false)}
-            className="text-status-warning hover:opacity-70"
-            title={t('accessibility.dismiss')}
-            aria-label={t('accessibility.dismiss')}
-          >
-            <svg
-              className={iconTokens.size.sm}
-              fill="currentColor"
-              viewBox="0 0 24 24"
-              aria-hidden="true"
+          <Tooltip text={t('accessibility.dismiss')}>
+            <button
+              type="button"
+              onClick={(): void => setShowWarning(false)}
+              className="text-status-warning hover:opacity-70"
+              aria-label={t('accessibility.dismiss')}
             >
-              <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z" />
-            </svg>
-          </button>
+              <svg
+                className={iconTokens.size.sm}
+                fill="currentColor"
+                viewBox="0 0 24 24"
+                aria-hidden="true"
+              >
+                <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z" />
+              </svg>
+            </button>
+          </Tooltip>
         </div>
       ) : null}
       {/* Trigger button */}
@@ -308,65 +310,74 @@ function InterfaceSelectorComponent({
                 </span>
               </div>
               {ethernetInterfaces.map((iface) => (
-                <button
-                  type="button"
+                <Tooltip
                   key={iface.name}
-                  onClick={(): void => selectInterface(iface.name)}
-                  className={cn(
-                    'w-full flex items-center',
-                    spacing.gap.tight,
-                    spacing.pad.sm,
-                    'hover:bg-surface-hover focus:bg-surface-hover focus:outline-none',
-                    iface.name === currentInterface ? 'bg-brand-primary/10' : '',
-                  )}
-                  role="option"
-                  aria-selected={iface.name === currentInterface}
+                  text={
+                    isRecommended(iface.name, 'ethernet') ? t('interface.recommended') : undefined
+                  }
                 >
-                  {/* Selection indicator */}
-                  <span
+                  <button
+                    type="button"
+                    onClick={(): void => selectInterface(iface.name)}
                     className={cn(
-                      'w-2 h-2 rounded-full',
-                      iface.name === currentInterface ? 'bg-brand-primary' : 'bg-transparent',
+                      'w-full flex items-center',
+                      spacing.gap.tight,
+                      spacing.pad.sm,
+                      'hover:bg-surface-hover focus:bg-surface-hover focus:outline-none',
+                      iface.name === currentInterface ? 'bg-brand-primary/10' : '',
                     )}
-                  />
-
-                  {/* Icon */}
-                  {getTypeIcon('ethernet', iface.up)}
-
-                  {/* Name and status */}
-                  <div className="flex-1 min-w-0 text-left">
-                    <div className="body-small font-medium text-text-primary truncate">
-                      {getDisplayName(iface)}
-                    </div>
-                    {getDetailText(iface) && (
-                      <div className="caption text-text-muted truncate">{getDetailText(iface)}</div>
-                    )}
-                  </div>
-
-                  {/* Status and recommended indicator */}
-                  <div className="flex items-center gap-tight">
-                    {isRecommended(iface.name, 'ethernet') && (
-                      <span className={statusColor.text.success} title={t('interface.recommended')}>
-                        <svg
-                          className={iconTokens.size.xs}
-                          fill="currentColor"
-                          viewBox="0 0 24 24"
-                          aria-hidden="true"
-                        >
-                          <path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z" />
-                        </svg>
-                      </span>
-                    )}
+                    role="option"
+                    aria-selected={iface.name === currentInterface}
+                  >
+                    {/* Selection indicator */}
                     <span
                       className={cn(
-                        'caption',
-                        iface.up ? 'text-text-secondary' : 'text-text-muted',
+                        'w-2 h-2 rounded-full',
+                        iface.name === currentInterface ? 'bg-brand-primary' : 'bg-transparent',
                       )}
-                    >
-                      {getStatusText(iface)}
-                    </span>
-                  </div>
-                </button>
+                    />
+
+                    {/* Icon */}
+                    {getTypeIcon('ethernet', iface.up)}
+
+                    {/* Name and status */}
+                    <div className="flex-1 min-w-0 text-left">
+                      <div className="body-small font-medium text-text-primary truncate">
+                        {getDisplayName(iface)}
+                      </div>
+                      {getDetailText(iface) && (
+                        <div className="caption text-text-muted truncate">
+                          {getDetailText(iface)}
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Status and recommended indicator */}
+                    <div className="flex items-center gap-tight">
+                      {isRecommended(iface.name, 'ethernet') && (
+                        <span className={statusColor.text.success}>
+                          <span className="sr-only">{t('interface.recommended')}</span>
+                          <svg
+                            className={iconTokens.size.xs}
+                            fill="currentColor"
+                            viewBox="0 0 24 24"
+                            aria-hidden="true"
+                          >
+                            <path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z" />
+                          </svg>
+                        </span>
+                      )}
+                      <span
+                        className={cn(
+                          'caption',
+                          iface.up ? 'text-text-secondary' : 'text-text-muted',
+                        )}
+                      >
+                        {getStatusText(iface)}
+                      </span>
+                    </div>
+                  </button>
+                </Tooltip>
               ))}
             </div>
           )}
@@ -387,65 +398,72 @@ function InterfaceSelectorComponent({
                 </span>
               </div>
               {wifiInterfaces.map((iface) => (
-                <button
-                  type="button"
+                <Tooltip
                   key={iface.name}
-                  onClick={(): void => selectInterface(iface.name)}
-                  className={cn(
-                    'w-full flex items-center',
-                    spacing.gap.tight,
-                    spacing.pad.sm,
-                    'hover:bg-surface-hover focus:bg-surface-hover focus:outline-none',
-                    iface.name === currentInterface ? 'bg-brand-primary/10' : '',
-                  )}
-                  role="option"
-                  aria-selected={iface.name === currentInterface}
+                  text={isRecommended(iface.name, 'wifi') ? t('interface.recommended') : undefined}
                 >
-                  {/* Selection indicator */}
-                  <span
+                  <button
+                    type="button"
+                    onClick={(): void => selectInterface(iface.name)}
                     className={cn(
-                      'w-2 h-2 rounded-full',
-                      iface.name === currentInterface ? 'bg-brand-primary' : 'bg-transparent',
+                      'w-full flex items-center',
+                      spacing.gap.tight,
+                      spacing.pad.sm,
+                      'hover:bg-surface-hover focus:bg-surface-hover focus:outline-none',
+                      iface.name === currentInterface ? 'bg-brand-primary/10' : '',
                     )}
-                  />
-
-                  {/* Icon */}
-                  {getTypeIcon('wifi', iface.up)}
-
-                  {/* Name */}
-                  <div className="flex-1 min-w-0 text-left">
-                    <div className="body-small font-medium text-text-primary truncate">
-                      {getDisplayName(iface)}
-                    </div>
-                    {getDetailText(iface) && (
-                      <div className="caption text-text-muted truncate">{getDetailText(iface)}</div>
-                    )}
-                  </div>
-
-                  {/* Status and recommended indicator */}
-                  <div className="flex items-center gap-tight">
-                    {isRecommended(iface.name, 'wifi') && (
-                      <span className={statusColor.text.success} title={t('interface.recommended')}>
-                        <svg
-                          className={iconTokens.size.xs}
-                          fill="currentColor"
-                          viewBox="0 0 24 24"
-                          aria-hidden="true"
-                        >
-                          <path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z" />
-                        </svg>
-                      </span>
-                    )}
+                    role="option"
+                    aria-selected={iface.name === currentInterface}
+                  >
+                    {/* Selection indicator */}
                     <span
                       className={cn(
-                        'caption',
-                        iface.up ? 'text-text-secondary' : 'text-text-muted',
+                        'w-2 h-2 rounded-full',
+                        iface.name === currentInterface ? 'bg-brand-primary' : 'bg-transparent',
                       )}
-                    >
-                      {getStatusText(iface)}
-                    </span>
-                  </div>
-                </button>
+                    />
+
+                    {/* Icon */}
+                    {getTypeIcon('wifi', iface.up)}
+
+                    {/* Name */}
+                    <div className="flex-1 min-w-0 text-left">
+                      <div className="body-small font-medium text-text-primary truncate">
+                        {getDisplayName(iface)}
+                      </div>
+                      {getDetailText(iface) && (
+                        <div className="caption text-text-muted truncate">
+                          {getDetailText(iface)}
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Status and recommended indicator */}
+                    <div className="flex items-center gap-tight">
+                      {isRecommended(iface.name, 'wifi') && (
+                        <span className={statusColor.text.success}>
+                          <span className="sr-only">{t('interface.recommended')}</span>
+                          <svg
+                            className={iconTokens.size.xs}
+                            fill="currentColor"
+                            viewBox="0 0 24 24"
+                            aria-hidden="true"
+                          >
+                            <path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z" />
+                          </svg>
+                        </span>
+                      )}
+                      <span
+                        className={cn(
+                          'caption',
+                          iface.up ? 'text-text-secondary' : 'text-text-muted',
+                        )}
+                      >
+                        {getStatusText(iface)}
+                      </span>
+                    </div>
+                  </button>
+                </Tooltip>
               ))}
             </div>
           )}

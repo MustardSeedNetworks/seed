@@ -164,8 +164,8 @@ describe('AlertsPage — real locale copy', () => {
     await renderIn('es', 'viewer');
 
     const ack = screen.getByTestId('alert-acknowledge');
-    expect(ack).toBeDisabled();
-    expect(ack.getAttribute('title')).toBe(
+    expect(ack).toHaveAttribute('aria-disabled', 'true');
+    expect(ack).toHaveAccessibleDescription(
       'Solo lectura — se requiere el rol de operador para reconocer o resolver una alerta',
     );
   });

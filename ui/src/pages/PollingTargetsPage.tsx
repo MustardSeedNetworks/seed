@@ -1,3 +1,4 @@
+import { Tooltip } from '../components/ui/tooltip';
 /**
  * PollingTargetsPage — List + detail.
  *
@@ -106,17 +107,18 @@ export function PollingTargetsPage(): JSX.Element {
             ? t('common:status.loading')
             : t('pollingTargets.targetCount', { count: targets.length })}
         </p>
-        <button
-          type="button"
-          onClick={(): void => setShowCreate(true)}
-          disabled={!canWrite}
-          title={readOnlyReason}
-          data-testid="target-add"
-          className="inline-flex items-center gap-compact rounded-md bg-brand-primary px-3 py-2 text-sm font-medium text-on-brand hover:bg-brand-accent disabled:cursor-not-allowed disabled:opacity-50"
-        >
-          <Plus className="h-4 w-4" />
-          {t('pollingTargets.addTarget')}
-        </button>
+        <Tooltip text={readOnlyReason}>
+          <button
+            type="button"
+            onClick={(): void => setShowCreate(true)}
+            disabled={!canWrite}
+            data-testid="target-add"
+            className="inline-flex items-center gap-compact rounded-md bg-brand-primary px-3 py-2 text-sm font-medium text-on-brand hover:bg-brand-accent disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            <Plus className="h-4 w-4" />
+            {t('pollingTargets.addTarget')}
+          </button>
+        </Tooltip>
       </div>
 
       <ListDetail>
@@ -177,33 +179,35 @@ export function PollingTargetsPage(): JSX.Element {
             status={<TargetStatus target={selected} />}
             actions={
               <>
-                <button
-                  type="button"
-                  onClick={(): void => setEditing(selected)}
-                  disabled={!canWrite}
-                  title={readOnlyReason}
-                  data-testid="target-edit"
-                  className="rounded-md border border-surface-border px-3 py-2 text-sm text-text-primary hover:bg-surface-hover disabled:cursor-not-allowed disabled:opacity-50"
-                >
-                  {t('common:buttons.edit')}
-                </button>
-                <button
-                  type="button"
-                  onClick={(): void => {
-                    if (
-                      window.confirm(t('pollingTargets.confirmDelete', { name: selected.name }))
-                    ) {
-                      void remove(selected.id);
-                      setSelectedId(null);
-                    }
-                  }}
-                  disabled={!canWrite}
-                  title={readOnlyReason}
-                  data-testid="target-delete"
-                  className="rounded-md px-3 py-2 text-sm text-status-error hover:bg-status-error/10 disabled:cursor-not-allowed disabled:opacity-50"
-                >
-                  {t('common:buttons.delete')}
-                </button>
+                <Tooltip text={readOnlyReason}>
+                  <button
+                    type="button"
+                    onClick={(): void => setEditing(selected)}
+                    disabled={!canWrite}
+                    data-testid="target-edit"
+                    className="rounded-md border border-surface-border px-3 py-2 text-sm text-text-primary hover:bg-surface-hover disabled:cursor-not-allowed disabled:opacity-50"
+                  >
+                    {t('common:buttons.edit')}
+                  </button>
+                </Tooltip>
+                <Tooltip text={readOnlyReason}>
+                  <button
+                    type="button"
+                    onClick={(): void => {
+                      if (
+                        window.confirm(t('pollingTargets.confirmDelete', { name: selected.name }))
+                      ) {
+                        void remove(selected.id);
+                        setSelectedId(null);
+                      }
+                    }}
+                    disabled={!canWrite}
+                    data-testid="target-delete"
+                    className="rounded-md px-3 py-2 text-sm text-status-error hover:bg-status-error/10 disabled:cursor-not-allowed disabled:opacity-50"
+                  >
+                    {t('common:buttons.delete')}
+                  </button>
+                </Tooltip>
               </>
             }
           >

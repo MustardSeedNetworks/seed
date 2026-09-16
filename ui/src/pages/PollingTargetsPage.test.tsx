@@ -126,11 +126,11 @@ describe('PollingTargetsPage — viewer gating', () => {
     await userEvent.click(screen.getByTestId('target-row-healthy'));
 
     await waitFor(() => {
-      expect(screen.getByTestId('target-add')).toBeDisabled();
+      expect(screen.getByTestId('target-add')).toHaveAttribute('aria-disabled', 'true');
     });
-    expect(screen.getByTestId('target-edit')).toBeDisabled();
-    expect(screen.getByTestId('target-delete')).toBeDisabled();
-    expect(screen.getByTestId('target-add').title).toContain('operator role');
+    expect(screen.getByTestId('target-edit')).toHaveAttribute('aria-disabled', 'true');
+    expect(screen.getByTestId('target-delete')).toHaveAttribute('aria-disabled', 'true');
+    expect(screen.getByTestId('target-add')).toHaveAccessibleDescription(/operator role/);
   });
 
   it('still lets a viewer read the target detail', async () => {

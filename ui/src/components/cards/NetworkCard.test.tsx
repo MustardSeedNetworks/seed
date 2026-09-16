@@ -32,8 +32,8 @@ describe('NetworkCard', () => {
   it('renders every DNS server it is given', () => {
     render(<NetworkCard data={makeData({ dns: ['192.0.2.53', '198.51.100.53'] })} />);
 
-    expect(screen.getByText('192.0.2.53')).toBeInTheDocument();
-    expect(screen.getByText('198.51.100.53')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: '192.0.2.53' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: '198.51.100.53' })).toBeInTheDocument();
   });
 
   it('omits the DNS section when the response carries no servers', () => {

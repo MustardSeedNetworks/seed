@@ -169,24 +169,38 @@ export function DeviceRow({
           <div className="flex flex-col">
             <span className="font-mono label">{device.ip || t('network.noIP')}</span>
             {device.ipv6 ? (
-              <span
-                className="font-mono text-xs text-text-muted truncate max-w-40"
-                title={device.ipv6}
-              >
-                {device.ipv6.length > 25 ? `${device.ipv6.substring(0, 25)}...` : device.ipv6}
-              </span>
+              <Tooltip text={device.ipv6}>
+                <button
+                  type="button"
+                  aria-label={device.ipv6}
+                  className="font-mono text-xs text-text-muted truncate max-w-40"
+                >
+                  {device.ipv6.length > 25 ? `${device.ipv6.substring(0, 25)}...` : device.ipv6}
+                </button>
+              </Tooltip>
             ) : null}
           </div>
         </td>
 
         {/* Hostname - prefer displayName, fallback to mdnsName, netbiosName, hostname */}
         <td className="px-3 py-row">
-          <span
-            className="text-sm text-text-secondary truncate block max-w-40"
-            title={device.displayName || device.mdnsName || device.netbiosName || device.hostname}
+          <Tooltip
+            text={device.displayName || device.mdnsName || device.netbiosName || device.hostname}
           >
-            {device.displayName || device.mdnsName || device.netbiosName || device.hostname || '-'}
-          </span>
+            <button
+              type="button"
+              aria-label={
+                device.displayName || device.mdnsName || device.netbiosName || device.hostname
+              }
+              className="text-sm text-text-secondary truncate block max-w-40"
+            >
+              {device.displayName ||
+                device.mdnsName ||
+                device.netbiosName ||
+                device.hostname ||
+                '-'}
+            </button>
+          </Tooltip>
         </td>
 
         {/* MAC Address */}
@@ -197,18 +211,24 @@ export function DeviceRow({
         {/* Vendor */}
         <td className="px-3 py-row">
           {device.vendor === 'LAA' ? (
-            <Tooltip
-              text="Locally Administered Address - MAC assigned locally rather than by manufacturer"
-              side="bottom"
-            >
-              <span className="text-xs text-text-muted underline decoration-dotted cursor-help">
+            <Tooltip text={t('discovery.localMacHint')} side="bottom">
+              <button
+                type="button"
+                className="text-xs text-text-muted underline decoration-dotted cursor-help"
+              >
                 LAA
-              </span>
+              </button>
             </Tooltip>
           ) : (
-            <span className="text-xs text-text-muted truncate block max-w-28" title={device.vendor}>
-              {device.vendor || '-'}
-            </span>
+            <Tooltip text={device.vendor}>
+              <button
+                type="button"
+                aria-label={device.vendor}
+                className="text-xs text-text-muted truncate block max-w-28"
+              >
+                {device.vendor || '-'}
+              </button>
+            </Tooltip>
           )}
         </td>
 
@@ -430,26 +450,31 @@ export function DeviceRow({
                       </span>
                       <div className="flex flex-wrap gap-tight mt-tight">
                         {device.snmpData.interfaces.slice(0, 8).map((iface) => (
-                          <span
+                          <Tooltip
+                            text={`${iface.name} - ${iface.speedMbps ? `${iface.speedMbps} Mbps` : 'N/A'}`}
                             key={iface.name}
-                            className={cn(
-                              'px-1.5 py-0.5 text-xs',
-                              radius.sm,
-                              iface.operStatus === 'up'
-                                ? 'bg-status-success/15 text-status-success'
-                                : 'bg-surface-hover text-text-muted',
-                            )}
-                            title={`${iface.name} - ${iface.speedMbps ? `${iface.speedMbps} Mbps` : 'N/A'}`}
                           >
-                            {iface.name}
-                            {iface.speedMbps && iface.speedMbps > 0 ? (
-                              <span className="text-text-muted ml-tight">
-                                {iface.speedMbps >= 1000
-                                  ? `${Math.round(iface.speedMbps / 1000)}G`
-                                  : `${iface.speedMbps}M`}
-                              </span>
-                            ) : null}
-                          </span>
+                            <button
+                              type="button"
+                              aria-label={`${iface.name} - ${iface.speedMbps ? `${iface.speedMbps} Mbps` : 'N/A'}`}
+                              className={cn(
+                                'px-1.5 py-0.5 text-xs',
+                                radius.sm,
+                                iface.operStatus === 'up'
+                                  ? 'bg-status-success/15 text-status-success'
+                                  : 'bg-surface-hover text-text-muted',
+                              )}
+                            >
+                              {iface.name}
+                              {iface.speedMbps && iface.speedMbps > 0 ? (
+                                <span className="text-text-muted ml-tight">
+                                  {iface.speedMbps >= 1000
+                                    ? `${Math.round(iface.speedMbps / 1000)}G`
+                                    : `${iface.speedMbps}M`}
+                                </span>
+                              ) : null}
+                            </button>
+                          </Tooltip>
                         ))}
                         {device.snmpData.interfaces.length > 8 ? (
                           <span className="text-xs text-text-muted">
@@ -468,23 +493,25 @@ export function DeviceRow({
                       </span>
                       <div className="flex flex-wrap gap-tight mt-tight">
                         {device.snmpData.vlans.slice(0, 12).map((vlan) => (
-                          <span
-                            key={vlan.id}
-                            className={cn(
-                              'px-1.5 py-0.5 text-xs bg-brand-primary/10 text-brand-primary',
-                              radius.sm,
-                            )}
-                            title={vlan.name || `VLAN ${vlan.id}`}
-                          >
-                            {vlan.id}
-                            {vlan.name && vlan.name !== `VLAN${vlan.id}` ? (
-                              <span className="text-text-muted ml-tight">
-                                {vlan.name.length > 10
-                                  ? `${vlan.name.substring(0, 10)}...`
-                                  : vlan.name}
-                              </span>
-                            ) : null}
-                          </span>
+                          <Tooltip text={vlan.name || `VLAN ${vlan.id}`} key={vlan.id}>
+                            <button
+                              type="button"
+                              aria-label={vlan.name || `VLAN ${vlan.id}`}
+                              className={cn(
+                                'px-1.5 py-0.5 text-xs bg-brand-primary/10 text-brand-primary',
+                                radius.sm,
+                              )}
+                            >
+                              {vlan.id}
+                              {vlan.name && vlan.name !== `VLAN${vlan.id}` ? (
+                                <span className="text-text-muted ml-tight">
+                                  {vlan.name.length > 10
+                                    ? `${vlan.name.substring(0, 10)}...`
+                                    : vlan.name}
+                                </span>
+                              ) : null}
+                            </button>
+                          </Tooltip>
                         ))}
                         {device.snmpData.vlans.length > 12 ? (
                           <span className="text-xs text-text-muted">

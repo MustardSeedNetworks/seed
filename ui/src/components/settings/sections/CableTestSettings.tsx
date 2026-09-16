@@ -1,3 +1,5 @@
+import { Info } from '../../ui/icons';
+import { Tooltip } from '../../ui/tooltip';
 /**
  * CableTestSettings Component
  *
@@ -191,6 +193,7 @@ export const CableTestSettings: React.NamedExoticComponent<CableTestSettingsProp
 
           {/* Enable Cable Test Card */}
           <label
+            htmlFor="cable-test-card-enabled"
             className={cn(
               layout.flex.between,
               spacing.pad.sm,
@@ -205,19 +208,39 @@ export const CableTestSettings: React.NamedExoticComponent<CableTestSettingsProp
               </span>
               <p className="caption text-text-muted">{t('cableTest.enableCardDesc')}</p>
             </div>
-            <input
-              type="checkbox"
-              checked={cableTestSettings.enabled}
-              onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>
-                setCableTestSettings((prev) => ({
-                  ...prev,
-                  enabled: e.target.checked,
-                }))
-              }
-              disabled={!canWrite}
-              title={canWrite ? undefined : t('common.readOnly')}
-              className={iconTokens.size.sm}
-            />
+            <Tooltip text={canWrite ? undefined : t('common.readOnly')}>
+              {(description) => (
+                <span className="contents">
+                  <input
+                    {...description}
+                    id="cable-test-card-enabled"
+                    type="checkbox"
+                    checked={cableTestSettings.enabled}
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>
+                      setCableTestSettings((prev) => ({
+                        ...prev,
+                        enabled: e.target.checked,
+                      }))
+                    }
+                    disabled={!canWrite}
+                    className={iconTokens.size.sm}
+                  />
+                  {!canWrite && canWrite ? undefined : !canWrite && canWrite ? undefined : t(
+                      'common.readOnly',
+                    ) ? (
+                    <button
+                      type="button"
+                      {...description}
+                      aria-label={canWrite ? undefined : t('common.readOnly')}
+                      onClick={(event) => event.preventDefault()}
+                      className="inline-flex text-text-muted rounded focus-visible:outline focus-visible:outline-2 focus-visible:outline-brand-primary"
+                    >
+                      <Info className="h-4 w-4" aria-hidden="true" />
+                    </button>
+                  ) : null}
+                </span>
+              )}
+            </Tooltip>
           </label>
 
           {/* Auto-Run on Link Down */}

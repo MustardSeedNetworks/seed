@@ -1235,6 +1235,18 @@ jobs:
       # preservation, interpolation parity, plural completeness, t()/<Trans>
       # key cross-reference, locked versions, and a blocking hardcoded-JSX
       # check.
+      - name: Set up Node.js
+        uses: ./.github/actions/setup-node
+
+      - name: Install UI dependencies for help-key analysis
+        working-directory: ui
+        run: npm ci --ignore-scripts
+
+      - name: Help locale consumer gate
+        run: |
+          node --test scripts/check-help-i18n.test.ts
+          node scripts/check-help-i18n.ts
+
       - name: Run shared i18n validator
         uses: MustardSeedNetworks/.github/.github/actions/i18n-validate@048d173dd72ca0f9e5fa832fb5b9fd2a6447e5e9 # v1.13.0
 

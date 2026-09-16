@@ -1,81 +1,150 @@
-/**
- * Tooltip primitive — shared design across seed / stem / niac.
- *
- * Minimal CSS-only tooltip with proper a11y wiring. Use native `title=` for
- * plain strings; reach for this primitive when the tooltip holds formatted,
- * multi-line, or linked content. The wrapper exposes `aria-describedby`
- * pointing at the bubble so screen readers announce it; hover OR keyboard
- * focus on the trigger reveals it.
- *
- * Behavior/API is kept consistent with the stem and niac copies (each repo
- * owns its own file; no master). Visuals use this repo's theme tokens.
- */
-import type React from 'react';
-import { type ReactNode, useId, useState } from 'react';
-import { border, cn, radius, spacing } from '../../styles/theme';
+import {
+  type ButtonHTMLAttributes,
+  cloneElement,
+  type FC,
+  isValidElement,
+  type ReactElement,
+  type ReactNode,
+  useEffect,
+  useId,
+  useLayoutEffect,
+  useRef,
+  useState,
+} from 'react';
+import { createPortal } from 'react-dom';
+
+type Description = { 'aria-describedby': string; onClick: () => void };
 
 export interface TooltipProps {
-  /** Hover/focus content. If omitted, the wrapper renders children unchanged. */
   text?: ReactNode;
-  /** Where to place the bubble relative to the trigger. Defaults to "top". */
   side?: 'top' | 'bottom' | 'left' | 'right';
-  /** Trigger element(s). */
-  children: ReactNode;
-  /** Optional class on the wrapper. */
+  children: ReactNode | ((description: Description) => ReactNode);
   className?: string;
 }
 
-const sideClass: Record<NonNullable<TooltipProps['side']>, string> = {
-  top: cn('bottom-full left-1/2 -translate-x-1/2', spacing.margin.bottom.inline),
-  bottom: cn('top-full left-1/2 -translate-x-1/2', spacing.margin.top.inline),
-  left: cn('right-full top-1/2 -translate-y-1/2', spacing.margin.right.inline),
-  right: cn('left-full top-1/2 -translate-y-1/2', spacing.margin.left.inline),
-};
-
-/**
- * Hover/focus-triggered tooltip that enriches an element with extra context.
- */
-export function Tooltip({
-  text,
-  side = 'top',
-  children,
-  className = '',
-}: TooltipProps): React.JSX.Element {
-  const id = useId();
-  const [open, setOpen] = useState(false);
-
-  if (text === undefined || text === null || text === '') {
-    return <>{children}</>;
+// Nested inputs use the render form to put the description on the focusable control.
+function describedChild(
+  children: TooltipProps['children'],
+  id: string,
+  dismiss: () => void,
+): ReactNode {
+  if (typeof children === 'function') return children({ 'aria-describedby': id, onClick: dismiss });
+  if (!isValidElement(children)) return children;
+  const child = children as ReactElement<ButtonHTMLAttributes<HTMLButtonElement>>;
+  const existing = child.props['aria-describedby'];
+  const description = { 'aria-describedby': existing ? `${existing} ${id}` : id };
+  if (child.type !== 'button' || !child.props.disabled) {
+    return cloneElement(child, {
+      ...description,
+      onClick: (event) => {
+        child.props.onClick?.(event);
+        dismiss();
+      },
+    });
   }
+  // Keep an unavailable action in the tab order so its reason can be read.
+  return cloneElement(child, {
+    ...description,
+    disabled: false,
+    'aria-disabled': true,
+    className: `${child.props.className ?? ''} aria-disabled:opacity-50 aria-disabled:cursor-not-allowed`,
+    onClick: (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+    },
+  });
+}
+
+export const Tooltip: FC<TooltipProps> = ({ text, side = 'top', children, className = '' }) => {
+  const id = useId();
+  const hasText = text !== null && text !== undefined && text !== '';
+  const wrapperRef = useRef<HTMLSpanElement>(null);
+  const bubbleRef = useRef<HTMLSpanElement>(null);
+  const [position, setPosition] = useState({ top: 0, left: 0 });
+  const [hovered, setHovered] = useState(false);
+  const [focused, setFocused] = useState(false);
+  const [dismissed, setDismissed] = useState(false);
+  const open = (hovered || focused) && !dismissed;
+
+  useEffect(() => {
+    if (!(open && hasText)) return;
+    const dismiss = (event: KeyboardEvent): void => {
+      if (event.key !== 'Escape') return;
+      setDismissed(true);
+      event.stopPropagation();
+    };
+    document.addEventListener('keydown', dismiss, true);
+    return () => document.removeEventListener('keydown', dismiss, true);
+  }, [open, hasText]);
+
+  useLayoutEffect(() => {
+    if (!open || !hasText) return;
+    const reposition = () => {
+      const trigger = wrapperRef.current?.querySelector<HTMLElement>(`[aria-describedby~="${id}"]`);
+      const bubble = bubbleRef.current;
+      if (!trigger || !bubble) return;
+      const anchor = trigger.getBoundingClientRect();
+      const bounds = bubble.getBoundingClientRect();
+      let top = anchor.top - bounds.height;
+      let left = anchor.left + (anchor.width - bounds.width) / 2;
+      if (side === 'bottom') top = anchor.bottom;
+      if (side === 'left' || side === 'right') {
+        top = anchor.top + (anchor.height - bounds.height) / 2;
+        left = side === 'left' ? anchor.left - bounds.width : anchor.right;
+      }
+      // Keep the bubble inside the viewport, including the collapsed sidebar.
+      setPosition({
+        top: Math.max(0, Math.min(top, window.innerHeight - bounds.height)),
+        left: Math.max(0, Math.min(left, window.innerWidth - bounds.width)),
+      });
+    };
+    reposition();
+    window.addEventListener('resize', reposition);
+    window.addEventListener('scroll', reposition, true);
+    return () => {
+      window.removeEventListener('resize', reposition);
+      window.removeEventListener('scroll', reposition, true);
+    };
+  }, [hasText, id, open, side, text]);
 
   return (
-    // biome-ignore lint/a11y/noStaticElementInteractions: hover-only enrichment; a11y comes from aria-describedby below
+    // biome-ignore lint/a11y/noStaticElementInteractions: events bubble from the described focusable trigger
     <span
-      className={cn('relative inline-flex', className)}
-      onMouseEnter={(): void => setOpen(true)}
-      onMouseLeave={(): void => setOpen(false)}
-      onFocus={(): void => setOpen(true)}
-      onBlur={(): void => setOpen(false)}
+      ref={wrapperRef}
+      className={`contents ${className}`}
+      onMouseEnter={() => {
+        setHovered(true);
+        setDismissed(false);
+      }}
+      onMouseLeave={() => setHovered(false)}
+      onFocus={() => {
+        setFocused(true);
+        setDismissed(false);
+      }}
+      onBlur={(event) => {
+        if (!event.currentTarget.contains(event.relatedTarget)) setFocused(false);
+      }}
     >
-      <span aria-describedby={id} className="inline-flex">
-        {children}
-      </span>
-      <span
-        id={id}
-        role="tooltip"
-        className={cn(
-          'pointer-events-none absolute z-50 max-w-xs whitespace-normal shadow-lg transition-opacity duration-100',
-          spacing.cell.px,
-          spacing.compact.pyMd,
-          radius.default,
-          border.card,
-          'bg-surface-raised text-text-primary caption',
-          sideClass[side],
-          open ? 'opacity-100' : 'opacity-0',
-        )}
-      >
-        {text}
-      </span>
+      {hasText
+        ? describedChild(children, id, () => setDismissed(true))
+        : typeof children === 'function'
+          ? children({ 'aria-describedby': '', onClick: () => setDismissed(true) })
+          : children}
+      {hasText
+        ? createPortal(
+            <span
+              ref={bubbleRef}
+              id={id}
+              role="tooltip"
+              hidden={!open}
+              style={position}
+              className="fixed z-[60] w-max max-w-[min(20rem,100vw)] whitespace-normal rounded-md bg-surface-raised px-cell py-compact text-xs text-text-primary ring-1 ring-surface-border"
+            >
+              {text}
+            </span>,
+            document.body,
+          )
+        : null}
     </span>
   );
-}
+};

@@ -23,53 +23,60 @@ export const guidesSections: HelpSection[] = [
     blocks: [
       {
         kind: 'paragraph',
-        text: 'Common symptoms and where to look first.',
+        text: 'content.troubleshooting.description',
       },
       {
         kind: 'terms',
-        heading: 'Link problems',
         items: [
           {
-            term: 'No carrier detected',
-            description:
-              'Check the cable is seated at both ends, the switch/router is powered with an active port LED, and the interface shows UP. Try another cable or port.',
-          },
-          {
-            term: 'Link speed lower than expected',
-            description:
-              'Use Cat5e or Cat6 cable for gigabit, run a cable test to confirm all four pairs are OK, and check for an auto-negotiation mismatch.',
+            term: 'content.troubleshooting.categories.linkIssues.noCarrier.symptom',
+            description: 'content.troubleshooting.categories.linkIssues.noCarrier.description',
           },
         ],
       },
       {
         kind: 'terms',
-        heading: 'Cable faults',
         items: [
           {
-            term: "Pair shows 'Open'",
-            description:
-              'A wire is broken or disconnected. Check terminations at the patch panel or wall jack, or re-terminate the connector.',
-          },
-          {
-            term: "Pair shows 'Short'",
-            description:
-              'Two wires are touching. Inspect the connector for bent pins and check the cable for crush damage.',
+            term: 'content.troubleshooting.categories.linkIssues.slowSpeed.symptom',
+            description: 'content.troubleshooting.categories.linkIssues.slowSpeed.description',
           },
         ],
       },
       {
         kind: 'terms',
-        heading: 'Connectivity',
         items: [
           {
-            term: 'Gateway unreachable',
-            description:
-              'Verify the gateway IP matches the router LAN IP, check the physical connection, and restart the router if it is unresponsive.',
+            term: 'content.troubleshooting.categories.cableIssues.open.symptom',
+            description: 'content.troubleshooting.categories.cableIssues.open.description',
           },
+        ],
+      },
+      {
+        kind: 'terms',
+        items: [
           {
-            term: 'Slow internet speed test',
+            term: 'content.troubleshooting.categories.cableIssues.short.symptom',
+            description: 'content.troubleshooting.categories.cableIssues.short.description',
+          },
+        ],
+      },
+      {
+        kind: 'terms',
+        items: [
+          {
+            term: 'content.troubleshooting.categories.gatewayIssues.unreachable.symptom',
+            description: 'content.troubleshooting.categories.gatewayIssues.unreachable.description',
+          },
+        ],
+      },
+      {
+        kind: 'terms',
+        items: [
+          {
+            term: 'content.troubleshooting.categories.performanceIssues.slowInternet.symptom',
             description:
-              'Test over a wired connection to rule out Wi-Fi, retry at a different time, and restart the modem and router.',
+              'content.troubleshooting.categories.performanceIssues.slowInternet.description',
           },
         ],
       },
@@ -83,52 +90,63 @@ export const guidesSections: HelpSection[] = [
     blocks: [
       {
         kind: 'paragraph',
-        text: 'Step-by-step guides for common tasks.',
+        text: 'content.howTo.description',
       },
       {
         kind: 'steps',
-        heading: 'Diagnose slow network speeds',
+        heading: 'content.howTo.guides.diagnoseSlowNetwork.title',
         ordered: true,
         items: [
           {
-            description:
-              'Check Link Status shows the expected speed (1 Gbps for gigabit). If it shows 100 Mbps, check cable quality or the switch port.',
+            title: 'content.howTo.guides.diagnoseSlowNetwork.steps.0.step',
+            description: 'content.howTo.guides.diagnoseSlowNetwork.steps.0.description',
           },
           {
-            description:
-              'Test gateway latency — it should be under 1 ms on a wired connection. High latency here points to a local problem.',
-          },
-          { description: 'Run an internet speed test and compare against your ISP plan.' },
-          {
-            description:
-              'Run a LAN iperf3 test to isolate whether the bottleneck is local or internet-bound.',
+            title: 'content.howTo.guides.diagnoseSlowNetwork.steps.1.step',
+            description: 'content.howTo.guides.diagnoseSlowNetwork.steps.1.description',
           },
           {
-            description:
-              'For Wi-Fi, check the channel graph and neighbor AP scan for congestion and interference.',
+            title: 'content.howTo.guides.diagnoseSlowNetwork.steps.2.step',
+            description: 'content.howTo.guides.diagnoseSlowNetwork.steps.2.description',
+          },
+          {
+            title: 'content.howTo.guides.diagnoseSlowNetwork.steps.3.step',
+            description: 'content.howTo.guides.diagnoseSlowNetwork.steps.3.description',
+          },
+          {
+            title: 'content.howTo.guides.diagnoseSlowNetwork.steps.4.step',
+            description: 'content.howTo.guides.diagnoseSlowNetwork.steps.4.description',
           },
         ],
       },
       {
         kind: 'steps',
-        heading: 'Configure health checks for critical services',
+        heading: 'content.howTo.guides.setupHealthChecks.title',
         ordered: true,
         items: [
           {
-            description:
-              'List the services that need monitoring — servers, databases, cloud services, cameras, medical equipment.',
+            title: 'content.howTo.guides.setupHealthChecks.steps.0.step',
+            description: 'content.howTo.guides.setupHealthChecks.steps.0.description',
           },
           {
-            description:
-              'Choose a check type: ping for reachability, TCP for service ports, HTTP for web services, RTSP for cameras, DICOM for imaging.',
+            title: 'content.howTo.guides.setupHealthChecks.steps.1.step',
+            description: 'content.howTo.guides.setupHealthChecks.steps.1.description',
           },
           {
-            description:
-              'Add each endpoint in Settings with its parameters and set warning/critical thresholds.',
+            title: 'content.howTo.guides.setupHealthChecks.steps.2.step',
+            description: 'content.howTo.guides.setupHealthChecks.steps.2.description',
           },
           {
-            description:
-              'Run the tests manually to confirm connectivity, then enable continuous monitoring and save to the appropriate profile.',
+            title: 'content.howTo.guides.setupHealthChecks.steps.3.step',
+            description: 'content.howTo.guides.setupHealthChecks.steps.3.description',
+          },
+          {
+            title: 'content.howTo.guides.setupHealthChecks.steps.4.step',
+            description: 'content.howTo.guides.setupHealthChecks.steps.4.description',
+          },
+          {
+            title: 'content.howTo.guides.setupHealthChecks.steps.5.step',
+            description: 'content.howTo.guides.setupHealthChecks.steps.5.description',
           },
         ],
       },

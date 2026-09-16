@@ -26,6 +26,7 @@
 import type { ReactElement, ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useLicense } from '../../contexts/LicenseContext';
+import { Tooltip } from './tooltip';
 
 interface TierGateProps {
   feature: string;
@@ -53,27 +54,19 @@ export function TierGate({
 
   const hint = message ?? t('license.tierGateTooltip', { tier: requiredTier });
 
-  // CSS-only hover (via `group` + `group-hover:`) keeps the tooltip
-  // tied to the wrapper without JS event handlers — that lets the
-  // outer span stay a presentation-only element and dodges the
-  // a11y/noStaticElementInteractions rule.
   return (
-    <span
-      data-testid="tier-gate-locked"
-      data-feature={feature}
-      className="relative inline-block group"
-    >
-      <span aria-disabled="true" className="pointer-events-none opacity-60">
+    <span data-testid="tier-gate-locked" data-feature={feature} className="relative inline-block">
+      <span inert={true} className="pointer-events-none opacity-60">
         {children}
       </span>
-      {/* Transparent click-blocking layer. */}
-      <span aria-hidden="true" className="absolute inset-0 cursor-not-allowed" title={hint} />
-      <span
-        role="tooltip"
-        className="invisible group-hover:visible group-focus-within:visible absolute z-50 bottom-full left-1/2 -translate-x-1/2 mb-tight px-cell py-compact rounded bg-surface-raised border border-surface-border text-xs text-text-primary whitespace-nowrap shadow-lg"
-      >
-        {hint}
-      </span>
+      <Tooltip text={hint}>
+        <button
+          type="button"
+          aria-label={hint}
+          aria-disabled="true"
+          className="absolute inset-0 cursor-not-allowed rounded focus-visible:outline focus-visible:outline-2 focus-visible:outline-brand-primary"
+        />
+      </Tooltip>
     </span>
   );
 }

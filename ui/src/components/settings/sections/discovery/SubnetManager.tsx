@@ -3,6 +3,7 @@ import { memo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { cn, icon as iconTokens, layout, radius, spacing } from '../../../../styles/theme';
 import type { SaveStatus, SubnetConfig } from '../../../../types/settings';
+import { Tooltip } from '../../../ui/tooltip';
 import { AutoSaveIndicator } from '../AutoSaveIndicator';
 
 interface SubnetManagerProps {
@@ -70,35 +71,39 @@ export const SubnetManager: React.NamedExoticComponent<SubnetManagerProps> = mem
                   <div className="caption text-text-muted">{subnet.cidr}</div>
                 </div>
                 <div className={cn(layout.inline.default, spacing.margin.left.inline)}>
-                  <input
-                    type="checkbox"
-                    checked={subnet.enabled}
-                    onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>
-                      toggleSubnet(subnet.cidr, e.target.checked)
-                    }
-                    className={iconTokens.size.sm}
-                    title={
+                  <Tooltip
+                    text={
                       subnet.enabled ? t('discovery.disableNetwork') : t('discovery.enableNetwork')
                     }
-                    // title alone does not name a form control (axe
-                    // label-title-only). The name carries the CIDR because
-                    // every row would otherwise announce the same words, and
-                    // a screen-reader user picking one of several identical
-                    // "Enable subnet" checkboxes cannot tell which is which.
-                    aria-label={
-                      subnet.enabled
-                        ? t('discovery.disableNetworkNamed', { cidr: subnet.cidr })
-                        : t('discovery.enableNetworkNamed', { cidr: subnet.cidr })
-                    }
-                  />
-                  <button
-                    type="button"
-                    onClick={(): void => deleteSubnet(subnet.cidr)}
-                    className="text-status-error hover:text-status-error/70 body-small"
-                    title={t('discovery.removeNetwork')}
                   >
-                    X
-                  </button>
+                    <input
+                      type="checkbox"
+                      checked={subnet.enabled}
+                      onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>
+                        toggleSubnet(subnet.cidr, e.target.checked)
+                      }
+                      className={iconTokens.size.sm}
+                      // title alone does not name a form control (axe
+                      // label-title-only). The name carries the CIDR because
+                      // every row would otherwise announce the same words, and
+                      // a screen-reader user picking one of several identical
+                      // "Enable subnet" checkboxes cannot tell which is which.
+                      aria-label={
+                        subnet.enabled
+                          ? t('discovery.disableNetworkNamed', { cidr: subnet.cidr })
+                          : t('discovery.enableNetworkNamed', { cidr: subnet.cidr })
+                      }
+                    />
+                  </Tooltip>
+                  <Tooltip text={t('discovery.removeNetwork')}>
+                    <button
+                      type="button"
+                      onClick={(): void => deleteSubnet(subnet.cidr)}
+                      className="text-status-error hover:text-status-error/70 body-small"
+                    >
+                      X
+                    </button>
+                  </Tooltip>
                 </div>
               </div>
             ))}

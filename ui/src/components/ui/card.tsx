@@ -1,3 +1,4 @@
+import { Tooltip } from './tooltip';
 /**
  * Card Component
  *
@@ -246,6 +247,7 @@ export function CardRow({
   const resolvedStatus = status ? getStatusConfig(status) : null;
   const statusIcon = resolvedStatus?.icon ?? null;
   const justifyClass = align === 'right' ? 'justify-end' : 'justify-start';
+  const ValueTag = value === '' ? 'span' : 'button';
 
   return (
     <div
@@ -257,24 +259,27 @@ export function CardRow({
       )}
     >
       <span className="body-small shrink-0">{label}</span>
-      <span
-        className={cn(
-          'body-small font-medium',
-          layout.inline.tight,
-          justifyClass,
-          align === 'right' ? 'text-right' : 'text-left',
-          wrap ? 'break-all whitespace-pre-wrap' : 'truncate',
-          mono && 'font-mono tabular-nums',
-          resolvedStatus?.color ?? 'text-text-primary',
-        )}
-        title={String(value)}
-        data-testid="card-row-value"
-      >
-        {statusIcon ? (
-          <span className={cn(iconTokens.size.xs, 'shrink-0 text-current')}>{statusIcon}</span>
-        ) : null}
-        <span>{value}</span>
-      </span>
+      <Tooltip text={String(value)}>
+        <ValueTag
+          type={value === '' ? undefined : 'button'}
+          aria-label={value === '' ? undefined : String(value)}
+          className={cn(
+            'body-small font-medium',
+            layout.inline.tight,
+            justifyClass,
+            align === 'right' ? 'text-right' : 'text-left',
+            wrap ? 'break-all whitespace-pre-wrap' : 'truncate',
+            mono && 'font-mono tabular-nums',
+            resolvedStatus?.color ?? 'text-text-primary',
+          )}
+          data-testid="card-row-value"
+        >
+          {statusIcon ? (
+            <span className={cn(iconTokens.size.xs, 'shrink-0 text-current')}>{statusIcon}</span>
+          ) : null}
+          <span>{value}</span>
+        </ValueTag>
+      </Tooltip>
     </div>
   );
 }

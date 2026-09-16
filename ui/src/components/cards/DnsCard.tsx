@@ -1,3 +1,4 @@
+import { Tooltip } from '../ui/tooltip';
 /**
  * DNSCard Component
  *
@@ -114,9 +115,11 @@ function LookupRow({
           </span>
         </span>
       </div>
-      <p className="body-small truncate" title={lookup.result}>
-        {lookup.result}
-      </p>
+      <Tooltip text={lookup.result}>
+        <button type="button" aria-label={lookup.result} className="body-small truncate">
+          {lookup.result}
+        </button>
+      </Tooltip>
     </div>
   );
 }
@@ -172,7 +175,7 @@ export const DnsCard: React.MemoExoticComponent<(props: DnsCardProps) => JSX.Ele
           <p className={cn('caption', spacing.margin.bottom.tight)}>{t('dns.dnsServers')}</p>
           <div className="stack-xs">
             {servers.map((server) => (
-              <p key={server} className="body-small font-mono break-all" title={server}>
+              <p key={server} className="body-small font-mono break-all">
                 {server}
               </p>
             ))}

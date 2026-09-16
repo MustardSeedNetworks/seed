@@ -1,3 +1,4 @@
+import { Tooltip } from '../ui/tooltip';
 /**
  * Pre-render helpers shared between NetworkDiscoveryCard and its summary.
  *
@@ -376,14 +377,16 @@ export function DiscoverySummary({
           )}
         >
           {stats.map(({ icon: ICON, label, count, color }) => (
-            <div
-              key={label}
-              className={cn('flex items-center', spacing.gap.tight)}
-              title={`${count} ${label}`}
-            >
-              <ICON className={cn(iconTokens.size.sm, color)} />
-              <span className="caption text-text-secondary">{count}</span>
-            </div>
+            <Tooltip text={`${count} ${label}`} key={label}>
+              <button
+                type="button"
+                aria-label={`${count} ${label}`}
+                className={cn('flex items-center', spacing.gap.tight)}
+              >
+                <ICON className={cn(iconTokens.size.sm, color)} />
+                <span className="caption text-text-secondary">{count}</span>
+              </button>
+            </Tooltip>
           ))}
         </div>
       )}

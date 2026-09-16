@@ -1,3 +1,4 @@
+import { Tooltip } from '../ui/tooltip';
 /**
  * Specialty protocol sections rendered inside HealthCheckCard.
  *
@@ -192,9 +193,15 @@ export function HealthCheckCardProtocolSections({
                 <div className="flex items-center gap-compact">
                   <StatusBadge status={r.success ? 'success' : 'error'} />
                   <span className="body-small font-medium">{r.name}</span>
-                  <span className="caption text-text-muted truncate max-w-48" title={r.url}>
-                    {r.url}
-                  </span>
+                  <Tooltip text={r.url}>
+                    <button
+                      type="button"
+                      aria-label={r.url}
+                      className="caption text-text-muted truncate max-w-48"
+                    >
+                      {r.url}
+                    </button>
+                  </Tooltip>
                 </div>
                 {r.success && (r.codec || r.resolution) ? (
                   <span className="caption text-text-muted ml-spacious">
@@ -333,9 +340,15 @@ export function HealthCheckCardProtocolSections({
                 <div className="flex items-center gap-compact">
                   <StatusBadge status={r.success ? 'success' : 'error'} />
                   <span className="body-small font-medium">{r.name}</span>
-                  <span className="caption text-text-muted truncate max-w-48" title={r.baseUrl}>
-                    {r.baseUrl}
-                  </span>
+                  <Tooltip text={r.baseUrl}>
+                    <button
+                      type="button"
+                      aria-label={r.baseUrl}
+                      className="caption text-text-muted truncate max-w-48"
+                    >
+                      {r.baseUrl}
+                    </button>
+                  </Tooltip>
                 </div>
                 {r.success && (r.fhirVersion || r.serverName) ? (
                   <span className="caption text-text-muted ml-spacious">
@@ -381,9 +394,15 @@ export function HealthCheckCardProtocolSections({
                 <div className="flex items-center gap-compact">
                   <StatusBadge status={r.success ? 'success' : 'error'} />
                   <span className="body-small font-medium">{r.name}</span>
-                  <span className="caption text-text-muted truncate max-w-48" title={r.launchUrl}>
-                    {r.launchUrl}
-                  </span>
+                  <Tooltip text={r.launchUrl}>
+                    <button
+                      type="button"
+                      aria-label={r.launchUrl}
+                      className="caption text-text-muted truncate max-w-48"
+                    >
+                      {r.launchUrl}
+                    </button>
+                  </Tooltip>
                 </div>
                 {r.success && r.ltiVersion ? (
                   <span className="caption text-text-muted ml-spacious">LTI {r.ltiVersion}</span>
@@ -422,9 +441,15 @@ export function HealthCheckCardProtocolSections({
                 <div className="flex items-center gap-compact">
                   <StatusBadge status={r.success ? 'success' : 'error'} />
                   <span className="body-small font-medium">{r.name}</span>
-                  <span className="caption text-text-muted truncate max-w-48" title={r.endpointUrl}>
-                    {r.endpointUrl}
-                  </span>
+                  <Tooltip text={r.endpointUrl}>
+                    <button
+                      type="button"
+                      aria-label={r.endpointUrl}
+                      className="caption text-text-muted truncate max-w-48"
+                    >
+                      {r.endpointUrl}
+                    </button>
+                  </Tooltip>
                 </div>
                 {r.success && (r.securityMode || r.productName) ? (
                   <span className="caption text-text-muted ml-spacious">
