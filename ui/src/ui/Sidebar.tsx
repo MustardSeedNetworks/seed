@@ -77,8 +77,8 @@ interface NavItemButtonProps {
 }
 
 function badgeClass(badge: string): string {
-  if (badge === 'New') return 'bg-status-success/20 text-status-success';
-  if (badge === 'Beta') return 'bg-status-warning/20 text-status-warning';
+  if (badge === 'New') return 'bg-status-success/15 text-status-success';
+  if (badge === 'Beta') return 'bg-status-warning/15 text-status-warning';
   return 'bg-brand-primary/20 text-brand-accent';
 }
 

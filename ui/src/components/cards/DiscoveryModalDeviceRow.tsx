@@ -226,7 +226,7 @@ export function DeviceRow({
           {openPorts.length > 0 ? (
             <span
               className={cn(
-                'text-xs px-1.5 py-0.5 bg-status-success/20 text-status-success',
+                'text-xs px-1.5 py-0.5 bg-status-success/15 text-status-success',
                 radius.md,
               )}
             >
@@ -269,7 +269,7 @@ export function DeviceRow({
                 onClick={handleScan}
                 disabled={isScanning}
                 className={cn(
-                  'text-xs px-cell py-compact bg-brand-primary/20 text-brand-primary',
+                  'text-xs px-cell py-compact bg-brand-primary/15 text-brand-primary',
                   radius.md,
                   'hover:bg-brand-primary/30 transition-colors disabled:opacity-50',
                 )}
@@ -436,7 +436,7 @@ export function DeviceRow({
                               'px-1.5 py-0.5 text-xs',
                               radius.sm,
                               iface.operStatus === 'up'
-                                ? 'bg-status-success/20 text-status-success'
+                                ? 'bg-status-success/15 text-status-success'
                                 : 'bg-surface-hover text-text-muted',
                             )}
                             title={`${iface.name} - ${iface.speedMbps ? `${iface.speedMbps} Mbps` : 'N/A'}`}

@@ -49,7 +49,7 @@
     },
     "timing": {
       "probe_interval": 75000000,
-      "rescan_interval": 600000000000,
+      "rescan_interval": 60000000000,
       "workers": 50
     },
     "target_networks": [],

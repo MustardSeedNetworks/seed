@@ -351,7 +351,7 @@ export function DataTable<T>({
               radius.lg,
               border.width.default,
               showFilters || hasActiveFilters
-                ? 'bg-brand-primary/20 border-brand-primary text-brand-primary'
+                ? 'bg-brand-primary/15 border-brand-primary text-brand-primary'
                 : 'border-surface-border text-text-muted hover:text-text-primary hover:border-text-muted',
             )}
             title="Toggle filters"
