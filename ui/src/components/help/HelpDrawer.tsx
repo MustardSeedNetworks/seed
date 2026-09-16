@@ -1,22 +1,4 @@
-/**
- * HelpDrawer Component
- *
- * Right-side help drawer for The Seed. Replaces the old ImprovedHelpModal,
- * which rendered no body content (every section had `content: null`). This
- * version is data-driven: the content model lives in `helpModel.ts`, the
- * sections in `sections/`, and `HelpSectionBody` renders them generically.
- *
- * Architecture mirrors niac's HelpDrawer (drawer chrome + section nav +
- * search filter) and Seed's SettingsDrawer chrome (overlay/backdrop,
- * useFocusTrap, animate-slide-in), using Seed theme tokens + the `help`
- * i18n namespace throughout.
- *
- * Accessibility:
- * - role="dialog" + aria-modal + aria-labelledby on an id'd <h2>
- * - useFocusTrap provides ESC-close, Tab trapping, and focus restore
- *
- * @copyright 2026 Mustard Seed Networks. All rights reserved.
- */
+/** Contextual, translated help for the current Seed page. */
 
 import type React from 'react';
 import { type ReactElement, useMemo, useState } from 'react';
@@ -47,13 +29,16 @@ export function HelpDrawer({
   version,
   section,
 }: HelpDrawerProps): ReactElement | null {
-  const { t } = useTranslation('help');
+  const { t } = useTranslation(['help', 'cards', 'pages', 'common']);
   const [activeSection, setActiveSection] = useState<string>(section ?? 'about');
   const [requestedSection, setRequestedSection] = useState(section);
+  const [wasOpen, setWasOpen] = useState(isOpen);
   const [searchQuery, setSearchQuery] = useState('');
 
-  if (section !== requestedSection) {
+  if (section !== requestedSection || isOpen !== wasOpen) {
     setRequestedSection(section);
+    setWasOpen(isOpen);
+    setSearchQuery('');
     if (section) {
       setActiveSection(section);
     }
@@ -78,14 +63,14 @@ export function HelpDrawer({
       return (
         title.includes(query) ||
         candidate.id.toLowerCase().includes(query) ||
-        sectionSearchText(candidate).includes(query)
+        sectionSearchText(candidate, t).includes(query)
       );
     });
   }, [query, t]);
 
   // Keep the active section valid as the filter narrows the list.
   const currentSection =
-    helpSections.find((s) => s.id === activeSection) ??
+    filteredSections.find((s) => s.id === activeSection) ??
     filteredSections.at(0) ??
     helpSections.at(0);
 
@@ -125,7 +110,9 @@ export function HelpDrawer({
             <h2 id="help-drawer-title" className="heading-3">
               {t('modal.title')}
             </h2>
-            {version ? <p className="caption">v{version}</p> : null}
+            {version ? (
+              <p className="caption">{version.startsWith('v') ? version : `v${version}`}</p>
+            ) : null}
           </div>
           <button
             type="button"
@@ -141,6 +128,23 @@ export function HelpDrawer({
             <X className={iconTokens.size.lg} aria-hidden="true" />
           </button>
         </div>
+
+        <label className="sm:hidden pad border-b border-surface-border">
+          <span className="label">{t('modal.contents')}</span>
+          <select
+            id="help-section-select"
+            data-testid="help-section-select"
+            className="w-full mt-tight bg-surface-raised text-text-primary border border-surface-border rounded-md pad-sm"
+            value={currentSection.id}
+            onChange={(event) => setActiveSection(event.target.value)}
+          >
+            {helpSections.map((entry) => (
+              <option key={entry.id} value={entry.id}>
+                {t(entry.titleKey)}
+              </option>
+            ))}
+          </select>
+        </label>
 
         {/* Body: sidebar (search + TOC) + content pane */}
         <div className="flex flex-1 overflow-hidden">
@@ -183,6 +187,8 @@ export function HelpDrawer({
                   <button
                     type="button"
                     key={entry.id}
+                    id={`help-section-${entry.id}`}
+                    data-testid={`help-section-${entry.id}`}
                     onClick={(): void => setActiveSection(entry.id)}
                     className={cn(
                       'w-full flex items-center',
@@ -213,6 +219,20 @@ export function HelpDrawer({
             data-testid="help-drawer-content"
           >
             <h3 className="heading-3 mb-content">{t(currentSection.titleKey)}</h3>
+            <a
+              href={`#help-section-${currentSection.id}`}
+              data-testid="help-return-to-toc"
+              className="body-small mb-content hidden text-brand-primary underline sm:inline-block"
+            >
+              {t('modal.backToSections')}
+            </a>
+            <a
+              href="#help-section-select"
+              data-testid="help-return-to-select"
+              className="body-small mb-content inline-block text-brand-primary underline sm:hidden"
+            >
+              {t('modal.backToSections')}
+            </a>
             <HelpSectionBody blocks={currentSection.blocks} />
           </main>
         </div>

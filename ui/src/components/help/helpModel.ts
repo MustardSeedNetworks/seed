@@ -8,18 +8,21 @@
  * @copyright 2026 Mustard Seed Networks. All rights reserved.
  */
 
+import type { ParseKeys, TFunction } from 'i18next';
 import type { ReactNode } from 'react';
 import type { HelpTranslations } from '../../i18n/types';
+export type HelpTextKey = ParseKeys<['help', 'cards', 'pages', 'common']>;
+
 /** A labelled term + its explanation (definition lists, metric glossaries). */
 export interface HelpTerm {
-  term: string;
-  description: string;
+  term: HelpTextKey;
+  description: HelpTextKey;
 }
 
 /** An ordered step within a how-to / configuration walkthrough. */
 export interface HelpStep {
-  title?: string;
-  description: string;
+  title?: HelpTextKey;
+  description: HelpTextKey;
 }
 
 /**
@@ -27,12 +30,12 @@ export interface HelpStep {
  * (`HelpSectionBody`) switches on `kind`.
  */
 export type HelpBlock =
-  | { kind: 'paragraph'; text: string }
-  | { kind: 'heading'; text: string }
-  | { kind: 'terms'; heading?: string; items: HelpTerm[] }
-  | { kind: 'steps'; heading?: string; ordered?: boolean; items: HelpStep[] }
-  | { kind: 'tips'; heading?: string; items: string[] }
-  | { kind: 'note'; text: string };
+  | { kind: 'paragraph'; text: HelpTextKey }
+  | { kind: 'heading'; text: HelpTextKey }
+  | { kind: 'terms'; heading?: HelpTextKey; items: HelpTerm[] }
+  | { kind: 'steps'; heading?: HelpTextKey; ordered?: boolean; items: HelpStep[] }
+  | { kind: 'tips'; heading?: HelpTextKey; items: HelpTextKey[] }
+  | { kind: 'note'; text: HelpTextKey };
 
 /** Fully-qualified `help` namespace key for a section title (e.g. `sections.about`). */
 export type HelpSectionTitleKey = `sections.${keyof HelpTranslations['sections']}`;
@@ -53,39 +56,42 @@ export interface HelpSection {
  * Flatten a section's blocks into a single lowercase string for search
  * matching (titles are matched separately by the drawer via i18n).
  */
-export function sectionSearchText(section: HelpSection): string {
+export function sectionSearchText(
+  section: HelpSection,
+  t: TFunction<['help', 'cards', 'pages', 'common']>,
+): string {
   const parts: string[] = [...section.keywords];
   for (const block of section.blocks) {
     switch (block.kind) {
       case 'paragraph':
       case 'heading':
       case 'note':
-        parts.push(block.text);
+        parts.push(t(block.text));
         break;
       case 'terms':
         if (block.heading) {
-          parts.push(block.heading);
+          parts.push(t(block.heading));
         }
         for (const item of block.items) {
-          parts.push(item.term, item.description);
+          parts.push(t(item.term), t(item.description));
         }
         break;
       case 'steps':
         if (block.heading) {
-          parts.push(block.heading);
+          parts.push(t(block.heading));
         }
         for (const item of block.items) {
           if (item.title) {
-            parts.push(item.title);
+            parts.push(t(item.title));
           }
-          parts.push(item.description);
+          parts.push(t(item.description));
         }
         break;
       case 'tips':
         if (block.heading) {
-          parts.push(block.heading);
+          parts.push(t(block.heading));
         }
-        parts.push(...block.items);
+        parts.push(...block.items.map((item) => t(item)));
         break;
     }
   }

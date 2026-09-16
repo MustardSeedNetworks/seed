@@ -12,6 +12,7 @@
  */
 import type { ButtonHTMLAttributes, FC, ReactNode, Ref } from 'react';
 import { iconSizes } from '../../constants/sizes';
+import { Tooltip } from './tooltip';
 
 type ButtonVariant = 'solid' | 'outline' | 'ghost' | 'secondary';
 type ButtonTone = 'violet' | 'red' | 'green' | 'blue' | 'gray';
@@ -107,19 +108,22 @@ export const Button: FC<ButtonProps> = ({
   className = '',
   disabled,
   ref,
+  title,
   ...props
 }) => (
-  <button
-    type="button"
-    ref={ref}
-    className={`${baseStyles} ${sizeStyles[size]} ${variantStyles[variant][tone]} ${className}`}
-    disabled={disabled || loading}
-    {...props}
-  >
-    {loading ? <LoadingSpinner size={size} /> : (leftIcon ?? null)}
-    {children}
-    {!loading ? (rightIcon ?? null) : null}
-  </button>
+  <Tooltip text={title}>
+    <button
+      type="button"
+      ref={ref}
+      className={`${baseStyles} ${sizeStyles[size]} ${variantStyles[variant][tone]} ${className}`}
+      disabled={disabled || loading}
+      {...props}
+    >
+      {loading ? <LoadingSpinner size={size} /> : (leftIcon ?? null)}
+      {children}
+      {!loading ? (rightIcon ?? null) : null}
+    </button>
+  </Tooltip>
 );
 
 interface IconButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
@@ -137,6 +141,7 @@ export const IconButton: FC<IconButtonProps> = ({
   tone = 'gray',
   size = 'md',
   className = '',
+  title,
   ...props
 }) => {
   const iconSizeStyles = {
@@ -160,12 +165,14 @@ export const IconButton: FC<IconButtonProps> = ({
   };
 
   return (
-    <button
-      type="button"
-      className={`inline-flex-center transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-brand-primary/50 disabled:opacity-50 disabled:cursor-not-allowed ${iconSizeStyles[size]} ${variantBase[variant]} ${toneStyles[tone]} ${className}`}
-      {...props}
-    >
-      {icon}
-    </button>
+    <Tooltip text={title}>
+      <button
+        type="button"
+        className={`inline-flex-center transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-brand-primary/50 disabled:opacity-50 disabled:cursor-not-allowed ${iconSizeStyles[size]} ${variantBase[variant]} ${toneStyles[tone]} ${className}`}
+        {...props}
+      >
+        {icon}
+      </button>
+    </Tooltip>
   );
 };

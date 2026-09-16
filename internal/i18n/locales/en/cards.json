@@ -142,7 +142,10 @@
     "tableActions": "Actions",
     "viewAllDevices": "View All Devices",
     "snmpInfo": "SNMP Details",
-    "scanningPhase": "Scanning — {{phase}}"
+    "scanningPhase": "Scanning — {{phase}}",
+    "localMacHint": "Locally administered address: assigned locally rather than by the manufacturer.",
+    "exportCSV": "Export CSV",
+    "exportJSON": "Export JSON"
   },
   "pipeline": {
     "phaseProgress": "Phase {{current}} of {{total}}",

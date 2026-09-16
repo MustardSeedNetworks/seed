@@ -23,36 +23,67 @@ export const interfaceSections: HelpSection[] = [
     blocks: [
       {
         kind: 'paragraph',
-        text: 'Link Status monitors the physical-layer connection of the selected network interface.',
+        text: 'content.linkStatus.description',
       },
       {
         kind: 'terms',
-        heading: 'Terms',
+        heading: 'content.common.terms',
         items: [
           {
-            term: 'Carrier',
-            description:
-              "Physical-layer signal detection. Shows 'Connected' when the NIC detects a link partner (a cable into an active port).",
+            term: 'content.linkStatus.terms.carrier.term',
+            description: 'content.linkStatus.terms.carrier.description',
           },
           {
-            term: 'Speed',
-            description:
-              'Negotiated link speed between your interface and the connected device (for example 1000 Mbps).',
+            term: 'content.linkStatus.terms.speed.term',
+            description: 'content.linkStatus.terms.speed.description',
           },
           {
-            term: 'Duplex',
-            description:
-              'Communication mode — full duplex allows simultaneous bidirectional data; half duplex is one direction at a time.',
+            term: 'content.linkStatus.terms.duplex.term',
+            description: 'content.linkStatus.terms.duplex.description',
           },
           {
-            term: 'Auto-Negotiation',
-            description:
-              'Whether speed and duplex were negotiated automatically with the link partner or set manually.',
+            term: 'content.linkStatus.terms.autoNeg.term',
+            description: 'content.linkStatus.terms.autoNeg.description',
           },
           {
-            term: 'MTU',
-            description:
-              'Maximum Transmission Unit — the largest packet size (in bytes) that can be sent without fragmentation. Standard is 1500 bytes.',
+            term: 'content.linkStatus.terms.mtu.term',
+            description: 'content.linkStatus.terms.mtu.description',
+          },
+        ],
+      },
+      {
+        kind: 'terms',
+        items: [
+          {
+            term: 'cards:link.title',
+            description: 'content.cardHelp.LinkCard.description',
+          },
+        ],
+      },
+      {
+        kind: 'terms',
+        items: [
+          {
+            term: 'cards:cable.title',
+            description: 'content.cardHelp.CableCard.description',
+          },
+        ],
+      },
+      {
+        kind: 'terms',
+        items: [
+          {
+            term: 'cards:driverStats.title',
+            description: 'content.cardHelp.DriverStatsCard.description',
+          },
+        ],
+      },
+      {
+        kind: 'terms',
+        items: [
+          {
+            term: 'cards:wifi.title',
+            description: 'content.cardHelp.WiFiCard.description',
           },
         ],
       },
@@ -66,37 +97,33 @@ export const interfaceSections: HelpSection[] = [
     blocks: [
       {
         kind: 'paragraph',
-        text: 'The Cable Test uses Time Domain Reflectometry (TDR) to check cable quality and locate faults.',
+        text: 'content.cableTest.description',
       },
       {
         kind: 'terms',
-        heading: 'Terms',
+        heading: 'content.common.terms',
         items: [
           {
-            term: 'TDR test',
-            description:
-              'Sends electrical pulses down the cable and measures reflections to detect faults and estimate length.',
+            term: 'content.cableTest.terms.tdrTest.term',
+            description: 'content.cableTest.terms.tdrTest.description',
           },
           {
-            term: 'Cable status',
-            description:
-              'Reports whether each pair is OK, open (disconnected), short (wires touching), or has an impedance mismatch.',
+            term: 'content.cableTest.terms.cableStatus.term',
+            description: 'content.cableTest.terms.cableStatus.description',
           },
           {
-            term: 'Fault distance',
-            description:
-              'Distance to a detected fault in meters, to help locate the physical problem.',
+            term: 'content.cableTest.terms.faultDistance.term',
+            description: 'content.cableTest.terms.faultDistance.description',
           },
           {
-            term: 'Pairs',
-            description:
-              'Ethernet cables have four twisted pairs. Gigabit uses all four; Fast Ethernet uses pairs 1-2 and 3-6.',
+            term: 'content.cableTest.terms.pairs.term',
+            description: 'content.cableTest.terms.pairs.description',
           },
         ],
       },
       {
         kind: 'note',
-        text: 'Cable testing requires compatible network hardware. Not all NICs support TDR.',
+        text: 'content.cableTest.note',
       },
     ],
   },
@@ -108,40 +135,71 @@ export const interfaceSections: HelpSection[] = [
     blocks: [
       {
         kind: 'paragraph',
-        text: 'Wi-Fi Status monitors the quality and settings of the current wireless connection — Wi-Fi visibility and troubleshooting.',
+        text: 'content.wifiStatus.description',
       },
       {
         kind: 'terms',
-        heading: 'Terms',
+        heading: 'content.common.terms',
         items: [
           {
-            term: 'SSID',
-            description:
-              "Service Set Identifier — the name of the wireless network you're connected to.",
+            term: 'content.wifiStatus.terms.ssid.term',
+            description: 'content.wifiStatus.terms.ssid.description',
           },
           {
-            term: 'BSSID',
-            description: 'Basic Service Set Identifier — the MAC address of the access point.',
+            term: 'content.wifiStatus.terms.bssid.term',
+            description: 'content.wifiStatus.terms.bssid.description',
           },
           {
-            term: 'Signal strength',
-            description:
-              'Signal level in dBm. -30 is excellent, -67 is good, -70 is fair, -80 is weak. Higher (less negative) is better.',
+            term: 'content.wifiStatus.terms.signal.term',
+            description: 'content.wifiStatus.terms.signal.description',
           },
           {
-            term: 'Channel',
-            description:
-              'Wi-Fi channel number (1-14 for 2.4 GHz, 36-165 for 5 GHz). Overlapping channels cause interference.',
+            term: 'content.wifiStatus.terms.channel.term',
+            description: 'content.wifiStatus.terms.channel.description',
           },
           {
-            term: 'Security',
-            description:
-              'Encryption protocol protecting the connection (WPA2, WPA3, WEP, or Open).',
+            term: 'content.wifiStatus.terms.security.term',
+            description: 'content.wifiStatus.terms.security.description',
           },
           {
-            term: 'Frequency',
-            description:
-              'Radio band — 2.4 GHz has better range; 5 GHz offers higher speeds and less interference.',
+            term: 'content.wifiStatus.terms.frequency.term',
+            description: 'content.wifiStatus.terms.frequency.description',
+          },
+        ],
+      },
+      {
+        kind: 'terms',
+        items: [
+          {
+            term: 'cards:wifi.title',
+            description: 'content.cardHelp.WiFiCard.description',
+          },
+        ],
+      },
+      {
+        kind: 'terms',
+        items: [
+          {
+            term: 'cards:wifi.channelGraph.title',
+            description: 'content.cardHelp.WiFiChannelGraph.description',
+          },
+        ],
+      },
+      {
+        kind: 'terms',
+        items: [
+          {
+            term: 'pages:wifi.airspaceTitle',
+            description: 'content.cardHelp.WiFiAirspaceCard.description',
+          },
+        ],
+      },
+      {
+        kind: 'terms',
+        items: [
+          {
+            term: 'pages:wifi.anomaliesTitle',
+            description: 'content.cardHelp.WiFiAnomaliesCard.description',
           },
         ],
       },
@@ -155,53 +213,29 @@ export const interfaceSections: HelpSection[] = [
     blocks: [
       {
         kind: 'paragraph',
-        text: 'Wi-Fi troubleshooting scans visible wireless networks to help diagnose the local wireless environment: neighbor access points, the channels in use, and how busy each channel is. It is a visibility and troubleshooting tool, not a survey/planning tool.',
+        text: 'content.wifiTroubleshooting.description',
       },
       {
         kind: 'terms',
-        heading: 'Terms',
+        heading: 'content.common.terms',
         items: [
           {
-            term: 'Neighbor AP scan',
-            description:
-              'Lists the access points the adapter can hear, with their SSID, BSSID, band, channel, and signal level.',
+            term: 'content.wifiTroubleshooting.terms.neighbors.term',
+            description: 'content.wifiTroubleshooting.terms.neighbors.description',
           },
           {
-            term: 'Channel utilization',
-            description:
-              'Indicates how busy each Wi-Fi channel is. High utilization (over ~50%) points to congestion and likely interference.',
+            term: 'content.wifiTroubleshooting.terms.utilization.term',
+            description: 'content.wifiTroubleshooting.terms.utilization.description',
           },
           {
-            term: 'Co-channel interference',
-            description:
-              'When multiple access points share the same channel they must share airtime, which reduces throughput.',
+            term: 'content.wifiTroubleshooting.terms.interference.term',
+            description: 'content.wifiTroubleshooting.terms.interference.description',
           },
           {
-            term: 'Signal / SNR',
-            description:
-              'Signal level in dBm and the signal-to-noise ratio of the connection. A higher SNR means a cleaner, more reliable link.',
+            term: 'content.wifiTroubleshooting.terms.snr.term',
+            description: 'content.wifiTroubleshooting.terms.snr.description',
           },
         ],
-      },
-      {
-        kind: 'terms',
-        heading: 'Bands',
-        items: [
-          {
-            term: '2.4 GHz',
-            description:
-              'Better range and wall penetration, but only three non-overlapping channels (1, 6, 11) and more congestion.',
-          },
-          {
-            term: '5 GHz',
-            description:
-              'Many non-overlapping channels, less interference, and faster speeds, but shorter range.',
-          },
-        ],
-      },
-      {
-        kind: 'note',
-        text: 'Advanced Wi-Fi scanning depends on adapter capabilities; built-in laptop Wi-Fi may report a limited view of the environment.',
       },
     ],
   },

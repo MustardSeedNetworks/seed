@@ -317,11 +317,13 @@ test.describe('Theme Toggle and Help Modal', { tag: '@smoke' }, () => {
       const content = page.getByTestId('help-drawer-content');
       await expect(content).toBeVisible();
 
-      // The default (About) section renders real product prose (the help
-      // glossary's botanical module terms were retired with the function-first
-      // nav — this asserts stable About copy instead).
-      await expect(content).toContainText('network diagnostics');
-      await expect(content).toContainText('Mustard Seed Networks');
+      // The entry point now opens the section for the current route rather than
+      // a fixed About page, and the body copy is localized, so this pins the
+      // shape of real content instead of one route's English sentence: a
+      // heading that names the open section, and prose underneath it.
+      const heading = content.getByRole('heading').first();
+      await expect(heading).toBeVisible();
+      expect((await heading.innerText()).trim().length).toBeGreaterThan(0);
 
       // And there is substantive prose, not an empty pane.
       const text = (await content.innerText()).trim();

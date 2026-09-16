@@ -22,63 +22,82 @@ export const referenceSections: HelpSection[] = [
     keywords: ['glossary', 'terms', 'definitions', 'acronyms'],
     blocks: [
       {
+        kind: 'paragraph',
+        text: 'content.glossary.description',
+      },
+      {
         kind: 'terms',
-        heading: 'Common terms',
+        heading: 'content.common.terms',
         items: [
           {
-            term: 'ARP',
-            description:
-              'Address Resolution Protocol — maps IP addresses to MAC addresses on a local network.',
-          },
-          { term: 'BSSID', description: 'MAC address of a Wi-Fi access point.' },
-          {
-            term: 'C-ECHO',
-            description:
-              'DICOM verification service used to confirm a remote imaging node is reachable.',
+            term: 'content.glossary.terms.arp.term',
+            description: 'content.glossary.terms.arp.description',
           },
           {
-            term: 'DHCP',
-            description:
-              'Dynamic Host Configuration Protocol — assigns IP configuration to devices automatically.',
+            term: 'content.glossary.terms.dhcp.term',
+            description: 'content.glossary.terms.dhcp.description',
           },
           {
-            term: 'DNS',
-            description: 'Domain Name System — resolves hostnames to IP addresses and back.',
+            term: 'content.glossary.terms.dns.term',
+            description: 'content.glossary.terms.dns.description',
           },
           {
-            term: 'Duplex',
-            description:
-              'Whether a link can send and receive at the same time (full) or one direction at a time (half).',
+            term: 'content.glossary.terms.iperf.term',
+            description: 'content.glossary.terms.iperf.description',
           },
           {
-            term: 'iperf3',
-            description:
-              'A tool for measuring achievable throughput between two hosts on a network.',
+            term: 'content.glossary.terms.lldp.term',
+            description: 'content.glossary.terms.lldp.description',
           },
           {
-            term: 'LLDP / CDP',
-            description:
-              'Discovery protocols that reveal details about directly connected switches.',
+            term: 'content.glossary.terms.rtsp.term',
+            description: 'content.glossary.terms.rtsp.description',
           },
           {
-            term: 'MTU',
-            description:
-              'Maximum Transmission Unit — the largest packet that can be sent without fragmentation.',
+            term: 'content.glossary.terms.snr.term',
+            description: 'content.glossary.terms.snr.description',
           },
           {
-            term: 'RTSP',
-            description: 'Real Time Streaming Protocol — used by IP cameras and video systems.',
+            term: 'content.glossary.terms.tdr.term',
+            description: 'content.glossary.terms.tdr.description',
+          },
+        ],
+      },
+      {
+        kind: 'terms',
+        heading: 'content.common.terms',
+        items: [
+          {
+            term: 'content.wifiStatus.terms.bssid.term',
+            description: 'content.wifiStatus.terms.bssid.description',
           },
           {
-            term: 'SNR',
-            description:
-              'Signal-to-noise ratio — how far a Wi-Fi signal rises above background noise.',
+            term: 'content.wifiStatus.terms.ssid.term',
+            description: 'content.wifiStatus.terms.ssid.description',
           },
-          { term: 'SSID', description: 'The name of a wireless network.' },
+        ],
+      },
+      {
+        kind: 'terms',
+        heading: 'content.common.terms',
+        items: [
           {
-            term: 'TDR',
-            description:
-              'Time Domain Reflectometry — measures cable length and locates faults using signal reflections.',
+            term: 'content.linkStatus.terms.duplex.term',
+            description: 'content.linkStatus.terms.duplex.description',
+          },
+          {
+            term: 'content.linkStatus.terms.mtu.term',
+            description: 'content.linkStatus.terms.mtu.description',
+          },
+        ],
+      },
+      {
+        kind: 'terms',
+        heading: 'content.common.terms',
+        items: [
+          {
+            term: 'content.dicomChecks.terms.cEcho.term',
+            description: 'content.dicomChecks.terms.cEcho.description',
           },
         ],
       },

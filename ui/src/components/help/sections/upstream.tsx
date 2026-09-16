@@ -23,37 +23,94 @@ export const upstreamSections: HelpSection[] = [
     blocks: [
       {
         kind: 'paragraph',
-        text: 'The Network page shows the diagnostic state of the upstream link: DHCP lease, default gateway, DNS resolvers, the public IP the gateway uses, and (when wired) the directly-attached switch and its VLAN configuration.',
-      },
-      {
-        kind: 'paragraph',
-        text: 'Each card refreshes on its own schedule and reflects the active interface selected in the header. If a card shows "no data", either the interface has not yet been probed, or that piece of the upstream config is not present (e.g., no IPv6 gateway).',
+        text: 'content.networkDhcp.description',
       },
       {
         kind: 'terms',
-        heading: 'Terms',
+        heading: 'content.common.terms',
         items: [
           {
-            term: 'Lease time',
-            description:
-              'How long the current IP address assignment is valid before renewal is required.',
+            term: 'content.networkDhcp.terms.leaseTime.term',
+            description: 'content.networkDhcp.terms.leaseTime.description',
           },
           {
-            term: 'DHCP server',
-            description:
-              'IP address of the DHCP server that issued the lease (usually your router).',
+            term: 'content.networkDhcp.terms.dhcpServer.term',
+            description: 'content.networkDhcp.terms.dhcpServer.description',
           },
           {
-            term: 'Gateway',
-            description: 'Default gateway assigned by DHCP for routing traffic off-subnet.',
+            term: 'content.networkDhcp.terms.gateway.term',
+            description: 'content.networkDhcp.terms.gateway.description',
           },
           {
-            term: 'DNS servers',
-            description: 'DNS servers assigned by DHCP for name resolution.',
+            term: 'content.networkDhcp.terms.dnsServers.term',
+            description: 'content.networkDhcp.terms.dnsServers.description',
           },
           {
-            term: 'Subnet mask',
-            description: 'Network mask defining the size of the local subnet.',
+            term: 'content.networkDhcp.terms.subnetMask.term',
+            description: 'content.networkDhcp.terms.subnetMask.description',
+          },
+        ],
+      },
+      {
+        kind: 'terms',
+        items: [
+          {
+            term: 'cards:network.title',
+            description: 'content.cardHelp.NetworkCard.description',
+          },
+        ],
+      },
+      {
+        kind: 'terms',
+        items: [
+          {
+            term: 'cards:gateway.title',
+            description: 'content.cardHelp.GatewayCard.description',
+          },
+        ],
+      },
+      {
+        kind: 'terms',
+        items: [
+          {
+            term: 'cards:dns.title',
+            description: 'content.cardHelp.DnsCard.description',
+          },
+        ],
+      },
+      {
+        kind: 'terms',
+        items: [
+          {
+            term: 'cards:neighbours.title',
+            description: 'content.cardHelp.NeighbourCacheCard.description',
+          },
+        ],
+      },
+      {
+        kind: 'terms',
+        items: [
+          {
+            term: 'cards:bonjour.title',
+            description: 'content.cardHelp.BonjourCard.description',
+          },
+        ],
+      },
+      {
+        kind: 'terms',
+        items: [
+          {
+            term: 'cards:publicIp.title',
+            description: 'content.cardHelp.PublicIpCard.description',
+          },
+        ],
+      },
+      {
+        kind: 'terms',
+        items: [
+          {
+            term: 'cards:switch.title',
+            description: 'content.cardHelp.SwitchCard.description',
           },
         ],
       },
@@ -67,32 +124,31 @@ export const upstreamSections: HelpSection[] = [
     blocks: [
       {
         kind: 'paragraph',
-        text: 'Gateway tests reachability and latency to your default gateway.',
+        text: 'content.gatewayHelp.description',
       },
       {
         kind: 'terms',
-        heading: 'Terms',
+        heading: 'content.common.terms',
         items: [
           {
-            term: 'IPv4 gateway',
-            description: 'Default router for IPv4 traffic leaving your local network.',
+            term: 'content.gatewayHelp.terms.ipv4Gateway.term',
+            description: 'content.gatewayHelp.terms.ipv4Gateway.description',
           },
           {
-            term: 'IPv6 gateway',
-            description: 'Default router for IPv6 traffic (may be a link-local address).',
+            term: 'content.gatewayHelp.terms.ipv6Gateway.term',
+            description: 'content.gatewayHelp.terms.ipv6Gateway.description',
           },
           {
-            term: 'Reachability',
-            description: 'Whether the gateway responds to ICMP ping requests.',
+            term: 'content.gatewayHelp.terms.reachability.term',
+            description: 'content.gatewayHelp.terms.reachability.description',
           },
           {
-            term: 'Latency',
-            description:
-              'Round-trip time to the gateway. It should be under 1 ms on a local network.',
+            term: 'content.gatewayHelp.terms.latency.term',
+            description: 'content.gatewayHelp.terms.latency.description',
           },
           {
-            term: 'Packet loss',
-            description: "Percentage of ping packets that didn't receive a response.",
+            term: 'content.gatewayHelp.terms.packetLoss.term',
+            description: 'content.gatewayHelp.terms.packetLoss.description',
           },
         ],
       },
@@ -106,28 +162,27 @@ export const upstreamSections: HelpSection[] = [
     blocks: [
       {
         kind: 'paragraph',
-        text: 'DNS Tests check name-resolution performance and functionality.',
+        text: 'content.dnsTests.description',
       },
       {
         kind: 'terms',
-        heading: 'Terms',
+        heading: 'content.common.terms',
         items: [
           {
-            term: 'Forward lookup',
-            description: 'Resolves a hostname to an IPv4 address (A record).',
+            term: 'content.dnsTests.terms.forwardLookup.term',
+            description: 'content.dnsTests.terms.forwardLookup.description',
           },
           {
-            term: 'Reverse lookup',
-            description: 'Resolves an IP address back to a hostname (PTR record).',
+            term: 'content.dnsTests.terms.reverseLookup.term',
+            description: 'content.dnsTests.terms.reverseLookup.description',
           },
           {
-            term: 'IPv6 lookup',
-            description: 'Resolves a hostname to an IPv6 address (AAAA record).',
+            term: 'content.dnsTests.terms.ipv6Lookup.term',
+            description: 'content.dnsTests.terms.ipv6Lookup.description',
           },
           {
-            term: 'Latency',
-            description:
-              'Time for the DNS query to complete. Under 50 ms is good for a local resolver.',
+            term: 'content.dnsTests.terms.latency.term',
+            description: 'content.dnsTests.terms.latency.description',
           },
         ],
       },
@@ -141,34 +196,53 @@ export const upstreamSections: HelpSection[] = [
     blocks: [
       {
         kind: 'paragraph',
-        text: 'Performance Tests measure network throughput and latency.',
+        text: 'content.performanceTests.description',
       },
       {
         kind: 'terms',
-        heading: 'Terms',
+        heading: 'content.common.terms',
         items: [
           {
-            term: 'Internet speed test',
-            description:
-              'Measures download and upload speed to public speed-test servers — your connection to the internet.',
+            term: 'content.performanceTests.terms.internetSpeed.term',
+            description: 'content.performanceTests.terms.internetSpeed.description',
           },
           {
-            term: 'LAN speed (iperf3)',
-            description:
-              'Measures throughput on the local network using iperf3 against a configured server.',
+            term: 'content.performanceTests.terms.lanSpeed.term',
+            description: 'content.performanceTests.terms.lanSpeed.description',
           },
           {
-            term: 'Download / Upload',
-            description: 'Maximum download and upload speeds achieved during the test.',
+            term: 'content.performanceTests.terms.download.term',
+            description: 'content.performanceTests.terms.download.description',
           },
           {
-            term: 'Latency',
-            description: 'Round-trip time (ping) to the test server.',
+            term: 'content.performanceTests.terms.upload.term',
+            description: 'content.performanceTests.terms.upload.description',
           },
           {
-            term: 'Jitter',
-            description:
-              'Variation in latency over time. Lower is better for real-time traffic such as voice and video.',
+            term: 'content.performanceTests.terms.latency.term',
+            description: 'content.performanceTests.terms.latency.description',
+          },
+          {
+            term: 'content.performanceTests.terms.jitter.term',
+            description: 'content.performanceTests.terms.jitter.description',
+          },
+        ],
+      },
+      {
+        kind: 'terms',
+        items: [
+          {
+            term: 'cards:health.title',
+            description: 'content.cardHelp.HealthCheckCard.description',
+          },
+        ],
+      },
+      {
+        kind: 'terms',
+        items: [
+          {
+            term: 'cards:performance.title',
+            description: 'content.cardHelp.PerformanceCard.description',
           },
         ],
       },
@@ -182,33 +256,31 @@ export const upstreamSections: HelpSection[] = [
     blocks: [
       {
         kind: 'paragraph',
-        text: 'Network Discovery finds devices on your network and identifies directly connected switches.',
+        text: 'content.networkDiscovery.description',
       },
       {
         kind: 'terms',
-        heading: 'Terms',
+        heading: 'content.common.terms',
         items: [
           {
-            term: 'Network scan',
-            description:
-              'Discovers active devices on the local subnet using ARP and ICMP ping sweeps.',
+            term: 'content.networkDiscovery.terms.networkScan.term',
+            description: 'content.networkDiscovery.terms.networkScan.description',
           },
           {
-            term: 'MAC address',
-            description: 'The hardware address of a device interface — a unique identifier.',
+            term: 'content.networkDiscovery.terms.macAddress.term',
+            description: 'content.networkDiscovery.terms.macAddress.description',
           },
           {
-            term: 'Vendor',
-            description: 'Manufacturer identified from the MAC address OUI (first three bytes).',
+            term: 'content.networkDiscovery.terms.vendor.term',
+            description: 'content.networkDiscovery.terms.vendor.description',
           },
           {
-            term: 'Hostname',
-            description: 'The DNS hostname, when a reverse lookup succeeds.',
+            term: 'content.networkDiscovery.terms.hostname.term',
+            description: 'content.networkDiscovery.terms.hostname.description',
           },
           {
-            term: 'LLDP / CDP',
-            description:
-              'Link Layer Discovery Protocol (standard) or Cisco Discovery Protocol — reveal details about directly connected switches.',
+            term: 'content.networkDiscovery.terms.lldpCdp.term',
+            description: 'content.networkDiscovery.terms.lldpCdp.description',
           },
         ],
       },

@@ -1,3 +1,4 @@
+import { Tooltip } from '../ui/tooltip';
 /**
  * CableCard Component
  *
@@ -220,14 +221,17 @@ export function CableCard({
             <div className={cn('grid grid-cols-8', spacing.gap.tight, spacing.margin.top.tight)}>
               {data.pinout.map((pin) => (
                 <div key={pin.pin} className="text-center">
-                  <div
-                    className={cn(
-                      'w-4 h-6 mx-auto border',
-                      radius.sm,
-                      wireColorMap[pin.color.toLowerCase()] || 'bg-surface-border',
-                    )}
-                    title={pin.color}
-                  />
+                  <Tooltip text={pin.color}>
+                    <button
+                      type="button"
+                      aria-label={pin.color}
+                      className={cn(
+                        'w-4 h-6 mx-auto border',
+                        radius.sm,
+                        wireColorMap[pin.color.toLowerCase()] || 'bg-surface-border',
+                      )}
+                    />
+                  </Tooltip>
                   <span className="caption text-text-muted">{pin.pin}</span>
                 </div>
               ))}

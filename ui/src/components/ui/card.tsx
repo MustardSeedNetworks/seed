@@ -1,3 +1,4 @@
+import { Tooltip } from './tooltip';
 /**
  * Card Component
  *
@@ -257,24 +258,25 @@ export function CardRow({
       )}
     >
       <span className="body-small shrink-0">{label}</span>
-      <span
-        className={cn(
-          'body-small font-medium',
-          layout.inline.tight,
-          justifyClass,
-          align === 'right' ? 'text-right' : 'text-left',
-          wrap ? 'break-all whitespace-pre-wrap' : 'truncate',
-          mono && 'font-mono tabular-nums',
-          resolvedStatus?.color ?? 'text-text-primary',
-        )}
-        title={String(value)}
-        data-testid="card-row-value"
-      >
-        {statusIcon ? (
-          <span className={cn(iconTokens.size.xs, 'shrink-0 text-current')}>{statusIcon}</span>
-        ) : null}
-        <span>{value}</span>
-      </span>
+      <Tooltip text={String(value)}>
+        <span
+          className={cn(
+            'body-small font-medium',
+            layout.inline.tight,
+            justifyClass,
+            align === 'right' ? 'text-right' : 'text-left',
+            wrap ? 'break-all whitespace-pre-wrap' : 'truncate',
+            mono && 'font-mono tabular-nums',
+            resolvedStatus?.color ?? 'text-text-primary',
+          )}
+          data-testid="card-row-value"
+        >
+          {statusIcon ? (
+            <span className={cn(iconTokens.size.xs, 'shrink-0 text-current')}>{statusIcon}</span>
+          ) : null}
+          <span>{value}</span>
+        </span>
+      </Tooltip>
     </div>
   );
 }

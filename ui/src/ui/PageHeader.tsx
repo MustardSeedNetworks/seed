@@ -19,7 +19,9 @@
 import type { LucideIcon } from 'lucide-react';
 import { ChevronRight, HelpCircle } from 'lucide-react';
 import { createElement, type FC, type ReactNode } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Link } from 'wouter';
+import { Tooltip } from '../components/ui/tooltip';
 import { iconSizes } from '../constants/sizes';
 
 interface BreadcrumbItem {
@@ -88,6 +90,7 @@ export const PageHeader: FC<PageHeaderProps> = ({
   onHelp,
   className = '',
 }) => {
+  const { t } = useTranslation();
   return (
     <div className={`mb-section animate-fade-in ${className}`}>
       {breadcrumbs && breadcrumbs.length > 0 && (
@@ -120,16 +123,17 @@ export const PageHeader: FC<PageHeaderProps> = ({
           ) : null}
           {actions}
           {onHelp ? (
-            <button
-              type="button"
-              onClick={onHelp}
-              aria-label={`Open help for ${title}`}
-              title={`What is ${title}?`}
-              data-testid="page-header-help-button"
-              className="rounded-full p-1.5 text-text-muted hover:bg-surface-hover hover:text-text-primary"
-            >
-              <HelpCircle className={iconSizes.lg} />
-            </button>
+            <Tooltip text={t('accessibility.pageHelpHint', { title })}>
+              <button
+                type="button"
+                onClick={onHelp}
+                aria-label={t('accessibility.openPageHelp', { title })}
+                data-testid="page-header-help-button"
+                className="rounded-full p-1.5 text-text-muted hover:bg-surface-hover hover:text-text-primary"
+              >
+                <HelpCircle className={iconSizes.lg} />
+              </button>
+            </Tooltip>
           ) : null}
         </div>
       </div>

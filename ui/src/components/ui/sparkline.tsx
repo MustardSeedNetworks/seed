@@ -1,3 +1,5 @@
+import { useTranslation } from 'react-i18next';
+import { Tooltip } from './tooltip';
 /**
  * Sparkline Component
  *
@@ -400,6 +402,7 @@ function HealthScoreBadgeComponent({
   showValue = true,
   className,
 }: HealthScoreBadgeProps): React.JSX.Element {
+  const { t } = useTranslation();
   // Determine status color
   const getStatusColor = (): string => {
     if (score >= 80) {
@@ -413,12 +416,12 @@ function HealthScoreBadgeComponent({
 
   const getStatusLabel = (): string => {
     if (score >= 80) {
-      return 'Healthy';
+      return t('health.healthy');
     }
     if (score >= 50) {
-      return 'Degraded';
+      return t('health.degraded');
     }
-    return 'Critical';
+    return t('health.critical');
   };
 
   const sizeClasses = {
@@ -428,18 +431,26 @@ function HealthScoreBadgeComponent({
   };
 
   return (
-    <span
-      className={cn(
-        'inline-flex items-center gap-tight font-medium border',
-        radius.md,
-        sizeClasses[size],
-        getStatusColor(),
-        className,
-      )}
-      title={`Health Score: ${score.toFixed(0)}% - ${getStatusLabel()}`}
+    <Tooltip
+      text={t('health.scoreDescription', { score: score.toFixed(0), status: getStatusLabel() })}
     >
-      {showValue ? <span className="tabular-nums">{Math.round(score)}</span> : null}
-      <span className={showValue ? 'hidden sm:inline' : ''}>{getStatusLabel()}</span>
-    </span>
+      <button
+        type="button"
+        aria-label={t('health.scoreDescription', {
+          score: score.toFixed(0),
+          status: getStatusLabel(),
+        })}
+        className={cn(
+          'inline-flex items-center gap-tight font-medium border',
+          radius.md,
+          sizeClasses[size],
+          getStatusColor(),
+          className,
+        )}
+      >
+        {showValue ? <span className="tabular-nums">{Math.round(score)}</span> : null}
+        <span className={showValue ? 'hidden sm:inline' : ''}>{getStatusLabel()}</span>
+      </button>
+    </Tooltip>
   );
 }

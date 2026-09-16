@@ -50,7 +50,10 @@ describe('Fab', () => {
 
     fireEvent.click(button);
 
-    expect(button).toBeDisabled();
+    expect(button).toHaveAttribute('aria-disabled', 'true');
+    const { startSignal } = useTestRunStore.getState();
+    fireEvent.click(button);
+    expect(useTestRunStore.getState().startSignal).toBe(startSignal);
     expect(button).toHaveAttribute('data-run-status', 'running');
     expect(button.querySelector('.animate-spin')).toBeInTheDocument();
   });
@@ -128,7 +131,8 @@ describe('Fab', () => {
     render(<Fab />);
 
     const button = screen.getByRole('button');
-    expect(button).toHaveAttribute('title', 'Run All Tests');
+    expect(button).toHaveAccessibleDescription('Run All Tests');
+    expect(button).not.toHaveAttribute('title');
     expect(button).toHaveAttribute('aria-label', 'Run All Tests');
   });
 

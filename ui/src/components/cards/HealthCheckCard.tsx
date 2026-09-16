@@ -225,10 +225,12 @@ export const HealthCheckCard: React.MemoExoticComponent<
     return (
       <div key={`${type}-${result.name}`} className={spacing.compact.py}>
         <div className={layout.flex.between}>
-          <span className="body-small text-text-muted truncate flex-1" title={displayName}>
-            {displayName}
-            {details}
-          </span>
+          <Tooltip text={displayName}>
+            <span className="body-small text-text-muted truncate flex-1">
+              {displayName}
+              {details}
+            </span>
+          </Tooltip>
           <span className={cn('inline-flex items-center', spacing.gap.compact)}>
             <StatusBadge status={statusLabel} size="sm" />
             <span className={cn('body-small font-medium', statusClass)}>
@@ -334,6 +336,7 @@ export const HealthCheckCard: React.MemoExoticComponent<
             const widthPercent = Math.min(100, Math.max(0, (seg.value / total) * 100));
             return (
               <div
+                aria-hidden="true"
                 key={seg.label}
                 className={cn(
                   'h-full',
@@ -342,7 +345,6 @@ export const HealthCheckCard: React.MemoExoticComponent<
                   i === segments.length - 1 ? 'rounded-r-full' : '',
                 )}
                 style={{ width: `${widthPercent}%` }}
-                title={`${seg.label}: ${fmt(seg.value)}${seg.status && seg.status !== 'success' ? ` (${seg.status})` : ''}`}
               />
             );
           })}
@@ -358,7 +360,9 @@ export const HealthCheckCard: React.MemoExoticComponent<
         >
           {segments.map((seg) => (
             <Tooltip key={seg.label} text={t(seg.helpKey)} side="bottom">
-              <span
+              <button
+                type="button"
+                data-testid="http-timing-segment"
                 className={cn(
                   'inline-flex items-center',
                   spacing.gap.tight,
@@ -367,7 +371,7 @@ export const HealthCheckCard: React.MemoExoticComponent<
               >
                 <span className={cn('inline-block w-2 h-2', radius.full, seg.color)} />
                 {seg.label} {fmt(seg.value)}
-              </span>
+              </button>
             </Tooltip>
           ))}
         </div>
@@ -465,10 +469,12 @@ export const HealthCheckCard: React.MemoExoticComponent<
     return (
       <div key={`http-${result.name}`} className={spacing.compact.pyMd}>
         <div className={layout.flex.between}>
-          <span className="body-small text-text-muted truncate flex-1" title={result.name}>
-            {result.name}
-            {result.status ? ` (${result.status})` : ''}
-          </span>
+          <Tooltip text={result.name}>
+            <span className="body-small text-text-muted truncate flex-1">
+              {result.name}
+              {result.status ? ` (${result.status})` : ''}
+            </span>
+          </Tooltip>
           <span className={cn('body-small font-medium', statusClass)}>
             {result.success ? formatLatency(result.latency) : 'fail'}
           </span>
@@ -484,16 +490,16 @@ export const HealthCheckCard: React.MemoExoticComponent<
             {hasTls ? <span className="text-text-muted">{result.tlsVersion}</span> : null}
             {hasTls && hasCertInfo ? <span className="text-text-muted">·</span> : null}
             {hasCertInfo ? (
-              <span className={certColor} title={`Expires: ${result.certExpiry}`}>
-                {formatCertExpiry()}
-              </span>
+              <Tooltip text={`Expires: ${result.certExpiry}`}>
+                <span className={certColor}>{formatCertExpiry()}</span>
+              </Tooltip>
             ) : null}
             {result.certIssuer ? (
               <>
                 <span className="text-text-muted">·</span>
-                <span className="text-text-muted truncate" title={result.certIssuer}>
-                  {result.certIssuer}
-                </span>
+                <Tooltip text={result.certIssuer}>
+                  <span className="text-text-muted truncate">{result.certIssuer}</span>
+                </Tooltip>
               </>
             ) : null}
           </div>

@@ -5,7 +5,7 @@
  * user nothing (#93).
  */
 
-import { render, screen } from '@testing-library/react';
+import { render, screen, within } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
 
 import { type DhcpData, NetworkCard } from './NetworkCard';
@@ -30,10 +30,14 @@ function makeData(overrides: Partial<DhcpData> = {}): DhcpData {
 
 describe('NetworkCard', () => {
   it('renders every DNS server it is given', () => {
-    render(<NetworkCard data={makeData({ dns: ['192.0.2.53', '198.51.100.53'] })} />);
+    // Scoped to the card: Tooltip also renders each value into a portal bubble
+    // on document.body, which an unscoped query would match a second time.
+    const { container } = render(
+      <NetworkCard data={makeData({ dns: ['192.0.2.53', '198.51.100.53'] })} />,
+    );
 
-    expect(screen.getByText('192.0.2.53')).toBeInTheDocument();
-    expect(screen.getByText('198.51.100.53')).toBeInTheDocument();
+    expect(within(container).getByText('192.0.2.53')).toBeInTheDocument();
+    expect(within(container).getByText('198.51.100.53')).toBeInTheDocument();
   });
 
   it('omits the DNS section when the response carries no servers', () => {

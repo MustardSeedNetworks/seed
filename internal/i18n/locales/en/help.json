@@ -3,7 +3,8 @@
     "title": "The Seed Help Center",
     "searchPlaceholder": "Search help...",
     "contents": "Contents",
-    "closeHelp": "Close help"
+    "closeHelp": "Close help",
+    "backToSections": "Back to help sections"
   },
   "sections": {
     "about": "About The Seed",
@@ -32,83 +33,14 @@
     "pollingTargets": "Polling Targets",
     "topology": "Topology"
   },
-  "instructions": {
-    "runTests": "Tap the play button to run all tests.",
-    "discovery": "Use the Network Discovery card to scan for devices on your network.",
-    "vlan": "Creates/removes 802.1Q VLAN subinterface. Requires root.",
-    "defaultCredentials": "Default: admin / seed"
-  },
-  "tooltips": {
-    "linkStatus": "Shows the physical link status and connection properties",
-    "networkConfig": "Displays IP configuration and DHCP information",
-    "discovery": "Scans your network to find connected devices",
-    "gateway": "Shows default gateway and connectivity status",
-    "publicIp": "Displays your public IP address and location",
-    "dns": "Tests DNS resolution and shows configured servers",
-    "wifi": "Shows Wi-Fi connection details and signal strength",
-    "cable": "Tests Ethernet cable integrity and length",
-    "performance": "Measures network throughput and latency",
-    "healthChecks": "Monitors endpoint availability",
-    "systemHealth": "Shows system resource usage"
-  },
-  "settings": {
-    "theme": "Choose between light, dark, or system theme",
-    "language": "Select your preferred language",
-    "interface": "Select the network interface to monitor",
-    "discovery": "Configure network scanning behavior",
-    "thresholds": "Set warning and critical threshold values"
-  },
-  "portServices": {
-    "ftp": "FTP",
-    "ssh": "SSH",
-    "telnet": "Telnet",
-    "smtp": "SMTP",
-    "dns": "DNS",
-    "http": "HTTP",
-    "pop3": "POP3",
-    "imap": "IMAP",
-    "https": "HTTPS",
-    "smb": "SMB",
-    "mysql": "MySQL",
-    "rdp": "RDP",
-    "postgresql": "PostgreSQL",
-    "mongodb": "MongoDB"
-  },
   "content": {
     "about": {
-      "welcome": "Welcome to The Seed",
-      "description": "The Seed is a comprehensive network diagnostics and monitoring tool by Mustard Seed Networks, designed to provide deep visibility into your network infrastructure.",
-      "features": {
-        "realTimeMonitoring": {
-          "title": "Real-time Monitoring",
-          "description": "Monitor link status, Wi-Fi signal strength, gateway reachability, and more with live updates."
-        },
-        "networkDiscovery": {
-          "title": "Network Discovery",
-          "description": "Discover all devices on your network with ARP scanning, LLDP/CDP neighbor detection."
-        },
-        "performanceTesting": {
-          "title": "Performance Testing",
-          "description": "Run internet speed tests and LAN throughput tests with iperf3 integration."
-        },
-        "cableDiagnostics": {
-          "title": "Cable Diagnostics",
-          "description": "Test Ethernet cables using Time Domain Reflectometry (TDR) to find faults and measure length."
-        }
-      },
+      "description": "Seed is a comprehensive network diagnostics and monitoring tool by Mustard Seed Networks, designed to provide deep visibility into your network infrastructure.",
       "openSource": {
-        "title": "Source-Available & Customizable",
-        "description": "The Seed is source-available software (BUSL-1.1). Customize thresholds, configure tests, and integrate with your existing monitoring infrastructure."
-      },
-      "versionInfo": {
-        "title": "Version Info",
-        "currentVersion": "Current Version:",
-        "backend": "Backend:",
-        "frontend": "Frontend:"
+        "description": "Seed is source-available software (BUSL-1.1). Customize thresholds, configure tests, and integrate with your existing monitoring infrastructure."
       }
     },
     "gettingStarted": {
-      "title": "Getting Started",
       "steps": {
         "dashboard": {
           "title": "Dashboard Overview",
@@ -125,20 +57,14 @@
         "runTests": {
           "title": "Run Tests",
           "description": "Click the \"Run All Tests\" button (⚡) in the bottom right to execute speed tests, cable diagnostics, network discovery, and custom health checks."
-        },
-        "exploreCards": {
-          "title": "Explore Individual Cards",
-          "description": "Each card has a help icon (?) that explains the metrics shown. Click on cards to view detailed information and run specific tests."
         }
       },
       "proTips": {
         "title": "Pro Tips",
-        "tips": [
-          "Use the Network Discovery card to find all devices on your network",
-          "Set up custom health check tests in Settings → Custom Tests",
-          "Export diagnostics data for troubleshooting or documentation",
-          "Enable auto-scan for continuous network monitoring"
-        ]
+        "tips": {
+          "0": "Use the Network Discovery card to find all devices on your network",
+          "2": "Export diagnostics data for troubleshooting or documentation"
+        }
       }
     },
     "linkStatus": {
@@ -396,209 +322,58 @@
       },
       "passwordRecovery": {
         "title": "Password Recovery",
-        "description": "If you've forgotten your admin password, you can reset it via filesystem access (SSH).",
-        "steps": [
-          "SSH into the server running The Seed",
-          "Create an empty file named '.recovery' in the data directory",
-          "User mode: touch ~/.local/share/seed/.recovery",
-          "System mode: sudo touch /var/lib/seed/.recovery",
-          "The server will detect the file and generate a recovery token",
-          "Read the token from '.recovery-token' in the same directory",
-          "Enter the token on the login page along with your new password",
-          "The token expires after 15 minutes and is single-use"
-        ],
-        "note": "This requires filesystem access to the server, proving you have admin-level access to the machine."
-      },
-      "portScanDetails": {
-        "title": "Port Scan Intensity",
-        "description": "Configure port scan behavior in Settings → Discovery.",
-        "levels": {
-          "off": "No port scanning - only basic device discovery",
-          "light": "Scans common ports (22, 80, 443, etc.) - ~20 ports",
-          "normal": "Extended scan of common service ports - ~100 ports",
-          "aggressive": "Full TCP scan of all 65535 ports - slow but thorough"
+        "steps": {
+          "0": "SSH into the server running Seed",
+          "1": "Create an empty file named '.recovery' in the data directory",
+          "2": "User mode: touch ~/.local/share/seed/.recovery",
+          "3": "System mode: sudo touch /var/lib/seed/.recovery",
+          "4": "The server will detect the file and generate a recovery token",
+          "5": "Read the token from '.recovery-token' in the same directory",
+          "6": "Enter the token on the login page along with your new password",
+          "7": "The token expires after 15 minutes and is single-use"
         },
-        "commonPorts": {
-          "21": "FTP - File transfer (insecure, use SFTP instead)",
-          "22": "SSH - Secure shell access",
-          "23": "Telnet - Remote terminal (insecure, use SSH instead)",
-          "25": "SMTP - Email server",
-          "53": "DNS - Name resolution",
-          "80": "HTTP - Web server (unencrypted)",
-          "443": "HTTPS - Secure web server",
-          "445": "SMB - Windows file sharing",
-          "3306": "MySQL - Database server",
-          "3389": "RDP - Windows remote desktop",
-          "5432": "PostgreSQL - Database server",
-          "8080": "HTTP-Alt - Alternative web server or proxy"
-        }
+        "note": "This requires filesystem access to the server, proving you have admin-level access to the machine."
       }
     },
     "troubleshooting": {
       "description": "Common issues and their solutions.",
       "categories": {
         "linkIssues": {
-          "title": "Link Status Problems",
           "noCarrier": {
             "symptom": "No carrier detected",
-            "causes": [
-              "Ethernet cable disconnected or unplugged",
-              "Cable connected to unpowered switch/router",
-              "Faulty Ethernet cable (try replacement)",
-              "Network interface disabled in OS",
-              "Hardware failure in NIC or switch port"
-            ],
-            "solutions": [
-              "Check cable is firmly seated at both ends",
-              "Verify switch/router is powered on and port LED is active",
-              "Try a different cable or switch port",
-              "Check 'ip link' or 'ifconfig' shows interface as UP"
-            ]
+            "description": "Check the cable at both ends, the switch power and port, and whether the interface is enabled. Try another cable or port."
           },
           "slowSpeed": {
             "symptom": "Link speed lower than expected (100Mbps instead of 1Gbps)",
-            "causes": [
-              "Cat5 cable (only supports 100Mbps) instead of Cat5e/Cat6",
-              "Damaged cable pairs affecting gigabit negotiation",
-              "Old switch not supporting gigabit",
-              "Auto-negotiation mismatch"
-            ],
-            "solutions": [
-              "Use Cat5e or Cat6 cable for gigabit speeds",
-              "Run cable test to check all 4 pairs are OK",
-              "Try forcing speed settings if auto-neg fails"
-            ]
+            "description": "Check the cable category and all four pairs, switch capabilities, and speed/duplex negotiation."
           }
         },
         "cableIssues": {
-          "title": "Cable Test Failures",
           "open": {
             "symptom": "Cable pair shows 'Open'",
-            "meaning": "Wire is broken or disconnected at specified distance",
-            "solutions": [
-              "Check cable termination at patch panel or wall jack",
-              "Replace cable if fault is mid-run",
-              "Re-terminate RJ45 connector"
-            ]
+            "description": "A wire is disconnected or broken. Check terminations and the reported distance to the fault."
           },
           "short": {
             "symptom": "Cable pair shows 'Short'",
-            "meaning": "Two wires are touching (shorted together)",
-            "solutions": [
-              "Inspect RJ45 connectors for bent pins",
-              "Check for cable damage (crushed, pinched)",
-              "Replace cable or re-terminate"
-            ]
-          },
-          "impedanceMismatch": {
-            "symptom": "Cable pair shows 'Impedance Mismatch'",
-            "meaning": "Cable characteristic impedance doesn't match expected 100Ω",
-            "solutions": [
-              "Avoid mixing cable types in a run",
-              "Use proper punch-down technique",
-              "Replace low-quality patch cables"
-            ]
-          }
-        },
-        "dnsIssues": {
-          "title": "DNS Problems",
-          "slowResolution": {
-            "symptom": "DNS lookups taking >100ms",
-            "causes": [
-              "Distant or overloaded DNS server",
-              "Network congestion to DNS server",
-              "DNS server doing recursive lookups"
-            ],
-            "solutions": [
-              "Use local caching DNS resolver",
-              "Try faster public DNS (1.1.1.1, 8.8.8.8)",
-              "Check DNS server configuration"
-            ]
-          },
-          "resolutionFailure": {
-            "symptom": "DNS lookup returns no results or NXDOMAIN",
-            "causes": [
-              "DNS server unreachable",
-              "Domain doesn't exist",
-              "Firewall blocking UDP 53"
-            ],
-            "solutions": [
-              "Verify DNS server IP is correct",
-              "Try alternative DNS server",
-              "Check firewall rules"
-            ]
+            "description": "Two wires are touching. Check the connector pins and inspect the cable for damage."
           }
         },
         "gatewayIssues": {
-          "title": "Gateway Problems",
           "unreachable": {
             "symptom": "Gateway shows as unreachable",
-            "causes": [
-              "Gateway/router powered off or crashed",
-              "IP configuration incorrect",
-              "Network interface not connected",
-              "Gateway ICMP disabled (rare)"
-            ],
-            "solutions": [
-              "Verify gateway IP matches router's LAN IP",
-              "Check physical connection to network",
-              "Restart router if unresponsive"
-            ]
-          },
-          "highLatency": {
-            "symptom": "Gateway latency >5ms",
-            "causes": [
-              "Router overloaded with traffic",
-              "Wireless connection to router",
-              "Interference on network"
-            ],
-            "solutions": [
-              "Use wired connection if possible",
-              "Check for bandwidth-heavy applications",
-              "Reboot router to clear buffers"
-            ]
+            "description": "Verify the configured gateway address and local link. A gateway may block ICMP even when forwarding traffic."
           }
         },
         "performanceIssues": {
-          "title": "Performance Problems",
           "slowInternet": {
             "symptom": "Internet speed test below expected",
-            "causes": [
-              "ISP throttling or congestion",
-              "Wi-Fi interference or weak signal",
-              "Router or modem issues",
-              "Time of day (peak usage)"
-            ],
-            "solutions": [
-              "Test with wired connection to isolate Wi-Fi issues",
-              "Run test at different times",
-              "Restart modem and router",
-              "Contact ISP if consistently slow"
-            ]
-          },
-          "slowLan": {
-            "symptom": "LAN iperf3 test below expected",
-            "causes": [
-              "Gigabit not negotiated (see link status)",
-              "Switch backplane overloaded",
-              "Duplex mismatch",
-              "Server bottleneck"
-            ],
-            "solutions": [
-              "Verify both ends show 1Gbps full duplex",
-              "Try direct connection bypassing switch",
-              "Check server disk/CPU during test"
-            ]
+            "description": "Compare wired and wireless results, test at another time, and compare LAN throughput with internet throughput."
           }
         }
       }
     },
     "profiles": {
       "description": "Profiles allow you to save and switch between different configuration sets for different clients, locations, or testing scenarios.",
-      "overview": {
-        "title": "What are Profiles?",
-        "description": "Profiles are saved configurations that store all your settings, thresholds, health check targets, and interface preferences. They're ideal for MSPs managing multiple clients or technicians working at different sites."
-      },
       "features": {
         "clientSpecific": {
           "title": "Client-Specific Settings",
@@ -617,32 +392,17 @@
           "description": "One profile can be marked as default and will be automatically loaded on startup."
         }
       },
-      "usage": {
-        "title": "Managing Profiles",
-        "steps": [
-          "Click the profile dropdown in the header to see available profiles",
-          "Select 'Manage Profiles' to create, edit, or delete profiles",
-          "Create a new profile with a descriptive name (e.g., 'Acme Corp - Main Office')",
-          "Configure all settings for that client/location",
-          "Settings are automatically saved to the active profile"
-        ]
-      },
       "bestPractices": {
         "title": "Best Practices",
-        "tips": [
-          "Use descriptive profile names that identify the client and location",
-          "Create a baseline 'Default' profile with standard settings",
-          "Export profiles before major changes as a backup",
-          "Document any client-specific health check targets in the profile description"
-        ]
+        "tips": {
+          "0": "Use descriptive profile names that identify the client and location",
+          "1": "Create a baseline 'Default' profile with standard settings",
+          "2": "Export profiles before major changes as a backup"
+        }
       }
     },
     "rtspChecks": {
       "description": "Monitor RTSP (Real Time Streaming Protocol) endpoints for IP camera and video surveillance systems.",
-      "overview": {
-        "title": "RTSP Monitoring",
-        "description": "RTSP health checks verify connectivity to IP cameras, NVRs, and video management systems. Essential for maintaining security camera uptime in enterprise and healthcare environments."
-      },
       "terms": {
         "rtspUrl": {
           "term": "RTSP URL",
@@ -663,85 +423,19 @@
       },
       "configuration": {
         "title": "Configuring RTSP Endpoints",
-        "steps": [
-          "Go to Settings → Health Checks → RTSP Endpoints",
-          "Click 'Add RTSP Endpoint'",
-          "Enter a descriptive name (e.g., 'Lobby Camera 1')",
-          "Enter the RTSP URL (e.g., rtsp://192.168.1.100:554/stream1)",
-          "Add credentials if required (username/password)",
-          "Set the check interval (default: 60 seconds)",
-          "Enable the endpoint to start monitoring"
-        ]
-      },
-      "commonIssues": {
-        "title": "Troubleshooting RTSP",
-        "connectionRefused": {
-          "symptom": "Connection refused",
-          "causes": [
-            "Camera powered off",
-            "RTSP service not running",
-            "Wrong port number"
-          ],
-          "solutions": [
-            "Verify camera is powered and online",
-            "Check RTSP is enabled in camera settings",
-            "Confirm port 554 or custom port"
-          ]
-        },
-        "authFailed": {
-          "symptom": "401 Unauthorized",
-          "causes": [
-            "Incorrect credentials",
-            "Account locked",
-            "IP not in allowed list"
-          ],
-          "solutions": [
-            "Verify username and password",
-            "Check camera's user management",
-            "Add The Seed's IP to camera whitelist"
-          ]
-        },
-        "streamNotFound": {
-          "symptom": "404 Stream Not Found",
-          "causes": [
-            "Incorrect stream path",
-            "Stream disabled",
-            "Channel not configured"
-          ],
-          "solutions": [
-            "Check camera documentation for correct URL format",
-            "Verify stream is enabled",
-            "Try /live, /stream1, or /h264 paths"
-          ]
-        },
-        "timeout": {
-          "symptom": "Connection timeout",
-          "causes": [
-            "Network connectivity issue",
-            "Firewall blocking",
-            "Camera overloaded"
-          ],
-          "solutions": [
-            "Test network path to camera",
-            "Check firewall rules for port 554",
-            "Reduce concurrent connections to camera"
-          ]
+        "steps": {
+          "0": "Go to Settings → Health Checks → RTSP Endpoints",
+          "1": "Click 'Add RTSP Endpoint'",
+          "2": "Enter a descriptive name (e.g., 'Lobby Camera 1')",
+          "3": "Enter the RTSP URL (e.g., rtsp://192.168.1.100:554/stream1)",
+          "4": "Add credentials if required (username/password)",
+          "5": "Set the check interval (default: 60 seconds)",
+          "6": "Enable the endpoint to start monitoring"
         }
-      },
-      "useCases": {
-        "title": "Use Cases",
-        "security": "Monitor security camera availability to ensure continuous surveillance coverage",
-        "healthcare": "Verify patient monitoring cameras in clinical environments",
-        "retail": "Track point-of-sale camera uptime for loss prevention",
-        "industrial": "Monitor process cameras in manufacturing and logistics"
       }
     },
     "dicomChecks": {
       "description": "Monitor DICOM medical imaging systems including CT, MRI, ultrasound, and PACS servers.",
-      "overview": {
-        "title": "DICOM Health Checks",
-        "description": "DICOM (Digital Imaging and Communications in Medicine) health checks verify connectivity between medical imaging devices. Uses C-ECHO to test DICOM associations, similar to ping but for medical systems."
-      },
       "terms": {
         "aeTitle": {
           "term": "AE Title",
@@ -761,108 +455,18 @@
         },
         "scu": {
           "term": "SCU (Service Class User)",
-          "description": "The DICOM client requesting services. The Seed acts as an SCU when performing C-ECHO tests."
+          "description": "The DICOM client requesting services. Seed acts as an SCU when performing C-ECHO tests."
         },
         "port": {
           "term": "DICOM Port",
           "description": "Standard DICOM port is 104, but many systems use 11112 or custom ports. Verify with your PACS administrator."
         }
       },
-      "configuration": {
-        "title": "Configuring DICOM Endpoints",
-        "steps": [
-          "Go to Settings → Health Checks → DICOM Endpoints",
-          "Click 'Add DICOM Endpoint'",
-          "Enter a descriptive name (e.g., 'Main PACS Server')",
-          "Enter the host IP address or hostname",
-          "Enter the port (typically 104 or 11112)",
-          "Enter the Called AE Title (the remote system's AE Title)",
-          "Enter the Calling AE Title (The Seed's AE Title - must be registered on remote system)",
-          "Set the check interval and enable the endpoint"
-        ]
-      },
-      "aeTitleSetup": {
-        "title": "AE Title Configuration",
-        "description": "DICOM systems require bilateral AE Title registration. You must:",
-        "steps": [
-          "Register The Seed's AE Title on the remote DICOM system (PACS, modality, etc.)",
-          "Configure the correct Called AE Title in The Seed to match the remote system's AE",
-          "Use a consistent Calling AE Title for all endpoints (e.g., 'THESEED')",
-          "Note: AE Titles are case-sensitive on some systems"
-        ]
-      },
-      "commonIssues": {
-        "title": "Troubleshooting DICOM",
-        "associationRejected": {
-          "symptom": "Association Rejected",
-          "causes": [
-            "AE Title not registered on remote system",
-            "Calling AE Title mismatch",
-            "IP not in allowed list"
-          ],
-          "solutions": [
-            "Register The Seed's AE Title on PACS/modality",
-            "Verify exact AE Title spelling and case",
-            "Add The Seed's IP to DICOM allowed hosts"
-          ]
-        },
-        "connectionRefused": {
-          "symptom": "Connection Refused",
-          "causes": [
-            "Wrong port",
-            "DICOM service not running",
-            "Firewall blocking"
-          ],
-          "solutions": [
-            "Verify DICOM port with PACS admin",
-            "Check DICOM service status",
-            "Allow port 104/11112 in firewall"
-          ]
-        },
-        "timeout": {
-          "symptom": "Connection Timeout",
-          "causes": [
-            "Network path issue",
-            "Remote system overloaded",
-            "Wrong IP address"
-          ],
-          "solutions": [
-            "Test basic network connectivity with ping",
-            "Check system load on PACS",
-            "Verify IP address is correct"
-          ]
-        },
-        "cEchoFailed": {
-          "symptom": "C-ECHO Failed (association succeeded)",
-          "causes": [
-            "SCP not supporting verification",
-            "Service class not configured",
-            "Internal error on remote"
-          ],
-          "solutions": [
-            "Verify remote supports Verification SOP Class",
-            "Check PACS logs for details",
-            "Contact PACS vendor support"
-          ]
-        }
-      },
-      "useCases": {
-        "title": "Healthcare Use Cases",
-        "pacs": "Monitor PACS server availability for radiology workflow continuity",
-        "modalities": "Verify CT, MRI, X-ray, and ultrasound systems are network-accessible",
-        "ris": "Check Radiology Information System connectivity",
-        "worklist": "Monitor modality worklist servers for proper study routing",
-        "archive": "Verify long-term archive systems are online"
-      },
       "compliance": {
-        "title": "Compliance Considerations",
-        "description": "When monitoring DICOM systems in healthcare environments:",
-        "points": [
-          "C-ECHO is a non-destructive verification - it doesn't access patient data",
-          "Ensure The Seed is deployed on a secured, HIPAA-compliant network segment",
-          "Document DICOM monitoring in your facility's network security plan",
-          "Coordinate AE Title registration with your biomedical/IT team"
-        ]
+        "points": {
+          "0": "C-ECHO is a non-destructive verification - it doesn't access patient data",
+          "3": "Coordinate AE Title registration with your biomedical/IT team"
+        }
       }
     },
     "howTo": {
@@ -870,153 +474,297 @@
       "guides": {
         "diagnoseSlowNetwork": {
           "title": "How to Diagnose Slow Network Speeds",
-          "steps": [
-            {
+          "steps": {
+            "0": {
               "step": "Check Link Status",
               "description": "Verify the Link Status card shows expected speed (1 Gbps for gigabit). If showing 100 Mbps, check cable quality or switch port."
             },
-            {
+            "1": {
               "step": "Test Gateway Latency",
               "description": "Gateway latency should be <1ms for wired connections. High latency here indicates local network issues."
             },
-            {
+            "2": {
               "step": "Run Internet Speed Test",
               "description": "Compare results to your ISP's advertised speeds. If significantly lower, the issue may be ISP-related."
             },
-            {
+            "3": {
               "step": "Run LAN iPerf Test",
               "description": "Test local network throughput to isolate whether the issue is local or internet-bound. Should achieve near wire speed."
             },
-            {
+            "4": {
               "step": "Check for Interference",
               "description": "For Wi-Fi, check the channel graph and neighbor AP scan for congestion and interference."
-            },
-            {
-              "step": "Review Discovery Results",
-              "description": "Check if other devices are consuming bandwidth. Look for unexpected high-traffic devices."
             }
-          ]
+          }
         },
         "setupHealthChecks": {
           "title": "How to Configure Health Checks for Critical Services",
-          "steps": [
-            {
+          "steps": {
+            "0": {
               "step": "Identify Critical Services",
               "description": "List all services that need monitoring: servers, databases, cloud services, cameras, medical equipment."
             },
-            {
+            "1": {
               "step": "Choose Check Type",
               "description": "Use Ping for basic reachability, TCP for service ports, HTTP for web services, RTSP for cameras, DICOM for medical imaging."
             },
-            {
+            "2": {
               "step": "Add Endpoints",
               "description": "Go to Settings → Health Checks and add each endpoint with appropriate parameters."
             },
-            {
+            "3": {
               "step": "Set Thresholds",
               "description": "Configure warning (yellow) and critical (red) latency thresholds based on service requirements."
             },
-            {
+            "4": {
               "step": "Test Configuration",
               "description": "Run tests manually first to verify connectivity before enabling continuous monitoring."
             },
-            {
+            "5": {
               "step": "Save to Profile",
               "description": "Ensure settings are saved to the appropriate client profile for persistence."
             }
-          ]
-        },
-        "setupDicom": {
-          "title": "How to Set Up DICOM Monitoring for Healthcare",
-          "steps": [
-            {
-              "step": "Gather DICOM Information",
-              "description": "Collect IP addresses, ports, and AE Titles for all DICOM devices: PACS, modalities, RIS, archives."
-            },
-            {
-              "step": "Register The Seed's AE Title",
-              "description": "On each DICOM system, add The Seed's AE Title (e.g., 'THESEED') to the allowed remote AE list."
-            },
-            {
-              "step": "Configure Endpoints",
-              "description": "In Settings → Health Checks → DICOM, add each device with its Called AE Title, IP, and port."
-            },
-            {
-              "step": "Test C-ECHO",
-              "description": "Run manual C-ECHO tests to verify association establishment before enabling continuous monitoring."
-            },
-            {
-              "step": "Set Check Intervals",
-              "description": "Recommended: 60 seconds for critical PACS, 5 minutes for modalities, based on clinical workflow needs."
-            },
-            {
-              "step": "Configure Alerts",
-              "description": "Set up notification thresholds to alert when DICOM systems become unreachable."
-            }
-          ]
-        },
-        "setupRtsp": {
-          "title": "How to Set Up RTSP Camera Monitoring",
-          "steps": [
-            {
-              "step": "Identify Camera URLs",
-              "description": "Locate RTSP URLs from camera documentation or NVR. Common formats: rtsp://ip:554/stream1, rtsp://ip/live/ch1"
-            },
-            {
-              "step": "Gather Credentials",
-              "description": "Collect camera usernames and passwords. Consider creating a dedicated monitoring account with view-only access."
-            },
-            {
-              "step": "Add RTSP Endpoints",
-              "description": "In Settings → Health Checks → RTSP, add each camera with URL and credentials."
-            },
-            {
-              "step": "Test Connectivity",
-              "description": "Run manual OPTIONS/DESCRIBE tests to verify URLs and credentials are correct."
-            },
-            {
-              "step": "Set Check Intervals",
-              "description": "Recommended: 60 seconds for critical cameras, 5 minutes for general surveillance."
-            },
-            {
-              "step": "Group by Location",
-              "description": "Use descriptive names (e.g., 'Building A - Entrance') for easy identification during alerts."
-            }
-          ]
-        },
-        "createMspProfile": {
-          "title": "How to Create Client-Specific Profiles for MSPs",
-          "steps": [
-            {
-              "step": "Create New Profile",
-              "description": "Click profile dropdown → Manage Profiles → Create New. Use format: 'ClientName - Location' (e.g., 'Acme Corp - HQ')."
-            },
-            {
-              "step": "Configure Interfaces",
-              "description": "Select the network interfaces used at this client site. Set preferred Ethernet and Wi-Fi interfaces."
-            },
-            {
-              "step": "Set Client Thresholds",
-              "description": "Adjust thresholds based on client SLA requirements. Stricter for critical environments, looser for basic monitoring."
-            },
-            {
-              "step": "Add Health Check Targets",
-              "description": "Add client-specific servers, applications, printers, cameras, and critical infrastructure."
-            },
-            {
-              "step": "Configure Discovery Settings",
-              "description": "Set subnet ranges, scan intensity, and SNMP credentials specific to this client environment."
-            },
-            {
-              "step": "Document in Description",
-              "description": "Add notes about client specifics: contact info, network topology, special considerations."
-            },
-            {
-              "step": "Export Backup",
-              "description": "Export the profile as backup before leaving the client site."
-            }
-          ]
+          }
         }
+      }
+    },
+    "common": {
+      "terms": "Terms"
+    },
+    "wifiTroubleshooting": {
+      "description": "Inspect visible access points, channels, signal and noise to diagnose the local wireless environment. Available measurements depend on the adapter and platform.",
+      "terms": {
+        "neighbors": {
+          "term": "Neighbor AP scan",
+          "description": "Lists access points the adapter can hear, with their SSID, BSSID, band, channel and signal level."
+        },
+        "utilization": {
+          "term": "Channel utilization",
+          "description": "The reported channel activity indicates how busy the channel is. Missing measurements do not establish an idle channel."
+        },
+        "interference": {
+          "term": "Co-channel interference",
+          "description": "Access points on the same channel share airtime, which can reduce throughput."
+        },
+        "snr": {
+          "term": "Signal / SNR",
+          "description": "Signal is measured in dBm; SNR compares the signal with background noise. Higher SNR generally indicates a cleaner link."
+        }
+      }
+    },
+    "path": {
+      "description": "Trace the route to a destination and inspect devices discovered on the local network. Missing replies are not proof that every intermediate device is offline.",
+      "terms": {
+        "hop": {
+          "term": "Hop",
+          "description": "A responding step along the route, with round-trip latency and any available hostname."
+        },
+        "protocol": {
+          "term": "Probe protocol",
+          "description": "Choose the probe protocol for the trace. Firewalls and routers may handle ICMP, UDP and TCP differently."
+        },
+        "local": {
+          "term": "On-link discovery",
+          "description": "ARP and neighbor discovery reveal reachable neighbors on the local segment."
+        }
+      }
+    },
+    "reports": {
+      "description": "Review service availability and generate or download diagnostic reports. Available actions depend on your role and license.",
+      "terms": {
+        "sla": {
+          "term": "SLA dashboard",
+          "description": "Availability and latency summaries come from recorded health checks. Review the time window and data coverage before interpreting them."
+        },
+        "export": {
+          "term": "Reports and exports",
+          "description": "Generate a report from collected diagnostics or download an existing report. An operator role is required for writes."
+        }
+      }
+    },
+    "logs": {
+      "description": "Review structured log entries and the health of the Seed process. Filter logs by level, source or text to investigate a failed test.",
+      "terms": {
+        "level": {
+          "term": "Level",
+          "description": "Severity such as debug, info, warning or error. A filter narrows the displayed entries."
+        },
+        "source": {
+          "term": "Source",
+          "description": "The component that emitted the entry, such as discovery or Wi-Fi."
+        },
+        "stream": {
+          "term": "Live entries",
+          "description": "Pause or resume the displayed stream and export entries for investigation."
+        }
+      }
+    },
+    "alerts": {
+      "description": "Review conditions raised by monitoring, then filter by severity and acknowledgment or resolution state. Your signed-in identity is recorded when you acknowledge an alert.",
+      "terms": {
+        "severity": {
+          "term": "Severity",
+          "description": "Indicates the urgency of the observed condition."
+        },
+        "ack": {
+          "term": "Acknowledge",
+          "description": "Mark the alert as seen while keeping it open for investigation."
+        },
+        "resolve": {
+          "term": "Resolve",
+          "description": "Mark the alert as resolved after verifying the condition has been addressed."
+        }
+      }
+    },
+    "pollingTargets": {
+      "description": "Add, edit or remove devices monitored over SNMP. A new target starts on the next polling cycle. Discovered devices and links feed Topology; observed changes can raise alerts.",
+      "terms": {
+        "target": {
+          "term": "Target",
+          "description": "A device address that Seed polls at a recurring interval."
+        },
+        "collectors": {
+          "term": "Collector chain",
+          "description": "Collectors read supported system, interface, LLDP, ARP and forwarding-table data from a target."
+        },
+        "snmp": {
+          "term": "SNMP",
+          "description": "Simple Network Management Protocol reads device state and tables using the configured credentials."
+        }
+      }
+    },
+    "topology": {
+      "description": "Inspect the network graph assembled from discovery and SNMP polling. Select a node to review its interfaces and observed links. A missing link can indicate missing observations.",
+      "terms": {
+        "node": {
+          "term": "Node",
+          "description": "A discovered device such as a switch, router, host or access point."
+        },
+        "link": {
+          "term": "Link",
+          "description": "An observed relationship between device interfaces, reconciled from discovery data."
+        },
+        "interface": {
+          "term": "Interface",
+          "description": "A device port with its status and any observed neighbors."
+        }
+      }
+    },
+    "glossary": {
+      "description": "Common terms used in Seed.",
+      "terms": {
+        "arp": {
+          "term": "ARP",
+          "description": "Address Resolution Protocol maps IPv4 addresses to local MAC addresses."
+        },
+        "dhcp": {
+          "term": "DHCP",
+          "description": "Dynamic Host Configuration Protocol assigns network configuration to clients."
+        },
+        "dns": {
+          "term": "DNS",
+          "description": "Domain Name System resolves names to addresses and supports reverse lookups."
+        },
+        "iperf": {
+          "term": "iperf3",
+          "description": "A tool for measuring throughput between two network hosts."
+        },
+        "lldp": {
+          "term": "LLDP / CDP",
+          "description": "Discovery protocols that report information about directly connected devices."
+        },
+        "rtsp": {
+          "term": "RTSP",
+          "description": "Real Time Streaming Protocol is used by cameras and video systems."
+        },
+        "snr": {
+          "term": "SNR",
+          "description": "Signal-to-noise ratio compares a wireless signal with background noise."
+        },
+        "tdr": {
+          "term": "TDR",
+          "description": "Time Domain Reflectometry estimates cable length and locates faults using reflected pulses."
+        }
+      }
+    },
+    "cardHelp": {
+      "LinkCard": {
+        "description": "Link state, negotiated speed and addressing for the selected wired interface."
+      },
+      "CableCard": {
+        "description": "Cable diagnostics appear when the wired link is down and require an adapter that supports TDR."
+      },
+      "DriverStatsCard": {
+        "description": "Driver counters can expose errors and drops. Platforms without the required driver support report that limitation."
+      },
+      "WiFiCard": {
+        "description": "Inspect the connected network, signal and security details. Operating-system privacy restrictions can withhold identifiers; a withheld SSID is not proof of disconnection."
+      },
+      "NetworkCard": {
+        "description": "Review addresses, DHCP lease and interface configuration."
+      },
+      "GatewayCard": {
+        "description": "Check the default gateway and its measured reachability and latency."
+      },
+      "DnsCard": {
+        "description": "Inspect configured resolvers and the results of forward, reverse and IPv6 lookups."
+      },
+      "NeighbourCacheCard": {
+        "description": "Inspect the operating system’s IPv4 ARP and IPv6 neighbor cache. Entries describe observed neighbors, not a complete device inventory."
+      },
+      "BonjourCard": {
+        "description": "Browse services advertised through mDNS and DNS-SD, with their hosts and ports. Missing advertisements do not prove a service is offline."
+      },
+      "PublicIpCard": {
+        "description": "Review the externally observed address and its history when public-IP checks are available."
+      },
+      "SwitchCard": {
+        "description": "On wired interfaces, inspect switch-neighbor and VLAN information when the connected device advertises it."
+      },
+      "PathDiscoveryCard": {
+        "description": "Run a trace to a destination and inspect the responding hops and their latency."
+      },
+      "NetworkDiscoveryCard": {
+        "description": "Scan configured local networks and inspect discovered devices, addresses and advertised services."
+      },
+      "WiFiChannelGraph": {
+        "description": "Compare visible AP signals by channel. Failed or privacy-restricted scans cannot establish an empty airspace."
+      },
+      "WiFiAirspaceCard": {
+        "description": "Inspect APs and stations observed in management-frame capture. Requires the licensed capability and a monitor-capable capture source."
+      },
+      "WiFiAnomaliesCard": {
+        "description": "Review association anomalies from captured management frames. Without capture observations there is no basis to declare the environment healthy."
+      },
+      "MfaCard": {
+        "description": "Set up an authenticator app (TOTP), keep recovery codes safely, or register a passkey when your browser supports it. Confirm enrollment before relying on the second factor."
+      },
+      "GuestNetworkAuditCard": {
+        "description": "Check configured guest-network isolation targets. Test only networks you are authorized to assess."
+      },
+      "InsecurePortScanCard": {
+        "description": "Scan the configured target for exposed insecure services and inspect the findings before taking action."
+      },
+      "BluetoothCard": {
+        "description": "Inspect nearby Bluetooth devices when the host adapter and platform support discovery. An unavailable adapter is not an empty scan."
+      },
+      "HealthCheckCard": {
+        "description": "Run configured ping, TCP, UDP and application checks. HTTP timing segments separate DNS, connection, TLS, server response and download time; focus each segment label for its explanation."
+      },
+      "PerformanceCard": {
+        "description": "Compare internet speed tests with LAN iperf3 results to locate a throughput bottleneck. Both endpoints and link conditions affect the result."
+      },
+      "SlaDashboardCard": {
+        "description": "Review availability and latency over the selected reporting window, including gaps in observations."
+      },
+      "ReportsCard": {
+        "description": "Generate, download or remove reports according to your role. Review their data window before sharing them."
+      },
+      "SystemHealthCard": {
+        "description": "Inspect the Seed process and host resource measurements while investigating slow or failed tests."
+      },
+      "LogViewerCard": {
+        "description": "Search, pause and export structured log entries to investigate daemon activity."
       }
     }
   },

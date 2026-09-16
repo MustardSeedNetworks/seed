@@ -93,7 +93,9 @@
     "carrier": "Carrier",
     "autoNeg": "Auto-Neg",
     "lastSeen": "Last Seen",
-    "noMatches": "No matches."
+    "noMatches": "No matches.",
+    "history": "History",
+    "manageProfiles": "Manage Profiles"
   },
   "time": {
     "seconds": "{{count}}s",
@@ -121,7 +123,15 @@
     "selectDevice": "Select device",
     "selectEthernet": "Select Ethernet interface",
     "selectWifi": "Select Wi-Fi interface",
-    "skipToMainContent": "Skip to main content"
+    "skipToMainContent": "Skip to main content",
+    "collapseSidebar": "Collapse sidebar",
+    "expandSidebar": "Expand sidebar",
+    "toggleFilters": "Toggle filters",
+    "manageProfiles": "Create, edit, and delete profiles",
+    "pageHelpHint": "What is {{title}}?",
+    "openPageHelp": "Open help for {{title}}",
+    "openMenu": "Open menu",
+    "closeMenu": "Close menu"
   },
   "sections": {
     "connectivity": "Connectivity",
@@ -321,7 +331,11 @@
   "health": {
     "database": "Database",
     "fileShares": "File shares",
-    "rtsp": "RTSP"
+    "rtsp": "RTSP",
+    "healthy": "Healthy",
+    "degraded": "Degraded",
+    "critical": "Critical",
+    "scoreDescription": "Health score: {{score}}% — {{status}}"
   },
   "interface": {
     "ethernet": "Ethernet",
