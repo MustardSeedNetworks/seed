@@ -38,10 +38,20 @@
    2. Dark mode is the NIGHT VERSION of light, not a second palette (owner
       2026-09-15). It used to sit at 195–208° cold steel against a 44–50°
       warm-cream light theme and shared only the status hues. Every surface
-      and text token below is derived at hue 43–51°, and every pair was
-      measured: text 4.5:1 or better, UI edges 3:1 or better. The values are
-      the approved "Dark proposed" column of the 2026-09-15 dark-palette
-      proposal, taken verbatim.
+      and text token below is derived at hue 43–51°. The values are the
+      approved "Dark proposed" column of the 2026-09-15 dark-palette
+      proposal, with the eleven corrections of .github#74 (see 5).
+   5. Contrast is MEASURED, by scripts/check-theme-contrast.py, over every
+      text-token × surface-token pair in both modes — not by hand, and not
+      just against base and raised. That distinction is the whole of #74:
+      the comments here recorded each token "on base, on raised", so hover,
+      sunken, deep and the rail were never measured, and eleven tokens were
+      under their floor on a surface nobody had looked at — including the
+      border token that #69 had just darkened FOR its 3:1. Text is 4.5:1 or
+      better (1.4.3; .kicker sets 10px, so the large-text allowance never
+      applies), UI edges 3:1 or better (1.4.11). Change a value here and run
+      the script; it is wired into this repo's CI, and each token's comment
+      below carries its worst measured ground.
    3. Card borders are hairlines. A 1px solid edge on every card drew a grid
       of boxes; the eye counted containers instead of reading content.
       surface-border keeps its old role for form controls and dividers, where
@@ -68,8 +78,10 @@
   /* ---- text ---------------------------------------------------------- */
   --color-text-primary: #1a2520;
   --color-text-secondary: #4a5650;
-  /* was #6b766f — 4.52:1, technically passing but with no margin at 10px */
-  --color-text-muted: #5f6a63;
+  /* was #6b766f — 4.52:1, technically passing but with no margin at 10px, then
+     #5f6a63, which measured 4.38:1 on the sunken surface (.github#74: the
+     measured set was base and raised only). 4.57:1 on its worst ground now. */
+  --color-text-muted: #5d6760;
   --color-text-inverse: #ffffff;
   --color-text-disabled: #8a938c;
 
@@ -79,15 +91,19 @@
      text on the surface they are designed to sit on. 5.19:1 and 5.06:1 now,
      matching the margin the warning token was darkened to. */
   --color-status-success: #2a7146;
-  --color-status-warning: #8a6208; /* darkened from #d4a017: 3.82:1 → 5.1:1 */
-  --color-status-error: #b93a3a;
+  /* warning was #d4a017 (3.82:1), then #8a6208, which measured 4.27:1 on the
+     sunken surface; error was #b93a3a, 4.38:1 there. Both 4.56:1 now. */
+  --color-status-warning: #845e08;
+  --color-status-error: #b43939;
   --color-status-info: #1263a8;
 
   /* ---- log levels (Syslog/RFC 5424, constant) ------------------------ */
-  --color-log-trace: #64748b;
-  --color-log-debug: #0e7490;
+  /* trace #64748b, debug #0e7490 and warn #a16207 measured 3.70, 4.17 and
+     3.83:1 on the sunken surface a log panel sits in. 4.61, 4.59 and 4.56:1. */
+  --color-log-trace: #576579;
+  --color-log-debug: #0d6d88;
   --color-log-info: #1d4ed8;
-  --color-log-warn: #a16207;
+  --color-log-warn: #905806;
   --color-log-error: #b91c1c;
   --color-log-fatal: #991b1b;
 
@@ -104,8 +120,9 @@
   --color-rail-to: #efe9d8;
   /* Eyebrows and accent icons. Was per-product --color-brand-gold with the
      same value in all four repos; shared here so the dark lift is one
-     decision. */
-  --color-accent-gold: #8a6208;
+     decision. Was #8a6208 — 4.27:1 on the sunken surface, and .kicker sets
+     10px text in this colour. 4.56:1 now. */
+  --color-accent-gold: #845e08;
 }
 
 .dark {
@@ -116,14 +133,20 @@
    * measured, not asserted. */
   --color-surface-base: #181611;
   --color-surface-raised: #23211a;
-  --color-surface-border: #746d58; /* 3.50 on base, 3.12 on raised */
+  /* was #746d58 — 3.50 on base and 3.12 on raised, but 2.63 on hover, under
+     the 3:1 that 1.4.11 needs for the form-control edge this token exists to
+     draw. 3.09 on hover, 3.66-4.30 elsewhere. */
+  --color-surface-border: #807861;
   --color-surface-hover: #312e25;
   --color-surface-sunken: #15140e;
   --color-surface-deep: #12110c;
 
   --color-text-primary: #f3efe2; /* 15.7 on base, 14.0 on raised */
   --color-text-secondary: #b5ac8c; /* 7.96 on base, 7.09 on raised */
-  --color-text-muted: #91896e; /* 5.17 on base, 4.61 on raised */
+  /* was #91896e — 5.17 on base, 4.61 on raised, 3.88 on hover, which is where
+     list rows, chips and command-palette items put their small text. 4.58 on
+     hover, 5.44-6.39 elsewhere. */
+  --color-text-muted: #9d967e;
   --color-text-inverse: #181611;
   --color-text-disabled: #706b5c; /* 3.40 on base, 3.03 on raised */
 
@@ -137,14 +160,14 @@
   --color-log-info: #7795e9;
   --color-log-warn: #d38922;
   --color-log-error: #e97777;
-  --color-log-fatal: #f15050;
+  --color-log-fatal: #f36a6a; /* was #f15050 — 3.88 on hover, 4.57 now */
 
   /* Hairlines carry the text colour, so they warm with the ground. */
   --color-hairline: rgba(243, 239, 226, 0.14);
   --color-hairline-strong: rgba(243, 239, 226, 0.22);
   --color-rail-from: #15140e;
   --color-rail-to: #12110c;
-  --color-accent-gold: #b88a1e; /* 5.76 on base, 5.13 on raised */
+  --color-accent-gold: #bd8e1f; /* was #b88a1e — 4.32 on hover, 4.56 now */
 }
 
 /* Third label tier. The old scale had heading-1…4 plus section-title, and
