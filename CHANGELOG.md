@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.214.58](https://github.com/MustardSeedNetworks/seed/compare/v0.214.57...v0.214.58) (2026-09-16)
+
+
+### Bug Fixes
+
+* **discovery:** scan the network by default on a fresh install ([#2693](https://github.com/MustardSeedNetworks/seed/issues/2693)) ([13c20f6](https://github.com/MustardSeedNetworks/seed/commit/13c20f6f62d9e5d98c40025956d38af4f0384a12))
+
+
+### Miscellaneous
+
+* **deps:** update module golang.org/x/vuln to v1.8.0 ([#2675](https://github.com/MustardSeedNetworks/seed/issues/2675)) ([3458099](https://github.com/MustardSeedNetworks/seed/commit/34580990338a9e2c893409b73e42c7a4d48dc888))
+
 ## [0.214.57](https://github.com/MustardSeedNetworks/seed/compare/v0.214.56...v0.214.57) (2026-09-16)
 
 
