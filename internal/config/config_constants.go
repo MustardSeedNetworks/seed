@@ -135,8 +135,11 @@ const (
 	// defaultProbeIntervalMs is the interval in milliseconds between network probes.
 	defaultProbeIntervalMs = 75
 
-	// defaultRescanIntervalMin is the interval in minutes between full network rescans.
-	defaultRescanIntervalMin = 10
+	// defaultRescanIntervalSec is the interval in seconds between full network
+	// rescans. A minute keeps the device list close enough to the network that
+	// an operator watching a page sees a device appear or leave (seed#2674);
+	// the previous ten minutes read as "the pages show nothing".
+	defaultRescanIntervalSec = 60
 
 	// defaultARPWorkers is the number of concurrent ARP scan workers.
 	defaultARPWorkers = 50

@@ -248,7 +248,7 @@ export function useSettingsDrawerLoaders({
           },
           timing: data.timing ?? {
             probeIntervalMs: 75,
-            rescanIntervalMs: 600000,
+            rescanIntervalMs: 60000,
             workers: 50,
           },
           profiler: data.profiler ?? {

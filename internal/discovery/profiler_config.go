@@ -74,7 +74,10 @@ func DefaultProfilerConfig() *ProfilerConfig {
 			8443, // HTTPS Alt
 			// Note: SNMP (port 161) is UDP, probed separately via probeSNMP()
 		},
-		PortScanIntensity: PortScanOff, // Default: OFF for security
+		// Light profiling: the quick port list is what turns a bare address
+		// into "printer" or "switch" on the first sweep (seed#2674, owner
+		// decision 2026-09-15). The wide Options.PortScan sweep stays opt-in.
+		PortScanIntensity: PortScanQuick,
 		TimingProfile:     ScanProfileNormal,
 		BannerGrab:        true,
 		ProbeDelay:        profilerProbeDelayMs * time.Millisecond,

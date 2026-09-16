@@ -42,6 +42,24 @@ func runPlatform(w io.Writer) {
 	default:
 		writeStr(w, "Platform "+runtime.GOOS+" is not fully supported.\n")
 	}
+
+	printDiscoveryDefaults(w)
+}
+
+// printDiscoveryDefaults states what the daemon does to the network on its own.
+// An install that is never opened in Settings still sweeps, so the operator is
+// told which methods that covers and which wait for them (seed#2674).
+func printDiscoveryDefaults(w io.Writer) {
+	writeStr(w, "\nDISCOVERY DEFAULTS (no Settings visit required):\n")
+	writeStr(w, "  • Passive listening: LLDP, CDP and EDP on the active interface\n")
+	writeStr(w, "  • ARP sweep of the interface's subnet, at startup, on an\n")
+	writeStr(w, "    interface change, and every 60s after that\n")
+	writeStr(w, "  • ICMP sweep of the same subnet — needs a raw socket, so an\n")
+	writeStr(w, "    unprivileged daemon reports it unavailable rather than silent\n")
+	writeStr(w, "  • Light profiling of what answers: the quick port list plus\n")
+	writeStr(w, "    name resolution, to give each device a type\n")
+	writeStr(w, "  • Off until you turn them on: full port scan, traceroute, SNMP\n")
+	writeStr(w, "    queries (SNMP also needs a credential in the vault)\n")
 }
 
 func writeStr(w io.Writer, s string) {

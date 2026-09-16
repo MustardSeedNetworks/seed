@@ -579,7 +579,7 @@ export const DEFAULT_NETWORK_DISCOVERY_SETTINGS: NetworkDiscoverySettings = {
   },
   timing: {
     probeIntervalMs: 75,
-    rescanIntervalMs: 600000, // 10 minutes
+    rescanIntervalMs: 60000, // 1 minute
     workers: 50,
   },
   profiler: {
