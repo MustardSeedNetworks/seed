@@ -53,7 +53,8 @@ func seedProbeWithResults(
 func TestProbeTrendRawIncludesTheBucketInProgress(t *testing.T) {
 	db, ctx := setupHistoryDB(t)
 
-	now := time.Now().UTC()
+	// The query has explicit bounds; its open-hour sample must precede the end.
+	now := time.Date(2026, time.September, 15, 20, 30, 0, 0, time.UTC)
 	thisHour := now.Truncate(time.Hour)
 	lastHour := thisHour.Add(-time.Hour)
 
