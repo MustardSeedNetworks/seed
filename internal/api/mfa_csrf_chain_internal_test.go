@@ -15,9 +15,10 @@ import (
 // MFA-enrolment defect. The pre-session login routes are CSRF-exempt (#2391),
 // but the *enrolment* routes are not and must not be: they run under a live
 // session, so a cross-site page could ride the operator's cookie and enrol its
-// own second factor. The existing MFA suite never sees this because
-// GetAuthenticatedHandler() stops at the JWT middleware and omits CSRF
-// entirely; only Handler() is the chain production serves.
+// own second factor. The MFA suite could not see this: it drove
+// GetAuthenticatedHandler(), which stops at the JWT middleware and omits CSRF
+// entirely. That suite now drives Handler() too — the chain production serves —
+// so this test pins the routes and that one covers the flows through them.
 func TestMFAEnrolmentRequiresCSRFThroughTheRealChain(t *testing.T) {
 	enrolment := []string{
 		APIVersionPrefix + "/auth/totp/setup",
