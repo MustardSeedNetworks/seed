@@ -200,6 +200,39 @@ jobs:
             echo "No open release PR to arm, or it carries release: hold."
             exit 0
           fi
+          # Only arm a release PR that still describes main.
+          #
+          # This workflow runs on workflow_run after CI succeeds on main, and
+          # that is slower than the release PR's own checks. So a commit merged
+          # while the PR was open could go green, merge the PR, and ship inside
+          # the tag with no changelog entry -- v0.94.91, v0.94.92 and v0.95.1
+          # each lost commits that way (niac#1817). Nothing self-corrects: the
+          # next release compares against the new tag.
+          #
+          # release-please branches its single commit off the main commit it
+          # generated from, so that commit's parent is exactly the main it
+          # described. If main has moved on, the PR is stale -- skip this tick.
+          # The CI run for the newer commit will trigger this workflow again,
+          # release-please will regenerate, and a later tick arms it.
+          # `gh api` writes its error body to stdout, so `|| echo ""` would
+          # capture the JSON as if it were a SHA and the emptiness check would
+          # pass a blob straight into the comparison. Take the value only when
+          # the call actually succeeded.
+          pr_parent=""
+          if parent_sha="$(gh api "repos/${GITHUB_REPOSITORY}/commits/release-please--branches--main" \
+                             --jq '.parents[0].sha' 2>/dev/null)"; then
+            pr_parent="${parent_sha}"
+          fi
+          main_head="$(gh api "repos/${GITHUB_REPOSITORY}/commits/main" --jq '.sha')"
+          if [ -z "${pr_parent}" ]; then
+            echo "Could not read the release branch's parent; not arming."
+            exit 0
+          fi
+          if [ "${pr_parent}" != "${main_head}" ]; then
+            echo "Release PR #${pr} was generated from ${pr_parent} but main is at ${main_head}."
+            echo "It does not yet describe main; leaving it unarmed for this tick."
+            exit 0
+          fi
           echo "Arming auto-merge on #${pr}"
           # Already queued is the steady state on the second and later ticks,
           # and is not a failure.
