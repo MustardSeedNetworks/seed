@@ -10,6 +10,7 @@
 
 import type { JSX } from 'react';
 import { type ReactNode, Suspense, useEffect, useRef } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Redirect, Route, Switch, useLocation } from 'wouter';
 import { AppFooter } from '../components/app/AppFooter';
 import { CapabilityWarnings } from '../components/app/CapabilityWarnings';
@@ -214,6 +215,12 @@ export function AppShell({ orchestration, logout }: AppShellProps): JSX.Element 
  * PageWithHeader renders the section frame every routed page shares —
  * breadcrumbs plus the page header — from the registry entry rather
  * than from the page body. Pages render only their own content.
+ *
+ * It also owns `document.title`. Nothing set it per route before, so every
+ * page, bookmark and browser-history entry read the bare product name from
+ * index.html and a user with several tabs open could not tell them apart
+ * (#2645). The title is the registry's label, so it is the same string as the
+ * rail item, the breadcrumb and the H1.
  */
 function PageWithHeader({
   page,
@@ -225,6 +232,13 @@ function PageWithHeader({
   children: ReactNode;
 }) {
   const helpSection = page.help;
+  const { t } = useTranslation('common');
+  const productName = t('app.title');
+
+  useEffect(() => {
+    document.title = `${page.label} · ${productName}`;
+  }, [page.label, productName]);
+
   return (
     <section className="stack-xl">
       <Breadcrumbs />

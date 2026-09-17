@@ -79,7 +79,6 @@
   },
   "network": {
     "description": "DHCP, gateway, DNS, public IP, and upstream switch detection.",
-    "eyebrow": "Diagnostics",
     "label": "Network",
     "title": "Network",
     "rollupProbing": "Probing the upstream link",
