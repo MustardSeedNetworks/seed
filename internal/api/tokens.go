@@ -104,6 +104,12 @@ type LicenseStatusResponse struct {
 	CanMintTokens bool      `json:"canMintTokens"` // true iff Tier >= Pro or active trial
 	Activated     bool      `json:"activated"`
 	ExpiresAt     time.Time `json:"expiresAt,omitzero"`
+	// Features is the effective feature catalogue for the active tier.
+	// The UI's <RequireFeature> / <TierGate> read nothing else, so this
+	// is the whole licence signal for every gated surface (#2688). Always
+	// emitted, empty on Free, so a missing key is a wiring bug and not
+	// mistaken for "no features".
+	Features []string `json:"features"`
 }
 
 // handleLicenseStatus exposes the local license state to the UI. The
@@ -115,14 +121,19 @@ func (s *Server) handleLicenseStatus(w http.ResponseWriter, r *http.Request) {
 		Tier:          license.TierFree.String(),
 		TierValue:     int(license.TierFree),
 		CanMintTokens: false,
+		// Never nil: the UI reads this as string[], and a JSON null would
+		// have to be special-cased at every gate.
+		Features: []string{},
 	}
 
 	mgr := s.licenseManager()
 	if mgr == nil {
 		// License disabled (dev / test build) — allow minting so the
 		// feature stays usable. Matches the tokens use-case LicenseGate
-		// (a nil manager permits minting).
+		// (a nil manager permits minting) and effectiveTier(), which
+		// already reads a nil manager as Pro.
 		resp.CanMintTokens = true
+		resp.Features = license.FeaturesForTier(license.TierPro)
 		sendJSONResponse(w, logging.FromContext(r.Context()), http.StatusOK, resp)
 		return
 	}
@@ -134,6 +145,12 @@ func (s *Server) handleLicenseStatus(w http.ResponseWriter, r *http.Request) {
 	}
 
 	resp.Activated = true
+	// Only a live licence unlocks the UI. GetState() still returns an
+	// expired or foreign-device state, and HasFeature refuses it; the
+	// feature list has to refuse it too or the gates outlive the licence.
+	if mgr.IsActivated() && st.Features != nil {
+		resp.Features = st.Features
+	}
 	resp.IsTrialMode = st.IsTrialMode
 	resp.ExpiresAt = st.ExpiresAt
 	resp.TierValue = st.Tier

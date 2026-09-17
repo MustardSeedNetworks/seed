@@ -814,7 +814,7 @@ jobs:
       # than because nothing was found. A stale security view is worse than an
       # absent one, so this step fails loudly.
       - name: Upload gosec results
-        uses: github/codeql-action/upload-sarif@cdf488f595d80d6e07e03d4674febd5ab45fa938 # v4.37.9
+        uses: github/codeql-action/upload-sarif@b96794f015dfd88f77b49b1c93e0fa7110f94c63 # v4.38.0
         if: always() && hashFiles('gosec-results.sarif') != ''
         with:
           sarif_file: gosec-results.sarif
@@ -867,7 +867,7 @@ jobs:
       # than because nothing was found. A stale security view is worse than an
       # absent one, so this step fails loudly.
       - name: Upload Trivy results
-        uses: github/codeql-action/upload-sarif@cdf488f595d80d6e07e03d4674febd5ab45fa938 # v4.37.9
+        uses: github/codeql-action/upload-sarif@b96794f015dfd88f77b49b1c93e0fa7110f94c63 # v4.38.0
         if: always() && hashFiles('trivy-results.sarif') != ''
         with:
           sarif_file: trivy-results.sarif
@@ -1235,6 +1235,18 @@ jobs:
       # preservation, interpolation parity, plural completeness, t()/<Trans>
       # key cross-reference, locked versions, and a blocking hardcoded-JSX
       # check.
+      - name: Set up Node.js
+        uses: ./.github/actions/setup-node
+
+      - name: Install UI dependencies for help-key analysis
+        working-directory: ui
+        run: npm ci --ignore-scripts
+
+      - name: Help locale consumer gate
+        run: |
+          node --test scripts/check-help-i18n.test.ts
+          node scripts/check-help-i18n.ts
+
       - name: Run shared i18n validator
         uses: MustardSeedNetworks/.github/.github/actions/i18n-validate@048d173dd72ca0f9e5fa832fb5b9fd2a6447e5e9 # v1.13.0
 

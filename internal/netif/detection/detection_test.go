@@ -99,7 +99,12 @@ func TestScoreInterface(t *testing.T) {
 	}
 }
 
-func TestDetectType(t *testing.T) {
+// TestDetectTypeByName pins the name patterns only. It deliberately does NOT go
+// through detectType: that consults the host's Wi-Fi interface list (#2670), so
+// a table naming `en0` would assert "ethernet" on Linux CI and "wifi" on any
+// Mac. The platform-aware rule is pinned, with a fake list, in
+// TestDetectTypeConsultsThePlatform.
+func TestDetectTypeByName(t *testing.T) {
 	tests := []struct {
 		name     string
 		wantType string
@@ -135,9 +140,9 @@ func TestDetectType(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got := detection.DetectType(tt.name)
+			got := detection.DetectTypeByName(tt.name)
 			if got != tt.wantType {
-				t.Errorf("DetectType(%q) = %q, want %q", tt.name, got, tt.wantType)
+				t.Errorf("DetectTypeByName(%q) = %q, want %q", tt.name, got, tt.wantType)
 			}
 		})
 	}
@@ -343,7 +348,7 @@ func TestGenerateFriendlyName(t *testing.T) {
 			score: detection.InterfaceScore{
 				Type: "wifi",
 			},
-			want: "WiFi Adapter",
+			want: "Wi-Fi Adapter",
 		},
 		{
 			name: "fallback to name",
@@ -544,9 +549,9 @@ func TestDetectTypeAdditionalPrefixes(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got := detection.DetectType(tt.name)
+			got := detection.DetectTypeByName(tt.name)
 			if got != tt.wantType {
-				t.Errorf("DetectType(%q) = %q, want %q", tt.name, got, tt.wantType)
+				t.Errorf("DetectTypeByName(%q) = %q, want %q", tt.name, got, tt.wantType)
 			}
 		})
 	}

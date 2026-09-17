@@ -9,6 +9,7 @@
  */
 
 import type { ReactElement } from 'react';
+import { useTranslation } from 'react-i18next';
 import { cn, layout, radius, spacing } from '../../styles/theme';
 import type { HelpBlock } from './helpModel';
 
@@ -43,32 +44,33 @@ function blockKey(block: HelpBlock, index: number): string {
 }
 
 function BlockView({ block }: { block: HelpBlock }): ReactElement | null {
+  const { t } = useTranslation(['help', 'cards', 'pages', 'common']);
   switch (block.kind) {
     case 'paragraph':
-      return <p className="body-small">{block.text}</p>;
+      return <p className="body-small">{t(block.text)}</p>;
 
     case 'heading':
-      return <h3 className="heading-4">{block.text}</h3>;
+      return <h3 className="heading-4">{t(block.text)}</h3>;
 
     case 'note':
       return (
         <p className={cn(spacing.pad.sm, radius.default, 'bg-surface-hover body-small')}>
-          {block.text}
+          {t(block.text)}
         </p>
       );
 
     case 'terms':
       return (
         <section className="stack-sm">
-          {block.heading ? <h3 className="heading-4">{block.heading}</h3> : null}
+          {block.heading ? <h3 className="heading-4">{t(block.heading)}</h3> : null}
           <dl className="stack-sm">
             {block.items.map((item) => (
               <div
                 key={item.term}
                 className={cn(spacing.pad.sm, radius.default, 'bg-surface-hover')}
               >
-                <dt className="label">{item.term}</dt>
-                <dd className="caption mt-tight">{item.description}</dd>
+                <dt className="label">{t(item.term)}</dt>
+                <dd className="caption mt-tight">{t(item.description)}</dd>
               </div>
             ))}
           </dl>
@@ -78,7 +80,7 @@ function BlockView({ block }: { block: HelpBlock }): ReactElement | null {
     case 'steps':
       return (
         <section className="stack-sm">
-          {block.heading ? <h3 className="heading-4">{block.heading}</h3> : null}
+          {block.heading ? <h3 className="heading-4">{t(block.heading)}</h3> : null}
           {block.ordered ? (
             <ol className="stack-sm pl-indent list-decimal">
               {block.items.map((step, i) => (
@@ -86,11 +88,11 @@ function BlockView({ block }: { block: HelpBlock }): ReactElement | null {
                   key={step.title ?? `${i}-${step.description.slice(0, 24)}`}
                   className="body-small"
                 >
-                  {step.title ? <span className="label">{step.title}</span> : null}
+                  {step.title ? <span className="label">{t(step.title)}</span> : null}
                   {step.title ? (
-                    <span className="caption"> — {step.description}</span>
+                    <span className="caption"> — {t(step.description)}</span>
                   ) : (
-                    step.description
+                    t(step.description)
                   )}
                 </li>
               ))}
@@ -102,8 +104,10 @@ function BlockView({ block }: { block: HelpBlock }): ReactElement | null {
                   key={step.title ?? `${i}-${step.description.slice(0, 24)}`}
                   className={cn(spacing.pad.sm, radius.default, 'bg-surface-hover')}
                 >
-                  {step.title ? <p className="label">{step.title}</p> : null}
-                  <p className={cn('caption', step.title ? 'mt-tight' : '')}>{step.description}</p>
+                  {step.title ? <p className="label">{t(step.title)}</p> : null}
+                  <p className={cn('caption', step.title ? 'mt-tight' : '')}>
+                    {t(step.description)}
+                  </p>
                 </div>
               ))}
             </div>
@@ -114,11 +118,11 @@ function BlockView({ block }: { block: HelpBlock }): ReactElement | null {
     case 'tips':
       return (
         <section className="stack-sm">
-          {block.heading ? <h3 className="heading-4">{block.heading}</h3> : null}
+          {block.heading ? <h3 className="heading-4">{t(block.heading)}</h3> : null}
           <ul className="stack-xs pl-indent list-disc">
             {block.items.map((tip) => (
               <li key={tip} className={cn(layout.flex.start, 'body-small')}>
-                {tip}
+                {t(tip)}
               </li>
             ))}
           </ul>

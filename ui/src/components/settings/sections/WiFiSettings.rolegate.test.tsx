@@ -79,9 +79,8 @@ describe('WiFiSettings — role gating', () => {
     await openSection();
 
     const forget = await screen.findByRole('button', { name: 'Forget' });
-    expect(forget).toBeDisabled();
-    expect(forget).toHaveAttribute(
-      'title',
+    expect(forget).toHaveAttribute('aria-disabled', 'true');
+    expect(forget).toHaveAccessibleDescription(
       'Read-only — operator role required to change the Wi-Fi connection',
     );
   });

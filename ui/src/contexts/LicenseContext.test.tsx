@@ -26,6 +26,7 @@ const status = (overrides: Partial<LicenseStatus> = {}): LicenseStatus => ({
   isTrialMode: false,
   canMintTokens: false,
   activated: false,
+  features: [],
   ...overrides,
 });
 

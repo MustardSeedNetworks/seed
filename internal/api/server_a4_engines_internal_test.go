@@ -112,6 +112,13 @@ func TestInitDatabaseDependentServices_HonoursLicenseDir(t *testing.T) {
 		t.Fatalf("StartTrial did not activate: %+v", res)
 	}
 
+	// Snapshot the real licence before the server runs: the assertion below
+	// is that this test did not create it, and a developer who has run
+	// `seed license trial` already has one. Asserting plain absence made this
+	// test fail on any such host and blamed it for a file it never wrote.
+	realLicense := realLicensePath()
+	existedBefore := realLicense != "" && fileExists(realLicense)
+
 	s := &Server{engines: engine.NewRegistry(nil), licenseDir: dir}
 	s.initDatabaseDependentServices(newTestDB(t))
 
@@ -126,10 +133,22 @@ func TestInitDatabaseDependentServices_HonoursLicenseDir(t *testing.T) {
 	}
 
 	// And the real config directory was left alone.
-	home, homeErr := os.UserHomeDir()
-	if homeErr == nil {
-		if _, statErr := os.Stat(filepath.Join(home, ".config", "seed", ".license")); statErr == nil {
-			t.Error("the test wrote activation state to the real user config directory")
-		}
+	if realLicense != "" && !existedBefore && fileExists(realLicense) {
+		t.Errorf("the test wrote activation state to the real user config directory (%s)", realLicense)
 	}
+}
+
+// realLicensePath is the licence file a manager with no directory override
+// would use. Empty when the home directory cannot be resolved.
+func realLicensePath() string {
+	home, err := os.UserHomeDir()
+	if err != nil {
+		return ""
+	}
+	return filepath.Join(home, ".config", "seed", ".license")
+}
+
+func fileExists(path string) bool {
+	_, err := os.Stat(path)
+	return err == nil
 }

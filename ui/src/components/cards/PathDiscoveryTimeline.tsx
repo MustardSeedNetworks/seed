@@ -46,6 +46,11 @@ export const PATH_TIMELINE: React.NamedExoticComponent<PathTimelineProps> = memo
     const { l2Path } = result;
     const l2Hops = l2Path?.hops ?? [];
     const l3Hops = result.l3Path?.hops ?? [];
+    // A trace that returned nothing and said why: on an unprivileged run a UDP
+    // or TCP traceroute cannot open the raw socket it reads hop errors from
+    // (seed#2689). Without this the L3 segment is simply absent and the
+    // operator sees an empty path with no reason for it.
+    const l3Limitation = l3Hops.length === 0 ? (result.l3Path?.error ?? '') : '';
     const destination = result.l3Path?.target ?? '';
 
     const toggleHop = useCallback(
@@ -98,6 +103,13 @@ export const PATH_TIMELINE: React.NamedExoticComponent<PathTimelineProps> = memo
         ) : null}
 
         {/* L3 router segment */}
+        {l3Limitation === '' ? null : (
+          <TIMELINE_ROW dotKind="l3-empty">
+            <span data-testid="l3-limitation" className="caption text-text-muted">
+              {t('pathDiscovery.l3Unavailable', { reason: l3Limitation })}
+            </span>
+          </TIMELINE_ROW>
+        )}
         {l3Hops.map((hop) => (
           <TIMELINE_ROW
             key={`l3-${hop.ttl}`}
@@ -124,7 +136,7 @@ export const PATH_TIMELINE: React.NamedExoticComponent<PathTimelineProps> = memo
   },
 );
 
-type DotKind = 'endpoint' | 'l2' | 'l2-empty' | 'l3' | 'l3-timeout';
+type DotKind = 'endpoint' | 'l2' | 'l2-empty' | 'l3' | 'l3-empty' | 'l3-timeout';
 
 interface TimelineRowProps {
   children: React.ReactNode;
@@ -138,6 +150,7 @@ const DOT_CLASS: Record<DotKind, string> = {
   l2: 'h-2.5 w-2.5 border-2 border-brand-primary bg-surface-raised',
   'l2-empty': 'h-2 w-2 border border-dashed border-surface-border bg-surface-base',
   l3: 'h-2.5 w-2.5 bg-brand-primary',
+  'l3-empty': 'h-2 w-2 border border-dashed border-surface-border bg-surface-base',
   'l3-timeout': 'h-2.5 w-2.5 bg-surface-border',
 };
 

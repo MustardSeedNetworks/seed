@@ -5,6 +5,49 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.214.60](https://github.com/MustardSeedNetworks/seed/compare/v0.214.59...v0.214.60) (2026-09-17)
+
+
+### Bug Fixes
+
+* **api:** send the licence feature catalogue to the UI ([#2703](https://github.com/MustardSeedNetworks/seed/issues/2703)) ([725f43a](https://github.com/MustardSeedNetworks/seed/commit/725f43a5f3df77dadd60cafe48cfb7283ac79eb7))
+* **discovery:** trace the path without a raw socket ([#2706](https://github.com/MustardSeedNetworks/seed/issues/2706)) ([9aca748](https://github.com/MustardSeedNetworks/seed/commit/9aca748d2ed82d9772f888fe88474c5f93b17a45)), closes [#2689](https://github.com/MustardSeedNetworks/seed/issues/2689)
+
+## [0.214.59](https://github.com/MustardSeedNetworks/seed/compare/v0.214.58...v0.214.59) (2026-09-16)
+
+
+### Bug Fixes
+
+* **ui:** adopt the corrected canonical theme ([#2701](https://github.com/MustardSeedNetworks/seed/issues/2701)) ([413eafc](https://github.com/MustardSeedNetworks/seed/commit/413eafc9165e144775d9b21d8826ca636fa4b9e9))
+* **ui:** complete contextual help and keyboard tooltips ([#2684](https://github.com/MustardSeedNetworks/seed/issues/2684)) ([9b44914](https://github.com/MustardSeedNetworks/seed/commit/9b449142d8f62cbb17226addee0d782dbab42267))
+
+## [0.214.58](https://github.com/MustardSeedNetworks/seed/compare/v0.214.57...v0.214.58) (2026-09-16)
+
+
+### Bug Fixes
+
+* **discovery:** scan the network by default on a fresh install ([#2693](https://github.com/MustardSeedNetworks/seed/issues/2693)) ([13c20f6](https://github.com/MustardSeedNetworks/seed/commit/13c20f6f62d9e5d98c40025956d38af4f0384a12))
+
+
+### Miscellaneous
+
+* **deps:** update module golang.org/x/vuln to v1.8.0 ([#2675](https://github.com/MustardSeedNetworks/seed/issues/2675)) ([3458099](https://github.com/MustardSeedNetworks/seed/commit/34580990338a9e2c893409b73e42c7a4d48dc888))
+
+## [0.214.57](https://github.com/MustardSeedNetworks/seed/compare/v0.214.56...v0.214.57) (2026-09-16)
+
+
+### Bug Fixes
+
+* **wifi:** preserve macOS hidden connection details ([#2681](https://github.com/MustardSeedNetworks/seed/issues/2681)) ([648806a](https://github.com/MustardSeedNetworks/seed/commit/648806a8629078e14dff5f4fcf832a295926a4ee))
+
+## [0.214.56](https://github.com/MustardSeedNetworks/seed/compare/v0.214.55...v0.214.56) (2026-09-16)
+
+
+### Tests
+
+* **database:** fix the open-hour history query fixture ([#2679](https://github.com/MustardSeedNetworks/seed/issues/2679)) ([a61d89f](https://github.com/MustardSeedNetworks/seed/commit/a61d89fe9df07f0dae1436236136bd7e849f320a))
+* **database:** observe the queued writer instead of sleeping past it ([#2668](https://github.com/MustardSeedNetworks/seed/issues/2668)) ([e597707](https://github.com/MustardSeedNetworks/seed/commit/e59770740a278e5f69a2ef61640d198d8a7f2372))
+
 ## [0.214.55](https://github.com/MustardSeedNetworks/seed/compare/v0.214.54...v0.214.55) (2026-09-15)
 
 

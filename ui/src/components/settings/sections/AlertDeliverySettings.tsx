@@ -1,3 +1,5 @@
+import { Info } from '../../ui/icons';
+import { Tooltip } from '../../ui/tooltip';
 /**
  * AlertDeliverySettings Component
  *
@@ -57,19 +59,36 @@ export const AlertDeliverySettings: React.NamedExoticComponent = memo(
             <span className="body-small font-medium text-text-primary">
               {t('alertDelivery.url')}
             </span>
-            <input
-              id="alert-webhook-url"
-              data-testid="alert-webhook-url"
-              type="url"
-              value={webhook.url}
-              disabled={!canWrite}
-              title={readOnlyReason}
-              placeholder={t('alertDelivery.urlPlaceholder')}
-              onChange={(e): void => {
-                setWebhook((current) => ({ ...current, url: e.target.value }));
-              }}
-              className={cn(inputTokens.base, 'w-full')}
-            />
+            <Tooltip text={readOnlyReason}>
+              {(description) => (
+                <span className="contents">
+                  <input
+                    {...description}
+                    id="alert-webhook-url"
+                    data-testid="alert-webhook-url"
+                    type="url"
+                    value={webhook.url}
+                    disabled={!canWrite}
+                    placeholder={t('alertDelivery.urlPlaceholder')}
+                    onChange={(e): void => {
+                      setWebhook((current) => ({ ...current, url: e.target.value }));
+                    }}
+                    className={cn(inputTokens.base, 'w-full')}
+                  />
+                  {!canWrite && readOnlyReason ? (
+                    <button
+                      type="button"
+                      {...description}
+                      aria-label={readOnlyReason}
+                      onClick={(event) => event.preventDefault()}
+                      className="inline-flex text-text-muted rounded focus-visible:outline focus-visible:outline-2 focus-visible:outline-brand-primary"
+                    >
+                      <Info className="h-4 w-4" aria-hidden="true" />
+                    </button>
+                  ) : null}
+                </span>
+              )}
+            </Tooltip>
             <span className="caption text-text-muted">{t('alertDelivery.urlHelp')}</span>
           </label>
 
@@ -77,24 +96,41 @@ export const AlertDeliverySettings: React.NamedExoticComponent = memo(
             <span className="body-small font-medium text-text-primary">
               {t('alertDelivery.secret')}
             </span>
-            <input
-              id="alert-webhook-secret"
-              data-testid="alert-webhook-secret"
-              type="password"
-              autoComplete="off"
-              value={webhook.secret}
-              disabled={!canWrite}
-              title={readOnlyReason}
-              placeholder={
-                webhook.secretSet
-                  ? t('alertDelivery.secretStored')
-                  : t('alertDelivery.secretPlaceholder')
-              }
-              onChange={(e): void => {
-                setWebhook((current) => ({ ...current, secret: e.target.value }));
-              }}
-              className={cn(inputTokens.base, 'w-full')}
-            />
+            <Tooltip text={readOnlyReason}>
+              {(description) => (
+                <span className="contents">
+                  <input
+                    {...description}
+                    id="alert-webhook-secret"
+                    data-testid="alert-webhook-secret"
+                    type="password"
+                    autoComplete="off"
+                    value={webhook.secret}
+                    disabled={!canWrite}
+                    placeholder={
+                      webhook.secretSet
+                        ? t('alertDelivery.secretStored')
+                        : t('alertDelivery.secretPlaceholder')
+                    }
+                    onChange={(e): void => {
+                      setWebhook((current) => ({ ...current, secret: e.target.value }));
+                    }}
+                    className={cn(inputTokens.base, 'w-full')}
+                  />
+                  {!canWrite && readOnlyReason ? (
+                    <button
+                      type="button"
+                      {...description}
+                      aria-label={readOnlyReason}
+                      onClick={(event) => event.preventDefault()}
+                      className="inline-flex text-text-muted rounded focus-visible:outline focus-visible:outline-2 focus-visible:outline-brand-primary"
+                    >
+                      <Info className="h-4 w-4" aria-hidden="true" />
+                    </button>
+                  ) : null}
+                </span>
+              )}
+            </Tooltip>
             <span className="caption text-text-muted">{t('alertDelivery.secretHelp')}</span>
           </label>
 
@@ -105,18 +141,23 @@ export const AlertDeliverySettings: React.NamedExoticComponent = memo(
           )}
 
           <div className={layout.inline.default}>
-            <button
-              type="button"
-              data-testid="alert-webhook-save"
-              disabled={!canWrite || status === 'saving'}
-              title={readOnlyReason}
-              onClick={(): void => {
-                saveWebhook().catch(() => undefined);
-              }}
-              className={cn(buttonTokens.base, buttonTokens.variant.primary, buttonTokens.size.sm)}
-            >
-              {t('alertDelivery.save')}
-            </button>
+            <Tooltip text={readOnlyReason}>
+              <button
+                type="button"
+                data-testid="alert-webhook-save"
+                disabled={!canWrite || status === 'saving'}
+                onClick={(): void => {
+                  saveWebhook().catch(() => undefined);
+                }}
+                className={cn(
+                  buttonTokens.base,
+                  buttonTokens.variant.primary,
+                  buttonTokens.size.sm,
+                )}
+              >
+                {t('alertDelivery.save')}
+              </button>
+            </Tooltip>
           </div>
         </div>
       </CollapsibleSection>

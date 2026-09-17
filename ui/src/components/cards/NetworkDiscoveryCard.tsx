@@ -15,6 +15,7 @@ import {
 } from '../../styles/theme';
 import { Card, CardValue, type Status } from '../ui/card';
 import { Maximize2, RefreshCw, ScanSearch } from '../ui/icons';
+import { Tooltip } from '../ui/tooltip';
 import { DiscoveryModal } from './DiscoveryModal';
 import { categorizeDevices, DiscoverySummary } from './NetworkDiscoveryCardHelpers';
 import type { NetworkDiscoveryData as _NetworkDiscoveryData } from './networkDiscoveryCardTypes';
@@ -184,21 +185,22 @@ export const NetworkDiscoveryCard: React.NamedExoticComponent<NetworkDiscoveryCa
         headerAction={
           <div className="flex items-center gap-compact">
             {/* Full Screen button */}
-            <button
-              type="button"
-              onClick={(): void => setIsModalOpen(true)}
-              data-testid="discovery-card-maximize"
-              className={cn(
-                'p-1.5',
-                'bg-surface-hover text-text-secondary',
-                radius.md,
-                'hover:bg-surface-border hover:text-text-primary transition-colors flex-center cursor-pointer',
-              )}
-              aria-label="Open full screen view"
-              title={t('discovery.fullScreen')}
-            >
-              <Maximize2 className={iconTokens.size.sm} aria-hidden="true" />
-            </button>
+            <Tooltip text={t('discovery.fullScreen')}>
+              <button
+                type="button"
+                onClick={(): void => setIsModalOpen(true)}
+                data-testid="discovery-card-maximize"
+                className={cn(
+                  'p-1.5',
+                  'bg-surface-hover text-text-secondary',
+                  radius.md,
+                  'hover:bg-surface-border hover:text-text-primary transition-colors flex-center cursor-pointer',
+                )}
+                aria-label="Open full screen view"
+              >
+                <Maximize2 className={iconTokens.size.sm} aria-hidden="true" />
+              </button>
+            </Tooltip>
 
             {/* Scan button */}
             <button

@@ -142,7 +142,10 @@
     "tableActions": "Actions",
     "viewAllDevices": "View All Devices",
     "snmpInfo": "SNMP Details",
-    "scanningPhase": "Scanning — {{phase}}"
+    "scanningPhase": "Scanning — {{phase}}",
+    "localMacHint": "Locally administered address: assigned locally rather than by the manufacturer.",
+    "exportCSV": "Export CSV",
+    "exportJSON": "Export JSON"
   },
   "pipeline": {
     "phaseProgress": "Phase {{current}} of {{total}}",
@@ -226,6 +229,11 @@
       "otherNetworks": "Other Networks",
       "noNetworksDetected": "No networks detected in {{band}} band",
       "tooltipChannel": "Channel {{channel}}"
+    },
+    "detailsWithheld": {
+      "title": "Wi-Fi details hidden",
+      "reason": "macOS Location Services withheld the network details from Seed. The Wi-Fi connection may still be active.",
+      "remediation": "Check the connection in System Settings > Wi-Fi. If the Seed Wi-Fi helper is installed, allow its Location Services access and keep its user session signed in. The standalone archive cannot request this permission."
     }
   },
   "cable": {
@@ -444,6 +452,7 @@
     "gateway": "Gateway",
     "ingressPort": "Ingress Port",
     "internet": "Internet",
+    "l3Unavailable": "No L3 router hops — {{reason}}",
     "layerL3": "Layer 3 hop",
     "noL2Hops": "No L2 switch hops — needs LLDP/CDP neighbors or SNMP",
     "protocol": "Protocol",

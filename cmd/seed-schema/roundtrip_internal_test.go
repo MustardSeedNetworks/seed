@@ -6,6 +6,7 @@ import (
 	"path/filepath"
 	"reflect"
 	"runtime"
+	"strings"
 	"testing"
 	"time"
 
@@ -200,6 +201,12 @@ func fillStruct(t *testing.T, typ reflect.Type) reflect.Value {
 			continue // explicitly excluded from the wire
 		}
 		out.Field(i).Set(fillValue(t, field.Type))
+		for tag := range strings.SplitSeq(field.Tag.Get("jsonschema"), ",") {
+			if value, ok := strings.CutPrefix(tag, "enum="); ok && field.Type.Kind() == reflect.String {
+				out.Field(i).SetString(value)
+				break
+			}
+		}
 	}
 
 	return out

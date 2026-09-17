@@ -83,6 +83,19 @@ neither is available the sweep does not run, and the discovery status stops
 listing `icmp` as an active method rather than reporting a scan that never
 happened.
 
+### What it does on its own
+
+Discovery runs without a Settings visit: it listens for LLDP, CDP and EDP, and
+sweeps the active interface's subnet with ARP and ICMP at startup, on an
+interface change, and every 60 seconds after that. What answers is profiled
+lightly — the quick port list plus name resolution — so a device arrives with a
+type rather than a bare address.
+
+The sweeps that act more loudly on the network wait for you: the full port scan,
+traceroute and SNMP queries are off until enabled, and SNMP also needs a
+credential in the vault. `seed platform` prints the same list for the machine it
+runs on, and the interval is a slider in Settings → Discovery.
+
 ### Install + run
 
 ```bash

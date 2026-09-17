@@ -8,6 +8,20 @@
         "interface": {
           "type": "string"
         },
+        "wireless": {
+          "type": "boolean"
+        },
+        "status": {
+          "type": "string",
+          "enum": [
+            "associated",
+            "detailsWithheld",
+            "notAssociated"
+          ]
+        },
+        "connected": {
+          "type": "boolean"
+        },
         "ssid": {
           "type": "string"
         },
@@ -25,18 +39,20 @@
         },
         "security": {
           "type": "string"
+        },
+        "reason": {
+          "type": "string"
+        },
+        "remediation": {
+          "type": "string"
         }
       },
       "additionalProperties": false,
       "type": "object",
       "required": [
         "interface",
-        "ssid",
-        "bssid",
-        "signal",
-        "channel",
-        "frequency",
-        "security"
+        "wireless",
+        "status"
       ]
     }
   },

@@ -23,11 +23,11 @@ export const overviewSections: HelpSection[] = [
     blocks: [
       {
         kind: 'paragraph',
-        text: 'The Seed is a network diagnostics and monitoring tool by Mustard Seed Networks. It gives you visibility into physical-layer link state, IP configuration, gateway and DNS reachability, device discovery, throughput, Wi-Fi connection quality, and endpoint health from a single dashboard.',
+        text: 'content.about.description',
       },
       {
-        kind: 'note',
-        text: 'The Seed is source-available software (BUSL-1.1). The version, backend commit, and build time are shown in the drawer header and at the /__version endpoint.',
+        kind: 'paragraph',
+        text: 'content.about.openSource.description',
       },
     ],
   },
@@ -38,44 +38,31 @@ export const overviewSections: HelpSection[] = [
     keywords: ['getting started', 'dashboard', 'interface', 'run tests', 'cards'],
     blocks: [
       {
-        kind: 'paragraph',
-        text: 'The dashboard shows a card for each diagnostic area. Each card displays live information about one aspect of your network and can be opened for detail.',
-      },
-      {
         kind: 'steps',
-        heading: 'First steps',
         ordered: true,
         items: [
           {
-            title: 'Select a network interface',
-            description:
-              'Use the interface selector in the header to choose which interface to monitor (for example eth0 or wlan0).',
+            title: 'content.gettingStarted.steps.interface.title',
+            description: 'content.gettingStarted.steps.interface.description',
           },
           {
-            title: 'Review the dashboard',
-            description:
-              'Each card reflects the selected interface. Cards update as the underlying tests run.',
+            title: 'content.gettingStarted.steps.dashboard.title',
+            description: 'content.gettingStarted.steps.dashboard.description',
           },
           {
-            title: 'Configure thresholds',
-            description:
-              'Open Settings to set warning and critical levels for metrics such as DNS latency, gateway ping, and Wi-Fi signal strength.',
+            title: 'content.gettingStarted.steps.thresholds.title',
+            description: 'content.gettingStarted.steps.thresholds.description',
           },
           {
-            title: 'Run tests',
-            description:
-              'Use the Run All Tests action to execute speed tests, discovery, and health checks together, or run an individual test from its card.',
+            title: 'content.gettingStarted.steps.runTests.title',
+            description: 'content.gettingStarted.steps.runTests.description',
           },
         ],
       },
       {
         kind: 'tips',
-        heading: 'Tips',
-        items: [
-          'Use Network Discovery to find every device on the local subnet.',
-          'Save per-site configuration as a Profile and switch between profiles from the header.',
-          'Export diagnostics for documentation or troubleshooting handoff.',
-        ],
+        heading: 'content.gettingStarted.proTips.title',
+        items: ['content.gettingStarted.proTips.tips.0', 'content.gettingStarted.proTips.tips.2'],
       },
     ],
   },
@@ -87,41 +74,36 @@ export const overviewSections: HelpSection[] = [
     blocks: [
       {
         kind: 'paragraph',
-        text: 'Profiles are saved configuration sets — thresholds, health-check targets, discovery settings, and interface preferences — so you can switch between clients, sites, or test scenarios without reconfiguring.',
+        text: 'content.profiles.description',
       },
       {
         kind: 'terms',
-        heading: 'What profiles store',
         items: [
           {
-            term: 'Site-specific settings',
-            description:
-              'Each profile can carry its own thresholds, health-check targets, and discovery settings tailored to that environment.',
+            term: 'content.profiles.features.clientSpecific.title',
+            description: 'content.profiles.features.clientSpecific.description',
           },
           {
-            term: 'Quick switching',
-            description:
-              'Switch profiles from the header; settings apply immediately without restarting the app.',
+            term: 'content.profiles.features.quickSwitch.title',
+            description: 'content.profiles.features.quickSwitch.description',
           },
           {
-            term: 'Export & import',
-            description:
-              'Export a profile as JSON to back it up or move it to another Seed installation, and import profiles from elsewhere.',
+            term: 'content.profiles.features.exportImport.title',
+            description: 'content.profiles.features.exportImport.description',
           },
           {
-            term: 'Default profile',
-            description:
-              'One profile can be marked as the default and loaded automatically on startup.',
+            term: 'content.profiles.features.defaultProfile.title',
+            description: 'content.profiles.features.defaultProfile.description',
           },
         ],
       },
       {
         kind: 'tips',
-        heading: 'Best practices',
+        heading: 'content.profiles.bestPractices.title',
         items: [
-          'Use descriptive profile names that identify the site or client and location.',
-          'Keep a baseline default profile with your standard settings.',
-          'Export a profile before making major changes so you have a backup.',
+          'content.profiles.bestPractices.tips.0',
+          'content.profiles.bestPractices.tips.1',
+          'content.profiles.bestPractices.tips.2',
         ],
       },
     ],

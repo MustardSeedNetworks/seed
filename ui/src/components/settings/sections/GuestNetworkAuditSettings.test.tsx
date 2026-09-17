@@ -132,12 +132,19 @@ describe('GuestNetworkAuditSettings', () => {
     await renderOpened();
 
     const section = screen.getByTestId('guest-audit-settings-section');
+    const explanations = within(section).getAllByRole('button', { name: /Read-only/ });
+    for (const explanation of explanations) {
+      expect(explanation).toBeEnabled();
+      expect(explanation).toHaveAccessibleDescription(/operator role/);
+    }
     for (const control of within(section).getAllByRole('button')) {
       // The section header itself is a button and stays operable.
-      if (control.textContent?.includes('Guest Network Audit')) {
+      if (control.textContent?.includes('Guest Network Audit') || explanations.includes(control)) {
         continue;
       }
-      expect(control).toBeDisabled();
+      expect(control).toHaveAttribute('aria-disabled', 'true');
+      await userEvent.click(control);
+      await userEvent.keyboard('{Enter} ');
     }
     expect(screen.getByLabelText('Target address')).toBeDisabled();
     expect(screen.getByLabelText('Run the audit')).toBeDisabled();

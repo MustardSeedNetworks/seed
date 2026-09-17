@@ -19,22 +19,34 @@ func isWirelessPlatform(iface string) bool {
 	return slices.Contains(names, iface)
 }
 
-// getInfoPlatform reports the current association on macOS.
-//
-// Returns nil when the interface is not associated, when the host has no Wi-Fi
-// adapter, or when Location Services authorization is missing — CoreWLAN
-// redacts the SSID and BSSID without it, and a record identifying no network is
-// worse than none.
-func getInfoPlatform(_ string, h Helper) *Info {
-	current, err := corewlan.Current()
+const (
+	withheldReason = "macOS Location Services withheld the network details from Seed. " +
+		"The Wi-Fi connection may still be active."
+	withheldRemediation = "Check the connection in System Settings > Wi-Fi. " +
+		"If the Seed Wi-Fi helper is installed, allow its Location Services access " +
+		"and keep its user session signed in. The standalone archive cannot request this permission."
+)
+
+// withheldExplanationPlatform explains the macOS state.
+func withheldExplanationPlatform() (string, string) {
+	return withheldReason, withheldRemediation
+}
+
+// CoreWLAN redaction conceals association state as well as network identifiers.
+func observePlatform(_ string, h Helper) Observation {
+	return observeCurrent(corewlan.Current, h)
+}
+
+func observeCurrent(read func() (*corewlan.Network, error), h Helper) Observation {
+	current, err := read()
 	if err != nil {
 		if h == nil || !shouldDelegate(err) {
-			return nil
+			return observationFromError(err)
 		}
 
 		viaHelper, helperErr := h.Current()
 		if helperErr != nil {
-			return nil
+			return observationFromError(err)
 		}
 		current = &corewlan.Network{
 			SSID: viaHelper.SSID, BSSID: viaHelper.BSSID, RSSI: viaHelper.RSSI,
@@ -43,14 +55,35 @@ func getInfoPlatform(_ string, h Helper) *Info {
 		}
 	}
 
-	return &Info{
-		SSID:      current.SSID,
-		BSSID:     current.BSSID,
-		Signal:    current.RSSI,
-		Channel:   current.Channel,
-		Frequency: channelToFrequencyInBand(current.Channel, int(current.Band)),
-		Security:  mapSecurityType(current.Security),
+	return Observation{
+		Status: StatusAssociated,
+		Info: &Info{
+			SSID:      current.SSID,
+			BSSID:     current.BSSID,
+			Signal:    current.RSSI,
+			Channel:   current.Channel,
+			Frequency: channelToFrequencyInBand(current.Channel, int(current.Band)),
+			Security:  mapSecurityType(current.Security),
+		},
 	}
+}
+
+func observationFromError(err error) Observation {
+	if errors.Is(err, corewlan.ErrLocationDenied) {
+		return Observation{
+			Status:      StatusDetailsWithheld,
+			Reason:      withheldReason,
+			Remediation: withheldRemediation,
+		}
+	}
+	return Observation{Status: StatusNotAssociated}
+}
+
+// getInfoPlatform reports the associated network, or nil when there is none to
+// report. Callers that need to tell "no network" from "a network this process
+// may not name" use [Manager.Observe] instead.
+func getInfoPlatform(iface string, h Helper) *Info {
+	return observePlatform(iface, h).Info
 }
 
 // connectPlatform joins a Wi-Fi network on macOS. Pass an empty password for an

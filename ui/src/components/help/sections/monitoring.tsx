@@ -23,46 +23,42 @@ export const monitoringSections: HelpSection[] = [
     blocks: [
       {
         kind: 'paragraph',
-        text: 'Health Checks monitor endpoint availability with automated ping, TCP, and HTTP tests.',
+        text: 'content.healthChecks.description',
       },
       {
         kind: 'terms',
-        heading: 'Check types',
+        heading: 'content.common.terms',
         items: [
           {
-            term: 'Ping (ICMP)',
-            description:
-              'Sends ICMP echo requests to verify reachability and report latency and packet loss.',
+            term: 'content.healthChecks.terms.pingTest.term',
+            description: 'content.healthChecks.terms.pingTest.description',
           },
           {
-            term: 'TCP connection',
-            description:
-              'Attempts a TCP handshake to a port to verify a service is accepting connections.',
+            term: 'content.healthChecks.terms.tcpTest.term',
+            description: 'content.healthChecks.terms.tcpTest.description',
           },
           {
-            term: 'HTTP',
-            description:
-              'Performs a full HTTP request including DNS, TCP, TLS, and response-time measurement.',
+            term: 'content.healthChecks.terms.httpTest.term',
+            description: 'content.healthChecks.terms.httpTest.description',
           },
           {
-            term: 'Custom targets',
-            description:
-              'Add your own endpoints to monitor in Settings — internal servers, cloud services, or critical infrastructure.',
+            term: 'content.healthChecks.terms.customTargets.term',
+            description: 'content.healthChecks.terms.customTargets.description',
           },
           {
-            term: 'Thresholds',
-            description:
-              'Set warning and critical latency thresholds in Settings to flag degraded endpoints.',
+            term: 'content.healthChecks.terms.thresholds.term',
+            description: 'content.healthChecks.terms.thresholds.description',
           },
         ],
       },
       {
         kind: 'tips',
-        heading: 'Common issues',
+        heading: 'content.healthChecks.commonIssues.title',
         items: [
-          'A timeout indicates the host is unreachable, a firewall is blocking, or there is a network-path problem.',
-          'High latency may indicate congestion, routing issues, or an overloaded server.',
-          'Connection refused means the service is not running or not listening on that port.',
+          'content.healthChecks.commonIssues.timeout',
+          'content.healthChecks.commonIssues.highLatency',
+          'content.healthChecks.commonIssues.packetLoss',
+          'content.healthChecks.commonIssues.connectionRefused',
         ],
       },
     ],
@@ -75,44 +71,56 @@ export const monitoringSections: HelpSection[] = [
     blocks: [
       {
         kind: 'paragraph',
-        text: 'RTSP Monitoring verifies connectivity to RTSP endpoints such as IP cameras, NVRs, and video-management systems.',
+        text: 'content.rtspChecks.description',
       },
       {
         kind: 'terms',
-        heading: 'Terms',
+        heading: 'content.common.terms',
         items: [
           {
-            term: 'RTSP URL',
-            description:
-              'The address of the stream, typically rtsp://host:port/path. Port 554 is the standard RTSP port.',
+            term: 'content.rtspChecks.terms.rtspUrl.term',
+            description: 'content.rtspChecks.terms.rtspUrl.description',
           },
           {
-            term: 'OPTIONS request',
-            description:
-              'An RTSP command that asks the server which methods it supports — a lightweight connectivity check.',
+            term: 'content.rtspChecks.terms.options.term',
+            description: 'content.rtspChecks.terms.options.description',
           },
           {
-            term: 'DESCRIBE request',
-            description:
-              'Requests the media description (SDP) to confirm the stream exists and is accessible.',
+            term: 'content.rtspChecks.terms.describe.term',
+            description: 'content.rtspChecks.terms.describe.description',
           },
           {
-            term: 'Authentication',
-            description:
-              'RTSP servers usually require a username and password; Basic and Digest authentication are supported.',
+            term: 'content.rtspChecks.terms.authentication.term',
+            description: 'content.rtspChecks.terms.authentication.description',
           },
         ],
       },
       {
         kind: 'steps',
-        heading: 'Configuring an endpoint',
+        heading: 'content.rtspChecks.configuration.title',
         ordered: true,
         items: [
-          { description: 'Open Settings and add an RTSP endpoint.' },
-          { description: 'Give it a descriptive name (for example "Lobby Camera 1").' },
-          { description: 'Enter the RTSP URL, for example rtsp://192.168.1.100:554/stream1.' },
-          { description: 'Add credentials if the camera requires them.' },
-          { description: 'Set the check interval and enable the endpoint to start monitoring.' },
+          {
+            description: 'content.rtspChecks.configuration.steps.0',
+          },
+          {
+            description: 'content.rtspChecks.configuration.steps.1',
+          },
+          {
+            description: 'content.rtspChecks.configuration.steps.2',
+          },
+          {
+            description: 'content.rtspChecks.configuration.steps.3',
+          },
+          {
+            description: 'content.rtspChecks.configuration.steps.4',
+          },
+          {
+            description: 'content.rtspChecks.configuration.steps.5',
+          },
+          {
+            description: 'content.rtspChecks.configuration.steps.6',
+          },
         ],
       },
     ],
@@ -125,37 +133,45 @@ export const monitoringSections: HelpSection[] = [
     blocks: [
       {
         kind: 'paragraph',
-        text: 'DICOM Health Checks verify connectivity to medical-imaging systems (CT, MRI, ultrasound, PACS) using C-ECHO — a DICOM equivalent of ping that confirms an association can be established.',
+        text: 'content.dicomChecks.description',
       },
       {
         kind: 'terms',
-        heading: 'Terms',
+        heading: 'content.common.terms',
         items: [
           {
-            term: 'AE Title',
-            description:
-              'Application Entity Title — a unique identifier (up to 16 characters) for a DICOM node. Both the calling (local) and called (remote) AE Titles must be configured correctly.',
+            term: 'content.dicomChecks.terms.aeTitle.term',
+            description: 'content.dicomChecks.terms.aeTitle.description',
           },
           {
-            term: 'C-ECHO',
-            description:
-              'The DICOM verification service — a "ping" that confirms the remote node is reachable and responding.',
+            term: 'content.dicomChecks.terms.cEcho.term',
+            description: 'content.dicomChecks.terms.cEcho.description',
           },
           {
-            term: 'Association',
-            description:
-              'A DICOM connection between two nodes. Both AE Titles must be registered in each other for an association to succeed.',
+            term: 'content.dicomChecks.terms.association.term',
+            description: 'content.dicomChecks.terms.association.description',
           },
           {
-            term: 'DICOM port',
-            description:
-              'The standard port is 104, but many systems use 11112 or a custom port. Confirm with your PACS administrator.',
+            term: 'content.dicomChecks.terms.scp.term',
+            description: 'content.dicomChecks.terms.scp.description',
+          },
+          {
+            term: 'content.dicomChecks.terms.scu.term',
+            description: 'content.dicomChecks.terms.scu.description',
+          },
+          {
+            term: 'content.dicomChecks.terms.port.term',
+            description: 'content.dicomChecks.terms.port.description',
           },
         ],
       },
       {
         kind: 'note',
-        text: 'C-ECHO is a non-destructive verification — it does not access patient data. Coordinate AE Title registration with your biomedical or IT team.',
+        text: 'content.dicomChecks.compliance.points.0',
+      },
+      {
+        kind: 'note',
+        text: 'content.dicomChecks.compliance.points.3',
       },
     ],
   },
@@ -175,56 +191,100 @@ export const monitoringSections: HelpSection[] = [
     blocks: [
       {
         kind: 'paragraph',
-        text: 'Security & Administration covers device scanning, posture assessment, and account administration — security posture for the network.',
+        text: 'content.security.description',
       },
       {
         kind: 'terms',
-        heading: 'Terms',
+        heading: 'content.common.terms',
         items: [
           {
-            term: 'Port scanning',
-            description:
-              'Identifies open ports on discovered devices to help spot unauthorized services or risks.',
+            term: 'content.security.terms.portScan.term',
+            description: 'content.security.terms.portScan.description',
           },
           {
-            term: 'Vulnerability scan',
-            description: 'Checks devices for known issues based on detected services and versions.',
+            term: 'content.security.terms.vulnScan.term',
+            description: 'content.security.terms.vulnScan.description',
           },
           {
-            term: 'Device posture',
-            description:
-              'Assesses the security posture of network devices — open ports, outdated services, and misconfigurations.',
+            term: 'content.security.terms.devicePosture.term',
+            description: 'content.security.terms.devicePosture.description',
           },
           {
-            term: 'Rogue DHCP detection',
-            description:
-              'Detects unauthorized DHCP servers that could intercept traffic or hand out malicious configuration.',
+            term: 'content.security.terms.rogueDhcp.term',
+            description: 'content.security.terms.rogueDhcp.description',
           },
         ],
       },
       {
         kind: 'steps',
-        heading: 'Password recovery',
+        heading: 'content.security.passwordRecovery.title',
         ordered: true,
         items: [
-          { description: 'SSH into the server running The Seed.' },
           {
-            description:
-              'Create an empty .recovery file in the data directory (user mode: ~/.local/share/seed/.recovery; system mode: /var/lib/seed/.recovery).',
+            description: 'content.security.passwordRecovery.steps.0',
           },
           {
-            description:
-              'The server detects the file and generates a single-use recovery token in .recovery-token in the same directory.',
+            description: 'content.security.passwordRecovery.steps.1',
           },
           {
-            description:
-              'Enter that token on the login page with your new password. The token expires after 15 minutes.',
+            description: 'content.security.passwordRecovery.steps.2',
+          },
+          {
+            description: 'content.security.passwordRecovery.steps.3',
+          },
+          {
+            description: 'content.security.passwordRecovery.steps.4',
+          },
+          {
+            description: 'content.security.passwordRecovery.steps.5',
+          },
+          {
+            description: 'content.security.passwordRecovery.steps.6',
+          },
+          {
+            description: 'content.security.passwordRecovery.steps.7',
           },
         ],
       },
       {
         kind: 'note',
-        text: 'Password recovery requires filesystem access to the server, which proves you have admin-level access to the machine.',
+        text: 'content.security.passwordRecovery.note',
+      },
+      {
+        kind: 'terms',
+        items: [
+          {
+            term: 'cards:mfa.title',
+            description: 'content.cardHelp.MfaCard.description',
+          },
+        ],
+      },
+      {
+        kind: 'terms',
+        items: [
+          {
+            term: 'cards:guestAudit.title',
+            description: 'content.cardHelp.GuestNetworkAuditCard.description',
+          },
+        ],
+      },
+      {
+        kind: 'terms',
+        items: [
+          {
+            term: 'cards:insecurePorts.title',
+            description: 'content.cardHelp.InsecurePortScanCard.description',
+          },
+        ],
+      },
+      {
+        kind: 'terms',
+        items: [
+          {
+            term: 'cards:bluetooth.title',
+            description: 'content.cardHelp.BluetoothCard.description',
+          },
+        ],
       },
     ],
   },

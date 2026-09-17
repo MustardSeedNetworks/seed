@@ -6,7 +6,7 @@
  * found on nine surfaces. This renders in both locales and requires the copy
  * to differ, which is the only assertion that can see that.
  */
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 

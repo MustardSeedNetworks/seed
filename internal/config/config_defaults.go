@@ -109,7 +109,7 @@ func defaultNetworkDiscoveryConfig() NetworkDiscoveryConfig {
 		},
 		Timing: DiscoveryTiming{
 			ProbeInterval:  defaultProbeIntervalMs * time.Millisecond,
-			RescanInterval: defaultRescanIntervalMin * time.Minute,
+			RescanInterval: defaultRescanIntervalSec * time.Second,
 			Workers:        defaultARPWorkers,
 		},
 		Fingerprinting: FingerprintingConfig{

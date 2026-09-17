@@ -126,6 +126,7 @@ describe('LinkPage — real locale copy', () => {
           link: null,
           cable: null,
           wifi: {
+            status: 'associated',
             ssid: 'msn-lab',
             bssid: '02:00:5e:00:00:01',
             channel: 36,

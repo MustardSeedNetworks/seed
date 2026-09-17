@@ -9,8 +9,8 @@
  */
 
 import type { JSX } from 'react';
-import { type ReactNode, Suspense } from 'react';
-import { Redirect, Route, Switch } from 'wouter';
+import { type ReactNode, Suspense, useEffect, useRef } from 'react';
+import { Redirect, Route, Switch, useLocation } from 'wouter';
 import { AppFooter } from '../components/app/AppFooter';
 import { CapabilityWarnings } from '../components/app/CapabilityWarnings';
 import { HeaderBar } from '../components/app/HeaderBar';
@@ -37,6 +37,7 @@ interface AppShellProps {
 export function AppShell({ orchestration, logout }: AppShellProps): JSX.Element {
   const navGroups = useNavGroups();
   const pages = usePages();
+  const [location] = useLocation();
   const {
     cards,
     loading,
@@ -81,6 +82,18 @@ export function AppShell({ orchestration, logout }: AppShellProps): JSX.Element 
     setPaletteOpen,
   } = orchestration;
 
+  const routePath = location.replace(/\/+$/, '') || '/';
+  const previousPath = useRef(routePath);
+  useEffect(() => {
+    if (routePath !== previousPath.current) {
+      previousPath.current = routePath;
+      closeHelp();
+    }
+  }, [routePath, closeHelp]);
+
+  const openPageHelp = (): void =>
+    openHelp(pages.find((page) => page.path === routePath)?.help ?? 'link');
+
   const appContextValue: AppContextValue = {
     cards,
     loading,
@@ -115,7 +128,7 @@ export function AppShell({ orchestration, logout }: AppShellProps): JSX.Element 
       switchToInterfaceType={switchToInterfaceType}
       toggleTheme={toggleTheme}
       isDark={isDark}
-      onHelpOpen={openHelp}
+      onHelpOpen={openPageHelp}
       onSettingsOpen={openSettings}
       logout={logout}
       recommendedEthernet={recommendedEthernet}
@@ -128,7 +141,7 @@ export function AppShell({ orchestration, logout }: AppShellProps): JSX.Element 
       <SidebarLayout
         groups={navGroups}
         version={appVersion}
-        onOpenHelp={openHelp}
+        onOpenHelp={openPageHelp}
         onOpenSettings={openSettings}
         onOpenProfiles={openProfiles}
         topBar={topBar}
@@ -188,7 +201,7 @@ export function AppShell({ orchestration, logout }: AppShellProps): JSX.Element 
         open={paletteOpen}
         onOpenChange={setPaletteOpen}
         onOpenSettings={openSettings}
-        onOpenHelp={openHelp}
+        onOpenHelp={openPageHelp}
         onToggleTheme={toggleTheme}
         isDark={isDark}
       />

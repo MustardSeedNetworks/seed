@@ -32,6 +32,10 @@ type Service struct {
 	rescanTicker *time.Ticker
 	stopCh       chan struct{}
 
+	// scanFunc performs a sweep. Nil means Scan; the seam exists so the
+	// background triggers can be observed without touching the network.
+	scanFunc func(context.Context) error
+
 	// Metrics tracking
 	metrics       *Metrics
 	previousScan  []*DiscoveredDevice // For delta computation
@@ -126,18 +130,10 @@ func (s *Service) Start() error {
 		go s.rescanLoop()
 	}
 
-	// Trigger initial scan asynchronously to populate subnet info immediately (fixes #XXX)
-	// This ensures GetStatus() returns valid subnet info without waiting for the first
-	// scheduled rescan or manual trigger from the frontend
+	// Sweep at once rather than waiting for the first tick, so GetStatus()
+	// reports a subnet and the pages have devices on them straight away.
 	if s.shouldDoActiveScanLocked() {
-		go func() {
-			ctx, cancel := context.WithTimeout(context.Background(), s.cfg.NetworkDiscovery.ScanTimeout)
-			defer cancel()
-			logging.GetLogger().Info("Triggering initial discovery scan on startup")
-			if err := s.Scan(ctx); err != nil {
-				logging.GetLogger().Warn("Initial discovery scan failed", "error", err)
-			}
-		}()
+		s.triggerScanLocked("startup")
 	}
 
 	return nil
@@ -360,13 +356,42 @@ func (s *Service) Reload() error {
 	return nil
 }
 
-// SetInterface changes the monitored network interface.
+// SetInterface changes the monitored network interface and sweeps it. Without
+// the sweep a host moved from Ethernet to Wi-Fi kept showing the old subnet's
+// devices until the rescan timer came round (seed#2674).
 func (s *Service) SetInterface(name string) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
 	s.interfaceName = name
-	return s.deviceDiscovery.SetInterface(name)
+	if err := s.deviceDiscovery.SetInterface(name); err != nil {
+		return err
+	}
+
+	if s.running && s.shouldDoActiveScanLocked() {
+		s.triggerScanLocked("interface change")
+	}
+
+	return nil
+}
+
+// triggerScanLocked sweeps in the background. The caller holds s.mu, which the
+// sweep itself takes, so it cannot run inline.
+func (s *Service) triggerScanLocked(reason string) {
+	scan := s.scanFunc
+	if scan == nil {
+		scan = s.Scan
+	}
+	timeout := s.cfg.NetworkDiscovery.ScanTimeout
+
+	go func() {
+		ctx, cancel := context.WithTimeout(context.Background(), timeout)
+		defer cancel()
+		logging.GetLogger().Info("Triggering discovery scan", "reason", reason)
+		if err := scan(ctx); err != nil {
+			logging.GetLogger().Warn("Discovery scan failed", "reason", reason, "error", err)
+		}
+	}()
 }
 
 // GetDevices returns all discovered devices with their profiles attached.

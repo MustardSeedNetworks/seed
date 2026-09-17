@@ -86,6 +86,7 @@ export const DNT_TERMS = [
   'MHz',
   'ms',
   // Products
+  'iperf3',
   'Seed',
   'Stem',
   'NIAC',

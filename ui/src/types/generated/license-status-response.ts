@@ -13,4 +13,5 @@ export interface LicenseStatusResponse {
   canMintTokens: boolean;
   activated: boolean;
   expiresAt?: string;
+  features: string[];
 }

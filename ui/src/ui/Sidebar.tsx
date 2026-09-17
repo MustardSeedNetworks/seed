@@ -25,6 +25,7 @@ import { createElement, type FC, type ReactNode, useEffect, useState } from 'rea
 import { useTranslation } from 'react-i18next';
 import { useLocation } from 'wouter';
 import { SeedLogo } from '../components/app/SeedLogo';
+import { Tooltip } from '../components/ui/tooltip';
 import { iconSizes } from '../constants/sizes';
 import { prefetchRoute } from '../utils/prefetch';
 import { safeGetItem, safeSetItem } from '../utils/storage';
@@ -77,59 +78,62 @@ interface NavItemButtonProps {
 }
 
 function badgeClass(badge: string): string {
-  if (badge === 'New') return 'bg-status-success/20 text-status-success';
-  if (badge === 'Beta') return 'bg-status-warning/20 text-status-warning';
+  if (badge === 'New') return 'bg-status-success/15 text-status-success';
+  if (badge === 'Beta') return 'bg-status-warning/15 text-status-warning';
   return 'bg-brand-primary/20 text-brand-accent';
 }
 
 const NavItemButton: FC<NavItemButtonProps> = ({ item, active, collapsed, onNavigate }) => (
-  <button
-    type="button"
-    onClick={() => onNavigate(item.path)}
-    onMouseEnter={() => prefetchRoute(item.path)}
-    aria-current={active ? 'page' : undefined}
-    /* 44px minimum target, 11px radius, and a 3px left bar for the active
+  <Tooltip text={collapsed ? item.label : undefined}>
+    <button
+      data-testid={`sidebar-nav-${item.path.slice(1)}`}
+      aria-label={item.label}
+      type="button"
+      onClick={() => onNavigate(item.path)}
+      onMouseEnter={() => prefetchRoute(item.path)}
+      aria-current={active ? 'page' : undefined}
+      /* 44px minimum target, 11px radius, and a 3px left bar for the active
        route. The bar carries the state rather than a gradient fill: a filled
        row competes with status colour, and the rail is chrome. */
-    className={`group relative flex items-center gap-default w-full min-h-11 px-3 py-2.5 rounded-[11px] text-sm font-medium transition-all duration-200 ${
-      active
-        ? 'bg-[color-mix(in_oklab,var(--color-brand-primary)_16%,transparent)] text-text-primary'
-        : 'text-text-muted hover:text-text-primary hover:bg-surface-hover'
-    }`}
-    title={collapsed ? item.label : undefined}
-  >
-    {active ? (
-      <span
-        aria-hidden="true"
-        className="absolute inset-y-1 left-0 w-[3px] rounded-full bg-brand-primary"
-      />
-    ) : null}
-    {createElement(item.icon, {
-      // Module accent (M1 follow-up): the icon carries the per-module brand
-      // colour the function-first nav moved off the group headers — dimmed at
-      // rest, full-strength when active. Items without a module accent keep the
-      // neutral→brand colouring.
-      className: `${iconSizes.lg} flex-shrink-0 ${
-        item.accent
-          ? active
-            ? item.accent
-            : `${item.accent} opacity-60 group-hover:opacity-100`
-          : active
-            ? 'text-brand-primary'
-            : 'text-text-muted group-hover:text-text-secondary'
-      }`,
-    })}
-    {!collapsed ? (
-      <>
-        <span className="flex-1 text-left truncate">{item.label}</span>
-        {item.badge ? (
-          <span className={`px-1.5 py-0.5 text-xs rounded font-medium ${badgeClass(item.badge)}`}>
-            {item.badge}
-          </span>
-        ) : null}
-      </>
-    ) : null}
-  </button>
+      className={`group relative flex items-center gap-default w-full min-h-11 px-3 py-2.5 rounded-[11px] text-sm font-medium transition-all duration-200 ${
+        active
+          ? 'bg-[color-mix(in_oklab,var(--color-brand-primary)_16%,transparent)] text-text-primary'
+          : 'text-text-muted hover:text-text-primary hover:bg-surface-hover'
+      }`}
+    >
+      {active ? (
+        <span
+          aria-hidden="true"
+          className="absolute inset-y-1 left-0 w-[3px] rounded-full bg-brand-primary"
+        />
+      ) : null}
+      {createElement(item.icon, {
+        // Module accent (M1 follow-up): the icon carries the per-module brand
+        // colour the function-first nav moved off the group headers — dimmed at
+        // rest, full-strength when active. Items without a module accent keep the
+        // neutral→brand colouring.
+        className: `${iconSizes.lg} flex-shrink-0 ${
+          item.accent
+            ? active
+              ? item.accent
+              : `${item.accent} opacity-60 group-hover:opacity-100`
+            : active
+              ? 'text-brand-primary'
+              : 'text-text-muted group-hover:text-text-secondary'
+        }`,
+      })}
+      {!collapsed ? (
+        <>
+          <span className="flex-1 text-left truncate">{item.label}</span>
+          {item.badge ? (
+            <span className={`px-1.5 py-0.5 text-xs rounded font-medium ${badgeClass(item.badge)}`}>
+              {item.badge}
+            </span>
+          ) : null}
+        </>
+      ) : null}
+    </button>
+  </Tooltip>
 );
 
 interface FooterIconButtonProps {
@@ -151,19 +155,20 @@ const FooterIconButton: FC<FooterIconButtonProps> = ({
   title,
   testId,
 }) => (
-  <button
-    type="button"
-    onClick={onClick}
-    data-testid={testId}
-    className={`${collapsed ? 'w-full' : 'flex-1'} flex items-center ${
-      collapsed ? 'justify-center' : 'gap-compact'
-    } px-3 py-row rounded-lg text-text-muted hover:text-text-primary hover:bg-surface-hover transition-colors text-sm font-medium`}
-    title={title}
-    aria-label={title}
-  >
-    {createElement(icon, { className: `${iconSizes.md} flex-shrink-0` })}
-    {!collapsed ? <span>{label}</span> : null}
-  </button>
+  <Tooltip text={title}>
+    <button
+      type="button"
+      onClick={onClick}
+      data-testid={testId}
+      className={`${collapsed ? 'w-full' : 'flex-1'} flex items-center ${
+        collapsed ? 'justify-center' : 'gap-compact'
+      } px-3 py-row rounded-lg text-text-muted hover:text-text-primary hover:bg-surface-hover transition-colors text-sm font-medium`}
+      aria-label={title}
+    >
+      {createElement(icon, { className: `${iconSizes.md} flex-shrink-0` })}
+      {!collapsed ? <span>{label}</span> : null}
+    </button>
+  </Tooltip>
 );
 
 interface SidebarHeaderProps {
@@ -191,15 +196,16 @@ const SidebarHeader: FC<SidebarHeaderProps> = ({ collapsed, onCollapse }) => {
         ) : null}
       </div>
       {!collapsed ? (
-        <button
-          type="button"
-          onClick={onCollapse}
-          className="p-1.5 rounded-lg text-text-muted hover:text-text-primary hover:bg-surface-hover transition-colors lg:flex hidden"
-          title="Collapse sidebar"
-          aria-label="Collapse sidebar"
-        >
-          <ChevronLeft className={iconSizes.md} />
-        </button>
+        <Tooltip text={t('accessibility.collapseSidebar')}>
+          <button
+            type="button"
+            onClick={onCollapse}
+            className="p-1.5 rounded-lg text-text-muted hover:text-text-primary hover:bg-surface-hover transition-colors lg:flex hidden"
+            aria-label={t('accessibility.collapseSidebar')}
+          >
+            <ChevronLeft className={iconSizes.md} />
+          </button>
+        </Tooltip>
       ) : null}
     </div>
   );
@@ -223,16 +229,17 @@ interface FullWidthDrawerButtonProps {
 }
 
 const FullWidthDrawerButton: FC<FullWidthDrawerButtonProps> = ({ onClick, icon, label, title }) => (
-  <button
-    type="button"
-    onClick={onClick}
-    className="w-full mb-heading flex items-center gap-compact px-3 py-row rounded-lg text-text-muted hover:text-text-primary hover:bg-surface-hover transition-colors text-sm font-medium"
-    title={title}
-    aria-label={title}
-  >
-    {createElement(icon, { className: `${iconSizes.md} flex-shrink-0` })}
-    <span>{label}</span>
-  </button>
+  <Tooltip text={title}>
+    <button
+      type="button"
+      onClick={onClick}
+      className="w-full mb-heading flex items-center gap-compact px-3 py-row rounded-lg text-text-muted hover:text-text-primary hover:bg-surface-hover transition-colors text-sm font-medium"
+      aria-label={title}
+    >
+      {createElement(icon, { className: `${iconSizes.md} flex-shrink-0` })}
+      <span>{label}</span>
+    </button>
+  </Tooltip>
 );
 
 const SidebarFooter: FC<SidebarFooterProps> = ({
@@ -243,71 +250,75 @@ const SidebarFooter: FC<SidebarFooterProps> = ({
   onOpenHistory,
   onOpenProfiles,
   onExpand,
-}) => (
-  <div className={`px-3 py-4 border-t border-surface-border ${collapsed ? 'text-center' : ''}`}>
-    <div className={`${collapsed ? 'stack-sm' : 'flex items-center gap-compact'} mb-heading`}>
-      {onOpenHelp ? (
-        <FooterIconButton
-          collapsed={collapsed}
-          onClick={() => onOpenHelp()}
-          icon={HelpCircle}
-          label="Help"
-          testId="sidebar-help-button"
-          title="Open help"
+}) => {
+  const { t } = useTranslation();
+  return (
+    <div className={`px-3 py-4 border-t border-surface-border ${collapsed ? 'text-center' : ''}`}>
+      <div className={`${collapsed ? 'stack-sm' : 'flex items-center gap-compact'} mb-heading`}>
+        {onOpenHelp ? (
+          <FooterIconButton
+            collapsed={collapsed}
+            onClick={() => onOpenHelp()}
+            icon={HelpCircle}
+            label={t('labels.help')}
+            testId="sidebar-help-button"
+            title={t('accessibility.openHelp')}
+          />
+        ) : null}
+        {onOpenSettings ? (
+          <FooterIconButton
+            collapsed={collapsed}
+            onClick={onOpenSettings}
+            icon={Settings}
+            label={t('labels.settings')}
+            testId="sidebar-settings-button"
+            title={t('accessibility.openSettings')}
+          />
+        ) : null}
+      </div>
+
+      {onOpenHistory && !collapsed ? (
+        <FullWidthDrawerButton
+          onClick={onOpenHistory}
+          icon={History}
+          label={t('labels.history')}
+          title={t('accessibility.openHistory')}
         />
       ) : null}
-      {onOpenSettings ? (
-        <FooterIconButton
-          collapsed={collapsed}
-          onClick={onOpenSettings}
-          icon={Settings}
-          label="Settings"
-          testId="sidebar-settings-button"
-          title="Open settings"
+
+      {onOpenProfiles && !collapsed ? (
+        <FullWidthDrawerButton
+          onClick={onOpenProfiles}
+          icon={Users}
+          label={t('labels.manageProfiles')}
+          title={t('accessibility.manageProfiles')}
         />
+      ) : null}
+
+      {version ? (
+        <div className={`text-xs font-mono text-text-muted ${collapsed ? '' : 'flex-between'}`}>
+          {!collapsed ? <span>{t('labels.version')}</span> : null}
+          <span>{version}</span>
+        </div>
+      ) : null}
+      {/* Whose tool this is, under what it is. Quiet by design: the product mark
+        at the top of the rail is the one that has to be recognised. */}
+      <MsnMark collapsed={collapsed} className="mt-heading" />
+      {collapsed ? (
+        <Tooltip text={t('accessibility.expandSidebar')}>
+          <button
+            type="button"
+            onClick={onExpand}
+            className="mt-inline p-1.5 rounded-lg text-text-muted hover:text-text-primary hover:bg-surface-hover transition-colors"
+            aria-label={t('accessibility.expandSidebar')}
+          >
+            <ChevronRight className={iconSizes.md} />
+          </button>
+        </Tooltip>
       ) : null}
     </div>
-
-    {onOpenHistory && !collapsed ? (
-      <FullWidthDrawerButton
-        onClick={onOpenHistory}
-        icon={History}
-        label="History"
-        title="Open test history"
-      />
-    ) : null}
-
-    {onOpenProfiles && !collapsed ? (
-      <FullWidthDrawerButton
-        onClick={onOpenProfiles}
-        icon={Users}
-        label="Manage Profiles"
-        title="Create, edit, and delete profiles"
-      />
-    ) : null}
-
-    {version ? (
-      <div className={`text-xs font-mono text-text-muted ${collapsed ? '' : 'flex-between'}`}>
-        {!collapsed ? <span>Version</span> : null}
-        <span>{version}</span>
-      </div>
-    ) : null}
-    {/* Whose tool this is, under what it is. Quiet by design: the product mark
-        at the top of the rail is the one that has to be recognised. */}
-    <MsnMark collapsed={collapsed} className="mt-heading" />
-    {collapsed ? (
-      <button
-        type="button"
-        onClick={onExpand}
-        className="mt-inline p-1.5 rounded-lg text-text-muted hover:text-text-primary hover:bg-surface-hover transition-colors"
-        title="Expand sidebar"
-        aria-label="Expand sidebar"
-      >
-        <ChevronRight className={iconSizes.md} />
-      </button>
-    ) : null}
-  </div>
-);
+  );
+};
 
 interface SidebarBodyProps {
   groups: SidebarNavGroup[];
@@ -394,15 +405,17 @@ const MobileTopBar: FC<MobileTopBarProps> = ({ mobileOpen, toggleMobile }) => {
         <SeedLogo badge badgeClassName="h-8 w-8" glyphClassName={iconSizes.md} />
         <span className="font-display font-bold text-text-primary">{t('app.title')}</span>
       </div>
-      <button
-        type="button"
-        onClick={toggleMobile}
-        className="pad-xs rounded-lg text-text-muted hover:text-text-primary hover:bg-surface-hover transition-colors"
-        title={mobileOpen ? 'Close menu' : 'Open menu'}
-        aria-label={mobileOpen ? 'Close menu' : 'Open menu'}
-      >
-        {mobileOpen ? <X className={iconSizes.lg} /> : <Menu className={iconSizes.lg} />}
-      </button>
+      <Tooltip text={mobileOpen ? t('accessibility.closeMenu') : t('accessibility.openMenu')}>
+        <button
+          type="button"
+          onClick={toggleMobile}
+          data-testid="mobile-menu-toggle"
+          className="pad-xs rounded-lg text-text-muted hover:text-text-primary hover:bg-surface-hover transition-colors"
+          aria-label={mobileOpen ? t('accessibility.closeMenu') : t('accessibility.openMenu')}
+        >
+          {mobileOpen ? <X className={iconSizes.lg} /> : <Menu className={iconSizes.lg} />}
+        </button>
+      </Tooltip>
     </header>
   );
 };

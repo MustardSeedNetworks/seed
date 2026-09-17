@@ -42,6 +42,24 @@ func runPlatform(w io.Writer) {
 	default:
 		writeStr(w, "Platform "+runtime.GOOS+" is not fully supported.\n")
 	}
+
+	printDiscoveryDefaults(w)
+}
+
+// printDiscoveryDefaults states what the daemon does to the network on its own.
+// An install that is never opened in Settings still sweeps, so the operator is
+// told which methods that covers and which wait for them (seed#2674).
+func printDiscoveryDefaults(w io.Writer) {
+	writeStr(w, "\nDISCOVERY DEFAULTS (no Settings visit required):\n")
+	writeStr(w, "  • Passive listening: LLDP, CDP and EDP on the active interface\n")
+	writeStr(w, "  • ARP sweep of the interface's subnet, at startup, on an\n")
+	writeStr(w, "    interface change, and every 60s after that\n")
+	writeStr(w, "  • ICMP sweep of the same subnet — needs a raw socket, so an\n")
+	writeStr(w, "    unprivileged daemon reports it unavailable rather than silent\n")
+	writeStr(w, "  • Light profiling of what answers: the quick port list plus\n")
+	writeStr(w, "    name resolution, to give each device a type\n")
+	writeStr(w, "  • Off until you turn them on: full port scan, traceroute, SNMP\n")
+	writeStr(w, "    queries (SNMP also needs a credential in the vault)\n")
 }
 
 func writeStr(w io.Writer, s string) {
@@ -75,12 +93,16 @@ func printDarwinCapabilities(w io.Writer) {
 	writeStr(w, "macOS Platform - Partial Support\n\n")
 	writeStr(w, "✓ FULLY SUPPORTED:\n")
 	writeStr(w, "  • Interface configuration (networksetup)\n")
-	writeStr(w, "  • Wi-Fi scanning and connection (CoreWLAN)\n")
 	writeStr(w, "  • ARP/NDP neighbor discovery\n")
 	writeStr(w, "  • Gateway and DNS detection\n")
 	writeStr(w, "  • DHCP lease information\n")
 	writeStr(w, "  • Link status monitoring\n\n")
 	writeStr(w, "⚠ LIMITED SUPPORT:\n")
+	writeStr(w, "  • Wi-Fi details and scans (CoreWLAN) - macOS Location Services\n")
+	writeStr(w, "    can withhold network names. A separately installed, authorized\n")
+	writeStr(w, "    Wi-Fi helper can read them from its signed-in user session.\n")
+	writeStr(w, "    The standalone archive cannot request this permission.\n")
+	writeStr(w, "    Check the connection in System Settings > Wi-Fi.\n")
 	writeStr(w, "  • Speed/duplex detection - basic only\n")
 	writeStr(w, "  • PHY layer information - limited access\n")
 	writeStr(w, "  • Bluetooth scanning - system API restrictions\n")

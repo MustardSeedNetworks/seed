@@ -7,10 +7,15 @@
  */
 export interface WiFiResponse {
   interface: string;
-  ssid: string;
-  bssid: string;
-  signal: number;
-  channel: number;
-  frequency: number;
-  security: string;
+  wireless: boolean;
+  status: 'associated' | 'detailsWithheld' | 'notAssociated';
+  connected?: boolean;
+  ssid?: string;
+  bssid?: string;
+  signal?: number;
+  channel?: number;
+  frequency?: number;
+  security?: string;
+  reason?: string;
+  remediation?: string;
 }

@@ -1,17 +1,5 @@
-/**
- * LogViewerModal - Full-screen modal for viewing system logs.
- *
- * Opens as a large modal overlay (similar to Help dialog) for better readability.
- * Fixes GitHub issues #721, #386 - cramped UI, hard to read, no obvious close.
- *
- * Features:
- * - Full-screen modal with backdrop
- * - Large, readable fonts
- * - Clear close button in header
- * - Keyboard support (Escape to close)
- * - Export buttons prominently displayed
- * - All existing filter/search functionality
- */
+import { Tooltip } from '../ui/tooltip';
+/** Full-screen log filtering, streaming and export. */
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -42,7 +30,6 @@ function getStreamingToggleHint(
   return streaming ? t('logs.streamingHint') : t('logs.pausedHint');
 }
 
-// Filter badge component
 interface FilterBadgeProps {
   label: string;
   active: boolean;
@@ -120,7 +107,7 @@ function LogEntryRow({ entry, expanded, onToggle, onClose }: LogEntryRowProps): 
 
         {/* Component badge */}
         {entry.component ? (
-          <span className={cn('px-3 py-compact', radius.default, 'bg-cat-6/20 text-cat-6 text-sm')}>
+          <span className={cn('px-3 py-compact', radius.default, 'bg-cat-6/15 text-cat-6 text-sm')}>
             {entry.component}
           </span>
         ) : null}
@@ -131,7 +118,7 @@ function LogEntryRow({ entry, expanded, onToggle, onClose }: LogEntryRowProps): 
             className={cn(
               'px-3 py-compact',
               radius.default,
-              'bg-status-info/20 text-status-info text-sm font-mono',
+              'bg-status-info/15 text-status-info text-sm font-mono',
             )}
           >
             {entry.requestId.substring(0, 8)}
@@ -139,9 +126,9 @@ function LogEntryRow({ entry, expanded, onToggle, onClose }: LogEntryRowProps): 
         ) : null}
 
         {/* Message - larger, don't truncate as aggressively */}
-        <span className={cn(colors.text, 'flex-1 text-base')} title={entry.message}>
-          {entry.message}
-        </span>
+        <Tooltip text={entry.message}>
+          <span className={cn(colors.text, 'flex-1 text-base')}>{entry.message}</span>
+        </Tooltip>
 
         {/* Duration badge */}
         {entry.durationMs !== undefined && entry.durationMs > 0 ? (
@@ -149,7 +136,7 @@ function LogEntryRow({ entry, expanded, onToggle, onClose }: LogEntryRowProps): 
             className={cn(
               'px-3 py-compact',
               radius.default,
-              'bg-status-success/20 text-status-success text-sm',
+              'bg-status-success/15 text-status-success text-sm',
             )}
           >
             {entry.durationMs}ms
@@ -567,125 +554,132 @@ export function LogViewerModal({ isOpen, onClose }: LogViewerModalProps): React.
 
           <div className={cn('flex items-center', spacing.gap.comfortable)}>
             {/* Streaming toggle */}
-            <button
-              type="button"
-              onClick={() => setIsStreaming(!isStreaming)}
-              title={getStreamingToggleHint(
+            <Tooltip
+              text={getStreamingToggleHint(
                 isStreaming,
                 t as unknown as (k: string, f?: string) => string,
               )}
-              className={cn(
-                button.size.md,
-                radius.lg,
-                'font-medium transition-colors',
-                isStreaming
-                  ? 'bg-status-success text-text-inverse hover:brightness-90'
-                  : 'bg-surface-base text-text-primary hover:bg-surface-hover border border-surface-border',
-              )}
             >
-              {isStreaming ? t('logs.streaming') : t('logs.paused')}
-            </button>
+              <button
+                type="button"
+                onClick={() => setIsStreaming(!isStreaming)}
+                className={cn(
+                  button.size.md,
+                  radius.lg,
+                  'font-medium transition-colors',
+                  isStreaming
+                    ? 'bg-status-success text-text-inverse hover:brightness-90'
+                    : 'bg-surface-base text-text-primary hover:bg-surface-hover border border-surface-border',
+                )}
+              >
+                {isStreaming ? t('logs.streaming') : t('logs.paused')}
+              </button>
+            </Tooltip>
 
             {/* Clear logs */}
-            <button
-              type="button"
-              className={cn(
-                button.size.md,
-                radius.lg,
-                'border border-surface-border hover:bg-surface-hover',
-              )}
-              onClick={clearLogs}
-              title={t('logs.clearHint')}
-            >
-              {t('logs.clear')}
-            </button>
+            <Tooltip text={t('logs.clearHint')}>
+              <button
+                type="button"
+                className={cn(
+                  button.size.md,
+                  radius.lg,
+                  'border border-surface-border hover:bg-surface-hover',
+                )}
+                onClick={clearLogs}
+              >
+                {t('logs.clear')}
+              </button>
+            </Tooltip>
 
             {/* Export JSON */}
-            <button
-              type="button"
-              className={cn(
-                button.size.md,
-                radius.lg,
-                'border border-surface-border hover:bg-surface-hover',
-                'flex items-center gap-compact',
-              )}
-              onClick={exportJson}
-              title={t('logs.exportJsonHint')}
-            >
-              <svg
-                className="w-4 h-4"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-                aria-hidden="true"
+            <Tooltip text={t('logs.exportJsonHint')}>
+              <button
+                type="button"
+                className={cn(
+                  button.size.md,
+                  radius.lg,
+                  'border border-surface-border hover:bg-surface-hover',
+                  'flex items-center gap-compact',
+                )}
+                onClick={exportJson}
               >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"
-                />
-              </svg>
-              JSON
-            </button>
+                <svg
+                  className="w-4 h-4"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                  aria-hidden="true"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"
+                  />
+                </svg>
+                JSON
+              </button>
+            </Tooltip>
 
             {/* Export CSV */}
-            <button
-              type="button"
-              className={cn(
-                button.size.md,
-                radius.lg,
-                'border border-surface-border hover:bg-surface-hover',
-                'flex items-center gap-compact',
-              )}
-              onClick={exportCsv}
-              title={t('logs.exportCsvHint')}
-            >
-              <svg
-                className="w-4 h-4"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-                aria-hidden="true"
+            <Tooltip text={t('logs.exportCsvHint')}>
+              <button
+                type="button"
+                className={cn(
+                  button.size.md,
+                  radius.lg,
+                  'border border-surface-border hover:bg-surface-hover',
+                  'flex items-center gap-compact',
+                )}
+                onClick={exportCsv}
               >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"
-                />
-              </svg>
-              CSV
-            </button>
+                <svg
+                  className="w-4 h-4"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                  aria-hidden="true"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"
+                  />
+                </svg>
+                CSV
+              </button>
+            </Tooltip>
 
             {/* Close button */}
-            <button
-              type="button"
-              onClick={onClose}
-              className={cn(
-                'pad-xs',
-                'text-text-muted',
-                'hover:text-text-primary',
-                'transition-colors',
-                radius.lg,
-                'hover:bg-surface-base',
-              )}
-              title={t('logs.close')}
-              aria-label={t('logs.close')}
-            >
-              <svg
-                className={iconTokens.size.lg}
-                viewBox="0 0 20 20"
-                fill="currentColor"
-                aria-hidden="true"
+            <Tooltip text={t('logs.close')}>
+              <button
+                type="button"
+                onClick={onClose}
+                className={cn(
+                  'pad-xs',
+                  'text-text-muted',
+                  'hover:text-text-primary',
+                  'transition-colors',
+                  radius.lg,
+                  'hover:bg-surface-base',
+                )}
+                aria-label={t('logs.close')}
               >
-                <path
-                  fillRule="evenodd"
-                  d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
-                  clipRule="evenodd"
-                />
-              </svg>
-            </button>
+                <svg
+                  className={iconTokens.size.lg}
+                  viewBox="0 0 20 20"
+                  fill="currentColor"
+                  aria-hidden="true"
+                >
+                  <path
+                    fillRule="evenodd"
+                    d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
+                    clipRule="evenodd"
+                  />
+                </svg>
+              </button>
+            </Tooltip>
           </div>
         </div>
 

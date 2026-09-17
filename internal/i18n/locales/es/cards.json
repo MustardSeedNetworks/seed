@@ -142,7 +142,10 @@
     "tableActions": "Acciones",
     "viewAllDevices": "Ver Todos los Dispositivos",
     "snmpInfo": "Detalles SNMP",
-    "scanningPhase": "Escaneando — {{phase}}"
+    "scanningPhase": "Escaneando — {{phase}}",
+    "localMacHint": "Dirección administrada localmente: asignada de forma local y no por el fabricante.",
+    "exportCSV": "Exportar CSV",
+    "exportJSON": "Exportar JSON"
   },
   "pipeline": {
     "phaseProgress": "Fase {{current}} de {{total}}",
@@ -226,6 +229,11 @@
       "otherNetworks": "Otras redes",
       "noNetworksDetected": "No se detectaron redes en la banda {{band}}",
       "tooltipChannel": "Canal {{channel}}"
+    },
+    "detailsWithheld": {
+      "title": "Detalles de Wi-Fi ocultos",
+      "reason": "Los servicios de localización de macOS ocultaron los detalles de la red a Seed. La conexión Wi-Fi puede seguir activa.",
+      "remediation": "Comprueba la conexión en Ajustes del Sistema > Wi-Fi. Si el asistente de Wi-Fi de Seed está instalado, permite su acceso a los servicios de localización y mantén abierta su sesión de usuario. El archivo independiente no puede solicitar este permiso."
     }
   },
   "cable": {
@@ -444,6 +452,7 @@
     "gateway": "Puerta de enlace",
     "ingressPort": "Puerto de entrada",
     "internet": "Internet",
+    "l3Unavailable": "Sin saltos de enrutador L3 — {{reason}}",
     "layerL3": "Salto de capa 3",
     "noL2Hops": "Sin saltos de switch L2 — requiere vecinos LLDP/CDP o SNMP",
     "protocol": "Protocolo",

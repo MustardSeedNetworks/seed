@@ -1,3 +1,4 @@
+import { Tooltip } from '../../ui/tooltip';
 /**
  * HealthChecksSettings Component (~449 lines)
  *
@@ -254,21 +255,27 @@ export const HealthChecksSettings: React.NamedExoticComponent<HealthChecksSettin
                   placeholder={t('common.hostIp')}
                   className={cn(input.base, input.state.default, input.size.md, 'flex-1')}
                 />
-                <input
-                  type="number"
-                  value={target.count || 3}
-                  onChange={(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>): void =>
-                    updatePingTarget(
-                      target.id ?? '',
-                      'count',
-                      Number.parseInt(e.target.value, 10) || 3,
-                    )
-                  }
-                  min={1}
-                  max={10}
-                  title={t('health.numberOfPings')}
-                  className={cn(input.base, input.state.default, input.size.md, 'w-14 text-center')}
-                />
+                <Tooltip text={t('health.numberOfPings')}>
+                  <input
+                    type="number"
+                    value={target.count || 3}
+                    onChange={(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>): void =>
+                      updatePingTarget(
+                        target.id ?? '',
+                        'count',
+                        Number.parseInt(e.target.value, 10) || 3,
+                      )
+                    }
+                    min={1}
+                    max={10}
+                    className={cn(
+                      input.base,
+                      input.state.default,
+                      input.size.md,
+                      'w-14 text-center',
+                    )}
+                  />
+                </Tooltip>
                 <button
                   type="button"
                   onClick={(): void => removePingTarget(target.id ?? '')}

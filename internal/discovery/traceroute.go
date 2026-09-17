@@ -166,12 +166,29 @@ func (t *Tracer) resolveHostname(ip string) string {
 	return ""
 }
 
-// setHopFromPeer sets hop IP and hostname from a peer address.
+// setHopFromPeer sets hop IP and hostname from a peer address. A raw ICMP
+// socket reports the hop as a [net.IPAddr] and the datagram socket as a
+// [net.UDPAddr] with a zero port (seed#2689); either names the same router.
 func (t *Tracer) setHopFromPeer(hop *TracerouteHop, peer net.Addr) {
-	if peerIP, ok := peer.(*net.IPAddr); ok {
-		hop.IP = peerIP.IP.String()
-		hop.Hostname = t.resolveHostname(hop.IP)
+	switch addr := peer.(type) {
+	case *net.IPAddr:
+		hop.IP = addr.IP.String()
+	case *net.UDPAddr:
+		hop.IP = addr.IP.String()
+	default:
+		return
 	}
+	hop.Hostname = t.resolveHostname(hop.IP)
+}
+
+// icmpDestination is the address an ICMP probe is written to, which differs
+// with the socket the tracer got: a raw listener addresses a [net.IPAddr] and
+// the datagram socket a [net.UDPAddr] (its port is unused by ICMP).
+func icmpDestination(targetIP net.IP, privileged bool) net.Addr {
+	if privileged {
+		return &net.IPAddr{IP: targetIP}
+	}
+	return &net.UDPAddr{IP: targetIP}
 }
 
 // isConnectionRefused checks if an error indicates a TCP connection was refused.

@@ -1,3 +1,4 @@
+import { Tooltip } from '../components/ui/tooltip';
 /**
  * AlertsPage — List + detail.
  *
@@ -156,34 +157,36 @@ export function AlertsPage(): JSX.Element {
             actions={
               <>
                 {!selected.acknowledged ? (
-                  <button
-                    type="button"
-                    onClick={(): void => {
-                      void acknowledge(selected.id);
-                    }}
-                    disabled={!canWrite}
-                    title={readOnlyReason}
-                    data-testid="alert-acknowledge"
-                    className="inline-flex items-center gap-tight rounded-md border border-surface-border px-3 py-2 text-sm text-text-primary hover:bg-surface-hover disabled:cursor-not-allowed disabled:opacity-50"
-                  >
-                    <Check className="h-3.5 w-3.5" />
-                    {t('alerts.acknowledge')}
-                  </button>
+                  <Tooltip text={readOnlyReason}>
+                    <button
+                      type="button"
+                      onClick={(): void => {
+                        void acknowledge(selected.id);
+                      }}
+                      disabled={!canWrite}
+                      data-testid="alert-acknowledge"
+                      className="inline-flex items-center gap-tight rounded-md border border-surface-border px-3 py-2 text-sm text-text-primary hover:bg-surface-hover disabled:cursor-not-allowed disabled:opacity-50"
+                    >
+                      <Check className="h-3.5 w-3.5" />
+                      {t('alerts.acknowledge')}
+                    </button>
+                  </Tooltip>
                 ) : null}
                 {!selected.resolved ? (
-                  <button
-                    type="button"
-                    onClick={(): void => {
-                      void resolve(selected.id);
-                    }}
-                    disabled={!canWrite}
-                    title={readOnlyReason}
-                    data-testid="alert-resolve"
-                    className="inline-flex items-center gap-tight rounded-md border border-surface-border px-3 py-2 text-sm text-text-primary hover:bg-surface-hover disabled:cursor-not-allowed disabled:opacity-50"
-                  >
-                    <CheckCircle2 className="h-3.5 w-3.5" />
-                    {t('alerts.resolve')}
-                  </button>
+                  <Tooltip text={readOnlyReason}>
+                    <button
+                      type="button"
+                      onClick={(): void => {
+                        void resolve(selected.id);
+                      }}
+                      disabled={!canWrite}
+                      data-testid="alert-resolve"
+                      className="inline-flex items-center gap-tight rounded-md border border-surface-border px-3 py-2 text-sm text-text-primary hover:bg-surface-hover disabled:cursor-not-allowed disabled:opacity-50"
+                    >
+                      <CheckCircle2 className="h-3.5 w-3.5" />
+                      {t('alerts.resolve')}
+                    </button>
+                  </Tooltip>
                 ) : null}
               </>
             }

@@ -51,6 +51,7 @@ import {
   spacing,
   status as statusColor,
 } from '../../styles/theme';
+import { Tooltip } from './tooltip';
 
 export type SortDirection = 'asc' | 'desc' | null;
 
@@ -342,22 +343,24 @@ export function DataTable<T>({
           ) : null}
         </div>
         {filterOptions && filterOptions.length > 0 ? (
-          <button
-            type="button"
-            onClick={(): void => setShowFilters(!showFilters)}
-            className={cn(
-              spacing.iconBtn.md,
-              'transition-colors',
-              radius.lg,
-              border.width.default,
-              showFilters || hasActiveFilters
-                ? 'bg-brand-primary/20 border-brand-primary text-brand-primary'
-                : 'border-surface-border text-text-muted hover:text-text-primary hover:border-text-muted',
-            )}
-            title="Toggle filters"
-          >
-            <Filter className={iconTokens.size.sm} />
-          </button>
+          <Tooltip text={t('accessibility.toggleFilters')}>
+            <button
+              aria-label={t('accessibility.toggleFilters')}
+              type="button"
+              onClick={(): void => setShowFilters(!showFilters)}
+              className={cn(
+                spacing.iconBtn.md,
+                'transition-colors',
+                radius.lg,
+                border.width.default,
+                showFilters || hasActiveFilters
+                  ? 'bg-brand-primary/15 border-brand-primary text-brand-primary'
+                  : 'border-surface-border text-text-muted hover:text-text-primary hover:border-text-muted',
+              )}
+            >
+              <Filter className={iconTokens.size.sm} />
+            </button>
+          </Tooltip>
         ) : null}
       </div>
       {/* Filter Dropdowns */}

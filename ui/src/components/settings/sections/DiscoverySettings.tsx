@@ -13,7 +13,8 @@ import type {
   SubnetConfig,
 } from '../../../types/settings';
 import { CollapsibleSection } from '../../ui/CollapsibleSection';
-import { ScanSearch } from '../../ui/icons';
+import { Info, ScanSearch } from '../../ui/icons';
+import { Tooltip } from '../../ui/tooltip';
 import { AutoSaveIndicator } from './AutoSaveIndicator';
 import { DiscoveryCustomOptions } from './discovery/DiscoveryCustomOptions';
 import { DiscoveryServiceStatus } from './discovery/DiscoveryServiceStatus';
@@ -126,75 +127,91 @@ export const DiscoverySettings: React.NamedExoticComponent<DiscoverySettingsProp
         defaultOpen={false}
       >
         <div className="stack">
-          <fieldset disabled={!canWrite} title={readOnlyReason} className="stack min-w-0">
-            {/* Card Visibility & FAB Controls */}
-            <div className="stack-sm">
-              <label
-                className={cn(
-                  layout.flex.between,
-                  spacing.pad.sm,
-                  'bg-surface-base',
-                  radius.default,
-                  'border border-surface-border',
-                )}
-              >
-                <div>
-                  <span className="body-small text-text-primary font-medium">
-                    {t('common.showCard')}
-                  </span>
-                  <p className="caption text-text-muted">{t('common.showCardDesc')}</p>
+          <Tooltip text={readOnlyReason}>
+            {(description) => (
+              <fieldset disabled={!canWrite} className="stack min-w-0">
+                {readOnlyReason ? (
+                  <legend>
+                    <button
+                      type="button"
+                      {...description}
+                      aria-label={readOnlyReason}
+                      className="text-text-muted inline-flex rounded focus-visible:outline focus-visible:outline-2 focus-visible:outline-brand-primary"
+                    >
+                      <Info className="h-4 w-4" aria-hidden="true" />
+                    </button>
+                  </legend>
+                ) : null}
+                {/* Card Visibility & FAB Controls */}
+                <div className="stack-sm">
+                  <label
+                    className={cn(
+                      layout.flex.between,
+                      spacing.pad.sm,
+                      'bg-surface-base',
+                      radius.default,
+                      'border border-surface-border',
+                    )}
+                  >
+                    <div>
+                      <span className="body-small text-text-primary font-medium">
+                        {t('common.showCard')}
+                      </span>
+                      <p className="caption text-text-muted">{t('common.showCardDesc')}</p>
+                    </div>
+                    <input
+                      type="checkbox"
+                      checked={cardSettings.networkDiscovery.enabled}
+                      onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>
+                        updateCardSettings({
+                          networkDiscovery: {
+                            ...cardSettings.networkDiscovery,
+                            enabled: e.target.checked,
+                          },
+                        })
+                      }
+                      className={iconTokens.size.sm}
+                    />
+                  </label>
+                  <label
+                    className={cn(
+                      layout.flex.between,
+                      spacing.pad.sm,
+                      'bg-surface-base',
+                      radius.default,
+                      'border border-surface-border',
+                    )}
+                  >
+                    <div>
+                      <span className="body-small text-text-primary font-medium">
+                        {t('common.runOnFab')}
+                      </span>
+                      <p className="caption text-text-muted">{t('common.runOnFabDesc')}</p>
+                    </div>
+                    <input
+                      type="checkbox"
+                      checked={cardSettings.networkDiscovery.autoRunOnLink}
+                      onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>
+                        updateCardSettings({
+                          networkDiscovery: {
+                            ...cardSettings.networkDiscovery,
+                            autoRunOnLink: e.target.checked,
+                          },
+                        })
+                      }
+                      className={iconTokens.size.sm}
+                    />
+                  </label>
                 </div>
-                <input
-                  type="checkbox"
-                  checked={cardSettings.networkDiscovery.enabled}
-                  onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>
-                    updateCardSettings({
-                      networkDiscovery: {
-                        ...cardSettings.networkDiscovery,
-                        enabled: e.target.checked,
-                      },
-                    })
-                  }
-                  className={iconTokens.size.sm}
-                />
-              </label>
-              <label
-                className={cn(
-                  layout.flex.between,
-                  spacing.pad.sm,
-                  'bg-surface-base',
-                  radius.default,
-                  'border border-surface-border',
-                )}
-              >
-                <div>
-                  <span className="body-small text-text-primary font-medium">
-                    {t('common.runOnFab')}
-                  </span>
-                  <p className="caption text-text-muted">{t('common.runOnFabDesc')}</p>
-                </div>
-                <input
-                  type="checkbox"
-                  checked={cardSettings.networkDiscovery.autoRunOnLink}
-                  onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>
-                    updateCardSettings({
-                      networkDiscovery: {
-                        ...cardSettings.networkDiscovery,
-                        autoRunOnLink: e.target.checked,
-                      },
-                    })
-                  }
-                  className={iconTokens.size.sm}
-                />
-              </label>
-            </div>
 
-            {/* Enable/Auto-scan Toggles */}
-            <DiscoveryToggles
-              settings={networkDiscoverySettings}
-              onSettingsChange={setNetworkDiscoverySettings}
-            />
-          </fieldset>
+                {/* Enable/Auto-scan Toggles */}
+                <DiscoveryToggles
+                  settings={networkDiscoverySettings}
+                  onSettingsChange={setNetworkDiscoverySettings}
+                />
+              </fieldset>
+            )}
+          </Tooltip>
 
           {/* Service Status Banner */}
           <DiscoveryServiceStatus
@@ -203,41 +220,57 @@ export const DiscoverySettings: React.NamedExoticComponent<DiscoverySettingsProp
             onRefresh={fetchServiceStatus}
           />
 
-          <fieldset disabled={!canWrite} title={readOnlyReason} className="stack min-w-0">
-            {/* Discovery Options */}
-            <DiscoveryCustomOptions
-              settings={networkDiscoverySettings}
-              onSettingsChange={setNetworkDiscoverySettings}
-            />
+          <Tooltip text={readOnlyReason}>
+            {(description) => (
+              <fieldset disabled={!canWrite} className="stack min-w-0">
+                {readOnlyReason ? (
+                  <legend>
+                    <button
+                      type="button"
+                      {...description}
+                      aria-label={readOnlyReason}
+                      className="text-text-muted inline-flex rounded focus-visible:outline focus-visible:outline-2 focus-visible:outline-brand-primary"
+                    >
+                      <Info className="h-4 w-4" aria-hidden="true" />
+                    </button>
+                  </legend>
+                ) : null}
+                {/* Discovery Options */}
+                <DiscoveryCustomOptions
+                  settings={networkDiscoverySettings}
+                  onSettingsChange={setNetworkDiscoverySettings}
+                />
 
-            {/* Timing Settings */}
-            <DiscoveryTimingSettings
-              settings={networkDiscoverySettings}
-              onSettingsChange={setNetworkDiscoverySettings}
-            />
+                {/* Timing Settings */}
+                <DiscoveryTimingSettings
+                  settings={networkDiscoverySettings}
+                  onSettingsChange={setNetworkDiscoverySettings}
+                />
 
-            {/* Target Networks */}
-            <SubnetManager
-              subnets={subnets}
-              subnetsStatus={subnetsStatus}
-              newSubnetCidr={newSubnetCidr}
-              setNewSubnetCidr={setNewSubnetCidr}
-              newSubnetName={newSubnetName}
-              setNewSubnetName={setNewSubnetName}
-              subnetError={subnetError}
-              setSubnetError={setSubnetError}
-              addSubnet={addSubnet}
-              toggleSubnet={toggleSubnet}
-              deleteSubnet={deleteSubnet}
-            />
+                {/* Target Networks */}
+                <SubnetManager
+                  subnets={subnets}
+                  subnetsStatus={subnetsStatus}
+                  newSubnetCidr={newSubnetCidr}
+                  setNewSubnetCidr={setNewSubnetCidr}
+                  newSubnetName={newSubnetName}
+                  setNewSubnetName={setNewSubnetName}
+                  subnetError={subnetError}
+                  setSubnetError={setSubnetError}
+                  addSubnet={addSubnet}
+                  toggleSubnet={toggleSubnet}
+                  deleteSubnet={deleteSubnet}
+                />
 
-            {/* SNMP Settings Section */}
-            <SnmpSettingsSection
-              snmpSettings={snmpSettings}
-              setSnmpSettings={setSnmpSettings}
-              snmpStatus={snmpStatus}
-            />
-          </fieldset>
+                {/* SNMP Settings Section */}
+                <SnmpSettingsSection
+                  snmpSettings={snmpSettings}
+                  setSnmpSettings={setSnmpSettings}
+                  snmpStatus={snmpStatus}
+                />
+              </fieldset>
+            )}
+          </Tooltip>
         </div>
       </CollapsibleSection>
     );

@@ -1,3 +1,5 @@
+import { Info } from '../ui/icons';
+import { Tooltip } from '../ui/tooltip';
 /**
  * InsecurePortScanCard — the on-demand insecure-port audit (#347).
  *
@@ -140,22 +142,39 @@ export function InsecurePortScanCard(): JSX.Element {
         <label className="caption text-text-muted" htmlFor="insecure-scan-target">
           {t('insecurePorts.target')}
         </label>
-        <input
-          id="insecure-scan-target"
-          type="text"
-          value={target}
-          disabled={!canWrite || scanning}
-          title={readOnlyReason}
-          onChange={(e): void => setTarget(e.target.value)}
-          placeholder={t('insecurePorts.targetPlaceholder')}
-          className={cn(
-            'w-full',
-            spacing.chip.lg,
-            'bg-surface-base border border-surface-border',
-            radius.default,
-            'body-small text-text-primary',
+        <Tooltip text={readOnlyReason}>
+          {(description) => (
+            <span className="contents">
+              <input
+                {...description}
+                id="insecure-scan-target"
+                type="text"
+                value={target}
+                disabled={!canWrite || scanning}
+                onChange={(e): void => setTarget(e.target.value)}
+                placeholder={t('insecurePorts.targetPlaceholder')}
+                className={cn(
+                  'w-full',
+                  spacing.chip.lg,
+                  'bg-surface-base border border-surface-border',
+                  radius.default,
+                  'body-small text-text-primary',
+                )}
+              />
+              {(!canWrite || scanning) && readOnlyReason ? (
+                <button
+                  type="button"
+                  {...description}
+                  aria-label={readOnlyReason}
+                  onClick={(event) => event.preventDefault()}
+                  className="inline-flex text-text-muted rounded focus-visible:outline focus-visible:outline-2 focus-visible:outline-brand-primary"
+                >
+                  <Info className="h-4 w-4" aria-hidden="true" />
+                </button>
+              ) : null}
+            </span>
           )}
-        />
+        </Tooltip>
         <Button
           onClick={run}
           disabled={!canWrite || target.trim() === ''}
