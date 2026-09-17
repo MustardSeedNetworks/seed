@@ -24,6 +24,24 @@ vi.mock('../hooks/useNeighbourCache', () => ({
   useNeighbourCache: () => ({ entries: [], loading: false, error: null, refresh: vi.fn() }),
 }));
 
+// NetworkDiscoveryCard mounts the jobs-spine hooks; the global EventSource
+// stub is an arrow function and so cannot be `new`-ed, the same blocker
+// documented in NetworkDiscoveryCard.test.tsx.
+vi.mock('../hooks/useEngineScan', () => ({
+  useEngineScan: () => ({
+    running: false,
+    status: { state: 'idle', jobId: '', percentComplete: 0, error: null },
+    startScan: vi.fn().mockResolvedValue(undefined),
+    cancelScan: vi.fn().mockResolvedValue(undefined),
+  }),
+}));
+
+vi.mock('../hooks/useEnginePhase', () => ({ useEnginePhase: () => ({ phase: '' }) }));
+
+vi.mock('../hooks/useNetworkDiscoveryAutoScan', () => ({
+  useNetworkDiscoveryAutoScan: () => ({ handleDeepScan: vi.fn().mockResolvedValue(undefined) }),
+}));
+
 const cards = {
   dhcp: {
     mac: '02:00:5e:10:00:00',
@@ -69,6 +87,12 @@ function context(overrides: Record<string, unknown> = {}): AppContextValue {
     isWifi: false,
     displayOptions: { showPublicIp: true },
     cards,
+    // The discovered-device list moved onto this page with #2674.
+    cardSettings: { networkDiscovery: { enabled: true, autoRunOnLink: true } },
+    networkDiscovery: null,
+    scanError: false,
+    triggerDeviceScan: vi.fn(),
+    openSettings: vi.fn(),
     ...overrides,
   } as unknown as AppContextValue;
 }
@@ -100,6 +124,27 @@ afterEach(async () => {
 const notTheTooltip = { ignore: '[role="tooltip"], script, style' } as const;
 
 describe('NetworkPage — real locale copy', () => {
+  /* #2674: the discovered-device list had no home on a routed page — its only
+     mount was Path Analysis, behind the Pro feature gate — so an install that
+     scanned correctly still showed the operator nothing here, and a page that
+     found nothing could not say which of the three reasons applied. */
+  it('carries the discovered-device list, and says it is still sweeping', async () => {
+    await renderIn('en');
+
+    expect(screen.getByTestId('discovery-scan-button')).toBeVisible();
+    expect(screen.getByTestId('discovery-empty-discovering')).toBeVisible();
+  });
+
+  it('says discovery is off here rather than reporting an empty network', async () => {
+    await renderIn(
+      'en',
+      context({ cardSettings: { networkDiscovery: { enabled: false, autoRunOnLink: false } } }),
+    );
+
+    expect(screen.getByTestId('discovery-empty-off')).toBeVisible();
+    expect(screen.getByTestId('discovery-open-options')).toBeVisible();
+  });
+
   it('answers the page question in English when the link is healthy', async () => {
     await renderIn('en');
 

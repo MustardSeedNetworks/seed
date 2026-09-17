@@ -15,6 +15,7 @@ export function PathAnalysisPage() {
     scanError,
     triggerDeviceScan,
     registerTraceHopHandler,
+    openSettings,
   } = useAppContext();
 
   return (
@@ -41,12 +42,16 @@ export function PathAnalysisPage() {
             onRegisterTraceHandler={registerTraceHopHandler}
           />
         )}
-        {!isWifi && cardSettings.networkDiscovery.enabled && (
+        {/* The card renders with discovery switched off as well: hiding it was
+            half of #2674 — nothing found and no page saying why. */}
+        {!isWifi && (
           <NetworkDiscoveryCard
             data={networkDiscovery}
             loading={loading}
             scanError={scanError}
             onScan={triggerDeviceScan}
+            discoveryEnabled={cardSettings.networkDiscovery.enabled}
+            onOpenSettings={openSettings}
           />
         )}
       </div>

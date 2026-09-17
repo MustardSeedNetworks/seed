@@ -33,6 +33,7 @@ import {
   Smartphone,
   Wifi,
 } from '../ui/icons';
+import { hasSwept } from './DiscoveryEmptyState';
 import type { DiscoveredDevice, DiscoveryStatus } from './networkDiscoveryCardTypes';
 import { ScanProgress } from './ScanProgress';
 
@@ -336,7 +337,10 @@ export function DiscoverySummary({
       {/* Status row */}
       <div className="flex-between body-small">
         <div className={cn('flex items-center', spacing.gap.compact)}>
-          {status.scanning ? (
+          {/* Before the first sweep completes this said a green "Complete",
+              which is the summary's share of #2674: a fresh install reported a
+              finished scan it had never run. */}
+          {status.scanning || !hasSwept(status.lastScan) ? (
             <>
               <RefreshCw className={cn(iconTokens.size.sm, 'text-status-info animate-spin')} />
               <span className="text-status-info font-medium">{t('discovery.scanning')}</span>

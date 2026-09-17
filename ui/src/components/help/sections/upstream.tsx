@@ -114,6 +114,15 @@ export const upstreamSections: HelpSection[] = [
           },
         ],
       },
+      {
+        kind: 'terms',
+        items: [
+          {
+            term: 'cards:discovery.title',
+            description: 'content.cardHelp.NetworkDiscoveryCard.description',
+          },
+        ],
+      },
     ],
   },
   {

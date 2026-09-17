@@ -16,6 +16,7 @@ import {
 import { Card, CardValue, type Status } from '../ui/card';
 import { Maximize2, RefreshCw, ScanSearch } from '../ui/icons';
 import { Tooltip } from '../ui/tooltip';
+import { DiscoveryEmptyState, discoveryPhase } from './DiscoveryEmptyState';
 import { DiscoveryModal } from './DiscoveryModal';
 import { categorizeDevices, DiscoverySummary } from './NetworkDiscoveryCardHelpers';
 import type { NetworkDiscoveryData as _NetworkDiscoveryData } from './networkDiscoveryCardTypes';
@@ -64,6 +65,14 @@ interface NetworkDiscoveryCardProps {
   /** Whether the most recent scan attempt failed (#2394). */
   scanError?: boolean;
   onScan?: () => void;
+  /**
+   * Whether device discovery is switched on (#2674). The card renders either
+   * way: a card that hides itself when discovery is off is why an install with
+   * nothing switched on had no page that said so.
+   */
+  discoveryEnabled?: boolean;
+  /** Opens the settings drawer, so an empty state can offer the options. */
+  onOpenSettings?: () => void;
 }
 
 export const NetworkDiscoveryCard: React.NamedExoticComponent<NetworkDiscoveryCardProps> = memo(
@@ -72,6 +81,8 @@ export const NetworkDiscoveryCard: React.NamedExoticComponent<NetworkDiscoveryCa
     loading,
     scanError,
     onScan,
+    discoveryEnabled = true,
+    onOpenSettings,
   }: NetworkDiscoveryCardProps): React.ReactElement | null {
     const { t } = useTranslation('cards');
     // Search and sort state lived here when the card embedded a sortable
@@ -129,8 +140,11 @@ export const NetworkDiscoveryCard: React.NamedExoticComponent<NetworkDiscoveryCa
           enableLiveRegion={true}
           ariaLabel="Network discovery - no data available"
         >
-          <CardValue value={t('discovery.noData')} size="md" />
-          {onScan ? (
+          <DiscoveryEmptyState
+            phase={discoveryPhase(discoveryEnabled, null)}
+            onOpenSettings={onOpenSettings}
+          />
+          {onScan && discoveryEnabled ? (
             <button
               type="button"
               onClick={onScan}
@@ -258,9 +272,10 @@ export const NetworkDiscoveryCard: React.NamedExoticComponent<NetworkDiscoveryCa
           </div>
         ) : null}
         {deviceCount === 0 && !status.scanning && !running ? (
-          <p className={cn('body-small text-text-muted text-center', spacing.pad.default)}>
-            {t('discovery.noDevices')}
-          </p>
+          <DiscoveryEmptyState
+            phase={discoveryPhase(discoveryEnabled, status)}
+            onOpenSettings={onOpenSettings}
+          />
         ) : null}
         {/* Vulnerability Details Modal */}
         {selectedDeviceForVuln ? (

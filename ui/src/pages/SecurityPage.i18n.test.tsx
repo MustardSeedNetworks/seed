@@ -14,6 +14,7 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { AppContext, type AppContextValue } from '../contexts/AppContext';
 import { RoleProvider } from '../contexts/RoleContext';
 import i18n from '../i18n';
 
@@ -61,13 +62,44 @@ vi.mock('../api', () => ({
   api: { get: (path: string): Promise<unknown> => mockGet(path), post: vi.fn() },
 }));
 
+// NetworkDiscoveryCard joined this page with #2674 and mounts the jobs-spine
+// hooks; the global EventSource stub is an arrow function and so cannot be
+// `new`-ed, the same blocker documented in NetworkDiscoveryCard.test.tsx.
+vi.mock('../hooks/useEngineScan', () => ({
+  useEngineScan: () => ({
+    running: false,
+    status: { state: 'idle', jobId: '', percentComplete: 0, error: null },
+    startScan: vi.fn().mockResolvedValue(undefined),
+    cancelScan: vi.fn().mockResolvedValue(undefined),
+  }),
+}));
+
+vi.mock('../hooks/useEnginePhase', () => ({ useEnginePhase: () => ({ phase: '' }) }));
+
+vi.mock('../hooks/useNetworkDiscoveryAutoScan', () => ({
+  useNetworkDiscoveryAutoScan: () => ({ handleDeepScan: vi.fn().mockResolvedValue(undefined) }),
+}));
+
 const { SecurityPage } = await import('./SecurityPage');
+
+function context(): AppContextValue {
+  return {
+    loading: false,
+    cardSettings: { networkDiscovery: { enabled: true, autoRunOnLink: true } },
+    networkDiscovery: null,
+    scanError: false,
+    triggerDeviceScan: vi.fn(),
+    openSettings: vi.fn(),
+  } as unknown as AppContextValue;
+}
 
 async function renderIn(language: string): Promise<void> {
   await i18n.changeLanguage(language);
   render(
     <RoleProvider isAuthenticated={true}>
-      <SecurityPage />
+      <AppContext.Provider value={context()}>
+        <SecurityPage />
+      </AppContext.Provider>
     </RoleProvider>,
   );
   // The MFA status line only appears once the status request resolves.
@@ -90,6 +122,15 @@ afterEach(async () => {
 });
 
 describe('SecurityPage — real locale copy', () => {
+  /* #2674: the posture cards below assess discovered devices, but the page
+     never showed the inventory they work from, nor why it could be empty. */
+  it('leads with the discovered-device list and says it is still sweeping', async () => {
+    await renderIn('en');
+
+    expect(screen.getByTestId('discovery-scan-button')).toBeVisible();
+    expect(screen.getByTestId('discovery-empty-discovering')).toBeVisible();
+  });
+
   it('renders the four card titles and their controls in English', async () => {
     await renderIn('en');
 
