@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.214.61](https://github.com/MustardSeedNetworks/seed/compare/v0.214.60...v0.214.61) (2026-09-17)
+
+
+### Bug Fixes
+
+* **deps:** update dependency valibot to v1.5.0 ([#2697](https://github.com/MustardSeedNetworks/seed/issues/2697)) ([8006587](https://github.com/MustardSeedNetworks/seed/commit/8006587789e5ce450d3d9f3fc1805a9a26bd18e3))
+
+
+### Miscellaneous
+
+* **deps:** lock file maintenance ([#2663](https://github.com/MustardSeedNetworks/seed/issues/2663)) ([89b4f42](https://github.com/MustardSeedNetworks/seed/commit/89b4f42324c9a907d73d3b49483e3a331a4447a0))
+
 ## [0.214.60](https://github.com/MustardSeedNetworks/seed/compare/v0.214.59...v0.214.60) (2026-09-17)
 
 
