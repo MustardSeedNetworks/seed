@@ -4,6 +4,7 @@ import { DnsCard } from '../components/cards/DnsCard';
 import { GatewayCard } from '../components/cards/GatewayCard';
 import { NeighbourCacheCard } from '../components/cards/NeighbourCacheCard';
 import { NetworkCard } from '../components/cards/NetworkCard';
+import { NetworkDiscoveryCard } from '../components/cards/NetworkDiscoveryCard';
 import { PublicIpCard } from '../components/cards/PublicIpCard';
 import { SwitchCard } from '../components/cards/SwitchCard';
 import { useAppContext } from '../contexts/AppContext';
@@ -19,7 +20,17 @@ import { type RollupState, StatusRollup } from '../ui/StatusRollup';
  */
 export function NetworkPage() {
   const { t } = useTranslation('pages');
-  const { cards, loading, isWifi, displayOptions } = useAppContext();
+  const {
+    cards,
+    loading,
+    isWifi,
+    displayOptions,
+    cardSettings,
+    networkDiscovery,
+    scanError,
+    triggerDeviceScan,
+    openSettings,
+  } = useAppContext();
 
   /* Overview opens with the rollup. The question this page answers is whether
      the upstream link is healthy, and five cards each reporting their own
@@ -85,6 +96,18 @@ export function NetworkPage() {
             <PublicIpCard data={cards.publicip} loading={loading} />
           </>
         )}
+        {/* What discovery found on this segment. Until #2674 the list had no
+            home on a routed page at all — its only mount was Path Analysis,
+            behind the Pro feature gate — so a fresh install that had scanned
+            correctly still showed the operator nothing here. */}
+        <NetworkDiscoveryCard
+          data={networkDiscovery}
+          loading={loading}
+          scanError={scanError}
+          onScan={triggerDeviceScan}
+          discoveryEnabled={cardSettings.networkDiscovery.enabled}
+          onOpenSettings={openSettings}
+        />
         <CardSlot
           present={!isWifi}
           absence={{

@@ -77,17 +77,65 @@ export const Scanning: Story = {
 
 /**
  * No devices discovered yet.
- * Shows empty state prompting user to start a scan.
+ * A sweep has run and found nothing, so the empty state offers the options
+ * rather than repeating "click Scan" (#2674).
  */
 export const NoDevices: Story = {
   args: {
     loading: false,
+    onOpenSettings: () => undefined,
     data: {
       devices: [],
       status: {
         scanning: false,
         deviceCount: 0,
         lastScan: new Date().toISOString(),
+        subnet: '192.168.1.0/24',
+        localIP: '192.168.1.100',
+        interface: 'en0',
+      },
+    },
+  },
+};
+
+/**
+ * First run: discovery is on and sweeping, but no sweep has completed, so
+ * `lastScan` is still Go's zero time. Before #2674 this rendered the same
+ * "no devices" line as a finished sweep over an empty segment.
+ */
+export const StillDiscovering: Story = {
+  args: {
+    loading: false,
+    onOpenSettings: () => undefined,
+    data: {
+      devices: [],
+      status: {
+        scanning: false,
+        deviceCount: 0,
+        lastScan: '0001-01-01T00:00:00Z',
+        subnet: '192.168.1.0/24',
+        localIP: '192.168.1.100',
+        interface: 'en0',
+      },
+    },
+  },
+};
+
+/**
+ * Discovery switched off. The card used to be hidden by its callers here,
+ * which is why an install with nothing enabled had no page that said so.
+ */
+export const DiscoveryOff: Story = {
+  args: {
+    loading: false,
+    discoveryEnabled: false,
+    onOpenSettings: () => undefined,
+    data: {
+      devices: [],
+      status: {
+        scanning: false,
+        deviceCount: 0,
+        lastScan: '0001-01-01T00:00:00Z',
         subnet: '192.168.1.0/24',
         localIP: '192.168.1.100',
         interface: 'en0',

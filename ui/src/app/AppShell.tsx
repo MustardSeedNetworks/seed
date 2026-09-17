@@ -108,6 +108,7 @@ export function AppShell({ orchestration, logout }: AppShellProps): JSX.Element 
     channelGraphData,
     channelGraphLoading,
     appVersion,
+    openSettings,
   };
 
   const topBar = (

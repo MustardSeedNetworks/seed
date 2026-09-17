@@ -31,6 +31,12 @@ export interface AppContextValue {
   channelGraphData: ChannelGraphResponse | null;
   channelGraphLoading: boolean;
   appVersion: string;
+  /**
+   * Opens the settings drawer. Settings is a drawer rather than a route, so a
+   * page that wants to send the operator to an option has nothing to link to;
+   * before #2674 the only openers were AppShell's own chrome.
+   */
+  openSettings: () => void;
 }
 
 export const AppContext = createContext<AppContextValue | null>(null);
