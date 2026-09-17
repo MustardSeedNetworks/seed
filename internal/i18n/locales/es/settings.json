@@ -505,7 +505,7 @@
     "none": "Aún no hay tokens de API.",
     "lastUsed": "Último uso",
     "description": "Tokens de acceso personal para llamadas programáticas a la API (scripts, monitoreo, CI). Disponible en el nivel <strong>Pro</strong>. La interfaz web funciona en todos los niveles sin token.",
-    "tierWarning": "Nivel actual: <tier>{{tier}}</tier>. La creación de tokens de API requiere Pro. Inicie una prueba de 14 días con <code>seed license trial</code>, o active una clave Pro con <code2>seed license activate -k &lt;KEY&gt;</code2>.",
+    "tierWarning": "Nivel actual: <tier>{{tier}}</tier>. La creación de tokens de API requiere Pro. Inicie una prueba de 14 días con <code>seed license trial</code>, o active una clave Pro con <code2>seed license activate -k <KEY></code2>.",
     "colName": "Nombre",
     "colPrefix": "Prefijo",
     "colCreated": "Creado",
