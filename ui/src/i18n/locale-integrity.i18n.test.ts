@@ -17,7 +17,7 @@
 import { describe, expect, it } from 'vitest';
 
 import { DNT_TERMS } from './dnt';
-import i18n from './index';
+import i18n, { languages, namespaces } from './index';
 
 /**
  * A value made only of do-not-translate terms is correctly identical in both
@@ -73,6 +73,20 @@ function resolve(lng: string, key: string): string {
   return getFixedT(lng, ns)(path);
 }
 
+/** Every string leaf under a locale bundle, with its dotted path. */
+function walk(node: unknown, path: string, visit: (path: string, value: string) => void): void {
+  if (typeof node === 'string') {
+    visit(path, node);
+
+    return;
+  }
+  if (node !== null && typeof node === 'object') {
+    for (const [key, child] of Object.entries(node)) {
+      walk(child, `${path}.${key}`, visit);
+    }
+  }
+}
+
 describe('locale integrity', () => {
   it('resolves every listed key in both locales', () => {
     for (const key of TRANSLATED) {
@@ -94,5 +108,33 @@ describe('locale integrity', () => {
     });
 
     expect(untranslated, 'these keys render English on a Spanish screen').toEqual([]);
+  });
+
+  /**
+   * seed#2642: three gate sentences carried `&lt;KEY&gt;` in the JSON so that
+   * `<Trans>` would not read `<KEY>` as a tag. It does not need the help — it
+   * renders an unmatched element as its text — and React prints the entity
+   * verbatim, so the copy-pasteable command on Reports, Path Analysis and the
+   * API-token panel read `seed license activate -k &lt;KEY&gt;` on screen.
+   *
+   * The three page suites assert their own sentence whole; this asserts the
+   * shape across every namespace in both locales, because the next one will
+   * not be on a page that has a suite.
+   */
+  it('escapes no HTML entity in any locale value', () => {
+    const escaped: string[] = [];
+
+    for (const lng of languages) {
+      for (const ns of namespaces) {
+        const bundle = i18n.getResourceBundle(lng.code, ns) as unknown;
+        walk(bundle, `${lng.code}:${ns}`, (path, value) => {
+          if (/&(lt|gt|amp|quot|#\d+);/.test(value)) {
+            escaped.push(`${path} = ${value}`);
+          }
+        });
+      }
+    }
+
+    expect(escaped, 'these values print an HTML entity as text').toEqual([]);
   });
 });

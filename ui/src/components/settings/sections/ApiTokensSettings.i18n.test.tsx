@@ -91,6 +91,11 @@ describe('ApiTokensSettings — real locale copy', () => {
     expect(screen.getByRole('button', { name: 'Create token' })).toBeVisible();
     expect(screen.getByRole('columnheader', { name: 'Prefix' })).toBeVisible();
     expect(screen.getByRole('button', { name: 'Revoke' })).toBeVisible();
+
+    // The Free-tier gate's second command is the one a reader retypes, so it
+    // is asserted whole. Pre-escaping the placeholder in the locale file put a
+    // literal `&lt;KEY&gt;` on screen here and on two pages (seed#2642).
+    expect(screen.getByText('seed license activate -k <KEY>')).toBeVisible();
   });
 
   it('renders Spanish under es, with no English left behind', async () => {
@@ -113,5 +118,6 @@ describe('ApiTokensSettings — real locale copy', () => {
       expect(screen.queryByText(english)).toBeNull();
     }
     expect(screen.queryByPlaceholderText('e.g. monitoring-prod')).toBeNull();
+    expect(screen.getByText('seed license activate -k <KEY>')).toBeVisible();
   });
 });

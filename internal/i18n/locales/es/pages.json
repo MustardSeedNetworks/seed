@@ -99,7 +99,7 @@
     "description": "Descubrimiento de rutas L2/L3, saltos de traceroute y descubrimiento de dispositivos en el enlace.",
     "label": "Análisis de ruta",
     "title": "Análisis de ruta",
-    "proGate": "El análisis de rutas es una función del nivel Pro. Inicie una prueba Pro de 14 días con <code>seed license trial</code> o active una clave Pro con <code2>seed license activate -k &lt;KEY&gt;</code2>."
+    "proGate": "El análisis de rutas es una función del nivel Pro. Inicie una prueba Pro de 14 días con <code>seed license trial</code> o active una clave Pro con <code2>seed license activate -k <KEY></code2>."
   },
   "performance": {
     "description": "Pruebas activas de rendimiento (speedtest, iperf3) y sondas de estado.",
@@ -144,7 +144,7 @@
     "description": "Panel de SLA agregado, seguimiento de cumplimiento e informes históricos.",
     "label": "Informes",
     "title": "Informes",
-    "tierGate": "Los informes requieren el nivel Starter o superior. Inicie una prueba Pro de 14 días con <code>seed license trial</code> o active una clave Starter / Pro con <code2>seed license activate -k &lt;KEY&gt;</code2>."
+    "tierGate": "Los informes requieren el nivel Starter o superior. Inicie una prueba Pro de 14 días con <code>seed license trial</code> o active una clave Starter / Pro con <code2>seed license activate -k <KEY></code2>."
   },
   "security": {
     "description": "Auditoría de aislamiento de la red de invitados y comprobaciones de postura de seguridad.",

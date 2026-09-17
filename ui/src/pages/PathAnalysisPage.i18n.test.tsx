@@ -83,7 +83,7 @@ describe('PathAnalysisPage — real locale copy', () => {
 
     expect(screen.getByText(/Path Analysis is a Pro-tier feature/)).toBeVisible();
     expect(screen.getByText('seed license trial')).toBeVisible();
-    expect(screen.getByText(/seed license activate -k/)).toBeVisible();
+    expect(screen.getByText('seed license activate -k <KEY>')).toBeVisible();
   });
 
   it('renders the licensed cards in English', async () => {
@@ -103,7 +103,7 @@ describe('PathAnalysisPage — real locale copy', () => {
     expect(screen.getByText(/El análisis de rutas es una función del nivel Pro/)).toBeVisible();
     // The two <code> children of the <Trans> are shell commands, not copy.
     expect(screen.getByText('seed license trial')).toBeVisible();
-    expect(screen.getByText(/seed license activate -k/)).toBeVisible();
+    expect(screen.getByText('seed license activate -k <KEY>')).toBeVisible();
   });
 
   it('renders the licensed cards in Spanish, with no English left behind', async () => {

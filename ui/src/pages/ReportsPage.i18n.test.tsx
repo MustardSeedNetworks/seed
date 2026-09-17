@@ -68,7 +68,7 @@ describe('ReportsPage — real locale copy', () => {
 
     expect(screen.getByText(/Reports require the Starter tier or higher/)).toBeVisible();
     expect(screen.getByText('seed license trial')).toBeVisible();
-    expect(screen.getByText(/seed license activate -k/)).toBeVisible();
+    expect(screen.getByText('seed license activate -k <KEY>')).toBeVisible();
   });
 
   it('renders the licensed card and its empty state in English', async () => {
@@ -86,7 +86,7 @@ describe('ReportsPage — real locale copy', () => {
     expect(screen.queryByText(/Reports require the Starter tier or higher/)).toBeNull();
     expect(screen.getByText(/Los informes requieren el nivel Starter o superior/)).toBeVisible();
     expect(screen.getByText('seed license trial')).toBeVisible();
-    expect(screen.getByText(/seed license activate -k/)).toBeVisible();
+    expect(screen.getByText('seed license activate -k <KEY>')).toBeVisible();
   });
 
   it('renders the licensed card in Spanish, with no English left behind', async () => {
