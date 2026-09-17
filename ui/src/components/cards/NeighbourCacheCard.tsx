@@ -39,6 +39,9 @@ export function NeighbourCacheCard(): JSX.Element {
       icon={<Network className="w-4 h-4" />}
       status={cardStatus}
       ariaLabel={t('neighbours.title')}
+      // Two grid columns: this is a device list, not a single-reading
+      // facet, and at a quarter of a 4-up grid it is 202 px wide (#2708).
+      className="sm:col-span-2"
     >
       <div className="stack-sm">
         <p className="caption text-text-muted">{t('neighbours.description')}</p>
@@ -50,24 +53,29 @@ export function NeighbourCacheCard(): JSX.Element {
         ) : null}
 
         {entries.length > 0 ? (
-          <div className={cn('overflow-x-auto', radius.default, 'border border-surface-border')}>
-            <table className="w-full body-small">
+          // No overflow-x-auto: table-fixed makes fitting the card structural
+          // rather than a tuning exercise, so a long vendor string or a full
+          // IPv6 address cannot push the last column off-card the way it did
+          // at 1280 and 1440 px (#2708). What does not fit is truncated and
+          // carries the full text in `title`.
+          <div className={cn(radius.default, 'border border-surface-border')}>
+            <table className="w-full table-fixed body-small">
               <caption className="sr-only">{t('neighbours.tableCaption')}</caption>
               <thead>
                 <tr className="border-b border-surface-border text-text-muted">
-                  <th scope="col" className="px-cell py-row text-left">
+                  <th scope="col" className="px-cell py-row text-left w-[30%] truncate">
                     {t('neighbours.address')}
                   </th>
-                  <th scope="col" className="px-cell py-row text-left">
+                  <th scope="col" className="px-cell py-row text-left w-[26%] truncate">
                     {t('neighbours.mac')}
                   </th>
-                  <th scope="col" className="px-cell py-row text-left">
+                  <th scope="col" className="px-cell py-row text-left w-[20%] truncate">
                     {t('neighbours.vendor')}
                   </th>
-                  <th scope="col" className="px-cell py-row text-left">
+                  <th scope="col" className="px-cell py-row text-left w-[12%] truncate">
                     {t('neighbours.interface')}
                   </th>
-                  <th scope="col" className="px-cell py-row text-left">
+                  <th scope="col" className="px-cell py-row text-left w-[12%] truncate">
                     {t('neighbours.state')}
                   </th>
                 </tr>
@@ -78,19 +86,36 @@ export function NeighbourCacheCard(): JSX.Element {
                     key={`${entry.ip}-${entry.interface ?? ''}`}
                     className="border-b border-surface-border last:border-b-0"
                   >
-                    <td className={cn('px-cell py-row font-mono', spacing.gap.tight)}>
-                      {entry.ip}
+                    <td
+                      className={cn('px-cell py-row font-mono overflow-hidden', spacing.gap.tight)}
+                      title={entry.ip}
+                    >
+                      {/* The address truncates and the family tag does not:
+                          a clipped "IPv" tells the reader nothing, and it is
+                          the tag that makes the row scannable. */}
+                      <span className="truncate block">{entry.ip}</span>
                       {/* The family is on the row rather than inferred from the
                           address, so an IPv4 and an IPv6 entry are
                           distinguishable at a glance and by a screen reader. */}
-                      <span className="caption text-text-muted ml-inline">
+                      <span className="caption text-text-muted shrink-0">
                         {entry.family === 'ipv6' ? 'IPv6' : 'IPv4'}
                       </span>
                     </td>
-                    <td className="px-cell py-row font-mono">{entry.mac || '—'}</td>
-                    <td className="px-cell py-row">{entry.vendor || '—'}</td>
-                    <td className="px-cell py-row">{entry.interface || '—'}</td>
-                    <td className="px-cell py-row">{entry.state || '—'}</td>
+                    <td
+                      className="px-cell py-row font-mono truncate"
+                      title={entry.mac || undefined}
+                    >
+                      {entry.mac || '—'}
+                    </td>
+                    <td className="px-cell py-row truncate" title={entry.vendor || undefined}>
+                      {entry.vendor || '—'}
+                    </td>
+                    <td className="px-cell py-row truncate" title={entry.interface || undefined}>
+                      {entry.interface || '—'}
+                    </td>
+                    <td className="px-cell py-row truncate" title={entry.state || undefined}>
+                      {entry.state || '—'}
+                    </td>
                   </tr>
                 ))}
               </tbody>
