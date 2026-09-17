@@ -189,7 +189,7 @@ func (t *Tracer) TraceTCP(ctx context.Context, target string, port int) *Tracero
 		return result
 	}
 
-	icmpConn := createICMPConnection(result)
+	icmpConn := createRawICMPConnection(result)
 	if icmpConn == nil {
 		return result
 	}

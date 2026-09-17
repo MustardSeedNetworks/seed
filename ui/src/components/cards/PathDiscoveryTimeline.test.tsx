@@ -70,6 +70,12 @@ function makeResult(overrides: Partial<PathResponse> = {}): PathResponse {
   };
 }
 
+/* The limitation row interpolates {{reason}}, which the fallback stand-in above
+   cannot do: it returns its second argument, and here that is the options
+   object. This one renders the key and its interpolated values instead. */
+const interpolatingT = ((key: string, options?: { reason?: string }): string =>
+  `${key} ${options?.reason ?? ''}`) as unknown as ComponentProps<typeof PATH_TIMELINE>['t'];
+
 describe('<PATH_TIMELINE>', () => {
   it('renders L2 switch hops before L3 router hops, ending at the destination', () => {
     const { getByTestId } = render(
@@ -130,6 +136,51 @@ describe('<PATH_TIMELINE>', () => {
 
     fireEvent.click(within(getByTestId('l2-hop-0')).getByRole('button'));
     expect(onToggle).toHaveBeenCalledWith(0);
+  });
+
+  it('explains why the L3 segment is empty instead of showing nothing', () => {
+    /* seed#2689: an unprivileged UDP or TCP traceroute cannot open the raw
+       socket it reads hop errors from, so the trace comes back with no hops and
+       a reason. The reason is what the operator needs; the old timeline dropped
+       it and rendered an empty path. */
+    const reason =
+      'udp traceroute needs a raw ICMP socket, which this process may not open ' +
+      '(socket: operation not permitted); use the ICMP protocol, which works unprivileged';
+    const { getByTestId, queryByTestId } = render(
+      <PATH_TIMELINE
+        result={makeResult({
+          l3Path: {
+            target: '8.8.8.8',
+            targetIp: '8.8.8.8',
+            protocol: 'udp',
+            completed: false,
+            hops: [],
+            error: reason,
+          },
+        })}
+        maxRtt={1}
+        expandedL2Hop={null}
+        onToggleL2Hop={vi.fn()}
+        t={interpolatingT}
+      />,
+    );
+
+    expect(getByTestId('l3-limitation').textContent).toContain(reason);
+    expect(queryByTestId('l3-hop-1')).toBeNull();
+  });
+
+  it('shows no limitation row when the L3 trace returned hops', () => {
+    const { queryByTestId } = render(
+      <PATH_TIMELINE
+        result={makeResult()}
+        maxRtt={20_000_000}
+        expandedL2Hop={null}
+        onToggleL2Hop={vi.fn()}
+        t={t}
+      />,
+    );
+
+    expect(queryByTestId('l3-limitation')).toBeNull();
   });
 
   it('renders L3-only when no L2 path is present', () => {

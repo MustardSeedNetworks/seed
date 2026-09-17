@@ -452,6 +452,7 @@
     "gateway": "Puerta de enlace",
     "ingressPort": "Puerto de entrada",
     "internet": "Internet",
+    "l3Unavailable": "Sin saltos de enrutador L3 — {{reason}}",
     "layerL3": "Salto de capa 3",
     "noL2Hops": "Sin saltos de switch L2 — requiere vecinos LLDP/CDP o SNMP",
     "protocol": "Protocolo",

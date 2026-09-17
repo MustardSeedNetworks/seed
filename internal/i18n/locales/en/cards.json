@@ -452,6 +452,7 @@
     "gateway": "Gateway",
     "ingressPort": "Ingress Port",
     "internet": "Internet",
+    "l3Unavailable": "No L3 router hops — {{reason}}",
     "layerL3": "Layer 3 hop",
     "noL2Hops": "No L2 switch hops — needs LLDP/CDP neighbors or SNMP",
     "protocol": "Protocol",
