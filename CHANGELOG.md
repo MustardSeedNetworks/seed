@@ -5,6 +5,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.214.69](https://github.com/MustardSeedNetworks/seed/compare/v0.214.68...v0.214.69) (2026-09-17)
+
+
+### Bug Fixes
+
+* **ci:** only arm the release PR when it still describes main ([#2756](https://github.com/MustardSeedNetworks/seed/issues/2756)) ([aa0f8ac](https://github.com/MustardSeedNetworks/seed/commit/aa0f8ace4700e0c64ac122e2b88f7b2067363907)), closes [#2755](https://github.com/MustardSeedNetworks/seed/issues/2755)
+* **ui:** derive nav labels, breadcrumb and title from the route table ([#2645](https://github.com/MustardSeedNetworks/seed/issues/2645)) ([#2746](https://github.com/MustardSeedNetworks/seed/issues/2746)) ([631a071](https://github.com/MustardSeedNetworks/seed/commit/631a07171931d702f405ed68a9dc213009029b66))
+* **ui:** move the run control off the figures at phone width ([#2646](https://github.com/MustardSeedNetworks/seed/issues/2646)) ([#2754](https://github.com/MustardSeedNetworks/seed/issues/2754)) ([5be49eb](https://github.com/MustardSeedNetworks/seed/commit/5be49eb2f07b071e3b883c866a81e1f55a73d7ad))
+
 ## [0.214.68](https://github.com/MustardSeedNetworks/seed/compare/v0.214.67...v0.214.68) (2026-09-17)
 
 
