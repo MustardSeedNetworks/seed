@@ -1635,6 +1635,9 @@
         },
         "enabled": {
           "type": "boolean"
+        },
+        "learned": {
+          "type": "boolean"
         }
       },
       "additionalProperties": false,

@@ -9,4 +9,5 @@ export interface SubnetResponse {
   cidr: string;
   name: string;
   enabled: boolean;
+  learned: boolean;
 }

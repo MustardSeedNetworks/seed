@@ -5,10 +5,13 @@ import (
 	"log/slog"
 	"net"
 	"net/http"
+	"net/netip"
 
 	"github.com/MustardSeedNetworks/seed/internal/auth"
 	"github.com/MustardSeedNetworks/seed/internal/config"
 	"github.com/MustardSeedNetworks/seed/internal/config/backups"
+	"github.com/MustardSeedNetworks/seed/internal/discovery"
+	"github.com/MustardSeedNetworks/seed/internal/discovery/learn"
 	"github.com/MustardSeedNetworks/seed/internal/engine"
 	"github.com/MustardSeedNetworks/seed/internal/i18n"
 	"github.com/MustardSeedNetworks/seed/internal/license"
@@ -496,4 +499,14 @@ func ExportCategorizeInterfaces(
 	interfaces []*netif.InterfaceInfo, current string,
 ) CategorizedInterfacesResponse {
 	return categorizeInterfaces(interfaces, current)
+}
+
+// ExportRoutingViews exposes routingViews for testing.
+func ExportRoutingViews(devices []*discovery.DiscoveredDevice) []learn.Device {
+	return routingViews(devices)
+}
+
+// ExportLocalPrefixes exposes localPrefixes for testing.
+func ExportLocalPrefixes(subnet string) []netip.Prefix {
+	return localPrefixes(subnet)
 }
