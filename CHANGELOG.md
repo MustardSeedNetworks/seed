@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.214.60](https://github.com/MustardSeedNetworks/seed/compare/v0.214.59...v0.214.60) (2026-09-17)
+
+
+### Bug Fixes
+
+* **api:** send the licence feature catalogue to the UI ([#2703](https://github.com/MustardSeedNetworks/seed/issues/2703)) ([725f43a](https://github.com/MustardSeedNetworks/seed/commit/725f43a5f3df77dadd60cafe48cfb7283ac79eb7))
+* **discovery:** trace the path without a raw socket ([#2706](https://github.com/MustardSeedNetworks/seed/issues/2706)) ([9aca748](https://github.com/MustardSeedNetworks/seed/commit/9aca748d2ed82d9772f888fe88474c5f93b17a45)), closes [#2689](https://github.com/MustardSeedNetworks/seed/issues/2689)
+
 ## [0.214.59](https://github.com/MustardSeedNetworks/seed/compare/v0.214.58...v0.214.59) (2026-09-16)
 
 
