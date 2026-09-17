@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.214.62](https://github.com/MustardSeedNetworks/seed/compare/v0.214.61...v0.214.62) (2026-09-17)
+
+
+### Bug Fixes
+
+* **deps:** update module github.com/go-webauthn/webauthn to v0.18.1 ([#2715](https://github.com/MustardSeedNetworks/seed/issues/2715)) ([2738a8d](https://github.com/MustardSeedNetworks/seed/commit/2738a8d19eb30eef0b51097cdd52dcc140bb85ef))
+* **ui:** give the MFA card two styled, separated buttons ([#2714](https://github.com/MustardSeedNetworks/seed/issues/2714)) ([db25f43](https://github.com/MustardSeedNetworks/seed/commit/db25f436242d355fbd1e1d4eb26374398158027c)), closes [#2641](https://github.com/MustardSeedNetworks/seed/issues/2641)
+
 ## [0.214.61](https://github.com/MustardSeedNetworks/seed/compare/v0.214.60...v0.214.61) (2026-09-17)
 
 
