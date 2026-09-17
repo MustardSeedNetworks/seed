@@ -53,6 +53,11 @@ export interface TopologyNodesResponse {
   nodes: TopologyNode[];
 }
 
+export interface TopologyLinksResponse {
+  count: number;
+  links: TopologyLink[];
+}
+
 export interface TopologyNodeDetailResponse {
   node: TopologyNode;
   interfaces: TopologyInterface[];

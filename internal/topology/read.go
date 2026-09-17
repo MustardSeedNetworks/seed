@@ -75,7 +75,8 @@ func (q *Queries) Node(ctx context.Context, id string) (NodeDetail, error) {
 	return NodeDetail{Node: node, Interfaces: interfaces, Links: links}, nil
 }
 
-// Links returns the links incident to nodeID.
+// Links returns the links incident to nodeID, or every link when nodeID
+// is empty.
 func (q *Queries) Links(ctx context.Context, nodeID string) ([]*Link, error) {
 	return q.reader.ListLinks(ctx, nodeID)
 }

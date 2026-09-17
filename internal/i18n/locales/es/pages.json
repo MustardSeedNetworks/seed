@@ -176,7 +176,15 @@
     "neighborLinksCount_one": "Enlace vecino ({{count}})",
     "neighborLinksCount_other": "Enlaces vecinos ({{count}})",
     "colIndex": "Índice",
-    "colSpeed": "Velocidad"
+    "colSpeed": "Velocidad",
+    "graphTitle": "Mapa",
+    "graphAria": "Mapa de topología",
+    "graphEmpty": "Aún no hay mapa. Se dibuja cuando un ciclo de sondeo descubre nodos.",
+    "graphLegendNeighbor": "Vecino (LLDP/CDP/FDP)",
+    "graphLegendLearned": "Aprendido (FDB)",
+    "graphNodeAria": "{{name}}, {{type}}",
+    "linkCount_one": "{{count}} enlace",
+    "linkCount_other": "{{count}} enlaces"
   },
   "wifi": {
     "description": "Enlace inalámbrico, utilización de canales y visualización de solapamiento de canales.",

@@ -1,14 +1,14 @@
 /**
  * TopologyPage
  *
- * Renders the fat-Node graph the Stage A4 reconcilers maintain: the list of
- * every node visible to this session, and the selected node's interfaces and
- * links from /topology/nodes/{id}.
+ * Renders the fat-Node graph the Stage A4 reconcilers maintain: a map of every
+ * node and edge visible to this session, the list beneath it, and the selected
+ * node's interfaces and links from /topology/nodes/{id}.
  *
- * Despite the route name this is not the Topology archetype — there is no
- * graph here, and seed carries no graph library. It is List + detail, which is
- * what the shared parts in ui/ListDetail.tsx model, so it uses those rather
- * than a second hand-rolled two-pane layout.
+ * The map is the page's primary answer and the list is the index into it — 200
+ * discovered nodes as a scrollbar was the defect (seed#2700). The list half
+ * stays on the shared List + detail parts in ui/ListDetail.tsx rather than a
+ * second hand-rolled two-pane layout.
  *
  * Selection is in-page state, not router state: the rest of the app navigates
  * by path, and pushing a route per click would put node ids in history for a
@@ -19,7 +19,7 @@ import type { TFunction } from 'i18next';
 import { Activity, Cable, RefreshCw } from 'lucide-react';
 import { type JSX, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useTopologyNode, useTopologyNodes } from '../hooks/useTopology';
+import { useTopologyLinks, useTopologyNode, useTopologyNodes } from '../hooks/useTopology';
 import type { TopologyInterface, TopologyLink, TopologyNode } from '../types/topology';
 import {
   DetailEmpty,
@@ -29,26 +29,57 @@ import {
   RecordPane,
   RecordRow,
 } from '../ui/ListDetail';
+import { TopologyGraph } from '../ui/TopologyGraph';
 
 export function TopologyPage(): JSX.Element {
   const [selectedID, setSelectedID] = useState<string>('');
+  // One nodes read feeds both halves, so the map and the list can never
+  // disagree about what was discovered.
+  const { nodes, loading, error, refresh } = useTopologyNodes();
+  const { links, error: linksError } = useTopologyLinks();
 
   return (
-    <ListDetail>
-      <NodeList selectedID={selectedID} onSelect={setSelectedID} />
-      <NodeDetail id={selectedID} onClear={(): void => setSelectedID('')} />
-    </ListDetail>
+    <div className="space-y-default">
+      <TopologyGraph
+        nodes={nodes}
+        links={links}
+        linksError={linksError}
+        selectedId={selectedID}
+        onSelect={setSelectedID}
+      />
+      <ListDetail>
+        <NodeList
+          nodes={nodes}
+          loading={loading}
+          error={error}
+          refresh={refresh}
+          selectedID={selectedID}
+          onSelect={setSelectedID}
+        />
+        <NodeDetail id={selectedID} onClear={(): void => setSelectedID('')} />
+      </ListDetail>
+    </div>
   );
 }
 
 interface NodeListProps {
+  nodes: TopologyNode[];
+  loading: boolean;
+  error: string | null;
+  refresh: () => Promise<void>;
   selectedID: string;
   onSelect: (id: string) => void;
 }
 
-function NodeList({ selectedID, onSelect }: NodeListProps): JSX.Element {
+function NodeList({
+  nodes,
+  loading,
+  error,
+  refresh,
+  selectedID,
+  onSelect,
+}: NodeListProps): JSX.Element {
   const { t } = useTranslation(['pages', 'common']);
-  const { nodes, loading, error, refresh } = useTopologyNodes();
 
   return (
     <RecordPane

@@ -110,6 +110,8 @@ const detail: TopologyNodeDetailResponse = {
 
 const state = {
   nodes: nodes as TopologyNode[],
+  links: [] as TopologyLink[],
+  linksError: null as string | null,
   listError: null as string | null,
   listLoading: false,
   detail: detail as TopologyNodeDetailResponse | null,
@@ -124,6 +126,12 @@ vi.mock('../hooks/useTopology', () => ({
     error: state.listError,
     refresh: vi.fn(),
   }),
+  useTopologyLinks: () => ({
+    links: state.links,
+    loading: state.listLoading,
+    error: state.linksError,
+    refresh: vi.fn(),
+  }),
   useTopologyNode: (id: string) => ({
     detail: id ? state.detail : null,
     loading: id ? state.detailLoading : false,
@@ -136,6 +144,8 @@ const { TopologyPage } = await import('./TopologyPage');
 
 function reset(): void {
   state.nodes = nodes;
+  state.links = [link({ id: 'l1', sourceNodeId: 'core', targetNodeId: 'bare' })];
+  state.linksError = null;
   state.listError = null;
   state.listLoading = false;
   state.detail = detail;
@@ -321,5 +331,62 @@ describe('TopologyPage — degraded backends', () => {
     await userEvent.click(screen.getByTestId('node-row-core'));
 
     expect(screen.getByText('Node not found.')).toBeTruthy();
+  });
+});
+
+describe('TopologyPage — the map', () => {
+  beforeEach(reset);
+
+  // seed#2700: the page was List + detail under a name that promises a map,
+  // so 200 discovered nodes read as a scrollbar. The map is the page's
+  // primary answer to "what does this network look like".
+  it('draws the discovered nodes and links as a graph', () => {
+    render(<TopologyPage />);
+
+    expect(screen.getByTestId('topology-graph')).toBeTruthy();
+    expect(screen.getByTestId('topology-graph-node-core')).toBeTruthy();
+    expect(screen.getByTestId('topology-graph-link-l1')).toBeTruthy();
+  });
+
+  it('drives the same detail panel from a click on the map as from the list', async () => {
+    render(<TopologyPage />);
+
+    await userEvent.click(screen.getByTestId('topology-graph-node-core'));
+
+    expect(screen.getByRole('heading', { name: 'core-01' })).toBeTruthy();
+  });
+
+  it('keeps the map and the list on one selection', async () => {
+    render(<TopologyPage />);
+    await userEvent.click(screen.getByTestId('node-row-core'));
+
+    expect(screen.getByTestId('topology-graph-node-core').getAttribute('aria-pressed')).toBe(
+      'true',
+    );
+  });
+});
+
+describe('TopologyPage — the map under a failing backend', () => {
+  beforeEach(reset);
+
+  // A map drawn with no edges is the same picture as a network with no
+  // edges. The page's whole rule is that it never says something it does
+  // not know, so a failed edge read has to say so on the map itself.
+  it('says the edges could not be read rather than drawing an edgeless network', () => {
+    state.links = [];
+    state.linksError = 'edges unavailable';
+    render(<TopologyPage />);
+
+    expect(screen.getByTestId('topology-graph-links-error')).toBeTruthy();
+    expect(screen.getByText('edges unavailable')).toBeTruthy();
+    // The nodes are still known, so the map still draws them.
+    expect(screen.getByTestId('topology-graph-node-core')).toBeTruthy();
+  });
+
+  it('shows no such warning when the edges simply do not exist yet', () => {
+    state.links = [];
+    render(<TopologyPage />);
+
+    expect(screen.queryByTestId('topology-graph-links-error')).toBeNull();
   });
 });

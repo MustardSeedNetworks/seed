@@ -69,16 +69,27 @@ func (r *TopologyRepository) UpsertLink(ctx context.Context, link *topology.Link
 }
 
 // ListLinks returns every link involving nodeID (either source or
-// target) ordered by LastSeen desc.
+// target) ordered by LastSeen desc. An empty nodeID is not a node that
+// matches nothing — it is no filter at all, and returns the whole edge
+// list, which is what the topology map draws (seed#2700).
 func (r *TopologyRepository) ListLinks(ctx context.Context, nodeID string) ([]*topology.Link, error) {
-	rows, err := r.db.Query(ctx, `
+	const columns = `
 		SELECT id, source_node_id, target_node_id, source_interface, target_interface,
 		       link_type, status, speed_mbps, utilization_pct,
 		       first_seen, last_seen, evidence_json
-		FROM topology_links
+		FROM topology_links`
+
+	query := columns + `
 		WHERE source_node_id = ? OR target_node_id = ?
-		ORDER BY last_seen DESC
-	`, nodeID, nodeID)
+		ORDER BY last_seen DESC`
+	args := []any{nodeID, nodeID}
+	if nodeID == "" {
+		query = columns + `
+		ORDER BY last_seen DESC`
+		args = nil
+	}
+
+	rows, err := r.db.Query(ctx, query, args...)
 	if err != nil {
 		return nil, fmt.Errorf("list topology_links: %w", err)
 	}

@@ -192,13 +192,29 @@ func TestHandleTopologyNodeByID_EmptyIDReturns400(t *testing.T) {
 	}
 }
 
-func TestHandleTopologyLinks_RequiresNodeID(t *testing.T) {
+// The handler's own contract — and the topology map that consumes it
+// (seed#2700) — is that ?node_id is a filter, not a requirement: without it
+// the endpoint serves the global edge list. It used to answer 400, so the map
+// would have had to fetch the edges of every node one request at a time.
+func TestHandleTopologyLinks_WithoutNodeIDReturnsEveryLink(t *testing.T) {
 	s := newTopologyTestServer(t)
+	seedTopology(t, s.db())
+
 	req := httptest.NewRequest(http.MethodGet, APIVersionPrefix+"/topology/links", http.NoBody)
 	w := httptest.NewRecorder()
 	s.handleTopologyLinks(w, req)
-	if w.Code != http.StatusBadRequest {
-		t.Errorf("status = %d, want 400 (missing node_id)", w.Code)
+	if w.Code != http.StatusOK {
+		t.Fatalf("status = %d, want 200; body %s", w.Code, w.Body.String())
+	}
+	var resp struct {
+		Count int              `json:"count"`
+		Links []map[string]any `json:"links"`
+	}
+	if err := json.Unmarshal(w.Body.Bytes(), &resp); err != nil {
+		t.Fatalf("decode: %v", err)
+	}
+	if resp.Count != 1 || len(resp.Links) != 1 {
+		t.Errorf("count = %d, links = %d, want 1 and 1", resp.Count, len(resp.Links))
 	}
 }
 

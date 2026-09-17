@@ -45,5 +45,4 @@
 /api/v1/telemetry/dns/security            # delete: unclaimed; the two routes are dns.SecurityScanner's only reader. Queued with bluetooth
 /api/v1/telemetry/dns/security/settings   # delete: see /telemetry/dns/security
 /api/v1/topology/arp                      # scheduled: Wave 3 #328 (this is the SNMP-harvested remote table, not the local cache)
-/api/v1/topology/links                    # non-UI: the S4-4 cross-product harness reads it per node (fleet rule 8); the UI reads node detail
 /api/v1/wifi/wifi/status                  # scheduled: Wave 9 #360 connection management (connect/disconnect/forget/status)

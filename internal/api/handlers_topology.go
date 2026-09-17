@@ -111,10 +111,6 @@ func (s *Server) handleTopologyNodeByID(w http.ResponseWriter, r *http.Request) 
 func (s *Server) handleTopologyLinks(w http.ResponseWriter, r *http.Request) {
 	logger := logging.FromContext(r.Context())
 	nodeID := r.URL.Query().Get("node_id")
-	if nodeID == "" {
-		http.Error(w, "node_id query parameter required", http.StatusBadRequest)
-		return
-	}
 
 	links, err := s.topologyQueries.Links(r.Context(), nodeID)
 	if err != nil {

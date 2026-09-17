@@ -82,6 +82,12 @@ vi.mock('../hooks/useTopology', () => ({
     error: null,
     refresh: vi.fn(),
   }),
+  useTopologyLinks: () => ({
+    links: [],
+    loading: false,
+    error: null,
+    refresh: vi.fn(),
+  }),
   useTopologyNode: (id: string) => ({
     detail: id ? state.detail : null,
     loading: false,
