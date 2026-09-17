@@ -76,8 +76,11 @@ func newMFAFixture(t *testing.T) *mfaTestFixture {
 	require.NoError(t, err)
 
 	return &mfaTestFixture{
-		server:  server,
-		handler: server.GetAuthenticatedHandler(),
+		server: server,
+		// Handler(), not GetAuthenticatedHandler(): the latter stops at the JWT
+		// middleware and omits CSRF, so this suite passed all the way through
+		// the enrolment routes answering 403 in production (#2725).
+		handler: server.Handler(),
 		db:      db,
 		token:   token,
 	}
@@ -102,10 +105,32 @@ func (f *mfaTestFixture) post(
 	req.Header.Set("Content-Type", "application/json")
 	if token != "" {
 		req.Header.Set("Authorization", "Bearer "+token)
+		// A session-bearing POST now crosses the CSRF middleware, exactly as the
+		// browser's does; the pre-session login routes pass an empty token and
+		// are exempt there.
+		req.Header.Set(auth.CSRFHeaderName, f.csrfToken(t, token))
 	}
 	w := httptest.NewRecorder()
 	f.handler.ServeHTTP(w, req)
 	return w
+}
+
+// csrfToken mints a CSRF token for the given bearer the way the UI does, with a
+// GET through the same handler, so the token is keyed to that session.
+func (f *mfaTestFixture) csrfToken(t *testing.T, token string) string {
+	t.Helper()
+	req := httptest.NewRequest(http.MethodGet, "/api/v1/auth/csrf", nil)
+	req.Header.Set("Authorization", "Bearer "+token)
+	w := httptest.NewRecorder()
+	f.handler.ServeHTTP(w, req)
+	require.Equal(t, http.StatusOK, w.Code, "mint CSRF token")
+
+	var body struct {
+		Token string `json:"token"`
+	}
+	require.NoError(t, json.Unmarshal(w.Body.Bytes(), &body))
+	require.NotEmpty(t, body.Token)
+	return body.Token
 }
 
 // codeNow computes the current TOTP code for the given base32 secret

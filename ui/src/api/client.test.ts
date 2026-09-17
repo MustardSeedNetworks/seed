@@ -262,4 +262,14 @@ describe('api client CSRF on authenticated auth mutations', () => {
 
     expect(sent).toEqual([[expect.stringContaining(endpoint), null]]);
   });
+
+  // The one pre-session route that carries a query string (webauthn.ts passes
+  // the username that way), so an exact-match lookup has to drop it first.
+  it('sends no CSRF token with the pre-session POST carrying a query string', async () => {
+    const endpoint = '/api/v1/auth/webauthn/login/finish?username=alice';
+
+    await api.post(endpoint, {});
+
+    expect(sent).toEqual([[expect.stringContaining(endpoint), null]]);
+  });
 });
