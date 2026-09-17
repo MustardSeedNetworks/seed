@@ -118,13 +118,15 @@ func TestCSRFTokenEndpointStillMintsForAFreshSession(t *testing.T) {
 	if err != nil {
 		t.Fatalf("mint first access token: %v", err)
 	}
-	// A refresh yields a new bearer, which is a new session key.
+	// A refresh yields a new bearer, which is a new session key. Every minted
+	// token carries a random jti (newTokenID), so the two differ even for the
+	// same user in the same second.
 	second, err := s.authManager().GenerateAccessToken(t.Context(), "admin")
 	if err != nil {
 		t.Fatalf("mint second access token: %v", err)
 	}
 	if first == second {
-		t.Skip("the auth manager returned the same bearer twice; nothing to tell apart")
+		t.Fatalf("two mints returned the same bearer; the jti is not unique")
 	}
 
 	a := fetchCSRFToken(t, s, first)
