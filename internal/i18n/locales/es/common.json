@@ -188,6 +188,7 @@
     "runTestsHint": "Toca el botón de reproducción para ejecutar todas las pruebas.",
     "networkDiscoveryHint": "Usa la tarjeta de Descubrimiento de Red para buscar dispositivos en tu red.",
     "byCompany": "por {{company}}",
+    "company": "Mustard Seed Networks",
     "contact": "Contacto",
     "copyright": "© {{year}} {{company}}. Todos los derechos reservados.",
     "legal": "Legal",
