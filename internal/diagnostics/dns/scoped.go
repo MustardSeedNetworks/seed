@@ -52,10 +52,3 @@ func (r resolverSource) resolversFor(iface string) ([]string, Scope) {
 	}
 	return servers, ScopeInterface
 }
-
-// InterfaceResolvers returns the resolvers configured for iface and whether
-// this host can attribute resolvers to an interface at all. Implementation is
-// platform-specific (scoped_darwin.go, scoped_linux.go, scoped_windows.go).
-func InterfaceResolvers(iface string) ([]string, bool) {
-	return interfaceResolversPlatform(iface)
-}

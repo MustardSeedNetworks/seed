@@ -214,7 +214,7 @@
     "noARecord": "No A record",
     "noAAAARecord": "No AAAA record",
     "scopeInterface": "Resolvers for this interface",
-    "scopeSystemHint": "This host does not record which interface a resolver belongs to.",
+    "scopeSystemHint": "Shown for the whole host, not for the selected interface.",
     "noResolvers": "No resolvers on this interface",
     "noResolversHint": "Nothing was looked up: resolving through another interface would not describe this link."
   },

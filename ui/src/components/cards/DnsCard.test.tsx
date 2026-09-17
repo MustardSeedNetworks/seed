@@ -40,7 +40,7 @@ describe('DnsCard resolver scope', () => {
     render(<DnsCard data={dnsData({ serverScope: 'system' })} />);
     expect(screen.getByText('DNS Servers')).toBeInTheDocument();
     expect(
-      screen.getByText('This host does not record which interface a resolver belongs to.'),
+      screen.getByText('Shown for the whole host, not for the selected interface.'),
     ).toBeInTheDocument();
   });
 

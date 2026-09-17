@@ -6,6 +6,7 @@ package dns_test
 
 import (
 	"slices"
+	"strings"
 	"testing"
 
 	"github.com/MustardSeedNetworks/seed/internal/diagnostics/dns"
@@ -44,12 +45,12 @@ resolver #2
 `
 
 func TestParseScutilScopedResolversNamesOneInterface(t *testing.T) {
-	got := dns.ExportParseScutilScopedResolvers(scutilFixture, "en0")
+	got, _ := dns.ExportParseScutilScopedResolvers(scutilFixture, "en0")
 	want := []string{"172.40.40.1", "172.40.40.2"}
 	if !slices.Equal(got, want) {
 		t.Errorf("en0 resolvers = %v, want %v", got, want)
 	}
-	tunnel := dns.ExportParseScutilScopedResolvers(scutilFixture, "utun3")
+	tunnel, _ := dns.ExportParseScutilScopedResolvers(scutilFixture, "utun3")
 	if !slices.Equal(tunnel, []string{"10.9.0.1"}) {
 		t.Errorf("utun3 resolvers = %v, want [10.9.0.1]", tunnel)
 	}
@@ -59,7 +60,28 @@ func TestParseScutilScopedResolversNamesOneInterface(t *testing.T) {
 // to the unscoped block is the defect in a new coat: it would name en0's
 // resolvers under feth0, the way the gateway named the Wi-Fi router (#2690).
 func TestParseScutilScopedResolversDoesNotFallBackToTheUnscopedBlock(t *testing.T) {
-	if got := dns.ExportParseScutilScopedResolvers(scutilFixture, "feth0"); len(got) != 0 {
+	if got, _ := dns.ExportParseScutilScopedResolvers(scutilFixture, "feth0"); len(got) != 0 {
 		t.Errorf("feth0 resolvers = %v, want none", got)
+	}
+}
+
+// A host whose scutil prints no scoped section cannot attribute resolvers to
+// an interface at all. Reporting that as "this interface has none" would put
+// every interface, including the one carrying the route, behind the absence
+// state — state 3 wearing state 2's coat, which is the move the scoping exists
+// to prevent.
+func TestParseScutilScopedResolversSaysWhenItCannotTell(t *testing.T) {
+	unscoped, _, _ := strings.Cut(scutilFixture, "DNS configuration (for scoped queries)")
+
+	if _, attributable := dns.ExportParseScutilScopedResolvers(unscoped, "en0"); attributable {
+		t.Error("output with no scoped section must not be reported as attributable")
+	}
+
+	servers, attributable := dns.ExportParseScutilScopedResolvers(scutilFixture, "feth0")
+	if !attributable {
+		t.Error("output with a scoped section is attributable even when it names no match")
+	}
+	if len(servers) != 0 {
+		t.Errorf("feth0 resolvers = %v, want none", servers)
 	}
 }
