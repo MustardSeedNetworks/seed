@@ -23,6 +23,7 @@ import { Tooltip } from './tooltip';
 
 import type React from 'react';
 import { useCallback, useEffect, useRef } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useTestRunStore } from '../../stores/testRunStore';
 import { cn, icon as iconTokens, layout, radius } from '../../styles/theme';
 
@@ -32,16 +33,26 @@ import { cn, icon as iconTokens, layout, radius } from '../../styles/theme';
 interface FabProps {
   /** Additional CSS classes */
   className?: string;
+  /**
+   * `floating` is the circular fixed-layer control. `inline` is the same
+   * action as a labelled button for the page header, used at phone width
+   * where the fixed layer has nowhere to sit: on `/link` the status band
+   * occupies y 544-827 of an 844px viewport, so a bottom-right FAB covers the
+   * Speed/Duplex/MTU figures whatever its offset (#2646). It also gives the
+   * control a label a touch user can read, which a hover tooltip cannot.
+   */
+  variant?: 'floating' | 'inline';
 }
 
 /**
  * Floating Action Button - triggers all diagnostic tests
  */
-export function Fab({ className = '' }: FabProps): React.JSX.Element {
+export function Fab({ className = '', variant = 'floating' }: FabProps): React.JSX.Element {
   // Run state is owned by the store. `running` disables the button and shows the
   // spinner; `partial` warns that the previous run finished without every check
   // reporting — surfaced distinctly so partial results are never presented as a
   // clean completion (the C2 correctness fix, seed#1568).
+  const { t } = useTranslation('common');
   const status = useTestRunStore((s) => s.status);
   const start = useTestRunStore((s) => s.start);
   const isRunning = status === 'running';
@@ -80,6 +91,11 @@ export function Fab({ className = '' }: FabProps): React.JSX.Element {
     ? 'Some checks did not finish — tap to run all tests again'
     : 'Run All Tests';
 
+  const inline = variant === 'inline';
+  // The visible label is translated; the `label` above (the accessible name and
+  // tooltip) stays as it was, baselined with the rest of this component's copy.
+  const shortLabel = t('buttons.runAllTests');
+
   return (
     <Tooltip text={label}>
       <button
@@ -87,9 +103,12 @@ export function Fab({ className = '' }: FabProps): React.JSX.Element {
         onClick={handleClick}
         disabled={isRunning}
         className={cn(
-          'w-14 h-14 bg-brand-primary text-on-brand shadow-lg hover:bg-brand-accent active:scale-95 transition-all touch-manipulation focus:outline-none focus:ring-4 focus:ring-brand-primary/50 focus:ring-offset-2 focus:ring-offset-surface-base',
+          'bg-brand-primary text-on-brand shadow-lg hover:bg-brand-accent active:scale-95 transition-all touch-manipulation focus:outline-none focus:ring-4 focus:ring-brand-primary/50 focus:ring-offset-2 focus:ring-offset-surface-base',
+          // Both variants keep a 44px minimum target (WCAG 2.5.8); the inline
+          // one grows sideways for its label instead of staying a circle.
+          inline ? 'min-h-11 gap-tight px-4 py-2 text-sm font-medium' : 'w-14 h-14',
           layout.flex.center,
-          radius.full,
+          inline ? radius.md : radius.full,
           isRunning && 'opacity-75 cursor-not-allowed',
           className,
         )}
@@ -152,6 +171,7 @@ export function Fab({ className = '' }: FabProps): React.JSX.Element {
             <path d="M8 5v14l11-7z" />
           </svg>
         )}
+        {inline ? <span>{shortLabel}</span> : null}
       </button>
     </Tooltip>
   );

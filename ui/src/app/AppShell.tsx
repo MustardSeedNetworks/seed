@@ -21,6 +21,7 @@ import { SettingsDrawer } from '../components/settings/SettingsDrawer';
 import { CommandPalette } from '../components/ui/CommandPalette';
 import { Fab } from '../components/ui/fab';
 import { AppContext, type AppContextValue } from '../contexts/AppContext';
+import { useIsPhone } from '../hooks/useIsPhone';
 import { useNavGroups } from '../navGroups';
 import { type PageConfig, usePages } from '../pageRegistry';
 import { cn, section } from '../styles/theme';
@@ -38,6 +39,7 @@ interface AppShellProps {
 export function AppShell({ orchestration, logout }: AppShellProps): JSX.Element {
   const navGroups = useNavGroups();
   const pages = usePages();
+  const isPhone = useIsPhone();
   const [location] = useLocation();
   const {
     cards,
@@ -192,10 +194,17 @@ export function AppShell({ orchestration, logout }: AppShellProps): JSX.Element 
       {/* Profile Management Modal (#754) */}
       {profilesOpen ? <ProfileManagement onClose={closeProfiles} /> : null}
 
-      {/* FAB - Run All Tests - positioned bottom-right */}
-      <div className="fixed bottom-0 right-0 pointer-events-none z-50">
-        <Fab className="pointer-events-auto absolute bottom-20 right-6" />
-      </div>
+      {/* Run All Tests. On a phone this control lives in the page header
+          instead (see PageWithHeader): the fixed layer has nowhere to sit at
+          390px, because /link's status band occupies y 544-827 of an 844px
+          viewport and a bottom-right FAB covers the figures at any offset
+          (#2646). Rendered here only above the sm breakpoint, so exactly one
+          run control is ever in the tree. */}
+      {isPhone ? null : (
+        <div className="fixed bottom-0 right-0 pointer-events-none z-50">
+          <Fab className="pointer-events-auto absolute bottom-20 right-6" />
+        </div>
+      )}
 
       {/* Command palette (Cmd+K / Ctrl+K) */}
       <CommandPalette
@@ -231,6 +240,7 @@ function PageWithHeader({
   onOpenHelp: (section: string) => void;
   children: ReactNode;
 }) {
+  const isPhone = useIsPhone();
   const helpSection = page.help;
   const { t } = useTranslation('common');
   const productName = t('app.title');
@@ -248,6 +258,10 @@ function PageWithHeader({
         eyebrow={page.eyebrow}
         title={page.title}
         description={page.description}
+        // On a phone the run control is a labelled button here rather than a
+        // FAB on the fixed layer, which had nowhere to sit clear of the page's
+        // own content (#2646). Above `sm` it stays a FAB, rendered by AppShell.
+        actions={isPhone ? <Fab variant="inline" /> : undefined}
         onHelp={helpSection ? () => onOpenHelp(helpSection) : undefined}
       />
       {children}
