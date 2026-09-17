@@ -259,4 +259,10 @@ export const handlers = [
       updatedAt: '2026-01-01T00:00:00Z',
     }),
   ),
+
+  // MfaStatus — internal/api/handlers_mfa.go. Nothing enrolled is the state the
+  // card offers both enrolment choices in, which is the one its story renders.
+  http.get('*/api/v1/auth/mfa/status', () =>
+    HttpResponse.json({ totpEnabled: false, webauthnEnabled: false, webauthnCredentialCount: 0 }),
+  ),
 ];
