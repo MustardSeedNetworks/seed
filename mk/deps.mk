@@ -48,7 +48,7 @@ update: ## Update ALL dependencies and tools to latest versions
 	$(call timer-end,update-tools,Go tools)
 	@printf "$(CYAN)│$(RESET) $(BOLD)[5/5]$(RESET) Playwright browsers                                                   $(CYAN)│$(RESET)\n"
 	$(call timer-start,update-playwright)
-	@cd ui && npx playwright install chromium 2>&1 | tail -2 || true
+	@cd ui && npx playwright install chromium webkit 2>&1 | tail -2 || true
 	$(call timer-end,update-playwright,Playwright)
 	@printf "$(CYAN)└──────────────────────────────────────────────────────────────────────────────┘$(RESET)\n"
 	@printf "\n$(GREEN)✓ All dependencies updated!$(RESET)\n"
@@ -154,7 +154,7 @@ tools-frontend: ## Install frontend development tools
 	@printf "Installing ui dependencies...\n"
 	@cd ui && npm ci
 	@printf "Installing Playwright browsers...\n"
-	@cd ui && npx playwright install --with-deps chromium 2>/dev/null || printf "Playwright install skipped (run 'make test-e2e-install' manually)\n"
+	@cd ui && npx playwright install --with-deps chromium webkit 2>/dev/null || printf "Playwright install skipped (run 'make test-e2e-install' manually)\n"
 	@echo "✅ Frontend tools installed"
 
 # =============================================================================

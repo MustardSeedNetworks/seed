@@ -136,7 +136,7 @@ test-e2e-ui: ## Run E2E tests with Playwright UI
 	cd ui && npm run test:e2e:ui
 
 test-e2e-install: ## Install Playwright browsers
-	cd ui && npx playwright install --with-deps chromium
+	cd ui && npx playwright install --with-deps chromium webkit
 
 # =============================================================================
 # Coverage & Integration
