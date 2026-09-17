@@ -3,7 +3,7 @@
 # Build the seed binary the E2E jobs run.
 #
 # Why this exists rather than `make build-backend-quiet`: the E2E jobs run
-# inside mcr.microsoft.com/playwright:v1.62.1-noble, and that image ships no
+# inside mcr.microsoft.com/playwright:v1.63.0-noble, and that image ships no
 # `make` — and no gcc, and no libpcap. It also cannot apt-install them: the
 # image's sources point at azure.archive.ubuntu.com, which is unreachable from
 # the container network (every index fails with a connection timeout). So the
