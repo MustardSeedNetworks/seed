@@ -10,7 +10,7 @@
  * - Disk usage: percentage, used/total bytes with formatting
  * - System info: hostname, OS, architecture, CPU count, goroutines
  * - Uptime: displays in human-readable format (days + hours, hours + minutes, or minutes)
- * - Process info: memory usage of the The Seed process itself
+ * - Process info: memory usage of the Seed process itself
  * - Threshold-based status: warning/critical levels from settings context
  * - Real-time updates: fetches metrics periodically from API
  *

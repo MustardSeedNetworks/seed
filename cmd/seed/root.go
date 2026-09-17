@@ -40,8 +40,8 @@ func newCLIState() *cliState {
 	// Note: Run function is set in initCommands() to avoid initialization cycle
 	state.rootCmd = &cobra.Command{
 		Use:   binaryName,
-		Short: "The Seed - Network Diagnostics by Mustard Seed Networks",
-		Long: fmt.Sprintf(`The Seed %s - Network Diagnostics by Mustard Seed Networks
+		Short: "Seed - Network Diagnostics by Mustard Seed Networks",
+		Long: fmt.Sprintf(`Seed %s - Network Diagnostics by Mustard Seed Networks
 
 A comprehensive network diagnostic tool that provides:`, version.GetVersion()) + `
 
@@ -54,7 +54,7 @@ A comprehensive network diagnostic tool that provides:`, version.GetVersion()) +
   - VLAN management
   - Real-time network monitoring
 
-The Seed runs as a web server with a modern React-based UI.`,
+Seed runs as a web server with a modern React-based UI.`,
 		Example: `  # Start the web server (also: ` + "`seed serve`" + `)
   seed
 

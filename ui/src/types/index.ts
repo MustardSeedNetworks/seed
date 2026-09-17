@@ -1,5 +1,5 @@
 /**
- * The Seed Type Definitions
+ * Seed Type Definitions
  */
 
 export interface Thresholds {

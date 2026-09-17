@@ -371,7 +371,7 @@ describe('App', () => {
       renderWithProviders(<App />);
 
       await waitFor(() => {
-        expect(screen.getByText('The Seed')).toBeInTheDocument();
+        expect(screen.getByText('Seed')).toBeInTheDocument();
       });
       expect(screen.getByText('Network Diagnostics by Mustard Seed Networks')).toBeInTheDocument();
       expect(screen.getByPlaceholderText('admin')).toBeInTheDocument();
@@ -646,8 +646,8 @@ describe('App', () => {
       renderWithProviders(<App />);
 
       await waitFor(() => {
-        // Multiple "The Seed" elements may exist (header + other places)
-        const seedElements = screen.getAllByText('The Seed');
+        // Multiple "Seed" elements may exist (header + other places)
+        const seedElements = screen.getAllByText('Seed');
         expect(seedElements.length).toBeGreaterThan(0);
       });
 

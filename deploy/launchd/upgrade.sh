@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# The Seed Upgrade Script for macOS
+# Seed Upgrade Script for macOS
 # Upgrades an existing Seed installation to the latest version
 #
 # Usage:

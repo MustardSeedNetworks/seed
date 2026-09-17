@@ -12,7 +12,7 @@ func initPlatformCmd(state *cliState) {
 	platformCmd := &cobra.Command{
 		Use:   "platform",
 		Short: "Display platform-specific capabilities and limitations",
-		Long: `Display platform-specific capabilities and limitations for The Seed.
+		Long: `Display platform-specific capabilities and limitations for Seed.
 
 Different operating systems have varying levels of support for network
 diagnostics features. This command shows what's available on your platform
@@ -29,7 +29,7 @@ and provides guidance for features that require additional setup.`,
 
 // runPlatform displays platform-specific information.
 func runPlatform(w io.Writer) {
-	writeStr(w, "The Seed - Platform Support ("+runtime.GOOS+"/"+runtime.GOARCH+")\n")
+	writeStr(w, "Seed - Platform Support ("+runtime.GOOS+"/"+runtime.GOARCH+")\n")
 	writeStr(w, "==================================================\n\n")
 
 	switch runtime.GOOS {

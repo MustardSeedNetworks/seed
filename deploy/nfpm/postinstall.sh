@@ -56,7 +56,7 @@ fi
 cat <<'EOF'
 
 ==========================================
-  The Seed installed successfully
+  Seed installed successfully
 ==========================================
 
 Web interface: https://localhost:8443

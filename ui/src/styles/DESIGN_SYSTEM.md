@@ -1,4 +1,4 @@
-# The Seed Design System
+# Seed Design System
 
 This design system ensures consistent styling across the application. Instead of scattered utility classes, use the
 centralized theme tokens and component utilities.

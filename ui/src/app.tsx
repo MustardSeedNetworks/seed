@@ -1,7 +1,7 @@
 /**
  * Main Application Component
  *
- * Root component for The Seed by Mustard Seed Networks. After the B1 refactor
+ * Root component for Seed by Mustard Seed Networks. After the B1 refactor
  * this file is intentionally small: it owns only the pre-dashboard GATING —
  * setup wizard, loading, and login — plus session-expiration handling.
  *

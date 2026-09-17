@@ -48,9 +48,11 @@ test.describe('a route names itself the same way everywhere', () => {
       await page.goto(path, { waitUntil: 'domcontentloaded' });
       await expect(page.getByTestId('page-header-title')).toBeVisible({ timeout: 20000 });
 
-      // The tab. Nothing set this per route before; it read "The Seed" on all
-      // eleven, so several open tabs were indistinguishable.
-      await expect(page).toHaveTitle(new RegExp(`^${label} · `));
+      // The tab. Nothing set this per route before; it read the bare product
+      // name on all eleven, so several open tabs were indistinguishable. The
+      // suffix is asserted too: it is the one place the product name reaches
+      // the browser chrome, and UI-SEED-9 dropped the article from it.
+      await expect(page).toHaveTitle(`${label} · Seed`);
 
       // The breadcrumb's last crumb is the current page, and it has to be the
       // same string as the label — not a de-slugged URL segment.

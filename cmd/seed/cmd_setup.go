@@ -99,7 +99,7 @@ func outputCredentials(creds setupCredentials, asJSON bool) error {
 		return nil
 	}
 	fmt.Fprintln(os.Stdout, "╔══════════════════════════════════════════════════════════════════╗")
-	fmt.Fprintln(os.Stdout, "║              THE SEED - CREDENTIALS GENERATED                    ║")
+	fmt.Fprintln(os.Stdout, "║                   SEED - CREDENTIALS GENERATED                   ║")
 	fmt.Fprintln(os.Stdout, "╠══════════════════════════════════════════════════════════════════╣")
 	fmt.Fprintf(os.Stdout, "║  Username: %-53s ║\n", creds.Username)
 	fmt.Fprintf(os.Stdout, "║  Password: %-53s ║\n", creds.Password)

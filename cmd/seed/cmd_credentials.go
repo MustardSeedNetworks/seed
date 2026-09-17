@@ -19,7 +19,7 @@ func initCredentialsCmd(state *cliState) {
 		Short: "Check setup status",
 		Long: `Check if initial setup is required and display setup instructions.
 
-This command checks whether The Seed has been configured with a secure
+This command checks whether Seed has been configured with a secure
 password. If setup is required, it provides instructions for accessing
 the web-based setup wizard.
 
@@ -85,7 +85,7 @@ func runCredentials(cmd *cobra.Command, _ []string, state *cliState) {
 		fmt.Fprintln(os.Stdout, string(jsonData))
 	} else {
 		fmt.Fprintln(os.Stdout, "╔══════════════════════════════════════════════════════════════════╗")
-		fmt.Fprintln(os.Stdout, "║              THE SEED - SETUP STATUS                             ║")
+		fmt.Fprintln(os.Stdout, "║                       SEED - SETUP STATUS                        ║")
 		fmt.Fprintln(os.Stdout, "║              Mustard Seed Networks                               ║")
 		fmt.Fprintln(os.Stdout, "╠══════════════════════════════════════════════════════════════════╣")
 		if needsSetup {

@@ -1,5 +1,5 @@
 /**
- * Sidebar navigation groups for The Seed.
+ * Sidebar navigation groups for Seed.
  *
  * Groups are labelled by FUNCTION, not by the botanical module metaphor
  * (Sap/Roots/Canopy/Shell/Harvest). This matches where the rest of the

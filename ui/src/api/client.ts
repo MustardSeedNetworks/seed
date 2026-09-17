@@ -1,7 +1,7 @@
 /**
  * API Client Library
  *
- * Provides a centralized HTTP client for communicating with the The Seed backend API.
+ * Provides a centralized HTTP client for communicating with the Seed backend API.
  *
  * Features:
  * - Cookie-based authentication (httpOnly cookies)

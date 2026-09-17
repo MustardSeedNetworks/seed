@@ -1,7 +1,7 @@
 Name:       seed
 Version:    __VERSION__
 Release:    1%{?dist}
-Summary:    The Seed - Network Diagnostic Tool by Mustard Seed Networks
+Summary:    Seed - Network Diagnostic Tool by Mustard Seed Networks
 License:    BSL 1.1
 URL:        https://github.com/MustardSeedNetworks/seed
 BuildArch:  __ARCHITECTURE__
@@ -12,7 +12,7 @@ Provides: user(seed)
 Provides: group(seed)
 
 %description
-The Seed is a professional-grade network diagnostic appliance designed
+Seed is a professional-grade network diagnostic appliance designed
 for network technicians and engineers. Plug it into any network jack and
 instantly see link status, switch information, DHCP details, DNS health,
 and gateway connectivity through a modern web interface.
@@ -52,7 +52,7 @@ install -m 644 %{_repo_root}/deploy/deb/seed.service %{buildroot}/usr/lib/system
 getent group seed >/dev/null || groupadd -r seed
 getent passwd seed >/dev/null || \
     useradd -r -g seed -d /var/lib/seed -s /sbin/nologin \
-    -c "The Seed Network Diagnostic Tool" seed
+    -c "Seed Network Diagnostic Tool" seed
 exit 0
 
 %post

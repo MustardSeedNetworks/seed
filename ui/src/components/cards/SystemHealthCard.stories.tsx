@@ -11,7 +11,7 @@ import { SystemHealthCard } from './SystemHealthCard';
  * - Disk usage with used/total display
  * - Load averages (1, 5, 15 minute)
  * - System uptime in human-readable format
- * - Process memory usage for The Seed itself
+ * - Process memory usage for Seed itself
  * - Goroutine count for Go runtime monitoring
  * - System info: hostname, OS, architecture, CPU count
  * - Color-coded status bars: green (< 75%), yellow (75-90%), red (> 90%)
