@@ -185,7 +185,13 @@ export function LoginForm({
             // click and matches what an authenticator app user expects.
             // biome-ignore lint/a11y/noAutofocus: sole control on a dedicated step
             autoFocus
-            className={cn('input', 'text-center tracking-widest')}
+            className={cn(
+              'w-full',
+              input.size.md,
+              radius.md,
+              'border border-surface-border bg-surface-base text-text-primary focus:outline-none focus:border-brand-primary',
+              'text-center tracking-widest',
+            )}
           />
 
           {error ? (
@@ -198,7 +204,13 @@ export function LoginForm({
             type="submit"
             data-testid="mfa-submit"
             disabled={isLoading || mfaCode.trim().length === 0}
-            className="btn-primary"
+            className={cn(
+              'w-full',
+              button.size.md,
+              'bg-brand-primary text-on-brand',
+              radius.md,
+              'font-medium hover:bg-brand-accent focus:outline-none focus:ring-2 focus:ring-brand-primary focus:ring-offset-2 focus:ring-offset-surface-base disabled:opacity-50',
+            )}
           >
             {isLoading ? t('status.loggingIn') : t('login.secondFactor.verify')}
           </button>

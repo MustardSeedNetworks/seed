@@ -1,4 +1,3 @@
-import { Tooltip } from '../ui/tooltip';
 /**
  * MfaCard
  *
@@ -24,7 +23,9 @@ import { useTranslation } from 'react-i18next';
 import { api } from '../../api';
 import { isPasskeySupported, registerPasskey } from '../../lib/webauthn';
 import { icon as iconTokens } from '../../styles/theme';
+import { Button } from '../ui/Button';
 import { Card } from '../ui/card';
+import { Input } from '../ui/Input';
 import { Shield } from '../ui/icons';
 
 /** Backend response shape for GET /api/v1/auth/mfa/status. */
@@ -136,65 +137,78 @@ export function MfaCard(): JSX.Element {
         <p className="body-small text-text-muted">{statusLine}</p>
         {error ? <p className="body-small text-status-error">{error}</p> : null}
 
-        {!(status?.totpEnabled || setup) ? (
-          <button
-            type="button"
-            className="btn btn-secondary"
-            disabled={busy}
-            onClick={() => {
-              startTotp().catch(() => undefined);
-            }}
-          >
-            {t('mfa.setupTotp')}
-          </button>
-        ) : null}
-
         {setup ? (
-          <div className="stack-sm">
+          <div className="flex flex-col items-start gap-compact">
             <img
               alt={t('mfa.qrAlt')}
               src={`data:image/png;base64,${setup.qrCodePngBase64}`}
               width={200}
               height={200}
             />
-            <p className="body-small text-text-muted">{t('mfa.scanAndEnter')}</p>
-            <input
+            <Input
+              id="mfa-totp-code"
+              label={t('mfa.scanAndEnter')}
               type="text"
               inputMode="numeric"
               autoComplete="one-time-code"
               maxLength={6}
               value={code}
-              onInput={(e) => setCode((e.target as HTMLInputElement).value)}
+              onChange={(event) => setCode(event.target.value)}
               placeholder="123456"
-              className="input"
+              data-testid="mfa-totp-code"
             />
-            <button
-              type="button"
-              className="btn btn-primary"
+            <Button
+              size="sm"
               disabled={busy || code.length !== 6}
+              data-testid="mfa-verify-totp"
               onClick={() => {
                 verifyTotp().catch(() => undefined);
               }}
             >
               {t('mfa.verifyAndEnable')}
-            </button>
+            </Button>
           </div>
         ) : null}
 
-        <Tooltip text={isPasskeySupported() ? undefined : t('mfa.passkeyUnsupported')}>
-          <button
-            type="button"
-            className="btn btn-secondary"
-            // A browser without WebAuthn cannot enrol, and an enabled button that
+        {/*
+          Both enrolment choices sit in one flex row. `Button` wraps itself in a
+          Tooltip span with `display: contents`, which generates no box, so the
+          `stack-sm` margins that used to separate these were dropped on the
+          floor and the two unstyled buttons read as one word (#2641). A flex
+          `gap-compact` spaces the buttons themselves and survives that wrapper.
+        */}
+        <div className="flex flex-wrap gap-compact">
+          {!(status?.totpEnabled || setup) ? (
+            <Button
+              variant="secondary"
+              size="sm"
+              disabled={busy}
+              data-testid="mfa-setup-totp"
+              onClick={() => {
+                startTotp().catch(() => undefined);
+              }}
+            >
+              {t('mfa.setupTotp')}
+            </Button>
+          ) : null}
+
+          <Button
+            variant="secondary"
+            size="sm"
+            // Button renders its own Tooltip from `title`, which keeps an
+            // unavailable action in the tab order so the reason can be read. A
+            // browser without WebAuthn cannot enrol, and an enabled button that
             // silently does nothing is what this card shipped with.
+            title={isPasskeySupported() ? undefined : t('mfa.passkeyUnsupported')}
             disabled={busy || !isPasskeySupported()}
+            data-testid="mfa-add-passkey"
             onClick={() => {
               addPasskey().catch(() => undefined);
             }}
           >
             {t('mfa.addPasskey')}
-          </button>
-        </Tooltip>
+          </Button>
+        </div>
       </div>
     </Card>
   );
