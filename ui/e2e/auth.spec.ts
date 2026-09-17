@@ -34,6 +34,14 @@ test.describe('Authentication', () => {
     await expect(page.getByLabel(/username/i)).toBeVisible();
     await expect(page.getByLabel(/password/i)).toBeVisible();
     await expect(page.getByTestId('login-submit')).toBeVisible();
+
+    // And it says nothing untrue (#2643). The pre-auth 401s that
+    // ProfileProvider collects on mount used to fire the session-expired
+    // callback, so this screen accused a first-time visitor of an expiry;
+    // and it printed "Default: admin / seed", a password the mandatory
+    // first-run setup makes impossible. Both are gone.
+    await expect(page.getByTestId('login-error')).toHaveCount(0);
+    await expect(page.getByText(/admin \/ seed/i)).toHaveCount(0);
   });
 
   test('should show error with invalid credentials', async ({ page }) => {
@@ -45,7 +53,9 @@ test.describe('Authentication', () => {
     await page.getByTestId('login-submit').click();
 
     // Should show error message. role=alert is i18n-stable; the
-    // LoginForm error alert (LoginForm.tsx:298) carries it natively.
+    // LoginForm error alert carries it natively. Before #2643 this could not
+    // fail — the fresh login screen already carried a session-expired alert,
+    // so the assertion resolved before the submit was ever answered.
     await expect(page.getByRole('alert')).toBeVisible({
       timeout: 5000,
     });

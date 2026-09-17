@@ -195,6 +195,11 @@ export function useAuth(): UseAuthReturn {
           return;
         }
         if (response.ok) {
+          // A cookie session is already live: this client holds one without
+          // having run login() this page load. Tell the API client so a later
+          // 401 is recognised as a real expiry — it refuses to expire a
+          // session that was never established (#2643).
+          beginSession();
           // Authenticated - we don't have username from /api/v1/status, will be set on login
           setState({
             isAuthenticated: true,

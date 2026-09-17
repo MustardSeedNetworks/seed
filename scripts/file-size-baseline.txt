@@ -19,7 +19,7 @@ internal/protocols/snmp/snmp_extended_test.go 1979
 internal/reporting/internal_test.go 1488
 internal/reporting/scheduler_suite_test.go 1342
 internal/reporting/services_test.go 1709
-ui/src/app.test.tsx 787
+ui/src/app.test.tsx 829
 ui/src/app/useAppOrchestration.ts 649
 ui/src/components/cards/LogViewerModal.tsx 765
 ui/src/components/cards/PerformanceCard.tsx 704

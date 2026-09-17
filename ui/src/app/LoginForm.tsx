@@ -430,8 +430,6 @@ export function LoginForm({
             {isLoading ? t('status.loggingIn') : t('buttons.login')}
           </button>
 
-          <p className="caption text-text-muted text-center">{t('login.defaultCredentials')}</p>
-
           {/* SSO Options - only show if any provider is enabled (fixes #769) */}
           {hasEnabledSso ? (
             <div className="flex flex-col stack">

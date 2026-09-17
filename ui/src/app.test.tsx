@@ -379,12 +379,54 @@ describe('App', () => {
       expect(screen.getByRole('button', { name: /login/i })).toBeInTheDocument();
     });
 
-    it('shows default credentials hint', async () => {
+    it('shows no default-credentials hint', async () => {
+      // The mandatory first-run setup (Argon2id, zxcvbn, HIBP) makes
+      // admin/seed impossible on any install, so printing it under the form
+      // was advice that could only mislead (#2643).
       renderWithProviders(<App />);
 
       await waitFor(() => {
-        expect(screen.getByText(/Default: admin \/ seed/i)).toBeInTheDocument();
+        expect(screen.getByTestId('login-submit')).toBeInTheDocument();
       });
+      expect(screen.queryByText(/admin \/ seed/i)).not.toBeInTheDocument();
+    });
+
+    it('does not tell a first-time visitor their session expired', async () => {
+      // ProfileProvider sits above <App> in main.tsx and queries
+      // /api/v1/profiles on mount, so a never-authenticated visit collects a
+      // 401 whose refresh also fails. That is the ordinary unauthenticated
+      // answer, not an expiry — the login screen must not claim otherwise
+      // (#2643).
+      mockFetch.mockImplementation((url: string) => {
+        if (url.includes('/api/v1/setup/status')) {
+          return Promise.resolve({
+            ok: true,
+            json: () => Promise.resolve({ needsSetup: false, username: 'admin' }),
+          });
+        }
+        // Everything else is behind the session the visitor does not have.
+        return Promise.resolve({
+          ok: false,
+          status: 401,
+          json: () => Promise.resolve({ error: 'Unauthorized' }),
+        });
+      });
+
+      renderWithProviders(<App />);
+
+      await waitFor(() => {
+        expect(screen.getByTestId('login-submit')).toBeInTheDocument();
+      });
+      // Let the profile queries' 401s and their refresh attempts settle.
+      await waitFor(() => {
+        expect(mockFetch).toHaveBeenCalledWith(
+          expect.stringContaining('/api/v1/auth/refresh'),
+          expect.anything(),
+        );
+      });
+
+      expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+      expect(screen.queryByText(/session expired/i)).not.toBeInTheDocument();
     });
 
     it('handles login form submission', async () => {

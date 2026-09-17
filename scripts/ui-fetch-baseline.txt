@@ -19,10 +19,10 @@
 
 ui/src/components/setup/setupApi.ts:25  # read-only — bypasses the client 401 refresh/retry
 ui/src/hooks/useAuth.ts:188  # read-only — bypasses the client 401 refresh/retry
-ui/src/hooks/useAuth.ts:258  # mutating but CSRF-exempt by design (isCSRFExemptPath) — correct as a raw fetch
-ui/src/hooks/useAuth.ts:333  # mutating but CSRF-exempt by design (isCSRFExemptPath) — correct as a raw fetch
-ui/src/hooks/useAuth.ts:398  # mutating but CSRF-exempt by design (isCSRFExemptPath) — correct as a raw fetch
-ui/src/hooks/useAuth.ts:432  # mutating but CSRF-exempt by design (isCSRFExemptPath) — correct as a raw fetch
+ui/src/hooks/useAuth.ts:263  # mutating but CSRF-exempt by design (isCSRFExemptPath) — correct as a raw fetch
+ui/src/hooks/useAuth.ts:338  # mutating but CSRF-exempt by design (isCSRFExemptPath) — correct as a raw fetch
+ui/src/hooks/useAuth.ts:403  # mutating but CSRF-exempt by design (isCSRFExemptPath) — correct as a raw fetch
+ui/src/hooks/useAuth.ts:437  # mutating but CSRF-exempt by design (isCSRFExemptPath) — correct as a raw fetch
 ui/src/hooks/useCapabilities.ts:55  # read-only — bypasses the client 401 refresh/retry
 ui/src/hooks/useLogs.ts:167  # read-only — bypasses the client 401 refresh/retry
 ui/src/hooks/useLogs.ts:187  # read-only — bypasses the client 401 refresh/retry

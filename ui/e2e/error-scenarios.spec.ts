@@ -172,9 +172,10 @@ test.describe('API Error Scenarios', () => {
         // which passed whichever happened: the username field is always visible
         // on a page that never navigates, so it could not fail.
         // Matched on the timeout copy specifically, not on any role="alert":
-        // a stale session-expired banner is also an alert and is already on
-        // the page, so a bare getByRole('alert') passes at once and the
-        // assertion proves nothing about the deadline.
+        // until #2643 a stale session-expired banner was already on this
+        // fresh login screen, so a bare getByRole('alert') passed at once and
+        // proved nothing about the deadline. The banner is gone now; the
+        // scoped match stays, because it is what actually names the deadline.
         await expect(page.getByText(/did not respond/i)).toBeVisible({ timeout: 20000 });
 
         if (timeoutHandle) {
