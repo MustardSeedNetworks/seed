@@ -1622,7 +1622,7 @@ jobs:
       - name: Assert Playwright matches the container image
         working-directory: ui
         run: |
-          want=1.62.1
+          want=1.63.0
           got=$(npx playwright --version | awk '{print $NF}')
           if [ "$got" != "$want" ]; then
             echo "::error::Playwright $got does not match the container image ($want) — bump the container: image tag+digest in ci.yml together with @playwright/test"
@@ -1735,7 +1735,7 @@ jobs:
       - name: Assert Playwright matches the container image
         working-directory: ui
         run: |
-          want=1.62.1
+          want=1.63.0
           got=$(npx playwright --version | awk '{print $NF}')
           if [ "$got" != "$want" ]; then
             echo "::error::Playwright $got does not match the container image ($want) — bump the container: image tag+digest in ci.yml together with @playwright/test"
