@@ -496,13 +496,16 @@ func (s *Server) initDatabaseDependentServices(db *database.DB) {
 
 // initLicenseAndAPITokens wires the Phase D-2 license manager + API
 // token repository onto the server. The license manager is
-// best-effort: failure to load isn't fatal, the mint endpoint just
-// behaves as if no paid license is present (rejects with 402).
+// best-effort: failure to load isn't fatal. It leaves s.licenseMgr nil,
+// which every gate reads as the pre-license dev state and treats as Pro
+// (effectiveTier, the mint flag, and the feature catalogue on
+// GET /api/v1/license) — so the warning has to say "unenforced", not
+// "disabled", which is what it claimed while permitting minting.
 func (s *Server) initLicenseAndAPITokens(db *database.DB) {
 	s.apiTokens = database.NewAPITokenRepository(db)
 	lm, lmErr := s.newLicenseManager()
 	if lmErr != nil {
-		logging.GetLogger().Warn("license manager init failed; minting will be disabled",
+		logging.GetLogger().Warn("license manager init failed; licensing is unenforced (Pro)",
 			"error", lmErr)
 		return
 	}

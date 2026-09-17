@@ -25,7 +25,7 @@ import { status as statusColor } from '../../styles/theme';
  * Dependencies: vitest, @testing-library/react
  */
 
-import { fireEvent, render, screen } from '@testing-library/react';
+import { fireEvent, render, screen, within } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import { Card, CardDivider, CardRow, CardValue } from './card';
 
@@ -162,16 +162,23 @@ describe('CardValue', () => {
 });
 
 describe('CardRow', () => {
+  it('keeps the value passive rather than creating a control that does nothing', () => {
+    render(<CardRow label="Domain" value="example.test" />);
+    expect(screen.queryByRole('button')).not.toBeInTheDocument();
+  });
+
+  // Queries are scoped to the row: Tooltip also renders the value into a portal
+  // bubble on document.body, which an unscoped query would match a second time.
   it('renders label and value', () => {
-    render(<CardRow label="Latency" value="15ms" />);
-    expect(screen.getByText('Latency')).toBeInTheDocument();
-    expect(screen.getByText('15ms')).toBeInTheDocument();
+    const { container } = render(<CardRow label="Latency" value="15ms" />);
+    expect(within(container).getByText('Latency')).toBeInTheDocument();
+    expect(within(container).getByText('15ms')).toBeInTheDocument();
   });
 
   it('renders numeric value', () => {
-    render(<CardRow label="Count" value={42} />);
-    expect(screen.getByText('Count')).toBeInTheDocument();
-    expect(screen.getByText('42')).toBeInTheDocument();
+    const { container } = render(<CardRow label="Count" value={42} />);
+    expect(within(container).getByText('Count')).toBeInTheDocument();
+    expect(within(container).getByText('42')).toBeInTheDocument();
   });
 
   it('applies status color to value', () => {
@@ -179,10 +186,15 @@ describe('CardRow', () => {
     expect(screen.getByTestId('card-row-value')).toHaveClass(statusColor.text.error);
   });
 
-  it('sets title attribute for truncation', () => {
+  // The full value is in the DOM; CSS truncates it visually only, so assistive
+  // technology reads it without a native title and without a second tab stop
+  // inside cards that are themselves a single control.
+  it('describes a truncated value without a native title', () => {
     render(<CardRow label="Long Value" value="This is a very long value" />);
     const valueElement = screen.getByTestId('card-row-value');
-    expect(valueElement).toHaveAttribute('title', 'This is a very long value');
+    expect(valueElement).toHaveTextContent('This is a very long value');
+    expect(valueElement).toHaveAccessibleDescription('This is a very long value');
+    expect(valueElement).not.toHaveAttribute('title');
   });
 });
 

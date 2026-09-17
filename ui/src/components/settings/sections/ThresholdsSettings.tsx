@@ -100,12 +100,18 @@ export const ThresholdsSettings: React.NamedExoticComponent<ThresholdsSettingsPr
                 {t('thresholds.dnsLookup')}
               </span>
               <Tooltip text={t('help:thresholds.dnsLookup')} side="top">
-                <Info
-                  className={cn(
-                    iconTokens.size.xs,
-                    'text-text-muted hover:text-text-secondary cursor-help',
-                  )}
-                />
+                <button
+                  type="button"
+                  aria-label={t('help:thresholds.dnsLookup')}
+                  className="inline-flex rounded focus-visible:outline focus-visible:outline-2 focus-visible:outline-brand-primary"
+                >
+                  <Info
+                    className={cn(
+                      iconTokens.size.xs,
+                      'text-text-muted hover:text-text-secondary cursor-help',
+                    )}
+                  />
+                </button>
               </Tooltip>
             </div>
             <div className={cn('grid grid-cols-2', spacing.gap.compact)}>
@@ -166,12 +172,18 @@ export const ThresholdsSettings: React.NamedExoticComponent<ThresholdsSettingsPr
                 {t('thresholds.gatewayPing')}
               </span>
               <Tooltip text={t('help:thresholds.gatewayPing')} side="top">
-                <Info
-                  className={cn(
-                    iconTokens.size.xs,
-                    'text-text-muted hover:text-text-secondary cursor-help',
-                  )}
-                />
+                <button
+                  type="button"
+                  aria-label={t('help:thresholds.gatewayPing')}
+                  className="inline-flex rounded focus-visible:outline focus-visible:outline-2 focus-visible:outline-brand-primary"
+                >
+                  <Info
+                    className={cn(
+                      iconTokens.size.xs,
+                      'text-text-muted hover:text-text-secondary cursor-help',
+                    )}
+                  />
+                </button>
               </Tooltip>
             </div>
             <div className={cn('grid grid-cols-2', spacing.gap.compact)}>
@@ -232,12 +244,18 @@ export const ThresholdsSettings: React.NamedExoticComponent<ThresholdsSettingsPr
                 {t('thresholds.wifiSignal')}
               </span>
               <Tooltip text={t('help:thresholds.wifiSignal')} side="top">
-                <Info
-                  className={cn(
-                    iconTokens.size.xs,
-                    'text-text-muted hover:text-text-secondary cursor-help',
-                  )}
-                />
+                <button
+                  type="button"
+                  aria-label={t('help:thresholds.wifiSignal')}
+                  className="inline-flex rounded focus-visible:outline focus-visible:outline-2 focus-visible:outline-brand-primary"
+                >
+                  <Info
+                    className={cn(
+                      iconTokens.size.xs,
+                      'text-text-muted hover:text-text-secondary cursor-help',
+                    )}
+                  />
+                </button>
               </Tooltip>
             </div>
             <div className={cn('grid grid-cols-2', spacing.gap.compact)}>
@@ -298,12 +316,18 @@ export const ThresholdsSettings: React.NamedExoticComponent<ThresholdsSettingsPr
                 {t('thresholds.healthPing')}
               </span>
               <Tooltip text={t('help:thresholds.healthCheckPing')} side="top">
-                <Info
-                  className={cn(
-                    iconTokens.size.xs,
-                    'text-text-muted hover:text-text-secondary cursor-help',
-                  )}
-                />
+                <button
+                  type="button"
+                  aria-label={t('help:thresholds.healthCheckPing')}
+                  className="inline-flex rounded focus-visible:outline focus-visible:outline-2 focus-visible:outline-brand-primary"
+                >
+                  <Info
+                    className={cn(
+                      iconTokens.size.xs,
+                      'text-text-muted hover:text-text-secondary cursor-help',
+                    )}
+                  />
+                </button>
               </Tooltip>
             </div>
             <div className={cn('grid grid-cols-2', spacing.gap.compact)}>
@@ -364,12 +388,18 @@ export const ThresholdsSettings: React.NamedExoticComponent<ThresholdsSettingsPr
                 {t('thresholds.healthTcp')}
               </span>
               <Tooltip text={t('help:thresholds.healthCheckTcp')} side="top">
-                <Info
-                  className={cn(
-                    iconTokens.size.xs,
-                    'text-text-muted hover:text-text-secondary cursor-help',
-                  )}
-                />
+                <button
+                  type="button"
+                  aria-label={t('help:thresholds.healthCheckTcp')}
+                  className="inline-flex rounded focus-visible:outline focus-visible:outline-2 focus-visible:outline-brand-primary"
+                >
+                  <Info
+                    className={cn(
+                      iconTokens.size.xs,
+                      'text-text-muted hover:text-text-secondary cursor-help',
+                    )}
+                  />
+                </button>
               </Tooltip>
             </div>
             <div className={cn('grid grid-cols-2', spacing.gap.compact)}>

@@ -1,3 +1,5 @@
+import { Info } from '../../ui/icons';
+import { Tooltip } from '../../ui/tooltip';
 /**
  * GuestNetworkAuditSettings — the in-app editor for the guest-isolation audit's
  * target list (#1004).
@@ -149,16 +151,33 @@ export function GuestNetworkAuditSettings(): React.ReactElement {
 
         <label className={cn(layout.flex.between, 'cursor-pointer')} htmlFor="guest-audit-enabled">
           <span className="body-small text-text-primary">{t('guestAudit.enabled')}</span>
-          <input
-            id="guest-audit-enabled"
-            type="checkbox"
-            checked={settings.enabled}
-            disabled={!canWrite || loading}
-            title={readOnlyReason}
-            onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>
-              setSettings({ ...settings, enabled: e.target.checked })
-            }
-          />
+          <Tooltip text={readOnlyReason}>
+            {(description) => (
+              <span className="contents">
+                <input
+                  {...description}
+                  id="guest-audit-enabled"
+                  type="checkbox"
+                  checked={settings.enabled}
+                  disabled={!canWrite || loading}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>
+                    setSettings({ ...settings, enabled: e.target.checked })
+                  }
+                />
+                {(!canWrite || loading) && readOnlyReason ? (
+                  <button
+                    type="button"
+                    {...description}
+                    aria-label={readOnlyReason}
+                    onClick={(event) => event.preventDefault()}
+                    className="inline-flex text-text-muted rounded focus-visible:outline focus-visible:outline-2 focus-visible:outline-brand-primary"
+                  >
+                    <Info className="h-4 w-4" aria-hidden="true" />
+                  </button>
+                ) : null}
+              </span>
+            )}
+          </Tooltip>
         </label>
 
         {settings.targets.length > 0 ? (
@@ -205,44 +224,80 @@ export function GuestNetworkAuditSettings(): React.ReactElement {
           <label className="caption text-text-muted" htmlFor="guest-audit-ip">
             {t('guestAudit.targetIp')}
           </label>
-          <input
-            id="guest-audit-ip"
-            type="text"
-            value={newIp}
-            disabled={!canWrite}
-            title={readOnlyReason}
-            onChange={(e: React.ChangeEvent<HTMLInputElement>): void => {
-              setNewIp(e.target.value);
-              setTargetError(null);
-            }}
-            placeholder={t('guestAudit.targetIpPlaceholder')}
-            className={cn(
-              'w-full',
-              spacing.chip.lg,
-              'bg-surface-base border border-surface-border',
-              radius.default,
-              'body-small text-text-primary',
+          <Tooltip text={readOnlyReason}>
+            {(description) => (
+              <span className="contents">
+                <input
+                  {...description}
+                  id="guest-audit-ip"
+                  type="text"
+                  value={newIp}
+                  disabled={!canWrite}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>): void => {
+                    setNewIp(e.target.value);
+                    setTargetError(null);
+                  }}
+                  placeholder={t('guestAudit.targetIpPlaceholder')}
+                  className={cn(
+                    'w-full',
+                    spacing.chip.lg,
+                    'bg-surface-base border border-surface-border',
+                    radius.default,
+                    'body-small text-text-primary',
+                  )}
+                />
+                {!canWrite && readOnlyReason ? (
+                  <button
+                    type="button"
+                    {...description}
+                    aria-label={readOnlyReason}
+                    onClick={(event) => event.preventDefault()}
+                    className="inline-flex text-text-muted rounded focus-visible:outline focus-visible:outline-2 focus-visible:outline-brand-primary"
+                  >
+                    <Info className="h-4 w-4" aria-hidden="true" />
+                  </button>
+                ) : null}
+              </span>
             )}
-          />
+          </Tooltip>
           <label className="caption text-text-muted" htmlFor="guest-audit-label">
             {t('guestAudit.targetLabel')}
           </label>
-          <input
-            id="guest-audit-label"
-            type="text"
-            value={newLabel}
-            disabled={!canWrite}
-            title={readOnlyReason}
-            onChange={(e: React.ChangeEvent<HTMLInputElement>): void => setNewLabel(e.target.value)}
-            placeholder={t('guestAudit.targetLabelPlaceholder')}
-            className={cn(
-              'w-full',
-              spacing.chip.lg,
-              'bg-surface-base border border-surface-border',
-              radius.default,
-              'body-small text-text-primary',
+          <Tooltip text={readOnlyReason}>
+            {(description) => (
+              <span className="contents">
+                <input
+                  {...description}
+                  id="guest-audit-label"
+                  type="text"
+                  value={newLabel}
+                  disabled={!canWrite}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>
+                    setNewLabel(e.target.value)
+                  }
+                  placeholder={t('guestAudit.targetLabelPlaceholder')}
+                  className={cn(
+                    'w-full',
+                    spacing.chip.lg,
+                    'bg-surface-base border border-surface-border',
+                    radius.default,
+                    'body-small text-text-primary',
+                  )}
+                />
+                {!canWrite && readOnlyReason ? (
+                  <button
+                    type="button"
+                    {...description}
+                    aria-label={readOnlyReason}
+                    onClick={(event) => event.preventDefault()}
+                    className="inline-flex text-text-muted rounded focus-visible:outline focus-visible:outline-2 focus-visible:outline-brand-primary"
+                  >
+                    <Info className="h-4 w-4" aria-hidden="true" />
+                  </button>
+                ) : null}
+              </span>
             )}
-          />
+          </Tooltip>
           {targetError ? <p className="caption text-status-error">{targetError}</p> : null}
           <Button
             onClick={addTarget}
@@ -258,25 +313,42 @@ export function GuestNetworkAuditSettings(): React.ReactElement {
           <label className="caption text-text-muted" htmlFor="guest-audit-ports">
             {t('guestAudit.ports')}
           </label>
-          <input
-            id="guest-audit-ports"
-            type="text"
-            value={portsValue}
-            disabled={!canWrite}
-            title={readOnlyReason}
-            onChange={(e: React.ChangeEvent<HTMLInputElement>): void => {
-              setPortsField(e.target.value);
-              setPortsError(null);
-            }}
-            onBlur={commitPorts}
-            className={cn(
-              'w-full',
-              spacing.chip.lg,
-              'bg-surface-base border border-surface-border',
-              radius.default,
-              'body-small text-text-primary',
+          <Tooltip text={readOnlyReason}>
+            {(description) => (
+              <span className="contents">
+                <input
+                  {...description}
+                  id="guest-audit-ports"
+                  type="text"
+                  value={portsValue}
+                  disabled={!canWrite}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>): void => {
+                    setPortsField(e.target.value);
+                    setPortsError(null);
+                  }}
+                  onBlur={commitPorts}
+                  className={cn(
+                    'w-full',
+                    spacing.chip.lg,
+                    'bg-surface-base border border-surface-border',
+                    radius.default,
+                    'body-small text-text-primary',
+                  )}
+                />
+                {!canWrite && readOnlyReason ? (
+                  <button
+                    type="button"
+                    {...description}
+                    aria-label={readOnlyReason}
+                    onClick={(event) => event.preventDefault()}
+                    className="inline-flex text-text-muted rounded focus-visible:outline focus-visible:outline-2 focus-visible:outline-brand-primary"
+                  >
+                    <Info className="h-4 w-4" aria-hidden="true" />
+                  </button>
+                ) : null}
+              </span>
             )}
-          />
+          </Tooltip>
           {portsError ? <p className="caption text-status-error">{portsError}</p> : null}
           <Button
             variant="ghost"

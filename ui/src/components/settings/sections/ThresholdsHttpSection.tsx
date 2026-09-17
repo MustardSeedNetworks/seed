@@ -96,12 +96,18 @@ export const ThresholdsHttpSection: React.NamedExoticComponent<ThresholdsHttpSec
               {t('thresholds.totalResponseTime')}
             </span>
             <Tooltip text={t('help:thresholds.httpTotal')} side="top">
-              <Info
-                className={cn(
-                  iconTokens.size.xs,
-                  'text-text-muted hover:text-text-secondary cursor-help',
-                )}
-              />
+              <button
+                type="button"
+                aria-label={t('help:thresholds.httpTotal')}
+                className="inline-flex rounded focus-visible:outline focus-visible:outline-2 focus-visible:outline-brand-primary"
+              >
+                <Info
+                  className={cn(
+                    iconTokens.size.xs,
+                    'text-text-muted hover:text-text-secondary cursor-help',
+                  )}
+                />
+              </button>
             </Tooltip>
           </div>
           <div className={cn('grid grid-cols-2', spacing.gap.compact)}>
@@ -166,12 +172,18 @@ export const ThresholdsHttpSection: React.NamedExoticComponent<ThresholdsHttpSec
               {t('thresholds.dnsLookupPhase')}
             </span>
             <Tooltip text={t('help:thresholds.httpDns')} side="top">
-              <Info
-                className={cn(
-                  iconTokens.size.xs,
-                  'text-text-muted hover:text-text-secondary cursor-help',
-                )}
-              />
+              <button
+                type="button"
+                aria-label={t('help:thresholds.httpDns')}
+                className="inline-flex rounded focus-visible:outline focus-visible:outline-2 focus-visible:outline-brand-primary"
+              >
+                <Info
+                  className={cn(
+                    iconTokens.size.xs,
+                    'text-text-muted hover:text-text-secondary cursor-help',
+                  )}
+                />
+              </button>
             </Tooltip>
           </div>
           <div className={cn('grid grid-cols-2', spacing.gap.compact)}>
@@ -225,12 +237,18 @@ export const ThresholdsHttpSection: React.NamedExoticComponent<ThresholdsHttpSec
               {t('thresholds.tcpConnect')}
             </span>
             <Tooltip text={t('help:thresholds.httpTcp')} side="top">
-              <Info
-                className={cn(
-                  iconTokens.size.xs,
-                  'text-text-muted hover:text-text-secondary cursor-help',
-                )}
-              />
+              <button
+                type="button"
+                aria-label={t('help:thresholds.httpTcp')}
+                className="inline-flex rounded focus-visible:outline focus-visible:outline-2 focus-visible:outline-brand-primary"
+              >
+                <Info
+                  className={cn(
+                    iconTokens.size.xs,
+                    'text-text-muted hover:text-text-secondary cursor-help',
+                  )}
+                />
+              </button>
             </Tooltip>
           </div>
           <div className={cn('grid grid-cols-2', spacing.gap.compact)}>
@@ -284,12 +302,18 @@ export const ThresholdsHttpSection: React.NamedExoticComponent<ThresholdsHttpSec
               {t('thresholds.tlsHandshake')}
             </span>
             <Tooltip text={t('help:thresholds.httpTls')} side="top">
-              <Info
-                className={cn(
-                  iconTokens.size.xs,
-                  'text-text-muted hover:text-text-secondary cursor-help',
-                )}
-              />
+              <button
+                type="button"
+                aria-label={t('help:thresholds.httpTls')}
+                className="inline-flex rounded focus-visible:outline focus-visible:outline-2 focus-visible:outline-brand-primary"
+              >
+                <Info
+                  className={cn(
+                    iconTokens.size.xs,
+                    'text-text-muted hover:text-text-secondary cursor-help',
+                  )}
+                />
+              </button>
             </Tooltip>
           </div>
           <div className={cn('grid grid-cols-2', spacing.gap.compact)}>
@@ -341,12 +365,18 @@ export const ThresholdsHttpSection: React.NamedExoticComponent<ThresholdsHttpSec
           <div className={cn(layout.inline.tight, spacing.margin.bottom.inline)}>
             <span className="caption font-medium text-text-primary">{t('thresholds.ttfb')}</span>
             <Tooltip text={t('help:thresholds.httpTtfb')} side="top">
-              <Info
-                className={cn(
-                  iconTokens.size.xs,
-                  'text-text-muted hover:text-text-secondary cursor-help',
-                )}
-              />
+              <button
+                type="button"
+                aria-label={t('help:thresholds.httpTtfb')}
+                className="inline-flex rounded focus-visible:outline focus-visible:outline-2 focus-visible:outline-brand-primary"
+              >
+                <Info
+                  className={cn(
+                    iconTokens.size.xs,
+                    'text-text-muted hover:text-text-secondary cursor-help',
+                  )}
+                />
+              </button>
             </Tooltip>
           </div>
           <div className={cn('grid grid-cols-2', spacing.gap.compact)}>

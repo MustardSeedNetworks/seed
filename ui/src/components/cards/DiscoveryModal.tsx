@@ -1,3 +1,4 @@
+import { Tooltip } from '../ui/tooltip';
 /**
  * DiscoveryModal - Full-screen modal for network device discovery.
  *
@@ -348,34 +349,36 @@ export function DiscoveryModal({
 
             {/* Export dropdown */}
             <div className="flex items-center gap-tight">
-              <button
-                type="button"
-                onClick={exportCsv}
-                className={cn(
-                  button.base,
-                  button.variant.ghost,
-                  button.size.sm,
-                  'flex items-center gap-tight',
-                )}
-                title="Export as CSV"
-              >
-                <Download className={iconTokens.size.sm} />
-                CSV
-              </button>
-              <button
-                type="button"
-                onClick={exportJson}
-                className={cn(
-                  button.base,
-                  button.variant.ghost,
-                  button.size.sm,
-                  'flex items-center gap-tight',
-                )}
-                title="Export as JSON"
-              >
-                <Download className={iconTokens.size.sm} />
-                JSON
-              </button>
+              <Tooltip text={t('discovery.exportCSV')}>
+                <button
+                  type="button"
+                  onClick={exportCsv}
+                  className={cn(
+                    button.base,
+                    button.variant.ghost,
+                    button.size.sm,
+                    'flex items-center gap-tight',
+                  )}
+                >
+                  <Download className={iconTokens.size.sm} />
+                  CSV
+                </button>
+              </Tooltip>
+              <Tooltip text={t('discovery.exportJSON')}>
+                <button
+                  type="button"
+                  onClick={exportJson}
+                  className={cn(
+                    button.base,
+                    button.variant.ghost,
+                    button.size.sm,
+                    'flex items-center gap-tight',
+                  )}
+                >
+                  <Download className={iconTokens.size.sm} />
+                  JSON
+                </button>
+              </Tooltip>
             </div>
 
             {/* Close button */}
@@ -418,15 +421,16 @@ export function DiscoveryModal({
               )}
             />
             {searchQuery ? (
-              <button
-                type="button"
-                onClick={(): void => setSearchQuery('')}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-text-muted hover:text-text-primary"
-                aria-label={t('discovery.clearSearch')}
-                title={t('discovery.clearSearch')}
-              >
-                <X className={iconTokens.size.sm} />
-              </button>
+              <Tooltip text={t('discovery.clearSearch')}>
+                <button
+                  type="button"
+                  onClick={(): void => setSearchQuery('')}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-text-muted hover:text-text-primary"
+                  aria-label={t('discovery.clearSearch')}
+                >
+                  <X className={iconTokens.size.sm} />
+                </button>
+              </Tooltip>
             ) : null}
           </div>
 

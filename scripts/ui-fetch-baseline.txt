@@ -68,9 +68,9 @@ ui/src/components/cards/SlaDashboardCard.tsx:46  # read-only — bypasses the cl
 ui/src/components/cards/SystemHealthCard.tsx:187  # read-only — bypasses the client 401 refresh/retry
 ui/src/components/login/RecoveryForm.tsx:83  # read-only — bypasses the client 401 refresh/retry
 ui/src/components/login/RecoveryForm.tsx:121  # mutating but CSRF-exempt by design (isCSRFExemptPath) — correct as a raw fetch
-ui/src/components/settings/sections/ConfigBackupsSection.tsx:63  # read-only — bypasses the client 401 refresh/retry
 ui/src/components/settings/sections/ConfigBackupsSection.tsx:64  # read-only — bypasses the client 401 refresh/retry
-ui/src/components/settings/sections/DiscoverySettings.tsx:91  # read-only — bypasses the client 401 refresh/retry
-ui/src/components/settings/sections/VulnerabilitySettings.tsx:56  # read-only — bypasses the client 401 refresh/retry
-ui/src/components/setup/SetupWizard.tsx:112  # read-only — bypasses the client 401 refresh/retry
-ui/src/components/setup/SetupWizard.tsx:194  # mutating but CSRF-exempt by design (isCSRFExemptPath) — correct as a raw fetch
+ui/src/components/settings/sections/ConfigBackupsSection.tsx:65  # read-only — bypasses the client 401 refresh/retry
+ui/src/components/settings/sections/DiscoverySettings.tsx:92  # read-only — bypasses the client 401 refresh/retry
+ui/src/components/settings/sections/VulnerabilitySettings.tsx:57  # read-only — bypasses the client 401 refresh/retry
+ui/src/components/setup/SetupWizard.tsx:113  # read-only — bypasses the client 401 refresh/retry
+ui/src/components/setup/SetupWizard.tsx:195  # mutating but CSRF-exempt by design (isCSRFExemptPath) — correct as a raw fetch

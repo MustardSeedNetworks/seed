@@ -1,3 +1,4 @@
+import { Tooltip } from '../ui/tooltip';
 /**
  * PathDiscoveryCard Component
  *
@@ -334,25 +335,26 @@ export const PathDiscoveryCard: React.NamedExoticComponent<PathDiscoveryCardProp
             {/* Protocol and Trace button group - inline always */}
             <div className="flex items-center gap-compact shrink-0">
               {/* Protocol selector - styled to match design system */}
-              <select
-                {...register('protocol')}
-                disabled={loading}
-                className={cn(
-                  inputTokens.base,
-                  inputTokens.state.default,
-                  inputTokens.size.sm,
-                  'w-20 body-small cursor-pointer',
-                )}
-                title={t('pathDiscovery.protocol')}
-                // title alone does not name a form control (axe
-                // label-title-only); the inline layout has no room for a
-                // visible label beside a 20-wide select.
-                aria-label={t('pathDiscovery.protocol')}
-              >
-                <option value="icmp">ICMP</option>
-                <option value="udp">UDP</option>
-                <option value="tcp">TCP</option>
-              </select>
+              <Tooltip text={t('pathDiscovery.protocol')}>
+                <select
+                  {...register('protocol')}
+                  disabled={loading}
+                  className={cn(
+                    inputTokens.base,
+                    inputTokens.state.default,
+                    inputTokens.size.sm,
+                    'w-20 body-small cursor-pointer',
+                  )}
+                  // title alone does not name a form control (axe
+                  // label-title-only); the inline layout has no room for a
+                  // visible label beside a 20-wide select.
+                  aria-label={t('pathDiscovery.protocol')}
+                >
+                  <option value="icmp">ICMP</option>
+                  <option value="udp">UDP</option>
+                  <option value="tcp">TCP</option>
+                </select>
+              </Tooltip>
 
               {/* Port input (only for TCP/UDP) */}
               {protocol !== 'icmp' && (

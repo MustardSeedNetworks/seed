@@ -11,14 +11,14 @@
  * light/dark automatically — no dark: variants needed.
  */
 export const discoveryMethod = {
-  arp: 'bg-cat-1/20 text-cat-1',
-  ping: 'bg-cat-2/20 text-cat-2',
-  ndp: 'bg-cat-3/20 text-cat-3',
-  lldp: 'bg-cat-4/20 text-cat-4',
-  cdp: 'bg-cat-5/20 text-cat-5',
-  snmp: 'bg-cat-6/20 text-cat-6',
-  edp: 'bg-cat-7/20 text-cat-7',
-  mdns: 'bg-cat-8/20 text-cat-8',
+  arp: 'bg-cat-1/15 text-cat-1',
+  ping: 'bg-cat-2/15 text-cat-2',
+  ndp: 'bg-cat-3/15 text-cat-3',
+  lldp: 'bg-cat-4/15 text-cat-4',
+  cdp: 'bg-cat-5/15 text-cat-5',
+  snmp: 'bg-cat-6/15 text-cat-6',
+  edp: 'bg-cat-7/15 text-cat-7',
+  mdns: 'bg-cat-8/15 text-cat-8',
 } as const;
 
 /**
@@ -95,10 +95,10 @@ export const status = {
     error: 'bg-status-error/10 text-status-error',
     info: 'bg-status-info/10 text-status-info',
 
-    successStrong: 'bg-status-success/20 text-status-success',
-    warningStrong: 'bg-status-warning/20 text-status-warning',
-    errorStrong: 'bg-status-error/20 text-status-error',
-    infoStrong: 'bg-status-info/20 text-status-info',
+    successStrong: 'bg-status-success/15 text-status-success',
+    warningStrong: 'bg-status-warning/15 text-status-warning',
+    errorStrong: 'bg-status-error/15 text-status-error',
+    infoStrong: 'bg-status-info/15 text-status-info',
   },
 
   // Legacy alias retained for existing call sites that use status.color.X.
@@ -203,31 +203,31 @@ export const moduleColor = {
   // Path - path analysis, traceroute, deep connectivity
   path: {
     icon: 'text-module-path', // Uses CSS variable
-    badge: 'bg-module-path/20 text-module-path',
+    badge: 'bg-module-path/15 text-module-path',
     border: 'border-module-path/30',
   },
   // Wi-Fi - visibility, troubleshooting, coverage
   wifi: {
     icon: 'text-module-wifi', // Matches brand primary
-    badge: 'bg-module-wifi/20 text-module-wifi',
+    badge: 'bg-module-wifi/15 text-module-wifi',
     border: 'border-module-wifi/30',
   },
   // Security - posture, hardening
   security: {
     icon: 'text-module-security',
-    badge: 'bg-module-security/20 text-module-security',
+    badge: 'bg-module-security/15 text-module-security',
     border: 'border-module-security/30',
   },
   // Telemetry - live monitoring, data flow
   telemetry: {
     icon: 'text-module-telemetry',
-    badge: 'bg-module-telemetry/20 text-module-telemetry',
+    badge: 'bg-module-telemetry/15 text-module-telemetry',
     border: 'border-module-telemetry/30',
   },
   // Reporting - reports, compliance, exports
   reporting: {
     icon: 'text-module-reporting', // Matches brand gold
-    badge: 'bg-module-reporting/20 text-module-reporting',
+    badge: 'bg-module-reporting/15 text-module-reporting',
     border: 'border-module-reporting/30',
   },
 } as const;
@@ -244,7 +244,7 @@ export const brand = {
   gold: {
     text: 'text-brand-gold',
     bg: 'bg-brand-gold',
-    badge: 'bg-brand-gold/20 text-brand-gold',
+    badge: 'bg-brand-gold/15 text-brand-gold',
     border: 'border-brand-gold/30',
   },
 } as const;

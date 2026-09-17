@@ -51,7 +51,7 @@ export const DiscoveryPerformanceTiming: React.NamedExoticComponent<DiscoveryPer
                   timing: {
                     ...prev.timing,
                     probeIntervalMs: Number.parseInt(e.target.value, 10),
-                    rescanIntervalMs: prev.timing?.rescanIntervalMs ?? 600000,
+                    rescanIntervalMs: prev.timing?.rescanIntervalMs ?? 60000,
                     workers: prev.timing?.workers ?? 50,
                   },
                 }))
@@ -130,7 +130,7 @@ export const DiscoveryPerformanceTiming: React.NamedExoticComponent<DiscoveryPer
                   timing: {
                     ...prev.timing,
                     probeIntervalMs: prev.timing?.probeIntervalMs ?? 75,
-                    rescanIntervalMs: prev.timing?.rescanIntervalMs ?? 600000,
+                    rescanIntervalMs: prev.timing?.rescanIntervalMs ?? 60000,
                     workers: Number.parseInt(e.target.value, 10),
                   },
                 }))
@@ -156,7 +156,7 @@ export const DiscoveryPerformanceTiming: React.NamedExoticComponent<DiscoveryPer
                 {t('discovery.rescanInterval')}
               </label>
               <span className="caption text-text-primary font-medium">
-                {Math.round((settings.timing?.rescanIntervalMs ?? 600000) / 60000)}m
+                {Math.round((settings.timing?.rescanIntervalMs ?? 60000) / 60000)}m
               </span>
             </div>
             <input
@@ -165,7 +165,7 @@ export const DiscoveryPerformanceTiming: React.NamedExoticComponent<DiscoveryPer
               min={60}
               max={3600}
               step={60}
-              value={(settings.timing?.rescanIntervalMs ?? 600000) / 1000}
+              value={(settings.timing?.rescanIntervalMs ?? 60000) / 1000}
               onChange={(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>): void =>
                 onSettingsChange((prev) => ({
                   ...prev,

@@ -8,6 +8,7 @@
  */
 
 import { render, screen, waitFor } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { type CurrentUser, RoleProvider } from '../contexts/RoleContext';
@@ -72,10 +73,19 @@ describe('AlertsPage — viewer gating', () => {
     renderAs('viewer');
 
     await waitFor(() => {
-      expect(screen.getByTestId('alert-acknowledge')).toBeDisabled();
+      expect(screen.getByTestId('alert-acknowledge')).toHaveAttribute('aria-disabled', 'true');
     });
-    expect(screen.getByTestId('alert-resolve')).toBeDisabled();
-    expect(screen.getByTestId('alert-acknowledge').title).toContain('operator role');
+    expect(screen.getByTestId('alert-resolve')).toHaveAttribute('aria-disabled', 'true');
+    expect(screen.getByTestId('alert-acknowledge')).toHaveAccessibleDescription(/operator role/);
+    for (const control of [
+      screen.getByTestId('alert-acknowledge'),
+      screen.getByTestId('alert-resolve'),
+    ]) {
+      await userEvent.click(control);
+      await userEvent.keyboard('{Enter} ');
+    }
+    expect(acknowledge).not.toHaveBeenCalled();
+    expect(resolve).not.toHaveBeenCalled();
   });
 
   it('leaves both actions live for an operator', async () => {

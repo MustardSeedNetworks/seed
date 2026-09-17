@@ -218,7 +218,7 @@ export async function disableAnimations(page: Page): Promise<void> {
  * desktop viewports where the sidebar rail is always present.
  */
 export async function revealSidebar(page: Page): Promise<void> {
-  const menuButton = page.getByRole('button', { name: 'Open menu' });
+  const menuButton = page.getByTestId('mobile-menu-toggle');
   if (await menuButton.isVisible().catch(() => false)) {
     await menuButton.click();
   }

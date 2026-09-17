@@ -1,16 +1,5 @@
-/**
- * ProfileManagement Component
- *
- * Modal-style profile management interface for MSP profiles (#754).
- * Centered modal similar to HelpModal.
- *
- * Features:
- * - Profile list with search/filter
- * - Create new profile
- * - Edit/Delete/Duplicate actions with visible buttons
- * - Import/Export functionality
- * - Set default profile
- */
+import { Tooltip } from '../ui/tooltip';
+/** Create, edit, switch and transfer saved profiles. */
 
 import type React from 'react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
@@ -234,33 +223,34 @@ export function ProfileManagement({ onClose }: ProfileManagementProps): React.Re
                 {t('profile.create')}
               </button>
             </WriteGate>
-            <button
-              type="button"
-              onClick={handleExport}
-              className={cn(
-                spacing.pad.sm,
-                'px-4',
-                radius.md,
-                'border border-surface-border bg-surface-raised hover:bg-surface-hover text-text-primary body-small font-medium flex items-center gap-compact',
-              )}
-              title={t('profile.export')}
-            >
-              <svg
-                className="w-4 h-4"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-                aria-hidden="true"
+            <Tooltip text={t('profile.export')}>
+              <button
+                type="button"
+                onClick={handleExport}
+                className={cn(
+                  spacing.pad.sm,
+                  'px-4',
+                  radius.md,
+                  'border border-surface-border bg-surface-raised hover:bg-surface-hover text-text-primary body-small font-medium flex items-center gap-compact',
+                )}
               >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"
-                />
-              </svg>
-              {t('profile.export')}
-            </button>
+                <svg
+                  className="w-4 h-4"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                  aria-hidden="true"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"
+                  />
+                </svg>
+                {t('profile.export')}
+              </button>
+            </Tooltip>
 
             {/* Search bar */}
             <div className="relative flex-1 ml-content">
@@ -468,72 +458,15 @@ function ProfileCard({
         <WriteGate>
           <div className="flex items-center gap-compact flex-wrap">
             {/* Edit button */}
-            <button
-              type="button"
-              onClick={onEdit}
-              className={cn(
-                spacing.chip.sm,
-                radius.md,
-                'border border-surface-border bg-surface-base hover:bg-surface-hover text-text-primary caption font-medium flex items-center gap-1.5',
-              )}
-              title={t('common.edit')}
-            >
-              <svg
-                className="w-3.5 h-3.5"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-                aria-hidden="true"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
-                />
-              </svg>
-              {t('common.edit')}
-            </button>
-
-            {/* Clone/Duplicate button */}
-            <button
-              type="button"
-              onClick={onDuplicate}
-              className={cn(
-                spacing.chip.sm,
-                radius.md,
-                'border border-surface-border bg-surface-base hover:bg-surface-hover text-text-primary caption font-medium flex items-center gap-1.5',
-              )}
-              title={t('common.clone')}
-            >
-              <svg
-                className="w-3.5 h-3.5"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-                aria-hidden="true"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"
-                />
-              </svg>
-              {t('common.clone')}
-            </button>
-
-            {/* Delete button - only if not default and not active */}
-            {profile.isDefault || isActive ? null : (
+            <Tooltip text={t('common.edit')}>
               <button
                 type="button"
-                onClick={onDelete}
+                onClick={onEdit}
                 className={cn(
                   spacing.chip.sm,
                   radius.md,
-                  'border border-status-error/30 bg-status-error/5 hover:bg-status-error/10 text-status-error caption font-medium flex items-center gap-1.5',
+                  'border border-surface-border bg-surface-base hover:bg-surface-hover text-text-primary caption font-medium flex items-center gap-1.5',
                 )}
-                title={t('common.delete')}
               >
                 <svg
                   className="w-3.5 h-3.5"
@@ -546,41 +479,102 @@ function ProfileCard({
                     strokeLinecap="round"
                     strokeLinejoin="round"
                     strokeWidth={2}
-                    d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                    d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
                   />
                 </svg>
-                {t('common.delete')}
+                {t('common.edit')}
               </button>
+            </Tooltip>
+
+            {/* Clone/Duplicate button */}
+            <Tooltip text={t('common.clone')}>
+              <button
+                type="button"
+                onClick={onDuplicate}
+                className={cn(
+                  spacing.chip.sm,
+                  radius.md,
+                  'border border-surface-border bg-surface-base hover:bg-surface-hover text-text-primary caption font-medium flex items-center gap-1.5',
+                )}
+              >
+                <svg
+                  className="w-3.5 h-3.5"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                  aria-hidden="true"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"
+                  />
+                </svg>
+                {t('common.clone')}
+              </button>
+            </Tooltip>
+
+            {/* Delete button - only if not default and not active */}
+            {profile.isDefault || isActive ? null : (
+              <Tooltip text={t('common.delete')}>
+                <button
+                  type="button"
+                  onClick={onDelete}
+                  className={cn(
+                    spacing.chip.sm,
+                    radius.md,
+                    'border border-status-error/30 bg-status-error/5 hover:bg-status-error/10 text-status-error caption font-medium flex items-center gap-1.5',
+                  )}
+                >
+                  <svg
+                    className="w-3.5 h-3.5"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                    aria-hidden="true"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                    />
+                  </svg>
+                  {t('common.delete')}
+                </button>
+              </Tooltip>
             )}
 
             {/* Activate button - only if not active */}
             {isActive ? null : (
-              <button
-                type="button"
-                onClick={onSetActive}
-                className={cn(
-                  spacing.chip.sm,
-                  radius.md,
-                  'bg-brand-primary hover:bg-brand-accent text-on-brand caption font-medium flex items-center gap-1.5 ml-auto',
-                )}
-                title={t('profile.activate')}
-              >
-                <svg
-                  className="w-3.5 h-3.5"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                  aria-hidden="true"
+              <Tooltip text={t('profile.activate')}>
+                <button
+                  type="button"
+                  onClick={onSetActive}
+                  className={cn(
+                    spacing.chip.sm,
+                    radius.md,
+                    'bg-brand-primary hover:bg-brand-accent text-on-brand caption font-medium flex items-center gap-1.5 ml-auto',
+                  )}
                 >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M5 13l4 4L19 7"
-                  />
-                </svg>
-                {t('profile.activate')}
-              </button>
+                  <svg
+                    className="w-3.5 h-3.5"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                    aria-hidden="true"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M5 13l4 4L19 7"
+                    />
+                  </svg>
+                  {t('profile.activate')}
+                </button>
+              </Tooltip>
             )}
           </div>
         </WriteGate>

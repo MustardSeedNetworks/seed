@@ -142,7 +142,10 @@
     "tableActions": "Actions",
     "viewAllDevices": "View All Devices",
     "snmpInfo": "SNMP Details",
-    "scanningPhase": "Scanning — {{phase}}"
+    "scanningPhase": "Scanning — {{phase}}",
+    "localMacHint": "Locally administered address: assigned locally rather than by the manufacturer.",
+    "exportCSV": "Export CSV",
+    "exportJSON": "Export JSON"
   },
   "pipeline": {
     "phaseProgress": "Phase {{current}} of {{total}}",
@@ -449,6 +452,7 @@
     "gateway": "Gateway",
     "ingressPort": "Ingress Port",
     "internet": "Internet",
+    "l3Unavailable": "No L3 router hops — {{reason}}",
     "layerL3": "Layer 3 hop",
     "noL2Hops": "No L2 switch hops — needs LLDP/CDP neighbors or SNMP",
     "protocol": "Protocol",

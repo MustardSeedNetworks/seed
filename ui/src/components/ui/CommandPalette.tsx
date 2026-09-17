@@ -136,7 +136,7 @@ export const CommandPalette: FC<CommandPaletteProps> = ({
                   >
                     <Icon className="h-4 w-4 text-text-muted" aria-hidden="true" />
                     <span className="flex-1">{item.label}</span>
-                    <span className="text-xs text-text-muted">{item.path}</span>
+                    <span className="text-xs text-text-secondary">{item.path}</span>
                   </Command.Item>
                 );
               })}

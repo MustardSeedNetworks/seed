@@ -3,7 +3,8 @@
     "title": "Centro de ayuda de The Seed",
     "searchPlaceholder": "Buscar ayuda...",
     "contents": "Contenido",
-    "closeHelp": "Cerrar ayuda"
+    "closeHelp": "Cerrar ayuda",
+    "backToSections": "Volver a las secciones de ayuda"
   },
   "sections": {
     "about": "Acerca de The Seed",
@@ -32,83 +33,14 @@
     "pollingTargets": "Objetivos de sondeo",
     "topology": "Topología"
   },
-  "instructions": {
-    "runTests": "Toque el botón de reproducir para ejecutar todas las pruebas.",
-    "discovery": "Use la tarjeta de Descubrimiento de red para escanear dispositivos en su red.",
-    "vlan": "Crea/elimina subinterfaz VLAN 802.1Q. Requiere root.",
-    "defaultCredentials": "Predeterminado: admin / seed"
-  },
-  "tooltips": {
-    "linkStatus": "Muestra el estado del enlace físico y propiedades de conexión",
-    "networkConfig": "Muestra configuración IP e información DHCP",
-    "discovery": "Escanea su red para encontrar dispositivos conectados",
-    "gateway": "Muestra puerta de enlace predeterminada y estado de conectividad",
-    "publicIp": "Muestra su dirección IP pública y ubicación",
-    "dns": "Prueba resolución DNS y muestra servidores configurados",
-    "wifi": "Muestra detalles de conexión Wi-Fi y fuerza de señal",
-    "cable": "Prueba integridad y longitud del cable Ethernet",
-    "performance": "Mide throughput de red y latency",
-    "healthChecks": "Monitorea disponibilidad de endpoints",
-    "systemHealth": "Muestra uso de recursos del sistema"
-  },
-  "settings": {
-    "theme": "Elija entre tema claro, oscuro o del sistema",
-    "language": "Seleccione su idioma preferido",
-    "interface": "Seleccione la interfaz de red a monitorear",
-    "discovery": "Configure el comportamiento del escaneo de red",
-    "thresholds": "Establezca valores de umbral de advertencia y crítico"
-  },
-  "portServices": {
-    "ftp": "FTP",
-    "ssh": "SSH",
-    "telnet": "Telnet",
-    "smtp": "SMTP",
-    "dns": "DNS",
-    "http": "HTTP",
-    "pop3": "POP3",
-    "imap": "IMAP",
-    "https": "HTTPS",
-    "smb": "SMB",
-    "mysql": "MySQL",
-    "rdp": "RDP",
-    "postgresql": "PostgreSQL",
-    "mongodb": "MongoDB"
-  },
   "content": {
     "about": {
-      "welcome": "Bienvenido a The Seed",
-      "description": "The Seed es una herramienta integral de diagnóstico y monitoreo de redes de Mustard Seed Networks, diseñada para proporcionar visibilidad profunda de su infraestructura de red.",
-      "features": {
-        "realTimeMonitoring": {
-          "title": "Monitoreo en tiempo real",
-          "description": "Monitoree el estado del enlace, intensidad de señal Wi-Fi, alcanzabilidad del gateway y más con actualizaciones en vivo."
-        },
-        "networkDiscovery": {
-          "title": "Descubrimiento de red",
-          "description": "Descubra todos los dispositivos en su red con escaneo ARP, detección de vecinos LLDP/CDP."
-        },
-        "performanceTesting": {
-          "title": "Pruebas de rendimiento",
-          "description": "Ejecute pruebas de velocidad de internet y pruebas de throughput LAN con integración iperf3."
-        },
-        "cableDiagnostics": {
-          "title": "Diagnóstico de cables",
-          "description": "Pruebe cables Ethernet usando Reflectometría de Dominio de Tiempo (TDR) para encontrar fallas y medir longitud."
-        }
-      },
+      "description": "Seed es una herramienta integral de diagnóstico y monitoreo de redes de Mustard Seed Networks, diseñada para proporcionar visibilidad profunda de su infraestructura de red.",
       "openSource": {
-        "title": "Código fuente disponible y personalizable",
-        "description": "The Seed es software con código fuente disponible (source-available, BUSL-1.1). Personalice umbrales, configure pruebas e integre con su infraestructura de supervisión existente."
-      },
-      "versionInfo": {
-        "title": "Información de versión",
-        "currentVersion": "Versión actual:",
-        "backend": "Backend:",
-        "frontend": "Frontend:"
+        "description": "Seed es software con código fuente disponible (source-available, BUSL-1.1). Personalice umbrales, configure pruebas e integre con su infraestructura de supervisión existente."
       }
     },
     "gettingStarted": {
-      "title": "Primeros pasos",
       "steps": {
         "dashboard": {
           "title": "Resumen del panel",
@@ -125,20 +57,14 @@
         "runTests": {
           "title": "Ejecutar pruebas",
           "description": "Haga clic en el botón \"Ejecutar todas las pruebas\" (⚡) en la esquina inferior derecha para ejecutar pruebas de velocidad, diagnósticos de cable, descubrimiento de red y verificaciones de salud personalizadas."
-        },
-        "exploreCards": {
-          "title": "Explorar tarjetas individuales",
-          "description": "Cada tarjeta tiene un icono de ayuda (?) que explica las métricas mostradas. Haga clic en las tarjetas para ver información detallada y ejecutar pruebas específicas."
         }
       },
       "proTips": {
         "title": "Consejos profesionales",
-        "tips": [
-          "Use la tarjeta de Descubrimiento de red para encontrar todos los dispositivos en su red",
-          "Configure pruebas de verificación de salud personalizadas en Configuración → Pruebas personalizadas",
-          "Exporte datos de diagnóstico para solución de problemas o documentación",
-          "Habilite escaneo automático para monitoreo continuo de red"
-        ]
+        "tips": {
+          "0": "Use la tarjeta de Descubrimiento de red para encontrar todos los dispositivos en su red",
+          "2": "Exporte datos de diagnóstico para solución de problemas o documentación"
+        }
       }
     },
     "linkStatus": {
@@ -396,209 +322,58 @@
       },
       "passwordRecovery": {
         "title": "Recuperación de Contraseña",
-        "description": "Si ha olvidado su contraseña de administrador, puede restablecerla mediante acceso al sistema de archivos (SSH).",
-        "steps": [
-          "Conéctese por SSH al servidor que ejecuta The Seed",
-          "Cree un archivo vacío llamado '.recovery' en el directorio de datos",
-          "Modo usuario: touch ~/.local/share/seed/.recovery",
-          "Modo sistema: sudo touch /var/lib/seed/.recovery",
-          "El servidor detectará el archivo y generará un token de recuperación",
-          "Lea el token desde '.recovery-token' en el mismo directorio",
-          "Ingrese el token en la página de inicio de sesión junto con su nueva contraseña",
-          "El token expira después de 15 minutos y es de un solo uso"
-        ],
-        "note": "Esto requiere acceso al sistema de archivos del servidor, demostrando que tiene acceso de nivel administrador a la máquina."
-      },
-      "portScanDetails": {
-        "title": "Intensidad del Escaneo de Puertos",
-        "description": "Configure el comportamiento del escaneo de puertos en Configuración → Descubrimiento.",
-        "levels": {
-          "off": "Sin escaneo de puertos - solo descubrimiento básico de dispositivos",
-          "light": "Escanea puertos comunes (22, 80, 443, etc.) - ~20 puertos",
-          "normal": "Escaneo extendido de puertos de servicios comunes - ~100 puertos",
-          "aggressive": "Escaneo TCP completo de los 65535 puertos - lento pero exhaustivo"
+        "steps": {
+          "0": "Conéctese por SSH al servidor que ejecuta Seed",
+          "1": "Cree un archivo vacío llamado '.recovery' en el directorio de datos",
+          "2": "Modo usuario: touch ~/.local/share/seed/.recovery",
+          "3": "Modo sistema: sudo touch /var/lib/seed/.recovery",
+          "4": "El servidor detectará el archivo y generará un token de recuperación",
+          "5": "Lea el token desde '.recovery-token' en el mismo directorio",
+          "6": "Ingrese el token en la página de inicio de sesión junto con su nueva contraseña",
+          "7": "El token expira después de 15 minutos y es de un solo uso"
         },
-        "commonPorts": {
-          "21": "FTP - Transferencia de archivos (inseguro, use SFTP en su lugar)",
-          "22": "SSH - Acceso seguro por shell",
-          "23": "Telnet - Terminal remota (inseguro, use SSH en su lugar)",
-          "25": "SMTP - Servidor de correo",
-          "53": "DNS - Resolución de nombres",
-          "80": "HTTP - Servidor web (sin cifrar)",
-          "443": "HTTPS - Servidor web seguro",
-          "445": "SMB - Compartición de archivos Windows",
-          "3306": "MySQL - Servidor de base de datos",
-          "3389": "RDP - Escritorio remoto de Windows",
-          "5432": "PostgreSQL - Servidor de base de datos",
-          "8080": "HTTP-Alt - Servidor web alternativo o proxy"
-        }
+        "note": "Esto requiere acceso al sistema de archivos del servidor, demostrando que tiene acceso de nivel administrador a la máquina."
       }
     },
     "troubleshooting": {
       "description": "Problemas comunes y sus soluciones.",
       "categories": {
         "linkIssues": {
-          "title": "Problemas de Estado de Enlace",
           "noCarrier": {
             "symptom": "No se detecta portadora",
-            "causes": [
-              "Cable Ethernet desconectado o desenchufado",
-              "Cable conectado a switch/router sin energía",
-              "Cable Ethernet defectuoso (pruebe un reemplazo)",
-              "Interfaz de red deshabilitada en el SO",
-              "Fallo de hardware en NIC o puerto del switch"
-            ],
-            "solutions": [
-              "Verifique que el cable esté firmemente conectado en ambos extremos",
-              "Verifique que el switch/router esté encendido y el LED del puerto esté activo",
-              "Pruebe con un cable o puerto de switch diferente",
-              "Verifique que 'ip link' o 'ifconfig' muestre la interfaz como UP"
-            ]
+            "description": "Compruebe ambos extremos del cable, la alimentación y el puerto del switch, y que la interfaz esté habilitada. Pruebe otro cable o puerto."
           },
           "slowSpeed": {
             "symptom": "Velocidad de enlace menor a la esperada (100Mbps en lugar de 1Gbps)",
-            "causes": [
-              "Cable Cat5 (solo soporta 100Mbps) en lugar de Cat5e/Cat6",
-              "Pares de cable dañados afectando negociación gigabit",
-              "Switch antiguo que no soporta gigabit",
-              "Desajuste de auto-negociación"
-            ],
-            "solutions": [
-              "Use cable Cat5e o Cat6 para velocidades gigabit",
-              "Ejecute prueba de cable para verificar que los 4 pares estén OK",
-              "Intente forzar configuración de velocidad si auto-neg falla"
-            ]
+            "description": "Compruebe la categoría del cable y sus cuatro pares, las capacidades del switch y la negociación de velocidad y dúplex."
           }
         },
         "cableIssues": {
-          "title": "Fallas en Prueba de Cable",
           "open": {
             "symptom": "Par de cable muestra 'Abierto'",
-            "meaning": "El cable está roto o desconectado a la distancia especificada",
-            "solutions": [
-              "Verifique terminación del cable en panel de parcheo o caja de pared",
-              "Reemplace el cable si la falla está a mitad del recorrido",
-              "Re-termine el conector RJ45"
-            ]
+            "description": "Un hilo está desconectado o roto. Revise las terminaciones y la distancia indicada hasta el fallo."
           },
           "short": {
             "symptom": "Par de cable muestra 'Cortocircuito'",
-            "meaning": "Dos cables están tocándose (en cortocircuito)",
-            "solutions": [
-              "Inspeccione conectores RJ45 por pines doblados",
-              "Verifique daño en el cable (aplastado, pellizcado)",
-              "Reemplace el cable o re-termine"
-            ]
-          },
-          "impedanceMismatch": {
-            "symptom": "Par de cable muestra 'Desajuste de Impedancia'",
-            "meaning": "La impedancia característica del cable no coincide con los 100Ω esperados",
-            "solutions": [
-              "Evite mezclar tipos de cable en un tramo",
-              "Use técnica de ponchado apropiada",
-              "Reemplace cables de baja calidad"
-            ]
-          }
-        },
-        "dnsIssues": {
-          "title": "Problemas de DNS",
-          "slowResolution": {
-            "symptom": "Búsquedas DNS tomando >100ms",
-            "causes": [
-              "Servidor DNS distante o sobrecargado",
-              "Congestión de red hacia el servidor DNS",
-              "Servidor DNS realizando búsquedas recursivas"
-            ],
-            "solutions": [
-              "Use resolutor DNS local con caché",
-              "Pruebe DNS público más rápido (1.1.1.1, 8.8.8.8)",
-              "Verifique configuración del servidor DNS"
-            ]
-          },
-          "resolutionFailure": {
-            "symptom": "Búsqueda DNS no retorna resultados o NXDOMAIN",
-            "causes": [
-              "Servidor DNS inalcanzable",
-              "El dominio no existe",
-              "Firewall bloqueando UDP 53"
-            ],
-            "solutions": [
-              "Verifique que la IP del servidor DNS sea correcta",
-              "Pruebe servidor DNS alternativo",
-              "Verifique reglas del firewall"
-            ]
+            "description": "Dos hilos están en contacto. Revise los pines del conector y busque daños en el cable."
           }
         },
         "gatewayIssues": {
-          "title": "Problemas de Puerta de Enlace",
           "unreachable": {
             "symptom": "Puerta de enlace muestra como inalcanzable",
-            "causes": [
-              "Puerta de enlace/router apagado o bloqueado",
-              "Configuración IP incorrecta",
-              "Interfaz de red no conectada",
-              "ICMP deshabilitado en puerta de enlace (raro)"
-            ],
-            "solutions": [
-              "Verifique que la IP de la puerta de enlace coincida con la IP LAN del router",
-              "Verifique conexión física a la red",
-              "Reinicie el router si no responde"
-            ]
-          },
-          "highLatency": {
-            "symptom": "Latency de puerta de enlace >5ms",
-            "causes": [
-              "Router sobrecargado con tráfico",
-              "Conexión inalámbrica al router",
-              "Interferencia en la red"
-            ],
-            "solutions": [
-              "Use conexión cableada si es posible",
-              "Verifique aplicaciones con alto consumo de ancho de banda",
-              "Reinicie el router para limpiar buffers"
-            ]
+            "description": "Verifique la dirección de la puerta de enlace y el enlace local. Una puerta de enlace puede bloquear ICMP aunque reenvíe tráfico."
           }
         },
         "performanceIssues": {
-          "title": "Problemas de Rendimiento",
           "slowInternet": {
             "symptom": "Prueba de velocidad de internet por debajo de lo esperado",
-            "causes": [
-              "Limitación o congestión del ISP",
-              "Interferencia Wi-Fi o señal débil",
-              "Problemas de router o módem",
-              "Hora del día (uso pico)"
-            ],
-            "solutions": [
-              "Pruebe con conexión cableada para aislar problemas Wi-Fi",
-              "Ejecute pruebas en diferentes horarios",
-              "Reinicie módem y router",
-              "Contacte al ISP si es consistentemente lento"
-            ]
-          },
-          "slowLan": {
-            "symptom": "Prueba iperf3 LAN por debajo de lo esperado",
-            "causes": [
-              "Gigabit no negociado (ver estado de enlace)",
-              "Backplane del switch sobrecargado",
-              "Desajuste de dúplex",
-              "Cuello de botella en el servidor"
-            ],
-            "solutions": [
-              "Verifique que ambos extremos muestren 1Gbps dúplex completo",
-              "Pruebe conexión directa sin pasar por el switch",
-              "Verifique disco/CPU del servidor durante la prueba"
-            ]
+            "description": "Compare los resultados por cable e inalámbricos, pruebe en otro momento y compare el rendimiento (throughput) de la LAN con el de Internet."
           }
         }
       }
     },
     "profiles": {
       "description": "Los perfiles permiten guardar y cambiar entre diferentes conjuntos de configuración para diferentes clientes, ubicaciones o escenarios de prueba.",
-      "overview": {
-        "title": "¿Qué son los perfiles?",
-        "description": "Los perfiles son configuraciones guardadas que almacenan todos sus ajustes, umbrales, objetivos de verificación de salud y preferencias de interfaz. Son ideales para MSPs que gestionan múltiples clientes o técnicos que trabajan en diferentes sitios."
-      },
       "features": {
         "clientSpecific": {
           "title": "Configuración específica por cliente",
@@ -617,32 +392,17 @@
           "description": "Un perfil puede marcarse como predeterminado y se cargará automáticamente al iniciar."
         }
       },
-      "usage": {
-        "title": "Gestión de perfiles",
-        "steps": [
-          "Haga clic en el menú desplegable de perfiles en el encabezado para ver los perfiles disponibles",
-          "Seleccione 'Gestionar perfiles' para crear, editar o eliminar perfiles",
-          "Cree un nuevo perfil con un nombre descriptivo (ej., 'Acme Corp - Oficina principal')",
-          "Configure todos los ajustes para ese cliente/ubicación",
-          "Los ajustes se guardan automáticamente en el perfil activo"
-        ]
-      },
       "bestPractices": {
         "title": "Mejores prácticas",
-        "tips": [
-          "Use nombres de perfil descriptivos que identifiquen al cliente y la ubicación",
-          "Cree un perfil 'Predeterminado' base con configuraciones estándar",
-          "Exporte perfiles antes de cambios importantes como respaldo",
-          "Documente cualquier objetivo de verificación de salud específico del cliente en la descripción del perfil"
-        ]
+        "tips": {
+          "0": "Use nombres de perfil descriptivos que identifiquen al cliente y la ubicación",
+          "1": "Cree un perfil 'Predeterminado' base con configuraciones estándar",
+          "2": "Exporte perfiles antes de cambios importantes como respaldo"
+        }
       }
     },
     "rtspChecks": {
       "description": "Monitoree endpoints RTSP (Real Time Streaming Protocol) para cámaras IP y sistemas de videovigilancia.",
-      "overview": {
-        "title": "Monitoreo RTSP",
-        "description": "Las verificaciones de salud RTSP verifican la conectividad a cámaras IP, NVRs y sistemas de gestión de video. Esencial para mantener el tiempo de actividad de cámaras de seguridad en entornos empresariales y de salud."
-      },
       "terms": {
         "rtspUrl": {
           "term": "URL RTSP",
@@ -663,85 +423,19 @@
       },
       "configuration": {
         "title": "Configuración de endpoints RTSP",
-        "steps": [
-          "Vaya a Configuración → Verificaciones de salud → Endpoints RTSP",
-          "Haga clic en 'Agregar endpoint RTSP'",
-          "Ingrese un nombre descriptivo (ej., 'Cámara lobby 1')",
-          "Ingrese la URL RTSP (ej., rtsp://192.168.1.100:554/stream1)",
-          "Agregue credenciales si es requerido (usuario/contraseña)",
-          "Establezca el intervalo de verificación (predeterminado: 60 segundos)",
-          "Habilite el endpoint para comenzar el monitoreo"
-        ]
-      },
-      "commonIssues": {
-        "title": "Solución de problemas RTSP",
-        "connectionRefused": {
-          "symptom": "Conexión rechazada",
-          "causes": [
-            "Cámara apagada",
-            "Servicio RTSP no ejecutándose",
-            "Número de puerto incorrecto"
-          ],
-          "solutions": [
-            "Verifique que la cámara esté encendida y en línea",
-            "Verifique que RTSP esté habilitado en la configuración de la cámara",
-            "Confirme puerto 554 o puerto personalizado"
-          ]
-        },
-        "authFailed": {
-          "symptom": "401 No autorizado",
-          "causes": [
-            "Credenciales incorrectas",
-            "Cuenta bloqueada",
-            "IP no en lista permitida"
-          ],
-          "solutions": [
-            "Verifique usuario y contraseña",
-            "Revise la gestión de usuarios de la cámara",
-            "Agregue la IP de The Seed a la lista blanca de la cámara"
-          ]
-        },
-        "streamNotFound": {
-          "symptom": "404 Stream no encontrado",
-          "causes": [
-            "Ruta de stream incorrecta",
-            "Stream deshabilitado",
-            "Canal no configurado"
-          ],
-          "solutions": [
-            "Revise la documentación de la cámara para el formato correcto de URL",
-            "Verifique que el stream esté habilitado",
-            "Pruebe rutas /live, /stream1 o /h264"
-          ]
-        },
-        "timeout": {
-          "symptom": "Tiempo de conexión agotado",
-          "causes": [
-            "Problema de conectividad de red",
-            "Firewall bloqueando",
-            "Cámara sobrecargada"
-          ],
-          "solutions": [
-            "Pruebe la ruta de red a la cámara",
-            "Revise reglas de firewall para puerto 554",
-            "Reduzca conexiones concurrentes a la cámara"
-          ]
+        "steps": {
+          "0": "Vaya a Configuración → Verificaciones de salud → Endpoints RTSP",
+          "1": "Haga clic en 'Agregar endpoint RTSP'",
+          "2": "Ingrese un nombre descriptivo (ej., 'Cámara lobby 1')",
+          "3": "Ingrese la URL RTSP (ej., rtsp://192.168.1.100:554/stream1)",
+          "4": "Agregue credenciales si es requerido (usuario/contraseña)",
+          "5": "Establezca el intervalo de verificación (predeterminado: 60 segundos)",
+          "6": "Habilite el endpoint para comenzar el monitoreo"
         }
-      },
-      "useCases": {
-        "title": "Casos de uso",
-        "security": "Monitoree disponibilidad de cámaras de seguridad para asegurar cobertura continua de vigilancia",
-        "healthcare": "Verifique cámaras de monitoreo de pacientes en entornos clínicos",
-        "retail": "Rastree tiempo de actividad de cámaras de punto de venta para prevención de pérdidas",
-        "industrial": "Monitoree cámaras de proceso en manufactura y logística"
       }
     },
     "dicomChecks": {
       "description": "Monitoree sistemas de imágenes médicas DICOM incluyendo CT, MRI, ultrasonido y servidores PACS.",
-      "overview": {
-        "title": "Verificaciones de salud DICOM",
-        "description": "DICOM (Digital Imaging and Communications in Medicine) las verificaciones de salud verifican la conectividad entre dispositivos de imágenes médicas. Usa C-ECHO para probar asociaciones DICOM, similar a ping pero para sistemas médicos."
-      },
       "terms": {
         "aeTitle": {
           "term": "AE Title",
@@ -761,108 +455,18 @@
         },
         "scu": {
           "term": "SCU (Service Class User)",
-          "description": "El cliente DICOM que solicita servicios. The Seed actúa como SCU cuando realiza pruebas C-ECHO."
+          "description": "El cliente DICOM que solicita servicios. Seed actúa como SCU cuando realiza pruebas C-ECHO."
         },
         "port": {
           "term": "Puerto DICOM",
           "description": "El puerto DICOM estándar es 104, pero muchos sistemas usan 11112 o puertos personalizados. Verifique con su administrador PACS."
         }
       },
-      "configuration": {
-        "title": "Configuración de endpoints DICOM",
-        "steps": [
-          "Vaya a Configuración → Verificaciones de salud → Endpoints DICOM",
-          "Haga clic en 'Agregar endpoint DICOM'",
-          "Ingrese un nombre descriptivo (ej., 'Servidor PACS principal')",
-          "Ingrese la dirección IP o hostname del host",
-          "Ingrese el puerto (típicamente 104 o 11112)",
-          "Ingrese el Called AE Title (el AE Title del sistema remoto)",
-          "Ingrese el Calling AE Title (el AE Title de The Seed - debe estar registrado en el sistema remoto)",
-          "Establezca el intervalo de verificación y habilite el endpoint"
-        ]
-      },
-      "aeTitleSetup": {
-        "title": "Configuración de AE Title",
-        "description": "Los sistemas DICOM requieren registro bilateral de AE Title. Debe:",
-        "steps": [
-          "Registrar el AE Title de The Seed en el sistema DICOM remoto (PACS, modalidad, etc.)",
-          "Configurar el Called AE Title correcto en The Seed para coincidir con el AE del sistema remoto",
-          "Usar un Calling AE Title consistente para todos los endpoints (ej., 'THESEED')",
-          "Nota: Los AE Titles distinguen mayúsculas/minúsculas en algunos sistemas"
-        ]
-      },
-      "commonIssues": {
-        "title": "Solución de problemas DICOM",
-        "associationRejected": {
-          "symptom": "Asociación rechazada",
-          "causes": [
-            "AE Title no registrado en sistema remoto",
-            "Desajuste de Calling AE Title",
-            "IP no en lista permitida"
-          ],
-          "solutions": [
-            "Registre el AE Title de The Seed en PACS/modalidad",
-            "Verifique ortografía exacta y mayúsculas/minúsculas del AE Title",
-            "Agregue la IP de The Seed a hosts DICOM permitidos"
-          ]
-        },
-        "connectionRefused": {
-          "symptom": "Conexión rechazada",
-          "causes": [
-            "Puerto incorrecto",
-            "Servicio DICOM no ejecutándose",
-            "Firewall bloqueando"
-          ],
-          "solutions": [
-            "Verifique puerto DICOM con admin de PACS",
-            "Revise estado del servicio DICOM",
-            "Permita puerto 104/11112 en firewall"
-          ]
-        },
-        "timeout": {
-          "symptom": "Tiempo de conexión agotado",
-          "causes": [
-            "Problema de ruta de red",
-            "Sistema remoto sobrecargado",
-            "Dirección IP incorrecta"
-          ],
-          "solutions": [
-            "Pruebe conectividad de red básica con ping",
-            "Revise carga del sistema en PACS",
-            "Verifique que la dirección IP sea correcta"
-          ]
-        },
-        "cEchoFailed": {
-          "symptom": "C-ECHO falló (asociación exitosa)",
-          "causes": [
-            "SCP no soporta verificación",
-            "Clase de servicio no configurada",
-            "Error interno en remoto"
-          ],
-          "solutions": [
-            "Verifique que remoto soporte Verification SOP Class",
-            "Revise logs de PACS para detalles",
-            "Contacte soporte del proveedor PACS"
-          ]
-        }
-      },
-      "useCases": {
-        "title": "Casos de uso en salud",
-        "pacs": "Monitoree disponibilidad del servidor PACS para continuidad del flujo de trabajo de radiología",
-        "modalities": "Verifique que sistemas CT, MRI, rayos X y ultrasonido sean accesibles por red",
-        "ris": "Revise conectividad del Sistema de Información de Radiología",
-        "worklist": "Monitoree servidores de lista de trabajo de modalidad para enrutamiento adecuado de estudios",
-        "archive": "Verifique que sistemas de archivo a largo plazo estén en línea"
-      },
       "compliance": {
-        "title": "Consideraciones de cumplimiento",
-        "description": "Al monitorear sistemas DICOM en entornos de salud:",
-        "points": [
-          "C-ECHO es una verificación no destructiva - no accede a datos de pacientes",
-          "Asegure que The Seed esté desplegado en un segmento de red seguro y compatible con HIPAA",
-          "Documente el monitoreo DICOM en el plan de seguridad de red de su instalación",
-          "Coordine el registro de AE Title con su equipo biomédico/IT"
-        ]
+        "points": {
+          "0": "C-ECHO es una verificación no destructiva - no accede a datos de pacientes",
+          "3": "Coordine el registro de AE Title con su equipo biomédico/IT"
+        }
       }
     },
     "howTo": {
@@ -870,153 +474,297 @@
       "guides": {
         "diagnoseSlowNetwork": {
           "title": "Cómo diagnosticar velocidades de red lentas",
-          "steps": [
-            {
+          "steps": {
+            "0": {
               "step": "Verificar estado del enlace",
               "description": "Verifique que la tarjeta de Estado del enlace muestre la velocidad esperada (1 Gbps para gigabit). Si muestra 100 Mbps, revise calidad del cable o puerto del switch."
             },
-            {
+            "1": {
               "step": "Probar latency de gateway",
               "description": "La latency del gateway debe ser <1ms para conexiones cableadas. Alta latency aquí indica problemas de red local."
             },
-            {
+            "2": {
               "step": "Ejecutar prueba de velocidad de internet",
               "description": "Compare resultados con las velocidades anunciadas por su ISP. Si es significativamente menor, el problema puede estar relacionado con el ISP."
             },
-            {
+            "3": {
               "step": "Ejecutar prueba iPerf LAN",
               "description": "Pruebe throughput de red local para aislar si el problema es local o hacia internet. Debe alcanzar velocidad cercana al cable."
             },
-            {
+            "4": {
               "step": "Verificar interferencias",
-              "description": "Para Wi-Fi, ejecute un Estudio de sitio para verificar congestión de canal e interferencias."
-            },
-            {
-              "step": "Revisar resultados de descubrimiento",
-              "description": "Verifique si otros dispositivos están consumiendo ancho de banda. Busque dispositivos de alto tráfico inesperados."
+              "description": "Para Wi-Fi, revise el gráfico de canales y el escaneo de AP vecinos en busca de congestión e interferencias."
             }
-          ]
+          }
         },
         "setupHealthChecks": {
           "title": "Cómo configurar verificaciones de salud para servicios críticos",
-          "steps": [
-            {
+          "steps": {
+            "0": {
               "step": "Identificar servicios críticos",
               "description": "Liste todos los servicios que necesitan monitoreo: servidores, bases de datos, servicios en la nube, cámaras, equipo médico."
             },
-            {
+            "1": {
               "step": "Elegir tipo de verificación",
               "description": "Use Ping para alcanzabilidad básica, TCP para puertos de servicio, HTTP para servicios web, RTSP para cámaras, DICOM para imágenes médicas."
             },
-            {
+            "2": {
               "step": "Agregar endpoints",
               "description": "Vaya a Configuración → Verificaciones de salud y agregue cada endpoint con los parámetros apropiados."
             },
-            {
+            "3": {
               "step": "Establecer umbrales",
               "description": "Configure umbrales de latency de advertencia (amarillo) y crítico (rojo) basados en requisitos del servicio."
             },
-            {
+            "4": {
               "step": "Probar configuración",
               "description": "Ejecute pruebas manualmente primero para verificar conectividad antes de habilitar monitoreo continuo."
             },
-            {
+            "5": {
               "step": "Guardar en perfil",
               "description": "Asegure que los ajustes se guarden en el perfil de cliente apropiado para persistencia."
             }
-          ]
-        },
-        "setupDicom": {
-          "title": "Cómo configurar monitoreo DICOM para salud",
-          "steps": [
-            {
-              "step": "Recopilar información DICOM",
-              "description": "Recopile direcciones IP, puertos y AE Titles para todos los dispositivos DICOM: PACS, modalidades, RIS, archivos."
-            },
-            {
-              "step": "Registrar AE Title de The Seed",
-              "description": "En cada sistema DICOM, agregue el AE Title de The Seed (ej., 'THESEED') a la lista de AE remotos permitidos."
-            },
-            {
-              "step": "Configurar endpoints",
-              "description": "En Configuración → Verificaciones de salud → DICOM, agregue cada dispositivo con su Called AE Title, IP y puerto."
-            },
-            {
-              "step": "Probar C-ECHO",
-              "description": "Ejecute pruebas manuales C-ECHO para verificar establecimiento de asociación antes de habilitar monitoreo continuo."
-            },
-            {
-              "step": "Establecer intervalos de verificación",
-              "description": "Recomendado: 60 segundos para PACS crítico, 5 minutos para modalidades, basado en necesidades del flujo de trabajo clínico."
-            },
-            {
-              "step": "Configurar alertas",
-              "description": "Configure umbrales de notificación para alertar cuando sistemas DICOM se vuelvan inalcanzables."
-            }
-          ]
-        },
-        "setupRtsp": {
-          "title": "Cómo configurar monitoreo de cámaras RTSP",
-          "steps": [
-            {
-              "step": "Identificar URLs de cámaras",
-              "description": "Localice URLs RTSP de la documentación de la cámara o NVR. Formatos comunes: rtsp://ip:554/stream1, rtsp://ip/live/ch1"
-            },
-            {
-              "step": "Recopilar credenciales",
-              "description": "Recopile usuarios y contraseñas de cámaras. Considere crear una cuenta de monitoreo dedicada con acceso solo de visualización."
-            },
-            {
-              "step": "Agregar endpoints RTSP",
-              "description": "En Configuración → Verificaciones de salud → RTSP, agregue cada cámara con URL y credenciales."
-            },
-            {
-              "step": "Probar conectividad",
-              "description": "Ejecute pruebas manuales OPTIONS/DESCRIBE para verificar que URLs y credenciales sean correctas."
-            },
-            {
-              "step": "Establecer intervalos de verificación",
-              "description": "Recomendado: 60 segundos para cámaras críticas, 5 minutos para vigilancia general."
-            },
-            {
-              "step": "Agrupar por ubicación",
-              "description": "Use nombres descriptivos (ej., 'Edificio A - Entrada') para fácil identificación durante alertas."
-            }
-          ]
-        },
-        "createMspProfile": {
-          "title": "Cómo crear perfiles específicos de cliente para MSPs",
-          "steps": [
-            {
-              "step": "Crear nuevo perfil",
-              "description": "Haga clic en menú de perfil → Gestionar perfiles → Crear nuevo. Use formato: 'NombreCliente - Ubicación' (ej., 'Acme Corp - HQ')."
-            },
-            {
-              "step": "Configurar interfaces",
-              "description": "Seleccione las interfaces de red usadas en este sitio del cliente. Establezca interfaces Ethernet y Wi-Fi preferidas."
-            },
-            {
-              "step": "Establecer umbrales del cliente",
-              "description": "Ajuste umbrales basados en requisitos de SLA del cliente. Más estrictos para entornos críticos, más flexibles para monitoreo básico."
-            },
-            {
-              "step": "Agregar objetivos de verificación de salud",
-              "description": "Agregue servidores específicos del cliente, aplicaciones, impresoras, cámaras e infraestructura crítica."
-            },
-            {
-              "step": "Configurar ajustes de descubrimiento",
-              "description": "Establezca rangos de subred, intensidad de escaneo y credenciales SNMP específicas para este entorno del cliente."
-            },
-            {
-              "step": "Documentar en descripción",
-              "description": "Agregue notas sobre especificidades del cliente: información de contacto, topología de red, consideraciones especiales."
-            },
-            {
-              "step": "Exportar respaldo",
-              "description": "Exporte el perfil como respaldo antes de dejar el sitio del cliente."
-            }
-          ]
+          }
         }
+      }
+    },
+    "common": {
+      "terms": "Términos"
+    },
+    "wifiTroubleshooting": {
+      "description": "Examine los puntos de acceso visibles, los canales, la señal y el ruido para diagnosticar el entorno inalámbrico local. Las mediciones disponibles dependen del adaptador y la plataforma.",
+      "terms": {
+        "neighbors": {
+          "term": "Exploración de AP vecinos",
+          "description": "Enumera los puntos de acceso que detecta el adaptador, con su SSID, BSSID, banda, canal y nivel de señal."
+        },
+        "utilization": {
+          "term": "Utilización del canal",
+          "description": "La actividad registrada indica la ocupación del canal. La ausencia de mediciones no demuestra que esté libre."
+        },
+        "interference": {
+          "term": "Interferencia cocanal",
+          "description": "Los puntos de acceso del mismo canal comparten tiempo de transmisión, lo que puede reducir el rendimiento (throughput)."
+        },
+        "snr": {
+          "term": "Señal / SNR",
+          "description": "La señal se mide en dBm; la SNR compara la señal con el ruido de fondo. Una SNR mayor suele indicar un enlace más limpio."
+        }
+      }
+    },
+    "path": {
+      "description": "Trace la ruta hasta un destino e inspeccione los dispositivos descubiertos en la red local. La ausencia de respuestas no demuestra que todos los dispositivos intermedios estén desconectados.",
+      "terms": {
+        "hop": {
+          "term": "Salto",
+          "description": "Un paso que responde en la ruta, con su latencia (latency) de ida y vuelta y el nombre de host disponible."
+        },
+        "protocol": {
+          "term": "Protocolo de sondeo",
+          "description": "Elija el protocolo de sondeo. Los cortafuegos y routers pueden tratar ICMP, UDP y TCP de forma distinta."
+        },
+        "local": {
+          "term": "Descubrimiento en el enlace",
+          "description": "ARP y el descubrimiento de vecinos muestran vecinos accesibles en el segmento local."
+        }
+      }
+    },
+    "reports": {
+      "description": "Revise la disponibilidad de los servicios y genere o descargue informes de diagnóstico. Las acciones disponibles dependen de su rol y licencia.",
+      "terms": {
+        "sla": {
+          "term": "Panel de SLA",
+          "description": "Los resúmenes de disponibilidad y latencia (latency) proceden de comprobaciones registradas. Revise el período y la cobertura de datos antes de interpretarlos."
+        },
+        "export": {
+          "term": "Informes y exportaciones",
+          "description": "Genere un informe con los diagnósticos recopilados o descargue uno existente. Las operaciones de escritura requieren el rol de operador."
+        }
+      }
+    },
+    "logs": {
+      "description": "Revise las entradas de registro estructuradas y el estado del proceso Seed. Filtre por nivel, origen o texto para investigar una prueba fallida.",
+      "terms": {
+        "level": {
+          "term": "Nivel",
+          "description": "Gravedad, como depuración, información, advertencia o error. Un filtro limita las entradas mostradas."
+        },
+        "source": {
+          "term": "Origen",
+          "description": "El componente que emitió la entrada, como descubrimiento o Wi-Fi."
+        },
+        "stream": {
+          "term": "Entradas en directo",
+          "description": "Pause o reanude el flujo mostrado y exporte entradas para investigarlas."
+        }
+      }
+    },
+    "alerts": {
+      "description": "Revise las condiciones detectadas por la supervisión y filtre por gravedad, confirmación o resolución. Su identidad de sesión se registra cuando confirma una alerta.",
+      "terms": {
+        "severity": {
+          "term": "Gravedad",
+          "description": "Indica la urgencia de la condición observada."
+        },
+        "ack": {
+          "term": "Confirmar",
+          "description": "Marque la alerta como vista y manténgala abierta para investigarla."
+        },
+        "resolve": {
+          "term": "Resolver",
+          "description": "Marque la alerta como resuelta después de verificar que la condición se haya corregido."
+        }
+      }
+    },
+    "pollingTargets": {
+      "description": "Añada, edite o elimine dispositivos supervisados por SNMP. Un destino nuevo comienza en el siguiente ciclo de sondeo. Los dispositivos y enlaces descubiertos alimentan Topología; los cambios observados pueden generar alertas.",
+      "terms": {
+        "target": {
+          "term": "Destino",
+          "description": "Una dirección de dispositivo que Seed sondea periódicamente."
+        },
+        "collectors": {
+          "term": "Cadena de recolectores",
+          "description": "Los recolectores leen los datos compatibles del sistema, interfaces, LLDP, ARP y tabla de reenvío de un destino."
+        },
+        "snmp": {
+          "term": "SNMP",
+          "description": "El Protocolo Simple de Administración de Red lee el estado y las tablas del dispositivo con las credenciales configuradas."
+        }
+      }
+    },
+    "topology": {
+      "description": "Inspeccione el grafo de red creado a partir del descubrimiento y el sondeo SNMP. Seleccione un nodo para revisar sus interfaces y enlaces observados. Un enlace ausente puede indicar que faltan observaciones.",
+      "terms": {
+        "node": {
+          "term": "Nodo",
+          "description": "Un dispositivo descubierto, como un switch, router, host o punto de acceso."
+        },
+        "link": {
+          "term": "Enlace",
+          "description": "Una relación observada entre interfaces de dispositivos, conciliada a partir de datos de descubrimiento."
+        },
+        "interface": {
+          "term": "Interfaz",
+          "description": "Un puerto de dispositivo con su estado y los vecinos observados."
+        }
+      }
+    },
+    "glossary": {
+      "description": "Términos habituales de Seed.",
+      "terms": {
+        "arp": {
+          "term": "ARP",
+          "description": "El Protocolo de Resolución de Direcciones relaciona direcciones IPv4 con direcciones MAC locales."
+        },
+        "dhcp": {
+          "term": "DHCP",
+          "description": "El Protocolo de Configuración Dinámica de Host asigna la configuración de red a los clientes."
+        },
+        "dns": {
+          "term": "DNS",
+          "description": "El Sistema de Nombres de Dominio resuelve nombres a direcciones y permite consultas inversas."
+        },
+        "iperf": {
+          "term": "iperf3",
+          "description": "Una herramienta para medir el rendimiento (throughput) entre dos hosts de red."
+        },
+        "lldp": {
+          "term": "LLDP / CDP",
+          "description": "Protocolos de descubrimiento que informan sobre dispositivos conectados directamente."
+        },
+        "rtsp": {
+          "term": "RTSP",
+          "description": "El Protocolo de Transmisión en Tiempo Real se utiliza en cámaras y sistemas de vídeo."
+        },
+        "snr": {
+          "term": "SNR",
+          "description": "La relación señal-ruido compara una señal inalámbrica con el ruido de fondo."
+        },
+        "tdr": {
+          "term": "TDR",
+          "description": "La reflectometría en el dominio del tiempo estima la longitud del cable y localiza fallos mediante pulsos reflejados."
+        }
+      }
+    },
+    "cardHelp": {
+      "LinkCard": {
+        "description": "Estado del enlace, velocidad negociada y direcciones de la interfaz cableada seleccionada."
+      },
+      "CableCard": {
+        "description": "Los diagnósticos de cable aparecen cuando el enlace cableado está caído y requieren un adaptador compatible con TDR."
+      },
+      "DriverStatsCard": {
+        "description": "Los contadores del controlador pueden revelar errores y descartes. Las plataformas sin el soporte necesario indican esa limitación."
+      },
+      "WiFiCard": {
+        "description": "Inspeccione la red conectada, la señal y la seguridad. Las restricciones de privacidad del sistema operativo pueden ocultar identificadores; un SSID oculto no demuestra una desconexión."
+      },
+      "NetworkCard": {
+        "description": "Revise las direcciones, la concesión DHCP y la configuración de la interfaz."
+      },
+      "GatewayCard": {
+        "description": "Compruebe la puerta de enlace predeterminada y su accesibilidad y latencia (latency) medidas."
+      },
+      "DnsCard": {
+        "description": "Inspeccione los resolutores configurados y los resultados de consultas directas, inversas e IPv6."
+      },
+      "NeighbourCacheCard": {
+        "description": "Inspeccione la caché ARP de IPv4 y de vecinos IPv6 del sistema operativo. Las entradas describen vecinos observados, no un inventario completo de dispositivos."
+      },
+      "BonjourCard": {
+        "description": "Explore los servicios anunciados por mDNS y DNS-SD, con sus hosts y puertos. La ausencia de anuncios no demuestra que un servicio esté desconectado."
+      },
+      "PublicIpCard": {
+        "description": "Revise la dirección observada externamente y su historial cuando estén disponibles las comprobaciones de IP pública."
+      },
+      "SwitchCard": {
+        "description": "En interfaces cableadas, inspeccione la información del switch vecino y de VLAN cuando el dispositivo conectado la anuncie."
+      },
+      "PathDiscoveryCard": {
+        "description": "Trace la ruta hasta un destino e inspeccione los saltos que responden y su latencia (latency)."
+      },
+      "NetworkDiscoveryCard": {
+        "description": "Explore las redes locales configuradas e inspeccione los dispositivos, las direcciones y los servicios anunciados descubiertos."
+      },
+      "WiFiChannelGraph": {
+        "description": "Compare las señales de AP visibles por canal. Un escaneo fallido o limitado por privacidad no demuestra que el entorno esté vacío."
+      },
+      "WiFiAirspaceCard": {
+        "description": "Inspeccione los AP y las estaciones observados en la captura de tramas de gestión. Requiere la capacidad incluida en la licencia y una fuente de captura compatible con modo monitor."
+      },
+      "WiFiAnomaliesCard": {
+        "description": "Revise las anomalías de asociación a partir de tramas de gestión capturadas. Sin observaciones de captura no se puede declarar que el entorno funciona correctamente."
+      },
+      "MfaCard": {
+        "description": "Configure una aplicación de autenticación (TOTP), guarde los códigos de recuperación de forma segura o registre una clave de acceso si su navegador lo permite. Confirme el registro antes de depender del segundo factor."
+      },
+      "GuestNetworkAuditCard": {
+        "description": "Compruebe los destinos configurados para el aislamiento de la red de invitados. Pruebe únicamente redes que esté autorizado a evaluar."
+      },
+      "InsecurePortScanCard": {
+        "description": "Explore el destino configurado en busca de servicios inseguros expuestos e inspeccione los hallazgos antes de actuar."
+      },
+      "BluetoothCard": {
+        "description": "Inspeccione dispositivos Bluetooth cercanos cuando el adaptador y la plataforma permitan el descubrimiento. Un adaptador no disponible no equivale a un escaneo vacío."
+      },
+      "HealthCheckCard": {
+        "description": "Ejecute las comprobaciones configuradas de ping, TCP, UDP y aplicaciones. Los tiempos HTTP separan DNS, conexión, TLS, respuesta del servidor y descarga; enfoque cada etiqueta para consultar su explicación."
+      },
+      "PerformanceCard": {
+        "description": "Compare las pruebas de velocidad de Internet con los resultados de throughput de iperf3 en la LAN para localizar un cuello de botella. Los extremos y las condiciones del enlace afectan al resultado."
+      },
+      "SlaDashboardCard": {
+        "description": "Revise la disponibilidad y la latencia (latency) durante el período seleccionado, incluidos los vacíos de observación."
+      },
+      "ReportsCard": {
+        "description": "Genere, descargue o elimine informes según su rol. Revise el período de datos antes de compartirlos."
+      },
+      "SystemHealthCard": {
+        "description": "Inspeccione el proceso Seed y las mediciones de recursos del host al investigar pruebas lentas o fallidas."
+      },
+      "LogViewerCard": {
+        "description": "Busque, pause y exporte entradas de registro estructuradas para investigar la actividad del servicio."
       }
     }
   },

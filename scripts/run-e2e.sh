@@ -82,10 +82,18 @@ printf '%s\n' \
 # can reap its children as well as itself. Turned off again immediately: with
 # `set -m` left on, this script's own foreground commands get their own groups
 # and stop inheriting the terminal's signals as expected.
+#
+# HOME is repointed at the run directory so the daemon cannot read the
+# developer's own ~/.config/seed/.license (seed#2688). The licence manager
+# resolves its state from os.UserHomeDir() and has no other override, so a
+# machine that has ever run `seed license trial` was serving the suite an
+# activated Pro licence — every RequireFeature page unlocked and the free-tier
+# gate assertions in reports-page.spec.ts passed or failed by accident of the
+# host. CI was green only because its runners have no licence file.
 set -m
 (
   cd "$run_dir"
-  SEED_LOGIN_MAX_ATTEMPTS=200 exec "$repo_dir/seed" --config "$run_dir/config.json"
+  HOME="$run_dir" SEED_LOGIN_MAX_ATTEMPTS=200 exec "$repo_dir/seed" --config "$run_dir/config.json"
 ) >"$server_log" 2>&1 &
 server_pid=$!
 set +m

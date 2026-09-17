@@ -1,25 +1,5 @@
-/**
- * WiFiSettings Component
- *
- * Purpose: WiFi interface configuration and network connection management.
- *
- * Key Features:
- * - Interface selection: dropdown of available WiFi interfaces
- * - Network scanning: scan for available WiFi networks
- * - Network connection: connect to WiFi networks with password
- * - Connection status: show current connection state
- * - Saved networks: view and manage saved network profiles
- * - AutoSaveIndicator: shows persistent save status
- *
- * Usage:
- * ```typescript
- * <WiFiSettings
- *   wifiSettings={settings}
- *   setWifiSettings={updateSettings}
- *   wifiStatus={saveStatus}
- * />
- * ```
- */
+import { Tooltip } from '../../ui/tooltip';
+/** Wireless interface selection, scanning and saved network configuration. */
 
 import type React from 'react';
 import { memo, useCallback, useEffect, useState } from 'react';
@@ -122,15 +102,16 @@ function SavedNetworks({
             )}
           >
             <span className="body-small text-text-primary">{network.ssid}</span>
-            <button
-              type="button"
-              onClick={(): void => onForget(network.ssid)}
-              disabled={!canWrite}
-              title={canWrite ? undefined : readOnlyReason}
-              className="caption text-status-error hover:underline disabled:opacity-50 disabled:no-underline"
-            >
-              Forget
-            </button>
+            <Tooltip text={canWrite ? undefined : readOnlyReason}>
+              <button
+                type="button"
+                onClick={(): void => onForget(network.ssid)}
+                disabled={!canWrite}
+                className="caption text-status-error hover:underline disabled:opacity-50 disabled:no-underline"
+              >
+                Forget
+              </button>
+            </Tooltip>
           </div>
         ))}
       </div>
@@ -521,26 +502,27 @@ export const WiFiSettings: React.NamedExoticComponent<WiFiSettingsProps> = memo(
                       </div>
                     ) : null}
 
-                    <button
-                      type="button"
-                      onClick={connectToNetwork}
-                      disabled={
-                        !canWrite ||
-                        connecting ||
-                        (selectedNetwork.security !== 'Open' && !password)
-                      }
-                      title={canWrite ? undefined : readOnlyReason}
-                      className={cn(
-                        'w-full',
-                        'body-small font-medium',
-                        spacing.chip.lg,
-                        radius.default,
-                        'bg-brand-primary text-on-brand',
-                        'hover:bg-brand-accent disabled:opacity-50',
-                      )}
-                    >
-                      {connecting ? t('wifi.connecting') : t('wifi.connect')}
-                    </button>
+                    <Tooltip text={canWrite ? undefined : readOnlyReason}>
+                      <button
+                        type="button"
+                        onClick={connectToNetwork}
+                        disabled={
+                          !canWrite ||
+                          connecting ||
+                          (selectedNetwork.security !== 'Open' && !password)
+                        }
+                        className={cn(
+                          'w-full',
+                          'body-small font-medium',
+                          spacing.chip.lg,
+                          radius.default,
+                          'bg-brand-primary text-on-brand',
+                          'hover:bg-brand-accent disabled:opacity-50',
+                        )}
+                      >
+                        {connecting ? t('wifi.connecting') : t('wifi.connect')}
+                      </button>
+                    </Tooltip>
                   </div>
                 ) : null}
 
@@ -563,21 +545,22 @@ export const WiFiSettings: React.NamedExoticComponent<WiFiSettingsProps> = memo(
                   <span className="body-small font-medium text-text-primary">
                     {t('wifi.connection')}
                   </span>
-                  <button
-                    type="button"
-                    onClick={disconnectNetwork}
-                    disabled={!canWrite || connecting}
-                    title={canWrite ? undefined : readOnlyReason}
-                    className={cn(
-                      'caption font-medium',
-                      spacing.chip.md,
-                      radius.default,
-                      'bg-status-error/10 text-status-error border border-status-error/20',
-                      'hover:bg-status-error/20 disabled:opacity-50',
-                    )}
-                  >
-                    Disconnect
-                  </button>
+                  <Tooltip text={canWrite ? undefined : readOnlyReason}>
+                    <button
+                      type="button"
+                      onClick={disconnectNetwork}
+                      disabled={!canWrite || connecting}
+                      className={cn(
+                        'caption font-medium',
+                        spacing.chip.md,
+                        radius.default,
+                        'bg-status-error/10 text-status-error border border-status-error/20',
+                        'hover:bg-status-error/20 disabled:opacity-50',
+                      )}
+                    >
+                      Disconnect
+                    </button>
+                  </Tooltip>
                 </div>
               </div>
 

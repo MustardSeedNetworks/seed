@@ -93,7 +93,9 @@
     "carrier": "Portadora",
     "autoNeg": "Auto-Neg",
     "lastSeen": "Visto por última vez",
-    "noMatches": "Sin coincidencias."
+    "noMatches": "Sin coincidencias.",
+    "history": "Historial",
+    "manageProfiles": "Administrar perfiles"
   },
   "time": {
     "seconds": "{{count}}s",
@@ -103,7 +105,7 @@
   },
   "accessibility": {
     "openHelp": "Abrir ayuda",
-    "openSettings": "Abrir configuración",
+    "openSettings": "Abrir ajustes",
     "switchToLightMode": "Cambiar a modo claro",
     "switchToDarkMode": "Cambiar a modo oscuro",
     "selectInterface": "Seleccionar interfaz de red",
@@ -121,7 +123,15 @@
     "selectDevice": "Seleccionar dispositivo",
     "selectEthernet": "Seleccionar interfaz Ethernet",
     "selectWifi": "Seleccionar interfaz Wi-Fi",
-    "skipToMainContent": "Saltar al contenido principal"
+    "skipToMainContent": "Saltar al contenido principal",
+    "collapseSidebar": "Contraer barra lateral",
+    "expandSidebar": "Expandir barra lateral",
+    "toggleFilters": "Mostrar u ocultar filtros",
+    "manageProfiles": "Crear, editar y eliminar perfiles",
+    "pageHelpHint": "¿Qué es {{title}}?",
+    "openPageHelp": "Abrir ayuda para {{title}}",
+    "openMenu": "Abrir menú",
+    "closeMenu": "Cerrar menú"
   },
   "sections": {
     "connectivity": "Conectividad",
@@ -321,7 +331,11 @@
   "health": {
     "database": "Base de datos",
     "fileShares": "Recursos compartidos",
-    "rtsp": "RTSP"
+    "rtsp": "RTSP",
+    "healthy": "Correcto",
+    "degraded": "Degradado",
+    "critical": "Crítico",
+    "scoreDescription": "Estado de salud: {{score}}% — {{status}}"
   },
   "interface": {
     "ethernet": "Ethernet",

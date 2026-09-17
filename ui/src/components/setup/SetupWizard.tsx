@@ -1,3 +1,4 @@
+import { Tooltip } from '../ui/tooltip';
 /**
  * Initial Setup Wizard Component
  *
@@ -345,19 +346,21 @@ export function SetupWizard({
                         <code className="flex-1 font-mono body-small text-brand-primary select-all break-all">
                           {suggestedPassword}
                         </code>
-                        <button
-                          type="button"
-                          onClick={handleCopyPassword}
-                          className={cn(
-                            button.size.xs,
-                            'text-text-muted hover:text-text-primary border border-surface-border',
-                            radius.md,
-                            'hover:bg-surface-base transition-colors shrink-0 p-1.5',
-                          )}
-                          title={t('buttons.copy')}
-                        >
-                          <Copy className="w-3.5 h-3.5" />
-                        </button>
+                        <Tooltip text={t('buttons.copy')}>
+                          <button
+                            aria-label={t('buttons.copy')}
+                            type="button"
+                            onClick={handleCopyPassword}
+                            className={cn(
+                              button.size.xs,
+                              'text-text-muted hover:text-text-primary border border-surface-border',
+                              radius.md,
+                              'hover:bg-surface-base transition-colors shrink-0 p-1.5',
+                            )}
+                          >
+                            <Copy className="w-3.5 h-3.5" />
+                          </button>
+                        </Tooltip>
                       </div>
                       {copied ? (
                         <p className={cn('caption text-status-success', spacing.margin.top.inline)}>

@@ -23,31 +23,41 @@ export const reportingSections: HelpSection[] = [
     blocks: [
       {
         kind: 'paragraph',
-        text: 'Path Analysis traces how traffic leaves the local network and reaches a destination. It surfaces every L2 hop on the local segment, every L3 hop on the route off-link, and the on-link devices ARP/ND can see along the way.',
+        text: 'content.path.description',
       },
       {
         kind: 'terms',
-        heading: 'Terms',
+        heading: 'content.common.terms',
         items: [
           {
-            term: 'L2 path',
-            description:
-              'Hops within the same broadcast domain (switches, bridges), discovered via ARP and on-link MAC tables.',
+            term: 'content.path.terms.hop.term',
+            description: 'content.path.terms.hop.description',
           },
           {
-            term: 'L3 path',
-            description:
-              'Per-hop IPv4/IPv6 traceroute with round-trip latency to each hop and any AS / reverse-DNS metadata.',
+            term: 'content.path.terms.protocol.term',
+            description: 'content.path.terms.protocol.description',
           },
           {
-            term: 'Gateway hop',
-            description:
-              'The first L3 hop off the local subnet — usually the router that issued the DHCP lease.',
+            term: 'content.path.terms.local.term',
+            description: 'content.path.terms.local.description',
           },
+        ],
+      },
+      {
+        kind: 'terms',
+        items: [
           {
-            term: 'On-link discovery',
-            description:
-              'ARP / ND sweep that surfaces neighbors visible without crossing a router.',
+            term: 'cards:pathDiscovery.title',
+            description: 'content.cardHelp.PathDiscoveryCard.description',
+          },
+        ],
+      },
+      {
+        kind: 'terms',
+        items: [
+          {
+            term: 'cards:discovery.title',
+            description: 'content.cardHelp.NetworkDiscoveryCard.description',
           },
         ],
       },
@@ -61,30 +71,37 @@ export const reportingSections: HelpSection[] = [
     blocks: [
       {
         kind: 'paragraph',
-        text: 'Reports collects the results of Seed’s diagnostic tests over time and exports them as SLA dashboards, compliance summaries, and historical CSV/JSON.',
+        text: 'content.reports.description',
       },
       {
         kind: 'terms',
-        heading: 'Terms',
+        heading: 'content.common.terms',
         items: [
           {
-            term: 'SLA dashboard',
-            description:
-              'Rolling availability and latency view derived from health-check probe results.',
+            term: 'content.reports.terms.sla.term',
+            description: 'content.reports.terms.sla.description',
           },
           {
-            term: 'Compliance summary',
-            description:
-              'Snapshot of which checks pass against the active profile’s thresholds — useful for audits.',
+            term: 'content.reports.terms.export.term',
+            description: 'content.reports.terms.export.description',
           },
+        ],
+      },
+      {
+        kind: 'terms',
+        items: [
           {
-            term: 'Scheduled reports',
-            description: 'Pro-tier feature that produces a periodic PDF report on a cadence.',
+            term: 'cards:slaDashboard.title',
+            description: 'content.cardHelp.SlaDashboardCard.description',
           },
+        ],
+      },
+      {
+        kind: 'terms',
+        items: [
           {
-            term: 'Export',
-            description:
-              'Download a slice of the underlying data as CSV or JSON for downstream tooling.',
+            term: 'cards:reports.title',
+            description: 'content.cardHelp.ReportsCard.description',
           },
         ],
       },
@@ -98,31 +115,41 @@ export const reportingSections: HelpSection[] = [
     blocks: [
       {
         kind: 'paragraph',
-        text: 'Logs streams the seed daemon’s structured log entries live as they are emitted, with filters by level, source, and free-text. Useful for confirming what the backend just did or diagnosing why a test failed.',
+        text: 'content.logs.description',
       },
       {
         kind: 'terms',
-        heading: 'Terms',
+        heading: 'content.common.terms',
         items: [
           {
-            term: 'Level',
-            description:
-              'Standard severity (debug / info / warn / error). Filter to narrow the view.',
+            term: 'content.logs.terms.level.term',
+            description: 'content.logs.terms.level.description',
           },
           {
-            term: 'Source',
-            description:
-              'The internal package emitting the entry (for example discovery, canopy, shell).',
+            term: 'content.logs.terms.source.term',
+            description: 'content.logs.terms.source.description',
           },
           {
-            term: 'Live tail',
-            description:
-              'WebSocket stream of new entries as they are produced by the running seed process.',
+            term: 'content.logs.terms.stream.term',
+            description: 'content.logs.terms.stream.description',
           },
+        ],
+      },
+      {
+        kind: 'terms',
+        items: [
           {
-            term: 'Daemon health',
-            description:
-              'Rotating-file usage, error counts, and uptime of the seed process itself.',
+            term: 'cards:system.title',
+            description: 'content.cardHelp.SystemHealthCard.description',
+          },
+        ],
+      },
+      {
+        kind: 'terms',
+        items: [
+          {
+            term: 'common:logs.title',
+            description: 'content.cardHelp.LogViewerCard.description',
           },
         ],
       },
@@ -136,30 +163,23 @@ export const reportingSections: HelpSection[] = [
     blocks: [
       {
         kind: 'paragraph',
-        text: 'Alerts lists the conditions the monitoring pipelines have raised — for example a polled device going unreachable or an interface changing state. Filter by severity, acknowledged, or resolved, then act on each row: acknowledge marks it seen, resolve marks it fixed. The person who clicks is recorded against the alert.',
+        text: 'content.alerts.description',
       },
       {
         kind: 'terms',
-        heading: 'Terms',
+        heading: 'content.common.terms',
         items: [
           {
-            term: 'Severity',
-            description:
-              'How urgent the condition is. Filter to focus on the most important alerts first.',
+            term: 'content.alerts.terms.severity.term',
+            description: 'content.alerts.terms.severity.description',
           },
           {
-            term: 'Acknowledge',
-            description:
-              'Marks an alert as seen without closing it — signals someone is looking into it.',
+            term: 'content.alerts.terms.ack.term',
+            description: 'content.alerts.terms.ack.description',
           },
           {
-            term: 'Resolve',
-            description: 'Marks an alert as fixed and removes it from the default unresolved view.',
-          },
-          {
-            term: 'Acknowledged by',
-            description:
-              'The operator who acknowledged the alert, taken from the signed-in identity.',
+            term: 'content.alerts.terms.resolve.term',
+            description: 'content.alerts.terms.resolve.description',
           },
         ],
       },
@@ -173,25 +193,23 @@ export const reportingSections: HelpSection[] = [
     blocks: [
       {
         kind: 'paragraph',
-        text: 'Polling targets is the list of devices Seed polls over SNMP. Add a target to start monitoring it, edit one to change its settings, or remove one you no longer track. A new target picks up the default collector chain and begins polling on the next cycle; the devices and links it discovers appear on the Topology page, and state changes surface as alerts.',
+        text: 'content.pollingTargets.description',
       },
       {
         kind: 'terms',
-        heading: 'Terms',
+        heading: 'content.common.terms',
         items: [
           {
-            term: 'Target',
-            description: 'A device (by address) that Seed polls on a recurring interval.',
+            term: 'content.pollingTargets.terms.target.term',
+            description: 'content.pollingTargets.terms.target.description',
           },
           {
-            term: 'Collector chain',
-            description:
-              'The set of SNMP collectors run against a target (system info, interface table, LLDP, ARP, and forwarding-database neighbors).',
+            term: 'content.pollingTargets.terms.collectors.term',
+            description: 'content.pollingTargets.terms.collectors.description',
           },
           {
-            term: 'SNMP',
-            description:
-              'Simple Network Management Protocol — the standard used to read device state and tables.',
+            term: 'content.pollingTargets.terms.snmp.term',
+            description: 'content.pollingTargets.terms.snmp.description',
           },
         ],
       },
@@ -205,25 +223,23 @@ export const reportingSections: HelpSection[] = [
     blocks: [
       {
         kind: 'paragraph',
-        text: 'Topology shows the network graph reconciled from discovery and SNMP polling: every node visible to your session, with its interfaces and the links between nodes. Select a node to open a detail panel listing its interfaces and discovered links. The graph is built from the same observations that drive polling targets and alerts.',
+        text: 'content.topology.description',
       },
       {
         kind: 'terms',
-        heading: 'Terms',
+        heading: 'content.common.terms',
         items: [
           {
-            term: 'Node',
-            description:
-              'A discovered device in the graph — switch, router, host, or access point.',
+            term: 'content.topology.terms.node.term',
+            description: 'content.topology.terms.node.description',
           },
           {
-            term: 'Link',
-            description:
-              'A neighbor relationship between two nodes, learned from LLDP/CDP or forwarding tables.',
+            term: 'content.topology.terms.link.term',
+            description: 'content.topology.terms.link.description',
           },
           {
-            term: 'Interface',
-            description: 'A port on a node, with its status and any links observed on it.',
+            term: 'content.topology.terms.interface.term',
+            description: 'content.topology.terms.interface.description',
           },
         ],
       },

@@ -1,3 +1,4 @@
+import { Tooltip } from '../../../ui/tooltip';
 /**
  * OPC-UA / Modbus TCP industrial endpoint editors.
  *
@@ -160,34 +161,36 @@ export function IndustrialEndpoints({
               placeholder="502"
               className={cn(input.base, input.state.default, input.size.md, 'w-20')}
             />
-            <input
-              type="number"
-              value={endpoint.unitId}
-              onChange={(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>): void =>
-                updateModbusEndpoint(
-                  endpoint.id ?? '',
-                  'unitId',
-                  Number.parseInt(e.target.value, 10),
-                )
-              }
-              placeholder="Unit"
-              title={t('health.unitId')}
-              className={cn(input.base, input.state.default, input.size.md, 'w-16')}
-            />
-            <input
-              type="number"
-              value={endpoint.testRegister}
-              onChange={(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>): void =>
-                updateModbusEndpoint(
-                  endpoint.id ?? '',
-                  'testRegister',
-                  Number.parseInt(e.target.value, 10),
-                )
-              }
-              placeholder="Reg"
-              title={t('health.testRegister')}
-              className={cn(input.base, input.state.default, input.size.md, 'w-16')}
-            />
+            <Tooltip text={t('health.unitId')}>
+              <input
+                type="number"
+                value={endpoint.unitId}
+                onChange={(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>): void =>
+                  updateModbusEndpoint(
+                    endpoint.id ?? '',
+                    'unitId',
+                    Number.parseInt(e.target.value, 10),
+                  )
+                }
+                placeholder="Unit"
+                className={cn(input.base, input.state.default, input.size.md, 'w-16')}
+              />
+            </Tooltip>
+            <Tooltip text={t('health.testRegister')}>
+              <input
+                type="number"
+                value={endpoint.testRegister}
+                onChange={(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>): void =>
+                  updateModbusEndpoint(
+                    endpoint.id ?? '',
+                    'testRegister',
+                    Number.parseInt(e.target.value, 10),
+                  )
+                }
+                placeholder="Reg"
+                className={cn(input.base, input.state.default, input.size.md, 'w-16')}
+              />
+            </Tooltip>
             <button
               type="button"
               onClick={(): void => removeModbusEndpoint(endpoint.id ?? '')}

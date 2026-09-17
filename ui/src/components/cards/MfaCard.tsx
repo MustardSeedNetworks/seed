@@ -1,3 +1,4 @@
+import { Tooltip } from '../ui/tooltip';
 /**
  * MfaCard
  *
@@ -180,19 +181,20 @@ export function MfaCard(): JSX.Element {
           </div>
         ) : null}
 
-        <button
-          type="button"
-          className="btn btn-secondary"
-          // A browser without WebAuthn cannot enrol, and an enabled button that
-          // silently does nothing is what this card shipped with.
-          disabled={busy || !isPasskeySupported()}
-          title={isPasskeySupported() ? undefined : t('mfa.passkeyUnsupported')}
-          onClick={() => {
-            addPasskey().catch(() => undefined);
-          }}
-        >
-          {t('mfa.addPasskey')}
-        </button>
+        <Tooltip text={isPasskeySupported() ? undefined : t('mfa.passkeyUnsupported')}>
+          <button
+            type="button"
+            className="btn btn-secondary"
+            // A browser without WebAuthn cannot enrol, and an enabled button that
+            // silently does nothing is what this card shipped with.
+            disabled={busy || !isPasskeySupported()}
+            onClick={() => {
+              addPasskey().catch(() => undefined);
+            }}
+          >
+            {t('mfa.addPasskey')}
+          </button>
+        </Tooltip>
       </div>
     </Card>
   );

@@ -146,7 +146,9 @@ function writeControls(section: HTMLElement, reads: HTMLElement[]): HTMLElement[
     ...within(section).queryAllByRole('combobox'),
     ...within(section).queryAllByRole('spinbutton'),
     ...within(section).queryAllByRole('button'),
-  ].filter((el) => el !== header && !reads.includes(el));
+  ].filter(
+    (el) => el !== header && !reads.includes(el) && el.getAttribute('aria-label') !== READ_ONLY,
+  );
 }
 
 describe.each(MIXED_SECTIONS)(
@@ -169,6 +171,11 @@ describe.each(MIXED_SECTIONS)(
       render(<RoleProvider isAuthenticated={true}>{renderSection()}</RoleProvider>);
 
       const section = await openSection(header);
+      const explanations = within(section).getAllByRole('button', { name: READ_ONLY });
+      for (const explanation of explanations) {
+        expect(explanation).toBeEnabled();
+        expect(explanation).toHaveAccessibleDescription(READ_ONLY);
+      }
       const controls = writeControls(section, await reads(section));
       expect(controls.length).toBeGreaterThan(0);
       for (const control of controls) {

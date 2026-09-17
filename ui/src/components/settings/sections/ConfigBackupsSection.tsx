@@ -1,3 +1,4 @@
+import { Tooltip } from '../../ui/tooltip';
 /**
  * ConfigBackupsSection Component
  *
@@ -202,34 +203,36 @@ export const ConfigBackupsSection: React.NamedExoticComponent<Record<string, nev
                     </>
                   ) : (
                     <>
-                      <button
-                        type="button"
-                        onClick={(): void => setRestoreConfirm(backup.name)}
-                        disabled={!!actionLoading}
-                        className={cn(
-                          spacing.chip.sm,
-                          radius.md,
-                          'border border-surface-border caption text-text-muted hover:text-text-primary disabled:opacity-50',
-                        )}
-                        title={t('configBackups.restoreTooltip')}
-                      >
-                        {t('configBackups.restore')}
-                      </button>
-                      <button
-                        type="button"
-                        onClick={(): void => {
-                          deleteBackup(backup.name).catch(() => undefined);
-                        }}
-                        disabled={!!actionLoading}
-                        className={cn(
-                          spacing.chip.sm,
-                          radius.md,
-                          'border border-status-error caption text-status-error hover:bg-status-error hover:text-text-inverse disabled:opacity-50',
-                        )}
-                        title={t('configBackups.deleteTooltip')}
-                      >
-                        {actionLoading === backup.name ? '...' : t('configBackups.delete')}
-                      </button>
+                      <Tooltip text={t('configBackups.restoreTooltip')}>
+                        <button
+                          type="button"
+                          onClick={(): void => setRestoreConfirm(backup.name)}
+                          disabled={!!actionLoading}
+                          className={cn(
+                            spacing.chip.sm,
+                            radius.md,
+                            'border border-surface-border caption text-text-muted hover:text-text-primary disabled:opacity-50',
+                          )}
+                        >
+                          {t('configBackups.restore')}
+                        </button>
+                      </Tooltip>
+                      <Tooltip text={t('configBackups.deleteTooltip')}>
+                        <button
+                          type="button"
+                          onClick={(): void => {
+                            deleteBackup(backup.name).catch(() => undefined);
+                          }}
+                          disabled={!!actionLoading}
+                          className={cn(
+                            spacing.chip.sm,
+                            radius.md,
+                            'border border-status-error caption text-status-error hover:bg-status-error hover:text-text-inverse disabled:opacity-50',
+                          )}
+                        >
+                          {actionLoading === backup.name ? '...' : t('configBackups.delete')}
+                        </button>
+                      </Tooltip>
                     </>
                   )}
                 </div>
