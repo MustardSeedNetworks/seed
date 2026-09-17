@@ -26,9 +26,9 @@ import { expect, test } from '@playwright/test';
 test.describe('MFA enrolment', () => {
   test('starts TOTP setup from the security page', async ({ page }) => {
     const setup = page.waitForResponse(
-      (response) =>
-        response.url().includes('/api/v1/auth/totp/setup') &&
-        response.request().method() === 'POST',
+      (candidate) =>
+        candidate.url().includes('/api/v1/auth/totp/setup') &&
+        candidate.request().method() === 'POST',
     );
 
     await page.goto('/security');
