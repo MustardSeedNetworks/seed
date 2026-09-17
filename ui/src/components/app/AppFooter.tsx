@@ -15,6 +15,7 @@ interface AppFooterProps {
 
 export function AppFooter({ appVersion }: AppFooterProps): JSX.Element {
   const { t } = useTranslation('common');
+  const company = t('footer.company');
 
   return (
     <footer
@@ -29,7 +30,9 @@ export function AppFooter({ appVersion }: AppFooterProps): JSX.Element {
         {/* Product Info */}
         <div>
           <h3 className="heading-4 text-text-primary mb-2">{t('app.title')}</h3>
-          <p className="body-small text-text-muted mb-tight">{t('footer.byCompany')}</p>
+          <p className="body-small text-text-muted mb-tight">
+            {t('footer.byCompany', { company })}
+          </p>
           <p className="caption text-text-muted">
             {t('footer.version')} {appVersion}
           </p>
@@ -95,7 +98,7 @@ export function AppFooter({ appVersion }: AppFooterProps): JSX.Element {
       {/* Copyright */}
       <div className="mt-6 pt-section border-t border-surface-border text-center">
         <p className="caption text-text-muted">
-          &copy; {new Date().getFullYear()} {t('footer.copyright')}
+          {t('footer.copyright', { company, year: String(new Date().getFullYear()) })}
         </p>
       </div>
     </footer>
