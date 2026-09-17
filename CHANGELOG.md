@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.214.68](https://github.com/MustardSeedNetworks/seed/compare/v0.214.67...v0.214.68) (2026-09-17)
+
+
+### Bug Fixes
+
+* **network:** scope the gateway to the active interface and derive the band from it ([#2742](https://github.com/MustardSeedNetworks/seed/issues/2742)) ([934f14d](https://github.com/MustardSeedNetworks/seed/commit/934f14d8c422230d3cb39dba59297eb79a6facb8))
+
 ## [0.214.67](https://github.com/MustardSeedNetworks/seed/compare/v0.214.66...v0.214.67) (2026-09-17)
 
 
