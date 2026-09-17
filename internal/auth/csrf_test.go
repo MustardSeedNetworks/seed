@@ -12,16 +12,16 @@ import (
 )
 
 // TestCSRFManagerGenerateAndValidate exercises Seed's thin wrapper over
-// foundation's manager: a token generated for a session validates, and a wrong
+// foundation's manager: a token resolved for a session validates, and a wrong
 // session or wrong token is rejected with foundation's ErrTokenInvalid. The
 // per-session store mechanics themselves are covered in foundation's tests.
-func TestCSRFManagerGenerateAndValidate(t *testing.T) {
+func TestCSRFManagerTokenForSessionAndValidate(t *testing.T) {
 	manager := auth.NewCSRFManager()
 	defer manager.Stop()
 
 	sessionID := "test-session"
 
-	token, err := manager.GenerateToken(sessionID)
+	token, err := manager.TokenForSession(sessionID)
 	if err != nil {
 		t.Fatalf("failed to generate token: %v", err)
 	}
@@ -41,13 +41,26 @@ func TestCSRFManagerGenerateAndValidate(t *testing.T) {
 	) {
 		t.Errorf("expected ErrTokenInvalid, got %v", wrongTokenErr)
 	}
+
+	// #2660: asking again returns the session's live token rather than
+	// replacing it, so a second tab cannot invalidate the first.
+	again, err := manager.TokenForSession(sessionID)
+	if err != nil {
+		t.Fatalf("second TokenForSession: %v", err)
+	}
+	if again != token {
+		t.Errorf("second TokenForSession minted a new token %q, want the live %q", again, token)
+	}
+	if validateErr := manager.ValidateToken(sessionID, token); validateErr != nil {
+		t.Errorf("the first token stopped validating after a second request: %v", validateErr)
+	}
 }
 
 // TestCSRFManagerStop confirms Stop shuts the manager down cleanly (delegating
 // to foundation's cleanup goroutine) without hanging or panicking.
 func TestCSRFManagerStop(t *testing.T) {
 	manager := auth.NewCSRFManager()
-	if _, err := manager.GenerateToken("session1"); err != nil {
+	if _, err := manager.TokenForSession("session1"); err != nil {
 		t.Fatalf("failed to generate token: %v", err)
 	}
 	manager.Stop()

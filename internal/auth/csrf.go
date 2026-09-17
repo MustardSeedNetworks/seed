@@ -35,11 +35,20 @@ func NewCSRFManager() *CSRFManager {
 	return &CSRFManager{mgr: csrf.NewManager()}
 }
 
-// GenerateToken mints a fresh CSRF token for the given session key (derived
-// from the caller's JWT via GetSessionIDFromRequest), replacing any existing
-// one.
-func (m *CSRFManager) GenerateToken(sessionID string) (string, error) {
-	return m.mgr.Generate(sessionID)
+// TokenForSession returns the session's live CSRF token, minting one only when
+// the session has none or its token has expired. The session key is derived
+// from the caller's JWT via GetSessionIDFromRequest, so every tab of one login
+// shares it: minting a *fresh* token here (foundation's Generate) replaced the
+// stored one, so a second tab's fetch silently invalidated the first tab's and
+// the operator's next write there answered 403 (#2660). foundation exposes
+// GetOrCreate for exactly this hazard.
+//
+// This is not a weakening. The token is still per-session, unguessable and
+// expiring; returning the live one is what makes the double-submit cookie
+// pattern work across tabs. Ending a session still drops its token via
+// RevokeToken, and a new session is a new key.
+func (m *CSRFManager) TokenForSession(sessionID string) (string, error) {
+	return m.mgr.GetOrCreate(sessionID)
 }
 
 // ValidateToken checks the token against the one stored for sessionID. It

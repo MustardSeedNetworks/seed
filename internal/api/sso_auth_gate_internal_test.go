@@ -77,7 +77,7 @@ func authedRequest(t *testing.T, s *Server, method, path, username, body string)
 	req.Header.Set("Authorization", "Bearer "+token)
 	req.Header.Set("Content-Type", "application/json")
 
-	csrfToken, err := s.csrfManager().GenerateToken(auth.GetSessionIDFromRequest(req))
+	csrfToken, err := s.csrfManager().TokenForSession(auth.GetSessionIDFromRequest(req))
 	if err != nil {
 		t.Fatalf("mint CSRF token: %v", err)
 	}
