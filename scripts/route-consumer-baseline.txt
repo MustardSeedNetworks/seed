@@ -14,8 +14,6 @@
 #                 its own change; reason on the line
 /api/v1/alert-rules                       # PAT-only allow-list (owner 2026-09-04)
 /api/v1/alert-rules/                      # PAT-only allow-list (owner 2026-09-04)
-/api/v1/device-credentials                # PAT-only until SE-2 (#2523) lands the vault picker
-/api/v1/device-credentials/               # PAT-only until SE-2 (#2523) lands the vault picker
 /api/v1/discovery/engine                  # PAT-only allow-list (owner 2026-09-04)
 /api/v1/discovery/engine/capabilities     # PAT-only allow-list (owner 2026-09-04)
 /api/v1/discovery/engine/device/          # PAT-only allow-list (owner 2026-09-04)

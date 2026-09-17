@@ -45,6 +45,7 @@ import {
   spacing,
   status as statusColor,
 } from '../../styles/theme';
+import { FirstRunSnmpStep } from './FirstRunSnmpStep';
 
 // API base URL for setup endpoints
 const API_BASE: string = import.meta.env.VITE_API_BASE || '';
@@ -93,6 +94,11 @@ export function SetupWizard({
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
   const [ssoProviders, setSsoProviders] = useState<string[]>([]);
+  // The wizard is two steps: credentials, then the optional SNMP community
+  // discovery needs to identify what it finds (#2722). `needsSetup` in
+  // useSetupState is a local flag flipped only by onComplete, so holding the
+  // call here is what keeps the second step mounted.
+  const [step, setStep] = useState<'password' | 'snmp'>('password');
 
   const {
     register,
@@ -221,7 +227,9 @@ export function SetupWizard({
       }
 
       logger.info(LogComponents.SETUP, 'Setup wizard completed - user logged in', { username });
-      onComplete();
+      // The session exists from here on, which is what the credential
+      // endpoint (operator+, CSRF) needs.
+      setStep('snmp');
     } catch (err) {
       setSubmitError(t('errors.networkError'));
       logger.error(LogComponents.SETUP, 'Setup network error', err, { username });
@@ -236,6 +244,10 @@ export function SetupWizard({
           typeof e === 'object' && e !== null && 'message' in e && typeof e.message === 'string',
       )
     : undefined;
+
+  if (step === 'snmp') {
+    return <FirstRunSnmpStep onDone={onComplete} />;
+  }
 
   return (
     <div className={cn('min-h-screen bg-surface-base', layout.flex.center, 'pad')}>

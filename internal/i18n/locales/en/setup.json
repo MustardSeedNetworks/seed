@@ -45,5 +45,21 @@
     "setupFailed": "Failed to complete setup",
     "loginFailed": "Setup complete but login failed. Please log in manually.",
     "networkError": "Network error. Please try again."
+  },
+  "snmp": {
+    "title": "Let discovery identify what it finds",
+    "subtitle": "Optional: an SNMP read community for the devices on your network",
+    "label": "SNMP community string",
+    "placeholder": "Leave empty to skip",
+    "help": "Seed scans your network as soon as it starts. Without a community it can see devices but not name their model, ports or neighbours. Read-only access is enough.",
+    "later": "You can add this and SNMPv3 credentials later in Settings.",
+    "buttons": {
+      "save": "Save and continue",
+      "saving": "Saving...",
+      "skip": "Skip for now"
+    },
+    "errors": {
+      "saveFailed": "The credential could not be saved. Try again, or skip and add it in Settings."
+    }
   }
 }
