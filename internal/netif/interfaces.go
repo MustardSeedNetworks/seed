@@ -214,16 +214,27 @@ func (m *Manager) GetInterfaces() []*InterfaceInfo {
 	return result
 }
 
-// GetPhysicalInterfaces returns only physical network interfaces (ethernet and wifi).
-// Excludes loopback, virtual, and other non-physical interfaces.
-func (m *Manager) GetPhysicalInterfaces() []*InterfaceInfo {
+// GetUsableInterfaces returns the interfaces an operator may work with:
+// ethernet and wifi, plus whatever interface the daemon is currently bound to,
+// whichever type that turned out to be.
+//
+// The selected interface is included unconditionally because the alternative
+// is a listing that contradicts the daemon (seed#2692): detectInterfaceType
+// names a type from a name prefix, and [Manager.FindFirstAvailable] will
+// happily select an InterfaceTypeOther interface that carries a routable
+// address — feth0 on macOS, and equally bond0, ppp0 or usb0 — so filtering the
+// listing by type alone dropped the very interface every measurement on the
+// page was taken from. An unselected interface of those types is still noise
+// and is still excluded.
+func (m *Manager) GetUsableInterfaces() []*InterfaceInfo {
 	m.mu.RLock()
 	defer m.mu.RUnlock()
 
 	result := make([]*InterfaceInfo, 0, len(m.interfaces))
 	for _, info := range m.interfaces {
-		// Only include ethernet and wifi interfaces
-		if info.Type == InterfaceTypeEthernet || info.Type == InterfaceTypeWiFi {
+		if info.Type == InterfaceTypeEthernet ||
+			info.Type == InterfaceTypeWiFi ||
+			info.Name == m.currentInterface {
 			result = append(result, info)
 		}
 	}

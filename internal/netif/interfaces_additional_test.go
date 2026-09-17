@@ -10,7 +10,7 @@ import (
 	"github.com/MustardSeedNetworks/seed/internal/netif"
 )
 
-func TestGetPhysicalInterfaces(t *testing.T) {
+func TestGetUsableInterfaces(t *testing.T) {
 	interfaces := make(map[string]*netif.InterfaceInfo)
 
 	// Add various interface types
@@ -46,11 +46,11 @@ func TestGetPhysicalInterfaces(t *testing.T) {
 	}
 
 	mgr := netif.CreateManagerWithInterfaces(interfaces)
-	physical := mgr.GetPhysicalInterfaces()
+	physical := mgr.GetUsableInterfaces()
 
 	// Should only include ethernet and wifi interfaces
 	if len(physical) != 2 {
-		t.Errorf("GetPhysicalInterfaces() returned %d interfaces, want 2", len(physical))
+		t.Errorf("GetUsableInterfaces() returned %d interfaces, want 2", len(physical))
 	}
 
 	// Verify only physical interfaces are included
@@ -67,20 +67,20 @@ func TestGetPhysicalInterfaces(t *testing.T) {
 		if iface.Type == netif.InterfaceTypeLoopback ||
 			iface.Type == netif.InterfaceTypeVirtual ||
 			iface.Type == netif.InterfaceTypeOther {
-			t.Errorf("GetPhysicalInterfaces() included non-physical interface: %s (%s)",
+			t.Errorf("GetUsableInterfaces() included non-physical interface: %s (%s)",
 				iface.Name, iface.Type)
 		}
 	}
 
 	if !foundEth {
-		t.Error("GetPhysicalInterfaces() did not include ethernet interface")
+		t.Error("GetUsableInterfaces() did not include ethernet interface")
 	}
 	if !foundWlan {
-		t.Error("GetPhysicalInterfaces() did not include wifi interface")
+		t.Error("GetUsableInterfaces() did not include wifi interface")
 	}
 }
 
-func TestGetPhysicalInterfacesEmpty(t *testing.T) {
+func TestGetUsableInterfacesEmpty(t *testing.T) {
 	// Test with no physical interfaces
 	interfaces := make(map[string]*netif.InterfaceInfo)
 	interfaces["lo"] = &netif.InterfaceInfo{
@@ -91,10 +91,10 @@ func TestGetPhysicalInterfacesEmpty(t *testing.T) {
 	}
 
 	mgr := netif.CreateManagerWithInterfaces(interfaces)
-	physical := mgr.GetPhysicalInterfaces()
+	physical := mgr.GetUsableInterfaces()
 
 	if len(physical) != 0 {
-		t.Errorf("GetPhysicalInterfaces() returned %d interfaces, want 0", len(physical))
+		t.Errorf("GetUsableInterfaces() returned %d interfaces, want 0", len(physical))
 	}
 }
 
@@ -292,7 +292,7 @@ func TestManagerConcurrentReads(t *testing.T) {
 		wg.Go(func() {
 			for range 20 {
 				_ = mgr.GetInterfaces()
-				_ = mgr.GetPhysicalInterfaces()
+				_ = mgr.GetUsableInterfaces()
 				_ = mgr.GetCurrentInterface()
 			}
 		})
