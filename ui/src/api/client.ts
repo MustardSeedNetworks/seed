@@ -189,9 +189,13 @@ export function clearCSRFToken(): void {
 }
 
 /**
- * Marks the start of a new authenticated session. Call on every successful
- * login so that in-flight requests from the previous session can no longer
- * expire this one.
+ * Marks the start of a new authenticated session.
+ *
+ * Call on every successful login, and when a mount-time probe finds a session
+ * already established by a cookie — both are how this client comes to hold
+ * one. In-flight requests from a previous session can no longer expire the
+ * new one, and a 401 collected before any call to this function is not an
+ * expiry at all (#2643).
  */
 export function beginSession(): void {
   sessionGeneration++;
@@ -258,10 +262,21 @@ async function handleResponse<T>(
       }
     }
 
-    // Refresh failed, or the retry was itself a 401. Only expire the session
-    // this request was issued under: if the user has logged in since, this 401
-    // is a straggler from the old session and must not tear down the new one.
-    if (issuedGeneration === sessionGeneration) {
+    // Refresh failed, or the retry was itself a 401. Only expire a session
+    // this client actually held, and only the one this request was issued
+    // under.
+    //
+    // Generation 0 means no session has been established in this page load,
+    // so a 401 there is the ordinary unauthenticated answer — not an expiry.
+    // Without that clause `issuedGeneration === sessionGeneration` compares
+    // 0 to 0 and passes, and every pre-auth fetch (ProfileProvider wraps
+    // <App> in main.tsx and queries /api/v1/profiles on mount) told a
+    // first-time visitor "Session expired. Please sign in again." before they
+    // had ever signed in (#2643).
+    //
+    // Above 0, a straggler from a session the user has already replaced must
+    // not tear down its successor (#2204).
+    if (sessionGeneration > 0 && issuedGeneration === sessionGeneration) {
       onSessionExpired?.();
     }
     throw new SessionExpiredError();

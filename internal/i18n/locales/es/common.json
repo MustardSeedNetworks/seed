@@ -176,7 +176,6 @@
     "streamingHint": "Pausar la transmisión de registros"
   },
   "login": {
-    "defaultCredentials": "Predeterminado: admin / seed",
     "secondFactor": {
       "title": "Verificación en dos pasos",
       "prompt": "Introduce el código de 6 dígitos de tu aplicación de autenticación.",

@@ -274,11 +274,18 @@ test.describe('Complete Authentication Lifecycle', () => {
       await page.reload();
 
       // Should redirect to login (SPA observes 401 from /api/v1/status
-      // and dumps the session). The login surface renders BOTH
+      // and dumps the session). The login surface used to render BOTH
       // login-title AND a "Session expired" role=alert — using .or()
-      // resolved to two elements and tripped strict mode. Asserting
-      // the login-title directly is unambiguous; the alert presence
-      // is implied by the 401 mock chain landing.
+      // resolved to two elements and tripped strict mode, so this asserts
+      // login-title directly.
+      //
+      // The alert is NOT implied here, and that comment was wrong after
+      // #2643: the reload restarts the page, the probe is itself 401ed, so
+      // no session is established and the client correctly declines to call
+      // this an expiry. What this case proves is the redirect. That a real
+      // expiry still banners is proved by
+      // src/hooks/useAuth.cookie-session.test.ts, which establishes a live
+      // cookie session and then goes stale.
       await expect(page.getByTestId('login-title')).toBeVisible({
         timeout: 10000,
       });

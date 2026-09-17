@@ -172,9 +172,10 @@ test.describe('API Error Scenarios', () => {
         // which passed whichever happened: the username field is always visible
         // on a page that never navigates, so it could not fail.
         // Matched on the timeout copy specifically, not on any role="alert":
-        // a stale session-expired banner is also an alert and is already on
-        // the page, so a bare getByRole('alert') passes at once and the
-        // assertion proves nothing about the deadline.
+        // until #2643 a stale session-expired banner was already on this
+        // fresh login screen, so a bare getByRole('alert') passed at once and
+        // proved nothing about the deadline. The banner is gone now; the
+        // scoped match stays, because it is what actually names the deadline.
         await expect(page.getByText(/did not respond/i)).toBeVisible({ timeout: 20000 });
 
         if (timeoutHandle) {
@@ -317,17 +318,30 @@ test.describe('Validation Error Scenarios', () => {
   test.describe('Invalid Form Inputs', () => {
     test.use({ storageState: { cookies: [], origins: [] } });
     test('should validate empty login credentials', async ({ page }) => {
+      // Both fields are `required`, so the browser's own constraint
+      // validation refuses the submit and no request is ever issued. The
+      // previous assertion — "an alert is visible OR the button is disabled"
+      // — covered neither of those, and passed only on the session-expired
+      // banner this screen used to carry before it was ever signed in
+      // (#2643). Assert the mechanism that actually rejects the submit.
+      const loginRequests: string[] = [];
+      page.on('request', (request) => {
+        if (/\/api(\/v1)?\/auth\/login$/.test(request.url())) {
+          loginRequests.push(request.url());
+        }
+      });
+
       await page.goto('/');
 
-      // Try to submit empty form
       const loginButton = page.getByTestId('login-submit');
       await loginButton.click();
 
-      // Should show validation error or button be disabled
-      const hasError = await page.getByRole('alert').isVisible({ timeout: 3000 });
-      const buttonDisabled = await loginButton.isDisabled();
-
-      expect(hasError || buttonDisabled).toBeTruthy();
+      const username = page.getByLabel(/username/i);
+      await expect(username).toHaveJSProperty('validity.valid', false);
+      expect(loginRequests).toEqual([]);
+      // And the operator is still on the form, able to fill it in.
+      await expect(page.getByTestId('login-title')).toBeVisible();
+      await expect(loginButton).toBeEnabled();
     });
   });
 });

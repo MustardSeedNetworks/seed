@@ -30,6 +30,9 @@ describe('api client session expiry', () => {
     onExpired = vi.fn<() => void>();
     setSessionExpiredCallback(onExpired);
     clearCSRFToken();
+    // These cases all model a client that IS signed in — the client refuses to
+    // expire a session it never established (#2643), so say that it holds one.
+    beginSession();
     mockUnauthorizedWithFailedRefresh();
   });
 
@@ -108,6 +111,8 @@ describe('api client retry after refresh', () => {
     onExpired = vi.fn<() => void>();
     setSessionExpiredCallback(onExpired);
     clearCSRFToken();
+    // A signed-in client, as above (#2643).
+    beginSession();
     attempts = [];
     csrfMints = 0;
   });
