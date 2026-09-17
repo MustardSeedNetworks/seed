@@ -82,6 +82,41 @@ let csrfFetchPromise: Promise<string | null> | null = null;
 const CSRF_HEADER_NAME = 'X-CSRF-Token';
 
 /**
+ * The pre-session endpoints, mirroring `isCSRFExemptPath` in
+ * `internal/auth/csrf.go`. A request to one of these runs before the user holds
+ * an access token, so there is no session to mint a CSRF token against and no
+ * session to expire — the flag suppresses both the token header and the 401
+ * refresh-and-retry.
+ *
+ * It is an exact-match set, not a `/api/v1/auth/` prefix. The prefix also caught
+ * the MFA *enrolment* routes, which the server does protect, so `totp/setup`,
+ * `totp/verify`, `totp/disable` and `webauthn/register/{begin,finish}` went out
+ * bare and came back `403 CSRF token required` — MFA could not be enabled from
+ * the UI at all (#2725). Mirror image of #2632, which was the same prefix bug
+ * on `/api/v1/sso/`.
+ */
+const PRE_SESSION_ENDPOINTS: ReadonlySet<string> = new Set([
+  '/api/v1/auth/login',
+  '/api/v1/auth/refresh',
+  '/api/v1/auth/logout',
+  '/api/v1/auth/login/totp',
+  '/api/v1/auth/webauthn/login/begin',
+  '/api/v1/auth/webauthn/login/finish',
+]);
+
+/**
+ * Whether an endpoint runs before the user holds a session.
+ *
+ * The query string is dropped before the lookup: passkey sign-in posts to
+ * `webauthn/login/finish?username=…`, and matching the raw endpoint would treat
+ * the one pre-session route that carries a query as authenticated.
+ */
+function isPreSessionEndpoint(endpoint: string): boolean {
+  const queryStart: number = endpoint.indexOf('?');
+  return PRE_SESSION_ENDPOINTS.has(queryStart === -1 ? endpoint : endpoint.slice(0, queryStart));
+}
+
+/**
  * Registers a callback to be invoked when the API returns a 401 Unauthorized response
  * and token refresh fails. Typically used to logout the user and redirect to the login page.
  *
@@ -304,7 +339,7 @@ async function mutate<T>(
   body: unknown,
   init: RequestInit | undefined,
 ): Promise<T> {
-  const isAuthEndpoint: boolean = endpoint.includes('/api/v1/auth/');
+  const isAuthEndpoint: boolean = isPreSessionEndpoint(endpoint);
   const issuedGeneration = sessionGeneration;
 
   const makeRequest = async (): Promise<Response> => {
@@ -346,7 +381,7 @@ export const api = {
    * const status = await api.get<NetworkStatus>('/api/v1/network/status');
    */
   async get<T>(endpoint: string, init?: RequestInit): Promise<T> {
-    const isAuthEndpoint: boolean = endpoint.includes('/api/v1/auth/');
+    const isAuthEndpoint: boolean = isPreSessionEndpoint(endpoint);
     const issuedGeneration = sessionGeneration;
     const makeRequest = (): Promise<Response> =>
       fetch(`${API_BASE}${endpoint}`, {

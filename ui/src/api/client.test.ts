@@ -200,3 +200,76 @@ describe('api client concurrent CSRF mint', () => {
     expect(attempts.slice(2)).toEqual(['csrf-2', 'csrf-2']);
   });
 });
+
+/**
+ * The CSRF header on authenticated `/api/v1/auth/` mutations.
+ *
+ * `mutate()` treats the whole `/api/v1/auth/` prefix as pre-session and sends
+ * no CSRF token. Only the login half is pre-session: the server's
+ * `isCSRFExemptPath` exempts `login`, `refresh`, `logout`, `login/totp` and
+ * `webauthn/login/{begin,finish}` and nothing else, so the five *enrolment*
+ * mutations below run under a live session and the server answers
+ * `403 CSRF token required` (proved through the real chain in
+ * `internal/api/mfa_csrf_chain_internal_test.go`). Enabling MFA from the
+ * shipped UI therefore cannot succeed.
+ */
+describe('api client CSRF on authenticated auth mutations', () => {
+  /** The CSRF token each non-`/auth/csrf` request carried, by URL. */
+  let sent: Array<[string, string | null]>;
+
+  beforeEach(() => {
+    clearCSRFToken();
+    beginSession();
+    sent = [];
+    vi.spyOn(globalThis, 'fetch').mockImplementation(
+      (input: RequestInfo | URL, init?: RequestInit) => {
+        const url = typeof input === 'string' ? input : input.toString();
+        if (url.includes('/api/v1/auth/csrf')) {
+          return Promise.resolve(
+            new Response(JSON.stringify({ token: 'csrf-1' }), { status: 200 }),
+          );
+        }
+        sent.push([url, new Headers(init?.headers).get('X-CSRF-Token')]);
+        return Promise.resolve(new Response('{}', { status: 200 }));
+      },
+    );
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  it.each([
+    '/api/v1/auth/totp/setup',
+    '/api/v1/auth/totp/verify',
+    '/api/v1/auth/totp/disable',
+    '/api/v1/auth/webauthn/register/begin',
+    '/api/v1/auth/webauthn/register/finish',
+  ])('sends a CSRF token with POST %s', async (endpoint) => {
+    await api.post(endpoint, {});
+
+    expect(sent).toEqual([[expect.stringContaining(endpoint), 'csrf-1']]);
+  });
+
+  it.each([
+    '/api/v1/auth/login',
+    '/api/v1/auth/logout',
+    '/api/v1/auth/login/totp',
+    '/api/v1/auth/webauthn/login/begin',
+    '/api/v1/auth/webauthn/login/finish',
+  ])('sends no CSRF token with the pre-session POST %s', async (endpoint) => {
+    await api.post(endpoint, {});
+
+    expect(sent).toEqual([[expect.stringContaining(endpoint), null]]);
+  });
+
+  // The one pre-session route that carries a query string (webauthn.ts passes
+  // the username that way), so an exact-match lookup has to drop it first.
+  it('sends no CSRF token with the pre-session POST carrying a query string', async () => {
+    const endpoint = '/api/v1/auth/webauthn/login/finish?username=alice';
+
+    await api.post(endpoint, {});
+
+    expect(sent).toEqual([[expect.stringContaining(endpoint), null]]);
+  });
+});

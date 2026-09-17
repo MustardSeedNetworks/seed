@@ -14,6 +14,7 @@
 #                 its own change; reason on the line
 /api/v1/alert-rules                       # PAT-only allow-list (owner 2026-09-04)
 /api/v1/alert-rules/                      # PAT-only allow-list (owner 2026-09-04)
+/api/v1/auth/totp/disable                 # scheduled: #2731 — the MFA card has no disable control; the route was masked until #2729 replaced client.ts's '/api/v1/auth/' prefix literal with an exact-match set
 /api/v1/discovery/engine                  # PAT-only allow-list (owner 2026-09-04)
 /api/v1/discovery/engine/capabilities     # PAT-only allow-list (owner 2026-09-04)
 /api/v1/discovery/engine/device/          # PAT-only allow-list (owner 2026-09-04)

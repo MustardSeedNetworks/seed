@@ -74,8 +74,13 @@ func (s *Server) Close() {
 	}
 }
 
-// GetAuthenticatedHandler returns the server's handler with auth middleware applied.
-// This is used by tests to get the full middleware stack.
+// GetAuthenticatedHandler returns the mux behind CORS and the JWT middleware
+// only. It is NOT the full stack: CSRF, the body limit, i18n and the API-token
+// middleware are all absent, so a test using it cannot see a protection the
+// production chain applies. The MFA suite read it as "authenticated" and so
+// never noticed that every enrolment route answered 403 in the browser (#2725).
+// Prefer Handler(), which is the chain Start serves; reach for this only when a
+// test deliberately needs the JWT middleware in isolation.
 func (s *Server) GetAuthenticatedHandler() http.Handler {
 	return corsMiddleware(s.authManager().Middleware(s.mux))
 }
