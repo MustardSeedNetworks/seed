@@ -59,6 +59,7 @@ describe('TopologyGraph', () => {
       <TopologyGraph
         nodes={nodes}
         links={[link({ id: 'l1' }), link({ id: 'l2', sourceNodeId: 'acc', targetNodeId: 'host' })]}
+        linksError={null}
         selectedId=""
         onSelect={vi.fn()}
       />,
@@ -80,6 +81,7 @@ describe('TopologyGraph', () => {
           link({ id: 'neighbour', linkType: 'lldp' }),
           link({ id: 'learned', linkType: 'fdb', sourceNodeId: 'acc', targetNodeId: 'host' }),
         ]}
+        linksError={null}
         selectedId=""
         onSelect={vi.fn()}
       />,
@@ -95,7 +97,15 @@ describe('TopologyGraph', () => {
 
   it('selects a node on click and on Enter, because the map is not mouse-only', async () => {
     const onSelect = vi.fn();
-    render(<TopologyGraph nodes={nodes} links={[]} selectedId="" onSelect={onSelect} />);
+    render(
+      <TopologyGraph
+        nodes={nodes}
+        links={[]}
+        linksError={null}
+        selectedId=""
+        onSelect={onSelect}
+      />,
+    );
 
     await userEvent.click(screen.getByTestId('topology-graph-node-acc'));
     expect(onSelect).toHaveBeenCalledWith('acc');
@@ -106,7 +116,15 @@ describe('TopologyGraph', () => {
   });
 
   it('marks the selected node pressed so it is not colour alone that says which one it is', () => {
-    render(<TopologyGraph nodes={nodes} links={[]} selectedId="acc" onSelect={vi.fn()} />);
+    render(
+      <TopologyGraph
+        nodes={nodes}
+        links={[]}
+        linksError={null}
+        selectedId="acc"
+        onSelect={vi.fn()}
+      />,
+    );
 
     expect(screen.getByTestId('topology-graph-node-acc').getAttribute('aria-pressed')).toBe('true');
     expect(screen.getByTestId('topology-graph-node-core').getAttribute('aria-pressed')).toBe(
@@ -115,7 +133,9 @@ describe('TopologyGraph', () => {
   });
 
   it('names each node for a screen reader with the label the list shows', () => {
-    render(<TopologyGraph nodes={nodes} links={[]} selectedId="" onSelect={vi.fn()} />);
+    render(
+      <TopologyGraph nodes={nodes} links={[]} linksError={null} selectedId="" onSelect={vi.fn()} />,
+    );
 
     expect(screen.getByRole('button', { name: /core-01/ })).toBeTruthy();
     // No displayName: the label falls back to sysName, as the list row does.
@@ -123,14 +143,18 @@ describe('TopologyGraph', () => {
   });
 
   it('says the map is empty rather than drawing a blank frame', () => {
-    render(<TopologyGraph nodes={[]} links={[]} selectedId="" onSelect={vi.fn()} />);
+    render(
+      <TopologyGraph nodes={[]} links={[]} linksError={null} selectedId="" onSelect={vi.fn()} />,
+    );
 
     expect(screen.queryByTestId('topology-graph')).toBeNull();
     expect(screen.getByTestId('topology-graph-empty')).toBeTruthy();
   });
 
   it('renders a legend, because a dashed line means nothing unexplained', () => {
-    render(<TopologyGraph nodes={nodes} links={[]} selectedId="" onSelect={vi.fn()} />);
+    render(
+      <TopologyGraph nodes={nodes} links={[]} linksError={null} selectedId="" onSelect={vi.fn()} />,
+    );
 
     expect(screen.getByTestId('topology-graph-legend')).toBeTruthy();
   });

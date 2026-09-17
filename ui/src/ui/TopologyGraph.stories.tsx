@@ -75,13 +75,23 @@ const links: TopologyLink[] = [
 ];
 
 export const Default: Story = {
-  args: { nodes, links, selectedId: '', onSelect: () => {} },
+  args: { nodes, links, linksError: null, selectedId: '', onSelect: () => {} },
 };
 
 export const Selected: Story = {
-  args: { nodes, links, selectedId: 'acc-01', onSelect: () => {} },
+  args: { nodes, links, linksError: null, selectedId: 'acc-01', onSelect: () => {} },
+};
+
+export const LinksUnavailable: Story = {
+  args: {
+    nodes,
+    links: [],
+    linksError: 'Failed to load links',
+    selectedId: '',
+    onSelect: () => {},
+  },
 };
 
 export const Empty: Story = {
-  args: { nodes: [], links: [], selectedId: '', onSelect: () => {} },
+  args: { nodes: [], links: [], linksError: null, selectedId: '', onSelect: () => {} },
 };

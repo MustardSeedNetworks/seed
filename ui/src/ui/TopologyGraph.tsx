@@ -42,6 +42,10 @@ const LABEL_MAX = 9;
 interface TopologyGraphProps {
   nodes: TopologyNode[];
   links: TopologyLink[];
+  /** Why the edge read failed, if it did. A map drawn with no edges is the
+   * same picture as a network with no edges, so the failure has to be on the
+   * map rather than left to look like a finding. */
+  linksError: string | null;
   selectedId: string;
   onSelect: (id: string) => void;
 }
@@ -59,6 +63,7 @@ function truncate(label: string): string {
 export function TopologyGraph({
   nodes,
   links,
+  linksError,
   selectedId,
   onSelect,
 }: TopologyGraphProps): JSX.Element {
@@ -94,6 +99,11 @@ export function TopologyGraph({
     <div className="rounded-2xl border border-surface-border bg-surface-raised">
       <div className="flex-between pad-sm border-b border-surface-border">
         <span className="kicker">{t('topology.graphTitle')}</span>
+        {linksError ? (
+          <span className="body-small text-status-error" data-testid="topology-graph-links-error">
+            {linksError}
+          </span>
+        ) : null}
         <span
           className="flex items-center gap-tight body-small text-text-muted"
           data-testid="topology-graph-legend"

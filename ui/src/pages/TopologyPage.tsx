@@ -36,11 +36,17 @@ export function TopologyPage(): JSX.Element {
   // One nodes read feeds both halves, so the map and the list can never
   // disagree about what was discovered.
   const { nodes, loading, error, refresh } = useTopologyNodes();
-  const { links } = useTopologyLinks();
+  const { links, error: linksError } = useTopologyLinks();
 
   return (
     <div className="space-y-default">
-      <TopologyGraph nodes={nodes} links={links} selectedId={selectedID} onSelect={setSelectedID} />
+      <TopologyGraph
+        nodes={nodes}
+        links={links}
+        linksError={linksError}
+        selectedId={selectedID}
+        onSelect={setSelectedID}
+      />
       <ListDetail>
         <NodeList
           nodes={nodes}
