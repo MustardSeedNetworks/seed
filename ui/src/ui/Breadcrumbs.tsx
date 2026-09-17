@@ -2,26 +2,24 @@ import { ChevronRight, Home } from 'lucide-react';
 import type { FC } from 'react';
 import { Link, useLocation } from 'wouter';
 import { iconSizes } from '../constants/sizes';
+import { usePages } from '../pageRegistry';
 
 interface BreadcrumbItem {
   label: string;
   path: string;
 }
 
-const ROUTE_LABELS: Record<string, string> = {
-  '/': 'Link',
-  '/link': 'Link',
-  '/network': 'Network',
-  '/path': 'Path Analysis',
-  '/wifi': 'Wi-Fi',
-  '/security': 'Security',
-  '/performance': 'Performance',
-  '/reports': 'Reports',
-  '/logs': 'Logs',
-};
-
+/**
+ * Labels come from the route table, never from a list kept here. The hard-coded
+ * label map this replaced knew nine of the eleven routes and none of the
+ * three newest, so `/polling-targets` fell through to a de-slugged segment and
+ * read "Polling Targets" over an H1 of "Polling targets" — a breadcrumb
+ * disagreeing with the heading directly beneath it (#2645). It was also
+ * untranslated, so every breadcrumb stayed English under `es`.
+ */
 export const Breadcrumbs: FC = () => {
   const [location] = useLocation();
+  const pages = usePages();
   const pathSegments = location.split('/').filter(Boolean);
 
   if (pathSegments.length === 0) {
@@ -32,7 +30,11 @@ export const Breadcrumbs: FC = () => {
   let currentPath = '';
   for (const segment of pathSegments) {
     currentPath += `/${segment}`;
-    const label = ROUTE_LABELS[currentPath] ?? segment.replace(/-/g, ' ');
+    // A segment with no page of its own (an intermediate path, or a route
+    // added without a registry entry) still has to render something; the
+    // de-slugged segment is the fallback, as before.
+    const label =
+      pages.find((page) => page.path === currentPath)?.label ?? segment.replace(/-/g, ' ');
     items.push({ label, path: currentPath });
   }
 

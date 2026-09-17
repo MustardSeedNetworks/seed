@@ -115,7 +115,6 @@ ui/src/components/ui/toast.tsx literal Dismiss notification
 # --- ui/src/ui/
 ui/src/ui/Breadcrumbs.tsx copy-prop aria-label=Breadcrumb
 ui/src/ui/Breadcrumbs.tsx copy-prop aria-label=Home
-ui/src/ui/Breadcrumbs.tsx literal Path Analysis
 ui/src/ui/PageHeader.tsx copy-prop aria-label=Breadcrumb
 ui/src/ui/Sidebar.tsx copy-prop aria-label=Close menu
 ui/src/ui/Sidebar.tsx literal Close menu

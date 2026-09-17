@@ -61,8 +61,13 @@ const AlertsPage = lazy(() =>
 export interface PageConfig {
   path: string;
   label: string;
-  /** Kicker above the title naming the product domain. */
-  eyebrow?: string;
+  /** Which sidebar group this route belongs to. */
+  group: NavGroupKey;
+  /**
+   * Kicker above the title. Always the label of `group`, so the kicker and
+   * the rail heading are one string resolved once (#2645).
+   */
+  eyebrow: string;
   title: string;
   description: string;
   icon: LucideIcon;
@@ -96,6 +101,16 @@ type PageI18nKey =
   | 'alerts';
 
 /**
+ * The sidebar groups, as `pages.groups.*` names them. A route declares its
+ * group here and nowhere else: the rail reads it (navGroups.ts), and the
+ * page's eyebrow is the group's own label, so the kicker over a page title
+ * cannot contradict the heading the rail files it under. Before this,
+ * `network` carried a hand-written eyebrow of "Diagnostics" while the rail
+ * filed it under Live Telemetry (#2645).
+ */
+export type NavGroupKey = 'liveTelemetry' | 'diagnostics' | 'monitoring' | 'reporting';
+
+/**
  * PageDef is the static, language-agnostic definition. The matching
  * translation lives at pages.{i18nKey}.{label,title,description} in
  * internal/i18n/locales/{en,es}/pages.json.
@@ -103,6 +118,8 @@ type PageI18nKey =
 interface PageDef {
   path: string;
   i18nKey: PageI18nKey;
+  /** Which sidebar group this route belongs to; also its eyebrow. */
+  group: NavGroupKey;
   icon: LucideIcon;
   iconColorClass?: string;
   component: FC;
@@ -112,6 +129,7 @@ interface PageDef {
 const staticPages: PageDef[] = [
   {
     path: '/link',
+    group: 'liveTelemetry',
     i18nKey: 'link',
     icon: Network,
     iconColorClass: 'text-module-telemetry',
@@ -120,6 +138,7 @@ const staticPages: PageDef[] = [
   },
   {
     path: '/network',
+    group: 'liveTelemetry',
     i18nKey: 'network',
     icon: Server,
     iconColorClass: 'text-module-telemetry',
@@ -128,6 +147,7 @@ const staticPages: PageDef[] = [
   },
   {
     path: '/path',
+    group: 'diagnostics',
     i18nKey: 'path',
     icon: Route,
     iconColorClass: 'text-module-path',
@@ -136,6 +156,7 @@ const staticPages: PageDef[] = [
   },
   {
     path: '/wifi',
+    group: 'diagnostics',
     i18nKey: 'wifi',
     icon: Wifi,
     iconColorClass: 'text-module-wifi',
@@ -144,6 +165,7 @@ const staticPages: PageDef[] = [
   },
   {
     path: '/security',
+    group: 'diagnostics',
     i18nKey: 'security',
     icon: Shield,
     iconColorClass: 'text-module-security',
@@ -152,6 +174,7 @@ const staticPages: PageDef[] = [
   },
   {
     path: '/performance',
+    group: 'liveTelemetry',
     i18nKey: 'performance',
     icon: Activity,
     component: PerformancePage,
@@ -159,6 +182,7 @@ const staticPages: PageDef[] = [
   },
   {
     path: '/reports',
+    group: 'reporting',
     i18nKey: 'reports',
     icon: BarChart3,
     iconColorClass: 'text-module-reporting',
@@ -167,6 +191,7 @@ const staticPages: PageDef[] = [
   },
   {
     path: '/logs',
+    group: 'reporting',
     i18nKey: 'logs',
     icon: ScrollText,
     iconColorClass: 'text-module-reporting',
@@ -175,6 +200,7 @@ const staticPages: PageDef[] = [
   },
   {
     path: '/polling-targets',
+    group: 'monitoring',
     i18nKey: 'pollingTargets',
     icon: ServerCog,
     iconColorClass: 'text-module-security',
@@ -183,6 +209,7 @@ const staticPages: PageDef[] = [
   },
   {
     path: '/topology',
+    group: 'monitoring',
     i18nKey: 'topology',
     icon: Network,
     iconColorClass: 'text-module-security',
@@ -191,6 +218,7 @@ const staticPages: PageDef[] = [
   },
   {
     path: '/alerts',
+    group: 'monitoring',
     i18nKey: 'alerts',
     icon: Bell,
     iconColorClass: 'text-module-security',
@@ -209,10 +237,11 @@ export function usePages(): PageConfig[] {
   return staticPages.map((p) => ({
     path: p.path,
     label: t(`${p.i18nKey}.label`),
-    // A page has an eyebrow when its locale namespace declares one, so the
-    // copy lives in one place instead of being mirrored by a flag here.
-    // Pages still awaiting their archetype pass have none.
-    eyebrow: t(`${p.i18nKey}.eyebrow`, { defaultValue: '' }) || undefined,
+    group: p.group,
+    // The eyebrow IS the group's label, not a second string a page can get
+    // wrong: `network` used to declare "Diagnostics" while the rail filed it
+    // under Live Telemetry (#2645). One key, one answer.
+    eyebrow: t(`groups.${p.group}`),
     title: t(`${p.i18nKey}.title`),
     description: t(`${p.i18nKey}.description`),
     icon: p.icon,

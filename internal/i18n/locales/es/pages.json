@@ -79,7 +79,6 @@
   },
   "network": {
     "description": "DHCP, puerta de enlace, DNS, IP pública y detección del switch ascendente.",
-    "eyebrow": "Diagnóstico",
     "label": "Red",
     "title": "Red",
     "rollupProbing": "Sondeando el enlace ascendente",

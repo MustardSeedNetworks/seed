@@ -27,12 +27,18 @@ describe('page registry translations', () => {
     unmount();
   });
 
-  it('gives an eyebrow only to pages whose locale declares one', () => {
+  // This used to assert that `/network` was the one page with an eyebrow and
+  // that the eyebrow read "Diagnostics" — which is precisely the defect #2645
+  // reports, since the rail files `/network` under Live Telemetry. The eyebrow
+  // is no longer authored per page: it is the label of the group the page
+  // declares, so every page has one and none can contradict the rail.
+  it('gives every page its declared group label as the eyebrow', () => {
     const { result } = renderHook(() => usePages());
-    const withEyebrow = result.current.filter((page) => page.eyebrow !== undefined);
 
-    expect(withEyebrow.map((page) => page.path)).toEqual(['/network']);
-    expect(withEyebrow[0]?.eyebrow).toBe('Diagnostics');
+    expect(result.current.every((page) => page.eyebrow.length > 0)).toBe(true);
+    const network = result.current.find((page) => page.path === '/network');
+    expect(network?.group).toBe('liveTelemetry');
+    expect(network?.eyebrow).toBe('Live Telemetry');
   });
 });
 
