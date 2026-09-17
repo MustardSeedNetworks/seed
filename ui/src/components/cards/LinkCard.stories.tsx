@@ -1,9 +1,9 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import type { JSX } from 'react';
 import { cn, spacing } from '../../styles/theme';
-import { Card, CardDivider, CardRow, CardValue } from '../ui/card';
-import { Cable } from '../ui/icons';
-import { Skeleton } from '../ui/skeleton';
+import { Card, CardDivider, CardRow, CardValue } from '../ui/Card';
+import { Cable } from '../ui/Icons';
+import { Skeleton } from '../ui/Skeleton';
 
 /**
  * LinkCard displays physical link layer (L2) and network layer (L3) status.

@@ -25,7 +25,7 @@ import type React from 'react';
 import { memo, useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { cn, icon as iconTokens, radius, spacing, status as statusColor } from '../../styles/theme';
-import { Card } from '../ui/card';
+import { Card } from '../ui/Card';
 import type { Status } from '../ui/StatusBadge';
 
 interface SLADashboardCardProps {

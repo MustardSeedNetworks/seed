@@ -1,4 +1,4 @@
-import { Tooltip } from '../ui/tooltip';
+import { Tooltip } from '../ui/Tooltip';
 /**
  * Pre-render helpers shared between NetworkDiscoveryCard and its summary.
  *
@@ -32,7 +32,7 @@ import {
   Server,
   Smartphone,
   Wifi,
-} from '../ui/icons';
+} from '../ui/Icons';
 import { hasSwept } from './DiscoveryEmptyState';
 import type { DiscoveredDevice, DiscoveryStatus } from './networkDiscoveryCardTypes';
 import { ScanProgress } from './ScanProgress';

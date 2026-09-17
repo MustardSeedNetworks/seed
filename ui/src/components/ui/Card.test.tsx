@@ -27,7 +27,7 @@ import { status as statusColor } from '../../styles/theme';
 
 import { fireEvent, render, screen, within } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
-import { Card, CardDivider, CardRow, CardValue } from './card';
+import { Card, CardDivider, CardRow, CardValue } from './Card';
 
 describe('Card', () => {
   it('renders with title and children', () => {

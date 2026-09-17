@@ -32,9 +32,9 @@ import type { JSX } from 'react';
 import { memo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { cn, icon as iconTokens, layout, radius, spacing } from '../../styles/theme';
-import { CardDivider, CardRow, CardValue, type Status } from '../ui/card';
-import { Cable } from '../ui/icons';
-import { Skeleton } from '../ui/skeleton';
+import { CardDivider, CardRow, CardValue, type Status } from '../ui/Card';
+import { Cable } from '../ui/Icons';
+import { Skeleton } from '../ui/Skeleton';
 import { BaseCard } from './BaseCard';
 
 /**

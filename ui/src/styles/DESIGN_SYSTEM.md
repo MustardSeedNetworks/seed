@@ -179,7 +179,7 @@ For bespoke inputs (custom label/affordance layout) compose the token object:
 ### Cards
 
 ```tsx
-import { Card } from '../components/ui/card';
+import { Card } from '../components/ui/Card';
 
 <Card>Card content</Card>
 ```python
@@ -278,7 +278,7 @@ import { cn } from '../styles/theme';
 
 ```tsx
 import { Button } from '../components/ui/Button';
-import { Card } from '../components/ui/card';
+import { Card } from '../components/ui/Card';
 
 <Button>Save</Button>
 

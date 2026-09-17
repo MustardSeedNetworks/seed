@@ -51,7 +51,7 @@ import {
   spacing,
   status as statusColor,
 } from '../../styles/theme';
-import { Tooltip } from './tooltip';
+import { Tooltip } from './Tooltip';
 
 export type SortDirection = 'asc' | 'desc' | null;
 

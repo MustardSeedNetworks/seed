@@ -5,7 +5,7 @@ import { type ReactElement, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useFocusTrap } from '../../hooks/useFocusTrap';
 import { button, cn, icon as iconTokens, layout, radius, spacing } from '../../styles/theme';
-import { Search, X } from '../ui/icons';
+import { Search, X } from '../ui/Icons';
 import { HelpSectionBody } from './HelpSectionBody';
 import { sectionSearchText } from './helpModel';
 import { helpSections } from './helpSections';

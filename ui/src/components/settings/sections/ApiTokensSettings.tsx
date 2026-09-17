@@ -26,8 +26,8 @@ import { useLicense } from '../../../contexts/LicenseContext';
 import { useRole } from '../../../contexts/RoleContext';
 import { Button } from '../../ui/Button';
 import { CollapsibleSection } from '../../ui/CollapsibleSection';
+import { Key, Plus, Trash2 } from '../../ui/Icons';
 import { Input } from '../../ui/Input';
-import { Key, Plus, Trash2 } from '../../ui/icons';
 
 interface ApiToken {
   id: string;

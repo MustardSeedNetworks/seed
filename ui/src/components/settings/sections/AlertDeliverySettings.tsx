@@ -1,5 +1,5 @@
-import { Info } from '../../ui/icons';
-import { Tooltip } from '../../ui/tooltip';
+import { Info } from '../../ui/Icons';
+import { Tooltip } from '../../ui/Tooltip';
 /**
  * AlertDeliverySettings Component
  *
@@ -31,7 +31,7 @@ import {
   layout,
 } from '../../../styles/theme';
 import { CollapsibleSection } from '../../ui/CollapsibleSection';
-import { Bell } from '../../ui/icons';
+import { Bell } from '../../ui/Icons';
 import { AutoSaveIndicator } from './AutoSaveIndicator';
 
 export const AlertDeliverySettings: React.NamedExoticComponent = memo(

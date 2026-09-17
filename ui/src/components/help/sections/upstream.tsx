@@ -9,7 +9,7 @@
  * @copyright 2026 Mustard Seed Networks. All rights reserved.
  */
 
-import { Network, Search, Server, Zap } from '../../ui/icons';
+import { Network, Search, Server, Zap } from '../../ui/Icons';
 import type { HelpSection } from '../helpModel';
 
 const ICON = 'w-4 h-4';

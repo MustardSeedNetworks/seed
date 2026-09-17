@@ -1,4 +1,4 @@
-import { Tooltip } from '../ui/tooltip';
+import { Tooltip } from '../ui/Tooltip';
 /** Full-screen log filtering, streaming and export. */
 
 import { useCallback, useEffect, useRef, useState } from 'react';

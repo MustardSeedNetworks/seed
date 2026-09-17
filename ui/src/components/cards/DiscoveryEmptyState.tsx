@@ -15,7 +15,7 @@ import type { JSX } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { button, cn, spacing } from '../../styles/theme';
-import { RefreshCw } from '../ui/icons';
+import { RefreshCw } from '../ui/Icons';
 import type { DiscoveryStatus } from './networkDiscoveryCardTypes';
 
 export type DiscoveryPhase = 'off' | 'discovering' | 'empty';

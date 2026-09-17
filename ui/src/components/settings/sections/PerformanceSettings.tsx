@@ -1,5 +1,5 @@
-import { Info } from '../../ui/icons';
-import { Tooltip } from '../../ui/tooltip';
+import { Info } from '../../ui/Icons';
+import { Tooltip } from '../../ui/Tooltip';
 /**
  * Performance testing configuration: which tests run automatically, and the
  * speedtest.net server to use. The iperf3 (LAN speed) half lives in
@@ -31,7 +31,7 @@ import type {
   TestsSettings,
 } from '../../../types/settings';
 import { CollapsibleSection } from '../../ui/CollapsibleSection';
-import { Gauge } from '../../ui/icons';
+import { Gauge } from '../../ui/Icons';
 import { AutoSaveIndicator } from './AutoSaveIndicator';
 import { PerformanceIperfSection } from './PerformanceIperfSection';
 

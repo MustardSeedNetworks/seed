@@ -45,8 +45,8 @@ import {
   spacing,
   status as statusColor,
 } from '../../styles/theme';
-import { Card, CardDivider, CardRow, CardValue, type Status } from '../ui/card';
-import { Gauge } from '../ui/icons';
+import { Card, CardDivider, CardRow, CardValue, type Status } from '../ui/Card';
+import { Gauge } from '../ui/Icons';
 import { ProgressRing, PulsingDot, SpeedGauge } from '../ui/SpeedGauge';
 
 // Speedtest types

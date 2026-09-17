@@ -19,8 +19,8 @@ import {
   spacing,
 } from '../../../styles/theme';
 import type { SettingsThresholds } from '../../../types/settings';
-import { Info } from '../../ui/icons';
-import { Tooltip } from '../../ui/tooltip';
+import { Info } from '../../ui/Icons';
+import { Tooltip } from '../../ui/Tooltip';
 
 interface ThresholdsHttpSectionProps {
   thresholds: SettingsThresholds;

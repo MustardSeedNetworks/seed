@@ -23,8 +23,8 @@ import {
   Sun,
   User,
   Wifi,
-} from '../ui/icons';
-import { Tooltip } from '../ui/tooltip';
+} from '../ui/Icons';
+import { Tooltip } from '../ui/Tooltip';
 import { SeedLogo } from './SeedLogo';
 
 type WsStatus = 'connecting' | 'connected' | 'disconnected' | 'error';

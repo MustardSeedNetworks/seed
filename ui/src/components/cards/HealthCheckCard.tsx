@@ -39,11 +39,11 @@ import {
   status as statusColor,
   timing,
 } from '../../styles/theme';
+import { Card, type Status } from '../ui/Card';
 import { CollapsibleSection } from '../ui/CollapsibleSection';
-import { Card, type Status } from '../ui/card';
-import { HeartPulse } from '../ui/icons';
+import { HeartPulse } from '../ui/Icons';
 import { StatusBadge } from '../ui/StatusBadge';
-import { Tooltip } from '../ui/tooltip';
+import { Tooltip } from '../ui/Tooltip';
 import { HealthCheckCardProtocolSections } from './HealthCheckCardProtocolSections';
 import type { HealthCheckData, StatusValue, TestResult } from './healthCheckCardTypes';
 

@@ -9,7 +9,7 @@ import { useTranslation } from 'react-i18next';
 import { cn, spacing } from '../../styles/theme';
 import type { ReportInfo } from '../../types/generated/reports-response';
 import { Button } from '../ui/Button';
-import { Card, CardDivider, CardRow } from '../ui/card';
+import { Card, CardDivider, CardRow } from '../ui/Card';
 import type { Status } from '../ui/StatusBadge';
 
 export interface ReportsCardProps {

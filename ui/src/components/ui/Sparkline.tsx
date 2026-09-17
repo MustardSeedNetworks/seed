@@ -1,5 +1,5 @@
 import { useTranslation } from 'react-i18next';
-import { Tooltip } from './tooltip';
+import { Tooltip } from './Tooltip';
 /**
  * Sparkline Component
  *

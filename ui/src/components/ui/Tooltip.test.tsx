@@ -2,7 +2,7 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
 import { Button, IconButton } from './Button';
-import { Tooltip } from './tooltip';
+import { Tooltip } from './Tooltip';
 
 describe('Tooltip keyboard contract', () => {
   it('describes the actual focused trigger and dismisses with Escape', async () => {

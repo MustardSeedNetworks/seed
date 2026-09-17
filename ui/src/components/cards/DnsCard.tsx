@@ -1,4 +1,4 @@
-import { Tooltip } from '../ui/tooltip';
+import { Tooltip } from '../ui/Tooltip';
 /**
  * DNSCard Component
  *
@@ -31,9 +31,9 @@ import { memo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { formatTime } from '../../lib/format';
 import { cn, icon as iconTokens, layout, spacing, status as statusColor } from '../../styles/theme';
+import { Card, CardDivider, CardValue, type Status } from '../ui/Card';
 import { CollapsibleSection } from '../ui/CollapsibleSection';
-import { Card, CardDivider, CardValue, type Status } from '../ui/card';
-import { Globe } from '../ui/icons';
+import { Globe } from '../ui/Icons';
 import { StatusBadge } from '../ui/StatusBadge';
 
 interface LookupResult {

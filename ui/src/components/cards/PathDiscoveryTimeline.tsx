@@ -13,7 +13,7 @@ import type React from 'react';
 import { memo, useCallback } from 'react';
 import { cn, icon as iconTokens, radius } from '../../styles/theme';
 import type { L2Hop, PathResponse, PortInfo, TracerouteHop } from '../../types';
-import { ChevronDown, ChevronUp, Globe, HardDrive, Network, Router } from '../ui/icons';
+import { ChevronDown, ChevronUp, Globe, HardDrive, Network, Router } from '../ui/Icons';
 import { formatRtt, getRttBarColor, getSourceColor } from './pathDiscoveryHelpers';
 
 /* The parent passes i18next's own t. The previous hand-rolled signature

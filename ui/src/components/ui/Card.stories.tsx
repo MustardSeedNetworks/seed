@@ -1,7 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { Cable, Server, Wifi } from 'lucide-react';
 import { cn, spacing } from '../../styles/theme';
-import { Card, CardDivider, CardRow, CardValue } from './card';
+import { Card, CardDivider, CardRow, CardValue } from './Card';
 
 const meta: Meta<typeof Card> = {
   title: 'UI/Card',
