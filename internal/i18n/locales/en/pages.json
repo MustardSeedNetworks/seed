@@ -176,7 +176,15 @@
     "neighborLinksCount_one": "Neighbor link ({{count}})",
     "neighborLinksCount_other": "Neighbor links ({{count}})",
     "colIndex": "Index",
-    "colSpeed": "Speed"
+    "colSpeed": "Speed",
+    "graphTitle": "Map",
+    "graphAria": "Topology map",
+    "graphEmpty": "No map yet. It draws once a poll cycle discovers nodes.",
+    "graphLegendNeighbor": "Neighbor (LLDP/CDP/FDP)",
+    "graphLegendLearned": "Learned (FDB)",
+    "graphNodeAria": "{{name}}, {{type}}",
+    "linkCount_one": "{{count}} link",
+    "linkCount_other": "{{count}} links"
   },
   "wifi": {
     "description": "Wireless link, channel utilization, and channel-overlap visualisation.",
