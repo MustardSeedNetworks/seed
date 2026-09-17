@@ -22,8 +22,8 @@ import { useProfileContext } from '../../../contexts/profileContext';
 import { useRole } from '../../../contexts/RoleContext';
 import { Button } from '../../ui/Button';
 import { CollapsibleSection } from '../../ui/CollapsibleSection';
+import { Check, Plus, Trash2, Wifi } from '../../ui/Icons';
 import { Input } from '../../ui/Input';
-import { Check, Plus, Trash2, Wifi } from '../../ui/icons';
 
 type IfaceKind = 'ethernet' | 'wifi';
 

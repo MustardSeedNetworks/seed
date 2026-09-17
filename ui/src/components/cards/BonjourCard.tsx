@@ -18,8 +18,8 @@ import { useBonjourBrowse } from '../../hooks/useBonjourBrowse';
 import { cn, radius } from '../../styles/theme';
 import type { BrowseResult, ReflectorStatus } from '../../types/generated/bonjour-browse-response';
 import { Button } from '../ui/Button';
-import { Card, type Status } from '../ui/card';
-import { Network } from '../ui/icons';
+import { Card, type Status } from '../ui/Card';
+import { Network } from '../ui/Icons';
 
 const MS_PER_SECOND = 1000;
 

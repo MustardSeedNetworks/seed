@@ -2,8 +2,8 @@ import type { Meta, StoryObj } from '@storybook/react-vite';
 import { Signal, Wifi, WifiOff } from 'lucide-react';
 import type { JSX } from 'react';
 import { cn, spacing } from '../../styles/theme';
-import { Card, CardDivider, CardRow, CardValue } from '../ui/card';
-import { Skeleton } from '../ui/skeleton';
+import { Card, CardDivider, CardRow, CardValue } from '../ui/Card';
+import { Skeleton } from '../ui/Skeleton';
 
 /**
  * WiFiCard displays wireless network connection status and signal quality.

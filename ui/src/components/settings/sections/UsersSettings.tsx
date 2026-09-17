@@ -22,8 +22,8 @@ import { api } from '../../../api/client';
 import { useLicense } from '../../../contexts/LicenseContext';
 import { Button } from '../../ui/Button';
 import { CollapsibleSection } from '../../ui/CollapsibleSection';
+import { Plus, Trash2, Users } from '../../ui/Icons';
 import { Input } from '../../ui/Input';
-import { Plus, Trash2, Users } from '../../ui/icons';
 
 interface UserRow {
   id: number;

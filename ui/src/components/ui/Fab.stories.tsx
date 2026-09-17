@@ -1,7 +1,7 @@
 import type { Decorator, Meta, StoryObj } from '@storybook/react-vite';
 import { useTestRunSignal, useTestRunStore } from '../../stores/testRunStore';
 import { cn, spacing } from '../../styles/theme';
-import { Fab } from './fab';
+import { Fab } from './Fab';
 
 /**
  * The Floating Action Button (FAB) provides quick access to running all diagnostic tests.

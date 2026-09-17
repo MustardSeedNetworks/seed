@@ -16,8 +16,8 @@ import {
   severity as severityTheme,
 } from '../../styles/theme';
 import type { Vulnerability } from '../../types/generated/engine-discovery-response';
-import { AlertTriangle } from '../ui/icons';
-import { Tooltip } from '../ui/tooltip';
+import { AlertTriangle } from '../ui/Icons';
+import { Tooltip } from '../ui/Tooltip';
 import type { DiscoveredDevice, DiscoveryMethod, OpenPort } from './NetworkDiscoveryCard';
 
 // Discovery method badge

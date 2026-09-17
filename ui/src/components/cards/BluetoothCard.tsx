@@ -22,8 +22,8 @@ import {
   spacing,
   status as statusColor,
 } from '../../styles/theme';
-import { Card, type Status } from '../ui/card';
-import { Bluetooth, Loader, Maximize2, X } from '../ui/icons';
+import { Card, type Status } from '../ui/Card';
+import { Bluetooth, Loader, Maximize2, X } from '../ui/Icons';
 import { BluetoothDeviceModal } from './BluetoothDeviceModal';
 
 export const BluetoothCard: React.NamedExoticComponent = memo(

@@ -1,5 +1,5 @@
-import { Info } from '../../ui/icons';
-import { Tooltip } from '../../ui/tooltip';
+import { Info } from '../../ui/Icons';
+import { Tooltip } from '../../ui/Tooltip';
 /**
  * GuestNetworkAuditSettings — the in-app editor for the guest-isolation audit's
  * target list (#1004).
@@ -23,7 +23,7 @@ import { type GuestAuditTarget, useGuestNetworkAudit } from '../../../hooks/useG
 import { cn, layout, radius, spacing } from '../../../styles/theme';
 import { Button } from '../../ui/Button';
 import { CollapsibleSection } from '../../ui/CollapsibleSection';
-import { ShieldAlert } from '../../ui/icons';
+import { ShieldAlert } from '../../ui/Icons';
 
 /**
  * The ports the backend probes when the settings carry no override.

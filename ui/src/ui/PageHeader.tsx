@@ -21,7 +21,7 @@ import { ChevronRight, HelpCircle } from 'lucide-react';
 import { createElement, type FC, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'wouter';
-import { Tooltip } from '../components/ui/tooltip';
+import { Tooltip } from '../components/ui/Tooltip';
 import { iconSizes } from '../constants/sizes';
 
 interface BreadcrumbItem {

@@ -28,9 +28,9 @@ import type React from 'react';
 import { memo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { icon as iconTokens } from '../../styles/theme';
+import { CardDivider, CardRow, CardValue, type Status } from '../ui/Card';
 import { CollapsibleSection } from '../ui/CollapsibleSection';
-import { CardDivider, CardRow, CardValue, type Status } from '../ui/card';
-import { Globe } from '../ui/icons';
+import { Globe } from '../ui/Icons';
 import { BaseCard } from './BaseCard';
 
 /** IP history entry for tracking address changes */

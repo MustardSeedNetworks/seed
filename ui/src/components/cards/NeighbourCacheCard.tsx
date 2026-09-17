@@ -17,8 +17,8 @@ import { useTranslation } from 'react-i18next';
 import { useNeighbourCache } from '../../hooks/useNeighbourCache';
 import { cn, radius, spacing } from '../../styles/theme';
 import { Button } from '../ui/Button';
-import { Card, type Status } from '../ui/card';
-import { Network } from '../ui/icons';
+import { Card, type Status } from '../ui/Card';
+import { Network } from '../ui/Icons';
 
 export function NeighbourCacheCard(): JSX.Element {
   const { t } = useTranslation('cards');

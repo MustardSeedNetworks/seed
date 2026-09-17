@@ -22,8 +22,8 @@ import {
   spacing,
   status as statusColor,
 } from '../../styles/theme';
-import { Card, type Status } from '../ui/card';
-import { AlertTriangle, CheckCircle, Shield } from '../ui/icons';
+import { Card, type Status } from '../ui/Card';
+import { AlertTriangle, CheckCircle, Shield } from '../ui/Icons';
 
 export function GuestNetworkAuditCard(): JSX.Element | null {
   const { t } = useTranslation('cards');

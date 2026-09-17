@@ -19,7 +19,7 @@ import { HelpDrawer } from '../components/help/HelpDrawer';
 import { ProfileManagement } from '../components/profiles/ProfileManagement';
 import { SettingsDrawer } from '../components/settings/SettingsDrawer';
 import { CommandPalette } from '../components/ui/CommandPalette';
-import { Fab } from '../components/ui/fab';
+import { Fab } from '../components/ui/Fab';
 import { AppContext, type AppContextValue } from '../contexts/AppContext';
 import { useIsPhone } from '../hooks/useIsPhone';
 import { useNavGroups } from '../navGroups';

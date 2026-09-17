@@ -1,5 +1,5 @@
-import { Info } from '../ui/icons';
-import { Tooltip } from '../ui/tooltip';
+import { Info } from '../ui/Icons';
+import { Tooltip } from '../ui/Tooltip';
 /**
  * InsecurePortScanCard — the on-demand insecure-port audit (#347).
  *
@@ -25,8 +25,8 @@ import { useRole } from '../../contexts/RoleContext';
 import { type ScannedService, useInsecurePortScan } from '../../hooks/useInsecurePortScan';
 import { cn, radius, spacing, status as statusColor } from '../../styles/theme';
 import { Button } from '../ui/Button';
-import { Card, type Status } from '../ui/card';
-import { AlertTriangle, CheckCircle, ShieldAlert } from '../ui/icons';
+import { Card, type Status } from '../ui/Card';
+import { AlertTriangle, CheckCircle, ShieldAlert } from '../ui/Icons';
 
 /**
  * Ports that carry their own explanation. A port the scanner reports without

@@ -1,4 +1,4 @@
-import { Tooltip } from '../ui/tooltip';
+import { Tooltip } from '../ui/Tooltip';
 /**
  * PathDiscoveryCard Component
  *
@@ -41,8 +41,8 @@ import {
   status as statusColor,
 } from '../../styles/theme';
 import type { PathResponse, TracerouteHop } from '../../types';
-import { Card, CardDivider, CardValue, type Status } from '../ui/card';
-import { Route } from '../ui/icons';
+import { Card, CardDivider, CardValue, type Status } from '../ui/Card';
+import { Route } from '../ui/Icons';
 import { PATH_TIMELINE } from './PathDiscoveryTimeline';
 import { formatRtt, getMaxRtt } from './pathDiscoveryHelpers';
 

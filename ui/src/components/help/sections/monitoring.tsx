@@ -9,7 +9,7 @@
  * @copyright 2026 Mustard Seed Networks. All rights reserved.
  */
 
-import { Heart, HeartPulse, Monitor, Shield } from '../../ui/icons';
+import { Heart, HeartPulse, Monitor, Shield } from '../../ui/Icons';
 import type { HelpSection } from '../helpModel';
 
 const ICON = 'w-4 h-4';

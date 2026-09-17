@@ -9,7 +9,7 @@
  * @copyright 2026 Mustard Seed Networks. All rights reserved.
  */
 
-import { Info, LayoutDashboard, SlidersHorizontal } from '../../ui/icons';
+import { Info, LayoutDashboard, SlidersHorizontal } from '../../ui/Icons';
 import type { HelpSection } from '../helpModel';
 
 const ICON = 'w-4 h-4';

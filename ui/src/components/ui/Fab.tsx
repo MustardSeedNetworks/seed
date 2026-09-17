@@ -1,4 +1,4 @@
-import { Tooltip } from './tooltip';
+import { Tooltip } from './Tooltip';
 /**
  * Floating Action Button (FAB) Component
  *

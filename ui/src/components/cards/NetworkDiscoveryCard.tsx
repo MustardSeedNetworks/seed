@@ -13,9 +13,9 @@ import {
   spacing,
   status as statusColor,
 } from '../../styles/theme';
-import { Card, CardValue, type Status } from '../ui/card';
-import { Maximize2, RefreshCw, ScanSearch } from '../ui/icons';
-import { Tooltip } from '../ui/tooltip';
+import { Card, CardValue, type Status } from '../ui/Card';
+import { Maximize2, RefreshCw, ScanSearch } from '../ui/Icons';
+import { Tooltip } from '../ui/Tooltip';
 import { DiscoveryEmptyState, discoveryPhase } from './DiscoveryEmptyState';
 import { DiscoveryModal } from './DiscoveryModal';
 import { categorizeDevices, DiscoverySummary } from './NetworkDiscoveryCardHelpers';

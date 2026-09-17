@@ -25,7 +25,7 @@ import { createElement, type FC, type ReactNode, useEffect, useState } from 'rea
 import { useTranslation } from 'react-i18next';
 import { useLocation } from 'wouter';
 import { SeedLogo } from '../components/app/SeedLogo';
-import { Tooltip } from '../components/ui/tooltip';
+import { Tooltip } from '../components/ui/Tooltip';
 import { iconSizes } from '../constants/sizes';
 import { prefetchRoute } from '../utils/prefetch';
 import { safeGetItem, safeSetItem } from '../utils/storage';

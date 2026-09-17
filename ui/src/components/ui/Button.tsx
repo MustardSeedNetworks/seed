@@ -12,7 +12,7 @@
  */
 import type { ButtonHTMLAttributes, FC, ReactNode, Ref } from 'react';
 import { iconSizes } from '../../constants/sizes';
-import { Tooltip } from './tooltip';
+import { Tooltip } from './Tooltip';
 
 type ButtonVariant = 'solid' | 'outline' | 'ghost' | 'secondary';
 type ButtonTone = 'violet' | 'red' | 'green' | 'blue' | 'gray';

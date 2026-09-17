@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { Settings } from '../ui/icons';
+import { Settings } from '../ui/Icons';
 import { SettingsSectionHeader } from './SettingsSectionHeader';
 
 const meta = {

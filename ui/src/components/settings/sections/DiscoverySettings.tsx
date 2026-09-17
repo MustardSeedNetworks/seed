@@ -13,8 +13,8 @@ import type {
   SubnetConfig,
 } from '../../../types/settings';
 import { CollapsibleSection } from '../../ui/CollapsibleSection';
-import { Info, ScanSearch } from '../../ui/icons';
-import { Tooltip } from '../../ui/tooltip';
+import { Info, ScanSearch } from '../../ui/Icons';
+import { Tooltip } from '../../ui/Tooltip';
 import { AutoSaveIndicator } from './AutoSaveIndicator';
 import { DiscoveryCustomOptions } from './discovery/DiscoveryCustomOptions';
 import { DiscoveryServiceStatus } from './discovery/DiscoveryServiceStatus';

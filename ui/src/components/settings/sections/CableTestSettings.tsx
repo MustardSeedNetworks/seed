@@ -1,5 +1,5 @@
-import { Info } from '../../ui/icons';
-import { Tooltip } from '../../ui/tooltip';
+import { Info } from '../../ui/Icons';
+import { Tooltip } from '../../ui/Tooltip';
 /**
  * CableTestSettings Component
  *
@@ -37,7 +37,7 @@ import type {
   SaveStatus,
 } from '../../../types/settings';
 import { CollapsibleSection } from '../../ui/CollapsibleSection';
-import { Cable } from '../../ui/icons';
+import { Cable } from '../../ui/Icons';
 import { AutoSaveIndicator } from './AutoSaveIndicator';
 
 interface CableTestSettingsProps {

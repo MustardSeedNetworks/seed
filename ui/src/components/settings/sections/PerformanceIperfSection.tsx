@@ -1,5 +1,5 @@
-import { Info } from '../../ui/icons';
-import { Tooltip } from '../../ui/tooltip';
+import { Info } from '../../ui/Icons';
+import { Tooltip } from '../../ui/Tooltip';
 /**
  * The iperf3 (LAN speed) half of the performance settings section.
  *

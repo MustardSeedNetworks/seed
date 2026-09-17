@@ -1,4 +1,4 @@
-import { Tooltip } from '../components/ui/tooltip';
+import { Tooltip } from '../components/ui/Tooltip';
 /**
  * AlertsPage — List + detail.
  *

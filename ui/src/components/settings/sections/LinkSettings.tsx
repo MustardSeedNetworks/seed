@@ -26,7 +26,7 @@ import type {
   SaveStatus,
 } from '../../../types/settings';
 import { CollapsibleSection } from '../../ui/CollapsibleSection';
-import { PlugZap } from '../../ui/icons';
+import { PlugZap } from '../../ui/Icons';
 import { AutoSaveIndicator } from './AutoSaveIndicator';
 
 interface LinkSettingsProps {

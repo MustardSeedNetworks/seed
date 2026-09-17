@@ -9,7 +9,7 @@
  * @copyright 2026 Mustard Seed Networks. All rights reserved.
  */
 
-import { Activity, Cable, Signal, Wifi } from '../../ui/icons';
+import { Activity, Cable, Signal, Wifi } from '../../ui/Icons';
 import type { HelpSection } from '../helpModel';
 
 const ICON = 'w-4 h-4';

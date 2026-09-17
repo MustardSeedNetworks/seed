@@ -21,9 +21,9 @@ import { useTranslation } from 'react-i18next';
 import { useDriverStats } from '../../hooks/useDriverStats';
 import { cn, radius, spacing, status as statusColor } from '../../styles/theme';
 import { Button } from '../ui/Button';
-import { Card, type Status } from '../ui/card';
+import { Card, type Status } from '../ui/Card';
 import { FeatureUnavailable } from '../ui/FeatureUnavailable';
-import { Activity } from '../ui/icons';
+import { Activity } from '../ui/Icons';
 
 interface DriverStatsCardProps {
   interfaceName?: string;
