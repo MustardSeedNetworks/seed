@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.214.66](https://github.com/MustardSeedNetworks/seed/compare/v0.214.65...v0.214.66) (2026-09-17)
+
+
+### Bug Fixes
+
+* **deps:** update frontend toolchain ([#2727](https://github.com/MustardSeedNetworks/seed/issues/2727)) ([02ad332](https://github.com/MustardSeedNetworks/seed/commit/02ad3327a99657e55ad3c37305fd1f029241bd18))
+
+
+### Miscellaneous
+
+* **ui:** drop jszip, which nothing imports ([#2733](https://github.com/MustardSeedNetworks/seed/issues/2733)) ([48fa7da](https://github.com/MustardSeedNetworks/seed/commit/48fa7da9a378c42a099f10c31c2b4490db51ce1c))
+
 ## [0.214.65](https://github.com/MustardSeedNetworks/seed/compare/v0.214.64...v0.214.65) (2026-09-17)
 
 
