@@ -163,6 +163,39 @@ func (s *Server) handleCategorizedInterfaces(w http.ResponseWriter, _ *http.Requ
 	sendJSONResponse(w, nil, http.StatusOK, resp)
 }
 
+// interfaceKind is the list an interface belongs in. The UI renders exactly
+// two, so every interface the listing carries has to reach one of them.
+type interfaceKind int
+
+const (
+	kindNone interfaceKind = iota
+	kindEthernet
+	kindWiFi
+)
+
+// kindFor decides which of the UI's two lists an interface joins.
+//
+// A selected interface of any other type joins the ethernet list rather than
+// being dropped: the UI has no third list, and ethernet is where netif's own
+// selection already counts it (collectCandidates scores an InterfaceTypeOther
+// interface with a routable address as an ethernet-class candidate). Leaving
+// it out of both is how seed#2692 offered no way to select the interface every
+// measurement on the page was taken from.
+func kindFor(iface *netif.InterfaceInfo, current string) interfaceKind {
+	switch iface.Type {
+	case netif.InterfaceTypeEthernet:
+		return kindEthernet
+	case netif.InterfaceTypeWiFi:
+		return kindWiFi
+	case netif.InterfaceTypeLoopback, netif.InterfaceTypeVirtual, netif.InterfaceTypeOther:
+		if iface.Name == current {
+			return kindEthernet
+		}
+		return kindNone
+	}
+	return kindNone
+}
+
 // categorizeInterfaces groups the listing into the two kinds the UI renders
 // and names the recommended interface in each.
 func categorizeInterfaces(
@@ -180,32 +213,18 @@ func categorizeInterfaces(
 		if iface.Name == current {
 			resp.CurrentType = string(iface.Type)
 		}
-		switch iface.Type {
-		case netif.InterfaceTypeEthernet:
+		switch kindFor(iface, current) {
+		case kindEthernet:
 			ethernet = append(ethernet, iface)
 			if isBetterInterface(iface, bestEthernet) {
 				bestEthernet = iface
 			}
-		case netif.InterfaceTypeWiFi:
+		case kindWiFi:
 			wifi = append(wifi, iface)
 			if isBetterInterface(iface, bestWiFi) {
 				bestWiFi = iface
 			}
-		case netif.InterfaceTypeLoopback, netif.InterfaceTypeVirtual, netif.InterfaceTypeOther:
-			// The listing only carries one of these when it is the interface
-			// the daemon is bound to, and the UI has no third list to show it
-			// in, so it joins the ethernet one — which is where netif's own
-			// selection already counts it (collectCandidates scores an
-			// InterfaceTypeOther interface with a routable address as an
-			// ethernet-class candidate). Leaving it out of both is how
-			// seed#2692 offered no way to select the active interface.
-			if iface.Name != current {
-				continue
-			}
-			ethernet = append(ethernet, iface)
-			if isBetterInterface(iface, bestEthernet) {
-				bestEthernet = iface
-			}
+		case kindNone:
 		}
 	}
 

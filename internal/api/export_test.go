@@ -12,6 +12,7 @@ import (
 	"github.com/MustardSeedNetworks/seed/internal/engine"
 	"github.com/MustardSeedNetworks/seed/internal/i18n"
 	"github.com/MustardSeedNetworks/seed/internal/license"
+	"github.com/MustardSeedNetworks/seed/internal/netif"
 )
 
 // ExportSplitCIDR exposes splitCIDR for testing.
@@ -488,4 +489,11 @@ func (s *Server) GatewayTesterInterface() string {
 		return ""
 	}
 	return s.gatewayTester().GetInterface()
+}
+
+// ExportCategorizeInterfaces exposes categorizeInterfaces for testing.
+func ExportCategorizeInterfaces(
+	interfaces []*netif.InterfaceInfo, current string,
+) CategorizedInterfacesResponse {
+	return categorizeInterfaces(interfaces, current)
 }
