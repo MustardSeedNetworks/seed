@@ -1331,8 +1331,8 @@ func TestCSRFRevokeToken(t *testing.T) {
 	mgr := auth.NewCSRFManager()
 	defer mgr.Stop()
 
-	// Generate a token
-	token, err := mgr.GenerateToken("testsession")
+	// Resolve the session's token
+	token, err := mgr.TokenForSession("testsession")
 	if err != nil {
 		t.Fatalf("failed to generate token: %v", err)
 	}

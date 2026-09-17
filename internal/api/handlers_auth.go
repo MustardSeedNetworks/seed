@@ -301,7 +301,9 @@ type CSRFTokenResponse struct {
 	Token string `json:"token"`
 }
 
-// handleCSRFToken generates and returns a CSRF token for the authenticated session.
+// handleCSRFToken returns the authenticated session's CSRF token, minting one
+// only when the session has none (#2660: minting a fresh one on every read let a
+// second tab invalidate the first).
 // The token must be included in X-CSRF-Token header for all state-changing requests.
 func (s *Server) handleCSRFToken(w http.ResponseWriter, r *http.Request) {
 	logger := logging.FromContext(r.Context())
@@ -322,10 +324,9 @@ func (s *Server) handleCSRFToken(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Generate CSRF token for this session
-	token, err := s.csrfManager().GenerateToken(sessionID)
+	token, err := s.csrfManager().TokenForSession(sessionID)
 	if err != nil {
-		logger.ErrorContext(r.Context(), "Failed to generate CSRF token", "error", err)
+		logger.ErrorContext(r.Context(), "Failed to resolve CSRF token", "error", err)
 		sendErrorResponseWithDetails(
 			w,
 			logger,
