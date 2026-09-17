@@ -239,3 +239,12 @@ func NewManagerForDetector(det InterfaceDetector, now func() time.Time) *Manager
 		now:        now,
 	}
 }
+
+// SetCurrentInterfaceUnchecked sets currentInterface without requiring the
+// interface to be present, so a test can reproduce a configured selection
+// that is no longer on the host.
+func (h *ManagerTestHelper) SetCurrentInterfaceUnchecked(name string) {
+	h.M.mu.Lock()
+	defer h.M.mu.Unlock()
+	h.M.currentInterface = name
+}
