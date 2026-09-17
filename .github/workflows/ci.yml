@@ -1622,7 +1622,11 @@ jobs:
       - name: Assert Playwright matches the container image
         working-directory: ui
         run: |
-          want=1.63.0
+          # Single source of truth: the container image tag Renovate bumps.
+          # A hardcoded value here is invisible to every Renovate manager and
+          # drifts on each @playwright/test bump — the guard then fails on a
+          # false mismatch, and each bump needs a manual edit (see msn-plans G-14).
+          want=$(sed -nE 's|^[[:space:]]*image: mcr\.microsoft\.com/playwright:v([0-9]+\.[0-9]+\.[0-9]+)-.*|\1|p' "$GITHUB_WORKSPACE/.github/workflows/ci.yml" | head -1)
           got=$(npx playwright --version | awk '{print $NF}')
           if [ "$got" != "$want" ]; then
             echo "::error::Playwright $got does not match the container image ($want) — bump the container: image tag+digest in ci.yml together with @playwright/test"
@@ -1735,7 +1739,11 @@ jobs:
       - name: Assert Playwright matches the container image
         working-directory: ui
         run: |
-          want=1.63.0
+          # Single source of truth: the container image tag Renovate bumps.
+          # A hardcoded value here is invisible to every Renovate manager and
+          # drifts on each @playwright/test bump — the guard then fails on a
+          # false mismatch, and each bump needs a manual edit (see msn-plans G-14).
+          want=$(sed -nE 's|^[[:space:]]*image: mcr\.microsoft\.com/playwright:v([0-9]+\.[0-9]+\.[0-9]+)-.*|\1|p' "$GITHUB_WORKSPACE/.github/workflows/ci.yml" | head -1)
           got=$(npx playwright --version | awk '{print $NF}')
           if [ "$got" != "$want" ]; then
             echo "::error::Playwright $got does not match the container image ($want) — bump the container: image tag+digest in ci.yml together with @playwright/test"
