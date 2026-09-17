@@ -93,8 +93,11 @@ type rather than a bare address.
 
 The sweeps that act more loudly on the network wait for you: the full port scan,
 traceroute and SNMP queries are off until enabled, and SNMP also needs a
-credential in the vault. `seed platform` prints the same list for the machine it
-runs on, and the interval is a slider in Settings → Discovery.
+credential in the vault. First-run setup offers to store one read community
+after the admin password is set — the field is empty, no community is
+suggested, and skipping it leaves the vault as it was. `seed platform` prints
+the same list for the machine it runs on, and the interval is a slider in
+Settings → Discovery.
 
 ### Install + run
 

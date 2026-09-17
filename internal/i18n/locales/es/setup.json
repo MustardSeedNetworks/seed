@@ -45,5 +45,21 @@
     "setupFailed": "Error al completar la configuración",
     "loginFailed": "Configuración completada pero el inicio de sesión falló. Por favor, inicie sesión manualmente.",
     "networkError": "Error de red. Por favor, intente de nuevo."
+  },
+  "snmp": {
+    "title": "Permita que el descubrimiento identifique lo que encuentra",
+    "subtitle": "Opcional: una comunidad SNMP de lectura para los dispositivos de su red",
+    "label": "Cadena de comunidad SNMP",
+    "placeholder": "Déjelo vacío para omitir",
+    "help": "Seed explora su red en cuanto arranca. Sin una comunidad puede ver los dispositivos pero no su modelo, sus puertos ni sus vecinos. Basta con acceso de solo lectura.",
+    "later": "Puede añadir esta credencial y las de SNMPv3 más tarde en Configuración.",
+    "buttons": {
+      "save": "Guardar y continuar",
+      "saving": "Guardando...",
+      "skip": "Omitir por ahora"
+    },
+    "errors": {
+      "saveFailed": "No se pudo guardar la credencial. Inténtelo de nuevo u omítalo y añádala en Configuración."
+    }
   }
 }
