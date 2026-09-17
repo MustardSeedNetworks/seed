@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.214.64](https://github.com/MustardSeedNetworks/seed/compare/v0.214.63...v0.214.64) (2026-09-17)
+
+
+### Features
+
+* **setup:** offer an SNMP read community at first run ([#2723](https://github.com/MustardSeedNetworks/seed/issues/2723)) ([e389aa8](https://github.com/MustardSeedNetworks/seed/commit/e389aa8b84f5efa7e3aee073917f6d1839f93287)), closes [#2722](https://github.com/MustardSeedNetworks/seed/issues/2722)
+* **ui:** draw the topology page's network map ([#2726](https://github.com/MustardSeedNetworks/seed/issues/2726)) ([6b1ffcf](https://github.com/MustardSeedNetworks/seed/commit/6b1ffcfa7d63545a94fb197958ff1cd93e2ac8fb))
+
 ## [0.214.63](https://github.com/MustardSeedNetworks/seed/compare/v0.214.62...v0.214.63) (2026-09-17)
 
 
