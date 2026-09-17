@@ -72,3 +72,37 @@ func TestSelectingAnInterfaceRescopesGatewayDetection(t *testing.T) {
 		t.Errorf("gateway tester interface = %q, want %q", got, iface)
 	}
 }
+
+// Selecting an interface must re-scope the resolvers too. The DNS card sat
+// beside the gateway card showing the host's resolvers whatever interface was
+// selected, and measured a lookup through whichever link carried the route
+// (#2690).
+func TestSelectingAnInterfaceRescopesDNSResolvers(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
+	server := api.NewTestServer()
+	defer server.Close()
+
+	iface := selectableInterface(t, server)
+	if server.DNSTesterInterface() == iface {
+		t.Fatalf("test is vacuous: the tester already names %q before the request", iface)
+	}
+
+	body, err := json.Marshal(map[string]string{"interface": iface})
+	if err != nil {
+		t.Fatalf("marshal body: %v", err)
+	}
+	req := httptest.NewRequest(http.MethodPut, "/api/v1/interface", bytes.NewReader(body))
+	req.Header.Set("Content-Type", "application/json")
+	w := httptest.NewRecorder()
+
+	server.Mux().ServeHTTP(w, req)
+
+	if w.Code != http.StatusOK {
+		t.Fatalf("status = %d, want 200: %s", w.Code, w.Body.String())
+	}
+	if got := server.DNSTesterInterface(); got != iface {
+		t.Errorf("dns tester interface = %q, want %q", got, iface)
+	}
+}

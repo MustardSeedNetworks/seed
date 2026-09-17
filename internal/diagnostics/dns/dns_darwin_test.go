@@ -8,16 +8,6 @@ import (
 	"github.com/MustardSeedNetworks/seed/internal/diagnostics/dns"
 )
 
-func TestGetDNSFromInterfaces(t *testing.T) {
-	// This is mostly a smoke test to ensure the function doesn't panic.
-	servers := dns.ExportGetDNSFromInterfaces()
-	if servers == nil {
-		t.Error("expected non-nil slice from GetDNSFromInterfaces")
-	}
-	// The function currently returns an empty slice as it's a placeholder.
-	// This test verifies it runs without error.
-}
-
 func TestGetSystemDNSPlatformDarwin(t *testing.T) {
 	servers := dns.GetSystemDNS()
 	if servers == nil {

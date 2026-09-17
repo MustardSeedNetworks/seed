@@ -212,7 +212,11 @@
     "reversePTR": "Inversa (PTR)",
     "serverTests": "Pruebas de servidor",
     "noARecord": "Sin registro A",
-    "noAAAARecord": "Sin registro AAAA"
+    "noAAAARecord": "Sin registro AAAA",
+    "scopeInterface": "Resolutores de esta interfaz",
+    "scopeSystemHint": "Este equipo no registra a qué interfaz pertenece cada resolutor.",
+    "noResolvers": "Sin resolutores en esta interfaz",
+    "noResolversHint": "No se consultó nada: resolver por otra interfaz no describiría este enlace."
   },
   "wifi": {
     "title": "Wi-Fi",

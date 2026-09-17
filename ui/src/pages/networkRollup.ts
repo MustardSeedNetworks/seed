@@ -32,6 +32,7 @@ type HeadlineKey =
   | 'network.rollupGatewayUnreachable'
   | 'network.rollupGatewayLossy'
   | 'network.rollupNoDns'
+  | 'network.rollupNoDnsForInterface'
   | 'network.rollupHealthy';
 
 type BodyKey =
@@ -39,7 +40,8 @@ type BodyKey =
   | 'network.rollupGatewayUnmeasuredBody'
   | 'network.rollupGatewayUnreachableBody'
   | 'network.rollupGatewayLossyBody'
-  | 'network.rollupNoDnsBody';
+  | 'network.rollupNoDnsBody'
+  | 'network.rollupNoDnsForInterfaceBody';
 
 type FigureKey =
   | 'network.figureUp'
@@ -76,6 +78,14 @@ function dnsAnswered(dns: DnsData | null): boolean {
   return Boolean(dns?.forward && dns.forward.status !== 'error');
 }
 
+/* An interface-scoped result with no servers means the selected link has no
+   resolvers of its own, and nothing was looked up through another one. That is
+   a different sentence from "the lookup failed", and it is why the card shows
+   no measurement at all (#2690). */
+function dnsAbsentForInterface(dns: DnsData | null): boolean {
+  return dns?.serverScope === 'interface' && (dns.servers?.length ?? 0) === 0;
+}
+
 const GATEWAY_FIGURE: Record<GatewayVerdict, FigureKey> = {
   absent: 'network.figureNone',
   unmeasured: 'network.figureUnknown',
@@ -87,11 +97,13 @@ const GATEWAY_FIGURE: Record<GatewayVerdict, FigureKey> = {
 export function networkRollup({ gateway, dns, loading }: NetworkRollupInput): NetworkRollup {
   const verdict = gatewayVerdict(gateway);
   const gatewayFigureKey = GATEWAY_FIGURE[verdict];
-  const dnsFigureKey: FigureKey = !dns
-    ? 'network.figureNone'
-    : dnsAnswered(dns)
-      ? 'network.figureUp'
-      : 'network.figureDown';
+  const dnsAbsent = dnsAbsentForInterface(dns);
+  const dnsFigureKey: FigureKey =
+    !dns || dnsAbsent
+      ? 'network.figureNone'
+      : dnsAnswered(dns)
+        ? 'network.figureUp'
+        : 'network.figureDown';
 
   if (loading) {
     return {
@@ -129,6 +141,16 @@ export function networkRollup({ gateway, dns, loading }: NetworkRollupInput): Ne
       };
     default:
       break;
+  }
+
+  if (dnsAbsent) {
+    return {
+      state: 'warn',
+      headlineKey: 'network.rollupNoDnsForInterface',
+      bodyKey: 'network.rollupNoDnsForInterfaceBody',
+      gatewayFigureKey,
+      dnsFigureKey,
+    };
   }
 
   if (!dnsAnswered(dns)) {

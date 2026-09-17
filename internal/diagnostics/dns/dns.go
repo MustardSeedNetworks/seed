@@ -74,7 +74,8 @@ type ServerTestResult struct {
 // TestResult contains the complete DNS test results.
 type TestResult struct {
 	Server           string              `json:"server"`
-	Servers          []string            `json:"servers"` // All configured DNS servers
+	Servers          []string            `json:"servers"`     // All configured DNS servers
+	ServerScope      Scope               `json:"serverScope"` // Whose resolvers Servers describes
 	TestHostname     string              `json:"testHostname"`
 	Forward          *LookupResult       `json:"forward"`          // IPv4 forward lookup (A record)
 	ForwardIPv6      *LookupResult       `json:"forwardIpv6"`      // IPv6 forward lookup (AAAA record)
@@ -110,7 +111,12 @@ type Tester struct {
 	thresholds        Thresholds
 	resolver          *net.Resolver
 	configuredServers []ConfiguredServer
-	mu                sync.RWMutex
+	// iface is the interface the operator selected. The resolvers shown and
+	// tested are scoped to it (#2690); empty means no selection, and the
+	// answer stays system-wide.
+	iface     string
+	resolvers resolverSource
+	mu        sync.RWMutex
 }
 
 // NewTester creates a new DNS tester.
@@ -119,25 +125,52 @@ func NewTester(server, testHostname string, thresholds Thresholds) *Tester {
 		server:       server,
 		testHostname: testHostname,
 		thresholds:   thresholds,
-	}
-
-	// Create custom resolver if server is specified
-	if server != "" {
-		t.resolver = &net.Resolver{
-			PreferGo: true,
-			Dial: func(ctx context.Context, _, _ string) (net.Conn, error) {
-				d := net.Dialer{
-					Timeout: DefaultDialerTimeout,
-				}
-				// Use the specified DNS server
-				return d.DialContext(ctx, "udp", server+":53")
-			},
-		}
-	} else {
-		t.resolver = net.DefaultResolver
+		resolvers:    systemResolvers(),
+		resolver:     resolverForServer(server),
 	}
 
 	return t
+}
+
+// NewTesterForInterface creates a tester whose resolvers are scoped to iface,
+// the way the gateway tester takes the active interface at construction. An
+// empty name keeps the system-wide answer, which is right when nothing has
+// been selected yet.
+func NewTesterForInterface(server, testHostname string, thresholds Thresholds, iface string) *Tester {
+	t := NewTester(server, testHostname, thresholds)
+	t.SetInterface(iface)
+	return t
+}
+
+// resolverForServer returns a resolver that dials server, or the system
+// resolver when no server is named.
+func resolverForServer(server string) *net.Resolver {
+	if server == "" {
+		return net.DefaultResolver
+	}
+	// Capture the address in the closure so a later SetServer cannot race it.
+	serverAddr := server + ":53"
+	return &net.Resolver{
+		PreferGo: true,
+		Dial: func(ctx context.Context, _, _ string) (net.Conn, error) {
+			d := net.Dialer{Timeout: DefaultDialerTimeout}
+			return d.DialContext(ctx, "udp", serverAddr)
+		},
+	}
+}
+
+// SetInterface scopes the resolvers to the interface the operator selected.
+func (t *Tester) SetInterface(name string) {
+	t.mu.Lock()
+	defer t.mu.Unlock()
+	t.iface = name
+}
+
+// GetInterface returns the interface the resolvers are scoped to.
+func (t *Tester) GetInterface() string {
+	t.mu.RLock()
+	defer t.mu.RUnlock()
+	return t.iface
 }
 
 // SetTestHostname updates the hostname used for testing.
@@ -154,21 +187,7 @@ func (t *Tester) SetServer(server string) {
 	defer t.mu.Unlock()
 
 	t.server = server
-	if server != "" {
-		// Capture server in closure to avoid race with later SetServer calls
-		serverAddr := server + ":53"
-		t.resolver = &net.Resolver{
-			PreferGo: true,
-			Dial: func(ctx context.Context, _, _ string) (net.Conn, error) {
-				d := net.Dialer{
-					Timeout: DefaultDialerTimeout,
-				}
-				return d.DialContext(ctx, "udp", serverAddr)
-			},
-		}
-	} else {
-		t.resolver = net.DefaultResolver
-	}
+	t.resolver = resolverForServer(server)
 }
 
 // SetConfiguredServers updates the list of user-configured DNS servers.
@@ -407,11 +426,16 @@ func (t *Tester) Test(ctx context.Context) *TestResult {
 	cfgServers := append([]ConfiguredServer(nil), t.configuredServers...)
 	host := t.testHostname
 	selectedServer := t.server
+	source := t.resolvers
+	iface := t.iface
+	thresholds := t.thresholds
 	t.mu.RUnlock()
 
-	servers := GetSystemDNS()
+	servers, scope := source.resolversFor(iface)
 
-	// Add enabled configured servers to the list (avoiding duplicates)
+	// Add enabled configured servers to the list (avoiding duplicates). They
+	// are an explicit operator choice, so they are offered whatever the scope
+	// is, and they do not turn an interface-scoped answer into a host-wide one.
 	serverSet := make(map[string]bool)
 	for _, s := range servers {
 		serverSet[s] = true
@@ -427,26 +451,42 @@ func (t *Tester) Test(ctx context.Context) *TestResult {
 		Server:       selectedServer,
 		TestHostname: host,
 		Servers:      servers,
+		ServerScope:  scope,
 	}
 
-	if selectedServer == "" {
+	// An interface with no resolvers of its own is not measured through
+	// another link's. The system resolver would answer — over whichever
+	// interface carries the route — and the card would report a success this
+	// link did not earn, which is the defect the scoping exists to remove.
+	if scope == ScopeInterface && len(servers) == 0 {
+		return result
+	}
+
+	// Without an explicitly selected server the lookups would go through the
+	// system resolver, so a scoped list would be displayed and a host-wide
+	// resolver measured. Dial the interface's own first resolver instead.
+	lookups := t
+	if selectedServer == "" && scope == ScopeInterface {
+		lookups = NewTester(servers[0], host, thresholds)
+		result.Server = servers[0]
+	} else if selectedServer == "" {
 		result.Server = "System Default"
 	}
 
 	// IPv4 forward lookup (A record)
-	result.Forward = t.ForwardLookupIPv4(ctx, host)
+	result.Forward = lookups.ForwardLookupIPv4(ctx, host)
 
 	// IPv6 forward lookup (AAAA record)
-	result.ForwardIPv6 = t.ForwardLookupIPv6(ctx, host)
+	result.ForwardIPv6 = lookups.ForwardLookupIPv6(ctx, host)
 
 	// Reverse lookup on the first IPv4 result
 	if result.Forward.Status != StatusError && len(result.Forward.Resolved) > 0 {
-		result.Reverse = t.ReverseLookup(ctx, result.Forward.Resolved[0])
+		result.Reverse = lookups.ReverseLookup(ctx, result.Forward.Resolved[0])
 	}
 
 	// Reverse lookup on the first IPv6 result
 	if result.ForwardIPv6.Status != StatusError && len(result.ForwardIPv6.Resolved) > 0 {
-		result.ReverseIPv6 = t.ReverseLookup(ctx, result.ForwardIPv6.Resolved[0])
+		result.ReverseIPv6 = lookups.ReverseLookup(ctx, result.ForwardIPv6.Resolved[0])
 	}
 
 	// Per-server testing (only for IPv4 servers to avoid duplicate long tests)

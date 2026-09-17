@@ -59,3 +59,26 @@ func ExportCalculateSeverity(result *SecurityScanResult) string {
 	scanner := NewSecurityScanner(DefaultSecurityScanConfig())
 	return scanner.calculateSeverity(result)
 }
+
+// TestResolverSource carries a resolverSource across the package boundary so
+// an external test can build one; the field itself stays unexported.
+type TestResolverSource struct{ src resolverSource }
+
+// ExportResolverSource builds a resolverSource from two stubs so the scoping
+// rule can be exercised without a host whose resolver configuration happens to
+// agree with the case under test.
+func ExportResolverSource(system func() []string, forIface func(string) ([]string, bool)) TestResolverSource {
+	return TestResolverSource{src: resolverSource{system: system, forIface: forIface}}
+}
+
+// ExportResolversFor applies the scoping rule to a source built above.
+func ExportResolversFor(s TestResolverSource, iface string) ([]string, Scope) {
+	return s.src.resolversFor(iface)
+}
+
+// ExportSetResolverSource replaces a tester's resolver source.
+func ExportSetResolverSource(t *Tester, s TestResolverSource) {
+	t.mu.Lock()
+	defer t.mu.Unlock()
+	t.resolvers = s.src
+}

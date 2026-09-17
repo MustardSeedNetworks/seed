@@ -9,6 +9,7 @@ export interface DNSResponse {
   interface: string;
   server: string;
   servers: string[];
+  serverScope: string;
   testHostname: string;
   forward?: DNSLookupResult;
   forwardIpv6?: DNSLookupResult;

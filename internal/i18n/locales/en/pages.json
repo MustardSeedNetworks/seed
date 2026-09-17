@@ -101,7 +101,9 @@
     "figureUnknown": "Not measured",
     "figureNone": "None",
     "switchAbsentLabel": "Switch and VLAN",
-    "switchAbsentReason": "Neighbour discovery reads LLDP and CDP from the wire. A wireless interface has no switch port to ask."
+    "switchAbsentReason": "Neighbour discovery reads LLDP and CDP from the wire. A wireless interface has no switch port to ask.",
+    "rollupNoDnsForInterface": "No DNS on this interface",
+    "rollupNoDnsForInterfaceBody": "The selected interface has no resolvers of its own, so names cannot be resolved over this link."
   },
   "path": {
     "description": "L2/L3 path discovery, traceroute hops, and on-link device discovery.",

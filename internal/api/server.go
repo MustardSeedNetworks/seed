@@ -422,7 +422,7 @@ func (s *Server) initAuthSecurity(cfg *config.Config, trustedProxies *TrustedPro
 // database or on each other; split out of NewServer to keep it under the
 // funlen limit.
 func (s *Server) initTelemetryAndWiFiServices(cfg *config.Config) {
-	s.dnsTest = dns.NewTester("", cfg.DNS.TestHostname, dns.DefaultThresholds())
+	s.dnsTest = dns.NewTesterForInterface("", cfg.DNS.TestHostname, dns.DefaultThresholds(), cfg.Interface.Default)
 	s.dnsSec = dns.NewSecurityScanner(dns.DefaultSecurityScanConfig())
 	s.gatewayTest = gateway.NewTesterForInterface(gateway.DefaultThresholds(), cfg.Interface.Default)
 	s.vlanMgr = vlan.NewManager(cfg.Interface.Default)

@@ -212,7 +212,11 @@
     "reversePTR": "Reverse (PTR)",
     "serverTests": "Server Tests",
     "noARecord": "No A record",
-    "noAAAARecord": "No AAAA record"
+    "noAAAARecord": "No AAAA record",
+    "scopeInterface": "Resolvers for this interface",
+    "scopeSystemHint": "This host does not record which interface a resolver belongs to.",
+    "noResolvers": "No resolvers on this interface",
+    "noResolversHint": "Nothing was looked up: resolving through another interface would not describe this link."
   },
   "wifi": {
     "title": "Wi-Fi",
