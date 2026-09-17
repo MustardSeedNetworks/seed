@@ -345,6 +345,13 @@ func (s *Server) handlePutInterface(
 		s.linkMonitor().SetInterface(req.Interface)
 	}
 
+	// Re-scope gateway detection. Without this the Network page keeps the
+	// gateway of whichever interface carries the default route and pings it
+	// while reporting the selected one (#2690).
+	if s.gatewayTester() != nil {
+		s.gatewayTester().SetInterface(req.Interface)
+	}
+
 	// Check if new interface is wireless
 	isWireless := false
 	if s.wifiManager() != nil {

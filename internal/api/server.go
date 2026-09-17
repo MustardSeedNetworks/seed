@@ -424,7 +424,7 @@ func (s *Server) initAuthSecurity(cfg *config.Config, trustedProxies *TrustedPro
 func (s *Server) initTelemetryAndWiFiServices(cfg *config.Config) {
 	s.dnsTest = dns.NewTester("", cfg.DNS.TestHostname, dns.DefaultThresholds())
 	s.dnsSec = dns.NewSecurityScanner(dns.DefaultSecurityScanConfig())
-	s.gatewayTest = gateway.NewTester(gateway.DefaultThresholds())
+	s.gatewayTest = gateway.NewTesterForInterface(gateway.DefaultThresholds(), cfg.Interface.Default)
 	s.vlanMgr = vlan.NewManager(cfg.Interface.Default)
 	s.speedtestTest = speedtest.NewTesterWithConfig(cfg.Speedtest.ServerID)
 	s.iperfMgr = iperf.NewManager()

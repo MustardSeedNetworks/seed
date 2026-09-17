@@ -481,3 +481,11 @@ func (s *Server) SetLicenseManagerForTest(m *license.Manager) {
 func ExportGetSystemDNS() []string {
 	return getSystemDNS()
 }
+
+// GatewayTesterInterface reports the interface gateway detection is scoped to.
+func (s *Server) GatewayTesterInterface() string {
+	if s.gatewayTester() == nil {
+		return ""
+	}
+	return s.gatewayTester().GetInterface()
+}

@@ -5,6 +5,7 @@ package gateway
 
 import (
 	"context"
+	"fmt"
 	"net"
 	"sync"
 	"time"
@@ -118,6 +119,11 @@ type Tester struct {
 	// an intermittent `go test -race` failure in TestStartContinuousCallback).
 	wg     sync.WaitGroup
 	pinger *enumerate.ICMPPinger // Raw ICMP pinger (nil if unavailable)
+	// iface is the interface the operator selected. Detection is scoped to it
+	// so the tester cannot report another link's gateway (#2690); empty means
+	// no selection, and detection stays system-wide.
+	iface   string
+	routing routingReader
 }
 
 // NewTester creates a new gateway tester.
@@ -128,6 +134,7 @@ func NewTester(thresholds Thresholds) *Tester {
 		pingTimeout: defaultPingTimeoutSec * time.Second,
 		stats:       &PingStats{Status: StatusUnknown},
 		stopCh:      make(chan struct{}),
+		routing:     systemRouting(),
 	}
 
 	// Try to create ICMP pinger. Raw needs CAP_NET_RAW or root; the constructor
@@ -140,11 +147,55 @@ func NewTester(thresholds Thresholds) *Tester {
 	return t
 }
 
+// NewTesterForInterface creates a tester whose detection is scoped to iface,
+// the way the other per-interface diagnostics take the active interface at
+// construction. An empty name keeps the system-wide answer, which is right
+// when nothing has been selected yet.
+//
+// Callers pass the configured interface rather than a network manager's view
+// of it: startup resolves the configured name against the host and writes the
+// interface it settled on back to the config before the server is built, and
+// NewServer tolerates a nil manager, so reading one here would segfault a
+// hand-built server for a value that is already correct.
+func NewTesterForInterface(thresholds Thresholds, iface string) *Tester {
+	t := NewTester(thresholds)
+	t.SetInterface(iface)
+	return t
+}
+
 // SetGateway updates the gateway address to ping.
 func (t *Tester) SetGateway(gateway string) {
 	t.mu.Lock()
 	defer t.mu.Unlock()
 	t.gateway = gateway
+}
+
+// SetInterface scopes detection to the interface the operator selected.
+//
+// A gateway detected for the previous interface is dropped, because it is the
+// answer to a different question: the Network page showed the system default
+// route's gateway while the active interface was another one, then pinged it
+// and reported 100 % loss as a fault of the selected link (#2690).
+func (t *Tester) SetInterface(name string) {
+	t.mu.Lock()
+	defer t.mu.Unlock()
+	if t.iface == name {
+		return
+	}
+	t.iface = name
+	t.gateway = ""
+	// The cached stats describe the previous interface's gateway, and
+	// collectGatewayData serves them straight to the card — leaving them would
+	// show the old router's loss under the new interface until the next tick,
+	// which is the defect this scoping exists to remove.
+	t.stats = &PingStats{Status: StatusUnknown}
+}
+
+// GetInterface returns the interface detection is scoped to.
+func (t *Tester) GetInterface() string {
+	t.mu.RLock()
+	defer t.mu.RUnlock()
+	return t.iface
 }
 
 // GetGateway returns the current gateway address.
@@ -170,6 +221,56 @@ func (t *Tester) GetStats() *PingStats {
 // Uses netlink on Linux, exec commands on macOS.
 func DetectGateway() (string, error) {
 	return detectGatewayPlatform()
+}
+
+// routingReader holds the two routing-table reads the interface-scoping rule
+// needs. The Tester carries one so the rule can be exercised without a host
+// whose routing table happens to say the right thing; production is always
+// built from systemRouting.
+type routingReader struct {
+	defaultRouteInterface func() (string, error)
+	defaultRouteGateway   func() (string, error)
+}
+
+func systemRouting() routingReader {
+	return routingReader{
+		defaultRouteInterface: GetDefaultGatewayInterface,
+		defaultRouteGateway:   DetectGateway,
+	}
+}
+
+// gatewayForInterface returns the gateway reachable over iface.
+//
+// A gateway is the next hop of a default route, so an interface that does not
+// carry the default route has none of its own: answering with the system
+// default would name a router on another link, which is what made the Network
+// page report a Wi-Fi gateway at 100 % loss for a probe pinned to a virtual
+// link (#2690). An empty iface means no selection and keeps the system answer.
+//
+// Limit, stated rather than papered over: a DHCP lease can carry a router
+// option for an interface the kernel gave no default route, and that address
+// is not consulted here — the routing table is the only source. Such an
+// interface reports an honest absence.
+func (r routingReader) gatewayForInterface(iface string) (string, error) {
+	if iface == "" {
+		return r.defaultRouteGateway()
+	}
+
+	routeIface, err := r.defaultRouteInterface()
+	if err != nil {
+		return "", fmt.Errorf("default route interface: %w", err)
+	}
+	if routeIface != iface {
+		return "", nil
+	}
+
+	return r.defaultRouteGateway()
+}
+
+// DetectGatewayForInterface returns the gateway reachable over iface, read
+// from this host's routing table. See routingReader.gatewayForInterface.
+func DetectGatewayForInterface(iface string) (string, error) {
+	return systemRouting().gatewayForInterface(iface)
 }
 
 // DetectGatewayIPv6 attempts to detect the default IPv6 gateway.
@@ -240,6 +341,8 @@ func (t *Tester) Test() *PingStats {
 	t.mu.RLock()
 	gateway := t.gateway
 	count := t.pingCount
+	iface := t.iface
+	routing := t.routing
 	t.mu.RUnlock()
 
 	stats := &PingStats{
@@ -253,7 +356,7 @@ func (t *Tester) Test() *PingStats {
 
 	if gateway == "" {
 		// Try to detect gateway
-		detected, err := DetectGateway()
+		detected, err := routing.gatewayForInterface(iface)
 		if err == nil && detected != "" {
 			t.SetGateway(detected)
 			gateway = detected

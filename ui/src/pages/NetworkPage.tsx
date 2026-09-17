@@ -9,7 +9,8 @@ import { PublicIpCard } from '../components/cards/PublicIpCard';
 import { SwitchCard } from '../components/cards/SwitchCard';
 import { useAppContext } from '../contexts/AppContext';
 import { CardGrid, CardSlot } from '../ui/CardGrid';
-import { type RollupState, StatusRollup } from '../ui/StatusRollup';
+import { StatusRollup } from '../ui/StatusRollup';
+import { networkRollup } from './networkRollup';
 
 /**
  * Network — Card grid, with the rollup it already had.
@@ -36,44 +37,21 @@ export function NetworkPage() {
      the upstream link is healthy, and five cards each reporting their own
      state make the reader assemble that themselves.
 
-     While the probes are still running the answer is not "healthy", it is "not
-     known yet" — the difference matters because a card with no data and a card
-     that failed look the same to a reader in a hurry. */
-  const gatewayUp = Boolean(cards.gateway);
-  const dnsUp = Boolean(cards.dns);
-  const state: RollupState = loading ? 'unknown' : !gatewayUp ? 'crit' : !dnsUp ? 'warn' : 'ok';
-
-  const headline = loading
-    ? t('network.rollupProbing')
-    : !gatewayUp
-      ? t('network.rollupNoGateway')
-      : !dnsUp
-        ? t('network.rollupNoDns')
-        : t('network.rollupHealthy');
-
-  const body = loading
-    ? undefined
-    : !gatewayUp
-      ? t('network.rollupNoGatewayBody')
-      : !dnsUp
-        ? t('network.rollupNoDnsBody')
-        : undefined;
+     The derivation lives in networkRollup so it can be read as a table of
+     states rather than a nested ternary, and so the rule the band gets wrong
+     when it drifts — a card is present, therefore all is well — is pinned by
+     unit tests rather than by an E2E that would have to break the link. */
+  const rollup = networkRollup({ gateway: cards.gateway, dns: cards.dns, loading });
 
   return (
     <>
       <StatusRollup
-        state={state}
-        headline={headline}
-        body={body}
+        state={rollup.state}
+        headline={t(rollup.headlineKey)}
+        body={rollup.bodyKey ? t(rollup.bodyKey) : undefined}
         figures={[
-          {
-            label: t('network.figureGateway'),
-            value: gatewayUp ? t('network.figureUp') : t('network.figureNone'),
-          },
-          {
-            label: t('network.figureDns'),
-            value: dnsUp ? t('network.figureUp') : t('network.figureNone'),
-          },
+          { label: t('network.figureGateway'), value: t(rollup.gatewayFigureKey) },
+          { label: t('network.figureDns'), value: t(rollup.dnsFigureKey) },
         ]}
       />
 

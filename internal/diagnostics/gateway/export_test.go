@@ -88,3 +88,17 @@ func PingErrorMessage(err error) string {
 
 // ErrTest is a sentinel error for testing.
 var ErrTest = errors.New("test error")
+
+// GatewayForInterfaceWithReads applies the interface-scoping rule to the
+// routing-table answers given, so the rule is testable without a routing table.
+func GatewayForInterfaceWithReads(iface string, routeIface, gw func() (string, error)) (string, error) {
+	return routingReader{defaultRouteInterface: routeIface, defaultRouteGateway: gw}.
+		gatewayForInterface(iface)
+}
+
+// SetRoutingForTesting points the tester's detection at the given reads.
+func (t *Tester) SetRoutingForTesting(routeIface, gw func() (string, error)) {
+	t.mu.Lock()
+	defer t.mu.Unlock()
+	t.routing = routingReader{defaultRouteInterface: routeIface, defaultRouteGateway: gw}
+}
