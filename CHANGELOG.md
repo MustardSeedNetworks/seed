@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.214.65](https://github.com/MustardSeedNetworks/seed/compare/v0.214.64...v0.214.65) (2026-09-17)
+
+
+### Bug Fixes
+
+* **ui:** pass company and year into the footer's interpolated copy ([#2721](https://github.com/MustardSeedNetworks/seed/issues/2721)) ([2ad63c7](https://github.com/MustardSeedNetworks/seed/commit/2ad63c729f5db0a856685d4a3ad25e8fe8190b36)), closes [#2644](https://github.com/MustardSeedNetworks/seed/issues/2644)
+
+
+### Miscellaneous
+
+* **deps:** lock file maintenance ([#2711](https://github.com/MustardSeedNetworks/seed/issues/2711)) ([93cc07e](https://github.com/MustardSeedNetworks/seed/commit/93cc07ecb5c142451f6f82eff5b5519692b81e89))
+
 ## [0.214.64](https://github.com/MustardSeedNetworks/seed/compare/v0.214.63...v0.214.64) (2026-09-17)
 
 
