@@ -50,6 +50,17 @@ SCOPE: tuple[str, ...] = (
     "deploy",
     "internal/config/schema.json",
     "package.json",
+    # The packaging descriptors goreleaser actually ships from. These are the
+    # strings `apt show` and `rpm -qi` print and the release notes lead with —
+    # deploy/deb/control and deploy/rpm/seed.spec are referenced by nothing.
+    # They are dotfiles, which is why a plain `rg` survey walks straight past
+    # them.
+    ".goreleaser.yml",
+    ".nfpm.yaml",
+    # Issue forms are customer-facing on GitHub. The rest of .github is not:
+    # the workflow headers are internal, and update-oui.yml's occurrence is a
+    # User-Agent, which belongs with the wire identifiers below.
+    ".github/ISSUE_TEMPLATE",
 )
 
 SKIP_DIRS = {"node_modules", "dist", "coverage", ".git"}
