@@ -108,8 +108,7 @@ export default defineConfig(({ mode }) => {
       rollupOptions: {
         output: {
           // Split stable third-party deps into long-lived vendor chunks so an
-          // app-code change doesn't bust their browser cache. jszip is left out
-          // deliberately — it's export-only and should stay a lazy async chunk.
+          // app-code change doesn't bust their browser cache.
           manualChunks: (id: string) => {
             if (
               id.includes('/node_modules/react/') ||
