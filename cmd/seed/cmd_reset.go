@@ -42,8 +42,7 @@ be preserved.`,
   # Reset without confirmation or backup (DANGEROUS)
   seed reset-config --force --backup=false`,
 		PreRunE: func(_ *cobra.Command, _ []string) error {
-			return guardConfigCommand(state,
-				"Stop seed serve before resetting its config, or change settings through the running daemon at PUT /api/v1/settings.")
+			return guardConfigCommand(state, insteadOfResetConfig)
 		},
 		Run: func(cmd *cobra.Command, args []string) {
 			runReset(cmd, args, state)

@@ -71,26 +71,32 @@ func TestDaemonOwnedCommandsRefuseWhileServeHoldsTheLock(t *testing.T) {
 			state.rootCmd.SetOut(&bytes.Buffer{})
 			state.rootCmd.SetErr(&bytes.Buffer{})
 
-			execErr := state.rootCmd.Execute()
-			if execErr == nil {
-				t.Fatalf("%v ran while the daemon held the lock; want a refusal", tc.args)
-			}
-
-			var held *daemonRunningError
-			if !errors.As(execErr, &held) {
-				t.Fatalf("error is %T (%v); want *daemonRunningError", execErr, execErr)
-			}
-			if got := exitCodeFor(execErr); got != exitDaemonRunning {
-				t.Errorf("exit code = %d, want %d", got, exitDaemonRunning)
-			}
-			msg := execErr.Error()
-			if !strings.Contains(msg, tc.wantsRoute) {
-				t.Errorf("message %q does not name %q", msg, tc.wantsRoute)
-			}
-			if !strings.Contains(msg, "18443") {
-				t.Errorf("message %q does not name the running daemon's port", msg)
-			}
+			assertRefused(t, state.rootCmd.Execute(), tc.args, tc.wantsRoute)
 		})
+	}
+}
+
+// assertRefused checks the one refusal every daemon-owned command must give:
+// a typed error, exit 2, and a message naming the live daemon and what to use
+// instead of this command.
+func assertRefused(t *testing.T, execErr error, args []string, wantsRoute string) {
+	t.Helper()
+	if execErr == nil {
+		t.Fatalf("%v ran while the daemon held the lock; want a refusal", args)
+	}
+	var held *daemonRunningError
+	if !errors.As(execErr, &held) {
+		t.Fatalf("error is %T (%v); want *daemonRunningError", execErr, execErr)
+	}
+	if got := exitCodeFor(execErr); got != exitDaemonRunning {
+		t.Errorf("exit code = %d, want %d", got, exitDaemonRunning)
+	}
+	msg := execErr.Error()
+	if !strings.Contains(msg, wantsRoute) {
+		t.Errorf("message %q does not name %q", msg, wantsRoute)
+	}
+	if !strings.Contains(msg, "18443") {
+		t.Errorf("message %q does not name the running daemon's port", msg)
 	}
 }
 

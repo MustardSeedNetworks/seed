@@ -13,6 +13,19 @@ import (
 	"github.com/MustardSeedNetworks/seed/internal/paths"
 )
 
+// What to do instead of each refused command. Where the daemon exposes the
+// same operation over HTTP the message names that route; where it does not —
+// resetting the config, and the license, which has only a read endpoint — it
+// says to stop the daemon rather than name a route that does not exist.
+const (
+	insteadOfResetConfig = "Stop seed serve before resetting its config, " +
+		"or change settings through the running daemon at PUT /api/v1/settings."
+	insteadOfCredentials = "Ask the running daemon instead: GET /api/v1/setup/status."
+	insteadOfSetupWizard = "Complete setup through the running daemon instead: POST /api/v1/setup/complete."
+	insteadOfLicense     = "Stop seed serve before changing the license: the running daemon " +
+		"holds its activation state in memory and would not see the change."
+)
+
 // exitDaemonRunning is the exit status of a command that refused to write
 // state a running seed serve owns. It is distinct from the generic 1 so a
 // script can tell "the daemon has it" from "the command failed".
@@ -93,6 +106,5 @@ func guardConfigCommand(state *cliState, instead string) error {
 // user's home and honors no --config flag, so the lock dir is resolved without
 // one rather than pretending the flag reaches it.
 func guardLicenseCommand() error {
-	return refuseIfDaemonOwns(paths.ResolveConfigPath("", paths.ModeAuto),
-		"Stop seed serve before changing the license: the running daemon holds its activation state in memory and would not see the change.")
+	return refuseIfDaemonOwns(paths.ResolveConfigPath("", paths.ModeAuto), insteadOfLicense)
 }

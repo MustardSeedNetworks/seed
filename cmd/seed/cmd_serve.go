@@ -72,8 +72,7 @@ func runServe(_ *cobra.Command, _ []string, state *cliState) {
 	// and the same SQLite file underneath the first one.
 	lock, lockErr := instance.Acquire(lockDir(configPath))
 	if lockErr != nil {
-		var held *instance.HeldError
-		if errors.As(lockErr, &held) {
+		if held, ok := errors.AsType[*instance.HeldError](lockErr); ok {
 			fmt.Fprintf(os.Stderr, "Error: %v\n", held)
 			os.Exit(exitDaemonRunning)
 		}
