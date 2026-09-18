@@ -113,13 +113,14 @@ func Candidates(devices []Device, local []netip.Prefix) []Candidate {
 }
 
 // network builds the masked network an address and prefix length describe. The
-// second return is false when the pair does not describe one — an unparseable
-// or non-IPv4 address, or a zero prefix, which is both the default route and
-// what an unreadable ipAdEntNetMask leaves behind.
+// second return is false when the pair does not describe an IPv4 one — the
+// sweeper only walks IPv4, and an IPv6 network that slipped through would be
+// offered as a target nothing can scan.
+//
+// A zero prefix needs no special case: it is what the default route and an
+// unreadable ipAdEntNetMask both leave behind, and both come out as a /0 that
+// the range rule in learnable rejects.
 func network(address string, prefix int) (netip.Prefix, bool) {
-	if prefix <= 0 {
-		return netip.Prefix{}, false
-	}
 	addr, err := netip.ParseAddr(address)
 	if err != nil || !addr.Is4() {
 		return netip.Prefix{}, false

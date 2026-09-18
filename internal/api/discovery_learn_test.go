@@ -13,7 +13,7 @@ import (
 func TestRoutingViewsCarriesBothTablesAndSkipsDevicesWithout(t *testing.T) {
 	devices := []*discovery.DiscoveredDevice{
 		nil,
-		{IP: "10.44.40.9"},                                   // profiled, no SNMP
+		{IP: "10.44.40.9"}, // profiled, no SNMP
 		{IP: "10.44.40.8", SNMPData: &discovery.SNMPFullData{ // answered, nothing routed
 			System: nil,
 		}},

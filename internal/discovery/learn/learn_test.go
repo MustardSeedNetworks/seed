@@ -51,17 +51,19 @@ func equalStrings(got, want []string) bool {
 	return true
 }
 
-func mustPrefix(t *testing.T, s string) netip.Prefix {
+// transitNetwork is the network the sweep already covers in every case below:
+// the link Seed itself sits on, which needs no learned toggle.
+func transitNetwork(t *testing.T) netip.Prefix {
 	t.Helper()
-	p, err := netip.ParsePrefix(s)
+	p, err := netip.ParsePrefix("10.44.40.0/24")
 	if err != nil {
-		t.Fatalf("ParsePrefix(%q): %v", s, err)
+		t.Fatalf("ParsePrefix: %v", err)
 	}
 	return p
 }
 
 func TestCandidatesLearnsTheNetworksBehindARouter(t *testing.T) {
-	local := []netip.Prefix{mustPrefix(t, "10.44.40.0/24")}
+	local := []netip.Prefix{transitNetwork(t)}
 
 	got := cidrs(learn.Candidates([]learn.Device{hospitalRouter()}, local))
 
@@ -94,6 +96,10 @@ func TestCandidatesRejectsWhatMustNeverBeSwept(t *testing.T) {
 		{"unusable mask", learn.Route{Destination: "10.7.0.0", Prefix: 0, Type: "remote"}},
 		{"not an address", learn.Route{Destination: "router-1", Prefix: 24, Type: "remote"}},
 		{"IPv6", learn.Route{Destination: "2001:db8::", Prefix: 64, Type: "remote"}},
+		// A unique-local IPv6 network answers "private" and sits inside the
+		// prefix bounds, so only the address family keeps it out of a sweep
+		// the scanner could never run.
+		{"IPv6 unique-local in range", learn.Route{Destination: "fd00::", Prefix: 24, Type: "remote"}},
 	}
 
 	for _, tc := range cases {
@@ -110,14 +116,14 @@ func TestCandidatesLearnsFromTheAddressTable(t *testing.T) {
 	dev := learn.Device{
 		IP: "10.44.40.1",
 		Addresses: []learn.Address{
-			{Address: "10.44.40.1", Prefix: 24},  // the transit network — already local
-			{Address: "10.44.80.1", Prefix: 24},  // a connected site network
-			{Address: "10.44.90.1", Prefix: 0},   // mask not readable: not a /0
-			{Address: "127.0.0.1", Prefix: 8},    // loopback
+			{Address: "10.44.40.1", Prefix: 24}, // the transit network — already local
+			{Address: "10.44.80.1", Prefix: 24}, // a connected site network
+			{Address: "10.44.90.1", Prefix: 0},  // mask not readable: not a /0
+			{Address: "127.0.0.1", Prefix: 8},   // loopback
 		},
 	}
 
-	got := cidrs(learn.Candidates([]learn.Device{dev}, []netip.Prefix{mustPrefix(t, "10.44.40.0/24")}))
+	got := cidrs(learn.Candidates([]learn.Device{dev}, []netip.Prefix{transitNetwork(t)}))
 
 	if want := []string{"10.44.80.0/24"}; !equalStrings(got, want) {
 		t.Errorf("Candidates() = %v, want %v", got, want)
@@ -188,7 +194,7 @@ func TestCandidatesSkipsWhatIsAlreadyCovered(t *testing.T) {
 		},
 	}
 
-	got := cidrs(learn.Candidates([]learn.Device{dev}, []netip.Prefix{mustPrefix(t, "10.44.40.0/24")}))
+	got := cidrs(learn.Candidates([]learn.Device{dev}, []netip.Prefix{transitNetwork(t)}))
 
 	if want := []string{"10.44.50.0/24"}; !equalStrings(got, want) {
 		t.Errorf("Candidates() = %v, want %v", got, want)
@@ -203,7 +209,7 @@ func TestCandidatesLearnsASupernetOfTheSweptNetwork(t *testing.T) {
 		Routes: []learn.Route{{Destination: "10.44.0.0", Prefix: 16, Type: "remote"}},
 	}
 
-	got := cidrs(learn.Candidates([]learn.Device{dev}, []netip.Prefix{mustPrefix(t, "10.44.40.0/24")}))
+	got := cidrs(learn.Candidates([]learn.Device{dev}, []netip.Prefix{transitNetwork(t)}))
 
 	if want := []string{"10.44.0.0/16"}; !equalStrings(got, want) {
 		t.Errorf("Candidates() = %v, want %v", got, want)
