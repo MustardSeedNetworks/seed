@@ -63,19 +63,39 @@ export function NeighbourCacheCard(): JSX.Element {
               <caption className="sr-only">{t('neighbours.tableCaption')}</caption>
               <thead>
                 <tr className="border-b border-surface-border text-text-muted">
-                  <th scope="col" className="px-cell py-row text-left w-[30%] truncate">
+                  <th
+                    scope="col"
+                    className="px-cell py-row text-left w-[30%] truncate"
+                    title={t('neighbours.address')}
+                  >
                     {t('neighbours.address')}
                   </th>
-                  <th scope="col" className="px-cell py-row text-left w-[26%] truncate">
+                  <th
+                    scope="col"
+                    className="px-cell py-row text-left w-[26%] truncate"
+                    title={t('neighbours.mac')}
+                  >
                     {t('neighbours.mac')}
                   </th>
-                  <th scope="col" className="px-cell py-row text-left w-[20%] truncate">
+                  <th
+                    scope="col"
+                    className="px-cell py-row text-left w-[20%] truncate"
+                    title={t('neighbours.vendor')}
+                  >
                     {t('neighbours.vendor')}
                   </th>
-                  <th scope="col" className="px-cell py-row text-left w-[12%] truncate">
+                  <th
+                    scope="col"
+                    className="px-cell py-row text-left w-[12%] truncate"
+                    title={t('neighbours.interface')}
+                  >
                     {t('neighbours.interface')}
                   </th>
-                  <th scope="col" className="px-cell py-row text-left w-[12%] truncate">
+                  <th
+                    scope="col"
+                    className="px-cell py-row text-left w-[12%] truncate"
+                    title={t('neighbours.state')}
+                  >
                     {t('neighbours.state')}
                   </th>
                 </tr>
@@ -86,21 +106,25 @@ export function NeighbourCacheCard(): JSX.Element {
                     key={`${entry.ip}-${entry.interface ?? ''}`}
                     className="border-b border-surface-border last:border-b-0"
                   >
-                    <td
-                      className={cn('px-cell py-row font-mono overflow-hidden', spacing.gap.tight)}
-                    >
-                      {/* The address truncates and the family tag does not:
-                          a clipped "IPv" tells the reader nothing, and it is
-                          the tag that makes the row scannable. */}
-                      <span className="truncate block" title={entry.ip}>
-                        {entry.ip}
-                      </span>
-                      {/* The family is on the row rather than inferred from the
-                          address, so an IPv4 and an IPv6 entry are
-                          distinguishable at a glance and by a screen reader. */}
-                      <span className="caption text-text-muted shrink-0">
-                        {entry.family === 'ipv6' ? 'IPv6' : 'IPv4'}
-                      </span>
+                    <td className="px-cell py-row font-mono">
+                      {/* A table cell is not a flex container, so the address
+                          and its tag need one: truncating the address makes it
+                          a block, which would otherwise drop the tag onto a
+                          second line and double the height of every row. */}
+                      <div className={cn('flex items-baseline', spacing.gap.tight)}>
+                        {/* The address truncates and the family tag does not:
+                            a clipped "IPv" tells the reader nothing, and it is
+                            the tag that makes the row scannable. */}
+                        <span className="truncate min-w-0" title={entry.ip}>
+                          {entry.ip}
+                        </span>
+                        {/* The family is on the row rather than inferred from the
+                            address, so an IPv4 and an IPv6 entry are
+                            distinguishable at a glance and by a screen reader. */}
+                        <span className="caption text-text-muted shrink-0">
+                          {entry.family === 'ipv6' ? 'IPv6' : 'IPv4'}
+                        </span>
+                      </div>
                     </td>
                     <td
                       className="px-cell py-row font-mono truncate"

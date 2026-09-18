@@ -156,19 +156,39 @@ function ServiceTable({ result }: { result: BrowseResult }): JSX.Element {
         <caption className="sr-only">{t('bonjour.tableCaption')}</caption>
         <thead>
           <tr className="border-b border-surface-border text-text-muted">
-            <th scope="col" className="px-cell py-row text-left w-[28%] truncate">
+            <th
+              scope="col"
+              className="px-cell py-row text-left w-[28%] truncate"
+              title={t('bonjour.instance')}
+            >
               {t('bonjour.instance')}
             </th>
-            <th scope="col" className="px-cell py-row text-left w-[24%] truncate">
+            <th
+              scope="col"
+              className="px-cell py-row text-left w-[24%] truncate"
+              title={t('bonjour.type')}
+            >
               {t('bonjour.type')}
             </th>
-            <th scope="col" className="px-cell py-row text-left w-[24%] truncate">
+            <th
+              scope="col"
+              className="px-cell py-row text-left w-[24%] truncate"
+              title={t('bonjour.host')}
+            >
               {t('bonjour.host')}
             </th>
-            <th scope="col" className="px-cell py-row text-left w-[10%] truncate">
+            <th
+              scope="col"
+              className="px-cell py-row text-left w-[10%] truncate"
+              title={t('bonjour.port')}
+            >
               {t('bonjour.port')}
             </th>
-            <th scope="col" className="px-cell py-row text-left w-[14%] truncate">
+            <th
+              scope="col"
+              className="px-cell py-row text-left w-[14%] truncate"
+              title={t('bonjour.origin')}
+            >
               {t('bonjour.origin')}
             </th>
           </tr>

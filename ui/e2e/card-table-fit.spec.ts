@@ -158,5 +158,20 @@ for (const width of [1280, 1440]) {
 
     const cut = tables.filter((t) => t.overflow > 0);
     expect(cut, `these card tables are cut off at ${width}px: ${JSON.stringify(cut)}`).toEqual([]);
+
+    // Fitting must not be bought with height. The neighbour address and its
+    // IPv4/IPv6 tag are one line: truncating the address needs a block or
+    // flex child, which is exactly the edit that silently wraps the tag onto
+    // a second line and doubles every row -- invisible to the width
+    // assertion above, and the opposite of what the density work wants.
+    const addressCell = page.locator('td').filter({ hasText: NEIGHBOURS.entries[1].ip }).first();
+    const address = await addressCell.locator('span').first().boundingBox();
+    const family = await addressCell.getByText('IPv6').boundingBox();
+    expect(address, 'the neighbour address span was not measurable').not.toBeNull();
+    expect(family, 'the address family tag was not measurable').not.toBeNull();
+    expect(
+      Math.abs((address?.y ?? 0) - (family?.y ?? 0)),
+      'the address family tag wrapped onto its own line',
+    ).toBeLessThan(4);
   });
 }
