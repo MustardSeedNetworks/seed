@@ -62,11 +62,13 @@ func lockDir(configPath string) string {
 // refuseIfDaemonOwns returns a *daemonRunningError when seed serve holds the
 // lock on the config's directory. `instead` says what to do about it.
 //
-// A probe that cannot be taken at all (an unwritable /etc/seed for a non-root
-// operator) fails open with a warning on stderr — never stdout, which carries
-// `credentials --json`. The guard is a courtesy that keeps a CLI from writing
-// under a live daemon; the durability guarantee is Config.Save's atomic
-// rename, not this.
+// A probe that cannot be read at all fails open with a warning on stderr —
+// never stdout, which carries `credentials --json`. The case is a root
+// daemon's 0600 lock record under /etc/seed read by an operator who is not
+// root; a directory with no lock file in it is simply free, because Probe
+// opens an existing record rather than creating one. The guard is a courtesy
+// that keeps a CLI from writing under a live daemon; the durability guarantee
+// is Config.Save's atomic rename, not this.
 func refuseIfDaemonOwns(configPath, instead string) error {
 	dir := lockDir(configPath)
 	info, held, err := instance.Probe(dir)
@@ -88,9 +90,9 @@ func guardConfigCommand(state *cliState, instead string) error {
 
 // guardLicenseCommand is the PreRunE for the license verbs that write
 // activation state. The license manager resolves its own directory from the
-// user's home and honours no --config flag, so the lock dir is resolved
-// without one rather than pretending the flag reaches it.
+// user's home and honors no --config flag, so the lock dir is resolved without
+// one rather than pretending the flag reaches it.
 func guardLicenseCommand() error {
 	return refuseIfDaemonOwns(paths.ResolveConfigPath("", paths.ModeAuto),
-		"Stop seed serve before changing the licence: the running daemon holds its activation state in memory and would not see the change.")
+		"Stop seed serve before changing the license: the running daemon holds its activation state in memory and would not see the change.")
 }

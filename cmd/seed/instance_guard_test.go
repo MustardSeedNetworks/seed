@@ -5,9 +5,11 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"net"
 	"os"
 	"os/exec"
 	"path/filepath"
+	"runtime"
 	"strconv"
 	"strings"
 	"testing"
@@ -144,6 +146,9 @@ func TestServeHoldsTheLockAndPublishesItsPort(t *testing.T) {
 	if testing.Short() {
 		t.Skip("starts a real daemon; -short skips it")
 	}
+	if runtime.GOOS == "windows" {
+		t.Skip("the built binary is seed.exe there and the daemon's signal handling differs")
+	}
 	bin := buildSeedBinary(t)
 
 	// The daemon writes certs/ and data/ relative to its working directory, so
@@ -152,6 +157,15 @@ func TestServeHoldsTheLockAndPublishesItsPort(t *testing.T) {
 	runDir := t.TempDir()
 	configPath := filepath.Join(runDir, "seed.json")
 	writeQuietConfig(t, configPath, 19443)
+
+	// Occupy the configured port so the daemon walks the +1..+9 fallback (#69).
+	// Publishing config.Server.Port instead of the bound one then shows up:
+	// that is the whole reason SetPort exists after Acquire.
+	blocker, listenErr := net.Listen("tcp", "127.0.0.1:19443")
+	if listenErr != nil {
+		t.Skipf("port 19443 is in use by something else: %v", listenErr)
+	}
+	t.Cleanup(func() { _ = blocker.Close() })
 
 	ctx, cancel := context.WithCancel(t.Context())
 	defer cancel()
@@ -164,9 +178,17 @@ func TestServeHoldsTheLockAndPublishesItsPort(t *testing.T) {
 		"XDG_STATE_HOME="+filepath.Join(runDir, "state"),
 		"XDG_CACHE_HOME="+filepath.Join(runDir, "cache"),
 	)
-	var daemonLog bytes.Buffer
-	cmd.Stdout = &daemonLog
-	cmd.Stderr = &daemonLog
+	// The child's output goes to a file rather than a bytes.Buffer: the copier
+	// goroutine writes it while a failing assertion would be reading it, and a
+	// data race reported instead of the real failure hides the cause.
+	logPath := filepath.Join(runDir, "daemon.log")
+	daemonLog, logErr := os.Create(logPath)
+	if logErr != nil {
+		t.Fatalf("create daemon log: %v", logErr)
+	}
+	t.Cleanup(func() { _ = daemonLog.Close() })
+	cmd.Stdout = daemonLog
+	cmd.Stderr = daemonLog
 	if err := cmd.Start(); err != nil {
 		t.Fatalf("start seed serve: %v", err)
 	}
@@ -176,14 +198,21 @@ func TestServeHoldsTheLockAndPublishesItsPort(t *testing.T) {
 	// is published seconds after the lock is taken, not with it.
 	exited := make(chan error, 1)
 	go func() { exited <- cmd.Wait() }()
-	info := awaitPublishedPort(t, runDir, &daemonLog, exited)
+	info := awaitPublishedPort(t, runDir, logPath, exited)
 
 	if info.PID != cmd.Process.Pid {
 		t.Errorf("lock reports pid %d; the daemon is %d", info.PID, cmd.Process.Pid)
 	}
-	if info.Port != 19443 {
-		t.Errorf("lock reports port %d; want 19443\n%s", info.Port, daemonLog.String())
+	if info.Port == 19443 {
+		t.Errorf("lock reports the CONFIGURED port %d; the daemon cannot have bound it", info.Port)
 	}
+	// The published port is one a client can reach, which is what a CLI
+	// refusal sends the operator to.
+	conn, dialErr := net.DialTimeout("tcp", net.JoinHostPort("127.0.0.1", strconv.Itoa(info.Port)), 5*time.Second)
+	if dialErr != nil {
+		t.Fatalf("nothing is listening on the published port %d: %v", info.Port, dialErr)
+	}
+	_ = conn.Close()
 
 	// And the guard reads what that daemon published, from this process.
 	err := refuseIfDaemonOwns(configPath, "use the API")
@@ -191,14 +220,15 @@ func TestServeHoldsTheLockAndPublishesItsPort(t *testing.T) {
 	if !errors.As(err, &held) {
 		t.Fatalf("guard returned %v; want a refusal while the daemon runs", err)
 	}
-	if !strings.Contains(held.Error(), "19443") || !strings.Contains(held.Error(), strconv.Itoa(cmd.Process.Pid)) {
+	if !strings.Contains(held.Error(), strconv.Itoa(info.Port)) ||
+		!strings.Contains(held.Error(), strconv.Itoa(cmd.Process.Pid)) {
 		t.Errorf("refusal %q does not name the running daemon's pid and port", held.Error())
 	}
 }
 
 // awaitPublishedPort polls the lock until the daemon has bound and published,
 // rather than sleeping a guessed interval.
-func awaitPublishedPort(t *testing.T, dir string, daemonLog *bytes.Buffer, exited <-chan error) instance.Info {
+func awaitPublishedPort(t *testing.T, dir, logPath string, exited <-chan error) instance.Info {
 	t.Helper()
 	deadline := time.Now().Add(90 * time.Second)
 	for time.Now().Before(deadline) {
@@ -211,12 +241,21 @@ func awaitPublishedPort(t *testing.T, dir string, daemonLog *bytes.Buffer, exite
 		}
 		select {
 		case waitErr := <-exited:
-			t.Fatalf("daemon exited before publishing a port (%v)\n%s", waitErr, daemonLog.String())
+			t.Fatalf("daemon exited before publishing a port (%v)\n%s", waitErr, readLog(logPath))
 		case <-time.After(200 * time.Millisecond):
 		}
 	}
-	t.Fatalf("daemon did not publish a port within the deadline\n%s", daemonLog.String())
+	t.Fatalf("daemon did not publish a port within the deadline\n%s", readLog(logPath))
 	return instance.Info{}
+}
+
+// readLog returns the daemon's output for a failure message.
+func readLog(path string) string {
+	out, err := os.ReadFile(path)
+	if err != nil {
+		return "(daemon log unreadable: " + err.Error() + ")"
+	}
+	return string(out)
 }
 
 // buildSeedBinary builds the binary under test once for this test.
@@ -241,5 +280,40 @@ func writeQuietConfig(t *testing.T, path string, port int) {
 }`, port)
 	if err := os.WriteFile(path, []byte(cfg), 0o600); err != nil {
 		t.Fatalf("write config: %v", err)
+	}
+}
+
+// TestProbeFailureFailsOpen pins the decision that an unreadable lock
+// directory does not take the CLI down with it: on a packaged install
+// /etc/seed is not writable by an operator who is not root, and a probe that
+// cannot be taken is not evidence a daemon is running. The durability
+// guarantee is Config.Save's atomic rename; this guard is a courtesy.
+func TestProbeFailureFailsOpen(t *testing.T) {
+	if runtime.GOOS == "windows" {
+		t.Skip("a directory chmod does not make it unwritable there")
+	}
+	if os.Geteuid() == 0 {
+		t.Skip("root ignores the directory mode")
+	}
+
+	// Probe opens an EXISTING lock file and reports "free" when there is none,
+	// so the case that actually errors is a lock file this user cannot open —
+	// a root daemon's 0600 record under /etc/seed, read by an operator.
+	dir := t.TempDir()
+	lockPath := filepath.Join(dir, instance.LockFileName)
+	if err := os.WriteFile(lockPath, make([]byte, 64), 0o600); err != nil {
+		t.Fatalf("seed a lock file: %v", err)
+	}
+	if err := os.Chmod(lockPath, 0o000); err != nil {
+		t.Fatalf("chmod: %v", err)
+	}
+	t.Cleanup(func() { _ = os.Chmod(lockPath, 0o600) })
+
+	if _, _, err := instance.Probe(dir); err == nil {
+		t.Fatal("probe succeeded on an unwritable directory; the premise of this test is gone")
+	}
+
+	if err := refuseIfDaemonOwns(filepath.Join(dir, "seed.json"), "use the API"); err != nil {
+		t.Errorf("guard refused on an unprobeable directory: %v", err)
 	}
 }
