@@ -78,20 +78,21 @@ for (const [name, viewport] of [
     test.beforeEach(async ({ page }) => {
       await disableAnimations(page);
       await page.setViewportSize(viewport);
-      await page.goto('/link', { waitUntil: 'domcontentloaded' });
-      await expect(page.getByTestId('page-header-title')).toBeVisible({ timeout: 20000 });
     });
 
-    test('renders no bar above the page header, and one product mark, on every route', async ({
-      page,
-    }) => {
-      for (const route of ROUTES) {
+    // A test per route rather than one loop: eleven webkit navigations do not
+    // fit the suite's 30s per-test budget, and a per-route name says which
+    // route broke.
+    for (const route of ROUTES) {
+      test(`${route} renders no bar above the page header, and one product mark`, async ({
+        page,
+      }) => {
         await page.goto(route, { waitUntil: 'domcontentloaded' });
         await expect(page.getByTestId('page-header-title')).toBeVisible({ timeout: 20000 });
-        await expect(page.locator('#main-content header'), route).toHaveCount(0);
-        expect(await onScreenMarkCount(page, viewport), route).toBe(1);
-      }
-    });
+        await expect(page.locator('#main-content header')).toHaveCount(0);
+        expect(await onScreenMarkCount(page, viewport)).toBe(1);
+      });
+    }
   });
 }
 
