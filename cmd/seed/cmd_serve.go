@@ -13,6 +13,8 @@ import (
 
 	"github.com/spf13/cobra"
 
+	"github.com/MustardSeedNetworks/foundation/pkg/instance"
+
 	api "github.com/MustardSeedNetworks/seed/internal/api"
 	"github.com/MustardSeedNetworks/seed/internal/app"
 	"github.com/MustardSeedNetworks/seed/internal/auth"
@@ -64,6 +66,21 @@ func runServe(_ *cobra.Command, _ []string, state *cliState) {
 	// Resolve config path using paths package
 	configPath := paths.ResolveConfigPath(state.cfgFile, paths.ModeAuto)
 
+	// Take the single-instance lock before anything is opened. A second daemon
+	// on the same install does NOT collide on the port — the +1..+9 fallback
+	// (#69) hands it a neighbour — so it would otherwise open the same config
+	// and the same SQLite file underneath the first one.
+	lock, lockErr := instance.Acquire(lockDir(configPath))
+	if lockErr != nil {
+		if held, ok := errors.AsType[*instance.HeldError](lockErr); ok {
+			fmt.Fprintf(os.Stderr, "Error: %v\n", held)
+			os.Exit(exitDaemonRunning)
+		}
+		fmt.Fprintf(os.Stderr, "Error: could not take the single-instance lock: %v\n", lockErr)
+		os.Exit(1)
+	}
+	defer func() { _ = lock.Release() }()
+
 	icmpAvailable := checkICMPCapabilities()
 	cfg := loadAndConfigureConfig(configPath)
 	logPath := setupLogging(cfg)
@@ -83,6 +100,13 @@ func runServe(_ *cobra.Command, _ []string, state *cliState) {
 	components := initializeBackgroundComponents(cfg, db)
 
 	server := api.NewServer(cfg, configPath, logPath, netMgr, icmpAvailable, proxies, db, components)
+	// Publish the port the listener settled on, so `seed license` and friends
+	// can name it when they refuse.
+	server.SetBoundPortObserver(func(port int) {
+		if err := lock.SetPort(port); err != nil {
+			logging.GetLogger().Warn("Could not record the listening port on the instance lock", "error", err)
+		}
+	})
 	runServerWithShutdown(server, cfg, components)
 }
 

@@ -39,6 +39,9 @@ interactive setup.`,
 
   # Also rotate the JWT secret (forces all sessions to log in again)
   seed setup-wizard --generate-password --reset-jwt`,
+		PreRunE: func(_ *cobra.Command, _ []string) error {
+			return guardConfigCommand(state, insteadOfSetupWizard)
+		},
 		Run: func(cmd *cobra.Command, args []string) {
 			runSetup(cmd, args, state)
 		},

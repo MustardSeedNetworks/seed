@@ -147,6 +147,9 @@ type Server struct {
 	httpServer *http.Server
 	mux        *http.ServeMux
 
+	// boundPort receives the port startHTTPS bound (the +1..+9 fallback, #69).
+	boundPort func(int)
+
 	// manifest records every route registered through register() (the
 	// capability registry, ADR-0002). Exposed read-only via /__capabilities
 	// for fleet policy audits.
