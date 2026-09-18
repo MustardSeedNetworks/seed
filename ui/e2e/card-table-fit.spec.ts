@@ -167,11 +167,16 @@ for (const width of [1280, 1440]) {
     const addressCell = page.locator('td').filter({ hasText: NEIGHBOURS.entries[1].ip }).first();
     const address = await addressCell.locator('span').first().boundingBox();
     const family = await addressCell.getByText('IPv6').boundingBox();
-    expect(address, 'the neighbour address span was not measurable').not.toBeNull();
-    expect(family, 'the address family tag was not measurable').not.toBeNull();
+    if (!address || !family) {
+      throw new Error('the neighbour address or its family tag was not measurable');
+    }
+    // Overlapping boxes, not a tolerance on their tops: the two spans are
+    // baseline-aligned at different type sizes, so their tops legitimately
+    // differ (3 px here) by an amount that is a font metric and varies by
+    // engine. Overlap says "same line" directly and cannot drift.
     expect(
-      Math.abs((address?.y ?? 0) - (family?.y ?? 0)),
-      'the address family tag wrapped onto its own line',
-    ).toBeLessThan(4);
+      family.y < address.y + address.height && address.y < family.y + family.height,
+      `the address family tag wrapped onto its own line: address ${JSON.stringify(address)}, tag ${JSON.stringify(family)}`,
+    ).toBe(true);
   });
 }
