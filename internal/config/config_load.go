@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"runtime"
 	"strconv"
 
 	"github.com/MustardSeedNetworks/seed/internal/logging"
@@ -115,8 +116,75 @@ func (c *Config) Save(path string) error {
 	if err != nil {
 		return fmt.Errorf("marshal config JSON: %w", err)
 	}
-	if writeErr := os.WriteFile(path, data, configFileMode); writeErr != nil {
+	return writeFileAtomically(path, data, configFileMode)
+}
+
+// writeFileAtomically replaces path with data through a scratch file in the
+// same directory, so a crash or a full disk mid-save leaves the previous
+// config exactly as it was (seed#2747). [os.WriteFile] truncates first, which
+// both loses the old document before the new one is complete and lets a
+// concurrent reader — Load, or an operator's editor — see an empty file.
+//
+// The cost is that the save now needs a writable directory rather than only a
+// writable file. Every path Seed writes is one the writer owns: the packaged
+// daemon owns /etc/seed (0750 seed:seed, listed in the unit's ReadWritePaths)
+// and the CLI writes under the user's own XDG directory.
+func writeFileAtomically(path string, data []byte, mode os.FileMode) error {
+	// A symlinked config is replaced through its target, so the scratch file
+	// lands on the same filesystem as the file rename will replace and the
+	// operator's link survives — behaviour [os.WriteFile] had for free.
+	target := path
+	if resolved, err := filepath.EvalSymlinks(path); err == nil {
+		target = resolved
+	}
+
+	dir := filepath.Dir(target)
+	tmp, err := os.CreateTemp(dir, "."+filepath.Base(target)+".tmp-*")
+	if err != nil {
+		return fmt.Errorf("create temp config file: %w", err)
+	}
+	tmpPath := tmp.Name()
+	defer func() {
+		// Both are no-ops once the rename has succeeded: the handle is closed
+		// and tmpPath no longer names a file.
+		_ = tmp.Close()
+		_ = os.Remove(tmpPath)
+	}()
+
+	if _, writeErr := tmp.Write(data); writeErr != nil {
 		return fmt.Errorf("write config file: %w", writeErr)
+	}
+	if chmodErr := tmp.Chmod(mode); chmodErr != nil {
+		return fmt.Errorf("set config file mode: %w", chmodErr)
+	}
+	// Without this the rename can be durable while the bytes it points at are
+	// not, which is the crash this change exists to survive.
+	if syncErr := tmp.Sync(); syncErr != nil {
+		return fmt.Errorf("sync config file: %w", syncErr)
+	}
+	if closeErr := tmp.Close(); closeErr != nil {
+		return fmt.Errorf("close config file: %w", closeErr)
+	}
+	if renameErr := os.Rename(tmpPath, target); renameErr != nil {
+		return fmt.Errorf("replace config file: %w", renameErr)
+	}
+	return syncDir(dir)
+}
+
+// syncDir makes the rename itself durable.
+func syncDir(dir string) error {
+	if runtime.GOOS == "windows" {
+		// Windows cannot open a directory as a file to fsync it; NTFS orders
+		// the rename's metadata itself.
+		return nil
+	}
+	d, err := os.Open(dir)
+	if err != nil {
+		return fmt.Errorf("open config directory: %w", err)
+	}
+	defer func() { _ = d.Close() }()
+	if syncErr := d.Sync(); syncErr != nil {
+		return fmt.Errorf("sync config directory: %w", syncErr)
 	}
 	return nil
 }
