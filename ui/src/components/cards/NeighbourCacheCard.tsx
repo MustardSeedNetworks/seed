@@ -88,12 +88,13 @@ export function NeighbourCacheCard(): JSX.Element {
                   >
                     <td
                       className={cn('px-cell py-row font-mono overflow-hidden', spacing.gap.tight)}
-                      title={entry.ip}
                     >
                       {/* The address truncates and the family tag does not:
                           a clipped "IPv" tells the reader nothing, and it is
                           the tag that makes the row scannable. */}
-                      <span className="truncate block">{entry.ip}</span>
+                      <span className="truncate block" title={entry.ip}>
+                        {entry.ip}
+                      </span>
                       {/* The family is on the row rather than inferred from the
                           address, so an IPv4 and an IPv6 entry are
                           distinguishable at a glance and by a screen reader. */}
