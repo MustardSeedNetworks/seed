@@ -411,6 +411,32 @@ func applyActiveInterface(
 	}
 }
 
+// gracefulServer is the drain half of api.Server, taken as an interface so the
+// shutdown order below is testable without standing up a real server.
+type gracefulServer interface {
+	Shutdown(ctx context.Context) error
+}
+
+// stopServing drains the HTTP server and only then stops the background
+// components (#2748). The other way round — which is what this did until the
+// drain was moved ahead of it — takes the report scheduler, the Wi-Fi loops and
+// the outbox relay away from requests that are still in flight when SIGTERM
+// arrives. A failed drain is reported and the components are stopped anyway:
+// leaving them running would leak the goroutines the drain was protecting.
+func stopServing(ctx context.Context, server gracefulServer, stopComponents func() error) {
+	if err := server.Shutdown(ctx); err != nil {
+		logging.GetLogger().ErrorContext(ctx, "Error during shutdown", "error", err)
+	}
+
+	if stopComponents == nil {
+		return
+	}
+	logging.GetLogger().InfoContext(ctx, "Stopping components...")
+	if err := stopComponents(); err != nil {
+		logging.GetLogger().ErrorContext(ctx, "Error stopping components", "error", err)
+	}
+}
+
 // runServerWithShutdown starts the server and handles graceful shutdown.
 func runServerWithShutdown(server *api.Server, cfg *config.Config, components *api.BackgroundComponents) {
 	// Start components
@@ -452,17 +478,11 @@ func runServerWithShutdown(server *api.Server, cfg *config.Config, components *a
 		shutdownCtx, cancel := context.WithTimeout(context.Background(), shutdownTimeoutSeconds*time.Second)
 		defer cancel()
 
-		// Stop components first
+		var stopComponents func() error
 		if components != nil {
-			logging.GetLogger().Info("Stopping components...")
-			if err := components.Stop(); err != nil {
-				logging.GetLogger().Error("Error stopping components", "error", err)
-			}
+			stopComponents = components.Stop
 		}
-
-		if err := server.Shutdown(shutdownCtx); err != nil {
-			logging.GetLogger().Error("Error during shutdown", "error", err)
-		}
+		stopServing(shutdownCtx, server, stopComponents)
 	}
 
 	logging.GetLogger().Info("Seed stopped")

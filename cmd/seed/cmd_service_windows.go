@@ -123,20 +123,16 @@ func (p *seedProgram) run() {
 	case <-p.stopChan:
 		logging.GetLogger().Info("Service stop requested, shutting down...")
 
-		// Stop components first
-		if p.components != nil {
-			logging.GetLogger().Info("Stopping components...")
-			if err := p.components.Stop(); err != nil {
-				logging.GetLogger().Error("Error stopping components", "error", err)
-			}
-		}
-
 		shutdownCtx, cancel := context.WithTimeout(context.Background(), serviceStopTimeout)
 		defer cancel()
 
-		if err := p.server.Shutdown(shutdownCtx); err != nil {
-			logging.GetLogger().Error("Error during shutdown", "error", err)
+		// The service carried its own copy of the shutdown sequence, with the
+		// same wrong order runServerWithShutdown had (#2748). One seam now.
+		var stopComponents func() error
+		if p.components != nil {
+			stopComponents = p.components.Stop
 		}
+		stopServing(shutdownCtx, p.server, stopComponents)
 	}
 
 	logging.GetLogger().Info("Seed service stopped")
