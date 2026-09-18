@@ -59,7 +59,7 @@ describe('GatedPreview', () => {
   it('names the tier the licence policy grants the feature in', async () => {
     renderGate([]);
 
-    await waitFor(() => expect(screen.getByText('Path Analysis is a Pro feature')).toBeVisible());
+    await waitFor(() => expect(screen.getByText('Pro feature: Path Analysis')).toBeVisible());
   });
 
   it('takes the sample out of the tab order and the accessibility tree', async () => {

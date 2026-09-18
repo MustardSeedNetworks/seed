@@ -44,7 +44,7 @@
     "currentTier": "Nivel actual: {{tier}}",
     "loading": "Verificando licencia…",
     "gated": {
-      "title": "{{feature}} es una función del nivel {{tier}}",
+      "title": "Función del nivel {{tier}}: {{feature}}",
       "sampleLabel": "Datos de ejemplo: esto es lo que muestra la página cuando la función está licenciada.",
       "actions": "Inicie una prueba Pro de 14 días con <code>seed license trial</code> o active una clave {{tier}} con <code2>seed license activate -k <KEY></code2>.",
       "features": {

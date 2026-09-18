@@ -66,7 +66,7 @@ describe('ReportsPage — real locale copy', () => {
   it('pitches the feature and both ways out of the gate in English', async () => {
     await renderIn('en');
 
-    expect(screen.getByText('Reports is a Starter feature')).toBeVisible();
+    expect(screen.getByText('Starter feature: Reports')).toBeVisible();
     expect(screen.getByText(/Generate executive summaries and device inventories/)).toBeVisible();
     expect(screen.getByText('seed license trial')).toBeVisible();
     expect(screen.getByText('seed license activate -k <KEY>')).toBeVisible();
@@ -84,8 +84,8 @@ describe('ReportsPage — real locale copy', () => {
   it('renders the pitch in Spanish, with the commands still verbatim', async () => {
     await renderIn('es');
 
-    expect(screen.queryByText('Reports is a Starter feature')).toBeNull();
-    expect(screen.getByText('Informes es una función del nivel Starter')).toBeVisible();
+    expect(screen.queryByText('Starter feature: Reports')).toBeNull();
+    expect(screen.getByText('Función del nivel Starter: Informes')).toBeVisible();
     expect(
       screen.getByText(/Genere resúmenes ejecutivos e inventarios de dispositivos/),
     ).toBeVisible();

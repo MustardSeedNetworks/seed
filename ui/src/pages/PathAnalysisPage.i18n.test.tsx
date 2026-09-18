@@ -81,7 +81,7 @@ describe('PathAnalysisPage — real locale copy', () => {
   it('pitches the feature and both ways out of the gate in English', async () => {
     await renderIn('en');
 
-    expect(screen.getByText('Path Analysis is a Pro feature')).toBeVisible();
+    expect(screen.getByText('Pro feature: Path Analysis')).toBeVisible();
     expect(screen.getByText(/Trace a path hop by hop across both layers/)).toBeVisible();
     expect(screen.getByText('seed license trial')).toBeVisible();
     expect(screen.getByText('seed license activate -k <KEY>')).toBeVisible();
@@ -100,8 +100,8 @@ describe('PathAnalysisPage — real locale copy', () => {
   it('renders the pitch in Spanish, with the commands still verbatim', async () => {
     await renderIn('es');
 
-    expect(screen.queryByText('Path Analysis is a Pro feature')).toBeNull();
-    expect(screen.getByText('Análisis de rutas es una función del nivel Pro')).toBeVisible();
+    expect(screen.queryByText('Pro feature: Path Analysis')).toBeNull();
+    expect(screen.getByText('Función del nivel Pro: Análisis de rutas')).toBeVisible();
     expect(screen.getByText(/Rastree una ruta salto a salto/)).toBeVisible();
     // The two <code> children of the <Trans> are shell commands, not copy.
     expect(screen.getByText('seed license trial')).toBeVisible();

@@ -35,7 +35,7 @@ test.describe('Reports Page', () => {
     // assertion can never be hijacked by sidebar nav labels — the prior
     // text-regex `.first()` was brittle that way.
     await expect(page.getByRole('main').getByTestId('gated-pitch')).toContainText(
-      'Reports is a Starter feature',
+      'Starter feature: Reports',
       { timeout: 5000 },
     );
   });

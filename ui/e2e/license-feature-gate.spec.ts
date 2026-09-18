@@ -92,8 +92,8 @@ test.describe('licence feature gate', () => {
   // Every route the UI gates as a whole page, with what the sample must show.
   // A page that renders the pitch over an empty body is the defect #2669 fixed.
   const GATED_ROUTES = [
-    { path: '/path', pitch: 'Path Analysis is a Pro feature', sample: '203.0.113.24' },
-    { path: '/reports', pitch: 'Reports is a Starter feature', sample: 'Executive summary' },
+    { path: '/path', pitch: 'Pro feature: Path Analysis', sample: '203.0.113.24' },
+    { path: '/reports', pitch: 'Starter feature: Reports', sample: 'Executive summary' },
   ] as const;
 
   for (const { path, pitch, sample } of GATED_ROUTES) {

@@ -44,7 +44,7 @@
     "currentTier": "Current tier: {{tier}}",
     "loading": "Checking license…",
     "gated": {
-      "title": "{{feature}} is a {{tier}} feature",
+      "title": "{{tier}} feature: {{feature}}",
       "sampleLabel": "Sample data — this is what the page shows once the feature is licensed.",
       "actions": "Start a 14-day Pro trial with <code>seed license trial</code>, or activate a {{tier}} key with <code2>seed license activate -k <KEY></code2>.",
       "features": {
