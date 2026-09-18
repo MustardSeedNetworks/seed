@@ -115,23 +115,57 @@ func (s *Server) rescanAfterLinkUp() {
 	}()
 }
 
-// Shutdown gracefully shuts down the server (fixes #515, #524).
+// Shutdown gracefully shuts down the server (fixes #515, #524, #2748).
+//
+// The order is the point. Everything stopServices tears down — the engines,
+// the job substrate, the database handle — is something a request still in a
+// handler may be using, so the HTTP server is drained first and the teardown
+// runs against a server with no live requests left on it.
 func (s *Server) Shutdown(ctx context.Context) error {
 	logging.GetLogger().InfoContext(ctx, "Shutting down server...")
 
+	// The SSE hub goes first, ahead of the drain rather than with the rest of
+	// the teardown: an SSE handler parks on its client channel until the hub
+	// closes it, so with one browser tab open the drain below would otherwise
+	// wait out its whole deadline (#2553 made those routes actually stream).
+	logging.GetLogger().InfoContext(ctx, "Stopping SSE hub...")
+	if hub := s.sseHub(); hub != nil {
+		hub.Shutdown()
+	}
+
+	drainErr := s.drainHTTP(ctx)
+
+	s.stopServices(ctx)
+
+	return drainErr
+}
+
+// drainHTTP waits for the in-flight requests to finish, bounded by ctx.
+func (s *Server) drainHTTP(ctx context.Context) error {
+	logging.GetLogger().InfoContext(ctx, "Draining in-flight requests...")
+	if err := s.httpServer.Shutdown(ctx); err != nil {
+		return fmt.Errorf("drain http server: %w", err)
+	}
+	return nil
+}
+
+// stopServices tears down everything the handlers depend on. It runs after the
+// drain and never returns early: a drain that timed out must not leave the
+// background goroutines and the database handle behind it running.
+func (s *Server) stopServices(ctx context.Context) {
 	if err := s.stopWiFiHelper(); err != nil {
 		logging.GetLogger().WarnContext(ctx, "Failed to close Wi-Fi helper socket", "error", err)
 	}
 
-	// Stop all services (fixes #524 - services will complete gracefully)
-	logging.GetLogger().InfoContext(ctx, "Stopping SSE hub...")
-	s.sseHub().Shutdown()
+	if mon := s.linkMonitor(); mon != nil {
+		logging.GetLogger().InfoContext(ctx, "Stopping link monitor...")
+		mon.Stop()
+	}
 
-	logging.GetLogger().InfoContext(ctx, "Stopping link monitor...")
-	s.linkMonitor().Stop()
-
-	logging.GetLogger().InfoContext(ctx, "Stopping discovery service...")
-	s.discoveryService().Stop()
+	if disc := s.discoveryService(); disc != nil {
+		logging.GetLogger().InfoContext(ctx, "Stopping discovery service...")
+		disc.Stop()
+	}
 
 	// Stop every engine registered with the lifecycle registry
 	// (probe, retention, snmp-poller, listeners, …) in reverse
@@ -154,9 +188,11 @@ func (s *Server) Shutdown(ctx context.Context) error {
 
 	s.drainJobSubstrate(ctx)
 
-	logging.GetLogger().InfoContext(ctx, "Stopping host health sampler...")
-	if err := s.health.Close(); err != nil {
-		logging.GetLogger().WarnContext(ctx, "Failed to stop host health sampler", "error", err)
+	if s.health != nil {
+		logging.GetLogger().InfoContext(ctx, "Stopping host health sampler...")
+		if err := s.health.Close(); err != nil {
+			logging.GetLogger().WarnContext(ctx, "Failed to stop host health sampler", "error", err)
+		}
 	}
 
 	logging.GetLogger().InfoContext(ctx, "Stopping rate limiters...")
@@ -183,13 +219,6 @@ func (s *Server) Shutdown(ctx context.Context) error {
 			logging.GetLogger().ErrorContext(ctx, "Error closing database", "error", err)
 		}
 	}
-
-	// Shutdown main HTTP server
-	logging.GetLogger().InfoContext(ctx, "Shutting down main HTTP server...")
-	if err := s.httpServer.Shutdown(ctx); err != nil {
-		return fmt.Errorf("shutdown main server: %w", err)
-	}
-	return nil
 }
 
 // drainJobSubstrate gracefully closes the async job runner and the in-process

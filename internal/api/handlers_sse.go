@@ -163,6 +163,18 @@ func (h *SSEHub) handleShutdown() {
 	h.mu.Unlock()
 }
 
+// unregisterClient removes a client from the hub. Run() is the only reader of
+// the unregister channel and it returns once the hub is shut down, so the send
+// is raced against that signal: after a shutdown every client has already been
+// closed and an unmatched send would park the SSE handler for ever, holding the
+// HTTP drain open until its deadline (#2748).
+func (h *SSEHub) unregisterClient(client *SSEClient) {
+	select {
+	case h.unregister <- client:
+	case <-h.shutdown:
+	}
+}
+
 // Shutdown stops the SSE hub.
 func (h *SSEHub) Shutdown() {
 	h.mu.Lock()
@@ -291,7 +303,7 @@ func (s *Server) handleSSE(w http.ResponseWriter, r *http.Request) {
 	// Ensure client is unregistered on exit
 	defer func() {
 		close(client.done)
-		s.sseHub().unregister <- client
+		s.sseHub().unregisterClient(client)
 	}()
 
 	// Send initial state
