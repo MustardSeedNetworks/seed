@@ -262,3 +262,27 @@ func TestShutdownTearsDownEvenWhenTheDrainTimesOut(t *testing.T) {
 		t.Error("database is still open after a timed-out drain: the teardown was skipped")
 	}
 }
+
+// TestRegisterClientGivesUpAfterTheHubStops is unregisterClient's twin. The
+// register channel is unbuffered with Run() as its only reader too, so an SSE
+// request accepted just before the hub stops would park here and hold the drain
+// open for the whole deadline.
+func TestRegisterClientGivesUpAfterTheHubStops(t *testing.T) {
+	hub := NewSSEHub()
+	go hub.Run()
+	hub.Shutdown()
+
+	registered := make(chan bool, 1)
+	go func() {
+		registered <- hub.registerClient(hub.newClient())
+	}()
+
+	select {
+	case took := <-registered:
+		if took {
+			t.Error("registerClient = true after the hub stopped, want false")
+		}
+	case <-time.After(shutdownDrainTimeout):
+		t.Fatal("registerClient blocked after the hub stopped")
+	}
+}
