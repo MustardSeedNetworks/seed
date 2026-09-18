@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.214.74](https://github.com/MustardSeedNetworks/seed/compare/v0.214.73...v0.214.74) (2026-09-18)
+
+
+### Bug Fixes
+
+* **shutdown:** drain HTTP before tearing down services ([#2748](https://github.com/MustardSeedNetworks/seed/issues/2748)) ([#2778](https://github.com/MustardSeedNetworks/seed/issues/2778)) ([13a3ad6](https://github.com/MustardSeedNetworks/seed/commit/13a3ad612a0348fc6a42dca612086dbc316d1b60))
+
+
+### Miscellaneous
+
+* **deps:** update dependency @babel/core to v8.0.5 ([#2758](https://github.com/MustardSeedNetworks/seed/issues/2758)) ([f6ff7f7](https://github.com/MustardSeedNetworks/seed/commit/f6ff7f7c3cfe74a6987dab7f141f0293819932a8))
+
 ## [0.214.73](https://github.com/MustardSeedNetworks/seed/compare/v0.214.72...v0.214.73) (2026-09-18)
 
 
