@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.214.72](https://github.com/MustardSeedNetworks/seed/compare/v0.214.71...v0.214.72) (2026-09-18)
+
+
+### Bug Fixes
+
+* **config:** replace the config atomically instead of truncating it ([#2771](https://github.com/MustardSeedNetworks/seed/issues/2771)) ([1cc5e5f](https://github.com/MustardSeedNetworks/seed/commit/1cc5e5f92809b4cb75151e0ee3bde840a5fc331c))
+* **ui:** fit the neighbour and Bonjour card tables to their card ([#2770](https://github.com/MustardSeedNetworks/seed/issues/2770)) ([96307a9](https://github.com/MustardSeedNetworks/seed/commit/96307a94119188a4a3ef115a5958958b74b32a40))
+
 ## [0.214.71](https://github.com/MustardSeedNetworks/seed/compare/v0.214.70...v0.214.71) (2026-09-18)
 
 
