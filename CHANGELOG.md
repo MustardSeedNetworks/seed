@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.214.73](https://github.com/MustardSeedNetworks/seed/compare/v0.214.72...v0.214.73) (2026-09-18)
+
+
+### Features
+
+* **cli:** take the single-instance lock in serve and refuse daemon-owned CLI writes ([#2774](https://github.com/MustardSeedNetworks/seed/issues/2774)) ([780acff](https://github.com/MustardSeedNetworks/seed/commit/780acff3870979ee6c6a123c1e98e3145b5f4018))
+
+
+### Miscellaneous
+
+* **deps:** update dependency fast-uri to v4.1.5 ([#2775](https://github.com/MustardSeedNetworks/seed/issues/2775)) ([92a0d56](https://github.com/MustardSeedNetworks/seed/commit/92a0d56a8af88222c267e75acc257b19b4f267b9))
+
 ## [0.214.72](https://github.com/MustardSeedNetworks/seed/compare/v0.214.71...v0.214.72) (2026-09-18)
 
 
