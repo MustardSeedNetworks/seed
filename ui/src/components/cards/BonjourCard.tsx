@@ -91,6 +91,9 @@ export function BonjourCard(): JSX.Element {
       icon={<Network className="w-4 h-4" />}
       status={cardStatus}
       ariaLabel={t('bonjour.title')}
+      // See NeighbourCacheCard: a service table needs more than a quarter
+      // of a 4-up grid (#2708).
+      className="sm:col-span-2"
     >
       <div className="stack-sm">
         <p className="caption text-text-muted">{t('bonjour.description')}</p>
@@ -147,24 +150,45 @@ function ServiceTable({ result }: { result: BrowseResult }): JSX.Element {
   }
 
   return (
-    <div className={cn('overflow-x-auto', radius.default, 'border border-surface-border')}>
-      <table className="w-full body-small">
+    // See NeighbourCacheCard: table-fixed, not overflow-x-auto (#2708).
+    <div className={cn(radius.default, 'border border-surface-border')}>
+      <table className="w-full table-fixed body-small">
         <caption className="sr-only">{t('bonjour.tableCaption')}</caption>
         <thead>
           <tr className="border-b border-surface-border text-text-muted">
-            <th scope="col" className="px-cell py-row text-left">
+            <th
+              scope="col"
+              className="px-cell py-row text-left w-[28%] truncate"
+              title={t('bonjour.instance')}
+            >
               {t('bonjour.instance')}
             </th>
-            <th scope="col" className="px-cell py-row text-left">
+            <th
+              scope="col"
+              className="px-cell py-row text-left w-[24%] truncate"
+              title={t('bonjour.type')}
+            >
               {t('bonjour.type')}
             </th>
-            <th scope="col" className="px-cell py-row text-left">
+            <th
+              scope="col"
+              className="px-cell py-row text-left w-[24%] truncate"
+              title={t('bonjour.host')}
+            >
               {t('bonjour.host')}
             </th>
-            <th scope="col" className="px-cell py-row text-left">
+            <th
+              scope="col"
+              className="px-cell py-row text-left w-[10%] truncate"
+              title={t('bonjour.port')}
+            >
               {t('bonjour.port')}
             </th>
-            <th scope="col" className="px-cell py-row text-left">
+            <th
+              scope="col"
+              className="px-cell py-row text-left w-[14%] truncate"
+              title={t('bonjour.origin')}
+            >
               {t('bonjour.origin')}
             </th>
           </tr>
@@ -175,16 +199,20 @@ function ServiceTable({ result }: { result: BrowseResult }): JSX.Element {
               key={`${service.instance}.${service.type}`}
               className="border-b border-surface-border last:border-0"
             >
-              <td className="px-cell py-row">{service.instance}</td>
-              <td className="px-cell py-row font-mono">{service.type}</td>
-              <td className="px-cell py-row font-mono">
+              <td className="px-cell py-row truncate" title={service.instance}>
+                {service.instance}
+              </td>
+              <td className="px-cell py-row font-mono truncate" title={service.type}>
+                {service.type}
+              </td>
+              <td className="px-cell py-row font-mono truncate" title={service.host ?? undefined}>
                 {service.host ?? t('bonjour.hostUnknown')}
               </td>
-              <td className="px-cell py-row font-mono">
+              <td className="px-cell py-row font-mono truncate">
                 {/* A zero port means no SRV record was seen, not port 0. */}
                 {service.port === 0 ? t('bonjour.portUnknown') : service.port}
               </td>
-              <td className="px-cell py-row">{originLabel(t, service.origin)}</td>
+              <td className="px-cell py-row truncate">{originLabel(t, service.origin)}</td>
             </tr>
           ))}
         </tbody>
