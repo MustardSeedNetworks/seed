@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"os"
 	"path/filepath"
+	"runtime"
 	"strings"
 	"sync"
 	"testing"
@@ -16,6 +17,10 @@ import (
 // A plain [os.WriteFile] truncates the file before it writes, so a concurrent
 // Load lands in that window and fails to parse.
 func TestSaveIsNeverObservedPartial(t *testing.T) {
+	// Windows replaces through MoveFileEx, where a reader can be refused the
+	// file outright rather than shown a short one; that is a different
+	// question from the truncation window this test is about.
+	skipOnWindows(t)
 	dir := t.TempDir()
 	path := filepath.Join(dir, "seed.json")
 
@@ -92,6 +97,9 @@ func readUntilPartial(path string, stop <-chan struct{}, partial chan<- string) 
 // that cannot complete must leave the file that was there, and must not leave
 // its scratch file behind.
 func TestSaveFailureLeavesPreviousConfigIntact(t *testing.T) {
+	// Chmod cannot make a directory unwritable on Windows, and root ignores
+	// the permission anywhere.
+	skipOnWindows(t)
 	if os.Geteuid() == 0 {
 		t.Skip("root ignores directory permissions")
 	}
@@ -190,6 +198,9 @@ func TestSaveKeepsOwnerOnlyMode(t *testing.T) {
 // a naive rename loses: an operator who symlinks the config to a managed file
 // keeps the symlink, and the bytes land on its target.
 func TestSaveThroughSymlinkWritesTheTarget(t *testing.T) {
+	// Creating a symlink on Windows needs a privilege the test runner does
+	// not have.
+	skipOnWindows(t)
 	dir := t.TempDir()
 	target := filepath.Join(dir, "real.json")
 	link := filepath.Join(dir, "seed.json")
@@ -220,6 +231,13 @@ func TestSaveThroughSymlinkWritesTheTarget(t *testing.T) {
 	}
 	if !strings.Contains(string(data), "9443") {
 		t.Error("save through the symlink did not write the target")
+	}
+}
+
+func skipOnWindows(t *testing.T) {
+	t.Helper()
+	if runtime.GOOS == "windows" {
+		t.Skip("the premise of this test is POSIX file semantics")
 	}
 }
 
