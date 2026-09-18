@@ -84,8 +84,7 @@ func assertRefused(t *testing.T, execErr error, args []string, wantsRoute string
 	if execErr == nil {
 		t.Fatalf("%v ran while the daemon held the lock; want a refusal", args)
 	}
-	var held *daemonRunningError
-	if !errors.As(execErr, &held) {
+	if _, ok := errors.AsType[*daemonRunningError](execErr); !ok {
 		t.Fatalf("error is %T (%v); want *daemonRunningError", execErr, execErr)
 	}
 	if got := exitCodeFor(execErr); got != exitDaemonRunning {
@@ -222,8 +221,8 @@ func TestServeHoldsTheLockAndPublishesItsPort(t *testing.T) {
 
 	// And the guard reads what that daemon published, from this process.
 	err := refuseIfDaemonOwns(configPath, "use the API")
-	var held *daemonRunningError
-	if !errors.As(err, &held) {
+	held, ok := errors.AsType[*daemonRunningError](err)
+	if !ok {
 		t.Fatalf("guard returned %v; want a refusal while the daemon runs", err)
 	}
 	if !strings.Contains(held.Error(), strconv.Itoa(info.Port)) ||

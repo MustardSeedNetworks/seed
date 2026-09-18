@@ -56,8 +56,7 @@ func (e *daemonRunningError) Error() string {
 // exitCodeFor maps an error returned by the root command to a process exit
 // status. Everything but a refused write is the historical 1.
 func exitCodeFor(err error) int {
-	var held *daemonRunningError
-	if errors.As(err, &held) {
+	if _, ok := errors.AsType[*daemonRunningError](err); ok {
 		return exitDaemonRunning
 	}
 	return 1
