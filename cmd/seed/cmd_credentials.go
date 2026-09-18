@@ -34,6 +34,10 @@ Use the --json flag to output the status in machine-readable JSON format.`,
 
   # Machine-readable output
   seed credentials --json`,
+		PreRunE: func(_ *cobra.Command, _ []string) error {
+			return guardConfigCommand(state,
+				"Ask the running daemon instead: GET /api/v1/setup/status.")
+		},
 		Run: func(cmd *cobra.Command, args []string) {
 			runCredentials(cmd, args, state)
 		},

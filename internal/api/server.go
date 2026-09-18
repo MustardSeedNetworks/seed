@@ -147,6 +147,11 @@ type Server struct {
 	httpServer *http.Server
 	mux        *http.ServeMux
 
+	// boundPort is called once startHTTPS knows the port it actually bound.
+	// The +1..+9 fallback (#69) means that is not config.Server.Port, and the
+	// caller that owns the single-instance lock is cmd/seed, not this package.
+	boundPort func(int)
+
 	// manifest records every route registered through register() (the
 	// capability registry, ADR-0002). Exposed read-only via /__capabilities
 	// for fleet policy audits.

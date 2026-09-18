@@ -60,7 +60,8 @@ to this device's hash and unlocks the tier features encoded in the key.`,
 
   # The flag is required — this prints the usage
   seed license activate`,
-		Run: func(cmd *cobra.Command, _ []string) { runLicenseActivate(cmd) },
+		PreRunE: func(_ *cobra.Command, _ []string) error { return guardLicenseCommand() },
+		Run:     func(cmd *cobra.Command, _ []string) { runLicenseActivate(cmd) },
 	}
 	activateCmd.Flags().StringP("key", "k", "", "License key to activate (XXXX-XXXX-XXXX-XXXX)")
 	_ = activateCmd.MarkFlagRequired("key")
@@ -74,7 +75,8 @@ Seed reverts to the Free tier. The license key itself remains valid and can
 be activated on another device.`,
 		Example: `  # Deactivate the current license (revert to Free tier)
   seed license deactivate`,
-		Run: func(_ *cobra.Command, _ []string) { runLicenseDeactivate(state) },
+		PreRunE: func(_ *cobra.Command, _ []string) error { return guardLicenseCommand() },
+		Run:     func(_ *cobra.Command, _ []string) { runLicenseDeactivate(state) },
 	})
 
 	licenseCmd.AddCommand(&cobra.Command{
@@ -86,7 +88,8 @@ real key with ` + "`seed license activate -k ...`" + ` to continue using Pro
 features.`,
 		Example: `  # Start the 14-day Pro trial
   seed license trial`,
-		Run: func(_ *cobra.Command, _ []string) { runLicenseTrial(state) },
+		PreRunE: func(_ *cobra.Command, _ []string) error { return guardLicenseCommand() },
+		Run:     func(_ *cobra.Command, _ []string) { runLicenseTrial(state) },
 	})
 
 	state.rootCmd.AddCommand(licenseCmd)

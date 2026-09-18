@@ -164,6 +164,16 @@ func (s *Server) Start() error {
 	return s.startHTTPS()
 }
 
+// SetBoundPortObserver registers the callback that receives the port the
+// listener actually bound, once the +1..+9 fallback has settled. It is how
+// cmd/seed publishes the running port on the single-instance lock.
+//
+// Registered before Start; there is no lock because nothing reads or writes it
+// afterwards.
+func (s *Server) SetBoundPortObserver(observe func(int)) {
+	s.boundPort = observe
+}
+
 // startHTTPS starts the server with an operator-provided certificate or a
 // generated self-signed certificate.
 func (s *Server) startHTTPS() error {
@@ -199,6 +209,9 @@ func (s *Server) startHTTPS() error {
 	}
 	s.httpServer.Addr = fmt.Sprintf(":%d", actualPort)
 	s.initWebAuthn(actualPort)
+	if s.boundPort != nil {
+		s.boundPort(actualPort)
+	}
 
 	logging.GetLogger().
 		Info("Starting HTTPS server", "addr", s.httpServer.Addr, "tls_version", "1.3")
