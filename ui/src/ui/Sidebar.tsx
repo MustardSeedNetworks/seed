@@ -84,7 +84,10 @@ export interface RailStatus {
   tone: 'success' | 'warning' | 'error';
   /** Machine-readable state, for the accessible name and the E2E assertion. */
   state: string;
+  /** The state, in words — the accessible name of the rail's lockup. */
   label: string;
+  /** What clicking does, when there is something to do. */
+  hint?: string;
   onActivate?: () => void;
 }
 
@@ -205,18 +208,29 @@ const STATUS_DOT: Record<RailStatus['tone'], string> = {
 
 const SidebarHeader: FC<SidebarHeaderProps> = ({ collapsed, onCollapse, status }) => {
   const { t } = useTranslation();
-  const mark = (
-    <div className="relative flex-shrink-0">
-      <SeedLogo badge badgeClassName="h-9 w-9 shadow-lg" glyphClassName={iconSizes.lg} />
-      <span
-        data-testid="rail-status"
-        data-status={status?.state ?? 'connected'}
-        aria-hidden="true"
-        className={`absolute -top-0.5 -right-0.5 h-2.5 w-2.5 rounded-full border-2 border-surface-raised ${
-          STATUS_DOT[status?.tone ?? 'success']
-        } ${status?.state === 'connecting' ? 'animate-pulse' : ''}`}
-      />
-    </div>
+  const lockupClass = `flex items-center gap-compact rounded-lg ${
+    collapsed ? 'justify-center' : ''
+  }`;
+  const lockup = (
+    <>
+      <div className="relative flex-shrink-0">
+        <SeedLogo badge badgeClassName="h-9 w-9 shadow-lg" glyphClassName={iconSizes.lg} />
+        <span
+          aria-hidden="true"
+          className={`absolute -top-0.5 -right-0.5 h-2.5 w-2.5 rounded-full border-2 border-surface-raised ${
+            STATUS_DOT[status?.tone ?? 'success']
+          } ${status?.state === 'connecting' ? 'animate-pulse' : ''}`}
+        />
+      </div>
+      {!collapsed ? (
+        <span className="font-display font-bold text-lg text-text-primary tracking-tight">
+          {t('app.title')}
+        </span>
+      ) : null}
+      {status ? (
+        <span className="sr-only">{[status.label, status.hint].filter(Boolean).join(' — ')}</span>
+      ) : null}
+    </>
   );
   return (
     <div
@@ -224,23 +238,32 @@ const SidebarHeader: FC<SidebarHeaderProps> = ({ collapsed, onCollapse, status }
         collapsed ? 'justify-center' : 'justify-between'
       } px-3 py-4 border-b border-surface-border`}
     >
-      <Tooltip text={status?.label}>
-        <button
-          type="button"
-          onClick={status?.onActivate}
-          disabled={!status?.onActivate}
-          aria-label={status ? `${t('app.title')} — ${status.label}` : t('app.title')}
-          className={`flex items-center gap-compact rounded-lg ${
-            collapsed ? 'justify-center' : ''
-          } ${status?.onActivate ? 'hover:opacity-80 cursor-pointer' : 'cursor-default'}`}
-        >
-          {mark}
-          {!collapsed ? (
-            <span className="font-display font-bold text-lg text-text-primary tracking-tight">
-              {t('app.title')}
-            </span>
-          ) : null}
-        </button>
+      {/* The dot is decoration; the state has to be readable. When there is
+          something to do about it the lockup is a button that does it, and
+          when there is not it stays a live region rather than becoming a
+          disabled button — Tab skips those, and hover never fires, so the
+          tooltip would not open either. */}
+      <Tooltip text={status ? [status.label, status.hint].filter(Boolean).join(' — ') : undefined}>
+        {status?.onActivate ? (
+          <button
+            type="button"
+            data-testid="rail-status"
+            data-status={status.state}
+            onClick={status.onActivate}
+            className={`${lockupClass} hover:opacity-80`}
+          >
+            {lockup}
+          </button>
+        ) : (
+          <div
+            data-testid="rail-status"
+            data-status={status?.state ?? 'connected'}
+            role="status"
+            className={lockupClass}
+          >
+            {lockup}
+          </div>
+        )}
       </Tooltip>
       {!collapsed ? (
         <Tooltip text={t('accessibility.collapseSidebar')}>

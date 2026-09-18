@@ -685,19 +685,6 @@ body {
     @apply p-1.5; /* 6px - medium icon button */
   }
 
-  /* Main content padding (responsive) */
-  .main-padding-y {
-    @apply py-4 sm:py-6; /* Responsive vertical padding */
-  }
-  .content-padding-x {
-    @apply px-4 sm:px-6 lg:px-8; /* Responsive horizontal padding */
-  }
-
-  /* Header padding (responsive) */
-  .header-padding-y {
-    @apply py-2 sm:py-3; /* Responsive header vertical padding */
-  }
-
   /* Drawer/Panel content padding */
   .drawer-content-pad {
     @apply px-4 sm:px-5 pb-10 pt-4; /* Drawer content padding with bottom for scroll */

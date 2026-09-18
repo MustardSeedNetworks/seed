@@ -164,17 +164,6 @@ export const spacing = {
     md: 'p-icon-btn-md', // 6px - medium icon button
   },
 
-  // Main content layout padding
-  mainPadding: {
-    y: 'main-padding-y', // py-4 sm:py-6
-    x: 'content-padding-x', // px-4 sm:px-6 lg:px-8
-  },
-
-  // Header padding (responsive)
-  headerPadding: {
-    y: 'header-padding-y', // py-2 sm:py-3
-  },
-
   // Drawer/panel content padding
   drawerPad: 'drawer-content-pad', // px-4 sm:px-5 pb-10 pt-4
 

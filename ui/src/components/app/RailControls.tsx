@@ -84,7 +84,11 @@ const buttonClass = cn(
 function panelClass(collapsed: boolean, width: string): string {
   return cn(
     'absolute bottom-full mb-tight z-50 overflow-hidden shadow-lg',
-    collapsed ? 'left-full ml-tight' : 'left-0',
+    // Collapsed, the panel has to clear the RAIL, not the button: `left-full`
+    // lands on the button's own right edge, which is still inside the 64px
+    // rail. Measured 58.5px there, so it overlapped the rail it hangs off.
+    // 4rem rail - 0.75rem of footer padding + a 0.5rem gap.
+    collapsed ? 'left-[calc(4rem-0.75rem+0.5rem)]' : 'left-0',
     width,
     radius.lg,
     'border border-surface-border bg-surface-raised',

@@ -114,11 +114,20 @@ export function AppShell({ orchestration, logout }: AppShellProps): JSX.Element 
   };
 
   const { t } = useTranslation();
-  const statusLabel = t(`status.${sseStatus}`);
+  // Literal keys rather than `t(`status.${sseStatus}`)`: the fleet key checker
+  // cannot resolve a computed key, so an interpolated one reads as four
+  // orphaned translations.
+  const statusLabel: Record<typeof sseStatus, string> = {
+    connected: t('status.connected'),
+    connecting: t('status.connecting'),
+    disconnected: t('status.disconnected'),
+    error: t('status.error'),
+  };
   const railStatus: RailStatus = {
     tone: sseStatus === 'connected' ? 'success' : sseStatus === 'connecting' ? 'warning' : 'error',
     state: sseStatus,
-    label: sseStatus === 'connected' ? statusLabel : t('status.clickToReconnect'),
+    label: statusLabel[sseStatus],
+    hint: sseStatus === 'connected' ? undefined : t('status.clickToReconnect'),
     onActivate: sseStatus === 'connected' ? undefined : reconnect,
   };
 
