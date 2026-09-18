@@ -282,4 +282,9 @@ type SubnetConfig struct {
 	CIDR    string `json:"cidr"`    // CIDR notation (e.g., "10.0.0.0/24")
 	Name    string `json:"name"`    // Friendly name (e.g., "Server VLAN")
 	Enabled bool   `json:"enabled"` // Whether to scan this subnet
+
+	// Learned marks a network Seed derived from a router's tables rather than
+	// one an operator typed in (seed#2695). It ships disabled: learning names
+	// a network, switching it on stays the operator's decision.
+	Learned bool `json:"learned,omitempty"`
 }

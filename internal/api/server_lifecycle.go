@@ -150,6 +150,7 @@ func (s *Server) Start() error {
 			} else {
 				logging.GetLogger().Info("Initial device discovery scan completed",
 					"deviceCount", s.deviceDiscovery().Count())
+				s.learnTargetNetworks(ctx)
 			}
 		}()
 	}

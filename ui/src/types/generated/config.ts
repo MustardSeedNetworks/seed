@@ -114,6 +114,7 @@ export interface SubnetConfig {
   cidr: string;
   name: string;
   enabled: boolean;
+  learned?: boolean;
 }
 export interface FingerprintingConfig {
   enabled: boolean;

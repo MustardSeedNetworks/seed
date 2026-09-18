@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/MustardSeedNetworks/seed/internal/config"
+	"github.com/MustardSeedNetworks/seed/internal/discovery/learn"
 	"github.com/MustardSeedNetworks/seed/internal/discovery/settings"
 )
 
@@ -201,5 +202,93 @@ func TestSetOptionsReturnsApplyError(t *testing.T) {
 	// The save still committed before the apply was attempted.
 	if st.saved != 1 {
 		t.Errorf("want save committed before apply, got %d saves", st.saved)
+	}
+}
+
+// Learn is the write half of seed#2695: a network the sweep saw becomes a
+// target the operator can switch on, without ever switching it on for them.
+func TestLearnAddsDisabledEntries(t *testing.T) {
+	svc, st, sink := newService(config.NetworkDiscoveryConfig{})
+
+	added, err := svc.Learn([]learn.Candidate{
+		{CIDR: "10.44.10.0/24", Source: learn.SourceRouteTable, Router: "10.44.40.1"},
+		{CIDR: "10.44.20.0/24", Source: learn.SourceAddressTable, Router: "10.44.40.2"},
+	})
+	if err != nil {
+		t.Fatalf("Learn() error = %v", err)
+	}
+	if added != 2 {
+		t.Errorf("Learn() added %d, want 2", added)
+	}
+
+	got := st.cfg.TargetNetworks
+	if len(got) != 2 {
+		t.Fatalf("TargetNetworks = %+v, want 2 entries", got)
+	}
+	for _, subnet := range got {
+		if subnet.Enabled {
+			t.Errorf("%s is enabled; a learned network is the operator's call", subnet.CIDR)
+		}
+		if !subnet.Learned {
+			t.Errorf("%s is not marked learned", subnet.CIDR)
+		}
+		if subnet.Name == "" {
+			t.Errorf("%s has no name", subnet.CIDR)
+		}
+	}
+	if len(sink.last) != 0 {
+		t.Errorf("scanner was given %v; nothing learned is enabled", sink.last)
+	}
+}
+
+// The learner runs after every sweep. Re-learning must not rewrite the config,
+// and above all must not undo an operator who switched a learned network on.
+func TestLearnIsIdempotentAndNeverUndoesTheOperator(t *testing.T) {
+	svc, st, _ := newService(config.NetworkDiscoveryConfig{
+		TargetNetworks: []config.SubnetConfig{
+			{CIDR: "10.44.10.0/24", Name: "Ward network", Enabled: true, Learned: true},
+			{CIDR: "10.44.20.0/24", Name: "Typed in by hand", Enabled: true},
+		},
+	})
+	saves := st.saved
+
+	added, err := svc.Learn([]learn.Candidate{
+		{CIDR: "10.44.10.0/24", Source: learn.SourceRouteTable, Router: "10.44.40.1"},
+		{CIDR: "10.44.20.0/24", Source: learn.SourceRouteTable, Router: "10.44.40.1"},
+	})
+	if err != nil {
+		t.Fatalf("Learn() error = %v", err)
+	}
+	if added != 0 {
+		t.Errorf("Learn() added %d, want 0", added)
+	}
+	if st.saved != saves {
+		t.Errorf("config was saved %d extra times; nothing changed", st.saved-saves)
+	}
+
+	for _, subnet := range st.cfg.TargetNetworks {
+		if !subnet.Enabled {
+			t.Errorf("%s was switched off by re-learning", subnet.CIDR)
+		}
+	}
+	if st.cfg.TargetNetworks[1].Learned {
+		t.Errorf("an operator's own entry was relabelled as learned")
+	}
+	if st.cfg.TargetNetworks[0].Name != "Ward network" {
+		t.Errorf("Name = %q; a rename by the operator was overwritten", st.cfg.TargetNetworks[0].Name)
+	}
+}
+
+// A malformed candidate is dropped rather than persisted: everything downstream
+// of TargetNetworks parses the CIDR.
+func TestLearnRejectsAMalformedCandidate(t *testing.T) {
+	svc, st, _ := newService(config.NetworkDiscoveryConfig{})
+
+	added, err := svc.Learn([]learn.Candidate{{CIDR: "not-a-network", Source: learn.SourceRouteTable}})
+	if err != nil {
+		t.Fatalf("Learn() error = %v", err)
+	}
+	if added != 0 || len(st.cfg.TargetNetworks) != 0 {
+		t.Errorf("Learn() added %d entries %+v, want none", added, st.cfg.TargetNetworks)
 	}
 }
