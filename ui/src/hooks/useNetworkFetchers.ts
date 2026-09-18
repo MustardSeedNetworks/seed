@@ -296,6 +296,7 @@ export function useNetworkFetchers({
           dns: {
             server: data.server || 'Unknown',
             servers: data.servers || [],
+            serverScope: data.serverScope,
             testHostname: data.testHostname || 'google.com',
             forward: data.forward
               ? {

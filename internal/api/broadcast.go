@@ -263,8 +263,11 @@ func (s *Server) collectDNSData() map[string]any {
 	}
 
 	data := map[string]any{
-		"server":       results.Server,
-		"servers":      results.Servers,
+		"server":  results.Server,
+		"servers": results.Servers,
+		// Without the scope the card cannot say whether the list it is
+		// showing belongs to the selected interface or to the host (#2690).
+		"serverScope":  string(results.ServerScope),
 		"testHostname": results.TestHostname,
 	}
 

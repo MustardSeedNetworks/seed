@@ -510,3 +510,16 @@ func ExportRoutingViews(devices []*discovery.DiscoveredDevice) []learn.Device {
 func ExportLocalPrefixes(subnet string) []netip.Prefix {
 	return localPrefixes(subnet)
 }
+
+// DNSTesterInterface reports the interface the resolvers are scoped to.
+func (s *Server) DNSTesterInterface() string {
+	if s.dnsTester() == nil {
+		return ""
+	}
+	return s.dnsTester().GetInterface()
+}
+
+// ExportCollectDNSData exposes the DNS payload the WebSocket broadcast sends.
+func (s *Server) ExportCollectDNSData() map[string]any {
+	return s.collectDNSData()
+}

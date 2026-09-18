@@ -50,6 +50,9 @@
           },
           "type": "array"
         },
+        "serverScope": {
+          "type": "string"
+        },
         "testHostname": {
           "type": "string"
         },
@@ -78,6 +81,7 @@
         "interface",
         "server",
         "servers",
+        "serverScope",
         "testHostname"
       ]
     },

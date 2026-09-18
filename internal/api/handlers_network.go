@@ -391,6 +391,12 @@ func (s *Server) handlePutInterface(
 		s.gatewayTester().SetInterface(req.Interface)
 	}
 
+	// Re-scope the resolvers for the same reason: the DNS card would keep
+	// showing, and measuring through, the host-wide resolvers (#2690).
+	if s.dnsTester() != nil {
+		s.dnsTester().SetInterface(req.Interface)
+	}
+
 	// Check if new interface is wireless
 	isWireless := false
 	if s.wifiManager() != nil {

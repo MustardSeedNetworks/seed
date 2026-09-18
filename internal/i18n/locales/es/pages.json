@@ -101,7 +101,9 @@
     "figureUnknown": "Sin medir",
     "figureNone": "Ninguna",
     "switchAbsentLabel": "Switch y VLAN",
-    "switchAbsentReason": "El descubrimiento de vecinos lee LLDP y CDP del cable. Una interfaz inalámbrica no tiene puerto de switch al que preguntar."
+    "switchAbsentReason": "El descubrimiento de vecinos lee LLDP y CDP del cable. Una interfaz inalámbrica no tiene puerto de switch al que preguntar.",
+    "rollupNoDnsForInterface": "Sin DNS en esta interfaz",
+    "rollupNoDnsForInterfaceBody": "La interfaz seleccionada no tiene resolutores propios, por lo que no se pueden resolver nombres por este enlace."
   },
   "path": {
     "description": "Descubrimiento de rutas L2/L3, saltos de traceroute y descubrimiento de dispositivos en el enlace.",

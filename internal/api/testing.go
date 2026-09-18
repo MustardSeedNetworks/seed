@@ -141,7 +141,7 @@ func NewTestServerWithConfig(cfg *config.Config) *Server {
 	// nil and return appropriate errors.
 
 	// Initialize lightweight telemetry services (no slow I/O)
-	s.dnsTest = dns.NewTester("", cfg.DNS.TestHostname, dns.DefaultThresholds())
+	s.dnsTest = dns.NewTesterForInterface("", cfg.DNS.TestHostname, dns.DefaultThresholds(), cfg.Interface.Default)
 	s.dnsSec = dns.NewSecurityScanner(dns.DefaultSecurityScanConfig())
 	s.dhcpMon = dhcp.NewMonitor(cfg.Interface.Default)
 	s.gatewayTest = gateway.NewTester(gateway.DefaultThresholds())

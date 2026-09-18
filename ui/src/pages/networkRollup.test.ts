@@ -117,6 +117,31 @@ describe('networkRollup', () => {
     expect(rollup.dnsFigureKey).toBe('network.figureDown');
   });
 
+  /* Slice 2 (#2690): an interface with no resolvers of its own is not a
+     failed lookup, and it is not a healthy link either. The card shows no
+     measurement because running one through another interface would describe
+     that link, not this one. */
+  it('says so when the selected interface has no resolvers of its own', () => {
+    const rollup = networkRollup({
+      gateway: gatewayCard(),
+      dns: dnsCard({ serverScope: 'interface', servers: [], forward: null }),
+      loading: false,
+    });
+    expect(rollup.state).toBe('warn');
+    expect(rollup.headlineKey).toBe('network.rollupNoDnsForInterface');
+    expect(rollup.dnsFigureKey).toBe('network.figureNone');
+  });
+
+  it('does not claim an absent resolver when the host answers system-wide', () => {
+    const rollup = networkRollup({
+      gateway: gatewayCard(),
+      dns: dnsCard({ serverScope: 'system', servers: [] }),
+      loading: false,
+    });
+    expect(rollup.state).toBe('ok');
+    expect(rollup.headlineKey).toBe('network.rollupHealthy');
+  });
+
   it('is healthy only when both were measured and both answered', () => {
     const rollup = networkRollup({ gateway: gatewayCard(), dns: dnsCard(), loading: false });
     expect(rollup.state).toBe('ok');
