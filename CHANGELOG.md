@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.214.70](https://github.com/MustardSeedNetworks/seed/compare/v0.214.69...v0.214.70) (2026-09-18)
+
+
+### Features
+
+* **discovery:** learn target networks from SNMP routing data (D-SEED-22) ([#2766](https://github.com/MustardSeedNetworks/seed/issues/2766)) ([6921c62](https://github.com/MustardSeedNetworks/seed/commit/6921c6285fc4cb4aa7d3fbed0556a90fa649ace2))
+
+
+### Code Refactoring
+
+* **ui:** rename the eight lowercase component files to PascalCase ([#2762](https://github.com/MustardSeedNetworks/seed/issues/2762)) ([0885b47](https://github.com/MustardSeedNetworks/seed/commit/0885b47c81ac6a23d5c648c51d649b860b16bf40))
+
 ## [0.214.69](https://github.com/MustardSeedNetworks/seed/compare/v0.214.68...v0.214.69) (2026-09-17)
 
 
