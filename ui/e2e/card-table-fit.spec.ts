@@ -136,14 +136,25 @@ for (const width of [1280, 1440]) {
     // operator asks for it.
     await page.getByTestId('bonjour-browse').click();
 
-    // Without this the assertion can run before both tables have rendered and
-    // pass against too few scroll containers -- the exact vacuous green this
-    // spec exists to avoid. It already earned its place: the first run of this
-    // spec found 1 table, not 2, because of the browse above.
-    await expect(page.locator('table')).toHaveCount(2, { timeout: 10000 });
+    // Both tables must actually be on the page before anything is measured,
+    // or the assertion passes against nothing. That guard already earned its
+    // place: the first run of this spec found one table, not two, because the
+    // Bonjour browse above was missing. They are waited for individually
+    // rather than by a total count, so adding an unrelated table to this page
+    // does not fail the spec for the wrong reason.
+    await expect(page.getByTestId('bonjour-services').locator('tr')).not.toHaveCount(0, {
+      timeout: 10000,
+    });
+    await expect(page.locator('table').filter({ hasText: NEIGHBOURS.entries[0].mac })).toHaveCount(
+      1,
+      { timeout: 10000 },
+    );
 
     const tables = await cardTableOverflow(page);
-    expect(tables.length, 'expected both card tables to be measured').toBe(2);
+    expect(
+      tables.length,
+      'expected at least the two card tables to be measured',
+    ).toBeGreaterThanOrEqual(2);
 
     const cut = tables.filter((t) => t.overflow > 0);
     expect(cut, `these card tables are cut off at ${width}px: ${JSON.stringify(cut)}`).toEqual([]);
