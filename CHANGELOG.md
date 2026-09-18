@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.214.71](https://github.com/MustardSeedNetworks/seed/compare/v0.214.70...v0.214.71) (2026-09-18)
+
+
+### Bug Fixes
+
+* **network:** scope the DNS resolvers to the active interface (D-SEED-19) ([#2760](https://github.com/MustardSeedNetworks/seed/issues/2760)) ([b62a15e](https://github.com/MustardSeedNetworks/seed/commit/b62a15e3a032b9d5197c2c65c5f7b150c8708f54))
+
+
+### Code Refactoring
+
+* **ui:** drop the article from the product name (UI-SEED-9) ([#2763](https://github.com/MustardSeedNetworks/seed/issues/2763)) ([79f4120](https://github.com/MustardSeedNetworks/seed/commit/79f412096b3e16d325a19beca5f58fb259cef1e8))
+
 ## [0.214.70](https://github.com/MustardSeedNetworks/seed/compare/v0.214.69...v0.214.70) (2026-09-18)
 
 
