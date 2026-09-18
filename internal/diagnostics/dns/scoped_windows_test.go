@@ -33,6 +33,9 @@ func TestParseIPConfigAdapterDNSScopesToOneAdapter(t *testing.T) {
 	if want := []string{"10.1.1.1", "10.1.1.2"}; !slices.Equal(got, want) {
 		t.Errorf("resolvers = %v, want %v", got, want)
 	}
+}
+
+func TestParseIPConfigAdapterDNSDoesNotAttributeAnUnnamedAdapter(t *testing.T) {
 	if _, ok := dns.ExportParseIPConfigAdapterDNS(ipconfigFixture, "Ethernet 9"); ok {
 		t.Error("an adapter the output does not name must not be reported as attributable")
 	}
