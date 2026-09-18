@@ -4,8 +4,8 @@ Architecture: __ARCHITECTURE__
 Maintainer: Kris Armstrong <kris@mustardseednetworks.com>
 Depends: libpcap0.8
 Recommends: libcap2-bin
-Description: The Seed - Network Diagnostic Tool by Mustard Seed Networks
- The Seed is a professional-grade network diagnostic appliance designed
+Description: Seed - Network Diagnostic Tool by Mustard Seed Networks
+ Seed is a professional-grade network diagnostic appliance designed
  for network technicians and engineers. Plug it into any network jack and
  instantly see link status, switch information, DHCP details, DNS health,
  and gateway connectivity through a modern web interface.

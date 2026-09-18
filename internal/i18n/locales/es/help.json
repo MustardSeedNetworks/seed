@@ -1,13 +1,13 @@
 {
   "modal": {
-    "title": "Centro de ayuda de The Seed",
+    "title": "Centro de ayuda de Seed",
     "searchPlaceholder": "Buscar ayuda...",
     "contents": "Contenido",
     "closeHelp": "Cerrar ayuda",
     "backToSections": "Volver a las secciones de ayuda"
   },
   "sections": {
-    "about": "Acerca de The Seed",
+    "about": "Acerca de Seed",
     "gettingStarted": "Primeros pasos",
     "profiles": "Perfiles",
     "link": "Estado del enlace",

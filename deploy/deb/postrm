@@ -1,6 +1,6 @@
 #!/bin/bash
 # =============================================================================
-# The Seed - Post-removal Script (deb)
+# Seed - Post-removal Script (deb)
 # =============================================================================
 # Cleans up after package removal.
 # On 'purge': removes data, logs, user, and group.

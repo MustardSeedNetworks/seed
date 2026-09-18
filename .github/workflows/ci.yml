@@ -985,6 +985,14 @@ jobs:
           python3 scripts/test-check-banned-vocabulary.py
           python3 scripts/check-banned-vocabulary.py
 
+      # Separate from the vocabulary gate above on purpose: that matcher folds
+      # case, which is why the articled product name cannot live in its term
+      # list (stem#1267 tried and reverted it).
+      - name: Enforce the article-free product name
+        run: |
+          python3 scripts/test-check-product-name.py
+          python3 scripts/check-product-name.py
+
       # Runs in quality, not in the bench job: the gate's own correctness does
       # not depend on benchmarks having run, and a docs-only PR skips bench.
       - name: Verify benchmark regression gate

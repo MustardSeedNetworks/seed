@@ -148,7 +148,7 @@ export function getMissingCapabilities(
       description:
         'Raw ICMP sockets are not available. Gateway ping, traceroute, and other ICMP-based features will not work.',
       remediation:
-        'Run The Seed with elevated privileges (sudo) or grant CAP_NET_RAW capability: sudo setcap cap_net_raw,cap_net_admin=+ep /path/to/seed',
+        'Run Seed with elevated privileges (sudo) or grant CAP_NET_RAW capability: sudo setcap cap_net_raw,cap_net_admin=+ep /path/to/seed',
     });
   }
 

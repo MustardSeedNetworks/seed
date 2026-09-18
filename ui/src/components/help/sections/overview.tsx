@@ -1,5 +1,5 @@
 /**
- * overview.tsx — Orientation — what The Seed is and how to get moving.
+ * overview.tsx — Orientation — what Seed is and how to get moving.
  *
  * Content module for the HelpDrawer. Section bodies are typed `HelpBlock`s
  * (see helpModel.ts) so one generic renderer presents every section. Content

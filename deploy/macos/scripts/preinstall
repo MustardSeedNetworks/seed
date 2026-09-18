@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# Pre-install script for The Seed macOS .pkg
+# Pre-install script for Seed macOS .pkg
 #
 # This script runs before the package payload is installed.
 # It stops any existing service to allow clean upgrade.
@@ -21,7 +21,7 @@ log() {
     echo "$1"
 }
 
-log "Starting pre-install for The Seed..."
+log "Starting pre-install for Seed..."
 
 # Stop existing service if running
 # Stop the Wi-Fi helper agent before replacing its bundle, or the running

@@ -45,7 +45,7 @@ describe('SetupWizard — real locale copy', () => {
     renderWizard();
 
     await waitFor(() => {
-      expect(screen.getByText('Welcome to The Seed')).toBeInTheDocument();
+      expect(screen.getByText('Welcome to Seed')).toBeInTheDocument();
     });
     expect(screen.getByText('Set up your admin password to get started')).toBeInTheDocument();
   });
@@ -55,7 +55,7 @@ describe('SetupWizard — real locale copy', () => {
     renderWizard();
 
     await waitFor(() => {
-      expect(screen.getByText('Bienvenido a The Seed')).toBeInTheDocument();
+      expect(screen.getByText('Bienvenido a Seed')).toBeInTheDocument();
     });
     expect(
       screen.getByText('Configure su contraseña de administrador para comenzar'),
@@ -63,14 +63,16 @@ describe('SetupWizard — real locale copy', () => {
     expect(screen.queryByText('Set up your admin password to get started')).toBeNull();
   });
 
-  it('keeps the product name verbatim in both locales, per the glossary', async () => {
+  it('keeps the product name verbatim in both locales', async () => {
     await i18n.changeLanguage('es');
     renderWizard();
 
-    // "The Seed" is a glossary term: the copy around it translates, the name
-    // itself must survive.
+    // The copy around the product name translates; the name itself must
+    // survive. The shared glossary still lists the articled name UI-SEED-9
+    // retired, so the article-free one is guarded by
+    // scripts/check-product-name.py instead.
     await waitFor(() => {
-      expect(screen.getAllByText(/The Seed/).length).toBeGreaterThan(0);
+      expect(screen.getAllByText(/Seed/).length).toBeGreaterThan(0);
     });
   });
 });

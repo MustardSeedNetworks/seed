@@ -2,7 +2,7 @@
   "name": "seed",
   "version": "0.165.34",
   "private": true,
-  "description": "The Seed - Network Diagnostics - Mustard Seed Networks",
+  "description": "Seed - Network Diagnostics - Mustard Seed Networks",
   "type": "module",
   "engines": {
     "node": "26.8.2",

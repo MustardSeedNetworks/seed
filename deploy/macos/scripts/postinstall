@@ -1,9 +1,9 @@
 #!/bin/bash
 #
-# Post-install script for The Seed macOS .pkg
+# Post-install script for Seed macOS .pkg
 #
 # This script runs after the package payload has been installed to /usr/local/seed.
-# It sets up the launchd service and starts The Seed.
+# It sets up the launchd service and starts Seed.
 #
 # Exit codes:
 #   0 - Success
@@ -25,7 +25,7 @@ log() {
     echo "$1"
 }
 
-log "Starting post-install for The Seed..."
+log "Starting post-install for Seed..."
 
 # Ensure directories exist
 mkdir -p "$INSTALL_DIR/configs"
@@ -104,7 +104,7 @@ sleep 3
 # Verify
 if launchctl list 2>/dev/null | grep -q "com.seed"; then
     if pgrep -f "/usr/local/seed/seed" > /dev/null; then
-        log "The Seed installation successful - service is running"
+        log "Seed installation successful - service is running"
     else
         log "Warning: Service loaded but process may not be running"
         log "Check logs: /usr/local/seed/logs/seed.error.log"

@@ -30,7 +30,7 @@ export default meta;
 type Story = StoryObj<typeof meta>;
 
 export const Heading1: Story = {
-  render: () => <H1>The Seed</H1>,
+  render: () => <H1>Seed</H1>,
 };
 
 export const Heading2: Story = {
@@ -84,7 +84,7 @@ export const LinkVariants: Story = {
 export const Hierarchy: Story = {
   render: () => (
     <div className="space-y-4">
-      <H1>The Seed</H1>
+      <H1>Seed</H1>
       <H2>Diagnostics</H2>
       <P>Function-grouped surfaces cover the full network diagnostics workflow:</P>
       <div className="space-y-2">

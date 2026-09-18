@@ -139,7 +139,7 @@ func (p *seedProgram) run() {
 		}
 	}
 
-	logging.GetLogger().Info("The Seed service stopped")
+	logging.GetLogger().Info("Seed service stopped")
 }
 
 // setupLoggingForService configures logging for Windows service mode.

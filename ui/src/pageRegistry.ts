@@ -1,5 +1,5 @@
 /**
- * Page registry — declarative route table for The Seed.
+ * Page registry — declarative route table for Seed.
  *
  * Heavy pages are lazy-loaded so the initial chunk only carries the
  * Link landing page. The shape mirrors niac's pageRegistry; stem

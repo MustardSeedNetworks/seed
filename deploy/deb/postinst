@@ -1,6 +1,6 @@
 #!/bin/bash
 # =============================================================================
-# The Seed - Post-installation Script (deb)
+# Seed - Post-installation Script (deb)
 # =============================================================================
 # Creates service user/group, sets capabilities, configures directories,
 # and enables the systemd service.
@@ -28,7 +28,7 @@ if ! getent passwd "$SERVICE_USER" > /dev/null 2>&1; then
         --home-dir "$DATA_DIR" \
         --no-create-home \
         --shell /usr/sbin/nologin \
-        --comment "The Seed Network Diagnostic Tool" \
+        --comment "Seed Network Diagnostic Tool" \
         "$SERVICE_USER"
 fi
 
@@ -106,7 +106,7 @@ fi
 
 echo ""
 echo "=========================================="
-echo "  The Seed installed successfully!"
+echo "  Seed installed successfully!"
 echo "=========================================="
 echo ""
 echo "Web interface: https://localhost:8443"

@@ -13,11 +13,11 @@ func initVersionCmd(state *cliState) {
 	versionCmd := &cobra.Command{
 		Use:   "version",
 		Short: "Print version information",
-		Long:  `Print The Seed version information.`,
+		Long:  `Print Seed version information.`,
 		Example: `  # Show the running version
   seed version`,
 		Run: func(_ *cobra.Command, _ []string) {
-			fmt.Fprintf(os.Stdout, "The Seed %s\n", version.GetVersion())
+			fmt.Fprintf(os.Stdout, "Seed %s\n", version.GetVersion())
 		},
 	}
 	state.rootCmd.AddCommand(versionCmd)

@@ -39,8 +39,8 @@ const (
 func initServeCmd(state *cliState) {
 	serveCmd := &cobra.Command{
 		Use:   "serve",
-		Short: "Start The Seed server",
-		Long: `Start The Seed network diagnostics server.
+		Short: "Start Seed server",
+		Long: `Start Seed network diagnostics server.
 
 The server provides a web-based UI for network diagnostics, monitoring,
 and analysis. It serves HTTPS only on port 8443 — the daemon binds no
@@ -218,7 +218,7 @@ func setupLogging(cfg *config.Config) string {
 		os.Exit(1)
 	}
 
-	logging.GetLogger().Info("The Seed starting", "version", version.GetVersion(), "log_path", logPath)
+	logging.GetLogger().Info("Seed starting", "version", version.GetVersion(), "log_path", logPath)
 
 	return logPath
 }
@@ -441,18 +441,18 @@ func runServerWithShutdown(server *api.Server, cfg *config.Config, components *a
 		}
 	}
 
-	logging.GetLogger().Info("The Seed stopped")
+	logging.GetLogger().Info("Seed stopped")
 }
 
 // printSetupBanner displays a message directing users to the web UI for setup.
 func printSetupBanner(w io.Writer, port int) {
 	banner := `
 ╔══════════════════════════════════════════════════════════════════╗
-║                   THE SEED - INITIAL SETUP                       ║
+║                       SEED - INITIAL SETUP                       ║
 ║               Mustard Seed Networks                              ║
 ╠══════════════════════════════════════════════════════════════════╣
 ║                                                                  ║
-║  Welcome to The Seed! Initial setup is required.                 ║
+║  Welcome to Seed! Initial setup is required.                     ║
 ║                                                                  ║
 ║  Please open your web browser and navigate to:                   ║
 ║                                                                  ║

@@ -190,7 +190,7 @@ export const category = {
 } as const;
 
 /**
- * Module colors - accent colors for The Seed's feature modules
+ * Module colors - accent colors for Seed's feature modules
  *
  * IMPORTANT: Use these for icons and small badges only, NOT for card backgrounds.
  * Cards should remain consistent (surface-raised) across all modules.

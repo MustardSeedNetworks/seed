@@ -1,8 +1,8 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://github.com/MustardSeedNetworks/seed/schemas/config.schema.json",
-  "title": "The Seed Configuration",
-  "description": "Configuration schema for The Seed network diagnostic tool",
+  "title": "Seed Configuration",
+  "description": "Configuration schema for Seed network diagnostic tool",
   "type": "object",
   "required": [
     "version",

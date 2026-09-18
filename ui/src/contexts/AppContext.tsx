@@ -1,7 +1,7 @@
 /**
  * AppContext — shared dashboard state for the routed pages.
  *
- * The Seed pages (Link, Network, Path, Wi-Fi, Security, Performance,
+ * Seed pages (Link, Network, Path, Wi-Fi, Security, Performance,
  * Reports, Logs) all consume slices of the same backing state owned by
  * the top-level App component (cards, loading flag, interface
  * selection, etc.). Rather than thread props through every page, App

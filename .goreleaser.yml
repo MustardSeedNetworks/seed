@@ -1,5 +1,5 @@
 # =============================================================================
-# goreleaser config for The Seed
+# goreleaser config for Seed
 # =============================================================================
 # Canonical release packager. Driven by .github/workflows/release.yml inside
 # the goreleaser-cross container (which ships gcc + osxcross + mingw-w64).
@@ -156,9 +156,9 @@ nfpms:
     homepage: https://github.com/MustardSeedNetworks/seed
     maintainer: Kris Armstrong <kris.armstrong@icloud.com>
     description: |
-      The Seed - Network Diagnostic Tool by Mustard Seed Networks
+      Seed - Network Diagnostic Tool by Mustard Seed Networks
       .
-      The Seed is a professional-grade network diagnostic appliance designed
+      Seed is a professional-grade network diagnostic appliance designed
       for network technicians and engineers. Plug it into any network jack
       and instantly see link status, switch information, DHCP details, DNS
       health, gateway connectivity, Wi-Fi survey data, and vulnerability
@@ -281,7 +281,7 @@ release:
   prerelease: auto
   mode: replace
   header: |
-    The Seed {{ .Tag }} — Network Diagnostic Tool by Mustard Seed Networks.
+    Seed {{ .Tag }} — Network Diagnostic Tool by Mustard Seed Networks.
 
     See [CHANGELOG.md](https://github.com/MustardSeedNetworks/seed/blob/main/CHANGELOG.md)
     for the full release notes.
