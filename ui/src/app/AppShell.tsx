@@ -14,7 +14,8 @@ import { useTranslation } from 'react-i18next';
 import { Redirect, Route, Switch, useLocation } from 'wouter';
 import { AppFooter } from '../components/app/AppFooter';
 import { CapabilityWarnings } from '../components/app/CapabilityWarnings';
-import { HeaderBar } from '../components/app/HeaderBar';
+import { ConnectionNotice } from '../components/app/ConnectionNotice';
+import { RailControls } from '../components/app/RailControls';
 import { HelpDrawer } from '../components/help/HelpDrawer';
 import { ProfileManagement } from '../components/profiles/ProfileManagement';
 import { SettingsDrawer } from '../components/settings/SettingsDrawer';
@@ -28,7 +29,7 @@ import { cn, section } from '../styles/theme';
 import { Breadcrumbs } from '../ui/Breadcrumbs';
 import { PageHeader } from '../ui/PageHeader';
 import { PageLoader } from '../ui/PageLoader';
-import { SidebarLayout } from '../ui/Sidebar';
+import { type RailStatus, SidebarLayout } from '../ui/Sidebar';
 import type { AppOrchestration } from './useAppOrchestration';
 
 interface AppShellProps {
@@ -63,14 +64,12 @@ export function AppShell({ orchestration, logout }: AppShellProps): JSX.Element 
     profilesLoading,
     switchProfile,
     interfaces,
-    hasEthernet,
     hasWifiInterface,
     changeInterface,
     switchToInterfaceType,
     toggleTheme,
     isDark,
     recommendedEthernet,
-    recommendedWifi,
     profilesOpen,
     settingsOpen,
     helpOpen,
@@ -114,31 +113,14 @@ export function AppShell({ orchestration, logout }: AppShellProps): JSX.Element 
     openSettings,
   };
 
-  const topBar = (
-    <HeaderBar
-      wsStatus={sseStatus}
-      onReconnect={reconnect}
-      profiles={profiles}
-      activeProfile={activeProfile}
-      profilesLoading={profilesLoading}
-      onProfileSwitch={switchProfile}
-      onProfileManage={openProfiles}
-      interfaces={interfaces}
-      currentInterface={currentInterface}
-      isWifi={isWifi}
-      onInterfaceChange={changeInterface}
-      hasEthernet={hasEthernet}
-      hasWifiInterface={hasWifiInterface}
-      switchToInterfaceType={switchToInterfaceType}
-      toggleTheme={toggleTheme}
-      isDark={isDark}
-      onHelpOpen={openPageHelp}
-      onSettingsOpen={openSettings}
-      logout={logout}
-      recommendedEthernet={recommendedEthernet}
-      recommendedWifi={recommendedWifi}
-    />
-  );
+  const { t } = useTranslation();
+  const statusLabel = t(`status.${sseStatus}`);
+  const railStatus: RailStatus = {
+    tone: sseStatus === 'connected' ? 'success' : sseStatus === 'connecting' ? 'warning' : 'error',
+    state: sseStatus,
+    label: sseStatus === 'connected' ? statusLabel : t('status.clickToReconnect'),
+    onActivate: sseStatus === 'connected' ? undefined : reconnect,
+  };
 
   return (
     <AppContext.Provider value={appContextValue}>
@@ -148,9 +130,30 @@ export function AppShell({ orchestration, logout }: AppShellProps): JSX.Element 
         onOpenHelp={openPageHelp}
         onOpenSettings={openSettings}
         onOpenProfiles={openProfiles}
-        topBar={topBar}
+        status={railStatus}
+        railControls={(collapsed) => (
+          <RailControls
+            collapsed={collapsed}
+            profiles={profiles}
+            activeProfile={activeProfile}
+            profilesLoading={profilesLoading}
+            onProfileSwitch={switchProfile}
+            onProfileManage={openProfiles}
+            logout={logout}
+            interfaces={interfaces}
+            currentInterface={currentInterface}
+            isWifi={isWifi}
+            hasWifiInterface={hasWifiInterface}
+            onInterfaceChange={changeInterface}
+            switchToInterfaceType={switchToInterfaceType}
+            recommendedEthernet={recommendedEthernet}
+            toggleTheme={toggleTheme}
+            isDark={isDark}
+          />
+        )}
       >
         <div className={cn(section.width.xl, 'mx-auto')}>
+          <ConnectionNotice status={sseStatus} onReconnect={reconnect} />
           <CapabilityWarnings capabilities={capabilities} />
 
           <Suspense fallback={<PageLoader />}>

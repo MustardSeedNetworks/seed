@@ -150,7 +150,7 @@ export async function reloadAndAwaitDashboard(page: Page): Promise<void> {
 
 /**
  * Settings / Help live in the sidebar footer, not the header (Phase 2 —
- * see components/app/HeaderBar.tsx and the sidebar's FooterIconButton).
+ * see components/app/RailControls.tsx and the sidebar's FooterIconButton).
  * Selected by test id rather than accessible name: the page header's (?)
  * reads "Open help for <page>", and Playwright matches names by substring,
  * so "Open help" is no longer unique.
