@@ -17,12 +17,17 @@ import (
 // It runs after a sweep rather than on a timer of its own because its whole
 // input is that sweep's result, and it is best-effort: a learner that cannot
 // write must not make a scan look failed.
-func (s *Server) learnTargetNetworks(ctx context.Context) {
+//
+// Every sweep reaches it: the discovery service's own observer covers the
+// startup sweep, the rescan ticker and an interface change, and the manual
+// scan button calls it directly because that path drives DeviceDiscovery
+// below the service.
+func (s *Server) learnTargetNetworks(ctx context.Context, discovered []*discovery.DiscoveredDevice) {
 	if s.discoverySettings == nil || s.deviceDiscovery() == nil {
 		return
 	}
 
-	devices := routingViews(s.deviceDiscovery().GetDevices())
+	devices := routingViews(discovered)
 	if len(devices) == 0 {
 		return
 	}
