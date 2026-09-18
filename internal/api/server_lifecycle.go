@@ -124,6 +124,11 @@ func (s *Server) Start() error {
 		}
 	}
 
+	// Learn target networks from every sweep the service drives: its startup
+	// sweep, the rescan ticker and an interface change (seed#2695). Registered
+	// before Start so the startup sweep is already observed.
+	s.discoveryService().SetSweepObserver(s.learnTargetNetworks)
+
 	// Start unified discovery service.
 	if err := s.discoveryService().Start(); err != nil {
 		logging.GetLogger().
@@ -150,7 +155,6 @@ func (s *Server) Start() error {
 			} else {
 				logging.GetLogger().Info("Initial device discovery scan completed",
 					"deviceCount", s.deviceDiscovery().Count())
-				s.learnTargetNetworks(ctx)
 			}
 		}()
 	}
