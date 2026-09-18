@@ -2,9 +2,9 @@ import { expect, type Page, test } from '@playwright/test';
 import { skipSetupWizard } from './helpers/auth';
 
 /**
- * Licence feature gate (/path, /reports) E2E — seed#2688.
+ * Licence feature gate (/path, /reports) E2E — seed#2688, seed#2669.
  *
- * Every <RequireFeature> surface reads `features` off GET /api/v1/license
+ * Every licence-gated surface reads `features` off GET /api/v1/license
  * and nothing else. The endpoint never sent that field, so Pro and Trial
  * users were shown the Free upgrade gate on Path Analysis and Reports.
  *
@@ -14,6 +14,10 @@ import { skipSetupWizard } from './helpers/auth';
  * The paid tiers are driven by intercepting the endpoint with the exact
  * payload the Go handler now produces — internal/api's
  * TestLicenseStatusCarriesFeatures is what pins the server to that shape.
+ *
+ * Both gated routes are whole-page <GatedPreview> surfaces (#2669): on a tier
+ * without the feature they render the pitch over a non-interactive sample, and
+ * on a tier with it neither exists.
  */
 
 const PRO_FEATURES = [
@@ -71,7 +75,7 @@ test.describe('licence feature gate', () => {
 
       const main = page.getByRole('main');
       await expect(main.getByTestId('card').first()).toBeVisible({ timeout: 10000 });
-      await expect(main.getByText(/Path Analysis is a Pro-tier feature/i)).toHaveCount(0);
+      await expect(main.getByTestId('gated-preview')).toHaveCount(0);
     });
 
     test(`renders Reports content on ${label}`, async ({ page }) => {
@@ -81,23 +85,46 @@ test.describe('licence feature gate', () => {
 
       const main = page.getByRole('main');
       await expect(main.getByTestId('card').first()).toBeVisible({ timeout: 10000 });
-      await expect(main.getByText(/Reports require the Starter tier/i)).toHaveCount(0);
+      await expect(main.getByTestId('gated-preview')).toHaveCount(0);
     });
   }
 
-  test('keeps the gate on Free', async ({ page }) => {
-    // No stub: the suite's own unlicensed daemon answers, and the real
-    // response now carries `features: []`.
-    await page.goto('/path');
-    await expect(page.getByTestId('page-header-title')).toBeVisible({ timeout: 10000 });
-    await expect(
-      page.getByRole('main').getByText(/Path Analysis is a Pro-tier feature/i),
-    ).toBeVisible({ timeout: 5000 });
+  // Every route the UI gates as a whole page, with what the sample must show.
+  // A page that renders the pitch over an empty body is the defect #2669 fixed.
+  const GATED_ROUTES = [
+    { path: '/path', pitch: 'Path Analysis is a Pro feature', sample: '203.0.113.24' },
+    { path: '/reports', pitch: 'Reports is a Starter feature', sample: 'Executive summary' },
+  ] as const;
 
-    await page.goto('/reports');
-    await expect(page.getByTestId('page-header-title')).toBeVisible({ timeout: 10000 });
-    await expect(page.getByRole('main').getByText(/Reports require the Starter tier/i)).toBeVisible(
-      { timeout: 5000 },
-    );
-  });
+  for (const { path, pitch, sample } of GATED_ROUTES) {
+    test(`previews the feature and pitches it on Free at ${path}`, async ({ page }) => {
+      // No stub: the suite's own unlicensed daemon answers with `features: []`.
+      await page.goto(path);
+      await expect(page.getByTestId('page-header-title')).toBeVisible({ timeout: 10000 });
+
+      const main = page.getByRole('main');
+      await expect(main.getByTestId('gated-pitch')).toContainText(pitch, { timeout: 5000 });
+      // The sample is the feature's own rendering, not an empty body.
+      await expect(main.getByTestId('gated-preview')).toContainText(sample);
+      await expect(main.getByText('seed license trial')).toBeVisible();
+    });
+
+    test(`leaves the sample unfocusable at ${path}`, async ({ page }) => {
+      await page.goto(path);
+      await expect(page.getByTestId('gated-preview')).toBeVisible({ timeout: 10000 });
+
+      // tabIndex is a property `inert` does not change, so reading it proves
+      // nothing: ask the engine instead — an inert control cannot take focus.
+      const focusable = await page
+        .getByTestId('gated-preview')
+        .locator('[inert] button, [inert] a, [inert] input, [inert] select')
+        .evaluateAll((nodes) =>
+          nodes.filter((node) => {
+            (node as HTMLElement).focus();
+            return document.activeElement === node;
+          }).length,
+        );
+      expect(focusable).toBe(0);
+    });
+  }
 });

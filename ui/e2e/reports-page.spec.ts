@@ -30,11 +30,12 @@ test.describe('Reports Page', () => {
   });
 
   test('should gate reports behind a Starter+ license on the free tier', async ({ page }) => {
-    // Unlicensed (Free) suite: RequireFeature renders the upsell fallback rather
-    // than the SLADashboardCard. Scope to <main> so the assertion can never be
-    // hijacked by sidebar nav labels (e.g. "Polling Targets" matches a loose
-    // /target/i regex) — the prior text-regex `.first()` was brittle this way.
-    await expect(page.getByRole('main').getByText(/reports require the starter tier/i)).toBeVisible(
+    // Unlicensed (Free) suite: GatedPreview renders the pitch over a sample of
+    // the feature rather than the live SLADashboardCard. Scope to <main> so the
+    // assertion can never be hijacked by sidebar nav labels — the prior
+    // text-regex `.first()` was brittle that way.
+    await expect(page.getByRole('main').getByTestId('gated-pitch')).toContainText(
+      'Reports is a Starter feature',
       { timeout: 5000 },
     );
   });

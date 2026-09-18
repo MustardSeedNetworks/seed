@@ -1,6 +1,6 @@
 /**
  * ReportsPage.i18n.test.tsx — the reports page renders real locale copy,
- * including its `<Trans>` licence gate.
+ * including the `<Trans>` actions in its <GatedPreview> pitch.
  *
  * S1-14b. Same reason the path analysis suite asserts its gate: a `<Trans>`
  * whose key is missing in a locale falls back to the component's children and
@@ -63,10 +63,11 @@ afterEach(async () => {
 });
 
 describe('ReportsPage — real locale copy', () => {
-  it('states the tier gate and both ways out of it in English', async () => {
+  it('pitches the feature and both ways out of the gate in English', async () => {
     await renderIn('en');
 
-    expect(screen.getByText(/Reports require the Starter tier or higher/)).toBeVisible();
+    expect(screen.getByText('Reports is a Starter feature')).toBeVisible();
+    expect(screen.getByText(/Generate executive summaries and device inventories/)).toBeVisible();
     expect(screen.getByText('seed license trial')).toBeVisible();
     expect(screen.getByText('seed license activate -k <KEY>')).toBeVisible();
   });
@@ -80,11 +81,14 @@ describe('ReportsPage — real locale copy', () => {
     expect(screen.getByText('Generate')).toBeVisible();
   });
 
-  it('renders the gate sentence in Spanish, with the commands still verbatim', async () => {
+  it('renders the pitch in Spanish, with the commands still verbatim', async () => {
     await renderIn('es');
 
-    expect(screen.queryByText(/Reports require the Starter tier or higher/)).toBeNull();
-    expect(screen.getByText(/Los informes requieren el nivel Starter o superior/)).toBeVisible();
+    expect(screen.queryByText('Reports is a Starter feature')).toBeNull();
+    expect(screen.getByText('Informes es una función del nivel Starter')).toBeVisible();
+    expect(
+      screen.getByText(/Genere resúmenes ejecutivos e inventarios de dispositivos/),
+    ).toBeVisible();
     expect(screen.getByText('seed license trial')).toBeVisible();
     expect(screen.getByText('seed license activate -k <KEY>')).toBeVisible();
   });

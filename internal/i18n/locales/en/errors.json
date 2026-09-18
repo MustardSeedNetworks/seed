@@ -42,7 +42,26 @@
     "tierGateTooltip": "Requires the {{tier}} tier",
     "featureUnavailable": "{{feature}} is not available on your current tier",
     "currentTier": "Current tier: {{tier}}",
-    "loading": "Checking license…"
+    "loading": "Checking license…",
+    "gated": {
+      "title": "{{feature}} is a {{tier}} feature",
+      "sampleLabel": "Sample data — this is what the page shows once the feature is licensed.",
+      "actions": "Start a 14-day Pro trial with <code>seed license trial</code>, or activate a {{tier}} key with <code2>seed license activate -k <KEY></code2>.",
+      "features": {
+        "path_analysis": {
+          "name": "Path Analysis",
+          "pitch": "Trace a path hop by hop across both layers: the switches a frame crosses, from LLDP, CDP and SNMP, and the routers it crosses after that, with the round-trip time of each hop."
+        },
+        "export_csv_json": {
+          "name": "Reports",
+          "pitch": "Generate executive summaries and device inventories on demand, and download each one as PDF, CSV or JSON for the people who never open Seed."
+        }
+      },
+      "samples": {
+        "executiveSummary": "Executive summary",
+        "deviceInventory": "Device inventory"
+      }
+    }
   },
   "validation": {
     "failed": "Validation failed",
