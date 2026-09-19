@@ -112,7 +112,7 @@ export const spacing = {
   },
 
   // Centered content padding (for loading states, empty states)
-  centered: 'py-centered', // 48px vertical
+  centered: 'py-centered', // 32px vertical
 
   // Compact action button padding (remove, delete buttons)
   actionBtn: 'action-btn-pad', // 4px horizontal

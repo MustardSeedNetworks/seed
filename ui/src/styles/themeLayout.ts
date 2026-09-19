@@ -109,8 +109,18 @@ export const layout = {
 
   // Grid layouts
   grid: {
-    // Responsive card grids - cards stretch to fill available space
-    cards: 'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6',
+    // Responsive card grids - cards stretch to fill available space.
+    // auto-fit rather than the fixed 1/2/3/4 columns: those snapped at the
+    // viewport breakpoints regardless of how much room the content column
+    // actually had, so a three-card page left a dead fourth column at 1440px
+    // and every card was squeezed to 232px at 1280px, where card headers
+    // painted outside their own border. A 16rem floor keeps four columns at
+    // 1440px, drops to three at 1280px before anything is squeezed, and the
+    // 1fr share means the last card in a row ends where the column does.
+    // grid-flow-dense so a card that spans two columns does not strand the
+    // single column beside it: without it the first row of /network ended
+    // three cards wide with a dead fourth column at 1440px.
+    cards: 'grid grid-flow-dense grid-cols-[repeat(auto-fit,minmax(16rem,1fr))] gap-6',
     cardsWide: 'grid grid-cols-1 lg:grid-cols-3 gap-6',
     // Form layouts
     form2col: 'grid grid-cols-2 gap-2',
