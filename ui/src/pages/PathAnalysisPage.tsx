@@ -1,7 +1,7 @@
-import { Trans } from 'react-i18next';
 import { NetworkDiscoveryCard } from '../components/cards/NetworkDiscoveryCard';
 import { PathDiscoveryCard } from '../components/cards/PathDiscoveryCard';
-import { RequireFeature } from '../components/ui/RequireFeature';
+import { PathAnalysisPreview } from '../components/previews/PathAnalysisPreview';
+import { GatedPreview } from '../components/ui/GatedPreview';
 import { useAppContext } from '../contexts/AppContext';
 import { layout } from '../styles/theme';
 
@@ -19,21 +19,7 @@ export function PathAnalysisPage() {
   } = useAppContext();
 
   return (
-    <RequireFeature
-      feature="path_analysis"
-      fallback={
-        <div className="rounded-lg border border-status-warning/30 bg-status-warning/5 pad text-sm text-status-warning">
-          <Trans
-            i18nKey="path.proGate"
-            ns="pages"
-            components={{
-              code: <code className="mx-1 px-1 rounded bg-surface-raised" />,
-              code2: <code className="ml-tight px-1 rounded bg-surface-raised" />,
-            }}
-          />
-        </div>
-      }
-    >
+    <GatedPreview feature="path_analysis" preview={<PathAnalysisPreview />}>
       <div className={layout.grid.cards}>
         {(!isWifi || cards.wifi) && (
           <PathDiscoveryCard
@@ -55,6 +41,6 @@ export function PathAnalysisPage() {
           />
         )}
       </div>
-    </RequireFeature>
+    </GatedPreview>
   );
 }

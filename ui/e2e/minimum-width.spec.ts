@@ -156,6 +156,9 @@ for (const { name: widthName, width } of WIDTHS) {
  *  - **Visually hidden until focused.** The skip link measures 1x1 while
  *    hidden. What matters is its size when it is reachable, so it is measured
  *    focused, not parked.
+ *  - **Inside an `inert` subtree.** A licence preview's sample (#2669) draws
+ *    the feature's real controls with the branch turned off: nothing there can
+ *    be focused, clicked or tapped, so it is a picture, not a touch target.
  *
  * And one correction to what gets measured: a control wrapped in its own
  * `<label>` is targeted by the whole label, not the 13x13 native checkbox
@@ -220,6 +223,10 @@ test.describe('at the minimum width (480px)', () => {
           .filter((el) => {
             const style = window.getComputedStyle(el);
             if (style.display === 'none' || style.visibility === 'hidden') {
+              return false;
+            }
+            // Nothing in an inert subtree can be tapped at all.
+            if (el.closest('[inert]') !== null) {
               return false;
             }
             const box = effectiveTarget(el);
