@@ -5,6 +5,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.214.77](https://github.com/MustardSeedNetworks/seed/compare/v0.214.76...v0.214.77) (2026-09-19)
+
+
+### Bug Fixes
+
+* **deps:** update dependency tailwind-merge to v3.7.0 ([#2786](https://github.com/MustardSeedNetworks/seed/issues/2786)) ([4a1208f](https://github.com/MustardSeedNetworks/seed/commit/4a1208f8a57ff50fd67d3bdb8cc73cb2dd4e299c))
+* **network:** read the netmask and name the interface on every platform ([#2785](https://github.com/MustardSeedNetworks/seed/issues/2785)) ([d48e363](https://github.com/MustardSeedNetworks/seed/commit/d48e363afda47ab7f7d38b1a5c12aa8e17501b2e))
+* **ui:** spend Seed's desktop height on its own content ([#2787](https://github.com/MustardSeedNetworks/seed/issues/2787)) ([b51381c](https://github.com/MustardSeedNetworks/seed/commit/b51381c7ace56d4232e594c640ef8632ae7bd17e)), closes [#2709](https://github.com/MustardSeedNetworks/seed/issues/2709)
+
 ## [0.214.76](https://github.com/MustardSeedNetworks/seed/compare/v0.214.75...v0.214.76) (2026-09-19)
 
 
