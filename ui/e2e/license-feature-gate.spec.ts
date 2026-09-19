@@ -118,11 +118,12 @@ test.describe('licence feature gate', () => {
       const focusable = await page
         .getByTestId('gated-preview')
         .locator('[inert] button, [inert] a, [inert] input, [inert] select')
-        .evaluateAll((nodes) =>
-          nodes.filter((node) => {
-            (node as HTMLElement).focus();
-            return document.activeElement === node;
-          }).length,
+        .evaluateAll(
+          (nodes) =>
+            nodes.filter((node) => {
+              (node as HTMLElement).focus();
+              return document.activeElement === node;
+            }).length,
         );
       expect(focusable).toBe(0);
     });
