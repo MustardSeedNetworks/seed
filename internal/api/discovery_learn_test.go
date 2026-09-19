@@ -1,10 +1,13 @@
 package api_test
 
 import (
+	"errors"
 	"testing"
 
 	"github.com/MustardSeedNetworks/seed/internal/api"
+	"github.com/MustardSeedNetworks/seed/internal/diagnostics/gateway"
 	"github.com/MustardSeedNetworks/seed/internal/discovery"
+	"github.com/MustardSeedNetworks/seed/internal/discovery/learn"
 )
 
 // The learner reads two SNMP tables off each discovered device. A device no
@@ -75,3 +78,56 @@ func TestLocalPrefixesMasksTheScannersSubnet(t *testing.T) {
 		})
 	}
 }
+
+// hostRoutesVia narrows Seed's own forwarding table to what leaves through
+// the interface discovery is bound to. The rows below are this Mac's real
+// table (feth0 carrying two routed /16s over a transit link), which is the
+// shape seed#2695 was written from.
+func TestHostRoutesViaNarrowsToTheActiveInterface(t *testing.T) {
+	read := func() ([]gateway.RouteInfo, error) {
+		return []gateway.RouteInfo{
+			{Destination: "0.0.0.0", Prefix: 0, Gateway: "10.44.20.1", Interface: "en0", Family: "inet"},
+			{Destination: "10.51.0.0", Prefix: 16, Gateway: "10.254.200.1", Interface: "feth0", Family: "inet"},
+			{Destination: "10.52.0.0", Prefix: 16, Gateway: "10.254.200.1", Interface: "feth0", Family: "inet"},
+			{Destination: "10.254.200.0", Prefix: 24, Interface: "feth0", Family: "inet"},
+			{Destination: "10.44.20.0", Prefix: 24, Interface: "en0", Family: "inet"},
+			{Destination: "fd00::", Prefix: 64, Interface: "feth0", Family: "inet6"},
+		}, nil
+	}
+
+	got := api.ExportHostRoutesVia("feth0", read)
+
+	want := []learn.HostRoute{
+		{Destination: "10.51.0.0", Prefix: 16, Gateway: "10.254.200.1"},
+		{Destination: "10.52.0.0", Prefix: 16, Gateway: "10.254.200.1"},
+		{Destination: "10.254.200.0", Prefix: 24},
+	}
+	if len(got) != len(want) {
+		t.Fatalf("hostRoutesVia() = %+v, want %+v", got, want)
+	}
+	for i := range want {
+		if got[i] != want[i] {
+			t.Errorf("route %d = %+v, want %+v", i, got[i], want[i])
+		}
+	}
+}
+
+// Two ways the host's table says nothing, neither of which is an error: no
+// interface bound yet, and a routing table that cannot be read.
+func TestHostRoutesViaIsEmptyWithoutAnInterfaceOrATable(t *testing.T) {
+	read := func() ([]gateway.RouteInfo, error) {
+		return []gateway.RouteInfo{
+			{Destination: "10.51.0.0", Prefix: 16, Interface: "feth0", Family: "inet"},
+		}, nil
+	}
+	if got := api.ExportHostRoutesVia("", read); got != nil {
+		t.Errorf("hostRoutesVia(\"\") = %+v, want none", got)
+	}
+
+	failing := func() ([]gateway.RouteInfo, error) { return nil, errNoRoutingTable }
+	if got := api.ExportHostRoutesVia("feth0", failing); got != nil {
+		t.Errorf("hostRoutesVia with an unreadable table = %+v, want none", got)
+	}
+}
+
+var errNoRoutingTable = errors.New("routing table unavailable")
