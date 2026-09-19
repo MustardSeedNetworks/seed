@@ -13,14 +13,6 @@ import (
 	"golang.org/x/net/route"
 )
 
-// RouteInfo contains information about a route.
-type RouteInfo struct {
-	Destination string `json:"destination"`
-	Gateway     string `json:"gateway,omitempty"`
-	Interface   string `json:"interface,omitempty"`
-	Family      string `json:"family"` // "inet" or "inet6"
-}
-
 // extractRouteIP extracts IP address and family from a route address.
 func extractRouteIP(addr route.Addr) (string, string) {
 	switch a := addr.(type) {
@@ -53,10 +45,55 @@ func parseRouteMessage(rm *route.RouteMessage) *RouteInfo {
 		}
 	}
 
+	ri.Prefix = routePrefix(rm, ri.Family)
+
 	if ri.Destination == "" && ri.Gateway == "" {
 		return nil
 	}
 	return ri
+}
+
+// Host prefix lengths, i.e. the mask a route to a single address carries.
+const (
+	hostPrefixIPv4 = 32
+	hostPrefixIPv6 = 128
+)
+
+// hostPrefix is the prefix length of a host route in the given family.
+func hostPrefix(family string) int {
+	if family == "inet6" {
+		return hostPrefixIPv6
+	}
+	return hostPrefixIPv4
+}
+
+// routePrefix is the route's prefix length. RTF_HOST is read before the
+// netmask because the kernel omits RTAX_NETMASK entirely for a host route:
+// taking a missing mask for a /0 is exactly the confusion seed#2765 is about,
+// and it would turn every ARP-cloned neighbour entry into a default route.
+// The real default route does carry a mask, of 0.0.0.0.
+func routePrefix(rm *route.RouteMessage, family string) int {
+	if rm.Flags&syscall.RTF_HOST != 0 {
+		return hostPrefix(family)
+	}
+	if len(rm.Addrs) > syscall.RTAX_NETMASK {
+		if bits, ok := maskBits(rm.Addrs[syscall.RTAX_NETMASK]); ok {
+			return bits
+		}
+	}
+	return 0
+}
+
+// maskBits counts the leading ones of a netmask carried as a route address.
+// The second return is false when the slot holds no mask at all.
+func maskBits(addr route.Addr) (int, bool) {
+	switch a := addr.(type) {
+	case *route.Inet4Addr:
+		return prefixFromMask(a.IP[:])
+	case *route.Inet6Addr:
+		return prefixFromMask(a.IP[:])
+	}
+	return 0, false
 }
 
 // GetAllRoutes returns all routes using the routing socket.

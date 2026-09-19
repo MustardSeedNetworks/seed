@@ -161,6 +161,8 @@ func learnedName(candidate learn.Candidate) string {
 		return "Learned from " + candidate.Router + " (interface addresses)"
 	case learn.SourceRouteTable:
 		return "Learned from " + candidate.Router + " (routing table)"
+	case learn.SourceHostRoute:
+		return "Learned from this host's route via " + candidate.Router
 	default:
 		return "Learned from " + candidate.Router
 	}

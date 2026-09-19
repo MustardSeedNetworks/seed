@@ -10,6 +10,7 @@ import (
 	"github.com/MustardSeedNetworks/seed/internal/auth"
 	"github.com/MustardSeedNetworks/seed/internal/config"
 	"github.com/MustardSeedNetworks/seed/internal/config/backups"
+	"github.com/MustardSeedNetworks/seed/internal/diagnostics/gateway"
 	"github.com/MustardSeedNetworks/seed/internal/discovery"
 	"github.com/MustardSeedNetworks/seed/internal/discovery/learn"
 	"github.com/MustardSeedNetworks/seed/internal/engine"
@@ -522,4 +523,12 @@ func (s *Server) DNSTesterInterface() string {
 // ExportCollectDNSData exposes the DNS payload the WebSocket broadcast sends.
 func (s *Server) ExportCollectDNSData() map[string]any {
 	return s.collectDNSData()
+}
+
+// ExportHostRoutesVia exposes hostRoutesVia for testing.
+func ExportHostRoutesVia(
+	iface string,
+	read func() ([]gateway.RouteInfo, error),
+) []learn.HostRoute {
+	return hostRoutesVia(iface, read)
 }

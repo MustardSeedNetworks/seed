@@ -65,7 +65,7 @@ func transitNetwork(t *testing.T) netip.Prefix {
 func TestCandidatesLearnsTheNetworksBehindARouter(t *testing.T) {
 	local := []netip.Prefix{transitNetwork(t)}
 
-	got := cidrs(learn.Candidates([]learn.Device{hospitalRouter()}, local))
+	got := cidrs(learn.Candidates([]learn.Device{hospitalRouter()}, nil, local))
 
 	want := []string{
 		"10.44.10.0/24", "10.44.20.0/24", "10.44.30.0/24",
@@ -105,7 +105,7 @@ func TestCandidatesRejectsWhatMustNeverBeSwept(t *testing.T) {
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
 			dev := learn.Device{IP: "10.44.40.1", Routes: []learn.Route{tc.route}}
-			if got := learn.Candidates([]learn.Device{dev}, nil); len(got) != 0 {
+			if got := learn.Candidates([]learn.Device{dev}, nil, nil); len(got) != 0 {
 				t.Errorf("Candidates() = %v, want none", cidrs(got))
 			}
 		})
@@ -123,7 +123,7 @@ func TestCandidatesLearnsFromTheAddressTable(t *testing.T) {
 		},
 	}
 
-	got := cidrs(learn.Candidates([]learn.Device{dev}, []netip.Prefix{transitNetwork(t)}))
+	got := cidrs(learn.Candidates([]learn.Device{dev}, nil, []netip.Prefix{transitNetwork(t)}))
 
 	if want := []string{"10.44.80.0/24"}; !equalStrings(got, want) {
 		t.Errorf("Candidates() = %v, want %v", got, want)
@@ -136,7 +136,7 @@ func TestCandidatesReportsWhichDeviceAndTableNamedTheNetwork(t *testing.T) {
 		{IP: "10.44.40.2", Addresses: []learn.Address{{Address: "10.44.20.1", Prefix: 24}}},
 	}
 
-	got := learn.Candidates(devices, nil)
+	got := learn.Candidates(devices, nil, nil)
 
 	if len(got) != 2 {
 		t.Fatalf("Candidates() returned %d, want 2: %v", len(got), cidrs(got))
@@ -159,7 +159,7 @@ func TestCandidatesDeduplicates(t *testing.T) {
 		{IP: "10.44.40.3", Addresses: []learn.Address{{Address: "10.44.10.5", Prefix: 24}}},
 	}
 
-	got := learn.Candidates(devices, nil)
+	got := learn.Candidates(devices, nil, nil)
 
 	if len(got) != 1 || got[0].CIDR != "10.44.10.0/24" || got[0].Router != "10.44.40.1" {
 		t.Errorf("Candidates() = %+v, want one 10.44.10.0/24 from 10.44.40.1", got)
@@ -177,7 +177,7 @@ func TestCandidatesCanonicalisesTheNetworkAddress(t *testing.T) {
 		},
 	}
 
-	got := cidrs(learn.Candidates([]learn.Device{dev}, nil))
+	got := cidrs(learn.Candidates([]learn.Device{dev}, nil, nil))
 
 	if want := []string{"10.44.10.0/24"}; !equalStrings(got, want) {
 		t.Errorf("Candidates() = %v, want %v", got, want)
@@ -194,7 +194,7 @@ func TestCandidatesSkipsWhatIsAlreadyCovered(t *testing.T) {
 		},
 	}
 
-	got := cidrs(learn.Candidates([]learn.Device{dev}, []netip.Prefix{transitNetwork(t)}))
+	got := cidrs(learn.Candidates([]learn.Device{dev}, nil, []netip.Prefix{transitNetwork(t)}))
 
 	if want := []string{"10.44.50.0/24"}; !equalStrings(got, want) {
 		t.Errorf("Candidates() = %v, want %v", got, want)
@@ -209,9 +209,65 @@ func TestCandidatesLearnsASupernetOfTheSweptNetwork(t *testing.T) {
 		Routes: []learn.Route{{Destination: "10.44.0.0", Prefix: 16, Type: "remote"}},
 	}
 
-	got := cidrs(learn.Candidates([]learn.Device{dev}, []netip.Prefix{transitNetwork(t)}))
+	got := cidrs(learn.Candidates([]learn.Device{dev}, nil, []netip.Prefix{transitNetwork(t)}))
 
 	if want := []string{"10.44.0.0/16"}; !equalStrings(got, want) {
 		t.Errorf("Candidates() = %v, want %v", got, want)
 	}
+}
+
+// Seed's own forwarding table names the routed networks behind the active
+// interface's gateway — on the machine #2695 was written from, two /16s via
+// the transit link — and they are learnable without any device answering
+// SNMP at all.
+func TestCandidatesLearnsFromTheHostsOwnRoutes(t *testing.T) {
+	host := []learn.HostRoute{
+		{Destination: "0.0.0.0", Prefix: 0, Gateway: "10.254.200.1"}, // the default route is not a target
+		{Destination: "10.51.0.0", Prefix: 16, Gateway: "10.254.200.1"},
+		{Destination: "10.52.0.0", Prefix: 16, Gateway: "10.254.200.1"},
+		{Destination: "10.254.200.0", Prefix: 24}, // the transit network itself
+		{Destination: "127.0.0.0", Prefix: 8},     // loopback
+		{Destination: "10.44.20.107", Prefix: 32}, // an ARP-cloned neighbour
+	}
+
+	got := learn.Candidates(nil, host, []netip.Prefix{hostTransitNetwork(t)})
+
+	if want := []string{"10.51.0.0/16", "10.52.0.0/16"}; !equalStrings(cidrs(got), want) {
+		t.Fatalf("Candidates() = %v, want %v", cidrs(got), want)
+	}
+	if got[0].Source != learn.SourceHostRoute {
+		t.Errorf("source = %q, want %q", got[0].Source, learn.SourceHostRoute)
+	}
+	if got[0].Router != "10.254.200.1" {
+		t.Errorf("router = %q, want the next hop 10.254.200.1", got[0].Router)
+	}
+}
+
+// A network the host routes and a router also advertises is one candidate:
+// the host's own table is read first, so it owns the attribution.
+func TestCandidatesDeduplicatesAcrossHostAndDevices(t *testing.T) {
+	host := []learn.HostRoute{{Destination: "10.51.0.0", Prefix: 16, Gateway: "10.254.200.1"}}
+	devices := []learn.Device{
+		{IP: "10.44.40.1", Routes: []learn.Route{{Destination: "10.51.0.0", Prefix: 16, Type: "remote"}}},
+	}
+
+	got := learn.Candidates(devices, host, []netip.Prefix{hostTransitNetwork(t)})
+
+	if len(got) != 1 {
+		t.Fatalf("Candidates() returned %d, want 1: %v", len(got), cidrs(got))
+	}
+	if got[0].Source != learn.SourceHostRoute {
+		t.Errorf("source = %q, want the host's own table to win", got[0].Source)
+	}
+}
+
+// hostTransitNetwork is the link the host's own routes leave through, i.e.
+// the network a sweep already covers without being told about it.
+func hostTransitNetwork(t *testing.T) netip.Prefix {
+	t.Helper()
+	p, err := netip.ParsePrefix("10.254.200.0/24")
+	if err != nil {
+		t.Fatalf("ParsePrefix: %v", err)
+	}
+	return p
 }

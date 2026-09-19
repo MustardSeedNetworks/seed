@@ -4,6 +4,7 @@ import (
 	"context"
 	"net/netip"
 
+	"github.com/MustardSeedNetworks/seed/internal/diagnostics/gateway"
 	"github.com/MustardSeedNetworks/seed/internal/discovery"
 	"github.com/MustardSeedNetworks/seed/internal/discovery/learn"
 	"github.com/MustardSeedNetworks/seed/internal/logging"
@@ -28,12 +29,13 @@ func (s *Server) learnTargetNetworks(ctx context.Context, discovered []*discover
 	}
 
 	devices := routingViews(discovered)
-	if len(devices) == 0 {
+	host := hostRoutesVia(s.deviceDiscovery().GetInterfaceName(), gateway.GetAllRoutes)
+	if len(devices) == 0 && len(host) == 0 {
 		return
 	}
 
 	subnet, _ := s.deviceDiscovery().GetSubnetInfo()
-	candidates := learn.Candidates(devices, localPrefixes(subnet))
+	candidates := learn.Candidates(devices, host, localPrefixes(subnet))
 	if len(candidates) == 0 {
 		return
 	}
@@ -48,6 +50,38 @@ func (s *Server) learnTargetNetworks(ctx context.Context, discovered []*discover
 		logger.InfoContext(ctx, "Learned target networks from SNMP routing data",
 			"added", added, "candidates", len(candidates))
 	}
+}
+
+// hostRoutesVia is Seed's own view of what lies behind the active interface:
+// the rows of the host's forwarding table that leave through it. A site
+// reached over a static route or a routing daemon is named here whether or
+// not any router on it answers SNMP, which is the one learning source that
+// survives a network whose devices are closed to us (seed#2695).
+//
+// Only the interface and the family are decided here. Which of those routes
+// is worth offering as a sweep target is the learner's range rule, and
+// duplicating it would give it two places to disagree with itself — the
+// default route, for one, is dropped there as a /0 and not by a guard here.
+func hostRoutesVia(iface string, read func() ([]gateway.RouteInfo, error)) []learn.HostRoute {
+	if iface == "" {
+		return nil
+	}
+	routes, err := read()
+	if err != nil {
+		return nil
+	}
+	var out []learn.HostRoute
+	for _, route := range routes {
+		if route.Interface != iface || route.Family != "inet" {
+			continue
+		}
+		out = append(out, learn.HostRoute{
+			Destination: route.Destination,
+			Prefix:      route.Prefix,
+			Gateway:     route.Gateway,
+		})
+	}
+	return out
 }
 
 // routingViews reduces the discovered devices to the routing and address rows

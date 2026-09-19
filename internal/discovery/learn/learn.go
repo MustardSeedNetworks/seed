@@ -18,6 +18,10 @@ const (
 	SourceRouteTable Source = "snmp-route-table"
 	// SourceAddressTable is a device's own interface addresses (IP-MIB).
 	SourceAddressTable Source = "snmp-address-table"
+	// SourceHostRoute is Seed's own forwarding table. It needs no device to
+	// answer SNMP, so it is the one source that works on a site whose routers
+	// are closed to us.
+	SourceHostRoute Source = "host-route"
 )
 
 // Route type values that mean "traffic for this network is dropped here"
@@ -57,6 +61,15 @@ type Route struct {
 	Protocol    string
 }
 
+// HostRoute is one row of Seed's own forwarding table, narrowed by the caller
+// to the routes that leave through the active interface. Gateway is the next
+// hop, which is what tells the operator whose route this is.
+type HostRoute struct {
+	Destination string
+	Prefix      int
+	Gateway     string
+}
+
 // Address is one interface address from a device's IP address table.
 type Address struct {
 	Address string
@@ -70,9 +83,9 @@ type Device struct {
 	Addresses []Address
 }
 
-// Candidates returns the private IPv4 networks named by the devices' routing
-// and address tables that local does not already cover, in the order they were
-// first seen.
+// Candidates returns the private IPv4 networks named by Seed's own forwarding
+// table and by the devices' routing and address tables that local does not
+// already cover, in the order they were first seen.
 //
 // Routes are kept whichever protocol learned them and whether the router calls
 // them local or remote: the networks #2695 is about sit *behind* the edge
@@ -81,7 +94,7 @@ type Device struct {
 // to be an RFC 1918 network between /16 and /30. That excludes public space,
 // carrier-grade NAT, loopback, link-local and multicast in one rule, so no
 // learned toggle can ever point a sweep at someone else's address space.
-func Candidates(devices []Device, local []netip.Prefix) []Candidate {
+func Candidates(devices []Device, host []HostRoute, local []netip.Prefix) []Candidate {
 	var out []Candidate
 	seen := make(map[netip.Prefix]bool)
 
@@ -93,23 +106,46 @@ func Candidates(devices []Device, local []netip.Prefix) []Candidate {
 		out = append(out, Candidate{CIDR: network.String(), Source: source, Router: router})
 	}
 
+	addHostRoutes(host, add)
+	addDeviceTables(devices, add)
+
+	return out
+}
+
+// addTo records one learned network. Each source hands its rows to one of
+// these so Candidates stays a statement of the order the sources are read in.
+type addTo func(network netip.Prefix, source Source, router string)
+
+// addHostRoutes reads Seed's own forwarding table. It goes first because it is
+// the one source that needs nothing on the wire to answer, so where it and a
+// router name the same network the attribution an operator can check for
+// himself wins.
+func addHostRoutes(host []HostRoute, add addTo) {
+	for _, route := range host {
+		if prefix, ok := network(route.Destination, route.Prefix); ok {
+			add(prefix, SourceHostRoute, route.Gateway)
+		}
+	}
+}
+
+// addDeviceTables reads the routing and address tables of the devices an SNMP
+// walk reached.
+func addDeviceTables(devices []Device, add addTo) {
 	for _, device := range devices {
 		for _, route := range device.Routes {
 			if route.Type == typeReject || route.Type == typeBlackhole {
 				continue
 			}
-			if network, ok := network(route.Destination, route.Prefix); ok {
-				add(network, SourceRouteTable, device.IP)
+			if prefix, ok := network(route.Destination, route.Prefix); ok {
+				add(prefix, SourceRouteTable, device.IP)
 			}
 		}
 		for _, address := range device.Addresses {
-			if network, ok := network(address.Address, address.Prefix); ok {
-				add(network, SourceAddressTable, device.IP)
+			if prefix, ok := network(address.Address, address.Prefix); ok {
+				add(prefix, SourceAddressTable, device.IP)
 			}
 		}
 	}
-
-	return out
 }
 
 // network builds the masked network an address and prefix length describe. The
