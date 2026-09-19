@@ -1,7 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import type { InterfaceInfo } from '../../types/generated/categorized-interfaces-response';
 import type { Profile } from '../../types/profile';
-import { HeaderBar } from './HeaderBar';
+import { RailControls } from './RailControls';
 
 const profiles: Profile[] = [
   {
@@ -49,43 +49,42 @@ const interfaces: InterfaceInfo[] = [
 ];
 
 const meta = {
-  title: 'App/HeaderBar',
-  component: HeaderBar,
-  parameters: { layout: 'fullscreen' },
-} satisfies Meta<typeof HeaderBar>;
+  title: 'App/RailControls',
+  component: RailControls,
+  parameters: { layout: 'centered' },
+} satisfies Meta<typeof RailControls>;
 
 export default meta;
 
 type Story = StoryObj<typeof meta>;
 
-export const Connected: Story = {
+export const Expanded: Story = {
   args: {
-    wsStatus: 'connected',
-    onReconnect: () => {},
     profiles,
     activeProfile: profiles.at(0) ?? null,
     profilesLoading: false,
     onProfileSwitch: async () => true,
     onProfileManage: () => {},
+    logout: () => {},
     interfaces,
     currentInterface: 'eth0',
     isWifi: false,
-    onInterfaceChange: () => {},
-    hasEthernet: true,
     hasWifiInterface: true,
+    onInterfaceChange: () => {},
     switchToInterfaceType: () => {},
+    recommendedEthernet: 'eth0',
     toggleTheme: () => {},
     isDark: true,
-    onHelpOpen: () => {},
-    onSettingsOpen: () => {},
-    logout: () => {},
-    recommendedEthernet: 'eth0',
+    collapsed: false,
   },
 };
 
-export const Disconnected: Story = {
-  args: {
-    ...Connected.args,
-    wsStatus: 'disconnected',
-  },
+/** The 64px rail: the controls stack and the panels open beside it. */
+export const Collapsed: Story = {
+  args: { ...Expanded.args, collapsed: true },
+};
+
+/** No Wi-Fi hardware — the mode control stays, with its warning pip. */
+export const NoWifiHardware: Story = {
+  args: { ...Expanded.args, hasWifiInterface: false },
 };

@@ -43,7 +43,7 @@ test.describe('smoke @ authenticated', { tag: '@smoke' }, () => {
   //                                 assert role, aria-modal, the TOC and ESC,
   //                                 which the copy here did not
   //   profile -> logout          -> auth-complete.spec.ts drives the same
-  //                                 header-profile click as its logout setup
+  //                                 rail-account click as its logout setup
   //
   // What stays is what nothing else covers: the build-metadata contract, the
   // unauthenticated login surface, and that an authenticated dashboard paints.

@@ -71,8 +71,6 @@ interface UseNetworkFetchersProps {
   prevLinkUpRef: React.MutableRefObject<boolean | null>;
   /** #756: Set recommended ethernet interface (most capable) */
   setRecommendedEthernet?: React.Dispatch<React.SetStateAction<string | undefined>>;
-  /** #756: Set recommended WiFi interface (most capable) */
-  setRecommendedWifi?: React.Dispatch<React.SetStateAction<string | undefined>>;
 }
 
 export function useNetworkFetchers({
@@ -87,7 +85,6 @@ export function useNetworkFetchers({
   networkDiscoveryAbortRef,
   prevLinkUpRef,
   setRecommendedEthernet,
-  setRecommendedWifi,
 }: UseNetworkFetchersProps): {
   fetchLinkData: () => Promise<void>;
   fetchIpConfig: () => Promise<void>;
@@ -195,18 +192,16 @@ export function useNetworkFetchers({
         // Combine ethernet and wifi interfaces for flat list compatibility
         const allInterfaces = [...(data.ethernet || []), ...(data.wifi || [])];
         setInterfaces(allInterfaces);
-        // Update recommended interfaces if setters are provided
+        // The Wi-Fi control is a mode, not a list, so only the Ethernet
+        // recommendation has anywhere to render (#756).
         if (setRecommendedEthernet && data.recommendedEthernet) {
           setRecommendedEthernet(data.recommendedEthernet);
-        }
-        if (setRecommendedWifi && data.recommendedWifi) {
-          setRecommendedWifi(data.recommendedWifi);
         }
       }
     } catch (err) {
       logger.error(LogComponents.NETWORK, 'Failed to fetch interfaces', err);
     }
-  }, [setInterfaces, setRecommendedEthernet, setRecommendedWifi]);
+  }, [setInterfaces, setRecommendedEthernet]);
 
   // Fetch app version from status endpoint
   const fetchVersion = useCallback(async () => {
