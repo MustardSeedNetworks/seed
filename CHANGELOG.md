@@ -5,6 +5,19 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.214.76](https://github.com/MustardSeedNetworks/seed/compare/v0.214.75...v0.214.76) (2026-09-19)
+
+
+### Features
+
+* **ui:** preview a Pro feature instead of an empty page behind the gate ([#2779](https://github.com/MustardSeedNetworks/seed/issues/2779)) ([f7dd63b](https://github.com/MustardSeedNetworks/seed/commit/f7dd63b343f2bcd388c7919086ef475cf8546375))
+* **ui:** retire the HeaderBar; the rail carries status, interface, theme and account ([#2777](https://github.com/MustardSeedNetworks/seed/issues/2777)) ([3d781dd](https://github.com/MustardSeedNetworks/seed/commit/3d781ddc556e60085f7c1a6476b93ec9ebe1d882))
+
+
+### Miscellaneous
+
+* **deps:** update dependency @biomejs/biome to v2.5.14 ([#2783](https://github.com/MustardSeedNetworks/seed/issues/2783)) ([6606691](https://github.com/MustardSeedNetworks/seed/commit/66066915f4d129f6b93e0eb6e8bdbf12a320118f))
+
 ## [0.214.75](https://github.com/MustardSeedNetworks/seed/compare/v0.214.74...v0.214.75) (2026-09-19)
 
 
