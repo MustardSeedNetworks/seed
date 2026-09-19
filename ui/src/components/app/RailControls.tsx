@@ -354,6 +354,10 @@ export function RailControls({
         <button
           type="button"
           data-testid="rail-wifi"
+          // The no-hardware dot overhangs the button's bottom-right corner by
+          // 2px, the same decoration as the rail's status badge. Declared to
+          // the density walk rather than given a pixel tolerance there.
+          data-phone-width-exempt="badge-overhang"
           className={cn(
             buttonClass,
             'relative',

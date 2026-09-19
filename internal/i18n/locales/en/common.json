@@ -187,7 +187,6 @@
   "footer": {
     "runTestsHint": "Tap the play button to run all tests.",
     "networkDiscoveryHint": "Use the Network Discovery card to scan for devices on your network.",
-    "byCompany": "by {{company}}",
     "company": "Mustard Seed Networks",
     "contact": "Contact",
     "copyright": "© {{year}} {{company}}. All rights reserved.",
@@ -195,7 +194,6 @@
     "license": "License",
     "privacy": "Privacy",
     "tos": "Terms of Service",
-    "version": "Version",
     "website": "Website"
   },
   "errorBoundary": {

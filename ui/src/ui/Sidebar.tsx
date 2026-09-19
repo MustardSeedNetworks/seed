@@ -213,7 +213,8 @@ const SidebarHeader: FC<SidebarHeaderProps> = ({ collapsed, onCollapse, status }
   }`;
   const lockup = (
     <>
-      <div className="relative flex-shrink-0">
+      {/* 2px of overhang with nothing to scroll: declared, not tolerated. */}
+      <div className="relative flex-shrink-0" data-phone-width-exempt="badge-overhang">
         <SeedLogo badge badgeClassName="h-9 w-9 shadow-lg" glyphClassName={iconSizes.lg} />
         <span
           aria-hidden="true"
@@ -580,7 +581,7 @@ export const SidebarLayout: FC<SidebarLayoutProps> = ({
 
       <aside
         className={`hidden lg:flex fixed top-0 left-0 z-40 h-full flex-col bg-gradient-to-b from-rail-from to-rail-to backdrop-blur-xl border-r border-hairline transition-all duration-300 ease-in-out ${
-          collapsed ? 'w-16' : 'w-[252px]'
+          collapsed ? 'w-16' : 'w-56' // one step with lg:pl-56 below; was 252 vs 256
         }`}
       >
         {body}
@@ -589,7 +590,7 @@ export const SidebarLayout: FC<SidebarLayoutProps> = ({
       <main
         id="main-content"
         className={`transition-all duration-300 ease-in-out pt-16 lg:pt-0 ${
-          collapsed ? 'lg:pl-16' : 'lg:pl-64'
+          collapsed ? 'lg:pl-16' : 'lg:pl-56'
         }`}
       >
         <div className="pad sm:pad-lg lg:pad-xl">{children}</div>

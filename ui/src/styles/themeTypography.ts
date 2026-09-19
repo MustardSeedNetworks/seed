@@ -8,7 +8,7 @@ export const typography = {
   // Semantic heading classes (match CSS utilities in index.css)
   // These are the preferred way to style headings
   heading: {
-    h1: 'heading-1', // Page titles: 24px/30px bold
+    h1: 'heading-1', // Page titles: 20px/24px bold
     h2: 'heading-2', // Section/modal titles: 20px/24px semibold
     h3: 'heading-3', // Card titles: 18px/20px semibold
     h4: 'heading-4', // Subsections: 16px/18px medium

@@ -310,9 +310,11 @@ body {
        <span className="caption">Metadata</span>
      ======================================================================== */
 
-  /* Page titles - largest, used sparingly (login, major pages) */
+  /* Page titles - largest, used sparingly (login, major pages).
+     One step down from the old text-2xl/3xl: the fleet shares one page-title
+     scale, set by stem UI-STEM-18 and niac-go UI-NIAC-19. */
   .heading-1 {
-    @apply text-2xl sm:text-3xl font-bold text-text-primary leading-tight tracking-tight;
+    @apply text-xl sm:text-2xl font-bold text-text-primary leading-tight tracking-tight;
   }
 
   /* Section/modal titles - prominent but secondary to h1 */
@@ -586,7 +588,7 @@ body {
 
   /* Centered content padding (for loading states, empty states) */
   .py-centered {
-    @apply py-12; /* 48px - centered loading/empty state */
+    @apply py-8; /* 32px - centered loading/empty state */
   }
 
   /* Left margins (for indentation, icon alignment) */

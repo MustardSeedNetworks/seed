@@ -183,7 +183,7 @@ export function AppShell({ orchestration, logout }: AppShellProps): JSX.Element 
             </Switch>
           </Suspense>
 
-          <AppFooter appVersion={appVersion} />
+          <AppFooter />
         </div>
       </SidebarLayout>
 

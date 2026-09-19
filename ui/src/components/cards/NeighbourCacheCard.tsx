@@ -41,7 +41,10 @@ export function NeighbourCacheCard(): JSX.Element {
       ariaLabel={t('neighbours.title')}
       // Two grid columns: this is a device list, not a single-reading
       // facet, and at a quarter of a 4-up grid it is 202 px wide (#2708).
-      className="sm:col-span-2"
+      // max-w-none so the two columns this asks for are two columns wide:
+      // Card's default max-w-sm otherwise capped the span at one card,
+      // leaving the rest of it blank (UI-SEED-20).
+      className="sm:col-span-2 max-w-none"
     >
       <div className="stack-sm">
         <p className="caption text-text-muted">{t('neighbours.description')}</p>

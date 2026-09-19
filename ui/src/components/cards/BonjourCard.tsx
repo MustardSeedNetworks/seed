@@ -93,7 +93,10 @@ export function BonjourCard(): JSX.Element {
       ariaLabel={t('bonjour.title')}
       // See NeighbourCacheCard: a service table needs more than a quarter
       // of a 4-up grid (#2708).
-      className="sm:col-span-2"
+      // max-w-none so the two columns this asks for are two columns wide:
+      // Card's default max-w-sm otherwise capped the span at one card,
+      // leaving the rest of it blank (UI-SEED-20).
+      className="sm:col-span-2 max-w-none"
     >
       <div className="stack-sm">
         <p className="caption text-text-muted">{t('bonjour.description')}</p>

@@ -197,14 +197,17 @@ const L3_TIMELINE_HOP: React.NamedExoticComponent<L3HopProps> = memo(function l3
       <span className={cn('px-1 caption font-semibold', radius.sm, LAYER_CHIP.l3)}>L3</span>
       <Router className={cn(iconTokens.size.sm, 'text-text-muted shrink-0')} />
       <span className="w-6 caption font-mono text-text-muted">{hop.ttl}</span>
-      <div className="flex-1 min-w-0">
+      {/* A flex row, not inline spans: `truncate` is inert on an inline
+          element, so the address and hostname used to paint straight out of
+          this column (225px of content in 105px, UI-SEED-20). */}
+      <div className="flex min-w-0 flex-1 items-baseline gap-compact">
         {isTimeout ? (
           <span className="caption text-text-muted">* * *</span>
         ) : (
           <>
             <span className="body-small font-mono text-text-primary truncate">{hop.ip || '?'}</span>
             {hop.hostname && hop.hostname !== hop.ip ? (
-              <span className="caption text-text-muted ml-inline truncate">{hop.hostname}</span>
+              <span className="caption text-text-muted truncate">{hop.hostname}</span>
             ) : null}
           </>
         )}
