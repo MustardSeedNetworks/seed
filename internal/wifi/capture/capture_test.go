@@ -12,6 +12,8 @@ import (
 	"github.com/gopacket/gopacket"
 	"github.com/gopacket/gopacket/layers"
 
+	"github.com/MustardSeedNetworks/foundation/pkg/supervise"
+
 	"github.com/MustardSeedNetworks/seed/internal/capture"
 	wificapture "github.com/MustardSeedNetworks/seed/internal/wifi/capture"
 	"github.com/MustardSeedNetworks/seed/internal/wifi/dot11"
@@ -102,6 +104,32 @@ func waitFor(t *testing.T, cond func() bool) {
 	t.Fatal("condition not met within deadline")
 }
 
+// runCapture starts c.Run on its own goroutine and returns the stop function
+// the supervisor's Stop stands in for: cancel, then wait for Run to return. A
+// Run that ignored its context would hang here rather than leak silently.
+func runCapture(t *testing.T, c *wificapture.Capture) func() {
+	t.Helper()
+	ctx, cancel := context.WithCancel(t.Context())
+	done := make(chan error, 1)
+	go func() { done <- c.Run(ctx) }()
+	var once sync.Once
+	stop := func() {
+		once.Do(func() {
+			cancel()
+			select {
+			case err := <-done:
+				if err != nil {
+					t.Errorf("Run returned %v, want nil", err)
+				}
+			case <-time.After(5 * time.Second):
+				t.Error("Run did not return after its context was cancelled")
+			}
+		})
+	}
+	t.Cleanup(stop)
+	return stop
+}
+
 // --- tests ----------------------------------------------------------------
 
 func TestCaptureIngestsDecodedFramesAndSkipsGarbage(t *testing.T) {
@@ -112,13 +140,9 @@ func TestCaptureIngestsDecodedFramesAndSkipsGarbage(t *testing.T) {
 	sink := &fakeSink{}
 	c := wificapture.New(&fakeOpener{handle: h}, sink, "mon0")
 
-	if err := c.Start(t.Context()); err != nil {
-		t.Fatalf("Start: %v", err)
-	}
+	stop := runCapture(t, c)
 	waitFor(t, func() bool { return sink.frameCount() == 2 })
-	if err := c.Stop(); err != nil {
-		t.Fatalf("Stop: %v", err)
-	}
+	stop()
 
 	if sink.frameCount() != 2 {
 		t.Errorf("ingested %d frames, want 2 (2 beacons, 1 garbage skipped)", sink.frameCount())
@@ -133,10 +157,8 @@ func TestCaptureRejectsNonMonitorInterface(t *testing.T) {
 	sink := &fakeSink{}
 	c := wificapture.New(&fakeOpener{handle: h}, sink, "eth0")
 
-	if err := c.Start(t.Context()); err != nil {
-		t.Fatalf("Start: %v", err)
-	}
-	t.Cleanup(func() { _ = c.Stop() })
+	stop := runCapture(t, c)
+	stop() // a non-monitor interface returns immediately; wait for that
 
 	if sink.frameCount() != 0 {
 		t.Error("non-monitor interface must not ingest frames")
@@ -155,9 +177,7 @@ func TestCaptureRejectsNonMonitorInterface(t *testing.T) {
 func TestCaptureGracefulWhenOpenFails(t *testing.T) {
 	sink := &fakeSink{}
 	c := wificapture.New(&fakeOpener{err: io.ErrUnexpectedEOF}, sink, "mon0")
-	if err := c.Start(t.Context()); err != nil {
-		t.Fatalf("Start should degrade gracefully, got error: %v", err)
-	}
+	runCapture(t, c)()
 	if sink.setCalls != 0 || sink.frameCount() != 0 {
 		t.Error("a failed open must not set a source or ingest frames")
 	}
@@ -166,9 +186,7 @@ func TestCaptureGracefulWhenOpenFails(t *testing.T) {
 func TestCaptureDisabledWithoutInterface(t *testing.T) {
 	op := &fakeOpener{}
 	c := wificapture.New(op, &fakeSink{}, "")
-	if err := c.Start(t.Context()); err != nil {
-		t.Fatalf("Start: %v", err)
-	}
+	runCapture(t, c)()
 	if op.calls != 0 {
 		t.Error("an empty interface must not attempt to open a handle")
 	}
@@ -183,13 +201,9 @@ func TestOptionsApplied(t *testing.T) {
 		wificapture.WithLogger(slog.New(slog.DiscardHandler)),
 		wificapture.WithSnapLen(2048),
 	)
-	if err := c.Start(t.Context()); err != nil {
-		t.Fatalf("Start: %v", err)
-	}
+	stop := runCapture(t, c)
 	waitFor(t, func() bool { return sink.frameCount() == 1 })
-	if err := c.Stop(); err != nil {
-		t.Fatalf("Stop: %v", err)
-	}
+	stop()
 }
 
 type fakeEnabler struct {
@@ -226,15 +240,9 @@ func TestCaptureEnablesMonitorAndRestores(t *testing.T) {
 	en := &fakeEnabler{}
 	c := wificapture.New(&fakeOpener{handle: h}, &fakeSink{}, "wlan1", wificapture.WithEnabler(en))
 
-	if err := c.Start(t.Context()); err != nil {
-		t.Fatalf("Start: %v", err)
-	}
-	if enabled, _ := en.counts(); enabled != 1 {
-		t.Errorf("Enable calls = %d, want 1 (before open)", enabled)
-	}
-	if err := c.Stop(); err != nil {
-		t.Fatalf("Stop: %v", err)
-	}
+	stop := runCapture(t, c)
+	waitFor(t, func() bool { enabled, _ := en.counts(); return enabled == 1 })
+	stop()
 	if _, restored := en.counts(); restored != 1 {
 		t.Errorf("restore calls = %d, want 1 (on stop)", restored)
 	}
@@ -246,29 +254,71 @@ func TestCaptureContinuesWhenEnableFails(t *testing.T) {
 	sink := &fakeSink{}
 	c := wificapture.New(&fakeOpener{handle: h}, sink, "wlan1", wificapture.WithEnabler(en))
 
-	if err := c.Start(t.Context()); err != nil {
-		t.Fatalf("Start: %v", err)
-	}
+	stop := runCapture(t, c)
 	// Enable failed, but the interface may already be monitor — capture proceeds.
 	waitFor(t, func() bool { return sink.frameCount() == 1 })
-	if err := c.Stop(); err != nil {
-		t.Fatalf("Stop: %v", err)
-	}
+	stop()
 	if _, restored := en.counts(); restored != 0 {
 		t.Errorf("a failed Enable must not register a restore, got %d", restored)
 	}
 }
 
-func TestStopIdempotent(t *testing.T) {
-	h := &fakeHandle{frames: [][]byte{beaconBytes("corp")}, linkType: layers.LinkTypeIEEE80211Radio}
-	c := wificapture.New(&fakeOpener{handle: h}, &fakeSink{}, "mon0")
-	if err := c.Start(t.Context()); err != nil {
-		t.Fatalf("Start: %v", err)
+// panickingHandle panics on its second read and then behaves. It stands in for
+// a frame the decoder cannot survive.
+type panickingHandle struct {
+	mu     sync.Mutex
+	reads  int
+	closed bool
+}
+
+func (h *panickingHandle) ReadPacketData() ([]byte, gopacket.CaptureInfo, error) {
+	h.mu.Lock()
+	h.reads++
+	n, closed := h.reads, h.closed
+	h.mu.Unlock()
+	if closed {
+		return nil, gopacket.CaptureInfo{}, io.EOF
 	}
-	if err := c.Stop(); err != nil {
-		t.Fatalf("Stop: %v", err)
+	if n == 2 {
+		panic("forced capture fault")
 	}
-	if err := c.Stop(); err != nil {
-		t.Fatalf("second Stop: %v", err)
+	return beaconBytes("corp"), gopacket.CaptureInfo{}, nil
+}
+
+func (h *panickingHandle) LinkType() layers.LinkType { return layers.LinkTypeIEEE80211Radio }
+
+func (h *panickingHandle) SetBPFFilter(string) error { return nil }
+
+func (h *panickingHandle) Close() {
+	h.mu.Lock()
+	defer h.mu.Unlock()
+	h.closed = true
+}
+
+func (h *panickingHandle) isClosed() bool {
+	h.mu.Lock()
+	defer h.mu.Unlock()
+	return h.closed
+}
+
+// TestRunReleasesTheInterfaceWhenTheLoopPanics: the supervisor restarts a
+// faulted worker, so Run must hand the interface back on the way out of a
+// panic. If it did not, the retry would open a second handle while the first
+// was still held and the adapter still in monitor mode (#2748).
+func TestRunReleasesTheInterfaceWhenTheLoopPanics(t *testing.T) {
+	h := &panickingHandle{}
+	en := &fakeEnabler{}
+	sink := &fakeSink{}
+	c := wificapture.New(&fakeOpener{handle: h}, sink, "wlan1", wificapture.WithEnabler(en))
+
+	group := supervise.New(slog.New(slog.DiscardHandler))
+	group.Add("wifi-capture", supervise.Fatal, c.Run)
+	group.Start(t.Context())
+	t.Cleanup(func() { _ = group.Stop(context.Background()) })
+
+	waitFor(t, h.isClosed)
+	waitFor(t, func() bool { _, restored := en.counts(); return restored == 1 })
+	if !sink.cleared {
+		t.Error("a panicking loop must clear the capture source on its way out")
 	}
 }

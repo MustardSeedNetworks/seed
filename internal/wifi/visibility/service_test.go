@@ -162,15 +162,16 @@ func TestSourceToggle(t *testing.T) {
 	}
 }
 
-func TestStartStopLifecycle(t *testing.T) {
+func TestRunEvaluatesUntilCancelled(t *testing.T) {
 	coord := wifiCoord(t, newFakeAnomalyStore())
 	svc := visibility.New(
 		visibility.WithCoordinator(coord),
 		visibility.WithEvalInterval(5*time.Millisecond),
 	)
-	if startErr := svc.Start(t.Context()); startErr != nil {
-		t.Fatalf("Start: %v", startErr)
-	}
+	ctx, cancel := context.WithCancel(t.Context())
+	done := make(chan error, 1)
+	go func() { done <- svc.Run(ctx) }()
+
 	svc.Ingest(beacon(t, "00:11:22:33:44:55", "guest", dot11.SecurityOpen), time.Now())
 	// Give the ticker a few cycles to evaluate.
 	deadline := time.Now().Add(2 * time.Second)
@@ -183,12 +184,17 @@ func TestStartStopLifecycle(t *testing.T) {
 	if coord.Engine().LenBySource(anomaly.SourceWiFi) == 0 {
 		t.Error("background loop did not evaluate ingested frames")
 	}
-	if stopErr := svc.Stop(); stopErr != nil {
-		t.Fatalf("Stop: %v", stopErr)
-	}
-	// Stop is idempotent.
-	if stopErr := svc.Stop(); stopErr != nil {
-		t.Fatalf("second Stop: %v", stopErr)
+
+	// Cancellation is the only thing that ends Run: the supervisor's Stop
+	// waits on it, so a Run that ignored its context would hang shutdown.
+	cancel()
+	select {
+	case err := <-done:
+		if err != nil {
+			t.Fatalf("Run returned %v, want nil on cancellation", err)
+		}
+	case <-time.After(5 * time.Second):
+		t.Fatal("Run did not return after its context was cancelled")
 	}
 }
 

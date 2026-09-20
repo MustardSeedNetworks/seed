@@ -794,7 +794,7 @@ func TestSchedulerService_Delete(t *testing.T) {
 	require.Error(t, err)
 }
 
-func TestSchedulerService_StartStop(t *testing.T) {
+func TestSchedulerService_RunStop(t *testing.T) {
 	db, cleanup := testDB(t)
 	defer cleanup()
 
@@ -806,18 +806,9 @@ func TestSchedulerService_StartStop(t *testing.T) {
 	gs := reporting.NewGeneratorService(cfg, store.NewReportRepo(db), store.NewExportRepo(db), ts, as)
 	ss := reporting.NewSchedulerService(cfg, store.NewScheduleRepo(db), gs)
 
-	ctx, cancel := context.WithTimeout(context.Background(), 100*time.Millisecond)
-	defer cancel()
-
-	// Start should not error
-	err := ss.Start(ctx)
-	require.NoError(t, err)
-
-	// Allow scheduler to run briefly
-	time.Sleep(50 * time.Millisecond)
-
-	// Stop should not panic
-	ss.Stop()
+	stop := runUntilCancelled(t, ss.Run)
+	time.Sleep(50 * time.Millisecond) // let the scheduler tick
+	stop()
 }
 
 func TestCalculateNextRun(t *testing.T) {
@@ -1260,20 +1251,13 @@ func TestModule_StartStop(t *testing.T) {
 		},
 	)
 
-	ctx, cancel := context.WithTimeout(context.Background(), 100*time.Millisecond)
-	defer cancel()
+	require.NoError(t, module.Load(context.Background()))
+	stop := runUntilCancelled(t, module.Run)
 
-	// Start should not error
-	err := module.Start(ctx)
-	require.NoError(t, err)
+	// Load is synchronous, so the templates are there before Run is started.
+	assert.NotEmpty(t, module.Templates().List())
 
-	// Templates should be loaded
-	templates := module.Templates().List()
-	assert.NotEmpty(t, templates)
-
-	// Stop should not error
-	err = module.Stop()
-	require.NoError(t, err)
+	stop()
 }
 
 func TestModule_Accessors(t *testing.T) {
@@ -1324,9 +1308,7 @@ func TestModule_ConcurrentAccess(t *testing.T) {
 		},
 	)
 
-	ctx := context.Background()
-	require.NoError(t, module.Start(ctx))
-	defer func() { _ = module.Stop() }()
+	runUntilCancelled(t, module.Run)
 
 	// Concurrent access should be safe
 	done := make(chan bool, 20)

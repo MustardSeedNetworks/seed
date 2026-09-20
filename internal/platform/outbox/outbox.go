@@ -79,11 +79,6 @@ type Relay struct {
 	logger   *slog.Logger
 	batch    int
 	interval time.Duration
-
-	mu      sync.Mutex
-	cancel  context.CancelFunc
-	done    chan struct{}
-	started bool
 }
 
 // Option tunes a Relay.
@@ -158,53 +153,22 @@ func (r *Relay) Cleanup(ctx context.Context, retention time.Duration) (int, erro
 	return n, nil
 }
 
-// Start drains the backlog once (the across-restart replay) and then polls on the
-// configured interval until Stop. It is idempotent: a second Start while running
-// is a no-op.
-func (r *Relay) Start(ctx context.Context) {
-	r.mu.Lock()
-	if r.started {
-		r.mu.Unlock()
-		return
+// Run drains the backlog once (the across-restart replay) and then polls on the
+// configured interval until ctx is cancelled. It blocks, so the caller owns the
+// goroutine: the relay is registered as a supervised worker (#2748), and a
+// relay that spawned its own goroutine would put the poll loop outside the
+// supervisor's recover — a panic mid-drain would take the daemon down.
+func (r *Relay) Run(ctx context.Context) error {
+	if _, err := r.Drain(ctx); err != nil {
+		r.logger.ErrorContext(ctx, "outbox initial drain failed", "err", err)
 	}
-	r.started = true
-	runCtx, cancel := context.WithCancel(ctx)
-	r.cancel = cancel
-	r.done = make(chan struct{})
-	r.mu.Unlock()
 
-	if _, err := r.Drain(runCtx); err != nil {
-		r.logger.ErrorContext(runCtx, "outbox initial drain failed", "err", err)
-	}
-	go r.loop(runCtx)
-}
-
-// Stop halts the poll loop and waits for it to exit. Idempotent.
-func (r *Relay) Stop() {
-	r.mu.Lock()
-	if !r.started {
-		r.mu.Unlock()
-		return
-	}
-	r.started = false
-	cancel := r.cancel
-	done := r.done
-	r.cancel = nil
-	r.mu.Unlock()
-
-	cancel()
-	<-done
-}
-
-// loop polls the store until ctx is cancelled.
-func (r *Relay) loop(ctx context.Context) {
-	defer close(r.done)
 	ticker := time.NewTicker(r.interval)
 	defer ticker.Stop()
 	for {
 		select {
 		case <-ctx.Done():
-			return
+			return nil
 		case <-ticker.C:
 			if _, err := r.Drain(ctx); err != nil {
 				r.logger.ErrorContext(ctx, "outbox drain failed", "err", err)

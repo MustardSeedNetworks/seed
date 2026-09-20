@@ -3,6 +3,9 @@ package api
 import (
 	"context"
 
+	"github.com/MustardSeedNetworks/foundation/pkg/supervise"
+
+	"github.com/MustardSeedNetworks/seed/internal/logging"
 	"github.com/MustardSeedNetworks/seed/internal/platform/outbox"
 	"github.com/MustardSeedNetworks/seed/internal/reporting"
 	wificapture "github.com/MustardSeedNetworks/seed/internal/wifi/capture"
@@ -26,48 +29,71 @@ type BackgroundComponents struct {
 	WiFiVisibility *visibility.Service
 	WiFiCapture    *wificapture.Capture
 	Outbox         *outbox.Relay
+
+	group *supervise.Group
 }
 
-// Start initializes and starts all background components. The visibility loop
-// starts before the capture producer that feeds it.
+// backgroundRestarts is how many times a faulted background loop is restarted
+// before the group gives up on it. All four loops are resumable — tickers and a
+// frame reader, none of them carrying state between iterations — so a transient
+// fault should not cost the daemon its reporting, its airspace view or its
+// durable-event delivery for the rest of its life. A loop that faults every
+// time stops after this many tries rather than spinning, leaving the one line
+// the supervisor logs.
+const backgroundRestarts = 3
+
+// Start runs every configured component as a supervised worker (#2748). Before
+// this each component spawned its own goroutine, so a panic anywhere in a
+// background loop took the daemon down with it; now the supervisor recovers it,
+// logs one line naming the worker, and restarts the loop.
+//
+// Registration order is the reverse of the stop order the components need,
+// because supervise.Group.Stop cancels workers last-registered-first: capture
+// (the producer) stops before the visibility loop it feeds, and the outbox
+// relay — the last thing still able to deliver an event — stops first.
 func (b *BackgroundComponents) Start(ctx context.Context) error {
+	// Loading is synchronous and still fails startup: an unreadable template
+	// directory or schedule table is a misconfigured install, not a fault to
+	// recover from.
 	if b.Reporting != nil {
-		if err := b.Reporting.Start(ctx); err != nil {
+		if err := b.Reporting.Load(ctx); err != nil {
 			return err
 		}
 	}
+
+	group := supervise.New(logging.GetLogger())
 	if b.WiFiVisibility != nil {
-		if err := b.WiFiVisibility.Start(ctx); err != nil {
-			return err
-		}
+		group.Add("wifi-visibility", supervise.RestartN(backgroundRestarts), b.WiFiVisibility.Run)
+	}
+	if b.Reporting != nil {
+		group.Add("reporting", supervise.RestartN(backgroundRestarts), b.Reporting.Run)
 	}
 	if b.WiFiCapture != nil {
-		if err := b.WiFiCapture.Start(ctx); err != nil {
-			return err
-		}
+		group.Add("wifi-capture", supervise.RestartN(backgroundRestarts), b.WiFiCapture.Run)
 	}
 	if b.Outbox != nil {
-		// The relay owns its own lifecycle context (it polls until Stop), so it
-		// is detached from the start ctx; Stop tears it down on shutdown.
-		b.Outbox.Start(context.WithoutCancel(ctx))
+		group.Add("outbox", supervise.RestartN(backgroundRestarts), b.Outbox.Run)
 	}
+	b.group = group
+	group.Start(ctx)
 	return nil
 }
 
-// Stop gracefully shuts down all background components. Capture stops before the
-// visibility loop it feeds (stop producing, then consuming).
+// Stop cancels the supervised workers in reverse registration order and blocks
+// until each has exited. It runs after the HTTP drain (slice 1 of #2748), so a
+// request in flight still reaches live components. Safe when Start was never
+// called.
 func (b *BackgroundComponents) Stop() error {
-	if b.Outbox != nil {
-		b.Outbox.Stop()
+	group := b.group
+	if group == nil {
+		return nil
 	}
-	if b.WiFiCapture != nil {
-		_ = b.WiFiCapture.Stop()
-	}
-	if b.Reporting != nil {
-		_ = b.Reporting.Stop()
-	}
-	if b.WiFiVisibility != nil {
-		_ = b.WiFiVisibility.Stop()
+	b.group = nil
+	// The caller's deadline is the shutdown context cmd/seed applies around
+	// this call; a bound of its own would only invent a second one to disagree
+	// with it.
+	if err := group.Stop(context.Background()); err != nil {
+		logging.GetLogger().Warn("background components did not stop cleanly", "error", err.Error())
 	}
 	return nil
 }

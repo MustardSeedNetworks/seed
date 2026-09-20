@@ -73,32 +73,28 @@ func (m *Service) Aggregator() *AggregatorService {
 	return m.aggregator
 }
 
-// Start initializes and starts the reporting component services.
-func (m *Service) Start(ctx context.Context) error {
+// Load reads the report templates and the persisted schedules. It is separate
+// from Run and called synchronously at startup (#2748): a load failure is a
+// misconfigured install the operator must see immediately, and a Run that
+// returned it instead would be retried four times in microseconds and then
+// take the outbox relay and the Wi-Fi loops down with it, while the daemon
+// carried on serving HTTP.
+func (m *Service) Load(ctx context.Context) error {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 
-	// Load templates
 	if err := m.templates.Load(); err != nil {
 		return err
 	}
-
-	// Start scheduler for recurring reports
-	if err := m.scheduler.Start(ctx); err != nil {
-		return err
-	}
-
-	return nil
+	return m.scheduler.Load(ctx)
 }
 
-// Stop gracefully shuts down all reporting component services.
-func (m *Service) Stop() error {
-	m.mu.Lock()
-	defer m.mu.Unlock()
+// Run ticks the schedule loop until ctx is cancelled. It blocks so the
+// component can be a supervised worker; Load must have succeeded first.
+func (m *Service) Run(ctx context.Context) error {
+	m.mu.RLock()
+	scheduler := m.scheduler
+	m.mu.RUnlock()
 
-	if m.scheduler != nil {
-		m.scheduler.Stop()
-	}
-
-	return nil
+	return scheduler.Run(ctx)
 }

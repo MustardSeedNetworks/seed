@@ -15,7 +15,6 @@ package wificapture
 import (
 	"context"
 	"log/slog"
-	"sync"
 	"time"
 
 	"github.com/gopacket/gopacket/layers"
@@ -47,12 +46,6 @@ type Capture struct {
 	enabler Enabler
 	now     func() time.Time
 	log     *slog.Logger
-
-	mu      sync.Mutex
-	handle  capture.Handle
-	cancel  context.CancelFunc
-	restore func() error
-	wg      sync.WaitGroup
 }
 
 // Option configures a Capture.
@@ -113,17 +106,17 @@ func New(opener capture.Opener, sink Sink, iface string, opts ...Option) *Captur
 	return c
 }
 
-// Start opens the capture handle and launches the read loop. It returns nil and
-// disables capture (with a log line) when no interface is configured, the handle
-// cannot be opened, or the interface is not in monitor mode — these are normal
-// degraded states, not startup failures. Idempotent: a second call while running
-// is a no-op.
-func (c *Capture) Start(ctx context.Context) error {
-	c.mu.Lock()
-	defer c.mu.Unlock()
-	if c.cancel != nil {
-		return nil
-	}
+// Run opens the capture handle and reads frames until ctx is cancelled. It
+// returns nil immediately and leaves capture disabled (with a log line) when no
+// interface is configured, the handle cannot be opened, or the interface is not
+// in monitor mode — these are normal degraded states, not startup failures.
+//
+// It blocks rather than spawning: the read loop is a supervised worker (#2748),
+// and the `go c.loop` it replaced put frame decoding outside the supervisor's
+// recover, so one malformed-frame panic took the daemon down. The one goroutine
+// that remains closes the handle on cancellation, which is what unblocks a
+// ReadPacketData parked in BlockForever; it does no decoding and cannot fault.
+func (c *Capture) Run(ctx context.Context) error {
 	if c.iface == "" {
 		c.log.InfoContext(ctx, "wifi capture disabled: no monitor interface configured")
 		return nil
@@ -158,14 +151,36 @@ func (c *Capture) Start(ctx context.Context) error {
 		return nil
 	}
 
-	loopCtx, cancel := context.WithCancel(ctx)
-	c.cancel = cancel
-	c.handle = handle
-	c.restore = restore
 	c.sink.SetSource(c.iface)
-	c.wg.Add(1)
-	go c.loop(loopCtx, handle)
 	c.log.InfoContext(ctx, "wifi monitor capture started", "iface", c.iface)
+
+	// The closer also watches the loop's own exit: a read error ends the loop
+	// with ctx still live, and a closer parked on ctx.Done() alone would never
+	// return, so Run could not.
+	stopped := make(chan struct{})
+	closed := make(chan struct{})
+	go func() {
+		defer close(closed)
+		select {
+		case <-ctx.Done():
+		case <-stopped:
+		}
+		handle.Close() // unblocks a ReadPacketData parked in BlockForever
+	}()
+
+	// Deferred, not sequential: a panic in the loop unwinds through here before
+	// the supervisor recovers it, so the handle is closed and the interface
+	// restored before Run is retried. Without it a restart would open a second
+	// handle while the first is still held and the interface still in monitor
+	// mode.
+	defer func() {
+		close(stopped)
+		<-closed
+		c.sink.ClearSource()
+		runRestore(restore) // revert the interface to its prior mode
+	}()
+
+	c.loop(ctx, handle)
 	return nil
 }
 
@@ -180,7 +195,6 @@ func runRestore(restore func() error) {
 // loop reads frames until the handle is closed (by Stop) or a read error occurs.
 // Undecodable frames (non-802.11 / malformed) are skipped, never fatal.
 func (c *Capture) loop(ctx context.Context, handle capture.Handle) {
-	defer c.wg.Done()
 	for {
 		if ctx.Err() != nil {
 			return
@@ -196,29 +210,4 @@ func (c *Capture) loop(ctx context.Context, handle capture.Handle) {
 		}
 		c.sink.Ingest(frame, c.now())
 	}
-}
-
-// Stop ends the read loop, closes the handle, and clears the capture source.
-// Idempotent.
-func (c *Capture) Stop() error {
-	c.mu.Lock()
-	cancel := c.cancel
-	handle := c.handle
-	restore := c.restore
-	c.cancel = nil
-	c.handle = nil
-	c.restore = nil
-	c.mu.Unlock()
-
-	if cancel == nil {
-		return nil // not running
-	}
-	cancel()
-	if handle != nil {
-		handle.Close() // unblocks a blocked ReadPacketData
-	}
-	c.wg.Wait()
-	c.sink.ClearSource()
-	runRestore(restore) // revert the interface to its prior mode
-	return nil
 }
