@@ -9,6 +9,7 @@ import (
 	"context"
 	"errors"
 	"strings"
+	"sync"
 
 	"github.com/MustardSeedNetworks/seed/internal/polling"
 )
@@ -40,6 +41,10 @@ type Repository interface {
 // Service is the polling-targets CRUD use-case.
 type Service struct {
 	repo Repository
+
+	// createMu serialises CreateMissing. Its read-then-create is only
+	// idempotent while nothing else is doing the same read.
+	createMu sync.Mutex
 }
 
 // NewService builds the use-case over its Repository port.
@@ -82,6 +87,58 @@ func (s *Service) Update(
 		return current, nil
 	}
 	return t, nil
+}
+
+// CreateMissing persists each candidate whose address has no target yet, and
+// returns how many were created.
+//
+// It exists because discovery promotes the devices a sweep found answering
+// SNMP (seed#2692), and a sweep runs again every minute: the operation the
+// promoter needs is "add what is not there", not "create". The read and the
+// writes are taken under one lock because polling_targets has no unique index
+// on the address — two callers that each read the list before either wrote
+// would each create a row for the same device, and the poller would then poll
+// it twice.
+//
+// An address that already has a target is left exactly as it is, enabled or
+// not: disabling a target is how an operator says "do not poll this", and a
+// promoter that re-enabled it would overrule them once a minute.
+func (s *Service) CreateMissing(
+	ctx context.Context, clientID string, candidates []*polling.Target,
+) (int, error) {
+	s.createMu.Lock()
+	defer s.createMu.Unlock()
+
+	existing, err := s.repo.ListAll(ctx, clientID)
+	if err != nil {
+		return 0, err
+	}
+	taken := make(map[string]struct{}, len(existing))
+	for _, target := range existing {
+		if target != nil {
+			taken[target.IPAddress] = struct{}{}
+		}
+	}
+
+	created := 0
+	var failed error
+	for _, candidate := range candidates {
+		if candidate == nil {
+			continue
+		}
+		if _, known := taken[candidate.IPAddress]; known {
+			continue
+		}
+		taken[candidate.IPAddress] = struct{}{}
+		if createErr := s.Create(ctx, candidate); createErr != nil {
+			// One unusable candidate must not cost the rest their
+			// targets; the caller reports what could not be written.
+			failed = errors.Join(failed, createErr)
+			continue
+		}
+		created++
+	}
+	return created, failed
 }
 
 // Delete removes a target, mapping the repository's not-found to ErrNotFound.

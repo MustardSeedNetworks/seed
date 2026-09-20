@@ -257,7 +257,7 @@ func (b *L2PathBuilder) enrichHopWithSNMP(ctx context.Context, hop *L2Hop) {
 	}
 
 	// Try to get system info to confirm device identity
-	systemInfo, err := snmp.GetSystemInfo(ctx, hop.DeviceIP, snmpCfg)
+	systemInfo, _, err := snmp.GetSystemInfo(ctx, hop.DeviceIP, snmpCfg)
 	if err != nil {
 		logging.GetLogger().
 			DebugContext(ctx, "Failed to get SNMP system info", "device", hop.DeviceIP, "error", err)

@@ -196,7 +196,7 @@ func TestGetVLANs(t *testing.T) {
 
 	t.Run("empty communities", func(t *testing.T) {
 		cfg := &snmp.Session{
-			Communities: []string{},
+			Communities: []snmp.Community{},
 			Port:        161,
 			Timeout:     100 * time.Millisecond,
 			Retries:     1,

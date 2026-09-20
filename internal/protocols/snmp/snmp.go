@@ -83,7 +83,18 @@ func QueryMultiple(
 		return nil, errors.New("SNMP config is nil")
 	}
 
-	return sweepCredentials(ctx, cfg, "SNMP query failed for all configured credentials",
+	results, _, err := queryMultipleNaming(ctx, ip, oids, cfg)
+	return results, err
+}
+
+// queryMultipleNaming is QueryMultiple reporting which credential answered.
+func queryMultipleNaming(
+	ctx context.Context,
+	ip string,
+	oids []string,
+	cfg *Session,
+) (map[string]string, CredentialRef, error) {
+	return sweepCredentialsNaming(ctx, cfg, "SNMP query failed for all configured credentials",
 		func(cred *V3Credential) (map[string]string, error) {
 			return queryMultipleWithV3(ctx, ip, oids, cred, cfg)
 		},
@@ -93,8 +104,16 @@ func QueryMultiple(
 	)
 }
 
-// GetSystemInfo retrieves standard SNMP system information.
-func GetSystemInfo(ctx context.Context, ip string, cfg *Session) (*SystemInfo, error) {
+// GetSystemInfo retrieves standard SNMP system information, and names the
+// credential the device answered.
+//
+// The identity comes back beside the data because this is the exchange
+// discovery uses to decide a device speaks SNMP at all (seed#2692): asking a
+// second time to learn which credential worked would be a second walk of the
+// same OIDs against the same device.
+func GetSystemInfo(
+	ctx context.Context, ip string, cfg *Session,
+) (*SystemInfo, CredentialRef, error) {
 	oids := []string{
 		OIDSysDescr,
 		OIDSysObjectID,
@@ -104,9 +123,9 @@ func GetSystemInfo(ctx context.Context, ip string, cfg *Session) (*SystemInfo, e
 		OIDSysUpTime,
 	}
 
-	results, err := QueryMultiple(ctx, ip, oids, cfg)
+	results, ref, err := queryMultipleNaming(ctx, ip, oids, cfg)
 	if err != nil {
-		return nil, err
+		return nil, CredentialRef{}, err
 	}
 
 	info := &SystemInfo{
@@ -117,7 +136,7 @@ func GetSystemInfo(ctx context.Context, ip string, cfg *Session) (*SystemInfo, e
 		SysLocation: results[OIDSysLocation],
 	}
 
-	return info, nil
+	return info, ref, nil
 }
 
 // queryWithCommunity performs SNMP v1/v2c query with community string.

@@ -32,7 +32,7 @@ func TestQuery(t *testing.T) {
 			ip:   "192.168.1.1",
 			oid:  snmp.OIDSysDescr,
 			cfg: &snmp.Session{
-				Communities:   []string{},
+				Communities:   []snmp.Community{},
 				V3Credentials: []snmp.V3Credential{},
 				Port:          161,
 				Timeout:       time.Second,
@@ -45,7 +45,7 @@ func TestQuery(t *testing.T) {
 			ip:   "192.0.2.1", // TEST-NET-1 (RFC 5737)
 			oid:  snmp.OIDSysDescr,
 			cfg: &snmp.Session{
-				Communities: []string{"public"},
+				Communities: []snmp.Community{{String: "public"}},
 				Port:        161,
 				Timeout:     100 * time.Millisecond,
 				Retries:     1,
@@ -93,7 +93,7 @@ func TestQueryMultiple(t *testing.T) {
 			ip:   "192.168.1.1",
 			oids: []string{},
 			cfg: &snmp.Session{
-				Communities: []string{"public"},
+				Communities: []snmp.Community{{String: "public"}},
 				Port:        161,
 				Timeout:     time.Second,
 				Retries:     1,
@@ -105,7 +105,7 @@ func TestQueryMultiple(t *testing.T) {
 			ip:   "192.0.2.1",
 			oids: []string{snmp.OIDSysDescr, snmp.OIDSysName},
 			cfg: &snmp.Session{
-				Communities: []string{"public"},
+				Communities: []snmp.Community{{String: "public"}},
 				Port:        161,
 				Timeout:     100 * time.Millisecond,
 				Retries:     1,
@@ -150,7 +150,7 @@ func TestGetSystemInfo(t *testing.T) {
 			name: "unreachable host",
 			ip:   "192.0.2.1",
 			cfg: &snmp.Session{
-				Communities: []string{"public"},
+				Communities: []snmp.Community{{String: "public"}},
 				Port:        161,
 				Timeout:     100 * time.Millisecond,
 				Retries:     1,
@@ -161,7 +161,7 @@ func TestGetSystemInfo(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			_, err := snmp.GetSystemInfo(ctx, tt.ip, tt.cfg)
+			_, _, err := snmp.GetSystemInfo(ctx, tt.ip, tt.cfg)
 
 			if tt.wantErr {
 				if err == nil {
@@ -189,7 +189,7 @@ func TestGetVendorVersion(t *testing.T) {
 			name: "unreachable host",
 			ip:   "192.0.2.1",
 			cfg: &snmp.Session{
-				Communities: []string{"public"},
+				Communities: []snmp.Community{{String: "public"}},
 				Port:        161,
 				Timeout:     100 * time.Millisecond,
 				Retries:     1,
@@ -492,7 +492,7 @@ func TestContextCancellation(t *testing.T) {
 	cancel() // Cancel immediately
 
 	cfg := &snmp.Session{
-		Communities: []string{"public"},
+		Communities: []snmp.Community{{String: "public"}},
 		Port:        161,
 		Timeout:     time.Second,
 		Retries:     1,
@@ -550,7 +550,7 @@ func TestSNMPConfigValidation(t *testing.T) {
 		{
 			name: "valid v2c config",
 			cfg: &snmp.Session{
-				Communities: []string{"public"},
+				Communities: []snmp.Community{{String: "public"}},
 				Port:        161,
 				Timeout:     time.Second,
 				Retries:     2,
@@ -560,7 +560,7 @@ func TestSNMPConfigValidation(t *testing.T) {
 		{
 			name: "valid v3 config",
 			cfg: &snmp.Session{
-				Communities: []string{},
+				Communities: []snmp.Community{},
 				V3Credentials: []snmp.V3Credential{
 					{
 						Username:     "snmpuser",
@@ -579,7 +579,7 @@ func TestSNMPConfigValidation(t *testing.T) {
 		{
 			name: "empty communities and credentials",
 			cfg: &snmp.Session{
-				Communities:   []string{},
+				Communities:   []snmp.Community{},
 				V3Credentials: []snmp.V3Credential{},
 				Port:          161,
 				Timeout:       time.Second,
@@ -614,7 +614,7 @@ func TestMultipleCommunities(t *testing.T) {
 
 	// Config with multiple communities (all will fail, but tests the iteration)
 	cfg := &snmp.Session{
-		Communities: []string{"public", "private", "community"},
+		Communities: []snmp.Community{{String: "public"}, {String: "private"}, {String: "community"}},
 		Port:        161,
 		Timeout:     100 * time.Millisecond,
 		Retries:     1,

@@ -31,7 +31,7 @@ func TestGetInterfaceInfo(t *testing.T) {
 			ip:      "192.0.2.1",
 			ifIndex: 1,
 			cfg: &snmp.Session{
-				Communities: []string{"public"},
+				Communities: []snmp.Community{{String: "public"}},
 				Port:        161,
 				Timeout:     100 * time.Millisecond,
 				Retries:     1,
@@ -43,7 +43,7 @@ func TestGetInterfaceInfo(t *testing.T) {
 			ip:      "192.168.1.1",
 			ifIndex: 1,
 			cfg: &snmp.Session{
-				Communities:   []string{},
+				Communities:   []snmp.Community{},
 				V3Credentials: []snmp.V3Credential{},
 				Port:          161,
 				Timeout:       time.Second,
@@ -56,7 +56,7 @@ func TestGetInterfaceInfo(t *testing.T) {
 			ip:      "192.0.2.1",
 			ifIndex: 1,
 			cfg: &snmp.Session{
-				Communities: []string{"public", "private", "secret"},
+				Communities: []snmp.Community{{String: "public"}, {String: "private"}, {String: "secret"}},
 				Port:        161,
 				Timeout:     100 * time.Millisecond,
 				Retries:     1,
@@ -126,7 +126,7 @@ func TestGetPortVLANs(t *testing.T) {
 			ip:      "192.0.2.1",
 			ifIndex: 1,
 			cfg: &snmp.Session{
-				Communities: []string{"public"},
+				Communities: []snmp.Community{{String: "public"}},
 				Port:        161,
 				Timeout:     100 * time.Millisecond,
 				Retries:     1,
@@ -138,7 +138,7 @@ func TestGetPortVLANs(t *testing.T) {
 			ip:      "192.168.1.1",
 			ifIndex: 1,
 			cfg: &snmp.Session{
-				Communities: []string{},
+				Communities: []snmp.Community{},
 				Port:        161,
 				Timeout:     time.Second,
 				Retries:     1,
@@ -189,7 +189,7 @@ func TestContextCancellationAllFunctions(t *testing.T) {
 	cancel() // Cancel immediately
 
 	cfg := &snmp.Session{
-		Communities: []string{"public"},
+		Communities: []snmp.Community{{String: "public"}},
 		Port:        161,
 		Timeout:     time.Second,
 		Retries:     1,
@@ -248,7 +248,7 @@ func TestContextTimeoutFunctions(t *testing.T) {
 	time.Sleep(5 * time.Millisecond)
 
 	cfg := &snmp.Session{
-		Communities: []string{"public"},
+		Communities: []snmp.Community{{String: "public"}},
 		Port:        161,
 		Timeout:     time.Second,
 		Retries:     1,
@@ -283,7 +283,7 @@ func TestV3CredentialsFallback(t *testing.T) {
 				AuthPassword: "pass2",
 			},
 		},
-		Communities: []string{"public", "private"},
+		Communities: []snmp.Community{{String: "public"}, {String: "private"}},
 		Port:        161,
 		Timeout:     100 * time.Millisecond,
 		Retries:     1,
@@ -301,7 +301,7 @@ func TestMACTableFallback(t *testing.T) {
 	ctx := context.Background()
 
 	cfg := &snmp.Session{
-		Communities: []string{"public"},
+		Communities: []snmp.Community{{String: "public"}},
 		Port:        161,
 		Timeout:     100 * time.Millisecond,
 		Retries:     1,
@@ -497,7 +497,7 @@ func TestConfigMaxRepetitionsEdgeCases(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			cfg := &snmp.Session{
-				Communities:    []string{"public"},
+				Communities:    []snmp.Community{{String: "public"}},
 				Port:           161,
 				Timeout:        100 * time.Millisecond,
 				Retries:        1,
