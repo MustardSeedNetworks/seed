@@ -195,7 +195,7 @@ func TestMDNSService_Fields(t *testing.T) {
 func TestNewDeviceProfiler(t *testing.T) {
 	cfg := discovery.DefaultProfilerConfig()
 	snmpSession := snmp.NewSession(&config.SNMPConfig{Timeout: 5 * time.Second})
-	snmpSession.Communities = []string{"public"}
+	snmpSession.Communities = []snmp.Community{{String: "public"}}
 
 	profiler := discovery.NewDeviceProfiler(cfg, testutil.StaticSNMPCredentials{Session: snmpSession})
 
@@ -208,7 +208,7 @@ func TestDeviceProfiler_QueueProfile(t *testing.T) {
 	cfg := discovery.DefaultProfilerConfig()
 	cfg.Timeout = 100 * time.Millisecond // Short timeout for test
 	snmpSession := snmp.NewSession(&config.SNMPConfig{Timeout: 100 * time.Millisecond})
-	snmpSession.Communities = []string{"public"}
+	snmpSession.Communities = []snmp.Community{{String: "public"}}
 
 	profiler := discovery.NewDeviceProfiler(cfg, testutil.StaticSNMPCredentials{Session: snmpSession})
 
@@ -223,7 +223,7 @@ func TestDeviceProfiler_QueueProfile(t *testing.T) {
 
 func TestDeviceProfiler_IsProfiled(t *testing.T) {
 	cfg := discovery.DefaultProfilerConfig()
-	snmpSession := &snmp.Session{Communities: []string{"public"}}
+	snmpSession := &snmp.Session{Communities: []snmp.Community{{String: "public"}}}
 
 	profiler := discovery.NewDeviceProfiler(cfg, testutil.StaticSNMPCredentials{Session: snmpSession})
 
@@ -235,7 +235,7 @@ func TestDeviceProfiler_IsProfiled(t *testing.T) {
 
 func TestDeviceProfiler_IsProfiling(t *testing.T) {
 	cfg := discovery.DefaultProfilerConfig()
-	snmpSession := &snmp.Session{Communities: []string{"public"}}
+	snmpSession := &snmp.Session{Communities: []snmp.Community{{String: "public"}}}
 
 	profiler := discovery.NewDeviceProfiler(cfg, testutil.StaticSNMPCredentials{Session: snmpSession})
 
@@ -247,7 +247,7 @@ func TestDeviceProfiler_IsProfiling(t *testing.T) {
 
 func TestDeviceProfiler_GetAllProfiles(t *testing.T) {
 	cfg := discovery.DefaultProfilerConfig()
-	snmpSession := &snmp.Session{Communities: []string{"public"}}
+	snmpSession := &snmp.Session{Communities: []snmp.Community{{String: "public"}}}
 
 	profiler := discovery.NewDeviceProfiler(cfg, testutil.StaticSNMPCredentials{Session: snmpSession})
 
@@ -259,7 +259,7 @@ func TestDeviceProfiler_GetAllProfiles(t *testing.T) {
 
 func TestDeviceProfiler_ClearProfiles(t *testing.T) {
 	cfg := discovery.DefaultProfilerConfig()
-	snmpSession := &snmp.Session{Communities: []string{"public"}}
+	snmpSession := &snmp.Session{Communities: []snmp.Community{{String: "public"}}}
 
 	profiler := discovery.NewDeviceProfiler(cfg, testutil.StaticSNMPCredentials{Session: snmpSession})
 
@@ -274,7 +274,7 @@ func TestDeviceProfiler_ClearProfiles(t *testing.T) {
 
 func TestDeviceProfiler_StartStop(t *testing.T) {
 	cfg := discovery.DefaultProfilerConfig()
-	snmpSession := &snmp.Session{Communities: []string{"public"}}
+	snmpSession := &snmp.Session{Communities: []snmp.Community{{String: "public"}}}
 
 	profiler := discovery.NewDeviceProfiler(cfg, testutil.StaticSNMPCredentials{Session: snmpSession})
 
@@ -300,7 +300,7 @@ func TestDeviceProfiler_StartStop(t *testing.T) {
 
 func TestDeviceProfiler_GetProfile_NonExistent(t *testing.T) {
 	cfg := discovery.DefaultProfilerConfig()
-	snmpSession := &snmp.Session{Communities: []string{"public"}}
+	snmpSession := &snmp.Session{Communities: []snmp.Community{{String: "public"}}}
 
 	profiler := discovery.NewDeviceProfiler(cfg, testutil.StaticSNMPCredentials{Session: snmpSession})
 

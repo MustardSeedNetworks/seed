@@ -187,3 +187,15 @@ func SweepCredentials[T any](
 ) (T, error) {
 	return sweepCredentials(ctx, cfg, what, v3, v2c)
 }
+
+// SweepCredentialsNaming exposes sweepCredentialsNaming so the identity it
+// reports can be asserted without a live device.
+func SweepCredentialsNaming[T any](
+	ctx context.Context,
+	cfg *Session,
+	what string,
+	v3 func(cred *V3Credential) (T, error),
+	v2c func(community string) (T, error),
+) (T, CredentialRef, error) {
+	return sweepCredentialsNaming(ctx, cfg, what, v3, v2c)
+}

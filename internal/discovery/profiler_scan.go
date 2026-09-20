@@ -333,7 +333,7 @@ func (p *DeviceProfiler) probeSNMP(ctx context.Context, ip string) *SNMPInfo {
 	)
 
 	// Query system information
-	sysInfo, err := snmp.GetSystemInfo(ctx, ip, snmpCfg)
+	sysInfo, cred, err := snmp.GetSystemInfo(ctx, ip, snmpCfg)
 	if err != nil {
 		logging.GetLogger().DebugContext(ctx, "SNMP probe failed", "ip", ip, "error", err)
 		return nil
@@ -354,5 +354,6 @@ func (p *DeviceProfiler) probeSNMP(ctx context.Context, ip string) *SNMPInfo {
 		SysName:     sysInfo.SysName,
 		SysContact:  sysInfo.SysContact,
 		SysLocation: sysInfo.SysLocation,
+		Credential:  cred,
 	}
 }

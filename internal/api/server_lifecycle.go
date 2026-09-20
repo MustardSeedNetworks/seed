@@ -124,10 +124,11 @@ func (s *Server) Start() error {
 		}
 	}
 
-	// Learn target networks from every sweep the service drives: its startup
-	// sweep, the rescan ticker and an interface change (seed#2695). Registered
+	// Read every sweep the service drives: its startup sweep, the rescan
+	// ticker and an interface change — learning target networks (seed#2695)
+	// and promoting the devices that answered SNMP (seed#2692). Registered
 	// before Start so the startup sweep is already observed.
-	s.discoveryService().SetSweepObserver(s.learnTargetNetworks)
+	s.discoveryService().SetSweepObserver(s.afterSweep)
 
 	// Start unified discovery service.
 	if err := s.discoveryService().Start(); err != nil {

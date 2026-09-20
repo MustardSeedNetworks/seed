@@ -13,6 +13,7 @@ import (
 	"github.com/MustardSeedNetworks/seed/internal/diagnostics/gateway"
 	"github.com/MustardSeedNetworks/seed/internal/discovery"
 	"github.com/MustardSeedNetworks/seed/internal/discovery/learn"
+	"github.com/MustardSeedNetworks/seed/internal/discovery/promote"
 	"github.com/MustardSeedNetworks/seed/internal/engine"
 	"github.com/MustardSeedNetworks/seed/internal/i18n"
 	"github.com/MustardSeedNetworks/seed/internal/license"
@@ -505,6 +506,11 @@ func ExportCategorizeInterfaces(
 // ExportRoutingViews exposes routingViews for testing.
 func ExportRoutingViews(devices []*discovery.DiscoveredDevice) []learn.Device {
 	return routingViews(devices)
+}
+
+// ExportPromotionViews exposes promotionViews for testing.
+func ExportPromotionViews(devices []*discovery.DiscoveredDevice) []promote.Device {
+	return promotionViews(devices)
 }
 
 // ExportLocalPrefixes exposes localPrefixes for testing.

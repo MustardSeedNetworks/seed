@@ -175,7 +175,7 @@ func TestGetPhysicalEntities(t *testing.T) {
 			name: "unreachable host",
 			ip:   "192.0.2.1",
 			cfg: &snmp.Session{
-				Communities: []string{"public"},
+				Communities: []snmp.Community{{String: "public"}},
 				Port:        161,
 				Timeout:     100 * time.Millisecond,
 				Retries:     1,
@@ -220,7 +220,7 @@ func TestGetChassisInfo(t *testing.T) {
 			name: "unreachable host",
 			ip:   "192.0.2.1",
 			cfg: &snmp.Session{
-				Communities: []string{"public"},
+				Communities: []snmp.Community{{String: "public"}},
 				Port:        161,
 				Timeout:     100 * time.Millisecond,
 				Retries:     1,
@@ -265,7 +265,7 @@ func TestGetModules(t *testing.T) {
 			name: "unreachable host",
 			ip:   "192.0.2.1",
 			cfg: &snmp.Session{
-				Communities: []string{"public"},
+				Communities: []snmp.Community{{String: "public"}},
 				Port:        161,
 				Timeout:     100 * time.Millisecond,
 				Retries:     1,
@@ -310,7 +310,7 @@ func TestGetPowerSupplies(t *testing.T) {
 			name: "unreachable host",
 			ip:   "192.0.2.1",
 			cfg: &snmp.Session{
-				Communities: []string{"public"},
+				Communities: []snmp.Community{{String: "public"}},
 				Port:        161,
 				Timeout:     100 * time.Millisecond,
 				Retries:     1,
@@ -355,7 +355,7 @@ func TestGetFans(t *testing.T) {
 			name: "unreachable host",
 			ip:   "192.0.2.1",
 			cfg: &snmp.Session{
-				Communities: []string{"public"},
+				Communities: []snmp.Community{{String: "public"}},
 				Port:        161,
 				Timeout:     100 * time.Millisecond,
 				Retries:     1,
