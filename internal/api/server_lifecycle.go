@@ -19,6 +19,8 @@ import (
 	"path/filepath"
 	"time"
 
+	"github.com/MustardSeedNetworks/foundation/pkg/supervise"
+
 	"github.com/MustardSeedNetworks/seed/internal/engine"
 	"github.com/MustardSeedNetworks/seed/internal/i18n"
 	"github.com/MustardSeedNetworks/seed/internal/logging"
@@ -144,25 +146,45 @@ func (s *Server) Start() error {
 	// This ensures /api/security/devices/status returns valid subnet info on first call
 	// without requiring a manual scan trigger from the frontend
 	if s.config.NetworkDiscovery.Enabled {
-		go func() {
-			ctx, cancel := context.WithTimeout(
-				context.Background(),
-				s.config.NetworkDiscovery.ScanTimeout,
-			)
-			defer cancel()
-			logging.GetLogger().Info("Triggering initial device discovery scan on startup")
-			if err := s.deviceDiscovery().Scan(ctx); err != nil {
-				logging.GetLogger().Warn("Initial device discovery scan failed", "error", err)
-			} else {
-				logging.GetLogger().Info("Initial device discovery scan completed",
-					"deviceCount", s.deviceDiscovery().Count())
-			}
-		}()
+		s.startInitialScan()
 	}
 
 	s.startBackgroundEngines()
 
 	return s.startHTTPS()
+}
+
+// startInitialScan runs the one-shot startup sweep under its own supervisor
+// (#2748) so a panic in the scan path is logged and contained instead of
+// killing the daemon.
+//
+// Its own group, not the background components' one: the scan is a one-shot
+// with its own timeout, and supervise.Fatal on a shared group would stop the
+// outbox relay, the report scheduler and the Wi-Fi loops because a sweep
+// faulted — worse than the crash it replaces. Nothing waits on it at shutdown
+// either, exactly as the bare goroutine it replaces did not: the scan's own
+// timeout bounds it, and blocking shutdown on a sweep that ignores its context
+// would trade a crash for a hang.
+func (s *Server) startInitialScan() {
+	group := supervise.New(logging.GetLogger())
+	group.Add("initial-scan", supervise.Fatal, func(workerCtx context.Context) error {
+		// The timeout is built inside the worker: supervise.Start detaches the
+		// context it is given with context.WithoutCancel, which strips the
+		// DEADLINE as well as the cancellation, and the scan path sizes its
+		// per-probe timeouts from ctx.Deadline().
+		scanCtx, cancel := context.WithTimeout(workerCtx, s.config.NetworkDiscovery.ScanTimeout)
+		defer cancel()
+
+		logging.GetLogger().InfoContext(scanCtx, "Triggering initial device discovery scan on startup")
+		if err := s.deviceDiscovery().Scan(scanCtx); err != nil {
+			logging.GetLogger().WarnContext(scanCtx, "Initial device discovery scan failed", "error", err)
+			return nil
+		}
+		logging.GetLogger().InfoContext(scanCtx, "Initial device discovery scan completed",
+			"deviceCount", s.deviceDiscovery().Count())
+		return nil
+	})
+	group.Start(context.Background())
 }
 
 // SetBoundPortObserver registers the callback that receives the port the

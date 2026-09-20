@@ -11,9 +11,11 @@ import (
 	"sync"
 	"time"
 
+	"github.com/MustardSeedNetworks/foundation/pkg/supervise"
 	"github.com/google/uuid"
 
 	"github.com/MustardSeedNetworks/seed/internal/config"
+	"github.com/MustardSeedNetworks/seed/internal/logging"
 )
 
 // SchedulerService manages scheduled reports. It keeps schedules in memory and
@@ -22,38 +24,76 @@ type SchedulerService struct {
 	cfg       *config.Config
 	repo      ScheduleRepo
 	generator *GeneratorService
-	cancel    context.CancelFunc
+	tick      time.Duration
 	mu        sync.RWMutex
 	schedules map[string]*ScheduledReport
 }
+
+// SchedulerOption tunes a SchedulerService.
+type SchedulerOption func(*SchedulerService)
+
+// WithTickInterval sets how often Run looks for due schedules (<= 0 keeps the
+// default minute). The same seam visibility.WithEvalInterval provides: a
+// minute-long tick makes the fan-out untestable in anything but a slow test.
+func WithTickInterval(d time.Duration) SchedulerOption {
+	return func(s *SchedulerService) {
+		if d > 0 {
+			s.tick = d
+		}
+	}
+}
+
+// defaultSchedulerTick is how often the scheduler looks for due reports. A
+// schedule's resolution is an hour at finest, so a minute is ample.
+const defaultSchedulerTick = time.Minute
 
 // NewSchedulerService creates a new scheduler service.
 func NewSchedulerService(
 	cfg *config.Config,
 	repo ScheduleRepo,
 	generator *GeneratorService,
+	opts ...SchedulerOption,
 ) *SchedulerService {
-	return &SchedulerService{
+	s := &SchedulerService{
 		cfg:       cfg,
 		repo:      repo,
 		generator: generator,
+		tick:      defaultSchedulerTick,
 		schedules: make(map[string]*ScheduledReport),
 	}
+	for _, opt := range opts {
+		opt(s)
+	}
+	return s
 }
 
-// Start begins the scheduler.
-func (s *SchedulerService) Start(ctx context.Context) error {
-	ctx, s.cancel = context.WithCancel(ctx)
-
-	// Load existing schedules
+// Load reads the persisted schedules into memory. Called once, synchronously,
+// before Run: a database that cannot be read is a startup failure, not a
+// worker fault (#2748).
+func (s *SchedulerService) Load(ctx context.Context) error {
 	if err := s.loadSchedules(ctx); err != nil {
 		return fmt.Errorf("loading schedules: %w", err)
 	}
-
-	// Start scheduler loop
-	go s.runScheduler(ctx)
-
 	return nil
+}
+
+// Run ticks once a minute until ctx is cancelled, firing every schedule whose
+// NextRun has passed. It blocks: the scheduler is a supervised worker (#2748),
+// and the `go s.runScheduler(ctx)` it replaced put the tick loop outside the
+// supervisor's recover, so a panic while checking schedules took the daemon
+// down.
+func (s *SchedulerService) Run(ctx context.Context) error {
+	ticker := time.NewTicker(s.tick)
+	defer ticker.Stop()
+
+	for {
+		select {
+		case <-ctx.Done():
+			return nil
+		case <-ticker.C:
+			s.checkSchedules(ctx)
+		}
+	}
 }
 
 func (s *SchedulerService) loadSchedules(ctx context.Context) error {
@@ -72,33 +112,46 @@ func (s *SchedulerService) loadSchedules(ctx context.Context) error {
 	return nil
 }
 
-func (s *SchedulerService) runScheduler(ctx context.Context) {
-	ticker := time.NewTicker(time.Minute)
-	defer ticker.Stop()
-
-	for {
-		select {
-		case <-ctx.Done():
-			return
-		case <-ticker.C:
-			s.checkSchedules(ctx)
-		}
+// checkSchedules fires every schedule whose NextRun has passed. Each firing
+// runs under its own supervisor rather than a bare `go`: generation is the
+// deepest call in the component (templates, aggregation, export) and a panic
+// there used to kill the daemon even once the tick loop was supervised (#2748).
+//
+// One group PER report, not one for the cycle: a group stops its remaining
+// workers when one fails, so a single bad template would cancel the other
+// reports due in the same minute. supervise.Fatal for the same reason the
+// restart count is absent — the ticker is the retry. A panic unwinds before
+// NextRun is stamped, so the schedule stays due and fires again next minute,
+// once a minute, visibly.
+func (s *SchedulerService) checkSchedules(ctx context.Context) {
+	for _, schedule := range s.dueSchedules(time.Now()) {
+		group := supervise.New(logging.GetLogger())
+		group.Add("scheduled-report:"+schedule.ID, supervise.Fatal,
+			func(reportCtx context.Context) error {
+				s.runScheduledReport(reportCtx, schedule)
+				return nil
+			})
+		group.Start(ctx)
 	}
 }
 
-func (s *SchedulerService) checkSchedules(ctx context.Context) {
+// dueSchedules returns the enabled schedules whose NextRun is in the past. It
+// takes and releases the read lock before anything is generated: runScheduledReport
+// takes the write lock to stamp LastRun, which would deadlock under a held RLock.
+func (s *SchedulerService) dueSchedules(now time.Time) []*ScheduledReport {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 
-	now := time.Now()
+	var due []*ScheduledReport
 	for _, schedule := range s.schedules {
 		if !schedule.Enabled {
 			continue
 		}
 		if schedule.NextRun != nil && now.After(*schedule.NextRun) {
-			go s.runScheduledReport(ctx, schedule)
+			due = append(due, schedule)
 		}
 	}
+	return due
 }
 
 func (s *SchedulerService) runScheduledReport(ctx context.Context, schedule *ScheduledReport) {
@@ -171,13 +224,6 @@ func calculateNextRun(schedule *Schedule) *time.Time {
 	}
 
 	return &next
-}
-
-// Stop halts the scheduler.
-func (s *SchedulerService) Stop() {
-	if s.cancel != nil {
-		s.cancel()
-	}
 }
 
 // Create adds a scheduled report.

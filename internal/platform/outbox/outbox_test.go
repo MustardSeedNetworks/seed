@@ -150,8 +150,22 @@ func TestRelayRepublishesAfterRestart(t *testing.T) {
 	bus.Subscribe("survey.completed", rec.handle)
 
 	relay := outbox.NewRelay(store, bus, quiet())
-	relay.Start(context.Background()) // initial drain == the across-restart replay
-	t.Cleanup(relay.Stop)
+	runCtx, cancel := context.WithCancel(context.Background())
+	t.Cleanup(cancel)
+	done := make(chan struct{})
+	go func() {
+		defer close(done)
+		_ = relay.Run(runCtx) // the initial drain is the across-restart replay
+	}()
+	t.Cleanup(func() { cancel(); <-done })
+
+	// Run's initial drain happens on its own goroutine, so the replay is
+	// awaited rather than assumed. drainBus closes the bus, so it runs once,
+	// after the subscriber has seen the redelivery.
+	deadline := time.Now().Add(5 * time.Second)
+	for len(rec.ids()) == 0 && time.Now().Before(deadline) {
+		time.Sleep(time.Millisecond)
+	}
 	drainBus(t, bus)
 
 	if got := rec.ids(); len(got) != 1 || got[0] != "7" {
@@ -213,15 +227,28 @@ func TestRelayCleanupDeletesPublished(t *testing.T) {
 	}
 }
 
-func TestRelayStartStopIdempotent(t *testing.T) {
+// TestRelayRunReturnsOnCancel: Run owns no goroutine of its own, so the only
+// thing that ends it is its context — the supervisor cancels, Run returns, and
+// the group's Stop can finish waiting on it.
+func TestRelayRunReturnsOnCancel(t *testing.T) {
 	t.Parallel()
 	store := newFakeStore()
 	bus := events.New(quiet())
-	relay := outbox.NewRelay(store, bus, quiet())
-	relay.Start(context.Background())
-	relay.Start(context.Background()) // second start is a no-op
-	relay.Stop()
-	relay.Stop() // second stop is a no-op
+	relay := outbox.NewRelay(store, bus, quiet(), outbox.WithInterval(time.Millisecond))
+
+	ctx, cancel := context.WithCancel(context.Background())
+	done := make(chan error, 1)
+	go func() { done <- relay.Run(ctx) }()
+
+	cancel()
+	select {
+	case err := <-done:
+		if err != nil {
+			t.Fatalf("Run returned %v, want nil on cancellation", err)
+		}
+	case <-time.After(5 * time.Second):
+		t.Fatal("Run did not return after its context was cancelled")
+	}
 	drainBus(t, bus)
 }
 

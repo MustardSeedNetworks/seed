@@ -847,7 +847,7 @@ func TestSchedulerService_Delete_TableDriven(t *testing.T) {
 // SchedulerService Start/Stop Tests
 // ----------------------------------------------------------------------------
 
-func TestSchedulerService_StartStop_TableDriven(t *testing.T) {
+func TestSchedulerService_RunStop_TableDriven(t *testing.T) {
 	tests := []struct {
 		name           string
 		contextTimeout time.Duration
@@ -873,44 +873,15 @@ func TestSchedulerService_StartStop_TableDriven(t *testing.T) {
 			ss, cleanup := setupSchedulerService(t)
 			defer cleanup()
 
-			ctx, cancel := context.WithTimeout(context.Background(), tt.contextTimeout)
-			defer cancel()
-
-			err := ss.Start(ctx)
 			if tt.wantStartErr {
-				require.Error(t, err)
+				require.Error(t, startErr(t, ss.Run))
 				return
 			}
-			require.NoError(t, err)
-
-			// Let scheduler run briefly
-			time.Sleep(tt.stopDelay)
-
-			// Stop should not panic
-			ss.Stop()
+			stop := runUntilCancelled(t, ss.Run)
+			time.Sleep(tt.stopDelay) // let the scheduler tick
+			stop()
 		})
 	}
-}
-
-func TestSchedulerService_MultipleStops(t *testing.T) {
-	ss, cleanup := setupSchedulerService(t)
-	defer cleanup()
-
-	ctx := context.Background()
-	require.NoError(t, ss.Start(ctx))
-
-	// Multiple stops should not panic
-	ss.Stop()
-	ss.Stop()
-	ss.Stop()
-}
-
-func TestSchedulerService_StopWithoutStart(t *testing.T) {
-	ss, cleanup := setupSchedulerService(t)
-	defer cleanup()
-
-	// Stop without Start should not panic
-	ss.Stop()
 }
 
 // ----------------------------------------------------------------------------
