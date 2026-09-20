@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.214.78](https://github.com/MustardSeedNetworks/seed/compare/v0.214.77...v0.214.78) (2026-09-20)
+
+
+### Features
+
+* **discovery:** promote SNMP-answering devices to polling targets ([#2789](https://github.com/MustardSeedNetworks/seed/issues/2789)) ([2028296](https://github.com/MustardSeedNetworks/seed/commit/2028296dbdd303a1f8280438aecfdca2e5fde90e))
+
+
+### Miscellaneous
+
+* **deps:** update dependency js-yaml to v5.4.2 ([#2790](https://github.com/MustardSeedNetworks/seed/issues/2790)) ([b86404a](https://github.com/MustardSeedNetworks/seed/commit/b86404a412fd17a56b4a4a935b24b9ec2482503c))
+
 ## [0.214.77](https://github.com/MustardSeedNetworks/seed/compare/v0.214.76...v0.214.77) (2026-09-19)
 
 
