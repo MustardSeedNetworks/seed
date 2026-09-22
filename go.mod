@@ -69,7 +69,7 @@ require (
 	github.com/go-webauthn/webauthn v0.18.1
 	github.com/golang-jwt/jwt/v5 v5.3.1
 	github.com/google/uuid v1.6.0
-	github.com/gopacket/gopacket v1.7.1
+	github.com/gopacket/gopacket v1.7.2
 	github.com/gosnmp/gosnmp v1.44.0
 	github.com/invopop/jsonschema v0.14.0
 	github.com/kardianos/service v1.3.0
