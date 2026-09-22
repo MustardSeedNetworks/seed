@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.214.81](https://github.com/MustardSeedNetworks/seed/compare/v0.214.80...v0.214.81) (2026-09-22)
+
+
+### Bug Fixes
+
+* **deps:** update module github.com/gopacket/gopacket to v1.7.2 ([#2800](https://github.com/MustardSeedNetworks/seed/issues/2800)) ([5fdf5ef](https://github.com/MustardSeedNetworks/seed/commit/5fdf5efeae9b7b4e627ed477f7dc845e379270c0))
+
+
+### Miscellaneous
+
+* **deps:** update dependency brace-expansion to v5.0.12 ([#2799](https://github.com/MustardSeedNetworks/seed/issues/2799)) ([460d420](https://github.com/MustardSeedNetworks/seed/commit/460d420534dbf41723567c51c1b6cf813be383bf))
+
 ## [0.214.80](https://github.com/MustardSeedNetworks/seed/compare/v0.214.79...v0.214.80) (2026-09-21)
 
 
