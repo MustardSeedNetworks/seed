@@ -136,10 +136,6 @@ jobs:
         working-directory: ui
         run: npm ci
 
-      - name: Install ts-prune
-        # Floating installs mean the gate's verdict depends on when it ran.
-        run: npm install -g ts-prune@0.10.3
-
       - name: Check for unused exports
         working-directory: ui
         run: |
@@ -147,7 +143,7 @@ jobs:
           echo "" >> "$GITHUB_STEP_SUMMARY"
 
           # Run ts-prune to find unused exports
-          ts-prune --error 2>&1 | tee ts-prune-output.txt || true
+          npm exec -- ts-prune --error 2>&1 | tee ts-prune-output.txt || true
 
           # grep -c PRINTS 0 and EXITS 1 when nothing matches, so `|| echo "0"`
           # appended a second line and the substitution became "0\n0" —
