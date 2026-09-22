@@ -120,35 +120,6 @@ export async function loginAndAwaitDashboard(
 }
 
 /**
- * Load the app afresh and wait for the dashboard, preserving the session.
- *
- * Used by the "auth survives a page load" test, and it has now failed twice on
- * WebKit for two different reasons:
- *
- *  1. A bare `page.reload()` plus a 10s assertion timed out. The post-load
- *     chain — SPA mount, first data fetch, header paint — is the same one
- *     `loginAndAwaitDashboard` documents as occasionally exceeding 10s on the
- *     contended shard, which is why that helper allows 20s. Fixed by matching
- *     the budget.
- *  2. `page.reload({ waitUntil: 'domcontentloaded' })` then failed with
- *     "WebKit encountered an internal error". That was my fix for (1) and it
- *     addressed when the promise resolves, not the race underneath: the
- *     navigation still starts while the dashboard's first fetches are in
- *     flight, and WebKit's reload path does not survive that.
- *
- * So this does not reload. `goto` is a fresh document load, which is what the
- * test actually cares about — the session has to survive the app starting
- * again — and it never enters the reload path that breaks. The distinction
- * between "reload" and "navigate to the same URL" is not one the behaviour
- * under test depends on; both discard the SPA's memory and re-bootstrap
- * against whatever cookies remain.
- */
-export async function reloadAndAwaitDashboard(page: Page): Promise<void> {
-  await page.goto('/', { waitUntil: 'domcontentloaded' });
-  await expect(page.getByTestId('page-header-title')).toBeVisible({ timeout: 20000 });
-}
-
-/**
  * Settings / Help live in the sidebar footer, not the header (Phase 2 —
  * see components/app/RailControls.tsx and the sidebar's FooterIconButton).
  * Selected by test id rather than accessible name: the page header's (?)

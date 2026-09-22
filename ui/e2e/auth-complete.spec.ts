@@ -3,7 +3,6 @@ import {
   AUTH_STORAGE_STATE,
   disableAnimations,
   loginAndAwaitDashboard,
-  reloadAndAwaitDashboard,
   TEST_CREDENTIALS,
 } from './helpers/auth';
 
@@ -346,17 +345,19 @@ test.describe('Complete Authentication Lifecycle', () => {
       await expect(linkCard).toBeVisible({ timeout: 5000 });
     });
 
-    test('should persist authentication on page reload', async ({ page }) => {
+    test('should persist authentication across a fresh page load', async ({ page }) => {
       // Login and land on the dashboard.
       await page.goto('/');
       await loginAndAwaitDashboard(page);
 
-      // Reload and wait for the dashboard the same way the login path does;
-      // a bare reload plus a 10s assertion is the WebKit flake (#2285).
-      await reloadAndAwaitDashboard(page);
+      const context = page.context();
+      await page.close();
+      const restoredPage = await context.newPage();
+      await restoredPage.goto('/', { waitUntil: 'domcontentloaded' });
+      await expect(restoredPage.getByTestId('page-header-title')).toBeVisible({ timeout: 20000 });
 
       // Should NOT show login form
-      const loginForm = page.getByLabel(/username/i);
+      const loginForm = restoredPage.getByLabel(/username/i);
       await expect(loginForm).not.toBeVisible();
     });
   });
