@@ -5,6 +5,30 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.214.81](https://github.com/MustardSeedNetworks/seed/compare/v0.214.80...v0.214.81) (2026-09-22)
+
+
+### Bug Fixes
+
+* **deps:** update module github.com/gopacket/gopacket to v1.7.2 ([#2800](https://github.com/MustardSeedNetworks/seed/issues/2800)) ([5fdf5ef](https://github.com/MustardSeedNetworks/seed/commit/5fdf5efeae9b7b4e627ed477f7dc845e379270c0))
+
+
+### Miscellaneous
+
+* **deps:** update dependency brace-expansion to v5.0.12 ([#2799](https://github.com/MustardSeedNetworks/seed/issues/2799)) ([460d420](https://github.com/MustardSeedNetworks/seed/commit/460d420534dbf41723567c51c1b6cf813be383bf))
+
+## [0.214.80](https://github.com/MustardSeedNetworks/seed/compare/v0.214.79...v0.214.80) (2026-09-21)
+
+
+### Bug Fixes
+
+* **deps:** update dependency react-i18next to v17.0.14 ([#2794](https://github.com/MustardSeedNetworks/seed/issues/2794)) ([1fc053b](https://github.com/MustardSeedNetworks/seed/commit/1fc053baf8f35f664d5b7fe55b95ef692b907dae))
+
+
+### Miscellaneous
+
+* **deps:** update dependency fast-uri to v4.2.1 ([#2797](https://github.com/MustardSeedNetworks/seed/issues/2797)) ([0b49707](https://github.com/MustardSeedNetworks/seed/commit/0b4970789676bccd0affe9a5a007426563021116))
+
 ## [0.214.79](https://github.com/MustardSeedNetworks/seed/compare/v0.214.78...v0.214.79) (2026-09-20)
 
 
