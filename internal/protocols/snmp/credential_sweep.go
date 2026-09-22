@@ -43,28 +43,46 @@ func sweepCredentials[T any](
 	v3 func(cred *V3Credential) (T, error),
 	v2c func(community string) (T, error),
 ) (T, error) {
+	out, _, err := sweepCredentialsNaming(ctx, cfg, what, v3, v2c)
+	return out, err
+}
+
+// sweepCredentialsNaming is the sweep itself, reporting which credential
+// answered.
+//
+// Discovery promotes an SNMP-answering device to a polling target, and a
+// target references a vault row rather than a secret (seed#2692): knowing that
+// *some* credential worked is not enough to write one. Only the caller that
+// needs the identity pays for it; sweepCredentials drops it.
+func sweepCredentialsNaming[T any](
+	ctx context.Context,
+	cfg *Session,
+	what string,
+	v3 func(cred *V3Credential) (T, error),
+	v2c func(community string) (T, error),
+) (T, CredentialRef, error) {
 	var zero T
 	if cfg == nil {
-		return zero, errors.New("SNMP config is nil")
+		return zero, CredentialRef{}, errors.New("SNMP config is nil")
 	}
 
 	for i := range cfg.V3Credentials {
 		if err := ctx.Err(); err != nil {
-			return zero, err
+			return zero, CredentialRef{}, err
 		}
 		if out, err := v3(&cfg.V3Credentials[i]); err == nil {
-			return out, nil
+			return out, CredentialRef{ID: cfg.V3Credentials[i].ID, Version: VersionV3}, nil
 		}
 	}
 
 	for _, community := range cfg.Communities {
 		if err := ctx.Err(); err != nil {
-			return zero, err
+			return zero, CredentialRef{}, err
 		}
-		if out, err := v2c(community); err == nil {
-			return out, nil
+		if out, err := v2c(community.String); err == nil {
+			return out, CredentialRef{ID: community.ID, Version: VersionV2c}, nil
 		}
 	}
 
-	return zero, fmt.Errorf("%w: %s", ErrNoCredentialSucceeded, what)
+	return zero, CredentialRef{}, fmt.Errorf("%w: %s", ErrNoCredentialSucceeded, what)
 }

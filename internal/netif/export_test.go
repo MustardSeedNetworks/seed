@@ -3,6 +3,8 @@ package netif
 import (
 	"sync"
 	"time"
+
+	"github.com/MustardSeedNetworks/seed/internal/diagnostics/gateway"
 )
 
 // DetectInterfaceType exposes detectInterfaceType for testing.
@@ -238,4 +240,18 @@ func NewManagerForDetector(det InterfaceDetector, now func() time.Time) *Manager
 		detector:   det,
 		now:        now,
 	}
+}
+
+// SetCurrentInterfaceUnchecked sets currentInterface without requiring the
+// interface to be present, so a test can reproduce a configured selection
+// that is no longer on the host.
+func (h *ManagerTestHelper) SetCurrentInterfaceUnchecked(name string) {
+	h.M.mu.Lock()
+	defer h.M.mu.Unlock()
+	h.M.currentInterface = name
+}
+
+// DefaultGatewayIn exposes defaultGatewayIn for testing.
+func DefaultGatewayIn(routes []gateway.RouteInfo, iface string) string {
+	return defaultGatewayIn(routes, iface)
 }

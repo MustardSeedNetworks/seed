@@ -61,7 +61,7 @@ This command will:
 }
 
 const systemdServiceTemplate = `[Unit]
-Description=The Seed - Network Diagnostics by Mustard Seed Networks
+Description=Seed - Network Diagnostics by Mustard Seed Networks
 After=network-online.target
 Wants=network-online.target
 Documentation=https://github.com/MustardSeedNetworks/seed
@@ -90,7 +90,7 @@ WantedBy=multi-user.target
 `
 
 const userServiceTemplate = `[Unit]
-Description=The Seed - Network Diagnostics
+Description=Seed - Network Diagnostics
 After=network-online.target
 
 [Service]

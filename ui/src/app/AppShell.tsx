@@ -10,23 +10,26 @@
 
 import type { JSX } from 'react';
 import { type ReactNode, Suspense, useEffect, useRef } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Redirect, Route, Switch, useLocation } from 'wouter';
 import { AppFooter } from '../components/app/AppFooter';
 import { CapabilityWarnings } from '../components/app/CapabilityWarnings';
-import { HeaderBar } from '../components/app/HeaderBar';
+import { ConnectionNotice } from '../components/app/ConnectionNotice';
+import { RailControls } from '../components/app/RailControls';
 import { HelpDrawer } from '../components/help/HelpDrawer';
 import { ProfileManagement } from '../components/profiles/ProfileManagement';
 import { SettingsDrawer } from '../components/settings/SettingsDrawer';
 import { CommandPalette } from '../components/ui/CommandPalette';
-import { Fab } from '../components/ui/fab';
+import { Fab } from '../components/ui/Fab';
 import { AppContext, type AppContextValue } from '../contexts/AppContext';
+import { useIsPhone } from '../hooks/useIsPhone';
 import { useNavGroups } from '../navGroups';
 import { type PageConfig, usePages } from '../pageRegistry';
 import { cn, section } from '../styles/theme';
 import { Breadcrumbs } from '../ui/Breadcrumbs';
 import { PageHeader } from '../ui/PageHeader';
 import { PageLoader } from '../ui/PageLoader';
-import { SidebarLayout } from '../ui/Sidebar';
+import { type RailStatus, SidebarLayout } from '../ui/Sidebar';
 import type { AppOrchestration } from './useAppOrchestration';
 
 interface AppShellProps {
@@ -37,6 +40,7 @@ interface AppShellProps {
 export function AppShell({ orchestration, logout }: AppShellProps): JSX.Element {
   const navGroups = useNavGroups();
   const pages = usePages();
+  const isPhone = useIsPhone();
   const [location] = useLocation();
   const {
     cards,
@@ -60,14 +64,12 @@ export function AppShell({ orchestration, logout }: AppShellProps): JSX.Element 
     profilesLoading,
     switchProfile,
     interfaces,
-    hasEthernet,
     hasWifiInterface,
     changeInterface,
     switchToInterfaceType,
     toggleTheme,
     isDark,
     recommendedEthernet,
-    recommendedWifi,
     profilesOpen,
     settingsOpen,
     helpOpen,
@@ -111,31 +113,23 @@ export function AppShell({ orchestration, logout }: AppShellProps): JSX.Element 
     openSettings,
   };
 
-  const topBar = (
-    <HeaderBar
-      wsStatus={sseStatus}
-      onReconnect={reconnect}
-      profiles={profiles}
-      activeProfile={activeProfile}
-      profilesLoading={profilesLoading}
-      onProfileSwitch={switchProfile}
-      onProfileManage={openProfiles}
-      interfaces={interfaces}
-      currentInterface={currentInterface}
-      isWifi={isWifi}
-      onInterfaceChange={changeInterface}
-      hasEthernet={hasEthernet}
-      hasWifiInterface={hasWifiInterface}
-      switchToInterfaceType={switchToInterfaceType}
-      toggleTheme={toggleTheme}
-      isDark={isDark}
-      onHelpOpen={openPageHelp}
-      onSettingsOpen={openSettings}
-      logout={logout}
-      recommendedEthernet={recommendedEthernet}
-      recommendedWifi={recommendedWifi}
-    />
-  );
+  const { t } = useTranslation();
+  // Literal keys rather than `t(`status.${sseStatus}`)`: the fleet key checker
+  // cannot resolve a computed key, so an interpolated one reads as four
+  // orphaned translations.
+  const statusLabel: Record<typeof sseStatus, string> = {
+    connected: t('status.connected'),
+    connecting: t('status.connecting'),
+    disconnected: t('status.disconnected'),
+    error: t('status.error'),
+  };
+  const railStatus: RailStatus = {
+    tone: sseStatus === 'connected' ? 'success' : sseStatus === 'connecting' ? 'warning' : 'error',
+    state: sseStatus,
+    label: statusLabel[sseStatus],
+    hint: sseStatus === 'connected' ? undefined : t('status.clickToReconnect'),
+    onActivate: sseStatus === 'connected' ? undefined : reconnect,
+  };
 
   return (
     <AppContext.Provider value={appContextValue}>
@@ -145,9 +139,30 @@ export function AppShell({ orchestration, logout }: AppShellProps): JSX.Element 
         onOpenHelp={openPageHelp}
         onOpenSettings={openSettings}
         onOpenProfiles={openProfiles}
-        topBar={topBar}
+        status={railStatus}
+        railControls={(collapsed) => (
+          <RailControls
+            collapsed={collapsed}
+            profiles={profiles}
+            activeProfile={activeProfile}
+            profilesLoading={profilesLoading}
+            onProfileSwitch={switchProfile}
+            onProfileManage={openProfiles}
+            logout={logout}
+            interfaces={interfaces}
+            currentInterface={currentInterface}
+            isWifi={isWifi}
+            hasWifiInterface={hasWifiInterface}
+            onInterfaceChange={changeInterface}
+            switchToInterfaceType={switchToInterfaceType}
+            recommendedEthernet={recommendedEthernet}
+            toggleTheme={toggleTheme}
+            isDark={isDark}
+          />
+        )}
       >
         <div className={cn(section.width.xl, 'mx-auto')}>
+          <ConnectionNotice status={sseStatus} onReconnect={reconnect} />
           <CapabilityWarnings capabilities={capabilities} />
 
           <Suspense fallback={<PageLoader />}>
@@ -168,7 +183,7 @@ export function AppShell({ orchestration, logout }: AppShellProps): JSX.Element 
             </Switch>
           </Suspense>
 
-          <AppFooter appVersion={appVersion} />
+          <AppFooter />
         </div>
       </SidebarLayout>
 
@@ -191,10 +206,17 @@ export function AppShell({ orchestration, logout }: AppShellProps): JSX.Element 
       {/* Profile Management Modal (#754) */}
       {profilesOpen ? <ProfileManagement onClose={closeProfiles} /> : null}
 
-      {/* FAB - Run All Tests - positioned bottom-right */}
-      <div className="fixed bottom-0 right-0 pointer-events-none z-50">
-        <Fab className="pointer-events-auto absolute bottom-20 right-6" />
-      </div>
+      {/* Run All Tests. On a phone this control lives in the page header
+          instead (see PageWithHeader): the fixed layer has nowhere to sit at
+          390px, because /link's status band occupies y 544-827 of an 844px
+          viewport and a bottom-right FAB covers the figures at any offset
+          (#2646). Rendered here only above the sm breakpoint, so exactly one
+          run control is ever in the tree. */}
+      {isPhone ? null : (
+        <div className="fixed bottom-0 right-0 pointer-events-none z-50">
+          <Fab className="pointer-events-auto absolute bottom-20 right-6" />
+        </div>
+      )}
 
       {/* Command palette (Cmd+K / Ctrl+K) */}
       <CommandPalette
@@ -214,6 +236,12 @@ export function AppShell({ orchestration, logout }: AppShellProps): JSX.Element 
  * PageWithHeader renders the section frame every routed page shares —
  * breadcrumbs plus the page header — from the registry entry rather
  * than from the page body. Pages render only their own content.
+ *
+ * It also owns `document.title`. Nothing set it per route before, so every
+ * page, bookmark and browser-history entry read the bare product name from
+ * index.html and a user with several tabs open could not tell them apart
+ * (#2645). The title is the registry's label, so it is the same string as the
+ * rail item, the breadcrumb and the H1.
  */
 function PageWithHeader({
   page,
@@ -224,7 +252,15 @@ function PageWithHeader({
   onOpenHelp: (section: string) => void;
   children: ReactNode;
 }) {
+  const isPhone = useIsPhone();
   const helpSection = page.help;
+  const { t } = useTranslation('common');
+  const productName = t('app.title');
+
+  useEffect(() => {
+    document.title = `${page.label} · ${productName}`;
+  }, [page.label, productName]);
+
   return (
     <section className="stack-xl">
       <Breadcrumbs />
@@ -234,6 +270,10 @@ function PageWithHeader({
         eyebrow={page.eyebrow}
         title={page.title}
         description={page.description}
+        // On a phone the run control is a labelled button here rather than a
+        // FAB on the fixed layer, which had nowhere to sit clear of the page's
+        // own content (#2646). Above `sm` it stays a FAB, rendered by AppShell.
+        actions={isPhone ? <Fab variant="inline" /> : undefined}
         onHelp={helpSection ? () => onOpenHelp(helpSection) : undefined}
       />
       {children}

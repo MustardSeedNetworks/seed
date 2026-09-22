@@ -39,6 +39,9 @@ interactive setup.`,
 
   # Also rotate the JWT secret (forces all sessions to log in again)
   seed setup-wizard --generate-password --reset-jwt`,
+		PreRunE: func(_ *cobra.Command, _ []string) error {
+			return guardConfigCommand(state, insteadOfSetupWizard)
+		},
 		Run: func(cmd *cobra.Command, args []string) {
 			runSetup(cmd, args, state)
 		},
@@ -99,7 +102,7 @@ func outputCredentials(creds setupCredentials, asJSON bool) error {
 		return nil
 	}
 	fmt.Fprintln(os.Stdout, "╔══════════════════════════════════════════════════════════════════╗")
-	fmt.Fprintln(os.Stdout, "║              THE SEED - CREDENTIALS GENERATED                    ║")
+	fmt.Fprintln(os.Stdout, "║                   SEED - CREDENTIALS GENERATED                   ║")
 	fmt.Fprintln(os.Stdout, "╠══════════════════════════════════════════════════════════════════╣")
 	fmt.Fprintf(os.Stdout, "║  Username: %-53s ║\n", creds.Username)
 	fmt.Fprintf(os.Stdout, "║  Password: %-53s ║\n", creds.Password)

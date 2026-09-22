@@ -25,7 +25,7 @@ import { createElement, type FC, type ReactNode, useEffect, useState } from 'rea
 import { useTranslation } from 'react-i18next';
 import { useLocation } from 'wouter';
 import { SeedLogo } from '../components/app/SeedLogo';
-import { Tooltip } from '../components/ui/tooltip';
+import { Tooltip } from '../components/ui/Tooltip';
 import { iconSizes } from '../constants/sizes';
 import { prefetchRoute } from '../utils/prefetch';
 import { safeGetItem, safeSetItem } from '../utils/storage';
@@ -65,7 +65,30 @@ interface SidebarLayoutProps {
   onOpenSettings?: () => void;
   onOpenHistory?: () => void;
   onOpenProfiles?: () => void;
-  topBar?: ReactNode;
+  /**
+   * Connection state for the rail's product mark. The dot used to be a
+   * hard-coded success green, so it reported "connected" on a dead socket;
+   * it now reads the live state and, when that state is not `connected`,
+   * reconnects on click.
+   */
+  status?: RailStatus;
+  /**
+   * Product-specific shell controls for the rail footer (account, interface,
+   * theme). A render prop rather than a node: the panels have to open beside
+   * the rail when it is collapsed, and only the rail knows that it is.
+   */
+  railControls?: (collapsed: boolean) => ReactNode;
+}
+
+export interface RailStatus {
+  tone: 'success' | 'warning' | 'error';
+  /** Machine-readable state, for the accessible name and the E2E assertion. */
+  state: string;
+  /** The state, in words — the accessible name of the rail's lockup. */
+  label: string;
+  /** What clicking does, when there is something to do. */
+  hint?: string;
+  onActivate?: () => void;
 }
 
 const STORAGE_KEY = 'stem-sidebar-collapsed';
@@ -174,27 +197,75 @@ const FooterIconButton: FC<FooterIconButtonProps> = ({
 interface SidebarHeaderProps {
   collapsed: boolean;
   onCollapse: () => void;
+  status?: RailStatus;
 }
 
-const SidebarHeader: FC<SidebarHeaderProps> = ({ collapsed, onCollapse }) => {
+const STATUS_DOT: Record<RailStatus['tone'], string> = {
+  success: 'bg-status-success',
+  warning: 'bg-status-warning',
+  error: 'bg-status-error',
+};
+
+const SidebarHeader: FC<SidebarHeaderProps> = ({ collapsed, onCollapse, status }) => {
   const { t } = useTranslation();
+  const lockupClass = `flex items-center gap-compact rounded-lg ${
+    collapsed ? 'justify-center' : ''
+  }`;
+  const lockup = (
+    <>
+      {/* 2px of overhang with nothing to scroll: declared, not tolerated. */}
+      <div className="relative flex-shrink-0" data-phone-width-exempt="badge-overhang">
+        <SeedLogo badge badgeClassName="h-9 w-9 shadow-lg" glyphClassName={iconSizes.lg} />
+        <span
+          aria-hidden="true"
+          className={`absolute -top-0.5 -right-0.5 h-2.5 w-2.5 rounded-full border-2 border-surface-raised ${
+            STATUS_DOT[status?.tone ?? 'success']
+          } ${status?.state === 'connecting' ? 'animate-pulse' : ''}`}
+        />
+      </div>
+      {!collapsed ? (
+        <span className="font-display font-bold text-lg text-text-primary tracking-tight">
+          {t('app.title')}
+        </span>
+      ) : null}
+      {status ? (
+        <span className="sr-only">{[status.label, status.hint].filter(Boolean).join(' — ')}</span>
+      ) : null}
+    </>
+  );
   return (
     <div
       className={`flex items-center ${
         collapsed ? 'justify-center' : 'justify-between'
       } px-3 py-4 border-b border-surface-border`}
     >
-      <div className={`flex items-center gap-compact ${collapsed ? 'justify-center' : ''}`}>
-        <div className="relative flex-shrink-0">
-          <SeedLogo badge badgeClassName="h-9 w-9 shadow-lg" glyphClassName={iconSizes.lg} />
-          <div className="absolute -top-0.5 -right-0.5 h-2.5 w-2.5 rounded-full bg-status-success border-2 border-surface-raised" />
-        </div>
-        {!collapsed ? (
-          <span className="font-display font-bold text-lg text-text-primary tracking-tight">
-            {t('app.title')}
-          </span>
-        ) : null}
-      </div>
+      {/* The dot is decoration; the state has to be readable. When there is
+          something to do about it the lockup is a button that does it, and
+          when there is not it stays a live region rather than becoming a
+          disabled button — Tab skips those, and hover never fires, so the
+          tooltip would not open either. */}
+      <Tooltip text={status ? [status.label, status.hint].filter(Boolean).join(' — ') : undefined}>
+        {status?.onActivate ? (
+          <button
+            type="button"
+            data-testid="rail-status"
+            data-status={status.state}
+            onClick={status.onActivate}
+            className={`${lockupClass} hover:opacity-80`}
+          >
+            {lockup}
+          </button>
+        ) : (
+          <div
+            data-testid="rail-status"
+            data-status={status?.state ?? 'connected'}
+            role="status"
+            className={lockupClass}
+          >
+            {lockup}
+          </div>
+        )}
+      </Tooltip>
       {!collapsed ? (
         <Tooltip text={t('accessibility.collapseSidebar')}>
           <button
@@ -214,6 +285,7 @@ const SidebarHeader: FC<SidebarHeaderProps> = ({ collapsed, onCollapse }) => {
 interface SidebarFooterProps {
   collapsed: boolean;
   version?: string;
+  railControls?: ReactNode;
   onOpenHelp?: () => void;
   onOpenSettings?: () => void;
   onOpenHistory?: () => void;
@@ -245,6 +317,7 @@ const FullWidthDrawerButton: FC<FullWidthDrawerButtonProps> = ({ onClick, icon, 
 const SidebarFooter: FC<SidebarFooterProps> = ({
   collapsed,
   version,
+  railControls,
   onOpenHelp,
   onOpenSettings,
   onOpenHistory,
@@ -254,6 +327,9 @@ const SidebarFooter: FC<SidebarFooterProps> = ({
   const { t } = useTranslation();
   return (
     <div className={`px-3 py-4 border-t border-surface-border ${collapsed ? 'text-center' : ''}`}>
+      {railControls ? (
+        <div className={`mb-heading ${collapsed ? '' : 'flex justify-start'}`}>{railControls}</div>
+      ) : null}
       <div className={`${collapsed ? 'stack-sm' : 'flex items-center gap-compact'} mb-heading`}>
         {onOpenHelp ? (
           <FooterIconButton
@@ -324,6 +400,8 @@ interface SidebarBodyProps {
   groups: SidebarNavGroup[];
   collapsed: boolean;
   version?: string;
+  status?: RailStatus;
+  railControls?: ReactNode;
   onCollapse: () => void;
   onExpand: () => void;
   onNavigate: (path: string) => void;
@@ -338,6 +416,8 @@ const SidebarBody: FC<SidebarBodyProps> = ({
   groups,
   collapsed,
   version,
+  status,
+  railControls,
   onCollapse,
   onExpand,
   onNavigate,
@@ -355,7 +435,7 @@ const SidebarBody: FC<SidebarBodyProps> = ({
     label ? t(label, { defaultValue: label }) : '';
   return (
     <>
-      <SidebarHeader collapsed={collapsed} onCollapse={onCollapse} />
+      <SidebarHeader collapsed={collapsed} onCollapse={onCollapse} status={status} />
       <nav className="flex-1 overflow-y-auto py-4 px-cell stack-xl">
         {groups.map((group, groupIndex) => (
           <div key={group.label || `nav-group-${String(groupIndex)}`}>
@@ -382,6 +462,7 @@ const SidebarBody: FC<SidebarBodyProps> = ({
       <SidebarFooter
         collapsed={collapsed}
         version={version}
+        railControls={railControls}
         onOpenHelp={onOpenHelp}
         onOpenSettings={onOpenSettings}
         onOpenHistory={onOpenHistory}
@@ -428,7 +509,8 @@ export const SidebarLayout: FC<SidebarLayoutProps> = ({
   onOpenSettings,
   onOpenHistory,
   onOpenProfiles,
-  topBar,
+  status,
+  railControls,
 }) => {
   const { t } = useTranslation();
   const [location, navigate] = useLocation();
@@ -451,6 +533,8 @@ export const SidebarLayout: FC<SidebarLayoutProps> = ({
       groups={groups}
       collapsed={collapsed}
       version={version}
+      status={status}
+      railControls={railControls?.(collapsed)}
       onCollapse={() => setCollapsed(true)}
       onExpand={() => setCollapsed(false)}
       onNavigate={(p) => navigate(p)}
@@ -482,17 +566,22 @@ export const SidebarLayout: FC<SidebarLayoutProps> = ({
         />
       ) : null}
 
+      {/* The phone drawer mounts on open rather than sitting off-canvas. A
+          closed drawer that stays in the tree keeps its buttons in the tab
+          order and puts a second product mark and a second copy of every rail
+          control in the document — which is what "one product mark per screen"
+          (owner 2026-09-15) rules out. */}
       <aside
         className={`lg:hidden fixed top-0 left-0 z-50 h-full w-72 bg-surface-raised/95 backdrop-blur-xl border-r border-surface-border transform transition-transform duration-300 ease-in-out ${
           mobileOpen ? 'translate-x-0' : '-translate-x-full'
         }`}
       >
-        <div className="flex flex-col h-full">{body}</div>
+        {mobileOpen ? <div className="flex flex-col h-full">{body}</div> : null}
       </aside>
 
       <aside
         className={`hidden lg:flex fixed top-0 left-0 z-40 h-full flex-col bg-gradient-to-b from-rail-from to-rail-to backdrop-blur-xl border-r border-hairline transition-all duration-300 ease-in-out ${
-          collapsed ? 'w-16' : 'w-[252px]'
+          collapsed ? 'w-16' : 'w-56' // one step with lg:pl-56 below; was 252 vs 256
         }`}
       >
         {body}
@@ -501,10 +590,9 @@ export const SidebarLayout: FC<SidebarLayoutProps> = ({
       <main
         id="main-content"
         className={`transition-all duration-300 ease-in-out pt-16 lg:pt-0 ${
-          collapsed ? 'lg:pl-16' : 'lg:pl-64'
+          collapsed ? 'lg:pl-16' : 'lg:pl-56'
         }`}
       >
-        {topBar}
         <div className="pad sm:pad-lg lg:pad-xl">{children}</div>
       </main>
     </div>

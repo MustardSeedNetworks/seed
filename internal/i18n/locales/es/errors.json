@@ -42,7 +42,26 @@
     "tierGateTooltip": "Requiere el nivel {{tier}}",
     "featureUnavailable": "{{feature}} no está disponible en tu nivel actual",
     "currentTier": "Nivel actual: {{tier}}",
-    "loading": "Verificando licencia…"
+    "loading": "Verificando licencia…",
+    "gated": {
+      "title": "Función del nivel {{tier}}: {{feature}}",
+      "sampleLabel": "Datos de ejemplo: esto es lo que muestra la página cuando la función está licenciada.",
+      "actions": "Inicie una prueba Pro de 14 días con <code>seed license trial</code> o active una clave {{tier}} con <code2>seed license activate -k <KEY></code2>.",
+      "features": {
+        "path_analysis": {
+          "name": "Análisis de rutas",
+          "pitch": "Rastree una ruta salto a salto en ambas capas: los conmutadores que atraviesa una trama, según LLDP, CDP y SNMP, y los enrutadores que atraviesa después, con el tiempo de ida y vuelta de cada salto."
+        },
+        "export_csv_json": {
+          "name": "Informes",
+          "pitch": "Genere resúmenes ejecutivos e inventarios de dispositivos cuando los necesite, y descargue cada uno en PDF, CSV o JSON para quienes nunca abren Seed."
+        }
+      },
+      "samples": {
+        "executiveSummary": "Resumen ejecutivo",
+        "deviceInventory": "Inventario de dispositivos"
+      }
+    }
   },
   "validation": {
     "failed": "Validación fallida",

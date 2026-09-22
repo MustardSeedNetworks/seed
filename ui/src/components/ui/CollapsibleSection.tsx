@@ -39,7 +39,7 @@
 import type React from 'react';
 import { type ReactNode, useState } from 'react';
 import { border, cn, icon as iconTokens, layout, radius, spacing } from '../../styles/theme';
-import type { Status } from './card';
+import type { Status } from './Card';
 import { StatusBadge } from './StatusBadge';
 
 interface CollapsibleSectionProps {

@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# Build macOS .pkg installer for The Seed
+# Build macOS .pkg installer for Seed
 #
 # Usage:
 #   ./build-pkg.sh [BINARY_PATH] [VERSION]
@@ -12,7 +12,7 @@
 #
 # Requirements:
 #   - Xcode command line tools (pkgbuild, productbuild)
-#   - The Seed binary built for macOS
+#   - Seed binary built for macOS
 #
 
 set -e

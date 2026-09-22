@@ -37,6 +37,7 @@ export function SeedLogo({
   if (badge) {
     return (
       <div
+        data-testid="product-mark"
         className={cn(
           // Family chip shape: flat brand-primary at 11px, matching the ST and
           // NI monogram chips. Seed keeps its glyph rather than taking a two
@@ -59,7 +60,13 @@ export function SeedLogo({
   }
 
   return (
-    <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" className={className}>
+    <svg
+      viewBox="0 0 24 24"
+      fill="currentColor"
+      aria-hidden="true"
+      data-testid="product-mark"
+      className={className}
+    >
       <path d={SEED_GLYPH_PATH} />
     </svg>
   );

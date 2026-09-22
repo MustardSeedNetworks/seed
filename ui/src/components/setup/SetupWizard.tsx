@@ -1,8 +1,8 @@
-import { Tooltip } from '../ui/tooltip';
+import { Tooltip } from '../ui/Tooltip';
 /**
  * Initial Setup Wizard Component
  *
- * Guides users through the first-time setup process for The Seed application.
+ * Guides users through the first-time setup process for the Seed application.
  *
  * Features:
  * - Password setup with validation (minimum 12 characters)

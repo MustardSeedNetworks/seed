@@ -21,7 +21,7 @@ import {
 } from '../../styles/theme';
 import type { DisplayOptions, IpSettings, SaveStatus } from '../../types/settings';
 import { CollapsibleSection } from '../ui/CollapsibleSection';
-import { Network } from '../ui/icons';
+import { Network } from '../ui/Icons';
 import { AutoSaveIndicator } from './sections/AutoSaveIndicator';
 import { MtuControl } from './sections/MtuControl';
 import { VlanControl } from './sections/VlanControl';

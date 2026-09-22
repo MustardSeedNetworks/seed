@@ -2,8 +2,8 @@ import type { Meta, StoryObj } from '@storybook/react-vite';
 import { Globe } from 'lucide-react';
 import type { JSX } from 'react';
 import { cn, spacing } from '../../styles/theme';
-import { Card, CardDivider, CardRow, CardValue } from '../ui/card';
-import { Skeleton } from '../ui/skeleton';
+import { Card, CardDivider, CardRow, CardValue } from '../ui/Card';
+import { Skeleton } from '../ui/Skeleton';
 
 /**
  * DNSCard displays DNS resolver status and resolution times.

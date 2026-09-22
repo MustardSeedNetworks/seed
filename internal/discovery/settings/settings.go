@@ -13,6 +13,7 @@ import (
 	"time"
 
 	"github.com/MustardSeedNetworks/seed/internal/config"
+	"github.com/MustardSeedNetworks/seed/internal/discovery/learn"
 )
 
 // Sentinel errors the transport layer maps to HTTP status codes.
@@ -108,6 +109,63 @@ func (s *Service) AddSubnet(in config.SubnetConfig) error {
 	}
 	cur.TargetNetworks = append(cur.TargetNetworks, in)
 	return s.saveAndSync(cur)
+}
+
+// Learn merges candidate networks into the configured target networks as
+// disabled entries and returns how many were new (seed#2695).
+//
+// Three rules make it safe to call after every sweep. A CIDR already present
+// is left exactly as it is, so an operator who enabled or renamed a learned
+// network keeps that across the next sweep and an operator's own entry is
+// never relabelled. A candidate whose CIDR does not parse is dropped rather
+// than persisted, because everything downstream of TargetNetworks parses it.
+// And when nothing is new the config is not written at all — the learner runs
+// every rescan interval, and rewriting the file each minute to save the same
+// bytes is a cost with no change behind it.
+func (s *Service) Learn(candidates []learn.Candidate) (int, error) {
+	cur := s.store.Discovery()
+	known := make(map[string]bool, len(cur.TargetNetworks))
+	for _, existing := range cur.TargetNetworks {
+		known[existing.CIDR] = true
+	}
+
+	added := 0
+	for _, candidate := range candidates {
+		if known[candidate.CIDR] {
+			continue
+		}
+		if _, _, err := net.ParseCIDR(candidate.CIDR); err != nil {
+			continue
+		}
+		known[candidate.CIDR] = true
+		cur.TargetNetworks = append(cur.TargetNetworks, config.SubnetConfig{
+			CIDR:    candidate.CIDR,
+			Name:    learnedName(candidate),
+			Enabled: false,
+			Learned: true,
+		})
+		added++
+	}
+
+	if added == 0 {
+		return 0, nil
+	}
+	return added, s.saveAndSync(cur)
+}
+
+// learnedName describes where a candidate came from, so the operator deciding
+// whether to sweep it can see which device named it and from which table.
+func learnedName(candidate learn.Candidate) string {
+	switch candidate.Source {
+	case learn.SourceAddressTable:
+		return "Learned from " + candidate.Router + " (interface addresses)"
+	case learn.SourceRouteTable:
+		return "Learned from " + candidate.Router + " (routing table)"
+	case learn.SourceHostRoute:
+		return "Learned from this host's route via " + candidate.Router
+	default:
+		return "Learned from " + candidate.Router
+	}
 }
 
 // UpdateSubnet renames/toggles the subnet matching in.CIDR. Returns ErrInvalidCIDR

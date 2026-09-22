@@ -1,4 +1,4 @@
-import { Tooltip } from '../ui/tooltip';
+import { Tooltip } from '../ui/Tooltip';
 /**
  * DNSCard Component
  *
@@ -31,9 +31,9 @@ import { memo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { formatTime } from '../../lib/format';
 import { cn, icon as iconTokens, layout, spacing, status as statusColor } from '../../styles/theme';
+import { Card, CardDivider, CardValue, type Status } from '../ui/Card';
 import { CollapsibleSection } from '../ui/CollapsibleSection';
-import { Card, CardDivider, CardValue, type Status } from '../ui/card';
-import { Globe } from '../ui/icons';
+import { Globe } from '../ui/Icons';
 import { StatusBadge } from '../ui/StatusBadge';
 
 interface LookupResult {
@@ -53,9 +53,14 @@ interface ServerTestResult {
   avgTimeMs: number;
 }
 
+/** Whose resolvers `servers` describes; see internal/diagnostics/dns.Scope. */
+export type DnsServerScope = 'interface' | 'system';
+
 export interface DnsData {
   server: string;
   servers?: string[]; // All configured DNS servers
+  /** Absent on a payload that predates the scoping (#2690); read as system. */
+  serverScope?: DnsServerScope;
   testHostname: string;
   forward: LookupResult | null;
   forwardIpv6?: LookupResult | null;
@@ -67,6 +72,15 @@ export interface DnsData {
 interface DnsCardProps {
   data: DnsData | null;
   loading?: boolean;
+}
+
+/**
+ * An interface-scoped result with no servers is an honest absence: the link
+ * has no resolvers, which is a different statement from "we could not tell",
+ * and neither is "DNS is broken". It is the reason no lookup was run.
+ */
+function hasNoResolversOfItsOwn(data: DnsData): boolean {
+  return data.serverScope === 'interface' && (data.servers?.length ?? 0) === 0;
 }
 
 function getStatusColorClass(status: string): string {
@@ -150,6 +164,19 @@ export const DnsCard: React.MemoExoticComponent<(props: DnsCardProps) => JSX.Ele
       );
     }
 
+    if (hasNoResolversOfItsOwn(data)) {
+      return (
+        <Card
+          title={t('dns.title')}
+          icon={<Globe className={iconTokens.size.md} />}
+          status="warning"
+        >
+          <CardValue value={t('dns.noResolvers')} size="md" />
+          <p className="caption">{t('dns.noResolversHint')}</p>
+        </Card>
+      );
+    }
+
     // Determine overall status based on forward/reverse lookups
     let overallStatus: Status = 'success';
     const lookups = [data.forward, data.forwardIpv6, data.reverse, data.reverseIpv6];
@@ -170,7 +197,9 @@ export const DnsCard: React.MemoExoticComponent<(props: DnsCardProps) => JSX.Ele
       >
         {/* DNS Servers */}
         <div className={spacing.margin.bottom.inline}>
-          <p className={cn('caption', spacing.margin.bottom.tight)}>{t('dns.dnsServers')}</p>
+          <p className={cn('caption', spacing.margin.bottom.tight)}>
+            {data.serverScope === 'interface' ? t('dns.scopeInterface') : t('dns.dnsServers')}
+          </p>
           <div className="stack-xs">
             {servers.map((server) => (
               <p key={server} className="body-small font-mono break-all">
@@ -179,6 +208,9 @@ export const DnsCard: React.MemoExoticComponent<(props: DnsCardProps) => JSX.Ele
             ))}
           </div>
         </div>
+        {data.serverScope === 'system' ? (
+          <p className="caption">{t('dns.scopeSystemHint')}</p>
+        ) : null}
         <p className="caption">{t('dns.testingHost', { hostname: data.testHostname })}</p>
         <CardDivider />
         {/* IPv4 Lookups */}

@@ -307,7 +307,7 @@ func TestSecurityLevelMappings(t *testing.T) {
 func TestGetSystemInfoNilConfig(t *testing.T) {
 	ctx := context.Background()
 
-	_, err := snmp.GetSystemInfo(ctx, "192.168.1.1", nil)
+	_, _, err := snmp.GetSystemInfo(ctx, "192.168.1.1", nil)
 	if err == nil {
 		t.Error("GetSystemInfo() with nil config should return error")
 	}
@@ -328,7 +328,7 @@ func TestQueryMultipleNilOids(t *testing.T) {
 	ctx := context.Background()
 
 	cfg := &snmp.Session{
-		Communities: []string{"public"},
+		Communities: []snmp.Community{{String: "public"}},
 		Port:        161,
 		Timeout:     100 * time.Millisecond,
 		Retries:     1,
@@ -1917,7 +1917,7 @@ func TestContextCanceledQuery(t *testing.T) {
 	cancel() // Cancel immediately
 
 	cfg := &snmp.Session{
-		Communities: []string{"public"},
+		Communities: []snmp.Community{{String: "public"}},
 		Timeout:     1,
 		Retries:     0,
 	}
@@ -1934,12 +1934,12 @@ func TestContextCanceledGetSystemInfo(t *testing.T) {
 	cancel()
 
 	cfg := &snmp.Session{
-		Communities: []string{"public"},
+		Communities: []snmp.Community{{String: "public"}},
 		Timeout:     1,
 		Retries:     0,
 	}
 
-	_, err := snmp.GetSystemInfo(ctx, "192.168.1.1", cfg)
+	_, _, err := snmp.GetSystemInfo(ctx, "192.168.1.1", cfg)
 	if err == nil {
 		t.Error("GetSystemInfo() with canceled context should return error")
 	}
@@ -1949,7 +1949,7 @@ func TestContextCanceledGetSystemInfo(t *testing.T) {
 func TestEmptyCommunitiesAndCredentials(t *testing.T) {
 	ctx := context.Background()
 	cfg := &snmp.Session{
-		Communities:   []string{},
+		Communities:   []snmp.Community{},
 		V3Credentials: []snmp.V3Credential{},
 		Timeout:       1,
 		Retries:       0,

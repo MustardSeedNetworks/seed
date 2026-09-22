@@ -112,7 +112,7 @@ export const spacing = {
   },
 
   // Centered content padding (for loading states, empty states)
-  centered: 'py-centered', // 48px vertical
+  centered: 'py-centered', // 32px vertical
 
   // Compact action button padding (remove, delete buttons)
   actionBtn: 'action-btn-pad', // 4px horizontal
@@ -162,17 +162,6 @@ export const spacing = {
   iconBtn: {
     sm: 'p-icon-btn', // 4px - compact icon button
     md: 'p-icon-btn-md', // 6px - medium icon button
-  },
-
-  // Main content layout padding
-  mainPadding: {
-    y: 'main-padding-y', // py-4 sm:py-6
-    x: 'content-padding-x', // px-4 sm:px-6 lg:px-8
-  },
-
-  // Header padding (responsive)
-  headerPadding: {
-    y: 'header-padding-y', // py-2 sm:py-3
   },
 
   // Drawer/panel content padding

@@ -10,7 +10,7 @@
  * - Disk usage: percentage, used/total bytes with formatting
  * - System info: hostname, OS, architecture, CPU count, goroutines
  * - Uptime: displays in human-readable format (days + hours, hours + minutes, or minutes)
- * - Process info: memory usage of the The Seed process itself
+ * - Process info: memory usage of the Seed process itself
  * - Threshold-based status: warning/critical levels from settings context
  * - Real-time updates: fetches metrics periodically from API
  *
@@ -32,7 +32,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { formatBytes } from '../../lib/format';
 import { cn, icon as iconTokens, radius, spacing, status as statusColor } from '../../styles/theme';
-import { CardDivider, CardRow } from '../ui/card';
+import { CardDivider, CardRow } from '../ui/Card';
 import type { Status } from '../ui/StatusBadge';
 import { BaseCard } from './BaseCard';
 

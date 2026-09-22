@@ -79,7 +79,6 @@
   },
   "network": {
     "description": "DHCP, puerta de enlace, DNS, IP pública y detección del switch ascendente.",
-    "eyebrow": "Diagnóstico",
     "label": "Red",
     "title": "Red",
     "rollupProbing": "Sondeando el enlace ascendente",
@@ -102,13 +101,14 @@
     "figureUnknown": "Sin medir",
     "figureNone": "Ninguna",
     "switchAbsentLabel": "Switch y VLAN",
-    "switchAbsentReason": "El descubrimiento de vecinos lee LLDP y CDP del cable. Una interfaz inalámbrica no tiene puerto de switch al que preguntar."
+    "switchAbsentReason": "El descubrimiento de vecinos lee LLDP y CDP del cable. Una interfaz inalámbrica no tiene puerto de switch al que preguntar.",
+    "rollupNoDnsForInterface": "Sin DNS en esta interfaz",
+    "rollupNoDnsForInterfaceBody": "La interfaz seleccionada no tiene resolutores propios, por lo que no se pueden resolver nombres por este enlace."
   },
   "path": {
     "description": "Descubrimiento de rutas L2/L3, saltos de traceroute y descubrimiento de dispositivos en el enlace.",
     "label": "Análisis de ruta",
-    "title": "Análisis de ruta",
-    "proGate": "El análisis de rutas es una función del nivel Pro. Inicie una prueba Pro de 14 días con <code>seed license trial</code> o active una clave Pro con <code2>seed license activate -k <KEY></code2>."
+    "title": "Análisis de ruta"
   },
   "performance": {
     "description": "Pruebas activas de rendimiento (speedtest, iperf3) y sondas de estado.",
@@ -152,8 +152,7 @@
   "reports": {
     "description": "Panel de SLA agregado, seguimiento de cumplimiento e informes históricos.",
     "label": "Informes",
-    "title": "Informes",
-    "tierGate": "Los informes requieren el nivel Starter o superior. Inicie una prueba Pro de 14 días con <code>seed license trial</code> o active una clave Starter / Pro con <code2>seed license activate -k <KEY></code2>."
+    "title": "Informes"
   },
   "security": {
     "description": "Auditoría de aislamiento de la red de invitados y comprobaciones de postura de seguridad.",

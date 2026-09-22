@@ -1,7 +1,7 @@
 import { useTranslation } from 'react-i18next';
 import { useWifiAnomalies } from '../../hooks/useWifiVisibility';
 import type { Anomaly } from '../../types/generated/wifi-anomalies-response';
-import { Card } from '../ui/card';
+import { Card } from '../ui/Card';
 import type { Status } from '../ui/statusConfig';
 import { WiFiAnomalyStream } from './WiFiAnomalyStream';
 

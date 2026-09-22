@@ -5,6 +5,150 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.214.81](https://github.com/MustardSeedNetworks/seed/compare/v0.214.80...v0.214.81) (2026-09-22)
+
+
+### Bug Fixes
+
+* **deps:** update module github.com/gopacket/gopacket to v1.7.2 ([#2800](https://github.com/MustardSeedNetworks/seed/issues/2800)) ([5fdf5ef](https://github.com/MustardSeedNetworks/seed/commit/5fdf5efeae9b7b4e627ed477f7dc845e379270c0))
+
+
+### Miscellaneous
+
+* **deps:** update dependency brace-expansion to v5.0.12 ([#2799](https://github.com/MustardSeedNetworks/seed/issues/2799)) ([460d420](https://github.com/MustardSeedNetworks/seed/commit/460d420534dbf41723567c51c1b6cf813be383bf))
+
+## [0.214.80](https://github.com/MustardSeedNetworks/seed/compare/v0.214.79...v0.214.80) (2026-09-21)
+
+
+### Bug Fixes
+
+* **deps:** update dependency react-i18next to v17.0.14 ([#2794](https://github.com/MustardSeedNetworks/seed/issues/2794)) ([1fc053b](https://github.com/MustardSeedNetworks/seed/commit/1fc053baf8f35f664d5b7fe55b95ef692b907dae))
+
+
+### Miscellaneous
+
+* **deps:** update dependency fast-uri to v4.2.1 ([#2797](https://github.com/MustardSeedNetworks/seed/issues/2797)) ([0b49707](https://github.com/MustardSeedNetworks/seed/commit/0b4970789676bccd0affe9a5a007426563021116))
+
+## [0.214.79](https://github.com/MustardSeedNetworks/seed/compare/v0.214.78...v0.214.79) (2026-09-20)
+
+
+### Bug Fixes
+
+* **api:** supervise the background loops so a panic cannot kill the daemon ([#2792](https://github.com/MustardSeedNetworks/seed/issues/2792)) ([7114c7e](https://github.com/MustardSeedNetworks/seed/commit/7114c7eac31477975f8424341cf2e7fe24e47ec4)), closes [#2748](https://github.com/MustardSeedNetworks/seed/issues/2748)
+
+## [0.214.78](https://github.com/MustardSeedNetworks/seed/compare/v0.214.77...v0.214.78) (2026-09-20)
+
+
+### Features
+
+* **discovery:** promote SNMP-answering devices to polling targets ([#2789](https://github.com/MustardSeedNetworks/seed/issues/2789)) ([2028296](https://github.com/MustardSeedNetworks/seed/commit/2028296dbdd303a1f8280438aecfdca2e5fde90e))
+
+
+### Miscellaneous
+
+* **deps:** update dependency js-yaml to v5.4.2 ([#2790](https://github.com/MustardSeedNetworks/seed/issues/2790)) ([b86404a](https://github.com/MustardSeedNetworks/seed/commit/b86404a412fd17a56b4a4a935b24b9ec2482503c))
+
+## [0.214.77](https://github.com/MustardSeedNetworks/seed/compare/v0.214.76...v0.214.77) (2026-09-19)
+
+
+### Bug Fixes
+
+* **deps:** update dependency tailwind-merge to v3.7.0 ([#2786](https://github.com/MustardSeedNetworks/seed/issues/2786)) ([4a1208f](https://github.com/MustardSeedNetworks/seed/commit/4a1208f8a57ff50fd67d3bdb8cc73cb2dd4e299c))
+* **network:** read the netmask and name the interface on every platform ([#2785](https://github.com/MustardSeedNetworks/seed/issues/2785)) ([d48e363](https://github.com/MustardSeedNetworks/seed/commit/d48e363afda47ab7f7d38b1a5c12aa8e17501b2e))
+* **ui:** spend Seed's desktop height on its own content ([#2787](https://github.com/MustardSeedNetworks/seed/issues/2787)) ([b51381c](https://github.com/MustardSeedNetworks/seed/commit/b51381c7ace56d4232e594c640ef8632ae7bd17e)), closes [#2709](https://github.com/MustardSeedNetworks/seed/issues/2709)
+
+## [0.214.76](https://github.com/MustardSeedNetworks/seed/compare/v0.214.75...v0.214.76) (2026-09-19)
+
+
+### Features
+
+* **ui:** preview a Pro feature instead of an empty page behind the gate ([#2779](https://github.com/MustardSeedNetworks/seed/issues/2779)) ([f7dd63b](https://github.com/MustardSeedNetworks/seed/commit/f7dd63b343f2bcd388c7919086ef475cf8546375))
+* **ui:** retire the HeaderBar; the rail carries status, interface, theme and account ([#2777](https://github.com/MustardSeedNetworks/seed/issues/2777)) ([3d781dd](https://github.com/MustardSeedNetworks/seed/commit/3d781ddc556e60085f7c1a6476b93ec9ebe1d882))
+
+
+### Miscellaneous
+
+* **deps:** update dependency @biomejs/biome to v2.5.14 ([#2783](https://github.com/MustardSeedNetworks/seed/issues/2783)) ([6606691](https://github.com/MustardSeedNetworks/seed/commit/66066915f4d129f6b93e0eb6e8bdbf12a320118f))
+
+## [0.214.75](https://github.com/MustardSeedNetworks/seed/compare/v0.214.74...v0.214.75) (2026-09-19)
+
+
+### Bug Fixes
+
+* **deps:** update dependency react-hook-form to v7.88.0 ([#2781](https://github.com/MustardSeedNetworks/seed/issues/2781)) ([239b735](https://github.com/MustardSeedNetworks/seed/commit/239b73579b5bdaa44f11cac6b4c06cdc080e3ea7))
+
+## [0.214.74](https://github.com/MustardSeedNetworks/seed/compare/v0.214.73...v0.214.74) (2026-09-18)
+
+
+### Bug Fixes
+
+* **shutdown:** drain HTTP before tearing down services ([#2748](https://github.com/MustardSeedNetworks/seed/issues/2748)) ([#2778](https://github.com/MustardSeedNetworks/seed/issues/2778)) ([13a3ad6](https://github.com/MustardSeedNetworks/seed/commit/13a3ad612a0348fc6a42dca612086dbc316d1b60))
+
+
+### Miscellaneous
+
+* **deps:** update dependency @babel/core to v8.0.5 ([#2758](https://github.com/MustardSeedNetworks/seed/issues/2758)) ([f6ff7f7](https://github.com/MustardSeedNetworks/seed/commit/f6ff7f7c3cfe74a6987dab7f141f0293819932a8))
+
+## [0.214.73](https://github.com/MustardSeedNetworks/seed/compare/v0.214.72...v0.214.73) (2026-09-18)
+
+
+### Features
+
+* **cli:** take the single-instance lock in serve and refuse daemon-owned CLI writes ([#2774](https://github.com/MustardSeedNetworks/seed/issues/2774)) ([780acff](https://github.com/MustardSeedNetworks/seed/commit/780acff3870979ee6c6a123c1e98e3145b5f4018))
+
+
+### Miscellaneous
+
+* **deps:** update dependency fast-uri to v4.1.5 ([#2775](https://github.com/MustardSeedNetworks/seed/issues/2775)) ([92a0d56](https://github.com/MustardSeedNetworks/seed/commit/92a0d56a8af88222c267e75acc257b19b4f267b9))
+
+## [0.214.72](https://github.com/MustardSeedNetworks/seed/compare/v0.214.71...v0.214.72) (2026-09-18)
+
+
+### Bug Fixes
+
+* **config:** replace the config atomically instead of truncating it ([#2771](https://github.com/MustardSeedNetworks/seed/issues/2771)) ([1cc5e5f](https://github.com/MustardSeedNetworks/seed/commit/1cc5e5f92809b4cb75151e0ee3bde840a5fc331c))
+* **ui:** fit the neighbour and Bonjour card tables to their card ([#2770](https://github.com/MustardSeedNetworks/seed/issues/2770)) ([96307a9](https://github.com/MustardSeedNetworks/seed/commit/96307a94119188a4a3ef115a5958958b74b32a40))
+
+## [0.214.71](https://github.com/MustardSeedNetworks/seed/compare/v0.214.70...v0.214.71) (2026-09-18)
+
+
+### Bug Fixes
+
+* **network:** scope the DNS resolvers to the active interface (D-SEED-19) ([#2760](https://github.com/MustardSeedNetworks/seed/issues/2760)) ([b62a15e](https://github.com/MustardSeedNetworks/seed/commit/b62a15e3a032b9d5197c2c65c5f7b150c8708f54))
+
+
+### Code Refactoring
+
+* **ui:** drop the article from the product name (UI-SEED-9) ([#2763](https://github.com/MustardSeedNetworks/seed/issues/2763)) ([79f4120](https://github.com/MustardSeedNetworks/seed/commit/79f412096b3e16d325a19beca5f58fb259cef1e8))
+
+## [0.214.70](https://github.com/MustardSeedNetworks/seed/compare/v0.214.69...v0.214.70) (2026-09-18)
+
+
+### Features
+
+* **discovery:** learn target networks from SNMP routing data (D-SEED-22) ([#2766](https://github.com/MustardSeedNetworks/seed/issues/2766)) ([6921c62](https://github.com/MustardSeedNetworks/seed/commit/6921c6285fc4cb4aa7d3fbed0556a90fa649ace2))
+
+
+### Code Refactoring
+
+* **ui:** rename the eight lowercase component files to PascalCase ([#2762](https://github.com/MustardSeedNetworks/seed/issues/2762)) ([0885b47](https://github.com/MustardSeedNetworks/seed/commit/0885b47c81ac6a23d5c648c51d649b860b16bf40))
+
+## [0.214.69](https://github.com/MustardSeedNetworks/seed/compare/v0.214.68...v0.214.69) (2026-09-17)
+
+
+### Bug Fixes
+
+* **ci:** only arm the release PR when it still describes main ([#2756](https://github.com/MustardSeedNetworks/seed/issues/2756)) ([aa0f8ac](https://github.com/MustardSeedNetworks/seed/commit/aa0f8ace4700e0c64ac122e2b88f7b2067363907)), closes [#2755](https://github.com/MustardSeedNetworks/seed/issues/2755)
+* **ui:** derive nav labels, breadcrumb and title from the route table ([#2645](https://github.com/MustardSeedNetworks/seed/issues/2645)) ([#2746](https://github.com/MustardSeedNetworks/seed/issues/2746)) ([631a071](https://github.com/MustardSeedNetworks/seed/commit/631a07171931d702f405ed68a9dc213009029b66))
+* **ui:** move the run control off the figures at phone width ([#2646](https://github.com/MustardSeedNetworks/seed/issues/2646)) ([#2754](https://github.com/MustardSeedNetworks/seed/issues/2754)) ([5be49eb](https://github.com/MustardSeedNetworks/seed/commit/5be49eb2f07b071e3b883c866a81e1f55a73d7ad))
+
+## [0.214.68](https://github.com/MustardSeedNetworks/seed/compare/v0.214.67...v0.214.68) (2026-09-17)
+
+
+### Bug Fixes
+
+* **network:** scope the gateway to the active interface and derive the band from it ([#2742](https://github.com/MustardSeedNetworks/seed/issues/2742)) ([934f14d](https://github.com/MustardSeedNetworks/seed/commit/934f14d8c422230d3cb39dba59297eb79a6facb8))
+
 ## [0.214.67](https://github.com/MustardSeedNetworks/seed/compare/v0.214.66...v0.214.67) (2026-09-17)
 
 

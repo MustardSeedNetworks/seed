@@ -21,7 +21,7 @@ import { ChevronRight, HelpCircle } from 'lucide-react';
 import { createElement, type FC, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'wouter';
-import { Tooltip } from '../components/ui/tooltip';
+import { Tooltip } from '../components/ui/Tooltip';
 import { iconSizes } from '../constants/sizes';
 
 interface BreadcrumbItem {
@@ -92,13 +92,13 @@ export const PageHeader: FC<PageHeaderProps> = ({
 }) => {
   const { t } = useTranslation();
   return (
-    <div className={`mb-section animate-fade-in ${className}`}>
+    <div className={`mb-content animate-fade-in ${className}`}>
       {breadcrumbs && breadcrumbs.length > 0 && (
         <Breadcrumb items={breadcrumbs} className="mb-heading" />
       )}
       <div className="flex flex-wrap items-start justify-between gap-comfortable">
         <div className="flex items-center gap-default">
-          {icon ? createElement(icon, { className: `h-8 w-8 ${iconColorClass}` }) : null}
+          {icon ? createElement(icon, { className: `${iconSizes.xl} ${iconColorClass}` }) : null}
           <div>
             {eyebrow ? (
               <p className="kicker mb-tight" data-testid="page-header-eyebrow">

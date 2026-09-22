@@ -122,8 +122,18 @@ func defaultGatewayFor(iface string) string {
 	if err != nil {
 		return ""
 	}
+	return defaultGatewayIn(routes, iface)
+}
+
+// defaultGatewayIn applies the selection rule to a routing table already read,
+// so the rule is testable without one.
+//
+// Prefix 0 is what makes this the DEFAULT gateway rather than the first route
+// out of the interface that happens to name one — the connected subnet is
+// usually listed first, and on Windows it names "On-link" (seed#2765).
+func defaultGatewayIn(routes []gateway.RouteInfo, iface string) string {
 	for _, route := range routes {
-		if route.Interface == iface && route.Gateway != "" {
+		if route.Interface == iface && route.Prefix == 0 && route.Gateway != "" {
 			return route.Gateway
 		}
 	}

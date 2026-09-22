@@ -1,5 +1,5 @@
 /**
- * overview.tsx — Orientation — what The Seed is and how to get moving.
+ * overview.tsx — Orientation — what Seed is and how to get moving.
  *
  * Content module for the HelpDrawer. Section bodies are typed `HelpBlock`s
  * (see helpModel.ts) so one generic renderer presents every section. Content
@@ -9,7 +9,7 @@
  * @copyright 2026 Mustard Seed Networks. All rights reserved.
  */
 
-import { Info, LayoutDashboard, SlidersHorizontal } from '../../ui/icons';
+import { Info, LayoutDashboard, SlidersHorizontal } from '../../ui/Icons';
 import type { HelpSection } from '../helpModel';
 
 const ICON = 'w-4 h-4';

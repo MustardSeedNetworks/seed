@@ -2,7 +2,7 @@
 
 package dns
 
-// ExportGetDNSFromInterfaces is exported for testing (darwin only).
-func ExportGetDNSFromInterfaces() []string {
-	return getDNSFromInterfaces()
+// ExportParseScutilScopedResolvers is exported for testing (darwin only).
+func ExportParseScutilScopedResolvers(out, iface string) ([]string, bool) {
+	return parseScutilScopedResolvers(out, iface)
 }

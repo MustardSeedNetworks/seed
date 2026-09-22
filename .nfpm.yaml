@@ -12,9 +12,9 @@ section: net
 priority: optional
 maintainer: Kris Armstrong <kris.armstrong@icloud.com>
 description: |
-  The Seed - Network Diagnostic Tool by Mustard Seed Networks
+  Seed - Network Diagnostic Tool by Mustard Seed Networks
   .
-  The Seed is a professional-grade network diagnostic appliance designed
+  Seed is a professional-grade network diagnostic appliance designed
   for network technicians and engineers. Plug it into any network jack and
   instantly see link status, switch information, DHCP details, DNS health,
   gateway connectivity, Wi-Fi survey data, and vulnerability findings.

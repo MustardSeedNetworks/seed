@@ -23,16 +23,54 @@ type Session struct {
 	// operator's file configuration.
 	config.SNMPConfig
 
-	// Communities are the v1/v2c community strings to try, in order.
-	Communities []string
+	// Communities are the v1/v2c communities to try, in order.
+	Communities []Community
 
 	// V3Credentials are the v3 credentials to try, in order. They are tried
 	// before Communities.
 	V3Credentials []V3Credential
 }
 
+// SNMP version names, in the spelling the polling target and the credential
+// vault use, so a credential a sweep succeeded with can be written to a target
+// without a translation table in between.
+const (
+	VersionV2c = "v2c"
+	VersionV3  = "v3"
+)
+
+// Community is one decrypted v1/v2c community together with the identity of
+// the vault row it was read from.
+//
+// The id is carried because a caller has to be able to say WHICH stored
+// credential a device answered: two rows may hold the same community string,
+// so the string cannot name the row, and a polling target references
+// device_credentials(client_id, id) rather than a secret.
+type Community struct {
+	// ID is the device_credentials row id. It is empty for a session that
+	// was not resolved from the vault, which is what the tests and the
+	// file-config path build.
+	ID string
+	// String is the community string put on the wire. It is a secret.
+	String string
+}
+
+// CredentialRef names the credential a sweep succeeded with. It carries no
+// secret: the id identifies the vault row and the version says which of the
+// two credential kinds answered.
+type CredentialRef struct {
+	// ID is the device_credentials row id, empty when the session carried
+	// no identity.
+	ID string
+	// Version is VersionV2c or VersionV3, empty when nothing answered.
+	Version string
+}
+
 // V3Credential is one decrypted SNMPv3 identity.
 type V3Credential struct {
+	// ID is the device_credentials row id, empty when the session was not
+	// resolved from the vault.
+	ID string
 	// Name identifies the credential in logs and errors. It never carries a secret.
 	Name string
 	// Username is the USM security name.

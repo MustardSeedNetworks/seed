@@ -1,6 +1,6 @@
 import { useTranslation } from 'react-i18next';
 import { useWifiAirspace } from '../../hooks/useWifiVisibility';
-import { Card } from '../ui/card';
+import { Card } from '../ui/Card';
 import { WiFiAirspaceTree } from './WiFiAirspaceTree';
 import { WiFiCaptureStatus } from './WiFiCaptureStatus';
 

@@ -1,6 +1,6 @@
 {
   "app": {
-    "title": "The Seed",
+    "title": "Seed",
     "tagline": "Diagnósticos de Red por Mustard Seed Networks"
   },
   "buttons": {
@@ -187,7 +187,6 @@
   "footer": {
     "runTestsHint": "Toca el botón de reproducción para ejecutar todas las pruebas.",
     "networkDiscoveryHint": "Usa la tarjeta de Descubrimiento de Red para buscar dispositivos en tu red.",
-    "byCompany": "por {{company}}",
     "company": "Mustard Seed Networks",
     "contact": "Contacto",
     "copyright": "© {{year}} {{company}}. Todos los derechos reservados.",
@@ -195,7 +194,6 @@
     "license": "Licencia",
     "privacy": "Privacidad",
     "tos": "Términos de servicio",
-    "version": "Versión",
     "website": "Sitio web"
   },
   "errorBoundary": {

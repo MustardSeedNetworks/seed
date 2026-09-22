@@ -1364,16 +1364,12 @@ func TestModuleStart_TemplateLoadError(t *testing.T) {
 		},
 	)
 
-	// Start should succeed (templates load without error)
-	ctx := context.Background()
-	err := module.Start(ctx)
-	require.NoError(t, err)
+	// Load should succeed (templates load without error).
+	require.NoError(t, module.Load(context.Background()))
+	assert.NotEmpty(t, module.Templates().List())
 
-	// Verify templates are loaded
-	templates := module.Templates().List()
-	assert.NotEmpty(t, templates)
-
-	_ = module.Stop()
+	stop := runUntilCancelled(t, module.Run)
+	stop()
 }
 
 func TestDataPoint_Struct(t *testing.T) {

@@ -12,8 +12,8 @@ import {
 } from '../../../styles/theme';
 import type { SaveStatus, SettingsThresholds } from '../../../types/settings';
 import { CollapsibleSection } from '../../ui/CollapsibleSection';
-import { Info, SlidersHorizontal } from '../../ui/icons';
-import { Tooltip } from '../../ui/tooltip';
+import { Info, SlidersHorizontal } from '../../ui/Icons';
+import { Tooltip } from '../../ui/Tooltip';
 import { AutoSaveIndicator } from './AutoSaveIndicator';
 import { ThresholdsHttpSection } from './ThresholdsHttpSection';
 

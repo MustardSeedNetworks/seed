@@ -1,7 +1,7 @@
 /**
  * Application Entry Point
  *
- * Initializes the The Seed React application with:
+ * Initializes the Seed React application with:
  * - React StrictMode for development warnings
  * - Global error boundary for crash protection
  * - React Query for API state management (#890)

@@ -527,7 +527,7 @@ func TestAllV3CredentialsFailThenV2cFails(t *testing.T) {
 				PrivPassword: "priv2",
 			},
 		},
-		Communities: []string{"public", "private", "secret"},
+		Communities: []snmp.Community{{String: "public"}, {String: "private"}, {String: "secret"}},
 		Port:        161,
 		Timeout:     50 * time.Millisecond,
 		Retries:     1,
@@ -546,7 +546,7 @@ func TestContextDeadlineExceeded(t *testing.T) {
 	defer cancel()
 
 	cfg := &snmp.Session{
-		Communities: []string{"public"},
+		Communities: []snmp.Community{{String: "public"}},
 		Port:        161,
 		Timeout:     time.Second,
 		Retries:     1,
@@ -565,7 +565,7 @@ func TestEmptyV3CredentialsList(t *testing.T) {
 
 	cfg := &snmp.Session{
 		V3Credentials: []snmp.V3Credential{}, // Empty v3
-		Communities:   []string{"public"},
+		Communities:   []snmp.Community{{String: "public"}},
 		Port:          161,
 		Timeout:       50 * time.Millisecond,
 		Retries:       1,
@@ -584,7 +584,7 @@ func TestNilV3Credentials(t *testing.T) {
 
 	cfg := &snmp.Session{
 		V3Credentials: nil, // Nil v3
-		Communities:   []string{"public"},
+		Communities:   []snmp.Community{{String: "public"}},
 		Port:          161,
 		Timeout:       50 * time.Millisecond,
 		Retries:       1,

@@ -28,6 +28,11 @@ type SNMPFullData struct {
 	// System contains basic system information.
 	System *snmp.SystemInfo `json:"system,omitempty"`
 
+	// Credential names the stored credential this device answered. It is
+	// what lets discovery promote the device to a polling target without
+	// asking the operator which credential to poll it with (seed#2692).
+	Credential snmp.CredentialRef `json:"-"`
+
 	// Interfaces contains all network interfaces with speeds, MACs, status.
 	Interfaces []SNMPInterface `json:"interfaces,omitempty"`
 
@@ -291,7 +296,7 @@ func (c *SNMPCollector) collectAndStoreSystem(
 	data *SNMPFullData,
 	mu *sync.Mutex,
 ) {
-	sysInfo, err := snmp.GetSystemInfo(ctx, ip, c.session)
+	sysInfo, cred, err := snmp.GetSystemInfo(ctx, ip, c.session)
 	mu.Lock()
 	defer mu.Unlock()
 	if err != nil {
@@ -299,6 +304,7 @@ func (c *SNMPCollector) collectAndStoreSystem(
 		return
 	}
 	data.System = sysInfo
+	data.Credential = cred
 	logging.GetLogger().DebugContext(ctx, "Collected system info", "ip", ip, "sysName", sysInfo.SysName)
 }
 

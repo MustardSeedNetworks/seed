@@ -87,7 +87,6 @@ export function useAppOrchestration({ isAuthenticated }: UseAppOrchestrationArgs
   const [appVersion, setAppVersion] = useState('dev');
   // #756: Auto-detected recommended interfaces (most capable)
   const [recommendedEthernet, setRecommendedEthernet] = useState<string | undefined>();
-  const [recommendedWifi, setRecommendedWifi] = useState<string | undefined>();
 
   const networkDiscoveryAbortRef = useRef<AbortController | null>(null);
 
@@ -119,7 +118,6 @@ export function useAppOrchestration({ isAuthenticated }: UseAppOrchestrationArgs
     setIsWifi,
     userSetWifiModeRef,
     currentInterfaceRef,
-    hasEthernet,
     hasWifiInterface,
     setEthernetInterfaceState,
     setWifiInterfaceState,
@@ -175,7 +173,6 @@ export function useAppOrchestration({ isAuthenticated }: UseAppOrchestrationArgs
     networkDiscoveryAbortRef,
     prevLinkUpRef,
     setRecommendedEthernet, // #756
-    setRecommendedWifi, // #756
   });
 
   // Channel graph data for WiFi visualization (extracted to hook #889)
@@ -610,11 +607,9 @@ export function useAppOrchestration({ isAuthenticated }: UseAppOrchestrationArgs
     scanError,
     appVersion,
     recommendedEthernet,
-    recommendedWifi,
     // interface selection
     currentInterface,
     isWifi,
-    hasEthernet,
     hasWifiInterface,
     changeInterface,
     switchToInterfaceType,

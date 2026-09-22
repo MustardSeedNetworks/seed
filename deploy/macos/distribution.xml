@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8" standalone="no"?>
 <installer-gui-script minSpecVersion="2">
-    <title>The Seed - Network Diagnostic Tool</title>
+    <title>Seed - Network Diagnostic Tool</title>
     <organization>com.mustardseednetworks</organization>
     <domains enable_localSystem="true"/>
     <options customize="never" require-scripts="true" rootVolumeOnly="true"/>

@@ -83,11 +83,11 @@ test.describe('API Error Scenarios', () => {
     // #2394's fix landed (useDeviceScan / NetworkDiscoveryCard now surface a
     // failed scan via discovery-scan-error) but this test still cannot reach
     // it live: NetworkDiscoveryCard's only mount point is /path, gated by
-    // <RequireFeature feature="path_analysis"> (Pro tier -- see
+    // <GatedPreview feature="path_analysis"> (Pro tier -- see
     // internal/api/server_routes.go's setupPathRoutes), and the E2E suite
     // runs unlicensed (Free). Confirmed against a live daemon: navigating to
-    // /path renders "Path Analysis is a Pro-tier feature... seed license
-    // trial", not the card, so discovery-scan-button never exists. Same
+    // /path renders the pitch over a sample of the feature, not the live
+    // card, so discovery-scan-button never exists. Same
     // blocker reports-page.spec.ts documents for export_csv_json (Starter+)
     // and defers as "needs a licensed fixture, out of scope". The card's own
     // backend routes (/api/v1/security/devices*) carry no `feature:` gate --

@@ -1,13 +1,13 @@
 {
   "modal": {
-    "title": "The Seed Help Center",
+    "title": "Seed Help Center",
     "searchPlaceholder": "Search help...",
     "contents": "Contents",
     "closeHelp": "Close help",
     "backToSections": "Back to help sections"
   },
   "sections": {
-    "about": "About The Seed",
+    "about": "About Seed",
     "gettingStarted": "Getting Started",
     "profiles": "Profiles",
     "link": "Link Status",

@@ -24,9 +24,9 @@ import { api } from '../../api';
 import { isPasskeySupported, registerPasskey } from '../../lib/webauthn';
 import { icon as iconTokens } from '../../styles/theme';
 import { Button } from '../ui/Button';
-import { Card } from '../ui/card';
+import { Card } from '../ui/Card';
+import { Shield } from '../ui/Icons';
 import { Input } from '../ui/Input';
-import { Shield } from '../ui/icons';
 
 /** Backend response shape for GET /api/v1/auth/mfa/status. */
 interface MfaStatus {

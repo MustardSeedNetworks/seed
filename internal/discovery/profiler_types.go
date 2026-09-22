@@ -5,7 +5,11 @@ package discovery
 // resolved-names + profiling-status records, and the small device-classifier
 // pattern struct. Constants used across profiler files also live here.
 
-import "time"
+import (
+	"time"
+
+	"github.com/MustardSeedNetworks/seed/internal/protocols/snmp"
+)
 
 // Discovery vendor / web-server name constants reused across the profiler
 // classifier and fingerprint signatures.
@@ -101,6 +105,11 @@ type SNMPInfo struct {
 	SysName     string `json:"sysName,omitempty"`
 	SysContact  string `json:"sysContact,omitempty"`
 	SysLocation string `json:"sysLocation,omitempty"`
+
+	// Credential names the stored credential this device answered, so a
+	// device that speaks SNMP can be promoted to a polling target without
+	// asking the operator which credential to poll it with (seed#2692).
+	Credential snmp.CredentialRef `json:"-"`
 }
 
 // MDNSService represents an mDNS/Bonjour advertised service.

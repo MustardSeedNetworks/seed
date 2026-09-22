@@ -1,7 +1,7 @@
 #!/bin/bash
 #
-# The Seed Uninstall Script for macOS
-# Removes The Seed launchd service and optionally all data
+# Seed Uninstall Script for macOS
+# Removes Seed launchd service and optionally all data
 #
 set -e
 
@@ -80,7 +80,7 @@ while [[ $# -gt 0 ]]; do
     esac
 done
 
-log_info "Uninstalling The Seed from macOS..."
+log_info "Uninstalling Seed from macOS..."
 echo ""
 
 # Step 1: Stop and unload service

@@ -388,3 +388,73 @@ func TestGetDefaultGatewayInterfaceDarwin(t *testing.T) {
 		t.Logf("Default gateway interface: %s", iface)
 	}
 }
+
+// TestParseRouteMessageReadsTheNetmask is seed#2765 on macOS: RTAX_NETMASK
+// sits in the same message as the destination and was never read, so a route
+// to a /24 and the host route to its network address were indistinguishable.
+func TestParseRouteMessageReadsTheNetmask(t *testing.T) {
+	network := gateway.ParseRouteMessage(&route.RouteMessage{
+		Index: 1,
+		Addrs: routeAddrs(
+			&route.Inet4Addr{IP: [4]byte{10, 44, 20, 0}},
+			&route.Inet4Addr{IP: [4]byte{10, 44, 20, 1}},
+			&route.Inet4Addr{IP: [4]byte{255, 255, 255, 0}},
+		),
+	})
+	if network == nil {
+		t.Fatal("network route not parsed")
+	}
+	if network.Prefix != 24 {
+		t.Errorf("prefix = %d, want 24", network.Prefix)
+	}
+}
+
+// TestParseRouteMessageHostRouteHasNoNetmask: the kernel omits RTAX_NETMASK
+// for an RTF_HOST route, so a missing mask means /32 and not the /0 a naive
+// reader would record.
+func TestParseRouteMessageHostRouteHasNoNetmask(t *testing.T) {
+	host := gateway.ParseRouteMessage(&route.RouteMessage{
+		Index: 1,
+		Flags: syscall.RTF_HOST,
+		Addrs: routeAddrs(
+			&route.Inet4Addr{IP: [4]byte{10, 44, 20, 107}},
+			&route.Inet4Addr{IP: [4]byte{10, 44, 20, 1}},
+			nil,
+		),
+	})
+	if host == nil {
+		t.Fatal("host route not parsed")
+	}
+	if host.Prefix != 32 {
+		t.Errorf("prefix = %d, want 32 for an RTF_HOST route", host.Prefix)
+	}
+}
+
+// TestParseRouteMessageDefaultRoute: the default route's mask arrives as
+// 0.0.0.0, which is a real /0 rather than an absent mask.
+func TestParseRouteMessageDefaultRoute(t *testing.T) {
+	def := gateway.ParseRouteMessage(&route.RouteMessage{
+		Index: 1,
+		Addrs: routeAddrs(
+			&route.Inet4Addr{IP: [4]byte{0, 0, 0, 0}},
+			&route.Inet4Addr{IP: [4]byte{10, 44, 20, 1}},
+			&route.Inet4Addr{IP: [4]byte{0, 0, 0, 0}},
+		),
+	})
+	if def == nil {
+		t.Fatal("default route not parsed")
+	}
+	if def.Destination != "0.0.0.0" || def.Prefix != 0 {
+		t.Errorf("default route = %s/%d, want 0.0.0.0/0", def.Destination, def.Prefix)
+	}
+}
+
+// routeAddrs lays dst, gateway and netmask out at the RTAX_ slots the kernel
+// puts them in.
+func routeAddrs(dst, gw, netmask route.Addr) []route.Addr {
+	addrs := make([]route.Addr, syscall.RTAX_MAX)
+	addrs[syscall.RTAX_DST] = dst
+	addrs[syscall.RTAX_GATEWAY] = gw
+	addrs[syscall.RTAX_NETMASK] = netmask
+	return addrs
+}

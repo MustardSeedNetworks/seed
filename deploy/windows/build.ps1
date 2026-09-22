@@ -1,5 +1,5 @@
 # =============================================================================
-# The Seed - Windows Distribution Build Script
+# Seed - Windows Distribution Build Script
 # =============================================================================
 # Creates a zip distribution with the binary and install helper.
 #
@@ -33,7 +33,7 @@ if (-not $Version) {
 $PackageName = "seed-${Version}-windows-${Arch}"
 $BuildDir = Join-Path $DistDir $PackageName
 
-Write-Host "Building Windows distribution for The Seed" -ForegroundColor Green
+Write-Host "Building Windows distribution for Seed" -ForegroundColor Green
 Write-Host "  Version:      $Version"
 Write-Host "  Architecture: $Arch"
 Write-Host ""
@@ -67,7 +67,7 @@ $InstallDir = "$env:ProgramFiles\Seed"
 $BinaryName = "seed.exe"
 $ServiceName = "SeedNetworkDiagnostics"
 
-Write-Host "Installing The Seed..." -ForegroundColor Green
+Write-Host "Installing Seed..." -ForegroundColor Green
 
 # Create installation directory
 New-Item -ItemType Directory -Force -Path $InstallDir | Out-Null
@@ -91,7 +91,7 @@ Write-Host "  Installing Windows service..."
 
 # Add firewall rule
 Write-Host "  Adding firewall rule for port 8443..."
-New-NetFirewallRule -DisplayName "The Seed" `
+New-NetFirewallRule -DisplayName "Seed" `
     -Direction Inbound -Protocol TCP -LocalPort 8443 `
     -Action Allow -ErrorAction SilentlyContinue | Out-Null
 

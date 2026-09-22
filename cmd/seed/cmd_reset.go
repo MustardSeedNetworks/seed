@@ -41,6 +41,9 @@ be preserved.`,
 
   # Reset without confirmation or backup (DANGEROUS)
   seed reset-config --force --backup=false`,
+		PreRunE: func(_ *cobra.Command, _ []string) error {
+			return guardConfigCommand(state, insteadOfResetConfig)
+		},
 		Run: func(cmd *cobra.Command, args []string) {
 			runReset(cmd, args, state)
 		},

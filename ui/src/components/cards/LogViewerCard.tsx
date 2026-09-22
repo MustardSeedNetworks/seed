@@ -1,4 +1,4 @@
-import { Tooltip } from '../ui/tooltip';
+import { Tooltip } from '../ui/Tooltip';
 /**
  * LogViewerCard - Dashboard card for system logs.
  *
@@ -20,8 +20,8 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useLogs } from '../../hooks/useLogs';
 import { cn, icon as iconTokens, radius, spacing, status as statusColor } from '../../styles/theme';
-import { Card, CardDivider, CardRow, CardValue, type Status } from '../ui/card';
-import { AlertCircle, AlertTriangle, FileText, Maximize2 } from '../ui/icons';
+import { Card, CardDivider, CardRow, CardValue, type Status } from '../ui/Card';
+import { AlertCircle, AlertTriangle, FileText, Maximize2 } from '../ui/Icons';
 import { LogViewerModal } from './LogViewerModal';
 
 /** Props for the LogViewerCard component. */

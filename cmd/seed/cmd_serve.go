@@ -13,6 +13,8 @@ import (
 
 	"github.com/spf13/cobra"
 
+	"github.com/MustardSeedNetworks/foundation/pkg/instance"
+
 	api "github.com/MustardSeedNetworks/seed/internal/api"
 	"github.com/MustardSeedNetworks/seed/internal/app"
 	"github.com/MustardSeedNetworks/seed/internal/auth"
@@ -39,8 +41,8 @@ const (
 func initServeCmd(state *cliState) {
 	serveCmd := &cobra.Command{
 		Use:   "serve",
-		Short: "Start The Seed server",
-		Long: `Start The Seed network diagnostics server.
+		Short: "Start Seed server",
+		Long: `Start Seed network diagnostics server.
 
 The server provides a web-based UI for network diagnostics, monitoring,
 and analysis. It serves HTTPS only on port 8443 — the daemon binds no
@@ -64,6 +66,21 @@ func runServe(_ *cobra.Command, _ []string, state *cliState) {
 	// Resolve config path using paths package
 	configPath := paths.ResolveConfigPath(state.cfgFile, paths.ModeAuto)
 
+	// Take the single-instance lock before anything is opened. A second daemon
+	// on the same install does NOT collide on the port — the +1..+9 fallback
+	// (#69) hands it a neighbour — so it would otherwise open the same config
+	// and the same SQLite file underneath the first one.
+	lock, lockErr := instance.Acquire(lockDir(configPath))
+	if lockErr != nil {
+		if held, ok := errors.AsType[*instance.HeldError](lockErr); ok {
+			fmt.Fprintf(os.Stderr, "Error: %v\n", held)
+			os.Exit(exitDaemonRunning)
+		}
+		fmt.Fprintf(os.Stderr, "Error: could not take the single-instance lock: %v\n", lockErr)
+		os.Exit(1)
+	}
+	defer func() { _ = lock.Release() }()
+
 	icmpAvailable := checkICMPCapabilities()
 	cfg := loadAndConfigureConfig(configPath)
 	logPath := setupLogging(cfg)
@@ -83,6 +100,13 @@ func runServe(_ *cobra.Command, _ []string, state *cliState) {
 	components := initializeBackgroundComponents(cfg, db)
 
 	server := api.NewServer(cfg, configPath, logPath, netMgr, icmpAvailable, proxies, db, components)
+	// Publish the port the listener settled on, so `seed license` and friends
+	// can name it when they refuse.
+	server.SetBoundPortObserver(func(port int) {
+		if err := lock.SetPort(port); err != nil {
+			logging.GetLogger().Warn("Could not record the listening port on the instance lock", "error", err)
+		}
+	})
 	runServerWithShutdown(server, cfg, components)
 }
 
@@ -218,7 +242,7 @@ func setupLogging(cfg *config.Config) string {
 		os.Exit(1)
 	}
 
-	logging.GetLogger().Info("The Seed starting", "version", version.GetVersion(), "log_path", logPath)
+	logging.GetLogger().Info("Seed starting", "version", version.GetVersion(), "log_path", logPath)
 
 	return logPath
 }
@@ -387,6 +411,32 @@ func applyActiveInterface(
 	}
 }
 
+// gracefulServer is the drain half of api.Server, taken as an interface so the
+// shutdown order below is testable without standing up a real server.
+type gracefulServer interface {
+	Shutdown(ctx context.Context) error
+}
+
+// stopServing drains the HTTP server and only then stops the background
+// components (#2748). The other way round — which is what this did until the
+// drain was moved ahead of it — takes the report scheduler, the Wi-Fi loops and
+// the outbox relay away from requests that are still in flight when SIGTERM
+// arrives. A failed drain is reported and the components are stopped anyway:
+// leaving them running would leak the goroutines the drain was protecting.
+func stopServing(ctx context.Context, server gracefulServer, stopComponents func() error) {
+	if err := server.Shutdown(ctx); err != nil {
+		logging.GetLogger().ErrorContext(ctx, "Error during shutdown", "error", err)
+	}
+
+	if stopComponents == nil {
+		return
+	}
+	logging.GetLogger().InfoContext(ctx, "Stopping components...")
+	if err := stopComponents(); err != nil {
+		logging.GetLogger().ErrorContext(ctx, "Error stopping components", "error", err)
+	}
+}
+
 // runServerWithShutdown starts the server and handles graceful shutdown.
 func runServerWithShutdown(server *api.Server, cfg *config.Config, components *api.BackgroundComponents) {
 	// Start components
@@ -428,31 +478,25 @@ func runServerWithShutdown(server *api.Server, cfg *config.Config, components *a
 		shutdownCtx, cancel := context.WithTimeout(context.Background(), shutdownTimeoutSeconds*time.Second)
 		defer cancel()
 
-		// Stop components first
+		var stopComponents func() error
 		if components != nil {
-			logging.GetLogger().Info("Stopping components...")
-			if err := components.Stop(); err != nil {
-				logging.GetLogger().Error("Error stopping components", "error", err)
-			}
+			stopComponents = components.Stop
 		}
-
-		if err := server.Shutdown(shutdownCtx); err != nil {
-			logging.GetLogger().Error("Error during shutdown", "error", err)
-		}
+		stopServing(shutdownCtx, server, stopComponents)
 	}
 
-	logging.GetLogger().Info("The Seed stopped")
+	logging.GetLogger().Info("Seed stopped")
 }
 
 // printSetupBanner displays a message directing users to the web UI for setup.
 func printSetupBanner(w io.Writer, port int) {
 	banner := `
 ╔══════════════════════════════════════════════════════════════════╗
-║                   THE SEED - INITIAL SETUP                       ║
+║                       SEED - INITIAL SETUP                       ║
 ║               Mustard Seed Networks                              ║
 ╠══════════════════════════════════════════════════════════════════╣
 ║                                                                  ║
-║  Welcome to The Seed! Initial setup is required.                 ║
+║  Welcome to Seed! Initial setup is required.                     ║
 ║                                                                  ║
 ║  Please open your web browser and navigate to:                   ║
 ║                                                                  ║

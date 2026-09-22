@@ -36,6 +36,11 @@ type Service struct {
 	// background triggers can be observed without touching the network.
 	scanFunc func(context.Context) error
 
+	// sweepObserver is called with the devices after each completed sweep, so
+	// a consumer can derive something from the sweep's own result without a
+	// timer of its own. Nil is a no-op. Set once at composition time.
+	sweepObserver func(context.Context, []*DiscoveredDevice)
+
 	// Metrics tracking
 	metrics       *Metrics
 	previousScan  []*DiscoveredDevice // For delta computation
@@ -295,7 +300,33 @@ func (s *Service) Scan(ctx context.Context) error {
 	// Queue all discovered devices for profiling (port scan, SNMP, HTTP detection)
 	s.queueDevicesForProfiling()
 
+	s.notifySweep(ctx, devices)
+
 	return nil
+}
+
+// SetSweepObserver registers the observer called after each completed sweep.
+func (s *Service) SetSweepObserver(observe func(context.Context, []*DiscoveredDevice)) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	s.sweepObserver = observe
+}
+
+// notifySweep hands the sweep's devices to the observer, outside s.mu so the
+// observer may call back into the service.
+//
+// Profiling is queued rather than awaited above, so a device found by THIS
+// sweep carries no SNMP data yet: an observer reading it sees what the previous
+// round profiled. That is why the observer is driven by the rescan interval
+// rather than run once — it converges a cycle behind discovery, not never.
+func (s *Service) notifySweep(ctx context.Context, devices []*DiscoveredDevice) {
+	s.mu.RLock()
+	observe := s.sweepObserver
+	s.mu.RUnlock()
+
+	if observe != nil {
+		observe(ctx, devices)
+	}
 }
 
 // queueDevicesForProfiling queues all discovered devices for profiling.

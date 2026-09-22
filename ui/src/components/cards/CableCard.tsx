@@ -1,4 +1,4 @@
-import { Tooltip } from '../ui/tooltip';
+import { Tooltip } from '../ui/Tooltip';
 /**
  * CableCard Component
  *
@@ -44,8 +44,8 @@ import {
   status as statusColor,
 } from '../../styles/theme';
 import type { UnitSystem } from '../../types/settings';
-import { CardDivider, CardRow, CardValue, type Status } from '../ui/card';
-import { Cable } from '../ui/icons';
+import { CardDivider, CardRow, CardValue, type Status } from '../ui/Card';
+import { Cable } from '../ui/Icons';
 import { SimpleBaseCard } from './BaseCard';
 import { wireColorMap } from './cableWire';
 

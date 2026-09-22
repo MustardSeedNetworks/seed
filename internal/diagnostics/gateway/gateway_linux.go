@@ -72,9 +72,16 @@ func GetAllRoutes() ([]RouteInfo, error) {
 func appendRouteInfo(result []RouteInfo, routes []netlink.Route, family string) []RouteInfo {
 	for index := range routes {
 		route := &routes[index]
-		info := RouteInfo{Destination: "default", Family: family}
+		// A nil Dst is the default route, which is 0.0.0.0/0 or ::/0 — the
+		// same shape as every other row rather than the word "default"
+		// (seed#2765), so a caller can read one field and get a network.
+		info := RouteInfo{Destination: net.IPv4zero.String(), Family: family}
+		if family == "inet6" {
+			info.Destination = net.IPv6zero.String()
+		}
 		if route.Dst != nil {
-			info.Destination = route.Dst.String()
+			info.Destination = route.Dst.IP.String()
+			info.Prefix, _ = route.Dst.Mask.Size()
 		}
 		if route.Gw != nil {
 			info.Gateway = route.Gw.String()
@@ -87,14 +94,6 @@ func appendRouteInfo(result []RouteInfo, routes []netlink.Route, family string) 
 		result = append(result, info)
 	}
 	return result
-}
-
-// RouteInfo contains information about a route.
-type RouteInfo struct {
-	Destination string `json:"destination"`
-	Gateway     string `json:"gateway,omitempty"`
-	Interface   string `json:"interface,omitempty"`
-	Family      string `json:"family"` // "inet" or "inet6"
 }
 
 // GetDefaultGatewayInterface returns the interface used for the default route.

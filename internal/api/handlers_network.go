@@ -135,7 +135,7 @@ func (s *Server) handleInterfaces(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Return only physical interfaces (ethernet and wifi) - excludes loopback, docker, veth, etc.
-	interfaces := s.netManager().GetPhysicalInterfaces()
+	interfaces := s.netManager().GetUsableInterfaces()
 
 	sendJSONResponse(w, nil, http.StatusOK, interfaces)
 }
@@ -155,38 +155,82 @@ func isBetterInterface(candidate, best *netif.InterfaceInfo) bool {
 // handleCategorizedInterfaces returns interfaces grouped by type (ethernet vs WiFi).
 // #756: Helps UI show ethernet interfaces under Ethernet dropdown, WiFi under WiFi dropdown.
 func (s *Server) handleCategorizedInterfaces(w http.ResponseWriter, _ *http.Request) {
-	interfaces := s.netManager().GetPhysicalInterfaces()
+	resp := categorizeInterfaces(
+		s.netManager().GetUsableInterfaces(),
+		s.netManager().GetCurrentInterface(),
+	)
 
-	resp := CategorizedInterfacesResponse{
-		CurrentInterface: s.netManager().GetCurrentInterface(),
+	sendJSONResponse(w, nil, http.StatusOK, resp)
+}
+
+// interfaceKind is the list an interface belongs in. The UI renders exactly
+// two, so every interface the listing carries has to reach one of them.
+type interfaceKind int
+
+const (
+	kindNone interfaceKind = iota
+	kindEthernet
+	kindWiFi
+)
+
+// kindFor decides which of the UI's two lists an interface joins.
+//
+// A selected interface of any other type joins the ethernet list rather than
+// being dropped: the UI has no third list, and ethernet is where netif's own
+// selection already counts it (collectCandidates scores an InterfaceTypeOther
+// interface with a routable address as an ethernet-class candidate). Leaving
+// it out of both is how seed#2692 offered no way to select the interface every
+// measurement on the page was taken from.
+func kindFor(iface *netif.InterfaceInfo, current string) interfaceKind {
+	switch iface.Type {
+	case netif.InterfaceTypeEthernet:
+		return kindEthernet
+	case netif.InterfaceTypeWiFi:
+		return kindWiFi
+	case netif.InterfaceTypeLoopback, netif.InterfaceTypeVirtual, netif.InterfaceTypeOther:
+		if iface.Name == current {
+			return kindEthernet
+		}
+		return kindNone
 	}
+	return kindNone
+}
 
-	// Categorize interfaces and find best in each category
+// categorizeInterfaces groups the listing into the two kinds the UI renders
+// and names the recommended interface in each.
+func categorizeInterfaces(
+	interfaces []*netif.InterfaceInfo, current string,
+) CategorizedInterfacesResponse {
+	resp := CategorizedInterfacesResponse{CurrentInterface: current}
+
 	var ethernet, wifi []*netif.InterfaceInfo
 	var bestEthernet, bestWiFi *netif.InterfaceInfo
 
 	for _, iface := range interfaces {
-		switch iface.Type {
-		case netif.InterfaceTypeEthernet:
+		if iface == nil {
+			continue
+		}
+		if iface.Name == current {
+			resp.CurrentType = string(iface.Type)
+		}
+		switch kindFor(iface, current) {
+		case kindEthernet:
 			ethernet = append(ethernet, iface)
 			if isBetterInterface(iface, bestEthernet) {
 				bestEthernet = iface
 			}
-		case netif.InterfaceTypeWiFi:
+		case kindWiFi:
 			wifi = append(wifi, iface)
 			if isBetterInterface(iface, bestWiFi) {
 				bestWiFi = iface
 			}
-		case netif.InterfaceTypeLoopback, netif.InterfaceTypeVirtual, netif.InterfaceTypeOther:
-			// Skip non-physical interfaces for categorization
-			continue
+		case kindNone:
 		}
 	}
 
 	resp.Ethernet = toInterfaceInfos(ethernet)
 	resp.WiFi = toInterfaceInfos(wifi)
 
-	// Set recommended interfaces
 	if bestEthernet != nil {
 		resp.RecommendedEthernet = bestEthernet.Name
 	}
@@ -194,12 +238,7 @@ func (s *Server) handleCategorizedInterfaces(w http.ResponseWriter, _ *http.Requ
 		resp.RecommendedWiFi = bestWiFi.Name
 	}
 
-	// Determine current interface type
-	if currentInfo, err := s.netManager().GetInterface(resp.CurrentInterface); err == nil && currentInfo != nil {
-		resp.CurrentType = string(currentInfo.Type)
-	}
-
-	sendJSONResponse(w, nil, http.StatusOK, resp)
+	return resp
 }
 
 // handleInterface handles GET/PUT for current interface.
@@ -350,6 +389,12 @@ func (s *Server) handlePutInterface(
 	// while reporting the selected one (#2690).
 	if s.gatewayTester() != nil {
 		s.gatewayTester().SetInterface(req.Interface)
+	}
+
+	// Re-scope the resolvers for the same reason: the DNS card would keep
+	// showing, and measuring through, the host-wide resolvers (#2690).
+	if s.dnsTester() != nil {
+		s.dnsTester().SetInterface(req.Interface)
 	}
 
 	// Check if new interface is wireless

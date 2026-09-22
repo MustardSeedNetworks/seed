@@ -22,8 +22,8 @@ import { useLicense } from '../../../contexts/LicenseContext';
 import { useRole } from '../../../contexts/RoleContext';
 import { Button } from '../../ui/Button';
 import { CollapsibleSection } from '../../ui/CollapsibleSection';
+import { Key } from '../../ui/Icons';
 import { Input } from '../../ui/Input';
-import { Key } from '../../ui/icons';
 
 type ProviderName = 'google' | 'microsoft' | 'github';
 

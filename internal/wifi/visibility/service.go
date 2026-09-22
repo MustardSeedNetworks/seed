@@ -69,8 +69,6 @@ type Service struct {
 	mu            sync.Mutex
 	source        string
 	lastEvaluated time.Time
-	cancel        context.CancelFunc
-	wg            sync.WaitGroup
 }
 
 // Option configures a Service.
@@ -276,50 +274,21 @@ func (s *Service) Status() Status {
 	}
 }
 
-// Start launches the background evaluation loop. It is idempotent: a second
-// call while running is a no-op.
-func (s *Service) Start(ctx context.Context) error {
-	s.mu.Lock()
-	if s.cancel != nil {
-		s.mu.Unlock()
-		return nil
-	}
-	loopCtx, cancel := context.WithCancel(ctx)
-	s.cancel = cancel
-	s.mu.Unlock()
-
+// Run evaluates the airspace on the eval interval until ctx is cancelled. It
+// blocks: the loop is a supervised worker (#2748), and the `go s.loop` it
+// replaced ran outside the supervisor's recover.
+func (s *Service) Run(ctx context.Context) error {
 	// Load-on-start is server-owned and happens once on the shared Coordinator
 	// before any producer observes (ADR-0029 §5), so the service does not load
 	// here — it would re-load the merged engine a second time.
-
-	s.wg.Add(1)
-	go s.loop(loopCtx)
-	return nil
-}
-
-func (s *Service) loop(ctx context.Context) {
-	defer s.wg.Done()
 	ticker := time.NewTicker(s.evalInterval)
 	defer ticker.Stop()
 	for {
 		select {
 		case <-ctx.Done():
-			return
+			return nil
 		case <-ticker.C:
 			s.Evaluate(ctx, time.Now())
 		}
 	}
-}
-
-// Stop halts the background loop and waits for it to exit. Idempotent.
-func (s *Service) Stop() error {
-	s.mu.Lock()
-	cancel := s.cancel
-	s.cancel = nil
-	s.mu.Unlock()
-	if cancel != nil {
-		cancel()
-	}
-	s.wg.Wait()
-	return nil
 }

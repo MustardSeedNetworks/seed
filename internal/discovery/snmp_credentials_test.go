@@ -73,9 +73,14 @@ func TestVaultSNMPCredentialsResolvesTheOneClient(t *testing.T) {
 	got, err := p.SNMPSession(context.Background())
 	require.NoError(t, err)
 
-	require.Equal(t, []string{"plain-community"}, got.Communities)
+	// The vault row id rides with each credential: a device that answers is
+	// promoted to a polling target referencing that row, and the community
+	// string cannot name it — two rows may hold the same one (seed#2692).
+	require.Equal(t,
+		[]snmp.Community{{ID: "c1", String: "plain-community"}}, got.Communities)
 	require.Len(t, got.V3Credentials, 1)
 	require.Equal(t, snmp.V3Credential{
+		ID:            "c2",
 		Name:          "v3",
 		Username:      "operator",
 		AuthProtocol:  "SHA256",

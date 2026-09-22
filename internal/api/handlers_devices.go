@@ -114,6 +114,8 @@ func (s *Server) handleDevicesScan(w http.ResponseWriter, r *http.Request) {
 		// Auto-scan for vulnerabilities if enabled
 		s.postScanVulnerabilityCheck(bgLogger)
 
+		s.afterSweep(ctx, s.deviceDiscovery().GetDevices())
+
 		// Notify SSE clients when scan completes
 		s.sseHub().Broadcast(Message{
 			Type: "deviceScanComplete",
@@ -430,6 +432,9 @@ type SubnetResponse struct {
 	CIDR    string `json:"cidr"`
 	Name    string `json:"name"`
 	Enabled bool   `json:"enabled"`
+	// Learned is true for a network Seed derived from a router's tables
+	// rather than one an operator entered (seed#2695).
+	Learned bool `json:"learned"`
 }
 
 // handleDevicesSubnets handles GET/POST/DELETE for target networks (fixes #702 - uses r.Context()).
@@ -466,6 +471,7 @@ func (s *Server) getDevicesSubnets(w http.ResponseWriter, r *http.Request) {
 			CIDR:    subnet.CIDR,
 			Name:    subnet.Name,
 			Enabled: subnet.Enabled,
+			Learned: subnet.Learned,
 		})
 	}
 	sendJSONResponse(w, logger, http.StatusOK, subnets)

@@ -63,13 +63,13 @@ require (
 )
 
 require (
-	github.com/MustardSeedNetworks/foundation v0.5.5
+	github.com/MustardSeedNetworks/foundation v0.5.12
 	github.com/go-pdf/fpdf v0.9.0
 	github.com/go-playground/validator/v10 v10.30.4
 	github.com/go-webauthn/webauthn v0.18.1
 	github.com/golang-jwt/jwt/v5 v5.3.1
 	github.com/google/uuid v1.6.0
-	github.com/gopacket/gopacket v1.7.1
+	github.com/gopacket/gopacket v1.7.2
 	github.com/gosnmp/gosnmp v1.44.0
 	github.com/invopop/jsonschema v0.14.0
 	github.com/kardianos/service v1.3.0
@@ -93,7 +93,7 @@ require (
 	golang.org/x/text v0.42.0
 	gopkg.in/natefinch/lumberjack.v2 v2.2.1
 	gopkg.in/yaml.v3 v3.0.1
-	modernc.org/sqlite v1.58.0
+	modernc.org/sqlite v1.59.0
 )
 
 tool (

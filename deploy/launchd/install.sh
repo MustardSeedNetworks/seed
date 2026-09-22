@@ -1,7 +1,7 @@
 #!/bin/bash
 #
-# The Seed Installation Script for macOS
-# Installs The Seed as a launchd service on macOS
+# Seed Installation Script for macOS
+# Installs Seed as a launchd service on macOS
 #
 set -e
 
@@ -69,13 +69,13 @@ if [[ -n "$1" && -f "$1" ]]; then
 elif [[ -f "./${BINARY_NAME}" ]]; then
     BINARY_PATH="./${BINARY_NAME}"
 else
-    log_error "The Seed binary not found."
+    log_error "Seed binary not found."
     log_error "Please run from the directory containing the binary or provide the path."
     usage
     exit 1
 fi
 
-log_info "Installing The Seed on macOS..."
+log_info "Installing Seed on macOS..."
 echo ""
 
 # Get version of binary being installed

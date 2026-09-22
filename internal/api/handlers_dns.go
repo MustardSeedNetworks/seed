@@ -45,6 +45,7 @@ type DNSResponse struct {
 	Interface        string                 `json:"interface"`
 	Server           string                 `json:"server"`
 	Servers          []string               `json:"servers"`
+	ServerScope      string                 `json:"serverScope"`
 	TestHostname     string                 `json:"testHostname"`
 	Forward          *DNSLookupResult       `json:"forward,omitempty"`
 	ForwardIpv6      *DNSLookupResult       `json:"forwardIpv6,omitempty"`
@@ -78,6 +79,7 @@ func buildDNSResponse(result *dns.TestResult, iface string) DNSResponse {
 		Interface:    iface,
 		Server:       result.Server,
 		Servers:      result.Servers,
+		ServerScope:  string(result.ServerScope),
 		TestHostname: result.TestHostname,
 		Forward:      convertDNSLookup(result.Forward),
 		ForwardIpv6:  convertDNSLookup(result.ForwardIPv6),

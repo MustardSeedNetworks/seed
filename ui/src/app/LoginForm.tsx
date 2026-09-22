@@ -1,7 +1,7 @@
 /**
  * LoginForm Component
  *
- * Authentication form component for The Seed application.
+ * Authentication form component for the Seed application.
  *
  * Responsibilities:
  * - User login with username/password

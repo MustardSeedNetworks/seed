@@ -1,4 +1,4 @@
-import { Tooltip } from '../../ui/tooltip';
+import { Tooltip } from '../../ui/Tooltip';
 /**
  * HealthChecksSettings Component (~449 lines)
  *
@@ -40,7 +40,7 @@ import { useArrayItem } from '../../../hooks/useArrayItem';
 import { cn, icon as iconTokens, input, layout, radius, spacing } from '../../../styles/theme';
 import type { CardSettings, SaveStatus, TestsSettings } from '../../../types/settings';
 import { CollapsibleSection } from '../../ui/CollapsibleSection';
-import { HeartPulse } from '../../ui/icons';
+import { HeartPulse } from '../../ui/Icons';
 import { AutoSaveIndicator } from './AutoSaveIndicator';
 import { HealthChecksSettingsEnterprise } from './HealthChecksSettingsEnterprise';
 import { HealthChecksSettingsSpecialty } from './HealthChecksSettingsSpecialty';

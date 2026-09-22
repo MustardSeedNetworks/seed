@@ -1,7 +1,7 @@
 /**
  * RecoveryForm Component
  *
- * Password recovery form for The Seed application.
+ * Password recovery form for Seed application.
  * Migrated to react-hook-form + valibot per #1201.
  */
 

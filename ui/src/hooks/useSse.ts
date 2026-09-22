@@ -1,7 +1,7 @@
 /**
  * Server-Sent Events (SSE) Connection Hook
  *
- * Manages SSE connections to the The Seed backend for real-time updates.
+ * Manages SSE connections to the Seed backend for real-time updates.
  * SSE provides a simpler, more reliable alternative to WebSockets for
  * server-to-client streaming.
  *

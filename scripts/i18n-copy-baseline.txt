@@ -96,26 +96,25 @@ ui/src/components/ui/DataTable.tsx literal Clear search
 ui/src/components/ui/DataTable.tsx literal Loading data
 ui/src/components/ui/DataTable.tsx literal No data found
 ui/src/components/ui/DeviceSelector.tsx literal Select device
+ui/src/components/ui/Fab.tsx literal Run All Tests
+ui/src/components/ui/Fab.tsx literal Some checks did not finish — tap to run all tests again
 ui/src/components/ui/Input.tsx copy-prop aria-label=Clear search
 ui/src/components/ui/Input.tsx literal Clear search
 ui/src/components/ui/Modal.tsx copy-prop aria-label=Close modal
 ui/src/components/ui/Modal.tsx literal Close modal
-ui/src/components/ui/fab.tsx literal Run All Tests
-ui/src/components/ui/fab.tsx literal Some checks did not finish — tap to run all tests again
-ui/src/components/ui/sparkline.tsx literal No data available
+ui/src/components/ui/Sparkline.tsx literal No data available
+ui/src/components/ui/Toast.tsx copy-prop aria-label=Dismiss notification
+ui/src/components/ui/Toast.tsx copy-prop aria-label=Notifications
+ui/src/components/ui/Toast.tsx literal Dismiss notification
 ui/src/components/ui/statusConfig.tsx literal Status: error
 ui/src/components/ui/statusConfig.tsx literal Status: loading
 ui/src/components/ui/statusConfig.tsx literal Status: success
 ui/src/components/ui/statusConfig.tsx literal Status: unknown
 ui/src/components/ui/statusConfig.tsx literal Status: warning
-ui/src/components/ui/toast.tsx copy-prop aria-label=Dismiss notification
-ui/src/components/ui/toast.tsx copy-prop aria-label=Notifications
-ui/src/components/ui/toast.tsx literal Dismiss notification
 
 # --- ui/src/ui/
 ui/src/ui/Breadcrumbs.tsx copy-prop aria-label=Breadcrumb
 ui/src/ui/Breadcrumbs.tsx copy-prop aria-label=Home
-ui/src/ui/Breadcrumbs.tsx literal Path Analysis
 ui/src/ui/PageHeader.tsx copy-prop aria-label=Breadcrumb
 ui/src/ui/Sidebar.tsx copy-prop aria-label=Close menu
 ui/src/ui/Sidebar.tsx literal Close menu

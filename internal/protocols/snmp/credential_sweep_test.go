@@ -14,7 +14,11 @@ func testCfg(communities []string, v3 int) *snmppkg.Session {
 	for i := range creds {
 		creds[i].Username = "user"
 	}
-	return &snmppkg.Session{Communities: communities, V3Credentials: creds}
+	pool := make([]snmppkg.Community, len(communities))
+	for i, community := range communities {
+		pool[i] = snmppkg.Community{String: community}
+	}
+	return &snmppkg.Session{Communities: pool, V3Credentials: creds}
 }
 
 // TestSweepPrefersV3 — a device that answers both should be talked to over the
@@ -110,5 +114,58 @@ func TestSweepNilConfig(t *testing.T) {
 	_, err := snmppkg.SweepCredentials[string](context.Background(), nil, "x", nil, nil)
 	if err == nil {
 		t.Error("nil config produced no error")
+	}
+}
+
+// TestSweepNamesTheCredentialThatAnswered — the sweep's caller has to be able
+// to say WHICH stored credential a device answered, not merely that one did.
+// Two vault rows carrying the identical community string is the case that
+// discriminates: a bare string cannot tell them apart, so the answer has to
+// come from the row's own id.
+func TestSweepNamesTheCredentialThatAnswered(t *testing.T) {
+	cfg := &snmppkg.Session{Communities: []snmppkg.Community{
+		{ID: "cred-first", String: "shared"},
+		{ID: "cred-second", String: "shared"},
+	}}
+	calls := 0
+	got, ref, err := snmppkg.SweepCredentialsNaming(context.Background(), cfg, "x",
+		func(*snmppkg.V3Credential) (string, error) {
+			return "", errors.New("no v3 configured")
+		},
+		func(string) (string, error) {
+			calls++
+			if calls < 2 {
+				return "", errors.New("wrong community")
+			}
+			return "ok", nil
+		},
+	)
+	if err != nil || got != "ok" {
+		t.Fatalf("got %q, %v; want ok", got, err)
+	}
+	if ref.ID != "cred-second" {
+		t.Errorf("credential id %q; want cred-second", ref.ID)
+	}
+	if ref.Version != snmppkg.VersionV2c {
+		t.Errorf("version %q; want %q", ref.Version, snmppkg.VersionV2c)
+	}
+}
+
+// TestSweepNamesTheV3CredentialThatAnswered — the v3 half reports its own row
+// and version, or a promoted target is created asking for v2c on a device that
+// only answers v3.
+func TestSweepNamesTheV3CredentialThatAnswered(t *testing.T) {
+	cfg := &snmppkg.Session{V3Credentials: []snmppkg.V3Credential{
+		{ID: "cred-v3", Username: "operator"},
+	}}
+	_, ref, err := snmppkg.SweepCredentialsNaming(context.Background(), cfg, "x",
+		func(*snmppkg.V3Credential) (string, error) { return "ok", nil },
+		func(string) (string, error) { return "", errors.New("not reached") },
+	)
+	if err != nil {
+		t.Fatalf("sweep: %v", err)
+	}
+	if ref.ID != "cred-v3" || ref.Version != snmppkg.VersionV3 {
+		t.Errorf("ref %+v; want cred-v3/%s", ref, snmppkg.VersionV3)
 	}
 }

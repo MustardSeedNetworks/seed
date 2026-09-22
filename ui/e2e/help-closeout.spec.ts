@@ -200,7 +200,22 @@ for (const route of [
     await page.goto(route);
     await expect(page.getByTestId('page-header-title')).toBeVisible();
     await expect(page.getByTestId('page-header-help-button')).toHaveAccessibleName(/help/i);
-    await expect(page.locator('[title]')).toHaveCount(0);
+    // A `title` that only repeats the element's own text is a clipped-text
+    // disclosure, not a tooltip: the value is already in the DOM, so a screen
+    // reader reads it in full whatever the CSS clips (the truncated card
+    // tables from #2708). A `title` carrying anything else is help content
+    // locked in a surface that is neither focusable nor announced reliably,
+    // which is what #2647 removed -- that stays banned.
+    const titlesCarryingOwnContent = await page.locator('[title]').evaluateAll((nodes) =>
+      nodes
+        .map((node) => ({
+          html: node.outerHTML.slice(0, 120),
+          title: (node.getAttribute('title') ?? '').trim(),
+          text: (node.textContent ?? '').trim(),
+        }))
+        .filter(({ title, text }) => title !== text),
+    );
+    expect(titlesCarryingOwnContent).toEqual([]);
     await expectAccessible(page);
     await page.getByTestId('page-header-help-button').click();
     await expect(page.getByTestId('help-drawer')).toBeVisible();

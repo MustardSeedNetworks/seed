@@ -5,13 +5,19 @@ import (
 	"log/slog"
 	"net"
 	"net/http"
+	"net/netip"
 
 	"github.com/MustardSeedNetworks/seed/internal/auth"
 	"github.com/MustardSeedNetworks/seed/internal/config"
 	"github.com/MustardSeedNetworks/seed/internal/config/backups"
+	"github.com/MustardSeedNetworks/seed/internal/diagnostics/gateway"
+	"github.com/MustardSeedNetworks/seed/internal/discovery"
+	"github.com/MustardSeedNetworks/seed/internal/discovery/learn"
+	"github.com/MustardSeedNetworks/seed/internal/discovery/promote"
 	"github.com/MustardSeedNetworks/seed/internal/engine"
 	"github.com/MustardSeedNetworks/seed/internal/i18n"
 	"github.com/MustardSeedNetworks/seed/internal/license"
+	"github.com/MustardSeedNetworks/seed/internal/netif"
 )
 
 // ExportSplitCIDR exposes splitCIDR for testing.
@@ -488,4 +494,47 @@ func (s *Server) GatewayTesterInterface() string {
 		return ""
 	}
 	return s.gatewayTester().GetInterface()
+}
+
+// ExportCategorizeInterfaces exposes categorizeInterfaces for testing.
+func ExportCategorizeInterfaces(
+	interfaces []*netif.InterfaceInfo, current string,
+) CategorizedInterfacesResponse {
+	return categorizeInterfaces(interfaces, current)
+}
+
+// ExportRoutingViews exposes routingViews for testing.
+func ExportRoutingViews(devices []*discovery.DiscoveredDevice) []learn.Device {
+	return routingViews(devices)
+}
+
+// ExportPromotionViews exposes promotionViews for testing.
+func ExportPromotionViews(devices []*discovery.DiscoveredDevice) []promote.Device {
+	return promotionViews(devices)
+}
+
+// ExportLocalPrefixes exposes localPrefixes for testing.
+func ExportLocalPrefixes(subnet string) []netip.Prefix {
+	return localPrefixes(subnet)
+}
+
+// DNSTesterInterface reports the interface the resolvers are scoped to.
+func (s *Server) DNSTesterInterface() string {
+	if s.dnsTester() == nil {
+		return ""
+	}
+	return s.dnsTester().GetInterface()
+}
+
+// ExportCollectDNSData exposes the DNS payload the WebSocket broadcast sends.
+func (s *Server) ExportCollectDNSData() map[string]any {
+	return s.collectDNSData()
+}
+
+// ExportHostRoutesVia exposes hostRoutesVia for testing.
+func ExportHostRoutesVia(
+	iface string,
+	read func() ([]gateway.RouteInfo, error),
+) []learn.HostRoute {
+	return hostRoutesVia(iface, read)
 }

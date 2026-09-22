@@ -1,4 +1,4 @@
-import { Tooltip } from '../../ui/tooltip';
+import { Tooltip } from '../../ui/Tooltip';
 /** Wireless interface selection, scanning and saved network configuration. */
 
 import type React from 'react';
@@ -16,7 +16,7 @@ import {
 } from '../../../styles/theme';
 import type { SaveStatus, WiFiSettings as WiFiSettingsType } from '../../../types/settings';
 import { CollapsibleSection } from '../../ui/CollapsibleSection';
-import { Wifi } from '../../ui/icons';
+import { Wifi } from '../../ui/Icons';
 import { AutoSaveIndicator } from './AutoSaveIndicator';
 
 // Types for WiFi scanning and connection

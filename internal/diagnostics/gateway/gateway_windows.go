@@ -21,15 +21,6 @@ const netshTimeoutSeconds = 15
 // netsh output lines, so a value containing ':' is not split further.
 const colonSplitParts = 2
 
-// route print's "Network Destination Netmask Gateway Interface Metric"
-// columns: routeFieldsMinimal is enough to reach the Gateway column
-// (fields[2]), routeFieldsWithInterface enough to also reach Interface
-// (fields[3]).
-const (
-	routeFieldsMinimal       = 3
-	routeFieldsWithInterface = 4
-)
-
 // detectGatewayPlatform detects the default IPv4 gateway on Windows.
 func detectGatewayPlatform() (string, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), netshTimeoutSeconds*time.Second)
@@ -50,8 +41,8 @@ func detectGatewayPlatform() (string, error) {
 		if strings.HasPrefix(line, "0.0.0.0") {
 			fields := strings.Fields(line)
 			// Format: Network Destination    Netmask         Gateway         Interface   Metric
-			if len(fields) >= routeFieldsMinimal {
-				gw := fields[2]
+			if len(fields) > v4FieldGateway {
+				gw := fields[v4FieldGateway]
 				// Validate it's an IP
 				if net.ParseIP(gw) != nil && gw != "0.0.0.0" {
 					return gw, nil
@@ -172,102 +163,16 @@ func GetAllRoutes() ([]RouteInfo, error) {
 	// Get IPv4 routes
 	output, err := exec.CommandContext(ctx, "route", "print", "-4").Output()
 	if err == nil {
-		routes = append(routes, parseRouteOutput(string(output), "inet")...)
+		routes = append(routes, parseRouteOutput(string(output), "inet", systemInterfaceNamer{})...)
 	}
 
 	// Get IPv6 routes
 	output, err = exec.CommandContext(ctx, "route", "print", "-6").Output()
 	if err == nil {
-		routes = append(routes, parseRouteOutput(string(output), "inet6")...)
+		routes = append(routes, parseRouteOutput(string(output), "inet6", systemInterfaceNamer{})...)
 	}
 
 	return routes, nil
-}
-
-// parseRouteOutput parses Windows route print output.
-func parseRouteOutput(output, family string) []RouteInfo {
-	var routes []RouteInfo
-
-	lines := strings.Split(output, "\n")
-	inActiveRoutes := false
-
-	for _, line := range lines {
-		line = strings.TrimSpace(line)
-
-		// Look for "Active Routes:" section
-		if strings.Contains(line, "Active Routes") {
-			inActiveRoutes = true
-			continue
-		}
-
-		// End of routes section
-		if inActiveRoutes && (strings.Contains(line, "Persistent Routes") || line == "") {
-			continue
-		}
-
-		if !inActiveRoutes {
-			continue
-		}
-
-		// Skip header line
-		if strings.Contains(line, "Network Destination") || strings.Contains(line, "Metric") {
-			continue
-		}
-
-		// Parse route line
-		fields := strings.Fields(line)
-		if len(fields) < routeFieldsMinimal {
-			continue
-		}
-		if ri, ok := parseRouteFields(fields, family); ok {
-			routes = append(routes, ri)
-		}
-	}
-
-	return routes
-}
-
-// parseRouteFields builds a RouteInfo from one route print data line's
-// whitespace-separated fields, already known to have at least
-// routeFieldsMinimal entries. The second return is false when the line
-// didn't carry a destination for the given family (nothing to add).
-func parseRouteFields(fields []string, family string) (RouteInfo, bool) {
-	ri := RouteInfo{
-		Family: family,
-	}
-
-	switch {
-	case family == "inet" && len(fields) >= routeFieldsWithInterface:
-		ri.Destination = fields[0]
-		if fields[0] == "0.0.0.0" {
-			ri.Destination = "default"
-		}
-		ri.Gateway = fields[2]
-		ri.Interface = fields[3]
-	case family == "inet6" && len(fields) >= routeFieldsMinimal:
-		ri.Destination = fields[0]
-		if fields[0] == "::/0" {
-			ri.Destination = "default"
-		}
-		// IPv6 format varies
-		for _, f := range fields[1:] {
-			ip := net.ParseIP(f)
-			if ip != nil && ip.To4() == nil {
-				ri.Gateway = f
-				break
-			}
-		}
-	}
-
-	return ri, ri.Destination != ""
-}
-
-// RouteInfo contains information about a route.
-type RouteInfo struct {
-	Destination string `json:"destination"`
-	Gateway     string `json:"gateway,omitempty"`
-	Interface   string `json:"interface,omitempty"`
-	Family      string `json:"family"` // "inet" or "inet6"
 }
 
 // GetDefaultGatewayInterface returns the interface used for the default route.
@@ -289,8 +194,8 @@ func GetDefaultGatewayInterface() (string, error) {
 		}
 		fields := strings.Fields(line)
 		// Format: Network Destination    Netmask         Gateway         Interface   Metric
-		if len(fields) >= routeFieldsWithInterface {
-			return interfaceNameForIP(fields[3]), nil
+		if len(fields) > v4FieldInterface {
+			return interfaceNameForIP(fields[v4FieldInterface]), nil
 		}
 	}
 
@@ -302,20 +207,45 @@ func GetDefaultGatewayInterface() (string, error) {
 // interface list can't be read) -- the IP is still a usable, if less
 // friendly, answer to what the outbound interface is.
 func interfaceNameForIP(ifaceIP string) string {
-	ifaces, ifacesErr := net.Interfaces()
-	if ifacesErr != nil {
-		return ifaceIP
+	if name := (systemInterfaceNamer{}).nameByAddress(ifaceIP); name != "" {
+		return name
 	}
-	for _, iface := range ifaces {
-		addrs, addrsErr := iface.Addrs()
-		if addrsErr != nil {
+	return ifaceIP
+}
+
+// systemInterfaceNamer resolves route print's interface columns against the
+// host's own interfaces. It answers "" rather than echoing the column back:
+// RouteInfo.Interface is a name or nothing, because a caller matching it
+// against net.Interface.Name is what seed#2765 is about.
+type systemInterfaceNamer struct{}
+
+func (systemInterfaceNamer) nameByAddress(addr string) string {
+	want := net.ParseIP(addr)
+	if want == nil {
+		return ""
+	}
+	ifaces, err := net.Interfaces()
+	if err != nil {
+		return ""
+	}
+	for i := range ifaces {
+		addrs, addrErr := ifaces[i].Addrs()
+		if addrErr != nil {
 			continue
 		}
-		for _, addr := range addrs {
-			if ipNet, ok := addr.(*net.IPNet); ok && ipNet.IP.String() == ifaceIP {
-				return iface.Name
+		for _, a := range addrs {
+			if ipnet, ok := a.(*net.IPNet); ok && ipnet.IP.Equal(want) {
+				return ifaces[i].Name
 			}
 		}
 	}
-	return ifaceIP
+	return ""
+}
+
+func (systemInterfaceNamer) nameByIndex(index int) string {
+	iface, err := net.InterfaceByIndex(index)
+	if err != nil {
+		return ""
+	}
+	return iface.Name
 }

@@ -371,7 +371,7 @@ describe('App', () => {
       renderWithProviders(<App />);
 
       await waitFor(() => {
-        expect(screen.getByText('The Seed')).toBeInTheDocument();
+        expect(screen.getByText('Seed')).toBeInTheDocument();
       });
       expect(screen.getByText('Network Diagnostics by Mustard Seed Networks')).toBeInTheDocument();
       expect(screen.getByPlaceholderText('admin')).toBeInTheDocument();
@@ -646,16 +646,14 @@ describe('App', () => {
       renderWithProviders(<App />);
 
       await waitFor(() => {
-        // Multiple "The Seed" elements may exist (header + other places)
-        const seedElements = screen.getAllByText('The Seed');
+        // Multiple "Seed" elements may exist (header + other places)
+        const seedElements = screen.getAllByText('Seed');
         expect(seedElements.length).toBeGreaterThan(0);
       });
 
-      // Phase 2 (HeaderBar slim) moved the standalone Logout button into
-      // the ProfileDropdown menu. The button only renders once the
-      // profile dropdown is opened. Verify the profile trigger exists
-      // (which gates access to logout) rather than the logout button
-      // itself — that round-trip is covered end-to-end by e2e tests.
+      // Logout lives inside the rail's account menu (UI-SEED-10), so the
+      // button only renders once that menu is opened. Verify the trigger
+      // exists — the round-trip is covered end-to-end by e2e tests.
       const profileTriggers = screen.getAllByRole('button', { name: /select profile|profile/i });
       expect(profileTriggers.length).toBeGreaterThan(0);
     });
@@ -709,7 +707,7 @@ describe('App', () => {
       renderWithProviders(<App />);
 
       await waitFor(() => {
-        // HeaderBar has separate buttons for Ethernet and WiFi interface selection
+        // The rail carries separate Ethernet and Wi-Fi interface controls.
         const ethernetButton = screen.getByRole('button', {
           name: /select ethernet interface/i,
         });

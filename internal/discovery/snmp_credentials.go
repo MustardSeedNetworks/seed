@@ -133,7 +133,18 @@ func (v *VaultSNMPCredentials) SNMPSession(ctx context.Context) (*snmp.Session, 
 
 // clientID returns the id of the deployment's single client.
 func (v *VaultSNMPCredentials) clientID(ctx context.Context) (string, error) {
-	ids, err := v.clients.ListClientIDs(ctx)
+	return SingleClientID(ctx, v.clients)
+}
+
+// SingleClientID returns the id of the deployment's one client, and
+// ErrDiscoveryTenantAmbiguous when there is not exactly one.
+//
+// Everything discovery does on an operator's behalf without a request to scope
+// it — resolving credentials for a sweep, promoting what that sweep found — has
+// to answer the same question the same way, or the two disagree about whose
+// deployment they are acting in.
+func SingleClientID(ctx context.Context, clients ClientLister) (string, error) {
+	ids, err := clients.ListClientIDs(ctx)
 	if err != nil {
 		return "", fmt.Errorf("list clients: %w", err)
 	}
@@ -164,6 +175,7 @@ func (v *VaultSNMPCredentials) append(out *snmp.Session, cred *polling.Credentia
 			return fmt.Errorf("credential %s: v3 priv secret: %w", cred.ID, err)
 		}
 		out.V3Credentials = append(out.V3Credentials, snmp.V3Credential{
+			ID:            cred.ID,
 			Name:          cred.Name,
 			Username:      cred.SNMPv3User,
 			AuthProtocol:  cred.SNMPv3AuthProto,
@@ -180,7 +192,7 @@ func (v *VaultSNMPCredentials) append(out *snmp.Session, cred *polling.Credentia
 		return fmt.Errorf("credential %s: community: %w", cred.ID, err)
 	}
 	if community != "" {
-		out.Communities = append(out.Communities, community)
+		out.Communities = append(out.Communities, snmp.Community{ID: cred.ID, String: community})
 	}
 	return nil
 }

@@ -18,7 +18,7 @@ import type {
   BluetoothDiscoveryStats,
 } from '../../types/generated/bluetooth-scan-response';
 import { type Column, DataTable } from '../ui/DataTable';
-import { BluetoothConnected, Bluetooth as BluetoothIcon } from '../ui/icons';
+import { BluetoothConnected, Bluetooth as BluetoothIcon } from '../ui/Icons';
 import { Modal } from '../ui/Modal';
 
 interface BluetoothDeviceModalProps {

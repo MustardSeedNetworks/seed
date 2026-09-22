@@ -2,7 +2,7 @@ import { twMerge } from 'tailwind-merge';
 
 /**
  * =============================================================================
- * THE SEED DESIGN SYSTEM - Mustard Seed Networks
+ * SEED DESIGN SYSTEM - Mustard Seed Networks
  * =============================================================================
  *
  * Centralized design tokens and utilities for consistent UI across the app.
