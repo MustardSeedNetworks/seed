@@ -566,20 +566,20 @@ export const SidebarLayout: FC<SidebarLayoutProps> = ({
         />
       ) : null}
 
-      {/* The phone drawer mounts on open rather than sitting off-canvas. A
-          closed drawer that stays in the tree keeps its buttons in the tab
-          order and puts a second product mark and a second copy of every rail
-          control in the document — which is what "one product mark per screen"
-          (owner 2026-09-15) rules out. */}
+      {/* The phone drawer mounts on open: a closed drawer in the tree keeps its
+          buttons in the tab order and a second product mark on screen, which
+          "one product mark per screen" (owner 2026-09-15) rules out. Closed, the
+          empty panel is `invisible` so it is no landmark parked off-screen. */}
       <aside
         className={`lg:hidden fixed top-0 left-0 z-50 h-full w-72 bg-surface-raised/95 backdrop-blur-xl border-r border-surface-border transform transition-transform duration-300 ease-in-out ${
-          mobileOpen ? 'translate-x-0' : '-translate-x-full'
+          mobileOpen ? 'translate-x-0' : '-translate-x-full invisible'
         }`}
       >
         {mobileOpen ? <div className="flex flex-col h-full">{body}</div> : null}
       </aside>
 
       <aside
+        data-testid="sidebar-desktop"
         className={`hidden lg:flex fixed top-0 left-0 z-40 h-full flex-col bg-gradient-to-b from-rail-from to-rail-to backdrop-blur-xl border-r border-hairline transition-all duration-300 ease-in-out ${
           collapsed ? 'w-16' : 'w-56' // one step with lg:pl-56 below; was 252 vs 256
         }`}
