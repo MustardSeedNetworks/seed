@@ -275,6 +275,17 @@ accepts any community string regardless of `rocommunity`. A local pass therefore
 says nothing about community handling — it exercises the wire format, which is
 the point. CI runs a current net-snmp from apt.
 
+### First-run discovery over a NIAC link
+
+`make test-e2e-niac-link` checks the out-of-the-box discovery defaults against
+a simulated segment: it puts NIAC's `home-network` scenario in a network
+namespace at the far end of a veth pair, starts seed on the near end with only
+its interface, port and paths configured, and requires every scenario device in
+the daemon's inventory and on the Network and Security pages within 90 s of
+start. Linux only; it needs `niac` on `PATH` and sudo for the namespace and the
+two daemons. Another scenario and address can be passed straight to
+`scripts/e2e-niac-link.sh TEMPLATE SEED_ADDRESS/PREFIX`.
+
 ### Test Requirements
 
 - Unit tests for business logic
