@@ -7,6 +7,9 @@
  * 3.45–3.71 at /20 on the worst surface). No alpha fixes that, so each pill
  * hue has a `-strong` text token measured against its wash (owner 2026-09-22,
  * UI-FLEET-3), and a pill uses it instead of the bare hue.
+ *
+ * The grounds here are the five surface tokens. The page body also carries a
+ * faint brand gradient (index.css), which only Storybook axe sees.
  */
 import { readdirSync, readFileSync } from 'node:fs';
 import { dirname, join, relative, resolve } from 'node:path';
