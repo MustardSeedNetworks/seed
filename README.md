@@ -218,6 +218,7 @@ via `//go:embed` — no copy step, no runtime dependency on the source tree.
 | `make build` | Full build (frontend + backend) |
 | `make test` | Go + frontend unit/integration tests |
 | `make test-e2e` | Playwright UI tests |
+| `make test-e2e-niac-link` | First-run discovery against a NIAC scenario over veth (Linux, sudo) |
 | `make lint` | golangci-lint + Biome |
 | `make security` | govulncheck + npm audit + gitleaks |
 | `make fmt-check` | Format check (Go + TS) |
