@@ -107,7 +107,13 @@ function LogEntryRow({ entry, expanded, onToggle, onClose }: LogEntryRowProps): 
 
         {/* Component badge */}
         {entry.component ? (
-          <span className={cn('px-3 py-compact', radius.default, 'bg-cat-6/15 text-cat-6 text-sm')}>
+          <span
+            className={cn(
+              'px-3 py-compact',
+              radius.default,
+              'bg-cat-6/15 text-cat-6-strong text-sm',
+            )}
+          >
             {entry.component}
           </span>
         ) : null}
@@ -118,7 +124,7 @@ function LogEntryRow({ entry, expanded, onToggle, onClose }: LogEntryRowProps): 
             className={cn(
               'px-3 py-compact',
               radius.default,
-              'bg-status-info/15 text-status-info text-sm font-mono',
+              'bg-status-info/15 text-status-info-strong text-sm font-mono',
             )}
           >
             {entry.requestId.substring(0, 8)}
@@ -136,7 +142,7 @@ function LogEntryRow({ entry, expanded, onToggle, onClose }: LogEntryRowProps): 
             className={cn(
               'px-3 py-compact',
               radius.default,
-              'bg-status-success/15 text-status-success text-sm',
+              'bg-status-success/15 text-status-success-strong text-sm',
             )}
           >
             {entry.durationMs}ms
@@ -198,7 +204,7 @@ function LogEntryRow({ entry, expanded, onToggle, onClose }: LogEntryRowProps): 
               className={cn(
                 'pad',
                 radius.lg,
-                'text-sm text-status-error bg-status-error/10 overflow-x-auto font-mono whitespace-pre-wrap',
+                'text-sm text-status-error-strong bg-status-error/10 overflow-x-auto font-mono whitespace-pre-wrap',
               )}
             >
               {entry.stack}

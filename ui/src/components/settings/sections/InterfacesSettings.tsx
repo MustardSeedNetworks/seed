@@ -125,14 +125,14 @@ export function InterfacesSettings(): React.ReactElement {
         <p className="text-sm text-text-secondary">{t('settings:interfaces.description')}</p>
 
         {(!canAddEthernet || !canAddWifi) && (
-          <div className="rounded-lg border border-status-warning/30 bg-status-warning/5 pad-sm text-sm text-status-warning">
+          <div className="rounded-lg border border-status-warning/30 bg-status-warning/5 pad-sm text-sm text-status-warning-strong">
             {t('settings:interfaces.limitReachedFreeStarter')}
           </div>
         )}
 
         {error ? (
           <div
-            className="rounded-lg border border-status-error/30 bg-status-error/5 pad-sm text-sm text-status-error"
+            className="rounded-lg border border-status-error/30 bg-status-error/5 pad-sm text-sm text-status-error-strong"
             data-testid="interfaces-error"
           >
             {error}
@@ -220,7 +220,7 @@ function InterfaceGroup({
               >
                 <span className="font-mono text-sm flex-1">{iface.name}</span>
                 {isActive && (
-                  <span className="rounded bg-status-success/10 px-1.5 py-0.5 text-xs text-status-success">
+                  <span className="rounded bg-status-success/10 px-1.5 py-0.5 text-xs text-status-success-strong">
                     {t('interfaces.active')}
                   </span>
                 )}

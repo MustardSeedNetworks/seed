@@ -103,7 +103,7 @@ export function LogViewerCard({ className = '' }: LogViewerCardProps): JSX.Eleme
               radius.md,
               'text-xs font-medium',
               isStreaming
-                ? 'bg-status-success/15 text-status-success'
+                ? 'bg-status-success/15 text-status-success-strong'
                 : 'bg-surface-hover text-text-muted',
             )}
           >

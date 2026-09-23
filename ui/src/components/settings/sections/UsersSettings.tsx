@@ -176,14 +176,14 @@ export function UsersSettings(): React.ReactElement {
         <p className="text-sm text-text-secondary">{t('settings:users.description')}</p>
 
         {isAdmin && !canCreate && (
-          <div className="rounded-lg border border-status-warning/30 bg-status-warning/5 pad-sm text-sm text-status-warning">
+          <div className="rounded-lg border border-status-warning/30 bg-status-warning/5 pad-sm text-sm text-status-warning-strong">
             {t('errors:users.featureRequired')} <strong>{tierLabel}</strong>
           </div>
         )}
 
         {error ? (
           <div
-            className="rounded-lg border border-status-error/30 bg-status-error/5 pad-sm text-sm text-status-error"
+            className="rounded-lg border border-status-error/30 bg-status-error/5 pad-sm text-sm text-status-error-strong"
             data-testid="users-settings-error"
           >
             {error}

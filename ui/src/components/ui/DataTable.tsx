@@ -283,7 +283,7 @@ export function DataTable<T>({
           className={cn(
             spacing.pad.sm,
             radius.md,
-            'bg-status-error/10 border border-status-error/20 text-status-error body-small',
+            'bg-status-error/10 border border-status-error/20 text-status-error-strong body-small',
             layout.inline.tight,
           )}
           role="alert"
@@ -354,7 +354,7 @@ export function DataTable<T>({
                 radius.lg,
                 border.width.default,
                 showFilters || hasActiveFilters
-                  ? 'bg-brand-primary/15 border-brand-primary text-brand-primary'
+                  ? 'bg-brand-primary/15 border-brand-primary text-brand-primary-strong'
                   : 'border-surface-border text-text-muted hover:text-text-primary hover:border-text-muted',
               )}
             >

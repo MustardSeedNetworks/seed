@@ -20,6 +20,18 @@
   --color-on-success: #ffffff;
   --color-on-info: #ffffff;
 
+  /* Pill text (UI-FLEET-3, .github#74). A hue's own wash pulls the ground
+	 * toward it, so the bare hue measures 3.13-3.66:1 as 12px text on a /20
+	 * wash over the sunken surface. Each value is the same hue, darkened by
+	 * the smallest step to 4.6:1 there; pillText.test.ts measures every
+	 * surface up to /20. The status four move to msn-shared.css once all
+	 * four products use them. */
+  --color-status-success-strong: #235e3a;
+  --color-status-warning-strong: #6d4e07;
+  --color-status-error-strong: #932e2e;
+  --color-status-info-strong: #0f548f;
+  --color-brand-primary-strong: #24602d;
+
   /* Seed's five module accents. Same role change as Stem's six: badges and
 	 * chart series, not button fills. Hues kept; light-mode values darkened
 	 * where they are used as TEXT on cream (module-reporting measured 2.9:1),
@@ -33,7 +45,10 @@
 }
 
 .dark {
-  --color-brand-primary: #6cc472;
+  /* Set C (canonical ui/theme/README.md). Was #6cc472, paler than set C
+	 * because it was picked to survive as pill text; pills now use
+	 * brand-primary-strong, so the anchor can be the published one. */
+  --color-brand-primary: #34b244;
   --color-brand-accent: #8ad48f;
   --color-brand-gold: #f5c451;
   --color-text-accent: #8ad48f;
@@ -44,6 +59,14 @@
 	 * to flip with it. on-info was the one on-* token defined in a single
 	 * place for both themes, which left white text on a light-blue fill. */
   --color-on-info: #08100c;
+
+  /* Pill text, lightened by the smallest step to 4.6:1 on a /20 wash over
+	 * the hover surface. */
+  --color-status-success-strong: #56c785;
+  --color-status-warning-strong: #deab34;
+  --color-status-error-strong: #e5a2a2;
+  --color-status-info-strong: #7eb8ea;
+  --color-brand-primary-strong: #45c956;
 
   --color-module-path: #fbbf24;
   --color-module-wifi: #81c784;

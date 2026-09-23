@@ -554,7 +554,7 @@ export const WiFiSettings: React.NamedExoticComponent<WiFiSettingsProps> = memo(
                         'caption font-medium',
                         spacing.chip.md,
                         radius.default,
-                        'bg-status-error/10 text-status-error border border-status-error/20',
+                        'bg-status-error/10 text-status-error-strong border border-status-error/20',
                         'hover:bg-status-error/20 disabled:opacity-50',
                       )}
                     >

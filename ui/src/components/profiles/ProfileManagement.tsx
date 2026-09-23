@@ -291,7 +291,7 @@ export function ProfileManagement({ onClose }: ProfileManagementProps): React.Re
                 'mx-4 mt-content',
                 spacing.pad.sm,
                 radius.md,
-                'bg-status-error/10 border border-status-error/20 text-status-error body-small shrink-0',
+                'bg-status-error/10 border border-status-error/20 text-status-error-strong body-small shrink-0',
               )}
             >
               {error}
@@ -433,12 +433,12 @@ function ProfileCard({
             <div className="flex items-center gap-compact flex-wrap">
               <h3 className="body-small font-medium text-text-primary truncate">{profile.name}</h3>
               {profile.isDefault ? (
-                <span className="caption px-1.5 py-0.5 rounded bg-brand-primary/10 text-brand-primary font-medium">
+                <span className="caption px-1.5 py-0.5 rounded bg-brand-primary/10 text-brand-primary-strong font-medium">
                   {t('profile.default')}
                 </span>
               ) : null}
               {isActive ? (
-                <span className="caption px-1.5 py-0.5 rounded bg-status-success/10 text-status-success font-medium">
+                <span className="caption px-1.5 py-0.5 rounded bg-status-success/10 text-status-success-strong font-medium">
                   {t('profile.active')}
                 </span>
               ) : null}
@@ -524,7 +524,7 @@ function ProfileCard({
                   className={cn(
                     spacing.chip.sm,
                     radius.md,
-                    'border border-status-error/30 bg-status-error/5 hover:bg-status-error/10 text-status-error caption font-medium flex items-center gap-1.5',
+                    'border border-status-error/30 bg-status-error/5 hover:bg-status-error/10 text-status-error-strong caption font-medium flex items-center gap-1.5',
                   )}
                 >
                   <svg

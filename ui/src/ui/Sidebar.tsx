@@ -101,9 +101,9 @@ interface NavItemButtonProps {
 }
 
 function badgeClass(badge: string): string {
-  if (badge === 'New') return 'bg-status-success/15 text-status-success';
-  if (badge === 'Beta') return 'bg-status-warning/15 text-status-warning';
-  return 'bg-brand-primary/20 text-brand-accent';
+  if (badge === 'New') return 'bg-status-success/15 text-status-success-strong';
+  if (badge === 'Beta') return 'bg-status-warning/15 text-status-warning-strong';
+  return 'bg-brand-primary/20 text-brand-primary-strong';
 }
 
 const NavItemButton: FC<NavItemButtonProps> = ({ item, active, collapsed, onNavigate }) => (
