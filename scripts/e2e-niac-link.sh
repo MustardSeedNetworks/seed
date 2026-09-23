@@ -61,10 +61,8 @@ cleanup() {
   sudo ip link del "$seed_link" 2>/dev/null || true
   if [ "$exit_status" -ne 0 ]; then
     for log in niac.log seed.log; do
-      if [ -f "$run_dir/$log" ]; then
-        printf '\n%s (last 60 lines):\n' "$log" >&2
-        tail -60 "$run_dir/$log" >&2
-      fi
+      printf '\n%s (last 60 lines):\n' "$log" >&2
+      sudo tail -60 "$run_dir/$log" >&2 || true
     done
   fi
   sudo rm -rf "$run_dir"
