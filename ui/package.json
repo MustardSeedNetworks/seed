@@ -53,7 +53,7 @@
   },
   "devDependencies": {
     "@babel/core": "8.0.5",
-    "@biomejs/biome": "2.5.13",
+    "@biomejs/biome": "2.5.14",
     "@chromatic-com/storybook": "5.3.1",
     "@playwright/test": "1.63.0",
     "@rolldown/plugin-babel": "0.2.4",
@@ -68,7 +68,7 @@
     "@testing-library/react": "16.3.3",
     "@types/babel__core": "7.20.5",
     "@types/jscodeshift": "17.3.0",
-    "@types/node": "26.5.1",
+    "@types/node": "26.6.1",
     "@types/react": "19.3.0",
     "@types/react-dom": "19.3.0",
     "@vitejs/plugin-react": "6.1.1",
