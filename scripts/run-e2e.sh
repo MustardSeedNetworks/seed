@@ -70,31 +70,13 @@ if [ "${stray:-0}" -gt 0 ]; then
 fi
 
 port=$(python3 -c 'import socket; s=socket.socket(); s.bind(("127.0.0.1", 0)); print(s.getsockname()[1]); s.close()')
-case $(uname -s) in
-  Darwin) loopback=lo0 ;;
-  *) loopback=lo ;;
-esac
-printf '%s\n' \
-  "{\"server\":{\"port\":$port},\"interface\":{\"default\":\"$loopback\",\"fallbacks\":[],\"startup_retries\":0,\"startup_retry_wait\":0},\"networkDiscovery\":{\"enabled\":false,\"auto_scan\":false,\"options\":{\"passiveProtocols\":{\"lldp\":false,\"cdp\":false,\"edp\":false,\"ndp\":false},\"arpScan\":false,\"icmpScan\":false,\"portScan\":{\"enabled\":false},\"traceroute\":false,\"snmpQuery\":false},\"profiler\":{\"enabled\":false},\"ipv6_enabled\":false},\"healthChecks\":{\"ping_targets\":[],\"tcp_ports\":[],\"udp_ports\":[],\"http_endpoints\":[],\"rtsp_endpoints\":[],\"dicom_endpoints\":[],\"hl7_endpoints\":[],\"fhir_endpoints\":[],\"sql_endpoints\":[],\"fileshare_endpoints\":[],\"ldap_endpoints\":[],\"lti_endpoints\":[],\"opcua_endpoints\":[],\"modbus_endpoints\":[],\"run_performance\":false,\"run_speedtest\":false,\"run_iperf\":false,\"run_discovery\":false},\"iperf\":{\"enable_server\":false,\"auto_run_on_link\":false},\"fabOptions\":{\"run_health_checks\":false,\"run_network_discovery\":false,\"run_speedtest\":false,\"run_iperf\":false,\"run_performance\":false,\"auto_scan_on_link\":false},\"database\":{\"path\":\"$run_dir/seed.db\"},\"logging\":{\"file\":\"$run_dir/seed.log\"}}" \
-  >"$run_dir/config.json"
 
-# Job control, so the subshell below becomes a process-group leader and cleanup
+# Job control, so the daemon below becomes a process-group leader and cleanup
 # can reap its children as well as itself. Turned off again immediately: with
 # `set -m` left on, this script's own foreground commands get their own groups
 # and stop inheriting the terminal's signals as expected.
-#
-# HOME is repointed at the run directory so the daemon cannot read the
-# developer's own ~/.config/seed/.license (seed#2688). The licence manager
-# resolves its state from os.UserHomeDir() and has no other override, so a
-# machine that has ever run `seed license trial` was serving the suite an
-# activated Pro licence — every RequireFeature page unlocked and the free-tier
-# gate assertions in reports-page.spec.ts passed or failed by accident of the
-# host. CI was green only because its runners have no licence file.
 set -m
-(
-  cd "$run_dir"
-  HOME="$run_dir" SEED_LOGIN_MAX_ATTEMPTS=200 exec "$repo_dir/seed" --config "$run_dir/config.json"
-) >"$server_log" 2>&1 &
+"$repo_dir/scripts/e2e-daemon.sh" "$run_dir" "$port" >"$server_log" 2>&1 &
 server_pid=$!
 set +m
 
