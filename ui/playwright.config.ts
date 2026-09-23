@@ -66,7 +66,8 @@ export default defineConfig({
   ],
   use: {
     baseURL: requireBaseURL(),
-    trace: 'on-first-retry',
+    // Keep the failing attempt's evidence even when its retry passes.
+    trace: 'retain-on-failure',
     screenshot: 'only-on-failure',
     video: 'on-first-retry',
     // Gated to local dev only. CI is expected to provision a CA-trusted

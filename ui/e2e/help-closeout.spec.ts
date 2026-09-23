@@ -10,12 +10,12 @@ import {
   skipSetupWizard,
 } from './helpers/auth';
 
-async function tabTo(page: Page, target: Locator): Promise<void> {
+async function tabTo(page: Page, target: Locator, key = 'Tab'): Promise<void> {
   for (let count = 0; count < 100; count++) {
-    await page.keyboard.press('Tab');
+    await page.keyboard.press(key);
     if (await target.evaluate((element) => element === document.activeElement)) return;
   }
-  throw new Error(`Target is not reachable through Tab: ${await target.textContent()}`);
+  throw new Error(`Target is not reachable through ${key}: ${await target.textContent()}`);
 }
 
 async function expectAccessible(page: Page): Promise<void> {
@@ -305,12 +305,15 @@ test('viewer settings retain disabled controls and a reachable reason', async ({
 for (const width of [1440, 390]) {
   test(`${width}px help content scrolls by keyboard and returns focus to the section navigation`, async ({
     page,
+    browserName,
   }) => {
     await page.setViewportSize({ width, height: 700 });
     await page.goto('/network');
     await page.getByTestId('page-header-help-button').click();
     const back = page.getByTestId(width === 390 ? 'help-return-to-select' : 'help-return-to-toc');
-    await tabTo(page, back);
+    // macOS WebKit uses Option+Tab to include native links in keyboard navigation.
+    const linkTab = browserName === 'webkit' && process.platform === 'darwin' ? 'Alt+Tab' : 'Tab';
+    await tabTo(page, back, linkTab);
     await expect(back).toBeFocused();
     const content = page.getByTestId('help-drawer-content');
     await page.keyboard.press('PageDown');
