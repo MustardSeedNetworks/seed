@@ -197,7 +197,7 @@ export function HelpDrawer({
                       radius.default,
                       'body-small transition-colors text-left',
                       currentSection.id === entry.id
-                        ? 'bg-brand-primary/10 text-brand-primary font-medium'
+                        ? 'bg-brand-primary/10 text-brand-primary-strong font-medium'
                         : 'text-text-secondary hover:bg-surface-hover hover:text-text-primary',
                     )}
                     aria-current={currentSection.id === entry.id ? 'true' : undefined}

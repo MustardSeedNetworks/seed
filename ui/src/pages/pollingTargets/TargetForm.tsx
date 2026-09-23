@@ -78,7 +78,7 @@ export function TargetForm({ mode, initial, onSubmit, onCancel }: TargetFormProp
         {formError ? (
           <div
             data-testid="target-form-error"
-            className="mt-heading rounded-md border border-status-error/40 bg-status-error/10 pad-xs text-sm text-status-error"
+            className="mt-heading rounded-md border border-status-error/40 bg-status-error/10 pad-xs text-sm text-status-error-strong"
           >
             {formError}
           </div>

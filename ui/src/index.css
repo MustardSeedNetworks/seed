@@ -30,6 +30,7 @@
 
   /* Brand Colors - Mustard Seed Networks */
   --color-brand-primary: var(--color-brand-primary);
+  --color-brand-primary-strong: var(--color-brand-primary-strong);
   --color-brand-accent: var(--color-brand-accent);
   --color-brand-gold: var(--color-brand-gold);
 
@@ -74,6 +75,12 @@
   --color-status-error: var(--color-status-error);
   --color-status-info: var(--color-status-info);
 
+  /* Pill text — the hue's text on its own wash (see product-seed.css). */
+  --color-status-success-strong: var(--color-status-success-strong);
+  --color-status-warning-strong: var(--color-status-warning-strong);
+  --color-status-error-strong: var(--color-status-error-strong);
+  --color-status-info-strong: var(--color-status-info-strong);
+
   /* Module Accent Colors - for icons/badges only */
   --color-module-path: var(--color-module-path);
   --color-module-wifi: var(--color-module-wifi);
@@ -115,10 +122,19 @@
   --color-cat-6: var(--color-cat-6);
   --color-cat-7: var(--color-cat-7);
   --color-cat-8: var(--color-cat-8);
+  --color-cat-1-strong: var(--color-cat-1-strong);
+  --color-cat-2-strong: var(--color-cat-2-strong);
+  --color-cat-3-strong: var(--color-cat-3-strong);
+  --color-cat-4-strong: var(--color-cat-4-strong);
+  --color-cat-5-strong: var(--color-cat-5-strong);
+  --color-cat-6-strong: var(--color-cat-6-strong);
+  --color-cat-7-strong: var(--color-cat-7-strong);
+  --color-cat-8-strong: var(--color-cat-8-strong);
 
   /* Severity scale extension — CVSS "high" has no status-* equivalent (sits
    * between status-warning and status-error). Semantic, not categorical. */
   --color-severity-high: var(--color-severity-high);
+  --color-severity-high-strong: var(--color-severity-high-strong);
 
   /* Log-level tinted bg + readable fg pairs (extends the solid --color-log-*
    * above). For row highlights / chips in the log viewer. */
@@ -186,8 +202,20 @@
   --color-cat-7: #0d9488; /* teal */
   --color-cat-8: #e11d48; /* rose */
 
+  /* Pill text for the categorical set: the hue on its own /20 wash, darkened
+   * to 4.6:1 over the sunken surface (pillText.test.ts). */
+  --color-cat-1-strong: #1248c0; /* blue */
+  --color-cat-2-strong: #055e74; /* cyan */
+  --color-cat-3-strong: #392fe2; /* indigo */
+  --color-cat-4-strong: #0e652e; /* green */
+  --color-cat-5-strong: #963808; /* orange */
+  --color-cat-6-strong: #7315c9; /* purple */
+  --color-cat-7-strong: #096159; /* teal */
+  --color-cat-8-strong: #9f1433; /* rose */
+
   /* Severity "high" — LIGHT (orange-600, between warning and error). */
   --color-severity-high: #ea580c;
+  --color-severity-high-strong: #963808; /* = cat-5-strong, same hue */
 
   /* Log-level bg/fg pairs — LIGHT (tint bg + dark fg). */
   --color-log-trace-bg: #f8fafc;
@@ -244,8 +272,20 @@
   --color-cat-7: #2dd4bf; /* teal */
   --color-cat-8: #fb7185; /* rose */
 
+  /* Pill text, lightened to 4.6:1 on a /20 wash over the hover surface.
+   * Cyan, green and teal already clear it and keep their value. */
+  --color-cat-1-strong: #80b7fb; /* blue */
+  --color-cat-2-strong: #22d3ee; /* cyan */
+  --color-cat-3-strong: #a2aafa; /* indigo */
+  --color-cat-4-strong: #4ade80; /* green */
+  --color-cat-5-strong: #fca055; /* orange */
+  --color-cat-6-strong: #cd9efd; /* purple */
+  --color-cat-7-strong: #2dd4bf; /* teal */
+  --color-cat-8-strong: #fc91a0; /* rose */
+
   /* Severity "high" — DARK (orange-400). */
   --color-severity-high: #fb923c;
+  --color-severity-high-strong: #fca055; /* = cat-5-strong, same hue */
 
   /* Log-level bg/fg pairs — DARK (deep bg + light fg). */
   --color-log-trace-bg: #020617;

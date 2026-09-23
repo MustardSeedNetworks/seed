@@ -108,7 +108,7 @@ export const SLADashboardCard: React.NamedExoticComponent<SLADashboardCardProps>
                 {anomalyCount > 0 ? (
                   <span
                     className={cn(
-                      'text-xs px-cell py-0.5 bg-status-warning/10 text-status-warning',
+                      'text-xs px-cell py-0.5 bg-status-warning/10 text-status-warning-strong',
                       radius.full,
                     )}
                   >

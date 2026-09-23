@@ -442,7 +442,7 @@ export const ButtonIcons: Story = {
           className={cn(
             layout.inline.default,
             button.size.md,
-            'bg-status-success/10 text-status-success border border-status-success/20 rounded-lg hover:bg-status-success/20',
+            'bg-status-success/10 text-status-success-strong border border-status-success/20 rounded-lg hover:bg-status-success/20',
           )}
         >
           <Download className={iconTheme.size.sm} />
@@ -453,7 +453,7 @@ export const ButtonIcons: Story = {
           className={cn(
             layout.inline.default,
             button.size.md,
-            'bg-status-error/10 text-status-error border border-status-error/20 rounded-lg hover:bg-status-error/20',
+            'bg-status-error/10 text-status-error-strong border border-status-error/20 rounded-lg hover:bg-status-error/20',
           )}
         >
           <Trash2 className={iconTheme.size.sm} />

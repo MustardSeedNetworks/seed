@@ -406,12 +406,12 @@ function HealthScoreBadgeComponent({
   // Determine status color
   const getStatusColor = (): string => {
     if (score >= 80) {
-      return 'bg-status-success/15 text-status-success border-status-success/30';
+      return 'bg-status-success/15 text-status-success-strong border-status-success/30';
     }
     if (score >= 50) {
-      return 'bg-status-warning/15 text-status-warning border-status-warning/30';
+      return 'bg-status-warning/15 text-status-warning-strong border-status-warning/30';
     }
-    return 'bg-status-error/15 text-status-error border-status-error/30';
+    return 'bg-status-error/15 text-status-error-strong border-status-error/30';
   };
 
   const getStatusLabel = (): string => {

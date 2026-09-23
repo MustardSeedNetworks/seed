@@ -13,13 +13,13 @@ interface TagProps {
 
 const colorStyles: Record<TagColorScheme, string> = {
   gray: 'bg-bg-muted/20 text-text-secondary border-border-muted/30',
-  red: 'bg-status-error/15 text-status-error border-status-error/30',
-  green: 'bg-status-success/15 text-status-success border-status-success/30',
-  blue: 'bg-status-info/15 text-status-info border-status-info/30',
-  yellow: 'bg-status-warning/15 text-status-warning border-status-warning/30',
-  purple: 'bg-brand-primary/20 text-brand-accent border-brand-primary/30',
-  violet: 'bg-brand-primary/20 text-brand-accent border-brand-primary/30',
-  cyan: 'bg-status-info/15 text-status-info border-status-info/30',
+  red: 'bg-status-error/15 text-status-error-strong border-status-error/30',
+  green: 'bg-status-success/15 text-status-success-strong border-status-success/30',
+  blue: 'bg-status-info/15 text-status-info-strong border-status-info/30',
+  yellow: 'bg-status-warning/15 text-status-warning-strong border-status-warning/30',
+  purple: 'bg-brand-primary/20 text-brand-primary-strong border-brand-primary/30',
+  violet: 'bg-brand-primary/20 text-brand-primary-strong border-brand-primary/30',
+  cyan: 'bg-status-info/15 text-status-info-strong border-status-info/30',
 };
 
 export const Tag: FC<TagProps> = ({ children, colorScheme = 'gray', className = '' }) => (

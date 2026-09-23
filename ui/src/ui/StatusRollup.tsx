@@ -64,13 +64,13 @@ const STATE_STYLES: Record<
   warn: {
     edge: 'bg-status-warning',
     dot: 'bg-status-warning',
-    kicker: 'text-status-warning',
+    kicker: 'text-status-warning-strong',
     wash: 'bg-status-warning/5',
   },
   crit: {
     edge: 'bg-status-error',
     dot: 'bg-status-error',
-    kicker: 'text-status-error',
+    kicker: 'text-status-error-strong',
     wash: 'bg-status-error/5',
   },
   unknown: {

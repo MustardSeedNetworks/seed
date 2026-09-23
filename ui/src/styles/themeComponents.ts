@@ -80,11 +80,11 @@ export const badge = {
 
   variant: {
     default: 'bg-surface-hover text-text-primary',
-    success: 'bg-status-success/10 text-status-success',
-    warning: 'bg-status-warning/10 text-status-warning',
-    error: 'bg-status-error/10 text-status-error',
-    info: 'bg-status-info/10 text-status-info',
-    primary: 'bg-brand-primary/10 text-brand-primary',
+    success: 'bg-status-success/10 text-status-success-strong',
+    warning: 'bg-status-warning/10 text-status-warning-strong',
+    error: 'bg-status-error/10 text-status-error-strong',
+    info: 'bg-status-info/10 text-status-info-strong',
+    primary: 'bg-brand-primary/10 text-brand-primary-strong',
   },
 } as const;
 
@@ -105,12 +105,12 @@ export const alert = {
 
   variant: {
     error:
-      'bg-status-error/10 border-status-error/20 text-status-error dark:bg-status-error/15 dark:border-status-error/30',
+      'bg-status-error/10 border-status-error/20 text-status-error-strong dark:bg-status-error/15 dark:border-status-error/30',
     warning:
-      'bg-status-warning/10 border-status-warning/20 text-status-warning dark:bg-status-warning/15 dark:border-status-warning/30',
+      'bg-status-warning/10 border-status-warning/20 text-status-warning-strong dark:bg-status-warning/15 dark:border-status-warning/30',
     success:
-      'bg-status-success/10 border-status-success/20 text-status-success dark:bg-status-success/15 dark:border-status-success/30',
-    info: 'bg-status-info/10 border-status-info/20 text-status-info dark:bg-status-info/15 dark:border-status-info/30',
+      'bg-status-success/10 border-status-success/20 text-status-success-strong dark:bg-status-success/15 dark:border-status-success/30',
+    info: 'bg-status-info/10 border-status-info/20 text-status-info-strong dark:bg-status-info/15 dark:border-status-info/30',
   },
 } as const;
 

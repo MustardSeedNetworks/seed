@@ -229,7 +229,7 @@ export function DeviceRow({
           {openPorts.length > 0 ? (
             <span
               className={cn(
-                'text-xs px-1.5 py-0.5 bg-status-success/15 text-status-success',
+                'text-xs px-1.5 py-0.5 bg-status-success/15 text-status-success-strong',
                 radius.md,
               )}
             >
@@ -272,7 +272,7 @@ export function DeviceRow({
                 onClick={handleScan}
                 disabled={isScanning}
                 className={cn(
-                  'text-xs px-cell py-compact bg-brand-primary/15 text-brand-primary',
+                  'text-xs px-cell py-compact bg-brand-primary/15 text-brand-primary-strong',
                   radius.md,
                   'hover:bg-brand-primary/30 transition-colors disabled:opacity-50',
                 )}
@@ -442,7 +442,7 @@ export function DeviceRow({
                                 'px-1.5 py-0.5 text-xs',
                                 radius.sm,
                                 iface.operStatus === 'up'
-                                  ? 'bg-status-success/15 text-status-success'
+                                  ? 'bg-status-success/15 text-status-success-strong'
                                   : 'bg-surface-hover text-text-muted',
                               )}
                             >
@@ -477,7 +477,7 @@ export function DeviceRow({
                           <Tooltip text={vlan.name || `VLAN ${vlan.id}`} key={vlan.id}>
                             <span
                               className={cn(
-                                'px-1.5 py-0.5 text-xs bg-brand-primary/10 text-brand-primary',
+                                'px-1.5 py-0.5 text-xs bg-brand-primary/10 text-brand-primary-strong',
                                 radius.sm,
                               )}
                             >

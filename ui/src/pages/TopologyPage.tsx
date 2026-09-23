@@ -154,7 +154,7 @@ function NodeDetail({ id, onClear }: NodeDetailProps): JSX.Element {
   }
   if (error) {
     return (
-      <div className="rounded-2xl border border-status-error/40 bg-status-error/10 pad-lg text-sm text-status-error">
+      <div className="rounded-2xl border border-status-error/40 bg-status-error/10 pad-lg text-sm text-status-error-strong">
         {error}
       </div>
     );

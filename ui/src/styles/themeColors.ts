@@ -11,14 +11,14 @@
  * light/dark automatically — no dark: variants needed.
  */
 export const discoveryMethod = {
-  arp: 'bg-cat-1/15 text-cat-1',
-  ping: 'bg-cat-2/15 text-cat-2',
-  ndp: 'bg-cat-3/15 text-cat-3',
-  lldp: 'bg-cat-4/15 text-cat-4',
-  cdp: 'bg-cat-5/15 text-cat-5',
-  snmp: 'bg-cat-6/15 text-cat-6',
-  edp: 'bg-cat-7/15 text-cat-7',
-  mdns: 'bg-cat-8/15 text-cat-8',
+  arp: 'bg-cat-1/15 text-cat-1-strong',
+  ping: 'bg-cat-2/15 text-cat-2-strong',
+  ndp: 'bg-cat-3/15 text-cat-3-strong',
+  lldp: 'bg-cat-4/15 text-cat-4-strong',
+  cdp: 'bg-cat-5/15 text-cat-5-strong',
+  snmp: 'bg-cat-6/15 text-cat-6-strong',
+  edp: 'bg-cat-7/15 text-cat-7-strong',
+  mdns: 'bg-cat-8/15 text-cat-8-strong',
 } as const;
 
 /**
@@ -90,15 +90,15 @@ export const status = {
   },
 
   badge: {
-    success: 'bg-status-success/10 text-status-success',
-    warning: 'bg-status-warning/10 text-status-warning',
-    error: 'bg-status-error/10 text-status-error',
-    info: 'bg-status-info/10 text-status-info',
+    success: 'bg-status-success/10 text-status-success-strong',
+    warning: 'bg-status-warning/10 text-status-warning-strong',
+    error: 'bg-status-error/10 text-status-error-strong',
+    info: 'bg-status-info/10 text-status-info-strong',
 
-    successStrong: 'bg-status-success/15 text-status-success',
-    warningStrong: 'bg-status-warning/15 text-status-warning',
-    errorStrong: 'bg-status-error/15 text-status-error',
-    infoStrong: 'bg-status-info/15 text-status-info',
+    successStrong: 'bg-status-success/15 text-status-success-strong',
+    warningStrong: 'bg-status-warning/15 text-status-warning-strong',
+    errorStrong: 'bg-status-error/15 text-status-error-strong',
+    infoStrong: 'bg-status-info/15 text-status-info-strong',
   },
 
   // Legacy alias retained for existing call sites that use status.color.X.
@@ -119,31 +119,31 @@ export const status = {
 export const severity = {
   critical: {
     bg: 'bg-status-error/15',
-    text: 'text-status-error',
+    text: 'text-status-error-strong',
     border: 'border-status-error/30',
     dot: 'bg-status-error',
   },
   high: {
     bg: 'bg-severity-high/15',
-    text: 'text-severity-high',
+    text: 'text-severity-high-strong',
     border: 'border-severity-high/30',
     dot: 'bg-severity-high',
   },
   medium: {
     bg: 'bg-status-warning/15',
-    text: 'text-status-warning',
+    text: 'text-status-warning-strong',
     border: 'border-status-warning/30',
     dot: 'bg-status-warning',
   },
   low: {
     bg: 'bg-status-success/15',
-    text: 'text-status-success',
+    text: 'text-status-success-strong',
     border: 'border-status-success/30',
     dot: 'bg-status-success',
   },
   info: {
     bg: 'bg-status-info/15',
-    text: 'text-status-info',
+    text: 'text-status-info-strong',
     border: 'border-status-info/30',
     dot: 'bg-status-info',
   },

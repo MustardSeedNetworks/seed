@@ -489,7 +489,7 @@ export function SetupWizard({
                 spacing.margin.bottom.content,
                 'pad-sm bg-status-error/10 border border-status-error/20',
                 radius.md,
-                'text-status-error body-small',
+                'text-status-error-strong body-small',
               )}
             >
               {crossFieldError.message}
@@ -503,7 +503,7 @@ export function SetupWizard({
                 spacing.margin.bottom.content,
                 'pad-sm bg-status-error/10 border border-status-error/20',
                 radius.md,
-                'text-status-error body-small',
+                'text-status-error-strong body-small',
               )}
             >
               {submitError}
