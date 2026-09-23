@@ -5,6 +5,26 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.214.85](https://github.com/MustardSeedNetworks/seed/compare/v0.214.84...v0.214.85) (2026-09-23)
+
+
+### Bug Fixes
+
+* **deps:** update dependency @tanstack/react-query to v5.103.0 ([#2822](https://github.com/MustardSeedNetworks/seed/issues/2822)) ([e89a661](https://github.com/MustardSeedNetworks/seed/commit/e89a661ea4ead4dee5ac437230048baefb96b3c2))
+* **deps:** update dependency lucide-react to v1.46.0 ([#2823](https://github.com/MustardSeedNetworks/seed/issues/2823)) ([be25f41](https://github.com/MustardSeedNetworks/seed/commit/be25f4166f1ed11b906bd976a738367154e3b67e))
+
+
+### Continuous Integration
+
+* adopt the fleet phone-width gate against seed's daemon ([#2820](https://github.com/MustardSeedNetworks/seed/issues/2820)) ([5d75c43](https://github.com/MustardSeedNetworks/seed/commit/5d75c4306a844b54f23ae2bed601b2e53f3a3d72))
+
+
+### Miscellaneous
+
+* **api:** retire the unconsumed /telemetry/dns/security routes ([#2818](https://github.com/MustardSeedNetworks/seed/issues/2818)) ([8ca5fd0](https://github.com/MustardSeedNetworks/seed/commit/8ca5fd010e7a19c3f88c4ffc3f14d70b158ec525)), closes [#2817](https://github.com/MustardSeedNetworks/seed/issues/2817)
+* **deps:** update dependency markdownlint-cli2 to v0.23.3 ([#2815](https://github.com/MustardSeedNetworks/seed/issues/2815)) ([374237d](https://github.com/MustardSeedNetworks/seed/commit/374237d639e12e37dfe42904370dc0d6adf1bb3a))
+* **deps:** update frontend toolchain ([#2821](https://github.com/MustardSeedNetworks/seed/issues/2821)) ([845bf89](https://github.com/MustardSeedNetworks/seed/commit/845bf899b00e55fbb9346b0ab4ea286fc98aaff1))
+
 ## [0.214.84](https://github.com/MustardSeedNetworks/seed/compare/v0.214.83...v0.214.84) (2026-09-23)
 
 
