@@ -142,10 +142,15 @@ printf '%s\n' \
   >"$run_dir/config.json"
 
 # Root for the raw sockets the sweep uses; HOME repointed so the host's own
-# licence file cannot change the tier under test (seed#2688).
+# licence file cannot change the tier under test (seed#2688). Started from
+# the run directory because seed writes its certs/ and data/ relative to the
+# working directory, and as root they would land in the checkout.
 started_at=$(python3 -c 'import time; print(int(time.time() * 1000))')
-setsid sudo env HOME="$run_dir" SEED_LOGIN_MAX_ATTEMPTS=200 \
-  "$repo_dir/seed" --config "$run_dir/config.json" >"$run_dir/seed.out" 2>&1 &
+(
+  cd "$run_dir"
+  exec setsid sudo env HOME="$run_dir" SEED_LOGIN_MAX_ATTEMPTS=200 \
+    "$repo_dir/seed" --config "$run_dir/config.json" >"$run_dir/seed.out" 2>&1
+) &
 seed_pid=$!
 
 base_url=
