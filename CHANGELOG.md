@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.214.84](https://github.com/MustardSeedNetworks/seed/compare/v0.214.83...v0.214.84) (2026-09-23)
+
+
+### Tests
+
+* use native macOS WebKit link navigation ([#2811](https://github.com/MustardSeedNetworks/seed/issues/2811)) ([b482e98](https://github.com/MustardSeedNetworks/seed/commit/b482e98d3a58d4ddc5b948377eecf3f60584f533))
+
+
+### Miscellaneous
+
+* **deps:** update node.js to v26.9.0 ([#2809](https://github.com/MustardSeedNetworks/seed/issues/2809)) ([9112a3e](https://github.com/MustardSeedNetworks/seed/commit/9112a3e3f81297ee3e7418c90cfc76631ff0b70b))
+
 ## [0.214.83](https://github.com/MustardSeedNetworks/seed/compare/v0.214.82...v0.214.83) (2026-09-23)
 
 
