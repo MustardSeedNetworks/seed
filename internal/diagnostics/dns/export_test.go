@@ -1,7 +1,6 @@
 package dns
 
 import (
-	"net"
 	"sync"
 	"time"
 )
@@ -47,17 +46,6 @@ func (t *Tester) GetStatus(duration time.Duration, hasError bool) Status {
 // ExportGetSystemDNSPlatform is exported for testing.
 func ExportGetSystemDNSPlatform() []string {
 	return getSystemDNSPlatform()
-}
-
-// ExportIsPrivateIP is exported for testing.
-func ExportIsPrivateIP(ip net.IP) bool {
-	return isPrivateIP(ip)
-}
-
-// ExportCalculateSeverity is exported for testing.
-func ExportCalculateSeverity(result *SecurityScanResult) string {
-	scanner := NewSecurityScanner(DefaultSecurityScanConfig())
-	return scanner.calculateSeverity(result)
 }
 
 // TestResolverSource carries a resolverSource across the package boundary so

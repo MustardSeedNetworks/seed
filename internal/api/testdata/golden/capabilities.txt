@@ -412,23 +412,6 @@ body:
   {
     "maxBodyBytes": 262144,
     "methods": [
-      "GET",
-      "POST"
-    ],
-    "path": "/api/v1/telemetry/dns/security"
-  },
-  {
-    "maxBodyBytes": 262144,
-    "methods": [
-      "GET",
-      "PUT"
-    ],
-    "minRole": "operator",
-    "path": "/api/v1/telemetry/dns/security/settings"
-  },
-  {
-    "maxBodyBytes": 262144,
-    "methods": [
       "GET"
     ],
     "path": "/api/v1/telemetry/gateway"

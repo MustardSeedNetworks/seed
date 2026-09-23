@@ -20,7 +20,7 @@ func keyCall() *regexp.Regexp {
 
 // knownUnresolved is the debt this test found and does not fix.
 //
-// 39 of the API's 106 distinct literal keys have no message in either locale.
+// 33 of the API's 107 distinct literal keys have no message in either locale.
 // (57 when this list was written; the profile keys were written in #2331,
 // where the router fix meant an operator could reach those errors at all.)
 // Writing the copy is its own piece of work in two languages, tracked
@@ -39,14 +39,10 @@ func knownUnresolvedKeys() []string {
 		"errors.discovery.managerUnavailable",
 		"errors.health.deviceDiscoveryNotAvailable",
 		"errors.health.dnsNotAvailable",
-		"errors.health.dnsSecurityNotAvailable",
 		"errors.health.iperfInvalidAction",
 		"errors.health.iperfServerStartFailed",
 		"errors.health.iperfServerStopFailed",
 		"errors.health.iperfValidationFailed",
-		"errors.health.noServersToScan",
-		"errors.health.scanFailed",
-		"errors.health.scanInProgress",
 		"errors.health.speedtestInProgress",
 		"errors.health.speedtestNotAvailable",
 		"errors.logs.notInitialized",

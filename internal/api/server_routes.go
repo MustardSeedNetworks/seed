@@ -418,17 +418,6 @@ func (s *Server) setupTelemetryRoutes() {
 			methods: get,
 		},
 		{path: APIVersionPrefix + "/telemetry/dns", handler: s.handleDNS, methods: getPost},
-		{
-			path:    APIVersionPrefix + "/telemetry/dns/security",
-			handler: s.handleDNSSecurity,
-			methods: getPost,
-		},
-		{
-			path:    APIVersionPrefix + "/telemetry/dns/security/settings",
-			handler: s.handleDNSSecuritySettings,
-			methods: getPut,
-			minRole: op,
-		},
 		{path: APIVersionPrefix + "/telemetry/gateway", handler: s.handleGateway, methods: get},
 		// Reads the lease this host already holds — no DISCOVER is sent and no
 		// target is supplied, so it is a read of local state rather than an
