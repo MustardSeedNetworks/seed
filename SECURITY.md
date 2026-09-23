@@ -77,7 +77,12 @@ Out of scope:
 - Use valid TLS certificates in production. Self-signed certs are
   acceptable for isolated networks; `./seed install-ca` trusts the
   generated cert system-wide for dev.
-- Change default credentials immediately (12+ char password rotation).
+- Create an administrator password during protected first-run setup; no usable
+  default credential is supplied.
+- Password strength checks run locally. Breach-corpus lookups are off by
+  default; set `SEED_ENABLE_HIBP=1` only if outbound password-hash-prefix
+  checks against Have I Been Pwned are permitted. The plaintext password is
+  never sent. An offline or unavailable lookup is not proof of no breach.
 - Deploy on isolated / management networks where possible; firewall
   the web interface (port 8443) to known clients.
 - Verify release artifacts with `cosign verify-blob` against the

@@ -6,10 +6,9 @@
 // the response for the remaining 35 characters. The plaintext password
 // is never transmitted.
 //
-// Per the audit notes for task #86 this check is opt-out: when the
-// environment variable SEED_DISABLE_HIBP=1 is set the function skips
-// the network call and returns (false, 0, nil), preserving the
-// air-gapped/offline deployment story.
+// This check is offline by default. Only SEED_ENABLE_HIBP=1 permits
+// an outbound request. Otherwise it returns (false, 0, nil), which
+// means the breach corpus was not checked, not that a password is safe.
 //
 // Network failures (timeout, DNS, closed port, non-2xx) are
 // intentionally non-fatal: they log a WARN and return (false, 0, nil)
@@ -36,7 +35,7 @@ import (
 
 // HIBP integration constants.
 const (
-	hibpEnvDisable     = "SEED_DISABLE_HIBP"
+	hibpEnvEnable      = "SEED_ENABLE_HIBP"
 	hibpRangeURL       = "https://api.pwnedpasswords.com/range/"
 	hibpUserAgent      = "seed/security-check"
 	hibpRequestTimeout = 5 * time.Second
@@ -75,7 +74,7 @@ func hibpClient() *http.Client {
 // seen (0 when the suffix is not in the response or when the check is
 // disabled).
 //
-// Returns (false, 0, nil) — never an error — when SEED_DISABLE_HIBP=1
+// Returns (false, 0, nil) — never an error — unless SEED_ENABLE_HIBP=1
 // or when the network call fails for any reason. This is deliberate:
 // HIBP unreachability must not block legitimate password rotations on
 // air-gapped or restricted-egress deployments.
@@ -98,9 +97,9 @@ func CheckPasswordBreached(ctx context.Context, password string) (bool, int, err
 	return count > 0, count, nil
 }
 
-// hibpDisabled returns true when the env-var opt-out is set to "1".
+// hibpDisabled rejects every configuration except explicit opt-in.
 func hibpDisabled() bool {
-	return strings.TrimSpace(os.Getenv(hibpEnvDisable)) == "1"
+	return os.Getenv(hibpEnvEnable) != "1"
 }
 
 // sha1PrefixAndSuffix returns the (5-char prefix, 35-char suffix)
