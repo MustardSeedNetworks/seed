@@ -163,7 +163,6 @@ func schemaTargets() []schemaTarget {
 		{&api.PortScanRequest{}, "port-scan-request.schema.json"},
 		{&api.TCPProbeRequest{}, "tcp-probe-request.schema.json"},
 		{&api.DNSResponse{}, "dns-response.schema.json"},
-		{&api.DNSSecurityScanRequest{}, "dns-security-scan-request.schema.json"},
 		{&api.EngineScanRequest{}, "engine-scan-request.schema.json"},
 		{&api.SetInterfaceRequest{}, "set-interface-request.schema.json"},
 		{&api.WiFiSettingsResponse{}, "wifi-settings-response.schema.json"},

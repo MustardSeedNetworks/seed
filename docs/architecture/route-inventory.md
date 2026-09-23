@@ -141,8 +141,6 @@ today; the registry makes it explicit per route.
 | `/api/v1/telemetry/dhcp/rogue/config` | `handleRogueDHCPConfig` | operator | — | — |
 | `/api/v1/telemetry/dhcp/rogue/servers` | `handleRogueDHCPServers` | — | — | — |
 | `/api/v1/telemetry/dns` | `handleDNS` | — | — | — |
-| `/api/v1/telemetry/dns/security` | `handleDNSSecurity` | — | — | — |
-| `/api/v1/telemetry/dns/security/settings` | `handleDNSSecuritySettings` | operator | — | — |
 | `/api/v1/telemetry/gateway` | `handleGateway` | — | — | — |
 | `/api/v1/telemetry/probes/anomalies` | `handleHealthCheckAnomalies` | — | anomaly_detection | — |
 | `/api/v1/telemetry/probes/run` | `handleHealthChecks` | — | — | yes |

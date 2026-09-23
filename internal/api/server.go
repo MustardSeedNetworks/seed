@@ -207,7 +207,6 @@ type Server struct {
 
 	// --- On-demand network diagnostics ---
 	dnsTest       *dns.Tester
-	dnsSec        *dns.SecurityScanner
 	dhcpMon       *dhcp.Monitor
 	rogueDet      *dhcp.RogueDetector
 	gatewayTest   *gateway.Tester
@@ -426,7 +425,6 @@ func (s *Server) initAuthSecurity(cfg *config.Config, trustedProxies *TrustedPro
 // funlen limit.
 func (s *Server) initTelemetryAndWiFiServices(cfg *config.Config) {
 	s.dnsTest = dns.NewTesterForInterface("", cfg.DNS.TestHostname, dns.DefaultThresholds(), cfg.Interface.Default)
-	s.dnsSec = dns.NewSecurityScanner(dns.DefaultSecurityScanConfig())
 	s.gatewayTest = gateway.NewTesterForInterface(gateway.DefaultThresholds(), cfg.Interface.Default)
 	s.vlanMgr = vlan.NewManager(cfg.Interface.Default)
 	s.speedtestTest = speedtest.NewTesterWithConfig(cfg.Speedtest.ServerID)
@@ -815,9 +813,6 @@ func (s *Server) VulnScanner() *vuln.VulnerabilityScanner { return s.vulnScan }
 // DNSTester returns the DNS tester.
 func (s *Server) DNSTester() *dns.Tester { return s.dnsTest }
 
-// DNSSecurityScanner returns the DNS security scanner.
-func (s *Server) DNSSecurityScanner() *dns.SecurityScanner { return s.dnsSec }
-
 // DHCPMonitor returns the DHCP monitor.
 func (s *Server) DHCPMonitor() *dhcp.Monitor { return s.dhcpMon }
 
@@ -882,20 +877,6 @@ func (s *Server) discoveryService() *enumerate.Service        { return s.discove
 func (s *Server) discoveryEngine() *discovery.Engine          { return s.discoveryEng }
 func (s *Server) problemDetector() *discovery.ProblemDetector { return s.problemDet }
 
-// enabledDNSServers returns the addresses of the configured, enabled DNS servers,
-// encapsulating the config lock + layout so handlers stay free of it.
-func (s *Server) enabledDNSServers() []string {
-	s.config.RLock()
-	defer s.config.RUnlock()
-	addrs := make([]string, 0, len(s.config.DNS.Servers))
-	for _, srv := range s.config.DNS.Servers {
-		if srv.Enabled {
-			addrs = append(addrs, srv.Address)
-		}
-	}
-	return addrs
-}
-
 // resolveWiFiInterface picks the Wi-Fi interface for a request: an explicit query
 // override, else the configured Wi-Fi interface, else the default interface.
 func (s *Server) resolveWiFiInterface(r *http.Request) string {
@@ -932,7 +913,6 @@ func (s *Server) anomalyEngine() *anomaly.Engine {
 func (s *Server) bluetoothScanner() *enumerate.BluetoothScanner { return s.bluetoothScan }
 func (s *Server) vulnScanner() *vuln.VulnerabilityScanner       { return s.vulnScan }
 func (s *Server) dnsTester() *dns.Tester                        { return s.dnsTest }
-func (s *Server) dnsSecurityScanner() *dns.SecurityScanner      { return s.dnsSec }
 func (s *Server) dhcpMonitor() *dhcp.Monitor                    { return s.dhcpMon }
 func (s *Server) rogueDetector() *dhcp.RogueDetector            { return s.rogueDet }
 func (s *Server) gatewayTester() *gateway.Tester                { return s.gatewayTest }
