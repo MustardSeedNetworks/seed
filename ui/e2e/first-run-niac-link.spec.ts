@@ -33,7 +33,7 @@ function remainingBudget(): number {
 }
 
 function listedAddresses(body: unknown): Set<string> {
-  const devices = (body as { devices?: unknown }).devices;
+  const { devices } = body as { devices?: unknown };
   if (!Array.isArray(devices)) {
     return new Set();
   }
@@ -52,7 +52,11 @@ async function expectDaemonFoundEveryDevice(request: APIRequestContext): Promise
         const found = response.ok() ? listedAddresses(await response.json()) : new Set<string>();
         return expectedIPs.filter((ip) => !found.has(ip));
       },
-      { message: 'addresses the daemon has not found', timeout: remainingBudget(), intervals: [1_000] },
+      {
+        message: 'addresses the daemon has not found',
+        timeout: remainingBudget(),
+        intervals: [1_000],
+      },
     )
     .toEqual([]);
 }
@@ -72,9 +76,7 @@ async function expectEveryDeviceListed(page: Page, route: string): Promise<void>
 test.describe('first run over a NIAC link', () => {
   test.setTimeout(ACCEPTANCE_MS + 30_000);
 
-  test('Network and Security list every scenario device within 90 s of start', async ({
-    page,
-  }) => {
+  test('Network and Security list every scenario device within 90 s of start', async ({ page }) => {
     expect(Number.isFinite(startedAt)).toBe(true);
     expect(expectedIPs.length).toBeGreaterThan(0);
 
