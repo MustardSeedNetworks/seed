@@ -5,22 +5,27 @@
  * judging the login screen.
  *
  * The browser comes from the gate's own Playwright, not ui/'s: the gate
- * installs a build for its pinned driver only, and puts that driver on
- * NODE_PATH, which only require() consults. (helpers/auth.ts still loads ui/'s
+ * installs a build for its pinned driver only and passes that driver's
+ * node_modules as NODE_PATH. require() is anchored THERE, because resolving
+ * from this file finds ui/node_modules/playwright first — a different version
+ * whose browser the runner does not have. (helpers/auth.ts still loads ui/'s
  * @playwright/test for its `expect`; nothing here launches from it.) Run under
  * plain `node`, so imports carry `.ts`.
  */
 import { createRequire } from 'node:module';
+import { resolve } from 'node:path';
 import process from 'node:process';
 
 import { signInAndPersist } from './helpers/sign-in.ts';
 
-const { chromium } = createRequire(import.meta.url)('playwright') as typeof import('playwright');
-const { BASE_URL: baseURL, STORAGE_STATE: outPath } = process.env;
-if (!baseURL || !outPath) {
-  process.stderr.write('BASE_URL and STORAGE_STATE are required\n');
+const { BASE_URL: baseURL, STORAGE_STATE: outPath, NODE_PATH: gateModules } = process.env;
+if (!baseURL || !outPath || !gateModules) {
+  process.stderr.write('BASE_URL, STORAGE_STATE and NODE_PATH are required\n');
   process.exit(2);
 }
+const { chromium } = createRequire(resolve(gateModules, '..', 'package.json'))(
+  'playwright',
+) as typeof import('playwright');
 
 const browser = await chromium.launch();
 try {
