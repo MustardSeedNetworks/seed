@@ -39,8 +39,10 @@ niac_pid=
 seed_pid=
 exit_status=0
 
-# Both daemons run as root under `set -m`, so each leads its own process
-# group and cleanup can reach everything it forked (seed#2420).
+# Each daemon starts under setsid, so it leads its own process group and
+# cleanup can reach everything it forked (seed#2420). Not `set -m`: dash
+# turns job control off when there is no terminal, which is every CI runner
+# and every ssh session, and the daemons then share this script's group.
 kill_group() {
   sudo kill -TERM -- "-$1" 2>/dev/null || return 0
   sleep 1
@@ -52,7 +54,9 @@ cleanup() {
   for pid in $seed_pid $niac_pid; do
     kill_group "$pid"
   done
-  wait 2>/dev/null || true
+  for pid in $seed_pid $niac_pid; do
+    wait "$pid" 2>/dev/null || true
+  done
   sudo ip netns del "$netns" 2>/dev/null || true
   sudo ip link del "$seed_link" 2>/dev/null || true
   if [ "$exit_status" -ne 0 ]; then
@@ -120,11 +124,9 @@ sudo ip netns exec "$netns" ip link set "$niac_link" up
 sudo ip addr add "$seed_cidr" dev "$seed_link"
 sudo ip link set "$seed_link" up
 
-set -m
-sudo ip netns exec "$netns" niac daemon --once "$niac_link" "$run_dir/scenario.yaml" \
+setsid sudo ip netns exec "$netns" niac daemon --once "$niac_link" "$run_dir/scenario.yaml" \
   --storage disabled --cert-dir "$run_dir/niac-certs" >"$run_dir/niac.log" 2>&1 &
 niac_pid=$!
-set +m
 
 attempt=0
 until grep -q 'Simulation started' "$run_dir/niac.log" 2>/dev/null; do
@@ -144,11 +146,9 @@ printf '%s\n' \
 # Root for the raw sockets the sweep uses; HOME repointed so the host's own
 # licence file cannot change the tier under test (seed#2688).
 started_at=$(python3 -c 'import time; print(int(time.time() * 1000))')
-set -m
-sudo env HOME="$run_dir" SEED_LOGIN_MAX_ATTEMPTS=200 \
+setsid sudo env HOME="$run_dir" SEED_LOGIN_MAX_ATTEMPTS=200 \
   "$repo_dir/seed" --config "$run_dir/config.json" >"$run_dir/seed.out" 2>&1 &
 seed_pid=$!
-set +m
 
 base_url=
 attempt=0
