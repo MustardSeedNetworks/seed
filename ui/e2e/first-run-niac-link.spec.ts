@@ -1,4 +1,4 @@
-import { expect, type Page, test } from '@playwright/test';
+import { type APIRequestContext, expect, type Page, test } from '@playwright/test';
 
 /**
  * A fresh install finds its neighbours with no Settings visit (seed#2674).
@@ -13,6 +13,12 @@ import { expect, type Page, test } from '@playwright/test';
  *
  * The 90 s budget is the row's acceptance and is measured from daemon start,
  * so the time global setup spends signing in counts against it.
+ *
+ * The daemon's inventory is checked before any page loads. Network and
+ * Security POST a scan of their own on mount (seed#2691), and that scan alone
+ * finds every device on an install whose discovery methods are all off, so an
+ * assertion made only through the pages cannot tell a working default from a
+ * broken one.
  */
 const ACCEPTANCE_MS = 90_000;
 
@@ -24,6 +30,31 @@ test.skip(!enabled, 'needs scripts/e2e-niac-link.sh (a NIAC scenario over a veth
 
 function remainingBudget(): number {
   return Math.max(startedAt + ACCEPTANCE_MS - Date.now(), 1);
+}
+
+function listedAddresses(body: unknown): Set<string> {
+  const devices = (body as { devices?: unknown }).devices;
+  if (!Array.isArray(devices)) {
+    return new Set();
+  }
+  return new Set(
+    devices
+      .map((device: unknown) => (device as { ip?: unknown }).ip)
+      .filter((ip): ip is string => typeof ip === 'string'),
+  );
+}
+
+async function expectDaemonFoundEveryDevice(request: APIRequestContext): Promise<void> {
+  await expect
+    .poll(
+      async () => {
+        const response = await request.get('/api/v1/security/devices');
+        const found = response.ok() ? listedAddresses(await response.json()) : new Set<string>();
+        return expectedIPs.filter((ip) => !found.has(ip));
+      },
+      { message: 'addresses the daemon has not found', timeout: remainingBudget(), intervals: [1_000] },
+    )
+    .toEqual([]);
 }
 
 async function expectEveryDeviceListed(page: Page, route: string): Promise<void> {
@@ -47,6 +78,7 @@ test.describe('first run over a NIAC link', () => {
     expect(Number.isFinite(startedAt)).toBe(true);
     expect(expectedIPs.length).toBeGreaterThan(0);
 
+    await expectDaemonFoundEveryDevice(page.request);
     await expectEveryDeviceListed(page, '/network');
     await expectEveryDeviceListed(page, '/security');
 
