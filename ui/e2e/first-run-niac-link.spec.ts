@@ -32,7 +32,8 @@ async function expectEveryDeviceListed(page: Page, route: string): Promise<void>
     await page.getByTestId('discovery-card-maximize').click({ timeout: 2_000 });
     const dialog = page.getByRole('dialog');
     for (const ip of expectedIPs) {
-      await expect(dialog.getByText(ip, { exact: true })).toBeVisible({ timeout: 1_000 });
+      // A device with no name shows its address in the name column as well.
+      await expect(dialog.getByText(ip, { exact: true }).first()).toBeVisible({ timeout: 1_000 });
     }
   }).toPass({ timeout: remainingBudget(), intervals: [2_000] });
 }
