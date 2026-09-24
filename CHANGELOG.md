@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.214.89](https://github.com/MustardSeedNetworks/seed/compare/v0.214.88...v0.214.89) (2026-09-24)
+
+
+### Bug Fixes
+
+* **ui:** localise the discovery cards and polling target form copy ([#2845](https://github.com/MustardSeedNetworks/seed/issues/2845)) ([4724d03](https://github.com/MustardSeedNetworks/seed/commit/4724d03c5760200bb95be1bf4545289e365be1fd)), closes [#2843](https://github.com/MustardSeedNetworks/seed/issues/2843)
+* **ui:** re-copy canonical msn-shared.css with the status pill text tokens ([#2849](https://github.com/MustardSeedNetworks/seed/issues/2849)) ([1e74def](https://github.com/MustardSeedNetworks/seed/commit/1e74def845cd47f4fb7fe3bd0ef42279663cdb60)), closes [#2848](https://github.com/MustardSeedNetworks/seed/issues/2848)
+
 ## [0.214.88](https://github.com/MustardSeedNetworks/seed/compare/v0.214.87...v0.214.88) (2026-09-24)
 
 
