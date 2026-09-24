@@ -1,0 +1,34 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/MustardSeedNetworks/seed/main/docs/schemas/api/qos-send-request.schema.json",
+  "$ref": "#/$defs/SendRequest",
+  "$defs": {
+    "SendRequest": {
+      "properties": {
+        "target": {
+          "type": "string"
+        },
+        "port": {
+          "type": "integer"
+        },
+        "dscp": {
+          "items": {
+            "type": "integer"
+          },
+          "type": "array"
+        },
+        "count": {
+          "type": "integer"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "target",
+        "port"
+      ]
+    }
+  },
+  "title": "SendRequest",
+  "description": "SendRequest — generated from the Go struct in internal/api; refresh with `make schema` after struct changes."
+}

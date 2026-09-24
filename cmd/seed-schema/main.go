@@ -28,6 +28,7 @@ import (
 	"github.com/MustardSeedNetworks/seed/internal/api"
 	"github.com/MustardSeedNetworks/seed/internal/config"
 	"github.com/MustardSeedNetworks/seed/internal/diagnostics/multicast"
+	"github.com/MustardSeedNetworks/seed/internal/diagnostics/qos"
 	"github.com/MustardSeedNetworks/seed/internal/discovery/bonjour"
 )
 
@@ -245,6 +246,13 @@ func schemaTargets() []schemaTarget {
 		// multicast package's own types for the same reason as the browse.
 		{&multicast.ListenRequest{}, "multicast-listen-request.schema.json"},
 		{&multicast.ListenResult{}, "multicast-listen-response.schema.json"},
+
+		// #400's DSCP preservation check, two jobs-spine kinds (one per host),
+		// registered as the qos package's own types like the listen above.
+		{&qos.SendRequest{}, "qos-send-request.schema.json"},
+		{&qos.SendResult{}, "qos-send-response.schema.json"},
+		{&qos.ListenRequest{}, "qos-listen-request.schema.json"},
+		{&qos.ListenResult{}, "qos-listen-response.schema.json"},
 
 		// Profile/settings config — code-first model of the per-profile
 		// config.Config blob (ADR-0007/0008, Phase 7 S6). The profile Config
