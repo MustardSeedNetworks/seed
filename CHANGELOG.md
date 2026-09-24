@@ -5,6 +5,23 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.214.87](https://github.com/MustardSeedNetworks/seed/compare/v0.214.86...v0.214.87) (2026-09-24)
+
+
+### Bug Fixes
+
+* **ui:** give pill text a -strong token measured on its own wash ([#2830](https://github.com/MustardSeedNetworks/seed/issues/2830)) ([e144881](https://github.com/MustardSeedNetworks/seed/commit/e144881bf7adc97b91fc1e1757462d63891886b0))
+
+
+### Tests
+
+* **ui:** put the last three settings sections under the locale-copy suite ([#2836](https://github.com/MustardSeedNetworks/seed/issues/2836)) ([9fcb96f](https://github.com/MustardSeedNetworks/seed/commit/9fcb96fa447e1b8a828de690b27aa7ac4930a012)), closes [#2835](https://github.com/MustardSeedNetworks/seed/issues/2835)
+
+
+### Miscellaneous
+
+* **deps:** update dependency jsdom to v30.1.0 ([#2837](https://github.com/MustardSeedNetworks/seed/issues/2837)) ([3ebbc51](https://github.com/MustardSeedNetworks/seed/commit/3ebbc51ad1d901d811b1984d2b140bb9b549f492))
+
 ## [0.214.86](https://github.com/MustardSeedNetworks/seed/compare/v0.214.85...v0.214.86) (2026-09-23)
 
 
