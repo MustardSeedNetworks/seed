@@ -15,7 +15,10 @@
 # thing under test. ui/e2e/first-run-niac-link.spec.ts then asserts that
 # Network and Security list every scenario device within 90 s of seed
 # starting, and this script asserts the service log names the default
-# discovery methods.
+# discovery methods. When the scenario has SNMP agents,
+# ui/e2e/niac-link-promotion.spec.ts runs next against the same daemon: it
+# saves the scenario's community and requires the agents to become polled
+# polling targets and topology nodes (seed#2692).
 set -eu
 
 template=${1:-home-network}
@@ -86,10 +89,12 @@ fi
 
 niac template use "$template" "$run_dir/scenario.yaml" >/dev/null
 
-# The addresses the spec expects: each device's first address inside seed's
+# The addresses the specs expect: each device's first address inside seed's
 # subnet. A device with none there (a second interface on another network)
-# is not on this link and is not expected.
-expected_ips=$(python3 - "$run_dir/scenario.yaml" "$seed_cidr" <<'EOF'
+# is not on this link and is not expected. Three lines: every such address,
+# the subset whose device runs an SNMP agent, and that agent's community.
+# One credential has to match every agent, so a second community is an error.
+scenario=$(python3 - "$run_dir/scenario.yaml" "$seed_cidr" <<'EOF'
 import ipaddress
 import re
 import sys
@@ -99,20 +104,36 @@ subnet = ipaddress.ip_interface(seed_cidr).network
 devices = []
 for line in open(path, encoding="utf-8"):
     if re.match(r"^  - name:", line):
-        devices.append([])
+        devices.append({"addresses": [], "community": None})
+    if not devices:
+        continue
     match = re.match(r'^\s+- "?(\d+\.\d+\.\d+\.\d+)"?\s*$', line)
-    if match and devices:
-        devices[-1].append(match.group(1))
-found = []
-for addresses in devices:
-    local = [a for a in addresses if ipaddress.ip_address(a) in subnet]
-    if local:
-        found.append(local[0])
+    if match:
+        devices[-1]["addresses"].append(match.group(1))
+    match = re.match(r'^\s+community:\s*"?([^"\s]+)"?\s*$', line)
+    if match:
+        devices[-1]["community"] = match.group(1)
+found, agents, communities = [], [], set()
+for device in devices:
+    local = [a for a in device["addresses"] if ipaddress.ip_address(a) in subnet]
+    if not local:
+        continue
+    found.append(local[0])
+    if device["community"]:
+        agents.append(local[0])
+        communities.add(device["community"])
 if not found:
     sys.exit(f"no device in {path} has an address in {subnet}")
+if len(communities) > 1:
+    sys.exit(f"{path} uses more than one SNMP community: {sorted(communities)}")
 print(",".join(found))
+print(",".join(agents))
+print(next(iter(communities), ""))
 EOF
 )
+expected_ips=$(printf '%s\n' "$scenario" | sed -n 1p)
+snmp_ips=$(printf '%s\n' "$scenario" | sed -n 2p)
+snmp_community=$(printf '%s\n' "$scenario" | sed -n 3p)
 
 sudo ip netns add "$netns"
 sudo ip link add "$seed_link" type veth peer name "$niac_link"
@@ -196,3 +217,19 @@ for method in lldp cdp arp icmp; do
   esac
 done
 printf 'service log: %s\n' "$methods"
+
+if [ -z "$snmp_ips" ]; then
+  printf '%s\n' "$template has no SNMP agent on this link; promotion not exercised"
+  exit 0
+fi
+
+# A second Playwright run, so the first spec's 90 s clock, measured from
+# daemon start, never includes this one's wait for two rescans.
+SEED_E2E_NIAC_LINK=1 \
+SEED_E2E_LINK="$seed_link" \
+SEED_E2E_SNMP_IPS="$snmp_ips" \
+SEED_E2E_SNMP_COMMUNITY="$snmp_community" \
+E2E_BASE_URL="$base_url" \
+PLAYWRIGHT_IGNORE_HTTPS_ERRORS=true \
+  node --disable-warning=DEP0205 ./node_modules/playwright/cli.js test \
+  e2e/niac-link-promotion.spec.ts --project=chromium
