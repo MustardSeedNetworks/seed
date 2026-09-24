@@ -147,7 +147,16 @@
     "emptySelectPrompt": "Select a target to see its configuration and collector chain.",
     "lastPollFailed": "Last poll failed",
     "noPollYet": "No poll completed yet",
-    "pollingPaused": "Polling paused"
+    "pollingPaused": "Polling paused",
+    "formCreateTitle": "Add polling target",
+    "formEditTitle": "Edit polling target",
+    "fieldName": "Name",
+    "fieldIpAddress": "IP address",
+    "fieldSnmpVersion": "SNMP version",
+    "fieldPollInterval": "Poll interval (seconds)",
+    "nameAndIpRequired": "Name and IP address are required.",
+    "saveFailed": "Failed to save",
+    "saveChanges": "Save changes"
   },
   "reports": {
     "description": "Aggregated SLA dashboard, compliance tracking, and historical reporting.",

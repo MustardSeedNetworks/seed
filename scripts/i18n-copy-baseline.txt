@@ -9,8 +9,9 @@
 #
 # Grouped by subtree, one reason per group. Cleared so far: everything under
 # ui/src/components/settings except the three protocol field names below
-# (S1-14c), and the shared primitives, app chrome and contexts (S1-14d, #2839).
-# The cards and pages below are what remains of S1-14d.
+# (S1-14c), the shared primitives, app chrome and contexts (S1-14d, #2839), and
+# the dashboard cards and pages (S1-14d slice 4). Every line left is here on
+# purpose, with its reason above it.
 
 # --- ui/src/components/help/
 # The in-app help tree. Every word of it is English in the source; it has no
@@ -20,13 +21,9 @@
 # export, into help.json, which left the file with no importer at all.
 
 # --- ui/src/components/cards/
-# Dashboard cards. Slice 2 of S1-14 asserted their copy through the pages that
-# render them; what is left here is the copy no page state reaches.
+# Protocol and radio names on the health-check and Bluetooth cards. They are
+# standard identifiers, kept verbatim the way the glossary keeps SSID and MTU.
 ui/src/components/cards/BluetoothDeviceModal.tsx copy-prop label=BLE
-ui/src/components/cards/DiscoveryModal.tsx copy-prop aria-label=Close
-ui/src/components/cards/DiscoveryModalDeviceRow.tsx literal Just now
-ui/src/components/cards/DnsCard.tsx literal No A record
-ui/src/components/cards/DnsCard.tsx literal No AAAA record
 ui/src/components/cards/HealthCheckCardProtocolSections.tsx copy-prop title=DICOM
 ui/src/components/cards/HealthCheckCardProtocolSections.tsx copy-prop title=FHIR R4
 ui/src/components/cards/HealthCheckCardProtocolSections.tsx copy-prop title=HL7 MLLP
@@ -35,24 +32,10 @@ ui/src/components/cards/HealthCheckCardProtocolSections.tsx copy-prop title=LTI/
 ui/src/components/cards/HealthCheckCardProtocolSections.tsx copy-prop title=Modbus TCP
 ui/src/components/cards/HealthCheckCardProtocolSections.tsx copy-prop title=OPC-UA
 ui/src/components/cards/HealthCheckCardProtocolSections.tsx literal Modbus TCP
-ui/src/components/cards/LogViewerModal.tsx copy-prop aria-label=Collapse entry
-ui/src/components/cards/LogViewerModal.tsx literal Collapse entry
-ui/src/components/cards/NetworkDiscoveryCard.tsx copy-prop aria-label=Open full screen view
-ui/src/components/cards/NetworkDiscoveryCard.tsx copy-prop aria-label=Start network discovery scan
-ui/src/components/cards/NetworkDiscoveryCard.tsx copy-prop ariaLabel=Network discovery - no data available
-ui/src/components/cards/NetworkDiscoveryCard.tsx copy-prop ariaLabel=Network discovery scanning in progress
-ui/src/components/cards/NetworkDiscoveryCard.tsx literal Network discovery - no data available
-ui/src/components/cards/NetworkDiscoveryCard.tsx literal Network discovery scanning in progress
-ui/src/components/cards/NetworkDiscoveryCard.tsx literal Open full screen view
-ui/src/components/cards/NetworkDiscoveryCard.tsx literal Scanning network
-ui/src/components/cards/NetworkDiscoveryCard.tsx literal Start network discovery scan
-ui/src/components/cards/NetworkDiscoveryCard.tsx literal Start network scan
-ui/src/components/cards/PathDiscoveryCard.tsx copy-prop placeholder=Port
+# The column row of the path CSV export. A downloaded file's header is read by
+# the spreadsheet or script it is opened in, so it stays the same in every
+# locale; the L3 row beside it is all acronyms and is not flagged.
 ui/src/components/cards/PathDiscoveryCard.tsx literal Device,Device IP,Ingress Port,Egress Port,Source\n
-ui/src/components/cards/PathDiscoveryCard.tsx literal Path discovery failed
-ui/src/components/cards/ScanProgress.tsx literal Name resolution
-ui/src/components/cards/SlaDashboardCard.tsx literal Failed to load anomalies
-ui/src/components/cards/SystemHealthCard.tsx literal Failed to fetch
 
 # --- ui/src/components/settings/
 # DICOM Application Entity title and the Modbus register/unit fields. Standard
@@ -60,21 +43,6 @@ ui/src/components/cards/SystemHealthCard.tsx literal Failed to fetch
 ui/src/components/settings/sections/specialty/ClinicalEndpoints.tsx copy-prop placeholder=AE Title
 ui/src/components/settings/sections/specialty/IndustrialEndpoints.tsx copy-prop placeholder=Reg
 ui/src/components/settings/sections/specialty/IndustrialEndpoints.tsx copy-prop placeholder=Unit
-
-# --- ui/src/pages/
-# Page-level copy the S1-14/S1-14b suites did not reach.
-ui/src/pages/pollingTargets/TargetForm.tsx copy-prop aria-label=Close
-ui/src/pages/pollingTargets/TargetForm.tsx copy-prop label=IP address
-ui/src/pages/pollingTargets/TargetForm.tsx copy-prop label=Name
-ui/src/pages/pollingTargets/TargetForm.tsx copy-prop label=Poll interval (seconds)
-ui/src/pages/pollingTargets/TargetForm.tsx copy-prop label=SNMP version
-ui/src/pages/pollingTargets/TargetForm.tsx literal Add polling target
-ui/src/pages/pollingTargets/TargetForm.tsx literal Add target
-ui/src/pages/pollingTargets/TargetForm.tsx literal Edit polling target
-ui/src/pages/pollingTargets/TargetForm.tsx literal Failed to save
-ui/src/pages/pollingTargets/TargetForm.tsx literal Name and IP address are required.
-ui/src/pages/pollingTargets/TargetForm.tsx literal Poll interval (seconds)
-ui/src/pages/pollingTargets/TargetForm.tsx literal Save changes
 
 # --- ui/src/main.tsx
 # Thrown before React mounts, when index.html has no #root: there is no UI to

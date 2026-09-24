@@ -148,14 +148,23 @@
     "scanningPhase": "Scanning — {{phase}}",
     "localMacHint": "Locally administered address: assigned locally rather than by the manufacturer.",
     "exportCSV": "Export CSV",
-    "exportJSON": "Export JSON"
+    "exportJSON": "Export JSON",
+    "ariaScanning": "Network discovery scanning in progress",
+    "ariaNoData": "Network discovery - no data available",
+    "ariaDevicesFound_one": "Network discovery - {{count}} device found",
+    "ariaDevicesFound_other": "Network discovery - {{count}} devices found",
+    "startScanAria": "Start network discovery scan",
+    "openFullScreen": "Open full screen view",
+    "scanningNetwork": "Scanning network",
+    "startNetworkScan": "Start network scan"
   },
   "pipeline": {
     "phaseProgress": "Phase {{current}} of {{total}}",
     "phases": {
-      "enumeration": "Enumeration",
-      "resolution": "Resolution",
-      "scanning": "Scanning",
+      "discovery": "Discovery",
+      "correlation": "Correlating",
+      "nameResolution": "Name resolution",
+      "enrichment": "Enrichment",
       "assessment": "Assessment"
     },
     "devices": "devices",
@@ -366,7 +375,8 @@
       "memoryHigh": "Consider increasing system memory or closing memory-intensive applications",
       "diskCritical": "Critical: Clear temporary files and archive old data immediately",
       "diskHigh": "Clear temporary files, remove unused applications, or archive old data"
-    }
+    },
+    "loadFailed": "Failed to load system health"
   },
   "switch": {
     "title": "Nearest Switch",
@@ -418,7 +428,8 @@
     "title": "Active Anomalies",
     "subtitle": "Detected by active monitoring",
     "anomalies": "Anomalies",
-    "detected": "detected"
+    "detected": "detected",
+    "loadFailed": "Failed to load anomalies"
   },
   "guestAudit": {
     "title": "Guest Network Audit",
@@ -471,7 +482,9 @@
     "trace": "Trace",
     "tracing": "Tracing path...",
     "tracingHops": "Tracing... {{count}} hops",
-    "trunk": "Trunk"
+    "trunk": "Trunk",
+    "port": "Port",
+    "failed": "Path discovery failed"
   },
   "bluetooth": {
     "title": "Bluetooth",
@@ -507,7 +520,8 @@
     "lastSeen": "Last seen"
   },
   "logViewer": {
-    "requestId": "Request ID:"
+    "requestId": "Request ID:",
+    "collapseEntry": "Collapse entry"
   },
   "systemHealth": {
     "topConsumers": "Top consumers:"

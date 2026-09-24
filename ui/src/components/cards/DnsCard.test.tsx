@@ -8,7 +8,7 @@
  * interface at all.
  */
 
-import { render, screen } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
 import { DnsCard, type DnsData } from './DnsCard';
 
@@ -59,5 +59,40 @@ describe('DnsCard resolver scope', () => {
     render(<DnsCard data={dnsData({ servers: [] })} />);
     expect(screen.queryByText('No resolvers on this interface')).not.toBeInTheDocument();
     expect(screen.getByText('DNS Servers')).toBeInTheDocument();
+  });
+});
+
+/* A per-server row reads "N/A" when the lookup answered nothing. That used to
+   be decided by comparing `result` to the Go side's English message, so the
+   row broke the day the message was reworded or translated. The answer is in
+   `resolved`: empty means nothing came back, whatever `result` says. */
+describe('DnsCard per-server rows', () => {
+  const lookup = (result: string, resolved?: string[]): NonNullable<DnsData['forward']> => ({
+    result,
+    time: 7,
+    timeMs: 7,
+    status: resolved ? 'success' : 'warning',
+    ...(resolved ? { resolved } : {}),
+  });
+
+  it('marks an empty answer N/A whatever the result text says', () => {
+    render(
+      <DnsCard
+        data={dnsData({
+          perServerResults: [
+            {
+              server: '192.0.2.53',
+              forward: lookup('ningún registro A'),
+              forwardIpv6: lookup('2001:db8::1', ['2001:db8::1']),
+              status: 'warning',
+              avgTimeMs: 7,
+            },
+          ],
+        })}
+      />,
+    );
+    fireEvent.click(screen.getByText('Server Tests'));
+
+    expect(screen.getAllByText('N/A')).toHaveLength(1);
   });
 });

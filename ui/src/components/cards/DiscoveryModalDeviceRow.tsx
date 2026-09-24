@@ -19,6 +19,7 @@ import type { Vulnerability } from '../../types/generated/engine-discovery-respo
 import { AlertTriangle } from '../ui/Icons';
 import { Tooltip } from '../ui/Tooltip';
 import type { DiscoveredDevice, DiscoveryMethod, OpenPort } from './NetworkDiscoveryCard';
+import { formatLastSeen } from './NetworkDiscoveryCardHelpers';
 
 // Discovery method badge
 // `discoveryMethod` is an open string set on the wire — the Go type has no enum
@@ -54,31 +55,6 @@ export function formatUptime(ticks: number): string {
     return `${hours}h ${minutes}m`;
   }
   return `${minutes}m`;
-}
-
-// Format timestamp for display
-export function formatLastSeen(timestamp: string): string {
-  const date = new Date(timestamp);
-  const now = new Date();
-  const diffMs = now.getTime() - date.getTime();
-  const diffSecs = Math.floor(diffMs / 1000);
-  const diffMins = Math.floor(diffSecs / 60);
-  const diffHours = Math.floor(diffMins / 60);
-  const diffDays = Math.floor(diffHours / 24);
-
-  if (diffSecs < 60) {
-    return 'Just now';
-  }
-  if (diffMins < 60) {
-    return `${diffMins}m ago`;
-  }
-  if (diffHours < 24) {
-    return `${diffHours}h ago`;
-  }
-  if (diffDays < 7) {
-    return `${diffDays}d ago`;
-  }
-  return date.toLocaleDateString();
 }
 
 // Helper function to get expand icon (avoids nested ternary)
@@ -260,7 +236,7 @@ export function DeviceRow({
 
         {/* Last Seen */}
         <td className="px-3 py-row">
-          <span className="text-xs text-text-muted">{formatLastSeen(device.lastSeen)}</span>
+          <span className="text-xs text-text-muted">{formatLastSeen(device.lastSeen, t)}</span>
         </td>
 
         {/* Actions */}

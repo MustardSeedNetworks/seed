@@ -147,7 +147,16 @@
     "emptySelectPrompt": "Seleccione un destino para ver su configuración y su cadena de recolectores.",
     "lastPollFailed": "El último sondeo falló",
     "noPollYet": "Aún no se ha completado ningún sondeo",
-    "pollingPaused": "Sondeo pausado"
+    "pollingPaused": "Sondeo pausado",
+    "formCreateTitle": "Agregar destino de sondeo",
+    "formEditTitle": "Editar destino de sondeo",
+    "fieldName": "Nombre",
+    "fieldIpAddress": "Dirección IP",
+    "fieldSnmpVersion": "Versión de SNMP",
+    "fieldPollInterval": "Intervalo de sondeo (segundos)",
+    "nameAndIpRequired": "El nombre y la dirección IP son obligatorios.",
+    "saveFailed": "No se pudo guardar",
+    "saveChanges": "Guardar cambios"
   },
   "reports": {
     "description": "Panel de SLA agregado, seguimiento de cumplimiento e informes históricos.",

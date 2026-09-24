@@ -159,13 +159,13 @@ export const PathDiscoveryCard: React.NamedExoticComponent<PathDiscoveryCardProp
           setStreamingHops([]); // Clear streaming hops now that we have full result
           activeTraceRef.current = null;
         } catch (err) {
-          setError(err instanceof Error ? err.message : 'Path discovery failed');
+          setError(err instanceof Error ? err.message : t('pathDiscovery.failed'));
           activeTraceRef.current = null;
         } finally {
           setLoading(false);
         }
       },
-      [protocol, port],
+      [protocol, port, t],
     );
 
     const onSubmit = useCallback(
@@ -361,7 +361,7 @@ export const PathDiscoveryCard: React.NamedExoticComponent<PathDiscoveryCardProp
                 <input
                   type="number"
                   {...register('port', { valueAsNumber: true })}
-                  placeholder="Port"
+                  placeholder={t('pathDiscovery.port')}
                   min={1}
                   max={65535}
                   disabled={loading}
