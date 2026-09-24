@@ -286,6 +286,18 @@ start. Linux only; it needs `niac` on `PATH` and sudo for the namespace and the
 two daemons. Another scenario and address can be passed straight to
 `scripts/e2e-niac-link.sh TEMPLATE SEED_ADDRESS/PREFIX`.
 
+### Target networks behind a routed NIAC pack
+
+`make test-e2e-niac-routed` checks target-network learning (#2695) behind a
+router. It has NIAC generate its `hospital` pack, runs it behind a veth pair
+bound to the pack's transit network, and gives seed one transit address plus
+the edge router's own summary route to the site. The spec saves the SNMP
+community, requires the summary as a learned (switched-off) target, enters one
+site network, and requires every other site network to be learned from a site
+device's SNMP tables and its devices found once switched on. Same requirements
+as above, plus PyYAML. Another pack can be passed to
+`scripts/e2e-niac-routed.sh PACK`.
+
 ### Test Requirements
 
 - Unit tests for business logic
