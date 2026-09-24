@@ -199,11 +199,11 @@ export function SystemHealthCard(): React.ReactElement {
       setData(result.system);
       setError(null);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to fetch');
+      setError(err instanceof Error ? err.message : t('system.loadFailed'));
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [t]);
 
   useEffect(() => {
     fetchHealth().catch(() => undefined);

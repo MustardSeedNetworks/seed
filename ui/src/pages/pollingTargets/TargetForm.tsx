@@ -19,7 +19,7 @@ export interface TargetFormProps {
 }
 
 export function TargetForm({ mode, initial, onSubmit, onCancel }: TargetFormProps): JSX.Element {
-  const { t } = useTranslation('pages');
+  const { t } = useTranslation(['pages', 'common']);
   const [form, setForm] = useState<PollingTargetInput>(initial);
   const [submitting, setSubmitting] = useState<boolean>(false);
   const [formError, setFormError] = useState<string | null>(null);
@@ -31,7 +31,7 @@ export function TargetForm({ mode, initial, onSubmit, onCancel }: TargetFormProp
   async function handleSubmit(e: FormEvent<HTMLFormElement>): Promise<void> {
     e.preventDefault();
     if (!form.name.trim() || !form.ipAddress.trim()) {
-      setFormError('Name and IP address are required.');
+      setFormError(t('pollingTargets.nameAndIpRequired'));
       return;
     }
     // The poller refuses this target rather than polling it unauthenticated
@@ -47,7 +47,7 @@ export function TargetForm({ mode, initial, onSubmit, onCancel }: TargetFormProp
     try {
       await onSubmit(form);
     } catch (err) {
-      setFormError(err instanceof Error ? err.message : 'Failed to save');
+      setFormError(err instanceof Error ? err.message : t('pollingTargets.saveFailed'));
     } finally {
       setSubmitting(false);
     }
@@ -63,13 +63,15 @@ export function TargetForm({ mode, initial, onSubmit, onCancel }: TargetFormProp
       >
         <div className="flex-between border-b border-surface-border pb-3">
           <h2 className="text-lg font-semibold text-text-primary">
-            {mode === 'create' ? 'Add polling target' : 'Edit polling target'}
+            {mode === 'create'
+              ? t('pollingTargets.formCreateTitle')
+              : t('pollingTargets.formEditTitle')}
           </h2>
           <button
             type="button"
             onClick={onCancel}
             className="text-text-muted hover:text-text-primary"
-            aria-label="Close"
+            aria-label={t('common:buttons.close')}
           >
             <X className="h-5 w-5" />
           </button>
@@ -85,7 +87,7 @@ export function TargetForm({ mode, initial, onSubmit, onCancel }: TargetFormProp
         ) : null}
 
         <div className="mt-content stack">
-          <Field label="Name">
+          <Field label={t('pollingTargets.fieldName')}>
             <input
               type="text"
               value={form.name}
@@ -95,7 +97,7 @@ export function TargetForm({ mode, initial, onSubmit, onCancel }: TargetFormProp
               className={inputClass}
             />
           </Field>
-          <Field label="IP address">
+          <Field label={t('pollingTargets.fieldIpAddress')}>
             <input
               type="text"
               value={form.ipAddress}
@@ -106,7 +108,7 @@ export function TargetForm({ mode, initial, onSubmit, onCancel }: TargetFormProp
               className={inputClass}
             />
           </Field>
-          <Field label="SNMP version">
+          <Field label={t('pollingTargets.fieldSnmpVersion')}>
             <select
               value={form.snmpVersion}
               onChange={(e): void => update('snmpVersion', e.target.value)}
@@ -116,7 +118,7 @@ export function TargetForm({ mode, initial, onSubmit, onCancel }: TargetFormProp
               <option value="v3">v3</option>
             </select>
           </Field>
-          <Field label="Poll interval (seconds)">
+          <Field label={t('pollingTargets.fieldPollInterval')}>
             <input
               type="number"
               min={10}
@@ -152,7 +154,7 @@ export function TargetForm({ mode, initial, onSubmit, onCancel }: TargetFormProp
             onClick={onCancel}
             className="rounded-md px-3 py-2 text-sm text-text-muted hover:text-text-primary"
           >
-            Cancel
+            {t('common:buttons.cancel')}
           </button>
           <button
             type="submit"
@@ -160,7 +162,11 @@ export function TargetForm({ mode, initial, onSubmit, onCancel }: TargetFormProp
             data-testid="target-save"
             className="rounded-md bg-brand-primary px-3 py-2 text-sm font-medium text-on-brand hover:bg-brand-accent disabled:opacity-60"
           >
-            {submitting ? 'Saving…' : mode === 'create' ? 'Add target' : 'Save changes'}
+            {submitting
+              ? t('common:common.saving')
+              : mode === 'create'
+                ? t('pollingTargets.addTarget')
+                : t('pollingTargets.saveChanges')}
           </button>
         </div>
       </form>

@@ -23,21 +23,24 @@ interface ScanProgressProps {
   onCancel?: () => void;
 }
 
-// Engine scan phase → human label. Engine phases differ from the legacy
-// pipeline's (discovery/correlation/name_resolution/enrichment/assessment).
-const PHASE_LABELS: Record<string, string> = {
-  discovery: 'Discovery',
-  correlation: 'Correlating',
-  name_resolution: 'Name resolution',
-  enrichment: 'Enrichment',
-  assessment: 'Assessment',
-};
+// Engine scan phase → locale key for its label.
+const PHASE_KEYS = {
+  discovery: 'pipeline.phases.discovery',
+  correlation: 'pipeline.phases.correlation',
+  name_resolution: 'pipeline.phases.nameResolution',
+  enrichment: 'pipeline.phases.enrichment',
+  assessment: 'pipeline.phases.assessment',
+} as const;
+
+function isKnownPhase(phase: string): phase is keyof typeof PHASE_KEYS {
+  return Object.hasOwn(PHASE_KEYS, phase);
+}
 
 export const ScanProgress: React.NamedExoticComponent<ScanProgressProps> = memo(
   function scanProgress({ percent, phase, onCancel }: ScanProgressProps): React.ReactElement {
     const { t } = useTranslation('cards');
     const clamped = Math.min(Math.max(percent, 0), 100);
-    const phaseLabel = phase ? PHASE_LABELS[phase] || phase : '';
+    const phaseLabel = isKnownPhase(phase) ? t(PHASE_KEYS[phase]) : phase;
 
     return (
       <div className="stack-xs" data-testid="scan-progress">
@@ -46,10 +49,7 @@ export const ScanProgress: React.NamedExoticComponent<ScanProgressProps> = memo(
             <Loader2 className={cn(iconTokens.size.sm, 'text-brand-primary animate-spin')} />
             <span className="body-small font-medium text-text-primary">
               {phaseLabel
-                ? t('discovery.scanningPhase', {
-                    phase: phaseLabel,
-                    defaultValue: `Scanning — ${phaseLabel}`,
-                  })
+                ? t('discovery.scanningPhase', { phase: phaseLabel })
                 : t('discovery.scanning')}
             </span>
           </div>

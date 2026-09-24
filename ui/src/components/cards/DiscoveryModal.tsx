@@ -129,7 +129,7 @@ export function DiscoveryModal({
   onScan,
   onDeepScan,
 }: DiscoveryModalProps): JSX.Element | null {
-  const { t } = useTranslation('cards');
+  const { t } = useTranslation(['cards', 'common']);
 
   const [searchQuery, setSearchQuery] = useState('');
   const [sortField, setSortField] = useState<SortField | null>('ip');
@@ -388,7 +388,7 @@ export function DiscoveryModal({
               className={cn(
                 'pad-xs rounded-lg text-text-muted hover:text-text-primary hover:bg-surface-hover transition-colors',
               )}
-              aria-label="Close"
+              aria-label={t('common:buttons.close')}
             >
               <X className={iconTokens.size.md} />
             </button>

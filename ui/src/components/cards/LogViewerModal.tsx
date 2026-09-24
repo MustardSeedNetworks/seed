@@ -164,7 +164,7 @@ function LogEntryRow({ entry, expanded, onToggle, onClose }: LogEntryRowProps): 
                 'text-text-muted hover:text-text-primary hover:bg-surface-hover',
                 'transition-colors',
               )}
-              aria-label="Collapse entry"
+              aria-label={tCards('logViewer.collapseEntry')}
             >
               <svg className="w-4 h-4" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
                 <path
