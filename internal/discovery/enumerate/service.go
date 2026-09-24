@@ -300,7 +300,11 @@ func (s *Service) Scan(ctx context.Context) error {
 	// Queue all discovered devices for profiling (port scan, SNMP, HTTP detection)
 	s.queueDevicesForProfiling()
 
-	s.notifySweep(ctx, devices)
+	// Fresh copies, enriched: the registry copies above carry no SNMP data,
+	// which is all the observer's readers use (seed#2695, seed#2692), and
+	// enriching those in place would change the snapshot the next delta is
+	// computed against.
+	s.notifySweep(ctx, s.GetDevices())
 
 	return nil
 }
@@ -426,11 +430,18 @@ func (s *Service) triggerScanLocked(reason string) {
 }
 
 // GetDevices returns all discovered devices with their profiles attached.
+func (s *Service) GetDevices() []*DiscoveredDevice {
+	return s.Enrich(s.deviceDiscovery.GetDevices())
+}
+
+// Enrich attaches what the shared profiler holds for each device — profile,
+// SNMP MIB data, resolved names — and queues any it has not profiled yet. A
+// device straight out of a DeviceDiscovery registry carries none of it, so any
+// reader of SNMP data (the target-network learner, target promotion) has to go
+// through here. The devices are modified in place and returned.
 //
 //nolint:gocognit // Complex enrichment logic; keep centralized for correctness.
-func (s *Service) GetDevices() []*DiscoveredDevice {
-	devices := s.deviceDiscovery.GetDevices()
-
+func (s *Service) Enrich(devices []*DiscoveredDevice) []*DiscoveredDevice {
 	// Attach profiles, SNMP data, resolved names, and queue profiling for unprofiled devices
 	for _, device := range devices {
 		if device.IP == "" {
