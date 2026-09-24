@@ -10,6 +10,18 @@ import (
 	"golang.org/x/sys/unix"
 )
 
+// marksDSCP reports that a send's marking reaches the wire.
+const marksDSCP = true
+
+// setDSCP marks the socket's next datagrams through its TOS byte (IPv4) or
+// traffic class (IPv6).
+func (c *udpProbeConn) setDSCP(dscp uint8) error {
+	if c.v6 != nil {
+		return c.v6.SetTrafficClass(int(dscp) << ecnBits)
+	}
+	return c.v4.SetTOS(int(dscp) << ecnBits)
+}
+
 // enableTOS asks the kernel to attach each datagram's TOS byte (IPv4) or
 // traffic class (IPv6) as a control message.
 func enableTOS(conn *net.UDPConn, v6 bool) error {

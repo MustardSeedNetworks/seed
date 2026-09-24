@@ -6,7 +6,6 @@ import (
 	"encoding/binary"
 	"net"
 	"net/netip"
-	"runtime"
 	"time"
 
 	"golang.org/x/net/ipv4"
@@ -48,7 +47,7 @@ func Send(ctx context.Context, req SendRequest) (*SendResult, error) {
 	if err != nil {
 		return nil, err
 	}
-	res.Marked = runtime.GOOS != "windows"
+	res.Marked = marksDSCP
 	return res, nil
 }
 
@@ -77,13 +76,6 @@ func newUDPProbeConn(conn *net.UDPConn, target netip.AddrPort) *udpProbeConn {
 		return &udpProbeConn{conn: conn, target: target, v6: ipv6.NewConn(conn)}
 	}
 	return &udpProbeConn{conn: conn, target: target, v4: ipv4.NewConn(conn)}
-}
-
-func (c *udpProbeConn) setDSCP(dscp uint8) error {
-	if c.v6 != nil {
-		return c.v6.SetTrafficClass(int(dscp) << ecnBits)
-	}
-	return c.v4.SetTOS(int(dscp) << ecnBits)
 }
 
 func (c *udpProbeConn) write(b []byte) error {
