@@ -177,6 +177,12 @@ func (s *Server) saveDeviceCredential(w http.ResponseWriter, r *http.Request, id
 		writeCredentialError(w, r, err)
 		return
 	}
+	// Devices already found were asked with the credentials that existed
+	// then; the new one reaches them only if they are asked again. A server
+	// built for credential storage alone has no profiler.
+	if s.profiler != nil {
+		s.profiler.ReprofileSNMPSilent()
+	}
 	writeJSON(w, r, saved)
 }
 

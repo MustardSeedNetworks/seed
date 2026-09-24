@@ -234,6 +234,33 @@ func (p *DeviceProfiler) QueueProfile(ip string) error {
 	}
 }
 
+// ReprofileSNMPSilent forgets the profile of every device SNMP has not answered
+// and queues it again, returning how many were queued. QueueProfile skips a
+// profiled device, so a device profiled before a credential was saved would
+// otherwise never be asked with it (seed#2692). One the queue cannot take now
+// has no profile left, so the next sweep queues it.
+func (p *DeviceProfiler) ReprofileSNMPSilent() int {
+	p.mu.Lock()
+	var silent []string
+	for ip, profile := range p.profiles {
+		// The collector keeps a record for a device that did not answer
+		// too, holding only its errors; System is what an answer sets.
+		if data := p.snmpData[ip]; profile.SNMPInfo == nil && (data == nil || data.System == nil) {
+			delete(p.profiles, ip)
+			silent = append(silent, ip)
+		}
+	}
+	p.mu.Unlock()
+
+	queued := 0
+	for _, ip := range silent {
+		if p.QueueProfile(ip) == nil {
+			queued++
+		}
+	}
+	return queued
+}
+
 // checkShutdown checks if the profiler is shutting down.
 // Returns the stopCh if active, or nil if shutdown is in progress/complete.
 func (p *DeviceProfiler) checkShutdown() chan struct{} {

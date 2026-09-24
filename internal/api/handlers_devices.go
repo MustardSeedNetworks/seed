@@ -114,7 +114,7 @@ func (s *Server) handleDevicesScan(w http.ResponseWriter, r *http.Request) {
 		// Auto-scan for vulnerabilities if enabled
 		s.postScanVulnerabilityCheck(bgLogger)
 
-		s.afterSweep(ctx, s.deviceDiscovery().GetDevices())
+		s.afterSweep(ctx, s.discoveryService().Enrich(s.deviceDiscovery().GetDevices()))
 
 		// Notify SSE clients when scan completes
 		s.sseHub().Broadcast(Message{
