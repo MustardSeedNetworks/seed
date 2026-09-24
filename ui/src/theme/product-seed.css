@@ -21,15 +21,10 @@
   --color-on-info: #ffffff;
 
   /* Pill text (UI-FLEET-3, .github#74). A hue's own wash pulls the ground
-	 * toward it, so the bare hue measures 3.13-3.66:1 as 12px text on a /20
-	 * wash over the sunken surface. Each value is the same hue, darkened by
-	 * the smallest step to 4.6:1 there; pillText.test.ts measures every
-	 * surface up to /20. The status four move to msn-shared.css once all
-	 * four products use them. */
-  --color-status-success-strong: #235e3a;
-  --color-status-warning-strong: #6d4e07;
-  --color-status-error-strong: #932e2e;
-  --color-status-info-strong: #0f548f;
+	 * toward it, so the bare hue measures under 4.5:1 as 12px text on a /20
+	 * wash over the sunken surface. The brand value is the same hue, darkened
+	 * by the smallest step to 4.6:1 there; pillText.test.ts measures every
+	 * surface up to /20. The status four live in msn-shared.css. */
   --color-brand-primary-strong: #24602d;
 
   /* Seed's five module accents. Same role change as Stem's six: badges and
@@ -62,10 +57,6 @@
 
   /* Pill text, lightened by the smallest step to 4.6:1 on a /20 wash over
 	 * the hover surface. */
-  --color-status-success-strong: #56c785;
-  --color-status-warning-strong: #deab34;
-  --color-status-error-strong: #e5a2a2;
-  --color-status-info-strong: #7eb8ea;
   --color-brand-primary-strong: #45c956;
 
   --color-module-path: #fbbf24;
