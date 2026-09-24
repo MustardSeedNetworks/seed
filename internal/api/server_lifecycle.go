@@ -142,10 +142,11 @@ func (s *Server) Start() error {
 			"methods", status.ActiveMethods)
 	}
 
-	// Trigger initial device discovery scan to populate subnet info immediately
-	// This ensures /api/security/devices/status returns valid subnet info on first call
-	// without requiring a manual scan trigger from the frontend
-	if s.config.NetworkDiscovery.Enabled {
+	// A running service has already swept the shared registry at startup
+	// (seed#2831); a second sweep here only collided with it. Sweep directly
+	// when the service could not start, so /api/security/devices/status still
+	// reports a subnet without a manual scan.
+	if s.config.NetworkDiscovery.Enabled && !s.discoveryService().IsRunning() {
 		s.startInitialScan()
 	}
 

@@ -155,7 +155,7 @@ func TestDiscoveryService(t *testing.T) {
 		WithInterface("lo").
 		Build()
 
-	service := enumerate.NewService(cfg, "lo", nil)
+	service := enumerate.NewService(cfg, enumerate.NewDeviceDiscovery("lo"), nil)
 	if service == nil {
 		t.Fatal("NewService returned nil")
 	}
@@ -199,7 +199,7 @@ func TestDiscoveryService(t *testing.T) {
 
 func TestReload(t *testing.T) {
 	cfg := testutil.NewConfigBuilder().Build()
-	service := enumerate.NewService(cfg, "lo", nil)
+	service := enumerate.NewService(cfg, enumerate.NewDeviceDiscovery("lo"), nil)
 
 	// Test Reload without starting
 	err := service.Reload()
@@ -228,7 +228,7 @@ func TestReload(t *testing.T) {
 func TestScanWithContext(t *testing.T) {
 	cfg := testutil.NewConfigBuilder().Build()
 	cfg.NetworkDiscovery.ScanTimeout = 1 * time.Second
-	service := enumerate.NewService(cfg, "lo", nil)
+	service := enumerate.NewService(cfg, enumerate.NewDeviceDiscovery("lo"), nil)
 
 	ctx, cancel := context.WithTimeout(context.Background(), 500*time.Millisecond)
 	defer cancel()
@@ -249,7 +249,7 @@ func TestScanWithContext(t *testing.T) {
 
 func TestClearDevicesService(t *testing.T) {
 	cfg := testutil.NewConfigBuilder().Build()
-	service := enumerate.NewService(cfg, "lo", nil)
+	service := enumerate.NewService(cfg, enumerate.NewDeviceDiscovery("lo"), nil)
 
 	// Clear (should work even with no devices)
 	service.ClearDevices()
@@ -278,7 +278,7 @@ func TestDiscoveryOptions(t *testing.T) {
 			cfg := testutil.NewConfigBuilder().
 				WithDiscoveryMethods(tt.arpScan, tt.icmpScan, tt.portScan).
 				Build()
-			service := enumerate.NewService(cfg, "lo", nil)
+			service := enumerate.NewService(cfg, enumerate.NewDeviceDiscovery("lo"), nil)
 
 			if err := service.Start(); err != nil {
 				t.Logf("Start failed for %s: %v", tt.name, err)
@@ -360,7 +360,7 @@ func TestDeviceDiscoveryStartStop(t *testing.T) {
 
 func TestServiceInterface(t *testing.T) {
 	cfg := testutil.NewConfigBuilder().Build()
-	service := enumerate.NewService(cfg, "lo", nil)
+	service := enumerate.NewService(cfg, enumerate.NewDeviceDiscovery("lo"), nil)
 
 	// Test SetInterface
 	err := service.SetInterface("eth0")
@@ -371,7 +371,7 @@ func TestServiceInterface(t *testing.T) {
 
 func TestServiceGetDevice(t *testing.T) {
 	cfg := testutil.NewConfigBuilder().Build()
-	service := enumerate.NewService(cfg, "lo", nil)
+	service := enumerate.NewService(cfg, enumerate.NewDeviceDiscovery("lo"), nil)
 
 	// Test GetDevice for non-existent device
 	device := service.GetDevice("00:11:22:33:44:55")
@@ -382,7 +382,7 @@ func TestServiceGetDevice(t *testing.T) {
 
 func TestGetDeviceByIPService(t *testing.T) {
 	cfg := testutil.NewConfigBuilder().Build()
-	service := enumerate.NewService(cfg, "lo", nil)
+	service := enumerate.NewService(cfg, enumerate.NewDeviceDiscovery("lo"), nil)
 
 	// Test GetDeviceByIP for non-existent device
 	device := service.GetDeviceByIP("192.168.1.10")
@@ -393,7 +393,7 @@ func TestGetDeviceByIPService(t *testing.T) {
 
 func TestGetNeighbors(t *testing.T) {
 	cfg := testutil.NewConfigBuilder().Build()
-	service := enumerate.NewService(cfg, "lo", nil)
+	service := enumerate.NewService(cfg, enumerate.NewDeviceDiscovery("lo"), nil)
 
 	if err := service.Start(); err != nil {
 		t.Logf("Start failed: %v", err)
@@ -407,13 +407,14 @@ func TestGetNeighbors(t *testing.T) {
 	}
 }
 
-func TestDeviceDiscoveryAccess(t *testing.T) {
+// The service sweeps the registry it is handed, never a private one of its
+// own: that registry is the one the API lists (seed#2831).
+func TestServiceSweepsTheRegistryItIsGiven(t *testing.T) {
 	cfg := testutil.NewConfigBuilder().Build()
-	service := enumerate.NewService(cfg, "lo", nil)
+	registry := enumerate.NewDeviceDiscovery("lo")
+	service := enumerate.NewService(cfg, registry, nil)
 
-	// Test DeviceDiscovery accessor
-	dd := service.DeviceDiscovery()
-	if dd == nil {
-		t.Error("DeviceDiscovery() returned nil")
+	if service.DeviceDiscovery() != registry {
+		t.Error("DeviceDiscovery() is not the registry passed to NewService")
 	}
 }

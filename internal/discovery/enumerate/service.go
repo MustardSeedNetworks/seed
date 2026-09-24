@@ -22,7 +22,6 @@ var errDiscoveryUnavailable = errors.New("device discovery is not available")
 // configuration settings to control which discovery methods are active.
 type Service struct {
 	cfg             *config.Config
-	interfaceName   string
 	deviceDiscovery *DeviceDiscovery
 	profiler        *DeviceProfiler
 
@@ -68,15 +67,12 @@ type ServiceStatus struct {
 	DegradationStatus *DegradationStatus `json:"degradationStatus,omitempty"`
 }
 
-// NewService creates a new unified discovery service.
+// NewService creates a new unified discovery service over registry, the one
+// device registry the process has: the service's sweeps fill it and the API
+// lists it, so a target network set on it is one the rescan sweeps (seed#2831).
 // If profiler is nil, a new DeviceProfiler is created internally.
 // If profiler is provided, it will be shared (e.g., with Pipeline).
-func NewService(
-	cfg *config.Config,
-	interfaceName string,
-	profiler *DeviceProfiler,
-	opts ...Option,
-) *Service {
+func NewService(cfg *config.Config, registry *DeviceDiscovery, profiler *DeviceProfiler) *Service {
 	// A Service built without a profiler has no SNMP credential source: the
 	// vault is reached through the composition root, which always supplies the
 	// shared profiler. This fallback exists for callers that do not do SNMP at
@@ -86,16 +82,10 @@ func NewService(
 		profiler = discovery.NewDeviceProfiler(discovery.DefaultProfilerConfig(), nil)
 	}
 	return &Service{
-		cfg:           cfg,
-		interfaceName: interfaceName,
-		deviceDiscovery: NewDeviceDiscoveryWithOUI(
-			interfaceName,
-			cfg.NetworkDiscovery.OUIFilePath,
-			cfg.NetworkDiscovery.OUIMaxAge,
-			opts...,
-		),
-		profiler: profiler,
-		metrics:  discovery.NewMetrics(),
+		cfg:             cfg,
+		deviceDiscovery: registry,
+		profiler:        profiler,
+		metrics:         discovery.NewMetrics(),
 	}
 }
 
@@ -398,7 +388,6 @@ func (s *Service) SetInterface(name string) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
-	s.interfaceName = name
 	if err := s.deviceDiscovery.SetInterface(name); err != nil {
 		return err
 	}

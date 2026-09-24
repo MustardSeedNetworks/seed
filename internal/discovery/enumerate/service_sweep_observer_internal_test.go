@@ -16,7 +16,7 @@ func observedService(t *testing.T) *Service {
 	return NewService(&config.Config{NetworkDiscovery: config.NetworkDiscoveryConfig{
 		Options:     config.DiscoveryOptions{ARPScan: true},
 		ScanTimeout: time.Second,
-	}}, realInterface(t), nil)
+	}}, NewDeviceDiscovery(realInterface(t)), nil)
 }
 
 // The observer is how a router's routing table becomes a learnable target
