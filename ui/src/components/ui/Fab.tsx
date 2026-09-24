@@ -87,13 +87,9 @@ export function Fab({ className = '', variant = 'floating' }: FabProps): React.J
   }, [isRunning, start]);
 
   const runStatus = isRunning ? 'running' : partial ? 'partial' : 'idle';
-  const label = partial
-    ? 'Some checks did not finish — tap to run all tests again'
-    : 'Run All Tests';
+  const label = partial ? t('buttons.runAllTestsPartial') : t('buttons.runAllTests');
 
   const inline = variant === 'inline';
-  // The visible label is translated; the `label` above (the accessible name and
-  // tooltip) stays as it was, baselined with the rest of this component's copy.
   const shortLabel = t('buttons.runAllTests');
 
   return (

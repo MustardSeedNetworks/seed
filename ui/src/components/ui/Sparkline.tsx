@@ -169,6 +169,7 @@ function SparklineComponent({
   className,
   label,
 }: SparklineProps): React.JSX.Element {
+  const { t } = useTranslation();
   const config = sizeConfigs[size];
   const padding = 2;
 
@@ -260,7 +261,7 @@ function SparklineComponent({
         role="img"
         className={cn('flex-center text-text-muted', className)}
         style={{ width: config.width, height: config.height }}
-        aria-label={label || 'No data available'}
+        aria-label={label || t('status.noDataAvailable')}
       >
         <span className="caption">—</span>
       </div>

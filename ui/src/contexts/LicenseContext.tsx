@@ -17,6 +17,7 @@
 
 import { createContext, type ReactNode, useCallback, useContext, useEffect, useState } from 'react';
 import { api } from '../api/client';
+import i18n from '../i18n';
 import type { LicenseStatusResponse } from '../types/generated/license-status-response';
 
 /**
@@ -73,7 +74,7 @@ export function LicenseProvider({
       const fresh = await api.get<LicenseStatus>('/api/v1/license');
       setStatus(fresh);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to load license');
+      setError(err instanceof Error ? err.message : i18n.t('errors.loadLicense'));
     } finally {
       setLoading(false);
     }

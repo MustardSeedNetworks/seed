@@ -79,7 +79,7 @@ export const DeviceSelector: React.MemoExoticComponent<typeof DeviceSelectorComp
 function DeviceSelectorComponent({
   value,
   onChange,
-  placeholder = 'Select device',
+  placeholder,
   disabled = false,
 }: DeviceSelectorProps): React.JSX.Element {
   const { t } = useTranslation();
@@ -247,7 +247,7 @@ function DeviceSelectorComponent({
     if (value) {
       return value; // Show manually entered IP
     }
-    return placeholder;
+    return placeholder ?? t('device.select');
   };
 
   // Get the appropriate icon based on loading/selection state

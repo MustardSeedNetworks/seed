@@ -83,7 +83,7 @@ export const CommandPalette: FC<CommandPaletteProps> = ({
     <Command.Dialog
       open={open}
       onOpenChange={onOpenChange}
-      label="Command palette"
+      label={t('commandPalette.label')}
       className="fixed inset-0 z-overlay flex items-start justify-center pt-[10vh]"
       shouldFilter={true}
     >
@@ -91,7 +91,7 @@ export const CommandPalette: FC<CommandPaletteProps> = ({
         type="button"
         className="absolute inset-0 bg-scrim/70 backdrop-blur-sm"
         onClick={() => onOpenChange(false)}
-        aria-label="Close command palette"
+        aria-label={t('accessibility.closeCommandPalette')}
       />
       <div className="relative mx-4 w-full max-w-xl rounded-2xl border border-surface-border bg-bg-surface/95 shadow-2xl">
         <div className="flex items-center gap-compact border-b border-surface-border px-4 py-row-lg">
@@ -100,7 +100,7 @@ export const CommandPalette: FC<CommandPaletteProps> = ({
             autoFocus={true}
             value={value}
             onValueChange={setValue}
-            placeholder="Search pages and actions…"
+            placeholder={t('commandPalette.placeholder')}
             className="flex-1 bg-transparent text-sm text-text-primary placeholder:text-text-muted focus:outline-none"
           />
           <kbd className="hidden sm:inline-flex items-center rounded border border-surface-border px-1.5 py-0.5 text-[11px] text-text-muted">
@@ -144,7 +144,7 @@ export const CommandPalette: FC<CommandPaletteProps> = ({
           ))}
 
           <Command.Group
-            heading="Actions"
+            heading={t('commandPalette.actions')}
             className="px-1 py-compact text-xs uppercase tracking-wider text-text-muted"
           >
             {onOpenSettings ? (
@@ -178,7 +178,11 @@ export const CommandPalette: FC<CommandPaletteProps> = ({
                 ) : (
                   <Moon className="h-4 w-4 text-text-muted" aria-hidden="true" />
                 )}
-                <span>{isDark ? 'Switch to light mode' : 'Switch to dark mode'}</span>
+                <span>
+                  {isDark
+                    ? t('accessibility.switchToLightMode')
+                    : t('accessibility.switchToDarkMode')}
+                </span>
               </Command.Item>
             ) : null}
             {extraActions.map((action) => {

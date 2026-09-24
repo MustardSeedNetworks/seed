@@ -58,25 +58,31 @@ interface BreadcrumbProps {
   className?: string;
 }
 
-const Breadcrumb: FC<BreadcrumbProps> = ({ items, className = '' }) => (
-  <nav className={`flex items-center gap-tight text-sm ${className}`} aria-label="Breadcrumb">
-    {items.map((item, index) => (
-      <div key={item.label} className="flex items-center gap-tight">
-        {index > 0 && <ChevronRight className={`${iconSizes.md} text-text-disabled`} />}
-        {item.href ? (
-          <Link
-            to={item.href}
-            className="text-text-muted hover:text-text-primary transition-colors"
-          >
-            {item.label}
-          </Link>
-        ) : (
-          <span className="text-text-secondary font-medium">{item.label}</span>
-        )}
-      </div>
-    ))}
-  </nav>
-);
+const Breadcrumb: FC<BreadcrumbProps> = ({ items, className = '' }) => {
+  const { t } = useTranslation();
+  return (
+    <nav
+      className={`flex items-center gap-tight text-sm ${className}`}
+      aria-label={t('accessibility.breadcrumb')}
+    >
+      {items.map((item, index) => (
+        <div key={item.label} className="flex items-center gap-tight">
+          {index > 0 && <ChevronRight className={`${iconSizes.md} text-text-disabled`} />}
+          {item.href ? (
+            <Link
+              to={item.href}
+              className="text-text-muted hover:text-text-primary transition-colors"
+            >
+              {item.label}
+            </Link>
+          ) : (
+            <span className="text-text-secondary font-medium">{item.label}</span>
+          )}
+        </div>
+      ))}
+    </nav>
+  );
+};
 
 export const PageHeader: FC<PageHeaderProps> = ({
   title,

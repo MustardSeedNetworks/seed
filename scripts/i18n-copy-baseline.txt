@@ -9,7 +9,8 @@
 #
 # Grouped by subtree, one reason per group. Cleared so far: everything under
 # ui/src/components/settings except the three protocol field names below
-# (S1-14c). The rest is carved out as S1-14d.
+# (S1-14c), and the shared primitives, app chrome and contexts (S1-14d, #2839).
+# The cards and pages below are what remains of S1-14d.
 
 # --- ui/src/components/help/
 # The in-app help tree. Every word of it is English in the source; it has no
@@ -75,54 +76,7 @@ ui/src/pages/pollingTargets/TargetForm.tsx literal Name and IP address are requi
 ui/src/pages/pollingTargets/TargetForm.tsx literal Poll interval (seconds)
 ui/src/pages/pollingTargets/TargetForm.tsx literal Save changes
 
-# --- ui/src/components/ui/
-# Shared UI primitives and app chrome.
-ui/src/components/ui/Alert.tsx copy-prop aria-label=Dismiss alert
-ui/src/components/ui/Alert.tsx literal Dismiss alert
-ui/src/components/ui/Combobox.tsx copy-prop placeholder=Search…
-ui/src/components/ui/Combobox.tsx literal No matches.
-ui/src/components/ui/CommandPalette.tsx copy-prop aria-label=Close command palette
-ui/src/components/ui/CommandPalette.tsx copy-prop heading=Actions
-ui/src/components/ui/CommandPalette.tsx copy-prop label=Command palette
-ui/src/components/ui/CommandPalette.tsx copy-prop placeholder=Search pages and actions…
-ui/src/components/ui/CommandPalette.tsx literal Close command palette
-ui/src/components/ui/CommandPalette.tsx literal Command palette
-ui/src/components/ui/CommandPalette.tsx literal Search pages and actions…
-ui/src/components/ui/CommandPalette.tsx literal Switch to dark mode
-ui/src/components/ui/CommandPalette.tsx literal Switch to light mode
-ui/src/components/ui/DataTable.tsx copy-prop aria-label=Clear search
-ui/src/components/ui/DataTable.tsx copy-prop aria-label=Loading data
-ui/src/components/ui/DataTable.tsx literal Clear search
-ui/src/components/ui/DataTable.tsx literal Loading data
-ui/src/components/ui/DataTable.tsx literal No data found
-ui/src/components/ui/DeviceSelector.tsx literal Select device
-ui/src/components/ui/Fab.tsx literal Run All Tests
-ui/src/components/ui/Fab.tsx literal Some checks did not finish — tap to run all tests again
-ui/src/components/ui/Input.tsx copy-prop aria-label=Clear search
-ui/src/components/ui/Input.tsx literal Clear search
-ui/src/components/ui/Modal.tsx copy-prop aria-label=Close modal
-ui/src/components/ui/Modal.tsx literal Close modal
-ui/src/components/ui/Sparkline.tsx literal No data available
-ui/src/components/ui/Toast.tsx copy-prop aria-label=Dismiss notification
-ui/src/components/ui/Toast.tsx copy-prop aria-label=Notifications
-ui/src/components/ui/Toast.tsx literal Dismiss notification
-ui/src/components/ui/statusConfig.tsx literal Status: error
-ui/src/components/ui/statusConfig.tsx literal Status: loading
-ui/src/components/ui/statusConfig.tsx literal Status: success
-ui/src/components/ui/statusConfig.tsx literal Status: unknown
-ui/src/components/ui/statusConfig.tsx literal Status: warning
-
-# --- ui/src/ui/
-ui/src/ui/Breadcrumbs.tsx copy-prop aria-label=Breadcrumb
-ui/src/ui/Breadcrumbs.tsx copy-prop aria-label=Home
-ui/src/ui/PageHeader.tsx copy-prop aria-label=Breadcrumb
-ui/src/ui/Sidebar.tsx copy-prop aria-label=Close menu
-ui/src/ui/Sidebar.tsx literal Close menu
-
-# --- everything else
-# Contexts, hooks and layout that render copy directly.
-ui/src/components/setup/SetupWizard.tsx literal Hide password
-ui/src/components/setup/SetupWizard.tsx literal Show password
-ui/src/contexts/LicenseContext.tsx literal Failed to load license
-ui/src/contexts/RoleContext.tsx literal Failed to load current user
+# --- ui/src/main.tsx
+# Thrown before React mounts, when index.html has no #root: there is no UI to
+# render into and no operator to read it. A build defect, not shipped copy.
 ui/src/main.tsx literal Root element not found
