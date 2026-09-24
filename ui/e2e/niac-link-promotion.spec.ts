@@ -17,12 +17,17 @@ import { type APIRequestContext, expect, test } from '@playwright/test';
  * sweep after that one reaches the agents with it, and promotion reads a sweep
  * a round behind discovery (enumerate.Service.notifySweep), so the targets land
  * within two rescan cycles of that sweep: three cycles of the compiled-in 60 s
- * rescan from the save. A target is polled as soon as it is registered, so
- * the topology gets no separate allowance beyond one poll.
+ * rescan from the save. A target is polled as soon as it is registered, and
+ * the topology reconcilers turn a poll into a node on their own 30 s tick.
+ *
+ * A node is built from the target's polled sysinfo and carries no address
+ * until a later ARP pass backfills one, so it is matched on sysName: the name
+ * promotion gave the target.
  */
 const RESCAN_MS = 60_000;
 const PROMOTION_MS = 3 * RESCAN_MS;
 const POLL_MS = 30_000;
+const RECONCILE_MS = 2 * 30_000;
 
 const enabled = process.env.SEED_E2E_NIAC_LINK === '1';
 const link = process.env.SEED_E2E_LINK ?? '';
@@ -35,6 +40,7 @@ test.skip(
 );
 
 interface PollingTarget {
+  name: string;
   ipAddress: string;
   enabled: boolean;
   credentialsId: string;
@@ -58,17 +64,17 @@ async function pollingTargets(request: APIRequestContext): Promise<PollingTarget
   return targets ?? [];
 }
 
-async function topologyNodeIPs(request: APIRequestContext): Promise<Set<string>> {
+async function topologySysNames(request: APIRequestContext): Promise<Set<string>> {
   const response = await request.get('/api/v1/topology/nodes');
   if (!response.ok()) {
     return new Set();
   }
-  const { nodes } = (await response.json()) as { nodes?: { primaryIp?: string }[] };
-  return new Set((nodes ?? []).map((node) => node.primaryIp ?? ''));
+  const { nodes } = (await response.json()) as { nodes?: { sysName?: string }[] };
+  return new Set((nodes ?? []).map((node) => node.sysName ?? ''));
 }
 
 test.describe('promotion over a NIAC link', () => {
-  test.setTimeout(PROMOTION_MS + POLL_MS + 30_000);
+  test.setTimeout(PROMOTION_MS + POLL_MS + RECONCILE_MS + 30_000);
 
   test('the active interface is listed where the UI selects it', async ({ page }) => {
     const response = await page.request.get('/api/v1/interfaces?categorized=true');
@@ -119,13 +125,19 @@ test.describe('promotion over a NIAC link', () => {
       )
       .toEqual([]);
 
+    const sysNames = (await pollingTargets(request))
+      .filter((t) => agentIPs.includes(t.ipAddress))
+      .map((t) => t.name);
+    expect(sysNames.filter(Boolean), 'promoted targets named by sysName').toHaveLength(
+      agentIPs.length,
+    );
     await expect
       .poll(
         async () => {
-          const nodes = await topologyNodeIPs(request);
-          return agentIPs.filter((ip) => !nodes.has(ip));
+          const nodes = await topologySysNames(request);
+          return sysNames.filter((name) => !nodes.has(name));
         },
-        { message: 'agents missing from the topology', timeout: POLL_MS, intervals: [1_000] },
+        { message: 'agents missing from the topology', timeout: RECONCILE_MS, intervals: [1_000] },
       )
       .toEqual([]);
 
