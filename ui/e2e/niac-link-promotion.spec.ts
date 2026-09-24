@@ -121,7 +121,11 @@ test.describe('promotion over a NIAC link', () => {
               !targets.some((t) => t.ipAddress === ip && t.lastStatus === 'ok' && t.lastPolledAt),
           );
         },
-        { message: 'targets with no successful poll recorded', timeout: POLL_MS, intervals: [1_000] },
+        {
+          message: 'targets with no successful poll recorded',
+          timeout: POLL_MS,
+          intervals: [1_000],
+        },
       )
       .toEqual([]);
 
