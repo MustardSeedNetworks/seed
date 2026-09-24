@@ -166,6 +166,12 @@ printf '%s\n' \
 # licence file cannot change the tier under test (seed#2688). Started from
 # the run directory because seed writes its certs/ and data/ relative to the
 # working directory, and as root they would land in the checkout.
+#
+# The tier under test is a Pro trial started in that HOME. Polling and the
+# topology reconcilers are Starter engines, registered only when the daemon
+# starts, so a Free daemon would promote the agents into targets nothing
+# polls. The first-run spec does not depend on the tier.
+(cd "$run_dir" && sudo env HOME="$run_dir" "$repo_dir/seed" license trial >/dev/null)
 started_at=$(python3 -c 'import time; print(int(time.time() * 1000))')
 (
   cd "$run_dir"
