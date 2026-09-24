@@ -1,0 +1,143 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/MustardSeedNetworks/seed/main/docs/schemas/api/qos-listen-response.schema.json",
+  "$ref": "#/$defs/ListenResult",
+  "$defs": {
+    "ClassResult": {
+      "properties": {
+        "sentDscp": {
+          "type": "integer"
+        },
+        "sentName": {
+          "type": "string"
+        },
+        "expected": {
+          "type": "integer"
+        },
+        "received": {
+          "type": "integer"
+        },
+        "observed": {
+          "items": {
+            "$ref": "#/$defs/ObservedDSCP"
+          },
+          "type": "array"
+        },
+        "verdict": {
+          "type": "string",
+          "enum": [
+            "preserved",
+            "remarked",
+            "mixed",
+            "lost",
+            "unobserved"
+          ]
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "sentDscp",
+        "expected",
+        "received",
+        "observed",
+        "verdict"
+      ]
+    },
+    "ListenResult": {
+      "properties": {
+        "port": {
+          "type": "integer"
+        },
+        "family": {
+          "type": "string",
+          "enum": [
+            "ipv4",
+            "ipv6"
+          ]
+        },
+        "listenedMs": {
+          "type": "integer"
+        },
+        "probes": {
+          "type": "integer"
+        },
+        "ignored": {
+          "type": "integer"
+        },
+        "runs": {
+          "items": {
+            "$ref": "#/$defs/RunResult"
+          },
+          "type": "array"
+        },
+        "runsTruncated": {
+          "type": "boolean"
+        },
+        "dscpObserved": {
+          "type": "boolean"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "port",
+        "family",
+        "listenedMs",
+        "probes",
+        "ignored",
+        "runs",
+        "runsTruncated",
+        "dscpObserved"
+      ]
+    },
+    "ObservedDSCP": {
+      "properties": {
+        "dscp": {
+          "type": "integer"
+        },
+        "name": {
+          "type": "string"
+        },
+        "count": {
+          "type": "integer"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "dscp",
+        "count"
+      ]
+    },
+    "RunResult": {
+      "properties": {
+        "runId": {
+          "type": "string"
+        },
+        "sender": {
+          "type": "string"
+        },
+        "classes": {
+          "items": {
+            "$ref": "#/$defs/ClassResult"
+          },
+          "type": "array"
+        },
+        "preserved": {
+          "type": "boolean"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "runId",
+        "sender",
+        "classes",
+        "preserved"
+      ]
+    }
+  },
+  "title": "ListenResult",
+  "description": "ListenResult — generated from the Go struct in internal/api; refresh with `make schema` after struct changes."
+}

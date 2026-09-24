@@ -1,0 +1,63 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/MustardSeedNetworks/seed/main/docs/schemas/api/qos-send-response.schema.json",
+  "$ref": "#/$defs/SendResult",
+  "$defs": {
+    "SendResult": {
+      "properties": {
+        "target": {
+          "type": "string"
+        },
+        "port": {
+          "type": "integer"
+        },
+        "runId": {
+          "type": "string"
+        },
+        "count": {
+          "type": "integer"
+        },
+        "classes": {
+          "items": {
+            "$ref": "#/$defs/SentClass"
+          },
+          "type": "array"
+        },
+        "marked": {
+          "type": "boolean"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "target",
+        "port",
+        "runId",
+        "count",
+        "classes",
+        "marked"
+      ]
+    },
+    "SentClass": {
+      "properties": {
+        "dscp": {
+          "type": "integer"
+        },
+        "name": {
+          "type": "string"
+        },
+        "sent": {
+          "type": "integer"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "dscp",
+        "sent"
+      ]
+    }
+  },
+  "title": "SendResult",
+  "description": "SendResult — generated from the Go struct in internal/api; refresh with `make schema` after struct changes."
+}
