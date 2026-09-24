@@ -27,6 +27,7 @@ import (
 
 	"github.com/MustardSeedNetworks/seed/internal/api"
 	"github.com/MustardSeedNetworks/seed/internal/config"
+	"github.com/MustardSeedNetworks/seed/internal/diagnostics/multicast"
 	"github.com/MustardSeedNetworks/seed/internal/discovery/bonjour"
 )
 
@@ -238,6 +239,12 @@ func schemaTargets() []schemaTarget {
 		// rather than an api mirror of it: a mirror is one more thing to drift
 		// and the handler serves this struct verbatim.
 		{&bonjour.BrowseResult{}, "bonjour-browse-response.schema.json"},
+
+		// #399's multicast listen, a jobs-spine kind: the request is the kind's
+		// params and the result is the job's result. Registered as the
+		// multicast package's own types for the same reason as the browse.
+		{&multicast.ListenRequest{}, "multicast-listen-request.schema.json"},
+		{&multicast.ListenResult{}, "multicast-listen-response.schema.json"},
 
 		// Profile/settings config — code-first model of the per-profile
 		// config.Config blob (ADR-0007/0008, Phase 7 S6). The profile Config
