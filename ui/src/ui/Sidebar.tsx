@@ -562,7 +562,7 @@ export const SidebarLayout: FC<SidebarLayoutProps> = ({
           type="button"
           className="lg:hidden fixed inset-0 z-40 bg-scrim/60 backdrop-blur-sm"
           onClick={() => setMobileOpen(false)}
-          aria-label="Close menu"
+          aria-label={t('accessibility.closeMenu')}
         />
       ) : null}
 

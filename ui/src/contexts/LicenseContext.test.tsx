@@ -8,9 +8,10 @@
  * which is what produced the spurious 401 storm behind seed#2422.
  */
 
-import { render, waitFor } from '@testing-library/react';
+import { render, renderHook, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
+import i18n from '../i18n';
 import { LicenseProvider, type LicenseStatus, useLicense } from './LicenseContext';
 
 const mockGet = vi.fn<(path: string) => Promise<unknown>>();
@@ -41,6 +42,22 @@ describe('LicenseContext / useLicense', () => {
   });
   afterEach(() => {
     vi.clearAllMocks();
+  });
+
+  it("names a non-Error rejection in the operator's language", async () => {
+    await i18n.changeLanguage('es');
+    try {
+      mockGet.mockRejectedValueOnce('boom');
+      const { result } = renderHook(() => useLicense(), {
+        wrapper: ({ children }) => (
+          <LicenseProvider isAuthenticated={true}>{children}</LicenseProvider>
+        ),
+      });
+      await waitFor(() => expect(result.current.loading).toBe(false));
+      expect(result.current.error).toBe('No se pudo cargar la licencia');
+    } finally {
+      await i18n.changeLanguage('en');
+    }
   });
 
   it('throws if useLicense is called outside LicenseProvider', () => {

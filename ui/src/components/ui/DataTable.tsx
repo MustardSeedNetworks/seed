@@ -113,12 +113,12 @@ export function DataTable<T>({
   data,
   columns,
   keyExtractor,
-  searchPlaceholder = 'Search...',
+  searchPlaceholder,
   searchKeys,
   onRowClick,
   expandedContent: _EXPANDED_CONTENT,
   isExpanded,
-  emptyMessage = 'No data found',
+  emptyMessage,
   maxHeight = 'max-h-80',
   actions,
   filterOptions,
@@ -301,7 +301,7 @@ export function DataTable<T>({
             'bg-surface-hover text-text-muted body-small text-center',
           )}
           role="status"
-          aria-label="Loading data"
+          aria-label={t('dataTable.loadingData')}
         >
           <span className="inline-block animate-spin mr-2">◐</span>
           {t('dataTable.loadingData')}
@@ -322,7 +322,7 @@ export function DataTable<T>({
             onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>
               setSearchQuery(e.target.value)
             }
-            placeholder={searchPlaceholder}
+            placeholder={searchPlaceholder ?? t('labels.searchPlaceholder')}
             className={cn(
               'w-full pl-9 pr-tight',
               spacing.compact.pyMd,
@@ -336,7 +336,7 @@ export function DataTable<T>({
               type="button"
               onClick={(): void => setSearchQuery('')}
               className="absolute right-2.5 top-1/2 -translate-y-1/2 text-text-muted hover:text-text-primary"
-              aria-label="Clear search"
+              aria-label={t('accessibility.clearSearch')}
             >
               <X className={iconTokens.size.sm} />
             </button>
@@ -473,7 +473,7 @@ export function DataTable<T>({
                   colSpan={columns.length + (actions ? 1 : 0)}
                   className={cn(spacing.tableCell.empty, 'text-center text-text-muted')}
                 >
-                  {emptyMessage}
+                  {emptyMessage ?? t('dataTable.noData')}
                 </td>
               </tr>
             ) : (

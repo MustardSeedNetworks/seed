@@ -21,6 +21,7 @@
 
 import { createContext, type ReactNode, useCallback, useContext, useEffect, useState } from 'react';
 import { api } from '../api/client';
+import i18n from '../i18n';
 
 /** Allowed role values, mirroring the seed DB CHECK constraint. */
 export type Role = 'admin' | 'operator' | 'viewer';
@@ -100,7 +101,7 @@ export function RoleProvider({ children, isAuthenticated }: RoleProviderProps): 
       setUser(fresh);
     } catch (err) {
       setUser(null);
-      setError(err instanceof Error ? err.message : 'Failed to load current user');
+      setError(err instanceof Error ? err.message : i18n.t('errors.loadCurrentUser'));
     } finally {
       setLoading(false);
     }

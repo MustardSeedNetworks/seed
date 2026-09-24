@@ -5,6 +5,7 @@
  * React 19: refs are regular props.
  */
 import type { FC, InputHTMLAttributes, ReactNode, Ref, TextareaHTMLAttributes } from 'react';
+import { useTranslation } from 'react-i18next';
 
 const inputBaseStyles =
   'w-full rounded-lg border bg-bg-base/60 text-text-primary placeholder:text-text-muted transition-all focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed';
@@ -326,6 +327,7 @@ export const SearchInput: FC<SearchInputProps> = ({
   ref,
   ...props
 }) => {
+  const { t } = useTranslation();
   const inputId = id || label?.toLowerCase().replace(/\s+/g, '-') || 'search-input';
   const hasValue = value !== undefined && value !== '';
 
@@ -388,7 +390,7 @@ export const SearchInput: FC<SearchInputProps> = ({
           <button
             type="button"
             onClick={handleClear}
-            aria-label="Clear search"
+            aria-label={t('accessibility.clearSearch')}
             className="absolute right-3 top-1/2 -translate-y-1/2 text-text-muted hover:text-text-primary transition-colors focus:outline-none focus:ring-2 focus:ring-brand-primary/50 rounded"
           >
             <svg

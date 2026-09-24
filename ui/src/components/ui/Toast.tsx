@@ -31,6 +31,7 @@
 
 import type React from 'react';
 import { type ReactNode, useCallback, useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   cn,
   icon as iconTokens,
@@ -89,13 +90,14 @@ interface ToastContainerProps {
 }
 
 function ToastContainer({ toasts, removeToast }: ToastContainerProps): React.JSX.Element {
+  const { t } = useTranslation();
   const handleClose = (id: string): void => removeToast(id);
   return (
     // biome-ignore lint/a11y/useSemanticElements: Region role with aria-live is the correct pattern for toast notifications
     <div
       role="region"
       aria-live="polite"
-      aria-label="Notifications"
+      aria-label={t('accessibility.notifications')}
       className={cn('fixed bottom-20 right-4 z-50 max-w-sm', layout.stack.default)}
     >
       {toasts.map((toast) => (
@@ -111,6 +113,7 @@ interface ToastItemProps {
 }
 
 function ToastItem({ toast, onClose }: ToastItemProps): React.JSX.Element {
+  const { t } = useTranslation();
   useEffect((): undefined | (() => void) => {
     if (toast.duration && toast.duration > 0) {
       const timer = setTimeout(onClose, toast.duration);
@@ -130,7 +133,7 @@ function ToastItem({ toast, onClose }: ToastItemProps): React.JSX.Element {
         radius.lg,
         typeStyles[toast.type],
       )}
-      aria-label={`Notification: ${toast.type}`}
+      aria-label={t(`accessibility.notification.${toast.type}`)}
     >
       {icons[toast.type]}
       <p className="body-small font-medium flex-1">{toast.message}</p>
@@ -142,7 +145,7 @@ function ToastItem({ toast, onClose }: ToastItemProps): React.JSX.Element {
           'hover:bg-surface-hover/50 focus:outline-none focus:ring-2 focus:ring-surface-border',
           radius.default,
         )}
-        aria-label="Dismiss notification"
+        aria-label={t('accessibility.dismissNotification')}
       >
         <svg
           className={iconTokens.size.sm}

@@ -1,5 +1,6 @@
 import { ChevronRight, Home } from 'lucide-react';
 import type { FC } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Link, useLocation } from 'wouter';
 import { iconSizes } from '../constants/sizes';
 import { usePages } from '../pageRegistry';
@@ -18,6 +19,7 @@ interface BreadcrumbItem {
  * untranslated, so every breadcrumb stayed English under `es`.
  */
 export const Breadcrumbs: FC = () => {
+  const { t } = useTranslation();
   const [location] = useLocation();
   const pages = usePages();
   const pathSegments = location.split('/').filter(Boolean);
@@ -40,7 +42,7 @@ export const Breadcrumbs: FC = () => {
 
   return (
     <nav
-      aria-label="Breadcrumb"
+      aria-label={t('accessibility.breadcrumb')}
       className="flex items-center gap-tight text-sm text-text-muted mb-content"
     >
       <Link
@@ -48,7 +50,7 @@ export const Breadcrumbs: FC = () => {
         // The icon is 14px; without a floor the whole link is a 14x14 target,
         // which fails WCAG 2.5.8 at any width and is simply hard to hit (#244).
         className="target flex-center hover:text-text-primary transition-colors"
-        aria-label="Home"
+        aria-label={t('accessibility.home')}
       >
         <Home className={iconSizes.sm} />
       </Link>

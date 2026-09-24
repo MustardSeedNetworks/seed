@@ -29,6 +29,7 @@
  */
 
 import type React from 'react';
+import { useTranslation } from 'react-i18next';
 import { cn, layout, radius } from '../../styles/theme';
 import { getSizeConfig, getStatusConfig, type Status } from './statusConfig';
 
@@ -60,7 +61,9 @@ export function StatusBadge({
   size = 'sm',
   className = '',
 }: StatusBadgeProps): React.JSX.Element {
+  const { t } = useTranslation();
   const config = getStatusConfig(status);
+  const label = t(`accessibility.status.${status}`);
   const sizes = getSizeConfig(size);
 
   if (variant === 'dot') {
@@ -74,7 +77,7 @@ export function StatusBadge({
           className,
         )}
         role="img"
-        aria-label={config.label}
+        aria-label={label}
       />
     );
   }
@@ -91,7 +94,7 @@ export function StatusBadge({
         className,
       )}
       role="img"
-      aria-label={config.label}
+      aria-label={label}
     >
       <span className={sizes.icon} aria-hidden="true">
         {config.icon}
