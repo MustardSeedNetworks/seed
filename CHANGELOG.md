@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.214.90](https://github.com/MustardSeedNetworks/seed/compare/v0.214.89...v0.214.90) (2026-09-24)
+
+
+### Bug Fixes
+
+* **discovery:** promote found SNMP agents once a credential is saved ([#2850](https://github.com/MustardSeedNetworks/seed/issues/2850)) ([5c0a834](https://github.com/MustardSeedNetworks/seed/commit/5c0a834ffdd28785b9739c998b3b7547e17fc845))
+* **discovery:** sweep the device registry the API lists ([#2852](https://github.com/MustardSeedNetworks/seed/issues/2852)) ([f18934c](https://github.com/MustardSeedNetworks/seed/commit/f18934c0e1057d27fc511c1e0bb28fbb088652df)), closes [#2831](https://github.com/MustardSeedNetworks/seed/issues/2831)
+
 ## [0.214.89](https://github.com/MustardSeedNetworks/seed/compare/v0.214.88...v0.214.89) (2026-09-24)
 
 
