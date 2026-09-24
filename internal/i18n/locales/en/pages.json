@@ -213,7 +213,6 @@
     "anomaliesLoading": "Loading anomalies…",
     "anomaliesUnavailable": "Anomaly data is unavailable.",
     "noAnomalies": "No Wi-Fi anomalies detected.",
-    "capturePlanned": "Capture lands in Seed v1.0 — see release notes when Phase 2.5 ships.",
     "liveCaptureOn": "Live capture on <src>{{source}}</src>",
     "captureInactive": "Monitor capture inactive — showing the last observed airspace",
     "airspaceTitle": "Wi-Fi Airspace",

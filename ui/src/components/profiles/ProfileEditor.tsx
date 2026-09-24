@@ -7,6 +7,7 @@ import { valibotResolver } from '@hookform/resolvers/valibot';
 import type React from 'react';
 import { type SubmitHandler, useForm } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
+import { useFocusTrap } from '../../hooks/useFocusTrap';
 import { ProfileEditorSchema } from '../../schemas/auth';
 import { cn, radius, spacing } from '../../styles/theme';
 import type { Profile, ProfileRequest } from '../../types/profile';
@@ -36,6 +37,7 @@ export function ProfileEditor({
 }: ProfileEditorProps): React.JSX.Element {
   const { t } = useTranslation();
   const isEditing = profile !== null;
+  const dialogRef = useFocusTrap<HTMLDivElement>({ isActive: true, onEscape: onCancel });
 
   const initialNotes = (profile?.config as { notes?: string })?.notes || '';
 
@@ -81,6 +83,10 @@ export function ProfileEditor({
     <div className="fixed inset-0 z-50 flex-center pad">
       <div className="fixed inset-0 bg-scrim/50" onClick={onCancel} aria-hidden="true" />
       <div
+        ref={dialogRef}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="profile-editor-title"
         className={cn(
           'relative w-full max-w-lg',
           radius.lg,
@@ -89,7 +95,7 @@ export function ProfileEditor({
       >
         {/* Header */}
         <div className={cn(spacing.pad.default, 'border-b border-surface-border')}>
-          <h2 className="heading-2 text-text-primary">
+          <h2 id="profile-editor-title" className="heading-2 text-text-primary">
             {isEditing ? t('profile.edit') : t('profile.create')}
           </h2>
         </div>
