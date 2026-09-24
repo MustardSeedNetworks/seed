@@ -2,9 +2,10 @@ import { Tooltip } from '../ui/Tooltip';
 /** Create, edit, switch and transfer saved profiles. */
 
 import type React from 'react';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useProfileContext } from '../../contexts/profileContext';
+import { useFocusTrap } from '../../hooks/useFocusTrap';
 import { cn, icon as iconTokens, layout, modal, radius, spacing } from '../../styles/theme';
 import type { Profile, ProfileRequest } from '../../types/profile';
 import { WriteGate } from '../ui/WriteGate';
@@ -39,8 +40,11 @@ export function ProfileManagement({ onClose }: ProfileManagementProps): React.Re
   const [isCreating, setIsCreating] = useState(false);
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
 
-  const modalRef = useRef<HTMLDivElement>(null);
-  const closeButtonRef = useRef<HTMLButtonElement>(null);
+  // A nested editor or delete confirmation owns focus while it is open.
+  const modalRef = useFocusTrap<HTMLDivElement>({
+    isActive: !isEditorOpen && deleteConfirm === null,
+    onEscape: onClose,
+  });
 
   // Filter profiles by search
   const filteredProfiles = useMemo(() => {
@@ -52,24 +56,6 @@ export function ProfileManagement({ onClose }: ProfileManagementProps): React.Re
       (p) => p.name.toLowerCase().includes(query) || p.description?.toLowerCase().includes(query),
     );
   }, [profiles, searchQuery]);
-
-  // Handle ESC key to close modal
-  useEffect((): (() => void) => {
-    const handleKeyDown = (e: KeyboardEvent): void => {
-      if (e.key === 'Escape') {
-        onClose();
-      }
-    };
-
-    document.addEventListener('keydown', handleKeyDown);
-
-    // Focus the close button when modal opens
-    setTimeout((): void => {
-      closeButtonRef.current?.focus();
-    }, 100);
-
-    return (): void => document.removeEventListener('keydown', handleKeyDown);
-  }, [onClose]);
 
   // Handlers
   const handleCreate = useCallback((): void => {
@@ -161,7 +147,6 @@ export function ProfileManagement({ onClose }: ProfileManagementProps): React.Re
             </div>
             <button
               type="button"
-              ref={closeButtonRef}
               onClick={onClose}
               data-testid="profile-modal-close"
               className={cn(
@@ -199,6 +184,7 @@ export function ProfileManagement({ onClose }: ProfileManagementProps): React.Re
               <button
                 type="button"
                 onClick={handleCreate}
+                data-testid="profile-create"
                 className={cn(
                   spacing.pad.sm,
                   'px-4',
@@ -521,6 +507,7 @@ function ProfileCard({
                 <button
                   type="button"
                   onClick={onDelete}
+                  data-testid={`profile-delete-${profile.id}`}
                   className={cn(
                     spacing.chip.sm,
                     radius.md,
@@ -601,13 +588,22 @@ function DeleteConfirmModal({
   isLoading,
 }: DeleteConfirmModalProps): React.ReactElement {
   const { t } = useTranslation();
+  const dialogRef = useFocusTrap<HTMLDivElement>({ isActive: true, onEscape: onCancel });
 
   return (
     // z-60 required: nested modal must appear above parent modal (z-50)
     <div className={cn(modal.overlay, 'z-60')}>
       <div className={modal.backdrop} onClick={onCancel} aria-hidden="true" />
-      <div className={cn('relative', modal.content, modal.size.sm, modal.padding.md)}>
-        <h3 className="heading-2 text-text-primary mb-2">{t('profile.deleteConfirm')}</h3>
+      <div
+        ref={dialogRef}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="profile-delete-title"
+        className={cn('relative', modal.content, modal.size.sm, modal.padding.md)}
+      >
+        <h3 id="profile-delete-title" className="heading-2 text-text-primary mb-2">
+          {t('profile.deleteConfirm')}
+        </h3>
         <p className="body-small text-text-secondary mb-section">
           {t('profile.deleteConfirmDesc', { name: profileName })}
         </p>

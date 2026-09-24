@@ -213,7 +213,6 @@
     "anomaliesLoading": "Cargando anomalías…",
     "anomaliesUnavailable": "Los datos de anomalías no están disponibles.",
     "noAnomalies": "No se detectaron anomalías de Wi-Fi.",
-    "capturePlanned": "La captura llega en Seed v1.0 — consulte las notas de la versión cuando se publique la fase 2.5.",
     "liveCaptureOn": "Captura en vivo en <src>{{source}}</src>",
     "captureInactive": "Captura de monitor inactiva — mostrando el último espacio radioeléctrico observado",
     "airspaceTitle": "Espacio radioeléctrico Wi-Fi",

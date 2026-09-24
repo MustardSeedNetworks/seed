@@ -187,7 +187,7 @@
     "interfaceRequired": "An interface name is required to renew a DHCP lease"
   },
   "platform": {
-    "unavailableTitle": "{{feature}} is not available on this platform",
+    "unavailableTitle": "{{feature}}: not available on this platform",
     "unavailableGeneric": "This operating system does not provide an API for it. Running Seed on a different platform is the only way to use it.",
     "limitedGeneric": "This works here, but not completely. Some fields may be empty or approximate.",
     "capabilityUnsupported": "This operating system does not support that feature."

@@ -16,8 +16,9 @@ import { Tooltip } from '../ui/Tooltip';
 
 import type React from 'react';
 import type { JSX } from 'react';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useFocusTrap } from '../../hooks/useFocusTrap';
 import { button, cn, icon as iconTokens, modal, radius } from '../../styles/theme';
 import { ArrowUpDown, ChevronDown, ChevronUp, Download, RefreshCw, Search, X } from '../ui/Icons';
 import { DeviceRow } from './DiscoveryModalDeviceRow';
@@ -271,21 +272,7 @@ export function DiscoveryModal({
     URL.revokeObjectURL(url);
   }, [filteredDevices]);
 
-  // Keyboard handler for Escape
-  useEffect((): (() => void) | undefined => {
-    if (!isOpen) {
-      return;
-    }
-
-    const handleKeyDown = (e: KeyboardEvent): void => {
-      if (e.key === 'Escape') {
-        onClose();
-      }
-    };
-
-    window.addEventListener('keydown', handleKeyDown);
-    return (): void => window.removeEventListener('keydown', handleKeyDown);
-  }, [isOpen, onClose]);
+  const dialogRef = useFocusTrap<HTMLDivElement>({ isActive: isOpen, onEscape: onClose });
 
   if (!isOpen) {
     return null;
@@ -300,6 +287,7 @@ export function DiscoveryModal({
       <div className={modal.backdrop} onClick={onClose} aria-hidden="true" />
       {/* Modal - full width */}
       <div
+        ref={dialogRef}
         className={cn(
           'relative',
           modal.content,

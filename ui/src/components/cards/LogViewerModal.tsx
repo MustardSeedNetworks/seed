@@ -3,6 +3,7 @@ import { Tooltip } from '../ui/Tooltip';
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useFocusTrap } from '../../hooks/useFocusTrap';
 import {
   formatLogTimestamp,
   LOG_LEVEL_COLORS,
@@ -437,21 +438,7 @@ export function LogViewerModal({ isOpen, onClose }: LogViewerModalProps): React.
     setAutoScroll(isAtBottom);
   }, []);
 
-  // Keyboard handler for Escape
-  useEffect((): (() => void) | undefined => {
-    if (!isOpen) {
-      return;
-    }
-
-    const handleKeyDown = (e: KeyboardEvent): void => {
-      if (e.key === 'Escape') {
-        onClose();
-      }
-    };
-
-    window.addEventListener('keydown', handleKeyDown);
-    return (): void => window.removeEventListener('keydown', handleKeyDown);
-  }, [isOpen, onClose]);
+  const dialogRef = useFocusTrap<HTMLDivElement>({ isActive: isOpen, onEscape: onClose });
 
   // Export functions
   const exportJson = useCallback((): void => {
@@ -515,6 +502,7 @@ export function LogViewerModal({ isOpen, onClose }: LogViewerModalProps): React.
       <div className={modal.backdrop} onClick={onClose} aria-hidden="true" />
       {/* Modal - use xl size for logs */}
       <div
+        ref={dialogRef}
         className={cn(
           'relative',
           modal.content,
