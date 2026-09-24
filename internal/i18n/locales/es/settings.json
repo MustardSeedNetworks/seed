@@ -476,7 +476,7 @@
       "role": "Rol",
       "lastLogin": "Último acceso",
       "status": "Estado",
-      "authProvider": "Auth"
+      "authProvider": "Autenticación"
     },
     "status": {
       "active": "Activo",
