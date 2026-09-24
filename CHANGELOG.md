@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.214.88](https://github.com/MustardSeedNetworks/seed/compare/v0.214.87...v0.214.88) (2026-09-24)
+
+
+### Bug Fixes
+
+* **deps:** update dependency lucide-react to v1.47.0 ([#2841](https://github.com/MustardSeedNetworks/seed/issues/2841)) ([a0d5852](https://github.com/MustardSeedNetworks/seed/commit/a0d58526e7a8ecac818b0e7b48d650c2e50a980e))
+* **ui:** translate the shared chrome's accessible names and placeholders ([#2840](https://github.com/MustardSeedNetworks/seed/issues/2840)) ([a57f105](https://github.com/MustardSeedNetworks/seed/commit/a57f1057ecc3877b72b73d6f09851fedf91930fa)), closes [#2839](https://github.com/MustardSeedNetworks/seed/issues/2839)
+
 ## [0.214.87](https://github.com/MustardSeedNetworks/seed/compare/v0.214.86...v0.214.87) (2026-09-24)
 
 
