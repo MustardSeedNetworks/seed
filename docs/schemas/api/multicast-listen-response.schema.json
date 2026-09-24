@@ -1,0 +1,80 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/MustardSeedNetworks/seed/main/docs/schemas/api/multicast-listen-response.schema.json",
+  "$ref": "#/$defs/ListenResult",
+  "$defs": {
+    "ListenResult": {
+      "properties": {
+        "group": {
+          "type": "string"
+        },
+        "port": {
+          "type": "integer"
+        },
+        "interface": {
+          "type": "string"
+        },
+        "listenedMs": {
+          "type": "integer"
+        },
+        "packets": {
+          "type": "integer"
+        },
+        "bytes": {
+          "type": "integer"
+        },
+        "packetsPerSecond": {
+          "type": "number"
+        },
+        "sources": {
+          "items": {
+            "$ref": "#/$defs/ListenSource"
+          },
+          "type": "array"
+        },
+        "sourcesTruncated": {
+          "type": "boolean"
+        },
+        "groupFiltered": {
+          "type": "boolean"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "group",
+        "port",
+        "interface",
+        "listenedMs",
+        "packets",
+        "bytes",
+        "packetsPerSecond",
+        "sources",
+        "sourcesTruncated",
+        "groupFiltered"
+      ]
+    },
+    "ListenSource": {
+      "properties": {
+        "address": {
+          "type": "string"
+        },
+        "packets": {
+          "type": "integer"
+        },
+        "bytes": {
+          "type": "integer"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "address",
+        "packets",
+        "bytes"
+      ]
+    }
+  },
+  "title": "ListenResult",
+  "description": "ListenResult — generated from the Go struct in internal/api; refresh with `make schema` after struct changes."
+}
