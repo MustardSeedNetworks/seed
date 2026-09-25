@@ -90,6 +90,7 @@ func NewDeviceProfiler(cfg *ProfilerConfig, snmpCreds SNMPCredentialProvider) *D
 			Bridge:      true,
 			VLAN:        true,
 			LLDP:        true,
+			Routing:     true,
 		}
 		if cfg.SNMPMIBs != nil {
 			mibConfig = *cfg.SNMPMIBs
