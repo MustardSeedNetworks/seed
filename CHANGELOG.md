@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.214.94](https://github.com/MustardSeedNetworks/seed/compare/v0.214.93...v0.214.94) (2026-09-25)
+
+
+### Miscellaneous
+
+* **deps:** update dependency @babel/core to v8.0.6 ([#2866](https://github.com/MustardSeedNetworks/seed/issues/2866)) ([5287494](https://github.com/MustardSeedNetworks/seed/commit/52874945fa79109fd843e5ec8c4a75d11d576649))
+* **deps:** update github/codeql-action action to v4.38.1 ([#2867](https://github.com/MustardSeedNetworks/seed/issues/2867)) ([abaeb49](https://github.com/MustardSeedNetworks/seed/commit/abaeb4949f983352a9eb56b9501f3a7d6363c35c))
+
 ## [0.214.93](https://github.com/MustardSeedNetworks/seed/compare/v0.214.92...v0.214.93) (2026-09-25)
 
 
