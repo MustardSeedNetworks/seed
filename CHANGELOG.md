@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.214.93](https://github.com/MustardSeedNetworks/seed/compare/v0.214.92...v0.214.93) (2026-09-25)
+
+
+### Features
+
+* **diagnostics:** check DSCP marking between two interfaces on one host ([#2863](https://github.com/MustardSeedNetworks/seed/issues/2863)) ([ba4df46](https://github.com/MustardSeedNetworks/seed/commit/ba4df469ff681f73c7bbdf39e391737d4127a7c0))
+
 ## [0.214.92](https://github.com/MustardSeedNetworks/seed/compare/v0.214.91...v0.214.92) (2026-09-25)
 
 
