@@ -5,6 +5,23 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.214.91](https://github.com/MustardSeedNetworks/seed/compare/v0.214.90...v0.214.91) (2026-09-25)
+
+
+### Features
+
+* **diagnostics:** check that a path preserves DSCP markings ([#2847](https://github.com/MustardSeedNetworks/seed/issues/2847)) ([ff30032](https://github.com/MustardSeedNetworks/seed/commit/ff300322e36e77f5fe5b212685e71dd48ab51286))
+
+
+### Bug Fixes
+
+* **ui:** trap focus in the hand-rolled dialogs and fix two copy slips ([#2853](https://github.com/MustardSeedNetworks/seed/issues/2853)) ([a01de3e](https://github.com/MustardSeedNetworks/seed/commit/a01de3ee8aba9d2ec8f5ea3a89e4a08442552656)), closes [#2648](https://github.com/MustardSeedNetworks/seed/issues/2648)
+
+
+### Tests
+
+* **e2e:** learn site networks behind a routed NIAC pack over veth ([#2855](https://github.com/MustardSeedNetworks/seed/issues/2855)) ([bbc2cd8](https://github.com/MustardSeedNetworks/seed/commit/bbc2cd8f8b2e0281caaece360ebc6eaa68af26d4))
+
 ## [0.214.90](https://github.com/MustardSeedNetworks/seed/compare/v0.214.89...v0.214.90) (2026-09-24)
 
 
