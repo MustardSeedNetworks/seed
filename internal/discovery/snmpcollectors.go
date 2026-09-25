@@ -180,14 +180,14 @@ func (c *SNMPCollector) collectLLDPNeighbors(
 }
 
 // collectRoutes retrieves routing table from IP-FORWARD-MIB.
-func (c *SNMPCollector) collectRoutes(ctx context.Context, ip string) ([]SNMPRoute, error) {
-	routes, err := snmp.GetRoutes(ctx, ip, c.session)
+func (c *SNMPCollector) collectRoutes(ctx context.Context, ip string) ([]SNMPRoute, bool, error) {
+	table, err := snmp.GetRoutes(ctx, ip, c.session)
 	if err != nil {
-		return nil, fmt.Errorf("get routes: %w", err)
+		return nil, false, fmt.Errorf("get routes: %w", err)
 	}
 
-	result := make([]SNMPRoute, len(routes))
-	for i, route := range routes {
+	result := make([]SNMPRoute, len(table.Routes))
+	for i, route := range table.Routes {
 		result[i] = SNMPRoute{
 			Destination: route.Destination,
 			Prefix:      route.Prefix,
@@ -199,5 +199,5 @@ func (c *SNMPCollector) collectRoutes(ctx context.Context, ip string) ([]SNMPRou
 		}
 	}
 
-	return result, nil
+	return result, table.Truncated, nil
 }

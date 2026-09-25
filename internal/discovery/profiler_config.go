@@ -94,7 +94,7 @@ func DefaultProfilerConfig() *ProfilerConfig {
 			Bridge:      true,  // BRIDGE-MIB (MAC table for switches)
 			VLAN:        true,  // Q-BRIDGE-MIB (VLAN info)
 			LLDP:        true,  // LLDP-MIB (neighbor discovery)
-			Routing:     false, // IP-FORWARD-MIB (disable by default - can be large)
+			Routing:     true,  // IP-FORWARD-MIB, bounded at snmp.MaxRouteRows (seed#2833)
 			Entity:      false, // ENTITY-MIB (disable by default - not always useful)
 		},
 		// Enable automatic name resolution

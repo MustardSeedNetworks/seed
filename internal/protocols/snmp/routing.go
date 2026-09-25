@@ -56,6 +56,31 @@ const (
 	ipCidrRouteIndexOffset = 13
 )
 
+// MaxRouteRows bounds one route-table walk. An edge router carrying a full
+// BGP table holds about a million routes, and the walk runs once per profiled
+// device, so an unbounded walk puts the whole table in memory for one profile
+// (seed#2833). Ten thousand rows is far more than any site's own networks;
+// the rows past it are the internet's, which nothing here uses.
+const MaxRouteRows = 10_000
+
+// errRouteRowCap stops a BulkWalk once it has read MaxRouteRows rows. gosnmp
+// ends a walk when the callback returns an error and hands that error back,
+// so walkCapped recognises it as the cap rather than a failure.
+var errRouteRowCap = errors.New("route row cap reached")
+
+// bulkWalker is the part of a gosnmp session a table walk uses.
+type bulkWalker interface {
+	BulkWalk(rootOid string, walkFn gosnmp.WalkFunc) error
+}
+
+// RouteTable is a device's forwarding table as far as it was read. Truncated
+// means the device held more than MaxRouteRows rows and the rest were not
+// walked, so Routes is a prefix of the table rather than all of it.
+type RouteTable struct {
+	Routes    []RouteEntry
+	Truncated bool
+}
+
 // RouteEntry contains routing table information from IP-FORWARD-MIB.
 type RouteEntry struct {
 	Destination string // Destination network
@@ -67,17 +92,18 @@ type RouteEntry struct {
 	Metric      int    // Route metric
 }
 
-// GetRoutes retrieves routing table from a device using IP-FORWARD-MIB.
+// GetRoutes retrieves routing table from a device using IP-FORWARD-MIB, at
+// most MaxRouteRows rows of it.
 // It tries the modern inetCidrRouteTable first, then falls back to legacy ipCidrRouteTable.
-func GetRoutes(ctx context.Context, ip string, cfg *Session) ([]RouteEntry, error) {
+func GetRoutes(ctx context.Context, ip string, cfg *Session) (RouteTable, error) {
 	if cfg == nil {
-		return nil, errors.New("SNMP config is nil")
+		return RouteTable{}, errors.New("SNMP config is nil")
 	}
 
 	// Try modern inetCidrRouteTable first.
-	routes, err := getInetCidrRoutes(ctx, ip, cfg)
-	if err == nil && len(routes) > 0 {
-		return routes, nil
+	table, err := getInetCidrRoutes(ctx, ip, cfg)
+	if err == nil && len(table.Routes) > 0 {
+		return table, nil
 	}
 
 	// Fall back to legacy ipCidrRouteTable.
@@ -89,24 +115,24 @@ func getInetCidrRoutes(
 	ctx context.Context,
 	ip string,
 	cfg *Session,
-) ([]RouteEntry, error) {
+) (RouteTable, error) {
 	return sweepCredentials(ctx, cfg, "failed to query inetCidrRouteTable with all configured credentials",
-		func(cred *V3Credential) ([]RouteEntry, error) {
+		func(cred *V3Credential) (RouteTable, error) {
 			return walkInetCidrRoutesV3(ctx, ip, cred, cfg)
 		},
-		func(community string) ([]RouteEntry, error) {
+		func(community string) (RouteTable, error) {
 			return walkInetCidrRoutes(ctx, ip, community, cfg)
 		},
 	)
 }
 
 // getIPCidrRoutes retrieves routes from the legacy ipCidrRouteTable.
-func getIPCidrRoutes(ctx context.Context, ip string, cfg *Session) ([]RouteEntry, error) {
+func getIPCidrRoutes(ctx context.Context, ip string, cfg *Session) (RouteTable, error) {
 	return sweepCredentials(ctx, cfg, "failed to query ipCidrRouteTable with all configured credentials",
-		func(cred *V3Credential) ([]RouteEntry, error) {
+		func(cred *V3Credential) (RouteTable, error) {
 			return walkIPCidrRoutesV3(ctx, ip, cred, cfg)
 		},
-		func(community string) ([]RouteEntry, error) {
+		func(community string) (RouteTable, error) {
 			return walkIPCidrRoutes(ctx, ip, community, cfg)
 		},
 	)
@@ -117,14 +143,14 @@ func walkInetCidrRoutes(
 	ctx context.Context,
 	ip, community string,
 	cfg *Session,
-) ([]RouteEntry, error) {
+) (RouteTable, error) {
 	params, err := newV2cWalkClient(ctx, ip, community, cfg)
 	if err != nil {
-		return nil, err
+		return RouteTable{}, err
 	}
 	defer func() { _ = params.Conn.Close() }()
 
-	return walkInetCidrRouteTable(params)
+	return walkInetCidrRouteTable(params, MaxRouteRows)
 }
 
 // walkInetCidrRoutesV3 walks the modern inetCidrRouteTable using SNMPv3.
@@ -133,25 +159,26 @@ func walkInetCidrRoutesV3(
 	ip string,
 	cred *V3Credential,
 	cfg *Session,
-) ([]RouteEntry, error) {
+) (RouteTable, error) {
 	params, err := newV3WalkClient(ctx, ip, cred, cfg)
 	if err != nil {
-		return nil, err
+		return RouteTable{}, err
 	}
 	defer func() { _ = params.Conn.Close() }()
 
-	return walkInetCidrRouteTable(params)
+	return walkInetCidrRouteTable(params, MaxRouteRows)
 }
 
-// walkInetCidrRouteTable walks the modern inetCidrRouteTable.
-func walkInetCidrRouteTable(params *gosnmp.GoSNMP) ([]RouteEntry, error) {
+// walkInetCidrRouteTable walks the modern inetCidrRouteTable, at most limit
+// rows of it.
+func walkInetCidrRouteTable(params bulkWalker, limit int) (RouteTable, error) {
 	routes := make(map[string]*RouteEntry)
 
 	// Walk inetCidrRouteIfIndex to discover routes.
-	err := params.BulkWalk(OIDInetCidrRouteIfIndex, func(pdu gosnmp.SnmpPDU) error {
+	truncated, err := walkCapped(params, OIDInetCidrRouteIfIndex, limit, func(pdu gosnmp.SnmpPDU) {
 		dest, prefix, nextHop := parseInetCidrRouteIndex(pdu.Name)
 		if dest == "" {
-			return nil
+			return
 		}
 
 		key := fmt.Sprintf("%s/%d-%s", dest, prefix, nextHop)
@@ -163,34 +190,27 @@ func walkInetCidrRouteTable(params *gosnmp.GoSNMP) ([]RouteEntry, error) {
 			NextHop:     nextHop,
 			IfIndex:     ifIndex,
 		}
-		return nil
 	})
 	if err != nil {
-		return nil, fmt.Errorf("failed to walk inetCidrRouteIfIndex: %w", err)
+		return RouteTable{}, fmt.Errorf("failed to walk inetCidrRouteIfIndex: %w", err)
 	}
 
 	// Walk route type.
-	walkRouteAttribute(params, OIDInetCidrRouteType, routes, func(r *RouteEntry, value string) {
+	walkRouteAttribute(params, OIDInetCidrRouteType, limit, routes, func(r *RouteEntry, value string) {
 		r.Type = parseRouteType(value)
 	})
 
 	// Walk route protocol.
-	walkRouteAttribute(params, OIDInetCidrRouteProto, routes, func(r *RouteEntry, value string) {
+	walkRouteAttribute(params, OIDInetCidrRouteProto, limit, routes, func(r *RouteEntry, value string) {
 		r.Protocol = parseRouteProtocol(value)
 	})
 
 	// Walk route metric.
-	walkRouteAttribute(params, OIDInetCidrRouteMetric1, routes, func(r *RouteEntry, value string) {
+	walkRouteAttribute(params, OIDInetCidrRouteMetric1, limit, routes, func(r *RouteEntry, value string) {
 		r.Metric, _ = strconv.Atoi(value)
 	})
 
-	// Convert map to slice.
-	result := make([]RouteEntry, 0, len(routes))
-	for _, route := range routes {
-		result = append(result, *route)
-	}
-
-	return result, nil
+	return routeTable(routes, truncated), nil
 }
 
 // walkIPCidrRoutes walks the legacy ipCidrRouteTable using SNMPv2c.
@@ -198,14 +218,14 @@ func walkIPCidrRoutes(
 	ctx context.Context,
 	ip, community string,
 	cfg *Session,
-) ([]RouteEntry, error) {
+) (RouteTable, error) {
 	params, err := newV2cWalkClient(ctx, ip, community, cfg)
 	if err != nil {
-		return nil, err
+		return RouteTable{}, err
 	}
 	defer func() { _ = params.Conn.Close() }()
 
-	return walkIPCidrRouteTable(params)
+	return walkIPCidrRouteTable(params, MaxRouteRows)
 }
 
 // walkIPCidrRoutesV3 walks the legacy ipCidrRouteTable using SNMPv3.
@@ -214,25 +234,26 @@ func walkIPCidrRoutesV3(
 	ip string,
 	cred *V3Credential,
 	cfg *Session,
-) ([]RouteEntry, error) {
+) (RouteTable, error) {
 	params, err := newV3WalkClient(ctx, ip, cred, cfg)
 	if err != nil {
-		return nil, err
+		return RouteTable{}, err
 	}
 	defer func() { _ = params.Conn.Close() }()
 
-	return walkIPCidrRouteTable(params)
+	return walkIPCidrRouteTable(params, MaxRouteRows)
 }
 
-// walkIPCidrRouteTable walks the legacy ipCidrRouteTable.
-func walkIPCidrRouteTable(params *gosnmp.GoSNMP) ([]RouteEntry, error) {
+// walkIPCidrRouteTable walks the legacy ipCidrRouteTable, at most limit rows
+// of it.
+func walkIPCidrRouteTable(params bulkWalker, limit int) (RouteTable, error) {
 	routes := make(map[string]*RouteEntry)
 
 	// Walk ipCidrRouteDest to discover routes.
-	err := params.BulkWalk(OIDIpCidrRouteDest, func(pdu gosnmp.SnmpPDU) error {
+	truncated, err := walkCapped(params, OIDIpCidrRouteDest, limit, func(pdu gosnmp.SnmpPDU) {
 		dest, mask, nextHop := parseIPCidrRouteIndex(pdu.Name)
 		if dest == "" {
-			return nil
+			return
 		}
 
 		key := fmt.Sprintf("%s/%s-%s", dest, mask, nextHop)
@@ -243,16 +264,16 @@ func walkIPCidrRouteTable(params *gosnmp.GoSNMP) ([]RouteEntry, error) {
 			Prefix:      prefix,
 			NextHop:     nextHop,
 		}
-		return nil
 	})
 	if err != nil {
-		return nil, fmt.Errorf("failed to walk ipCidrRouteDest: %w", err)
+		return RouteTable{}, fmt.Errorf("failed to walk ipCidrRouteDest: %w", err)
 	}
 
 	// Walk ipCidrRouteIfIndex.
 	walkIPCidrRouteAttribute(
 		params,
 		OIDIpCidrRouteIfIndex,
+		limit,
 		routes,
 		func(r *RouteEntry, value string) {
 			r.IfIndex, _ = strconv.Atoi(value)
@@ -260,7 +281,7 @@ func walkIPCidrRouteTable(params *gosnmp.GoSNMP) ([]RouteEntry, error) {
 	)
 
 	// Walk ipCidrRouteType.
-	walkIPCidrRouteAttribute(params, OIDIpCidrRouteType, routes, func(r *RouteEntry, value string) {
+	walkIPCidrRouteAttribute(params, OIDIpCidrRouteType, limit, routes, func(r *RouteEntry, value string) {
 		r.Type = parseRouteType(value)
 	})
 
@@ -268,6 +289,7 @@ func walkIPCidrRouteTable(params *gosnmp.GoSNMP) ([]RouteEntry, error) {
 	walkIPCidrRouteAttribute(
 		params,
 		OIDIpCidrRouteProto,
+		limit,
 		routes,
 		func(r *RouteEntry, value string) {
 			r.Protocol = parseRouteProtocol(value)
@@ -278,42 +300,70 @@ func walkIPCidrRouteTable(params *gosnmp.GoSNMP) ([]RouteEntry, error) {
 	walkIPCidrRouteAttribute(
 		params,
 		OIDIpCidrRouteMetric1,
+		limit,
 		routes,
 		func(r *RouteEntry, value string) {
 			r.Metric, _ = strconv.Atoi(value)
 		},
 	)
 
-	// Convert map to slice.
+	return routeTable(routes, truncated), nil
+}
+
+// walkCapped walks one column, handing visit at most limit rows. It reports
+// truncated when the column holds more, which it knows only by being offered
+// row limit+1, so a table of exactly limit rows is not called truncated.
+//
+// Every column of a table is capped the same way, not only the one that
+// discovers the rows: the columns share the table's index order, so the rows
+// past the cap in an attribute column belong to routes that were never kept,
+// and walking them would cost the same million-row round trips for nothing.
+func walkCapped(params bulkWalker, oid string, limit int, visit func(gosnmp.SnmpPDU)) (bool, error) {
+	rows := 0
+	err := params.BulkWalk(oid, func(pdu gosnmp.SnmpPDU) error {
+		if rows == limit {
+			return errRouteRowCap
+		}
+		rows++
+		visit(pdu)
+		return nil
+	})
+	if errors.Is(err, errRouteRowCap) {
+		return true, nil
+	}
+	return false, err
+}
+
+// routeTable flattens the walked rows.
+func routeTable(routes map[string]*RouteEntry, truncated bool) RouteTable {
 	result := make([]RouteEntry, 0, len(routes))
 	for _, route := range routes {
 		result = append(result, *route)
 	}
-
-	return result, nil
+	return RouteTable{Routes: result, Truncated: truncated}
 }
 
 // walkRouteAttribute walks a routing table attribute (inetCidrRouteTable).
 func walkRouteAttribute(
-	params *gosnmp.GoSNMP,
+	params bulkWalker,
 	oid string,
+	limit int,
 	routes map[string]*RouteEntry,
 	updateFunc func(*RouteEntry, string),
 ) {
-	err := params.BulkWalk(oid, func(pdu gosnmp.SnmpPDU) error {
+	_, err := walkCapped(params, oid, limit, func(pdu gosnmp.SnmpPDU) {
 		dest, prefix, nextHop := parseInetCidrRouteIndex(pdu.Name)
 		if dest == "" {
-			return nil
+			return
 		}
 
 		key := fmt.Sprintf("%s/%d-%s", dest, prefix, nextHop)
 		route, exists := routes[key]
 		if !exists {
-			return nil
+			return
 		}
 
 		updateFunc(route, formatSNMPValue(pdu))
-		return nil
 	})
 	if err != nil {
 		logging.GetLogger().Debug("Failed to walk route attribute", "oid", oid, "error", err)
@@ -322,25 +372,25 @@ func walkRouteAttribute(
 
 // walkIPCidrRouteAttribute walks a routing table attribute (ipCidrRouteTable).
 func walkIPCidrRouteAttribute(
-	params *gosnmp.GoSNMP,
+	params bulkWalker,
 	oid string,
+	limit int,
 	routes map[string]*RouteEntry,
 	updateFunc func(*RouteEntry, string),
 ) {
-	err := params.BulkWalk(oid, func(pdu gosnmp.SnmpPDU) error {
+	_, err := walkCapped(params, oid, limit, func(pdu gosnmp.SnmpPDU) {
 		dest, mask, nextHop := parseIPCidrRouteIndex(pdu.Name)
 		if dest == "" {
-			return nil
+			return
 		}
 
 		key := fmt.Sprintf("%s/%s-%s", dest, mask, nextHop)
 		route, exists := routes[key]
 		if !exists {
-			return nil
+			return
 		}
 
 		updateFunc(route, formatSNMPValue(pdu))
-		return nil
 	})
 	if err != nil {
 		logging.GetLogger().

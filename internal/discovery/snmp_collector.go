@@ -54,6 +54,10 @@ type SNMPFullData struct {
 	// Routing contains routing table entries (IP-FORWARD-MIB).
 	Routing []SNMPRoute `json:"routing,omitempty"`
 
+	// RoutingTruncated is true when the device held more than
+	// snmp.MaxRouteRows routes and Routing is only the first of them.
+	RoutingTruncated bool `json:"routingTruncated,omitempty"`
+
 	// Errors contains any errors encountered during collection.
 	Errors []string `json:"errors,omitempty"`
 }
@@ -423,7 +427,7 @@ func (c *SNMPCollector) collectAndStoreRoutes(
 	data *SNMPFullData,
 	mu *sync.Mutex,
 ) {
-	routes, err := c.collectRoutes(ctx, ip)
+	routes, truncated, err := c.collectRoutes(ctx, ip)
 	mu.Lock()
 	defer mu.Unlock()
 	if err != nil {
@@ -431,5 +435,7 @@ func (c *SNMPCollector) collectAndStoreRoutes(
 		return
 	}
 	data.Routing = routes
-	logging.GetLogger().DebugContext(ctx, "Collected routes", "ip", ip, "count", len(routes))
+	data.RoutingTruncated = truncated
+	logging.GetLogger().DebugContext(ctx, "Collected routes",
+		"ip", ip, "count", len(routes), "truncated", truncated)
 }
