@@ -17,6 +17,7 @@
 package capture
 
 import (
+	"errors"
 	"time"
 
 	"github.com/gopacket/gopacket"
@@ -29,6 +30,13 @@ import (
 // pcap adapter's test asserts the two stay equal so a gopacket upgrade that
 // changed the sentinel cannot silently break block-forever semantics here.
 const BlockForever = -10 * time.Millisecond
+
+// ErrTimeout is what ReadPacketData returns when a handle opened with a
+// positive timeout saw no frame within it. A caller that must be able to close
+// a quiet handle opens it with a timeout and reads past this error: with
+// BlockForever, libpcap on Linux holds the handle inside a read until a frame
+// arrives, and Close waits for that read.
+var ErrTimeout = errors.New("capture: read timed out")
 
 // Handle is an open live-capture handle. It embeds gopacket.PacketDataSource so a
 // handle can be passed straight to
@@ -43,6 +51,10 @@ type Handle interface {
 	// LinkType reports the link-layer type of the handle, used as the gopacket
 	// decoder when building a packet source.
 	LinkType() layers.LinkType
+
+	// WritePacketData injects one link-layer frame on the interface, as
+	// built: the kernel adds nothing and routes nothing.
+	WritePacketData(data []byte) error
 
 	// Close releases the handle and any associated OS resources.
 	Close()

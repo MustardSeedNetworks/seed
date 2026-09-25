@@ -12,6 +12,10 @@
 // every probe arrived with. Each probe carries the marking it was sent with
 // and the set of classes in its run, so the listener alone can say which
 // classes were preserved, rewritten or lost, without the two hosts talking.
+//
+// SingleHost is both halves on one host with two interfaces, the case the
+// issue names first: out of the Wi-Fi interface, through the access point
+// and the wired network, back in on the wired interface.
 package qos
 
 import (
@@ -224,25 +228,35 @@ func parseSend(req SendRequest) (sendSpec, error) {
 	if req.Port < 1 || req.Port > 65535 {
 		return sendSpec{}, fmt.Errorf("%w: %d", ErrPort, req.Port)
 	}
-	classes := req.DSCP
+	mask, count, err := parseClasses(req.DSCP, req.Count)
+	if err != nil {
+		return sendSpec{}, err
+	}
+	return sendSpec{target: netip.AddrPortFrom(addr, uint16(req.Port)), mask: mask, count: count}, nil
+}
+
+// parseClasses validates a request's classes and per-class count, applying
+// the defaults for either left empty.
+func parseClasses(dscp []int, perClass int) (uint64, uint16, error) {
+	classes := dscp
 	if len(classes) == 0 {
 		classes = defaultClasses()
 	}
 	var mask uint64
 	for _, d := range classes {
 		if d < 0 || d > maxDSCP {
-			return sendSpec{}, fmt.Errorf("%w: %d", ErrDSCP, d)
+			return 0, 0, fmt.Errorf("%w: %d", ErrDSCP, d)
 		}
 		mask |= 1 << d
 	}
 	count := DefaultCount
-	if req.Count != 0 {
-		count = req.Count
+	if perClass != 0 {
+		count = perClass
 	}
 	if count < 1 || count > MaxCount {
-		return sendSpec{}, fmt.Errorf("%w: %d", ErrCount, count)
+		return 0, 0, fmt.Errorf("%w: %d", ErrCount, count)
 	}
-	return sendSpec{target: netip.AddrPortFrom(addr, uint16(req.Port)), mask: mask, count: uint16(count)}, nil
+	return mask, uint16(count), nil
 }
 
 // listenSpec is a validated ListenRequest.

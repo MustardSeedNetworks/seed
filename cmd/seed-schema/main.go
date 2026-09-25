@@ -247,12 +247,15 @@ func schemaTargets() []schemaTarget {
 		{&multicast.ListenRequest{}, "multicast-listen-request.schema.json"},
 		{&multicast.ListenResult{}, "multicast-listen-response.schema.json"},
 
-		// #400's DSCP preservation check, two jobs-spine kinds (one per host),
-		// registered as the qos package's own types like the listen above.
+		// #400's DSCP preservation check, three jobs-spine kinds (one per host,
+		// or both on one host), registered as the qos package's own types like
+		// the listen above.
 		{&qos.SendRequest{}, "qos-send-request.schema.json"},
 		{&qos.SendResult{}, "qos-send-response.schema.json"},
 		{&qos.ListenRequest{}, "qos-listen-request.schema.json"},
 		{&qos.ListenResult{}, "qos-listen-response.schema.json"},
+		{&qos.SingleHostRequest{}, "qos-single-host-request.schema.json"},
+		{&qos.SingleHostResult{}, "qos-single-host-response.schema.json"},
 
 		// Profile/settings config — code-first model of the per-profile
 		// config.Config blob (ADR-0007/0008, Phase 7 S6). The profile Config

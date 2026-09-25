@@ -89,7 +89,13 @@ func (s *Server) registerJobKinds() {
 	s.registerPathMonitorKind(defaultPathTracer)
 	s.registerDeviceScanKind(func() deviceScanService { return s.deviceDiscovery() })
 	s.registerMulticastListenKind(multicast.Listen)
-	s.registerQoSKinds(qos.Send, qos.Listen)
+	s.registerQoSKinds(
+		qos.Send,
+		qos.Listen,
+		func(ctx context.Context, req qos.SingleHostRequest) (*qos.SingleHostResult, error) {
+			return qos.SingleHost(ctx, defaultCaptureOpener(), req)
+		},
+	)
 }
 
 // registerSpeedtestKind registers the speedtest kind with an injectable tester

@@ -21,6 +21,7 @@ import (
 type fakeQoS struct {
 	sent  qos.SendRequest
 	heard qos.ListenRequest
+	local qos.SingleHostRequest
 	hold  bool
 	err   error
 }
@@ -44,10 +45,18 @@ func (f *fakeQoS) listen(ctx context.Context, req qos.ListenRequest) (*qos.Liste
 	return &qos.ListenResult{Port: req.Port, Probes: 30, DSCPObserved: true}, nil
 }
 
+func (f *fakeQoS) singleHost(_ context.Context, req qos.SingleHostRequest) (*qos.SingleHostResult, error) {
+	f.local = req
+	if f.err != nil {
+		return nil, f.err
+	}
+	return &qos.SingleHostResult{SendInterface: req.SendInterface, Probes: 12, Preserved: true}, nil
+}
+
 func submitQoS(t *testing.T, fake *fakeQoS, kind, params string) (*jobs.Runner, string) {
 	t.Helper()
 	srv, runner := newJobsTestServer(t, jobs.Config{})
-	srv.registerQoSKinds(fake.send, fake.listen)
+	srv.registerQoSKinds(fake.send, fake.listen, fake.singleHost)
 	id, err := runner.Submit(kind, json.RawMessage(params))
 	if err != nil {
 		t.Fatalf("Submit %s: %v", kind, err)
@@ -78,6 +87,17 @@ func TestQoSKindsPassTheRequestThrough(t *testing.T) {
 	if res, ok := j.Result.(*qos.ListenResult); !ok || res.Probes != 30 {
 		t.Fatalf("listen result = %#v", j.Result)
 	}
+
+	runner, id = submitQoS(t, fake, qosSingleHostJobKind,
+		`{"sendInterface":"wlan0","captureInterface":"eth0","dscp":[46],"count":4}`)
+	j = waitForState(t, runner, id, jobs.StateSucceeded)
+	wantLocal := qos.SingleHostRequest{SendInterface: "wlan0", CaptureInterface: "eth0", DSCP: []int{46}, Count: 4}
+	if !reflect.DeepEqual(fake.local, wantLocal) {
+		t.Fatalf("single-host got %+v, want %+v", fake.local, wantLocal)
+	}
+	if res, ok := j.Result.(*qos.SingleHostResult); !ok || res.Probes != 12 {
+		t.Fatalf("single-host result = %#v", j.Result)
+	}
 }
 
 // Stopping a listen is how the operator says the far side has finished, so a
@@ -105,6 +125,11 @@ func TestQoSKindsRejectBadParams(t *testing.T) {
 		"send unknown field":   {qosSendJobKind, `{"target":"192.0.2.7","port":5004,"ttl":4}`},
 		"listen missing":       {qosListenJobKind, ``},
 		"listen unknown field": {qosListenJobKind, `{"port":5004,"interface":"en0"}`},
+		"single-host missing":  {qosSingleHostJobKind, ``},
+		"single-host unknown": {
+			qosSingleHostJobKind,
+			`{"sendInterface":"wlan0","captureInterface":"eth0","port":5004}`,
+		},
 	}
 	for name, tc := range cases {
 		t.Run(name, func(t *testing.T) {
@@ -128,7 +153,7 @@ func TestQoSKindsReportTheirError(t *testing.T) {
 
 // The production registration, not a test double: each half refuses a bad
 // request before any socket opens, which proves the kinds are wired to
-// qos.Send and qos.Listen rather than being unknown kinds.
+// the qos package's checks rather than being unknown kinds.
 func TestServerRegistersTheQoSKinds(t *testing.T) {
 	t.Parallel()
 
@@ -136,8 +161,9 @@ func TestServerRegistersTheQoSKinds(t *testing.T) {
 		params string
 		want   error
 	}{
-		qosSendJobKind:   {`{"target":"239.1.1.1","port":5004}`, qos.ErrTarget},
-		qosListenJobKind: {`{"port":0}`, qos.ErrPort},
+		qosSendJobKind:       {`{"target":"239.1.1.1","port":5004}`, qos.ErrTarget},
+		qosListenJobKind:     {`{"port":0}`, qos.ErrPort},
+		qosSingleHostJobKind: {`{"sendInterface":"eth0","captureInterface":"eth0"}`, qos.ErrInterfaces},
 	} {
 		srv, runner := newJobsTestServer(t, jobs.Config{})
 		srv.registerJobKinds()
@@ -161,7 +187,7 @@ func newLicensedJobsServer(t *testing.T, key string) *Server {
 	t.Helper()
 	srv, runner := newJobsTestServer(t, jobs.Config{})
 	fake := &fakeQoS{}
-	srv.registerQoSKinds(fake.send, fake.listen)
+	srv.registerQoSKinds(fake.send, fake.listen, fake.singleHost)
 	if err := runner.Register("echo", okKind("ok")); err != nil {
 		t.Fatalf("Register: %v", err)
 	}
@@ -188,6 +214,7 @@ func TestQoSKindsRequireDSCPVerification(t *testing.T) {
 	const (
 		send   = `{"target":"192.0.2.7","port":5004}`
 		listen = `{"port":5004}`
+		local  = `{"sendInterface":"wlan0","captureInterface":"eth0"}`
 	)
 	cases := []struct {
 		name, key, kind, params string
@@ -195,12 +222,15 @@ func TestQoSKindsRequireDSCPVerification(t *testing.T) {
 	}{
 		{"free send", "", qosSendJobKind, send, true},
 		{"free listen", "", qosListenJobKind, listen, true},
+		{"free single-host", "", qosSingleHostJobKind, local, true},
 		{"free echo", "", "echo", `{}`, false},
 		{"starter send", prodSeedStarterVector, qosSendJobKind, send, true},
 		{"starter listen", prodSeedStarterVector, qosListenJobKind, listen, true},
+		{"starter single-host", prodSeedStarterVector, qosSingleHostJobKind, local, true},
 		{"starter echo", prodSeedStarterVector, "echo", `{}`, false},
 		{"pro send", prodSeedProVector, qosSendJobKind, send, false},
 		{"pro listen", prodSeedProVector, qosListenJobKind, listen, false},
+		{"pro single-host", prodSeedProVector, qosSingleHostJobKind, local, false},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {

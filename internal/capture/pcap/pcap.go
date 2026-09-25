@@ -15,20 +15,17 @@
 package pcap
 
 import (
+	"errors"
 	"time"
 
+	"github.com/gopacket/gopacket"
 	"github.com/gopacket/gopacket/pcap"
 
 	"github.com/MustardSeedNetworks/seed/internal/capture"
 )
 
-// Compile-time guarantees: this adapter implements the port, and *pcap.Handle
-// satisfies capture.Handle directly (ReadPacketData/SetBPFFilter/LinkType/Close),
-// so OpenLive returns it without a wrapper type.
-var (
-	_ capture.Opener = Opener{}
-	_ capture.Handle = (*pcap.Handle)(nil)
-)
+// Compile-time guarantee: this adapter implements the port.
+var _ capture.Opener = Opener{}
 
 // Opener is the libpcap-backed capture.Opener.
 type Opener struct{}
@@ -37,21 +34,34 @@ type Opener struct{}
 func New() Opener { return Opener{} }
 
 // OpenLive opens a live libpcap capture handle.
-//
-// *pcap.Handle already satisfies capture.Handle — it has ReadPacketData,
-// SetBPFFilter, LinkType, and Close with matching signatures — so the returned
-// handle needs no wrapping.
 func (Opener) OpenLive(
 	iface string,
 	snaplen int32,
 	promiscuous bool,
 	timeout time.Duration,
 ) (capture.Handle, error) {
-	handle, err := pcap.OpenLive(iface, snaplen, promiscuous, timeout)
+	h, err := pcap.OpenLive(iface, snaplen, promiscuous, timeout)
 	if err != nil {
 		// Return an explicit nil interface (not a typed-nil *pcap.Handle) so
 		// callers' `handle == nil` checks behave. Callers add feature context.
 		return nil, err
 	}
-	return handle, nil
+	return handle{h}, nil
+}
+
+// handle is a *pcap.Handle whose read timeout is the port's ErrTimeout, so a
+// caller can tell "no frame yet" from a failed read without importing
+// gopacket/pcap.
+type handle struct{ *pcap.Handle }
+
+func (h handle) ReadPacketData() ([]byte, gopacket.CaptureInfo, error) {
+	data, ci, err := h.Handle.ReadPacketData()
+	return data, ci, portError(err)
+}
+
+func portError(err error) error {
+	if errors.Is(err, pcap.NextErrorTimeoutExpired) {
+		return capture.ErrTimeout
+	}
+	return err
 }

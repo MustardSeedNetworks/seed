@@ -49,9 +49,10 @@ func (h *replayHandle) ReadPacketData() ([]byte, gopacket.CaptureInfo, error) {
 	}, nil
 }
 
-func (h *replayHandle) SetBPFFilter(string) error { return nil }
-func (h *replayHandle) LinkType() layers.LinkType { return layers.LinkTypeEthernet }
-func (h *replayHandle) Close()                    {}
+func (h *replayHandle) SetBPFFilter(string) error    { return nil }
+func (h *replayHandle) LinkType() layers.LinkType    { return layers.LinkTypeEthernet }
+func (h *replayHandle) WritePacketData([]byte) error { return nil }
+func (h *replayHandle) Close()                       {}
 
 type replayOpener struct{ frames [][]byte }
 

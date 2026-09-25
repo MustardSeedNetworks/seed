@@ -48,8 +48,8 @@ Three mechanisms, and only three:
 - **`sendFeatureGate`**, in the same file, answers the same 402 from inside a
   handler, for a boundary that is a value in the request rather than a path:
   a report's `format` (PDF is `audit_pdf`) and a job's `kind`
-  (`jobKindFeatures` in `internal/api/handlers_jobs.go`; `qos-send` and
-  `qos-listen` are `dscp_verification`).
+  (`jobKindFeature` in `internal/api/handlers_jobs.go`; `qos-send`,
+  `qos-listen` and `qos-single-host` are `dscp_verification`).
 - **The feature catalogue** in `internal/license/policy.go` maps each tier to
   the feature names it grants. `starterFeatures()` is a list;
   `proFeatures()` is that list plus the Pro additions, so Pro is a superset by
