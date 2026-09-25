@@ -24,6 +24,9 @@ const (
 	qosSendJobKind = "qos-send"
 	// qosListenJobKind is the registered kind name for the receiving half.
 	qosListenJobKind = "qos-listen"
+	// dscpVerificationFeature is the Pro licence feature both halves need
+	// (owner 2026-09-24).
+	dscpVerificationFeature = "dscp_verification"
 )
 
 // errQoSParams is returned when either kind is submitted with no params: both
