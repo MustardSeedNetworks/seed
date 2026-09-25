@@ -55,7 +55,7 @@ const (
 // a PDF.
 func jobKindFeature(kind string) (string, bool) {
 	switch kind {
-	case qosSendJobKind, qosListenJobKind:
+	case qosSendJobKind, qosListenJobKind, qosSingleHostJobKind:
 		return dscpVerificationFeature, true
 	}
 	return "", false
