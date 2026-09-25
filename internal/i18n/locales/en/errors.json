@@ -204,5 +204,10 @@
   "mdns": {
     "browseUnavailable": "Could not join the mDNS multicast group on this interface",
     "invalidWindow": "Browse window must be a positive number of seconds"
+  },
+  "capture": {
+    "notFound": "Capture not found",
+    "inProgress": "The capture is still running; stop it or wait for it to finish, then download it",
+    "readFailed": "Failed to read the capture"
   }
 }

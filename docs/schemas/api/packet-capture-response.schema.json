@@ -1,0 +1,49 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/MustardSeedNetworks/seed/main/docs/schemas/api/packet-capture-response.schema.json",
+  "$ref": "#/$defs/Result",
+  "$defs": {
+    "Result": {
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "interface": {
+          "type": "string"
+        },
+        "filter": {
+          "type": "string"
+        },
+        "packets": {
+          "type": "integer"
+        },
+        "bytes": {
+          "type": "integer"
+        },
+        "durationMs": {
+          "type": "integer"
+        },
+        "stopReason": {
+          "type": "string",
+          "enum": [
+            "duration",
+            "size",
+            "stopped"
+          ]
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "id",
+        "interface",
+        "packets",
+        "bytes",
+        "durationMs",
+        "stopReason"
+      ]
+    }
+  },
+  "title": "Result",
+  "description": "Result — generated from the Go struct in internal/api; refresh with `make schema` after struct changes."
+}

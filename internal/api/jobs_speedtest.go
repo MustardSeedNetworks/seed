@@ -96,6 +96,7 @@ func (s *Server) registerJobKinds() {
 			return qos.SingleHost(ctx, defaultCaptureOpener(), req)
 		},
 	)
+	s.registerDefaultPacketCaptureKind()
 }
 
 // registerSpeedtestKind registers the speedtest kind with an injectable tester
