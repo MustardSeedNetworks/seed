@@ -137,6 +137,9 @@ func proFeatures() []string {
 		"server_monitoring",
 		"bgp_monitoring",
 		"wifi_management_capture",
+		// The qos-send / qos-listen job kinds: whether a path keeps the DSCP
+		// marking each class was sent with (#400).
+		"dscp_verification",
 	}
 	return append(starterFeatures(), pro...)
 }

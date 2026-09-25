@@ -40,19 +40,25 @@ fourth tier. They are the same binary and the same tiers, arranged through
 
 ## 2. How entitlement is enforced
 
-Two mechanisms, and only two:
+Three mechanisms, and only three:
 
 - **`requireFeature`** ([`internal/api/middleware_license.go`](../internal/api/middleware_license.go))
   wraps a route with a feature name. Without the feature the route answers 402;
   the handler is never reached.
+- **`sendFeatureGate`**, in the same file, answers the same 402 from inside a
+  handler, for a boundary that is a value in the request rather than a path:
+  a report's `format` (PDF is `audit_pdf`) and a job's `kind`
+  (`jobKindFeatures` in `internal/api/handlers_jobs.go`; `qos-send` and
+  `qos-listen` are `dscp_verification`).
 - **The feature catalogue** in `internal/license/policy.go` maps each tier to
   the feature names it grants. `starterFeatures()` is a list;
   `proFeatures()` is that list plus the Pro additions, so Pro is a superset by
   construction rather than by remembering to copy entries.
 
-Write a Pro-only route as a `requireFeature("...")` at registration. Do not
-add a tier check inside a handler: an entitlement decision that is not at the
-route is one that a second caller can miss.
+Write a Pro-only route as a `requireFeature("...")` at registration. Use
+`sendFeatureGate` only where one route serves both a free and a paid request,
+and keep the decision in the one handler every such request enters; a tier
+check scattered through handlers is one that a second caller can miss.
 
 **The catalogue is not a feature list you can quote to a customer.** An audit
 on 2026-09-02 found catalogue strings with no gating reference anywhere in Go —

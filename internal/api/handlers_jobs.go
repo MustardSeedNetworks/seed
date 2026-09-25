@@ -49,6 +49,18 @@ const (
 	jobsShutdownTimeout = 5 * time.Second
 )
 
+// jobKindFeature names the licence feature a paid job kind is sold under.
+// POST /jobs is one route for every kind, so the route gate cannot tell them
+// apart and the handler answers the 402 itself, as the reports handler does for
+// a PDF.
+func jobKindFeature(kind string) (string, bool) {
+	switch kind {
+	case qosSendJobKind, qosListenJobKind:
+		return dscpVerificationFeature, true
+	}
+	return "", false
+}
+
 // CreateJobRequest is the POST /jobs body: a job kind plus opaque,
 // kind-specific parameters passed through verbatim to the kind's handler.
 type CreateJobRequest struct {
@@ -95,6 +107,10 @@ func (s *Server) handleJobs(w http.ResponseWriter, r *http.Request) {
 	if req.Kind == "" {
 		sendErrorResponseWithDetails(w, logger, http.StatusBadRequest,
 			ErrCodeValidation, "Job kind is required", "")
+		return
+	}
+	if feature, ok := jobKindFeature(req.Kind); ok && !s.hasFeature(feature) {
+		s.sendFeatureGate(w, r, feature)
 		return
 	}
 

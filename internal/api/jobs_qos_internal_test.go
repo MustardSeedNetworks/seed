@@ -1,13 +1,17 @@
 package api
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
+	"net/http"
+	"net/http/httptest"
 	"reflect"
 	"strings"
 	"testing"
 
 	"github.com/MustardSeedNetworks/seed/internal/diagnostics/qos"
+	"github.com/MustardSeedNetworks/seed/internal/license"
 	"github.com/MustardSeedNetworks/seed/internal/platform/jobs"
 )
 
@@ -144,5 +148,88 @@ func TestServerRegistersTheQoSKinds(t *testing.T) {
 		if j := waitForState(t, runner, id, jobs.StateFailed); !strings.Contains(j.Err, tc.want.Error()) {
 			t.Fatalf("%s Err = %q, want %q", kind, j.Err, tc.want)
 		}
+	}
+}
+
+// prodSeedProVector is the production-signed Pro key internal/license pins its
+// keygen contract against; prodSeedStarterVector sits beside the reports gate.
+const prodSeedProVector = "MSN1.eyJjb2RlIjoiNDAwMiIsImlhdCI6MTc4MDg3NjgwMCwibWF4RGV2aWNlcyI6MywicHJvZHVjdCI6InNlZWQiLCJzZXJpYWwiOiIxMjM0NTY3IiwidGllciI6MiwidiI6MX0.wGtw4OLbVFHE19Zqt7ZK4_10P6sbmvdwa0pjoY_9U0ggR2w_Ix5Sy8KvIB3p4uO62p8tIhMon6hj_T60pK4VDA"
+
+// newLicensedJobsServer is a jobs server with the fake QoS halves and an
+// ungated echo kind registered, running under the licence key (none = Free).
+func newLicensedJobsServer(t *testing.T, key string) *Server {
+	t.Helper()
+	srv, runner := newJobsTestServer(t, jobs.Config{})
+	fake := &fakeQoS{}
+	srv.registerQoSKinds(fake.send, fake.listen)
+	if err := runner.Register("echo", okKind("ok")); err != nil {
+		t.Fatalf("Register: %v", err)
+	}
+	mgr, err := license.NewManagerWithDir(t.TempDir())
+	if err != nil {
+		t.Fatalf("license manager: %v", err)
+	}
+	if key != "" {
+		if res := mgr.Activate(key); !res.Success {
+			t.Fatalf("activate: %s", res.Message)
+		}
+	}
+	srv.licenseMgr = mgr
+	return srv
+}
+
+// The DSCP check is sold at Pro (owner 2026-09-24). Both halves arrive through
+// POST /jobs, which every tier reaches, so the kind is the boundary: the route
+// gate cannot express it. The fake halves are registered on every tier, so a
+// missing gate shows up as a created job.
+func TestQoSKindsRequireDSCPVerification(t *testing.T) {
+	t.Parallel()
+
+	const (
+		send   = `{"target":"192.0.2.7","port":5004}`
+		listen = `{"port":5004}`
+	)
+	cases := []struct {
+		name, key, kind, params string
+		gated                   bool
+	}{
+		{"free send", "", qosSendJobKind, send, true},
+		{"free listen", "", qosListenJobKind, listen, true},
+		{"free echo", "", "echo", `{}`, false},
+		{"starter send", prodSeedStarterVector, qosSendJobKind, send, true},
+		{"starter listen", prodSeedStarterVector, qosListenJobKind, listen, true},
+		{"starter echo", prodSeedStarterVector, "echo", `{}`, false},
+		{"pro send", prodSeedProVector, qosSendJobKind, send, false},
+		{"pro listen", prodSeedProVector, qosListenJobKind, listen, false},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+			srv := newLicensedJobsServer(t, tc.key)
+			body, _ := json.Marshal(CreateJobRequest{Kind: tc.kind, Params: json.RawMessage(tc.params)})
+			w := httptest.NewRecorder()
+			srv.handleJobs(w, httptest.NewRequest(http.MethodPost, APIVersionPrefix+"/jobs", bytes.NewReader(body)))
+
+			if !tc.gated {
+				if w.Code != http.StatusCreated {
+					t.Fatalf("status = %d, want 201; body=%s", w.Code, w.Body.String())
+				}
+				return
+			}
+			if w.Code != http.StatusPaymentRequired {
+				t.Fatalf("status = %d, want 402; body=%s", w.Code, w.Body.String())
+			}
+			var gate FeatureGateResponse
+			if err := json.NewDecoder(w.Body).Decode(&gate); err != nil {
+				t.Fatalf("decode 402 body: %v", err)
+			}
+			if gate.RequiredFeature != dscpVerificationFeature {
+				t.Errorf("requiredFeature = %q, want %q", gate.RequiredFeature, dscpVerificationFeature)
+			}
+			// Location is set only once Submit has created the job.
+			if loc := w.Header().Get("Location"); loc != "" {
+				t.Errorf("refused with 402 but created %s", loc)
+			}
+		})
 	}
 }
