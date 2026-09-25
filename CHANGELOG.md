@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.214.92](https://github.com/MustardSeedNetworks/seed/compare/v0.214.91...v0.214.92) (2026-09-25)
+
+
+### Features
+
+* **license:** gate the DSCP preservation check at Pro ([#2859](https://github.com/MustardSeedNetworks/seed/issues/2859)) ([176d64e](https://github.com/MustardSeedNetworks/seed/commit/176d64ed0f546ed7007b2c49f7dd268b74671a02))
+
+
+### Bug Fixes
+
+* **discovery:** bound the route-table walk and walk it by default ([#2858](https://github.com/MustardSeedNetworks/seed/issues/2858)) ([09f4720](https://github.com/MustardSeedNetworks/seed/commit/09f472082900ea7c6edc9de766c8211ff5507937)), closes [#2833](https://github.com/MustardSeedNetworks/seed/issues/2833)
+
 ## [0.214.91](https://github.com/MustardSeedNetworks/seed/compare/v0.214.90...v0.214.91) (2026-09-25)
 
 
