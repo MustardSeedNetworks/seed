@@ -52,7 +52,7 @@
     "zustand": "5.0.15"
   },
   "devDependencies": {
-    "@babel/core": "8.0.5",
+    "@babel/core": "8.0.6",
     "@biomejs/biome": "2.5.14",
     "@chromatic-com/storybook": "5.3.1",
     "@playwright/test": "1.63.0",
