@@ -220,6 +220,7 @@ via `//go:embed` — no copy step, no runtime dependency on the source tree.
 | `make test-e2e` | Playwright UI tests |
 | `make test-e2e-niac-link` | First-run discovery against a NIAC scenario over veth (Linux, sudo) |
 | `make test-e2e-niac-routed` | Target networks learned behind a routed NIAC pack over veth (Linux, sudo) |
+| `make test-snmp-niac-packs` | SNMP collectors against NIAC's six packs vs their manifests (Linux, sudo) |
 | `make lint` | golangci-lint + Biome |
 | `make security` | govulncheck + npm audit + gitleaks |
 | `make fmt-check` | Format check (Go + TS) |

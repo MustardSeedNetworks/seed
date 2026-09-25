@@ -166,7 +166,7 @@ func TestBuild_PollerStartLoadsZeroTargetsCleanly(t *testing.T) {
 	}
 }
 
-func TestBuild_RegistersAllElevenCollectorChainKinds(t *testing.T) {
+func TestBuild_RegistersAllTenCollectorChainKinds(t *testing.T) {
 	t.Parallel()
 	db := openTestDB(t)
 	sched := newSchedulerForTest()

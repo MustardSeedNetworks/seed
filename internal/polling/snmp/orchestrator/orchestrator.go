@@ -1,7 +1,7 @@
-// Package orchestrator wires the eleven Stage A3 SNMP collectors
-// (sys_info, if_table, lldp, cdp, fdp, arp, fdb, routing,
-// host_resources, bgp4_mib) into a single [engine.Engine] that the
-// server lifecycle registry starts and stops.
+// Package orchestrator wires the ten SNMP collectors (sys_info,
+// if_table, lldp, cdp, fdp, arp, fdb, routing, host_resources,
+// bgp4_mib) into a single [engine.Engine] that the server lifecycle
+// registry starts and stops.
 //
 // Build returns a configured [*snmp.Poller] with every default
 // collector registered against a single [sink.Sink] persisting into
@@ -49,7 +49,7 @@ type Config struct {
 	Decrypter   snmp.SecretDecrypter
 }
 
-// Build returns a *snmp.Poller with all eleven default collectors
+// Build returns a *snmp.Poller with all ten default collectors
 // registered against a sink that persists into snmp_observations.
 // The returned Poller satisfies [engine.Engine] so the server
 // registers it directly with the engine registry.
@@ -93,18 +93,41 @@ func Build(cfg Config) (*snmp.Poller, error) {
 	}
 	poller.SetCredentialResolver(resolver)
 
-	// Register every collector. cdp + fdp share a Publisher (CDP),
-	// distinguished downstream by Observation.TablePrefix.
-	poller.RegisterCollector(sysinfo.New(cfg.ClientFactory, persistSink, now))
-	poller.RegisterCollector(iftable.New(cfg.ClientFactory, persistSink, now))
-	poller.RegisterCollector(lldp.New(cfg.ClientFactory, persistSink, now))
-	poller.RegisterCollector(cdp.New(cfg.ClientFactory, persistSink, now))
-	poller.RegisterCollector(fdp.New(cfg.ClientFactory, persistSink, now))
-	poller.RegisterCollector(arp.New(cfg.ClientFactory, persistSink, now))
-	poller.RegisterCollector(fdb.New(cfg.ClientFactory, persistSink, now))
-	poller.RegisterCollector(routing.New(cfg.ClientFactory, persistSink, now))
-	poller.RegisterCollector(hostresources.New(cfg.ClientFactory, persistSink, now))
-	poller.RegisterCollector(bgp4.New(cfg.ClientFactory, persistSink, now))
+	for _, collector := range Collectors(cfg.ClientFactory, persistSink, now) {
+		poller.RegisterCollector(collector)
+	}
 
 	return poller, nil
+}
+
+// Publisher receives every collector's observations. [sink.Sink] is the
+// production implementation; the NIAC acceptance suite counts them instead.
+type Publisher interface {
+	sysinfo.Publisher
+	iftable.Publisher
+	lldp.Publisher
+	cdp.Publisher
+	arp.Publisher
+	fdb.Publisher
+	routing.Publisher
+	hostresources.Publisher
+	bgp4.Publisher
+}
+
+// Collectors returns the ten collectors a poller runs, in registration
+// order. cdp and fdp share a Publisher (CDP), distinguished downstream by
+// Observation.TablePrefix.
+func Collectors(factory snmp.ClientFactory, publisher Publisher, now func() time.Time) []snmp.Collector {
+	return []snmp.Collector{
+		sysinfo.New(factory, publisher, now),
+		iftable.New(factory, publisher, now),
+		lldp.New(factory, publisher, now),
+		cdp.New(factory, publisher, now),
+		fdp.New(factory, publisher, now),
+		arp.New(factory, publisher, now),
+		fdb.New(factory, publisher, now),
+		routing.New(factory, publisher, now),
+		hostresources.New(factory, publisher, now),
+		bgp4.New(factory, publisher, now),
+	}
 }

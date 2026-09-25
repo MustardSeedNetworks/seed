@@ -10,7 +10,7 @@
 # =============================================================================
 
 .PHONY: test test-all test-backend test-backend-quiet test-fast test-frontend test-frontend-quiet \
-        test-e2e test-e2e-ui test-e2e-install test-e2e-niac-link test-e2e-niac-routed test-coverage \
+        test-e2e test-e2e-ui test-e2e-install test-e2e-niac-link test-e2e-niac-routed test-snmp-niac-packs test-coverage \
         check-stale-tests
 
 # =============================================================================
@@ -137,6 +137,9 @@ test-e2e-niac-link: ## First-run discovery against a NIAC scenario over veth (Li
 
 test-e2e-niac-routed: ## Target networks learned behind a routed NIAC pack over veth (Linux, sudo, niac)
 	@./scripts/e2e-niac-routed.sh
+
+test-snmp-niac-packs: ## SNMP collectors against NIAC's six packs vs their manifests (Linux, sudo, niac)
+	@./scripts/snmp-acceptance-niac.sh
 
 test-e2e-ui: ## Run E2E tests with Playwright UI
 	@echo "🎭 Starting Playwright UI mode..."
