@@ -53,6 +53,10 @@ concerns so the OS-specific surface stays tiny:
   degrade tier) and reports reduced fidelity rather than failing.
 - **Pro-gated** (`wifi_management_capture` / `wifi_association_forensics`, already reserved in the
   license validator); Free/Starter keep the OS-scan + channel-utilization indicator.
+  _Amended 2026-09-26 (#2351):_ the rules now also run on scan results, so the gate moved.
+  Free keeps the scan, Starter gets the airspace tree and anomalies (`wifi_analysis`), and
+  Pro sees the clients under each BSS (`wifi_association_forensics`). `wifi_management_capture`
+  was deleted.
 - **Build-tagged** real vs null capture mirrors the established `wire_capture_real.go` /
   `wire_capture_null.go` split; new DTOs are camelCase (ADR-0010) via code-first schema (ADR-0008).
 

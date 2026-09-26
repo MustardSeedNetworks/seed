@@ -26,8 +26,8 @@ vi.mock('../../api/client', () => ({
 const proFeatures = [
   'export_csv_json',
   'path_analysis',
+  'wifi_analysis',
   'wifi_association_forensics',
-  'wifi_management_capture',
 ];
 
 function payload(overrides: Partial<LicenseStatusResponse> = {}): LicenseStatusResponse {

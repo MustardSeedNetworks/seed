@@ -8,6 +8,7 @@
 export interface WiFiAirspaceResponse {
   ssids: SSIDGroup[];
   status: Status;
+  clientsWithheld: boolean;
 }
 export interface SSIDGroup {
   ssid: string;

@@ -24,8 +24,7 @@ func TestLicenseStatusCarriesFeatures(t *testing.T) {
 	uiGated := []string{
 		"path_analysis",
 		"export_csv_json",
-		"wifi_association_forensics",
-		"wifi_management_capture",
+		"wifi_analysis",
 	}
 
 	tests := []struct {

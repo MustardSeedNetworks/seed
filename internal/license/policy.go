@@ -87,11 +87,16 @@ func (t Tier) String() string {
 // something Free already does and nothing distinguished the paid version --
 // selling a string with no boundary behind it is what this catalogue keeps
 // getting wrong.
+//
+// wifi_analysis is the airspace tree and the Wi-Fi anomaly rules (#2351): they
+// run on any radio from scan results, so what separates Starter from Free is
+// the analysis, not the hardware. Free keeps the raw scan.
 func starterFeatures() []string {
 	return []string{
 		"export_csv_json",
 		"dns_monitoring",
 		"ssl_cert_monitoring",
+		"wifi_analysis",
 	}
 }
 
@@ -110,6 +115,8 @@ func starterFeatures() []string {
 // capability is reachable.
 func proFeatures() []string {
 	pro := []string{
+		// The clients under each BSS in the airspace tree (#2351). Starter
+		// sees the same tree with the stations withheld.
 		"wifi_association_forensics",
 		"anomaly_detection",
 		"path_analysis",
@@ -131,12 +138,11 @@ func proFeatures() []string {
 		// server_engine_tiers.go and retention.tierHorizons already varies
 		// by tier, so both boundaries existed and neither needed a second
 		// mechanism. wifi_roam_analysis and wifi_rogue_detection left too --
-		// both are surfaced by GET /wifi/anomalies, which is already Pro via
-		// wifi_association_forensics. Three strings for one boundary.
+		// both are surfaced by GET /wifi/anomalies, which wifi_analysis gates.
+		// Three strings for one boundary.
 		"estate_polling",
 		"server_monitoring",
 		"bgp_monitoring",
-		"wifi_management_capture",
 		// The qos-send / qos-listen / qos-single-host job kinds: whether a
 		// path keeps the DSCP marking each class was sent with (#400).
 		"dscp_verification",

@@ -962,7 +962,7 @@ body:
     "path": "/api/v1/wifi/wifi/channel-graph"
   },
   {
-    "feature": "wifi_management_capture",
+    "feature": "wifi_analysis",
     "maxBodyBytes": 262144,
     "methods": [
       "GET"
@@ -970,7 +970,7 @@ body:
     "path": "/api/v1/wifi/airspace"
   },
   {
-    "feature": "wifi_association_forensics",
+    "feature": "wifi_analysis",
     "maxBodyBytes": 262144,
     "methods": [
       "GET"
