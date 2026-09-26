@@ -17,7 +17,7 @@ MARKDOWNLINT_CLI2_VERSION := 0.23.3
 # Must match the golangci-lint pin in .github/workflows/ci.yml. The old rule
 # only installed when the binary was missing, so a stale local copy passed
 # what CI rejected (v2.13.1's embedlit rule was the last time this bit).
-GOLANGCI_LINT_VERSION := v2.13.2
+GOLANGCI_LINT_VERSION := v2.14.0
 
 .PHONY: lint lint-backend lint-backend-quiet lint-frontend lint-frontend-quiet lint-md \
         fix fix-backend fix-backend-quiet fix-frontend fix-frontend-quiet fix-md fix-all \

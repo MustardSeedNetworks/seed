@@ -121,7 +121,7 @@ require_job_condition "publish-release" \
 require_pin 'IPERF3_VERSION' '^ +IPERF3_VERSION: "[0-9]+\.[0-9]+(\.[0-9]+)?"$'
 require_pin 'IPERF3_SHA256' '^ +IPERF3_SHA256: "[0-9a-f]{64}"$'
 require_pin 'the goreleaser-cross image' \
-  '^ +image: goreleaser/goreleaser-cross:v[0-9]+\.[0-9]+\.[0-9]+(-v[0-9.]+)?@sha256:[0-9a-f]{64}$'
+  '^ +image: goreleaser/goreleaser-cross:v[0-9]+\.[0-9]+\.[0-9]+(-[0-9]+)?(-v[0-9.]+)?@sha256:[0-9a-f]{64}$'
 require_pin 'SYFT_VERSION' '^ +SYFT_VERSION: "[0-9]+\.[0-9]+\.[0-9]+"$'
 require_pin 'SYFT_SHA256' '^ +SYFT_SHA256: "[0-9a-f]{64}"$'
 require_pin 'COSIGN_VERSION' '^ +COSIGN_VERSION: "v[0-9]+\.[0-9]+\.[0-9]+"$'

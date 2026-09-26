@@ -77,7 +77,7 @@ type ListenerPipeline struct {
 	stopped    bool
 	cancel     context.CancelFunc
 	wg         sync.WaitGroup
-	suppress   suppressionStore
+	suppress   SuppressionStore
 	rules      []Rule
 	lastTickAt time.Time
 	lastError  string
@@ -116,7 +116,7 @@ type ListenerConfig struct {
 	// store is used (legacy — restart loses state). Production wires
 	// NewDBSuppressionStore(db.AlertSuppressions()) for restart-safety
 	// (#1380).
-	Suppressions suppressionStore
+	Suppressions SuppressionStore
 }
 
 // NewListenerPipeline returns an unstarted pipeline.

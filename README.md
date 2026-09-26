@@ -238,7 +238,7 @@ npm run typecheck
 npm run test:e2e     # or `make test-e2e`, which builds an isolated backend first
 ```
 
-Verified versions: **Go 1.27.0**, Node.js 26.8.1, golangci-lint v2.13.2.
+Verified versions: **Go 1.27.1**, Node.js 26.10.0, golangci-lint v2.14.0.
 Cross-platform releases (linux/macOS/windows × amd64/arm64) are built by
 `release.yml` on tag push and signed with cosign keyless OIDC.
 
