@@ -40,6 +40,7 @@ export interface FollowUp {
 export interface Status {
   captureActive: boolean;
   source?: string;
+  lastScan?: string;
   ssids: number;
   aps: number;
   bsses: number;

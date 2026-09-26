@@ -192,6 +192,10 @@
         "source": {
           "type": "string"
         },
+        "lastScan": {
+          "type": "string",
+          "format": "date-time"
+        },
         "ssids": {
           "type": "integer"
         },
