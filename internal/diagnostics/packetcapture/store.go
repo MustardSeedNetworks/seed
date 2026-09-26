@@ -92,7 +92,18 @@ func (s *Store) Open(id string) (*os.File, error) {
 	if running {
 		return nil, ErrInProgress
 	}
-	f, err := os.Open(s.path(id))
+	// The ID arrives over HTTP. validID already rules out a separator, and
+	// opening through an os.Root keeps the read inside the directory even if
+	// that check ever loosens.
+	root, err := os.OpenRoot(s.dir)
+	if errors.Is(err, os.ErrNotExist) {
+		return nil, ErrNotFound
+	}
+	if err != nil {
+		return nil, fmt.Errorf("open capture directory: %w", err)
+	}
+	defer func() { _ = root.Close() }()
+	f, err := root.Open(id + fileSuffix)
 	if errors.Is(err, os.ErrNotExist) {
 		return nil, ErrNotFound
 	}

@@ -102,6 +102,14 @@ func TestStoreOpen(t *testing.T) {
 	}
 }
 
+// A daemon that has never captured has no directory yet; a download then
+// finds nothing rather than failing to read.
+func TestStoreOpenBeforeTheFirstCapture(t *testing.T) {
+	s := NewStore(filepath.Join(t.TempDir(), "captures"))
+	_, err := s.Open("AAAAAAAAAAAAAAAAAAAAAAAAAA")
+	require.ErrorIs(t, err, ErrNotFound)
+}
+
 func TestStoreFilesAreOwnerOnly(t *testing.T) {
 	if runtime.GOOS == "windows" {
 		t.Skip("Go on Windows ignores the mode bits; the data directory's ACL applies")
