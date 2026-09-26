@@ -8,8 +8,11 @@
 //
 // A capture source (W3, libpcap/monitor-mode, built separately and CGO-tagged)
 // feeds decoded 802.11 frames in via Ingest; this package is itself CGO-free and
-// frame-source-agnostic, so it builds and tests everywhere. Start runs a periodic
-// evaluation loop (detector → Coordinator), and Tree/Status are the read model
+// frame-source-agnostic, so it builds and tests everywhere. Without capture, an
+// ordinary managed-mode scan (SetScanSource) feeds the BSSes it sees, so the
+// rules that read beacon information elements run on any radio (#2351). Run
+// drives the scan and evaluation loops (detector → Coordinator), and Tree/Status
+// are the read model
 // the API layer (W5b) serves Pro-gated; the anomaly list itself is read from the
 // store (ADR-0029 §4), not from here.
 package visibility
@@ -33,7 +36,17 @@ const (
 	// defaultRetention is how long a BSS/station/anomaly survives without being
 	// re-observed before it is pruned (the condition is considered resolved).
 	defaultRetention = 5 * time.Minute
+	// defaultScanInterval is how often the loop scans for neighbour networks
+	// while no capture source is feeding frames. Each scan takes the radio
+	// off-channel for a few seconds, so this stays well above the evaluation
+	// cadence; the retention window still covers several missed scans.
+	defaultScanInterval = time.Minute
 )
+
+// ScanSource performs one managed-mode scan and returns the BSSes it saw, with
+// lowercase BSSIDs. A scan carries no station or frame data, so those view
+// fields stay empty.
+type ScanSource func() ([]airspace.BSSView, error)
 
 // Status is the read-model summary of the visibility service: whether a capture
 // source is feeding it, and the current entity/anomaly counts. Pure data with
@@ -41,6 +54,7 @@ const (
 type Status struct {
 	CaptureActive bool      `json:"captureActive"`
 	Source        string    `json:"source,omitempty"`
+	LastScan      time.Time `json:"lastScan,omitzero"`
 	SSIDs         int       `json:"ssids"`
 	APs           int       `json:"aps"`
 	BSSes         int       `json:"bsses"`
@@ -64,11 +78,17 @@ type Service struct {
 	logger      *slog.Logger
 
 	evalInterval time.Duration
+	scanInterval time.Duration
 	retention    time.Duration
 
 	mu            sync.Mutex
 	source        string
 	lastEvaluated time.Time
+	scanSource    ScanSource
+	// scanned is the most recent scan's BSSes, merged under the captured
+	// airspace by Tree and dropped once it is older than the retention window.
+	scanned  []airspace.BSSView
+	lastScan time.Time
 }
 
 // Option configures a Service.
@@ -76,6 +96,7 @@ type Option func(*config)
 
 type config struct {
 	evalInterval time.Duration
+	scanInterval time.Duration
 	retention    time.Duration
 	detector     *wifianomaly.Detector
 	coordinator  *anomaly.Coordinator
@@ -87,6 +108,15 @@ func WithEvalInterval(d time.Duration) Option {
 	return func(c *config) {
 		if d > 0 {
 			c.evalInterval = d
+		}
+	}
+}
+
+// WithScanInterval sets the cadence of the managed-mode scan feed.
+func WithScanInterval(d time.Duration) Option {
+	return func(c *config) {
+		if d > 0 {
+			c.scanInterval = d
 		}
 	}
 }
@@ -132,7 +162,11 @@ func WithLogger(l *slog.Logger) Option {
 // Coordinator is injected via WithCoordinator (tests) or SetCoordinator (the
 // server, after it owns the merged engine).
 func New(opts ...Option) *Service {
-	cfg := config{evalInterval: defaultEvalInterval, retention: defaultRetention}
+	cfg := config{
+		evalInterval: defaultEvalInterval,
+		scanInterval: defaultScanInterval,
+		retention:    defaultRetention,
+	}
 	for _, o := range opts {
 		o(&cfg)
 	}
@@ -150,6 +184,7 @@ func New(opts ...Option) *Service {
 		coordinator:  cfg.coordinator,
 		logger:       logger,
 		evalInterval: cfg.evalInterval,
+		scanInterval: cfg.scanInterval,
 		retention:    cfg.retention,
 	}
 }
@@ -161,6 +196,23 @@ func New(opts ...Option) *Service {
 func (s *Service) SetCoordinator(coord *anomaly.Coordinator) {
 	s.mu.Lock()
 	s.coordinator = coord
+	s.mu.Unlock()
+}
+
+// SetScanSource injects the managed-mode scan feed. The server owns the Wi-Fi
+// scanner, so it wires this during init, like SetCoordinator.
+func (s *Service) SetScanSource(src ScanSource) {
+	s.mu.Lock()
+	s.scanSource = src
+	s.mu.Unlock()
+}
+
+// IngestScan replaces the scan snapshot with the BSSes one scan saw at `at`.
+// A BSS the scan no longer reports disappears with it.
+func (s *Service) IngestScan(views []airspace.BSSView, at time.Time) {
+	s.mu.Lock()
+	s.scanned = views
+	s.lastScan = at
 	s.mu.Unlock()
 }
 
@@ -178,6 +230,11 @@ func (s *Service) Ingest(f *dot11.Frame, at time.Time) {
 func (s *Service) Evaluate(ctx context.Context, at time.Time) {
 	cutoff := at.Add(-s.retention)
 	s.air.Prune(cutoff)
+	s.mu.Lock()
+	if s.lastScan.Before(cutoff) {
+		s.scanned = nil
+	}
+	s.mu.Unlock()
 
 	// Airspace-only when no Coordinator is wired (ADR-0029): Ingest/Tree/Status
 	// stay live, but anomaly detection needs the shared engine.
@@ -194,7 +251,7 @@ func (s *Service) Evaluate(ctx context.Context, at time.Time) {
 // Coordinator. Store errors are logged, not fatal — the in-memory engine stays
 // authoritative and the next tick re-persists.
 func (s *Service) evaluatePersistent(ctx context.Context, coord *anomaly.Coordinator, at, cutoff time.Time) {
-	for _, d := range s.detector.Detect(s.air.Tree()) {
+	for _, d := range s.detector.Detect(s.Tree()) {
 		// Stamp the producer source at the hand-off (ADR-0029 §2); the Wi-Fi
 		// detector stays source-agnostic.
 		d.Source = anomaly.SourceWiFi
@@ -221,8 +278,35 @@ func (s *Service) snapshotCoordinator() *anomaly.Coordinator {
 	return s.coordinator
 }
 
-// Tree returns the current cross-referenced SSID → AP → BSSID → client view.
-func (s *Service) Tree() []airspace.SSIDGroup { return s.air.Tree() }
+// Tree returns the current cross-referenced SSID → AP → BSSID → client view:
+// the captured airspace plus every scanned BSS capture has not seen. A captured
+// BSS wins because it carries the stations and frame counts a scan cannot.
+func (s *Service) Tree() []airspace.SSIDGroup {
+	captured := s.air.Tree()
+	s.mu.Lock()
+	scanned := s.scanned
+	s.mu.Unlock()
+	if len(scanned) == 0 {
+		return captured
+	}
+
+	var views []airspace.BSSView
+	seen := make(map[string]struct{})
+	for _, g := range captured {
+		for _, ap := range g.APs {
+			for _, b := range ap.BSSes {
+				views = append(views, b)
+				seen[b.BSSID] = struct{}{}
+			}
+		}
+	}
+	for _, b := range scanned {
+		if _, ok := seen[b.BSSID]; !ok {
+			views = append(views, b)
+		}
+	}
+	return airspace.TreeFromBSSViews(views)
+}
 
 // SetSource records that a named capture source is actively feeding frames.
 func (s *Service) SetSource(name string) {
@@ -240,7 +324,7 @@ func (s *Service) ClearSource() {
 
 // Status summarizes the live read model.
 func (s *Service) Status() Status {
-	tree := s.air.Tree()
+	tree := s.Tree()
 	apKeys := make(map[string]struct{})
 	bsses, stations := 0, 0
 	for _, g := range tree {
@@ -252,7 +336,7 @@ func (s *Service) Status() Status {
 	}
 
 	s.mu.Lock()
-	src, last, coord := s.source, s.lastEvaluated, s.coordinator
+	src, last, scanned, coord := s.source, s.lastEvaluated, s.lastScan, s.coordinator
 	s.mu.Unlock()
 
 	// Source-scoped count (ADR-0029 §4): the shared engine holds every producer's
@@ -265,6 +349,7 @@ func (s *Service) Status() Status {
 	return Status{
 		CaptureActive: src != "",
 		Source:        src,
+		LastScan:      scanned,
 		SSIDs:         len(tree),
 		APs:           len(apKeys),
 		BSSes:         bsses,
@@ -274,21 +359,46 @@ func (s *Service) Status() Status {
 	}
 }
 
-// Run evaluates the airspace on the eval interval until ctx is cancelled. It
-// blocks: the loop is a supervised worker (#2748), and the `go s.loop` it
-// replaced ran outside the supervisor's recover.
+// Run scans on the scan interval and evaluates the airspace on the eval
+// interval until ctx is cancelled. It blocks: the loop is a supervised worker
+// (#2748), and the `go s.loop` it replaced ran outside the supervisor's recover.
 func (s *Service) Run(ctx context.Context) error {
 	// Load-on-start is server-owned and happens once on the shared Coordinator
 	// before any producer observes (ADR-0029 §5), so the service does not load
 	// here — it would re-load the merged engine a second time.
 	ticker := time.NewTicker(s.evalInterval)
 	defer ticker.Stop()
+	scanTicker := time.NewTicker(s.scanInterval)
+	defer scanTicker.Stop()
+	s.scan(ctx)
 	for {
 		select {
 		case <-ctx.Done():
 			return nil
 		case <-ticker.C:
 			s.Evaluate(ctx, time.Now())
+		case <-scanTicker.C:
+			s.scan(ctx)
 		}
 	}
+}
+
+// scan runs one managed-mode scan into the snapshot. It stands down while a
+// capture source feeds frames: the radio is in monitor mode then, and the
+// captured airspace already holds everything a scan would report. A failed
+// scan keeps the previous snapshot until the retention window expires it.
+func (s *Service) scan(ctx context.Context) {
+	s.mu.Lock()
+	src, capturing := s.scanSource, s.source != ""
+	s.mu.Unlock()
+	if src == nil || capturing {
+		return
+	}
+	views, err := src()
+	if err != nil {
+		// Debug, not Warn: a host with no wireless adapter fails every scan.
+		s.logger.DebugContext(ctx, "wifi airspace scan failed", "error", err)
+		return
+	}
+	s.IngestScan(views, time.Now())
 }

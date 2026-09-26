@@ -71,7 +71,7 @@ func Decode(data []byte) (*Frame, error) {
 		f.SignalDBm = v.DBMAntennaSignal
 		f.NoiseDBm = v.DBMAntennaNoise
 		f.ChannelMHz = int(v.ChannelFrequency)
-		f.Band, f.ChannelNum = bandAndChannel(int(v.ChannelFrequency))
+		f.Band, f.ChannelNum = BandAndChannel(int(v.ChannelFrequency))
 	}
 
 	if f.Kind == KindBeacon || f.Kind == KindProbeResponse {
@@ -141,7 +141,7 @@ func decodeBSS(pkt gopacket.Packet, band Band) *BSS {
 // frequency. A truncated element ends the walk; the elements before it are
 // kept, as the capture path keeps what gopacket decoded.
 func DecodeIEs(ies []byte, privacy bool, freqMHz int) *BSS {
-	band, channel := bandAndChannel(freqMHz)
+	band, channel := BandAndChannel(freqMHz)
 	bss := buildBSS(splitIEs(ies), privacy, band)
 	if bss.ChannelNum == 0 {
 		// 5 and 6 GHz beacons carry no DS Parameter Set element.
@@ -219,9 +219,10 @@ func capabilityPrivacy(pkt gopacket.Packet) bool {
 	return false
 }
 
-// bandAndChannel derives the band and channel number from a center frequency in
-// MHz (radiotap). Returns BandUnknown/0 for frequencies outside the Wi-Fi bands.
-func bandAndChannel(freqMHz int) (Band, int) {
+// BandAndChannel derives the band and channel number from a center frequency in
+// MHz (radiotap or a scan result). Returns BandUnknown/0 for frequencies
+// outside the Wi-Fi bands.
+func BandAndChannel(freqMHz int) (Band, int) {
 	switch {
 	case freqMHz == freqChannel14:
 		return Band24GHz, channel14

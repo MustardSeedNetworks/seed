@@ -230,9 +230,9 @@ func TestBandAndChannel(t *testing.T) {
 		{9999, BandUnknown, 0},
 	}
 	for _, c := range cases {
-		band, ch := bandAndChannel(c.freq)
+		band, ch := BandAndChannel(c.freq)
 		if band != c.band || ch != c.channel {
-			t.Errorf("bandAndChannel(%d) = %v/%d, want %v/%d", c.freq, band, ch, c.band, c.channel)
+			t.Errorf("BandAndChannel(%d) = %v/%d, want %v/%d", c.freq, band, ch, c.band, c.channel)
 		}
 	}
 }

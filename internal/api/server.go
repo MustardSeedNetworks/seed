@@ -434,8 +434,8 @@ func (s *Server) initTelemetryAndWiFiServices(cfg *config.Config) {
 	s.cableTest = cable.NewTester(cfg.Interface.Default)
 	s.publicIP = publicip.NewChecker()
 
-	s.wifiMgr = wifi.NewManager(cfg.Interface.Default)
-	s.wifiScan = wifi.NewScanner(cfg.Interface.Default)
+	s.wifiMgr = wifi.NewManager(cfg.Interface.ResolvedWiFi())
+	s.wifiScan = wifi.NewScanner(cfg.Interface.ResolvedWiFi())
 	s.startWiFiHelper()
 }
 
@@ -943,6 +943,9 @@ func (s *Server) initWiFiUseCases() {
 	s.wifiQueries = app.NewWiFiQueries(s.wifiVisibility, s.anomalyStore, s.anomalyEngine)
 	s.wifiManagement = app.NewWiFiManagement(s.wifiManager, s.wifiScanner, s.netManager, s.config, s.configPath)
 	s.wifiDiscovery = app.NewWiFiDiscovery(s.wifiBridge)
+	if v := s.wifiVisibility(); v != nil {
+		v.SetScanSource(app.WiFiScanSource(s.wifiManagement))
+	}
 }
 
 // initDiscoveryUseCases wires the discovery use-cases (ADR-0020) from the
