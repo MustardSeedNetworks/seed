@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.214.97](https://github.com/MustardSeedNetworks/seed/compare/v0.214.96...v0.214.97) (2026-09-26)
+
+
+### Features
+
+* **wifi:** feed the airspace from managed-mode scans ([#2880](https://github.com/MustardSeedNetworks/seed/issues/2880)) ([de31358](https://github.com/MustardSeedNetworks/seed/commit/de313589721abbaa0b262a700516bdd33cbaf1b4))
+
+
+### Bug Fixes
+
+* **ui:** drop variants on [@layer](https://github.com/layer) components classes and gate them ([#2878](https://github.com/MustardSeedNetworks/seed/issues/2878)) ([f7d4047](https://github.com/MustardSeedNetworks/seed/commit/f7d4047eccd4fe991735702969f87d6ef6edb65e)), closes [#2877](https://github.com/MustardSeedNetworks/seed/issues/2877)
+
 ## [0.214.96](https://github.com/MustardSeedNetworks/seed/compare/v0.214.95...v0.214.96) (2026-09-26)
 
 
