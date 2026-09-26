@@ -5,6 +5,23 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.215.0](https://github.com/MustardSeedNetworks/seed/compare/v0.214.97...v0.215.0) (2026-09-26)
+
+
+### Features
+
+* **wifi:** report the rules that need capture as unavailable ([#2883](https://github.com/MustardSeedNetworks/seed/issues/2883)) ([639f51a](https://github.com/MustardSeedNetworks/seed/commit/639f51ad1e9103e4ec1f59f8babe7a2dc6667a83))
+
+
+### Continuous Integration
+
+* **conformance:** pin the policy repo past the OIDC fix ([#2885](https://github.com/MustardSeedNetworks/seed/issues/2885)) ([9952a8f](https://github.com/MustardSeedNetworks/seed/commit/9952a8f16b92716157df4a90eb866e37988b451b)), closes [#2884](https://github.com/MustardSeedNetworks/seed/issues/2884)
+
+
+### Miscellaneous
+
+* **release:** bump minor for feat: while below 1.0 ([#2888](https://github.com/MustardSeedNetworks/seed/issues/2888)) ([17ed96e](https://github.com/MustardSeedNetworks/seed/commit/17ed96e6d31e94343a8d4f90c9a297a96e2bb8fe)), closes [#2887](https://github.com/MustardSeedNetworks/seed/issues/2887)
+
 ## [0.214.97](https://github.com/MustardSeedNetworks/seed/compare/v0.214.96...v0.214.97) (2026-09-26)
 
 
