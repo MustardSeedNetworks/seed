@@ -442,3 +442,38 @@ func TestBackupManager_RestoreBackup_ConfigPathIsSymlink(t *testing.T) {
 		t.Fatalf("unmarshal restored config: %v", unmarshalErr)
 	}
 }
+
+// TestBackupManager_RestoreBackup_ConfigMissing proves RestoreBackup can
+// still recreate m.configPath after the operator has deleted or moved it
+// away — the primary restore use case, and the reason RestoreBackup's
+// write-back skips the pre-restore CreateBackup call when [os.Stat] on
+// configPath fails. fsutil.RootAt falls back to resolving configPath's
+// parent when the file itself doesn't exist, so this must still succeed.
+func TestBackupManager_RestoreBackup_ConfigMissing(t *testing.T) {
+	tmpDir := t.TempDir()
+	configPath := filepath.Join(tmpDir, "config.json")
+
+	cfg := config.DefaultConfig()
+	cfg.Server.Port = 7777
+	if err := cfg.Save(configPath); err != nil {
+		t.Fatalf("save config: %v", err)
+	}
+
+	backupMgr := config.NewBackupManager(configPath, "", 10)
+	backup, err := backupMgr.CreateBackup()
+	if err != nil {
+		t.Fatalf("CreateBackup: %v", err)
+	}
+
+	if removeErr := os.Remove(configPath); removeErr != nil {
+		t.Fatalf("remove config (simulating operator deletion): %v", removeErr)
+	}
+
+	if restoreErr := backupMgr.RestoreBackup(backup.Name); restoreErr != nil {
+		t.Fatalf("RestoreBackup(%q) = %v, want nil", backup.Name, restoreErr)
+	}
+
+	if _, statErr := os.Stat(configPath); statErr != nil {
+		t.Errorf("config file was not recreated: %v", statErr)
+	}
+}

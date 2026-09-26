@@ -91,6 +91,34 @@ func TestRootAt_FollowsSymlinkedFile(t *testing.T) {
 	}
 }
 
+// TestRootAt_MissingFileCanStillBeCreated proves RootAt still lets a caller
+// create path when nothing exists there yet — the config-restore-after-
+// deletion case: [filepath.EvalSymlinks] fails on a missing leaf, so RootAt
+// falls back to resolving path's parent directory and addresses the file
+// by its own (unresolved) base name, matching what a direct
+// [os.WriteFile] call would have done.
+func TestRootAt_MissingFileCanStillBeCreated(t *testing.T) {
+	dir := resolvedTempDir(t)
+	missing := filepath.Join(dir, "config.json")
+
+	root, name, err := fsutil.RootAt(missing)
+	if err != nil {
+		t.Fatalf("RootAt(%q) = %v, want nil", missing, err)
+	}
+	defer func() { _ = root.Close() }()
+
+	if writeErr := root.WriteFile(name, []byte("created"), 0o600); writeErr != nil {
+		t.Fatalf("root.WriteFile(%q) = %v, want nil", name, writeErr)
+	}
+	data, readErr := os.ReadFile(missing)
+	if readErr != nil {
+		t.Fatalf("read created file: %v", readErr)
+	}
+	if string(data) != "created" {
+		t.Errorf("contents = %q, want %q", data, "created")
+	}
+}
+
 // TestRootAt_ScopesToPathsParent proves RootAt scopes to whatever directory
 // path lexically names as its parent — here [filepath.Join] has already
 // resolved "sub/../secret.txt" down to "secret.txt" before RootAt ever sees
