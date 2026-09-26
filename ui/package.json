@@ -5,8 +5,8 @@
   "type": "module",
   "description": "The Seed WebUI - Network Diagnostics - Mustard Seed Networks",
   "engines": {
-    "node": "26.9.0",
-    "npm": "12.0.2"
+    "node": "26.10.0",
+    "npm": "12.1.0"
   },
   "scripts": {
     "dev": "node --disable-warning=DEP0205 ./node_modules/vite/bin/vite.js",
@@ -68,7 +68,7 @@
     "@testing-library/react": "16.3.3",
     "@types/babel__core": "7.20.5",
     "@types/jscodeshift": "17.3.0",
-    "@types/node": "26.6.1",
+    "@types/node": "26.6.2",
     "@types/react": "19.3.0",
     "@types/react-dom": "19.3.0",
     "@vitejs/plugin-react": "6.1.1",
@@ -96,7 +96,7 @@
     "js-yaml": "5.4.2",
     "nanoid": "6.0.1"
   },
-  "packageManager": "npm@12.0.2",
+  "packageManager": "npm@12.1.0",
   "msw": {
     "workerDirectory": [
       ".storybook/public"

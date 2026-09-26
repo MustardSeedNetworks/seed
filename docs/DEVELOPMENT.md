@@ -2,9 +2,9 @@
 
 ## Prerequisites
 
-- Go 1.27.0+
-- Node.js 26.8.1+
-- npm 12.0.2+
+- Go 1.27.1+
+- Node.js 26.10.0+
+- npm 12.1.0+
 
 ## Setup
 
