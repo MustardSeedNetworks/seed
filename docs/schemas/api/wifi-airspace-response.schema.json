@@ -124,6 +124,22 @@
         "stations"
       ]
     },
+    "Rule": {
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "title": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "id",
+        "title"
+      ]
+    },
     "SSIDGroup": {
       "properties": {
         "ssid": {
@@ -214,6 +230,12 @@
         "lastEvaluated": {
           "type": "string",
           "format": "date-time"
+        },
+        "needsCapture": {
+          "items": {
+            "$ref": "#/$defs/Rule"
+          },
+          "type": "array"
         }
       },
       "additionalProperties": false,

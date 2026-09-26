@@ -124,3 +124,35 @@ func TestHandleWiFiAirspaceAndAnomaliesPopulated(t *testing.T) {
 		t.Errorf("expected %s in the anomaly stream, got %+v", wifianomaly.DefOpenNetwork, an.Anomalies)
 	}
 }
+
+// TestWiFiAnomaliesNameTheRulesThatNeedCapture is S5-1's second acceptance
+// clause on the wire: on a scan-only host the anomaly stream says which rules
+// could not run, so their absence does not read as a clean airspace.
+func TestWiFiAnomaliesNameTheRulesThatNeedCapture(t *testing.T) {
+	svc := visibility.New()
+	s := &Server{wifiQueries: troubleshooting.NewQueries(svc, stubAnomalyStore{available: true})}
+
+	get := func() map[string]any {
+		rec := httptest.NewRecorder()
+		s.handleWiFiAnomalies(rec, httptest.NewRequest(http.MethodGet, "/api/v1/wifi/anomalies", nil))
+		body := decodeJSON[map[string]any](t, rec)
+		status, ok := body["status"].(map[string]any)
+		if !ok {
+			t.Fatalf("no status object in %v", body)
+		}
+		return status
+	}
+
+	rules, ok := get()["needsCapture"].([]any)
+	if !ok || len(rules) != 1 {
+		t.Fatalf("scan-only needsCapture = %v, want the deauth-flood rule", rules)
+	}
+	if rule, _ := rules[0].(map[string]any); rule["id"] != wifianomaly.DefDeauthFlood || rule["title"] == "" {
+		t.Errorf("needsCapture[0] = %v, want id %s with its title", rules[0], wifianomaly.DefDeauthFlood)
+	}
+
+	svc.SetSource("monitor0")
+	if got, present := get()["needsCapture"]; present {
+		t.Errorf("capturing: needsCapture = %v, want the key absent", got)
+	}
+}

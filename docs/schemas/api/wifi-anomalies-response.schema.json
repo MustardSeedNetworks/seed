@@ -97,6 +97,22 @@
         "action"
       ]
     },
+    "Rule": {
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "title": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "id",
+        "title"
+      ]
+    },
     "Status": {
       "properties": {
         "captureActive": {
@@ -127,6 +143,12 @@
         "lastEvaluated": {
           "type": "string",
           "format": "date-time"
+        },
+        "needsCapture": {
+          "items": {
+            "$ref": "#/$defs/Rule"
+          },
+          "type": "array"
         }
       },
       "additionalProperties": false,

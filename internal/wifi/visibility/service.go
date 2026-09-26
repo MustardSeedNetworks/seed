@@ -61,6 +61,10 @@ type Status struct {
 	Stations      int       `json:"stations"`
 	Anomalies     int       `json:"anomalies"`
 	LastEvaluated time.Time `json:"lastEvaluated,omitzero"`
+	// NeedsCapture lists the rules that cannot run while no capture source
+	// feeds frames, so their absence from the anomaly list reads as
+	// unavailable rather than clear.
+	NeedsCapture []wifianomaly.Rule `json:"needsCapture,omitempty"`
 }
 
 // Service owns the live airspace, the Wi-Fi detector, and the evaluation loop. It
@@ -346,7 +350,7 @@ func (s *Service) Status() Status {
 		anomalies = coord.Engine().LenBySource(anomaly.SourceWiFi)
 	}
 
-	return Status{
+	st := Status{
 		CaptureActive: src != "",
 		Source:        src,
 		LastScan:      scanned,
@@ -357,6 +361,10 @@ func (s *Service) Status() Status {
 		Anomalies:     anomalies,
 		LastEvaluated: last,
 	}
+	if !st.CaptureActive {
+		st.NeedsCapture = wifianomaly.CaptureOnlyRules()
+	}
+	return st
 }
 
 // Run scans on the scan interval and evaluates the airspace on the eval
