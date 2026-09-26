@@ -73,7 +73,8 @@ func scanMessage(t *testing.T, b bssAttrs) genetlink.Message {
 	return genetlink.Message{Data: data}
 }
 
-func testBSSID() []byte { return []byte{0x18, 0xa5, 0xff, 0x85, 0x3f, 0x7c} }
+// testBSSID is from the RFC 7042 documentation range.
+func testBSSID() []byte { return []byte{0x00, 0x00, 0x5e, 0x00, 0x53, 0x01} }
 
 func TestParseScanDumpDecodesInformationElements(t *testing.T) {
 	msgs := []genetlink.Message{scanMessage(t, bssAttrs{
@@ -92,7 +93,7 @@ func TestParseScanDumpDecodesInformationElements(t *testing.T) {
 		got, want any
 	}{
 		{"SSID", n.SSID, "corp"},
-		{"BSSID", n.BSSID, "18:A5:FF:85:3F:7C"},
+		{"BSSID", n.BSSID, "00:00:5E:00:53:01"},
 		{"Signal", n.Signal, -54},
 		{"Channel", n.Channel, 6},
 		{"Frequency", n.Frequency, 2437},
