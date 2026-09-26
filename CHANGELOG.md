@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.216.0](https://github.com/MustardSeedNetworks/seed/compare/v0.215.0...v0.216.0) (2026-09-26)
+
+
+### Features
+
+* **wifi:** retier airspace and anomalies to Starter, clients to Pro ([#2890](https://github.com/MustardSeedNetworks/seed/issues/2890)) ([d5ac3c9](https://github.com/MustardSeedNetworks/seed/commit/d5ac3c97829b2da44ea9c026fe163e477587d376))
+
+
+### Bug Fixes
+
+* **security:** replace gosec G703 exclusions with os.Root confinement ([#2892](https://github.com/MustardSeedNetworks/seed/issues/2892)) ([16a72dc](https://github.com/MustardSeedNetworks/seed/commit/16a72dc54b130b3e0035b997a54d2be5f0197e3b))
+
 ## [0.215.0](https://github.com/MustardSeedNetworks/seed/compare/v0.214.97...v0.215.0) (2026-09-26)
 
 
