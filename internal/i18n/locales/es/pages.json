@@ -219,7 +219,7 @@
     "airspaceSubtitle": "Mapa en vivo de SSID / AP / BSSID / clientes a partir de la captura de tramas de gestión 802.11.",
     "anomaliesTitle": "Anomalías de Wi-Fi",
     "anomaliesSubtitle": "Anomalías de seguridad, RF, itinerancia y estándares detectadas en el espacio radioeléctrico.",
-    "tierHint": "Disponible en Seed Pro. Ejecute `seed license trial` para una prueba de 14 días.",
+    "tierHint": "Disponible en Seed Starter y Pro. Ejecute `seed license trial` para una prueba de 14 días.",
     "wiredLabel": "Datos inalámbricos",
     "wiredReason": "Esta interfaz es cableada. Cambie a una interfaz Wi-Fi desde la cabecera para ver señal, canales y espacio radioeléctrico.",
     "airspaceLabel": "Espacio radioeléctrico",

@@ -17,12 +17,14 @@ func initLicenseCmd(state *cliState) {
 for Seed. Without a license, Seed runs in the Free tier (basic
 diagnostics only). Paid tiers:
 
-  • Starter ($299/yr) — multi-interface, scheduled monitoring,
-    basic Wi-Fi visibility, basic compliance, CSV/JSON export
-  • Pro ($999/yr)    — everything in Starter plus Wi-Fi roam
-    analysis, association forensics, anomaly detection, path
-    analysis, live telemetry, advanced compliance, scheduled
-    PDF reports, multi-site, white-label, and REST API access
+  • Starter ($299/yr) — Wi-Fi airspace and anomaly analysis,
+    higher DNS and certificate monitoring limits, CSV/JSON export
+  • Pro ($999/yr)    — everything in Starter plus the Wi-Fi
+    clients under each access point, anomaly detection, path
+    analysis, live telemetry, advanced compliance, PDF audit
+    reports, multiple interfaces, users and clients, SSO, SNMP
+    estate, server and BGP polling, DSCP verification, and REST
+    API access
 
 A 14-day trial of the full Pro tier is available without a key.`,
 		Example: `  # Check the current tier / activation

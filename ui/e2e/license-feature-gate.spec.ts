@@ -25,8 +25,8 @@ const PRO_FEATURES = [
   'dns_monitoring',
   'ssl_cert_monitoring',
   'path_analysis',
+  'wifi_analysis',
   'wifi_association_forensics',
-  'wifi_management_capture',
   'rest_api',
 ];
 

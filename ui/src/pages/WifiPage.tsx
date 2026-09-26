@@ -15,7 +15,7 @@ import { CardAbsent, CardGrid } from '../ui/CardGrid';
  *
  * Two kinds of conditional membership meet here. A wired interface cannot
  * produce any of it, which the page says once rather than five times. The
- * Pro-gated cards are absent for a different reason — the licence, not the
+ * tier-gated cards are absent for a different reason — the licence, not the
  * hardware — and say so, because "this needs a tier you do not have" and
  * "this needs a radio you do not have" have different fixes.
  */
@@ -36,12 +36,12 @@ export function WifiPage() {
       <WiFiCard data={cards.wifi} loading={loading} visible={true} />
       <WifiChannelGraph data={channelGraphData} loading={channelGraphLoading} visible={true} />
 
-      {/* Wi-Fi visibility (W5/W6): live airspace tree + anomaly stream from
-          802.11 management-frame capture (internal/wifi/visibility). Each card
-          is Pro-gated and degrades to an empty/last-observed view when no
-          monitor-capable interface is feeding the capture loop. */}
+      {/* Wi-Fi visibility (W5/W6, #2351): live airspace tree + anomaly stream
+          from scan results, and from 802.11 management-frame capture when a
+          monitor-capable interface feeds it (internal/wifi/visibility). Both
+          cards are Starter-gated; the clients in the tree are Pro. */}
       <RequireFeature
-        feature="wifi_management_capture"
+        feature="wifi_analysis"
         fallback={
           <CardAbsent id="airspace" label={t('wifi.airspaceLabel')} reason={t('wifi.tierHint')} />
         }
@@ -50,7 +50,7 @@ export function WifiPage() {
       </RequireFeature>
 
       <RequireFeature
-        feature="wifi_association_forensics"
+        feature="wifi_analysis"
         fallback={
           <CardAbsent
             id="association-anomalies"

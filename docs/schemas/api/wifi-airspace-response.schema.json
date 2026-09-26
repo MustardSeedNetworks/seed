@@ -259,13 +259,17 @@
         },
         "status": {
           "$ref": "#/$defs/Status"
+        },
+        "clientsWithheld": {
+          "type": "boolean"
         }
       },
       "additionalProperties": false,
       "type": "object",
       "required": [
         "ssids",
-        "status"
+        "status",
+        "clientsWithheld"
       ]
     }
   },

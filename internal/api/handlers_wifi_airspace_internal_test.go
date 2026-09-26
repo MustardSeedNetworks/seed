@@ -6,10 +6,12 @@ import (
 	"net"
 	"net/http"
 	"net/http/httptest"
+	"slices"
 	"testing"
 	"time"
 
 	"github.com/MustardSeedNetworks/seed/internal/anomaly"
+	"github.com/MustardSeedNetworks/seed/internal/license"
 	wifianomaly "github.com/MustardSeedNetworks/seed/internal/wifi/anomaly"
 	"github.com/MustardSeedNetworks/seed/internal/wifi/dot11"
 	"github.com/MustardSeedNetworks/seed/internal/wifi/troubleshooting"
@@ -154,5 +156,116 @@ func TestWiFiAnomaliesNameTheRulesThatNeedCapture(t *testing.T) {
 	svc.SetSource("monitor0")
 	if got, present := get()["needsCapture"]; present {
 		t.Errorf("capturing: needsCapture = %v, want the key absent", got)
+	}
+}
+
+// TestWiFiVisibilityTiers pins the #2351 retier through the registered routes:
+// Free scans (and is refused the analysis), Starter sees the airspace and the
+// anomalies with the clients withheld, Pro sees the clients.
+func TestWiFiVisibilityTiers(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name        string
+		activate    func(t *testing.T, mgr *license.Manager)
+		wantStatus  int
+		wantClients bool
+	}{
+		{
+			name:       "free is refused the analysis",
+			activate:   func(*testing.T, *license.Manager) {},
+			wantStatus: http.StatusPaymentRequired,
+		},
+		{
+			name: "starter sees the airspace without its clients",
+			activate: func(t *testing.T, mgr *license.Manager) {
+				t.Helper()
+				if res := mgr.Activate(prodSeedStarterVector); !res.Success {
+					t.Fatalf("Starter vector did not activate: %s", res.Message)
+				}
+			},
+			wantStatus: http.StatusOK,
+		},
+		{
+			name: "pro sees the clients",
+			activate: func(t *testing.T, mgr *license.Manager) {
+				t.Helper()
+				if res := mgr.StartTrial(); !res.Success {
+					t.Fatalf("StartTrial: %s", res.Message)
+				}
+			},
+			wantStatus:  http.StatusOK,
+			wantClients: true,
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+			s, mgr := apiTokenTestSetup(t)
+			s.setupRoutes()
+			tc.activate(t, mgr)
+			s.wifiQueries = troubleshooting.NewQueries(airspaceWithOneClient(t), stubAnomalyStore{available: true})
+
+			get := func(path string) *httptest.ResponseRecorder {
+				rec := httptest.NewRecorder()
+				s.mux.ServeHTTP(rec, newAuthedRequest(http.MethodGet, APIVersionPrefix+path, nil, "alice"))
+				if rec.Code != tc.wantStatus {
+					t.Fatalf("GET %s: status = %d, want %d; body=%s", path, rec.Code, tc.wantStatus, rec.Body.String())
+				}
+				return rec
+			}
+
+			get("/wifi/anomalies")
+			rec := get("/wifi/airspace")
+			if tc.wantStatus == http.StatusOK {
+				assertClients(t, decodeJSON[WiFiAirspaceResponse](t, rec), tc.wantClients)
+			}
+		})
+	}
+}
+
+// airspaceWithOneClient is openBeacon's BSS with one associated client.
+func airspaceWithOneClient(t *testing.T) *visibility.Service {
+	t.Helper()
+	bssid, err := net.ParseMAC("00:11:22:33:44:55")
+	if err != nil {
+		t.Fatal(err)
+	}
+	sta, err := net.ParseMAC("aa:bb:cc:dd:ee:ff")
+	if err != nil {
+		t.Fatal(err)
+	}
+	svc := visibility.New()
+	svc.SetSource("monitor0")
+	now := time.Now()
+	svc.Ingest(openBeacon(t), now)
+	svc.Ingest(&dot11.Frame{
+		Kind:        dot11.KindAssocRequest,
+		BSSID:       bssid,
+		Transmitter: sta,
+		Band:        dot11.Band24GHz,
+		ChannelNum:  6,
+	}, now)
+	return svc
+}
+
+// assertClients checks that the one client is either present everywhere the
+// response counts it, or absent everywhere and flagged as withheld.
+func assertClients(t *testing.T, air WiFiAirspaceResponse, want bool) {
+	t.Helper()
+	if len(air.SSIDs) != 1 || len(air.SSIDs[0].APs) != 1 || len(air.SSIDs[0].APs[0].BSSes) != 1 {
+		t.Fatalf("want one SSID/AP/BSS, got %+v", air.SSIDs)
+	}
+	wantN := 0
+	if want {
+		wantN = 1
+	}
+	counts := []int{len(air.SSIDs[0].APs[0].BSSes[0].Stations), air.SSIDs[0].StationCount, air.Status.Stations}
+	if !slices.Equal(counts, []int{wantN, wantN, wantN}) {
+		t.Errorf("stations/stationCount/status.stations = %v, want all %d", counts, wantN)
+	}
+	if air.ClientsWithheld == want {
+		t.Errorf("clientsWithheld = %v, want %v", air.ClientsWithheld, !want)
 	}
 }

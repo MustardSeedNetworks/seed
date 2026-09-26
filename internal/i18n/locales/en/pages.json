@@ -219,7 +219,7 @@
     "airspaceSubtitle": "Live SSID / AP / BSSID / client map from 802.11 management-frame capture.",
     "anomaliesTitle": "Wi-Fi Anomalies",
     "anomaliesSubtitle": "Security, RF, roaming, and standards anomalies detected in the airspace.",
-    "tierHint": "Available on Seed Pro. Run `seed license trial` for a 14-day trial.",
+    "tierHint": "Available on Seed Starter and Pro. Run `seed license trial` for a 14-day trial.",
     "wiredLabel": "Wireless data",
     "wiredReason": "This interface is wired. Switch to a Wi-Fi interface from the header to see signal, channels and airspace.",
     "airspaceLabel": "Airspace",
