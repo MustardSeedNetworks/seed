@@ -423,11 +423,6 @@ jobs:
           python3 scripts/test-check-ui-generated-types.py
           python3 scripts/check-ui-generated-types.py
 
-      - name: i18n copy gate — hardcoded copy the shared JSX-text gate cannot see
-        run: |
-          python3 scripts/test-check-i18n-copy.py
-          python3 scripts/check-i18n-copy.py
-
       - name: Feature-catalog gate — every sold feature has a gate in code
         run: |
           python3 scripts/test-check-feature-catalog.py
@@ -1271,7 +1266,7 @@ jobs:
           node scripts/check-help-i18n.ts
 
       - name: Run shared i18n validator
-        uses: MustardSeedNetworks/.github/.github/actions/i18n-validate@048d173dd72ca0f9e5fa832fb5b9fd2a6447e5e9 # v1.13.0
+        uses: MustardSeedNetworks/.github/.github/actions/i18n-validate@19e61bef9a6c9d3c15fc47c2bf144a62065617cc # .github#97, untagged
 
   # ===========================================================================
   # Documentation Checks

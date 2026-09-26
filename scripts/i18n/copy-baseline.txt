@@ -1,6 +1,6 @@
-# Baseline for scripts/check-i18n-copy.py — hardcoded English copy in shapes the
-# shared JSX-text gate cannot see (a copy-bearing prop value, a prose string
-# literal). This file may only SHRINK: a new site fails CI, and an entry that no
+# Baseline for the shared i18n gate's copy check (check-copy.py in
+# MustardSeedNetworks/.github) — hardcoded English copy in shapes its JSX-text
+# check cannot see (a copy-bearing prop value, a prose string literal). This file may only SHRINK: a new site fails CI, and an entry that no
 # longer matches must be deleted so the list cannot drift into fiction.
 #
 # Entries are `<file> <kind> <text>` and carry no line number on purpose — the
