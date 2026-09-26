@@ -53,7 +53,15 @@ func TestRootAt(t *testing.T) {
 	}
 }
 
-func TestRootAt_CannotEscapeParent(t *testing.T) {
+// TestRootAt_ScopesToPathsParent proves RootAt scopes to whatever directory
+// path lexically names as its parent — here [filepath.Join] has already
+// resolved "sub/../secret.txt" down to "secret.txt" before RootAt ever sees
+// it, so the parent is dir itself, not sub. RootAt confines to that lexical
+// parent; it is not a directory-confinement boundary against a
+// caller-chosen root (see internal/config's BackupManager or
+// internal/truststore for that stronger guarantee, built on [os.Root]
+// scoped to a fixed directory).
+func TestRootAt_ScopesToPathsParent(t *testing.T) {
 	dir := t.TempDir()
 	sub := filepath.Join(dir, "sub")
 	if err := os.MkdirAll(sub, 0o750); err != nil {
@@ -64,14 +72,6 @@ func TestRootAt_CannotEscapeParent(t *testing.T) {
 		t.Fatalf("write: %v", err)
 	}
 
-	// RootAt("sub/../secret.txt") scopes the Root to filepath.Dir of the
-	// *cleaned* path's directory component, i.e. still "sub" here since
-	// filepath.Dir does not itself resolve "..": it operates lexically, so
-	// this proves the "root scoped to Dir(path)" value passed to os.Open
-	// still names the same file filepath.Base/Dir would recombine to, not
-	// a different one — RootAt is a taint-clearing wrapper, not a
-	// directory-confinement boundary (see internal/config's BackupManager
-	// for that stronger guarantee).
 	root, name, err := fsutil.RootAt(filepath.Join(sub, "..", "secret.txt"))
 	if err != nil {
 		t.Fatalf("RootAt() = %v, want nil", err)
