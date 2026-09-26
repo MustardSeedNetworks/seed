@@ -406,6 +406,10 @@ func TestBackupManager_RestoreBackup_NormalPath(t *testing.T) {
 // scope. The write-back goes through fsutil.RootAt, which resolves
 // symlinks first.
 func TestBackupManager_RestoreBackup_ConfigPathIsSymlink(t *testing.T) {
+	// Creating a symlink on Windows needs a privilege the test runner does
+	// not have.
+	skipOnWindows(t)
+
 	realDir := t.TempDir()
 	realConfigPath := filepath.Join(realDir, "config.json")
 
@@ -427,19 +431,30 @@ func TestBackupManager_RestoreBackup_ConfigPathIsSymlink(t *testing.T) {
 		t.Fatalf("CreateBackup: %v", err)
 	}
 
+	// Overwrite the real file behind the symlink after the backup was
+	// taken, so the assertion below fails if the restore's write-back
+	// silently went nowhere instead of landing on the real file.
+	if writeErr := os.WriteFile(realConfigPath, []byte(`{"version":1}`), 0o600); writeErr != nil {
+		t.Fatalf("overwrite real config: %v", writeErr)
+	}
+
 	if restoreErr := backupMgr.RestoreBackup(backup.Name); restoreErr != nil {
 		t.Fatalf("RestoreBackup(%q) = %v, want nil", backup.Name, restoreErr)
 	}
 
-	// The write-back should have landed on the real file behind the
-	// symlink, not silently failed or written somewhere else.
 	restored, err := os.ReadFile(realConfigPath)
 	if err != nil {
 		t.Fatalf("read real config file: %v", err)
 	}
-	var wire map[string]any
-	if unmarshalErr := json.Unmarshal(restored, &wire); unmarshalErr != nil {
+	restoredCfg := config.DefaultConfig()
+	if unmarshalErr := json.Unmarshal(restored, restoredCfg); unmarshalErr != nil {
 		t.Fatalf("unmarshal restored config: %v", unmarshalErr)
+	}
+	if restoredCfg.Server.Port != 6666 {
+		t.Errorf(
+			"restored Server.Port = %d, want 6666 (restore did not write through the symlink)",
+			restoredCfg.Server.Port,
+		)
 	}
 }
 

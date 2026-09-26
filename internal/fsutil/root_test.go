@@ -3,6 +3,7 @@ package fsutil_test
 import (
 	"os"
 	"path/filepath"
+	"runtime"
 	"testing"
 
 	"github.com/MustardSeedNetworks/seed/internal/fsutil"
@@ -60,6 +61,8 @@ func TestRootAt(t *testing.T) {
 // would reject, since [os.Root] refuses to follow a symlink that leaves
 // its scope.
 func TestRootAt_FollowsSymlinkedFile(t *testing.T) {
+	skipOnWindows(t)
+
 	realDir := resolvedTempDir(t)
 	realPath := filepath.Join(realDir, "seed.json")
 	if err := os.WriteFile(realPath, []byte("original"), 0o600); err != nil {
@@ -149,6 +152,16 @@ func TestRootAt_ScopesToPathsParent(t *testing.T) {
 	}
 	if name != "secret.txt" {
 		t.Errorf("name = %q, want %q", name, "secret.txt")
+	}
+}
+
+// skipOnWindows skips a test whose premise is POSIX symlink creation:
+// [os.Symlink] on Windows needs a privilege (Developer Mode or
+// SeCreateSymbolicLinkPrivilege) the CI runner does not have.
+func skipOnWindows(t *testing.T) {
+	t.Helper()
+	if runtime.GOOS == "windows" {
+		t.Skip("the premise of this test is POSIX symlink creation")
 	}
 }
 
