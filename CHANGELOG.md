@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.217.0](https://github.com/MustardSeedNetworks/seed/compare/v0.216.0...v0.217.0) (2026-09-26)
+
+
+### Features
+
+* **capture:** summarize a finished capture's traffic ([#239](https://github.com/MustardSeedNetworks/seed/issues/239)) ([#2895](https://github.com/MustardSeedNetworks/seed/issues/2895)) ([7035d76](https://github.com/MustardSeedNetworks/seed/commit/7035d7643147060da62b2e44c573bcdf3e8e6ffb))
+
 ## [0.216.0](https://github.com/MustardSeedNetworks/seed/compare/v0.215.0...v0.216.0) (2026-09-26)
 
 
