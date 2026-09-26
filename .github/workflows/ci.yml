@@ -962,10 +962,15 @@ jobs:
   # is why this runs per PR rather than on a schedule.
   # Defined once in MustardSeedNetworks/.github (fleet-shared); ci-complete
   # still needs: [ci-conformance].
+  # `id-token: write` is how the reusable workflow learns which commit of
+  # itself is running, so its policy checkout reads the pinned commit instead
+  # of .github@main (a canonical change there reaches this repo only when this
+  # pin moves).
   ci-conformance:
-    uses: MustardSeedNetworks/.github/.github/workflows/ci-conformance.yml@048d173dd72ca0f9e5fa832fb5b9fd2a6447e5e9 # v1.13.0
+    uses: MustardSeedNetworks/.github/.github/workflows/ci-conformance.yml@6b754001cf1d0b14c97c59379fb4275d77c6ece3 # .github#93, untagged
     permissions:
       contents: read
+      id-token: write
 
   # ===========================================================================
   # Code Quality Checks
