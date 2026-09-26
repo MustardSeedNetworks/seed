@@ -512,7 +512,7 @@ export const SettingsDrawer: React.MemoExoticComponent<
         <div
           className={cn(
             layout.flex.between,
-            'pad sm:pad-lg border-b border-surface-border sticky top-0 bg-surface-raised z-10',
+            'pad border-b border-surface-border sticky top-0 bg-surface-raised z-10',
           )}
         >
           <div className="stack-xs">

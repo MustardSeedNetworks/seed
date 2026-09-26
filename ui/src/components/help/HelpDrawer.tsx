@@ -103,7 +103,7 @@ export function HelpDrawer({
         <div
           className={cn(
             layout.flex.between,
-            'pad sm:pad-lg border-b border-surface-border bg-surface-raised shrink-0',
+            'pad border-b border-surface-border bg-surface-raised shrink-0',
           )}
         >
           <div className="stack-xs">
