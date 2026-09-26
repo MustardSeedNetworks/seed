@@ -28,6 +28,7 @@ import (
 	"github.com/MustardSeedNetworks/seed/internal/api"
 	"github.com/MustardSeedNetworks/seed/internal/config"
 	"github.com/MustardSeedNetworks/seed/internal/diagnostics/multicast"
+	"github.com/MustardSeedNetworks/seed/internal/diagnostics/packetcapture"
 	"github.com/MustardSeedNetworks/seed/internal/diagnostics/qos"
 	"github.com/MustardSeedNetworks/seed/internal/discovery/bonjour"
 )
@@ -256,6 +257,11 @@ func schemaTargets() []schemaTarget {
 		{&qos.ListenResult{}, "qos-listen-response.schema.json"},
 		{&qos.SingleHostRequest{}, "qos-single-host-request.schema.json"},
 		{&qos.SingleHostResult{}, "qos-single-host-response.schema.json"},
+
+		// #326's packet capture, a jobs-spine kind registered as the
+		// packetcapture package's own types like the two above.
+		{&packetcapture.Request{}, "packet-capture-request.schema.json"},
+		{&packetcapture.Result{}, "packet-capture-response.schema.json"},
 
 		// Profile/settings config — code-first model of the per-profile
 		// config.Config blob (ADR-0007/0008, Phase 7 S6). The profile Config

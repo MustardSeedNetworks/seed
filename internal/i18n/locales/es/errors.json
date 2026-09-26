@@ -204,5 +204,10 @@
   "mdns": {
     "browseUnavailable": "No se pudo unir al grupo de multidifusión mDNS en esta interfaz",
     "invalidWindow": "La ventana de exploración debe ser un número positivo de segundos"
+  },
+  "capture": {
+    "notFound": "No se encontró la captura",
+    "inProgress": "La captura sigue en curso; deténgala o espere a que termine y luego descárguela",
+    "readFailed": "No se pudo leer la captura"
   }
 }

@@ -33,6 +33,7 @@ import (
 	"github.com/MustardSeedNetworks/seed/internal/diagnostics/export"
 	"github.com/MustardSeedNetworks/seed/internal/diagnostics/gateway"
 	"github.com/MustardSeedNetworks/seed/internal/diagnostics/iperf"
+	"github.com/MustardSeedNetworks/seed/internal/diagnostics/packetcapture"
 	"github.com/MustardSeedNetworks/seed/internal/diagnostics/speedtest"
 	"github.com/MustardSeedNetworks/seed/internal/diagnostics/vlan"
 	"github.com/MustardSeedNetworks/seed/internal/discovery"
@@ -246,6 +247,7 @@ type Server struct {
 	bus          *events.Bus             // in-process domain event bus (ADR-0004)
 	jobRunner    *jobs.Runner            // unified async job runner (ADR-0005)
 	jobIdemp     jobIdempotencyStore     // Idempotency-Key dedup for POST /jobs
+	captures     *packetcapture.Store    // packet-capture job files, downloaded by ID
 
 	// --- Database ---
 	dbConn          *database.DB
