@@ -460,7 +460,9 @@ body {
     @apply gap-6; /* 24px */
   }
 
-  /* Card/container padding */
+  /* Card/container padding. Like every class in this layer these take no
+     variants (`sm:pad-lg` compiles to nothing, scripts/check-component-variants.py),
+     so the shell pads its pages at 16px on every width. */
   .pad-xs {
     @apply p-2; /* 8px */
   }

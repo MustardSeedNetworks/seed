@@ -381,6 +381,11 @@ jobs:
       - name: Malformed Tailwind classes
         run: ./scripts/check-tailwind-classes.sh
 
+      - name: Variants on @layer components classes
+        run: |
+          python3 scripts/test-check-component-variants.py
+          python3 scripts/check-component-variants.py
+
       - name: Verify API schemas are up to date
         run: ./scripts/check-schema-drift.sh
 
