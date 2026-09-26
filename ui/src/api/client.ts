@@ -27,6 +27,8 @@
  * token refresh. If refresh fails, invokes session expired callback.
  */
 
+import type { ErrorResponse } from '../types/generated/error-response';
+
 // API base URL - can be overridden via VITE_API_BASE environment variable
 const API_BASE: string = import.meta.env.VITE_API_BASE || '';
 
@@ -44,6 +46,41 @@ export class SessionExpiredError extends Error {
   constructor() {
     super('Session expired');
     this.name = 'SessionExpiredError';
+  }
+}
+
+/**
+ * Thrown for every non-2xx response other than an expired session, so a
+ * caller branches on `status` or `code` instead of parsing the message — a
+ * `message.includes('404')` also matched a server reason that merely contained
+ * the digits.
+ *
+ * `code`, `details` and `error` come from the server's `ErrorResponse`
+ * envelope and are absent when the body was not one (plain-text `http.Error`
+ * replies, proxies). `body` is the parsed JSON, left `unknown` for callers
+ * that need a route-specific shape such as `FeatureGateResponse` to narrow.
+ */
+export class ApiError extends Error {
+  readonly status: number;
+  readonly code: string | undefined;
+  readonly details: string | undefined;
+  /** The `X-Request-ID` the server logged this request under. */
+  readonly requestId: string | undefined;
+  readonly body: unknown;
+
+  constructor(
+    status: number,
+    envelope: Partial<ErrorResponse>,
+    requestId: string | undefined,
+    body: unknown,
+  ) {
+    super(envelope.error ? `API error: ${status}: ${envelope.error}` : `API error: ${status}`);
+    this.name = 'ApiError';
+    this.status = status;
+    this.code = envelope.code;
+    this.details = envelope.details;
+    this.requestId = requestId;
+    this.body = body;
   }
 }
 
@@ -80,6 +117,9 @@ let csrfFetchPromise: Promise<string | null> | null = null;
 
 /** CSRF token header name - must match backend auth.CSRFHeaderName */
 const CSRF_HEADER_NAME = 'X-CSRF-Token';
+
+/** Request ID header name - must match backend logging.RequestIDHeader */
+const REQUEST_ID_HEADER_NAME = 'X-Request-ID';
 
 /**
  * The pre-session endpoints, mirroring `isCSRFExemptPath` in
@@ -236,25 +276,38 @@ export function beginSession(): void {
   sessionGeneration++;
 }
 
+/** The string fields of the server's `ErrorResponse`, where the body is one. */
+function errorEnvelope(body: unknown): Partial<ErrorResponse> {
+  if (typeof body !== 'object' || body === null) {
+    return {};
+  }
+  const field = (key: keyof ErrorResponse): string | undefined => {
+    const value: unknown = (body as Record<string, unknown>)[key];
+    return typeof value === 'string' && value !== '' ? value : undefined;
+  };
+  return { error: field('error'), code: field('code'), details: field('details') };
+}
+
 /**
  * Builds the error for a non-2xx response.
  *
  * The server's own message is carried through. Callers that used a raw fetch
  * read it out of the body themselves and showed it — "CIDR overlaps an
  * existing subnet" is worth more to the operator than "API error: 400" — so
- * dropping it would have made the migration off raw fetch a regression. The
- * `API error: N` prefix is kept so anything matching on it still matches.
+ * dropping it would have made the migration off raw fetch a regression.
  */
-async function requestError(response: Response): Promise<Error> {
-  let detail = '';
+async function requestError(response: Response): Promise<ApiError> {
+  let body: unknown;
   try {
-    const body = (await response.clone().json()) as { error?: string; message?: string };
-    detail = body.error ?? body.message ?? '';
+    body = await response.clone().json();
   } catch {
     // Not JSON, or already consumed. The status alone will have to do.
   }
-  return new Error(
-    detail ? `API error: ${response.status}: ${detail}` : `API error: ${response.status}`,
+  return new ApiError(
+    response.status,
+    errorEnvelope(body),
+    response.headers.get(REQUEST_ID_HEADER_NAME) ?? undefined,
+    body,
   );
 }
 
@@ -268,7 +321,7 @@ async function requestError(response: Response): Promise<Error> {
  * @param isAuthEndpoint - If true, skips token refresh and session expiration handling
  * @param retryRequest - Optional function to retry the original request after token refresh
  * @returns Parsed JSON response data
- * @throws Error on non-2xx status codes or session expiration
+ * @throws ApiError on non-2xx status codes, SessionExpiredError on session expiration
  */
 async function handleResponse<T>(
   response: Response,

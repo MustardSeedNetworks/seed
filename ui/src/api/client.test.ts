@@ -9,7 +9,14 @@
  */
 
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { api, beginSession, clearCSRFToken, setSessionExpiredCallback } from './client';
+import {
+  ApiError,
+  api,
+  beginSession,
+  clearCSRFToken,
+  SessionExpiredError,
+  setSessionExpiredCallback,
+} from './client';
 
 /** A 401 with a failing refresh — the path that reaches onSessionExpired. */
 function mockUnauthorizedWithFailedRefresh(): void {
@@ -125,7 +132,12 @@ describe('api client retry after refresh', () => {
   it('retries with a CSRF token minted after the refresh', async () => {
     mockRefreshThen(403, JSON.stringify({ error: 'Invalid CSRF token' }));
 
-    await expect(api.post('/api/v1/settings', { theme: 'dark' })).rejects.toThrow(/API error: 403/);
+    // The error describes the retry's response, not the 401 that preceded it.
+    await expect(api.post('/api/v1/settings', { theme: 'dark' })).rejects.toMatchObject({
+      name: 'ApiError',
+      status: 403,
+      message: 'API error: 403: Invalid CSRF token',
+    });
 
     // Two attempts, and the second carried a token minted after the refresh.
     expect(attempts).toEqual(['csrf-1', 'csrf-2']);
@@ -137,11 +149,112 @@ describe('api client retry after refresh', () => {
   it('expires the session only when the retry is itself a 401', async () => {
     mockRefreshThen(401, '{}');
 
-    await expect(api.post('/api/v1/settings', { theme: 'dark' })).rejects.toThrow(
-      'Session expired',
+    await expect(api.post('/api/v1/settings', { theme: 'dark' })).rejects.toBeInstanceOf(
+      SessionExpiredError,
     );
 
     expect(onExpired).toHaveBeenCalledTimes(1);
+  });
+});
+
+/**
+ * Every non-2xx answer other than an expired session is an `ApiError`, so a
+ * caller branches on `status` and `code` rather than on the message (#763).
+ */
+describe('api client ApiError', () => {
+  function respondWith(status: number, body: string, headers?: Record<string, string>): void {
+    vi.spyOn(globalThis, 'fetch').mockImplementation((input: RequestInfo | URL) => {
+      const url = typeof input === 'string' ? input : input.toString();
+      if (url.includes('/api/v1/auth/csrf')) {
+        return Promise.resolve(new Response(JSON.stringify({ token: 'csrf-1' }), { status: 200 }));
+      }
+      return Promise.resolve(new Response(body, { status, headers }));
+    });
+  }
+
+  async function rejection(request: () => Promise<unknown>): Promise<ApiError> {
+    const err: unknown = await request().then(
+      () => undefined,
+      (e: unknown) => e,
+    );
+    expect(err).toBeInstanceOf(ApiError);
+    return err as ApiError;
+  }
+
+  beforeEach(() => {
+    clearCSRFToken();
+    beginSession();
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  it.each([
+    [400, 'BAD_REQUEST', 'CIDR overlaps an existing subnet'],
+    [403, 'FORBIDDEN', 'Insufficient role'],
+    [404, 'NOT_FOUND', 'Profile not found'],
+    [409, 'CONFLICT', 'Profile name already exists'],
+    [500, 'INTERNAL_ERROR', 'Failed to save settings'],
+  ])('carries status %i and the ErrorResponse envelope', async (status, code, error) => {
+    respondWith(status, JSON.stringify({ error, code, details: 'row 3' }), {
+      'X-Request-ID': 'req-42',
+    });
+
+    const err = await rejection(() => api.put('/api/v1/settings', {}));
+
+    expect(err).toMatchObject({
+      status,
+      code,
+      details: 'row 3',
+      requestId: 'req-42',
+      message: `API error: ${status}: ${error}`,
+    });
+    expect(err.body).toEqual({ error, code, details: 'row 3' });
+  });
+
+  it('keeps the status of a plain-text reply and names no envelope fields', async () => {
+    respondWith(502, 'Bad Gateway\n', { 'Content-Type': 'text/plain' });
+
+    const err = await rejection(() => api.get('/api/v1/status'));
+
+    expect(err).toMatchObject({ status: 502, message: 'API error: 502' });
+    expect(err.code).toBeUndefined();
+    expect(err.details).toBeUndefined();
+    expect(err.requestId).toBeUndefined();
+    expect(err.body).toBeUndefined();
+  });
+
+  it('keeps a JSON body that is not an ErrorResponse for the caller to narrow', async () => {
+    const gate = {
+      error: 'Feature requires Pro',
+      code: 'FEATURE_GATED',
+      requiredFeature: 'path_analysis',
+      currentTier: 'free',
+      upgradeMessage: 'Upgrade to Pro',
+    };
+    respondWith(402, JSON.stringify(gate));
+
+    const err = await rejection(() => api.get('/api/v1/path'));
+
+    expect(err).toMatchObject({ status: 402, code: 'FEATURE_GATED' });
+    expect(err.body).toEqual(gate);
+  });
+
+  it('ignores envelope fields that are not strings', async () => {
+    respondWith(400, JSON.stringify({ error: 7, code: null, details: '' }));
+
+    const err = await rejection(() => api.get('/api/v1/status'));
+
+    expect(err).toMatchObject({ status: 400, message: 'API error: 400' });
+    expect(err.code).toBeUndefined();
+    expect(err.details).toBeUndefined();
+  });
+
+  it('reports an unauthenticated 401 as SessionExpiredError, not ApiError', async () => {
+    respondWith(401, JSON.stringify({ error: 'Unauthorized', code: 'UNAUTHORIZED' }));
+
+    await expect(api.get('/api/v1/status')).rejects.toBeInstanceOf(SessionExpiredError);
   });
 });
 

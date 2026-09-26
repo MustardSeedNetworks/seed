@@ -20,7 +20,7 @@
 import type { UseMutationResult, UseQueryResult } from '@tanstack/react-query';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useEffect } from 'react';
-import { api } from '../api';
+import { ApiError, api, SessionExpiredError } from '../api';
 import { LogComponents, logger } from '../lib/logger';
 import type { DefaultSettings } from '../types/defaults';
 import type { ProfileImportResponse } from '../types/generated/profile-import-response';
@@ -79,10 +79,9 @@ export function useProfilesQuery(): UseQueryResult<Profile[], Error> {
 
   useEffect(() => {
     if (query.isError && query.error) {
-      const message =
-        query.error instanceof Error ? query.error.message : 'Failed to fetch profiles';
-      if (!message.toLowerCase().includes('session')) {
-        setError(message);
+      // An expired session is the session flow's to report, not this store's.
+      if (!(query.error instanceof SessionExpiredError)) {
+        setError(query.error.message);
       }
       logger.error(LogComponents.PROFILES, 'Failed to fetch profiles', query.error);
     }
@@ -115,7 +114,7 @@ export function useActiveProfileQuery(): UseQueryResult<Profile, Error> {
     staleTime: 10 * 1000, // 10 seconds
     retry: (failureCount: number, error: Error) => {
       // Don't retry on 404 - profile may not exist yet
-      if (error instanceof Error && error.message.includes('404')) {
+      if (error instanceof ApiError && error.status === 404) {
         return false;
       }
       return failureCount < 3;
@@ -134,14 +133,12 @@ export function useActiveProfileQuery(): UseQueryResult<Profile, Error> {
   useEffect(() => {
     if (query.isError && query.error) {
       // Active profile may not exist yet, which is okay
-      if (query.error instanceof Error && query.error.message.includes('404')) {
+      if (query.error instanceof ApiError && query.error.status === 404) {
         setIsSettingsLoaded(true);
         return;
       }
-      const message =
-        query.error instanceof Error ? query.error.message : 'Failed to fetch active profile';
-      if (!message.toLowerCase().includes('session')) {
-        setError(message);
+      if (!(query.error instanceof SessionExpiredError)) {
+        setError(query.error.message);
         logger.error(LogComponents.PROFILES, 'Failed to fetch active profile', query.error);
       }
       setIsSettingsLoaded(true);
