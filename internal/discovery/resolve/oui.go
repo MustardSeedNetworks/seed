@@ -175,7 +175,6 @@ func (db *OUIDatabase) TryLoadIEEEFile() error {
 	}
 
 	for _, loc := range locations {
-		//nolint:gosec // G703: locations is a literal hardcoded list of well-known OUI database paths
 		if _, err := os.Stat(loc); err == nil {
 			return db.LoadFromFile(loc)
 		}

@@ -62,7 +62,7 @@ type ObservationPipeline struct {
 	stopped  bool
 	cancel   context.CancelFunc
 	wg       sync.WaitGroup
-	suppress suppressionStore
+	suppress SuppressionStore
 
 	// Per-scan status, updated under mu for engine.Reporter.
 	lastTickAt time.Time
@@ -93,7 +93,7 @@ type ObservationConfig struct {
 	Suppression  time.Duration
 
 	// Suppressions is the persistence backend; see ListenerConfig.
-	Suppressions suppressionStore
+	Suppressions SuppressionStore
 
 	// ReplayDepth controls how many recent observations per kind
 	// are read at Start to prime the state caches (#1381). Zero

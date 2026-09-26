@@ -836,6 +836,22 @@ linters:
       - text: 'G703: Path traversal via taint analysis'
         path: 'internal/truststore/truststore_linux\.go'
         linters: [ gosec ]
+      # golangci-lint v2.14.0 surfaces G703 at two more call sites gosec's
+      # taint analysis cannot follow through indirection, each already
+      # documented in place: removeBinary's os.Remove is filepath.Join'd from
+      # trusted Paths/os.Getenv("HOME") (cmd_uninstall.go), and
+      # LoadFromFile's os.Open and TryLoadIEEEFile's os.Stat are an
+      # administrative load path over a hardcoded location list, not
+      # user-controlled at runtime (oui.go). Both filepath.Clean the loaded
+      # path defensively; the taint is advisory, same class as the
+      # truststore entry above. Path-scoped here (not per-line //nolint,
+      # which this replaced) so it covers both call sites.
+      - text: 'G703: Path traversal via taint analysis'
+        path: 'cmd/seed/cmd_uninstall\.go'
+        linters: [ gosec ]
+      - text: 'G703: Path traversal via taint analysis'
+        path: 'internal/discovery/resolve/oui\.go'
+        linters: [ gosec ]
       # profiler_infer.go contains portToService, an intentional literal-
       # reference table mapping port numbers to user-facing protocol names.
       # The repeated strings (ftp/ssh/http/etc.) are protocol identifiers,

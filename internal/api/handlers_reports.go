@@ -21,7 +21,7 @@ const reportsPathPrefix = APIVersionPrefix + "/reports/"
 // rather than returning the record.
 const downloadSuffix = "/download"
 
-// reportIDPattern matches the uuid.New().String() ids Generate assigns.
+// reportIDPattern matches the [uuid.New]().String() ids Generate assigns.
 //
 // r.URL.Path arrives percent-decoded, so without this an id could carry a
 // newline and forge log lines. It is also plain input validation: nothing but a

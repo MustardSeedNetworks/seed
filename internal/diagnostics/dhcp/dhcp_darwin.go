@@ -76,8 +76,8 @@ func parseDHCPLine(line string, result *TestResult) {
 // parseSubnetMask extracts subnet mask from ipconfig output line.
 func parseSubnetMask(line string, result *TestResult) {
 	// Format: subnet_mask (ip): 255.255.255.0
-	if idx := strings.LastIndex(line, ": "); idx != -1 {
-		result.SubnetMask = strings.TrimSpace(line[idx+2:])
+	if _, after, found := strings.CutLast(line, ": "); found {
+		result.SubnetMask = strings.TrimSpace(after)
 	}
 }
 
@@ -105,16 +105,16 @@ func parseDNSServers(line string, result *TestResult) {
 // parseDomainName extracts domain name from ipconfig output line.
 func parseDomainName(line string, result *TestResult) {
 	// Format: domain_name (string): local
-	if idx := strings.LastIndex(line, ": "); idx != -1 {
-		result.DomainName = strings.TrimSpace(line[idx+2:])
+	if _, after, found := strings.CutLast(line, ": "); found {
+		result.DomainName = strings.TrimSpace(after)
 	}
 }
 
 // parseLeaseTimeLine extracts lease time from ipconfig output line.
 func parseLeaseTimeLine(line string, result *TestResult) {
 	// Format: lease_time (uint32): 0x15180
-	if idx := strings.LastIndex(line, ": "); idx != -1 {
-		valStr := strings.TrimSpace(line[idx+2:])
+	if _, after, found := strings.CutLast(line, ": "); found {
+		valStr := strings.TrimSpace(after)
 		if seconds, err := parseLeaseTime(valStr); err == nil {
 			result.LeaseTime = time.Duration(seconds) * time.Second
 			result.LeaseTimeSec = seconds
@@ -125,9 +125,9 @@ func parseLeaseTimeLine(line string, result *TestResult) {
 // parseServerIdentifier extracts server identifier from ipconfig output line.
 func parseServerIdentifier(line string, result *TestResult) {
 	// Format: server_identifier (ip): 192.168.1.1
-	if idx := strings.LastIndex(line, ": "); idx != -1 {
+	if _, after, found := strings.CutLast(line, ": "); found {
 		if result.ServerIP == "" {
-			result.ServerIP = strings.TrimSpace(line[idx+2:])
+			result.ServerIP = strings.TrimSpace(after)
 		}
 	}
 }
