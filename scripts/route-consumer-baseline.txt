@@ -30,8 +30,8 @@
 /api/v1/history/probes/                   # scheduled: S6-2 #325, see /history/anomalies
 /api/v1/path/traceroute                   # scheduled: Wave 4 path cluster (#165 #395 #435), one traceroute engine
 /api/v1/reporting/logs/query              # PAT-only allow-list (owner 2026-09-04)
-/api/v1/security/discovery/fingerprint    # delete: only reader of discovery.Fingerprinter (423 lines); ADR-0018 moves the package, it does not give it a caller
-/api/v1/security/discovery/probe          # delete: only reader of fingerprint.TCPProber
+/api/v1/security/discovery/fingerprint    # scheduled: S4-5 #2456 reuses it (owner 2026-09-24, keep and reuse); operator+ and rate limited (#2635)
+/api/v1/security/discovery/probe          # scheduled: S4-5 #2456, see /security/discovery/fingerprint
 /api/v1/security/problems                 # delete: unclaimed. S6-3's vehicle is anomaly.Catalog, not discovery.ProblemDetector, and nothing calls AddListener — these three routes are the detector's only reader. Queued with bluetooth behind one owner sentence
 /api/v1/security/problems/scan            # delete: see /security/problems
 /api/v1/security/problems/thresholds      # delete: see /security/problems
