@@ -1,6 +1,9 @@
 package main
 
 import (
+	"context"
+	"os"
+	"path/filepath"
 	"testing"
 
 	"github.com/MustardSeedNetworks/seed/internal/paths"
@@ -209,4 +212,37 @@ func TestUninstallFlagsCombinations(t *testing.T) {
 			}
 		})
 	}
+}
+
+// TestRemoveBinary proves removeBinary deletes exactly "seed" inside
+// p.BinaryDir and never anything outside it, now that it is scoped via
+// [os.Root] instead of a bare [os.Remove] on a joined path.
+func TestRemoveBinary(t *testing.T) {
+	dir := t.TempDir()
+	binaryPath := filepath.Join(dir, "seed")
+	if err := os.WriteFile(binaryPath, []byte("binary"), 0o600); err != nil {
+		t.Fatalf("write binary fixture: %v", err)
+	}
+	sibling := filepath.Join(dir, "other-file")
+	if err := os.WriteFile(sibling, []byte("keep me"), 0o600); err != nil {
+		t.Fatalf("write sibling fixture: %v", err)
+	}
+
+	p := &paths.Paths{BinaryDir: dir}
+	removeBinary(context.Background(), p, paths.ModeSystem)
+
+	if _, err := os.Stat(binaryPath); !os.IsNotExist(err) {
+		t.Errorf("binary still exists after removeBinary: err=%v", err)
+	}
+	if _, err := os.Stat(sibling); err != nil {
+		t.Errorf("sibling file was affected: %v", err)
+	}
+}
+
+// TestRemoveBinary_MissingDirectory proves a nonexistent BinaryDir is a
+// silent no-op (matches the pre-os.Root [os.IsNotExist] tolerance), not
+// a panic or an unhandled error.
+func TestRemoveBinary_MissingDirectory(t *testing.T) {
+	p := &paths.Paths{BinaryDir: filepath.Join(t.TempDir(), "does-not-exist")}
+	removeBinary(context.Background(), p, paths.ModeSystem)
 }
