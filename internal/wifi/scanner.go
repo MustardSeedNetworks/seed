@@ -15,11 +15,25 @@ type ScannedNetwork struct {
 	Frequency    int       `json:"frequency"` // MHz
 	Security     string    `json:"security"`
 	ChannelWidth int       `json:"channelWidth"` // 20, 40, 80, 160, 320 MHz
-	NoiseFloor   int       `json:"noiseFloor"`   // dBm (typically -90 to -100)
+	NoiseFloor   int       `json:"noiseFloor"`   // dBm (typically -90 to -100); 0 when not measured
 	SNR          int       `json:"snr"`          // Signal-to-Noise Ratio (Signal - NoiseFloor)
 	HTMode       string    `json:"htMode"`       // HT20, HT40, VHT80, HE160, EHT320, etc.
 	IsDFS        bool      `json:"isDFS"`        // true if channel is DFS (Dynamic Frequency Selection)
 	LastSeen     time.Time `json:"lastSeen"`
+
+	// Decoded from the scan result's information elements. Only the Linux
+	// scanner reads those today; elsewhere these stay zero.
+	Hidden             bool   `json:"hidden"`
+	Standard           string `json:"standard,omitempty"`
+	CountryCode        string `json:"countryCode,omitempty"`
+	PMFRequired        bool   `json:"pmfRequired"`
+	WPSEnabled         bool   `json:"wpsEnabled"`
+	RRMNeighbor        bool   `json:"rrmNeighbor"`
+	BTMSupported       bool   `json:"btmSupported"`
+	FTSupported        bool   `json:"ftSupported"`
+	HasBSSLoad         bool   `json:"hasBssLoad"`
+	ChannelUtil        int    `json:"channelUtil"` // BSS Load figure, 0-255; valid only when HasBSSLoad
+	AdvertisedStations int    `json:"advertisedStations"`
 }
 
 // Scanner scans for available WiFi networks.
