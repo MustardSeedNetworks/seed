@@ -284,7 +284,7 @@ jobs:
         env:
           GOOS: windows
         with:
-          version: v2.13.2
+          version: v2.14.0
           only-new-issues: true
           # See the Backend (Go) step below: the action's cache key carries no
           # GOOS, so this job and that one share one entry while analysing two
@@ -341,7 +341,7 @@ jobs:
       - name: Run golangci-lint
         uses: golangci/golangci-lint-action@ba0d7d2ec06a0ea1cb5fa41b2e4a3ab91d21278a # v9.3.0
         with:
-          version: v2.13.2
+          version: v2.14.0
           # Full-tree lint verified clean on 2026-08-14. Keep CI aligned with
           # the repository-wide zero-warning policy.
           args: --timeout=5m
@@ -1218,7 +1218,7 @@ jobs:
           # falls back to unauthenticated requests and gets rate-limited.
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          pipx install zizmor==1.29.0
+          pipx install zizmor==1.30.1
           zizmor --min-severity high --color always .github/workflows/
 
 
