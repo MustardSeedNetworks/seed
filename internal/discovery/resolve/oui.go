@@ -33,6 +33,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/MustardSeedNetworks/seed/internal/fsutil"
 	"github.com/MustardSeedNetworks/seed/internal/logging"
 )
 
@@ -89,13 +90,18 @@ func NewOUIDatabase() *OUIDatabase {
 // LoadFromFile loads additional OUI entries from a file.
 // File format: AA:BB:CC<tab>Vendor Name.
 //
-// path is [filepath.Clean]'d to normalize traversal sequences. This is an
-// administrative load operation invoked at boot or by privileged code
-// paths — not user-controlled at runtime — so the cleaning is purely
-// defensive (and to satisfy gosec's taint analysis).
+// path is an administrative path — operator-configured or one of
+// TryLoadIEEEFile's hardcoded candidate locations, never user input at
+// runtime — with no directory of its own to confine it to, so it is opened
+// via [fsutil.RootAt] rather than a bare [os.Open].
 func (db *OUIDatabase) LoadFromFile(path string) error {
-	cleanPath := filepath.Clean(path)
-	file, err := os.Open(cleanPath)
+	root, name, err := fsutil.RootAt(path)
+	if err != nil {
+		return fmt.Errorf("open OUI file: %w", err)
+	}
+	defer func() { _ = root.Close() }()
+
+	file, err := root.Open(name)
 	if err != nil {
 		return fmt.Errorf("open OUI file: %w", err)
 	}
@@ -174,10 +180,19 @@ func (db *OUIDatabase) TryLoadIEEEFile() error {
 		filepath.Join(os.Getenv("HOME"), ".config", "seed", "oui.txt"),
 	}
 
+	// Each location is tried directly rather than os.Stat'd first: a
+	// missing file (the expected case for most candidates) is reported by
+	// LoadFromFile as os.ErrNotExist and we move on to the next one, but a
+	// real failure — permission denied, a malformed file — is returned
+	// immediately instead of being silently masked by scanning further.
 	for _, loc := range locations {
-		if _, err := os.Stat(loc); err == nil {
-			return db.LoadFromFile(loc)
+		if err := db.LoadFromFile(loc); err != nil {
+			if errors.Is(err, os.ErrNotExist) {
+				continue
+			}
+			return err
 		}
+		return nil
 	}
 	return errors.New("no IEEE OUI file found")
 }

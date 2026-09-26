@@ -322,3 +322,78 @@ func TestBackupInfoWireKeysAreCamelCase(t *testing.T) {
 		t.Error(`wire still carries snake_case "created_at" (ADR-0010)`)
 	}
 }
+
+// TestBackupManager_SiblingDirectoryEscape proves RestoreBackup and
+// DeleteBackup reject a name that steps out of backupDir into a sibling
+// directory whose name happens to share backupDir's name as a string
+// prefix (e.g. "backups" vs "backupsXXX") — the case a bare
+// [strings.HasPrefix](cleanPath, cleanBackupDir) check (without a trailing
+// separator) let through before both methods moved to [os.Root] confinement.
+func TestBackupManager_SiblingDirectoryEscape(t *testing.T) {
+	tmpDir := t.TempDir()
+	configPath := filepath.Join(tmpDir, "config.json")
+	backupDir := filepath.Join(tmpDir, "backups")
+	if err := os.MkdirAll(backupDir, 0o750); err != nil {
+		t.Fatalf("mkdir backupDir: %v", err)
+	}
+
+	// A sibling directory whose name has backupDir's name as a prefix.
+	siblingDir := filepath.Join(tmpDir, "backupsXXX")
+	if err := os.MkdirAll(siblingDir, 0o750); err != nil {
+		t.Fatalf("mkdir siblingDir: %v", err)
+	}
+	evilPath := filepath.Join(siblingDir, "evil.json")
+	if err := os.WriteFile(evilPath, []byte(`{"version":1}`), 0o600); err != nil {
+		t.Fatalf("write evil file: %v", err)
+	}
+
+	cfg := config.DefaultConfig()
+	if err := cfg.Save(configPath); err != nil {
+		t.Fatalf("save config: %v", err)
+	}
+
+	backupMgr := config.NewBackupManager(configPath, backupDir, 10)
+	escapeName := filepath.Join("..", "backupsXXX", "evil.json")
+
+	tests := []struct {
+		name string
+		call func() error
+	}{
+		{"RestoreBackup", func() error { return backupMgr.RestoreBackup(escapeName) }},
+		{"DeleteBackup", func() error { return backupMgr.DeleteBackup(escapeName) }},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if err := tt.call(); err == nil {
+				t.Error("expected an error confining the name to backupDir, got nil")
+			}
+			if _, statErr := os.Stat(evilPath); statErr != nil {
+				t.Errorf("sibling file was affected: %v", statErr)
+			}
+		})
+	}
+}
+
+// TestBackupManager_RestoreBackup_NormalPath proves a legitimate backup
+// name (produced by CreateBackup, living directly under backupDir) is
+// still accepted by RestoreBackup's [os.Root] confinement.
+func TestBackupManager_RestoreBackup_NormalPath(t *testing.T) {
+	tmpDir := t.TempDir()
+	configPath := filepath.Join(tmpDir, "config.json")
+
+	cfg := config.DefaultConfig()
+	cfg.Server.Port = 5555
+	if err := cfg.Save(configPath); err != nil {
+		t.Fatalf("save config: %v", err)
+	}
+
+	backupMgr := config.NewBackupManager(configPath, "", 10)
+	backup, err := backupMgr.CreateBackup()
+	if err != nil {
+		t.Fatalf("CreateBackup: %v", err)
+	}
+
+	if restoreErr := backupMgr.RestoreBackup(backup.Name); restoreErr != nil {
+		t.Fatalf("RestoreBackup(%q) = %v, want nil", backup.Name, restoreErr)
+	}
+}
