@@ -5,6 +5,23 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.214.95](https://github.com/MustardSeedNetworks/seed/compare/v0.214.94...v0.214.95) (2026-09-26)
+
+
+### Features
+
+* **capture:** record a bounded pcap as a job and download it ([#326](https://github.com/MustardSeedNetworks/seed/issues/326)) ([#2871](https://github.com/MustardSeedNetworks/seed/issues/2871)) ([a33878c](https://github.com/MustardSeedNetworks/seed/commit/a33878c6d3c46c72ee4c96d5ae27897ffda1dcd6))
+
+
+### Tests
+
+* **snmp:** run the ten collectors against NIAC's six packs ([#2869](https://github.com/MustardSeedNetworks/seed/issues/2869)) ([015f895](https://github.com/MustardSeedNetworks/seed/commit/015f895f4ec0f09f1d0f6934d1bb23bed77a0236))
+
+
+### Miscellaneous
+
+* **deps:** update dependency @types/node to v26.6.2 ([#2872](https://github.com/MustardSeedNetworks/seed/issues/2872)) ([ff5063e](https://github.com/MustardSeedNetworks/seed/commit/ff5063e6fa718093f993330de02285da8862bf33))
+
 ## [0.214.94](https://github.com/MustardSeedNetworks/seed/compare/v0.214.93...v0.214.94) (2026-09-25)
 
 
