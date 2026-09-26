@@ -2,7 +2,7 @@
 // an operator downloads and opens in Wireshark (#326). A capture is bounded
 // three ways — its duration, a file-size ceiling, and the caller's context,
 // which is how an operator stops it early — and a stopped capture keeps what
-// it recorded. Frames come through the capture port (internal/capture), so
+// it recorded, with a summary of it (#239). Frames come through the capture port (internal/capture), so
 // this package stays CGO-free; the file is written with gopacket/pcapgo,
 // which is pure Go.
 package packetcapture
@@ -85,6 +85,7 @@ type Result struct {
 	Bytes      int64      `json:"bytes"`
 	DurationMs int64      `json:"durationMs"`
 	StopReason StopReason `json:"stopReason"       jsonschema:"enum=duration,enum=size,enum=stopped"`
+	Summary    Summary    `json:"summary"`
 }
 
 // Run captures on req.Interface through opener into a new file in store.
@@ -161,6 +162,7 @@ func (s session) record(
 		return nil, fmt.Errorf("write capture header: %w", err)
 	}
 	res := &Result{Bytes: fileHeaderBytes}
+	sum := newSummarizer(handle.LinkType())
 	start := s.now()
 	lastReport := start
 	// Once a stop or the deadline is seen, frames the kernel already holds
@@ -201,6 +203,7 @@ func (s session) record(
 		if err = w.WritePacket(ci, data); err != nil {
 			return nil, fmt.Errorf("write frame: %w", err)
 		}
+		sum.add(ci, data)
 		res.Packets++
 		res.Bytes += size
 	}
@@ -211,6 +214,7 @@ func (s session) record(
 		stoppedAt = s.now()
 	}
 	res.DurationMs = stoppedAt.Sub(start).Milliseconds()
+	res.Summary = sum.summary()
 	return res, nil
 }
 

@@ -3,6 +3,62 @@
   "$id": "https://raw.githubusercontent.com/MustardSeedNetworks/seed/main/docs/schemas/api/packet-capture-response.schema.json",
   "$ref": "#/$defs/Result",
   "$defs": {
+    "Flow": {
+      "properties": {
+        "transport": {
+          "type": "string",
+          "enum": [
+            "TCP",
+            "UDP"
+          ]
+        },
+        "source": {
+          "type": "string"
+        },
+        "destination": {
+          "type": "string"
+        },
+        "packets": {
+          "type": "integer"
+        },
+        "bytes": {
+          "type": "integer"
+        },
+        "durationMs": {
+          "type": "integer"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "transport",
+        "source",
+        "destination",
+        "packets",
+        "bytes",
+        "durationMs"
+      ]
+    },
+    "ProtocolCount": {
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "packets": {
+          "type": "integer"
+        },
+        "bytes": {
+          "type": "integer"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "name",
+        "packets",
+        "bytes"
+      ]
+    },
     "Result": {
       "properties": {
         "id": {
@@ -30,6 +86,9 @@
             "size",
             "stopped"
           ]
+        },
+        "summary": {
+          "$ref": "#/$defs/Summary"
         }
       },
       "additionalProperties": false,
@@ -40,7 +99,77 @@
         "packets",
         "bytes",
         "durationMs",
-        "stopReason"
+        "stopReason",
+        "summary"
+      ]
+    },
+    "Summary": {
+      "properties": {
+        "protocols": {
+          "items": {
+            "$ref": "#/$defs/ProtocolCount"
+          },
+          "type": "array"
+        },
+        "topTalkers": {
+          "items": {
+            "$ref": "#/$defs/Talker"
+          },
+          "type": "array"
+        },
+        "topFlows": {
+          "items": {
+            "$ref": "#/$defs/Flow"
+          },
+          "type": "array"
+        },
+        "dnsQueries": {
+          "type": "integer"
+        },
+        "tcpConnections": {
+          "type": "integer"
+        },
+        "httpRequests": {
+          "type": "integer"
+        },
+        "truncated": {
+          "type": "boolean"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "protocols",
+        "topTalkers",
+        "topFlows",
+        "dnsQueries",
+        "tcpConnections",
+        "httpRequests",
+        "truncated"
+      ]
+    },
+    "Talker": {
+      "properties": {
+        "address": {
+          "type": "string"
+        },
+        "packets": {
+          "type": "integer"
+        },
+        "bytesSent": {
+          "type": "integer"
+        },
+        "bytesReceived": {
+          "type": "integer"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "address",
+        "packets",
+        "bytesSent",
+        "bytesReceived"
       ]
     }
   },

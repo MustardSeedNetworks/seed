@@ -13,4 +13,33 @@ export interface Result {
   bytes: number;
   durationMs: number;
   stopReason: 'duration' | 'size' | 'stopped';
+  summary: Summary;
+}
+export interface Summary {
+  protocols: ProtocolCount[];
+  topTalkers: Talker[];
+  topFlows: Flow[];
+  dnsQueries: number;
+  tcpConnections: number;
+  httpRequests: number;
+  truncated: boolean;
+}
+export interface ProtocolCount {
+  name: string;
+  packets: number;
+  bytes: number;
+}
+export interface Talker {
+  address: string;
+  packets: number;
+  bytesSent: number;
+  bytesReceived: number;
+}
+export interface Flow {
+  transport: 'TCP' | 'UDP';
+  source: string;
+  destination: string;
+  packets: number;
+  bytes: number;
+  durationMs: number;
 }
