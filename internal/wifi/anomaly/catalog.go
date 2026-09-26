@@ -36,6 +36,27 @@ const (
 // guided manual prompt (ADR-0011).
 const CapActiveTest = "wifi_active_test"
 
+// Rule names one catalog rule, for a caller that lists rules rather than
+// detections.
+type Rule struct {
+	ID    string `json:"id"`
+	Title string `json:"title"`
+}
+
+// CaptureOnlyRules returns the rules that read what only monitor-mode capture
+// observes: deauthentication and disassociation frames. A managed-mode scan
+// carries no frames, so while no capture runs these rules cannot fire, and a
+// caller must report them as unavailable rather than as clear (#2351).
+func CaptureOnlyRules() []Rule {
+	var out []Rule
+	for _, d := range Defs() {
+		if d.ID == DefDeauthFlood {
+			out = append(out, Rule{ID: d.ID, Title: d.Title})
+		}
+	}
+	return out
+}
+
 // Catalog builds and validates the Wi-Fi anomaly catalog. It fails fast if a
 // definition is malformed, so a typo in the data below cannot ship a blank card.
 func Catalog() (*anomaly.Catalog, error) {
