@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.214.96](https://github.com/MustardSeedNetworks/seed/compare/v0.214.95...v0.214.96) (2026-09-26)
+
+
+### Features
+
+* **wifi:** decode scan-result information elements natively on Linux ([#2876](https://github.com/MustardSeedNetworks/seed/issues/2876)) ([a6c6805](https://github.com/MustardSeedNetworks/seed/commit/a6c68053db23071150933082c60a20d5dd61ae91))
+
+
+### Miscellaneous
+
+* **deps:** bump toolchain to Go 1.27.1, Node 26.10.0, golangci-lint 2.14.0 ([#2874](https://github.com/MustardSeedNetworks/seed/issues/2874)) ([3f78ddf](https://github.com/MustardSeedNetworks/seed/commit/3f78ddfc0c9f2cc83f670bc8db84fc5e8a2df594))
+
 ## [0.214.95](https://github.com/MustardSeedNetworks/seed/compare/v0.214.94...v0.214.95) (2026-09-26)
 
 
