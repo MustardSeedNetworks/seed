@@ -12,19 +12,26 @@ import (
 	"path/filepath"
 )
 
-// RootAt opens an [os.Root] scoped to path's parent directory and returns it
-// alongside path's base name, so the caller addresses exactly the file path
-// names through the returned root's own methods, without a raw call on the
-// [os] package whose path argument crossed a function boundary tripping
-// gosec's G703 taint check. Joining the parent directory back with the base
-// name always reconstructs the original (cleaned) path, so this resolves to
-// the identical file a direct call would have; the benefit is [os.Root]'s
-// symlink-escape protection, not a change in which file is addressed. The
-// caller closes the returned root once it is done with it.
+// RootAt resolves path's symlinks, then opens an [os.Root] scoped to the
+// resolved parent directory and returns it alongside the resolved base
+// name, so the caller addresses exactly the file path names today through
+// the returned root's own methods, without a raw call on the [os] package
+// whose path argument crossed a function boundary tripping gosec's G703
+// taint check. Resolving symlinks first (rather than handing [os.Root] the
+// unresolved directory) matters because [os.Root] refuses to follow a
+// symlink that leaves its scope: an operator-supplied path that is itself
+// a symlink to elsewhere (an alternatives-style config layout, for
+// example) would otherwise silently stop being addressable through a bare
+// [os.Open] or [os.WriteFile] call. The caller closes the returned root
+// once it is done with it.
 func RootAt(path string) (*os.Root, string, error) {
-	root, err := os.OpenRoot(filepath.Dir(path))
+	resolved, err := filepath.EvalSymlinks(path)
 	if err != nil {
 		return nil, "", err
 	}
-	return root, filepath.Base(path), nil
+	root, err := os.OpenRoot(filepath.Dir(resolved))
+	if err != nil {
+		return nil, "", err
+	}
+	return root, filepath.Base(resolved), nil
 }

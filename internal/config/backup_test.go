@@ -397,3 +397,48 @@ func TestBackupManager_RestoreBackup_NormalPath(t *testing.T) {
 		t.Fatalf("RestoreBackup(%q) = %v, want nil", backup.Name, restoreErr)
 	}
 }
+
+// TestBackupManager_RestoreBackup_ConfigPathIsSymlink proves RestoreBackup
+// still writes through m.configPath when it is itself a symlink to a file
+// elsewhere (an alternatives-style config layout) — the case a bare
+// [os.Root] scoped to configPath's own (unresolved) directory would
+// reject, since [os.Root] refuses to follow a symlink that leaves its
+// scope. The write-back goes through fsutil.RootAt, which resolves
+// symlinks first.
+func TestBackupManager_RestoreBackup_ConfigPathIsSymlink(t *testing.T) {
+	realDir := t.TempDir()
+	realConfigPath := filepath.Join(realDir, "config.json")
+
+	cfg := config.DefaultConfig()
+	cfg.Server.Port = 6666
+	if err := cfg.Save(realConfigPath); err != nil {
+		t.Fatalf("save config: %v", err)
+	}
+
+	linkDir := t.TempDir()
+	configPath := filepath.Join(linkDir, "config.json")
+	if err := os.Symlink(realConfigPath, configPath); err != nil {
+		t.Fatalf("symlink: %v", err)
+	}
+
+	backupMgr := config.NewBackupManager(configPath, "", 10)
+	backup, err := backupMgr.CreateBackup()
+	if err != nil {
+		t.Fatalf("CreateBackup: %v", err)
+	}
+
+	if restoreErr := backupMgr.RestoreBackup(backup.Name); restoreErr != nil {
+		t.Fatalf("RestoreBackup(%q) = %v, want nil", backup.Name, restoreErr)
+	}
+
+	// The write-back should have landed on the real file behind the
+	// symlink, not silently failed or written somewhere else.
+	restored, err := os.ReadFile(realConfigPath)
+	if err != nil {
+		t.Fatalf("read real config file: %v", err)
+	}
+	var wire map[string]any
+	if unmarshalErr := json.Unmarshal(restored, &wire); unmarshalErr != nil {
+		t.Fatalf("unmarshal restored config: %v", unmarshalErr)
+	}
+}

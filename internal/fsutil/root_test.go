@@ -9,7 +9,7 @@ import (
 )
 
 func TestRootAt(t *testing.T) {
-	dir := t.TempDir()
+	dir := resolvedTempDir(t)
 	filePath := filepath.Join(dir, "sub", "target.txt")
 	if err := os.MkdirAll(filepath.Dir(filePath), 0o750); err != nil {
 		t.Fatalf("mkdir: %v", err)
@@ -53,6 +53,44 @@ func TestRootAt(t *testing.T) {
 	}
 }
 
+// TestRootAt_FollowsSymlinkedFile proves RootAt can still address a path
+// that is itself a symlink pointing outside its own directory (an
+// alternatives-style config layout, for example) — the case a bare
+// [os.Root] scoped to the symlink's own (unresolved) parent directory
+// would reject, since [os.Root] refuses to follow a symlink that leaves
+// its scope.
+func TestRootAt_FollowsSymlinkedFile(t *testing.T) {
+	realDir := resolvedTempDir(t)
+	realPath := filepath.Join(realDir, "seed.json")
+	if err := os.WriteFile(realPath, []byte("original"), 0o600); err != nil {
+		t.Fatalf("write real file: %v", err)
+	}
+
+	linkDir := resolvedTempDir(t)
+	linkPath := filepath.Join(linkDir, "seed.json")
+	if err := os.Symlink(realPath, linkPath); err != nil {
+		t.Fatalf("symlink: %v", err)
+	}
+
+	root, name, err := fsutil.RootAt(linkPath)
+	if err != nil {
+		t.Fatalf("RootAt(%q) = %v, want nil", linkPath, err)
+	}
+	defer func() { _ = root.Close() }()
+
+	if writeErr := root.WriteFile(name, []byte("updated"), 0o600); writeErr != nil {
+		t.Fatalf("root.WriteFile(%q) = %v, want nil", name, writeErr)
+	}
+
+	data, err := os.ReadFile(realPath)
+	if err != nil {
+		t.Fatalf("read real file: %v", err)
+	}
+	if string(data) != "updated" {
+		t.Errorf("real file contents = %q, want %q (write through the symlink did not land)", data, "updated")
+	}
+}
+
 // TestRootAt_ScopesToPathsParent proves RootAt scopes to whatever directory
 // path lexically names as its parent — here [filepath.Join] has already
 // resolved "sub/../secret.txt" down to "secret.txt" before RootAt ever sees
@@ -62,7 +100,7 @@ func TestRootAt(t *testing.T) {
 // internal/truststore for that stronger guarantee, built on [os.Root]
 // scoped to a fixed directory).
 func TestRootAt_ScopesToPathsParent(t *testing.T) {
-	dir := t.TempDir()
+	dir := resolvedTempDir(t)
 	sub := filepath.Join(dir, "sub")
 	if err := os.MkdirAll(sub, 0o750); err != nil {
 		t.Fatalf("mkdir: %v", err)
@@ -84,4 +122,16 @@ func TestRootAt_ScopesToPathsParent(t *testing.T) {
 	if name != "secret.txt" {
 		t.Errorf("name = %q, want %q", name, "secret.txt")
 	}
+}
+
+// resolvedTempDir returns t.TempDir() with its own symlinks resolved (on
+// macOS, $TMPDIR sits under /var, itself a symlink to /private/var), so
+// tests can compare it directly against RootAt's symlink-resolved output.
+func resolvedTempDir(t *testing.T) string {
+	t.Helper()
+	dir, err := filepath.EvalSymlinks(t.TempDir())
+	if err != nil {
+		t.Fatalf("EvalSymlinks(TempDir): %v", err)
+	}
+	return dir
 }
