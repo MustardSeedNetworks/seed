@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.217.0](https://github.com/MustardSeedNetworks/seed/compare/v0.216.0...v0.217.0) (2026-09-26)
+
+
+### Features
+
+* **capture:** summarize a finished capture's traffic ([#239](https://github.com/MustardSeedNetworks/seed/issues/239)) ([#2895](https://github.com/MustardSeedNetworks/seed/issues/2895)) ([7035d76](https://github.com/MustardSeedNetworks/seed/commit/7035d7643147060da62b2e44c573bcdf3e8e6ffb))
+
+
+### Bug Fixes
+
+* **api:** gate the probe and fingerprint routes at operator ([#2897](https://github.com/MustardSeedNetworks/seed/issues/2897)) ([a0acb15](https://github.com/MustardSeedNetworks/seed/commit/a0acb15d05d20a2ba662a9c77050e0de69b14b82)), closes [#2635](https://github.com/MustardSeedNetworks/seed/issues/2635)
+
 ## [0.216.0](https://github.com/MustardSeedNetworks/seed/compare/v0.215.0...v0.216.0) (2026-09-26)
 
 
