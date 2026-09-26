@@ -124,6 +124,9 @@ func (a wifiHardware) SetInterface(name string) {
 	if m := a.mgr(); m != nil {
 		m.SetInterface(name)
 	}
+	if sc := a.scanner(); sc != nil {
+		sc.SetInterface(name)
+	}
 }
 
 func (a wifiHardware) Scan() ([]*wifi.ScannedNetwork, error) { return a.scanner().Scan() }
@@ -164,11 +167,9 @@ type wifiInterfaceStore struct {
 }
 
 func (s wifiInterfaceStore) ResolvedWiFiInterface() string {
-	iface := s.cfg.Interface.WiFi
-	if iface == "" {
-		iface = s.cfg.Interface.Default
-	}
-	return iface
+	s.cfg.RLock()
+	defer s.cfg.RUnlock()
+	return s.cfg.Interface.ResolvedWiFi()
 }
 
 func (s wifiInterfaceStore) SaveWiFiInterface(name string) error {
