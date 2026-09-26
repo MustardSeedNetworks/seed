@@ -628,7 +628,9 @@ body:
     "methods": [
       "POST"
     ],
-    "path": "/api/v1/security/discovery/probe"
+    "minRole": "operator",
+    "path": "/api/v1/security/discovery/probe",
+    "rateLimited": true
   },
   {
     "maxBodyBytes": 262144,
@@ -660,7 +662,9 @@ body:
     "methods": [
       "POST"
     ],
-    "path": "/api/v1/security/discovery/fingerprint"
+    "minRole": "operator",
+    "path": "/api/v1/security/discovery/fingerprint",
+    "rateLimited": true
   },
   {
     "maxBodyBytes": 262144,

@@ -586,10 +586,14 @@ func (s *Server) setupSecurityRoutes() {
 	crud := []string{http.MethodGet, http.MethodPost, http.MethodPut, http.MethodDelete}
 	s.registerAll([]route{
 		{path: APIVersionPrefix + "/security/discovery", handler: s.handleDiscovery, methods: get},
+		// probe and fingerprint connect to a caller-named host just as
+		// portscan does, so they carry the same gate (#2635).
 		{
-			path:    APIVersionPrefix + "/security/discovery/probe",
-			handler: s.handleTCPProbe,
-			methods: post,
+			path:        APIVersionPrefix + "/security/discovery/probe",
+			handler:     s.handleTCPProbe,
+			methods:     post,
+			minRole:     op,
+			rateLimited: true,
 		},
 		// Port scanning is an active, outbound operation against an
 		// operator-supplied target. Every sibling active scan in this file
@@ -616,9 +620,11 @@ func (s *Server) setupSecurityRoutes() {
 			methods: get,
 		},
 		{
-			path:    APIVersionPrefix + "/security/discovery/fingerprint",
-			handler: s.handleAdvancedFingerprint,
-			methods: post,
+			path:        APIVersionPrefix + "/security/discovery/fingerprint",
+			handler:     s.handleAdvancedFingerprint,
+			methods:     post,
+			minRole:     op,
+			rateLimited: true,
 		},
 		{path: APIVersionPrefix + "/security/devices", handler: s.handleDevices, methods: getPost},
 		{
