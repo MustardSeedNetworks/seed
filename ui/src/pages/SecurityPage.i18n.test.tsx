@@ -11,7 +11,7 @@
  * locales, because the call passed a default-value string where i18next
  * expects the options object carrying `count`.
  */
-import { render, screen, waitFor } from '@testing-library/react';
+import { act, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { AppContext, type AppContextValue } from '../contexts/AppContext';
@@ -103,7 +103,7 @@ async function renderIn(language: string): Promise<void> {
     </RoleProvider>,
   );
   // The MFA status line only appears once the status request resolves.
-  await waitFor(() => expect(screen.getAllByRole('button').length).toBeGreaterThan(2));
+  expect(await screen.findByText(i18n.t('cards:mfa.none'))).toBeVisible();
 }
 
 beforeEach(() => {
@@ -122,6 +122,36 @@ afterEach(async () => {
 });
 
 describe('SecurityPage — real locale copy', () => {
+  it('waits for MFA status even when the other card controls have rendered', async () => {
+    let resolveStatus!: (value: unknown) => void;
+    const status = new Promise<unknown>((resolve) => {
+      resolveStatus = resolve;
+    });
+    mockGet.mockImplementation((path: string) =>
+      path.includes('/users/me')
+        ? Promise.resolve({ username: 'u', role: 'admin', isActive: true })
+        : status,
+    );
+    let ready = false;
+    const rendering = renderIn('en').then(() => {
+      ready = true;
+    });
+    try {
+      await waitFor(() => expect(screen.getAllByRole('button').length).toBeGreaterThan(2));
+      await act(async () => {
+        await Promise.resolve();
+      });
+      expect(ready).toBe(false);
+      expect(screen.queryByText('No second factor enrolled')).toBeNull();
+    } finally {
+      await act(async () => {
+        resolveStatus({ totpEnabled: false, webauthnEnabled: false, webauthnCredentialCount: 0 });
+      });
+      await rendering;
+    }
+    expect(screen.getByText('No second factor enrolled')).toBeVisible();
+  });
+
   /* #2674: the posture cards below assess discovered devices, but the page
      never showed the inventory they work from, nor why it could be empty. */
   it('leads with the discovered-device list and says it is still sweeping', async () => {
