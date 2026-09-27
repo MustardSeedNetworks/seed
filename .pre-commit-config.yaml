@@ -118,7 +118,7 @@ repos:
   # old markdownlint-cli hook ran a different linter with --fix, so a commit
   # could pass locally and fail MD060 in CI.
   - repo: https://github.com/DavidAnson/markdownlint-cli2
-    rev: v0.23.2
+    rev: v0.23.3
     hooks:
       - id: markdownlint-cli2
 
