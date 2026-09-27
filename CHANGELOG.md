@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.217.2](https://github.com/MustardSeedNetworks/seed/compare/v0.217.1...v0.217.2) (2026-09-27)
+
+
+### Miscellaneous
+
+* **deps:** update pre-commit hook davidanson/markdownlint-cli2 to v0.23.3 ([#2907](https://github.com/MustardSeedNetworks/seed/issues/2907)) ([7fe9e90](https://github.com/MustardSeedNetworks/seed/commit/7fe9e9005506386c89ea50c4d9905925479436ea))
+
 ## [0.217.1](https://github.com/MustardSeedNetworks/seed/compare/v0.217.0...v0.217.1) (2026-09-26)
 
 
