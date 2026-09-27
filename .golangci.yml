@@ -790,18 +790,6 @@ linters:
       - common-false-positives
     # Excluding configuration per-path, per-linter, per-text and per-source.
     rules:
-      - source: 'TODO'
-        linters: [ godot ]
-      # internal/database's test binary memoizes the migrated schema in a
-      # package-level sync.Once so 64 tests copy it instead of each running
-      # all 13 migrations -- 5.8s of avoidable work per test under -race
-      # (seed#2614). A package-scoped memo cannot be expressed in Go without
-      # a package-level var, and a test binary's own state is not the mutable
-      # shared global gochecknoglobals exists to catch. Scoped to this one
-      # file rather than to _test.go generally, so the rule still holds
-      # everywhere else.
-      - path: 'internal/database/database_test\.go'
-        linters: [ gochecknoglobals ]
       # G204 in full, not the single wording EXC0007 catches -- see the note on
       # the gosec entry above. Subprocess taint is advisory-only in this repo;
       # the standalone gosec step in ci.yml still reports it as SARIF.
@@ -815,25 +803,6 @@ linters:
       # MustardSeedNetworks/seed#2410, recommendation 1.
       - text: 'G702'
         linters: [ gosec ]
-      # revive's package-comment and exported-comment rules are NOT excluded:
-      # they were, which made revive look like a gate it was not. The findings
-      # they surface were fixed rather than suppressed.
-      - text: 'package comment should be of the form ".+"'
-        source: '// ?(nolint|TODO)'
-        linters: [ revive ]
-      - text: 'comment on exported \S+ \S+ should be of the form ".+"'
-        source: '// ?(nolint|TODO)'
-        linters: [ revive, staticcheck ]
-      - text: 'avoid meaningless package names'
-        path: 'internal/api/'
-        linters: [ revive ]
-      # DICOM A-ASSOCIATE PDU framing intentionally truncates length values
-      # profiler_infer.go contains portToService, an intentional literal-
-      # reference table mapping port numbers to user-facing protocol names.
-      # The repeated strings (ftp/ssh/http/etc.) are protocol identifiers,
-      # not refactorable constants.
-      - path: 'internal/discovery/profiler_infer\.go'
-        linters: [ goconst ]
       # Shared JSON response field-name conventions across all api handlers
       # (status/message/error/interface/available/good). Project uses literal
       # keys in map[string]any{...} payloads by convention; consolidating
@@ -841,14 +810,6 @@ linters:
       # no behavioural change. The strings ARE the wire contract.
       - path: 'internal/api/'
         text: 'string `(status|message|error|interface|available|good|warning)` has'
-        linters: [ goconst ]
-      - path: 'internal/discovery/profiler_scan\.go'
-        text: 'string `https?` has'
-        linters: [ goconst ]
-      # handlers_guest_audit.go uses "status"/"updated" as JSON response
-      # field+value; this convention is shared across every PUT handler in
-      # the api package and is not refactorable to a single constant (#397).
-      - path: 'internal/api/handlers_guest_audit\.go'
         linters: [ goconst ]
       # schemaTargets() in cmd/seed-schema/main.go is a single declarative
       # registry table — one row per published DTO (RE_ARCHITECTURE_BLUEPRINT.md
