@@ -81,10 +81,64 @@ const (
 // Operating channel widths in MHz.
 const (
 	width20MHz  = 20
+	width40MHz  = 40
 	width80MHz  = 80
 	width160MHz = 160
 	width320MHz = 320
 )
+
+// Operation-element layouts (IEEE 802.11-2020 9.4.2.56, 9.4.2.158, 9.4.2.249;
+// 802.11be 9.4.2.311). Each names the field that carries the operating width.
+const (
+	htOpMinLen         = 2    // primary channel(1) + HT Operation Information byte 1
+	htSecondaryMask    = 0x03 // byte 1 bits 0-1: secondary channel offset
+	htSecondaryAbove   = 1
+	htSecondaryBelow   = 3
+	htAnyWidthBit      = 0x04 // byte 1 bit 2: STA Channel Width (40 MHz allowed)
+	vhtOpInfoLen       = 3    // channel width(1) + CCFS0(1) + CCFS1(1)
+	vhtWidth80Plus     = 1    // 80 MHz, or 160 / 80+80 when CCFS1 is set
+	vhtWidth160Old     = 2    // deprecated 160 MHz encoding
+	vhtWidth8080Old    = 3    // deprecated 80+80 MHz encoding
+	heOpFixedLen       = 6    // parameters(3) + BSS color(1) + basic HE-MCS(2)
+	heVHTInfoBit       = 14   // parameters: VHT Operation Information present
+	heCoHostedBit      = 15   // parameters: Max Co-Hosted BSSID Indicator present
+	he6GHzInfoBit      = 17   // parameters: 6 GHz Operation Information present
+	he6GHzControlOff   = 1    // control byte within the 6 GHz Operation Information
+	he6GHzWidthMask    = 0x03
+	ehtOpFixedLen      = 5 // parameters(1) + basic EHT-MCS and NSS set(4)
+	ehtInfoPresentBit  = 0x01
+	ehtWidthMask       = 0x07
+	shiftBitsPerOctet2 = 16
+)
+
+// Width codes shared by the HE 6 GHz and EHT Operation Information fields.
+const (
+	widthCode20 = iota
+	widthCode40
+	widthCode80
+	widthCode160
+	widthCode320
+)
+
+// widthForCode maps the width codes of the HE 6 GHz and EHT Operation
+// Information control fields, which both count 20, 40, 80, 160, 320 MHz from 0.
+// A reserved code states nothing.
+func widthForCode(code byte) int {
+	switch code {
+	case widthCode20:
+		return width20MHz
+	case widthCode40:
+		return width40MHz
+	case widthCode80:
+		return width80MHz
+	case widthCode160:
+		return width160MHz
+	case widthCode320:
+		return width320MHz
+	default:
+		return 0
+	}
+}
 
 // rawIE is one parsed tag from the IE list: its ID, the extension sub-ID (only
 // meaningful when ID == 255), and the element body.
@@ -99,6 +153,8 @@ type rawIE struct {
 type phyPresence struct {
 	hasHT, hasVHT, hasHE, hasEHT bool
 	hasOFDMRate                  bool
+	// opWidth is the widest operating width an Operation element states.
+	opWidth int
 }
 
 // applyIE folds an identity/security/capability information element into the
@@ -139,51 +195,144 @@ func applyIE(bss *BSS, ie rawIE) {
 }
 
 // markPHY records the presence of a PHY-generation element (or OFDM rates) so
-// the highest advertised standard can be chosen in finalize.
+// the highest advertised standard can be chosen in finalize, and the operating
+// width each Operation element states.
 func markPHY(phy *phyPresence, ie rawIE) {
 	switch ie.id {
 	case ieSupportedRates, ieExtSupportRates:
 		phy.hasOFDMRate = phy.hasOFDMRate || hasOFDMRate(ie.body)
-	case ieHTCapabilities, ieHTOperation:
+	case ieHTCapabilities:
 		phy.hasHT = true
-	case ieVHTCapabilities, ieVHTOperation:
+	case ieHTOperation:
+		phy.hasHT = true
+		phy.opWidth = maxWidth(phy.opWidth, htOperationWidth(ie.body))
+	case ieVHTCapabilities:
 		phy.hasVHT = true
+	case ieVHTOperation:
+		phy.hasVHT = true
+		phy.opWidth = maxWidth(phy.opWidth, vhtOperationWidth(ie.body))
 	case ieElementExtension:
-		switch ie.extID {
-		case extHECapabilities, extHEOperation:
-			phy.hasHE = true
-		case extEHTCapabilities, extEHTOperation:
-			phy.hasEHT = true
-		}
+		markExtension(phy, ie)
 	}
 }
 
-// finalize sets the BSS standard + a default channel width from the PHY flags,
-// the band, and the rates. Precedence runs newest-first (EHT→HE→VHT→HT→legacy).
+func markExtension(phy *phyPresence, ie rawIE) {
+	switch ie.extID {
+	case extHECapabilities:
+		phy.hasHE = true
+	case extHEOperation:
+		phy.hasHE = true
+		phy.opWidth = maxWidth(phy.opWidth, heOperationWidth(ie.body))
+	case extEHTCapabilities:
+		phy.hasEHT = true
+	case extEHTOperation:
+		phy.hasEHT = true
+		phy.opWidth = maxWidth(phy.opWidth, ehtOperationWidth(ie.body))
+	}
+}
+
+// finalize sets the BSS standard from the PHY flags, the band and the rates,
+// newest first (EHT→HE→VHT→HT→legacy), and the operating width from the
+// Operation elements. A generation's capability ceiling is not its operating
+// width: a Wi-Fi 6 AP on 2.4 GHz runs 20 MHz, so the width comes only from what
+// the AP states it operates at, and 20 MHz (the primary channel every BSS
+// occupies) when it states nothing wider.
 func (p phyPresence) finalize(bss *BSS, band Band) {
 	switch {
 	case p.hasEHT:
 		bss.Standard = Standard80211be
-		bss.ChannelWidthM = maxWidth(bss.ChannelWidthM, width320MHz)
 	case p.hasHE:
 		bss.Standard = Standard80211ax
-		bss.ChannelWidthM = maxWidth(bss.ChannelWidthM, width160MHz)
 	case p.hasVHT:
 		bss.Standard = Standard80211ac
-		bss.ChannelWidthM = maxWidth(bss.ChannelWidthM, width80MHz)
 	case p.hasHT:
 		bss.Standard = Standard80211n
-		bss.ChannelWidthM = maxWidth(bss.ChannelWidthM, width20MHz)
 	case band == Band5GHz:
 		bss.Standard = Standard80211a
-		bss.ChannelWidthM = maxWidth(bss.ChannelWidthM, width20MHz)
 	case p.hasOFDMRate:
 		bss.Standard = Standard80211g
-		bss.ChannelWidthM = maxWidth(bss.ChannelWidthM, width20MHz)
 	default:
 		bss.Standard = Standard80211b
-		bss.ChannelWidthM = maxWidth(bss.ChannelWidthM, width20MHz)
 	}
+	bss.ChannelWidthM = maxWidth(width20MHz, p.opWidth)
+}
+
+// htOperationWidth is 40 when the HT Operation element names a secondary
+// channel and allows a 40 MHz STA channel width, else 20.
+func htOperationWidth(body []byte) int {
+	if len(body) < htOpMinLen {
+		return 0
+	}
+	info := body[1]
+	secondary := info & htSecondaryMask
+	if (secondary == htSecondaryAbove || secondary == htSecondaryBelow) && info&htAnyWidthBit != 0 {
+		return width40MHz
+	}
+	return width20MHz
+}
+
+// vhtOperationWidth reads the VHT Operation Information field, which leads the
+// VHT Operation element.
+func vhtOperationWidth(body []byte) int {
+	if len(body) < vhtOpInfoLen {
+		return 0
+	}
+	return vhtChannelWidth(body[0], body[2])
+}
+
+// vhtChannelWidth decodes a VHT Operation Information width. Code 0 defers to
+// the HT Operation element (20 or 40 MHz), so it contributes nothing here. With
+// code 1 a non-zero CCFS1 means 160 or 80+80 MHz (802.11-2020 Table 9-274);
+// both occupy 160 MHz of spectrum.
+func vhtChannelWidth(code, ccfs1 byte) int {
+	switch code {
+	case vhtWidth80Plus:
+		if ccfs1 != 0 {
+			return width160MHz
+		}
+		return width80MHz
+	case vhtWidth160Old, vhtWidth8080Old:
+		return width160MHz
+	default:
+		return 0
+	}
+}
+
+// heOperationWidth reads the width from the optional fields of the HE
+// Operation element: the VHT Operation Information a 5 GHz HE AP may carry, and
+// the 6 GHz Operation Information a 6 GHz AP carries instead of HT/VHT
+// Operation. On 2.4 and most 5 GHz APs neither is present and the HT/VHT
+// Operation elements state the width.
+func heOperationWidth(body []byte) int {
+	if len(body) < heOpFixedLen {
+		return 0
+	}
+	params := uint32(body[0]) | uint32(body[1])<<bitsPerByte | uint32(body[2])<<shiftBitsPerOctet2
+	off := heOpFixedLen
+	width := 0
+	if params&(1<<heVHTInfoBit) != 0 {
+		if len(body) < off+vhtOpInfoLen {
+			return 0
+		}
+		width = vhtChannelWidth(body[off], body[off+2])
+		off += vhtOpInfoLen
+	}
+	if params&(1<<heCoHostedBit) != 0 {
+		off++
+	}
+	if params&(1<<he6GHzInfoBit) != 0 && len(body) > off+he6GHzControlOff {
+		width = maxWidth(width, widthForCode(body[off+he6GHzControlOff]&he6GHzWidthMask))
+	}
+	return width
+}
+
+// ehtOperationWidth reads the EHT Operation Information control field, present
+// when the parameters say so; it is the only element that can state 320 MHz.
+func ehtOperationWidth(body []byte) int {
+	if len(body) <= ehtOpFixedLen || body[0]&ehtInfoPresentBit == 0 {
+		return 0
+	}
+	return widthForCode(body[ehtOpFixedLen] & ehtWidthMask)
 }
 
 // applyBSSLoad parses the 802.11e BSS Load IE: station count (uint16 LE) +

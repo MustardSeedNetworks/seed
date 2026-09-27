@@ -23,6 +23,8 @@ const (
 	// capabilityFieldOffset is the byte offset of the Capability Information
 	// word within that fixed-parameter block.
 	capabilityFieldOffset = 10
+	// ieHeaderLen is an information element's ID and length octets.
+	ieHeaderLen = 2
 
 	// Wi-Fi channel-plan reference frequencies (MHz) for band/channel mapping.
 	freqChannel14         = 2484 // 2.4 GHz channel 14 (Japan), numbered specially
@@ -69,7 +71,7 @@ func Decode(data []byte) (*Frame, error) {
 		f.SignalDBm = v.DBMAntennaSignal
 		f.NoiseDBm = v.DBMAntennaNoise
 		f.ChannelMHz = int(v.ChannelFrequency)
-		f.Band, f.ChannelNum = bandAndChannel(int(v.ChannelFrequency))
+		f.Band, f.ChannelNum = BandAndChannel(int(v.ChannelFrequency))
 	}
 
 	if f.Kind == KindBeacon || f.Kind == KindProbeResponse {
@@ -124,16 +126,53 @@ func classify(t layers.Dot11Type) Kind {
 // decodeBSS builds the BSS view from a beacon/probe-response: the Privacy bit
 // from the Capability Information field plus every information element.
 func decodeBSS(pkt gopacket.Packet, band Band) *BSS {
-	bss := &BSS{}
-	privacy := capabilityPrivacy(pkt)
-
-	phy := phyPresence{}
+	var ies []rawIE
 	for _, l := range pkt.Layers() {
-		ieLayer, ok := l.(*layers.Dot11InformationElement)
-		if !ok {
-			continue
+		if ieLayer, ok := l.(*layers.Dot11InformationElement); ok {
+			ies = append(ies, toRawIE(ieLayer))
 		}
-		r := toRawIE(ieLayer)
+	}
+	return buildBSS(ies, capabilityPrivacy(pkt), band)
+}
+
+// DecodeIEs builds the BSS view from a raw information-element list, the bytes
+// an nl80211 scan result carries as NL80211_BSS_INFORMATION_ELEMENTS. privacy
+// is the Capability Information Privacy bit and freqMHz the operating
+// frequency. A truncated element ends the walk; the elements before it are
+// kept, as the capture path keeps what gopacket decoded.
+func DecodeIEs(ies []byte, privacy bool, freqMHz int) *BSS {
+	band, channel := BandAndChannel(freqMHz)
+	bss := buildBSS(splitIEs(ies), privacy, band)
+	if bss.ChannelNum == 0 {
+		// 5 and 6 GHz beacons carry no DS Parameter Set element.
+		bss.ChannelNum = channel
+	}
+	return bss
+}
+
+// splitIEs walks an ID/length/body element list.
+func splitIEs(data []byte) []rawIE {
+	var ies []rawIE
+	for len(data) >= ieHeaderLen {
+		id, n := data[0], int(data[1])
+		if len(data) < ieHeaderLen+n {
+			break
+		}
+		r := rawIE{id: id, body: data[ieHeaderLen : ieHeaderLen+n]}
+		if r.id == ieElementExtension && n >= 1 {
+			r.extID = r.body[0]
+			r.body = r.body[1:]
+		}
+		ies = append(ies, r)
+		data = data[ieHeaderLen+n:]
+	}
+	return ies
+}
+
+func buildBSS(ies []rawIE, privacy bool, band Band) *BSS {
+	bss := &BSS{}
+	phy := phyPresence{}
+	for _, r := range ies {
 		applyIE(bss, r)
 		markPHY(&phy, r)
 	}
@@ -180,9 +219,10 @@ func capabilityPrivacy(pkt gopacket.Packet) bool {
 	return false
 }
 
-// bandAndChannel derives the band and channel number from a center frequency in
-// MHz (radiotap). Returns BandUnknown/0 for frequencies outside the Wi-Fi bands.
-func bandAndChannel(freqMHz int) (Band, int) {
+// BandAndChannel derives the band and channel number from a center frequency in
+// MHz (radiotap or a scan result). Returns BandUnknown/0 for frequencies
+// outside the Wi-Fi bands.
+func BandAndChannel(freqMHz int) (Band, int) {
 	switch {
 	case freqMHz == freqChannel14:
 		return Band24GHz, channel14

@@ -77,7 +77,7 @@ failure that check exists to catch.
   catches things a plain YAML parse does not; it found a duplicated `with:` key
   in `ci.yml` that `yaml.safe_load` accepts silently by keeping the last one.
   `SC2129` is ignored as a pure style preference; every correctness rule stays on.
-- **zizmor** (pinned 1.29.0) — Actions security scanner. **Blocks on High
+- **zizmor** (pinned 1.30.1) — Actions security scanner. **Blocks on High
   findings.** The repo sits at zero High. One finding survived review and carries
   a `# zizmor: ignore[...]` comment with the reasoning inline (in
   `release-please.yml`); anything else that reaches High fails the build.
@@ -152,7 +152,7 @@ make test-e2e  # Playwright E2E
 ### Backend
 
 ```bash
-make lint-backend      # golangci-lint v2.13.2
+make lint-backend      # golangci-lint v2.14.0
 make test-backend      # Go tests
 make test-coverage     # Coverage report
 make security-backend  # gosec (blocking via golangci-lint; G103/G204/G304/G702 SARIF-only) + govulncheck

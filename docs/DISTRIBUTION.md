@@ -39,7 +39,7 @@ installer. Do not re-add it.
 
 ## 2. How it is built
 
-`release.yml` on a tag push, inside `goreleaser/goreleaser-cross:v1.27.0`
+`release.yml` on a tag push, inside `goreleaser/goreleaser-cross:v1.27.1-2-v2.18.2`
 pinned by digest. The frontend is built outside the container and embedded, so
 every published binary reports a non-empty `uiBuildHash` at `/__version` —
 that field is how you tell a release build from a bare `go build`.

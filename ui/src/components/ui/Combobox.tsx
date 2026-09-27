@@ -19,6 +19,7 @@
 import { Command } from 'cmdk';
 import { Check, ChevronsUpDown } from 'lucide-react';
 import { type ReactNode, useEffect, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 export interface ComboboxProps<T> {
   value: T | null;
@@ -43,11 +44,12 @@ export function Combobox<T>({
   getLabel,
   renderItem,
   placeholder = 'Select…',
-  emptyText = 'No matches.',
+  emptyText,
   className = '',
   ariaLabel = 'Combobox',
   disabled = false,
 }: ComboboxProps<T>): React.JSX.Element {
+  const { t } = useTranslation();
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState('');
   const containerRef = useRef<HTMLDivElement>(null);
@@ -102,12 +104,12 @@ export function Combobox<T>({
               autoFocus={true}
               value={query}
               onValueChange={setQuery}
-              placeholder="Search…"
+              placeholder={t('labels.searchPlaceholder')}
               className="w-full bg-transparent px-3 py-row text-sm text-text-primary placeholder:text-text-muted focus:outline-none border-b border-surface-border"
             />
             <Command.List className="max-h-60 overflow-y-auto py-compact text-sm">
               <Command.Empty className="px-3 py-4 text-center text-text-muted">
-                {emptyText}
+                {emptyText ?? t('labels.noMatches')}
               </Command.Empty>
               {options.map((option) => {
                 const key = getKey(option);

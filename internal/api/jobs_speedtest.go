@@ -11,6 +11,8 @@ import (
 	"time"
 
 	"github.com/MustardSeedNetworks/seed/internal/diagnostics/iperf"
+	"github.com/MustardSeedNetworks/seed/internal/diagnostics/multicast"
+	"github.com/MustardSeedNetworks/seed/internal/diagnostics/qos"
 	"github.com/MustardSeedNetworks/seed/internal/diagnostics/speedtest"
 	"github.com/MustardSeedNetworks/seed/internal/logging"
 	"github.com/MustardSeedNetworks/seed/internal/platform/jobs"
@@ -86,6 +88,15 @@ func (s *Server) registerJobKinds() {
 	s.registerWiFiDiscoveryScanKind(func() wifiDiscoveryBridge { return s.wifiBridge() })
 	s.registerPathMonitorKind(defaultPathTracer)
 	s.registerDeviceScanKind(func() deviceScanService { return s.deviceDiscovery() })
+	s.registerMulticastListenKind(multicast.Listen)
+	s.registerQoSKinds(
+		qos.Send,
+		qos.Listen,
+		func(ctx context.Context, req qos.SingleHostRequest) (*qos.SingleHostResult, error) {
+			return qos.SingleHost(ctx, defaultCaptureOpener(), req)
+		},
+	)
+	s.registerDefaultPacketCaptureKind()
 }
 
 // registerSpeedtestKind registers the speedtest kind with an injectable tester

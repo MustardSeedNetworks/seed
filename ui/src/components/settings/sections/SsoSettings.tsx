@@ -153,14 +153,14 @@ export function SsoSettings(): React.ReactElement {
         <p className="text-sm text-text-secondary">{t('settings:sso.description')}</p>
 
         {!canEdit && (
-          <div className="rounded-lg border border-status-warning/30 bg-status-warning/5 pad-sm text-sm text-status-warning">
+          <div className="rounded-lg border border-status-warning/30 bg-status-warning/5 pad-sm text-sm text-status-warning-strong">
             {t('errors:sso.featureRequired')}
           </div>
         )}
 
         {error ? (
           <div
-            className="rounded-lg border border-status-error/30 bg-status-error/5 pad-sm text-sm text-status-error"
+            className="rounded-lg border border-status-error/30 bg-status-error/5 pad-sm text-sm text-status-error-strong"
             data-testid="sso-error"
           >
             {error}
@@ -168,7 +168,7 @@ export function SsoSettings(): React.ReactElement {
         ) : null}
 
         {saveStatus ? (
-          <div className="rounded-lg border border-status-success/30 bg-status-success/5 pad-sm text-sm text-status-success">
+          <div className="rounded-lg border border-status-success/30 bg-status-success/5 pad-sm text-sm text-status-success-strong">
             {saveStatus}
           </div>
         ) : null}

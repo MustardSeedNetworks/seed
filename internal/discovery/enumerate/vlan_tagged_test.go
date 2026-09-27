@@ -17,9 +17,8 @@ import (
 //
 //	tcpdump -i eth0 -s 0 'ether dst 01:00:0c:cc:cc:cc and vlan'
 //
-// and stored as raw Ethernet frames rather than a pcap savefile so the test
-// needs no pcap reader: gopacket/pcapgo is off-limits here under the capture-port
-// confinement rule. Both carry the same advertisement on a different VLAN.
+// and stored as raw Ethernet frames. Both carry the same advertisement on a
+// different VLAN.
 var (
 	//go:embed testdata/cdp_dot1q_vlan200.bin
 	cdpTaggedVLAN200 []byte
@@ -49,9 +48,10 @@ func (h *replayHandle) ReadPacketData() ([]byte, gopacket.CaptureInfo, error) {
 	}, nil
 }
 
-func (h *replayHandle) SetBPFFilter(string) error { return nil }
-func (h *replayHandle) LinkType() layers.LinkType { return layers.LinkTypeEthernet }
-func (h *replayHandle) Close()                    {}
+func (h *replayHandle) SetBPFFilter(string) error    { return nil }
+func (h *replayHandle) LinkType() layers.LinkType    { return layers.LinkTypeEthernet }
+func (h *replayHandle) WritePacketData([]byte) error { return nil }
+func (h *replayHandle) Close()                       {}
 
 type replayOpener struct{ frames [][]byte }
 

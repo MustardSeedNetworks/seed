@@ -101,13 +101,15 @@ afterEach(async () => {
 });
 
 describe('WifiPage — real locale copy', () => {
-  it('names the Pro-gated cards and the way to get them in English', async () => {
+  it('names the tier-gated cards and the way to get them in English', async () => {
     await renderIn('en');
 
     expect(screen.getByText('Airspace')).toBeVisible();
     expect(screen.getByText('Association anomalies')).toBeVisible();
     expect(
-      screen.getAllByText('Available on Seed Pro. Run `seed license trial` for a 14-day trial.'),
+      screen.getAllByText(
+        'Available on Seed Starter and Pro. Run `seed license trial` for a 14-day trial.',
+      ),
     ).toHaveLength(2);
   });
 
@@ -123,7 +125,7 @@ describe('WifiPage — real locale copy', () => {
   });
 
   it('titles the licensed visibility cards in English', async () => {
-    license.features = ['wifi_management_capture', 'wifi_association_forensics'];
+    license.features = ['wifi_analysis'];
     await renderIn('en');
 
     expect(screen.getByText('Wi-Fi Airspace')).toBeVisible();
@@ -135,7 +137,7 @@ describe('WifiPage — real locale copy', () => {
   });
 
   it('renders Spanish under es, with no English left behind', async () => {
-    license.features = ['wifi_management_capture', 'wifi_association_forensics'];
+    license.features = ['wifi_analysis'];
     await renderIn('es');
 
     for (const english of [
@@ -157,10 +159,10 @@ describe('WifiPage — real locale copy', () => {
     await renderIn('es');
     expect(
       screen.getAllByText(
-        'Disponible en Seed Pro. Ejecute `seed license trial` para una prueba de 14 días.',
+        'Disponible en Seed Starter y Pro. Ejecute `seed license trial` para una prueba de 14 días.',
       ),
     ).toHaveLength(2);
-    expect(screen.queryByText(/Available on Seed Pro/)).toBeNull();
+    expect(screen.queryByText(/Available on Seed/)).toBeNull();
   });
 
   it('keeps the SSID, BSSID and Wi-Fi itself untranslated under es', async () => {

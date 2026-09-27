@@ -420,7 +420,11 @@ export function SetupWizard({
                     type="button"
                     onClick={(): void => setShowPassword(!showPassword)}
                     className="absolute right-2 top-1/2 -translate-y-1/2 flex h-6 w-6 items-center justify-center text-text-muted hover:text-text-primary"
-                    aria-label={showPassword ? 'Hide password' : 'Show password'}
+                    aria-label={
+                      showPassword
+                        ? tCommon('buttons.hidePassword')
+                        : tCommon('buttons.showPassword')
+                    }
                   >
                     {showPassword ? (
                       <EyeOff className={iconTokens.size.md} />
@@ -489,7 +493,7 @@ export function SetupWizard({
                 spacing.margin.bottom.content,
                 'pad-sm bg-status-error/10 border border-status-error/20',
                 radius.md,
-                'text-status-error body-small',
+                'text-status-error-strong body-small',
               )}
             >
               {crossFieldError.message}
@@ -503,7 +507,7 @@ export function SetupWizard({
                 spacing.margin.bottom.content,
                 'pad-sm bg-status-error/10 border border-status-error/20',
                 radius.md,
-                'text-status-error body-small',
+                'text-status-error-strong body-small',
               )}
             >
               {submitError}

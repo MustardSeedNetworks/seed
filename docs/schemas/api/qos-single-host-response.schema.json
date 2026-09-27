@@ -1,0 +1,128 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/MustardSeedNetworks/seed/main/docs/schemas/api/qos-single-host-response.schema.json",
+  "$ref": "#/$defs/SingleHostResult",
+  "$defs": {
+    "ClassResult": {
+      "properties": {
+        "sentDscp": {
+          "type": "integer"
+        },
+        "sentName": {
+          "type": "string"
+        },
+        "expected": {
+          "type": "integer"
+        },
+        "received": {
+          "type": "integer"
+        },
+        "observed": {
+          "items": {
+            "$ref": "#/$defs/ObservedDSCP"
+          },
+          "type": "array"
+        },
+        "verdict": {
+          "type": "string",
+          "enum": [
+            "preserved",
+            "remarked",
+            "mixed",
+            "lost",
+            "unobserved"
+          ]
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "sentDscp",
+        "expected",
+        "received",
+        "observed",
+        "verdict"
+      ]
+    },
+    "ObservedDSCP": {
+      "properties": {
+        "dscp": {
+          "type": "integer"
+        },
+        "name": {
+          "type": "string"
+        },
+        "count": {
+          "type": "integer"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "dscp",
+        "count"
+      ]
+    },
+    "SingleHostResult": {
+      "properties": {
+        "sendInterface": {
+          "type": "string"
+        },
+        "captureInterface": {
+          "type": "string"
+        },
+        "source": {
+          "type": "string"
+        },
+        "target": {
+          "type": "string"
+        },
+        "nextHop": {
+          "type": "string"
+        },
+        "routed": {
+          "type": "boolean"
+        },
+        "port": {
+          "type": "integer"
+        },
+        "runId": {
+          "type": "string"
+        },
+        "count": {
+          "type": "integer"
+        },
+        "probes": {
+          "type": "integer"
+        },
+        "classes": {
+          "items": {
+            "$ref": "#/$defs/ClassResult"
+          },
+          "type": "array"
+        },
+        "preserved": {
+          "type": "boolean"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "sendInterface",
+        "captureInterface",
+        "source",
+        "target",
+        "nextHop",
+        "routed",
+        "port",
+        "runId",
+        "count",
+        "probes",
+        "classes",
+        "preserved"
+      ]
+    }
+  },
+  "title": "SingleHostResult",
+  "description": "SingleHostResult — generated from the Go struct in internal/api; refresh with `make schema` after struct changes."
+}

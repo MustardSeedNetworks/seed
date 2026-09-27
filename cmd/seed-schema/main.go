@@ -27,6 +27,9 @@ import (
 
 	"github.com/MustardSeedNetworks/seed/internal/api"
 	"github.com/MustardSeedNetworks/seed/internal/config"
+	"github.com/MustardSeedNetworks/seed/internal/diagnostics/multicast"
+	"github.com/MustardSeedNetworks/seed/internal/diagnostics/packetcapture"
+	"github.com/MustardSeedNetworks/seed/internal/diagnostics/qos"
 	"github.com/MustardSeedNetworks/seed/internal/discovery/bonjour"
 )
 
@@ -163,7 +166,6 @@ func schemaTargets() []schemaTarget {
 		{&api.PortScanRequest{}, "port-scan-request.schema.json"},
 		{&api.TCPProbeRequest{}, "tcp-probe-request.schema.json"},
 		{&api.DNSResponse{}, "dns-response.schema.json"},
-		{&api.DNSSecurityScanRequest{}, "dns-security-scan-request.schema.json"},
 		{&api.EngineScanRequest{}, "engine-scan-request.schema.json"},
 		{&api.SetInterfaceRequest{}, "set-interface-request.schema.json"},
 		{&api.WiFiSettingsResponse{}, "wifi-settings-response.schema.json"},
@@ -239,6 +241,27 @@ func schemaTargets() []schemaTarget {
 		// rather than an api mirror of it: a mirror is one more thing to drift
 		// and the handler serves this struct verbatim.
 		{&bonjour.BrowseResult{}, "bonjour-browse-response.schema.json"},
+
+		// #399's multicast listen, a jobs-spine kind: the request is the kind's
+		// params and the result is the job's result. Registered as the
+		// multicast package's own types for the same reason as the browse.
+		{&multicast.ListenRequest{}, "multicast-listen-request.schema.json"},
+		{&multicast.ListenResult{}, "multicast-listen-response.schema.json"},
+
+		// #400's DSCP preservation check, three jobs-spine kinds (one per host,
+		// or both on one host), registered as the qos package's own types like
+		// the listen above.
+		{&qos.SendRequest{}, "qos-send-request.schema.json"},
+		{&qos.SendResult{}, "qos-send-response.schema.json"},
+		{&qos.ListenRequest{}, "qos-listen-request.schema.json"},
+		{&qos.ListenResult{}, "qos-listen-response.schema.json"},
+		{&qos.SingleHostRequest{}, "qos-single-host-request.schema.json"},
+		{&qos.SingleHostResult{}, "qos-single-host-response.schema.json"},
+
+		// #326's packet capture, a jobs-spine kind registered as the
+		// packetcapture package's own types like the two above.
+		{&packetcapture.Request{}, "packet-capture-request.schema.json"},
+		{&packetcapture.Result{}, "packet-capture-response.schema.json"},
 
 		// Profile/settings config — code-first model of the per-profile
 		// config.Config blob (ADR-0007/0008, Phase 7 S6). The profile Config

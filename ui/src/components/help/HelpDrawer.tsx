@@ -103,7 +103,7 @@ export function HelpDrawer({
         <div
           className={cn(
             layout.flex.between,
-            'pad sm:pad-lg border-b border-surface-border bg-surface-raised shrink-0',
+            'pad border-b border-surface-border bg-surface-raised shrink-0',
           )}
         >
           <div className="stack-xs">
@@ -197,7 +197,7 @@ export function HelpDrawer({
                       radius.default,
                       'body-small transition-colors text-left',
                       currentSection.id === entry.id
-                        ? 'bg-brand-primary/10 text-brand-primary font-medium'
+                        ? 'bg-brand-primary/10 text-brand-primary-strong font-medium'
                         : 'text-text-secondary hover:bg-surface-hover hover:text-text-primary',
                     )}
                     aria-current={currentSection.id === entry.id ? 'true' : undefined}

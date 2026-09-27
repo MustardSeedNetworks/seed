@@ -5,6 +5,8 @@
  * after Go DTO changes). The schema source of truth lives at
  * docs/schemas/api/; the Go DTO source lives at internal/api/.
  */
-export interface DNSSecurityScanRequest {
-  servers: string[];
+export interface Request {
+  interface: string;
+  filter?: string;
+  durationSeconds?: number;
 }

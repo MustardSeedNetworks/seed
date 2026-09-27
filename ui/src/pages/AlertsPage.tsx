@@ -84,7 +84,7 @@ export function AlertsPage(): JSX.Element {
   return (
     <>
       {error ? (
-        <div className="rounded-md border border-status-error/40 bg-status-error/10 pad-sm text-sm text-status-error">
+        <div className="rounded-md border border-status-error/40 bg-status-error/10 pad-sm text-sm text-status-error-strong">
           {error}
         </div>
       ) : null}
@@ -292,13 +292,13 @@ function AlertState({ alert }: { alert: Alert }): JSX.Element {
   }
   if (alert.acknowledged) {
     return (
-      <span className="rounded-lg border border-status-info/40 bg-status-info/10 px-3 py-1.5 text-xs font-semibold text-status-info">
+      <span className="rounded-lg border border-status-info/40 bg-status-info/10 px-3 py-1.5 text-xs font-semibold text-status-info-strong">
         {t('alerts.stateAcknowledged')}
       </span>
     );
   }
   return (
-    <span className="rounded-lg border border-status-warning/40 bg-status-warning/10 px-3 py-1.5 text-xs font-semibold text-status-warning">
+    <span className="rounded-lg border border-status-warning/40 bg-status-warning/10 px-3 py-1.5 text-xs font-semibold text-status-warning-strong">
       {t('alerts.stateOpen')}
     </span>
   );

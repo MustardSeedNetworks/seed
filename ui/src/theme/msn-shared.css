@@ -61,6 +61,16 @@
       compared against its previous reading, and proportional digits make
       that harder than it needs to be. The mono stack is native: no product
       may fetch a font.
+   6. Pill text has its own tokens (owner 2026-09-22). A status pill paints
+      its hue as a 5-20 % wash and its label in the same hue, and same-hue
+      text on a same-hue wash fails at every usable alpha — the wash pulls
+      the ground toward the text (3.45-3.71:1 at /20 for the bare hues). The
+      hues stay; the label takes --color-status-<hue>-strong, the smallest
+      same-hue lightness step to 4.6:1 on a /20 wash over every panel
+      surface. Icons keep the bare hue. Each product derives its own
+      --color-brand-primary-strong the same way in product-<name>.css.
+      These four were first defined, identically, in all four products
+      (UI-FLEET-3 phase 1) and moved here once every product used them.
    ========================================================================== */
 
 :root {
@@ -96,6 +106,14 @@
   --color-status-warning: #845e08;
   --color-status-error: #b43939;
   --color-status-info: #1263a8;
+
+  /* ---- status pill text (see 6) -------------------------------------- */
+  /* On a /20 wash of the matching hue over the sunken surface, the worst
+     ground a pill has: 4.61, 4.61, 4.63 and 4.60:1. */
+  --color-status-success-strong: #235e3a;
+  --color-status-warning-strong: #6d4e07;
+  --color-status-error-strong: #932e2e;
+  --color-status-info-strong: #0f548f;
 
   /* ---- log levels (Syslog/RFC 5424, constant) ------------------------ */
   /* trace #64748b, debug #0e7490 and warn #a16207 measured 3.70, 4.17 and
@@ -154,6 +172,13 @@
   --color-status-warning: #ca9721;
   --color-status-error: #de8787;
   --color-status-info: #5da5e5;
+
+  /* Pill text on a /20 wash over hover, the worst dark ground: 4.62, 4.60,
+     4.62 and 4.60:1. */
+  --color-status-success-strong: #56c785;
+  --color-status-warning-strong: #deab34;
+  --color-status-error-strong: #e5a2a2;
+  --color-status-info-strong: #7eb8ea;
 
   --color-log-trace: #8a9bb2;
   --color-log-debug: #21a5ca;

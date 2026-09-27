@@ -124,6 +124,22 @@
         "stations"
       ]
     },
+    "Rule": {
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "title": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "id",
+        "title"
+      ]
+    },
     "SSIDGroup": {
       "properties": {
         "ssid": {
@@ -192,6 +208,10 @@
         "source": {
           "type": "string"
         },
+        "lastScan": {
+          "type": "string",
+          "format": "date-time"
+        },
         "ssids": {
           "type": "integer"
         },
@@ -210,6 +230,12 @@
         "lastEvaluated": {
           "type": "string",
           "format": "date-time"
+        },
+        "needsCapture": {
+          "items": {
+            "$ref": "#/$defs/Rule"
+          },
+          "type": "array"
         }
       },
       "additionalProperties": false,
@@ -233,13 +259,17 @@
         },
         "status": {
           "$ref": "#/$defs/Status"
+        },
+        "clientsWithheld": {
+          "type": "boolean"
         }
       },
       "additionalProperties": false,
       "type": "object",
       "required": [
         "ssids",
-        "status"
+        "status",
+        "clientsWithheld"
       ]
     }
   },

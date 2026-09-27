@@ -32,7 +32,8 @@
     "signInWithMicrosoft": "Iniciar sesión con Microsoft",
     "signInWithGitHub": "Iniciar sesión con GitHub",
     "copied": "Copiado",
-    "edit": "Editar"
+    "edit": "Editar",
+    "runAllTestsPartial": "Algunas comprobaciones no terminaron: toque para volver a ejecutar todas las pruebas"
   },
   "or": "o",
   "status": {
@@ -95,7 +96,8 @@
     "lastSeen": "Visto por última vez",
     "noMatches": "Sin coincidencias.",
     "history": "Historial",
-    "manageProfiles": "Administrar perfiles"
+    "manageProfiles": "Administrar perfiles",
+    "searchPlaceholder": "Buscar…"
   },
   "time": {
     "seconds": "{{count}}s",
@@ -131,7 +133,27 @@
     "pageHelpHint": "¿Qué es {{title}}?",
     "openPageHelp": "Abrir ayuda para {{title}}",
     "openMenu": "Abrir menú",
-    "closeMenu": "Cerrar menú"
+    "closeMenu": "Cerrar menú",
+    "dismissAlert": "Descartar alerta",
+    "closeCommandPalette": "Cerrar paleta de comandos",
+    "closeModal": "Cerrar ventana",
+    "notifications": "Notificaciones",
+    "dismissNotification": "Descartar notificación",
+    "breadcrumb": "Ruta de navegación",
+    "home": "Inicio",
+    "notification": {
+      "success": "Notificación: éxito",
+      "error": "Notificación: error",
+      "warning": "Notificación: advertencia",
+      "info": "Notificación: información"
+    },
+    "status": {
+      "success": "Estado: correcto",
+      "warning": "Estado: advertencia",
+      "error": "Estado: error",
+      "unknown": "Estado: desconocido",
+      "loading": "Estado: cargando"
+    }
   },
   "sections": {
     "connectivity": "Conectividad",
@@ -206,7 +228,8 @@
     "showingResults": "Mostrando {{shown}} de {{total}} resultados",
     "loadingData": "Cargando datos...",
     "actionsColumn": "Acciones",
-    "scrollRegion": "Contenido de la tabla"
+    "scrollRegion": "Contenido de la tabla",
+    "noData": "No se encontraron datos"
   },
   "capabilities": {
     "warning": {
@@ -324,7 +347,9 @@
   "errors": {
     "password": {
       "mismatch": "Las contraseñas no coinciden"
-    }
+    },
+    "loadLicense": "No se pudo cargar la licencia",
+    "loadCurrentUser": "No se pudo cargar el usuario actual"
   },
   "health": {
     "database": "Base de datos",
@@ -364,5 +389,10 @@
       "logout": "Cerrar la sesión actual",
       "settings": "Abrir el panel de configuración"
     }
+  },
+  "commandPalette": {
+    "label": "Paleta de comandos",
+    "placeholder": "Buscar páginas y acciones…",
+    "actions": "Acciones"
   }
 }

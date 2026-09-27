@@ -116,7 +116,7 @@ export function SwitchCard({ data, vlanData, loading }: SwitchCardProps): React.
                 'caption',
                 spacing.chip.sm,
                 'bg-brand-primary/20',
-                'text-brand-primary',
+                'text-brand-primary-strong',
                 radius.default,
               )}
             >

@@ -75,6 +75,15 @@ func (c *InterfaceConfig) AllEthernet() []string {
 	return out
 }
 
+// ResolvedWiFi returns the Wi-Fi interface to scan and report on: the one the
+// operator selected, else the default interface.
+func (c *InterfaceConfig) ResolvedWiFi() string {
+	if c.WiFi != "" {
+		return c.WiFi
+	}
+	return c.Default
+}
+
 // AllWiFi returns the de-duplicated list of Wi-Fi interfaces the
 // operator configured. WiFi is folded in as the first element so the
 // legacy single-interface workflow remains the canonical "primary".

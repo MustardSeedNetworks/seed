@@ -1,6 +1,6 @@
 package api
 
-// handlers_dns.go contains DNS testing and security scanning handlers.
+// handlers_dns.go contains the DNS testing handlers.
 // Split from handlers_health_checks.go for code organization (Plan F).
 
 import (
@@ -9,12 +9,6 @@ import (
 	"github.com/MustardSeedNetworks/seed/internal/diagnostics/dns"
 	"github.com/MustardSeedNetworks/seed/internal/i18n"
 	"github.com/MustardSeedNetworks/seed/internal/logging"
-)
-
-// DNS scanning constants.
-const (
-	// dnsSecurityConcurrentScans is the number of concurrent DNS security scans.
-	dnsSecurityConcurrentScans = 5
 )
 
 // ============================================================================
@@ -121,117 +115,4 @@ func (s *Server) handleDNS(w http.ResponseWriter, r *http.Request) {
 	resp := buildDNSResponse(result, currentIface)
 
 	sendJSONResponse(w, logger, http.StatusOK, resp)
-}
-
-// ============================================================================
-// DNS Security Scanning Types and Handlers
-// ============================================================================
-
-// DNSSecurityScanRequest represents a request to scan DNS servers for security issues.
-type DNSSecurityScanRequest struct {
-	Servers []string `json:"servers"`
-}
-
-// handleDNSSecurity handles DNS security scanning operations.
-// POST - Scan specific DNS servers for security issues.
-// GET - Get results of previous scans.
-func (s *Server) handleDNSSecurity(w http.ResponseWriter, r *http.Request) {
-	logger := logging.FromContext(r.Context())
-	localizer := i18n.FromRequest(r)
-
-	if s.dnsSecurityScanner() == nil {
-		sendErrorResponseWithDetails(w, logger, http.StatusServiceUnavailable,
-			ErrCodeServiceUnavail, localizer.T("errors.health.dnsSecurityNotAvailable"), "")
-		return
-	}
-
-	switch r.Method {
-	case http.MethodPost:
-		// Trigger a security scan
-		var req DNSSecurityScanRequest
-		if !decodeJSONStrictLocalized(w, r, &req, MaxBodySizeJSON, logger, localizer) {
-			return
-		}
-
-		if len(req.Servers) == 0 {
-			// Fall back to the configured, enabled DNS servers.
-			req.Servers = s.enabledDNSServers()
-		}
-
-		if len(req.Servers) == 0 {
-			sendErrorResponseWithDetails(
-				w,
-				logger,
-				http.StatusBadRequest,
-				ErrCodeBadRequest,
-				localizer.T("errors.health.noServersToScan"),
-				"No DNS servers provided or configured",
-			)
-			return
-		}
-
-		// Check if already running
-		if s.dnsSecurityScanner().IsRunning() {
-			sendErrorResponseWithDetails(w, logger, http.StatusConflict,
-				ErrCodeConflict, localizer.T("errors.health.scanInProgress"), "")
-			return
-		}
-
-		// Run concurrent scans
-		results, err := s.dnsSecurityScanner().ScanServers(r.Context(), req.Servers, dnsSecurityConcurrentScans)
-		if err != nil {
-			logger.ErrorContext(r.Context(), "DNS security scan failed", "error", err)
-			sendErrorResponseWithDetails(w, logger, http.StatusInternalServerError,
-				ErrCodeInternal, localizer.T("errors.health.scanFailed"), "")
-			return
-		}
-
-		sendJSONResponse(w, logger, http.StatusOK, results)
-
-	case http.MethodGet:
-		// Return cached results
-		results := s.dnsSecurityScanner().GetResults()
-		sendJSONResponse(w, logger, http.StatusOK, results)
-
-	default:
-		sendErrorResponseWithDetails(w, logger, http.StatusMethodNotAllowed,
-			ErrCodeMethodNotAllowed, localizer.T("errors.api.methodNotAllowed"), "")
-	}
-}
-
-// handleDNSSecuritySettings handles DNS security scanner settings.
-// GET - Get current settings.
-// PUT - Update settings.
-func (s *Server) handleDNSSecuritySettings(w http.ResponseWriter, r *http.Request) {
-	logger := logging.FromContext(r.Context())
-	localizer := i18n.FromRequest(r)
-
-	if s.dnsSecurityScanner() == nil {
-		sendErrorResponseWithDetails(w, logger, http.StatusServiceUnavailable,
-			ErrCodeServiceUnavail, localizer.T("errors.health.dnsSecurityNotAvailable"), "")
-		return
-	}
-
-	switch r.Method {
-	case http.MethodGet:
-		scanConfig := s.dnsSecurityScanner().GetConfig()
-		sendJSONResponse(w, logger, http.StatusOK, scanConfig)
-
-	case http.MethodPut:
-		var newConfig dns.SecurityScanConfig
-		if !decodeJSONStrictLocalized(w, r, &newConfig, MaxBodySizeJSON, logger, localizer) {
-			return
-		}
-
-		s.dnsSecurityScanner().SetConfig(newConfig)
-
-		sendJSONResponse(w, logger, http.StatusOK, map[string]string{
-			"status":  statusSuccess,
-			"message": "DNS security settings updated",
-		})
-
-	default:
-		sendErrorResponseWithDetails(w, logger, http.StatusMethodNotAllowed,
-			ErrCodeMethodNotAllowed, localizer.T("errors.api.methodNotAllowed"), "")
-	}
 }

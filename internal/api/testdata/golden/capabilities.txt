@@ -412,23 +412,6 @@ body:
   {
     "maxBodyBytes": 262144,
     "methods": [
-      "GET",
-      "POST"
-    ],
-    "path": "/api/v1/telemetry/dns/security"
-  },
-  {
-    "maxBodyBytes": 262144,
-    "methods": [
-      "GET",
-      "PUT"
-    ],
-    "minRole": "operator",
-    "path": "/api/v1/telemetry/dns/security/settings"
-  },
-  {
-    "maxBodyBytes": 262144,
-    "methods": [
       "GET"
     ],
     "path": "/api/v1/telemetry/gateway"
@@ -645,7 +628,9 @@ body:
     "methods": [
       "POST"
     ],
-    "path": "/api/v1/security/discovery/probe"
+    "minRole": "operator",
+    "path": "/api/v1/security/discovery/probe",
+    "rateLimited": true
   },
   {
     "maxBodyBytes": 262144,
@@ -677,7 +662,9 @@ body:
     "methods": [
       "POST"
     ],
-    "path": "/api/v1/security/discovery/fingerprint"
+    "minRole": "operator",
+    "path": "/api/v1/security/discovery/fingerprint",
+    "rateLimited": true
   },
   {
     "maxBodyBytes": 262144,
@@ -979,7 +966,7 @@ body:
     "path": "/api/v1/wifi/wifi/channel-graph"
   },
   {
-    "feature": "wifi_management_capture",
+    "feature": "wifi_analysis",
     "maxBodyBytes": 262144,
     "methods": [
       "GET"
@@ -987,7 +974,7 @@ body:
     "path": "/api/v1/wifi/airspace"
   },
   {
-    "feature": "wifi_association_forensics",
+    "feature": "wifi_analysis",
     "maxBodyBytes": 262144,
     "methods": [
       "GET"
@@ -1215,6 +1202,13 @@ body:
     ],
     "minRole": "operator",
     "path": "/api/v1/jobs/"
+  },
+  {
+    "maxBodyBytes": 262144,
+    "methods": [
+      "GET"
+    ],
+    "path": "/api/v1/captures/"
   },
   {
     "feature": "live_telemetry",

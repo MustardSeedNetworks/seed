@@ -44,8 +44,8 @@ func sampleRecord(id string) anomaly.Record {
 	// subject would collide unrelated records (e.g. "A|bssid|aa:bb" and
 	// "B|bssid|cc:dd") on that key, making the daily census nondeterministic.
 	subject := id
-	if i := strings.LastIndex(id, "|"); i >= 0 {
-		subject = id[i+1:]
+	if _, after, found := strings.CutLast(id, "|"); found {
+		subject = after
 	}
 	return anomaly.Record{
 		ID:     id,

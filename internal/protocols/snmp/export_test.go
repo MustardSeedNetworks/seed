@@ -199,3 +199,16 @@ func SweepCredentialsNaming[T any](
 ) (T, CredentialRef, error) {
 	return sweepCredentialsNaming(ctx, cfg, what, v3, v2c)
 }
+
+// BulkWalker is bulkWalker, so a test can hand the table walks a fake agent.
+type BulkWalker = bulkWalker
+
+// ExportWalkInetCidrRouteTable exposes walkInetCidrRouteTable for testing.
+func ExportWalkInetCidrRouteTable(params BulkWalker, limit int) (RouteTable, error) {
+	return walkInetCidrRouteTable(params, limit)
+}
+
+// ExportWalkIPCidrRouteTable exposes walkIPCidrRouteTable for testing.
+func ExportWalkIPCidrRouteTable(params BulkWalker, limit int) (RouteTable, error) {
+	return walkIPCidrRouteTable(params, limit)
+}

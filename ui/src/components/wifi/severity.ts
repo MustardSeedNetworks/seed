@@ -11,10 +11,10 @@ export interface SeverityStyle {
 }
 
 const styles: Record<string, SeverityStyle> = {
-  critical: { badge: 'bg-status-error/10 text-status-error', rank: 4 },
-  error: { badge: 'bg-severity-high/10 text-severity-high', rank: 3 },
-  warning: { badge: 'bg-status-warning/10 text-status-warning', rank: 2 },
-  info: { badge: 'bg-status-info/10 text-status-info', rank: 1 },
+  critical: { badge: 'bg-status-error/10 text-status-error-strong', rank: 4 },
+  error: { badge: 'bg-severity-high/10 text-severity-high-strong', rank: 3 },
+  warning: { badge: 'bg-status-warning/10 text-status-warning-strong', rank: 2 },
+  info: { badge: 'bg-status-info/10 text-status-info-strong', rank: 1 },
 };
 
 const fallback: SeverityStyle = {

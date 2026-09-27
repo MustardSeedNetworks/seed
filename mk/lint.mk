@@ -12,12 +12,12 @@
 # Must match the markdownlint-cli2 bundled by DavidAnson/markdownlint-cli2-action
 # in .github/workflows/ci.yml; a newer or older local copy is a false clear
 # (MD060 table style landed in 0.23 and the local Homebrew copy was on 0.20).
-MARKDOWNLINT_CLI2_VERSION := 0.23.2
+MARKDOWNLINT_CLI2_VERSION := 0.23.3
 
 # Must match the golangci-lint pin in .github/workflows/ci.yml. The old rule
 # only installed when the binary was missing, so a stale local copy passed
 # what CI rejected (v2.13.1's embedlit rule was the last time this bit).
-GOLANGCI_LINT_VERSION := v2.13.2
+GOLANGCI_LINT_VERSION := v2.14.0
 
 .PHONY: lint lint-backend lint-backend-quiet lint-frontend lint-frontend-quiet lint-md \
         fix fix-backend fix-backend-quiet fix-frontend fix-frontend-quiet fix-md fix-all \

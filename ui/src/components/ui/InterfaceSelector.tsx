@@ -198,7 +198,7 @@ function InterfaceSelectorComponent({
           className={cn(
             'absolute bottom-full left-0 right-0 mb-2 pad-xs',
             radius.md,
-            'bg-status-warning/10 border border-status-warning/30 text-status-warning',
+            'bg-status-warning/10 border border-status-warning/30 text-status-warning-strong',
             'flex items-center gap-compact',
           )}
         >

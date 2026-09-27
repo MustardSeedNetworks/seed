@@ -33,6 +33,7 @@ import (
 	"github.com/MustardSeedNetworks/seed/internal/diagnostics/export"
 	"github.com/MustardSeedNetworks/seed/internal/diagnostics/gateway"
 	"github.com/MustardSeedNetworks/seed/internal/diagnostics/iperf"
+	"github.com/MustardSeedNetworks/seed/internal/diagnostics/packetcapture"
 	"github.com/MustardSeedNetworks/seed/internal/diagnostics/speedtest"
 	"github.com/MustardSeedNetworks/seed/internal/diagnostics/vlan"
 	"github.com/MustardSeedNetworks/seed/internal/discovery"
@@ -207,7 +208,6 @@ type Server struct {
 
 	// --- On-demand network diagnostics ---
 	dnsTest       *dns.Tester
-	dnsSec        *dns.SecurityScanner
 	dhcpMon       *dhcp.Monitor
 	rogueDet      *dhcp.RogueDetector
 	gatewayTest   *gateway.Tester
@@ -247,6 +247,7 @@ type Server struct {
 	bus          *events.Bus             // in-process domain event bus (ADR-0004)
 	jobRunner    *jobs.Runner            // unified async job runner (ADR-0005)
 	jobIdemp     jobIdempotencyStore     // Idempotency-Key dedup for POST /jobs
+	captures     *packetcapture.Store    // packet-capture job files, downloaded by ID
 
 	// --- Database ---
 	dbConn          *database.DB
@@ -426,7 +427,6 @@ func (s *Server) initAuthSecurity(cfg *config.Config, trustedProxies *TrustedPro
 // funlen limit.
 func (s *Server) initTelemetryAndWiFiServices(cfg *config.Config) {
 	s.dnsTest = dns.NewTesterForInterface("", cfg.DNS.TestHostname, dns.DefaultThresholds(), cfg.Interface.Default)
-	s.dnsSec = dns.NewSecurityScanner(dns.DefaultSecurityScanConfig())
 	s.gatewayTest = gateway.NewTesterForInterface(gateway.DefaultThresholds(), cfg.Interface.Default)
 	s.vlanMgr = vlan.NewManager(cfg.Interface.Default)
 	s.speedtestTest = speedtest.NewTesterWithConfig(cfg.Speedtest.ServerID)
@@ -434,8 +434,8 @@ func (s *Server) initTelemetryAndWiFiServices(cfg *config.Config) {
 	s.cableTest = cable.NewTester(cfg.Interface.Default)
 	s.publicIP = publicip.NewChecker()
 
-	s.wifiMgr = wifi.NewManager(cfg.Interface.Default)
-	s.wifiScan = wifi.NewScanner(cfg.Interface.Default)
+	s.wifiMgr = wifi.NewManager(cfg.Interface.ResolvedWiFi())
+	s.wifiScan = wifi.NewScanner(cfg.Interface.ResolvedWiFi())
 	s.startWiFiHelper()
 }
 
@@ -815,9 +815,6 @@ func (s *Server) VulnScanner() *vuln.VulnerabilityScanner { return s.vulnScan }
 // DNSTester returns the DNS tester.
 func (s *Server) DNSTester() *dns.Tester { return s.dnsTest }
 
-// DNSSecurityScanner returns the DNS security scanner.
-func (s *Server) DNSSecurityScanner() *dns.SecurityScanner { return s.dnsSec }
-
 // DHCPMonitor returns the DHCP monitor.
 func (s *Server) DHCPMonitor() *dhcp.Monitor { return s.dhcpMon }
 
@@ -882,20 +879,6 @@ func (s *Server) discoveryService() *enumerate.Service        { return s.discove
 func (s *Server) discoveryEngine() *discovery.Engine          { return s.discoveryEng }
 func (s *Server) problemDetector() *discovery.ProblemDetector { return s.problemDet }
 
-// enabledDNSServers returns the addresses of the configured, enabled DNS servers,
-// encapsulating the config lock + layout so handlers stay free of it.
-func (s *Server) enabledDNSServers() []string {
-	s.config.RLock()
-	defer s.config.RUnlock()
-	addrs := make([]string, 0, len(s.config.DNS.Servers))
-	for _, srv := range s.config.DNS.Servers {
-		if srv.Enabled {
-			addrs = append(addrs, srv.Address)
-		}
-	}
-	return addrs
-}
-
 // resolveWiFiInterface picks the Wi-Fi interface for a request: an explicit query
 // override, else the configured Wi-Fi interface, else the default interface.
 func (s *Server) resolveWiFiInterface(r *http.Request) string {
@@ -932,7 +915,6 @@ func (s *Server) anomalyEngine() *anomaly.Engine {
 func (s *Server) bluetoothScanner() *enumerate.BluetoothScanner { return s.bluetoothScan }
 func (s *Server) vulnScanner() *vuln.VulnerabilityScanner       { return s.vulnScan }
 func (s *Server) dnsTester() *dns.Tester                        { return s.dnsTest }
-func (s *Server) dnsSecurityScanner() *dns.SecurityScanner      { return s.dnsSec }
 func (s *Server) dhcpMonitor() *dhcp.Monitor                    { return s.dhcpMon }
 func (s *Server) rogueDetector() *dhcp.RogueDetector            { return s.rogueDet }
 func (s *Server) gatewayTester() *gateway.Tester                { return s.gatewayTest }
@@ -961,6 +943,9 @@ func (s *Server) initWiFiUseCases() {
 	s.wifiQueries = app.NewWiFiQueries(s.wifiVisibility, s.anomalyStore, s.anomalyEngine)
 	s.wifiManagement = app.NewWiFiManagement(s.wifiManager, s.wifiScanner, s.netManager, s.config, s.configPath)
 	s.wifiDiscovery = app.NewWiFiDiscovery(s.wifiBridge)
+	if v := s.wifiVisibility(); v != nil {
+		v.SetScanSource(app.WiFiScanSource(s.wifiManagement))
+	}
 }
 
 // initDiscoveryUseCases wires the discovery use-cases (ADR-0020) from the

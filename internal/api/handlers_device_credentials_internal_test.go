@@ -7,8 +7,10 @@ import (
 	"net/http/httptest"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/MustardSeedNetworks/seed/internal/app"
+	"github.com/MustardSeedNetworks/seed/internal/discovery"
 )
 
 // testEncrypter stands in for the keyring. Deliberately not a no-op: a no-op
@@ -181,5 +183,45 @@ func TestCredentialDeleteReturns204(t *testing.T) {
 	s.handleDeviceCredentialByID(rec, req)
 	if rec.Code != http.StatusNoContent {
 		t.Errorf("status %d, want 204: %s", rec.Code, rec.Body.String())
+	}
+}
+
+// TestSavingACredentialAsksFoundDevicesAgain — a device profiled before the
+// credential existed is asked with it only if saving it re-profiles the
+// device; otherwise it is never promoted to a polling target (seed#2692).
+func TestSavingACredentialAsksFoundDevicesAgain(t *testing.T) {
+	s := newDeviceCredentialsTestServer(t)
+	cfg := discovery.DefaultProfilerConfig()
+	cfg.Timeout = 100 * time.Millisecond
+	cfg.ConnectTimeout = 100 * time.Millisecond
+	s.profiler = discovery.NewDeviceProfiler(cfg, nil)
+	s.profiler.Start()
+	t.Cleanup(s.profiler.Stop)
+
+	const ip = "192.0.2.9" // TEST-NET-1: nothing answers, as before a credential exists
+	profiledAt := func() time.Time {
+		t.Helper()
+		deadline := time.Now().Add(10 * time.Second)
+		for {
+			if profile := s.profiler.GetProfile(ip); profile != nil {
+				return profile.ProfiledAt
+			}
+			if time.Now().After(deadline) {
+				t.Fatalf("%s was never profiled", ip)
+			}
+			time.Sleep(20 * time.Millisecond)
+		}
+	}
+	if err := s.profiler.QueueProfile(ip); err != nil {
+		t.Fatalf("QueueProfile: %v", err)
+	}
+	first := profiledAt()
+
+	if rec := postCredential(t, s, `{"name":"core","community":"c"}`); rec.Code != http.StatusOK {
+		t.Fatalf("create: status %d, body %s", rec.Code, rec.Body.String())
+	}
+
+	if again := profiledAt(); !again.After(first) {
+		t.Errorf("%s kept its profile from %v after a credential was saved", ip, first)
 	}
 }

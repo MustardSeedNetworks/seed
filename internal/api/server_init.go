@@ -229,12 +229,9 @@ func (s *Server) initDiscovery(cfg *config.Config, db *database.DB) {
 		s.portScanner = portScanner
 	}
 
-	// Initialize discovery service with the shared profiler. WithCapture injects
-	// the build-tagged capture adapter so the Service's internal device discovery
-	// uses real libpcap capture in production (CGO-free no-op under CGO_ENABLED=0).
-	s.discoverySvc = enumerate.NewService(
-		cfg, cfg.Interface.Default, sharedProfiler, enumerate.WithCapture(defaultCaptureOpener()),
-	)
+	// The service sweeps s.deviceDisc, the registry the API lists and the
+	// discovery settings feed, never one of its own (seed#2831).
+	s.discoverySvc = enumerate.NewService(cfg, s.deviceDisc, sharedProfiler)
 	logging.GetLogger().Info("Discovery service initialized with shared profiler")
 }
 
