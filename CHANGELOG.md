@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.217.4](https://github.com/MustardSeedNetworks/seed/compare/v0.217.3...v0.217.4) (2026-09-29)
+
+
+### Miscellaneous
+
+* **deps:** update dependency jsdom to v30.1.1 ([#2913](https://github.com/MustardSeedNetworks/seed/issues/2913)) ([03f31cc](https://github.com/MustardSeedNetworks/seed/commit/03f31cc65b445e2bdcc2281619db06a28d2f23f6))
+
 ## [0.217.3](https://github.com/MustardSeedNetworks/seed/compare/v0.217.2...v0.217.3) (2026-09-28)
 
 
