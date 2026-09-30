@@ -24,13 +24,6 @@
 # Protocol and radio names on the health-check and Bluetooth cards. They are
 # standard identifiers, kept verbatim the way the glossary keeps SSID and MTU.
 ui/src/components/cards/BluetoothDeviceModal.tsx copy-prop label=BLE
-ui/src/components/cards/HealthCheckCardProtocolSections.tsx copy-prop title=DICOM
-ui/src/components/cards/HealthCheckCardProtocolSections.tsx copy-prop title=FHIR R4
-ui/src/components/cards/HealthCheckCardProtocolSections.tsx copy-prop title=HL7 MLLP
-ui/src/components/cards/HealthCheckCardProtocolSections.tsx copy-prop title=LDAP
-ui/src/components/cards/HealthCheckCardProtocolSections.tsx copy-prop title=LTI/LMS
-ui/src/components/cards/HealthCheckCardProtocolSections.tsx copy-prop title=Modbus TCP
-ui/src/components/cards/HealthCheckCardProtocolSections.tsx copy-prop title=OPC-UA
 ui/src/components/cards/HealthCheckCardProtocolSections.tsx literal Modbus TCP
 # The column row of the path CSV export. A downloaded file's header is read by
 # the spreadsheet or script it is opened in, so it stays the same in every
