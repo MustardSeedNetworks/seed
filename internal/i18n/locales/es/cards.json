@@ -356,7 +356,24 @@
     "certExpiryDays": "{{days}} días",
     "certExpiryMonths": "{{months}}m",
     "certExpiryYears": "{{years}}a",
-    "rtsp": "RTSP Video"
+    "rtsp": "RTSP Video",
+    "detail": {
+      "connect": "Conexión {{ms}}",
+      "query": "Consulta {{ms}}",
+      "bind": "Vinculación {{ms}}",
+      "read": "Lectura {{rate}} MB/s",
+      "write": "Escritura {{rate}} MB/s",
+      "echo": "C-ECHO {{ms}}",
+      "response": "Respuesta {{ms}}",
+      "resources_one": "{{count}} recurso",
+      "resources_other": "{{count}} recursos",
+      "register": "Registro {{value}}",
+      "unit": "Unidad {{id}}",
+      "aeTitle": "AE {{title}}",
+      "serverAeTitle": "AE del servidor {{title}}",
+      "ack": "ACK {{code}}",
+      "expires": "Caduca el {{date}}"
+    }
   },
   "system": {
     "title": "Salud del sistema",

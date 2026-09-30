@@ -46,6 +46,7 @@ import { StatusBadge } from '../ui/StatusBadge';
 import { Tooltip } from '../ui/Tooltip';
 import { HealthCheckCardProtocolSections } from './HealthCheckCardProtocolSections';
 import type { HealthCheckData, StatusValue, TestResult } from './healthCheckCardTypes';
+import { failuresFirst, testResultRank } from './healthCheckResultOrder';
 
 interface HealthCheckCardProps {
   loading?: boolean;
@@ -476,7 +477,7 @@ export const HealthCheckCard: React.MemoExoticComponent<
             </span>
           </Tooltip>
           <span className={cn('body-small font-medium', statusClass)}>
-            {result.success ? formatLatency(result.latency) : 'fail'}
+            {result.success ? formatLatency(result.latency) : t('health.fail')}
           </span>
         </div>
         {hasTimingData ? <TIMING_BAR result={result} /> : null}
@@ -487,18 +488,20 @@ export const HealthCheckCard: React.MemoExoticComponent<
         ) : null}
         {hasTls || hasCertInfo ? (
           <div className={cn('caption', spacing.margin.top.tight, layout.inline.default)}>
-            {hasTls ? <span className="text-text-muted">{result.tlsVersion}</span> : null}
+            {hasTls ? (
+              <span className="text-text-muted whitespace-nowrap">{result.tlsVersion}</span>
+            ) : null}
             {hasTls && hasCertInfo ? <span className="text-text-muted">·</span> : null}
             {hasCertInfo ? (
-              <Tooltip text={`Expires: ${result.certExpiry}`}>
-                <span className={certColor}>{formatCertExpiry()}</span>
+              <Tooltip text={t('health.detail.expires', { date: result.certExpiry })}>
+                <span className={cn(certColor, 'whitespace-nowrap')}>{formatCertExpiry()}</span>
               </Tooltip>
             ) : null}
             {result.certIssuer ? (
               <>
                 <span className="text-text-muted">·</span>
                 <Tooltip text={result.certIssuer}>
-                  <span className="text-text-muted truncate">{result.certIssuer}</span>
+                  <span className="text-text-muted truncate min-w-0">{result.certIssuer}</span>
                 </Tooltip>
               </>
             ) : null}
@@ -526,7 +529,9 @@ export const HealthCheckCard: React.MemoExoticComponent<
               defaultOpen={true}
               status={getSectionStatus(data.pingResults)}
             >
-              {data.pingResults.map((r) => renderTestResult(r, 'ping'))}
+              {failuresFirst(data.pingResults, testResultRank).map((r) =>
+                renderTestResult(r, 'ping'),
+              )}
             </CollapsibleSection>
           ) : null}
 
@@ -539,7 +544,9 @@ export const HealthCheckCard: React.MemoExoticComponent<
               defaultOpen={true}
               status={getSectionStatus(data.tcpResults)}
             >
-              {data.tcpResults.map((r) => renderTestResult(r, 'tcp'))}
+              {failuresFirst(data.tcpResults, testResultRank).map((r) =>
+                renderTestResult(r, 'tcp'),
+              )}
             </CollapsibleSection>
           ) : null}
 
@@ -552,7 +559,9 @@ export const HealthCheckCard: React.MemoExoticComponent<
               defaultOpen={true}
               status={getSectionStatus(data.udpResults)}
             >
-              {data.udpResults.map((r) => renderTestResult(r, 'udp'))}
+              {failuresFirst(data.udpResults, testResultRank).map((r) =>
+                renderTestResult(r, 'udp'),
+              )}
             </CollapsibleSection>
           ) : null}
 
@@ -565,7 +574,7 @@ export const HealthCheckCard: React.MemoExoticComponent<
               defaultOpen={true}
               status={getSectionStatus(data.httpResults, true)}
             >
-              {data.httpResults.map((r) => renderHttpResult(r))}
+              {failuresFirst(data.httpResults, testResultRank).map((r) => renderHttpResult(r))}
             </CollapsibleSection>
           ) : null}
 

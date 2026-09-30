@@ -57,7 +57,7 @@ ui/src/hooks/useVulnerabilitySettings.ts:44  # read-only — bypasses the client
 ui/src/lib/logger.ts:267  # mutating but CSRF-exempt by design (isCSRFExemptPath) — correct as a raw fetch
 ui/src/app/LoginForm.tsx:101  # read-only — bypasses the client 401 refresh/retry
 ui/src/app/LoginForm.tsx:115  # read-only — bypasses the client 401 refresh/retry
-ui/src/components/cards/HealthCheckCard.tsx:67  # read-only — bypasses the client 401 refresh/retry
+ui/src/components/cards/HealthCheckCard.tsx:68  # read-only — bypasses the client 401 refresh/retry
 ui/src/components/cards/PerformanceCard.tsx:189  # read-only — bypasses the client 401 refresh/retry
 ui/src/components/cards/PerformanceCard.tsx:202  # read-only — bypasses the client 401 refresh/retry
 ui/src/components/cards/PerformanceCard.tsx:210  # read-only — bypasses the client 401 refresh/retry
