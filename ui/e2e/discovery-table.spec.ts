@@ -57,7 +57,11 @@ async function openWithDevices(page: Page, count: number, width: number): Promis
   await disableAnimations(page);
   await page.setViewportSize({ width, height: 900 });
   await page.goto('/network');
-  await page.getByTestId('discovery-card-maximize').click();
+  // From the keyboard, not a click: the cards above this one load real daemon
+  // data while Playwright scrolls down to it, and a click at the button's
+  // position a moment earlier opened nothing on a loaded WebKit (#2922).
+  await page.getByTestId('discovery-card-maximize').focus();
+  await page.keyboard.press('Enter');
   // The rows must be on screen before anything is measured, or every
   // assertion below passes against an empty table.
   await expect(mountedRows(page).first()).toBeVisible({ timeout: 20000 });
@@ -150,10 +154,14 @@ test('a long list mounts only the rows in view, and Tab walks past them', async 
   for (let i = 0; i < lastMounted + 10; i++) {
     await page.keyboard.press('Tab');
   }
-  const focusedIndex = await focusedRowIndex(page);
-  expect(focusedIndex, 'focus left the table instead of reaching later rows').toBeGreaterThan(
-    lastMounted,
-  );
+  // Polled: at the edge of the mounted rows focus moves once the next row is
+  // mounted, and on a loaded WebKit the last Tab's move had not landed when a
+  // single read looked (#2922).
+  await expect
+    .poll(() => focusedRowIndex(page), {
+      message: 'focus left the table instead of reaching later rows',
+    })
+    .toBeGreaterThan(lastMounted);
   await expect(page.locator(':focus')).toBeInViewport();
   expect(await mountedRows(page).count()).toBeLessThan(60);
 });

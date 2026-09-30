@@ -203,7 +203,6 @@ function Owner({ onEscape }: { onEscape: (tick: number) => void }) {
   );
 }
 
-// The trap moves focus in an animation frame.
 function nextFrame(): Promise<void> {
   return act(() => new Promise<void>((resolve) => requestAnimationFrame(() => resolve())));
 }
@@ -223,6 +222,25 @@ describe('a focus trap across re-renders of its owner', () => {
 
     expect(screen.getByRole('button', { name: 'opener 1' })).toBeInTheDocument();
     expect(document.activeElement).toBe(second);
+  });
+
+  // The trap used to move its initial focus a frame after opening. Under load
+  // that frame came late -- after the operator had already focused a sort
+  // header in the discovery modal -- and moved focus to the first control, so
+  // the header's second Enter went to the CSV button instead (#2922).
+  it('leaves focus the operator placed inside the dialog before its first frame', async () => {
+    render(<Dialog onEscape={vi.fn()} />);
+    const second = screen.getByRole('button', { name: 'second' });
+    second.focus();
+
+    await nextFrame();
+
+    expect(document.activeElement).toBe(second);
+  });
+
+  it('focuses the first control when the dialog opens', () => {
+    render(<Dialog onEscape={vi.fn()} />);
+    expect(document.activeElement).toBe(screen.getByRole('button', { name: 'first' }));
   });
 
   it('calls the onEscape from the latest render', () => {

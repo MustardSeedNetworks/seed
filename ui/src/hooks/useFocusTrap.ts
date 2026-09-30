@@ -103,14 +103,10 @@ export function useFocusTrap<T extends HTMLElement = HTMLDivElement>(
       return;
     }
 
-    if (autoFocus) {
-      const focusableElements = getFocusableElements(container);
-      const [firstElement] = focusableElements;
-      if (firstElement) {
-        requestAnimationFrame(() => {
-          firstElement.focus();
-        });
-      }
+    // Now, not a frame later: a late frame (seconds, on a loaded WebKit) moved
+    // focus off a control the operator had already chosen inside (#2922).
+    if (autoFocus && !container.contains(document.activeElement)) {
+      getFocusableElements(container)[0]?.focus();
     }
 
     const handleKeyDown = (event: KeyboardEvent): void => {
