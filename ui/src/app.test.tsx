@@ -27,7 +27,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import type React from 'react';
 import type { JSX, ReactNode } from 'react';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import App from './app';
 import { ProfileProvider } from './contexts/profileContext';
 
@@ -194,6 +194,8 @@ function renderWithProviders(ui: React.ReactElement): ReturnType<typeof render> 
   return render(ui, { wrapper: createWrapper() });
 }
 
+// App's lazy gates, pre-imported: a cold compile outlasts waitFor's timeout.
+beforeAll(() => Promise.all([import('./app/LoginForm'), import('./app/AppShell')]));
 describe('App', () => {
   let originalWebSocket: typeof WebSocket;
 

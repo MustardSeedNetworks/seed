@@ -9,16 +9,13 @@
  */
 
 import type { JSX } from 'react';
-import { type ReactNode, Suspense, useEffect, useRef } from 'react';
+import { lazy, type ReactNode, Suspense, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Redirect, Route, Switch, useLocation } from 'wouter';
 import { AppFooter } from '../components/app/AppFooter';
 import { CapabilityWarnings } from '../components/app/CapabilityWarnings';
 import { ConnectionNotice } from '../components/app/ConnectionNotice';
 import { RailControls } from '../components/app/RailControls';
-import { HelpDrawer } from '../components/help/HelpDrawer';
-import { ProfileManagement } from '../components/profiles/ProfileManagement';
-import { SettingsDrawer } from '../components/settings/SettingsDrawer';
 import { CommandPalette } from '../components/ui/CommandPalette';
 import { Fab } from '../components/ui/Fab';
 import { AppContext, type AppContextValue } from '../contexts/AppContext';
@@ -31,6 +28,20 @@ import { PageHeader } from '../ui/PageHeader';
 import { PageLoader } from '../ui/PageLoader';
 import { type RailStatus, SidebarLayout } from '../ui/Sidebar';
 import type { AppOrchestration } from './useAppOrchestration';
+
+// The drawers and the profile manager are most of the shell's code and open
+// on demand, so their chunks load on first open rather than with the shell.
+const SettingsDrawer = lazy(() =>
+  import('../components/settings/SettingsDrawer').then((m) => ({ default: m.SettingsDrawer })),
+);
+const HelpDrawer = lazy(() =>
+  import('../components/help/HelpDrawer').then((m) => ({ default: m.HelpDrawer })),
+);
+const ProfileManagement = lazy(() =>
+  import('../components/profiles/ProfileManagement').then((m) => ({
+    default: m.ProfileManagement,
+  })),
+);
 
 interface AppShellProps {
   orchestration: AppOrchestration;
@@ -92,6 +103,17 @@ export function AppShell({ orchestration, logout }: AppShellProps): JSX.Element 
       closeHelp();
     }
   }, [routePath, closeHelp]);
+
+  // Each drawer mounts on its first open and then stays mounted, so the state
+  // it keeps between openings survives the lazy load.
+  const [settingsMounted, setSettingsMounted] = useState(settingsOpen);
+  if (settingsOpen && !settingsMounted) {
+    setSettingsMounted(true);
+  }
+  const [helpMounted, setHelpMounted] = useState(helpOpen);
+  if (helpOpen && !helpMounted) {
+    setHelpMounted(true);
+  }
 
   const openPageHelp = (): void =>
     openHelp(pages.find((page) => page.path === routePath)?.help ?? 'link');
@@ -187,24 +209,35 @@ export function AppShell({ orchestration, logout }: AppShellProps): JSX.Element 
         </div>
       </SidebarLayout>
 
-      {/* Settings Drawer - shows interface-specific settings (#754) */}
-      <SettingsDrawer
-        isOpen={settingsOpen}
-        onClose={closeSettings}
-        version={appVersion}
-        isWifi={isWifi}
-      />
+      {/* Settings Drawer - shows interface-specific settings (#754). One
+          boundary per drawer, so loading one never blanks another. */}
+      <Suspense fallback={null}>
+        {settingsMounted ? (
+          <SettingsDrawer
+            isOpen={settingsOpen}
+            onClose={closeSettings}
+            version={appVersion}
+            isWifi={isWifi}
+          />
+        ) : null}
+      </Suspense>
 
       {/* Help Drawer - data-driven, with TOC, search, and real content */}
-      <HelpDrawer
-        isOpen={helpOpen}
-        onClose={closeHelp}
-        version={appVersion}
-        section={helpSection}
-      />
+      <Suspense fallback={null}>
+        {helpMounted ? (
+          <HelpDrawer
+            isOpen={helpOpen}
+            onClose={closeHelp}
+            version={appVersion}
+            section={helpSection}
+          />
+        ) : null}
+      </Suspense>
 
       {/* Profile Management Modal (#754) */}
-      {profilesOpen ? <ProfileManagement onClose={closeProfiles} /> : null}
+      <Suspense fallback={null}>
+        {profilesOpen ? <ProfileManagement onClose={closeProfiles} /> : null}
+      </Suspense>
 
       {/* Run All Tests. On a phone this control lives in the page header
           instead (see PageWithHeader): the fixed layer has nowhere to sit at
