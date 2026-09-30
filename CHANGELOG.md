@@ -5,6 +5,23 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.218.0](https://github.com/MustardSeedNetworks/seed/compare/v0.217.5...v0.218.0) (2026-09-30)
+
+
+### Features
+
+* **ui:** fit the discovery table to the modal and virtualise long lists ([#2920](https://github.com/MustardSeedNetworks/seed/issues/2920)) ([f94ab70](https://github.com/MustardSeedNetworks/seed/commit/f94ab70e31e9e7da40e389e6428211ae49f54a3a))
+
+
+### Bug Fixes
+
+* **ui:** move a dialog's initial focus at once, and steady the discovery-table E2E ([#2923](https://github.com/MustardSeedNetworks/seed/issues/2923)) ([7ad5d53](https://github.com/MustardSeedNetworks/seed/commit/7ad5d53bba9d7f58bfeb67e563172b1bf7bd33d9)), closes [#2922](https://github.com/MustardSeedNetworks/seed/issues/2922)
+
+
+### Performance Improvements
+
+* **ui:** lazy-load the drawers, gate screens and Spanish locale ([#2918](https://github.com/MustardSeedNetworks/seed/issues/2918)) ([cd44602](https://github.com/MustardSeedNetworks/seed/commit/cd44602d6cbc235425b445588e304a7c48af2d99)), closes [#2917](https://github.com/MustardSeedNetworks/seed/issues/2917)
+
 ## [0.217.5](https://github.com/MustardSeedNetworks/seed/compare/v0.217.4...v0.217.5) (2026-09-30)
 
 
