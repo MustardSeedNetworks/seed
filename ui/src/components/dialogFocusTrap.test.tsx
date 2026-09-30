@@ -9,9 +9,10 @@
  */
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
-import type { ReactNode } from 'react';
+import { type ReactNode, useState } from 'react';
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 
+import { useFocusTrap } from '../hooks/useFocusTrap';
 import { DiscoveryModal } from './cards/DiscoveryModal';
 import { LogViewerModal } from './cards/LogViewerModal';
 import { ProfileManagement } from './profiles/ProfileManagement';
@@ -168,5 +169,71 @@ describe('dialog focus traps', () => {
 
     const confirm = await screen.findByRole('dialog', { name: 'Delete profile?' });
     expectTabStaysInside(confirm);
+  });
+});
+
+// A parent re-render must not move focus inside an open dialog. Callers pass
+// `onEscape` as an inline arrow, a new function on every render of the owner.
+// The trap's effect listed it as a dependency, so each re-render tore the trap
+// down, restoring focus to the control that opened the dialog, and set it up
+// again, focusing the dialog's first control. The discovery modal's owner
+// re-renders on every device poll, so a keyboard user walking the device table
+// was thrown back to the Rescan button (#461).
+function Dialog({ onEscape }: { onEscape: () => void }) {
+  const ref = useFocusTrap<HTMLDivElement>({ isActive: true, onEscape });
+  return (
+    <div ref={ref} role="dialog">
+      <button type="button">first</button>
+      <button type="button">second</button>
+    </div>
+  );
+}
+
+function Owner({ onEscape }: { onEscape: (tick: number) => void }) {
+  const [tick, setTick] = useState(0);
+  return (
+    <>
+      <button type="button" onClick={() => setTick(tick + 1)}>
+        opener {tick}
+      </button>
+      {/* Captures `tick`, so it is a new function on every render even under
+          the React Compiler. */}
+      <Dialog onEscape={() => onEscape(tick)} />
+    </>
+  );
+}
+
+// The trap moves focus in an animation frame.
+function nextFrame(): Promise<void> {
+  return act(() => new Promise<void>((resolve) => requestAnimationFrame(() => resolve())));
+}
+
+describe('a focus trap across re-renders of its owner', () => {
+  it('keeps focus where it is when the owner re-renders with a new onEscape', async () => {
+    const onEscape = vi.fn();
+    render(<Owner onEscape={onEscape} />);
+    await nextFrame(); // the trap's own autofocus on open
+    const second = screen.getByRole('button', { name: 'second' });
+    second.focus();
+
+    act(() => {
+      fireEvent.click(screen.getByRole('button', { name: /opener/ }));
+    });
+    await nextFrame();
+
+    expect(screen.getByRole('button', { name: 'opener 1' })).toBeInTheDocument();
+    expect(document.activeElement).toBe(second);
+  });
+
+  it('calls the onEscape from the latest render', () => {
+    const first = vi.fn();
+    const latest = vi.fn();
+    const { rerender } = render(<Dialog onEscape={first} />);
+    rerender(<Dialog onEscape={latest} />);
+
+    fireEvent.keyDown(document, { key: 'Escape' });
+
+    expect(latest).toHaveBeenCalledTimes(1);
+    expect(first).not.toHaveBeenCalled();
   });
 });

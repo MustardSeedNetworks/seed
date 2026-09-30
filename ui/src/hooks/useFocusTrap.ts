@@ -4,7 +4,7 @@
  *              Implements WCAG 2.1 AA compliance for modal dialogs.
  */
 
-import { type RefObject, useEffect, useRef } from 'react';
+import { type RefObject, useEffect, useEffectEvent, useRef } from 'react';
 
 /** Focusable element selectors */
 const FOCUSABLE_SELECTORS: string = [
@@ -76,6 +76,18 @@ export function useFocusTrap<T extends HTMLElement = HTMLDivElement>(
   const { isActive, onEscape, autoFocus = true, restoreFocus = true } = options;
   const containerRef = useRef<T>(null);
   const previousActiveElement = useRef<HTMLElement | null>(null);
+  // Callers pass `onEscape` as an inline arrow, a new function on every render
+  // of the owner. As an effect dependency it re-ran the trap on each
+  // re-render, which restored focus to the opener and then refocused the first
+  // control, so focus jumped whenever the page polled (#461).
+  const handleEscape = useEffectEvent((event: KeyboardEvent): void => {
+    if (!onEscape) {
+      return;
+    }
+    event.preventDefault();
+    event.stopPropagation();
+    onEscape();
+  });
 
   useEffect(() => {
     if (!isActive) {
@@ -102,14 +114,14 @@ export function useFocusTrap<T extends HTMLElement = HTMLDivElement>(
     }
 
     const handleKeyDown = (event: KeyboardEvent): void => {
-      if (event.key === 'Escape' && onEscape) {
-        event.preventDefault();
-        event.stopPropagation();
-        onEscape();
+      if (event.key === 'Escape') {
+        handleEscape(event);
         return;
       }
 
-      if (event.key === 'Tab') {
+      // A Tab the dialog's content already handled (the virtualised discovery
+      // table moving focus to a row it has not mounted yet) is not the trap's.
+      if (event.key === 'Tab' && !event.defaultPrevented) {
         const focusableElements = getFocusableElements(container);
         handleTabKey(event, container, focusableElements);
       }
@@ -144,7 +156,7 @@ export function useFocusTrap<T extends HTMLElement = HTMLDivElement>(
         previousActiveElement.current.focus();
       }
     };
-  }, [isActive, onEscape, autoFocus, restoreFocus]);
+  }, [isActive, autoFocus, restoreFocus]);
 
   return containerRef;
 }
