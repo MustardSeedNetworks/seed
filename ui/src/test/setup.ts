@@ -38,7 +38,12 @@ import '@testing-library/jest-dom';
 // entirely, so defaultValue and interpolation silently vanished.
 import i18next from 'i18next';
 import { afterEach, beforeEach, vi } from 'vitest';
-import '../i18n';
+import { i18nReady } from '../i18n';
+
+// The app fetches Spanish on first use; the suite reads both locales directly,
+// so it loads Spanish up front.
+await i18nReady;
+await i18next.loadLanguages('es');
 
 // Loading the real locale files is only half of it. Corrupting every string in
 // both locales -- all 4,290 of them -- still leaves 285 of 311 tests passing,
