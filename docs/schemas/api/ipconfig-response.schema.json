@@ -35,6 +35,9 @@
         "mac": {
           "type": "string"
         },
+        "vendor": {
+          "type": "string"
+        },
         "mode": {
           "type": "string"
         },
