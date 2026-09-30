@@ -23,7 +23,8 @@ import type {
   DiscoveredDevice,
   Vulnerability,
 } from '../../types/generated/engine-discovery-response';
-import { DeviceRow, highestSeverity } from './DiscoveryModalDeviceRow';
+import { highestSeverity } from './DiscoveryModalCells';
+import { DeviceRow } from './DiscoveryModalDeviceRow';
 
 function finding(cveId: string, severity: string): Vulnerability {
   return {
@@ -71,9 +72,7 @@ const device: DiscoveredDevice = {
 function renderRow(expanded: boolean) {
   return render(
     <table>
-      <tbody>
-        <DeviceRow device={device} isExpanded={expanded} onToggle={() => {}} isScanning={false} />
-      </tbody>
+      <DeviceRow device={device} isExpanded={expanded} onToggle={() => {}} isScanning={false} />
     </table>,
   );
 }
