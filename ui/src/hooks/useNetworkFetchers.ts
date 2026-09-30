@@ -167,7 +167,9 @@ export function useNetworkFetchers({
         setCards((prev) => ({
           ...prev,
           dhcp: {
+            interface: data.interface || undefined,
             mac: data.mac || '',
+            vendor: data.vendor || undefined,
             mode: data.mode || 'auto',
             ipv4: data.ipv4 || null,
             ipv6: data.ipv6 || [],

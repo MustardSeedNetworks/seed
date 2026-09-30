@@ -11,7 +11,8 @@
  * - Item count: displays "(count)" next to title
  * - Customizable title: can be string or React node for complex headers
  * - Default open: optional defaultOpen prop to start expanded
- * - Semantic HTML: uses <section> and <button> for accessibility
+ * - Semantic HTML: uses <section> and <button> for accessibility; the button
+ *   carries aria-expanded and aria-controls so assistive tech hears the state
  * - Keyboard support: button can be activated with Enter/Space
  *
  * Usage:
@@ -37,7 +38,7 @@
  */
 
 import type React from 'react';
-import { type ReactNode, useState } from 'react';
+import { type ReactNode, useId, useState } from 'react';
 import { border, cn, icon as iconTokens, layout, radius, spacing } from '../../styles/theme';
 import type { Status } from './Card';
 import { StatusBadge } from './StatusBadge';
@@ -91,6 +92,7 @@ export function CollapsibleSection({
   'data-testid': dataTestId,
 }: CollapsibleSectionProps): React.JSX.Element {
   const [isOpen, setIsOpen] = useState(defaultOpen);
+  const bodyId = useId();
 
   const isCompact = variant === 'compact';
   const bodyClass = cn(
@@ -111,6 +113,8 @@ export function CollapsibleSection({
       <button
         type="button"
         onClick={(): void => setIsOpen(!isOpen)}
+        aria-expanded={isOpen}
+        aria-controls={bodyId}
         className={cn(
           'w-full transition-colors',
           layout.flex.between,
@@ -149,14 +153,18 @@ export function CollapsibleSection({
           </span>
         ) : null}
       </button>
-      {isOpen && readOnlyReason === undefined ? <div className={bodyClass}>{children}</div> : null}
+      {isOpen && readOnlyReason === undefined ? (
+        <div id={bodyId} className={bodyClass}>
+          {children}
+        </div>
+      ) : null}
       {isOpen && readOnlyReason !== undefined ? (
         // min-w-0 undoes the UA `min-inline-size: min-content` on fieldset,
         // which otherwise makes a long child overflow its flex parent. Nothing
         // else is needed: Tailwind preflight already zeroes the UA border,
         // margin and padding, and `border-0` here would defeat the body's own
         // `border-t` through tailwind-merge.
-        <fieldset disabled className={cn(bodyClass, 'min-w-0')}>
+        <fieldset id={bodyId} disabled className={cn(bodyClass, 'min-w-0')}>
           {children}
         </fieldset>
       ) : null}
