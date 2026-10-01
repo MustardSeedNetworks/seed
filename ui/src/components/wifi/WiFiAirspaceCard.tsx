@@ -6,8 +6,9 @@ import { WiFiCaptureStatus } from './WiFiCaptureStatus';
 
 /**
  * WiFiAirspaceCard is the container for the live airspace tree: it polls the
- * Pro-gated /wifi/airspace endpoint and renders the capture status plus the
- * SSID -> AP -> BSSID -> client hierarchy.
+ * Starter-gated /wifi/airspace endpoint and renders the capture status plus the
+ * SSID -> AP -> BSSID -> client hierarchy. Below Pro the clients are withheld,
+ * which the status and tree state rather than showing as zero.
  */
 export function WiFiAirspaceCard() {
   const { t } = useTranslation('pages');
@@ -27,8 +28,8 @@ export function WiFiAirspaceCard() {
         </p>
       ) : (
         <div className="stack-md">
-          <WiFiCaptureStatus status={data.status} />
-          <WiFiAirspaceTree ssids={data.ssids} />
+          <WiFiCaptureStatus status={data.status} clientsWithheld={data.clientsWithheld} />
+          <WiFiAirspaceTree ssids={data.ssids} clientsWithheld={data.clientsWithheld} />
         </div>
       )}
     </Card>
