@@ -3,8 +3,8 @@
  *
  * `aria-modal="true"` tells a screen reader the page behind is inert. Without a
  * trap that is a lie: Tab walks out of the dialog into controls the operator
- * cannot see (seed#2648). These dialogs are hand-rolled rather than built on
- * <Modal>, so each one is checked here, including the two dialogs
+ * cannot see (seed#2648). Most of these dialogs are hand-rolled rather than
+ * built on <Modal>, so each one is checked here, including the two dialogs
  * ProfileManagement opens on top of itself.
  */
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
@@ -16,6 +16,7 @@ import { useFocusTrap } from '../hooks/useFocusTrap';
 import { DiscoveryModal } from './cards/DiscoveryModal';
 import { LogViewerModal } from './cards/LogViewerModal';
 import { ProfileManagement } from './profiles/ProfileManagement';
+import { Modal } from './ui/Modal';
 
 vi.mock('../hooks/useLogs', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../hooks/useLogs')>()),
@@ -151,8 +152,15 @@ describe('dialog focus traps', () => {
 
   it('hands focus to the profile editor, and Escape closes only the editor', async () => {
     const onClose = vi.fn();
+    // Focused before the manager mounts, as the account button is in the app.
+    const opener = document.body.appendChild(document.createElement('button'));
+    opener.focus();
     render(<ProfileManagement onClose={onClose} />);
-    fireEvent.click(screen.getByTestId('profile-create'));
+    const create = screen.getByTestId('profile-create');
+    act(() => {
+      create.focus();
+    });
+    fireEvent.click(create);
 
     const editor = await screen.findByRole('dialog', { name: 'Create profile' });
     expectTabStaysInside(editor);
@@ -161,6 +169,25 @@ describe('dialog focus traps', () => {
     expect(onClose).not.toHaveBeenCalled();
     expect(screen.queryByRole('dialog', { name: 'Create profile' })).toBeNull();
     expect(screen.getByRole('dialog')).toBeInTheDocument();
+    // The manager's trap stayed open underneath, so it does not take focus
+    // back to its own first control: the editor returns it to its opener.
+    expect(document.activeElement).toBe(create);
+    opener.remove();
+  });
+
+  // The trap listens on document. Modal used to stop Escape on its content so
+  // it never got there, and the Bluetooth device table could not be closed
+  // from the keyboard at all (#388).
+  it('Modal closes on Escape pressed inside it', () => {
+    const onClose = vi.fn();
+    render(
+      <Modal isOpen={true} onClose={onClose} title="Devices">
+        <button type="button">inside</button>
+      </Modal>,
+    );
+
+    fireEvent.keyDown(screen.getByRole('button', { name: 'inside' }), { key: 'Escape' });
+    expect(onClose).toHaveBeenCalledTimes(1);
   });
 
   it('traps focus in the delete confirmation', async () => {

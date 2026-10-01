@@ -117,6 +117,7 @@ export function RailControls({
   const { setEthernetInterface, setWifiInterface } = useProfileContext();
   const [openPanel, setOpenPanel] = useState<'account' | 'interface' | null>(null);
   const rootRef = useRef<HTMLDivElement>(null);
+  const accountRef = useRef<HTMLButtonElement>(null);
 
   useEffect(() => {
     const onPointerDown = (event: MouseEvent): void => {
@@ -167,6 +168,7 @@ export function RailControls({
         >
           <button
             type="button"
+            ref={accountRef}
             data-testid="rail-account"
             aria-haspopup="menu"
             aria-expanded={openPanel === 'account'}
@@ -225,7 +227,12 @@ export function RailControls({
             <div className="border-t border-surface-border">
               <button
                 type="button"
+                data-testid="rail-profile-manage"
                 onClick={(): void => {
+                  // This button unmounts with the menu, so the dialog's focus
+                  // trap would have nowhere to return focus on close. The
+                  // account button that opened the menu is where it belongs.
+                  accountRef.current?.focus();
                   setOpenPanel(null);
                   onProfileManage();
                 }}

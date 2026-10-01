@@ -16,6 +16,13 @@ const FOCUSABLE_SELECTORS: string = [
   '[tabindex]:not([tabindex="-1"])',
 ].join(', ');
 
+/**
+ * Open traps, oldest first. A dialog can open over another (the profile editor
+ * over the profile manager) and every trap listens on document, so only the
+ * newest one may act on a key or a focus change.
+ */
+const openTraps: object[] = [];
+
 interface UseFocusTrapOptions {
   isActive: boolean;
   onEscape?: () => void;
@@ -103,6 +110,10 @@ export function useFocusTrap<T extends HTMLElement = HTMLDivElement>(
       return;
     }
 
+    const trap = {};
+    openTraps.push(trap);
+    const isTopmost = (): boolean => openTraps.at(-1) === trap;
+
     // Now, not a frame later: a late frame (seconds, on a loaded WebKit) moved
     // focus off a control the operator had already chosen inside (#2922).
     if (autoFocus && !container.contains(document.activeElement)) {
@@ -110,6 +121,9 @@ export function useFocusTrap<T extends HTMLElement = HTMLDivElement>(
     }
 
     const handleKeyDown = (event: KeyboardEvent): void => {
+      if (!isTopmost()) {
+        return;
+      }
       if (event.key === 'Escape') {
         handleEscape(event);
         return;
@@ -125,7 +139,7 @@ export function useFocusTrap<T extends HTMLElement = HTMLDivElement>(
 
     const handleFocusOut = (event: FocusEvent): void => {
       const isLeavingContainer = !container.contains(event.relatedTarget as Node);
-      if (!isLeavingContainer) {
+      if (!(isLeavingContainer && isTopmost())) {
         return;
       }
 
@@ -145,6 +159,7 @@ export function useFocusTrap<T extends HTMLElement = HTMLDivElement>(
     container.addEventListener('focusout', handleFocusOut);
 
     return () => {
+      openTraps.splice(openTraps.indexOf(trap), 1);
       document.removeEventListener('keydown', handleKeyDown);
       container.removeEventListener('focusout', handleFocusOut);
 

@@ -40,11 +40,7 @@ export function ProfileManagement({ onClose }: ProfileManagementProps): React.Re
   const [isCreating, setIsCreating] = useState(false);
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
 
-  // A nested editor or delete confirmation owns focus while it is open.
-  const modalRef = useFocusTrap<HTMLDivElement>({
-    isActive: !isEditorOpen && deleteConfirm === null,
-    onEscape: onClose,
-  });
+  const modalRef = useFocusTrap<HTMLDivElement>({ isActive: true, onEscape: onClose });
 
   // Filter profiles by search
   const filteredProfiles = useMemo(() => {
