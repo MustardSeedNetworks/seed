@@ -72,6 +72,11 @@ func (s *Server) Close() {
 	if s.sse != nil {
 		s.sse.Shutdown()
 	}
+
+	// The gateway tester opened an ICMP socket at construction (#2719).
+	if s.gatewayTest != nil {
+		s.gatewayTest.Close()
+	}
 }
 
 // GetAuthenticatedHandler returns the mux behind CORS and the JWT middleware
