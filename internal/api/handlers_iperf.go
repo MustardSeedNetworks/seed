@@ -324,7 +324,7 @@ func (s *Server) handleIperfServer(w http.ResponseWriter, r *http.Request) {
 			logger,
 			http.StatusBadRequest,
 			ErrCodeBadRequest,
-			localizer.T("errors.health.iperfInvalidAction"),
+			localizer.T("errors.api.invalidAction"),
 			"",
 		)
 	}
@@ -349,7 +349,7 @@ func (s *Server) handleIperfSuggestions(w http.ResponseWriter, r *http.Request) 
 			logger,
 			http.StatusServiceUnavailable,
 			ErrCodeServiceUnavail,
-			localizer.T("errors.health.deviceDiscoveryNotAvailable"),
+			localizer.T("errors.discovery.managerUnavailable"),
 			"",
 		)
 		return
