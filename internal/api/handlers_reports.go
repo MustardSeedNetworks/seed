@@ -207,7 +207,7 @@ func (s *Server) handleReportByID(w http.ResponseWriter, r *http.Request) {
 		s.deleteReport(w, r, gen, id)
 	default:
 		sendErrorResponseWithDetails(w, logger, http.StatusMethodNotAllowed,
-			ErrCodeValidation, i18n.FromRequest(r).T("errors.methodNotAllowed"), "")
+			ErrCodeValidation, i18n.FromRequest(r).T("errors.api.methodNotAllowed"), "")
 	}
 }
 

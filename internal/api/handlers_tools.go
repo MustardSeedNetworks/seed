@@ -171,7 +171,7 @@ func (s *Server) handleTCPProbe(w http.ResponseWriter, r *http.Request) {
 			logger,
 			http.StatusBadRequest,
 			ErrCodeValidation,
-			localizer.T("errors.tools.portRequired"),
+			localizer.T("errors.tools.portCount"),
 			"",
 		)
 		return

@@ -119,7 +119,7 @@ func (s *Server) handleRogueDHCPAction(
 	default:
 		sendErrorResponseWithDetails(
 			w, logger, http.StatusBadRequest, ErrCodeBadRequest,
-			localizer.T("errors.security.invalidAction"), "",
+			localizer.T("errors.api.invalidAction"), "",
 		)
 	}
 }

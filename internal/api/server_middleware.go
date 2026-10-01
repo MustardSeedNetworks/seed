@@ -123,7 +123,7 @@ func recoverMiddleware(next http.Handler) http.Handler {
 					logger,
 					http.StatusInternalServerError,
 					ErrCodeInternal,
-					localizer.T("errors.security.panicRecovered"),
+					localizer.T("errors.api.internalError"),
 					"",
 				) // fixes #694
 			}

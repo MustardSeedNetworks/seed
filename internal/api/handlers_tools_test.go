@@ -192,6 +192,7 @@ func TestHandleTCPProbeTooManyPorts(t *testing.T) {
 	if w.Code != http.StatusBadRequest {
 		t.Errorf("Expected status %d, got %d: %s", http.StatusBadRequest, w.Code, w.Body.String())
 	}
+	assertErrorMessage(t, w, "Enter from 1 to 100 ports")
 }
 
 // TestHandleTCPProbeInvalidTarget tests TCP probe with invalid target.
@@ -221,6 +222,22 @@ func TestHandleTCPProbeInvalidTarget(t *testing.T) {
 
 	if w.Code != http.StatusBadRequest {
 		t.Errorf("Expected status %d, got %d: %s", http.StatusBadRequest, w.Code, w.Body.String())
+	}
+	assertErrorMessage(t, w, "Invalid target: enter a hostname or IP address")
+}
+
+// assertErrorMessage pins the message an operator reads. A key with no copy
+// used to arrive here verbatim ("errors.tools.invalidTarget") with every
+// status-code assertion green (#2299).
+func assertErrorMessage(t *testing.T, w *httptest.ResponseRecorder, want string) {
+	t.Helper()
+
+	var resp api.ErrorResponse
+	if err := json.Unmarshal(w.Body.Bytes(), &resp); err != nil {
+		t.Fatalf("error body is not JSON: %v", err)
+	}
+	if resp.Error != want {
+		t.Errorf("error message = %q, want %q", resp.Error, want)
 	}
 }
 

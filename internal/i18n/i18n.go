@@ -10,7 +10,7 @@
 // Usage:
 //
 //	localizer := i18n.NewLocalizer("es")
-//	msg := localizer.MustLocalize("errors.auth.invalidCredentials")
+//	msg := localizer.T("errors.auth.invalidCredentials")
 package i18n
 
 import (
@@ -221,7 +221,8 @@ func normalizeLanguage(lang string) string {
 // Returns the key itself if translation is not found.
 func (l *Localizer) T(key string) string {
 	msg, err := l.Localize(&i18n.LocalizeConfig{
-		MessageID: key,
+		MessageID:      key,
+		TemplateParser: interpolation{},
 	})
 	if err != nil {
 		// Return key as fallback
@@ -234,8 +235,9 @@ func (l *Localizer) T(key string) string {
 // Example: l.TWithData("validation.port.invalidRange", map[string]any{"value": 70000}).
 func (l *Localizer) TWithData(key string, data map[string]any) string {
 	msg, err := l.Localize(&i18n.LocalizeConfig{
-		MessageID:    key,
-		TemplateData: data,
+		MessageID:      key,
+		TemplateData:   data,
+		TemplateParser: interpolation{},
 	})
 	if err != nil {
 		// Return key as fallback
