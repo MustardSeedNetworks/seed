@@ -38,7 +38,6 @@ func TestWithCustomConfig(t *testing.T) {
         WithInterface("eth0").
         WithHTTPS(false).
         WithDiscoveryProfile(config.ProfileFullScan).
-        WithDiscoveryConcurrency(100).
         Build()
 
     // Use config in tests
@@ -107,7 +106,6 @@ func TestStandardScan(t *testing.T) {
 ### Discovery
 
 - `WithDiscoveryProfile(profile config.DiscoveryProfile)` - Set profile (Stealth, Standard, FullScan, Custom)
-- `WithDiscoveryConcurrency(workers int)` - Set ARP scan workers
 - `WithDiscoveryMethods(arp, icmp, portScan bool)` - Enable/disable methods
 - `WithTCPPorts(ports string)` - Set TCP ports (e.g., "22,80,443")
 

@@ -6,15 +6,6 @@ import "github.com/MustardSeedNetworks/seed/internal/config"
 const (
 	// DefaultTestPort is the standard HTTP port used for test configurations.
 	DefaultTestPort = 8080
-
-	// FullScanConcurrency is the concurrency level for full discovery scans in tests.
-	FullScanConcurrency = 50
-
-	// PassiveOnlyConcurrency is the concurrency level for passive-only scans in tests.
-	PassiveOnlyConcurrency = 10
-
-	// StandardScanConcurrency is the concurrency level for standard scans in tests.
-	StandardScanConcurrency = 25
 )
 
 // MinimalValidConfig returns a minimal valid configuration for testing.
@@ -42,7 +33,6 @@ func FullScanConfig() *config.Config {
 	return NewConfigBuilder().
 		WithPort(DefaultTestPort).
 		WithInterface("lo").
-		WithDiscoveryConcurrency(FullScanConcurrency).
 		WithDiscoveryMethods(true, true, true). // All methods enabled
 		WithTCPPorts("22,80,443,445,8080").
 		Build()
@@ -53,7 +43,6 @@ func PassiveOnlyConfig() *config.Config {
 	return NewConfigBuilder().
 		WithPort(DefaultTestPort).
 		WithInterface("lo").
-		WithDiscoveryConcurrency(PassiveOnlyConcurrency).
 		WithDiscoveryMethods(false, false, false). // Passive only
 		Build()
 }
@@ -63,7 +52,6 @@ func StandardScanConfig() *config.Config {
 	return NewConfigBuilder().
 		WithPort(DefaultTestPort).
 		WithInterface("lo").
-		WithDiscoveryConcurrency(StandardScanConcurrency).
 		WithDiscoveryMethods(true, true, false). // ARP + ICMP
 		Build()
 }

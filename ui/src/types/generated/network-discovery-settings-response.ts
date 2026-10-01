@@ -7,11 +7,8 @@
  */
 export interface NetworkDiscoverySettingsResponse {
   enabled: boolean;
-  arpScanWorkers: number;
-  pingTimeoutMs: number;
   scanTimeoutMs: number;
   autoScan: boolean;
-  scanIntervalMs: number;
   ouiFilePath: string;
   options: OptionsResponse;
   timing: TimingResponse;
@@ -36,18 +33,16 @@ export interface PassiveProtocolResponse {
 }
 export interface PortScanResponse {
   enabled: boolean;
+  preset: string;
   tcpPorts: string;
   udpPorts: string;
-  bannerTimeoutMs: number;
 }
 export interface TCPProbeSettingsResponse {
   timeoutMs: number;
   workers: number;
 }
 export interface TimingResponse {
-  probeIntervalMs: number;
   rescanIntervalMs: number;
-  workers: number;
 }
 export interface ProfilerResponse {
   enabled: boolean;

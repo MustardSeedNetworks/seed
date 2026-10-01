@@ -168,11 +168,10 @@ type PassiveProtocolDefaults struct {
 
 // PortScanDefaults contains default port scan settings.
 type PortScanDefaults struct {
-	Enabled         bool   `json:"enabled"`
-	Preset          string `json:"preset"`
-	TCPPorts        string `json:"tcpPorts"`
-	UDPPorts        string `json:"udpPorts"`
-	BannerTimeoutMs int64  `json:"bannerTimeoutMs"`
+	Enabled  bool   `json:"enabled"`
+	Preset   string `json:"preset"`
+	TCPPorts string `json:"tcpPorts"`
+	UDPPorts string `json:"udpPorts"`
 }
 
 // TCPProbeDefaults contains default TCP probe settings.
@@ -194,9 +193,7 @@ type DiscoveryOptionsDefaults struct {
 
 // DiscoveryTimingDefaults contains default timing settings.
 type DiscoveryTimingDefaults struct {
-	ProbeIntervalMs  int64 `json:"probeIntervalMs"`
 	RescanIntervalMs int64 `json:"rescanIntervalMs"`
-	Workers          int   `json:"workers"`
 }
 
 // DeviceProfilerDefaults contains default device profiler settings.
@@ -218,11 +215,8 @@ type FingerprintingDefaults struct {
 // Note: OUI database is baked into binary at build time - no runtime path needed.
 type NetworkDiscoveryDefaults struct {
 	Enabled        bool                     `json:"enabled"`
-	ARPScanWorkers int                      `json:"arpScanWorkers"`
-	PingTimeoutMs  int64                    `json:"pingTimeoutMs"`
 	ScanTimeoutMs  int64                    `json:"scanTimeoutMs"`
 	AutoScan       bool                     `json:"autoScan"`
-	ScanIntervalMs int64                    `json:"scanIntervalMs"`
 	IPv6Enabled    bool                     `json:"ipv6Enabled"`
 	Options        DiscoveryOptionsDefaults `json:"options"`
 	Timing         DiscoveryTimingDefaults  `json:"timing"`
@@ -369,13 +363,10 @@ func buildThresholdDefaults(t *ThresholdMsValues) ThresholdDefaults {
 // buildNetworkDiscoveryDefaults constructs network discovery defaults from config.
 func buildNetworkDiscoveryDefaults(cfg *Config) NetworkDiscoveryDefaults {
 	return NetworkDiscoveryDefaults{
-		Enabled:        cfg.NetworkDiscovery.Enabled,
-		ARPScanWorkers: cfg.NetworkDiscovery.ARPScanWorkers,
-		PingTimeoutMs:  cfg.NetworkDiscovery.PingTimeout.Milliseconds(),
-		ScanTimeoutMs:  cfg.NetworkDiscovery.ScanTimeout.Milliseconds(),
-		AutoScan:       cfg.NetworkDiscovery.AutoScan,
-		ScanIntervalMs: cfg.NetworkDiscovery.ScanInterval.Milliseconds(),
-		IPv6Enabled:    cfg.NetworkDiscovery.IPv6Enabled,
+		Enabled:       cfg.NetworkDiscovery.Enabled,
+		ScanTimeoutMs: cfg.NetworkDiscovery.ScanTimeout.Milliseconds(),
+		AutoScan:      cfg.NetworkDiscovery.AutoScan,
+		IPv6Enabled:   cfg.NetworkDiscovery.IPv6Enabled,
 		Options: DiscoveryOptionsDefaults{
 			PassiveProtocols: PassiveProtocolDefaults{
 				LLDP: cfg.NetworkDiscovery.Options.PassiveProtocols.LLDP,
@@ -385,11 +376,10 @@ func buildNetworkDiscoveryDefaults(cfg *Config) NetworkDiscoveryDefaults {
 			},
 			ARPScan: cfg.NetworkDiscovery.Options.ARPScan, ICMPScan: cfg.NetworkDiscovery.Options.ICMPScan,
 			PortScan: PortScanDefaults{
-				Enabled:         cfg.NetworkDiscovery.Options.PortScan.Enabled,
-				Preset:          string(cfg.NetworkDiscovery.Options.PortScan.Preset),
-				TCPPorts:        cfg.NetworkDiscovery.Options.PortScan.TCPPorts,
-				UDPPorts:        cfg.NetworkDiscovery.Options.PortScan.UDPPorts,
-				BannerTimeoutMs: cfg.NetworkDiscovery.Options.PortScan.BannerTimeout.Milliseconds(),
+				Enabled:  cfg.NetworkDiscovery.Options.PortScan.Enabled,
+				Preset:   string(cfg.NetworkDiscovery.Options.PortScan.Preset),
+				TCPPorts: cfg.NetworkDiscovery.Options.PortScan.TCPPorts,
+				UDPPorts: cfg.NetworkDiscovery.Options.PortScan.UDPPorts,
 			},
 			TCPProbe: TCPProbeDefaults{
 				TimeoutMs: cfg.NetworkDiscovery.Options.TCPProbe.Timeout.Milliseconds(),
@@ -398,9 +388,7 @@ func buildNetworkDiscoveryDefaults(cfg *Config) NetworkDiscoveryDefaults {
 			Traceroute: cfg.NetworkDiscovery.Options.Traceroute, SNMPQuery: cfg.NetworkDiscovery.Options.SNMPQuery,
 		},
 		Timing: DiscoveryTimingDefaults{
-			ProbeIntervalMs:  cfg.NetworkDiscovery.Timing.ProbeInterval.Milliseconds(),
 			RescanIntervalMs: cfg.NetworkDiscovery.Timing.RescanInterval.Milliseconds(),
-			Workers:          cfg.NetworkDiscovery.Timing.Workers,
 		},
 		Profiler: DeviceProfilerDefaults{
 			Enabled:       cfg.NetworkDiscovery.Profiler.Enabled,

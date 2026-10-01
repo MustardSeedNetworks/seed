@@ -54,9 +54,9 @@ func TestGetTestDefaults(t *testing.T) {
 			)
 		}
 
-		if defaults.NetworkDiscovery.ARPScanWorkers != cfg.NetworkDiscovery.ARPScanWorkers {
-			t.Errorf("concurrency mismatch: test=%d, default=%d",
-				defaults.NetworkDiscovery.ARPScanWorkers, cfg.NetworkDiscovery.ARPScanWorkers)
+		if defaults.NetworkDiscovery.ScanTimeout != cfg.NetworkDiscovery.ScanTimeout {
+			t.Errorf("scan timeout mismatch: test=%s, default=%s",
+				defaults.NetworkDiscovery.ScanTimeout, cfg.NetworkDiscovery.ScanTimeout)
 		}
 	})
 }
@@ -102,15 +102,6 @@ func assertDiscoveryMethods(t *testing.T, cfg *config.Config, arp, icmp, port bo
 
 	if cfg.NetworkDiscovery.Options.PortScan.Enabled != port {
 		t.Errorf("expected PortScan=%v, got %v", port, cfg.NetworkDiscovery.Options.PortScan.Enabled)
-	}
-}
-
-// assertConcurrency checks if the discovery concurrency matches expected.
-func assertConcurrency(t *testing.T, cfg *config.Config, expected int) {
-	t.Helper()
-
-	if cfg.NetworkDiscovery.ARPScanWorkers != expected {
-		t.Errorf("expected concurrency %d, got %d", expected, cfg.NetworkDiscovery.ARPScanWorkers)
 	}
 }
 
@@ -180,13 +171,11 @@ func TestConfigBuilder(t *testing.T) {
 			WithPort(9090).
 			WithInterface("eth0").
 			WithDiscoveryMethods(true, true, true).
-			WithDiscoveryConcurrency(100).
 			Build()
 
 		assertPort(t, cfg, 9090)
 		assertInterface(t, cfg, "eth0")
 		assertDiscoveryMethods(t, cfg, true, true, true)
-		assertConcurrency(t, cfg, 100)
 	})
 
 	t.Run("WithAuth sets credentials", func(t *testing.T) {
@@ -240,14 +229,6 @@ func TestMustBuild(t *testing.T) {
 
 		if err := builder.Validate(); err == nil {
 			t.Error("expected validation error for empty JWT secret")
-		}
-	})
-
-	t.Run("rejects invalid concurrency", func(t *testing.T) {
-		builder := testutil.NewConfigBuilder().WithDiscoveryConcurrency(0)
-
-		if err := builder.Validate(); err == nil {
-			t.Error("expected validation error for zero concurrency")
 		}
 	})
 

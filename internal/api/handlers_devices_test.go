@@ -5,6 +5,8 @@ import (
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
+	"path/filepath"
+	"strings"
 	"testing"
 
 	api "github.com/MustardSeedNetworks/seed/internal/api"
@@ -230,12 +232,9 @@ func TestHandleDevicesSettingsPUT(t *testing.T) {
 	server.SetConfigPath("/tmp/test-config.json")
 
 	reqBody := api.NetworkDiscoverySettingsResponse{
-		Enabled:        true,
-		ARPScanWorkers: 10,
-		PingTimeoutMs:  1000,
-		ScanTimeoutMs:  30000,
-		AutoScan:       false,
-		ScanIntervalMs: 60000,
+		Enabled:       true,
+		ScanTimeoutMs: 30000,
+		AutoScan:      false,
 	}
 	body, _ := json.Marshal(reqBody)
 
@@ -260,6 +259,48 @@ func TestHandleDevicesSettingsPUT(t *testing.T) {
 
 	if resp["status"] != "success" {
 		t.Errorf("Expected status 'success', got %q", resp["status"])
+	}
+}
+
+// TestHandleDevicesSettingsPUTAcceptsTheDrawerBody sends the body the settings
+// drawer actually PUTs (captured from the browser, seed#491) and reads it back.
+// The drawer sends portScan.preset; the wire type had no such field, so the
+// strict decode answered 400 to every discovery save the UI ever made.
+func TestHandleDevicesSettingsPUTAcceptsTheDrawerBody(t *testing.T) {
+	server := api.NewTestServer()
+	defer server.Close()
+	server.SetConfigPath(filepath.Join(t.TempDir(), "config.json"))
+
+	const drawerBody = `{"enabled":true,"scanTimeoutMs":31000,"autoScan":false,"ipv6Enabled":true,` +
+		`"options":{"passiveProtocols":{"lldp":true,"cdp":true,"edp":true,"ndp":true},` +
+		`"arpScan":true,"icmpScan":true,"portScan":{"enabled":false,"tcpPorts":"22,443",` +
+		`"udpPorts":"53","preset":"secure"},"tcpProbe":{"timeoutMs":2000,"workers":20},` +
+		`"traceroute":false,"snmpQuery":false},"timing":{"rescanIntervalMs":180000},` +
+		`"profiler":{"enabled":true,"timeoutMs":2000,"maxConcurrent":5,"quickPorts":[22,80,443,8080]},` +
+		`"fingerprinting":{"enabled":false,"osDetection":false,"serviceProbes":false}}`
+
+	put := httptest.NewRequest(http.MethodPut, "/api/v1/security/devices/settings",
+		strings.NewReader(drawerBody))
+	put.Header.Set("Content-Type", "application/json")
+	putRec := httptest.NewRecorder()
+	server.Mux().ServeHTTP(putRec, put)
+	if putRec.Code != http.StatusOK {
+		t.Fatalf("PUT status = %d, want 200: %s", putRec.Code, putRec.Body.String())
+	}
+
+	getRec := httptest.NewRecorder()
+	server.Mux().ServeHTTP(getRec,
+		httptest.NewRequest(http.MethodGet, "/api/v1/security/devices/settings", http.NoBody))
+	var got api.NetworkDiscoverySettingsResponse
+	if err := json.NewDecoder(getRec.Body).Decode(&got); err != nil {
+		t.Fatalf("decode GET: %v", err)
+	}
+	if got.Timing.RescanIntervalMs != 180000 || got.ScanTimeoutMs != 31000 {
+		t.Errorf("timers = rescan %d ms, scan %d ms; want 180000 and 31000",
+			got.Timing.RescanIntervalMs, got.ScanTimeoutMs)
+	}
+	if got.Options.PortScan.Preset != "secure" {
+		t.Errorf("portScan.preset = %q, want %q", got.Options.PortScan.Preset, "secure")
 	}
 }
 
@@ -607,14 +648,11 @@ func TestHandlePublicIPMethodNotAllowed(t *testing.T) {
 // TestNetworkDiscoverySettingsResponseFields tests that settings response has expected fields.
 func TestNetworkDiscoverySettingsResponseFields(t *testing.T) {
 	resp := api.NetworkDiscoverySettingsResponse{
-		Enabled:        true,
-		ARPScanWorkers: 10,
-		PingTimeoutMs:  500,
-		ScanTimeoutMs:  30000,
-		AutoScan:       true,
-		ScanIntervalMs: 60000,
-		OUIFilePath:    "/var/lib/seed/oui.txt",
-		IPv6Enabled:    true,
+		Enabled:       true,
+		ScanTimeoutMs: 30000,
+		AutoScan:      true,
+		OUIFilePath:   "/var/lib/seed/oui.txt",
+		IPv6Enabled:   true,
 		Options: api.OptionsResponse{
 			PassiveProtocols: api.PassiveProtocolResponse{
 				LLDP: true,
@@ -625,10 +663,9 @@ func TestNetworkDiscoverySettingsResponseFields(t *testing.T) {
 			ARPScan:  true,
 			ICMPScan: true,
 			PortScan: api.PortScanResponse{
-				Enabled:         true,
-				TCPPorts:        "22,80,443",
-				UDPPorts:        "53,161",
-				BannerTimeoutMs: 2000,
+				Enabled:  true,
+				TCPPorts: "22,80,443",
+				UDPPorts: "53,161",
 			},
 			TCPProbe: api.TCPProbeSettingsResponse{
 				TimeoutMs: 1000,
@@ -638,9 +675,7 @@ func TestNetworkDiscoverySettingsResponseFields(t *testing.T) {
 			SNMPQuery:  true,
 		},
 		Timing: api.TimingResponse{
-			ProbeIntervalMs:  100,
 			RescanIntervalMs: 300000,
-			Workers:          5,
 		},
 		Profiler: api.ProfilerResponse{
 			Enabled:       true,
@@ -659,20 +694,11 @@ func TestNetworkDiscoverySettingsResponseFields(t *testing.T) {
 	if !resp.Enabled {
 		t.Error("Expected Enabled to be true")
 	}
-	if resp.ARPScanWorkers != 10 {
-		t.Errorf("Expected ARPScanWorkers 10, got %d", resp.ARPScanWorkers)
-	}
-	if resp.PingTimeoutMs != 500 {
-		t.Errorf("Expected PingTimeoutMs 500, got %d", resp.PingTimeoutMs)
-	}
 	if resp.ScanTimeoutMs != 30000 {
 		t.Errorf("Expected ScanTimeoutMs 30000, got %d", resp.ScanTimeoutMs)
 	}
 	if !resp.AutoScan {
 		t.Error("Expected AutoScan to be true")
-	}
-	if resp.ScanIntervalMs != 60000 {
-		t.Errorf("Expected ScanIntervalMs 60000, got %d", resp.ScanIntervalMs)
 	}
 	if resp.OUIFilePath != "/var/lib/seed/oui.txt" {
 		t.Errorf("Expected OUIFilePath /var/lib/seed/oui.txt, got %q", resp.OUIFilePath)
@@ -686,8 +712,8 @@ func TestNetworkDiscoverySettingsResponseFields(t *testing.T) {
 	if !resp.Options.PortScan.Enabled {
 		t.Error("Expected PortScan to be enabled")
 	}
-	if resp.Timing.Workers != 5 {
-		t.Errorf("Expected Timing.Workers 5, got %d", resp.Timing.Workers)
+	if resp.Timing.RescanIntervalMs != 300000 {
+		t.Errorf("Expected Timing.RescanIntervalMs 300000, got %d", resp.Timing.RescanIntervalMs)
 	}
 	if !resp.Profiler.Enabled {
 		t.Error("Expected Profiler to be enabled")

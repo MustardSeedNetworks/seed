@@ -138,7 +138,6 @@ export interface PortScanDefaults {
   preset: string;
   tcpPorts: string;
   udpPorts: string;
-  bannerTimeoutMs: number;
 }
 
 export interface TcpProbeDefaults {
@@ -157,9 +156,7 @@ export interface DiscoveryOptionsDefaults {
 }
 
 export interface DiscoveryTimingDefaults {
-  probeIntervalMs: number;
   rescanIntervalMs: number;
-  workers: number;
 }
 
 export interface DeviceProfilerDefaults {
@@ -177,11 +174,8 @@ export interface FingerprintingDefaults {
 
 export interface NetworkDiscoveryDefaults {
   enabled: boolean;
-  arpScanWorkers: number;
-  pingTimeoutMs: number;
   scanTimeoutMs: number;
   autoScan: boolean;
-  scanIntervalMs: number;
   ipv6Enabled: boolean;
   options: DiscoveryOptionsDefaults;
   timing: DiscoveryTimingDefaults;

@@ -11,7 +11,6 @@ import {
 } from '../../../../styles/theme';
 import type { NetworkDiscoverySettings } from '../../../../types/settings';
 import { PORT_PRESETS } from './DiscoveryCustomOptions.constants';
-import { DiscoveryPerformanceTiming } from './DiscoveryPerformanceTiming';
 import { DiscoveryPortScanDetails } from './DiscoveryPortScanDetails';
 
 interface DiscoveryCustomOptionsProps {
@@ -41,7 +40,6 @@ export const DiscoveryCustomOptions: React.NamedExoticComponent<DiscoveryCustomO
               preset,
               tcpPorts: presetConfig.tcp,
               udpPorts: presetConfig.udp,
-              bannerTimeoutMs: prev.options?.portScan?.bannerTimeoutMs ?? 2000,
             },
           },
         }));
@@ -219,7 +217,6 @@ export const DiscoveryCustomOptions: React.NamedExoticComponent<DiscoveryCustomO
                       preset: prev.options?.portScan?.preset ?? 'common',
                       tcpPorts: prev.options?.portScan?.tcpPorts ?? '22,80,443',
                       udpPorts: prev.options?.portScan?.udpPorts ?? '53,161',
-                      bannerTimeoutMs: prev.options?.portScan?.bannerTimeoutMs ?? 2000,
                     },
                   },
                 }))
@@ -353,8 +350,6 @@ export const DiscoveryCustomOptions: React.NamedExoticComponent<DiscoveryCustomO
             />
             <span className="body-small text-text-primary">{t('discovery.snmpQueries')}</span>
           </label>
-
-          <DiscoveryPerformanceTiming settings={settings} onSettingsChange={onSettingsChange} />
         </div>
       </div>
     );

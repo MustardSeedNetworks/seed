@@ -16,11 +16,8 @@ const noop = (): void => {
 
 export const defaultSettings: NetworkDiscoverySettings = {
   enabled: true,
-  arpScanWorkers: 50,
-  pingTimeoutMs: 500,
   scanTimeoutMs: 30000,
   autoScan: false,
-  scanIntervalMs: 0,
   options: {
     passiveProtocols: {
       lldp: true,
@@ -35,7 +32,6 @@ export const defaultSettings: NetworkDiscoverySettings = {
       preset: 'common',
       tcpPorts: '',
       udpPorts: '',
-      bannerTimeoutMs: 3000,
     },
     tcpProbe: {
       timeoutMs: 3000,
@@ -45,9 +41,7 @@ export const defaultSettings: NetworkDiscoverySettings = {
     snmpQuery: false,
   },
   timing: {
-    probeIntervalMs: 100,
     rescanIntervalMs: 300000,
-    workers: 50,
   },
   profiler: {
     enabled: true,
