@@ -5,6 +5,33 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.220.0](https://github.com/MustardSeedNetworks/seed/compare/v0.219.0...v0.220.0) (2026-10-01)
+
+
+### Features
+
+* **settings:** name the device and show it in the header and tab title ([#2929](https://github.com/MustardSeedNetworks/seed/issues/2929)) ([f9c8743](https://github.com/MustardSeedNetworks/seed/commit/f9c8743fed12881c1540db16c8e28bdb077b93d4))
+
+
+### Bug Fixes
+
+* **ci:** remove steps that check nothing and run i18n on locale PRs ([#2935](https://github.com/MustardSeedNetworks/seed/issues/2935)) ([5a44fff](https://github.com/MustardSeedNetworks/seed/commit/5a44fffa6baa210f24725059df4d6b68dedcee79)), closes [#2636](https://github.com/MustardSeedNetworks/seed/issues/2636)
+* **i18n:** render API messages that take data and write the missing copy ([#2932](https://github.com/MustardSeedNetworks/seed/issues/2932)) ([35fd9bd](https://github.com/MustardSeedNetworks/seed/commit/35fd9bd5014d82c570c2fc143ca59e2023be4741)), closes [#2299](https://github.com/MustardSeedNetworks/seed/issues/2299)
+* **ui:** close the Bluetooth table on Escape and return focus from dialogs ([#2942](https://github.com/MustardSeedNetworks/seed/issues/2942)) ([eb4a6c1](https://github.com/MustardSeedNetworks/seed/commit/eb4a6c1535a3eedc0233489471c2b961a9865f78))
+* **ui:** name withheld Wi-Fi clients as a Pro boundary, not zero ([#2934](https://github.com/MustardSeedNetworks/seed/issues/2934)) ([2059b7a](https://github.com/MustardSeedNetworks/seed/commit/2059b7aeec68f5f4f49bbb72110608fc5d2aa733)), closes [#2889](https://github.com/MustardSeedNetworks/seed/issues/2889)
+
+
+### Tests
+
+* **e2e:** gate every page and overlay on axe and keyboard focus ([#2937](https://github.com/MustardSeedNetworks/seed/issues/2937)) ([415aaf8](https://github.com/MustardSeedNetworks/seed/commit/415aaf8c8984ec869822d1a9447239aad5aa6082))
+* **storybook:** gate the five excluded stories and expanded settings sections ([#2941](https://github.com/MustardSeedNetworks/seed/issues/2941)) ([c74e25e](https://github.com/MustardSeedNetworks/seed/commit/c74e25e9a9f8b64273c785742a935901c1974a36))
+
+
+### Miscellaneous
+
+* **deps:** update dependency vite to v8.3.1 ([#2939](https://github.com/MustardSeedNetworks/seed/issues/2939)) ([885b72f](https://github.com/MustardSeedNetworks/seed/commit/885b72f3f4e4c3cefbf5bdc1bf88d29602ca8850))
+* **deps:** update github/codeql-action action to v4.38.2 ([#2940](https://github.com/MustardSeedNetworks/seed/issues/2940)) ([dc31d65](https://github.com/MustardSeedNetworks/seed/commit/dc31d65e6a588bfdc461eadb82290bfbb4f4a2a4))
+
 ## [0.219.0](https://github.com/MustardSeedNetworks/seed/compare/v0.218.0...v0.219.0) (2026-10-01)
 
 
