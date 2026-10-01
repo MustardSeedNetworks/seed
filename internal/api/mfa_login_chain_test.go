@@ -25,6 +25,7 @@ import (
 	"github.com/MustardSeedNetworks/seed/internal/api"
 	"github.com/MustardSeedNetworks/seed/internal/auth"
 	"github.com/MustardSeedNetworks/seed/internal/database"
+	"github.com/MustardSeedNetworks/seed/internal/database/dbtest"
 	"github.com/MustardSeedNetworks/seed/internal/netif"
 	"github.com/MustardSeedNetworks/seed/internal/testutil"
 )
@@ -53,7 +54,7 @@ func TestSecondFactorLoginSurvivesTheMiddlewareChain(t *testing.T) {
 	t.Cleanup(api.ResetMFAAttempts)
 
 	dir := t.TempDir()
-	db, err := database.Open(filepath.Join(dir, "mfa-chain.db"))
+	db, err := database.Open(dbtest.Path(t))
 	if err != nil {
 		t.Fatalf("open database: %v", err)
 	}

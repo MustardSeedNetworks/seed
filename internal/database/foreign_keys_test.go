@@ -10,6 +10,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/MustardSeedNetworks/seed/internal/database"
+	"github.com/MustardSeedNetworks/seed/internal/database/dbtest"
 )
 
 const foreignKeyTestClientID = "foreign-key-parent"
@@ -28,7 +29,7 @@ func TestForeignKeysEnforcedOnEveryPooledConnection(t *testing.T) {
 }
 
 func TestForeignKeysRemainEnabledAfterReopen(t *testing.T) {
-	path := filepath.Join(t.TempDir(), "reopen.db")
+	path := dbtest.Path(t)
 	db := openPooledTestDB(t, path)
 	require.NoError(t, db.Close())
 

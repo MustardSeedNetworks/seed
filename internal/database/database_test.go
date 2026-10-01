@@ -13,14 +13,14 @@ import (
 
 	alertmodel "github.com/MustardSeedNetworks/seed/internal/alerts"
 	"github.com/MustardSeedNetworks/seed/internal/database"
+	"github.com/MustardSeedNetworks/seed/internal/database/dbtest"
 )
 
 // testDB creates a temporary database for testing.
 func testDB(t *testing.T) (*database.DB, func()) {
 	t.Helper()
 
-	tmpDir := t.TempDir()
-	dbPath := filepath.Join(tmpDir, "test.db")
+	dbPath := dbtest.Path(t)
 
 	db, err := database.Open(dbPath)
 	if err != nil {

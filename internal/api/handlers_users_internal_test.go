@@ -6,10 +6,10 @@ import (
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
-	"os"
 	"testing"
 
 	"github.com/MustardSeedNetworks/seed/internal/database"
+	"github.com/MustardSeedNetworks/seed/internal/database/dbtest"
 	"github.com/MustardSeedNetworks/seed/internal/license"
 )
 
@@ -20,15 +20,7 @@ import (
 // mgr.StartTrial() when they need it.
 func usersTestSetup(t *testing.T) (*Server, *license.Manager) {
 	t.Helper()
-	tmpFile, err := os.CreateTemp(t.TempDir(), "seed-users-*.db")
-	if err != nil {
-		t.Fatalf("temp db file: %v", err)
-	}
-	tmpPath := tmpFile.Name()
-	_ = tmpFile.Close()
-	t.Cleanup(func() { _ = os.Remove(tmpPath) })
-
-	db, openErr := database.Open(tmpPath)
+	db, openErr := database.Open(dbtest.Path(t))
 	if openErr != nil {
 		t.Fatalf("open db: %v", openErr)
 	}
@@ -245,12 +237,7 @@ func TestCurrentUser_ReturnsCallerOwnRecord(t *testing.T) {
 
 func TestUpsertSSOUser_FirstEverBecomesAdmin(t *testing.T) {
 	t.Parallel()
-	tmpFile, _ := os.CreateTemp(t.TempDir(), "seed-sso-*.db")
-	tmpPath := tmpFile.Name()
-	_ = tmpFile.Close()
-	t.Cleanup(func() { _ = os.Remove(tmpPath) })
-
-	db, err := database.Open(tmpPath)
+	db, err := database.Open(dbtest.Path(t))
 	if err != nil {
 		t.Fatalf("open db: %v", err)
 	}
@@ -286,12 +273,7 @@ func TestUpsertSSOUser_FirstEverBecomesAdmin(t *testing.T) {
 
 func TestUpsertSSOUser_SubsequentDefaultsToViewer(t *testing.T) {
 	t.Parallel()
-	tmpFile, _ := os.CreateTemp(t.TempDir(), "seed-sso2-*.db")
-	tmpPath := tmpFile.Name()
-	_ = tmpFile.Close()
-	t.Cleanup(func() { _ = os.Remove(tmpPath) })
-
-	db, err := database.Open(tmpPath)
+	db, err := database.Open(dbtest.Path(t))
 	if err != nil {
 		t.Fatalf("open db: %v", err)
 	}

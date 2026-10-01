@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/MustardSeedNetworks/seed/internal/database"
+	"github.com/MustardSeedNetworks/seed/internal/database/dbtest"
 	"github.com/MustardSeedNetworks/seed/internal/topology"
 )
 
@@ -17,7 +18,7 @@ import (
 func TestNodeForMAC_ResolvesThroughInterfacePhysAddress(t *testing.T) {
 	t.Parallel()
 	ctx := context.Background()
-	db, err := database.Open(t.TempDir() + "/seed.db")
+	db, err := database.Open(dbtest.Path(t))
 	if err != nil {
 		t.Fatalf("open db: %v", err)
 	}
@@ -52,7 +53,7 @@ func TestNodeForMAC_ResolvesThroughInterfacePhysAddress(t *testing.T) {
 func TestNodeForMAC_UnknownMACIsNotFound(t *testing.T) {
 	t.Parallel()
 	ctx := context.Background()
-	db, err := database.Open(t.TempDir() + "/seed.db")
+	db, err := database.Open(dbtest.Path(t))
 	if err != nil {
 		t.Fatalf("open db: %v", err)
 	}
@@ -77,7 +78,7 @@ func TestNodeForMAC_UnknownMACIsNotFound(t *testing.T) {
 func TestNodeForMAC_IsScopedToTheClient(t *testing.T) {
 	t.Parallel()
 	ctx := context.Background()
-	db, err := database.Open(t.TempDir() + "/seed.db")
+	db, err := database.Open(dbtest.Path(t))
 	if err != nil {
 		t.Fatalf("open db: %v", err)
 	}

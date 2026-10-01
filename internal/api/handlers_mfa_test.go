@@ -15,7 +15,6 @@ import (
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
-	"path/filepath"
 	"testing"
 	"time"
 
@@ -27,6 +26,7 @@ import (
 	api "github.com/MustardSeedNetworks/seed/internal/api"
 	"github.com/MustardSeedNetworks/seed/internal/auth"
 	"github.com/MustardSeedNetworks/seed/internal/database"
+	"github.com/MustardSeedNetworks/seed/internal/database/dbtest"
 )
 
 // testUserPassword is the bcrypt/argon2 input used to seed the test
@@ -51,8 +51,7 @@ func newMFAFixture(t *testing.T) *mfaTestFixture {
 	api.ResetMFAAttempts()
 	t.Cleanup(api.ResetMFAAttempts)
 
-	dbPath := filepath.Join(t.TempDir(), "mfa-test.db")
-	db, err := database.Open(dbPath)
+	db, err := database.Open(dbtest.Path(t))
 	require.NoError(t, err)
 	t.Cleanup(func() { _ = db.Close() })
 

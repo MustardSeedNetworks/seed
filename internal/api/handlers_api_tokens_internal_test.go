@@ -8,12 +8,12 @@ import (
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
-	"os"
 	"strings"
 	"testing"
 
 	"github.com/MustardSeedNetworks/seed/internal/auth"
 	"github.com/MustardSeedNetworks/seed/internal/database"
+	"github.com/MustardSeedNetworks/seed/internal/database/dbtest"
 	"github.com/MustardSeedNetworks/seed/internal/license"
 )
 
@@ -22,15 +22,7 @@ import (
 // tmpdir so test runs don't touch the developer's real license.
 func apiTokenTestSetup(t *testing.T) (*Server, *license.Manager) {
 	t.Helper()
-	tmpFile, err := os.CreateTemp(t.TempDir(), "seed-token-*.db")
-	if err != nil {
-		t.Fatalf("temp db file: %v", err)
-	}
-	tmpPath := tmpFile.Name()
-	_ = tmpFile.Close()
-	t.Cleanup(func() { _ = os.Remove(tmpPath) })
-
-	db, openErr := database.Open(tmpPath)
+	db, openErr := database.Open(dbtest.Path(t))
 	if openErr != nil {
 		t.Fatalf("open db: %v", openErr)
 	}
