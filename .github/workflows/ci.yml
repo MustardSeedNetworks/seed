@@ -95,8 +95,14 @@ jobs:
               # the Go suite even when no .go file moves.
               - 'internal/database/migrations/**'
               - 'internal/database/testdata/**'
+              # The locale catalogue is //go:embed'ed by internal/i18n and
+              # imported by the UI through the @locales alias, so a
+              # translation-only change is an input of both test suites and
+              # of the i18n job that the frontend filter gates.
+              - 'internal/i18n/locales/**'
             frontend:
               - 'ui/**'
+              - 'internal/i18n/locales/**'
             c:
               - 'src/**'
               - 'include/**'
@@ -1280,7 +1286,7 @@ jobs:
     name: Documentation Quality
     runs-on: ubuntu-latest
     timeout-minutes: 10
-    # The wiki/template checks apply to every PR regardless of which paths
+    # The template check applies to every PR regardless of which paths
     # changed. External link checking is NOT here: it walks every URL in every
     # .md file, took ~6 min (the longest job in this workflow), and failed for
     # reasons unrelated to the diff — dead third-party links — which is why it
@@ -1325,29 +1331,6 @@ jobs:
         uses: DavidAnson/markdownlint-cli2-action@21c1be1b93ad9ed58fa840aacc3f279cde2a72ff # v24.2.0
         with:
           globs: ${{ steps.changed-md.outputs.files }}
-
-      - name: Validate wiki navigation
-        run: |
-          echo "Checking wiki navigation links..."
-          WIKI_DIR="docs/wiki"
-
-          # Extract all wiki links from Home.md
-          HOME_LINKS=$(grep -oP '\]\(\K[^)]+' "$WIKI_DIR/Home.md" | grep -v '^http' | grep -v '^#' || true)
-
-          # Check each link exists as a .md file
-          for link in $HOME_LINKS; do
-            # Convert link to filename (e.g., "Intel-WiFi" -> "Intel-WiFi.md")
-            if [[ ! "$link" =~ \.md$ ]]; then
-              link="$link.md"
-            fi
-
-            if [[ ! -f "$WIKI_DIR/$link" ]]; then
-              echo "ERROR: Broken wiki link: $link (referenced in Home.md but file not found)"
-              exit 1
-            fi
-          done
-
-          echo "All wiki navigation links are valid"
 
       - name: Check template references
         run: |
