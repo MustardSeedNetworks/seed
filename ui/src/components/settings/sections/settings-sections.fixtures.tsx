@@ -337,6 +337,6 @@ export const API_GET_BODIES: Record<string, unknown> = {
   },
   '/api/v1/settings': {
     alerts: { webhook: { url: 'https://hooks.example.test/seed', secretSet: true } },
-    identity: { name: 'seed-idf-3b', location: 'Main Office, IDF 3B' },
+    identity: { name: 'seed-idf-3b', location: 'idf-3b-rack-12' },
   },
 };
