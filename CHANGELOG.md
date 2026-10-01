@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.219.0](https://github.com/MustardSeedNetworks/seed/compare/v0.218.0...v0.219.0) (2026-10-01)
+
+
+### Features
+
+* **settings:** discovery timing in minutes and seconds; drop the timers nothing read ([#2927](https://github.com/MustardSeedNetworks/seed/issues/2927)) ([38515f2](https://github.com/MustardSeedNetworks/seed/commit/38515f2f796cb9dd843a3204dbc783869b7e537a)), closes [#491](https://github.com/MustardSeedNetworks/seed/issues/491)
+* **ui:** collapse the Network card's secondary facts into a Details group ([#2924](https://github.com/MustardSeedNetworks/seed/issues/2924)) ([a2fdc4c](https://github.com/MustardSeedNetworks/seed/commit/a2fdc4c7e783cbd8aff9087e927771d54e9f1653)), closes [#123](https://github.com/MustardSeedNetworks/seed/issues/123)
+
 ## [0.218.0](https://github.com/MustardSeedNetworks/seed/compare/v0.217.5...v0.218.0) (2026-09-30)
 
 
