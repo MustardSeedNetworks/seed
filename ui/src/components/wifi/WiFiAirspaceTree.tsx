@@ -3,6 +3,7 @@ import type { APGroup, BSSView, SSIDGroup } from '../../types/generated/wifi-air
 
 interface WiFiAirspaceTreeProps {
   ssids: SSIDGroup[];
+  clientsWithheld: boolean;
 }
 
 function ssidLabel(g: SSIDGroup): string {
@@ -50,7 +51,7 @@ function BSSRows({ ap }: { ap: APGroup }) {
  * hierarchy as collapsible sections. Protocol terms (SSID, BSSID, dBm, 802.11
  * standards) are shown verbatim.
  */
-export function WiFiAirspaceTree({ ssids }: WiFiAirspaceTreeProps) {
+export function WiFiAirspaceTree({ ssids, clientsWithheld }: WiFiAirspaceTreeProps) {
   const { t } = useTranslation('pages');
   if (ssids.length === 0) {
     return (
@@ -71,7 +72,8 @@ export function WiFiAirspaceTree({ ssids }: WiFiAirspaceTreeProps) {
           <summary className="cursor-pointer text-sm font-medium text-text-primary">
             {ssidLabel(g)}{' '}
             <span className="text-xs font-normal text-text-muted">
-              ({g.apCount} AP / {g.bssCount} BSSID / {g.stationCount} clients)
+              ({g.apCount} AP / {g.bssCount} BSSID
+              {clientsWithheld ? '' : ` / ${g.stationCount} clients`})
             </span>
           </summary>
           <div className="mt-inline stack-xs">

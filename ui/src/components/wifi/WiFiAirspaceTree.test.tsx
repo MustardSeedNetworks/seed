@@ -51,12 +51,12 @@ const group: SSIDGroup = {
 
 describe('WiFiAirspaceTree', () => {
   it('shows an empty state with no SSIDs', () => {
-    render(<WiFiAirspaceTree ssids={[]} />);
+    render(<WiFiAirspaceTree clientsWithheld={false} ssids={[]} />);
     expect(screen.getByTestId('wifi-airspace-empty')).toBeInTheDocument();
   });
 
   it('renders the SSID -> AP -> BSSID -> client hierarchy', () => {
-    render(<WiFiAirspaceTree ssids={[group]} />);
+    render(<WiFiAirspaceTree clientsWithheld={false} ssids={[group]} />);
     expect(screen.getByTestId('wifi-airspace-tree')).toBeInTheDocument();
     expect(screen.getByText('corp')).toBeInTheDocument();
     expect(screen.getByTestId('wifi-bss')).toHaveTextContent('00:11:22:33:44:55');
@@ -64,7 +64,9 @@ describe('WiFiAirspaceTree', () => {
   });
 
   it('labels a cloaked SSID rather than showing a blank name', () => {
-    render(<WiFiAirspaceTree ssids={[{ ...group, ssid: '', hidden: true }]} />);
+    render(
+      <WiFiAirspaceTree clientsWithheld={false} ssids={[{ ...group, ssid: '', hidden: true }]} />,
+    );
     expect(screen.getByText('(hidden SSID)')).toBeInTheDocument();
   });
 });

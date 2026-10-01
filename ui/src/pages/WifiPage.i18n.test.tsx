@@ -130,7 +130,9 @@ describe('WifiPage — real locale copy', () => {
 
     expect(screen.getByText('Wi-Fi Airspace')).toBeVisible();
     expect(
-      screen.getByText('Live SSID / AP / BSSID / client map from 802.11 management-frame capture.'),
+      screen.getByText(
+        'SSID / AP / BSSID / client map from Wi-Fi scans, plus 802.11 management-frame capture when monitor mode is on.',
+      ),
     ).toBeVisible();
     expect(screen.getByText('Wi-Fi Anomalies')).toBeVisible();
     expect(screen.getByText('Loading airspace…')).toBeVisible();
@@ -143,7 +145,7 @@ describe('WifiPage — real locale copy', () => {
     for (const english of [
       'Wi-Fi Airspace',
       'Wi-Fi Anomalies',
-      'Live SSID / AP / BSSID / client map from 802.11 management-frame capture.',
+      'SSID / AP / BSSID / client map from Wi-Fi scans, plus 802.11 management-frame capture when monitor mode is on.',
       'Security, RF, roaming, and standards anomalies detected in the airspace.',
       'Loading airspace…',
     ]) {
