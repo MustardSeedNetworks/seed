@@ -40,9 +40,10 @@ declare global {
 
 type Violation = { id: string; impact: string | null; nodes: string[] };
 
-async function axeViolations(page: Page): Promise<Violation[]> {
-  const violations = await page.evaluate(async () => {
-    const report = await window.axe.run(document, {
+/** `within` scopes the run to an overlay whose page is already walked. */
+async function axeViolations(page: Page, within?: string): Promise<Violation[]> {
+  const violations = await page.evaluate(async (selector) => {
+    const report = await window.axe.run(selector ? { include: [[selector]] } : document, {
       runOnly: ['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'wcag22aa'],
       rules: { 'color-contrast': { enabled: false } },
     });
@@ -51,7 +52,7 @@ async function axeViolations(page: Page): Promise<Violation[]> {
       impact: impact ?? null,
       nodes: nodes.map(({ html }) => html.slice(0, 200)),
     }));
-  });
+  }, within);
   await test.info().attach('axe-violations.json', {
     body: JSON.stringify(violations, null, 2),
     contentType: 'application/json',
@@ -83,6 +84,9 @@ for (const width of [1440, 390]) {
     }
 
     test('the open settings drawer has no axe violations', async ({ page }) => {
+      // Eighteen expansions and an axe pass over the full drawer: on webkit
+      // under four CI workers that is over 30 s of real work, not a wait.
+      test.slow();
       await page.goto('/link');
       await expect(page.getByTestId('page-header-title')).toBeVisible();
       if (width < 1024) await page.getByTestId('mobile-menu-toggle').click();
@@ -98,7 +102,7 @@ for (const width of [1440, 390]) {
       }
       await expect(collapsed).toHaveCount(0);
       await page.waitForLoadState('networkidle');
-      expect(await axeViolations(page)).toEqual([]);
+      expect(await axeViolations(page, '[data-testid="settings-drawer"]')).toEqual([]);
     });
 
     test('the open help drawer has no axe violations', async ({ page }) => {
