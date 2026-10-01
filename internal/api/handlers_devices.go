@@ -186,14 +186,10 @@ func (s *Server) handleDevicesStatus(w http.ResponseWriter, r *http.Request) {
 
 // NetworkDiscoverySettingsResponse represents network discovery settings.
 type NetworkDiscoverySettingsResponse struct {
-	// Legacy fields (backward compatibility)
-	Enabled        bool   `json:"enabled"`
-	ARPScanWorkers int    `json:"arpScanWorkers"`
-	PingTimeoutMs  int64  `json:"pingTimeoutMs"`
-	ScanTimeoutMs  int64  `json:"scanTimeoutMs"`
-	AutoScan       bool   `json:"autoScan"`
-	ScanIntervalMs int64  `json:"scanIntervalMs"`
-	OUIFilePath    string `json:"ouiFilePath"`
+	Enabled       bool   `json:"enabled"`
+	ScanTimeoutMs int64  `json:"scanTimeoutMs"`
+	AutoScan      bool   `json:"autoScan"`
+	OUIFilePath   string `json:"ouiFilePath"`
 
 	// Direct options configuration (profiles removed in favor of direct settings).
 	Options        OptionsResponse        `json:"options"`
@@ -213,10 +209,10 @@ type PassiveProtocolResponse struct {
 
 // PortScanResponse represents port scanning settings.
 type PortScanResponse struct {
-	Enabled         bool   `json:"enabled"`
-	TCPPorts        string `json:"tcpPorts"`
-	UDPPorts        string `json:"udpPorts"`
-	BannerTimeoutMs int64  `json:"bannerTimeoutMs"`
+	Enabled  bool   `json:"enabled"`
+	Preset   string `json:"preset"`
+	TCPPorts string `json:"tcpPorts"`
+	UDPPorts string `json:"udpPorts"`
 }
 
 // TCPProbeSettingsResponse represents TCP probe settings in the discovery config.
@@ -238,9 +234,7 @@ type OptionsResponse struct {
 
 // TimingResponse represents discovery timing settings.
 type TimingResponse struct {
-	ProbeIntervalMs  int64 `json:"probeIntervalMs"`
 	RescanIntervalMs int64 `json:"rescanIntervalMs"`
-	Workers          int   `json:"workers"`
 }
 
 // ProfilerResponse represents device profiler settings.
@@ -288,7 +282,7 @@ func (s *Server) getDevicesSettings(w http.ResponseWriter, r *http.Request) {
 
 // updateDevicesSettings persists the network-discovery settings. Thin transport:
 // decode the wire DTO, map it to the domain update, delegate the merge/persist to
-// the service, and map a store error to 500.
+// the service, and map a bad preset to 400 and a store or reload error to 500.
 func (s *Server) updateDevicesSettings(w http.ResponseWriter, r *http.Request) {
 	logger := logging.FromContext(r.Context())
 	localizer := i18n.FromRequest(r)
@@ -299,7 +293,13 @@ func (s *Server) updateDevicesSettings(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := s.discoverySettings.Update(requestToDiscoveryUpdate(req)); err != nil {
+	err := s.discoverySettings.Update(requestToDiscoveryUpdate(req))
+	if errors.Is(err, discoverysettings.ErrInvalidPortPreset) {
+		sendErrorResponseWithDetails(
+			w, logger, http.StatusBadRequest, ErrCodeBadRequest, "Invalid port-scan preset", "")
+		return
+	}
+	if err != nil {
 		logger.ErrorContext(r.Context(), "Failed to save discovery settings", "error", err)
 		sendErrorResponseWithDetails(
 			w, logger, http.StatusInternalServerError, ErrCodeInternal,
@@ -318,14 +318,11 @@ func (s *Server) updateDevicesSettings(w http.ResponseWriter, r *http.Request) {
 // (duration → milliseconds). Pure transport serialization.
 func discoveryConfigToResponse(cfg config.NetworkDiscoveryConfig) NetworkDiscoverySettingsResponse {
 	return NetworkDiscoverySettingsResponse{
-		Enabled:        cfg.Enabled,
-		ARPScanWorkers: cfg.ARPScanWorkers,
-		PingTimeoutMs:  cfg.PingTimeout.Milliseconds(),
-		ScanTimeoutMs:  cfg.ScanTimeout.Milliseconds(),
-		AutoScan:       cfg.AutoScan,
-		ScanIntervalMs: cfg.ScanInterval.Milliseconds(),
-		OUIFilePath:    cfg.OUIFilePath,
-		IPv6Enabled:    cfg.IPv6Enabled,
+		Enabled:       cfg.Enabled,
+		ScanTimeoutMs: cfg.ScanTimeout.Milliseconds(),
+		AutoScan:      cfg.AutoScan,
+		OUIFilePath:   cfg.OUIFilePath,
+		IPv6Enabled:   cfg.IPv6Enabled,
 		Options: OptionsResponse{
 			PassiveProtocols: PassiveProtocolResponse{
 				LLDP: cfg.Options.PassiveProtocols.LLDP,
@@ -336,10 +333,10 @@ func discoveryConfigToResponse(cfg config.NetworkDiscoveryConfig) NetworkDiscove
 			ARPScan:  cfg.Options.ARPScan,
 			ICMPScan: cfg.Options.ICMPScan,
 			PortScan: PortScanResponse{
-				Enabled:         cfg.Options.PortScan.Enabled,
-				TCPPorts:        cfg.Options.PortScan.TCPPorts,
-				UDPPorts:        cfg.Options.PortScan.UDPPorts,
-				BannerTimeoutMs: cfg.Options.PortScan.BannerTimeout.Milliseconds(),
+				Enabled:  cfg.Options.PortScan.Enabled,
+				Preset:   string(cfg.Options.PortScan.Preset),
+				TCPPorts: cfg.Options.PortScan.TCPPorts,
+				UDPPorts: cfg.Options.PortScan.UDPPorts,
 			},
 			TCPProbe: TCPProbeSettingsResponse{
 				TimeoutMs: cfg.Options.TCPProbe.Timeout.Milliseconds(),
@@ -349,9 +346,7 @@ func discoveryConfigToResponse(cfg config.NetworkDiscoveryConfig) NetworkDiscove
 			SNMPQuery:  cfg.Options.SNMPQuery,
 		},
 		Timing: TimingResponse{
-			ProbeIntervalMs:  cfg.Timing.ProbeInterval.Milliseconds(),
 			RescanIntervalMs: cfg.Timing.RescanInterval.Milliseconds(),
-			Workers:          cfg.Timing.Workers,
 		},
 		Profiler: ProfilerResponse{
 			Enabled:       cfg.Profiler.Enabled,
@@ -371,14 +366,11 @@ func discoveryConfigToResponse(cfg config.NetworkDiscoveryConfig) NetworkDiscove
 // transport mapping; the field-specific merge rules live in the service.
 func requestToDiscoveryUpdate(req NetworkDiscoverySettingsResponse) discoverysettings.Update {
 	return discoverysettings.Update{
-		Enabled:        req.Enabled,
-		ARPScanWorkers: req.ARPScanWorkers,
-		PingTimeoutMs:  req.PingTimeoutMs,
-		ScanTimeoutMs:  req.ScanTimeoutMs,
-		AutoScan:       req.AutoScan,
-		ScanIntervalMs: req.ScanIntervalMs,
-		OUIFilePath:    req.OUIFilePath,
-		IPv6Enabled:    req.IPv6Enabled,
+		Enabled:       req.Enabled,
+		ScanTimeoutMs: req.ScanTimeoutMs,
+		AutoScan:      req.AutoScan,
+		OUIFilePath:   req.OUIFilePath,
+		IPv6Enabled:   req.IPv6Enabled,
 		Options: discoverysettings.OptionsUpdate{
 			PassiveProtocols: discoverysettings.PassiveProtocolsUpdate{
 				LLDP: req.Options.PassiveProtocols.LLDP,
@@ -389,10 +381,10 @@ func requestToDiscoveryUpdate(req NetworkDiscoverySettingsResponse) discoveryset
 			ARPScan:  req.Options.ARPScan,
 			ICMPScan: req.Options.ICMPScan,
 			PortScan: discoverysettings.PortScanUpdate{
-				Enabled:         req.Options.PortScan.Enabled,
-				TCPPorts:        req.Options.PortScan.TCPPorts,
-				UDPPorts:        req.Options.PortScan.UDPPorts,
-				BannerTimeoutMs: req.Options.PortScan.BannerTimeoutMs,
+				Enabled:  req.Options.PortScan.Enabled,
+				Preset:   req.Options.PortScan.Preset,
+				TCPPorts: req.Options.PortScan.TCPPorts,
+				UDPPorts: req.Options.PortScan.UDPPorts,
 			},
 			TCPProbe: discoverysettings.TCPProbeUpdate{
 				TimeoutMs: req.Options.TCPProbe.TimeoutMs,
@@ -402,9 +394,7 @@ func requestToDiscoveryUpdate(req NetworkDiscoverySettingsResponse) discoveryset
 			SNMPQuery:  req.Options.SNMPQuery,
 		},
 		Timing: discoverysettings.TimingUpdate{
-			ProbeIntervalMs:  req.Timing.ProbeIntervalMs,
 			RescanIntervalMs: req.Timing.RescanIntervalMs,
-			Workers:          req.Timing.Workers,
 		},
 		Profiler: discoverysettings.ProfilerUpdate{
 			Enabled:       req.Profiler.Enabled,

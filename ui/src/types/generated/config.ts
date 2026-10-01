@@ -68,11 +68,8 @@ export interface NetworkDiscoveryConfig {
   timing: DiscoveryTiming;
   target_networks: SubnetConfig[];
   enabled: boolean;
-  arp_scan_workers: number;
-  ping_timeout: number;
   scan_timeout: number;
   auto_scan: boolean;
-  scan_interval: number;
   oui_file_path: string;
   oui_max_age: number;
   fingerprinting?: FingerprintingConfig;
@@ -99,16 +96,13 @@ export interface PortScanConfig {
   preset: string;
   tcpPorts: string;
   udpPorts: string;
-  bannerTimeout: number;
 }
 export interface TCPProbeConfig {
   timeout: number;
   workers: number;
 }
 export interface DiscoveryTiming {
-  probe_interval: number;
   rescan_interval: number;
-  workers: number;
 }
 export interface SubnetConfig {
   cidr: string;

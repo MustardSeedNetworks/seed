@@ -57,7 +57,6 @@ export const DiscoveryPortScanDetails: React.NamedExoticComponent<DiscoveryPortS
                       newPreset === 'custom'
                         ? (prev.options?.portScan?.udpPorts ?? '53,161')
                         : presetConfig.udp,
-                    bannerTimeoutMs: prev.options?.portScan?.bannerTimeoutMs ?? 2000,
                   },
                 },
               }));
@@ -105,7 +104,6 @@ export const DiscoveryPortScanDetails: React.NamedExoticComponent<DiscoveryPortS
                     preset: prev.options?.portScan?.preset ?? 'common',
                     tcpPorts: e.target.value,
                     udpPorts: prev.options?.portScan?.udpPorts ?? '53,161',
-                    bannerTimeoutMs: prev.options?.portScan?.bannerTimeoutMs ?? 2000,
                   },
                 },
               }))
@@ -149,7 +147,6 @@ export const DiscoveryPortScanDetails: React.NamedExoticComponent<DiscoveryPortS
                     preset: prev.options?.portScan?.preset ?? 'common',
                     tcpPorts: prev.options?.portScan?.tcpPorts ?? '22,80,443',
                     udpPorts: e.target.value,
-                    bannerTimeoutMs: prev.options?.portScan?.bannerTimeoutMs ?? 2000,
                   },
                 },
               }))
@@ -164,42 +161,6 @@ export const DiscoveryPortScanDetails: React.NamedExoticComponent<DiscoveryPortS
               (settings.options?.portScan?.preset ?? 'common') !== 'custom'
                 ? 'bg-surface-hover cursor-not-allowed opacity-60'
                 : inputTokens.state.default,
-              inputTokens.size.sm,
-              'body-small',
-            )}
-          />
-        </div>
-        <div>
-          <label className="caption text-text-muted" htmlFor="port-scan-banner">
-            {t('discovery.portScanBannerTimeout')}
-          </label>
-          <input
-            id="port-scan-banner"
-            type="number"
-            value={settings.options?.portScan?.bannerTimeoutMs ?? 2000}
-            onChange={(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>): void =>
-              onSettingsChange((prev) => ({
-                ...prev,
-                options: {
-                  ...prev.options,
-                  portScan: {
-                    ...prev.options?.portScan,
-                    enabled: prev.options?.portScan?.enabled ?? false,
-                    preset: prev.options?.portScan?.preset ?? 'common',
-                    tcpPorts: prev.options?.portScan?.tcpPorts ?? '22,80,443',
-                    udpPorts: prev.options?.portScan?.udpPorts ?? '53,161',
-                    bannerTimeoutMs: Number.parseInt(e.target.value, 10) || 2000,
-                  },
-                },
-              }))
-            }
-            min={100}
-            max={10000}
-            className={cn(
-              'w-24',
-              spacing.margin.top.tight,
-              inputTokens.base,
-              inputTokens.state.default,
               inputTokens.size.sm,
               'body-small',
             )}

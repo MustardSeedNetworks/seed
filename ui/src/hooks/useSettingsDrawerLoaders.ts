@@ -225,11 +225,8 @@ export function useSettingsDrawerLoaders({
         const data = await (response.json() as Promise<Partial<NetworkDiscoverySettings>>);
         setNetworkDiscoverySettings({
           enabled: data.enabled ?? true,
-          arpScanWorkers: data.arpScanWorkers ?? 50,
-          pingTimeoutMs: data.pingTimeoutMs ?? 500,
           scanTimeoutMs: data.scanTimeoutMs ?? 30000,
           autoScan: data.autoScan ?? false,
-          scanIntervalMs: data.scanIntervalMs ?? 0,
           ipv6Enabled: data.ipv6Enabled ?? true,
           options: data.options ?? {
             passiveProtocols: { lldp: true, cdp: true, edp: true, ndp: true },
@@ -240,16 +237,13 @@ export function useSettingsDrawerLoaders({
               preset: 'common',
               tcpPorts: '22,80,443,8080-8100',
               udpPorts: '53,123,161',
-              bannerTimeoutMs: 2000,
             },
             tcpProbe: { timeoutMs: 2000, workers: 20 },
             traceroute: false,
             snmpQuery: false,
           },
           timing: data.timing ?? {
-            probeIntervalMs: 75,
             rescanIntervalMs: 60000,
-            workers: 50,
           },
           profiler: data.profiler ?? {
             enabled: true,

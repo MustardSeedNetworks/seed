@@ -418,22 +418,14 @@
     },
     "DiscoveryTiming": {
       "properties": {
-        "probe_interval": {
-          "type": "integer"
-        },
         "rescan_interval": {
-          "type": "integer"
-        },
-        "workers": {
           "type": "integer"
         }
       },
       "additionalProperties": false,
       "type": "object",
       "required": [
-        "probe_interval",
-        "rescan_interval",
-        "workers"
+        "rescan_interval"
       ]
     },
     "DisplayOptionsConfig": {
@@ -1198,20 +1190,11 @@
         "enabled": {
           "type": "boolean"
         },
-        "arp_scan_workers": {
-          "type": "integer"
-        },
-        "ping_timeout": {
-          "type": "integer"
-        },
         "scan_timeout": {
           "type": "integer"
         },
         "auto_scan": {
           "type": "boolean"
-        },
-        "scan_interval": {
-          "type": "integer"
         },
         "oui_file_path": {
           "type": "string"
@@ -1236,11 +1219,8 @@
         "timing",
         "target_networks",
         "enabled",
-        "arp_scan_workers",
-        "ping_timeout",
         "scan_timeout",
         "auto_scan",
-        "scan_interval",
         "oui_file_path",
         "oui_max_age",
         "ipv6_enabled"
@@ -1341,9 +1321,6 @@
         },
         "udpPorts": {
           "type": "string"
-        },
-        "bannerTimeout": {
-          "type": "integer"
         }
       },
       "additionalProperties": false,
@@ -1352,8 +1329,7 @@
         "enabled",
         "preset",
         "tcpPorts",
-        "udpPorts",
-        "bannerTimeout"
+        "udpPorts"
       ]
     },
     "RTSPEndpoint": {

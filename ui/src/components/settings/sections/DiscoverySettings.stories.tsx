@@ -115,7 +115,6 @@ export const FullDiscovery: Story = {
           preset: 'common',
           tcpPorts: '22,80,443,8080,8443',
           udpPorts: '53,161,162',
-          bannerTimeoutMs: 3000,
         },
         traceroute: true,
         snmpQuery: true,
@@ -144,7 +143,6 @@ export const WithPortScanCommon: Story = {
           preset: 'common',
           tcpPorts: '22,80,443,8080',
           udpPorts: '53,161',
-          bannerTimeoutMs: 3000,
         },
       },
     },
@@ -166,7 +164,6 @@ export const WithPortScanSecure: Story = {
           preset: 'secure',
           tcpPorts: '22,443,8443',
           udpPorts: '',
-          bannerTimeoutMs: 3000,
         },
       },
     },
@@ -188,7 +185,6 @@ export const WithPortScanInsecure: Story = {
           preset: 'insecure',
           tcpPorts: '21,23,25,80,110,143',
           udpPorts: '69,161',
-          bannerTimeoutMs: 3000,
         },
       },
     },
@@ -210,7 +206,6 @@ export const CustomPorts: Story = {
           preset: 'custom',
           tcpPorts: '22,80,443,3000-3010,8000-8100',
           udpPorts: '53,161,500-600',
-          bannerTimeoutMs: 5000,
         },
       },
     },
@@ -228,7 +223,7 @@ export const Disabled: Story = {
 };
 
 /**
- * Auto-scan enabled with interval
+ * Auto-scan enabled
  */
 export const AutoScanEnabled: Story = {
   args: {
@@ -236,7 +231,6 @@ export const AutoScanEnabled: Story = {
     networkDiscoverySettings: {
       ...defaultSettings,
       autoScan: true,
-      scanIntervalMs: 300000, // 5 minutes
     },
   },
 };
@@ -273,14 +267,11 @@ export const FastTiming: Story = {
     ...baseArgs(),
     networkDiscoverySettings: {
       ...defaultSettings,
-      arpScanWorkers: 100,
-      pingTimeoutMs: 200,
       scanTimeoutMs: 15000,
-      timing: { probeIntervalMs: 50, rescanIntervalMs: 60000, workers: 100 },
+      timing: { rescanIntervalMs: 60000 },
       options: {
         ...defaultSettings.options,
         tcpProbe: { timeoutMs: 1000, workers: 20 },
-        portScan: { ...defaultSettings.options.portScan, bannerTimeoutMs: 1000 },
       },
     },
   },
@@ -294,14 +285,11 @@ export const ThoroughTiming: Story = {
     ...baseArgs(),
     networkDiscoverySettings: {
       ...defaultSettings,
-      arpScanWorkers: 20,
-      pingTimeoutMs: 2000,
       scanTimeoutMs: 120000,
-      timing: { probeIntervalMs: 500, rescanIntervalMs: 600000, workers: 20 },
+      timing: { rescanIntervalMs: 600000 },
       options: {
         ...defaultSettings.options,
         tcpProbe: { timeoutMs: 10000, workers: 5 },
-        portScan: { ...defaultSettings.options.portScan, bannerTimeoutMs: 10000 },
       },
     },
   },

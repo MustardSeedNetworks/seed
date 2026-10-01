@@ -222,7 +222,6 @@ export interface PortScanSettingsConfig {
   preset?: string;
   tcpPorts?: string;
   udpPorts?: string;
-  bannerTimeoutMs?: number;
 }
 
 /** Network discovery options. */
@@ -242,14 +241,11 @@ export interface DiscoveryOptionsConfig {
  */
 export interface NetworkDiscoveryConfig {
   enabled?: boolean;
-  arpScanWorkers?: number;
-  pingTimeoutMs?: number;
   scanTimeoutMs?: number;
   autoScan?: boolean;
-  scanIntervalMs?: number;
   ipv6Enabled?: boolean;
   options?: DiscoveryOptionsConfig;
-  timing?: { probeIntervalMs?: number; rescanIntervalMs?: number; workers?: number };
+  timing?: { rescanIntervalMs?: number };
   profiler?: {
     enabled?: boolean;
     timeoutMs?: number;

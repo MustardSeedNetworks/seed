@@ -90,11 +90,10 @@ func defaultNetworkDiscoveryConfig() NetworkDiscoveryConfig {
 			PassiveProtocols: PassiveProtocolConfig{LLDP: true, CDP: true, EDP: true, NDP: true},
 			ARPScan:          true, ICMPScan: true,
 			PortScan: PortScanConfig{
-				Enabled:       false,
-				Preset:        PortPresetCommon,
-				TCPPorts:      "",
-				UDPPorts:      "",
-				BannerTimeout: defaultBannerTimeoutSec * time.Second,
+				Enabled:  false,
+				Preset:   PortPresetCommon,
+				TCPPorts: "",
+				UDPPorts: "",
 			},
 			TCPProbe: TCPProbeConfig{
 				Timeout: defaultTracerouteTimeoutSec * time.Second,
@@ -108,9 +107,7 @@ func defaultNetworkDiscoveryConfig() NetworkDiscoveryConfig {
 			QuickPorts:    []int{portSSH, portHTTP, portHTTPS, portHTTPAlt},
 		},
 		Timing: DiscoveryTiming{
-			ProbeInterval:  defaultProbeIntervalMs * time.Millisecond,
 			RescanInterval: defaultRescanIntervalSec * time.Second,
-			Workers:        defaultARPWorkers,
 		},
 		Fingerprinting: FingerprintingConfig{
 			Enabled:       false,
@@ -119,11 +116,8 @@ func defaultNetworkDiscoveryConfig() NetworkDiscoveryConfig {
 		},
 		IPv6Enabled:    true,
 		Enabled:        true,
-		ARPScanWorkers: defaultARPWorkers,
-		PingTimeout:    defaultPingTimeoutMs * time.Millisecond,
 		ScanTimeout:    defaultScanTimeoutSec * time.Second,
 		AutoScan:       true,
-		ScanInterval:   0,
 		OUIFilePath:    "data/oui.txt",
 		OUIMaxAge:      defaultOUIMaxAgeDays * 24 * time.Hour,
 		TargetNetworks: []SubnetConfig{},

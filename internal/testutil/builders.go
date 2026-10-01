@@ -58,12 +58,6 @@ func (b *ConfigBuilder) WithDNSTestHostname(hostname string) *ConfigBuilder {
 	return b
 }
 
-// WithDiscoveryConcurrency sets the network discovery concurrency (ARP scan workers).
-func (b *ConfigBuilder) WithDiscoveryConcurrency(concurrency int) *ConfigBuilder {
-	b.cfg.NetworkDiscovery.ARPScanWorkers = concurrency
-	return b
-}
-
 // WithDiscoveryMethods configures which discovery methods are enabled.
 func (b *ConfigBuilder) WithDiscoveryMethods(arp, icmp, portScan bool) *ConfigBuilder {
 	b.cfg.NetworkDiscovery.Options.ARPScan = arp
@@ -102,10 +96,6 @@ func (b *ConfigBuilder) Validate() error {
 
 	if b.cfg.Auth.JWTSecret == "" {
 		return errors.New("JWT secret cannot be empty")
-	}
-
-	if b.cfg.NetworkDiscovery.ARPScanWorkers < 1 {
-		return errors.New("discovery concurrency must be at least 1")
 	}
 
 	if b.cfg.Interface.Default == "" {

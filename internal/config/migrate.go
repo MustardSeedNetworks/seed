@@ -105,8 +105,44 @@ func removedKeys() []removedKey {
 				return ok && enabled
 			},
 		},
+		// Discovery timers no code ever read (#491). Dropping them changes
+		// nothing a running daemon did.
+		{
+			path:        []string{"networkDiscovery"},
+			key:         "arp_scan_workers",
+			replacement: neverReadDiscoveryTimer,
+		},
+		{
+			path:        []string{"networkDiscovery"},
+			key:         "ping_timeout",
+			replacement: neverReadDiscoveryTimer,
+		},
+		{
+			path:        []string{"networkDiscovery"},
+			key:         "scan_interval",
+			replacement: "the rescan period is networkDiscovery.timing.rescan_interval",
+		},
+		{
+			path:        []string{"networkDiscovery", "timing"},
+			key:         "probe_interval",
+			replacement: neverReadDiscoveryTimer,
+		},
+		{
+			path:        []string{"networkDiscovery", "timing"},
+			key:         "workers",
+			replacement: neverReadDiscoveryTimer,
+		},
+		{
+			path:        []string{"networkDiscovery", "options", "portScan"},
+			key:         "bannerTimeout",
+			replacement: neverReadDiscoveryTimer,
+		},
 	}
 }
+
+// neverReadDiscoveryTimer is the report for a discovery setting that was
+// accepted and saved but never used.
+const neverReadDiscoveryTimer = "discovery never used this setting; nothing replaces it"
 
 // renamedKeys is every rename the loader knows how to apply, oldest first.
 func renamedKeys() []renamedKey {

@@ -28,20 +28,11 @@
         "enabled": {
           "type": "boolean"
         },
-        "arpScanWorkers": {
-          "type": "integer"
-        },
-        "pingTimeoutMs": {
-          "type": "integer"
-        },
         "scanTimeoutMs": {
           "type": "integer"
         },
         "autoScan": {
           "type": "boolean"
-        },
-        "scanIntervalMs": {
-          "type": "integer"
         },
         "ouiFilePath": {
           "type": "string"
@@ -66,11 +57,8 @@
       "type": "object",
       "required": [
         "enabled",
-        "arpScanWorkers",
-        "pingTimeoutMs",
         "scanTimeoutMs",
         "autoScan",
-        "scanIntervalMs",
         "ouiFilePath",
         "options",
         "timing",
@@ -144,23 +132,23 @@
         "enabled": {
           "type": "boolean"
         },
+        "preset": {
+          "type": "string"
+        },
         "tcpPorts": {
           "type": "string"
         },
         "udpPorts": {
           "type": "string"
-        },
-        "bannerTimeoutMs": {
-          "type": "integer"
         }
       },
       "additionalProperties": false,
       "type": "object",
       "required": [
         "enabled",
+        "preset",
         "tcpPorts",
-        "udpPorts",
-        "bannerTimeoutMs"
+        "udpPorts"
       ]
     },
     "ProfilerResponse": {
@@ -208,22 +196,14 @@
     },
     "TimingResponse": {
       "properties": {
-        "probeIntervalMs": {
-          "type": "integer"
-        },
         "rescanIntervalMs": {
-          "type": "integer"
-        },
-        "workers": {
           "type": "integer"
         }
       },
       "additionalProperties": false,
       "type": "object",
       "required": [
-        "probeIntervalMs",
-        "rescanIntervalMs",
-        "workers"
+        "rescanIntervalMs"
       ]
     }
   },
