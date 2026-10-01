@@ -25,6 +25,9 @@ func (c *Config) Validate() error {
 	errs = append(errs, c.validateSNMPConfig()...)
 	errs = append(errs, c.validateLoggingConfig()...)
 	errs = append(errs, c.validateCORSConfig()...)
+	if err := c.Identity.Validate(); err != nil {
+		errs = append(errs, err.Error())
+	}
 
 	if len(errs) > 0 {
 		return fmt.Errorf("configuration validation failed:\n  - %s", strings.Join(errs, "\n  - "))

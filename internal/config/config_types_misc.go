@@ -2,9 +2,16 @@ package config
 
 // config_types_misc.go contains the remaining configuration types that don't
 // belong to a larger domain: profile-scoped Link/CableTest, database, DNS,
-// logging, FAB / display options, and setup-result.
+// logging, device identity, FAB / display options, and setup-result.
 
-import "time"
+import (
+	"errors"
+	"fmt"
+	"strings"
+	"time"
+	"unicode"
+	"unicode/utf8"
+)
 
 // LinkConfig contains interface speed/duplex settings (profile-specific).
 type LinkConfig struct {
@@ -61,6 +68,45 @@ type FABOptionsConfig struct {
 	RunIperf            bool `json:"run_iperf"`
 	RunPerformance      bool `json:"run_performance"`
 	AutoScanOnLink      bool `json:"auto_scan_on_link"`
+}
+
+// Identity bounds. A name is one label in a header and a tab title; a location
+// is one line of free text. Both are far past anything an operator writes and
+// short enough that neither pushes the rest of the header off the screen.
+const (
+	IdentityNameMaxRunes     = 64
+	IdentityLocationMaxRunes = 128
+)
+
+// IdentityConfig names this Seed so an operator with several open can tell
+// them apart (#195). It belongs to the device, not to a profile: switching
+// profiles does not move the box. Both fields are optional; empty means unset.
+type IdentityConfig struct {
+	Name     string `json:"name"`
+	Location string `json:"location"`
+}
+
+// Validate refuses a value the header and tab title cannot show as written:
+// over the length bound, or carrying a control character (a newline in a
+// <title> is silently collapsed, so the operator would not see what they saved).
+func (i IdentityConfig) Validate() error {
+	var errs []error
+	for _, field := range []struct {
+		key, value string
+		limit      int
+	}{
+		{"identity.name", i.Name, IdentityNameMaxRunes},
+		{"identity.location", i.Location, IdentityLocationMaxRunes},
+	} {
+		if n := utf8.RuneCountInString(field.value); n > field.limit {
+			errs = append(errs, fmt.Errorf("%s is %d characters; the limit is %d",
+				field.key, n, field.limit))
+		}
+		if strings.IndexFunc(field.value, unicode.IsControl) >= 0 {
+			errs = append(errs, fmt.Errorf("%s must be one line of text", field.key))
+		}
+	}
+	return errors.Join(errs...)
 }
 
 // DisplayOptionsConfig contains display/UI settings.

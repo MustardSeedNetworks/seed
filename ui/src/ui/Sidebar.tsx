@@ -16,10 +16,8 @@ import {
   HelpCircle,
   History,
   type LucideIcon,
-  Menu,
   Settings,
   Users,
-  X,
 } from 'lucide-react';
 import { createElement, type FC, type ReactNode, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -29,7 +27,9 @@ import { Tooltip } from '../components/ui/Tooltip';
 import { iconSizes } from '../constants/sizes';
 import { prefetchRoute } from '../utils/prefetch';
 import { safeGetItem, safeSetItem } from '../utils/storage';
+import { MobileTopBar } from './MobileTopBar';
 import { MsnMark } from './MsnMark';
+import { ProductTitle } from './ProductTitle';
 
 export interface SidebarNavItem {
   path: string;
@@ -78,6 +78,12 @@ interface SidebarLayoutProps {
    * the rail when it is collapsed, and only the rail knows that it is.
    */
   railControls?: (collapsed: boolean) => ReactNode;
+  /**
+   * The operator's name for this device (#195), shown under the product
+   * name so several open tabs can be told apart. Empty or absent shows
+   * nothing.
+   */
+  deviceName?: string;
 }
 
 export interface RailStatus {
@@ -198,6 +204,7 @@ interface SidebarHeaderProps {
   collapsed: boolean;
   onCollapse: () => void;
   status?: RailStatus;
+  deviceName?: string;
 }
 
 const STATUS_DOT: Record<RailStatus['tone'], string> = {
@@ -206,7 +213,7 @@ const STATUS_DOT: Record<RailStatus['tone'], string> = {
   error: 'bg-status-error',
 };
 
-const SidebarHeader: FC<SidebarHeaderProps> = ({ collapsed, onCollapse, status }) => {
+const SidebarHeader: FC<SidebarHeaderProps> = ({ collapsed, onCollapse, status, deviceName }) => {
   const { t } = useTranslation();
   const lockupClass = `flex items-center gap-compact rounded-lg ${
     collapsed ? 'justify-center' : ''
@@ -224,9 +231,11 @@ const SidebarHeader: FC<SidebarHeaderProps> = ({ collapsed, onCollapse, status }
         />
       </div>
       {!collapsed ? (
-        <span className="font-display font-bold text-lg text-text-primary tracking-tight">
-          {t('app.title')}
-        </span>
+        <ProductTitle
+          bar="rail"
+          deviceName={deviceName}
+          className="font-display font-bold text-lg text-text-primary tracking-tight"
+        />
       ) : null}
       {status ? (
         <span className="sr-only">{[status.label, status.hint].filter(Boolean).join(' — ')}</span>
@@ -402,6 +411,7 @@ interface SidebarBodyProps {
   version?: string;
   status?: RailStatus;
   railControls?: ReactNode;
+  deviceName?: string;
   onCollapse: () => void;
   onExpand: () => void;
   onNavigate: (path: string) => void;
@@ -418,6 +428,7 @@ const SidebarBody: FC<SidebarBodyProps> = ({
   version,
   status,
   railControls,
+  deviceName,
   onCollapse,
   onExpand,
   onNavigate,
@@ -435,7 +446,12 @@ const SidebarBody: FC<SidebarBodyProps> = ({
     label ? t(label, { defaultValue: label }) : '';
   return (
     <>
-      <SidebarHeader collapsed={collapsed} onCollapse={onCollapse} status={status} />
+      <SidebarHeader
+        collapsed={collapsed}
+        onCollapse={onCollapse}
+        status={status}
+        deviceName={deviceName}
+      />
       <nav className="flex-1 overflow-y-auto py-4 px-cell stack-xl">
         {groups.map((group, groupIndex) => (
           <div key={group.label || `nav-group-${String(groupIndex)}`}>
@@ -473,34 +489,6 @@ const SidebarBody: FC<SidebarBodyProps> = ({
   );
 };
 
-interface MobileTopBarProps {
-  mobileOpen: boolean;
-  toggleMobile: () => void;
-}
-
-const MobileTopBar: FC<MobileTopBarProps> = ({ mobileOpen, toggleMobile }) => {
-  const { t } = useTranslation();
-  return (
-    <header className="lg:hidden fixed top-0 left-0 right-0 z-50 flex-between px-4 py-row-lg bg-surface-raised/95 backdrop-blur-xl border-b border-surface-border">
-      <div className="flex items-center gap-compact">
-        <SeedLogo badge badgeClassName="h-8 w-8" glyphClassName={iconSizes.md} />
-        <span className="font-display font-bold text-text-primary">{t('app.title')}</span>
-      </div>
-      <Tooltip text={mobileOpen ? t('accessibility.closeMenu') : t('accessibility.openMenu')}>
-        <button
-          type="button"
-          onClick={toggleMobile}
-          data-testid="mobile-menu-toggle"
-          className="pad-xs rounded-lg text-text-muted hover:text-text-primary hover:bg-surface-hover transition-colors"
-          aria-label={mobileOpen ? t('accessibility.closeMenu') : t('accessibility.openMenu')}
-        >
-          {mobileOpen ? <X className={iconSizes.lg} /> : <Menu className={iconSizes.lg} />}
-        </button>
-      </Tooltip>
-    </header>
-  );
-};
-
 export const SidebarLayout: FC<SidebarLayoutProps> = ({
   groups,
   version,
@@ -511,6 +499,7 @@ export const SidebarLayout: FC<SidebarLayoutProps> = ({
   onOpenProfiles,
   status,
   railControls,
+  deviceName,
 }) => {
   const { t } = useTranslation();
   const [location, navigate] = useLocation();
@@ -535,6 +524,7 @@ export const SidebarLayout: FC<SidebarLayoutProps> = ({
       version={version}
       status={status}
       railControls={railControls?.(collapsed)}
+      deviceName={deviceName}
       onCollapse={() => setCollapsed(true)}
       onExpand={() => setCollapsed(false)}
       onNavigate={(p) => navigate(p)}
@@ -555,7 +545,11 @@ export const SidebarLayout: FC<SidebarLayoutProps> = ({
         {t('accessibility.skipToMainContent')}
       </a>
 
-      <MobileTopBar mobileOpen={mobileOpen} toggleMobile={() => setMobileOpen(!mobileOpen)} />
+      <MobileTopBar
+        mobileOpen={mobileOpen}
+        toggleMobile={() => setMobileOpen(!mobileOpen)}
+        deviceName={deviceName}
+      />
 
       {mobileOpen ? (
         <button

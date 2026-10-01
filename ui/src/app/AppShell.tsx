@@ -19,6 +19,7 @@ import { RailControls } from '../components/app/RailControls';
 import { CommandPalette } from '../components/ui/CommandPalette';
 import { Fab } from '../components/ui/Fab';
 import { AppContext, type AppContextValue } from '../contexts/AppContext';
+import { useDeviceIdentity } from '../hooks/useDeviceIdentity';
 import { useIsPhone } from '../hooks/useIsPhone';
 import { useNavGroups } from '../navGroups';
 import { type PageConfig, usePages } from '../pageRegistry';
@@ -52,6 +53,7 @@ export function AppShell({ orchestration, logout }: AppShellProps): JSX.Element 
   const navGroups = useNavGroups();
   const pages = usePages();
   const isPhone = useIsPhone();
+  const { name: deviceName } = useDeviceIdentity();
   const [location] = useLocation();
   const {
     cards,
@@ -162,6 +164,7 @@ export function AppShell({ orchestration, logout }: AppShellProps): JSX.Element 
         onOpenSettings={openSettings}
         onOpenProfiles={openProfiles}
         status={railStatus}
+        deviceName={deviceName}
         railControls={(collapsed) => (
           <RailControls
             collapsed={collapsed}
@@ -274,7 +277,9 @@ export function AppShell({ orchestration, logout }: AppShellProps): JSX.Element 
  * page, bookmark and browser-history entry read the bare product name from
  * index.html and a user with several tabs open could not tell them apart
  * (#2645). The title is the registry's label, so it is the same string as the
- * rail item, the breadcrumb and the H1.
+ * rail item, the breadcrumb and the H1. The device's own name sits between
+ * the two when one is set (#195): a tab title names the page first, then
+ * which Seed it is on.
  */
 function PageWithHeader({
   page,
@@ -289,10 +294,11 @@ function PageWithHeader({
   const helpSection = page.help;
   const { t } = useTranslation('common');
   const productName = t('app.title');
+  const { name: deviceName } = useDeviceIdentity();
 
   useEffect(() => {
-    document.title = `${page.label} · ${productName}`;
-  }, [page.label, productName]);
+    document.title = [page.label, deviceName, productName].filter(Boolean).join(' · ');
+  }, [page.label, deviceName, productName]);
 
   return (
     <section className="stack-xl">

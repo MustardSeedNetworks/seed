@@ -65,8 +65,9 @@ func (c *Config) ToProfileJSON() (string, error) {
 
 // SettingsETag returns the optimistic-concurrency version token for the
 // file-backed settings resource (ADR re-arch Phase 5): a strong ETag whose body
-// is the SHA-256 of the mutable-settings subset (the same ProfileExportFields
-// ToProfileJSON serializes), quoted per RFC 9110. It is a content-hash, not a
+// is the SHA-256 of the mutable-settings subset (the ProfileExportFields
+// ToProfileJSON serializes, plus the device Identity, which the settings
+// endpoint writes but no profile carries), quoted per RFC 9110. It is a content-hash, not a
 // timestamp — so it is exact (no sub-second window) and is unaffected by writes
 // to the excluded GLOBAL config (Server/Auth/Security/Logging/Database).
 func (c *Config) SettingsETag() string {
@@ -82,7 +83,11 @@ func (c *Config) SettingsETagLocked() string {
 	// ProfileExportFields contains no map fields, so json.Marshal is
 	// deterministic and the hash is a stable token. A marshal error cannot
 	// arise from these plain structs; fall back to an empty body defensively.
-	data, err := json.Marshal(c.profileExportLocked())
+	data, err := json.Marshal(struct {
+		ProfileExportFields
+
+		Identity IdentityConfig `json:"identity"`
+	}{c.profileExportLocked(), c.Identity})
 	if err != nil {
 		return `""`
 	}

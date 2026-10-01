@@ -37,6 +37,15 @@ func TestSettingsETag(t *testing.T) {
 		t.Fatalf("ETag unchanged after covered field changed: %q", changed)
 	}
 
+	// The device identity is written through the settings endpoint without
+	// being part of any profile, so it is covered too: a second tab renaming
+	// the device must make this tab's pending write a conflict.
+	beforeIdentity := cfg.SettingsETag()
+	cfg.Identity.Name = "idf-3b"
+	if renamed := cfg.SettingsETag(); renamed == beforeIdentity {
+		t.Fatalf("ETag unchanged after identity changed: %q", renamed)
+	}
+
 	// Changing an EXCLUDED global field (Auth) must NOT change the token: a
 	// JWT-secret rotation must not invalidate a pending settings-edit token.
 	afterCovered := cfg.SettingsETag()

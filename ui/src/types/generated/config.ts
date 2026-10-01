@@ -25,6 +25,7 @@ export interface Config {
   alerts: AlertsConfig;
   fabOptions: FABOptionsConfig;
   displayOptions: DisplayOptionsConfig;
+  identity: IdentityConfig;
   logging: LoggingConfig;
   database: DatabaseConfig;
   link?: LinkConfig;
@@ -424,6 +425,10 @@ export interface FABOptionsConfig {
 export interface DisplayOptionsConfig {
   show_public_ip: boolean;
   unit_system: string;
+}
+export interface IdentityConfig {
+  name: string;
+  location: string;
 }
 export interface LoggingConfig {
   level: string;

@@ -14,7 +14,8 @@
     "cableTest": "Prueba de cable",
     "link": "Enlace",
     "vulnerability": "Escaneo de vulnerabilidades",
-    "alertDelivery": "Envío de alertas"
+    "alertDelivery": "Envío de alertas",
+    "identity": "Identidad del equipo"
   },
   "common": {
     "add": "+ Agregar",
@@ -546,5 +547,15 @@
     "url": "URL del receptor",
     "urlHelp": "Una dirección http o https absoluta. Al borrarla se desactiva el envío y no sale ninguna petición del equipo.",
     "urlPlaceholder": "https://hooks.example.com/services/T000/B000/XXXX"
+  },
+  "identity": {
+    "description": "Asigne un nombre a este Seed e indique dónde está instalado, para distinguirlo de los demás en el encabezado y en la pestaña del navegador.",
+    "name": "Nombre del equipo",
+    "nameHelp": "Se muestra en el encabezado y en el título de la pestaña. Hasta 64 caracteres.",
+    "namePlaceholder": "seed-idf-3b",
+    "location": "Ubicación",
+    "locationHelp": "Dónde está instalado el equipo. Hasta 128 caracteres.",
+    "locationPlaceholder": "Oficina principal, IDF 3B, puerto 21",
+    "save": "Guardar identidad"
   }
 }

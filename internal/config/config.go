@@ -42,6 +42,7 @@ type Config struct {
 	Alerts           AlertsConfig           `json:"alerts"`
 	FABOptions       FABOptionsConfig       `json:"fabOptions"`
 	DisplayOptions   DisplayOptionsConfig   `json:"displayOptions"`
+	Identity         IdentityConfig         `json:"identity"`
 	Logging          LoggingConfig          `json:"logging"`
 	Database         DatabaseConfig         `json:"database"`
 	// Profile-specific settings (not in YAML config, only stored per-profile)
@@ -109,6 +110,7 @@ func (c *Config) cloneFields() *Config {
 		Alerts:           c.Alerts,
 		FABOptions:       c.FABOptions,
 		DisplayOptions:   c.DisplayOptions,
+		Identity:         c.Identity,
 		Logging:          c.Logging,
 		Database:         c.Database,
 		// The keyring is immutable after init and safe to share across clones.
@@ -148,6 +150,7 @@ func (c *Config) CopyFieldsFrom(src *Config) {
 	c.SNMP = temp.SNMP
 	c.FABOptions = temp.FABOptions
 	c.DisplayOptions = temp.DisplayOptions
+	c.Identity = temp.Identity
 	c.Logging = temp.Logging
 	c.Database = temp.Database
 	c.credentialKeyring = temp.credentialKeyring

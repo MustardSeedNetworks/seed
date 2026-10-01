@@ -14,7 +14,8 @@
     "cableTest": "Cable Test",
     "link": "Link",
     "vulnerability": "Vulnerability Scanning",
-    "alertDelivery": "Alert Delivery"
+    "alertDelivery": "Alert Delivery",
+    "identity": "Device Identity"
   },
   "common": {
     "add": "+ Add",
@@ -546,5 +547,15 @@
     "url": "Receiver URL",
     "urlHelp": "An absolute http or https address. Clearing it turns delivery off; no request leaves the host.",
     "urlPlaceholder": "https://hooks.example.com/services/T000/B000/XXXX"
+  },
+  "identity": {
+    "description": "Name this Seed and record where it is installed, so it can be told apart from the others in the header and in a browser tab.",
+    "name": "Device name",
+    "nameHelp": "Shown in the header and the browser tab title. Up to 64 characters.",
+    "namePlaceholder": "seed-idf-3b",
+    "location": "Location",
+    "locationHelp": "Where the device is installed. Up to 128 characters.",
+    "locationPlaceholder": "Main Office, IDF 3B, Port 21",
+    "save": "Save identity"
   }
 }
