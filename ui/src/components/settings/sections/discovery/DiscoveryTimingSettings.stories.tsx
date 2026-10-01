@@ -2,11 +2,13 @@ import type { Meta, StoryObj } from '@storybook/react-vite';
 import { useState } from 'react';
 import type { NetworkDiscoverySettings } from '../../../../types/settings';
 import { DEFAULT_NETWORK_DISCOVERY_SETTINGS } from '../../../../types/settings';
+import { expandSections } from '../storyPlay';
 import { DiscoveryTimingSettings } from './DiscoveryTimingSettings';
 
 const meta = {
   title: 'Settings/DiscoveryTimingSettings',
   component: DiscoveryTimingSettings,
+  play: expandSections,
 } satisfies Meta<typeof DiscoveryTimingSettings>;
 
 export default meta;

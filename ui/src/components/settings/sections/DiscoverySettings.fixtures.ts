@@ -8,6 +8,7 @@
 
 import type { ComponentProps } from 'react';
 import type { NetworkDiscoverySettings, SnmpSettings, SubnetConfig } from '../../../types/settings';
+import { DEFAULT_CARD_SETTINGS } from '../../../types/settings';
 import type { DiscoverySettings } from './DiscoverySettings';
 
 const noop = (): void => {
@@ -87,8 +88,6 @@ export const baseArgs = (subnets: SubnetConfig[] = []): DiscoverySettingsArgs =>
   snmpSettings: defaultSnmpSettings,
   setSnmpSettings: noop,
   snmpStatus: 'idle',
-  cardSettings: {
-    networkDiscovery: { enabled: true, autoRunOnLink: true },
-  } as unknown as DiscoverySettingsArgs['cardSettings'],
+  cardSettings: DEFAULT_CARD_SETTINGS,
   updateCardSettings: noop,
 });

@@ -3,10 +3,12 @@ import { useState } from 'react';
 import type { CardSettings, LinkSettings as LinkSettingsType } from '../../../types/settings';
 import { DEFAULT_CARD_SETTINGS, DEFAULT_LINK_SETTINGS } from '../../../types/settings';
 import { LinkSettings } from './LinkSettings';
+import { expandSections } from './storyPlay';
 
 const meta = {
   title: 'Settings/LinkSettings',
   component: LinkSettings,
+  play: expandSections,
 } satisfies Meta<typeof LinkSettings>;
 
 export default meta;

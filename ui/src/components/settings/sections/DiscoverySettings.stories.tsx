@@ -26,10 +26,12 @@ import type {
   SnmpSettings,
   SubnetConfig,
 } from '../../../types/settings';
+import { DEFAULT_CARD_SETTINGS } from '../../../types/settings';
 import { DiscoverySettings } from './DiscoverySettings';
 import { baseArgs, defaultSettings, defaultSnmpSettings } from './DiscoverySettings.fixtures';
+import { expandSections } from './storyPlay';
 
-const meta: Meta<typeof DiscoverySettings> = {
+const meta = {
   title: 'Settings/discovery-settings',
   component: DiscoverySettings,
   parameters: {
@@ -66,7 +68,9 @@ const meta: Meta<typeof DiscoverySettings> = {
       </div>
     ),
   ],
-};
+  args: baseArgs(),
+  play: expandSections,
+} satisfies Meta<typeof DiscoverySettings>;
 
 export default meta;
 type Story = StoryObj<typeof meta>;
@@ -380,7 +384,7 @@ export const Interactive: Story = {
         snmpSettings={snmpSettings}
         setSnmpSettings={handleSetSnmpSettings}
         snmpStatus={snmpStatus}
-        cardSettings={{} as never}
+        cardSettings={DEFAULT_CARD_SETTINGS}
         updateCardSettings={() => {}}
       />
     );
