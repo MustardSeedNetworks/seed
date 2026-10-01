@@ -144,6 +144,9 @@
         "displayOptions": {
           "$ref": "#/$defs/DisplayOptionsConfig"
         },
+        "identity": {
+          "$ref": "#/$defs/IdentityConfig"
+        },
         "logging": {
           "$ref": "#/$defs/LoggingConfig"
         },
@@ -179,6 +182,7 @@
         "alerts",
         "fabOptions",
         "displayOptions",
+        "identity",
         "logging",
         "database"
       ]
@@ -888,6 +892,22 @@
       "type": "object",
       "required": [
         "mode"
+      ]
+    },
+    "IdentityConfig": {
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "location": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "name",
+        "location"
       ]
     },
     "IntThreshold": {

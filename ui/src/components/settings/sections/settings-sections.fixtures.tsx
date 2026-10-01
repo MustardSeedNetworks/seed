@@ -6,6 +6,7 @@
  * of them is exactly the gap both were written to close.
  */
 
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import type { ReactElement } from 'react';
 
 import {
@@ -27,6 +28,7 @@ import { ApiTokensSettings } from './ApiTokensSettings';
 import { AppearanceSettings } from './AppearanceSettings';
 import { CableTestSettings } from './CableTestSettings';
 import { ConfigBackupsSection } from './ConfigBackupsSection';
+import { DeviceIdentitySettings } from './DeviceIdentitySettings';
 import { DiscoverySettings } from './DiscoverySettings';
 import { DnsSettings } from './DnsSettings';
 import { GuestNetworkAuditSettings } from './GuestNetworkAuditSettings';
@@ -126,6 +128,20 @@ export const SECTIONS: SectionFixture[] = [
         cardSettings={DEFAULT_CARD_SETTINGS}
         updateCardSettings={noop}
       />
+    ),
+  },
+  {
+    name: 'DeviceIdentitySettings',
+    header: /device identity|identidad del equipo/i,
+    // The identity is a shared query (the header reads it too), so the
+    // section needs a client of its own; a fresh one per render keeps a
+    // cached identity from leaking between cases.
+    render: () => (
+      <QueryClientProvider
+        client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}
+      >
+        <DeviceIdentitySettings />
+      </QueryClientProvider>
     ),
   },
   {
@@ -321,5 +337,6 @@ export const API_GET_BODIES: Record<string, unknown> = {
   },
   '/api/v1/settings': {
     alerts: { webhook: { url: 'https://hooks.example.test/seed', secretSet: true } },
+    identity: { name: 'seed-idf-3b', location: 'Main Office, IDF 3B' },
   },
 };

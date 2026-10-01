@@ -59,6 +59,7 @@ import { ApiTokensSettings } from './sections/ApiTokensSettings';
 import { AppearanceSettings } from './sections/AppearanceSettings';
 import { CableTestSettings } from './sections/CableTestSettings';
 import { ConfigBackupsSection } from './sections/ConfigBackupsSection';
+import { DeviceIdentitySettings } from './sections/DeviceIdentitySettings';
 import { DiscoverySettings } from './sections/DiscoverySettings';
 import { DnsSettings } from './sections/DnsSettings';
 import { GuestNetworkAuditSettings } from './sections/GuestNetworkAuditSettings';
@@ -654,6 +655,8 @@ export const SettingsDrawer: React.MemoExoticComponent<
             setThresholds={setThresholds}
             thresholdsStatus={thresholdsStatus}
           />
+
+          <DeviceIdentitySettings />
 
           {/* Appearance Section */}
           <AppearanceSettings

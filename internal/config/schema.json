@@ -24,6 +24,7 @@
     "alerts",
     "fabOptions",
     "displayOptions",
+    "identity",
     "logging",
     "database"
   ],
@@ -88,6 +89,9 @@
     },
     "displayOptions": {
       "$ref": "#/$defs/DisplayOptionsConfig"
+    },
+    "identity": {
+      "$ref": "#/$defs/IdentityConfig"
     },
     "logging": {
       "$ref": "#/$defs/LoggingConfig"
@@ -1507,6 +1511,28 @@
           "description": "Measurement system for distances (sae = feet, metric = meters)",
           "enum": ["sae", "metric"],
           "default": "sae"
+        }
+      }
+    },
+    "IdentityConfig": {
+      "type": "object",
+      "description": "Operator-assigned name and location of this Seed",
+      "required": ["name", "location"],
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Shown in the header and browser tab title; empty means unset",
+          "maxLength": 64,
+          "pattern": "^[^\\x00-\\x1f\\x7f-\\x9f]*$",
+          "default": ""
+        },
+        "location": {
+          "type": "string",
+          "description": "Where this Seed is installed; empty means unset",
+          "maxLength": 128,
+          "pattern": "^[^\\x00-\\x1f\\x7f-\\x9f]*$",
+          "default": ""
         }
       }
     },

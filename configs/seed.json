@@ -355,6 +355,10 @@
     "show_public_ip": true,
     "unit_system": "sae"
   },
+  "identity": {
+    "name": "",
+    "location": ""
+  },
   "logging": {
     "level": "info",
     "format": "text",
