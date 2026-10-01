@@ -1,5 +1,5 @@
 import type React from 'react';
-import { memo, useEffect } from 'react';
+import { memo } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   cn,
@@ -10,7 +10,6 @@ import {
   spacing,
 } from '../../../../styles/theme';
 import type { NetworkDiscoverySettings } from '../../../../types/settings';
-import { PORT_PRESETS } from './DiscoveryCustomOptions.constants';
 import { DiscoveryPortScanDetails } from './DiscoveryPortScanDetails';
 
 interface DiscoveryCustomOptionsProps {
@@ -24,28 +23,6 @@ interface DiscoveryCustomOptionsProps {
 export const DiscoveryCustomOptions: React.NamedExoticComponent<DiscoveryCustomOptionsProps> = memo(
   function discoveryCustomOptions({ settings, onSettingsChange }: DiscoveryCustomOptionsProps) {
     const { t } = useTranslation('settings');
-
-    // Auto-populate ports when preset changes (but not for custom)
-    useEffect(() => {
-      const preset = settings.options?.portScan?.preset ?? 'common';
-      if (preset !== 'custom') {
-        const presetConfig = PORT_PRESETS[preset];
-        onSettingsChange((prev) => ({
-          ...prev,
-          options: {
-            ...prev.options,
-            portScan: {
-              ...prev.options?.portScan,
-              enabled: prev.options?.portScan?.enabled ?? false,
-              preset,
-              tcpPorts: presetConfig.tcp,
-              udpPorts: presetConfig.udp,
-            },
-          },
-        }));
-      }
-      // Only run when preset changes - onSettingsChange is stable from useCallback
-    }, [settings.options?.portScan?.preset, onSettingsChange]);
 
     return (
       <div className={cn('border-t border-surface-border', spacing.pad.sm)}>

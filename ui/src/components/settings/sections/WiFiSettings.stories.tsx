@@ -17,6 +17,7 @@ import type React from 'react';
 import { useState } from 'react';
 import { cn, spacing } from '../../../styles/theme';
 import type { SaveStatus, WiFiSettings as WiFiSettingsType } from '../../../types/settings';
+import { expandSections } from './storyPlay';
 import { WiFiSettings } from './WiFiSettings';
 
 const meta: Meta<typeof WiFiSettings> = {
@@ -46,6 +47,7 @@ const meta: Meta<typeof WiFiSettings> = {
       </div>
     ),
   ],
+  play: expandSections,
 };
 
 export default meta;

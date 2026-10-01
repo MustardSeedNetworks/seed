@@ -15,8 +15,11 @@
 import type { Decorator, Meta, StoryObj } from '@storybook/react-vite';
 import type React from 'react';
 import { useState } from 'react';
+import { fn } from 'storybook/test';
 import type { SaveStatus, TestsSettings } from '../../../types/settings';
+import { DEFAULT_CARD_SETTINGS } from '../../../types/settings';
 import { HealthChecksSettings } from './HealthChecksSettings';
+import { expandSections } from './storyPlay';
 
 const emptySettings: TestsSettings = {
   dnsHostname: 'google.com',
@@ -33,7 +36,7 @@ const emptySettings: TestsSettings = {
   iperf: { autoRunOnLink: false },
 };
 
-const meta: Meta<typeof HealthChecksSettings> = {
+const meta = {
   title: 'Settings/health-checks-settings',
   component: HealthChecksSettings,
   parameters: {
@@ -60,7 +63,15 @@ const meta: Meta<typeof HealthChecksSettings> = {
       </div>
     ),
   ],
-};
+  args: {
+    testsSettings: emptySettings,
+    setTestsSettings: fn(),
+    testsStatus: 'idle',
+    cardSettings: DEFAULT_CARD_SETTINGS,
+    updateCardSettings: fn(),
+  },
+  play: expandSections,
+} satisfies Meta<typeof HealthChecksSettings>;
 
 export default meta;
 type Story = StoryObj<typeof meta>;
@@ -71,9 +82,6 @@ type Story = StoryObj<typeof meta>;
 export const Empty: Story = {
   args: {
     testsSettings: emptySettings,
-    setTestsSettings: (): void => {
-      // intentionally empty
-    },
     testsStatus: 'idle',
   },
 };
@@ -86,9 +94,6 @@ export const Disabled: Story = {
     testsSettings: {
       ...emptySettings,
       runPerformance: false,
-    },
-    setTestsSettings: (): void => {
-      // intentionally empty
     },
     testsStatus: 'idle',
   },
@@ -125,9 +130,6 @@ export const OnlyPingTargets: Story = {
         },
       ],
     },
-    setTestsSettings: (): void => {
-      // intentionally empty
-    },
     testsStatus: 'idle',
   },
 };
@@ -163,9 +165,6 @@ export const OnlyTcpPorts: Story = {
         },
       ],
     },
-    setTestsSettings: (): void => {
-      // intentionally empty
-    },
     testsStatus: 'idle',
   },
 };
@@ -187,9 +186,6 @@ export const OnlyUdpPorts: Story = {
           enabled: true,
         },
       ],
-    },
-    setTestsSettings: (): void => {
-      // intentionally empty
     },
     testsStatus: 'idle',
   },
@@ -218,9 +214,6 @@ export const OnlyHttpEndpoints: Story = {
           enabled: true,
         },
       ],
-    },
-    setTestsSettings: (): void => {
-      // intentionally empty
     },
     testsStatus: 'idle',
   },
@@ -269,9 +262,6 @@ export const AllTestTypes: Story = {
           enabled: true,
         },
       ],
-    },
-    setTestsSettings: (): void => {
-      // intentionally empty
     },
     testsStatus: 'idle',
   },
@@ -363,9 +353,6 @@ export const ProductionMonitoring: Story = {
         },
       ],
     },
-    setTestsSettings: (): void => {
-      // intentionally empty
-    },
     testsStatus: 'idle',
   },
 };
@@ -386,9 +373,6 @@ export const Saving: Story = {
           count: 3,
         },
       ],
-    },
-    setTestsSettings: (): void => {
-      // intentionally empty
     },
     testsStatus: 'saving',
   },
@@ -439,7 +423,7 @@ export const Interactive: Story = {
         testsSettings={testsSettings}
         setTestsSettings={handleSetTestsSettings}
         testsStatus={status}
-        cardSettings={{} as never}
+        cardSettings={DEFAULT_CARD_SETTINGS}
         updateCardSettings={() => {}}
       />
     );
