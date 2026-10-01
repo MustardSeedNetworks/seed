@@ -6,12 +6,13 @@ import (
 	"time"
 
 	"github.com/MustardSeedNetworks/seed/internal/database"
+	"github.com/MustardSeedNetworks/seed/internal/database/dbtest"
 	"github.com/MustardSeedNetworks/seed/internal/topology"
 )
 
 func newTopoARPDB(t *testing.T) *database.DB {
 	t.Helper()
-	db, err := database.Open(t.TempDir() + "/seed.db")
+	db, err := database.Open(dbtest.Path(t))
 	if err != nil {
 		t.Fatalf("open db: %v", err)
 	}

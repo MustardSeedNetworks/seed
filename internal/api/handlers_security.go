@@ -341,6 +341,7 @@ func (s *Server) handleGateway(w http.ResponseWriter, r *http.Request) {
 	if err == nil && ipv6Gateway != "" {
 		// Create a temporary tester for IPv6
 		ipv6Tester := gateway.NewTester(gateway.DefaultThresholds())
+		defer ipv6Tester.Close()
 		ipv6Tester.SetGateway(ipv6Gateway)
 		ipv6Stats := ipv6Tester.Test()
 

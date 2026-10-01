@@ -3,11 +3,11 @@ package database_test
 import (
 	"context"
 	"errors"
-	"os"
 	"testing"
 	"time"
 
 	"github.com/MustardSeedNetworks/seed/internal/database"
+	"github.com/MustardSeedNetworks/seed/internal/database/dbtest"
 )
 
 // userCRUDTestDB holds test dependencies for user CRUD tests.
@@ -20,16 +20,7 @@ type userCRUDTestDB struct {
 func setupUserCRUDTest(t *testing.T) *userCRUDTestDB {
 	t.Helper()
 
-	tmpFile, tmpErr := os.CreateTemp(t.TempDir(), "seed-test-*.db")
-	if tmpErr != nil {
-		t.Fatalf("Failed to create temp file: %v", tmpErr)
-	}
-	tmpPath := tmpFile.Name()
-	_ = tmpFile.Close()
-
-	t.Cleanup(func() { _ = os.Remove(tmpPath) })
-
-	db, openErr := database.Open(tmpPath)
+	db, openErr := database.Open(dbtest.Path(t))
 	if openErr != nil {
 		t.Fatalf("Failed to open database: %v", openErr)
 	}
@@ -206,16 +197,7 @@ type loginTrackingTestDB struct {
 func setupLoginTrackingTest(t *testing.T) *loginTrackingTestDB {
 	t.Helper()
 
-	tmpFile, tmpErr := os.CreateTemp(t.TempDir(), "seed-test-*.db")
-	if tmpErr != nil {
-		t.Fatalf("Failed to create temp file: %v", tmpErr)
-	}
-	tmpPath := tmpFile.Name()
-	_ = tmpFile.Close()
-
-	t.Cleanup(func() { _ = os.Remove(tmpPath) })
-
-	db, openErr := database.Open(tmpPath)
+	db, openErr := database.Open(dbtest.Path(t))
 	if openErr != nil {
 		t.Fatalf("Failed to open database: %v", openErr)
 	}
@@ -354,16 +336,7 @@ type migrateUserTestDB struct {
 func setupMigrateUserTest(t *testing.T) *migrateUserTestDB {
 	t.Helper()
 
-	tmpFile, tmpErr := os.CreateTemp(t.TempDir(), "seed-test-*.db")
-	if tmpErr != nil {
-		t.Fatalf("Failed to create temp file: %v", tmpErr)
-	}
-	tmpPath := tmpFile.Name()
-	_ = tmpFile.Close()
-
-	t.Cleanup(func() { _ = os.Remove(tmpPath) })
-
-	db, openErr := database.Open(tmpPath)
+	db, openErr := database.Open(dbtest.Path(t))
 	if openErr != nil {
 		t.Fatalf("Failed to open database: %v", openErr)
 	}
@@ -427,16 +400,7 @@ type closedDBTestDB struct {
 func setupClosedDBTest(t *testing.T) *closedDBTestDB {
 	t.Helper()
 
-	tmpFile, err := os.CreateTemp(t.TempDir(), "seed-test-*.db")
-	if err != nil {
-		t.Fatalf("Failed to create temp file: %v", err)
-	}
-	tmpPath := tmpFile.Name()
-	_ = tmpFile.Close()
-
-	t.Cleanup(func() { _ = os.Remove(tmpPath) })
-
-	db, err := database.Open(tmpPath)
+	db, err := database.Open(dbtest.Path(t))
 	if err != nil {
 		t.Fatalf("Failed to open database: %v", err)
 	}

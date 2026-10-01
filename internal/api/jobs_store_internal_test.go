@@ -4,10 +4,10 @@ import (
 	"context"
 	"encoding/json"
 	"log/slog"
-	"path/filepath"
 	"testing"
 
 	"github.com/MustardSeedNetworks/seed/internal/database"
+	"github.com/MustardSeedNetworks/seed/internal/database/dbtest"
 	"github.com/MustardSeedNetworks/seed/internal/platform/events"
 	"github.com/MustardSeedNetworks/seed/internal/platform/jobs"
 )
@@ -45,7 +45,7 @@ func TestDBJobIdempotency(t *testing.T) {
 
 func newJobStoreTestDB(t *testing.T) *database.DB {
 	t.Helper()
-	db, err := database.Open(filepath.Join(t.TempDir(), "jobs-store.db"))
+	db, err := database.Open(dbtest.Path(t))
 	if err != nil {
 		t.Fatalf("open db: %v", err)
 	}

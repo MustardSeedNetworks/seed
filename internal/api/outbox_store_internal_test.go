@@ -4,18 +4,18 @@ import (
 	"context"
 	"database/sql"
 	"log/slog"
-	"path/filepath"
 	"testing"
 	"time"
 
 	"github.com/MustardSeedNetworks/seed/internal/database"
+	"github.com/MustardSeedNetworks/seed/internal/database/dbtest"
 	"github.com/MustardSeedNetworks/seed/internal/platform/events"
 	"github.com/MustardSeedNetworks/seed/internal/platform/outbox"
 )
 
 func newOutboxStoreTestDB(t *testing.T) *database.DB {
 	t.Helper()
-	db, err := database.Open(filepath.Join(t.TempDir(), "outbox-store.db"))
+	db, err := database.Open(dbtest.Path(t))
 	if err != nil {
 		t.Fatalf("open db: %v", err)
 	}
