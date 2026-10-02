@@ -206,15 +206,25 @@ test('Tab and Shift+Tab cross the edge of the mounted rows', async ({ page }) =>
     'focus stopped outside the rows',
   ).toEqual([]);
 
-  await page.getByTestId('discovery-table').evaluate((table) => {
-    if (table.parentElement) {
-      table.parentElement.scrollTop = 30000;
+  const table = page.getByTestId('discovery-table');
+  await table.evaluate((t) => {
+    if (t.parentElement) {
+      t.parentElement.scrollTop = 30000;
     }
   });
   await expect
     .poll(async () => Number(await mountedRows(page).first().getAttribute('data-index')))
     // 30,000 px is some 490 rows down; anything short of that is mid-update.
     .toBeGreaterThan(400);
+  // Chromium's scroll anchoring used to move the list a second time once the
+  // virtualiser had swapped the rows (30,000 px landed near 58,000), and how
+  // late that came decided whether the reads below saw the rows before or
+  // after it (#2962). Reading the offset lays the page out, so a pending move
+  // has landed by then.
+  expect(
+    await table.evaluate((t) => t.parentElement?.scrollTop),
+    'the list moved again after it was scrolled',
+  ).toBe(30000);
   const firstIndex = Number(await mountedRows(page).first().getAttribute('data-index'));
   await scanIn(mountedRows(page).first());
   await page.keyboard.press('Shift+Tab');
