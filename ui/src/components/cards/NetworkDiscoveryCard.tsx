@@ -20,7 +20,6 @@ import { DiscoveryEmptyState, discoveryPhase } from './DiscoveryEmptyState';
 import { DiscoveryModal } from './DiscoveryModal';
 import { categorizeDevices, DiscoverySummary } from './NetworkDiscoveryCardHelpers';
 import type { NetworkDiscoveryData as _NetworkDiscoveryData } from './networkDiscoveryCardTypes';
-import { VulnerabilityDetailsModal } from './VulnerabilityDetailsModal';
 
 // Re-export public types so existing import paths still resolve.
 export type {
@@ -96,9 +95,6 @@ export const NetworkDiscoveryCard: React.NamedExoticComponent<NetworkDiscoveryCa
 
     // Auto-scan + vuln-scan orchestration lives in its own hook
     const { handleDeepScan } = useNetworkDiscoveryAutoScan(data);
-
-    // Vulnerability modal state
-    const [selectedDeviceForVuln, setSelectedDeviceForVuln] = useState<string | null>(null);
 
     // Full-screen modal state
     const [isModalOpen, setIsModalOpen] = useState(false);
@@ -279,13 +275,6 @@ export const NetworkDiscoveryCard: React.NamedExoticComponent<NetworkDiscoveryCa
           <DiscoveryEmptyState
             phase={discoveryPhase(discoveryEnabled, status)}
             onOpenSettings={onOpenSettings}
-          />
-        ) : null}
-        {/* Vulnerability Details Modal */}
-        {selectedDeviceForVuln ? (
-          <VulnerabilityDetailsModal
-            deviceIp={selectedDeviceForVuln}
-            onClose={(): void => setSelectedDeviceForVuln(null)}
           />
         ) : null}
         {/* Full Screen Discovery Modal */}

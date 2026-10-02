@@ -131,26 +131,42 @@ export function PortsBadge({ count }: { count: number }): JSX.Element {
   );
 }
 
+/**
+ * The finding count, as the button that opens the device's findings.
+ */
 export function VulnBadge({
   vulnerabilities,
+  device,
+  onOpen,
 }: {
   vulnerabilities: Vulnerability[] | undefined;
+  device: string;
+  onOpen: () => void;
 }): JSX.Element {
+  const { t } = useTranslation('cards');
   const count = vulnerabilities?.length ?? 0;
   if (count === 0) {
     return none;
   }
   return (
-    <span
+    <button
+      type="button"
+      onClick={(e): void => {
+        // The row toggles its details panel on click.
+        e.stopPropagation();
+        onOpen();
+      }}
+      aria-label={t('discovery.showVulnerabilities', { device })}
       className={cn(
-        'inline-flex items-center gap-tight text-xs px-1.5 py-0.5',
+        'inline-flex items-center gap-tight min-h-6 text-xs px-1.5 py-0.5',
         radius.md,
         getSeverityClasses(highestSeverity(vulnerabilities)),
+        'hover:opacity-80 transition-opacity',
       )}
     >
       <AlertTriangle className="w-3 h-3" />
       {count}
-    </span>
+    </button>
   );
 }
 
@@ -158,9 +174,11 @@ export function VulnBadge({
 export function ColumnSummary({
   device,
   openPortCount,
+  onShowVulnerabilities,
 }: {
   device: DiscoveredDevice;
   openPortCount: number;
+  onShowVulnerabilities: () => void;
 }): JSX.Element {
   const { t } = useTranslation('cards');
   const items = [
@@ -188,7 +206,13 @@ export function ColumnSummary({
     {
       key: 'vulns',
       label: t('discovery.tableVulns'),
-      value: <VulnBadge vulnerabilities={device.vulnerabilities?.vulnerabilities} />,
+      value: (
+        <VulnBadge
+          vulnerabilities={device.vulnerabilities?.vulnerabilities}
+          device={deviceName(device) || device.ip}
+          onOpen={onShowVulnerabilities}
+        />
+      ),
     },
   ] as const;
   return (

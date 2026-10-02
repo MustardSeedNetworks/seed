@@ -27,6 +27,7 @@ import { column } from './DiscoveryModalCells';
 import { DeviceRow } from './DiscoveryModalDeviceRow';
 import type { DiscoveredDevice, NetworkDiscoveryData } from './NetworkDiscoveryCard';
 import { useVirtualDeviceRows } from './useVirtualDeviceRows';
+import { VulnerabilityDetailsModal } from './VulnerabilityDetailsModal';
 
 interface DiscoveryModalProps {
   isOpen: boolean;
@@ -167,6 +168,7 @@ export function DiscoveryModal({
   const [expandedDevices, setExpandedDevices] = useState<Set<string>>(new Set());
   const [scanningDevices, setScanningDevices] = useState<Set<string>>(new Set());
   const [showLocalOnly, setShowLocalOnly] = useState(false);
+  const [vulnDeviceIp, setVulnDeviceIp] = useState<string | null>(null);
 
   // Toggle sort
   const handleSort = useCallback((field: SortField) => {
@@ -551,6 +553,7 @@ export function DiscoveryModal({
                   isExpanded={expandedDevices.has(key)}
                   onToggle={(): void => toggleDevice(key)}
                   onDeepScan={onDeepScan ? handleDeepScan : undefined}
+                  onShowVulnerabilities={setVulnDeviceIp}
                   isScanning={scanningDevices.has(device.ip)}
                 />
               );
@@ -566,6 +569,12 @@ export function DiscoveryModal({
           ) : null}
         </div>
       </div>
+      {vulnDeviceIp ? (
+        <VulnerabilityDetailsModal
+          deviceIp={vulnDeviceIp}
+          onClose={(): void => setVulnDeviceIp(null)}
+        />
+      ) : null}
     </div>
   );
 }

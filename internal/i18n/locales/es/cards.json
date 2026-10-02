@@ -148,6 +148,7 @@
     "tableActions": "Acciones",
     "showDetails": "Mostrar detalles de {{device}}",
     "hideDetails": "Ocultar detalles de {{device}}",
+    "showVulnerabilities": "Mostrar vulnerabilidades de {{device}}",
     "viewAllDevices": "Ver Todos los Dispositivos",
     "snmpInfo": "Detalles SNMP",
     "scanningPhase": "Escaneando — {{phase}}",

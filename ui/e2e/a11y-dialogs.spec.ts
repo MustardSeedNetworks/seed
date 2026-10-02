@@ -147,3 +147,71 @@ test('the profile editor passes axe and returns focus to the profile manager', a
   await expect(byLabelledBy('profile-modal-title')(page)).toBeVisible();
   await expectFocused(create);
 });
+
+// Nothing opened the vulnerability details until the CVE badge became its
+// opener (#2640), so this is the first time a browser has reached it. The
+// devices and the findings are mocked: a test host has no CVE data.
+test('the vulnerability details pass axe and return focus to the CVE badge', async ({ page }) => {
+  const findings = {
+    deviceIp: '10.44.10.7',
+    hostname: 'sw-core-01',
+    vendor: 'Cisco',
+    product: 'IOS',
+    version: '15.2',
+    scanTime: new Date().toISOString(),
+    vulnerabilities: [
+      {
+        cveId: 'CVE-2026-0002',
+        description: 'Remote code execution in the web UI.',
+        severity: 'CRITICAL',
+        score: 9.8,
+        published: '2026-01-01T00:00:00Z',
+        modified: '2026-01-01T00:00:00Z',
+        references: ['https://nvd.nist.gov/vuln/detail/CVE-2026-0002'],
+        affectedCpe: '',
+      },
+    ],
+  };
+  const devices = [
+    {
+      ip: '10.44.10.7',
+      mac: '00:1b:21:aa:bb:01',
+      hostname: 'sw-core-01',
+      discoveryMethod: ['arp'],
+      lastSeen: new Date().toISOString(),
+      isLocal: true,
+      vulnerabilities: findings,
+    },
+  ];
+  await page.route('**/api/v1/security/devices', (route) => route.fulfill({ json: { devices } }));
+  await page.route('**/api/v1/security/vulnerabilities/device?*', (route) =>
+    route.fulfill({ json: findings }),
+  );
+
+  await page.goto('/network');
+  await expect(page.getByTestId('page-header-title')).toBeVisible();
+  await page.getByTestId('discovery-card-maximize').focus();
+  await page.keyboard.press('Enter');
+  const table = byLabelledBy('discovery-modal-title')(page);
+  await expect(table).toBeVisible();
+
+  const badge = table.getByRole('button', { name: 'Show vulnerabilities for sw-core-01' });
+  await badge.focus();
+  await page.keyboard.press('Enter');
+  const details = page.getByRole('dialog', { name: 'Vulnerability Report' });
+  await expect(details.getByText('CVE-2026-0002')).toBeVisible();
+
+  expect(await axeViolations(page, '[aria-labelledby="modal-title"]')).toEqual([]);
+  for (let presses = 0; presses < 20; presses++) {
+    await page.keyboard.press('Tab');
+    expect(
+      await details.evaluate((root) => root.contains(document.activeElement)),
+      `Tab #${presses + 1} left the vulnerability details`,
+    ).toBe(true);
+  }
+
+  // Escape closes the details only; the discovery table stays open.
+  await closeWithEscape(page, details);
+  await expect(table).toBeVisible();
+  await expectFocused(badge);
+});

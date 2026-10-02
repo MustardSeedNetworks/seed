@@ -148,6 +148,7 @@
     "tableActions": "Actions",
     "showDetails": "Show details for {{device}}",
     "hideDetails": "Hide details for {{device}}",
+    "showVulnerabilities": "Show vulnerabilities for {{device}}",
     "viewAllDevices": "View All Devices",
     "snmpInfo": "SNMP Details",
     "scanningPhase": "Scanning — {{phase}}",
