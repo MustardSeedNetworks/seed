@@ -1,5 +1,6 @@
 import { expect, test } from '@playwright/test';
 import { skipSetupWizard } from './helpers/auth';
+import { expectFocused } from './helpers/focus';
 
 /**
  * FAB (Floating Action Button) E2E Tests
@@ -89,7 +90,7 @@ test.describe('FAB - Run All Tests Flow', () => {
 
     // Focus the FAB using keyboard
     await fab.focus();
-    await expect(fab).toBeFocused();
+    await expectFocused(fab);
 
     // Arm a waiter for the next /api/ request BEFORE pressing Enter —
     // the click handler dispatches multiple async fetches and the

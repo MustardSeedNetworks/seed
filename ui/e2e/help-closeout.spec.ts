@@ -9,6 +9,7 @@ import {
   sidebarSettingsButton,
   skipSetupWizard,
 } from './helpers/auth';
+import { expectFocused } from './helpers/focus';
 
 async function tabTo(page: Page, target: Locator, key = 'Tab'): Promise<void> {
   for (let count = 0; count < 100; count++) {
@@ -148,14 +149,14 @@ test('HTTP timing segments are reached with Tab, described and dismissed with Es
   for (let index = 0; index < 5; index++) {
     const trigger = segments.nth(index);
     await tabTo(page, trigger);
-    await expect(trigger).toBeFocused();
+    await expectFocused(trigger);
     await expect(page.getByRole('tooltip')).toBeVisible();
     const description = await trigger.getAttribute('aria-describedby');
     expect(description).toBeTruthy();
     await expect(trigger).toHaveAccessibleDescription(await page.getByRole('tooltip').innerText());
     await page.keyboard.press('Escape');
     await expect(page.getByRole('tooltip')).toHaveCount(0);
-    await expect(trigger).toBeFocused();
+    await expectFocused(trigger);
   }
 });
 
@@ -314,13 +315,13 @@ for (const width of [1440, 390]) {
     // macOS WebKit uses Option+Tab to include native links in keyboard navigation.
     const linkTab = browserName === 'webkit' && process.platform === 'darwin' ? 'Alt+Tab' : 'Tab';
     await tabTo(page, back, linkTab);
-    await expect(back).toBeFocused();
+    await expectFocused(back);
     const content = page.getByTestId('help-drawer-content');
     await page.keyboard.press('PageDown');
     await expect.poll(() => content.evaluate((element) => element.scrollTop)).toBeGreaterThan(0);
     await page.keyboard.press('Enter');
-    await expect(
+    await expectFocused(
       page.getByTestId(width === 390 ? 'help-section-select' : 'help-section-network'),
-    ).toBeFocused();
+    );
   });
 }

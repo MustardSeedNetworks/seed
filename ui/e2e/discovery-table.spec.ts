@@ -1,5 +1,6 @@
 import { expect, type Page, test } from '@playwright/test';
 import { AUTH_STORAGE_STATE, disableAnimations } from './helpers/auth';
+import { expectFocused } from './helpers/focus';
 
 /**
  * The discovery table fits the modal at every published width and stays
@@ -150,7 +151,7 @@ test('a long list mounts only the rows in view, and Tab walks past them', async 
   // reach rows that were not in the DOM when it started.
   const firstScan = mountedRows(page).first().getByRole('button', { name: 'Scan' });
   await firstScan.focus();
-  await expect(firstScan).toBeFocused();
+  await expectFocused(firstScan);
   for (let i = 0; i < lastMounted + 10; i++) {
     await page.keyboard.press('Tab');
   }

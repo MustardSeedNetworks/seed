@@ -17,6 +17,7 @@ import axe from 'axe-core';
 
 import { AUTH_STORAGE_STATE, disableAnimations, sidebarSettingsButton } from './helpers/auth';
 import { axeViolations } from './helpers/axe';
+import { expectFocused } from './helpers/focus';
 
 const ROUTES = [
   '/link',
@@ -141,7 +142,7 @@ test.describe('overlays keep and return keyboard focus', () => {
 
       await page.keyboard.press('Escape');
       await expect(dialog(page)).toBeHidden();
-      await expect(trigger).toBeFocused();
+      await expectFocused(trigger);
     });
   }
 
@@ -160,7 +161,7 @@ test.describe('overlays keep and return keyboard focus', () => {
 
     await page.keyboard.press('Escape');
     await expect(page.getByTestId('help-drawer')).toBeHidden();
-    await expect(trigger).toBeFocused();
+    await expectFocused(trigger);
   });
 
   test('the command palette traps Tab and closes on Escape', async ({ page }) => {
