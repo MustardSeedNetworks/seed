@@ -1,7 +1,8 @@
 import { type APIRequestContext, expect, test } from '@playwright/test';
 
 /**
- * Site networks behind the edge router are learned, not typed (seed#2695).
+ * Site networks behind the edge router are found from the learned summary
+ * alone (seed#2695, seed#2832).
  *
  * Runs only under scripts/e2e-niac-routed.sh, which puts a routed NIAC pack
  * behind a veth pair, gives seed one address on the pack's transit network
@@ -15,14 +16,13 @@ import { type APIRequestContext, expect, test } from '@playwright/test';
  *   SEED_E2E_SITE_ROUTE      the host's static route to the site
  *   SEED_E2E_SITE_NETWORKS   comma-separated site CIDRs, inside that route
  *   SEED_E2E_SITE_DEVICES    `cidr=ip|ip;cidr=ip|…`, the devices inside each
- *   SEED_E2E_TYPED_NETWORK   the one site network entered by hand
- *   SEED_E2E_CORE            the agent in it whose address table names the rest
+ *   SEED_E2E_CORE            the agent whose address table names the site networks
  *
- * The edge router names the site only as its summary route, and a learned
- * summary is not something the sweep can cover (it caps a target at 254
- * hosts), so the operator enters one site network. Every other one has to be
- * learned from the SNMP tables of a device inside it: the host has no route
- * narrower than the summary, so no site network can come from anywhere else.
+ * The edge router names the site only as its summary route, which is wider
+ * than one sweep may probe. With only that summary switched on, the sweep
+ * first probes .1 to .4 of each /24 inside it, finds the core switch, and then
+ * sweeps the /24s the core's address table names, one per sweep. No site
+ * network is typed in and none of the learned /24s is switched on.
  *
  * The 60 s rescan sweeps enabled target networks too (seed#2831), but this
  * spec presses the operator's Scan through the API so each step waits on a
@@ -37,15 +37,16 @@ const SCAN_EVERY_MS = 15_000;
 // after the one that found the device.
 const SCAN_MS = 4 * SCAN_EVERY_MS;
 const LEARN_MS = 6 * SCAN_EVERY_MS;
+// Probing .1-.4 covers 63 /24s a sweep, so a /16 takes five.
+const PROBED_HOSTS = 4;
+const PROBE_MS = 6 * SCAN_EVERY_MS + SCAN_MS;
 
 const enabled = process.env.SEED_E2E_NIAC_ROUTED === '1';
 const community = process.env.SEED_E2E_SNMP_COMMUNITY ?? '';
 const gateway = process.env.SEED_E2E_GATEWAY ?? '';
 const siteRoute = process.env.SEED_E2E_SITE_ROUTE ?? '';
-const typedNetwork = process.env.SEED_E2E_TYPED_NETWORK ?? '';
 const core = process.env.SEED_E2E_CORE ?? '';
 const siteNetworks = (process.env.SEED_E2E_SITE_NETWORKS ?? '').split(',').filter(Boolean);
-const learnedNetworks = siteNetworks.filter((cidr) => cidr !== typedNetwork);
 const siteDevices = new Map(
   (process.env.SEED_E2E_SITE_DEVICES ?? '')
     .split(';')
@@ -115,22 +116,21 @@ async function pending(
 }
 
 test.describe('target networks behind a NIAC edge router', () => {
-  test.setTimeout(RESCAN_MS + SCAN_MS + LEARN_MS + SCAN_MS + 60_000);
+  test.setTimeout(RESCAN_MS + PROBE_MS + LEARN_MS + siteNetworks.length * SCAN_EVERY_MS + SCAN_MS);
 
-  test('one site network typed in, the rest learned from SNMP and swept', async ({ page }) => {
+  test('only the learned summary switched on, its site networks swept', async ({ page }) => {
     const { request } = page;
     expect(siteRoute).not.toBe('');
     expect(gateway).not.toBe('');
     expect(core).not.toBe('');
-    expect(learnedNetworks.length).toBeGreaterThan(0);
-    expect(learnedNetworks.length).toBe(siteNetworks.length - 1);
+    expect(siteNetworks.length).toBeGreaterThan(1);
 
     // Nothing inside the site is reachable to a sweep yet, so nothing of it
     // may be known: otherwise the steps below would prove nothing.
     const before = await discoveredIPs(request);
     expect(
       siteNetworks.flatMap((cidr) => siteDevices.get(cidr) ?? []).filter((ip) => before.has(ip)),
-      'site devices discovered before any site network was entered',
+      'site devices discovered before the summary was switched on',
     ).toEqual([]);
     expect(
       await pending(siteNetworks, request, (s) => s === undefined),
@@ -159,32 +159,34 @@ test.describe('target networks behind a NIAC edge router', () => {
     });
     const routeAfter = Date.now() - savedAt;
 
-    const typed = await request.post('/api/v1/security/devices/subnets', {
+    const summaryName = (await subnets(request)).find((s) => s.cidr === siteRoute)?.name ?? '';
+    const switched = await request.put('/api/v1/security/devices/subnets', {
       headers: { 'X-CSRF-Token': await csrfToken(request) },
-      data: { cidr: typedNetwork, name: 'site management', enabled: true },
+      data: { cidr: siteRoute, name: summaryName, enabled: true },
     });
-    expect(typed.status(), `POST /api/v1/security/devices/subnets ${typedNetwork}`).toBe(200);
-    const typedAt = Date.now();
+    expect(switched.status(), `PUT /api/v1/security/devices/subnets ${siteRoute}`).toBe(200);
+    const enabledAt = Date.now();
     const scan = scanner(request);
 
-    await test.step('scanning the typed network finds the device inside it', async () => {
+    await test.step('probing the summary finds the core switch inside it', async () => {
       await expect
         .poll(
           async () => {
             await scan();
             return (await discoveredIPs(request)).has(core);
           },
-          { message: `${core} discovered`, timeout: SCAN_MS, intervals: [2_000] },
+          { message: `${core} discovered`, timeout: PROBE_MS, intervals: [2_000] },
         )
         .toBe(true);
     });
+    const coreAfter = Date.now() - enabledAt;
 
-    await test.step('every other site network is learned from that device, switched off', async () => {
+    await test.step('the site networks are learned from it, switched off', async () => {
       await expect
         .poll(
           async () => {
             await scan();
-            return pending(learnedNetworks, request, (s) => s?.learned === true && !s.enabled);
+            return pending(siteNetworks, request, (s) => s?.learned === true && !s.enabled);
           },
           {
             message: 'site networks not listed as learned and switched off',
@@ -194,55 +196,51 @@ test.describe('target networks behind a NIAC edge router', () => {
         )
         .toEqual([]);
     });
-    const learnedAfter = Date.now() - typedAt;
 
-    const listed = await subnets(request);
-    const nameOf = (cidr: string): string => listed.find((s) => s.cidr === cidr)?.name ?? '';
-    // The name records which table named the network, and the host's own
-    // table has nothing narrower than the summary.
-    expect(
-      learnedNetworks.filter(
-        (cidr) => !/\((interface addresses|routing table)\)$/.test(nameOf(cidr)),
-      ),
-      `learned site networks not attributed to an SNMP table: ${learnedNetworks.map((c) => `${c} "${nameOf(c)}"`).join('; ')}`,
-    ).toEqual([]);
-    expect(
-      listed.find((s) => s.cidr === typedNetwork)?.learned,
-      `${typedNetwork} stays the operator's own entry`,
-    ).toBe(false);
+    // The probe alone reaches .1 to .4, so only a device above them shows its
+    // /24 was swept whole. Some site networks hold nothing above .4; the rest
+    // must each show one.
+    const sweptOnly = new Map(
+      siteNetworks
+        .map(
+          (cidr) =>
+            [
+              cidr,
+              (siteDevices.get(cidr) ?? []).filter((ip) => Number(ip.split('.')[3]) > PROBED_HOSTS),
+            ] as const,
+        )
+        .filter(([, ips]) => ips.length > 0),
+    );
+    expect(sweptOnly.size, `site networks with a device above .${PROBED_HOSTS}`).toBeGreaterThan(1);
 
-    const token = await csrfToken(request);
-    for (const cidr of learnedNetworks) {
-      const response = await request.put('/api/v1/security/devices/subnets', {
-        headers: { 'X-CSRF-Token': token },
-        data: { cidr, name: nameOf(cidr), enabled: true },
-      });
-      expect(response.status(), `PUT /api/v1/security/devices/subnets ${cidr}`).toBe(200);
-    }
-    const enabledAt = Date.now();
-
-    await test.step('switching them on finds devices in every one', async () => {
+    await test.step('sweeping the summary finds devices across its site networks', async () => {
       await expect
         .poll(
           async () => {
             await scan();
             const found = await discoveredIPs(request);
-            return learnedNetworks.filter(
-              (cidr) => !(siteDevices.get(cidr) ?? []).some((ip) => found.has(ip)),
-            );
+            return [...sweptOnly]
+              .filter(([, ips]) => !ips.some((ip) => found.has(ip)))
+              .map(([cidr]) => cidr);
           },
           {
-            message: 'learned site networks with no device discovered',
-            timeout: SCAN_MS,
+            message: `site networks with no device above .${PROBED_HOSTS} discovered`,
+            timeout: siteNetworks.length * SCAN_EVERY_MS + SCAN_MS,
             intervals: [2_000],
           },
         )
         .toEqual([]);
     });
 
+    const listed = await subnets(request);
+    expect(
+      listed.filter((s) => s.enabled).map((s) => s.cidr),
+      'target networks switched on',
+    ).toEqual([siteRoute]);
+
     test.info().annotations.push({
-      type: 'learned target networks',
-      description: `${siteRoute} learned ${routeAfter} ms after the credential was saved; ${learnedNetworks.length} site networks learned ${learnedAfter} ms after ${typedNetwork} was entered; their devices ${Date.now() - enabledAt} ms after they were switched on: ${learnedNetworks.map((c) => `${c} "${nameOf(c)}"`).join('; ')}`,
+      type: 'learned summary sweep',
+      description: `${siteRoute} learned ${routeAfter} ms after the credential was saved; ${core} found ${coreAfter} ms after it was switched on; devices above .${PROBED_HOSTS} in ${[...sweptOnly.keys()].join(', ')} ${Date.now() - enabledAt} ms after it was switched on`,
     });
   });
 });

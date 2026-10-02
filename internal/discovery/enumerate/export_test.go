@@ -29,11 +29,6 @@ func ExportGuessOSFromTTL(ttl int) string {
 	return guessOSFromTTL(ttl)
 }
 
-// ExportSplitSubnetIntoChunks exposes splitSubnetIntoChunks for testing.
-func ExportSplitSubnetIntoChunks(subnet *net.IPNet, maxChunks int) []*net.IPNet {
-	return splitSubnetIntoChunks(subnet, maxChunks)
-}
-
 // ExportIsLocallyAdministeredMAC exposes isLocallyAdministeredMAC for testing.
 func ExportIsLocallyAdministeredMAC(mac string) bool {
 	return isLocallyAdministeredMAC(mac)

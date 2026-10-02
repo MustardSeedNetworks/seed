@@ -292,10 +292,11 @@ two daemons. Another scenario and address can be passed straight to
 router. It has NIAC generate its `hospital` pack, runs it behind a veth pair
 bound to the pack's transit network, and gives seed one transit address plus
 the edge router's own summary route to the site. The spec saves the SNMP
-community, requires the summary as a learned (switched-off) target, enters one
-site network, and requires every other site network to be learned from a site
-device's SNMP tables and its devices found once switched on. Same requirements
-as above, plus PyYAML. Another pack can be passed to
+community, requires the summary as a learned (switched-off) target and
+switches only it on. It then requires the sweep to find the core switch by
+probing the low addresses of each /24 in the summary, to learn every site
+network from the core's SNMP tables, and to find devices in each of them
+without any being switched on (#2832). Same requirements as above, plus PyYAML. Another pack can be passed to
 `scripts/e2e-niac-routed.sh PACK`.
 
 ### SNMP collectors against NIAC's packs
