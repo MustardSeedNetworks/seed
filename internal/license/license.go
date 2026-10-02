@@ -2,7 +2,11 @@
 
 package license
 
-import fnd "github.com/MustardSeedNetworks/foundation/pkg/license"
+import (
+	"time"
+
+	fnd "github.com/MustardSeedNetworks/foundation/pkg/license"
+)
 
 // The manager, activation state and parsed-license types are the foundation
 // core's, aliased so Seed callers keep referring to them as license.Manager
@@ -43,6 +47,35 @@ func EffectiveTier(m *Manager) Tier {
 		return TierFree
 	}
 	return Tier(st.Tier)
+}
+
+// Why a licence state grants nothing, for the operator. A state that did not
+// load is named by its fnd.LoadStatus instead ("unreadable", "malformed",
+// "unverified").
+const (
+	ReasonExpired      = "expired"
+	ReasonTrialExpired = "trialExpired"
+	ReasonOtherDevice  = "otherDevice"
+)
+
+// InactiveReason says why m holds a licence state that EffectiveTier does not
+// honour, in the order the manager refuses it. It is empty when there is no
+// state, which is a fresh install, or when the state is live.
+func InactiveReason(m *Manager) string {
+	if status := m.LoadStatus(); !status.Usable() {
+		return status.String()
+	}
+	st := m.GetState()
+	switch {
+	case st == nil || m.IsActivated():
+		return ""
+	case st.IsTrialMode:
+		return ReasonTrialExpired
+	case !st.ExpiresAt.IsZero() && time.Now().After(st.ExpiresAt):
+		return ReasonExpired
+	default:
+		return ReasonOtherDevice
+	}
 }
 
 // FormatKey returns a signed token trimmed for display.

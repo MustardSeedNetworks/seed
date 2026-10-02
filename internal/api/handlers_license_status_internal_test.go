@@ -8,8 +8,12 @@ import (
 	"net/http/httptest"
 	"slices"
 	"testing"
+	"time"
+
+	fnd "github.com/MustardSeedNetworks/foundation/pkg/license"
 
 	"github.com/MustardSeedNetworks/seed/internal/license"
+	"github.com/MustardSeedNetworks/seed/internal/license/licensetest"
 )
 
 // TestLicenseStatusCarriesFeatures pins seed#2688: the UI gates every
@@ -132,37 +136,84 @@ func TestLicenseStatusFeaturesMatchCatalogue(t *testing.T) {
 	}
 }
 
-// TestLicenseStatusReportsOnlyTheLiveGrant pins D-SEED-13 on the wire: a spent
-// or unbacked licence must not advertise minting or report a tier it does not
-// grant, because the UI's token and tier surfaces read nothing else.
+// TestLicenseStatusReportsOnlyTheLiveGrant pins D-SEED-13 and seed#2704 on the
+// wire: a spent, foreign or unbacked licence must report the Free it grants and
+// why, not the tier it once held, because the UI's token and tier surfaces read
+// nothing else.
 func TestLicenseStatusReportsOnlyTheLiveGrant(t *testing.T) {
 	t.Parallel()
 
 	tests := []struct {
 		name          string
-		state         license.ActivationState
+		mgr           func(t *testing.T) *license.Manager
 		wantTier      string
 		wantActivated bool
 		wantMint      bool
+		wantReason    string
 	}{
 		{
 			name:          "live trial",
-			state:         trialState(t, 1),
+			mgr:           withState(func(t *testing.T) license.ActivationState { return trialState(t, 1) }),
 			wantTier:      "Trial",
 			wantActivated: true,
 			wantMint:      true,
 		},
 		{
-			name:          "expired trial",
-			state:         trialState(t, license.TrialDays+1),
-			wantTier:      "Trial",
+			name: "expired trial",
+			mgr: withState(
+				func(t *testing.T) license.ActivationState { return trialState(t, license.TrialDays+1) },
+			),
+			wantTier:   license.TierFree.String(),
+			wantReason: license.ReasonTrialExpired,
+		},
+		{
+			name: "live Pro licence",
+			mgr: func(t *testing.T) *license.Manager {
+				t.Helper()
+				return licensetest.PaidManager(t, license.TierPro, time.Now().Add(24*time.Hour), thisDevice(t))
+			},
+			wantTier:      license.TierPro.String(),
 			wantActivated: true,
+			wantMint:      true,
+		},
+		{
+			name: "expired Pro licence",
+			mgr: func(t *testing.T) *license.Manager {
+				t.Helper()
+				return licensetest.PaidManager(t, license.TierPro, time.Now().Add(-time.Hour), thisDevice(t))
+			},
+			wantTier:   license.TierFree.String(),
+			wantReason: license.ReasonExpired,
+		},
+		{
+			name: "Pro licence activated on another device",
+			mgr: func(t *testing.T) *license.Manager {
+				t.Helper()
+				return licensetest.PaidManager(t, license.TierPro, time.Time{}, "another-device")
+			},
+			wantTier:   license.TierFree.String(),
+			wantReason: license.ReasonOtherDevice,
 		},
 		{
 			name: "unbacked Pro state",
-			state: license.ActivationState{
-				Tier:     int(license.TierPro),
-				Features: license.FeaturesForTier(license.TierPro),
+			mgr: withState(func(*testing.T) license.ActivationState {
+				return license.ActivationState{
+					Tier:     int(license.TierPro),
+					Features: license.FeaturesForTier(license.TierPro),
+				}
+			}),
+			wantTier:   license.TierFree.String(),
+			wantReason: fnd.StatusUnverified.String(),
+		},
+		{
+			name: "no licence is Free with no reason",
+			mgr: func(t *testing.T) *license.Manager {
+				t.Helper()
+				mgr, err := license.NewManagerWithDir(t.TempDir())
+				if err != nil {
+					t.Fatalf("license manager: %v", err)
+				}
+				return mgr
 			},
 			wantTier: license.TierFree.String(),
 		},
@@ -171,15 +222,36 @@ func TestLicenseStatusReportsOnlyTheLiveGrant(t *testing.T) {
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
-			s := &Server{mux: http.NewServeMux(), licenseMgr: managerWithState(t, tc.state)}
+			s := &Server{mux: http.NewServeMux(), licenseMgr: tc.mgr(t)}
 			resp := licenseStatusJSON(t, s)
-			if resp.Tier != tc.wantTier || resp.Activated != tc.wantActivated || resp.CanMintTokens != tc.wantMint {
-				t.Errorf("tier=%q activated=%t canMint=%t, want %q %t %t",
-					resp.Tier, resp.Activated, resp.CanMintTokens, tc.wantTier, tc.wantActivated, tc.wantMint)
+			if resp.Tier != tc.wantTier || resp.Activated != tc.wantActivated ||
+				resp.CanMintTokens != tc.wantMint || resp.Reason != tc.wantReason {
+				t.Errorf("tier=%q activated=%t canMint=%t reason=%q, want %q %t %t %q",
+					resp.Tier, resp.Activated, resp.CanMintTokens, resp.Reason,
+					tc.wantTier, tc.wantActivated, tc.wantMint, tc.wantReason)
 			}
-			if !tc.wantMint && len(resp.Features) != 0 {
-				t.Errorf("features = %v, want none", resp.Features)
+			if !tc.wantActivated &&
+				(resp.TierValue != int(license.TierFree) || resp.IsTrialMode || len(resp.Features) != 0) {
+				t.Errorf("tierValue=%d isTrialMode=%t features=%v, want the Free grant",
+					resp.TierValue, resp.IsTrialMode, resp.Features)
 			}
 		})
 	}
+}
+
+// withState loads a manager over the state build returns, sealed on disk.
+func withState(build func(t *testing.T) license.ActivationState) func(t *testing.T) *license.Manager {
+	return func(t *testing.T) *license.Manager {
+		t.Helper()
+		return managerWithState(t, build(t))
+	}
+}
+
+func thisDevice(t *testing.T) string {
+	t.Helper()
+	fp, err := fnd.GenerateFingerprint()
+	if err != nil {
+		t.Fatalf("fingerprint: %v", err)
+	}
+	return fp.Hash()
 }
