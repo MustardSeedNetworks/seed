@@ -481,8 +481,14 @@ export function DiscoveryModal({
         </div>
 
         {/* Table. The scroll padding keeps a row that takes focus clear of the
-            sticky header. */}
-        <div ref={scrollRef} className="@container flex-1 overflow-auto scroll-pt-12">
+            sticky header. The virtualiser keeps the scroll position itself;
+            left to the browser's scroll anchoring, a long scroll moved the
+            list a second time once the rows and spacers were swapped
+            (30,000 px landed near 58,000 on Chromium, #2962). */}
+        <div
+          ref={scrollRef}
+          className="@container flex-1 overflow-auto scroll-pt-12 [overflow-anchor:none]"
+        >
           <table className="w-full table-fixed" onKeyDown={onKeyDown} data-testid="discovery-table">
             <thead className="bg-surface-base sticky top-0 z-10">
               <tr className="border-b border-surface-border">
