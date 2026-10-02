@@ -5,6 +5,26 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.220.3](https://github.com/MustardSeedNetworks/seed/compare/v0.220.2...v0.220.3) (2026-10-02)
+
+
+### Bug Fixes
+
+* **deps:** update dependency lucide-react to v1.48.0 ([#2933](https://github.com/MustardSeedNetworks/seed/issues/2933)) ([726c881](https://github.com/MustardSeedNetworks/seed/commit/726c8812f8baca26d02048104e5a558628d22069))
+* reject passkey login on persistence failure ([#2814](https://github.com/MustardSeedNetworks/seed/issues/2814)) ([f9a371e](https://github.com/MustardSeedNetworks/seed/commit/f9a371eefd9c10508f1cd657c16411b1569d2a27))
+* require opt-in for password breach checks ([#2813](https://github.com/MustardSeedNetworks/seed/issues/2813)) ([a8516d5](https://github.com/MustardSeedNetworks/seed/commit/a8516d55ac29517fbb56ea7fe3e644ff0727f3e0))
+
+
+### Tests
+
+* **e2e:** require a device in every learned site network ([#2950](https://github.com/MustardSeedNetworks/seed/issues/2950)) ([03cceec](https://github.com/MustardSeedNetworks/seed/commit/03cceecd4e5b876ecb46220bcfaaa7ce12e76957)), closes [#2695](https://github.com/MustardSeedNetworks/seed/issues/2695)
+
+
+### Miscellaneous
+
+* **deploy:** drop the dead SEED_DATA_DIR and unreferenced package scripts ([#2954](https://github.com/MustardSeedNetworks/seed/issues/2954)) ([f4733bc](https://github.com/MustardSeedNetworks/seed/commit/f4733bcfa46d2aec10aa1421d6366b5b92562f32)), closes [#2638](https://github.com/MustardSeedNetworks/seed/issues/2638)
+* **deps:** lock file maintenance ([#2808](https://github.com/MustardSeedNetworks/seed/issues/2808)) ([33a4906](https://github.com/MustardSeedNetworks/seed/commit/33a4906717f035544ec1875632b45239a5462e74))
+
 ## [0.220.2](https://github.com/MustardSeedNetworks/seed/compare/v0.220.1...v0.220.2) (2026-10-02)
 
 
