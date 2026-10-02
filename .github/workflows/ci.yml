@@ -1862,12 +1862,13 @@ jobs:
     steps:
       # The base image has no git (checkout would fall back to a tarball and
       # the ldflags' git calls to dev/unknown), no CA bundle, no zstd (the
-      # cache actions' archive format, else every restore misses) and no
-      # libatomic, which the Node binaries link.
+      # cache actions' archive format, else every restore misses), no
+      # libatomic, which the Node binaries link, and none of the curl,
+      # python3 and pgrep that scripts/run-e2e.sh calls.
       - name: Install container prerequisites
         run: |
           apt-get update
-          apt-get install -y --no-install-recommends ca-certificates git libatomic1 zstd
+          apt-get install -y --no-install-recommends ca-certificates curl git libatomic1 procps python3 zstd
 
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
