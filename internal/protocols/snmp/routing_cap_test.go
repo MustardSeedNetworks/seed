@@ -13,10 +13,12 @@ import (
 
 // fakeRouteAgent serves a route table of rows routes, every column in index
 // order the way an agent answers a BulkWalk, and counts how many rows of each
-// column it had to hand over before the walker stopped it.
+// column it had to hand over before the walker stopped it. Every value is the
+// integer 4 except the columns named in addresses, which hold that IpAddress.
 type fakeRouteAgent struct {
 	rows      int
 	index     func(row int) string
+	addresses map[string]string
 	delivered map[string]int
 }
 
@@ -24,6 +26,9 @@ func (a *fakeRouteAgent) BulkWalk(root string, walkFn gosnmp.WalkFunc) error {
 	for row := range a.rows {
 		a.delivered[root]++
 		pdu := gosnmp.SnmpPDU{Name: "." + root + "." + a.index(row), Type: gosnmp.Integer, Value: 4}
+		if address, ok := a.addresses[root]; ok {
+			pdu.Type, pdu.Value = gosnmp.IPAddress, address
+		}
 		if err := walkFn(pdu); err != nil {
 			return err
 		}
@@ -40,11 +45,16 @@ func ipCidrIndex(row int) string {
 	return fmt.Sprintf("10.%d.%d.0.255.255.255.0.0.10.254.200.1", row/256, row%256)
 }
 
+func ipRouteIndex(row int) string {
+	return fmt.Sprintf("10.%d.%d.0", row/256, row%256)
+}
+
 type routeTableWalk struct {
-	name    string
-	index   func(int) string
-	columns []string
-	walk    func(snmp.BulkWalker, int) (snmp.RouteTable, error)
+	name      string
+	index     func(int) string
+	columns   []string
+	addresses map[string]string
+	walk      func(snmp.BulkWalker, int) (snmp.RouteTable, error)
 }
 
 type routeTableSize struct {
@@ -74,6 +84,19 @@ func TestRouteTableWalksStopAtTheRowCap(t *testing.T) {
 			},
 			walk: snmp.ExportWalkIPCidrRouteTable,
 		},
+		{
+			name:  "ipRouteTable",
+			index: ipRouteIndex,
+			columns: []string{
+				snmp.OIDIpRouteDest, snmp.OIDIpRouteMask, snmp.OIDIpRouteNextHop, snmp.OIDIpRouteIfIndex,
+				snmp.OIDIpRouteType, snmp.OIDIpRouteProto, snmp.OIDIpRouteMetric1,
+			},
+			addresses: map[string]string{
+				snmp.OIDIpRouteMask:    "255.255.255.0",
+				snmp.OIDIpRouteNextHop: "10.254.200.1",
+			},
+			walk: snmp.ExportWalkIPRouteTable,
+		},
 	}
 	sizes := []routeTableSize{
 		{"past the cap", snmp.MaxRouteRows + 500, snmp.MaxRouteRows, true},
@@ -92,7 +115,9 @@ func TestRouteTableWalksStopAtTheRowCap(t *testing.T) {
 
 func assertCappedWalk(t *testing.T, walk routeTableWalk, size routeTableSize) {
 	t.Helper()
-	agent := &fakeRouteAgent{rows: size.rows, index: walk.index, delivered: map[string]int{}}
+	agent := &fakeRouteAgent{
+		rows: size.rows, index: walk.index, addresses: walk.addresses, delivered: map[string]int{},
+	}
 
 	table, err := walk.walk(agent, snmp.MaxRouteRows)
 	if err != nil {
@@ -122,6 +147,7 @@ func TestRouteTableWalkReportsAnAgentFailure(t *testing.T) {
 	for name, walk := range map[string]func(snmp.BulkWalker, int) (snmp.RouteTable, error){
 		"inetCidrRouteTable": snmp.ExportWalkInetCidrRouteTable,
 		"ipCidrRouteTable":   snmp.ExportWalkIPCidrRouteTable,
+		"ipRouteTable":       snmp.ExportWalkIPRouteTable,
 	} {
 		t.Run(name, func(t *testing.T) {
 			_, err := walk(failing, snmp.MaxRouteRows)

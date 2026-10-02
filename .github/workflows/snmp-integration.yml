@@ -93,7 +93,8 @@ jobs:
           # The raw stream is kept in the log as well: it is verbose, but this
           # is a nightly job and the failure it exists to catch is a wire-format
           # difference that needs the actual values.
-          go test -json -tags integration -count=1 ./internal/polling/snmp/... \
+          go test -json -tags integration -count=1 \
+            ./internal/polling/snmp/... ./internal/protocols/snmp/ \
             | tee "$RUNNER_TEMP/integration.json"
 
       # `go test` exits 0 when the build tag matches no test file and 0 when
@@ -110,6 +111,8 @@ jobs:
             TestWalkHandlesCounter64 \
             TestWalkOfAnEmptySubtreeIsNotAnError \
             TestGetOfAnAbsentOIDDoesNotFailTheRequest \
+            TestRoutingReadsAnAgentThatServesOnlyIPRouteTable \
+            TestGetRoutesReadsAnAgentThatServesOnlyIPRouteTable \
             < "$RUNNER_TEMP/integration.json"
 
       - name: Agent log

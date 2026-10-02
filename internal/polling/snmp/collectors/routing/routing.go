@@ -4,15 +4,17 @@
 // Stage A4 topology to draw L3 next-hop edges between routers and
 // by the listener pipeline to alert on flapping/withdrawn routes.
 //
-// V1.0 uses ipCidrRouteTable (RFC 2096) which is IPv4-only but
-// universally implemented. The newer inetCidrRouteTable (RFC 4292,
-// dual-stack) lands when an IPv6 customer asks for it.
+// V1.0 uses ipCidrRouteTable (RFC 2096), IPv4-only, and falls back to
+// the RFC 1213 ipRouteTable when it is empty: plenty of devices serve
+// only the older table (seed#2587). The newer inetCidrRouteTable
+// (RFC 4292, dual-stack) lands when an IPv6 customer asks for it.
 package routing
 
 import (
 	"context"
 	"errors"
 	"fmt"
+	"net"
 	"net/netip"
 	"strconv"
 	"strings"
@@ -39,6 +41,24 @@ const (
 	// 4 octets dest + 4 octets mask + 1 octet tos + 4 octets nextHop.
 	indexFieldsRouting = 13
 	ipv4OctetCount     = 4
+
+	// legacyTablePrefix is RFC1213-MIB::ipRouteEntry, indexed by the
+	// destination alone; the mask and next hop are columns.
+	legacyTablePrefix = "1.3.6.1.2.1.4.21.1"
+
+	legacyColIfIndex = "2"
+	legacyColMetric1 = "3"
+	legacyColNextHop = "7"
+	legacyColType    = "8"
+	legacyColProto   = "9"
+	legacyColAge     = "10"
+	legacyColMask    = "11"
+
+	// legacyTypeInvalid is ipRouteType invalid(2), an entry the agent
+	// has deleted but may still list. Its other values, other(1),
+	// direct(3) and indirect(4), share TypeOther, TypeLocal and
+	// TypeRemote's numbers and meaning.
+	legacyTypeInvalid = 2
 )
 
 // RouteType values (RFC 2096).
@@ -113,7 +133,8 @@ func New(factory snmp.ClientFactory, publisher Publisher, now func() time.Time) 
 // Name implements snmp.Collector.
 func (*Collector) Name() string { return Name }
 
-// Collect walks ipCidrRouteTable and publishes the assembled routes.
+// Collect walks ipCidrRouteTable, or ipRouteTable when that is empty, and
+// publishes the assembled routes.
 func (c *Collector) Collect(ctx context.Context, target snmp.Target, creds snmp.ResolvedCredentials) error {
 	if c.newClient == nil {
 		return errors.New("routing: client factory not configured")
@@ -133,11 +154,20 @@ func (c *Collector) Collect(ctx context.Context, target snmp.Target, creds snmp.
 		return fmt.Errorf("routing: walk ipCidrRouteTable: %w", err)
 	}
 
+	routes := buildRoutes(vbs)
+	if len(routes) == 0 {
+		legacy, legacyErr := client.Walk(ctx, legacyTablePrefix)
+		if legacyErr != nil {
+			return fmt.Errorf("routing: walk ipRouteTable: %w", legacyErr)
+		}
+		routes = buildLegacyRoutes(legacy)
+	}
+
 	if pubErr := c.publisher.PublishRouting(ctx, Observation{
 		ClientID:   target.ClientID,
 		TargetID:   target.ID,
 		ObservedAt: observedAt,
-		Routes:     buildRoutes(vbs),
+		Routes:     routes,
 	}); pubErr != nil {
 		return fmt.Errorf("routing: publish: %w", pubErr)
 	}
@@ -211,6 +241,97 @@ func parseRouteOID(oid string) (string, routeKey, bool) {
 	return parts[0], routeKey{
 		dest: dest, mask: mask, tos: tos, nextHop: nextHop,
 	}, true
+}
+
+// buildLegacyRoutes assembles ipRouteTable rows. A row is kept only
+// once its mask and next hop have arrived as IPv4 values, and never
+// when the agent marks it invalid: a row without its mask cannot be
+// told apart from a default route.
+func buildLegacyRoutes(vbs []snmp.Varbind) []Route {
+	rows := make(map[string]*Route)
+	for _, vb := range vbs {
+		col, dest, ok := parseLegacyRouteOID(vb.OID)
+		if !ok {
+			continue
+		}
+		r := rows[dest]
+		if r == nil {
+			r = &Route{Destination: dest}
+			rows[dest] = r
+		}
+		applyLegacyColumn(r, col, vb.Value)
+	}
+
+	out := make([]Route, 0, len(rows))
+	for _, r := range rows {
+		if r.Type == legacyTypeInvalid || !contiguousMask(r.Mask) || r.NextHop == "" {
+			continue
+		}
+		out = append(out, *r)
+	}
+	sortRoutes(out)
+	return out
+}
+
+// parseLegacyRouteOID expects legacyTablePrefix.col.<4 dest>.
+func parseLegacyRouteOID(oid string) (string, string, bool) {
+	rest, ok := strings.CutPrefix(oid, legacyTablePrefix+".")
+	if !ok {
+		return "", "", false
+	}
+	parts := strings.Split(rest, ".")
+	if len(parts) != 1+ipv4OctetCount {
+		return "", "", false
+	}
+	dest, ok := parseIPv4(parts[1:])
+	if !ok {
+		return "", "", false
+	}
+	return parts[0], dest, true
+}
+
+func applyLegacyColumn(r *Route, col string, v any) {
+	switch col {
+	case legacyColIfIndex:
+		r.IfIndex = uint32Value(v)
+	case legacyColMetric1:
+		r.Metric1 = intValue(v)
+	case legacyColNextHop:
+		r.NextHop = ipv4Value(v)
+	case legacyColType:
+		r.Type = intValue(v)
+	case legacyColProto:
+		r.Proto = intValue(v)
+	case legacyColAge:
+		r.AgeSeconds = uint32Value(v)
+	case legacyColMask:
+		r.Mask = ipv4Value(v)
+	}
+}
+
+// ipv4Value renders an IpAddress varbind, which gosnmp decodes to a
+// dotted-quad string, as a canonical dotted quad; anything else is "".
+func ipv4Value(v any) string {
+	s, ok := v.(string)
+	if !ok {
+		return ""
+	}
+	addr, err := netip.ParseAddr(s)
+	if err != nil || !addr.Is4() {
+		return ""
+	}
+	return addr.String()
+}
+
+// contiguousMask reports whether mask is a dotted-quad netmask with its
+// one bits leading.
+func contiguousMask(mask string) bool {
+	addr, err := netip.ParseAddr(mask)
+	if err != nil || !addr.Is4() {
+		return false
+	}
+	_, bits := net.IPMask(addr.AsSlice()).Size()
+	return bits != 0
 }
 
 // parseIPv4 reads four decimal octets from an OID suffix slice and

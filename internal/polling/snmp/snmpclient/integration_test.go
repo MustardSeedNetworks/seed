@@ -25,6 +25,7 @@ import (
 	"time"
 
 	"github.com/MustardSeedNetworks/seed/internal/polling/snmp"
+	"github.com/MustardSeedNetworks/seed/internal/polling/snmp/collectors/routing"
 	"github.com/MustardSeedNetworks/seed/internal/polling/snmp/snmpclient"
 )
 
@@ -43,10 +44,28 @@ const (
 	oidIfDescr      = "1.3.6.1.2.1.2.2.1.2"
 	oidIfType       = "1.3.6.1.2.1.2.2.1.3"
 	oidIfHCInOctets = "1.3.6.1.2.1.31.1.1.1.6"
+
+	oidIPCidrRouteEntry = "1.3.6.1.2.1.4.24.4.1"
 )
+
+// legacyRoutesCommunity is the fixture community whose view holds the system
+// group and ipRouteTable only.
+const legacyRoutesCommunity = "legacyroutes"
 
 // dial builds a client pointed at the agent named by SEED_SNMP_ADDR.
 func dial(t *testing.T) snmp.Client {
+	t.Helper()
+
+	community := os.Getenv("SEED_SNMP_COMMUNITY")
+	if community == "" {
+		community = "public"
+	}
+	return dialAs(t, community)
+}
+
+// dialAs builds a client for the agent named by SEED_SNMP_ADDR that speaks
+// as community.
+func dialAs(t *testing.T, community string) snmp.Client {
 	t.Helper()
 
 	addr := os.Getenv("SEED_SNMP_ADDR")
@@ -68,11 +87,6 @@ func dial(t *testing.T) snmp.Client {
 	port, err := strconv.ParseUint(portText, 10, 16)
 	if err != nil {
 		t.Fatalf("SEED_SNMP_ADDR port %q: %v", portText, err)
-	}
-
-	community := os.Getenv("SEED_SNMP_COMMUNITY")
-	if community == "" {
-		community = "public"
 	}
 
 	factory := snmpclient.NewFactory(snmpclient.Options{
@@ -265,5 +279,41 @@ func renderString(value any) string {
 		return string(v)
 	default:
 		return ""
+	}
+}
+
+type routingPublisher struct{ got []routing.Observation }
+
+func (p *routingPublisher) PublishRouting(_ context.Context, obs routing.Observation) error {
+	p.got = append(p.got, obs)
+	return nil
+}
+
+// TestRoutingReadsAnAgentThatServesOnlyIPRouteTable covers the routing
+// collector's fallback against an agent's real encoding of the legacy table,
+// where the mask and next hop arrive as IpAddress columns.
+func TestRoutingReadsAnAgentThatServesOnlyIPRouteTable(t *testing.T) {
+	client := dialAs(t, legacyRoutesCommunity)
+
+	// Without this the test could pass on the CIDR table and prove nothing.
+	cidr, err := client.Walk(timeout(t), oidIPCidrRouteEntry)
+	if err != nil || len(cidr) != 0 {
+		t.Fatalf("fixture view serves ipCidrRouteTable (%d rows, err %v); it must serve ipRouteTable only",
+			len(cidr), err)
+	}
+
+	pub := &routingPublisher{}
+	factory := func(snmp.Target, snmp.ResolvedCredentials) (snmp.Client, error) { return client, nil }
+	if err = routing.New(factory, pub, nil).Collect(timeout(t), snmp.Target{ID: "fixture"},
+		snmp.ResolvedCredentials{}); err != nil {
+		t.Fatalf("Collect: %v", err)
+	}
+	if len(pub.got) != 1 || len(pub.got[0].Routes) == 0 {
+		t.Fatalf("published %+v, want the agent's ipRouteTable rows", pub.got)
+	}
+	for _, route := range pub.got[0].Routes {
+		if route.Mask == "" || route.NextHop == "" {
+			t.Errorf("route %+v lacks its mask or next hop", route)
+		}
 	}
 }
