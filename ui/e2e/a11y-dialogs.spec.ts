@@ -14,6 +14,7 @@ import axe from 'axe-core';
 import { AUTH_STORAGE_STATE, disableAnimations } from './helpers/auth';
 import { axeViolations } from './helpers/axe';
 import { mockBluetoothScanJob } from './helpers/bluetooth';
+import { expectFocused } from './helpers/focus';
 
 type Dialog = {
   name: string;
@@ -117,7 +118,7 @@ for (const { name, route, prepare, returnTo, dialog } of DIALOGS) {
     }
 
     await closeWithEscape(page, dialog(page));
-    await expect((returnTo ?? (() => opener))(page)).toBeFocused();
+    await expectFocused((returnTo ?? (() => opener))(page));
   });
 }
 
@@ -144,5 +145,5 @@ test('the profile editor passes axe and returns focus to the profile manager', a
   // Escape closes the editor only; the manager it was opened from stays.
   await closeWithEscape(page, editor);
   await expect(byLabelledBy('profile-modal-title')(page)).toBeVisible();
-  await expect(create).toBeFocused();
+  await expectFocused(create);
 });
