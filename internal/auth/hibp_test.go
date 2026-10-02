@@ -57,7 +57,7 @@ func TestCheckPasswordBreached_KnownBreached_MockedServer(t *testing.T) {
 	restoreURL := auth.SetHIBPEndpointForTest(srv.URL + "/")
 	defer restoreURL()
 
-	t.Setenv("SEED_DISABLE_HIBP", "")
+	t.Setenv("SEED_ENABLE_HIBP", "1")
 
 	breached, count, err := auth.CheckPasswordBreached(context.Background(), "password")
 	if err != nil {
@@ -80,7 +80,7 @@ func TestCheckPasswordBreached_NotBreached_MockedServer(t *testing.T) {
 	restoreURL := auth.SetHIBPEndpointForTest(srv.URL + "/")
 	defer restoreURL()
 
-	t.Setenv("SEED_DISABLE_HIBP", "")
+	t.Setenv("SEED_ENABLE_HIBP", "1")
 
 	const highEntropy = "Z7q$kP9!vC2x@Lm4#Nw8&Rt6"
 	breached, count, err := auth.CheckPasswordBreached(context.Background(), highEntropy)
@@ -100,7 +100,7 @@ func TestCheckPasswordBreached_NetworkFailure_DoesNotBlock(t *testing.T) {
 	restoreURL := auth.SetHIBPEndpointForTest("http://127.0.0.1:1/")
 	defer restoreURL()
 
-	t.Setenv("SEED_DISABLE_HIBP", "")
+	t.Setenv("SEED_ENABLE_HIBP", "1")
 
 	breached, count, err := auth.CheckPasswordBreached(context.Background(), "anything")
 	if err != nil {
@@ -115,21 +115,21 @@ func TestCheckPasswordBreached_NetworkFailure_DoesNotBlock(t *testing.T) {
 }
 
 func TestCheckPasswordBreached_DisabledByEnv(t *testing.T) {
-	// Even with a working server, SEED_DISABLE_HIBP=1 must skip the call.
+	// Even with a working server, disabled checks must skip the call.
 	srv := hibpServer(t, "password", 1_000_000)
 	defer srv.Close()
 
 	restoreURL := auth.SetHIBPEndpointForTest(srv.URL + "/")
 	defer restoreURL()
 
-	t.Setenv("SEED_DISABLE_HIBP", "1")
+	t.Setenv("SEED_ENABLE_HIBP", "0")
 
 	breached, count, err := auth.CheckPasswordBreached(context.Background(), "password")
 	if err != nil {
 		t.Fatalf("CheckPasswordBreached: %v", err)
 	}
 	if breached {
-		t.Error("expected breached=false when SEED_DISABLE_HIBP=1")
+		t.Error("expected breached=false when SEED_ENABLE_HIBP=0")
 	}
 	if count != 0 {
 		t.Errorf("expected count=0 when disabled, got %d", count)
@@ -146,7 +146,7 @@ func TestCheckPasswordBreached_RealAPI(t *testing.T) {
 		t.Log("SEED_HIBP_LIVE!=1; not running live HIBP integration check")
 		return
 	}
-	t.Setenv("SEED_DISABLE_HIBP", "")
+	t.Setenv("SEED_ENABLE_HIBP", "1")
 
 	breached, count, err := auth.CheckPasswordBreached(context.Background(), "password")
 	if err != nil {

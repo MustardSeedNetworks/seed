@@ -29,7 +29,7 @@ func TestEnforcePasswordPolicy_AcceptsStrongPassword(t *testing.T) {
 	srv := hibpAlwaysClean(t)
 	defer srv.Close()
 	defer auth.SetHIBPEndpointForTest(srv.URL + "/")()
-	t.Setenv("SEED_DISABLE_HIBP", "")
+	t.Setenv("SEED_ENABLE_HIBP", "1")
 
 	result, err := auth.EnforcePasswordPolicy(
 		context.Background(),
@@ -48,7 +48,7 @@ func TestEnforcePasswordPolicy_AcceptsStrongPassword(t *testing.T) {
 func TestEnforcePasswordPolicy_RejectsOnClassRule(t *testing.T) {
 	// "short" fails length+class — should NOT even reach zxcvbn/HIBP.
 	defer auth.SetHIBPEndpointForTest("http://127.0.0.1:1/")()
-	t.Setenv("SEED_DISABLE_HIBP", "")
+	t.Setenv("SEED_ENABLE_HIBP", "1")
 
 	result, err := auth.EnforcePasswordPolicy(
 		context.Background(),
@@ -67,7 +67,7 @@ func TestEnforcePasswordPolicy_RejectsOnWeakScore(t *testing.T) {
 	srv := hibpAlwaysClean(t)
 	defer srv.Close()
 	defer auth.SetHIBPEndpointForTest(srv.URL + "/")()
-	t.Setenv("SEED_DISABLE_HIBP", "")
+	t.Setenv("SEED_ENABLE_HIBP", "1")
 
 	// Long enough to pass length+class but a well-known weak base.
 	result, err := auth.EnforcePasswordPolicy(
@@ -91,7 +91,7 @@ func TestEnforcePasswordPolicy_RejectsOnBreached(t *testing.T) {
 	srv := hibpServer(t, "Tr0ub4dor&3-Long-Enough-And-Strong-2026!", 12345)
 	defer srv.Close()
 	defer auth.SetHIBPEndpointForTest(srv.URL + "/")()
-	t.Setenv("SEED_DISABLE_HIBP", "")
+	t.Setenv("SEED_ENABLE_HIBP", "1")
 
 	result, err := auth.EnforcePasswordPolicy(
 		context.Background(),
