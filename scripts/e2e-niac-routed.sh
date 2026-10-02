@@ -286,6 +286,11 @@ printf '%s\n' \
 # licence file cannot change the tier under test (seed#2688). Started from
 # the run directory because seed writes its certs/ and data/ relative to the
 # working directory, and as root they would land in the checkout.
+#
+# The tier under test is a Pro trial started in that HOME: the spec ends by
+# tracing a path into the site, and path analysis is Pro. The discovery and
+# learning routes the spec drives are ungated.
+(cd "$run_dir" && sudo env HOME="$run_dir" "$repo_dir/seed" license trial >/dev/null)
 (
   cd "$run_dir"
   exec setsid sudo env HOME="$run_dir" SEED_LOGIN_MAX_ATTEMPTS=200 \

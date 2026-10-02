@@ -1,4 +1,5 @@
 import { type APIRequestContext, expect, test } from '@playwright/test';
+import type { PathResponse } from '../src/types/generated/path-response';
 
 /**
  * Site networks behind the edge router are found from the learned summary
@@ -40,6 +41,8 @@ const LEARN_MS = 6 * SCAN_EVERY_MS;
 // Probing .1-.4 covers 63 /24s a sweep, so a /16 takes five.
 const PROBED_HOSTS = 4;
 const PROBE_MS = 6 * SCAN_EVERY_MS + SCAN_MS;
+// The path route gives a trace two minutes.
+const TRACE_MS = 120_000;
 
 const enabled = process.env.SEED_E2E_NIAC_ROUTED === '1';
 const community = process.env.SEED_E2E_SNMP_COMMUNITY ?? '';
@@ -64,6 +67,16 @@ interface Subnet {
   name: string;
   enabled: boolean;
   learned: boolean;
+}
+
+/** An IPv4 network contains addr: the path step's check on a hop's route. */
+function covers(network: string, prefix: number, addr: string): boolean {
+  const toInt = (ip: string) => ip.split('.').reduce((n, octet) => n * 256 + Number(octet), 0);
+  if (prefix < 0 || prefix > 32) {
+    return false;
+  }
+  const size = 2 ** (32 - prefix);
+  return Math.floor(toInt(network) / size) === Math.floor(toInt(addr) / size);
 }
 
 async function csrfToken(request: APIRequestContext): Promise<string> {
@@ -116,7 +129,9 @@ async function pending(
 }
 
 test.describe('target networks behind a NIAC edge router', () => {
-  test.setTimeout(RESCAN_MS + PROBE_MS + LEARN_MS + siteNetworks.length * SCAN_EVERY_MS + SCAN_MS);
+  test.setTimeout(
+    RESCAN_MS + PROBE_MS + LEARN_MS + siteNetworks.length * SCAN_EVERY_MS + SCAN_MS + TRACE_MS,
+  );
 
   test('only the learned summary switched on, its site networks swept', async ({ page }) => {
     const { request } = page;
@@ -242,9 +257,38 @@ test.describe('target networks behind a NIAC edge router', () => {
       'target networks switched on',
     ).toEqual([siteRoute]);
 
+    // The path view reads each router's own table (seed#2587): a hop that a
+    // discovered router answers on carries the route it holds for the target.
+    const target = [...sweptOnly.values()][0]?.[0] ?? '';
+    const routed = await test.step("the traced path carries the routers' own routes", async () => {
+      const response = await request.post('/api/v1/path/path', {
+        headers: { 'X-CSRF-Token': await csrfToken(request) },
+        data: { source: 'self', destination: target, method: 'l3', protocol: 'icmp' },
+      });
+      expect(response.status(), `POST /api/v1/path/path ${target}`).toBe(200);
+      const { l3Path } = (await response.json()) as PathResponse;
+      const hops = (l3Path?.hops ?? []).filter((hop) => hop.route !== undefined);
+      expect(hops.length, `hops toward ${target} carrying a route`).toBeGreaterThan(0);
+      for (const { ip, route } of hops) {
+        expect(
+          covers(route?.destination ?? '', route?.prefix ?? -1, target),
+          `${ip} route covers ${target}`,
+        ).toBe(true);
+        if (route?.type === 'remote') {
+          expect(route.nextHop ?? '', `${ip} remote route's next hop`).not.toMatch(
+            /^(0\.0\.0\.0)?$/,
+          );
+        }
+      }
+      return hops.map(
+        ({ ip, route }) =>
+          `${ip} via ${route?.device}: ${route?.destination}/${route?.prefix} -> ${route?.nextHop}`,
+      );
+    });
+
     test.info().annotations.push({
       type: 'learned summary sweep',
-      description: `${siteRoute} learned ${routeAfter} ms after the credential was saved; ${siteNetworks.length} site networks learned, devices found in ${populated.join(', ')}; ${core} found ${coreAfter} ms after it was switched on; devices above .${PROBED_HOSTS} in ${[...sweptOnly.keys()].join(', ')} ${Date.now() - enabledAt} ms after it was switched on`,
+      description: `${siteRoute} learned ${routeAfter} ms after the credential was saved; ${siteNetworks.length} site networks learned, devices found in ${populated.join(', ')}; ${core} found ${coreAfter} ms after it was switched on; devices above .${PROBED_HOSTS} in ${[...sweptOnly.keys()].join(', ')} ${Date.now() - enabledAt} ms after it was switched on; path to ${target}: ${routed.join('; ')}`,
     });
   });
 });

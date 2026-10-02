@@ -113,6 +113,7 @@ jobs:
             TestGetOfAnAbsentOIDDoesNotFailTheRequest \
             TestRoutingReadsAnAgentThatServesOnlyIPRouteTable \
             TestGetRoutesReadsAnAgentThatServesOnlyIPRouteTable \
+            TestGetRoutesReadsInetCidrNextHops \
             < "$RUNNER_TEMP/integration.json"
 
       - name: Agent log

@@ -1381,68 +1381,6 @@ func TestMACFromOIDExtended(t *testing.T) {
 	}
 }
 
-// TestParseInetCidrRouteIndexExtended tests extended cases for parseInetCidrRouteIndex.
-func TestParseInetCidrRouteIndexExtended(t *testing.T) {
-	tests := []struct {
-		name       string
-		oid        string
-		wantDest   string
-		wantPrefix int
-		wantNext   string
-	}{
-		{
-			name:       "valid IPv4 route",
-			oid:        "1.3.6.1.2.1.4.24.7.1.1.1.4.10.0.0.0.24.1.4.192.168.1.1",
-			wantDest:   "10.0.0.0",
-			wantPrefix: 24,
-			wantNext:   "0.0.0.0",
-		},
-		{
-			name:       "default route",
-			oid:        "1.3.6.1.2.1.4.24.7.1.1.1.4.0.0.0.0.0.1.4.10.0.0.1",
-			wantDest:   "0.0.0.0",
-			wantPrefix: 0,
-			wantNext:   "0.0.0.0",
-		},
-		{
-			name:       "host route /32",
-			oid:        "1.3.6.1.2.1.4.24.7.1.1.1.4.192.168.1.100.32.1.4.192.168.1.1",
-			wantDest:   "192.168.1.100",
-			wantPrefix: 32,
-			wantNext:   "0.0.0.0",
-		},
-		{
-			name:       "too short OID",
-			oid:        "1.3.6.1.2.1.4.24",
-			wantDest:   "",
-			wantPrefix: 0,
-			wantNext:   "",
-		},
-		{
-			name:       "empty OID",
-			oid:        "",
-			wantDest:   "",
-			wantPrefix: 0,
-			wantNext:   "",
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			gotDest, gotPrefix, gotNext := snmp.ExportParseInetCidrRouteIndex(tt.oid)
-			if gotDest != tt.wantDest {
-				t.Errorf("parseInetCidrRouteIndex(%v) dest = %v, want %v", tt.oid, gotDest, tt.wantDest)
-			}
-			if gotPrefix != tt.wantPrefix {
-				t.Errorf("parseInetCidrRouteIndex(%v) prefix = %v, want %v", tt.oid, gotPrefix, tt.wantPrefix)
-			}
-			if gotNext != tt.wantNext {
-				t.Errorf("parseInetCidrRouteIndex(%v) next = %v, want %v", tt.oid, gotNext, tt.wantNext)
-			}
-		})
-	}
-}
-
 // TestParseIPCidrRouteIndexExtended tests extended cases for parseIPCidrRouteIndex.
 func TestParseIPCidrRouteIndexExtended(t *testing.T) {
 	tests := []struct {

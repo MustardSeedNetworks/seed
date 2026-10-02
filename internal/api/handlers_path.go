@@ -67,6 +67,22 @@ type TracerouteHop struct {
 	Hostname string        `json:"hostname,omitempty"`
 	RTT      time.Duration `json:"rtt"`
 	State    string        `json:"state"`
+	Route    *HopRoute     `json:"route,omitempty"`
+}
+
+// HopRoute is the flat transport view of discovery.HopRoute: the route the
+// hop's own SNMP forwarding table holds toward the trace target. Absent when
+// no discovered device answers on the hop's address with a read table.
+type HopRoute struct {
+	Device         string `json:"device"`
+	Destination    string `json:"destination"`
+	Prefix         int    `json:"prefix"`
+	NextHop        string `json:"nextHop,omitempty"`
+	IfIndex        int    `json:"ifIndex,omitempty"`
+	Interface      string `json:"interface,omitempty"`
+	Type           string `json:"type,omitempty"`
+	Protocol       string `json:"protocol,omitempty"`
+	TableTruncated bool   `json:"tableTruncated,omitempty"`
 }
 
 // L2PathResult is the flat transport view of discovery.L2PathResult (an L2
@@ -98,8 +114,12 @@ type PortInfo struct {
 }
 
 // toTracerouteResult maps an L3 traceroute result onto its flat transport view,
-// preserving nil so an absent L3 path stays omitted.
-func toTracerouteResult(result *discovery.TracerouteResult) *TracerouteResult {
+// preserving nil so an absent L3 path stays omitted. Each hop carries the route
+// its own table holds toward the target when one of devices answers on it.
+func toTracerouteResult(
+	result *discovery.TracerouteResult,
+	devices []*discovery.DiscoveredDevice,
+) *TracerouteResult {
 	if result == nil {
 		return nil
 	}
@@ -111,6 +131,7 @@ func toTracerouteResult(result *discovery.TracerouteResult) *TracerouteResult {
 			Hostname: h.Hostname,
 			RTT:      h.RTT,
 			State:    h.State,
+			Route:    toHopRoute(discovery.RouteForHop(devices, h.IP, result.TargetIP)),
 		})
 	}
 	return &TracerouteResult{
@@ -121,6 +142,23 @@ func toTracerouteResult(result *discovery.TracerouteResult) *TracerouteResult {
 		Hops:      hops,
 		Completed: result.Completed,
 		Error:     result.Error,
+	}
+}
+
+func toHopRoute(route *discovery.HopRoute) *HopRoute {
+	if route == nil {
+		return nil
+	}
+	return &HopRoute{
+		Device:         route.Device,
+		Destination:    route.Destination,
+		Prefix:         route.Prefix,
+		NextHop:        route.NextHop,
+		IfIndex:        route.IfIndex,
+		Interface:      route.Interface,
+		Type:           route.Type,
+		Protocol:       route.Protocol,
+		TableTruncated: route.TableTruncated,
 	}
 }
 
@@ -292,7 +330,12 @@ func (s *Server) performPathDiscovery(
 				return nil
 			}
 		}
-		response.L3Path = toTracerouteResult(l3Path)
+		// The registry alone carries no SNMP data; the service attaches it.
+		var devices []*discovery.DiscoveredDevice
+		if s.discoveryService() != nil {
+			devices = s.discoveryService().GetDevices()
+		}
+		response.L3Path = toTracerouteResult(l3Path, devices)
 	}
 
 	// Perform L2 path discovery if requested
