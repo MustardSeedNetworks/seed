@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.220.2](https://github.com/MustardSeedNetworks/seed/compare/v0.220.1...v0.220.2) (2026-10-02)
+
+
+### Documentation
+
+* stop promising a published macOS .pkg; drop stale pins and dead scripts ([#2953](https://github.com/MustardSeedNetworks/seed/issues/2953)) ([ea2c6b8](https://github.com/MustardSeedNetworks/seed/commit/ea2c6b896bb9082cd103eb918dc471efc309605c)), closes [#2637](https://github.com/MustardSeedNetworks/seed/issues/2637)
+
+
+### Tests
+
+* **e2e:** say where focus went when a focus assertion fails ([#2951](https://github.com/MustardSeedNetworks/seed/issues/2951)) ([b0fdb99](https://github.com/MustardSeedNetworks/seed/commit/b0fdb99e85619b972f4bad2bb206d76e0a8ef9aa))
+
 ## [0.220.1](https://github.com/MustardSeedNetworks/seed/compare/v0.220.0...v0.220.1) (2026-10-02)
 
 
