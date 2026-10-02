@@ -28,7 +28,7 @@ func (s *Server) learnTargetNetworks(ctx context.Context, discovered []*discover
 		return
 	}
 
-	devices := routingViews(discovered)
+	devices := deviceViews(discovered)
 	host := hostRoutesVia(s.deviceDiscovery().GetInterfaceName(), gateway.GetAllRoutes)
 	if len(devices) == 0 && len(host) == 0 {
 		return
@@ -50,6 +50,16 @@ func (s *Server) learnTargetNetworks(ctx context.Context, discovered []*discover
 		logger.InfoContext(ctx, "Learned target networks from SNMP routing data",
 			"added", added, "candidates", len(candidates))
 	}
+}
+
+// noteSweepEvidence hands the scanner the addresses this sweep saw in use, so
+// the next sweep of a target network wider than it may probe whole picks the
+// /24s inside it that hold something (seed#2832).
+func (s *Server) noteSweepEvidence(discovered []*discovery.DiscoveredDevice) {
+	if s.deviceDiscovery() == nil {
+		return
+	}
+	s.deviceDiscovery().SetSweepEvidence(learn.Evidence(deviceViews(discovered)))
 }
 
 // hostRoutesVia is Seed's own view of what lies behind the active interface:
@@ -84,31 +94,42 @@ func hostRoutesVia(iface string, read func() ([]gateway.RouteInfo, error)) []lea
 	return out
 }
 
-// routingViews reduces the discovered devices to the routing and address rows
-// the learner reads, skipping the ones no SNMP walk reached.
-func routingViews(devices []*discovery.DiscoveredDevice) []learn.Device {
+// deviceViews reduces the discovered devices to what the learner and the
+// sweep evidence read: each device's address, and the routing, address and
+// LLDP rows of the ones an SNMP walk reached. A device with no address has
+// nothing to attribute a candidate to and is skipped.
+func deviceViews(devices []*discovery.DiscoveredDevice) []learn.Device {
 	views := make([]learn.Device, 0, len(devices))
 	for _, device := range devices {
-		if device == nil || device.SNMPData == nil || device.IP == "" {
+		if device == nil || device.IP == "" {
 			continue
 		}
 		view := learn.Device{IP: device.IP}
-		for _, route := range device.SNMPData.Routing {
-			view.Routes = append(view.Routes, learn.Route{
-				Destination: route.Destination,
-				Prefix:      route.Prefix,
-				Type:        route.Type,
-				Protocol:    route.Protocol,
-			})
+		if device.LLDPInfo != nil {
+			view.Neighbours = append(view.Neighbours, device.LLDPInfo.ManagementAddress)
 		}
-		for _, address := range device.SNMPData.IPAddresses {
-			view.Addresses = append(view.Addresses, learn.Address{
-				Address: address.Address,
-				Prefix:  address.Prefix,
-			})
+		if device.CDPInfo != nil {
+			view.Neighbours = append(view.Neighbours, device.CDPInfo.ManagementAddress)
 		}
-		if len(view.Routes) == 0 && len(view.Addresses) == 0 {
-			continue
+		if data := device.SNMPData; data != nil {
+			for _, route := range data.Routing {
+				view.Routes = append(view.Routes, learn.Route{
+					Destination: route.Destination,
+					Prefix:      route.Prefix,
+					NextHop:     route.NextHop,
+					Type:        route.Type,
+					Protocol:    route.Protocol,
+				})
+			}
+			for _, address := range data.IPAddresses {
+				view.Addresses = append(view.Addresses, learn.Address{
+					Address: address.Address,
+					Prefix:  address.Prefix,
+				})
+			}
+			for _, neighbour := range data.LLDPNeighbors {
+				view.Neighbours = append(view.Neighbours, neighbour.RemoteMgmtAddr)
+			}
 		}
 		views = append(views, view)
 	}

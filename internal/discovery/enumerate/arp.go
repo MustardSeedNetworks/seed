@@ -49,6 +49,8 @@ package enumerate
 import (
 	"fmt"
 	"net"
+	"net/netip"
+	"slices"
 	"sync"
 	"time"
 
@@ -117,7 +119,9 @@ type ARPScanner struct {
 	entries           map[string]*ARPEntry // Key by IP
 	subnet            *net.IPNet
 	localIP           net.IP
-	targetNetworks    []*net.IPNet          // Target networks to scan
+	targetNetworks    []*net.IPNet // Target networks to scan
+	evidence          []netip.Addr // Addresses seen in use, for planning wide sweeps
+	rotations         map[netip.Prefix]*rotation
 	pingResponders    []string              // IPs that responded to ping (for remote subnets)
 	pingResults       map[string]PingResult // Cached ping results with TTL info
 	pinger            *ICMPPinger           // ICMP pinger (raw socket, or the datagram fallback)
@@ -170,20 +174,38 @@ func (s *ARPScanner) SetInterface(name string) {
 	s.localIP = nil
 }
 
-// SetTargetNetworks configures extra subnets to scan.
+// SetTargetNetworks configures extra subnets to scan. A network that stays
+// configured keeps its place in its sweep rotation.
 func (s *ARPScanner) SetTargetNetworks(cidrs []string) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
 	s.targetNetworks = nil
+	kept := make(map[netip.Prefix]*rotation)
 	for _, cidr := range cidrs {
 		_, subnet, err := net.ParseCIDR(cidr)
 		if err != nil {
 			return fmt.Errorf("invalid CIDR %s: %w", cidr, err)
 		}
 		s.targetNetworks = append(s.targetNetworks, subnet)
+		if prefix, ok := ipv4Prefix(subnet); ok && s.rotations[prefix] != nil {
+			kept[prefix] = s.rotations[prefix]
+		}
 	}
+	if prefix, ok := ipv4Prefix(s.subnet); ok && s.rotations[prefix] != nil {
+		kept[prefix] = s.rotations[prefix]
+	}
+	s.rotations = kept
 	return nil
+}
+
+// SetSweepEvidence records the addresses discovery has seen in use. A target
+// network wider than one sweep may probe is swept in the /24s these name
+// (seed#2832).
+func (s *ARPScanner) SetSweepEvidence(addrs []netip.Addr) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	s.evidence = slices.Clone(addrs)
 }
 
 // PingSweepUnavailable reports why the last sweep could not probe anything, or

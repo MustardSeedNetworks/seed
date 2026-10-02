@@ -18,6 +18,7 @@ import (
 	"context"
 	"fmt"
 	"net"
+	"net/netip"
 	"os"
 	"sync"
 	"time"
@@ -224,6 +225,12 @@ func (d *DeviceDiscovery) SetInterface(name string) error {
 // SetTargetNetworks configures extra subnets to scan.
 func (d *DeviceDiscovery) SetTargetNetworks(cidrs []string) error {
 	return d.arpScanner.SetTargetNetworks(cidrs)
+}
+
+// SetSweepEvidence records the addresses discovery has seen in use, which
+// pick the /24s a sweep of a wide target network probes (seed#2832).
+func (d *DeviceDiscovery) SetSweepEvidence(addrs []netip.Addr) {
+	d.arpScanner.SetSweepEvidence(addrs)
 }
 
 // ReadNeighbourCache returns this device's own neighbour cache as the kernel

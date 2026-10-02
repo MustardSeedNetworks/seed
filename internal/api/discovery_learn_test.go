@@ -2,6 +2,7 @@ package api_test
 
 import (
 	"errors"
+	"slices"
 	"testing"
 
 	"github.com/MustardSeedNetworks/seed/internal/api"
@@ -10,44 +11,53 @@ import (
 	"github.com/MustardSeedNetworks/seed/internal/discovery/learn"
 )
 
-// The learner reads two SNMP tables off each discovered device. A device no
-// SNMP walk reached carries neither, and contributing it would put an empty
-// routing view in front of the rules for every host on the subnet.
-func TestRoutingViewsCarriesBothTablesAndSkipsDevicesWithout(t *testing.T) {
+// Every device with an address is viewed: a device no SNMP walk reached still
+// shows its own address and its passive LLDP/CDP neighbour, which are sweep
+// evidence (seed#2832); one that answered carries its tables whole.
+func TestDeviceViewsCarriesTablesAndSkipsDevicesWithoutAnAddress(t *testing.T) {
 	devices := []*discovery.DiscoveredDevice{
 		nil,
-		{IP: "10.44.40.9"}, // profiled, no SNMP
-		{IP: "10.44.40.8", SNMPData: &discovery.SNMPFullData{ // answered, nothing routed
-			System: nil,
-		}},
+		{
+			IP: "10.44.40.9", LLDPInfo: &discovery.LLDPDeviceInfo{ManagementAddress: "10.44.10.2"},
+			CDPInfo: &discovery.CDPDeviceInfo{ManagementAddress: "10.44.20.2"},
+		},
 		{IP: "", SNMPData: &discovery.SNMPFullData{
 			Routing: []discovery.SNMPRoute{{Destination: "10.44.10.0", Prefix: 24}},
 		}}, // no address to attribute a candidate to
 		{IP: "10.44.40.1", SNMPData: &discovery.SNMPFullData{
 			Routing: []discovery.SNMPRoute{
-				{Destination: "10.44.10.0", Prefix: 24, Type: "remote", Protocol: "ospf"},
+				{Destination: "10.44.10.0", Prefix: 24, NextHop: "10.44.40.2", Type: "remote", Protocol: "ospf"},
 			},
-			IPAddresses: []discovery.SNMPIPAddress{{Address: "10.44.40.1", Prefix: 24}},
+			IPAddresses:   []discovery.SNMPIPAddress{{Address: "10.44.40.1", Prefix: 24}},
+			LLDPNeighbors: []discovery.SNMPLLDPNeighbor{{RemoteMgmtAddr: "10.44.30.2"}},
 		}},
 	}
 
-	got := api.ExportRoutingViews(devices)
+	got := api.ExportDeviceViews(devices)
 
-	if len(got) != 1 {
-		t.Fatalf("routingViews() returned %d views, want 1: %+v", len(got), got)
+	if len(got) != 2 {
+		t.Fatalf("deviceViews() returned %d views, want 2: %+v", len(got), got)
 	}
-	view := got[0]
+	passive := got[0]
+	if passive.IP != "10.44.40.9" || len(passive.Routes) != 0 || len(passive.Addresses) != 0 ||
+		!slices.Equal(passive.Neighbours, []string{"10.44.10.2", "10.44.20.2"}) {
+		t.Errorf("unprofiled view = %+v, want its address and both neighbours only", passive)
+	}
+	view := got[1]
 	if view.IP != "10.44.40.1" {
 		t.Errorf("IP = %q, want 10.44.40.1", view.IP)
 	}
-	if len(view.Routes) != 1 || view.Routes[0].Destination != "10.44.10.0" ||
-		view.Routes[0].Prefix != 24 || view.Routes[0].Type != "remote" ||
-		view.Routes[0].Protocol != "ospf" {
+	if len(view.Routes) != 1 || view.Routes[0] != (learn.Route{
+		Destination: "10.44.10.0", Prefix: 24, NextHop: "10.44.40.2", Type: "remote", Protocol: "ospf",
+	}) {
 		t.Errorf("Routes = %+v, want the route row carried whole", view.Routes)
 	}
 	if len(view.Addresses) != 1 || view.Addresses[0].Address != "10.44.40.1" ||
 		view.Addresses[0].Prefix != 24 {
 		t.Errorf("Addresses = %+v, want the address row carried whole", view.Addresses)
+	}
+	if !slices.Equal(view.Neighbours, []string{"10.44.30.2"}) {
+		t.Errorf("Neighbours = %v, want the SNMP LLDP management address", view.Neighbours)
 	}
 }
 

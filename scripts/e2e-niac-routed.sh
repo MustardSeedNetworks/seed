@@ -17,9 +17,10 @@
 # the shape seed#2695 was reported from — and seed starts with a config naming
 # only its interface, port and file paths.
 # ui/e2e/niac-routed-learned-subnets.spec.ts then saves the SNMP credential,
-# asserts the summary is learned from the host route, enters one site network
-# by hand, and asserts every other site network is then learned from the SNMP
-# tables of a device inside it and that switching them on finds their devices.
+# asserts the summary is learned from the host route, switches only that
+# summary on, and asserts the sweep finds the core switch inside it, learns
+# every site network from its SNMP tables and finds devices in each of them
+# without any of them being switched on (seed#2832).
 set -eu
 
 pack=${1:-hospital}
@@ -152,8 +153,7 @@ generator_pid=
 #   route       the edge router's route covering every site network
 #   sites       the private site networks, which seed has to learn
 #   devices     per site network, the addresses of the devices inside it
-#   typed       the one site network the spec enters by hand
-#   core        the agent inside it whose address table names the others
+#   core        the site agent whose address table names the most site networks
 #
 # A site network is a private (RFC 1918) network other than the transit one.
 # Python's is_private also counts the documentation ranges NIAC uses for its
@@ -214,9 +214,8 @@ if not covering:
     sys.exit(f"the edge router {gateway} has no route covering every site network")
 route = max(covering, key=lambda r: r.prefixlen)
 
-# The network the operator types: the one holding the first site address of
-# the SNMP agent with an address in the most site networks — a core switch,
-# whose address table names every other site network. The rest are learned.
+# The SNMP agent with an address in the most site networks — a core switch,
+# whose address table names the site networks once a probe has found it.
 agents = [
     [a for a in (ipaddress.ip_address(x) for x in d.get("ips") or []) if any(a in s for s in sites)]
     for d in scenario.get("devices") or []
@@ -225,7 +224,6 @@ agents = [
 core = max(agents, key=lambda a: len({s for s in sites for x in a if x in s}))
 if len({s for s in sites for x in core if x in s}) < 2:
     sys.exit("no SNMP agent inside the site has addresses in more than one site network")
-typed = next(s for s in sites if core[0] in s)
 
 site_devices = ";".join(s + "=" + "|".join(d) for s, d in devices.items())
 values = [
@@ -237,7 +235,6 @@ values = [
     route,
     ",".join(str(s) for s in sites),
     site_devices,
-    typed,
     core[0],
 ]
 with open(env_path, "w", encoding="utf-8") as env:
@@ -252,7 +249,6 @@ EOF
   read -r route
   read -r sites
   read -r devices
-  read -r typed
   read -r core
 } <"$run_dir/topology.txt"
 
@@ -325,7 +321,6 @@ SEED_E2E_NIAC_ROUTED=1 \
 SEED_E2E_SNMP_COMMUNITY="$community" \
 SEED_E2E_GATEWAY="$gateway" \
 SEED_E2E_SITE_ROUTE="$route" \
-SEED_E2E_TYPED_NETWORK="$typed" \
 SEED_E2E_CORE="$core" \
 SEED_E2E_SITE_NETWORKS="$sites" \
 SEED_E2E_SITE_DEVICES="$devices" \

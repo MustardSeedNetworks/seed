@@ -118,61 +118,6 @@ func TestGetMaxHostsPerSubnet_ZeroValueReportsTheDefault(t *testing.T) {
 	}
 }
 
-// splitSubnetIntoChunks bounds how much of a large subnet a scan will touch.
-// The cap is a safety property -- a /16 is 256 /24s and sweeping all of them
-// unasked is how a discovery scan becomes a network event -- so the cases
-// worth pinning are the boundaries, not the happy middle.
-func TestSplitSubnetIntoChunks_SmallSubnetsAreNotChunked(t *testing.T) {
-	for _, cidr := range []string{"10.0.0.0/24", "10.0.0.0/28", "10.0.0.0/32"} {
-		if got := splitSubnetIntoChunks(mustCIDR(t, cidr), 64); len(got) != 1 {
-			t.Errorf("%s split into %d chunks, want 1", cidr, len(got))
-		}
-	}
-}
-
-func TestSplitSubnetIntoChunks_SlashTwentyTwoBecomesFourSlashTwentyFours(t *testing.T) {
-	got := splitSubnetIntoChunks(mustCIDR(t, "10.0.0.0/22"), 64)
-
-	if len(got) != 4 {
-		t.Fatalf("chunks = %d, want 4", len(got))
-	}
-	// Contiguous and non-overlapping: each chunk starts where the last ended.
-	for i, chunk := range got {
-		ones, _ := chunk.Mask.Size()
-		if ones != 24 {
-			t.Errorf("chunk %d is /%d, want /24", i, ones)
-		}
-		if want := byte(i); chunk.IP.To4()[2] != want {
-			t.Errorf("chunk %d third octet = %d, want %d", i, chunk.IP.To4()[2], want)
-		}
-	}
-}
-
-// The cap is a safety property: a /16 is 256 /24s, and sweeping all of them
-// unasked is how a discovery scan becomes a network event.
-func TestSplitSubnetIntoChunks_CapBoundsALargeSubnet(t *testing.T) {
-	if got := splitSubnetIntoChunks(mustCIDR(t, "10.0.0.0/16"), 8); len(got) != 8 {
-		t.Errorf("chunks = %d, want the cap of 8", len(got))
-	}
-}
-
-func TestSplitSubnetIntoChunks_NonPositiveCapUsesTheDefault(t *testing.T) {
-	got := splitSubnetIntoChunks(mustCIDR(t, "10.0.0.0/16"), 0)
-
-	if len(got) == 0 {
-		t.Fatal("a zero cap produced no chunks; the scan would cover nothing")
-	}
-	if len(got) > MaxChunksDefault {
-		t.Errorf("chunks = %d, want at most the default %d", len(got), MaxChunksDefault)
-	}
-}
-
-func TestSplitSubnetIntoChunks_IPv6IsReturnedUnchunked(t *testing.T) {
-	if got := splitSubnetIntoChunks(mustCIDR(t, "2001:db8::/32"), 64); len(got) != 1 {
-		t.Errorf("IPv6 split into %d chunks, want 1", len(got))
-	}
-}
-
 func TestDefaultBluetoothScanConfig(t *testing.T) {
 	cfg := DefaultBluetoothScanConfig()
 
