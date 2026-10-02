@@ -4,6 +4,8 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"net"
+	"net/netip"
 	"strconv"
 	"strings"
 
@@ -42,6 +44,30 @@ const (
 	// OIDIpCidrRouteMetric1 is the IP-FORWARD-MIB OID for route metric.
 	OIDIpCidrRouteMetric1 = "1.3.6.1.2.1.4.24.4.1.11"
 )
+
+// RFC1213-MIB ipRouteTable OIDs. The table is deprecated, but plenty of
+// devices serve only it, and an EtherScope reads it alongside the CIDR tables
+// (seed#2587).
+const (
+	// OIDIpRouteDest is the ipRouteTable OID for route destination.
+	OIDIpRouteDest = "1.3.6.1.2.1.4.21.1.1"
+	// OIDIpRouteIfIndex is the ipRouteTable OID for route interface index.
+	OIDIpRouteIfIndex = "1.3.6.1.2.1.4.21.1.2"
+	// OIDIpRouteMetric1 is the ipRouteTable OID for route metric.
+	OIDIpRouteMetric1 = "1.3.6.1.2.1.4.21.1.3"
+	// OIDIpRouteNextHop is the ipRouteTable OID for route next hop.
+	OIDIpRouteNextHop = "1.3.6.1.2.1.4.21.1.7"
+	// OIDIpRouteType is the ipRouteTable OID for route type.
+	OIDIpRouteType = "1.3.6.1.2.1.4.21.1.8"
+	// OIDIpRouteProto is the ipRouteTable OID for route protocol.
+	OIDIpRouteProto = "1.3.6.1.2.1.4.21.1.9"
+	// OIDIpRouteMask is the ipRouteTable OID for route mask.
+	OIDIpRouteMask = "1.3.6.1.2.1.4.21.1.11"
+)
+
+// ipRouteTypeInvalid is RFC 1213's ipRouteType invalid(2): an entry the agent
+// has deleted but may still list.
+const ipRouteTypeInvalid = "2"
 
 // Routing table OID parsing constants.
 const (
@@ -94,20 +120,30 @@ type RouteEntry struct {
 
 // GetRoutes retrieves routing table from a device using IP-FORWARD-MIB, at
 // most MaxRouteRows rows of it.
-// It tries the modern inetCidrRouteTable first, then falls back to legacy ipCidrRouteTable.
+// It reads the first of inetCidrRouteTable (RFC 4292), ipCidrRouteTable
+// (RFC 2096) and ipRouteTable (RFC 1213) that holds any rows.
 func GetRoutes(ctx context.Context, ip string, cfg *Session) (RouteTable, error) {
 	if cfg == nil {
 		return RouteTable{}, errors.New("SNMP config is nil")
 	}
 
-	// Try modern inetCidrRouteTable first.
-	table, err := getInetCidrRoutes(ctx, ip, cfg)
-	if err == nil && len(table.Routes) > 0 {
-		return table, nil
-	}
+	return firstRouteTable(ctx, ip, cfg, getInetCidrRoutes, getIPCidrRoutes, getIPRoutes)
+}
 
-	// Fall back to legacy ipCidrRouteTable.
-	return getIPCidrRoutes(ctx, ip, cfg)
+// routeReader reads one of the route tables.
+type routeReader func(ctx context.Context, ip string, cfg *Session) (RouteTable, error)
+
+// firstRouteTable returns the first table that holds rows, in the order the
+// readers are given. When none does, the last reader's answer stands, so a
+// device that serves no route table reports either nothing or the failure.
+func firstRouteTable(ctx context.Context, ip string, cfg *Session, readers ...routeReader) (RouteTable, error) {
+	last := len(readers) - 1
+	for _, read := range readers[:last] {
+		if table, err := read(ctx, ip, cfg); err == nil && len(table.Routes) > 0 {
+			return table, nil
+		}
+	}
+	return readers[last](ctx, ip, cfg)
 }
 
 // getInetCidrRoutes retrieves routes from the modern inetCidrRouteTable.
@@ -181,7 +217,7 @@ func walkInetCidrRouteTable(params bulkWalker, limit int) (RouteTable, error) {
 			return
 		}
 
-		key := fmt.Sprintf("%s/%d-%s", dest, prefix, nextHop)
+		key := inetCidrRouteKey(pdu.Name)
 		ifIndex, _ := strconv.Atoi(formatSNMPValue(pdu))
 
 		routes[key] = &RouteEntry{
@@ -196,19 +232,26 @@ func walkInetCidrRouteTable(params bulkWalker, limit int) (RouteTable, error) {
 	}
 
 	// Walk route type.
-	walkRouteAttribute(params, OIDInetCidrRouteType, limit, routes, func(r *RouteEntry, value string) {
+	walkRouteColumn(params, OIDInetCidrRouteType, limit, routes, inetCidrRouteKey, func(r *RouteEntry, value string) {
 		r.Type = parseRouteType(value)
 	})
 
 	// Walk route protocol.
-	walkRouteAttribute(params, OIDInetCidrRouteProto, limit, routes, func(r *RouteEntry, value string) {
+	walkRouteColumn(params, OIDInetCidrRouteProto, limit, routes, inetCidrRouteKey, func(r *RouteEntry, value string) {
 		r.Protocol = parseRouteProtocol(value)
 	})
 
 	// Walk route metric.
-	walkRouteAttribute(params, OIDInetCidrRouteMetric1, limit, routes, func(r *RouteEntry, value string) {
-		r.Metric, _ = strconv.Atoi(value)
-	})
+	walkRouteColumn(
+		params,
+		OIDInetCidrRouteMetric1,
+		limit,
+		routes,
+		inetCidrRouteKey,
+		func(r *RouteEntry, value string) {
+			r.Metric, _ = strconv.Atoi(value)
+		},
+	)
 
 	return routeTable(routes, truncated), nil
 }
@@ -256,7 +299,7 @@ func walkIPCidrRouteTable(params bulkWalker, limit int) (RouteTable, error) {
 			return
 		}
 
-		key := fmt.Sprintf("%s/%s-%s", dest, mask, nextHop)
+		key := ipCidrRouteKey(pdu.Name)
 		prefix := netmaskToPrefix(mask)
 
 		routes[key] = &RouteEntry{
@@ -270,44 +313,145 @@ func walkIPCidrRouteTable(params bulkWalker, limit int) (RouteTable, error) {
 	}
 
 	// Walk ipCidrRouteIfIndex.
-	walkIPCidrRouteAttribute(
+	walkRouteColumn(
 		params,
 		OIDIpCidrRouteIfIndex,
 		limit,
 		routes,
+		ipCidrRouteKey,
 		func(r *RouteEntry, value string) {
 			r.IfIndex, _ = strconv.Atoi(value)
 		},
 	)
 
 	// Walk ipCidrRouteType.
-	walkIPCidrRouteAttribute(params, OIDIpCidrRouteType, limit, routes, func(r *RouteEntry, value string) {
+	walkRouteColumn(params, OIDIpCidrRouteType, limit, routes, ipCidrRouteKey, func(r *RouteEntry, value string) {
 		r.Type = parseRouteType(value)
 	})
 
 	// Walk ipCidrRouteProto.
-	walkIPCidrRouteAttribute(
+	walkRouteColumn(
 		params,
 		OIDIpCidrRouteProto,
 		limit,
 		routes,
+		ipCidrRouteKey,
 		func(r *RouteEntry, value string) {
 			r.Protocol = parseRouteProtocol(value)
 		},
 	)
 
 	// Walk ipCidrRouteMetric1.
-	walkIPCidrRouteAttribute(
+	walkRouteColumn(
 		params,
 		OIDIpCidrRouteMetric1,
 		limit,
 		routes,
+		ipCidrRouteKey,
 		func(r *RouteEntry, value string) {
 			r.Metric, _ = strconv.Atoi(value)
 		},
 	)
 
 	return routeTable(routes, truncated), nil
+}
+
+// getIPRoutes retrieves routes from the RFC 1213 ipRouteTable.
+func getIPRoutes(ctx context.Context, ip string, cfg *Session) (RouteTable, error) {
+	return sweepCredentials(ctx, cfg, "failed to query ipRouteTable with all configured credentials",
+		func(cred *V3Credential) (RouteTable, error) {
+			params, err := newV3WalkClient(ctx, ip, cred, cfg)
+			if err != nil {
+				return RouteTable{}, err
+			}
+			defer func() { _ = params.Conn.Close() }()
+			return walkIPRouteTable(params, MaxRouteRows)
+		},
+		func(community string) (RouteTable, error) {
+			params, err := newV2cWalkClient(ctx, ip, community, cfg)
+			if err != nil {
+				return RouteTable{}, err
+			}
+			defer func() { _ = params.Conn.Close() }()
+			return walkIPRouteTable(params, MaxRouteRows)
+		},
+	)
+}
+
+// walkIPRouteTable walks the RFC 1213 ipRouteTable, at most limit rows of it.
+// The table is indexed by destination alone, so the mask and next hop are
+// columns rather than index parts. A row is kept only once both have arrived
+// as IPv4 values: netmaskToPrefix would read a missing mask as /0 and turn
+// the row into a default route. Rows the agent marks invalid are dropped.
+func walkIPRouteTable(params bulkWalker, limit int) (RouteTable, error) {
+	routes := make(map[string]*RouteEntry)
+
+	truncated, err := walkCapped(params, OIDIpRouteDest, limit, func(pdu gosnmp.SnmpPDU) {
+		if dest := parseIPRouteIndex(pdu.Name); dest != "" {
+			routes[dest] = &RouteEntry{Destination: dest, Prefix: -1}
+		}
+	})
+	if err != nil {
+		return RouteTable{}, fmt.Errorf("failed to walk ipRouteDest: %w", err)
+	}
+
+	invalid := make(map[string]bool)
+	columns := []struct {
+		oid    string
+		update func(*RouteEntry, string)
+	}{
+		{OIDIpRouteMask, func(r *RouteEntry, value string) { r.Prefix = maskPrefix(value) }},
+		{OIDIpRouteNextHop, func(r *RouteEntry, value string) {
+			if addr, parseErr := netip.ParseAddr(value); parseErr == nil && addr.Is4() {
+				r.NextHop = addr.String()
+			}
+		}},
+		{OIDIpRouteIfIndex, func(r *RouteEntry, value string) { r.IfIndex, _ = strconv.Atoi(value) }},
+		{OIDIpRouteType, func(r *RouteEntry, value string) {
+			invalid[r.Destination] = value == ipRouteTypeInvalid
+			r.Type = parseRouteType(value)
+		}},
+		{OIDIpRouteProto, func(r *RouteEntry, value string) { r.Protocol = parseRouteProtocol(value) }},
+		{OIDIpRouteMetric1, func(r *RouteEntry, value string) { r.Metric, _ = strconv.Atoi(value) }},
+	}
+	for _, column := range columns {
+		walkRouteColumn(params, column.oid, limit, routes, parseIPRouteIndex, column.update)
+	}
+
+	for dest, route := range routes {
+		if route.Prefix < 0 || route.NextHop == "" || invalid[dest] {
+			delete(routes, dest)
+		}
+	}
+	return routeTable(routes, truncated), nil
+}
+
+// parseIPRouteIndex extracts the destination from an ipRouteTable OID, whose
+// index is the four destination octets.
+func parseIPRouteIndex(oid string) string {
+	parts := strings.Split(oid, ".")
+	if len(parts) < ipv4OctetCount {
+		return ""
+	}
+	addr, err := netip.ParseAddr(strings.Join(parts[len(parts)-ipv4OctetCount:], "."))
+	if err != nil || !addr.Is4() {
+		return ""
+	}
+	return addr.String()
+}
+
+// maskPrefix returns the prefix length of a contiguous IPv4 netmask, or -1
+// when value is not one.
+func maskPrefix(value string) int {
+	addr, err := netip.ParseAddr(value)
+	if err != nil || !addr.Is4() {
+		return -1
+	}
+	ones, bits := net.IPMask(addr.AsSlice()).Size()
+	if bits == 0 {
+		return -1
+	}
+	return ones
 }
 
 // walkCapped walks one column, handing visit at most limit rows. It reports
@@ -343,59 +487,43 @@ func routeTable(routes map[string]*RouteEntry, truncated bool) RouteTable {
 	return RouteTable{Routes: result, Truncated: truncated}
 }
 
-// walkRouteAttribute walks a routing table attribute (inetCidrRouteTable).
-func walkRouteAttribute(
+// walkRouteColumn walks one attribute column of a route table and applies
+// each value to the route its index names, by the same key the table's
+// discovery walk stored the routes under.
+func walkRouteColumn(
 	params bulkWalker,
 	oid string,
 	limit int,
 	routes map[string]*RouteEntry,
+	key func(oid string) string,
 	updateFunc func(*RouteEntry, string),
 ) {
 	_, err := walkCapped(params, oid, limit, func(pdu gosnmp.SnmpPDU) {
-		dest, prefix, nextHop := parseInetCidrRouteIndex(pdu.Name)
-		if dest == "" {
-			return
+		if route, exists := routes[key(pdu.Name)]; exists {
+			updateFunc(route, formatSNMPValue(pdu))
 		}
-
-		key := fmt.Sprintf("%s/%d-%s", dest, prefix, nextHop)
-		route, exists := routes[key]
-		if !exists {
-			return
-		}
-
-		updateFunc(route, formatSNMPValue(pdu))
 	})
 	if err != nil {
-		logging.GetLogger().Debug("Failed to walk route attribute", "oid", oid, "error", err)
+		logging.GetLogger().Debug("Failed to walk route column", "oid", oid, "error", err)
 	}
 }
 
-// walkIPCidrRouteAttribute walks a routing table attribute (ipCidrRouteTable).
-func walkIPCidrRouteAttribute(
-	params bulkWalker,
-	oid string,
-	limit int,
-	routes map[string]*RouteEntry,
-	updateFunc func(*RouteEntry, string),
-) {
-	_, err := walkCapped(params, oid, limit, func(pdu gosnmp.SnmpPDU) {
-		dest, mask, nextHop := parseIPCidrRouteIndex(pdu.Name)
-		if dest == "" {
-			return
-		}
-
-		key := fmt.Sprintf("%s/%s-%s", dest, mask, nextHop)
-		route, exists := routes[key]
-		if !exists {
-			return
-		}
-
-		updateFunc(route, formatSNMPValue(pdu))
-	})
-	if err != nil {
-		logging.GetLogger().
-			Debug("Failed to walk IP CIDR route attribute", "oid", oid, "error", err)
+// inetCidrRouteKey keys an inetCidrRouteTable row by its index.
+func inetCidrRouteKey(oid string) string {
+	dest, prefix, nextHop := parseInetCidrRouteIndex(oid)
+	if dest == "" {
+		return ""
 	}
+	return fmt.Sprintf("%s/%d-%s", dest, prefix, nextHop)
+}
+
+// ipCidrRouteKey keys an ipCidrRouteTable row by its index.
+func ipCidrRouteKey(oid string) string {
+	dest, mask, nextHop := parseIPCidrRouteIndex(oid)
+	if dest == "" {
+		return ""
+	}
+	return fmt.Sprintf("%s/%s-%s", dest, mask, nextHop)
 }
 
 // parseInetCidrRouteIndex extracts destination, prefix, and next hop from OID.

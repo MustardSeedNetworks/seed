@@ -4,6 +4,8 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"slices"
+	"strings"
 	"sync"
 	"testing"
 	"time"
@@ -12,22 +14,39 @@ import (
 	"github.com/MustardSeedNetworks/seed/internal/polling/snmp/collectors/routing"
 )
 
-const tablePrefix = "1.3.6.1.2.1.4.24.4.1"
+const (
+	tablePrefix       = "1.3.6.1.2.1.4.24.4.1"
+	legacyTablePrefix = "1.3.6.1.2.1.4.21.1"
+)
 
+// fakeClient answers a Walk with the varbinds under the walked prefix, the
+// way an agent does, and records the prefixes it was asked for.
 type fakeClient struct {
-	vbs     []snmp.Varbind
-	walkErr error
+	vbs       []snmp.Varbind
+	walkErr   error
+	legacyErr error
+	walked    []string
 }
 
 func (f *fakeClient) Get(_ context.Context, _ []string) ([]snmp.Varbind, error) {
 	return nil, errors.New("get not used by routing")
 }
 
-func (f *fakeClient) Walk(_ context.Context, _ string) ([]snmp.Varbind, error) {
+func (f *fakeClient) Walk(_ context.Context, prefix string) ([]snmp.Varbind, error) {
+	f.walked = append(f.walked, prefix)
 	if f.walkErr != nil {
 		return nil, f.walkErr
 	}
-	return f.vbs, nil
+	if prefix == legacyTablePrefix && f.legacyErr != nil {
+		return nil, f.legacyErr
+	}
+	var out []snmp.Varbind
+	for _, vb := range f.vbs {
+		if strings.HasPrefix(vb.OID, prefix+".") {
+			out = append(out, vb)
+		}
+	}
+	return out, nil
 }
 
 type fakePublisher struct {
@@ -60,6 +79,115 @@ func at() time.Time { return time.Date(2026, 5, 31, 12, 0, 0, 0, time.UTC) }
 func routeOID(col, dest, nextHop string) string {
 	return fmt.Sprintf("%s.%s.%s.255.255.255.0.0.%s",
 		tablePrefix, col, dest, nextHop)
+}
+
+// legacyRouteOID composes an ipRouteTable OID, indexed by destination alone.
+func legacyRouteOID(col, dest string) string {
+	return fmt.Sprintf("%s.%s.%s", legacyTablePrefix, col, dest)
+}
+
+// legacyRow is one ipRouteTable row's columns as an agent serves them, with
+// mask and next hop as IpAddress strings.
+func legacyRow(dest, mask, nextHop string, routeType int) []snmp.Varbind {
+	return []snmp.Varbind{
+		{OID: legacyRouteOID("1", dest), Value: dest},
+		{OID: legacyRouteOID("2", dest), Value: 3},
+		{OID: legacyRouteOID("3", dest), Value: 20},
+		{OID: legacyRouteOID("7", dest), Value: nextHop},
+		{OID: legacyRouteOID("8", dest), Value: routeType},
+		{OID: legacyRouteOID("9", dest), Value: routing.ProtoOSPF},
+		{OID: legacyRouteOID("10", dest), Value: 600},
+		{OID: legacyRouteOID("11", dest), Value: mask},
+	}
+}
+
+func collectRoutes(t *testing.T, fc *fakeClient) []routing.Route {
+	t.Helper()
+	pub := &fakePublisher{}
+	if err := routing.New(factoryFor(fc), pub, at).
+		Collect(context.Background(), snmp.Target{ID: "t-1"}, snmp.ResolvedCredentials{}); err != nil {
+		t.Fatalf("Collect: %v", err)
+	}
+	if len(pub.got) != 1 {
+		t.Fatalf("published %d observations, want 1", len(pub.got))
+	}
+	return pub.got[0].Routes
+}
+
+func TestCollect_ReadsIPRouteTableWhenTheCIDRTableIsEmpty(t *testing.T) {
+	t.Parallel()
+	fc := &fakeClient{vbs: slices.Concat(
+		legacyRow("10.20.0.0", "255.255.0.0", "10.0.0.1", routing.TypeRemote),
+		legacyRow("10.0.0.0", "255.255.255.0", "0.0.0.0", routing.TypeLocal),
+	)}
+	got := collectRoutes(t, fc)
+
+	want := []routing.Route{
+		{
+			Destination: "10.0.0.0", Mask: "255.255.255.0", NextHop: "0.0.0.0",
+			IfIndex: 3, Type: routing.TypeLocal, Proto: routing.ProtoOSPF, AgeSeconds: 600, Metric1: 20,
+		},
+		{
+			Destination: "10.20.0.0", Mask: "255.255.0.0", NextHop: "10.0.0.1",
+			IfIndex: 3, Type: routing.TypeRemote, Proto: routing.ProtoOSPF, AgeSeconds: 600, Metric1: 20,
+		},
+	}
+	if !slices.Equal(got, want) {
+		t.Errorf("routes = %+v\nwant %+v", got, want)
+	}
+	if !slices.Equal(fc.walked, []string{tablePrefix, legacyTablePrefix}) {
+		t.Errorf("walked %v, want the CIDR table then ipRouteTable", fc.walked)
+	}
+}
+
+func TestCollect_IPRouteTableRowsWithoutAUsableRoute(t *testing.T) {
+	t.Parallel()
+	noMask := legacyRow("10.3.0.0", "255.255.0.0", "10.0.0.1", routing.TypeRemote)
+	noMask = slices.DeleteFunc(noMask, func(vb snmp.Varbind) bool {
+		return vb.OID == legacyRouteOID("11", "10.3.0.0")
+	})
+	fc := &fakeClient{vbs: slices.Concat(
+		legacyRow("10.1.0.0", "255.255.0.0", "10.0.0.1", 2), // invalid(2): deleted by the agent
+		legacyRow("10.2.0.0", "255.0.255.0", "10.0.0.1", routing.TypeRemote),
+		noMask,
+		legacyRow("10.4.0.0", "255.255.0.0", "", routing.TypeRemote),
+		legacyRow("10.5.0.0", "255.255.0.0", "10.0.0.1", routing.TypeRemote),
+	)}
+	got := collectRoutes(t, fc)
+
+	if len(got) != 1 || got[0].Destination != "10.5.0.0" {
+		t.Errorf("routes = %+v, want only 10.5.0.0 (invalid, non-contiguous mask, "+
+			"missing mask and missing next hop dropped)", got)
+	}
+}
+
+func TestCollect_IPRouteTableNotWalkedWhenTheCIDRTableHoldsRoutes(t *testing.T) {
+	t.Parallel()
+	fc := &fakeClient{vbs: slices.Concat(
+		[]snmp.Varbind{{OID: routeOID("5", "10.0.0.0", "10.0.0.254"), Value: uint32(1)}},
+		legacyRow("10.20.0.0", "255.255.0.0", "10.0.0.1", routing.TypeRemote),
+	)}
+	got := collectRoutes(t, fc)
+
+	if len(got) != 1 || got[0].Destination != "10.0.0.0" {
+		t.Errorf("routes = %+v, want the CIDR table's row only", got)
+	}
+	if !slices.Equal(fc.walked, []string{tablePrefix}) {
+		t.Errorf("walked %v, want the CIDR table only", fc.walked)
+	}
+}
+
+func TestCollect_IPRouteTableWalkErrorPropagates(t *testing.T) {
+	t.Parallel()
+	c := routing.New(
+		factoryFor(&fakeClient{legacyErr: errors.New("timeout")}),
+		&fakePublisher{},
+		at,
+	)
+	err := c.Collect(context.Background(), snmp.Target{}, snmp.ResolvedCredentials{})
+	if err == nil || !strings.Contains(err.Error(), "ipRouteTable") {
+		t.Errorf("err = %v, want the ipRouteTable walk failure", err)
+	}
 }
 
 func TestCollector_Name(t *testing.T) {

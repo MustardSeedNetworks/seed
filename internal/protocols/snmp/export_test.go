@@ -212,3 +212,18 @@ func ExportWalkInetCidrRouteTable(params BulkWalker, limit int) (RouteTable, err
 func ExportWalkIPCidrRouteTable(params BulkWalker, limit int) (RouteTable, error) {
 	return walkIPCidrRouteTable(params, limit)
 }
+
+// ExportWalkIPRouteTable exposes walkIPRouteTable for testing.
+func ExportWalkIPRouteTable(params BulkWalker, limit int) (RouteTable, error) {
+	return walkIPRouteTable(params, limit)
+}
+
+// ExportFirstRouteTable exposes firstRouteTable for testing; each reader
+// stands in for one route table's walk.
+func ExportFirstRouteTable(readers ...func() (RouteTable, error)) (RouteTable, error) {
+	wrapped := make([]routeReader, len(readers))
+	for i, read := range readers {
+		wrapped[i] = func(context.Context, string, *Session) (RouteTable, error) { return read() }
+	}
+	return firstRouteTable(context.Background(), "", nil, wrapped...)
+}
