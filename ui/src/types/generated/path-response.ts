@@ -24,6 +24,18 @@ export interface TracerouteHop {
   hostname?: string;
   rtt: number;
   state: string;
+  route?: HopRoute;
+}
+export interface HopRoute {
+  device: string;
+  destination: string;
+  prefix: number;
+  nextHop?: string;
+  ifIndex?: number;
+  interface?: string;
+  type?: string;
+  protocol?: string;
+  tableTruncated?: boolean;
 }
 export interface L2PathResult {
   hops: L2Hop[];

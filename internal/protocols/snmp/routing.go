@@ -69,11 +69,18 @@ const (
 // has deleted but may still list.
 const ipRouteTypeInvalid = "2"
 
+// inetCidrRouteEntry is the IP-FORWARD-MIB row every inetCidrRouteTable
+// column OID starts with; InetAddressType values are RFC 4001's.
+const (
+	inetCidrRouteEntry = "1.3.6.1.2.1.4.24.7.1"
+
+	inetAddressUnknown = 0
+	inetAddressIPv4    = 1
+	inetAddressIPv6    = 2
+)
+
 // Routing table OID parsing constants.
 const (
-	// minOIDPartsInetCidrRoute is the minimum OID parts for modern inetCidrRouteTable entries.
-	// Format includes: OID base + destType + destLen + dest(4-16) + pfxLen + policy + nextHopType + nextHopLen + nextHop.
-	minOIDPartsInetCidrRoute = 12
 	// minOIDPartsIPCidrRoute is the minimum OID parts for legacy ipCidrRouteTable entries.
 	// Format includes: OID base + 4 dest octets + 4 mask octets + 1 TOS + 4 nextHop octets = 14 parts minimum.
 	minOIDPartsIPCidrRoute = 14
@@ -526,49 +533,93 @@ func ipCidrRouteKey(oid string) string {
 	return fmt.Sprintf("%s/%s-%s", dest, mask, nextHop)
 }
 
-// parseInetCidrRouteIndex extracts destination, prefix, and next hop from OID.
-// OID format: ...destType.destLen.dest.pfxLen.policy.nextHopType.nextHopLen.nextHop.
+// parseInetCidrRouteIndex reads an inetCidrRouteEntry OID's index (RFC 4292):
+// destType.destLen.dest….pfxLen.policyLen.policy….nextHopType.nextHopLen.nextHop….
+// Both addresses and the policy are length-prefixed, so the index is read
+// front to back. Only IPv4 destinations are returned; a next hop of type
+// unknown(0), which a connected route carries, comes back empty.
 func parseInetCidrRouteIndex(oid string) (string, int, string) {
-	parts := strings.Split(oid, ".")
-	if len(parts) < minOIDPartsInetCidrRoute {
+	rest, ok := strings.CutPrefix(strings.TrimPrefix(oid, "."), inetCidrRouteEntry+".")
+	if !ok {
 		return "", 0, ""
 	}
-
-	// Find the starting point - look for address type (1=ipv4, 2=ipv6)
-	// This is complex because the OID embeds variable-length addresses
-	// For simplicity, we'll try to parse IPv4 addresses which have predictable format
-
-	for i := len(parts) - 1; i >= 10; i-- {
-		destType, err := strconv.Atoi(parts[i-10])
-		if err != nil || destType != 1 {
-			continue
-		}
-
-		destLen, err := strconv.Atoi(parts[i-9])
-		if err != nil || destLen != 4 {
-			continue
-		}
-
-		// Extract destination (4 octets)
-		if i-8+4 > len(parts) {
-			continue
-		}
-		dest := strings.Join(parts[i-8:i-4], ".")
-
-		// Extract prefix length
-		if i-4 >= len(parts) {
-			continue
-		}
-		prefix, _ := strconv.Atoi(parts[i-4])
-
-		// For simplicity, use destination as next hop placeholder
-		// Real implementation would parse the full next hop from OID
-		nextHop := "0.0.0.0"
-
-		return dest, prefix, nextHop
+	// The first sub-identifier is the column; the index follows it.
+	r := indexReader{ids: strings.Split(rest, "."), pos: 1}
+	dest, ok := r.inetAddress()
+	if !ok || !dest.Is4() {
+		return "", 0, ""
 	}
+	prefix, ok := r.next()
+	if !ok || prefix > net.IPv4len*8 {
+		return "", 0, ""
+	}
+	if policyLen, read := r.next(); !read || !r.skip(policyLen) {
+		return "", 0, ""
+	}
+	nextHop, ok := r.inetAddress()
+	if !ok || r.pos != len(r.ids) {
+		return "", 0, ""
+	}
+	if !nextHop.IsValid() {
+		return dest.String(), prefix, ""
+	}
+	return dest.String(), prefix, nextHop.String()
+}
 
-	return "", 0, ""
+// indexReader walks the sub-identifiers of a table index.
+type indexReader struct {
+	ids []string
+	pos int
+}
+
+func (r *indexReader) next() (int, bool) {
+	if r.pos >= len(r.ids) {
+		return 0, false
+	}
+	r.pos++
+	id, err := strconv.Atoi(r.ids[r.pos-1])
+	return id, err == nil && id >= 0
+}
+
+func (r *indexReader) skip(n int) bool {
+	if n > len(r.ids)-r.pos {
+		return false
+	}
+	r.pos += n
+	return true
+}
+
+// inetAddress reads an InetAddressType then a length-prefixed InetAddress.
+// Type unknown(0) with no octets is the zero Addr; IPv4 and IPv6 must carry
+// their own length; any other type is refused.
+func (r *indexReader) inetAddress() (netip.Addr, bool) {
+	addrType, ok := r.next()
+	if !ok {
+		return netip.Addr{}, false
+	}
+	length, ok := r.next()
+	if !ok || length > len(r.ids)-r.pos {
+		return netip.Addr{}, false
+	}
+	octets := make([]byte, 0, length)
+	for _, id := range r.ids[r.pos : r.pos+length] {
+		octet, err := strconv.ParseUint(id, 10, 8)
+		if err != nil {
+			return netip.Addr{}, false
+		}
+		octets = append(octets, byte(octet))
+	}
+	r.pos += length
+	switch {
+	case addrType == inetAddressUnknown && length == 0:
+		return netip.Addr{}, true
+	case addrType == inetAddressIPv4 && length == net.IPv4len,
+		addrType == inetAddressIPv6 && length == net.IPv6len:
+		addr, _ := netip.AddrFromSlice(octets)
+		return addr, true
+	default:
+		return netip.Addr{}, false
+	}
 }
 
 // parseIPCidrRouteIndex extracts destination, mask, and next hop from OID.

@@ -134,59 +134,109 @@ func TestParseIPCidrRouteIndex(t *testing.T) {
 	}
 }
 
+// TestParseInetCidrRouteIndex reads RFC 4292 indexes front to back. The next
+// hop is only in the index, after a policy OID whose length agents differ on
+// (seed#2587).
 func TestParseInetCidrRouteIndex(t *testing.T) {
-	// The parseInetCidrRouteIndex function has complex OID parsing logic.
-	// It searches backwards through the OID parts to find IPv4 routes.
-	// We test mainly the edge cases for empty/short OIDs.
 	tests := []struct {
 		name       string
 		oid        string
-		wantDst    string
+		wantDest   string
 		wantPrefix int
-		wantNH     string
+		wantNext   string
 	}{
 		{
-			name:       "short OID",
-			oid:        "1.3.6.1",
-			wantDst:    "",
+			// net-snmp's index: policy zeroDotZero as a two-part OID.
+			name:       "IPv4 route, two-part policy",
+			oid:        ".1.3.6.1.2.1.4.24.7.1.7.1.4.10.0.0.0.24.2.0.0.1.4.192.168.1.1",
+			wantDest:   "10.0.0.0",
+			wantPrefix: 24,
+			wantNext:   "192.168.1.1",
+		},
+		{
+			// NIAC's index: policy as five zero sub-identifiers.
+			name:       "IPv4 route, five-part policy",
+			oid:        "1.3.6.1.2.1.4.24.7.1.7.1.4.10.51.0.0.16.5.0.0.0.0.0.1.4.10.254.200.2",
+			wantDest:   "10.51.0.0",
+			wantPrefix: 16,
+			wantNext:   "10.254.200.2",
+		},
+		{
+			name:       "default route",
+			oid:        "1.3.6.1.2.1.4.24.7.1.8.1.4.0.0.0.0.0.2.0.0.1.4.10.0.0.1",
+			wantDest:   "0.0.0.0",
 			wantPrefix: 0,
-			wantNH:     "",
+			wantNext:   "10.0.0.1",
+		},
+		{
+			name:       "host route /32",
+			oid:        "1.3.6.1.2.1.4.24.7.1.7.1.4.192.168.1.100.32.2.0.0.1.4.192.168.1.1",
+			wantDest:   "192.168.1.100",
+			wantPrefix: 32,
+			wantNext:   "192.168.1.1",
+		},
+		{
+			name:       "connected route has no next hop",
+			oid:        "1.3.6.1.2.1.4.24.7.1.7.1.4.10.254.200.0.24.2.0.0.0.0",
+			wantDest:   "10.254.200.0",
+			wantPrefix: 24,
+		},
+		{
+			name: "IPv6 destination is not returned",
+			oid: "1.3.6.1.2.1.4.24.7.1.7.2.16.32.1.13.184.0.0.0.0.0.0.0.0.0.0.0.0.32.2.0.0." +
+				"2.16.254.128.0.0.0.0.0.0.0.0.0.0.0.0.0.1",
+		},
+		{
+			name: "index cut short in the next hop",
+			oid:  "1.3.6.1.2.1.4.24.7.1.7.1.4.10.0.0.0.24.2.0.0.1.4.192.168",
+		},
+		{
+			name: "trailing sub-identifiers after the next hop",
+			oid:  "1.3.6.1.2.1.4.24.7.1.7.1.4.10.0.0.0.24.2.0.0.1.4.192.168.1.1.9",
+		},
+		{
+			name: "policy length past the end",
+			oid:  "1.3.6.1.2.1.4.24.7.1.7.1.4.10.0.0.0.24.40.0.0",
+		},
+		{
+			name: "octet out of range",
+			oid:  "1.3.6.1.2.1.4.24.7.1.7.1.4.10.0.0.300.24.2.0.0.0.0",
+		},
+		{
+			name: "prefix longer than the address",
+			oid:  "1.3.6.1.2.1.4.24.7.1.7.1.4.10.0.0.0.33.2.0.0.0.0",
+		},
+		{
+			name: "another table's OID",
+			oid:  "1.3.6.1.2.1.4.24.4.1.5.10.0.0.0.255.255.255.0.0.192.168.1.1",
+		},
+		{
+			name:       "too short OID",
+			oid:        "1.3.6.1.2.1.4.24",
+			wantDest:   "",
+			wantPrefix: 0,
+			wantNext:   "",
 		},
 		{
 			name:       "empty OID",
 			oid:        "",
-			wantDst:    "",
+			wantDest:   "",
 			wantPrefix: 0,
-			wantNH:     "",
+			wantNext:   "",
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			gotDst, gotPrefix, gotNH := snmp.ExportParseInetCidrRouteIndex(tt.oid)
-			if gotDst != tt.wantDst {
-				t.Errorf(
-					"ParseInetCidrRouteIndex(%v) dest = %v, want %v",
-					tt.oid,
-					gotDst,
-					tt.wantDst,
-				)
+			gotDest, gotPrefix, gotNext := snmp.ExportParseInetCidrRouteIndex(tt.oid)
+			if gotDest != tt.wantDest {
+				t.Errorf("parseInetCidrRouteIndex(%v) dest = %v, want %v", tt.oid, gotDest, tt.wantDest)
 			}
 			if gotPrefix != tt.wantPrefix {
-				t.Errorf(
-					"ParseInetCidrRouteIndex(%v) prefix = %v, want %v",
-					tt.oid,
-					gotPrefix,
-					tt.wantPrefix,
-				)
+				t.Errorf("parseInetCidrRouteIndex(%v) prefix = %v, want %v", tt.oid, gotPrefix, tt.wantPrefix)
 			}
-			if gotNH != tt.wantNH {
-				t.Errorf(
-					"ParseInetCidrRouteIndex(%v) nexthop = %v, want %v",
-					tt.oid,
-					gotNH,
-					tt.wantNH,
-				)
+			if gotNext != tt.wantNext {
+				t.Errorf("parseInetCidrRouteIndex(%v) next = %v, want %v", tt.oid, gotNext, tt.wantNext)
 			}
 		})
 	}

@@ -38,7 +38,7 @@ func (a *fakeRouteAgent) BulkWalk(root string, walkFn gosnmp.WalkFunc) error {
 
 // Each row is a distinct 10.x.y.0/24, so no two rows collapse onto one key.
 func inetCidrIndex(row int) string {
-	return fmt.Sprintf("1.4.10.%d.%d.0.24.0.0.1.4.10.254.200.1", row/256, row%256)
+	return fmt.Sprintf("1.4.10.%d.%d.0.24.2.0.0.1.4.10.254.200.1", row/256, row%256)
 }
 
 func ipCidrIndex(row int) string {

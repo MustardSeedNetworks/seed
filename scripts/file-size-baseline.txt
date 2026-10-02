@@ -15,7 +15,7 @@ internal/diagnostics/speedtest/speedtest_unit_test.go 1024
 internal/diagnostics/vlan/vlan_test.go 1509
 internal/mibdb/builtin_oids.go 927
 internal/netif/interfaces_test.go 1022
-internal/protocols/snmp/snmp_extended_test.go 1979
+internal/protocols/snmp/snmp_extended_test.go 1916
 internal/reporting/internal_test.go 1488
 internal/reporting/scheduler_suite_test.go 1342
 internal/reporting/services_test.go 1709
