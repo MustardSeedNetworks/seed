@@ -5,24 +5,16 @@ package database_test
 import (
 	"context"
 	"errors"
-	"os"
 	"testing"
 	"time"
 
 	"github.com/MustardSeedNetworks/seed/internal/database"
+	"github.com/MustardSeedNetworks/seed/internal/database/dbtest"
 )
 
 func setupJobsTest(t *testing.T) (*database.JobRepository, context.Context) {
 	t.Helper()
-	tmpFile, err := os.CreateTemp(t.TempDir(), "seed-jobs-*.db")
-	if err != nil {
-		t.Fatalf("temp file: %v", err)
-	}
-	tmpPath := tmpFile.Name()
-	_ = tmpFile.Close()
-	t.Cleanup(func() { _ = os.Remove(tmpPath) })
-
-	db, openErr := database.Open(tmpPath)
+	db, openErr := database.Open(dbtest.Path(t))
 	if openErr != nil {
 		t.Fatalf("open db: %v", openErr)
 	}

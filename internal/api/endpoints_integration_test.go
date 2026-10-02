@@ -14,6 +14,7 @@ import (
 
 	api "github.com/MustardSeedNetworks/seed/internal/api"
 	"github.com/MustardSeedNetworks/seed/internal/database"
+	"github.com/MustardSeedNetworks/seed/internal/database/dbtest"
 	"github.com/MustardSeedNetworks/seed/internal/netif"
 	"github.com/MustardSeedNetworks/seed/internal/testutil"
 )
@@ -428,7 +429,7 @@ func TestTestsSettingsEndpoints(t *testing.T) {
 
 	// The health-checks settings endpoint is store-of-record backed by the
 	// probes table (ADR-0027 P2), so the server needs a real database.
-	db, dbErr := database.Open(filepath.Join(tmpDir, "test.db"))
+	db, dbErr := database.Open(dbtest.Path(t))
 	if dbErr != nil {
 		t.Fatalf("Failed to open test database: %v", dbErr)
 	}

@@ -9,7 +9,6 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
-	"strings"
 )
 
 // pathExists reports whether a filesystem path exists. Used by
@@ -91,10 +90,16 @@ func detectLinuxStore() (linuxStore, bool) {
 	return linuxStore{}, false
 }
 
-// anchorPath is the destination path for the seed CA inside the host's
+// anchorName is the destination filename for the seed CA inside the host's
 // anchor directory.
+func (s linuxStore) anchorName() string {
+	return "seed-root" + s.Suffix
+}
+
+// anchorPath is the destination path for the seed CA inside the host's
+// anchor directory, for display in Result messages.
 func (s linuxStore) anchorPath() string {
-	return filepath.Join(s.AnchorDir, "seed-root"+s.Suffix)
+	return filepath.Join(s.AnchorDir, s.anchorName())
 }
 
 // trustAnchorMode is the on-disk permission set the system bundle
@@ -102,35 +107,35 @@ func (s linuxStore) anchorPath() string {
 // contents are a public certificate and contain no secret material.
 const trustAnchorMode os.FileMode = 0o644
 
-// writeAnchorFile writes pem to dst with trustAnchorMode. The write
-// happens in two steps: create at 0o600 (so the file does not exist
-// world-readable while the contents are being written), then chmod to
-// trustAnchorMode so update-ca-certificates / update-ca-trust can
-// find and read it.
+// anchorWriteMode is the permission the anchor file is created at before
+// the chmod to trustAnchorMode below (owner read/write only, so the file
+// does not exist world-readable while its contents are being written).
+// mnd's ignored-functions list covers [os.WriteFile] but not the
+// identically-named [os.Root] method used here, so this is named rather
+// than repeated as a literal.
+const anchorWriteMode os.FileMode = 0o600
+
+// writeAnchorFile writes pem to name inside root at trustAnchorMode, via
+// the two-step create-then-chmod described by anchorWriteMode above.
 //
-// dst is bounded under root via [filepath.Rel] before any I/O. Both
-// arguments originate from detectLinuxStore's hardcoded candidate
-// list, so the bound is a defense-in-depth check rather than a
-// security-critical gate, but it also forces [filepath.Clean]
-// normalization right before [os.WriteFile] which is what gosec G703
-// requires to clear path-traversal taint analysis.
-func writeAnchorFile(root, dst string, pem []byte) (string, error) {
-	cleanRoot := filepath.Clean(root)
-	cleanDst := filepath.Clean(dst)
-	rel, relErr := filepath.Rel(cleanRoot, cleanDst)
-	if relErr != nil {
-		return "", fmt.Errorf("resolve %s against %s: %w", dst, root, relErr)
+// name is opened through an [os.Root] scoped to root, rather than a bare
+// [os.WriteFile] on a joined path, so it cannot resolve outside root even
+// via a symlink.
+func writeAnchorFile(root, name string, pem []byte) (string, error) {
+	r, err := os.OpenRoot(root)
+	if err != nil {
+		return "", fmt.Errorf("open %s: %w", root, err)
 	}
-	if rel == ".." || strings.HasPrefix(rel, ".."+string(filepath.Separator)) {
-		return "", fmt.Errorf("anchor path %q escapes %q", dst, root)
+	defer func() { _ = r.Close() }()
+
+	dst := filepath.Join(root, name)
+	if writeErr := r.WriteFile(name, pem, anchorWriteMode); writeErr != nil {
+		return "", fmt.Errorf("write %s: %w", dst, writeErr)
 	}
-	if err := os.WriteFile(cleanDst, pem, 0o600); err != nil {
-		return "", fmt.Errorf("write %s: %w", cleanDst, err)
+	if chmodErr := r.Chmod(name, trustAnchorMode); chmodErr != nil {
+		return "", fmt.Errorf("chmod %s: %w", dst, chmodErr)
 	}
-	if err := os.Chmod(cleanDst, trustAnchorMode); err != nil {
-		return "", fmt.Errorf("chmod %s: %w", cleanDst, err)
-	}
-	return cleanDst, nil
+	return dst, nil
 }
 
 func installPlatform(ctx context.Context, certPath string) (Result, error) {
@@ -150,7 +155,7 @@ func installPlatform(ctx context.Context, certPath string) (Result, error) {
 		return Result{}, fmt.Errorf("read certificate: %w", readErr)
 	}
 
-	dst, writeErr := writeAnchorFile(store.AnchorDir, store.anchorPath(), pemBytes)
+	dst, writeErr := writeAnchorFile(store.AnchorDir, store.anchorName(), pemBytes)
 	if writeErr != nil {
 		return Result{}, writeErr
 	}
@@ -172,10 +177,18 @@ func uninstallPlatform(ctx context.Context, _ string) (Result, error) {
 		return Result{}, errors.New("no supported system CA directory found")
 	}
 	dst := store.anchorPath()
+	name := store.anchorName()
 	res := Result{}
-	if pathExists(dst) {
-		if err := os.Remove(dst); err != nil {
-			return Result{}, fmt.Errorf("remove %s: %w", dst, err)
+
+	root, err := os.OpenRoot(store.AnchorDir)
+	if err != nil {
+		return Result{}, fmt.Errorf("open %s: %w", store.AnchorDir, err)
+	}
+	defer func() { _ = root.Close() }()
+
+	if _, statErr := root.Stat(name); statErr == nil {
+		if removeErr := root.Remove(name); removeErr != nil {
+			return Result{}, fmt.Errorf("remove %s: %w", dst, removeErr)
 		}
 		res.Stores = append(res.Stores, store.Label+" ("+dst+")")
 	} else {

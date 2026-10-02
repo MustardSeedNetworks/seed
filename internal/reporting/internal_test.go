@@ -5,7 +5,6 @@ import (
 	"context"
 	"fmt"
 	"os"
-	"path/filepath"
 	"testing"
 	"time"
 
@@ -14,6 +13,7 @@ import (
 
 	"github.com/MustardSeedNetworks/seed/internal/config"
 	"github.com/MustardSeedNetworks/seed/internal/database"
+	"github.com/MustardSeedNetworks/seed/internal/database/dbtest"
 	"github.com/MustardSeedNetworks/seed/internal/reporting"
 	"github.com/MustardSeedNetworks/seed/internal/reporting/store"
 )
@@ -972,8 +972,7 @@ func TestReportsPath_Internal(t *testing.T) {
 func testDBHelper(t *testing.T) (*database.DB, func()) {
 	t.Helper()
 
-	tmpDir := t.TempDir()
-	dbPath := filepath.Join(tmpDir, "test.db")
+	dbPath := dbtest.Path(t)
 
 	db, err := database.Open(dbPath)
 	require.NoError(t, err, "failed to open database")

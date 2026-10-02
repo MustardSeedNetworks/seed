@@ -8,65 +8,22 @@ import (
 	"strings"
 	"testing"
 
+	goi18n "github.com/nicksnyder/go-i18n/v2/i18n"
+	"github.com/nicksnyder/go-i18n/v2/i18n/template"
+
 	"github.com/MustardSeedNetworks/seed/internal/i18n"
 )
 
-// keyCall matches localizer.T("...") and TWithData("...", ...) with a literal
-// key. Keys built at run time are out of reach of a static check and are not
-// what this is for.
-func keyCall() *regexp.Regexp {
-	return regexp.MustCompile(`\.T(?:WithData)?\("([a-zA-Z0-9_.]+)"`)
-}
-
-// knownUnresolved is the debt this test found and does not fix.
+// keyCall matches a literal key passed to localizer.T, to TWithData, or as a
+// validation MessageKey (rendered through TWithData). Group 1 is the form, so
+// a key that is given data is not judged by a lookup without it. Keys built at
+// run time are out of reach of a static check and are not what this is for.
 //
-// 39 of the API's 106 distinct literal keys have no message in either locale.
-// (57 when this list was written; the profile keys were written in #2331,
-// where the router fix meant an operator could reach those errors at all.)
-// Writing the copy is its own piece of work in two languages, tracked
-// separately. The list is exact rather than a count so that fixing one is
-// noticed here: an entry that starts resolving fails this test and has to be
-// removed, which is what stops the list rotting into a permanent excuse.
-func knownUnresolvedKeys() []string {
-	return []string{
-		"errors.api.validationFailed",
-		"errors.config.backupNameRequired",
-		"errors.config.failedToCreateBackup",
-		"errors.config.failedToDeleteBackup",
-		"errors.config.invalidBackupName",
-		"errors.config.nameParamRequired",
-		"errors.discovery.failedToApplyOptions",
-		"errors.discovery.managerUnavailable",
-		"errors.health.deviceDiscoveryNotAvailable",
-		"errors.health.dnsNotAvailable",
-		"errors.health.dnsSecurityNotAvailable",
-		"errors.health.iperfInvalidAction",
-		"errors.health.iperfServerStartFailed",
-		"errors.health.iperfServerStopFailed",
-		"errors.health.iperfValidationFailed",
-		"errors.health.noServersToScan",
-		"errors.health.scanFailed",
-		"errors.health.scanInProgress",
-		"errors.health.speedtestInProgress",
-		"errors.health.speedtestNotAvailable",
-		"errors.logs.notInitialized",
-		"errors.methodNotAllowed",
-		"errors.security.gatewayTesterUnavailable",
-		"errors.security.invalidAction",
-		"errors.security.nullOriginForbidden",
-		"errors.security.panicRecovered",
-		"errors.settings.loadFailed",
-		"errors.settings.saveFailed",
-		"errors.tools.failedToCreateProber",
-		"errors.tools.failedToCreateScanner",
-		"errors.tools.invalidTarget",
-		"errors.tools.ipRequired",
-		"errors.tools.portRequired",
-		"errors.vuln.invalidIp",
-		"errors.vuln.missingIpParam",
-		"errors.vuln.scannerNotEnabled",
-		"validation.port.invalidRange",
-	}
+// The `\s*` is load-bearing: gofmt splits a long TWithData call so the key
+// starts the next line, and a matcher without it never saw
+// errors.service.notAvailable, which reached the client verbatim.
+func keyCall() *regexp.Regexp {
+	return regexp.MustCompile(`(\.T\(|\.TWithData\(|MessageKey:)\s*"([a-zA-Z0-9_.]+)"`)
 }
 
 // TestEveryLiteralKeyResolves is the backend counterpart of the UI's
@@ -87,40 +44,44 @@ func TestEveryLiteralKeyResolves(t *testing.T) {
 	}
 
 	var stillBroken []string
-	for key, path := range seen {
-		if localizer.T(key) != key {
+	for key, use := range seen {
+		if resolves(localizer, key, use.withData) {
 			continue
 		}
-		if slices.Contains(knownUnresolvedKeys(), key) {
-			continue
-		}
-		stillBroken = append(stillBroken, path+": "+key)
+		stillBroken = append(stillBroken, use.path+": "+key)
 	}
 	slices.Sort(stillBroken)
 	for _, entry := range stillBroken {
 		t.Errorf("%s does not resolve — it would reach the client verbatim", entry)
 	}
-
-	// An entry that now resolves has been fixed and must leave the list, or
-	// the list stops describing anything.
-	for _, key := range knownUnresolvedKeys() {
-		if _, used := seen[key]; !used {
-			t.Errorf("%q is no longer called anywhere; drop it from knownUnresolved", key)
-
-			continue
-		}
-		if localizer.T(key) != key {
-			t.Errorf("%q resolves now; drop it from knownUnresolved", key)
-		}
-	}
 }
 
-// literalKeys collects every literal translation key in the tree, mapped to the
-// first file it was seen in.
-func literalKeys(t *testing.T) map[string]string {
+// resolves reports whether key has a message. A key given data only has to
+// exist here, since its placeholders are filled at the call; a key looked up
+// with T must also render without data.
+func resolves(localizer *i18n.Localizer, key string, withData bool) bool {
+	if !withData {
+		return localizer.T(key) != key
+	}
+	_, err := localizer.Localize(&goi18n.LocalizeConfig{
+		MessageID:      key,
+		TemplateParser: template.IdentityParser{},
+	})
+
+	return err == nil
+}
+
+type keyUse struct {
+	path     string
+	withData bool
+}
+
+// literalKeys collects every literal translation key in the tree with the
+// first file it was seen in. A key is withData when any call gives it data.
+func literalKeys(t *testing.T) map[string]keyUse {
 	t.Helper()
 
-	found := map[string]string{}
+	found := map[string]keyUse{}
 	root := filepath.Join("..", "..", "internal")
 	err := filepath.WalkDir(root, func(path string, entry os.DirEntry, walkErr error) error {
 		if walkErr != nil {
@@ -134,9 +95,12 @@ func literalKeys(t *testing.T) map[string]string {
 			return readErr
 		}
 		for _, match := range keyCall().FindAllStringSubmatch(string(source), -1) {
-			if _, ok := found[match[1]]; !ok {
-				found[match[1]] = path
+			use, ok := found[match[2]]
+			if !ok {
+				use.path = path
 			}
+			use.withData = use.withData || match[1] != ".T("
+			found[match[2]] = use
 		}
 
 		return nil

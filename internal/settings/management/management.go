@@ -119,6 +119,7 @@ func (s *Service) Get() (map[string]any, string) {
 				"showPublicIP": cfg.DisplayOptions.ShowPublicIP,
 				"unitSystem":   cfg.DisplayOptions.UnitSystem,
 			},
+			"identity": buildIdentitySettings(cfg),
 		}
 		etag = cfg.SettingsETagLocked()
 	})
@@ -149,26 +150,19 @@ func (s *Service) write(updates map[string]any, ifMatch string) error {
 		}
 
 		var applyErrors []error
-		if err := applyThresholdUpdates(updates, cfg); err != nil {
-			applyErrors = append(applyErrors, err)
-		}
-		if err := applyHealthChecksUpdates(updates, cfg); err != nil {
-			applyErrors = append(applyErrors, err)
-		}
-		if err := applySpeedtestUpdates(updates, cfg); err != nil {
-			applyErrors = append(applyErrors, err)
-		}
-		if err := applyIperfUpdates(updates, cfg); err != nil {
-			applyErrors = append(applyErrors, err)
-		}
-		if err := applyFABOptionsUpdates(updates, cfg); err != nil {
-			applyErrors = append(applyErrors, err)
-		}
-		if err := applyDisplayOptionsUpdates(updates, cfg); err != nil {
-			applyErrors = append(applyErrors, err)
-		}
-		if err := s.applyAlerts(updates, cfg); err != nil {
-			applyErrors = append(applyErrors, err)
+		for _, apply := range []func(map[string]any, *config.Config) error{
+			applyThresholdUpdates,
+			applyHealthChecksUpdates,
+			applySpeedtestUpdates,
+			applyIperfUpdates,
+			applyFABOptionsUpdates,
+			applyDisplayOptionsUpdates,
+			applyIdentityUpdates,
+			s.applyAlerts,
+		} {
+			if err := apply(updates, cfg); err != nil {
+				applyErrors = append(applyErrors, err)
+			}
 		}
 
 		if len(applyErrors) > 0 {

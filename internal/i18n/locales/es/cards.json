@@ -32,6 +32,9 @@
     "ipv6": "IPv6",
     "mac": "MAC",
     "mode": "Modo",
+    "details": "Detalles",
+    "interface": "Interfaz",
+    "vendor": "Fabricante",
     "address": "Dirección",
     "gateway": "Puerta de enlace",
     "dhcpServer": "Servidor DHCP",
@@ -143,19 +146,30 @@
     "tableVulns": "CVEs",
     "tableLastSeen": "Última Vez",
     "tableActions": "Acciones",
+    "showDetails": "Mostrar detalles de {{device}}",
+    "hideDetails": "Ocultar detalles de {{device}}",
     "viewAllDevices": "Ver Todos los Dispositivos",
     "snmpInfo": "Detalles SNMP",
     "scanningPhase": "Escaneando — {{phase}}",
     "localMacHint": "Dirección administrada localmente: asignada de forma local y no por el fabricante.",
     "exportCSV": "Exportar CSV",
-    "exportJSON": "Exportar JSON"
+    "exportJSON": "Exportar JSON",
+    "ariaScanning": "Descubrimiento de red en curso",
+    "ariaNoData": "Descubrimiento de red: no hay datos disponibles",
+    "ariaDevicesFound_one": "Descubrimiento de red: {{count}} dispositivo encontrado",
+    "ariaDevicesFound_other": "Descubrimiento de red: {{count}} dispositivos encontrados",
+    "startScanAria": "Iniciar escaneo de descubrimiento de red",
+    "openFullScreen": "Abrir vista de pantalla completa",
+    "scanningNetwork": "Escaneando la red",
+    "startNetworkScan": "Iniciar escaneo de red"
   },
   "pipeline": {
     "phaseProgress": "Fase {{current}} de {{total}}",
     "phases": {
-      "enumeration": "Enumeración",
-      "resolution": "Resolución",
-      "scanning": "Escaneo",
+      "discovery": "Descubrimiento",
+      "correlation": "Correlacionando",
+      "nameResolution": "Resolución de nombres",
+      "enrichment": "Enriquecimiento",
       "assessment": "Evaluación"
     },
     "devices": "dispositivos",
@@ -345,7 +359,24 @@
     "certExpiryDays": "{{days}} días",
     "certExpiryMonths": "{{months}}m",
     "certExpiryYears": "{{years}}a",
-    "rtsp": "RTSP Video"
+    "rtsp": "RTSP Video",
+    "detail": {
+      "connect": "Conexión {{ms}}",
+      "query": "Consulta {{ms}}",
+      "bind": "Vinculación {{ms}}",
+      "read": "Lectura {{rate}} MB/s",
+      "write": "Escritura {{rate}} MB/s",
+      "echo": "C-ECHO {{ms}}",
+      "response": "Respuesta {{ms}}",
+      "resources_one": "{{count}} recurso",
+      "resources_other": "{{count}} recursos",
+      "register": "Registro {{value}}",
+      "unit": "Unidad {{id}}",
+      "aeTitle": "AE {{title}}",
+      "serverAeTitle": "AE del servidor {{title}}",
+      "ack": "ACK {{code}}",
+      "expires": "Caduca el {{date}}"
+    }
   },
   "system": {
     "title": "Salud del sistema",
@@ -366,7 +397,8 @@
       "memoryHigh": "Considere ampliar la memoria del sistema o cerrar aplicaciones que consuman mucha memoria",
       "diskCritical": "Crítico: borre los archivos temporales y archive los datos antiguos de inmediato",
       "diskHigh": "Borre los archivos temporales, elimine aplicaciones sin usar o archive los datos antiguos"
-    }
+    },
+    "loadFailed": "No se pudo cargar el estado del sistema"
   },
   "switch": {
     "title": "Switch más cercano",
@@ -418,7 +450,8 @@
     "title": "Anomalías activas",
     "subtitle": "Detectadas por la monitorización activa",
     "anomalies": "Anomalías",
-    "detected": "detectadas"
+    "detected": "detectadas",
+    "loadFailed": "No se pudieron cargar las anomalías"
   },
   "guestAudit": {
     "title": "Auditoría de red de invitados",
@@ -471,7 +504,9 @@
     "trace": "Trazar",
     "tracing": "Trazando ruta...",
     "tracingHops": "Trazando... {{count}} saltos",
-    "trunk": "Trunk"
+    "trunk": "Trunk",
+    "port": "Puerto",
+    "failed": "El descubrimiento de ruta falló"
   },
   "bluetooth": {
     "title": "Bluetooth",
@@ -507,7 +542,8 @@
     "lastSeen": "Visto por última vez"
   },
   "logViewer": {
-    "requestId": "ID de solicitud:"
+    "requestId": "ID de solicitud:",
+    "collapseEntry": "Contraer entrada"
   },
   "systemHealth": {
     "topConsumers": "Principales consumidores:"

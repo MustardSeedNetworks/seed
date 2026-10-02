@@ -1,0 +1,27 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/MustardSeedNetworks/seed/main/docs/schemas/api/packet-capture-request.schema.json",
+  "$ref": "#/$defs/Request",
+  "$defs": {
+    "Request": {
+      "properties": {
+        "interface": {
+          "type": "string"
+        },
+        "filter": {
+          "type": "string"
+        },
+        "durationSeconds": {
+          "type": "integer"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "interface"
+      ]
+    }
+  },
+  "title": "Request",
+  "description": "Request — generated from the Go struct in internal/api; refresh with `make schema` after struct changes."
+}

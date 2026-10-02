@@ -134,7 +134,7 @@ function ProfileSelectorComponent({
 
   // Default indicator
   const DEFAULT_BADGE = (): React.JSX.Element => (
-    <span className="caption px-1.5 py-0.5 rounded bg-brand-primary/10 text-brand-primary font-medium">
+    <span className="caption px-1.5 py-0.5 rounded bg-brand-primary/10 text-brand-primary-strong font-medium">
       {t('profile.default')}
     </span>
   );

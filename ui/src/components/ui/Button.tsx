@@ -52,20 +52,20 @@ const variantStyles: Record<ButtonVariant, Record<ButtonTone, string>> = {
   },
   outline: {
     violet:
-      'border border-brand-accent/30 text-brand-accent hover:bg-brand-accent/10 hover:border-brand-accent/50 focus:ring-brand-primary',
-    red: 'border border-status-error/30 text-status-error hover:bg-status-error/10 hover:border-status-error/50 focus:ring-status-error',
+      'border border-brand-accent/30 text-brand-primary-strong hover:bg-brand-accent/10 hover:border-brand-accent/50 focus:ring-brand-primary',
+    red: 'border border-status-error/30 text-status-error-strong hover:bg-status-error/10 hover:border-status-error/50 focus:ring-status-error',
     green:
-      'border border-status-success/30 text-status-success hover:bg-status-success/10 hover:border-status-success/50 focus:ring-status-success',
-    blue: 'border border-status-info/30 text-status-info hover:bg-status-info/10 hover:border-status-info/50 focus:ring-status-info',
+      'border border-status-success/30 text-status-success-strong hover:bg-status-success/10 hover:border-status-success/50 focus:ring-status-success',
+    blue: 'border border-status-info/30 text-status-info-strong hover:bg-status-info/10 hover:border-status-info/50 focus:ring-status-info',
     gray: 'border border-surface-border text-text-secondary hover:bg-surface-hover hover:border-surface-border focus:ring-border-muted',
   },
   ghost: {
     violet:
-      'text-brand-accent hover:bg-brand-accent/10 hover:text-brand-accent focus:ring-brand-primary',
-    red: 'text-status-error hover:bg-status-error/10 hover:text-status-error focus:ring-status-error',
+      'text-brand-primary-strong hover:bg-brand-accent/10 hover:text-brand-primary-strong focus:ring-brand-primary',
+    red: 'text-status-error-strong hover:bg-status-error/10 hover:text-status-error-strong focus:ring-status-error',
     green:
-      'text-status-success hover:bg-status-success/10 hover:text-status-success focus:ring-status-success',
-    blue: 'text-status-info hover:bg-status-info/10 hover:text-status-info focus:ring-status-info',
+      'text-status-success-strong hover:bg-status-success/10 hover:text-status-success-strong focus:ring-status-success',
+    blue: 'text-status-info-strong hover:bg-status-info/10 hover:text-status-info-strong focus:ring-status-info',
     gray: 'text-text-muted hover:bg-surface-hover hover:text-text-primary focus:ring-border-muted',
   },
   secondary: {

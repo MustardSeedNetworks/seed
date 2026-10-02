@@ -191,19 +191,26 @@ func reloadSystemd(ctx context.Context, mode paths.Mode) {
 func removeBinary(ctx context.Context, p *paths.Paths, mode paths.Mode) {
 	fmt.Fprintln(os.Stdout, "Removing binary...")
 
-	binaryPath := filepath.Join(p.BinaryDir, "seed")
+	binaryDir := p.BinaryDir
 	if mode == paths.ModeUser {
-		binaryPath = filepath.Join(os.Getenv("HOME"), ".local", "bin", "seed")
+		binaryDir = filepath.Join(os.Getenv("HOME"), ".local", "bin")
 	}
 
-	// binaryPath is filepath.Join'd from trusted Paths or os.Getenv("HOME").
-	// gosec can't follow the indirection but the join is anchored to a known
-	// suffix ("seed") in a known parent directory.
-	if err := os.Remove(
-		filepath.Clean(binaryPath),
-	); err != nil &&
-		!os.IsNotExist(err) {
-		logging.GetLogger().WarnContext(ctx, "Failed to remove binary", "error", err)
+	// The binary directory is trusted (Paths or $HOME), but the removal
+	// itself is scoped to it via os.Root rather than a bare os.Remove, so
+	// the "seed" name can never resolve outside binaryDir even via a
+	// symlink.
+	root, err := os.OpenRoot(binaryDir)
+	if err != nil {
+		if !os.IsNotExist(err) {
+			logging.GetLogger().WarnContext(ctx, "Failed to open binary directory", "error", err)
+		}
+		return
+	}
+	defer func() { _ = root.Close() }()
+
+	if removeErr := root.Remove("seed"); removeErr != nil && !os.IsNotExist(removeErr) {
+		logging.GetLogger().WarnContext(ctx, "Failed to remove binary", "error", removeErr)
 	}
 }
 

@@ -2,6 +2,7 @@ package resolve_test
 
 import (
 	"context"
+	"errors"
 	"os"
 	"path/filepath"
 	"strings"
@@ -107,6 +108,23 @@ func TestOUILoadFromFile(t *testing.T) {
 	}
 	if v := db.Lookup("DD:EE:FF:44:55:66"); v != "Another Vendor" {
 		t.Errorf("Expected 'Another Vendor', got %q", v)
+	}
+}
+
+// TestOUILoadFromFile_NotExist proves LoadFromFile's error wraps
+// [os.ErrNotExist] for a missing file, which TryLoadIEEEFile's fallback loop
+// relies on to distinguish "this candidate location doesn't exist, try the
+// next one" from a real failure (permission denied, a malformed file) that
+// should be reported immediately instead of silently scanned past.
+func TestOUILoadFromFile_NotExist(t *testing.T) {
+	db := resolve.NewOUIDatabase()
+
+	err := db.LoadFromFile(filepath.Join(t.TempDir(), "does-not-exist.txt"))
+	if err == nil {
+		t.Fatal("LoadFromFile() = nil error, want one")
+	}
+	if !errors.Is(err, os.ErrNotExist) {
+		t.Errorf("LoadFromFile() error = %v, want one satisfying errors.Is(err, os.ErrNotExist)", err)
 	}
 }
 

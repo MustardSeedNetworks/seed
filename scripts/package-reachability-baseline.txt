@@ -18,3 +18,7 @@
 # Test-only by design: a recorded-walk replayer that serves fixtures to the
 # collector tests. It has no place in a shipped binary and should stay here.
 internal/polling/snmp/snmpwalkfile   # test helper, intentionally not shipped
+
+# Test-only by design: hands tests a copy of a once-migrated database so each
+# test does not rerun every migration under -race (seed#2614, seed#2719).
+internal/database/dbtest   # test helper, intentionally not shipped

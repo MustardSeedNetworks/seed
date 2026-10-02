@@ -3,6 +3,7 @@
  */
 import { AlertCircle, AlertTriangle, CheckCircle, Info, X } from 'lucide-react';
 import type { FC, ReactNode } from 'react';
+import { useTranslation } from 'react-i18next';
 import { iconSizes } from '../../constants/sizes';
 
 export type AlertStatus = 'success' | 'error' | 'warning' | 'info';
@@ -24,27 +25,28 @@ const statusConfig: Record<
 > = {
   success: {
     icon: CheckCircle,
-    containerClass: 'border-status-success/30 bg-status-success/10 text-status-success',
+    containerClass: 'border-status-success/30 bg-status-success/10 text-status-success-strong',
     iconClass: 'text-status-success',
   },
   error: {
     icon: AlertCircle,
-    containerClass: 'border-status-error/30 bg-status-error/10 text-status-error',
+    containerClass: 'border-status-error/30 bg-status-error/10 text-status-error-strong',
     iconClass: 'text-status-error',
   },
   warning: {
     icon: AlertTriangle,
-    containerClass: 'border-status-warning/30 bg-status-warning/10 text-status-warning',
+    containerClass: 'border-status-warning/30 bg-status-warning/10 text-status-warning-strong',
     iconClass: 'text-status-warning',
   },
   info: {
     icon: Info,
-    containerClass: 'border-status-info/30 bg-status-info/10 text-status-info',
+    containerClass: 'border-status-info/30 bg-status-info/10 text-status-info-strong',
     iconClass: 'text-status-info',
   },
 };
 
 export const Alert: FC<AlertProps> = ({ status, children, onDismiss, className = '' }) => {
+  const { t } = useTranslation();
   const config = statusConfig[status];
   const Icon = config.icon;
 
@@ -60,7 +62,7 @@ export const Alert: FC<AlertProps> = ({ status, children, onDismiss, className =
           type="button"
           onClick={onDismiss}
           className="ml-auto text-current hover:opacity-70 transition-opacity"
-          aria-label="Dismiss alert"
+          aria-label={t('accessibility.dismissAlert')}
         >
           <X className={iconSizes.md} />
         </button>

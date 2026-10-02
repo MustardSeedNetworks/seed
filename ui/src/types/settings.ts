@@ -312,7 +312,6 @@ export interface PortScanConfig {
   preset: PortPreset; // Quick selection of port sets
   tcpPorts: string; // Comma-separated ports or ranges (e.g., "22,80,443,8000-8100")
   udpPorts: string; // Comma-separated ports or ranges
-  bannerTimeoutMs: number; // Timeout for banner grabbing
 }
 
 /** TCP probe configuration */
@@ -334,9 +333,7 @@ export interface DiscoveryOptions {
 
 /** Discovery timing configuration */
 export interface DiscoveryTimingConfig {
-  probeIntervalMs: number; // Time between probes
   rescanIntervalMs: number; // Time between full rescans
-  workers: number; // Concurrent workers
 }
 
 /** Device profiler configuration */
@@ -370,11 +367,8 @@ export interface DiscoveryServiceStatus {
 export interface NetworkDiscoverySettings {
   // Core settings
   enabled: boolean;
-  arpScanWorkers: number;
-  pingTimeoutMs: number;
   scanTimeoutMs: number;
   autoScan: boolean;
-  scanIntervalMs: number;
   // Note: OUI database is baked into binary at build time - no runtime path needed
 
   // Configuration objects
@@ -546,11 +540,8 @@ export const DEFAULT_TESTS_SETTINGS: TestsSettings = {
 export const DEFAULT_NETWORK_DISCOVERY_SETTINGS: NetworkDiscoverySettings = {
   // Core settings
   enabled: true,
-  arpScanWorkers: 50,
-  pingTimeoutMs: 500,
   scanTimeoutMs: 30000,
   autoScan: true,
-  scanIntervalMs: 600000, // 10 minutes
 
   // Configuration objects
   ipv6Enabled: true,
@@ -568,7 +559,6 @@ export const DEFAULT_NETWORK_DISCOVERY_SETTINGS: NetworkDiscoverySettings = {
       preset: 'common',
       tcpPorts: '22,80,443,8080-8100',
       udpPorts: '53,123,161',
-      bannerTimeoutMs: 2000,
     },
     tcpProbe: {
       timeoutMs: 2000,
@@ -578,9 +568,7 @@ export const DEFAULT_NETWORK_DISCOVERY_SETTINGS: NetworkDiscoverySettings = {
     snmpQuery: false,
   },
   timing: {
-    probeIntervalMs: 75,
     rescanIntervalMs: 60000, // 1 minute
-    workers: 50,
   },
   profiler: {
     enabled: true,

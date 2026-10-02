@@ -78,7 +78,8 @@
     "invalidRequestBody": "Invalid request body",
     "notFound": "Not found",
     "rateLimitExceeded": "Rate limit exceeded. Please try again later.",
-    "internalError": "Internal server error"
+    "internalError": "Internal server error",
+    "invalidAction": "Action must be 'start' or 'stop'"
   },
   "service": {
     "notAvailable": "{{service}} not available",
@@ -90,7 +91,12 @@
   "config": {
     "failedToSave": "Failed to save configuration",
     "failedToLoad": "Failed to load configuration",
-    "insecureCredentials": "Insecure default credentials detected"
+    "insecureCredentials": "Insecure default credentials detected",
+    "backupNameRequired": "A backup name is required",
+    "failedToCreateBackup": "Failed to create the configuration backup",
+    "failedToDeleteBackup": "Failed to delete the configuration backup",
+    "invalidBackupName": "A backup name may contain only letters, digits, dots, hyphens and underscores",
+    "nameParamRequired": "The name query parameter is required"
   },
   "guestAudit": {
     "notEnabled": "Guest network audit is not enabled. Enable it in Security settings.",
@@ -170,7 +176,9 @@
     "deleteFailed": "Failed to delete user"
   },
   "settings": {
-    "conflict": "This setting was changed by another user since you loaded it. Reload and apply your changes again."
+    "conflict": "This setting was changed by another user since you loaded it. Reload and apply your changes again.",
+    "loadFailed": "Failed to load settings",
+    "saveFailed": "Failed to save settings"
   },
   "reports": {
     "unavailable": "Reporting service is not available",
@@ -187,14 +195,17 @@
     "interfaceRequired": "An interface name is required to renew a DHCP lease"
   },
   "platform": {
-    "unavailableTitle": "{{feature}} is not available on this platform",
+    "unavailableTitle": "{{feature}}: not available on this platform",
     "unavailableGeneric": "This operating system does not provide an API for it. Running Seed on a different platform is the only way to use it.",
     "limitedGeneric": "This works here, but not completely. Some fields may be empty or approximate.",
     "capabilityUnsupported": "This operating system does not support that feature."
   },
   "vulnerability": {
     "invalidApiKey": "Invalid API key",
-    "validateFailed": "Failed to validate API key"
+    "validateFailed": "Failed to validate API key",
+    "invalidIp": "Invalid IP address",
+    "missingIpParam": "The ip query parameter is required",
+    "scannerNotEnabled": "Vulnerability scanning is not enabled"
   },
   "history": {
     "probeRequired": "A probe id is required",
@@ -204,5 +215,36 @@
   "mdns": {
     "browseUnavailable": "Could not join the mDNS multicast group on this interface",
     "invalidWindow": "Browse window must be a positive number of seconds"
+  },
+  "capture": {
+    "notFound": "Capture not found",
+    "inProgress": "The capture is still running; stop it or wait for it to finish, then download it",
+    "readFailed": "Failed to read the capture"
+  },
+  "discovery": {
+    "failedToApplyOptions": "Failed to apply the discovery options",
+    "managerUnavailable": "Device discovery is not running"
+  },
+  "health": {
+    "dnsNotAvailable": "The DNS test is not available",
+    "iperfServerStartFailed": "Failed to start the iperf3 server",
+    "iperfServerStopFailed": "Failed to stop the iperf3 server",
+    "iperfValidationFailed": "Invalid iperf3 test settings",
+    "speedtestInProgress": "A speed test is already running",
+    "speedtestNotAvailable": "The speed test is not available"
+  },
+  "logs": {
+    "notInitialized": "Logs are not available"
+  },
+  "security": {
+    "gatewayTesterUnavailable": "The gateway test is not available",
+    "nullOriginForbidden": "Requests from a null origin are not allowed"
+  },
+  "tools": {
+    "failedToCreateProber": "Failed to start the TCP probe",
+    "failedToCreateScanner": "Failed to start the port scan",
+    "invalidTarget": "Invalid target: enter a hostname or IP address",
+    "ipRequired": "An IP address is required",
+    "portCount": "Enter from 1 to 100 ports"
   }
 }

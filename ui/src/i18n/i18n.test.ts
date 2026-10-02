@@ -44,6 +44,8 @@ describe('i18n configuration', () => {
     }
   });
 
+  // Spanish is not bundled: these bundles arrived through the lazy backend,
+  // when the test setup called loadLanguages('es').
   it('loads ES resources for every declared namespace', () => {
     for (const ns of namespaces) {
       const bundle = i18n.getResourceBundle('es', ns);

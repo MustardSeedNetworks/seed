@@ -5,6 +5,321 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.220.2](https://github.com/MustardSeedNetworks/seed/compare/v0.220.1...v0.220.2) (2026-10-02)
+
+
+### Documentation
+
+* stop promising a published macOS .pkg; drop stale pins and dead scripts ([#2953](https://github.com/MustardSeedNetworks/seed/issues/2953)) ([ea2c6b8](https://github.com/MustardSeedNetworks/seed/commit/ea2c6b896bb9082cd103eb918dc471efc309605c)), closes [#2637](https://github.com/MustardSeedNetworks/seed/issues/2637)
+
+
+### Tests
+
+* **e2e:** say where focus went when a focus assertion fails ([#2951](https://github.com/MustardSeedNetworks/seed/issues/2951)) ([b0fdb99](https://github.com/MustardSeedNetworks/seed/commit/b0fdb99e85619b972f4bad2bb206d76e0a8ef9aa))
+
+## [0.220.1](https://github.com/MustardSeedNetworks/seed/compare/v0.220.0...v0.220.1) (2026-10-02)
+
+
+### Bug Fixes
+
+* **discovery:** sweep the live /24s of a learned summary ([#2949](https://github.com/MustardSeedNetworks/seed/issues/2949)) ([4a5a0d0](https://github.com/MustardSeedNetworks/seed/commit/4a5a0d05cdf55e49a9b460e92be46ff46cccfafa))
+* **i18n:** gate every locale namespace for en/es parity ([#2943](https://github.com/MustardSeedNetworks/seed/issues/2943)) ([738cf98](https://github.com/MustardSeedNetworks/seed/commit/738cf98446d8629e03c4cf084c148d8c51c78149)), closes [#2639](https://github.com/MustardSeedNetworks/seed/issues/2639)
+* **probe:** lock the HTTP trace and time tcp to the dial that connected ([#2947](https://github.com/MustardSeedNetworks/seed/issues/2947)) ([c5d98c0](https://github.com/MustardSeedNetworks/seed/commit/c5d98c0dd491d8a584bd459f8d8ceb2913f5c594)), closes [#2630](https://github.com/MustardSeedNetworks/seed/issues/2630)
+* **test:** migrate the test database once per binary and close the gateway pinger ([#2946](https://github.com/MustardSeedNetworks/seed/issues/2946)) ([587378d](https://github.com/MustardSeedNetworks/seed/commit/587378d84d501125f98716b3a4562451dbbd0f6b))
+* **ui:** leave Escape to a modal opened over a hovered tooltip ([#2948](https://github.com/MustardSeedNetworks/seed/issues/2948)) ([65332f2](https://github.com/MustardSeedNetworks/seed/commit/65332f22231c318e7d8d0a468b362e5723ba94ec)), closes [#2893](https://github.com/MustardSeedNetworks/seed/issues/2893)
+
+## [0.220.0](https://github.com/MustardSeedNetworks/seed/compare/v0.219.0...v0.220.0) (2026-10-01)
+
+
+### Features
+
+* **settings:** name the device and show it in the header and tab title ([#2929](https://github.com/MustardSeedNetworks/seed/issues/2929)) ([f9c8743](https://github.com/MustardSeedNetworks/seed/commit/f9c8743fed12881c1540db16c8e28bdb077b93d4))
+
+
+### Bug Fixes
+
+* **ci:** remove steps that check nothing and run i18n on locale PRs ([#2935](https://github.com/MustardSeedNetworks/seed/issues/2935)) ([5a44fff](https://github.com/MustardSeedNetworks/seed/commit/5a44fffa6baa210f24725059df4d6b68dedcee79)), closes [#2636](https://github.com/MustardSeedNetworks/seed/issues/2636)
+* **i18n:** render API messages that take data and write the missing copy ([#2932](https://github.com/MustardSeedNetworks/seed/issues/2932)) ([35fd9bd](https://github.com/MustardSeedNetworks/seed/commit/35fd9bd5014d82c570c2fc143ca59e2023be4741)), closes [#2299](https://github.com/MustardSeedNetworks/seed/issues/2299)
+* **ui:** close the Bluetooth table on Escape and return focus from dialogs ([#2942](https://github.com/MustardSeedNetworks/seed/issues/2942)) ([eb4a6c1](https://github.com/MustardSeedNetworks/seed/commit/eb4a6c1535a3eedc0233489471c2b961a9865f78))
+* **ui:** name withheld Wi-Fi clients as a Pro boundary, not zero ([#2934](https://github.com/MustardSeedNetworks/seed/issues/2934)) ([2059b7a](https://github.com/MustardSeedNetworks/seed/commit/2059b7aeec68f5f4f49bbb72110608fc5d2aa733)), closes [#2889](https://github.com/MustardSeedNetworks/seed/issues/2889)
+
+
+### Tests
+
+* **e2e:** gate every page and overlay on axe and keyboard focus ([#2937](https://github.com/MustardSeedNetworks/seed/issues/2937)) ([415aaf8](https://github.com/MustardSeedNetworks/seed/commit/415aaf8c8984ec869822d1a9447239aad5aa6082))
+* **storybook:** gate the five excluded stories and expanded settings sections ([#2941](https://github.com/MustardSeedNetworks/seed/issues/2941)) ([c74e25e](https://github.com/MustardSeedNetworks/seed/commit/c74e25e9a9f8b64273c785742a935901c1974a36))
+
+
+### Miscellaneous
+
+* **deps:** update dependency vite to v8.3.1 ([#2939](https://github.com/MustardSeedNetworks/seed/issues/2939)) ([885b72f](https://github.com/MustardSeedNetworks/seed/commit/885b72f3f4e4c3cefbf5bdc1bf88d29602ca8850))
+* **deps:** update github/codeql-action action to v4.38.2 ([#2940](https://github.com/MustardSeedNetworks/seed/issues/2940)) ([dc31d65](https://github.com/MustardSeedNetworks/seed/commit/dc31d65e6a588bfdc461eadb82290bfbb4f4a2a4))
+
+## [0.219.0](https://github.com/MustardSeedNetworks/seed/compare/v0.218.0...v0.219.0) (2026-10-01)
+
+
+### Features
+
+* **settings:** discovery timing in minutes and seconds; drop the timers nothing read ([#2927](https://github.com/MustardSeedNetworks/seed/issues/2927)) ([38515f2](https://github.com/MustardSeedNetworks/seed/commit/38515f2f796cb9dd843a3204dbc783869b7e537a)), closes [#491](https://github.com/MustardSeedNetworks/seed/issues/491)
+* **ui:** collapse the Network card's secondary facts into a Details group ([#2924](https://github.com/MustardSeedNetworks/seed/issues/2924)) ([a2fdc4c](https://github.com/MustardSeedNetworks/seed/commit/a2fdc4c7e783cbd8aff9087e927771d54e9f1653)), closes [#123](https://github.com/MustardSeedNetworks/seed/issues/123)
+
+## [0.218.0](https://github.com/MustardSeedNetworks/seed/compare/v0.217.5...v0.218.0) (2026-09-30)
+
+
+### Features
+
+* **ui:** fit the discovery table to the modal and virtualise long lists ([#2920](https://github.com/MustardSeedNetworks/seed/issues/2920)) ([f94ab70](https://github.com/MustardSeedNetworks/seed/commit/f94ab70e31e9e7da40e389e6428211ae49f54a3a))
+
+
+### Bug Fixes
+
+* **ui:** move a dialog's initial focus at once, and steady the discovery-table E2E ([#2923](https://github.com/MustardSeedNetworks/seed/issues/2923)) ([7ad5d53](https://github.com/MustardSeedNetworks/seed/commit/7ad5d53bba9d7f58bfeb67e563172b1bf7bd33d9)), closes [#2922](https://github.com/MustardSeedNetworks/seed/issues/2922)
+
+
+### Performance Improvements
+
+* **ui:** lazy-load the drawers, gate screens and Spanish locale ([#2918](https://github.com/MustardSeedNetworks/seed/issues/2918)) ([cd44602](https://github.com/MustardSeedNetworks/seed/commit/cd44602d6cbc235425b445588e304a7c48af2d99)), closes [#2917](https://github.com/MustardSeedNetworks/seed/issues/2917)
+
+## [0.217.5](https://github.com/MustardSeedNetworks/seed/compare/v0.217.4...v0.217.5) (2026-09-30)
+
+
+### Bug Fixes
+
+* **deps:** update dependency wouter to v3.11.1 ([#2915](https://github.com/MustardSeedNetworks/seed/issues/2915)) ([902a7c1](https://github.com/MustardSeedNetworks/seed/commit/902a7c11cf6f0013b7305f2f3b771ade373c4d24))
+
+## [0.217.4](https://github.com/MustardSeedNetworks/seed/compare/v0.217.3...v0.217.4) (2026-09-29)
+
+
+### Miscellaneous
+
+* **deps:** update dependency jsdom to v30.1.1 ([#2913](https://github.com/MustardSeedNetworks/seed/issues/2913)) ([03f31cc](https://github.com/MustardSeedNetworks/seed/commit/03f31cc65b445e2bdcc2281619db06a28d2f23f6))
+
+## [0.217.3](https://github.com/MustardSeedNetworks/seed/compare/v0.217.2...v0.217.3) (2026-09-28)
+
+
+### Bug Fixes
+
+* **deps:** update dependency @tanstack/react-query to v5.103.2 ([#2910](https://github.com/MustardSeedNetworks/seed/issues/2910)) ([5a23266](https://github.com/MustardSeedNetworks/seed/commit/5a23266f39ecbd11075280ee4ca3431133ee5fde))
+* **deps:** update dependency react-i18next to v17.0.15 ([#2911](https://github.com/MustardSeedNetworks/seed/issues/2911)) ([0465c91](https://github.com/MustardSeedNetworks/seed/commit/0465c9114736bd6fd92cb9c257fe1ae742cd2087))
+
+## [0.217.2](https://github.com/MustardSeedNetworks/seed/compare/v0.217.1...v0.217.2) (2026-09-27)
+
+
+### Miscellaneous
+
+* **deps:** update pre-commit hook davidanson/markdownlint-cli2 to v0.23.3 ([#2907](https://github.com/MustardSeedNetworks/seed/issues/2907)) ([7fe9e90](https://github.com/MustardSeedNetworks/seed/commit/7fe9e9005506386c89ea50c4d9905925479436ea))
+
+## [0.217.1](https://github.com/MustardSeedNetworks/seed/compare/v0.217.0...v0.217.1) (2026-09-26)
+
+
+### Bug Fixes
+
+* **ui:** throw a typed ApiError for non-2xx responses ([#2901](https://github.com/MustardSeedNetworks/seed/issues/2901)) ([4172bd4](https://github.com/MustardSeedNetworks/seed/commit/4172bd41c40bbd40f010485ecda103dcc6e0a0ca)), closes [#763](https://github.com/MustardSeedNetworks/seed/issues/763)
+
+
+### Continuous Integration
+
+* **i18n:** gate hardcoded copy with the shared i18n check ([#2899](https://github.com/MustardSeedNetworks/seed/issues/2899)) ([707d288](https://github.com/MustardSeedNetworks/seed/commit/707d288a4f507b4937d0a390085fdf28f8823a43)), closes [#2898](https://github.com/MustardSeedNetworks/seed/issues/2898)
+
+## [0.217.0](https://github.com/MustardSeedNetworks/seed/compare/v0.216.0...v0.217.0) (2026-09-26)
+
+
+### Features
+
+* **capture:** summarize a finished capture's traffic ([#239](https://github.com/MustardSeedNetworks/seed/issues/239)) ([#2895](https://github.com/MustardSeedNetworks/seed/issues/2895)) ([7035d76](https://github.com/MustardSeedNetworks/seed/commit/7035d7643147060da62b2e44c573bcdf3e8e6ffb))
+
+
+### Bug Fixes
+
+* **api:** gate the probe and fingerprint routes at operator ([#2897](https://github.com/MustardSeedNetworks/seed/issues/2897)) ([a0acb15](https://github.com/MustardSeedNetworks/seed/commit/a0acb15d05d20a2ba662a9c77050e0de69b14b82)), closes [#2635](https://github.com/MustardSeedNetworks/seed/issues/2635)
+
+## [0.216.0](https://github.com/MustardSeedNetworks/seed/compare/v0.215.0...v0.216.0) (2026-09-26)
+
+
+### Features
+
+* **wifi:** retier airspace and anomalies to Starter, clients to Pro ([#2890](https://github.com/MustardSeedNetworks/seed/issues/2890)) ([d5ac3c9](https://github.com/MustardSeedNetworks/seed/commit/d5ac3c97829b2da44ea9c026fe163e477587d376))
+
+
+### Bug Fixes
+
+* **security:** replace gosec G703 exclusions with os.Root confinement ([#2892](https://github.com/MustardSeedNetworks/seed/issues/2892)) ([16a72dc](https://github.com/MustardSeedNetworks/seed/commit/16a72dc54b130b3e0035b997a54d2be5f0197e3b))
+
+## [0.215.0](https://github.com/MustardSeedNetworks/seed/compare/v0.214.97...v0.215.0) (2026-09-26)
+
+
+### Features
+
+* **wifi:** report the rules that need capture as unavailable ([#2883](https://github.com/MustardSeedNetworks/seed/issues/2883)) ([639f51a](https://github.com/MustardSeedNetworks/seed/commit/639f51ad1e9103e4ec1f59f8babe7a2dc6667a83))
+
+
+### Continuous Integration
+
+* **conformance:** pin the policy repo past the OIDC fix ([#2885](https://github.com/MustardSeedNetworks/seed/issues/2885)) ([9952a8f](https://github.com/MustardSeedNetworks/seed/commit/9952a8f16b92716157df4a90eb866e37988b451b)), closes [#2884](https://github.com/MustardSeedNetworks/seed/issues/2884)
+
+
+### Miscellaneous
+
+* **release:** bump minor for feat: while below 1.0 ([#2888](https://github.com/MustardSeedNetworks/seed/issues/2888)) ([17ed96e](https://github.com/MustardSeedNetworks/seed/commit/17ed96e6d31e94343a8d4f90c9a297a96e2bb8fe)), closes [#2887](https://github.com/MustardSeedNetworks/seed/issues/2887)
+
+## [0.214.97](https://github.com/MustardSeedNetworks/seed/compare/v0.214.96...v0.214.97) (2026-09-26)
+
+
+### Features
+
+* **wifi:** feed the airspace from managed-mode scans ([#2880](https://github.com/MustardSeedNetworks/seed/issues/2880)) ([de31358](https://github.com/MustardSeedNetworks/seed/commit/de313589721abbaa0b262a700516bdd33cbaf1b4))
+
+
+### Bug Fixes
+
+* **ui:** drop variants on [@layer](https://github.com/layer) components classes and gate them ([#2878](https://github.com/MustardSeedNetworks/seed/issues/2878)) ([f7d4047](https://github.com/MustardSeedNetworks/seed/commit/f7d4047eccd4fe991735702969f87d6ef6edb65e)), closes [#2877](https://github.com/MustardSeedNetworks/seed/issues/2877)
+
+## [0.214.96](https://github.com/MustardSeedNetworks/seed/compare/v0.214.95...v0.214.96) (2026-09-26)
+
+
+### Features
+
+* **wifi:** decode scan-result information elements natively on Linux ([#2876](https://github.com/MustardSeedNetworks/seed/issues/2876)) ([a6c6805](https://github.com/MustardSeedNetworks/seed/commit/a6c68053db23071150933082c60a20d5dd61ae91))
+
+
+### Miscellaneous
+
+* **deps:** bump toolchain to Go 1.27.1, Node 26.10.0, golangci-lint 2.14.0 ([#2874](https://github.com/MustardSeedNetworks/seed/issues/2874)) ([3f78ddf](https://github.com/MustardSeedNetworks/seed/commit/3f78ddfc0c9f2cc83f670bc8db84fc5e8a2df594))
+
+## [0.214.95](https://github.com/MustardSeedNetworks/seed/compare/v0.214.94...v0.214.95) (2026-09-26)
+
+
+### Features
+
+* **capture:** record a bounded pcap as a job and download it ([#326](https://github.com/MustardSeedNetworks/seed/issues/326)) ([#2871](https://github.com/MustardSeedNetworks/seed/issues/2871)) ([a33878c](https://github.com/MustardSeedNetworks/seed/commit/a33878c6d3c46c72ee4c96d5ae27897ffda1dcd6))
+
+
+### Tests
+
+* **snmp:** run the ten collectors against NIAC's six packs ([#2869](https://github.com/MustardSeedNetworks/seed/issues/2869)) ([015f895](https://github.com/MustardSeedNetworks/seed/commit/015f895f4ec0f09f1d0f6934d1bb23bed77a0236))
+
+
+### Miscellaneous
+
+* **deps:** update dependency @types/node to v26.6.2 ([#2872](https://github.com/MustardSeedNetworks/seed/issues/2872)) ([ff5063e](https://github.com/MustardSeedNetworks/seed/commit/ff5063e6fa718093f993330de02285da8862bf33))
+
+## [0.214.94](https://github.com/MustardSeedNetworks/seed/compare/v0.214.93...v0.214.94) (2026-09-25)
+
+
+### Miscellaneous
+
+* **deps:** update dependency @babel/core to v8.0.6 ([#2866](https://github.com/MustardSeedNetworks/seed/issues/2866)) ([5287494](https://github.com/MustardSeedNetworks/seed/commit/52874945fa79109fd843e5ec8c4a75d11d576649))
+* **deps:** update github/codeql-action action to v4.38.1 ([#2867](https://github.com/MustardSeedNetworks/seed/issues/2867)) ([abaeb49](https://github.com/MustardSeedNetworks/seed/commit/abaeb4949f983352a9eb56b9501f3a7d6363c35c))
+
+## [0.214.93](https://github.com/MustardSeedNetworks/seed/compare/v0.214.92...v0.214.93) (2026-09-25)
+
+
+### Features
+
+* **diagnostics:** check DSCP marking between two interfaces on one host ([#2863](https://github.com/MustardSeedNetworks/seed/issues/2863)) ([ba4df46](https://github.com/MustardSeedNetworks/seed/commit/ba4df469ff681f73c7bbdf39e391737d4127a7c0))
+
+## [0.214.92](https://github.com/MustardSeedNetworks/seed/compare/v0.214.91...v0.214.92) (2026-09-25)
+
+
+### Features
+
+* **license:** gate the DSCP preservation check at Pro ([#2859](https://github.com/MustardSeedNetworks/seed/issues/2859)) ([176d64e](https://github.com/MustardSeedNetworks/seed/commit/176d64ed0f546ed7007b2c49f7dd268b74671a02))
+
+
+### Bug Fixes
+
+* **discovery:** bound the route-table walk and walk it by default ([#2858](https://github.com/MustardSeedNetworks/seed/issues/2858)) ([09f4720](https://github.com/MustardSeedNetworks/seed/commit/09f472082900ea7c6edc9de766c8211ff5507937)), closes [#2833](https://github.com/MustardSeedNetworks/seed/issues/2833)
+
+## [0.214.91](https://github.com/MustardSeedNetworks/seed/compare/v0.214.90...v0.214.91) (2026-09-25)
+
+
+### Features
+
+* **diagnostics:** check that a path preserves DSCP markings ([#2847](https://github.com/MustardSeedNetworks/seed/issues/2847)) ([ff30032](https://github.com/MustardSeedNetworks/seed/commit/ff300322e36e77f5fe5b212685e71dd48ab51286))
+
+
+### Bug Fixes
+
+* **ui:** trap focus in the hand-rolled dialogs and fix two copy slips ([#2853](https://github.com/MustardSeedNetworks/seed/issues/2853)) ([a01de3e](https://github.com/MustardSeedNetworks/seed/commit/a01de3ee8aba9d2ec8f5ea3a89e4a08442552656)), closes [#2648](https://github.com/MustardSeedNetworks/seed/issues/2648)
+
+
+### Tests
+
+* **e2e:** learn site networks behind a routed NIAC pack over veth ([#2855](https://github.com/MustardSeedNetworks/seed/issues/2855)) ([bbc2cd8](https://github.com/MustardSeedNetworks/seed/commit/bbc2cd8f8b2e0281caaece360ebc6eaa68af26d4))
+
+## [0.214.90](https://github.com/MustardSeedNetworks/seed/compare/v0.214.89...v0.214.90) (2026-09-24)
+
+
+### Bug Fixes
+
+* **discovery:** promote found SNMP agents once a credential is saved ([#2850](https://github.com/MustardSeedNetworks/seed/issues/2850)) ([5c0a834](https://github.com/MustardSeedNetworks/seed/commit/5c0a834ffdd28785b9739c998b3b7547e17fc845))
+* **discovery:** sweep the device registry the API lists ([#2852](https://github.com/MustardSeedNetworks/seed/issues/2852)) ([f18934c](https://github.com/MustardSeedNetworks/seed/commit/f18934c0e1057d27fc511c1e0bb28fbb088652df)), closes [#2831](https://github.com/MustardSeedNetworks/seed/issues/2831)
+
+## [0.214.89](https://github.com/MustardSeedNetworks/seed/compare/v0.214.88...v0.214.89) (2026-09-24)
+
+
+### Bug Fixes
+
+* **ui:** localise the discovery cards and polling target form copy ([#2845](https://github.com/MustardSeedNetworks/seed/issues/2845)) ([4724d03](https://github.com/MustardSeedNetworks/seed/commit/4724d03c5760200bb95be1bf4545289e365be1fd)), closes [#2843](https://github.com/MustardSeedNetworks/seed/issues/2843)
+* **ui:** re-copy canonical msn-shared.css with the status pill text tokens ([#2849](https://github.com/MustardSeedNetworks/seed/issues/2849)) ([1e74def](https://github.com/MustardSeedNetworks/seed/commit/1e74def845cd47f4fb7fe3bd0ef42279663cdb60)), closes [#2848](https://github.com/MustardSeedNetworks/seed/issues/2848)
+
+## [0.214.88](https://github.com/MustardSeedNetworks/seed/compare/v0.214.87...v0.214.88) (2026-09-24)
+
+
+### Bug Fixes
+
+* **deps:** update dependency lucide-react to v1.47.0 ([#2841](https://github.com/MustardSeedNetworks/seed/issues/2841)) ([a0d5852](https://github.com/MustardSeedNetworks/seed/commit/a0d58526e7a8ecac818b0e7b48d650c2e50a980e))
+* **ui:** translate the shared chrome's accessible names and placeholders ([#2840](https://github.com/MustardSeedNetworks/seed/issues/2840)) ([a57f105](https://github.com/MustardSeedNetworks/seed/commit/a57f1057ecc3877b72b73d6f09851fedf91930fa)), closes [#2839](https://github.com/MustardSeedNetworks/seed/issues/2839)
+
+## [0.214.87](https://github.com/MustardSeedNetworks/seed/compare/v0.214.86...v0.214.87) (2026-09-24)
+
+
+### Bug Fixes
+
+* **ui:** give pill text a -strong token measured on its own wash ([#2830](https://github.com/MustardSeedNetworks/seed/issues/2830)) ([e144881](https://github.com/MustardSeedNetworks/seed/commit/e144881bf7adc97b91fc1e1757462d63891886b0))
+
+
+### Tests
+
+* **ui:** put the last three settings sections under the locale-copy suite ([#2836](https://github.com/MustardSeedNetworks/seed/issues/2836)) ([9fcb96f](https://github.com/MustardSeedNetworks/seed/commit/9fcb96fa447e1b8a828de690b27aa7ac4930a012)), closes [#2835](https://github.com/MustardSeedNetworks/seed/issues/2835)
+
+
+### Miscellaneous
+
+* **deps:** update dependency jsdom to v30.1.0 ([#2837](https://github.com/MustardSeedNetworks/seed/issues/2837)) ([3ebbc51](https://github.com/MustardSeedNetworks/seed/commit/3ebbc51ad1d901d811b1984d2b140bb9b549f492))
+
+## [0.214.86](https://github.com/MustardSeedNetworks/seed/compare/v0.214.85...v0.214.86) (2026-09-23)
+
+
+### Bug Fixes
+
+* **deps:** update dependency @tanstack/react-query to v5.103.1 ([#2824](https://github.com/MustardSeedNetworks/seed/issues/2824)) ([926ef13](https://github.com/MustardSeedNetworks/seed/commit/926ef13c481844db53964403e3c2b8537103c6c2))
+
+
+### Tests
+
+* **e2e:** first-run discovery over a NIAC veth link ([#2828](https://github.com/MustardSeedNetworks/seed/issues/2828)) ([08179b1](https://github.com/MustardSeedNetworks/seed/commit/08179b1b4885590916f7d375173c2db1540e7e20))
+
+## [0.214.85](https://github.com/MustardSeedNetworks/seed/compare/v0.214.84...v0.214.85) (2026-09-23)
+
+
+### Bug Fixes
+
+* **deps:** update dependency @tanstack/react-query to v5.103.0 ([#2822](https://github.com/MustardSeedNetworks/seed/issues/2822)) ([e89a661](https://github.com/MustardSeedNetworks/seed/commit/e89a661ea4ead4dee5ac437230048baefb96b3c2))
+* **deps:** update dependency lucide-react to v1.46.0 ([#2823](https://github.com/MustardSeedNetworks/seed/issues/2823)) ([be25f41](https://github.com/MustardSeedNetworks/seed/commit/be25f4166f1ed11b906bd976a738367154e3b67e))
+
+
+### Continuous Integration
+
+* adopt the fleet phone-width gate against seed's daemon ([#2820](https://github.com/MustardSeedNetworks/seed/issues/2820)) ([5d75c43](https://github.com/MustardSeedNetworks/seed/commit/5d75c4306a844b54f23ae2bed601b2e53f3a3d72))
+
+
+### Miscellaneous
+
+* **api:** retire the unconsumed /telemetry/dns/security routes ([#2818](https://github.com/MustardSeedNetworks/seed/issues/2818)) ([8ca5fd0](https://github.com/MustardSeedNetworks/seed/commit/8ca5fd010e7a19c3f88c4ffc3f14d70b158ec525)), closes [#2817](https://github.com/MustardSeedNetworks/seed/issues/2817)
+* **deps:** update dependency markdownlint-cli2 to v0.23.3 ([#2815](https://github.com/MustardSeedNetworks/seed/issues/2815)) ([374237d](https://github.com/MustardSeedNetworks/seed/commit/374237d639e12e37dfe42904370dc0d6adf1bb3a))
+* **deps:** update frontend toolchain ([#2821](https://github.com/MustardSeedNetworks/seed/issues/2821)) ([845bf89](https://github.com/MustardSeedNetworks/seed/commit/845bf899b00e55fbb9346b0ab4ea286fc98aaff1))
+
 ## [0.214.84](https://github.com/MustardSeedNetworks/seed/compare/v0.214.83...v0.214.84) (2026-09-23)
 
 

@@ -142,7 +142,7 @@ export function ApiTokensSettings(): React.ReactElement {
         </p>
 
         {!canMint && (
-          <div className="rounded-lg border border-status-warning/30 bg-status-warning/5 pad-sm text-sm text-status-warning">
+          <div className="rounded-lg border border-status-warning/30 bg-status-warning/5 pad-sm text-sm text-status-warning-strong">
             <Trans
               i18nKey="apiTokens.tierWarning"
               ns="settings"
@@ -153,14 +153,16 @@ export function ApiTokensSettings(): React.ReactElement {
         )}
 
         {error ? (
-          <div className="rounded-lg border border-status-error/30 bg-status-error/5 pad-sm text-sm text-status-error">
+          <div className="rounded-lg border border-status-error/30 bg-status-error/5 pad-sm text-sm text-status-error-strong">
             {error}
           </div>
         ) : null}
 
         {mintedToken ? (
           <div className="rounded-lg border border-status-success/40 bg-status-success/5 pad-sm stack-xs">
-            <div className="text-sm font-medium text-status-success">{t('apiTokens.created')}</div>
+            <div className="text-sm font-medium text-status-success-strong">
+              {t('apiTokens.created')}
+            </div>
             <code className="block break-all rounded bg-surface-raised px-cell py-compact text-xs">
               {mintedToken.token}
             </code>

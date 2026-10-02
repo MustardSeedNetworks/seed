@@ -4,26 +4,18 @@ package database_test
 
 import (
 	"context"
-	"os"
 	"strings"
 	"testing"
 	"time"
 
 	"github.com/MustardSeedNetworks/seed/internal/anomaly"
 	"github.com/MustardSeedNetworks/seed/internal/database"
+	"github.com/MustardSeedNetworks/seed/internal/database/dbtest"
 )
 
 func setupAnomalyDB(t *testing.T) (*database.DB, context.Context) {
 	t.Helper()
-	tmpFile, err := os.CreateTemp(t.TempDir(), "seed-anomalies-*.db")
-	if err != nil {
-		t.Fatalf("temp file: %v", err)
-	}
-	tmpPath := tmpFile.Name()
-	_ = tmpFile.Close()
-	t.Cleanup(func() { _ = os.Remove(tmpPath) })
-
-	db, openErr := database.Open(tmpPath)
+	db, openErr := database.Open(dbtest.Path(t))
 	if openErr != nil {
 		t.Fatalf("open db: %v", openErr)
 	}
@@ -44,8 +36,8 @@ func sampleRecord(id string) anomaly.Record {
 	// subject would collide unrelated records (e.g. "A|bssid|aa:bb" and
 	// "B|bssid|cc:dd") on that key, making the daily census nondeterministic.
 	subject := id
-	if i := strings.LastIndex(id, "|"); i >= 0 {
-		subject = id[i+1:]
+	if _, after, found := strings.CutLast(id, "|"); found {
+		subject = after
 	}
 	return anomaly.Record{
 		ID:     id,

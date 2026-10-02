@@ -24,6 +24,9 @@ var (
 	ErrSubnetExists = errors.New("settings: subnet already exists")
 	// ErrSubnetNotFound is returned when updating/deleting an absent subnet.
 	ErrSubnetNotFound = errors.New("settings: subnet not found")
+	// ErrInvalidPortPreset is returned for a port-scan preset that is not one of
+	// the four the config defines.
+	ErrInvalidPortPreset = errors.New("settings: invalid port-scan preset")
 )
 
 // Store reads and persists the network-discovery configuration. Discovery
@@ -68,10 +71,28 @@ func (s *Service) Settings() config.NetworkDiscoveryConfig {
 // field-specific (some fields are set unconditionally, others only when a
 // positive/non-empty value is supplied) — preserved verbatim from the original
 // handler so the wire contract is unchanged.
+//
+// The running scanner caches its options and its rescan ticker, so a change to
+// either is applied the way SetOptions applies it. The drawer auto-saves the
+// whole form on every edit, so an update that changes neither leaves the
+// scanner alone rather than restarting it.
 func (s *Service) Update(in Update) error {
-	cur := s.store.Discovery()
+	switch config.PortPreset(in.Options.PortScan.Preset) {
+	case "", config.PortPresetCommon, config.PortPresetSecure,
+		config.PortPresetInsecure, config.PortPresetCustom:
+	default:
+		return ErrInvalidPortPreset
+	}
+	before := s.store.Discovery()
+	cur := before
 	in.mergeInto(&cur)
-	return s.store.SaveDiscovery(cur)
+	if err := s.store.SaveDiscovery(cur); err != nil {
+		return err
+	}
+	if cur.Options == before.Options && cur.Timing == before.Timing {
+		return nil
+	}
+	return s.applier.ReloadOptions()
 }
 
 // SetOptions replaces the discovery options wholesale, persists, then applies the
@@ -231,14 +252,11 @@ func (s *Service) saveAndSync(cur config.NetworkDiscoveryConfig) error {
 // match the original contract exactly. The transport layer maps its request DTO
 // onto this domain input.
 type Update struct {
-	Enabled        bool
-	ARPScanWorkers int
-	PingTimeoutMs  int64
-	ScanTimeoutMs  int64
-	AutoScan       bool
-	ScanIntervalMs int64
-	OUIFilePath    string
-	IPv6Enabled    bool
+	Enabled       bool
+	ScanTimeoutMs int64
+	AutoScan      bool
+	OUIFilePath   string
+	IPv6Enabled   bool
 
 	Options        OptionsUpdate
 	Timing         TimingUpdate
@@ -267,10 +285,10 @@ type PassiveProtocolsUpdate struct {
 
 // PortScanUpdate mirrors the port-scan write model.
 type PortScanUpdate struct {
-	Enabled         bool
-	TCPPorts        string
-	UDPPorts        string
-	BannerTimeoutMs int64
+	Enabled  bool
+	Preset   string
+	TCPPorts string
+	UDPPorts string
 }
 
 // TCPProbeUpdate mirrors the TCP-probe write model.
@@ -281,9 +299,7 @@ type TCPProbeUpdate struct {
 
 // TimingUpdate mirrors the discovery-timing write model.
 type TimingUpdate struct {
-	ProbeIntervalMs  int64
 	RescanIntervalMs int64
-	Workers          int
 }
 
 // ProfilerUpdate mirrors the profiler write model.
@@ -302,22 +318,15 @@ type FingerprintingUpdate struct {
 }
 
 // mergeInto applies the update onto cur with the original field-specific rules:
-// booleans and ScanInterval are set unconditionally; counts/timeouts/intervals
+// booleans are set unconditionally; counts/timeouts/intervals
 // and paths are set only when a positive/non-empty value is supplied (treating
 // zero/empty as "keep existing").
 func (u Update) mergeInto(cur *config.NetworkDiscoveryConfig) {
 	cur.Enabled = u.Enabled
-	if u.ARPScanWorkers > 0 {
-		cur.ARPScanWorkers = u.ARPScanWorkers
-	}
-	if u.PingTimeoutMs > 0 {
-		cur.PingTimeout = msDuration(u.PingTimeoutMs)
-	}
 	if u.ScanTimeoutMs > 0 {
 		cur.ScanTimeout = msDuration(u.ScanTimeoutMs)
 	}
 	cur.AutoScan = u.AutoScan
-	cur.ScanInterval = msDuration(u.ScanIntervalMs)
 	if u.OUIFilePath != "" {
 		cur.OUIFilePath = u.OUIFilePath
 	}
@@ -342,14 +351,14 @@ func (o OptionsUpdate) mergeInto(cur *config.DiscoveryOptions) {
 	cur.SNMPQuery = o.SNMPQuery
 
 	cur.PortScan.Enabled = o.PortScan.Enabled
+	if o.PortScan.Preset != "" {
+		cur.PortScan.Preset = config.PortPreset(o.PortScan.Preset)
+	}
 	if o.PortScan.TCPPorts != "" {
 		cur.PortScan.TCPPorts = o.PortScan.TCPPorts
 	}
 	if o.PortScan.UDPPorts != "" {
 		cur.PortScan.UDPPorts = o.PortScan.UDPPorts
-	}
-	if o.PortScan.BannerTimeoutMs > 0 {
-		cur.PortScan.BannerTimeout = msDuration(o.PortScan.BannerTimeoutMs)
 	}
 	if o.TCPProbe.TimeoutMs > 0 {
 		cur.TCPProbe.Timeout = msDuration(o.TCPProbe.TimeoutMs)
@@ -360,14 +369,8 @@ func (o OptionsUpdate) mergeInto(cur *config.DiscoveryOptions) {
 }
 
 func (t TimingUpdate) mergeInto(cur *config.DiscoveryTiming) {
-	if t.ProbeIntervalMs > 0 {
-		cur.ProbeInterval = msDuration(t.ProbeIntervalMs)
-	}
 	if t.RescanIntervalMs > 0 {
 		cur.RescanInterval = msDuration(t.RescanIntervalMs)
-	}
-	if t.Workers > 0 {
-		cur.Workers = t.Workers
 	}
 }
 

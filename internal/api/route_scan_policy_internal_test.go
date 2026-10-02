@@ -2,6 +2,7 @@ package api
 
 import (
 	"net/http"
+	"net/http/httptest"
 	"slices"
 	"strings"
 	"testing"
@@ -19,6 +20,8 @@ import (
 func targetedScanRoutes() []string {
 	return []string{
 		"/security/discovery/portscan",
+		"/security/discovery/probe",
+		"/security/discovery/fingerprint",
 		"/security/devices/scan",
 		"/security/vulnerabilities/scan",
 	}
@@ -73,26 +76,63 @@ func TestTargetedScansAreRateLimited(t *testing.T) {
 	}
 }
 
-// TestPortScanRequiresOperator pins the gate specifically, because it is the
-// one this change adds and the one a future refactor is most likely to drop.
-func TestPortScanRequiresOperator(t *testing.T) {
+// TestHostProbesRequireOperator pins the gate on the routes that open
+// connections to any host the caller names. portscan gained it in #347; probe
+// and fingerprint were kept for reuse (S1-12, owner 2026-09-24) and carried
+// neither a role nor a rate limit (#2635).
+func TestHostProbesRequireOperator(t *testing.T) {
 	s := newRoutePolicyServer(t)
 
+	byPath := make(map[string]route, len(s.manifest))
 	for _, rt := range s.manifest {
-		if rt.path != APIVersionPrefix+"/security/discovery/portscan" {
-			continue
-		}
-		if rt.minRole != database.RoleOperator {
-			t.Errorf("portscan minRole = %q, want %q — scanning arbitrary hosts "+
-				"is an action on the network, not a read of it",
-				rt.minRole, database.RoleOperator)
-		}
-		if !rt.rateLimited {
-			t.Error("portscan is not rate limited")
-		}
-		return
+		byPath[rt.path] = rt
 	}
-	t.Fatal("the portscan route is not registered")
+
+	for _, suffix := range []string{
+		"/security/discovery/portscan",
+		"/security/discovery/probe",
+		"/security/discovery/fingerprint",
+	} {
+		t.Run(suffix, func(t *testing.T) {
+			rt, ok := byPath[APIVersionPrefix+suffix]
+			if !ok {
+				t.Fatalf("%s is not registered", suffix)
+			}
+			if rt.minRole != database.RoleOperator {
+				t.Errorf("%s minRole = %q, want %q — probing arbitrary hosts "+
+					"is an action on the network, not a read of it",
+					suffix, rt.minRole, database.RoleOperator)
+			}
+		})
+	}
+}
+
+// TestHostProbesRefuseViewerAtTheMux drives the registered routes, so a gate
+// dropped from the table and a gate the table carries but registration ignores
+// both fail. The operator's empty body is refused by the handler's own
+// validation, which proves the gate let it through without putting a packet on
+// the wire.
+func TestHostProbesRefuseViewerAtTheMux(t *testing.T) {
+	t.Parallel()
+	s := routedServer(t, "viewer1", database.RoleViewer)
+	seedRoledUser(t, s, "operator1", database.RoleOperator)
+
+	for _, suffix := range []string{"/security/discovery/probe", "/security/discovery/fingerprint"} {
+		for _, c := range []struct {
+			user string
+			want int
+		}{
+			{"viewer1", http.StatusForbidden},
+			{"operator1", http.StatusBadRequest},
+		} {
+			req := newAuthedRequest(http.MethodPost, APIVersionPrefix+suffix, []byte(`{}`), c.user)
+			w := httptest.NewRecorder()
+			s.mux.ServeHTTP(w, req)
+			if w.Code != c.want {
+				t.Errorf("%s POST %s: status = %d, want %d", c.user, suffix, w.Code, c.want)
+			}
+		}
+	}
 }
 
 // TestInsecureProfileIsWiredToTheSharedList pins that the "insecure" profile

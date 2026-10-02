@@ -78,7 +78,8 @@
     "invalidRequestBody": "Cuerpo de solicitud inválido",
     "notFound": "No encontrado",
     "rateLimitExceeded": "Límite de solicitudes excedido. Intente más tarde.",
-    "internalError": "Error interno del servidor"
+    "internalError": "Error interno del servidor",
+    "invalidAction": "La acción debe ser 'start' o 'stop'"
   },
   "service": {
     "notAvailable": "{{service}} no disponible",
@@ -90,7 +91,12 @@
   "config": {
     "failedToSave": "Error al guardar configuración",
     "failedToLoad": "Error al cargar configuración",
-    "insecureCredentials": "Credenciales predeterminadas inseguras detectadas"
+    "insecureCredentials": "Credenciales predeterminadas inseguras detectadas",
+    "backupNameRequired": "Se requiere un nombre para la copia de seguridad",
+    "failedToCreateBackup": "No se pudo crear la copia de seguridad de la configuración",
+    "failedToDeleteBackup": "No se pudo eliminar la copia de seguridad de la configuración",
+    "invalidBackupName": "El nombre de la copia de seguridad solo puede contener letras, dígitos, puntos, guiones y guiones bajos",
+    "nameParamRequired": "Se requiere el parámetro de consulta name"
   },
   "guestAudit": {
     "notEnabled": "La auditoría de red de invitados no está habilitada. Habilítela en Configuración de seguridad.",
@@ -170,7 +176,9 @@
     "deleteFailed": "Error al eliminar el usuario"
   },
   "settings": {
-    "conflict": "Otro usuario cambió esta configuración desde que la cargaste. Vuelve a cargarla y aplica tus cambios de nuevo."
+    "conflict": "Otro usuario cambió esta configuración desde que la cargaste. Vuelve a cargarla y aplica tus cambios de nuevo.",
+    "loadFailed": "No se pudo cargar la configuración",
+    "saveFailed": "No se pudo guardar la configuración"
   },
   "reports": {
     "unavailable": "El servicio de informes no está disponible",
@@ -187,14 +195,17 @@
     "interfaceRequired": "Se requiere un nombre de interfaz para renovar una concesión DHCP"
   },
   "platform": {
-    "unavailableTitle": "{{feature}} no está disponible en esta plataforma",
+    "unavailableTitle": "{{feature}}: no disponible en esta plataforma",
     "unavailableGeneric": "Este sistema operativo no ofrece una API para ello. Ejecutar Seed en otra plataforma es la única forma de usarlo.",
     "limitedGeneric": "Esto funciona aquí, pero no por completo. Algunos campos pueden estar vacíos o ser aproximados.",
     "capabilityUnsupported": "Este sistema operativo no admite esa función."
   },
   "vulnerability": {
     "invalidApiKey": "Clave de API inválida",
-    "validateFailed": "Error al validar la clave de API"
+    "validateFailed": "Error al validar la clave de API",
+    "invalidIp": "Dirección IP no válida",
+    "missingIpParam": "Se requiere el parámetro de consulta ip",
+    "scannerNotEnabled": "El escaneo de vulnerabilidades no está habilitado"
   },
   "history": {
     "probeRequired": "Se requiere un identificador de sonda",
@@ -204,5 +215,36 @@
   "mdns": {
     "browseUnavailable": "No se pudo unir al grupo de multidifusión mDNS en esta interfaz",
     "invalidWindow": "La ventana de exploración debe ser un número positivo de segundos"
+  },
+  "capture": {
+    "notFound": "No se encontró la captura",
+    "inProgress": "La captura sigue en curso; deténgala o espere a que termine y luego descárguela",
+    "readFailed": "No se pudo leer la captura"
+  },
+  "discovery": {
+    "failedToApplyOptions": "No se pudieron aplicar las opciones de descubrimiento",
+    "managerUnavailable": "El descubrimiento de dispositivos no está en ejecución"
+  },
+  "health": {
+    "dnsNotAvailable": "La prueba de DNS no está disponible",
+    "iperfServerStartFailed": "No se pudo iniciar el servidor iperf3",
+    "iperfServerStopFailed": "No se pudo detener el servidor iperf3",
+    "iperfValidationFailed": "Configuración de la prueba iperf3 no válida",
+    "speedtestInProgress": "Ya hay una prueba de velocidad en curso",
+    "speedtestNotAvailable": "La prueba de velocidad no está disponible"
+  },
+  "logs": {
+    "notInitialized": "Los registros no están disponibles"
+  },
+  "security": {
+    "gatewayTesterUnavailable": "La prueba de la puerta de enlace no está disponible",
+    "nullOriginForbidden": "No se permiten solicitudes desde un origen null"
+  },
+  "tools": {
+    "failedToCreateProber": "No se pudo iniciar la sonda TCP",
+    "failedToCreateScanner": "No se pudo iniciar el escaneo de puertos",
+    "invalidTarget": "Destino no válido: introduzca un nombre de host o una dirección IP",
+    "ipRequired": "Se requiere una dirección IP",
+    "portCount": "Introduzca de 1 a 100 puertos"
   }
 }

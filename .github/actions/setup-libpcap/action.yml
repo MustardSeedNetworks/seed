@@ -18,4 +18,3 @@ runs:
       uses: MustardSeedNetworks/.github/.github/actions/apt-install@048d173dd72ca0f9e5fa832fb5b9fd2a6447e5e9 # v1.13.0
       with:
         packages: libpcap-dev
-        update: ${{ steps.cache-apt.outputs.cache-hit != 'true' }}

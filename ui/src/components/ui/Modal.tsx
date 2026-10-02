@@ -1,11 +1,12 @@
 /**
  * Modal primitive — ported from niac UI kit (Phase B).
  *
- * Focus is trapped via useFocusTrap so Tab/Shift+Tab cycle within the dialog.
- * Escape bubbles through onClose when closeOnEscape is true.
+ * Focus is trapped via useFocusTrap so Tab/Shift+Tab cycle within the dialog,
+ * and the trap calls onClose on Escape when closeOnEscape is true.
  */
 import { X } from 'lucide-react';
-import { type FC, type KeyboardEvent, type ReactNode, useEffect } from 'react';
+import { type FC, type ReactNode, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { iconSizes } from '../../constants/sizes';
 import { useFocusTrap } from '../../hooks/useFocusTrap';
 
@@ -57,6 +58,7 @@ export const Modal: FC<ModalProps> = ({
   closeOnEscape = true,
   className = '',
 }) => {
+  const { t } = useTranslation();
   const containerRef = useFocusTrap<HTMLDivElement>({
     isActive: isOpen,
     onEscape: closeOnEscape ? onClose : undefined,
@@ -75,12 +77,6 @@ export const Modal: FC<ModalProps> = ({
     return null;
   }
 
-  const handleContentKeyDown = (e: KeyboardEvent<HTMLDivElement>) => {
-    if (e.key === 'Escape') {
-      e.stopPropagation();
-    }
-  };
-
   return (
     <div className="fixed inset-0 z-50 flex-center">
       {closeOnBackdropClick ? (
@@ -88,7 +84,7 @@ export const Modal: FC<ModalProps> = ({
           type="button"
           className="absolute inset-0 bg-scrim/70 backdrop-blur-sm"
           onClick={onClose}
-          aria-label="Close modal"
+          aria-label={t('accessibility.closeModal')}
         />
       ) : (
         <div className="absolute inset-0 bg-scrim/70 backdrop-blur-sm" />
@@ -100,7 +96,6 @@ export const Modal: FC<ModalProps> = ({
         aria-modal="true"
         aria-labelledby={title ? 'modal-title' : ariaLabelledBy}
         aria-label={title || ariaLabelledBy ? undefined : ariaLabel}
-        onKeyDown={handleContentKeyDown}
       >
         {title || showCloseButton ? (
           <div className="flex-between px-6 py-4 border-b border-surface-border">
@@ -114,7 +109,7 @@ export const Modal: FC<ModalProps> = ({
                 type="button"
                 onClick={onClose}
                 className="ml-auto p-1 text-text-muted hover:text-text-primary transition-colors rounded-lg hover:bg-surface-hover"
-                aria-label="Close modal"
+                aria-label={t('accessibility.closeModal')}
               >
                 <X className={iconSizes.lg} />
               </button>

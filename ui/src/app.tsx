@@ -14,17 +14,23 @@
  */
 
 import type { JSX } from 'react';
-import { useEffect } from 'react';
+import { lazy, Suspense, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { setSessionExpiredCallback } from './api';
-import { AppShell } from './app/AppShell';
-import { LoginForm } from './app/LoginForm';
 import { useAppOrchestration } from './app/useAppOrchestration';
-import { SetupWizard } from './components/setup/SetupWizard';
 import { LicenseProvider } from './contexts/LicenseContext';
 import { RoleProvider } from './contexts/RoleContext';
 import { useAuth } from './hooks/useAuth';
 import { useSetupState } from './hooks/useSetupState';
+
+// Each gate outcome is its own chunk: a signed-in session never downloads the
+// setup wizard or the login form, and the login screen never waits for the
+// dashboard shell.
+const SetupWizard = lazy(() =>
+  import('./components/setup/SetupWizard').then((m) => ({ default: m.SetupWizard })),
+);
+const LoginForm = lazy(() => import('./app/LoginForm').then((m) => ({ default: m.LoginForm })));
+const AppShell = lazy(() => import('./app/AppShell').then((m) => ({ default: m.AppShell })));
 
 /**
  * Main App Component — authentication/setup gating and mount.
@@ -64,6 +70,12 @@ function App(): JSX.Element {
   // god component.
   const orchestration = useAppOrchestration({ isAuthenticated });
 
+  const loadingScreen = (
+    <div className="min-h-screen flex-center">
+      <div className="text-text-muted">{t('status.loading')}</div>
+    </div>
+  );
+
   // Show setup wizard if needed (before auth check)
   let content: JSX.Element;
   if (needsSetup === true) {
@@ -78,11 +90,7 @@ function App(): JSX.Element {
     );
   } else if (needsSetup === null) {
     // Show loading while checking setup status
-    content = (
-      <div className="min-h-screen flex-center">
-        <div className="text-text-muted">{t('status.loading')}</div>
-      </div>
-    );
+    content = loadingScreen;
   } else if (!isAuthenticated) {
     content = (
       <LoginForm
@@ -106,7 +114,9 @@ function App(): JSX.Element {
   // logout traffic that could race a concurrent real login (seed#2422).
   return (
     <LicenseProvider isAuthenticated={isAuthenticated}>
-      <RoleProvider isAuthenticated={isAuthenticated}>{content}</RoleProvider>
+      <RoleProvider isAuthenticated={isAuthenticated}>
+        <Suspense fallback={loadingScreen}>{content}</Suspense>
+      </RoleProvider>
     </LicenseProvider>
   );
 }

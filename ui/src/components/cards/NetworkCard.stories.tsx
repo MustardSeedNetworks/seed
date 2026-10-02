@@ -7,9 +7,8 @@ import { NetworkCard } from './NetworkCard';
  *
  * Features:
  * - IPv4 and IPv6 address display
- * - MAC address and DHCP mode (dhcp/static/auto)
+ * - Collapsed Details group: interface, MAC, vendor, mode, DHCP server, lease
  * - DHCP timing breakdown (discover, offer, request, ACK phases)
- * - Lease time information
  * - DNS servers
  * - Public IP integration (optional)
  * - Color-coded timing thresholds (green/yellow/red)
@@ -44,7 +43,9 @@ type Story = StoryObj<typeof meta>;
 export const Dhcpv4Success: Story = {
   args: {
     data: {
-      mac: 'aa:bb:cc:dd:ee:ff',
+      interface: 'en0',
+      mac: '00:11:22:dd:ee:ff',
+      vendor: 'CIMSYS Inc',
       mode: 'dhcp',
       ipv4: {
         address: '192.168.1.100',

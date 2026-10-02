@@ -1,37 +1,31 @@
 /**
- * DiscoveryModal device row and inline badges.
+ * DiscoveryModal device row and its details panel.
  *
- * Renders a single device row in the discovery modal table, plus the
- * expandable detail panel (open ports, LLDP/CDP, SNMP, OS guess).
+ * One `<tbody>` per device: the row and its details panel move, measure and
+ * unmount together, which is what lets the modal virtualise a long list with
+ * rows of different heights (#461).
  */
 
 import type React from 'react';
 import type { JSX } from 'react';
+import { useId } from 'react';
 import { useTranslation } from 'react-i18next';
 import { isValidNumber } from '../../lib/format';
-import {
-  cn,
-  discoveryMethod as discoveryMethodTheme,
-  radius,
-  severity as severityTheme,
-} from '../../styles/theme';
-import type { Vulnerability } from '../../types/generated/engine-discovery-response';
-import { AlertTriangle } from '../ui/Icons';
+import { cn, radius } from '../../styles/theme';
+import { ChevronDown, ChevronUp } from '../ui/Icons';
 import { Tooltip } from '../ui/Tooltip';
-import type { DiscoveredDevice, DiscoveryMethod, OpenPort } from './NetworkDiscoveryCard';
-
-// Discovery method badge
-// `discoveryMethod` is an open string set on the wire — the Go type has no enum
-// and a collector may add one — so the badge takes whatever arrives and falls
-// back to the ARP styling for a method it has no colour for.
-export function MethodBadge({ method }: { method: string }): JSX.Element {
-  const themeClass = discoveryMethodTheme[method as DiscoveryMethod] ?? discoveryMethodTheme.arp;
-  return (
-    <span className={cn('px-1.5 py-0.5 text-xs font-medium uppercase', radius.md, themeClass)}>
-      {method}
-    </span>
-  );
-}
+import {
+  ALL_COLUMNS_SHOWN_HIDDEN,
+  ColumnSummary,
+  column,
+  deviceName,
+  MethodList,
+  PortsBadge,
+  VendorLabel,
+  VulnBadge,
+} from './DiscoveryModalCells';
+import type { DiscoveredDevice, OpenPort } from './NetworkDiscoveryCard';
+import { formatLastSeen } from './NetworkDiscoveryCardHelpers';
 
 // Format SNMP sysUpTime (in hundredths of a second) to human-readable duration
 export function formatUptime(ticks: number): string {
@@ -56,72 +50,6 @@ export function formatUptime(ticks: number): string {
   return `${minutes}m`;
 }
 
-// Format timestamp for display
-export function formatLastSeen(timestamp: string): string {
-  const date = new Date(timestamp);
-  const now = new Date();
-  const diffMs = now.getTime() - date.getTime();
-  const diffSecs = Math.floor(diffMs / 1000);
-  const diffMins = Math.floor(diffSecs / 60);
-  const diffHours = Math.floor(diffMins / 60);
-  const diffDays = Math.floor(diffHours / 24);
-
-  if (diffSecs < 60) {
-    return 'Just now';
-  }
-  if (diffMins < 60) {
-    return `${diffMins}m ago`;
-  }
-  if (diffHours < 24) {
-    return `${diffHours}h ago`;
-  }
-  if (diffDays < 7) {
-    return `${diffDays}d ago`;
-  }
-  return date.toLocaleDateString();
-}
-
-// Helper function to get expand icon (avoids nested ternary)
-export function getExpandIcon(hasDetails: boolean, isExpanded: boolean): string {
-  if (!hasDetails) {
-    return '';
-  }
-  if (isExpanded) {
-    return '▲';
-  }
-  return '▼';
-}
-
-// Helper function to get severity theme classes (avoids nested ternary)
-export function getSeverityClasses(severity: string): string {
-  if (severity === 'CRITICAL') {
-    return `${severityTheme.critical.bg} ${severityTheme.critical.text}`;
-  }
-  if (severity === 'HIGH') {
-    return `${severityTheme.high.bg} ${severityTheme.high.text}`;
-  }
-  if (severity === 'MEDIUM') {
-    return `${severityTheme.medium.bg} ${severityTheme.medium.text}`;
-  }
-  return `${severityTheme.low.bg} ${severityTheme.low.text}`;
-}
-
-// Severity order, worst first, matching getSeverityClasses' branches.
-const SEVERITY_ORDER = ['CRITICAL', 'HIGH', 'MEDIUM', 'LOW'] as const;
-
-// The wire carries the findings themselves (DeviceVulnerabilities.vulnerabilities);
-// the count and the worst severity are the row's own summary of them. The
-// hand-typed mirror this file used to carry declared `count`/`highestSeverity`
-// instead, which the daemon has never sent, so the badge read undefined and the
-// column was always "-" (seed#2393).
-export function highestSeverity(vulnerabilities: Vulnerability[] | undefined): string {
-  // `severity` is NVD's `baseSeverity` passed through verbatim (internal/discovery/vuln/cve_nvd.go),
-  // so its casing is the feed's, not ours.
-  const severities = new Set((vulnerabilities ?? []).map((v) => v.severity.toUpperCase()));
-  return SEVERITY_ORDER.find((s) => severities.has(s)) ?? 'LOW';
-}
-
-// Device row component
 // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: Device row handles many device types and states
 export function DeviceRow({
   device,
@@ -129,16 +57,24 @@ export function DeviceRow({
   onToggle,
   onDeepScan,
   isScanning,
+  index,
+  measureRef,
 }: {
   device: DiscoveredDevice;
   isExpanded: boolean;
   onToggle: () => void;
   onDeepScan?: (ip: string) => Promise<void>;
   isScanning: boolean;
+  /** Position in the sorted list; the virtualiser reads it back when measuring. */
+  index?: number;
+  measureRef?: (element: HTMLTableSectionElement | null) => void;
 }): JSX.Element {
   const { t } = useTranslation('cards');
+  const detailsId = useId();
   const openPorts = device.profile?.openPorts?.filter((p) => p.isOpen) || [];
-  const vulnCount = device.vulnerabilities?.vulnerabilities?.length ?? 0;
+  const name = deviceName(device);
+  // Protocol and SNMP detail. Below full width every row also has hidden
+  // columns to show, so only a full-width row without these has no panel.
   const hasDetails = Boolean(
     device.lldpInfo ||
       device.cdpInfo ||
@@ -156,7 +92,7 @@ export function DeviceRow({
   };
 
   return (
-    <>
+    <tbody ref={measureRef} data-index={index} className="text-text-primary">
       <tr
         className={cn(
           'border-b border-surface-border hover:bg-surface-hover cursor-pointer transition-colors',
@@ -166,101 +102,44 @@ export function DeviceRow({
       >
         {/* IP Address */}
         <td className="px-3 py-row">
-          <div className="flex flex-col">
+          <div className="flex flex-col min-w-0">
             <span className="font-mono label">{device.ip || t('network.noIP')}</span>
             {device.ipv6 ? (
               <Tooltip text={device.ipv6}>
-                <span className="font-mono text-xs text-text-muted truncate max-w-40">
-                  {device.ipv6.length > 25 ? `${device.ipv6.substring(0, 25)}...` : device.ipv6}
-                </span>
+                <span className="font-mono text-xs text-text-muted truncate">{device.ipv6}</span>
               </Tooltip>
             ) : null}
           </div>
         </td>
 
-        {/* Hostname - prefer displayName, fallback to mdnsName, netbiosName, hostname */}
         <td className="px-3 py-row">
-          <Tooltip
-            text={device.displayName || device.mdnsName || device.netbiosName || device.hostname}
-          >
-            <span className="text-sm text-text-secondary truncate block max-w-40">
-              {device.displayName ||
-                device.mdnsName ||
-                device.netbiosName ||
-                device.hostname ||
-                '-'}
-            </span>
+          <Tooltip text={name}>
+            <span className="text-sm text-text-secondary truncate block">{name || '-'}</span>
           </Tooltip>
         </td>
 
-        {/* MAC Address */}
-        <td className="px-3 py-row">
+        <td className={cn('px-3 py-row', column.mac.cell)}>
           <span className="font-mono text-xs text-text-muted">{device.mac || '-'}</span>
         </td>
 
-        {/* Vendor */}
-        <td className="px-3 py-row">
-          {device.vendor === 'LAA' ? (
-            <Tooltip text={t('discovery.localMacHint')} side="bottom">
-              <span className="text-xs text-text-muted underline decoration-dotted cursor-help">
-                LAA
-              </span>
-            </Tooltip>
-          ) : (
-            <Tooltip text={device.vendor}>
-              <span className="text-xs text-text-muted truncate block max-w-28">
-                {device.vendor || '-'}
-              </span>
-            </Tooltip>
-          )}
+        <td className={cn('px-3 py-row', column.vendor.cell)}>
+          <VendorLabel vendor={device.vendor} />
         </td>
 
-        {/* Discovery Methods */}
-        <td className="px-3 py-row">
-          <div className="flex items-center gap-tight flex-wrap">
-            {device.discoveryMethod.map((method) => (
-              <MethodBadge key={method} method={method} />
-            ))}
-          </div>
+        <td className={cn('px-3 py-row', column.methods.cell)}>
+          <MethodList methods={device.discoveryMethod} />
         </td>
 
-        {/* Open Ports */}
-        <td className="px-3 py-row">
-          {openPorts.length > 0 ? (
-            <span
-              className={cn(
-                'text-xs px-1.5 py-0.5 bg-status-success/15 text-status-success',
-                radius.md,
-              )}
-            >
-              {openPorts.length} open
-            </span>
-          ) : (
-            <span className="text-xs text-text-muted">-</span>
-          )}
+        <td className={cn('px-3 py-row', column.ports.cell)}>
+          <PortsBadge count={openPorts.length} />
         </td>
 
-        {/* Vulnerabilities */}
-        <td className="px-3 py-row">
-          {vulnCount > 0 ? (
-            <span
-              className={cn(
-                'inline-flex items-center gap-tight text-xs px-1.5 py-0.5',
-                radius.md,
-                getSeverityClasses(highestSeverity(device.vulnerabilities?.vulnerabilities)),
-              )}
-            >
-              <AlertTriangle className="w-3 h-3" />
-              {vulnCount}
-            </span>
-          ) : (
-            <span className="text-xs text-text-muted">-</span>
-          )}
+        <td className={cn('px-3 py-row', column.vulns.cell)}>
+          <VulnBadge vulnerabilities={device.vulnerabilities?.vulnerabilities} />
         </td>
 
-        {/* Last Seen */}
-        <td className="px-3 py-row">
-          <span className="text-xs text-text-muted">{formatLastSeen(device.lastSeen)}</span>
+        <td className={cn('px-3 py-row', column.lastSeen.cell)}>
+          <span className="text-xs text-text-muted">{formatLastSeen(device.lastSeen, t)}</span>
         </td>
 
         {/* Actions */}
@@ -272,7 +151,7 @@ export function DeviceRow({
                 onClick={handleScan}
                 disabled={isScanning}
                 className={cn(
-                  'text-xs px-cell py-compact bg-brand-primary/15 text-brand-primary',
+                  'text-xs px-cell py-compact bg-brand-primary/15 text-brand-primary-strong',
                   radius.md,
                   'hover:bg-brand-primary/30 transition-colors disabled:opacity-50',
                 )}
@@ -280,15 +159,37 @@ export function DeviceRow({
                 {isScanning ? '...' : t('discovery.scan')}
               </button>
             ) : null}
-            <span className="text-xs text-text-muted">{getExpandIcon(hasDetails, isExpanded)}</span>
+            <button
+              type="button"
+              onClick={(e): void => {
+                e.stopPropagation();
+                onToggle();
+              }}
+              aria-expanded={isExpanded}
+              aria-controls={detailsId}
+              aria-label={t(isExpanded ? 'discovery.hideDetails' : 'discovery.showDetails', {
+                device: name || device.ip,
+              })}
+              data-testid="discovery-row-toggle"
+              className={cn(
+                'inline-flex items-center justify-center min-w-6 min-h-6 text-text-muted hover:text-text-primary',
+                radius.md,
+                !hasDetails && ALL_COLUMNS_SHOWN_HIDDEN,
+              )}
+            >
+              {isExpanded ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
+            </button>
           </div>
         </td>
       </tr>
-      {/* Expanded details row */}
-      {isExpanded && hasDetails ? (
-        <tr className="bg-surface-sunken">
+      {isExpanded ? (
+        <tr
+          id={detailsId}
+          className={cn('bg-surface-sunken', !hasDetails && ALL_COLUMNS_SHOWN_HIDDEN)}
+        >
           <td colSpan={9} className="px-4 py-row-lg">
             <div className="stack">
+              <ColumnSummary device={device} openPortCount={openPorts.length} />
               {/* Open Ports */}
               {openPorts.length > 0 ? (
                 <div>
@@ -442,7 +343,7 @@ export function DeviceRow({
                                 'px-1.5 py-0.5 text-xs',
                                 radius.sm,
                                 iface.operStatus === 'up'
-                                  ? 'bg-status-success/15 text-status-success'
+                                  ? 'bg-status-success/15 text-status-success-strong'
                                   : 'bg-surface-hover text-text-muted',
                               )}
                             >
@@ -477,7 +378,7 @@ export function DeviceRow({
                           <Tooltip text={vlan.name || `VLAN ${vlan.id}`} key={vlan.id}>
                             <span
                               className={cn(
-                                'px-1.5 py-0.5 text-xs bg-brand-primary/10 text-brand-primary',
+                                'px-1.5 py-0.5 text-xs bg-brand-primary/10 text-brand-primary-strong',
                                 radius.sm,
                               )}
                             >
@@ -551,6 +452,6 @@ export function DeviceRow({
           </td>
         </tr>
       ) : null}
-    </>
+    </tbody>
   );
 }

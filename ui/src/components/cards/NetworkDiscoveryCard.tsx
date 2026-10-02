@@ -124,7 +124,7 @@ export const NetworkDiscoveryCard: React.NamedExoticComponent<NetworkDiscoveryCa
           icon={<ScanSearch className={iconTokens.size.md} />}
           status="loading"
           enableLiveRegion={true}
-          ariaLabel="Network discovery scanning in progress"
+          ariaLabel={t('discovery.ariaScanning')}
         >
           <CardValue value={t('discovery.scanning')} size="lg" />
         </Card>
@@ -138,7 +138,7 @@ export const NetworkDiscoveryCard: React.NamedExoticComponent<NetworkDiscoveryCa
           icon={<ScanSearch className={iconTokens.size.md} />}
           status={scanError ? 'error' : 'unknown'}
           enableLiveRegion={true}
-          ariaLabel="Network discovery - no data available"
+          ariaLabel={t('discovery.ariaNoData')}
         >
           <DiscoveryEmptyState
             phase={discoveryPhase(discoveryEnabled, null)}
@@ -156,7 +156,7 @@ export const NetworkDiscoveryCard: React.NamedExoticComponent<NetworkDiscoveryCa
                 radius.md,
                 'hover:bg-brand-primary/90 transition-colors font-medium body-small',
               )}
-              aria-label="Start network discovery scan"
+              aria-label={t('discovery.startScanAria')}
               data-testid="discovery-scan-button"
             >
               {t('discovery.startScan')}
@@ -195,7 +195,7 @@ export const NetworkDiscoveryCard: React.NamedExoticComponent<NetworkDiscoveryCa
         icon={<ScanSearch className={iconTokens.size.md} />}
         status={cardStatus}
         enableLiveRegion={true}
-        ariaLabel={`Network discovery - ${deviceCount} devices found`}
+        ariaLabel={t('discovery.ariaDevicesFound', { count: deviceCount })}
         headerAction={
           <div className="flex items-center gap-compact">
             {/* Full Screen button */}
@@ -210,7 +210,7 @@ export const NetworkDiscoveryCard: React.NamedExoticComponent<NetworkDiscoveryCa
                   radius.md,
                   'hover:bg-surface-border hover:text-text-primary transition-colors flex-center cursor-pointer',
                 )}
-                aria-label="Open full screen view"
+                aria-label={t('discovery.openFullScreen')}
               >
                 <Maximize2 className={iconTokens.size.sm} aria-hidden="true" />
               </button>
@@ -237,7 +237,11 @@ export const NetworkDiscoveryCard: React.NamedExoticComponent<NetworkDiscoveryCa
                 'hover:bg-brand-primary/90 transition-colors font-medium caption disabled:opacity-50 disabled:cursor-not-allowed flex items-center',
                 spacing.inline.sm,
               )}
-              aria-label={status.scanning || running ? 'Scanning network' : 'Start network scan'}
+              aria-label={
+                status.scanning || running
+                  ? t('discovery.scanningNetwork')
+                  : t('discovery.startNetworkScan')
+              }
               data-testid="discovery-scan-button"
             >
               {status.scanning || running ? (

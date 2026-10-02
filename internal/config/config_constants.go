@@ -132,20 +132,11 @@ const (
 	// defaultMDNSMaxConcurrent is the maximum concurrent mDNS/profiler operations.
 	defaultMDNSMaxConcurrent = 5
 
-	// defaultProbeIntervalMs is the interval in milliseconds between network probes.
-	defaultProbeIntervalMs = 75
-
 	// defaultRescanIntervalSec is the interval in seconds between full network
 	// rescans. A minute keeps the device list close enough to the network that
 	// an operator watching a page sees a device appear or leave (seed#2674);
 	// the previous ten minutes read as "the pages show nothing".
 	defaultRescanIntervalSec = 60
-
-	// defaultARPWorkers is the number of concurrent ARP scan workers.
-	defaultARPWorkers = 50
-
-	// defaultPingTimeoutMs is the timeout in milliseconds for ICMP ping operations.
-	defaultPingTimeoutMs = 500
 
 	// defaultScanTimeoutSec is the total timeout in seconds for network scans.
 	defaultScanTimeoutSec = 30

@@ -3,6 +3,7 @@ import { Tooltip } from '../ui/Tooltip';
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useFocusTrap } from '../../hooks/useFocusTrap';
 import {
   formatLogTimestamp,
   LOG_LEVEL_COLORS,
@@ -107,7 +108,13 @@ function LogEntryRow({ entry, expanded, onToggle, onClose }: LogEntryRowProps): 
 
         {/* Component badge */}
         {entry.component ? (
-          <span className={cn('px-3 py-compact', radius.default, 'bg-cat-6/15 text-cat-6 text-sm')}>
+          <span
+            className={cn(
+              'px-3 py-compact',
+              radius.default,
+              'bg-cat-6/15 text-cat-6-strong text-sm',
+            )}
+          >
             {entry.component}
           </span>
         ) : null}
@@ -118,7 +125,7 @@ function LogEntryRow({ entry, expanded, onToggle, onClose }: LogEntryRowProps): 
             className={cn(
               'px-3 py-compact',
               radius.default,
-              'bg-status-info/15 text-status-info text-sm font-mono',
+              'bg-status-info/15 text-status-info-strong text-sm font-mono',
             )}
           >
             {entry.requestId.substring(0, 8)}
@@ -136,7 +143,7 @@ function LogEntryRow({ entry, expanded, onToggle, onClose }: LogEntryRowProps): 
             className={cn(
               'px-3 py-compact',
               radius.default,
-              'bg-status-success/15 text-status-success text-sm',
+              'bg-status-success/15 text-status-success-strong text-sm',
             )}
           >
             {entry.durationMs}ms
@@ -158,7 +165,7 @@ function LogEntryRow({ entry, expanded, onToggle, onClose }: LogEntryRowProps): 
                 'text-text-muted hover:text-text-primary hover:bg-surface-hover',
                 'transition-colors',
               )}
-              aria-label="Collapse entry"
+              aria-label={tCards('logViewer.collapseEntry')}
             >
               <svg className="w-4 h-4" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
                 <path
@@ -198,7 +205,7 @@ function LogEntryRow({ entry, expanded, onToggle, onClose }: LogEntryRowProps): 
               className={cn(
                 'pad',
                 radius.lg,
-                'text-sm text-status-error bg-status-error/10 overflow-x-auto font-mono whitespace-pre-wrap',
+                'text-sm text-status-error-strong bg-status-error/10 overflow-x-auto font-mono whitespace-pre-wrap',
               )}
             >
               {entry.stack}
@@ -431,21 +438,7 @@ export function LogViewerModal({ isOpen, onClose }: LogViewerModalProps): React.
     setAutoScroll(isAtBottom);
   }, []);
 
-  // Keyboard handler for Escape
-  useEffect((): (() => void) | undefined => {
-    if (!isOpen) {
-      return;
-    }
-
-    const handleKeyDown = (e: KeyboardEvent): void => {
-      if (e.key === 'Escape') {
-        onClose();
-      }
-    };
-
-    window.addEventListener('keydown', handleKeyDown);
-    return (): void => window.removeEventListener('keydown', handleKeyDown);
-  }, [isOpen, onClose]);
+  const dialogRef = useFocusTrap<HTMLDivElement>({ isActive: isOpen, onEscape: onClose });
 
   // Export functions
   const exportJson = useCallback((): void => {
@@ -509,6 +502,7 @@ export function LogViewerModal({ isOpen, onClose }: LogViewerModalProps): React.
       <div className={modal.backdrop} onClick={onClose} aria-hidden="true" />
       {/* Modal - use xl size for logs */}
       <div
+        ref={dialogRef}
         className={cn(
           'relative',
           modal.content,

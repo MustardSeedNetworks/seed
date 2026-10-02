@@ -10,18 +10,23 @@ import { Tooltip } from '../ui/Tooltip';
  * - Sortable table columns (IP, hostname, vendor, MAC, last seen)
  * - Search and filtering
  * - Device details expandable rows
+ * - Lower-priority columns fold into the details panel on narrow widths, and
+ *   long lists are virtualised (#461)
  * - Export to CSV/JSON
  * - Keyboard support (Escape to close)
  */
 
 import type React from 'react';
 import type { JSX } from 'react';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useFocusTrap } from '../../hooks/useFocusTrap';
 import { button, cn, icon as iconTokens, modal, radius } from '../../styles/theme';
 import { ArrowUpDown, ChevronDown, ChevronUp, Download, RefreshCw, Search, X } from '../ui/Icons';
+import { column } from './DiscoveryModalCells';
 import { DeviceRow } from './DiscoveryModalDeviceRow';
 import type { DiscoveredDevice, NetworkDiscoveryData } from './NetworkDiscoveryCard';
+import { useVirtualDeviceRows } from './useVirtualDeviceRows';
 
 interface DiscoveryModalProps {
   isOpen: boolean;
@@ -33,6 +38,12 @@ interface DiscoveryModalProps {
 
 type SortField = 'ip' | 'hostname' | 'vendor' | 'mac' | 'lastSeen';
 type SortDirection = 'asc' | 'desc';
+
+const COLUMN_COUNT = 9;
+
+function deviceKey(device: DiscoveredDevice): string {
+  return device.mac || `ip:${device.ip}`;
+}
 
 // Sort comparator
 function compareDevices(
@@ -103,19 +114,38 @@ function SortableHeader({
   className?: string;
 }): JSX.Element {
   const isActive = currentField === field;
+  let ariaSort: 'ascending' | 'descending' | 'none' = 'none';
+  if (isActive) {
+    ariaSort = direction === 'asc' ? 'ascending' : 'descending';
+  }
   return (
     <th
-      className={cn(
-        'px-3 py-row text-left text-xs font-semibold uppercase tracking-wider cursor-pointer hover:bg-surface-hover transition-colors select-none',
-        className,
-      )}
-      onClick={() => onSort(field)}
+      aria-sort={ariaSort}
+      className={cn('text-left text-xs font-semibold uppercase tracking-wider', className)}
     >
-      <div className="flex items-center gap-tight">
-        <span>{label}</span>
+      <button
+        type="button"
+        onClick={() => onSort(field)}
+        className="flex w-full items-center gap-tight px-3 py-row uppercase tracking-wider hover:bg-surface-hover transition-colors select-none"
+      >
+        <span className="truncate">{label}</span>
         {getSortIcon(isActive, direction)}
-      </div>
+      </button>
     </th>
+  );
+}
+
+const headerCell = 'px-3 py-row text-left text-xs font-semibold uppercase tracking-wider';
+
+// Stands in for the rows scrolled out of a virtualised list, so the scrollbar
+// keeps the height of the whole list.
+function Spacer({ height }: { height: number }): JSX.Element {
+  return (
+    <tbody aria-hidden="true">
+      <tr>
+        <td colSpan={COLUMN_COUNT} className="p-0" style={{ height }} />
+      </tr>
+    </tbody>
   );
 }
 
@@ -129,7 +159,7 @@ export function DiscoveryModal({
   onScan,
   onDeepScan,
 }: DiscoveryModalProps): JSX.Element | null {
-  const { t } = useTranslation('cards');
+  const { t } = useTranslation(['cards', 'common']);
 
   const [searchQuery, setSearchQuery] = useState('');
   const [sortField, setSortField] = useState<SortField | null>('ip');
@@ -271,21 +301,12 @@ export function DiscoveryModal({
     URL.revokeObjectURL(url);
   }, [filteredDevices]);
 
-  // Keyboard handler for Escape
-  useEffect((): (() => void) | undefined => {
-    if (!isOpen) {
-      return;
-    }
+  const dialogRef = useFocusTrap<HTMLDivElement>({ isActive: isOpen, onEscape: onClose });
 
-    const handleKeyDown = (e: KeyboardEvent): void => {
-      if (e.key === 'Escape') {
-        onClose();
-      }
-    };
-
-    window.addEventListener('keydown', handleKeyDown);
-    return (): void => window.removeEventListener('keydown', handleKeyDown);
-  }, [isOpen, onClose]);
+  const { scrollRef, rows, padTop, padBottom, measureRef, onKeyDown } = useVirtualDeviceRows(
+    filteredDevices,
+    deviceKey,
+  );
 
   if (!isOpen) {
     return null;
@@ -300,6 +321,7 @@ export function DiscoveryModal({
       <div className={modal.backdrop} onClick={onClose} aria-hidden="true" />
       {/* Modal - full width */}
       <div
+        ref={dialogRef}
         className={cn(
           'relative',
           modal.content,
@@ -312,7 +334,7 @@ export function DiscoveryModal({
         aria-labelledby="discovery-modal-title"
       >
         {/* Header */}
-        <div className="flex-between mb-content pb-4 border-b border-surface-border">
+        <div className="flex flex-wrap items-center justify-between gap-default mb-content pb-4 border-b border-surface-border">
           <div>
             <h2 id="discovery-modal-title" className="heading-2 text-text-primary">
               {t('discovery.title')}
@@ -388,7 +410,7 @@ export function DiscoveryModal({
               className={cn(
                 'pad-xs rounded-lg text-text-muted hover:text-text-primary hover:bg-surface-hover transition-colors',
               )}
-              aria-label="Close"
+              aria-label={t('common:buttons.close')}
             >
               <X className={iconTokens.size.md} />
             </button>
@@ -454,14 +476,15 @@ export function DiscoveryModal({
 
           {/* Results count */}
           <span className="text-sm text-text-muted">
-            {filteredDevices.length} of {deviceCount} devices
+            {t('discovery.filteredCount', { filtered: filteredDevices.length, total: deviceCount })}
           </span>
         </div>
 
-        {/* Table */}
-        <div className="flex-1 overflow-auto">
-          <table className="w-full min-w-[900px]">
-            <thead className="bg-surface-base sticky top-0">
+        {/* Table. The scroll padding keeps a row that takes focus clear of the
+            sticky header. */}
+        <div ref={scrollRef} className="@container flex-1 overflow-auto scroll-pt-12">
+          <table className="w-full table-fixed" onKeyDown={onKeyDown} data-testid="discovery-table">
+            <thead className="bg-surface-base sticky top-0 z-10">
               <tr className="border-b border-surface-border">
                 <SortableHeader
                   label={t('discovery.tableIp')}
@@ -469,7 +492,7 @@ export function DiscoveryModal({
                   currentField={sortField}
                   direction={sortDirection}
                   onSort={handleSort}
-                  className="w-40"
+                  className="w-36"
                 />
                 <SortableHeader
                   label={t('discovery.tableHostname')}
@@ -477,7 +500,6 @@ export function DiscoveryModal({
                   currentField={sortField}
                   direction={sortDirection}
                   onSort={handleSort}
-                  className="w-40"
                 />
                 <SortableHeader
                   label={t('discovery.tableMac')}
@@ -485,7 +507,7 @@ export function DiscoveryModal({
                   currentField={sortField}
                   direction={sortDirection}
                   onSort={handleSort}
-                  className="w-36"
+                  className={column.mac.cell}
                 />
                 <SortableHeader
                   label={t('discovery.tableVendor')}
@@ -493,45 +515,41 @@ export function DiscoveryModal({
                   currentField={sortField}
                   direction={sortDirection}
                   onSort={handleSort}
-                  className="w-32"
+                  className={column.vendor.cell}
                 />
-                <th className="px-3 py-row text-left text-xs font-semibold uppercase tracking-wider w-28">
+                <th className={cn(headerCell, column.methods.cell)}>
                   {t('discovery.tableDiscovery')}
                 </th>
-                <th className="px-3 py-row text-left text-xs font-semibold uppercase tracking-wider w-20">
-                  {t('discovery.tablePorts')}
-                </th>
-                <th className="px-3 py-row text-left text-xs font-semibold uppercase tracking-wider w-20">
-                  {t('discovery.tableVulns')}
-                </th>
+                <th className={cn(headerCell, column.ports.cell)}>{t('discovery.tablePorts')}</th>
+                <th className={cn(headerCell, column.vulns.cell)}>{t('discovery.tableVulns')}</th>
                 <SortableHeader
                   label={t('discovery.tableLastSeen')}
                   field="lastSeen"
                   currentField={sortField}
                   direction={sortDirection}
                   onSort={handleSort}
-                  className="w-24"
+                  className={column.lastSeen.cell}
                 />
-                <th className="px-3 py-row text-left text-xs font-semibold uppercase tracking-wider w-24">
-                  {t('discovery.tableActions')}
-                </th>
+                <th className={cn(headerCell, 'w-24')}>{t('discovery.tableActions')}</th>
               </tr>
             </thead>
-            <tbody className="text-text-primary">
-              {filteredDevices.map((device) => {
-                const deviceKey = device.mac || `ip:${device.ip}`;
-                return (
-                  <DeviceRow
-                    key={deviceKey}
-                    device={device}
-                    isExpanded={expandedDevices.has(deviceKey)}
-                    onToggle={(): void => toggleDevice(deviceKey)}
-                    onDeepScan={onDeepScan ? handleDeepScan : undefined}
-                    isScanning={scanningDevices.has(device.ip)}
-                  />
-                );
-              })}
-            </tbody>
+            {padTop > 0 ? <Spacer height={padTop} /> : null}
+            {rows.map(({ index, item: device }) => {
+              const key = deviceKey(device);
+              return (
+                <DeviceRow
+                  key={key}
+                  index={index}
+                  measureRef={measureRef}
+                  device={device}
+                  isExpanded={expandedDevices.has(key)}
+                  onToggle={(): void => toggleDevice(key)}
+                  onDeepScan={onDeepScan ? handleDeepScan : undefined}
+                  isScanning={scanningDevices.has(device.ip)}
+                />
+              );
+            })}
+            {padBottom > 0 ? <Spacer height={padBottom} /> : null}
           </table>
 
           {/* Empty state */}

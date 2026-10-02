@@ -35,7 +35,6 @@ func discoveringService(t *testing.T) (*Service, chan string, string) {
 			Options:     config.DiscoveryOptions{ARPScan: true},
 			ScanTimeout: time.Second,
 		}},
-		interfaceName:   iface,
 		deviceDiscovery: NewDeviceDiscovery(iface),
 		scanFunc: func(context.Context) error {
 			scans <- "scan"

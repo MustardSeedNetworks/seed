@@ -22,7 +22,6 @@ var errDiscoveryUnavailable = errors.New("device discovery is not available")
 // configuration settings to control which discovery methods are active.
 type Service struct {
 	cfg             *config.Config
-	interfaceName   string
 	deviceDiscovery *DeviceDiscovery
 	profiler        *DeviceProfiler
 
@@ -68,15 +67,12 @@ type ServiceStatus struct {
 	DegradationStatus *DegradationStatus `json:"degradationStatus,omitempty"`
 }
 
-// NewService creates a new unified discovery service.
+// NewService creates a new unified discovery service over registry, the one
+// device registry the process has: the service's sweeps fill it and the API
+// lists it, so a target network set on it is one the rescan sweeps (seed#2831).
 // If profiler is nil, a new DeviceProfiler is created internally.
 // If profiler is provided, it will be shared (e.g., with Pipeline).
-func NewService(
-	cfg *config.Config,
-	interfaceName string,
-	profiler *DeviceProfiler,
-	opts ...Option,
-) *Service {
+func NewService(cfg *config.Config, registry *DeviceDiscovery, profiler *DeviceProfiler) *Service {
 	// A Service built without a profiler has no SNMP credential source: the
 	// vault is reached through the composition root, which always supplies the
 	// shared profiler. This fallback exists for callers that do not do SNMP at
@@ -86,16 +82,10 @@ func NewService(
 		profiler = discovery.NewDeviceProfiler(discovery.DefaultProfilerConfig(), nil)
 	}
 	return &Service{
-		cfg:           cfg,
-		interfaceName: interfaceName,
-		deviceDiscovery: NewDeviceDiscoveryWithOUI(
-			interfaceName,
-			cfg.NetworkDiscovery.OUIFilePath,
-			cfg.NetworkDiscovery.OUIMaxAge,
-			opts...,
-		),
-		profiler: profiler,
-		metrics:  discovery.NewMetrics(),
+		cfg:             cfg,
+		deviceDiscovery: registry,
+		profiler:        profiler,
+		metrics:         discovery.NewMetrics(),
 	}
 }
 
@@ -300,7 +290,11 @@ func (s *Service) Scan(ctx context.Context) error {
 	// Queue all discovered devices for profiling (port scan, SNMP, HTTP detection)
 	s.queueDevicesForProfiling()
 
-	s.notifySweep(ctx, devices)
+	// Fresh copies, enriched: the registry copies above carry no SNMP data,
+	// which is all the observer's readers use (seed#2695, seed#2692), and
+	// enriching those in place would change the snapshot the next delta is
+	// computed against.
+	s.notifySweep(ctx, s.GetDevices())
 
 	return nil
 }
@@ -394,7 +388,6 @@ func (s *Service) SetInterface(name string) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
-	s.interfaceName = name
 	if err := s.deviceDiscovery.SetInterface(name); err != nil {
 		return err
 	}
@@ -426,11 +419,18 @@ func (s *Service) triggerScanLocked(reason string) {
 }
 
 // GetDevices returns all discovered devices with their profiles attached.
+func (s *Service) GetDevices() []*DiscoveredDevice {
+	return s.Enrich(s.deviceDiscovery.GetDevices())
+}
+
+// Enrich attaches what the shared profiler holds for each device — profile,
+// SNMP MIB data, resolved names — and queues any it has not profiled yet. A
+// device straight out of a DeviceDiscovery registry carries none of it, so any
+// reader of SNMP data (the target-network learner, target promotion) has to go
+// through here. The devices are modified in place and returned.
 //
 //nolint:gocognit // Complex enrichment logic; keep centralized for correctness.
-func (s *Service) GetDevices() []*DiscoveredDevice {
-	devices := s.deviceDiscovery.GetDevices()
-
+func (s *Service) Enrich(devices []*DiscoveredDevice) []*DiscoveredDevice {
 	// Attach profiles, SNMP data, resolved names, and queue profiling for unprofiled devices
 	for _, device := range devices {
 		if device.IP == "" {

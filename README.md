@@ -218,6 +218,9 @@ via `//go:embed` — no copy step, no runtime dependency on the source tree.
 | `make build` | Full build (frontend + backend) |
 | `make test` | Go + frontend unit/integration tests |
 | `make test-e2e` | Playwright UI tests |
+| `make test-e2e-niac-link` | First-run discovery against a NIAC scenario over veth (Linux, sudo) |
+| `make test-e2e-niac-routed` | Target networks learned behind a routed NIAC pack over veth (Linux, sudo) |
+| `make test-snmp-niac-packs` | SNMP collectors against NIAC's six packs vs their manifests (Linux, sudo) |
 | `make lint` | golangci-lint + Biome |
 | `make security` | govulncheck + npm audit + gitleaks |
 | `make fmt-check` | Format check (Go + TS) |
@@ -235,7 +238,7 @@ npm run typecheck
 npm run test:e2e     # or `make test-e2e`, which builds an isolated backend first
 ```
 
-Verified versions: **Go 1.27.0**, Node.js 26.8.1, golangci-lint v2.13.2.
+Verified versions: **Go 1.27.1**, Node.js 26.10.0, golangci-lint v2.14.0.
 Cross-platform releases (linux/macOS/windows × amd64/arm64) are built by
 `release.yml` on tag push and signed with cosign keyless OIDC.
 
@@ -251,10 +254,12 @@ The UI uses a Tailwind v4 CSS-first theme with semantic tokens:
 
 Conventional commits drive [release-please](https://github.com/googleapis/release-please).
 Tags trigger `release.yml`, which builds binaries and packages
-(`.deb`/`.rpm`/`.zip`/`.tar.gz`) for linux, macOS and Windows on amd64 and
-arm64, and attaches an SBOM, a cosign bundle and SLSA provenance to each.
-Seed is not distributed through Homebrew and will not be (owner decision,
-2026-09-07); on macOS the `.pkg` installer is the supported route.
+(`.deb`/`.rpm`/`.zip`/`.tar.gz`) for Linux and Windows on amd64 and arm64 and
+for macOS on arm64, and attaches an SBOM, a cosign bundle and SLSA provenance
+to each. Seed is not distributed through Homebrew and will not be (owner
+decision, 2026-09-07). The release publishes macOS as a `.tar.gz` only; the
+`.pkg` installer is built locally by `deploy/macos/build-pkg.sh` and is not on
+the Releases page. See [`docs/DISTRIBUTION.md`](docs/DISTRIBUTION.md).
 
 ## License
 

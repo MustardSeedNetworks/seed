@@ -15,6 +15,7 @@
  */
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import type { ReactNode } from 'react';
 import { afterEach, describe, expect, it } from 'vitest';
 
@@ -38,7 +39,9 @@ function renderCard(node: ReactNode): ReturnType<typeof render> {
 }
 
 const dhcp: DhcpData = {
+  interface: 'eth0',
   mac: '02:00:5e:10:00:00',
+  vendor: 'Example Networks',
   mode: 'dhcp',
   ipv4: {
     address: '192.0.2.10',
@@ -83,10 +86,14 @@ describe('Network page cards — real locale copy', () => {
     renderCard(<NetworkCard data={dhcp} />);
 
     expect(screen.getByText('Network')).toBeInTheDocument();
-    expect(screen.getByText('MAC')).toBeInTheDocument();
-    expect(screen.getByText('Mode')).toBeInTheDocument();
     expect(screen.getByText('Gateway')).toBeInTheDocument();
     expect(screen.getByText('DNS')).toBeInTheDocument();
+
+    await userEvent.click(screen.getByRole('button', { name: 'Details' }));
+    expect(screen.getByText('Interface')).toBeInTheDocument();
+    expect(screen.getByText('MAC')).toBeInTheDocument();
+    expect(screen.getByText('Vendor')).toBeInTheDocument();
+    expect(screen.getByText('Mode')).toBeInTheDocument();
   });
 
   it('labels the Network card in Spanish, with no English left behind', async () => {
@@ -94,10 +101,16 @@ describe('Network page cards — real locale copy', () => {
     renderCard(<NetworkCard data={dhcp} />);
 
     expect(screen.getByText('Red')).toBeInTheDocument();
-    expect(screen.getByText('Modo')).toBeInTheDocument();
     expect(screen.getByText('Puerta de enlace')).toBeInTheDocument();
     expect(screen.queryByText('Network')).not.toBeInTheDocument();
+    expect(screen.queryByText('Details')).not.toBeInTheDocument();
+
+    await userEvent.click(screen.getByRole('button', { name: 'Detalles' }));
+    expect(screen.getByText('Interfaz')).toBeInTheDocument();
+    expect(screen.getByText('Fabricante')).toBeInTheDocument();
+    expect(screen.getByText('Modo')).toBeInTheDocument();
     expect(screen.queryByText('Mode')).not.toBeInTheDocument();
+    expect(screen.queryByText('Vendor')).not.toBeInTheDocument();
 
     // MAC and DNS are protocol names and stay verbatim in both locales.
     expect(screen.getByText('MAC')).toBeInTheDocument();

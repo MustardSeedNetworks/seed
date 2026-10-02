@@ -62,7 +62,7 @@
     "rollupNoAddress": "El enlace está activo sin dirección enrutable",
     "rollupNoAddressBody": "La capa 2 está sana y la capa 3 no. Lo siguiente que hay que revisar es DHCP o la configuración estática.",
     "rollupHalfDuplex": "El enlace negoció semidúplex",
-    "rollupHalfDuplexBody": "El semidúplex en un puerto conmutado casi siempre es un desajuste de negociación y cuesta rendimiento.",
+    "rollupHalfDuplexBody": "El semidúplex en un puerto conmutado casi siempre es un desajuste de negociación y cuesta throughput.",
     "rollupUp": "El enlace está activo a {{speed}}",
     "rollupUnreportedSpeed": "una velocidad no informada",
     "figureSpeed": "Velocidad",
@@ -111,7 +111,7 @@
     "title": "Análisis de ruta"
   },
   "performance": {
-    "description": "Pruebas activas de rendimiento (speedtest, iperf3) y sondas de estado.",
+    "description": "Pruebas activas de throughput (speedtest, iperf3) y sondas de estado.",
     "label": "Rendimiento",
     "title": "Rendimiento"
   },
@@ -147,7 +147,16 @@
     "emptySelectPrompt": "Seleccione un destino para ver su configuración y su cadena de recolectores.",
     "lastPollFailed": "El último sondeo falló",
     "noPollYet": "Aún no se ha completado ningún sondeo",
-    "pollingPaused": "Sondeo pausado"
+    "pollingPaused": "Sondeo pausado",
+    "formCreateTitle": "Agregar destino de sondeo",
+    "formEditTitle": "Editar destino de sondeo",
+    "fieldName": "Nombre",
+    "fieldIpAddress": "Dirección IP",
+    "fieldSnmpVersion": "Versión de SNMP",
+    "fieldPollInterval": "Intervalo de sondeo (segundos)",
+    "nameAndIpRequired": "El nombre y la dirección IP son obligatorios.",
+    "saveFailed": "No se pudo guardar",
+    "saveChanges": "Guardar cambios"
   },
   "reports": {
     "description": "Panel de SLA agregado, seguimiento de cumplimiento e informes históricos.",
@@ -204,14 +213,14 @@
     "anomaliesLoading": "Cargando anomalías…",
     "anomaliesUnavailable": "Los datos de anomalías no están disponibles.",
     "noAnomalies": "No se detectaron anomalías de Wi-Fi.",
-    "capturePlanned": "La captura llega en Seed v1.0 — consulte las notas de la versión cuando se publique la fase 2.5.",
     "liveCaptureOn": "Captura en vivo en <src>{{source}}</src>",
     "captureInactive": "Captura de monitor inactiva — mostrando el último espacio radioeléctrico observado",
     "airspaceTitle": "Espacio radioeléctrico Wi-Fi",
-    "airspaceSubtitle": "Mapa en vivo de SSID / AP / BSSID / clientes a partir de la captura de tramas de gestión 802.11.",
+    "airspaceSubtitle": "Mapa de SSID / AP / BSSID / clientes a partir de los escaneos Wi-Fi, más la captura de tramas de gestión 802.11 cuando el modo monitor está activo.",
+    "clientsWithheld": "Los clientes requieren el nivel Pro.",
     "anomaliesTitle": "Anomalías de Wi-Fi",
     "anomaliesSubtitle": "Anomalías de seguridad, RF, itinerancia y estándares detectadas en el espacio radioeléctrico.",
-    "tierHint": "Disponible en Seed Pro. Ejecute `seed license trial` para una prueba de 14 días.",
+    "tierHint": "Disponible en Seed Starter y Pro. Ejecute `seed license trial` para una prueba de 14 días.",
     "wiredLabel": "Datos inalámbricos",
     "wiredReason": "Esta interfaz es cableada. Cambie a una interfaz Wi-Fi desde la cabecera para ver señal, canales y espacio radioeléctrico.",
     "airspaceLabel": "Espacio radioeléctrico",

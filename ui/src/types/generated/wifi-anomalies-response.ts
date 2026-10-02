@@ -40,10 +40,16 @@ export interface FollowUp {
 export interface Status {
   captureActive: boolean;
   source?: string;
+  lastScan?: string;
   ssids: number;
   aps: number;
   bsses: number;
   stations: number;
   anomalies: number;
   lastEvaluated?: string;
+  needsCapture?: Rule[];
+}
+export interface Rule {
+  id: string;
+  title: string;
 }

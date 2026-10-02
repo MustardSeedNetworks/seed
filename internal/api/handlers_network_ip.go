@@ -68,7 +68,8 @@ type DHCPTimingInfo struct {
 type IPConfigResponse struct {
 	Interface string          `json:"interface"`
 	MAC       string          `json:"mac"`
-	Mode      string          `json:"mode"` // dhcp, static, auto
+	Vendor    string          `json:"vendor,omitempty"` // OUI manufacturer; absent when unregistered
+	Mode      string          `json:"mode"`             // dhcp, static, auto
 	IPv4      *IPv4Info       `json:"ipv4,omitempty"`
 	IPv6      []IPv6Info      `json:"ipv6"`
 	DNS       []string        `json:"dns"`
@@ -160,6 +161,9 @@ func (s *Server) handleIPConfig(w http.ResponseWriter, r *http.Request) {
 		Mode:      "auto", // We'll detect this properly later
 		IPv6:      []IPv6Info{},
 		DNS:       []string{},
+	}
+	if s.deviceDisc != nil {
+		resp.Vendor = s.deviceDisc.GetOUIDatabase().Lookup(ifaceInfo.HardwareAddr)
 	}
 
 	// Parse addresses into IPv4 and IPv6

@@ -24,6 +24,7 @@
     "alerts",
     "fabOptions",
     "displayOptions",
+    "identity",
     "logging",
     "database"
   ],
@@ -88,6 +89,9 @@
     },
     "displayOptions": {
       "$ref": "#/$defs/DisplayOptionsConfig"
+    },
+    "identity": {
+      "$ref": "#/$defs/IdentityConfig"
     },
     "logging": {
       "$ref": "#/$defs/LoggingConfig"
@@ -330,11 +334,8 @@
         "timing",
         "target_networks",
         "enabled",
-        "arp_scan_workers",
-        "ping_timeout",
         "scan_timeout",
         "auto_scan",
-        "scan_interval",
         "oui_file_path",
         "oui_max_age",
         "ipv6_enabled"
@@ -360,18 +361,6 @@
           "description": "Enable network discovery (legacy)",
           "default": true
         },
-        "arp_scan_workers": {
-          "type": "integer",
-          "description": "Number of concurrent ARP scan workers (legacy)",
-          "minimum": 1,
-          "maximum": 500,
-          "default": 50
-        },
-        "ping_timeout": {
-          "$ref": "#/$defs/Duration",
-          "description": "Timeout for each ping (legacy)",
-          "default": "500ms"
-        },
         "scan_timeout": {
           "$ref": "#/$defs/Duration",
           "description": "Total scan timeout (legacy)",
@@ -381,11 +370,6 @@
           "type": "boolean",
           "description": "Auto-scan on startup (legacy)",
           "default": true
-        },
-        "scan_interval": {
-          "$ref": "#/$defs/Duration",
-          "description": "Interval for auto-scan (0 = disabled, legacy)",
-          "default": "0s"
         },
         "oui_file_path": {
           "type": "string",
@@ -553,35 +537,19 @@
           "type": "string",
           "description": "Comma-separated UDP ports or ranges (used when preset is 'custom')",
           "default": ""
-        },
-        "bannerTimeout": {
-          "$ref": "#/$defs/Duration",
-          "description": "Timeout for banner grabbing",
-          "default": "2s"
         }
       }
     },
     "DiscoveryTiming": {
       "type": "object",
-      "description": "Scan frequency and probe intervals",
-      "required": ["probe_interval", "rescan_interval", "workers"],
+      "description": "Scan frequency",
+      "required": ["rescan_interval"],
       "additionalProperties": false,
       "properties": {
-        "probe_interval": {
-          "$ref": "#/$defs/Duration",
-          "description": "Time between sending probes",
-          "default": "75ms"
-        },
         "rescan_interval": {
           "$ref": "#/$defs/Duration",
           "description": "Time between full rescans",
-          "default": "10m"
-        },
-        "workers": {
-          "type": "integer",
-          "description": "Concurrent scan workers",
-          "minimum": 1,
-          "default": 50
+          "default": "1m"
         }
       }
     },
@@ -1543,6 +1511,28 @@
           "description": "Measurement system for distances (sae = feet, metric = meters)",
           "enum": ["sae", "metric"],
           "default": "sae"
+        }
+      }
+    },
+    "IdentityConfig": {
+      "type": "object",
+      "description": "Operator-assigned name and location of this Seed",
+      "required": ["name", "location"],
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Shown in the header and browser tab title; empty means unset",
+          "maxLength": 64,
+          "pattern": "^[^\\x00-\\x1f\\x7f-\\x9f]*$",
+          "default": ""
+        },
+        "location": {
+          "type": "string",
+          "description": "Where this Seed is installed; empty means unset",
+          "maxLength": 128,
+          "pattern": "^[^\\x00-\\x1f\\x7f-\\x9f]*$",
+          "default": ""
         }
       }
     },

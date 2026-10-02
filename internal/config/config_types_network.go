@@ -75,6 +75,15 @@ func (c *InterfaceConfig) AllEthernet() []string {
 	return out
 }
 
+// ResolvedWiFi returns the Wi-Fi interface to scan and report on: the one the
+// operator selected, else the default interface.
+func (c *InterfaceConfig) ResolvedWiFi() string {
+	if c.WiFi != "" {
+		return c.WiFi
+	}
+	return c.Default
+}
+
 // AllWiFi returns the de-duplicated list of Wi-Fi interfaces the
 // operator configured. WiFi is folded in as the first element so the
 // legacy single-interface workflow remains the canonical "primary".
@@ -167,15 +176,11 @@ type NetworkDiscoveryConfig struct {
 	// TargetNetworks to scan in full_scan or custom mode.
 	TargetNetworks []SubnetConfig `json:"target_networks"`
 
-	// Legacy fields (kept for backward compatibility, will be deprecated)
-	Enabled        bool          `json:"enabled"`          // Enable network discovery
-	ARPScanWorkers int           `json:"arp_scan_workers"` // Number of concurrent workers
-	PingTimeout    time.Duration `json:"ping_timeout"`     // Timeout for each ping
-	ScanTimeout    time.Duration `json:"scan_timeout"`     // Total scan timeout
-	AutoScan       bool          `json:"auto_scan"`        // Auto-scan on startup
-	ScanInterval   time.Duration `json:"scan_interval"`    // Interval for auto-scan
-	OUIFilePath    string        `json:"oui_file_path"`    // Path to IEEE OUI file
-	OUIMaxAge      time.Duration `json:"oui_max_age"`      // Max age before auto-download (0 = never auto-update)
+	Enabled     bool          `json:"enabled"`       // Enable network discovery
+	ScanTimeout time.Duration `json:"scan_timeout"`  // Total scan timeout
+	AutoScan    bool          `json:"auto_scan"`     // Auto-scan on startup
+	OUIFilePath string        `json:"oui_file_path"` // Path to IEEE OUI file
+	OUIMaxAge   time.Duration `json:"oui_max_age"`   // Max age before auto-download (0 = never auto-update)
 
 	// Fingerprinting enables OS/service detection.
 	Fingerprinting FingerprintingConfig `json:"fingerprinting,omitzero"`
@@ -200,11 +205,10 @@ type DiscoveryOptions struct {
 
 // PortScanConfig controls port scanning behavior.
 type PortScanConfig struct {
-	Enabled       bool          `json:"enabled"`
-	Preset        PortPreset    `json:"preset"`        // Port preset: common, secure, insecure, custom
-	TCPPorts      string        `json:"tcpPorts"`      // Comma-separated ports or ranges (used when preset is "custom")
-	UDPPorts      string        `json:"udpPorts"`      // Comma-separated ports or ranges (used when preset is "custom")
-	BannerTimeout time.Duration `json:"bannerTimeout"` // Timeout for banner grabbing (default 2s)
+	Enabled  bool       `json:"enabled"`
+	Preset   PortPreset `json:"preset"`   // Port preset: common, secure, insecure, custom
+	TCPPorts string     `json:"tcpPorts"` // Comma-separated ports or ranges (used when preset is "custom")
+	UDPPorts string     `json:"udpPorts"` // Comma-separated ports or ranges (used when preset is "custom")
 }
 
 // GetEffectivePorts returns the TCP and UDP ports based on the preset or custom settings.
@@ -263,11 +267,9 @@ type DeviceProfilerConfig struct {
 	QuickPorts    []int         `json:"quick_ports"`    // Quick scan ports for profiling (default: 22,80,443,8080)
 }
 
-// DiscoveryTiming controls scan frequency and probe intervals.
+// DiscoveryTiming controls scan frequency.
 type DiscoveryTiming struct {
-	ProbeInterval  time.Duration `json:"probe_interval"`  // Time between sending probes (default 75ms)
-	RescanInterval time.Duration `json:"rescan_interval"` // Time between full rescans (default 10m)
-	Workers        int           `json:"workers"`         // Concurrent scan workers (default 50)
+	RescanInterval time.Duration `json:"rescan_interval"` // Time between full rescans (default 1m)
 }
 
 // FingerprintingConfig controls OS and service detection.

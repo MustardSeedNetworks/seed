@@ -6,24 +6,16 @@ import (
 	"context"
 	"database/sql"
 	"errors"
-	"os"
 	"testing"
 	"time"
 
 	"github.com/MustardSeedNetworks/seed/internal/database"
+	"github.com/MustardSeedNetworks/seed/internal/database/dbtest"
 )
 
 func setupAPITokenTest(t *testing.T, owners ...string) (*database.APITokenRepository, context.Context) {
 	t.Helper()
-	tmpFile, err := os.CreateTemp(t.TempDir(), "seed-test-*.db")
-	if err != nil {
-		t.Fatalf("temp file: %v", err)
-	}
-	tmpPath := tmpFile.Name()
-	_ = tmpFile.Close()
-	t.Cleanup(func() { _ = os.Remove(tmpPath) })
-
-	db, openErr := database.Open(tmpPath)
+	db, openErr := database.Open(dbtest.Path(t))
 	if openErr != nil {
 		t.Fatalf("open db: %v", openErr)
 	}

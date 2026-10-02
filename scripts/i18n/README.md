@@ -28,6 +28,7 @@ Conventions live in `msn-docs-internal/05-Engineering/`:
 | `banned-vocab.txt` | One term per line — must NOT appear in any locale file. |
 | `glossary-exceptions.txt` | Per-key allow-list for glossary false positives. |
 | `dynamic-prefixes.txt` | Key prefixes reached by data-driven lookup. Each entry needs a one-line WHY. |
+| `copy-baseline.txt` | Hardcoded copy in props and string literals, ratcheted: it may only shrink. Each group needs a reason. |
 
 ## Usage
 

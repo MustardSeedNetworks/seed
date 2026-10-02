@@ -77,9 +77,9 @@ const deviceColumns: Column<Device>[] = [
     sortable: true,
     render: (d: Device): React.JSX.Element => {
       const statusColors: Record<Device['status'], string> = {
-        online: 'bg-status-success/20 text-status-success',
+        online: 'bg-status-success/20 text-status-success-strong',
         offline: 'bg-status-danger/20 text-status-danger',
-        unknown: 'bg-status-warning/20 text-status-warning',
+        unknown: 'bg-status-warning/20 text-status-warning-strong',
       };
       const statusClass = statusColors[d.status];
       return (
@@ -195,7 +195,7 @@ export const WithActions: Story = {
         }}
         className={cn(
           spacing.chip.sm,
-          'text-xs bg-brand-primary/20 text-brand-primary rounded hover:bg-brand-primary/30',
+          'text-xs bg-brand-primary/15 text-brand-primary-strong rounded hover:bg-brand-primary/20',
         )}
       >
         Details

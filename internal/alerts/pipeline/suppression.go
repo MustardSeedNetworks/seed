@@ -23,9 +23,9 @@ import (
 	"time"
 )
 
-// suppressionStore is the narrow surface alert pipelines need.
+// SuppressionStore is the narrow surface alert pipelines need.
 // Both the in-memory and DB-backed implementations satisfy it.
-type suppressionStore interface {
+type SuppressionStore interface {
 	// IsSuppressed reports whether fingerprint has a fire mark that
 	// has not yet expired.
 	IsSuppressed(ctx context.Context, fingerprint string, now time.Time) (bool, error)
@@ -81,9 +81,9 @@ func (s *inMemorySuppressionStore) Mark(
 
 // NewDBSuppressionStore wires a database-backed suppression store
 // by returning the repo directly — *database.AlertSuppressionsRepository
-// already satisfies suppressionStore. Exported as a constructor so
+// already satisfies SuppressionStore. Exported as a constructor so
 // server.go has a stable seam if we ever need to layer behavior
 // (metrics, retries) above the raw repo.
-func NewDBSuppressionStore(repo suppressionStore) suppressionStore {
+func NewDBSuppressionStore(repo SuppressionStore) SuppressionStore {
 	return repo
 }

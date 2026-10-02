@@ -40,8 +40,8 @@ export function ConnectionNotice({
         radius.lg,
         'mb-default border',
         connecting
-          ? 'border-status-warning/40 bg-status-warning/10 text-status-warning'
-          : 'border-status-error/40 bg-status-error/10 text-status-error',
+          ? 'border-status-warning/40 bg-status-warning/10 text-status-warning-strong'
+          : 'border-status-error/40 bg-status-error/10 text-status-error-strong',
       )}
     >
       <span className="body-small flex items-center gap-tight">

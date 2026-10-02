@@ -13,6 +13,7 @@ import (
 	"time"
 
 	"github.com/MustardSeedNetworks/seed/internal/database"
+	"github.com/MustardSeedNetworks/seed/internal/database/dbtest"
 	"github.com/MustardSeedNetworks/seed/internal/netif"
 	"github.com/MustardSeedNetworks/seed/internal/testutil"
 )
@@ -25,7 +26,7 @@ func routedServer(t *testing.T, username, role string) *Server {
 	t.Helper()
 
 	dir := t.TempDir()
-	db, err := database.Open(filepath.Join(dir, "routes.db"))
+	db, err := database.Open(dbtest.Path(t))
 	if err != nil {
 		t.Fatalf("open db: %v", err)
 	}

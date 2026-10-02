@@ -126,6 +126,7 @@ export interface SNMPFullData {
   inventory?: SNMPEntity[];
   lldpNeighbors?: SNMPLLDPNeighbor[];
   routing?: SNMPRoute[];
+  routingTruncated?: boolean;
   errors?: string[];
 }
 export interface SystemInfo {

@@ -15,6 +15,7 @@ import type { Decorator, Meta, StoryObj } from '@storybook/react-vite';
 import { useState } from 'react';
 import { cn, spacing } from '../../../styles/theme';
 import { AppearanceSettings } from './AppearanceSettings';
+import { expandSections } from './storyPlay';
 
 const meta: Meta<typeof AppearanceSettings> = {
   title: 'Settings/AppearanceSettings',
@@ -47,6 +48,7 @@ const meta: Meta<typeof AppearanceSettings> = {
       </div>
     ),
   ],
+  play: expandSections,
 };
 
 export default meta;

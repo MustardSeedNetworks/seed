@@ -51,11 +51,11 @@ export const SLADashboardCard: React.NamedExoticComponent<SLADashboardCardProps>
           setAnomalyCount(data.activeCount ?? 0);
         }
       } catch (err) {
-        setError(err instanceof Error ? err.message : 'Failed to load anomalies');
+        setError(err instanceof Error ? err.message : t('slaDashboard.loadFailed'));
       } finally {
         setLoading(false);
       }
-    }, []);
+    }, [t]);
 
     useEffect(() => {
       fetchData().catch(() => undefined);
@@ -108,7 +108,7 @@ export const SLADashboardCard: React.NamedExoticComponent<SLADashboardCardProps>
                 {anomalyCount > 0 ? (
                   <span
                     className={cn(
-                      'text-xs px-cell py-0.5 bg-status-warning/10 text-status-warning',
+                      'text-xs px-cell py-0.5 bg-status-warning/10 text-status-warning-strong',
                       radius.full,
                     )}
                   >

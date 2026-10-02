@@ -3,6 +3,7 @@ package visibility_test
 import (
 	"context"
 	"net"
+	"slices"
 	"sync"
 	"testing"
 	"time"
@@ -159,6 +160,28 @@ func TestSourceToggle(t *testing.T) {
 	svc.ClearSource()
 	if svc.Status().CaptureActive {
 		t.Error("after ClearSource: capture should be inactive")
+	}
+}
+
+// TestStatusNamesTheRulesThatNeedCapture: without capture the deauth-flood rule
+// can never fire, so the status must say so rather than let an empty anomaly
+// list read as a clean airspace.
+func TestStatusNamesTheRulesThatNeedCapture(t *testing.T) {
+	svc := visibility.New()
+	want := wifianomaly.CaptureOnlyRules()
+	if len(want) == 0 {
+		t.Fatal("no capture-only rules; the deauth-flood rule reads captured frames")
+	}
+	if got := svc.Status().NeedsCapture; !slices.Equal(got, want) {
+		t.Errorf("no capture: NeedsCapture = %v, want %v", got, want)
+	}
+	svc.SetSource("monitor0")
+	if got := svc.Status().NeedsCapture; len(got) != 0 {
+		t.Errorf("capturing: NeedsCapture = %v, want none", got)
+	}
+	svc.ClearSource()
+	if got := svc.Status().NeedsCapture; !slices.Equal(got, want) {
+		t.Errorf("after ClearSource: NeedsCapture = %v, want %v", got, want)
 	}
 }
 

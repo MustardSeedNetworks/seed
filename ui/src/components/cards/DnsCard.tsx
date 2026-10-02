@@ -45,6 +45,12 @@ interface LookupResult {
   resolved?: string[];
 }
 
+// A lookup that failed or came back empty resolves nothing. `result` is the Go
+// side's message for that case, prose rather than a code, so it is not compared.
+function answeredNothing(lookup: LookupResult): boolean {
+  return !lookup.resolved?.length;
+}
+
 interface ServerTestResult {
   server: string;
   forward: LookupResult | null;
@@ -256,7 +262,7 @@ export const DnsCard: React.MemoExoticComponent<(props: DnsCardProps) => JSX.Ele
                       <span className={layout.inline.default}>
                         <StatusBadge status={server.forward.status} size="sm" />
                         <span className={getStatusColorClass(server.forward.status)}>
-                          {server.forward.result === 'No A record'
+                          {answeredNothing(server.forward)
                             ? 'N/A'
                             : formatTime(server.forward.timeMs)}
                         </span>
@@ -269,7 +275,7 @@ export const DnsCard: React.MemoExoticComponent<(props: DnsCardProps) => JSX.Ele
                       <span className={layout.inline.default}>
                         <StatusBadge status={server.forwardIpv6.status} size="sm" />
                         <span className={getStatusColorClass(server.forwardIpv6.status)}>
-                          {server.forwardIpv6.result === 'No AAAA record'
+                          {answeredNothing(server.forwardIpv6)
                             ? 'N/A'
                             : formatTime(server.forwardIpv6.timeMs)}
                         </span>

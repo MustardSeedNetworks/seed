@@ -95,8 +95,14 @@ jobs:
               # the Go suite even when no .go file moves.
               - 'internal/database/migrations/**'
               - 'internal/database/testdata/**'
+              # The locale catalogue is //go:embed'ed by internal/i18n and
+              # imported by the UI through the @locales alias, so a
+              # translation-only change is an input of both test suites and
+              # of the i18n job that the frontend filter gates.
+              - 'internal/i18n/locales/**'
             frontend:
               - 'ui/**'
+              - 'internal/i18n/locales/**'
             c:
               - 'src/**'
               - 'include/**'
@@ -151,6 +157,11 @@ jobs:
       - name: Build
         working-directory: ui
         run: npm run build
+
+      - name: First-load bundle budget
+        run: |
+          python3 scripts/test-check-initial-bundle.py
+          python3 scripts/check-initial-bundle.py
 
       - name: Upload built UI assets
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
@@ -284,7 +295,7 @@ jobs:
         env:
           GOOS: windows
         with:
-          version: v2.13.2
+          version: v2.14.0
           only-new-issues: true
           # See the Backend (Go) step below: the action's cache key carries no
           # GOOS, so this job and that one share one entry while analysing two
@@ -341,7 +352,7 @@ jobs:
       - name: Run golangci-lint
         uses: golangci/golangci-lint-action@ba0d7d2ec06a0ea1cb5fa41b2e4a3ab91d21278a # v9.3.0
         with:
-          version: v2.13.2
+          version: v2.14.0
           # Full-tree lint verified clean on 2026-08-14. Keep CI aligned with
           # the repository-wide zero-warning policy.
           args: --timeout=5m
@@ -381,6 +392,11 @@ jobs:
       - name: Malformed Tailwind classes
         run: ./scripts/check-tailwind-classes.sh
 
+      - name: Variants on @layer components classes
+        run: |
+          python3 scripts/test-check-component-variants.py
+          python3 scripts/check-component-variants.py
+
       - name: Verify API schemas are up to date
         run: ./scripts/check-schema-drift.sh
 
@@ -417,11 +433,6 @@ jobs:
         run: |
           python3 scripts/test-check-ui-generated-types.py
           python3 scripts/check-ui-generated-types.py
-
-      - name: i18n copy gate — hardcoded copy the shared JSX-text gate cannot see
-        run: |
-          python3 scripts/test-check-i18n-copy.py
-          python3 scripts/check-i18n-copy.py
 
       - name: Feature-catalog gate — every sold feature has a gate in code
         run: |
@@ -819,7 +830,7 @@ jobs:
       # than because nothing was found. A stale security view is worse than an
       # absent one, so this step fails loudly.
       - name: Upload gosec results
-        uses: github/codeql-action/upload-sarif@b96794f015dfd88f77b49b1c93e0fa7110f94c63 # v4.38.0
+        uses: github/codeql-action/upload-sarif@2892aa5e19bbd11bc0cff5427e3b750a04d9e3c2 # v4.38.2
         if: always() && hashFiles('gosec-results.sarif') != ''
         with:
           sarif_file: gosec-results.sarif
@@ -872,7 +883,7 @@ jobs:
       # than because nothing was found. A stale security view is worse than an
       # absent one, so this step fails loudly.
       - name: Upload Trivy results
-        uses: github/codeql-action/upload-sarif@b96794f015dfd88f77b49b1c93e0fa7110f94c63 # v4.38.0
+        uses: github/codeql-action/upload-sarif@2892aa5e19bbd11bc0cff5427e3b750a04d9e3c2 # v4.38.2
         if: always() && hashFiles('trivy-results.sarif') != ''
         with:
           sarif_file: trivy-results.sarif
@@ -957,10 +968,15 @@ jobs:
   # is why this runs per PR rather than on a schedule.
   # Defined once in MustardSeedNetworks/.github (fleet-shared); ci-complete
   # still needs: [ci-conformance].
+  # `id-token: write` is how the reusable workflow learns which commit of
+  # itself is running, so its policy checkout reads the pinned commit instead
+  # of .github@main (a canonical change there reaches this repo only when this
+  # pin moves).
   ci-conformance:
-    uses: MustardSeedNetworks/.github/.github/workflows/ci-conformance.yml@048d173dd72ca0f9e5fa832fb5b9fd2a6447e5e9 # v1.13.0
+    uses: MustardSeedNetworks/.github/.github/workflows/ci-conformance.yml@6b754001cf1d0b14c97c59379fb4275d77c6ece3 # .github#93, untagged
     permissions:
       contents: read
+      id-token: write
 
   # ===========================================================================
   # Code Quality Checks
@@ -1218,7 +1234,7 @@ jobs:
           # falls back to unauthenticated requests and gets rate-limited.
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          pipx install zizmor==1.29.0
+          pipx install zizmor==1.30.1
           zizmor --min-severity high --color always .github/workflows/
 
 
@@ -1261,7 +1277,7 @@ jobs:
           node scripts/check-help-i18n.ts
 
       - name: Run shared i18n validator
-        uses: MustardSeedNetworks/.github/.github/actions/i18n-validate@048d173dd72ca0f9e5fa832fb5b9fd2a6447e5e9 # v1.13.0
+        uses: MustardSeedNetworks/.github/.github/actions/i18n-validate@19e61bef9a6c9d3c15fc47c2bf144a62065617cc # .github#97, untagged
 
   # ===========================================================================
   # Documentation Checks
@@ -1270,7 +1286,7 @@ jobs:
     name: Documentation Quality
     runs-on: ubuntu-latest
     timeout-minutes: 10
-    # The wiki/template checks apply to every PR regardless of which paths
+    # The template check applies to every PR regardless of which paths
     # changed. External link checking is NOT here: it walks every URL in every
     # .md file, took ~6 min (the longest job in this workflow), and failed for
     # reasons unrelated to the diff — dead third-party links — which is why it
@@ -1315,29 +1331,6 @@ jobs:
         uses: DavidAnson/markdownlint-cli2-action@21c1be1b93ad9ed58fa840aacc3f279cde2a72ff # v24.2.0
         with:
           globs: ${{ steps.changed-md.outputs.files }}
-
-      - name: Validate wiki navigation
-        run: |
-          echo "Checking wiki navigation links..."
-          WIKI_DIR="docs/wiki"
-
-          # Extract all wiki links from Home.md
-          HOME_LINKS=$(grep -oP '\]\(\K[^)]+' "$WIKI_DIR/Home.md" | grep -v '^http' | grep -v '^#' || true)
-
-          # Check each link exists as a .md file
-          for link in $HOME_LINKS; do
-            # Convert link to filename (e.g., "Intel-WiFi" -> "Intel-WiFi.md")
-            if [[ ! "$link" =~ \.md$ ]]; then
-              link="$link.md"
-            fi
-
-            if [[ ! -f "$WIKI_DIR/$link" ]]; then
-              echo "ERROR: Broken wiki link: $link (referenced in Home.md but file not found)"
-              exit 1
-            fi
-          done
-
-          echo "All wiki navigation links are valid"
 
       - name: Check template references
         run: |
@@ -1556,7 +1549,7 @@ jobs:
     #     fact break setup-go/setup-node, which write to the root-owned
     #     tool cache.
     #   * setup-go and setup-node both work here and install OUR pins
-    #     (go 1.26.6, node 26.7.0) over the image's bundled node 24.
+    #     (go.mod, .nvmrc) over the image's bundled node 24.
     #   * no gcc, no make, no libpcap — and apt cannot supply them: the image's
     #     sources point at azure.archive.ubuntu.com, unreachable from the
     #     container network. Hence the CGO_ENABLED=0 build, explained in
@@ -1898,6 +1891,31 @@ jobs:
           SEED_IPERF3_TESTS: "1"
         run: go test -count=1 -tags iperf3 -run 'TestReal_' -v ./internal/diagnostics/iperf/
 
+  # Phone width (owner 2026-09-15: everything works at 390x844). The fleet's one
+  # definition of "works" lives in MustardSeedNetworks/.github; this job points
+  # it at seed's own daemon, since every route is behind a session and a static
+  # serve would answer each one with the login screen. The binary is the
+  # CGO-free E2E build (the reusable workflow has no libpcap), started by the
+  # same script and config as scripts/run-e2e.sh; phone-width-sign-in.ts signs
+  # it in with the gate's own Playwright. `routes` must equal pageRegistry's
+  # paths — src/pageRegistry.test.tsx fails when the two diverge.
+  phone-width:
+    needs: [changes]
+    if: needs.changes.outputs.frontend == 'true' || needs.changes.outputs.backend == 'true' || needs.changes.outputs.ci_infra == 'true'
+    permissions:
+      contents: read
+      id-token: write
+    uses: MustardSeedNetworks/.github/.github/workflows/phone-width.yml@042e037814c114aadc2b8b2caaedfba8e0149018 # .github#88, untagged
+    with:
+      base-url: https://127.0.0.1:8443
+      prepare-command: ./scripts/build-backend-e2e.sh
+      start-command: ./scripts/e2e-daemon.sh "$RUNNER_TEMP/seed-phone-width" 8443
+      setup-command: node ui/e2e/phone-width-sign-in.ts
+      storage-state: phone-width-state.json
+      routes: '["/link", "/network", "/path", "/wifi", "/security", "/performance", "/reports", "/logs", "/polling-targets", "/topology", "/alerts"]'
+      rail-testid: sidebar-desktop
+      primary-action-testid: fab-run-all-tests
+
   # Fails the build on any open High/Critical CodeQL alert on the default
   # branch. The CodeQL job itself reports success when the *analysis* succeeds,
   # regardless of what it found, so without this a repository can carry open
@@ -1950,6 +1968,7 @@ jobs:
       - build
       - e2e
       - e2e-smoke
+      - phone-width
       - codeql-alert-gate
     if: always()
     steps:

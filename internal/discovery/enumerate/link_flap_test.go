@@ -58,8 +58,9 @@ func (h *countingHandle) ReadPacketData() ([]byte, gopacket.CaptureInfo, error) 
 	return nil, gopacket.CaptureInfo{}, io.EOF
 }
 
-func (h *countingHandle) SetBPFFilter(string) error { return nil }
-func (h *countingHandle) LinkType() layers.LinkType { return layers.LinkTypeEthernet }
+func (h *countingHandle) SetBPFFilter(string) error    { return nil }
+func (h *countingHandle) LinkType() layers.LinkType    { return layers.LinkTypeEthernet }
+func (h *countingHandle) WritePacketData([]byte) error { return nil }
 
 func (h *countingHandle) Close() {
 	h.mu.Lock()

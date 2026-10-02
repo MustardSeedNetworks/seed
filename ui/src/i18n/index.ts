@@ -2,7 +2,9 @@
  * i18n Configuration
  *
  * Configures react-i18next for internationalization support.
- * Loads translations from shared locale files at /locales/{lang}/*.json
+ * Loads translations from shared locale files at /locales/{lang}/*.json.
+ * English is bundled, since it is the default and every lookup's fallback;
+ * any other language is fetched the first time it is selected.
  *
  * Supported languages:
  * - en: English (default)
@@ -28,16 +30,7 @@ import enHelp from '@locales/en/help.json';
 import enPages from '@locales/en/pages.json';
 import enSettings from '@locales/en/settings.json';
 import enSetup from '@locales/en/setup.json';
-// Import Spanish locale files
-import esCards from '@locales/es/cards.json';
-import esCommon from '@locales/es/common.json';
-import esErrors from '@locales/es/errors.json';
-import esGlossary from '@locales/es/glossary.json';
-import esHelp from '@locales/es/help.json';
-import esPages from '@locales/es/pages.json';
-import esSettings from '@locales/es/settings.json';
-import esSetup from '@locales/es/setup.json';
-import i18n from 'i18next';
+import i18n, { type BackendModule, type ResourceLanguage } from 'i18next';
 import LanguageDetector from 'i18next-browser-languagedetector';
 import { initReactI18next } from 'react-i18next';
 
@@ -73,39 +66,61 @@ export type Namespace = (typeof namespaces)[number];
 export const defaultNs: Namespace = 'common';
 
 /**
- * Resources organized by language and namespace.
+ * Every language but English loads on demand. `supportedLngs` below keeps
+ * i18next from asking for any language this table does not name.
  */
-const resources: { en: Record<string, unknown>; es: Record<string, unknown> } = {
-  en: {
-    common: enCommon,
-    cards: enCards,
-    settings: enSettings,
-    errors: enErrors,
-    glossary: enGlossary,
-    help: enHelp,
-    pages: enPages,
-    setup: enSetup,
-  },
-  es: {
-    common: esCommon,
-    cards: esCards,
-    settings: esSettings,
-    errors: esErrors,
-    glossary: esGlossary,
-    help: esHelp,
-    pages: esPages,
-    setup: esSetup,
+const lazyLanguages: ReadonlyMap<string, () => Promise<ResourceLanguage>> = new Map([
+  ['es', () => import('./es').then((m) => m.es)],
+]);
+
+const lazyLanguageBackend: BackendModule = {
+  type: 'backend',
+  init: () => undefined,
+  read: (language, namespace, callback) => {
+    const load = lazyLanguages.get(language);
+    if (!load) {
+      // English: bundled, so a reload has nothing to add.
+      callback(null, {});
+      return;
+    }
+    load().then(
+      (resources) => callback(null, resources[namespace]),
+      (error: unknown) =>
+        callback(error instanceof Error ? error : new Error(String(error)), false),
+    );
   },
 };
 
-i18n
+/**
+ * Resolves once the active language's resources are in place. The entry point
+ * awaits it before the first render, so a Spanish session never paints English.
+ */
+export const i18nReady: Promise<unknown> = i18n
+  .use(lazyLanguageBackend)
   // Detect user language from browser/localStorage
   .use(LanguageDetector)
   // Pass i18n instance to react-i18next
   .use(initReactI18next)
   // Initialize i18next
   .init({
-    resources: resources as Parameters<typeof i18n.init>[0]['resources'],
+    resources: {
+      en: {
+        common: enCommon,
+        cards: enCards,
+        settings: enSettings,
+        errors: enErrors,
+        glossary: enGlossary,
+        help: enHelp,
+        pages: enPages,
+        setup: enSetup,
+      },
+    },
+    // Only the languages missing from `resources` go to the backend.
+    partialBundledLanguages: true,
+    supportedLngs: languages.map((language) => language.code),
+    // `es-MX` is served by `es`, as it was when both were bundled.
+    nonExplicitSupportedLngs: true,
+    load: 'languageOnly',
     fallbackLng: 'en',
     defaultNS: defaultNs,
     ns: namespaces,

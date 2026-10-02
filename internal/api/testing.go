@@ -72,6 +72,11 @@ func (s *Server) Close() {
 	if s.sse != nil {
 		s.sse.Shutdown()
 	}
+
+	// The gateway tester opened an ICMP socket at construction (#2719).
+	if s.gatewayTest != nil {
+		s.gatewayTest.Close()
+	}
 }
 
 // GetAuthenticatedHandler returns the mux behind CORS and the JWT middleware
@@ -142,7 +147,6 @@ func NewTestServerWithConfig(cfg *config.Config) *Server {
 
 	// Initialize lightweight telemetry services (no slow I/O)
 	s.dnsTest = dns.NewTesterForInterface("", cfg.DNS.TestHostname, dns.DefaultThresholds(), cfg.Interface.Default)
-	s.dnsSec = dns.NewSecurityScanner(dns.DefaultSecurityScanConfig())
 	s.dhcpMon = dhcp.NewMonitor(cfg.Interface.Default)
 	s.gatewayTest = gateway.NewTester(gateway.DefaultThresholds())
 	s.vlanMgr = vlan.NewManager(cfg.Interface.Default)

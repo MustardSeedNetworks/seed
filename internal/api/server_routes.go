@@ -28,6 +28,7 @@ func (s *Server) setupRoutes() {
 	s.setupReportingRoutes()
 	s.setupTopologyRoutes()
 	s.registerAll(s.jobsRoutes())
+	s.registerAll(s.captureRoutes())
 	s.setupSSEAndStatic()
 }
 
@@ -418,17 +419,6 @@ func (s *Server) setupTelemetryRoutes() {
 			methods: get,
 		},
 		{path: APIVersionPrefix + "/telemetry/dns", handler: s.handleDNS, methods: getPost},
-		{
-			path:    APIVersionPrefix + "/telemetry/dns/security",
-			handler: s.handleDNSSecurity,
-			methods: getPost,
-		},
-		{
-			path:    APIVersionPrefix + "/telemetry/dns/security/settings",
-			handler: s.handleDNSSecuritySettings,
-			methods: getPut,
-			minRole: op,
-		},
 		{path: APIVersionPrefix + "/telemetry/gateway", handler: s.handleGateway, methods: get},
 		// Reads the lease this host already holds — no DISCOVER is sent and no
 		// target is supplied, so it is a read of local state rather than an
@@ -596,10 +586,14 @@ func (s *Server) setupSecurityRoutes() {
 	crud := []string{http.MethodGet, http.MethodPost, http.MethodPut, http.MethodDelete}
 	s.registerAll([]route{
 		{path: APIVersionPrefix + "/security/discovery", handler: s.handleDiscovery, methods: get},
+		// probe and fingerprint connect to a caller-named host just as
+		// portscan does, so they carry the same gate (#2635).
 		{
-			path:    APIVersionPrefix + "/security/discovery/probe",
-			handler: s.handleTCPProbe,
-			methods: post,
+			path:        APIVersionPrefix + "/security/discovery/probe",
+			handler:     s.handleTCPProbe,
+			methods:     post,
+			minRole:     op,
+			rateLimited: true,
 		},
 		// Port scanning is an active, outbound operation against an
 		// operator-supplied target. Every sibling active scan in this file
@@ -626,9 +620,11 @@ func (s *Server) setupSecurityRoutes() {
 			methods: get,
 		},
 		{
-			path:    APIVersionPrefix + "/security/discovery/fingerprint",
-			handler: s.handleAdvancedFingerprint,
-			methods: post,
+			path:        APIVersionPrefix + "/security/discovery/fingerprint",
+			handler:     s.handleAdvancedFingerprint,
+			methods:     post,
+			minRole:     op,
+			rateLimited: true,
 		},
 		{path: APIVersionPrefix + "/security/devices", handler: s.handleDevices, methods: getPost},
 		{
@@ -870,20 +866,20 @@ func (s *Server) setupWiFiRoutes() {
 			handler: s.handleWiFiChannelGraph,
 			methods: get,
 		},
-		// Pro: monitor-mode airspace visibility + anomaly stream (W5). Read-only;
-		// the capture source feeds the model out-of-band. Feature-gated so the
-		// tree/forensics surface stays on the Pro tier (LICENSE_STRATEGY.md).
+		// Starter: the airspace tree + anomaly stream (#2351). Read-only; the
+		// scan and capture sources feed the model out-of-band. Free keeps the
+		// raw scan above; the clients inside the tree are Pro (see the handler).
 		{
 			path:    APIVersionPrefix + "/wifi/airspace",
 			handler: s.handleWiFiAirspace,
 			methods: get,
-			feature: "wifi_management_capture",
+			feature: "wifi_analysis",
 		},
 		{
 			path:    APIVersionPrefix + "/wifi/anomalies",
 			handler: s.handleWiFiAnomalies,
 			methods: get,
-			feature: "wifi_association_forensics",
+			feature: "wifi_analysis",
 		},
 		{
 			path:    APIVersionPrefix + "/wifi/wifi/settings",

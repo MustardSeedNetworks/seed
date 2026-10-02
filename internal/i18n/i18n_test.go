@@ -137,6 +137,52 @@ func TestLocalizerTWithData(t *testing.T) {
 	}
 }
 
+// The locale files are shared with the UI, so their placeholders are
+// i18next's `{{name}}`. Every API message that takes data used to come back
+// as its raw key, because go-i18n's default parser reads `{{service}}` as a
+// call to an undefined template function.
+func TestLocalizerTWithDataInterpolates(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		lang, key string
+		data      map[string]any
+		want      string
+	}{
+		{
+			"en", "errors.service.notAvailable",
+			map[string]any{"service": "Cable tester"},
+			"Cable tester not available",
+		},
+		{
+			"es", "validation.port.invalidRange",
+			map[string]any{"value": 70000},
+			"puerto debe estar entre 1 y 65535, recibido 70000",
+		},
+		{
+			"en", "errors.validation.invalidRange",
+			map[string]any{"field": "VLAN", "min": 1, "max": 4094},
+			"VLAN must be between 1 and 4094",
+		},
+	}
+	for _, tc := range tests {
+		if got := i18n.NewLocalizer(tc.lang).TWithData(tc.key, tc.data); got != tc.want {
+			t.Errorf("%s %s = %q, want %q", tc.lang, tc.key, got, tc.want)
+		}
+	}
+}
+
+// A placeholder with no value is a caller bug, and it falls back to the key
+// like any other failed lookup rather than shipping "{{service}} not available".
+func TestLocalizerMissingPlaceholderFallsBackToKey(t *testing.T) {
+	t.Parallel()
+
+	key := "errors.service.notAvailable"
+	if got := i18n.NewLocalizer("en").T(key); got != key {
+		t.Errorf("T(%q) without data = %q, want the key", key, got)
+	}
+}
+
 func TestIsSupported(t *testing.T) {
 	// Note: IsSupported normalizes languages first, so unsupported languages
 	// normalize to the default "en" which is supported, returning true.

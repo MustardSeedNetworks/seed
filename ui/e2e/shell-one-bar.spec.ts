@@ -21,6 +21,7 @@
 import { expect, type Page, test } from '@playwright/test';
 
 import { AUTH_STORAGE_STATE, disableAnimations } from './helpers/auth';
+import { expectFocused } from './helpers/focus';
 
 const DESKTOP = { width: 1440, height: 900 };
 const PHONE = { width: 390, height: 844 };
@@ -121,7 +122,7 @@ test.describe('the rail carries the shell controls', () => {
     const toggle = railControl(page, 'rail-theme-toggle');
     await expect(toggle).toBeVisible();
     await toggle.focus();
-    await expect(toggle).toBeFocused();
+    await expectFocused(toggle);
 
     const before = await page.evaluate(() => document.documentElement.classList.contains('dark'));
     await toggle.press('Enter');

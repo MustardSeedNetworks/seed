@@ -57,6 +57,7 @@ type Candidate struct {
 type Route struct {
 	Destination string
 	Prefix      int
+	NextHop     string
 	Type        string
 	Protocol    string
 }
@@ -77,10 +78,13 @@ type Address struct {
 }
 
 // Device is one discovered device's view of the networks around it.
+// Neighbours are the management addresses its LLDP or CDP neighbours
+// advertise.
 type Device struct {
-	IP        string
-	Routes    []Route
-	Addresses []Address
+	IP         string
+	Routes     []Route
+	Addresses  []Address
+	Neighbours []string
 }
 
 // Candidates returns the private IPv4 networks named by Seed's own forwarding
@@ -109,6 +113,47 @@ func Candidates(devices []Device, host []HostRoute, local []netip.Prefix) []Cand
 	addHostRoutes(host, add)
 	addDeviceTables(devices, add)
 
+	return out
+}
+
+// evidenceRoutePrefix is the widest route whose destination is evidence for the
+// /24 it sits in; anything wider is a summary that names no /24 in particular.
+const evidenceRoutePrefix = 24
+
+// Evidence returns the IPv4 addresses discovery has seen in use: each device's
+// own address, its interface addresses, its neighbours' management addresses,
+// its routes' next hops and the destinations of its routes no wider than a /24
+// (seed#2832).
+//
+// A learned summary is wider than one sweep may probe, and these addresses
+// are what tell the sweeper which /24s inside it hold something. A summary
+// route is not evidence for the /24 at its bottom, which is why a route wider
+// than a /24 contributes only its next hop; nor is a network the router drops.
+func Evidence(devices []Device) []netip.Addr {
+	var out []netip.Addr
+	add := func(address string) {
+		if addr, err := netip.ParseAddr(address); err == nil && addr.Is4() {
+			out = append(out, addr)
+		}
+	}
+	for _, device := range devices {
+		add(device.IP)
+		for _, address := range device.Addresses {
+			add(address.Address)
+		}
+		for _, neighbour := range device.Neighbours {
+			add(neighbour)
+		}
+		for _, route := range device.Routes {
+			if route.Type == typeReject || route.Type == typeBlackhole {
+				continue
+			}
+			add(route.NextHop)
+			if route.Prefix >= evidenceRoutePrefix {
+				add(route.Destination)
+			}
+		}
+	}
 	return out
 }
 

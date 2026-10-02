@@ -40,9 +40,10 @@ func (h *fakeHandle) ReadPacketData() ([]byte, gopacket.CaptureInfo, error) {
 	return d, gopacket.CaptureInfo{}, nil
 }
 
-func (h *fakeHandle) SetBPFFilter(string) error { return nil }
-func (h *fakeHandle) LinkType() layers.LinkType { return h.linkType }
-func (h *fakeHandle) Close()                    { h.mu.Lock(); h.closed = true; h.mu.Unlock() }
+func (h *fakeHandle) SetBPFFilter(string) error    { return nil }
+func (h *fakeHandle) LinkType() layers.LinkType    { return h.linkType }
+func (h *fakeHandle) WritePacketData([]byte) error { return nil }
+func (h *fakeHandle) Close()                       { h.mu.Lock(); h.closed = true; h.mu.Unlock() }
 
 type fakeOpener struct {
 	handle capture.Handle
@@ -285,7 +286,8 @@ func (h *panickingHandle) ReadPacketData() ([]byte, gopacket.CaptureInfo, error)
 	return beaconBytes("corp"), gopacket.CaptureInfo{}, nil
 }
 
-func (h *panickingHandle) LinkType() layers.LinkType { return layers.LinkTypeIEEE80211Radio }
+func (h *panickingHandle) LinkType() layers.LinkType    { return layers.LinkTypeIEEE80211Radio }
+func (h *panickingHandle) WritePacketData([]byte) error { return nil }
 
 func (h *panickingHandle) SetBPFFilter(string) error { return nil }
 

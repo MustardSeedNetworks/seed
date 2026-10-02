@@ -18,13 +18,16 @@
 import type { Decorator, Meta, StoryObj } from '@storybook/react-vite';
 import type React from 'react';
 import { useState } from 'react';
+import { fn } from 'storybook/test';
 import type {
   IperfSettings,
   IperfSuggestion,
   SaveStatus,
   TestsSettings,
 } from '../../../types/settings';
+import { DEFAULT_CARD_SETTINGS } from '../../../types/settings';
 import { PerformanceSettings } from './PerformanceSettings';
+import { expandSections } from './storyPlay';
 
 const baseTestsSettings: TestsSettings = {
   dnsHostname: 'google.com',
@@ -57,7 +60,7 @@ const mockIperfSuggestions: IperfSuggestion[] = [
   { host: '192.168.1.102', latencyMs: 8 },
 ];
 
-const meta: Meta<typeof PerformanceSettings> = {
+const meta = {
   title: 'Settings/performance-settings',
   component: PerformanceSettings,
   parameters: {
@@ -89,7 +92,21 @@ const meta: Meta<typeof PerformanceSettings> = {
       </div>
     ),
   ],
-};
+  args: {
+    testsSettings: baseTestsSettings,
+    setTestsSettings: fn(),
+    iperfSettings: defaultIperfSettings,
+    setIperfSettings: fn(),
+    iperfStatus: 'idle',
+    iperfSuggestions: [],
+    iperfSuggestionsStatus: 'idle',
+    iperfSuggestionsError: null,
+    fetchIperfSuggestions: fn(),
+    cardSettings: DEFAULT_CARD_SETTINGS,
+    updateCardSettings: fn(),
+  },
+  play: expandSections,
+} satisfies Meta<typeof PerformanceSettings>;
 
 export default meta;
 type Story = StoryObj<typeof meta>;
@@ -100,20 +117,11 @@ type Story = StoryObj<typeof meta>;
 export const Default: Story = {
   args: {
     testsSettings: baseTestsSettings,
-    setTestsSettings: (): void => {
-      // intentionally empty
-    },
     iperfSettings: defaultIperfSettings,
-    setIperfSettings: (): void => {
-      // intentionally empty
-    },
     iperfStatus: 'idle',
     iperfSuggestions: [],
     iperfSuggestionsStatus: 'idle',
     iperfSuggestionsError: null,
-    fetchIperfSuggestions: (): void => {
-      // intentionally empty
-    },
   },
 };
 
@@ -127,20 +135,11 @@ export const OnlySpeedtest: Story = {
       runSpeedtest: true,
       runIperf: false,
     },
-    setTestsSettings: (): void => {
-      // intentionally empty
-    },
     iperfSettings: defaultIperfSettings,
-    setIperfSettings: (): void => {
-      // intentionally empty
-    },
     iperfStatus: 'idle',
     iperfSuggestions: [],
     iperfSuggestionsStatus: 'idle',
     iperfSuggestionsError: null,
-    fetchIperfSuggestions: (): void => {
-      // intentionally empty
-    },
   },
 };
 
@@ -154,20 +153,11 @@ export const OnlyIperf: Story = {
       runSpeedtest: false,
       runIperf: true,
     },
-    setTestsSettings: (): void => {
-      // intentionally empty
-    },
     iperfSettings: defaultIperfSettings,
-    setIperfSettings: (): void => {
-      // intentionally empty
-    },
     iperfStatus: 'idle',
     iperfSuggestions: [],
     iperfSuggestionsStatus: 'idle',
     iperfSuggestionsError: null,
-    fetchIperfSuggestions: (): void => {
-      // intentionally empty
-    },
   },
 };
 
@@ -181,20 +171,11 @@ export const BothDisabled: Story = {
       runSpeedtest: false,
       runIperf: false,
     },
-    setTestsSettings: (): void => {
-      // intentionally empty
-    },
     iperfSettings: defaultIperfSettings,
-    setIperfSettings: (): void => {
-      // intentionally empty
-    },
     iperfStatus: 'idle',
     iperfSuggestions: [],
     iperfSuggestionsStatus: 'idle',
     iperfSuggestionsError: null,
-    fetchIperfSuggestions: (): void => {
-      // intentionally empty
-    },
   },
 };
 
@@ -208,20 +189,11 @@ export const AutoRunEnabled: Story = {
       speedtest: { serverId: '', autoRunOnLink: true },
       iperf: { autoRunOnLink: true },
     },
-    setTestsSettings: (): void => {
-      // intentionally empty
-    },
     iperfSettings: defaultIperfSettings,
-    setIperfSettings: (): void => {
-      // intentionally empty
-    },
     iperfStatus: 'idle',
     iperfSuggestions: [],
     iperfSuggestionsStatus: 'idle',
     iperfSuggestionsError: null,
-    fetchIperfSuggestions: (): void => {
-      // intentionally empty
-    },
   },
 };
 
@@ -231,9 +203,6 @@ export const AutoRunEnabled: Story = {
 export const IperfWithServer: Story = {
   args: {
     testsSettings: baseTestsSettings,
-    setTestsSettings: (): void => {
-      // intentionally empty
-    },
     iperfSettings: {
       server: '192.168.1.100',
       port: 5201,
@@ -243,16 +212,10 @@ export const IperfWithServer: Story = {
       enableServer: false,
       serverPort: 5201,
     },
-    setIperfSettings: (): void => {
-      // intentionally empty
-    },
     iperfStatus: 'idle',
     iperfSuggestions: [],
     iperfSuggestionsStatus: 'idle',
     iperfSuggestionsError: null,
-    fetchIperfSuggestions: (): void => {
-      // intentionally empty
-    },
   },
 };
 
@@ -262,9 +225,6 @@ export const IperfWithServer: Story = {
 export const IperfServerMode: Story = {
   args: {
     testsSettings: baseTestsSettings,
-    setTestsSettings: (): void => {
-      // intentionally empty
-    },
     iperfSettings: {
       server: '192.168.1.100',
       port: 5201,
@@ -274,16 +234,10 @@ export const IperfServerMode: Story = {
       enableServer: true,
       serverPort: 5202,
     },
-    setIperfSettings: (): void => {
-      // intentionally empty
-    },
     iperfStatus: 'idle',
     iperfSuggestions: [],
     iperfSuggestionsStatus: 'idle',
     iperfSuggestionsError: null,
-    fetchIperfSuggestions: (): void => {
-      // intentionally empty
-    },
   },
 };
 
@@ -293,20 +247,11 @@ export const IperfServerMode: Story = {
 export const WithIperfSuggestions: Story = {
   args: {
     testsSettings: baseTestsSettings,
-    setTestsSettings: (): void => {
-      // intentionally empty
-    },
     iperfSettings: defaultIperfSettings,
-    setIperfSettings: (): void => {
-      // intentionally empty
-    },
     iperfStatus: 'idle',
     iperfSuggestions: mockIperfSuggestions,
     iperfSuggestionsStatus: 'idle',
     iperfSuggestionsError: null,
-    fetchIperfSuggestions: (): void => {
-      // intentionally empty
-    },
   },
 };
 
@@ -316,20 +261,11 @@ export const WithIperfSuggestions: Story = {
 export const SuggestionsLoading: Story = {
   args: {
     testsSettings: baseTestsSettings,
-    setTestsSettings: (): void => {
-      // intentionally empty
-    },
     iperfSettings: defaultIperfSettings,
-    setIperfSettings: (): void => {
-      // intentionally empty
-    },
     iperfStatus: 'idle',
     iperfSuggestions: [],
     iperfSuggestionsStatus: 'loading',
     iperfSuggestionsError: null,
-    fetchIperfSuggestions: (): void => {
-      // intentionally empty
-    },
   },
 };
 
@@ -339,20 +275,11 @@ export const SuggestionsLoading: Story = {
 export const SuggestionsError: Story = {
   args: {
     testsSettings: baseTestsSettings,
-    setTestsSettings: (): void => {
-      // intentionally empty
-    },
     iperfSettings: defaultIperfSettings,
-    setIperfSettings: (): void => {
-      // intentionally empty
-    },
     iperfStatus: 'idle',
     iperfSuggestions: [],
     iperfSuggestionsStatus: 'error',
     iperfSuggestionsError: 'No iperf hosts found on network',
-    fetchIperfSuggestions: (): void => {
-      // intentionally empty
-    },
   },
 };
 
@@ -362,24 +289,15 @@ export const SuggestionsError: Story = {
 export const UdpProtocol: Story = {
   args: {
     testsSettings: baseTestsSettings,
-    setTestsSettings: (): void => {
-      // intentionally empty
-    },
     iperfSettings: {
       ...defaultIperfSettings,
       protocol: 'udp',
       server: '192.168.1.100',
     },
-    setIperfSettings: (): void => {
-      // intentionally empty
-    },
     iperfStatus: 'idle',
     iperfSuggestions: [],
     iperfSuggestionsStatus: 'idle',
     iperfSuggestionsError: null,
-    fetchIperfSuggestions: (): void => {
-      // intentionally empty
-    },
   },
 };
 
@@ -389,24 +307,15 @@ export const UdpProtocol: Story = {
 export const UploadDirection: Story = {
   args: {
     testsSettings: baseTestsSettings,
-    setTestsSettings: (): void => {
-      // intentionally empty
-    },
     iperfSettings: {
       ...defaultIperfSettings,
       direction: 'upload',
       server: '192.168.1.100',
     },
-    setIperfSettings: (): void => {
-      // intentionally empty
-    },
     iperfStatus: 'idle',
     iperfSuggestions: [],
     iperfSuggestionsStatus: 'idle',
     iperfSuggestionsError: null,
-    fetchIperfSuggestions: (): void => {
-      // intentionally empty
-    },
   },
 };
 
@@ -416,24 +325,15 @@ export const UploadDirection: Story = {
 export const Bidirectional: Story = {
   args: {
     testsSettings: baseTestsSettings,
-    setTestsSettings: (): void => {
-      // intentionally empty
-    },
     iperfSettings: {
       ...defaultIperfSettings,
       direction: 'bidirectional',
       server: '192.168.1.100',
     },
-    setIperfSettings: (): void => {
-      // intentionally empty
-    },
     iperfStatus: 'idle',
     iperfSuggestions: [],
     iperfSuggestionsStatus: 'idle',
     iperfSuggestionsError: null,
-    fetchIperfSuggestions: (): void => {
-      // intentionally empty
-    },
   },
 };
 
@@ -446,20 +346,11 @@ export const CustomSpeedtestServer: Story = {
       ...baseTestsSettings,
       speedtest: { serverId: '12345', autoRunOnLink: false },
     },
-    setTestsSettings: (): void => {
-      // intentionally empty
-    },
     iperfSettings: defaultIperfSettings,
-    setIperfSettings: (): void => {
-      // intentionally empty
-    },
     iperfStatus: 'idle',
     iperfSuggestions: [],
     iperfSuggestionsStatus: 'idle',
     iperfSuggestionsError: null,
-    fetchIperfSuggestions: (): void => {
-      // intentionally empty
-    },
   },
 };
 
@@ -469,20 +360,11 @@ export const CustomSpeedtestServer: Story = {
 export const Saving: Story = {
   args: {
     testsSettings: baseTestsSettings,
-    setTestsSettings: (): void => {
-      // intentionally empty
-    },
     iperfSettings: defaultIperfSettings,
-    setIperfSettings: (): void => {
-      // intentionally empty
-    },
     iperfStatus: 'saving',
     iperfSuggestions: [],
     iperfSuggestionsStatus: 'idle',
     iperfSuggestionsError: null,
-    fetchIperfSuggestions: (): void => {
-      // intentionally empty
-    },
   },
 };
 
@@ -527,7 +409,7 @@ export const Interactive: Story = {
         iperfSuggestionsStatus={suggestionsStatus}
         iperfSuggestionsError={null}
         fetchIperfSuggestions={handleFetchSuggestions}
-        cardSettings={{} as never}
+        cardSettings={DEFAULT_CARD_SETTINGS}
         updateCardSettings={() => {}}
       />
     );

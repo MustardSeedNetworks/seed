@@ -6,6 +6,7 @@
  * of them is exactly the gap both were written to close.
  */
 
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import type { ReactElement } from 'react';
 
 import {
@@ -22,11 +23,15 @@ import {
   type IpSettings,
 } from '../../../types/settings';
 import { SettingsDrawerNetworkSection } from '../SettingsDrawerNetworkSection';
+import { AlertDeliverySettings } from './AlertDeliverySettings';
+import { ApiTokensSettings } from './ApiTokensSettings';
 import { AppearanceSettings } from './AppearanceSettings';
 import { CableTestSettings } from './CableTestSettings';
 import { ConfigBackupsSection } from './ConfigBackupsSection';
+import { DeviceIdentitySettings } from './DeviceIdentitySettings';
 import { DiscoverySettings } from './DiscoverySettings';
 import { DnsSettings } from './DnsSettings';
+import { GuestNetworkAuditSettings } from './GuestNetworkAuditSettings';
 import { HealthChecksSettings } from './HealthChecksSettings';
 import { InterfacesSettings } from './InterfacesSettings';
 import { LinkSettings } from './LinkSettings';
@@ -123,6 +128,20 @@ export const SECTIONS: SectionFixture[] = [
         cardSettings={DEFAULT_CARD_SETTINGS}
         updateCardSettings={noop}
       />
+    ),
+  },
+  {
+    name: 'DeviceIdentitySettings',
+    header: /device identity|identidad del equipo/i,
+    // The identity is a shared query (the header reads it too), so the
+    // section needs a client of its own; a fresh one per render keeps a
+    // cached identity from leaking between cases.
+    render: () => (
+      <QueryClientProvider
+        client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}
+      >
+        <DeviceIdentitySettings />
+      </QueryClientProvider>
     ),
   },
   {
@@ -272,7 +291,9 @@ export const RAW_GET_BODIES: Record<string, unknown> = {
  * i18n suite still has to read. WiFiSettings gates per control (its Forget and
  * Disconnect buttons are writes beside a live scan) and UsersSettings is
  * admin-only, so neither belongs in the two tables above — but a section left
- * out of the copy assertion is exactly the gap S1-14c exists to close.
+ * out of the copy assertion is exactly the gap S1-14c exists to close. The
+ * last three each disable their own writes for a viewer rather than sitting
+ * behind a fieldset, so they join here (#2835).
  */
 export const COPY_ONLY_SECTIONS: SectionFixture[] = [
   {
@@ -287,4 +308,35 @@ export const COPY_ONLY_SECTIONS: SectionFixture[] = [
     ),
   },
   { name: 'UsersSettings', header: /users|usuarios/i, render: () => <UsersSettings /> },
+  {
+    name: 'AlertDeliverySettings',
+    header: /alert delivery/i,
+    render: () => <AlertDeliverySettings />,
+  },
+  { name: 'ApiTokensSettings', header: /api tokens/i, render: () => <ApiTokensSettings /> },
+  {
+    name: 'GuestNetworkAuditSettings',
+    header: /guest network audit/i,
+    render: () => <GuestNetworkAuditSettings />,
+  },
 ];
+
+/**
+ * What the sections above read through the `api` client, so each renders its
+ * populated state — a token row, a stored receiver, an audit target — rather
+ * than only the empty one, whose copy is a fraction of the section's.
+ */
+export const API_GET_BODIES: Record<string, unknown> = {
+  '/api/v1/tokens': [
+    { id: 'tok-1', name: 'monitoring', prefix: 'sd_pat_ab', createdAt: '2026-09-07T00:00:00Z' },
+  ],
+  '/api/v1/security/guest-audit/settings': {
+    enabled: true,
+    targets: [{ ip: '10.0.0.1', label: 'core' }],
+    ports: [22, 443],
+  },
+  '/api/v1/settings': {
+    alerts: { webhook: { url: 'https://hooks.example.test/seed', secretSet: true } },
+    identity: { name: 'seed-idf-3b', location: 'idf-3b-rack-12' },
+  },
+};

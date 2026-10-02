@@ -44,12 +44,29 @@ describe('FeatureUnavailable', () => {
     );
 
     expect(
-      await screen.findByText('Cable diagnostics (TDR) is not available on this platform'),
+      await screen.findByText('Cable diagnostics (TDR): not available on this platform'),
     ).toBeInTheDocument();
     // The note comes from internal/capabilities, so the API, the banner and
     // HARDWARE.md all say the same words.
     expect(screen.getByText('No macOS API exposes TDR.')).toBeInTheDocument();
     expect(screen.queryByText('Cable test')).not.toBeInTheDocument();
+  });
+
+  it('reads correctly for a plural feature title', async () => {
+    // Titles come from internal/capabilities and are not all singular, so the
+    // heading must not make a verb agree with them ("Driver error counters is").
+    withCapabilities([
+      { capability: 'driver_statistics', title: 'Driver error counters', level: 'none' },
+    ]);
+    render(
+      <FeatureUnavailable capability="driver_statistics">
+        <p>Driver stats</p>
+      </FeatureUnavailable>,
+    );
+
+    expect(
+      await screen.findByText('Driver error counters: not available on this platform'),
+    ).toBeInTheDocument();
   });
 
   it('renders the feature when the platform supports it', async () => {

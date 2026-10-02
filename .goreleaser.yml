@@ -264,7 +264,7 @@ signs:
 # job (needs: [goreleaser]).
 #
 # There is no tap and there will not be one — owner decision, 2026-09-07. Do not
-# re-add a brews: block. macOS is served by the .pkg installer.
+# re-add a brews: block. macOS ships as the .tar.gz above (see the header).
 
 release:
   github:

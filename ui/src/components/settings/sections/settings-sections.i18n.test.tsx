@@ -31,6 +31,7 @@ import { type CurrentUser, RoleProvider } from '../../../contexts/RoleContext';
 import i18n from '../../../i18n';
 import { DNT_TERMS } from '../../../i18n/dnt';
 import {
+  API_GET_BODIES,
   COPY_ONLY_SECTIONS,
   MIXED_SECTIONS,
   RAW_GET_BODIES,
@@ -55,8 +56,12 @@ vi.mock('../../../api', () => ({
   },
 }));
 vi.mock('../../../contexts/LicenseContext', () => ({
-  useLicense: (): { status: { features: string[] } } => ({
-    status: { features: ['sso', 'multi_interface'] },
+  useLicense: (): {
+    status: { features: string[]; tier: string; canMintTokens: boolean };
+    refresh: () => Promise<void>;
+  } => ({
+    status: { features: ['sso', 'multi_interface'], tier: 'Pro', canMintTokens: true },
+    refresh: () => Promise.resolve(),
   }),
 }));
 vi.mock('../../../contexts/profileContext', () => ({
@@ -235,13 +240,21 @@ function untranslated(section: HTMLElement): string[] {
 function asUser(role: CurrentUser['role']): void {
   mockGet.mockImplementation((path: string) => {
     if (path.includes('/users/me')) {
-      return Promise.resolve({ username: 'u', role, isActive: true });
+      return Promise.resolve({
+        id: 1,
+        username: 'u',
+        role,
+        isActive: true,
+        authProvider: 'local',
+        createdAt: '2026-09-07T00:00:00Z',
+      });
     }
     if (path.includes('/sso/settings')) {
       return Promise.resolve({ providers: [] });
     }
+    const body = Object.entries(API_GET_BODIES).find(([route]) => path === route);
 
-    return Promise.resolve({});
+    return Promise.resolve(body === undefined ? {} : body[1]);
   });
 }
 

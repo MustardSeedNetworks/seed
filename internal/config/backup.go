@@ -2,7 +2,6 @@ package config
 
 import (
 	"encoding/json"
-	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -10,8 +9,15 @@ import (
 	"strings"
 	"time"
 
+	"github.com/MustardSeedNetworks/seed/internal/fsutil"
 	"github.com/MustardSeedNetworks/seed/internal/logging"
 )
+
+// backupFileMode is the permission set for a written backup or restored
+// config file: owner read/write only. mnd's ignored-functions list covers
+// [os.WriteFile] but not the identically-named [os.Root] method used here,
+// so this is named rather than repeated as a literal.
+const backupFileMode = 0o600
 
 // BackupManager handles configuration file backups.
 type BackupManager struct {
@@ -64,32 +70,27 @@ func (m *BackupManager) CreateBackup() (*BackupInfo, error) {
 
 	// Generate backup filename with timestamp (including nanoseconds for uniqueness).
 	// filepath.Base on configPath strips any directory traversal attempts to
-	// just the last element; the result is then anchored under m.backupDir.
+	// just the last element.
 	timestamp := time.Now().UTC().Format("2006-01-02T15-04-05.000000000")
 	baseName := filepath.Base(m.configPath)
 	backupName := fmt.Sprintf("%s.backup.%s", baseName, timestamp)
 	backupPath := filepath.Join(m.backupDir, backupName)
 
-	// Defense-in-depth: confirm the joined path is still inside backupDir.
-	cleanBackupDir := filepath.Clean(m.backupDir)
-	if !strings.HasPrefix(filepath.Clean(backupPath), cleanBackupDir+string(filepath.Separator)) {
-		return nil, fmt.Errorf("backup path escaped backup dir: %s", backupPath)
+	// backupName is written through an [os.Root] scoped to m.backupDir, so it
+	// cannot resolve outside the backup directory even via a symlink; this
+	// replaces the previous manual HasPrefix containment check.
+	root, err := os.OpenRoot(m.backupDir)
+	if err != nil {
+		return nil, fmt.Errorf("failed to open backup directory: %w", err)
 	}
+	defer func() { _ = root.Close() }()
 
-	// backupPath is filepath.Join(m.backupDir, filepath.Base(m.configPath)+...)
-	// and we just verified above (via strings.HasPrefix) that the joined path
-	// is anchored under m.backupDir. gosec's taint analysis can't follow that.
-	//nolint:gosec // G703: path verified anchored under backupDir above
-	if writeErr := os.WriteFile(
-		backupPath,
-		data,
-		0o600,
-	); writeErr != nil {
+	if writeErr := root.WriteFile(backupName, data, backupFileMode); writeErr != nil {
 		return nil, fmt.Errorf("failed to write backup file: %w", writeErr)
 	}
 
 	// Get file info for metadata
-	info, err := os.Stat(backupPath)
+	info, err := root.Stat(backupName)
 	if err != nil {
 		return nil, fmt.Errorf("failed to stat backup file: %w", err)
 	}
@@ -175,18 +176,20 @@ func (m *BackupManager) ListBackups() ([]BackupInfo, error) {
 
 // RestoreBackup restores configuration from a backup file.
 // Creates a backup of the current config before restoring.
+//
+// backupName arrives from the /api/config/restore request body: it is
+// opened through an [os.Root] scoped to m.backupDir, so a name that steps
+// outside the backup directory (e.g. via "../") is rejected instead of the
+// previous HasPrefix check, which matched a sibling directory sharing
+// m.backupDir's name as a prefix (e.g. "backupsXXX").
 func (m *BackupManager) RestoreBackup(backupName string) error {
-	// Construct full path and validate
-	backupPath := filepath.Join(m.backupDir, backupName)
-
-	// Security: ensure the backup is in the expected directory
-	cleanPath := filepath.Clean(backupPath)
-	if !strings.HasPrefix(cleanPath, filepath.Clean(m.backupDir)) {
-		return errors.New("invalid backup path: must be within backup directory")
+	backupRoot, err := os.OpenRoot(m.backupDir)
+	if err != nil {
+		return fmt.Errorf("failed to open backup directory: %w", err)
 	}
+	defer func() { _ = backupRoot.Close() }()
 
-	// Read backup file
-	data, err := os.ReadFile(cleanPath)
+	data, err := backupRoot.ReadFile(backupName)
 	if err != nil {
 		return fmt.Errorf("failed to read backup file: %w", err)
 	}
@@ -204,15 +207,16 @@ func (m *BackupManager) RestoreBackup(backupName string) error {
 		}
 	}
 
-	// Write restored config. m.configPath is supplied at BackupManager
-	// construction time from the caller's trusted config path; we Clean it
-	// to satisfy gosec's taint analysis and to normalize any "./" or "//".
-	//nolint:gosec // G703: m.configPath comes from trusted constructor; filepath.Clean strips traversal
-	if writeErr := os.WriteFile(
-		filepath.Clean(m.configPath),
-		data,
-		0o600,
-	); writeErr != nil {
+	// Write restored config back to m.configPath, the exact file it is
+	// configured against — scoped via fsutil.RootAt rather than a bare
+	// os.WriteFile.
+	cfgRoot, cfgName, err := fsutil.RootAt(m.configPath)
+	if err != nil {
+		return fmt.Errorf("failed to open config directory: %w", err)
+	}
+	defer func() { _ = cfgRoot.Close() }()
+
+	if writeErr := cfgRoot.WriteFile(cfgName, data, backupFileMode); writeErr != nil {
 		return fmt.Errorf("failed to write restored config: %w", writeErr)
 	}
 
@@ -220,24 +224,24 @@ func (m *BackupManager) RestoreBackup(backupName string) error {
 }
 
 // DeleteBackup removes a backup file.
+//
+// backupName is opened through an [os.Root] scoped to m.backupDir for the
+// same reason as RestoreBackup above.
 func (m *BackupManager) DeleteBackup(backupName string) error {
-	// Construct full path and validate
-	backupPath := filepath.Join(m.backupDir, backupName)
-
-	// Security: ensure the backup is in the expected directory
-	cleanPath := filepath.Clean(backupPath)
-	if !strings.HasPrefix(cleanPath, filepath.Clean(m.backupDir)) {
-		return errors.New("invalid backup path: must be within backup directory")
-	}
-
 	// Verify it's a backup file (not the main config)
 	baseName := filepath.Base(m.configPath)
 	if !strings.HasPrefix(backupName, baseName+".backup.") {
 		return fmt.Errorf("invalid backup file: %s", backupName)
 	}
 
-	if err := os.Remove(cleanPath); err != nil {
-		return fmt.Errorf("failed to delete backup: %w", err)
+	root, err := os.OpenRoot(m.backupDir)
+	if err != nil {
+		return fmt.Errorf("failed to open backup directory: %w", err)
+	}
+	defer func() { _ = root.Close() }()
+
+	if removeErr := root.Remove(backupName); removeErr != nil {
+		return fmt.Errorf("failed to delete backup: %w", removeErr)
 	}
 
 	return nil

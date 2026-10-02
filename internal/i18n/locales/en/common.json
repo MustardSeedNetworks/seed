@@ -32,7 +32,8 @@
     "signInWithMicrosoft": "Sign in with Microsoft",
     "signInWithGitHub": "Sign in with GitHub",
     "copied": "Copied",
-    "edit": "Edit"
+    "edit": "Edit",
+    "runAllTestsPartial": "Some checks did not finish — tap to run all tests again"
   },
   "or": "or",
   "status": {
@@ -95,7 +96,8 @@
     "lastSeen": "Last Seen",
     "noMatches": "No matches.",
     "history": "History",
-    "manageProfiles": "Manage Profiles"
+    "manageProfiles": "Manage Profiles",
+    "searchPlaceholder": "Search…"
   },
   "time": {
     "seconds": "{{count}}s",
@@ -131,7 +133,27 @@
     "pageHelpHint": "What is {{title}}?",
     "openPageHelp": "Open help for {{title}}",
     "openMenu": "Open menu",
-    "closeMenu": "Close menu"
+    "closeMenu": "Close menu",
+    "dismissAlert": "Dismiss alert",
+    "closeCommandPalette": "Close command palette",
+    "closeModal": "Close modal",
+    "notifications": "Notifications",
+    "dismissNotification": "Dismiss notification",
+    "breadcrumb": "Breadcrumb",
+    "home": "Home",
+    "notification": {
+      "success": "Notification: success",
+      "error": "Notification: error",
+      "warning": "Notification: warning",
+      "info": "Notification: info"
+    },
+    "status": {
+      "success": "Status: success",
+      "warning": "Status: warning",
+      "error": "Status: error",
+      "unknown": "Status: unknown",
+      "loading": "Status: loading"
+    }
   },
   "sections": {
     "connectivity": "Connectivity",
@@ -206,7 +228,8 @@
     "showingResults": "Showing {{shown}} of {{total}} results",
     "loadingData": "Loading data...",
     "actionsColumn": "Actions",
-    "scrollRegion": "Table contents"
+    "scrollRegion": "Table contents",
+    "noData": "No data found"
   },
   "capabilities": {
     "warning": {
@@ -324,7 +347,9 @@
   "errors": {
     "password": {
       "mismatch": "Passwords do not match"
-    }
+    },
+    "loadLicense": "Failed to load license",
+    "loadCurrentUser": "Failed to load current user"
   },
   "health": {
     "database": "Database",
@@ -364,5 +389,10 @@
       "logout": "Sign out of the current session",
       "settings": "Open the settings drawer"
     }
+  },
+  "commandPalette": {
+    "label": "Command palette",
+    "placeholder": "Search pages and actions…",
+    "actions": "Actions"
   }
 }

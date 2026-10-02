@@ -42,7 +42,7 @@ func (s *Server) handleDHCPLease(w http.ResponseWriter, r *http.Request) {
 	}
 	if iface == "" {
 		sendErrorResponseWithDetails(w, logger, http.StatusBadRequest,
-			ErrCodeValidation, localizer.T("errors.tools.invalidTarget"), "")
+			ErrCodeValidation, localizer.T("validation.interface.required"), "")
 		return
 	}
 	// The name reaches a platform command as an argv element, so there is no
@@ -53,7 +53,7 @@ func (s *Server) handleDHCPLease(w http.ResponseWriter, r *http.Request) {
 		logger.WarnContext(r.Context(), "DHCP lease requested for an unknown interface",
 			"event", "dhcp.lease.unknown_interface")
 		sendErrorResponseWithDetails(w, logger, http.StatusBadRequest,
-			ErrCodeValidation, localizer.T("errors.tools.invalidTarget"), "")
+			ErrCodeValidation, localizer.T("errors.network.interfaceNotFound"), "")
 		return
 	}
 

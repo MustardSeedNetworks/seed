@@ -258,6 +258,7 @@ export const HealthChecksSettings: React.NamedExoticComponent<HealthChecksSettin
                 <Tooltip text={t('health.numberOfPings')}>
                   <input
                     type="number"
+                    aria-label={t('health.numberOfPings')}
                     value={target.count || 3}
                     onChange={(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>): void =>
                       updatePingTarget(
