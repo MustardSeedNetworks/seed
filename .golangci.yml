@@ -790,8 +790,6 @@ linters:
       - common-false-positives
     # Excluding configuration per-path, per-linter, per-text and per-source.
     rules:
-      - source: 'TODO'
-        linters: [ godot ]
       # dbtest memoizes the migrated template database in a package-level
       # sync.Once so every test copies one file instead of running all the
       # migrations -- ~1.3 s alone and ~10 s contended per test under -race
@@ -814,25 +812,6 @@ linters:
       # MustardSeedNetworks/seed#2410, recommendation 1.
       - text: 'G702'
         linters: [ gosec ]
-      # revive's package-comment and exported-comment rules are NOT excluded:
-      # they were, which made revive look like a gate it was not. The findings
-      # they surface were fixed rather than suppressed.
-      - text: 'package comment should be of the form ".+"'
-        source: '// ?(nolint|TODO)'
-        linters: [ revive ]
-      - text: 'comment on exported \S+ \S+ should be of the form ".+"'
-        source: '// ?(nolint|TODO)'
-        linters: [ revive, staticcheck ]
-      - text: 'avoid meaningless package names'
-        path: 'internal/api/'
-        linters: [ revive ]
-      # DICOM A-ASSOCIATE PDU framing intentionally truncates length values
-      # profiler_infer.go contains portToService, an intentional literal-
-      # reference table mapping port numbers to user-facing protocol names.
-      # The repeated strings (ftp/ssh/http/etc.) are protocol identifiers,
-      # not refactorable constants.
-      - path: 'internal/discovery/profiler_infer\.go'
-        linters: [ goconst ]
       # Shared JSON response field-name conventions across all api handlers
       # (status/message/error/interface/available/good). Project uses literal
       # keys in map[string]any{...} payloads by convention; consolidating
@@ -840,14 +819,6 @@ linters:
       # no behavioural change. The strings ARE the wire contract.
       - path: 'internal/api/'
         text: 'string `(status|message|error|interface|available|good|warning)` has'
-        linters: [ goconst ]
-      - path: 'internal/discovery/profiler_scan\.go'
-        text: 'string `https?` has'
-        linters: [ goconst ]
-      # handlers_guest_audit.go uses "status"/"updated" as JSON response
-      # field+value; this convention is shared across every PUT handler in
-      # the api package and is not refactorable to a single constant (#397).
-      - path: 'internal/api/handlers_guest_audit\.go'
         linters: [ goconst ]
       # schemaTargets() in cmd/seed-schema/main.go is a single declarative
       # registry table — one row per published DTO (RE_ARCHITECTURE_BLUEPRINT.md

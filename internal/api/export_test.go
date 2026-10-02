@@ -7,6 +7,8 @@ import (
 	"net/http"
 	"net/netip"
 
+	"github.com/go-webauthn/webauthn/webauthn"
+
 	"github.com/MustardSeedNetworks/seed/internal/auth"
 	"github.com/MustardSeedNetworks/seed/internal/config"
 	"github.com/MustardSeedNetworks/seed/internal/config/backups"
@@ -19,6 +21,13 @@ import (
 	"github.com/MustardSeedNetworks/seed/internal/license"
 	"github.com/MustardSeedNetworks/seed/internal/netif"
 )
+
+// CompleteWebAuthnLoginForTest exercises finalization after protocol verification.
+func CompleteWebAuthnLoginForTest(
+	s *Server, w http.ResponseWriter, r *http.Request, username string, credential *webauthn.Credential,
+) {
+	s.completeWebAuthnLogin(w, r, username, credential)
+}
 
 // ExportSplitCIDR exposes splitCIDR for testing.
 func ExportSplitCIDR(addr string) [2]string {

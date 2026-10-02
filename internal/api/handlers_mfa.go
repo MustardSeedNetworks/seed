@@ -774,11 +774,23 @@ func (s *Server) handleWebAuthnLoginFinish(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
+	s.completeWebAuthnLogin(w, r, username, cred)
+}
+
+func (s *Server) completeWebAuthnLogin(
+	w http.ResponseWriter, r *http.Request, username string, cred *webauthn.Credential,
+) {
+	logger := logging.FromContext(r.Context())
+	localizer := i18n.FromRequest(r)
 	if updErr := s.db().UpdateWebAuthnSignCount(
 		r.Context(), cred.ID, cred.Authenticator.SignCount,
 	); updErr != nil {
-		logger.WarnContext(r.Context(), "Failed to update WebAuthn sign count",
+		logger.ErrorContext(r.Context(), "Failed to update WebAuthn sign count",
 			"error", updErr, "username", username)
+		recordMFAAuditEvent(r, username, "webauthn", "rejected")
+		sendErrorResponseWithDetails(w, logger, http.StatusInternalServerError,
+			ErrCodeInternal, localizer.T("errors.api.internalError"), "")
+		return
 	}
 
 	recordMFAAuditEvent(r, username, "webauthn", "success")

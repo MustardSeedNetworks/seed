@@ -275,7 +275,7 @@ func parseHCIToolOutput(output string) ([]BluetoothDevice, error) {
 
 // scanBLE uses hcitool lescan for BLE discovery.
 //
-//nolint:gocognit // multi-step BLE discovery (lescan spawn, hcidump parse, dedupe); splitting prematurely would obscure data flow — TODO refactor into stages
+//nolint:gocognit // multi-step BLE discovery (lescan spawn, hcidump parse, dedupe); splitting prematurely would obscure data flow — TODO refactor into stages.
 func (s *BluetoothScanner) scanBLE(
 	ctx context.Context,
 	adapter string,

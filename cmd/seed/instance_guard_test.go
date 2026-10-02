@@ -166,7 +166,7 @@ func TestServeHoldsTheLockAndPublishesItsPort(t *testing.T) {
 	// Occupy the configured port so the daemon walks the +1..+9 fallback (#69).
 	// Publishing config.Server.Port instead of the bound one then shows up:
 	// that is the whole reason SetPort exists after Acquire.
-	blocker, listenErr := net.Listen("tcp", "127.0.0.1:19443")
+	blocker, listenErr := net.Listen("tcp", ":19443")
 	if listenErr != nil {
 		t.Skipf("port 19443 is in use by something else: %v", listenErr)
 	}
