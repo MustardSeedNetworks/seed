@@ -21,6 +21,7 @@ import { createRoot } from 'react-dom/client';
 import App from './app';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { ProfileProvider } from './contexts/profileContext';
+import { i18nReady } from './i18n';
 import { getQueryClient } from './lib/queryClient';
 import './index.css';
 
@@ -36,6 +37,7 @@ const rootElement: HTMLElement | null = document.getElementById('root');
 if (!rootElement) {
   throw new Error('Root element not found');
 }
+await i18nReady;
 createRoot(rootElement).render(
   <StrictMode>
     <ErrorBoundary>

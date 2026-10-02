@@ -120,6 +120,20 @@ func TestRemovedKeysAreStripped(t *testing.T) {
 				"v3_credentials": []any{map[string]any{"name": "lab", "username": "operator"}},
 			}},
 		},
+		{
+			name: "discovery timers nothing read (#491)",
+			document: map[string]any{"networkDiscovery": map[string]any{
+				"arp_scan_workers": 50,
+				"ping_timeout":     500000000,
+				"scan_interval":    0,
+				"timing": map[string]any{
+					"probe_interval":  75000000,
+					"rescan_interval": 60000000000,
+					"workers":         50,
+				},
+				"options": map[string]any{"portScan": map[string]any{"bannerTimeout": 2000000000}},
+			}},
+		},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			encoded, err := json.MarshalIndent(tc.document, "", "  ")

@@ -96,9 +96,10 @@ export default defineConfig(({ mode }) => {
       cssCodeSplit: true,
       // Module preload polyfill: not needed for evergreen browsers (ES2022 target).
       modulePreload: { polyfill: false },
-      // Real budget, not a cover-up. The shell stays the largest chunk; route
-      // pages already lazy-load. Tighten toward niac's 350 as the shell shrinks.
-      chunkSizeWarningLimit: 500,
+      // Real budget, not a cover-up, and niac's figure. The largest chunk is
+      // now the lazy settings drawer; the first-load budget itself is gated by
+      // scripts/check-initial-bundle.py.
+      chunkSizeWarningLimit: 350,
       // Never inline assets as data: URLs (Vite default is 4096 bytes). Required
       // because @fontsource-variable ships small metric-override shim fonts that
       // would otherwise be inlined and violate the production `font-src 'self'`

@@ -188,6 +188,11 @@ func (s *Server) stopServices(ctx context.Context) {
 
 	s.drainJobSubstrate(ctx)
 
+	if tester := s.gatewayTester(); tester != nil {
+		logging.GetLogger().InfoContext(ctx, "Closing gateway tester...")
+		tester.Close()
+	}
+
 	if s.health != nil {
 		logging.GetLogger().InfoContext(ctx, "Stopping host health sampler...")
 		if err := s.health.Close(); err != nil {

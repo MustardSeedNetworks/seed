@@ -14,7 +14,8 @@
     "cableTest": "Prueba de cable",
     "link": "Enlace",
     "vulnerability": "Escaneo de vulnerabilidades",
-    "alertDelivery": "Envío de alertas"
+    "alertDelivery": "Envío de alertas",
+    "identity": "Identidad del equipo"
   },
   "common": {
     "add": "+ Agregar",
@@ -123,7 +124,6 @@
     "portPresetReadOnly": "(solo lectura, seleccione Personalizado para editar)",
     "portScanTcpPorts": "Puertos TCP",
     "portScanUdpPorts": "Puertos UDP",
-    "portScanBannerTimeout": "Tiempo de espera de banner (ms)",
     "traceroute": "Traceroute",
     "snmpQueries": "Consultas SNMP",
     "passiveProtocols": "Protocolos pasivos",
@@ -132,13 +132,10 @@
     "tcpProbeDesc": "Configurar sondeo de conexión TCP para detección de dispositivos y descubrimiento de servicios",
     "tcpProbeTimeout": "Tiempo de espera (ms)",
     "tcpProbeWorkers": "Trabajadores",
-    "timingSettings": "Configuración de tiempos",
-    "concurrentWorkers": "Trabajadores de escaneo concurrentes",
-    "workersDesc": "Más trabajadores = escaneo más rápido (predeterminado: 50)",
-    "pingTimeout": "Tiempo de espera de ping (ms)",
-    "scanTimeout": "Tiempo de espera total del escaneo (ms)",
-    "rescanInterval": "Intervalo de re-escaneo automático (ms)",
-    "rescanIntervalDesc": "0 = deshabilitado, de lo contrario intervalo entre re-escaneos automáticos",
+    "timingSettings": "Tiempos",
+    "scanTimeout": "Tiempo máximo del escaneo (segundos)",
+    "rescanInterval": "Intervalo de re-escaneo (minutos)",
+    "rescanIntervalDesc": "Con qué frecuencia el descubrimiento recorre las redes de destino.",
     "ouiFilePath": "Ruta del archivo de base de datos OUI",
     "ouiFileDesc": "Ruta al archivo IEEE OUI para búsqueda de fabricantes",
     "targetNetworks": "Redes objetivo",
@@ -159,17 +156,11 @@
       "subnet": "Subred",
       "localIP": "IP local"
     },
-    "aggressive": "Agresivo",
-    "bannerTimeout": "Tiempo de espera del banner",
-    "faster": "Más rápido",
-    "gentler": "Más suave",
-    "performanceTiming": "Temporización de rendimiento",
-    "performanceTimingDesc": "Ajuste la agresividad del escaneo frente al impacto en la red.",
-    "probeInterval": "Intervalo de sondeo",
-    "slower": "Más lento",
-    "workers": "Cantidad de trabajadores",
     "enableNetworkNamed": "Habilitar red {{cidr}}",
-    "disableNetworkNamed": "Deshabilitar red {{cidr}}"
+    "disableNetworkNamed": "Deshabilitar red {{cidr}}",
+    "scanTimeoutDesc": "Un recorrido que siga en curso pasado este tiempo se detiene.",
+    "recommended": "Recomendado: {{value}}.",
+    "advancedTiming": "Avanzado"
   },
   "performance": {
     "title": "Rendimiento",
@@ -556,5 +547,15 @@
     "url": "URL del receptor",
     "urlHelp": "Una dirección http o https absoluta. Al borrarla se desactiva el envío y no sale ninguna petición del equipo.",
     "urlPlaceholder": "https://hooks.example.com/services/T000/B000/XXXX"
+  },
+  "identity": {
+    "description": "Asigne un nombre a este Seed e indique dónde está instalado, para distinguirlo de los demás en el encabezado y en la pestaña del navegador.",
+    "name": "Nombre del equipo",
+    "nameHelp": "Se muestra en el encabezado y en el título de la pestaña. Hasta 64 caracteres.",
+    "namePlaceholder": "seed-idf-3b",
+    "location": "Ubicación",
+    "locationHelp": "Dónde está instalado el equipo. Hasta 128 caracteres.",
+    "locationPlaceholder": "Oficina principal, IDF 3B, puerto 21",
+    "save": "Guardar identidad"
   }
 }

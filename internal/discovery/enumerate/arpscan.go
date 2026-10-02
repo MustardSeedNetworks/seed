@@ -5,6 +5,8 @@ import (
 	"errors"
 	"fmt"
 	"net"
+	"net/netip"
+	"slices"
 	"time"
 
 	"github.com/MustardSeedNetworks/seed/internal/discovery"
@@ -119,131 +121,53 @@ func (s *ARPScanner) Scan(ctx context.Context) error {
 	return nil
 }
 
-// MaxChunksDefault is the default maximum number of /24 chunks to scan.
-// This provides a safety guardrail for very large CIDRs like /8.
-// 256 chunks = /16 subnet = 65,534 hosts (reasonable upper bound).
-const MaxChunksDefault = 256
-
-// splitSubnetIntoChunks splits a large subnet into /24 chunks for manageable scanning.
-// Returns the original subnet in a slice if it's already /24 or smaller.
-// maxChunks limits the number of chunks to prevent memory/time issues with huge CIDRs.
-// Pass 0 for maxChunks to use MaxChunksDefault.
-func splitSubnetIntoChunks(subnet *net.IPNet, maxChunks int) []*net.IPNet {
-	ones, bits := subnet.Mask.Size()
-	if bits != cidrBits32 {
-		// IPv6 or invalid - return as-is
-		return []*net.IPNet{subnet}
-	}
-
-	// /24 or smaller - no need to chunk
-	if ones >= cidrMask24 {
-		return []*net.IPNet{subnet}
-	}
-
-	// Calculate number of /24 chunks needed
-	numChunks := 1 << (cidrMask24 - ones) // e.g., /22 = 4 chunks, /16 = 256 chunks
-
-	// Apply safety cap
-	if maxChunks <= 0 {
-		maxChunks = MaxChunksDefault
-	}
-	if numChunks > maxChunks {
-		logging.GetLogger().Warn("Subnet too large - capping chunk count",
-			"subnet", subnet.String(),
-			"totalChunks", numChunks,
-			"maxChunks", maxChunks,
-			"coverage", fmt.Sprintf("%.1f%%", float64(maxChunks)/float64(numChunks)*percentMultiplier))
-		numChunks = maxChunks
-	}
-
-	chunks := make([]*net.IPNet, 0, numChunks)
-	baseIP := subnet.IP.Mask(subnet.Mask).To4()
-	if baseIP == nil {
-		return []*net.IPNet{subnet}
-	}
-
-	// Convert base IP to uint32 for proper arithmetic
-	baseUint := uint32(
-		baseIP[0],
-	)<<byteShift24 | uint32(
-		baseIP[1],
-	)<<byteShift16 | uint32(
-		baseIP[2],
-	)<<byteShift8 | uint32(
-		baseIP[3],
-	)
-
-	for i := range numChunks {
-		// Calculate the starting IP for this /24 chunk
-		// Explicit bounds check for safe uint32 conversion (i is bounded by maxChunks ≤ 256)
-		if i < 0 || i > 256 {
-			continue
-		}
-		offset := uint32(i) * hostsPerSubnet24Block
-		chunkUint := baseUint + offset
-
-		// Mask each shifted value to byte explicitly. The shifts produce
-		// values that fit in byte (8 bits) but gosec G115 needs the mask
-		// to prove the bound.
-		chunkIP := net.IP{
-			byte((chunkUint >> byteShift24) & byteMask),
-			byte((chunkUint >> byteShift16) & byteMask),
-			byte((chunkUint >> byteShift8) & byteMask),
-			0, // Start of /24 block
-		}
-
-		chunk := &net.IPNet{
-			IP:   chunkIP,
-			Mask: net.CIDRMask(cidrMask24, cidrBits32),
-		}
-		chunks = append(chunks, chunk)
-	}
-
-	return chunks
-}
-
-// pingSweep sends ICMP echo requests to all hosts in the subnet using raw sockets.
-// For subnets larger than /24, automatically splits into /24 chunks and scans sequentially.
-// Respects maxHostsPerSubnet configuration to cap total hosts scanned.
+// pingSweep sends ICMP echo requests to the hosts of subnet using raw sockets.
+// A subnet wider than the per-sweep host cap is swept in the /24s planSweep
+// picks for it, so successive sweeps rotate through it (seed#2832).
 func (s *ARPScanner) pingSweep(ctx context.Context, subnet *net.IPNet) error {
-	ones, bits := subnet.Mask.Size()
-	totalHosts := 1<<(bits-ones) - subnetExcludeCount // Exclude network and broadcast
-
-	// Calculate max chunks based on configured host limit
-	// maxHostsPerSubnet / 254 = max /24 chunks to scan
-	maxHosts := s.GetMaxHostsPerSubnet()
-	maxChunks := (maxHosts + roundUpAdjust) / hostsPerSubnet24 // Round up
-
-	// For large subnets, split into /24 chunks and scan sequentially
-	chunks := splitSubnetIntoChunks(subnet, maxChunks)
-	if len(chunks) > 1 {
-		logging.GetLogger().InfoContext(ctx, "Large subnet detected - scanning in chunks",
-			"subnet", subnet.String(),
-			"totalHosts", totalHosts,
-			"chunks", len(chunks),
-			"maxHosts", maxHosts)
-
-		for i, chunk := range chunks {
-			select {
-			case <-ctx.Done():
-				return fmt.Errorf("chunk scan cancelled: %w", ctx.Err())
-			default:
-				logging.GetLogger().DebugContext(ctx, "Scanning chunk",
-					"chunk", fmt.Sprintf("%d/%d", i+1, len(chunks)),
-					"subnet", chunk.String())
-
-				if err := s.pingSweepChunk(ctx, chunk); err != nil {
-					logging.GetLogger().WarnContext(ctx, "Chunk scan failed - continuing with remaining chunks",
-						"chunk", chunk.String(),
-						"error", err)
-				}
-			}
-		}
-		return nil
+	target, ok := ipv4Prefix(subnet)
+	if !ok || target.Bits() >= cidrMask24 {
+		return s.pingSweepChunk(ctx, subnet)
 	}
 
-	// Small subnet - scan directly
-	return s.pingSweepChunk(ctx, subnet)
+	maxHosts := s.GetMaxHostsPerSubnet()
+	s.mu.Lock()
+	evidence := slices.Clone(s.evidence)
+	if s.localIP != nil {
+		if local, valid := netip.AddrFromSlice(s.localIP.To4()); valid {
+			evidence = append(evidence, local)
+		}
+	}
+	if s.rotations == nil {
+		s.rotations = make(map[netip.Prefix]*rotation)
+	}
+	turn := s.rotations[target]
+	if turn == nil {
+		turn = &rotation{}
+		s.rotations[target] = turn
+	}
+	plan := turn.planSweep(target, evidence, maxHosts)
+	s.mu.Unlock()
+
+	logging.GetLogger().InfoContext(ctx, "Sweeping part of a target network wider than one sweep",
+		"subnet", target.String(),
+		"blocks", len(plan.blocks),
+		"firstHostsOnly", plan.probe,
+		"maxHosts", maxHosts)
+
+	hosts := plan.hosts()
+	ips := make([]net.IP, 0, len(hosts))
+	for _, host := range hosts {
+		ips = append(ips, host.AsSlice())
+	}
+	if err := s.pingHosts(ctx, ips); err != nil {
+		return err
+	}
+
+	s.mu.Lock()
+	turn.commit(target, plan)
+	s.mu.Unlock()
+	return nil
 }
 
 // pingSweepChunk scans a single /24 or smaller subnet chunk.
@@ -257,14 +181,19 @@ func (s *ARPScanner) pingSweepChunk(ctx context.Context, subnet *net.IPNet) erro
 		return errors.New("invalid subnet")
 	}
 
-	// Build list of IPs to ping
 	var ips []net.IP
 	for i := 1; i <= numHosts; i++ {
-		ip := incrementIP(baseIP, i)
-		if ip != nil && !ip.Equal(s.localIP) {
+		if ip := incrementIP(baseIP, i); ip != nil {
 			ips = append(ips, ip)
 		}
 	}
+	return s.pingHosts(ctx, ips)
+}
+
+// pingHosts pings ips, skipping this host's own address, and records who
+// answered.
+func (s *ARPScanner) pingHosts(ctx context.Context, ips []net.IP) error {
+	ips = slices.DeleteFunc(ips, func(ip net.IP) bool { return ip.Equal(s.localIP) })
 
 	// Initialize pinger if needed (fixes #822 - check under lock)
 	s.mu.Lock()

@@ -21,11 +21,13 @@ func (c *Config) Validate() error {
 	errs = append(errs, c.validateVLANConfig()...)
 	errs = append(errs, c.validateIPConfig()...)
 	errs = append(errs, c.validateTimeouts()...)
-	errs = append(errs, c.validateConcurrency()...)
 	errs = append(errs, c.validateAuthConfig()...)
 	errs = append(errs, c.validateSNMPConfig()...)
 	errs = append(errs, c.validateLoggingConfig()...)
 	errs = append(errs, c.validateCORSConfig()...)
+	if err := c.Identity.Validate(); err != nil {
+		errs = append(errs, err.Error())
+	}
 
 	if len(errs) > 0 {
 		return fmt.Errorf("configuration validation failed:\n  - %s", strings.Join(errs, "\n  - "))
@@ -167,29 +169,11 @@ func (c *Config) validateTimeouts() []string {
 	if c.Discovery.Timeout <= 0 {
 		errs = append(errs, "discovery.timeout must be positive")
 	}
-	if c.NetworkDiscovery.PingTimeout <= 0 {
-		errs = append(errs, "network_discovery.ping_timeout must be positive")
-	}
 	if c.NetworkDiscovery.ScanTimeout <= 0 {
 		errs = append(errs, "network_discovery.scan_timeout must be positive")
 	}
 	if c.DNS.Timeout <= 0 {
 		errs = append(errs, "dns.timeout must be positive")
-	}
-	return errs
-}
-
-// validateConcurrency checks worker/concurrency limits.
-func (c *Config) validateConcurrency() []string {
-	var errs []string
-	if c.NetworkDiscovery.ARPScanWorkers < 1 || c.NetworkDiscovery.ARPScanWorkers > 500 {
-		errs = append(
-			errs,
-			fmt.Sprintf(
-				"network_discovery.arp_scan_workers must be between 1-500, got %d",
-				c.NetworkDiscovery.ARPScanWorkers,
-			),
-		)
 	}
 	return errs
 }

@@ -16,41 +16,46 @@
  * DNT list which is dominated by acronyms and stable noun forms.
  */
 
-import enApi from '@locales/en/api.json';
-import enCards from '@locales/en/cards.json';
-import enCommon from '@locales/en/common.json';
-import enErrors from '@locales/en/errors.json';
-import enGlossary from '@locales/en/glossary.json';
-import enHelp from '@locales/en/help.json';
-import enSettings from '@locales/en/settings.json';
-import enSetup from '@locales/en/setup.json';
-import enValidation from '@locales/en/validation.json';
-import esApi from '@locales/es/api.json';
-import esCards from '@locales/es/cards.json';
-import esCommon from '@locales/es/common.json';
-import esErrors from '@locales/es/errors.json';
-import esGlossary from '@locales/es/glossary.json';
-import esHelp from '@locales/es/help.json';
-import esSettings from '@locales/es/settings.json';
-import esSetup from '@locales/es/setup.json';
-import esValidation from '@locales/es/validation.json';
 import { describe, expect, it } from 'vitest';
 
 import { DNT_TERMS } from './dnt';
+import { namespaces } from './index';
 
 type Json = string | number | boolean | null | Json[] | { [k: string]: Json };
 
-const FIXTURES: { ns: string; en: Json; es: Json }[] = [
-  { ns: 'api', en: enApi as Json, es: esApi as Json },
-  { ns: 'cards', en: enCards as Json, es: esCards as Json },
-  { ns: 'common', en: enCommon as Json, es: esCommon as Json },
-  { ns: 'errors', en: enErrors as Json, es: esErrors as Json },
-  { ns: 'glossary', en: enGlossary as Json, es: esGlossary as Json },
-  { ns: 'help', en: enHelp as Json, es: esHelp as Json },
-  { ns: 'settings', en: enSettings as Json, es: esSettings as Json },
-  { ns: 'setup', en: enSetup as Json, es: esSetup as Json },
-  { ns: 'validation', en: enValidation as Json, es: esValidation as Json },
-];
+// Read from disk rather than listed by hand: a hand list skipped `pages`, the
+// namespace every page title is drawn from (seed#2639). The Go side serves
+// `api` and `validation`, which the UI never loads, so the runtime namespace
+// list cannot stand in for this one either.
+const EN = import.meta.glob<Json>('@locales/en/*.json', { eager: true, import: 'default' });
+const ES = import.meta.glob<Json>('@locales/es/*.json', { eager: true, import: 'default' });
+
+function byNamespace(files: Record<string, Json>): Map<string, Json> {
+  return new Map(
+    Object.entries(files).map(([path, json]) => [path.replace(/^.*\/(.+)\.json$/, '$1'), json]),
+  );
+}
+
+const enFiles = byNamespace(EN);
+const esFiles = byNamespace(ES);
+
+const FIXTURES: { ns: string; en: Json; es: Json }[] = [...enFiles].flatMap(([ns, en]) => {
+  const es = esFiles.get(ns);
+  return es === undefined ? [] : [{ ns, en, es }];
+});
+
+const byName = (a: string, b: string) => a.localeCompare(b);
+
+describe('i18n parity — locale files', () => {
+  it('en and es ship the same namespace files', () => {
+    expect([...esFiles.keys()].sort(byName)).toEqual([...enFiles.keys()].sort(byName));
+  });
+
+  it('every namespace the UI loads is under the parity gate', () => {
+    const gated = new Set(FIXTURES.map(({ ns }) => ns));
+    expect(namespaces.filter((ns) => !gated.has(ns))).toEqual([]);
+  });
+});
 
 function flatKeyPaths(node: Json, prefix = ''): string[] {
   if (node === null || typeof node !== 'object') return [prefix];

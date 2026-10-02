@@ -512,9 +512,9 @@ func ExportCategorizeInterfaces(
 	return categorizeInterfaces(interfaces, current)
 }
 
-// ExportRoutingViews exposes routingViews for testing.
-func ExportRoutingViews(devices []*discovery.DiscoveredDevice) []learn.Device {
-	return routingViews(devices)
+// ExportDeviceViews exposes deviceViews for testing.
+func ExportDeviceViews(devices []*discovery.DiscoveredDevice) []learn.Device {
+	return deviceViews(devices)
 }
 
 // ExportPromotionViews exposes promotionViews for testing.

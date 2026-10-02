@@ -1,19 +1,19 @@
 package api
 
 import (
-	"path/filepath"
 	"testing"
 
 	"github.com/MustardSeedNetworks/seed/internal/app"
 	"github.com/MustardSeedNetworks/seed/internal/config"
 	"github.com/MustardSeedNetworks/seed/internal/database"
+	"github.com/MustardSeedNetworks/seed/internal/database/dbtest"
 )
 
 // TestSettingsUseCasePersistsToDefaultProfile exercises the ADR-0016 phase-3
 // adapter wiring end-to-end against a real database: SaveToActiveProfile must
 // write the live config's profile JSON onto the seeded default profile.
 func TestSettingsUseCasePersistsToDefaultProfile(t *testing.T) {
-	db, err := database.Open(filepath.Join(t.TempDir(), "seed.db"))
+	db, err := database.Open(dbtest.Path(t))
 	if err != nil {
 		t.Fatalf("open db: %v", err)
 	}

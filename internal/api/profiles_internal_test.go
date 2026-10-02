@@ -11,6 +11,7 @@ import (
 	"github.com/MustardSeedNetworks/seed/internal/app"
 	"github.com/MustardSeedNetworks/seed/internal/config"
 	"github.com/MustardSeedNetworks/seed/internal/database"
+	"github.com/MustardSeedNetworks/seed/internal/database/dbtest"
 	"github.com/MustardSeedNetworks/seed/internal/profiles/catalog"
 )
 
@@ -18,7 +19,7 @@ import (
 // default profile) with the profiles use-case initialised.
 func newProfilesTestServer(t *testing.T) (*Server, *database.DB) {
 	t.Helper()
-	db, err := database.Open(filepath.Join(t.TempDir(), "seed.db"))
+	db, err := database.Open(dbtest.Path(t))
 	if err != nil {
 		t.Fatalf("open db: %v", err)
 	}

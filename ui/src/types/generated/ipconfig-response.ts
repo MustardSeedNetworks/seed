@@ -8,6 +8,7 @@
 export interface IPConfigResponse {
   interface: string;
   mac: string;
+  vendor?: string;
   mode: string;
   ipv4?: IPv4Info;
   ipv6: IPv6Info[];

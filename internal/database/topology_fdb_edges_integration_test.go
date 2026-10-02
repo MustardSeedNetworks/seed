@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/MustardSeedNetworks/seed/internal/database"
+	"github.com/MustardSeedNetworks/seed/internal/database/dbtest"
 	"github.com/MustardSeedNetworks/seed/internal/polling/snmp/collectors/arp"
 	"github.com/MustardSeedNetworks/seed/internal/polling/snmp/collectors/fdb"
 	"github.com/MustardSeedNetworks/seed/internal/polling/snmp/collectors/iftable"
@@ -50,7 +51,7 @@ func fdbTestTime() time.Time { return time.Date(2026, 9, 9, 12, 0, 0, 0, time.UT
 func buildHospitalAccessLayer(t *testing.T) (*database.DB, string) {
 	t.Helper()
 	ctx := context.Background()
-	db, err := database.Open(t.TempDir() + "/seed.db")
+	db, err := database.Open(dbtest.Path(t))
 	if err != nil {
 		t.Fatalf("open db: %v", err)
 	}

@@ -92,49 +92,5 @@ func TestExportGuessOSFromTTL(t *testing.T) {
 	}
 }
 
-func TestExportSplitSubnetIntoChunks(t *testing.T) {
-	tests := []struct {
-		name        string
-		cidr        string
-		maxChunks   int
-		minExpected int // At least this many chunks
-		maxExpected int // At most this many chunks
-	}{
-		{"slash24_2chunks", "192.168.1.0/24", 2, 1, 2},
-		{"slash24_4chunks", "192.168.1.0/24", 4, 1, 4},
-		{"slash24_1chunk", "192.168.1.0/24", 1, 1, 1},
-		{"slash16_16chunks", "10.0.0.0/16", 16, 1, 16},
-		{"slash30_2chunks", "10.0.0.0/30", 2, 1, 2},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			_, subnet, err := net.ParseCIDR(tt.cidr)
-			if err != nil {
-				t.Fatalf("Failed to parse CIDR %s: %v", tt.cidr, err)
-			}
-
-			chunks := enumerate.ExportSplitSubnetIntoChunks(subnet, tt.maxChunks)
-			if len(chunks) < tt.minExpected || len(chunks) > tt.maxExpected {
-				t.Errorf(
-					"splitSubnetIntoChunks(%s, %d) returned %d chunks, expected %d-%d",
-					tt.cidr,
-					tt.maxChunks,
-					len(chunks),
-					tt.minExpected,
-					tt.maxExpected,
-				)
-			}
-
-			// Verify all chunks are valid subnets
-			for i, chunk := range chunks {
-				if chunk == nil {
-					t.Errorf("Chunk %d is nil", i)
-				}
-			}
-		})
-	}
-}
-
 // TestNVDRateLimitConstants moved to internal/discovery/vuln with the NVD
 // provider (ADR-0018).

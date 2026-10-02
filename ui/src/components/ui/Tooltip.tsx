@@ -71,6 +71,12 @@ export const Tooltip: FC<TooltipProps> = ({ text, side = 'top', children, classN
     const dismiss = (event: KeyboardEvent): void => {
       if (event.key !== 'Escape') return;
       setDismissed(true);
+      // WebKit sends no mouseleave when a drawer opens over a still pointer,
+      // so a hovered tooltip can stay open beneath a modal. That Escape
+      // belongs to the dialog (#2893).
+      const dialog =
+        event.target instanceof Element ? event.target.closest('[aria-modal="true"]') : null;
+      if (dialog && !dialog.contains(wrapperRef.current)) return;
       event.stopPropagation();
     };
     document.addEventListener('keydown', dismiss, true);

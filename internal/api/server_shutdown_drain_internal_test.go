@@ -5,11 +5,11 @@ import (
 	"errors"
 	"net"
 	"net/http"
-	"path/filepath"
 	"testing"
 	"time"
 
 	"github.com/MustardSeedNetworks/seed/internal/database"
+	"github.com/MustardSeedNetworks/seed/internal/database/dbtest"
 )
 
 // shutdownDrainTimeout bounds the drain in these tests. It is long enough that
@@ -212,7 +212,7 @@ func TestUnregisterClientGivesUpAfterTheHubStops(t *testing.T) {
 func newShutdownTestDB(t *testing.T) *database.DB {
 	t.Helper()
 
-	db, err := database.Open(filepath.Join(t.TempDir(), "shutdown-drain.db"))
+	db, err := database.Open(dbtest.Path(t))
 	if err != nil {
 		t.Fatalf("open test database: %v", err)
 	}

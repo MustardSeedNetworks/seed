@@ -790,6 +790,15 @@ linters:
       - common-false-positives
     # Excluding configuration per-path, per-linter, per-text and per-source.
     rules:
+      # dbtest memoizes the migrated template database in a package-level
+      # sync.Once so every test copies one file instead of running all the
+      # migrations -- ~1.3 s alone and ~10 s contended per test under -race
+      # (seed#2614, seed#2719). A per-binary memo cannot be expressed in Go
+      # without a package-level var, and it is test-support state, not the
+      # mutable shared global gochecknoglobals exists to catch. Scoped to this
+      # one file so the rule still holds everywhere else.
+      - path: 'internal/database/dbtest/dbtest\.go'
+        linters: [ gochecknoglobals ]
       # G204 in full, not the single wording EXC0007 catches -- see the note on
       # the gosec entry above. Subprocess taint is advisory-only in this repo;
       # the standalone gosec step in ci.yml still reports it as SARIF.

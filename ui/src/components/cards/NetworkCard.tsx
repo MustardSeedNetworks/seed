@@ -3,7 +3,7 @@
  *
  * Displays DHCP/network configuration information including:
  * - IPv4 and IPv6 addresses and configuration
- * - MAC address and DHCP mode
+ * - A collapsed Details group: interface, MAC, vendor, mode and the DHCP lease
  * - DHCP timing breakdown (discover, offer, request, ACK phases)
  * - Public IP information (if available)
  * - DNS servers
@@ -21,11 +21,12 @@
  */
 
 import type React from 'react';
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { formatTime, isValidNumber } from '../../lib/format';
-import { border, cn, icon as iconTokens, layout, radius, spacing } from '../../styles/theme';
+import { border, cn, icon as iconTokens, spacing } from '../../styles/theme';
 import { CardDivider, CardRow, CardValue, type Status } from '../ui/Card';
+import { CollapsibleSection } from '../ui/CollapsibleSection';
 import { Network } from '../ui/Icons';
 import { SimpleBaseCard } from './BaseCard';
 
@@ -64,7 +65,9 @@ export interface Ipv6Info {
  * DHCP configuration data from the backend
  */
 export interface DhcpData {
+  interface?: string; // Interface name the configuration was read from
   mac: string; // MAC address of interface
+  vendor?: string; // Manufacturer registered for the MAC's OUI
   mode: 'dhcp' | 'static' | 'auto'; // Address assignment mode
   ipv4: Ipv4Info | null; // IPv4 configuration (or null if not configured)
   ipv6: Ipv6Info[]; // Array of IPv6 addresses
@@ -136,19 +139,6 @@ function formatLeaseTime(seconds: number): string {
   return `${seconds}s`;
 }
 
-// Scope labels are handled in the component using i18n
-
-// getSourceLabel for future use when displaying IPv6 source type
-// function getSourceLabel(source: Ipv6Info['source']): string {
-//   switch (source) {
-//     case 'slaac': return 'SLAAC';
-//     case 'dhcpv6': return 'DHCPv6';
-//     case 'static': return 'Static';
-//     case 'temporary': return 'Temporary';
-//     default: return source;
-//   }
-// }
-
 // Compress IPv6 address by replacing longest run of zeros with ::
 function compressIpv6(address: string): string {
   // Already compressed or not a valid IPv6
@@ -218,15 +208,85 @@ function getFallbackIpDisplay(
     return tc('status.loading');
   }
   if (hasData) {
-    return tr('network.noIp');
+    return tr('network.noIP');
   }
   return tr('network.noData');
 }
 
 /**
+ * Secondary identity and lease facts, collapsed so the card leads with address
+ * and gateway (#123). Only the facts the response carries get a row.
+ */
+function NetworkDetails({ data }: { data: DhcpData }): React.ReactElement {
+  const { t: tr } = useTranslation('cards');
+  const { ipv4 } = data;
+
+  return (
+    <CollapsibleSection
+      title={tr('network.details')}
+      variant="compact"
+      data-testid="network-card-details"
+    >
+      {data.interface ? (
+        <CardRow label={tr('network.interface')} value={data.interface} mono={true} />
+      ) : null}
+      {data.mac ? <CardRow label={tr('network.mac')} value={data.mac} mono={true} /> : null}
+      {data.vendor ? <CardRow label={tr('network.vendor')} value={data.vendor} /> : null}
+      <CardRow label={tr('network.mode')} value={data.mode.toUpperCase()} />
+      {ipv4?.dhcpServer ? (
+        <CardRow label={tr('network.dhcpServer')} value={ipv4.dhcpServer} wrap={true} mono={true} />
+      ) : null}
+      {ipv4?.leaseTime ? (
+        <CardRow label={tr('network.lease')} value={formatLeaseTime(ipv4.leaseTime)} />
+      ) : null}
+    </CollapsibleSection>
+  );
+}
+
+function DhcpTimingSection({
+  timing,
+  thresholds: th,
+}: {
+  timing: DhcpTiming;
+  thresholds: NonNullable<DhcpCardProps['thresholds']>;
+}): React.ReactElement {
+  const { t: tr } = useTranslation('cards');
+
+  return (
+    <CollapsibleSection
+      title={tr('network.dhcpTiming')}
+      variant="compact"
+      data-testid="network-card-dhcp-timing"
+    >
+      <CardRow
+        label={tr('network.discoverOffer')}
+        value={formatTime(timing.discover)}
+        status={getTimingStatus(timing.discover, th.perPhase)}
+      />
+      <CardRow
+        label={tr('network.offerRequest')}
+        value={formatTime(timing.offer)}
+        status={getTimingStatus(timing.offer, th.perPhase)}
+      />
+      <CardRow
+        label={tr('network.requestAck')}
+        value={formatTime(timing.request)}
+        status={getTimingStatus(timing.request, th.perPhase)}
+      />
+      <div className={cn(spacing.padding.top.tight, border.divider)}>
+        <CardRow
+          label={tr('network.total')}
+          value={formatTime(timing.total)}
+          status={getTimingStatus(timing.total, th.total)}
+        />
+      </div>
+    </CollapsibleSection>
+  );
+}
+
+/**
  * Displays network interface information with IP addresses and connection status.
  */
-// biome-ignore lint/complexity/noExcessiveCognitiveComplexity: Complex card with multiple network status displays
 export function NetworkCard({
   data,
   publicIp,
@@ -242,7 +302,6 @@ export function NetworkCard({
     perPhase: { warning: 200, critical: 1000 },
   };
   const th = thresholds || defaultThresholds;
-  const [showTiming, setShowTiming] = useState(false);
 
   // Keep hooks unconditional: derive safe fallbacks
   const hasData = !!data;
@@ -345,14 +404,9 @@ export function NetworkCard({
       {!hasData && <CardValue value={tr('network.noDataAvailable')} size="md" />}
       {hasData ? (
         <>
-          {/* MAC Address */}
-          <CardRow label={tr('network.mac')} value={data?.mac} />
-          <CardRow label={tr('network.mode')} value={data?.mode.toUpperCase()} />
-
           {/* IPv4 Section */}
           {hasIpv4 && ipv4 ? (
             <>
-              <CardDivider />
               <p className={cn('caption font-medium', spacing.margin.bottom.tight)}>
                 {tr('network.ipv4')}
               </p>
@@ -370,24 +424,13 @@ export function NetworkCard({
                   mono={true}
                 />
               ) : null}
-              {ipv4.dhcpServer ? (
-                <CardRow
-                  label={tr('network.dhcpServer')}
-                  value={ipv4.dhcpServer}
-                  wrap={true}
-                  mono={true}
-                />
-              ) : null}
-              {ipv4.leaseTime ? (
-                <CardRow label={tr('network.lease')} value={formatLeaseTime(ipv4.leaseTime)} />
-              ) : null}
             </>
           ) : null}
 
           {/* IPv6 Section */}
           {hasIpv6 ? (
             <>
-              <CardDivider />
+              {hasIpv4 ? <CardDivider /> : null}
               <p className={cn('caption font-medium', spacing.margin.bottom.tight)}>
                 {tr('network.ipv6')}
               </p>
@@ -433,68 +476,9 @@ export function NetworkCard({
             </>
           ) : null}
 
-          {/* DHCP Timing (if available) */}
-          {timing ? (
-            <>
-              <CardDivider />
-              <div className={cn(layout.flex.between, spacing.margin.bottom.tight)}>
-                <p className="caption font-medium">{tr('network.dhcpTiming')}</p>
-                {showTiming ? (
-                  <button
-                    type="button"
-                    className={cn(
-                      'caption font-medium text-brand-primary hover:text-brand-primary/80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-primary',
-                      spacing.actionBtn,
-                      radius.default,
-                    )}
-                    onClick={(): void => setShowTiming(false)}
-                    aria-expanded="true"
-                  >
-                    {tc('buttons.hide')}
-                  </button>
-                ) : (
-                  <button
-                    type="button"
-                    className={cn(
-                      'caption font-medium text-brand-primary hover:text-brand-primary/80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-primary',
-                      spacing.actionBtn,
-                      radius.default,
-                    )}
-                    onClick={(): void => setShowTiming(true)}
-                    aria-expanded="false"
-                  >
-                    {tc('buttons.show')}
-                  </button>
-                )}
-              </div>
-              {showTiming ? (
-                <div className="stack-xs">
-                  <CardRow
-                    label={tr('network.discoverOffer')}
-                    value={formatTime(timing.discover)}
-                    status={getTimingStatus(timing.discover, th.perPhase)}
-                  />
-                  <CardRow
-                    label={tr('network.offerRequest')}
-                    value={formatTime(timing.offer)}
-                    status={getTimingStatus(timing.offer, th.perPhase)}
-                  />
-                  <CardRow
-                    label={tr('network.requestAck')}
-                    value={formatTime(timing.request)}
-                    status={getTimingStatus(timing.request, th.perPhase)}
-                  />
-                  <div className={cn(spacing.padding.top.tight, border.divider)}>
-                    <CardRow
-                      label={tr('network.total')}
-                      value={formatTime(timing.total)}
-                      status={getTimingStatus(timing.total, th.total)}
-                    />
-                  </div>
-                </div>
-              ) : null}
-            </>
-          ) : null}
+          <CardDivider />
+          <NetworkDetails data={data} />
+          {timing ? <DhcpTimingSection timing={timing} thresholds={th} /> : null}
 
           {hasData && !timing ? (
             <>

@@ -10,6 +10,7 @@ import (
 	"net/http/httptrace"
 	"slices"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/MustardSeedNetworks/seed/internal/probe"
@@ -251,25 +252,53 @@ func buildHTTPClient(timeout time.Duration, params HTTPParams) HTTPDoer {
 // [httptrace.ClientTrace] during a single request, so the checker can
 // publish a DNS/TCP/TLS/TTFB latency breakdown — the per-phase timing
 // the legacy /run surfaced on the health-check card (ADR-0027 P3a).
+//
+// The hooks run on the dialer's goroutines, not the caller's: when a host has
+// both A and AAAA records Go dials one address family per goroutine and both
+// call ConnectStart and ConnectDone, the loser's ConnectDone arriving with a
+// cancellation error after the winner connected (#2630). mu guards every
+// field.
 type httpTrace struct {
+	mu                  sync.Mutex
 	dnsStart, dnsDone   time.Time
 	connStart, connDone time.Time
 	tlsStart, tlsDone   time.Time
 	firstByte           time.Time
 }
 
+// stamp sets *field to now under the lock.
+func (h *httpTrace) stamp(field *time.Time) {
+	h.mu.Lock()
+	defer h.mu.Unlock()
+	*field = time.Now()
+}
+
 // clientTrace returns the trace whose hooks stamp the phase timestamps.
 // Connection reuse means DNS/connect/TLS hooks may not fire; the timings
-// helper emits only the phases that were actually measured.
+// helper emits only the phases that were actually measured. The tcp phase
+// runs from the first dial to the first dial that connected, so a parallel
+// dial's later failure cannot stretch it.
 func (h *httpTrace) clientTrace() *httptrace.ClientTrace {
 	return &httptrace.ClientTrace{
-		DNSStart:             func(httptrace.DNSStartInfo) { h.dnsStart = time.Now() },
-		DNSDone:              func(httptrace.DNSDoneInfo) { h.dnsDone = time.Now() },
-		ConnectStart:         func(_, _ string) { h.connStart = time.Now() },
-		ConnectDone:          func(_, _ string, _ error) { h.connDone = time.Now() },
-		TLSHandshakeStart:    func() { h.tlsStart = time.Now() },
-		TLSHandshakeDone:     func(tls.ConnectionState, error) { h.tlsDone = time.Now() },
-		GotFirstResponseByte: func() { h.firstByte = time.Now() },
+		DNSStart: func(httptrace.DNSStartInfo) { h.stamp(&h.dnsStart) },
+		DNSDone:  func(httptrace.DNSDoneInfo) { h.stamp(&h.dnsDone) },
+		ConnectStart: func(_, _ string) {
+			h.mu.Lock()
+			defer h.mu.Unlock()
+			if h.connStart.IsZero() {
+				h.connStart = time.Now()
+			}
+		},
+		ConnectDone: func(_, _ string, err error) {
+			h.mu.Lock()
+			defer h.mu.Unlock()
+			if err == nil && h.connDone.IsZero() {
+				h.connDone = time.Now()
+			}
+		},
+		TLSHandshakeStart:    func() { h.stamp(&h.tlsStart) },
+		TLSHandshakeDone:     func(tls.ConnectionState, error) { h.stamp(&h.tlsDone) },
+		GotFirstResponseByte: func() { h.stamp(&h.firstByte) },
 	}
 }
 
@@ -278,6 +307,8 @@ func (h *httpTrace) clientTrace() *httptrace.ClientTrace {
 // Phases that did not fire (e.g. TLS on a plain-HTTP request, or any phase
 // on a reused connection) are omitted rather than reported as zero.
 func (h *httpTrace) timings(start time.Time) map[string]float64 {
+	h.mu.Lock()
+	defer h.mu.Unlock()
 	m := map[string]float64{}
 	add := func(key string, from, to time.Time) {
 		if !from.IsZero() && !to.IsZero() && to.After(from) {

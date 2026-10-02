@@ -12,6 +12,7 @@ import (
 
 	"github.com/MustardSeedNetworks/seed/internal/auth"
 	"github.com/MustardSeedNetworks/seed/internal/database"
+	"github.com/MustardSeedNetworks/seed/internal/database/dbtest"
 	"github.com/MustardSeedNetworks/seed/internal/netif"
 	"github.com/MustardSeedNetworks/seed/internal/testutil"
 )
@@ -22,7 +23,7 @@ func csrfEndpointServer(t *testing.T) *Server {
 	t.Helper()
 
 	dir := t.TempDir()
-	db, err := database.Open(filepath.Join(dir, "csrf.db"))
+	db, err := database.Open(dbtest.Path(t))
 	if err != nil {
 		t.Fatalf("open db: %v", err)
 	}

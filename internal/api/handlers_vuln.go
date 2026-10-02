@@ -40,7 +40,7 @@ func (s *Server) handleVulnerabilityScan(w http.ResponseWriter, r *http.Request)
 			logger,
 			http.StatusServiceUnavailable,
 			ErrCodeServiceUnavail,
-			localizer.T("errors.vuln.scannerNotEnabled"),
+			localizer.T("errors.vulnerability.scannerNotEnabled"),
 			"",
 		) // fixes #694
 		return
@@ -55,7 +55,7 @@ func (s *Server) handleVulnerabilityScan(w http.ResponseWriter, r *http.Request)
 			logger,
 			http.StatusBadRequest,
 			ErrCodeValidation,
-			localizer.T("errors.vuln.invalidIp"),
+			localizer.T("errors.vulnerability.invalidIp"),
 			targetIP,
 		) // fixes #694
 		return
@@ -179,7 +179,7 @@ func (s *Server) handleDeviceVulnerabilities(w http.ResponseWriter, r *http.Requ
 			logger,
 			http.StatusServiceUnavailable,
 			ErrCodeServiceUnavail,
-			localizer.T("errors.vuln.scannerNotEnabled"),
+			localizer.T("errors.vulnerability.scannerNotEnabled"),
 			"",
 		) // fixes #694
 		return
@@ -192,7 +192,7 @@ func (s *Server) handleDeviceVulnerabilities(w http.ResponseWriter, r *http.Requ
 			logger,
 			http.StatusBadRequest,
 			ErrCodeValidation,
-			localizer.T("errors.vuln.missingIpParam"),
+			localizer.T("errors.vulnerability.missingIpParam"),
 			"",
 		) // fixes #694
 		return
@@ -205,7 +205,7 @@ func (s *Server) handleDeviceVulnerabilities(w http.ResponseWriter, r *http.Requ
 			logger,
 			http.StatusBadRequest,
 			ErrCodeValidation,
-			localizer.T("errors.vuln.invalidIp"),
+			localizer.T("errors.vulnerability.invalidIp"),
 			ip,
 		) // fixes #694
 		return

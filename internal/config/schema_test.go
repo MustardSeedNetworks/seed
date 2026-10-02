@@ -711,46 +711,6 @@ func TestValidateWithSchema_InvalidConfig(t *testing.T) {
 	}
 }
 
-func TestValidateConfig_WorkerLimits(t *testing.T) {
-	validator, err := config.NewSchemaValidator()
-	if err != nil {
-		t.Fatalf("failed to create validator: %v", err)
-	}
-
-	tests := []struct {
-		name    string
-		workers int
-		want    bool // true = should have errors
-	}{
-		{"workers 1", 1, false},
-		{"workers 50", 50, false},
-		{"workers 500", 500, false},
-		{"workers 0", 0, true},
-		{"workers negative", -1, true},
-		{"workers too high", 501, true},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			cfg := config.DefaultConfig()
-			cfg.NetworkDiscovery.ARPScanWorkers = tt.workers
-			errors := validator.ValidateConfig(cfg)
-
-			hasErrors := len(errors) > 0
-			if hasErrors != tt.want {
-				if tt.want {
-					t.Errorf("expected validation errors for workers %d, got none", tt.workers)
-				} else {
-					t.Errorf("expected no validation errors for workers %d, got: %+v", tt.workers, errors)
-					for _, e := range errors {
-						t.Logf("  - Path: %s, Message: %s", e.Path, e.Message)
-					}
-				}
-			}
-		})
-	}
-}
-
 func TestValidateConfig_StartupRetries(t *testing.T) {
 	validator, err := config.NewSchemaValidator()
 	if err != nil {

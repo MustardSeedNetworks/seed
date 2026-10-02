@@ -16,6 +16,7 @@ import type React from 'react';
 import { useState } from 'react';
 import { cn, spacing } from '../../../styles/theme';
 import type { SaveStatus, SettingsThresholds } from '../../../types/settings';
+import { expandSections } from './storyPlay';
 import { ThresholdsSettings } from './ThresholdsSettings';
 
 const defaultThresholds: SettingsThresholds = {
@@ -75,6 +76,7 @@ const meta: Meta<typeof ThresholdsSettings> = {
       </div>
     ),
   ],
+  play: expandSections,
 };
 
 export default meta;

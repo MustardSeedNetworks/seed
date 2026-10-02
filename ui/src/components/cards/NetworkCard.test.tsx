@@ -6,13 +6,16 @@
  */
 
 import { render, screen, within } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { describe, expect, it } from 'vitest';
 
 import { type DhcpData, NetworkCard } from './NetworkCard';
 
 function makeData(overrides: Partial<DhcpData> = {}): DhcpData {
   return {
+    interface: 'eth0',
     mac: '02:00:5e:10:00:00',
+    vendor: 'Example Networks',
     mode: 'dhcp',
     ipv4: {
       address: '192.0.2.10',
@@ -44,5 +47,96 @@ describe('NetworkCard', () => {
     render(<NetworkCard data={makeData({ dns: [] })} />);
 
     expect(screen.queryByText('DNS')).not.toBeInTheDocument();
+  });
+
+  // #123: the card leads with address and gateway; interface, MAC, vendor, mode
+  // and the lease sit behind one Details control.
+  describe('Details group', () => {
+    it('keeps the secondary facts collapsed by default', () => {
+      const { container } = render(<NetworkCard data={makeData()} />);
+      const card = within(container);
+
+      expect(card.getByText('192.0.2.10/24')).toBeInTheDocument();
+      expect(card.getByText('Gateway')).toBeInTheDocument();
+      expect(card.getByRole('button', { name: 'Details' })).toHaveAttribute(
+        'aria-expanded',
+        'false',
+      );
+      for (const label of ['Interface', 'MAC', 'Vendor', 'Mode', 'DHCP Server', 'Lease']) {
+        expect(card.queryByText(label)).not.toBeInTheDocument();
+      }
+    });
+
+    it('expands to every secondary fact and collapses again', async () => {
+      const { container } = render(<NetworkCard data={makeData()} />);
+      const card = within(container);
+      const toggle = card.getByRole('button', { name: 'Details' });
+
+      await userEvent.click(toggle);
+
+      expect(toggle).toHaveAttribute('aria-expanded', 'true');
+      const body = document.getElementById(toggle.getAttribute('aria-controls') ?? '');
+      expect(body).not.toBeNull();
+      const details = within(body as HTMLElement);
+      expect(details.getByText('eth0')).toBeInTheDocument();
+      expect(details.getByText('02:00:5e:10:00:00')).toBeInTheDocument();
+      expect(details.getByText('Example Networks')).toBeInTheDocument();
+      expect(details.getByText('DHCP')).toBeInTheDocument();
+      expect(details.getByText('192.0.2.1')).toBeInTheDocument();
+      expect(details.getByText('1h')).toBeInTheDocument();
+
+      await userEvent.click(toggle);
+
+      expect(toggle).toHaveAttribute('aria-expanded', 'false');
+      expect(card.queryByText('Example Networks')).not.toBeInTheDocument();
+    });
+
+    it('lists only the facts the response carries', async () => {
+      const { container } = render(
+        <NetworkCard
+          data={makeData({
+            interface: undefined,
+            vendor: undefined,
+            ipv4: {
+              address: '192.0.2.10',
+              subnet: '24',
+              gateway: null,
+              dhcpServer: null,
+              leaseTime: null,
+            },
+          })}
+        />,
+      );
+      const card = within(container);
+
+      await userEvent.click(card.getByRole('button', { name: 'Details' }));
+
+      expect(card.getByText('MAC')).toBeInTheDocument();
+      expect(card.getByText('Mode')).toBeInTheDocument();
+      for (const label of ['Interface', 'Vendor', 'DHCP Server', 'Lease', 'Gateway']) {
+        expect(card.queryByText(label)).not.toBeInTheDocument();
+      }
+    });
+  });
+
+  it('keeps DHCP timing behind its own control', async () => {
+    const { container } = render(
+      <NetworkCard
+        data={makeData({ timing: { discover: 10, offer: 20, request: 30, total: 60 } })}
+      />,
+    );
+    const card = within(container);
+
+    expect(card.queryByText('Total')).not.toBeInTheDocument();
+    await userEvent.click(card.getByRole('button', { name: 'DHCP Timing' }));
+    expect(card.getByText('Total')).toBeInTheDocument();
+  });
+
+  // The fallback asked for `network.noIp`; the key is `network.noIP`, so an
+  // interface with no address showed the raw key as its headline.
+  it('says No IP when the interface has no address', () => {
+    const { container } = render(<NetworkCard data={makeData({ ipv4: null })} />);
+
+    expect(within(container).getByText('No IP')).toBeInTheDocument();
   });
 });

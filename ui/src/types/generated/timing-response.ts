@@ -6,7 +6,5 @@
  * docs/schemas/api/; the Go DTO source lives at internal/api/.
  */
 export interface TimingResponse {
-  probeIntervalMs: number;
   rescanIntervalMs: number;
-  workers: number;
 }

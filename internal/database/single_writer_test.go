@@ -3,7 +3,6 @@ package database_test
 import (
 	"context"
 	"database/sql"
-	"path/filepath"
 	"runtime"
 	"sync"
 	"testing"
@@ -12,6 +11,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/MustardSeedNetworks/seed/internal/database"
+	"github.com/MustardSeedNetworks/seed/internal/database/dbtest"
 )
 
 // openWithShortBusyTimeout opens a database whose SQLite busy timeout is short
@@ -19,7 +19,7 @@ import (
 // 5 s; the behaviour under test is what happens once that budget is spent.
 func openWithShortBusyTimeout(t *testing.T) *database.DB {
 	t.Helper()
-	cfg := database.DefaultConfig(filepath.Join(t.TempDir(), "seed.db"))
+	cfg := database.DefaultConfig(dbtest.Path(t))
 	cfg.BusyTimeout = int(busyTimeoutForTest / time.Millisecond)
 	db, err := database.OpenWithConfig(cfg)
 	require.NoError(t, err)
@@ -245,7 +245,7 @@ func TestUpdateReturningWaitsForHeldTransaction(t *testing.T) {
 // recycled at ConnMaxLifetime — reverts to the SQLite default. On the write
 // handle that would mean an fsync per commit.
 func TestPragmasApplyToEveryConnection(t *testing.T) {
-	cfg := database.DefaultConfig(filepath.Join(t.TempDir(), "seed.db"))
+	cfg := database.DefaultConfig(dbtest.Path(t))
 	cfg.ConnMaxLifetime = time.Millisecond
 	db, err := database.OpenWithConfig(cfg)
 	require.NoError(t, err)

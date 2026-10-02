@@ -633,7 +633,6 @@ func TestValidateZeroTimeout(t *testing.T) {
 		modify func(*config.Config)
 	}{
 		{"discovery timeout", func(c *config.Config) { c.Discovery.Timeout = 0 }},
-		{"ping timeout", func(c *config.Config) { c.NetworkDiscovery.PingTimeout = 0 }},
 		{"scan timeout", func(c *config.Config) { c.NetworkDiscovery.ScanTimeout = 0 }},
 		{"DNS timeout", func(c *config.Config) { c.DNS.Timeout = 0 }},
 		{"SNMP timeout", func(c *config.Config) { c.SNMP.Timeout = 0 }},
@@ -648,31 +647,6 @@ func TestValidateZeroTimeout(t *testing.T) {
 			err := cfg.Validate()
 			if err == nil {
 				t.Error("expected validation error for zero timeout")
-			}
-		})
-	}
-}
-
-func TestValidateInvalidARPScanWorkers(t *testing.T) {
-	tests := []struct {
-		name    string
-		workers int
-	}{
-		{"zero workers", 0},
-		{"negative workers", -1},
-		{"too many workers", 501},
-		{"way too many workers", 10000},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			cfg := config.DefaultConfig()
-			cfg.Auth.DefaultPasswordHash = "hash"
-			cfg.NetworkDiscovery.ARPScanWorkers = tt.workers
-
-			err := cfg.Validate()
-			if err == nil {
-				t.Error("expected validation error for invalid ARP scan workers")
 			}
 		})
 	}

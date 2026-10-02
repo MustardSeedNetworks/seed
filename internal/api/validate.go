@@ -66,7 +66,7 @@ func validateStruct(
 			w, logger,
 			http.StatusBadRequest,
 			ErrCodeValidation,
-			localizer.T("errors.api.validationFailed"),
+			localizer.T("errors.validation.failed"),
 			details,
 		)
 		return false

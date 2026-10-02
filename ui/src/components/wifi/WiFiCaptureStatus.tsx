@@ -3,6 +3,7 @@ import type { Status } from '../../types/generated/wifi-airspace-response';
 
 interface WiFiCaptureStatusProps {
   status: Status;
+  clientsWithheld: boolean;
 }
 
 interface Stat {
@@ -13,15 +14,16 @@ interface Stat {
 /**
  * WiFiCaptureStatus is a compact header showing whether monitor-mode capture is
  * active (and its source) plus the live entity counts. When capture is inactive
- * it states so plainly rather than implying an empty network.
+ * it states so plainly rather than implying an empty network, and withheld
+ * clients are named as a tier boundary rather than counted as zero.
  */
-export function WiFiCaptureStatus({ status }: WiFiCaptureStatusProps) {
+export function WiFiCaptureStatus({ status, clientsWithheld }: WiFiCaptureStatusProps) {
   const { t } = useTranslation('pages');
   const stats: Stat[] = [
     { label: 'SSIDs', value: status.ssids },
     { label: 'APs', value: status.aps },
     { label: 'BSSIDs', value: status.bsses },
-    { label: 'Clients', value: status.stations },
+    ...(clientsWithheld ? [] : [{ label: 'Clients', value: status.stations }]),
   ];
 
   return (
@@ -54,6 +56,11 @@ export function WiFiCaptureStatus({ status }: WiFiCaptureStatusProps) {
           </div>
         ))}
       </dl>
+      {clientsWithheld ? (
+        <p data-testid="wifi-clients-withheld" className="text-xs text-text-muted">
+          {t('wifi.clientsWithheld')}
+        </p>
+      ) : null}
     </div>
   );
 }

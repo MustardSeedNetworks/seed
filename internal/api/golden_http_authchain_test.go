@@ -24,6 +24,7 @@ import (
 
 	api "github.com/MustardSeedNetworks/seed/internal/api"
 	"github.com/MustardSeedNetworks/seed/internal/database"
+	"github.com/MustardSeedNetworks/seed/internal/database/dbtest"
 	"github.com/MustardSeedNetworks/seed/internal/netif"
 	"github.com/MustardSeedNetworks/seed/internal/testutil"
 )
@@ -90,7 +91,7 @@ func newFullChainServer(t *testing.T) *testEndpointServer {
 		t.Fatalf("save test config: %v", err)
 	}
 
-	db, err := database.Open(filepath.Join(tmpDir, "seed.db"))
+	db, err := database.Open(dbtest.Path(t))
 	if err != nil {
 		t.Fatalf("open test db: %v", err)
 	}

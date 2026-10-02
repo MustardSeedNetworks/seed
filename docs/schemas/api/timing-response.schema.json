@@ -5,22 +5,14 @@
   "$defs": {
     "TimingResponse": {
       "properties": {
-        "probeIntervalMs": {
-          "type": "integer"
-        },
         "rescanIntervalMs": {
-          "type": "integer"
-        },
-        "workers": {
           "type": "integer"
         }
       },
       "additionalProperties": false,
       "type": "object",
       "required": [
-        "probeIntervalMs",
-        "rescanIntervalMs",
-        "workers"
+        "rescanIntervalMs"
       ]
     }
   },

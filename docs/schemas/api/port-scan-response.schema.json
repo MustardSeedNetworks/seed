@@ -8,23 +8,23 @@
         "enabled": {
           "type": "boolean"
         },
+        "preset": {
+          "type": "string"
+        },
         "tcpPorts": {
           "type": "string"
         },
         "udpPorts": {
           "type": "string"
-        },
-        "bannerTimeoutMs": {
-          "type": "integer"
         }
       },
       "additionalProperties": false,
       "type": "object",
       "required": [
         "enabled",
+        "preset",
         "tcpPorts",
-        "udpPorts",
-        "bannerTimeoutMs"
+        "udpPorts"
       ]
     }
   },

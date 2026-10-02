@@ -17,6 +17,7 @@ import (
 	"github.com/MustardSeedNetworks/seed/internal/auth"
 	"github.com/MustardSeedNetworks/seed/internal/config"
 	"github.com/MustardSeedNetworks/seed/internal/database"
+	"github.com/MustardSeedNetworks/seed/internal/database/dbtest"
 	"github.com/MustardSeedNetworks/seed/internal/license"
 	"github.com/MustardSeedNetworks/seed/internal/reporting"
 	"github.com/MustardSeedNetworks/seed/internal/testutil"
@@ -41,7 +42,7 @@ func reportsTestConfig(t *testing.T) (*config.Config, string) {
 func reportsTestDB(t *testing.T) *database.DB {
 	t.Helper()
 
-	db, err := database.Open(filepath.Join(t.TempDir(), "reports-test.db"))
+	db, err := database.Open(dbtest.Path(t))
 	require.NoError(t, err)
 	t.Cleanup(func() { _ = db.Close() })
 

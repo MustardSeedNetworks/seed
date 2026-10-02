@@ -8,6 +8,7 @@
 
 import type { ComponentProps } from 'react';
 import type { NetworkDiscoverySettings, SnmpSettings, SubnetConfig } from '../../../types/settings';
+import { DEFAULT_CARD_SETTINGS } from '../../../types/settings';
 import type { DiscoverySettings } from './DiscoverySettings';
 
 const noop = (): void => {
@@ -16,11 +17,8 @@ const noop = (): void => {
 
 export const defaultSettings: NetworkDiscoverySettings = {
   enabled: true,
-  arpScanWorkers: 50,
-  pingTimeoutMs: 500,
   scanTimeoutMs: 30000,
   autoScan: false,
-  scanIntervalMs: 0,
   options: {
     passiveProtocols: {
       lldp: true,
@@ -35,7 +33,6 @@ export const defaultSettings: NetworkDiscoverySettings = {
       preset: 'common',
       tcpPorts: '',
       udpPorts: '',
-      bannerTimeoutMs: 3000,
     },
     tcpProbe: {
       timeoutMs: 3000,
@@ -45,9 +42,7 @@ export const defaultSettings: NetworkDiscoverySettings = {
     snmpQuery: false,
   },
   timing: {
-    probeIntervalMs: 100,
     rescanIntervalMs: 300000,
-    workers: 50,
   },
   profiler: {
     enabled: true,
@@ -93,8 +88,6 @@ export const baseArgs = (subnets: SubnetConfig[] = []): DiscoverySettingsArgs =>
   snmpSettings: defaultSnmpSettings,
   setSnmpSettings: noop,
   snmpStatus: 'idle',
-  cardSettings: {
-    networkDiscovery: { enabled: true, autoRunOnLink: true },
-  } as unknown as DiscoverySettingsArgs['cardSettings'],
+  cardSettings: DEFAULT_CARD_SETTINGS,
   updateCardSettings: noop,
 });

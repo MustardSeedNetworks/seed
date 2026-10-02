@@ -1,9 +1,9 @@
 /**
  * Page registry — declarative route table for Seed.
  *
- * Heavy pages are lazy-loaded so the initial chunk only carries the
- * Link landing page. The shape mirrors niac's pageRegistry; stem
- * exposes the same surface.
+ * Every page is lazy-loaded, the Link landing page included, so the
+ * initial chunk carries only the shell. The shape mirrors niac's
+ * pageRegistry; stem exposes the same surface.
  *
  * The header a page wears is rendered centrally by AppShell from this
  * table, not by the page itself — one edit per route, and page bodies
@@ -25,10 +25,10 @@ import {
 import { type FC, lazy } from 'react';
 import { useTranslation } from 'react-i18next';
 
-// Eager — the default landing pages.
-import { LinkPage } from './pages/LinkPage';
-import { NetworkPage } from './pages/NetworkPage';
-
+const LinkPage = lazy(() => import('./pages/LinkPage').then((m) => ({ default: m.LinkPage })));
+const NetworkPage = lazy(() =>
+  import('./pages/NetworkPage').then((m) => ({ default: m.NetworkPage })),
+);
 const PathAnalysisPage = lazy(() =>
   import('./pages/PathAnalysisPage').then((m) => ({ default: m.PathAnalysisPage })),
 );

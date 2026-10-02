@@ -37,8 +37,7 @@
         "enabled": false,
         "preset": "common",
         "tcpPorts": "",
-        "udpPorts": "",
-        "bannerTimeout": 2000000000
+        "udpPorts": ""
       },
       "tcpProbe": {
         "timeout": 2000000000,
@@ -48,17 +47,12 @@
       "snmpQuery": false
     },
     "timing": {
-      "probe_interval": 75000000,
-      "rescan_interval": 60000000000,
-      "workers": 50
+      "rescan_interval": 60000000000
     },
     "target_networks": [],
     "enabled": true,
-    "arp_scan_workers": 50,
-    "ping_timeout": 500000000,
     "scan_timeout": 30000000000,
     "auto_scan": true,
-    "scan_interval": 0,
     "oui_file_path": "data/oui.txt",
     "oui_max_age": 2592000000000000,
     "profiler": {
@@ -360,6 +354,10 @@
   "displayOptions": {
     "show_public_ip": true,
     "unit_system": "sae"
+  },
+  "identity": {
+    "name": "",
+    "location": ""
   },
   "logging": {
     "level": "info",

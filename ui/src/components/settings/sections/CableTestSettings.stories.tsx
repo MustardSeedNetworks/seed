@@ -3,10 +3,12 @@ import { useState } from 'react';
 import type { CableTestSettings as CableTestSettingsType } from '../../../types/settings';
 import { DEFAULT_CABLE_TEST_SETTINGS } from '../../../types/settings';
 import { CableTestSettings } from './CableTestSettings';
+import { expandSections } from './storyPlay';
 
 const meta = {
   title: 'Settings/CableTestSettings',
   component: CableTestSettings,
+  play: expandSections,
 } satisfies Meta<typeof CableTestSettings>;
 
 export default meta;

@@ -38,7 +38,6 @@ PrivateDevices=no
 
 # Environment
 Environment=HOME=/var/lib/seed
-Environment=SEED_DATA_DIR=/var/lib/seed
 
 [Install]
 WantedBy=multi-user.target

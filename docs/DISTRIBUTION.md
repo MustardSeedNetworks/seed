@@ -34,8 +34,10 @@ Alongside each artifact:
 There is **no macOS x86-64 build** and **no container image**. There is also
 **no Homebrew tap, and there will not be one** — the `brews:` block was removed
 on 2026-05-18 when the tap token proved never to have been provisioned, and the
-owner closed the question on 2026-09-07: macOS is served by the `.pkg`
-installer. Do not re-add it.
+owner closed the question on 2026-09-07. Do not re-add it. Nor is there a
+published macOS `.pkg`: the release workflow cannot run `pkgbuild` on Linux, so
+the installer is built only locally by `deploy/macos/build-pkg.sh`, and the
+`.tar.gz` above is what an operator downloads.
 
 ## 2. How it is built
 

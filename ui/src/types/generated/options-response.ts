@@ -22,9 +22,9 @@ export interface PassiveProtocolResponse {
 }
 export interface PortScanResponse {
   enabled: boolean;
+  preset: string;
   tcpPorts: string;
   udpPorts: string;
-  bannerTimeoutMs: number;
 }
 export interface TCPProbeSettingsResponse {
   timeoutMs: number;

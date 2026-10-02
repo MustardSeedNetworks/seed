@@ -1,8 +1,19 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import type { ReactNode } from 'react';
 import { describe, expect, it, vi } from 'vitest';
+import { useFocusTrap } from '../../hooks/useFocusTrap';
 import { Button, IconButton } from './Button';
 import { Tooltip } from './Tooltip';
+
+function TrapDialog({ onEscape, children }: { onEscape: () => void; children: ReactNode }) {
+  const ref = useFocusTrap<HTMLDivElement>({ isActive: true, onEscape });
+  return (
+    <div ref={ref} role="dialog" aria-modal="true">
+      {children}
+    </div>
+  );
+}
 
 describe('Tooltip keyboard contract', () => {
   it('describes the actual focused trigger and dismisses with Escape', async () => {
@@ -57,6 +68,46 @@ describe('Tooltip keyboard contract', () => {
     await user.click(screen.getByRole('button', { name: 'Open help' }));
     expect(open).toHaveBeenCalledOnce();
     expect(screen.queryByRole('tooltip')).not.toBeInTheDocument();
+  });
+
+  // WebKit sends no mouseleave when a drawer opens over a still pointer, so a
+  // hovered tooltip stays open beneath the dialog (#2893).
+  it('leaves Escape to a modal dialog opened over a hovered tooltip', async () => {
+    const user = userEvent.setup();
+    const closeDialog = vi.fn();
+    render(
+      <>
+        <Tooltip text="Select an Ethernet interface">
+          <button type="button">Ethernet</button>
+        </Tooltip>
+        <TrapDialog onEscape={closeDialog}>
+          <button type="button">Close help</button>
+        </TrapDialog>
+      </>,
+    );
+    await user.hover(screen.getByRole('button', { name: 'Ethernet' }));
+    expect(screen.getByRole('tooltip')).toBeVisible();
+    screen.getByRole('button', { name: 'Close help' }).focus();
+    await user.keyboard('{Escape}');
+    expect(closeDialog).toHaveBeenCalledOnce();
+    expect(screen.queryByRole('tooltip')).not.toBeInTheDocument();
+  });
+
+  it('still takes Escape for a tooltip inside the open dialog', async () => {
+    const user = userEvent.setup();
+    const closeDialog = vi.fn();
+    render(
+      <TrapDialog onEscape={closeDialog}>
+        <Tooltip text="Section contents">
+          <button type="button">Contents</button>
+        </Tooltip>
+      </TrapDialog>,
+    );
+    await user.tab();
+    expect(screen.getByRole('tooltip')).toBeVisible();
+    await user.keyboard('{Escape}');
+    expect(screen.queryByRole('tooltip')).not.toBeInTheDocument();
+    expect(closeDialog).not.toHaveBeenCalled();
   });
 
   it('keeps focus and the accessible name when contextual text changes', async () => {

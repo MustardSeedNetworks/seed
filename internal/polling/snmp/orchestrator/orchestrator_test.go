@@ -4,11 +4,11 @@ import (
 	"context"
 	"errors"
 	"log/slog"
-	"path/filepath"
 	"testing"
 	"time"
 
 	"github.com/MustardSeedNetworks/seed/internal/database"
+	"github.com/MustardSeedNetworks/seed/internal/database/dbtest"
 	"github.com/MustardSeedNetworks/seed/internal/polling/snmp"
 	"github.com/MustardSeedNetworks/seed/internal/polling/snmp/orchestrator"
 	"github.com/MustardSeedNetworks/seed/internal/scheduler"
@@ -21,8 +21,7 @@ func at() time.Time              { return time.Date(2026, 5, 31, 12, 0, 0, 0, ti
 // temporary file. Closed automatically when t terminates.
 func openTestDB(t *testing.T) *database.DB {
 	t.Helper()
-	path := filepath.Join(t.TempDir(), "seed.db")
-	db, err := database.Open(path)
+	db, err := database.Open(dbtest.Path(t))
 	if err != nil {
 		t.Fatalf("open db: %v", err)
 	}

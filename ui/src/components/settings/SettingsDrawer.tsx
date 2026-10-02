@@ -59,6 +59,7 @@ import { ApiTokensSettings } from './sections/ApiTokensSettings';
 import { AppearanceSettings } from './sections/AppearanceSettings';
 import { CableTestSettings } from './sections/CableTestSettings';
 import { ConfigBackupsSection } from './sections/ConfigBackupsSection';
+import { DeviceIdentitySettings } from './sections/DeviceIdentitySettings';
 import { DiscoverySettings } from './sections/DiscoverySettings';
 import { DnsSettings } from './sections/DnsSettings';
 import { GuestNetworkAuditSettings } from './sections/GuestNetworkAuditSettings';
@@ -209,11 +210,8 @@ export const SettingsDrawer: React.MemoExoticComponent<
   const [networkDiscoverySettings, setNetworkDiscoverySettings] =
     useState<NetworkDiscoverySettings>({
       enabled: true,
-      arpScanWorkers: 50,
-      pingTimeoutMs: 500,
       scanTimeoutMs: 30000,
       autoScan: false,
-      scanIntervalMs: 0,
       ipv6Enabled: true,
       options: {
         passiveProtocols: {
@@ -229,7 +227,6 @@ export const SettingsDrawer: React.MemoExoticComponent<
           preset: 'common',
           tcpPorts: '22,80,443,8080-8100',
           udpPorts: '53,123,161',
-          bannerTimeoutMs: 2000,
         },
         tcpProbe: {
           timeoutMs: 2000,
@@ -239,9 +236,7 @@ export const SettingsDrawer: React.MemoExoticComponent<
         snmpQuery: false,
       },
       timing: {
-        probeIntervalMs: 75,
         rescanIntervalMs: 60000,
-        workers: 50,
       },
       profiler: {
         enabled: true,
@@ -660,6 +655,8 @@ export const SettingsDrawer: React.MemoExoticComponent<
             setThresholds={setThresholds}
             thresholdsStatus={thresholdsStatus}
           />
+
+          <DeviceIdentitySettings />
 
           {/* Appearance Section */}
           <AppearanceSettings

@@ -13,7 +13,8 @@
  * showing an English word above a Spanish headline.
  */
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen, waitFor, within } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { AppContext, type AppContextValue } from '../contexts/AppContext';
@@ -216,6 +217,10 @@ describe('NetworkPage — real locale copy', () => {
     expect(screen.getAllByText('192.0.2.10').length).toBeGreaterThan(0);
     expect(screen.getAllByText('DNS').length).toBeGreaterThan(0);
     expect(screen.getAllByText('IPv4').length).toBeGreaterThan(0);
+    // The MAC sits in the Network card's collapsed Details group (#123).
+    await userEvent.click(
+      within(screen.getByTestId('network-card-details')).getByRole('button', { name: 'Detalles' }),
+    );
     expect(screen.getByText('02:00:5e:10:00:00', notTheTooltip)).toBeVisible();
   });
 });

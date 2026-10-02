@@ -38,7 +38,12 @@ import '@testing-library/jest-dom';
 // entirely, so defaultValue and interpolation silently vanished.
 import i18next from 'i18next';
 import { afterEach, beforeEach, vi } from 'vitest';
-import '../i18n';
+import { i18nReady } from '../i18n';
+
+// The app fetches Spanish on first use; the suite reads both locales directly,
+// so it loads Spanish up front.
+await i18nReady;
+await i18next.loadLanguages('es');
 
 // Loading the real locale files is only half of it. Corrupting every string in
 // both locales -- all 4,290 of them -- still leaves 285 of 311 tests passing,
@@ -102,12 +107,15 @@ Object.defineProperty(window, 'matchMedia', {
   }),
 });
 
-// ResizeObserver: used by xyflow, codemirror, recharts, headlessui
-global.ResizeObserver = vi.fn().mockImplementation(() => ({
-  observe: vi.fn(),
-  unobserve: vi.fn(),
-  disconnect: vi.fn(),
-})) as unknown as typeof ResizeObserver;
+// ResizeObserver: used by xyflow, codemirror, recharts, headlessui, and the
+// discovery table's virtualiser. A class, because callers construct it with
+// `new`, and Vitest 4 refuses to construct a mock whose implementation is an
+// arrow function.
+global.ResizeObserver = class {
+  observe(): void {}
+  unobserve(): void {}
+  disconnect(): void {}
+} as unknown as typeof ResizeObserver;
 
 // IntersectionObserver: used by lazy loading, infinite scroll
 global.IntersectionObserver = vi.fn().mockImplementation(() => ({

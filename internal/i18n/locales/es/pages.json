@@ -62,7 +62,7 @@
     "rollupNoAddress": "El enlace está activo sin dirección enrutable",
     "rollupNoAddressBody": "La capa 2 está sana y la capa 3 no. Lo siguiente que hay que revisar es DHCP o la configuración estática.",
     "rollupHalfDuplex": "El enlace negoció semidúplex",
-    "rollupHalfDuplexBody": "El semidúplex en un puerto conmutado casi siempre es un desajuste de negociación y cuesta rendimiento.",
+    "rollupHalfDuplexBody": "El semidúplex en un puerto conmutado casi siempre es un desajuste de negociación y cuesta throughput.",
     "rollupUp": "El enlace está activo a {{speed}}",
     "rollupUnreportedSpeed": "una velocidad no informada",
     "figureSpeed": "Velocidad",
@@ -111,7 +111,7 @@
     "title": "Análisis de ruta"
   },
   "performance": {
-    "description": "Pruebas activas de rendimiento (speedtest, iperf3) y sondas de estado.",
+    "description": "Pruebas activas de throughput (speedtest, iperf3) y sondas de estado.",
     "label": "Rendimiento",
     "title": "Rendimiento"
   },
@@ -216,7 +216,8 @@
     "liveCaptureOn": "Captura en vivo en <src>{{source}}</src>",
     "captureInactive": "Captura de monitor inactiva — mostrando el último espacio radioeléctrico observado",
     "airspaceTitle": "Espacio radioeléctrico Wi-Fi",
-    "airspaceSubtitle": "Mapa en vivo de SSID / AP / BSSID / clientes a partir de la captura de tramas de gestión 802.11.",
+    "airspaceSubtitle": "Mapa de SSID / AP / BSSID / clientes a partir de los escaneos Wi-Fi, más la captura de tramas de gestión 802.11 cuando el modo monitor está activo.",
+    "clientsWithheld": "Los clientes requieren el nivel Pro.",
     "anomaliesTitle": "Anomalías de Wi-Fi",
     "anomaliesSubtitle": "Anomalías de seguridad, RF, itinerancia y estándares detectadas en el espacio radioeléctrico.",
     "tierHint": "Disponible en Seed Starter y Pro. Ejecute `seed license trial` para una prueba de 14 días.",

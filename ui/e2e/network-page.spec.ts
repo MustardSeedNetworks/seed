@@ -34,4 +34,20 @@ test.describe('Network Page', () => {
     const cards = page.locator('text=/dhcp|gateway|dns|public.*ip|switch/i');
     await expect(cards.first()).toBeVisible({ timeout: 5000 });
   });
+
+  // #123: interface, MAC, vendor, mode and the lease sit behind one control.
+  // Mode is the one row every response carries (the E2E daemon runs on lo).
+  test('opens and closes the Network card Details group', async ({ page }) => {
+    const toggle = page.getByTestId('network-card-details').getByRole('button');
+    await expect(toggle).toHaveAttribute('aria-expanded', 'false', { timeout: 10000 });
+
+    await toggle.click();
+    await expect(toggle).toHaveAttribute('aria-expanded', 'true');
+    const body = page.locator(`[id="${await toggle.getAttribute('aria-controls')}"]`);
+    await expect(body.getByText('Mode', { exact: true })).toBeVisible();
+
+    await toggle.click();
+    await expect(toggle).toHaveAttribute('aria-expanded', 'false');
+    await expect(body).toHaveCount(0);
+  });
 });

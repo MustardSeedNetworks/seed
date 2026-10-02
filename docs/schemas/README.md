@@ -66,7 +66,6 @@ The schema enforces the same validation rules as `config.Validate()`:
 - `server.port`: 1-65535
 - `vlan.id`: 1-4094 (when enabled)
 - `ip.mode`: "dhcp" or "static"
-- `network_discovery.arp_scan_workers`: 1-500
 - `network_discovery.profile`: "stealth", "standard", "full_scan", "custom"
 - `snmp.port`: 1-65535
 - `snmp.retries`: 0-10

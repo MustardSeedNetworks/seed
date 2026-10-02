@@ -59,16 +59,7 @@ describe('shared chrome — Spanish, with no English left behind', () => {
   });
 
   it('labels the command palette, its search, its actions and the theme toggle', () => {
-    // cmdk constructs a ResizeObserver; the suite-wide stub is an arrow function.
-    vi.stubGlobal(
-      'ResizeObserver',
-      class {
-        observe(): void {}
-        unobserve(): void {}
-        disconnect(): void {}
-      },
-    );
-    // …and scrolls the active item into view, which jsdom does not implement.
+    // cmdk scrolls the active item into view, which jsdom does not implement.
     Element.prototype.scrollIntoView = (): void => {};
     render(
       <CommandPalette

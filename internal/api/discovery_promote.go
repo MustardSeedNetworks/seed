@@ -123,9 +123,10 @@ func deviceName(device *discovery.DiscoveredDevice) string {
 }
 
 // afterSweep is the one observer the discovery service calls when a sweep
-// finishes. Both consumers read the same result, and the service holds a
+// finishes. Every consumer reads the same result, and the service holds a
 // single observer.
 func (s *Server) afterSweep(ctx context.Context, discovered []*discovery.DiscoveredDevice) {
 	s.learnTargetNetworks(ctx, discovered)
+	s.noteSweepEvidence(discovered)
 	s.promoteDiscoveredDevices(ctx, discovered)
 }

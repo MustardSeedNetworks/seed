@@ -4,7 +4,7 @@
  *              Implements WCAG 2.1 AA compliance for modal dialogs.
  */
 
-import { type RefObject, useEffect, useRef } from 'react';
+import { type RefObject, useEffect, useEffectEvent, useRef } from 'react';
 
 /** Focusable element selectors */
 const FOCUSABLE_SELECTORS: string = [
@@ -15,6 +15,13 @@ const FOCUSABLE_SELECTORS: string = [
   'a[href]',
   '[tabindex]:not([tabindex="-1"])',
 ].join(', ');
+
+/**
+ * Open traps, oldest first. A dialog can open over another (the profile editor
+ * over the profile manager) and every trap listens on document, so only the
+ * newest one may act on a key or a focus change.
+ */
+const openTraps: object[] = [];
 
 interface UseFocusTrapOptions {
   isActive: boolean;
@@ -76,6 +83,18 @@ export function useFocusTrap<T extends HTMLElement = HTMLDivElement>(
   const { isActive, onEscape, autoFocus = true, restoreFocus = true } = options;
   const containerRef = useRef<T>(null);
   const previousActiveElement = useRef<HTMLElement | null>(null);
+  // Callers pass `onEscape` as an inline arrow, a new function on every render
+  // of the owner. As an effect dependency it re-ran the trap on each
+  // re-render, which restored focus to the opener and then refocused the first
+  // control, so focus jumped whenever the page polled (#461).
+  const handleEscape = useEffectEvent((event: KeyboardEvent): void => {
+    if (!onEscape) {
+      return;
+    }
+    event.preventDefault();
+    event.stopPropagation();
+    onEscape();
+  });
 
   useEffect(() => {
     if (!isActive) {
@@ -91,25 +110,28 @@ export function useFocusTrap<T extends HTMLElement = HTMLDivElement>(
       return;
     }
 
-    if (autoFocus) {
-      const focusableElements = getFocusableElements(container);
-      const [firstElement] = focusableElements;
-      if (firstElement) {
-        requestAnimationFrame(() => {
-          firstElement.focus();
-        });
-      }
+    const trap = {};
+    openTraps.push(trap);
+    const isTopmost = (): boolean => openTraps.at(-1) === trap;
+
+    // Now, not a frame later: a late frame (seconds, on a loaded WebKit) moved
+    // focus off a control the operator had already chosen inside (#2922).
+    if (autoFocus && !container.contains(document.activeElement)) {
+      getFocusableElements(container)[0]?.focus();
     }
 
     const handleKeyDown = (event: KeyboardEvent): void => {
-      if (event.key === 'Escape' && onEscape) {
-        event.preventDefault();
-        event.stopPropagation();
-        onEscape();
+      if (!isTopmost()) {
+        return;
+      }
+      if (event.key === 'Escape') {
+        handleEscape(event);
         return;
       }
 
-      if (event.key === 'Tab') {
+      // A Tab the dialog's content already handled (the virtualised discovery
+      // table moving focus to a row it has not mounted yet) is not the trap's.
+      if (event.key === 'Tab' && !event.defaultPrevented) {
         const focusableElements = getFocusableElements(container);
         handleTabKey(event, container, focusableElements);
       }
@@ -117,7 +139,7 @@ export function useFocusTrap<T extends HTMLElement = HTMLDivElement>(
 
     const handleFocusOut = (event: FocusEvent): void => {
       const isLeavingContainer = !container.contains(event.relatedTarget as Node);
-      if (!isLeavingContainer) {
+      if (!(isLeavingContainer && isTopmost())) {
         return;
       }
 
@@ -137,6 +159,7 @@ export function useFocusTrap<T extends HTMLElement = HTMLDivElement>(
     container.addEventListener('focusout', handleFocusOut);
 
     return () => {
+      openTraps.splice(openTraps.indexOf(trap), 1);
       document.removeEventListener('keydown', handleKeyDown);
       container.removeEventListener('focusout', handleFocusOut);
 
@@ -144,7 +167,7 @@ export function useFocusTrap<T extends HTMLElement = HTMLDivElement>(
         previousActiveElement.current.focus();
       }
     };
-  }, [isActive, onEscape, autoFocus, restoreFocus]);
+  }, [isActive, autoFocus, restoreFocus]);
 
   return containerRef;
 }

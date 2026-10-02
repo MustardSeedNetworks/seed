@@ -271,3 +271,39 @@ func hostTransitNetwork(t *testing.T) netip.Prefix {
 	}
 	return p
 }
+
+// Evidence is every address a device table shows in use. A summary route
+// names no /24 in particular, so it contributes only its next hop, and a
+// network the router drops contributes nothing (seed#2832).
+func TestEvidenceReadsEveryAddressInUse(t *testing.T) {
+	devices := []learn.Device{
+		{
+			IP: "10.254.200.1",
+			Routes: []learn.Route{
+				{Destination: "10.51.0.0", Prefix: 16, NextHop: "203.0.113.2", Type: "remote"},
+				{Destination: "10.51.10.0", Prefix: 24, NextHop: "10.51.0.9", Type: "remote"},
+				{Destination: "10.51.40.7", Prefix: 32, Type: "local"},
+				{Destination: "10.51.90.0", Prefix: 24, NextHop: "10.51.90.1", Type: "blackhole"},
+				{Destination: "10.51.91.0", Prefix: 24, NextHop: "10.51.91.1", Type: "reject"},
+			},
+			Addresses:  []learn.Address{{Address: "10.51.20.2", Prefix: 24}, {Address: "fe80::1", Prefix: 64}},
+			Neighbours: []string{"10.51.30.3", "", "not an address"},
+		},
+		{IP: "10.51.200.5"},
+	}
+
+	got := learn.Evidence(devices)
+
+	want := []string{
+		"10.254.200.1", "10.51.20.2", "10.51.30.3",
+		"203.0.113.2", "10.51.0.9", "10.51.10.0", "10.51.40.7",
+		"10.51.200.5",
+	}
+	gotStrings := make([]string, 0, len(got))
+	for _, addr := range got {
+		gotStrings = append(gotStrings, addr.String())
+	}
+	if !equalStrings(gotStrings, want) {
+		t.Errorf("Evidence() = %v, want %v", gotStrings, want)
+	}
+}

@@ -5,6 +5,110 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.220.2](https://github.com/MustardSeedNetworks/seed/compare/v0.220.1...v0.220.2) (2026-10-02)
+
+
+### Documentation
+
+* stop promising a published macOS .pkg; drop stale pins and dead scripts ([#2953](https://github.com/MustardSeedNetworks/seed/issues/2953)) ([ea2c6b8](https://github.com/MustardSeedNetworks/seed/commit/ea2c6b896bb9082cd103eb918dc471efc309605c)), closes [#2637](https://github.com/MustardSeedNetworks/seed/issues/2637)
+
+
+### Tests
+
+* **e2e:** say where focus went when a focus assertion fails ([#2951](https://github.com/MustardSeedNetworks/seed/issues/2951)) ([b0fdb99](https://github.com/MustardSeedNetworks/seed/commit/b0fdb99e85619b972f4bad2bb206d76e0a8ef9aa))
+
+## [0.220.1](https://github.com/MustardSeedNetworks/seed/compare/v0.220.0...v0.220.1) (2026-10-02)
+
+
+### Bug Fixes
+
+* **discovery:** sweep the live /24s of a learned summary ([#2949](https://github.com/MustardSeedNetworks/seed/issues/2949)) ([4a5a0d0](https://github.com/MustardSeedNetworks/seed/commit/4a5a0d05cdf55e49a9b460e92be46ff46cccfafa))
+* **i18n:** gate every locale namespace for en/es parity ([#2943](https://github.com/MustardSeedNetworks/seed/issues/2943)) ([738cf98](https://github.com/MustardSeedNetworks/seed/commit/738cf98446d8629e03c4cf084c148d8c51c78149)), closes [#2639](https://github.com/MustardSeedNetworks/seed/issues/2639)
+* **probe:** lock the HTTP trace and time tcp to the dial that connected ([#2947](https://github.com/MustardSeedNetworks/seed/issues/2947)) ([c5d98c0](https://github.com/MustardSeedNetworks/seed/commit/c5d98c0dd491d8a584bd459f8d8ceb2913f5c594)), closes [#2630](https://github.com/MustardSeedNetworks/seed/issues/2630)
+* **test:** migrate the test database once per binary and close the gateway pinger ([#2946](https://github.com/MustardSeedNetworks/seed/issues/2946)) ([587378d](https://github.com/MustardSeedNetworks/seed/commit/587378d84d501125f98716b3a4562451dbbd0f6b))
+* **ui:** leave Escape to a modal opened over a hovered tooltip ([#2948](https://github.com/MustardSeedNetworks/seed/issues/2948)) ([65332f2](https://github.com/MustardSeedNetworks/seed/commit/65332f22231c318e7d8d0a468b362e5723ba94ec)), closes [#2893](https://github.com/MustardSeedNetworks/seed/issues/2893)
+
+## [0.220.0](https://github.com/MustardSeedNetworks/seed/compare/v0.219.0...v0.220.0) (2026-10-01)
+
+
+### Features
+
+* **settings:** name the device and show it in the header and tab title ([#2929](https://github.com/MustardSeedNetworks/seed/issues/2929)) ([f9c8743](https://github.com/MustardSeedNetworks/seed/commit/f9c8743fed12881c1540db16c8e28bdb077b93d4))
+
+
+### Bug Fixes
+
+* **ci:** remove steps that check nothing and run i18n on locale PRs ([#2935](https://github.com/MustardSeedNetworks/seed/issues/2935)) ([5a44fff](https://github.com/MustardSeedNetworks/seed/commit/5a44fffa6baa210f24725059df4d6b68dedcee79)), closes [#2636](https://github.com/MustardSeedNetworks/seed/issues/2636)
+* **i18n:** render API messages that take data and write the missing copy ([#2932](https://github.com/MustardSeedNetworks/seed/issues/2932)) ([35fd9bd](https://github.com/MustardSeedNetworks/seed/commit/35fd9bd5014d82c570c2fc143ca59e2023be4741)), closes [#2299](https://github.com/MustardSeedNetworks/seed/issues/2299)
+* **ui:** close the Bluetooth table on Escape and return focus from dialogs ([#2942](https://github.com/MustardSeedNetworks/seed/issues/2942)) ([eb4a6c1](https://github.com/MustardSeedNetworks/seed/commit/eb4a6c1535a3eedc0233489471c2b961a9865f78))
+* **ui:** name withheld Wi-Fi clients as a Pro boundary, not zero ([#2934](https://github.com/MustardSeedNetworks/seed/issues/2934)) ([2059b7a](https://github.com/MustardSeedNetworks/seed/commit/2059b7aeec68f5f4f49bbb72110608fc5d2aa733)), closes [#2889](https://github.com/MustardSeedNetworks/seed/issues/2889)
+
+
+### Tests
+
+* **e2e:** gate every page and overlay on axe and keyboard focus ([#2937](https://github.com/MustardSeedNetworks/seed/issues/2937)) ([415aaf8](https://github.com/MustardSeedNetworks/seed/commit/415aaf8c8984ec869822d1a9447239aad5aa6082))
+* **storybook:** gate the five excluded stories and expanded settings sections ([#2941](https://github.com/MustardSeedNetworks/seed/issues/2941)) ([c74e25e](https://github.com/MustardSeedNetworks/seed/commit/c74e25e9a9f8b64273c785742a935901c1974a36))
+
+
+### Miscellaneous
+
+* **deps:** update dependency vite to v8.3.1 ([#2939](https://github.com/MustardSeedNetworks/seed/issues/2939)) ([885b72f](https://github.com/MustardSeedNetworks/seed/commit/885b72f3f4e4c3cefbf5bdc1bf88d29602ca8850))
+* **deps:** update github/codeql-action action to v4.38.2 ([#2940](https://github.com/MustardSeedNetworks/seed/issues/2940)) ([dc31d65](https://github.com/MustardSeedNetworks/seed/commit/dc31d65e6a588bfdc461eadb82290bfbb4f4a2a4))
+
+## [0.219.0](https://github.com/MustardSeedNetworks/seed/compare/v0.218.0...v0.219.0) (2026-10-01)
+
+
+### Features
+
+* **settings:** discovery timing in minutes and seconds; drop the timers nothing read ([#2927](https://github.com/MustardSeedNetworks/seed/issues/2927)) ([38515f2](https://github.com/MustardSeedNetworks/seed/commit/38515f2f796cb9dd843a3204dbc783869b7e537a)), closes [#491](https://github.com/MustardSeedNetworks/seed/issues/491)
+* **ui:** collapse the Network card's secondary facts into a Details group ([#2924](https://github.com/MustardSeedNetworks/seed/issues/2924)) ([a2fdc4c](https://github.com/MustardSeedNetworks/seed/commit/a2fdc4c7e783cbd8aff9087e927771d54e9f1653)), closes [#123](https://github.com/MustardSeedNetworks/seed/issues/123)
+
+## [0.218.0](https://github.com/MustardSeedNetworks/seed/compare/v0.217.5...v0.218.0) (2026-09-30)
+
+
+### Features
+
+* **ui:** fit the discovery table to the modal and virtualise long lists ([#2920](https://github.com/MustardSeedNetworks/seed/issues/2920)) ([f94ab70](https://github.com/MustardSeedNetworks/seed/commit/f94ab70e31e9e7da40e389e6428211ae49f54a3a))
+
+
+### Bug Fixes
+
+* **ui:** move a dialog's initial focus at once, and steady the discovery-table E2E ([#2923](https://github.com/MustardSeedNetworks/seed/issues/2923)) ([7ad5d53](https://github.com/MustardSeedNetworks/seed/commit/7ad5d53bba9d7f58bfeb67e563172b1bf7bd33d9)), closes [#2922](https://github.com/MustardSeedNetworks/seed/issues/2922)
+
+
+### Performance Improvements
+
+* **ui:** lazy-load the drawers, gate screens and Spanish locale ([#2918](https://github.com/MustardSeedNetworks/seed/issues/2918)) ([cd44602](https://github.com/MustardSeedNetworks/seed/commit/cd44602d6cbc235425b445588e304a7c48af2d99)), closes [#2917](https://github.com/MustardSeedNetworks/seed/issues/2917)
+
+## [0.217.5](https://github.com/MustardSeedNetworks/seed/compare/v0.217.4...v0.217.5) (2026-09-30)
+
+
+### Bug Fixes
+
+* **deps:** update dependency wouter to v3.11.1 ([#2915](https://github.com/MustardSeedNetworks/seed/issues/2915)) ([902a7c1](https://github.com/MustardSeedNetworks/seed/commit/902a7c11cf6f0013b7305f2f3b771ade373c4d24))
+
+## [0.217.4](https://github.com/MustardSeedNetworks/seed/compare/v0.217.3...v0.217.4) (2026-09-29)
+
+
+### Miscellaneous
+
+* **deps:** update dependency jsdom to v30.1.1 ([#2913](https://github.com/MustardSeedNetworks/seed/issues/2913)) ([03f31cc](https://github.com/MustardSeedNetworks/seed/commit/03f31cc65b445e2bdcc2281619db06a28d2f23f6))
+
+## [0.217.3](https://github.com/MustardSeedNetworks/seed/compare/v0.217.2...v0.217.3) (2026-09-28)
+
+
+### Bug Fixes
+
+* **deps:** update dependency @tanstack/react-query to v5.103.2 ([#2910](https://github.com/MustardSeedNetworks/seed/issues/2910)) ([5a23266](https://github.com/MustardSeedNetworks/seed/commit/5a23266f39ecbd11075280ee4ca3431133ee5fde))
+* **deps:** update dependency react-i18next to v17.0.15 ([#2911](https://github.com/MustardSeedNetworks/seed/issues/2911)) ([0465c91](https://github.com/MustardSeedNetworks/seed/commit/0465c9114736bd6fd92cb9c257fe1ae742cd2087))
+
+## [0.217.2](https://github.com/MustardSeedNetworks/seed/compare/v0.217.1...v0.217.2) (2026-09-27)
+
+
+### Miscellaneous
+
+* **deps:** update pre-commit hook davidanson/markdownlint-cli2 to v0.23.3 ([#2907](https://github.com/MustardSeedNetworks/seed/issues/2907)) ([7fe9e90](https://github.com/MustardSeedNetworks/seed/commit/7fe9e9005506386c89ea50c4d9905925479436ea))
+
 ## [0.217.1](https://github.com/MustardSeedNetworks/seed/compare/v0.217.0...v0.217.1) (2026-09-26)
 
 

@@ -63,6 +63,10 @@ body:
     "runPerformance": true,
     "runSpeedtest": true
   },
+  "identity": {
+    "location": "",
+    "name": ""
+  },
   "interface": {
     "available": [],
     "current": "lo"

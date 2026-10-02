@@ -25,6 +25,13 @@ func TestDHCPLeaseRejectsAnUnknownInterface(t *testing.T) {
 	if rec.Code != http.StatusBadRequest {
 		t.Errorf("status %d, want 400", rec.Code)
 	}
+	var resp ErrorResponse
+	if err := json.Unmarshal(rec.Body.Bytes(), &resp); err != nil {
+		t.Fatalf("error body is not JSON: %v", err)
+	}
+	if resp.Error != "Interface not found" {
+		t.Errorf("error message = %q, want %q", resp.Error, "Interface not found")
+	}
 }
 
 // TestDHCPLeaseReportsARealInterface drives the handler against an interface

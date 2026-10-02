@@ -16,9 +16,12 @@
 import type { Decorator, Meta, StoryObj } from '@storybook/react-vite';
 import type React from 'react';
 import { useState } from 'react';
+import { fn } from 'storybook/test';
 import { cn, spacing } from '../../../styles/theme';
-import type { CardSettings, SaveStatus, TestsSettings } from '../../../types/settings';
+import type { SaveStatus, TestsSettings } from '../../../types/settings';
+import { DEFAULT_CARD_SETTINGS } from '../../../types/settings';
 import { DnsSettings } from './DnsSettings';
+import { expandSections } from './storyPlay';
 
 const baseSettings: Omit<TestsSettings, 'dnsHostname' | 'dnsServers'> = {
   pingTargets: [],
@@ -38,7 +41,7 @@ const baseSettings: Omit<TestsSettings, 'dnsHostname' | 'dnsServers'> = {
   },
 };
 
-const meta: Meta<typeof DnsSettings> = {
+const meta = {
   title: 'Settings/dns-settings',
   component: DnsSettings,
   parameters: {
@@ -65,7 +68,15 @@ const meta: Meta<typeof DnsSettings> = {
       </div>
     ),
   ],
-};
+  args: {
+    testsSettings: { ...baseSettings, dnsHostname: 'google.com', dnsServers: [] },
+    setTestsSettings: fn(),
+    testsStatus: 'idle',
+    cardSettings: DEFAULT_CARD_SETTINGS,
+    updateCardSettings: fn(),
+  },
+  play: expandSections,
+} satisfies Meta<typeof DnsSettings>;
 
 export default meta;
 type Story = StoryObj<typeof meta>;
@@ -80,9 +91,6 @@ export const Default: Story = {
       dnsHostname: 'google.com',
       dnsServers: [],
     },
-    setTestsSettings: () => {
-      // intentionally empty - story placeholder callback
-    },
     testsStatus: 'idle',
   },
 };
@@ -96,9 +104,6 @@ export const CustomHostname: Story = {
       ...baseSettings,
       dnsHostname: 'example.com',
       dnsServers: [],
-    },
-    setTestsSettings: () => {
-      // intentionally empty - story placeholder callback
     },
     testsStatus: 'idle',
   },
@@ -118,9 +123,6 @@ export const WithPopularDns: Story = {
         { id: '3', address: '1.1.1.1', enabled: true },
         { id: '4', address: '1.0.0.1', enabled: true },
       ],
-    },
-    setTestsSettings: () => {
-      // intentionally empty
     },
     testsStatus: 'idle',
   },
@@ -142,9 +144,6 @@ export const MultipleDnsProviders: Story = {
         { id: '5', address: '8.26.56.26', enabled: true }, // Comodo Secure DNS
       ],
     },
-    setTestsSettings: () => {
-      // intentionally empty
-    },
     testsStatus: 'idle',
   },
 };
@@ -159,9 +158,6 @@ export const SingleServer: Story = {
       dnsHostname: 'google.com',
       dnsServers: [{ id: '1', address: '1.1.1.1', enabled: true }],
     },
-    setTestsSettings: () => {
-      // intentionally empty
-    },
     testsStatus: 'idle',
   },
 };
@@ -175,9 +171,6 @@ export const EmptyServerList: Story = {
       ...baseSettings,
       dnsHostname: 'google.com',
       dnsServers: [],
-    },
-    setTestsSettings: () => {
-      // intentionally empty
     },
     testsStatus: 'idle',
   },
@@ -196,9 +189,6 @@ export const Saving: Story = {
         { id: '2', address: '1.1.1.1', enabled: true },
       ],
     },
-    setTestsSettings: () => {
-      // intentionally empty
-    },
     testsStatus: 'saving',
   },
 };
@@ -215,9 +205,6 @@ export const Saved: Story = {
         { id: '1', address: '8.8.8.8', enabled: true },
         { id: '2', address: '1.1.1.1', enabled: true },
       ],
-    },
-    setTestsSettings: () => {
-      // intentionally empty
     },
     testsStatus: 'saved',
   },
@@ -255,7 +242,7 @@ export const Interactive: Story = {
         testsSettings={testsSettings}
         setTestsSettings={handleSetTestsSettings}
         testsStatus={status}
-        cardSettings={{ dns: { enabled: true, autoRunOnLink: true } } as unknown as CardSettings}
+        cardSettings={DEFAULT_CARD_SETTINGS}
         updateCardSettings={() => {}}
       />
     );
@@ -282,7 +269,7 @@ export const Comparison: Story = {
             // intentionally empty
           }}
           testsStatus="idle"
-          cardSettings={{ dns: { enabled: true, autoRunOnLink: true } } as unknown as CardSettings}
+          cardSettings={DEFAULT_CARD_SETTINGS}
           updateCardSettings={() => {}}
         />
       </div>
@@ -303,7 +290,7 @@ export const Comparison: Story = {
             // intentionally empty
           }}
           testsStatus="idle"
-          cardSettings={{ dns: { enabled: true, autoRunOnLink: true } } as unknown as CardSettings}
+          cardSettings={DEFAULT_CARD_SETTINGS}
           updateCardSettings={() => {}}
         />
       </div>
@@ -319,7 +306,7 @@ export const Comparison: Story = {
             // intentionally empty
           }}
           testsStatus="saving"
-          cardSettings={{ dns: { enabled: true, autoRunOnLink: true } } as unknown as CardSettings}
+          cardSettings={DEFAULT_CARD_SETTINGS}
           updateCardSettings={() => {}}
         />
       </div>
