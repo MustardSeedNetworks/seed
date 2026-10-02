@@ -27,7 +27,7 @@ ui/src/hooks/useCapabilities.ts:55  # read-only — bypasses the client 401 refr
 ui/src/hooks/useLogs.ts:167  # read-only — bypasses the client 401 refresh/retry
 ui/src/hooks/useLogs.ts:187  # read-only — bypasses the client 401 refresh/retry
 ui/src/hooks/useNetworkDiscoveryAutoScan.ts:52  # read-only — bypasses the client 401 refresh/retry
-ui/src/hooks/useNetworkDiscoveryAutoScan.ts:61  # read-only — bypasses the client 401 refresh/retry
+ui/src/hooks/useNetworkDiscoveryAutoScan.ts:59  # read-only — bypasses the client 401 refresh/retry
 ui/src/hooks/useNetworkFetchers.ts:110  # read-only — bypasses the client 401 refresh/retry
 ui/src/hooks/useNetworkFetchers.ts:162  # read-only — bypasses the client 401 refresh/retry
 ui/src/hooks/useNetworkFetchers.ts:189  # read-only — bypasses the client 401 refresh/retry

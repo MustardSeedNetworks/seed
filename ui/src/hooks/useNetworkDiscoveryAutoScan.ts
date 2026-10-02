@@ -4,7 +4,7 @@
  *
  * Hosts the port-scan + vulnerability-scan automation that previously
  * lived inline in NetworkDiscoveryCard. The hook:
- * - fetches DiscoverySettings.PortScan + Vulnerabilities settings on mount
+ * - fetches the discovery options + vulnerability settings on mount
  * - exposes a manual deep-scan callback used by the discovery modal
  * - watches incoming devices and auto-runs port scans (up to 3 concurrent)
  * - watches devices with useful fingerprint info and auto-triggers vuln scans
@@ -27,6 +27,7 @@ import type {
   ServiceInfo,
 } from '../components/cards/networkDiscoveryCardTypes';
 import { LogComponents, logger } from '../lib/logger';
+import type { OptionsResponse } from '../types/generated/options-response';
 
 interface UseNetworkDiscoveryAutoScanResult {
   handleDeepScan: (ip: string) => Promise<void>;
@@ -48,26 +49,26 @@ export function useNetworkDiscoveryAutoScan(
     const fetchSettings = async (): Promise<void> => {
       const apiBase = import.meta.env.VITE_API_BASE || '';
       try {
-        // Fetch discovery options from correct endpoint
         const discoveryResponse = await fetch(`${apiBase}/api/v1/security/discovery/options`, {
           credentials: 'include',
         });
         if (discoveryResponse.ok) {
-          const discoveryData = await discoveryResponse.json();
-          // Backend returns { options: { PortScan: { Enabled: true, ... } } }
-          const portScanEnabled = discoveryData?.options?.PortScan?.Enabled ?? false;
+          const discoveryData = (await discoveryResponse.json()) as { options: OptionsResponse };
+          const portScanEnabled = discoveryData.options.portScan.enabled;
 
-          // Fetch vulnerability settings from correct endpoint
           const vulnResponse = await fetch(`${apiBase}/api/v1/security/vulnerabilities/settings`, {
             credentials: 'include',
           });
           let vulnEnabled = false;
           let vulnAutoScan = false;
           if (vulnResponse.ok) {
-            const vulnData = await vulnResponse.json();
-            // Backend returns { Enabled: false, AutoScan: false, ... }
-            vulnEnabled = vulnData?.Enabled ?? false;
-            vulnAutoScan = vulnData?.AutoScan ?? false;
+            // config.VulnerabilityScanConfig marshals snake_case keys (seed#2971).
+            const vulnData = (await vulnResponse.json()) as {
+              enabled: boolean;
+              auto_scan: boolean;
+            };
+            vulnEnabled = vulnData.enabled;
+            vulnAutoScan = vulnData.auto_scan;
           }
 
           setAutoScanSettings({
