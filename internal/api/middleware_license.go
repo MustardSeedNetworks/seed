@@ -68,13 +68,9 @@ func (s *Server) hasFeature(feature string) bool {
 // path it was posted to, so the handler has to be able to answer the same way
 // the middleware would.
 func (s *Server) sendFeatureGate(w http.ResponseWriter, r *http.Request, feature string) {
-	// Resolve current tier for the response body. State may be nil
-	// (no license activated) — present that as "Free".
 	tierName := license.TierFree.String()
 	if mgr := s.licenseManager(); mgr != nil {
-		if st := mgr.GetState(); st != nil {
-			tierName = license.Tier(st.Tier).String()
-		}
+		tierName = license.EffectiveTier(mgr).String()
 	}
 
 	resp := FeatureGateResponse{

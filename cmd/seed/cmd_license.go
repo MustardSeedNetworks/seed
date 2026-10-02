@@ -104,6 +104,14 @@ func runLicenseStatus(_ *cliState) {
 		os.Exit(1)
 	}
 
+	if status := mgr.LoadStatus(); !status.Usable() {
+		_, _ = fmt.Fprintf(os.Stdout, "Tier:        Free (license state is %s)\n", status)
+		_, _ = fmt.Fprintf(os.Stdout, "Reason:      %v\n", mgr.LoadError())
+		_, _ = fmt.Fprintln(os.Stdout, "Re-enter the key with `seed license activate -k <KEY>`;")
+		_, _ = fmt.Fprintln(os.Stdout, "a trial will not replace it.")
+		return
+	}
+
 	state := mgr.GetState()
 	if state == nil {
 		_, _ = fmt.Fprintln(os.Stdout, "Tier:        Free (no license activated)")

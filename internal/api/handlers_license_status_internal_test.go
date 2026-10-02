@@ -131,3 +131,55 @@ func TestLicenseStatusFeaturesMatchCatalogue(t *testing.T) {
 		}
 	}
 }
+
+// TestLicenseStatusReportsOnlyTheLiveGrant pins D-SEED-13 on the wire: a spent
+// or unbacked licence must not advertise minting or report a tier it does not
+// grant, because the UI's token and tier surfaces read nothing else.
+func TestLicenseStatusReportsOnlyTheLiveGrant(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name          string
+		state         license.ActivationState
+		wantTier      string
+		wantActivated bool
+		wantMint      bool
+	}{
+		{
+			name:          "live trial",
+			state:         trialState(t, 1),
+			wantTier:      "Trial",
+			wantActivated: true,
+			wantMint:      true,
+		},
+		{
+			name:          "expired trial",
+			state:         trialState(t, license.TrialDays+1),
+			wantTier:      "Trial",
+			wantActivated: true,
+		},
+		{
+			name: "unbacked Pro state",
+			state: license.ActivationState{
+				Tier:     int(license.TierPro),
+				Features: license.FeaturesForTier(license.TierPro),
+			},
+			wantTier: license.TierFree.String(),
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+			s := &Server{mux: http.NewServeMux(), licenseMgr: managerWithState(t, tc.state)}
+			resp := licenseStatusJSON(t, s)
+			if resp.Tier != tc.wantTier || resp.Activated != tc.wantActivated || resp.CanMintTokens != tc.wantMint {
+				t.Errorf("tier=%q activated=%t canMint=%t, want %q %t %t",
+					resp.Tier, resp.Activated, resp.CanMintTokens, tc.wantTier, tc.wantActivated, tc.wantMint)
+			}
+			if !tc.wantMint && len(resp.Features) != 0 {
+				t.Errorf("features = %v, want none", resp.Features)
+			}
+		})
+	}
+}

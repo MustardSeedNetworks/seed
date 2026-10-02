@@ -33,6 +33,18 @@ func NewManagerWithDir(configDir string) (*Manager, error) {
 	return fnd.NewManagerWithDir(fnd.NewProductionVerifier(Policy()), Policy(), configDir)
 }
 
+// EffectiveTier is the tier m grants now. Anything short of a live grant is
+// Free: no state, an expired licence or trial, another device's state, or state
+// that did not load. The persisted tier records what was once granted, and an
+// unverified state carries TierInvalid, which would gate out even Free.
+func EffectiveTier(m *Manager) Tier {
+	st := m.GetState()
+	if st == nil || !m.IsActivated() {
+		return TierFree
+	}
+	return Tier(st.Tier)
+}
+
 // FormatKey returns a signed token trimmed for display.
 func FormatKey(key string) string {
 	return fnd.FormatKey(key)
