@@ -2,10 +2,15 @@ package api
 
 import (
 	"context"
+	"slices"
 	"testing"
+	"time"
+
+	fnd "github.com/MustardSeedNetworks/foundation/pkg/license"
 
 	"github.com/MustardSeedNetworks/seed/internal/engine"
 	"github.com/MustardSeedNetworks/seed/internal/license"
+	"github.com/MustardSeedNetworks/seed/internal/license/licensetest"
 )
 
 func TestMinTierForEngine_Mapping(t *testing.T) {
@@ -66,12 +71,81 @@ func TestRegisterEngineIfLicensed_NoManagerAllowsAllEngines(t *testing.T) {
 	}
 }
 
-// gatingFakeAuth lets tests pin a tier without constructing a real
-// license.Manager. The licenseTierAdapter is bypassed by
-// effectiveTier when Auth.License is non-nil but the field type
-// doesn't allow a stub — so we test the gate's branch logic
-// directly via minTierForEngine instead, and trust the
-// effectiveTier integration test to cover the real-license path.
-//
-// effectiveTier is exercised end-to-end in production runs; the
-// unit tests verify minTierForEngine + the no-manager bypass.
+// TestRegisterEngineIfLicensed_GatesOnTheLiveGrant drives the gate through a
+// real manager. The persisted tier is what was once granted: an expired trial
+// still records Pro, and a state no signature backs records TierInvalid, which
+// sits below Free and used to gate out even the Free engines (D-SEED-13).
+func TestRegisterEngineIfLicensed_GatesOnTheLiveGrant(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name  string
+		state license.ActivationState
+		want  []string
+	}{
+		{
+			name:  "live trial runs every tier",
+			state: trialState(t, 1),
+			want:  []string{"probe", "snmp-poller", "alert-listener-pipeline"},
+		},
+		{
+			name:  "expired trial runs Free only",
+			state: trialState(t, license.TrialDays+1),
+			want:  []string{"probe"},
+		},
+		{
+			name: "unbacked Pro state runs Free only",
+			state: license.ActivationState{
+				Tier:     int(license.TierPro),
+				Features: license.FeaturesForTier(license.TierPro),
+			},
+			want: []string{"probe"},
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+			s := &Server{engines: engine.NewRegistry(nil), licenseMgr: managerWithState(t, tc.state)}
+			for _, name := range []string{"probe", "snmp-poller", "alert-listener-pipeline"} {
+				if err := s.registerEngineIfLicensed(&gatingTestEngine{name: name}); err != nil {
+					t.Fatalf("register %s: %v", name, err)
+				}
+			}
+			var got []string
+			for _, eng := range s.engines.Engines() {
+				got = append(got, eng.Name())
+			}
+			if !slices.Equal(got, tc.want) {
+				t.Errorf("registered %v, want %v", got, tc.want)
+			}
+		})
+	}
+}
+
+// trialState is a trial on this device that started daysAgo days ago.
+func trialState(t *testing.T, daysAgo int) license.ActivationState {
+	t.Helper()
+	fp, err := fnd.GenerateFingerprint()
+	if err != nil {
+		t.Fatalf("fingerprint: %v", err)
+	}
+	return license.ActivationState{
+		DeviceHash:     fp.Hash(),
+		Tier:           int(license.TierPro),
+		TrialStartedAt: time.Now().AddDate(0, 0, -daysAgo),
+		IsTrialMode:    true,
+	}
+}
+
+// managerWithState loads a manager over st sealed on disk.
+func managerWithState(t *testing.T, st license.ActivationState) *license.Manager {
+	t.Helper()
+	dir := t.TempDir()
+	licensetest.WriteState(t, dir, st)
+	mgr, err := license.NewManagerWithDir(dir)
+	if err != nil {
+		t.Fatalf("license manager: %v", err)
+	}
+	return mgr
+}

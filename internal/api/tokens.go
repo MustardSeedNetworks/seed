@@ -138,8 +138,10 @@ func (s *Server) handleLicenseStatus(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// A state that did not load or that nothing vouches for grants nothing,
+	// so it reports as Free; the startup log carries the reason.
 	st := mgr.GetState()
-	if st == nil {
+	if st == nil || !mgr.LoadStatus().Usable() {
 		sendJSONResponse(w, logging.FromContext(r.Context()), http.StatusOK, resp)
 		return
 	}
@@ -154,16 +156,15 @@ func (s *Server) handleLicenseStatus(w http.ResponseWriter, r *http.Request) {
 	resp.IsTrialMode = st.IsTrialMode
 	resp.ExpiresAt = st.ExpiresAt
 	resp.TierValue = st.Tier
+	// Route the UI signal through the same catalog lookup the backend gate
+	// (tokens.LicenseGate) uses, so an expired trial cannot advertise minting
+	// the backend refuses.
+	resp.CanMintTokens = mgr.HasFeature("rest_api")
 	if st.IsTrialMode {
 		resp.Tier = "Trial"
 		resp.TrialDaysLeft = mgr.TrialDaysRemaining()
-		resp.CanMintTokens = true
 	} else {
 		resp.Tier = license.Tier(st.Tier).String()
-		// Route the UI signal through the same catalog lookup the
-		// backend gate (tokens.LicenseGate) uses. Keeps the two in
-		// lock-step if rest_api ever moves between tiers.
-		resp.CanMintTokens = mgr.HasFeature("rest_api")
 	}
 	sendJSONResponse(w, logging.FromContext(r.Context()), http.StatusOK, resp)
 }

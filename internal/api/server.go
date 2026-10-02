@@ -512,6 +512,10 @@ func (s *Server) initLicenseAndAPITokens(db *database.DB) {
 			"error", lmErr)
 		return
 	}
+	if status := lm.LoadStatus(); !status.Usable() {
+		logging.GetLogger().Warn("license state is unusable; running as Free until the key is re-entered",
+			"status", status.String(), "error", lm.LoadError())
+	}
 	s.licenseMgr = lm
 }
 
@@ -747,24 +751,20 @@ func (s *Server) initRetentionEngine(db *database.DB) {
 	}
 }
 
-// licenseTierAdapter satisfies retention.TierProvider by reading the
-// active tier from license.Manager.GetState(). nil-safe — falls
-// back to TierFree when no license manager is wired.
+// licenseTierAdapter satisfies retention.TierProvider with the tier the
+// license manager grants now. nil-safe — falls back to TierFree when no
+// license manager is wired.
 type licenseTierAdapter struct {
 	lm *license.Manager
 }
 
-// GetTier returns the active tier, defaulting to Free when the
-// license manager or its state is unavailable.
+// GetTier returns the granted tier, Free when there is no manager or no live
+// grant.
 func (a licenseTierAdapter) GetTier() license.Tier {
 	if a.lm == nil {
 		return license.TierFree
 	}
-	state := a.lm.GetState()
-	if state == nil {
-		return license.TierFree
-	}
-	return license.Tier(state.Tier)
+	return license.EffectiveTier(a.lm)
 }
 
 // Service accessors — the in-package read interface and the lazy method
