@@ -5,6 +5,29 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.221.0](https://github.com/MustardSeedNetworks/seed/compare/v0.220.3...v0.221.0) (2026-10-02)
+
+
+### Features
+
+* **path:** show each hop's own route toward the trace target ([#2963](https://github.com/MustardSeedNetworks/seed/issues/2963)) ([d00ac5d](https://github.com/MustardSeedNetworks/seed/commit/d00ac5dc6dd11d3d04f6fb1746209265a623a2ff))
+
+
+### Bug Fixes
+
+* **snmp:** read RFC 1213 ipRouteTable when the CIDR route tables are empty ([#2957](https://github.com/MustardSeedNetworks/seed/issues/2957)) ([15b0e8a](https://github.com/MustardSeedNetworks/seed/commit/15b0e8a281b08963439c530cb15c8148e74cef47))
+
+
+### Continuous Integration
+
+* **e2e:** run WebKit on Ubuntu 26.04 to avoid bundled libsoup 3.6.5 ([#2965](https://github.com/MustardSeedNetworks/seed/issues/2965)) ([44d4560](https://github.com/MustardSeedNetworks/seed/commit/44d4560c3200b5ae6b85349bcc7720ba54df34c5))
+
+
+### Miscellaneous
+
+* **deps:** lock file maintenance ([#2958](https://github.com/MustardSeedNetworks/seed/issues/2958)) ([a97b7f9](https://github.com/MustardSeedNetworks/seed/commit/a97b7f9f97ef8a08c20e7ccf43b5a571b75a3a2a))
+* **discovery:** refresh embedded IEEE OUI registry (20261001) ([#2936](https://github.com/MustardSeedNetworks/seed/issues/2936)) ([836c57a](https://github.com/MustardSeedNetworks/seed/commit/836c57abedf6441b1d8d86adec6ee3f655dc0a5b))
+
 ## [0.220.3](https://github.com/MustardSeedNetworks/seed/compare/v0.220.2...v0.220.3) (2026-10-02)
 
 
