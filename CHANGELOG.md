@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.221.1](https://github.com/MustardSeedNetworks/seed/compare/v0.221.0...v0.221.1) (2026-10-02)
+
+
+### Bug Fixes
+
+* **license:** grant only the live licence and say why a damaged one is Free ([#2968](https://github.com/MustardSeedNetworks/seed/issues/2968)) ([7866d50](https://github.com/MustardSeedNetworks/seed/commit/7866d50e70eabc1d916e949c4f0bb51194638c8d))
+* **ui:** stop scroll anchoring moving the virtualised discovery table ([#2966](https://github.com/MustardSeedNetworks/seed/issues/2966)) ([563b8e3](https://github.com/MustardSeedNetworks/seed/commit/563b8e3c23cd67f39b4acdf7c6b0074796aff434)), closes [#2962](https://github.com/MustardSeedNetworks/seed/issues/2962)
+
 ## [0.221.0](https://github.com/MustardSeedNetworks/seed/compare/v0.220.3...v0.221.0) (2026-10-02)
 
 
