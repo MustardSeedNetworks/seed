@@ -145,6 +145,24 @@ test.describe('overlays keep and return keyboard focus', () => {
     });
   }
 
+  // WebKit sends no mouseleave when the drawer opens over a still pointer, so
+  // the rail tooltip stays open beneath it and used to take this Escape (#2893).
+  test('Escape closes the help drawer over a hovered rail tooltip', async ({ page }) => {
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await page.goto('/network');
+    await expect(page.getByTestId('page-header-title')).toBeVisible();
+    await page.getByTestId('rail-interface').hover();
+    await expect(page.getByRole('tooltip')).toBeVisible();
+    const trigger = page.getByTestId('page-header-help-button');
+    await trigger.focus();
+    await page.keyboard.press('Enter');
+    await expect(page.getByTestId('help-drawer')).toBeVisible();
+
+    await page.keyboard.press('Escape');
+    await expect(page.getByTestId('help-drawer')).toBeHidden();
+    await expect(trigger).toBeFocused();
+  });
+
   test('the command palette traps Tab and closes on Escape', async ({ page }) => {
     await page.setViewportSize({ width: 1440, height: 900 });
     await page.goto('/network');
