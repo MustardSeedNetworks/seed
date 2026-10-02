@@ -38,6 +38,7 @@ const SCAN_EVERY_MS = 15_000;
 const SCAN_MS = 4 * SCAN_EVERY_MS;
 const LEARN_MS = 6 * SCAN_EVERY_MS;
 // Probing .1-.4 covers 63 /24s a sweep, so a /16 takes five.
+const PROBED_HOSTS = 4;
 const PROBE_MS = 6 * SCAN_EVERY_MS + SCAN_MS;
 
 const enabled = process.env.SEED_E2E_NIAC_ROUTED === '1';
@@ -117,7 +118,7 @@ async function pending(
 test.describe('target networks behind a NIAC edge router', () => {
   test.setTimeout(RESCAN_MS + PROBE_MS + LEARN_MS + siteNetworks.length * SCAN_EVERY_MS + SCAN_MS);
 
-  test('only the learned summary switched on, every site network swept', async ({ page }) => {
+  test('only the learned summary switched on, its site networks swept', async ({ page }) => {
     const { request } = page;
     expect(siteRoute).not.toBe('');
     expect(gateway).not.toBe('');
@@ -196,18 +197,34 @@ test.describe('target networks behind a NIAC edge router', () => {
         .toEqual([]);
     });
 
-    await test.step('sweeping the summary finds devices in every site network', async () => {
+    // The probe alone reaches .1 to .4, so only a device above them shows its
+    // /24 was swept whole. Some site networks hold nothing above .4; the rest
+    // must each show one.
+    const sweptOnly = new Map(
+      siteNetworks
+        .map(
+          (cidr) =>
+            [
+              cidr,
+              (siteDevices.get(cidr) ?? []).filter((ip) => Number(ip.split('.')[3]) > PROBED_HOSTS),
+            ] as const,
+        )
+        .filter(([, ips]) => ips.length > 0),
+    );
+    expect(sweptOnly.size, `site networks with a device above .${PROBED_HOSTS}`).toBeGreaterThan(1);
+
+    await test.step('sweeping the summary finds devices across its site networks', async () => {
       await expect
         .poll(
           async () => {
             await scan();
             const found = await discoveredIPs(request);
-            return siteNetworks.filter(
-              (cidr) => !(siteDevices.get(cidr) ?? []).some((ip) => found.has(ip)),
-            );
+            return [...sweptOnly]
+              .filter(([, ips]) => !ips.some((ip) => found.has(ip)))
+              .map(([cidr]) => cidr);
           },
           {
-            message: 'site networks with no device discovered',
+            message: `site networks with no device above .${PROBED_HOSTS} discovered`,
             timeout: siteNetworks.length * SCAN_EVERY_MS + SCAN_MS,
             intervals: [2_000],
           },
@@ -223,7 +240,7 @@ test.describe('target networks behind a NIAC edge router', () => {
 
     test.info().annotations.push({
       type: 'learned summary sweep',
-      description: `${siteRoute} learned ${routeAfter} ms after the credential was saved; ${core} found ${coreAfter} ms after it was switched on; devices in all ${siteNetworks.length} site networks ${Date.now() - enabledAt} ms after it was switched on`,
+      description: `${siteRoute} learned ${routeAfter} ms after the credential was saved; ${core} found ${coreAfter} ms after it was switched on; devices above .${PROBED_HOSTS} in ${[...sweptOnly.keys()].join(', ')} ${Date.now() - enabledAt} ms after it was switched on`,
     });
   });
 });
