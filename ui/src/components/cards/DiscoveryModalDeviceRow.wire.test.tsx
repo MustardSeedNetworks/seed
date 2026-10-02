@@ -72,7 +72,13 @@ const device: DiscoveredDevice = {
 function renderRow(expanded: boolean) {
   return render(
     <table>
-      <DeviceRow device={device} isExpanded={expanded} onToggle={() => {}} isScanning={false} />
+      <DeviceRow
+        device={device}
+        isExpanded={expanded}
+        onToggle={() => {}}
+        onShowVulnerabilities={() => {}}
+        isScanning={false}
+      />
     </table>,
   );
 }

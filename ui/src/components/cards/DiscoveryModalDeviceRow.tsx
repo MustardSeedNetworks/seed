@@ -56,6 +56,7 @@ export function DeviceRow({
   isExpanded,
   onToggle,
   onDeepScan,
+  onShowVulnerabilities,
   isScanning,
   index,
   measureRef,
@@ -64,6 +65,7 @@ export function DeviceRow({
   isExpanded: boolean;
   onToggle: () => void;
   onDeepScan?: (ip: string) => Promise<void>;
+  onShowVulnerabilities: (ip: string) => void;
   isScanning: boolean;
   /** Position in the sorted list; the virtualiser reads it back when measuring. */
   index?: number;
@@ -90,6 +92,8 @@ export function DeviceRow({
       await onDeepScan(device.ip);
     }
   };
+
+  const showVulnerabilities = (): void => onShowVulnerabilities(device.ip);
 
   return (
     <tbody ref={measureRef} data-index={index} className="text-text-primary">
@@ -135,7 +139,11 @@ export function DeviceRow({
         </td>
 
         <td className={cn('px-3 py-row', column.vulns.cell)}>
-          <VulnBadge vulnerabilities={device.vulnerabilities?.vulnerabilities} />
+          <VulnBadge
+            vulnerabilities={device.vulnerabilities?.vulnerabilities}
+            device={name || device.ip}
+            onOpen={showVulnerabilities}
+          />
         </td>
 
         <td className={cn('px-3 py-row', column.lastSeen.cell)}>
@@ -189,7 +197,11 @@ export function DeviceRow({
         >
           <td colSpan={9} className="px-4 py-row-lg">
             <div className="stack">
-              <ColumnSummary device={device} openPortCount={openPorts.length} />
+              <ColumnSummary
+                device={device}
+                openPortCount={openPorts.length}
+                onShowVulnerabilities={showVulnerabilities}
+              />
               {/* Open Ports */}
               {openPorts.length > 0 ? (
                 <div>
