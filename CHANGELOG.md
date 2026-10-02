@@ -5,6 +5,17 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.220.1](https://github.com/MustardSeedNetworks/seed/compare/v0.220.0...v0.220.1) (2026-10-02)
+
+
+### Bug Fixes
+
+* **discovery:** sweep the live /24s of a learned summary ([#2949](https://github.com/MustardSeedNetworks/seed/issues/2949)) ([4a5a0d0](https://github.com/MustardSeedNetworks/seed/commit/4a5a0d05cdf55e49a9b460e92be46ff46cccfafa))
+* **i18n:** gate every locale namespace for en/es parity ([#2943](https://github.com/MustardSeedNetworks/seed/issues/2943)) ([738cf98](https://github.com/MustardSeedNetworks/seed/commit/738cf98446d8629e03c4cf084c148d8c51c78149)), closes [#2639](https://github.com/MustardSeedNetworks/seed/issues/2639)
+* **probe:** lock the HTTP trace and time tcp to the dial that connected ([#2947](https://github.com/MustardSeedNetworks/seed/issues/2947)) ([c5d98c0](https://github.com/MustardSeedNetworks/seed/commit/c5d98c0dd491d8a584bd459f8d8ceb2913f5c594)), closes [#2630](https://github.com/MustardSeedNetworks/seed/issues/2630)
+* **test:** migrate the test database once per binary and close the gateway pinger ([#2946](https://github.com/MustardSeedNetworks/seed/issues/2946)) ([587378d](https://github.com/MustardSeedNetworks/seed/commit/587378d84d501125f98716b3a4562451dbbd0f6b))
+* **ui:** leave Escape to a modal opened over a hovered tooltip ([#2948](https://github.com/MustardSeedNetworks/seed/issues/2948)) ([65332f2](https://github.com/MustardSeedNetworks/seed/commit/65332f22231c318e7d8d0a468b362e5723ba94ec)), closes [#2893](https://github.com/MustardSeedNetworks/seed/issues/2893)
+
 ## [0.220.0](https://github.com/MustardSeedNetworks/seed/compare/v0.219.0...v0.220.0) (2026-10-01)
 
 
