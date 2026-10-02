@@ -254,10 +254,12 @@ The UI uses a Tailwind v4 CSS-first theme with semantic tokens:
 
 Conventional commits drive [release-please](https://github.com/googleapis/release-please).
 Tags trigger `release.yml`, which builds binaries and packages
-(`.deb`/`.rpm`/`.zip`/`.tar.gz`) for linux, macOS and Windows on amd64 and
-arm64, and attaches an SBOM, a cosign bundle and SLSA provenance to each.
-Seed is not distributed through Homebrew and will not be (owner decision,
-2026-09-07); on macOS the `.pkg` installer is the supported route.
+(`.deb`/`.rpm`/`.zip`/`.tar.gz`) for Linux and Windows on amd64 and arm64 and
+for macOS on arm64, and attaches an SBOM, a cosign bundle and SLSA provenance
+to each. Seed is not distributed through Homebrew and will not be (owner
+decision, 2026-09-07). The release publishes macOS as a `.tar.gz` only; the
+`.pkg` installer is built locally by `deploy/macos/build-pkg.sh` and is not on
+the Releases page. See [`docs/DISTRIBUTION.md`](docs/DISTRIBUTION.md).
 
 ## License
 

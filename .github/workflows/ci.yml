@@ -1549,7 +1549,7 @@ jobs:
     #     fact break setup-go/setup-node, which write to the root-owned
     #     tool cache.
     #   * setup-go and setup-node both work here and install OUR pins
-    #     (go 1.26.6, node 26.7.0) over the image's bundled node 24.
+    #     (go.mod, .nvmrc) over the image's bundled node 24.
     #   * no gcc, no make, no libpcap — and apt cannot supply them: the image's
     #     sources point at azure.archive.ubuntu.com, unreachable from the
     #     container network. Hence the CGO_ENABLED=0 build, explained in
