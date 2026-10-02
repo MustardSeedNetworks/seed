@@ -1897,9 +1897,11 @@ jobs:
 
       # The repo's own playwright installs the WebKit build that matches
       # @playwright/test, so there is no image version to keep in step here.
+      # e2e/global-setup.ts signs in once with chromium whatever the project,
+      # so its headless shell comes along.
       - name: Install WebKit and its OS dependencies
         working-directory: ui
-        run: npx playwright install --with-deps webkit
+        run: npx playwright install --with-deps --only-shell webkit chromium
 
       - name: Assert WebKit loads the OS libsoup, not the bundled 3.6.5
         run: ./scripts/check-webkit-libsoup.sh
