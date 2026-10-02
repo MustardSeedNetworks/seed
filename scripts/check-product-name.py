@@ -51,8 +51,7 @@ SCOPE: tuple[str, ...] = (
     "internal/config/schema.json",
     "package.json",
     # The packaging descriptors goreleaser actually ships from. These are the
-    # strings `apt show` and `rpm -qi` print and the release notes lead with —
-    # deploy/deb/control and deploy/rpm/seed.spec are referenced by nothing.
+    # strings `apt show` and `rpm -qi` print and the release notes lead with.
     # They are dotfiles, which is why a plain `rg` survey walks straight past
     # them.
     ".goreleaser.yml",
