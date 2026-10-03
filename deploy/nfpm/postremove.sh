@@ -2,9 +2,14 @@
 set -e
 
 is_purge=0
+is_final_remove=0
 case "$1" in
     purge|0)
         is_purge=1
+        is_final_remove=1
+        ;;
+    remove)
+        is_final_remove=1
         ;;
 esac
 
@@ -25,7 +30,7 @@ if [ "$is_purge" -eq 1 ]; then
     fi
 
     rm -rf /etc/seed /var/lib/seed /var/log/seed
-else
+elif [ "$is_final_remove" -eq 1 ]; then
     echo "Seed removed. Data preserved in /var/lib/seed"
 fi
 

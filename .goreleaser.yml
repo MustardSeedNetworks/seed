@@ -225,6 +225,9 @@ nfpms:
       postinstall: ./deploy/nfpm/postinstall.sh
       preremove: ./deploy/nfpm/preremove.sh
       postremove: ./deploy/nfpm/postremove.sh
+    rpm:
+      scripts:
+        posttrans: ./deploy/nfpm/posttrans.sh
     # Default install location for the binary (overrides nfpm default of
     # /usr/local/bin). Matches existing .deb/.rpm contract.
     bindir: /usr/bin
