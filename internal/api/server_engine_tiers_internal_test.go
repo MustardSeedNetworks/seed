@@ -6,8 +6,6 @@ import (
 	"testing"
 	"time"
 
-	fnd "github.com/MustardSeedNetworks/foundation/pkg/license"
-
 	"github.com/MustardSeedNetworks/seed/internal/engine"
 	"github.com/MustardSeedNetworks/seed/internal/license"
 	"github.com/MustardSeedNetworks/seed/internal/license/licensetest"
@@ -126,12 +124,8 @@ func TestRegisterEngineIfLicensed_GatesOnTheLiveGrant(t *testing.T) {
 // trialState is a trial on this device that started daysAgo days ago.
 func trialState(t *testing.T, daysAgo int) license.ActivationState {
 	t.Helper()
-	fp, err := fnd.GenerateFingerprint()
-	if err != nil {
-		t.Fatalf("fingerprint: %v", err)
-	}
 	return license.ActivationState{
-		DeviceHash:     fp.Hash(),
+		DeviceHash:     thisDevice(t),
 		Tier:           int(license.TierPro),
 		TrialStartedAt: time.Now().AddDate(0, 0, -daysAgo),
 		IsTrialMode:    true,

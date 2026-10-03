@@ -110,6 +110,10 @@ type LicenseStatusResponse struct {
 	// emitted, empty on Free, so a missing key is a wiring bug and not
 	// mistaken for "no features".
 	Features []string `json:"features"`
+	// Reason says why a licence that is present grants nothing: "expired",
+	// "trialExpired", "otherDevice", or the load status of a file that could
+	// not be used. Absent when the licence is live or there is none.
+	Reason string `json:"reason,omitempty"`
 }
 
 // handleLicenseStatus exposes the local license state to the UI. The
@@ -138,27 +142,25 @@ func (s *Server) handleLicenseStatus(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// A state that did not load or that nothing vouches for grants nothing,
-	// so it reports as Free; the startup log carries the reason.
-	st := mgr.GetState()
-	if st == nil || !mgr.LoadStatus().Usable() {
+	// GetState still returns an expired, foreign-device or unverified state.
+	// It grants nothing, so it reports as Free with the reason it is not in
+	// force; only the live grant reaches the fields below.
+	if !mgr.IsActivated() {
+		resp.Reason = license.InactiveReason(mgr)
 		sendJSONResponse(w, logging.FromContext(r.Context()), http.StatusOK, resp)
 		return
 	}
 
+	st := mgr.GetState()
 	resp.Activated = true
-	// Only a live licence unlocks the UI. GetState() still returns an
-	// expired or foreign-device state, and HasFeature refuses it; the
-	// feature list has to refuse it too or the gates outlive the licence.
-	if mgr.IsActivated() && st.Features != nil {
+	if st.Features != nil {
 		resp.Features = st.Features
 	}
 	resp.IsTrialMode = st.IsTrialMode
 	resp.ExpiresAt = st.ExpiresAt
 	resp.TierValue = st.Tier
 	// Route the UI signal through the same catalog lookup the backend gate
-	// (tokens.LicenseGate) uses, so an expired trial cannot advertise minting
-	// the backend refuses.
+	// (tokens.LicenseGate) uses.
 	resp.CanMintTokens = mgr.HasFeature("rest_api")
 	if st.IsTrialMode {
 		resp.Tier = "Trial"

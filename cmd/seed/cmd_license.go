@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"io"
 	"os"
 
 	"github.com/spf13/cobra"
@@ -103,40 +104,55 @@ func runLicenseStatus(_ *cliState) {
 		fmt.Fprintf(os.Stderr, "Error: %v\n", err)
 		os.Exit(1)
 	}
+	writeLicenseStatus(os.Stdout, mgr)
+}
 
+func writeLicenseStatus(w io.Writer, mgr *license.Manager) {
 	if status := mgr.LoadStatus(); !status.Usable() {
-		_, _ = fmt.Fprintf(os.Stdout, "Tier:        Free (license state is %s)\n", status)
-		_, _ = fmt.Fprintf(os.Stdout, "Reason:      %v\n", mgr.LoadError())
-		_, _ = fmt.Fprintln(os.Stdout, "Re-enter the key with `seed license activate -k <KEY>`;")
-		_, _ = fmt.Fprintln(os.Stdout, "a trial will not replace it.")
+		_, _ = fmt.Fprintf(w, "Tier:        Free (license state is %s)\n", status)
+		_, _ = fmt.Fprintf(w, "Reason:      %v\n", mgr.LoadError())
+		_, _ = fmt.Fprintln(w, "Re-enter the key with `seed license activate -k <KEY>`;")
+		_, _ = fmt.Fprintln(w, "a trial will not replace it.")
 		return
 	}
 
 	state := mgr.GetState()
 	if state == nil {
-		_, _ = fmt.Fprintln(os.Stdout, "Tier:        Free (no license activated)")
-		_, _ = fmt.Fprintln(os.Stdout, "Run `seed license trial` to start a 14-day Pro trial,")
-		_, _ = fmt.Fprintln(os.Stdout, "or `seed license activate -k <KEY>` to enter a key.")
+		_, _ = fmt.Fprintln(w, "Tier:        Free (no license activated)")
+		_, _ = fmt.Fprintln(w, "Run `seed license trial` to start a 14-day Pro trial,")
+		_, _ = fmt.Fprintln(w, "or `seed license activate -k <KEY>` to enter a key.")
 		return
 	}
 
 	if state.IsTrialMode {
 		remaining := mgr.TrialDaysRemaining()
-		_, _ = fmt.Fprintln(os.Stdout, "Tier:        Trial (Pro features)")
-		_, _ = fmt.Fprintf(os.Stdout, "Days left:   %d of %d\n", remaining, license.TrialDays)
+		_, _ = fmt.Fprintln(w, "Tier:        Trial (Pro features)")
+		_, _ = fmt.Fprintf(w, "Days left:   %d of %d\n", remaining, license.TrialDays)
 		if remaining <= 0 {
-			_, _ = fmt.Fprintln(os.Stdout, "Trial expired. Run `seed license activate -k <KEY>` to continue.")
+			_, _ = fmt.Fprintln(w, "Trial expired. Run `seed license activate -k <KEY>` to continue.")
 		}
 		return
 	}
 
-	_, _ = fmt.Fprintf(os.Stdout, "Tier:        %s\n", license.Tier(state.Tier))
-	_, _ = fmt.Fprintf(os.Stdout, "Key:         %s\n", license.FormatKey(state.LicenseKey))
-	_, _ = fmt.Fprintf(os.Stdout, "Activated:   %s\n", state.ActivatedAt.Format("2006-01-02"))
-	_, _ = fmt.Fprintf(os.Stdout, "Expires:     %s\n", state.ExpiresAt.Format("2006-01-02"))
-	_, _ = fmt.Fprintf(os.Stdout, "Device:      %s\n", state.DeviceHash)
+	if !mgr.IsActivated() {
+		_, _ = fmt.Fprintf(w, "Tier:        Free (the %s license is not in force)\n", license.Tier(state.Tier))
+		switch license.InactiveReason(mgr) {
+		case license.ReasonExpired:
+			_, _ = fmt.Fprintf(w, "Reason:      expired %s\n", state.ExpiresAt.Format("2006-01-02"))
+		default:
+			_, _ = fmt.Fprintln(w, "Reason:      it was activated on another device")
+		}
+		_, _ = fmt.Fprintln(w, "Run `seed license activate -k <KEY>` with a current key for this device.")
+		return
+	}
+
+	_, _ = fmt.Fprintf(w, "Tier:        %s\n", license.Tier(state.Tier))
+	_, _ = fmt.Fprintf(w, "Key:         %s\n", license.FormatKey(state.LicenseKey))
+	_, _ = fmt.Fprintf(w, "Activated:   %s\n", state.ActivatedAt.Format("2006-01-02"))
+	_, _ = fmt.Fprintf(w, "Expires:     %s\n", state.ExpiresAt.Format("2006-01-02"))
+	_, _ = fmt.Fprintf(w, "Device:      %s\n", state.DeviceHash)
 	if len(state.Features) > 0 {
-		_, _ = fmt.Fprintf(os.Stdout, "Features:    %d unlocked\n", len(state.Features))
+		_, _ = fmt.Fprintf(w, "Features:    %d unlocked\n", len(state.Features))
 	}
 }
 

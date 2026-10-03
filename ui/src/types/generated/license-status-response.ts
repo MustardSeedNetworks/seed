@@ -14,4 +14,5 @@ export interface LicenseStatusResponse {
   activated: boolean;
   expiresAt?: string;
   features: string[];
+  reason?: string;
 }
