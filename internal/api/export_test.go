@@ -9,9 +9,10 @@ import (
 
 	"github.com/go-webauthn/webauthn/webauthn"
 
+	alertdelivery "github.com/MustardSeedNetworks/seed/internal/alerts/delivery"
+	"github.com/MustardSeedNetworks/seed/internal/app"
 	"github.com/MustardSeedNetworks/seed/internal/auth"
 	"github.com/MustardSeedNetworks/seed/internal/config"
-	"github.com/MustardSeedNetworks/seed/internal/config/backups"
 	"github.com/MustardSeedNetworks/seed/internal/diagnostics/gateway"
 	"github.com/MustardSeedNetworks/seed/internal/discovery"
 	"github.com/MustardSeedNetworks/seed/internal/discovery/learn"
@@ -149,7 +150,8 @@ func (s *Server) SetConfigPath(path string) {
 // test harnesses.
 func (s *Server) wireConfigBackupsForTest() {
 	if s.config != nil && s.configPath != "" {
-		s.configBackups = backups.NewService(s.config, s.configPath)
+		s.configBackups = app.NewConfigBackups(s.config, s.configPath,
+			func() *alertdelivery.Manager { return s.alertDelivery })
 	}
 }
 

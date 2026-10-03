@@ -2,9 +2,12 @@ package config_test
 
 import (
 	"errors"
+	"math/rand"
 	"os"
 	"path/filepath"
+	"reflect"
 	"testing"
+	"testing/quick"
 	"time"
 
 	"github.com/MustardSeedNetworks/seed/internal/config"
@@ -1090,6 +1093,48 @@ func TestConfigCopyFieldsFrom(t *testing.T) {
 	dst.Security.AllowedOrigins[0] = "modified"
 	if src.Security.AllowedOrigins[0] == "modified" {
 		t.Error("CopyFieldsFrom should deep copy slices, but source was modified")
+	}
+}
+
+// TestCopyCarriesEveryField fills every exported Config field with a random
+// non-zero value (a zero one would pass whether or not it is copied) and checks that Clone and CopyFieldsFrom both carry it, so a
+// field added to Config without being copied fails here rather than being
+// silently dropped by a backup restore (#2928).
+func TestCopyCarriesEveryField(t *testing.T) {
+	rng := rand.New(rand.NewSource(2928))
+	src := &config.Config{}
+	srcV := reflect.ValueOf(src).Elem()
+	fields := reflect.VisibleFields(srcV.Type())
+	for _, f := range fields {
+		if !f.IsExported() {
+			continue
+		}
+		var v reflect.Value
+		for !v.IsValid() || v.IsZero() {
+			var ok bool
+			if v, ok = quick.Value(f.Type, rng); !ok {
+				t.Fatalf("cannot generate a value for Config.%s (%s)", f.Name, f.Type)
+			}
+		}
+		srcV.FieldByIndex(f.Index).Set(v)
+	}
+
+	dst := &config.Config{}
+	dst.Lock()
+	dst.CopyFieldsFrom(src)
+	dst.Unlock()
+
+	for name, got := range map[string]*config.Config{"Clone": src.Clone(), "CopyFieldsFrom": dst} {
+		gotV := reflect.ValueOf(got).Elem()
+		for _, f := range fields {
+			if !f.IsExported() {
+				continue
+			}
+			want := srcV.FieldByIndex(f.Index).Interface()
+			if !reflect.DeepEqual(gotV.FieldByIndex(f.Index).Interface(), want) {
+				t.Errorf("%s does not carry Config.%s", name, f.Name)
+			}
+		}
 	}
 }
 

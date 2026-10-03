@@ -23,20 +23,29 @@ var (
 	ErrReloadFailed = errors.New("backups: reload after restore failed")
 )
 
+// Reconfigurer re-points a running component at the config a restore just
+// applied, so the restored alert receiver takes effect without a restart.
+type Reconfigurer interface {
+	ReconfigureAlerts()
+}
+
 // Service is the config backup/restore use-case.
 type Service struct {
-	mgr  *config.BackupManager
-	cfg  *config.Config
-	path string
+	mgr      *config.BackupManager
+	cfg      *config.Config
+	path     string
+	reconfig Reconfigurer
 }
 
 // NewService builds the use-case over the live config and its on-disk path,
-// constructing the BackupManager for the path's directory.
-func NewService(cfg *config.Config, path string) *Service {
+// constructing the BackupManager for the path's directory. reconfig may be nil
+// in a composition with no alert delivery to re-point.
+func NewService(cfg *config.Config, path string, reconfig Reconfigurer) *Service {
 	return &Service{
-		mgr:  config.NewBackupManager(path, filepath.Dir(path), DefaultMaxCount),
-		cfg:  cfg,
-		path: path,
+		mgr:      config.NewBackupManager(path, filepath.Dir(path), DefaultMaxCount),
+		cfg:      cfg,
+		path:     path,
+		reconfig: reconfig,
 	}
 }
 
@@ -49,8 +58,9 @@ func (s *Service) Create() (*config.BackupInfo, error) { return s.mgr.CreateBack
 // Delete removes the named backup.
 func (s *Service) Delete(name string) error { return s.mgr.DeleteBackup(name) }
 
-// Restore restores the named backup, reloads the config from disk, and copies the
-// reloaded fields into the live config under its write lock. A restore-file
+// Restore restores the named backup, reloads the config from disk, copies the
+// reloaded fields into the live config under its write lock, and re-points the
+// alert receiver at the restored one. A restore-file
 // failure returns ErrRestoreFailed; a reload failure returns ErrReloadFailed (the
 // transport layer maps the two to distinct messages).
 func (s *Service) Restore(name string) error {
@@ -61,11 +71,13 @@ func (s *Service) Restore(name string) error {
 	if err != nil {
 		return fmt.Errorf("%w: %w", ErrReloadFailed, err)
 	}
-	// CopyFieldsFrom uses struct literals for compile-time checking that no fields
-	// are missed; the lock guards the live config against concurrent readers.
 	s.cfg.Lock()
-	defer s.cfg.Unlock()
 	s.cfg.CopyFieldsFrom(newCfg)
+	s.cfg.Unlock()
+	// After the unlock: the reconfigurer reads the live config under its RLock.
+	if s.reconfig != nil {
+		s.reconfig.ReconfigureAlerts()
+	}
 	return nil
 }
 

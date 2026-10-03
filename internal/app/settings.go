@@ -13,6 +13,7 @@ import (
 
 	alertdelivery "github.com/MustardSeedNetworks/seed/internal/alerts/delivery"
 	"github.com/MustardSeedNetworks/seed/internal/config"
+	"github.com/MustardSeedNetworks/seed/internal/config/backups"
 	"github.com/MustardSeedNetworks/seed/internal/database"
 	"github.com/MustardSeedNetworks/seed/internal/logging"
 	"github.com/MustardSeedNetworks/seed/internal/settings/management"
@@ -99,6 +100,14 @@ func NewSettingsManagement(
 		reconfig = alertReconfigurer{manager: webhook, cfg: cfg}
 	}
 	return management.NewService(managementStore{cfg: cfg, path: path}, configKeyring{cfg: cfg}, reconfig)
+}
+
+// NewConfigBackups builds the config backup/restore use-case (ADR-0020) over the
+// live config and its on-disk path. A restore re-points the running alert
+// webhook through webhook, the same lazy getter NewSettingsManagement takes, so
+// the restored receiver is the one that delivers (#2928).
+func NewConfigBackups(cfg *config.Config, path string, webhook func() *alertdelivery.Manager) *backups.Service {
+	return backups.NewService(cfg, path, alertReconfigurer{manager: webhook, cfg: cfg})
 }
 
 // configKeyring encrypts through whatever keyring the config holds *at the
