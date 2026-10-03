@@ -447,7 +447,8 @@ func (s *Server) initSettingsUseCases() {
 	s.settingsStore = app.NewSettings(s.db, s.config)
 	s.settingsManagement = app.NewSettingsManagement(s.config, s.configPath,
 		func() *alertdelivery.Manager { return s.alertDelivery })
-	s.configBackups = backups.NewService(s.config, s.configPath)
+	s.configBackups = app.NewConfigBackups(s.config, s.configPath,
+		func() *alertdelivery.Manager { return s.alertDelivery })
 	s.securitySettings = app.NewSecuritySettings(s.config, s.configPath, s.rogueDetector)
 	s.profiles = app.NewProfiles(s.db, s.config, s.configPath)
 	s.networkIP = app.NewNetworkIP(s.netManager, s.config, s.configPath)

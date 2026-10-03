@@ -86,8 +86,9 @@ func (c *Config) Clone() *Config {
 }
 
 // cloneFields creates a Config with all fields copied from the receiver (fixes #691).
-// This uses a struct literal, ensuring compile-time checking that no fields are missed.
-// The mutex is NOT copied - returns a new Config with a fresh mutex.
+// The mutex is NOT copied - returns a new Config with a fresh mutex. A struct
+// literal does not make the compiler reject an omitted field, so
+// TestCopyCarriesEveryField reflects over Config and fails on one (#2928).
 // Fixes #958: Deep copy slices to prevent shared references.
 func (c *Config) cloneFields() *Config {
 	clone := &Config{
@@ -113,6 +114,8 @@ func (c *Config) cloneFields() *Config {
 		Identity:         c.Identity,
 		Logging:          c.Logging,
 		Database:         c.Database,
+		Link:             c.Link,
+		CableTest:        c.CableTest,
 		// The keyring is immutable after init and safe to share across clones.
 		credentialKeyring: c.credentialKeyring,
 	}
@@ -126,9 +129,9 @@ func (c *Config) cloneFields() *Config {
 	return clone
 }
 
-// CopyFieldsFrom copies all fields from src to the receiver (fixes #691).
-// This uses cloneFields internally, ensuring compile-time checking that no fields are missed.
-// The mutex is NOT copied. The receiver must be locked before calling this method.
+// CopyFieldsFrom copies all fields from src to the receiver (fixes #691), through
+// cloneFields so slices are not shared. TestCopyCarriesEveryField guards against
+// an omitted field (#2928). The mutex is NOT copied. The receiver must be locked before calling this method.
 func (c *Config) CopyFieldsFrom(src *Config) {
 	temp := src.cloneFields()
 	// Copy each field individually to avoid copying the mutex
@@ -148,10 +151,13 @@ func (c *Config) CopyFieldsFrom(src *Config) {
 	c.Security = temp.Security
 	c.DHCP = temp.DHCP
 	c.SNMP = temp.SNMP
+	c.Alerts = temp.Alerts
 	c.FABOptions = temp.FABOptions
 	c.DisplayOptions = temp.DisplayOptions
 	c.Identity = temp.Identity
 	c.Logging = temp.Logging
 	c.Database = temp.Database
+	c.Link = temp.Link
+	c.CableTest = temp.CableTest
 	c.credentialKeyring = temp.credentialKeyring
 }
