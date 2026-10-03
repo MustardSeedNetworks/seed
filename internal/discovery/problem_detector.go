@@ -15,6 +15,7 @@ import (
 	"github.com/google/uuid"
 
 	"github.com/MustardSeedNetworks/seed/internal/logging"
+	"github.com/MustardSeedNetworks/seed/internal/protocols/snmp"
 )
 
 // keyValueParts is the number of parts when splitting key-value strings.
@@ -45,6 +46,21 @@ type ProblemDetector struct {
 	lastScanAt  time.Time
 	listeners   []ProblemListener
 	knownIssues map[string]*NetworkProblem // ID -> Problem
+	// errorSamples holds each interface's last error-counter reading, keyed
+	// by errorSampleKey, so the next scan can rate against it.
+	errorSamples map[string]errorSample
+}
+
+// errorSample is one reading of an interface's error counters and the rate
+// it produced against the reading before it.
+type errorSample struct {
+	collectedAt time.Time
+	upTime      uint32
+	inErrors    uint64
+	outErrors   uint64
+	rated       bool
+	inPerMin    float64
+	outPerMin   float64
 }
 
 // ProblemListener is notified when problems are detected or resolved.
@@ -56,8 +72,9 @@ type ProblemListener interface {
 // NewProblemDetector creates a new problem detector with default thresholds.
 func NewProblemDetector() *ProblemDetector {
 	return &ProblemDetector{
-		thresholds:  DefaultProblemThresholds(),
-		knownIssues: make(map[string]*NetworkProblem),
+		thresholds:   DefaultProblemThresholds(),
+		knownIssues:  make(map[string]*NetworkProblem),
+		errorSamples: make(map[string]errorSample),
 	}
 }
 
@@ -327,7 +344,12 @@ func (d *ProblemDetector) detectResourceThresholds(
 	// (HOST-RESOURCES-MIB, UCD-SNMP-MIB, etc.)
 }
 
-// detectInterfaceErrors checks for high error rates on interfaces.
+// detectInterfaceErrors flags interfaces whose error counters rose faster
+// than the per-minute thresholds since the previous reading (seed#2753).
+// IF-MIB error counters are lifetime totals, so an interface is only rated
+// once a second reading exists, and never across an agent restart. Readings
+// without sysUpTime are not rated: a counter that went down could then be a
+// wrap or a restart, and the two give opposite answers.
 func (d *ProblemDetector) detectInterfaceErrors(
 	_ context.Context,
 	devices []*DiscoveredDevice,
@@ -336,33 +358,66 @@ func (d *ProblemDetector) detectInterfaceErrors(
 ) {
 	now := time.Now()
 
+	d.mu.Lock()
+	defer d.mu.Unlock()
+	// Rebuilt every scan so interfaces that disappeared drop their readings.
+	samples := make(map[string]errorSample, len(d.errorSamples))
+
 	for _, dev := range devices {
-		if dev.SNMPData == nil {
+		if dev.SNMPData == nil || dev.SNMPData.System == nil {
 			continue
 		}
 
 		for _, iface := range dev.SNMPData.Interfaces {
-			hasErrors := false
-			stats := InterfaceErrorStats{
-				DeviceID:      dev.MAC, // Use MAC as device identifier
-				InterfaceName: iface.Name,
-				InputErrors:   safeUint64ToInt64(iface.InErrors),
-				OutputErrors:  safeUint64ToInt64(iface.OutErrors),
-				RecordedAt:    now,
-			}
+			key := fmt.Sprintf("%s/%d", dev.MAC, iface.Index)
+			cur := rateErrorSample(d.errorSamples[key], errorSample{
+				collectedAt: dev.SNMPData.CollectedAt,
+				upTime:      dev.SNMPData.System.SysUpTime,
+				inErrors:    iface.InErrors,
+				outErrors:   iface.OutErrors,
+			})
+			samples[key] = cur
 
-			if safeUint64ToInt64(iface.InErrors) > thresholds.InputErrorsPerMin {
-				hasErrors = true
+			if !cur.rated ||
+				(cur.inPerMin <= float64(thresholds.InputErrorsPerMin) &&
+					cur.outPerMin <= float64(thresholds.OutputErrorsPerMin)) {
+				continue
 			}
-			if safeUint64ToInt64(iface.OutErrors) > thresholds.OutputErrorsPerMin {
-				hasErrors = true
-			}
-
-			if hasErrors {
-				result.InterfaceErrors = append(result.InterfaceErrors, stats)
-			}
+			result.InterfaceErrors = append(result.InterfaceErrors, InterfaceErrorStats{
+				DeviceID:           dev.MAC, // Use MAC as device identifier
+				InterfaceName:      iface.Name,
+				InputErrors:        safeUint64ToInt64(iface.InErrors),
+				OutputErrors:       safeUint64ToInt64(iface.OutErrors),
+				InputErrorsPerMin:  cur.inPerMin,
+				OutputErrorsPerMin: cur.outPerMin,
+				RecordedAt:         now,
+			})
 		}
 	}
+
+	d.errorSamples = samples
+}
+
+// rateErrorSample rates cur against prev, the same interface's previous
+// reading (zero when there is none). A reading no newer than prev returns
+// prev, so repeated scans between polls agree.
+func rateErrorSample(prev, cur errorSample) errorSample {
+	if prev.collectedAt.IsZero() {
+		return cur
+	}
+	if !cur.collectedAt.After(prev.collectedAt) {
+		return prev
+	}
+	inDelta, inOK := snmp.Counter32Delta(prev.inErrors, cur.inErrors, prev.upTime, cur.upTime)
+	outDelta, outOK := snmp.Counter32Delta(prev.outErrors, cur.outErrors, prev.upTime, cur.upTime)
+	if !inOK || !outOK {
+		return cur
+	}
+	minutes := cur.collectedAt.Sub(prev.collectedAt).Minutes()
+	cur.rated = true
+	cur.inPerMin = float64(inDelta) / minutes
+	cur.outPerMin = float64(outDelta) / minutes
+	return cur
 }
 
 // createIPConflictProblem creates a NetworkProblem from an IPConflict.
@@ -433,8 +488,8 @@ func createInterfaceErrorProblem(errStats InterfaceErrorStats, now time.Time) Ne
 		Severity: ProblemSeverityWarning,
 		Status:   ProblemStatusActive,
 		Title:    fmt.Sprintf("Interface Errors: %s", errStats.InterfaceName),
-		Description: fmt.Sprintf("Interface %s has input errors: %d, output errors: %d, collisions: %d",
-			errStats.InterfaceName, errStats.InputErrors, errStats.OutputErrors, errStats.Collisions),
+		Description: fmt.Sprintf("Interface %s is logging %.1f input errors and %.1f output errors per minute",
+			errStats.InterfaceName, errStats.InputErrorsPerMin, errStats.OutputErrorsPerMin),
 		DeviceID:        errStats.DeviceID,
 		InterfaceName:   errStats.InterfaceName,
 		FirstSeen:       now,

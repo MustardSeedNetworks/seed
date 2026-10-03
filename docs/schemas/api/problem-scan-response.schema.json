@@ -81,11 +81,11 @@
         "droppedOutput": {
           "type": "integer"
         },
-        "inputErrorsDelta": {
-          "type": "integer"
+        "inputErrorsPerMin": {
+          "type": "number"
         },
-        "outputErrorsDelta": {
-          "type": "integer"
+        "outputErrorsPerMin": {
+          "type": "number"
         },
         "recordedAt": {
           "type": "string",
@@ -107,6 +107,8 @@
         "lateCollision",
         "carrierErrors",
         "droppedOutput",
+        "inputErrorsPerMin",
+        "outputErrorsPerMin",
         "recordedAt"
       ]
     },
