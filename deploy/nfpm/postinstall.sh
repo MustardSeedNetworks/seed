@@ -43,7 +43,15 @@ case "${SEED_OPEN_FIREWALL:-0}" in
     1 | true | yes | TRUE | YES) open_firewall ;;
 esac
 
-if command -v systemctl >/dev/null 2>&1; then
+# RPM passes a count of installed versions and starts seed from posttrans.sh
+# instead: %post runs before the old package's %preun, and the %preun of every
+# release before #2861 stops and disables the service. dpkg passes a word.
+case "${1:-}" in
+    [0-9]*) start_service=no ;;
+    *) start_service=yes ;;
+esac
+
+if [ "$start_service" = yes ] && command -v systemctl >/dev/null 2>&1; then
     systemctl daemon-reload || true
     systemctl enable seed.service >/dev/null 2>&1 || true
     if systemctl is-active --quiet seed.service 2>/dev/null; then
