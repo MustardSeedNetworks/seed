@@ -37,6 +37,8 @@ function requireBaseURL(): string {
   );
 }
 
+const SERIAL_SPEC = /\.serial\.spec\.ts$/;
+
 export default defineConfig({
   testDir: './e2e',
   fullyParallel: true,
@@ -83,16 +85,29 @@ export default defineConfig({
     storageState: AUTH_STORAGE_STATE,
   },
   projects: [
+    // Specs that change the shared admin account (a second factor, say) run
+    // here, alone, before either browser project starts: a parallel spec that
+    // signs in for real would otherwise hit the changed account mid-test.
+    {
+      name: 'serial-admin',
+      testMatch: SERIAL_SPEC,
+      workers: 1,
+      use: { ...devices['Desktop Chrome'] },
+    },
     // Per msn-docs-internal/05-Engineering/E2E_CONVENTIONS.md, only chromium
     // (covers Chrome and Edge — same engine) and webkit (covers Safari) are
     // supported. The previous firefox/edge/mobile-chrome/mobile-safari/tablet
     // entries were configured but never invoked in CI, lying about coverage.
     {
       name: 'chromium',
+      testIgnore: SERIAL_SPEC,
+      dependencies: ['serial-admin'],
       use: { ...devices['Desktop Chrome'] },
     },
     {
       name: 'webkit',
+      testIgnore: SERIAL_SPEC,
+      dependencies: ['serial-admin'],
       use: { ...devices['Desktop Safari'] },
     },
   ],

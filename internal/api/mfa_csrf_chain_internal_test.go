@@ -3,6 +3,7 @@
 package api
 
 import (
+	"encoding/json"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -48,7 +49,9 @@ func TestMFAEnrolmentRequiresCSRFThroughTheRealChain(t *testing.T) {
 			}
 
 			// With the token the request clears CSRF and reaches the handler,
-			// so whatever it answers it is no longer a CSRF refusal.
+			// so whatever it answers it is no longer a CSRF refusal. The status
+			// alone cannot tell: verify and disable answer a wrong factor with
+			// their own 403 (#2731), so the refusal is identified by its code.
 			token := fetchCSRFToken(t, s, bearer)
 			req = httptest.NewRequest(http.MethodPost, path, strings.NewReader(`{}`))
 			req.Header.Set("Authorization", "Bearer "+bearer)
@@ -57,8 +60,12 @@ func TestMFAEnrolmentRequiresCSRFThroughTheRealChain(t *testing.T) {
 			w = httptest.NewRecorder()
 			s.Handler().ServeHTTP(w, req)
 
-			if w.Code == http.StatusForbidden {
-				t.Fatalf("POST %s with a valid CSRF token = 403: %s", path, w.Body.String())
+			var body ErrorResponse
+			if decodeErr := json.NewDecoder(w.Body).Decode(&body); decodeErr != nil {
+				t.Fatalf("POST %s with a valid CSRF token: decode body: %v", path, decodeErr)
+			}
+			if body.Code == ErrCodeForbidden {
+				t.Fatalf("POST %s with a valid CSRF token was refused by CSRF: %d %+v", path, w.Code, body)
 			}
 		})
 	}

@@ -38,6 +38,8 @@ const (
 	ErrCodeValidation       = "VALIDATION_ERROR"
 	ErrCodeRateLimit        = "RATE_LIMIT_EXCEEDED"
 	ErrCodeSetupExpired     = "SETUP_EXPIRED" // Security fix #891: Setup mode timeout
+	ErrCodePasswordInvalid  = "INVALID_PASSWORD"
+	ErrCodeInvalidMFACode   = "INVALID_MFA_CODE"
 )
 
 // Buffer size constants for log reading.

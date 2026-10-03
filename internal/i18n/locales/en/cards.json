@@ -479,7 +479,14 @@
     "scanAndEnter": "Scan with an authenticator app, then enter a code",
     "verifyAndEnable": "Verify and enable",
     "addPasskey": "Add passkey",
-    "passkeyUnsupported": "This browser does not support passkeys."
+    "passkeyUnsupported": "This browser does not support passkeys.",
+    "disableTotp": "Turn off TOTP",
+    "disablePrompt": "Enter your password and a current code to turn off TOTP.",
+    "password": "Password",
+    "currentCode": "Current code",
+    "wrongPassword": "Wrong password. TOTP is still on.",
+    "wrongCode": "Wrong or expired code. Try the next one.",
+    "tooManyAttempts": "Too many attempts. Wait a minute, then try again."
   },
   "pathDiscovery": {
     "copy": "Copy",
