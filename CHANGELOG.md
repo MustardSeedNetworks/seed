@@ -5,6 +5,20 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.221.2](https://github.com/MustardSeedNetworks/seed/compare/v0.221.1...v0.221.2) (2026-10-03)
+
+
+### Bug Fixes
+
+* **license:** report a spent or foreign licence as Free on the status surfaces ([#2973](https://github.com/MustardSeedNetworks/seed/issues/2973)) ([ceed541](https://github.com/MustardSeedNetworks/seed/commit/ceed541993d55a917844d29cf1f73ab42e7e873e)), closes [#2704](https://github.com/MustardSeedNetworks/seed/issues/2704)
+* **ui:** open vulnerability details from the CVE badge, as a real dialog ([#2961](https://github.com/MustardSeedNetworks/seed/issues/2961)) ([f222e4e](https://github.com/MustardSeedNetworks/seed/commit/f222e4e8bc7b02a045f2d2bf3efe470afe60b99a)), closes [#2640](https://github.com/MustardSeedNetworks/seed/issues/2640)
+* **ui:** read discovery and vulnerability settings with the wire's keys ([#2972](https://github.com/MustardSeedNetworks/seed/issues/2972)) ([179f53b](https://github.com/MustardSeedNetworks/seed/commit/179f53b5c880d8a828f5aa74e377129af99e64ac)), closes [#2687](https://github.com/MustardSeedNetworks/seed/issues/2687)
+
+
+### Miscellaneous
+
+* **deps:** update dependency @types/node to v26.6.3 ([#2974](https://github.com/MustardSeedNetworks/seed/issues/2974)) ([c680cb7](https://github.com/MustardSeedNetworks/seed/commit/c680cb7ef0a91663c48108c5588091326057f51c))
+
 ## [0.221.1](https://github.com/MustardSeedNetworks/seed/compare/v0.221.0...v0.221.1) (2026-10-02)
 
 
