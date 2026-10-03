@@ -765,6 +765,9 @@
       },
       "LogViewerCard": {
         "description": "Busque, pause y exporte entradas de registro estructuradas para investigar la actividad del servicio."
+      },
+      "PacketCaptureCard": {
+        "description": "Graba el tráfico de una interfaz en un archivo PCAP, limitado por una duración y un tamaño máximo de archivo de 64 MB. El resumen cuenta las tramas por protocolo y muestra los equipos y las conversaciones con más tráfico; abra el archivo en Wireshark para ver los paquetes. Iniciar y descargar una captura requiere el rol de operador."
       }
     }
   },

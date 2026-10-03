@@ -37,6 +37,17 @@ vi.mock('../hooks/useEngineScan', () => ({
   }),
 }));
 
+// PacketCaptureCard gates its form on the role and mounts the job stream,
+// the same EventSource blocker as useEngineScan above.
+vi.mock('../contexts/RoleContext', async (importOriginal) => ({
+  ...(await importOriginal<Record<string, unknown>>()),
+  useRole: () => ({ canWrite: true, role: 'admin', loading: false }),
+}));
+
+vi.mock('../hooks/usePacketCapture', () => ({
+  usePacketCapture: () => ({ state: { phase: 'idle' }, start: vi.fn(), stop: vi.fn() }),
+}));
+
 vi.mock('../hooks/useEnginePhase', () => ({ useEnginePhase: () => ({ phase: '' }) }));
 
 vi.mock('../hooks/useNetworkDiscoveryAutoScan', () => ({
@@ -92,6 +103,7 @@ function context(overrides: Record<string, unknown> = {}): AppContextValue {
   return {
     loading: false,
     isWifi: false,
+    currentInterface: 'en0',
     displayOptions: { showPublicIp: true },
     cards,
     // The discovered-device list moved onto this page with #2674.

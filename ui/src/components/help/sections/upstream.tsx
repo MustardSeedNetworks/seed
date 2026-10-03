@@ -123,6 +123,15 @@ export const upstreamSections: HelpSection[] = [
           },
         ],
       },
+      {
+        kind: 'terms',
+        items: [
+          {
+            term: 'cards:packetCapture.title',
+            description: 'content.cardHelp.PacketCaptureCard.description',
+          },
+        ],
+      },
     ],
   },
   {
