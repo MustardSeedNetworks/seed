@@ -10,7 +10,7 @@
  * which provides settings merged with defaults.
  */
 
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { api } from '../api';
 import { LogComponents, logger } from '../lib/logger';
 import type { DefaultSettings } from '../types/defaults';
@@ -50,7 +50,7 @@ export function useDefaults(): UseDefaultsResult {
   const [error, setError] = useState<Error | null>(null);
   const isMountedRef = useRef(true);
 
-  const fetchDefaults = useCallback(async () => {
+  const fetchDefaults = async () => {
     // If already cached, use cached value
     if (cachedDefaults) {
       setDefaults(cachedDefaults);
@@ -101,16 +101,15 @@ export function useDefaults(): UseDefaultsResult {
         // Don't set fallback - let caller handle missing defaults
         setIsLoading(false);
       }
-    } finally {
-      fetchPromise = null;
     }
-  }, []);
+    fetchPromise = null;
+  };
 
-  const refetch = useCallback(async () => {
+  const refetch = async () => {
     cachedDefaults = null;
     fetchPromise = null;
     await fetchDefaults();
-  }, [fetchDefaults]);
+  };
 
   useEffect(() => {
     isMountedRef.current = true;

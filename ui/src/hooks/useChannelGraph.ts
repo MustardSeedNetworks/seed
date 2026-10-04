@@ -7,7 +7,7 @@
  * Extracted from App.tsx to reduce component complexity (#889).
  */
 
-import { useCallback, useState } from 'react';
+import { useState } from 'react';
 import { api } from '../api';
 
 /** Network data for channel graph visualization */
@@ -102,7 +102,7 @@ export function useChannelGraph({
   const [channelGraphLoading, setChannelGraphLoading] = useState(false);
 
   // Fetch channel graph data for WiFi visualization
-  const fetchChannelGraphData = useCallback(async () => {
+  const fetchChannelGraphData = async () => {
     if (!(isWifi && currentInterface)) {
       return;
     }
@@ -114,10 +114,9 @@ export function useChannelGraph({
       setChannelGraphData(normalizeChannelGraphResponse(response));
     } catch {
       setChannelGraphData({ available: false, error: 'Failed to fetch channel data' });
-    } finally {
-      setChannelGraphLoading(false);
     }
-  }, [isWifi, currentInterface]);
+    setChannelGraphLoading(false);
+  };
 
   return {
     channelGraphData,

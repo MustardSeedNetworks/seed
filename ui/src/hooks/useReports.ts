@@ -4,7 +4,7 @@
  * Kept apart from the card so the card stays a pure render of its props, and so
  * the mapping from the wire shape to those props has somewhere to be tested.
  */
-import { useCallback, useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { api } from '../api';
 import { LogComponents, logger } from '../lib/logger';
 import type { ReportInfo, ReportsResponse } from '../types/generated/reports-response';
@@ -32,69 +32,65 @@ function isReportsResponse(value: unknown): value is ReportsResponse {
   );
 }
 
+async function fetchReports(): Promise<{ reports: ReportInfo[]; error: string | null }> {
+  const res = await fetch(reportsEndpoint, { credentials: 'include' });
+  if (!res.ok) {
+    // 402 is the licence gate and 401 the auth boundary; neither is a
+    // failure worth a red card, but an empty list would be a lie.
+    return { reports: [], error: `reports request failed (${res.status})` };
+  }
+  const body: unknown = await res.json();
+  return { reports: isReportsResponse(body) ? body.reports : [], error: null };
+}
+
 export function useReports(): UseReportsResult {
   const [reports, setReports] = useState<ReportInfo[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [generating, setGenerating] = useState(false);
 
-  const refresh = useCallback(async () => {
+  const refresh = async () => {
     setLoading(true);
-    try {
-      const res = await fetch(reportsEndpoint, { credentials: 'include' });
-      if (!res.ok) {
-        // 402 is the licence gate and 401 the auth boundary; neither is a
-        // failure worth a red card, but an empty list would be a lie.
-        setError(`reports request failed (${res.status})`);
+    await fetchReports()
+      .then((loaded) => {
+        setReports(loaded.reports);
+        setError(loaded.error);
+      })
+      .catch((err: unknown) => {
+        logger.error(LogComponents.EXPORT, 'Failed to load reports', err);
+        setError(err instanceof Error ? err.message : 'Failed to load reports');
         setReports([]);
-        return;
-      }
-      const body: unknown = await res.json();
-      setReports(isReportsResponse(body) ? body.reports : []);
-      setError(null);
+      });
+    setLoading(false);
+  };
+
+  const generate = async (type: string, format: ReportFormat) => {
+    setGenerating(true);
+    try {
+      // Through the api client, not a raw fetch: the client attaches the
+      // X-CSRF-Token this route requires. A raw fetch omits it, and the
+      // middleware answers 403 "CSRF token required" — so Generate Report
+      // failed every time it was pressed.
+      await api.post(`${reportsEndpoint}/generate`, { type, format });
+      // 202: the record exists, the file does not yet. Re-read rather than
+      // trusting the snapshot, so the row shows its real current status.
+      await refresh();
     } catch (err) {
-      logger.error(LogComponents.EXPORT, 'Failed to load reports', err);
-      setError(err instanceof Error ? err.message : 'Failed to load reports');
-      setReports([]);
-    } finally {
-      setLoading(false);
+      logger.error(LogComponents.EXPORT, 'Failed to generate report', err);
+      setError(err instanceof Error ? err.message : 'Failed to generate report');
     }
-  }, []);
+    setGenerating(false);
+  };
 
-  const generate = useCallback(
-    async (type: string, format: ReportFormat) => {
-      setGenerating(true);
-      try {
-        // Through the api client, not a raw fetch: the client attaches the
-        // X-CSRF-Token this route requires. A raw fetch omits it, and the
-        // middleware answers 403 "CSRF token required" — so Generate Report
-        // failed every time it was pressed.
-        await api.post(`${reportsEndpoint}/generate`, { type, format });
-        // 202: the record exists, the file does not yet. Re-read rather than
-        // trusting the snapshot, so the row shows its real current status.
-        await refresh();
-      } catch (err) {
-        logger.error(LogComponents.EXPORT, 'Failed to generate report', err);
-        setError(err instanceof Error ? err.message : 'Failed to generate report');
-      } finally {
-        setGenerating(false);
-      }
-    },
-    [refresh],
-  );
-
-  const remove = useCallback(
-    async (id: string) => {
-      try {
-        await api.delete(`${reportsEndpoint}/${encodeURIComponent(id)}`);
-        await refresh();
-      } catch (err) {
-        logger.error(LogComponents.EXPORT, 'Failed to delete report', err);
-        setError(err instanceof Error ? err.message : 'Failed to delete report');
-      }
-    },
-    [refresh],
-  );
+  const remove = async (id: string) => {
+    try {
+      await api.delete(`${reportsEndpoint}/${encodeURIComponent(id)}`);
+      await refresh();
+    } catch (err) {
+      logger.error(LogComponents.EXPORT, 'Failed to delete report', err);
+      setError(err instanceof Error ? err.message : 'Failed to delete report');
+    }
+  };
 
   useEffect(() => {
     refresh().catch(() => undefined);

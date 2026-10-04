@@ -33,7 +33,7 @@
  * ```
  */
 
-import { useCallback, useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 
 /** Theme mode options */
 type Theme = 'light' | 'dark' | 'system';
@@ -98,17 +98,17 @@ export function useTheme(): {
     theme === 'system' ? getSystemTheme() : theme,
   );
 
-  const setTheme = useCallback((newTheme: Theme) => {
+  const setTheme = (newTheme: Theme) => {
     setThemeState(newTheme);
     localStorage.setItem(STORAGE_KEY, newTheme);
     applyTheme(newTheme);
     setEffectiveTheme(newTheme === 'system' ? getSystemTheme() : newTheme);
-  }, []);
+  };
 
-  const toggleTheme = useCallback(() => {
+  const toggleTheme = () => {
     const newTheme = effectiveTheme === 'dark' ? 'light' : 'dark';
     setTheme(newTheme);
-  }, [effectiveTheme, setTheme]);
+  };
 
   // Apply theme on mount and listen for system theme changes
   useEffect(() => {

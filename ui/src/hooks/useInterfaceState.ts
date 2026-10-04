@@ -11,7 +11,7 @@
  * - Profile-based interface restoration
  */
 
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import type { InterfaceInfo } from '../types/generated/categorized-interfaces-response';
 import type { Profile } from '../types/profile';
 
@@ -54,21 +54,18 @@ export function useInterfaceState({
   const isWifi = activeMode === 'wifi';
 
   // Helper to set the appropriate interface based on mode
-  const setCurrentInterface = useCallback(
-    (name: string) => {
-      if (activeMode === 'wifi') {
-        setWifiInterfaceState(name);
-      } else {
-        setEthernetInterfaceState(name);
-      }
-    },
-    [activeMode],
-  );
+  const setCurrentInterface = (name: string) => {
+    if (activeMode === 'wifi') {
+      setWifiInterfaceState(name);
+    } else {
+      setEthernetInterfaceState(name);
+    }
+  };
 
   // Helper to set isWifi (actually sets activeMode)
-  const setIsWifi = useCallback((wifi: boolean) => {
+  const setIsWifi = (wifi: boolean) => {
     setActiveMode(wifi ? 'wifi' : 'ethernet');
-  }, []);
+  };
 
   // Track if user manually selected Wi-Fi/Ethernet mode - prevents auto-switching from API responses
   const userSetWifiModeRef = useRef(false);
@@ -79,14 +76,8 @@ export function useInterfaceState({
   }, [currentInterface]);
 
   // Quick helpers for interface groups
-  const hasEthernet = useMemo(
-    () => interfaces.some((iface) => iface.type === 'ethernet'),
-    [interfaces],
-  );
-  const hasWifiInterface = useMemo(
-    () => interfaces.some((iface) => iface.type === 'wifi'),
-    [interfaces],
-  );
+  const hasEthernet = interfaces.some((iface) => iface.type === 'ethernet');
+  const hasWifiInterface = interfaces.some((iface) => iface.type === 'wifi');
 
   return {
     ethernetInterface,

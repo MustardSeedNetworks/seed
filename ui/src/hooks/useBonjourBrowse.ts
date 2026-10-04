@@ -7,7 +7,7 @@
  * segment nobody asked for. The operator presses the button.
  */
 
-import { useCallback, useState } from 'react';
+import { useState } from 'react';
 
 import { api } from '../api';
 import { LogComponents, logger } from '../lib/logger';
@@ -25,20 +25,22 @@ export function useBonjourBrowse(): BonjourBrowse {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const browse = useCallback(async (): Promise<void> => {
+  const browse = async (): Promise<void> => {
     setLoading(true);
     setError(null);
-    try {
-      const response = await api.get<BrowseResult>('/api/v1/discovery/bonjour');
-      setResult(response ?? null);
-    } catch (err) {
-      const message = err instanceof Error ? err.message : 'Failed to browse for Bonjour services';
-      setError(message);
-      logger.error(LogComponents.DISCOVERY, 'Failed to browse for Bonjour services', err);
-    } finally {
-      setLoading(false);
-    }
-  }, []);
+    await api
+      .get<BrowseResult>('/api/v1/discovery/bonjour')
+      .then((response) => {
+        setResult(response ?? null);
+      })
+      .catch((err: unknown) => {
+        const message =
+          err instanceof Error ? err.message : 'Failed to browse for Bonjour services';
+        setError(message);
+        logger.error(LogComponents.DISCOVERY, 'Failed to browse for Bonjour services', err);
+      });
+    setLoading(false);
+  };
 
   return { result, loading, error, browse };
 }

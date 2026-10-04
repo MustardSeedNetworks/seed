@@ -6,7 +6,7 @@
  * stays mounted across list refreshes when the user clicks back.
  */
 
-import { useCallback, useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { api } from '../api/client';
 import type {
   TopologyLink,
@@ -39,18 +39,19 @@ export function useTopologyNodes(): UseTopologyNodesResult {
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
 
-  const refresh = useCallback(async (): Promise<void> => {
+  const refresh = async (): Promise<void> => {
     setLoading(true);
     setError(null);
-    try {
-      const resp = await api.get<TopologyNodesResponse>(`${ENDPOINT}/nodes?limit=${PAGE_LIMIT}`);
-      setNodes(resp.nodes ?? []);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to load topology');
-    } finally {
-      setLoading(false);
-    }
-  }, []);
+    await api
+      .get<TopologyNodesResponse>(`${ENDPOINT}/nodes?limit=${PAGE_LIMIT}`)
+      .then((resp) => {
+        setNodes(resp.nodes ?? []);
+      })
+      .catch((err: unknown) => {
+        setError(err instanceof Error ? err.message : 'Failed to load topology');
+      });
+    setLoading(false);
+  };
 
   useEffect(() => {
     void refresh();
@@ -74,7 +75,7 @@ export function useTopologyNode(id: string): UseTopologyNodeResult {
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
 
-  const refresh = useCallback(async (): Promise<void> => {
+  const refresh = async (): Promise<void> => {
     if (!id) {
       setDetail(null);
       setLoading(false);
@@ -82,15 +83,16 @@ export function useTopologyNode(id: string): UseTopologyNodeResult {
     }
     setLoading(true);
     setError(null);
-    try {
-      const resp = await api.get<TopologyNodeDetailResponse>(`${ENDPOINT}/nodes/${id}`);
-      setDetail(resp);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to load node');
-    } finally {
-      setLoading(false);
-    }
-  }, [id]);
+    await api
+      .get<TopologyNodeDetailResponse>(`${ENDPOINT}/nodes/${id}`)
+      .then((resp) => {
+        setDetail(resp);
+      })
+      .catch((err: unknown) => {
+        setError(err instanceof Error ? err.message : 'Failed to load node');
+      });
+    setLoading(false);
+  };
 
   useEffect(() => {
     void refresh();
@@ -114,18 +116,19 @@ export function useTopologyLinks(): UseTopologyLinksResult {
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
 
-  const refresh = useCallback(async (): Promise<void> => {
+  const refresh = async (): Promise<void> => {
     setLoading(true);
     setError(null);
-    try {
-      const resp = await api.get<TopologyLinksResponse>(`${ENDPOINT}/links?limit=${PAGE_LIMIT}`);
-      setLinks(resp.links ?? []);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to load links');
-    } finally {
-      setLoading(false);
-    }
-  }, []);
+    await api
+      .get<TopologyLinksResponse>(`${ENDPOINT}/links?limit=${PAGE_LIMIT}`)
+      .then((resp) => {
+        setLinks(resp.links ?? []);
+      })
+      .catch((err: unknown) => {
+        setError(err instanceof Error ? err.message : 'Failed to load links');
+      });
+    setLoading(false);
+  };
 
   useEffect(() => {
     void refresh();

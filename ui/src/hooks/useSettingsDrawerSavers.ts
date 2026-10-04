@@ -67,6 +67,9 @@ export function useSettingsDrawerSavers({
   snmpSettings,
   setSnmpStatus,
 }: UseSettingsDrawerSaversArgs): UseSettingsDrawerSaversResult {
+  // Kept: these memos are the only hooks here, so the compiler would not
+  // treat this function as a hook and would leave it uncompiled.
+
   const saveThresholds = useCallback(async () => {
     setThresholdsStatus('saving');
     try {

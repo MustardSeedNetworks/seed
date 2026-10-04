@@ -13,7 +13,7 @@
  */
 
 import type React from 'react';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import type { CableData } from '../components/cards/CableCard';
 import type { DnsData } from '../components/cards/DnsCard';
 import type { GatewayData } from '../components/cards/GatewayCard';
@@ -107,136 +107,130 @@ export function useCardState({
   // Track setTimeout IDs for cleanup on unmount (fixes #851)
   const timeoutIdsRef = useRef<Set<ReturnType<typeof setTimeout>>>(new Set());
 
-  const handleMessage = useCallback(
-    (message: Message) => {
-      // Route traceHop events to the path discovery component
-      if (message.type === 'traceHop') {
-        const traceHopMessage = message.payload as TraceHopMessage;
-        const handler = (
-          window as unknown as {
-            __traceHopHandler?: (msg: TraceHopMessage) => void;
-          }
-        ).__traceHopHandler;
-
-        if (typeof handler === 'function') {
-          try {
-            handler(traceHopMessage);
-          } catch (err) {
-            logger.error(LogComponents.WEBSOCKET, 'TraceHop handler threw exception', {
-              error: err,
-              target: traceHopMessage.target,
-            });
-          }
+  const handleMessage = (message: Message) => {
+    // Route traceHop events to the path discovery component
+    if (message.type === 'traceHop') {
+      const traceHopMessage = message.payload as TraceHopMessage;
+      const handler = (
+        window as unknown as {
+          __traceHopHandler?: (msg: TraceHopMessage) => void;
         }
+      ).__traceHopHandler;
+
+      if (typeof handler === 'function') {
+        try {
+          handler(traceHopMessage);
+        } catch (err) {
+          logger.error(LogComponents.WEBSOCKET, 'TraceHop handler threw exception', {
+            error: err,
+            target: traceHopMessage.target,
+          });
+        }
+      }
+      return;
+    }
+
+    if (message.type === 'initial_state') {
+      setLoading(false);
+      if (!isPlainObject(message.payload)) {
+        logger.warn(LogComponents.WEBSOCKET, 'Invalid initial_state payload', {
+          payload: message.payload,
+        });
         return;
       }
 
-      if (message.type === 'initial_state') {
-        setLoading(false);
-        if (!isPlainObject(message.payload)) {
-          logger.warn(LogComponents.WEBSOCKET, 'Invalid initial_state payload', {
-            payload: message.payload,
-          });
-          return;
-        }
+      const { interface: iface, isWireless, cards: payloadCards } = message.payload;
+      if (typeof iface === 'string' && iface) {
+        setCurrentInterface(iface);
+      }
 
-        const { interface: iface, isWireless, cards: payloadCards } = message.payload;
-        if (typeof iface === 'string' && iface) {
-          setCurrentInterface(iface);
-        }
+      // Only auto-set WiFi mode if user hasn't manually selected
+      if (typeof isWireless === 'boolean' && !userSetWifiModeRef.current) {
+        setIsWifi(isWireless);
+      }
 
-        // Only auto-set WiFi mode if user hasn't manually selected
-        if (typeof isWireless === 'boolean' && !userSetWifiModeRef.current) {
-          setIsWifi(isWireless);
-        }
+      if (isPlainObject(payloadCards)) {
+        const updates: Partial<CardState> = {};
+        for (const [key, value] of Object.entries(payloadCards)) {
+          if (!isCardId(key)) {
+            continue;
+          }
 
-        if (isPlainObject(payloadCards)) {
-          const updates: Partial<CardState> = {};
-          for (const [key, value] of Object.entries(payloadCards)) {
-            if (!isCardId(key)) {
-              continue;
-            }
+          // Normalize value: null stays null, plain objects stay, others become undefined
+          let normalized: Record<string, unknown> | null | undefined;
+          if (value === null) {
+            normalized = null;
+          } else if (isPlainObject(value)) {
+            normalized = value;
+          } else {
+            normalized = undefined;
+          }
+          if (normalized === undefined) {
+            continue;
+          }
 
-            // Normalize value: null stays null, plain objects stay, others become undefined
-            let normalized: Record<string, unknown> | null | undefined;
-            if (value === null) {
-              normalized = null;
-            } else if (isPlainObject(value)) {
-              normalized = value;
-            } else {
-              normalized = undefined;
-            }
-            if (normalized === undefined) {
-              continue;
-            }
+          switch (key) {
+            case 'link':
+              updates.link = normalized as CardState['link'];
+              // Initialize prevLinkUpRef on first load
+              if (normalized && typeof (normalized as { linkUp?: boolean }).linkUp === 'boolean') {
+                const { linkUp } = normalized as { linkUp: boolean };
+                prevLinkUpRef.current = linkUp;
 
-            switch (key) {
-              case 'link':
-                updates.link = normalized as CardState['link'];
-                // Initialize prevLinkUpRef on first load
-                if (
-                  normalized &&
-                  typeof (normalized as { linkUp?: boolean }).linkUp === 'boolean'
-                ) {
-                  const { linkUp } = normalized as { linkUp: boolean };
-                  prevLinkUpRef.current = linkUp;
-
-                  // Trigger initial auto-run if link is up on page load
-                  if (linkUp && !initialAutoRunDoneRef.current) {
-                    initialAutoRunDoneRef.current = true;
-                    logger.info(
-                      LogComponents.NETWORK,
-                      'Link up on initial load, triggering auto-run tests',
-                    );
-                    // Track timeout for cleanup on unmount (fixes #851)
-                    const timeoutId = setTimeout(() => {
-                      timeoutIdsRef.current.delete(timeoutId);
-                      useTestRunStore.getState().start();
-                    }, 2000);
-                    timeoutIdsRef.current.add(timeoutId);
-                  }
+                // Trigger initial auto-run if link is up on page load
+                if (linkUp && !initialAutoRunDoneRef.current) {
+                  initialAutoRunDoneRef.current = true;
+                  logger.info(
+                    LogComponents.NETWORK,
+                    'Link up on initial load, triggering auto-run tests',
+                  );
+                  // Track timeout for cleanup on unmount (fixes #851)
+                  const timeoutId = setTimeout(() => {
+                    timeoutIdsRef.current.delete(timeoutId);
+                    useTestRunStore.getState().start();
+                  }, 2000);
+                  timeoutIdsRef.current.add(timeoutId);
                 }
-                break;
-              case 'cable':
-                updates.cable = normalized as CardState['cable'];
-                break;
-              case 'vlan':
-                updates.vlan = normalized as CardState['vlan'];
-                break;
-              case 'switch':
-                updates.switch = normalized as CardState['switch'];
-                break;
-              case 'wifi':
-                updates.wifi = normalized as CardState['wifi'];
-                break;
-              case 'dhcp':
-                updates.dhcp = normalized as CardState['dhcp'];
-                break;
-              case 'dns':
-                updates.dns = normalized as CardState['dns'];
-                break;
-              case 'gateway':
-                updates.gateway = normalized as CardState['gateway'];
-                break;
-              case 'publicip':
-                updates.publicip = normalized as CardState['publicip'];
-                break;
-              default:
-                // Unknown card ID - log for debugging
-                break;
-            }
+              }
+              break;
+            case 'cable':
+              updates.cable = normalized as CardState['cable'];
+              break;
+            case 'vlan':
+              updates.vlan = normalized as CardState['vlan'];
+              break;
+            case 'switch':
+              updates.switch = normalized as CardState['switch'];
+              break;
+            case 'wifi':
+              updates.wifi = normalized as CardState['wifi'];
+              break;
+            case 'dhcp':
+              updates.dhcp = normalized as CardState['dhcp'];
+              break;
+            case 'dns':
+              updates.dns = normalized as CardState['dns'];
+              break;
+            case 'gateway':
+              updates.gateway = normalized as CardState['gateway'];
+              break;
+            case 'publicip':
+              updates.publicip = normalized as CardState['publicip'];
+              break;
+            default:
+              // Unknown card ID - log for debugging
+              break;
           }
+        }
 
-          if (Object.keys(updates).length > 0) {
-            setCards((prev) => ({ ...prev, ...updates }));
-          }
+        if (Object.keys(updates).length > 0) {
+          setCards((prev) => ({ ...prev, ...updates }));
         }
       }
-    },
-    [setCurrentInterface, setIsWifi, userSetWifiModeRef],
-  );
+    }
+  };
 
-  const handleCardUpdate = useCallback((update: CardUpdate) => {
+  const handleCardUpdate = (update: CardUpdate) => {
     if (!update || typeof update !== 'object') {
       return;
     }
@@ -284,7 +278,7 @@ export function useCardState({
       ...prev,
       [cardId]: data as CardState[typeof cardId],
     }));
-  }, []);
+  };
 
   // Cleanup timeouts on unmount (fixes #851)
   useEffect(() => {
@@ -299,26 +293,23 @@ export function useCardState({
   }, []);
 
   // Register handler for traceHop WebSocket messages
-  const registerTraceHopHandler = useCallback(
-    (handler: (msg: TraceHopMessage) => void): (() => void) => {
-      (
-        window as unknown as {
-          __traceHopHandler?: (msg: TraceHopMessage) => void;
-        }
-      ).__traceHopHandler = handler;
+  const registerTraceHopHandler = (handler: (msg: TraceHopMessage) => void): (() => void) => {
+    (
+      window as unknown as {
+        __traceHopHandler?: (msg: TraceHopMessage) => void;
+      }
+    ).__traceHopHandler = handler;
 
-      // Return cleanup function
-      return () => {
-        const win = window as unknown as {
-          __traceHopHandler?: (msg: TraceHopMessage) => void;
-        };
-        if (win.__traceHopHandler === handler) {
-          win.__traceHopHandler = undefined;
-        }
+    // Return cleanup function
+    return () => {
+      const win = window as unknown as {
+        __traceHopHandler?: (msg: TraceHopMessage) => void;
       };
-    },
-    [],
-  );
+      if (win.__traceHopHandler === handler) {
+        win.__traceHopHandler = undefined;
+      }
+    };
+  };
 
   return {
     cards,
