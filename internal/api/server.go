@@ -13,7 +13,6 @@ import (
 	"net"
 	"net/http"
 	"net/url"
-	"os"
 	"strconv"
 	"time"
 
@@ -51,9 +50,6 @@ import (
 	"github.com/MustardSeedNetworks/seed/internal/identity/tokens"
 	"github.com/MustardSeedNetworks/seed/internal/identity/users"
 	"github.com/MustardSeedNetworks/seed/internal/license"
-	listenersink "github.com/MustardSeedNetworks/seed/internal/listener/sink"
-	"github.com/MustardSeedNetworks/seed/internal/listener/snmptrap"
-	"github.com/MustardSeedNetworks/seed/internal/listener/syslog"
 	"github.com/MustardSeedNetworks/seed/internal/logging"
 	logquery "github.com/MustardSeedNetworks/seed/internal/logs/query"
 	"github.com/MustardSeedNetworks/seed/internal/mibdb"
@@ -604,46 +600,6 @@ func (s *Server) initProbeEngine(db *database.DB) {
 // 5s; tests can run faster via direct scheduler.New construction.
 const probeSchedulerTick = 5 * time.Second
 
-// initListeners wires the passive-ingress listeners (syslog UDP +
-// SNMP traps) into the engine registry. Both are opt-in via env
-// variables — operators set SEED_SYSLOG_BIND / SEED_SNMP_TRAP_BIND
-// (e.g. ":514", ":162") to enable them. Default is off because
-// binding to <1024 requires elevated privileges and we don't want
-// the server to crash out of the box when run as a non-root user.
-//
-// V1.0 NMS expansion — Stage A3.5e-4.
-func (s *Server) initListeners(db *database.DB) {
-	persistSink := listenersink.New(db.ListenerEvents(), logging.GetLogger(), nil)
-	logger := logging.GetLogger()
-
-	if addr := os.Getenv("SEED_SYSLOG_BIND"); addr != "" {
-		l, err := syslog.New(syslog.Config{
-			BindAddr: addr,
-			Sink:     persistSink,
-			Logger:   logger,
-		})
-		if err != nil {
-			logger.Warn("syslog listener init failed", "error", err)
-		} else if regErr := s.registerEngineIfLicensed(l); regErr != nil {
-			logger.Warn("syslog listener registry registration failed", "error", regErr)
-		}
-	}
-
-	if addr := os.Getenv("SEED_SNMP_TRAP_BIND"); addr != "" {
-		l, err := snmptrap.New(snmptrap.Config{
-			BindAddr:    addr,
-			Sink:        persistSink,
-			Credentials: s.snmpCreds,
-			Logger:      logger,
-		})
-		if err != nil {
-			logger.Warn("snmp trap listener init failed", "error", err)
-		} else if regErr := s.registerEngineIfLicensed(l); regErr != nil {
-			logger.Warn("snmp trap listener registry registration failed", "error", regErr)
-		}
-	}
-}
-
 // snmpPollerSchedulerTick is the cadence the snmp.Poller's
 // scheduler wakes up at to dispatch due target jobs. The actual
 // per-target cadence comes from polling_targets.poll_interval_seconds
@@ -741,7 +697,7 @@ func (s *Server) initAlertPipelines(db *database.DB) {
 }
 
 // initRetentionEngine constructs the unified retention engine and
-// registers V1.0 sources (probe_results, metrics). The engine is
+// registers its sources (probe_results, metrics, flow_records). The engine is
 // tier-aware — it reads license.Manager on each pass — so in-place
 // license upgrades take effect on the next tick.
 //
@@ -753,6 +709,7 @@ func (s *Server) initRetentionEngine(db *database.DB) {
 	)
 	retentionEngine.Register(database.NewProbeRollupSource(db))
 	retentionEngine.Register(database.NewMetricsRollupSource(db))
+	retentionEngine.Register(database.NewFlowRollupSource(db))
 	s.retentionEngine = retentionEngine
 	if regErr := s.registerEngineIfLicensed(retentionEngine); regErr != nil {
 		logging.GetLogger().Warn("retention engine registry registration failed", "error", regErr)

@@ -255,6 +255,12 @@ CREATE INDEX idx_discovery_history_client ON discovery_history(client_id);
 -- index: idx_discovery_interfaces_client
 CREATE INDEX idx_discovery_interfaces_client ON discovery_interfaces(client_id);
 
+-- index: idx_flow_records_end
+CREATE INDEX idx_flow_records_end ON flow_records(flow_end);
+
+-- index: idx_flow_records_exporter_end
+CREATE INDEX idx_flow_records_exporter_end ON flow_records(exporter, flow_end);
+
 -- index: idx_job_idempotency_job
 CREATE INDEX idx_job_idempotency_job ON job_idempotency(job_id);
 
@@ -1037,6 +1043,28 @@ CREATE TABLE discovery_interfaces (
 				FOREIGN KEY (device_id) REFERENCES discovered_devices(id) ON DELETE CASCADE,
 				UNIQUE(device_id, mac_address)
 			) STRICT;
+
+-- table: flow_records
+CREATE TABLE flow_records (
+	id INTEGER PRIMARY KEY AUTOINCREMENT,
+	client_id TEXT NOT NULL DEFAULT 'default' REFERENCES clients(id),
+	exporter TEXT NOT NULL,
+	version INTEGER NOT NULL,
+	observation_domain INTEGER NOT NULL,
+	flow_start TEXT NOT NULL,
+	flow_end TEXT NOT NULL,
+	src_addr TEXT NOT NULL,
+	dst_addr TEXT NOT NULL,
+	src_port INTEGER NOT NULL,
+	dst_port INTEGER NOT NULL,
+	protocol INTEGER NOT NULL,
+	tcp_flags INTEGER NOT NULL,
+	bytes INTEGER NOT NULL,
+	packets INTEGER NOT NULL,
+	input_if INTEGER NOT NULL,
+	output_if INTEGER NOT NULL,
+	received_at TEXT NOT NULL
+) STRICT;
 
 -- table: job_idempotency
 CREATE TABLE job_idempotency (

@@ -87,6 +87,7 @@ type DB struct {
 	outbox            *OutboxRepository
 	snmpObservations  *SNMPObservationsRepository
 	listenerEvents    *ListenerEventsRepository
+	flowRecords       *FlowRecordsRepository
 	topology          *TopologyRepository
 	alertRules        *AlertRulesRepository
 	alertSuppressions *AlertSuppressionsRepository

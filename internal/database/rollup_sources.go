@@ -257,3 +257,36 @@ func purgeRows(res sql.Result, err error, op string) (int64, error) {
 	n, _ := res.RowsAffected()
 	return n, nil
 }
+
+// FlowRollupSource purges raw flow_records at the tier's raw horizon.
+// Flows have no hourly or daily tier yet: the conversation aggregates
+// that P-C3 adds are their rollup, so the rollup and rollup-purge steps
+// write and delete nothing until then.
+type FlowRollupSource struct {
+	db *DB
+}
+
+// NewFlowRollupSource returns a source bound to the given DB.
+func NewFlowRollupSource(db *DB) *FlowRollupSource {
+	return &FlowRollupSource{db: db}
+}
+
+// Name implements retention.RollupSource.
+func (*FlowRollupSource) Name() string { return "flow_records" }
+
+// RollupHour implements retention.RollupSource.
+func (*FlowRollupSource) RollupHour(context.Context, time.Time) (int, error) { return 0, nil }
+
+// RollupDay implements retention.RollupSource.
+func (*FlowRollupSource) RollupDay(context.Context, time.Time) (int, error) { return 0, nil }
+
+// PurgeRaw deletes flows that ended before cutoff.
+func (s *FlowRollupSource) PurgeRaw(ctx context.Context, cutoff time.Time) (int64, error) {
+	return s.db.FlowRecords().DeleteOlderThan(ctx, cutoff)
+}
+
+// PurgeHourly implements retention.RollupSource.
+func (*FlowRollupSource) PurgeHourly(context.Context, time.Time) (int64, error) { return 0, nil }
+
+// PurgeDaily implements retention.RollupSource.
+func (*FlowRollupSource) PurgeDaily(context.Context, time.Time) (int64, error) { return 0, nil }

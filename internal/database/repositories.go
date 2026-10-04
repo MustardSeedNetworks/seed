@@ -167,6 +167,18 @@ func (db *DB) ListenerEvents() *ListenerEventsRepository {
 	return db.listenerEvents
 }
 
+// FlowRecords returns the repository the flow collector writes decoded
+// NetFlow and IPFIX records into.
+func (db *DB) FlowRecords() *FlowRecordsRepository {
+	db.mu.Lock()
+	defer db.mu.Unlock()
+
+	if db.flowRecords == nil {
+		db.flowRecords = &FlowRecordsRepository{db: db}
+	}
+	return db.flowRecords
+}
+
 // Topology returns the topology repository (Stage A4). Reconcilers
 // in internal/topology own writes; the operator UI + alert rules
 // own reads.
