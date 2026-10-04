@@ -20,7 +20,7 @@
  *                            (get / set / add / remove / setActive)
  */
 
-import { createContext, type ReactNode, useCallback, useContext } from 'react';
+import { createContext, type ReactNode, useContext } from 'react';
 import { useBackendDefaultsQuery } from '../stores/profileQueries';
 import {
   type SettingsSaveStatus,
@@ -195,7 +195,6 @@ export function ProfileProvider({ children }: ProfileProviderProps): React.JSX.E
   const error = useProfileStore((s) => s.error);
   const settingsStatus = useProfileStore((s) => s.settingsStatus);
   const isSettingsLoaded = useProfileStore((s) => s.isSettingsLoaded);
-  const setActiveProfile = useProfileStore((s) => s.setActiveProfile);
 
   // Memoized settings selectors
   const linkSettings = useLinkSettings();
@@ -219,11 +218,7 @@ export function ProfileProvider({ children }: ProfileProviderProps): React.JSX.E
   // Extracted hooks: API wrappers, settings updaters, interface helpers
   const apiOps = useProfileApi();
   const settingsUpdaters = useProfileSettingsUpdates(activeProfile);
-  const interfaceOps = useProfileInterfaces(activeProfile, setActiveProfile);
-
-  const refreshSettings = useCallback(async () => {
-    await apiOps.refreshActiveProfile();
-  }, [apiOps.refreshActiveProfile]);
+  const interfaceOps = useProfileInterfaces();
 
   const contextValue: ProfileContextValue = {
     // Profile state (from Zustand)
@@ -255,7 +250,7 @@ export function ProfileProvider({ children }: ProfileProviderProps): React.JSX.E
 
     // Settings auto-save
     ...settingsUpdaters,
-    refreshSettings,
+    refreshSettings: apiOps.refreshActiveProfile,
 
     // Interface helpers
     ...interfaceOps,
