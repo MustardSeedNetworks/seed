@@ -30,6 +30,7 @@
     "labelResolved": "Resolved",
     "labelDeliveryWebhook": "Webhook delivery",
     "labelDeliveryEmail": "Email delivery",
+    "labelDeliverySyslog": "Syslog delivery",
     "deliveryPending": "queued for the receiver",
     "deliveryDelivered": "delivered {{time}}",
     "deliveryFailed": "failed {{time}} — {{reason}}",

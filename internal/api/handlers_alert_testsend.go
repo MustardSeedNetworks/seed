@@ -30,7 +30,7 @@ func (s *Server) handleAlertTestSend(w http.ResponseWriter, r *http.Request) {
 	}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		sendErrorResponseWithDetails(w, logger, http.StatusBadRequest,
-			ErrCodeBadRequest, "body must be {\"channel\": \"email\" | \"webhook\"}", "")
+			ErrCodeBadRequest, "body must be {\"channel\": \"email\" | \"syslog\" | \"webhook\"}", "")
 		return
 	}
 	// Resolve to the package constant so nothing the caller sent reaches the
@@ -39,11 +39,13 @@ func (s *Server) handleAlertTestSend(w http.ResponseWriter, r *http.Request) {
 	switch req.Channel {
 	case alerts.ChannelEmail:
 		channel = alerts.ChannelEmail
+	case alerts.ChannelSyslog:
+		channel = alerts.ChannelSyslog
 	case alerts.ChannelWebhook:
 		channel = alerts.ChannelWebhook
 	default:
 		sendErrorResponseWithDetails(w, logger, http.StatusBadRequest,
-			ErrCodeValidation, "channel must be \"email\" or \"webhook\"", "")
+			ErrCodeValidation, "channel must be \"email\", \"syslog\" or \"webhook\"", "")
 		return
 	}
 	if s.alertDelivery == nil {

@@ -30,6 +30,7 @@
     "labelResolved": "Resuelta",
     "labelDeliveryWebhook": "Envío al webhook",
     "labelDeliveryEmail": "Envío por correo",
+    "labelDeliverySyslog": "Envío por syslog",
     "deliveryPending": "en cola para el receptor",
     "deliveryDelivered": "enviada {{time}}",
     "deliveryFailed": "falló {{time}} — {{reason}}",

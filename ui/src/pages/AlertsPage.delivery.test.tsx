@@ -6,7 +6,7 @@
  * a failure is named on the row itself (the operator is scanning, not opening
  * each alert), and an install with no receiver shows nothing at all — most
  * deployments configure none, so an empty status must never read as a failure.
- * Each channel (webhook, email; #2997) answers for itself.
+ * Each channel (webhook, email #2997, syslog #3037) answers for itself.
  */
 import { render, screen, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -136,7 +136,7 @@ describe('AlertsPage — delivery status', () => {
     expect(screen.getByText(/the delivery queue was full/)).toBeVisible();
   });
 
-  it('states each channel separately, so a delivered webhook cannot hide a failed email', async () => {
+  it('states each channel separately, so a delivered webhook cannot hide a failed email or syslog', async () => {
     await renderWith({
       ...baseAlert,
       deliveries: [
@@ -147,6 +147,12 @@ describe('AlertsPage — delivery status', () => {
           error: 'RCPT TO noc@example.com: 550 5.1.1 no such mailbox',
         },
         { channel: 'webhook', status: 'delivered', attemptedAt: '2026-09-06T10:00:05Z' },
+        {
+          channel: 'syslog',
+          status: 'failed',
+          attemptedAt: '2026-09-06T10:00:05Z',
+          error: 'connect to 10.0.0.5:514: connection refused',
+        },
       ],
     });
 
@@ -154,6 +160,8 @@ describe('AlertsPage — delivery status', () => {
     expect(screen.getByText('Email delivery')).toBeVisible();
     expect(screen.getByText(/550 5.1.1 no such mailbox/)).toBeVisible();
     expect(screen.getByText('Webhook delivery')).toBeVisible();
+    expect(screen.getByText('Syslog delivery')).toBeVisible();
+    expect(screen.getByText(/10.0.0.5:514: connection refused/)).toBeVisible();
   });
 
   it('renders the delivery copy in Spanish, with no English left behind', async () => {

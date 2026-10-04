@@ -6,6 +6,7 @@ package config
 type AlertsConfig struct {
 	Webhook AlertWebhookConfig `json:"webhook"`
 	Email   AlertEmailConfig   `json:"email"`
+	Syslog  AlertSyslogConfig  `json:"syslog"`
 	// Escalations re-send an alert nobody has acknowledged, one ladder per
 	// rule (P-B2). Empty means an alert is sent once, when it is raised.
 	Escalations []AlertEscalationConfig `json:"escalations,omitempty"`
@@ -23,7 +24,7 @@ type AlertEscalationConfig struct {
 }
 
 // AlertEscalationStage fires AfterSeconds after the alert was raised, on the
-// named channels ("webhook", "email").
+// named channels ("webhook", "email", "syslog").
 type AlertEscalationStage struct {
 	AfterSeconds int      `json:"after_seconds"`
 	Channels     []string `json:"channels"`
@@ -65,4 +66,14 @@ type AlertEmailConfig struct {
 	Password string   `json:"password"`
 	From     string   `json:"from"`
 	To       []string `json:"to,omitempty"`
+}
+
+// AlertSyslogConfig is the collector alerts are forwarded to as RFC 5424
+// syslog (#3037). An empty Host means forwarding is off.
+type AlertSyslogConfig struct {
+	Host string `json:"host"`
+	// Port is 0 for the transport's IANA port: 514, or 6514 for tls.
+	Port int `json:"port"`
+	// Transport is "udp" (the default), "tcp" or "tls".
+	Transport string `json:"transport"`
 }

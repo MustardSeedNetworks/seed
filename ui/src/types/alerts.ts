@@ -33,7 +33,7 @@ export interface Alert {
 
 /** One channel's delivery outcome for one alert. */
 export interface AlertDelivery {
-  channel: 'webhook' | 'email';
+  channel: 'webhook' | 'email' | 'syslog';
   status: 'pending' | 'delivered' | 'failed' | 'dropped';
   /** When the last attempt finished; absent while still queued. */
   attemptedAt?: string;
