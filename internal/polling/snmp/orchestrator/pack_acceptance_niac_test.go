@@ -75,8 +75,10 @@ func readJSON(path string, into any) error {
 // and runs this with SEED_NIAC_TARGETS and SEED_NIAC_MANIFEST set.
 func TestNIACPackObservations(t *testing.T) {
 	targetsPath, manifestPath := os.Getenv("SEED_NIAC_TARGETS"), os.Getenv("SEED_NIAC_MANIFEST")
-	if targetsPath == "" || manifestPath == "" {
-		t.Fatal("SEED_NIAC_TARGETS and SEED_NIAC_MANIFEST are unset; run scripts/snmp-acceptance-niac.sh")
+	poller := os.Getenv("SEED_NIAC_POLLER_MAC")
+	if targetsPath == "" || manifestPath == "" || poller == "" {
+		t.Fatal("SEED_NIAC_TARGETS, SEED_NIAC_MANIFEST and SEED_NIAC_POLLER_MAC are unset; " +
+			"run scripts/snmp-acceptance-niac.sh")
 	}
 	var targets packTargets
 	if err := readJSON(targetsPath, &targets); err != nil {
@@ -94,7 +96,7 @@ func TestNIACPackObservations(t *testing.T) {
 		t.Fatal("the pack has no SNMP agents; this run would assert nothing")
 	}
 
-	results := pollPack(t.Context(), targets.Agents)
+	results := pollPack(t.Context(), targets.Agents, poller)
 	// One line per agent, so a finding can be traced to the devices behind it.
 	for _, line := range agentRows(results) {
 		t.Log(line)
@@ -120,7 +122,7 @@ func TestNIACPackObservations(t *testing.T) {
 
 // pollPack runs every collector against every agent with the production
 // client factory.
-func pollPack(ctx context.Context, agents []packAgent) []packResult {
+func pollPack(ctx context.Context, agents []packAgent, poller string) []packResult {
 	factory := snmpclient.NewFactory(snmpclient.Options{})
 	queue := make(chan packAgent)
 	var (
@@ -130,7 +132,7 @@ func pollPack(ctx context.Context, agents []packAgent) []packResult {
 	)
 	for range packPollers {
 		wg.Go(func() {
-			recorder := &rowRecorder{}
+			recorder := &rowRecorder{poller: poller}
 			collectors := orchestrator.Collectors(factory, recorder, nil)
 			for agent := range queue {
 				target := snmp.Target{
