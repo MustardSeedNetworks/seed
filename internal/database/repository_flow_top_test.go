@@ -198,7 +198,7 @@ func TestFlowRollupSaturatesAndPurges(t *testing.T) {
 	src := database.NewFlowRollupSource(db)
 	n, err := src.RollupHour(ctx, hour)
 	require.NoError(t, err)
-	require.Equal(t, 1, n)
+	require.Equal(t, 2, n, "one conversation row and one application row")
 	_, err = src.RollupDay(ctx, flowDay())
 	require.NoError(t, err)
 
@@ -206,11 +206,15 @@ func TestFlowRollupSaturatesAndPurges(t *testing.T) {
 		hour, hour.Add(time.Hour), database.FlowRankBytes, 1)
 	require.NoError(t, err)
 	require.Equal(t, []database.FlowTalker{{Addr: hostA, Bytes: math.MaxInt64, Packets: 2}}, got)
+	apps, err := db.FlowRecords().TopApplications(ctx, "default", database.FlowTierDaily,
+		hour, hour.Add(time.Hour), database.FlowRankBytes, 1)
+	require.NoError(t, err)
+	require.Equal(t, []database.FlowApplication{{Name: "unknown", Bytes: math.MaxInt64, Packets: 2}}, apps)
 
 	purged, err := src.PurgeHourly(ctx, hour.Add(time.Hour))
 	require.NoError(t, err)
-	require.Equal(t, int64(1), purged)
+	require.Equal(t, int64(2), purged)
 	purged, err = src.PurgeDaily(ctx, flowDay().AddDate(0, 0, 1))
 	require.NoError(t, err)
-	require.Equal(t, int64(1), purged)
+	require.Equal(t, int64(2), purged)
 }

@@ -1,0 +1,478 @@
+{
+  "signatures": [
+    {
+      "name": "icmp",
+      "description": "Internet Control Message Protocol (ping, unreachables)",
+      "protocol": 1
+    },
+    {
+      "name": "igmp",
+      "description": "Multicast group membership",
+      "protocol": 2
+    },
+    {
+      "name": "gre",
+      "description": "Generic Routing Encapsulation tunnels",
+      "protocol": 47
+    },
+    {
+      "name": "ipsec-esp",
+      "description": "IPsec Encapsulating Security Payload",
+      "protocol": 50
+    },
+    {
+      "name": "ipsec-ah",
+      "description": "IPsec Authentication Header",
+      "protocol": 51
+    },
+    {
+      "name": "icmpv6",
+      "description": "ICMP for IPv6, including neighbour discovery",
+      "protocol": 58
+    },
+    {
+      "name": "ospf",
+      "description": "OSPF routing",
+      "protocol": 89
+    },
+    {
+      "name": "pim",
+      "description": "Protocol Independent Multicast",
+      "protocol": 103
+    },
+    {
+      "name": "vrrp",
+      "description": "Virtual Router Redundancy Protocol",
+      "protocol": 112
+    },
+    {
+      "name": "ftp",
+      "description": "File Transfer Protocol, data and control",
+      "protocol": 6,
+      "ports": [
+        "20-21"
+      ]
+    },
+    {
+      "name": "ssh",
+      "description": "Secure Shell, including SCP and SFTP",
+      "protocol": 6,
+      "ports": [
+        "22"
+      ]
+    },
+    {
+      "name": "telnet",
+      "description": "Telnet remote terminal (cleartext)",
+      "protocol": 6,
+      "ports": [
+        "23"
+      ]
+    },
+    {
+      "name": "smtp",
+      "description": "Mail submission and relay, with and without TLS",
+      "protocol": 6,
+      "ports": [
+        "25",
+        "465",
+        "587"
+      ]
+    },
+    {
+      "name": "dns",
+      "description": "Domain Name System",
+      "protocol": 17,
+      "ports": [
+        "53"
+      ]
+    },
+    {
+      "name": "dns",
+      "description": "Domain Name System over TCP (zone transfers, large answers)",
+      "protocol": 6,
+      "ports": [
+        "53",
+        "853"
+      ]
+    },
+    {
+      "name": "dhcp",
+      "description": "DHCP and BOOTP",
+      "protocol": 17,
+      "ports": [
+        "67-68"
+      ]
+    },
+    {
+      "name": "tftp",
+      "description": "Trivial File Transfer Protocol",
+      "protocol": 17,
+      "ports": [
+        "69"
+      ]
+    },
+    {
+      "name": "http",
+      "description": "Unencrypted web traffic",
+      "protocol": 6,
+      "ports": [
+        "80",
+        "8000",
+        "8080"
+      ]
+    },
+    {
+      "name": "kerberos",
+      "description": "Kerberos authentication",
+      "protocol": 6,
+      "ports": [
+        "88"
+      ]
+    },
+    {
+      "name": "kerberos",
+      "description": "Kerberos authentication",
+      "protocol": 17,
+      "ports": [
+        "88"
+      ]
+    },
+    {
+      "name": "pop3",
+      "description": "Mail retrieval, with and without TLS",
+      "protocol": 6,
+      "ports": [
+        "110",
+        "995"
+      ]
+    },
+    {
+      "name": "ntp",
+      "description": "Network Time Protocol",
+      "protocol": 17,
+      "ports": [
+        "123"
+      ]
+    },
+    {
+      "name": "msrpc",
+      "description": "Microsoft RPC endpoint mapper",
+      "protocol": 6,
+      "ports": [
+        "135"
+      ]
+    },
+    {
+      "name": "netbios",
+      "description": "NetBIOS name and datagram services",
+      "protocol": 17,
+      "ports": [
+        "137-138"
+      ]
+    },
+    {
+      "name": "netbios",
+      "description": "NetBIOS session service",
+      "protocol": 6,
+      "ports": [
+        "139"
+      ]
+    },
+    {
+      "name": "imap",
+      "description": "Mail access, with and without TLS",
+      "protocol": 6,
+      "ports": [
+        "143",
+        "993"
+      ]
+    },
+    {
+      "name": "snmp",
+      "description": "SNMP polling and traps",
+      "protocol": 17,
+      "ports": [
+        "161-162"
+      ]
+    },
+    {
+      "name": "bgp",
+      "description": "Border Gateway Protocol",
+      "protocol": 6,
+      "ports": [
+        "179"
+      ]
+    },
+    {
+      "name": "ldap",
+      "description": "Directory access, with and without TLS",
+      "protocol": 6,
+      "ports": [
+        "389",
+        "636"
+      ]
+    },
+    {
+      "name": "https",
+      "description": "Web traffic over TLS",
+      "protocol": 6,
+      "ports": [
+        "443",
+        "8443"
+      ]
+    },
+    {
+      "name": "quic",
+      "description": "QUIC, including HTTP/3",
+      "protocol": 17,
+      "ports": [
+        "443"
+      ]
+    },
+    {
+      "name": "smb",
+      "description": "Windows file sharing",
+      "protocol": 6,
+      "ports": [
+        "445"
+      ]
+    },
+    {
+      "name": "ike",
+      "description": "IPsec key exchange and NAT traversal",
+      "protocol": 17,
+      "ports": [
+        "500",
+        "4500"
+      ]
+    },
+    {
+      "name": "modbus",
+      "description": "Modbus/TCP industrial control",
+      "protocol": 6,
+      "ports": [
+        "502"
+      ]
+    },
+    {
+      "name": "syslog",
+      "description": "Syslog",
+      "protocol": 17,
+      "ports": [
+        "514"
+      ]
+    },
+    {
+      "name": "rtsp",
+      "description": "Real Time Streaming Protocol",
+      "protocol": 6,
+      "ports": [
+        "554"
+      ]
+    },
+    {
+      "name": "ipp",
+      "description": "Internet Printing Protocol",
+      "protocol": 6,
+      "ports": [
+        "631"
+      ]
+    },
+    {
+      "name": "openvpn",
+      "description": "OpenVPN",
+      "protocol": 17,
+      "ports": [
+        "1194"
+      ]
+    },
+    {
+      "name": "mssql",
+      "description": "Microsoft SQL Server",
+      "protocol": 6,
+      "ports": [
+        "1433"
+      ]
+    },
+    {
+      "name": "oracle",
+      "description": "Oracle database listener",
+      "protocol": 6,
+      "ports": [
+        "1521"
+      ]
+    },
+    {
+      "name": "radius",
+      "description": "RADIUS authentication and accounting",
+      "protocol": 17,
+      "ports": [
+        "1812-1813"
+      ]
+    },
+    {
+      "name": "mqtt",
+      "description": "MQTT messaging, with and without TLS",
+      "protocol": 6,
+      "ports": [
+        "1883",
+        "8883"
+      ]
+    },
+    {
+      "name": "ssdp",
+      "description": "Simple Service Discovery Protocol (UPnP)",
+      "protocol": 17,
+      "ports": [
+        "1900"
+      ]
+    },
+    {
+      "name": "nfs",
+      "description": "Network File System",
+      "protocol": 6,
+      "ports": [
+        "2049"
+      ]
+    },
+    {
+      "name": "netflow",
+      "description": "NetFlow and IPFIX export",
+      "protocol": 17,
+      "ports": [
+        "2055",
+        "4739"
+      ]
+    },
+    {
+      "name": "iscsi",
+      "description": "iSCSI storage",
+      "protocol": 6,
+      "ports": [
+        "3260"
+      ]
+    },
+    {
+      "name": "mysql",
+      "description": "MySQL and MariaDB",
+      "protocol": 6,
+      "ports": [
+        "3306"
+      ]
+    },
+    {
+      "name": "rdp",
+      "description": "Remote Desktop Protocol",
+      "protocol": 6,
+      "ports": [
+        "3389"
+      ]
+    },
+    {
+      "name": "rdp",
+      "description": "Remote Desktop Protocol (UDP transport)",
+      "protocol": 17,
+      "ports": [
+        "3389"
+      ]
+    },
+    {
+      "name": "opc-ua",
+      "description": "OPC UA industrial automation",
+      "protocol": 6,
+      "ports": [
+        "4840"
+      ]
+    },
+    {
+      "name": "iperf",
+      "description": "iperf3 throughput testing",
+      "protocol": 6,
+      "ports": [
+        "5201"
+      ]
+    },
+    {
+      "name": "sip",
+      "description": "Session Initiation Protocol (VoIP signalling)",
+      "protocol": 17,
+      "ports": [
+        "5060"
+      ]
+    },
+    {
+      "name": "sip",
+      "description": "Session Initiation Protocol (VoIP signalling), with and without TLS",
+      "protocol": 6,
+      "ports": [
+        "5060",
+        "5061"
+      ]
+    },
+    {
+      "name": "mdns",
+      "description": "Multicast DNS",
+      "protocol": 17,
+      "ports": [
+        "5353"
+      ]
+    },
+    {
+      "name": "llmnr",
+      "description": "Link-Local Multicast Name Resolution",
+      "protocol": 17,
+      "ports": [
+        "5355"
+      ]
+    },
+    {
+      "name": "postgresql",
+      "description": "PostgreSQL",
+      "protocol": 6,
+      "ports": [
+        "5432"
+      ]
+    },
+    {
+      "name": "vnc",
+      "description": "VNC remote desktop",
+      "protocol": 6,
+      "ports": [
+        "5900-5903"
+      ]
+    },
+    {
+      "name": "sflow",
+      "description": "sFlow export",
+      "protocol": 17,
+      "ports": [
+        "6343"
+      ]
+    },
+    {
+      "name": "redis",
+      "description": "Redis",
+      "protocol": 6,
+      "ports": [
+        "6379"
+      ]
+    },
+    {
+      "name": "dnp3",
+      "description": "DNP3 utility control",
+      "protocol": 6,
+      "ports": [
+        "20000"
+      ]
+    },
+    {
+      "name": "bacnet",
+      "description": "BACnet building automation",
+      "protocol": 17,
+      "ports": [
+        "47808"
+      ]
+    }
+  ]
+}
