@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.227.1](https://github.com/MustardSeedNetworks/seed/compare/v0.227.0...v0.227.1) (2026-10-04)
+
+
+### Bug Fixes
+
+* **i18n:** clear the copy the tightened shared gate finds ([#3057](https://github.com/MustardSeedNetworks/seed/issues/3057)) ([57badde](https://github.com/MustardSeedNetworks/seed/commit/57badde2d96a84f8cd70f48352b5414a94eb761b))
+* **reporting:** read gateway telemetry and keep speed tests for the report ([#3058](https://github.com/MustardSeedNetworks/seed/issues/3058)) ([7596456](https://github.com/MustardSeedNetworks/seed/commit/7596456d2d4e94b8ffa0b7dcfb65fc31eb7d58b6)), closes [#2623](https://github.com/MustardSeedNetworks/seed/issues/2623)
+
 ## [0.227.0](https://github.com/MustardSeedNetworks/seed/compare/v0.226.0...v0.227.0) (2026-10-04)
 
 
