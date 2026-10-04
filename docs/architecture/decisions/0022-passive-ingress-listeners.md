@@ -1,7 +1,7 @@
 # ADR-0022: Passive-ingress listeners share the engine lifecycle and a sink seam
 
 **Status:** Accepted — 2026-06-10 · as-built (documents `internal/listener`, shipped during the V1.0 NMS expansion)
-· amended 2026-10-04 (SNMPv3 traps, P-B4)
+· amended 2026-10-04 (SNMPv3 traps, P-B4; flow collector, P-C1)
 
 ## Context
 
@@ -132,3 +132,63 @@ A dropped datagram is logged at debug level with its reason and is never
 persisted. The trap listener's event kind is now `snmp-trap` for every
 version. Migration `00016` renames stored events and alert rules that used the
 old `snmp-trap-v2c`.
+
+## Amendment 2026-10-04: the flow collector (P-C1, seed#3082)
+
+`internal/listener/flow` receives NetFlow v5, NetFlow v9 and IPFIX on one UDP
+socket (`SEED_FLOW_BIND`, conventionally `:2055`) and picks the decoder from
+each datagram's version field. It is a `Listener` and registers like the
+others, at the Pro tier.
+
+**Flows do not go through `Sink`.** `Sink.Publish` takes one `Event` with a
+JSON payload and writes one `listener_events` row per call. A datagram holds up
+to 30 flows, and an exporter sends thousands of datagrams a minute. A row per
+flow with a JSON body would make every later reader parse JSON to sum bytes,
+and a write per flow would cap ingest at the database's single-row insert rate.
+The flow package therefore defines its own port, `flow.Store`, which takes a
+batch of typed `flow.Record`s. `database.FlowRecordsRepository` writes each
+batch in one transaction into `flow_records` (migration `00019`), with one
+typed column per field. The rest of the decision holds: the listener owns no
+SQL, and the composition root binds the port.
+
+**Memory is bounded on both paths an exporter controls.**
+
+- _Records._ The read loop decodes each datagram and offers its records to a
+  queue of 8,192. A record that does not fit is dropped and counted. The read
+  loop never waits on the database. One writer goroutine drains the queue in
+  batches of up to 512, or each second. Stop closes the socket, and the writer
+  flushes what is queued before it returns.
+- _Templates._ v9 and IPFIX templates are keyed by exporter address, version,
+  observation domain and template ID (RFC 7011 §8). The cache holds at most
+  4,096 templates of at most 256 fields. When it is full, the least recently
+  refreshed template is evicted. A template that has not been refreshed for an
+  hour expires.
+
+**Template loss is counted, not buffered.** A data set whose template is not
+known is dropped and counted. This happens when the collector starts after
+the exporter sent its templates, or after the template expires. Exporters
+resend templates on a timer, so flows decode again from the next refresh.
+Holding data sets until their template arrives would put an exporter-controlled
+buffer back into memory. A redefinition of the same template ID, as after an
+exporter restart, replaces the old template. IPFIX withdrawals, of one
+template or of all of them, are honoured.
+
+The listener logs one summary a minute while it is losing records: queue-full
+drops, data sets without a template, malformed datagrams and failed batches.
+The retention engine purges `flow_records` at the tier's raw horizon. Flows
+have no hourly or daily tier yet. The conversation aggregates of P-C3 will be
+that tier.
+
+Options records carry exporter metadata, not flows. The collector reads one
+value from them: `systemInitTimeMilliseconds`. softflowd, nProbe and several
+Cisco images send IPFIX flow times relative to exporter uptime and send the
+boot time this way. The boot time is kept per exporter and observation domain,
+and expires with the templates. A 32-bit millisecond uptime wraps every 49.7
+days, so an uptime resolves to the instant nearest the export time that it can
+denote. Without it, an uptime-relative IPFIX record is
+stamped with its export time.
+
+v5 counters are scaled by the header's sampling interval. v9 and IPFIX
+exporters report their sampling rate in options records too, and the collector
+does not read it yet, so v9 and IPFIX counts are stored as sampled. Applying
+that rate is the next slice of P-C1.

@@ -8,7 +8,7 @@ package api
 // the basic Seed functionality (probe, retention, telemetry); Starter adds
 // SNMP visibility (snmp-poller + the four topology reconcilers);
 // Pro adds proactive alerting (the two alert pipelines + the opt-
-// in syslog/trap listeners).
+// in syslog/trap/flow listeners).
 //
 // This matches the locked tier matrix from
 // msn-docs-internal/10-Portal-License/LICENSE_STRATEGY.md.
@@ -37,7 +37,8 @@ func minTierForEngine(name string) license.Tier {
 		"alert-observation-pipeline",
 		"alert-escalation",
 		"syslog-udp",
-		"snmp-trap":
+		"snmp-trap",
+		"flow-collector":
 		return license.TierPro
 	}
 	return license.TierFree
