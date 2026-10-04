@@ -1,11 +1,9 @@
 /**
  * useProfileApi — backwards-compatible wrappers around the profile-related
  * React Query mutations / queries. Extracted from ProfileContext so the
- * provider stays focused on assembling context value rather than holding
- * dozens of inline useCallback hooks.
+ * provider stays focused on assembling its context value.
  */
 
-import { useCallback } from 'react';
 import { api } from '../api';
 import { LogComponents, logger } from '../lib/logger';
 import { getQueryClient } from '../lib/queryClient';
@@ -42,99 +40,85 @@ export interface ProfileApi {
 }
 
 /**
- * Returns memoized wrappers around the profile-related queries / mutations.
+ * Returns wrappers around the profile-related queries / mutations. Each
+ * takes only the stable `refetch` / `mutateAsync`, never the whole result
+ * object, which is new on every render and would change every wrapper.
  */
 export function useProfileApi(): ProfileApi {
-  const profilesQuery = useProfilesQuery();
-  const activeProfileQuery = useActiveProfileQuery();
-  const createProfileMutation = useCreateProfileMutation();
-  const updateProfileMutation = useUpdateProfileMutation();
-  const deleteProfileMutation = useDeleteProfileMutation();
-  const switchProfileMutation = useSwitchProfileMutation();
-  const duplicateProfileMutation = useDuplicateProfileMutation();
-  const importProfilesMutation = useImportProfilesMutation();
+  const { refetch: refetchProfiles } = useProfilesQuery();
+  const { refetch: refetchActiveProfile } = useActiveProfileQuery();
+  const { mutateAsync: createProfileAsync } = useCreateProfileMutation();
+  const { mutateAsync: updateProfileAsync } = useUpdateProfileMutation();
+  const { mutateAsync: deleteProfileAsync } = useDeleteProfileMutation();
+  const { mutateAsync: switchProfileAsync } = useSwitchProfileMutation();
+  const { mutateAsync: duplicateProfileAsync } = useDuplicateProfileMutation();
+  const { mutateAsync: importProfilesAsync } = useImportProfilesMutation();
 
-  const refreshProfiles = useCallback(async () => {
-    await Promise.resolve(profilesQuery.refetch());
-  }, [profilesQuery]);
+  const refreshProfiles = async () => {
+    await Promise.resolve(refetchProfiles());
+  };
 
-  const refreshActiveProfile = useCallback(async () => {
-    await Promise.resolve(activeProfileQuery.refetch());
-  }, [activeProfileQuery]);
+  const refreshActiveProfile = async () => {
+    await Promise.resolve(refetchActiveProfile());
+  };
 
-  const createProfile = useCallback(
-    async (profile: ProfileRequest): Promise<Profile | null> => {
-      try {
-        const result = await Promise.resolve(createProfileMutation.mutateAsync(profile));
-        return result;
-      } catch {
-        return null;
-      }
-    },
-    [createProfileMutation],
-  );
+  const createProfile = async (profile: ProfileRequest): Promise<Profile | null> => {
+    try {
+      const result = await Promise.resolve(createProfileAsync(profile));
+      return result;
+    } catch {
+      return null;
+    }
+  };
 
-  const updateProfile = useCallback(
-    async (id: string, profile: ProfileRequest): Promise<Profile | null> => {
-      try {
-        const result = await Promise.resolve(updateProfileMutation.mutateAsync({ id, profile }));
-        return result;
-      } catch {
-        return null;
-      }
-    },
-    [updateProfileMutation],
-  );
+  const updateProfile = async (id: string, profile: ProfileRequest): Promise<Profile | null> => {
+    try {
+      const result = await Promise.resolve(updateProfileAsync({ id, profile }));
+      return result;
+    } catch {
+      return null;
+    }
+  };
 
-  const deleteProfile = useCallback(
-    async (id: string): Promise<boolean> => {
-      try {
-        await Promise.resolve(deleteProfileMutation.mutateAsync(id));
-        return true;
-      } catch {
-        return false;
-      }
-    },
-    [deleteProfileMutation],
-  );
+  const deleteProfile = async (id: string): Promise<boolean> => {
+    try {
+      await Promise.resolve(deleteProfileAsync(id));
+      return true;
+    } catch {
+      return false;
+    }
+  };
 
-  const switchProfile = useCallback(
-    async (profileId: string): Promise<boolean> => {
-      try {
-        await Promise.resolve(switchProfileMutation.mutateAsync(profileId));
-        return true;
-      } catch {
-        return false;
-      }
-    },
-    [switchProfileMutation],
-  );
+  const switchProfile = async (profileId: string): Promise<boolean> => {
+    try {
+      await Promise.resolve(switchProfileAsync(profileId));
+      return true;
+    } catch {
+      return false;
+    }
+  };
 
-  const duplicateProfile = useCallback(
-    async (id: string, _newName?: string): Promise<Profile | null> => {
-      try {
-        const result = await Promise.resolve(duplicateProfileMutation.mutateAsync(id));
-        return result;
-      } catch {
-        return null;
-      }
-    },
-    [duplicateProfileMutation],
-  );
+  const duplicateProfile = async (id: string, _newName?: string): Promise<Profile | null> => {
+    try {
+      const result = await Promise.resolve(duplicateProfileAsync(id));
+      return result;
+    } catch {
+      return null;
+    }
+  };
 
-  const importProfiles = useCallback(
-    async (request: ProfileImportRequest): Promise<ProfileImportResponse | null> => {
-      try {
-        const result = await Promise.resolve(importProfilesMutation.mutateAsync(request));
-        return result;
-      } catch {
-        return null;
-      }
-    },
-    [importProfilesMutation],
-  );
+  const importProfiles = async (
+    request: ProfileImportRequest,
+  ): Promise<ProfileImportResponse | null> => {
+    try {
+      const result = await Promise.resolve(importProfilesAsync(request));
+      return result;
+    } catch {
+      return null;
+    }
+  };
 
-  const exportProfiles = useCallback(async (): Promise<ProfileExportResponse | null> => {
+  const exportProfiles = async (): Promise<ProfileExportResponse | null> => {
     try {
       const queryClient = getQueryClient();
       const result = await Promise.resolve(
@@ -155,9 +139,9 @@ export function useProfileApi(): ProfileApi {
       logger.error(LogComponents.PROFILES, 'Failed to export profiles', err);
       return null;
     }
-  }, []);
+  };
 
-  const downloadProfiles = useCallback(async (): Promise<boolean> => {
+  const downloadProfiles = async (): Promise<boolean> => {
     try {
       const result = await exportProfiles();
       if (!result) {
@@ -177,7 +161,7 @@ export function useProfileApi(): ProfileApi {
       logger.error(LogComponents.PROFILES, 'Failed to download profiles', err);
       return false;
     }
-  }, [exportProfiles]);
+  };
 
   return {
     refreshProfiles,

@@ -42,10 +42,11 @@ export default defineConfig(({ mode }) => {
   return {
     plugins: [
       react(),
-      // React Compiler. It memoises what it can prove is safe, which is why
-      // every existing memo() and useCallback stays in place here: removing
-      // them is a separate change, and some exist to hold an identity stable
-      // rather than to save work — the compiler does not replace those.
+      // React Compiler. It memoises what it can prove is safe. Hand-written
+      // memos come out one directory at a time (#3066), each with a test that
+      // fails without the compiler, because some hold an identity stable
+      // rather than save work. A function the compiler bails on gets no
+      // memoisation at all, so a removal is also a check that it compiles.
       //
       // plugin-react v6 is oxc-based and has no `babel` option; the compiler
       // runs through @rolldown/plugin-babel with the preset the plugin ships.

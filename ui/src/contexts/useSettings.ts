@@ -8,7 +8,6 @@
  * for compatibility with existing components.
  */
 
-import { useMemo } from 'react';
 import type {
   CardSettings,
   DisplayOptions,
@@ -91,46 +90,26 @@ export function useSettings(): SettingsContextValue {
     refreshSettings,
   } = useProfileContext();
 
-  // Create the backward-compatible status object
-  const status = useMemo(() => {
-    const saveStatus = convertSaveStatus(settingsStatus);
-    return {
+  const saveStatus = convertSaveStatus(settingsStatus);
+
+  return {
+    cardSettings: cardSettings as CardSettings,
+    displayOptions: displayOptions as DisplayOptions,
+    iperfSettings: iperfSettings as IperfSettings,
+    thresholds: thresholds as SettingsThresholds,
+    status: {
       cards: saveStatus,
       display: saveStatus,
       iperf: saveStatus,
       thresholds: saveStatus,
-    };
-  }, [settingsStatus]);
-
-  // Create adapter that maps new types to old types
-  return useMemo(
-    () => ({
-      cardSettings: cardSettings as CardSettings,
-      displayOptions: displayOptions as DisplayOptions,
-      iperfSettings: iperfSettings as IperfSettings,
-      thresholds: thresholds as SettingsThresholds,
-      status,
-      updateCardSettings: updateCardSettings as (updates: Partial<CardSettings>) => void,
-      updateDisplayOptions: updateDisplayOptions as (updates: Partial<DisplayOptions>) => void,
-      updateIperfSettings: updateIperfSettings as (updates: Partial<IperfSettings>) => void,
-      updateThresholds: updateThresholds as (updates: Partial<SettingsThresholds>) => void,
-      refreshSettings,
-      isLoaded: isSettingsLoaded,
-    }),
-    [
-      cardSettings,
-      displayOptions,
-      iperfSettings,
-      thresholds,
-      status,
-      updateCardSettings,
-      updateDisplayOptions,
-      updateIperfSettings,
-      updateThresholds,
-      refreshSettings,
-      isSettingsLoaded,
-    ],
-  );
+    },
+    updateCardSettings: updateCardSettings as (updates: Partial<CardSettings>) => void,
+    updateDisplayOptions: updateDisplayOptions as (updates: Partial<DisplayOptions>) => void,
+    updateIperfSettings: updateIperfSettings as (updates: Partial<IperfSettings>) => void,
+    updateThresholds: updateThresholds as (updates: Partial<SettingsThresholds>) => void,
+    refreshSettings,
+    isLoaded: isSettingsLoaded,
+  };
 }
 
 /**
@@ -141,40 +120,28 @@ export function useSettings(): SettingsContextValue {
  */
 export function useSettingsOptional(): SettingsContextValue | null {
   const context = useProfileContextOptional();
-
-  // Create the backward-compatible status object
-  const status = useMemo(() => {
-    if (!context) {
-      return null;
-    }
-    const saveStatus = convertSaveStatus(context.settingsStatus);
-    return {
+  if (!context) {
+    return null;
+  }
+  const saveStatus = convertSaveStatus(context.settingsStatus);
+  return {
+    cardSettings: context.cardSettings as CardSettings,
+    displayOptions: context.displayOptions as DisplayOptions,
+    iperfSettings: context.iperfSettings as IperfSettings,
+    thresholds: context.thresholds as SettingsThresholds,
+    status: {
       cards: saveStatus,
       display: saveStatus,
       iperf: saveStatus,
       thresholds: saveStatus,
-    };
-  }, [context]);
-
-  // Create adapter that maps new types to old types
-  return useMemo(() => {
-    if (!(context && status)) {
-      return null;
-    }
-    return {
-      cardSettings: context.cardSettings as CardSettings,
-      displayOptions: context.displayOptions as DisplayOptions,
-      iperfSettings: context.iperfSettings as IperfSettings,
-      thresholds: context.thresholds as SettingsThresholds,
-      status,
-      updateCardSettings: context.updateCardSettings as (updates: Partial<CardSettings>) => void,
-      updateDisplayOptions: context.updateDisplayOptions as (
-        updates: Partial<DisplayOptions>,
-      ) => void,
-      updateIperfSettings: context.updateIperfSettings as (updates: Partial<IperfSettings>) => void,
-      updateThresholds: context.updateThresholds as (updates: Partial<SettingsThresholds>) => void,
-      refreshSettings: context.refreshSettings,
-      isLoaded: context.isSettingsLoaded,
-    };
-  }, [context, status]);
+    },
+    updateCardSettings: context.updateCardSettings as (updates: Partial<CardSettings>) => void,
+    updateDisplayOptions: context.updateDisplayOptions as (
+      updates: Partial<DisplayOptions>,
+    ) => void,
+    updateIperfSettings: context.updateIperfSettings as (updates: Partial<IperfSettings>) => void,
+    updateThresholds: context.updateThresholds as (updates: Partial<SettingsThresholds>) => void,
+    refreshSettings: context.refreshSettings,
+    isLoaded: context.isSettingsLoaded,
+  };
 }

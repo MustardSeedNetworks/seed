@@ -4,7 +4,6 @@
  * ProfileContext so the provider stays focused on assembling its value.
  */
 
-import { useCallback } from 'react';
 import { LogComponents, logger } from '../lib/logger';
 import { useSaveSettingsMutation } from '../stores/profileQueries';
 import type {
@@ -45,103 +44,70 @@ export interface ProfileSettingsUpdaters {
 }
 
 /**
- * Returns memoized settings updaters bound to the active profile.
+ * Returns settings updaters bound to the active profile.
  */
 export function useProfileSettingsUpdates(activeProfile: Profile | null): ProfileSettingsUpdaters {
-  const saveSettingsMutation = useSaveSettingsMutation();
+  const { mutate: saveSettings } = useSaveSettingsMutation();
 
-  const updateSettingsField = useCallback(
-    <T extends keyof ProfileSettings>(field: T, updates: Partial<ProfileSettings[T]>) => {
-      if (!activeProfile) {
-        logger.warn(LogComponents.PROFILES, 'Cannot save settings: no active profile');
-        return;
-      }
+  const updateSettingsField = <T extends keyof ProfileSettings>(
+    field: T,
+    updates: Partial<ProfileSettings[T]>,
+  ) => {
+    if (!activeProfile) {
+      logger.warn(LogComponents.PROFILES, 'Cannot save settings: no active profile');
+      return;
+    }
 
-      const currentSettings = activeProfile.config?.settings ?? {};
-      const currentFieldValue = currentSettings[field] ?? {};
-      const newSettings = {
-        [field]: { ...currentFieldValue, ...updates },
-      };
+    const currentSettings = activeProfile.config?.settings ?? {};
+    const currentFieldValue = currentSettings[field] ?? {};
+    const newSettings = {
+      [field]: { ...currentFieldValue, ...updates },
+    };
 
-      saveSettingsMutation.mutate({
-        profileId: activeProfile.id,
-        settings: newSettings,
-      });
-    },
-    [activeProfile, saveSettingsMutation],
-  );
+    saveSettings({
+      profileId: activeProfile.id,
+      settings: newSettings,
+    });
+  };
 
-  const updateCardSettings = useCallback(
-    (updates: Partial<CardSettingsConfig>) => updateSettingsField('cardSettings', updates),
-    [updateSettingsField],
-  );
-  const updateDisplayOptions = useCallback(
-    (updates: Partial<DisplayOptionsConfig>) => updateSettingsField('displayOptions', updates),
-    [updateSettingsField],
-  );
-  const updateIperfSettings = useCallback(
-    (updates: Partial<IperfConfig>) => updateSettingsField('iperf', updates),
-    [updateSettingsField],
-  );
-  const updateThresholds = useCallback(
-    (updates: Partial<ProfileThresholdsConfig>) => updateSettingsField('thresholds', updates),
-    [updateSettingsField],
-  );
-  const updateSpeedtestSettings = useCallback(
-    (updates: Partial<SpeedtestConfig>) => updateSettingsField('speedtest', updates),
-    [updateSettingsField],
-  );
-  const updateTestsSettings = useCallback(
-    (updates: Partial<TestsConfig>) => updateSettingsField('tests', updates),
-    [updateSettingsField],
-  );
-  const updateNetworkDiscoverySettings = useCallback(
-    (updates: Partial<NetworkDiscoveryConfig>) => updateSettingsField('networkDiscovery', updates),
-    [updateSettingsField],
-  );
-  const updateSnmpSettings = useCallback(
-    (updates: Partial<SnmpConfig>) => updateSettingsField('snmp', updates),
-    [updateSettingsField],
-  );
-  const updateWifiSettings = useCallback(
-    (updates: Partial<WiFiSettingsConfig>) => updateSettingsField('wifi', updates),
-    [updateSettingsField],
-  );
-  const updateLinkSettings = useCallback(
-    (updates: Partial<LinkConfig>) => updateSettingsField('link', updates),
-    [updateSettingsField],
-  );
-  const updateCableTestSettings = useCallback(
-    (updates: Partial<CableTestConfig>) => updateSettingsField('cableTest', updates),
-    [updateSettingsField],
-  );
-  const updateVulnerabilitySettings = useCallback(
-    (updates: Partial<VulnerabilityConfig>) => updateSettingsField('vulnerability', updates),
-    [updateSettingsField],
-  );
-  const updateDnsSettings = useCallback(
-    (updates: Partial<DnsSettingsConfig>) => updateSettingsField('dns', updates),
-    [updateSettingsField],
-  );
-  const updateAppearanceSettings = useCallback(
-    (updates: Partial<AppearanceConfig>) => updateSettingsField('appearance', updates),
-    [updateSettingsField],
-  );
+  const updateCardSettings = (updates: Partial<CardSettingsConfig>) =>
+    updateSettingsField('cardSettings', updates);
+  const updateDisplayOptions = (updates: Partial<DisplayOptionsConfig>) =>
+    updateSettingsField('displayOptions', updates);
+  const updateIperfSettings = (updates: Partial<IperfConfig>) =>
+    updateSettingsField('iperf', updates);
+  const updateThresholds = (updates: Partial<ProfileThresholdsConfig>) =>
+    updateSettingsField('thresholds', updates);
+  const updateSpeedtestSettings = (updates: Partial<SpeedtestConfig>) =>
+    updateSettingsField('speedtest', updates);
+  const updateTestsSettings = (updates: Partial<TestsConfig>) =>
+    updateSettingsField('tests', updates);
+  const updateNetworkDiscoverySettings = (updates: Partial<NetworkDiscoveryConfig>) =>
+    updateSettingsField('networkDiscovery', updates);
+  const updateSnmpSettings = (updates: Partial<SnmpConfig>) => updateSettingsField('snmp', updates);
+  const updateWifiSettings = (updates: Partial<WiFiSettingsConfig>) =>
+    updateSettingsField('wifi', updates);
+  const updateLinkSettings = (updates: Partial<LinkConfig>) => updateSettingsField('link', updates);
+  const updateCableTestSettings = (updates: Partial<CableTestConfig>) =>
+    updateSettingsField('cableTest', updates);
+  const updateVulnerabilitySettings = (updates: Partial<VulnerabilityConfig>) =>
+    updateSettingsField('vulnerability', updates);
+  const updateDnsSettings = (updates: Partial<DnsSettingsConfig>) =>
+    updateSettingsField('dns', updates);
+  const updateAppearanceSettings = (updates: Partial<AppearanceConfig>) =>
+    updateSettingsField('appearance', updates);
 
-  const updateSettings = useCallback(
-    (updates: Partial<ProfileSettings>) => {
-      if (!activeProfile) {
-        logger.warn(LogComponents.PROFILES, 'Cannot save settings: no active profile');
-        return;
-      }
+  const updateSettings = (updates: Partial<ProfileSettings>) => {
+    if (!activeProfile) {
+      logger.warn(LogComponents.PROFILES, 'Cannot save settings: no active profile');
+      return;
+    }
 
-      saveSettingsMutation.mutate({
-        profileId: activeProfile.id,
-        settings: updates,
-      });
-    },
-    [activeProfile, saveSettingsMutation],
-  );
+    saveSettings({
+      profileId: activeProfile.id,
+      settings: updates,
+    });
+  };
 
   return {
     updateLinkSettings,

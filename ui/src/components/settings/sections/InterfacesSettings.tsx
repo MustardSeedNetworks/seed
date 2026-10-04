@@ -120,6 +120,7 @@ export function InterfacesSettings(): React.ReactElement {
         </div>
       }
       defaultOpen={false}
+      data-testid="interfaces-settings"
     >
       <div className="stack-sm" data-testid="interfaces-settings-section">
         <p className="text-sm text-text-secondary">{t('settings:interfaces.description')}</p>

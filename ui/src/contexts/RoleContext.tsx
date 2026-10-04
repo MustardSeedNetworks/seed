@@ -19,7 +19,7 @@
  * `canWrite` resolves true and no UI changes.
  */
 
-import { createContext, type ReactNode, useCallback, useContext, useEffect, useState } from 'react';
+import { createContext, type ReactNode, useContext, useEffect, useState } from 'react';
 import { api } from '../api/client';
 import i18n from '../i18n';
 
@@ -94,7 +94,7 @@ export function RoleProvider({ children, isAuthenticated }: RoleProviderProps): 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const refresh = useCallback(async (): Promise<void> => {
+  const refresh = async (): Promise<void> => {
     setError(null);
     try {
       const fresh = await api.get<CurrentUser>('/api/v1/users/me');
@@ -102,10 +102,11 @@ export function RoleProvider({ children, isAuthenticated }: RoleProviderProps): 
     } catch (err) {
       setUser(null);
       setError(err instanceof Error ? err.message : i18n.t('errors.loadCurrentUser'));
-    } finally {
-      setLoading(false);
     }
-  }, []);
+    // Not a `finally`: the React Compiler cannot compile one, and an
+    // uncompiled provider hands consumers a new value every render.
+    setLoading(false);
+  };
 
   useEffect(() => {
     if (!isAuthenticated) {

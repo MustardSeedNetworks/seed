@@ -4,12 +4,11 @@
  * profile. Extracted from ProfileContext.
  */
 
-import type React from 'react';
-import { useCallback, useRef } from 'react';
 import { api } from '../api';
 import { LogComponents, logger } from '../lib/logger';
 import { getQueryClient } from '../lib/queryClient';
 import { profileKeys } from '../stores/profileQueries';
+import { useProfileStore } from '../stores/profileStore';
 import type { Profile, ProfileInterfaceSelection } from '../types/profile';
 
 export interface ProfileInterfaceHelpers {
@@ -30,272 +29,239 @@ export interface ProfileInterfaceHelpers {
 /**
  * Returns the get/set/add/remove helpers for ethernet + wifi interface
  * lists on the active profile.
+ *
+ * The getters read the profile this render subscribed to, so a consumer
+ * that calls them while rendering sees the current list. The mutators read
+ * the store when they run, so two in a row each build on the last.
  */
-export function useProfileInterfaces(
-  activeProfile: Profile | null,
-  setActiveProfile: (profile: Profile | null) => void,
-): ProfileInterfaceHelpers {
-  // Hold the current profile in a ref so callbacks stay stable while still
-  // reading the latest value when they fire (avoids busting memoized consumers).
-  const activeProfileRef: React.MutableRefObject<Profile | null> = useRef(activeProfile);
-  activeProfileRef.current = activeProfile;
+export function useProfileInterfaces(): ProfileInterfaceHelpers {
+  const activeProfile = useProfileStore((s) => s.activeProfile);
 
-  const getEthernetInterface = useCallback((): ProfileInterfaceSelection | null => {
-    const interfaces = activeProfileRef.current?.config?.interfaces;
+  const getEthernetInterface = (): ProfileInterfaceSelection | null => {
+    const interfaces = activeProfile?.config?.interfaces;
     if (!(interfaces?.activeEthernet && interfaces.ethernet)) {
       return null;
     }
     return interfaces.ethernet.find((i) => i.name === interfaces.activeEthernet) ?? null;
-  }, []);
+  };
 
-  const getWifiInterface = useCallback((): ProfileInterfaceSelection | null => {
-    const interfaces = activeProfileRef.current?.config?.interfaces;
+  const getWifiInterface = (): ProfileInterfaceSelection | null => {
+    const interfaces = activeProfile?.config?.interfaces;
     if (!(interfaces?.activeWifi && interfaces.wifi)) {
       return null;
     }
     return interfaces.wifi.find((i) => i.name === interfaces.activeWifi) ?? null;
-  }, []);
+  };
 
-  const getAllEthernetInterfaces = useCallback(
-    (): ProfileInterfaceSelection[] => activeProfileRef.current?.config?.interfaces?.ethernet ?? [],
-    [],
-  );
+  const getAllEthernetInterfaces = (): ProfileInterfaceSelection[] =>
+    activeProfile?.config?.interfaces?.ethernet ?? [];
 
-  const getAllWifiInterfaces = useCallback(
-    (): ProfileInterfaceSelection[] => activeProfileRef.current?.config?.interfaces?.wifi ?? [],
-    [],
-  );
+  const getAllWifiInterfaces = (): ProfileInterfaceSelection[] =>
+    activeProfile?.config?.interfaces?.wifi ?? [];
 
   /**
    * Helper to update interface config on the backend.
    */
-  const updateInterfaceConfig = useCallback(
-    async (
-      updater: (
-        interfaces: NonNullable<NonNullable<Profile['config']>['interfaces']>,
-      ) => NonNullable<NonNullable<Profile['config']>['interfaces']>,
-    ): Promise<boolean> => {
-      const currentProfile = activeProfileRef.current;
-      if (!currentProfile) {
-        logger.warn(LogComponents.PROFILES, 'Cannot update interfaces: no active profile');
-        return false;
-      }
+  const updateInterfaceConfig = async (
+    updater: (
+      interfaces: NonNullable<NonNullable<Profile['config']>['interfaces']>,
+    ) => NonNullable<NonNullable<Profile['config']>['interfaces']>,
+  ): Promise<boolean> => {
+    const currentProfile = useProfileStore.getState().activeProfile;
+    if (!currentProfile) {
+      logger.warn(LogComponents.PROFILES, 'Cannot update interfaces: no active profile');
+      return false;
+    }
 
-      try {
-        const currentInterfaces = currentProfile.config?.interfaces ?? { ethernet: [], wifi: [] };
-        const updatedInterfaces = updater(currentInterfaces);
-        const updatedConfig = { ...currentProfile.config, interfaces: updatedInterfaces };
+    // Built outside the try: the React Compiler cannot compile `?.` or `??`
+    // inside one, and an uncompiled hook hands out new helpers every render.
+    const currentInterfaces = currentProfile.config?.interfaces ?? { ethernet: [], wifi: [] };
+    const updatedConfig = { ...currentProfile.config, interfaces: updater(currentInterfaces) };
 
-        await api.put(`/api/v1/profiles/${currentProfile.id}`, {
-          name: currentProfile.name,
-          description: currentProfile.description,
-          config: updatedConfig,
-        });
-
-        setActiveProfile({ ...currentProfile, config: updatedConfig });
-
-        const queryClient = getQueryClient();
-        await queryClient.invalidateQueries({ queryKey: profileKeys.active() });
-
-        return true;
-      } catch (err) {
-        logger.error(LogComponents.PROFILES, 'Failed to update interface config', err);
-        return false;
-      }
-    },
-    [setActiveProfile],
-  );
-
-  const setEthernetInterface = useCallback(
-    async (name: string, enabled = true): Promise<boolean> => {
-      const result = await updateInterfaceConfig((interfaces) => {
-        const ethernet = [...(interfaces.ethernet ?? [])];
-        const existingIdx = ethernet.findIndex((i) => i.name === name);
-        const existing = ethernet.at(existingIdx);
-        if (existing) {
-          ethernet[existingIdx] = { ...existing, enabled };
-        } else {
-          ethernet.push({ name, enabled });
-        }
-        return { ...interfaces, ethernet, activeEthernet: name };
+    try {
+      await api.put(`/api/v1/profiles/${currentProfile.id}`, {
+        name: currentProfile.name,
+        description: currentProfile.description,
+        config: updatedConfig,
       });
-      if (result) {
-        logger.info(LogComponents.PROFILES, 'Ethernet interface set as active', {
-          profileId: activeProfileRef.current?.id,
-          interface: name,
-        });
-      }
-      return result;
-    },
-    [updateInterfaceConfig],
-  );
 
-  const setWifiInterface = useCallback(
-    async (name: string, enabled = true): Promise<boolean> => {
-      const result = await updateInterfaceConfig((interfaces) => {
-        const wifi = [...(interfaces.wifi ?? [])];
-        const existingIdx = wifi.findIndex((i) => i.name === name);
-        const existing = wifi.at(existingIdx);
-        if (existing) {
-          wifi[existingIdx] = { ...existing, enabled };
-        } else {
-          wifi.push({ name, enabled });
-        }
-        return { ...interfaces, wifi, activeWifi: name };
+      useProfileStore.getState().setActiveProfile({ ...currentProfile, config: updatedConfig });
+
+      const queryClient = getQueryClient();
+      await queryClient.invalidateQueries({ queryKey: profileKeys.active() });
+
+      return true;
+    } catch (err) {
+      logger.error(LogComponents.PROFILES, 'Failed to update interface config', err);
+      return false;
+    }
+  };
+
+  const setEthernetInterface = async (name: string, enabled = true): Promise<boolean> => {
+    const result = await updateInterfaceConfig((interfaces) => {
+      const ethernet = [...(interfaces.ethernet ?? [])];
+      const existingIdx = ethernet.findIndex((i) => i.name === name);
+      const existing = ethernet.at(existingIdx);
+      if (existing) {
+        ethernet[existingIdx] = { ...existing, enabled };
+      } else {
+        ethernet.push({ name, enabled });
+      }
+      return { ...interfaces, ethernet, activeEthernet: name };
+    });
+    if (result) {
+      logger.info(LogComponents.PROFILES, 'Ethernet interface set as active', {
+        profileId: useProfileStore.getState().activeProfile?.id,
+        interface: name,
       });
-      if (result) {
-        logger.info(LogComponents.PROFILES, 'Wifi interface set as active', {
-          profileId: activeProfileRef.current?.id,
-          interface: name,
-        });
-      }
-      return result;
-    },
-    [updateInterfaceConfig],
-  );
+    }
+    return result;
+  };
 
-  const addEthernetInterface = useCallback(
-    async (name: string, enabled = true): Promise<boolean> => {
-      const result = await updateInterfaceConfig((interfaces) => {
-        const ethernet = [...(interfaces.ethernet ?? [])];
-        const existingIdx = ethernet.findIndex((i) => i.name === name);
-        const existing = ethernet.at(existingIdx);
-        if (existing) {
-          ethernet[existingIdx] = { ...existing, enabled };
-        } else {
-          ethernet.push({ name, enabled });
-        }
-        return { ...interfaces, ethernet };
+  const setWifiInterface = async (name: string, enabled = true): Promise<boolean> => {
+    const result = await updateInterfaceConfig((interfaces) => {
+      const wifi = [...(interfaces.wifi ?? [])];
+      const existingIdx = wifi.findIndex((i) => i.name === name);
+      const existing = wifi.at(existingIdx);
+      if (existing) {
+        wifi[existingIdx] = { ...existing, enabled };
+      } else {
+        wifi.push({ name, enabled });
+      }
+      return { ...interfaces, wifi, activeWifi: name };
+    });
+    if (result) {
+      logger.info(LogComponents.PROFILES, 'Wifi interface set as active', {
+        profileId: useProfileStore.getState().activeProfile?.id,
+        interface: name,
       });
-      if (result) {
-        logger.info(LogComponents.PROFILES, 'Ethernet interface added', {
-          profileId: activeProfileRef.current?.id,
-          interface: name,
-        });
-      }
-      return result;
-    },
-    [updateInterfaceConfig],
-  );
+    }
+    return result;
+  };
 
-  const addWifiInterface = useCallback(
-    async (name: string, enabled = true): Promise<boolean> => {
-      const result = await updateInterfaceConfig((interfaces) => {
-        const wifi = [...(interfaces.wifi ?? [])];
-        const existingIdx = wifi.findIndex((i) => i.name === name);
-        const existing = wifi.at(existingIdx);
-        if (existing) {
-          wifi[existingIdx] = { ...existing, enabled };
-        } else {
-          wifi.push({ name, enabled });
-        }
-        return { ...interfaces, wifi };
+  const addEthernetInterface = async (name: string, enabled = true): Promise<boolean> => {
+    const result = await updateInterfaceConfig((interfaces) => {
+      const ethernet = [...(interfaces.ethernet ?? [])];
+      const existingIdx = ethernet.findIndex((i) => i.name === name);
+      const existing = ethernet.at(existingIdx);
+      if (existing) {
+        ethernet[existingIdx] = { ...existing, enabled };
+      } else {
+        ethernet.push({ name, enabled });
+      }
+      return { ...interfaces, ethernet };
+    });
+    if (result) {
+      logger.info(LogComponents.PROFILES, 'Ethernet interface added', {
+        profileId: useProfileStore.getState().activeProfile?.id,
+        interface: name,
       });
-      if (result) {
-        logger.info(LogComponents.PROFILES, 'Wifi interface added', {
-          profileId: activeProfileRef.current?.id,
-          interface: name,
-        });
-      }
-      return result;
-    },
-    [updateInterfaceConfig],
-  );
+    }
+    return result;
+  };
 
-  const removeEthernetInterface = useCallback(
-    async (name: string): Promise<boolean> => {
-      const result = await updateInterfaceConfig((interfaces) => {
-        const ethernet = (interfaces.ethernet ?? []).filter((i) => i.name !== name);
-        const activeEthernetVal =
-          interfaces.activeEthernet === name ? '' : interfaces.activeEthernet;
-        return { ...interfaces, ethernet, activeEthernet: activeEthernetVal };
+  const addWifiInterface = async (name: string, enabled = true): Promise<boolean> => {
+    const result = await updateInterfaceConfig((interfaces) => {
+      const wifi = [...(interfaces.wifi ?? [])];
+      const existingIdx = wifi.findIndex((i) => i.name === name);
+      const existing = wifi.at(existingIdx);
+      if (existing) {
+        wifi[existingIdx] = { ...existing, enabled };
+      } else {
+        wifi.push({ name, enabled });
+      }
+      return { ...interfaces, wifi };
+    });
+    if (result) {
+      logger.info(LogComponents.PROFILES, 'Wifi interface added', {
+        profileId: useProfileStore.getState().activeProfile?.id,
+        interface: name,
       });
-      if (result) {
-        logger.info(LogComponents.PROFILES, 'Ethernet interface removed', {
-          profileId: activeProfileRef.current?.id,
-          interface: name,
-        });
-      }
-      return result;
-    },
-    [updateInterfaceConfig],
-  );
+    }
+    return result;
+  };
 
-  const removeWifiInterface = useCallback(
-    async (name: string): Promise<boolean> => {
-      const result = await updateInterfaceConfig((interfaces) => {
-        const wifi = (interfaces.wifi ?? []).filter((i) => i.name !== name);
-        const activeWifiVal = interfaces.activeWifi === name ? '' : interfaces.activeWifi;
-        return { ...interfaces, wifi, activeWifi: activeWifiVal };
+  const removeEthernetInterface = async (name: string): Promise<boolean> => {
+    const result = await updateInterfaceConfig((interfaces) => {
+      const ethernet = (interfaces.ethernet ?? []).filter((i) => i.name !== name);
+      const activeEthernetVal = interfaces.activeEthernet === name ? '' : interfaces.activeEthernet;
+      return { ...interfaces, ethernet, activeEthernet: activeEthernetVal };
+    });
+    if (result) {
+      logger.info(LogComponents.PROFILES, 'Ethernet interface removed', {
+        profileId: useProfileStore.getState().activeProfile?.id,
+        interface: name,
       });
-      if (result) {
-        logger.info(LogComponents.PROFILES, 'Wifi interface removed', {
-          profileId: activeProfileRef.current?.id,
-          interface: name,
-        });
-      }
-      return result;
-    },
-    [updateInterfaceConfig],
-  );
+    }
+    return result;
+  };
 
-  const setActiveEthernetInterface = useCallback(
-    async (name: string): Promise<boolean> => {
-      const currentProfile = activeProfileRef.current;
-      const exists = (currentProfile?.config?.interfaces?.ethernet ?? []).some(
-        (i) => i.name === name,
+  const removeWifiInterface = async (name: string): Promise<boolean> => {
+    const result = await updateInterfaceConfig((interfaces) => {
+      const wifi = (interfaces.wifi ?? []).filter((i) => i.name !== name);
+      const activeWifiVal = interfaces.activeWifi === name ? '' : interfaces.activeWifi;
+      return { ...interfaces, wifi, activeWifi: activeWifiVal };
+    });
+    if (result) {
+      logger.info(LogComponents.PROFILES, 'Wifi interface removed', {
+        profileId: useProfileStore.getState().activeProfile?.id,
+        interface: name,
+      });
+    }
+    return result;
+  };
+
+  const setActiveEthernetInterface = async (name: string): Promise<boolean> => {
+    const currentProfile = useProfileStore.getState().activeProfile;
+    const exists = (currentProfile?.config?.interfaces?.ethernet ?? []).some(
+      (i) => i.name === name,
+    );
+    if (!exists) {
+      logger.warn(
+        LogComponents.PROFILES,
+        'Cannot set active ethernet interface: interface not in list',
+        { interface: name },
       );
-      if (!exists) {
-        logger.warn(
-          LogComponents.PROFILES,
-          'Cannot set active ethernet interface: interface not in list',
-          { interface: name },
-        );
-        return false;
-      }
+      return false;
+    }
 
-      const result = await updateInterfaceConfig((interfaces) => ({
-        ...interfaces,
-        activeEthernet: name,
-      }));
-      if (result) {
-        logger.info(LogComponents.PROFILES, 'Active ethernet interface changed', {
-          profileId: activeProfileRef.current?.id,
-          interface: name,
-        });
-      }
-      return result;
-    },
-    [updateInterfaceConfig],
-  );
+    const result = await updateInterfaceConfig((interfaces) => ({
+      ...interfaces,
+      activeEthernet: name,
+    }));
+    if (result) {
+      logger.info(LogComponents.PROFILES, 'Active ethernet interface changed', {
+        profileId: useProfileStore.getState().activeProfile?.id,
+        interface: name,
+      });
+    }
+    return result;
+  };
 
-  const setActiveWifiInterface = useCallback(
-    async (name: string): Promise<boolean> => {
-      const currentProfile = activeProfileRef.current;
-      const exists = (currentProfile?.config?.interfaces?.wifi ?? []).some((i) => i.name === name);
-      if (!exists) {
-        logger.warn(
-          LogComponents.PROFILES,
-          'Cannot set active Wifi interface: interface not in list',
-          { interface: name },
-        );
-        return false;
-      }
+  const setActiveWifiInterface = async (name: string): Promise<boolean> => {
+    const currentProfile = useProfileStore.getState().activeProfile;
+    const exists = (currentProfile?.config?.interfaces?.wifi ?? []).some((i) => i.name === name);
+    if (!exists) {
+      logger.warn(
+        LogComponents.PROFILES,
+        'Cannot set active Wifi interface: interface not in list',
+        { interface: name },
+      );
+      return false;
+    }
 
-      const result = await updateInterfaceConfig((interfaces) => ({
-        ...interfaces,
-        activeWifi: name,
-      }));
-      if (result) {
-        logger.info(LogComponents.PROFILES, 'Active Wifi interface changed', {
-          profileId: activeProfileRef.current?.id,
-          interface: name,
-        });
-      }
-      return result;
-    },
-    [updateInterfaceConfig],
-  );
+    const result = await updateInterfaceConfig((interfaces) => ({
+      ...interfaces,
+      activeWifi: name,
+    }));
+    if (result) {
+      logger.info(LogComponents.PROFILES, 'Active Wifi interface changed', {
+        profileId: useProfileStore.getState().activeProfile?.id,
+        interface: name,
+      });
+    }
+    return result;
+  };
 
   return {
     getEthernetInterface,
