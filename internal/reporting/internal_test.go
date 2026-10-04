@@ -24,114 +24,83 @@ import (
 // ----------------------------------------------------------------------------
 
 func TestCalculateNextRun_Internal(t *testing.T) {
+	// Wednesday 2026-10-07 09:00 UTC.
+	now := time.Date(2026, time.October, 7, 9, 0, 0, 0, time.UTC)
+	newYork, err := time.LoadLocation("America/New_York")
+	require.NoError(t, err)
+
 	tests := []struct {
-		name       string
-		schedule   *reporting.Schedule
-		wantFuture bool
+		name     string
+		schedule reporting.Schedule
+		want     time.Time
 	}{
 		{
-			name: "daily schedule",
-			schedule: &reporting.Schedule{
-				Frequency: reporting.FrequencyDaily,
-				Hour:      9,
-				Minute:    0,
-				Timezone:  "UTC",
-			},
-			wantFuture: true,
+			name:     "daily later today runs today",
+			schedule: reporting.Schedule{Frequency: reporting.FrequencyDaily, Hour: 17, Timezone: "UTC"},
+			want:     time.Date(2026, time.October, 7, 17, 0, 0, 0, time.UTC),
 		},
 		{
-			name: "weekly schedule on Monday",
-			schedule: &reporting.Schedule{
+			name:     "daily at this exact minute runs tomorrow",
+			schedule: reporting.Schedule{Frequency: reporting.FrequencyDaily, Hour: 9, Timezone: "UTC"},
+			want:     time.Date(2026, time.October, 8, 9, 0, 0, 0, time.UTC),
+		},
+		{
+			name:     "daily earlier today runs tomorrow",
+			schedule: reporting.Schedule{Frequency: reporting.FrequencyDaily, Hour: 8, Minute: 30, Timezone: "UTC"},
+			want:     time.Date(2026, time.October, 8, 8, 30, 0, 0, time.UTC),
+		},
+		{
+			name: "weekly today later runs today",
+			schedule: reporting.Schedule{
+				Frequency: reporting.FrequencyWeekly, DayOfWeek: new(int(time.Wednesday)), Hour: 10, Timezone: "UTC",
+			},
+			want: time.Date(2026, time.October, 7, 10, 0, 0, 0, time.UTC),
+		},
+		{
+			name: "weekly today earlier runs next week",
+			schedule: reporting.Schedule{
+				Frequency: reporting.FrequencyWeekly, DayOfWeek: new(int(time.Wednesday)), Hour: 8, Timezone: "UTC",
+			},
+			want: time.Date(2026, time.October, 14, 8, 0, 0, 0, time.UTC),
+		},
+		{
+			name: "weekly Monday",
+			schedule: reporting.Schedule{
 				Frequency: reporting.FrequencyWeekly,
-				DayOfWeek: new(1),
+				DayOfWeek: new(int(time.Monday)),
 				Hour:      10,
 				Minute:    30,
 				Timezone:  "UTC",
 			},
-			wantFuture: true,
+			want: time.Date(2026, time.October, 12, 10, 30, 0, 0, time.UTC),
 		},
 		{
-			name: "weekly schedule on Sunday",
-			schedule: &reporting.Schedule{
-				Frequency: reporting.FrequencyWeekly,
-				DayOfWeek: new(0),
-				Hour:      8,
-				Minute:    0,
-				Timezone:  "America/New_York",
+			name: "monthly later this month",
+			schedule: reporting.Schedule{
+				Frequency: reporting.FrequencyMonthly, DayOfMonth: new(15), Hour: 12, Timezone: "UTC",
 			},
-			wantFuture: true,
+			want: time.Date(2026, time.October, 15, 12, 0, 0, 0, time.UTC),
 		},
 		{
-			name: "monthly schedule on 1st",
-			schedule: &reporting.Schedule{
-				Frequency:  reporting.FrequencyMonthly,
-				DayOfMonth: new(1),
-				Hour:       7,
-				Minute:     0,
-				Timezone:   "UTC",
+			name: "monthly day already passed runs next month",
+			schedule: reporting.Schedule{
+				Frequency: reporting.FrequencyMonthly, DayOfMonth: new(1), Hour: 7, Timezone: "UTC",
 			},
-			wantFuture: true,
+			want: time.Date(2026, time.November, 1, 7, 0, 0, 0, time.UTC),
 		},
 		{
-			name: "monthly schedule on 15th",
-			schedule: &reporting.Schedule{
-				Frequency:  reporting.FrequencyMonthly,
-				DayOfMonth: new(15),
-				Hour:       12,
-				Minute:     0,
-				Timezone:   "Europe/London",
-			},
-			wantFuture: true,
-		},
-		{
-			name: "monthly schedule no day specified",
-			schedule: &reporting.Schedule{
-				Frequency: reporting.FrequencyMonthly,
-				Hour:      8,
-				Minute:    0,
-				Timezone:  "UTC",
-			},
-			wantFuture: true,
-		},
-		{
-			name: "weekly schedule no day specified",
-			schedule: &reporting.Schedule{
-				Frequency: reporting.FrequencyWeekly,
-				DayOfWeek: new(int(time.Now().Weekday()) + 1), // Next day of week
-				Hour:      8,
-				Minute:    0,
-				Timezone:  "UTC",
-			},
-			wantFuture: true,
-		},
-		{
-			name: "invalid timezone falls back to local",
-			schedule: &reporting.Schedule{
-				Frequency: reporting.FrequencyDaily,
-				Hour:      9,
-				Minute:    0,
-				Timezone:  "Invalid/Timezone",
-			},
-			wantFuture: true,
+			// 09:00 UTC is 05:00 in New York, so 08:00 local is still ahead today.
+			name:     "timezone is the schedule's, not UTC",
+			schedule: reporting.Schedule{Frequency: reporting.FrequencyDaily, Hour: 8, Timezone: "America/New_York"},
+			want:     time.Date(2026, time.October, 7, 8, 0, 0, 0, newYork),
 		},
 	}
 
-	now := time.Now()
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			result := reporting.ExportCalculateNextRun(tt.schedule)
-			require.NotNil(t, result)
-
-			if tt.wantFuture {
-				assert.True(t, result.After(now),
-					"NextRun should be after now: got %v, now is %v", result, now)
-			}
-
-			// Verify hour matches
-			assert.Equal(t, tt.schedule.Hour, result.Hour(),
-				"Hour should match schedule")
-			assert.Equal(t, tt.schedule.Minute, result.Minute(),
-				"Minute should match schedule")
+			got := reporting.ExportCalculateNextRun(&tt.schedule, now)
+			require.NotNil(t, got)
+			assert.True(t, got.Equal(tt.want), "NextRun = %v, want %v", got, tt.want)
 		})
 	}
 }
@@ -612,11 +581,11 @@ func TestRunScheduledReport_Internal(t *testing.T) {
 
 	require.NoError(t, ss.Create(ctx, schedule))
 
-	// Run the scheduled report
 	ss.ExportRunScheduledReport(ctx, schedule)
 
-	// Verify LastRun was updated
-	assert.NotNil(t, schedule.LastRun)
+	stored, err := ss.Get(ctx, schedule.ID)
+	require.NoError(t, err)
+	assert.NotNil(t, stored.LastRun)
 }
 
 func TestLoadSchedules_Internal(t *testing.T) {
@@ -657,12 +626,16 @@ func TestLoadSchedules_Internal(t *testing.T) {
 	err := ss2.ExportLoadSchedules(ctx)
 	require.NoError(t, err)
 
-	// Verify schedules were loaded - note: LoadSchedules loads from database
-	// but the schedules were saved to DB by ss.Create via saveSchedule
+	// A restart must bring every schedule back with its timing intact.
 	schedules, err := ss2.List(ctx)
 	require.NoError(t, err)
-	// The schedules are loaded from database into the new service's map
-	assert.NotNil(t, schedules) // May be empty if DB doesn't persist properly in test
+	require.Len(t, schedules, len(createdIDs))
+	for _, id := range createdIDs {
+		got, getErr := ss2.Get(ctx, id)
+		require.NoError(t, getErr)
+		assert.False(t, got.CreatedAt.IsZero())
+		require.NotNil(t, got.NextRun)
+	}
 }
 
 func TestSaveSchedule_Internal(t *testing.T) {

@@ -1,0 +1,100 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/MustardSeedNetworks/seed/main/docs/schemas/api/report-schedules-response.schema.json",
+  "$ref": "#/$defs/ReportSchedulesResponse",
+  "$defs": {
+    "ReportScheduleInfo": {
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "template": {
+          "type": "string"
+        },
+        "format": {
+          "type": "string"
+        },
+        "schedule": {
+          "$ref": "#/$defs/Schedule"
+        },
+        "enabled": {
+          "type": "boolean"
+        },
+        "lastRun": {
+          "type": "string"
+        },
+        "nextRun": {
+          "type": "string"
+        },
+        "createdAt": {
+          "type": "string"
+        },
+        "updatedAt": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "id",
+        "name",
+        "template",
+        "format",
+        "schedule",
+        "enabled",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "ReportSchedulesResponse": {
+      "properties": {
+        "schedules": {
+          "items": {
+            "$ref": "#/$defs/ReportScheduleInfo"
+          },
+          "type": "array"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "schedules"
+      ]
+    },
+    "Schedule": {
+      "properties": {
+        "frequency": {
+          "type": "string"
+        },
+        "dayOfWeek": {
+          "type": "integer"
+        },
+        "dayOfMonth": {
+          "type": "integer"
+        },
+        "hour": {
+          "type": "integer"
+        },
+        "minute": {
+          "type": "integer"
+        },
+        "timezone": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "frequency",
+        "hour",
+        "minute",
+        "timezone"
+      ]
+    }
+  },
+  "title": "ReportSchedulesResponse",
+  "description": "ReportSchedulesResponse — generated from the Go struct in internal/api; refresh with `make schema` after struct changes."
+}

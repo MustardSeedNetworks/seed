@@ -742,7 +742,13 @@ func TestSchedulerService_Update(t *testing.T) {
 	assert.Contains(t, err.Error(), "nil")
 
 	// Test update non-existent
-	nonExistent := &reporting.ScheduledReport{ID: "nonexistent"}
+	nonExistent := &reporting.ScheduledReport{
+		ID:       "nonexistent",
+		Name:     "missing",
+		Template: "executive",
+		Format:   reporting.FormatPDF,
+		Schedule: reporting.Schedule{Frequency: reporting.FrequencyDaily, Timezone: "UTC"},
+	}
 	err = ss.Update(ctx, nonExistent)
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), "not found")
@@ -1425,38 +1431,6 @@ func TestTemplateService_BuiltInTemplateProperties(t *testing.T) {
 			assert.False(t, tmpl.UpdatedAt.IsZero())
 		})
 	}
-}
-
-func TestSchedulerService_InvalidTimezone(t *testing.T) {
-	db, cleanup := testDB(t)
-	defer cleanup()
-
-	cfg := testConfig()
-	ts := reporting.NewTemplateService(cfg)
-	require.NoError(t, ts.Load())
-
-	as := reporting.NewAggregatorService(cfg, store.NewMetricsRepo(db))
-	gs := reporting.NewGeneratorService(cfg, store.NewReportRepo(db), store.NewExportRepo(db), ts, as)
-	ss := reporting.NewSchedulerService(cfg, store.NewScheduleRepo(db), gs)
-
-	ctx := context.Background()
-
-	// Schedule with invalid timezone should still work (fallback to local)
-	schedule := &reporting.ScheduledReport{
-		Name:     "Invalid TZ Test",
-		Template: "executive",
-		Format:   reporting.FormatPDF,
-		Schedule: reporting.Schedule{
-			Frequency: reporting.FrequencyDaily,
-			Hour:      9,
-			Timezone:  "Invalid/Timezone",
-		},
-		Enabled: true,
-	}
-
-	err := ss.Create(ctx, schedule)
-	require.NoError(t, err)
-	assert.NotNil(t, schedule.NextRun)
 }
 
 func TestReportParams_DateRangeCalculation(t *testing.T) {

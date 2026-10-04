@@ -7,6 +7,7 @@ package reporting_test
 
 import (
 	"context"
+	"slices"
 	"sync"
 	"testing"
 	"time"
@@ -188,22 +189,6 @@ func TestNextRunCalculation_Weekly(t *testing.T) {
 				assert.Equal(t, 6, next.Hour())
 			},
 		},
-		{
-			name: "weekly with nil DayOfWeek returns valid time",
-			schedule: reporting.Schedule{
-				Frequency: reporting.FrequencyWeekly,
-				DayOfWeek: nil,
-				Hour:      8,
-				Minute:    0,
-				Timezone:  "UTC",
-			},
-			validate: func(t *testing.T, next *time.Time) {
-				require.NotNil(t, next)
-				// Just verify hour/minute are set correctly
-				assert.Equal(t, 8, next.Hour())
-				assert.Equal(t, 0, next.Minute())
-			},
-		},
 	}
 
 	for _, tt := range tests {
@@ -279,20 +264,6 @@ func TestNextRunCalculation_Monthly(t *testing.T) {
 				assert.Equal(t, 30, next.Minute())
 			},
 		},
-		{
-			name: "monthly with nil DayOfMonth (defaults to 1st)",
-			schedule: reporting.Schedule{
-				Frequency:  reporting.FrequencyMonthly,
-				DayOfMonth: nil,
-				Hour:       7,
-				Minute:     0,
-				Timezone:   "UTC",
-			},
-			validate: func(t *testing.T, next *time.Time) {
-				require.NotNil(t, next)
-				assert.Equal(t, 1, next.Day())
-			},
-		},
 	}
 
 	for _, tt := range tests {
@@ -326,8 +297,7 @@ func TestNextRunCalculation_Timezones(t *testing.T) {
 		{name: "Europe/London", timezone: "Europe/London"},
 		{name: "Asia/Tokyo", timezone: "Asia/Tokyo"},
 		{name: "Australia/Sydney", timezone: "Australia/Sydney"},
-		{name: "Invalid timezone (fallback)", timezone: "Invalid/Timezone"},
-		{name: "Empty timezone (fallback)", timezone: ""},
+		{name: "Empty timezone is UTC", timezone: ""},
 	}
 
 	for _, tt := range tests {
@@ -740,7 +710,13 @@ func TestSchedulerService_Update_TableDriven(t *testing.T) {
 		{
 			name: "update non-existent",
 			modifyFn: func() *reporting.ScheduledReport {
-				return &reporting.ScheduledReport{ID: "nonexistent-id"}
+				return &reporting.ScheduledReport{
+					ID:       "nonexistent-id",
+					Name:     "missing",
+					Template: "executive",
+					Format:   reporting.FormatPDF,
+					Schedule: reporting.Schedule{Frequency: reporting.FrequencyDaily, Timezone: "UTC"},
+				}
 			},
 			wantErr:   true,
 			errSubstr: "not found",
@@ -1015,20 +991,6 @@ func TestScheduleFrequency_EdgeCases(t *testing.T) {
 			},
 		},
 		{
-			name: "monthly on 31st",
-			schedule: reporting.Schedule{
-				Frequency:  reporting.FrequencyMonthly,
-				DayOfMonth: new(31),
-				Hour:       12,
-				Minute:     0,
-				Timezone:   "UTC",
-			},
-			validate: func(t *testing.T, next *time.Time) {
-				require.NotNil(t, next)
-				assert.True(t, next.After(time.Now()))
-			},
-		},
-		{
 			name: "daily at 23:59",
 			schedule: reporting.Schedule{
 				Frequency: reporting.FrequencyDaily,
@@ -1261,7 +1223,13 @@ func TestScheduledReport_AllTemplatesAndFormats(t *testing.T) {
 					Enabled: true,
 				}
 
+				tmplDef, ok := ss.ExportTemplate(tmpl)
+				require.True(t, ok)
 				err := ss.Create(ctx, schedule)
+				if !slices.Contains(tmplDef.Formats, fmt) {
+					require.ErrorIs(t, err, reporting.ErrInvalidSchedule)
+					return
+				}
 				require.NoError(t, err)
 				assert.NotEmpty(t, schedule.ID)
 			})

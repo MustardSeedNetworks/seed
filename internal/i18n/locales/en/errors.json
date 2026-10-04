@@ -187,7 +187,11 @@
     "invalidRequest": "Unknown report type or format",
     "invalidID": "Missing or invalid report id",
     "notFound": "Report not found",
-    "notReady": "Report file is not available yet"
+    "notReady": "Report file is not available yet",
+    "invalidScheduleID": "Missing or invalid schedule id",
+    "invalidSchedule": "The schedule is not valid",
+    "scheduleNotFound": "Schedule not found",
+    "scheduleSaveFailed": "Failed to save the schedule"
   },
   "dhcp": {
     "renewNotSupported": "Forcing a DHCP lease renewal is not supported on this operating system",

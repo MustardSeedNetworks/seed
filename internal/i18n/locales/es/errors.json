@@ -187,7 +187,11 @@
     "invalidRequest": "Tipo o formato de informe desconocido",
     "invalidID": "Falta el id del informe o no es válido",
     "notFound": "Informe no encontrado",
-    "notReady": "El archivo del informe aún no está disponible"
+    "notReady": "El archivo del informe aún no está disponible",
+    "invalidScheduleID": "Falta el id de la programación o no es válido",
+    "invalidSchedule": "La programación no es válida",
+    "scheduleNotFound": "Programación no encontrada",
+    "scheduleSaveFailed": "No se pudo guardar la programación"
   },
   "dhcp": {
     "renewNotSupported": "La renovación forzada de la concesión DHCP no es compatible con este sistema operativo",

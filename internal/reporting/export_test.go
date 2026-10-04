@@ -8,8 +8,8 @@ import (
 // Export internal functions and methods for testing.
 
 // ExportCalculateNextRun exposes the internal calculateNextRun function for testing.
-func ExportCalculateNextRun(schedule *Schedule) *time.Time {
-	return calculateNextRun(schedule)
+func ExportCalculateNextRun(schedule *Schedule, now time.Time) *time.Time {
+	return calculateNextRun(schedule, now)
 }
 
 // ExportGenerateHTML exposes the generateHTML method for testing.
@@ -128,4 +128,9 @@ func (s *GeneratorService) GetReportsPath() string {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 	return s.reportsPath
+}
+
+// ExportTemplate looks up a template through the scheduler's generator.
+func (s *SchedulerService) ExportTemplate(id string) (*Template, bool) {
+	return s.generator.templates.Get(id)
 }

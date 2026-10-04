@@ -6,8 +6,9 @@ package reporting
 
 import (
 	"context"
-	"errors"
 	"fmt"
+	"slices"
+	"strings"
 	"sync"
 	"time"
 
@@ -155,97 +156,165 @@ func (s *SchedulerService) dueSchedules(now time.Time) []*ScheduledReport {
 }
 
 func (s *SchedulerService) runScheduledReport(ctx context.Context, schedule *ScheduledReport) {
-	// Generate report
-	_, _ = s.generator.GenerateFromTemplate(
+	logger := logging.GetLogger()
+	if _, err := s.generator.GenerateFromTemplate(
 		ctx,
 		schedule.Template,
 		schedule.Format,
 		&schedule.Parameters,
-	)
+	); err != nil {
+		logger.ErrorContext(ctx, "scheduled report failed",
+			"event", "report.schedule.failed", "schedule_id", schedule.ID, "error", err)
+	}
 
-	// Update last run and calculate next run
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
+	// Stamp the entry that is live now, not the one that was due: an edit made
+	// while the report generated replaced it, and saving the old copy would
+	// revert the edit. A deleted schedule is not saved at all, because the
+	// upsert would bring its row back.
+	live, ok := s.schedules[schedule.ID]
+	if !ok {
+		return
+	}
 	now := time.Now()
-	schedule.LastRun = &now
-	schedule.NextRun = calculateNextRun(&schedule.Schedule)
-	schedule.UpdatedAt = now
+	live.LastRun = &now
+	live.NextRun = calculateNextRun(&live.Schedule, now)
+	live.UpdatedAt = now
 
-	_ = s.saveSchedule(ctx, schedule)
+	if err := s.saveSchedule(ctx, live); err != nil {
+		logger.ErrorContext(ctx, "saving scheduled report failed",
+			"event", "report.schedule.save_failed", "schedule_id", schedule.ID, "error", err)
+	}
 }
 
-func calculateNextRun(schedule *Schedule) *time.Time {
-	now := time.Now()
-
+// calculateNextRun returns the first occurrence of schedule strictly after now,
+// in the schedule's timezone. A time still ahead today counts: a daily report
+// set for 17:00 at 09:00 runs this evening, not tomorrow.
+func calculateNextRun(schedule *Schedule, now time.Time) *time.Time {
 	loc, err := time.LoadLocation(schedule.Timezone)
 	if err != nil {
 		loc = time.Local
+	}
+	now = now.In(loc)
+	at := func(year int, month time.Month, day int) time.Time {
+		return time.Date(year, month, day, schedule.Hour, schedule.Minute, 0, 0, loc)
 	}
 
 	var next time.Time
 	switch schedule.Frequency {
 	case FrequencyDaily:
-		next = time.Date(
-			now.Year(),
-			now.Month(),
-			now.Day()+1,
-			schedule.Hour,
-			schedule.Minute,
-			0,
-			0,
-			loc,
-		)
-	case FrequencyWeekly:
-		next = now
-		if schedule.DayOfWeek != nil {
-			daysUntil := (*schedule.DayOfWeek - int(now.Weekday()) + daysInWeek) % daysInWeek
-			if daysUntil == 0 {
-				daysUntil = daysInWeek
-			}
-			next = next.AddDate(0, 0, daysUntil)
+		next = at(now.Year(), now.Month(), now.Day())
+		if !next.After(now) {
+			next = at(now.Year(), now.Month(), now.Day()+1)
 		}
-		next = time.Date(
-			next.Year(),
-			next.Month(),
-			next.Day(),
-			schedule.Hour,
-			schedule.Minute,
-			0,
-			0,
-			loc,
-		)
+	case FrequencyWeekly:
+		days := 0
+		if schedule.DayOfWeek != nil {
+			days = (*schedule.DayOfWeek - int(now.Weekday()) + daysInWeek) % daysInWeek
+		}
+		next = at(now.Year(), now.Month(), now.Day()+days)
+		if !next.After(now) {
+			next = at(now.Year(), now.Month(), now.Day()+days+daysInWeek)
+		}
 	case FrequencyMonthly:
 		day := 1
 		if schedule.DayOfMonth != nil {
 			day = *schedule.DayOfMonth
 		}
-		next = time.Date(now.Year(), now.Month()+1, day, schedule.Hour, schedule.Minute, 0, 0, loc)
+		next = at(now.Year(), now.Month(), day)
+		if !next.After(now) {
+			next = at(now.Year(), now.Month()+1, day)
+		}
 	}
 
 	return &next
 }
 
-// Create adds a scheduled report.
-func (s *SchedulerService) Create(ctx context.Context, sr *ScheduledReport) error {
+// Schedule field bounds. Day of month stops at 28 so that every month has the
+// day: [time.Date] would carry the 31st of a short month into the next one.
+const (
+	maxHour       = 23
+	maxMinute     = 59
+	maxDayOfWeek  = 6
+	maxDayOfMonth = 28
+)
+
+// validate rejects a schedule the tick loop could not run as written: an
+// unknown template, a format the template does not produce, or a time that
+// does not exist. An unknown frequency would leave NextRun at the zero time,
+// which is always due, so the report would fire every tick.
+//
+// Reasons name the field, never its value: the caller sent the value, and a
+// request-derived string in the error would reach a log line.
+func (s *SchedulerService) validate(sr *ScheduledReport) error {
 	if sr == nil {
-		return errors.New("scheduled report is nil")
+		return fmt.Errorf("%w: scheduled report is nil", ErrInvalidSchedule)
+	}
+	if strings.TrimSpace(sr.Name) == "" {
+		return fmt.Errorf("%w: name is required", ErrInvalidSchedule)
+	}
+	tmpl, ok := s.generator.templates.Get(sr.Template)
+	if !ok {
+		return fmt.Errorf("%w: unknown template", ErrInvalidSchedule)
+	}
+	if !slices.Contains(tmpl.Formats, sr.Format) {
+		return fmt.Errorf("%w: the template does not produce this format", ErrInvalidSchedule)
+	}
+	return sr.Schedule.validate()
+}
+
+// validate checks the timing fields against the frequency they belong to.
+func (sch *Schedule) validate() error {
+	if sch.Hour < 0 || sch.Hour > maxHour || sch.Minute < 0 || sch.Minute > maxMinute {
+		return fmt.Errorf("%w: hour must be 0-23 and minute 0-59", ErrInvalidSchedule)
+	}
+	if _, err := time.LoadLocation(sch.Timezone); err != nil {
+		return fmt.Errorf("%w: unknown timezone", ErrInvalidSchedule)
+	}
+	weekly := sch.Frequency == FrequencyWeekly
+	monthly := sch.Frequency == FrequencyMonthly
+	switch {
+	case sch.Frequency != FrequencyDaily && !weekly && !monthly:
+		return fmt.Errorf("%w: frequency must be daily, weekly or monthly", ErrInvalidSchedule)
+	case weekly != (sch.DayOfWeek != nil):
+		return fmt.Errorf("%w: dayOfWeek is required for weekly and only for weekly", ErrInvalidSchedule)
+	case monthly != (sch.DayOfMonth != nil):
+		return fmt.Errorf("%w: dayOfMonth is required for monthly and only for monthly", ErrInvalidSchedule)
+	case weekly && (*sch.DayOfWeek < 0 || *sch.DayOfWeek > maxDayOfWeek):
+		return fmt.Errorf("%w: dayOfWeek must be 0-6", ErrInvalidSchedule)
+	case monthly && (*sch.DayOfMonth < 1 || *sch.DayOfMonth > maxDayOfMonth):
+		return fmt.Errorf("%w: dayOfMonth must be 1-28", ErrInvalidSchedule)
+	}
+	return nil
+}
+
+// Create validates and adds a scheduled report, filling in its ID, timestamps
+// and first NextRun on sr. The scheduler keeps its own copy, so the caller may
+// go on reading sr while the tick loop stamps runs.
+func (s *SchedulerService) Create(ctx context.Context, sr *ScheduledReport) error {
+	if err := s.validate(sr); err != nil {
+		return err
 	}
 	if sr.ID == "" {
 		sr.ID = uuid.New().String()
 	}
 
-	sr.CreatedAt = time.Now()
-	sr.UpdatedAt = time.Now()
-	sr.NextRun = calculateNextRun(&sr.Schedule)
+	now := time.Now()
+	sr.CreatedAt = now
+	sr.UpdatedAt = now
+	sr.LastRun = nil
+	sr.NextRun = calculateNextRun(&sr.Schedule, now)
+
+	s.mu.Lock()
+	defer s.mu.Unlock()
 
 	if err := s.saveSchedule(ctx, sr); err != nil {
 		return err
 	}
-
-	s.mu.Lock()
-	s.schedules[sr.ID] = sr
-	s.mu.Unlock()
+	stored := *sr
+	s.schedules[sr.ID] = &stored
 
 	return nil
 }
@@ -254,16 +323,17 @@ func (s *SchedulerService) saveSchedule(ctx context.Context, sr *ScheduledReport
 	return s.repo.SaveSchedule(ctx, sr)
 }
 
-// Get retrieves a scheduled report.
+// Get returns a copy of a scheduled report.
 func (s *SchedulerService) Get(_ context.Context, id string) (*ScheduledReport, error) {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 
 	sr, ok := s.schedules[id]
 	if !ok {
-		return nil, fmt.Errorf("scheduled report not found: %s", id)
+		return nil, ErrScheduleNotFound
 	}
-	return sr, nil
+	snapshot := *sr
+	return &snapshot, nil
 }
 
 // List returns all scheduled reports.
@@ -278,24 +348,35 @@ func (s *SchedulerService) List(_ context.Context) ([]ScheduledReport, error) {
 	return result, nil
 }
 
-// Update modifies a scheduled report.
+// Update validates sr and replaces the scheduled report with its ID. CreatedAt
+// and LastRun belong to the scheduler and are carried over from the stored
+// entry; NextRun is recomputed from the new schedule.
 func (s *SchedulerService) Update(ctx context.Context, sr *ScheduledReport) error {
-	if sr == nil {
-		return errors.New("scheduled report is nil")
+	if err := s.validate(sr); err != nil {
+		return err
 	}
 
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
-	if _, ok := s.schedules[sr.ID]; !ok {
-		return fmt.Errorf("scheduled report not found: %s", sr.ID)
+	existing, ok := s.schedules[sr.ID]
+	if !ok {
+		return ErrScheduleNotFound
 	}
 
-	sr.UpdatedAt = time.Now()
-	sr.NextRun = calculateNextRun(&sr.Schedule)
-	s.schedules[sr.ID] = sr
+	now := time.Now()
+	sr.CreatedAt = existing.CreatedAt
+	sr.LastRun = existing.LastRun
+	sr.UpdatedAt = now
+	sr.NextRun = calculateNextRun(&sr.Schedule, now)
 
-	return s.saveSchedule(ctx, sr)
+	if err := s.saveSchedule(ctx, sr); err != nil {
+		return err
+	}
+	stored := *sr
+	s.schedules[sr.ID] = &stored
+
+	return nil
 }
 
 // Delete removes a scheduled report.
@@ -304,9 +385,12 @@ func (s *SchedulerService) Delete(ctx context.Context, id string) error {
 	defer s.mu.Unlock()
 
 	if _, ok := s.schedules[id]; !ok {
-		return fmt.Errorf("scheduled report not found: %s", id)
+		return ErrScheduleNotFound
 	}
 
+	if err := s.repo.DeleteSchedule(ctx, id); err != nil {
+		return err
+	}
 	delete(s.schedules, id)
-	return s.repo.DeleteSchedule(ctx, id)
+	return nil
 }

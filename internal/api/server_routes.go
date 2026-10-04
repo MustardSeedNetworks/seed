@@ -663,6 +663,22 @@ func (s *Server) setupSecurityRoutes() {
 			feature:     "export_csv_json",
 			rateLimited: true,
 		},
+		// Scheduled reports are Pro (scheduled_reports). The more specific
+		// /reports/schedules/ pattern wins over /reports/ in ServeMux.
+		{
+			path:    APIVersionPrefix + "/reports/schedules",
+			handler: s.handleReportSchedules,
+			methods: getPost,
+			minRole: op,
+			feature: "scheduled_reports",
+		},
+		{
+			path:    APIVersionPrefix + "/reports/schedules/",
+			handler: s.handleReportScheduleByID,
+			methods: []string{http.MethodGet, http.MethodPut, http.MethodDelete},
+			minRole: op,
+			feature: "scheduled_reports",
+		},
 		{
 			path:    APIVersionPrefix + "/reports/",
 			handler: s.handleReportByID,
