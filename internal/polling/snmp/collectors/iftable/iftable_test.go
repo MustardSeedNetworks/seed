@@ -15,11 +15,19 @@ import (
 type fakeClient struct {
 	ifTableVbs  []snmp.Varbind
 	ifXTableVbs []snmp.Varbind
+	upTime      any
+	getErr      error
 	walkErr     error
 }
 
-func (f *fakeClient) Get(_ context.Context, _ []string) ([]snmp.Varbind, error) {
-	return nil, errors.New("get not used by iftable")
+func (f *fakeClient) Get(_ context.Context, oids []string) ([]snmp.Varbind, error) {
+	if f.getErr != nil {
+		return nil, f.getErr
+	}
+	if len(oids) != 1 || oids[0] != "1.3.6.1.2.1.1.3.0" {
+		return nil, errors.New("iftable reads only sysUpTime.0")
+	}
+	return []snmp.Varbind{{OID: oids[0], Value: f.upTime}}, nil
 }
 
 func (f *fakeClient) Walk(_ context.Context, prefix string) ([]snmp.Varbind, error) {
@@ -249,5 +257,103 @@ func TestCollect_MalformedOIDsSkipped(t *testing.T) {
 
 	if len(pub.got[0].Rows) != 1 || pub.got[0].Rows[0].IfDescr != "good" {
 		t.Errorf("malformed OIDs should be skipped; got rows = %+v", pub.got[0].Rows)
+	}
+}
+
+func TestCollect_Counters(t *testing.T) {
+	t.Parallel()
+	ifTable := []snmp.Varbind{
+		{OID: "1.3.6.1.2.1.2.2.1.10.1", Value: uint(1000)},
+		{OID: "1.3.6.1.2.1.2.2.1.13.1", Value: uint(3)},
+		{OID: "1.3.6.1.2.1.2.2.1.14.1", Value: uint(4)},
+		{OID: "1.3.6.1.2.1.2.2.1.16.1", Value: uint(2000)},
+		{OID: "1.3.6.1.2.1.2.2.1.19.1", Value: uint(5)},
+		{OID: "1.3.6.1.2.1.2.2.1.20.1", Value: uint(6)},
+	}
+	hcIn := snmp.Varbind{OID: "1.3.6.1.2.1.31.1.1.1.6.1", Value: uint64(1 << 40)}
+	hcOut := snmp.Varbind{OID: "1.3.6.1.2.1.31.1.1.1.10.1", Value: uint64(1<<40 + 1)}
+	discontinuity := snmp.Varbind{OID: "1.3.6.1.2.1.31.1.1.1.19.1", Value: uint32(777)}
+
+	tests := []struct {
+		name string
+		ifX  []snmp.Varbind
+		want iftable.Counters
+	}{
+		{
+			name: "32-bit octets without ifXTable",
+			want: iftable.Counters{
+				InOctets: 1000, OutOctets: 2000,
+				InErrors: 4, OutErrors: 6, InDiscards: 3, OutDiscards: 5,
+			},
+		},
+		{
+			name: "64-bit octets when both HC columns are served",
+			ifX:  []snmp.Varbind{hcIn, hcOut, discontinuity},
+			want: iftable.Counters{
+				InOctets: 1 << 40, OutOctets: 1<<40 + 1, HCOctets: true,
+				InErrors: 4, OutErrors: 6, InDiscards: 3, OutDiscards: 5,
+				Discontinuity: 777,
+			},
+		},
+		{
+			// Mixing a 64-bit in with a 32-bit out would rate the two at
+			// different wrap widths; one width per row keeps them comparable.
+			name: "one HC column alone falls back to 32-bit for both",
+			ifX:  []snmp.Varbind{hcIn},
+			want: iftable.Counters{
+				InOctets: 1000, OutOctets: 2000,
+				InErrors: 4, OutErrors: 6, InDiscards: 3, OutDiscards: 5,
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			fc := &fakeClient{ifTableVbs: ifTable, ifXTableVbs: tt.ifX, upTime: uint32(4200)}
+			pub := &fakePublisher{}
+			if err := iftable.New(factoryFor(fc), pub, at).
+				Collect(context.Background(), snmp.Target{}, snmp.ResolvedCredentials{}); err != nil {
+				t.Fatalf("Collect: %v", err)
+			}
+			if got := pub.got[0].Rows[0].Counters; got != tt.want {
+				t.Errorf("Counters = %+v, want %+v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestCollect_SysUpTime(t *testing.T) {
+	t.Parallel()
+	tests := []struct {
+		name   string
+		upTime any
+		want   *uint32
+	}{
+		{"served", uint32(4200), new(uint32(4200))},
+		{"not served", nil, nil},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			pub := &fakePublisher{}
+			fc := &fakeClient{upTime: tt.upTime}
+			if err := iftable.New(factoryFor(fc), pub, at).
+				Collect(context.Background(), snmp.Target{}, snmp.ResolvedCredentials{}); err != nil {
+				t.Fatalf("Collect: %v", err)
+			}
+			got := pub.got[0].SysUpTime
+			if (got == nil) != (tt.want == nil) || (got != nil && *got != *tt.want) {
+				t.Errorf("SysUpTime = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestCollect_SysUpTimeGetErrorPropagates(t *testing.T) {
+	t.Parallel()
+	fc := &fakeClient{getErr: errors.New("timeout")}
+	if err := iftable.New(factoryFor(fc), &fakePublisher{}, at).
+		Collect(context.Background(), snmp.Target{}, snmp.ResolvedCredentials{}); err == nil {
+		t.Error("expected Get error to propagate")
 	}
 }

@@ -4,7 +4,10 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"strconv"
 	"time"
+
+	"github.com/MustardSeedNetworks/seed/internal/timeseries/ifrate"
 )
 
 // MetricsRepository provides operations for metrics data.
@@ -60,6 +63,40 @@ func (r *MetricsRepository) RecordBatch(ctx context.Context, metrics []*Metric) 
 				m.Timestamp.Format(time.RFC3339), m.Metadata)
 			if execErr != nil {
 				return fmt.Errorf("failed to insert metric: %w", execErr)
+			}
+		}
+		return nil
+	})
+}
+
+// RecordInterfaceRates stores each rate's six points in one transaction,
+// keyed by client and by target_id "<polling target ID>/<ifIndex>".
+// interface_name repeats target_id: the hourly and daily rollups are unique
+// on interface_name, and an ifName is only unique within one device.
+func (r *MetricsRepository) RecordInterfaceRates(ctx context.Context, rates []ifrate.Rate) error {
+	if len(rates) == 0 {
+		return nil
+	}
+	return r.db.WithTx(ctx, func(tx *sql.Tx) error {
+		stmt, err := tx.PrepareContext(ctx, `
+			INSERT INTO metrics
+			  (interface_name, metric_type, value, unit, timestamp,
+			   client_id, target_kind, target_id)
+			VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+		`)
+		if err != nil {
+			return fmt.Errorf("prepare interface rate insert: %w", err)
+		}
+		defer func() { _ = stmt.Close() }()
+
+		for _, rate := range rates {
+			targetID := rate.TargetID + "/" + strconv.FormatUint(uint64(rate.IfIndex), 10)
+			at := rate.At.UTC().Format(time.RFC3339)
+			for _, pt := range rate.Points() {
+				if _, execErr := stmt.ExecContext(ctx, targetID, pt.Type, pt.Value, pt.Unit, at,
+					rate.ClientID, ifrate.TargetKind, targetID); execErr != nil {
+					return fmt.Errorf("insert interface rate: %w", execErr)
+				}
 			}
 		}
 		return nil

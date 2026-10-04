@@ -44,6 +44,7 @@ func (s *Server) initSNMPPoller(db *database.DB) {
 	poller, err := snmporchestrator.Build(snmporchestrator.Config{
 		Targets:       db.PollingTargets(),
 		Observations:  db.SNMPObservations(),
+		Rates:         db.Metrics(),
 		Scheduler:     sched,
 		ClientFactory: factory,
 		Logger:        logger,
