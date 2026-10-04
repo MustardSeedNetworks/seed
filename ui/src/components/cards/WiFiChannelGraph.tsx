@@ -300,7 +300,7 @@ function ChannelGraph({
           textAnchor="middle"
           className="body-small text-text-muted"
         >
-          Channel
+          {tCards('wifi.channel')}
         </text>
 
         {/* Network curves */}

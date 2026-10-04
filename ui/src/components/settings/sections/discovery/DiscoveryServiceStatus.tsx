@@ -84,7 +84,7 @@ export const DiscoveryServiceStatus: React.NamedExoticComponent<DiscoveryService
             </div>
             <div>
               <span className="font-medium">{t('discovery.serviceStatus.interface')}:</span>{' '}
-              {status.interface || 'auto'}
+              {status.interface || t('discovery.serviceStatus.autoInterface')}
             </div>
             <div>
               <span className="font-medium">{t('discovery.serviceStatus.subnet')}:</span>{' '}

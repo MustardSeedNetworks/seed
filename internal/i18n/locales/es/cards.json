@@ -162,7 +162,22 @@
     "startScanAria": "Iniciar escaneo de descubrimiento de red",
     "openFullScreen": "Abrir vista de pantalla completa",
     "scanningNetwork": "Escaneando la red",
-    "startNetworkScan": "Iniciar escaneo de red"
+    "startNetworkScan": "Iniciar escaneo de red",
+    "detail": {
+      "system": "Sistema:",
+      "port": "Puerto:",
+      "capabilities": "Capacidades:",
+      "device": "Dispositivo:",
+      "platform": "Plataforma:",
+      "name": "Nombre:",
+      "description": "Descripción:",
+      "location": "Ubicación:",
+      "contact": "Contacto:",
+      "uptime": "Tiempo activo:",
+      "interfaces": "Interfaces ({{total}}):",
+      "hardware": "Hardware:",
+      "model": "Modelo:"
+    }
   },
   "pipeline": {
     "phaseProgress": "Fase {{current}} de {{total}}",
@@ -552,7 +567,10 @@
   },
   "logViewer": {
     "requestId": "ID de solicitud:",
-    "collapseEntry": "Contraer entrada"
+    "collapseEntry": "Contraer entrada",
+    "timestamp": "Marca de tiempo:",
+    "session": "Sesión:",
+    "duration": "Duración:"
   },
   "systemHealth": {
     "topConsumers": "Principales consumidores:"
@@ -579,7 +597,9 @@
     "vendor": "Fabricante",
     "interface": "Interfaz",
     "state": "Estado",
-    "refresh": "Actualizar"
+    "refresh": "Actualizar",
+    "familyIpv4": "IPv4",
+    "familyIpv6": "IPv6"
   },
   "insecurePorts": {
     "title": "Escaneo de puertos inseguros",

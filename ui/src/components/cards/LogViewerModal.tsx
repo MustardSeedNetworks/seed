@@ -222,12 +222,13 @@ function LogEntryRow({ entry, expanded, onToggle, onClose }: LogEntryRowProps): 
             )}
           >
             <div>
-              <strong className="text-text-primary">Timestamp:</strong>{' '}
+              <strong className="text-text-primary">{tCards('logViewer.timestamp')}</strong>{' '}
               {new Date(entry.timestamp).toISOString()}
             </div>
             {entry.sessionId ? (
               <div>
-                <strong className="text-text-primary">Session:</strong> {entry.sessionId}
+                <strong className="text-text-primary">{tCards('logViewer.session')}</strong>{' '}
+                {entry.sessionId}
               </div>
             ) : null}
             {entry.requestId ? (
@@ -238,7 +239,8 @@ function LogEntryRow({ entry, expanded, onToggle, onClose }: LogEntryRowProps): 
             ) : null}
             {entry.durationMs !== undefined ? (
               <div>
-                <strong className="text-text-primary">Duration:</strong> {entry.durationMs}ms
+                <strong className="text-text-primary">{tCards('logViewer.duration')}</strong>{' '}
+                {entry.durationMs}ms
               </div>
             ) : null}
           </div>

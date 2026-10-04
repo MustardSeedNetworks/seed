@@ -236,10 +236,12 @@ export function DeviceRow({
                   </h4>
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-compact text-xs">
                     <div>
-                      <span className="text-text-muted">System:</span> {device.lldpInfo.systemName}
+                      <span className="text-text-muted">{t('discovery.detail.system')}</span>{' '}
+                      {device.lldpInfo.systemName}
                     </div>
                     <div>
-                      <span className="text-text-muted">Port:</span> {device.lldpInfo.portId}
+                      <span className="text-text-muted">{t('discovery.detail.port')}</span>{' '}
+                      {device.lldpInfo.portId}
                     </div>
                     {device.lldpInfo.managementAddress ? (
                       <div>
@@ -249,7 +251,9 @@ export function DeviceRow({
                     ) : null}
                     {device.lldpInfo.capabilities ? (
                       <div>
-                        <span className="text-text-muted">Capabilities:</span>{' '}
+                        <span className="text-text-muted">
+                          {t('discovery.detail.capabilities')}
+                        </span>{' '}
                         {device.lldpInfo.capabilities.join(', ')}
                       </div>
                     ) : null}
@@ -265,10 +269,12 @@ export function DeviceRow({
                   </h4>
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-compact text-xs">
                     <div>
-                      <span className="text-text-muted">Device:</span> {device.cdpInfo.deviceId}
+                      <span className="text-text-muted">{t('discovery.detail.device')}</span>{' '}
+                      {device.cdpInfo.deviceId}
                     </div>
                     <div>
-                      <span className="text-text-muted">Platform:</span> {device.cdpInfo.platform}
+                      <span className="text-text-muted">{t('discovery.detail.platform')}</span>{' '}
+                      {device.cdpInfo.platform}
                     </div>
                     {device.cdpInfo.nativeVlan ? (
                       <div>
@@ -293,7 +299,7 @@ export function DeviceRow({
                       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-x-4 gap-y-1 text-xs">
                         {device.snmpData.system.sysName ? (
                           <div>
-                            <span className="text-text-muted">Name:</span>{' '}
+                            <span className="text-text-muted">{t('discovery.detail.name')}</span>{' '}
                             <span className="text-text-primary font-medium">
                               {device.snmpData.system.sysName}
                             </span>
@@ -301,7 +307,9 @@ export function DeviceRow({
                         ) : null}
                         {device.snmpData.system.sysDescr ? (
                           <div className="col-span-2">
-                            <span className="text-text-muted">Description:</span>{' '}
+                            <span className="text-text-muted">
+                              {t('discovery.detail.description')}
+                            </span>{' '}
                             <span className="text-text-primary">
                               {device.snmpData.system.sysDescr.length > 80
                                 ? `${device.snmpData.system.sysDescr.substring(0, 80)}...`
@@ -311,7 +319,9 @@ export function DeviceRow({
                         ) : null}
                         {device.snmpData.system.sysLocation ? (
                           <div>
-                            <span className="text-text-muted">Location:</span>{' '}
+                            <span className="text-text-muted">
+                              {t('discovery.detail.location')}
+                            </span>{' '}
                             <span className="text-text-primary">
                               {device.snmpData.system.sysLocation}
                             </span>
@@ -319,7 +329,7 @@ export function DeviceRow({
                         ) : null}
                         {device.snmpData.system.sysContact ? (
                           <div>
-                            <span className="text-text-muted">Contact:</span>{' '}
+                            <span className="text-text-muted">{t('discovery.detail.contact')}</span>{' '}
                             <span className="text-text-primary">
                               {device.snmpData.system.sysContact}
                             </span>
@@ -328,7 +338,7 @@ export function DeviceRow({
                         {device.snmpData.system.sysUpTime !== undefined &&
                         device.snmpData.system.sysUpTime > 0 ? (
                           <div>
-                            <span className="text-text-muted">Uptime:</span>{' '}
+                            <span className="text-text-muted">{t('discovery.detail.uptime')}</span>{' '}
                             <span className="text-text-primary">
                               {formatUptime(device.snmpData.system.sysUpTime)}
                             </span>
@@ -342,7 +352,9 @@ export function DeviceRow({
                   {device.snmpData.interfaces && device.snmpData.interfaces.length > 0 ? (
                     <div>
                       <span className="text-xs text-text-muted">
-                        Interfaces ({device.snmpData.interfaces.length}):
+                        {t('discovery.detail.interfaces', {
+                          total: device.snmpData.interfaces.length,
+                        })}
                       </span>
                       <div className="flex flex-wrap gap-tight mt-tight">
                         {device.snmpData.interfaces.slice(0, 8).map((iface) => (
@@ -417,7 +429,9 @@ export function DeviceRow({
                   {/* Hardware Inventory */}
                   {device.snmpData.inventory && device.snmpData.inventory.length > 0 ? (
                     <div>
-                      <span className="text-xs text-text-muted">Hardware:</span>
+                      <span className="text-xs text-text-muted">
+                        {t('discovery.detail.hardware')}
+                      </span>
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-tight mt-tight text-xs">
                         {device.snmpData.inventory
                           .filter(
@@ -442,7 +456,7 @@ export function DeviceRow({
                               ) : null}
                               {entity.modelName ? (
                                 <span className="text-text-muted ml-inline">
-                                  Model: {entity.modelName}
+                                  {t('discovery.detail.model')} {entity.modelName}
                                 </span>
                               ) : null}
                             </div>

@@ -11,7 +11,15 @@ import type { JSX } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useArrayItem } from '../../../hooks/useArrayItem';
 import { cn, input, layout, radius, spacing } from '../../../styles/theme';
-import type { TestsSettings } from '../../../types/settings';
+import type { SqlEndpoint, TestsSettings } from '../../../types/settings';
+
+// Product names, written the same in every locale.
+const SQL_DRIVERS: ReadonlyArray<{ value: SqlEndpoint['driver']; label: string }> = [
+  { value: 'postgres', label: 'PostgreSQL' },
+  { value: 'mysql', label: 'MySQL' },
+  { value: 'mssql', label: 'SQL Server' },
+  { value: 'oracle', label: 'Oracle' },
+];
 
 interface HealthChecksSettingsEnterpriseProps {
   testsSettings: TestsSettings;
@@ -112,7 +120,7 @@ export function HealthChecksSettingsEnterprise({
                   updateSqlEndpoint(
                     endpoint.id ?? '',
                     'driver',
-                    e.target.value as 'mysql' | 'postgres' | 'mssql' | 'oracle',
+                    e.target.value as SqlEndpoint['driver'],
                   )
                 }
                 className={cn(
@@ -122,10 +130,11 @@ export function HealthChecksSettingsEnterprise({
                   'w-28 bg-surface-raised',
                 )}
               >
-                <option value="postgres">PostgreSQL</option>
-                <option value="mysql">MySQL</option>
-                <option value="mssql">SQL Server</option>
-                <option value="oracle">Oracle</option>
+                {SQL_DRIVERS.map((d) => (
+                  <option key={d.value} value={d.value}>
+                    {d.label}
+                  </option>
+                ))}
               </select>
               <button
                 type="button"

@@ -208,7 +208,7 @@ export function UsersSettings(): React.ReactElement {
             </div>
             <div className="flex-1 min-w-[12rem]">
               <label className="block text-xs text-text-muted mb-tight" htmlFor="new-password">
-                Password
+                {t('common:labels.password')}
               </label>
               <Input
                 id="new-password"

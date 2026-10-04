@@ -216,7 +216,7 @@ export function CableCard({
           <>
             <CardDivider />
             <p className={cn('caption font-medium text-text-muted', spacing.margin.bottom.tight)}>
-              {t('cable.wiringStandard')}: {data.wiringStandard || '568B'}
+              {t('cable.wiringStandard')}: {data.wiringStandard}
             </p>
             <div className={cn('grid grid-cols-8', spacing.gap.tight, spacing.margin.top.tight)}>
               {data.pinout.map((pin) => (
