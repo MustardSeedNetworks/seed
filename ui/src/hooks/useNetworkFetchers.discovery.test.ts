@@ -55,6 +55,7 @@ async function switchCardFor(body: unknown): Promise<SwitchData | null> {
       userSetWifiModeRef: ref(false),
       networkDiscoveryAbortRef: ref<AbortController | null>(null),
       prevLinkUpRef: ref<boolean | null>(null),
+      cableSupported: true,
     }),
   );
 

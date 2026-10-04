@@ -23,11 +23,14 @@
  *
  * Dependencies: Card UI components, StatusBadge, CollapsibleSection, Tooltip, useSettings hook,
  *              auth hooks for making secure test requests, Icons, theme utilities
- * State: Manages test result data, fetches results periodically, uses SettingsContext for thresholds
+ * State: the last run is React Query data, kept across navigation. A run is rate-limited and
+ *        shares its budget with operator actions, so it never runs on mount (#2691).
  */
 
-import { memo, useCallback, useEffect, useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { memo, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
+import { api } from '../../api';
 import { useSettings } from '../../contexts/useSettings';
 import { useTestRunSignal, useTestRunStore } from '../../stores/testRunStore';
 import {
@@ -48,6 +51,9 @@ import { HealthCheckCardProtocolSections } from './HealthCheckCardProtocolSectio
 import type { HealthCheckData, StatusValue, TestResult } from './healthCheckCardTypes';
 import { failuresFirst, testResultRank } from './healthCheckResultOrder';
 
+/** One cache entry for the last run, shared by every mount of the card. */
+const healthCheckRunKey = ['healthChecks', 'run'] as const;
+
 interface HealthCheckCardProps {
   loading?: boolean;
 }
@@ -57,36 +63,20 @@ export const HealthCheckCard: React.MemoExoticComponent<
 > = memo(function healthCheckCard({ loading }: HealthCheckCardProps): React.JSX.Element | null {
   const { t } = useTranslation('cards');
   const { cardSettings } = useSettings();
-  const [data, setData] = useState<HealthCheckData | null>(null);
-  const [isRunning, setIsRunning] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-
-  const fetchTests = useCallback(async (): Promise<void> => {
-    setIsRunning(true);
-    setError(null);
-    try {
-      const res: Response = await fetch('/api/v1/telemetry/probes/run', {
-        credentials: 'include',
-      });
-      if (res.ok) {
-        const result: HealthCheckData = (await res.json()) as HealthCheckData;
-        setData(result);
-      } else {
-        setError(t('health.failedToRun'));
-      }
-    } catch (err) {
-      setError(err instanceof Error ? err.message : t('health.failedToRun'));
-    } finally {
-      setIsRunning(false);
-    }
-  }, [t]);
-
-  // Initial fetch to check if tests are configured
-  useEffect((): void => {
-    fetchTests().catch((): void => {
-      /* handled */
-    });
-  }, [fetchTests]);
+  const run = useQuery({
+    queryKey: healthCheckRunKey,
+    queryFn: () => api.get<HealthCheckData>('/api/v1/telemetry/probes/run'),
+    enabled: false,
+    staleTime: Number.POSITIVE_INFINITY,
+    gcTime: Number.POSITIVE_INFINITY,
+    retry: false,
+  });
+  const data = run.data ?? null;
+  const isRunning = run.isFetching;
+  const error = run.error ? t('health.failedToRun') : null;
+  const fetchTests = async (): Promise<void> => {
+    await run.refetch();
+  };
 
   // Listen for settings changes (fired when settings drawer closes after test config changes)
   useEffect((): (() => void) => {
@@ -124,8 +114,8 @@ export const HealthCheckCard: React.MemoExoticComponent<
     });
   });
 
-  // Don't render card if no tests are configured
-  if (!(data?.hasTests || loading || isRunning)) {
+  // Hidden once a run finds no probes; shown before the first run so one can start.
+  if (data && !(data.hasTests || loading || isRunning)) {
     return null;
   }
 
@@ -516,8 +506,31 @@ export const HealthCheckCard: React.MemoExoticComponent<
       title={t('health.title')}
       icon={<HeartPulse className={iconTokens.size.md} />}
       status={getStatus()}
+      headerAction={
+        <button
+          type="button"
+          onClick={(): void => {
+            fetchTests().catch((): void => {
+              /* surfaced through the query error */
+            });
+          }}
+          disabled={isRunning}
+          data-testid="health-check-run"
+          className={cn(
+            spacing.chip.sm,
+            'bg-brand-primary text-on-brand',
+            radius.md,
+            'hover:bg-brand-primary/90 transition-colors font-medium caption disabled:opacity-50 disabled:cursor-not-allowed',
+          )}
+        >
+          {t('health.run')}
+        </button>
+      }
     >
       {isRunning ? <p className="body-small text-text-muted">{t('health.runningTests')}</p> : null}
+      {!(isRunning || data || error) ? (
+        <p className="body-small text-text-muted">{t('health.notRun')}</p>
+      ) : null}
       {!isRunning && data ? (
         <>
           {/* Ping Results */}

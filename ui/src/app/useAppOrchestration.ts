@@ -45,7 +45,7 @@ interface UseAppOrchestrationArgs {
 export function useAppOrchestration({ isAuthenticated }: UseAppOrchestrationArgs) {
   const { isDark, toggleTheme } = useTheme();
   // Issue #803: Track network capabilities for warning display
-  const { capabilities } = useCapabilities();
+  const { capabilities } = useCapabilities(isAuthenticated);
 
   // Sync logger auth state to prevent 401 spam on login screen
   useEffect(() => {
@@ -173,6 +173,7 @@ export function useAppOrchestration({ isAuthenticated }: UseAppOrchestrationArgs
     networkDiscoveryAbortRef,
     prevLinkUpRef,
     setRecommendedEthernet, // #756
+    cableSupported: capabilities?.cableDiagnostics === true,
   });
 
   // Channel graph data for WiFi visualization (extracted to hook #889)
@@ -475,9 +476,6 @@ export function useAppOrchestration({ isAuthenticated }: UseAppOrchestrationArgs
       fetchWifiData().catch((): void => {
         /* handled */
       });
-      fetchCableData().catch((): void => {
-        /* handled */
-      });
       fetchPublicIp().catch((): void => {
         /* handled */
       });
@@ -500,12 +498,22 @@ export function useAppOrchestration({ isAuthenticated }: UseAppOrchestrationArgs
     fetchGatewayData,
     fetchVlanData,
     fetchWifiData,
-    fetchCableData,
     fetchPublicIp,
     fetchNetworkDiscovery,
     fetchChannelGraphData,
     setLoading,
   ]);
+
+  // The cable read waits for the capability report, which lands after the
+  // initial load, so it has its own effect rather than re-running that batch.
+  useEffect(() => {
+    if (!isAuthenticated) {
+      return;
+    }
+    fetchCableData().catch((): void => {
+      /* handled */
+    });
+  }, [isAuthenticated, fetchCableData]);
 
   // SSE polling: fallback REST polling when SSE disconnected + supplementary data polling
   // Extracted to useSsePolling hook (#892) - see hook for interval details
@@ -525,25 +533,6 @@ export function useAppOrchestration({ isAuthenticated }: UseAppOrchestrationArgs
       fetchChannelGraphData,
     },
   });
-
-  // Auto-scan network devices on mount (respects per-card autoRunOnLink setting)
-  useEffect(() => {
-    if (!isAuthenticated) {
-      return;
-    }
-
-    const shouldAutoScan = runOpts.runNetworkDiscovery;
-
-    if (shouldAutoScan) {
-      // Small delay to let other data load first
-      const timer = setTimeout(() => {
-        triggerDeviceScan().catch((err: unknown) => {
-          logger.error(LogComponents.NETWORK, 'Failed to trigger device scan', { error: err });
-        });
-      }, 2000);
-      return () => clearTimeout(timer);
-    }
-  }, [isAuthenticated, triggerDeviceScan, runOpts.runNetworkDiscovery]);
 
   return {
     // theme + capabilities

@@ -28,6 +28,9 @@ export interface PlatformShortfall {
 export interface Capabilities {
   /** Whether raw ICMP sockets are available (requires root or CAP_NET_RAW) */
   icmpAvailable: boolean;
+  /** Whether this platform can run a TDR cable test at all. Where it cannot,
+   *  GET /telemetry/cable answers 501, so nothing should call it (#2691). */
+  cableDiagnostics: boolean;
 }
 
 interface UseCapabilitiesResult {
@@ -54,17 +57,24 @@ async function readCapabilities(): Promise<Capabilities | null> {
     throw new Error(`HTTP ${response.status}`);
   }
 
-  const data: { icmpAvailable?: boolean } = await (response.json() as Promise<{
+  const data = await (response.json() as Promise<{
     icmpAvailable?: boolean;
+    capabilities?: { capability: string; level: string }[];
   }>);
-  return { icmpAvailable: data.icmpAvailable === true };
+  return {
+    icmpAvailable: data.icmpAvailable === true,
+    cableDiagnostics: (data.capabilities ?? []).some(
+      (entry) => entry.capability === 'cable_diagnostics' && entry.level !== 'none',
+    ),
+  };
 }
 
 /**
  * Hook to fetch and track system capabilities.
- * Capabilities are fetched once on mount and can be refreshed manually.
+ * Capabilities are fetched once signed in (GET /api/v1/status answers 401
+ * before that) and can be refreshed manually.
  */
-export function useCapabilities(): UseCapabilitiesResult {
+export function useCapabilities(isAuthenticated: boolean): UseCapabilitiesResult {
   const [capabilities, setCapabilities] = useState<Capabilities | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -86,8 +96,11 @@ export function useCapabilities(): UseCapabilitiesResult {
   };
 
   useEffect(() => {
+    if (!isAuthenticated) {
+      return;
+    }
     fetchCapabilities().catch(() => undefined);
-  }, [fetchCapabilities]);
+  }, [isAuthenticated, fetchCapabilities]);
 
   return {
     capabilities,

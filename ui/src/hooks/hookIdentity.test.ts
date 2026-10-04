@@ -113,7 +113,7 @@ const cases: [string, () => object][] = [
   ['useAuth', () => useAuth()],
   ['useBluetoothScan', () => useBluetoothScan()],
   ['useBonjourBrowse', () => useBonjourBrowse()],
-  ['useCapabilities', () => useCapabilities()],
+  ['useCapabilities', () => useCapabilities(true)],
   ['useChannelGraph', () => useChannelGraph({ isWifi: true, currentInterface: 'wlan0' })],
   ['useDefaults', () => useDefaults()],
   ['useDiscoveredDevices', () => useDiscoveredDevices()],

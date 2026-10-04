@@ -71,6 +71,9 @@ interface UseNetworkFetchersProps {
   prevLinkUpRef: React.MutableRefObject<boolean | null>;
   /** #756: Set recommended ethernet interface (most capable) */
   setRecommendedEthernet?: React.Dispatch<React.SetStateAction<string | undefined>>;
+  /** The platform can run a cable test; where it cannot, the route answers
+   *  501 and polling it only logs errors (#2691). */
+  cableSupported: boolean;
 }
 
 export function useNetworkFetchers({
@@ -85,6 +88,7 @@ export function useNetworkFetchers({
   networkDiscoveryAbortRef,
   prevLinkUpRef,
   setRecommendedEthernet,
+  cableSupported,
 }: UseNetworkFetchersProps): {
   fetchLinkData: () => Promise<void>;
   fetchIpConfig: () => Promise<void>;
@@ -463,6 +467,9 @@ export function useNetworkFetchers({
 
   // Fetch Cable test data
   const fetchCableData = useCallback(async () => {
+    if (!cableSupported) {
+      return;
+    }
     try {
       const response = await fetch(`${API_BASE}/api/v1/telemetry/cable`, {
         credentials: 'include',
@@ -482,7 +489,7 @@ export function useNetworkFetchers({
     } catch (err) {
       logger.error(LogComponents.CABLE, 'Failed to fetch Cable data', err);
     }
-  }, [setCards]);
+  }, [setCards, cableSupported]);
 
   // Fetch Public IP data
   const fetchPublicIp = useCallback(async () => {
