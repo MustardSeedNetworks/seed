@@ -78,10 +78,12 @@ func (p *ObservationPipeline) evaluateIfTable(
 			Title:    fmt.Sprintf("Interface %s down on %s", row.IfName, obs.TargetID),
 			Message: fmt.Sprintf("ifOperStatus transitioned from up to %d (ifIndex=%d, admin=up)",
 				row.IfOper, row.IfIndex),
-			Source:   obs.TargetID,
-			Metadata: obs.PayloadJSON,
+			Source: obs.TargetID,
+			Metadata: evidenceJSON(alerts.InterfaceDownEvidence{
+				IfIndex: row.IfIndex, IfName: row.IfName, IfOperStatus: row.IfOper,
+			}),
 		}
-		if p.fire(ctx, "iface.down", key, alert) {
+		if p.fire(ctx, alerts.RuleInterfaceDown, key, alert) {
 			count++
 		}
 	}
@@ -123,10 +125,12 @@ func (p *ObservationPipeline) evaluateBGP(
 			Title:    fmt.Sprintf("BGP peer %s left Established on %s", peer.RemoteAddr, obs.TargetID),
 			Message: fmt.Sprintf("Peer state transitioned from 6 (Established) to %d, AS%d",
 				peer.State, peer.RemoteAS),
-			Source:   obs.TargetID,
-			Metadata: obs.PayloadJSON,
+			Source: obs.TargetID,
+			Metadata: evidenceJSON(alerts.BGPPeerEvidence{
+				RemoteAddr: peer.RemoteAddr, RemoteAS: peer.RemoteAS, State: peer.State,
+			}),
 		}
-		if p.fire(ctx, "bgp.flap", key, alert) {
+		if p.fire(ctx, alerts.RuleBGPFlap, key, alert) {
 			count++
 		}
 	}
@@ -165,6 +169,10 @@ func (p *ObservationPipeline) evaluateHostResources(
 		key := fmt.Sprintf("storage/%s/%d", obs.TargetID, st.Index)
 		prev := p.lookupStorage(key)
 		p.recordStorage(key, pct)
+		evidence := evidenceJSON(alerts.StorageEvidence{
+			Index: st.Index, Description: st.Description,
+			SizeBytes: st.SizeBytes, UsedBytes: st.UsedBytes, UsedPercent: pct,
+		})
 
 		// Upward crossings: prev below threshold and now at-or-above.
 		// Two thresholds means two possible alerts per observation.
@@ -175,9 +183,9 @@ func (p *ObservationPipeline) evaluateHostResources(
 				Title:    fmt.Sprintf("Filesystem %s critical on %s", st.Description, obs.TargetID),
 				Message:  fmt.Sprintf("Usage crossed %.0f%%: %.1f%% of %d bytes", storageFullPct, pct, st.SizeBytes),
 				Source:   obs.TargetID,
-				Metadata: obs.PayloadJSON,
+				Metadata: evidence,
 			}
-			if p.fire(ctx, "storage.critical", key, alert) {
+			if p.fire(ctx, alerts.RuleStorageCritical, key, alert) {
 				count++
 			}
 		} else if prev < storageHighPct && pct >= storageHighPct {
@@ -187,14 +195,21 @@ func (p *ObservationPipeline) evaluateHostResources(
 				Title:    fmt.Sprintf("Filesystem %s high on %s", st.Description, obs.TargetID),
 				Message:  fmt.Sprintf("Usage crossed %.0f%%: %.1f%% of %d bytes", storageHighPct, pct, st.SizeBytes),
 				Source:   obs.TargetID,
-				Metadata: obs.PayloadJSON,
+				Metadata: evidence,
 			}
-			if p.fire(ctx, "storage.high", key, alert) {
+			if p.fire(ctx, alerts.RuleStorageHigh, key, alert) {
 				count++
 			}
 		}
 	}
 	return count
+}
+
+// evidenceJSON renders an alert's evidence for Metadata. The evidence types
+// are plain structs, which [json.Marshal] cannot fail on.
+func evidenceJSON(v any) string {
+	b, _ := json.Marshal(v)
+	return string(b)
 }
 
 // fire writes an alert if the (ruleID, entityKey) fingerprint isn't

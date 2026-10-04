@@ -52,5 +52,44 @@
   },
   "messages": {
     "validationFailed": "Validation failed"
+  },
+  "narrative": {
+    "interfaceDown": {
+      "summary": "Interface {{interface}} on {{device}} went down while it was administratively up.",
+      "summaryWithBgp": "Interface {{interface}} on {{device}} went down while it was administratively up. BGP sessions on {{device}} that dropped after it: {{peers}}.",
+      "evidence": {
+        "operStatus": "ifOperStatus went from up to {{status}} on ifIndex {{ifIndex}} at {{time}}.",
+        "bgpPeer": "BGP peer {{peer}} (AS{{as}}) left Established {{seconds}} s later."
+      },
+      "next": {
+        "down": "Check the physical link on {{interface}}: the cable, the optic and the far-end port, then whether the far-end device is up.",
+        "lowerLayerDown": "{{interface}} is waiting on the layer beneath it. Check the port, bundle or tunnel it runs over on {{device}}.",
+        "notPresent": "Part of {{interface}} is missing. Check that its module or transceiver is seated and recognised on {{device}}.",
+        "testing": "{{interface}} is in test mode. Find the test running on {{device}} and end it.",
+        "dormant": "{{interface}} is waiting for an external event, such as a standby or dial-on-demand link. Confirm on {{device}} that this is expected.",
+        "unknown": "{{device}} did not report why {{interface}} is down. Log in to {{device}} and read the interface status."
+      }
+    },
+    "bgpFlap": {
+      "summary": "The BGP session to {{peer}} (AS{{as}}) on {{device}} left Established, with no interface-down alert on {{device}} in the {{minutes}} minutes before it.",
+      "evidence": {
+        "state": "bgpPeerState went from established to {{state}} at {{time}}."
+      },
+      "next": {
+        "idle": "The session was reset. Read the BGP notification in the log on {{device}}: a hold timer expiry, a prefix limit or a configuration change.",
+        "connect": "{{device}} cannot complete a TCP connection to {{peer}}. Check reachability to {{peer}} and whether TCP port 179 is filtered between them.",
+        "active": "{{device}} cannot complete a TCP connection to {{peer}}. Check reachability to {{peer}} and whether TCP port 179 is filtered between them.",
+        "openSent": "TCP connects, but the BGP OPEN exchange with {{peer}} fails. Compare the AS number, hold time and authentication on both sides.",
+        "openConfirm": "TCP connects, but the BGP OPEN exchange with {{peer}} fails. Compare the AS number, hold time and authentication on both sides.",
+        "unknown": "Log in to {{device}} and read the state of the BGP session to {{peer}}."
+      }
+    },
+    "storage": {
+      "summary": "Filesystem {{filesystem}} on {{device}} is {{percent}}% full.",
+      "evidence": {
+        "usage": "{{used}} of {{size}} bytes in use at {{time}}."
+      },
+      "next": "Find what grew on {{filesystem}}, such as logs, core dumps or captures, then clear it or extend the filesystem."
+    }
   }
 }

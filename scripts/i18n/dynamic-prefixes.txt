@@ -225,3 +225,9 @@ help:sections.
 settings:users.roles.
 settings:users.providers.
 settings:sso.providers.
+
+# Alert narratives are message keys returned as data and rendered by the
+# alerts handler with TWithData(m.Key, m.Data); the next-check keys end in
+# the RFC 2863 ifOperStatus / RFC 4273 bgpPeerState label:
+#   internal/alerts/narrative: msg("interfaceDown.next."+operStatusName(...))
+api:narrative.

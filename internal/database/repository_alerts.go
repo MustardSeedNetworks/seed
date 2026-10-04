@@ -135,22 +135,35 @@ func (r *AlertRepository) List(ctx context.Context, opts alerts.ListOptions) ([]
 		args = append(args, opts.Offset)
 	}
 
-	rows, err := r.db.Query(ctx, query, args...)
+	out, err := r.queryAlerts(ctx, query, args...)
 	if err != nil {
 		return nil, fmt.Errorf("failed to list alerts: %w", err)
 	}
-	defer func() { _ = rows.Close() }()
+	return out, nil
+}
 
-	var out []*alerts.Alert
-	for rows.Next() {
-		a, scanErr := r.scanAlertFromRows(rows)
-		if scanErr != nil {
-			return nil, scanErr
-		}
-		out = append(out, a)
+// ListEffects returns the alerts whose root cause is one of causeIDs, oldest
+// first — the rest of each cluster a page of the inbox shows the cause of.
+func (r *AlertRepository) ListEffects(ctx context.Context, causeIDs []int64) ([]*alerts.Alert, error) {
+	if len(causeIDs) == 0 {
+		return nil, nil
 	}
-
-	return out, rows.Err()
+	args := make([]any, len(causeIDs))
+	for i, id := range causeIDs {
+		args[i] = id
+	}
+	out, err := r.queryAlerts(ctx, `
+		SELECT id, type, severity, title, message, source, device_id, acknowledged,
+		       acknowledged_by, acknowledged_at, resolved, resolved_at, created_at, metadata_json,
+		       rule, root_cause_id, escalation_stage, escalated_at, NULL
+		FROM alerts
+		WHERE root_cause_id IN (?`+strings.Repeat(", ?", len(causeIDs)-1)+`)
+		ORDER BY created_at, id
+	`, args...)
+	if err != nil {
+		return nil, fmt.Errorf("failed to list alert effects: %w", err)
+	}
+	return out, nil
 }
 
 // Acknowledge marks an alert as acknowledged.
@@ -280,7 +293,7 @@ func (r *AlertRepository) ListEscalating(ctx context.Context, rules []string) ([
 	for i, rule := range rules {
 		args[i] = rule
 	}
-	rows, err := r.db.Query(ctx, `
+	out, err := r.queryAlerts(ctx, `
 		SELECT id, type, severity, title, message, source, device_id, acknowledged,
 		       acknowledged_by, acknowledged_at, resolved, resolved_at, created_at, metadata_json,
 		       rule, root_cause_id, escalation_stage, escalated_at, NULL
@@ -291,6 +304,16 @@ func (r *AlertRepository) ListEscalating(ctx context.Context, rules []string) ([
 	`, args...)
 	if err != nil {
 		return nil, fmt.Errorf("failed to list escalating alerts: %w", err)
+	}
+	return out, nil
+}
+
+// queryAlerts runs a query selecting the scanAlertFromRows columns and reads
+// every row.
+func (r *AlertRepository) queryAlerts(ctx context.Context, query string, args ...any) ([]*alerts.Alert, error) {
+	rows, err := r.db.Query(ctx, query, args...)
+	if err != nil {
+		return nil, err
 	}
 	defer func() { _ = rows.Close() }()
 

@@ -3,6 +3,7 @@ package pipeline_test
 import (
 	"context"
 	"encoding/json"
+	"strings"
 	"testing"
 	"time"
 
@@ -85,7 +86,8 @@ func TestObservationScanOnce_InterfaceUpToDownEmitsAlert(t *testing.T) {
 			{"IfIndex": 1, "IfName": "Gi0/0", "IfAdmin": 1, "IfOper": 1},
 		}),
 		iftableObs("t-1", at(), []map[string]any{
-			{"IfIndex": 1, "IfName": "Gi0/0", "IfAdmin": 1, "IfOper": 2},
+			{"IfIndex": 1, "IfName": "Gi0/0", "IfAdmin": 1, "IfOper": 7},
+			{"IfIndex": 2, "IfName": "Gi0/1", "IfAdmin": 1, "IfOper": 1},
 		}),
 	}}
 	p, _ := pipeline.NewObservationPipeline(pipeline.ObservationConfig{
@@ -102,6 +104,8 @@ func TestObservationScanOnce_InterfaceUpToDownEmitsAlert(t *testing.T) {
 	if a.Severity != alertmodel.SeverityWarning || a.Type != alertmodel.TypeConnectivity {
 		t.Errorf("type/severity = %q/%q", a.Type, a.Severity)
 	}
+	// The evidence is the row that went down, not the table it came from.
+	assertEvidence(t, a, alertmodel.InterfaceDownEvidence{IfIndex: 1, IfName: "Gi0/0", IfOperStatus: 7})
 }
 
 func TestObservationScanOnce_AdminDownDoesNotAlert(t *testing.T) {
@@ -168,6 +172,7 @@ func TestObservationScanOnce_BGPLeavingEstablishedFires(t *testing.T) {
 	if alerts.created[0].Severity != alertmodel.SeverityError {
 		t.Errorf("BGP flap should be error severity, got %q", alerts.created[0].Severity)
 	}
+	assertEvidence(t, alerts.created[0], alertmodel.BGPPeerEvidence{RemoteAddr: "192.0.2.1", RemoteAS: 65001, State: 3})
 }
 
 func TestObservationScanOnce_BGPStillEstablishedNoAlert(t *testing.T) {
@@ -229,7 +234,24 @@ func TestObservationScanOnce_StorageCrosses95FiresCritical(t *testing.T) {
 	})
 	_ = p.ScanOnce(context.Background())
 	if len(alerts.created) != 1 || alerts.created[0].Severity != alertmodel.SeverityCritical {
-		t.Errorf("expected one critical alert, got %+v", alerts.created)
+		t.Fatalf("expected one critical alert, got %+v", alerts.created)
+	}
+	assertEvidence(t, alerts.created[0], alertmodel.StorageEvidence{
+		Index: 1, Description: "/", SizeBytes: 1000, UsedBytes: 970, UsedPercent: 97,
+	})
+}
+
+// assertEvidence checks an alert's Metadata decodes to exactly want.
+func assertEvidence[T comparable](t *testing.T, a *alertmodel.Alert, want T) {
+	t.Helper()
+	var got T
+	dec := json.NewDecoder(strings.NewReader(a.Metadata))
+	dec.DisallowUnknownFields()
+	if err := dec.Decode(&got); err != nil {
+		t.Fatalf("metadata %s: %v", a.Metadata, err)
+	}
+	if got != want {
+		t.Errorf("evidence = %+v, want %+v", got, want)
 	}
 }
 
