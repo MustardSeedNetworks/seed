@@ -1,5 +1,0 @@
-# One finding per line, by gitleaks fingerprint. Each entry says why it is
-# not a secret; the rules themselves stay as strict as before.
-
-# The INVALID_PASSWORD API error-code constant added in #2977.
-7f7f4a1e11308674476fa97dd859237ad7cbc7a4:internal/api/handlers_types.go:hardcoded-password:41

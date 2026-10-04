@@ -17,10 +17,10 @@
  * /api/v1/auth/webauthn/* — see internal/api/handlers_mfa.go.
  */
 
-import type { JSX } from 'react';
+import type { FormEvent, JSX } from 'react';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { api } from '../../api';
+import { ApiError, api } from '../../api';
 import { isPasskeySupported, registerPasskey } from '../../lib/webauthn';
 import { icon as iconTokens } from '../../styles/theme';
 import { Button } from '../ui/Button';
@@ -43,12 +43,33 @@ interface TotpSetup {
 }
 
 export function MfaCard(): JSX.Element {
-  const { t } = useTranslation('cards');
+  const { t } = useTranslation(['cards', 'common']);
   const [status, setStatus] = useState<MfaStatus | null>(null);
   const [setup, setSetup] = useState<TotpSetup | null>(null);
   const [code, setCode] = useState<string>('');
   const [error, setError] = useState<string>('');
   const [busy, setBusy] = useState<boolean>(false);
+  const [disabling, setDisabling] = useState<boolean>(false);
+  const [password, setPassword] = useState<string>('');
+  const [disableCode, setDisableCode] = useState<string>('');
+
+  // A wrong factor names itself with a code, so the reason reads in the UI's
+  // language rather than the browser's Accept-Language the server answered in.
+  const failureText = (err: unknown): string => {
+    if (err instanceof ApiError) {
+      switch (err.code) {
+        case 'INVALID_PASSWORD':
+          return t('mfa.wrongPassword');
+        case 'INVALID_MFA_CODE':
+          return t('mfa.wrongCode');
+        case 'RATE_LIMIT_EXCEEDED':
+          return t('mfa.tooManyAttempts');
+        default:
+          break;
+      }
+    }
+    return (err as Error).message;
+  };
 
   const refresh = async (): Promise<void> => {
     try {
@@ -87,7 +108,30 @@ export function MfaCard(): JSX.Element {
       setCode('');
       await refresh();
     } catch (err) {
-      setError((err as Error).message);
+      setError(failureText(err));
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const closeDisable = (): void => {
+    setDisabling(false);
+    setPassword('');
+    setDisableCode('');
+  };
+
+  const disableTotp = async (event: FormEvent<HTMLFormElement>): Promise<void> => {
+    event.preventDefault();
+    setError('');
+    setBusy(true);
+    try {
+      await api.post<unknown>('/api/v1/auth/totp/disable', { password, code: disableCode });
+      closeDisable();
+      await refresh();
+    } catch (err) {
+      // The factor stays enrolled, so keep the form open for another try.
+      setError(failureText(err));
+      setDisableCode('');
     } finally {
       setBusy(false);
     }
@@ -135,7 +179,11 @@ export function MfaCard(): JSX.Element {
     >
       <div className="stack-sm">
         <p className="body-small text-text-muted">{statusLine}</p>
-        {error ? <p className="body-small text-status-error">{error}</p> : null}
+        {error ? (
+          <p className="body-small text-status-error" data-testid="mfa-error">
+            {error}
+          </p>
+        ) : null}
 
         {setup ? (
           <div className="flex flex-col items-start gap-compact">
@@ -170,6 +218,63 @@ export function MfaCard(): JSX.Element {
           </div>
         ) : null}
 
+        {disabling ? (
+          <form
+            className="flex flex-col items-start gap-compact"
+            data-testid="mfa-disable-form"
+            onSubmit={(event) => {
+              disableTotp(event).catch(() => undefined);
+            }}
+          >
+            <p className="body-small text-text-muted">{t('mfa.disablePrompt')}</p>
+            <Input
+              id="mfa-disable-password"
+              label={t('mfa.password')}
+              type="password"
+              autoComplete="current-password"
+              value={password}
+              onChange={(event) => setPassword(event.target.value)}
+              data-testid="mfa-disable-password"
+            />
+            <Input
+              id="mfa-disable-code"
+              label={t('mfa.currentCode')}
+              type="text"
+              inputMode="numeric"
+              autoComplete="one-time-code"
+              maxLength={6}
+              value={disableCode}
+              onChange={(event) => setDisableCode(event.target.value)}
+              placeholder="123456"
+              data-testid="mfa-disable-code"
+            />
+            <div className="flex flex-wrap gap-compact">
+              <Button
+                type="submit"
+                tone="red"
+                size="sm"
+                disabled={busy || password === '' || disableCode.length !== 6}
+                data-testid="mfa-disable-confirm"
+              >
+                {t('mfa.disableTotp')}
+              </Button>
+              <Button
+                type="button"
+                variant="secondary"
+                size="sm"
+                disabled={busy}
+                data-testid="mfa-disable-cancel"
+                onClick={() => {
+                  closeDisable();
+                  setError('');
+                }}
+              >
+                {t('common:buttons.cancel')}
+              </Button>
+            </div>
+          </form>
+        ) : null}
+
         {/*
           Both enrolment choices sit in one flex row. `Button` wraps itself in a
           Tooltip span with `display: contents`, which generates no box, so the
@@ -189,6 +294,22 @@ export function MfaCard(): JSX.Element {
               }}
             >
               {t('mfa.setupTotp')}
+            </Button>
+          ) : null}
+
+          {status?.totpEnabled && !disabling ? (
+            <Button
+              variant="outline"
+              tone="red"
+              size="sm"
+              disabled={busy}
+              data-testid="mfa-disable-totp"
+              onClick={() => {
+                setError('');
+                setDisabling(true);
+              }}
+            >
+              {t('mfa.disableTotp')}
             </Button>
           ) : null}
 

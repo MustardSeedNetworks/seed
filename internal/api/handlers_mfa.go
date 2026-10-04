@@ -147,6 +147,15 @@ func (s *mfaAttemptStore) Reset() {
 	s.failures = make(map[string][]time.Time)
 }
 
+// sendReauthRejected answers a wrong password or code on a route that
+// already holds a valid session (TOTP verify and disable). It is a 403, not a
+// 401: the client reads 401 as an expired session, refreshes, replays the
+// request (spending a second attempt against mfaAttempts) and then signs the
+// user out over a typo (#2731). The code tells the UI which factor was wrong.
+func sendReauthRejected(w http.ResponseWriter, logger *slog.Logger, code, message string) {
+	sendErrorResponseWithDetails(w, logger, http.StatusForbidden, code, message, "")
+}
+
 // mfaAttempts is a package-level singleton used by all MFA handlers.
 // It's safe for concurrent use.
 var mfaAttempts = newMFAAttemptStore() //nolint:gochecknoglobals // process-wide rate limit
@@ -295,8 +304,7 @@ func (s *Server) handleTOTPVerify(w http.ResponseWriter, r *http.Request) {
 	if err != nil || !valid {
 		mfaAttempts.RecordFailure(username)
 		recordMFAAuditEvent(r, username, mfaFactorTOTP, "rejected")
-		sendErrorResponseWithDetails(w, logger, http.StatusUnauthorized,
-			ErrCodeUnauthorized, localizer.T("errors.mfa.invalidCode"), "")
+		sendReauthRejected(w, logger, ErrCodeInvalidMFACode, localizer.T("errors.mfa.invalidCode"))
 		return
 	}
 
@@ -357,8 +365,7 @@ func (s *Server) handleTOTPDisable(w http.ResponseWriter, r *http.Request) {
 	if err := s.authManager().VerifyPasswordOnly(r.Context(), username, req.Password); err != nil {
 		mfaAttempts.RecordFailure(username)
 		recordMFAAuditEvent(r, username, mfaFactorTOTP, "bad_password")
-		sendErrorResponseWithDetails(w, logger, http.StatusUnauthorized,
-			ErrCodeUnauthorized, localizer.T("errors.auth.invalidCredentials"), "")
+		sendReauthRejected(w, logger, ErrCodePasswordInvalid, localizer.T("errors.auth.invalidCredentials"))
 		return
 	}
 	secret, enabled, getErr := s.db().GetTOTP(r.Context(), username)
@@ -372,8 +379,7 @@ func (s *Server) handleTOTPDisable(w http.ResponseWriter, r *http.Request) {
 	if err != nil || !valid {
 		mfaAttempts.RecordFailure(username)
 		recordMFAAuditEvent(r, username, mfaFactorTOTP, "bad_code")
-		sendErrorResponseWithDetails(w, logger, http.StatusUnauthorized,
-			ErrCodeUnauthorized, localizer.T("errors.mfa.invalidCode"), "")
+		sendReauthRejected(w, logger, ErrCodeInvalidMFACode, localizer.T("errors.mfa.invalidCode"))
 		return
 	}
 

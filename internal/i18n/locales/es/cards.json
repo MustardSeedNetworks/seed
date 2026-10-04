@@ -479,7 +479,14 @@
     "scanAndEnter": "Escanee con una aplicación de autenticación y luego ingrese un código",
     "verifyAndEnable": "Verificar y activar",
     "addPasskey": "Añadir llave de acceso",
-    "passkeyUnsupported": "Este navegador no admite claves de acceso."
+    "passkeyUnsupported": "Este navegador no admite claves de acceso.",
+    "disableTotp": "Desactivar TOTP",
+    "disablePrompt": "Ingrese su contraseña y un código actual para desactivar TOTP.",
+    "password": "Contraseña",
+    "currentCode": "Código actual",
+    "wrongPassword": "Contraseña incorrecta. TOTP sigue activado.",
+    "wrongCode": "Código incorrecto o expirado. Pruebe con el siguiente.",
+    "tooManyAttempts": "Demasiados intentos. Espere un minuto y vuelva a intentarlo."
   },
   "pathDiscovery": {
     "copy": "Copiar",

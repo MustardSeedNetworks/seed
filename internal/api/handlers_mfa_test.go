@@ -145,6 +145,17 @@ func codeNow(t *testing.T, secret string) string {
 	return code
 }
 
+// assertReauthRejected checks a wrong factor on an authenticated MFA route:
+// 403 with the code naming the factor, never 401 (#2731).
+func assertReauthRejected(t *testing.T, w *httptest.ResponseRecorder, code string) {
+	t.Helper()
+	require.Equal(t, http.StatusForbidden, w.Code, "body: %s", w.Body.String())
+	var body api.ErrorResponse
+	require.NoError(t, json.NewDecoder(w.Body).Decode(&body))
+	assert.Equal(t, code, body.Code)
+	assert.NotEmpty(t, body.Error)
+}
+
 // TestTOTPEnrollmentFlow covers setup → verify → login-with-totp.
 func TestTOTPEnrollmentFlow(t *testing.T) {
 	f := newMFAFixture(t)
@@ -196,7 +207,9 @@ func TestTOTPEnrollmentFlow(t *testing.T) {
 	assert.False(t, final.MFARequired)
 }
 
-// TestTOTPVerify_WrongCode returns 401 and does NOT flip totp_enabled.
+// TestTOTPVerify_WrongCode returns 403 INVALID_MFA_CODE and does NOT flip
+// totp_enabled. Not 401: the session is valid, and the client signs the user
+// out on a 401 (#2731).
 func TestTOTPVerify_WrongCode(t *testing.T) {
 	f := newMFAFixture(t)
 
@@ -205,7 +218,7 @@ func TestTOTPVerify_WrongCode(t *testing.T) {
 
 	w = f.post(t, "/api/v1/auth/totp/verify",
 		map[string]string{"code": "000000"}, f.token)
-	assert.Equal(t, http.StatusUnauthorized, w.Code)
+	assertReauthRejected(t, w, api.ErrCodeInvalidMFACode)
 
 	_, enabled, err := f.db.GetTOTP(context.Background(), "admin")
 	require.NoError(t, err)
@@ -260,13 +273,21 @@ func TestTOTPDisableRequiresBothFactors(t *testing.T) {
 		map[string]string{"code": codeNow(t, setup.Secret)}, f.token)
 	require.Equal(t, http.StatusOK, w.Code)
 
-	// Wrong password → 401, still enabled
+	// Each wrong factor is named, and leaves TOTP enabled.
 	w = f.post(t, "/api/v1/auth/totp/disable", map[string]string{
 		"password": "WRONG",
 		"code":     codeNow(t, setup.Secret),
 	}, f.token)
-	assert.Equal(t, http.StatusUnauthorized, w.Code)
+	assertReauthRejected(t, w, api.ErrCodePasswordInvalid)
 	_, enabled, _ := f.db.GetTOTP(context.Background(), "admin")
+	assert.True(t, enabled)
+
+	w = f.post(t, "/api/v1/auth/totp/disable", map[string]string{
+		"password": testUserPassword,
+		"code":     "000000",
+	}, f.token)
+	assertReauthRejected(t, w, api.ErrCodeInvalidMFACode)
+	_, enabled, _ = f.db.GetTOTP(context.Background(), "admin")
 	assert.True(t, enabled)
 
 	// Correct password + correct code → disabled
