@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/MustardSeedNetworks/seed/internal/alerts"
+	"github.com/MustardSeedNetworks/seed/internal/alerts/escalation"
 )
 
 // ErrNotConfigured is returned by SendTest for a channel with no receiver.
@@ -35,6 +36,7 @@ type Manager struct {
 
 	mu      sync.Mutex
 	current map[alerts.Channel]*Notifier
+	ladders []escalation.Ladder
 	stopped bool
 }
 
@@ -136,6 +138,36 @@ func (m *Manager) receivers() []*Notifier {
 	}
 	slices.SortFunc(out, func(a, b *Notifier) int { return strings.Compare(string(a.channel), string(b.channel)) })
 	return out
+}
+
+// ApplyEscalations replaces the escalation ladders (P-B2). They live beside
+// the receivers because both are the operator's delivery policy and both are
+// re-read on the same settings write.
+func (m *Manager) ApplyEscalations(ladders []escalation.Ladder) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	m.ladders = slices.Clone(ladders)
+}
+
+// Escalations returns the current escalation ladders.
+func (m *Manager) Escalations() []escalation.Ladder {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	return slices.Clone(m.ladders)
+}
+
+// Escalate sends alert again on channels, the stage of its rule's escalation
+// ladder that is due (P-B2). A channel with no receiver configured is skipped:
+// the ladder names channels, and the operator may have turned one off since.
+// Each attempt's outcome overwrites the channel's delivery state on the alert,
+// so the inbox shows how the latest send went.
+func (m *Manager) Escalate(ctx context.Context, alert *alerts.Alert, channels []alerts.Channel) {
+	for _, n := range m.receivers() {
+		if !slices.Contains(channels, n.Channel()) {
+			continue
+		}
+		n.Deliver(ctx, alert)
+	}
 }
 
 // Status is each configured channel's delivery counters.

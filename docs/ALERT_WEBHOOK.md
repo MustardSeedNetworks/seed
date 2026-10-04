@@ -8,7 +8,9 @@ It is one of two transports; the other is email through your own mail relay
 ([ALERT_EMAIL.md](ALERT_EMAIL.md)). Each records its own outcome on the alert,
 so a working webhook cannot hide a relay that refuses every message. There is
 no per-user delivery preference, no on-call schedule and no digest batching —
-those belong to the notification system you already operate.
+those belong to the notification system you already operate. An alert nobody
+acknowledges can be sent again on a per-rule schedule
+([ALERT_ESCALATION.md](ALERT_ESCALATION.md)).
 
 ## Enabling it
 

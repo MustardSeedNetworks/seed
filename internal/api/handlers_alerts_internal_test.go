@@ -257,3 +257,49 @@ func TestHandleAlerts_ServesEachChannelsDelivery(t *testing.T) {
 		}
 	}
 }
+
+// An escalation ladder is keyed by the alert's rule, so the inbox serves the
+// rule, and the stage the alert was last escalated to (P-B2). An alert that
+// was never escalated carries neither escalation key.
+func TestHandleAlerts_ServesRuleAndEscalation(t *testing.T) {
+	s := newAlertsTestServer(t)
+	ctx := context.Background()
+	escalated := &alerts.Alert{
+		Type: alerts.TypeConnectivity, Severity: alerts.SeverityError,
+		Title: "Interface eth0 down", Source: "t-1", Rule: "iface.down",
+	}
+	if err := s.db().Alerts().Create(ctx, escalated); err != nil {
+		t.Fatalf("create: %v", err)
+	}
+	quiet := seedAlert(t, s.db(), alerts.SeverityWarning)
+	at := time.Date(2026, 10, 4, 7, 16, 47, 0, time.UTC)
+	if moved, err := s.db().Alerts().AdvanceEscalation(ctx, escalated.ID, 0, nil, 2, at); err != nil || !moved {
+		t.Fatalf("advance: %v, %v", moved, err)
+	}
+
+	req := httptest.NewRequest(http.MethodGet, APIVersionPrefix+"/alerts", http.NoBody)
+	w := httptest.NewRecorder()
+	s.handleAlerts(w, req)
+	var resp struct {
+		Alerts []map[string]any `json:"alerts"`
+	}
+	if err := json.Unmarshal(w.Body.Bytes(), &resp); err != nil {
+		t.Fatalf("decode: %v", err)
+	}
+	for _, a := range resp.Alerts {
+		switch int64(a["id"].(float64)) {
+		case escalated.ID:
+			if a["rule"] != "iface.down" || a["escalationStage"] != float64(2) ||
+				a["escalatedAt"] != "2026-10-04T07:16:47Z" {
+				t.Errorf("escalated alert serves rule %v, stage %v at %v",
+					a["rule"], a["escalationStage"], a["escalatedAt"])
+			}
+		case quiet:
+			for _, key := range []string{"rule", "escalationStage", "escalatedAt"} {
+				if v, ok := a[key]; ok {
+					t.Errorf("alert with no rule and no escalation serves %s = %v", key, v)
+				}
+			}
+		}
+	}
+}

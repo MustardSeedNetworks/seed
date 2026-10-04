@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/MustardSeedNetworks/seed/internal/alerts"
@@ -75,7 +76,7 @@ func (r *AlertRepository) Get(ctx context.Context, id int64) (*alerts.Alert, err
 	row := r.db.QueryRow(ctx, `
 		SELECT id, type, severity, title, message, source, device_id, acknowledged,
 		       acknowledged_by, acknowledged_at, resolved, resolved_at, created_at, metadata_json,
-		       rule, root_cause_id, `+deliveriesColumn+`
+		       rule, root_cause_id, escalation_stage, escalated_at, `+deliveriesColumn+`
 		FROM alerts WHERE id = ?
 	`, id)
 
@@ -88,7 +89,7 @@ func (r *AlertRepository) List(ctx context.Context, opts alerts.ListOptions) ([]
 	query := `
 		SELECT id, type, severity, title, message, source, device_id, acknowledged,
 		       acknowledged_by, acknowledged_at, resolved, resolved_at, created_at, metadata_json,
-		       rule, root_cause_id, ` + deliveriesColumn + `
+		       rule, root_cause_id, escalation_stage, escalated_at, ` + deliveriesColumn + `
 		FROM alerts
 		WHERE 1=1
 	`
@@ -268,6 +269,69 @@ func (r *AlertRepository) RecordDelivery(
 	return nil
 }
 
+// ListEscalating returns the open alerts — neither acknowledged nor resolved —
+// raised by any of rules, oldest first (P-B2). It is the escalator's read, so
+// it skips the per-channel delivery history the inbox needs.
+func (r *AlertRepository) ListEscalating(ctx context.Context, rules []string) ([]*alerts.Alert, error) {
+	if len(rules) == 0 {
+		return nil, nil
+	}
+	args := make([]any, len(rules))
+	for i, rule := range rules {
+		args[i] = rule
+	}
+	rows, err := r.db.Query(ctx, `
+		SELECT id, type, severity, title, message, source, device_id, acknowledged,
+		       acknowledged_by, acknowledged_at, resolved, resolved_at, created_at, metadata_json,
+		       rule, root_cause_id, escalation_stage, escalated_at, NULL
+		FROM alerts
+		WHERE acknowledged = 0 AND resolved = 0
+		  AND rule IN (?`+strings.Repeat(", ?", len(rules)-1)+`)
+		ORDER BY created_at, id
+	`, args...)
+	if err != nil {
+		return nil, fmt.Errorf("failed to list escalating alerts: %w", err)
+	}
+	defer func() { _ = rows.Close() }()
+
+	var out []*alerts.Alert
+	for rows.Next() {
+		a, scanErr := r.scanAlertFromRows(rows)
+		if scanErr != nil {
+			return nil, scanErr
+		}
+		out = append(out, a)
+	}
+	return out, rows.Err()
+}
+
+// AdvanceEscalation records that alert id was sent at stage at at (P-B2). It
+// is a compare-and-set on the stage and time the caller read, and it requires
+// the alert to be open, so an alert acknowledged or resolved after the read,
+// or advanced by another pass, is left alone and false is returned.
+func (r *AlertRepository) AdvanceEscalation(
+	ctx context.Context,
+	id int64,
+	fromStage int,
+	fromAt *time.Time,
+	stage int,
+	at time.Time,
+) (bool, error) {
+	result, err := r.db.Exec(ctx, `
+		UPDATE alerts SET escalation_stage = ?, escalated_at = ?
+		WHERE id = ? AND acknowledged = 0 AND resolved = 0
+		  AND escalation_stage = ? AND escalated_at IS ?
+	`, stage, at.UTC().Format(time.RFC3339), id, fromStage, timeToString(fromAt))
+	if err != nil {
+		return false, fmt.Errorf("failed to advance alert escalation: %w", err)
+	}
+	n, err := result.RowsAffected()
+	if err != nil {
+		return false, fmt.Errorf("failed to get rows affected: %w", err)
+	}
+	return n == 1, nil
+}
+
 // Delete removes an alert by ID.
 func (r *AlertRepository) Delete(ctx context.Context, id int64) error {
 	result, err := r.db.Exec(ctx, `DELETE FROM alerts WHERE id = ?`, id)
@@ -373,10 +437,11 @@ func scanAlertInto(scan func(...any) error) (*alerts.Alert, error) {
 	var source, deviceID, ackedBy, ackedAt, resolvedAt, metadata, rule sql.NullString
 	var deliveries sql.NullString
 	var rootCauseID sql.NullInt64
+	var escalatedAt sql.NullString
 
 	if err := scan(&a.ID, &a.Type, &a.Severity, &a.Title, &a.Message, &source, &deviceID,
 		&acked, &ackedBy, &ackedAt, &resolved, &resolvedAt, &createdAt, &metadata,
-		&rule, &rootCauseID, &deliveries); err != nil {
+		&rule, &rootCauseID, &a.EscalationStage, &escalatedAt, &deliveries); err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, err
 		}
@@ -409,6 +474,11 @@ func scanAlertInto(scan func(...any) error) (*alerts.Alert, error) {
 	if resolvedAt.Valid {
 		if t, parseErr := time.Parse(time.RFC3339, resolvedAt.String); parseErr == nil {
 			a.ResolvedAt = &t
+		}
+	}
+	if escalatedAt.Valid {
+		if t, parseErr := time.Parse(time.RFC3339, escalatedAt.String); parseErr == nil {
+			a.EscalatedAt = &t
 		}
 	}
 	if deliveries.Valid {

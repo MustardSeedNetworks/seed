@@ -242,6 +242,17 @@ func encodeAlerts(alerts []*alerts.Alert) []map[string]any {
 		if len(a.Deliveries) > 0 {
 			row["deliveries"] = encodeDeliveries(a.Deliveries)
 		}
+		// The rule is what an escalation ladder is keyed by (P-B2), so the
+		// operator reads it here to configure one.
+		if a.Rule != "" {
+			row["rule"] = a.Rule
+		}
+		if a.EscalationStage > 0 {
+			row["escalationStage"] = a.EscalationStage
+		}
+		if a.EscalatedAt != nil {
+			row["escalatedAt"] = formatTime(*a.EscalatedAt)
+		}
 		out = append(out, row)
 	}
 	return out

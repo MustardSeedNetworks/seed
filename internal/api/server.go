@@ -731,6 +731,8 @@ func (s *Server) initAlertPipelines(db *database.DB) {
 	} else if regErr := s.registerEngineIfLicensed(p); regErr != nil {
 		logger.Warn("observation alert pipeline registry registration failed", "error", regErr)
 	}
+
+	s.initAlertEscalation(db, logger)
 }
 
 // initRetentionEngine constructs the unified retention engine and

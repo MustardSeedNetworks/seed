@@ -404,6 +404,7 @@ export interface SNMPConfig {
 export interface AlertsConfig {
   webhook: AlertWebhookConfig;
   email: AlertEmailConfig;
+  escalations?: AlertEscalationConfig[];
 }
 export interface AlertWebhookConfig {
   url: string;
@@ -417,6 +418,15 @@ export interface AlertEmailConfig {
   password: string;
   from: string;
   to?: string[];
+}
+export interface AlertEscalationConfig {
+  rule: string;
+  stages: AlertEscalationStage[];
+  repeat_seconds?: number;
+}
+export interface AlertEscalationStage {
+  after_seconds: number;
+  channels: string[];
 }
 export interface FABOptionsConfig {
   run_link: boolean;

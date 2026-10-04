@@ -20,6 +20,10 @@ CREATE INDEX idx_alerts_created ON alerts(created_at);
 -- index: idx_alerts_device
 CREATE INDEX idx_alerts_device ON alerts(device_id);
 
+-- index: idx_alerts_open_rule
+CREATE INDEX idx_alerts_open_rule
+    ON alerts(rule) WHERE acknowledged = 0 AND resolved = 0;
+
 -- index: idx_alerts_resolved
 CREATE INDEX idx_alerts_resolved ON alerts(resolved);
 
@@ -710,7 +714,7 @@ CREATE TABLE alerts (
 				resolved INTEGER DEFAULT 0 CHECK (resolved IN (0,1)),
 				resolved_at TEXT,
 				created_at TEXT NOT NULL,
-				metadata_json TEXT, client_id TEXT NOT NULL DEFAULT 'default' REFERENCES clients(id), rule TEXT NOT NULL DEFAULT '', root_cause_id INTEGER REFERENCES alerts(id) ON DELETE SET NULL,
+				metadata_json TEXT, client_id TEXT NOT NULL DEFAULT 'default' REFERENCES clients(id), rule TEXT NOT NULL DEFAULT '', root_cause_id INTEGER REFERENCES alerts(id) ON DELETE SET NULL, escalation_stage INTEGER NOT NULL DEFAULT 0, escalated_at TEXT,
 				FOREIGN KEY (device_id) REFERENCES devices(id) ON DELETE SET NULL
 			) STRICT;
 
