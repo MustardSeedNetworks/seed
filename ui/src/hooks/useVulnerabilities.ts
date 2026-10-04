@@ -34,7 +34,7 @@
  * ```
  */
 
-import { useCallback, useRef, useState } from 'react';
+import { useRef, useState } from 'react';
 import { api } from '../api';
 import { getJob, isTerminalJobState, submitJob } from '../lib/jobsClient';
 import { LogComponents, logger } from '../lib/logger';
@@ -135,6 +135,86 @@ function normalizeSeverityFilter(severity: string): SeverityFilter | null {
   }
 }
 
+async function fetchStatus(): Promise<VulnerabilityScannerStatus | null> {
+  try {
+    return await api.get<VulnerabilityScannerStatus>('/api/v1/security/vulnerabilities/status');
+  } catch (error) {
+    logger.error(LogComponents.VULN, 'Failed to fetch vulnerability status', error, {
+      endpoint: '/api/v1/security/vulnerabilities/status',
+    });
+    return null;
+  }
+}
+
+async function fetchResults(severity?: string): Promise<DeviceVulnerabilities[]> {
+  try {
+    const params = new URLSearchParams();
+    if (severity) {
+      const validSeverity = normalizeSeverityFilter(severity);
+      if (!validSeverity) {
+        throw new Error('Invalid severity filter');
+      }
+      params.set('severity', validSeverity);
+    }
+
+    const endpoint =
+      params.size > 0
+        ? `/api/v1/security/vulnerabilities/results?${params.toString()}`
+        : '/api/v1/security/vulnerabilities/results';
+    const data = await api.get<ResultsResponse>(endpoint);
+    return data.results || [];
+  } catch (error) {
+    logger.error(LogComponents.VULN, 'Failed to fetch vulnerability results', error, {
+      endpoint: '/api/v1/security/vulnerabilities/results',
+      severity,
+    });
+    return [];
+  }
+}
+
+async function fetchDeviceVulnerabilities(ip: string): Promise<DeviceVulnerabilities | null> {
+  try {
+    const trimmed = ip.trim();
+    if (!isValidIp(trimmed)) {
+      throw new Error('Invalid IP address');
+    }
+
+    const params = new URLSearchParams({ ip: trimmed });
+    return await api.get<DeviceVulnerabilities>(
+      `/api/v1/security/vulnerabilities/device?${params.toString()}`,
+    );
+  } catch (error) {
+    logger.error(LogComponents.VULN, 'Failed to fetch vulnerabilities for device', error, {
+      ip,
+    });
+    return null;
+  }
+}
+
+async function fetchSettings(): Promise<VulnerabilityScannerConfig | null> {
+  try {
+    return await api.get<VulnerabilityScannerConfig>('/api/v1/security/vulnerabilities/settings');
+  } catch (error) {
+    logger.error(LogComponents.VULN, 'Failed to fetch vulnerability settings', error, {
+      endpoint: '/api/v1/security/vulnerabilities/settings',
+    });
+    return null;
+  }
+}
+
+async function updateSettings(settings: Partial<VulnerabilityScannerConfig>): Promise<boolean> {
+  try {
+    await api.put<{ status: string }>('/api/v1/security/vulnerabilities/settings', settings);
+    return true;
+  } catch (error) {
+    logger.error(LogComponents.VULN, 'Failed to update vulnerability settings', error, {
+      endpoint: '/api/v1/security/vulnerabilities/settings',
+      updates: settings,
+    });
+    return false;
+  }
+}
+
 /**
  * Custom hook for managing vulnerability scanning operations.
  *
@@ -149,20 +229,18 @@ export function useVulnerabilities() {
   // Resolvers for submitted scans, keyed by job id, settled by the job stream.
   const waitersRef = useRef(new Map<string, (job: JobResponse) => void>());
 
-  useJobEvents(
-    useCallback((job: JobResponse) => {
-      const settle = waitersRef.current.get(job.id);
-      if (settle && isTerminalJobState(job.state)) {
-        waitersRef.current.delete(job.id);
-        settle(job);
-      }
-    }, []),
-  );
+  useJobEvents((job: JobResponse) => {
+    const settle = waitersRef.current.get(job.id);
+    if (settle && isTerminalJobState(job.state)) {
+      waitersRef.current.delete(job.id);
+      settle(job);
+    }
+  });
 
   // finished resolves with the job's terminal snapshot. The stream is
   // live-only, so a job that finished before its waiter was registered is
   // caught by the one GET issued after registration.
-  const finished = useCallback((submitted: JobResponse): Promise<JobResponse> => {
+  const finished = (submitted: JobResponse): Promise<JobResponse> => {
     if (isTerminalJobState(submitted.state)) {
       return Promise.resolve(submitted);
     }
@@ -180,124 +258,36 @@ export function useVulnerabilities() {
           reject(error);
         });
     });
-  }, []);
+  };
 
-  const triggerScan = useCallback(
-    async (ip?: string): Promise<boolean> => {
-      setIsScanning(true);
-      setScanError(null);
+  const triggerScan = async (ip?: string): Promise<boolean> => {
+    setIsScanning(true);
+    setScanError(null);
 
-      try {
-        const params: VulnScanRequest = {};
-        if (ip) {
-          const trimmed = ip.trim();
-          if (!isValidIp(trimmed)) {
-            throw new Error('Invalid IP address');
-          }
-          params.ip = trimmed;
-        }
-
-        const job = await finished(await submitJob({ kind: 'vuln-scan', params }));
-        if (job.state !== 'succeeded') {
-          throw new Error(job.error ?? `Vulnerability scan ${job.state}`);
-        }
-        return true;
-      } catch (error) {
-        const message = error instanceof Error ? error.message : 'Unknown error';
-        setScanError(message);
-        return false;
-      } finally {
-        setIsScanning(false);
-      }
-    },
-    [finished],
-  );
-
-  const fetchStatus = useCallback(async (): Promise<VulnerabilityScannerStatus | null> => {
-    try {
-      return await api.get<VulnerabilityScannerStatus>('/api/v1/security/vulnerabilities/status');
-    } catch (error) {
-      logger.error(LogComponents.VULN, 'Failed to fetch vulnerability status', error, {
-        endpoint: '/api/v1/security/vulnerabilities/status',
-      });
-      return null;
-    }
-  }, []);
-
-  const fetchResults = useCallback(async (severity?: string): Promise<DeviceVulnerabilities[]> => {
-    try {
-      const params = new URLSearchParams();
-      if (severity) {
-        const validSeverity = normalizeSeverityFilter(severity);
-        if (!validSeverity) {
-          throw new Error('Invalid severity filter');
-        }
-        params.set('severity', validSeverity);
-      }
-
-      const endpoint =
-        params.size > 0
-          ? `/api/v1/security/vulnerabilities/results?${params.toString()}`
-          : '/api/v1/security/vulnerabilities/results';
-      const data = await api.get<ResultsResponse>(endpoint);
-      return data.results || [];
-    } catch (error) {
-      logger.error(LogComponents.VULN, 'Failed to fetch vulnerability results', error, {
-        endpoint: '/api/v1/security/vulnerabilities/results',
-        severity,
-      });
-      return [];
-    }
-  }, []);
-
-  const fetchDeviceVulnerabilities = useCallback(
-    async (ip: string): Promise<DeviceVulnerabilities | null> => {
-      try {
+    const scan = async (): Promise<boolean> => {
+      const params: VulnScanRequest = {};
+      if (ip) {
         const trimmed = ip.trim();
         if (!isValidIp(trimmed)) {
           throw new Error('Invalid IP address');
         }
-
-        const params = new URLSearchParams({ ip: trimmed });
-        return await api.get<DeviceVulnerabilities>(
-          `/api/v1/security/vulnerabilities/device?${params.toString()}`,
-        );
-      } catch (error) {
-        logger.error(LogComponents.VULN, 'Failed to fetch vulnerabilities for device', error, {
-          ip,
-        });
-        return null;
+        params.ip = trimmed;
       }
-    },
-    [],
-  );
 
-  const fetchSettings = useCallback(async (): Promise<VulnerabilityScannerConfig | null> => {
-    try {
-      return await api.get<VulnerabilityScannerConfig>('/api/v1/security/vulnerabilities/settings');
-    } catch (error) {
-      logger.error(LogComponents.VULN, 'Failed to fetch vulnerability settings', error, {
-        endpoint: '/api/v1/security/vulnerabilities/settings',
-      });
-      return null;
-    }
-  }, []);
-
-  const updateSettings = useCallback(
-    async (settings: Partial<VulnerabilityScannerConfig>): Promise<boolean> => {
-      try {
-        await api.put<{ status: string }>('/api/v1/security/vulnerabilities/settings', settings);
-        return true;
-      } catch (error) {
-        logger.error(LogComponents.VULN, 'Failed to update vulnerability settings', error, {
-          endpoint: '/api/v1/security/vulnerabilities/settings',
-          updates: settings,
-        });
-        return false;
+      const job = await finished(await submitJob({ kind: 'vuln-scan', params }));
+      if (job.state !== 'succeeded') {
+        throw new Error(job.error ?? `Vulnerability scan ${job.state}`);
       }
-    },
-    [],
-  );
+      return true;
+    };
+
+    const ok = await scan().catch((error: unknown) => {
+      setScanError(error instanceof Error ? error.message : 'Unknown error');
+      return false;
+    });
+    setIsScanning(false);
+    return ok;
+  };
 
   return {
     triggerScan,

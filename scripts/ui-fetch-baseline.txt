@@ -24,8 +24,8 @@ ui/src/hooks/useAuth.ts:338  # mutating but CSRF-exempt by design (isCSRFExemptP
 ui/src/hooks/useAuth.ts:403  # mutating but CSRF-exempt by design (isCSRFExemptPath) — correct as a raw fetch
 ui/src/hooks/useAuth.ts:437  # mutating but CSRF-exempt by design (isCSRFExemptPath) — correct as a raw fetch
 ui/src/hooks/useCapabilities.ts:45  # read-only — bypasses the client 401 refresh/retry
-ui/src/hooks/useLogs.ts:167  # read-only — bypasses the client 401 refresh/retry
-ui/src/hooks/useLogs.ts:187  # read-only — bypasses the client 401 refresh/retry
+ui/src/hooks/useLogs.ts:199  # read-only — bypasses the client 401 refresh/retry
+ui/src/hooks/useLogs.ts:217  # read-only — bypasses the client 401 refresh/retry
 ui/src/hooks/useNetworkDiscoveryAutoScan.ts:54  # read-only — bypasses the client 401 refresh/retry
 ui/src/hooks/useNetworkDiscoveryAutoScan.ts:61  # read-only — bypasses the client 401 refresh/retry
 ui/src/hooks/useNetworkFetchers.ts:110  # read-only — bypasses the client 401 refresh/retry
