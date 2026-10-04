@@ -343,6 +343,10 @@ func NewServer(
 	// Initialize database services
 	s.dbConn = db
 
+	// Discovery and the trap listener read SNMP credentials from the vault;
+	// the listener is built in initDatabaseDependentServices.
+	s.snmpCreds = newDiscoverySNMPCredentials(cfg, db)
+
 	s.initDatabaseDependentServices(db)
 
 	// Security fix #891: Record setup mode start time
@@ -366,7 +370,7 @@ func NewServer(
 	s.initSSEAndLogging(db)
 
 	// Initialize discovery service and pipeline
-	s.initDiscovery(cfg, db)
+	s.initDiscovery(cfg)
 
 	// Wire the ADR-0020 use-cases now the discovery components exist.
 	s.initUseCases()
@@ -602,7 +606,7 @@ func (s *Server) initProbeEngine(db *database.DB) {
 const probeSchedulerTick = 5 * time.Second
 
 // initListeners wires the passive-ingress listeners (syslog UDP +
-// SNMPv2c traps) into the engine registry. Both are opt-in via env
+// SNMP traps) into the engine registry. Both are opt-in via env
 // variables — operators set SEED_SYSLOG_BIND / SEED_SNMP_TRAP_BIND
 // (e.g. ":514", ":162") to enable them. Default is off because
 // binding to <1024 requires elevated privileges and we don't want
@@ -628,9 +632,10 @@ func (s *Server) initListeners(db *database.DB) {
 
 	if addr := os.Getenv("SEED_SNMP_TRAP_BIND"); addr != "" {
 		l, err := snmptrap.New(snmptrap.Config{
-			BindAddr: addr,
-			Sink:     persistSink,
-			Logger:   logger,
+			BindAddr:    addr,
+			Sink:        persistSink,
+			Credentials: s.snmpCreds,
+			Logger:      logger,
 		})
 		if err != nil {
 			logger.Warn("snmp trap listener init failed", "error", err)

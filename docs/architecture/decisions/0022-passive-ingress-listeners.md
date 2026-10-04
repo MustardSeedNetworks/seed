@@ -1,6 +1,7 @@
 # ADR-0022: Passive-ingress listeners share the engine lifecycle and a sink seam
 
 **Status:** Accepted — 2026-06-10 · as-built (documents `internal/listener`, shipped during the V1.0 NMS expansion)
+· amended 2026-10-04 (SNMPv3 traps, P-B4)
 
 ## Context
 
@@ -71,8 +72,9 @@ a port.
   default bind `:514`, remappable for unprivileged hosts. **TLS/TCP syslog
   (RFC 5425) is deferred** — it is a separate `Listener` type, not a flag on this
   one.
-- **`internal/listener/snmptrap`** — SNMPv2c traps over UDP/162. **SNMPv3 (auth/priv)
-  traps are out of scope for V1.0.**
+- **`internal/listener/snmptrap`** — SNMP traps over UDP/162: v1 and v2c traps
+  and informs, and SNMPv3 traps (see the 2026-10-04 amendment below). Event kind
+  `snmp-trap` for every version.
 - **`internal/listener/sink`** — default `Sink` over `database.ListenerEvents()`
   (`listener_events`, migration `00001_init.sql`).
 - **Wiring** — `initListeners` in `internal/api/server.go` constructs the persist
@@ -82,3 +84,51 @@ a port.
   that resolves `SourceAddr` against `polling_targets` / `discovered_devices`
   lands. Events persist and flow to the alerts pipeline; they are simply not yet
   attributed to a known device.
+
+## Amendment 2026-10-04: SNMPv3 traps (P-B4, seed#1376)
+
+The original cut left SNMPv3 out because gosnmp's trap code was flagged as
+unreliable for v3. The parity program puts v3 trap receipt in v1, so we
+re-tested gosnmp v1.44.0 against net-snmp 5.9.4's `snmptrap` and `snmpinform`.
+
+**USM decoding is sound and is kept.** Traps at authPriv with SHA/AES-128,
+SHA-256/AES-256-C and SHA/DES, and at authNoPriv with SHA-512, all
+authenticate and decrypt. Keys are localized against each sender's engine ID,
+and a wrong passphrase is rejected.
+
+**`gosnmp.TrapListener` is not a safe v3 receiver, so it is no longer used.**
+The re-test found three gaps:
+
+1. It authenticates at whatever level the message claims. A noAuthNoPriv trap
+   that names an authPriv user is accepted without authentication. Anyone who
+   knows a user name can inject traps under it.
+2. It does not check the time window (RFC 3414 3.2.7). An authenticated trap
+   captured once can be replayed indefinitely.
+3. With more than one user configured, it drops the RFC 3414 §4 discovery
+   probe, so a v3 inform sender never learns an engine ID and times out.
+
+`internal/listener/snmptrap` now owns the UDP socket and calls gosnmp only to
+decode. It also:
+
+- **Takes users from the credential vault.** The v3 rows of
+  `device_credentials` are resolved through the provider discovery uses, with
+  the same single-client rule. Seed has no second place to configure SNMPv3
+  users. The table is re-read at most every 30 seconds, so a credential added
+  after start is honoured without a restart.
+- **Enforces the stored security level.** A message is accepted only at a
+  level one of its user's stored credentials has. A noAuthNoPriv trap for an
+  authPriv user is dropped.
+- **Checks the time window.** It keeps the non-authoritative clock cache of
+  RFC 3414 3.2.7 b for each sending engine ID. A trap more than 150 seconds
+  behind the receiver's running estimate of that engine's clock, or from an
+  earlier boot, is dropped. Replays inside the window are still accepted, as
+  the RFC allows.
+- **Drops v3 informs for now.** For an inform, Seed is the authoritative
+  engine. Supporting informs needs a persisted snmpEngineID and
+  snmpEngineBoots, and the discovery and notInTimeWindow reports. That is the
+  second slice of seed#1376. Informs at v1 and v2c are still acknowledged.
+
+A dropped datagram is logged at debug level with its reason and is never
+persisted. The trap listener's event kind is now `snmp-trap` for every
+version. Migration `00016` renames stored events and alert rules that used the
+old `snmp-trap-v2c`.

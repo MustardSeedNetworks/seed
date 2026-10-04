@@ -271,22 +271,14 @@ func queryWithV3(
 	}
 
 	params := &gosnmp.GoSNMP{
-		Target:        ip,
-		Port:          uint16(cfg.Port), // #nosec G115 -- Port validated by config (1-65535)
-		Version:       gosnmp.Version3,
-		Timeout:       cfg.Timeout,
-		Retries:       cfg.Retries,
-		SecurityModel: gosnmp.UserSecurityModel,
-		MsgFlags:      gosnmp.AuthPriv,
-		SecurityParameters: &gosnmp.UsmSecurityParameters{
-			UserName: cred.Username,
-			AuthenticationProtocol: getAuthProtocol(
-				cred.AuthProtocol,
-			),
-			AuthenticationPassphrase: cred.AuthPassword,
-			PrivacyProtocol:          getPrivProtocol(cred.PrivProtocol),
-			PrivacyPassphrase:        cred.PrivPassword,
-		},
+		Target:             ip,
+		Port:               uint16(cfg.Port), // #nosec G115 -- Port validated by config (1-65535)
+		Version:            gosnmp.Version3,
+		Timeout:            cfg.Timeout,
+		Retries:            cfg.Retries,
+		SecurityModel:      gosnmp.UserSecurityModel,
+		MsgFlags:           gosnmp.AuthPriv,
+		SecurityParameters: cred.USM(),
 	}
 
 	err := params.Connect()
@@ -352,22 +344,14 @@ func queryMultipleWithV3(
 	}
 
 	params := &gosnmp.GoSNMP{
-		Target:        ip,
-		Port:          uint16(cfg.Port), // #nosec G115 -- Port validated by config (1-65535)
-		Version:       gosnmp.Version3,
-		Timeout:       cfg.Timeout,
-		Retries:       cfg.Retries,
-		SecurityModel: gosnmp.UserSecurityModel,
-		MsgFlags:      gosnmp.AuthPriv,
-		SecurityParameters: &gosnmp.UsmSecurityParameters{
-			UserName: cred.Username,
-			AuthenticationProtocol: getAuthProtocol(
-				cred.AuthProtocol,
-			),
-			AuthenticationPassphrase: cred.AuthPassword,
-			PrivacyProtocol:          getPrivProtocol(cred.PrivProtocol),
-			PrivacyPassphrase:        cred.PrivPassword,
-		},
+		Target:             ip,
+		Port:               uint16(cfg.Port), // #nosec G115 -- Port validated by config (1-65535)
+		Version:            gosnmp.Version3,
+		Timeout:            cfg.Timeout,
+		Retries:            cfg.Retries,
+		SecurityModel:      gosnmp.UserSecurityModel,
+		MsgFlags:           gosnmp.AuthPriv,
+		SecurityParameters: cred.USM(),
 	}
 
 	err := params.Connect()
@@ -424,6 +408,31 @@ func formatSNMPValue(variable gosnmp.SnmpPDU) string {
 		return str
 	default:
 		return fmt.Sprintf("%v", variable.Value)
+	}
+}
+
+// USM returns the credential as gosnmp USM security parameters. The keys are
+// localized against whichever engine an exchange names, so one value serves
+// polling (the agent is authoritative) and trap receipt (the sender is).
+func (c *V3Credential) USM() *gosnmp.UsmSecurityParameters {
+	return &gosnmp.UsmSecurityParameters{
+		UserName:                 c.Username,
+		AuthenticationProtocol:   getAuthProtocol(c.AuthProtocol),
+		AuthenticationPassphrase: c.AuthPassword,
+		PrivacyProtocol:          getPrivProtocol(c.PrivProtocol),
+		PrivacyPassphrase:        c.PrivPassword,
+	}
+}
+
+// MsgFlags returns the message security level the credential is stored with.
+func (c *V3Credential) MsgFlags() gosnmp.SnmpV3MsgFlags {
+	switch c.SecurityLevel {
+	case "authPriv":
+		return gosnmp.AuthPriv
+	case "authNoPriv":
+		return gosnmp.AuthNoPriv
+	default:
+		return gosnmp.NoAuthNoPriv
 	}
 }
 
@@ -495,21 +504,15 @@ func newV3WalkClient(
 	}
 
 	params := &gosnmp.GoSNMP{
-		Target:         ip,
-		Port:           uint16(cfg.Port), // #nosec G115 -- Port validated by config (1-65535)
-		Version:        gosnmp.Version3,
-		Timeout:        cfg.Timeout,
-		Retries:        cfg.Retries,
-		MaxRepetitions: getMaxRepetitions(cfg),
-		SecurityModel:  gosnmp.UserSecurityModel,
-		MsgFlags:       gosnmp.AuthPriv,
-		SecurityParameters: &gosnmp.UsmSecurityParameters{
-			UserName:                 cred.Username,
-			AuthenticationProtocol:   getAuthProtocol(cred.AuthProtocol),
-			AuthenticationPassphrase: cred.AuthPassword,
-			PrivacyProtocol:          getPrivProtocol(cred.PrivProtocol),
-			PrivacyPassphrase:        cred.PrivPassword,
-		},
+		Target:             ip,
+		Port:               uint16(cfg.Port), // #nosec G115 -- Port validated by config (1-65535)
+		Version:            gosnmp.Version3,
+		Timeout:            cfg.Timeout,
+		Retries:            cfg.Retries,
+		MaxRepetitions:     getMaxRepetitions(cfg),
+		SecurityModel:      gosnmp.UserSecurityModel,
+		MsgFlags:           gosnmp.AuthPriv,
+		SecurityParameters: cred.USM(),
 	}
 
 	if err := params.Connect(); err != nil {

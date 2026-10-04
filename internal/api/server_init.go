@@ -214,9 +214,7 @@ func (s *Server) initSSEAndLogging(db *database.DB) {
 // initDiscovery initializes the shared discovery profiler, port scanner, and
 // the discovery service. (The legacy pipeline orchestrator was retired in
 // Phase 7 — discovery now runs through the engine + jobs spine.)
-func (s *Server) initDiscovery(cfg *config.Config, db *database.DB) {
-	s.snmpCreds = newDiscoverySNMPCredentials(cfg, db)
-
+func (s *Server) initDiscovery(cfg *config.Config) {
 	// Create SHARED DeviceProfiler - used by Service and Engine
 	// This ensures port scan results and SNMP data are consistent across the system
 	sharedProfiler := discovery.NewDeviceProfiler(discovery.DefaultProfilerConfig(), s.snmpCreds)

@@ -145,7 +145,7 @@ func ruleTrapLinkDown() Rule {
 	return Rule{
 		ID: "trap.linkdown",
 		Match: func(evt *listener.EventRecord) bool {
-			if evt.Kind != "snmp-trap-v2c" {
+			if evt.Kind != "snmp-trap" {
 				return false
 			}
 			return strings.Contains(evt.PayloadJSON, `"1.3.6.1.6.3.1.1.5.3"`)
@@ -167,7 +167,7 @@ func ruleTrapAuthFailure() Rule {
 	return Rule{
 		ID: "trap.authfail",
 		Match: func(evt *listener.EventRecord) bool {
-			if evt.Kind != "snmp-trap-v2c" {
+			if evt.Kind != "snmp-trap" {
 				return false
 			}
 			return strings.Contains(evt.PayloadJSON, `"1.3.6.1.6.3.1.1.5.5"`)

@@ -59,7 +59,7 @@ type Event struct {
 // supervisor needed.
 type Listener interface {
 	// Name is the stable identifier, e.g. "syslog-udp",
-	// "snmp-trap-v2c". One word preferred.
+	// "snmp-trap". One word preferred.
 	Name() string
 
 	// Start binds the configured socket and begins streaming
