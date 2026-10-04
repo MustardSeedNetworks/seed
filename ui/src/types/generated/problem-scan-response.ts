@@ -59,8 +59,8 @@ export interface InterfaceErrorStats {
   lateCollision: number;
   carrierErrors: number;
   droppedOutput: number;
-  inputErrorsDelta?: number;
-  outputErrorsDelta?: number;
+  inputErrorsPerMin: number;
+  outputErrorsPerMin: number;
   recordedAt: string;
 }
 export interface WiFiProblem {

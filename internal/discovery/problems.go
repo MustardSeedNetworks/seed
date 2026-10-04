@@ -179,9 +179,11 @@ type InterfaceErrorStats struct {
 	CarrierErrors int64 `json:"carrierErrors"`
 	DroppedOutput int64 `json:"droppedOutput"`
 
-	// Delta calculations (change since last poll)
-	InputErrorsDelta  int64 `json:"inputErrorsDelta,omitempty"`
-	OutputErrorsDelta int64 `json:"outputErrorsDelta,omitempty"`
+	// Rates between the last two readings, which the per-minute thresholds
+	// are compared against. The counters above are the agent's lifetime
+	// totals and say nothing about current health.
+	InputErrorsPerMin  float64 `json:"inputErrorsPerMin"`
+	OutputErrorsPerMin float64 `json:"outputErrorsPerMin"`
 
 	RecordedAt time.Time `json:"recordedAt"`
 }
