@@ -319,9 +319,9 @@ export function ClinicalEndpoints({
               }
               className={cn(input.base, input.state.default, input.size.md, 'w-24')}
             >
-              <option value="none">None</option>
-              <option value="basic">Basic</option>
-              <option value="oauth2">OAuth2</option>
+              <option value="none">{t('health.fhirAuthNone')}</option>
+              <option value="basic">{t('health.fhirAuthBasic')}</option>
+              <option value="oauth2">{t('health.fhirAuthOauth2')}</option>
             </select>
             <button
               type="button"

@@ -125,7 +125,9 @@ export function NeighbourCacheCard(): JSX.Element {
                             address, so an IPv4 and an IPv6 entry are
                             distinguishable at a glance and by a screen reader. */}
                         <span className="caption text-text-muted shrink-0">
-                          {entry.family === 'ipv6' ? 'IPv6' : 'IPv4'}
+                          {entry.family === 'ipv6'
+                            ? t('neighbours.familyIpv6')
+                            : t('neighbours.familyIpv4')}
                         </span>
                       </div>
                     </td>

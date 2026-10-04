@@ -496,7 +496,7 @@ function DeviceSelectorComponent({
                             {getDeviceDisplayName(device)}
                           </div>
                           <div className="caption text-text-muted truncate">
-                            {device.vendor || device.profile?.deviceType || 'Unknown'}
+                            {device.vendor || device.profile?.deviceType || t('status.unknown')}
                           </div>
                         </div>
                         {/* IP address */}

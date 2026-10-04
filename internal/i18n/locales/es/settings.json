@@ -154,7 +154,8 @@
       "devices": "Dispositivos",
       "interface": "Interfaz",
       "subnet": "Subred",
-      "localIP": "IP local"
+      "localIP": "IP local",
+      "autoInterface": "automática"
     },
     "enableNetworkNamed": "Habilitar red {{cidr}}",
     "disableNetworkNamed": "Deshabilitar red {{cidr}}",
@@ -251,7 +252,13 @@
     "modbusEndpoints": "Endpoints industriales Modbus TCP",
     "modbusDescription": "Probar conectividad de dispositivos industriales Modbus",
     "unitId": "Unit ID",
-    "testRegister": "Registro de prueba"
+    "testRegister": "Registro de prueba",
+    "fhirAuthNone": "Ninguna",
+    "fhirAuthBasic": "Basic",
+    "fhirAuthOauth2": "OAuth2",
+    "opcuaSecurityNone": "Ninguna",
+    "opcuaSecuritySign": "Firmar",
+    "opcuaSecuritySignAndEncrypt": "Firmar+Cifrar"
   },
   "dns": {
     "title": "DNS",
@@ -283,7 +290,14 @@
     "connection": "Conexión",
     "connectedTo": "Conectado a {{ssid}}",
     "disconnected": "Desconectado",
-    "readOnlyReason": "Solo lectura: se requiere el rol operator para cambiar la conexión Wi-Fi"
+    "readOnlyReason": "Solo lectura: se requiere el rol operator para cambiar la conexión Wi-Fi",
+    "availableNetworks": "Redes disponibles",
+    "scanningInline": "(escaneando...)",
+    "refresh": "Actualizar",
+    "channelShort": "Can. {{channel}}",
+    "connectTo": "Conectar a {{ssid}}",
+    "disconnect": "Desconectar",
+    "forget": "Olvidar"
   },
   "snmp": {
     "port": "Puerto SNMP",

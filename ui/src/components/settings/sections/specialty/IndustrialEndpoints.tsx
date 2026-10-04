@@ -100,9 +100,9 @@ export function IndustrialEndpoints({
               }
               className={cn(input.base, input.state.default, input.size.md, 'w-32')}
             >
-              <option value="None">None</option>
-              <option value="Sign">Sign</option>
-              <option value="SignAndEncrypt">Sign+Encrypt</option>
+              <option value="None">{t('health.opcuaSecurityNone')}</option>
+              <option value="Sign">{t('health.opcuaSecuritySign')}</option>
+              <option value="SignAndEncrypt">{t('health.opcuaSecuritySignAndEncrypt')}</option>
             </select>
             <button
               type="button"

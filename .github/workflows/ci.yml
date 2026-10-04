@@ -1277,7 +1277,7 @@ jobs:
           node scripts/check-help-i18n.ts
 
       - name: Run shared i18n validator
-        uses: MustardSeedNetworks/.github/.github/actions/i18n-validate@19e61bef9a6c9d3c15fc47c2bf144a62065617cc # .github#97, untagged
+        uses: MustardSeedNetworks/.github/.github/actions/i18n-validate@d2aa4161d10bf8cb5a9ffb0e0985224df0faa617 # .github#105 + #106, untagged
 
   # ===========================================================================
   # Documentation Checks

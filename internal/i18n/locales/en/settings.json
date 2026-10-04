@@ -154,7 +154,8 @@
       "devices": "Devices",
       "interface": "Discovery interface",
       "subnet": "Subnet",
-      "localIP": "Local IP"
+      "localIP": "Local IP",
+      "autoInterface": "auto"
     },
     "enableNetworkNamed": "Enable network {{cidr}}",
     "disableNetworkNamed": "Disable network {{cidr}}",
@@ -251,7 +252,13 @@
     "modbusEndpoints": "Modbus TCP Industrial Endpoints",
     "modbusDescription": "Test Modbus industrial device connectivity",
     "unitId": "Unit ID",
-    "testRegister": "Test Register"
+    "testRegister": "Test Register",
+    "fhirAuthNone": "None",
+    "fhirAuthBasic": "Basic",
+    "fhirAuthOauth2": "OAuth2",
+    "opcuaSecurityNone": "None",
+    "opcuaSecuritySign": "Sign",
+    "opcuaSecuritySignAndEncrypt": "Sign+Encrypt"
   },
   "dns": {
     "title": "DNS",
@@ -283,7 +290,14 @@
     "connection": "Connection",
     "connectedTo": "Connected to {{ssid}}",
     "disconnected": "Disconnected",
-    "readOnlyReason": "Read-only — operator role required to change the Wi-Fi connection"
+    "readOnlyReason": "Read-only — operator role required to change the Wi-Fi connection",
+    "availableNetworks": "Available Networks",
+    "scanningInline": "(scanning...)",
+    "refresh": "Refresh",
+    "channelShort": "Ch {{channel}}",
+    "connectTo": "Connect to {{ssid}}",
+    "disconnect": "Disconnect",
+    "forget": "Forget"
   },
   "snmp": {
     "port": "SNMP Port",

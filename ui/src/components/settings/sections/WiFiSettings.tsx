@@ -109,7 +109,7 @@ function SavedNetworks({
                 disabled={!canWrite}
                 className="caption text-status-error hover:underline disabled:opacity-50 disabled:no-underline"
               >
-                Forget
+                {t('wifi.forget')}
               </button>
             </Tooltip>
           </div>
@@ -122,6 +122,7 @@ function SavedNetworks({
 export const WiFiSettings: React.NamedExoticComponent<WiFiSettingsProps> = memo(
   function wiFiSettings({ wifiSettings, setWifiSettings, wifiStatus }: WiFiSettingsProps) {
     const { t } = useTranslation(['settings', 'errors']);
+    const { t: tCommon } = useTranslation('common');
 
     // State for network scanning and connection
     const [networks, setNetworks] = useState<ScannedNetwork[]>([]);
@@ -364,8 +365,10 @@ export const WiFiSettings: React.NamedExoticComponent<WiFiSettingsProps> = memo(
               <div className="border-t border-surface-border pt-heading">
                 <div className="flex-between">
                   <span className="body-small font-medium text-text-primary">
-                    Available Networks{' '}
-                    {scanning ? <span className="text-text-muted">(scanning...)</span> : null}
+                    {t('wifi.availableNetworks')}{' '}
+                    {scanning ? (
+                      <span className="text-text-muted">{t('wifi.scanningInline')}</span>
+                    ) : null}
                   </span>
                   <button
                     type="button"
@@ -379,7 +382,7 @@ export const WiFiSettings: React.NamedExoticComponent<WiFiSettingsProps> = memo(
                       'hover:bg-surface-border disabled:opacity-50',
                     )}
                   >
-                    ↻ Refresh
+                    ↻ {t('wifi.refresh')}
                   </button>
                 </div>
 
@@ -431,7 +434,9 @@ export const WiFiSettings: React.NamedExoticComponent<WiFiSettingsProps> = memo(
                             </span>
                           </div>
                           <div className="flex items-center gap-compact">
-                            <span className="caption text-text-muted">Ch {network.channel}</span>
+                            <span className="caption text-text-muted">
+                              {t('wifi.channelShort', { channel: network.channel })}
+                            </span>
                             <span
                               className={cn('font-mono caption', getSignalColor(network.signal))}
                             >
@@ -456,7 +461,7 @@ export const WiFiSettings: React.NamedExoticComponent<WiFiSettingsProps> = memo(
                   >
                     <div className="flex-between mb-2">
                       <span className="body-small font-medium text-text-primary">
-                        Connect to {selectedNetwork.ssid}
+                        {t('wifi.connectTo', { ssid: selectedNetwork.ssid })}
                       </span>
                       <button
                         type="button"
@@ -466,7 +471,7 @@ export const WiFiSettings: React.NamedExoticComponent<WiFiSettingsProps> = memo(
                         }}
                         className="caption text-text-muted hover:text-text-primary"
                       >
-                        Cancel
+                        {tCommon('buttons.cancel')}
                       </button>
                     </div>
 
@@ -558,7 +563,7 @@ export const WiFiSettings: React.NamedExoticComponent<WiFiSettingsProps> = memo(
                         'hover:bg-status-error/20 disabled:opacity-50',
                       )}
                     >
-                      Disconnect
+                      {t('wifi.disconnect')}
                     </button>
                   </Tooltip>
                 </div>

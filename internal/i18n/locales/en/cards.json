@@ -162,7 +162,22 @@
     "startScanAria": "Start network discovery scan",
     "openFullScreen": "Open full screen view",
     "scanningNetwork": "Scanning network",
-    "startNetworkScan": "Start network scan"
+    "startNetworkScan": "Start network scan",
+    "detail": {
+      "system": "System:",
+      "port": "Port:",
+      "capabilities": "Capabilities:",
+      "device": "Device:",
+      "platform": "Platform:",
+      "name": "Name:",
+      "description": "Description:",
+      "location": "Location:",
+      "contact": "Contact:",
+      "uptime": "Uptime:",
+      "interfaces": "Interfaces ({{total}}):",
+      "hardware": "Hardware:",
+      "model": "Model:"
+    }
   },
   "pipeline": {
     "phaseProgress": "Phase {{current}} of {{total}}",
@@ -552,7 +567,10 @@
   },
   "logViewer": {
     "requestId": "Request ID:",
-    "collapseEntry": "Collapse entry"
+    "collapseEntry": "Collapse entry",
+    "timestamp": "Timestamp:",
+    "session": "Session:",
+    "duration": "Duration:"
   },
   "systemHealth": {
     "topConsumers": "Top consumers:"
@@ -579,7 +597,9 @@
     "vendor": "Vendor",
     "interface": "Interface",
     "state": "State",
-    "refresh": "Refresh"
+    "refresh": "Refresh",
+    "familyIpv4": "IPv4",
+    "familyIpv6": "IPv6"
   },
   "insecurePorts": {
     "title": "Insecure Port Scan",
