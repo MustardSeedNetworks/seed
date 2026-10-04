@@ -27,7 +27,7 @@
  * ```
  */
 
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { LogComponents, logger } from '../lib/logger';
 import {
   parseSseCardUpdate,
@@ -87,12 +87,9 @@ interface UseSseReturn {
  * @param options - SSE configuration options
  * @returns Object containing connection status and reconnect function
  */
-export function useSse({
-  url,
-  isAuthenticated = true,
-  onMessage,
-  onCardUpdate,
-}: UseSseOptions): UseSseReturn {
+export function useSse(options: UseSseOptions): UseSseReturn {
+  const { url, onMessage, onCardUpdate } = options;
+  const isAuthenticated = options.isAuthenticated ?? true;
   const [status, setStatus] = useState<SseConnectionStatus>('disconnected');
   const eventSourceRef = useRef<EventSource | null>(null);
   const connectionIdRef = useRef(0);
@@ -113,52 +110,48 @@ export function useSse({
   /**
    * Processes an SSE message and routes it to appropriate handlers.
    */
-  const handleSseMessage = useCallback(
-    (data: string, connectionId: number) => {
-      // Ignore messages from stale connections
-      if (connectionId !== connectionIdRef.current) {
+  const handleSseMessage = (data: string, connectionId: number): void => {
+    // Ignore messages from stale connections
+    if (connectionId !== connectionIdRef.current) {
+      return;
+    }
+
+    let raw: unknown;
+    try {
+      raw = JSON.parse(data);
+    } catch (error) {
+      logger.error(LogComponents.SSE, 'Failed to parse SSE message', error, { data });
+      return;
+    }
+
+    const message = parseSseMessage(raw);
+    if (!message) {
+      logger.warn(LogComponents.SSE, 'Invalid SSE envelope', { data });
+      return;
+    }
+
+    // Handle card update messages specially with per-type validation.
+    // The envelope's payload is `unknown` until we narrow it via the
+    // card-update schema; dropping invalid card_update frames is
+    // safer than dispatching them and crashing the subscriber.
+    if (message.type === 'card_update') {
+      const update = parseSseCardUpdate(message.payload);
+      if (!update) {
+        logger.warn(LogComponents.SSE, 'Invalid card_update payload', {
+          payloadType: typeof message.payload,
+        });
         return;
       }
-
-      let raw: unknown;
-      try {
-        raw = JSON.parse(data);
-      } catch (error) {
-        logger.error(LogComponents.SSE, 'Failed to parse SSE message', error, { data });
-        return;
+      if (onCardUpdateRef.current) {
+        onCardUpdateRef.current(update);
       }
+    }
 
-      const message = parseSseMessage(raw);
-      if (!message) {
-        logger.warn(LogComponents.SSE, 'Invalid SSE envelope', { data });
-        return;
-      }
-
-      // Handle card update messages specially with per-type validation.
-      // The envelope's payload is `unknown` until we narrow it via the
-      // card-update schema; dropping invalid card_update frames is
-      // safer than dispatching them and crashing the subscriber.
-      if (message.type === 'card_update') {
-        const update = parseSseCardUpdate(message.payload);
-        if (!update) {
-          logger.warn(LogComponents.SSE, 'Invalid card_update payload', {
-            payloadType: typeof message.payload,
-          });
-          return;
-        }
-        if (onCardUpdateRef.current) {
-          onCardUpdateRef.current(update);
-        }
-      }
-
-      // Always invoke general message handler with the validated envelope.
-      if (onMessageRef.current) {
-        onMessageRef.current(message);
-      }
-    },
-    // Validation functions are pure and stable - no dependencies needed
-    [],
-  );
+    // Always invoke general message handler with the validated envelope.
+    if (onMessageRef.current) {
+      onMessageRef.current(message);
+    }
+  };
 
   /**
    * Establishes SSE connection with automatic browser-managed reconnection.
@@ -166,7 +159,7 @@ export function useSse({
    * EventSource provides built-in reconnection with exponential backoff.
    * Authentication is handled via httpOnly cookies (sent automatically).
    */
-  const connect = useCallback(() => {
+  const connect = (): void => {
     // Don't connect if not authenticated
     if (!isAuthenticated) {
       logger.info(LogComponents.SSE, 'Skipping SSE connection - not authenticated');
@@ -188,12 +181,12 @@ export function useSse({
     connectionIdRef.current += 1;
     const connectionId = connectionIdRef.current;
 
-    try {
-      // Determine the full URL (EventSource doesn't support relative URLs in all browsers)
-      const fullUrl = url.startsWith('http')
-        ? url
-        : `${window.location.protocol}//${window.location.host}${url}`;
+    // Determine the full URL (EventSource doesn't support relative URLs in all browsers)
+    const fullUrl = url.startsWith('http')
+      ? url
+      : `${window.location.protocol}//${window.location.host}${url}`;
 
+    try {
       // Create EventSource with credentials to send cookies
       const eventSource = new EventSource(fullUrl, { withCredentials: true });
       eventSourceRef.current = eventSource;
@@ -237,28 +230,28 @@ export function useSse({
       setStatus('error');
       logger.error(LogComponents.SSE, 'Failed to create EventSource', error, { url });
     }
-  }, [url, isAuthenticated, handleSseMessage]);
+  };
 
   /**
    * Cleanly disconnects the SSE connection.
    */
-  const disconnect = useCallback(() => {
+  const disconnect = (): void => {
     connectionIdRef.current += 1; // Invalidate handlers
     if (eventSourceRef.current) {
       eventSourceRef.current.close();
       eventSourceRef.current = null;
     }
     setStatus('disconnected');
-  }, []);
+  };
 
   /**
    * Manually trigger reconnection.
    */
-  const reconnect = useCallback(() => {
+  const reconnect = (): void => {
     disconnect();
     // Small delay to ensure clean disconnect
     setTimeout(connect, 100);
-  }, [connect, disconnect]);
+  };
 
   // Connect on mount, disconnect on unmount
   useEffect(() => {

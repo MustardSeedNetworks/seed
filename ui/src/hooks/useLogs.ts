@@ -20,7 +20,7 @@
  * ```
  */
 
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 
 /** Log severity levels */
 export type LogLevel = 'DEBUG' | 'INFO' | 'WARN' | 'ERROR';
@@ -119,16 +119,52 @@ const DEFAULT_STATS: LogStats = {
 };
 
 /**
+ * Apply filters to logs and sort by timestamp (newest first).
+ */
+function filterLogs(allLogs: LogEntry[], filters: LogFilters): LogEntry[] {
+  let result = [...allLogs];
+
+  // Filter by level
+  if (filters.levels.length > 0) {
+    result = result.filter((log) => filters.levels.includes(log.level));
+  }
+
+  // Filter by layer
+  if (filters.layers.length > 0) {
+    result = result.filter((log) => filters.layers.includes(log.layer));
+  }
+
+  // Filter by component
+  if (filters.components.length > 0) {
+    result = result.filter((log) => log.component && filters.components.includes(log.component));
+  }
+
+  // Filter by search text
+  if (filters.search) {
+    const searchLower = filters.search.toLowerCase();
+    result = result.filter(
+      (log) =>
+        log.message.toLowerCase().includes(searchLower) ||
+        log.component?.toLowerCase().includes(searchLower) ||
+        log.requestId?.toLowerCase().includes(searchLower),
+    );
+  }
+
+  // Sort by timestamp (newest first)
+  result.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+
+  return result;
+}
+
+/**
  * Custom hook for managing log viewing with filtering and real-time updates.
  */
-export function useLogs({
-  maxLogs = 1000,
-  initialFilters = {},
-}: UseLogsOptions = {}): UseLogsReturn {
+export function useLogs(options: UseLogsOptions = {}): UseLogsReturn {
+  const maxLogs = options.maxLogs ?? 1000;
   const [allLogs, setAllLogs] = useState<LogEntry[]>([]);
   const [filters, setFiltersState] = useState<LogFilters>({
     ...DEFAULT_FILTERS,
-    ...initialFilters,
+    ...options.initialFilters,
   });
   const [stats, setStats] = useState<LogStats | null>(null);
   const [isStreaming, setIsStreaming] = useState(true);
@@ -138,124 +174,82 @@ export function useLogs({
   /**
    * Add a single log entry to the state.
    */
-  const addLog = useCallback(
-    (entry: LogEntry) => {
-      if (!isStreaming) {
-        return;
-      }
+  const addLog = (entry: LogEntry): void => {
+    if (!isStreaming) {
+      return;
+    }
 
-      setAllLogs((prev) => {
-        const newLogs = [...prev, entry];
-        // Trim to maxLogs
-        if (newLogs.length > maxLogs) {
-          return newLogs.slice(-maxLogs);
-        }
-        return newLogs;
-      });
-    },
-    [isStreaming, maxLogs],
-  );
+    setAllLogs((prev) => {
+      const newLogs = [...prev, entry];
+      // Trim to maxLogs
+      if (newLogs.length > maxLogs) {
+        return newLogs.slice(-maxLogs);
+      }
+      return newLogs;
+    });
+  };
 
   /**
    * Fetch logs from the backend API.
    */
-  const fetchLogs = useCallback(async (limit = 200) => {
+  const fetchLogs = async (limit = 200): Promise<void> => {
     setIsLoading(true);
     setError(null);
 
-    try {
-      const response = await fetch(`/api/v1/reporting/logs/recent?limit=${limit}`);
-      if (!response.ok) {
-        throw new Error(`Failed to fetch logs: ${response.statusText}`);
-      }
-
-      const data = await response.json();
-      setAllLogs(data.logs || []);
-    } catch (err) {
-      const message = err instanceof Error ? err.message : 'Failed to fetch logs';
-      setError(message);
-    } finally {
-      setIsLoading(false);
-    }
-  }, []);
+    await fetch(`/api/v1/reporting/logs/recent?limit=${limit}`)
+      .then(async (response) => {
+        if (!response.ok) {
+          throw new Error(`Failed to fetch logs: ${response.statusText}`);
+        }
+        const data = await response.json();
+        setAllLogs(data.logs || []);
+      })
+      .catch((err: unknown) => {
+        setError(err instanceof Error ? err.message : 'Failed to fetch logs');
+      });
+    setIsLoading(false);
+  };
 
   /**
    * Fetch log statistics from the backend.
    */
-  const fetchStats = useCallback(async () => {
-    try {
-      const response = await fetch('/api/v1/reporting/logs/stats');
-      if (!response.ok) {
-        throw new Error(`Failed to fetch stats: ${response.statusText}`);
-      }
-
-      const data = await response.json();
-      setStats(data);
-    } catch {
-      // Silently fail to avoid infinite loops in logging system
-      // fixes #681 - removed console.error statement
-      setStats(DEFAULT_STATS);
-    }
-  }, []);
+  const fetchStats = async (): Promise<void> => {
+    await fetch('/api/v1/reporting/logs/stats')
+      .then(async (response) => {
+        if (!response.ok) {
+          throw new Error(`Failed to fetch stats: ${response.statusText}`);
+        }
+        setStats(await response.json());
+      })
+      .catch(() => {
+        // Silently fail to avoid infinite loops in logging system
+        // fixes #681 - removed console.error statement
+        setStats(DEFAULT_STATS);
+      });
+  };
 
   /**
    * Update filter configuration.
    */
-  const setFilters = useCallback((newFilters: Partial<LogFilters>) => {
+  const setFilters = (newFilters: Partial<LogFilters>): void => {
     setFiltersState((prev) => ({ ...prev, ...newFilters }));
-  }, []);
+  };
 
   /**
    * Reset filters to defaults.
    */
-  const resetFilters = useCallback(() => {
+  const resetFilters = (): void => {
     setFiltersState(DEFAULT_FILTERS);
-  }, []);
+  };
 
   /**
    * Clear all logs from state.
    */
-  const clearLogs = useCallback(() => {
+  const clearLogs = (): void => {
     setAllLogs([]);
-  }, []);
+  };
 
-  /**
-   * Apply filters to logs and sort by timestamp (newest first).
-   */
-  const filteredLogs = useMemo(() => {
-    let result = [...allLogs];
-
-    // Filter by level
-    if (filters.levels.length > 0) {
-      result = result.filter((log) => filters.levels.includes(log.level));
-    }
-
-    // Filter by layer
-    if (filters.layers.length > 0) {
-      result = result.filter((log) => filters.layers.includes(log.layer));
-    }
-
-    // Filter by component
-    if (filters.components.length > 0) {
-      result = result.filter((log) => log.component && filters.components.includes(log.component));
-    }
-
-    // Filter by search text
-    if (filters.search) {
-      const searchLower = filters.search.toLowerCase();
-      result = result.filter(
-        (log) =>
-          log.message.toLowerCase().includes(searchLower) ||
-          log.component?.toLowerCase().includes(searchLower) ||
-          log.requestId?.toLowerCase().includes(searchLower),
-      );
-    }
-
-    // Sort by timestamp (newest first)
-    result.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
-
-    return result;
-  }, [allLogs, filters]);
+  const filteredLogs = filterLogs(allLogs, filters);
 
   // Fetch initial logs and stats on mount
   useEffect(() => {

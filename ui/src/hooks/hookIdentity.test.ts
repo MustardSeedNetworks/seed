@@ -1,6 +1,6 @@
 /**
  * Hook callback identity, held by the React Compiler rather than by
- * hand-written useCallback/useMemo (UI-SEED-41 slices 2 and 3, #3066).
+ * hand-written useCallback/useMemo (UI-SEED-41 slices 2 to 4, #3066).
  *
  * Every function these hooks return must keep its identity across a
  * re-render that changed nothing it reads; callers list them in effect
@@ -24,14 +24,17 @@ import { useDriverStats } from './useDriverStats';
 import { useGuestNetworkAudit } from './useGuestNetworkAudit';
 import { useInsecurePortScan } from './useInsecurePortScan';
 import { useIperfServerSync } from './useIperfServerSync';
+import { useLogs } from './useLogs';
 import { useNeighbourCache } from './useNeighbourCache';
 import { usePlatformCapabilities } from './usePlatformCapabilities';
 import { usePollingTargets } from './usePollingTargets';
 import { useReports } from './useReports';
 import { useSettingsDrawerLoaders } from './useSettingsDrawerLoaders';
+import { useSse } from './useSse';
 import { useSubnetSettings } from './useSubnetSettings';
 import { useTheme } from './useTheme';
 import { useTopologyLinks, useTopologyNode, useTopologyNodes } from './useTopology';
+import { useVulnerabilities } from './useVulnerabilities';
 import { useVulnerabilitySettings } from './useVulnerabilitySettings';
 
 const { mockGet, mockPost, apiMock } = vi.hoisted(() => {
@@ -55,7 +58,29 @@ vi.mock('../api/client', () => apiMock);
 vi.mock('../api', () => apiMock);
 vi.mock('../contexts/RoleContext', () => ({ useRole: () => ({ canWrite: true }) }));
 
+// The setup.ts EventSource mock cannot be constructed with `new` under
+// Vitest 4, so useSse would only ever reach its catch branch.
+class FakeEventSource {
+  static readonly CONNECTING = 0;
+  static readonly OPEN = 1;
+  static readonly CLOSED = 2;
+  static opened = 0;
+  readyState = FakeEventSource.OPEN;
+  onopen: (() => void) | null = null;
+  onmessage: (() => void) | null = null;
+  onerror: (() => void) | null = null;
+  constructor() {
+    FakeEventSource.opened += 1;
+  }
+  addEventListener(): void {}
+  close(): void {
+    this.readyState = FakeEventSource.CLOSED;
+  }
+}
+
 beforeEach(() => {
+  FakeEventSource.opened = 0;
+  vi.stubGlobal('EventSource', FakeEventSource);
   mockGet.mockReset();
   mockGet.mockResolvedValue({});
   mockPost.mockReset();
@@ -88,15 +113,18 @@ const cases: [string, () => object][] = [
   ['useDriverStats', () => useDriverStats('eth0')],
   ['useGuestNetworkAudit', () => useGuestNetworkAudit()],
   ['useInsecurePortScan', () => useInsecurePortScan()],
+  ['useLogs', () => useLogs()],
   ['useNeighbourCache', () => useNeighbourCache()],
   ['usePlatformCapabilities', () => usePlatformCapabilities()],
   ['usePollingTargets', () => usePollingTargets()],
   ['useReports', () => useReports()],
+  ['useSse', () => useSse({ url: '/api/v1/events' })],
   ['useSubnetSettings', () => useSubnetSettings()],
   ['useTheme', () => useTheme()],
   ['useTopologyLinks', () => useTopologyLinks()],
   ['useTopologyNode', () => useTopologyNode('n1')],
   ['useTopologyNodes', () => useTopologyNodes()],
+  ['useVulnerabilities', () => useVulnerabilities()],
   ['useVulnerabilitySettings', () => useVulnerabilitySettings()],
 ];
 
@@ -114,9 +142,9 @@ describe('hook functions keep their identity across an unrelated re-render', () 
   });
 });
 
-// These two hooks list their own callbacks in an effect, so a new identity
-// re-runs the effect: a second write to the iperf listener, or every settings
-// section fetched again.
+// These hooks list their own callbacks in an effect, so a new identity
+// re-runs the effect: a second write to the iperf listener, every settings
+// section or the log list fetched again, or the event stream reopened.
 describe('hook effects do not re-run on an unrelated re-render', () => {
   it('useIperfServerSync starts the listener once', async () => {
     mockGet.mockResolvedValue({ running: false, port: 5201, pid: 0 });
@@ -129,6 +157,25 @@ describe('hook effects do not re-run on an unrelated re-render', () => {
     rerender();
     await settle();
     expect(mockPost).toHaveBeenCalledTimes(1);
+  });
+
+  it('useSse opens the event stream once', async () => {
+    const { result, rerender } = renderHook(() => useSse({ url: '/api/v1/events' }));
+    await settle();
+    expect(FakeEventSource.opened).toBe(1);
+    expect(result.current.status).toBe('connecting');
+    rerender();
+    await settle();
+    expect(FakeEventSource.opened).toBe(1);
+  });
+
+  it('useLogs fetches the log list and stats once', async () => {
+    const { rerender } = renderHook(() => useLogs());
+    await settle();
+    expect(fetch).toHaveBeenCalledTimes(2);
+    rerender();
+    await settle();
+    expect(fetch).toHaveBeenCalledTimes(2);
   });
 
   it('useSettingsDrawerLoaders loads each section once per open', async () => {
