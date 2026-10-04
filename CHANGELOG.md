@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.223.1](https://github.com/MustardSeedNetworks/seed/compare/v0.223.0...v0.223.1) (2026-10-04)
+
+
+### Continuous Integration
+
+* **release:** declare the artifacts each release publishes ([#3014](https://github.com/MustardSeedNetworks/seed/issues/3014)) ([4d14237](https://github.com/MustardSeedNetworks/seed/commit/4d1423740902d821c777a146e1f29958ad24a5d4)), closes [#3013](https://github.com/MustardSeedNetworks/seed/issues/3013)
+
 ## [0.223.0](https://github.com/MustardSeedNetworks/seed/compare/v0.222.0...v0.223.0) (2026-10-04)
 
 
