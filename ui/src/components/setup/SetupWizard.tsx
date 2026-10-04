@@ -564,9 +564,9 @@ export function SetupWizard({
                     className={cn(
                       'w-full',
                       button.size.md,
-                      'bg-brand-secondary text-text-inverse',
+                      'bg-surface-sunken text-text-primary',
                       radius.md,
-                      'font-medium hover:bg-brand-secondary-dark focus:outline-none focus:ring-2 focus:ring-brand-secondary focus:ring-offset-2 focus:ring-offset-surface-base disabled:opacity-50',
+                      'font-medium hover:bg-surface-hover focus:outline-none focus:ring-2 focus:ring-surface-border focus:ring-offset-2 focus:ring-offset-surface-base border border-surface-border disabled:opacity-50',
                     )}
                   >
                     {tCommon('buttons.signInWithMicrosoft')}

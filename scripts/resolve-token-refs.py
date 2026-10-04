@@ -17,7 +17,9 @@ import sys
 from pathlib import Path
 
 target = Path(sys.argv[1] if len(sys.argv) > 1 else "ui/src")
-css = (target / "index.css").read_text()
+# Comments are stripped first: a commented-out definition is not a definition,
+# and counting one hid an undefined brand-secondary on the sign-in page.
+css = re.sub(r"/\*.*?\*/", "", (target / "index.css").read_text(), flags=re.S)
 
 # Defined --color-* names from :root / .dark / @theme — the source of truth.
 defined = set(re.findall(r"--color-([a-z0-9-]+)\s*:", css))
