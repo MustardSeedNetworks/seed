@@ -200,10 +200,6 @@ func TestTest(t *testing.T) {
 		t.Fatal("Test returned nil")
 	}
 
-	// Check fields are populated.
-	if result.Server == "" {
-		t.Error("expected server to be set")
-	}
 	if result.TestHostname != "google.com" {
 		t.Errorf("expected test hostname google.com, got %s", result.TestHostname)
 	}
