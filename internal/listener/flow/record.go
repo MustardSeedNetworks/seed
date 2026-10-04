@@ -1,7 +1,7 @@
-// Package flow implements a NetFlow v5, NetFlow v9 and IPFIX collector
-// (RFC 3954, RFC 7011) as a passive-ingress listener.
+// Package flow implements a NetFlow v5, NetFlow v9, IPFIX (RFC 3954,
+// RFC 7011) and sFlow v5 collector as a passive-ingress listener.
 //
-// One UDP socket accepts all three formats; the version field of each
+// One UDP socket accepts all four formats; the version field of each
 // datagram picks the decoder. v9 and IPFIX data sets are decoded against
 // templates learned from the same exporter, keyed by exporter address,
 // observation domain and template ID. A data set whose template has not
@@ -24,23 +24,40 @@ import (
 )
 
 // Export format versions, as carried in the first two bytes of every
-// datagram.
+// NetFlow and IPFIX datagram. sFlow carries its version in four bytes,
+// so its datagrams open with two zero bytes.
 const (
 	VersionNetFlow5 = 5
 	VersionNetFlow9 = 9
 	VersionIPFIX    = 10
+	VersionSFlow5   = 5
+)
+
+// Format is the export protocol a record arrived in. sFlow v5 and
+// NetFlow v5 share a version number, so the version alone cannot say.
+type Format string
+
+// Formats, as stored in flow_records.format.
+const (
+	FormatNetFlow5 Format = "netflow5"
+	FormatNetFlow9 Format = "netflow9"
+	FormatIPFIX    Format = "ipfix"
+	FormatSFlow5   Format = "sflow5"
 )
 
 // Record is one decoded flow, normalised across the three formats.
 type Record struct {
-	// Exporter is the address the datagram came from.
+	// Exporter is the address the datagram came from; for sFlow it is
+	// the agent address the datagram names.
 	Exporter netip.Addr
-	// Version is the export format: 5, 9 or 10 (IPFIX).
-	Version uint16
+	Format   Format
 	// ObservationDomain is the v9 source ID or IPFIX observation domain
-	// ID; for v5 it is the engine type and ID.
+	// ID; for NetFlow v5 it is the engine type and ID, and for sFlow the
+	// sub-agent ID.
 	ObservationDomain uint32
 
+	// Start and End bound the flow. An sFlow record is one sampled
+	// packet, so both are the time it was received.
 	Start time.Time
 	End   time.Time
 

@@ -184,12 +184,21 @@ type exportHeader struct {
 	hasInit  bool
 }
 
+func (h *exportHeader) format() Format {
+	if h.version == VersionIPFIX {
+		return FormatIPFIX
+	}
+	return FormatNetFlow9
+}
+
 // Decode decodes one datagram received from exporter at now.
 func (d *Decoder) Decode(exporter netip.Addr, pkt []byte, now time.Time) (Result, error) {
 	if len(pkt) < versionLen {
 		return Result{}, ErrTruncated
 	}
 	switch v := binary.BigEndian.Uint16(pkt); v {
+	case 0:
+		return decodeSFlow(exporter, pkt, now)
 	case VersionNetFlow5:
 		return decodeV5(exporter, pkt)
 	case VersionNetFlow9:
@@ -226,7 +235,7 @@ func decodeV5(exporter netip.Addr, pkt []byte) (Result, error) {
 		r := pkt[v5HeaderLen+i*v5RecordLen:]
 		records = append(records, Record{
 			Exporter:          exporter,
-			Version:           VersionNetFlow5,
+			Format:            FormatNetFlow5,
 			ObservationDomain: domain,
 			Start:             uptimeTime(exportTime, uptime, be.Uint32(r[24:])),
 			End:               uptimeTime(exportTime, uptime, be.Uint32(r[28:])),
@@ -525,7 +534,7 @@ type counters struct {
 }
 
 func (d *Decoder) decodeRecord(hdr *exportHeader, t *template, b []byte, now time.Time) (Record, int, bool) {
-	rec := Record{Exporter: hdr.exporter, Version: hdr.version, ObservationDomain: hdr.domain}
+	rec := Record{Exporter: hdr.exporter, Format: hdr.format(), ObservationDomain: hdr.domain}
 	var (
 		times flowTimes
 		cnt   counters

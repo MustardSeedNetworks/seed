@@ -31,7 +31,7 @@ func (r *FlowRecordsRepository) InsertFlows(ctx context.Context, records []flow.
 	return r.db.WithTx(ctx, func(tx *sql.Tx) error {
 		stmt, err := tx.PrepareContext(ctx, `
 			INSERT INTO flow_records
-			  (exporter, version, observation_domain, flow_start, flow_end,
+			  (exporter, format, observation_domain, flow_start, flow_end,
 			   src_addr, dst_addr, src_port, dst_port, protocol, tcp_flags,
 			   bytes, packets, input_if, output_if, received_at)
 			VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
@@ -43,7 +43,7 @@ func (r *FlowRecordsRepository) InsertFlows(ctx context.Context, records []flow.
 		for i := range records {
 			f := &records[i]
 			if _, execErr := stmt.ExecContext(ctx,
-				f.Exporter.String(), f.Version, f.ObservationDomain,
+				f.Exporter.String(), string(f.Format), f.ObservationDomain,
 				f.Start.UTC().Format(flowTimeFormat), f.End.UTC().Format(flowTimeFormat),
 				f.SrcAddr.String(), f.DstAddr.String(), f.SrcPort, f.DstPort,
 				f.Protocol, f.TCPFlags, saturatingInt64(f.Bytes), saturatingInt64(f.Packets),
