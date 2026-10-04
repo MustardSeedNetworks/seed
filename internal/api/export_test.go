@@ -3,11 +3,13 @@ package api
 import (
 	"context"
 	"log/slog"
-	"net"
 	"net/http"
 	"net/netip"
+	"path/filepath"
 
 	"github.com/go-webauthn/webauthn/webauthn"
+
+	"github.com/MustardSeedNetworks/foundation/pkg/httpserver"
 
 	alertdelivery "github.com/MustardSeedNetworks/seed/internal/alerts/delivery"
 	"github.com/MustardSeedNetworks/seed/internal/app"
@@ -417,23 +419,16 @@ func (s *Server) GetEngine() any {
 	return s.discoveryEng
 }
 
-// ExportBindWithFallback exposes bindWithFallback for testing.
-func ExportBindWithFallback(
-	ctx context.Context,
-	host string,
-	port int,
-) (net.Listener, int, error) {
-	return bindWithFallback(ctx, host, port)
-}
-
-// ExportIsAddrInUse exposes isAddrInUse for testing.
-func ExportIsAddrInUse(err error) bool {
-	return isAddrInUse(err)
-}
-
-// EnsureSelfSignedCert exposes ensureSelfSignedCert for testing.
-func (s *Server) EnsureSelfSignedCert() (string, string, error) {
-	return s.ensureSelfSignedCert()
+// EnsureSelfSignedCert generates the self-signed pair startHTTPS would, in the
+// working directory's certs/, and returns its paths, so a test can trust the
+// certificate before the listener is up.
+func EnsureSelfSignedCert() (string, string, error) {
+	certFile := filepath.Join(selfSignedCertDir, httpserver.DefaultCertFileName)
+	keyFile := filepath.Join(selfSignedCertDir, httpserver.DefaultKeyFileName)
+	if _, err := httpserver.EnsureCertificate(nil, certFile, keyFile, selfSignedCertOptions()); err != nil {
+		return "", "", err
+	}
+	return certFile, keyFile, nil
 }
 
 // StartHTTPSForTest starts the production TLS listener with a focused handler.

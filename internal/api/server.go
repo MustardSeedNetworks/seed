@@ -93,9 +93,6 @@ const (
 	// portScannerTimeout is the timeout for the port scanner.
 	portScannerTimeout = 5 * time.Second
 
-	// rsaKeyBits is the RSA key size in bits for self-signed certificates.
-	rsaKeyBits = 4096
-
 	// serverReadTimeoutSec is the HTTP server read timeout in seconds.
 	serverReadTimeoutSec = 15
 

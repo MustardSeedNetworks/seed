@@ -13,8 +13,11 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"path/filepath"
 	"strings"
 	"sync"
+
+	"github.com/MustardSeedNetworks/foundation/pkg/httpserver"
 )
 
 // pemCertBlockType is the PEM block header used for X.509 certificates.
@@ -133,14 +136,8 @@ func (s *Server) activeCertPath() string {
 	if s.config.Server.CertFile != "" {
 		return s.config.Server.CertFile
 	}
-	// Fall back to the self-signed default path used by ensureSelfSignedCert.
-	return defaultSelfSignedCertPath
+	return filepath.Join(selfSignedCertDir, httpserver.DefaultCertFileName)
 }
-
-// defaultSelfSignedCertPath is the path used by ensureSelfSignedCert.
-// Kept here so /__version can fingerprint the same file even before the
-// HTTPS listener has been started.
-const defaultSelfSignedCertPath = "certs/server.crt"
 
 // tlsFingerprintForResponse returns the cached fingerprint (computing it
 // on first call). Errors are swallowed and reported as an empty string so

@@ -107,8 +107,9 @@ if [ -z "$base_url" ]; then
 fi
 
 plain_url="http://${base_url#https://}"
-if curl -sf --max-time 2 "$plain_url/__version" >/dev/null 2>&1; then
-	printf '%s\n' "Seed served application content over plaintext HTTP at $plain_url" >&2
+plain_reply=$(curl -s --max-time 2 -o /dev/null -w '%{http_code} %{size_download} %{redirect_url}' "$plain_url/__version" || true)
+if [ "$plain_reply" != "308 0 $base_url/__version" ]; then
+	printf '%s\n' "Plaintext HTTP at $plain_url did not get only a 308 to https: $plain_reply" >&2
 	exit 1
 fi
 
