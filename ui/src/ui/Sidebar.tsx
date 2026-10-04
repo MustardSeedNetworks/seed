@@ -97,7 +97,7 @@ export interface RailStatus {
   onActivate?: () => void;
 }
 
-const STORAGE_KEY = 'stem-sidebar-collapsed';
+const STORAGE_KEY = 'seed-sidebar-collapsed';
 
 interface NavItemButtonProps {
   item: SidebarNavItem;

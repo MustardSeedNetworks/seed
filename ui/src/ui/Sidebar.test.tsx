@@ -38,7 +38,7 @@ describe('SidebarLayout device name', () => {
   });
 
   it('leaves the collapsed rail to the mark alone', () => {
-    localStorage.setItem('stem-sidebar-collapsed', 'true');
+    localStorage.setItem('seed-sidebar-collapsed', 'true');
     render(
       <SidebarLayout groups={groups} deviceName="seed-idf-3b">
         <div />
