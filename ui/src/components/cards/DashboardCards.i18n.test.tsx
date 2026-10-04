@@ -72,7 +72,13 @@ const dns: DnsData = {
   server: '192.0.2.53',
   servers: ['192.0.2.53'],
   testHostname: 'example.com',
-  forward: { status: 'success', time: 12, timeMs: 12, result: '192.0.2.10' },
+  forward: {
+    status: 'success',
+    time: 12,
+    timeMs: 12,
+    outcome: 'resolved',
+    resolved: ['192.0.2.10'],
+  },
   reverse: null,
 };
 

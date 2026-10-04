@@ -49,7 +49,7 @@ func TestDNSChecker_Run_IPv4Success(t *testing.T) {
 	t.Parallel()
 	fake := &fakeDNSResolver{
 		ipv4Result: &dns.LookupResult{
-			Result:   "ok",
+			Outcome:  dns.OutcomeResolved,
 			Time:     12 * time.Millisecond,
 			TimeMs:   12,
 			Status:   "success",
@@ -95,7 +95,7 @@ func TestDNSChecker_Run_IPv6FromParams(t *testing.T) {
 	t.Parallel()
 	fake := &fakeDNSResolver{
 		ipv6Result: &dns.LookupResult{
-			Result:   "ok",
+			Outcome:  dns.OutcomeResolved,
 			Time:     8 * time.Millisecond,
 			TimeMs:   8,
 			Status:   "success",

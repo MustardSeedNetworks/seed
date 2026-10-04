@@ -200,10 +200,6 @@ func TestTest(t *testing.T) {
 		t.Fatal("Test returned nil")
 	}
 
-	// Check fields are populated.
-	if result.Server == "" {
-		t.Error("expected server to be set")
-	}
 	if result.TestHostname != "google.com" {
 		t.Errorf("expected test hostname google.com, got %s", result.TestHostname)
 	}
@@ -342,7 +338,7 @@ func TestReverseLookupInvalidIP(t *testing.T) {
 
 func TestLookupResultFields(t *testing.T) {
 	result := dns.LookupResult{
-		Result:   "192.168.1.1",
+		Outcome:  dns.OutcomeResolved,
 		Time:     50 * time.Millisecond,
 		TimeMs:   50,
 		Status:   dns.StatusSuccess,
@@ -350,8 +346,8 @@ func TestLookupResultFields(t *testing.T) {
 		Resolved: []string{"192.168.1.1", "192.168.1.2"},
 	}
 
-	if result.Result != "192.168.1.1" {
-		t.Errorf("expected Result '192.168.1.1', got %q", result.Result)
+	if result.Outcome != dns.OutcomeResolved {
+		t.Errorf("expected OutcomeResolved, got %q", result.Outcome)
 	}
 	if result.Time != 50*time.Millisecond {
 		t.Errorf("expected Time 50ms, got %v", result.Time)
@@ -457,8 +453,8 @@ func TestTestWithEmptyServer(t *testing.T) {
 	if result == nil {
 		t.Fatal("Test returned nil")
 	}
-	if result.Server != "System Default" {
-		t.Errorf("expected 'System Default' server, got %q", result.Server)
+	if result.Server != "" {
+		t.Errorf("expected an empty server for the system resolver, got %q", result.Server)
 	}
 }
 

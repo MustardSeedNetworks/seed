@@ -291,13 +291,13 @@ export function useNetworkFetchers({
         setCards((prev) => ({
           ...prev,
           dns: {
-            server: data.server || 'Unknown',
+            server: data.server ?? '',
             servers: data.servers || [],
             serverScope: data.serverScope,
             testHostname: data.testHostname || 'google.com',
             forward: data.forward
               ? {
-                  result: data.forward.result,
+                  outcome: data.forward.outcome,
                   time: data.forward.time || data.forward.timeMs || 0,
                   timeMs: data.forward.timeMs || data.forward.time || 0,
                   status: data.forward.status,
@@ -307,7 +307,7 @@ export function useNetworkFetchers({
               : null,
             forwardIpv6: data.forwardIpv6
               ? {
-                  result: data.forwardIpv6.result,
+                  outcome: data.forwardIpv6.outcome,
                   time: data.forwardIpv6.time || data.forwardIpv6.timeMs || 0,
                   timeMs: data.forwardIpv6.timeMs || data.forwardIpv6.time || 0,
                   status: data.forwardIpv6.status,
@@ -317,7 +317,7 @@ export function useNetworkFetchers({
               : null,
             reverse: data.reverse
               ? {
-                  result: data.reverse.result,
+                  outcome: data.reverse.outcome,
                   time: data.reverse.time || data.reverse.timeMs || 0,
                   timeMs: data.reverse.timeMs || data.reverse.time || 0,
                   status: data.reverse.status,
@@ -327,7 +327,7 @@ export function useNetworkFetchers({
               : null,
             reverseIpv6: data.reverseIpv6
               ? {
-                  result: data.reverseIpv6.result,
+                  outcome: data.reverseIpv6.outcome,
                   time: data.reverseIpv6.time || data.reverseIpv6.timeMs || 0,
                   timeMs: data.reverseIpv6.timeMs || data.reverseIpv6.time || 0,
                   status: data.reverseIpv6.status,

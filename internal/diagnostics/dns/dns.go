@@ -52,9 +52,20 @@ func (e *TimeoutError) Error() string {
 	return "DNS timeout " + e.Value.String() + " must be between " + e.Min.String() + " and " + e.Max.String()
 }
 
+// Outcome is what a lookup came back with. It is a code, not prose: the UI
+// words it in the reader's language (#2844).
+type Outcome string
+
+// Lookup outcomes.
+const (
+	OutcomeResolved Outcome = "resolved"
+	OutcomeNoRecord Outcome = "noRecord"
+	OutcomeFailed   Outcome = "failed"
+)
+
 // LookupResult contains the result of a DNS lookup with timing.
 type LookupResult struct {
-	Result   string        `json:"result"`
+	Outcome  Outcome       `json:"outcome"`
 	Time     time.Duration `json:"time"`
 	TimeMs   int64         `json:"timeMs"`
 	Status   Status        `json:"status"`
@@ -73,7 +84,7 @@ type ServerTestResult struct {
 
 // TestResult contains the complete DNS test results.
 type TestResult struct {
-	Server           string              `json:"server"`
+	Server           string              `json:"server"`      // Empty: the system resolver answered
 	Servers          []string            `json:"servers"`     // All configured DNS servers
 	ServerScope      Scope               `json:"serverScope"` // Whose resolvers Servers describes
 	TestHostname     string              `json:"testHostname"`
@@ -261,16 +272,16 @@ func (t *Tester) ForwardLookup(ctx context.Context, hostname string) *LookupResu
 
 	if err != nil {
 		result.Error = err.Error()
-		result.Result = "Failed"
+		result.Outcome = OutcomeFailed
 		result.Status = StatusError
 		return result
 	}
 
 	if len(addrs) > 0 {
-		result.Result = addrs[0]
+		result.Outcome = OutcomeResolved
 		result.Resolved = addrs
 	} else {
-		result.Result = "No results"
+		result.Outcome = OutcomeNoRecord
 	}
 	result.Status = t.getStatusWith(thresholds, elapsed, false)
 
@@ -294,7 +305,7 @@ func (t *Tester) getStatusWith(th Thresholds, duration time.Duration, hasError b
 // network should be "ip4" for A records or "ip6" for AAAA records.
 func (t *Tester) forwardLookupIP(
 	ctx context.Context,
-	hostname, network, noRecordMsg string,
+	hostname, network string,
 ) *LookupResult {
 	t.mu.RLock()
 	if hostname == "" {
@@ -315,7 +326,7 @@ func (t *Tester) forwardLookupIP(
 
 	if err != nil {
 		result.Error = err.Error()
-		result.Result = noRecordMsg
+		result.Outcome = OutcomeNoRecord
 		result.Status = StatusWarning
 		return result
 	}
@@ -326,10 +337,10 @@ func (t *Tester) forwardLookupIP(
 	}
 
 	if len(resolved) > 0 {
-		result.Result = resolved[0]
+		result.Outcome = OutcomeResolved
 		result.Resolved = resolved
 	} else {
-		result.Result = noRecordMsg
+		result.Outcome = OutcomeNoRecord
 		result.Status = StatusWarning
 		return result
 	}
@@ -340,12 +351,12 @@ func (t *Tester) forwardLookupIP(
 
 // ForwardLookupIPv4 performs an IPv4-only forward DNS lookup (A record).
 func (t *Tester) ForwardLookupIPv4(ctx context.Context, hostname string) *LookupResult {
-	return t.forwardLookupIP(ctx, hostname, "ip4", "No A record")
+	return t.forwardLookupIP(ctx, hostname, "ip4")
 }
 
 // ForwardLookupIPv6 performs an IPv6-only forward DNS lookup (AAAA record).
 func (t *Tester) ForwardLookupIPv6(ctx context.Context, hostname string) *LookupResult {
-	return t.forwardLookupIP(ctx, hostname, "ip6", "No AAAA record")
+	return t.forwardLookupIP(ctx, hostname, "ip6")
 }
 
 // ReverseLookup performs a reverse DNS lookup (IP to hostname) with timing.
@@ -366,16 +377,16 @@ func (t *Tester) ReverseLookup(ctx context.Context, ip string) *LookupResult {
 
 	if err != nil {
 		result.Error = err.Error()
-		result.Result = "Failed"
+		result.Outcome = OutcomeFailed
 		result.Status = StatusError
 		return result
 	}
 
 	if len(names) > 0 {
-		result.Result = names[0]
+		result.Outcome = OutcomeResolved
 		result.Resolved = names
 	} else {
-		result.Result = "No PTR record"
+		result.Outcome = OutcomeNoRecord
 		result.Status = StatusWarning
 		return result
 	}
@@ -502,8 +513,6 @@ func (t *Tester) Test(ctx context.Context) *TestResult {
 	if selectedServer == "" && scope == ScopeInterface {
 		lookups = NewTester(servers[0], host, thresholds)
 		result.Server = servers[0]
-	} else if selectedServer == "" {
-		result.Server = "System Default"
 	}
 
 	// IPv4 forward lookup (A record)
