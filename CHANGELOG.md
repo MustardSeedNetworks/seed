@@ -17,6 +17,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 * **dns:** send a lookup outcome code and word it in the card ([#3036](https://github.com/MustardSeedNetworks/seed/issues/3036)) ([0992f55](https://github.com/MustardSeedNetworks/seed/commit/0992f554de2674249c416c0ced4274d95efdc05f))
 
+### Also shipped in this release
+
+<!-- Added by scripts/check-release-changelog.py: these commits are
+     contained in the tag but were absent from the generated
+     changelog, because they merged after release-please last
+     regenerated the release PR. -->
+
+* run the NIAC pack acceptance nightly against the latest release ([#3041](https://github.com/MustardSeedNetworks/seed/issues/3041)) ([11ee38bc](https://github.com/MustardSeedNetworks/seed/commit/11ee38bc90f77eca33b5eb8a44d4a2da36275780)) — _Continuous Integration_
+
 ## [0.224.1](https://github.com/MustardSeedNetworks/seed/compare/v0.224.0...v0.224.1) (2026-10-04)
 
 
