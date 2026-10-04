@@ -765,6 +765,9 @@
       },
       "LogViewerCard": {
         "description": "Search, pause and export structured log entries to investigate daemon activity."
+      },
+      "PacketCaptureCard": {
+        "description": "Record traffic on an interface to a PCAP file, bounded by a duration and a 64 MB file limit. The summary counts frames by protocol and lists the busiest hosts and conversations; open the file in Wireshark for the packets themselves. Starting and downloading a capture need the operator role."
       }
     }
   },

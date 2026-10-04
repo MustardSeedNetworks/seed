@@ -5,6 +5,7 @@ import { GatewayCard } from '../components/cards/GatewayCard';
 import { NeighbourCacheCard } from '../components/cards/NeighbourCacheCard';
 import { NetworkCard } from '../components/cards/NetworkCard';
 import { NetworkDiscoveryCard } from '../components/cards/NetworkDiscoveryCard';
+import { PacketCaptureCard } from '../components/cards/PacketCaptureCard';
 import { PublicIpCard } from '../components/cards/PublicIpCard';
 import { SwitchCard } from '../components/cards/SwitchCard';
 import { useAppContext } from '../contexts/AppContext';
@@ -25,6 +26,7 @@ export function NetworkPage() {
     cards,
     loading,
     isWifi,
+    currentInterface,
     displayOptions,
     cardSettings,
     networkDiscovery,
@@ -86,6 +88,8 @@ export function NetworkPage() {
           discoveryEnabled={cardSettings.networkDiscovery.enabled}
           onOpenSettings={openSettings}
         />
+        {/* Capturing is wired and wireless alike, so it is not in the Wi-Fi wait. */}
+        <PacketCaptureCard defaultInterface={currentInterface} />
         <CardSlot
           present={!isWifi}
           absence={{
