@@ -6,19 +6,15 @@ package api
 // known vulnerabilities based on device profiles.
 //
 // Key features:
-//   - Trigger vulnerability scans for all or specific devices
 //   - Retrieve vulnerability reports for devices
 //   - Mark vulnerabilities as acknowledged
-//   - Background scanning with timeout protection
 //
 // Dependencies:
 //   - internal/discovery: Device profile and CVE scanner
 
 import (
-	"context"
 	"net/http"
 	"strings"
-	"time"
 
 	"github.com/MustardSeedNetworks/seed/internal/discovery"
 	"github.com/MustardSeedNetworks/seed/internal/discovery/vuln"
@@ -27,89 +23,6 @@ import (
 	securitysettings "github.com/MustardSeedNetworks/seed/internal/security/settings"
 	"github.com/MustardSeedNetworks/seed/internal/validation"
 )
-
-// handleVulnerabilityScan triggers vulnerability scan for all or specific devices
-// POST /api/vulnerabilities/scan?ip=x.x.x.x (optional IP filter).
-func (s *Server) handleVulnerabilityScan(w http.ResponseWriter, r *http.Request) {
-	logger := logging.FromContext(r.Context())
-	localizer := i18n.FromRequest(r)
-
-	if s.vulnScanner() == nil {
-		sendErrorResponseWithDetails(
-			w,
-			logger,
-			http.StatusServiceUnavailable,
-			ErrCodeServiceUnavail,
-			localizer.T("errors.vulnerability.scannerNotEnabled"),
-			"",
-		) // fixes #694
-		return
-	}
-
-	targetIP := r.URL.Query().Get("ip")
-
-	// Validate IP if provided
-	if targetIP != "" && !validation.IsValidIP(targetIP) {
-		sendErrorResponseWithDetails(
-			w,
-			logger,
-			http.StatusBadRequest,
-			ErrCodeValidation,
-			localizer.T("errors.vulnerability.invalidIp"),
-			targetIP,
-		) // fixes #694
-		return
-	}
-
-	// Check if scan is already in progress
-	if s.vulnScanner().IsRunning() {
-		sendJSONResponse(w, logger, http.StatusOK, map[string]any{
-			"status":  "scan already in progress",
-			"running": true,
-		})
-		return
-	}
-
-	// Run scan in background (fixes #698 - timeout protection).
-	// WithoutCancel inherits logging values from the request but detaches
-	// lifecycle so the scan outlives the HTTP request.
-	go func(reqCtx context.Context) {
-		bgLogger := logging.FromContext(reqCtx)
-		ctx, cancel := context.WithTimeout(context.WithoutCancel(reqCtx), vulnScanTimeoutMin*time.Minute)
-		defer cancel()
-
-		var devices []*discovery.DiscoveredDevice
-
-		if targetIP != "" {
-			// Scan specific device
-			device := s.deviceDiscovery().GetDeviceByIP(targetIP)
-			if device != nil {
-				devices = append(devices, device)
-			}
-		} else {
-			// Scan all discovered devices
-			devices = s.deviceDiscovery().GetDevices()
-		}
-
-		// Scan each device
-		for _, device := range devices {
-			if _, err := s.vulnScanner().ScanDevice(ctx, device); err != nil {
-				bgLogger.WarnContext(reqCtx, "Vulnerability scan failed", "device_ip", device.IP, "error", err)
-			}
-		}
-
-		// Broadcast results via SSE
-		results := s.vulnScanner().GetAllVulnerabilities()
-		s.sseHub().BroadcastCardUpdate("vulnerabilities", map[string]any{
-			"results": results,
-			"count":   len(results),
-		})
-	}(r.Context())
-
-	sendJSONResponse(w, logger, http.StatusOK, map[string]string{
-		"status": "scan started",
-	})
-}
 
 // handleVulnerabilityStatus returns scanner status and statistics
 // GET /api/vulnerabilities/status (fixes #703).

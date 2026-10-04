@@ -2,12 +2,13 @@ package api
 
 // jobs_vuln.go registers the vulnerability scan as a unified job kind
 // (ADR-0005), the first discovery-coupled long-op on the runner. It is a thin
-// additive wrapper over the EXISTING public scanner + device-registry methods
-// (both already ctx-aware) behind an interface seam — no discovery-internal
-// refactor. The legacy /security/vulnerabilities/scan + /status + /results
-// endpoints are unchanged (retire at the Phase-7 frontend cutover).
+// wrapper over the public scanner + device-registry methods (both ctx-aware)
+// behind an interface seam. It is the only way to start a scan: the legacy
+// POST /security/vulnerabilities/scan was retired with #2960, because the UI
+// and the handler had drifted onto two request shapes.
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -17,14 +18,20 @@ import (
 	"github.com/MustardSeedNetworks/seed/internal/discovery/vuln"
 	"github.com/MustardSeedNetworks/seed/internal/logging"
 	"github.com/MustardSeedNetworks/seed/internal/platform/jobs"
+	"github.com/MustardSeedNetworks/seed/internal/validation"
 )
 
-// vulnScanJobKind is the registered kind name for a vulnerability scan.
-const vulnScanJobKind = "vuln-scan"
+const (
+	// vulnScanJobKind is the registered kind name for a vulnerability scan.
+	vulnScanJobKind = "vuln-scan"
+	// vulnScanFeature is the licence feature the scan is sold under (Pro,
+	// LICENSE_STRATEGY §2).
+	vulnScanFeature = "compliance_advanced"
+)
 
-// VulnScanParams is the job params for a vulnerability scan. An empty IP scans
+// VulnScanRequest is the job params for a vulnerability scan. An empty IP scans
 // every discovered device; a set IP scans just that one.
-type VulnScanParams struct {
+type VulnScanRequest struct {
 	IP string `json:"ip,omitempty"`
 }
 
@@ -89,15 +96,21 @@ func newVulnScanHandler(newSvc func() vulnScanService) jobs.Handler {
 }
 
 // decodeVulnScanParams parses the optional job params; absent params scan all
-// devices.
-func decodeVulnScanParams(params any) (VulnScanParams, error) {
+// devices. Unknown fields are refused: a misspelt target must not widen a
+// one-device scan to every device (#2960).
+func decodeVulnScanParams(params any) (VulnScanRequest, error) {
 	raw, ok := params.(json.RawMessage)
 	if !ok || len(raw) == 0 {
-		return VulnScanParams{}, nil
+		return VulnScanRequest{}, nil
 	}
-	var p VulnScanParams
-	if err := json.Unmarshal(raw, &p); err != nil {
-		return VulnScanParams{}, fmt.Errorf("invalid vuln-scan params: %w", err)
+	dec := json.NewDecoder(bytes.NewReader(raw))
+	dec.DisallowUnknownFields()
+	var p VulnScanRequest
+	if err := dec.Decode(&p); err != nil {
+		return VulnScanRequest{}, fmt.Errorf("invalid vuln-scan params: %w", err)
+	}
+	if p.IP != "" && !validation.IsValidIP(p.IP) {
+		return VulnScanRequest{}, fmt.Errorf("invalid vuln-scan params: %q is not an IP address", p.IP)
 	}
 	return p, nil
 }

@@ -26,8 +26,10 @@ import type {
   PortScanResult,
   ServiceInfo,
 } from '../components/cards/networkDiscoveryCardTypes';
+import { submitJob } from '../lib/jobsClient';
 import { LogComponents, logger } from '../lib/logger';
 import type { OptionsResponse } from '../types/generated/options-response';
+import type { VulnScanRequest } from '../types/generated/vuln-scan-request';
 
 interface UseNetworkDiscoveryAutoScanResult {
   handleDeepScan: (ip: string) => Promise<void>;
@@ -143,7 +145,8 @@ export function useNetworkDiscoveryAutoScan(
           ip,
           reasons: reasons.join(', '),
         });
-        await api.post('/api/v1/security/vulnerabilities/scan', { targets: [ip] });
+        const params: VulnScanRequest = { ip };
+        await submitJob({ kind: 'vuln-scan', params });
       } catch (error) {
         logger.debug(LogComponents.DISCOVERY, 'Failed to trigger vulnerability scan', {
           error: error instanceof Error ? error.message : String(error),

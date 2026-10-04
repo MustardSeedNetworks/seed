@@ -191,7 +191,6 @@ today; the registry makes it explicit per route.
 | `/api/v1/security/problems/thresholds` | `handleProblemThresholds` | operator | — | — |
 | `/api/v1/security/vulnerabilities/device` | `handleDeviceVulnerabilities` | — | — | — |
 | `/api/v1/security/vulnerabilities/results` | `handleVulnerabilityResults` | — | — | — |
-| `/api/v1/security/vulnerabilities/scan` | `handleVulnerabilityScan` | — | compliance_advanced | yes |
 | `/api/v1/security/vulnerabilities/settings` | `handleVulnerabilitySettings` | operator | — | — |
 | `/api/v1/security/vulnerabilities/status` | `handleVulnerabilityStatus` | — | — | — |
 | `/api/v1/security/vulnerabilities/validate-api-key` | `handleNVDAPIKeyValidate` | — | — | — |
