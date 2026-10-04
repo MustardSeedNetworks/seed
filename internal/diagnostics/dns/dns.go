@@ -104,6 +104,25 @@ type ConfiguredServer struct {
 	Enabled bool
 }
 
+// enabledServers returns the addresses of the enabled configured servers, in
+// order, up to the limit limit returns; 0 or a nil limit is no limit.
+func enabledServers(servers []ConfiguredServer, limit func() int) []string {
+	n := 0
+	if limit != nil {
+		n = limit()
+	}
+	var out []string
+	for _, cs := range servers {
+		if n > 0 && len(out) == n {
+			break
+		}
+		if cs.Enabled && cs.Address != "" {
+			out = append(out, cs.Address)
+		}
+	}
+	return out
+}
+
 // Tester performs DNS tests with timing.
 type Tester struct {
 	server            string
@@ -111,6 +130,9 @@ type Tester struct {
 	thresholds        Thresholds
 	resolver          *net.Resolver
 	configuredServers []ConfiguredServer
+	// configuredLimit is how many enabled configured servers Test offers; it
+	// returns 0 for no limit. Nil is no limit.
+	configuredLimit func() int
 	// iface is the interface the operator selected. The resolvers shown and
 	// tested are scoped to it (#2690); empty means no selection, and the
 	// answer stays system-wide.
@@ -194,6 +216,15 @@ func (t *Tester) SetServer(server string) {
 func (t *Tester) SetConfiguredServers(servers []ConfiguredServer) {
 	t.mu.Lock()
 	t.configuredServers = servers
+	t.mu.Unlock()
+}
+
+// SetConfiguredServerLimit caps how many enabled configured servers Test
+// offers, read at each run so a limit that changes takes effect without a new
+// server list. limit returns 0 for no limit.
+func (t *Tester) SetConfiguredServerLimit(limit func() int) {
+	t.mu.Lock()
+	t.configuredLimit = limit
 	t.mu.Unlock()
 }
 
@@ -429,6 +460,7 @@ func (t *Tester) Test(ctx context.Context) *TestResult {
 	source := t.resolvers
 	iface := t.iface
 	thresholds := t.thresholds
+	limit := t.configuredLimit
 	t.mu.RUnlock()
 
 	servers, scope := source.resolversFor(iface)
@@ -436,14 +468,15 @@ func (t *Tester) Test(ctx context.Context) *TestResult {
 	// Add enabled configured servers to the list (avoiding duplicates). They
 	// are an explicit operator choice, so they are offered whatever the scope
 	// is, and they do not turn an interface-scoped answer into a host-wide one.
+	// Past the limit they are not offered at all.
 	serverSet := make(map[string]bool)
 	for _, s := range servers {
 		serverSet[s] = true
 	}
-	for _, cs := range cfgServers {
-		if cs.Enabled && cs.Address != "" && !serverSet[cs.Address] {
-			servers = append(servers, cs.Address)
-			serverSet[cs.Address] = true
+	for _, address := range enabledServers(cfgServers, limit) {
+		if !serverSet[address] {
+			servers = append(servers, address)
+			serverSet[address] = true
 		}
 	}
 

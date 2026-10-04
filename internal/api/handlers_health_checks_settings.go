@@ -264,6 +264,18 @@ func (s *Server) getHealthChecksSettings(w http.ResponseWriter, r *http.Request)
 	sendJSONResponse(w, logger, http.StatusOK, resp)
 }
 
+// enabledDNSServers counts the servers a DNS test would offer, the count
+// dns_monitoring limits.
+func enabledDNSServers(servers []config.DNSServer) int {
+	n := 0
+	for _, d := range servers {
+		if d.Enabled && d.Address != "" {
+			n++
+		}
+	}
+	return n
+}
+
 // requestDNSServers maps the wire DNS server list to config form.
 func requestDNSServers(req *TestsSettingsResponse) []config.DNSServer {
 	servers := make([]config.DNSServer, 0, len(req.DNSServers))
@@ -414,10 +426,16 @@ func (s *Server) updateHealthChecksSettings(w http.ResponseWriter, r *http.Reque
 		return
 	}
 
+	dnsServers := requestDNSServers(&req)
+	if limit := s.dnsServerLimit(); limit > 0 && enabledDNSServers(dnsServers) > limit {
+		s.sendFeatureGate(w, r, "dns_monitoring")
+		return
+	}
+
 	err := s.healthSettings.Update(r.Context(), healthsettings.Settings{
 		Endpoints:              requestEndpointTargets(&req),
 		DNSHostname:            req.DNSHostname,
-		DNSServers:             requestDNSServers(&req),
+		DNSServers:             dnsServers,
 		RunPerformance:         req.RunPerformance,
 		RunSpeedtest:           req.RunSpeedtest,
 		RunIperf:               req.RunIperf,

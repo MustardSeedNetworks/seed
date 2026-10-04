@@ -140,3 +140,39 @@ func TestConfiguredServersJoinTheInterfaceList(t *testing.T) {
 		t.Errorf("serverScope = %q, want %q", result.ServerScope, dns.ScopeInterface)
 	}
 }
+
+// Configured servers past the limit are not offered at all (seed#2327:
+// dns_monitoring is a count). Disabled servers do not use up the limit.
+func TestConfiguredServerLimit(t *testing.T) {
+	configured := []dns.ConfiguredServer{
+		{Address: "127.0.0.2", Enabled: false},
+		{Address: "127.0.0.3", Enabled: true},
+		{Address: "127.0.0.4", Enabled: true},
+		{Address: "127.0.0.5", Enabled: true},
+	}
+	tests := []struct {
+		name  string
+		limit func() int
+		want  []string
+	}{
+		{"no limit set", nil, []string{"127.0.0.1", "127.0.0.3", "127.0.0.4", "127.0.0.5"}},
+		{"zero is unlimited", func() int { return 0 }, []string{"127.0.0.1", "127.0.0.3", "127.0.0.4", "127.0.0.5"}},
+		{"one", func() int { return 1 }, []string{"127.0.0.1", "127.0.0.3"}},
+		{"two", func() int { return 2 }, []string{"127.0.0.1", "127.0.0.3", "127.0.0.4"}},
+	}
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			tester := dns.NewTesterForInterface("", "localhost", dns.DefaultThresholds(), "feth0")
+			dns.ExportSetResolverSource(tester, dns.ExportResolverSource(
+				func() []string { return nil },
+				func(string) ([]string, bool) { return []string{"127.0.0.1"}, true },
+			))
+			tester.SetConfiguredServers(configured)
+			tester.SetConfiguredServerLimit(tc.limit)
+
+			if got := tester.Test(context.Background()).Servers; !slices.Equal(got, tc.want) {
+				t.Errorf("servers = %v, want %v", got, tc.want)
+			}
+		})
+	}
+}

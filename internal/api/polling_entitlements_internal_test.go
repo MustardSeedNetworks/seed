@@ -14,19 +14,24 @@ import (
 	"github.com/MustardSeedNetworks/seed/internal/polling"
 )
 
+// licenseManagerAt is a licence manager at tier: Free has no licence at all.
+func licenseManagerAt(t *testing.T, tier license.Tier) *license.Manager {
+	t.Helper()
+	if tier != license.TierFree {
+		return licensetest.PaidManager(t, tier, time.Now().Add(24*time.Hour), thisDevice(t))
+	}
+	mgr, err := license.NewManagerWithDir(t.TempDir())
+	if err != nil {
+		t.Fatalf("license manager: %v", err)
+	}
+	return mgr
+}
+
 // pollingServerAt is the polling-targets test server under a licence of tier.
 func pollingServerAt(t *testing.T, tier license.Tier) *Server {
 	t.Helper()
 	s := newPollingTargetsTestServer(t)
-	if tier == license.TierFree {
-		mgr, err := license.NewManagerWithDir(t.TempDir())
-		if err != nil {
-			t.Fatalf("license manager: %v", err)
-		}
-		s.licenseMgr = mgr
-	} else {
-		s.licenseMgr = licensetest.PaidManager(t, tier, time.Now().Add(24*time.Hour), thisDevice(t))
-	}
+	s.licenseMgr = licenseManagerAt(t, tier)
 	return s
 }
 

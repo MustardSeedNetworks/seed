@@ -38,6 +38,7 @@ func (s *Server) initNetworkServices(cfg *config.Config) {
 		}
 		s.dnsTester().SetConfiguredServers(configuredServers)
 	}
+	s.dnsTester().SetConfiguredServerLimit(s.dnsServerLimit)
 
 	// Initialize device discovery with configured target networks
 	s.initTargetNetworks(cfg)
