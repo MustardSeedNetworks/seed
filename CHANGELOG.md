@@ -18,6 +18,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 * **ui:** let the compiler hold the settings hooks' callbacks ([#3088](https://github.com/MustardSeedNetworks/seed/issues/3088)) ([1749cc8](https://github.com/MustardSeedNetworks/seed/commit/1749cc8f828f2ae91a4af54ea719c1239d8588d4))
 
+### Also shipped in this release
+
+<!-- Added by scripts/check-release-changelog.py: these commits are
+     contained in the tag but were absent from the generated
+     changelog, because they merged after release-please last
+     regenerated the release PR. -->
+
+* **listener:** collect sflow v5 flow samples on the flow collector ([#3091](https://github.com/MustardSeedNetworks/seed/issues/3091)) ([5465751a](https://github.com/MustardSeedNetworks/seed/commit/5465751ad47c899e3de1768906ffeccfe014c8c6)) — _Features_
+
 ## [0.231.0](https://github.com/MustardSeedNetworks/seed/compare/v0.230.0...v0.231.0) (2026-10-04)
 
 
