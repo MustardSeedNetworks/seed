@@ -468,9 +468,11 @@ func (s *Server) initCaptureServices(cfg *config.Config) {
 	s.deviceDisc = enumerate.NewDeviceDiscoveryWithOUI(
 		cfg.Interface.Default,
 		cfg.NetworkDiscovery.OUIFilePath,
-		cfg.NetworkDiscovery.OUIMaxAge,
 		enumerate.WithCapture(captureOpener),
 	)
+	if cfg.NetworkDiscovery.OUIMaxAge > 0 {
+		go s.deviceDisc.RefreshOUI(cfg.NetworkDiscovery.OUIFilePath, cfg.NetworkDiscovery.OUIMaxAge)
+	}
 	s.dhcpMon = dhcp.NewMonitor(cfg.Interface.Default, dhcp.WithCapture(captureOpener))
 	s.rogueDet = dhcp.NewRogueDetector(&dhcp.RogueDetectorConfig{
 		Interface:        cfg.Interface.Default,

@@ -63,3 +63,23 @@ func TestSampleConfigMatchesTheDiscoveryDefaults(t *testing.T) {
 		t.Error("configs/seed.json must ship the active sweeps on")
 	}
 }
+
+// seed#2970: a 30-day OUI refresh by default downloaded the IEEE registry on
+// every fresh start, before the listener came up. The product does not call
+// out unless an operator enables it, and the registry is embedded, so both
+// the built-in default and the shipped sample leave the refresh off.
+func TestOUIRefreshIsOptIn(t *testing.T) {
+	fresh, err := config.Load(filepath.Join(t.TempDir(), "absent.json"))
+	if err != nil {
+		t.Fatalf("Load with no config file: %v", err)
+	}
+	sample, err := config.Load("../../configs/seed.json")
+	if err != nil {
+		t.Fatalf("Load configs/seed.json: %v", err)
+	}
+	for name, cfg := range map[string]*config.Config{"default": fresh, "configs/seed.json": sample} {
+		if got := cfg.NetworkDiscovery.OUIMaxAge; got != 0 {
+			t.Errorf("%s oui_max_age = %s, want 0 (no callout unless the operator opts in)", name, got)
+		}
+	}
+}

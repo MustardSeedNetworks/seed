@@ -180,7 +180,10 @@ type NetworkDiscoveryConfig struct {
 	ScanTimeout time.Duration `json:"scan_timeout"`  // Total scan timeout
 	AutoScan    bool          `json:"auto_scan"`     // Auto-scan on startup
 	OUIFilePath string        `json:"oui_file_path"` // Path to IEEE OUI file
-	OUIMaxAge   time.Duration `json:"oui_max_age"`   // Max age before auto-download (0 = never auto-update)
+	// OUIMaxAge opts in to refreshing OUIFilePath from the IEEE registry once
+	// it is older than this. Zero, the default, never calls out: the registry
+	// embedded in the binary is used.
+	OUIMaxAge time.Duration `json:"oui_max_age"`
 
 	// Fingerprinting enables OS/service detection.
 	Fingerprinting FingerprintingConfig `json:"fingerprinting,omitzero"`

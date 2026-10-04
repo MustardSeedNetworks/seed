@@ -141,9 +141,6 @@ const (
 	// defaultScanTimeoutSec is the total timeout in seconds for network scans.
 	defaultScanTimeoutSec = 30
 
-	// defaultOUIMaxAgeDays is the maximum age in days for OUI database before refresh.
-	defaultOUIMaxAgeDays = 30
-
 	// defaultSessionTimeoutHours is the default session timeout in hours.
 	defaultSessionTimeoutHours = 24
 

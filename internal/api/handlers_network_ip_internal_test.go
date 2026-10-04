@@ -31,7 +31,7 @@ func TestIPConfigReportsInterfaceVendor(t *testing.T) {
 			s := NewTestServer()
 			t.Cleanup(s.Close)
 			if tc.withOUI {
-				s.deviceDisc = enumerate.NewDeviceDiscoveryWithOUI(tc.iface, "", 0)
+				s.deviceDisc = enumerate.NewDeviceDiscoveryWithOUI(tc.iface, "")
 			}
 
 			body := getIPConfig(t, s, tc.iface)

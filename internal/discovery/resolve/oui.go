@@ -265,8 +265,7 @@ func (db *OUIDatabase) DownloadOUIDatabase(ctx context.Context, destPath string)
 		return fmt.Errorf("failed to move OUI database: %w", renameErr)
 	}
 
-	// Parse and load the downloaded file
-	if loadErr := db.LoadFromIEEEFormat(destPath); loadErr != nil {
+	if loadErr := db.reloadFromIEEEFormat(destPath); loadErr != nil {
 		return fmt.Errorf("failed to parse OUI database: %w", loadErr)
 	}
 
@@ -330,8 +329,30 @@ func (db *OUIDatabase) LoadFromIEEEFormat(path string) error {
 	return nil
 }
 
+// reloadFromIEEEFormat loads path afresh and replaces its ieeeOUICache entry.
+// DownloadOUIDatabase has just rewritten the file, so a parse cached earlier
+// in the process, or a cached "not found" from the startup load, is stale.
+func (db *OUIDatabase) reloadFromIEEEFormat(path string) error {
+	vendors, err := parseIEEEOUIFile(path)
+	if err != nil {
+		return err
+	}
+	abs, absErr := filepath.Abs(path)
+	if absErr != nil {
+		abs = path
+	}
+	entry := &ieeeOUIEntry{vendors: vendors}
+	entry.once.Do(func() {})
+	ieeeOUICache.Store(abs, entry)
+
+	db.mu.Lock()
+	defer db.mu.Unlock()
+	maps.Copy(db.vendors, vendors)
+	return nil
+}
+
 // parseIEEEOUIFile parses an IEEE oui.txt file into a vendor map. Called
-// once per path via the ieeeOUICache.
+// once per path via the ieeeOUICache, and again by reloadFromIEEEFormat.
 func parseIEEEOUIFile(path string) (map[string]string, error) {
 	file, err := os.Open(path)
 	if err != nil {
