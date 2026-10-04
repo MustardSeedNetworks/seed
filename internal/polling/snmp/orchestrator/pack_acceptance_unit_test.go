@@ -7,6 +7,7 @@ import (
 	"slices"
 	"testing"
 
+	"github.com/MustardSeedNetworks/seed/internal/alerts"
 	"github.com/MustardSeedNetworks/seed/internal/polling/observation"
 	"github.com/MustardSeedNetworks/seed/internal/polling/snmp/collectors/fdb"
 	"github.com/MustardSeedNetworks/seed/internal/polling/snmp/collectors/lldp"
@@ -209,6 +210,66 @@ func TestTopologyFindings(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 			if got := topologyFindings(tt.authored, tt.drawn); !slices.Equal(got, tt.want) {
+				t.Errorf("findings = %q, want %q", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestAlertFindings(t *testing.T) {
+	t.Parallel()
+	fault := packFault{Device: "core", Interface: "Gi0/2"}
+	down := func(source, iface string) *alerts.Alert {
+		return &alerts.Alert{Rule: ifaceDownRule, Source: source, Title: "Interface " + iface + " down on " + source}
+	}
+	tests := []struct {
+		name   string
+		raised []*alerts.Alert
+		want   []string
+	}{
+		{
+			name:   "the faulted interface alone",
+			raised: []*alerts.Alert{down("core", "Gi0/2")},
+		},
+		{
+			name: "nothing raised",
+			want: []string{"alerts: no iface.down for core Gi0/2, which NIAC took down"},
+		},
+		{
+			name:   "an interface whose name extends the faulted one",
+			raised: []*alerts.Alert{down("core", "Gi0/20")},
+			want: []string{
+				`alerts: iface.down on core ("Interface Gi0/20 down on core"), which the fault does not explain`,
+				"alerts: no iface.down for core Gi0/2, which NIAC took down",
+			},
+		},
+		{
+			name:   "the same interface on another device",
+			raised: []*alerts.Alert{down("core", "Gi0/2"), down("dist", "Gi0/2")},
+			want: []string{
+				`alerts: iface.down on dist ("Interface Gi0/2 down on dist"), which the fault does not explain`,
+			},
+		},
+		{
+			name: "another rule on the faulted device",
+			raised: []*alerts.Alert{
+				down("core", "Gi0/2"),
+				{Rule: "storage.high", Source: "core", Title: "Filesystem / high on core"},
+			},
+			want: []string{
+				`alerts: storage.high on core ("Filesystem / high on core"), which the fault does not explain`,
+			},
+		},
+		{
+			name:   "raised twice",
+			raised: []*alerts.Alert{down("core", "Gi0/2"), down("core", "Gi0/2")},
+			want:   []string{"alerts: 2 iface.down alerts for core Gi0/2, want one"},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			if got := alertFindings(fault, tt.raised); !slices.Equal(got, tt.want) {
 				t.Errorf("findings = %q, want %q", got, tt.want)
 			}
 		})
