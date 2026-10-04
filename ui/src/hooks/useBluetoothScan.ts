@@ -15,7 +15,7 @@
  * Bluetooth / BLE / RSSI / GATT / UUID are protocol nouns (Do-Not-Translate).
  */
 
-import { useCallback, useRef, useState } from 'react';
+import { useRef, useState } from 'react';
 import { cancelJob, submitJob } from '../lib/jobsClient';
 import type {
   BluetoothDevice,
@@ -112,27 +112,22 @@ export function useBluetoothScan(): UseBluetoothScanReturn {
   // applyJob updates status from a job snapshot and captures the scan result
   // once it succeeds. Used both for live SSE updates and for the submit
   // response itself (a synchronous job may already be terminal on return).
-  const applyJob = useCallback((job: JobResponse): void => {
+  const applyJob = (job: JobResponse): void => {
     setStatus(statusFromJob(job));
     if (job.state === 'succeeded' && isScanResponse(job.result)) {
       setResult(job.result);
     }
-  }, []);
+  };
 
   // Apply events for OUR job only; the stream multiplexes every job.
-  useJobEvents(
-    useCallback(
-      (job: JobResponse) => {
-        if (job.id !== jobIdRef.current) {
-          return;
-        }
-        applyJob(job);
-      },
-      [applyJob],
-    ),
-  );
+  useJobEvents((job: JobResponse) => {
+    if (job.id !== jobIdRef.current) {
+      return;
+    }
+    applyJob(job);
+  });
 
-  const startScan = useCallback(async (): Promise<void> => {
+  const startScan = async (): Promise<void> => {
     setStatus({ state: 'running', jobId: '', percentComplete: 0, error: null });
     try {
       // bluetooth-scan takes no params; the scanner is injected server-side.
@@ -149,9 +144,9 @@ export function useBluetoothScan(): UseBluetoothScanReturn {
       });
       throw err;
     }
-  }, []);
+  };
 
-  const cancelScan = useCallback(async (): Promise<void> => {
+  const cancelScan = async (): Promise<void> => {
     const id = jobIdRef.current;
     if (!id) {
       return;
@@ -160,13 +155,11 @@ export function useBluetoothScan(): UseBluetoothScanReturn {
       await cancelJob(id);
       setStatus((prev) => ({ ...prev, state: 'canceled' }));
     } catch (err) {
-      setStatus((prev) => ({
-        ...prev,
-        error: err instanceof Error ? err.message : 'Failed to cancel scan',
-      }));
+      const error = err instanceof Error ? err.message : 'Failed to cancel scan';
+      setStatus((prev) => ({ ...prev, error }));
       throw err;
     }
-  }, []);
+  };
 
   return {
     status,

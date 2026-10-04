@@ -15,7 +15,7 @@
  * it is intentionally not surfaced here (see SEED_S4_FOLD_PLAN.md S3 fork).
  */
 
-import { useCallback, useRef, useState } from 'react';
+import { useRef, useState } from 'react';
 import { cancelJob, submitJob } from '../lib/jobsClient';
 import type { EngineScanRequest } from '../types/generated/engine-scan-request';
 import type { JobResponse } from '../types/generated/job-response';
@@ -109,16 +109,14 @@ export function useEngineScan(): UseEngineScanReturn {
   const jobIdRef = useRef<string>('');
 
   // Apply events for OUR job only; the stream multiplexes every job.
-  useJobEvents(
-    useCallback((job: JobResponse) => {
-      if (job.id !== jobIdRef.current) {
-        return;
-      }
-      setStatus(statusFromJob(job));
-    }, []),
-  );
+  useJobEvents((job: JobResponse) => {
+    if (job.id !== jobIdRef.current) {
+      return;
+    }
+    setStatus(statusFromJob(job));
+  });
 
-  const startScan = useCallback(async (overrides?: Partial<EngineScanRequest>): Promise<void> => {
+  const startScan = async (overrides?: Partial<EngineScanRequest>): Promise<void> => {
     const params: EngineScanRequest = { ...DEFAULT_SCAN_PARAMS, ...overrides };
     setStatus({ state: 'running', jobId: '', percentComplete: 0, error: null });
     try {
@@ -135,9 +133,9 @@ export function useEngineScan(): UseEngineScanReturn {
       });
       throw err;
     }
-  }, []);
+  };
 
-  const cancelScan = useCallback(async (): Promise<void> => {
+  const cancelScan = async (): Promise<void> => {
     const id = jobIdRef.current;
     if (!id) {
       return;
@@ -146,13 +144,11 @@ export function useEngineScan(): UseEngineScanReturn {
       await cancelJob(id);
       setStatus((prev) => ({ ...prev, state: 'canceled' }));
     } catch (err) {
-      setStatus((prev) => ({
-        ...prev,
-        error: err instanceof Error ? err.message : 'Failed to cancel scan',
-      }));
+      const error = err instanceof Error ? err.message : 'Failed to cancel scan';
+      setStatus((prev) => ({ ...prev, error }));
       throw err;
     }
-  }, []);
+  };
 
   return { status, running: status.state === 'running', startScan, cancelScan };
 }

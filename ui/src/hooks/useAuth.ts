@@ -36,7 +36,7 @@
  * ```
  */
 
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { beginSession, clearCSRFToken } from '../api';
 import { LogComponents, logger } from '../lib/logger';
 import type { LoginResponse } from '../types/generated/login-response';
@@ -111,14 +111,6 @@ function clearLegacyStorage(): void {
 }
 
 /**
- * Custom hook for managing user authentication state.
- *
- * Provides login/logout functionality and tracks authentication state.
- * Automatically checks session validity on mount via backend API.
- *
- * @returns Authentication state and control functions
- */
-/**
  * How long a login request may hang before it is abandoned.
  *
  * Long enough for a slow but working server, short enough that an operator
@@ -126,6 +118,52 @@ function clearLegacyStorage(): void {
  * re-enables.
  */
 const LOGIN_TIMEOUT_MS = 15_000;
+
+/**
+ * postAuth sends one credential exchange and returns the parsed response.
+ * A non-2xx answer rejects with `failure`, the sentence the form shows.
+ */
+async function postAuth(
+  path: string,
+  body: Record<string, string>,
+  signal: AbortSignal,
+  failure: string,
+): Promise<LoginResponse> {
+  const response = await fetch(`${API_BASE}${path}`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    credentials: 'include', // Receive httpOnly cookies
+    body: JSON.stringify(body),
+    // Without a deadline a server that accepts the connection and never
+    // answers leaves this promise pending, so isLoading stays true, the submit
+    // button stays disabled and no error is ever shown -- the form is simply
+    // stuck, with no way to retry.
+    signal,
+  });
+  if (!response.ok) {
+    throw new Error(failure);
+  }
+  return response.json() as Promise<LoginResponse>;
+}
+
+function errorText(err: unknown, fallback: string): string {
+  return err instanceof Error ? err.message : fallback;
+}
+
+function loginFailureMessage(err: unknown, deadline: AbortSignal): string {
+  return deadline.aborted
+    ? 'The server did not respond. Check the connection and try again.'
+    : errorText(err, 'Login failed');
+}
+
+/**
+ * Custom hook for managing user authentication state.
+ *
+ * Provides login/logout functionality and tracks authentication state.
+ * Automatically checks session validity on mount via backend API.
+ *
+ * @returns Authentication state and control functions
+ */
 export function useAuth(): UseAuthReturn {
   // Internal authentication state
   const [state, setState] = useState<AuthState>({
@@ -147,7 +185,7 @@ export function useAuth(): UseAuthReturn {
   const loginSupersededProbeRef = useRef(false);
 
   // Expire session handler - clears state and shows error message
-  const expireSession = useCallback((message = 'Session expired. Please sign in again.') => {
+  const expireSession = (message = 'Session expired. Please sign in again.') => {
     // Clear any polling intervals
     if (pollingIntervalRef.current !== null) {
       clearInterval(pollingIntervalRef.current);
@@ -167,12 +205,12 @@ export function useAuth(): UseAuthReturn {
     setError(message);
 
     logger.warn(LogComponents.AUTH, 'Session expired', { message });
-  }, []);
+  };
 
   // Clear error handler
-  const clearError = useCallback(() => {
+  const clearError = () => {
     setError(null);
-  }, []);
+  };
 
   /**
    * Effect: Check authentication status on mount
@@ -245,133 +283,117 @@ export function useAuth(): UseAuthReturn {
       });
   }, []);
 
-  const login = useCallback(async (username: string, password: string): Promise<LoginOutcome> => {
+  const login = async (username: string, password: string): Promise<LoginOutcome> => {
     // From here on, the mount-time /status probe must not override our result:
     // an explicit login is authoritative even if the probe resolves later.
     loginSupersededProbeRef.current = true;
     setIsLoading(true);
     setError(null);
 
-    // Declared outside the try so the catch can ask the signal whether OUR
-    // deadline fired. The rejection's name is not reliable for this: Chromium
-    // raises TimeoutError, WebKit raises AbortError, and matching on the name
-    // meant Safari users got WebKit's internal "Fetch is aborted" text instead
-    // of the sentence written for them. Nothing else can abort this signal.
+    // Created here so the catch can ask the signal whether OUR deadline
+    // fired. The rejection's name is not reliable for this: Chromium raises
+    // TimeoutError, WebKit raises AbortError, and matching on the name meant
+    // Safari users got WebKit's internal "Fetch is aborted" text instead of
+    // the sentence written for them. Nothing else can abort this signal.
     const deadline = AbortSignal.timeout(LOGIN_TIMEOUT_MS);
 
+    let data: LoginResponse;
     try {
-      const response = await fetch(`${API_BASE}/api/v1/auth/login`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        credentials: 'include', // Receive httpOnly cookies
-        body: JSON.stringify({ username, password }),
-        // Without a deadline a server that accepts the connection and never
-        // answers leaves this promise pending, so isLoading stays true, the
-        // submit button stays disabled and no error is ever shown -- the form
-        // is simply stuck, with no way to retry.
-        signal: deadline,
-      });
-
-      if (!response.ok) {
-        throw new Error('Invalid credentials');
-      }
-
-      const data: LoginResponse = await (response.json() as Promise<LoginResponse>);
-
-      // A user with a second factor enrolled gets no access token here, only a
-      // one-time mfaToken to exchange. Treating that as a successful login left
-      // the app "authenticated" with an empty token, so every request failed
-      // and the account looked bricked (#2391).
-      if (data.mfaRequired === true) {
-        if (!data.mfaToken) {
-          setError('The server asked for a second factor but issued no token to complete it.');
-          return { status: 'error' };
-        }
-        logger.info(LogComponents.AUTH, 'Login requires a second factor', { username });
-        return { status: 'mfa-required', mfaToken: data.mfaToken, username };
-      }
-
-      // Open a new session generation before any request can be issued against
-      // it, so a 401 still in flight from the previous session cannot expire
-      // this one (#2204).
-      beginSession();
-
-      // Backend sets httpOnly cookies automatically
-      // Store access token in memory ONLY for SSE/WebSocket connections
-      setState({
-        isAuthenticated: true,
-        token: data.token ?? null, // Access token for SSE (short-lived, 15min)
-        username,
-      });
-      setConnected(true);
-
-      logger.info(LogComponents.AUTH, 'User logged in successfully', {
-        username,
-      });
-      return { status: 'ok' };
+      data = await postAuth(
+        '/api/v1/auth/login',
+        { username, password },
+        deadline,
+        'Invalid credentials',
+      );
     } catch (err) {
-      const timedOut = deadline.aborted;
-      const errorMessage = timedOut
-        ? 'The server did not respond. Check the connection and try again.'
-        : err instanceof Error
-          ? err.message
-          : 'Login failed';
-      setError(errorMessage);
+      setError(loginFailureMessage(err, deadline));
       // fixes #678 - added structured error logging for login failures
       logger.error(LogComponents.AUTH, 'Login failed', err, {
         endpoint: '/api/v1/auth/login',
         username,
       });
-      return { status: 'error' };
-    } finally {
       setIsLoading(false);
+      return { status: 'error' };
     }
-  }, []);
+    setIsLoading(false);
 
-  const completeSecondFactor = useCallback(
-    async (mfaToken: string, code: string): Promise<boolean> => {
-      setIsLoading(true);
-      setError(null);
-      try {
-        const response = await fetch(`${API_BASE}/api/v1/auth/login/totp`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          credentials: 'include',
-          body: JSON.stringify({ mfaToken, code }),
-          signal: AbortSignal.timeout(LOGIN_TIMEOUT_MS),
-        });
-        if (!response.ok) {
-          throw new Error('Invalid verification code');
-        }
-
-        const data: LoginResponse = await (response.json() as Promise<LoginResponse>);
-        if (!data.token) {
-          throw new Error('Invalid verification code');
-        }
-
-        beginSession();
-        setState({ isAuthenticated: true, token: data.token, username: '' });
-        setConnected(true);
-        logger.info(LogComponents.AUTH, 'Second factor accepted');
-
-        return true;
-      } catch (err) {
-        setError(err instanceof Error ? err.message : 'Verification failed');
-        logger.error(LogComponents.AUTH, 'Second factor failed', err, {
-          endpoint: '/api/v1/auth/login/totp',
-        });
-
-        return false;
-      } finally {
-        setIsLoading(false);
+    // A user with a second factor enrolled gets no access token here, only a
+    // one-time mfaToken to exchange. Treating that as a successful login left
+    // the app "authenticated" with an empty token, so every request failed
+    // and the account looked bricked (#2391).
+    if (data.mfaRequired === true) {
+      if (!data.mfaToken) {
+        setError('The server asked for a second factor but issued no token to complete it.');
+        return { status: 'error' };
       }
-    },
-    [],
-  );
+      logger.info(LogComponents.AUTH, 'Login requires a second factor', { username });
+      return { status: 'mfa-required', mfaToken: data.mfaToken, username };
+    }
 
-  const logout = useCallback(() => {
+    // Open a new session generation before any request can be issued against
+    // it, so a 401 still in flight from the previous session cannot expire
+    // this one (#2204).
+    beginSession();
+
+    // Backend sets httpOnly cookies automatically
+    // Store access token in memory ONLY for SSE/WebSocket connections
+    setState({
+      isAuthenticated: true,
+      token: data.token ?? null, // Access token for SSE (short-lived, 15min)
+      username,
+    });
+    setConnected(true);
+
+    logger.info(LogComponents.AUTH, 'User logged in successfully', {
+      username,
+    });
+    return { status: 'ok' };
+  };
+
+  const completeSecondFactor = async (mfaToken: string, code: string): Promise<boolean> => {
+    setIsLoading(true);
+    setError(null);
+
+    let data: LoginResponse;
+    try {
+      data = await postAuth(
+        '/api/v1/auth/login/totp',
+        { mfaToken, code },
+        AbortSignal.timeout(LOGIN_TIMEOUT_MS),
+        'Invalid verification code',
+      );
+    } catch (err) {
+      setError(errorText(err, 'Verification failed'));
+      logger.error(LogComponents.AUTH, 'Second factor failed', err, {
+        endpoint: '/api/v1/auth/login/totp',
+      });
+      setIsLoading(false);
+      return false;
+    }
+    setIsLoading(false);
+
+    if (!data.token) {
+      setError('Invalid verification code');
+      logger.error(
+        LogComponents.AUTH,
+        'Second factor failed',
+        new Error('Invalid verification code'),
+        {
+          endpoint: '/api/v1/auth/login/totp',
+        },
+      );
+      return false;
+    }
+
+    beginSession();
+    setState({ isAuthenticated: true, token: data.token, username: '' });
+    setConnected(true);
+    logger.info(LogComponents.AUTH, 'Second factor accepted');
+
+    return true;
+  };
+
+  const logout = () => {
     const currentUsername = state.username;
 
     // Clear any polling intervals
@@ -417,14 +439,14 @@ export function useAuth(): UseAuthReturn {
         });
         // Local state already cleared, so continue
       });
-  }, [state.username]);
+  };
 
   /**
    * Refresh the access token using the refresh token cookie.
    * Returns the new access token if successful, null otherwise.
    * This is used by WebSocket to get a fresh token for reconnection.
    */
-  const refreshToken = useCallback(async (): Promise<string | null> => {
+  const refreshToken = async (): Promise<string | null> => {
     // Fixes #718: any refresh-failure path must drop auth state so the UI
     // doesn't keep showing an authenticated session with a stale token.
     const clearAuthState = (): void => {
@@ -473,7 +495,7 @@ export function useAuth(): UseAuthReturn {
       clearAuthState();
       return null;
     }
-  }, []);
+  };
 
   return {
     isAuthenticated: state.isAuthenticated,
