@@ -5,6 +5,19 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.221.4](https://github.com/MustardSeedNetworks/seed/compare/v0.221.3...v0.221.4) (2026-10-04)
+
+
+### Bug Fixes
+
+* **deps:** update go dependencies ([#2982](https://github.com/MustardSeedNetworks/seed/issues/2982)) ([1b2970e](https://github.com/MustardSeedNetworks/seed/commit/1b2970ea433905d3999aaeaf4579b5413df55349))
+* **discovery:** rate interface errors between readings, not lifetime totals ([#2993](https://github.com/MustardSeedNetworks/seed/issues/2993)) ([44d342a](https://github.com/MustardSeedNetworks/seed/commit/44d342aa910bd815f8f16b40b990933926d73645)), closes [#2753](https://github.com/MustardSeedNetworks/seed/issues/2753)
+
+
+### Documentation
+
+* **changelog:** record [#2977](https://github.com/MustardSeedNetworks/seed/issues/2977) in v0.221.3 ([#2998](https://github.com/MustardSeedNetworks/seed/issues/2998)) ([774f0e3](https://github.com/MustardSeedNetworks/seed/commit/774f0e3917dd59d2c87f05c9859cc2690903b8e0))
+
 ## [0.221.3](https://github.com/MustardSeedNetworks/seed/compare/v0.221.2...v0.221.3) (2026-10-03)
 
 
