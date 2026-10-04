@@ -315,6 +315,11 @@ pack authors and seed does not draw, or that seed draws and the pack does not
 author. Needs `niac`, PyYAML, Go and sudo; no seed daemon or UI.
 Named packs can be passed to `scripts/snmp-acceptance-niac.sh PACK...`.
 
+Nightly against the latest NIAC release via `.github/workflows/niac-packs.yml`,
+and on any PR that changes the harness. Each pack's line reports its wall time
+and how long before the injected fault the baseline poll finished; that margin
+is the timing budget, and the run fails when it runs out.
+
 ### Test Requirements
 
 - Unit tests for business logic
