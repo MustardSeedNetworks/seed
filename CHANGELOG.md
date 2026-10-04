@@ -5,6 +5,23 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.232.1](https://github.com/MustardSeedNetworks/seed/compare/v0.232.0...v0.232.1) (2026-10-04)
+
+
+### Bug Fixes
+
+* **api:** answer every error with the JSON ErrorResponse ([#3096](https://github.com/MustardSeedNetworks/seed/issues/3096)) ([5f5d93c](https://github.com/MustardSeedNetworks/seed/commit/5f5d93c238a9748fd2b30f685a348c99ee5a3607)), closes [#2749](https://github.com/MustardSeedNetworks/seed/issues/2749)
+
+
+### Code Refactoring
+
+* **ui:** let the compiler hold the SSE, log and vulnerability hooks ([#3093](https://github.com/MustardSeedNetworks/seed/issues/3093)) ([9656f24](https://github.com/MustardSeedNetworks/seed/commit/9656f2466bc2445249ed45482de6cbbaad85b5ac))
+
+
+### Documentation
+
+* **changelog:** record [#3091](https://github.com/MustardSeedNetworks/seed/issues/3091) in v0.232.0 ([#3094](https://github.com/MustardSeedNetworks/seed/issues/3094)) ([47ca820](https://github.com/MustardSeedNetworks/seed/commit/47ca82086f9af788af6b64a3f58f745c36f1cd5b))
+
 ## [0.232.0](https://github.com/MustardSeedNetworks/seed/compare/v0.231.0...v0.232.0) (2026-10-04)
 
 
