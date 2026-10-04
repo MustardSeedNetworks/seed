@@ -37,7 +37,7 @@ func minTierForEngine(name string) license.Tier {
 		"alert-observation-pipeline",
 		"alert-escalation",
 		"syslog-udp",
-		"snmp-trap-v2c":
+		"snmp-trap":
 		return license.TierPro
 	}
 	return license.TierFree

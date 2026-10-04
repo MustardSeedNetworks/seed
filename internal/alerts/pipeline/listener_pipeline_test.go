@@ -98,7 +98,7 @@ func trapEvent(trapOID, source string, observed time.Time) *listener.EventRecord
 		"trapOid": trapOID,
 	})
 	return &listener.EventRecord{
-		Kind:        "snmp-trap-v2c",
+		Kind:        "snmp-trap",
 		ClientID:    "default",
 		SourceAddr:  source,
 		ObservedAt:  observed,

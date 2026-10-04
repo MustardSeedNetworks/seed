@@ -95,7 +95,7 @@ func TestCompileRulesFromDB_MatchKindFilter(t *testing.T) {
 	rule := rules[0]
 
 	syslogEvt := &listener.EventRecord{Kind: "syslog-udp"}
-	trapEvt := &listener.EventRecord{Kind: "snmp-trap-v2c"}
+	trapEvt := &listener.EventRecord{Kind: "snmp-trap"}
 
 	if !rule.Match(syslogEvt) {
 		t.Error("syslog-udp event should match syslog-udp filter")
@@ -114,8 +114,8 @@ func TestCompileRulesFromDB_MatchKindEmptyMatchesAll(t *testing.T) {
 	if !rule.Match(&listener.EventRecord{Kind: "syslog-udp"}) {
 		t.Error("empty match_kind should match syslog-udp")
 	}
-	if !rule.Match(&listener.EventRecord{Kind: "snmp-trap-v2c"}) {
-		t.Error("empty match_kind should match snmp-trap-v2c")
+	if !rule.Match(&listener.EventRecord{Kind: "snmp-trap"}) {
+		t.Error("empty match_kind should match snmp-trap")
 	}
 }
 

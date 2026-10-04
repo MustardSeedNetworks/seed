@@ -61,8 +61,8 @@ func TestInitListeners_SyslogEnvVarRegistersListener(t *testing.T) {
 	if !names["syslog-udp"] {
 		t.Errorf("syslog-udp not registered; got engines = %v", names)
 	}
-	if names["snmp-trap-v2c"] {
-		t.Errorf("snmp-trap-v2c should NOT be registered when env unset")
+	if names["snmp-trap"] {
+		t.Errorf("snmp-trap should NOT be registered when env unset")
 	}
 }
 
@@ -77,8 +77,8 @@ func TestInitListeners_SnmpTrapEnvVarRegistersListener(t *testing.T) {
 	for _, e := range s.engines.Engines() {
 		names[e.Name()] = true
 	}
-	if !names["snmp-trap-v2c"] {
-		t.Errorf("snmp-trap-v2c not registered; got engines = %v", names)
+	if !names["snmp-trap"] {
+		t.Errorf("snmp-trap not registered; got engines = %v", names)
 	}
 }
 
@@ -93,7 +93,7 @@ func TestInitListeners_BothEnvVarsRegistersBoth(t *testing.T) {
 	for _, e := range s.engines.Engines() {
 		names[e.Name()] = true
 	}
-	if !names["syslog-udp"] || !names["snmp-trap-v2c"] {
+	if !names["syslog-udp"] || !names["snmp-trap"] {
 		t.Errorf("expected both listeners registered, got %v", names)
 	}
 }

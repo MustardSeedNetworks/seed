@@ -26,7 +26,7 @@ func TestMinTierForEngine_Mapping(t *testing.T) {
 		{"alert-listener-pipeline", license.TierPro},
 		{"alert-observation-pipeline", license.TierPro},
 		{"syslog-udp", license.TierPro},
-		{"snmp-trap-v2c", license.TierPro},
+		{"snmp-trap", license.TierPro},
 		{"unknown-future-engine", license.TierFree}, // default
 	}
 	for _, tt := range cases {
