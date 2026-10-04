@@ -2,8 +2,8 @@
 --
 -- One row per flow record as the exporter sent it. Times are UTC with fixed
 -- millisecond precision so they sort as text. Counters are the exporter's,
--- scaled by the v5 header's sampling interval. The retention engine purges
--- rows past the raw horizon.
+-- scaled by the sampling rate it announced (the v5 header, or a v9/IPFIX
+-- options record). The retention engine purges rows past the raw horizon.
 
 -- +goose Up
 CREATE TABLE flow_records (
