@@ -1,7 +1,9 @@
 package enumerate
 
 import (
+	"errors"
 	"fmt"
+	"time"
 
 	"github.com/gopacket/gopacket"
 	"github.com/gopacket/gopacket/layers"
@@ -15,6 +17,10 @@ const dot1qTagLength = 4
 
 // ethernetTypeOffset is where the type field sits in an untagged Ethernet frame.
 const ethernetTypeOffset = 12
+
+// protocolReadTimeout bounds each capture read so Stop can close a handle on an
+// interface that has gone quiet (see capture.ErrTimeout).
+const protocolReadTimeout = 100 * time.Millisecond
 
 // dot1qVLANMask selects the 12-bit VLAN ID out of the TCI, discarding the
 // 3-bit priority and the drop-eligible flag above it.
@@ -69,6 +75,9 @@ func readTaggedPackets(handle capture.Handle, linkType layers.LinkType) <-chan t
 		defer close(out)
 		for {
 			data, _, err := handle.ReadPacketData()
+			if errors.Is(err, capture.ErrTimeout) {
+				continue
+			}
 			if err != nil {
 				return
 			}
@@ -107,7 +116,7 @@ func openProtocolCapture(
 	snaplen int32,
 	bpfFilter string,
 ) (capture.Handle, layers.LinkType, error) {
-	handle, err := opener.OpenLive(iface, snaplen, true, capture.BlockForever)
+	handle, err := opener.OpenLive(iface, snaplen, true, protocolReadTimeout)
 	if err != nil {
 		return nil, 0, fmt.Errorf("failed to open capture: %w", err)
 	}

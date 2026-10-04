@@ -33,13 +33,17 @@ type Opener struct{}
 // New returns a libpcap-backed capture.Opener.
 func New() Opener { return Opener{} }
 
-// OpenLive opens a live libpcap capture handle.
+// OpenLive opens a live libpcap capture handle. It refuses a non-positive
+// timeout, which gopacket would turn into a read that blocks Close.
 func (Opener) OpenLive(
 	iface string,
 	snaplen int32,
 	promiscuous bool,
 	timeout time.Duration,
 ) (capture.Handle, error) {
+	if timeout <= 0 {
+		return nil, capture.ErrNoReadTimeout
+	}
 	h, err := pcap.OpenLive(iface, snaplen, promiscuous, timeout)
 	if err != nil {
 		// Return an explicit nil interface (not a typed-nil *pcap.Handle) so

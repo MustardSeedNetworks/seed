@@ -3,6 +3,7 @@ package nullcapture_test
 import (
 	"errors"
 	"testing"
+	"time"
 
 	"github.com/MustardSeedNetworks/seed/internal/capture"
 	"github.com/MustardSeedNetworks/seed/internal/capture/nullcapture"
@@ -15,7 +16,7 @@ func TestOpenLiveReturnsUnavailable(t *testing.T) {
 
 	var opener capture.Opener = nullcapture.New()
 
-	handle, err := opener.OpenLive("eth0", 65535, true, capture.BlockForever)
+	handle, err := opener.OpenLive("eth0", 65535, true, 100*time.Millisecond)
 	if handle != nil {
 		t.Errorf("OpenLive returned a non-nil handle: %v", handle)
 	}

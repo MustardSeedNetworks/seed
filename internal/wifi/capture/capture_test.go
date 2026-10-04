@@ -15,6 +15,7 @@ import (
 	"github.com/MustardSeedNetworks/foundation/pkg/supervise"
 
 	"github.com/MustardSeedNetworks/seed/internal/capture"
+	"github.com/MustardSeedNetworks/seed/internal/capture/capturetest"
 	wificapture "github.com/MustardSeedNetworks/seed/internal/wifi/capture"
 	"github.com/MustardSeedNetworks/seed/internal/wifi/dot11"
 )
@@ -150,6 +151,32 @@ func TestCaptureIngestsDecodedFramesAndSkipsGarbage(t *testing.T) {
 	}
 	if sink.setCalls == 0 || !sink.cleared {
 		t.Errorf("expected SetSource on start and ClearSource on stop: set=%d cleared=%v", sink.setCalls, sink.cleared)
+	}
+}
+
+// TestCaptureStopsOnQuietChannel pins seed#2862: a beacon after a read timeout
+// proves the loop reads past capture.ErrTimeout, and cancelling on the quiet
+// channel that follows must return promptly. Opened without a read timeout,
+// libpcap on Linux holds the handle in a read that never returns, so closing
+// it, and Run with it, hang.
+func TestCaptureStopsOnQuietChannel(t *testing.T) {
+	opener := &capturetest.QuietOpener{
+		LinkType: layers.LinkTypeIEEE80211Radio,
+		Frames:   [][]byte{beaconBytes("corp")},
+	}
+	sink := &fakeSink{}
+	c := wificapture.New(opener, sink, "mon0")
+
+	ctx, cancel := context.WithCancel(t.Context())
+	done := make(chan error, 1)
+	go func() { done <- c.Run(ctx) }()
+	waitFor(t, func() bool { return sink.frameCount() == 1 })
+
+	cancel()
+	select {
+	case <-done:
+	case <-time.After(time.Second):
+		t.Fatal("Run did not return within one second of cancellation on a quiet channel")
 	}
 }
 
