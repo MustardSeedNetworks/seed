@@ -8,7 +8,7 @@
  * SettingsDrawer.
  */
 
-import { useCallback, useState } from 'react';
+import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { api } from '../api';
 import { LogComponents, logger } from '../lib/logger';
@@ -39,22 +39,22 @@ export function useSubnetSettings(): UseSubnetSettingsResult {
   const [subnetError, setSubnetError] = useState<string | null>(null);
   const [subnetsStatus, setSubnetsStatus] = useState<SaveStatus>('idle');
 
-  const fetchSubnets = useCallback(async () => {
-    try {
-      const response = await fetch(`${API_BASE}/api/v1/security/devices/subnets`, {
-        credentials: 'include',
+  const fetchSubnets = async (): Promise<void> => {
+    await fetch(`${API_BASE}/api/v1/security/devices/subnets`, { credentials: 'include' })
+      .then(async (response) => {
+        if (response.ok) {
+          const data = await (response.json() as Promise<Record<string, unknown>>);
+          setSubnets(Array.isArray(data) ? data : []);
+        }
+      })
+      .catch((err: unknown) => {
+        logger.error(LogComponents.DISCOVERY, 'Failed to fetch subnets', err);
       });
-      if (response.ok) {
-        const data = await (response.json() as Promise<Record<string, unknown>>);
-        setSubnets(Array.isArray(data) ? data : []);
-      }
-    } catch (err) {
-      logger.error(LogComponents.DISCOVERY, 'Failed to fetch subnets', err);
-    }
-  }, []);
+  };
 
-  const addSubnet = useCallback(async (): Promise<void> => {
-    if (!newSubnetCidr.trim()) {
+  const addSubnet = async (): Promise<void> => {
+    const cidr = newSubnetCidr.trim();
+    if (!cidr) {
       setSubnetError(t('network.cidrRequired'));
       return;
     }
@@ -62,58 +62,53 @@ export function useSubnetSettings(): UseSubnetSettingsResult {
     setSubnetError(null);
     setSubnetsStatus('saving');
 
-    try {
-      await api.post('/api/v1/security/devices/subnets', {
-        cidr: newSubnetCidr.trim(),
-        name: newSubnetName.trim() || newSubnetCidr.trim(),
+    await api
+      .post('/api/v1/security/devices/subnets', {
+        cidr,
+        name: newSubnetName.trim() || cidr,
         enabled: true,
+      })
+      .then(async () => {
+        setNewSubnetCidr('');
+        setNewSubnetName('');
+        setSubnetsStatus('saved');
+        setTimeout(() => setSubnetsStatus('idle'), 2000);
+        await fetchSubnets();
+      })
+      .catch((err: unknown) => {
+        // The client carries the server's own message through, which is what the
+        // hand-rolled branch above used to dig out of the body.
+        setSubnetError(err instanceof Error ? err.message : 'Failed to add subnet');
+        setSubnetsStatus('error');
       });
+  };
 
-      setNewSubnetCidr('');
-      setNewSubnetName('');
+  const toggleSubnet = async (cidr: string, enabled: boolean): Promise<void> => {
+    setSubnetsStatus('saving');
+    try {
+      await api.put('/api/v1/security/devices/subnets', { cidr, enabled });
+
       setSubnetsStatus('saved');
       setTimeout(() => setSubnetsStatus('idle'), 2000);
       await fetchSubnets();
-    } catch (err) {
-      // The client carries the server's own message through, which is what the
-      // hand-rolled branch above used to dig out of the body.
-      setSubnetError(err instanceof Error ? err.message : 'Failed to add subnet');
+    } catch {
       setSubnetsStatus('error');
     }
-  }, [newSubnetCidr, newSubnetName, fetchSubnets, t]);
+  };
 
-  const toggleSubnet = useCallback(
-    async (cidr: string, enabled: boolean): Promise<void> => {
-      setSubnetsStatus('saving');
-      try {
-        await api.put('/api/v1/security/devices/subnets', { cidr, enabled });
+  const deleteSubnet = async (cidr: string): Promise<void> => {
+    setSubnetsStatus('saving');
+    try {
+      // Backend expects CIDR as query parameter, not in body
+      await api.delete(`/api/v1/security/devices/subnets?cidr=${encodeURIComponent(cidr)}`);
 
-        setSubnetsStatus('saved');
-        setTimeout(() => setSubnetsStatus('idle'), 2000);
-        await fetchSubnets();
-      } catch {
-        setSubnetsStatus('error');
-      }
-    },
-    [fetchSubnets],
-  );
-
-  const deleteSubnet = useCallback(
-    async (cidr: string): Promise<void> => {
-      setSubnetsStatus('saving');
-      try {
-        // Backend expects CIDR as query parameter, not in body
-        await api.delete(`/api/v1/security/devices/subnets?cidr=${encodeURIComponent(cidr)}`);
-
-        setSubnetsStatus('saved');
-        setTimeout(() => setSubnetsStatus('idle'), 2000);
-        await fetchSubnets();
-      } catch {
-        setSubnetsStatus('error');
-      }
-    },
-    [fetchSubnets],
-  );
+      setSubnetsStatus('saved');
+      setTimeout(() => setSubnetsStatus('idle'), 2000);
+      await fetchSubnets();
+    } catch {
+      setSubnetsStatus('error');
+    }
+  };
 
   return {
     subnets,

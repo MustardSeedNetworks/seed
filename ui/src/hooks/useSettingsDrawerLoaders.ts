@@ -10,7 +10,7 @@
  */
 
 import type React from 'react';
-import { useCallback, useEffect } from 'react';
+import { useEffect } from 'react';
 import { withIds } from '../components/settings/settingsDrawerNormalizer';
 import { LogComponents, logger } from '../lib/logger';
 import type {
@@ -88,258 +88,262 @@ export function useSettingsDrawerLoaders({
   fetchSubnets,
   fetchVulnSettings,
 }: UseSettingsDrawerLoadersArgs): UseSettingsDrawerLoadersResult {
-  const fetchThresholds = useCallback(async () => {
-    try {
-      const response = await fetch(`${API_BASE}/api/v1/settings`, {
-        credentials: 'include',
-      });
-      if (response.ok) {
-        const data = await (response.json() as Promise<{
-          thresholds?: Partial<SettingsThresholds>;
-        }>);
-        if (data.thresholds) {
-          setThresholds((prev) => ({ ...prev, ...data.thresholds }));
+  const fetchThresholds = async (): Promise<void> => {
+    await fetch(`${API_BASE}/api/v1/settings`, { credentials: 'include' })
+      .then(async (response) => {
+        if (response.ok) {
+          const data = await (response.json() as Promise<{
+            thresholds?: Partial<SettingsThresholds>;
+          }>);
+          if (data.thresholds) {
+            setThresholds((prev) => ({ ...prev, ...data.thresholds }));
+          }
         }
-      }
-    } catch (err) {
-      logger.error(LogComponents.CONFIG, 'Failed to fetch thresholds', err);
-    }
-  }, [setThresholds]);
-
-  const fetchIpSettings = useCallback(async () => {
-    try {
-      const response = await fetch(`${API_BASE}/api/v1/telemetry/ipconfig/settings`, {
-        credentials: 'include',
+      })
+      .catch((err: unknown) => {
+        logger.error(LogComponents.CONFIG, 'Failed to fetch thresholds', err);
       });
-      if (response.ok) {
-        const data = await (response.json() as Promise<Partial<IpSettings>>);
-        setIpSettings({
-          mode: data.mode || 'dhcp',
-          address: data.address || '',
-          netmask: data.netmask || '24',
-          gateway: data.gateway || '',
-          dns: data.dns || [],
-        });
-        setDnsInput((data.dns || []).join(', '));
-      }
-    } catch (err) {
-      logger.error(LogComponents.CONFIG, 'Failed to fetch IP settings', err);
-    }
-  }, [setIpSettings, setDnsInput]);
+  };
 
-  const fetchTestsSettings = useCallback(async () => {
-    try {
-      const response = await fetch(`${API_BASE}/api/v1/telemetry/probes/settings`, {
-        credentials: 'include',
+  const fetchIpSettings = async (): Promise<void> => {
+    await fetch(`${API_BASE}/api/v1/telemetry/ipconfig/settings`, { credentials: 'include' })
+      .then(async (response) => {
+        if (response.ok) {
+          const data = await (response.json() as Promise<Partial<IpSettings>>);
+          setIpSettings({
+            mode: data.mode || 'dhcp',
+            address: data.address || '',
+            netmask: data.netmask || '24',
+            gateway: data.gateway || '',
+            dns: data.dns || [],
+          });
+          setDnsInput((data.dns || []).join(', '));
+        }
+      })
+      .catch((err: unknown) => {
+        logger.error(LogComponents.CONFIG, 'Failed to fetch IP settings', err);
       });
-      if (response.ok) {
-        const data = await (response.json() as Promise<Partial<TestsSettings>>);
-        setTestsSettings({
-          dnsHostname: data.dnsHostname || 'google.com',
-          dnsServers: withIds(data.dnsServers || []).map((server) => ({
-            ...server,
-            enabled: server.enabled !== false,
-          })),
-          pingTargets: withIds(data.pingTargets || []).map((target) => ({
-            ...target,
-            enabled: target.enabled !== false,
-          })),
-          tcpPorts: withIds(data.tcpPorts || []).map((port) => ({
-            ...port,
-            port: port.port || 80,
-            enabled: port.enabled !== false,
-          })),
-          udpPorts: withIds(data.udpPorts || []).map((port) => ({
-            ...port,
-            port: port.port || 53,
-            enabled: port.enabled !== false,
-          })),
-          httpEndpoints: withIds(data.httpEndpoints || []).map((endpoint) => ({
-            ...endpoint,
-            expectedStatus: endpoint.expectedStatus || 200,
-            enabled: endpoint.enabled !== false,
-          })),
-          runPerformance: data.runPerformance ?? true,
-          runSpeedtest: data.runSpeedtest ?? true,
-          runIperf: data.runIperf ?? true,
-          runDiscovery: data.runDiscovery ?? true,
-          speedtest: {
-            serverId: data.speedtest?.serverId || '',
-            autoRunOnLink: data.speedtest?.autoRunOnLink ?? true,
-          },
-          iperf: {
-            autoRunOnLink: data.iperf?.autoRunOnLink ?? true,
-          },
-        });
-      }
-    } catch (err) {
-      logger.error(LogComponents.CONFIG, 'Failed to fetch tests settings', err);
-    }
-  }, [setTestsSettings]);
+  };
 
-  const fetchIperfSuggestions = useCallback(async () => {
+  const fetchTestsSettings = async (): Promise<void> => {
+    await fetch(`${API_BASE}/api/v1/telemetry/probes/settings`, { credentials: 'include' })
+      .then(async (response) => {
+        if (response.ok) {
+          const data = await (response.json() as Promise<Partial<TestsSettings>>);
+          setTestsSettings({
+            dnsHostname: data.dnsHostname || 'google.com',
+            dnsServers: withIds(data.dnsServers || []).map((server) => ({
+              ...server,
+              enabled: server.enabled !== false,
+            })),
+            pingTargets: withIds(data.pingTargets || []).map((target) => ({
+              ...target,
+              enabled: target.enabled !== false,
+            })),
+            tcpPorts: withIds(data.tcpPorts || []).map((port) => ({
+              ...port,
+              port: port.port || 80,
+              enabled: port.enabled !== false,
+            })),
+            udpPorts: withIds(data.udpPorts || []).map((port) => ({
+              ...port,
+              port: port.port || 53,
+              enabled: port.enabled !== false,
+            })),
+            httpEndpoints: withIds(data.httpEndpoints || []).map((endpoint) => ({
+              ...endpoint,
+              expectedStatus: endpoint.expectedStatus || 200,
+              enabled: endpoint.enabled !== false,
+            })),
+            runPerformance: data.runPerformance ?? true,
+            runSpeedtest: data.runSpeedtest ?? true,
+            runIperf: data.runIperf ?? true,
+            runDiscovery: data.runDiscovery ?? true,
+            speedtest: {
+              serverId: data.speedtest?.serverId || '',
+              autoRunOnLink: data.speedtest?.autoRunOnLink ?? true,
+            },
+            iperf: {
+              autoRunOnLink: data.iperf?.autoRunOnLink ?? true,
+            },
+          });
+        }
+      })
+      .catch((err: unknown) => {
+        logger.error(LogComponents.CONFIG, 'Failed to fetch tests settings', err);
+      });
+  };
+
+  const fetchIperfSuggestions = async (): Promise<void> => {
     setIperfSuggestionsStatus('loading');
     setIperfSuggestionsError(null);
-    try {
-      const response = await fetch(`${API_BASE}/api/v1/telemetry/iperf/suggestions`, {
-        credentials: 'include',
-      });
-      if (response.ok) {
-        const data = await (response.json() as Promise<IperfSuggestion[]>);
-        setIperfSuggestions(Array.isArray(data) ? data : []);
-        setIperfSuggestionsStatus('idle');
-      } else {
+    await fetch(`${API_BASE}/api/v1/telemetry/iperf/suggestions`, { credentials: 'include' })
+      .then(async (response) => {
+        if (response.ok) {
+          const data = await (response.json() as Promise<IperfSuggestion[]>);
+          setIperfSuggestions(Array.isArray(data) ? data : []);
+          setIperfSuggestionsStatus('idle');
+        } else {
+          setIperfSuggestionsStatus('error');
+          setIperfSuggestionsError('No iperf hosts found');
+        }
+      })
+      .catch((err: unknown) => {
         setIperfSuggestionsStatus('error');
-        setIperfSuggestionsError('No iperf hosts found');
-      }
-    } catch (err) {
-      setIperfSuggestionsStatus('error');
-      setIperfSuggestionsError(err instanceof Error ? err.message : 'Failed to find iperf hosts');
-    }
-  }, [setIperfSuggestions, setIperfSuggestionsStatus, setIperfSuggestionsError]);
-
-  const fetchWifiSettings = useCallback(async () => {
-    try {
-      const response = await fetch(`${API_BASE}/api/v1/wifi/wifi/settings`, {
-        credentials: 'include',
+        setIperfSuggestionsError(err instanceof Error ? err.message : 'Failed to find iperf hosts');
       });
-      if (response.ok) {
-        const data = await (response.json() as Promise<Partial<WiFiSettingsType>>);
-        setWifiSettings({
-          interface: data.interface || '',
-          availableWifi: data.availableWifi || [],
-          isWireless: data.isWireless ?? false,
-        });
-      }
-    } catch (err) {
-      logger.error(LogComponents.WIFI, 'Failed to fetch WiFi settings', err);
-    }
-  }, [setWifiSettings]);
+  };
 
-  const fetchNetworkDiscoverySettings = useCallback(async () => {
-    try {
-      const response = await fetch(`${API_BASE}/api/v1/security/devices/settings`, {
-        credentials: 'include',
+  const fetchWifiSettings = async (): Promise<void> => {
+    await fetch(`${API_BASE}/api/v1/wifi/wifi/settings`, { credentials: 'include' })
+      .then(async (response) => {
+        if (response.ok) {
+          const data = await (response.json() as Promise<Partial<WiFiSettingsType>>);
+          setWifiSettings({
+            interface: data.interface || '',
+            availableWifi: data.availableWifi || [],
+            isWireless: data.isWireless ?? false,
+          });
+        }
+      })
+      .catch((err: unknown) => {
+        logger.error(LogComponents.WIFI, 'Failed to fetch WiFi settings', err);
       });
-      if (response.ok) {
-        const data = await (response.json() as Promise<Partial<NetworkDiscoverySettings>>);
-        setNetworkDiscoverySettings({
-          enabled: data.enabled ?? true,
-          scanTimeoutMs: data.scanTimeoutMs ?? 30000,
-          autoScan: data.autoScan ?? false,
-          ipv6Enabled: data.ipv6Enabled ?? true,
-          options: data.options ?? {
-            passiveProtocols: { lldp: true, cdp: true, edp: true, ndp: true },
-            arpScan: true,
-            icmpScan: true,
-            portScan: {
-              enabled: false,
-              preset: 'common',
-              tcpPorts: '22,80,443,8080-8100',
-              udpPorts: '53,123,161',
+  };
+
+  const fetchNetworkDiscoverySettings = async (): Promise<void> => {
+    await fetch(`${API_BASE}/api/v1/security/devices/settings`, { credentials: 'include' })
+      .then(async (response) => {
+        if (response.ok) {
+          const data = await (response.json() as Promise<Partial<NetworkDiscoverySettings>>);
+          setNetworkDiscoverySettings({
+            enabled: data.enabled ?? true,
+            scanTimeoutMs: data.scanTimeoutMs ?? 30000,
+            autoScan: data.autoScan ?? false,
+            ipv6Enabled: data.ipv6Enabled ?? true,
+            options: data.options ?? {
+              passiveProtocols: { lldp: true, cdp: true, edp: true, ndp: true },
+              arpScan: true,
+              icmpScan: true,
+              portScan: {
+                enabled: false,
+                preset: 'common',
+                tcpPorts: '22,80,443,8080-8100',
+                udpPorts: '53,123,161',
+              },
+              tcpProbe: { timeoutMs: 2000, workers: 20 },
+              traceroute: false,
+              snmpQuery: false,
             },
-            tcpProbe: { timeoutMs: 2000, workers: 20 },
-            traceroute: false,
-            snmpQuery: false,
-          },
-          timing: data.timing ?? {
-            rescanIntervalMs: 60000,
-          },
-          profiler: data.profiler ?? {
-            enabled: true,
-            timeoutMs: 2000,
-            maxConcurrent: 5,
-            quickPorts: [22, 80, 443, 8080],
-          },
-          fingerprinting: data.fingerprinting ?? {
-            enabled: false,
-            osDetection: false,
-            serviceProbes: false,
-          },
-        });
-      }
-    } catch (err) {
-      logger.error(LogComponents.DISCOVERY, 'Failed to fetch network discovery settings', err);
-    }
-  }, [setNetworkDiscoverySettings]);
-
-  const fetchSnmpSettings = useCallback(async () => {
-    try {
-      const response = await fetch(`${API_BASE}/api/v1/telemetry/snmp/settings`, {
-        credentials: 'include',
+            timing: data.timing ?? {
+              rescanIntervalMs: 60000,
+            },
+            profiler: data.profiler ?? {
+              enabled: true,
+              timeoutMs: 2000,
+              maxConcurrent: 5,
+              quickPorts: [22, 80, 443, 8080],
+            },
+            fingerprinting: data.fingerprinting ?? {
+              enabled: false,
+              osDetection: false,
+              serviceProbes: false,
+            },
+          });
+        }
+      })
+      .catch((err: unknown) => {
+        logger.error(LogComponents.DISCOVERY, 'Failed to fetch network discovery settings', err);
       });
-      if (response.ok) {
-        const data = await (response.json() as Promise<Partial<SnmpSettingsType>>);
-        setSnmpSettings({
-          timeout: data.timeout ?? 5000,
-          retries: data.retries ?? 2,
-          port: data.port ?? 161,
-        });
-      }
-    } catch (err) {
-      logger.error(LogComponents.CONFIG, 'Failed to fetch SNMP settings', err);
-    }
-  }, [setSnmpSettings]);
+  };
 
-  const fetchLinkSettings = useCallback(async () => {
-    try {
-      const response = await fetch(`${API_BASE}/api/v1/settings/link`, {
-        credentials: 'include',
+  const fetchSnmpSettings = async (): Promise<void> => {
+    await fetch(`${API_BASE}/api/v1/telemetry/snmp/settings`, { credentials: 'include' })
+      .then(async (response) => {
+        if (response.ok) {
+          const data = await (response.json() as Promise<Partial<SnmpSettingsType>>);
+          setSnmpSettings({
+            timeout: data.timeout ?? 5000,
+            retries: data.retries ?? 2,
+            port: data.port ?? 161,
+          });
+        }
+      })
+      .catch((err: unknown) => {
+        logger.error(LogComponents.CONFIG, 'Failed to fetch SNMP settings', err);
       });
-      if (response.ok) {
-        const data = await (response.json() as Promise<{
-          mode?: string;
-          auto_negotiation?: boolean;
-          speed?: string;
-          duplex?: string;
-          available_modes?: string[];
-        }>);
-        const mode = data.mode ?? (data.auto_negotiation ? 'auto' : `${data.speed}/${data.duplex}`);
-        setLinkSettings({
-          mode: mode,
-          availableModes: data.available_modes ?? [],
-        });
-      }
-    } catch (err) {
-      logger.error(LogComponents.CONFIG, 'Failed to fetch link settings', err);
-    }
-  }, [setLinkSettings]);
+  };
 
-  const fetchCableTestSettings = useCallback(async () => {
-    try {
-      const response = await fetch(`${API_BASE}/api/v1/settings/cable`, {
-        credentials: 'include',
+  const fetchLinkSettings = async (): Promise<void> => {
+    await fetch(`${API_BASE}/api/v1/settings/link`, { credentials: 'include' })
+      .then(async (response) => {
+        if (response.ok) {
+          const data = await (response.json() as Promise<{
+            mode?: string;
+            auto_negotiation?: boolean;
+            speed?: string;
+            duplex?: string;
+            available_modes?: string[];
+          }>);
+          const mode =
+            data.mode ?? (data.auto_negotiation ? 'auto' : `${data.speed}/${data.duplex}`);
+          setLinkSettings({
+            mode: mode,
+            availableModes: data.available_modes ?? [],
+          });
+        }
+      })
+      .catch((err: unknown) => {
+        logger.error(LogComponents.CONFIG, 'Failed to fetch link settings', err);
       });
-      if (response.ok) {
-        const data = await (response.json() as Promise<Partial<CableTestSettingsType>>);
-        setCableTestSettings({
-          enabled: data.enabled ?? true,
-        });
-      }
-    } catch (err) {
-      logger.error(LogComponents.CONFIG, 'Failed to fetch cable test settings', err);
-    }
-  }, [setCableTestSettings]);
+  };
 
-  const fetchLogPreview = useCallback(async () => {
+  const fetchCableTestSettings = async (): Promise<void> => {
+    await fetch(`${API_BASE}/api/v1/settings/cable`, { credentials: 'include' })
+      .then(async (response) => {
+        if (response.ok) {
+          const data = await (response.json() as Promise<Partial<CableTestSettingsType>>);
+          setCableTestSettings({
+            enabled: data.enabled ?? true,
+          });
+        }
+      })
+      .catch((err: unknown) => {
+        logger.error(LogComponents.CONFIG, 'Failed to fetch cable test settings', err);
+      });
+  };
+
+  const fetchLogPreview = async (): Promise<void> => {
     setLogLoading(true);
     setLogError(null);
-    try {
-      const response = await fetch(`${API_BASE}/api/v1/reporting/logs?lines=200`, {
-        credentials: 'include',
+    await fetch(`${API_BASE}/api/v1/reporting/logs?lines=200`, { credentials: 'include' })
+      .then(async (response) => {
+        if (!response.ok) {
+          throw new Error('Unable to load logs');
+        }
+        const data = await (response.json() as Promise<LogsResponse>);
+        setLogPreview(data.lines || []);
+      })
+      .catch((err: unknown) => {
+        setLogPreview([]);
+        setLogError(err instanceof Error ? err.message : 'Failed to load log file');
       });
-      if (!response.ok) {
-        throw new Error('Unable to load logs');
-      }
-      const data = await (response.json() as Promise<LogsResponse>);
-      setLogPreview(data.lines || []);
-    } catch (err) {
-      setLogPreview([]);
-      setLogError(err instanceof Error ? err.message : 'Failed to load log file');
-    } finally {
-      setLogLoading(false);
-    }
-  }, [setLogPreview, setLogLoading, setLogError]);
+    setLogLoading(false);
+  };
+
+  // Destructured so the compiler reads each as a ref (by name) and allows the
+  // effect below to write it; through `initRefs` it would be a frozen prop.
+  const {
+    initialLoadRef,
+    thresholdsInitRef,
+    testsInitRef,
+    wifiInitRef,
+    linkInitRef,
+    cableTestInitRef,
+    networkDiscoveryInitRef,
+    snmpInitRef,
+    vulnInitRef,
+  } = initRefs;
 
   // Open-time orchestration: reset init refs, fire every fetch, then
   // clear init refs after a short delay so the auto-save hooks ignore
@@ -348,15 +352,15 @@ export function useSettingsDrawerLoaders({
     if (!isOpen) {
       return;
     }
-    initRefs.initialLoadRef.current = true;
-    initRefs.thresholdsInitRef.current = true;
-    initRefs.testsInitRef.current = true;
-    initRefs.wifiInitRef.current = true;
-    initRefs.linkInitRef.current = true;
-    initRefs.cableTestInitRef.current = true;
-    initRefs.networkDiscoveryInitRef.current = true;
-    initRefs.snmpInitRef.current = true;
-    initRefs.vulnInitRef.current = true;
+    initialLoadRef.current = true;
+    thresholdsInitRef.current = true;
+    testsInitRef.current = true;
+    wifiInitRef.current = true;
+    linkInitRef.current = true;
+    cableTestInitRef.current = true;
+    networkDiscoveryInitRef.current = true;
+    snmpInitRef.current = true;
+    vulnInitRef.current = true;
 
     fetchThresholds().catch(() => undefined);
     fetchIpSettings().catch(() => undefined);
@@ -370,21 +374,29 @@ export function useSettingsDrawerLoaders({
     fetchSubnets().catch(() => undefined);
 
     const timer = setTimeout(() => {
-      initRefs.initialLoadRef.current = false;
-      initRefs.thresholdsInitRef.current = false;
-      initRefs.testsInitRef.current = false;
-      initRefs.wifiInitRef.current = false;
-      initRefs.linkInitRef.current = false;
-      initRefs.cableTestInitRef.current = false;
-      initRefs.networkDiscoveryInitRef.current = false;
-      initRefs.snmpInitRef.current = false;
-      initRefs.vulnInitRef.current = false;
+      initialLoadRef.current = false;
+      thresholdsInitRef.current = false;
+      testsInitRef.current = false;
+      wifiInitRef.current = false;
+      linkInitRef.current = false;
+      cableTestInitRef.current = false;
+      networkDiscoveryInitRef.current = false;
+      snmpInitRef.current = false;
+      vulnInitRef.current = false;
     }, 500);
 
     return (): void => clearTimeout(timer);
   }, [
     isOpen,
-    initRefs,
+    initialLoadRef,
+    thresholdsInitRef,
+    testsInitRef,
+    wifiInitRef,
+    linkInitRef,
+    cableTestInitRef,
+    networkDiscoveryInitRef,
+    snmpInitRef,
+    vulnInitRef,
     fetchThresholds,
     fetchIpSettings,
     fetchTestsSettings,

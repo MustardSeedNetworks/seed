@@ -12,7 +12,7 @@
  * input on save means "leave the stored secret alone".
  */
 
-import { useCallback, useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { api } from '../api';
 import { LogComponents, logger } from '../lib/logger';
 import type { SaveStatus } from '../types/settings';
@@ -61,20 +61,22 @@ export function useAlertWebhookSettings(): UseAlertWebhookSettingsResult {
   const [status, setStatus] = useState<SaveStatus>('idle');
   const [error, setError] = useState('');
 
-  const fetchWebhook = useCallback(async (): Promise<void> => {
-    try {
-      const data = await api.get<AlertsSettingsResponse>('/api/v1/settings');
-      setWebhook({
-        url: data.alerts?.webhook?.url ?? '',
-        secret: '',
-        secretSet: data.alerts?.webhook?.secretSet ?? false,
+  const fetchWebhook = async (): Promise<void> => {
+    await api
+      .get<AlertsSettingsResponse>('/api/v1/settings')
+      .then((data) => {
+        setWebhook({
+          url: data.alerts?.webhook?.url ?? '',
+          secret: '',
+          secretSet: data.alerts?.webhook?.secretSet ?? false,
+        });
+      })
+      .catch((err: unknown) => {
+        logger.error(LogComponents.CONFIG, 'Failed to fetch alert webhook settings', err);
       });
-    } catch (err) {
-      logger.error(LogComponents.CONFIG, 'Failed to fetch alert webhook settings', err);
-    }
-  }, []);
+  };
 
-  const saveWebhook = useCallback(async (): Promise<void> => {
+  const saveWebhook = async (): Promise<void> => {
     setStatus('saving');
     setError('');
     // An untouched secret input is omitted, not sent empty: the server reads an
@@ -84,22 +86,24 @@ export function useAlertWebhookSettings(): UseAlertWebhookSettingsResult {
     if (webhook.secret !== '') {
       payload.secret = webhook.secret;
     }
-    try {
-      await api.put('/api/v1/settings', { alerts: { webhook: payload } });
-      setStatus('saved');
-      // The secret has left the browser; drop it rather than keep it in state
-      // where a later save would resend it.
-      setWebhook((current) => ({
-        url: current.url,
-        secret: '',
-        secretSet: current.url !== '' && (current.secret !== '' || current.secretSet),
-      }));
-      setTimeout(() => setStatus('idle'), 2000);
-    } catch (err) {
-      setStatus('error');
-      setError(err instanceof Error ? err.message : '');
-    }
-  }, [webhook]);
+    await api
+      .put('/api/v1/settings', { alerts: { webhook: payload } })
+      .then(() => {
+        setStatus('saved');
+        // The secret has left the browser; drop it rather than keep it in state
+        // where a later save would resend it.
+        setWebhook((current) => ({
+          url: current.url,
+          secret: '',
+          secretSet: current.url !== '' && (current.secret !== '' || current.secretSet),
+        }));
+        setTimeout(() => setStatus('idle'), 2000);
+      })
+      .catch((err: unknown) => {
+        setStatus('error');
+        setError(err instanceof Error ? err.message : '');
+      });
+  };
 
   // The section loads its own state on mount rather than joining the drawer's
   // open-time orchestration: it is the only section that does not auto-save,
