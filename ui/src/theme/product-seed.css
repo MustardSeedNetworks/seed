@@ -37,6 +37,48 @@
   --color-module-security: #a14a12;
   --color-module-telemetry: #0e6f80;
   --color-module-reporting: #8a6208;
+
+  /* Categorical data-viz palette — LIGHT (≈600 weight, AA on warm cream). */
+  --color-cat-1: #2563eb; /* blue */
+  --color-cat-2: #0891b2; /* cyan */
+  --color-cat-3: #4f46e5; /* indigo */
+  --color-cat-4: #16a34a; /* green */
+  --color-cat-5: #ea580c; /* orange */
+  --color-cat-6: #9333ea; /* purple */
+  --color-cat-7: #0d9488; /* teal */
+  --color-cat-8: #e11d48; /* rose */
+
+  /* Pill text for the categorical set: the hue on its own /20 wash, darkened
+   * to 4.6:1 over the sunken surface (pillText.test.ts). */
+  --color-cat-1-strong: #1248c0; /* blue */
+  --color-cat-2-strong: #055e74; /* cyan */
+  --color-cat-3-strong: #392fe2; /* indigo */
+  --color-cat-4-strong: #0e652e; /* green */
+  --color-cat-5-strong: #963808; /* orange */
+  --color-cat-6-strong: #7315c9; /* purple */
+  --color-cat-7-strong: #096159; /* teal */
+  --color-cat-8-strong: #9f1433; /* rose */
+
+  /* Severity "high" — LIGHT (orange-600, between warning and error). */
+  --color-severity-high: #ea580c;
+  --color-severity-high-strong: #963808; /* = cat-5-strong, same hue */
+
+  /* Log-level bg/fg pairs — LIGHT (tint bg + dark fg). */
+  --color-log-trace-bg: #f8fafc;
+  --color-log-trace-fg: #334155;
+  --color-log-debug-bg: #ecfeff;
+  --color-log-debug-fg: #0e7490;
+  --color-log-info-bg: #eff6ff;
+  --color-log-info-fg: #1d4ed8;
+  --color-log-warn-bg: #fefce8;
+  --color-log-warn-fg: #a16207;
+  --color-log-error-bg: #fef2f2;
+  --color-log-error-fg: #b91c1c;
+  --color-log-fatal-bg: #fee2e2;
+  --color-log-fatal-fg: #991b1b;
+
+  /* Gauge/Progress Colors (for SVG) */
+  --gauge-amber: #d97706;
 }
 
 .dark {
@@ -64,4 +106,46 @@
   --color-module-security: #fb923c;
   --color-module-telemetry: #22d3ee;
   --color-module-reporting: #f5c451;
+
+  /* Categorical data-viz palette — DARK (≈400 weight, AA on deep green-black). */
+  --color-cat-1: #60a5fa; /* blue */
+  --color-cat-2: #22d3ee; /* cyan */
+  --color-cat-3: #818cf8; /* indigo */
+  --color-cat-4: #4ade80; /* green */
+  --color-cat-5: #fb923c; /* orange */
+  --color-cat-6: #c084fc; /* purple */
+  --color-cat-7: #2dd4bf; /* teal */
+  --color-cat-8: #fb7185; /* rose */
+
+  /* Pill text, lightened to 4.6:1 on a /20 wash over the hover surface.
+   * Cyan, green and teal already clear it and keep their value. */
+  --color-cat-1-strong: #80b7fb; /* blue */
+  --color-cat-2-strong: #22d3ee; /* cyan */
+  --color-cat-3-strong: #a2aafa; /* indigo */
+  --color-cat-4-strong: #4ade80; /* green */
+  --color-cat-5-strong: #fca055; /* orange */
+  --color-cat-6-strong: #cd9efd; /* purple */
+  --color-cat-7-strong: #2dd4bf; /* teal */
+  --color-cat-8-strong: #fc91a0; /* rose */
+
+  /* Severity "high" — DARK (orange-400). */
+  --color-severity-high: #fb923c;
+  --color-severity-high-strong: #fca055; /* = cat-5-strong, same hue */
+
+  /* Log-level bg/fg pairs — DARK (deep bg + light fg). */
+  --color-log-trace-bg: #020617;
+  --color-log-trace-fg: #cbd5e1;
+  --color-log-debug-bg: #083344;
+  --color-log-debug-fg: #67e8f9;
+  --color-log-info-bg: #172554;
+  --color-log-info-fg: #93c5fd;
+  --color-log-warn-bg: #422006;
+  --color-log-warn-fg: #fde047;
+  --color-log-error-bg: #450a0a;
+  --color-log-error-fg: #fca5a5;
+  --color-log-fatal-bg: #450a0a;
+  --color-log-fatal-fg: #fecaca;
+
+  /* Gauge/Progress Colors (for SVG) */
+  --gauge-amber: #fbbf24;
 }

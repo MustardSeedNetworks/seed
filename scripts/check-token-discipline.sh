@@ -11,6 +11,7 @@
 #       - bare bg/text/border-white|black
 #       - text-[var(--color-X)] indirection (use text-X directly)
 #       - raw 6/8-digit hex colors in .ts/.tsx
+#       - raw hex colors in .css outside theme/ (FAMILY_RAW_HEX_CSS)
 #       - undefined tokens: bg-/text-/… utilities whose --color-* is not in
 #         index.css (compiles to nothing, renders no color) — see
 #         resolve-token-refs.py
@@ -166,13 +167,21 @@ advise FAMILY_CONST_ON_BRAND \
   'Constant text colour on a brand fill — use text-on-brand / text-on-danger / text-on-success'
 
 # advise() scans .ts/.tsx only, so raw hex in a stylesheet would slip past it.
-# theme/ is where colour values are allowed to exist.
+# theme/ is where colour values are allowed to exist. Blocking: the count
+# reached zero when the palette moved into theme/product-seed.css (#1944).
 css_hex=$(grep -rInE '#([0-9a-fA-F]{6}([0-9a-fA-F]{2})?|[0-9a-fA-F]{0,3}[a-fA-F][0-9a-fA-F]{0,3})\b' \
   "$TARGET" --include='*.css' 2>/dev/null \
   | grep -v "$TARGET/theme/" | grep -v "/assets/" \
   | grep -vE ':[0-9]+:\s*(\*|//|/\*)' || true)
 if [ -n "$css_hex" ]; then
-  echo "[warn: FAMILY_RAW_HEX_CSS] $(printf '%s\n' "$css_hex" | grep -c .) occurrence(s) — raw hex in CSS outside theme/"
+  css_hex_count=$(printf '%s\n' "$css_hex" | grep -c .)
+  FAIL_COUNT=$((FAIL_COUNT + css_hex_count))
+  echo "============================================================"
+  echo "[BLOCK: FAMILY_RAW_HEX_CSS] $css_hex_count violation(s)"
+  echo "  fix: define the colour in ui/src/theme/product-seed.css and reference the token"
+  echo "------------------------------------------------------------"
+  printf '%s\n' "$css_hex" | head -10
+  echo ""
 fi
 
 if [ "$FAIL_COUNT" -gt 0 ] && [ "$REPORT_MODE" -eq 0 ]; then
