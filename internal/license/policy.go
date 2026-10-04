@@ -82,7 +82,9 @@ func (t Tier) String() string {
 //
 // dns_monitoring and ssl_cert_monitoring are count caps, not switches: Free
 // keeps recurring probes (the probe engine is Free in server_engine_tiers.go)
-// and Starter raises the ceiling. monitoring_scheduled, compliance_basic and
+// and Starter raises how many configured DNS servers are tested and how many
+// HTTPS certificates are evaluated; Pro has no limit. See
+// internal/api/probe_entitlements.go. monitoring_scheduled, compliance_basic and
 // wifi_visibility_basic left on 2026-09-03 (#2327) because each named
 // something Free already does and nothing distinguished the paid version --
 // selling a string with no boundary behind it is what this catalogue keeps

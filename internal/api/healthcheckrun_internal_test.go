@@ -38,7 +38,7 @@ func TestMapHTTPResult_TimingsAndCert(t *testing.T) {
 	})
 	r := probe.Result{Kind: probe.KindHTTPS, Success: true, LatencyMs: 12, Metadata: meta}
 
-	out := mapHTTPResult(p, r, &th)
+	out := mapHTTPResult(p, r, &th, &certAllowance{})
 
 	require.Equal(t, "api", out.Name)
 	require.True(t, out.Success)
@@ -65,7 +65,7 @@ func TestMapHTTPResult_CertNearExpiryWarns(t *testing.T) {
 	})
 	r := probe.Result{Kind: probe.KindHTTPS, Success: true, LatencyMs: 6, Metadata: meta}
 
-	out := mapHTTPResult(p, r, &th)
+	out := mapHTTPResult(p, r, &th, &certAllowance{})
 
 	require.Equal(t, statusWarning, out.CertStatus, "10 days < 30-day warning threshold")
 	require.Equal(t, statusWarning, out.TestStatus, "cert warning elevates the overall status")
@@ -95,16 +95,16 @@ func TestMapRunResult_GroupsByFamily(t *testing.T) {
 	hl7Meta, _ := json.Marshal(map[string]any{"ack_code": "AA"})
 	mapRunResult(&resp,
 		probe.Probe{Kind: probe.KindHL7, DisplayName: "lab", Params: json.RawMessage(hl7Params)},
-		probe.Result{Kind: probe.KindHL7, Success: true, LatencyMs: 8, Metadata: hl7Meta}, &th)
+		probe.Result{Kind: probe.KindHL7, Success: true, LatencyMs: 8, Metadata: hl7Meta}, &th, &certAllowance{})
 
 	sqlParams, _ := json.Marshal(config.SQLEndpoint{Driver: "postgres", Host: "db", Port: 5432})
 	mapRunResult(&resp,
 		probe.Probe{Kind: probe.KindSQL, DisplayName: "pg", Params: json.RawMessage(sqlParams)},
-		probe.Result{Kind: probe.KindSQL, Success: true, LatencyMs: 4}, &th)
+		probe.Result{Kind: probe.KindSQL, Success: true, LatencyMs: 4}, &th, &certAllowance{})
 
 	mapRunResult(&resp,
 		probe.Probe{Kind: probe.KindPing, DisplayName: "gw", Target: "1.1.1.1"},
-		probe.Result{Kind: probe.KindPing, Success: true, LatencyMs: 2}, &th)
+		probe.Result{Kind: probe.KindPing, Success: true, LatencyMs: 2}, &th, &certAllowance{})
 
 	require.Len(t, resp.PingResults, 1)
 	require.NotNil(t, resp.MedicalResults)

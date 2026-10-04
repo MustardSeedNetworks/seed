@@ -77,6 +77,9 @@ type TestResult struct {
 	CertExpiry   string `json:"certExpiry,omitempty"`
 	CertIssuer   string `json:"certIssuer,omitempty"`
 	TLSVersion   string `json:"tlsVersion,omitempty"`
+	// CertWithheld is an https result past the licence's certificate limit
+	// (ssl_cert_monitoring): the check ran, its certificate was not evaluated.
+	CertWithheld bool `json:"certWithheld,omitempty"`
 }
 
 // EnterpriseResults groups SQL/FileShare/LDAP results.
@@ -270,8 +273,9 @@ func (s *Server) handleHealthChecks(w http.ResponseWriter, r *http.Request) {
 	var resp HealthCheckRunResponse
 	resp.HasTests = len(probes) > 0
 	thresholds := &s.config.Thresholds.CustomTests
+	certs := &certAllowance{limit: s.certCheckLimit()}
 	for _, d := range dispatched {
-		mapRunResult(&resp, d.probe, d.result, thresholds)
+		mapRunResult(&resp, d.probe, d.result, thresholds, certs)
 	}
 	sendJSONResponse(w, logger, http.StatusOK, resp)
 }
@@ -310,7 +314,10 @@ func (s *Server) dispatchProbes(ctx context.Context, probes []probe.Probe) []run
 
 // mapRunResult dispatches a single (probe, result) into the right slot of the
 // response by kind. The per-kind mappers live in healthcheckrunmappers.go.
-func mapRunResult(resp *HealthCheckRunResponse, p probe.Probe, r probe.Result, th *config.CustomThresholds) {
+// certs is spent by each https result whose certificate is summarised.
+func mapRunResult(
+	resp *HealthCheckRunResponse, p probe.Probe, r probe.Result, th *config.CustomThresholds, certs *certAllowance,
+) {
 	switch p.Kind {
 	case probe.KindPing:
 		resp.PingResults = append(resp.PingResults, mapPingResult(p, r))
@@ -319,7 +326,7 @@ func mapRunResult(resp *HealthCheckRunResponse, p probe.Probe, r probe.Result, t
 	case probe.KindUDP:
 		resp.UDPResults = append(resp.UDPResults, mapPortResult(p, r, th.UDP))
 	case probe.KindHTTP, probe.KindHTTPS:
-		resp.HTTPResults = append(resp.HTTPResults, mapHTTPResult(p, r, th))
+		resp.HTTPResults = append(resp.HTTPResults, mapHTTPResult(p, r, th, certs))
 	case probe.KindRTSP:
 		resp.video().RTSPResults = append(resp.video().RTSPResults, mapRTSPResult(p, r))
 	case probe.KindDICOM:
@@ -398,8 +405,9 @@ func mapPortResult(p probe.Probe, r probe.Result, th config.Threshold) TestResul
 }
 
 // mapHTTPResult maps an http/https probe Result: status code, per-phase
-// timing breakdown + derived statuses, and (for https) the cert summary.
-func mapHTTPResult(p probe.Probe, r probe.Result, th *config.CustomThresholds) TestResult {
+// timing breakdown + derived statuses, and (for https) the cert summary while
+// certs allows it.
+func mapHTTPResult(p probe.Probe, r probe.Result, th *config.CustomThresholds, certs *certAllowance) TestResult {
 	out := baseTestResult(p, r)
 	var meta checkers.HTTPRunMetadata
 	if len(r.Metadata) > 0 {
@@ -415,7 +423,9 @@ func mapHTTPResult(p probe.Probe, r probe.Result, th *config.CustomThresholds) T
 		applyHTTPTimingStatuses(&out, th)
 	}
 
-	if meta.TLS != nil {
+	if meta.TLS != nil && !certs.take() {
+		out.CertWithheld = true
+	} else if meta.TLS != nil {
 		out.CertDaysLeft = meta.TLS.DaysRemaining
 		out.CertExpiry = meta.TLS.NotAfter
 		out.CertIssuer = meta.TLS.Issuer
