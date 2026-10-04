@@ -175,9 +175,14 @@ template or of all of them, are honoured.
 
 The listener logs one summary a minute while it is losing records: queue-full
 drops, data sets without a template, malformed datagrams and failed batches.
-The retention engine purges `flow_records` at the tier's raw horizon. Flows
-have no hourly or daily tier yet. The conversation aggregates of P-C3 will be
-that tier.
+The retention engine purges `flow_records` at the tier's raw horizon, and
+rolls it up into `flow_conversations_hourly` and `flow_conversations_daily`
+(P-C3): one row per source, destination and protocol per bucket, with ports
+dropped. Those tables keep the hourly and daily horizons of the metric and probe
+rollups. Top talkers and top conversations
+(`/api/v1/flows/top-talkers`, `/api/v1/flows/top-conversations`) read raw rows
+for a window the raw horizon covers and a rollup table past it, by the same
+window resolution as the history series.
 
 Options records carry exporter metadata, not flows. The collector reads one
 value from them: `systemInitTimeMilliseconds`. softflowd, nProbe and several

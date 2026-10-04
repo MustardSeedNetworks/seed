@@ -10,9 +10,8 @@ import (
 // SQL — the engine orchestrates cadence, the source owns its
 // table layout.
 //
-// Stage A2 V1.0 sources: probe_results (probe.Engine writes) and
-// metrics (servermon / microburst writes). V1.1+ may add flow
-// aggregates from NetFlow listeners.
+// Sources: probe_results (probe.Engine writes), metrics (servermon /
+// microburst writes) and flow_records (the flow collector writes).
 type RollupSource interface {
 	// Name is a stable identifier used in logs (e.g. "probe_results",
 	// "metrics").

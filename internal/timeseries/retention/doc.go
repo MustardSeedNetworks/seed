@@ -2,9 +2,8 @@
 // any time-series source registered with the engine. One loop, one
 // tier-aware purge policy, source-pluggable via RollupSource.
 //
-// V1.0 sources registered at startup: probe_results (replacing
-// dead internal/health/rollup.go) and metrics. V1.1 may add flow
-// aggregates from NetFlow listeners.
+// Sources registered at startup: probe_results (replacing dead
+// internal/health/rollup.go), metrics and flow_records.
 //
 // Tier horizons:
 //

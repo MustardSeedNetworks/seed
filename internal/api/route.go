@@ -138,10 +138,12 @@ func hasMethodPrefix(path string) bool {
 	return ok
 }
 
-// registerAll installs a slice of routes.
-func (s *Server) registerAll(routes []route) {
-	for _, rt := range routes {
-		s.register(rt)
+// registerAll installs one or more groups of routes, in order.
+func (s *Server) registerAll(groups ...[]route) {
+	for _, routes := range groups {
+		for _, rt := range routes {
+			s.register(rt)
+		}
 	}
 }
 
