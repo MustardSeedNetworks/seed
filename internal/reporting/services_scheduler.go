@@ -327,7 +327,7 @@ func (s *SchedulerService) Get(_ context.Context, id string) (*ScheduledReport, 
 
 	sr, ok := s.schedules[id]
 	if !ok {
-		return nil, fmt.Errorf("%w: %s", ErrScheduleNotFound, id)
+		return nil, ErrScheduleNotFound
 	}
 	snapshot := *sr
 	return &snapshot, nil
@@ -358,7 +358,7 @@ func (s *SchedulerService) Update(ctx context.Context, sr *ScheduledReport) erro
 
 	existing, ok := s.schedules[sr.ID]
 	if !ok {
-		return fmt.Errorf("%w: %s", ErrScheduleNotFound, sr.ID)
+		return ErrScheduleNotFound
 	}
 
 	now := time.Now()
@@ -382,7 +382,7 @@ func (s *SchedulerService) Delete(ctx context.Context, id string) error {
 	defer s.mu.Unlock()
 
 	if _, ok := s.schedules[id]; !ok {
-		return fmt.Errorf("%w: %s", ErrScheduleNotFound, id)
+		return ErrScheduleNotFound
 	}
 
 	if err := s.repo.DeleteSchedule(ctx, id); err != nil {
