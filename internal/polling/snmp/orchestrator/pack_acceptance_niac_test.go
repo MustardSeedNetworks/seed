@@ -199,6 +199,9 @@ func checkAlerts(
 		t.Fatalf("the baseline ended %s after the fault was due; start the fault later",
 			time.Since(due).Round(time.Second))
 	}
+	// The margin is the run's timing budget: the nightly job's log shows it
+	// shrinking long before a slow runner turns it into the failure above.
+	t.Logf("%s: baseline done %s before the fault was due", targets.Pack, time.Until(due).Round(time.Second))
 	time.Sleep(time.Until(due.Add(faultGrace)))
 
 	// Every agent again, not just the faulted one: an interface the fault

@@ -152,6 +152,7 @@ generator_pid=
 failed=
 for pack in "$@"; do
   printf '\n== %s\n' "$pack"
+  pack_started=$(date +%s)
 
   # From the generated pack: the scenario YAML, the manifest, the agents to
   # poll, and the wiring. The pool's ports share one access VLAN; the network
@@ -324,14 +325,16 @@ EOF
     SEED_NIAC_POLLER_MAC="$poller_mac" \
     SEED_NIAC_FAULT_AT="$fault_at" \
     "$run_dir/acceptance.test" -test.run '^TestNIACPack$' -test.v -test.count=1 \
-    >"$run_dir/$pack.acceptance.log" 2>&1; then
+    >"$run_dir/$pack.acceptance.log" 2>&1 &&
+    # A -test.run pattern that matches nothing also exits 0.
+    grep -q '^--- PASS: TestNIACPack ' "$run_dir/$pack.acceptance.log"; then
     result=PASS
   else
     result=FAIL
     failed="$failed $pack"
   fi
-  grep -E 'found|findings|manifest promises|collect failed|topology|alerts' "$run_dir/$pack.acceptance.log" | sed 's/^ *//' || true
-  printf '%s: %s\n' "$pack" "$result"
+  grep -E 'found|findings|manifest promises|collect failed|topology|alerts|baseline done' "$run_dir/$pack.acceptance.log" | sed 's/^ *//' || true
+  printf '%s: %s in %ss\n' "$pack" "$result" "$(($(date +%s) - pack_started))"
   stop_pack
 done
 
