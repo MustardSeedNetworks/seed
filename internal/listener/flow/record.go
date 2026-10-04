@@ -7,7 +7,9 @@
 // observation domain and template ID. A data set whose template has not
 // arrived yet, or has expired, is dropped and counted rather than held:
 // exporters resend templates on a timer, so the flows after the next
-// template decode normally and memory stays bounded.
+// template decode normally and memory stays bounded. Byte and packet counts
+// are scaled by the sampling rate the exporter announces, so they estimate
+// the traffic observed rather than the packets sampled.
 //
 // Flows do not go through [listener.Sink]. One datagram carries up to
 // dozens of flows and an exporter sends thousands of datagrams a minute,

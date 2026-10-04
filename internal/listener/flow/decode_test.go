@@ -4,6 +4,7 @@ import (
 	"encoding/binary"
 	"errors"
 	"net/netip"
+	"slices"
 	"testing"
 	"time"
 
@@ -495,4 +496,148 @@ func TestDecodeIPFIXUptimeTimes(t *testing.T) {
 // carries it.
 func wrapped(d time.Duration) uint32 {
 	return uint32(d.Milliseconds() & 0xFFFFFFFF)
+}
+
+// TestDecodeSamplingRate covers the sampling rates v9 and IPFIX exporters
+// announce, each shaped after an exporter that sends it: softflowd scopes
+// a v9 rate to an interface and an IPFIX one to its metering process,
+// Cisco names a sampler in each data record, and some exporters carry the
+// rate in the data record itself.
+func TestDecodeSamplingRate(t *testing.T) {
+	t.Parallel()
+	const uptime = 500_000
+	v9Flow := set(256, v9Data("10.1.1.1", "10.2.2.2", 40000, 53, 1000, 3, 470_000, 499_000))
+	// softflowd -v 9 -s 10: scope Interface, SAMPLING_INTERVAL,
+	// SAMPLING_ALGORITHM.
+	v9IfOptions := set(1, pkt{}.u16(300).u16(4).u16(8).
+		u16(2).u16(4).u16(34).u16(4).u16(35).u16(1))
+	v9IfRate := func(ifIndex, interval uint32) pkt {
+		return set(300, pkt{}.u32(ifIndex).u32(interval).u8(1))
+	}
+	// Cisco random sampler: scope System, FLOW_SAMPLER_ID,
+	// FLOW_SAMPLER_MODE, FLOW_SAMPLER_RANDOM_INTERVAL.
+	v9SamplerOptions := set(1, pkt{}.u16(301).u16(4).u16(12).
+		u16(1).u16(4).u16(48).u16(1).u16(49).u16(1).u16(50).u16(4))
+	v9SamplerRate := set(301, pkt{}.u32(0).u8(7).u8(2).u32(100))
+	v9SamplerTemplate := set(0, pkt{}.u16(257).u16(5).
+		u16(8).u16(4).u16(12).u16(4).u16(1).u16(4).u16(2).u16(4).u16(48).u16(1))
+	v9SamplerFlow := func(sampler uint8) pkt {
+		return set(257, pkt{}.addr("10.1.1.1").addr("10.2.2.2").u32(1000).u32(3).u8(sampler))
+	}
+	v9InRecordTemplate := set(0, pkt{}.u16(258).u16(5).
+		u16(8).u16(4).u16(12).u16(4).u16(1).u16(4).u16(2).u16(4).u16(34).u16(4))
+	v9InRecordFlow := set(258, pkt{}.addr("10.1.1.1").addr("10.2.2.2").u32(1000).u32(3).u32(4))
+	// softflowd -v 10 -s 10: scope meteringProcessId,
+	// samplingPacketInterval, samplingPacketSpace.
+	ipfixOptions := set(3, pkt{}.u16(256).u16(3).u16(1).
+		u16(143).u16(4).u16(305).u16(4).u16(306).u16(4))
+	ipfixRate := func(interval, space uint32) pkt {
+		return set(256, pkt{}.u32(1).u32(interval).u32(space))
+	}
+	ipfixTemplate := set(2, pkt{}.u16(1024).u16(5).
+		u16(8).u16(4).u16(12).u16(4).u16(1).u16(4).u16(2).u16(4).u16(10).u16(4))
+	ipfixFlow := set(1024, pkt{}.addr("10.0.0.1").addr("10.0.0.2").u32(1000).u32(3).u32(3))
+
+	type message struct {
+		p     pkt
+		after time.Duration
+	}
+	tests := []struct {
+		name string
+		msgs []message
+		// want is each decoded record's bytes and packets, in order.
+		want [][2]uint64
+	}{
+		{
+			name: "v9 rate for the flow's interface",
+			msgs: []message{{p: v9(1, uptime, v9IfOptions, v9IfRate(3, 10), v9Template(), v9Flow)}},
+			want: [][2]uint64{{10_000, 30}},
+		},
+		{
+			name: "v9 rate for another interface",
+			msgs: []message{{p: v9(1, uptime, v9IfOptions, v9IfRate(5, 10), v9Template(), v9Flow)}},
+			want: [][2]uint64{{1000, 3}},
+		},
+		{
+			name: "v9 system-wide rate",
+			msgs: []message{{p: v9(1, uptime,
+				set(1, pkt{}.u16(300).u16(4).u16(4).u16(1).u16(4).u16(34).u16(4)),
+				set(300, pkt{}.u32(1).u32(100)), v9Template(), v9Flow)}},
+			want: [][2]uint64{{100_000, 300}},
+		},
+		{
+			name: "v9 rate for the flow's sampler",
+			msgs: []message{{p: v9(1, uptime, v9SamplerOptions, v9SamplerRate,
+				v9SamplerTemplate, v9SamplerFlow(7), v9SamplerFlow(8))}},
+			want: [][2]uint64{{100_000, 300}, {1000, 3}},
+		},
+		{
+			name: "v9 rate in the data record",
+			msgs: []message{{p: v9(1, uptime, v9IfOptions, v9IfRate(0, 10), v9InRecordTemplate, v9InRecordFlow)}},
+			want: [][2]uint64{{4000, 12}},
+		},
+		{
+			name: "v9 rate from another domain",
+			msgs: []message{
+				{p: v9(2, uptime, v9IfOptions, v9IfRate(3, 10))},
+				{p: v9(1, uptime, v9Template(), v9Flow)},
+			},
+			want: [][2]uint64{{1000, 3}},
+		},
+		{
+			name: "IPFIX interval and space",
+			msgs: []message{{p: ipfix(1, ipfixOptions, ipfixRate(1, 9), ipfixTemplate, ipfixFlow)}},
+			want: [][2]uint64{{10_000, 30}},
+		},
+		{
+			name: "IPFIX fractional rate",
+			msgs: []message{{p: ipfix(1, ipfixOptions, ipfixRate(2, 3), ipfixTemplate, ipfixFlow)}},
+			want: [][2]uint64{{2500, 7}},
+		},
+		{
+			name: "IPFIX rate changed",
+			msgs: []message{
+				{p: ipfix(1, ipfixOptions, ipfixRate(1, 9), ipfixTemplate)},
+				{p: ipfix(1, ipfixRate(1, 0), ipfixFlow)},
+			},
+			want: [][2]uint64{{1000, 3}},
+		},
+		{
+			// The options record arrives after the flow: the flow keeps
+			// its sampled counts and later flows are scaled.
+			name: "flow before the rate",
+			msgs: []message{
+				{p: ipfix(1, ipfixOptions, ipfixTemplate, ipfixFlow)},
+				{p: ipfix(1, ipfixRate(1, 9), ipfixFlow)},
+			},
+			want: [][2]uint64{{1000, 3}, {10_000, 30}},
+		},
+		{
+			name: "rate not refreshed",
+			msgs: []message{
+				{p: ipfix(1, ipfixOptions, ipfixRate(1, 9))},
+				{p: ipfix(1, ipfixTemplate, ipfixFlow), after: 2 * time.Hour},
+			},
+			want: [][2]uint64{{1000, 3}},
+		},
+	}
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+			dec := flow.NewDecoder()
+			var got [][2]uint64
+			for _, m := range tc.msgs {
+				res, err := dec.Decode(exporterA(), m.p, exportAt().Add(m.after))
+				if err != nil {
+					t.Fatalf("Decode: %v", err)
+				}
+				for _, r := range res.Records {
+					got = append(got, [2]uint64{r.Bytes, r.Packets})
+				}
+			}
+			if !slices.Equal(got, tc.want) {
+				t.Errorf("bytes, packets = %v, want %v", got, tc.want)
+			}
+		})
+	}
 }

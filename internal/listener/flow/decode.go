@@ -59,7 +59,8 @@ const (
 	// maxTemplateFields bounds one template so the cache's worst case
 	// stays small: a v9 set could otherwise declare 16k fields.
 	maxTemplateFields = 256
-	// maxTemplates bounds the cache across every exporter.
+	// maxTemplates bounds the cache across every exporter. The exporter
+	// boot times and sampling rates learned from options records share it.
 	maxTemplates = 4096
 	// templateLifetime drops a template its exporter has stopped
 	// refreshing. Exporters resend templates every few minutes to every
@@ -115,6 +116,9 @@ type Decoder struct {
 	// sent in an options record, against which uptime-relative flow
 	// times resolve.
 	initTimes map[domainKey]initTime
+	// rates holds the sampling rates exporters announced in options
+	// records, by the scope each covers.
+	rates map[rateKey]learnedRate
 }
 
 // domainKey identifies one exporter's observation domain.
@@ -132,6 +136,7 @@ func NewDecoder() *Decoder {
 	return &Decoder{
 		templates: make(map[templateKey]*template),
 		initTimes: make(map[domainKey]initTime),
+		rates:     make(map[rateKey]learnedRate),
 	}
 }
 
@@ -148,6 +153,9 @@ type field struct {
 	id         uint16
 	length     uint16
 	enterprise bool
+	// scope marks an options template's scope field. In v9 its id is a
+	// scope type, not a field type.
+	scope bool
 }
 
 type template struct {
@@ -347,14 +355,18 @@ func (d *Decoder) learnTemplate(hdr *exportHeader, set []byte, options bool, now
 	if id < minDataSetID || count == 0 || count > maxTemplateFields {
 		return nil, fmt.Errorf("%w: template %d with %d fields", ErrMalformed, id, count)
 	}
+	scope := 0
 	if options {
-		if scope := int(binary.BigEndian.Uint16(set[4:])); scope == 0 || scope > count {
+		if scope = int(binary.BigEndian.Uint16(set[4:])); scope == 0 || scope > count {
 			return nil, fmt.Errorf("%w: options template %d scope count %d", ErrMalformed, id, scope)
 		}
 	}
 	fields, rest, err := readFieldSpecifiers(set[headerLen:], count, hdr.version == VersionIPFIX)
 	if err != nil {
 		return nil, err
+	}
+	for i := range scope {
+		fields[i].scope = true
 	}
 	return rest, d.learn(hdr, id, fields, options, now)
 }
@@ -377,6 +389,9 @@ func (d *Decoder) learnV9OptionsTemplates(hdr *exportHeader, set []byte, now tim
 		fields, rest, err := readFieldSpecifiers(set[optionsHeaderLen:], count, false)
 		if err != nil {
 			return err
+		}
+		for i := range scopeLen / specifierLen {
+			fields[i].scope = true
 		}
 		set = rest
 		if err = d.learn(hdr, id, fields, true, now); err != nil {
@@ -424,7 +439,7 @@ func (d *Decoder) learn(hdr *exportHeader, id uint16, fields []field, options bo
 	}
 	key := templateKey{exporter: hdr.exporter, version: hdr.version, domain: hdr.domain, id: id}
 	if _, ok := d.templates[key]; !ok && len(d.templates) >= maxTemplates {
-		d.evictOldest()
+		evictOldest(d.templates, func(t *template) time.Time { return t.learned })
 	}
 	d.templates[key] = &template{fields: fields, options: options, minLen: minLen, learned: now}
 	return nil
@@ -445,18 +460,19 @@ func (d *Decoder) withdraw(hdr *exportHeader, id uint16, options bool) {
 	}
 }
 
-func (d *Decoder) evictOldest() {
+// evictOldest deletes the entry of m learned longest ago.
+func evictOldest[K comparable, V any](m map[K]V, learned func(V) time.Time) {
 	var (
-		oldest    templateKey
+		oldest    K
 		oldestAt  time.Time
 		haveFirst bool
 	)
-	for k, t := range d.templates {
-		if !haveFirst || t.learned.Before(oldestAt) {
-			oldest, oldestAt, haveFirst = k, t.learned, true
+	for k, v := range m {
+		if at := learned(v); !haveFirst || at.Before(oldestAt) {
+			oldest, oldestAt, haveFirst = k, at, true
 		}
 	}
-	delete(d.templates, oldest)
+	delete(m, oldest)
 }
 
 func (d *Decoder) lookup(hdr *exportHeader, id uint16, now time.Time) *template {
@@ -483,7 +499,7 @@ func (d *Decoder) decodeDataSet(hdr *exportHeader, id uint16, set []byte, now ti
 	}
 	// Anything shorter than one record is padding.
 	for len(set) >= t.minLen {
-		rec, n, ok := decodeRecord(hdr, t, set)
+		rec, n, ok := d.decodeRecord(hdr, t, set, now)
 		if !ok {
 			return fmt.Errorf("%w: data set %d overruns its record", ErrMalformed, id)
 		}
@@ -508,13 +524,18 @@ type counters struct {
 	hasDeltaBytes, hasDeltaPackets                     bool
 }
 
-func decodeRecord(hdr *exportHeader, t *template, b []byte) (Record, int, bool) {
+func (d *Decoder) decodeRecord(hdr *exportHeader, t *template, b []byte, now time.Time) (Record, int, bool) {
 	rec := Record{Exporter: hdr.exporter, Version: hdr.version, ObservationDomain: hdr.domain}
 	var (
 		times flowTimes
 		cnt   counters
+		smp   sampling
 	)
-	n, ok := walkRecord(t, b, func(id uint16, v []byte) { applyField(&rec, &times, &cnt, id, v) })
+	n, ok := walkRecord(t, b, func(f field, v []byte) {
+		if !smp.apply(f.id, v) {
+			applyField(&rec, &times, &cnt, f.id, v)
+		}
+	})
 	if !ok {
 		return Record{}, 0, false
 	}
@@ -525,24 +546,18 @@ func decodeRecord(hdr *exportHeader, t *template, b []byte) (Record, int, bool) 
 	if !cnt.hasDeltaPackets {
 		rec.Packets = cnt.totalPackets
 	}
+	r := d.recordRate(hdr, &rec, &smp, now)
+	rec.Bytes, rec.Packets = r.scale(rec.Bytes), r.scale(rec.Packets)
 	rec.Start, rec.End = resolveTimes(hdr, &times)
 	return rec, n, true
 }
 
-// readExporterOptions reads an options data set for the one value flows
-// depend on: the exporter's systemInitTimeMilliseconds. Every other option
-// is skipped.
+// readExporterOptions reads an options data set for the values flows
+// depend on: the exporter's systemInitTimeMilliseconds and its sampling
+// rates. Every other option is skipped.
 func (d *Decoder) readExporterOptions(hdr *exportHeader, id uint16, t *template, set []byte, now time.Time) error {
 	for len(set) >= t.minLen {
-		n, ok := walkRecord(t, set, func(ie uint16, v []byte) {
-			if ie != ieSystemInitTimeMilliseconds || hdr.version != VersionIPFIX {
-				return
-			}
-			if at, valid := readMilliseconds(v); valid {
-				hdr.initTime, hdr.hasInit = at, true
-				d.learnInitTime(hdr, at, now)
-			}
-		})
+		n, ok := d.readOptionsRecord(hdr, t, set, now)
 		if !ok {
 			return fmt.Errorf("%w: options data set %d overruns its record", ErrMalformed, id)
 		}
@@ -551,20 +566,51 @@ func (d *Decoder) readExporterOptions(hdr *exportHeader, id uint16, t *template,
 	return nil
 }
 
+// readOptionsRecord reads the options record at the start of b and returns
+// its length, or false when it overruns b.
+func (d *Decoder) readOptionsRecord(hdr *exportHeader, t *template, b []byte, now time.Time) (int, bool) {
+	var (
+		smp     sampling
+		ifIndex uint32
+		hasIf   bool
+	)
+	n, ok := walkRecord(t, b, func(f field, v []byte) {
+		switch {
+		case f.scope && hdr.version == VersionNetFlow9:
+			if f.id == v9ScopeInterface {
+				ifIndex, hasIf = readUint[uint32](v)
+			}
+		case f.scope && f.id == ieIngressInterface:
+			ifIndex, hasIf = readUint[uint32](v)
+		case f.id == ieSystemInitTimeMilliseconds && hdr.version == VersionIPFIX:
+			if at, valid := readMilliseconds(v); valid {
+				hdr.initTime, hdr.hasInit = at, true
+				d.learnInitTime(hdr, at, now)
+			}
+		default:
+			smp.apply(f.id, v)
+		}
+	})
+	if !ok {
+		return 0, false
+	}
+	if r, valid := smp.rate(); valid {
+		key := rateKey{exporter: hdr.exporter, domain: hdr.domain, scope: scopeDomain}
+		switch {
+		case smp.hasSampler:
+			key.scope, key.id = scopeSampler, smp.sampler
+		case hasIf:
+			key.scope, key.id = scopeInterface, uint64(ifIndex)
+		}
+		d.learnRate(key, r, now)
+	}
+	return n, true
+}
+
 func (d *Decoder) learnInitTime(hdr *exportHeader, at, now time.Time) {
 	key := domainKey{exporter: hdr.exporter, domain: hdr.domain}
 	if _, ok := d.initTimes[key]; !ok && len(d.initTimes) >= maxTemplates {
-		var (
-			oldest   domainKey
-			oldestAt time.Time
-			found    bool
-		)
-		for k, it := range d.initTimes {
-			if !found || it.learned.Before(oldestAt) {
-				oldest, oldestAt, found = k, it.learned, true
-			}
-		}
-		delete(d.initTimes, oldest)
+		evictOldest(d.initTimes, func(it initTime) time.Time { return it.learned })
 	}
 	d.initTimes[key] = initTime{at: at, learned: now}
 }
@@ -572,7 +618,7 @@ func (d *Decoder) learnInitTime(hdr *exportHeader, at, now time.Time) {
 // walkRecord calls fn with each IANA field of the record at the start of b
 // and returns the record's length, or false when the record overruns b.
 // Enterprise-specific fields are stepped over.
-func walkRecord(t *template, b []byte, fn func(id uint16, v []byte)) (int, bool) {
+func walkRecord(t *template, b []byte, fn func(f field, v []byte)) (int, bool) {
 	off := 0
 	for _, f := range t.fields {
 		n := int(f.length)
@@ -594,7 +640,7 @@ func walkRecord(t *template, b []byte, fn func(id uint16, v []byte)) (int, bool)
 			return 0, false
 		}
 		if !f.enterprise {
-			fn(f.id, b[off:off+n])
+			fn(f, b[off:off+n])
 		}
 		off += n
 	}

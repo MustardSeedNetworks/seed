@@ -188,7 +188,17 @@ days, so an uptime resolves to the instant nearest the export time that it can
 denote. Without it, an uptime-relative IPFIX record is
 stamped with its export time.
 
-v5 counters are scaled by the header's sampling interval. v9 and IPFIX
-exporters report their sampling rate in options records too, and the collector
-does not read it yet, so v9 and IPFIX counts are stored as sampled. Applying
-that rate is the next slice of P-C1.
+Stored byte and packet counts are estimates of the traffic observed, not the
+sampled counts. v5 counters are scaled by the header's sampling interval. v9
+and IPFIX exporters announce their rate in options records, as a 1-in-N
+interval (elements 34 and 50) or as RFC 5476's selected interval and skipped
+space (305 and 306). The collector keeps each rate by what it covers, most
+specific first: a sampler (an options record carrying sampler ID 48 or
+selector ID 302, which data records then name), an ingress interface (a v9
+Interface scope or an IPFIX `ingressInterface` scope), or the whole domain.
+softflowd scopes its v9 rate to an interface and its IPFIX rate to the
+metering process; Cisco names a sampler. A rate carried in the data record
+itself wins over all of them. Rates share the template cache's bound and
+lifetime. A flow decoded before its exporter's options record arrives keeps
+its sampled counts, the same trade the template cache makes for data ahead of
+its template.
