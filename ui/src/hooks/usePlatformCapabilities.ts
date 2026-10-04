@@ -12,7 +12,7 @@
  * the silence this replaces.
  */
 
-import { useCallback, useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 
 import { api } from '../api';
 import { LogComponents, logger } from '../lib/logger';
@@ -52,38 +52,33 @@ export function usePlatformCapabilities(): PlatformCapabilities {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const refresh = useCallback(async (): Promise<void> => {
+  const refresh = async (): Promise<void> => {
     setLoading(true);
     setError(null);
-    try {
-      const status = await api.get<StatusWithCapabilities>('/api/v1/status');
-      setAll(status?.capabilities ?? []);
-    } catch (err) {
-      const message = err instanceof Error ? err.message : 'Failed to read platform capabilities';
-      setError(message);
-      logger.error(LogComponents.SYSTEM, 'Failed to read platform capabilities', err);
-    } finally {
-      setLoading(false);
-    }
-  }, []);
+    await api
+      .get<StatusWithCapabilities>('/api/v1/status')
+      .then((status) => {
+        setAll(status?.capabilities ?? []);
+      })
+      .catch((err: unknown) => {
+        const message = err instanceof Error ? err.message : 'Failed to read platform capabilities';
+        setError(message);
+        logger.error(LogComponents.SYSTEM, 'Failed to read platform capabilities', err);
+      });
+    setLoading(false);
+  };
 
   useEffect(() => {
     refresh().catch(() => undefined);
   }, [refresh]);
 
-  const levelOf = useCallback(
-    (capability: string): CapabilityLevel =>
-      all.find((entry) => entry.capability === capability)?.level ?? 'none',
-    [all],
-  );
+  const levelOf = (capability: string): CapabilityLevel =>
+    all.find((entry) => entry.capability === capability)?.level ?? 'none';
 
   return {
     all,
     levelOf,
-    supported: useCallback(
-      (capability: string): boolean => levelOf(capability) !== 'none',
-      [levelOf],
-    ),
+    supported: (capability: string): boolean => levelOf(capability) !== 'none',
     degraded: all.filter((entry) => entry.level !== 'full'),
     loading,
     error,

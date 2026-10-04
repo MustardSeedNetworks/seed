@@ -12,7 +12,7 @@
  * endpoints arrives, lift state into a context first.
  */
 
-import { useCallback, useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { api } from '../api/client';
 import type {
   PollingTarget,
@@ -37,54 +37,46 @@ export function usePollingTargets(): UsePollingTargetsResult {
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
 
-  const refresh = useCallback(async (): Promise<void> => {
+  const refresh = async (): Promise<void> => {
     setLoading(true);
     setError(null);
-    try {
-      const resp = await api.get<PollingTargetsListResponse>(ENDPOINT);
-      setTargets(resp.targets ?? []);
-    } catch (err) {
-      // The api client throws Error on non-2xx; surface the message
-      // verbatim so operators see "Failed to list polling targets"
-      // (from the handler) or "Network error" (from the client).
-      setError(err instanceof Error ? err.message : 'Failed to load polling targets');
-    } finally {
-      setLoading(false);
-    }
-  }, []);
+    await api
+      .get<PollingTargetsListResponse>(ENDPOINT)
+      .then((resp) => {
+        setTargets(resp.targets ?? []);
+      })
+      .catch((err: unknown) => {
+        // The api client throws Error on non-2xx; surface the message
+        // verbatim so operators see "Failed to list polling targets"
+        // (from the handler) or "Network error" (from the client).
+        setError(err instanceof Error ? err.message : 'Failed to load polling targets');
+      });
+    setLoading(false);
+  };
 
   useEffect(() => {
     void refresh();
   }, [refresh]);
 
-  const create = useCallback(
-    async (input: PollingTargetInput): Promise<PollingTarget> => {
-      const created = await api.post<PollingTarget>(ENDPOINT, input);
-      // Re-fetch so the row order, audit columns, and any server-
-      // generated defaults (id, collectorChain) reflect what's on
-      // disk instead of a partial echo of the input.
-      await refresh();
-      return created;
-    },
-    [refresh],
-  );
+  const create = async (input: PollingTargetInput): Promise<PollingTarget> => {
+    const created = await api.post<PollingTarget>(ENDPOINT, input);
+    // Re-fetch so the row order, audit columns, and any server-
+    // generated defaults (id, collectorChain) reflect what's on
+    // disk instead of a partial echo of the input.
+    await refresh();
+    return created;
+  };
 
-  const update = useCallback(
-    async (id: string, input: PollingTargetInput): Promise<PollingTarget> => {
-      const updated = await api.put<PollingTarget>(`${ENDPOINT}/${id}`, input);
-      await refresh();
-      return updated;
-    },
-    [refresh],
-  );
+  const update = async (id: string, input: PollingTargetInput): Promise<PollingTarget> => {
+    const updated = await api.put<PollingTarget>(`${ENDPOINT}/${id}`, input);
+    await refresh();
+    return updated;
+  };
 
-  const remove = useCallback(
-    async (id: string): Promise<void> => {
-      await api.delete(`${ENDPOINT}/${id}`);
-      await refresh();
-    },
-    [refresh],
-  );
+  const remove = async (id: string): Promise<void> => {
+    await api.delete(`${ENDPOINT}/${id}`);
+    await refresh();
+  };
 
   return { targets, loading, error, refresh, create, update, remove };
 }

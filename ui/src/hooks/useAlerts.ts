@@ -6,7 +6,7 @@
  * cheap.
  */
 
-import { useCallback, useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { api } from '../api/client';
 import type { Alert, AlertActionResponse, AlertsFilter, AlertsListResponse } from '../types/alerts';
 
@@ -43,38 +43,33 @@ export function useAlerts(initialFilter?: Partial<AlertsFilter>): UseAlertsResul
     ...initialFilter,
   });
 
-  const refresh = useCallback(async (): Promise<void> => {
+  const refresh = async (): Promise<void> => {
     setLoading(true);
     setError(null);
-    try {
-      const resp = await api.get<AlertsListResponse>(`${ENDPOINT}${buildQuery(filter)}`);
-      setAlerts(resp.alerts ?? []);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to load alerts');
-    } finally {
-      setLoading(false);
-    }
-  }, [filter]);
+    await api
+      .get<AlertsListResponse>(`${ENDPOINT}${buildQuery(filter)}`)
+      .then((resp) => {
+        setAlerts(resp.alerts ?? []);
+      })
+      .catch((err: unknown) => {
+        setError(err instanceof Error ? err.message : 'Failed to load alerts');
+      });
+    setLoading(false);
+  };
 
   useEffect(() => {
     void refresh();
   }, [refresh]);
 
-  const acknowledge = useCallback(
-    async (id: number): Promise<void> => {
-      await api.post<AlertActionResponse>(`${ENDPOINT}/${id}/acknowledge`);
-      await refresh();
-    },
-    [refresh],
-  );
+  const acknowledge = async (id: number): Promise<void> => {
+    await api.post<AlertActionResponse>(`${ENDPOINT}/${id}/acknowledge`);
+    await refresh();
+  };
 
-  const resolve = useCallback(
-    async (id: number): Promise<void> => {
-      await api.post<AlertActionResponse>(`${ENDPOINT}/${id}/resolve`);
-      await refresh();
-    },
-    [refresh],
-  );
+  const resolve = async (id: number): Promise<void> => {
+    await api.post<AlertActionResponse>(`${ENDPOINT}/${id}/resolve`);
+    await refresh();
+  };
 
   return { alerts, loading, error, filter, setFilter, refresh, acknowledge, resolve };
 }

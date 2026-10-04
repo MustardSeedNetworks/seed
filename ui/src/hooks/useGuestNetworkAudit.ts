@@ -11,7 +11,7 @@
  *   that the UI surfaces as a critical security alert.
  */
 
-import { useCallback, useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import type { GuestAuditTarget } from '../types/generated/config';
 
 export type { GuestAuditTarget };
@@ -92,7 +92,7 @@ export function useGuestNetworkAudit(): UseGuestNetworkAuditResult {
       .finally(() => setLoading(false));
   }, []);
 
-  const saveSettings = useCallback(async (): Promise<void> => {
+  const saveSettings = async (): Promise<void> => {
     setError(null);
     try {
       await api.put('/api/v1/security/guest-audit/settings', settings);
@@ -102,9 +102,9 @@ export function useGuestNetworkAudit(): UseGuestNetworkAuditResult {
       logger.error(LogComponents.CONFIG, 'Failed to save guest-audit settings', err);
       throw err;
     }
-  }, [settings]);
+  };
 
-  const runAudit = useCallback(async (): Promise<void> => {
+  const runAudit = async (): Promise<void> => {
     setRunning(true);
     setError(null);
     try {
@@ -124,10 +124,9 @@ export function useGuestNetworkAudit(): UseGuestNetworkAuditResult {
       const msg = err instanceof Error ? err.message : 'Failed to run guest-network audit';
       setError(msg);
       logger.error(LogComponents.VULN, 'Failed to run guest-network audit', err);
-    } finally {
-      setRunning(false);
     }
-  }, []);
+    setRunning(false);
+  };
 
   return {
     settings,

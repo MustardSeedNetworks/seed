@@ -7,7 +7,7 @@
  * MAC on the segment they are plugged into.
  */
 
-import { useCallback, useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 
 import { api } from '../api';
 import { LogComponents, logger } from '../lib/logger';
@@ -28,20 +28,21 @@ export function useNeighbourCache(): NeighbourCache {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const refresh = useCallback(async (): Promise<void> => {
+  const refresh = async (): Promise<void> => {
     setLoading(true);
     setError(null);
-    try {
-      const response = await api.get<NeighbourCacheResponse>('/api/v1/network/neighbours');
-      setEntries(response?.entries ?? []);
-    } catch (err) {
-      const message = err instanceof Error ? err.message : 'Failed to read the neighbour cache';
-      setError(message);
-      logger.error(LogComponents.DISCOVERY, 'Failed to read the neighbour cache', err);
-    } finally {
-      setLoading(false);
-    }
-  }, []);
+    await api
+      .get<NeighbourCacheResponse>('/api/v1/network/neighbours')
+      .then((response) => {
+        setEntries(response?.entries ?? []);
+      })
+      .catch((err: unknown) => {
+        const message = err instanceof Error ? err.message : 'Failed to read the neighbour cache';
+        setError(message);
+        logger.error(LogComponents.DISCOVERY, 'Failed to read the neighbour cache', err);
+      });
+    setLoading(false);
+  };
 
   useEffect(() => {
     refresh().catch(() => undefined);

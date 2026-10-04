@@ -22,7 +22,7 @@
  * phone-width gate.
  */
 
-import { type JSX, useMemo } from 'react';
+import type { JSX } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { TopologyLink, TopologyNode } from '../types/topology';
 import { type GraphLinkInput, type GraphNodeInput, layoutTopology } from './topologyLayout';
@@ -69,20 +69,18 @@ export function TopologyGraph({
 }: TopologyGraphProps): JSX.Element {
   const { t } = useTranslation(['pages', 'common']);
 
-  const laid = useMemo(() => {
-    const graphNodes: GraphNodeInput[] = nodes.map((n) => ({
-      id: n.id,
-      label: labelOf(n),
-      deviceType: n.deviceType,
-    }));
-    const graphLinks: GraphLinkInput[] = links.map((l) => ({
-      id: l.id,
-      source: l.sourceNodeId,
-      target: l.targetNodeId,
-      learned: l.linkType === LEARNED_KIND,
-    }));
-    return layoutTopology(graphNodes, graphLinks);
-  }, [nodes, links]);
+  const graphNodes: GraphNodeInput[] = nodes.map((n) => ({
+    id: n.id,
+    label: labelOf(n),
+    deviceType: n.deviceType,
+  }));
+  const graphLinks: GraphLinkInput[] = links.map((l) => ({
+    id: l.id,
+    source: l.sourceNodeId,
+    target: l.targetNodeId,
+    learned: l.linkType === LEARNED_KIND,
+  }));
+  const laid = layoutTopology(graphNodes, graphLinks);
 
   if (laid.nodes.length === 0) {
     return (

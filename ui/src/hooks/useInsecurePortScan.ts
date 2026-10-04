@@ -10,7 +10,7 @@
  * The route is `minRole: op` and rate-limited, so the caller gates the control.
  */
 
-import { useCallback, useState } from 'react';
+import { useState } from 'react';
 
 import { api } from '../api';
 import { LogComponents, logger } from '../lib/logger';
@@ -47,7 +47,7 @@ export function useInsecurePortScan(): InsecurePortScan {
   const [scanning, setScanning] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const scan = useCallback(async (target: string): Promise<void> => {
+  const scan = async (target: string): Promise<void> => {
     setScanning(true);
     setError(null);
     setResult(null);
@@ -61,15 +61,14 @@ export function useInsecurePortScan(): InsecurePortScan {
       const message = err instanceof Error ? err.message : 'Insecure port scan failed';
       setError(message);
       logger.error(LogComponents.DISCOVERY, 'Insecure port scan failed', err);
-    } finally {
-      setScanning(false);
     }
-  }, []);
+    setScanning(false);
+  };
 
-  const reset = useCallback((): void => {
+  const reset = (): void => {
     setResult(null);
     setError(null);
-  }, []);
+  };
 
   return { result, scanning, error, scan, reset };
 }

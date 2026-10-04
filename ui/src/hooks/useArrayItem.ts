@@ -144,6 +144,9 @@ export function useArrayItem<TSettings extends object, K extends ArrayKeys<TSett
 ): UseArrayItemReturn<ArrayItemType<TSettings, K>> {
   type Item = ArrayItemType<TSettings, K>;
 
+  // Kept: these memos are the only hooks here, so the compiler would not
+  // treat this function as a hook and would leave it uncompiled.
+
   /**
    * Adds a new item to the array with a generated unique ID.
    */
