@@ -35,6 +35,7 @@ func minTierForEngine(name string) license.Tier {
 		return license.TierStarter
 	case "alert-listener-pipeline",
 		"alert-observation-pipeline",
+		"alert-escalation",
 		"syslog-udp",
 		"snmp-trap-v2c":
 		return license.TierPro

@@ -41,6 +41,47 @@
         "from"
       ]
     },
+    "AlertEscalationConfig": {
+      "properties": {
+        "rule": {
+          "type": "string"
+        },
+        "stages": {
+          "items": {
+            "$ref": "#/$defs/AlertEscalationStage"
+          },
+          "type": "array"
+        },
+        "repeat_seconds": {
+          "type": "integer"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "rule",
+        "stages"
+      ]
+    },
+    "AlertEscalationStage": {
+      "properties": {
+        "after_seconds": {
+          "type": "integer"
+        },
+        "channels": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "after_seconds",
+        "channels"
+      ]
+    },
     "AlertWebhookConfig": {
       "properties": {
         "url": {
@@ -64,6 +105,12 @@
         },
         "email": {
           "$ref": "#/$defs/AlertEmailConfig"
+        },
+        "escalations": {
+          "items": {
+            "$ref": "#/$defs/AlertEscalationConfig"
+          },
+          "type": "array"
         }
       },
       "additionalProperties": false,

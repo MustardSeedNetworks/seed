@@ -1,17 +1,23 @@
 package management
 
 import (
+	"bytes"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"strings"
+	"time"
 
+	"github.com/MustardSeedNetworks/seed/internal/alerts"
 	"github.com/MustardSeedNetworks/seed/internal/alerts/delivery"
+	"github.com/MustardSeedNetworks/seed/internal/alerts/escalation"
 	"github.com/MustardSeedNetworks/seed/internal/config"
 )
 
 // The alert receivers' operator half: the webhook an operator names in
-// Settings (#2605), the mail relay alerts are emailed through (#2997), and the
-// secrets that go to the keyring on the way in.
+// Settings (#2605), the mail relay alerts are emailed through (#2997), the
+// secrets that go to the keyring on the way in, and the escalation ladders
+// that re-send an alert nobody acknowledged (P-B2).
 
 // Encrypter turns plaintext into keyring ciphertext. Satisfied by
 // config.Keyring; declared here so the service holds only the seam and
@@ -46,7 +52,93 @@ func buildAlertSettings(cfg *config.Config) map[string]any {
 			"from":        email.From,
 			"to":          to,
 		},
+		"escalations": escalationsView(cfg.Alerts.Escalations),
 	}
+}
+
+// escalationLadder is the wire shape of one ladder in the settings read
+// model and in an update.
+type escalationLadder struct {
+	Rule          string            `json:"rule"`
+	Stages        []escalationStage `json:"stages"`
+	RepeatSeconds int               `json:"repeatSeconds"`
+}
+
+type escalationStage struct {
+	AfterSeconds int      `json:"afterSeconds"`
+	Channels     []string `json:"channels"`
+}
+
+func escalationsView(stored []config.AlertEscalationConfig) []escalationLadder {
+	out := make([]escalationLadder, 0, len(stored))
+	for _, l := range stored {
+		v := escalationLadder{Rule: l.Rule, RepeatSeconds: l.RepeatSeconds}
+		for _, st := range l.Stages {
+			v.Stages = append(v.Stages, escalationStage{AfterSeconds: st.AfterSeconds, Channels: st.Channels})
+		}
+		out = append(out, v)
+	}
+	return out
+}
+
+// EscalationLadders converts the stored escalation policy to the escalator's
+// ladders, refusing the first one that could not run and any rule given two.
+func EscalationLadders(stored []config.AlertEscalationConfig) ([]escalation.Ladder, error) {
+	out := make([]escalation.Ladder, 0, len(stored))
+	seen := make(map[string]bool, len(stored))
+	for _, l := range stored {
+		ladder := escalation.Ladder{Rule: l.Rule, Repeat: time.Duration(l.RepeatSeconds) * time.Second}
+		for _, st := range l.Stages {
+			stage := escalation.Stage{After: time.Duration(st.AfterSeconds) * time.Second}
+			for _, c := range st.Channels {
+				stage.Channels = append(stage.Channels, alerts.Channel(c))
+			}
+			ladder.Stages = append(ladder.Stages, stage)
+		}
+		if err := ladder.Validate(); err != nil {
+			return nil, err
+		}
+		if seen[l.Rule] {
+			return nil, fmt.Errorf("%w: %s has two ladders", escalation.ErrInvalidLadder, l.Rule)
+		}
+		seen[l.Rule] = true
+		out = append(out, ladder)
+	}
+	return out, nil
+}
+
+// applyEscalationUpdates applies alerts.escalations. The list replaces the
+// stored one whole, and a ladder that could not run is refused with its
+// reason rather than stored and silently skipped.
+func applyEscalationUpdates(section map[string]any, cfg *config.Config) error {
+	val, exists := section["escalations"]
+	if !exists {
+		return nil
+	}
+	raw, err := json.Marshal(val)
+	if err != nil {
+		return errors.New("alerts.escalations must be a list of ladders")
+	}
+	dec := json.NewDecoder(bytes.NewReader(raw))
+	dec.DisallowUnknownFields()
+	var ladders []escalationLadder
+	if err = dec.Decode(&ladders); err != nil {
+		return fmt.Errorf("alerts.escalations must be a list of ladders: %w", err)
+	}
+	next := make([]config.AlertEscalationConfig, 0, len(ladders))
+	for _, l := range ladders {
+		stored := config.AlertEscalationConfig{Rule: strings.TrimSpace(l.Rule), RepeatSeconds: l.RepeatSeconds}
+		for _, st := range l.Stages {
+			stored.Stages = append(stored.Stages,
+				config.AlertEscalationStage{AfterSeconds: st.AfterSeconds, Channels: st.Channels})
+		}
+		next = append(next, stored)
+	}
+	if _, err = EscalationLadders(next); err != nil {
+		return err
+	}
+	cfg.Alerts.Escalations = next
+	return nil
 }
 
 // applyAlertsUpdates applies the alerts section: each receiver present in it.
@@ -62,6 +154,7 @@ func applyAlertsUpdates(updates map[string]any, cfg *config.Config, encrypt Encr
 	return errors.Join(
 		applyWebhookUpdates(section, cfg, encrypt),
 		applyEmailUpdates(section, cfg, encrypt),
+		applyEscalationUpdates(section, cfg),
 	)
 }
 

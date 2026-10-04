@@ -6,6 +6,27 @@ package config
 type AlertsConfig struct {
 	Webhook AlertWebhookConfig `json:"webhook"`
 	Email   AlertEmailConfig   `json:"email"`
+	// Escalations re-send an alert nobody has acknowledged, one ladder per
+	// rule (P-B2). Empty means an alert is sent once, when it is raised.
+	Escalations []AlertEscalationConfig `json:"escalations,omitempty"`
+}
+
+// AlertEscalationConfig is one rule's escalation ladder. Rule is the alert's
+// rule identifier: a built-in such as "iface.down", or "db.<id>" for an
+// operator rule.
+type AlertEscalationConfig struct {
+	Rule   string                 `json:"rule"`
+	Stages []AlertEscalationStage `json:"stages"`
+	// RepeatSeconds re-sends the last stage at this period until the alert is
+	// acknowledged or resolved; 0 sends it once.
+	RepeatSeconds int `json:"repeat_seconds,omitempty"`
+}
+
+// AlertEscalationStage fires AfterSeconds after the alert was raised, on the
+// named channels ("webhook", "email").
+type AlertEscalationStage struct {
+	AfterSeconds int      `json:"after_seconds"`
+	Channels     []string `json:"channels"`
 }
 
 // AlertWebhookConfig is the outbound alert receiver (#368, #2605).

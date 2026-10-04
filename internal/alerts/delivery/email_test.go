@@ -411,3 +411,39 @@ func TestManagerSendTest(t *testing.T) {
 		t.Errorf("X-Seed-Alert-Id = %q on a test alert", id)
 	}
 }
+
+// An escalation goes out only on the channels its stage names, and the email
+// says it is an escalation, or it reads as a duplicate of the first send.
+func TestManagerEscalatesOnTheStageChannelsOnly(t *testing.T) {
+	srv, hits := countingReceiver(t)
+	sink := &smtpSink{user: sinkUser, pass: sinkPass}
+	sink.start(t)
+
+	recorder := &recordingRecorder{}
+	m := delivery.NewManager(recorder, quietLogger())
+	t.Cleanup(func() { m.Stop(context.Background()) })
+	m.ApplyWebhook(delivery.WebhookConfig{URL: srv.URL, Secret: signingKey})
+	m.ApplyEmail(emailConfig(sink, nil))
+
+	alert := testAlert()
+	alert.EscalationStage = 2
+	m.Escalate(context.Background(), alert, []alerts.Channel{alerts.ChannelEmail})
+
+	if !waitFor(t, func() bool { return len(sink.received()) == 1 }) {
+		t.Fatal("the escalation was not emailed")
+	}
+	header, body := readMessage(t, sink.received()[0].data)
+	subject, err := new(mime.WordDecoder).DecodeHeader(header.Get("Subject"))
+	if err != nil {
+		t.Fatalf("decode subject: %v", err)
+	}
+	if want := "[Seed] CRITICAL, unacknowledged, escalation 2: Gateway latency threshold breached"; subject != want {
+		t.Errorf("Subject = %q, want %q", subject, want)
+	}
+	if !strings.Contains(body, "Escalation: stage 2, not acknowledged") {
+		t.Errorf("body does not name the escalation:\n%s", body)
+	}
+	if hits.Load() != 0 {
+		t.Errorf("webhook got %d posts; the stage names email only", hits.Load())
+	}
+}

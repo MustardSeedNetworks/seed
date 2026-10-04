@@ -141,7 +141,8 @@ func (a alertReconfigurer) ReconfigureAlerts() {
 	}
 }
 
-// ApplyAlertReceivers points m at the receivers the config names. It is the
+// ApplyAlertReceivers points m at the receivers and escalation ladders the
+// config names. It is the
 // one place plaintext receiver secrets exist outside the operator's browser:
 // decrypted here, handed to the notifier, never stored. Startup and every
 // later settings write both come through it, so there is one decision about
@@ -155,7 +156,17 @@ func ApplyAlertReceivers(cfg *config.Config, m *alertdelivery.Manager) {
 	webhook := cfg.Alerts.Webhook
 	email := cfg.Alerts.Email
 	email.To = slices.Clone(email.To)
+	ladders, ladderErr := management.EscalationLadders(cfg.Alerts.Escalations)
 	cfg.RUnlock()
+
+	// The settings write refuses a ladder that could not run, so this is a
+	// hand-edited or restored config. Running part of a policy would page
+	// the wrong people on the wrong schedule; none of it runs until fixed.
+	if ladderErr != nil {
+		logging.GetLogger().Error("alert escalation ladders are invalid; "+
+			"no alert is escalated until they are fixed", "error", ladderErr)
+	}
+	m.ApplyEscalations(ladders)
 
 	if webhook.URL == "" {
 		m.ApplyWebhook(alertdelivery.WebhookConfig{})

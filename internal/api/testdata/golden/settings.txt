@@ -11,6 +11,7 @@ body:
       "to": [],
       "username": ""
     },
+    "escalations": [],
     "webhook": {
       "secretSet": false,
       "url": ""

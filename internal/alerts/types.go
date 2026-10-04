@@ -44,6 +44,11 @@ type Alert struct {
 	ResolvedAt     *time.Time `json:"resolvedAt,omitempty"`
 	CreatedAt      time.Time  `json:"createdAt"`
 	Metadata       string     `json:"metadata,omitempty"` // JSON string for extra data
+
+	// EscalationStage is the last stage of the rule's escalation ladder this
+	// alert was sent at (P-B2), 0 before the first. EscalatedAt is when.
+	EscalationStage int        `json:"escalationStage,omitempty"`
+	EscalatedAt     *time.Time `json:"escalatedAt,omitempty"`
 }
 
 // Type constants for common alert types.

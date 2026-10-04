@@ -329,6 +329,12 @@ func (e *email) compose(alert *alerts.Alert) ([]byte, error) {
 		recipients[i] = addr.String()
 	}
 	subject := fmt.Sprintf("[Seed] %s: %s", strings.ToUpper(alert.Severity), alert.Title)
+	// An escalation is the same alert sent again because nobody acknowledged
+	// it; the subject says so, or it reads as a duplicate.
+	if alert.EscalationStage > 0 {
+		subject = fmt.Sprintf("[Seed] %s, unacknowledged, escalation %d: %s",
+			strings.ToUpper(alert.Severity), alert.EscalationStage, alert.Title)
+	}
 	created := alert.CreatedAt
 	if created.IsZero() {
 		created = e.now()
@@ -383,6 +389,9 @@ func body(alert *alerts.Alert, created time.Time) string {
 	}
 	line("Rule", alert.Rule)
 	line("Raised", created.UTC().Format(time.RFC3339))
+	if alert.EscalationStage > 0 {
+		line("Escalation", "stage "+strconv.Itoa(alert.EscalationStage)+", not acknowledged")
+	}
 	if alert.RootCauseID != nil {
 		line("Probable cause", "alert "+strconv.FormatInt(*alert.RootCauseID, 10))
 	}

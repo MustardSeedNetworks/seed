@@ -1956,6 +1956,63 @@
         },
         "email": {
           "$ref": "#/$defs/AlertEmailConfig"
+        },
+        "escalations": {
+          "type": "array",
+          "description": "Escalation ladders, one per alert rule: an alert nobody acknowledges is sent again at each stage",
+          "items": {
+            "$ref": "#/$defs/AlertEscalationConfig"
+          }
+        }
+      }
+    },
+    "AlertEscalationConfig": {
+      "type": "object",
+      "description": "One rule's escalation ladder. Acknowledging or resolving the alert stops it",
+      "additionalProperties": false,
+      "required": ["rule", "stages"],
+      "properties": {
+        "rule": {
+          "type": "string",
+          "description": "The alert's rule: a built-in such as iface.down, or db.<id> for an operator rule",
+          "minLength": 1
+        },
+        "stages": {
+          "type": "array",
+          "description": "Stages in time order; each fires a fixed time after the alert was raised",
+          "minItems": 1,
+          "maxItems": 5,
+          "items": {
+            "$ref": "#/$defs/AlertEscalationStage"
+          }
+        },
+        "repeat_seconds": {
+          "type": "integer",
+          "description": "Re-send the last stage at this period until the alert is acknowledged; 0 sends it once",
+          "minimum": 0,
+          "default": 0
+        }
+      }
+    },
+    "AlertEscalationStage": {
+      "type": "object",
+      "description": "One escalation stage",
+      "additionalProperties": false,
+      "required": ["after_seconds", "channels"],
+      "properties": {
+        "after_seconds": {
+          "type": "integer",
+          "description": "Seconds after the alert was raised; at least 60, and later than the previous stage",
+          "minimum": 60
+        },
+        "channels": {
+          "type": "array",
+          "description": "Channels this stage sends on",
+          "minItems": 1,
+          "items": {
+            "type": "string",
+            "enum": ["webhook", "email"]
+          }
         }
       }
     },

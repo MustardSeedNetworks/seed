@@ -19,6 +19,7 @@ import (
 
 	alertcorrelation "github.com/MustardSeedNetworks/seed/internal/alerts/correlation"
 	alertdelivery "github.com/MustardSeedNetworks/seed/internal/alerts/delivery"
+	"github.com/MustardSeedNetworks/seed/internal/alerts/escalation"
 	"github.com/MustardSeedNetworks/seed/internal/app"
 	"github.com/MustardSeedNetworks/seed/internal/database"
 )
@@ -57,4 +58,23 @@ func (s *Server) initAlertDelivery(
 		app.ApplyAlertReceivers(s.config, manager)
 	}
 	return manager
+}
+
+// initAlertEscalation registers the escalator that re-sends an alert nobody
+// acknowledged (P-B2). It runs after alertStore, which built the delivery
+// Manager it sends through and reads the operator's ladders from.
+func (s *Server) initAlertEscalation(db *database.DB, logger *slog.Logger) {
+	e, err := escalation.New(escalation.Config{
+		Store:   db.Alerts(),
+		Sender:  s.alertDelivery,
+		Ladders: s.alertDelivery.Escalations,
+		Logger:  logger,
+	})
+	if err != nil {
+		logger.Warn("alert escalation init failed", "error", err)
+		return
+	}
+	if regErr := s.registerEngineIfLicensed(e); regErr != nil {
+		logger.Warn("alert escalation registry registration failed", "error", regErr)
+	}
 }
