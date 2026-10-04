@@ -13,6 +13,12 @@ points at the wrong release.
 This compares the two sources directly -- `git log <prev>..<tag>` against the
 CHANGELOG section for <tag> -- so the record cannot drift from git silently
 regardless of merge ordering.
+
+The post-tag form reports the loss but cannot prevent it (#2769: once the
+release PR is queued its branch is locked, so release-please cannot regenerate
+it). `--pending` runs the same comparison on the merge-queue tree, up to the
+untagged release commit, so a PR queued ahead of the release ejects the release
+PR instead of shipping inside its tag unrecorded.
 """
 
 from __future__ import annotations
@@ -87,6 +93,12 @@ def previous_tag(tag: str) -> str | None:
     return tags[index - 1] if index > 0 else None
 
 
+def newest_section_version() -> str | None:
+    text = (REPO_ROOT / "CHANGELOG.md").read_text()
+    match = re.search(r"^## \[(\d+\.\d+\.\d+)\]", text, re.MULTILINE)
+    return match.group(1) if match else None
+
+
 def changelog_section(version: str) -> str | None:
     """The CHANGELOG body for one version, or None if it has no section."""
     text = (REPO_ROOT / "CHANGELOG.md").read_text()
@@ -155,15 +167,17 @@ def apply_fix(tag: str, missing: list[tuple[str, str]]) -> None:
     )
 
 
-def missing_entries(tag: str, prev: str | None, types: set[str]) -> list[tuple[str, str]]:
-    span = f"{prev}..{tag}" if prev else tag
+def missing_entries(
+    rev: str, prev: str | None, version: str, types: set[str]
+) -> list[tuple[str, str]]:
+    span = f"{prev}..{rev}" if prev else rev
     log = run("git", "log", "--no-merges", "--format=%h%x00%s", span)
-    section = changelog_section(tag.lstrip("v"))
+    section = changelog_section(version)
     if section is None:
         # A tag with no section at all predates the changelog (or was cut by
         # hand). That is a different condition from a section that is missing
         # entries, and reporting it as drift would bury the real signal.
-        raise NoSection(tag)
+        raise NoSection(version)
 
     missing = []
     for line in filter(None, log.splitlines()):
@@ -182,11 +196,64 @@ def missing_entries(tag: str, prev: str | None, types: set[str]) -> list[tuple[s
     return missing
 
 
+def release_commit(version: str, prev: str | None) -> str | None:
+    """The release-please commit for an untagged version, if HEAD contains it."""
+    span = f"{prev}..HEAD" if prev else "HEAD"
+    wanted = re.compile(rf"^chore\(main\):\s*release {re.escape(version)}\b")
+    for line in run("git", "log", "--format=%H%x00%s", span).splitlines():
+        sha, subject = line.split("\0", 1)
+        if wanted.match(subject):
+            return sha
+    return None
+
+
+def check_pending() -> int:
+    """Check the release the tree describes before it is tagged.
+
+    The range ends at the release commit, not HEAD: release-please tags that
+    commit, so a PR queued behind the release PR belongs to the next release
+    and must not eject this one.
+    """
+    version = newest_section_version()
+    tags = sorted_tags()
+    if version is None or f"v{version}" in tags:
+        print("no untagged release in CHANGELOG.md; nothing pending")
+        return 0
+
+    prev = tags[-1] if tags else None
+    rev = release_commit(version, prev)
+    if rev is None:
+        print(f"::error::CHANGELOG.md has an untagged {version} section but no "
+              f"`chore(main): release {version}` commit follows {prev or 'the root'}")
+        return 1
+
+    missing = missing_entries(rev, prev, version, changelog_types())
+    if not missing:
+        print(f"pending v{version}: changelog matches `git log {prev}..{rev[:8]}`")
+        return 0
+
+    print(f"::error::pending v{version} would ship {len(missing)} commit(s) "
+          "its changelog entry omits:")
+    for sha, subject in missing:
+        print(f"  {sha}  {subject}")
+    print()
+    print("A PR merged ahead of the queued release PR, whose locked branch")
+    print("release-please can no longer regenerate (#2769). Let this eject the")
+    print("release PR; release-please regenerates it once main's CI passes.")
+    return 1
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument(
+    mode = parser.add_mutually_exclusive_group()
+    mode.add_argument(
         "--tag",
         help="release tag to check (default: the highest semver tag)",
+    )
+    mode.add_argument(
+        "--pending",
+        action="store_true",
+        help="check the untagged release in the tree, before it merges",
     )
     parser.add_argument(
         "--fix",
@@ -194,6 +261,10 @@ def main() -> int:
         help="append the missing commits to this version's changelog section",
     )
     args = parser.parse_args()
+    if args.pending:
+        if args.fix:
+            parser.error("--fix repairs a tagged release; it has nothing to do with --pending")
+        return check_pending()
 
     tag = args.tag or (sorted_tags() or [None])[-1]
     if tag is None:
@@ -202,7 +273,7 @@ def main() -> int:
 
     prev = previous_tag(tag)
     try:
-        missing = missing_entries(tag, prev, changelog_types())
+        missing = missing_entries(tag, prev, tag.lstrip("v"), changelog_types())
     except NoSection:
         print(f"{tag}: no changelog section; predates CHANGELOG.md, skipping")
         return 0

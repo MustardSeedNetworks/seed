@@ -1088,6 +1088,33 @@ jobs:
 
           echo "✅ No unsafe logging patterns detected"
 
+  # Not path-gated and not gated on `changes`: a release PR touches only
+  # CHANGELOG.md and the version files, and this is the job that has to judge
+  # exactly that PR.
+  release-notes:
+    name: Release Notes
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          # The check compares against the previous tag, so it needs the tags
+          # and the commits between them.
+          fetch-depth: 0
+
+      - name: Gate self-test
+        run: python3 scripts/test-check-release-changelog.py
+
+      # merge_group only (#2769). The queue tree is where a PR merged ahead of
+      # the release PR can still eject it. On pull_request a PR opened while a
+      # release PR is pending would stay red after that release merged
+      # (stem#1582); on push the release is already history, and
+      # release-please.yml's post-tag reconcile reports it.
+      - name: An untagged release must list every commit it would ship
+        if: github.event_name == 'merge_group'
+        run: python3 scripts/check-release-changelog.py --pending
+
   # ===========================================================================
   # C Code Linting (if applicable)
   # ===========================================================================
@@ -2109,6 +2136,7 @@ jobs:
       - dependency-review
       - ci-conformance
       - quality
+      - release-notes
       - c-lint
       - i18n
       - docs
