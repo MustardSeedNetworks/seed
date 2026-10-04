@@ -494,7 +494,7 @@ func TestDiscoveryNeighborInfo(t *testing.T) {
 
 func TestDNSLookupResult(t *testing.T) {
 	result := api.DNSLookupResult{
-		Result:   "93.184.216.34",
+		Outcome:  "resolved",
 		Time:     15,
 		TimeMs:   15,
 		Status:   "success",
@@ -507,8 +507,8 @@ func TestDNSLookupResult(t *testing.T) {
 	if len(result.Resolved) == 0 && result.Status == "success" {
 		t.Error("successful lookup should have resolved addresses")
 	}
-	if result.Result == "" {
-		t.Error("expected result to be set")
+	if result.Outcome != "resolved" {
+		t.Errorf("expected outcome resolved, got %q", result.Outcome)
 	}
 	if result.Time <= 0 || result.TimeMs <= 0 {
 		t.Error("expected positive timing values")

@@ -8,8 +8,9 @@
  * interface at all.
  */
 
-import { fireEvent, render, screen } from '@testing-library/react';
-import { describe, expect, it } from 'vitest';
+import { fireEvent, render, screen, within } from '@testing-library/react';
+import { afterEach, describe, expect, it } from 'vitest';
+import i18n from '../../i18n';
 import { DnsCard, type DnsData } from './DnsCard';
 
 function dnsData(over: Partial<DnsData> = {}): DnsData {
@@ -18,7 +19,7 @@ function dnsData(over: Partial<DnsData> = {}): DnsData {
     servers: ['10.0.0.1'],
     testHostname: 'example.com',
     forward: {
-      result: '93.184.216.34',
+      outcome: 'resolved',
       time: 12,
       timeMs: 12,
       status: 'success',
@@ -62,28 +63,26 @@ describe('DnsCard resolver scope', () => {
   });
 });
 
-/* A per-server row reads "N/A" when the lookup answered nothing. That used to
-   be decided by comparing `result` to the Go side's English message, so the
-   row broke the day the message was reworded or translated. The answer is in
-   `resolved`: empty means nothing came back, whatever `result` says. */
+/* A per-server row reads "N/A" when the lookup answered nothing. The answer is
+   in `resolved`: empty means nothing came back. */
 describe('DnsCard per-server rows', () => {
-  const lookup = (result: string, resolved?: string[]): NonNullable<DnsData['forward']> => ({
-    result,
+  const lookup = (resolved?: string[]): NonNullable<DnsData['forward']> => ({
+    outcome: resolved ? 'resolved' : 'noRecord',
     time: 7,
     timeMs: 7,
     status: resolved ? 'success' : 'warning',
     ...(resolved ? { resolved } : {}),
   });
 
-  it('marks an empty answer N/A whatever the result text says', () => {
+  it('marks an empty answer N/A', () => {
     render(
       <DnsCard
         data={dnsData({
           perServerResults: [
             {
               server: '192.0.2.53',
-              forward: lookup('ningún registro A'),
-              forwardIpv6: lookup('2001:db8::1', ['2001:db8::1']),
+              forward: lookup(),
+              forwardIpv6: lookup(['2001:db8::1']),
               status: 'warning',
               avgTimeMs: 7,
             },
@@ -94,5 +93,47 @@ describe('DnsCard per-server rows', () => {
     fireEvent.click(screen.getByText('Server Tests'));
 
     expect(screen.getAllByText('N/A')).toHaveLength(1);
+  });
+});
+
+/* The daemon sends a code for what each lookup came back with; the card words
+   it in the reader's language (#2844). It used to print the daemon's English
+   ("No AAAA record", "Failed") whatever the locale. */
+describe('DnsCard lookup outcomes', () => {
+  afterEach(async () => {
+    await i18n.changeLanguage('en');
+  });
+
+  const outcomes: DnsData = {
+    server: '',
+    servers: [],
+    testHostname: 'example.com',
+    forward: {
+      outcome: 'resolved',
+      time: 9,
+      timeMs: 9,
+      status: 'success',
+      resolved: ['192.0.2.10'],
+    },
+    forwardIpv6: { outcome: 'noRecord', time: 9, timeMs: 9, status: 'warning' },
+    reverse: { outcome: 'failed', time: 9, timeMs: 9, status: 'error', error: 'timeout' },
+    reverseIpv6: null,
+  };
+
+  it.each([
+    ['en', 'No AAAA record', 'Lookup failed', 'System resolver'],
+    ['es', 'Sin registro AAAA', 'La consulta falló', 'Resolutor del sistema'],
+  ])('words every outcome in %s', async (lng, noRecord, failed, systemResolver) => {
+    await i18n.changeLanguage(lng);
+    const { container } = render(<DnsCard data={outcomes} />);
+    const card = within(container);
+
+    expect(card.getByText('192.0.2.10')).toBeInTheDocument();
+    expect(card.getByText(noRecord)).toBeInTheDocument();
+    expect(card.getByText(failed)).toBeInTheDocument();
+    expect(card.getByText(systemResolver)).toBeInTheDocument();
+    for (const code of ['resolved', 'noRecord', 'failed', 'timeout']) {
+      expect(card.queryByText(code)).not.toBeInTheDocument();
+    }
   });
 });

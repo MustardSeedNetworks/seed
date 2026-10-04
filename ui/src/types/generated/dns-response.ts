@@ -18,7 +18,7 @@ export interface DNSResponse {
   perServerResults?: DNSServerTestResult[];
 }
 export interface DNSLookupResult {
-  result: string;
+  outcome: 'resolved' | 'noRecord' | 'failed';
   time: number;
   timeMs: number;
   status: string;

@@ -33,7 +33,7 @@ function dnsCard(over: Partial<DnsData> = {}): DnsData {
     server: '192.168.1.1',
     testHostname: 'example.com',
     forward: {
-      result: '93.184.216.34',
+      outcome: 'resolved',
       time: 12,
       timeMs: 12,
       status: 'success',
@@ -108,7 +108,7 @@ describe('networkRollup', () => {
     const rollup = networkRollup({
       gateway: gatewayCard(),
       dns: dnsCard({
-        forward: { result: '', time: 0, timeMs: 0, status: 'error', error: 'timeout' },
+        forward: { outcome: 'failed', time: 0, timeMs: 0, status: 'error', error: 'timeout' },
       } as Partial<DnsData>),
       loading: false,
     });

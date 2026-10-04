@@ -31,13 +31,14 @@ import { memo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { formatTime } from '../../lib/format';
 import { cn, icon as iconTokens, layout, spacing, status as statusColor } from '../../styles/theme';
+import type { DNSLookupResult } from '../../types/generated/dns-response';
 import { Card, CardDivider, CardValue, type Status } from '../ui/Card';
 import { CollapsibleSection } from '../ui/CollapsibleSection';
 import { Globe } from '../ui/Icons';
 import { StatusBadge } from '../ui/StatusBadge';
 
 interface LookupResult {
-  result: string;
+  outcome: DNSLookupResult['outcome'];
   time: number; // ms
   timeMs: number;
   status: Status;
@@ -45,8 +46,7 @@ interface LookupResult {
   resolved?: string[];
 }
 
-// A lookup that failed or came back empty resolves nothing. `result` is the Go
-// side's message for that case, prose rather than a code, so it is not compared.
+// A lookup that failed or came back empty resolves nothing.
 function answeredNothing(lookup: LookupResult): boolean {
   return !lookup.resolved?.length;
 }
@@ -112,14 +112,20 @@ function getAggregatedStatus(results: ServerTestResult[]): 'error' | 'warning' |
 
 function LookupRow({
   label,
+  record,
   lookup,
 }: {
   label: string;
+  record: 'A' | 'AAAA' | 'PTR';
   lookup: LookupResult | null | undefined;
 }): JSX.Element | null {
+  const { t } = useTranslation('cards');
   if (!lookup) {
     return null;
   }
+  const text =
+    lookup.resolved?.[0] ??
+    (lookup.outcome === 'failed' ? t('dns.lookupFailed') : t('dns.noRecord', { record }));
 
   const statusBadge = lookup.status;
   const statusClass = getStatusColorClass(statusBadge);
@@ -135,8 +141,8 @@ function LookupRow({
           </span>
         </span>
       </div>
-      <Tooltip text={lookup.result}>
-        <span className="body-small truncate">{lookup.result}</span>
+      <Tooltip text={text}>
+        <span className="body-small truncate">{text}</span>
       </Tooltip>
     </div>
   );
@@ -193,7 +199,11 @@ export const DnsCard: React.MemoExoticComponent<(props: DnsCardProps) => JSX.Ele
     }
 
     // Show all DNS servers if available
-    const servers = data.servers && data.servers.length > 0 ? data.servers : [data.server];
+    // An empty server is the system resolver.
+    const servers =
+      data.servers && data.servers.length > 0
+        ? data.servers
+        : [data.server || t('dns.systemResolver')];
 
     return (
       <Card
@@ -223,8 +233,8 @@ export const DnsCard: React.MemoExoticComponent<(props: DnsCardProps) => JSX.Ele
         {data.forward || data.reverse ? (
           <div className={spacing.margin.bottom.inline}>
             <p className={cn('caption font-medium', spacing.margin.bottom.tight)}>IPv4</p>
-            <LookupRow label={t('dns.forwardA')} lookup={data.forward} />
-            <LookupRow label={t('dns.reversePTR')} lookup={data.reverse} />
+            <LookupRow label={t('dns.forwardA')} record="A" lookup={data.forward} />
+            <LookupRow label={t('dns.reversePTR')} record="PTR" lookup={data.reverse} />
           </div>
         ) : null}
         {/* IPv6 Lookups */}
@@ -233,8 +243,8 @@ export const DnsCard: React.MemoExoticComponent<(props: DnsCardProps) => JSX.Ele
             <CardDivider />
             <div>
               <p className={cn('caption font-medium', spacing.margin.bottom.tight)}>IPv6</p>
-              <LookupRow label={t('dns.forwardAAAA')} lookup={data.forwardIpv6} />
-              <LookupRow label={t('dns.reversePTR')} lookup={data.reverseIpv6} />
+              <LookupRow label={t('dns.forwardAAAA')} record="AAAA" lookup={data.forwardIpv6} />
+              <LookupRow label={t('dns.reversePTR')} record="PTR" lookup={data.reverseIpv6} />
             </div>
           </>
         ) : null}

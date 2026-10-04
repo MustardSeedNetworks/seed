@@ -92,24 +92,24 @@ func TestDNSResponseFields(t *testing.T) {
 		Servers:      []string{"8.8.8.8", "8.8.4.4"},
 		TestHostname: "google.com",
 		Forward: &api.DNSLookupResult{
-			Result:   "142.250.185.78",
+			Outcome:  "resolved",
 			Time:     25,
 			TimeMs:   25,
 			Status:   "ok",
 			Resolved: []string{"142.250.185.78"},
 		},
 		ForwardIpv6: &api.DNSLookupResult{
-			Result:   "2607:f8b0:4004:800::200e",
+			Outcome:  "resolved",
 			Time:     30,
 			TimeMs:   30,
 			Status:   "ok",
 			Resolved: []string{"2607:f8b0:4004:800::200e"},
 		},
 		Reverse: &api.DNSLookupResult{
-			Result: "lhr25s10-in-f14.1e100.net",
-			Time:   15,
-			TimeMs: 15,
-			Status: "ok",
+			Outcome: "resolved",
+			Time:    15,
+			TimeMs:  15,
+			Status:  "ok",
 		},
 		PerServerResults: []*api.DNSServerTestResult{
 			{
@@ -117,9 +117,9 @@ func TestDNSResponseFields(t *testing.T) {
 				Status:    "ok",
 				AvgTimeMs: 25,
 				Forward: &api.DNSLookupResult{
-					Result: "142.250.185.78",
-					TimeMs: 25,
-					Status: "ok",
+					Outcome: "resolved",
+					TimeMs:  25,
+					Status:  "ok",
 				},
 			},
 			{
@@ -161,7 +161,7 @@ func TestDNSResponseFields(t *testing.T) {
 // TestDNSLookupResultFields tests that DNSLookupResult has expected fields.
 func TestDNSLookupResultFields(t *testing.T) {
 	result := api.DNSLookupResult{
-		Result:   "192.168.1.1",
+		Outcome:  "resolved",
 		Time:     50,
 		TimeMs:   50,
 		Status:   "ok",
@@ -169,8 +169,8 @@ func TestDNSLookupResultFields(t *testing.T) {
 		Resolved: []string{"192.168.1.1", "192.168.1.2"},
 	}
 
-	if result.Result != "192.168.1.1" {
-		t.Errorf("Expected Result '192.168.1.1', got %q", result.Result)
+	if result.Outcome != "resolved" {
+		t.Errorf("Expected Outcome 'resolved', got %q", result.Outcome)
 	}
 	if result.Time != 50 {
 		t.Errorf("Expected Time 50, got %d", result.Time)
@@ -192,10 +192,10 @@ func TestDNSLookupResultFields(t *testing.T) {
 // TestDNSLookupResultWithError tests DNSLookupResult with error.
 func TestDNSLookupResultWithError(t *testing.T) {
 	result := api.DNSLookupResult{
-		Result: "",
-		TimeMs: 100,
-		Status: "error",
-		Error:  "no such host",
+		Outcome: "failed",
+		TimeMs:  100,
+		Status:  "error",
+		Error:   "no such host",
 	}
 
 	if result.Status != "error" {
@@ -207,8 +207,8 @@ func TestDNSLookupResultWithError(t *testing.T) {
 	if result.Error != "no such host" {
 		t.Errorf("Expected Error 'no such host', got %q", result.Error)
 	}
-	if result.Result != "" {
-		t.Errorf("Expected empty Result, got %q", result.Result)
+	if result.Outcome != "failed" {
+		t.Errorf("Expected Outcome 'failed', got %q", result.Outcome)
 	}
 }
 
@@ -219,14 +219,14 @@ func TestDNSServerTestResultFields(t *testing.T) {
 		Status:    "ok",
 		AvgTimeMs: 15,
 		Forward: &api.DNSLookupResult{
-			Result: "93.184.216.34",
-			TimeMs: 15,
-			Status: "ok",
+			Outcome: "resolved",
+			TimeMs:  15,
+			Status:  "ok",
 		},
 		ForwardIpv6: &api.DNSLookupResult{
-			Result: "2606:2800:220:1:248:1893:25c8:1946",
-			TimeMs: 18,
-			Status: "ok",
+			Outcome: "resolved",
+			TimeMs:  18,
+			Status:  "ok",
 		},
 	}
 
@@ -271,7 +271,7 @@ func TestDNSResponseJSONSerialization(t *testing.T) {
 		Servers:      []string{"8.8.8.8"},
 		TestHostname: "example.com",
 		Forward: &api.DNSLookupResult{
-			Result:   "93.184.216.34",
+			Outcome:  "resolved",
 			TimeMs:   20,
 			Status:   "ok",
 			Resolved: []string{"93.184.216.34"},

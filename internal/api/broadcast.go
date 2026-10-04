@@ -273,7 +273,7 @@ func (s *Server) collectDNSData() map[string]any {
 
 	if results.Forward != nil {
 		data["forward"] = map[string]any{
-			"result":   results.Forward.Result,
+			"outcome":  results.Forward.Outcome,
 			"timeMs":   results.Forward.TimeMs,
 			"status":   results.Forward.Status,
 			"error":    results.Forward.Error,
@@ -283,7 +283,7 @@ func (s *Server) collectDNSData() map[string]any {
 
 	if results.ForwardIPv6 != nil {
 		data["forwardIpv6"] = map[string]any{
-			"result":   results.ForwardIPv6.Result,
+			"outcome":  results.ForwardIPv6.Outcome,
 			"timeMs":   results.ForwardIPv6.TimeMs,
 			"status":   results.ForwardIPv6.Status,
 			"error":    results.ForwardIPv6.Error,
@@ -293,7 +293,7 @@ func (s *Server) collectDNSData() map[string]any {
 
 	if results.Reverse != nil {
 		data["reverse"] = map[string]any{
-			"result":   results.Reverse.Result,
+			"outcome":  results.Reverse.Outcome,
 			"timeMs":   results.Reverse.TimeMs,
 			"status":   results.Reverse.Status,
 			"error":    results.Reverse.Error,

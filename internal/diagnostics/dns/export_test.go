@@ -1,6 +1,7 @@
 package dns
 
 import (
+	"net"
 	"sync"
 	"time"
 )
@@ -69,4 +70,11 @@ func ExportSetResolverSource(t *Tester, s TestResolverSource) {
 	t.mu.Lock()
 	defer t.mu.Unlock()
 	t.resolvers = s.src
+}
+
+// ExportSetResolver replaces the resolver a tester's lookups go through.
+func ExportSetResolver(t *Tester, r *net.Resolver) {
+	t.mu.Lock()
+	defer t.mu.Unlock()
+	t.resolver = r
 }

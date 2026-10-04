@@ -17,12 +17,12 @@ import (
 
 // DNSLookupResult represents a DNS lookup result for the API.
 type DNSLookupResult struct {
-	Result   string   `json:"result"`
-	Time     int64    `json:"time"` // ms (deprecated, use timeMs)
-	TimeMs   int64    `json:"timeMs"`
-	Status   string   `json:"status"`
-	Error    string   `json:"error,omitempty"`
-	Resolved []string `json:"resolved,omitempty"`
+	Outcome  dns.Outcome `json:"outcome"            jsonschema:"enum=resolved,enum=noRecord,enum=failed"`
+	Time     int64       `json:"time"` // ms (deprecated, use timeMs)
+	TimeMs   int64       `json:"timeMs"`
+	Status   string      `json:"status"`
+	Error    string      `json:"error,omitempty"`
+	Resolved []string    `json:"resolved,omitempty"`
 }
 
 // DNSServerTestResult represents per-server DNS test results for the API.
@@ -58,7 +58,7 @@ func convertDNSLookup(src *dns.LookupResult) *DNSLookupResult {
 		return nil
 	}
 	return &DNSLookupResult{
-		Result:   src.Result,
+		Outcome:  src.Outcome,
 		Time:     src.TimeMs,
 		TimeMs:   src.TimeMs,
 		Status:   string(src.Status),

@@ -5,8 +5,13 @@
   "$defs": {
     "DNSLookupResult": {
       "properties": {
-        "result": {
-          "type": "string"
+        "outcome": {
+          "type": "string",
+          "enum": [
+            "resolved",
+            "noRecord",
+            "failed"
+          ]
         },
         "time": {
           "type": "integer"
@@ -30,7 +35,7 @@
       "additionalProperties": false,
       "type": "object",
       "required": [
-        "result",
+        "outcome",
         "time",
         "timeMs",
         "status"
