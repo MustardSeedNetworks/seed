@@ -5,6 +5,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.221.3](https://github.com/MustardSeedNetworks/seed/compare/v0.221.2...v0.221.3) (2026-10-03)
+
+
+### Bug Fixes
+
+* **ci:** drop ts-prune, which pulls an unpatched braces advisory ([#2990](https://github.com/MustardSeedNetworks/seed/issues/2990)) ([7a3b2ea](https://github.com/MustardSeedNetworks/seed/commit/7a3b2ead05104eef5cc94401284d57f3facdd801))
+* **config:** restore every section of a config backup ([#2987](https://github.com/MustardSeedNetworks/seed/issues/2987)) ([94ca28d](https://github.com/MustardSeedNetworks/seed/commit/94ca28dd08ea9ef867f4631b876524fc0e790740)), closes [#2928](https://github.com/MustardSeedNetworks/seed/issues/2928)
+* **packaging:** keep seed running across an RPM upgrade ([#2981](https://github.com/MustardSeedNetworks/seed/issues/2981)) ([fe7a972](https://github.com/MustardSeedNetworks/seed/commit/fe7a97256ef5ad43cfd74b13e813e97250974af7)), closes [#2861](https://github.com/MustardSeedNetworks/seed/issues/2861)
+
 ## [0.221.2](https://github.com/MustardSeedNetworks/seed/compare/v0.221.1...v0.221.2) (2026-10-03)
 
 
