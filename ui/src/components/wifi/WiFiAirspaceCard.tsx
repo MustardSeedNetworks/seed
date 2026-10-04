@@ -3,6 +3,7 @@ import { useWifiAirspace } from '../../hooks/useWifiVisibility';
 import { Card } from '../ui/Card';
 import { WiFiAirspaceTree } from './WiFiAirspaceTree';
 import { WiFiCaptureStatus } from './WiFiCaptureStatus';
+import { WiFiNeedsCapture } from './WiFiNeedsCapture';
 
 /**
  * WiFiAirspaceCard is the container for the live airspace tree: it polls the
@@ -29,6 +30,7 @@ export function WiFiAirspaceCard() {
       ) : (
         <div className="stack-md">
           <WiFiCaptureStatus status={data.status} clientsWithheld={data.clientsWithheld} />
+          <WiFiNeedsCapture rules={data.status.needsCapture} />
           <WiFiAirspaceTree ssids={data.ssids} clientsWithheld={data.clientsWithheld} />
         </div>
       )}

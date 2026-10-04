@@ -219,6 +219,7 @@
     "airspaceTitle": "Wi-Fi Airspace",
     "airspaceSubtitle": "SSID / AP / BSSID / client map from Wi-Fi scans, plus 802.11 management-frame capture when monitor mode is on.",
     "clientsWithheld": "Clients require the Pro tier.",
+    "needsCapture": "These checks need monitor-mode capture and did not run:",
     "anomaliesTitle": "Wi-Fi Anomalies",
     "anomaliesSubtitle": "Security, RF, roaming, and standards anomalies detected in the airspace.",
     "tierHint": "Available on Seed Starter and Pro. Run `seed license trial` for a 14-day trial.",

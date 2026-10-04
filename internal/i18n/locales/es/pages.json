@@ -219,6 +219,7 @@
     "airspaceTitle": "Espacio radioeléctrico Wi-Fi",
     "airspaceSubtitle": "Mapa de SSID / AP / BSSID / clientes a partir de los escaneos Wi-Fi, más la captura de tramas de gestión 802.11 cuando el modo monitor está activo.",
     "clientsWithheld": "Los clientes requieren el nivel Pro.",
+    "needsCapture": "Estas comprobaciones necesitan captura en modo monitor y no se ejecutaron:",
     "anomaliesTitle": "Anomalías de Wi-Fi",
     "anomaliesSubtitle": "Anomalías de seguridad, RF, itinerancia y estándares detectadas en el espacio radioeléctrico.",
     "tierHint": "Disponible en Seed Starter y Pro. Ejecute `seed license trial` para una prueba de 14 días.",
