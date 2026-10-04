@@ -1,21 +1,24 @@
 import { useTranslation } from 'react-i18next';
 import { useWifiAnomalies } from '../../hooks/useWifiVisibility';
-import type { Anomaly } from '../../types/generated/wifi-anomalies-response';
+import type { WiFiAnomaliesResponse } from '../../types/generated/wifi-anomalies-response';
 import { Card } from '../ui/Card';
 import type { Status } from '../ui/statusConfig';
 import { WiFiAnomalyStream } from './WiFiAnomalyStream';
+import { WiFiNeedsCapture } from './WiFiNeedsCapture';
 
 // cardStatus reflects the most urgent anomaly severity in the card header. The
 // Status vocabulary tops out at 'error', so both critical and error anomalies
 // map to it (the per-row badge in severity.ts keeps them visually distinct).
-function cardStatus(anomalies: Anomaly[]): Status {
+// With nothing detected, rules that need a capture source did not run, so the
+// result is not a clean bill of health.
+function cardStatus({ anomalies, status }: WiFiAnomaliesResponse): Status {
   if (anomalies.some((a) => a.severity === 'critical' || a.severity === 'error')) {
     return 'error';
   }
   if (anomalies.some((a) => a.severity === 'warning')) {
     return 'warning';
   }
-  return 'success';
+  return status.needsCapture?.length ? 'unknown' : 'success';
 }
 
 /**
@@ -30,7 +33,7 @@ export function WiFiAnomaliesCard() {
     <Card
       title={t('wifi.anomaliesTitle')}
       subtitle={t('wifi.anomaliesSubtitle')}
-      status={data ? cardStatus(data.anomalies) : 'unknown'}
+      status={data ? cardStatus(data) : 'unknown'}
     >
       {isLoading ? (
         <p data-testid="wifi-anomalies-loading" className="text-sm text-text-muted">
@@ -41,7 +44,10 @@ export function WiFiAnomaliesCard() {
           {t('wifi.anomaliesUnavailable')}
         </p>
       ) : (
-        <WiFiAnomalyStream anomalies={data.anomalies} />
+        <div className="stack-md">
+          <WiFiAnomalyStream anomalies={data.anomalies} />
+          <WiFiNeedsCapture rules={data.status.needsCapture} />
+        </div>
       )}
     </Card>
   );
