@@ -4,7 +4,7 @@
  *              Implements WCAG 2.1 AA compliance for modal dialogs.
  */
 
-import { type RefObject, useEffect, useEffectEvent, useRef } from 'react';
+import { type RefObject, useEffectEvent, useLayoutEffect, useRef } from 'react';
 
 /** Focusable element selectors */
 const FOCUSABLE_SELECTORS: string = [
@@ -96,7 +96,11 @@ export function useFocusTrap<T extends HTMLElement = HTMLDivElement>(
     onEscape();
   });
 
-  useEffect(() => {
+  // A layout effect, so the trap is in place before the dialog paints. A
+  // dialog that mounts outside a keypress (a lazy chunk's first open commits
+  // as a Suspense retry) runs passive effects after paint, and a Tab or Escape
+  // in that gap went to the page and the opener was recorded wrongly (#3016).
+  useLayoutEffect(() => {
     if (!isActive) {
       return;
     }

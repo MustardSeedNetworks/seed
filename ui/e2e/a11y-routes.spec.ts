@@ -146,6 +146,30 @@ test.describe('overlays keep and return keyboard focus', () => {
     });
   }
 
+  // The help drawer's chunk loads on first open, so it commits as a Suspense
+  // retry and passive effects run after paint. A trap set up in one left the
+  // drawer visible while focus, Tab and Escape still belonged to the page
+  // (#3016). The observer runs after the commit's layout work and before any
+  // later task, so it sees exactly what a keypress arriving then would.
+  test('the help drawer holds focus from the commit that shows it', async ({ page }) => {
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await page.goto('/network');
+    await expect(page.getByTestId('page-header-title')).toBeVisible();
+    await page.evaluate(() => {
+      const observer = new MutationObserver(() => {
+        const drawer = document.querySelector('[data-testid="help-drawer"]');
+        if (!drawer) return;
+        observer.disconnect();
+        document.body.dataset.focusAtCommit = String(drawer.contains(document.activeElement));
+      });
+      observer.observe(document.body, { childList: true, subtree: true });
+    });
+    await page.getByTestId('page-header-help-button').focus();
+    await page.keyboard.press('Enter');
+    await expect(page.getByTestId('help-drawer')).toBeVisible();
+    expect(await page.evaluate(() => document.body.dataset.focusAtCommit)).toBe('true');
+  });
+
   // WebKit sends no mouseleave when the drawer opens over a still pointer, so
   // the rail tooltip stays open beneath it and used to take this Escape (#2893).
   test('Escape closes the help drawer over a hovered rail tooltip', async ({ page }) => {
