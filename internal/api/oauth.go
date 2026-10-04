@@ -183,7 +183,7 @@ func (s *Server) handleSSOLogin(w http.ResponseWriter, r *http.Request) {
 			"url_prefix",
 			authURL[:min(urlLogPrefixLen, len(authURL))],
 		)
-		http.Error(w, "invalid OAuth redirect", http.StatusInternalServerError)
+		writeError(w, r, http.StatusInternalServerError, ErrCodeInternal, "invalid OAuth redirect")
 		return
 	}
 	//nolint:gosec // G710: authURL is verified to start with provider.Config.Endpoint.AuthURL (hardcoded at provider construction) above; gosec taint analysis can't follow the prefix check

@@ -418,6 +418,9 @@ jobs:
       - name: JSON wire-casing gate — camelCase ratchet (ADR-0010)
         run: ./scripts/check-json-casing.sh
 
+      - name: Error-shape gate — one JSON error contract (#2749)
+        run: ./scripts/check-error-shape.sh
+
       - name: Filename-policy gate — no monolith naming outside internal/api
         run: ./scripts/check-filename-policy.sh
 

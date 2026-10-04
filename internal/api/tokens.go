@@ -25,7 +25,6 @@ import (
 
 	"github.com/MustardSeedNetworks/seed/internal/auth"
 	"github.com/MustardSeedNetworks/seed/internal/database"
-	"github.com/MustardSeedNetworks/seed/internal/i18n"
 	"github.com/MustardSeedNetworks/seed/internal/identity/tokens"
 	"github.com/MustardSeedNetworks/seed/internal/license"
 	"github.com/MustardSeedNetworks/seed/internal/logging"
@@ -179,7 +178,7 @@ func (s *Server) handleAPITokens(w http.ResponseWriter, r *http.Request) {
 	case http.MethodGet:
 		s.handleAPITokenList(w, r)
 	default:
-		writeAPITokenError(w, r, http.StatusMethodNotAllowed, ErrCodeMethodNotAllowed,
+		writeError(w, r, http.StatusMethodNotAllowed, ErrCodeMethodNotAllowed,
 			"Method not allowed")
 	}
 }
@@ -192,7 +191,7 @@ func (s *Server) handleAPITokenByID(w http.ResponseWriter, r *http.Request) {
 func (s *Server) handleAPITokenMint(w http.ResponseWriter, r *http.Request) {
 	username := usernameFromContext(r)
 	if username == "" {
-		writeAPITokenError(w, r, http.StatusUnauthorized, ErrCodeUnauthorized,
+		writeError(w, r, http.StatusUnauthorized, ErrCodeUnauthorized,
 			"Authentication required")
 		return
 	}
@@ -203,12 +202,12 @@ func (s *Server) handleAPITokenMint(w http.ResponseWriter, r *http.Request) {
 	}
 	req.Name = strings.TrimSpace(req.Name)
 	if req.Name == "" {
-		writeAPITokenError(w, r, http.StatusBadRequest, ErrCodeValidation,
+		writeError(w, r, http.StatusBadRequest, ErrCodeValidation,
 			"`name` is required")
 		return
 	}
 	if len(req.Name) > apiTokenNameMaxLen {
-		writeAPITokenError(w, r, http.StatusBadRequest, ErrCodeValidation,
+		writeError(w, r, http.StatusBadRequest, ErrCodeValidation,
 			"`name` must be 64 characters or fewer")
 		return
 	}
@@ -220,13 +219,13 @@ func (s *Server) handleAPITokenMint(w http.ResponseWriter, r *http.Request) {
 	req.Scope = strings.TrimSpace(req.Scope)
 	if req.Scope != "" {
 		if !database.IsValidRole(req.Scope) {
-			writeAPITokenError(w, r, http.StatusBadRequest, ErrCodeValidation,
+			writeError(w, r, http.StatusBadRequest, ErrCodeValidation,
 				"`scope` must be one of viewer, operator, admin")
 			return
 		}
 		ownerRole, ok := s.callerRole(r)
 		if !ok || roleRank(req.Scope) > roleRank(ownerRole) {
-			writeAPITokenError(w, r, http.StatusForbidden, ErrCodeForbidden,
+			writeError(w, r, http.StatusForbidden, ErrCodeForbidden,
 				"`scope` may not exceed your own role")
 			return
 		}
@@ -234,7 +233,7 @@ func (s *Server) handleAPITokenMint(w http.ResponseWriter, r *http.Request) {
 
 	id, secret, mintErr := mintTokenMaterial()
 	if mintErr != nil {
-		writeAPITokenError(w, r, http.StatusInternalServerError, ErrCodeInternal,
+		writeError(w, r, http.StatusInternalServerError, ErrCodeInternal,
 			"Failed to generate token material")
 		return
 	}
@@ -252,16 +251,16 @@ func (s *Server) handleAPITokenMint(w http.ResponseWriter, r *http.Request) {
 	if insertErr := s.identityTokens.Mint(r.Context(), rec); insertErr != nil {
 		switch {
 		case errors.Is(insertErr, tokens.ErrMintingNotAllowed):
-			writeAPITokenError(w, r, http.StatusPaymentRequired, "TIER_TOO_LOW",
+			writeError(w, r, http.StatusPaymentRequired, "TIER_TOO_LOW",
 				"API token minting requires the Pro tier. "+
 					"Start a Pro trial with `seed license trial` or activate a Pro key.")
 		case errors.Is(insertErr, tokens.ErrUnavailable):
-			writeAPITokenError(w, r, http.StatusServiceUnavailable, ErrCodeServiceUnavail,
+			writeError(w, r, http.StatusServiceUnavailable, ErrCodeServiceUnavail,
 				"API token storage is not available")
 		default:
 			logger := logging.FromContext(r.Context())
 			logger.ErrorContext(r.Context(), "failed to insert api token", "error", insertErr)
-			writeAPITokenError(w, r, http.StatusInternalServerError, ErrCodeInternal,
+			writeError(w, r, http.StatusInternalServerError, ErrCodeInternal,
 				"Failed to persist token")
 		}
 		return
@@ -280,14 +279,14 @@ func (s *Server) handleAPITokenMint(w http.ResponseWriter, r *http.Request) {
 func (s *Server) handleAPITokenList(w http.ResponseWriter, r *http.Request) {
 	username := usernameFromContext(r)
 	if username == "" {
-		writeAPITokenError(w, r, http.StatusUnauthorized, ErrCodeUnauthorized,
+		writeError(w, r, http.StatusUnauthorized, ErrCodeUnauthorized,
 			"Authentication required")
 		return
 	}
 
 	rows, err := s.identityTokens.List(r.Context(), username)
 	if err != nil {
-		writeAPITokenError(w, r, http.StatusInternalServerError, ErrCodeInternal,
+		writeError(w, r, http.StatusInternalServerError, ErrCodeInternal,
 			"Failed to list tokens")
 		return
 	}
@@ -309,14 +308,14 @@ func (s *Server) handleAPITokenList(w http.ResponseWriter, r *http.Request) {
 func (s *Server) handleAPITokenRevoke(w http.ResponseWriter, r *http.Request) {
 	username := usernameFromContext(r)
 	if username == "" {
-		writeAPITokenError(w, r, http.StatusUnauthorized, ErrCodeUnauthorized,
+		writeError(w, r, http.StatusUnauthorized, ErrCodeUnauthorized,
 			"Authentication required")
 		return
 	}
 
 	id := strings.TrimPrefix(r.URL.Path, APIVersionPrefix+"/tokens/")
 	if id == "" || strings.ContainsRune(id, '/') {
-		writeAPITokenError(w, r, http.StatusBadRequest, ErrCodeBadRequest,
+		writeError(w, r, http.StatusBadRequest, ErrCodeBadRequest,
 			"Token ID is required in path")
 		return
 	}
@@ -324,13 +323,13 @@ func (s *Server) handleAPITokenRevoke(w http.ResponseWriter, r *http.Request) {
 	if err := s.identityTokens.Revoke(r.Context(), id, username); err != nil {
 		switch {
 		case errors.Is(err, tokens.ErrUnavailable):
-			writeAPITokenError(w, r, http.StatusServiceUnavailable, ErrCodeServiceUnavail,
+			writeError(w, r, http.StatusServiceUnavailable, ErrCodeServiceUnavail,
 				"API token storage is not available")
 		case errors.Is(err, sql.ErrNoRows):
-			writeAPITokenError(w, r, http.StatusNotFound, ErrCodeNotFound,
+			writeError(w, r, http.StatusNotFound, ErrCodeNotFound,
 				"Token not found or already revoked")
 		default:
-			writeAPITokenError(w, r, http.StatusInternalServerError, ErrCodeInternal,
+			writeError(w, r, http.StatusInternalServerError, ErrCodeInternal,
 				"Failed to revoke token")
 		}
 		return
@@ -430,7 +429,7 @@ func apiTokenMiddleware(
 		}
 		rec := resolveAPIToken(r.Context(), repo, token)
 		if rec.OwnerUsername == "" {
-			writeAPITokenError(w, r, http.StatusUnauthorized, ErrCodeUnauthorized,
+			writeError(w, r, http.StatusUnauthorized, ErrCodeUnauthorized,
 				"Invalid or revoked API token")
 			return
 		}
@@ -448,7 +447,7 @@ func apiTokenMiddleware(
 				"method", r.Method,
 				"error", clientErr,
 			)
-			writeAPITokenError(w, r, http.StatusUnauthorized, ErrCodeUnauthorized,
+			writeError(w, r, http.StatusUnauthorized, ErrCodeUnauthorized,
 				"Invalid or revoked API token")
 			return
 		}
@@ -469,14 +468,6 @@ func apiTokenMiddleware(
 		}
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})
-}
-
-// writeAPITokenError is a thin wrapper around sendErrorResponseWithDetails
-// that pulls the logger + localizer from the request context.
-func writeAPITokenError(w http.ResponseWriter, r *http.Request, status int, code, message string) {
-	logger := logging.FromContext(r.Context())
-	_ = i18n.FromRequest(r) // reserved for future localization
-	sendErrorResponseWithDetails(w, logger, status, code, message, "")
 }
 
 // resolveClientID answers which client owns a user, for the PAT seam. It fails

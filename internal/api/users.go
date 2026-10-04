@@ -82,7 +82,7 @@ func (s *Server) handleUsers(w http.ResponseWriter, r *http.Request) {
 	case http.MethodPost:
 		s.handleUserCreate(w, r)
 	default:
-		writeAPITokenError(w, r, http.StatusMethodNotAllowed, ErrCodeMethodNotAllowed, "Method not allowed")
+		writeError(w, r, http.StatusMethodNotAllowed, ErrCodeMethodNotAllowed, "Method not allowed")
 	}
 }
 
@@ -90,7 +90,7 @@ func (s *Server) handleUsers(w http.ResponseWriter, r *http.Request) {
 func (s *Server) handleUserByName(w http.ResponseWriter, r *http.Request) {
 	username := strings.TrimPrefix(r.URL.Path, usersPathPrefix)
 	if username == "" || strings.ContainsRune(username, '/') {
-		writeAPITokenError(w, r, http.StatusBadRequest, ErrCodeBadRequest, "Username is required in path")
+		writeError(w, r, http.StatusBadRequest, ErrCodeBadRequest, "Username is required in path")
 		return
 	}
 
@@ -102,7 +102,7 @@ func (s *Server) handleUserByName(w http.ResponseWriter, r *http.Request) {
 	case http.MethodDelete:
 		s.handleUserDelete(w, r, username)
 	default:
-		writeAPITokenError(w, r, http.StatusMethodNotAllowed, ErrCodeMethodNotAllowed, "Method not allowed")
+		writeError(w, r, http.StatusMethodNotAllowed, ErrCodeMethodNotAllowed, "Method not allowed")
 	}
 }
 
@@ -113,7 +113,7 @@ func (s *Server) handleUserByName(w http.ResponseWriter, r *http.Request) {
 func (s *Server) handleCurrentUser(w http.ResponseWriter, r *http.Request) {
 	caller := usernameFromContext(r)
 	if caller == "" {
-		writeAPITokenError(w, r, http.StatusUnauthorized, ErrCodeUnauthorized, "Authentication required")
+		writeError(w, r, http.StatusUnauthorized, ErrCodeUnauthorized, "Authentication required")
 		return
 	}
 	s.handleUserGet(w, r, caller)
@@ -126,11 +126,11 @@ func (s *Server) handleUsersList(w http.ResponseWriter, r *http.Request) {
 	list, err := s.identityUsers.List(r.Context())
 	if err != nil {
 		if errors.Is(err, users.ErrUnavailable) {
-			writeAPITokenError(w, r, http.StatusServiceUnavailable, ErrCodeServiceUnavail, "User store unavailable")
+			writeError(w, r, http.StatusServiceUnavailable, ErrCodeServiceUnavail, "User store unavailable")
 			return
 		}
 		logging.FromContext(r.Context()).ErrorContext(r.Context(), "list users failed", "error", err)
-		writeAPITokenError(w, r, http.StatusInternalServerError, ErrCodeInternal, "Failed to list users")
+		writeError(w, r, http.StatusInternalServerError, ErrCodeInternal, "Failed to list users")
 		return
 	}
 	resp := make([]UserResponse, 0, len(list))
@@ -146,7 +146,7 @@ func (s *Server) handleUserCreate(w http.ResponseWriter, r *http.Request) {
 	}
 	// Pro gate — Free + Starter are single-admin only.
 	if !s.licenseAllowsMultiUser() {
-		writeAPITokenError(
+		writeError(
 			w,
 			r,
 			http.StatusPaymentRequired,
@@ -167,22 +167,22 @@ func (s *Server) handleUserCreate(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := validateUsername(req.Username); err != nil {
-		writeAPITokenError(w, r, http.StatusBadRequest, ErrCodeValidation, err.Error())
+		writeError(w, r, http.StatusBadRequest, ErrCodeValidation, err.Error())
 		return
 	}
 	if !database.IsValidRole(req.Role) {
-		writeAPITokenError(w, r, http.StatusBadRequest, ErrCodeValidation,
+		writeError(w, r, http.StatusBadRequest, ErrCodeValidation,
 			"role must be one of: admin, operator, viewer")
 		return
 	}
 	if err := auth.ValidatePasswordStrength(req.Password); err != nil {
-		writeAPITokenError(w, r, http.StatusBadRequest, ErrCodeValidation, err.Error())
+		writeError(w, r, http.StatusBadRequest, ErrCodeValidation, err.Error())
 		return
 	}
 
 	hash, err := auth.HashPassword(req.Password)
 	if err != nil {
-		writeAPITokenError(w, r, http.StatusInternalServerError, ErrCodeInternal, "Failed to hash password")
+		writeError(w, r, http.StatusInternalServerError, ErrCodeInternal, "Failed to hash password")
 		return
 	}
 
@@ -190,12 +190,12 @@ func (s *Server) handleUserCreate(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		switch {
 		case errors.Is(err, users.ErrUnavailable):
-			writeAPITokenError(w, r, http.StatusServiceUnavailable, ErrCodeServiceUnavail, "User store unavailable")
+			writeError(w, r, http.StatusServiceUnavailable, ErrCodeServiceUnavail, "User store unavailable")
 		case errors.Is(err, database.ErrUserExists):
-			writeAPITokenError(w, r, http.StatusConflict, "USER_EXISTS", "Username already in use")
+			writeError(w, r, http.StatusConflict, "USER_EXISTS", "Username already in use")
 		default:
 			logging.FromContext(r.Context()).ErrorContext(r.Context(), "create user failed", "error", err)
-			writeAPITokenError(w, r, http.StatusInternalServerError, ErrCodeInternal, "Failed to create user")
+			writeError(w, r, http.StatusInternalServerError, ErrCodeInternal, "Failed to create user")
 		}
 		return
 	}
@@ -210,23 +210,23 @@ func (s *Server) handleUserCreate(w http.ResponseWriter, r *http.Request) {
 func (s *Server) handleUserGet(w http.ResponseWriter, r *http.Request, target string) {
 	caller := usernameFromContext(r)
 	if caller == "" {
-		writeAPITokenError(w, r, http.StatusUnauthorized, ErrCodeUnauthorized, "Authentication required")
+		writeError(w, r, http.StatusUnauthorized, ErrCodeUnauthorized, "Authentication required")
 		return
 	}
 	// Self-read is always allowed; everyone else needs admin.
 	if caller != target && !s.callerIsAdmin(r) {
-		writeAPITokenError(w, r, http.StatusForbidden, ErrCodeForbidden, "Admin role required")
+		writeError(w, r, http.StatusForbidden, ErrCodeForbidden, "Admin role required")
 		return
 	}
 	user, err := s.identityUsers.Get(r.Context(), target)
 	if err != nil {
 		switch {
 		case errors.Is(err, users.ErrUnavailable):
-			writeAPITokenError(w, r, http.StatusServiceUnavailable, ErrCodeServiceUnavail, "User store unavailable")
+			writeError(w, r, http.StatusServiceUnavailable, ErrCodeServiceUnavail, "User store unavailable")
 		case errors.Is(err, database.ErrUserNotFound):
-			writeAPITokenError(w, r, http.StatusNotFound, ErrCodeNotFound, "User not found")
+			writeError(w, r, http.StatusNotFound, ErrCodeNotFound, "User not found")
 		default:
-			writeAPITokenError(w, r, http.StatusInternalServerError, ErrCodeInternal, "Failed to fetch user")
+			writeError(w, r, http.StatusInternalServerError, ErrCodeInternal, "Failed to fetch user")
 		}
 		return
 	}
@@ -236,7 +236,7 @@ func (s *Server) handleUserGet(w http.ResponseWriter, r *http.Request, target st
 func (s *Server) handleUserUpdate(w http.ResponseWriter, r *http.Request, target string) {
 	caller := usernameFromContext(r)
 	if caller == "" {
-		writeAPITokenError(w, r, http.StatusUnauthorized, ErrCodeUnauthorized, "Authentication required")
+		writeError(w, r, http.StatusUnauthorized, ErrCodeUnauthorized, "Authentication required")
 		return
 	}
 
@@ -252,7 +252,7 @@ func (s *Server) handleUserUpdate(w http.ResponseWriter, r *http.Request, target
 	// partial-update confusion when the store is nil.
 	if _, checkErr := s.identityUsers.Get(r.Context(), target); checkErr != nil {
 		if errors.Is(checkErr, users.ErrUnavailable) {
-			writeAPITokenError(w, r, http.StatusServiceUnavailable, ErrCodeServiceUnavail, "User store unavailable")
+			writeError(w, r, http.StatusServiceUnavailable, ErrCodeServiceUnavail, "User store unavailable")
 			return
 		}
 		// ErrUserNotFound and other errors propagate from the mutation helpers below.
@@ -270,7 +270,7 @@ func (s *Server) handleUserUpdate(w http.ResponseWriter, r *http.Request, target
 
 	updated, err := s.identityUsers.Get(r.Context(), target)
 	if err != nil {
-		writeAPITokenError(w, r, http.StatusInternalServerError, ErrCodeInternal, "Failed to reload user")
+		writeError(w, r, http.StatusInternalServerError, ErrCodeInternal, "Failed to reload user")
 		return
 	}
 	logging.FromContext(r.Context()).InfoContext(r.Context(), "user updated",
@@ -285,11 +285,11 @@ func (s *Server) checkUserUpdateAuthorization(
 	w http.ResponseWriter, r *http.Request, caller, target string, req *UpdateUserRequest,
 ) bool {
 	if caller != target && !s.callerIsAdmin(r) {
-		writeAPITokenError(w, r, http.StatusForbidden, ErrCodeForbidden, "Admin role required")
+		writeError(w, r, http.StatusForbidden, ErrCodeForbidden, "Admin role required")
 		return false
 	}
 	if caller == target && !s.callerIsAdmin(r) && (req.Role != "" || req.IsActive != nil) {
-		writeAPITokenError(w, r, http.StatusForbidden, ErrCodeForbidden,
+		writeError(w, r, http.StatusForbidden, ErrCodeForbidden,
 			"Only an administrator can change role or active state")
 		return false
 	}
@@ -302,20 +302,20 @@ func (s *Server) applyPasswordUpdate(
 	w http.ResponseWriter, r *http.Request, target, password string,
 ) bool {
 	if err := auth.ValidatePasswordStrength(password); err != nil {
-		writeAPITokenError(w, r, http.StatusBadRequest, ErrCodeValidation, err.Error())
+		writeError(w, r, http.StatusBadRequest, ErrCodeValidation, err.Error())
 		return false
 	}
 	hash, err := auth.HashPassword(password)
 	if err != nil {
-		writeAPITokenError(w, r, http.StatusInternalServerError, ErrCodeInternal, "Failed to hash password")
+		writeError(w, r, http.StatusInternalServerError, ErrCodeInternal, "Failed to hash password")
 		return false
 	}
 	if updErr := s.identityUsers.UpdatePassword(r.Context(), target, hash); updErr != nil {
 		if errors.Is(updErr, database.ErrUserNotFound) {
-			writeAPITokenError(w, r, http.StatusNotFound, ErrCodeNotFound, "User not found")
+			writeError(w, r, http.StatusNotFound, ErrCodeNotFound, "User not found")
 			return false
 		}
-		writeAPITokenError(w, r, http.StatusInternalServerError, ErrCodeInternal, "Failed to update password")
+		writeError(w, r, http.StatusInternalServerError, ErrCodeInternal, "Failed to update password")
 		return false
 	}
 	return true
@@ -325,7 +325,7 @@ func (s *Server) applyRoleUpdate(
 	w http.ResponseWriter, r *http.Request, target, role string,
 ) bool {
 	if !database.IsValidRole(role) {
-		writeAPITokenError(w, r, http.StatusBadRequest, ErrCodeValidation,
+		writeError(w, r, http.StatusBadRequest, ErrCodeValidation,
 			"role must be one of: admin, operator, viewer")
 		return false
 	}
@@ -335,11 +335,11 @@ func (s *Server) applyRoleUpdate(
 	}
 	switch {
 	case errors.Is(err, database.ErrUserNotFound):
-		writeAPITokenError(w, r, http.StatusNotFound, ErrCodeNotFound, "User not found")
+		writeError(w, r, http.StatusNotFound, ErrCodeNotFound, "User not found")
 	case errors.Is(err, database.ErrLastAdmin):
-		writeAPITokenError(w, r, http.StatusConflict, "LAST_ADMIN", "Cannot demote the last administrator")
+		writeError(w, r, http.StatusConflict, "LAST_ADMIN", "Cannot demote the last administrator")
 	default:
-		writeAPITokenError(w, r, http.StatusInternalServerError, ErrCodeInternal, "Failed to update role")
+		writeError(w, r, http.StatusInternalServerError, ErrCodeInternal, "Failed to update role")
 	}
 	return false
 }
@@ -348,16 +348,16 @@ func (s *Server) applyDeactivation(
 	w http.ResponseWriter, r *http.Request, caller, target string,
 ) bool {
 	if caller == target {
-		writeAPITokenError(w, r, http.StatusConflict, "SELF_DEACTIVATE",
+		writeError(w, r, http.StatusConflict, "SELF_DEACTIVATE",
 			"You cannot deactivate your own account")
 		return false
 	}
 	if err := s.identityUsers.Deactivate(r.Context(), target); err != nil {
 		if errors.Is(err, database.ErrUserNotFound) {
-			writeAPITokenError(w, r, http.StatusNotFound, ErrCodeNotFound, "User not found")
+			writeError(w, r, http.StatusNotFound, ErrCodeNotFound, "User not found")
 			return false
 		}
-		writeAPITokenError(w, r, http.StatusInternalServerError, ErrCodeInternal, "Failed to deactivate user")
+		writeError(w, r, http.StatusInternalServerError, ErrCodeInternal, "Failed to deactivate user")
 		return false
 	}
 	return true
@@ -369,20 +369,20 @@ func (s *Server) handleUserDelete(w http.ResponseWriter, r *http.Request, target
 	}
 	caller := usernameFromContext(r)
 	if caller == target {
-		writeAPITokenError(w, r, http.StatusConflict, "SELF_DELETE", "You cannot delete your own account")
+		writeError(w, r, http.StatusConflict, "SELF_DELETE", "You cannot delete your own account")
 		return
 	}
 	if err := s.identityUsers.Delete(r.Context(), target); err != nil {
 		switch {
 		case errors.Is(err, users.ErrUnavailable):
-			writeAPITokenError(w, r, http.StatusServiceUnavailable, ErrCodeServiceUnavail, "User store unavailable")
+			writeError(w, r, http.StatusServiceUnavailable, ErrCodeServiceUnavail, "User store unavailable")
 		case errors.Is(err, database.ErrUserNotFound):
-			writeAPITokenError(w, r, http.StatusNotFound, ErrCodeNotFound, "User not found")
+			writeError(w, r, http.StatusNotFound, ErrCodeNotFound, "User not found")
 		case errors.Is(err, database.ErrLastAdmin):
-			writeAPITokenError(w, r, http.StatusConflict, "LAST_ADMIN",
+			writeError(w, r, http.StatusConflict, "LAST_ADMIN",
 				"Cannot delete the last administrator")
 		default:
-			writeAPITokenError(w, r, http.StatusInternalServerError, ErrCodeInternal, "Failed to delete user")
+			writeError(w, r, http.StatusInternalServerError, ErrCodeInternal, "Failed to delete user")
 		}
 		return
 	}
@@ -396,11 +396,11 @@ func (s *Server) handleUserDelete(w http.ResponseWriter, r *http.Request, target
 func (s *Server) requireAdmin(w http.ResponseWriter, r *http.Request) bool {
 	caller := usernameFromContext(r)
 	if caller == "" {
-		writeAPITokenError(w, r, http.StatusUnauthorized, ErrCodeUnauthorized, "Authentication required")
+		writeError(w, r, http.StatusUnauthorized, ErrCodeUnauthorized, "Authentication required")
 		return false
 	}
 	if !s.callerIsAdmin(r) {
-		writeAPITokenError(w, r, http.StatusForbidden, ErrCodeForbidden, "Admin role required")
+		writeError(w, r, http.StatusForbidden, ErrCodeForbidden, "Admin role required")
 		return false
 	}
 	return true
@@ -505,7 +505,7 @@ func (s *Server) requireRole(w http.ResponseWriter, r *http.Request, minRole str
 			"path", r.URL.Path,
 			"method", r.Method,
 		)
-		writeAPITokenError(w, r, http.StatusUnauthorized, ErrCodeUnauthorized, "Authentication required")
+		writeError(w, r, http.StatusUnauthorized, ErrCodeUnauthorized, "Authentication required")
 		return false
 	}
 	if roleRank(role) < roleRank(minRole) {
@@ -523,7 +523,7 @@ func (s *Server) requireRole(w http.ResponseWriter, r *http.Request, minRole str
 			"path", r.URL.Path,
 			"method", r.Method,
 		)
-		writeAPITokenError(w, r, http.StatusForbidden, ErrCodeForbidden, minRole+" role required")
+		writeError(w, r, http.StatusForbidden, ErrCodeForbidden, minRole+" role required")
 		return false
 	}
 	return true

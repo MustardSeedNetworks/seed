@@ -78,14 +78,14 @@ func spaHandler(fsys http.FileSystem) http.Handler {
 
 		f, err := openSPAFile(fsys, path)
 		if err != nil {
-			http.NotFound(w, r)
+			writeError(w, r, http.StatusNotFound, ErrCodeNotFound, "Not found")
 			return
 		}
 		defer func() { _ = f.Close() }()
 
 		stat, err := f.Stat()
 		if err != nil {
-			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+			writeError(w, r, http.StatusInternalServerError, ErrCodeInternal, "Internal Server Error")
 			return
 		}
 
@@ -93,7 +93,7 @@ func spaHandler(fsys http.FileSystem) http.Handler {
 		if stat.IsDir() {
 			result, dirErr := handleDirectoryRequest(fsys, f, path)
 			if dirErr != nil {
-				http.NotFound(w, r)
+				writeError(w, r, http.StatusNotFound, ErrCodeNotFound, "Not found")
 				return
 			}
 			defer func() { _ = result.file.Close() }()
@@ -103,7 +103,7 @@ func spaHandler(fsys http.FileSystem) http.Handler {
 
 		rs, ok := f.(io.ReadSeeker)
 		if !ok {
-			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+			writeError(w, r, http.StatusInternalServerError, ErrCodeInternal, "Internal Server Error")
 			return
 		}
 		http.ServeContent(w, r, stat.Name(), stat.ModTime(), rs)

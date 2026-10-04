@@ -24,6 +24,7 @@ import (
 	"net/http"
 
 	"github.com/MustardSeedNetworks/seed/internal/engine/status"
+	"github.com/MustardSeedNetworks/seed/internal/logging"
 )
 
 func (s *Server) handleEngines(w http.ResponseWriter, r *http.Request) {
@@ -32,7 +33,7 @@ func (s *Server) handleEngines(w http.ResponseWriter, r *http.Request) {
 	for _, st := range statuses {
 		out = append(out, encodeEngineEntry(st))
 	}
-	writeJSON(w, r, map[string]any{
+	sendJSONResponse(w, logging.FromContext(r.Context()), http.StatusOK, map[string]any{
 		jsonKeyCount: len(out),
 		"engines":    out,
 	})

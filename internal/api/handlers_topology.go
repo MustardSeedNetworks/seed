@@ -34,14 +34,14 @@ import (
 // writeTopologyError maps a topology read error to its HTTP status: the store
 // being unwired → 503 (the prior "Database not initialized"), a missing node →
 // 404, anything else → 500 with genericMsg.
-func writeTopologyError(w http.ResponseWriter, err error, genericMsg string) {
+func writeTopologyError(w http.ResponseWriter, r *http.Request, err error, genericMsg string) {
 	switch {
 	case errors.Is(err, topology.ErrUnavailable):
-		http.Error(w, "Database not initialized", http.StatusServiceUnavailable)
+		writeError(w, r, http.StatusServiceUnavailable, ErrCodeServiceUnavail, "Database not initialized")
 	case errors.Is(err, topology.ErrNodeNotFound):
-		http.Error(w, "Node not found", http.StatusNotFound)
+		writeError(w, r, http.StatusNotFound, ErrCodeNotFound, "Node not found")
 	default:
-		http.Error(w, genericMsg, http.StatusInternalServerError)
+		writeError(w, r, http.StatusInternalServerError, ErrCodeInternal, genericMsg)
 	}
 }
 
@@ -66,14 +66,14 @@ func (s *Server) handleTopologyNodes(w http.ResponseWriter, r *http.Request) {
 
 	opts, parseErr := parseTopologyListOptions(r)
 	if parseErr != nil {
-		http.Error(w, parseErr.Error(), http.StatusBadRequest)
+		writeError(w, r, http.StatusBadRequest, ErrCodeBadRequest, parseErr.Error())
 		return
 	}
 
 	nodes, err := s.topologyQueries.Nodes(r.Context(), opts)
 	if err != nil {
 		logger.ErrorContext(r.Context(), "list topology_nodes failed", "error", err)
-		writeTopologyError(w, err, "Failed to list nodes")
+		writeTopologyError(w, r, err, "Failed to list nodes")
 		return
 	}
 
@@ -86,7 +86,7 @@ func (s *Server) handleTopologyNodes(w http.ResponseWriter, r *http.Request) {
 func (s *Server) handleTopologyNodeByID(w http.ResponseWriter, r *http.Request) {
 	id := strings.TrimPrefix(r.URL.Path, topologyPathPrefix+"nodes/")
 	if id == "" || strings.Contains(id, "/") {
-		http.Error(w, "Missing or invalid node id", http.StatusBadRequest)
+		writeError(w, r, http.StatusBadRequest, ErrCodeBadRequest, "Missing or invalid node id")
 		return
 	}
 	logger := logging.FromContext(r.Context())
@@ -94,11 +94,11 @@ func (s *Server) handleTopologyNodeByID(w http.ResponseWriter, r *http.Request) 
 	detail, err := s.topologyQueries.Node(r.Context(), id)
 	if err != nil {
 		logger.ErrorContext(r.Context(), "load topology node failed", "node_id", id, "error", err)
-		writeTopologyError(w, err, "Failed to load node")
+		writeTopologyError(w, r, err, "Failed to load node")
 		return
 	}
 
-	writeJSON(w, r, map[string]any{
+	sendJSONResponse(w, logger, http.StatusOK, map[string]any{
 		"node":       encodeNode(detail.Node),
 		"interfaces": encodeInterfaces(detail.Interfaces),
 		"links":      encodeLinks(detail.Links),
@@ -115,7 +115,7 @@ func (s *Server) handleTopologyLinks(w http.ResponseWriter, r *http.Request) {
 	links, err := s.topologyQueries.Links(r.Context(), nodeID)
 	if err != nil {
 		logger.ErrorContext(r.Context(), "list links failed", "node_id", nodeID, "error", err)
-		writeTopologyError(w, err, "Failed to list links")
+		writeTopologyError(w, r, err, "Failed to list links")
 		return
 	}
 	writeTopologyJSON(w, r, "links", encodeLinks(links))
@@ -141,7 +141,7 @@ func (s *Server) handleTopologyARP(w http.ResponseWriter, r *http.Request) {
 	if sinceRaw := q.Get("since"); sinceRaw != "" {
 		t, err := time.Parse(time.RFC3339, sinceRaw)
 		if err != nil {
-			http.Error(w, "invalid 'since' (expect RFC3339)", http.StatusBadRequest)
+			writeError(w, r, http.StatusBadRequest, ErrCodeBadRequest, "invalid 'since' (expect RFC3339)")
 			return
 		}
 		opts.Since = t
@@ -149,7 +149,7 @@ func (s *Server) handleTopologyARP(w http.ResponseWriter, r *http.Request) {
 	if limitRaw := q.Get("limit"); limitRaw != "" {
 		n, err := strconv.Atoi(limitRaw)
 		if err != nil || n < 1 {
-			http.Error(w, "invalid 'limit' (positive integer)", http.StatusBadRequest)
+			writeError(w, r, http.StatusBadRequest, ErrCodeBadRequest, "invalid 'limit' (positive integer)")
 			return
 		}
 		if n > topologyMaxLimit {
@@ -162,7 +162,7 @@ func (s *Server) handleTopologyARP(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		logging.FromContext(r.Context()).ErrorContext(r.Context(),
 			"list topology_arp_bindings failed", "error", err)
-		writeTopologyError(w, err, "Failed to list ARP bindings")
+		writeTopologyError(w, r, err, "Failed to list ARP bindings")
 		return
 	}
 	writeTopologyJSON(w, r, "bindings", encodeARPBindings(bindings))
@@ -311,24 +311,10 @@ func formatTime(t time.Time) string {
 // the UI doesn't have to parse a bare array. Standard shape across
 // every topology list endpoint.
 func writeTopologyJSON(w http.ResponseWriter, r *http.Request, key string, payload any) {
-	writeJSON(w, r, map[string]any{
+	sendJSONResponse(w, logging.FromContext(r.Context()), http.StatusOK, map[string]any{
 		jsonKeyCount: lenOf(payload),
 		key:          payload,
 	})
-}
-
-// writeJSON sets Content-Type + 200, then encodes body. Wraps the
-// common pattern used across every other handler so we don't repeat
-// the header/encode/log triple at each call site. Callers that need
-// a non-200 status set the header themselves before calling — none
-// do today, which is why the helper hard-codes 200.
-func writeJSON(w http.ResponseWriter, r *http.Request, body any) {
-	logger := logging.FromContext(r.Context())
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusOK)
-	if err := json.NewEncoder(w).Encode(body); err != nil {
-		logger.WarnContext(r.Context(), "writeJSON encode failed", "error", err)
-	}
 }
 
 // lenOf returns len(v) for slice / map types or 0 otherwise.

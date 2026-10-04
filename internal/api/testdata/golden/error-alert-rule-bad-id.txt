@@ -1,0 +1,6 @@
+status: 400
+body:
+{
+  "code": "BAD_REQUEST",
+  "error": "Rule id must be a positive integer"
+}

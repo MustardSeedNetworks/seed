@@ -123,7 +123,7 @@ func (s *Server) handleVulnFindings(w http.ResponseWriter, r *http.Request) {
 			DetectedAt: f.DetectedAt, ResolvedAt: f.ResolvedAt,
 		})
 	}
-	writeJSON(w, r, map[string]any{jsonKeyCount: len(out), "findings": out})
+	sendJSONResponse(w, logger, http.StatusOK, map[string]any{jsonKeyCount: len(out), "findings": out})
 }
 
 // handleVulnFindingAction routes /findings/{id}/status (POST) and
@@ -191,7 +191,7 @@ func (s *Server) setVulnFindingStatus(w http.ResponseWriter, r *http.Request, id
 	case err == nil:
 		logger.InfoContext(r.Context(), "vulnerability finding triaged",
 			"event", "vuln.status", "id", id, "status", req.Status, "actor", actor)
-		writeJSON(w, r, map[string]any{"id": id, "status": req.Status})
+		sendJSONResponse(w, logger, http.StatusOK, map[string]any{"id": id, "status": req.Status})
 	case errors.Is(err, database.ErrVulnFindingNotFound):
 		sendErrorResponseWithDetails(w, logger, http.StatusNotFound,
 			ErrCodeNotFound, localizer.T("errors.vulnerability.findingNotFound"), "")
@@ -231,7 +231,7 @@ func (s *Server) writeVulnFindingHistory(w http.ResponseWriter, r *http.Request,
 			Reason: c.Reason, ChangedAt: c.ChangedAt,
 		})
 	}
-	writeJSON(w, r, map[string]any{"id": id, "history": out})
+	sendJSONResponse(w, logger, http.StatusOK, map[string]any{"id": id, "history": out})
 }
 
 // validVulnStatus reports whether s names one of the four finding states.

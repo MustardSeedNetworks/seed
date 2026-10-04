@@ -56,6 +56,18 @@ func goldenRoutes() []goldenRoute {
 		{name: "status", method: http.MethodGet, path: "/api/v1/status", body: bodyGolden},
 		{name: "settings", method: http.MethodGet, path: "/api/v1/settings", body: bodyGolden},
 		{name: "interfaces", method: http.MethodGet, path: "/api/v1/interfaces", body: bodyStatusOnly},
+		// Error paths (#2749): one per writer that used to answer in plain
+		// text. The harness has no database, so the store-backed reads 503.
+		{name: "error-unknown-api-route", method: http.MethodGet, path: "/api/v1/no-such-route", body: bodyGolden},
+		{name: "error-alert-rules-no-db", method: http.MethodGet, path: "/api/v1/alert-rules", body: bodyGolden},
+		{name: "error-alert-rule-bad-id", method: http.MethodGet, path: "/api/v1/alert-rules/abc", body: bodyGolden},
+		{name: "error-topology-no-db", method: http.MethodGet, path: "/api/v1/topology/nodes", body: bodyGolden},
+		{
+			name:   "error-probe-anomalies-no-detector",
+			method: http.MethodGet,
+			path:   "/api/v1/telemetry/probes/anomalies",
+			body:   bodyGolden,
+		},
 	}
 }
 
@@ -94,6 +106,10 @@ func TestGoldenHTTP(t *testing.T) {
 		t.Run(rt.name, func(t *testing.T) {
 			status, body := doGoldenRequest(t, srv.ts.URL+rt.path, rt.method)
 
+			if status >= http.StatusBadRequest {
+				assertErrorShape(t, body)
+			}
+
 			var snapshot string
 			if rt.body == bodyStatusOnly {
 				snapshot = formatSnapshot(status, "")
@@ -104,6 +120,19 @@ func TestGoldenHTTP(t *testing.T) {
 			goldenPath := filepath.Join("testdata", "golden", rt.name+".txt")
 			compareGolden(t, goldenPath, snapshot)
 		})
+	}
+}
+
+// assertErrorShape fails unless body is the API's one error shape: a JSON
+// object carrying a non-empty error message and code (#2749).
+func assertErrorShape(t *testing.T, body []byte) {
+	t.Helper()
+	var resp struct {
+		Error string `json:"error"`
+		Code  string `json:"code"`
+	}
+	if err := json.Unmarshal(body, &resp); err != nil || resp.Error == "" || resp.Code == "" {
+		t.Errorf("error body is not ErrorResponse: %q", body)
 	}
 }
 
