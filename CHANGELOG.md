@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.227.0](https://github.com/MustardSeedNetworks/seed/compare/v0.226.0...v0.227.0) (2026-10-04)
+
+
+### Features
+
+* **listener:** accept SNMPv3 traps from vault users ([#3054](https://github.com/MustardSeedNetworks/seed/issues/3054)) ([ef0182c](https://github.com/MustardSeedNetworks/seed/commit/ef0182c94ade9a0ae20941e7ff7d9e6cd43c0f98))
+
+
+### Bug Fixes
+
+* **timeseries:** record link, gateway and DNS health into metrics ([#3049](https://github.com/MustardSeedNetworks/seed/issues/3049)) ([d802d1b](https://github.com/MustardSeedNetworks/seed/commit/d802d1b49b5984968f0e0427875f2081917d2678))
+
 ## [0.226.0](https://github.com/MustardSeedNetworks/seed/compare/v0.225.0...v0.226.0) (2026-10-04)
 
 
