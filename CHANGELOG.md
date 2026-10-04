@@ -5,6 +5,23 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.231.0](https://github.com/MustardSeedNetworks/seed/compare/v0.230.0...v0.231.0) (2026-10-04)
+
+
+### Features
+
+* **listener:** collect NetFlow v5/v9 and IPFIX flows ([#3085](https://github.com/MustardSeedNetworks/seed/issues/3085)) ([3832d96](https://github.com/MustardSeedNetworks/seed/commit/3832d9682de5dbf229e7cde80cb62d0bc1b91246))
+
+
+### Bug Fixes
+
+* **ui:** store the sidebar collapse state under a seed key ([#3081](https://github.com/MustardSeedNetworks/seed/issues/3081)) ([8d0009f](https://github.com/MustardSeedNetworks/seed/commit/8d0009f10d8bf05777d9bbabf859dded30bbc4e6)), closes [#2527](https://github.com/MustardSeedNetworks/seed/issues/2527)
+
+
+### Code Refactoring
+
+* **ui:** let the React Compiler hold the hooks' callback identities ([#3084](https://github.com/MustardSeedNetworks/seed/issues/3084)) ([46c00d6](https://github.com/MustardSeedNetworks/seed/commit/46c00d6da3d74ebb945742ca241f98187c7a7a13))
+
 ## [0.230.0](https://github.com/MustardSeedNetworks/seed/compare/v0.229.0...v0.230.0) (2026-10-04)
 
 
