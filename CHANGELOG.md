@@ -14,6 +14,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 * **config:** restore every section of a config backup ([#2987](https://github.com/MustardSeedNetworks/seed/issues/2987)) ([94ca28d](https://github.com/MustardSeedNetworks/seed/commit/94ca28dd08ea9ef867f4631b876524fc0e790740)), closes [#2928](https://github.com/MustardSeedNetworks/seed/issues/2928)
 * **packaging:** keep seed running across an RPM upgrade ([#2981](https://github.com/MustardSeedNetworks/seed/issues/2981)) ([fe7a972](https://github.com/MustardSeedNetworks/seed/commit/fe7a97256ef5ad43cfd74b13e813e97250974af7)), closes [#2861](https://github.com/MustardSeedNetworks/seed/issues/2861)
 
+### Also shipped in this release
+
+<!-- Added by scripts/check-release-changelog.py: these commits are
+     contained in the tag but were absent from the generated
+     changelog, because they merged after release-please last
+     regenerated the release PR. -->
+
+* **ui:** turn off TOTP from the MFA card ([#2977](https://github.com/MustardSeedNetworks/seed/issues/2977)) ([edeeb35f](https://github.com/MustardSeedNetworks/seed/commit/edeeb35f39c85af1039aaef4f00bc31da056198f)) — _Features_
+
 ## [0.221.2](https://github.com/MustardSeedNetworks/seed/compare/v0.221.1...v0.221.2) (2026-10-03)
 
 
