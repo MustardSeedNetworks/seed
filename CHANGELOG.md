@@ -5,6 +5,23 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.222.0](https://github.com/MustardSeedNetworks/seed/compare/v0.221.4...v0.222.0) (2026-10-04)
+
+
+### Features
+
+* **polling:** rate interface counters on every if_table poll ([#3006](https://github.com/MustardSeedNetworks/seed/issues/3006)) ([28d0647](https://github.com/MustardSeedNetworks/seed/commit/28d0647e79b9be7a807b80b78a4951dffbca76dc)), closes [#3001](https://github.com/MustardSeedNetworks/seed/issues/3001)
+
+
+### Bug Fixes
+
+* **snmp:** run the NIAC pack acceptance against pool attachments ([#3007](https://github.com/MustardSeedNetworks/seed/issues/3007)) ([c73f283](https://github.com/MustardSeedNetworks/seed/commit/c73f283ddb86b872b376c632e060a9c646e31f83)), closes [#2984](https://github.com/MustardSeedNetworks/seed/issues/2984)
+
+
+### Documentation
+
+* **changelog:** record [#2999](https://github.com/MustardSeedNetworks/seed/issues/2999) in v0.221.4 ([#3005](https://github.com/MustardSeedNetworks/seed/issues/3005)) ([e5bce76](https://github.com/MustardSeedNetworks/seed/commit/e5bce7689226b91253c84c9bb289545066103780))
+
 ## [0.221.4](https://github.com/MustardSeedNetworks/seed/compare/v0.221.3...v0.221.4) (2026-10-04)
 
 
