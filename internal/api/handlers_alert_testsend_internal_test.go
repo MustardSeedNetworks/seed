@@ -42,7 +42,7 @@ func TestAlertTestSendAnswersWithTheReceiversReason(t *testing.T) {
 	}))
 	defer receiver.Close()
 
-	manager := alertdelivery.NewManager(nil, slog.New(slog.DiscardHandler))
+	manager := alertdelivery.NewManager(nil, nil, slog.New(slog.DiscardHandler))
 	defer manager.Stop(context.Background())
 
 	send := func(s *Server, body string) (int, map[string]any) {
@@ -103,7 +103,7 @@ func TestAlertTestSendReachesTheSyslogCollector(t *testing.T) {
 		received <- string(frame)
 	}()
 
-	manager := alertdelivery.NewManager(nil, slog.New(slog.DiscardHandler))
+	manager := alertdelivery.NewManager(nil, nil, slog.New(slog.DiscardHandler))
 	defer manager.Stop(context.Background())
 	manager.ApplySyslog(alertdelivery.SyslogConfig{Host: "127.0.0.1", Port: port, Transport: alertdelivery.SyslogTCP})
 	s := &Server{alertDelivery: manager}

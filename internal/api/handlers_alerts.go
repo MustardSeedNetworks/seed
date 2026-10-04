@@ -270,7 +270,7 @@ func encodeAlert(
 		row["rootCauseId"] = *a.RootCauseID
 	}
 	if n, ok := narratives[a.ID]; ok {
-		row["narrative"] = encodeNarrative(n, t)
+		row["narrative"] = n.Render(t.TWithData)
 	}
 	if a.EscalationStage > 0 {
 		row["escalationStage"] = a.EscalationStage
@@ -279,19 +279,6 @@ func encodeAlert(
 		row["escalatedAt"] = formatTime(*a.EscalatedAt)
 	}
 	return row
-}
-
-// encodeNarrative renders a narrative in the reader's language.
-func encodeNarrative(n narrative.Narrative, t *i18n.Localizer) map[string]any {
-	evidence := make([]string, 0, len(n.Evidence))
-	for _, m := range n.Evidence {
-		evidence = append(evidence, t.TWithData(m.Key, m.Data))
-	}
-	return map[string]any{
-		"summary":   t.TWithData(n.Summary.Key, n.Summary.Data),
-		"evidence":  evidence,
-		"nextCheck": t.TWithData(n.NextCheck.Key, n.NextCheck.Data),
-	}
 }
 
 // encodeDeliveries is each channel's outcome. It is what makes a receiver

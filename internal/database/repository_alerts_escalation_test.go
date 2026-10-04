@@ -35,7 +35,7 @@ func TestUnacknowledgedAlertEscalatesTwoStagesAndStopsOnAcknowledge(t *testing.T
 	posts := escalationReceiver(t)
 
 	logger := slog.New(slog.DiscardHandler)
-	manager := delivery.NewManager(repo, logger)
+	manager := delivery.NewManager(repo, nil, logger)
 	manager.ApplyWebhook(delivery.WebhookConfig{URL: posts.url, Secret: "escalation-test-signing-key"})
 	defer manager.Stop(ctx)
 	manager.ApplyEscalations([]escalation.Ladder{{

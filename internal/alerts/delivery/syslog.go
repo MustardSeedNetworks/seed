@@ -13,6 +13,7 @@ import (
 	"unicode/utf8"
 
 	"github.com/MustardSeedNetworks/seed/internal/alerts"
+	"github.com/MustardSeedNetworks/seed/internal/alerts/narrative"
 )
 
 // The syslog channel (#3037): one RFC 5424 message per alert to the
@@ -180,8 +181,8 @@ func NewSyslog(cfg SyslogConfig) (*Notifier, error) {
 // send makes one delivery. Only a certificate the collector's name cannot be
 // verified against is permanent; a refused connection or a collector that
 // stops reading may answer differently on the next try.
-func (s *syslogSender) send(ctx context.Context, alert *alerts.Alert) (bool, error) {
-	msg := s.format(alert)
+func (s *syslogSender) send(ctx context.Context, alert *alerts.Alert, story *narrative.Text) (bool, error) {
+	msg := s.format(alert, story)
 	dialer := &net.Dialer{Timeout: s.timeout}
 	var conn net.Conn
 	var err error
@@ -211,7 +212,11 @@ func (s *syslogSender) send(ctx context.Context, alert *alerts.Alert) (bool, err
 // format renders alert as an RFC 5424 message:
 //
 //	<130>1 2023-11-14T22:13:20.000000Z probe-01 seed - alert - id=42 severity=critical ...
-func (s *syslogSender) format(alert *alerts.Alert) []byte {
+//
+// A narrative's summary and next check go ahead of the alert's own text and
+// its evidence last, joined by "; ": a datagram is cut at maxDatagram from
+// the end, and the evidence is what a reader can most afford to lose.
+func (s *syslogSender) format(alert *alerts.Alert, story *narrative.Text) []byte {
 	created := alert.CreatedAt
 	if created.IsZero() {
 		created = s.now()
@@ -240,8 +245,15 @@ func (s *syslogSender) format(alert *alerts.Alert) []byte {
 	if alert.RootCauseID != nil {
 		pair("cause", strconv.FormatInt(*alert.RootCauseID, 10))
 	}
+	if story != nil {
+		pair("summary", story.Summary)
+		pair("next_check", story.NextCheck)
+	}
 	pair("title", alert.Title)
 	pair("message", alert.Message)
+	if story != nil {
+		pair("evidence", strings.Join(story.Evidence, "; "))
+	}
 	return []byte(header + strings.Join(pairs, " "))
 }
 

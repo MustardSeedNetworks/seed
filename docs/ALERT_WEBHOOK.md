@@ -92,6 +92,30 @@ The alert object is the same shape `GET /api/v1/alerts` returns, without the
 bookkeeping for the delivery it is part of. It is nested under `alert` so later
 envelope fields cannot collide with an alert field.
 
+An alert that heads a cluster of correlated alerts, and has a rule Seed can
+explain, also carries its narrative: the same summary, evidence and next check
+the Alerts page shows, in English. It is a sibling of `alert`:
+
+```json
+{
+  "alert": { "id": 43, "rule": "iface.down", "...": "..." },
+  "narrative": {
+    "summary": "Interface Gi0/3 on core-sw1 went down while it was administratively up.",
+    "evidence": [
+      "ifOperStatus went from up to down on ifIndex 3 at 2026-09-14T12:00:00Z.",
+      "ifInErrors on Gi0/3 peaked at 12 per second in the 15 minutes before it went down."
+    ],
+    "nextCheck": "Gi0/3 was counting errors before it went down, so the link is failing physically. Replace or reseat the cable and the optic on Gi0/3, then read the error counters of the far-end port."
+  },
+  "sentAt": "2026-09-14T12:00:01Z"
+}
+```
+
+`narrative` is absent when the alert has none: an alert another alert caused
+(its `rootCauseId` names the one whose narrative covers it), or a rule with no
+narrative. It is read when the alert is sent, so an escalation also names the
+alerts correlated with it since it was first sent.
+
 Headers:
 
 | Header | Value |

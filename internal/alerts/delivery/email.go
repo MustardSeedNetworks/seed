@@ -19,6 +19,7 @@ import (
 	"time"
 
 	"github.com/MustardSeedNetworks/seed/internal/alerts"
+	"github.com/MustardSeedNetworks/seed/internal/alerts/narrative"
 )
 
 // The email channel (#2997): one message per alert through the operator's own
@@ -208,8 +209,8 @@ func NewEmail(cfg EmailConfig) (*Notifier, error) {
 // send makes one SMTP transaction. A 5xx reply, a certificate the system
 // cannot verify, or a server missing STARTTLS or AUTH is permanent: the same
 // server will answer the same way. A 4xx reply or a network failure is not.
-func (e *email) send(ctx context.Context, alert *alerts.Alert) (bool, error) {
-	msg, err := e.compose(alert)
+func (e *email) send(ctx context.Context, alert *alerts.Alert, story *narrative.Text) (bool, error) {
+	msg, err := e.compose(alert, story)
 	if err != nil {
 		return true, err
 	}
@@ -320,7 +321,7 @@ func isPermanentSMTP(err error) bool {
 // compose renders alert as an RFC 5322 message. Every header value that came
 // from the alert is reduced to one line before it is written, so text a
 // device controls (a syslog message, a hostname) cannot add a header.
-func (e *email) compose(alert *alerts.Alert) ([]byte, error) {
+func (e *email) compose(alert *alerts.Alert, story *narrative.Text) ([]byte, error) {
 	recipients := make([]string, len(e.to))
 	for i, addr := range e.to {
 		recipients[i] = addr.String()
@@ -359,7 +360,7 @@ func (e *email) compose(alert *alerts.Alert) ([]byte, error) {
 	msg.WriteString("\r\n")
 
 	qp := quotedprintable.NewWriter(&msg)
-	if _, err := qp.Write([]byte(body(alert, created))); err != nil {
+	if _, err := qp.Write([]byte(body(alert, story, created))); err != nil {
 		return nil, fmt.Errorf("encode alert %d: %w", alert.ID, err)
 	}
 	if err := qp.Close(); err != nil {
@@ -368,11 +369,19 @@ func (e *email) compose(alert *alerts.Alert) ([]byte, error) {
 	return msg.Bytes(), nil
 }
 
-// body is the plain-text message: the facts an on-call engineer needs to
-// decide whether to get up, then the alert's own text.
-func body(alert *alerts.Alert, created time.Time) string {
+// body is the plain-text message: the narrative, when the alert has one, then
+// the facts an on-call engineer needs to decide whether to get up, then the
+// alert's own text.
+func body(alert *alerts.Alert, story *narrative.Text, created time.Time) string {
 	var b strings.Builder
 	b.WriteString(alert.Title + "\n\n")
+	if story != nil {
+		b.WriteString(story.Summary + "\n\nEvidence:\n")
+		for _, line := range story.Evidence {
+			b.WriteString("- " + line + "\n")
+		}
+		b.WriteString("\nNext check: " + story.NextCheck + "\n\n")
+	}
 	line := func(label, value string) {
 		if value != "" {
 			b.WriteString(label + ": " + value + "\n")

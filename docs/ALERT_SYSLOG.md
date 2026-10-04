@@ -92,8 +92,17 @@ alert has it:
 | `source` | What generated it. |
 | `device` | The device it is about. |
 | `cause` | ID of an earlier alert that probably caused this one. |
+| `summary` | The narrative's summary: what happened and where. |
+| `next_check` | The narrative's next check. |
 | `title` | One-line summary. |
 | `message` | The alert's text. |
+| `evidence` | The narrative's evidence, sentences separated by a semicolon and a space. |
+
+An alert that heads a cluster of correlated alerts, and has a rule Seed can
+explain, also carries its narrative: the same summary, evidence and next check
+the Alerts page shows, in English. The three narrative keys are absent when it
+has none. The evidence comes last because a UDP datagram is cut at 2048 bytes
+from the end, and it is what a reader can most afford to lose.
 
 A value containing a space, `"`, `=`, `\` or a control character is a
 double-quoted string with Go escaping (`\"`, `\\`, `\n`). Text a device

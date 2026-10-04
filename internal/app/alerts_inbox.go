@@ -10,14 +10,45 @@ import (
 	"time"
 
 	"github.com/MustardSeedNetworks/seed/internal/alerts"
+	alertdelivery "github.com/MustardSeedNetworks/seed/internal/alerts/delivery"
 	"github.com/MustardSeedNetworks/seed/internal/alerts/inbox"
+	"github.com/MustardSeedNetworks/seed/internal/alerts/narrative"
 	"github.com/MustardSeedNetworks/seed/internal/database"
+	"github.com/MustardSeedNetworks/seed/internal/i18n"
 	"github.com/MustardSeedNetworks/seed/internal/timeseries/ifrate"
 )
 
 // NewAlertInbox builds the alert-inbox use-case over a lazy database accessor.
 func NewAlertInbox(db func() *database.DB) *inbox.Service {
 	return inbox.NewService(alertInboxRepo{db: db})
+}
+
+// NewAlertNarrator explains alerts for the delivery channels with the inbox's
+// own narratives (P-B7), rendered in the default language: a receiver has no
+// reader whose language Seed could follow, and the rest of what each channel
+// sends is English.
+func NewAlertNarrator(db *database.DB) alertdelivery.Narrator {
+	return alertNarrator{
+		inbox: NewAlertInbox(func() *database.DB { return db }),
+		t:     i18n.NewLocalizer(i18n.DefaultLanguage),
+	}
+}
+
+type alertNarrator struct {
+	inbox *inbox.Service
+	t     *i18n.Localizer
+}
+
+func (n alertNarrator) Narrate(ctx context.Context, a *alerts.Alert) (narrative.Text, bool, error) {
+	stories, err := n.inbox.Narratives(ctx, []*alerts.Alert{a})
+	if err != nil {
+		return narrative.Text{}, false, err
+	}
+	story, ok := stories[a.ID]
+	if !ok {
+		return narrative.Text{}, false, nil
+	}
+	return story.Render(n.t.TWithData), true, nil
 }
 
 // alertInboxRepo implements inbox.Repository over the alert repository. A nil

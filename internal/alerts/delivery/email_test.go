@@ -341,7 +341,7 @@ func TestManagerRecordsEachChannelSeparately(t *testing.T) {
 	sink.start(t)
 
 	recorder := &recordingRecorder{}
-	m := delivery.NewManager(recorder, quietLogger())
+	m := delivery.NewManager(recorder, nil, quietLogger())
 	t.Cleanup(func() { m.Stop(context.Background()) })
 	m.ApplyWebhook(delivery.WebhookConfig{URL: srv.URL, Secret: signingKey})
 	m.ApplyEmail(emailConfig(sink, nil))
@@ -385,7 +385,7 @@ func TestManagerRecordsEachChannelSeparately(t *testing.T) {
 }
 
 func TestManagerSendTest(t *testing.T) {
-	m := delivery.NewManager(nil, quietLogger())
+	m := delivery.NewManager(nil, nil, quietLogger())
 	t.Cleanup(func() { m.Stop(context.Background()) })
 
 	if err := m.SendTest(context.Background(), alerts.ChannelEmail); !errors.Is(err, delivery.ErrNotConfigured) {
@@ -420,7 +420,7 @@ func TestManagerEscalatesOnTheStageChannelsOnly(t *testing.T) {
 	sink.start(t)
 
 	recorder := &recordingRecorder{}
-	m := delivery.NewManager(recorder, quietLogger())
+	m := delivery.NewManager(recorder, nil, quietLogger())
 	t.Cleanup(func() { m.Stop(context.Background()) })
 	m.ApplyWebhook(delivery.WebhookConfig{URL: srv.URL, Secret: signingKey})
 	m.ApplyEmail(emailConfig(sink, nil))

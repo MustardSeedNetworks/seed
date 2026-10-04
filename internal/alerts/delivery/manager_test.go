@@ -36,7 +36,7 @@ func countingReceiver(t *testing.T) (*httptest.Server, *atomic.Int64) {
 
 func TestManagerDeliversAfterApplyWithoutRestart(t *testing.T) {
 	srv, hits := countingReceiver(t)
-	m := delivery.NewManager(nil, quietLogger())
+	m := delivery.NewManager(nil, nil, quietLogger())
 	t.Cleanup(func() { m.Stop(context.Background()) })
 
 	// Before Apply the manager is the air-gapped default: no receiver, so the
@@ -69,7 +69,7 @@ func TestManagerDeliversAfterApplyWithoutRestart(t *testing.T) {
 
 func TestManagerApplyEmptyURLStopsDelivery(t *testing.T) {
 	srv, hits := countingReceiver(t)
-	m := delivery.NewManager(nil, quietLogger())
+	m := delivery.NewManager(nil, nil, quietLogger())
 	t.Cleanup(func() { m.Stop(context.Background()) })
 	store := &recordingStore{}
 	writer := delivery.WrapWriter(store, m)
@@ -99,7 +99,7 @@ func TestManagerApplyEmptyURLStopsDelivery(t *testing.T) {
 func TestManagerApplyRepointsToTheNewReceiver(t *testing.T) {
 	first, firstHits := countingReceiver(t)
 	second, secondHits := countingReceiver(t)
-	m := delivery.NewManager(nil, quietLogger())
+	m := delivery.NewManager(nil, nil, quietLogger())
 	t.Cleanup(func() { m.Stop(context.Background()) })
 	writer := delivery.WrapWriter(&recordingStore{}, m)
 
@@ -118,7 +118,7 @@ func TestManagerApplyRepointsToTheNewReceiver(t *testing.T) {
 
 func TestManagerApplyUnusableConfigDisablesDelivery(t *testing.T) {
 	srv, hits := countingReceiver(t)
-	m := delivery.NewManager(nil, quietLogger())
+	m := delivery.NewManager(nil, nil, quietLogger())
 	t.Cleanup(func() { m.Stop(context.Background()) })
 	writer := delivery.WrapWriter(&recordingStore{}, m)
 
@@ -140,7 +140,7 @@ func TestManagerApplyUnusableConfigDisablesDelivery(t *testing.T) {
 
 func TestManagerApplyLeavesNoWorkerBehind(t *testing.T) {
 	srv, _ := countingReceiver(t)
-	m := delivery.NewManager(nil, quietLogger())
+	m := delivery.NewManager(nil, nil, quietLogger())
 	t.Cleanup(func() { m.Stop(context.Background()) })
 
 	// One receiver's worker, as the baseline. Re-pointing repeatedly must not
@@ -162,7 +162,7 @@ func TestManagerApplyLeavesNoWorkerBehind(t *testing.T) {
 func TestManagerDisablingDeliveryIsNotAnError(t *testing.T) {
 	var logged strings.Builder
 	logger := slog.New(slog.NewTextHandler(&logged, &slog.HandlerOptions{Level: slog.LevelError}))
-	m := delivery.NewManager(nil, logger)
+	m := delivery.NewManager(nil, nil, logger)
 	t.Cleanup(func() { m.Stop(context.Background()) })
 
 	// Turning delivery off is an operator's choice, not a misconfiguration. An

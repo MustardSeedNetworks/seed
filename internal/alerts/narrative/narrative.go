@@ -43,6 +43,27 @@ type Narrative struct {
 	NextCheck Message
 }
 
+// Text is a narrative rendered in one language: the shape the inbox serves
+// and every delivery channel sends.
+type Text struct {
+	Summary   string   `json:"summary"`
+	Evidence  []string `json:"evidence"`
+	NextCheck string   `json:"nextCheck"`
+}
+
+// Render renders n with t, a localizer's TWithData.
+func (n Narrative) Render(t func(key string, data map[string]any) string) Text {
+	evidence := make([]string, 0, len(n.Evidence))
+	for _, m := range n.Evidence {
+		evidence = append(evidence, t(m.Key, m.Data))
+	}
+	return Text{
+		Summary:   t(n.Summary.Key, n.Summary.Data),
+		Evidence:  evidence,
+		NextCheck: t(n.NextCheck.Key, n.NextCheck.Data),
+	}
+}
+
 // Cluster is what Explain reads: the cause, the alerts whose RootCauseID
 // names it, and what else Seed knows about where it happened.
 type Cluster struct {

@@ -32,6 +32,7 @@ var ErrNotConfigured = errors.New("alert delivery: no receiver is configured on 
 // with it.
 type Manager struct {
 	recorder Recorder
+	narrator Narrator
 	logger   *slog.Logger
 
 	mu      sync.Mutex
@@ -42,12 +43,16 @@ type Manager struct {
 
 // NewManager returns a Manager with no receiver: the air-gapped default, in
 // which an alert is stored and nothing leaves the host. recorder is the alert
-// repository each Notifier writes delivery outcomes back through.
-func NewManager(recorder Recorder, logger *slog.Logger) *Manager {
+// repository each Notifier writes delivery outcomes back through; narrator
+// explains each alert on every channel, and may be nil.
+func NewManager(recorder Recorder, narrator Narrator, logger *slog.Logger) *Manager {
 	if logger == nil {
 		logger = slog.Default()
 	}
-	return &Manager{recorder: recorder, logger: logger, current: map[alerts.Channel]*Notifier{}}
+	return &Manager{
+		recorder: recorder, narrator: narrator, logger: logger,
+		current: map[alerts.Channel]*Notifier{},
+	}
 }
 
 // ApplyWebhook re-points the webhook channel at cfg's receiver. An empty
@@ -98,11 +103,14 @@ func (m *Manager) ApplySyslog(cfg SyslogConfig) {
 	m.swap(alerts.ChannelSyslog, n)
 }
 
-// fill supplies the Manager's own recorder and logger wherever opts leaves
-// them unset, so a caller states only what it is changing.
+// fill supplies the Manager's own recorder, narrator and logger wherever opts
+// leaves them unset, so a caller states only what it is changing.
 func (m *Manager) fill(opts Options) Options {
 	if opts.Recorder == nil {
 		opts.Recorder = m.recorder
+	}
+	if opts.Narrator == nil {
+		opts.Narrator = m.narrator
 	}
 	if opts.Logger == nil {
 		opts.Logger = m.logger
