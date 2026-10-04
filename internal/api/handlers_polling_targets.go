@@ -12,7 +12,9 @@ package api
 //   DELETE /api/v1/polling-targets/{id}    delete
 //
 // List is read-only; the mutating routes go through writeGated so
-// only operator+ roles can add/edit/remove devices to poll.
+// only operator+ roles can add/edit/remove devices to poll. A create past
+// the licence's target limit, or a chain naming a Pro collector below Pro,
+// is a 402 (polling_entitlements.go).
 //
 // Every route is scoped to the client on the caller's session claim
 // (internal/auth/client_context.go). There is no ?client_id filter and no
@@ -147,8 +149,16 @@ func (s *Server) createPollingTarget(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
+	if feature, unlicensed := s.unlicensedCollectorFeature(in.CollectorChain); unlicensed {
+		s.sendFeatureGate(w, r, feature)
+		return
+	}
 	target := inputToTarget(in, "", clientID)
 	if createErr := s.pollingTargets.Create(r.Context(), target); createErr != nil {
+		if errors.As(createErr, new(targets.LimitError)) {
+			s.sendFeatureGate(w, r, "estate_polling")
+			return
+		}
 		logger.ErrorContext(r.Context(), "create polling_target failed", "error", createErr)
 		writePollingError(w, createErr, "Failed to create target")
 		return
@@ -167,6 +177,10 @@ func (s *Server) updatePollingTarget(w http.ResponseWriter, r *http.Request, id 
 	in, err := decodePollingTargetInput(r)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+	if feature, unlicensed := s.unlicensedCollectorFeature(in.CollectorChain); unlicensed {
+		s.sendFeatureGate(w, r, feature)
 		return
 	}
 	current, updErr := s.pollingTargets.Update(r.Context(), clientID, inputToTarget(in, id, clientID))

@@ -3,13 +3,18 @@ package orchestrator_test
 import (
 	"context"
 	"errors"
+	"fmt"
 	"log/slog"
+	"strings"
+	"sync/atomic"
 	"testing"
 	"time"
 
 	"github.com/MustardSeedNetworks/seed/internal/database"
 	"github.com/MustardSeedNetworks/seed/internal/database/dbtest"
+	"github.com/MustardSeedNetworks/seed/internal/engine"
 	"github.com/MustardSeedNetworks/seed/internal/polling/snmp"
+	"github.com/MustardSeedNetworks/seed/internal/polling/snmp/collectors/hostresources"
 	"github.com/MustardSeedNetworks/seed/internal/polling/snmp/orchestrator"
 	"github.com/MustardSeedNetworks/seed/internal/scheduler"
 )
@@ -28,6 +33,8 @@ func openTestDB(t *testing.T) *database.DB {
 	t.Cleanup(func() { _ = db.Close() })
 	return db
 }
+
+func allLicensed(string) bool { return true }
 
 func newSchedulerForTest() *scheduler.Scheduler {
 	return scheduler.New(time.Hour) // tick is irrelevant for these tests
@@ -118,6 +125,19 @@ func TestBuild_AllRequiredFieldsValidated(t *testing.T) {
 				Credentials:   db.DeviceCredentials(),
 			},
 		},
+		{
+			// Which collectors are for sale is the licence's decision; a
+			// poller built without asking would run every one of them.
+			"missing Licensed",
+			orchestrator.Config{
+				Targets:       db.PollingTargets(),
+				Observations:  db.SNMPObservations(),
+				Scheduler:     sched,
+				ClientFactory: nopClientFactory,
+				Credentials:   db.DeviceCredentials(),
+				Decrypter:     nopDecrypter{},
+			},
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -144,6 +164,7 @@ func TestBuild_ReturnsPollerWithEngineName(t *testing.T) {
 		Now:           at,
 		Credentials:   db.DeviceCredentials(),
 		Decrypter:     nopDecrypter{},
+		Licensed:      allLicensed,
 	})
 	if err != nil {
 		t.Fatalf("Build: %v", err)
@@ -168,6 +189,7 @@ func TestBuild_PollerStartLoadsZeroTargetsCleanly(t *testing.T) {
 		Now:           at,
 		Credentials:   db.DeviceCredentials(),
 		Decrypter:     nopDecrypter{},
+		Licensed:      allLicensed,
 	})
 	if err != nil {
 		t.Fatalf("Build: %v", err)
@@ -213,6 +235,7 @@ func TestBuild_RegistersAllTenCollectorChainKinds(t *testing.T) {
 		Now:           at,
 		Credentials:   db.DeviceCredentials(),
 		Decrypter:     nopDecrypter{},
+		Licensed:      allLicensed,
 	})
 	if err != nil {
 		t.Fatalf("Build: %v", err)
@@ -230,3 +253,90 @@ func TestBuild_RegistersAllTenCollectorChainKinds(t *testing.T) {
 type nopDecrypter struct{}
 
 func (nopDecrypter) DecryptValue(encrypted string) (string, error) { return encrypted, nil }
+
+// seedHostResourcesTarget stores one credentialed target whose chain is only
+// host_resources.
+func seedHostResourcesTarget(t *testing.T, db *database.DB) {
+	t.Helper()
+	ctx := context.Background()
+	now := time.Now().UTC().Format(time.RFC3339Nano)
+	if _, err := db.Exec(ctx, `
+		INSERT INTO device_credentials
+		  (id, client_id, name, kind, snmp_community_enc, created_at, updated_at)
+		VALUES ('cred-1', 'default', 'lab', 'v2c', ?, ?, ?)
+	`, []byte("enc:v1:community"), now, now); err != nil {
+		t.Fatalf("seed credential: %v", err)
+	}
+	if _, err := db.Exec(ctx, `
+		INSERT INTO polling_targets
+		  (id, name, ip_address, snmp_version, credentials_id, poll_interval_seconds, enabled,
+		   collector_chain, created_at, updated_at, client_id)
+		VALUES ('t-1', 'server-1', '10.0.0.1', 'v2c', 'cred-1', 3600, 1, '["host_resources"]', ?, ?, 'default')
+	`, now, now); err != nil {
+		t.Fatalf("seed target: %v", err)
+	}
+}
+
+// firstChainStatus starts poller, waits for its first chain to complete and
+// returns the status after stopping it.
+func firstChainStatus(t *testing.T, poller *snmp.Poller) engine.Status {
+	t.Helper()
+	ctx := context.Background()
+	if err := poller.Start(ctx); err != nil {
+		t.Fatalf("Start: %v", err)
+	}
+	deadline := time.Now().Add(5 * time.Second)
+	for poller.Status().LastTickAt.IsZero() && time.Now().Before(deadline) {
+		time.Sleep(time.Millisecond)
+	}
+	if err := poller.Stop(ctx); err != nil {
+		t.Fatalf("Stop: %v", err)
+	}
+	status := poller.Status()
+	if status.LastTickAt.IsZero() {
+		t.Fatal("the target's chain never ran")
+	}
+	return status
+}
+
+// A collector the licence does not cover is never run, even for a target whose
+// chain names it (server_monitoring and bgp_monitoring are Pro, seed#2327).
+// Running it is observable as a dial through the client factory.
+func TestBuild_UnlicensedCollectorNeverRuns(t *testing.T) {
+	t.Parallel()
+
+	for _, licensed := range []bool{true, false} {
+		t.Run(fmt.Sprintf("licensed=%v", licensed), func(t *testing.T) {
+			t.Parallel()
+			db := openTestDB(t)
+			seedHostResourcesTarget(t, db)
+
+			var dials atomic.Int32
+			poller, err := orchestrator.Build(orchestrator.Config{
+				Targets:      db.PollingTargets(),
+				Observations: db.SNMPObservations(),
+				Scheduler:    scheduler.New(5 * time.Millisecond),
+				ClientFactory: func(snmp.Target, snmp.ResolvedCredentials) (snmp.Client, error) {
+					dials.Add(1)
+					return nil, errors.New("orchestrator test: no device")
+				},
+				Logger:      silentLogger(),
+				Now:         at,
+				Credentials: db.DeviceCredentials(),
+				Decrypter:   nopDecrypter{},
+				Licensed:    func(name string) bool { return name != hostresources.Name || licensed },
+			})
+			if err != nil {
+				t.Fatalf("Build: %v", err)
+			}
+
+			status := firstChainStatus(t, poller)
+			if ran := dials.Load() > 0; ran != licensed {
+				t.Errorf("host_resources dialled = %v, want %v (last error %q)", ran, licensed, status.LastError)
+			}
+			if !licensed && !strings.Contains(status.LastError, "not registered") {
+				t.Errorf("last error = %q, want the collector reported as not registered", status.LastError)
+			}
+		})
+	}
+}
