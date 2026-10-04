@@ -26,6 +26,7 @@ type fakeMetricsRepo struct {
 	openAlerts int
 	topology   reporting.TopologyChanges
 	probes     []reporting.ProbeOutcome
+	history    []reporting.InterfaceUtilization
 }
 
 func (f *fakeMetricsRepo) CountDevices(context.Context) (int, error) { return f.devices, nil }
@@ -66,6 +67,12 @@ func (f *fakeMetricsRepo) TopologyChanges(context.Context, reporting.DateRange) 
 
 func (f *fakeMetricsRepo) ProbeOutcomes(context.Context, reporting.DateRange) ([]reporting.ProbeOutcome, error) {
 	return f.probes, nil
+}
+
+func (f *fakeMetricsRepo) InterfaceUtilizationHistory(
+	context.Context, reporting.DateRange,
+) ([]reporting.InterfaceUtilization, error) {
+	return f.history, nil
 }
 
 // TestAggregatorService_Aggregate_NoDB verifies the domain maps raw severity

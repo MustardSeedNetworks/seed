@@ -103,23 +103,7 @@ func (s *TemplateService) loadBuiltInTemplates() {
 		UpdatedAt: now,
 	}
 
-	// Network Summary template: the daily summary a schedule mails out.
-	s.templates["summary"] = &Template{
-		ID:          "summary",
-		Name:        "Network Summary",
-		Description: "Interface health, alerts, topology changes and probe results over the last day",
-		Type:        ReportTypeSummary,
-		Formats:     []ExportFormat{FormatPDF, FormatJSON},
-		Sections: []TemplateSection{
-			{ID: "interfaces", Name: "Interfaces", Title: "Interface Health", Order: sectionOrderOverview},
-			{ID: "alerts", Name: "Alerts", Title: "Alerts", Order: sectionOrderSecondary},
-			{ID: "topology", Name: "Topology", Title: "Topology Changes", Order: sectionOrderTertiary},
-			{ID: "probes", Name: "Probes", Title: "Probe Results", Order: sectionOrderQuaternary},
-		},
-		IsBuiltIn: true,
-		CreatedAt: now,
-		UpdatedAt: now,
-	}
+	s.loadNetworkTemplates(now)
 
 	// Performance Report template
 	s.templates["performance"] = &Template{
@@ -223,4 +207,42 @@ func (s *TemplateService) Delete(id string) error {
 
 	delete(s.templates, id)
 	return nil
+}
+
+// loadNetworkTemplates adds the templates over the polled network: the daily
+// summary and the capacity forecast.
+func (s *TemplateService) loadNetworkTemplates(now time.Time) {
+	// Network Summary template: the daily summary a schedule mails out.
+	s.templates["summary"] = &Template{
+		ID:          "summary",
+		Name:        "Network Summary",
+		Description: "Interface health, alerts, topology changes and probe results over the last day",
+		Type:        ReportTypeSummary,
+		Formats:     []ExportFormat{FormatPDF, FormatJSON},
+		Sections: []TemplateSection{
+			{ID: "interfaces", Name: "Interfaces", Title: "Interface Health", Order: sectionOrderOverview},
+			{ID: "alerts", Name: "Alerts", Title: "Alerts", Order: sectionOrderSecondary},
+			{ID: "topology", Name: "Topology", Title: "Topology Changes", Order: sectionOrderTertiary},
+			{ID: "probes", Name: "Probes", Title: "Probe Results", Order: sectionOrderQuaternary},
+		},
+		IsBuiltIn: true,
+		CreatedAt: now,
+		UpdatedAt: now,
+	}
+
+	// Capacity Forecast template: when each interface's busy hour reaches
+	// the planning threshold.
+	s.templates["capacity"] = &Template{
+		ID:          "capacity",
+		Name:        "Capacity Forecast",
+		Description: "When each interface's busy-hour utilization reaches 80% of line rate, from its trend",
+		Type:        ReportTypeCapacity,
+		Formats:     []ExportFormat{FormatPDF, FormatJSON},
+		Sections: []TemplateSection{
+			{ID: "forecast", Name: "Forecast", Title: "Capacity Forecast", Order: sectionOrderOverview},
+		},
+		IsBuiltIn: true,
+		CreatedAt: now,
+		UpdatedAt: now,
+	}
 }

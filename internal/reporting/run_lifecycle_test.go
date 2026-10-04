@@ -199,3 +199,9 @@ func (nopMetricsRepo) TopologyChanges(context.Context, reporting.DateRange) (rep
 func (nopMetricsRepo) ProbeOutcomes(context.Context, reporting.DateRange) ([]reporting.ProbeOutcome, error) {
 	return nil, nil
 }
+
+func (nopMetricsRepo) InterfaceUtilizationHistory(
+	context.Context, reporting.DateRange,
+) ([]reporting.InterfaceUtilization, error) {
+	return nil, nil
+}

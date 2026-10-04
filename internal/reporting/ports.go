@@ -71,6 +71,10 @@ type MetricsRepo interface {
 	TopologyChanges(ctx context.Context, window DateRange) (TopologyChanges, error)
 	// ProbeOutcomes returns one row per probe that ran in the window.
 	ProbeOutcomes(ctx context.Context, window DateRange) ([]ProbeOutcome, error)
+
+	// InterfaceUtilizationHistory returns one entry per interface rated in
+	// [window.Start, window.End), with its hourly utilization in time order.
+	InterfaceUtilizationHistory(ctx context.Context, window DateRange) ([]InterfaceUtilization, error)
 }
 
 // ExportRepo reads raw rows for bulk data export. Rows are returned as generic

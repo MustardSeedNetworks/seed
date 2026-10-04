@@ -62,10 +62,16 @@ func (h *InterfaceHealth) faultRate() float64 {
 }
 
 func (h *InterfaceHealth) label() string {
-	if h.IfName != "" {
-		return h.Target + " " + h.IfName
+	return interfaceLabel(h.Target, h.IfName, h.IfIndex)
+}
+
+// interfaceLabel names an interface by its ifName once the topology has seen
+// it, and by ifIndex until then.
+func interfaceLabel(target, ifName string, ifIndex uint32) string {
+	if ifName != "" {
+		return target + " " + ifName
 	}
-	return h.Target + " ifIndex " + strconv.FormatUint(uint64(h.IfIndex), 10)
+	return target + " ifIndex " + strconv.FormatUint(uint64(ifIndex), 10)
 }
 
 // InterfaceSummary ranks the rated interfaces. Busiest holds those with a
@@ -242,22 +248,28 @@ func (s *GeneratorService) generateSummary(ctx context.Context, report *Report) 
 	case FormatPDF:
 		return s.generateSummaryPDF(report, summary)
 	case FormatJSON:
-		out, marshalErr := json.MarshalIndent(map[string]any{
-			"report": map[string]any{
-				"id":        report.ID,
-				"name":      report.Name,
-				"type":      report.Type,
-				"generated": time.Now().Format(time.RFC3339),
-			},
-			"summary": summary,
-		}, "", "  ")
-		if marshalErr != nil {
-			return nil, fmt.Errorf("marshaling JSON report: %w", marshalErr)
-		}
-		return out, nil
+		return marshalWindowedJSON(report, "summary", summary)
 	case FormatHTML, FormatCSV, FormatExcel, FormatMarkdown:
 	}
 	return nil, fmt.Errorf("unsupported format for a summary: %s", report.Format)
+}
+
+// marshalWindowedJSON renders a summary or forecast as JSON: the report's
+// identity, and body under key.
+func marshalWindowedJSON(report *Report, key string, body any) ([]byte, error) {
+	out, err := json.MarshalIndent(map[string]any{
+		"report": map[string]any{
+			"id":        report.ID,
+			"name":      report.Name,
+			"type":      report.Type,
+			"generated": time.Now().Format(time.RFC3339),
+		},
+		key: body,
+	}, "", "  ")
+	if err != nil {
+		return nil, fmt.Errorf("marshaling JSON report: %w", err)
+	}
+	return out, nil
 }
 
 func (s *GeneratorService) generateSummaryPDF(report *Report, sum *NetworkSummary) ([]byte, error) {
