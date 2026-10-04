@@ -59,10 +59,13 @@
       "summaryWithBgp": "Interface {{interface}} on {{device}} went down while it was administratively up. BGP sessions on {{device}} that dropped after it: {{peers}}.",
       "evidence": {
         "operStatus": "ifOperStatus went from up to {{status}} on ifIndex {{ifIndex}} at {{time}}.",
+        "counterPeak": "{{counter}} on {{interface}} peaked at {{rate}} per second in the {{minutes}} minutes before it went down.",
+        "countersClean": "{{interface}} counted no errors or discards in the {{minutes}} minutes before it went down (rated polls: {{polls}}).",
         "bgpPeer": "BGP peer {{peer}} (AS{{as}}) left Established {{seconds}} s later."
       },
       "next": {
         "down": "Check the physical link on {{interface}}: the cable, the optic and the far-end port, then whether the far-end device is up.",
+        "downAfterErrors": "{{interface}} was counting errors before it went down, so the link is failing physically. Replace or reseat the cable and the optic on {{interface}}, then read the error counters of the far-end port.",
         "lowerLayerDown": "{{interface}} is waiting on the layer beneath it. Check the port, bundle or tunnel it runs over on {{device}}.",
         "notPresent": "Part of {{interface}} is missing. Check that its module or transceiver is seated and recognised on {{device}}.",
         "testing": "{{interface}} is in test mode. Find the test running on {{device}} and end it.",

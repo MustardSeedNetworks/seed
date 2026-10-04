@@ -202,6 +202,17 @@ func (r Rate) Points() []Point {
 	return points
 }
 
+// ErrorPeaks is the peak per-second rate of each of an interface's error
+// and discard counters over a window, and how many polls were rated in it.
+// Zero Polls means no rates were stored for the window.
+type ErrorPeaks struct {
+	Polls       int
+	InErrors    float64
+	OutErrors   float64
+	InDiscards  float64
+	OutDiscards float64
+}
+
 // Store persists rates.
 type Store interface {
 	RecordInterfaceRates(ctx context.Context, rates []Rate) error

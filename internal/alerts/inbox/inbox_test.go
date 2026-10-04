@@ -5,9 +5,11 @@ import (
 	"errors"
 	"slices"
 	"testing"
+	"time"
 
 	"github.com/MustardSeedNetworks/seed/internal/alerts"
 	"github.com/MustardSeedNetworks/seed/internal/alerts/inbox"
+	"github.com/MustardSeedNetworks/seed/internal/timeseries/ifrate"
 )
 
 type fakeRepo struct {
@@ -17,7 +19,16 @@ type fakeRepo struct {
 	ackID     int64
 	ackUser   string
 	resolveID int64
+	peaks     ifrate.ErrorPeaks
+	peakReads []peakRead
+	peaksErr  error
 	err       error
+}
+
+type peakRead struct {
+	target   string
+	ifIndex  uint32
+	from, to time.Time
 }
 
 func (f *fakeRepo) List(_ context.Context, opts alerts.ListOptions) ([]*alerts.Alert, error) {
@@ -32,6 +43,13 @@ func (f *fakeRepo) ListEffects(_ context.Context, causeIDs []int64) ([]*alerts.A
 
 func (f *fakeRepo) DeviceNames(context.Context) (map[string]string, error) {
 	return map[string]string{"tgt-1": "core-sw1"}, f.err
+}
+
+func (f *fakeRepo) InterfaceErrorPeaks(
+	_ context.Context, target string, ifIndex uint32, from, to time.Time,
+) (ifrate.ErrorPeaks, error) {
+	f.peakReads = append(f.peakReads, peakRead{target, ifIndex, from, to})
+	return f.peaks, f.peaksErr
 }
 
 func (f *fakeRepo) Acknowledge(_ context.Context, id int64, user string) error {
@@ -71,8 +89,9 @@ func TestServicePropagatesRepoError(t *testing.T) {
 
 func TestNarrativesExplainCausesWithTheirEffects(t *testing.T) {
 	causeID := int64(1)
+	downAt := time.Date(2026, 10, 4, 12, 0, 0, 0, time.UTC)
 	cause := &alerts.Alert{
-		ID: causeID, Rule: alerts.RuleInterfaceDown, Source: "tgt-1",
+		ID: causeID, Rule: alerts.RuleInterfaceDown, Source: "tgt-1", CreatedAt: downAt,
 		Metadata: `{"ifIndex":2,"ifName":"eth1","ifOperStatus":2}`,
 	}
 	// The effect is outside the page; it is found by its cause.
@@ -82,7 +101,7 @@ func TestNarrativesExplainCausesWithTheirEffects(t *testing.T) {
 	}
 	explained := &alerts.Alert{ID: 4, Rule: alerts.RuleBGPFlap, RootCauseID: &causeID, Metadata: effect.Metadata}
 	operator := &alerts.Alert{ID: 3, Rule: "db.2", Metadata: `{}`}
-	repo := &fakeRepo{effects: []*alerts.Alert{effect}}
+	repo := &fakeRepo{effects: []*alerts.Alert{effect}, peaks: ifrate.ErrorPeaks{Polls: 3, InErrors: 0.5}}
 
 	got, err := inbox.NewService(repo).Narratives(context.Background(),
 		[]*alerts.Alert{explained, operator, cause})
@@ -95,9 +114,18 @@ func TestNarrativesExplainCausesWithTheirEffects(t *testing.T) {
 	if len(got) != 1 {
 		t.Fatalf("narratives for %d alerts, want only the cause: %+v", len(got), got)
 	}
+	// Only the interface-down cause reads counters, over the window ending
+	// when it went down.
+	wantRead := peakRead{"tgt-1", 2, downAt.Add(-15 * time.Minute), downAt}
+	if len(repo.peakReads) != 1 || repo.peakReads[0] != wantRead {
+		t.Errorf("counter reads = %+v, want only %+v", repo.peakReads, wantRead)
+	}
 	n := got[causeID]
-	if n.Summary.Data["peers"] != 1 || len(n.Evidence) != 2 {
-		t.Errorf("cause narrative did not include its effect: %+v", n)
+	if n.Summary.Data["peers"] != 1 || len(n.Evidence) != 3 {
+		t.Errorf("cause narrative did not include its counters and effect: %+v", n)
+	}
+	if n.Evidence[1].Data["counter"] != "ifInErrors" {
+		t.Errorf("evidence[1] = %+v, want the input error peak", n.Evidence[1])
 	}
 	if n.Summary.Data["device"] != "core-sw1" {
 		t.Errorf("device = %v, want the polling target's name", n.Summary.Data["device"])
@@ -109,5 +137,18 @@ func TestNarrativesPropagatesRepoError(t *testing.T) {
 	svc := inbox.NewService(&fakeRepo{err: wantErr})
 	if _, err := svc.Narratives(context.Background(), []*alerts.Alert{{ID: 1}}); !errors.Is(err, wantErr) {
 		t.Errorf("repo error not propagated: %v", err)
+	}
+}
+
+func TestNarrativesPropagatesCounterReadError(t *testing.T) {
+	wantErr := errors.New("boom")
+	svc := inbox.NewService(&fakeRepo{peaksErr: wantErr})
+	cause := &alerts.Alert{
+		ID:       1,
+		Rule:     alerts.RuleInterfaceDown,
+		Metadata: `{"ifIndex":2,"ifName":"eth1","ifOperStatus":2}`,
+	}
+	if _, err := svc.Narratives(context.Background(), []*alerts.Alert{cause}); !errors.Is(err, wantErr) {
+		t.Errorf("counter read error not propagated: %v", err)
 	}
 }
