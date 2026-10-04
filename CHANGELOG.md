@@ -5,6 +5,25 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.226.0](https://github.com/MustardSeedNetworks/seed/compare/v0.225.0...v0.226.0) (2026-10-04)
+
+
+### Features
+
+* **alerts:** forward alerts to a syslog collector ([#3039](https://github.com/MustardSeedNetworks/seed/issues/3039)) ([8c2ecde](https://github.com/MustardSeedNetworks/seed/commit/8c2ecde3540e85b377a2ba702dbfa1991bf06aff)), closes [#3037](https://github.com/MustardSeedNetworks/seed/issues/3037)
+
+
+### Bug Fixes
+
+* **capture:** stop LLDP, CDP, EDP and Wi-Fi captures on a quiet interface ([#3043](https://github.com/MustardSeedNetworks/seed/issues/3043)) ([d5653a2](https://github.com/MustardSeedNetworks/seed/commit/d5653a25e78d6c5a75429529441a0d1d0e8b9454)), closes [#2862](https://github.com/MustardSeedNetworks/seed/issues/2862)
+* **ui:** move the palette into theme/ and block raw hex in CSS ([#3042](https://github.com/MustardSeedNetworks/seed/issues/3042)) ([a0ae4e3](https://github.com/MustardSeedNetworks/seed/commit/a0ae4e34c71fc28e951bd869fb927d4754caf46d))
+
+
+### Documentation
+
+* **adr:** link the fleet API styles decision from the ADR index ([#3044](https://github.com/MustardSeedNetworks/seed/issues/3044)) ([fa27dec](https://github.com/MustardSeedNetworks/seed/commit/fa27decb26891a02e33a1266d544ae861f67f5e4))
+* **changelog:** record [#3041](https://github.com/MustardSeedNetworks/seed/issues/3041) in v0.225.0 ([#3047](https://github.com/MustardSeedNetworks/seed/issues/3047)) ([83b7f81](https://github.com/MustardSeedNetworks/seed/commit/83b7f810bf10d5de4f95c5c84738059f2ad294e3))
+
 ## [0.225.0](https://github.com/MustardSeedNetworks/seed/compare/v0.224.1...v0.225.0) (2026-10-04)
 
 
