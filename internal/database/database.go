@@ -28,6 +28,7 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"net/url"
 	"os"
 	"path/filepath"
 	"strings"
@@ -334,6 +335,10 @@ func OpenWithConfig(cfg Config) (*DB, error) {
 	if !cfg.EnableWAL {
 		journalMode = "DELETE"
 	}
+	// The path is percent-encoded into the URI: raw, a '#' starts a fragment and
+	// a '?' the query, so distinct paths opened one file (#2906). Clean folds a
+	// leading "//", which would otherwise parse as a URI authority.
+	uriPath := (&url.URL{Path: filepath.ToSlash(filepath.Clean(cfg.Path))}).EscapedPath()
 	dsn := fmt.Sprintf(
 		"file:%s?_txlock=immediate"+
 			"&_pragma=foreign_keys(1)"+
@@ -341,7 +346,7 @@ func OpenWithConfig(cfg Config) (*DB, error) {
 			"&_pragma=synchronous(NORMAL)"+
 			"&_pragma=cache_size(-64000)"+ // 64MB cache
 			"&_pragma=temp_store(MEMORY)",
-		cfg.Path, journalMode,
+		uriPath, journalMode,
 	)
 	if cfg.BusyTimeout > 0 {
 		dsn += fmt.Sprintf("&_busy_timeout=%d", cfg.BusyTimeout)
