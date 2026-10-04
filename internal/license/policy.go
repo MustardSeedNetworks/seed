@@ -110,11 +110,11 @@ func starterFeatures() []string {
 // them: airmapper_baseline_diff has no implementation at all and the survey
 // import it named belongs to another product; white_label has a clients table
 // with a branding_json column and a repository, and db.Clients() has no caller,
-// no route and nothing that reads the branding; scheduled_reports has a working
-// tick engine that Start() runs at boot, and no route through which anyone can
-// ever create a schedule for it to find. The code stays where it is useful --
-// what is deleted is the claim that it is for sale. Re-add each string when the
-// capability is reachable.
+// no route and nothing that reads the branding. The code stays where it is
+// useful -- what is deleted is the claim that it is for sale. Re-add each
+// string when the capability is reachable. scheduled_reports was the third and
+// came back once /api/v1/reports/schedules gave the tick engine a way in
+// (#3048).
 func proFeatures() []string {
 	pro := []string{
 		// The clients under each BSS in the airspace tree (#2351). Starter
@@ -130,6 +130,8 @@ func proFeatures() []string {
 		"multi_client",
 		"sso",
 		"rest_api",
+		// The schedule CRUD routes (#3048); the scheduler fires them.
+		"scheduled_reports",
 		// Each of these has a real implementation and a gate (#2327):
 		// estate_polling lifts the polling-target cap, and server_monitoring
 		// and bgp_monitoring are the host_resources and bgp4_mib collectors,

@@ -728,6 +728,27 @@ body:
     "rateLimited": true
   },
   {
+    "feature": "scheduled_reports",
+    "maxBodyBytes": 262144,
+    "methods": [
+      "GET",
+      "POST"
+    ],
+    "minRole": "operator",
+    "path": "/api/v1/reports/schedules"
+  },
+  {
+    "feature": "scheduled_reports",
+    "maxBodyBytes": 262144,
+    "methods": [
+      "GET",
+      "PUT",
+      "DELETE"
+    ],
+    "minRole": "operator",
+    "path": "/api/v1/reports/schedules/"
+  },
+  {
     "feature": "export_csv_json",
     "maxBodyBytes": 262144,
     "methods": [

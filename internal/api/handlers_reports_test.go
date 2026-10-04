@@ -56,10 +56,20 @@ func reportsTestServer(t *testing.T) *api.Server {
 	t.Helper()
 
 	cfg, configPath := reportsTestConfig(t)
-	db := reportsTestDB(t)
+	return reportsTestServerOn(t, cfg, configPath, reportsTestDB(t))
+}
 
+// reportsTestServerOn is reportsTestServer over a caller-owned database, for
+// tests that bring a second reporting service up on the same rows.
+func reportsTestServerOn(t *testing.T, cfg *config.Config, configPath string, db *database.DB) *api.Server {
+	t.Helper()
+
+	// Load is what cmd_serve runs before serving: it reads the templates and the
+	// persisted schedules.
+	rep := app.NewReporting(cfg, db)
+	require.NoError(t, rep.Load(t.Context()))
 	s := api.NewServer(cfg, configPath, "", nil, false, nil, db, &api.BackgroundComponents{
-		Reporting: app.NewReporting(cfg, db),
+		Reporting: rep,
 	})
 
 	// Reports are gated on export_csv_json, which is Starter+. A test server

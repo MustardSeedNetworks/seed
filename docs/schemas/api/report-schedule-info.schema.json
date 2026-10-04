@@ -1,0 +1,85 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/MustardSeedNetworks/seed/main/docs/schemas/api/report-schedule-info.schema.json",
+  "$ref": "#/$defs/ReportScheduleInfo",
+  "$defs": {
+    "ReportScheduleInfo": {
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "template": {
+          "type": "string"
+        },
+        "format": {
+          "type": "string"
+        },
+        "schedule": {
+          "$ref": "#/$defs/Schedule"
+        },
+        "enabled": {
+          "type": "boolean"
+        },
+        "lastRun": {
+          "type": "string"
+        },
+        "nextRun": {
+          "type": "string"
+        },
+        "createdAt": {
+          "type": "string"
+        },
+        "updatedAt": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "id",
+        "name",
+        "template",
+        "format",
+        "schedule",
+        "enabled",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "Schedule": {
+      "properties": {
+        "frequency": {
+          "type": "string"
+        },
+        "dayOfWeek": {
+          "type": "integer"
+        },
+        "dayOfMonth": {
+          "type": "integer"
+        },
+        "hour": {
+          "type": "integer"
+        },
+        "minute": {
+          "type": "integer"
+        },
+        "timezone": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "frequency",
+        "hour",
+        "minute",
+        "timezone"
+      ]
+    }
+  },
+  "title": "ReportScheduleInfo",
+  "description": "ReportScheduleInfo — generated from the Go struct in internal/api; refresh with `make schema` after struct changes."
+}
