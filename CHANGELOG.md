@@ -5,6 +5,29 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.224.0](https://github.com/MustardSeedNetworks/seed/compare/v0.223.0...v0.224.0) (2026-10-04)
+
+
+### Features
+
+* **snmp:** collect and rate the EtherLike-MIB dot3StatsTable ([#3021](https://github.com/MustardSeedNetworks/seed/issues/3021)) ([3fc2dd6](https://github.com/MustardSeedNetworks/seed/commit/3fc2dd6afa64390dd5655f253fed9deba50ac708)), closes [#3020](https://github.com/MustardSeedNetworks/seed/issues/3020)
+
+
+### Bug Fixes
+
+* **license:** gate estate_polling, server_monitoring and bgp_monitoring ([#3003](https://github.com/MustardSeedNetworks/seed/issues/3003)) ([8087136](https://github.com/MustardSeedNetworks/seed/commit/8087136490b532d51af4142c01546a49b6942e6c))
+* **vuln:** scan only the named device, and reload when the scan finishes ([#3017](https://github.com/MustardSeedNetworks/seed/issues/3017)) ([af66bfe](https://github.com/MustardSeedNetworks/seed/commit/af66bfe3e11e52dddf4c2c7939c4072f076c4325)), closes [#2960](https://github.com/MustardSeedNetworks/seed/issues/2960)
+
+
+### Tests
+
+* **topology:** check seed's topology against NIAC's six packs ([#3019](https://github.com/MustardSeedNetworks/seed/issues/3019)) ([b696c77](https://github.com/MustardSeedNetworks/seed/commit/b696c77083441ab1b68cba9107090c18351e4206)), closes [#3018](https://github.com/MustardSeedNetworks/seed/issues/3018)
+
+
+### Continuous Integration
+
+* **release:** declare the artifacts each release publishes ([#3014](https://github.com/MustardSeedNetworks/seed/issues/3014)) ([4d14237](https://github.com/MustardSeedNetworks/seed/commit/4d1423740902d821c777a146e1f29958ad24a5d4)), closes [#3013](https://github.com/MustardSeedNetworks/seed/issues/3013)
+
 ## [0.223.0](https://github.com/MustardSeedNetworks/seed/compare/v0.222.0...v0.223.0) (2026-10-04)
 
 
