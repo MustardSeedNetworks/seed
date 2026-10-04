@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.229.0](https://github.com/MustardSeedNetworks/seed/compare/v0.228.0...v0.229.0) (2026-10-04)
+
+
+### Features
+
+* **reports:** add a daily network summary over interfaces, alerts, topology and probes ([#3072](https://github.com/MustardSeedNetworks/seed/issues/3072)) ([52f0ced](https://github.com/MustardSeedNetworks/seed/commit/52f0cedfeaa591e34aea615f3eb1313fc0d73325)), closes [#3071](https://github.com/MustardSeedNetworks/seed/issues/3071)
+
+
+### Code Refactoring
+
+* **ui:** let the React Compiler hold the contexts' identities ([#3067](https://github.com/MustardSeedNetworks/seed/issues/3067)) ([ed0746d](https://github.com/MustardSeedNetworks/seed/commit/ed0746dc0086e3c88d2173014499bd259b265944))
+
 ## [0.228.0](https://github.com/MustardSeedNetworks/seed/compare/v0.227.1...v0.228.0) (2026-10-04)
 
 
