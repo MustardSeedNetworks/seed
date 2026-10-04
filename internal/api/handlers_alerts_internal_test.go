@@ -3,6 +3,7 @@ package api
 import (
 	"context"
 	"encoding/json"
+	"maps"
 	"net/http"
 	"net/http/httptest"
 	"strconv"
@@ -210,5 +211,49 @@ func TestSeedAlert_HasNonZeroCreatedAt(t *testing.T) {
 	}
 	if !alert.CreatedAt.Before(time.Now().UTC().Add(time.Minute)) {
 		t.Errorf("CreatedAt looks wrong: %v", alert.CreatedAt)
+	}
+}
+
+// The inbox can only show a receiver that stopped accepting if the list
+// serves each channel's outcome (#2606, #2997); an alert never offered to a
+// receiver carries no deliveries key at all.
+func TestHandleAlerts_ServesEachChannelsDelivery(t *testing.T) {
+	s := newAlertsTestServer(t)
+	ctx := context.Background()
+	offered := seedAlert(t, s.db(), alerts.SeverityError)
+	seedAlert(t, s.db(), alerts.SeverityWarning)
+	attemptedAt := time.Date(2026, 10, 4, 1, 0, 0, 0, time.UTC)
+	const reason = "AUTH: 535 5.7.8 authentication credentials invalid"
+	if err := s.db().Alerts().RecordDelivery(ctx, offered, alerts.ChannelEmail,
+		alerts.DeliveryFailed, attemptedAt, reason); err != nil {
+		t.Fatalf("record delivery: %v", err)
+	}
+
+	req := httptest.NewRequest(http.MethodGet, APIVersionPrefix+"/alerts", http.NoBody)
+	w := httptest.NewRecorder()
+	s.handleAlerts(w, req)
+	var resp struct {
+		Alerts []struct {
+			ID         int64            `json:"id"`
+			Deliveries []map[string]any `json:"deliveries"`
+		} `json:"alerts"`
+	}
+	if err := json.Unmarshal(w.Body.Bytes(), &resp); err != nil {
+		t.Fatalf("decode: %v", err)
+	}
+	for _, a := range resp.Alerts {
+		if a.ID != offered {
+			if a.Deliveries != nil {
+				t.Errorf("alert %d was never offered to a receiver but serves %v", a.ID, a.Deliveries)
+			}
+			continue
+		}
+		want := map[string]any{
+			"channel": "email", "status": "failed",
+			"attemptedAt": "2026-10-04T01:00:00Z", "error": reason,
+		}
+		if len(a.Deliveries) != 1 || !maps.Equal(a.Deliveries[0], want) {
+			t.Errorf("alert %d deliveries = %v, want [%v]", a.ID, a.Deliveries, want)
+		}
 	}
 }

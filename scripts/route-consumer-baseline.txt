@@ -38,6 +38,7 @@
 /api/v1/security/wifi/discovery/networks  # scheduled: Wave 9, see /security/wifi/discovery/aps
 /api/v1/security/wifi/discovery/scan      # scheduled: Wave 9, see /security/wifi/discovery/aps
 /api/v1/security/wifi/discovery/stats     # scheduled: Wave 9, see /security/wifi/discovery/aps
+/api/v1/settings/alerts/test              # scheduled: UI-SEED-24 — the SMTP settings section (fleet UI driver) sends its test here; the API landed first (#2997)
 /api/v1/telemetry/dhcp/lease              # scheduled: #170 landed the backend (PR #2276); the UI consumer is the remaining half
 /api/v1/telemetry/dhcp/renew              # scheduled: #170, see /telemetry/dhcp/lease
 /api/v1/telemetry/dhcp/rogue              # delete: unclaimed. Rogue DHCP is a NetAlly problem type, but no wave item claims it and these routes are dhcp.RogueDetector's only reader — nothing starts it, AlertOnDetection reaches no alert path. Queued with bluetooth

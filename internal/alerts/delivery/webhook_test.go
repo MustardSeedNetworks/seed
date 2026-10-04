@@ -77,7 +77,7 @@ func TestNotifierPostsSignedAlert(t *testing.T) {
 	}))
 	defer srv.Close()
 
-	n, err := delivery.New(delivery.Config{URL: srv.URL, Secret: signingKey})
+	n, err := delivery.NewWebhook(delivery.WebhookConfig{URL: srv.URL, Secret: signingKey})
 	if err != nil {
 		t.Fatalf("New: %v", err)
 	}
@@ -128,11 +128,10 @@ func TestNotifierRetriesThenReportsFailed(t *testing.T) {
 	}))
 	defer srv.Close()
 
-	n, err := delivery.New(delivery.Config{
+	n, err := delivery.NewWebhook(delivery.WebhookConfig{
 		URL:         srv.URL,
 		Secret:      signingKey,
-		MaxAttempts: 3,
-		Backoff:     time.Millisecond,
+		MaxAttempts: 3, Backoff: time.Millisecond,
 	})
 	if err != nil {
 		t.Fatalf("New: %v", err)
@@ -165,11 +164,10 @@ func TestNotifierDoesNotRetryPermanentRejection(t *testing.T) {
 	}))
 	defer srv.Close()
 
-	n, err := delivery.New(delivery.Config{
+	n, err := delivery.NewWebhook(delivery.WebhookConfig{
 		URL:         srv.URL,
 		Secret:      signingKey,
-		MaxAttempts: 3,
-		Backoff:     time.Millisecond,
+		MaxAttempts: 3, Backoff: time.Millisecond,
 	})
 	if err != nil {
 		t.Fatalf("New: %v", err)
@@ -196,7 +194,7 @@ func TestNotifierDropsWhenQueueFullAndNeverBlocks(t *testing.T) {
 	defer srv.Close()
 	defer close(release)
 
-	n, err := delivery.New(delivery.Config{
+	n, err := delivery.NewWebhook(delivery.WebhookConfig{
 		URL:       srv.URL,
 		Secret:    signingKey,
 		QueueSize: 1,
@@ -229,18 +227,18 @@ func TestNotifierDropsWhenQueueFullAndNeverBlocks(t *testing.T) {
 func TestNewRejectsBadConfig(t *testing.T) {
 	tests := []struct {
 		name string
-		cfg  delivery.Config
+		cfg  delivery.WebhookConfig
 	}{
-		{"empty url", delivery.Config{Secret: signingKey}},
-		{"relative url", delivery.Config{URL: "/alerts", Secret: signingKey}},
-		{"unsupported scheme", delivery.Config{URL: "ftp://example.test/a", Secret: signingKey}},
-		{"no host", delivery.Config{URL: "https://", Secret: signingKey}},
-		{"userinfo in url", delivery.Config{URL: "https://user:pw@example.test/a", Secret: signingKey}},
-		{"missing secret", delivery.Config{URL: "https://example.test/a"}},
+		{"empty url", delivery.WebhookConfig{Secret: signingKey}},
+		{"relative url", delivery.WebhookConfig{URL: "/alerts", Secret: signingKey}},
+		{"unsupported scheme", delivery.WebhookConfig{URL: "ftp://example.test/a", Secret: signingKey}},
+		{"no host", delivery.WebhookConfig{URL: "https://", Secret: signingKey}},
+		{"userinfo in url", delivery.WebhookConfig{URL: "https://user:pw@example.test/a", Secret: signingKey}},
+		{"missing secret", delivery.WebhookConfig{URL: "https://example.test/a"}},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if _, err := delivery.New(tt.cfg); !errors.Is(err, delivery.ErrInvalidConfig) {
+			if _, err := delivery.NewWebhook(tt.cfg); !errors.Is(err, delivery.ErrInvalidConfig) {
 				t.Errorf("New(%+v) error = %v, want ErrInvalidConfig", tt.cfg, err)
 			}
 		})
@@ -270,7 +268,7 @@ func TestWrapWriterDeliversEveryStoredAlert(t *testing.T) {
 	defer srv.Close()
 
 	m := delivery.NewManager(nil, slog.New(slog.DiscardHandler))
-	m.Apply(delivery.Config{URL: srv.URL, Secret: signingKey})
+	m.ApplyWebhook(delivery.WebhookConfig{URL: srv.URL, Secret: signingKey})
 	defer m.Stop(context.Background())
 
 	store := &fakeWriter{}
@@ -296,7 +294,7 @@ func TestWrapWriterDoesNotDeliverWhenTheStoreFails(t *testing.T) {
 	defer srv.Close()
 
 	m := delivery.NewManager(nil, slog.New(slog.DiscardHandler))
-	m.Apply(delivery.Config{URL: srv.URL, Secret: signingKey})
+	m.ApplyWebhook(delivery.WebhookConfig{URL: srv.URL, Secret: signingKey})
 	defer m.Stop(context.Background())
 
 	storeErr := errors.New("insert failed")
@@ -312,7 +310,7 @@ func TestWrapWriterDoesNotDeliverWhenTheStoreFails(t *testing.T) {
 }
 
 func TestEndpointWithholdsThePathSecret(t *testing.T) {
-	n, err := delivery.New(delivery.Config{
+	n, err := delivery.NewWebhook(delivery.WebhookConfig{
 		URL:    "https://hooks.example.test/services/T000/B000/XXXXsecretXXXX?k=v",
 		Secret: signingKey,
 	})

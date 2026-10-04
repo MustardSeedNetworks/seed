@@ -24,16 +24,21 @@ export interface Alert {
   /** An earlier alert that probably caused this one (#409). */
   rootCauseId?: number;
   /**
-   * What happened when the outbound webhook last tried to send this alert:
-   * 'pending' | 'delivered' | 'failed' | 'dropped', or absent. Absent means
-   * delivery never applied — no receiver is configured, which is the default
-   * — and must never render as a failure.
+   * What happened when each configured receiver was offered this alert, one
+   * entry per channel. Absent means delivery never applied — no receiver is
+   * configured, which is the default — and must never render as a failure.
    */
-  deliveryStatus?: string;
-  /** When the last delivery attempt finished. */
-  deliveryAttemptedAt?: string;
+  deliveries?: AlertDelivery[];
+}
+
+/** One channel's delivery outcome for one alert. */
+export interface AlertDelivery {
+  channel: 'webhook' | 'email';
+  status: 'pending' | 'delivered' | 'failed' | 'dropped';
+  /** When the last attempt finished; absent while still queued. */
+  attemptedAt?: string;
   /** The last attempt's error text, so the reason is readable without the log. */
-  deliveryError?: string;
+  error?: string;
 }
 
 export interface AlertsListResponse {

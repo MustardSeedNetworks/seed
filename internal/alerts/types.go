@@ -31,18 +31,12 @@ type Alert struct {
 	// RootCauseID names an earlier alert that probably caused this one — set
 	// by internal/alerts/correlation, nil when nothing explains it.
 	RootCauseID *int64 `json:"rootCauseId,omitempty"`
-	// DeliveryStatus is what happened when the outbound webhook (#368) last
-	// tried to send this alert: one of the Delivery* constants, or empty.
-	// Empty means delivery never applied to this alert — no receiver is
-	// configured, or the alert predates the one that is — and must never be
-	// rendered as a failure.
-	DeliveryStatus string `json:"deliveryStatus,omitempty"`
-	// DeliveryAttemptedAt is when the last attempt finished, nil while the
-	// alert is still queued and on every alert delivery never touched.
-	DeliveryAttemptedAt *time.Time `json:"deliveryAttemptedAt,omitempty"`
-	// DeliveryError is the last attempt's error text, so an operator can tell
-	// a refused connection from a 401 without reading the daemon log.
-	DeliveryError  string     `json:"deliveryError,omitempty"`
+	// Deliveries is what happened when Seed tried to send this alert to each
+	// configured receiver (#368 webhook, #2997 email): one entry per channel
+	// that was offered the alert. No entry for a channel means delivery never
+	// applied there — no receiver was configured when the alert was raised —
+	// and must never be rendered as a failure.
+	Deliveries     []Delivery `json:"deliveries,omitempty"`
 	Acknowledged   bool       `json:"acknowledged"`
 	AcknowledgedBy *string    `json:"acknowledgedBy,omitempty"`
 	AcknowledgedAt *time.Time `json:"acknowledgedAt,omitempty"`
@@ -61,9 +55,33 @@ const (
 	TypeDiscovery    = "discovery"
 )
 
-// Delivery states for DeliveryStatus. The zero value — the empty string — is
-// deliberately not one of them: an alert nobody tried to send is not a failed
-// delivery, and most installs configure no receiver at all.
+// Channel names an outbound transport. Each one records its own outcome on
+// the alert, so a working webhook cannot hide a mail relay that refuses every
+// message.
+type Channel string
+
+// The outbound channels.
+const (
+	ChannelWebhook Channel = "webhook"
+	ChannelEmail   Channel = "email"
+)
+
+// Delivery is one channel's outcome for one alert.
+type Delivery struct {
+	Channel Channel `json:"channel"`
+	// Status is one of the Delivery* constants.
+	Status string `json:"status"`
+	// AttemptedAt is when the last attempt finished, nil while the alert is
+	// still queued.
+	AttemptedAt *time.Time `json:"attemptedAt,omitempty"`
+	// Error is the last attempt's error text, so an operator can tell a
+	// refused connection from a rejected login without reading the daemon log.
+	Error string `json:"error,omitempty"`
+}
+
+// Delivery states for Delivery.Status. There is no "not applicable" state:
+// an alert nobody tried to send on a channel has no Delivery for it, because
+// most installs configure no receiver at all.
 const (
 	// DeliveryPending means the alert is queued for the receiver and no
 	// attempt has finished yet.

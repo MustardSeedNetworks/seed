@@ -1,11 +1,12 @@
 /**
- * AlertsPage.delivery.test.tsx — the webhook delivery outcome is visible.
+ * AlertsPage.delivery.test.tsx — each receiver's delivery outcome is visible.
  *
  * #368's acceptance is that a receiver which stopped accepting POSTs becomes
  * discoverable from the inbox. Two rules carry that and are asserted here:
  * a failure is named on the row itself (the operator is scanning, not opening
  * each alert), and an install with no receiver shows nothing at all — most
  * deployments configure none, so an empty status must never read as a failure.
+ * Each channel (webhook, email; #2997) answers for itself.
  */
 import { render, screen, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -74,7 +75,7 @@ afterEach(async () => {
   await i18n.changeLanguage('en');
 });
 
-describe('AlertsPage — webhook delivery status', () => {
+describe('AlertsPage — delivery status', () => {
   it('says nothing about delivery when no receiver is configured', async () => {
     await renderWith(baseAlert);
 
@@ -85,9 +86,14 @@ describe('AlertsPage — webhook delivery status', () => {
   it('names a failed delivery on the row and its reason in the detail', async () => {
     await renderWith({
       ...baseAlert,
-      deliveryStatus: 'failed',
-      deliveryAttemptedAt: '2026-09-06T10:00:05Z',
-      deliveryError: 'receiver answered 401 for alert 1',
+      deliveries: [
+        {
+          channel: 'webhook',
+          status: 'failed',
+          attemptedAt: '2026-09-06T10:00:05Z',
+          error: 'receiver answered 401 for alert 1',
+        },
+      ],
     });
 
     // On the row, so the misconfiguration is discoverable without opening
@@ -100,8 +106,13 @@ describe('AlertsPage — webhook delivery status', () => {
   it('does not mark a delivered alert on the row, but states it in the detail', async () => {
     await renderWith({
       ...baseAlert,
-      deliveryStatus: 'delivered',
-      deliveryAttemptedAt: '2026-09-06T10:00:05Z',
+      deliveries: [
+        {
+          channel: 'webhook',
+          status: 'delivered',
+          attemptedAt: '2026-09-06T10:00:05Z',
+        },
+      ],
     });
 
     expect(screen.getByTestId('alert-row-1').textContent).not.toContain('not delivered');
@@ -112,21 +123,51 @@ describe('AlertsPage — webhook delivery status', () => {
   it('marks a dropped delivery, which the receiver never saw either', async () => {
     await renderWith({
       ...baseAlert,
-      deliveryStatus: 'dropped',
-      deliveryAttemptedAt: '2026-09-06T10:00:05Z',
+      deliveries: [
+        {
+          channel: 'webhook',
+          status: 'dropped',
+          attemptedAt: '2026-09-06T10:00:05Z',
+        },
+      ],
     });
 
     expect(screen.getByTestId('alert-row-1').textContent).toContain('not delivered');
     expect(screen.getByText(/the delivery queue was full/)).toBeVisible();
   });
 
+  it('states each channel separately, so a delivered webhook cannot hide a failed email', async () => {
+    await renderWith({
+      ...baseAlert,
+      deliveries: [
+        {
+          channel: 'email',
+          status: 'failed',
+          attemptedAt: '2026-09-06T10:00:05Z',
+          error: 'RCPT TO noc@example.com: 550 5.1.1 no such mailbox',
+        },
+        { channel: 'webhook', status: 'delivered', attemptedAt: '2026-09-06T10:00:05Z' },
+      ],
+    });
+
+    expect(screen.getByTestId('alert-row-1').textContent).toContain('not delivered');
+    expect(screen.getByText('Email delivery')).toBeVisible();
+    expect(screen.getByText(/550 5.1.1 no such mailbox/)).toBeVisible();
+    expect(screen.getByText('Webhook delivery')).toBeVisible();
+  });
+
   it('renders the delivery copy in Spanish, with no English left behind', async () => {
     await renderWith(
       {
         ...baseAlert,
-        deliveryStatus: 'failed',
-        deliveryAttemptedAt: '2026-09-06T10:00:05Z',
-        deliveryError: 'receiver answered 401 for alert 1',
+        deliveries: [
+          {
+            channel: 'webhook',
+            status: 'failed',
+            attemptedAt: '2026-09-06T10:00:05Z',
+            error: 'receiver answered 401 for alert 1',
+          },
+        ],
       },
       'es',
     );

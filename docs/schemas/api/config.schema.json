@@ -3,6 +3,44 @@
   "$id": "https://raw.githubusercontent.com/MustardSeedNetworks/seed/main/docs/schemas/api/config.schema.json",
   "$ref": "#/$defs/Config",
   "$defs": {
+    "AlertEmailConfig": {
+      "properties": {
+        "host": {
+          "type": "string"
+        },
+        "port": {
+          "type": "integer"
+        },
+        "tls": {
+          "type": "string"
+        },
+        "username": {
+          "type": "string"
+        },
+        "password": {
+          "type": "string"
+        },
+        "from": {
+          "type": "string"
+        },
+        "to": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "host",
+        "port",
+        "tls",
+        "username",
+        "password",
+        "from"
+      ]
+    },
     "AlertWebhookConfig": {
       "properties": {
         "url": {
@@ -23,12 +61,16 @@
       "properties": {
         "webhook": {
           "$ref": "#/$defs/AlertWebhookConfig"
+        },
+        "email": {
+          "$ref": "#/$defs/AlertEmailConfig"
         }
       },
       "additionalProperties": false,
       "type": "object",
       "required": [
-        "webhook"
+        "webhook",
+        "email"
       ]
     },
     "AuthConfig": {

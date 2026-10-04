@@ -49,17 +49,17 @@ func TestManagerDeliversAfterApplyWithoutRestart(t *testing.T) {
 	if got := hits.Load(); got != 0 {
 		t.Fatalf("unconfigured manager made %d requests, want 0", got)
 	}
-	if got := store.created[0].DeliveryStatus; got != "" {
+	if got := statusOn(store.created[0], alerts.ChannelWebhook); got != "" {
 		t.Fatalf("delivery status %q on an unconfigured manager, want empty "+
 			"(empty means nobody ever tried to send this)", got)
 	}
 
-	m.Apply(delivery.Config{URL: srv.URL, Secret: "s3cret"})
+	m.ApplyWebhook(delivery.WebhookConfig{URL: srv.URL, Secret: "s3cret"})
 
 	if err := writer.Create(context.Background(), &alerts.Alert{ID: 2}); err != nil {
 		t.Fatalf("Create after Apply: %v", err)
 	}
-	if got := store.created[1].DeliveryStatus; got != alerts.DeliveryPending {
+	if got := statusOn(store.created[1], alerts.ChannelWebhook); got != alerts.DeliveryPending {
 		t.Fatalf("delivery status %q after Apply, want %q", got, alerts.DeliveryPending)
 	}
 	if !waitFor(t, func() bool { return hits.Load() == 1 }) {
@@ -74,7 +74,7 @@ func TestManagerApplyEmptyURLStopsDelivery(t *testing.T) {
 	store := &recordingStore{}
 	writer := delivery.WrapWriter(store, m)
 
-	m.Apply(delivery.Config{URL: srv.URL, Secret: "s3cret"})
+	m.ApplyWebhook(delivery.WebhookConfig{URL: srv.URL, Secret: "s3cret"})
 	if err := writer.Create(context.Background(), &alerts.Alert{ID: 1}); err != nil {
 		t.Fatalf("Create: %v", err)
 	}
@@ -82,11 +82,11 @@ func TestManagerApplyEmptyURLStopsDelivery(t *testing.T) {
 		t.Fatalf("timed out waiting for the first alert to arrive")
 	}
 
-	m.Apply(delivery.Config{})
+	m.ApplyWebhook(delivery.WebhookConfig{})
 	if err := writer.Create(context.Background(), &alerts.Alert{ID: 2}); err != nil {
 		t.Fatalf("Create after clearing the URL: %v", err)
 	}
-	if got := store.created[1].DeliveryStatus; got != "" {
+	if got := statusOn(store.created[1], alerts.ChannelWebhook); got != "" {
 		t.Fatalf("delivery status %q after the URL was cleared, want empty", got)
 	}
 	// Give a would-be delivery room to arrive before asserting it did not.
@@ -103,8 +103,8 @@ func TestManagerApplyRepointsToTheNewReceiver(t *testing.T) {
 	t.Cleanup(func() { m.Stop(context.Background()) })
 	writer := delivery.WrapWriter(&recordingStore{}, m)
 
-	m.Apply(delivery.Config{URL: first.URL, Secret: "s3cret"})
-	m.Apply(delivery.Config{URL: second.URL, Secret: "s3cret"})
+	m.ApplyWebhook(delivery.WebhookConfig{URL: first.URL, Secret: "s3cret"})
+	m.ApplyWebhook(delivery.WebhookConfig{URL: second.URL, Secret: "s3cret"})
 	if err := writer.Create(context.Background(), &alerts.Alert{ID: 1}); err != nil {
 		t.Fatalf("Create: %v", err)
 	}
@@ -122,10 +122,10 @@ func TestManagerApplyUnusableConfigDisablesDelivery(t *testing.T) {
 	t.Cleanup(func() { m.Stop(context.Background()) })
 	writer := delivery.WrapWriter(&recordingStore{}, m)
 
-	m.Apply(delivery.Config{URL: srv.URL, Secret: "s3cret"})
+	m.ApplyWebhook(delivery.WebhookConfig{URL: srv.URL, Secret: "s3cret"})
 	// A URL with no signing material cannot produce a verifiable request. The
 	// receiver must go away rather than keep receiving under the old secret.
-	m.Apply(delivery.Config{URL: srv.URL})
+	m.ApplyWebhook(delivery.WebhookConfig{URL: srv.URL})
 	if err := writer.Create(context.Background(), &alerts.Alert{ID: 1}); err != nil {
 		t.Fatalf("Create: %v", err)
 	}
@@ -133,7 +133,7 @@ func TestManagerApplyUnusableConfigDisablesDelivery(t *testing.T) {
 	if got := hits.Load(); got != 0 {
 		t.Fatalf("receiver saw %d requests after an unusable Apply, want 0", got)
 	}
-	if m.Enabled() {
+	if len(m.Status()) != 0 {
 		t.Fatal("manager reports enabled after an unusable Apply")
 	}
 }
@@ -147,11 +147,11 @@ func TestManagerApplyLeavesNoWorkerBehind(t *testing.T) {
 	// add to it: a settings write that left the old worker running would leak
 	// a goroutine per edit, and the replaced receiver would still be holding a
 	// connection to an endpoint the operator has moved away from.
-	m.Apply(delivery.Config{URL: srv.URL, Secret: "s3cret"})
+	m.ApplyWebhook(delivery.WebhookConfig{URL: srv.URL, Secret: "s3cret"})
 	baseline := runtime.NumGoroutine()
 
 	for range 8 {
-		m.Apply(delivery.Config{URL: srv.URL, Secret: "s3cret"})
+		m.ApplyWebhook(delivery.WebhookConfig{URL: srv.URL, Secret: "s3cret"})
 	}
 	if !waitFor(t, func() bool { return runtime.NumGoroutine() <= baseline }) {
 		t.Fatalf("goroutines grew from %d to %d over eight re-points; the replaced "+
@@ -169,11 +169,11 @@ func TestManagerDisablingDeliveryIsNotAnError(t *testing.T) {
 	// empty receiver must not reach New, whose job is to refuse an empty URL:
 	// the operator would find an error in the journal for doing what the UI
 	// invited them to do.
-	m.Apply(delivery.Config{})
+	m.ApplyWebhook(delivery.WebhookConfig{})
 	if logged.Len() != 0 {
 		t.Fatalf("clearing the receiver logged an error: %s", logged.String())
 	}
-	if m.Enabled() {
+	if len(m.Status()) != 0 {
 		t.Fatal("manager reports enabled after an empty Apply")
 	}
 }
@@ -181,8 +181,9 @@ func TestManagerDisablingDeliveryIsNotAnError(t *testing.T) {
 func TestStoppedNotifierRefusesRatherThanLeavingAlertsPending(t *testing.T) {
 	srv, hits := countingReceiver(t)
 	recorder := &recordingRecorder{}
-	n, err := delivery.New(delivery.Config{
-		URL: srv.URL, Secret: "s3cret", Recorder: recorder, Logger: quietLogger(),
+	n, err := delivery.NewWebhook(delivery.WebhookConfig{
+		URL: srv.URL, Secret: "s3cret",
+		Recorder: recorder, Logger: quietLogger(),
 	})
 	if err != nil {
 		t.Fatalf("New: %v", err)

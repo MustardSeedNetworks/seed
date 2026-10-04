@@ -1953,6 +1953,54 @@
       "properties": {
         "webhook": {
           "$ref": "#/$defs/AlertWebhookConfig"
+        },
+        "email": {
+          "$ref": "#/$defs/AlertEmailConfig"
+        }
+      }
+    },
+    "AlertEmailConfig": {
+      "type": "object",
+      "description": "Mail relay alerts are emailed through. An empty host means email is off and no outbound connection is made",
+      "additionalProperties": false,
+      "properties": {
+        "host": {
+          "type": "string",
+          "description": "Mail server host name, without scheme or port; empty disables email",
+          "default": ""
+        },
+        "port": {
+          "type": "integer",
+          "description": "Mail server port; 0 means the TLS mode's submission port (587 starttls, 465 tls)",
+          "minimum": 0,
+          "maximum": 65535,
+          "default": 0
+        },
+        "tls": {
+          "type": "string",
+          "description": "How the connection is encrypted; empty means starttls. There is no plaintext mode",
+          "enum": ["", "starttls", "tls"],
+          "default": ""
+        },
+        "username": {
+          "type": "string",
+          "description": "SMTP AUTH username; empty for a relay that admits by address",
+          "default": ""
+        },
+        "password": {
+          "type": "string",
+          "description": "SMTP AUTH password held as keyring ciphertext (enc: prefix); never stored or served in plaintext",
+          "default": ""
+        },
+        "from": {
+          "type": "string",
+          "description": "Sender address, e.g. \"Seed <seed@example.com>\"",
+          "default": ""
+        },
+        "to": {
+          "type": "array",
+          "description": "Recipient addresses",
+          "items": { "type": "string" }
         }
       }
     },

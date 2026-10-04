@@ -69,7 +69,7 @@ func TestBGPFlapReachesTheReceiverNamingTheInterfaceThatCausedIt(t *testing.T) {
 	defer srv.Close()
 
 	manager := delivery.NewManager(nil, slog.New(slog.DiscardHandler))
-	manager.Apply(delivery.Config{URL: srv.URL, Secret: signingKey})
+	manager.ApplyWebhook(delivery.WebhookConfig{URL: srv.URL, Secret: signingKey})
 	defer manager.Stop(context.Background())
 
 	now := func() time.Time { return time.Date(2026, 9, 14, 12, 0, 0, 0, time.UTC) }

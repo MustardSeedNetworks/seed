@@ -53,7 +53,7 @@ type Store interface {
 
 // Reconfigurer re-points a running component at settings that have just been
 // written, so a Settings edit takes effect without a daemon restart (#2605).
-// Today one component needs it: the outbound alert webhook.
+// Today one component needs it: the outbound alert receivers.
 //
 // It takes no argument and returns none. The implementation reads the live
 // config it already holds, so the component is re-pointed with exactly what
@@ -72,8 +72,8 @@ type Service struct {
 }
 
 // NewService builds the settings management service over its Store port.
-// encrypt is the keyring seam the alert-webhook secret is stored through;
-// reconfig re-points the webhook after a write. Both may be nil in a
+// encrypt is the keyring seam the alert receivers' secrets are stored through;
+// reconfig re-points the receivers after a write. Both may be nil in a
 // composition that has neither — the settings that need them are then refused
 // rather than half-applied.
 func NewService(store Store, encrypt Encrypter, reconfig Reconfigurer) *Service {
@@ -172,20 +172,20 @@ func (s *Service) write(updates map[string]any, ifMatch string) error {
 	})
 }
 
-// applyAlerts applies the alert-webhook section. Without an encrypter there is
-// nowhere safe to put the signing material, so the section is refused rather
-// than written in plaintext.
+// applyAlerts applies the alert receivers section. Without an encrypter there
+// is nowhere safe to put a secret, so the section is refused rather than
+// written in plaintext.
 func (s *Service) applyAlerts(updates map[string]any, cfg *config.Config) error {
 	if _, present := updates["alerts"]; !present {
 		return nil
 	}
 	if s.encrypt == nil {
-		return errors.New("alerts: no keyring is available to store the webhook secret")
+		return errors.New("alerts: no keyring is available to store receiver secrets")
 	}
 	return applyAlertsUpdates(updates, cfg, s.encrypt)
 }
 
-// reconfigure tells the running webhook to re-read what was just persisted.
+// reconfigure tells the running receivers to re-read what was just persisted.
 func (s *Service) reconfigure() {
 	if s.reconfig != nil {
 		s.reconfig.ReconfigureAlerts()

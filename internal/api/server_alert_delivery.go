@@ -54,7 +54,7 @@ func (s *Server) initAlertDelivery(
 	// settings write. A Server built without a config — the hand-assembled one
 	// several internal tests use — has no stored receiver to apply.
 	if s.config != nil {
-		app.ApplyAlertWebhook(s.config, manager)
+		app.ApplyAlertReceivers(s.config, manager)
 	}
 	return manager
 }

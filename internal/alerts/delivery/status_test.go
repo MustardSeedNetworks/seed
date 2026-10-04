@@ -30,6 +30,7 @@ type recordingRecorder struct {
 
 type recordedDelivery struct {
 	alertID     int64
+	channel     alerts.Channel
 	status      string
 	attemptedAt time.Time
 	errText     string
@@ -38,14 +39,26 @@ type recordedDelivery struct {
 func (r *recordingRecorder) RecordDelivery(
 	_ context.Context,
 	alertID int64,
+	channel alerts.Channel,
 	status string,
 	attemptedAt time.Time,
 	deliveryErr string,
 ) error {
 	r.mu.Lock()
 	defer r.mu.Unlock()
-	r.writes = append(r.writes, recordedDelivery{alertID, status, attemptedAt, deliveryErr})
+	r.writes = append(r.writes, recordedDelivery{alertID, channel, status, attemptedAt, deliveryErr})
 	return r.failErr
+}
+
+// statusOn is the alert's delivery state on channel, empty when the channel
+// was never offered the alert.
+func statusOn(alert *alerts.Alert, channel alerts.Channel) string {
+	for _, d := range alert.Deliveries {
+		if d.Channel == channel {
+			return d.Status
+		}
+	}
+	return ""
 }
 
 func (r *recordingRecorder) last() (recordedDelivery, bool) {
@@ -71,7 +84,7 @@ func TestDeliveredOutcomeReachesTheAlertRow(t *testing.T) {
 
 	recorder := &recordingRecorder{}
 	store := &recordingStore{}
-	writer := newTestWriter(t, store, recorder, delivery.Config{URL: srv.URL, Secret: signingKey})
+	writer := newTestWriter(t, store, recorder, delivery.WebhookConfig{URL: srv.URL, Secret: signingKey})
 
 	alert := testAlert()
 	alert.ID = 0 // the store assigns it, as the repository does
@@ -81,8 +94,12 @@ func TestDeliveredOutcomeReachesTheAlertRow(t *testing.T) {
 
 	// The row is written once, with the insert, so the inbox never shows an
 	// alert whose delivery state is missing rather than pending.
-	if alert.DeliveryStatus != alerts.DeliveryPending {
-		t.Errorf("stored alert DeliveryStatus = %q, want %q", alert.DeliveryStatus, alerts.DeliveryPending)
+	if statusOn(alert, alerts.ChannelWebhook) != alerts.DeliveryPending {
+		t.Errorf(
+			"stored alert DeliveryStatus = %q, want %q",
+			statusOn(alert, alerts.ChannelWebhook),
+			alerts.DeliveryPending,
+		)
 	}
 
 	if !waitFor(t, func() bool {
@@ -113,8 +130,9 @@ func TestFailedDeliveryLeavesAVisibleReasonOnTheAlert(t *testing.T) {
 
 	recorder := &recordingRecorder{}
 	store := &recordingStore{}
-	writer := newTestWriter(t, store, recorder, delivery.Config{
-		URL: srv.URL, Secret: signingKey, MaxAttempts: 2, Backoff: time.Millisecond,
+	writer := newTestWriter(t, store, recorder, delivery.WebhookConfig{
+		URL: srv.URL, Secret: signingKey,
+		MaxAttempts: 2, Backoff: time.Millisecond,
 	})
 
 	alert := testAlert()
@@ -153,8 +171,9 @@ func TestQueueFullIsRecordedAsDroppedNotPending(t *testing.T) {
 
 	recorder := &recordingRecorder{}
 	store := &recordingStore{}
-	writer := newTestWriter(t, store, recorder, delivery.Config{
-		URL: srv.URL, Secret: signingKey, QueueSize: 1,
+	writer := newTestWriter(t, store, recorder, delivery.WebhookConfig{
+		URL: srv.URL, Secret: signingKey,
+		QueueSize: 1,
 	})
 
 	var dropped *alerts.Alert
@@ -175,9 +194,9 @@ func TestQueueFullIsRecordedAsDroppedNotPending(t *testing.T) {
 	// Dropped must be recorded synchronously: the worker is blocked, so
 	// nothing else will ever revisit this alert and a pending row would stay
 	// pending forever.
-	if dropped.DeliveryStatus != alerts.DeliveryPending {
+	if statusOn(dropped, alerts.ChannelWebhook) != alerts.DeliveryPending {
 		t.Errorf("the stored row read %q, want the insert to carry %q",
-			dropped.DeliveryStatus, alerts.DeliveryPending)
+			statusOn(dropped, alerts.ChannelWebhook), alerts.DeliveryPending)
 	}
 }
 
@@ -194,9 +213,9 @@ func TestNoReceiverConfiguredRecordsNothing(t *testing.T) {
 	if err := writer.Create(context.Background(), alert); err != nil {
 		t.Fatalf("Create: %v", err)
 	}
-	if alert.DeliveryStatus != "" {
+	if statusOn(alert, alerts.ChannelWebhook) != "" {
 		t.Errorf("an install with no receiver stamped DeliveryStatus = %q, want empty",
-			alert.DeliveryStatus)
+			statusOn(alert, alerts.ChannelWebhook))
 	}
 	if recorder.count() != 0 {
 		t.Errorf("an install with no receiver made %d delivery writes, want 0", recorder.count())
@@ -209,12 +228,12 @@ func newTestWriter(
 	t *testing.T,
 	store delivery.Writer,
 	recorder delivery.Recorder,
-	cfg delivery.Config,
+	cfg delivery.WebhookConfig,
 ) delivery.Writer {
 	t.Helper()
 	cfg.Logger = slog.New(slog.DiscardHandler)
 	manager := delivery.NewManager(recorder, cfg.Logger)
-	manager.Apply(cfg)
+	manager.ApplyWebhook(cfg)
 	t.Cleanup(func() { manager.Stop(context.Background()) })
 	return delivery.WrapWriter(store, manager)
 }
@@ -234,7 +253,7 @@ func TestDeliveredPayloadCarriesNoDeliveryBookkeeping(t *testing.T) {
 	defer srv.Close()
 
 	writer := newTestWriter(t, &recordingStore{}, &recordingRecorder{},
-		delivery.Config{URL: srv.URL, Secret: signingKey})
+		delivery.WebhookConfig{URL: srv.URL, Secret: signingKey})
 
 	alert := testAlert()
 	alert.ID = 0

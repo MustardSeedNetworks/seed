@@ -27,6 +27,7 @@ func (s *Server) setupRoutes() {
 	s.setupWiFiRoutes()
 	s.setupReportingRoutes()
 	s.setupTopologyRoutes()
+	s.registerAll(s.alertRoutes())
 	s.registerAll(s.jobsRoutes())
 	s.registerAll(s.captureRoutes())
 	s.setupSSEAndStatic()
@@ -38,7 +39,6 @@ func (s *Server) setupRoutes() {
 func (s *Server) setupTopologyRoutes() {
 	op := database.RoleOperator
 	get := []string{http.MethodGet}
-	post := []string{http.MethodPost}
 	getPost := []string{http.MethodGet, http.MethodPost}
 	getPutDelete := []string{http.MethodGet, http.MethodPut, http.MethodDelete}
 	s.registerAll([]route{
@@ -59,14 +59,6 @@ func (s *Server) setupTopologyRoutes() {
 			path:    APIVersionPrefix + "/network/neighbours",
 			handler: s.handleNeighbourCache,
 			methods: get,
-		},
-		// A5.2 alerts: GET read-only; the action endpoint is operator-gated.
-		{path: APIVersionPrefix + "/alerts", handler: s.handleAlerts, methods: get},
-		{
-			path:    APIVersionPrefix + "/alerts/",
-			handler: s.handleAlertAction,
-			methods: post,
-			minRole: op,
 		},
 		// A5.3 polling targets CRUD: both writeGated (collection accepts POST).
 		{

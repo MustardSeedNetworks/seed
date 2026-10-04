@@ -21,6 +21,7 @@ import (
 
 	"github.com/MustardSeedNetworks/seed/internal/alerts"
 	"github.com/MustardSeedNetworks/seed/internal/alerts/inbox"
+	"github.com/MustardSeedNetworks/seed/internal/database"
 	"github.com/MustardSeedNetworks/seed/internal/logging"
 )
 
@@ -31,6 +32,27 @@ const (
 	alertsMaxLimit     = 1000
 	alertsDefaultLimit = 100
 )
+
+// alertRoutes returns the inbox routes and the receiver test-send. Listing
+// is a safe read; acknowledging, resolving and test-sending are operator
+// actions, and the test-send is rate-limited because each call is an outbound
+// connection.
+func (s *Server) alertRoutes() []route {
+	op := database.RoleOperator
+	post := []string{http.MethodPost}
+	return []route{
+		{path: APIVersionPrefix + "/alerts", handler: s.handleAlerts, methods: []string{http.MethodGet}},
+		{path: APIVersionPrefix + "/alerts/", handler: s.handleAlertAction, methods: post, minRole: op},
+		{
+			path:         APIVersionPrefix + "/settings/alerts/test",
+			handler:      s.handleAlertTestSend,
+			methods:      post,
+			minRole:      op,
+			maxBodyBytes: MaxBodySizeConfig,
+			rateLimited:  true,
+		},
+	}
+}
 
 // handleAlerts serves GET /api/v1/alerts. Supports the same filter
 // vocabulary as AlertRepository.List:
@@ -216,6 +238,27 @@ func encodeAlerts(alerts []*alerts.Alert) []map[string]any {
 		}
 		if a.ResolvedAt != nil {
 			row["resolvedAt"] = formatTime(*a.ResolvedAt)
+		}
+		if len(a.Deliveries) > 0 {
+			row["deliveries"] = encodeDeliveries(a.Deliveries)
+		}
+		out = append(out, row)
+	}
+	return out
+}
+
+// encodeDeliveries is each channel's outcome. It is what makes a receiver
+// that stopped accepting visible in the inbox (#2606, #2997); an alert with no
+// entry was never offered to a receiver and carries no key at all.
+func encodeDeliveries(deliveries []alerts.Delivery) []map[string]any {
+	out := make([]map[string]any, 0, len(deliveries))
+	for _, d := range deliveries {
+		row := map[string]any{"channel": d.Channel, "status": d.Status}
+		if d.AttemptedAt != nil {
+			row["attemptedAt"] = formatTime(*d.AttemptedAt)
+		}
+		if d.Error != "" {
+			row["error"] = d.Error
 		}
 		out = append(out, row)
 	}
