@@ -55,8 +55,8 @@ const DefaultWindow = 5 * time.Minute
 // be asserted about what causes them.
 func causeRuleFor(rule string) (string, bool) {
 	switch rule {
-	case ruleBGPFlap:
-		return ruleInterfaceDown, true
+	case alerts.RuleBGPFlap:
+		return alerts.RuleInterfaceDown, true
 	default:
 		return "", false
 	}
@@ -70,14 +70,8 @@ func causeRuleFor(rule string) (string, bool) {
 // (listener_rules_loader.go), so a rule an operator names "iface.down" cannot
 // be mistaken for the observation pipeline's.
 func isCause(rule string) bool {
-	return rule == ruleInterfaceDown
+	return rule == alerts.RuleInterfaceDown
 }
-
-// The pipeline rule ids this package reasons about, spelled once.
-const (
-	ruleBGPFlap       = "bgp.flap"
-	ruleInterfaceDown = "iface.down"
-)
 
 // Config configures the decorator. The zero value is usable: Window falls back
 // to [DefaultWindow] and Now to [time.Now].

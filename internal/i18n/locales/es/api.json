@@ -52,5 +52,44 @@
   },
   "messages": {
     "validationFailed": "Validación fallida"
+  },
+  "narrative": {
+    "interfaceDown": {
+      "summary": "La interfaz {{interface}} de {{device}} se desactivó mientras estaba habilitada administrativamente.",
+      "summaryWithBgp": "La interfaz {{interface}} de {{device}} se desactivó mientras estaba habilitada administrativamente. Sesiones BGP de {{device}} que cayeron después: {{peers}}.",
+      "evidence": {
+        "operStatus": "ifOperStatus pasó de up a {{status}} en el ifIndex {{ifIndex}} a las {{time}}.",
+        "bgpPeer": "El par BGP {{peer}} (AS{{as}}) salió de Established {{seconds}} s después."
+      },
+      "next": {
+        "down": "Revise el enlace físico de {{interface}}: el cable, el módulo óptico y el puerto del otro extremo; después, compruebe que el dispositivo del otro extremo está activo.",
+        "lowerLayerDown": "{{interface}} espera a la capa que tiene debajo. Revise el puerto, el agregado o el túnel sobre el que funciona en {{device}}.",
+        "notPresent": "Falta una parte de {{interface}}. Compruebe que su módulo o transceptor está bien insertado y que {{device}} lo reconoce.",
+        "testing": "{{interface}} está en modo de prueba. Localice la prueba en curso en {{device}} y deténgala.",
+        "dormant": "{{interface}} espera un evento externo, como un enlace de respaldo o de marcación bajo demanda. Confirme en {{device}} que es lo esperado.",
+        "unknown": "{{device}} no indicó por qué {{interface}} está desactivada. Inicie sesión en {{device}} y lea el estado de la interfaz."
+      }
+    },
+    "bgpFlap": {
+      "summary": "La sesión BGP con {{peer}} (AS{{as}}) en {{device}} salió de Established, sin ninguna alerta de interfaz desactivada en {{device}} en los {{minutes}} minutos anteriores.",
+      "evidence": {
+        "state": "bgpPeerState pasó de established a {{state}} a las {{time}}."
+      },
+      "next": {
+        "idle": "La sesión se reinició. Lea la notificación BGP en el registro de {{device}}: vencimiento del temporizador de espera, un límite de prefijos o un cambio de configuración.",
+        "connect": "{{device}} no logra completar una conexión TCP con {{peer}}. Compruebe la conectividad con {{peer}} y si el puerto TCP 179 está filtrado entre ambos.",
+        "active": "{{device}} no logra completar una conexión TCP con {{peer}}. Compruebe la conectividad con {{peer}} y si el puerto TCP 179 está filtrado entre ambos.",
+        "openSent": "TCP conecta, pero el intercambio BGP OPEN con {{peer}} falla. Compare el número de AS, el tiempo de espera y la autenticación en ambos extremos.",
+        "openConfirm": "TCP conecta, pero el intercambio BGP OPEN con {{peer}} falla. Compare el número de AS, el tiempo de espera y la autenticación en ambos extremos.",
+        "unknown": "Inicie sesión en {{device}} y lea el estado de la sesión BGP con {{peer}}."
+      }
+    },
+    "storage": {
+      "summary": "El sistema de archivos {{filesystem}} de {{device}} está lleno al {{percent}} %.",
+      "evidence": {
+        "usage": "{{used}} de {{size}} bytes en uso a las {{time}}."
+      },
+      "next": "Averigüe qué creció en {{filesystem}}, como registros, volcados de memoria o capturas, y libere espacio o amplíe el sistema de archivos."
+    }
   }
 }

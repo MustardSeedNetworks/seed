@@ -60,6 +60,42 @@ const (
 	TypeDiscovery    = "discovery"
 )
 
+// The rule ids of the built-in observation pipeline, spelled once for the
+// pipeline that raises them and everything that reasons about them.
+const (
+	RuleInterfaceDown   = "iface.down"
+	RuleBGPFlap         = "bgp.flap"
+	RuleStorageHigh     = "storage.high"
+	RuleStorageCritical = "storage.critical"
+)
+
+// InterfaceDownEvidence is the Metadata of a RuleInterfaceDown alert: the one
+// ifTable row that went down, not the whole table it was read from.
+type InterfaceDownEvidence struct {
+	IfIndex uint32 `json:"ifIndex"`
+	IfName  string `json:"ifName"`
+	// IfOperStatus is the RFC 2863 value the interface went down to.
+	IfOperStatus int `json:"ifOperStatus"`
+}
+
+// BGPPeerEvidence is the Metadata of a RuleBGPFlap alert: the peer that left
+// Established and the RFC 4273 bgpPeerState it was in when polled.
+type BGPPeerEvidence struct {
+	RemoteAddr string `json:"remoteAddr"`
+	RemoteAS   uint32 `json:"remoteAs"`
+	State      int    `json:"state"`
+}
+
+// StorageEvidence is the Metadata of a RuleStorageHigh or RuleStorageCritical
+// alert: the filesystem that crossed the threshold.
+type StorageEvidence struct {
+	Index       uint32  `json:"index"`
+	Description string  `json:"description"`
+	SizeBytes   uint64  `json:"sizeBytes"`
+	UsedBytes   uint64  `json:"usedBytes"`
+	UsedPercent float64 `json:"usedPercent"`
+}
+
 // Channel names an outbound transport. Each one records its own outcome on
 // the alert, so a working webhook cannot hide a mail relay that refuses every
 // message.

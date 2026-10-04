@@ -21,7 +21,9 @@ import (
 
 	"github.com/MustardSeedNetworks/seed/internal/alerts"
 	"github.com/MustardSeedNetworks/seed/internal/alerts/inbox"
+	"github.com/MustardSeedNetworks/seed/internal/alerts/narrative"
 	"github.com/MustardSeedNetworks/seed/internal/database"
+	"github.com/MustardSeedNetworks/seed/internal/i18n"
 	"github.com/MustardSeedNetworks/seed/internal/logging"
 )
 
@@ -78,9 +80,15 @@ func (s *Server) handleAlerts(w http.ResponseWriter, r *http.Request) {
 		writeAlertError(w, err, "Failed to list alerts")
 		return
 	}
+	narratives, err := s.alertInbox.Narratives(r.Context(), alerts)
+	if err != nil {
+		logger.ErrorContext(r.Context(), "explain alerts failed", "error", err)
+		writeAlertError(w, err, "Failed to list alerts")
+		return
+	}
 	writeJSON(w, r, map[string]any{
 		jsonKeyCount: len(alerts),
-		"alerts":     encodeAlerts(alerts),
+		"alerts":     encodeAlerts(alerts, narratives, i18n.FromRequest(r)),
 	})
 }
 
@@ -212,50 +220,78 @@ func parseAlertListOptions(r *http.Request) (alerts.ListOptions, error) {
 // encodeAlerts shapes the AlertRepository rows into the JSON
 // envelope. Done explicitly so the wire format stays stable when
 // DB columns evolve.
-func encodeAlerts(alerts []*alerts.Alert) []map[string]any {
+func encodeAlerts(
+	alerts []*alerts.Alert, narratives map[int64]narrative.Narrative, t *i18n.Localizer,
+) []map[string]any {
 	out := make([]map[string]any, 0, len(alerts))
 	for _, a := range alerts {
-		row := map[string]any{
-			"id":           a.ID,
-			"type":         a.Type,
-			"severity":     a.Severity,
-			"title":        a.Title,
-			"message":      a.Message,
-			"source":       a.Source,
-			"acknowledged": a.Acknowledged,
-			"resolved":     a.Resolved,
-			"createdAt":    formatTime(a.CreatedAt),
-			"metadata":     rawJSON(a.Metadata),
-		}
-		if a.DeviceID != nil {
-			row["deviceId"] = *a.DeviceID
-		}
-		if a.AcknowledgedBy != nil {
-			row["acknowledgedBy"] = *a.AcknowledgedBy
-		}
-		if a.AcknowledgedAt != nil {
-			row["acknowledgedAt"] = formatTime(*a.AcknowledgedAt)
-		}
-		if a.ResolvedAt != nil {
-			row["resolvedAt"] = formatTime(*a.ResolvedAt)
-		}
-		if len(a.Deliveries) > 0 {
-			row["deliveries"] = encodeDeliveries(a.Deliveries)
-		}
-		// The rule is what an escalation ladder is keyed by (P-B2), so the
-		// operator reads it here to configure one.
-		if a.Rule != "" {
-			row["rule"] = a.Rule
-		}
-		if a.EscalationStage > 0 {
-			row["escalationStage"] = a.EscalationStage
-		}
-		if a.EscalatedAt != nil {
-			row["escalatedAt"] = formatTime(*a.EscalatedAt)
-		}
-		out = append(out, row)
+		out = append(out, encodeAlert(a, narratives, t))
 	}
 	return out
+}
+
+func encodeAlert(
+	a *alerts.Alert, narratives map[int64]narrative.Narrative, t *i18n.Localizer,
+) map[string]any {
+	row := map[string]any{
+		"id":           a.ID,
+		"type":         a.Type,
+		"severity":     a.Severity,
+		"title":        a.Title,
+		"message":      a.Message,
+		"source":       a.Source,
+		"acknowledged": a.Acknowledged,
+		"resolved":     a.Resolved,
+		"createdAt":    formatTime(a.CreatedAt),
+		"metadata":     rawJSON(a.Metadata),
+	}
+	if a.DeviceID != nil {
+		row["deviceId"] = *a.DeviceID
+	}
+	if a.AcknowledgedBy != nil {
+		row["acknowledgedBy"] = *a.AcknowledgedBy
+	}
+	if a.AcknowledgedAt != nil {
+		row["acknowledgedAt"] = formatTime(*a.AcknowledgedAt)
+	}
+	if a.ResolvedAt != nil {
+		row["resolvedAt"] = formatTime(*a.ResolvedAt)
+	}
+	if len(a.Deliveries) > 0 {
+		row["deliveries"] = encodeDeliveries(a.Deliveries)
+	}
+	// The rule is what an escalation ladder is keyed by (P-B2), so the
+	// operator reads it here to configure one.
+	if a.Rule != "" {
+		row["rule"] = a.Rule
+	}
+	// A caused alert points at its cause, whose narrative covers both.
+	if a.RootCauseID != nil {
+		row["rootCauseId"] = *a.RootCauseID
+	}
+	if n, ok := narratives[a.ID]; ok {
+		row["narrative"] = encodeNarrative(n, t)
+	}
+	if a.EscalationStage > 0 {
+		row["escalationStage"] = a.EscalationStage
+	}
+	if a.EscalatedAt != nil {
+		row["escalatedAt"] = formatTime(*a.EscalatedAt)
+	}
+	return row
+}
+
+// encodeNarrative renders a narrative in the reader's language.
+func encodeNarrative(n narrative.Narrative, t *i18n.Localizer) map[string]any {
+	evidence := make([]string, 0, len(n.Evidence))
+	for _, m := range n.Evidence {
+		evidence = append(evidence, t.TWithData(m.Key, m.Data))
+	}
+	return map[string]any{
+		"summary":   t.TWithData(n.Summary.Key, n.Summary.Data),
+		"evidence":  evidence,
+		"nextCheck": t.TWithData(n.NextCheck.Key, n.NextCheck.Data),
+	}
 }
 
 // encodeDeliveries is each channel's outcome. It is what makes a receiver
