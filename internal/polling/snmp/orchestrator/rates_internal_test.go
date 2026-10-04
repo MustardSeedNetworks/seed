@@ -18,7 +18,8 @@ import (
 // recovery poll. Every if_table observation lands in snmp_observations; the
 // metrics store holds one rate per interval except the one spanning the
 // restart, and none of them is negative. The port's dot3Stats FCS counter
-// rates the same way; a counter the agent never served stores nothing.
+// rates the same way; a counter the agent never served stores nothing. The
+// port's line rate turns its octet rates into utilization.
 func TestRatingSinkPersistsRatesAcrossPolls(t *testing.T) {
 	t.Parallel()
 	db, err := database.Open(dbtest.Path(t))
@@ -55,8 +56,9 @@ func TestRatingSinkPersistsRatesAcrossPolls(t *testing.T) {
 			ObservedAt: start.Add(time.Duration(i) * time.Minute),
 			SysUpTime:  &upTime,
 			Rows: []iftable.Row{{
-				IfIndex: 3,
-				IfName:  "Gi0/3",
+				IfIndex:  3,
+				IfName:   "Gi0/3",
+				SpeedBps: 10_000,
 				Counters: iftable.Counters{
 					InOctets: p.inOctets, InErrors: p.inErrors,
 					EtherLike: map[string]uint64{iftable.Dot3FCSErrors: p.fcs},
@@ -83,6 +85,8 @@ func TestRatingSinkPersistsRatesAcrossPolls(t *testing.T) {
 		{ifrate.MetricInOctets, 1000},
 		{ifrate.MetricInErrors, 1},
 		{ifrate.MetricOutOctets, 0},
+		{ifrate.MetricInUtilization, 80},
+		{ifrate.MetricOutUtilization, 0},
 		{ifrate.MetricDot3FCSErrors, 0.5},
 	} {
 		got, queryErr := db.Metrics().Query(ctx, database.MetricQueryOptions{

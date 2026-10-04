@@ -20,8 +20,8 @@ func TestRecordInterfaceRates(t *testing.T) {
 
 	at := time.Date(2026, 10, 4, 12, 30, 0, 0, time.UTC)
 	rates := []ifrate.Rate{
-		{ClientID: "default", TargetID: "sw-a", IfIndex: 7, At: at, InOctets: 100, OutDiscards: 2},
-		{ClientID: "default", TargetID: "sw-b", IfIndex: 7, At: at, InOctets: 300},
+		{ClientID: "default", TargetID: "sw-a", IfIndex: 7, At: at, Octets: &ifrate.Octets{In: 100}, OutDiscards: 2},
+		{ClientID: "default", TargetID: "sw-b", IfIndex: 7, At: at, Octets: &ifrate.Octets{In: 300}},
 	}
 	if err := db.Metrics().RecordInterfaceRates(ctx, rates); err != nil {
 		t.Fatalf("RecordInterfaceRates: %v", err)

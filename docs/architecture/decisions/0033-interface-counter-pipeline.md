@@ -23,7 +23,9 @@ rows built on it (P-A3, P-A4, P-A6, P-B6 to P-B8) can claim:
    counter;
 3. where the result is stored and how the retention tiers treat it;
 4. why the stored thing is a rate in the timeseries store rather than the raw
-   counter in `snmp_observations`.
+   counter in `snmp_observations`;
+5. how utilization is derived from the octet rates, and how the line rate
+   bounds them (P-A4).
 
 ## Decision
 
@@ -126,19 +128,60 @@ the rest of seed reads:
   table would need a second retention scheme. A rolled-up counter would mean
   nothing: the average of a cumulative counter is not a rate.
 
+### 5. Utilization and the line-rate bound
+
+Utilization is each direction's octet rate as a percentage of the interface's
+line rate: `100 × 8 × octets/s ÷ line rate`, stored as `if_in_utilization` and
+`if_out_utilization` in `percent`, beside the octet rates and under the same
+`target_id`, which adds two rows per interface per poll. The line rate is
+`ifHighSpeed` (in Mb/s) converted to bits per second, or `ifSpeed` when the
+agent serves no `ifXTable`. An `ifSpeed` at its 32-bit maximum is treated as
+unknown, because RFC 2863 has an agent report any faster link that way. With
+the line rate unknown, the octets are still rated and no utilization is
+stored.
+
+**Full-duplex convention.** Every link is taken to be full duplex: inbound
+and outbound are each measured against the whole line rate and never summed.
+A saturated full-duplex gigabit port reads 100 percent in both directions, not
+200 percent and not 50. IF-MIB does not say whether a link is half duplex, and
+on the rare half-duplex link that is still in service the two directions share
+the medium, so the real load is the sum of the two figures. That case reads
+low, and the EtherLike-MIB collision counters (P-A3) are where it shows.
+
+The line rate also bounds the octet rates, which settles the two consequences
+this ADR left to P-A4:
+
+- **Above line rate.** A direction whose rate exceeds the line rate by more
+  than 10 percent is a counter reset, not traffic, and the interface's whole
+  interval is dropped like any other discontinuity. This catches net-snmp's
+  silent 2^32 jump (#3004) wherever the jump is larger than the line could
+  carry in the interval, which at the default interval is any port up to
+  100 Mb/s. On a faster port it is within the line rate, and this check cannot
+  see it. The 10 percent slack exists because a poll's
+  interval is timed from when the collector started it, not from when the
+  agent read the counters. A poll whose walks ran slower than the last one's
+  counts its bytes over a shorter measured interval. Within the slack, the
+  octet rate is stored as measured and utilization is capped at 100.
+- **32-bit wrap.** A 32-bit octet counter on a link that could carry 2^32
+  octets in one interval (line rate × interval ≥ 2^32 × 8 bits) is not rated.
+  Its octet and utilization points are omitted, and its error and discard
+  rates are still stored. At 300 s that applies to any 32-bit counter on a link
+  faster than about 114.5 Mb/s. Such agents are rare, because RFC 2863 has an
+  agent serve the 64-bit columns on any interface faster than 20 Mb/s.
+
 ## Consequences
 
 - **Trustworthy range of 32-bit octet rates.** An agent that serves only 32-bit
   octets wraps every 2^32 bytes. At 300 s, more than one wrap per interval
   happens above an average of about 114.5 Mb/s, and the Rater cannot tell two
-  wraps from one. Such a rate is silently low. P-A4 owns the bound: with
-  `ifHighSpeed` known, a 32-bit interface whose line rate can exceed one wrap
-  per interval is reported as unrated rather than shown low.
+  wraps from one. Where the line rate is known, §5 leaves such an interface
+  unrated rather than showing it low. Where the line rate is unknown, the rate
+  can still be silently low.
 - **Rates above line rate.** net-snmp turns a silent counter reset into a jump
   of 2^32 in `ifHCInOctets` and does not move `ifCounterDiscontinuityTime`
-  (#3004). No in-band signal catches it. The plausibility bound (a rate above
-  the interface's line rate is discarded) belongs with P-A4's use of
-  `ifHighSpeed`.
+  (#3004). No in-band signal catches it. §5's line-rate bound drops it on ports
+  slow enough for the jump to exceed the line rate. On faster ports a spike of
+  one interval remains possible, and #3004 stays open for it.
 - **Raw observations need their own retention.** `snmp_observations` has a
   purge method and no caller (#3009), so the raw payloads this pipeline enlarged
   grow without bound. That is independent of the rates, which age out through

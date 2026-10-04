@@ -12,11 +12,17 @@
 // Counter64 does not wrap in practice. Every skipped pair re-baselines, so
 // the next reading rates normally. The EtherLike-MIB counters an Ethernet
 // interface carries follow the same rules (ADR-0033).
+//
+// With the interface's line rate known, the octet rates also yield
+// utilization, and the line rate bounds them: a rate above it is a counter
+// reset rather than traffic, and a 32-bit octet counter on a link fast
+// enough to wrap more than once per interval is not rated at all.
 package ifrate
 
 import (
 	"context"
 	"maps"
+	"math"
 	"slices"
 	"sync"
 	"time"
@@ -39,6 +45,27 @@ const (
 
 	UnitOctets  = "octets/s"
 	UnitPackets = "packets/s"
+)
+
+// Metric types and unit of an interface's utilization: each direction's
+// octet rate as a percentage of the line rate (ADR-0033 §5).
+const (
+	MetricInUtilization  = "if_in_utilization"
+	MetricOutUtilization = "if_out_utilization"
+
+	UnitPercent = "percent"
+)
+
+// lineRateSlack is how far above line rate a measured octet rate may read
+// and still count as traffic. Each poll's interval is timed from when the
+// collector started the poll, not from when the agent read the counters, so
+// a poll whose walks ran slower than the last one's stretches the counted
+// bytes over a shorter measured interval.
+const lineRateSlack = 1.10
+
+const (
+	bitsPerOctet = 8
+	fullPercent  = 100
 )
 
 // Metric types of the EtherLike-MIB dot3StatsTable rates (RFC 3635). Most
@@ -79,7 +106,8 @@ func etherLikeUnit(metric string) string {
 // and discards are always Counter32. Discontinuity is the interface's
 // ifCounterDiscontinuityTime. EtherLike maps an EtherLike metric type to
 // its Counter32 and holds only the counters the agent served; it is nil for
-// an interface that is not Ethernet.
+// an interface that is not Ethernet. SpeedBps is the line rate, 0 when the
+// agent does not report one.
 type Reading struct {
 	IfIndex       uint32
 	InOctets      uint64
@@ -91,6 +119,7 @@ type Reading struct {
 	OutDiscards   uint64
 	Discontinuity uint32
 	EtherLike     map[string]uint64
+	SpeedBps      uint64
 }
 
 // Snapshot is every interface reading of one target at one poll.
@@ -107,19 +136,37 @@ type Snapshot struct {
 
 // Rate is one interface's per-second counter rates over the interval
 // ending at At. EtherLike holds a rate for each EtherLike counter served in
-// both readings, keyed by metric type.
+// both readings, keyed by metric type. Octets is nil when the octet
+// counters cannot be rated (see [Octets]).
 type Rate struct {
 	ClientID    string
 	TargetID    string
 	IfIndex     uint32
 	At          time.Time
-	InOctets    float64
-	OutOctets   float64
+	Octets      *Octets
 	InErrors    float64
 	OutErrors   float64
 	InDiscards  float64
 	OutDiscards float64
 	EtherLike   map[string]float64
+}
+
+// Octets is an interface's octet rates in each direction. A Rate carries
+// none for a 32-bit octet counter whose line rate could wrap it more than
+// once in the interval, since the delta would then be silently low.
+// Utilization is nil when the line rate is unknown.
+type Octets struct {
+	In          float64
+	Out         float64
+	Utilization *Utilization
+}
+
+// Utilization is each direction's octet rate as a percentage of the line
+// rate, capped at 100. A link is taken to be full duplex: each direction is
+// measured against the whole line rate, never their sum (ADR-0033 §5).
+type Utilization struct {
+	In  float64
+	Out float64
 }
 
 // Point is one metric value of a Rate.
@@ -129,17 +176,26 @@ type Point struct {
 	Value float64
 }
 
-// Points lists the six interface rates in a fixed order, then the EtherLike
-// rates sorted by metric type.
+// Points lists the interface rates in a fixed order, octets and
+// utilization first when rated, then the EtherLike rates sorted by metric
+// type.
 func (r Rate) Points() []Point {
-	points := []Point{
-		{MetricInOctets, UnitOctets, r.InOctets},
-		{MetricOutOctets, UnitOctets, r.OutOctets},
-		{MetricInErrors, UnitPackets, r.InErrors},
-		{MetricOutErrors, UnitPackets, r.OutErrors},
-		{MetricInDiscards, UnitPackets, r.InDiscards},
-		{MetricOutDiscards, UnitPackets, r.OutDiscards},
+	var points []Point
+	if o := r.Octets; o != nil {
+		points = append(points,
+			Point{MetricInOctets, UnitOctets, o.In},
+			Point{MetricOutOctets, UnitOctets, o.Out})
+		if u := o.Utilization; u != nil {
+			points = append(points,
+				Point{MetricInUtilization, UnitPercent, u.In},
+				Point{MetricOutUtilization, UnitPercent, u.Out})
+		}
 	}
+	points = append(points,
+		Point{MetricInErrors, UnitPackets, r.InErrors},
+		Point{MetricOutErrors, UnitPackets, r.OutErrors},
+		Point{MetricInDiscards, UnitPackets, r.InDiscards},
+		Point{MetricOutDiscards, UnitPackets, r.OutDiscards})
 	for _, metric := range slices.Sorted(maps.Keys(r.EtherLike)) {
 		points = append(points, Point{metric, etherLikeUnit(metric), r.EtherLike[metric]})
 	}
@@ -172,7 +228,8 @@ func NewRater() *Rater {
 
 // Observe records snap as the target's baseline and returns the rates of
 // every interface that also appeared in the previous snapshot, minus any
-// whose counters were discontinuous between the two.
+// whose counters were discontinuous between the two or ran faster than its
+// line rate.
 func (r *Rater) Observe(snap Snapshot) []Rate {
 	r.mu.Lock()
 	defer r.mu.Unlock()
@@ -206,13 +263,16 @@ func (r *Rater) Observe(snap Snapshot) []Rate {
 		if !ok {
 			continue
 		}
+		octets, ok := octetRates(rd, deltas[0], deltas[1], seconds)
+		if !ok {
+			continue
+		}
 		rates = append(rates, Rate{
 			ClientID:    snap.ClientID,
 			TargetID:    snap.TargetID,
 			IfIndex:     rd.IfIndex,
 			At:          snap.At,
-			InOctets:    float64(deltas[0]) / seconds,
-			OutOctets:   float64(deltas[1]) / seconds,
+			Octets:      octets,
 			InErrors:    float64(deltas[2]) / seconds,
 			OutErrors:   float64(deltas[3]) / seconds,
 			InDiscards:  float64(deltas[4]) / seconds,
@@ -271,4 +331,40 @@ func etherLikeRates(prev, cur map[string]uint64, prevUp, curUp uint32, seconds f
 		rates[metric] = float64(d) / seconds
 	}
 	return rates, true
+}
+
+// octetRates turns the octet deltas into rates and, with the line rate
+// known, bounds them by it. It returns nil for a 32-bit counter the line
+// could wrap more than once in the interval, and false when either
+// direction ran faster than the line allows: net-snmp reports a silent
+// counter reset as a jump of 2^32 with nothing else moving (#3004), so such
+// a rate is a reset, and the interface's whole interval is dropped like any
+// other discontinuity.
+func octetRates(rd Reading, in, out uint64, seconds float64) (*Octets, bool) {
+	octets := &Octets{In: float64(in) / seconds, Out: float64(out) / seconds}
+	lineOctets := lineRateBps(rd.SpeedBps) / bitsPerOctet
+	if lineOctets == 0 {
+		return octets, true
+	}
+	if !rd.WideOctets && lineOctets*seconds >= 1<<32 {
+		return nil, true
+	}
+	if octets.In > lineOctets*lineRateSlack || octets.Out > lineOctets*lineRateSlack {
+		return nil, false
+	}
+	octets.Utilization = &Utilization{
+		In:  min(fullPercent*octets.In/lineOctets, fullPercent),
+		Out: min(fullPercent*octets.Out/lineOctets, fullPercent),
+	}
+	return octets, true
+}
+
+// lineRateBps is the interface's line rate, or 0 when unknown. An agent
+// that serves no ifHighSpeed reports a link faster than ifSpeed can hold
+// as ifSpeed's maximum (RFC 2863 ifSpeed), which is a floor, not a rate.
+func lineRateBps(speedBps uint64) float64 {
+	if speedBps == math.MaxUint32 {
+		return 0
+	}
+	return float64(speedBps)
 }
