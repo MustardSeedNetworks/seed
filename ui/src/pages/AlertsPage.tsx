@@ -32,19 +32,31 @@ import {
 /** Severities aligned with database.AlertSeverity* constants. */
 const SEVERITIES = ['critical', 'error', 'warning', 'info'] as const;
 
+type Severity = (typeof SEVERITIES)[number];
+
+/** Info is a note, not a problem, so it paints calm. */
+const SEVERITY_STATE = {
+  critical: 'crit',
+  error: 'crit',
+  warning: 'warn',
+  info: 'ok',
+} as const satisfies Record<Severity, RecordState>;
+
+/** The server does not constrain severity (a rule may set any string), so narrow here. */
+function isSeverity(severity: string): severity is Severity {
+  return (SEVERITIES as readonly string[]).includes(severity);
+}
+
 /**
- * A resolved alert is calm whatever it once was. Anything outside the known
- * severity set lands calm too, so a server-side rule addition cannot paint
- * the screen red on a value the UI has never heard of.
+ * A resolved alert is calm whatever it once was. A severity outside the known
+ * set is unknown, not calm: it cannot paint the screen red on a value the UI
+ * has never heard of, and it must not claim health either (#2526).
  */
 function alertState(alert: Alert): RecordState {
   if (alert.resolved) {
     return 'ok';
   }
-  if (alert.severity === 'critical' || alert.severity === 'error') {
-    return 'crit';
-  }
-  return alert.severity === 'warning' ? 'warn' : 'ok';
+  return isSeverity(alert.severity) ? SEVERITY_STATE[alert.severity] : 'unknown';
 }
 
 function fmtTime(iso?: string): string {
