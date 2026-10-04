@@ -1,9 +1,12 @@
 package api
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"errors"
+	"net/http"
+	"net/http/httptest"
 	"testing"
 
 	"github.com/MustardSeedNetworks/seed/internal/discovery"
@@ -105,6 +108,83 @@ func TestVulnScanKindTargetsSingleDevice(t *testing.T) {
 	j, _ := runner.Get(id)
 	if res := j.Result.(VulnScanJobResult); res.Scanned != 1 {
 		t.Fatalf("scanned = %d, want 1 (single-device target)", res.Scanned)
+	}
+}
+
+// A request the kind does not understand must fail, not fall back to scanning
+// every device. The UI posted {"targets":[ip]} for months and each auto-trigger
+// scanned the whole estate (#2960).
+func TestVulnScanKindRefusesParamsItCannotHonour(t *testing.T) {
+	t.Parallel()
+
+	for _, params := range []string{
+		`{"targets":["10.0.0.2"]}`,
+		`{"ip":"not-an-ip"}`,
+	} {
+		t.Run(params, func(t *testing.T) {
+			t.Parallel()
+
+			_, runner := newJobsTestServer(t, jobs.Config{})
+			fake := &fakeVulnScanService{devices: devicesAt("10.0.0.1", "10.0.0.2")}
+			_ = runner.Register(vulnScanJobKind, newVulnScanHandler(func() vulnScanService { return fake }))
+
+			id, err := runner.Submit(vulnScanJobKind, json.RawMessage(params))
+			if err != nil {
+				t.Fatalf("Submit: %v", err)
+			}
+			waitFor(t, "job reaches a terminal state", func() bool {
+				j, ok := runner.Get(id)
+				return ok && (j.State == jobs.StateFailed || j.State == jobs.StateSucceeded)
+			})
+			if j, _ := runner.Get(id); j.State != jobs.StateFailed {
+				t.Fatalf("state = %s, result = %+v; want failed with nothing scanned", j.State, j.Result)
+			}
+		})
+	}
+}
+
+// The scan is sold at Pro (compliance_advanced). It arrives through POST /jobs,
+// which every tier reaches, so the kind is the boundary. Before #2960 only the
+// retired legacy route carried the gate, and the job kind was open to Free.
+func TestVulnScanKindRequiresComplianceAdvanced(t *testing.T) {
+	t.Parallel()
+
+	for _, tc := range []struct {
+		name, key string
+		gated     bool
+	}{
+		{"free", "", true},
+		{"starter", prodSeedStarterVector, true},
+		{"pro", prodSeedProVector, false},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+			srv := newLicensedJobsServer(t, tc.key)
+			srv.registerVulnScanKind(func() vulnScanService { return &fakeVulnScanService{} })
+			body, _ := json.Marshal(CreateJobRequest{
+				Kind:   vulnScanJobKind,
+				Params: json.RawMessage(`{"ip":"10.0.0.2"}`),
+			})
+			w := httptest.NewRecorder()
+			srv.handleJobs(w, httptest.NewRequest(http.MethodPost, APIVersionPrefix+"/jobs", bytes.NewReader(body)))
+
+			if !tc.gated {
+				if w.Code != http.StatusCreated {
+					t.Fatalf("status = %d, want 201; body=%s", w.Code, w.Body.String())
+				}
+				return
+			}
+			if w.Code != http.StatusPaymentRequired {
+				t.Fatalf("status = %d, want 402; body=%s", w.Code, w.Body.String())
+			}
+			var gate FeatureGateResponse
+			if err := json.NewDecoder(w.Body).Decode(&gate); err != nil {
+				t.Fatalf("decode 402 body: %v", err)
+			}
+			if gate.RequiredFeature != vulnScanFeature {
+				t.Errorf("requiredFeature = %q, want %q", gate.RequiredFeature, vulnScanFeature)
+			}
+		})
 	}
 }
 

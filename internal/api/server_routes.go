@@ -589,9 +589,8 @@ func (s *Server) setupSecurityRoutes() {
 		},
 		// Port scanning is an active, outbound operation against an
 		// operator-supplied target. Every sibling active scan in this file
-		// carries rateLimited, and vulnerabilities/scan adds a feature gate;
-		// this route had neither, so a viewer could scan arbitrary hosts at
-		// will. Operator+ matches the other routes that act on the network
+		// carries rateLimited; this route had neither that nor a role gate, so
+		// a viewer could scan arbitrary hosts at will. Operator+ matches the other routes that act on the network
 		// rather than read from it (#347).
 		{
 			path:        APIVersionPrefix + "/security/discovery/portscan",
@@ -671,16 +670,10 @@ func (s *Server) setupSecurityRoutes() {
 			minRole: op, // gates DELETE only; GET stays open to viewers
 			feature: "export_csv_json",
 		},
-		// Vulnerability scan + guest-audit run are compliance_advanced (Pro,
-		// LICENSE_STRATEGY §2); read-only results/status/settings stay open so prior
-		// scan output remains visible to lower tiers.
-		{
-			path:        APIVersionPrefix + "/security/vulnerabilities/scan",
-			handler:     s.handleVulnerabilityScan,
-			methods:     post,
-			feature:     "compliance_advanced",
-			rateLimited: true,
-		},
+		// Vulnerability scan (the vuln-scan job kind) + guest-audit run are
+		// compliance_advanced (Pro, LICENSE_STRATEGY §2); read-only
+		// results/status/settings stay open so prior scan output remains visible
+		// to lower tiers.
 		{
 			path:    APIVersionPrefix + "/security/vulnerabilities/status",
 			handler: s.handleVulnerabilityStatus,

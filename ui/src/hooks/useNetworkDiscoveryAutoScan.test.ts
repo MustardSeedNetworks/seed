@@ -14,17 +14,22 @@ import type {
   DiscoveredDevice,
   NetworkDiscoveryData,
 } from '../components/cards/networkDiscoveryCardTypes';
+import type { CreateJobRequest } from '../types/generated/create-job-request';
 import type { OptionsResponse } from '../types/generated/options-response';
 import { useNetworkDiscoveryAutoScan } from './useNetworkDiscoveryAutoScan';
 
 const mockPost = vi.fn<(path: string, body?: unknown) => Promise<unknown>>();
+const mockSubmitJob = vi.fn<(req: CreateJobRequest) => Promise<unknown>>();
 
 vi.mock('../api', () => ({
   api: { post: (path: string, body?: unknown): Promise<unknown> => mockPost(path, body) },
 }));
 
+vi.mock('../lib/jobsClient', () => ({
+  submitJob: (req: CreateJobRequest): Promise<unknown> => mockSubmitJob(req),
+}));
+
 const PORT_SCAN_PATH = '/api/v1/security/discovery/portscan';
-const VULN_SCAN_PATH = '/api/v1/security/vulnerabilities/scan';
 
 function discoveryOptions(portScanEnabled: boolean): { options: OptionsResponse } {
   return {
@@ -86,9 +91,19 @@ function postedPaths(): string[] {
   return mockPost.mock.calls.map(([path]) => path);
 }
 
+// The scan names the one device it is for. The hook used to post
+// {targets:[ip]}, which the daemon did not read, so every trigger scanned
+// every device (#2960).
+function expectVulnScanQueued(): Promise<void> {
+  return vi.waitFor(() =>
+    expect(mockSubmitJob).toHaveBeenCalledWith({ kind: 'vuln-scan', params: { ip: DEVICE.ip } }),
+  );
+}
+
 beforeEach(() => {
   vi.useFakeTimers();
   mockPost.mockResolvedValue({ ip: DEVICE.ip, services: [] });
+  mockSubmitJob.mockResolvedValue({ id: 'job-1', kind: 'vuln-scan', state: 'queued', progress: 0 });
 });
 
 afterEach(() => {
@@ -109,7 +124,7 @@ describe('useNetworkDiscoveryAutoScan settings', () => {
   it('does not port-scan when port scanning is disabled', async () => {
     stubDaemon(false, true);
     renderHook(() => useNetworkDiscoveryAutoScan(DISCOVERY));
-    await expectPosted(VULN_SCAN_PATH, { targets: [DEVICE.ip] });
+    await expectVulnScanQueued();
     await settle();
     expect(postedPaths()).not.toContain(PORT_SCAN_PATH);
   });
@@ -117,7 +132,7 @@ describe('useNetworkDiscoveryAutoScan settings', () => {
   it('queues a vulnerability scan when vulnerability auto-scan is enabled', async () => {
     stubDaemon(false, true);
     renderHook(() => useNetworkDiscoveryAutoScan(DISCOVERY));
-    await expectPosted(VULN_SCAN_PATH, { targets: [DEVICE.ip] });
+    await expectVulnScanQueued();
   });
 
   it('does not queue a vulnerability scan when vulnerability scanning is disabled', async () => {
@@ -125,6 +140,6 @@ describe('useNetworkDiscoveryAutoScan settings', () => {
     renderHook(() => useNetworkDiscoveryAutoScan(DISCOVERY));
     await expectPosted(PORT_SCAN_PATH, expect.objectContaining({ target: DEVICE.ip }));
     await settle();
-    expect(postedPaths()).not.toContain(VULN_SCAN_PATH);
+    expect(mockSubmitJob).not.toHaveBeenCalled();
   });
 });

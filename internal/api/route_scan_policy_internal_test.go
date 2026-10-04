@@ -23,7 +23,8 @@ func targetedScanRoutes() []string {
 		"/security/discovery/probe",
 		"/security/discovery/fingerprint",
 		"/security/devices/scan",
-		"/security/vulnerabilities/scan",
+		// The vulnerability scan is the vuln-scan kind on POST /jobs (#2960).
+		"/jobs",
 	}
 }
 

@@ -15,6 +15,10 @@
  * - Caches results for performance
  * - Supports filtering by severity (critical, high, medium, low)
  *
+ * A scan is a `vuln-scan` job (ADR-0005): triggerScan submits it and resolves
+ * once the job reaches a terminal state, so callers reload on completion
+ * rather than after a guessed delay (#2960).
+ *
  * Usage:
  * ```typescript
  * const { triggerScan, fetchResults, isScanning } = useVulnerabilities();
@@ -30,22 +34,20 @@
  * ```
  */
 
-import { useCallback, useState } from 'react';
+import { useCallback, useRef, useState } from 'react';
 import { api } from '../api';
+import { getJob, isTerminalJobState, submitJob } from '../lib/jobsClient';
 import { LogComponents, logger } from '../lib/logger';
+import type { JobResponse } from '../types/generated/job-response';
+import type { VulnScanRequest } from '../types/generated/vuln-scan-request';
 import type {
   DeviceVulnerabilities,
   VulnerabilityScannerConfig,
   VulnerabilityScannerStatus,
 } from '../types/vulnerabilities';
+import { useJobEvents } from './useJobEvents';
 
 type SeverityFilter = 'critical' | 'high' | 'medium' | 'low';
-
-/** API response for scan initiation */
-interface ScanResponse {
-  status: string; // "scan started" on success
-  running?: boolean;
-}
 
 /** API response for vulnerability results */
 interface ResultsResponse {
@@ -144,35 +146,72 @@ export function useVulnerabilities() {
   const [isScanning, setIsScanning] = useState(false);
   const [scanError, setScanError] = useState<string | null>(null);
 
-  const triggerScan = useCallback(async (ip?: string): Promise<boolean> => {
-    setIsScanning(true);
-    setScanError(null);
+  // Resolvers for submitted scans, keyed by job id, settled by the job stream.
+  const waitersRef = useRef(new Map<string, (job: JobResponse) => void>());
 
-    try {
-      const params = new URLSearchParams();
-      if (ip) {
-        const trimmed = ip.trim();
-        if (!isValidIp(trimmed)) {
-          throw new Error('Invalid IP address');
-        }
-        params.set('ip', trimmed);
+  useJobEvents(
+    useCallback((job: JobResponse) => {
+      const settle = waitersRef.current.get(job.id);
+      if (settle && isTerminalJobState(job.state)) {
+        waitersRef.current.delete(job.id);
+        settle(job);
       }
+    }, []),
+  );
 
-      const endpoint =
-        params.size > 0
-          ? `/api/v1/security/vulnerabilities/scan?${params.toString()}`
-          : '/api/v1/security/vulnerabilities/scan';
-
-      const data = await api.post<ScanResponse>(endpoint);
-      return data.status === 'scan started' || data.status === 'scan already in progress';
-    } catch (error) {
-      const message = error instanceof Error ? error.message : 'Unknown error';
-      setScanError(message);
-      return false;
-    } finally {
-      setIsScanning(false);
+  // finished resolves with the job's terminal snapshot. The stream is
+  // live-only, so a job that finished before its waiter was registered is
+  // caught by the one GET issued after registration.
+  const finished = useCallback((submitted: JobResponse): Promise<JobResponse> => {
+    if (isTerminalJobState(submitted.state)) {
+      return Promise.resolve(submitted);
     }
+    const waiters = waitersRef.current;
+    return new Promise<JobResponse>((resolve, reject) => {
+      waiters.set(submitted.id, resolve);
+      getJob(submitted.id)
+        .then((job) => {
+          if (isTerminalJobState(job.state) && waiters.delete(job.id)) {
+            resolve(job);
+          }
+        })
+        .catch((error: unknown) => {
+          waiters.delete(submitted.id);
+          reject(error);
+        });
+    });
   }, []);
+
+  const triggerScan = useCallback(
+    async (ip?: string): Promise<boolean> => {
+      setIsScanning(true);
+      setScanError(null);
+
+      try {
+        const params: VulnScanRequest = {};
+        if (ip) {
+          const trimmed = ip.trim();
+          if (!isValidIp(trimmed)) {
+            throw new Error('Invalid IP address');
+          }
+          params.ip = trimmed;
+        }
+
+        const job = await finished(await submitJob({ kind: 'vuln-scan', params }));
+        if (job.state !== 'succeeded') {
+          throw new Error(job.error ?? `Vulnerability scan ${job.state}`);
+        }
+        return true;
+      } catch (error) {
+        const message = error instanceof Error ? error.message : 'Unknown error';
+        setScanError(message);
+        return false;
+      } finally {
+        setIsScanning(false);
+      }
+    },
+    [finished],
+  );
 
   const fetchStatus = useCallback(async (): Promise<VulnerabilityScannerStatus | null> => {
     try {

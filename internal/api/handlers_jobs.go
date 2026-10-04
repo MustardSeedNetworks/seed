@@ -57,6 +57,8 @@ func jobKindFeature(kind string) (string, bool) {
 	switch kind {
 	case qosSendJobKind, qosListenJobKind, qosSingleHostJobKind:
 		return dscpVerificationFeature, true
+	case vulnScanJobKind:
+		return vulnScanFeature, true
 	}
 	return "", false
 }
