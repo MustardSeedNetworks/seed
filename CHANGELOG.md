@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.224.1](https://github.com/MustardSeedNetworks/seed/compare/v0.224.0...v0.224.1) (2026-10-04)
+
+
+### Bug Fixes
+
+* **wifi:** name the rules that need a capture source ([#3028](https://github.com/MustardSeedNetworks/seed/issues/3028)) ([4b57653](https://github.com/MustardSeedNetworks/seed/commit/4b576536070bd4c485135978135ebf64be0b1230)), closes [#2351](https://github.com/MustardSeedNetworks/seed/issues/2351)
+
+
+### Tests
+
+* **snmp:** check the alert pipeline against a NIAC link fault on every pack ([#3031](https://github.com/MustardSeedNetworks/seed/issues/3031)) ([5eaff46](https://github.com/MustardSeedNetworks/seed/commit/5eaff46993283a67d78b9097dde242716791b8f4)), closes [#3030](https://github.com/MustardSeedNetworks/seed/issues/3030)
+
 ## [0.224.0](https://github.com/MustardSeedNetworks/seed/compare/v0.223.0...v0.224.0) (2026-10-04)
 
 
