@@ -1,6 +1,6 @@
 /**
  * Hook callback identity, held by the React Compiler rather than by
- * hand-written useCallback/useMemo (UI-SEED-41 slices 2 to 4, #3066).
+ * hand-written useCallback/useMemo (UI-SEED-41 slices 2 to 5, #3066).
  *
  * Every function these hooks return must keep its identity across a
  * re-render that changed nothing it reads; callers list them in effect
@@ -15,12 +15,15 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { useAlerts } from './useAlerts';
 import { useAlertWebhookSettings } from './useAlertWebhookSettings';
 import { useAppDrawers } from './useAppDrawers';
+import { useAuth } from './useAuth';
+import { useBluetoothScan } from './useBluetoothScan';
 import { useBonjourBrowse } from './useBonjourBrowse';
 import { useCapabilities } from './useCapabilities';
 import { useChannelGraph } from './useChannelGraph';
 import { useDefaults } from './useDefaults';
 import { useDiscoveredDevices } from './useDiscoveredDevices';
 import { useDriverStats } from './useDriverStats';
+import { useEngineScan } from './useEngineScan';
 import { useGuestNetworkAudit } from './useGuestNetworkAudit';
 import { useInsecurePortScan } from './useInsecurePortScan';
 import { useIperfServerSync } from './useIperfServerSync';
@@ -51,6 +54,8 @@ const { mockGet, mockPost, apiMock } = vi.hoisted(() => {
         patch: (): Promise<unknown> => Promise.resolve({}),
         delete: (): Promise<unknown> => Promise.resolve({}),
       },
+      beginSession: (): void => undefined,
+      clearCSRFToken: (): void => undefined,
     },
   };
 });
@@ -105,12 +110,15 @@ const cases: [string, () => object][] = [
   ['useAlerts', () => useAlerts()],
   ['useAlertWebhookSettings', () => useAlertWebhookSettings()],
   ['useAppDrawers', () => useAppDrawers()],
+  ['useAuth', () => useAuth()],
+  ['useBluetoothScan', () => useBluetoothScan()],
   ['useBonjourBrowse', () => useBonjourBrowse()],
   ['useCapabilities', () => useCapabilities()],
   ['useChannelGraph', () => useChannelGraph({ isWifi: true, currentInterface: 'wlan0' })],
   ['useDefaults', () => useDefaults()],
   ['useDiscoveredDevices', () => useDiscoveredDevices()],
   ['useDriverStats', () => useDriverStats('eth0')],
+  ['useEngineScan', () => useEngineScan()],
   ['useGuestNetworkAudit', () => useGuestNetworkAudit()],
   ['useInsecurePortScan', () => useInsecurePortScan()],
   ['useLogs', () => useLogs()],
