@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.223.0](https://github.com/MustardSeedNetworks/seed/compare/v0.222.0...v0.223.0) (2026-10-04)
+
+
+### Features
+
+* **alerts:** email alert delivery over SMTP, outcome recorded per channel ([#3000](https://github.com/MustardSeedNetworks/seed/issues/3000)) ([eb0c21c](https://github.com/MustardSeedNetworks/seed/commit/eb0c21cdba740862c1e1c5f6009adb6d682b85a0))
+
+
+### Documentation
+
+* **adr:** ADR-0033 interface counter pipeline (P-A5) ([#3011](https://github.com/MustardSeedNetworks/seed/issues/3011)) ([35bb508](https://github.com/MustardSeedNetworks/seed/commit/35bb5085535d739850c02ba5742d1f1358018508)), closes [#3010](https://github.com/MustardSeedNetworks/seed/issues/3010)
+
 ## [0.222.0](https://github.com/MustardSeedNetworks/seed/compare/v0.221.4...v0.222.0) (2026-10-04)
 
 
