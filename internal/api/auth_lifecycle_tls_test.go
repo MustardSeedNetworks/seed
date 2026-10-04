@@ -206,7 +206,7 @@ func settingsUpdate(serverID string) map[string]any {
 func newTLSSession(t *testing.T) *tlsSession {
 	t.Helper()
 
-	// ensureSelfSignedCert writes certs/ relative to the working directory.
+	// The self-signed pair is written to certs/ relative to the working directory.
 	t.Chdir(t.TempDir())
 
 	held := holdFallbackBasePort(t)
@@ -242,7 +242,7 @@ func newTLSSession(t *testing.T) *tlsSession {
 	server := api.NewServer(cfg, configPath, "", netMgr, false, nil, db, nil)
 	t.Cleanup(server.Close)
 
-	if _, _, certErr := server.EnsureSelfSignedCert(); certErr != nil {
+	if _, _, certErr := api.EnsureSelfSignedCert(); certErr != nil {
 		t.Fatalf("generate the listener certificate: %v", certErr)
 	}
 

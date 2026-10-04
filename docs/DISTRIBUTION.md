@@ -67,8 +67,9 @@ sudo rpm -i seed-<version>-1.x86_64.rpm
 ```
 
 Both install a systemd unit. Seed listens on `https://<host>:8443` and has
-no plaintext listener; a browser sent to `http://` gets connection refused,
-which is intended.
+no plaintext listener. A plaintext request to that port, such as a browser
+given `<host>:8443` without a scheme, gets a `308` redirect to the same URL
+over `https://` and nothing else.
 
 Verify what you installed before trusting it:
 

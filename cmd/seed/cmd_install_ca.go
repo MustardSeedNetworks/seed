@@ -20,7 +20,7 @@ const (
 	// in sync.
 	installCACommandName = "install-ca"
 
-	// defaultCertPath is the file ensureSelfSignedCert writes when seed
+	// defaultCertPath is the file the HTTPS listener writes when seed
 	// generates its own HTTPS certificate. install-ca uses this path
 	// unless overridden with --cert.
 	defaultCertPath = "certs/server.crt"

@@ -27,7 +27,7 @@ func TestProductionListenerServesApplicationOnlyOverTLS(t *testing.T) {
 	server := api.NewTestServerWithConfig(cfg)
 	defer server.Close()
 	t.Chdir(t.TempDir())
-	if _, _, err := server.EnsureSelfSignedCert(); err != nil {
+	if _, _, err := api.EnsureSelfSignedCert(); err != nil {
 		t.Fatal(err)
 	}
 	transport := trustedTransport(t)
@@ -71,7 +71,7 @@ func TestProductionListenerServesApplicationOnlyOverTLS(t *testing.T) {
 		t.Fatal("bound HTTPS listener did not initialize WebAuthn")
 	}
 
-	assertNoPlaintextApplication(t, actualPort)
+	assertPlaintextRedirectsToHTTPS(t, actualPort)
 
 	shutdown()
 	if listenerErr == nil || !strings.Contains(listenerErr.Error(), http.ErrServerClosed.Error()) {
@@ -130,20 +130,34 @@ func waitForTLSListener(
 	return nil, 0
 }
 
-func assertNoPlaintextApplication(t *testing.T, port int) {
+// assertPlaintextRedirectsToHTTPS sends plaintext HTTP to the TLS port and
+// expects only a 308 to the same path and query over https: no application
+// content, and no second listener behind it.
+func assertPlaintextRedirectsToHTTPS(t *testing.T, port int) {
 	t.Helper()
-	response, err := (&http.Client{Timeout: 5 * time.Second}).Get(
-		"http://127.0.0.1:" + strconv.Itoa(port),
-	)
+	client := &http.Client{
+		Timeout: 5 * time.Second,
+		CheckRedirect: func(*http.Request, []*http.Request) error {
+			return http.ErrUseLastResponse
+		},
+	}
+	authority := "127.0.0.1:" + strconv.Itoa(port)
+	response, err := client.Get("http://" + authority + "/devices?view=table")
 	if err != nil {
-		return
+		t.Fatalf("plaintext request to the TLS port: %v", err)
 	}
 	defer func() { _ = response.Body.Close() }()
 	body, err := io.ReadAll(response.Body)
 	if err != nil {
 		t.Fatal(err)
 	}
-	if response.StatusCode == http.StatusOK || strings.Contains(string(body), "tls-only") {
-		t.Fatalf("application responded over plaintext HTTP: %d %q", response.StatusCode, body)
+	if response.StatusCode != http.StatusPermanentRedirect {
+		t.Fatalf("plaintext status = %d %q, want %d", response.StatusCode, body, http.StatusPermanentRedirect)
+	}
+	if want := "https://" + authority + "/devices?view=table"; response.Header.Get("Location") != want {
+		t.Errorf("Location = %q, want %q", response.Header.Get("Location"), want)
+	}
+	if len(body) != 0 {
+		t.Errorf("redirect carried a body: %q", body)
 	}
 }

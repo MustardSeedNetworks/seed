@@ -5,20 +5,14 @@ package api
 
 import (
 	"context"
-	"crypto/rand"
-	"crypto/rsa"
-	"crypto/tls"
-	"crypto/x509"
-	"crypto/x509/pkix"
-	"encoding/pem"
 	"errors"
 	"fmt"
-	"math/big"
+	"net"
 	"net/http"
-	"os"
-	"path/filepath"
+	"strconv"
 	"time"
 
+	"github.com/MustardSeedNetworks/foundation/pkg/httpserver"
 	"github.com/MustardSeedNetworks/foundation/pkg/supervise"
 
 	"github.com/MustardSeedNetworks/seed/internal/engine"
@@ -198,8 +192,23 @@ func (s *Server) SetBoundPortObserver(observe func(int)) {
 	s.boundPort = observe
 }
 
-// startHTTPS starts the server with an operator-provided certificate or a
-// generated self-signed certificate.
+// selfSignedCertDir is where foundation's httpserver writes the generated pair
+// (server.crt / server.key) when the operator configured no certificate.
+const selfSignedCertDir = "certs"
+
+// selfSignedCertOptions describes the generated certificate. It is its own CA,
+// so `seed install-ca` can put the same file in the OS trust store.
+func selfSignedCertOptions() httpserver.CertOptions {
+	return httpserver.CertOptions{
+		CommonName: "The Seed Self-Signed",
+		DNSNames:   []string{"localhost", "seed.local"},
+	}
+}
+
+// startHTTPS binds foundation's HTTPS listener (port fallback per #69, TLS 1.3,
+// the self-signed default and the same-port plaintext 308 redirect) and serves
+// on it. It is the only listener: a plaintext request on the TLS port gets a
+// redirect to https and nothing else.
 func (s *Server) startHTTPS() error {
 	certFile := s.config.Server.CertFile
 	keyFile := s.config.Server.KeyFile
@@ -207,31 +216,24 @@ func (s *Server) startHTTPS() error {
 		return errors.New("server.cert_file and server.key_file must be configured together")
 	}
 
-	// Generate a self-signed certificate when the operator did not provide one.
-	if certFile == "" {
-		var err error
-		certFile, keyFile, err = s.ensureSelfSignedCert()
-		if err != nil {
-			return fmt.Errorf("failed to generate self-signed certificate: %w", err)
-		}
+	ln, listenErr := httpserver.Listen(context.Background(), httpserver.Config{
+		Addr:     net.JoinHostPort("", strconv.Itoa(s.config.Server.Port)),
+		CertFile: certFile,
+		KeyFile:  keyFile,
+		CertDir:  selfSignedCertDir,
+		Cert:     selfSignedCertOptions(),
+		Logger:   logging.GetLogger(),
+	})
+	if listenErr != nil {
+		return fmt.Errorf("https server: %w", listenErr)
 	}
-
-	// Configure TLS 1.3 (fixes #523)
-	// CipherSuites is not set because TLS 1.3 uses its own mandatory cipher suites:
-	// - TLS_AES_128_GCM_SHA256
-	// - TLS_AES_256_GCM_SHA384
-	// - TLS_CHACHA20_POLY1305_SHA256
-	// Setting CipherSuites with TLS 1.3 is misleading as Go ignores them.
-	tlsConfig := &tls.Config{
-		MinVersion: tls.VersionTLS13,
+	tcpAddr, isTCP := ln.Addr().(*net.TCPAddr)
+	if !isTCP {
+		_ = ln.Close()
+		return fmt.Errorf("https server: listener address %s is not TCP", ln.Addr())
 	}
-	s.httpServer.TLSConfig = tlsConfig
-
-	ln, actualPort, bindErr := bindWithFallback(context.Background(), "", s.config.Server.Port)
-	if bindErr != nil {
-		return fmt.Errorf("https server: %w", bindErr)
-	}
-	s.httpServer.Addr = fmt.Sprintf(":%d", actualPort)
+	actualPort := tcpAddr.Port
+	s.httpServer.Addr = ln.Addr().String()
 	s.initWebAuthn(actualPort)
 	if s.boundPort != nil {
 		s.boundPort(actualPort)
@@ -239,102 +241,8 @@ func (s *Server) startHTTPS() error {
 
 	logging.GetLogger().
 		Info("Starting HTTPS server", "addr", s.httpServer.Addr, "tls_version", "1.3")
-	if err := s.httpServer.ServeTLS(ln, certFile, keyFile); err != nil {
+	if err := s.httpServer.Serve(ln); err != nil {
 		return fmt.Errorf("https server: %w", err)
 	}
 	return nil
-}
-
-// ensureSelfSignedCert generates a self-signed certificate if needed.
-func (s *Server) ensureSelfSignedCert() (string, string, error) {
-	certsDir := "certs"
-	certFile := filepath.Join(certsDir, "server.crt")
-	keyFile := filepath.Join(certsDir, "server.key")
-
-	// Check if certs already exist
-	if _, certErr := os.Stat(certFile); certErr == nil {
-		if _, keyErr := os.Stat(keyFile); keyErr == nil {
-			return certFile, keyFile, nil
-		}
-	}
-
-	// Ensure certs directory exists
-	if err := os.MkdirAll(certsDir, 0o700); err != nil {
-		return "", "", fmt.Errorf("create certs directory: %w", err)
-	}
-
-	// Generate private key with 4096-bit RSA (fixes #533)
-	privateKey, err := rsa.GenerateKey(rand.Reader, rsaKeyBits)
-	if err != nil {
-		return "", "", fmt.Errorf("generate RSA key: %w", err)
-	}
-
-	// Create certificate template.
-	//
-	// The cert is a single-tier self-signed CA: it acts as both the root
-	// (Issuer == Subject) and the leaf the TLS listener serves. This lets
-	// `seed install-ca` install the same file into the OS trust store so
-	// browsers stop showing the self-signed warning. Without IsCA=true and
-	// KeyUsageCertSign, OS trust stores will reject the cert as not
-	// eligible to act as a root.
-	//
-	// Existing certs on disk are not regenerated automatically; they will
-	// continue to work for TLS but cannot be installed as roots until they
-	// are deleted and seed regenerates them.
-	template := x509.Certificate{
-		SerialNumber: big.NewInt(1),
-		Subject: pkix.Name{
-			Organization: []string{"The Seed"},
-			CommonName:   "The Seed Self-Signed",
-		},
-		NotBefore: time.Now(),
-		NotAfter:  time.Now().AddDate(1, 0, 0), // Valid for 1 year
-		KeyUsage: x509.KeyUsageKeyEncipherment |
-			x509.KeyUsageDigitalSignature |
-			x509.KeyUsageCertSign,
-		ExtKeyUsage:           []x509.ExtKeyUsage{x509.ExtKeyUsageServerAuth},
-		BasicConstraintsValid: true,
-		IsCA:                  true,
-		DNSNames:              []string{"localhost", "seed.local"},
-	}
-
-	// Create certificate
-	certDER, err := x509.CreateCertificate(
-		rand.Reader,
-		&template,
-		&template,
-		&privateKey.PublicKey,
-		privateKey,
-	)
-	if err != nil {
-		return "", "", fmt.Errorf("create certificate: %w", err)
-	}
-
-	// Write certificate
-
-	certOut, err := os.Create(certFile)
-	if err != nil {
-		return "", "", fmt.Errorf("create cert file: %w", err)
-	}
-	defer func() { _ = certOut.Close() }()
-	if encodeErr := pem.Encode(certOut, &pem.Block{Type: pemCertBlockType, Bytes: certDER}); encodeErr != nil {
-		return "", "", fmt.Errorf("encode certificate PEM: %w", encodeErr)
-	}
-
-	// Write private key
-
-	keyOut, err := os.OpenFile(keyFile, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0o600)
-	if err != nil {
-		return "", "", fmt.Errorf("create key file: %w", err)
-	}
-	defer func() { _ = keyOut.Close() }()
-	if keyEncodeErr := pem.Encode(
-		keyOut,
-		&pem.Block{Type: "RSA PRIVATE KEY", Bytes: x509.MarshalPKCS1PrivateKey(privateKey)},
-	); keyEncodeErr != nil {
-		return "", "", fmt.Errorf("encode private key PEM: %w", keyEncodeErr)
-	}
-
-	logging.GetLogger().Info("Generated self-signed certificate", "cert_file", certFile)
-	return certFile, keyFile, nil
 }
