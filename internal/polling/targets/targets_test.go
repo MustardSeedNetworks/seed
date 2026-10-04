@@ -18,6 +18,8 @@ type fakeRepo struct {
 	created   int
 }
 
+func unlimited() int { return 0 }
+
 func newFakeRepo() *fakeRepo { return &fakeRepo{store: map[string]*polling.Target{}} }
 
 func (f *fakeRepo) ListAll(context.Context, string) ([]*polling.Target, error) {
@@ -66,7 +68,7 @@ func (f *fakeRepo) Delete(_ context.Context, _ string, id string) error {
 func TestCreateClassifiesRepoValidationError(t *testing.T) {
 	repo := newFakeRepo()
 	repo.createErr = errors.New("polling_targets: name must be unique")
-	svc := targets.NewService(repo)
+	svc := targets.NewService(repo, unlimited)
 
 	err := svc.Create(context.Background(), &polling.Target{Name: "x"})
 	var ve targets.ValidationError
@@ -79,7 +81,7 @@ func TestCreateClassifiesRepoValidationError(t *testing.T) {
 }
 
 func TestGetAndDeleteMapNotFound(t *testing.T) {
-	svc := targets.NewService(newFakeRepo())
+	svc := targets.NewService(newFakeRepo(), unlimited)
 	if _, err := svc.Get(context.Background(), "acme", "missing"); !errors.Is(err, targets.ErrNotFound) {
 		t.Errorf("Get: want ErrNotFound, got %v", err)
 	}
@@ -91,7 +93,7 @@ func TestGetAndDeleteMapNotFound(t *testing.T) {
 func TestUpdateEchoesFreshRowAndMapsNotFound(t *testing.T) {
 	repo := newFakeRepo()
 	repo.store["t1"] = &polling.Target{ID: "t1", Name: "old"}
-	svc := targets.NewService(repo)
+	svc := targets.NewService(repo, unlimited)
 
 	got, err := svc.Update(context.Background(), "acme", &polling.Target{ID: "t1", Name: "new"})
 	if err != nil {
@@ -117,7 +119,7 @@ func target(ip, name string) *polling.Target {
 // disabled target is how an operator says "do not poll this".
 func TestCreateMissingAddsOnlyAbsentAddresses(t *testing.T) {
 	repo := newFakeRepo()
-	svc := targets.NewService(repo)
+	svc := targets.NewService(repo, unlimited)
 	existing := &polling.Target{
 		ID: "tgt-1", ClientID: "acme", Name: "operator's own",
 		IPAddress: "10.44.40.1", SNMPVersion: "v2c", Enabled: false,
@@ -150,7 +152,7 @@ func TestCreateMissingAddsOnlyAbsentAddresses(t *testing.T) {
 // on the address, so a duplicate here is a device polled twice.
 func TestCreateMissingCollapsesDuplicateAddresses(t *testing.T) {
 	repo := newFakeRepo()
-	svc := targets.NewService(repo)
+	svc := targets.NewService(repo, unlimited)
 
 	created, err := svc.CreateMissing(context.Background(), "acme", []*polling.Target{
 		target("10.44.40.2", "core-sw"),
@@ -170,7 +172,7 @@ func TestCreateMissingReportsFailuresAndKeepsGoing(t *testing.T) {
 	repo := newFakeRepo()
 	repo.createErr = errors.New("polling_targets: IPAddress required")
 	repo.failIP = "10.44.40.1"
-	svc := targets.NewService(repo)
+	svc := targets.NewService(repo, unlimited)
 
 	created, err := svc.CreateMissing(context.Background(), "acme", []*polling.Target{
 		target("10.44.40.1", "edge-rtr"),
@@ -191,7 +193,7 @@ func TestCreateMissingReportsFailuresAndKeepsGoing(t *testing.T) {
 // device.
 func TestCreateMissingIsSerialised(t *testing.T) {
 	repo := newFakeRepo()
-	svc := targets.NewService(repo)
+	svc := targets.NewService(repo, unlimited)
 
 	var wg sync.WaitGroup
 	for range 8 {
@@ -208,5 +210,69 @@ func TestCreateMissingIsSerialised(t *testing.T) {
 
 	if len(repo.store) != 2 {
 		t.Fatalf("store holds %d targets, want 2: %+v", len(repo.store), repo.store)
+	}
+}
+
+// The licence caps how many targets a client holds (estate_polling, seed#2327):
+// the create that would pass the cap is refused with the limit it hit, and a
+// delete frees a slot. The limit is read per create, so a licence change
+// applies without a restart.
+func TestCreateRefusedAtLicenceLimit(t *testing.T) {
+	repo := newFakeRepo()
+	limit := 2
+	svc := targets.NewService(repo, func() int { return limit })
+	ctx := context.Background()
+
+	for _, ip := range []string{"10.44.40.1", "10.44.40.2"} {
+		if err := svc.Create(ctx, target(ip, ip)); err != nil {
+			t.Fatalf("create %s under the limit: %v", ip, err)
+		}
+	}
+	refused := svc.Create(ctx, target("10.44.40.3", "third"))
+	var le targets.LimitError
+	if !errors.As(refused, &le) || le.Limit != 2 {
+		t.Fatalf("third create: want LimitError{2}, got %v", refused)
+	}
+	if len(repo.store) != 2 {
+		t.Errorf("refused create was written: store holds %d", len(repo.store))
+	}
+
+	if delErr := svc.Delete(ctx, "acme", "generated-1"); delErr != nil {
+		t.Fatalf("delete: %v", delErr)
+	}
+	if err := svc.Create(ctx, target("10.44.40.3", "third")); err != nil {
+		t.Errorf("create after a delete freed a slot: %v", err)
+	}
+
+	limit = 0
+	if err := svc.Create(ctx, target("10.44.40.4", "fourth")); err != nil {
+		t.Errorf("create once the licence is unlimited: %v", err)
+	}
+}
+
+// Discovery promotes every SNMP-answering device a sweep finds, so it is the
+// path that would quietly pass the cap if only the handler checked it.
+func TestCreateMissingStopsAtLicenceLimit(t *testing.T) {
+	repo := newFakeRepo()
+	svc := targets.NewService(repo, func() int { return 2 })
+	ctx := context.Background()
+	if err := svc.Create(ctx, target("10.44.40.1", "operator's own")); err != nil {
+		t.Fatalf("seed: %v", err)
+	}
+
+	created, err := svc.CreateMissing(ctx, "acme", []*polling.Target{
+		target("10.44.40.1", "edge-rtr"),
+		target("10.44.40.2", "core-sw"),
+		target("10.44.40.3", "dist-sw"),
+		target("10.44.40.4", "access-sw"),
+	})
+
+	var le targets.LimitError
+	if !errors.As(err, &le) || le.Limit != 2 {
+		t.Fatalf("want LimitError{2}, got %v", err)
+	}
+	if created != 1 || len(repo.store) != 2 {
+		t.Errorf("created %d (store %d), want 1 created and the store at the limit",
+			created, len(repo.store))
 	}
 }

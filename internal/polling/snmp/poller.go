@@ -400,8 +400,12 @@ func wireTarget(t *polling.Target) Target {
 // target. Implements scheduler.Job by reaching into the poller for
 // dispatch.
 type targetJob struct {
-	poller  *Poller
-	target  *polling.Target
+	poller *Poller
+	target *polling.Target
+
+	// mu guards lastRun: the scheduler reads it from its tick loop while Run
+	// writes it on the job's own goroutine.
+	mu      sync.Mutex
 	lastRun time.Time
 }
 
@@ -412,6 +416,8 @@ func (j *targetJob) ID() string {
 
 // NextRun returns now on first call, then lastRun + interval.
 func (j *targetJob) NextRun(now time.Time) time.Time {
+	j.mu.Lock()
+	defer j.mu.Unlock()
 	if j.lastRun.IsZero() {
 		return now
 	}
@@ -420,7 +426,9 @@ func (j *targetJob) NextRun(now time.Time) time.Time {
 
 // Run dispatches the target's collector chain.
 func (j *targetJob) Run(ctx context.Context) error {
+	j.mu.Lock()
 	j.lastRun = time.Now().UTC()
+	j.mu.Unlock()
 	j.poller.runChain(ctx, j.target)
 	return nil
 }

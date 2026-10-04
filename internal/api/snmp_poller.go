@@ -42,7 +42,7 @@ func (s *Server) initSNMPPoller(db *database.DB) {
 	}
 
 	poller, err := snmporchestrator.Build(snmporchestrator.Config{
-		Targets:       db.PollingTargets(),
+		Targets:       licensedPollerTargets{PollerStorage: db.PollingTargets(), limit: s.pollingTargetLimit},
 		Observations:  db.SNMPObservations(),
 		Rates:         db.Metrics(),
 		Scheduler:     sched,
@@ -50,6 +50,7 @@ func (s *Server) initSNMPPoller(db *database.DB) {
 		Logger:        logger,
 		Credentials:   db.DeviceCredentials(),
 		Decrypter:     keyring,
+		Licensed:      s.collectorLicensed,
 	})
 	if err != nil {
 		logger.Warn("snmp poller init failed", "error", err)

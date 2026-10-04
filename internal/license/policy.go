@@ -128,10 +128,11 @@ func proFeatures() []string {
 		"multi_client",
 		"sso",
 		"rest_api",
-		// Each of these has a real implementation, verified rather than
-		// asserted: bgp4 and hostresources are registered collectors in
-		// internal/polling/snmp/orchestrator, and estate_polling is the
-		// number of devices being polled. Their gates land next (#2327).
+		// Each of these has a real implementation and a gate (#2327):
+		// estate_polling lifts the polling-target cap, and server_monitoring
+		// and bgp_monitoring are the host_resources and bgp4_mib collectors,
+		// which are not registered without them. See
+		// internal/api/polling_entitlements.go.
 		//
 		// topology_estate and extended_retention left on 2026-09-03: the
 		// topology reconcilers are already Starter-gated in
