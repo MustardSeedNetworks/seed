@@ -61,8 +61,11 @@ installing, confirm the deployment reports the version and commit you installed,
 and that its UI was embedded:
 
 ```bash
-./scripts/deploy-validate.sh <expected-version> <expected-commit> [host] [port]
+make deploy-validate HOST=<host> [RELEASE=v<x.y.z>] [PORT=8443]
 ```
+
+`RELEASE` defaults to the latest published release. The target resolves the tag
+to its commit and only reads `/__version`; it installs nothing.
 
 For day-to-day development, run the binary in the foreground instead. An
 unprivileged run that is not a systemd service resolves to the XDG user
