@@ -71,7 +71,7 @@ func (r *ExportRepo) ExportDevices(ctx context.Context) ([]map[string]any, error
 // ExportVulnerabilities returns all vulnerability rows joined to device IPs.
 func (r *ExportRepo) ExportVulnerabilities(ctx context.Context) ([]map[string]any, error) {
 	rows, err := r.db.Query(ctx, `
-		SELECT dv.id, dv.device_id, dv.cve_id, dv.severity, dv.notes, dv.detected_at, d.ip_address
+		SELECT dv.id, dv.device_id, dv.cve_id, dv.severity, dv.status, dv.notes, dv.detected_at, d.ip_address
 		FROM device_vulnerabilities dv
 		LEFT JOIN devices d ON dv.device_id = d.id
 		ORDER BY dv.severity DESC, dv.detected_at DESC
@@ -85,11 +85,11 @@ func (r *ExportRepo) ExportVulnerabilities(ctx context.Context) ([]map[string]an
 	for rows.Next() {
 		var id int
 		var deviceID, cveID, detectedAt string
-		// severity, notes and the joined ip_address are all nullable: the first
-		// two by schema, the third because the join is a LEFT JOIN.
-		var severity, notes, ipAddr *string
+		// severity, status, notes and the joined ip_address are all nullable:
+		// the first three by schema, the last because the join is a LEFT JOIN.
+		var severity, status, notes, ipAddr *string
 		if scanErr := rows.Scan(
-			&id, &deviceID, &cveID, &severity, &notes, &detectedAt, &ipAddr,
+			&id, &deviceID, &cveID, &severity, &status, &notes, &detectedAt, &ipAddr,
 		); scanErr != nil {
 			return nil, fmt.Errorf("scanning vulnerability row: %w", scanErr)
 		}
@@ -98,6 +98,7 @@ func (r *ExportRepo) ExportVulnerabilities(ctx context.Context) ([]map[string]an
 			"device_id":   deviceID,
 			"cve_id":      cveID,
 			"severity":    severity,
+			"status":      status,
 			"notes":       notes,
 			"detected_at": detectedAt,
 			"device_ip":   ipAddr,

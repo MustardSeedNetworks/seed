@@ -33,6 +33,17 @@ func (db *DB) Devices() *DeviceRepository {
 	return db.devices
 }
 
+// Vulnerabilities returns the vulnerability findings repository.
+func (db *DB) Vulnerabilities() *VulnerabilityRepository {
+	db.mu.Lock()
+	defer db.mu.Unlock()
+
+	if db.vulnerabilities == nil {
+		db.vulnerabilities = &VulnerabilityRepository{db: db}
+	}
+	return db.vulnerabilities
+}
+
 // Alerts returns the alert repository.
 func (db *DB) Alerts() *AlertRepository {
 	db.mu.Lock()
