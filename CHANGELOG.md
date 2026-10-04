@@ -5,6 +5,19 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.232.0](https://github.com/MustardSeedNetworks/seed/compare/v0.231.0...v0.232.0) (2026-10-04)
+
+
+### Features
+
+* **listener:** apply v9 and IPFIX sampling rates to flow counts ([#3087](https://github.com/MustardSeedNetworks/seed/issues/3087)) ([2d39fab](https://github.com/MustardSeedNetworks/seed/commit/2d39fabd507aa8377597301dc0c43f324f60eba3))
+* **vuln:** let an operator triage a vulnerability finding ([#3086](https://github.com/MustardSeedNetworks/seed/issues/3086)) ([9d969f2](https://github.com/MustardSeedNetworks/seed/commit/9d969f26a1b16e638cdffea3d570f43d6bdc1181))
+
+
+### Code Refactoring
+
+* **ui:** let the compiler hold the settings hooks' callbacks ([#3088](https://github.com/MustardSeedNetworks/seed/issues/3088)) ([1749cc8](https://github.com/MustardSeedNetworks/seed/commit/1749cc8f828f2ae91a4af54ea719c1239d8588d4))
+
 ## [0.231.0](https://github.com/MustardSeedNetworks/seed/compare/v0.230.0...v0.231.0) (2026-10-04)
 
 
