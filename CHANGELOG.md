@@ -5,6 +5,21 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.228.0](https://github.com/MustardSeedNetworks/seed/compare/v0.227.1...v0.228.0) (2026-10-04)
+
+
+### Features
+
+* **alerts:** explain each correlated alert cluster in plain language ([#3065](https://github.com/MustardSeedNetworks/seed/issues/3065)) ([d881dbb](https://github.com/MustardSeedNetworks/seed/commit/d881dbb4e720db5c21df97915cfcf98124d6df9c))
+* **api:** adopt foundation httpserver so plaintext on the TLS port gets a 308 ([#3063](https://github.com/MustardSeedNetworks/seed/issues/3063)) ([63269e6](https://github.com/MustardSeedNetworks/seed/commit/63269e62b2088a17c8ec8347405d209beddc3244)), closes [#3062](https://github.com/MustardSeedNetworks/seed/issues/3062)
+* **reports:** add the schedule routes so scheduled reports can fire ([#3051](https://github.com/MustardSeedNetworks/seed/issues/3051)) ([b9db467](https://github.com/MustardSeedNetworks/seed/commit/b9db4676c3749d7e3945f38d96a45020c94869d4))
+
+
+### Bug Fixes
+
+* **build:** wire deploy-validate.sh into make so installs are checked ([#3070](https://github.com/MustardSeedNetworks/seed/issues/3070)) ([0afdf1c](https://github.com/MustardSeedNetworks/seed/commit/0afdf1c791d17d45b0893a57f04a3ce361c156da)), closes [#3069](https://github.com/MustardSeedNetworks/seed/issues/3069)
+* **vuln:** persist scan findings so reports and exports include them ([#3060](https://github.com/MustardSeedNetworks/seed/issues/3060)) ([fabff35](https://github.com/MustardSeedNetworks/seed/commit/fabff354a7a6e343e0290706da85b4734e1a568c)), closes [#2628](https://github.com/MustardSeedNetworks/seed/issues/2628)
+
 ## [0.227.1](https://github.com/MustardSeedNetworks/seed/compare/v0.227.0...v0.227.1) (2026-10-04)
 
 
