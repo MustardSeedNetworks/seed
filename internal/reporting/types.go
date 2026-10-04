@@ -39,6 +39,7 @@ const (
 	ReportTypePerformance   ReportType = "performance"   // Performance metrics
 	ReportTypeIncident      ReportType = "incident"      // Incident response
 	ReportTypeCustom        ReportType = "custom"        // Custom template
+	ReportTypeSummary       ReportType = "summary"       // Daily network summary
 )
 
 // ExportFormat specifies output format.
@@ -227,7 +228,7 @@ func IsValidReportType(t ReportType) bool {
 	switch t {
 	case ReportTypeExecutive, ReportTypeDetailed, ReportTypeVulnerability,
 		ReportTypeCompliance, ReportTypeInventory, ReportTypePerformance,
-		ReportTypeIncident, ReportTypeCustom:
+		ReportTypeIncident, ReportTypeCustom, ReportTypeSummary:
 		return true
 	default:
 		return false

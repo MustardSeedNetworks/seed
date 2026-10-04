@@ -169,6 +169,12 @@ func (s *GeneratorService) Generate(
 func (s *GeneratorService) generateReport(ctx context.Context, report *Report) {
 	s.mu.Lock()
 	report.Status = StatusGenerating
+	// A summary covers an exact window, recorded on the report so its numbers
+	// can be checked against the stores for the same window.
+	if report.Type == ReportTypeSummary {
+		window := summaryWindowEnding(time.Now())
+		report.Parameters.DateRange = &window
+	}
 	live := s.updateReport(ctx, report)
 	s.mu.Unlock()
 
@@ -178,40 +184,15 @@ func (s *GeneratorService) generateReport(ctx context.Context, report *Report) {
 		return
 	}
 
-	// Aggregate data for the report
-	dateRange := PeriodWeekly
-	if report.Parameters.DateRange != nil {
-		days := report.Parameters.DateRange.End.Sub(report.Parameters.DateRange.Start).Hours() / hoursPerDay
-		if days > monthlyThresholdDays {
-			dateRange = PeriodMonthly
-		} else if days <= 1 {
-			dateRange = PeriodDaily
-		}
-	}
-
-	data, err := s.aggregator.Aggregate(ctx, dateRange, "", "")
-	if err != nil {
-		s.failReport(ctx, report, fmt.Sprintf("aggregation failed: %v", err))
-		return
-	}
-
-	// Generate based on format
 	var content []byte
-	switch report.Format {
-	case FormatPDF:
-		content, err = s.generatePDF(report, data)
-	case FormatHTML:
-		content, err = s.generateHTML(report, data)
-	case FormatCSV:
-		content, err = s.generateCSV(report, data)
-	case FormatJSON:
-		content, err = s.generateJSON(report, data)
-	case FormatExcel, FormatMarkdown:
-		err = fmt.Errorf("unsupported format: %s", report.Format)
+	var err error
+	if report.Type == ReportTypeSummary {
+		content, err = s.generateSummary(ctx, report)
+	} else {
+		content, err = s.generateAggregate(ctx, report)
 	}
-
 	if err != nil {
-		s.failReport(ctx, report, fmt.Sprintf("generation failed: %v", err))
+		s.failReport(ctx, report, err.Error())
 		return
 	}
 
@@ -233,6 +214,44 @@ func (s *GeneratorService) generateReport(ctx context.Context, report *Report) {
 	report.FileSize = int64(len(content))
 
 	s.updateReport(ctx, report)
+}
+
+// generateAggregate renders every report type but the summary from the
+// period aggregate.
+func (s *GeneratorService) generateAggregate(ctx context.Context, report *Report) ([]byte, error) {
+	dateRange := PeriodWeekly
+	if report.Parameters.DateRange != nil {
+		days := report.Parameters.DateRange.End.Sub(report.Parameters.DateRange.Start).Hours() / hoursPerDay
+		if days > monthlyThresholdDays {
+			dateRange = PeriodMonthly
+		} else if days <= 1 {
+			dateRange = PeriodDaily
+		}
+	}
+
+	data, err := s.aggregator.Aggregate(ctx, dateRange, "", "")
+	if err != nil {
+		return nil, fmt.Errorf("aggregation failed: %w", err)
+	}
+
+	var content []byte
+	switch report.Format {
+	case FormatPDF:
+		content, err = s.generatePDF(report, data)
+	case FormatHTML:
+		content, err = s.generateHTML(report, data)
+	case FormatCSV:
+		content, err = s.generateCSV(report, data)
+	case FormatJSON:
+		content, err = s.generateJSON(report, data)
+	case FormatExcel, FormatMarkdown:
+		err = fmt.Errorf("unsupported format: %s", report.Format)
+	}
+
+	if err != nil {
+		return nil, fmt.Errorf("generation failed: %w", err)
+	}
+	return content, nil
 }
 
 func (s *GeneratorService) saveReportFile(report *Report, content []byte) error {

@@ -57,6 +57,20 @@ type MetricsRepo interface {
 	TopIssues(ctx context.Context) ([]IssueSummary, error)
 	// Trends returns time-series points for a metric over a period.
 	Trends(ctx context.Context, metric, period string) ([]DataPoint, error)
+
+	// The network summary reads. Each counts only what happened in
+	// [window.Start, window.End).
+
+	// InterfaceHealth returns one row per interface that was rated in the
+	// window, with its utilization and error and discard rates.
+	InterfaceHealth(ctx context.Context, window DateRange) ([]InterfaceHealth, error)
+	// AlertSeverityCounts returns severity → count of the alerts raised in the
+	// window, and how many of those are still unresolved.
+	AlertSeverityCounts(ctx context.Context, window DateRange) (counts map[string]int, open int, err error)
+	// TopologyChanges returns the nodes and links first seen in the window.
+	TopologyChanges(ctx context.Context, window DateRange) (TopologyChanges, error)
+	// ProbeOutcomes returns one row per probe that ran in the window.
+	ProbeOutcomes(ctx context.Context, window DateRange) ([]ProbeOutcome, error)
 }
 
 // ExportRepo reads raw rows for bulk data export. Rows are returned as generic
