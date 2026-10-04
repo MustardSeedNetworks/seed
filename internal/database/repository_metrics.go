@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/MustardSeedNetworks/seed/internal/timeseries/ifrate"
+	"github.com/MustardSeedNetworks/seed/internal/timeseries/telemetry"
 )
 
 // MetricsRepository provides operations for metrics data.
@@ -97,6 +98,34 @@ func (r *MetricsRepository) RecordInterfaceRates(ctx context.Context, rates []if
 					rate.ClientID, ifrate.TargetKind, targetID); execErr != nil {
 					return fmt.Errorf("insert interface rate: %w", execErr)
 				}
+			}
+		}
+		return nil
+	})
+}
+
+// RecordTelemetry stores one telemetry sample's points in one transaction,
+// keyed by target_id = the interface name.
+func (r *MetricsRepository) RecordTelemetry(ctx context.Context, s telemetry.Sample) error {
+	if len(s.Points) == 0 {
+		return nil
+	}
+	return r.db.WithTx(ctx, func(tx *sql.Tx) error {
+		stmt, err := tx.PrepareContext(ctx, `
+			INSERT INTO metrics
+			  (interface_name, metric_type, value, unit, timestamp, target_kind, target_id)
+			VALUES (?, ?, ?, ?, ?, ?, ?)
+		`)
+		if err != nil {
+			return fmt.Errorf("prepare telemetry insert: %w", err)
+		}
+		defer func() { _ = stmt.Close() }()
+
+		at := s.At.UTC().Format(time.RFC3339)
+		for _, pt := range s.Points {
+			if _, execErr := stmt.ExecContext(ctx, s.Interface, pt.Type, pt.Value, pt.Unit, at,
+				telemetry.TargetKind, s.Interface); execErr != nil {
+				return fmt.Errorf("insert telemetry point: %w", execErr)
 			}
 		}
 		return nil
