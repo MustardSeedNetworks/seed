@@ -20,6 +20,12 @@ type fakeMetricsRepo struct {
 	perf      reporting.PerformanceMetrics
 	topIssues []reporting.IssueSummary
 	trends    []reporting.DataPoint
+
+	interfaces []reporting.InterfaceHealth
+	alerts     map[string]int
+	openAlerts int
+	topology   reporting.TopologyChanges
+	probes     []reporting.ProbeOutcome
 }
 
 func (f *fakeMetricsRepo) CountDevices(context.Context) (int, error) { return f.devices, nil }
@@ -42,6 +48,24 @@ func (f *fakeMetricsRepo) TopIssues(context.Context) ([]reporting.IssueSummary, 
 
 func (f *fakeMetricsRepo) Trends(context.Context, string, string) ([]reporting.DataPoint, error) {
 	return f.trends, nil
+}
+
+func (f *fakeMetricsRepo) InterfaceHealth(
+	context.Context, reporting.DateRange,
+) ([]reporting.InterfaceHealth, error) {
+	return f.interfaces, nil
+}
+
+func (f *fakeMetricsRepo) AlertSeverityCounts(context.Context, reporting.DateRange) (map[string]int, int, error) {
+	return f.alerts, f.openAlerts, nil
+}
+
+func (f *fakeMetricsRepo) TopologyChanges(context.Context, reporting.DateRange) (reporting.TopologyChanges, error) {
+	return f.topology, nil
+}
+
+func (f *fakeMetricsRepo) ProbeOutcomes(context.Context, reporting.DateRange) ([]reporting.ProbeOutcome, error) {
+	return f.probes, nil
 }
 
 // TestAggregatorService_Aggregate_NoDB verifies the domain maps raw severity

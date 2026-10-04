@@ -103,6 +103,24 @@ func (s *TemplateService) loadBuiltInTemplates() {
 		UpdatedAt: now,
 	}
 
+	// Network Summary template: the daily summary a schedule mails out.
+	s.templates["summary"] = &Template{
+		ID:          "summary",
+		Name:        "Network Summary",
+		Description: "Interface health, alerts, topology changes and probe results over the last day",
+		Type:        ReportTypeSummary,
+		Formats:     []ExportFormat{FormatPDF, FormatJSON},
+		Sections: []TemplateSection{
+			{ID: "interfaces", Name: "Interfaces", Title: "Interface Health", Order: sectionOrderOverview},
+			{ID: "alerts", Name: "Alerts", Title: "Alerts", Order: sectionOrderSecondary},
+			{ID: "topology", Name: "Topology", Title: "Topology Changes", Order: sectionOrderTertiary},
+			{ID: "probes", Name: "Probes", Title: "Probe Results", Order: sectionOrderQuaternary},
+		},
+		IsBuiltIn: true,
+		CreatedAt: now,
+		UpdatedAt: now,
+	}
+
 	// Performance Report template
 	s.templates["performance"] = &Template{
 		ID:          "performance",
