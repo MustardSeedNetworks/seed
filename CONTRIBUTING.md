@@ -309,7 +309,10 @@ polled from a second namespace routed through the pack's edge router. The run
 fails on any collector that errors against an agent and on any device or row
 count that disagrees with the manifest's `expectedObservations`; the test log
 lists every agent's rows per collector, so a finding can be traced to the
-devices behind it. Needs `niac`, PyYAML, Go and sudo; no seed daemon or UI.
+devices behind it. It then runs seed's topology reconcilers over what the
+collectors stored, and fails on any link between two polled devices that the
+pack authors and seed does not draw, or that seed draws and the pack does not
+author. Needs `niac`, PyYAML, Go and sudo; no seed daemon or UI.
 Named packs can be passed to `scripts/snmp-acceptance-niac.sh PACK...`.
 
 ### Test Requirements
