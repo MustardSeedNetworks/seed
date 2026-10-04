@@ -348,6 +348,8 @@
     "lastCheck": "Last Check",
     "runningTests": "Running tests...",
     "failedToRun": "Failed to run tests",
+    "run": "Run",
+    "notRun": "Not run yet. Run the checks here, or with Run All Tests.",
     "ping": "Ping",
     "tcpPorts": "TCP Ports",
     "udpPorts": "UDP Ports",

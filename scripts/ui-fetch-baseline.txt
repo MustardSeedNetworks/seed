@@ -22,24 +22,24 @@ ui/src/hooks/useAuth.ts:132  # mutating but CSRF-exempt by design (isCSRFExemptP
 ui/src/hooks/useAuth.ts:226  # read-only — bypasses the client 401 refresh/retry
 ui/src/hooks/useAuth.ts:425  # mutating but CSRF-exempt by design (isCSRFExemptPath) — correct as a raw fetch
 ui/src/hooks/useAuth.ts:459  # mutating but CSRF-exempt by design (isCSRFExemptPath) — correct as a raw fetch
-ui/src/hooks/useCapabilities.ts:45  # read-only — bypasses the client 401 refresh/retry
+ui/src/hooks/useCapabilities.ts:48  # read-only — bypasses the client 401 refresh/retry
 ui/src/hooks/useLogs.ts:199  # read-only — bypasses the client 401 refresh/retry
 ui/src/hooks/useLogs.ts:217  # read-only — bypasses the client 401 refresh/retry
 ui/src/hooks/useNetworkDiscoveryAutoScan.ts:54  # read-only — bypasses the client 401 refresh/retry
 ui/src/hooks/useNetworkDiscoveryAutoScan.ts:61  # read-only — bypasses the client 401 refresh/retry
-ui/src/hooks/useNetworkFetchers.ts:110  # read-only — bypasses the client 401 refresh/retry
-ui/src/hooks/useNetworkFetchers.ts:162  # read-only — bypasses the client 401 refresh/retry
-ui/src/hooks/useNetworkFetchers.ts:189  # read-only — bypasses the client 401 refresh/retry
-ui/src/hooks/useNetworkFetchers.ts:211  # read-only — bypasses the client 401 refresh/retry
-ui/src/hooks/useNetworkFetchers.ts:228  # read-only — bypasses the client 401 refresh/retry
-ui/src/hooks/useNetworkFetchers.ts:286  # read-only — bypasses the client 401 refresh/retry
-ui/src/hooks/useNetworkFetchers.ts:349  # read-only — bypasses the client 401 refresh/retry
-ui/src/hooks/useNetworkFetchers.ts:377  # read-only — bypasses the client 401 refresh/retry
-ui/src/hooks/useNetworkFetchers.ts:425  # read-only — bypasses the client 401 refresh/retry
-ui/src/hooks/useNetworkFetchers.ts:467  # read-only — bypasses the client 401 refresh/retry
-ui/src/hooks/useNetworkFetchers.ts:490  # read-only — bypasses the client 401 refresh/retry
-ui/src/hooks/useNetworkFetchers.ts:519  # read-only — bypasses the client 401 refresh/retry
-ui/src/hooks/useNetworkFetchers.ts:523  # read-only — bypasses the client 401 refresh/retry
+ui/src/hooks/useNetworkFetchers.ts:114  # read-only — bypasses the client 401 refresh/retry
+ui/src/hooks/useNetworkFetchers.ts:166  # read-only — bypasses the client 401 refresh/retry
+ui/src/hooks/useNetworkFetchers.ts:193  # read-only — bypasses the client 401 refresh/retry
+ui/src/hooks/useNetworkFetchers.ts:215  # read-only — bypasses the client 401 refresh/retry
+ui/src/hooks/useNetworkFetchers.ts:232  # read-only — bypasses the client 401 refresh/retry
+ui/src/hooks/useNetworkFetchers.ts:290  # read-only — bypasses the client 401 refresh/retry
+ui/src/hooks/useNetworkFetchers.ts:353  # read-only — bypasses the client 401 refresh/retry
+ui/src/hooks/useNetworkFetchers.ts:381  # read-only — bypasses the client 401 refresh/retry
+ui/src/hooks/useNetworkFetchers.ts:429  # read-only — bypasses the client 401 refresh/retry
+ui/src/hooks/useNetworkFetchers.ts:474  # read-only — bypasses the client 401 refresh/retry
+ui/src/hooks/useNetworkFetchers.ts:497  # read-only — bypasses the client 401 refresh/retry
+ui/src/hooks/useNetworkFetchers.ts:526  # read-only — bypasses the client 401 refresh/retry
+ui/src/hooks/useNetworkFetchers.ts:530  # read-only — bypasses the client 401 refresh/retry
 ui/src/hooks/useReports.ts:36  # read-only — bypasses the client 401 refresh/retry
 ui/src/hooks/useSettingsDrawerLoaders.ts:92  # read-only — bypasses the client 401 refresh/retry
 ui/src/hooks/useSettingsDrawerLoaders.ts:109  # read-only — bypasses the client 401 refresh/retry
@@ -56,7 +56,6 @@ ui/src/hooks/useVulnerabilitySettings.ts:43  # read-only — bypasses the client
 ui/src/lib/logger.ts:267  # mutating but CSRF-exempt by design (isCSRFExemptPath) — correct as a raw fetch
 ui/src/app/LoginForm.tsx:101  # read-only — bypasses the client 401 refresh/retry
 ui/src/app/LoginForm.tsx:115  # read-only — bypasses the client 401 refresh/retry
-ui/src/components/cards/HealthCheckCard.tsx:68  # read-only — bypasses the client 401 refresh/retry
 ui/src/components/cards/PerformanceCard.tsx:189  # read-only — bypasses the client 401 refresh/retry
 ui/src/components/cards/PerformanceCard.tsx:202  # read-only — bypasses the client 401 refresh/retry
 ui/src/components/cards/PerformanceCard.tsx:210  # read-only — bypasses the client 401 refresh/retry

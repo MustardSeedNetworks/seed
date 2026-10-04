@@ -305,6 +305,7 @@ async function openHealthCard(page: Page, width: number): Promise<Locator> {
   await skipSetupWizard(page);
   await page.goto('/performance');
   const card = page.getByTestId('card').and(page.getByLabel('Health Checks', { exact: true }));
+  await card.getByTestId('health-check-run').click();
   // Every section must be rendered before anything is measured, or the
   // assertions pass against a card that is still loading.
   await expect(card.getByText(SECTIONS.at(-1)?.failing ?? '', { exact: true })).toBeVisible({

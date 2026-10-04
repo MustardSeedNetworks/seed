@@ -11,8 +11,8 @@ export default meta;
 
 type Story = StoryObj<typeof meta>;
 
-const okCaps: Capabilities = { icmpAvailable: true };
-const missingCaps: Capabilities = { icmpAvailable: false };
+const okCaps: Capabilities = { icmpAvailable: true, cableDiagnostics: true };
+const missingCaps: Capabilities = { icmpAvailable: false, cableDiagnostics: true };
 
 export const Healthy: Story = {
   args: {

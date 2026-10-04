@@ -348,6 +348,8 @@
     "lastCheck": "Última verificación",
     "runningTests": "Ejecutando pruebas...",
     "failedToRun": "Error al ejecutar pruebas",
+    "run": "Ejecutar",
+    "notRun": "Aún no se han ejecutado. Ejecute las comprobaciones aquí o con Ejecutar todas las pruebas.",
     "ping": "Ping",
     "tcpPorts": "Puertos TCP",
     "udpPorts": "Puertos UDP",

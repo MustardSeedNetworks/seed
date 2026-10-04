@@ -80,6 +80,7 @@ it.each<{ response: WiFiResponse; expected: WiFiData }>([
         userSetWifiModeRef: { current: false },
         networkDiscoveryAbortRef: { current: null },
         prevLinkUpRef: { current: null },
+        cableSupported: true,
       }),
     );
     await result.current.fetchWifiData();

@@ -9,6 +9,7 @@
  * (`HelpContent.tsx`) rather than the locale files — so a Spanish label
  * carried an English explanation.
  */
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -42,8 +43,13 @@ vi.mock('../contexts/useSettings', () => ({
 
 vi.mock('../hooks/useIperfServerSync', () => ({ useIperfServerSync: () => undefined }));
 
+// The Health Check card reads its run through the api client; the rest of the
+// page's reads only need to resolve.
 vi.mock('../api', () => ({
-  api: { get: vi.fn(() => Promise.resolve({})), post: vi.fn(() => Promise.resolve({})) },
+  api: {
+    get: vi.fn((url: string) => Promise.resolve(url.endsWith('/probes/run') ? health : {})),
+    post: vi.fn(() => Promise.resolve({})),
+  },
 }));
 
 /** One ping that answered, one that did not, and an HTTP test with phase timings. */
@@ -89,10 +95,13 @@ const { PerformancePage } = await import('./PerformancePage');
 async function renderIn(language: string): Promise<void> {
   await i18n.changeLanguage(language);
   render(
-    <AppContext.Provider value={appContext}>
-      <PerformancePage />
-    </AppContext.Provider>,
+    <QueryClientProvider client={new QueryClient()}>
+      <AppContext.Provider value={appContext}>
+        <PerformancePage />
+      </AppContext.Provider>
+    </QueryClientProvider>,
   );
+  fireEvent.click(screen.getByTestId('health-check-run'));
   await waitFor(() => expect(screen.getByText('8.8.8.8', notTheTooltip)).toBeVisible());
 }
 

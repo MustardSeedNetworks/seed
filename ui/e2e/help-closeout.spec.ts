@@ -144,6 +144,7 @@ test('HTTP timing segments are reached with Tab, described and dismissed with Es
     }),
   );
   await page.goto('/performance');
+  await page.getByTestId('health-check-run').click();
   const segments = page.getByTestId('http-timing-segment');
   await expect(segments).toHaveCount(5);
   for (let index = 0; index < 5; index++) {
