@@ -31,6 +31,17 @@ type ifKey struct {
 	ifIndex        uint32
 }
 
+// parseIfKey splits an interface rate's target_id, which is
+// "<polling target ID>/<ifIndex>" (ifrate.TargetKind).
+func parseIfKey(client, targetID string) (ifKey, error) {
+	target, index, ok := strings.Cut(targetID, "/")
+	ifIndex, err := strconv.ParseUint(index, 10, 32)
+	if !ok || err != nil {
+		return ifKey{}, fmt.Errorf("interface rate target %q is not <target>/<ifIndex>", targetID)
+	}
+	return ifKey{client: client, target: target, ifIndex: uint32(ifIndex)}, nil
+}
+
 // InterfaceHealth returns the rated interfaces' utilization and error and
 // discard rates in the window, named by polling target and, once the
 // topology has seen the interface, by ifName.
@@ -71,16 +82,14 @@ func (r *MetricsRepo) InterfaceHealth(
 			&inErr, &outErr, &inDisc, &outDisc); scanErr != nil {
 			return nil, fmt.Errorf("scanning interface rates: %w", scanErr)
 		}
-		// target_id is "<polling target ID>/<ifIndex>" (ifrate.TargetKind).
-		target, index, ok := strings.Cut(targetID, "/")
-		ifIndex, parseErr := strconv.ParseUint(index, 10, 32)
-		if !ok || parseErr != nil {
-			return nil, fmt.Errorf("interface rate target %q is not <target>/<ifIndex>", targetID)
+		k, parseErr := parseIfKey(client, targetID)
+		if parseErr != nil {
+			return nil, parseErr
 		}
-		keys = append(keys, ifKey{client: client, target: target, ifIndex: uint32(ifIndex)})
+		keys = append(keys, k)
 		health = append(health, reporting.InterfaceHealth{
-			Target:            target,
-			IfIndex:           uint32(ifIndex),
+			Target:            k.target,
+			IfIndex:           k.ifIndex,
 			PeakUtilization:   peak.Float64,
 			AvgInUtilization:  inUtil.Float64,
 			AvgOutUtilization: outUtil.Float64,

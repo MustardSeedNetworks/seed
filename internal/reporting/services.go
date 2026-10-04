@@ -169,11 +169,20 @@ func (s *GeneratorService) Generate(
 func (s *GeneratorService) generateReport(ctx context.Context, report *Report) {
 	s.mu.Lock()
 	report.Status = StatusGenerating
-	// A summary covers an exact window, recorded on the report so its numbers
-	// can be checked against the stores for the same window.
-	if report.Type == ReportTypeSummary {
+	// A summary and a forecast cover an exact window, recorded on the report
+	// so their numbers can be checked against the stores for the same window.
+	generate := s.generateAggregate
+	switch report.Type {
+	case ReportTypeSummary:
 		window := summaryWindowEnding(time.Now())
 		report.Parameters.DateRange = &window
+		generate = s.generateSummary
+	case ReportTypeCapacity:
+		window := capacityWindowEnding(time.Now())
+		report.Parameters.DateRange = &window
+		generate = s.generateCapacity
+	case ReportTypeExecutive, ReportTypeDetailed, ReportTypeVulnerability, ReportTypeCompliance,
+		ReportTypeInventory, ReportTypePerformance, ReportTypeIncident, ReportTypeCustom:
 	}
 	live := s.updateReport(ctx, report)
 	s.mu.Unlock()
@@ -184,13 +193,7 @@ func (s *GeneratorService) generateReport(ctx context.Context, report *Report) {
 		return
 	}
 
-	var content []byte
-	var err error
-	if report.Type == ReportTypeSummary {
-		content, err = s.generateSummary(ctx, report)
-	} else {
-		content, err = s.generateAggregate(ctx, report)
-	}
+	content, err := generate(ctx, report)
 	if err != nil {
 		s.failReport(ctx, report, err.Error())
 		return
@@ -216,8 +219,8 @@ func (s *GeneratorService) generateReport(ctx context.Context, report *Report) {
 	s.updateReport(ctx, report)
 }
 
-// generateAggregate renders every report type but the summary from the
-// period aggregate.
+// generateAggregate renders every report type but the summary and the
+// capacity forecast from the period aggregate.
 func (s *GeneratorService) generateAggregate(ctx context.Context, report *Report) ([]byte, error) {
 	dateRange := PeriodWeekly
 	if report.Parameters.DateRange != nil {
