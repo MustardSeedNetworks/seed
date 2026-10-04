@@ -74,6 +74,7 @@ type DB struct {
 	profiles          *ProfileRepository
 	metrics           *MetricsRepository
 	devices           *DeviceRepository
+	vulnerabilities   *VulnerabilityRepository
 	alerts            *AlertRepository
 	settings          *SettingsRepository
 	logs              *LogRepository

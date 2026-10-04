@@ -7,6 +7,7 @@ package api
 
 import (
 	"context"
+	"fmt"
 	"strings"
 	"sync"
 
@@ -353,4 +354,43 @@ func (a *dbDeviceWriterAdapter) PersistDevices(
 	}
 
 	return nil
+}
+
+// dbVulnStoreAdapter implements vuln.Store: it writes each scan pass to
+// device_vulnerabilities under the device's persisted id, persisting the device
+// first so a finding never waits on the next discovery flush.
+type dbVulnStoreAdapter struct {
+	db *database.DB
+}
+
+// SaveScan implements vuln.Store.
+func (a *dbVulnStoreAdapter) SaveScan(
+	ctx context.Context,
+	device *discovery.DiscoveredDevice,
+	result *discovery.DeviceVulnerabilities,
+) error {
+	devices := &dbDeviceWriterAdapter{db: a.db}
+	if err := devices.PersistDevices(ctx, []*discovery.DiscoveredDevice{device}); err != nil {
+		return err
+	}
+	stored, err := a.db.Devices().GetByIP(ctx, device.IP)
+	if err != nil {
+		return fmt.Errorf("resolving device id for %s: %w", device.IP, err)
+	}
+
+	findings := make([]database.VulnerabilityFinding, 0, len(result.Vulnerabilities))
+	for i := range result.Vulnerabilities {
+		v := &result.Vulnerabilities[i]
+		findings = append(findings, database.VulnerabilityFinding{
+			CVEID: v.CVEID,
+			// Providers report NVD's upper-case severities; reports and the
+			// scanner's own filter work in lower case.
+			Severity:          strings.ToLower(v.Severity),
+			CVSSScore:         v.Score,
+			Description:       v.Description,
+			AffectedComponent: result.Product,
+			AffectedVersion:   result.Version,
+		})
+	}
+	return a.db.Vulnerabilities().RecordScan(ctx, stored.ID, findings, result.ScanTime)
 }

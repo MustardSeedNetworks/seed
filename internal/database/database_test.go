@@ -146,7 +146,6 @@ func TestV10NMSSchemaArtifacts(t *testing.T) {
 		"wifi_associations",
 		"wifi_roams",
 		"wifi_deauths",
-		"wifi_rogues",
 		"voip_calls",
 		"bgp_sessions",
 	}

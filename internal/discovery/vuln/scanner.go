@@ -53,9 +53,16 @@ type VulnerabilityScanner struct {
 	cveProvider   CVEProvider
 	kevProvider   *KEVProvider                      // CISA KEV catalog for enrichment
 	deviceResults map[string]*DeviceVulnerabilities // key is device IP
+	store         Store                             // nil: results live in memory only
 	lastUpdate    time.Time
 	running       bool
 	stopCh        chan struct{} // Channel to signal goroutine shutdown (fixes #820)
+}
+
+// Store persists each completed scan pass, so findings outlive the process and
+// reach report generation and export (#2628).
+type Store interface {
+	SaveScan(ctx context.Context, device *DiscoveredDevice, result *DeviceVulnerabilities) error
 }
 
 // CVEProvider is an interface for CVE data sources (NVD API, local DB, etc).
@@ -217,12 +224,25 @@ func (vs *VulnerabilityScanner) ScanDevice(
 	// Filter by severity threshold
 	result.Vulnerabilities = vs.filterBySeverity(vulns)
 
-	// Store result
 	vs.mu.Lock()
 	vs.deviceResults[device.IP] = result
+	store := vs.store
 	vs.mu.Unlock()
 
+	if store != nil {
+		if saveErr := store.SaveScan(ctx, device, result); saveErr != nil {
+			return result, fmt.Errorf("persisting vulnerability scan of %s: %w", device.IP, saveErr)
+		}
+	}
+
 	return result, nil
+}
+
+// SetStore makes every later completed scan pass write through to store.
+func (vs *VulnerabilityScanner) SetStore(store Store) {
+	vs.mu.Lock()
+	defer vs.mu.Unlock()
+	vs.store = store
 }
 
 // GetDeviceVulnerabilities returns cached vulnerability scan results for a device.

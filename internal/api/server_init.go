@@ -235,7 +235,7 @@ func (s *Server) initDiscovery(cfg *config.Config) {
 }
 
 // initVulnerabilityScanner initializes the vulnerability scanner if enabled.
-func (s *Server) initVulnerabilityScanner(cfg *config.Config) {
+func (s *Server) initVulnerabilityScanner(cfg *config.Config, db *database.DB) {
 	if !cfg.Security.VulnerabilityScanning.Enabled {
 		return
 	}
@@ -253,6 +253,9 @@ func (s *Server) initVulnerabilityScanner(cfg *config.Config) {
 	if err != nil {
 		logging.GetLogger().Warn("Failed to initialize vulnerability scanner", "error", err)
 		return
+	}
+	if db != nil {
+		vulnScanner.SetStore(&dbVulnStoreAdapter{db: db})
 	}
 	s.vulnScan = vulnScanner
 	logging.GetLogger().Info("Vulnerability scanner initialized",

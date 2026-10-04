@@ -50,9 +50,9 @@ func (r *MetricsRepo) VulnerabilitySeverityCounts(
 	rows, err := r.db.Query(ctx, `
 		SELECT severity, COUNT(*) as count
 		FROM device_vulnerabilities
-		WHERE discovered_at >= ?
+		WHERE detected_at >= ? AND status IS NOT ?
 		GROUP BY severity
-	`, since.Format(time.RFC3339))
+	`, since.Format(time.RFC3339), database.VulnStatusResolved)
 	if err != nil {
 		return nil, fmt.Errorf("querying vulnerability counts: %w", err)
 	}
@@ -124,9 +124,10 @@ func (r *MetricsRepo) PerformanceMetrics(
 // TopIssues returns the highest-impact vulnerability issues.
 func (r *MetricsRepo) TopIssues(ctx context.Context) ([]reporting.IssueSummary, error) {
 	rows, err := r.db.Query(ctx, `
-		SELECT severity, description, COUNT(*) as count
+		SELECT severity, COALESCE(description, cve_id), COUNT(*) as count
 		FROM device_vulnerabilities
-		GROUP BY description
+		WHERE status IS NOT ?
+		GROUP BY cve_id
 		ORDER BY
 			CASE severity
 				WHEN 'critical' THEN 1
@@ -136,7 +137,7 @@ func (r *MetricsRepo) TopIssues(ctx context.Context) ([]reporting.IssueSummary, 
 			END,
 			count DESC
 		LIMIT 10
-	`)
+	`, database.VulnStatusResolved)
 	if err != nil {
 		return nil, fmt.Errorf("querying top issues: %w", err)
 	}

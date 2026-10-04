@@ -7,7 +7,6 @@ package api
 //
 // Key features:
 //   - Retrieve vulnerability reports for devices
-//   - Mark vulnerabilities as acknowledged
 //
 // Dependencies:
 //   - internal/discovery: Device profile and CVE scanner

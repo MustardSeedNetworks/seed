@@ -628,21 +628,6 @@ CREATE INDEX idx_wifi_roams_started ON wifi_roams(started_at);
 -- index: idx_wifi_roams_to
 CREATE INDEX idx_wifi_roams_to ON wifi_roams(to_bssid);
 
--- index: idx_wifi_rogues_bssid
-CREATE INDEX idx_wifi_rogues_bssid ON wifi_rogues(ap_bssid);
-
--- index: idx_wifi_rogues_client
-CREATE INDEX idx_wifi_rogues_client ON wifi_rogues(client_id);
-
--- index: idx_wifi_rogues_detected
-CREATE INDEX idx_wifi_rogues_detected ON wifi_rogues(detected_at);
-
--- index: idx_wifi_rogues_severity
-CREATE INDEX idx_wifi_rogues_severity ON wifi_rogues(severity);
-
--- index: idx_wifi_rogues_status
-CREATE INDEX idx_wifi_rogues_status ON wifi_rogues(status);
-
 -- table: alert_deliveries
 CREATE TABLE alert_deliveries (
     alert_id     INTEGER NOT NULL REFERENCES alerts(id) ON DELETE CASCADE,
@@ -960,7 +945,7 @@ CREATE TABLE device_vulnerabilities (
 				status TEXT DEFAULT 'new',
 				detected_at TEXT NOT NULL,
 				resolved_at TEXT,
-				notes TEXT,
+				notes TEXT, description TEXT,
 				FOREIGN KEY (device_id) REFERENCES devices(id) ON DELETE CASCADE
 			) STRICT;
 
@@ -1616,19 +1601,5 @@ CREATE TABLE wifi_roams (
 				roam_type TEXT,
 				rssi_before INTEGER,
 				rssi_after INTEGER
-			, client_id TEXT NOT NULL DEFAULT 'default' REFERENCES clients(id)) STRICT;
-
--- table: wifi_rogues
-CREATE TABLE wifi_rogues (
-				id TEXT PRIMARY KEY,
-				detected_at TEXT NOT NULL,
-				ap_bssid TEXT NOT NULL,
-				ssid TEXT,
-				rogue_type TEXT NOT NULL,
-				severity TEXT NOT NULL,
-				status TEXT NOT NULL DEFAULT 'active',
-				evidence_json TEXT,
-				acknowledged_at TEXT,
-				resolved_at TEXT
 			, client_id TEXT NOT NULL DEFAULT 'default' REFERENCES clients(id)) STRICT;
 

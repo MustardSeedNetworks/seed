@@ -392,7 +392,7 @@ func NewServer(
 	s.initSettingsUseCases()
 
 	// Initialize vulnerability scanner if enabled
-	s.initVulnerabilityScanner(cfg)
+	s.initVulnerabilityScanner(cfg, db)
 
 	// Configure security: allowed origins for CORS
 	s.initSecurityOrigins(cfg)
