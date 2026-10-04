@@ -7,7 +7,7 @@
  * Extracted from App.tsx to reduce component complexity (#889).
  */
 
-import { useCallback, useState } from 'react';
+import { useState } from 'react';
 
 interface UseAppDrawersReturn {
   /** Whether the profiles drawer is open */
@@ -47,18 +47,18 @@ export function useAppDrawers(): UseAppDrawersReturn {
   const [helpOpen, setHelpOpen] = useState(false);
   const [helpSection, setHelpSection] = useState<string | undefined>(undefined);
 
-  const openProfiles = useCallback(() => setProfilesOpen(true), []);
-  const closeProfiles = useCallback(() => setProfilesOpen(false), []);
-  const openSettings = useCallback(() => setSettingsOpen(true), []);
-  const closeSettings = useCallback(() => setSettingsOpen(false), []);
-  const openHelp = useCallback((section?: string) => {
+  const openProfiles = () => setProfilesOpen(true);
+  const closeProfiles = () => setProfilesOpen(false);
+  const openSettings = () => setSettingsOpen(true);
+  const closeSettings = () => setSettingsOpen(false);
+  const openHelp = (section?: string) => {
     setHelpSection(section);
     setHelpOpen(true);
-  }, []);
-  const closeHelp = useCallback(() => {
+  };
+  const closeHelp = () => {
     setHelpOpen(false);
     setHelpSection(undefined);
-  }, []);
+  };
 
   return {
     profilesOpen,

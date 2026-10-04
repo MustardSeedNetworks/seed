@@ -13,7 +13,7 @@
  * return value. Gating (setup wizard / loading / login) stays in `App`.
  */
 
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { api } from '../api';
 import type { NetworkDiscoveryData } from '../components/cards/NetworkDiscoveryCard';
 import { useProfileContext } from '../contexts/profileContext';
@@ -196,113 +196,83 @@ export function useAppOrchestration({ isAuthenticated }: UseAppOrchestrationArgs
   });
 
   // Change interface on backend
-  const changeInterface = useCallback(
-    async (interfaceName: string) => {
-      try {
-        // Use api.put() which handles CSRF tokens automatically
-        const data = await api.put<{ isWireless?: boolean }>('/api/v1/interface', {
-          interface: interfaceName,
-        });
-        if (data) {
-          setCurrentInterface(interfaceName);
-          // Update ref immediately so fetch functions use the new interface (#754)
-          // React state updates are async, but fetch functions read from ref synchronously
-          currentInterfaceRef.current = interfaceName;
-          // Only auto-set WiFi mode if user hasn't manually selected via Ethernet/WiFi buttons
-          if (!userSetWifiModeRef.current) {
-            setIsWifi(data.isWireless === true);
-          }
-          // Refresh data for new interface
-          fetchLinkData().catch((): void => {
-            /* handled */
-          });
-          fetchIpConfig().catch((): void => {
-            /* handled */
-          });
-          fetchDiscoveryData().catch((): void => {
-            /* handled */
-          });
-          fetchDnsData().catch((): void => {
-            /* handled */
-          });
-          fetchGatewayData().catch((): void => {
-            /* handled */
-          });
-          fetchVlanData().catch((): void => {
-            /* handled */
-          });
-          fetchWifiData().catch((): void => {
-            /* handled */
-          });
-          fetchCableData().catch((): void => {
-            /* handled */
-          });
+  const changeInterface = async (interfaceName: string) => {
+    try {
+      // Use api.put() which handles CSRF tokens automatically
+      const data = await api.put<{ isWireless?: boolean }>('/api/v1/interface', {
+        interface: interfaceName,
+      });
+      if (data) {
+        setCurrentInterface(interfaceName);
+        // Update ref immediately so fetch functions use the new interface (#754)
+        // React state updates are async, but fetch functions read from ref synchronously
+        currentInterfaceRef.current = interfaceName;
+        // Only auto-set WiFi mode if user hasn't manually selected via Ethernet/WiFi buttons
+        if (!userSetWifiModeRef.current) {
+          setIsWifi(data.isWireless === true);
         }
-      } catch (err) {
-        logger.error(LogComponents.NETWORK, 'Failed to change interface', err);
+        // Refresh data for new interface
+        fetchLinkData().catch((): void => {
+          /* handled */
+        });
+        fetchIpConfig().catch((): void => {
+          /* handled */
+        });
+        fetchDiscoveryData().catch((): void => {
+          /* handled */
+        });
+        fetchDnsData().catch((): void => {
+          /* handled */
+        });
+        fetchGatewayData().catch((): void => {
+          /* handled */
+        });
+        fetchVlanData().catch((): void => {
+          /* handled */
+        });
+        fetchWifiData().catch((): void => {
+          /* handled */
+        });
+        fetchCableData().catch((): void => {
+          /* handled */
+        });
       }
-    },
-    [
-      fetchLinkData,
-      fetchIpConfig,
-      fetchDiscoveryData,
-      fetchDnsData,
-      fetchGatewayData,
-      fetchVlanData,
-      fetchWifiData,
-      fetchCableData,
-      setCurrentInterface,
-      setIsWifi,
-      userSetWifiModeRef,
-      currentInterfaceRef,
-    ],
-  );
+    } catch (err) {
+      logger.error(LogComponents.NETWORK, 'Failed to change interface', err);
+    }
+  };
 
   // Fast switching between Ethernet/Wi-Fi views
-  const switchToInterfaceType = useCallback(
-    async (type: 'ethernet' | 'wifi') => {
-      // Mark that user explicitly selected this mode - prevents API responses from flipping back
-      userSetWifiModeRef.current = true;
-      setActiveMode(type);
+  const switchToInterfaceType = async (type: 'ethernet' | 'wifi') => {
+    // Mark that user explicitly selected this mode - prevents API responses from flipping back
+    userSetWifiModeRef.current = true;
+    setActiveMode(type);
 
-      // Check if we already have a stored interface for this mode
-      const storedInterface = type === 'wifi' ? wifiInterface : ethernetInterface;
-      if (storedInterface) {
-        await changeInterface(storedInterface);
-        return;
-      }
+    // Check if we already have a stored interface for this mode
+    const storedInterface = type === 'wifi' ? wifiInterface : ethernetInterface;
+    if (storedInterface) {
+      await changeInterface(storedInterface);
+      return;
+    }
 
-      // No stored interface - find one from available interfaces using helper
-      const target = findBestInterface(interfaces, type);
-      if (!target) {
-        // No interfaces of this type available, just show the view anyway
-        return;
-      }
+    // No stored interface - find one from available interfaces using helper
+    const target = findBestInterface(interfaces, type);
+    if (!target) {
+      // No interfaces of this type available, just show the view anyway
+      return;
+    }
 
-      // Update state and persist selection
-      const setInterfaceState = type === 'wifi' ? setWifiInterfaceState : setEthernetInterfaceState;
-      setInterfaceState(target.name);
-      await changeInterface(target.name);
-      // Persist interface selection - use Promise.resolve to satisfy linter
-      if (type === 'wifi') {
-        await Promise.resolve(setWifiInterface(target.name, true));
-      } else {
-        await Promise.resolve(setEthernetInterface(target.name, true));
-      }
-    },
-    [
-      interfaces,
-      changeInterface,
-      setEthernetInterface,
-      setWifiInterface,
-      ethernetInterface,
-      wifiInterface,
-      setActiveMode,
-      setEthernetInterfaceState,
-      setWifiInterfaceState,
-      userSetWifiModeRef,
-    ],
-  );
+    // Update state and persist selection
+    const setInterfaceState = type === 'wifi' ? setWifiInterfaceState : setEthernetInterfaceState;
+    setInterfaceState(target.name);
+    await changeInterface(target.name);
+    // Persist interface selection - use Promise.resolve to satisfy linter
+    if (type === 'wifi') {
+      await Promise.resolve(setWifiInterface(target.name, true));
+    } else {
+      await Promise.resolve(setEthernetInterface(target.name, true));
+    }
+  };
 
   // Load interface selections from active profile (#754 multi-interface support)
   const profileInterfaceLoadedRef = useRef<string | null>(null);
@@ -356,25 +326,25 @@ export function useAppOrchestration({ isAuthenticated }: UseAppOrchestrationArgs
     setWifiInterfaceState,
   ]);
 
-  // Memoize run options to prevent unnecessary re-computation (fixes #671)
-  const runOpts = useMemo(
-    () => ({
-      runLink: cardSettings.link.autoRunOnLink,
-      runSwitch: cardSettings.switch.autoRunOnLink,
-      runVlan: cardSettings.vlan.autoRunOnLink,
-      runIpConfig: cardSettings.network.autoRunOnLink,
-      runGateway: cardSettings.gateway.autoRunOnLink,
-      runDns: cardSettings.dns.autoRunOnLink,
-      runHealthChecks: cardSettings.healthChecks.autoRunOnLink,
-      runPerformance: cardSettings.performance.autoRunOnLink,
-      runSpeedtest:
-        cardSettings.performance.autoRunOnLink && cardSettings.performance.speedtest.autoRunOnLink,
-      runIperf:
-        cardSettings.performance.autoRunOnLink && cardSettings.performance.iperf.autoRunOnLink,
-      runNetworkDiscovery: cardSettings.networkDiscovery.autoRunOnLink,
-    }),
-    [cardSettings],
-  );
+  // The compiler keeps runOpts stable while cardSettings is unchanged (#671).
+  const runOpts = {
+    runLink: cardSettings.link.autoRunOnLink,
+    runSwitch: cardSettings.switch.autoRunOnLink,
+    runVlan: cardSettings.vlan.autoRunOnLink,
+    runIpConfig: cardSettings.network.autoRunOnLink,
+    runGateway: cardSettings.gateway.autoRunOnLink,
+    runDns: cardSettings.dns.autoRunOnLink,
+    runHealthChecks: cardSettings.healthChecks.autoRunOnLink,
+    runPerformance: cardSettings.performance.autoRunOnLink,
+
+    runSpeedtest:
+      cardSettings.performance.autoRunOnLink && cardSettings.performance.speedtest.autoRunOnLink,
+
+    runIperf:
+      cardSettings.performance.autoRunOnLink && cardSettings.performance.iperf.autoRunOnLink,
+
+    runNetworkDiscovery: cardSettings.networkDiscovery.autoRunOnLink,
+  };
 
   // React to a run start (FAB click or link-up auto-run) via the testRunStore.
   // This replaces the former `window` runAllTests/cardTestComplete/testsComplete

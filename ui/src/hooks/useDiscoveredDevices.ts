@@ -17,7 +17,7 @@
  * ```
  */
 
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { api } from '../api';
 import { LogComponents, logger } from '../lib/logger';
 import type { DiscoveredDevice } from '../types/generated/engine-discovery-response';
@@ -184,32 +184,33 @@ export function useDiscoveredDevices(autoRefresh: boolean = false): {
   /**
    * Fetches discovered devices from the API.
    */
-  const fetchDevices = useCallback(async (): Promise<void> => {
-    try {
-      setError(null);
-      // Use /api/v1/devices endpoint which returns discovered network devices
-      // (not /api/v1/discovery which returns LLDP/CDP protocol neighbors)
-      const data = await api.get<SecurityDevicesResponse>('/api/v1/security/devices');
-      setDevices(data.devices || []);
-      setStatus(data.status);
-    } catch (err) {
-      const message = err instanceof Error ? err.message : 'Failed to fetch discovered devices';
-      setError(message);
-      logger.error(LogComponents.DEVICES, 'Failed to fetch discovered devices', err, {
-        endpoint: '/api/v1/security/devices',
+  const fetchDevices = async (): Promise<void> => {
+    setError(null);
+    // Use /api/v1/devices endpoint which returns discovered network devices
+    // (not /api/v1/discovery which returns LLDP/CDP protocol neighbors)
+    await api
+      .get<SecurityDevicesResponse>('/api/v1/security/devices')
+      .then((data) => {
+        setDevices(data.devices || []);
+        setStatus(data.status);
+      })
+      .catch((err: unknown) => {
+        const message = err instanceof Error ? err.message : 'Failed to fetch discovered devices';
+        setError(message);
+        logger.error(LogComponents.DEVICES, 'Failed to fetch discovered devices', err, {
+          endpoint: '/api/v1/security/devices',
+        });
       });
-    } finally {
-      setIsLoading(false);
-    }
-  }, []);
+    setIsLoading(false);
+  };
 
   /**
    * Manually refresh the device list.
    */
-  const refresh = useCallback(async () => {
+  const refresh = async () => {
     setIsLoading(true);
     await fetchDevices();
-  }, [fetchDevices]);
+  };
 
   // Initial fetch
   useEffect(() => {
@@ -230,7 +231,7 @@ export function useDiscoveredDevices(autoRefresh: boolean = false): {
   }, [autoRefresh, fetchDevices]);
 
   // Group devices by type
-  const groupedDevices = useMemo(() => groupDevicesByType(devices), [devices]);
+  const groupedDevices = groupDevicesByType(devices);
 
   return {
     devices,

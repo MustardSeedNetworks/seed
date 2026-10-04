@@ -8,7 +8,7 @@
  * run and show its outcome.
  */
 
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { api, SessionExpiredError } from '../api';
 import type { NetworkDiscoveryData } from '../components/cards/NetworkDiscoveryCard';
 import { LogComponents, logger } from '../lib/logger';
@@ -41,7 +41,7 @@ export function useDeviceScan({
   const scanTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [scanError, setScanError] = useState(false);
 
-  const triggerDeviceScan = useCallback(async () => {
+  const triggerDeviceScan = async () => {
     try {
       // Clear any existing polling interval/timeout
       if (scanPollIntervalRef.current) {
@@ -105,7 +105,7 @@ export function useDeviceScan({
         setScanError(true);
       }
     }
-  }, [fetchNetworkDiscovery, setNetworkDiscovery]);
+  };
 
   // Cleanup device scan polling on unmount
   useEffect(

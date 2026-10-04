@@ -6,7 +6,7 @@
  * explanation rather than an empty table.
  */
 
-import { useCallback, useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 
 import { api } from '../api';
 import { LogComponents, logger } from '../lib/logger';
@@ -26,24 +26,23 @@ export function useDriverStats(interfaceName?: string): DriverStats {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const refresh = useCallback(async (): Promise<void> => {
+  const refresh = async (): Promise<void> => {
     setLoading(true);
     setError(null);
-    try {
-      const query = interfaceName ? `?interface=${encodeURIComponent(interfaceName)}` : '';
-      const stats = await api.get<DriverStatsResponse>(
-        `/api/v1/telemetry/interface/driver-stats${query}`,
-      );
-      setCounters(stats?.counters ?? []);
-      setTotal(stats?.total ?? 0);
-    } catch (err) {
-      const message = err instanceof Error ? err.message : 'Failed to read driver statistics';
-      setError(message);
-      logger.error(LogComponents.NETWORK, 'Failed to read driver statistics', err);
-    } finally {
-      setLoading(false);
-    }
-  }, [interfaceName]);
+    const query = interfaceName ? `?interface=${encodeURIComponent(interfaceName)}` : '';
+    await api
+      .get<DriverStatsResponse>(`/api/v1/telemetry/interface/driver-stats${query}`)
+      .then((stats) => {
+        setCounters(stats?.counters ?? []);
+        setTotal(stats?.total ?? 0);
+      })
+      .catch((err: unknown) => {
+        const message = err instanceof Error ? err.message : 'Failed to read driver statistics';
+        setError(message);
+        logger.error(LogComponents.NETWORK, 'Failed to read driver statistics', err);
+      });
+    setLoading(false);
+  };
 
   useEffect(() => {
     refresh().catch(() => undefined);
