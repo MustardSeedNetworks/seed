@@ -14,6 +14,7 @@ package wificapture
 
 import (
 	"context"
+	"errors"
 	"log/slog"
 	"time"
 
@@ -27,6 +28,10 @@ import (
 // frame with its information elements fits comfortably; data frames are captured
 // only far enough to attribute a client to its BSSID.
 const defaultSnapLen = 65535
+
+// readTimeout bounds each read so cancellation can close the handle on a quiet
+// channel (see capture.ErrTimeout).
+const readTimeout = 100 * time.Millisecond
 
 // Sink receives decoded frames and capture-source lifecycle signals. The
 // visibility service satisfies it.
@@ -114,8 +119,8 @@ func New(opener capture.Opener, sink Sink, iface string, opts ...Option) *Captur
 // It blocks rather than spawning: the read loop is a supervised worker (#2748),
 // and the `go c.loop` it replaced put frame decoding outside the supervisor's
 // recover, so one malformed-frame panic took the daemon down. The one goroutine
-// that remains closes the handle on cancellation, which is what unblocks a
-// ReadPacketData parked in BlockForever; it does no decoding and cannot fault.
+// that remains closes the handle on cancellation; it does no decoding and
+// cannot fault.
 func (c *Capture) Run(ctx context.Context) error {
 	if c.iface == "" {
 		c.log.InfoContext(ctx, "wifi capture disabled: no monitor interface configured")
@@ -136,7 +141,7 @@ func (c *Capture) Run(ctx context.Context) error {
 		}
 	}
 
-	handle, err := c.opener.OpenLive(c.iface, c.snapLen, true, capture.BlockForever)
+	handle, err := c.opener.OpenLive(c.iface, c.snapLen, true, readTimeout)
 	if err != nil {
 		runRestore(restore)
 		c.log.WarnContext(ctx, "wifi capture unavailable: cannot open interface",
@@ -165,7 +170,7 @@ func (c *Capture) Run(ctx context.Context) error {
 		case <-ctx.Done():
 		case <-stopped:
 		}
-		handle.Close() // unblocks a ReadPacketData parked in BlockForever
+		handle.Close()
 	}()
 
 	// Deferred, not sequential: a panic in the loop unwinds through here before
@@ -200,6 +205,9 @@ func (c *Capture) loop(ctx context.Context, handle capture.Handle) {
 			return
 		}
 		data, _, err := handle.ReadPacketData()
+		if errors.Is(err, capture.ErrTimeout) {
+			continue
+		}
 		if err != nil {
 			// Closed handle (Stop) or a fatal read error ends the loop.
 			return

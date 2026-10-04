@@ -26,3 +26,7 @@ internal/database/dbtest   # test helper, intentionally not shipped
 # Test-only by design: seals the expired and forged licence files no manager
 # call produces, for the fail-closed licence tests (D-SEED-13).
 internal/license/licensetest   # test helper, intentionally not shipped
+
+# Test-only by design: a capture.Opener that models libpcap's close-waits-on-read
+# behaviour on a quiet interface, for the stop-promptly tests (seed#2862).
+internal/capture/capturetest   # test helper, intentionally not shipped

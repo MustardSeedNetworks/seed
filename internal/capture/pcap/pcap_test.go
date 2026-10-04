@@ -6,6 +6,7 @@ import (
 	"errors"
 	"io"
 	"testing"
+	"time"
 
 	gpcap "github.com/gopacket/gopacket/pcap"
 
@@ -13,20 +14,16 @@ import (
 	"github.com/MustardSeedNetworks/seed/internal/capture/pcap"
 )
 
-// TestBlockForeverMatchesPcap guards against drift: capture.BlockForever is
-// defined CGO-free (the port may not import gopacket/pcap) by mirroring
-// pcap.BlockForever's value. The adapter passes the timeout straight through, so
-// if a gopacket upgrade changed the sentinel, callers using capture.BlockForever
-// would silently lose block-forever semantics. This test is the only place that
-// can compare the two values.
-func TestBlockForeverMatchesPcap(t *testing.T) {
+// A handle without a read timeout cannot be closed on a quiet interface
+// (#2862), so the adapter refuses to open one, gopacket's BlockForever included.
+func TestOpenLiveRefusesNoReadTimeout(t *testing.T) {
 	t.Parallel()
 
-	if capture.BlockForever != gpcap.BlockForever {
-		t.Fatalf(
-			"capture.BlockForever (%v) != pcap.BlockForever (%v): update the constant in internal/capture",
-			capture.BlockForever, gpcap.BlockForever,
-		)
+	for _, timeout := range []time.Duration{0, gpcap.BlockForever, -time.Second} {
+		handle, err := pcap.New().OpenLive("lo", 65535, false, timeout)
+		if handle != nil || !errors.Is(err, capture.ErrNoReadTimeout) {
+			t.Errorf("OpenLive(timeout %v) = %v, %v; want nil, ErrNoReadTimeout", timeout, handle, err)
+		}
 	}
 }
 

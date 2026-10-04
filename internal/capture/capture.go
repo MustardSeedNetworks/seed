@@ -24,19 +24,16 @@ import (
 	"github.com/gopacket/gopacket/layers"
 )
 
-// BlockForever is the OpenLive timeout that makes packet reads block until a
-// packet arrives instead of returning on a timeout. It mirrors the value of
-// pcap.BlockForever so the libpcap adapter can pass it straight through; the
-// pcap adapter's test asserts the two stay equal so a gopacket upgrade that
-// changed the sentinel cannot silently break block-forever semantics here.
-const BlockForever = -10 * time.Millisecond
-
-// ErrTimeout is what ReadPacketData returns when a handle opened with a
-// positive timeout saw no frame within it. A caller that must be able to close
-// a quiet handle opens it with a timeout and reads past this error: with
-// BlockForever, libpcap on Linux holds the handle inside a read until a frame
-// arrives, and Close waits for that read.
+// ErrTimeout is what ReadPacketData returns when no frame arrived within the
+// handle's read timeout. Readers loop past it. The timeout is what makes a
+// quiet handle closable: libpcap on Linux holds the handle inside a read until
+// it returns, and Close waits for that read.
 var ErrTimeout = errors.New("capture: read timed out")
+
+// ErrNoReadTimeout rejects an OpenLive call without a positive read timeout. A
+// handle that blocks until a frame arrives cannot be closed on a quiet
+// interface (#2862).
+var ErrNoReadTimeout = errors.New("capture: read timeout must be positive")
 
 // Handle is an open live-capture handle. It embeds gopacket.PacketDataSource so a
 // handle can be passed straight to
@@ -65,7 +62,8 @@ type Handle interface {
 // (internal/capture/nullcapture).
 type Opener interface {
 	// OpenLive opens iface for live capture. snaplen is the per-packet capture
-	// length in bytes; promiscuous toggles promiscuous mode; timeout is the read
-	// timeout — pass BlockForever to block until a packet arrives.
+	// length in bytes; promiscuous toggles promiscuous mode; timeout bounds each
+	// read, after which ReadPacketData returns ErrTimeout. A non-positive
+	// timeout is ErrNoReadTimeout.
 	OpenLive(iface string, snaplen int32, promiscuous bool, timeout time.Duration) (Handle, error)
 }
