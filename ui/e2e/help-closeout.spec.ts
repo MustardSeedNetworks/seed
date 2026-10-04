@@ -227,7 +227,7 @@ for (const route of [
 test('collapsed sidebar buttons keep their names and hover-only Escape closes the bubble', async ({
   page,
 }) => {
-  await page.addInitScript(() => localStorage.setItem('stem-sidebar-collapsed', 'true'));
+  await page.addInitScript(() => localStorage.setItem('seed-sidebar-collapsed', 'true'));
   await page.goto('/network');
   const help = sidebarHelpButton(page);
   await expect(help).toHaveAccessibleName('Open help');
