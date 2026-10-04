@@ -137,6 +137,7 @@ include mk/lint.mk
 include mk/security.mk
 include mk/deps.mk
 include mk/dev.mk
+include mk/deploy.mk
 
 # =============================================================================
 # Default Target

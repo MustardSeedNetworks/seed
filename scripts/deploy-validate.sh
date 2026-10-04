@@ -9,9 +9,12 @@
 #
 # Usage: ./scripts/deploy-validate.sh <expected-version> <expected-commit> [host] [port]
 #
+# `make deploy-validate HOST=...` is the entry point; it resolves a release
+# tag to its commit and calls this script.
+#
 # Examples:
 #   ./scripts/deploy-validate.sh v0.166.0 abc1234
-#   ./scripts/deploy-validate.sh v0.166.0 abc1234 niac-srv-ubuntu 8443
+#   ./scripts/deploy-validate.sh v0.166.0 abc1234 10.44.40.30 8443
 #
 # =============================================================================
 
@@ -120,7 +123,8 @@ echo ""
 VALIDATION_FAILED=0
 
 echo "Running validation checks..."
-if [ "$ACTUAL_VERSION" = "$EXPECTED_VERSION" ]; then
+# Release tags carry a leading "v"; the daemon reports the bare version.
+if [ "${ACTUAL_VERSION#v}" = "${EXPECTED_VERSION#v}" ]; then
     success "Version matches: $ACTUAL_VERSION"
 else
     fail "Version MISMATCH: expected=$EXPECTED_VERSION actual=$ACTUAL_VERSION"

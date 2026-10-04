@@ -1022,6 +1022,9 @@ jobs:
       - name: Verify release workflow dispatch contract
         run: ./scripts/test-check-release-workflow-contract.sh
 
+      - name: Verify the deployment validator
+        run: ./scripts/test-deploy-validate.sh
+
       # In quality rather than bench: the retry's failure path is the half that
       # was wrong last time (#1950) and the half CI never reaches, so it needs
       # running on every PR rather than only when benchmarks do.
