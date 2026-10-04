@@ -315,6 +315,7 @@ func TestBuild_UnlicensedCollectorNeverRuns(t *testing.T) {
 			poller, err := orchestrator.Build(orchestrator.Config{
 				Targets:      db.PollingTargets(),
 				Observations: db.SNMPObservations(),
+				Rates:        db.Metrics(),
 				Scheduler:    scheduler.New(5 * time.Millisecond),
 				ClientFactory: func(snmp.Target, snmp.ResolvedCredentials) (snmp.Client, error) {
 					dials.Add(1)
