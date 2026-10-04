@@ -78,7 +78,10 @@ The known costs of that choice:
 
 Each interval's six rates are written to `metrics` as six points with
 `target_kind = snmp_interface` and `target_id = <polling target ID>/<ifIndex>`.
-Octets are in `octets/s`, errors and discards in `packets/s`. `interface_name`
+Octets are in `octets/s`, errors and discards in `packets/s`. An Ethernet
+interface adds one point per EtherLike-MIB `dot3StatsTable` counter its agent
+serves (P-A3, up to 13, metric types `dot3_*`), in `frames/s`, or `events/s`
+for the four that count line events rather than frames. `interface_name`
 repeats `target_id`, because the hourly and daily rollups key on it and an
 `ifName` is unique only within one device.
 
@@ -96,7 +99,10 @@ at the default interval. A 48-port switch adds about 83,000 rows a day, and
 7 days of raw for 100 such switches is about 58 million rows. That is inside
 what the single-writer SQLite design ([ADR-0031](0031-single-writer-sqlite-connection.md))
 handles, but it is the reason the default interval is not shortened, and the
-reason raw retention stays at 7 days on every tier.
+reason raw retention stays at 7 days on every tier. The EtherLike counters
+raise it to as many as 19 rows per Ethernet port per poll, about three times
+those figures for a switch whose agent serves the whole `dot3StatsTable`. That
+is the price of a zero rate being a stored fact rather than a missing row.
 
 ### 4. Why rates, and why `metrics`
 

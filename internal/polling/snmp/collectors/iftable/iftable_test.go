@@ -3,6 +3,7 @@ package iftable_test
 import (
 	"context"
 	"errors"
+	"reflect"
 	"strings"
 	"sync"
 	"testing"
@@ -15,6 +16,8 @@ import (
 type fakeClient struct {
 	ifTableVbs  []snmp.Varbind
 	ifXTableVbs []snmp.Varbind
+	dot3Vbs     []snmp.Varbind
+	dot3Err     error
 	upTime      any
 	getErr      error
 	walkErr     error
@@ -39,6 +42,8 @@ func (f *fakeClient) Walk(_ context.Context, prefix string) ([]snmp.Varbind, err
 		return f.ifTableVbs, nil
 	case strings.HasPrefix(prefix, "1.3.6.1.2.1.31.1.1.1"):
 		return f.ifXTableVbs, nil
+	case strings.HasPrefix(prefix, "1.3.6.1.2.1.10.7.2.1"):
+		return f.dot3Vbs, f.dot3Err
 	}
 	return nil, nil
 }
@@ -315,10 +320,109 @@ func TestCollect_Counters(t *testing.T) {
 				Collect(context.Background(), snmp.Target{}, snmp.ResolvedCredentials{}); err != nil {
 				t.Fatalf("Collect: %v", err)
 			}
-			if got := pub.got[0].Rows[0].Counters; got != tt.want {
+			if got := pub.got[0].Rows[0].Counters; !reflect.DeepEqual(got, tt.want) {
 				t.Errorf("Counters = %+v, want %+v", got, tt.want)
 			}
 		})
+	}
+}
+
+func TestCollect_EtherLikeCounters(t *testing.T) {
+	t.Parallel()
+	ifTable := []snmp.Varbind{
+		{OID: "1.3.6.1.2.1.2.2.1.3.1", Value: uint32(53)}, // propVirtual: a VLAN interface
+		{OID: "1.3.6.1.2.1.2.2.1.3.2", Value: uint32(6)},  // ethernetCsmacd
+	}
+	tests := []struct {
+		name string
+		dot3 []snmp.Varbind
+		want map[string]uint64
+	}{
+		{
+			name: "agent without the EtherLike-MIB",
+		},
+		{
+			name: "every counter column, and the columns that are not counters",
+			dot3: []snmp.Varbind{
+				{OID: "1.3.6.1.2.1.10.7.2.1.1.2", Value: 2}, // dot3StatsIndex
+				{OID: "1.3.6.1.2.1.10.7.2.1.2.2", Value: uint(1)},
+				{OID: "1.3.6.1.2.1.10.7.2.1.3.2", Value: uint(2)},
+				{OID: "1.3.6.1.2.1.10.7.2.1.4.2", Value: uint(3)},
+				{OID: "1.3.6.1.2.1.10.7.2.1.5.2", Value: uint(4)},
+				{OID: "1.3.6.1.2.1.10.7.2.1.6.2", Value: uint(5)},
+				{OID: "1.3.6.1.2.1.10.7.2.1.7.2", Value: uint(6)},
+				{OID: "1.3.6.1.2.1.10.7.2.1.8.2", Value: uint(7)},
+				{OID: "1.3.6.1.2.1.10.7.2.1.9.2", Value: uint(8)},
+				{OID: "1.3.6.1.2.1.10.7.2.1.10.2", Value: uint(9)},
+				{OID: "1.3.6.1.2.1.10.7.2.1.11.2", Value: uint(10)},
+				{OID: "1.3.6.1.2.1.10.7.2.1.13.2", Value: uint(11)},
+				{OID: "1.3.6.1.2.1.10.7.2.1.16.2", Value: uint(12)},
+				{OID: "1.3.6.1.2.1.10.7.2.1.17.2", Value: ".0.0"}, // dot3StatsEtherChipSet
+				{OID: "1.3.6.1.2.1.10.7.2.1.18.2", Value: uint(13)},
+				{OID: "1.3.6.1.2.1.10.7.2.1.19.2", Value: 3}, // dot3StatsDuplexStatus
+			},
+			want: map[string]uint64{
+				iftable.Dot3AlignmentErrors:           1,
+				iftable.Dot3FCSErrors:                 2,
+				iftable.Dot3SingleCollisionFrames:     3,
+				iftable.Dot3MultipleCollisionFrames:   4,
+				iftable.Dot3SQETestErrors:             5,
+				iftable.Dot3DeferredTransmissions:     6,
+				iftable.Dot3LateCollisions:            7,
+				iftable.Dot3ExcessiveCollisions:       8,
+				iftable.Dot3InternalMacTransmitErrors: 9,
+				iftable.Dot3CarrierSenseErrors:        10,
+				iftable.Dot3FrameTooLongs:             11,
+				iftable.Dot3InternalMacReceiveErrors:  12,
+				iftable.Dot3SymbolErrors:              13,
+			},
+		},
+		{
+			// net-snmp on Linux serves only the columns its driver reports.
+			// An unserved column must not read as a zero count.
+			name: "sparse columns and a value that is not a counter",
+			dot3: []snmp.Varbind{
+				{OID: "1.3.6.1.2.1.10.7.2.1.3.2", Value: uint(0)},
+				{OID: "1.3.6.1.2.1.10.7.2.1.8.2", Value: nil},
+				{OID: "1.3.6.1.2.1.10.7.2.1.18.2", Value: "garbage"},
+			},
+			want: map[string]uint64{iftable.Dot3FCSErrors: 0},
+		},
+		{
+			name: "a row for an index the ifTable does not list",
+			dot3: []snmp.Varbind{{OID: "1.3.6.1.2.1.10.7.2.1.3.99", Value: uint(4)}},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			fc := &fakeClient{ifTableVbs: ifTable, dot3Vbs: tt.dot3, upTime: uint32(4200)}
+			pub := &fakePublisher{}
+			if err := iftable.New(factoryFor(fc), pub, at).
+				Collect(context.Background(), snmp.Target{}, snmp.ResolvedCredentials{}); err != nil {
+				t.Fatalf("Collect: %v", err)
+			}
+			rows := pub.got[0].Rows
+			if len(rows) != 2 {
+				t.Fatalf("rows = %+v, want ifIndex 1 and 2 only", rows)
+			}
+			if vlan := rows[0].Counters.EtherLike; vlan != nil {
+				t.Errorf("VLAN interface EtherLike = %v, want nil", vlan)
+			}
+			if got := rows[1].Counters.EtherLike; !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("EtherLike = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestCollect_Dot3WalkErrorPropagates(t *testing.T) {
+	t.Parallel()
+	fc := &fakeClient{upTime: uint32(1), dot3Err: errors.New("timeout")}
+	err := iftable.New(factoryFor(fc), &fakePublisher{}, at).
+		Collect(context.Background(), snmp.Target{}, snmp.ResolvedCredentials{})
+	if err == nil || !strings.Contains(err.Error(), "dot3StatsTable") {
+		t.Errorf("Collect error = %v, want the dot3StatsTable walk failure", err)
 	}
 }
 

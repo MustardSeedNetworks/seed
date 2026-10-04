@@ -13,7 +13,7 @@ import (
 
 // The tests in iftable_test.go drive the collector through a hand-written fake
 // that returns whatever the test author decided an agent emits. These replay
-// recorded walks from eight vendors instead, so the collector meets the types,
+// recorded walks from nine devices instead, so the collector meets the types,
 // the sparse columns and the odd encodings those devices actually produced.
 
 type capturingPublisher struct{ obs []iftable.Observation }
@@ -69,7 +69,7 @@ func collectFrom(t *testing.T, path string) iftable.Observation {
 }
 
 // TestCollectFromRecordedWalks is the point of the fixtures: the collector runs
-// against eight real devices and has to produce a coherent table for each.
+// against nine real devices and has to produce a coherent table for each.
 func TestCollectFromRecordedWalks(t *testing.T) {
 	for _, path := range walkFixtures(t) {
 		t.Run(filepath.Base(path), func(t *testing.T) {
@@ -157,5 +157,34 @@ func TestSpeedIsPlausible(t *testing.T) {
 				t.Log("no interface reported a speed; fixture may lack ifSpeed")
 			}
 		})
+	}
+}
+
+// TestEtherLikeFromRecordedWalk is the P-A3 acceptance against a captured
+// Catalyst 3750: every Gigabit port carries the full dot3Stats counter set,
+// and the VLAN interfaces, which have no dot3StatsEntry, carry none.
+func TestEtherLikeFromRecordedWalk(t *testing.T) {
+	const ethernetCsmacd = 6
+	obs := collectFrom(t, filepath.Join(
+		"..", "..", "snmpwalkfile", "testdata", "cisco-c3750-03.walk"))
+
+	var ports int
+	for _, row := range obs.Rows {
+		if row.IfType != ethernetCsmacd {
+			if row.Counters.EtherLike != nil {
+				t.Errorf("%s (ifType %d) has EtherLike counters %v, want none",
+					row.IfDescr, row.IfType, row.Counters.EtherLike)
+			}
+			continue
+		}
+		ports++
+		if got := len(row.Counters.EtherLike); got != 13 {
+			t.Errorf("%s has %d EtherLike counters, want all 13: %v",
+				row.IfDescr, got, row.Counters.EtherLike)
+		}
+	}
+	if ports == 0 || ports == len(obs.Rows) {
+		t.Fatalf("%d of %d rows are Ethernet; the fixture should hold both kinds",
+			ports, len(obs.Rows))
 	}
 }

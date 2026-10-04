@@ -1,6 +1,7 @@
 // Package iftable implements the if_table SNMP Collector: walks
-// IF-MIB ifTable (RFC 2233 §6) plus ifXTable extensions and emits
-// one Observation containing every interface row indexed by ifIndex.
+// IF-MIB ifTable (RFC 2233 §6) plus ifXTable extensions, and the
+// EtherLike-MIB dot3StatsTable (RFC 3635), and emits one Observation
+// containing every interface row indexed by ifIndex.
 // Used by Stage A4 topology to attach physical/logical interfaces
 // to their parent Node.
 package iftable
@@ -49,6 +50,48 @@ const (
 	colIfCounterDiscontinuityTime = "19"
 )
 
+// dot3StatsPrefix is the EtherLike-MIB dot3StatsTable
+// (1.3.6.1.2.1.10.7.2.1.*). Its index is the ifIndex of the Ethernet
+// interface a row describes; other interfaces have no row.
+const dot3StatsPrefix = "1.3.6.1.2.1.10.7.2.1"
+
+// Counter32 columns under dot3StatsTable. The columns left out are the
+// index, the deprecated chipset OID, duplex status and rate control, none
+// of which is a counter.
+const (
+	colDot3AlignmentErrors           = "2"
+	colDot3FCSErrors                 = "3"
+	colDot3SingleCollisionFrames     = "4"
+	colDot3MultipleCollisionFrames   = "5"
+	colDot3SQETestErrors             = "6"
+	colDot3DeferredTransmissions     = "7"
+	colDot3LateCollisions            = "8"
+	colDot3ExcessiveCollisions       = "9"
+	colDot3InternalMacTransmitErrors = "10"
+	colDot3CarrierSenseErrors        = "11"
+	colDot3FrameTooLongs             = "13"
+	colDot3InternalMacReceiveErrors  = "16"
+	colDot3SymbolErrors              = "18"
+)
+
+// The dot3StatsTable counters by MIB descriptor (RFC 3635 §4), the keys of
+// [Counters].EtherLike.
+const (
+	Dot3AlignmentErrors           = "dot3StatsAlignmentErrors"
+	Dot3FCSErrors                 = "dot3StatsFCSErrors"
+	Dot3SingleCollisionFrames     = "dot3StatsSingleCollisionFrames"
+	Dot3MultipleCollisionFrames   = "dot3StatsMultipleCollisionFrames"
+	Dot3SQETestErrors             = "dot3StatsSQETestErrors"
+	Dot3DeferredTransmissions     = "dot3StatsDeferredTransmissions"
+	Dot3LateCollisions            = "dot3StatsLateCollisions"
+	Dot3ExcessiveCollisions       = "dot3StatsExcessiveCollisions"
+	Dot3InternalMacTransmitErrors = "dot3StatsInternalMacTransmitErrors"
+	Dot3CarrierSenseErrors        = "dot3StatsCarrierSenseErrors"
+	Dot3FrameTooLongs             = "dot3StatsFrameTooLongs"
+	Dot3InternalMacReceiveErrors  = "dot3StatsInternalMacReceiveErrors"
+	Dot3SymbolErrors              = "dot3StatsSymbolErrors"
+)
+
 // oidSysUpTime is read with the tables so counter deltas can tell an agent
 // restart from a counter wrap (RFC 2863 §3.1.6).
 const oidSysUpTime = "1.3.6.1.2.1.1.3.0"
@@ -94,7 +137,13 @@ type Row struct {
 // 64-bit ifHC columns when the agent serves both, otherwise from the 32-bit
 // ifTable columns, and HCOctets records which: the two wrap at different
 // widths. Discontinuity is ifCounterDiscontinuityTime, which an agent bumps
-// when the counters restart without a reboot (a "clear counters").
+// when the counters restart without a reboot (a "clear counters"); RFC 3635
+// makes it the discontinuity indicator for the EtherLike counters too.
+//
+// EtherLike holds the dot3StatsTable counters the agent served for the
+// interface, keyed by MIB descriptor (Dot3FCSErrors, ...). It is nil for an interface with no dot3StatsEntry (a VLAN
+// interface, a loopback, an agent without the MIB), and a column the agent
+// skipped is absent rather than zero.
 type Counters struct {
 	InOctets      uint64
 	OutOctets     uint64
@@ -104,6 +153,7 @@ type Counters struct {
 	InDiscards    uint64
 	OutDiscards   uint64
 	Discontinuity uint32
+	EtherLike     map[string]uint64
 }
 
 // Observation is the per-target ifTable snapshot. Rows is sorted by
@@ -143,8 +193,10 @@ func New(factory snmp.ClientFactory, publisher Publisher, now func() time.Time) 
 // Name implements snmp.Collector.
 func (*Collector) Name() string { return Name }
 
-// Collect walks ifTable + ifXTable subtrees, merges by ifIndex, and
-// publishes the resulting Observation.
+// Collect walks the ifTable, ifXTable and dot3StatsTable subtrees, merges
+// them by ifIndex, and publishes the resulting Observation. An agent
+// without the EtherLike-MIB answers its walk with nothing, which is not an
+// error.
 func (c *Collector) Collect(
 	ctx context.Context,
 	target snmp.Target,
@@ -178,7 +230,12 @@ func (c *Collector) Collect(
 		return fmt.Errorf("iftable: walk ifXTable: %w", err)
 	}
 
-	rows := mergeRows(ifVarbinds, ifXVarbinds)
+	dot3Varbinds, err := client.Walk(ctx, dot3StatsPrefix)
+	if err != nil {
+		return fmt.Errorf("iftable: walk dot3StatsTable: %w", err)
+	}
+
+	rows := mergeRows(ifVarbinds, ifXVarbinds, dot3Varbinds)
 
 	if pubErr := c.publisher.PublishIfTable(ctx, Observation{
 		ClientID:   target.ClientID,
@@ -192,10 +249,11 @@ func (c *Collector) Collect(
 	return nil
 }
 
-// mergeRows folds ifTable + ifXTable varbinds into Rows keyed by
-// ifIndex. Order is ascending ifIndex for deterministic downstream
-// comparisons.
-func mergeRows(ifVarbinds, ifXVarbinds []snmp.Varbind) []Row {
+// mergeRows folds ifTable, ifXTable and dot3StatsTable varbinds into Rows
+// keyed by ifIndex. Order is ascending ifIndex for deterministic downstream
+// comparisons. A dot3StatsEntry joins an existing row only: an index the
+// ifTable does not list describes no interface seed can name.
+func mergeRows(ifVarbinds, ifXVarbinds, dot3Varbinds []snmp.Varbind) []Row {
 	byIndex := make(map[uint32]*Row)
 
 	for _, vb := range ifVarbinds {
@@ -213,6 +271,15 @@ func mergeRows(ifVarbinds, ifXVarbinds []snmp.Varbind) []Row {
 		}
 		row := getOrCreate(byIndex, idx)
 		applyIfXTableColumn(row, col, vb.Value)
+	}
+	for _, vb := range dot3Varbinds {
+		col, idx, ok := parseColumnIndex(vb.OID, dot3StatsPrefix)
+		if !ok {
+			continue
+		}
+		if row, exists := byIndex[idx]; exists {
+			applyDot3StatsColumn(row, col, vb.Value)
+		}
 	}
 
 	out := make([]Row, 0, len(byIndex))
@@ -308,6 +375,51 @@ func applyIfXTableColumn(row *Row, col string, v any) {
 	case colIfCounterDiscontinuityTime:
 		row.Counters.Discontinuity = uint32Value(v)
 	}
+}
+
+// applyDot3StatsColumn records one dot3StatsTable counter on row. Columns
+// that are not counters are ignored, as is a counter whose value is not an
+// integer: a bad value must read as not served, never as zero.
+func applyDot3StatsColumn(row *Row, col string, v any) {
+	var name string
+	switch col {
+	case colDot3AlignmentErrors:
+		name = Dot3AlignmentErrors
+	case colDot3FCSErrors:
+		name = Dot3FCSErrors
+	case colDot3SingleCollisionFrames:
+		name = Dot3SingleCollisionFrames
+	case colDot3MultipleCollisionFrames:
+		name = Dot3MultipleCollisionFrames
+	case colDot3SQETestErrors:
+		name = Dot3SQETestErrors
+	case colDot3DeferredTransmissions:
+		name = Dot3DeferredTransmissions
+	case colDot3LateCollisions:
+		name = Dot3LateCollisions
+	case colDot3ExcessiveCollisions:
+		name = Dot3ExcessiveCollisions
+	case colDot3InternalMacTransmitErrors:
+		name = Dot3InternalMacTransmitErrors
+	case colDot3CarrierSenseErrors:
+		name = Dot3CarrierSenseErrors
+	case colDot3FrameTooLongs:
+		name = Dot3FrameTooLongs
+	case colDot3InternalMacReceiveErrors:
+		name = Dot3InternalMacReceiveErrors
+	case colDot3SymbolErrors:
+		name = Dot3SymbolErrors
+	default:
+		return
+	}
+	value, ok := counterValue(v)
+	if !ok {
+		return
+	}
+	if row.Counters.EtherLike == nil {
+		row.Counters.EtherLike = make(map[string]uint64)
+	}
+	row.Counters.EtherLike[name] = value
 }
 
 // mbpsToBps converts ifHighSpeed (megabits per second) to bps. Kept
@@ -457,6 +569,18 @@ func uint64Value(v any) uint64 {
 		return uint64(max(t, 0))
 	default:
 		return 0
+	}
+}
+
+// counterValue decodes a Counter32 the way uint64Value does, but reports
+// whether v was an integer at all, so a missing or mistyped value is not
+// mistaken for a zero count.
+func counterValue(v any) (uint64, bool) {
+	switch v.(type) {
+	case uint64, uint, uint32, int, int32, int64:
+		return uint64Value(v), true
+	default:
+		return 0, false
 	}
 }
 

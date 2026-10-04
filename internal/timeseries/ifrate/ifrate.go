@@ -10,11 +10,14 @@
 // 32-bit and 64-bit octet counters. A smaller 32-bit value with none of
 // those is one wrap through 2^32; a smaller 64-bit value is a reset, since a
 // Counter64 does not wrap in practice. Every skipped pair re-baselines, so
-// the next reading rates normally.
+// the next reading rates normally. The EtherLike-MIB counters an Ethernet
+// interface carries follow the same rules (ADR-0033).
 package ifrate
 
 import (
 	"context"
+	"maps"
+	"slices"
 	"sync"
 	"time"
 
@@ -38,10 +41,45 @@ const (
 	UnitPackets = "packets/s"
 )
 
+// Metric types of the EtherLike-MIB dot3StatsTable rates (RFC 3635). Most
+// count frames; SQE test errors, carrier sense errors, late collisions and
+// symbol errors count line events that are not frames.
+const (
+	MetricDot3AlignmentErrors           = "dot3_alignment_errors"
+	MetricDot3FCSErrors                 = "dot3_fcs_errors"
+	MetricDot3SingleCollisionFrames     = "dot3_single_collision_frames"
+	MetricDot3MultipleCollisionFrames   = "dot3_multiple_collision_frames"
+	MetricDot3SQETestErrors             = "dot3_sqe_test_errors"
+	MetricDot3DeferredTransmissions     = "dot3_deferred_transmissions"
+	MetricDot3LateCollisions            = "dot3_late_collisions"
+	MetricDot3ExcessiveCollisions       = "dot3_excessive_collisions"
+	MetricDot3InternalMacTransmitErrors = "dot3_internal_mac_transmit_errors"
+	MetricDot3CarrierSenseErrors        = "dot3_carrier_sense_errors"
+	MetricDot3FrameTooLongs             = "dot3_frame_too_longs"
+	MetricDot3InternalMacReceiveErrors  = "dot3_internal_mac_receive_errors"
+	MetricDot3SymbolErrors              = "dot3_symbol_errors"
+
+	UnitFrames = "frames/s"
+	UnitEvents = "events/s"
+)
+
+// etherLikeUnit is the unit of an EtherLike rate metric.
+func etherLikeUnit(metric string) string {
+	switch metric {
+	case MetricDot3SQETestErrors, MetricDot3LateCollisions,
+		MetricDot3CarrierSenseErrors, MetricDot3SymbolErrors:
+		return UnitEvents
+	default:
+		return UnitFrames
+	}
+}
+
 // Reading is one interface's cumulative counters at one poll. Octet
 // counters are 64-bit when WideOctets is set and 32-bit otherwise; errors
 // and discards are always Counter32. Discontinuity is the interface's
-// ifCounterDiscontinuityTime.
+// ifCounterDiscontinuityTime. EtherLike maps an EtherLike metric type to
+// its Counter32 and holds only the counters the agent served; it is nil for
+// an interface that is not Ethernet.
 type Reading struct {
 	IfIndex       uint32
 	InOctets      uint64
@@ -52,6 +90,7 @@ type Reading struct {
 	InDiscards    uint64
 	OutDiscards   uint64
 	Discontinuity uint32
+	EtherLike     map[string]uint64
 }
 
 // Snapshot is every interface reading of one target at one poll.
@@ -67,7 +106,8 @@ type Snapshot struct {
 }
 
 // Rate is one interface's per-second counter rates over the interval
-// ending at At.
+// ending at At. EtherLike holds a rate for each EtherLike counter served in
+// both readings, keyed by metric type.
 type Rate struct {
 	ClientID    string
 	TargetID    string
@@ -79,6 +119,7 @@ type Rate struct {
 	OutErrors   float64
 	InDiscards  float64
 	OutDiscards float64
+	EtherLike   map[string]float64
 }
 
 // Point is one metric value of a Rate.
@@ -88,9 +129,10 @@ type Point struct {
 	Value float64
 }
 
-// Points lists the six rates as metric points, in a fixed order.
+// Points lists the six interface rates in a fixed order, then the EtherLike
+// rates sorted by metric type.
 func (r Rate) Points() []Point {
-	return []Point{
+	points := []Point{
 		{MetricInOctets, UnitOctets, r.InOctets},
 		{MetricOutOctets, UnitOctets, r.OutOctets},
 		{MetricInErrors, UnitPackets, r.InErrors},
@@ -98,6 +140,10 @@ func (r Rate) Points() []Point {
 		{MetricInDiscards, UnitPackets, r.InDiscards},
 		{MetricOutDiscards, UnitPackets, r.OutDiscards},
 	}
+	for _, metric := range slices.Sorted(maps.Keys(r.EtherLike)) {
+		points = append(points, Point{metric, etherLikeUnit(metric), r.EtherLike[metric]})
+	}
+	return points
 }
 
 // Store persists rates.
@@ -156,6 +202,10 @@ func (r *Rater) Observe(snap Snapshot) []Rate {
 		if !ok {
 			continue
 		}
+		etherLike, ok := etherLikeRates(before.EtherLike, rd.EtherLike, prev.sysUpTime, cur.sysUpTime, seconds)
+		if !ok {
+			continue
+		}
 		rates = append(rates, Rate{
 			ClientID:    snap.ClientID,
 			TargetID:    snap.TargetID,
@@ -167,6 +217,7 @@ func (r *Rater) Observe(snap Snapshot) []Rate {
 			OutErrors:   float64(deltas[3]) / seconds,
 			InDiscards:  float64(deltas[4]) / seconds,
 			OutDiscards: float64(deltas[5]) / seconds,
+			EtherLike:   etherLike,
 		})
 	}
 	return rates
@@ -196,4 +247,28 @@ func counterDeltas(prev, cur Reading, prevUp, curUp uint32) ([6]uint64, bool) {
 	out[4], ok[4] = delta(prev.InDiscards, cur.InDiscards, false)
 	out[5], ok[5] = delta(prev.OutDiscards, cur.OutDiscards, false)
 	return out, ok == [6]bool{true, true, true, true, true, true}
+}
+
+// etherLikeRates rates every EtherLike counter served in both readings. It
+// runs after counterDeltas accepted the interval, so the restart and clear
+// checks have passed; it reports false only for a value that is not a
+// Counter32, and the interface's whole interval is then dropped like any
+// other discontinuity.
+func etherLikeRates(prev, cur map[string]uint64, prevUp, curUp uint32, seconds float64) (map[string]float64, bool) {
+	var rates map[string]float64
+	for metric, c := range cur {
+		p, ok := prev[metric]
+		if !ok {
+			continue
+		}
+		d, ok := snmp.Counter32Delta(p, c, prevUp, curUp)
+		if !ok {
+			return nil, false
+		}
+		if rates == nil {
+			rates = make(map[string]float64, len(cur))
+		}
+		rates[metric] = float64(d) / seconds
+	}
+	return rates, true
 }
