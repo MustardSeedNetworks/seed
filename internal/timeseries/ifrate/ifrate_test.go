@@ -2,6 +2,7 @@ package ifrate_test
 
 import (
 	"math"
+	"reflect"
 	"testing"
 	"time"
 
@@ -107,7 +108,7 @@ func TestRaterObserve(t *testing.T) {
 			}
 			want := *tt.want
 			want.ClientID, want.TargetID, want.IfIndex, want.At = "c1", "t1", 1, tt.second.At
-			if len(got) != 1 || got[0] != want {
+			if len(got) != 1 || !reflect.DeepEqual(got[0], want) {
 				t.Errorf("rates = %+v, want [%+v]", got, want)
 			}
 		})
@@ -213,5 +214,99 @@ func TestRateServesAllSixPoints(t *testing.T) {
 		if pts[i] != want[i] {
 			t.Errorf("point[%d] = %+v, want %+v", i, pts[i], want[i])
 		}
+	}
+}
+
+func TestRaterEtherLike(t *testing.T) {
+	t.Parallel()
+	const fcs, late = ifrate.MetricDot3FCSErrors, ifrate.MetricDot3LateCollisions
+	tests := []struct {
+		name     string
+		first    map[string]uint64
+		second   map[string]uint64
+		upTime   uint32
+		discont  uint32
+		want     map[string]float64
+		wantNone bool
+	}{
+		{
+			name:   "rated over the interval",
+			first:  map[string]uint64{fcs: 100, late: 7},
+			second: map[string]uint64{fcs: 160, late: 7},
+			upTime: 106000,
+			want:   map[string]float64{fcs: 1, late: 0},
+		},
+		{
+			name:   "one 32-bit wrap",
+			first:  map[string]uint64{fcs: math.MaxUint32 - 9},
+			second: map[string]uint64{fcs: 50},
+			upTime: 106000,
+			want:   map[string]float64{fcs: 1},
+		},
+		{
+			name:   "a counter in only one reading is not rated",
+			first:  map[string]uint64{fcs: 100},
+			second: map[string]uint64{fcs: 160, late: 3},
+			upTime: 106000,
+			want:   map[string]float64{fcs: 1},
+		},
+		{
+			name:   "an interface that is not Ethernet",
+			upTime: 106000,
+		},
+		{
+			name:     "agent restart drops the EtherLike rates with the rest",
+			first:    map[string]uint64{fcs: 100},
+			second:   map[string]uint64{fcs: 160},
+			upTime:   500,
+			wantNone: true,
+		},
+		{
+			name:     "a counters clear drops the EtherLike rates with the rest",
+			first:    map[string]uint64{fcs: 100},
+			second:   map[string]uint64{fcs: 1},
+			upTime:   106000,
+			discont:  105000,
+			wantNone: true,
+		},
+		{
+			name:     "a value wider than a Counter32 drops the interval",
+			first:    map[string]uint64{fcs: 100},
+			second:   map[string]uint64{fcs: 1 << 33},
+			upTime:   106000,
+			wantNone: true,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			r := ifrate.NewRater()
+			r.Observe(snap(0, 100000, ifrate.Reading{EtherLike: tt.first}))
+			got := r.Observe(snap(60, tt.upTime, ifrate.Reading{EtherLike: tt.second, Discontinuity: tt.discont}))
+			if tt.wantNone {
+				if len(got) != 0 {
+					t.Errorf("rates = %+v, want none", got)
+				}
+				return
+			}
+			if len(got) != 1 || !reflect.DeepEqual(got[0].EtherLike, tt.want) {
+				t.Errorf("rates = %+v, want EtherLike %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestRatePointsAppendServedEtherLike(t *testing.T) {
+	t.Parallel()
+	pts := ifrate.Rate{EtherLike: map[string]float64{
+		ifrate.MetricDot3SymbolErrors: 2,
+		ifrate.MetricDot3FCSErrors:    1,
+	}}.Points()
+	want := []ifrate.Point{
+		{ifrate.MetricDot3FCSErrors, ifrate.UnitFrames, 1},
+		{ifrate.MetricDot3SymbolErrors, ifrate.UnitEvents, 2},
+	}
+	if len(pts) != 6+len(want) || !reflect.DeepEqual(pts[6:], want) {
+		t.Errorf("points = %+v, want the six interface rates then %+v", pts, want)
 	}
 }

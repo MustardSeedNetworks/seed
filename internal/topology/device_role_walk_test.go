@@ -16,7 +16,7 @@ import (
 
 // The role tests elsewhere in this package feed the classifier values
 // a test author chose. These replay the recorded walk corpus through
-// the real sysinfo collector, so the scalars are the ones eight
+// the real sysinfo collector, so the scalars are the ones nine
 // devices actually emitted — including the three whose sysObjectID is
 // a lie (MustardSeedNetworks/niac-go#2154).
 
@@ -75,7 +75,7 @@ func nodeFromWalk(t *testing.T, path string) *topology.Node {
 
 // Every device in the corpus is a switch, and every one of them was
 // reported as a vendor name or `unknown` before seed#2456. Three of
-// the eight — arista, aruba, dell — carry a Cisco sysObjectID, so
+// the nine — arista, aruba, dell — carry a Cisco sysObjectID, so
 // they are also the proof that the role does not come from the
 // vendor: under the old code all three read "cisco".
 func TestDeviceRole_RecordedWalkCorpus(t *testing.T) {
@@ -85,8 +85,8 @@ func TestDeviceRole_RecordedWalkCorpus(t *testing.T) {
 	if err != nil {
 		t.Fatalf("glob fixtures: %v", err)
 	}
-	if len(paths) != 8 {
-		t.Fatalf("walk fixtures = %d, want the 8 recorded vendors; "+
+	if len(paths) != 9 {
+		t.Fatalf("walk fixtures = %d, want the 9 recorded walks; "+
 			"a changed corpus needs this expectation re-read, not re-fitted", len(paths))
 	}
 	for _, path := range paths {

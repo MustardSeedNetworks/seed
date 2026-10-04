@@ -45,6 +45,7 @@ func snapshot(obs iftable.Observation) ifrate.Snapshot {
 			InDiscards:    c.InDiscards,
 			OutDiscards:   c.OutDiscards,
 			Discontinuity: c.Discontinuity,
+			EtherLike:     etherLikeReading(c.EtherLike),
 		}
 	}
 	return ifrate.Snapshot{
@@ -53,5 +54,53 @@ func snapshot(obs iftable.Observation) ifrate.Snapshot {
 		At:        obs.ObservedAt,
 		SysUpTime: obs.SysUpTime,
 		Readings:  readings,
+	}
+}
+
+// etherLikeReading renames the collector's dot3StatsTable counters to the
+// rate metrics they feed.
+func etherLikeReading(counters map[string]uint64) map[string]uint64 {
+	if counters == nil {
+		return nil
+	}
+	out := make(map[string]uint64, len(counters))
+	for name, value := range counters {
+		if metric := etherLikeMetric(name); metric != "" {
+			out[metric] = value
+		}
+	}
+	return out
+}
+
+func etherLikeMetric(name string) string {
+	switch name {
+	case iftable.Dot3AlignmentErrors:
+		return ifrate.MetricDot3AlignmentErrors
+	case iftable.Dot3FCSErrors:
+		return ifrate.MetricDot3FCSErrors
+	case iftable.Dot3SingleCollisionFrames:
+		return ifrate.MetricDot3SingleCollisionFrames
+	case iftable.Dot3MultipleCollisionFrames:
+		return ifrate.MetricDot3MultipleCollisionFrames
+	case iftable.Dot3SQETestErrors:
+		return ifrate.MetricDot3SQETestErrors
+	case iftable.Dot3DeferredTransmissions:
+		return ifrate.MetricDot3DeferredTransmissions
+	case iftable.Dot3LateCollisions:
+		return ifrate.MetricDot3LateCollisions
+	case iftable.Dot3ExcessiveCollisions:
+		return ifrate.MetricDot3ExcessiveCollisions
+	case iftable.Dot3InternalMacTransmitErrors:
+		return ifrate.MetricDot3InternalMacTransmitErrors
+	case iftable.Dot3CarrierSenseErrors:
+		return ifrate.MetricDot3CarrierSenseErrors
+	case iftable.Dot3FrameTooLongs:
+		return ifrate.MetricDot3FrameTooLongs
+	case iftable.Dot3InternalMacReceiveErrors:
+		return ifrate.MetricDot3InternalMacReceiveErrors
+	case iftable.Dot3SymbolErrors:
+		return ifrate.MetricDot3SymbolErrors
+	default:
+		return ""
 	}
 }
