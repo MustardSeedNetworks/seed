@@ -378,8 +378,8 @@
         },
         "oui_max_age": {
           "$ref": "#/$defs/Duration",
-          "description": "Max age before auto-download OUI database (0 = never auto-update)",
-          "default": "720h"
+          "description": "Refresh oui_file_path from the IEEE registry once it is older than this (opt-in; 0 never calls out and uses the embedded registry)",
+          "default": 0
         },
         "fingerprinting": {
           "$ref": "#/$defs/FingerprintingConfig"

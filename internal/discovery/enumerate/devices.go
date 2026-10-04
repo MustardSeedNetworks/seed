@@ -6,7 +6,7 @@ package enumerate
 // metadata.
 //
 // devices.go holds the DeviceDiscovery struct, NewDeviceDiscovery /
-// NewDeviceDiscoveryWithOUI, the Start/Stop lifecycle, OUI-database loaders,
+// NewDeviceDiscoveryWithOUI, the Start/Stop lifecycle, the OUI file load and refresh,
 // interface / subnet configuration, accessors that copy devices out
 // (GetDevices/GetDevice/GetDeviceByIP/Count/IsScanning/LastScan/GetStatus),
 // the NetBIOS / mDNS active resolution methods, and ClearDevices /
@@ -16,6 +16,7 @@ package enumerate
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net"
 	"net/netip"
@@ -47,90 +48,36 @@ type DeviceDiscovery struct {
 	dbWriter        DBDeviceWriter // Database writer for persistence
 }
 
-// loadOUIDatabase loads the OUI database based on configuration.
-// Uses early returns to minimize nesting complexity.
-func loadOUIDatabase(oui *resolve.OUIDatabase, ouiPath string, ouiMaxAge time.Duration) {
-	// No path provided: try standard locations silently
+// loadOUIFile layers an on-disk IEEE registry over the embedded one. It reads
+// local files only: startup must never wait on the network (#2970). A missing
+// file is the normal case, since the embedded registry is complete.
+func loadOUIFile(oui *resolve.OUIDatabase, ouiPath string) {
 	if ouiPath == "" {
 		_ = oui.TryLoadIEEEFile()
 		return
 	}
-
-	// Path provided but no auto-update: just load from file
-	if ouiMaxAge == 0 {
-		loadOUIFromFile(oui, ouiPath)
-		return
-	}
-
-	// Auto-update enabled: download if needed, then load
-	loadOUIWithAutoUpdate(oui, ouiPath, ouiMaxAge)
-}
-
-// loadOUIFromFile loads OUI from a specific file path with fallback.
-func loadOUIFromFile(oui *resolve.OUIDatabase, ouiPath string) {
 	if err := oui.LoadFromIEEEFormat(ouiPath); err != nil {
-		logging.GetLogger().Warn("Failed to load OUI from file", "path", ouiPath, "error", err)
-		if loadErr := oui.TryLoadIEEEFile(); loadErr != nil {
-			logging.GetLogger().Warn("Failed to load IEEE OUI file", "error", loadErr)
+		if !errors.Is(err, os.ErrNotExist) {
+			logging.GetLogger().Warn("Failed to load OUI from file", "path", ouiPath, "error", err)
 		}
+		_ = oui.TryLoadIEEEFile()
 		return
 	}
 	logging.GetLogger().Info("OUI database loaded from file", "path", ouiPath, "entries", oui.Count())
 }
 
-// loadOUIWithAutoUpdate updates OUI database if needed, then loads it.
-//
-// Honors the SKIP_NETWORK_TESTS env var: when set, the auto-download is
-// skipped and the bundled file (loaded via TryLoadIEEEFile or its
-// preloaded vendor map) is used as-is. CI sets this env var to avoid
-// hanging on the IEEE OUI download when the runner has no outbound
-// network — without the guard the 2-min timeout per attempt stacks up
-// and the test suite blows past its 10-min deadline.
-//
-// Production binaries get a fresh OUI baked in at build time, so the
-// in-process refresh is a quality-of-life feature, not load-bearing.
-func loadOUIWithAutoUpdate(oui *resolve.OUIDatabase, ouiPath string, ouiMaxAge time.Duration) {
-	if os.Getenv("SKIP_NETWORK_TESTS") != "" {
-		if err := oui.TryLoadIEEEFile(); err != nil {
-			logging.GetLogger().Warn("SKIP_NETWORK_TESTS set; bundled OUI file not loadable", "error", err)
-		} else {
-			logging.GetLogger().Info(
-				"OUI database loaded from bundled file (SKIP_NETWORK_TESTS set)",
-				"entries", oui.Count(),
-			)
-		}
-		return
-	}
-
-	ctx, cancel := context.WithTimeout(context.Background(), ouiUpdateTimeoutMinutes*time.Minute)
-	defer cancel()
-
-	if err := oui.UpdateIfNeeded(ctx, ouiPath, ouiMaxAge); err != nil {
-		logging.GetLogger().Warn("Failed to update OUI database", "error", err)
-		if loadErr := oui.TryLoadIEEEFile(); loadErr != nil {
-			logging.GetLogger().Warn("Failed to load IEEE OUI file", "error", loadErr)
-		}
-		return
-	}
-	logging.GetLogger().Info("OUI database loaded", "entries", oui.Count())
-}
-
 // NewDeviceDiscovery creates a new device discovery aggregator.
 func NewDeviceDiscovery(interfaceName string, opts ...Option) *DeviceDiscovery {
-	return NewDeviceDiscoveryWithOUI(interfaceName, "", 0, opts...)
+	return NewDeviceDiscoveryWithOUI(interfaceName, "", opts...)
 }
 
-// NewDeviceDiscoveryWithOUI creates a new device discovery aggregator with OUI configuration.
-// ouiPath specifies the path to store/load the OUI database file.
-// ouiMaxAge specifies how old the file can be before auto-downloading (0 = never auto-update).
+// NewDeviceDiscoveryWithOUI creates a new device discovery aggregator whose
+// vendor lookups layer the IEEE file at ouiPath, when present, over the
+// embedded registry. It does no network I/O; RefreshOUI is the download.
 // opts inject optional dependencies such as the live-capture Opener (WithCapture).
-func NewDeviceDiscoveryWithOUI(
-	interfaceName, ouiPath string,
-	ouiMaxAge time.Duration,
-	opts ...Option,
-) *DeviceDiscovery {
+func NewDeviceDiscoveryWithOUI(interfaceName, ouiPath string, opts ...Option) *DeviceDiscovery {
 	oui := resolve.NewOUIDatabase()
-	loadOUIDatabase(oui, ouiPath, ouiMaxAge)
+	loadOUIFile(oui, ouiPath)
 
 	return &DeviceDiscovery{
 		interfaceName:   interfaceName,
@@ -145,6 +92,22 @@ func NewDeviceDiscoveryWithOUI(
 		nameResolution:  true,                       // Enabled by default
 		deviceTTL:       deviceTTLHours * time.Hour, // Default: expire stale devices after 24h (fixes #829)
 	}
+}
+
+// RefreshOUI downloads the IEEE registry to ouiPath when the copy there is
+// older than maxAge, then loads it. It is the operator's opt-in callout
+// (oui_max_age > 0) and runs off the startup path, bounded by
+// ouiUpdateTimeoutMinutes; lookups keep using the registry already loaded
+// until it finishes.
+func (d *DeviceDiscovery) RefreshOUI(ouiPath string, maxAge time.Duration) {
+	ctx, cancel := context.WithTimeout(context.Background(), ouiUpdateTimeoutMinutes*time.Minute)
+	defer cancel()
+
+	if err := d.oui.UpdateIfNeeded(ctx, ouiPath, maxAge); err != nil {
+		logging.GetLogger().Warn("Failed to refresh OUI database", "path", ouiPath, "error", err)
+		return
+	}
+	logging.GetLogger().Info("OUI database refreshed", "path", ouiPath, "entries", d.oui.Count())
 }
 
 // Start begins background protocol captures.

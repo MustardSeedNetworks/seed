@@ -119,7 +119,6 @@ func defaultNetworkDiscoveryConfig() NetworkDiscoveryConfig {
 		ScanTimeout:    defaultScanTimeoutSec * time.Second,
 		AutoScan:       true,
 		OUIFilePath:    "data/oui.txt",
-		OUIMaxAge:      defaultOUIMaxAgeDays * 24 * time.Hour,
 		TargetNetworks: []SubnetConfig{},
 	}
 }

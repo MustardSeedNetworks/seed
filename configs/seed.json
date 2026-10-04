@@ -54,7 +54,7 @@
     "scan_timeout": 30000000000,
     "auto_scan": true,
     "oui_file_path": "data/oui.txt",
-    "oui_max_age": 2592000000000000,
+    "oui_max_age": 0,
     "profiler": {
       "enabled": true,
       "timeout": 2000000000,
