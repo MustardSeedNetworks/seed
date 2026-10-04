@@ -131,3 +131,108 @@ func TestPutSettingsStoresTheWebhookAndGetNeverServesTheSecret(t *testing.T) {
 		t.Error("secretSet = false after a secret was stored")
 	}
 }
+
+func emailBody(fields map[string]any) map[string]any {
+	return map[string]any{"alerts": map[string]any{"email": fields}}
+}
+
+// The mail relay (#2997) follows the webhook's rules: refused with a reason,
+// the password stored as ciphertext and never served back.
+func TestPutSettingsStoresTheMailRelayAndGetNeverServesThePassword(t *testing.T) {
+	cfg := config.DefaultConfig()
+	server := api.NewTestServerWithConfig(cfg)
+	defer server.Close()
+
+	w := putSettings(t, server, emailBody(map[string]any{
+		"host": " mail.example.com ", "port": 587, "tls": "starttls",
+		"username": "seed-alerts", "password": "relay-pass",
+		"from": "Seed <seed@example.com>", "to": []any{"noc@example.com", " "},
+	}))
+	if w.Code != http.StatusOK {
+		t.Fatalf("status = %d, want 200 (body %s)", w.Code, w.Body)
+	}
+	if got := cfg.Alerts.Email.Password; got == "relay-pass" || !config.IsEncrypted(got) {
+		t.Errorf("stored password = %q, want keyring ciphertext", got)
+	}
+
+	req := httptest.NewRequest(http.MethodGet, "/api/v1/settings", http.NoBody)
+	read := httptest.NewRecorder()
+	server.HandleSettings(read, req)
+	if strings.Contains(read.Body.String(), "relay-pass") {
+		t.Fatal("GET /api/v1/settings served the relay password back")
+	}
+	var settings struct {
+		Alerts struct {
+			Email struct {
+				Host        string   `json:"host"`
+				Port        int      `json:"port"`
+				TLS         string   `json:"tls"`
+				Username    string   `json:"username"`
+				PasswordSet bool     `json:"passwordSet"`
+				From        string   `json:"from"`
+				To          []string `json:"to"`
+			} `json:"email"`
+		} `json:"alerts"`
+	}
+	if err := json.NewDecoder(read.Body).Decode(&settings); err != nil {
+		t.Fatalf("decode settings: %v", err)
+	}
+	got := settings.Alerts.Email
+	if got.Host != "mail.example.com" || got.Port != 587 || got.TLS != "starttls" ||
+		got.Username != "seed-alerts" || !got.PasswordSet || got.From != "Seed <seed@example.com>" ||
+		len(got.To) != 1 || got.To[0] != "noc@example.com" {
+		t.Errorf("GET alerts.email = %+v", got)
+	}
+
+	// Re-pointing the relay keeps the password the operator cannot read back;
+	// clearing the host takes it with it.
+	if repoint := putSettings(
+		t,
+		server,
+		emailBody(map[string]any{"host": "relay2.example.com"}),
+	); repoint.Code != http.StatusOK {
+		t.Fatalf("re-point status = %d (body %s)", repoint.Code, repoint.Body)
+	}
+	if !config.IsEncrypted(cfg.Alerts.Email.Password) {
+		t.Error("re-pointing the host dropped the stored password")
+	}
+	if cleared := putSettings(t, server, emailBody(map[string]any{"host": ""})); cleared.Code != http.StatusOK {
+		t.Fatalf("clear status = %d (body %s)", cleared.Code, cleared.Body)
+	}
+	if cfg.Alerts.Email.Password != "" || len(cfg.Alerts.Email.To) != 0 {
+		t.Errorf("clearing the host left %+v behind", cfg.Alerts.Email)
+	}
+}
+
+func TestPutSettingsRefusesAnUndeliverableMailRelayWithItsReason(t *testing.T) {
+	valid := func() map[string]any {
+		return map[string]any{
+			"host": "mail.example.com", "from": "seed@example.com", "to": []any{"noc@example.com"},
+		}
+	}
+	for name, tc := range map[string]struct {
+		mutate func(map[string]any)
+		want   string
+	}{
+		"plaintext":          {func(f map[string]any) { f["tls"] = "none" }, `tls mode "none"`},
+		"sender":             {func(f map[string]any) { f["from"] = "seed" }, `sender "seed"`},
+		"no recipients":      {func(f map[string]any) { f["to"] = []any{} }, "at least one recipient"},
+		"recipients as text": {func(f map[string]any) { f["to"] = "noc@example.com" }, "alerts.email.to must be a list"},
+		"host with port":     {func(f map[string]any) { f["host"] = "mail.example.com:25" }, "bare host name"},
+	} {
+		t.Run(name, func(t *testing.T) {
+			server := api.NewTestServer()
+			defer server.Close()
+			fields := valid()
+			tc.mutate(fields)
+
+			w := putSettings(t, server, emailBody(fields))
+			if w.Code != http.StatusBadRequest {
+				t.Fatalf("status = %d, want 400 (body %s)", w.Code, w.Body)
+			}
+			if got := errorText(t, w); !strings.Contains(got, tc.want) {
+				t.Errorf("error = %q, want it to contain %q", got, tc.want)
+			}
+		})
+	}
+}

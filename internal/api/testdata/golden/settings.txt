@@ -2,6 +2,15 @@ status: 200
 body:
 {
   "alerts": {
+    "email": {
+      "from": "",
+      "host": "",
+      "passwordSet": false,
+      "port": 0,
+      "tls": "",
+      "to": [],
+      "username": ""
+    },
     "webhook": {
       "secretSet": false,
       "url": ""

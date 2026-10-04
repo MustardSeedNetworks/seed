@@ -10,6 +10,7 @@ package app
 import (
 	"context"
 	"fmt"
+	"slices"
 
 	alertdelivery "github.com/MustardSeedNetworks/seed/internal/alerts/delivery"
 	"github.com/MustardSeedNetworks/seed/internal/config"
@@ -127,9 +128,8 @@ func (k configKeyring) EncryptValue(plaintext string) (string, error) {
 	return keyring.EncryptValue(plaintext)
 }
 
-// alertReconfigurer re-points the running alert webhook at what was just
-// written. It is the one place plaintext signing material exists outside the
-// operator's browser: decrypted here, handed to the notifier, never stored.
+// alertReconfigurer re-points the running alert receivers at what was just
+// written.
 type alertReconfigurer struct {
 	manager func() *alertdelivery.Manager
 	cfg     *config.Config
@@ -137,42 +137,66 @@ type alertReconfigurer struct {
 
 func (a alertReconfigurer) ReconfigureAlerts() {
 	if m := a.manager(); m != nil {
-		ApplyAlertWebhook(a.cfg, m)
+		ApplyAlertReceivers(a.cfg, m)
 	}
 }
 
-// ApplyAlertWebhook points m at the receiver the config names. It is the one
-// place plaintext signing material exists outside the operator's browser:
+// ApplyAlertReceivers points m at the receivers the config names. It is the
+// one place plaintext receiver secrets exist outside the operator's browser:
 // decrypted here, handed to the notifier, never stored. Startup and every
 // later settings write both come through it, so there is one decision about
-// what a stored webhook means.
-func ApplyAlertWebhook(cfg *config.Config, m *alertdelivery.Manager) {
+// what a stored receiver means.
+//
+// A secret this install cannot decrypt — an imported profile from another
+// deployment, whose keyring is not this one — turns that one channel off
+// rather than authenticating with ciphertext no receiver expects.
+func ApplyAlertReceivers(cfg *config.Config, m *alertdelivery.Manager) {
 	cfg.RLock()
 	webhook := cfg.Alerts.Webhook
+	email := cfg.Alerts.Email
+	email.To = slices.Clone(email.To)
 	cfg.RUnlock()
 
-	logger := logging.GetLogger()
 	if webhook.URL == "" {
-		m.Apply(alertdelivery.Config{})
-		return
+		m.ApplyWebhook(alertdelivery.WebhookConfig{})
+	} else if secret, err := decryptSecret(cfg, webhook.Secret); err != nil {
+		logging.GetLogger().Error("alert webhook secret could not be decrypted; "+
+			"delivery is off until it is set again", "error", err)
+		m.ApplyWebhook(alertdelivery.WebhookConfig{})
+	} else {
+		m.ApplyWebhook(alertdelivery.WebhookConfig{URL: webhook.URL, Secret: secret})
 	}
-	secret := webhook.Secret
-	if config.IsEncrypted(secret) {
-		keyring, err := cfg.CredentialKeyring()
-		if err == nil {
-			secret, err = keyring.DecryptValue(webhook.Secret)
-		}
-		if err != nil {
-			// A secret this install cannot decrypt — an imported profile from
-			// another deployment, whose keyring is not this one — disables
-			// delivery rather than signing with ciphertext no receiver expects.
-			logger.Error("alert webhook secret could not be decrypted; "+
-				"delivery is off until it is set again", "error", err)
-			m.Apply(alertdelivery.Config{})
-			return
-		}
+
+	if email.Host == "" {
+		m.ApplyEmail(alertdelivery.EmailConfig{})
+	} else if password, err := decryptSecret(cfg, email.Password); err != nil {
+		logging.GetLogger().Error("alert email password could not be decrypted; "+
+			"email is off until it is set again", "error", err)
+		m.ApplyEmail(alertdelivery.EmailConfig{})
+	} else {
+		m.ApplyEmail(alertdelivery.EmailConfig{
+			Host:     email.Host,
+			Port:     email.Port,
+			TLS:      alertdelivery.TLSMode(email.TLS),
+			Username: email.Username,
+			Password: password,
+			From:     email.From,
+			To:       email.To,
+		})
 	}
-	m.Apply(alertdelivery.Config{URL: webhook.URL, Secret: secret})
+}
+
+// decryptSecret returns stored keyring ciphertext as plaintext. A value
+// without the `enc:` prefix is returned as it is.
+func decryptSecret(cfg *config.Config, stored string) (string, error) {
+	if !config.IsEncrypted(stored) {
+		return stored, nil
+	}
+	keyring, err := cfg.CredentialKeyring()
+	if err != nil {
+		return "", err
+	}
+	return keyring.DecryptValue(stored)
 }
 
 // managementStore implements management.Store over the live config, owning

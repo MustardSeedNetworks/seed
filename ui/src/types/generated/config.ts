@@ -403,10 +403,20 @@ export interface SNMPConfig {
 }
 export interface AlertsConfig {
   webhook: AlertWebhookConfig;
+  email: AlertEmailConfig;
 }
 export interface AlertWebhookConfig {
   url: string;
   secret: string;
+}
+export interface AlertEmailConfig {
+  host: string;
+  port: number;
+  tls: string;
+  username: string;
+  password: string;
+  from: string;
+  to?: string[];
 }
 export interface FABOptionsConfig {
   run_link: boolean;

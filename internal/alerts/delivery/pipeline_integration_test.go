@@ -118,7 +118,7 @@ func TestThresholdBreachReachesAnExternalReceiver(t *testing.T) {
 	defer srv.Close()
 
 	manager := delivery.NewManager(nil, slog.New(slog.DiscardHandler))
-	manager.Apply(delivery.Config{URL: srv.URL, Secret: signingKey})
+	manager.ApplyWebhook(delivery.WebhookConfig{URL: srv.URL, Secret: signingKey})
 	defer manager.Stop(context.Background())
 
 	store := &recordingStore{}

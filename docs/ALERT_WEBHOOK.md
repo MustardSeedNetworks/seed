@@ -4,8 +4,10 @@ Seed detects, records and displays alerts. The webhook is the one way it
 **sends** one: a signed JSON POST to a receiver you run, so Seed can be bridged
 into the Slack, PagerDuty, or SIEM you already have.
 
-It is deliberately one transport. There is no SMTP, no per-user delivery
-preference, no escalation policy, no on-call schedule and no digest batching —
+It is one of two transports; the other is email through your own mail relay
+([ALERT_EMAIL.md](ALERT_EMAIL.md)). Each records its own outcome on the alert,
+so a working webhook cannot hide a relay that refuses every message. There is
+no per-user delivery preference, no on-call schedule and no digest batching —
 those belong to the notification system you already operate.
 
 ## Enabling it
@@ -22,7 +24,17 @@ Configure it in **Settings → Alert Delivery**:
 | Signing secret | Shared material for the HMAC. Required whenever a URL is set. |
 
 The change takes effect immediately — the running daemon re-points itself, and
-no restart is needed. A URL that could never receive a POST is refused at the
+no restart is needed. To check the saved receiver end to end, an operator can
+send it a test alert:
+
+```text
+POST /api/v1/settings/alerts/test   {"channel": "webhook"}
+```
+
+It answers `200 {"sent": true}`, or `502 DELIVERY_FAILED` carrying the
+receiver's own answer (`receiver answered 401 for alert 0`), or `409` when no
+receiver is saved. It tests the saved receiver only, never a URL named in the
+request. A URL that could never receive a POST is refused at the
 API with the reason, rather than stored as a setting that silently never
 delivers.
 
@@ -72,8 +84,10 @@ One POST per alert, `Content-Type: application/json`:
 }
 ```
 
-The alert object is the same shape `GET /api/v1/alerts` returns. It is nested
-under `alert` so later envelope fields cannot collide with an alert field.
+The alert object is the same shape `GET /api/v1/alerts` returns, without the
+`deliveries` field: the receiver is told about the alert, not about Seed's
+bookkeeping for the delivery it is part of. It is nested under `alert` so later
+envelope fields cannot collide with an alert field.
 
 Headers:
 

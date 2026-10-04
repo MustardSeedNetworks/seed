@@ -17,7 +17,7 @@ import { type JSX, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useRole } from '../contexts/RoleContext';
 import { useAlerts } from '../hooks/useAlerts';
-import type { Alert } from '../types/alerts';
+import type { Alert, AlertDelivery } from '../types/alerts';
 import {
   DetailEmpty,
   DetailFacts,
@@ -60,7 +60,7 @@ function fmtTime(iso?: string): string {
  * misconfiguration they do not know about, and 'delivered' on every row would
  * bury it.
  */
-const UNDELIVERED = ['failed', 'dropped'];
+const UNDELIVERED: ReadonlySet<AlertDelivery['status']> = new Set(['failed', 'dropped']);
 
 /** The page's own translator, so the helpers below keep its key checking. */
 type AlertsT = TFunction<['pages', 'common']>;
@@ -222,19 +222,18 @@ export function AlertsPage(): JSX.Element {
                   label: t('alerts.labelResolved'),
                   value: selected.resolved ? fmtTime(selected.resolvedAt) : t('alerts.valueNo'),
                 },
-                // Delivery is omitted entirely when nothing tried to send the
-                // alert. Most installs configure no receiver, and a row
-                // reading "not delivered" there would report a failure that
-                // never happened.
-                ...(selected.deliveryStatus
-                  ? [
-                      {
-                        label: t('alerts.labelDelivery'),
-                        value: deliveryText(t, selected),
-                        prose: true,
-                      },
-                    ]
-                  : []),
+                // One row per channel that was offered the alert, none when
+                // nothing tried to send it. Most installs configure no
+                // receiver, and a row reading "not delivered" there would
+                // report a failure that never happened.
+                ...(selected.deliveries ?? []).map((delivery) => ({
+                  label:
+                    delivery.channel === 'email'
+                      ? t('alerts.labelDeliveryEmail')
+                      : t('alerts.labelDeliveryWebhook'),
+                  value: deliveryText(t, delivery),
+                  prose: true,
+                })),
               ]}
             />
             <AlertMetadata metadata={selected.metadata} />
@@ -255,7 +254,7 @@ export function AlertsPage(): JSX.Element {
  */
 function rowMeta(t: AlertsT, alert: Alert): string {
   const base = `${alert.source || t('alerts.unknownSource')} · ${fmtTime(alert.createdAt)}`;
-  if (alert.deliveryStatus !== undefined && UNDELIVERED.includes(alert.deliveryStatus)) {
+  if (alert.deliveries?.some((delivery) => UNDELIVERED.has(delivery.status))) {
     return `${base} · ${t('alerts.deliveryNotDeliveredShort')}`;
   }
   return base;
@@ -266,13 +265,13 @@ function rowMeta(t: AlertsT, alert: Alert): string {
  * a refused connection and a 401 need different fixes, and the operator should
  * not have to read the daemon log to tell them apart.
  */
-function deliveryText(t: AlertsT, alert: Alert): string {
-  const time = fmtTime(alert.deliveryAttemptedAt);
-  switch (alert.deliveryStatus) {
+function deliveryText(t: AlertsT, delivery: AlertDelivery): string {
+  const time = fmtTime(delivery.attemptedAt);
+  switch (delivery.status) {
     case 'delivered':
       return t('alerts.deliveryDelivered', { time });
     case 'failed':
-      return t('alerts.deliveryFailed', { time, reason: alert.deliveryError ?? '' });
+      return t('alerts.deliveryFailed', { time, reason: delivery.error ?? '' });
     case 'dropped':
       return t('alerts.deliveryDropped', { time });
     default:

@@ -61,3 +61,24 @@ func extractInt(data map[string]any, key, prefix string) (int, bool, error) {
 	}
 	return int(f), true, nil
 }
+
+// extractStringList extracts a list of strings from a JSON array in a map.
+func extractStringList(data map[string]any, key, prefix string) ([]string, bool, error) {
+	val, exists := data[key]
+	if !exists {
+		return nil, false, nil
+	}
+	items, ok := val.([]any)
+	if !ok {
+		return nil, false, fmt.Errorf("%s.%s must be a list of strings", prefix, key)
+	}
+	out := make([]string, 0, len(items))
+	for _, item := range items {
+		s, isString := item.(string)
+		if !isString {
+			return nil, false, fmt.Errorf("%s.%s must be a list of strings", prefix, key)
+		}
+		out = append(out, s)
+	}
+	return out, true, nil
+}
