@@ -49,7 +49,16 @@ test.describe('Packet capture card', () => {
 
     await page.getByTestId('packet-capture-interface').fill('seed-e2e-none0');
     await page.getByTestId('packet-capture-duration').fill('5');
-    await page.getByTestId('packet-capture-start').click();
+    // The failure must come from the capture job, not from a refused start
+    // (a 429 or 403 also lands the card on "failed").
+    const [start] = await Promise.all([
+      page.waitForResponse(
+        (response) =>
+          response.request().method() === 'POST' && response.url().endsWith('/api/v1/jobs'),
+      ),
+      page.getByTestId('packet-capture-start').click(),
+    ]);
+    expect(start.ok(), `job start answered ${start.status()}`).toBe(true);
 
     await expect(page.getByTestId('packet-capture')).toHaveAttribute('data-phase', 'failed');
     await expect(page.getByTestId('packet-capture-failed')).toBeVisible();
