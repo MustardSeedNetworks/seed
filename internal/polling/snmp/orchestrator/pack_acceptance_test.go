@@ -35,6 +35,10 @@ type packObservation struct {
 // ran last; the caller reads it after each Collect.
 type rowRecorder struct {
 	rows int
+	// poller is the polling host's own MAC, in the collector's canonical
+	// form. NIAC places the poller on a spare port of its attachment pool, so
+	// the pool switch learns it on a port the manifest does not describe.
+	poller string
 }
 
 func (r *rowRecorder) record(rows int) error {
@@ -64,9 +68,13 @@ func (r *rowRecorder) PublishARP(_ context.Context, obs arp.Observation) error {
 
 // PublishFDB counts bridge ports, not MAC entries: NIAC's manifest counts the
 // switch ports an endpoint is learned on, and one port can carry many MACs.
+// The poller's own entry is left out; it belongs to the test, not the pack.
 func (r *rowRecorder) PublishFDB(_ context.Context, obs fdb.Observation) error {
 	ports := make(map[uint32]struct{}, len(obs.Entries))
 	for _, entry := range obs.Entries {
+		if entry.MACAddress == r.poller {
+			continue
+		}
 		ports[entry.BridgePort] = struct{}{}
 	}
 	return r.record(len(ports))

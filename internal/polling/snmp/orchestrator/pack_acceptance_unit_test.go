@@ -43,6 +43,21 @@ func TestRowRecorderCountsFDBPortsNotMACs(t *testing.T) {
 	}
 }
 
+func TestRowRecorderLeavesOutThePollersFDBEntry(t *testing.T) {
+	t.Parallel()
+	recorder := &rowRecorder{poller: "00:00:5e:00:53:ff"}
+	err := recorder.PublishFDB(context.Background(), fdb.Observation{Entries: []fdb.Entry{
+		{MACAddress: "00:00:5e:00:53:01", BridgePort: 1},
+		{MACAddress: "00:00:5e:00:53:ff", BridgePort: 43},
+	}})
+	if err != nil {
+		t.Fatalf("PublishFDB: %v", err)
+	}
+	if recorder.rows != 1 {
+		t.Fatalf("rows = %d, want 1 (the poller's own port is not the pack's)", recorder.rows)
+	}
+}
+
 func TestTallyResults(t *testing.T) {
 	t.Parallel()
 	tallies := tallyResults([]packResult{
