@@ -42,7 +42,7 @@ func TestRaterObserve(t *testing.T) {
 			name:   "rates over the interval",
 			second: snap(60, 106000, advanced),
 			want: &ifrate.Rate{
-				InOctets: 100, OutOctets: 200,
+				Octets:   &ifrate.Octets{In: 100, Out: 200},
 				InErrors: 0.1, OutErrors: 0.2, InDiscards: 0.1, OutDiscards: 0.1,
 			},
 		},
@@ -52,7 +52,7 @@ func TestRaterObserve(t *testing.T) {
 				InOctets: 999, OutOctets: 2000,
 				InErrors: 10, OutErrors: 20, InDiscards: 30, OutDiscards: 40,
 			}),
-			want: &ifrate.Rate{InOctets: float64(math.MaxUint32-1000+999+1) / 10},
+			want: &ifrate.Rate{Octets: &ifrate.Octets{In: float64(math.MaxUint32-1000+999+1) / 10}},
 		},
 		{
 			name:   "agent restart: sysUpTime went backwards",
@@ -138,8 +138,8 @@ func TestRater64BitOctets(t *testing.T) {
 			if (len(got) == 1) != tt.wantOK {
 				t.Fatalf("rates = %+v, want rated=%v", got, tt.wantOK)
 			}
-			if tt.wantOK && got[0].InOctets != 100 {
-				t.Errorf("InOctets = %v, want 100", got[0].InOctets)
+			if tt.wantOK && got[0].Octets.In != 100 {
+				t.Errorf("Octets.In = %v, want 100", got[0].Octets.In)
 			}
 		})
 	}
@@ -166,7 +166,7 @@ func TestRaterResetSeries(t *testing.T) {
 	var got []float64
 	for _, s := range series {
 		for _, rate := range r.Observe(snap(s.secs, s.upTime, ifrate.Reading{InOctets: s.octets})) {
-			got = append(got, rate.InOctets)
+			got = append(got, rate.Octets.In)
 		}
 	}
 	want := []float64{1000, 1000, 1000, 1000}
@@ -191,14 +191,17 @@ func TestRaterKeepsTargetsApart(t *testing.T) {
 	b2 := snap(60, 106000, ifrate.Reading{InOctets: 600})
 	b2.TargetID = "t2"
 	got := r.Observe(b2)
-	if len(got) != 1 || got[0].TargetID != "t2" || got[0].InOctets != 10 {
+	if len(got) != 1 || got[0].TargetID != "t2" || got[0].Octets.In != 10 {
 		t.Errorf("rates = %+v, want t2 at 10 octets/s", got)
 	}
 }
 
 func TestRateServesAllSixPoints(t *testing.T) {
 	t.Parallel()
-	pts := ifrate.Rate{InOctets: 1, OutOctets: 2, InErrors: 3, OutErrors: 4, InDiscards: 5, OutDiscards: 6}.Points()
+	pts := ifrate.Rate{
+		Octets:   &ifrate.Octets{In: 1, Out: 2},
+		InErrors: 3, OutErrors: 4, InDiscards: 5, OutDiscards: 6,
+	}.Points()
 	want := []ifrate.Point{
 		{ifrate.MetricInOctets, ifrate.UnitOctets, 1},
 		{ifrate.MetricOutOctets, ifrate.UnitOctets, 2},
@@ -298,7 +301,7 @@ func TestRaterEtherLike(t *testing.T) {
 
 func TestRatePointsAppendServedEtherLike(t *testing.T) {
 	t.Parallel()
-	pts := ifrate.Rate{EtherLike: map[string]float64{
+	pts := ifrate.Rate{Octets: &ifrate.Octets{}, EtherLike: map[string]float64{
 		ifrate.MetricDot3SymbolErrors: 2,
 		ifrate.MetricDot3FCSErrors:    1,
 	}}.Points()
@@ -308,5 +311,135 @@ func TestRatePointsAppendServedEtherLike(t *testing.T) {
 	}
 	if len(pts) != 6+len(want) || !reflect.DeepEqual(pts[6:], want) {
 		t.Errorf("points = %+v, want the six interface rates then %+v", pts, want)
+	}
+}
+
+func TestRaterLineRate(t *testing.T) {
+	t.Parallel()
+	const (
+		gig     = 1_000_000_000
+		gigFull = gig / 8 * 60 // octets a 1 Gb/s link carries in 60 s
+	)
+	tests := []struct {
+		name       string
+		speedBps   uint64
+		wide       bool
+		in, out    uint64
+		wantOctets *ifrate.Octets
+		wantNone   bool
+	}{
+		{
+			name:     "saturated inbound, idle outbound",
+			speedBps: gig, wide: true, in: gigFull,
+			wantOctets: &ifrate.Octets{In: gig / 8, Utilization: &ifrate.Utilization{In: 100}},
+		},
+		{
+			name:     "full duplex: each direction against the whole line rate",
+			speedBps: gig, wide: true, in: gigFull, out: gigFull / 2,
+			wantOctets: &ifrate.Octets{
+				In: gig / 8, Out: gig / 16,
+				Utilization: &ifrate.Utilization{In: 100, Out: 50},
+			},
+		},
+		{
+			name:     "timing skew past line rate reads as saturated",
+			speedBps: gig, wide: true, in: gigFull / 100 * 105,
+			wantOctets: &ifrate.Octets{In: gig / 8 * 1.05, Utilization: &ifrate.Utilization{In: 100}},
+		},
+		{
+			// net-snmp's silent reset (#3004): a 2^32 jump on a 100 Mb/s
+			// port is nine times what the line could carry.
+			name:     "far above line rate is a reset, not traffic",
+			speedBps: 100_000_000, wide: true, in: 1 << 32,
+			wantNone: true,
+		},
+		{
+			name: "unknown line rate: rated, no utilization",
+			wide: true, in: 6000,
+			wantOctets: &ifrate.Octets{In: 100},
+		},
+		{
+			name:     "saturated ifSpeed without ifHighSpeed is not a line rate",
+			speedBps: math.MaxUint32, wide: true, in: 1 << 40,
+			wantOctets: &ifrate.Octets{In: float64(1<<40) / 60},
+		},
+		{
+			name:     "32-bit counter the line could wrap twice is not rated",
+			speedBps: gig, in: 6000,
+		},
+		{
+			name:     "32-bit counter on a line too slow to wrap twice",
+			speedBps: 100_000_000, in: 750_000_000,
+			wantOctets: &ifrate.Octets{In: 12_500_000, Utilization: &ifrate.Utilization{In: 100}},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			r := ifrate.NewRater()
+			r.Observe(snap(0, 100000, ifrate.Reading{SpeedBps: tt.speedBps, WideOctets: tt.wide}))
+			got := r.Observe(snap(60, 106000, ifrate.Reading{
+				SpeedBps: tt.speedBps, WideOctets: tt.wide,
+				InOctets: tt.in, OutOctets: tt.out, InErrors: 60,
+			}))
+			if tt.wantNone {
+				if len(got) != 0 {
+					t.Errorf("rates = %+v, want none", got)
+				}
+				return
+			}
+			if len(got) != 1 {
+				t.Fatalf("rates = %+v, want one", got)
+			}
+			if !reflect.DeepEqual(got[0].Octets, tt.wantOctets) {
+				t.Errorf("Octets = %+v, want %+v", got[0].Octets, tt.wantOctets)
+			}
+			if got[0].InErrors != 1 {
+				t.Errorf("InErrors = %v, want 1: an unrated octet counter keeps the error rates", got[0].InErrors)
+			}
+		})
+	}
+}
+
+func TestRatePointsOctetsAndUtilization(t *testing.T) {
+	t.Parallel()
+	errorPoints := []ifrate.Point{
+		{ifrate.MetricInErrors, ifrate.UnitPackets, 0},
+		{ifrate.MetricOutErrors, ifrate.UnitPackets, 0},
+		{ifrate.MetricInDiscards, ifrate.UnitPackets, 0},
+		{ifrate.MetricOutDiscards, ifrate.UnitPackets, 0},
+	}
+	tests := []struct {
+		name   string
+		octets *ifrate.Octets
+		want   []ifrate.Point
+	}{
+		{name: "octets not rated", want: errorPoints},
+		{
+			name:   "octets without a line rate",
+			octets: &ifrate.Octets{In: 1, Out: 2},
+			want: append([]ifrate.Point{
+				{ifrate.MetricInOctets, ifrate.UnitOctets, 1},
+				{ifrate.MetricOutOctets, ifrate.UnitOctets, 2},
+			}, errorPoints...),
+		},
+		{
+			name:   "octets and utilization",
+			octets: &ifrate.Octets{In: 1, Out: 2, Utilization: &ifrate.Utilization{In: 30, Out: 40}},
+			want: append([]ifrate.Point{
+				{ifrate.MetricInOctets, ifrate.UnitOctets, 1},
+				{ifrate.MetricOutOctets, ifrate.UnitOctets, 2},
+				{ifrate.MetricInUtilization, ifrate.UnitPercent, 30},
+				{ifrate.MetricOutUtilization, ifrate.UnitPercent, 40},
+			}, errorPoints...),
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			if got := (ifrate.Rate{Octets: tt.octets}).Points(); !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("points = %+v, want %+v", got, tt.want)
+			}
+		})
 	}
 }

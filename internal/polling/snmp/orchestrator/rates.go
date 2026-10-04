@@ -46,6 +46,7 @@ func snapshot(obs iftable.Observation) ifrate.Snapshot {
 			OutDiscards:   c.OutDiscards,
 			Discontinuity: c.Discontinuity,
 			EtherLike:     etherLikeReading(c.EtherLike),
+			SpeedBps:      row.SpeedBps,
 		}
 	}
 	return ifrate.Snapshot{
