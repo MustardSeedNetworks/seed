@@ -33,7 +33,15 @@ func (s *Server) handleAlertTestSend(w http.ResponseWriter, r *http.Request) {
 			ErrCodeBadRequest, "body must be {\"channel\": \"email\" | \"webhook\"}", "")
 		return
 	}
-	if req.Channel != alerts.ChannelEmail && req.Channel != alerts.ChannelWebhook {
+	// Resolve to the package constant so nothing the caller sent reaches the
+	// log or the receiver lookup (CodeQL go/log-injection cannot see a guard).
+	var channel alerts.Channel
+	switch req.Channel {
+	case alerts.ChannelEmail:
+		channel = alerts.ChannelEmail
+	case alerts.ChannelWebhook:
+		channel = alerts.ChannelWebhook
+	default:
 		sendErrorResponseWithDetails(w, logger, http.StatusBadRequest,
 			ErrCodeValidation, "channel must be \"email\" or \"webhook\"", "")
 		return
@@ -44,15 +52,15 @@ func (s *Server) handleAlertTestSend(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err := s.alertDelivery.SendTest(ctx, req.Channel)
+	err := s.alertDelivery.SendTest(ctx, channel)
 	switch {
 	case err == nil:
-		writeJSON(w, r, map[string]any{"channel": req.Channel, "sent": true})
+		writeJSON(w, r, map[string]any{"channel": channel, "sent": true})
 	case errors.Is(err, alertdelivery.ErrNotConfigured):
 		sendErrorResponseWithDetails(w, logger, http.StatusConflict,
 			ErrCodeConflict, err.Error(), "")
 	default:
-		logger.WarnContext(ctx, "alert test send failed", "channel", req.Channel, "error", err)
+		logger.WarnContext(ctx, "alert test send failed", "channel", channel, "error", err)
 		sendErrorResponseWithDetails(w, logger, http.StatusBadGateway,
 			ErrCodeDeliveryFailed, err.Error(), "")
 	}
