@@ -209,7 +209,16 @@
     "validateFailed": "Error al validar la clave de API",
     "invalidIp": "Dirección IP no válida",
     "missingIpParam": "Se requiere el parámetro de consulta ip",
-    "scannerNotEnabled": "El escaneo de vulnerabilidades no está habilitado"
+    "scannerNotEnabled": "El escaneo de vulnerabilidades no está habilitado",
+    "storeUnavailable": "Los hallazgos de vulnerabilidades no están disponibles: la base de datos no está abierta",
+    "invalidStatus": "El estado debe ser new, acknowledged, ignored o resolved",
+    "invalidPaging": "limit debe estar entre 1 y 1000 y offset no puede ser negativo",
+    "readFailed": "No se pudieron leer los hallazgos de vulnerabilidades",
+    "writeFailed": "No se pudo actualizar el hallazgo de vulnerabilidad",
+    "findingNotFound": "Hallazgo de vulnerabilidad no encontrado",
+    "reasonRequired": "Indique un motivo al ignorar un hallazgo",
+    "reasonTooLong": "El motivo debe tener 500 caracteres o menos",
+    "transitionRefused": "Ese cambio de estado no está permitido: un hallazgo resuelto no se puede clasificar, solo el escáner resuelve hallazgos y es posible que el hallazgo ya tenga este estado"
   },
   "history": {
     "probeRequired": "Se requiere un identificador de sonda",

@@ -15,6 +15,7 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/MustardSeedNetworks/seed/internal/database"
 	"github.com/MustardSeedNetworks/seed/internal/discovery"
 	"github.com/MustardSeedNetworks/seed/internal/discovery/vuln"
 	"github.com/MustardSeedNetworks/seed/internal/i18n"
@@ -22,6 +23,59 @@ import (
 	securitysettings "github.com/MustardSeedNetworks/seed/internal/security/settings"
 	"github.com/MustardSeedNetworks/seed/internal/validation"
 )
+
+// vulnerabilityRoutes returns the scanner's routes. A scan is the vuln-scan
+// job kind, gated at compliance_advanced (Pro, LICENSE_STRATEGY §2); these
+// reads stay open so prior scan output remains visible to lower tiers, and
+// the writes are gated by role.
+func (s *Server) vulnerabilityRoutes() []route {
+	op := database.RoleOperator
+	get := []string{http.MethodGet}
+	post := []string{http.MethodPost}
+	getPost := []string{http.MethodGet, http.MethodPost}
+	getPut := []string{http.MethodGet, http.MethodPut}
+	return []route{
+		{
+			path:    APIVersionPrefix + "/security/vulnerabilities/status",
+			handler: s.handleVulnerabilityStatus,
+			methods: get,
+		},
+		{
+			path:    APIVersionPrefix + "/security/vulnerabilities/results",
+			handler: s.handleVulnerabilityResults,
+			methods: get,
+		},
+		{
+			path:    APIVersionPrefix + "/security/vulnerabilities/device",
+			handler: s.handleDeviceVulnerabilities,
+			methods: get,
+		},
+		// Literals, not the vulnFindingsPath consts, so the route-consumer gate
+		// sees them.
+		{
+			path:    APIVersionPrefix + "/security/vulnerabilities/findings",
+			handler: s.handleVulnFindings,
+			methods: get,
+		},
+		{
+			path:    APIVersionPrefix + "/security/vulnerabilities/findings/",
+			handler: s.handleVulnFindingAction,
+			methods: getPost,
+			minRole: op,
+		},
+		{
+			path:    APIVersionPrefix + "/security/vulnerabilities/settings",
+			handler: s.handleVulnerabilitySettings,
+			methods: getPut,
+			minRole: op,
+		},
+		{
+			path:    APIVersionPrefix + "/security/vulnerabilities/validate-api-key",
+			handler: s.handleNVDAPIKeyValidate,
+			methods: post,
+		},
+	}
+}
 
 // handleVulnerabilityStatus returns scanner status and statistics
 // GET /api/vulnerabilities/status (fixes #703).

@@ -761,43 +761,6 @@ body:
   {
     "maxBodyBytes": 262144,
     "methods": [
-      "GET"
-    ],
-    "path": "/api/v1/security/vulnerabilities/status"
-  },
-  {
-    "maxBodyBytes": 262144,
-    "methods": [
-      "GET"
-    ],
-    "path": "/api/v1/security/vulnerabilities/results"
-  },
-  {
-    "maxBodyBytes": 262144,
-    "methods": [
-      "GET"
-    ],
-    "path": "/api/v1/security/vulnerabilities/device"
-  },
-  {
-    "maxBodyBytes": 262144,
-    "methods": [
-      "GET",
-      "PUT"
-    ],
-    "minRole": "operator",
-    "path": "/api/v1/security/vulnerabilities/settings"
-  },
-  {
-    "maxBodyBytes": 262144,
-    "methods": [
-      "POST"
-    ],
-    "path": "/api/v1/security/vulnerabilities/validate-api-key"
-  },
-  {
-    "maxBodyBytes": 262144,
-    "methods": [
       "GET",
       "PUT"
     ],
@@ -1198,6 +1161,59 @@ body:
     "minRole": "operator",
     "path": "/api/v1/settings/alerts/test",
     "rateLimited": true
+  },
+  {
+    "maxBodyBytes": 262144,
+    "methods": [
+      "GET"
+    ],
+    "path": "/api/v1/security/vulnerabilities/status"
+  },
+  {
+    "maxBodyBytes": 262144,
+    "methods": [
+      "GET"
+    ],
+    "path": "/api/v1/security/vulnerabilities/results"
+  },
+  {
+    "maxBodyBytes": 262144,
+    "methods": [
+      "GET"
+    ],
+    "path": "/api/v1/security/vulnerabilities/device"
+  },
+  {
+    "maxBodyBytes": 262144,
+    "methods": [
+      "GET"
+    ],
+    "path": "/api/v1/security/vulnerabilities/findings"
+  },
+  {
+    "maxBodyBytes": 262144,
+    "methods": [
+      "GET",
+      "POST"
+    ],
+    "minRole": "operator",
+    "path": "/api/v1/security/vulnerabilities/findings/"
+  },
+  {
+    "maxBodyBytes": 262144,
+    "methods": [
+      "GET",
+      "PUT"
+    ],
+    "minRole": "operator",
+    "path": "/api/v1/security/vulnerabilities/settings"
+  },
+  {
+    "maxBodyBytes": 262144,
+    "methods": [
+      "POST"
+    ],
+    "path": "/api/v1/security/vulnerabilities/validate-api-key"
   },
   {
     "maxBodyBytes": 262144,

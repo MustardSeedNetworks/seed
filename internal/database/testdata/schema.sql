@@ -549,6 +549,10 @@ CREATE INDEX idx_voip_calls_mos ON voip_calls(mos_score);
 -- index: idx_voip_calls_started
 CREATE INDEX idx_voip_calls_started ON voip_calls(started_at);
 
+-- index: idx_vuln_status_history_vuln
+CREATE INDEX idx_vuln_status_history_vuln
+	ON vulnerability_status_history(vulnerability_id, id);
+
 -- index: idx_webauthn_credential_id
 CREATE UNIQUE INDEX idx_webauthn_credential_id
 				ON webauthn_credentials(credential_id);
@@ -938,7 +942,7 @@ CREATE TABLE device_ports (
 			) STRICT;
 
 -- table: device_vulnerabilities
-CREATE TABLE device_vulnerabilities (
+CREATE TABLE "device_vulnerabilities" (
 				id INTEGER PRIMARY KEY AUTOINCREMENT,
 				device_id TEXT NOT NULL,
 				cve_id TEXT NOT NULL,
@@ -948,10 +952,12 @@ CREATE TABLE device_vulnerabilities (
 				affected_component TEXT,
 				affected_version TEXT,
 				fix_available INTEGER DEFAULT 0 CHECK (fix_available IN (0,1)),
-				status TEXT DEFAULT 'new',
+				status TEXT NOT NULL DEFAULT 'new'
+					CHECK (status IN ('new','acknowledged','ignored','resolved')),
 				detected_at TEXT NOT NULL,
 				resolved_at TEXT,
-				notes TEXT, description TEXT,
+				notes TEXT,
+				description TEXT,
 				FOREIGN KEY (device_id) REFERENCES devices(id) ON DELETE CASCADE
 			) STRICT;
 
@@ -1514,6 +1520,20 @@ CREATE TABLE voip_calls (
 				avg_latency_ms REAL,
 				direction TEXT
 			, client_id TEXT NOT NULL DEFAULT 'default' REFERENCES clients(id)) STRICT;
+
+-- table: vulnerability_status_history
+CREATE TABLE vulnerability_status_history (
+				id INTEGER PRIMARY KEY AUTOINCREMENT,
+				vulnerability_id INTEGER NOT NULL
+					REFERENCES device_vulnerabilities(id) ON DELETE CASCADE,
+				from_status TEXT NOT NULL
+					CHECK (from_status IN ('new','acknowledged','ignored','resolved')),
+				to_status TEXT NOT NULL
+					CHECK (to_status IN ('new','acknowledged','ignored','resolved')),
+				actor TEXT,
+				reason TEXT,
+				changed_at TEXT NOT NULL
+			) STRICT;
 
 -- table: webauthn_credentials
 CREATE TABLE webauthn_credentials (
