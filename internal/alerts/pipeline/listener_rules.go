@@ -64,7 +64,8 @@ func (p *ListenerPipeline) reloadLoop(ctx context.Context) {
 
 // ReloadRules pulls every enabled alert_rules row, compiles them into
 // runtime rules, and swaps them in atomically. Falls back to
-// DefaultListenerRules when the DB has no enabled rows. Returns the
+// DefaultListenerRules when the DB has no enabled rows. The pinned rules
+// run on top of either set. Returns the
 // list error from the repo unchanged so callers can decide to log /
 // retry. Safe to call concurrently with ScanOnce.
 func (p *ListenerPipeline) ReloadRules(ctx context.Context) error {
@@ -85,7 +86,7 @@ func (p *ListenerPipeline) ReloadRules(ctx context.Context) error {
 		next = compiled
 	}
 	p.mu.Lock()
-	p.rules = next
+	p.rules = withPinned(next)
 	p.mu.Unlock()
 	p.logger.DebugContext(ctx, "alert_rules reloaded",
 		"db_rows", len(rows), "compiled", len(compiled),

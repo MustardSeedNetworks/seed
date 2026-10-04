@@ -69,6 +69,10 @@ const (
 	RuleStorageCritical = "storage.critical"
 )
 
+// RuleFlowIndicator is the listener pipeline rule that alerts on a flow to
+// or from an address on the operator's threat indicator list.
+const RuleFlowIndicator = "flow.indicator"
+
 // InterfaceDownEvidence is the Metadata of a RuleInterfaceDown alert: the one
 // ifTable row that went down, not the whole table it was read from.
 type InterfaceDownEvidence struct {

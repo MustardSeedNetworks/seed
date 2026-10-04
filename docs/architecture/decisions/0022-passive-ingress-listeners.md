@@ -192,6 +192,16 @@ horizon. The cost is that an edit to the table names later flows only.
 `/api/v1/flows/top-applications` reads them, and
 [FLOW_APPLICATIONS.md](../../FLOW_APPLICATIONS.md) documents the table.
 
+Each batch is also checked against the operator's threat indicator list
+(P-C5, `internal/indicators`) after it is offered to the store. Flows
+otherwise bypass the `listener.Sink` seam. A match is the exception: it is
+rare and needs an alert, so the collector publishes one `flow-indicator`
+event per host and listed address in the batch through the same sink as
+syslog and traps. The listener alert pipeline raises it with a pinned rule,
+which operator alert rules do not replace. Seed ships no list and fetches
+none. [FLOW_THREAT_INDICATORS.md](../../FLOW_THREAT_INDICATORS.md)
+documents it.
+
 Options records carry exporter metadata, not flows. The collector reads one
 value from them: `systemInitTimeMilliseconds`. softflowd, nProbe and several
 Cisco images send IPFIX flow times relative to exporter uptime and send the

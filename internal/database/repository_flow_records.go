@@ -9,6 +9,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/MustardSeedNetworks/seed/internal/indicators"
 	"github.com/MustardSeedNetworks/seed/internal/listener/flow"
 )
 
@@ -18,15 +19,17 @@ import (
 const flowTimeFormat = "2006-01-02T15:04:05.000Z"
 
 // FlowRecordsRepository owns flow_records, written by the flow collector
-// (internal/listener/flow), and the signature table that names each flow's
-// application as it is stored.
+// (internal/listener/flow), the signature table that names each flow's
+// application as it is stored, and the threat indicator list the collector
+// checks each flow against.
 type FlowRecordsRepository struct {
 	db *DB
 
-	// mu guards signatures, which is loaded from settings on first use and
-	// replaced when the operator edits the table.
+	// mu guards signatures and indicators, which are loaded from settings
+	// on first use and replaced when the operator edits them.
 	mu         sync.Mutex
 	signatures *AppSignatures
+	indicators *indicators.List
 }
 
 // InsertFlows implements flow.Store: one batch, one transaction.

@@ -9,7 +9,10 @@ package pipeline
 // to DefaultListenerRules so a fresh install keeps emitting alerts
 // without any operator action. Mixing the two ("additive merging")
 // was rejected because it makes "why did this fire twice?" harder to
-// answer than "my rules win or yours do".
+// answer than "my rules win or yours do". The pinned rules
+// (pinnedListenerRules) are outside that choice and always run: they act
+// on operator configuration held elsewhere, such as the threat indicator
+// list, and an unrelated rule edit must not silence them.
 //
 // Template support (#1378): AlertTitle / AlertMessage are parsed as
 // text/template at compile time. The runtime context (exposed to

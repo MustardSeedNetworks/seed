@@ -39,9 +39,11 @@ func (s *Server) initListeners(db *database.DB) {
 
 	if addr := os.Getenv("SEED_FLOW_BIND"); addr != "" {
 		l, err := flow.New(flow.Config{
-			BindAddr: addr,
-			Store:    db.FlowRecords(),
-			Logger:   logger,
+			BindAddr:   addr,
+			Store:      db.FlowRecords(),
+			Indicators: db.FlowRecords(),
+			Sink:       persistSink,
+			Logger:     logger,
 		})
 		if err != nil {
 			logger.Warn("flow collector init failed", "error", err)

@@ -155,7 +155,7 @@ func NewListenerPipeline(cfg ListenerConfig) (*ListenerPipeline, error) {
 	staticRules := cfg.Rules != nil
 	initial := cfg.Rules
 	if initial == nil {
-		initial = defaults
+		initial = withPinned(defaults)
 	}
 	suppress := cfg.Suppressions
 	if suppress == nil {

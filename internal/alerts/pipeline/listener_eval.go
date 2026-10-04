@@ -6,6 +6,7 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
+	"slices"
 	"strings"
 	"time"
 
@@ -113,6 +114,55 @@ func DefaultListenerRules() []Rule {
 		ruleSyslogSevereLogged(),
 		ruleTrapLinkDown(),
 		ruleTrapAuthFailure(),
+	}
+}
+
+// pinnedListenerRules are the built-in rules that run whatever rule set is
+// active. Each acts on a list the operator configured for that purpose, so
+// the operator has already asked for its alert.
+func pinnedListenerRules() []Rule {
+	return []Rule{ruleFlowIndicator()}
+}
+
+// withPinned returns rules followed by the pinned rules, leaving rules
+// untouched.
+func withPinned(rules []Rule) []Rule {
+	return append(slices.Clip(rules), pinnedListenerRules()...)
+}
+
+// ruleFlowIndicator alerts on traffic between a host and an address on the
+// operator's threat indicator list (P-C5). The event's SourceAddr is the
+// host, so suppression holds one alert per host per window however many
+// listed addresses it reaches.
+func ruleFlowIndicator() Rule {
+	return Rule{
+		ID: alerts.RuleFlowIndicator,
+		Match: func(evt *listener.EventRecord) bool {
+			return evt.Kind == listener.FlowIndicatorKind
+		},
+		Build: func(evt *listener.EventRecord) *alerts.Alert {
+			var hit listener.FlowIndicatorHit
+			if err := json.Unmarshal([]byte(evt.PayloadJSON), &hit); err != nil {
+				return nil
+			}
+			return &alerts.Alert{
+				Type:     alerts.TypeSecurity,
+				Severity: alerts.SeverityCritical,
+				Title:    fmt.Sprintf("%s exchanged traffic with listed address %s", hit.Host, hit.Listed),
+				Message: fmt.Sprintf(
+					"%s is on the threat indicator list (entry %s). Exporter %s reported %d flows, %d bytes, between %s and %s.",
+					hit.Listed,
+					hit.Indicator,
+					hit.Exporter,
+					hit.Flows,
+					hit.Bytes,
+					hit.FirstSeen.UTC().Format(time.RFC3339),
+					hit.LastSeen.UTC().Format(time.RFC3339),
+				),
+				Source:   hit.Host,
+				Metadata: evt.PayloadJSON,
+			}
+		},
 	}
 }
 

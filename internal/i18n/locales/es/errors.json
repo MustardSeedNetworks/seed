@@ -225,7 +225,9 @@
     "invalidLimit": "Límite no válido: use un número entero de 1 a 100",
     "readFailed": "No se pudieron leer los flujos",
     "invalidSignatures": "Tabla de firmas de aplicaciones no válida",
-    "signaturesFailed": "No se pudo acceder a la tabla de firmas de aplicaciones"
+    "signaturesFailed": "No se pudo acceder a la tabla de firmas de aplicaciones",
+    "invalidIndicators": "Lista de indicadores de amenaza no válida",
+    "indicatorsFailed": "No se pudo acceder a la lista de indicadores de amenaza"
   },
   "history": {
     "probeRequired": "Se requiere un identificador de sonda",

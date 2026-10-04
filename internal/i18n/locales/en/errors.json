@@ -225,7 +225,9 @@
     "invalidLimit": "Invalid limit: use a whole number from 1 to 100",
     "readFailed": "Failed to read flows",
     "invalidSignatures": "Invalid application signature table",
-    "signaturesFailed": "Failed to access the application signature table"
+    "signaturesFailed": "Failed to access the application signature table",
+    "invalidIndicators": "Invalid threat indicator list",
+    "indicatorsFailed": "Failed to access the threat indicator list"
   },
   "history": {
     "probeRequired": "A probe id is required",
