@@ -150,7 +150,7 @@ test.describe('API Error Scenarios', () => {
 
         // Mock login endpoint that never responds (simulates timeout).
         // RegExp matches both /api/auth/login and /api/v1/auth/login.
-        let timeoutHandle: NodeJS.Timeout;
+        let timeoutHandle: NodeJS.Timeout | undefined;
         await page.route(/\/api(\/v1)?\/auth\/login$/, async (route) => {
           // Delay indefinitely to trigger timeout
           await new Promise((resolve) => {

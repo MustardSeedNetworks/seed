@@ -270,7 +270,7 @@ const RESULTS = {
       },
     ],
   },
-};
+} as const;
 
 /** The names of the failing row and the passing row in each section. */
 const SECTIONS: { title: string; failing: string; passing: string }[] = [

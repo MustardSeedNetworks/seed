@@ -214,7 +214,7 @@ test.describe('Complete Authentication Lifecycle', () => {
 
       // Verify logout API was called
       expect(logoutRequests.length).toBeGreaterThan(0);
-      expect(logoutRequests[0].method).toBe('POST');
+      expect(logoutRequests[0]?.method).toBe('POST');
     });
 
     test('should display empty login form after logout', async ({ page }) => {
@@ -440,7 +440,6 @@ test.describe('Complete Authentication Lifecycle', () => {
       await loginAndAwaitDashboard(page);
 
       // Close and reopen (simulate browser restart)
-      const _cookies = await page.context().cookies();
       await page.context().clearCookies();
       await page.goto('/');
 

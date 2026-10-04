@@ -55,7 +55,7 @@ const NEIGHBOURS = {
       family: 'ipv4',
     },
   ],
-};
+} as const;
 
 const BONJOUR = {
   serviceTypes: ['_http._tcp', '_ipp._tcp'],
