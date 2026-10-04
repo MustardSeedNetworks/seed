@@ -24,12 +24,6 @@ const (
 	// defaultSpeedTestDays is the default retention period for speed test results (3 months).
 	defaultSpeedTestDays = 90
 
-	// defaultDNSResultDays is the default retention period for DNS test results (1 month).
-	defaultDNSResultDays = 30
-
-	// defaultGatewayResultDays is the default retention period for gateway results (1 month).
-	defaultGatewayResultDays = 30
-
 	// defaultAnomalyResolvedDays is the default retention for resolved anomalies
 	// (90 days). Active anomalies are kept indefinitely (ADR-0021); only resolved
 	// instances age out, bounding table growth on appliances.
@@ -68,12 +62,6 @@ type RetentionPolicy struct {
 	// SpeedTestDays is how many days to keep speed test results (0 = forever)
 	SpeedTestDays int
 
-	// DNSResultDays is how many days to keep DNS results (0 = forever)
-	DNSResultDays int
-
-	// GatewayResultDays is how many days to keep gateway results (0 = forever)
-	GatewayResultDays int
-
 	// AnomalyResolvedDays is how many days to keep RESOLVED anomalies (0 =
 	// forever). Active anomalies are never aged out (ADR-0021).
 	AnomalyResolvedDays int
@@ -95,8 +83,6 @@ func DefaultRetentionPolicy() RetentionPolicy {
 		InactiveDeviceDays:  defaultInactiveDeviceDays,
 		AuditLogDays:        defaultAuditLogDays,
 		SpeedTestDays:       defaultSpeedTestDays,
-		DNSResultDays:       defaultDNSResultDays,
-		GatewayResultDays:   defaultGatewayResultDays,
 		AnomalyResolvedDays: defaultAnomalyResolvedDays,
 	}
 }
@@ -108,8 +94,6 @@ type CleanupResult struct {
 	DevicesDeleted           int64
 	AuditLogsDeleted         int64
 	SpeedTestsDeleted        int64
-	DNSResultsDeleted        int64
-	GatewayResultsDeleted    int64
 	AnomaliesResolvedDeleted int64
 	AnomalyRollupsCensused   int64
 	AnomalyRollupsDeleted    int64
@@ -162,8 +146,6 @@ func (db *DB) RunCleanup(ctx context.Context, policy RetentionPolicy) (*CleanupR
 		{policy.InactiveDeviceDays, db.cleanupDevices, "devices"},
 		{policy.AuditLogDays, db.deleteAuditLogsOlderThan, "audit logs"},
 		{policy.SpeedTestDays, db.deleteSpeedTestsOlderThan, "speed tests"},
-		{policy.DNSResultDays, db.deleteDNSResultsOlderThan, "DNS results"},
-		{policy.GatewayResultDays, db.deleteGatewayResultsOlderThan, "gateway results"},
 		{policy.AnomalyResolvedDays, db.cleanupResolvedAnomalies, "resolved anomalies"},
 	}
 
@@ -181,9 +163,7 @@ func (db *DB) RunCleanup(ctx context.Context, policy RetentionPolicy) (*CleanupR
 	result.DevicesDeleted = results[2]
 	result.AuditLogsDeleted = results[3]
 	result.SpeedTestsDeleted = results[4]
-	result.DNSResultsDeleted = results[5]
-	result.GatewayResultsDeleted = results[6]
-	result.AnomaliesResolvedDeleted = results[7]
+	result.AnomaliesResolvedDeleted = results[5]
 	result.Duration = time.Since(start)
 
 	return result, nil
@@ -300,34 +280,6 @@ func (db *DB) deleteSpeedTestsOlderThan(ctx context.Context, cutoff time.Time) (
 	rowsAffected, err := result.RowsAffected()
 	if err != nil {
 		return 0, fmt.Errorf("delete speed tests rows affected: %w", err)
-	}
-	return rowsAffected, nil
-}
-
-func (db *DB) deleteDNSResultsOlderThan(ctx context.Context, cutoff time.Time) (int64, error) {
-	result, err := db.Exec(ctx, `
-		DELETE FROM dns_results WHERE timestamp < ?
-	`, cutoff.UTC().Format(time.RFC3339))
-	if err != nil {
-		return 0, fmt.Errorf("delete DNS results exec: %w", err)
-	}
-	rowsAffected, err := result.RowsAffected()
-	if err != nil {
-		return 0, fmt.Errorf("delete DNS results rows affected: %w", err)
-	}
-	return rowsAffected, nil
-}
-
-func (db *DB) deleteGatewayResultsOlderThan(ctx context.Context, cutoff time.Time) (int64, error) {
-	result, err := db.Exec(ctx, `
-		DELETE FROM gateway_results WHERE timestamp < ?
-	`, cutoff.UTC().Format(time.RFC3339))
-	if err != nil {
-		return 0, fmt.Errorf("delete gateway results exec: %w", err)
-	}
-	rowsAffected, err := result.RowsAffected()
-	if err != nil {
-		return 0, fmt.Errorf("delete gateway results rows affected: %w", err)
 	}
 	return rowsAffected, nil
 }

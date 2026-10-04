@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"testing"
+	"time"
 
 	"github.com/MustardSeedNetworks/seed/internal/diagnostics/speedtest"
 	"github.com/MustardSeedNetworks/seed/internal/platform/jobs"
@@ -36,6 +37,8 @@ func (f *fakeSpeedTester) RunTest(ctx context.Context) (*speedtest.Result, error
 	return f.result, nil
 }
 
+func discardSpeedtest(context.Context, *speedtest.Result) {}
+
 func TestSpeedtestKindRunsToSuccess(t *testing.T) {
 	t.Parallel()
 
@@ -44,7 +47,8 @@ func TestSpeedtestKindRunsToSuccess(t *testing.T) {
 		result:   &speedtest.Result{Download: 100, Upload: 20, Latency: 5, Server: "s1"},
 		progress: 100,
 	}
-	if err := runner.Register(speedtestJobKind, newSpeedtestHandler(func() speedTester { return fake })); err != nil {
+	handler := newSpeedtestHandler(func() speedTester { return fake }, discardSpeedtest)
+	if err := runner.Register(speedtestJobKind, handler); err != nil {
 		t.Fatalf("Register: %v", err)
 	}
 
@@ -77,7 +81,7 @@ func TestSpeedtestKindReportsProgress(t *testing.T) {
 	release := make(chan struct{})
 	defer close(release)
 	fake := &fakeSpeedTester{result: &speedtest.Result{}, progress: 50, release: release}
-	_ = runner.Register(speedtestJobKind, newSpeedtestHandler(func() speedTester { return fake }))
+	_ = runner.Register(speedtestJobKind, newSpeedtestHandler(func() speedTester { return fake }, discardSpeedtest))
 
 	id, _ := runner.Submit(speedtestJobKind, nil)
 	// The handler samples the tester's phase progress (50/100) onto the job.
@@ -93,7 +97,7 @@ func TestSpeedtestKindCancellation(t *testing.T) {
 	_, runner := newJobsTestServer(t, jobs.Config{})
 	// release is never closed: RunTest blocks until the job context is cancelled.
 	fake := &fakeSpeedTester{release: make(chan struct{})}
-	_ = runner.Register(speedtestJobKind, newSpeedtestHandler(func() speedTester { return fake }))
+	_ = runner.Register(speedtestJobKind, newSpeedtestHandler(func() speedTester { return fake }, discardSpeedtest))
 
 	id, _ := runner.Submit(speedtestJobKind, nil)
 	waitFor(t, "job running", func() bool {
@@ -115,7 +119,7 @@ func TestSpeedtestKindFailure(t *testing.T) {
 
 	_, runner := newJobsTestServer(t, jobs.Config{})
 	fake := &fakeSpeedTester{err: errors.New("network down")}
-	_ = runner.Register(speedtestJobKind, newSpeedtestHandler(func() speedTester { return fake }))
+	_ = runner.Register(speedtestJobKind, newSpeedtestHandler(func() speedTester { return fake }, discardSpeedtest))
 
 	id, _ := runner.Submit(speedtestJobKind, nil)
 	waitFor(t, "job failed", func() bool {
@@ -150,5 +154,39 @@ func TestRegisterSpeedtestKindWiresRunner(t *testing.T) {
 	res, ok := j.Result.(SpeedtestResponse)
 	if !ok || res.Download != 42 {
 		t.Fatalf("result = %+v (ok=%v), want download 42", res, ok)
+	}
+}
+
+// TestSpeedtestKindKeepsResult is #2623's speed-test half: a finished job
+// leaves a speedtest_results row, the one the report's bandwidth reads.
+func TestSpeedtestKindKeepsResult(t *testing.T) {
+	t.Parallel()
+
+	srv, runner := newJobsTestServer(t, jobs.Config{})
+	srv.dbConn = newTestDB(t)
+	fake := &fakeSpeedTester{
+		result:   &speedtest.Result{Download: 200, Upload: 40, Latency: 7, Server: "s1", Timestamp: time.Now()},
+		progress: 100,
+	}
+	srv.registerSpeedtestKind(func() speedTester { return fake })
+
+	id, err := runner.Submit(speedtestJobKind, nil)
+	if err != nil {
+		t.Fatalf("Submit: %v", err)
+	}
+	waitFor(t, "job succeeded", func() bool {
+		j, ok := runner.Get(id)
+		return ok && j.State == jobs.StateSucceeded
+	})
+
+	var download, upload float64
+	var server string
+	row := srv.db().QueryRow(t.Context(),
+		"SELECT download_mbps, upload_mbps, server_name FROM speedtest_results")
+	if scanErr := row.Scan(&download, &upload, &server); scanErr != nil {
+		t.Fatalf("speedtest_results row: %v", scanErr)
+	}
+	if download != 200 || upload != 40 || server != "s1" {
+		t.Fatalf("row = %v/%v/%q, want 200/40/\"s1\"", download, upload, server)
 	}
 }

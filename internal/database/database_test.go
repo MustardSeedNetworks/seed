@@ -419,7 +419,7 @@ func TestStageA11ClientsArtifacts(t *testing.T) {
 	// client_id column exists on every targeted legacy + V1.0 table.
 	tables := []string{
 		"profiles", "alerts", "metrics",
-		"speedtest_results", "dns_results", "gateway_results",
+		"speedtest_results",
 		"discovered_devices", "discovery_interfaces",
 		"wifi_networks", "wifi_access_points", "channel_utilization",
 		"discovery_history", "bluetooth_devices", "bluetooth_scan_history",
@@ -1469,37 +1469,6 @@ func TestMetricsRepositoryExtended(t *testing.T) {
 		err := repo.RecordSpeedTest(ctx, result)
 		require.NoError(t, err)
 	})
-
-	t.Run("GetSpeedTestHistory", func(t *testing.T) {
-		results, err := repo.GetSpeedTestHistory(ctx, "eth0", 10)
-		require.NoError(t, err)
-		if len(results) != 1 {
-			t.Errorf("expected 1 result, got %d", len(results))
-		}
-	})
-
-	t.Run("RecordDNSResult", func(t *testing.T) {
-		result := &database.DNSResult{
-			InterfaceName:  "eth0",
-			Server:         "8.8.8.8",
-			Hostname:       "example.com",
-			ResponseTimeMs: 25.0,
-			Status:         "success",
-		}
-		err := repo.RecordDNSResult(ctx, result)
-		require.NoError(t, err)
-	})
-
-	t.Run("RecordGatewayResult", func(t *testing.T) {
-		result := &database.GatewayResult{
-			InterfaceName: "eth0",
-			Gateway:       "192.168.1.1",
-			LatencyMs:     1.5,
-			Reachable:     true,
-		}
-		err := repo.RecordGatewayResult(ctx, result)
-		require.NoError(t, err)
-	})
 }
 
 func TestRetentionExtended(t *testing.T) {
@@ -1536,32 +1505,6 @@ func TestRetentionExtended(t *testing.T) {
 		require.NoError(t, err)
 
 		count, err := db.DeleteSpeedTestsOlderThan(ctx, time.Now().Add(time.Hour))
-		require.NoError(t, err)
-		if count < 0 {
-			t.Errorf("count should be non-negative, got %d", count)
-		}
-	})
-
-	t.Run("DeleteDNSResultsOlderThan", func(t *testing.T) {
-		err := db.Metrics().RecordDNSResult(ctx, &database.DNSResult{
-			InterfaceName: "eth0", Server: "8.8.8.8", Hostname: "test.com",
-		})
-		require.NoError(t, err)
-
-		count, err := db.DeleteDNSResultsOlderThan(ctx, time.Now().Add(time.Hour))
-		require.NoError(t, err)
-		if count < 0 {
-			t.Errorf("count should be non-negative, got %d", count)
-		}
-	})
-
-	t.Run("DeleteGatewayResultsOlderThan", func(t *testing.T) {
-		err := db.Metrics().RecordGatewayResult(ctx, &database.GatewayResult{
-			InterfaceName: "eth0", Gateway: "192.168.1.1", Reachable: true,
-		})
-		require.NoError(t, err)
-
-		count, err := db.DeleteGatewayResultsOlderThan(ctx, time.Now().Add(time.Hour))
 		require.NoError(t, err)
 		if count < 0 {
 			t.Errorf("count should be non-negative, got %d", count)

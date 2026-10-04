@@ -255,27 +255,6 @@ CREATE INDEX idx_discovery_history_client ON discovery_history(client_id);
 -- index: idx_discovery_interfaces_client
 CREATE INDEX idx_discovery_interfaces_client ON discovery_interfaces(client_id);
 
--- index: idx_dns_interface
-CREATE INDEX idx_dns_interface ON dns_results(interface_name);
-
--- index: idx_dns_results_client
-CREATE INDEX idx_dns_results_client ON dns_results(client_id);
-
--- index: idx_dns_server
-CREATE INDEX idx_dns_server ON dns_results(server);
-
--- index: idx_dns_timestamp
-CREATE INDEX idx_dns_timestamp ON dns_results(timestamp);
-
--- index: idx_gateway_interface
-CREATE INDEX idx_gateway_interface ON gateway_results(interface_name);
-
--- index: idx_gateway_results_client
-CREATE INDEX idx_gateway_results_client ON gateway_results(client_id);
-
--- index: idx_gateway_timestamp
-CREATE INDEX idx_gateway_timestamp ON gateway_results(timestamp);
-
 -- index: idx_job_idempotency_job
 CREATE INDEX idx_job_idempotency_job ON job_idempotency(job_id);
 
@@ -1073,30 +1052,6 @@ CREATE TABLE discovery_interfaces (
 				FOREIGN KEY (device_id) REFERENCES discovered_devices(id) ON DELETE CASCADE,
 				UNIQUE(device_id, mac_address)
 			) STRICT;
-
--- table: dns_results
-CREATE TABLE dns_results (
-				id INTEGER PRIMARY KEY AUTOINCREMENT,
-				interface_name TEXT NOT NULL,
-				server TEXT NOT NULL,
-				hostname TEXT NOT NULL,
-				response_time_ms REAL,
-				resolved_ip TEXT,
-				status TEXT NOT NULL,
-				error_message TEXT,
-				timestamp TEXT NOT NULL
-			, client_id TEXT NOT NULL DEFAULT 'default' REFERENCES clients(id)) STRICT;
-
--- table: gateway_results
-CREATE TABLE gateway_results (
-				id INTEGER PRIMARY KEY AUTOINCREMENT,
-				interface_name TEXT NOT NULL,
-				gateway TEXT NOT NULL,
-				latency_ms REAL,
-				packet_loss REAL,
-				reachable INTEGER CHECK (reachable IN (0,1)),
-				timestamp TEXT NOT NULL
-			, client_id TEXT NOT NULL DEFAULT 'default' REFERENCES clients(id)) STRICT;
 
 -- table: job_idempotency
 CREATE TABLE job_idempotency (

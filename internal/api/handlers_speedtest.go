@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/MustardSeedNetworks/seed/internal/database"
 	"github.com/MustardSeedNetworks/seed/internal/diagnostics/speedtest"
 	"github.com/MustardSeedNetworks/seed/internal/i18n"
 	"github.com/MustardSeedNetworks/seed/internal/logging"
@@ -87,10 +88,12 @@ func (s *Server) handleSpeedtest(w http.ResponseWriter, r *http.Request) {
 		ctx, cancel := context.WithTimeout(context.WithoutCancel(parentCtx), speedtestTimeoutMin*time.Minute)
 		defer cancel()
 
-		_, err := s.speedtestTester().RunTest(ctx)
+		res, err := s.speedtestTester().RunTest(ctx)
 		if err != nil {
 			logger.ErrorContext(parentCtx, "Speedtest failed", "error", err)
+			return
 		}
+		s.recordSpeedtest(ctx, res)
 	}(r.Context(), logger)
 
 	// Return immediately with "started" status
@@ -131,6 +134,30 @@ func (s *Server) handleSpeedtestStatus(w http.ResponseWriter, r *http.Request) {
 	}
 
 	sendJSONResponse(w, logger, http.StatusOK, resp)
+}
+
+// recordSpeedtest keeps a finished test for the reports' bandwidth figures.
+// Failing to store it costs the report a point, not the operator the result.
+func (s *Server) recordSpeedtest(ctx context.Context, res *speedtest.Result) {
+	if s.db() == nil {
+		return
+	}
+	var iface string
+	if s.netManager() != nil {
+		iface = s.netManager().GetCurrentInterface()
+	}
+	err := s.db().Metrics().RecordSpeedTest(ctx, &database.SpeedTestResult{
+		InterfaceName:  iface,
+		ServerName:     res.Server,
+		ServerLocation: res.Location,
+		DownloadMbps:   res.Download,
+		UploadMbps:     res.Upload,
+		LatencyMs:      res.Latency,
+		Timestamp:      res.Timestamp.UTC(),
+	})
+	if err != nil {
+		logging.FromContext(ctx).WarnContext(ctx, "storing speed test result failed", "error", err)
+	}
 }
 
 // toSpeedtestResponse maps a speedtest.Result to the API wire shape. Shared by

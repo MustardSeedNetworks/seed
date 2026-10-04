@@ -42,10 +42,13 @@ type speedTester interface {
 
 // newSpeedtestHandler returns the job Handler for the "speedtest" kind. newTester
 // produces a fresh tester per job so concurrent runs never share singleton
-// state. The handler runs the test, samples its phase progress onto the job, and
-// returns the result as a SpeedtestResponse; a cancelled job context unwinds the
-// underlying run at its next phase boundary.
-func newSpeedtestHandler(newTester func() speedTester) jobs.Handler {
+// state. The handler runs the test, samples its phase progress onto the job,
+// hands a finished result to keep, and returns it as a SpeedtestResponse; a
+// cancelled job context unwinds the underlying run at its next phase boundary.
+func newSpeedtestHandler(
+	newTester func() speedTester,
+	keep func(context.Context, *speedtest.Result),
+) jobs.Handler {
 	return func(ctx context.Context, _ any, report func(float64)) (any, error) {
 		tester := newTester()
 
@@ -69,6 +72,7 @@ func newSpeedtestHandler(newTester func() speedTester) jobs.Handler {
 				if out.err != nil {
 					return nil, out.err
 				}
+				keep(ctx, out.res)
 				report(1)
 				return toSpeedtestResponse(out.res), nil
 			}
@@ -102,7 +106,7 @@ func (s *Server) registerJobKinds() {
 // registerSpeedtestKind registers the speedtest kind with an injectable tester
 // factory (the seam that makes the wiring testable without the network).
 func (s *Server) registerSpeedtestKind(newTester func() speedTester) {
-	if err := s.jobsRunner().Register(speedtestJobKind, newSpeedtestHandler(newTester)); err != nil {
+	if err := s.jobsRunner().Register(speedtestJobKind, newSpeedtestHandler(newTester, s.recordSpeedtest)); err != nil {
 		logging.GetLogger().Error("failed to register speedtest job kind", "error", err)
 	}
 }

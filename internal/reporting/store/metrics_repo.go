@@ -2,11 +2,13 @@ package store
 
 import (
 	"context"
+	"database/sql"
 	"fmt"
 	"time"
 
 	"github.com/MustardSeedNetworks/seed/internal/database"
 	"github.com/MustardSeedNetworks/seed/internal/reporting"
+	"github.com/MustardSeedNetworks/seed/internal/timeseries/telemetry"
 )
 
 // sqliteDateFormat is the strftime grouping format for trend buckets. It is a
@@ -61,68 +63,60 @@ func (r *MetricsRepo) VulnerabilitySeverityCounts(
 		var severity string
 		var count int
 		if scanErr := rows.Scan(&severity, &count); scanErr != nil {
-			continue
+			return nil, fmt.Errorf("scanning vulnerability count: %w", scanErr)
 		}
 		counts[severity] = count
+	}
+	if rowsErr := rows.Err(); rowsErr != nil {
+		return nil, fmt.Errorf("iterating vulnerability counts: %w", rowsErr)
 	}
 
 	return counts, nil
 }
 
 // PerformanceMetrics returns averaged latency / packet-loss / bandwidth /
-// uptime since `since`. Defaults (notably 100% uptime with no data) are
-// preserved from the original aggregator.
+// uptime since `since`. Gateway figures come from the telemetry series in
+// metrics; uptime is the share of gateway samples that got a reply, 100% when
+// there are none.
 func (r *MetricsRepo) PerformanceMetrics(
 	ctx context.Context,
 	since time.Time,
 ) (reporting.PerformanceMetrics, error) {
 	var perf reporting.PerformanceMetrics
 
-	// Get average latency from gateway results
 	row := r.db.QueryRow(ctx, `
-		SELECT AVG(latency_ms), AVG(packet_loss)
-		FROM gateway_results
-		WHERE timestamp >= ?
-	`, since.Format(time.RFC3339))
+		SELECT
+			AVG(CASE WHEN metric_type = ? THEN value END),
+			AVG(CASE WHEN metric_type = ? THEN value END),
+			AVG(CASE WHEN metric_type = ? THEN value END) * 100.0
+		FROM metrics
+		WHERE target_kind = ? AND metric_type IN (?, ?, ?) AND timestamp >= ?
+	`, telemetry.GatewayLatencyMs, telemetry.GatewayLossPct, telemetry.GatewayReachable,
+		telemetry.TargetKind, telemetry.GatewayLatencyMs, telemetry.GatewayLossPct, telemetry.GatewayReachable,
+		since.UTC().Format(time.RFC3339))
 
-	var avgLatency, avgPacketLoss *float64
-	_ = row.Scan(&avgLatency, &avgPacketLoss)
-
-	if avgLatency != nil {
-		perf.AvgLatencyMs = *avgLatency
+	var avgLatency, avgPacketLoss, uptime sql.NullFloat64
+	if err := row.Scan(&avgLatency, &avgPacketLoss, &uptime); err != nil {
+		return perf, fmt.Errorf("querying gateway telemetry: %w", err)
 	}
-	if avgPacketLoss != nil {
-		perf.AvgPacketLoss = *avgPacketLoss
+	perf.AvgLatencyMs = avgLatency.Float64
+	perf.AvgPacketLoss = avgPacketLoss.Float64
+	perf.UptimePercent = 100.0
+	if uptime.Valid {
+		perf.UptimePercent = uptime.Float64
 	}
 
-	// Get average bandwidth from speedtest results
 	row = r.db.QueryRow(ctx, `
 		SELECT AVG((download_mbps + upload_mbps) / 2)
 		FROM speedtest_results
 		WHERE timestamp >= ?
-	`, since.Format(time.RFC3339))
+	`, since.UTC().Format(time.RFC3339))
 
-	var avgBandwidth *float64
-	_ = row.Scan(&avgBandwidth)
-	if avgBandwidth != nil {
-		perf.AvgBandwidthMbps = *avgBandwidth
+	var avgBandwidth sql.NullFloat64
+	if err := row.Scan(&avgBandwidth); err != nil {
+		return perf, fmt.Errorf("querying speed tests: %w", err)
 	}
-
-	// Calculate uptime (simplified: based on successful gateway checks)
-	row = r.db.QueryRow(ctx, `
-		SELECT
-			COUNT(CASE WHEN success = 1 THEN 1 END) * 100.0 / COUNT(*)
-		FROM gateway_results
-		WHERE timestamp >= ?
-	`, since.Format(time.RFC3339))
-
-	var uptime *float64
-	_ = row.Scan(&uptime)
-	if uptime != nil {
-		perf.UptimePercent = *uptime
-	} else {
-		perf.UptimePercent = 100.0 // Default to 100% if no data
-	}
+	perf.AvgBandwidthMbps = avgBandwidth.Float64
 
 	return perf, nil
 }
@@ -152,10 +146,13 @@ func (r *MetricsRepo) TopIssues(ctx context.Context) ([]reporting.IssueSummary, 
 	for rows.Next() {
 		var issue reporting.IssueSummary
 		if scanErr := rows.Scan(&issue.Severity, &issue.Description, &issue.Count); scanErr != nil {
-			continue
+			return nil, fmt.Errorf("scanning top issue: %w", scanErr)
 		}
 		issue.Category = "vulnerability"
 		issues = append(issues, issue)
+	}
+	if rowsErr := rows.Err(); rowsErr != nil {
+		return nil, fmt.Errorf("iterating top issues: %w", rowsErr)
 	}
 
 	return issues, nil
@@ -169,33 +166,30 @@ func (r *MetricsRepo) Trends(
 	// Determine time range and grouping
 	now := time.Now()
 	var startDate time.Time
-	var groupFormat string
+	groupFormat, bucketLayout := sqliteDateFormat, time.DateOnly
 
 	switch period {
 	case reporting.PeriodDaily:
 		startDate = now.AddDate(0, 0, -1)
-		groupFormat = "%Y-%m-%d %H:00"
-	case reporting.PeriodWeekly:
-		startDate = now.AddDate(0, 0, -7)
-		groupFormat = sqliteDateFormat
+		groupFormat, bucketLayout = "%Y-%m-%d %H:00", "2006-01-02 15:04"
 	case reporting.PeriodMonthly:
 		startDate = now.AddDate(0, -1, 0)
-		groupFormat = sqliteDateFormat
 	default:
 		startDate = now.AddDate(0, 0, -7)
-		groupFormat = sqliteDateFormat
 	}
 
 	var query string
+	var args []any
 	switch metric {
 	case "latency":
 		query = fmt.Sprintf(`
-			SELECT strftime('%s', timestamp) as period, AVG(latency_ms)
-			FROM gateway_results
-			WHERE timestamp >= ?
+			SELECT strftime('%s', timestamp) as period, AVG(value)
+			FROM metrics
+			WHERE target_kind = ? AND metric_type = ? AND timestamp >= ?
 			GROUP BY period
 			ORDER BY period
 		`, groupFormat)
+		args = append(args, telemetry.TargetKind, telemetry.GatewayLatencyMs)
 	case "bandwidth":
 		query = fmt.Sprintf(`
 			SELECT strftime('%s', timestamp) as period, AVG(download_mbps)
@@ -216,7 +210,8 @@ func (r *MetricsRepo) Trends(
 		return nil, fmt.Errorf("unsupported metric: %s", metric)
 	}
 
-	rows, err := r.db.Query(ctx, query, startDate.Format(time.RFC3339))
+	args = append(args, startDate.UTC().Format(time.RFC3339))
+	rows, err := r.db.Query(ctx, query, args...)
 	if err != nil {
 		return nil, fmt.Errorf("querying trends: %w", err)
 	}
@@ -230,7 +225,7 @@ func (r *MetricsRepo) Trends(
 			continue
 		}
 
-		t, _ := time.Parse("2006-01-02", periodStr)
+		t, _ := time.Parse(bucketLayout, periodStr)
 		points = append(points, reporting.DataPoint{
 			Timestamp: t,
 			Value:     value,

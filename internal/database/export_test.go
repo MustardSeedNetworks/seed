@@ -79,16 +79,6 @@ func (db *DB) DeleteSpeedTestsOlderThan(ctx context.Context, cutoff time.Time) (
 	return db.deleteSpeedTestsOlderThan(ctx, cutoff)
 }
 
-// DeleteDNSResultsOlderThan exports deleteDNSResultsOlderThan for testing.
-func (db *DB) DeleteDNSResultsOlderThan(ctx context.Context, cutoff time.Time) (int64, error) {
-	return db.deleteDNSResultsOlderThan(ctx, cutoff)
-}
-
-// DeleteGatewayResultsOlderThan exports deleteGatewayResultsOlderThan for testing.
-func (db *DB) DeleteGatewayResultsOlderThan(ctx context.Context, cutoff time.Time) (int64, error) {
-	return db.deleteGatewayResultsOlderThan(ctx, cutoff)
-}
-
 // ReadPoolForTest exposes the pooled read handle. Tests that assert a
 // connection-scoped property (the foreign_keys pragma, say) need a second and
 // third real connection, and the write handle is a single connection by
