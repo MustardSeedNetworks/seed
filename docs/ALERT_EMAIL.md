@@ -104,6 +104,25 @@ Alert ID: 42
 gateway latency 812ms over the 200ms threshold
 ```
 
+An alert that heads a cluster of correlated alerts, and has a rule Seed can
+explain, also carries its narrative: the same summary, evidence and next check
+the Alerts page shows, in English. It comes first, between the title and the facts:
+
+```text
+Interface Gi0/3 down on core-sw1
+
+Interface Gi0/3 on core-sw1 went down while it was administratively up.
+
+Evidence:
+- ifOperStatus went from up to down on ifIndex 3 at 2026-09-14T12:00:00Z.
+- ifInErrors on Gi0/3 peaked at 12 per second in the 15 minutes before it went down.
+
+Next check: Gi0/3 was counting errors before it went down, so the link is failing physically. Replace or reseat the cable and the optic on Gi0/3, then read the error counters of the far-end port.
+
+Severity: critical
+...
+```
+
 `Auto-Submitted` (RFC 3834) stops out-of-office replies from answering every
 alert. Text a device controls cannot add a header: line breaks in the title are
 folded into the subject line.

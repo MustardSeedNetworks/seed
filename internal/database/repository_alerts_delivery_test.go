@@ -186,7 +186,7 @@ func TestFailedDeliveryIsVisibleOnTheStoredAlert(t *testing.T) {
 	}))
 	defer receiver.Close()
 
-	manager := delivery.NewManager(repo, slog.New(slog.DiscardHandler))
+	manager := delivery.NewManager(repo, nil, slog.New(slog.DiscardHandler))
 	manager.ApplyWebhook(delivery.WebhookConfig{
 		URL:         receiver.URL,
 		Secret:      "delivery-signing-material",

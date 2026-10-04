@@ -267,7 +267,7 @@ func TestWrapWriterDeliversEveryStoredAlert(t *testing.T) {
 	}))
 	defer srv.Close()
 
-	m := delivery.NewManager(nil, slog.New(slog.DiscardHandler))
+	m := delivery.NewManager(nil, nil, slog.New(slog.DiscardHandler))
 	m.ApplyWebhook(delivery.WebhookConfig{URL: srv.URL, Secret: signingKey})
 	defer m.Stop(context.Background())
 
@@ -293,7 +293,7 @@ func TestWrapWriterDoesNotDeliverWhenTheStoreFails(t *testing.T) {
 	}))
 	defer srv.Close()
 
-	m := delivery.NewManager(nil, slog.New(slog.DiscardHandler))
+	m := delivery.NewManager(nil, nil, slog.New(slog.DiscardHandler))
 	m.ApplyWebhook(delivery.WebhookConfig{URL: srv.URL, Secret: signingKey})
 	defer m.Stop(context.Background())
 

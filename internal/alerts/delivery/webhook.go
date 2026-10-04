@@ -15,6 +15,7 @@ import (
 	"time"
 
 	"github.com/MustardSeedNetworks/seed/internal/alerts"
+	"github.com/MustardSeedNetworks/seed/internal/alerts/narrative"
 )
 
 // The webhook channel (#368): a signed JSON POST to an operator-configured
@@ -48,10 +49,13 @@ type WebhookConfig struct {
 }
 
 // envelope is the POST body. The alert is nested rather than sent bare so a
-// later field (correlation id, site) does not collide with an alert field.
+// later field does not collide with an alert field. Narrative is the alert's
+// plain-language explanation, absent when it has none; it has the shape the
+// inbox serves.
 type envelope struct {
-	Alert  *alerts.Alert `json:"alert"`
-	SentAt time.Time     `json:"sentAt"`
+	Alert     *alerts.Alert   `json:"alert"`
+	Narrative *narrative.Text `json:"narrative,omitempty"`
+	SentAt    time.Time       `json:"sentAt"`
 }
 
 // webhook posts one alert per request to one receiver.
@@ -123,8 +127,8 @@ func redactURL(raw string) string {
 
 // send makes one signed POST. A 4xx other than 408 and 429 is permanent: the
 // receiver will refuse the same body again.
-func (w *webhook) send(ctx context.Context, alert *alerts.Alert) (bool, error) {
-	body, err := json.Marshal(envelope{Alert: alert, SentAt: w.now().UTC()})
+func (w *webhook) send(ctx context.Context, alert *alerts.Alert, story *narrative.Text) (bool, error) {
+	body, err := json.Marshal(envelope{Alert: alert, Narrative: story, SentAt: w.now().UTC()})
 	if err != nil {
 		return true, fmt.Errorf("marshal alert %d: %w", alert.ID, err)
 	}

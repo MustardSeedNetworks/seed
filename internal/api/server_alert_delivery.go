@@ -37,7 +37,7 @@ func (s *Server) alertStore(db *database.DB, logger *slog.Logger) alertdelivery.
 	// — the annotation is worth having whether or not a receiver is
 	// configured, and with no webhook this is the whole of it.
 	store := alertcorrelation.WrapWriter(db.Alerts(), alertcorrelation.Config{})
-	return alertdelivery.WrapWriter(store, s.initAlertDelivery(db.Alerts(), logger))
+	return alertdelivery.WrapWriter(store, s.initAlertDelivery(db.Alerts(), app.NewAlertNarrator(db), logger))
 }
 
 // initAlertDelivery builds the delivery Manager and points it at the
@@ -46,9 +46,10 @@ func (s *Server) alertStore(db *database.DB, logger *slog.Logger) alertdelivery.
 // stores the alert and sends nothing.
 func (s *Server) initAlertDelivery(
 	recorder alertdelivery.Recorder,
+	narrator alertdelivery.Narrator,
 	logger *slog.Logger,
 ) *alertdelivery.Manager {
-	manager := alertdelivery.NewManager(recorder, logger)
+	manager := alertdelivery.NewManager(recorder, narrator, logger)
 	s.alertDelivery = manager
 	// Point it at what the config already says, so a receiver configured in a
 	// previous session is live from the first alert rather than from the first

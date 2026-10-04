@@ -33,6 +33,7 @@ import (
 	"time"
 
 	"github.com/MustardSeedNetworks/seed/internal/alerts"
+	"github.com/MustardSeedNetworks/seed/internal/alerts/narrative"
 )
 
 // ErrInvalidConfig is returned when operator-supplied receiver configuration
@@ -55,6 +56,10 @@ type Options struct {
 	// only in counters nothing serves. Optional: nil means the outcome is
 	// counted but not written back.
 	Recorder Recorder
+	// Narrator explains an alert that heads a cluster, so the receiver reads
+	// the same narrative the inbox shows (P-B7). Optional: nil sends the
+	// alert's own fields only.
+	Narrator Narrator
 	// MaxAttempts is the total number of tries per alert, retries included.
 	MaxAttempts int
 	// Backoff is the base delay between attempts; attempt n waits n*Backoff.
@@ -81,6 +86,14 @@ type Recorder interface {
 	) error
 }
 
+// Narrator explains alert in plain language, or reports false when it has
+// nothing specific to say: an alert another alert explains, or a rule with no
+// narrative. It is read at send time, so an escalation carries the effects
+// correlated since the alert was first sent.
+type Narrator interface {
+	Narrate(ctx context.Context, alert *alerts.Alert) (narrative.Text, bool, error)
+}
+
 // Status is the last-delivery picture an operator needs to notice a receiver
 // that is configured but not arriving.
 type Status struct {
@@ -96,7 +109,8 @@ type Status struct {
 type transport interface {
 	// send reports whether a failure is permanent — a receiver that rejects
 	// this alert will reject it again, so retrying only duplicates load.
-	send(ctx context.Context, alert *alerts.Alert) (permanent bool, err error)
+	// story is the alert's narrative, nil when it has none.
+	send(ctx context.Context, alert *alerts.Alert, story *narrative.Text) (permanent bool, err error)
 }
 
 // Notifier delivers alerts on one channel from a single worker goroutine.
@@ -109,6 +123,7 @@ type Notifier struct {
 	logger      *slog.Logger
 	now         func() time.Time
 	recorder    Recorder
+	narrator    Narrator
 
 	queue chan *alerts.Alert
 
@@ -131,6 +146,7 @@ func newNotifier(channel alerts.Channel, endpoint string, opts Options) *Notifie
 		logger:      opts.Logger,
 		now:         opts.Now,
 		recorder:    opts.Recorder,
+		narrator:    opts.Narrator,
 	}
 	if n.maxAttempts < 1 {
 		n.maxAttempts = defaultMaxAttempts
@@ -237,7 +253,7 @@ func (n *Notifier) Deliver(ctx context.Context, alert *alerts.Alert) bool {
 // test-send: the operator is waiting for the answer, and the receiver's own
 // reason is the answer.
 func (n *Notifier) SendNow(ctx context.Context, alert *alerts.Alert) error {
-	_, err := n.transport.send(ctx, alert)
+	_, err := n.transport.send(ctx, alert, nil)
 	return err
 }
 
@@ -290,6 +306,7 @@ func (n *Notifier) run(ctx context.Context) {
 // failure the receiver will give again for the same alert.
 func (n *Notifier) attempt(ctx context.Context, alert *alerts.Alert) {
 	wire := forTheWire(alert)
+	story := n.narrate(ctx, alert)
 	var lastErr error
 	for try := 1; try <= n.maxAttempts; try++ {
 		if try > 1 {
@@ -301,7 +318,7 @@ func (n *Notifier) attempt(ctx context.Context, alert *alerts.Alert) {
 			}
 		}
 
-		permanent, err := n.transport.send(ctx, wire)
+		permanent, err := n.transport.send(ctx, wire, story)
 		if err == nil {
 			n.record(true, nil)
 			n.recordOnAlert(ctx, alert, alerts.DeliveryDelivered, "")
@@ -313,6 +330,25 @@ func (n *Notifier) attempt(ctx context.Context, alert *alerts.Alert) {
 		}
 	}
 	n.fail(ctx, alert, lastErr)
+}
+
+// narrate reads alert's narrative once for all of its attempts. One that
+// cannot be read is logged and the alert sent without it: the explanation is
+// an aid to the alert, and a receiver must not lose the alert over it.
+func (n *Notifier) narrate(ctx context.Context, alert *alerts.Alert) *narrative.Text {
+	if n.narrator == nil {
+		return nil
+	}
+	story, ok, err := n.narrator.Narrate(ctx, alert)
+	if err != nil {
+		n.logger.WarnContext(ctx, "could not explain alert; sending it without a narrative",
+			"error", err, "channel", n.channel, "alert_id", alert.ID)
+		return nil
+	}
+	if !ok {
+		return nil
+	}
+	return &story
 }
 
 // fail records one exhausted delivery in both places the outcome is read: the

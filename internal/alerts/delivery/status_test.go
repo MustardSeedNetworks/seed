@@ -232,7 +232,7 @@ func newTestWriter(
 ) delivery.Writer {
 	t.Helper()
 	cfg.Logger = slog.New(slog.DiscardHandler)
-	manager := delivery.NewManager(recorder, cfg.Logger)
+	manager := delivery.NewManager(recorder, nil, cfg.Logger)
 	manager.ApplyWebhook(cfg)
 	t.Cleanup(func() { manager.Stop(context.Background()) })
 	return delivery.WrapWriter(store, manager)
