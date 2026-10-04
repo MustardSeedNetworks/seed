@@ -314,10 +314,7 @@ func isPermanentSMTP(err error) bool {
 	if reply, ok := errors.AsType[*textproto.Error](err); ok {
 		return reply.Code >= replyPermanent
 	}
-	_, certErr := errors.AsType[*tls.CertificateVerificationError](err)
-	_, hostErr := errors.AsType[x509.HostnameError](err)
-	_, authErr := errors.AsType[x509.UnknownAuthorityError](err)
-	return certErr || hostErr || authErr
+	return isCertificateError(err)
 }
 
 // compose renders alert as an RFC 5322 message. Every header value that came

@@ -1963,6 +1963,9 @@
           "items": {
             "$ref": "#/$defs/AlertEscalationConfig"
           }
+        },
+        "syslog": {
+          "$ref": "#/$defs/AlertSyslogConfig"
         }
       }
     },
@@ -2011,8 +2014,38 @@
           "minItems": 1,
           "items": {
             "type": "string",
-            "enum": ["webhook", "email"]
+            "enum": ["webhook", "email", "syslog"]
           }
+        }
+      }
+    },
+    "AlertSyslogConfig": {
+      "type": "object",
+      "description": "Collector alerts are forwarded to as RFC 5424 syslog. An empty host means forwarding is off and no outbound connection is made",
+      "additionalProperties": false,
+      "properties": {
+        "host": {
+          "type": "string",
+          "description": "Collector host name or address, without scheme or port; empty disables forwarding",
+          "default": ""
+        },
+        "port": {
+          "type": "integer",
+          "description": "Collector port; 0 means the transport's IANA port (514, or 6514 for tls)",
+          "minimum": 0,
+          "maximum": 65535,
+          "default": 0
+        },
+        "transport": {
+          "type": "string",
+          "description": "udp, tcp (RFC 6587 octet counting) or tls (RFC 5425); empty means udp",
+          "enum": [
+            "",
+            "udp",
+            "tcp",
+            "tls"
+          ],
+          "default": ""
         }
       }
     },

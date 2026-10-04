@@ -32,7 +32,7 @@ type Alert struct {
 	// by internal/alerts/correlation, nil when nothing explains it.
 	RootCauseID *int64 `json:"rootCauseId,omitempty"`
 	// Deliveries is what happened when Seed tried to send this alert to each
-	// configured receiver (#368 webhook, #2997 email): one entry per channel
+	// configured receiver (#368 webhook, #2997 email, #3037 syslog): one entry per channel
 	// that was offered the alert. No entry for a channel means delivery never
 	// applied there — no receiver was configured when the alert was raised —
 	// and must never be rendered as a failure.
@@ -69,6 +69,7 @@ type Channel string
 const (
 	ChannelWebhook Channel = "webhook"
 	ChannelEmail   Channel = "email"
+	ChannelSyslog  Channel = "syslog"
 )
 
 // Delivery is one channel's outcome for one alert.

@@ -16,8 +16,9 @@ import (
 
 // The alert receivers' operator half: the webhook an operator names in
 // Settings (#2605), the mail relay alerts are emailed through (#2997), the
-// secrets that go to the keyring on the way in, and the escalation ladders
-// that re-send an alert nobody acknowledged (P-B2).
+// syslog collector they are forwarded to (#3037), the secrets that go to the
+// keyring on the way in, and the escalation ladders that re-send an alert
+// nobody acknowledged (P-B2).
 
 // Encrypter turns plaintext into keyring ciphertext. Satisfied by
 // config.Keyring; declared here so the service holds only the seam and
@@ -53,6 +54,11 @@ func buildAlertSettings(cfg *config.Config) map[string]any {
 			"to":          to,
 		},
 		"escalations": escalationsView(cfg.Alerts.Escalations),
+		"syslog": map[string]any{
+			"host":      cfg.Alerts.Syslog.Host,
+			"port":      cfg.Alerts.Syslog.Port,
+			"transport": cfg.Alerts.Syslog.Transport,
+		},
 	}
 }
 
@@ -155,6 +161,7 @@ func applyAlertsUpdates(updates map[string]any, cfg *config.Config, encrypt Encr
 		applyWebhookUpdates(section, cfg, encrypt),
 		applyEmailUpdates(section, cfg, encrypt),
 		applyEscalationUpdates(section, cfg),
+		applySyslogUpdates(section, cfg),
 	)
 }
 
@@ -306,4 +313,53 @@ func readEmailFields(fields map[string]any, next *config.AlertEmailConfig) (stri
 		errs = append(errs, err)
 	}
 	return password, passwordGiven, errors.Join(errs...)
+}
+
+// applySyslogUpdates applies alerts.syslog: a collector that could never
+// receive is refused with its reason, and clearing the host turns forwarding
+// off. There is no secret; the collector is named, not authenticated to.
+func applySyslogUpdates(section map[string]any, cfg *config.Config) error {
+	val, exists := section["syslog"]
+	if !exists {
+		return nil
+	}
+	fields, ok := val.(map[string]any)
+	if !ok {
+		return errors.New("alerts.syslog must be an object")
+	}
+
+	const prefix = "alerts.syslog"
+	next := cfg.Alerts.Syslog
+	var errs []error
+	for _, field := range []struct {
+		key string
+		dst *string
+	}{{"host", &next.Host}, {"transport", &next.Transport}} {
+		s, given, err := extractString(fields, field.key, prefix)
+		if err != nil {
+			errs = append(errs, err)
+		} else if given {
+			*field.dst = strings.TrimSpace(s)
+		}
+	}
+	if port, given, err := extractInt(fields, "port", prefix); err != nil {
+		errs = append(errs, err)
+	} else if given {
+		next.Port = port
+	}
+	if err := errors.Join(errs...); err != nil {
+		return err
+	}
+
+	if next.Host == "" {
+		cfg.Alerts.Syslog = config.AlertSyslogConfig{}
+		return nil
+	}
+	if invalid := delivery.ValidateSyslog(delivery.SyslogConfig{
+		Host: next.Host, Port: next.Port, Transport: delivery.SyslogTransport(next.Transport),
+	}); invalid != nil {
+		return invalid
+	}
+	cfg.Alerts.Syslog = next
+	return nil
 }

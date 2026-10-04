@@ -82,6 +82,22 @@ func (m *Manager) ApplyEmail(cfg EmailConfig) {
 	m.swap(alerts.ChannelEmail, n)
 }
 
+// ApplySyslog re-points the syslog channel at cfg's collector. An empty
+// cfg.Host turns it off, as does a cfg that could never deliver, with the
+// reason logged.
+func (m *Manager) ApplySyslog(cfg SyslogConfig) {
+	if cfg.Host == "" {
+		m.swap(alerts.ChannelSyslog, nil)
+		return
+	}
+	cfg.Options = m.fill(cfg.Options)
+	n, err := NewSyslog(cfg)
+	if err != nil {
+		m.logger.Error("alert syslog not configured; alerts will not be forwarded", "error", err)
+	}
+	m.swap(alerts.ChannelSyslog, n)
+}
+
 // fill supplies the Manager's own recorder and logger wherever opts leaves
 // them unset, so a caller states only what it is changing.
 func (m *Manager) fill(opts Options) Options {

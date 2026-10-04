@@ -1,8 +1,9 @@
 // Package delivery sends alerts somewhere else: a signed JSON POST to an
 // operator-configured receiver (#368), so a customer can bridge Seed into the
-// Slack, PagerDuty or SIEM they already run, and email through the operator's
-// own mail relay (#2997). Seed detects, records and displays alerts everywhere
-// else; this is the only place it sends one.
+// Slack, PagerDuty or SIEM they already run, email through the operator's
+// own mail relay (#2997), and RFC 5424 syslog to their collector (#3037).
+// Seed detects, records and displays alerts everywhere else; this is the only
+// place it sends one.
 //
 // Every channel runs on the same Notifier, and these properties are
 // load-bearing and asserted by the package tests:
@@ -23,6 +24,8 @@ package delivery
 
 import (
 	"context"
+	"crypto/tls"
+	"crypto/x509"
 	"errors"
 	"fmt"
 	"log/slog"
@@ -350,4 +353,13 @@ func (n *Notifier) record(ok bool, err error) {
 		n.status.LastError = err.Error()
 		n.logger.Error("alert delivery failed", "channel", n.channel, "error", err)
 	}
+}
+
+// isCertificateError reports whether err is a certificate the collector will
+// present again.
+func isCertificateError(err error) bool {
+	_, certErr := errors.AsType[*tls.CertificateVerificationError](err)
+	_, hostErr := errors.AsType[x509.HostnameError](err)
+	_, authErr := errors.AsType[x509.UnknownAuthorityError](err)
+	return certErr || hostErr || authErr
 }

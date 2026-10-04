@@ -62,6 +62,13 @@ function fmtTime(iso?: string): string {
  */
 const UNDELIVERED: ReadonlySet<AlertDelivery['status']> = new Set(['failed', 'dropped']);
 
+/** The detail row each channel's outcome is shown under. */
+const DELIVERY_LABEL = {
+  webhook: 'alerts.labelDeliveryWebhook',
+  email: 'alerts.labelDeliveryEmail',
+  syslog: 'alerts.labelDeliverySyslog',
+} as const satisfies Record<AlertDelivery['channel'], string>;
+
 /** The page's own translator, so the helpers below keep its key checking. */
 type AlertsT = TFunction<['pages', 'common']>;
 
@@ -227,10 +234,7 @@ export function AlertsPage(): JSX.Element {
                 // receiver, and a row reading "not delivered" there would
                 // report a failure that never happened.
                 ...(selected.deliveries ?? []).map((delivery) => ({
-                  label:
-                    delivery.channel === 'email'
-                      ? t('alerts.labelDeliveryEmail')
-                      : t('alerts.labelDeliveryWebhook'),
+                  label: t(DELIVERY_LABEL[delivery.channel]),
                   value: deliveryText(t, delivery),
                   prose: true,
                 })),

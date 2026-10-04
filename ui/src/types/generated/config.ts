@@ -404,6 +404,7 @@ export interface SNMPConfig {
 export interface AlertsConfig {
   webhook: AlertWebhookConfig;
   email: AlertEmailConfig;
+  syslog: AlertSyslogConfig;
   escalations?: AlertEscalationConfig[];
 }
 export interface AlertWebhookConfig {
@@ -418,6 +419,11 @@ export interface AlertEmailConfig {
   password: string;
   from: string;
   to?: string[];
+}
+export interface AlertSyslogConfig {
+  host: string;
+  port: number;
+  transport: string;
 }
 export interface AlertEscalationConfig {
   rule: string;

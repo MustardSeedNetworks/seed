@@ -80,7 +80,7 @@ func (l Ladder) Validate() error {
 			return fmt.Errorf("%w: %s stage %d names no channel", ErrInvalidLadder, l.Rule, i+1)
 		}
 		for _, c := range s.Channels {
-			if c != alerts.ChannelWebhook && c != alerts.ChannelEmail {
+			if c != alerts.ChannelWebhook && c != alerts.ChannelEmail && c != alerts.ChannelSyslog {
 				return fmt.Errorf("%w: %s stage %d: unknown channel %q", ErrInvalidLadder, l.Rule, i+1, c)
 			}
 		}

@@ -157,6 +157,7 @@ func ApplyAlertReceivers(cfg *config.Config, m *alertdelivery.Manager) {
 	email := cfg.Alerts.Email
 	email.To = slices.Clone(email.To)
 	ladders, ladderErr := management.EscalationLadders(cfg.Alerts.Escalations)
+	syslog := cfg.Alerts.Syslog
 	cfg.RUnlock()
 
 	// The settings write refuses a ladder that could not run, so this is a
@@ -195,6 +196,12 @@ func ApplyAlertReceivers(cfg *config.Config, m *alertdelivery.Manager) {
 			To:       email.To,
 		})
 	}
+
+	m.ApplySyslog(alertdelivery.SyslogConfig{
+		Host:      syslog.Host,
+		Port:      syslog.Port,
+		Transport: alertdelivery.SyslogTransport(syslog.Transport),
+	})
 }
 
 // decryptSecret returns stored keyring ciphertext as plaintext. A value

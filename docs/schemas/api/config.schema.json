@@ -82,6 +82,26 @@
         "channels"
       ]
     },
+    "AlertSyslogConfig": {
+      "properties": {
+        "host": {
+          "type": "string"
+        },
+        "port": {
+          "type": "integer"
+        },
+        "transport": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "host",
+        "port",
+        "transport"
+      ]
+    },
     "AlertWebhookConfig": {
       "properties": {
         "url": {
@@ -106,6 +126,9 @@
         "email": {
           "$ref": "#/$defs/AlertEmailConfig"
         },
+        "syslog": {
+          "$ref": "#/$defs/AlertSyslogConfig"
+        },
         "escalations": {
           "items": {
             "$ref": "#/$defs/AlertEscalationConfig"
@@ -117,7 +140,8 @@
       "type": "object",
       "required": [
         "webhook",
-        "email"
+        "email",
+        "syslog"
       ]
     },
     "AuthConfig": {

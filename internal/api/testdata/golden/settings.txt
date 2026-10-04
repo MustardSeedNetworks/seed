@@ -12,6 +12,11 @@ body:
       "username": ""
     },
     "escalations": [],
+    "syslog": {
+      "host": "",
+      "port": 0,
+      "transport": ""
+    },
     "webhook": {
       "secretSet": false,
       "url": ""

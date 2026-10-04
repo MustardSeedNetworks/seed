@@ -236,3 +236,68 @@ func TestPutSettingsRefusesAnUndeliverableMailRelayWithItsReason(t *testing.T) {
 		})
 	}
 }
+
+func syslogBody(fields map[string]any) map[string]any {
+	return map[string]any{"alerts": map[string]any{"syslog": fields}}
+}
+
+// The syslog collector (#3037): stored as given, served back whole (it holds
+// no secret), refused with a reason when it could never receive, and off when
+// the host is cleared.
+func TestPutSettingsStoresTheSyslogCollector(t *testing.T) {
+	cfg := config.DefaultConfig()
+	server := api.NewTestServerWithConfig(cfg)
+	defer server.Close()
+
+	w := putSettings(t, server, syslogBody(map[string]any{
+		"host": " siem.example.com ", "port": 6514, "transport": "tls",
+	}))
+	if w.Code != http.StatusOK {
+		t.Fatalf("status = %d, want 200 (body %s)", w.Code, w.Body)
+	}
+
+	req := httptest.NewRequest(http.MethodGet, "/api/v1/settings", http.NoBody)
+	read := httptest.NewRecorder()
+	server.HandleSettings(read, req)
+	var settings struct {
+		Alerts struct {
+			Syslog config.AlertSyslogConfig `json:"syslog"`
+		} `json:"alerts"`
+	}
+	if err := json.NewDecoder(read.Body).Decode(&settings); err != nil {
+		t.Fatalf("decode settings: %v", err)
+	}
+	want := config.AlertSyslogConfig{Host: "siem.example.com", Port: 6514, Transport: "tls"}
+	if settings.Alerts.Syslog != want {
+		t.Errorf("GET alerts.syslog = %+v, want %+v", settings.Alerts.Syslog, want)
+	}
+
+	for name, tc := range map[string]struct {
+		fields map[string]any
+		want   string
+	}{
+		"unknown transport": {map[string]any{"transport": "relp"}, `syslog transport "relp"`},
+		"host with port":    {map[string]any{"host": "siem.example.com:514"}, "bare host name"},
+		"port as text":      {map[string]any{"port": "514"}, "alerts.syslog.port"},
+	} {
+		t.Run(name, func(t *testing.T) {
+			refused := putSettings(t, server, syslogBody(tc.fields))
+			if refused.Code != http.StatusBadRequest {
+				t.Fatalf("status = %d, want 400 (body %s)", refused.Code, refused.Body)
+			}
+			if got := errorText(t, refused); !strings.Contains(got, tc.want) {
+				t.Errorf("error = %q, want it to contain %q", got, tc.want)
+			}
+			if cfg.Alerts.Syslog != want {
+				t.Errorf("a refused update changed the stored collector to %+v", cfg.Alerts.Syslog)
+			}
+		})
+	}
+
+	if cleared := putSettings(t, server, syslogBody(map[string]any{"host": ""})); cleared.Code != http.StatusOK {
+		t.Fatalf("clear status = %d (body %s)", cleared.Code, cleared.Body)
+	}
+	if cfg.Alerts.Syslog != (config.AlertSyslogConfig{}) {
+		t.Errorf("clearing the host left %+v behind", cfg.Alerts.Syslog)
+	}
+}

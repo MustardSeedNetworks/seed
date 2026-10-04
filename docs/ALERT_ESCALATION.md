@@ -16,7 +16,7 @@ off. The Settings screen for ladders is UI work that has not been built yet.
 | --- | --- |
 | `rule` | The alert's rule, as `rule` on `GET /api/v1/alerts`: a built-in such as `iface.down` or `bgp.flap`, or `db.<id>` for an operator rule. One ladder per rule. |
 | `stages[].afterSeconds` | When the stage fires, counted from when the alert was raised. At least 60, and later than the stage before it. |
-| `stages[].channels` | `webhook`, `email` or both. |
+| `stages[].channels` | Any of `webhook`, `email` and `syslog`. |
 | `repeatSeconds` | Re-send the last stage at this period until the alert is acknowledged or resolved. `0` (the default) sends it once; otherwise at least 60. |
 
 At most five stages per ladder.

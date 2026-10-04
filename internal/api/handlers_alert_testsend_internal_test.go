@@ -3,7 +3,9 @@ package api
 import (
 	"context"
 	"encoding/json"
+	"io"
 	"log/slog"
+	"net"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -81,5 +83,49 @@ func TestAlertTestSendAnswersWithTheReceiversReason(t *testing.T) {
 
 	if code, _ := send(&Server{}, `{"channel":"email"}`); code != http.StatusServiceUnavailable {
 		t.Errorf("no delivery manager: status %d, want 503", code)
+	}
+}
+
+func TestAlertTestSendReachesTheSyslogCollector(t *testing.T) {
+	ln, err := (&net.ListenConfig{}).Listen(context.Background(), "tcp", "127.0.0.1:0")
+	if err != nil {
+		t.Fatalf("listen: %v", err)
+	}
+	port := ln.Addr().(*net.TCPAddr).Port
+	received := make(chan string, 1)
+	go func() {
+		conn, acceptErr := ln.Accept()
+		if acceptErr != nil {
+			return
+		}
+		defer func() { _ = conn.Close() }()
+		frame, _ := io.ReadAll(conn)
+		received <- string(frame)
+	}()
+
+	manager := alertdelivery.NewManager(nil, slog.New(slog.DiscardHandler))
+	defer manager.Stop(context.Background())
+	manager.ApplySyslog(alertdelivery.SyslogConfig{Host: "127.0.0.1", Port: port, Transport: alertdelivery.SyslogTCP})
+	s := &Server{alertDelivery: manager}
+
+	send := func() (int, string) {
+		req := httptest.NewRequest(http.MethodPost, "/api/v1/settings/alerts/test",
+			strings.NewReader(`{"channel":"syslog"}`))
+		w := httptest.NewRecorder()
+		s.handleAlertTestSend(w, req)
+		return w.Code, w.Body.String()
+	}
+
+	if code, body := send(); code != http.StatusOK {
+		t.Fatalf("working collector: %d %s, want 200", code, body)
+	}
+	if frame := <-received; !strings.Contains(frame, " seed - alert - ") ||
+		!strings.Contains(frame, `title="Test alert"`) {
+		t.Errorf("collector received %q, want the test alert as RFC 5424", frame)
+	}
+
+	_ = ln.Close()
+	if code, body := send(); code != http.StatusBadGateway || !strings.Contains(body, "connect to 127.0.0.1:") {
+		t.Errorf("collector gone: %d %s, want 502 naming the connection", code, body)
 	}
 }
