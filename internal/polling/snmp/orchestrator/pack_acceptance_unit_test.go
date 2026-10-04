@@ -3,12 +3,30 @@ package orchestrator_test
 import (
 	"context"
 	"errors"
+	"log/slog"
 	"slices"
 	"testing"
 
+	"github.com/MustardSeedNetworks/seed/internal/polling/observation"
 	"github.com/MustardSeedNetworks/seed/internal/polling/snmp/collectors/fdb"
+	"github.com/MustardSeedNetworks/seed/internal/polling/snmp/collectors/lldp"
 	"github.com/MustardSeedNetworks/seed/internal/polling/snmp/orchestrator"
+	"github.com/MustardSeedNetworks/seed/internal/polling/snmp/sink"
 )
+
+// observationLog is the sink's store: it keeps the kind of every observation
+// the recorder hands on.
+type observationLog struct{ kinds []string }
+
+func (l *observationLog) Insert(_ context.Context, obs *observation.SNMPObservation) error {
+	l.kinds = append(l.kinds, obs.Kind)
+	return nil
+}
+
+func newRowRecorder(poller string) (*rowRecorder, *observationLog) {
+	log := &observationLog{}
+	return &rowRecorder{poller: poller, next: sink.New(log, slog.New(slog.DiscardHandler), nil)}, log
+}
 
 // NIAC keys its manifest's expectedObservations by these names (its
 // internal/scenario Collector* constants). Neither repository imports the
@@ -29,7 +47,7 @@ func TestCollectorsAreTheTenNamesNIACKeysBy(t *testing.T) {
 
 func TestRowRecorderCountsFDBPortsNotMACs(t *testing.T) {
 	t.Parallel()
-	recorder := &rowRecorder{}
+	recorder, _ := newRowRecorder("")
 	err := recorder.PublishFDB(context.Background(), fdb.Observation{Entries: []fdb.Entry{
 		{MACAddress: "00:00:5e:00:53:01", BridgePort: 1},
 		{MACAddress: "00:00:5e:00:53:02", BridgePort: 1},
@@ -45,7 +63,7 @@ func TestRowRecorderCountsFDBPortsNotMACs(t *testing.T) {
 
 func TestRowRecorderLeavesOutThePollersFDBEntry(t *testing.T) {
 	t.Parallel()
-	recorder := &rowRecorder{poller: "00:00:5e:00:53:ff"}
+	recorder, _ := newRowRecorder("00:00:5e:00:53:ff")
 	err := recorder.PublishFDB(context.Background(), fdb.Observation{Entries: []fdb.Entry{
 		{MACAddress: "00:00:5e:00:53:01", BridgePort: 1},
 		{MACAddress: "00:00:5e:00:53:ff", BridgePort: 43},
@@ -55,6 +73,23 @@ func TestRowRecorderLeavesOutThePollersFDBEntry(t *testing.T) {
 	}
 	if recorder.rows != 1 {
 		t.Fatalf("rows = %d, want 1 (the poller's own port is not the pack's)", recorder.rows)
+	}
+}
+
+// The topology consumers read what the sink stored, so a count the recorder
+// keeps for itself would leave them nothing to reconcile.
+func TestRowRecorderHandsEveryObservationToTheSink(t *testing.T) {
+	t.Parallel()
+	recorder, log := newRowRecorder("")
+	ctx := context.Background()
+	if err := recorder.PublishLLDP(ctx, lldp.Observation{Neighbors: []lldp.Neighbor{{SysName: "sw2"}}}); err != nil {
+		t.Fatalf("PublishLLDP: %v", err)
+	}
+	if err := recorder.PublishFDB(ctx, fdb.Observation{}); err != nil {
+		t.Fatalf("PublishFDB: %v", err)
+	}
+	if want := []string{sink.KindLLDP, sink.KindFDB}; !slices.Equal(log.kinds, want) {
+		t.Fatalf("stored kinds = %q, want %q", log.kinds, want)
 	}
 }
 
@@ -137,5 +172,45 @@ func TestAgentRows(t *testing.T) {
 	want := []string{"sw1: sys_info=1 lldp=error", "sw2: sys_info=1"}
 	if !slices.Equal(got, want) {
 		t.Errorf("agentRows = %q, want %q", got, want)
+	}
+}
+
+func TestTopologyFindings(t *testing.T) {
+	t.Parallel()
+	tests := []struct {
+		name            string
+		authored, drawn []packLink
+		want            []string
+	}{
+		{
+			name:     "the same pairs in either order",
+			authored: []packLink{{"core", "acc1"}, {"acc1", "pump"}},
+			drawn:    []packLink{{"pump", "acc1"}, {"acc1", "core"}},
+		},
+		{
+			name:     "parallel cables are one pair",
+			authored: []packLink{{"core", "dist"}, {"dist", "core"}},
+			drawn:    []packLink{{"core", "dist"}},
+		},
+		{
+			name:     "a cable left out",
+			authored: []packLink{{"core", "acc1"}, {"acc1", "pump"}},
+			drawn:    []packLink{{"acc1", "core"}},
+			want:     []string{"topology: no link drawn for authored acc1 -- pump"},
+		},
+		{
+			name:     "a cable invented",
+			authored: []packLink{{"core", "acc1"}},
+			drawn:    []packLink{{"acc1", "core"}, {"core", "pump"}},
+			want:     []string{"topology: link drawn for core -- pump, which the pack does not author"},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			if got := topologyFindings(tt.authored, tt.drawn); !slices.Equal(got, tt.want) {
+				t.Errorf("findings = %q, want %q", got, tt.want)
+			}
+		})
 	}
 }

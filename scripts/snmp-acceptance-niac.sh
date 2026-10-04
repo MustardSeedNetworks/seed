@@ -17,10 +17,12 @@
 # pair, with a free address on the network behind the pool and that network's
 # router as its default gateway, so every agent in the pack is reached the way
 # a probe plugged into a spare access port reaches it. After the manifest's
-# neighbour settling time, TestNIACPackObservations
-# (internal/polling/snmp/orchestrator) runs seed's ten collectors against
-# every SNMP agent and fails on any count that disagrees with the manifest's
-# expectedObservations, or on any collector that errors against an agent.
+# neighbour settling time, TestNIACPack (internal/polling/snmp/orchestrator)
+# runs seed's ten collectors against every SNMP agent and fails on any count
+# that disagrees with the manifest's expectedObservations, or on any collector
+# that errors against an agent; then it runs seed's topology reconcilers over
+# what the collectors stored and fails on any link between two agents that
+# the pack does not author, or that it authors and seed does not draw.
 set -eu
 
 repo_dir=$(CDPATH='' cd -- "$(dirname -- "$0")/.." && pwd)
@@ -216,10 +218,19 @@ for device in scenario.get("devices") or []:
             gateway = on_access[0]
 if gateway is None:
     sys.exit(f"no device on {access} carries routes")
+# The links seed's topology can see: a cable or a learned endpoint between two
+# devices seed polls. One pair, however many cables join it.
+agent_names = {agent["name"] for agent in agents}
+agent_links = sorted({
+    tuple(sorted((device["name"], trunk["remote_device"])))
+    for device in scenario.get("devices") or []
+    for trunk in device.get("trunk_ports") or []
+    if device["name"] in agent_names and trunk["remote_device"] in agent_names
+})
 poller = next(a for a in reversed(list(access.hosts())) if a not in used)
 settle = generated["manifest"].get("timing", {}).get("neighborsStableAfterSeconds", 0)
 
-json.dump({"pack": pack, "agents": agents}, open(f"{run_dir}/{pack}.targets.json", "w", encoding="utf-8"))
+json.dump({"pack": pack, "agents": agents, "links": agent_links}, open(f"{run_dir}/{pack}.targets.json", "w", encoding="utf-8"))
 with open(f"{run_dir}/{pack}.wiring", "w", encoding="utf-8") as wiring:
     for value in (attachment["name"], vlan, f"{poller}/{access.prefixlen}", gateway, settle):
         wiring.write(f"{value}\n")
@@ -268,14 +279,14 @@ EOF
     SEED_NIAC_TARGETS="$run_dir/$pack.targets.json" \
     SEED_NIAC_MANIFEST="$run_dir/$pack.manifest.json" \
     SEED_NIAC_POLLER_MAC="$poller_mac" \
-    "$run_dir/acceptance.test" -test.run '^TestNIACPackObservations$' -test.v -test.count=1 \
+    "$run_dir/acceptance.test" -test.run '^TestNIACPack$' -test.v -test.count=1 \
     >"$run_dir/$pack.acceptance.log" 2>&1; then
     result=PASS
   else
     result=FAIL
     failed="$failed $pack"
   fi
-  grep -E 'found|findings|manifest promises|collect failed' "$run_dir/$pack.acceptance.log" | sed 's/^ *//' || true
+  grep -E 'found|findings|manifest promises|collect failed|topology' "$run_dir/$pack.acceptance.log" | sed 's/^ *//' || true
   printf '%s: %s\n' "$pack" "$result"
   stop_pack
 done
