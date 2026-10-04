@@ -220,6 +220,11 @@
     "reasonTooLong": "El motivo debe tener 500 caracteres o menos",
     "transitionRefused": "Ese cambio de estado no está permitido: un hallazgo resuelto no se puede clasificar, solo el escáner resuelve hallazgos y es posible que el hallazgo ya tenga este estado"
   },
+  "flows": {
+    "invalidRank": "Clasificación no válida: use bytes o packets",
+    "invalidLimit": "Límite no válido: use un número entero de 1 a 100",
+    "readFailed": "No se pudieron leer los flujos"
+  },
   "history": {
     "probeRequired": "Se requiere un identificador de sonda",
     "invalidRange": "Intervalo no válido: use una duración como 24h o un número de días como 7d, dentro de la ventana conservada",

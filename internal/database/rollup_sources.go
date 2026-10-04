@@ -258,10 +258,15 @@ func purgeRows(res sql.Result, err error, op string) (int64, error) {
 	return n, nil
 }
 
-// FlowRollupSource purges raw flow_records at the tier's raw horizon.
-// Flows have no hourly or daily tier yet: the conversation aggregates
-// that P-C3 adds are their rollup, so the rollup and rollup-purge steps
-// write and delete nothing until then.
+// FlowRollupSource rolls flow_records up into flow_conversations_hourly and
+// flow_conversations_daily, one row per (src, dst, protocol) per bucket.
+// A flow lands in the bucket it ended in, the same instant PurgeRaw ages it
+// out by.
+//
+// Counters are summed with TOTAL and cast back, not SUM: SUM raises an
+// integer overflow, and one corrupt record pinned at MaxInt64 by
+// saturatingInt64 would then fail every pass for its hour. The cast
+// saturates at MaxInt64 instead, and is exact below 2^53 bytes.
 type FlowRollupSource struct {
 	db *DB
 }
@@ -274,19 +279,69 @@ func NewFlowRollupSource(db *DB) *FlowRollupSource {
 // Name implements retention.RollupSource.
 func (*FlowRollupSource) Name() string { return "flow_records" }
 
-// RollupHour implements retention.RollupSource.
-func (*FlowRollupSource) RollupHour(context.Context, time.Time) (int, error) { return 0, nil }
+// RollupHour aggregates flows that ended in [hourStart, hourStart+1h).
+func (s *FlowRollupSource) RollupHour(ctx context.Context, hourStart time.Time) (int, error) {
+	res, err := s.db.Exec(ctx, `
+		INSERT OR REPLACE INTO flow_conversations_hourly
+		  (client_id, src_addr, dst_addr, protocol, hour_bucket, bytes, packets)
+		SELECT client_id, src_addr, dst_addr, protocol, ?,
+		       CAST(TOTAL(bytes) AS INTEGER), CAST(TOTAL(packets) AS INTEGER)
+		FROM flow_records
+		WHERE flow_end >= ? AND flow_end < ?
+		GROUP BY client_id, src_addr, dst_addr, protocol
+	`,
+		hourStart.UTC().Format(hourFormat),
+		hourStart.UTC().Format(flowTimeFormat),
+		hourStart.Add(time.Hour).UTC().Format(flowTimeFormat),
+	)
+	if err != nil {
+		return 0, fmt.Errorf("flow hourly rollup: %w", err)
+	}
+	n, _ := res.RowsAffected()
+	return int(n), nil
+}
 
-// RollupDay implements retention.RollupSource.
-func (*FlowRollupSource) RollupDay(context.Context, time.Time) (int, error) { return 0, nil }
+// RollupDay aggregates the day's hourly rows into flow_conversations_daily.
+func (s *FlowRollupSource) RollupDay(ctx context.Context, dayStart time.Time) (int, error) {
+	res, err := s.db.Exec(ctx, `
+		INSERT OR REPLACE INTO flow_conversations_daily
+		  (client_id, src_addr, dst_addr, protocol, day_bucket, bytes, packets)
+		SELECT client_id, src_addr, dst_addr, protocol, ?,
+		       CAST(TOTAL(bytes) AS INTEGER), CAST(TOTAL(packets) AS INTEGER)
+		FROM flow_conversations_hourly
+		WHERE hour_bucket >= ? AND hour_bucket < ?
+		GROUP BY client_id, src_addr, dst_addr, protocol
+	`,
+		dayStart.UTC().Format(dayFormat),
+		dayStart.UTC().Format(hourFormat),
+		dayStart.Add(hoursPerDay*time.Hour).UTC().Format(hourFormat),
+	)
+	if err != nil {
+		return 0, fmt.Errorf("flow daily rollup: %w", err)
+	}
+	n, _ := res.RowsAffected()
+	return int(n), nil
+}
 
 // PurgeRaw deletes flows that ended before cutoff.
 func (s *FlowRollupSource) PurgeRaw(ctx context.Context, cutoff time.Time) (int64, error) {
 	return s.db.FlowRecords().DeleteOlderThan(ctx, cutoff)
 }
 
-// PurgeHourly implements retention.RollupSource.
-func (*FlowRollupSource) PurgeHourly(context.Context, time.Time) (int64, error) { return 0, nil }
+// PurgeHourly deletes flow_conversations_hourly rows whose bucket < cutoff.
+func (s *FlowRollupSource) PurgeHourly(ctx context.Context, cutoff time.Time) (int64, error) {
+	res, err := s.db.Exec(ctx,
+		`DELETE FROM flow_conversations_hourly WHERE hour_bucket < ?`,
+		cutoff.UTC().Format(hourFormat),
+	)
+	return purgeRows(res, err, "flow_conversations_hourly purge")
+}
 
-// PurgeDaily implements retention.RollupSource.
-func (*FlowRollupSource) PurgeDaily(context.Context, time.Time) (int64, error) { return 0, nil }
+// PurgeDaily deletes flow_conversations_daily rows whose bucket < cutoff.
+func (s *FlowRollupSource) PurgeDaily(ctx context.Context, cutoff time.Time) (int64, error) {
+	res, err := s.db.Exec(ctx,
+		`DELETE FROM flow_conversations_daily WHERE day_bucket < ?`,
+		cutoff.UTC().Format(dayFormat),
+	)
+	return purgeRows(res, err, "flow_conversations_daily purge")
+}

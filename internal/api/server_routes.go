@@ -27,10 +27,8 @@ func (s *Server) setupRoutes() {
 	s.setupWiFiRoutes()
 	s.setupReportingRoutes()
 	s.setupTopologyRoutes()
-	s.registerAll(s.alertRoutes())
-	s.registerAll(s.vulnerabilityRoutes())
-	s.registerAll(s.jobsRoutes())
-	s.registerAll(s.captureRoutes())
+	s.registerAll(s.alertRoutes(), s.vulnerabilityRoutes(), s.flowRoutes(),
+		s.jobsRoutes(), s.captureRoutes())
 	s.setupSSEAndStatic()
 }
 

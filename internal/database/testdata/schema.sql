@@ -255,6 +255,12 @@ CREATE INDEX idx_discovery_history_client ON discovery_history(client_id);
 -- index: idx_discovery_interfaces_client
 CREATE INDEX idx_discovery_interfaces_client ON discovery_interfaces(client_id);
 
+-- index: idx_flow_conversations_daily_bucket
+CREATE INDEX idx_flow_conversations_daily_bucket ON flow_conversations_daily(day_bucket);
+
+-- index: idx_flow_conversations_hourly_bucket
+CREATE INDEX idx_flow_conversations_hourly_bucket ON flow_conversations_hourly(hour_bucket);
+
 -- index: idx_flow_records_end
 CREATE INDEX idx_flow_records_end ON flow_records(flow_end);
 
@@ -1049,6 +1055,30 @@ CREATE TABLE discovery_interfaces (
 				FOREIGN KEY (device_id) REFERENCES discovered_devices(id) ON DELETE CASCADE,
 				UNIQUE(device_id, mac_address)
 			) STRICT;
+
+-- table: flow_conversations_daily
+CREATE TABLE flow_conversations_daily (
+	client_id TEXT NOT NULL DEFAULT 'default' REFERENCES clients(id),
+	src_addr TEXT NOT NULL,
+	dst_addr TEXT NOT NULL,
+	protocol INTEGER NOT NULL,
+	day_bucket TEXT NOT NULL,
+	bytes INTEGER NOT NULL,
+	packets INTEGER NOT NULL,
+	PRIMARY KEY (client_id, src_addr, dst_addr, protocol, day_bucket)
+) STRICT;
+
+-- table: flow_conversations_hourly
+CREATE TABLE flow_conversations_hourly (
+	client_id TEXT NOT NULL DEFAULT 'default' REFERENCES clients(id),
+	src_addr TEXT NOT NULL,
+	dst_addr TEXT NOT NULL,
+	protocol INTEGER NOT NULL,
+	hour_bucket TEXT NOT NULL,
+	bytes INTEGER NOT NULL,
+	packets INTEGER NOT NULL,
+	PRIMARY KEY (client_id, src_addr, dst_addr, protocol, hour_bucket)
+) STRICT;
 
 -- table: flow_records
 CREATE TABLE "flow_records" (

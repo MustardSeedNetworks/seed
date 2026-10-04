@@ -220,6 +220,11 @@
     "reasonTooLong": "The reason must be 500 characters or fewer",
     "transitionRefused": "That status change is not allowed: a resolved finding cannot be triaged, the scanner alone resolves findings, and the finding may already have this status"
   },
+  "flows": {
+    "invalidRank": "Invalid ranking: use bytes or packets",
+    "invalidLimit": "Invalid limit: use a whole number from 1 to 100",
+    "readFailed": "Failed to read flows"
+  },
   "history": {
     "probeRequired": "A probe id is required",
     "invalidRange": "Invalid range: use a duration such as 24h or a number of days such as 7d, within the retained window",
