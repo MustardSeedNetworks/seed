@@ -245,6 +245,9 @@ const (
 // unknown template, a format the template does not produce, or a time that
 // does not exist. An unknown frequency would leave NextRun at the zero time,
 // which is always due, so the report would fire every tick.
+//
+// Reasons name the field, never its value: the caller sent the value, and a
+// request-derived string in the error would reach a log line.
 func (s *SchedulerService) validate(sr *ScheduledReport) error {
 	if sr == nil {
 		return fmt.Errorf("%w: scheduled report is nil", ErrInvalidSchedule)
@@ -254,10 +257,10 @@ func (s *SchedulerService) validate(sr *ScheduledReport) error {
 	}
 	tmpl, ok := s.generator.templates.Get(sr.Template)
 	if !ok {
-		return fmt.Errorf("%w: unknown template %q", ErrInvalidSchedule, sr.Template)
+		return fmt.Errorf("%w: unknown template", ErrInvalidSchedule)
 	}
 	if !slices.Contains(tmpl.Formats, sr.Format) {
-		return fmt.Errorf("%w: template %q does not produce %q", ErrInvalidSchedule, sr.Template, sr.Format)
+		return fmt.Errorf("%w: the template does not produce this format", ErrInvalidSchedule)
 	}
 	return sr.Schedule.validate()
 }
@@ -268,7 +271,7 @@ func (sch *Schedule) validate() error {
 		return fmt.Errorf("%w: hour must be 0-23 and minute 0-59", ErrInvalidSchedule)
 	}
 	if _, err := time.LoadLocation(sch.Timezone); err != nil {
-		return fmt.Errorf("%w: unknown timezone %q", ErrInvalidSchedule, sch.Timezone)
+		return fmt.Errorf("%w: unknown timezone", ErrInvalidSchedule)
 	}
 	weekly := sch.Frequency == FrequencyWeekly
 	monthly := sch.Frequency == FrequencyMonthly
