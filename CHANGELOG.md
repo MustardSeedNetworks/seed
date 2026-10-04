@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.230.0](https://github.com/MustardSeedNetworks/seed/compare/v0.229.0...v0.230.0) (2026-10-04)
+
+
+### Features
+
+* **reports:** forecast when each interface's busy hour reaches capacity ([#3078](https://github.com/MustardSeedNetworks/seed/issues/3078)) ([f66ce82](https://github.com/MustardSeedNetworks/seed/commit/f66ce82162b082c4abb2fbec0f069798016c85e6)), closes [#3077](https://github.com/MustardSeedNetworks/seed/issues/3077)
+
+
+### Bug Fixes
+
+* **ui:** paint unrecognised alert severities unknown, not calm ([#3076](https://github.com/MustardSeedNetworks/seed/issues/3076)) ([d9eeb86](https://github.com/MustardSeedNetworks/seed/commit/d9eeb86d0023e7b42515c617e44db563979f69a5)), closes [#2526](https://github.com/MustardSeedNetworks/seed/issues/2526)
+
 ## [0.229.0](https://github.com/MustardSeedNetworks/seed/compare/v0.228.0...v0.229.0) (2026-10-04)
 
 
