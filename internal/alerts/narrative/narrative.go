@@ -23,6 +23,7 @@ import (
 
 	"github.com/MustardSeedNetworks/seed/internal/alerts"
 	"github.com/MustardSeedNetworks/seed/internal/alerts/correlation"
+	"github.com/MustardSeedNetworks/seed/internal/timeseries/ifrate"
 )
 
 // Message is one sentence: a locale key and the values it interpolates.
@@ -41,6 +42,23 @@ type Narrative struct {
 	// NextCheck is the one thing to look at next.
 	NextCheck Message
 }
+
+// Cluster is what Explain reads: the cause, the alerts whose RootCauseID
+// names it, and what else Seed knows about where it happened.
+type Cluster struct {
+	Cause   *alerts.Alert
+	Effects []*alerts.Alert
+	// Device is the name the operator knows the cause's device by.
+	Device string
+	// Counters is the cause interface's error and discard rates over
+	// CountersWindow up to the alert. Only an interface-down cause reads it.
+	Counters ifrate.ErrorPeaks
+}
+
+// CountersWindow is how far back an interface's error and discard rates are
+// read when it goes down: several polls at the 60 to 300 s intervals targets
+// are polled at, short enough to describe the link as it was just before.
+const CountersWindow = 15 * time.Minute
 
 const keyPrefix = "api.narrative."
 
@@ -64,39 +82,49 @@ const (
 	bgpOpenConfirm = 5
 )
 
-// Explain returns the narrative for the cluster rooted at cause, given the
-// alerts whose RootCauseID names it and the name the operator knows the
-// cause's device by. It reports false when the cause is
-// itself explained by another alert (that alert's narrative covers it), when
-// its rule has no narrative (operator rules are open-ended), or when its
-// evidence cannot be read.
-func Explain(cause *alerts.Alert, effects []*alerts.Alert, device string) (Narrative, bool) {
-	if cause.RootCauseID != nil {
+// Explain returns the narrative for the cluster rooted at c.Cause. It
+// reports false when the cause is itself explained by another alert (that
+// alert's narrative covers it), when its rule has no narrative (operator
+// rules are open-ended), or when its evidence cannot be read.
+func Explain(c Cluster) (Narrative, bool) {
+	if c.Cause.RootCauseID != nil {
 		return Narrative{}, false
 	}
-	switch cause.Rule {
+	switch c.Cause.Rule {
 	case alerts.RuleInterfaceDown:
-		return interfaceDown(cause, effects, device)
+		return interfaceDown(c)
 	case alerts.RuleBGPFlap:
-		return bgpFlap(cause, device)
+		return bgpFlap(c.Cause, c.Device)
 	case alerts.RuleStorageHigh, alerts.RuleStorageCritical:
-		return storage(cause, device)
+		return storage(c.Cause, c.Device)
 	default:
 		return Narrative{}, false
 	}
 }
 
-func interfaceDown(cause *alerts.Alert, effects []*alerts.Alert, device string) (Narrative, bool) {
+// CountersFor reports the interface whose error and discard rates Explain
+// cites for cause, so the caller reads only what a narrative will use: the
+// ifIndex of an interface-down cause that heads its cluster.
+func CountersFor(cause *alerts.Alert) (uint32, bool) {
+	var ev alerts.InterfaceDownEvidence
+	if cause.Rule != alerts.RuleInterfaceDown || cause.RootCauseID != nil || !decode(cause, &ev) {
+		return 0, false
+	}
+	return ev.IfIndex, true
+}
+
+func interfaceDown(c Cluster) (Narrative, bool) {
+	cause := c.Cause
 	var ev alerts.InterfaceDownEvidence
 	if !decode(cause, &ev) {
 		return Narrative{}, false
 	}
-	where := map[string]any{"interface": ev.IfName, "device": device}
+	where := map[string]any{"interface": ev.IfName, "device": c.Device}
 
 	summary := "interfaceDown.summary"
 	var peers []alerts.BGPPeerEvidence
 	var peerEvidence []Message
-	for _, effect := range effects {
+	for _, effect := range c.Effects {
 		var peer alerts.BGPPeerEvidence
 		if effect.Rule != alerts.RuleBGPFlap || !decode(effect, &peer) {
 			continue
@@ -116,13 +144,70 @@ func interfaceDown(cause *alerts.Alert, effects []*alerts.Alert, device string) 
 		"status":  operStatusName(ev.IfOperStatus),
 		"ifIndex": ev.IfIndex,
 		"time":    cause.CreatedAt.UTC().Format(time.RFC3339),
-	})}, peerEvidence...)
+	})}, counterEvidence(ev.IfName, c.Counters)...)
+	evidence = append(evidence, peerEvidence...)
+
+	next := operStatusName(ev.IfOperStatus)
+	// A link that was corrupting frames before it dropped is failing
+	// physically; one that dropped clean could as well have been unplugged or
+	// shut at the far end, so it keeps the general check.
+	if next == "down" && (c.Counters.InErrors > 0 || c.Counters.OutErrors > 0) {
+		next = "downAfterErrors"
+	}
 
 	return Narrative{
 		Summary:   msg(summary, with(where, "peers", len(peers))),
 		Evidence:  evidence,
-		NextCheck: msg("interfaceDown.next."+operStatusName(ev.IfOperStatus), where),
+		NextCheck: msg("interfaceDown.next."+next, where),
 	}, true
+}
+
+// counterEvidence states what the interface's error and discard counters did
+// before it went down: the peak rate of each counter that moved, or that none
+// did. With no rated poll in the window there is nothing to state.
+func counterEvidence(ifName string, peaks ifrate.ErrorPeaks) []Message {
+	if peaks.Polls == 0 {
+		return nil
+	}
+	minutes := int(CountersWindow / time.Minute)
+	var out []Message
+	for _, counter := range []struct {
+		name string
+		peak float64
+	}{
+		{"ifInErrors", peaks.InErrors},
+		{"ifOutErrors", peaks.OutErrors},
+		{"ifInDiscards", peaks.InDiscards},
+		{"ifOutDiscards", peaks.OutDiscards},
+	} {
+		if counter.peak > 0 {
+			out = append(out, msg("interfaceDown.evidence.counterPeak", map[string]any{
+				"counter":   counter.name,
+				"interface": ifName,
+				"rate":      formatRate(counter.peak),
+				"minutes":   minutes,
+			}))
+		}
+	}
+	if out == nil {
+		out = append(out, msg("interfaceDown.evidence.countersClean", map[string]any{
+			"interface": ifName,
+			"minutes":   minutes,
+			"polls":     peaks.Polls,
+		}))
+	}
+	return out
+}
+
+// formatRate keeps three significant figures, so one error in a five-minute
+// poll still reads as a rate and not as 0.00, without printing a large rate
+// in exponent form.
+func formatRate(perSecond float64) string {
+	const wholeFrom = 100
+	if perSecond >= wholeFrom {
+		return strconv.FormatFloat(perSecond, 'f', 0, 64)
+	}
+	return strconv.FormatFloat(perSecond, 'g', 3, 64)
 }
 
 func bgpFlap(cause *alerts.Alert, device string) (Narrative, bool) {

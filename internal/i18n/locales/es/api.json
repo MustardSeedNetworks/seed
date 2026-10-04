@@ -59,10 +59,13 @@
       "summaryWithBgp": "La interfaz {{interface}} de {{device}} se desactivó mientras estaba habilitada administrativamente. Sesiones BGP de {{device}} que cayeron después: {{peers}}.",
       "evidence": {
         "operStatus": "ifOperStatus pasó de up a {{status}} en el ifIndex {{ifIndex}} a las {{time}}.",
+        "counterPeak": "{{counter}} en {{interface}} alcanzó un máximo de {{rate}} por segundo en los {{minutes}} minutos anteriores a la caída.",
+        "countersClean": "{{interface}} no contó errores ni descartes en los {{minutes}} minutos anteriores a la caída (sondeos medidos: {{polls}}).",
         "bgpPeer": "El par BGP {{peer}} (AS{{as}}) salió de Established {{seconds}} s después."
       },
       "next": {
         "down": "Revise el enlace físico de {{interface}}: el cable, el módulo óptico y el puerto del otro extremo; después, compruebe que el dispositivo del otro extremo está activo.",
+        "downAfterErrors": "{{interface}} contaba errores antes de caer, así que el enlace falla en la capa física. Cambie o vuelva a insertar el cable y el módulo óptico de {{interface}} y después lea los contadores de errores del puerto del otro extremo.",
         "lowerLayerDown": "{{interface}} espera a la capa que tiene debajo. Revise el puerto, el agregado o el túnel sobre el que funciona en {{device}}.",
         "notPresent": "Falta una parte de {{interface}}. Compruebe que su módulo o transceptor está bien insertado y que {{device}} lo reconoce.",
         "testing": "{{interface}} está en modo de prueba. Localice la prueba en curso en {{device}} y deténgala.",

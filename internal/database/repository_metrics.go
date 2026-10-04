@@ -104,6 +104,54 @@ func (r *MetricsRepository) RecordInterfaceRates(ctx context.Context, rates []if
 	})
 }
 
+// InterfaceErrorPeaks reads the error and discard rates RecordInterfaceRates
+// stored for one interface in the window (from, to].
+func (r *MetricsRepository) InterfaceErrorPeaks(
+	ctx context.Context, clientID, targetID string, ifIndex uint32, from, to time.Time,
+) (ifrate.ErrorPeaks, error) {
+	rows, err := r.db.Query(ctx, `
+		SELECT metric_type, MAX(value), COUNT(*)
+		FROM metrics
+		WHERE interface_name = ? AND metric_type IN (?, ?, ?, ?)
+		  AND timestamp > ? AND timestamp <= ?
+		  AND client_id = ? AND target_kind = ?
+		GROUP BY metric_type
+	`, targetID+"/"+strconv.FormatUint(uint64(ifIndex), 10),
+		ifrate.MetricInErrors, ifrate.MetricOutErrors, ifrate.MetricInDiscards, ifrate.MetricOutDiscards,
+		from.UTC().Format(time.RFC3339), to.UTC().Format(time.RFC3339),
+		clientID, ifrate.TargetKind)
+	if err != nil {
+		return ifrate.ErrorPeaks{}, fmt.Errorf("query interface error peaks: %w", err)
+	}
+	defer func() { _ = rows.Close() }()
+
+	var peaks ifrate.ErrorPeaks
+	for rows.Next() {
+		var metric string
+		var peak float64
+		var polls int
+		if scanErr := rows.Scan(&metric, &peak, &polls); scanErr != nil {
+			return ifrate.ErrorPeaks{}, fmt.Errorf("scan interface error peak: %w", scanErr)
+		}
+		// Every rated poll stores all four, so each count is the poll count.
+		peaks.Polls = polls
+		switch metric {
+		case ifrate.MetricInErrors:
+			peaks.InErrors = peak
+		case ifrate.MetricOutErrors:
+			peaks.OutErrors = peak
+		case ifrate.MetricInDiscards:
+			peaks.InDiscards = peak
+		case ifrate.MetricOutDiscards:
+			peaks.OutDiscards = peak
+		}
+	}
+	if rowsErr := rows.Err(); rowsErr != nil {
+		return ifrate.ErrorPeaks{}, fmt.Errorf("interface error peaks rows: %w", rowsErr)
+	}
+	return peaks, nil
+}
+
 // RecordTelemetry stores one telemetry sample's points in one transaction,
 // keyed by target_id = the interface name.
 func (r *MetricsRepository) RecordTelemetry(ctx context.Context, s telemetry.Sample) error {

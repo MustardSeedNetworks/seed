@@ -9,9 +9,11 @@ import (
 	"cmp"
 	"context"
 	"errors"
+	"time"
 
 	"github.com/MustardSeedNetworks/seed/internal/alerts"
 	"github.com/MustardSeedNetworks/seed/internal/alerts/narrative"
+	"github.com/MustardSeedNetworks/seed/internal/timeseries/ifrate"
 )
 
 // ErrUnavailable is returned when the store is not wired (handler → 503).
@@ -26,6 +28,11 @@ type Repository interface {
 	// DeviceNames maps an alert Source that is a polling target id to the
 	// target's name.
 	DeviceNames(ctx context.Context) (map[string]string, error)
+	// InterfaceErrorPeaks reads the error and discard rates of one polling
+	// target's interface in the window (from, to].
+	InterfaceErrorPeaks(
+		ctx context.Context, targetID string, ifIndex uint32, from, to time.Time,
+	) (ifrate.ErrorPeaks, error)
 	Acknowledge(ctx context.Context, id int64, username string) error
 	Resolve(ctx context.Context, id int64) error
 }
@@ -72,12 +79,27 @@ func (s *Service) Narratives(
 	for _, a := range page {
 		// A source that is not a polling target (a syslog sender's address)
 		// is already the best name Seed has for it.
-		device := cmp.Or(names[a.Source], a.Source)
-		if n, ok := narrative.Explain(a, byCause[a.ID], device); ok {
+		cluster := narrative.Cluster{
+			Cause: a, Effects: byCause[a.ID], Device: cmp.Or(names[a.Source], a.Source),
+		}
+		if cluster.Counters, err = s.counters(ctx, a); err != nil {
+			return nil, err
+		}
+		if n, ok := narrative.Explain(cluster); ok {
 			out[a.ID] = n
 		}
 	}
 	return out, nil
+}
+
+// counters reads what the interface of an interface-down cause counted over
+// the narrative's window before it went down. Any other alert reads nothing.
+func (s *Service) counters(ctx context.Context, a *alerts.Alert) (ifrate.ErrorPeaks, error) {
+	ifIndex, ok := narrative.CountersFor(a)
+	if !ok {
+		return ifrate.ErrorPeaks{}, nil
+	}
+	return s.repo.InterfaceErrorPeaks(ctx, a.Source, ifIndex, a.CreatedAt.Add(-narrative.CountersWindow), a.CreatedAt)
 }
 
 // Acknowledge marks alert id acknowledged by username.

@@ -7,10 +7,12 @@ package app
 
 import (
 	"context"
+	"time"
 
 	"github.com/MustardSeedNetworks/seed/internal/alerts"
 	"github.com/MustardSeedNetworks/seed/internal/alerts/inbox"
 	"github.com/MustardSeedNetworks/seed/internal/database"
+	"github.com/MustardSeedNetworks/seed/internal/timeseries/ifrate"
 )
 
 // NewAlertInbox builds the alert-inbox use-case over a lazy database accessor.
@@ -68,6 +70,18 @@ func (a alertInboxRepo) DeviceNames(ctx context.Context) (map[string]string, err
 		names[t.ID] = t.Name
 	}
 	return names, nil
+}
+
+// InterfaceErrorPeaks reads the rates the SNMP pipeline stored for the
+// default client's target, the client DeviceNames reads targets from.
+func (a alertInboxRepo) InterfaceErrorPeaks(
+	ctx context.Context, targetID string, ifIndex uint32, from, to time.Time,
+) (ifrate.ErrorPeaks, error) {
+	db := a.db()
+	if db == nil {
+		return ifrate.ErrorPeaks{}, inbox.ErrUnavailable
+	}
+	return db.Metrics().InterfaceErrorPeaks(ctx, database.DefaultClientID, targetID, ifIndex, from, to)
 }
 
 func (a alertInboxRepo) Acknowledge(ctx context.Context, id int64, username string) error {
