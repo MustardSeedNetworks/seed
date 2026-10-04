@@ -5,7 +5,7 @@ package api
 // Engine registration runs through registerEngineIfLicensed, which
 // looks up the engine's minimum license tier and skips registration
 // when the current license sits below it. The Free tier ships with
-// the basic Seed functionality (probe + retention); Starter adds
+// the basic Seed functionality (probe, retention, telemetry); Starter adds
 // SNMP visibility (snmp-poller + the four topology reconcilers);
 // Pro adds proactive alerting (the two alert pipelines + the opt-
 // in syslog/trap listeners).
@@ -25,7 +25,7 @@ import (
 // the operator deliberately puts it on a paid tier.
 func minTierForEngine(name string) license.Tier {
 	switch name {
-	case "probe", "probe-anomaly", "retention":
+	case "probe", "probe-anomaly", "retention", "telemetry":
 		return license.TierFree
 	case "snmp-poller",
 		"topology-sysinfo-reconciler",

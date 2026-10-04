@@ -492,6 +492,7 @@ func (s *Server) initDatabaseDependentServices(db *database.DB) {
 	s.initAnomalyPlatform(db)
 	s.initProbeEngine(db)
 	s.initRetentionEngine(db)
+	s.initTelemetry(db)
 	s.initListeners(db)
 	s.initTopologyReconcilers(db)
 	s.initAlertPipelines(db)
