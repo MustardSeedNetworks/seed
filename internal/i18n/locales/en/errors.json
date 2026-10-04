@@ -209,7 +209,16 @@
     "validateFailed": "Failed to validate API key",
     "invalidIp": "Invalid IP address",
     "missingIpParam": "The ip query parameter is required",
-    "scannerNotEnabled": "Vulnerability scanning is not enabled"
+    "scannerNotEnabled": "Vulnerability scanning is not enabled",
+    "storeUnavailable": "Vulnerability findings are unavailable: the database is not open",
+    "invalidStatus": "Status must be one of new, acknowledged, ignored or resolved",
+    "invalidPaging": "limit must be 1 to 1000 and offset must not be negative",
+    "readFailed": "Failed to read vulnerability findings",
+    "writeFailed": "Failed to update the vulnerability finding",
+    "findingNotFound": "Vulnerability finding not found",
+    "reasonRequired": "Give a reason when ignoring a finding",
+    "reasonTooLong": "The reason must be 500 characters or fewer",
+    "transitionRefused": "That status change is not allowed: a resolved finding cannot be triaged, the scanner alone resolves findings, and the finding may already have this status"
   },
   "history": {
     "probeRequired": "A probe id is required",

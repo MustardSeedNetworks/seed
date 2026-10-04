@@ -28,6 +28,7 @@ func (s *Server) setupRoutes() {
 	s.setupReportingRoutes()
 	s.setupTopologyRoutes()
 	s.registerAll(s.alertRoutes())
+	s.registerAll(s.vulnerabilityRoutes())
 	s.registerAll(s.jobsRoutes())
 	s.registerAll(s.captureRoutes())
 	s.setupSSEAndStatic()
@@ -686,37 +687,8 @@ func (s *Server) setupSecurityRoutes() {
 			minRole: op, // gates DELETE only; GET stays open to viewers
 			feature: "export_csv_json",
 		},
-		// Vulnerability scan (the vuln-scan job kind) + guest-audit run are
-		// compliance_advanced (Pro, LICENSE_STRATEGY §2); read-only
-		// results/status/settings stay open so prior scan output remains visible
-		// to lower tiers.
-		{
-			path:    APIVersionPrefix + "/security/vulnerabilities/status",
-			handler: s.handleVulnerabilityStatus,
-			methods: get,
-		},
-		{
-			path:    APIVersionPrefix + "/security/vulnerabilities/results",
-			handler: s.handleVulnerabilityResults,
-			methods: get,
-		},
-		{
-			path:    APIVersionPrefix + "/security/vulnerabilities/device",
-			handler: s.handleDeviceVulnerabilities,
-			methods: get,
-		},
-		{
-			path:    APIVersionPrefix + "/security/vulnerabilities/settings",
-			handler: s.handleVulnerabilitySettings,
-			methods: getPut,
-			minRole: op,
-		},
-		{
-			path:    APIVersionPrefix + "/security/vulnerabilities/validate-api-key",
-			handler: s.handleNVDAPIKeyValidate,
-			methods: post,
-		},
-		// Guest-network isolation audit (#397).
+		// Guest-network isolation audit (#397); the run is compliance_advanced
+		// (Pro, LICENSE_STRATEGY §2).
 		{
 			path:    APIVersionPrefix + "/security/guest-audit/settings",
 			handler: s.handleGuestAuditSettings,

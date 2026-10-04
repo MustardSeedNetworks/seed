@@ -42,7 +42,8 @@ func (r *MetricsRepo) CountDevices(ctx context.Context) (int, error) {
 	return count, nil
 }
 
-// VulnerabilitySeverityCounts returns severity → count discovered since `since`.
+// VulnerabilitySeverityCounts returns severity → count of the open findings
+// discovered since `since`; resolved and ignored findings are not counted.
 func (r *MetricsRepo) VulnerabilitySeverityCounts(
 	ctx context.Context,
 	since time.Time,
@@ -50,9 +51,9 @@ func (r *MetricsRepo) VulnerabilitySeverityCounts(
 	rows, err := r.db.Query(ctx, `
 		SELECT severity, COUNT(*) as count
 		FROM device_vulnerabilities
-		WHERE detected_at >= ? AND status IS NOT ?
+		WHERE detected_at >= ? AND status NOT IN (?, ?)
 		GROUP BY severity
-	`, since.Format(time.RFC3339), database.VulnStatusResolved)
+	`, since.Format(time.RFC3339), database.VulnStatusResolved, database.VulnStatusIgnored)
 	if err != nil {
 		return nil, fmt.Errorf("querying vulnerability counts: %w", err)
 	}
@@ -121,12 +122,12 @@ func (r *MetricsRepo) PerformanceMetrics(
 	return perf, nil
 }
 
-// TopIssues returns the highest-impact vulnerability issues.
+// TopIssues returns the highest-impact open vulnerability issues.
 func (r *MetricsRepo) TopIssues(ctx context.Context) ([]reporting.IssueSummary, error) {
 	rows, err := r.db.Query(ctx, `
 		SELECT severity, COALESCE(description, cve_id), COUNT(*) as count
 		FROM device_vulnerabilities
-		WHERE status IS NOT ?
+		WHERE status NOT IN (?, ?)
 		GROUP BY cve_id
 		ORDER BY
 			CASE severity
@@ -137,7 +138,7 @@ func (r *MetricsRepo) TopIssues(ctx context.Context) ([]reporting.IssueSummary, 
 			END,
 			count DESC
 		LIMIT 10
-	`, database.VulnStatusResolved)
+	`, database.VulnStatusResolved, database.VulnStatusIgnored)
 	if err != nil {
 		return nil, fmt.Errorf("querying top issues: %w", err)
 	}
