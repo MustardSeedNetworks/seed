@@ -41,3 +41,9 @@ See the [Re-Architecture Blueprint](../RE_ARCHITECTURE_BLUEPRINT.md) for the ful
 | [0031](0031-single-writer-sqlite-connection.md) | One SQLite write connection, a pool for reads | Accepted |
 | [0032](0032-fdb-access-port-edges.md) | Forwarding-database edges — one MAC on a port no neighbour protocol claims | Accepted |
 | [0033](0033-interface-counter-pipeline.md) | Interface counter pipeline — rates in `metrics`, not counters in observations | Accepted |
+
+Fleet decisions recorded outside this repository: the API style. Seed, stem and
+niac serve REST/JSON over foundation's shared route registrar, and trellis
+serves Connect-RPC over its proto contract
+(`msn-docs-internal/05-Engineering/API_STYLES.md`, owner decision 10,
+2026-09-17; revisit at trellis v1).
