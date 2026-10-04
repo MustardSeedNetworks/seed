@@ -57,7 +57,12 @@ func (s *Server) handleAlertTestSend(w http.ResponseWriter, r *http.Request) {
 	err := s.alertDelivery.SendTest(ctx, channel)
 	switch {
 	case err == nil:
-		writeJSON(w, r, map[string]any{"channel": channel, "sent": true})
+		sendJSONResponse(
+			w,
+			logging.FromContext(r.Context()),
+			http.StatusOK,
+			map[string]any{"channel": channel, "sent": true},
+		)
 	case errors.Is(err, alertdelivery.ErrNotConfigured):
 		sendErrorResponseWithDetails(w, logger, http.StatusConflict,
 			ErrCodeConflict, err.Error(), "")

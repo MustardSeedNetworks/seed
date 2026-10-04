@@ -71,22 +71,22 @@ func (s *Server) handleAlerts(w http.ResponseWriter, r *http.Request) {
 
 	opts, parseErr := parseAlertListOptions(r)
 	if parseErr != nil {
-		http.Error(w, parseErr.Error(), http.StatusBadRequest)
+		writeError(w, r, http.StatusBadRequest, ErrCodeBadRequest, parseErr.Error())
 		return
 	}
 	alerts, err := s.alertInbox.List(r.Context(), opts)
 	if err != nil {
 		logger.ErrorContext(r.Context(), "list alerts failed", "error", err)
-		writeAlertError(w, err, "Failed to list alerts")
+		writeAlertError(w, r, err, "Failed to list alerts")
 		return
 	}
 	narratives, err := s.alertInbox.Narratives(r.Context(), alerts)
 	if err != nil {
 		logger.ErrorContext(r.Context(), "explain alerts failed", "error", err)
-		writeAlertError(w, err, "Failed to list alerts")
+		writeAlertError(w, r, err, "Failed to list alerts")
 		return
 	}
-	writeJSON(w, r, map[string]any{
+	sendJSONResponse(w, logger, http.StatusOK, map[string]any{
 		jsonKeyCount: len(alerts),
 		"alerts":     encodeAlerts(alerts, narratives, i18n.FromRequest(r)),
 	})
@@ -99,7 +99,7 @@ func (s *Server) handleAlerts(w http.ResponseWriter, r *http.Request) {
 func (s *Server) handleAlertAction(w http.ResponseWriter, r *http.Request) {
 	id, action, ok := splitAlertActionPath(r.URL.Path)
 	if !ok {
-		http.Error(w, "Path must be /alerts/{id}/{acknowledge|resolve}", http.StatusBadRequest)
+		writeError(w, r, http.StatusBadRequest, ErrCodeBadRequest, "Path must be /alerts/{id}/{acknowledge|resolve}")
 		return
 	}
 	logger := logging.FromContext(r.Context())
@@ -109,10 +109,10 @@ func (s *Server) handleAlertAction(w http.ResponseWriter, r *http.Request) {
 		username := s.usernameFromRequest(r)
 		if err := s.alertInbox.Acknowledge(r.Context(), id, username); err != nil {
 			logger.ErrorContext(r.Context(), "alert acknowledge failed", "id", id, "error", err)
-			writeAlertError(w, err, "Failed to acknowledge alert")
+			writeAlertError(w, r, err, "Failed to acknowledge alert")
 			return
 		}
-		writeJSON(w, r, map[string]any{
+		sendJSONResponse(w, logger, http.StatusOK, map[string]any{
 			"id":             id,
 			"acknowledged":   true,
 			"acknowledgedBy": username,
@@ -120,27 +120,26 @@ func (s *Server) handleAlertAction(w http.ResponseWriter, r *http.Request) {
 	case "resolve":
 		if err := s.alertInbox.Resolve(r.Context(), id); err != nil {
 			logger.ErrorContext(r.Context(), "alert resolve failed", "id", id, "error", err)
-			writeAlertError(w, err, "Failed to resolve alert")
+			writeAlertError(w, r, err, "Failed to resolve alert")
 			return
 		}
-		writeJSON(w, r, map[string]any{
+		sendJSONResponse(w, logger, http.StatusOK, map[string]any{
 			"id":       id,
 			"resolved": true,
 		})
 	default:
-		http.Error(w, "Unknown action; use acknowledge or resolve",
-			http.StatusBadRequest)
+		writeError(w, r, http.StatusBadRequest, ErrCodeBadRequest, "Unknown action; use acknowledge or resolve")
 	}
 }
 
 // writeAlertError maps an alert-inbox error to its HTTP status: the store unwired
 // → 503 (the prior "Database not initialized"), anything else → 500 with genericMsg.
-func writeAlertError(w http.ResponseWriter, err error, genericMsg string) {
+func writeAlertError(w http.ResponseWriter, r *http.Request, err error, genericMsg string) {
 	if errors.Is(err, inbox.ErrUnavailable) {
-		http.Error(w, "Database not initialized", http.StatusServiceUnavailable)
+		writeError(w, r, http.StatusServiceUnavailable, ErrCodeServiceUnavail, "Database not initialized")
 		return
 	}
-	http.Error(w, genericMsg, http.StatusInternalServerError)
+	writeError(w, r, http.StatusInternalServerError, ErrCodeInternal, genericMsg)
 }
 
 // splitAlertActionPath parses /api/v1/alerts/{id}/{action} into

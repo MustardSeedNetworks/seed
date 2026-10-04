@@ -74,7 +74,7 @@ func withholdClients(resp *WiFiAirspaceResponse) {
 func (s *Server) handleWiFiAnomalies(w http.ResponseWriter, r *http.Request) {
 	res, err := s.wifiQueries.Anomalies(r.Context())
 	if err != nil {
-		http.Error(w, "Failed to read Wi-Fi anomalies", http.StatusInternalServerError)
+		writeError(w, r, http.StatusInternalServerError, ErrCodeInternal, "Failed to read Wi-Fi anomalies")
 		return
 	}
 	sendJSONResponse(w, nil, http.StatusOK, WiFiAnomaliesResponse{Anomalies: res.Anomalies, Status: res.Status})

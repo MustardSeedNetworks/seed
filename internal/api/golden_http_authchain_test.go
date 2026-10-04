@@ -71,6 +71,9 @@ func TestGoldenHTTPAuthChain(t *testing.T) {
 	for _, rt := range authChainRoutes() {
 		t.Run(rt.name, func(t *testing.T) {
 			status, headers, body := doFullChainRequest(t, srv.ts.URL+rt.path, rt.method)
+			if status >= http.StatusBadRequest {
+				assertErrorShape(t, body)
+			}
 			snapshot := formatChainSnapshot(status, headers, normalizeJSON(t, body))
 			goldenPath := filepath.Join("testdata", "golden", "authchain", rt.name+".txt")
 			compareGolden(t, goldenPath, snapshot)

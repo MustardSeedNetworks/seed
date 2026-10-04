@@ -49,19 +49,19 @@ func (s *Server) handleAlertRules(w http.ResponseWriter, r *http.Request) {
 	case http.MethodPost:
 		s.createAlertRule(w, r)
 	default:
-		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		writeError(w, r, http.StatusMethodNotAllowed, ErrCodeMethodNotAllowed, "Method not allowed")
 	}
 }
 
 func (s *Server) handleAlertRuleByID(w http.ResponseWriter, r *http.Request) {
 	rest := strings.TrimPrefix(r.URL.Path, alertRulesPathPrefix)
 	if rest == "" || strings.Contains(rest, "/") {
-		http.Error(w, "Missing or invalid rule id", http.StatusBadRequest)
+		writeError(w, r, http.StatusBadRequest, ErrCodeBadRequest, "Missing or invalid rule id")
 		return
 	}
 	id, err := strconv.ParseInt(rest, 10, 64)
 	if err != nil || id <= 0 {
-		http.Error(w, "Rule id must be a positive integer", http.StatusBadRequest)
+		writeError(w, r, http.StatusBadRequest, ErrCodeBadRequest, "Rule id must be a positive integer")
 		return
 	}
 	switch r.Method {
@@ -72,24 +72,24 @@ func (s *Server) handleAlertRuleByID(w http.ResponseWriter, r *http.Request) {
 	case http.MethodDelete:
 		s.deleteAlertRule(w, r, id)
 	default:
-		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		writeError(w, r, http.StatusMethodNotAllowed, ErrCodeMethodNotAllowed, "Method not allowed")
 	}
 }
 
 func (s *Server) listAlertRules(w http.ResponseWriter, r *http.Request) {
 	logger := logging.FromContext(r.Context())
 	if !s.alertRules.Available() {
-		http.Error(w, "Database not initialized", http.StatusServiceUnavailable)
+		writeError(w, r, http.StatusServiceUnavailable, ErrCodeServiceUnavail, "Database not initialized")
 		return
 	}
 	enabledOnly := r.URL.Query().Get("enabled_only") == "true"
 	ruleList, err := s.alertRules.List(r.Context(), enabledOnly)
 	if err != nil {
 		logger.ErrorContext(r.Context(), "list alert_rules failed", "error", err)
-		http.Error(w, "Failed to list rules", http.StatusInternalServerError)
+		writeError(w, r, http.StatusInternalServerError, ErrCodeInternal, "Failed to list rules")
 		return
 	}
-	writeJSON(w, r, map[string]any{
+	sendJSONResponse(w, logger, http.StatusOK, map[string]any{
 		jsonKeyCount: len(ruleList),
 		"rules":      encodeAlertRules(ruleList),
 	})
@@ -98,56 +98,56 @@ func (s *Server) listAlertRules(w http.ResponseWriter, r *http.Request) {
 func (s *Server) getAlertRule(w http.ResponseWriter, r *http.Request, id int64) {
 	logger := logging.FromContext(r.Context())
 	if !s.alertRules.Available() {
-		http.Error(w, "Database not initialized", http.StatusServiceUnavailable)
+		writeError(w, r, http.StatusServiceUnavailable, ErrCodeServiceUnavail, "Database not initialized")
 		return
 	}
 	rule, err := s.alertRules.Get(r.Context(), id)
 	if err != nil {
 		if errors.Is(err, rules.ErrNotFound) {
-			http.Error(w, "Rule not found", http.StatusNotFound)
+			writeError(w, r, http.StatusNotFound, ErrCodeNotFound, "Rule not found")
 			return
 		}
 		logger.ErrorContext(r.Context(), "get alert_rule failed", "id", id, "error", err)
-		http.Error(w, "Failed to load rule", http.StatusInternalServerError)
+		writeError(w, r, http.StatusInternalServerError, ErrCodeInternal, "Failed to load rule")
 		return
 	}
-	writeJSON(w, r, encodeAlertRule(rule))
+	sendJSONResponse(w, logger, http.StatusOK, encodeAlertRule(rule))
 }
 
 func (s *Server) createAlertRule(w http.ResponseWriter, r *http.Request) {
 	logger := logging.FromContext(r.Context())
 	if !s.alertRules.Available() {
-		http.Error(w, "Database not initialized", http.StatusServiceUnavailable)
+		writeError(w, r, http.StatusServiceUnavailable, ErrCodeServiceUnavail, "Database not initialized")
 		return
 	}
 	in, err := decodeAlertRuleInput(r)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		writeError(w, r, http.StatusBadRequest, ErrCodeBadRequest, err.Error())
 		return
 	}
 	rule, createErr := s.alertRules.Create(r.Context(), inputToRule(in))
 	if createErr != nil {
 		if ve, ok := errors.AsType[*rules.ValidationError](createErr); ok {
-			http.Error(w, ve.Msg, http.StatusBadRequest)
+			writeError(w, r, http.StatusBadRequest, ErrCodeValidation, ve.Msg)
 			return
 		}
 		logger.ErrorContext(r.Context(), "create alert_rule failed", "error", createErr)
-		http.Error(w, "Failed to create rule", http.StatusInternalServerError)
+		writeError(w, r, http.StatusInternalServerError, ErrCodeInternal, "Failed to create rule")
 		return
 	}
 	w.Header().Set("Location", alertRulesPathPrefix+strconv.FormatInt(rule.ID, 10))
-	writeJSON(w, r, encodeAlertRule(rule))
+	sendJSONResponse(w, logger, http.StatusOK, encodeAlertRule(rule))
 }
 
 func (s *Server) updateAlertRule(w http.ResponseWriter, r *http.Request, id int64) {
 	logger := logging.FromContext(r.Context())
 	if !s.alertRules.Available() {
-		http.Error(w, "Database not initialized", http.StatusServiceUnavailable)
+		writeError(w, r, http.StatusServiceUnavailable, ErrCodeServiceUnavail, "Database not initialized")
 		return
 	}
 	in, err := decodeAlertRuleInput(r)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		writeError(w, r, http.StatusBadRequest, ErrCodeBadRequest, err.Error())
 		return
 	}
 	// The use-case writes the row and echoes the freshly-read record so the
@@ -155,29 +155,29 @@ func (s *Server) updateAlertRule(w http.ResponseWriter, r *http.Request, id int6
 	rule, updateErr := s.alertRules.Update(r.Context(), id, inputToRule(in))
 	if updateErr != nil {
 		if errors.Is(updateErr, rules.ErrNotFound) {
-			http.Error(w, "Rule not found", http.StatusNotFound)
+			writeError(w, r, http.StatusNotFound, ErrCodeNotFound, "Rule not found")
 			return
 		}
 		logger.ErrorContext(r.Context(), "update alert_rule failed", "id", id, "error", updateErr)
-		http.Error(w, "Failed to update rule", http.StatusInternalServerError)
+		writeError(w, r, http.StatusInternalServerError, ErrCodeInternal, "Failed to update rule")
 		return
 	}
-	writeJSON(w, r, encodeAlertRule(rule))
+	sendJSONResponse(w, logger, http.StatusOK, encodeAlertRule(rule))
 }
 
 func (s *Server) deleteAlertRule(w http.ResponseWriter, r *http.Request, id int64) {
 	logger := logging.FromContext(r.Context())
 	if !s.alertRules.Available() {
-		http.Error(w, "Database not initialized", http.StatusServiceUnavailable)
+		writeError(w, r, http.StatusServiceUnavailable, ErrCodeServiceUnavail, "Database not initialized")
 		return
 	}
 	if err := s.alertRules.Delete(r.Context(), id); err != nil {
 		if errors.Is(err, rules.ErrNotFound) {
-			http.Error(w, "Rule not found", http.StatusNotFound)
+			writeError(w, r, http.StatusNotFound, ErrCodeNotFound, "Rule not found")
 			return
 		}
 		logger.ErrorContext(r.Context(), "delete alert_rule failed", "id", id, "error", err)
-		http.Error(w, "Failed to delete rule", http.StatusInternalServerError)
+		writeError(w, r, http.StatusInternalServerError, ErrCodeInternal, "Failed to delete rule")
 		return
 	}
 	w.WriteHeader(http.StatusNoContent)

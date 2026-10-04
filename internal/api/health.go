@@ -28,10 +28,16 @@ func (s *Server) handleHealthCheckAnomalies(w http.ResponseWriter, r *http.Reque
 	result, err := s.healthMonitoring.Anomalies(r.Context(), r.URL.Query().Get("endpoint"))
 	switch {
 	case errors.Is(err, monitoring.ErrUnavailable):
-		http.Error(w, "Anomaly detection service not available", http.StatusServiceUnavailable)
+		writeError(
+			w,
+			r,
+			http.StatusServiceUnavailable,
+			ErrCodeServiceUnavail,
+			"Anomaly detection service not available",
+		)
 		return
 	case err != nil:
-		http.Error(w, "Failed to read anomalies", http.StatusInternalServerError)
+		writeError(w, r, http.StatusInternalServerError, ErrCodeInternal, "Failed to read anomalies")
 		return
 	}
 

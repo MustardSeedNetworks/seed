@@ -76,7 +76,7 @@ func (s *Server) handleDeviceCredentials(w http.ResponseWriter, r *http.Request)
 	case http.MethodPost:
 		s.saveDeviceCredential(w, r, "")
 	default:
-		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		writeError(w, r, http.StatusMethodNotAllowed, ErrCodeMethodNotAllowed, "Method not allowed")
 	}
 }
 
@@ -84,7 +84,7 @@ func (s *Server) handleDeviceCredentials(w http.ResponseWriter, r *http.Request)
 func (s *Server) handleDeviceCredentialByID(w http.ResponseWriter, r *http.Request) {
 	id := strings.TrimPrefix(r.URL.Path, deviceCredentialsPathPrefix)
 	if !validCredentialID(id) {
-		http.Error(w, "Missing or invalid credential id", http.StatusBadRequest)
+		writeError(w, r, http.StatusBadRequest, ErrCodeBadRequest, "Missing or invalid credential id")
 		return
 	}
 	switch r.Method {
@@ -95,7 +95,7 @@ func (s *Server) handleDeviceCredentialByID(w http.ResponseWriter, r *http.Reque
 	case http.MethodDelete:
 		s.deleteDeviceCredential(w, r, id)
 	default:
-		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		writeError(w, r, http.StatusMethodNotAllowed, ErrCodeMethodNotAllowed, "Method not allowed")
 	}
 }
 
@@ -115,7 +115,7 @@ func (s *Server) listDeviceCredentials(w http.ResponseWriter, r *http.Request) {
 		writeCredentialError(w, r, err)
 		return
 	}
-	writeJSON(w, r, map[string]any{
+	sendJSONResponse(w, logging.FromContext(r.Context()), http.StatusOK, map[string]any{
 		jsonKeyCount:  len(list),
 		"credentials": list,
 	})
@@ -135,7 +135,7 @@ func (s *Server) getDeviceCredential(w http.ResponseWriter, r *http.Request, id 
 		writeCredentialError(w, r, err)
 		return
 	}
-	writeJSON(w, r, c)
+	sendJSONResponse(w, logging.FromContext(r.Context()), http.StatusOK, c)
 }
 
 // saveDeviceCredential handles both POST (id == "") and PUT.
@@ -151,7 +151,7 @@ func (s *Server) saveDeviceCredential(w http.ResponseWriter, r *http.Request, id
 
 	var in deviceCredentialInput
 	if err := json.NewDecoder(r.Body).Decode(&in); err != nil {
-		http.Error(w, "Invalid JSON body", http.StatusBadRequest)
+		writeError(w, r, http.StatusBadRequest, ErrCodeBadRequest, "Invalid JSON body")
 		return
 	}
 	// A blank id on POST means create; the repository generates it, so a
@@ -183,7 +183,7 @@ func (s *Server) saveDeviceCredential(w http.ResponseWriter, r *http.Request, id
 	if s.profiler != nil {
 		s.profiler.ReprofileSNMPSilent()
 	}
-	writeJSON(w, r, saved)
+	sendJSONResponse(w, logging.FromContext(r.Context()), http.StatusOK, saved)
 }
 
 func (s *Server) deleteDeviceCredential(w http.ResponseWriter, r *http.Request, id string) {
@@ -212,17 +212,17 @@ func writeCredentialError(w http.ResponseWriter, r *http.Request, err error) {
 	var ve credentials.ValidationError
 	switch {
 	case errors.As(err, &ve):
-		writeAPITokenError(w, r, http.StatusBadRequest, ErrCodeValidation, ve.Msg)
+		writeError(w, r, http.StatusBadRequest, ErrCodeValidation, ve.Msg)
 	case errors.Is(err, credentials.ErrNotFound), errors.Is(err, polling.ErrCredentialsNotFound):
-		writeAPITokenError(w, r, http.StatusNotFound, ErrCodeNotFound, "Credential not found")
+		writeError(w, r, http.StatusNotFound, ErrCodeNotFound, "Credential not found")
 	case errors.Is(err, credentials.ErrInUse):
-		writeAPITokenError(w, r, http.StatusConflict, ErrCodeConflict,
+		writeError(w, r, http.StatusConflict, ErrCodeConflict,
 			"Credential is still referenced by a polling target")
 	case errors.Is(err, credentials.ErrUnavailable):
-		writeAPITokenError(w, r, http.StatusServiceUnavailable, ErrCodeServiceUnavail,
+		writeError(w, r, http.StatusServiceUnavailable, ErrCodeServiceUnavail,
 			"Credential store unavailable")
 	default:
-		writeAPITokenError(w, r, http.StatusInternalServerError, ErrCodeInternal,
+		writeError(w, r, http.StatusInternalServerError, ErrCodeInternal,
 			"Failed to process credential")
 	}
 }

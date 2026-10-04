@@ -61,7 +61,7 @@ func (s *Server) handlePollingTargets(w http.ResponseWriter, r *http.Request) {
 	case http.MethodPost:
 		s.createPollingTarget(w, r)
 	default:
-		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		writeError(w, r, http.StatusMethodNotAllowed, ErrCodeMethodNotAllowed, "Method not allowed")
 	}
 }
 
@@ -70,7 +70,7 @@ func (s *Server) handlePollingTargets(w http.ResponseWriter, r *http.Request) {
 func (s *Server) handlePollingTargetByID(w http.ResponseWriter, r *http.Request) {
 	id := strings.TrimPrefix(r.URL.Path, pollingTargetsPathPrefix)
 	if id == "" || strings.Contains(id, "/") {
-		http.Error(w, "Missing or invalid target id", http.StatusBadRequest)
+		writeError(w, r, http.StatusBadRequest, ErrCodeBadRequest, "Missing or invalid target id")
 		return
 	}
 	switch r.Method {
@@ -81,7 +81,7 @@ func (s *Server) handlePollingTargetByID(w http.ResponseWriter, r *http.Request)
 	case http.MethodDelete:
 		s.deletePollingTarget(w, r, id)
 	default:
-		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		writeError(w, r, http.StatusMethodNotAllowed, ErrCodeMethodNotAllowed, "Method not allowed")
 	}
 }
 
@@ -98,7 +98,7 @@ func (s *Server) callerClient(w http.ResponseWriter, r *http.Request) (string, b
 			"Request carries no client claim",
 			"event", "auth.unauthorized",
 		)
-		writeAPITokenError(w, r, http.StatusUnauthorized, ErrCodeUnauthorized,
+		writeError(w, r, http.StatusUnauthorized, ErrCodeUnauthorized,
 			"Authentication required")
 		return "", false
 	}
@@ -114,10 +114,10 @@ func (s *Server) listPollingTargets(w http.ResponseWriter, r *http.Request) {
 	list, err := s.pollingTargets.ListAll(r.Context(), clientID)
 	if err != nil {
 		logger.ErrorContext(r.Context(), "list polling_targets failed", "error", err)
-		writePollingError(w, err, "Failed to list polling targets")
+		writePollingError(w, r, err, "Failed to list polling targets")
 		return
 	}
-	writeJSON(w, r, map[string]any{
+	sendJSONResponse(w, logger, http.StatusOK, map[string]any{
 		jsonKeyCount: len(list),
 		"targets":    encodePollingTargets(list),
 	})
@@ -132,10 +132,10 @@ func (s *Server) getPollingTarget(w http.ResponseWriter, r *http.Request, id str
 	target, err := s.pollingTargets.Get(r.Context(), clientID, id)
 	if err != nil {
 		logger.ErrorContext(r.Context(), "get polling_target failed", "id", id, "error", err)
-		writePollingError(w, err, "Failed to load target")
+		writePollingError(w, r, err, "Failed to load target")
 		return
 	}
-	writeJSON(w, r, encodePollingTarget(target))
+	sendJSONResponse(w, logger, http.StatusOK, encodePollingTarget(target))
 }
 
 func (s *Server) createPollingTarget(w http.ResponseWriter, r *http.Request) {
@@ -146,7 +146,7 @@ func (s *Server) createPollingTarget(w http.ResponseWriter, r *http.Request) {
 	}
 	in, err := decodePollingTargetInput(r)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		writeError(w, r, http.StatusBadRequest, ErrCodeBadRequest, err.Error())
 		return
 	}
 	if feature, unlicensed := s.unlicensedCollectorFeature(in.CollectorChain); unlicensed {
@@ -160,12 +160,12 @@ func (s *Server) createPollingTarget(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		logger.ErrorContext(r.Context(), "create polling_target failed", "error", createErr)
-		writePollingError(w, createErr, "Failed to create target")
+		writePollingError(w, r, createErr, "Failed to create target")
 		return
 	}
 	s.reloadSNMPPoller(r.Context())
 	w.Header().Set("Location", pollingTargetsPathPrefix+target.ID)
-	writeJSON(w, r, encodePollingTarget(target))
+	sendJSONResponse(w, logger, http.StatusOK, encodePollingTarget(target))
 }
 
 func (s *Server) updatePollingTarget(w http.ResponseWriter, r *http.Request, id string) {
@@ -176,7 +176,7 @@ func (s *Server) updatePollingTarget(w http.ResponseWriter, r *http.Request, id 
 	}
 	in, err := decodePollingTargetInput(r)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		writeError(w, r, http.StatusBadRequest, ErrCodeBadRequest, err.Error())
 		return
 	}
 	if feature, unlicensed := s.unlicensedCollectorFeature(in.CollectorChain); unlicensed {
@@ -186,11 +186,11 @@ func (s *Server) updatePollingTarget(w http.ResponseWriter, r *http.Request, id 
 	current, updErr := s.pollingTargets.Update(r.Context(), clientID, inputToTarget(in, id, clientID))
 	if updErr != nil {
 		logger.ErrorContext(r.Context(), "update polling_target failed", "id", id, "error", updErr)
-		writePollingError(w, updErr, "Failed to update target")
+		writePollingError(w, r, updErr, "Failed to update target")
 		return
 	}
 	s.reloadSNMPPoller(r.Context())
-	writeJSON(w, r, encodePollingTarget(current))
+	sendJSONResponse(w, logger, http.StatusOK, encodePollingTarget(current))
 }
 
 func (s *Server) deletePollingTarget(w http.ResponseWriter, r *http.Request, id string) {
@@ -201,7 +201,7 @@ func (s *Server) deletePollingTarget(w http.ResponseWriter, r *http.Request, id 
 	}
 	if err := s.pollingTargets.Delete(r.Context(), clientID, id); err != nil {
 		logger.ErrorContext(r.Context(), "delete polling_target failed", "id", id, "error", err)
-		writePollingError(w, err, "Failed to delete target")
+		writePollingError(w, r, err, "Failed to delete target")
 		return
 	}
 	s.reloadSNMPPoller(r.Context())
@@ -211,17 +211,17 @@ func (s *Server) deletePollingTarget(w http.ResponseWriter, r *http.Request, id 
 // writePollingError maps a polling-targets use-case error to its HTTP status: the
 // store unwired → 503 (the prior "Database not initialized"), a missing target →
 // 404, a repo validation error → 400 with its message, anything else → 500.
-func writePollingError(w http.ResponseWriter, err error, genericMsg string) {
+func writePollingError(w http.ResponseWriter, r *http.Request, err error, genericMsg string) {
 	var ve targets.ValidationError
 	switch {
 	case errors.Is(err, targets.ErrUnavailable):
-		http.Error(w, "Database not initialized", http.StatusServiceUnavailable)
+		writeError(w, r, http.StatusServiceUnavailable, ErrCodeServiceUnavail, "Database not initialized")
 	case errors.Is(err, targets.ErrNotFound):
-		http.Error(w, "Target not found", http.StatusNotFound)
+		writeError(w, r, http.StatusNotFound, ErrCodeNotFound, "Target not found")
 	case errors.As(err, &ve):
-		http.Error(w, ve.Msg, http.StatusBadRequest)
+		writeError(w, r, http.StatusBadRequest, ErrCodeValidation, ve.Msg)
 	default:
-		http.Error(w, genericMsg, http.StatusInternalServerError)
+		writeError(w, r, http.StatusInternalServerError, ErrCodeInternal, genericMsg)
 	}
 }
 

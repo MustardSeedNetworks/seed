@@ -78,6 +78,14 @@ func sendErrorResponseWithDetails(
 	}
 }
 
+// writeError sends ErrorResponse, the API's one error shape, using the
+// request's logger. Every 4xx/5xx in this package goes through it or
+// sendErrorResponseWithDetails; scripts/check-error-shape.sh bans the
+// plain-text writers.
+func writeError(w http.ResponseWriter, r *http.Request, status int, code, message string) {
+	sendErrorResponseWithDetails(w, logging.FromContext(r.Context()), status, code, message, "")
+}
+
 // sendJSONResponse is a helper to send JSON responses and handle encoding errors.
 // Used across all handler files (fixes #544 - shared utilities).
 func sendJSONResponse(w http.ResponseWriter, logger *slog.Logger, status int, data any) {

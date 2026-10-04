@@ -1,0 +1,6 @@
+status: 503
+body:
+{
+  "code": "SERVICE_UNAVAILABLE",
+  "error": "Anomaly detection service not available"
+}
