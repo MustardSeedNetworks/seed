@@ -52,6 +52,7 @@ func TestBuild_AllRequiredFieldsValidated(t *testing.T) {
 			"missing Targets",
 			orchestrator.Config{
 				Observations:  db.SNMPObservations(),
+				Rates:         db.Metrics(),
 				Scheduler:     sched,
 				ClientFactory: nopClientFactory,
 			},
@@ -65,10 +66,22 @@ func TestBuild_AllRequiredFieldsValidated(t *testing.T) {
 			},
 		},
 		{
+			"missing Rates",
+			orchestrator.Config{
+				Targets:       db.PollingTargets(),
+				Observations:  db.SNMPObservations(),
+				Scheduler:     sched,
+				ClientFactory: nopClientFactory,
+				Credentials:   db.DeviceCredentials(),
+				Decrypter:     nopDecrypter{},
+			},
+		},
+		{
 			"missing Scheduler",
 			orchestrator.Config{
 				Targets:       db.PollingTargets(),
 				Observations:  db.SNMPObservations(),
+				Rates:         db.Metrics(),
 				ClientFactory: nopClientFactory,
 			},
 		},
@@ -77,6 +90,7 @@ func TestBuild_AllRequiredFieldsValidated(t *testing.T) {
 			orchestrator.Config{
 				Targets:      db.PollingTargets(),
 				Observations: db.SNMPObservations(),
+				Rates:        db.Metrics(),
 				Scheduler:    sched,
 			},
 		},
@@ -87,6 +101,7 @@ func TestBuild_AllRequiredFieldsValidated(t *testing.T) {
 			orchestrator.Config{
 				Targets:       db.PollingTargets(),
 				Observations:  db.SNMPObservations(),
+				Rates:         db.Metrics(),
 				Scheduler:     sched,
 				ClientFactory: nopClientFactory,
 				Decrypter:     nopDecrypter{},
@@ -97,6 +112,7 @@ func TestBuild_AllRequiredFieldsValidated(t *testing.T) {
 			orchestrator.Config{
 				Targets:       db.PollingTargets(),
 				Observations:  db.SNMPObservations(),
+				Rates:         db.Metrics(),
 				Scheduler:     sched,
 				ClientFactory: nopClientFactory,
 				Credentials:   db.DeviceCredentials(),
@@ -121,6 +137,7 @@ func TestBuild_ReturnsPollerWithEngineName(t *testing.T) {
 	poller, err := orchestrator.Build(orchestrator.Config{
 		Targets:       db.PollingTargets(),
 		Observations:  db.SNMPObservations(),
+		Rates:         db.Metrics(),
 		Scheduler:     sched,
 		ClientFactory: nopClientFactory,
 		Logger:        silentLogger(),
@@ -144,6 +161,7 @@ func TestBuild_PollerStartLoadsZeroTargetsCleanly(t *testing.T) {
 	poller, err := orchestrator.Build(orchestrator.Config{
 		Targets:       db.PollingTargets(),
 		Observations:  db.SNMPObservations(),
+		Rates:         db.Metrics(),
 		Scheduler:     sched,
 		ClientFactory: nopClientFactory,
 		Logger:        silentLogger(),
@@ -188,6 +206,7 @@ func TestBuild_RegistersAllTenCollectorChainKinds(t *testing.T) {
 	poller, err := orchestrator.Build(orchestrator.Config{
 		Targets:       db.PollingTargets(),
 		Observations:  db.SNMPObservations(),
+		Rates:         db.Metrics(),
 		Scheduler:     sched,
 		ClientFactory: nopClientFactory,
 		Logger:        silentLogger(),

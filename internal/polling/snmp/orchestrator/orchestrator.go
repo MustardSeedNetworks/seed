@@ -5,7 +5,8 @@
 //
 // Build returns a configured [*snmp.Poller] with every default
 // collector registered against a single [sink.Sink] persisting into
-// snmp_observations. The orchestrator does not own the SNMP client
+// snmp_observations; if_table counters are also rated into the
+// metrics time series. The orchestrator does not own the SNMP client
 // factory — callers inject one ([snmp.ClientFactory]) so production
 // can plug in a real gosnmp dialer while tests pass a fake.
 package orchestrator
@@ -29,6 +30,7 @@ import (
 	"github.com/MustardSeedNetworks/seed/internal/polling/snmp/collectors/sysinfo"
 	"github.com/MustardSeedNetworks/seed/internal/polling/snmp/sink"
 	"github.com/MustardSeedNetworks/seed/internal/scheduler"
+	"github.com/MustardSeedNetworks/seed/internal/timeseries/ifrate"
 )
 
 // Config holds the dependencies the orchestrator needs to build a
@@ -37,6 +39,7 @@ import (
 type Config struct {
 	Targets       snmp.PollerStorage
 	Observations  sink.ObservationsStore
+	Rates         ifrate.Store
 	Scheduler     *scheduler.Scheduler
 	ClientFactory snmp.ClientFactory
 	Logger        *slog.Logger
@@ -62,6 +65,9 @@ func Build(cfg Config) (*snmp.Poller, error) {
 	if cfg.Observations == nil {
 		return nil, errors.New("orchestrator: Observations required")
 	}
+	if cfg.Rates == nil {
+		return nil, errors.New("orchestrator: Rates required")
+	}
 	if cfg.Scheduler == nil {
 		return nil, errors.New("orchestrator: Scheduler required")
 	}
@@ -84,7 +90,11 @@ func Build(cfg Config) (*snmp.Poller, error) {
 		now = func() time.Time { return time.Now().UTC() }
 	}
 
-	persistSink := sink.New(cfg.Observations, logger, now)
+	persistSink := ratingSink{
+		Sink:  sink.New(cfg.Observations, logger, now),
+		rater: ifrate.NewRater(),
+		rates: cfg.Rates,
+	}
 	poller := snmp.NewPoller(cfg.Targets, cfg.Scheduler, logger)
 
 	resolver, err := snmp.NewCredentialResolver(cfg.Credentials, cfg.Decrypter)

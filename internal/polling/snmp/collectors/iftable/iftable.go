@@ -30,15 +30,28 @@ const (
 	colIfPhysAddress = "6"
 	colIfAdminStatus = "7"
 	colIfOperStatus  = "8"
+	colIfInOctets    = "10"
+	colIfInDiscards  = "13"
+	colIfInErrors    = "14"
+	colIfOutOctets   = "16"
+	colIfOutDiscards = "19"
+	colIfOutErrors   = "20"
 )
 
 // Column OIDs under ifXTable (1.3.6.1.2.1.31.1.1.1.*).
 const (
-	ifXTablePrefix = "1.3.6.1.2.1.31.1.1.1"
-	colIfName      = "1"
-	colIfHighSpeed = "15"
-	colIfAlias     = "18"
+	ifXTablePrefix                = "1.3.6.1.2.1.31.1.1.1"
+	colIfName                     = "1"
+	colIfHCInOctets               = "6"
+	colIfHCOutOctets              = "10"
+	colIfHighSpeed                = "15"
+	colIfAlias                    = "18"
+	colIfCounterDiscontinuityTime = "19"
 )
+
+// oidSysUpTime is read with the tables so counter deltas can tell an agent
+// restart from a counter wrap (RFC 2863 §3.1.6).
+const oidSysUpTime = "1.3.6.1.2.1.1.3.0"
 
 // AdminStatus / OperStatus values from RFC 2233 — exported because
 // downstream listeners decode them by name in alert messages.
@@ -56,26 +69,52 @@ const (
 // ifHighSpeed*1e6 when available (multi-gigabit links); falls back
 // to ifSpeed (32-bit bps) for older agents.
 type Row struct {
-	IfIndex     uint32
-	IfDescr     string
-	IfName      string
-	IfAlias     string
-	IfType      uint32
-	IfAdmin     int
-	IfOper      int
-	IfPhysAddr  string
-	SpeedBps    uint64
-	rawIfSpeed  uint32
-	rawHighMbps uint32
+	IfIndex    uint32
+	IfDescr    string
+	IfName     string
+	IfAlias    string
+	IfType     uint32
+	IfAdmin    int
+	IfOper     int
+	IfPhysAddr string
+	SpeedBps   uint64
+	Counters   Counters
+
+	rawIfSpeed    uint32
+	rawHighMbps   uint32
+	rawInOctets   uint64
+	rawOutOctets  uint64
+	rawHCIn       uint64
+	rawHCOut      uint64
+	hasHCInOctet  bool
+	hasHCOutOctet bool
+}
+
+// Counters are the row's raw cumulative counters. Octets come from the
+// 64-bit ifHC columns when the agent serves both, otherwise from the 32-bit
+// ifTable columns, and HCOctets records which: the two wrap at different
+// widths. Discontinuity is ifCounterDiscontinuityTime, which an agent bumps
+// when the counters restart without a reboot (a "clear counters").
+type Counters struct {
+	InOctets      uint64
+	OutOctets     uint64
+	HCOctets      bool
+	InErrors      uint64
+	OutErrors     uint64
+	InDiscards    uint64
+	OutDiscards   uint64
+	Discontinuity uint32
 }
 
 // Observation is the per-target ifTable snapshot. Rows is sorted by
 // ascending IfIndex so downstream comparisons (alerting on
-// new/missing interfaces) are deterministic.
+// new/missing interfaces) are deterministic. SysUpTime is nil when the
+// agent did not serve sysUpTime.0, and the counters then cannot be rated.
 type Observation struct {
 	ClientID   string
 	TargetID   string
 	ObservedAt time.Time
+	SysUpTime  *uint32
 	Rows       []Row
 }
 
@@ -125,6 +164,11 @@ func (c *Collector) Collect(
 
 	observedAt := c.now()
 
+	upTime, err := client.Get(ctx, []string{oidSysUpTime})
+	if err != nil {
+		return fmt.Errorf("iftable: get sysUpTime: %w", err)
+	}
+
 	ifVarbinds, err := client.Walk(ctx, ifTablePrefix)
 	if err != nil {
 		return fmt.Errorf("iftable: walk ifTable: %w", err)
@@ -140,6 +184,7 @@ func (c *Collector) Collect(
 		ClientID:   target.ClientID,
 		TargetID:   target.ID,
 		ObservedAt: observedAt,
+		SysUpTime:  sysUpTime(upTime),
 		Rows:       rows,
 	}); pubErr != nil {
 		return fmt.Errorf("iftable: publish: %w", pubErr)
@@ -173,6 +218,12 @@ func mergeRows(ifVarbinds, ifXVarbinds []snmp.Varbind) []Row {
 	out := make([]Row, 0, len(byIndex))
 	for _, row := range byIndex {
 		row.SpeedBps = pickSpeedBps(row.rawHighMbps, row.rawIfSpeed)
+		row.Counters.HCOctets = row.hasHCInOctet && row.hasHCOutOctet
+		if row.Counters.HCOctets {
+			row.Counters.InOctets, row.Counters.OutOctets = row.rawHCIn, row.rawHCOut
+		} else {
+			row.Counters.InOctets, row.Counters.OutOctets = row.rawInOctets, row.rawOutOctets
+		}
 		out = append(out, *row)
 	}
 	sortByIfIndex(out)
@@ -226,6 +277,18 @@ func applyIfTableColumn(row *Row, col string, v any) {
 		row.IfAdmin = intValue(v)
 	case colIfOperStatus:
 		row.IfOper = intValue(v)
+	case colIfInOctets:
+		row.rawInOctets = uint64Value(v)
+	case colIfInDiscards:
+		row.Counters.InDiscards = uint64Value(v)
+	case colIfInErrors:
+		row.Counters.InErrors = uint64Value(v)
+	case colIfOutOctets:
+		row.rawOutOctets = uint64Value(v)
+	case colIfOutDiscards:
+		row.Counters.OutDiscards = uint64Value(v)
+	case colIfOutErrors:
+		row.Counters.OutErrors = uint64Value(v)
 	}
 }
 
@@ -238,6 +301,12 @@ func applyIfXTableColumn(row *Row, col string, v any) {
 		row.rawHighMbps = uint32Value(v)
 	case colIfAlias:
 		row.IfAlias = stringValue(v)
+	case colIfHCInOctets:
+		row.rawHCIn, row.hasHCInOctet = uint64Value(v), v != nil
+	case colIfHCOutOctets:
+		row.rawHCOut, row.hasHCOutOctet = uint64Value(v), v != nil
+	case colIfCounterDiscontinuityTime:
+		row.Counters.Discontinuity = uint32Value(v)
 	}
 }
 
@@ -356,6 +425,36 @@ func uint32Value(v any) uint32 {
 			return uint32(maxUint32)
 		}
 		return uint32(t)
+	default:
+		return 0
+	}
+}
+
+// sysUpTime returns the TimeTicks value of a sysUpTime.0 Get, or nil when
+// the agent did not serve it.
+func sysUpTime(vbs []snmp.Varbind) *uint32 {
+	if len(vbs) != 1 || vbs[0].Value == nil {
+		return nil
+	}
+	ticks := uint32Value(vbs[0].Value)
+	return &ticks
+}
+
+// uint64Value decodes a Counter32 or Counter64. Negative values clamp to 0.
+func uint64Value(v any) uint64 {
+	switch t := v.(type) {
+	case uint64:
+		return t
+	case uint:
+		return uint64(t)
+	case uint32:
+		return uint64(t)
+	case int:
+		return uint64(max(t, 0))
+	case int32:
+		return uint64(max(t, 0))
+	case int64:
+		return uint64(max(t, 0))
 	default:
 		return 0
 	}
