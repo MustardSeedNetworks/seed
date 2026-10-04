@@ -8,7 +8,7 @@
  * Issue #803: UI detect/warn missing network capabilities
  */
 
-import { useCallback, useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { LogComponents, logger } from '../lib/logger';
 
 const API_BASE = '';
@@ -41,6 +41,25 @@ interface UseCapabilitiesResult {
   refresh: () => Promise<void>;
 }
 
+async function readCapabilities(): Promise<Capabilities | null> {
+  const response = await fetch(`${API_BASE}/api/v1/status`, {
+    credentials: 'include',
+  });
+
+  if (!response.ok) {
+    if (response.status === 401) {
+      // Not authenticated yet, this is expected during login
+      return null;
+    }
+    throw new Error(`HTTP ${response.status}`);
+  }
+
+  const data: { icmpAvailable?: boolean } = await (response.json() as Promise<{
+    icmpAvailable?: boolean;
+  }>);
+  return { icmpAvailable: data.icmpAvailable === true };
+}
+
 /**
  * Hook to fetch and track system capabilities.
  * Capabilities are fetched once on mount and can be refreshed manually.
@@ -50,36 +69,21 @@ export function useCapabilities(): UseCapabilitiesResult {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const fetchCapabilities = useCallback(async () => {
-    try {
-      const response = await fetch(`${API_BASE}/api/v1/status`, {
-        credentials: 'include',
-      });
-
-      if (!response.ok) {
-        if (response.status === 401) {
-          // Not authenticated yet, this is expected during login
-          return;
+  const fetchCapabilities = async (): Promise<void> => {
+    await readCapabilities()
+      .then((loaded) => {
+        // null is the 401 before sign-in: expected, not an error.
+        if (loaded) {
+          setCapabilities(loaded);
+          setError(null);
         }
-        throw new Error(`HTTP ${response.status}`);
-      }
-
-      const data: { icmpAvailable?: boolean } = await (response.json() as Promise<{
-        icmpAvailable?: boolean;
-      }>);
-
-      setCapabilities({
-        icmpAvailable: data.icmpAvailable === true,
+      })
+      .catch((err: unknown) => {
+        logger.error(LogComponents.SYSTEM, 'Failed to fetch capabilities', err);
+        setError(err instanceof Error ? err.message : 'Failed to fetch capabilities');
       });
-      setError(null);
-    } catch (err) {
-      const message = err instanceof Error ? err.message : 'Failed to fetch capabilities';
-      logger.error(LogComponents.SYSTEM, 'Failed to fetch capabilities', err);
-      setError(message);
-    } finally {
-      setLoading(false);
-    }
-  }, []);
+    setLoading(false);
+  };
 
   useEffect(() => {
     fetchCapabilities().catch(() => undefined);

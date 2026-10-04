@@ -12,7 +12,7 @@
  * this replaces leave the #2389 baseline.
  */
 
-import { useCallback, useEffect, useRef } from 'react';
+import { useEffect, useRef } from 'react';
 import { api } from '../api';
 import { useRole } from '../contexts/RoleContext';
 import { LogComponents, logger } from '../lib/logger';
@@ -45,17 +45,15 @@ export function useIperfServerSync({
   const { canWrite } = useRole();
   const initialSyncDone = useRef(false);
 
-  const manageServer = useCallback(
-    async (shouldRun: boolean, port: number): Promise<void> => {
-      try {
-        await api.post(SERVER_PATH, { action: shouldRun ? 'start' : 'stop', port });
-        onStatus(await api.get<IperfServerStatus>(STATUS_PATH));
-      } catch (err) {
+  const manageServer = async (shouldRun: boolean, port: number): Promise<void> => {
+    await api
+      .post(SERVER_PATH, { action: shouldRun ? 'start' : 'stop', port })
+      .then(() => api.get<IperfServerStatus>(STATUS_PATH))
+      .then(onStatus)
+      .catch((err: unknown) => {
         logger.error(LogComponents.IPERF, 'Failed to manage iperf server', err);
-      }
-    },
-    [onStatus],
-  );
+      });
+  };
 
   useEffect(() => {
     if (!installed || !canWrite) {
