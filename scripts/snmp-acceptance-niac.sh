@@ -22,7 +22,11 @@
 # that disagrees with the manifest's expectedObservations, or on any collector
 # that errors against an agent; then it runs seed's topology reconcilers over
 # what the collectors stored and fails on any link between two agents that
-# the pack does not author, or that it authors and seed does not draw.
+# the pack does not author, or that it authors and seed does not draw. Last,
+# NIAC takes one interface down (a behaviour timeline added to the pack, due
+# a minute after that poll should be done), every agent's interface table is
+# polled again, and seed's alert pipeline must raise exactly one alert: that
+# interface going down.
 set -eu
 
 repo_dir=$(CDPATH='' cd -- "$(dirname -- "$0")/.." && pwd)
@@ -164,10 +168,11 @@ import yaml
 
 run_dir, pack = sys.argv[1:]
 generated = json.load(open(f"{run_dir}/{pack}.generated.json", encoding="utf-8"))
-open(f"{run_dir}/{pack}.yaml", "w", encoding="utf-8").write(generated["content"])
 json.dump(generated["manifest"], open(f"{run_dir}/{pack}.manifest.json", "w", encoding="utf-8"))
 
 scenario = yaml.safe_load(generated["content"])
+if "behavior_timelines" in scenario:
+    sys.exit("the pack authors behaviour timelines; the fault this run adds would join them")
 devices = {d["name"]: d for d in scenario.get("devices") or []}
 attachments = scenario.get("attachments") or []
 if len(attachments) != 1:
@@ -230,9 +235,43 @@ agent_links = sorted({
 poller = next(a for a in reversed(list(access.hosts())) if a not in used)
 settle = generated["manifest"].get("timing", {}).get("neighborsStableAfterSeconds", 0)
 
-json.dump({"pack": pack, "agents": agents, "links": agent_links}, open(f"{run_dir}/{pack}.targets.json", "w", encoding="utf-8"))
+# The fault: the first interface that is up on a device seed polls, with an
+# address on a subnet that holds no polled address. Losing it cuts the poller
+# off from no agent, which the test's second poll of every agent confirms. In
+# a routed pack NIAC can fault only addressed interfaces (niac-go#2482). It is
+# due a minute after the neighbours settle; the poll before it takes about
+# fifteen seconds.
+polled = {ipaddress.ip_address(agent["address"]) for agent in agents}
+fault = next((
+    {"device": device["name"], "interface": interface["name"]}
+    for device in scenario.get("devices") or []
+    if device.get("snmp_agent") and device.get("ips")
+    for interface in device.get("interfaces") or []
+    if interface.get("address")
+    and not any(a in ipaddress.ip_interface(interface["address"]).network for a in polled)
+    and interface.get("admin_status", "up") == "up"
+    and interface.get("oper_status", "up") == "up"
+), None)
+if fault is None:
+    sys.exit("no polled device has an up interface off every polled subnet to take down")
+fault_offset = settle + 60
+timeline = {"behavior_timelines": [{
+    "name": "seed-alert-consumer",
+    "start_offset_ms": fault_offset * 1000,
+    "repeat_count": 1,
+    "phases": [{
+        "name": "link-down",
+        "duration_ms": 600000,
+        "faults": [{**fault, "type": "link_down", "value": 1}],
+    }],
+}]}
+with open(f"{run_dir}/{pack}.yaml", "w", encoding="utf-8") as config:
+    config.write(generated["content"].rstrip("\n") + "\n")
+    config.write(yaml.safe_dump(timeline, sort_keys=False))
+
+json.dump({"pack": pack, "agents": agents, "links": agent_links, "fault": fault}, open(f"{run_dir}/{pack}.targets.json", "w", encoding="utf-8"))
 with open(f"{run_dir}/{pack}.wiring", "w", encoding="utf-8") as wiring:
-    for value in (attachment["name"], vlan, f"{poller}/{access.prefixlen}", gateway, settle):
+    for value in (attachment["name"], vlan, f"{poller}/{access.prefixlen}", gateway, settle, fault_offset):
         wiring.write(f"{value}\n")
 EOF
   {
@@ -241,6 +280,7 @@ EOF
     read -r poller_cidr
     read -r gateway
     read -r settle
+    read -r fault_offset
   } <"$run_dir/$pack.wiring"
 
   sudo ip netns add "$niac_ns"
@@ -267,6 +307,9 @@ EOF
     fi
     sleep 0.5
   done
+  # The timeline's clock started before NIAC logged the start, so this is no
+  # earlier than the fault.
+  fault_at=$(($(date +%s) + fault_offset))
   # Neighbour tables are complete only once every advertiser has sent at
   # least once; the manifest says how long that takes for this pack.
   sleep "$settle"
@@ -279,6 +322,7 @@ EOF
     SEED_NIAC_TARGETS="$run_dir/$pack.targets.json" \
     SEED_NIAC_MANIFEST="$run_dir/$pack.manifest.json" \
     SEED_NIAC_POLLER_MAC="$poller_mac" \
+    SEED_NIAC_FAULT_AT="$fault_at" \
     "$run_dir/acceptance.test" -test.run '^TestNIACPack$' -test.v -test.count=1 \
     >"$run_dir/$pack.acceptance.log" 2>&1; then
     result=PASS
@@ -286,7 +330,7 @@ EOF
     result=FAIL
     failed="$failed $pack"
   fi
-  grep -E 'found|findings|manifest promises|collect failed|topology' "$run_dir/$pack.acceptance.log" | sed 's/^ *//' || true
+  grep -E 'found|findings|manifest promises|collect failed|topology|alerts' "$run_dir/$pack.acceptance.log" | sed 's/^ *//' || true
   printf '%s: %s\n' "$pack" "$result"
   stop_pack
 done

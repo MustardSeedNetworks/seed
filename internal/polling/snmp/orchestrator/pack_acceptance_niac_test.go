@@ -14,10 +14,13 @@ import (
 	"maps"
 	"os"
 	"slices"
+	"strconv"
 	"sync"
 	"testing"
 	"time"
 
+	"github.com/MustardSeedNetworks/seed/internal/alerts"
+	"github.com/MustardSeedNetworks/seed/internal/alerts/pipeline"
 	"github.com/MustardSeedNetworks/seed/internal/database"
 	"github.com/MustardSeedNetworks/seed/internal/database/dbtest"
 	"github.com/MustardSeedNetworks/seed/internal/polling/snmp"
@@ -36,13 +39,20 @@ const packPollers = 16
 // still ends a run against a pack that has stopped answering.
 const packCollectTimeout = time.Minute
 
+// faultGrace is how long after its due time the fault is read. The harness
+// dates the fault from when it saw NIAC report the simulation started, which
+// is after the timeline's clock began, so this covers only timer latency.
+const faultGrace = 2 * time.Second
+
 // packTargets is what scripts/snmp-acceptance-niac.sh reads out of a
 // generated pack: every device that runs an SNMP agent, at its first address,
-// and every pair of those agents the pack links.
+// every pair of those agents the pack links, and the interface it has NIAC
+// take down.
 type packTargets struct {
 	Pack   string      `json:"pack"`
 	Agents []packAgent `json:"agents"`
 	Links  []packLink  `json:"links"`
+	Fault  packFault   `json:"fault"`
 }
 
 type packAgent struct {
@@ -79,35 +89,13 @@ func readJSON(path string, into any) error {
 // TestNIACPack is the acceptance against a running NIAC pack: seed's ten
 // collectors, over the wire, against every SNMP agent, compared with the
 // pack's manifest (seed plan S4-2); then seed's topology reconcilers over what
-// they stored, compared with the links the pack authors (niac plan P3-2).
+// they stored, compared with the links the pack authors; then seed's alert
+// pipeline across a fault NIAC injects after that poll (niac plan P3-2).
 // scripts/snmp-acceptance-niac.sh starts the pack and runs this with
-// SEED_NIAC_TARGETS and SEED_NIAC_MANIFEST set.
+// SEED_NIAC_TARGETS, SEED_NIAC_MANIFEST, SEED_NIAC_POLLER_MAC and
+// SEED_NIAC_FAULT_AT set.
 func TestNIACPack(t *testing.T) {
-	targetsPath, manifestPath := os.Getenv("SEED_NIAC_TARGETS"), os.Getenv("SEED_NIAC_MANIFEST")
-	poller := os.Getenv("SEED_NIAC_POLLER_MAC")
-	if targetsPath == "" || manifestPath == "" || poller == "" {
-		t.Fatal("SEED_NIAC_TARGETS, SEED_NIAC_MANIFEST and SEED_NIAC_POLLER_MAC are unset; " +
-			"run scripts/snmp-acceptance-niac.sh")
-	}
-	var targets packTargets
-	if err := readJSON(targetsPath, &targets); err != nil {
-		t.Fatalf("read targets: %v", err)
-	}
-	var manifest packManifest
-	if err := readJSON(manifestPath, &manifest); err != nil {
-		t.Fatalf("read manifest: %v", err)
-	}
-	if manifest.SchemaVersion < manifestSchemaVersion || len(manifest.Expected) == 0 {
-		t.Fatalf("manifest schema %d promises no observations; this run would assert nothing",
-			manifest.SchemaVersion)
-	}
-	if len(targets.Agents) == 0 {
-		t.Fatal("the pack has no SNMP agents; this run would assert nothing")
-	}
-	if len(targets.Links) == 0 {
-		t.Fatal("the pack links none of its SNMP agents; the topology check would assert nothing")
-	}
-
+	targets, manifest, poller, due := packInputs(t)
 	db := dbtest.Open(t)
 	store := sink.New(db.SNMPObservations(), slog.New(slog.DiscardHandler), nil)
 	results := pollPack(t.Context(), targets.Agents, poller, store)
@@ -146,6 +134,92 @@ func TestNIACPack(t *testing.T) {
 		t.Logf("%s: topology found %d links, want %d, %d findings",
 			targets.Pack, len(drawn), len(targets.Links), len(findings))
 	})
+
+	t.Run("alerts", func(t *testing.T) {
+		checkAlerts(t, db, store, targets, manifest, poller, due)
+	})
+}
+
+// packInputs reads what scripts/snmp-acceptance-niac.sh hands the test, and
+// stops it when any part would leave a check asserting nothing.
+func packInputs(t *testing.T) (packTargets, packManifest, string, time.Time) {
+	t.Helper()
+	targetsPath, manifestPath := os.Getenv("SEED_NIAC_TARGETS"), os.Getenv("SEED_NIAC_MANIFEST")
+	poller := os.Getenv("SEED_NIAC_POLLER_MAC")
+	faultAt, faultAtErr := strconv.ParseInt(os.Getenv("SEED_NIAC_FAULT_AT"), 10, 64)
+	if targetsPath == "" || manifestPath == "" || poller == "" || faultAtErr != nil {
+		t.Fatal("SEED_NIAC_TARGETS, SEED_NIAC_MANIFEST, SEED_NIAC_POLLER_MAC or SEED_NIAC_FAULT_AT is unset; " +
+			"run scripts/snmp-acceptance-niac.sh")
+	}
+	var targets packTargets
+	if err := readJSON(targetsPath, &targets); err != nil {
+		t.Fatalf("read targets: %v", err)
+	}
+	var manifest packManifest
+	if err := readJSON(manifestPath, &manifest); err != nil {
+		t.Fatalf("read manifest: %v", err)
+	}
+	if manifest.SchemaVersion < manifestSchemaVersion || len(manifest.Expected) == 0 {
+		t.Fatalf("manifest schema %d promises no observations; this run would assert nothing",
+			manifest.SchemaVersion)
+	}
+	if len(targets.Agents) == 0 {
+		t.Fatal("the pack has no SNMP agents; this run would assert nothing")
+	}
+	if len(targets.Links) == 0 {
+		t.Fatal("the pack links none of its SNMP agents; the topology check would assert nothing")
+	}
+	if targets.Fault.Device == "" || targets.Fault.Interface == "" {
+		t.Fatal("the harness names no fault; the alert check would assert nothing")
+	}
+	return targets, manifest, poller, time.Unix(faultAt, 0)
+}
+
+// checkAlerts runs seed's observation alert pipeline over the poll above, then
+// again after the fault NIAC injects at due, and compares what it raised with
+// that fault.
+func checkAlerts(
+	t *testing.T, db *database.DB, store orchestrator.Publisher,
+	targets packTargets, manifest packManifest, poller string, due time.Time,
+) {
+	t.Helper()
+	watcher, err := pipeline.NewObservationPipeline(pipeline.ObservationConfig{
+		Observations: db.SNMPObservations(), Alerts: db.Alerts(), Settings: db.Settings(),
+		Logger: slog.New(slog.DiscardHandler),
+	})
+	if err != nil {
+		t.Fatalf("observation pipeline: %v", err)
+	}
+	// The first pass learns every interface's state from the poll above;
+	// the second sees the fault, which is due once the first is done.
+	if scanErr := watcher.ScanOnce(t.Context()); scanErr != nil {
+		t.Fatalf("baseline scan: %v", scanErr)
+	}
+	if !time.Now().Before(due) {
+		t.Fatalf("the baseline ended %s after the fault was due; start the fault later",
+			time.Since(due).Round(time.Second))
+	}
+	time.Sleep(time.Until(due.Add(faultGrace)))
+
+	// Every agent again, not just the faulted one: an interface the fault
+	// did not touch going down is as much a finding as the faulted one
+	// staying up, and an agent the fault cut off fails its collect.
+	ifTable := map[string]packObservation{"if_table": manifest.Expected["if_table"]}
+	findings := packFindings(ifTable, tallyResults(
+		pollPack(t.Context(), targets.Agents, poller, store, "if_table")))
+	if scanErr := watcher.ScanOnce(t.Context()); scanErr != nil {
+		t.Fatalf("fault scan: %v", scanErr)
+	}
+	raised, err := db.Alerts().List(t.Context(), alerts.ListOptions{})
+	if err != nil {
+		t.Fatalf("list alerts: %v", err)
+	}
+	findings = append(findings, alertFindings(targets.Fault, raised)...)
+	for _, finding := range findings {
+		t.Errorf("%s: %s", targets.Pack, finding)
+	}
+	t.Logf("%s: alerts with %s %s down: %d raised, %d findings",
+		targets.Pack, targets.Fault.Device, targets.Fault.Interface, len(raised), len(findings))
 }
 
 // reconcileTopology runs the topology reconcilers once each, in the order the
@@ -230,9 +304,12 @@ func drawnLinks(ctx context.Context, db *database.DB, agents []packAgent) ([]pac
 	return drawn, findings
 }
 
-// pollPack runs every collector against every agent with the production
-// client factory, handing every observation on to store.
-func pollPack(ctx context.Context, agents []packAgent, poller string, store orchestrator.Publisher) []packResult {
+// pollPack runs the named collectors, or every collector when none is named,
+// against every agent with the production client factory, handing every
+// observation on to store.
+func pollPack(
+	ctx context.Context, agents []packAgent, poller string, store orchestrator.Publisher, only ...string,
+) []packResult {
 	factory := snmpclient.NewFactory(snmpclient.Options{})
 	queue := make(chan packAgent)
 	var (
@@ -244,6 +321,11 @@ func pollPack(ctx context.Context, agents []packAgent, poller string, store orch
 		wg.Go(func() {
 			recorder := &rowRecorder{poller: poller, next: store}
 			collectors := orchestrator.Collectors(factory, recorder, nil)
+			if len(only) > 0 {
+				collectors = slices.DeleteFunc(collectors, func(c snmp.Collector) bool {
+					return !slices.Contains(only, c.Name())
+				})
+			}
 			for agent := range queue {
 				target := snmp.Target{
 					ID: agent.Name, ClientID: database.DefaultClientID, Name: agent.Name,

@@ -7,6 +7,7 @@ import (
 	"slices"
 	"strings"
 
+	"github.com/MustardSeedNetworks/seed/internal/alerts"
 	"github.com/MustardSeedNetworks/seed/internal/polling/snmp/collectors/arp"
 	"github.com/MustardSeedNetworks/seed/internal/polling/snmp/collectors/bgp4"
 	"github.com/MustardSeedNetworks/seed/internal/polling/snmp/collectors/cdp"
@@ -22,7 +23,8 @@ import (
 // The NIAC pack acceptance (seed plan S4-2, niac plan P3-2) runs every
 // collector against every SNMP agent of a NIAC scenario pack and compares what
 // they found with the pack's manifest, then what seed's topology drew from it
-// with the pack's links. The live half needs a running pack and lives in
+// with the pack's links, then what seed's alert pipeline raised once NIAC took
+// one interface down. The live half needs a running pack and lives in
 // pack_acceptance_niac_test.go; this file holds the parts that decide
 // the verdict, so they are tested without one.
 
@@ -225,4 +227,41 @@ func topologyFindings(authored, drawn []packLink) []string {
 
 func comparePackLinks(a, b packLink) int {
 	return strings.Compare(a.String(), b.String())
+}
+
+// packFault is the interface the harness has NIAC take down once the baseline
+// poll is over: a link_down fault in a behaviour timeline of the pack.
+type packFault struct {
+	Device    string `json:"device"`
+	Interface string `json:"interface"`
+}
+
+// ifaceDownRule is the observation pipeline's rule for an interface that was
+// up and no longer is (internal/alerts/pipeline evaluateIfTable).
+const ifaceDownRule = "iface.down"
+
+// alertFindings compares what seed's alert pipeline raised with the one fault
+// NIAC injected. The interface going down must raise exactly one alert, and
+// nothing else in the pack changed, so any other alert is invented.
+func alertFindings(fault packFault, raised []*alerts.Alert) []string {
+	var findings []string
+	matched := 0
+	for _, alert := range raised {
+		if alert.Rule == ifaceDownRule && alert.Source == fault.Device &&
+			strings.Contains(alert.Title, " "+fault.Interface+" ") {
+			matched++
+			continue
+		}
+		findings = append(findings, fmt.Sprintf("alerts: %s on %s (%q), which the fault does not explain",
+			alert.Rule, alert.Source, alert.Title))
+	}
+	switch {
+	case matched == 0:
+		findings = append(findings, fmt.Sprintf("alerts: no %s for %s %s, which NIAC took down",
+			ifaceDownRule, fault.Device, fault.Interface))
+	case matched > 1:
+		findings = append(findings, fmt.Sprintf("alerts: %d %s alerts for %s %s, want one",
+			matched, ifaceDownRule, fault.Device, fault.Interface))
+	}
+	return findings
 }
