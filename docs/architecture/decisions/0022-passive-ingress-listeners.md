@@ -184,6 +184,14 @@ rollups. Top talkers and top conversations
 for a window the raw horizon covers and a rollup table past it, by the same
 window resolution as the history series.
 
+Each flow is stored with the application its protocol and ports suggest
+(P-C4, `internal/appid`), named against an operator-editable signature table
+when the flow arrives. The name is stored rather than derived on read so the
+hourly and daily `flow_applications_*` rollups can carry it past the raw
+horizon. The cost is that an edit to the table names later flows only.
+`/api/v1/flows/top-applications` reads them, and
+[FLOW_APPLICATIONS.md](../../FLOW_APPLICATIONS.md) documents the table.
+
 Options records carry exporter metadata, not flows. The collector reads one
 value from them: `systemInitTimeMilliseconds`. softflowd, nProbe and several
 Cisco images send IPFIX flow times relative to exporter uptime and send the

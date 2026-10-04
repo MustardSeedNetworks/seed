@@ -36,9 +36,11 @@ type FlowConversationsResponse struct {
 	Conversations []database.FlowConversation `json:"conversations"`
 }
 
-// flowRoutes registers the top-N reads. Reads only, so no role gate, and no
-// feature gate: the collector that fills flow_records is Pro, so below Pro
-// these answer with empty lists, over the window the tier retains.
+// flowRoutes registers the top-N reads and the application signature table.
+// The reads have no role gate and no feature gate: the collector that fills
+// flow_records is Pro, so below Pro they answer with empty lists, over the
+// window the tier retains. Editing the signature table is a persistent
+// write, so it is operator-gated.
 func (s *Server) flowRoutes() []route {
 	get := []string{http.MethodGet}
 	return []route{
@@ -51,6 +53,18 @@ func (s *Server) flowRoutes() []route {
 			path:    APIVersionPrefix + "/flows/top-conversations",
 			handler: s.handleFlowTopConversations,
 			methods: get,
+		},
+		{
+			path:    APIVersionPrefix + "/flows/top-applications",
+			handler: s.handleFlowTopApplications,
+			methods: get,
+		},
+		{
+			path:         APIVersionPrefix + "/flows/application-signatures",
+			handler:      s.handleAppSignatures,
+			methods:      []string{http.MethodGet, http.MethodPut, http.MethodDelete},
+			minRole:      database.RoleOperator,
+			maxBodyBytes: MaxBodySizeConfig,
 		},
 	}
 }

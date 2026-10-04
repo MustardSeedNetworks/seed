@@ -255,6 +255,12 @@ CREATE INDEX idx_discovery_history_client ON discovery_history(client_id);
 -- index: idx_discovery_interfaces_client
 CREATE INDEX idx_discovery_interfaces_client ON discovery_interfaces(client_id);
 
+-- index: idx_flow_applications_daily_bucket
+CREATE INDEX idx_flow_applications_daily_bucket ON flow_applications_daily(day_bucket);
+
+-- index: idx_flow_applications_hourly_bucket
+CREATE INDEX idx_flow_applications_hourly_bucket ON flow_applications_hourly(hour_bucket);
+
 -- index: idx_flow_conversations_daily_bucket
 CREATE INDEX idx_flow_conversations_daily_bucket ON flow_conversations_daily(day_bucket);
 
@@ -1056,6 +1062,26 @@ CREATE TABLE discovery_interfaces (
 				UNIQUE(device_id, mac_address)
 			) STRICT;
 
+-- table: flow_applications_daily
+CREATE TABLE flow_applications_daily (
+	client_id TEXT NOT NULL DEFAULT 'default' REFERENCES clients(id),
+	application TEXT NOT NULL,
+	day_bucket TEXT NOT NULL,
+	bytes INTEGER NOT NULL,
+	packets INTEGER NOT NULL,
+	PRIMARY KEY (client_id, application, day_bucket)
+) STRICT;
+
+-- table: flow_applications_hourly
+CREATE TABLE flow_applications_hourly (
+	client_id TEXT NOT NULL DEFAULT 'default' REFERENCES clients(id),
+	application TEXT NOT NULL,
+	hour_bucket TEXT NOT NULL,
+	bytes INTEGER NOT NULL,
+	packets INTEGER NOT NULL,
+	PRIMARY KEY (client_id, application, hour_bucket)
+) STRICT;
+
 -- table: flow_conversations_daily
 CREATE TABLE flow_conversations_daily (
 	client_id TEXT NOT NULL DEFAULT 'default' REFERENCES clients(id),
@@ -1100,7 +1126,7 @@ CREATE TABLE "flow_records" (
 	input_if INTEGER NOT NULL,
 	output_if INTEGER NOT NULL,
 	received_at TEXT NOT NULL
-) STRICT;
+, application TEXT NOT NULL DEFAULT 'unknown') STRICT;
 
 -- table: job_idempotency
 CREATE TABLE job_idempotency (

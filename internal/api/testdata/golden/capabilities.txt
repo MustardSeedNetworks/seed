@@ -1232,6 +1232,23 @@ body:
   {
     "maxBodyBytes": 262144,
     "methods": [
+      "GET"
+    ],
+    "path": "/api/v1/flows/top-applications"
+  },
+  {
+    "maxBodyBytes": 65536,
+    "methods": [
+      "GET",
+      "PUT",
+      "DELETE"
+    ],
+    "minRole": "operator",
+    "path": "/api/v1/flows/application-signatures"
+  },
+  {
+    "maxBodyBytes": 262144,
+    "methods": [
       "POST"
     ],
     "minRole": "operator",

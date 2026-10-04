@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"math"
+	"sync"
 	"time"
 
 	"github.com/MustardSeedNetworks/seed/internal/listener/flow"
@@ -17,9 +18,15 @@ import (
 const flowTimeFormat = "2006-01-02T15:04:05.000Z"
 
 // FlowRecordsRepository owns flow_records, written by the flow collector
-// (internal/listener/flow).
+// (internal/listener/flow), and the signature table that names each flow's
+// application as it is stored.
 type FlowRecordsRepository struct {
 	db *DB
+
+	// mu guards signatures, which is loaded from settings on first use and
+	// replaced when the operator edits the table.
+	mu         sync.Mutex
+	signatures *AppSignatures
 }
 
 // InsertFlows implements flow.Store: one batch, one transaction.
@@ -27,14 +34,18 @@ func (r *FlowRecordsRepository) InsertFlows(ctx context.Context, records []flow.
 	if len(records) == 0 {
 		return nil
 	}
+	sigs, sigErr := r.AppSignatures(ctx)
+	if sigErr != nil {
+		return sigErr
+	}
 	receivedAt := time.Now().UTC().Format(flowTimeFormat)
 	return r.db.WithTx(ctx, func(tx *sql.Tx) error {
 		stmt, err := tx.PrepareContext(ctx, `
 			INSERT INTO flow_records
 			  (exporter, format, observation_domain, flow_start, flow_end,
 			   src_addr, dst_addr, src_port, dst_port, protocol, tcp_flags,
-			   bytes, packets, input_if, output_if, received_at)
-			VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+			   bytes, packets, input_if, output_if, application, received_at)
+			VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
 		`)
 		if err != nil {
 			return fmt.Errorf("prepare flow_records insert: %w", err)
@@ -47,7 +58,8 @@ func (r *FlowRecordsRepository) InsertFlows(ctx context.Context, records []flow.
 				f.Start.UTC().Format(flowTimeFormat), f.End.UTC().Format(flowTimeFormat),
 				f.SrcAddr.String(), f.DstAddr.String(), f.SrcPort, f.DstPort,
 				f.Protocol, f.TCPFlags, saturatingInt64(f.Bytes), saturatingInt64(f.Packets),
-				f.InputIf, f.OutputIf, receivedAt,
+				f.InputIf, f.OutputIf, sigs.Table.Classify(f.Protocol, f.SrcPort, f.DstPort),
+				receivedAt,
 			); execErr != nil {
 				return fmt.Errorf("insert flow_record: %w", execErr)
 			}

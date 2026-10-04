@@ -223,7 +223,9 @@
   "flows": {
     "invalidRank": "Clasificación no válida: use bytes o packets",
     "invalidLimit": "Límite no válido: use un número entero de 1 a 100",
-    "readFailed": "No se pudieron leer los flujos"
+    "readFailed": "No se pudieron leer los flujos",
+    "invalidSignatures": "Tabla de firmas de aplicaciones no válida",
+    "signaturesFailed": "No se pudo acceder a la tabla de firmas de aplicaciones"
   },
   "history": {
     "probeRequired": "Se requiere un identificador de sonda",
