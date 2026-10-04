@@ -21,7 +21,7 @@ func newPollingTargetsTestServer(t *testing.T) *Server {
 	db := newTestDB(t)
 	s := &Server{}
 	s.dbConn = db
-	s.pollingTargets = app.NewPollingTargets(s.db)
+	s.pollingTargets = app.NewPollingTargets(s.db, s.pollingTargetLimit)
 	return s
 }
 

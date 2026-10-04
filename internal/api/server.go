@@ -963,7 +963,7 @@ func (s *Server) initDiscoveryUseCases() {
 	s.topologyQueries = app.NewTopologyQueries(s.db, topologyMaxLimit)
 	s.exportService = export.NewService(serverExportSources{s: s})
 	s.logQuery = app.NewLogQuery(s.db)
-	s.pollingTargets = app.NewPollingTargets(s.db)
+	s.pollingTargets = app.NewPollingTargets(s.db, s.pollingTargetLimit)
 	// The credential vault needs the keyring that owns the DEK. Without a
 	// config there is none, so the use-case stays nil and its handlers report
 	// 503 — the alternative is a CRUD surface that would persist plaintext.

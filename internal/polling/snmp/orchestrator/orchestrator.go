@@ -50,9 +50,15 @@ type Config struct {
 	// polling unauthenticated is a security failure rather than a degraded mode.
 	Credentials snmp.CredentialStore
 	Decrypter   snmp.SecretDecrypter
+
+	// Licensed reports whether the licence covers a collector, by name. An
+	// unlicensed collector is not registered, so a chain that names it never
+	// runs it. Required: which collectors are for sale is the licence's
+	// decision, and defaulting to all of them is how a gate goes missing.
+	Licensed func(collector string) bool
 }
 
-// Build returns a *snmp.Poller with all ten default collectors
+// Build returns a *snmp.Poller with the licensed default collectors
 // registered against a sink that persists into snmp_observations.
 // The returned Poller satisfies [engine.Engine] so the server
 // registers it directly with the engine registry.
@@ -80,6 +86,9 @@ func Build(cfg Config) (*snmp.Poller, error) {
 	if cfg.Decrypter == nil {
 		return nil, errors.New("orchestrator: Decrypter required")
 	}
+	if cfg.Licensed == nil {
+		return nil, errors.New("orchestrator: Licensed required")
+	}
 
 	logger := cfg.Logger
 	if logger == nil {
@@ -104,7 +113,9 @@ func Build(cfg Config) (*snmp.Poller, error) {
 	poller.SetCredentialResolver(resolver)
 
 	for _, collector := range Collectors(cfg.ClientFactory, persistSink, now) {
-		poller.RegisterCollector(collector)
+		if cfg.Licensed(collector.Name()) {
+			poller.RegisterCollector(collector)
+		}
 	}
 
 	return poller, nil
