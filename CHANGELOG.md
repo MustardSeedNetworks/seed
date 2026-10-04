@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.225.0](https://github.com/MustardSeedNetworks/seed/compare/v0.224.1...v0.225.0) (2026-10-04)
+
+
+### Features
+
+* **alerts:** escalate an unacknowledged alert through per-rule stages ([#3033](https://github.com/MustardSeedNetworks/seed/issues/3033)) ([a6de533](https://github.com/MustardSeedNetworks/seed/commit/a6de533bb1176f8a08146ee178f018c3235b53f7)), closes [#3032](https://github.com/MustardSeedNetworks/seed/issues/3032)
+
+
+### Bug Fixes
+
+* **dns:** send a lookup outcome code and word it in the card ([#3036](https://github.com/MustardSeedNetworks/seed/issues/3036)) ([0992f55](https://github.com/MustardSeedNetworks/seed/commit/0992f554de2674249c416c0ced4274d95efdc05f))
+
 ## [0.224.1](https://github.com/MustardSeedNetworks/seed/compare/v0.224.0...v0.224.1) (2026-10-04)
 
 
