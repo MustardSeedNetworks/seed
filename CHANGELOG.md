@@ -18,6 +18,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 * **changelog:** record [#2977](https://github.com/MustardSeedNetworks/seed/issues/2977) in v0.221.3 ([#2998](https://github.com/MustardSeedNetworks/seed/issues/2998)) ([774f0e3](https://github.com/MustardSeedNetworks/seed/commit/774f0e3917dd59d2c87f05c9859cc2690903b8e0))
 
+### Also shipped in this release
+
+<!-- Added by scripts/check-release-changelog.py: these commits are
+     contained in the tag but were absent from the generated
+     changelog, because they merged after release-please last
+     regenerated the release PR. -->
+
+* **deps:** update module github.com/mustardseednetworks/foundation to v0.7.0 ([#2999](https://github.com/MustardSeedNetworks/seed/issues/2999)) ([16ed7e6a](https://github.com/MustardSeedNetworks/seed/commit/16ed7e6a0a96290276fd1838391fb22d4f6a56aa)) — _Bug Fixes_
+
 ## [0.221.3](https://github.com/MustardSeedNetworks/seed/compare/v0.221.2...v0.221.3) (2026-10-03)
 
 
