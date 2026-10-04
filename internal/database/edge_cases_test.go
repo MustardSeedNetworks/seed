@@ -438,25 +438,6 @@ func TestMetricsRepositoryEdgeCases(t *testing.T) {
 			t.Error("expected non-nil aggregate")
 		}
 	})
-
-	t.Run("GetSpeedTestHistory with zero limit", func(t *testing.T) {
-		// Record a speed test first
-		err := repo.RecordSpeedTest(ctx, &database.SpeedTestResult{
-			InterfaceName: "eth1",
-			ServerName:    "Test Server",
-			DownloadMbps:  100,
-			UploadMbps:    50,
-			LatencyMs:     10,
-		})
-		require.NoError(t, err)
-
-		// Zero limit should use default
-		results, err := repo.GetSpeedTestHistory(ctx, "eth1", 0)
-		require.NoError(t, err)
-		if len(results) < 1 {
-			t.Error("expected at least 1 speed test result")
-		}
-	})
 }
 
 func TestAuditLogEdgeCases(t *testing.T) {
@@ -512,8 +493,6 @@ func TestRetentionEdgeCases(t *testing.T) {
 			InactiveDeviceDays: 0,
 			AuditLogDays:       0,
 			SpeedTestDays:      0,
-			DNSResultDays:      0,
-			GatewayResultDays:  0,
 		}
 
 		result, err := db.RunCleanup(ctx, policy)

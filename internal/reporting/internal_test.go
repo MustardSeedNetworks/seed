@@ -16,6 +16,7 @@ import (
 	"github.com/MustardSeedNetworks/seed/internal/database/dbtest"
 	"github.com/MustardSeedNetworks/seed/internal/reporting"
 	"github.com/MustardSeedNetworks/seed/internal/reporting/store"
+	"github.com/MustardSeedNetworks/seed/internal/timeseries/telemetry"
 )
 
 // ----------------------------------------------------------------------------
@@ -517,8 +518,7 @@ func TestAggregatePerformance_Internal(t *testing.T) {
 
 	as.ExportAggregatePerformance(ctx, data, since)
 
-	// Verify aggregation structures are populated (may have defaults)
-	assert.GreaterOrEqual(t, data.Performance.UptimePercent, 0.0)
+	assert.InDelta(t, 80.0, data.Performance.UptimePercent, 0.001)
 }
 
 func TestAggregateTopIssues_Internal(t *testing.T) {
@@ -1051,13 +1051,12 @@ func setupVulnerabilityData(t *testing.T, ctx context.Context, db *database.DB) 
 func setupPerformanceData(t *testing.T, ctx context.Context, db *database.DB) {
 	t.Helper()
 
-	// Insert gateway results
+	// Gateway telemetry: four replies, then one miss.
 	for i := range 5 {
-		_, err := db.Exec(ctx, `
-			INSERT OR REPLACE INTO gateway_results (interface_name, gateway, latency_ms, packet_loss, reachable, timestamp)
-			VALUES (?, ?, ?, ?, ?, ?)
-		`, "eth0", "192.168.1.1", 10.0+float64(i), 0.1*float64(i), 1,
-			time.Now().Add(-time.Duration(i)*time.Hour).Format(time.RFC3339))
+		err := db.Metrics().RecordTelemetry(ctx, telemetry.Sample{
+			Interface: "eth0", At: time.Now().Add(-time.Duration(i) * time.Hour),
+			Points: []telemetry.Point{{Type: telemetry.GatewayReachable, Value: float64(min(4-i, 1))}},
+		})
 		require.NoError(t, err)
 	}
 

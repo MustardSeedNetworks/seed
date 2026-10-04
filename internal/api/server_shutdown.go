@@ -269,8 +269,6 @@ func (s *Server) startMaintenance(retentionDays int) {
 		MetricsDays:        retentionDays,
 		AlertsDays:         retentionDays * retentionAlertsMultiplier, // Keep alerts longer
 		SpeedTestDays:      retentionDays,
-		DNSResultDays:      retentionDays,
-		GatewayResultDays:  retentionDays,
 		AuditLogDays:       retentionDays * retentionAuditLogMultiplier,       // Keep audit logs longest
 		InactiveDeviceDays: retentionDays * retentionInactiveDeviceMultiplier, // Keep inactive device records longer
 		// Resolved anomalies age out on their own fixed 90d window (ADR-0021);
@@ -315,8 +313,7 @@ func (s *Server) startMaintenance(retentionDays int) {
 				continue
 			}
 			totalDeleted := result.MetricsDeleted + result.AlertsDeleted +
-				result.SpeedTestsDeleted + result.DNSResultsDeleted +
-				result.GatewayResultsDeleted + result.AuditLogsDeleted +
+				result.SpeedTestsDeleted + result.AuditLogsDeleted +
 				result.DevicesDeleted + result.AnomaliesResolvedDeleted
 			if totalDeleted > 0 {
 				logging.GetLogger().Info("Data retention cleanup completed",
@@ -324,8 +321,6 @@ func (s *Server) startMaintenance(retentionDays int) {
 					"alerts_deleted", result.AlertsDeleted,
 					"devices_deleted", result.DevicesDeleted,
 					"speedtests_deleted", result.SpeedTestsDeleted,
-					"dns_deleted", result.DNSResultsDeleted,
-					"gateway_deleted", result.GatewayResultsDeleted,
 					"audit_deleted", result.AuditLogsDeleted,
 					"anomalies_resolved_deleted", result.AnomaliesResolvedDeleted,
 					"duration", result.Duration)

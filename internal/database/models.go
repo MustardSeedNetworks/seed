@@ -101,30 +101,6 @@ type SpeedTestResult struct {
 	Metadata       string    `json:"metadata,omitempty"`
 }
 
-// DNSResult represents a DNS test result.
-type DNSResult struct {
-	ID             int64     `json:"id"`
-	InterfaceName  string    `json:"interfaceName"`
-	Server         string    `json:"server"`
-	Hostname       string    `json:"hostname"`
-	ResponseTimeMs float64   `json:"responseTimeMs"`
-	ResolvedIP     string    `json:"resolvedIp,omitempty"`
-	Status         string    `json:"status"` // "success", "timeout", "error"
-	ErrorMessage   string    `json:"errorMessage,omitempty"`
-	Timestamp      time.Time `json:"timestamp"`
-}
-
-// GatewayResult represents a gateway ping result.
-type GatewayResult struct {
-	ID            int64     `json:"id"`
-	InterfaceName string    `json:"interfaceName"`
-	Gateway       string    `json:"gateway"`
-	LatencyMs     float64   `json:"latencyMs"`
-	PacketLoss    float64   `json:"packetLoss"`
-	Reachable     bool      `json:"reachable"`
-	Timestamp     time.Time `json:"timestamp"`
-}
-
 // AuditLogEntry represents an audit log entry.
 type AuditLogEntry struct {
 	ID           int64     `json:"id"`
