@@ -8,6 +8,7 @@ package targets
 import (
 	"context"
 	"errors"
+	"fmt"
 	"strings"
 	"sync"
 
@@ -27,6 +28,15 @@ type ValidationError struct{ Msg string }
 
 func (e ValidationError) Error() string { return e.Msg }
 
+// LimitError is returned when a create would take a client past the number of
+// polling targets its licence allows (the estate_polling boundary, seed#2327).
+// The handler maps it to 402 with the upgrade hint.
+type LimitError struct{ Limit int }
+
+func (e LimitError) Error() string {
+	return fmt.Sprintf("targets: the licence allows %d polling targets", e.Limit)
+}
+
 // Repository is the persistence surface the use-case needs. It mirrors the
 // polling-target repository; the adapter satisfies it over
 // database.PollingTargetRepository and surfaces ErrUnavailable when no DB is wired.
@@ -42,13 +52,22 @@ type Repository interface {
 type Service struct {
 	repo Repository
 
-	// createMu serialises CreateMissing. Its read-then-create is only
-	// idempotent while nothing else is doing the same read.
+	// limit reports how many targets a client may hold, read on every create
+	// so an activated or expired licence applies without a restart; 0 is
+	// unlimited. It counts one client's targets, which is the whole install
+	// below Pro: multi_client is a Pro feature, and Pro is unlimited.
+	limit func() int
+
+	// createMu serialises creates. Both the limit check and CreateMissing's
+	// address check read the list before writing, and are only sound while
+	// nothing else is doing the same read.
 	createMu sync.Mutex
 }
 
-// NewService builds the use-case over its Repository port.
-func NewService(repo Repository) *Service { return &Service{repo: repo} }
+// NewService builds the use-case over its Repository port and licence limit.
+func NewService(repo Repository, limit func() int) *Service {
+	return &Service{repo: repo, limit: limit}
+}
 
 // ListAll returns every polling target owned by clientID, enabled or not.
 // There is no "all clients" spelling: the scheduler reads its own seam on the
@@ -63,10 +82,33 @@ func (s *Service) Get(ctx context.Context, clientID, id string) (*polling.Target
 	return t, mapNotFound(err)
 }
 
-// Create persists a new target. A repository validation error (the
-// "polling_targets:" prefix is the repo's user-input signal) is returned as a
-// ValidationError; everything else propagates as-is.
+// Create persists a new target, or returns a LimitError when the client
+// already holds as many as its licence allows. A repository validation error
+// (the "polling_targets:" prefix is the repo's user-input signal) is returned as
+// a ValidationError; everything else propagates as-is.
 func (s *Service) Create(ctx context.Context, t *polling.Target) error {
+	s.createMu.Lock()
+	defer s.createMu.Unlock()
+
+	existing, err := s.repo.ListAll(ctx, t.ClientID)
+	if err != nil {
+		return err
+	}
+	if limitErr := s.checkLimit(len(existing)); limitErr != nil {
+		return limitErr
+	}
+	return s.create(ctx, t)
+}
+
+// checkLimit refuses a create when held targets already fill the licence.
+func (s *Service) checkLimit(held int) error {
+	if limit := s.limit(); limit > 0 && held >= limit {
+		return LimitError{Limit: limit}
+	}
+	return nil
+}
+
+func (s *Service) create(ctx context.Context, t *polling.Target) error {
 	err := s.repo.Create(ctx, t)
 	if err != nil && strings.HasPrefix(err.Error(), "polling_targets:") {
 		return ValidationError{Msg: err.Error()}
@@ -90,7 +132,8 @@ func (s *Service) Update(
 }
 
 // CreateMissing persists each candidate whose address has no target yet, and
-// returns how many were created.
+// returns how many were created. Candidates past the licence limit are not
+// created, and the returned error carries the LimitError.
 //
 // It exists because discovery promotes the devices a sweep found answering
 // SNMP (seed#2692), and a sweep runs again every minute: the operation the
@@ -129,8 +172,11 @@ func (s *Service) CreateMissing(
 		if _, known := taken[candidate.IPAddress]; known {
 			continue
 		}
+		if limitErr := s.checkLimit(len(existing) + created); limitErr != nil {
+			return created, errors.Join(failed, limitErr)
+		}
 		taken[candidate.IPAddress] = struct{}{}
-		if createErr := s.Create(ctx, candidate); createErr != nil {
+		if createErr := s.create(ctx, candidate); createErr != nil {
 			// One unusable candidate must not cost the rest their
 			// targets; the caller reports what could not be written.
 			failed = errors.Join(failed, createErr)

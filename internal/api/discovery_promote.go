@@ -2,11 +2,13 @@ package api
 
 import (
 	"context"
+	"errors"
 
 	"github.com/MustardSeedNetworks/seed/internal/discovery"
 	"github.com/MustardSeedNetworks/seed/internal/discovery/promote"
 	"github.com/MustardSeedNetworks/seed/internal/logging"
 	"github.com/MustardSeedNetworks/seed/internal/polling"
+	"github.com/MustardSeedNetworks/seed/internal/polling/targets"
 	"github.com/MustardSeedNetworks/seed/internal/protocols/snmp"
 )
 
@@ -53,7 +55,15 @@ func (s *Server) promoteDiscoveredDevices(
 	}
 
 	created, err := s.pollingTargets.CreateMissing(ctx, clientID, candidates)
-	if err != nil {
+	var limitErr targets.LimitError
+	switch {
+	case err == nil:
+	case errors.As(err, &limitErr):
+		// Expected below Pro on any estate larger than the licence, and every
+		// sweep finds it again, so it is not a warning.
+		logger.InfoContext(ctx, "Discovered devices past the licence's polling-target limit not promoted",
+			"limit", limitErr.Limit, "error", err)
+	default:
 		logger.WarnContext(ctx, "Some discovered devices could not be promoted",
 			"error", err)
 	}
