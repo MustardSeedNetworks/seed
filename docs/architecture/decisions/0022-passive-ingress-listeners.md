@@ -202,3 +202,36 @@ itself wins over all of them. Rates share the template cache's bound and
 lifetime. A flow decoded before its exporter's options record arrives keeps
 its sampled counts, the same trade the template cache makes for data ahead of
 its template.
+
+## Amendment 2026-10-04: sFlow on the flow collector (P-C2, seed#3090)
+
+The flow collector also takes sFlow v5. It shares the NetFlow socket rather
+than adding a second listener: a NetFlow or IPFIX datagram opens with a
+two-byte version of 5, 9 or 10, and an sFlow datagram with a four-byte version,
+so its first two bytes are zero. The decoder dispatches on them. An operator
+points sFlow agents at the `SEED_FLOW_BIND` port, not at 6343.
+
+An sFlow flow sample is one packet the agent sampled 1-in-N. Each sample of an
+IP packet becomes one `flow_records` row standing for N packets: `packets` is
+the sampling rate and `bytes` the packet's IP length times the rate. That is
+the layer-3 length NetFlow counts, so rows from both protocols sum together.
+The IP length comes from the header itself (the IPv4 total length, or the IPv6
+payload length plus 40), not from the frame length, so it is right for a
+header the agent truncated. The decoder reads the flow key from a
+`sampled_header` record holding an Ethernet (with up to four VLAN tags), IPv4
+or IPv6 header, or from a `sampled_ipv4` or `sampled_ipv6` record, which wins
+when an agent sends both. It walks IPv6 extension headers to the transport
+header and reads no ports from a non-first fragment. A sample of a packet that
+is not IP is skipped. Counter samples and other enterprises' structures are
+skipped too.
+
+sFlow carries no wall clock, only agent uptime, so a row's start and end are
+the time the datagram arrived. The exporter is the agent address the datagram
+names, falling back to the UDP source when it names none. The observation
+domain is the sub-agent ID. An interface that is not a single ifIndex
+(discarded, several outputs, or unknown) is stored as 0, the NetFlow
+convention.
+
+`flow_records.version` became `format` (migration `00021`): `netflow5`,
+`netflow9`, `ipfix` or `sflow5`. sFlow v5 and NetFlow v5 share version 5, so
+the number alone could not say which protocol a row came from.

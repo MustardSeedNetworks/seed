@@ -12,7 +12,7 @@ import (
 )
 
 // initListeners wires the passive-ingress listeners (syslog UDP, SNMP
-// traps, NetFlow/IPFIX) into the engine registry. Each is opt-in via an
+// traps, NetFlow/IPFIX/sFlow) into the engine registry. Each is opt-in via an
 // env variable — operators set SEED_SYSLOG_BIND / SEED_SNMP_TRAP_BIND /
 // SEED_FLOW_BIND (e.g. ":514", ":162", ":2055") to enable them. Default
 // is off because binding to <1024 requires elevated privileges and we

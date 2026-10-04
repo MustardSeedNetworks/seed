@@ -116,7 +116,7 @@ func TestDecodeV5(t *testing.T) {
 			}
 			got := res.Records[0]
 			want := flow.Record{
-				Exporter: exporterA(), Version: 5, ObservationDomain: 1<<8 | 4,
+				Exporter: exporterA(), Format: flow.FormatNetFlow5, ObservationDomain: 1<<8 | 4,
 				Start:   exportAt().Add(-60 * time.Second),
 				End:     exportAt().Add(-10 * time.Second),
 				SrcAddr: netip.MustParseAddr("10.0.0.1"), DstAddr: netip.MustParseAddr("198.51.100.7"),
@@ -152,7 +152,7 @@ func TestDecodeV9TemplateLossAndRelearn(t *testing.T) {
 			len(res.Records), res.MissingTemplate, err)
 	}
 	want := flow.Record{
-		Exporter: exporterA(), Version: 9, ObservationDomain: 7,
+		Exporter: exporterA(), Format: flow.FormatNetFlow9, ObservationDomain: 7,
 		Start: exportAt().Add(-30 * time.Second), End: exportAt().Add(-time.Second),
 		SrcAddr: netip.MustParseAddr("10.1.1.1"), DstAddr: netip.MustParseAddr("10.2.2.2"),
 		SrcPort: 40000, DstPort: 53, Protocol: 6, Bytes: 900, Packets: 9, InputIf: 3,
@@ -263,7 +263,7 @@ func TestDecodeIPFIX(t *testing.T) {
 		t.Fatalf("records = %d, want 2", len(res.Records))
 	}
 	want := flow.Record{
-		Exporter: exporterA(), Version: 10, ObservationDomain: 42,
+		Exporter: exporterA(), Format: flow.FormatIPFIX, ObservationDomain: 42,
 		Start: exportAt().Add(-5 * time.Second), End: exportAt().Add(-1500 * time.Millisecond),
 		SrcAddr: netip.MustParseAddr("172.16.0.9"), DstAddr: netip.MustParseAddr("172.16.0.10"),
 		TCPFlags: 0x18, Bytes: 4096, Packets: 12,

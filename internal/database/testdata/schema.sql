@@ -1051,11 +1051,11 @@ CREATE TABLE discovery_interfaces (
 			) STRICT;
 
 -- table: flow_records
-CREATE TABLE flow_records (
+CREATE TABLE "flow_records" (
 	id INTEGER PRIMARY KEY AUTOINCREMENT,
 	client_id TEXT NOT NULL DEFAULT 'default' REFERENCES clients(id),
 	exporter TEXT NOT NULL,
-	version INTEGER NOT NULL,
+	format TEXT NOT NULL CHECK (format IN ('netflow5', 'netflow9', 'ipfix', 'sflow5')),
 	observation_domain INTEGER NOT NULL,
 	flow_start TEXT NOT NULL,
 	flow_end TEXT NOT NULL,
