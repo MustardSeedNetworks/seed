@@ -149,10 +149,19 @@ jobs:
           git config user.name "${APP_SLUG}[bot]"
           git config user.email "${app_id}+${APP_SLUG}[bot]@users.noreply.github.com"
 
-          # Reuse an open refresh branch if it already exists this run window.
-          git switch -c "$branch" 2>/dev/null || git switch "$branch"
+          git switch -c "$branch"
           git add "$OUI_PATH"
           git commit -m "chore(discovery): refresh embedded IEEE OUI registry (${stamp})"
+
+          # A second run on the same UTC day finds today's branch already on
+          # origin. actions/checkout fetched only main, so without this fetch
+          # there is no remote-tracking ref and --force-with-lease rejects the
+          # push as "stale info" (#2366). With it, the push replaces the branch
+          # with this run's commit on current main and the open PR updates in
+          # place; the lease still refuses if someone pushed in between.
+          if git ls-remote --exit-code --heads origin "$branch" >/dev/null; then
+            git fetch --no-tags origin "+refs/heads/${branch}:refs/remotes/origin/${branch}"
+          fi
           git push -u origin "$branch" --force-with-lease
 
           if gh pr view "$branch" >/dev/null 2>&1; then
