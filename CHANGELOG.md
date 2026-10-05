@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.236.2](https://github.com/MustardSeedNetworks/seed/compare/v0.236.1...v0.236.2) (2026-10-05)
+
+
+### Bug Fixes
+
+* **deps:** update module modernc.org/sqlite to v1.60.0 ([#3170](https://github.com/MustardSeedNetworks/seed/issues/3170)) ([2882980](https://github.com/MustardSeedNetworks/seed/commit/2882980107fd01a8bce1e837f023a0f01ca2e48b))
+
+
+### Miscellaneous
+
+* **deps:** lock file maintenance ([#3171](https://github.com/MustardSeedNetworks/seed/issues/3171)) ([6f8262f](https://github.com/MustardSeedNetworks/seed/commit/6f8262fb5066e6e17c5c410510bff9d8bc5cd031))
+
 ## [0.236.1](https://github.com/MustardSeedNetworks/seed/compare/v0.236.0...v0.236.1) (2026-10-05)
 
 
