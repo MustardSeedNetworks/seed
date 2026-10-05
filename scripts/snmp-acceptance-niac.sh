@@ -179,11 +179,15 @@ attachments = scenario.get("attachments") or []
 if len(attachments) != 1:
     sys.exit(f"expected one attachment, found {len(attachments)}")
 attachment = attachments[0]
-switch = devices[attachment["at"]["device"]]
-ports = {i["name"]: i for i in switch.get("interfaces") or []}
-port_vlans = {tuple(ports[p].get("vlans") or ()) for p in attachment["at"]["ports"]}
+# NIAC 0.110 lets one pool span several switches (niac-go#2505): `at` is a
+# list of {device, ports}, and every port in it lands on the same network.
+pool = [segment["device"] for segment in attachment["at"]]
+port_vlans = set()
+for segment in attachment["at"]:
+    ports = {i["name"]: i for i in devices[segment["device"]].get("interfaces") or []}
+    port_vlans |= {tuple(ports[p].get("vlans") or ()) for p in segment["ports"]}
 if len(port_vlans) != 1 or len(next(iter(port_vlans))) != 1:
-    sys.exit(f"pool ports on {switch['name']} carry {sorted(port_vlans)}, not one access VLAN")
+    sys.exit(f"pool ports on {', '.join(pool)} carry {sorted(port_vlans)}, not one access VLAN")
 (vlan,) = next(iter(port_vlans))
 
 links = {}
@@ -192,7 +196,7 @@ for device in devices.values():
         if vlan in (trunk.get("vlans") or []) and not trunk.get("fdb_only"):
             links.setdefault(device["name"], set()).add(trunk["remote_device"])
             links.setdefault(trunk["remote_device"], set()).add(device["name"])
-domain, frontier = {switch["name"]}, [switch["name"]]
+domain, frontier = set(pool), list(pool)
 while frontier:
     for peer in links.get(frontier.pop(), ()):
         if peer not in domain:
@@ -204,7 +208,7 @@ candidates = [
     if n.get("virtual_vlan") == vlan and any(a in ipaddress.ip_network(n["subnet"]) for a in in_domain)
 ]
 if len(candidates) != 1:
-    sys.exit(f"VLAN {vlan} behind {switch['name']} resolves to {len(candidates)} networks, not one")
+    sys.exit(f"VLAN {vlan} behind {', '.join(pool)} resolves to {len(candidates)} networks, not one")
 access = candidates[0]
 
 agents, used, gateway = [], set(), None
