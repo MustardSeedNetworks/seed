@@ -12,6 +12,10 @@ import { skipSetupWizard } from './helpers/auth';
  * capture adapter refuses every interface. The capture test skips on exactly
  * that refusal and on nothing else, so a capture-capable daemon (a libpcap
  * build with CAP_NET_RAW) runs it in full and any other failure fails it.
+ *
+ * The card reads "running" from the job's acceptance, before the daemon has
+ * opened the interface, so only a capture's end says whether this daemon can
+ * capture. The test finds out with a one-second capture first.
  */
 
 const CGO_FREE_REFUSAL = 'built without CGO/libpcap';
@@ -74,10 +78,9 @@ test.describe('Packet capture card', () => {
     const card = page.getByTestId('packet-capture');
 
     await page.getByTestId('packet-capture-interface').fill('lo');
-    await page.getByTestId('packet-capture-duration').fill('60');
+    await page.getByTestId('packet-capture-duration').fill('1');
     await page.getByTestId('packet-capture-start').click();
-
-    await expect(card).toHaveAttribute('data-phase', /running|failed/);
+    await expect(card).toHaveAttribute('data-phase', /finished|failed/, { timeout: 15000 });
     if ((await card.getAttribute('data-phase')) === 'failed') {
       const detail = (await page.getByTestId('packet-capture-error-detail').textContent()) ?? '';
       test.skip(
@@ -87,6 +90,8 @@ test.describe('Packet capture card', () => {
       throw new Error(`capture on lo failed: ${detail}`);
     }
 
+    await page.getByTestId('packet-capture-duration').fill('60');
+    await page.getByTestId('packet-capture-start').click();
     await expect(page.getByTestId('packet-capture-running')).toContainText('lo');
     // Traffic for the capture to record: the daemon's own HTTPS on lo.
     for (let i = 0; i < 5; i++) {
