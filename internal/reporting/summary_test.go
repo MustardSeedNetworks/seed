@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"path/filepath"
 	"regexp"
 	"strconv"
 	"strings"
@@ -354,12 +355,42 @@ func TestSummaryRejectsFormatsItDoesNotRender(t *testing.T) {
 	})
 }
 
+// TestPDFTextKeepsAStreamEndingInCR: a compressed stream whose last byte is a
+// CR still yields its text (#3138).
+func TestPDFTextKeepsAStreamEndingInCR(t *testing.T) {
+	t.Parallel()
+	var shown string
+	var compressed bytes.Buffer
+	for i := 0; ; i++ {
+		shown = fmt.Sprintf("row %d", i)
+		compressed.Reset()
+		w := zlib.NewWriter(&compressed)
+		// The padding makes deflate compress rather than store the text, so
+		// the shown string cannot be read off the raw bytes.
+		_, err := fmt.Fprintf(w, "%sBT 31.19 79.50 Td (%s)Tj ET\n", strings.Repeat("q 0.392 g Q\n", 20), shown)
+		require.NoError(t, err)
+		require.NoError(t, w.Close())
+		if bytes.HasSuffix(compressed.Bytes(), []byte("\r")) {
+			break
+		}
+	}
+	path := filepath.Join(t.TempDir(), "cr.pdf")
+	pdf := fmt.Appendf(nil, "<</Filter /FlateDecode /Length %d>>\nstream\n%s\nendstream\n",
+		compressed.Len(), compressed.Bytes())
+	require.NoError(t, os.WriteFile(path, pdf, 0o600))
+
+	assert.Equal(t, []string{shown}, pdfText(t, path))
+}
+
 var (
-	pdfStream = regexp.MustCompile(`(?s)stream\r?\n(.*?)\r?\nendstream`)
+	pdfStream = regexp.MustCompile(`/Length (\d+)>>\r?\nstream\r?\n`)
 	pdfShow   = regexp.MustCompile(`\(((?:\\.|[^\\)])*)\) ?Tj`)
 )
 
-// pdfText returns the strings the PDF at path shows, in drawing order.
+// pdfText returns the strings the PDF at path shows, in drawing order. Each
+// stream is taken by its /Length, not up to the next "endstream": compressed
+// bytes can end in a CR, and trimming it as a line ending cut the stream short
+// and dropped that page's text (#3138).
 func pdfText(t *testing.T, path string) []string {
 	t.Helper()
 	raw, err := os.ReadFile(path)
@@ -367,13 +398,14 @@ func pdfText(t *testing.T, path string) []string {
 	unescape := strings.NewReplacer(`\(`, "(", `\)`, ")", `\\`, `\`)
 
 	var text []string
-	for _, m := range pdfStream.FindAllSubmatch(raw, -1) {
-		content := m[1]
-		if r, zErr := zlib.NewReader(bytes.NewReader(content)); zErr == nil {
-			if inflated, readErr := io.ReadAll(r); readErr == nil {
-				content = inflated
-			}
-		}
+	for _, m := range pdfStream.FindAllSubmatchIndex(raw, -1) {
+		length, atoiErr := strconv.Atoi(string(raw[m[2]:m[3]]))
+		require.NoError(t, atoiErr)
+		require.LessOrEqual(t, m[1]+length, len(raw), "stream runs past the end of %s", path)
+		r, zErr := zlib.NewReader(bytes.NewReader(raw[m[1] : m[1]+length]))
+		require.NoError(t, zErr)
+		content, readErr := io.ReadAll(r)
+		require.NoError(t, readErr)
 		for _, show := range pdfShow.FindAllSubmatch(content, -1) {
 			text = append(text, unescape.Replace(string(show[1])))
 		}
