@@ -1,6 +1,6 @@
 /**
  * Hook callback identity, held by the React Compiler rather than by
- * hand-written useCallback/useMemo (UI-SEED-41 slices 2 to 5, #3066).
+ * hand-written useCallback/useMemo (UI-SEED-41 slices 2 to 5 and 10, #3066).
  *
  * Every function these hooks return must keep its identity across a
  * re-render that changed nothing it reads; callers list them in effect
@@ -29,6 +29,7 @@ import { useInsecurePortScan } from './useInsecurePortScan';
 import { useIperfServerSync } from './useIperfServerSync';
 import { useLogs } from './useLogs';
 import { useNeighbourCache } from './useNeighbourCache';
+import { useNetworkDiscoveryAutoScan } from './useNetworkDiscoveryAutoScan';
 import { usePacketCapture } from './usePacketCapture';
 import { usePlatformCapabilities } from './usePlatformCapabilities';
 import { usePollingTargets } from './usePollingTargets';
@@ -124,6 +125,7 @@ const cases: [string, () => object][] = [
   ['useInsecurePortScan', () => useInsecurePortScan()],
   ['useLogs', () => useLogs()],
   ['useNeighbourCache', () => useNeighbourCache()],
+  ['useNetworkDiscoveryAutoScan', () => useNetworkDiscoveryAutoScan(null)],
   ['usePacketCapture', () => usePacketCapture()],
   ['usePlatformCapabilities', () => usePlatformCapabilities()],
   ['usePollingTargets', () => usePollingTargets()],
