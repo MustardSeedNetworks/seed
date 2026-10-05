@@ -245,6 +245,14 @@ cd ui && npm test -- --coverage
 make test-e2e
 ```
 
+While iterating, `make validate-touched` checks only what the branch changed
+since `origin/main` (override with `BASE=<ref>`), uncommitted and untracked
+files included. It lints the changed Go packages, runs `go test -race` on
+them and on every package whose tests link them, runs Biome and Vitest
+`related` on changed UI files and markdownlint on changed Markdown, and runs
+each CI gate in `scripts/` whose inputs changed. It prints every command it
+runs. Run the full `make test` once before opening the PR.
+
 ### SNMP integration suite
 
 The unit tests drive the SNMP collectors through a fake client. That is the
