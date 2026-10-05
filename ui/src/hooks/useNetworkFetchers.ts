@@ -104,6 +104,10 @@ export function useNetworkFetchers({
   fetchPublicIp: () => Promise<void>;
   fetchNetworkDiscovery: () => Promise<void>;
 } {
+  // Kept: these memos are the only hooks here, so the compiler would leave
+  // the function uncompiled, and the DNS and gateway fetchers list
+  // currentInterfaceRef.current so an interface switch re-runs the mount fetch.
+
   // Fetch link data (Layer 2 only)
   const fetchLinkData = useCallback(async () => {
     try {

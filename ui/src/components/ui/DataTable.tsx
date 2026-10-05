@@ -37,9 +37,10 @@
  * State: Manages sort column/direction, search term, filter values, expanded rows
  */
 
+import type { TFunction } from 'i18next';
 import { ArrowUpDown, ChevronDown, ChevronUp, Filter, Search, X } from 'lucide-react';
 import type React from 'react';
-import { type ReactNode, useCallback, useMemo, useState } from 'react';
+import { type ReactNode, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { logger } from '../../lib/logger';
 import {
@@ -105,6 +106,219 @@ function SortIcon({
   );
 }
 
+interface RowQuery {
+  searchQuery: string;
+  searchKeys: string[] | undefined;
+  activeFilters: Record<string, string>;
+  sortKey: string | null;
+  sortDirection: SortDirection;
+}
+
+// Outside the component: the React Compiler skips a component whose render
+// holds a try/catch, and this one guards caller-supplied accessors.
+function filterAndSortRows<T>(
+  data: T[],
+  columns: Column<T>[],
+  { searchQuery, searchKeys, activeFilters, sortKey, sortDirection }: RowQuery,
+): { rows: T[]; error: Error | null } {
+  // Fixes #680: Add null checks and error handling
+  try {
+    if (!Array.isArray(data)) {
+      logger.error('ui', 'DataTable: data prop is not an array', undefined, { data });
+      return { rows: [], error: null };
+    }
+
+    let result = [...data];
+
+    // Apply search filter
+    if (searchQuery && searchKeys && searchKeys.length > 0) {
+      const query = searchQuery.toLowerCase();
+      result = result.filter((item) => {
+        if (!item) {
+          return false; // Null check
+        }
+        return searchKeys.some((key) => {
+          const column = columns.find((c) => c.key === key);
+          if (column) {
+            try {
+              const value = column.accessor(item);
+              return value?.toString().toLowerCase().includes(query);
+            } catch (err) {
+              logger.error('ui', 'DataTable: Error accessing column value', err);
+              return false;
+            }
+          }
+          return false;
+        });
+      });
+    }
+
+    // Apply column filters
+    for (const [key, filterValue] of Object.entries(activeFilters)) {
+      if (filterValue) {
+        const column = columns.find((c) => c.key === key);
+        if (column) {
+          result = result.filter((item) => {
+            if (!item) {
+              return false; // Null check
+            }
+            try {
+              const value = column.accessor(item);
+              return value?.toString().toLowerCase().includes(filterValue.toLowerCase());
+            } catch (err) {
+              logger.error('ui', 'DataTable: Error filtering column value', err);
+              return false;
+            }
+          });
+        }
+      }
+    }
+
+    // Apply sorting
+    if (sortKey && sortDirection) {
+      const column = columns.find((c) => c.key === sortKey);
+      if (column) {
+        result.sort((a, b) => {
+          if (!(a && b)) {
+            return 0; // Null checks
+          }
+          try {
+            const aVal = column.accessor(a);
+            const bVal = column.accessor(b);
+
+            // Handle nulls
+            if (aVal === null && bVal === null) {
+              return 0;
+            }
+            if (aVal === null) {
+              return sortDirection === 'asc' ? 1 : -1;
+            }
+            if (bVal === null) {
+              return sortDirection === 'asc' ? -1 : 1;
+            }
+
+            // Compare values
+            if (typeof aVal === 'number' && typeof bVal === 'number') {
+              return sortDirection === 'asc' ? aVal - bVal : bVal - aVal;
+            }
+
+            const strA = String(aVal).toLowerCase();
+            const strB = String(bVal).toLowerCase();
+            const comparison = strA.localeCompare(strB, undefined, {
+              numeric: true,
+            });
+            return sortDirection === 'asc' ? comparison : -comparison;
+          } catch (err) {
+            logger.error('ui', 'DataTable: Error sorting data', err);
+            return 0;
+          }
+        });
+      }
+    }
+
+    return { rows: result, error: null };
+  } catch (err) {
+    logger.error('ui', 'DataTable: Error in filteredAndSortedData', err);
+    return { rows: [], error: err instanceof Error ? err : new Error(String(err)) };
+  }
+}
+
+type RowContext<T> = Pick<
+  DataTableProps<T>,
+  'columns' | 'keyExtractor' | 'isExpanded' | 'onRowClick' | 'actions'
+> & { t: TFunction<'common'> };
+
+// A plain function, not a component, for the same reason as filterAndSortRows:
+// each row and cell guards caller-supplied render props with try/catch.
+function renderRow<T>(
+  item: T,
+  { columns, keyExtractor, isExpanded, onRowClick, actions, t }: RowContext<T>,
+): React.JSX.Element | null {
+  // Fixes #680: Add null checks for safe rendering
+  if (!item) {
+    logger.warn('ui', 'DataTable: Encountered null/undefined item in data');
+    return null;
+  }
+
+  try {
+    const key = keyExtractor(item);
+    const expanded = isExpanded?.(item) ?? false;
+
+    return (
+      <tr
+        key={key}
+        className={cn(
+          'border-b border-surface-border/50',
+          onRowClick && 'cursor-pointer hover:bg-surface-hover',
+          expanded && 'bg-surface-hover/50',
+        )}
+        onClick={onRowClick ? (): void => onRowClick(item) : undefined}
+      >
+        {columns.map((column) => {
+          try {
+            return (
+              <td
+                key={`${key}-${column.key}`}
+                className={cn(
+                  spacing.cell.px,
+                  spacing.row.py,
+                  column.hiddenOnMobile && 'hidden sm:table-cell',
+                )}
+              >
+                {column.render ? column.render(item) : (column.accessor(item) ?? '-')}
+              </td>
+            );
+          } catch (err) {
+            logger.error('ui', 'DataTable: Error rendering column', err, {
+              columnKey: column.key,
+            });
+            return (
+              <td
+                key={`${key}-${column.key}`}
+                className={cn(
+                  spacing.cell.px,
+                  spacing.row.py,
+                  column.hiddenOnMobile && 'hidden sm:table-cell',
+                )}
+              >
+                <span className={statusColor.text.error}>{t('status.error')}</span>
+              </td>
+            );
+          }
+        })}
+        {actions ? (
+          <td className={cn(spacing.cell.px, spacing.row.py, 'text-right')}>
+            {((): React.ReactNode => {
+              try {
+                return actions(item);
+              } catch (err) {
+                logger.error('ui', 'DataTable: Error rendering actions', err);
+                return null;
+              }
+            })()}
+          </td>
+        ) : null}
+      </tr>
+    );
+  } catch (err) {
+    logger.error('ui', 'DataTable: Error rendering row', err);
+    return null;
+  }
+}
+
+// The compiler cannot lower a computed key in a destructuring pattern.
+function withFilter(
+  filters: Record<string, string>,
+  key: string,
+  value: string,
+): Record<string, string> {
+  if (value === '') {
+    const { [key]: _, ...rest } = filters;
+    return rest;
+  }
+  return { ...filters, [key]: value };
+}
+
 /**
  * Generic table component with search, sorting, and expandable row support.
  * Fixes #680: Added error handling and null checks for safe rendering
@@ -131,149 +345,43 @@ export function DataTable<T>({
   const [sortDirection, setSortDirection] = useState<SortDirection>(null);
   const [activeFilters, setActiveFilters] = useState<Record<string, string>>({});
   const [showFilters, setShowFilters] = useState(false);
-  const [renderError, setRenderError] = useState<Error | null>(null);
 
-  const handleSort = useCallback(
-    (key: string) => {
-      if (sortKey === key) {
-        // Cycle through: asc -> desc -> null
-        if (sortDirection === 'asc') {
-          setSortDirection('desc');
-        } else if (sortDirection === 'desc') {
-          setSortDirection(null);
-          setSortKey(null);
-        }
-      } else {
-        setSortKey(key);
-        setSortDirection('asc');
+  const handleSort = (key: string): void => {
+    if (sortKey === key) {
+      // Cycle through: asc -> desc -> null
+      if (sortDirection === 'asc') {
+        setSortDirection('desc');
+      } else if (sortDirection === 'desc') {
+        setSortDirection(null);
+        setSortKey(null);
       }
-    },
-    [sortKey, sortDirection],
-  );
+    } else {
+      setSortKey(key);
+      setSortDirection('asc');
+    }
+  };
 
-  const handleFilterChange = useCallback((key: string, value: string) => {
-    setActiveFilters((prev) => {
-      if (value === '') {
-        const { [key]: _, ...rest } = prev;
-        return rest;
-      }
-      return { ...prev, [key]: value };
-    });
-  }, []);
+  const handleFilterChange = (key: string, value: string): void => {
+    setActiveFilters((prev) => withFilter(prev, key, value));
+  };
 
-  const clearFilters = useCallback(() => {
+  const clearFilters = (): void => {
     setActiveFilters({});
     setSearchQuery('');
-  }, []);
+  };
 
-  const filteredAndSortedData = useMemo(() => {
-    // Fixes #680: Add null checks and error handling
-    try {
-      if (!Array.isArray(data)) {
-        logger.error('ui', 'DataTable: data prop is not an array', undefined, { data });
-        return [];
-      }
-
-      let result = [...data];
-
-      // Apply search filter
-      if (searchQuery && searchKeys && searchKeys.length > 0) {
-        const query = searchQuery.toLowerCase();
-        result = result.filter((item) => {
-          if (!item) {
-            return false; // Null check
-          }
-          return searchKeys.some((key) => {
-            const column = columns.find((c) => c.key === key);
-            if (column) {
-              try {
-                const value = column.accessor(item);
-                return value?.toString().toLowerCase().includes(query);
-              } catch (err) {
-                logger.error('ui', 'DataTable: Error accessing column value', err);
-                return false;
-              }
-            }
-            return false;
-          });
-        });
-      }
-
-      // Apply column filters
-      for (const [key, filterValue] of Object.entries(activeFilters)) {
-        if (filterValue) {
-          const column = columns.find((c) => c.key === key);
-          if (column) {
-            result = result.filter((item) => {
-              if (!item) {
-                return false; // Null check
-              }
-              try {
-                const value = column.accessor(item);
-                return value?.toString().toLowerCase().includes(filterValue.toLowerCase());
-              } catch (err) {
-                logger.error('ui', 'DataTable: Error filtering column value', err);
-                return false;
-              }
-            });
-          }
-        }
-      }
-
-      // Apply sorting
-      if (sortKey && sortDirection) {
-        const column = columns.find((c) => c.key === sortKey);
-        if (column) {
-          result.sort((a, b) => {
-            if (!(a && b)) {
-              return 0; // Null checks
-            }
-            try {
-              const aVal = column.accessor(a);
-              const bVal = column.accessor(b);
-
-              // Handle nulls
-              if (aVal === null && bVal === null) {
-                return 0;
-              }
-              if (aVal === null) {
-                return sortDirection === 'asc' ? 1 : -1;
-              }
-              if (bVal === null) {
-                return sortDirection === 'asc' ? -1 : 1;
-              }
-
-              // Compare values
-              if (typeof aVal === 'number' && typeof bVal === 'number') {
-                return sortDirection === 'asc' ? aVal - bVal : bVal - aVal;
-              }
-
-              const strA = String(aVal).toLowerCase();
-              const strB = String(bVal).toLowerCase();
-              const comparison = strA.localeCompare(strB, undefined, {
-                numeric: true,
-              });
-              return sortDirection === 'asc' ? comparison : -comparison;
-            } catch (err) {
-              logger.error('ui', 'DataTable: Error sorting data', err);
-              return 0;
-            }
-          });
-        }
-      }
-
-      return result;
-    } catch (err) {
-      logger.error('ui', 'DataTable: Error in filteredAndSortedData', err);
-      setRenderError(err instanceof Error ? err : new Error(String(err)));
-      return [];
-    }
-  }, [data, searchQuery, searchKeys, activeFilters, sortKey, sortDirection, columns]);
+  const { rows: filteredAndSortedData, error: filterError } = filterAndSortRows(data, columns, {
+    searchQuery,
+    searchKeys,
+    activeFilters,
+    sortKey,
+    sortDirection,
+  });
 
   const hasActiveFilters = searchQuery !== '' || Object.keys(activeFilters).length > 0;
 
   // Fixes #680: Show error state if error prop is provided or render error occurred
-  const displayError = error || renderError?.message;
+  const displayError = error || filterError?.message;
 
   return (
     <div className="stack-sm">
@@ -477,78 +585,9 @@ export function DataTable<T>({
                 </td>
               </tr>
             ) : (
-              filteredAndSortedData.map((item) => {
-                // Fixes #680: Add null checks for safe rendering
-                if (!item) {
-                  logger.warn('ui', 'DataTable: Encountered null/undefined item in data');
-                  return null;
-                }
-
-                try {
-                  const key = keyExtractor(item);
-                  const expanded = isExpanded?.(item) ?? false;
-
-                  return (
-                    <tr
-                      key={key}
-                      className={cn(
-                        'border-b border-surface-border/50',
-                        onRowClick && 'cursor-pointer hover:bg-surface-hover',
-                        expanded && 'bg-surface-hover/50',
-                      )}
-                      onClick={onRowClick ? (): void => onRowClick(item) : undefined}
-                    >
-                      {columns.map((column) => {
-                        try {
-                          return (
-                            <td
-                              key={`${key}-${column.key}`}
-                              className={cn(
-                                spacing.cell.px,
-                                spacing.row.py,
-                                column.hiddenOnMobile && 'hidden sm:table-cell',
-                              )}
-                            >
-                              {column.render ? column.render(item) : (column.accessor(item) ?? '-')}
-                            </td>
-                          );
-                        } catch (err) {
-                          logger.error('ui', 'DataTable: Error rendering column', err, {
-                            columnKey: column.key,
-                          });
-                          return (
-                            <td
-                              key={`${key}-${column.key}`}
-                              className={cn(
-                                spacing.cell.px,
-                                spacing.row.py,
-                                column.hiddenOnMobile && 'hidden sm:table-cell',
-                              )}
-                            >
-                              <span className={statusColor.text.error}>{t('status.error')}</span>
-                            </td>
-                          );
-                        }
-                      })}
-                      {actions ? (
-                        <td className={cn(spacing.cell.px, spacing.row.py, 'text-right')}>
-                          {((): React.ReactNode => {
-                            try {
-                              return actions(item);
-                            } catch (err) {
-                              logger.error('ui', 'DataTable: Error rendering actions', err);
-                              return null;
-                            }
-                          })()}
-                        </td>
-                      ) : null}
-                    </tr>
-                  );
-                } catch (err) {
-                  logger.error('ui', 'DataTable: Error rendering row', err);
-                  return null;
-                }
-              })
+              filteredAndSortedData.map((item) =>
+                renderRow(item, { columns, keyExtractor, isExpanded, onRowClick, actions, t }),
+              )
             )}
           </tbody>
         </table>
