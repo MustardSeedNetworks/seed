@@ -248,3 +248,40 @@ convention.
 `flow_records.version` became `format` (migration `00021`): `netflow5`,
 `netflow9`, `ipfix` or `sflow5`. sFlow v5 and NetFlow v5 share version 5, so
 the number alone could not say which protocol a row came from.
+
+## Amendment 2026-10-05: the microburst listener (P-A6, seed#3029)
+
+`internal/listener/microburst` measures sub-second saturation on the probe's
+own link. It is opt-in (`SEED_MICROBURST_IFACE` names the interface), because
+it reads every frame on that link, and it registers at the Pro tier like the
+flow collector.
+
+**It captures; it does not poll.** The 2026-05-29 design polled
+`ifHCInOctets` at 100 ms and 10 ms. Agents refresh those counters every few
+seconds (net-snmp 5.9.4 every ~3 s, measured in #3029), so a short poll reads
+zero and then one jump far above line rate. The owner chose capture-timed bins
+instead (OA-11, 2026-10-04):
+
+- The listener opens the interface through the `capture.Opener` port with a
+  64-byte snaplen. It reads only each frame's source MAC and original length.
+  A frame sourced from the interface's own MAC is outbound, and every other
+  frame is inbound.
+- Each frame occupies the wire for its serialization time at the negotiated
+  link speed: the captured length padded to the 60-byte minimum, plus 24 bytes
+  of FCS, preamble and inter-frame gap. It starts at its capture timestamp or
+  when the previous frame in that direction finished, whichever is later. A
+  batch of frames the kernel stamped together, or one TSO/GRO super-frame, is
+  spread at line rate instead of piling into one bin, so no bin reads above
+  100 %.
+- Wire time is summed into 1 ms bins per direction. Two or more consecutive
+  bins at or above 90 % of line rate are one row in `microburst_events`, with
+  `sampling_mode` `capture-1ms`. A single bin can be a timestamping artefact
+  and is not reported.
+- Like flows, bursts bypass `Sink` through their own batch port,
+  `microburst.Store`. Rows age out on the metrics retention window.
+
+It does not measure a SPAN port: a mirror carries both directions of another
+port as inbound frames, which this model would sum against one direction's
+capacity. Frames the kernel drops under load are not counted, so a burst can be
+missed, but never invented. Estate-wide utilization stays with the SNMP
+pipeline ([ADR-0033](0033-interface-counter-pipeline.md)).

@@ -7,6 +7,8 @@ import (
 	"github.com/MustardSeedNetworks/seed/internal/database"
 	"github.com/MustardSeedNetworks/seed/internal/database/dbtest"
 	"github.com/MustardSeedNetworks/seed/internal/engine"
+	"github.com/MustardSeedNetworks/seed/internal/listener/microburst"
+	"github.com/MustardSeedNetworks/seed/internal/netif"
 )
 
 // freeAddr returns a free UDP loopback address as a "host:port"
@@ -95,5 +97,25 @@ func TestInitListeners_BothEnvVarsRegistersBoth(t *testing.T) {
 	}
 	if !names["syslog-udp"] || !names["snmp-trap"] {
 		t.Errorf("expected both listeners registered, got %v", names)
+	}
+}
+
+// An interface the manager does not know cannot be measured: nothing is
+// registered and the server still starts.
+func TestInitListeners_MicroburstUnknownInterfaceRegistersNothing(t *testing.T) {
+	t.Setenv("SEED_SYSLOG_BIND", "")
+	t.Setenv("SEED_SNMP_TRAP_BIND", "")
+	t.Setenv("SEED_MICROBURST_IFACE", "no-such-iface0")
+
+	mgr, err := netif.NewManager("")
+	if err != nil {
+		t.Fatalf("netif manager: %v", err)
+	}
+	s := &Server{engines: engine.NewRegistry(nil), netMgr: mgr}
+	s.initListeners(newTestDB(t))
+	for _, e := range s.engines.Engines() {
+		if e.Name() == microburst.Name {
+			t.Fatalf("microburst registered for an unknown interface")
+		}
 	}
 }

@@ -28,6 +28,10 @@ const (
 	// (90 days). Active anomalies are kept indefinitely (ADR-0021); only resolved
 	// instances age out, bounding table growth on appliances.
 	defaultAnomalyResolvedDays = 90
+
+	// defaultMicroburstDays is the default retention period for microbursts
+	// (3 months, as metrics).
+	defaultMicroburstDays = 90
 )
 
 // SQL query fragment constants.
@@ -73,6 +77,9 @@ type RetentionPolicy struct {
 	// older than this window; when 0 (Free/Starter) no census is written and any
 	// existing rollups are purged in full, mirroring probe_rollups_daily.
 	AnomalyRollupDailyDays int
+
+	// MicroburstDays is how many days to keep microbursts (0 = forever)
+	MicroburstDays int
 }
 
 // DefaultRetentionPolicy returns the default retention policy.
@@ -84,6 +91,7 @@ func DefaultRetentionPolicy() RetentionPolicy {
 		AuditLogDays:        defaultAuditLogDays,
 		SpeedTestDays:       defaultSpeedTestDays,
 		AnomalyResolvedDays: defaultAnomalyResolvedDays,
+		MicroburstDays:      defaultMicroburstDays,
 	}
 }
 
@@ -97,6 +105,7 @@ type CleanupResult struct {
 	AnomaliesResolvedDeleted int64
 	AnomalyRollupsCensused   int64
 	AnomalyRollupsDeleted    int64
+	MicroburstsDeleted       int64
 	Duration                 time.Duration
 }
 
@@ -147,6 +156,7 @@ func (db *DB) RunCleanup(ctx context.Context, policy RetentionPolicy) (*CleanupR
 		{policy.AuditLogDays, db.deleteAuditLogsOlderThan, "audit logs"},
 		{policy.SpeedTestDays, db.deleteSpeedTestsOlderThan, "speed tests"},
 		{policy.AnomalyResolvedDays, db.cleanupResolvedAnomalies, "resolved anomalies"},
+		{policy.MicroburstDays, db.Microbursts().DeleteOlderThan, "microbursts"},
 	}
 
 	results := make([]int64, len(tasks))
@@ -164,6 +174,7 @@ func (db *DB) RunCleanup(ctx context.Context, policy RetentionPolicy) (*CleanupR
 	result.AuditLogsDeleted = results[3]
 	result.SpeedTestsDeleted = results[4]
 	result.AnomaliesResolvedDeleted = results[5]
+	result.MicroburstsDeleted = results[6]
 	result.Duration = time.Since(start)
 
 	return result, nil

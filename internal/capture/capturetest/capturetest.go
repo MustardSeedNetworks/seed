@@ -1,5 +1,6 @@
-// Package capturetest provides a capture.Opener that behaves like libpcap on a
-// quiet Linux interface, for testing that a capture can always be stopped.
+// Package capturetest provides capture.Openers for tests. QuietOpener behaves
+// like libpcap on a quiet Linux interface, for testing that a capture can
+// always be stopped. ReplayOpener replays frames with their capture times.
 package capturetest
 
 import (
@@ -84,3 +85,57 @@ func (h *quietHandle) Close() {
 func (h *quietHandle) SetBPFFilter(string) error    { return nil }
 func (h *quietHandle) LinkType() layers.LinkType    { return h.linkType }
 func (h *quietHandle) WritePacketData([]byte) error { return nil }
+
+// Frame is one captured frame and its capture metadata.
+type Frame struct {
+	Data []byte
+	Info gopacket.CaptureInfo
+}
+
+// ReplayOpener opens handles that yield Frames in order, then time out on
+// every read until closed, like a link that has gone quiet.
+type ReplayOpener struct {
+	LinkType layers.LinkType
+	Frames   []Frame
+}
+
+// OpenLive returns a handle replaying Frames.
+func (o *ReplayOpener) OpenLive(_ string, _ int32, _ bool, timeout time.Duration) (capture.Handle, error) {
+	if timeout <= 0 {
+		return nil, capture.ErrNoReadTimeout
+	}
+	return &replayHandle{linkType: o.LinkType, frames: o.Frames, timeout: timeout}, nil
+}
+
+type replayHandle struct {
+	mu       sync.Mutex
+	linkType layers.LinkType
+	frames   []Frame
+	timeout  time.Duration
+	closed   bool
+}
+
+func (h *replayHandle) ReadPacketData() ([]byte, gopacket.CaptureInfo, error) {
+	h.mu.Lock()
+	defer h.mu.Unlock()
+	if h.closed {
+		return nil, gopacket.CaptureInfo{}, io.EOF
+	}
+	if len(h.frames) > 0 {
+		f := h.frames[0]
+		h.frames = h.frames[1:]
+		return f.Data, f.Info, nil
+	}
+	time.Sleep(h.timeout)
+	return nil, gopacket.CaptureInfo{}, capture.ErrTimeout
+}
+
+func (h *replayHandle) Close() {
+	h.mu.Lock()
+	defer h.mu.Unlock()
+	h.closed = true
+}
+
+func (h *replayHandle) SetBPFFilter(string) error    { return nil }
+func (h *replayHandle) LinkType() layers.LinkType    { return h.linkType }
+func (h *replayHandle) WritePacketData([]byte) error { return nil }

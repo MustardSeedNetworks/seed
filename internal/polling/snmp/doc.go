@@ -10,11 +10,11 @@
 // internal/protocols/snmp for the wire-level work.
 //
 // V1.0 collectors: sys_info, if_table, lldp, arp, fdb, routing,
-// host_resources, bgp4_mib, microburst_counters. Each emits some
+// host_resources, bgp4_mib. Each emits some
 // combination of metrics, events, and topology observations.
 //
 // V1.0 NMS expansion — Stage A0 scaffold (2026-05-30). Absorbs
-// internal/services/estatepoll/, internal/services/servermon/, and
-// the SNMP-polling half of internal/services/microburst/ during
-// Stage A3.
+// internal/services/estatepoll/ and internal/services/servermon/
+// during Stage A3. Microbursts are measured by capture, not polling
+// (internal/listener/microburst).
 package snmp
