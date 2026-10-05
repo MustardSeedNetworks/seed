@@ -69,6 +69,7 @@ import (
 	"github.com/MustardSeedNetworks/seed/internal/profiles/catalog"
 	"github.com/MustardSeedNetworks/seed/internal/scheduler"
 	securitysettings "github.com/MustardSeedNetworks/seed/internal/security/settings"
+	"github.com/MustardSeedNetworks/seed/internal/security/vulntriage"
 	"github.com/MustardSeedNetworks/seed/internal/settings/management"
 	"github.com/MustardSeedNetworks/seed/internal/settings/persistence"
 	"github.com/MustardSeedNetworks/seed/internal/system"
@@ -283,6 +284,7 @@ type Server struct {
 	exportService      *export.Service             // Diagnostic-export use-case (ADR-0020)
 	logQuery           *logquery.Service           // Log-query use-case (ADR-0020)
 	historyQueries     *history.Service            // Probe/anomaly history read use-case (#175, ADR-0020)
+	vulnTriage         *vulntriage.Service         // Vulnerability-triage use-case (#899, ADR-0020)
 	healthMonitoring   *monitoring.Service         // Health-monitoring use-case (ADR-0020)
 	healthSettings     *healthsettings.Service     // Health-checks settings use-case (ADR-0020)
 	engineStatus       *enginestatus.Service       // Engine-status use-case (ADR-0020)
@@ -894,6 +896,7 @@ func (s *Server) initDiscoveryUseCases() {
 	s.exportService = export.NewService(serverExportSources{s: s})
 	s.logQuery = app.NewLogQuery(s.db)
 	s.historyQueries = app.NewHistory(s.db)
+	s.vulnTriage = app.NewVulnTriage(s.db)
 	s.pollingTargets = app.NewPollingTargets(s.db, s.pollingTargetLimit)
 	// The credential vault needs the keyring that owns the DEK. Without a
 	// config there is none, so the use-case stays nil and its handlers report
@@ -906,19 +909,6 @@ func (s *Server) initDiscoveryUseCases() {
 		}
 	}
 	s.alertInbox = app.NewAlertInbox(s.db)
-}
-
-// initHealthUseCases wires the health-monitoring use-case (ADR-0020) from the
-// composition root over the server's lazy accessor for the unified anomaly store
-// (the only remaining concern after the dead health_check_results read-path was
-// deleted — ADR-0026), so a nil or later-set store (the test harness) is honored.
-func (s *Server) initHealthUseCases() {
-	s.healthMonitoring = app.NewHealthMonitoring(s.anomalyStore, s.anomalyEngine)
-	s.healthSettings = app.NewHealthSettings(
-		s.healthProbeRepo, s.rescheduleProbeEngine,
-		s.config, s.configPath, s.dnsTester, s.speedtestTester,
-		s.healthSettingsRepo,
-	)
 }
 
 // healthProbeRepo is the probes-table accessor the health-settings use-case reads

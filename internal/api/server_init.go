@@ -3,7 +3,7 @@ package api
 // server_init.go contains the per-subsystem initialisation helpers that
 // NewServer composes: DNS/discovery, target networks, database +
 // migration, MIB DB, SSE + log broadcaster, discovery pipeline, vulnerability
-// scanner, CORS origin policy, and the retention engine.
+// scanner, CORS origin policy, the retention engine, and the health use-cases.
 
 import (
 	"context"
@@ -442,4 +442,17 @@ func (a licenseTierAdapter) GetTier() license.Tier {
 		return license.TierFree
 	}
 	return license.EffectiveTier(a.lm)
+}
+
+// initHealthUseCases wires the health-monitoring use-case (ADR-0020) from the
+// composition root over the server's lazy accessor for the unified anomaly store
+// (the only remaining concern after the dead health_check_results read-path was
+// deleted — ADR-0026), so a nil or later-set store (the test harness) is honored.
+func (s *Server) initHealthUseCases() {
+	s.healthMonitoring = app.NewHealthMonitoring(s.anomalyStore, s.anomalyEngine)
+	s.healthSettings = app.NewHealthSettings(
+		s.healthProbeRepo, s.rescheduleProbeEngine,
+		s.config, s.configPath, s.dnsTester, s.speedtestTester,
+		s.healthSettingsRepo,
+	)
 }
