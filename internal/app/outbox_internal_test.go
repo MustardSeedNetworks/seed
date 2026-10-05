@@ -1,4 +1,4 @@
-package api
+package app
 
 import (
 	"context"
@@ -47,7 +47,7 @@ func TestOutboxRelayEndToEnd(t *testing.T) {
 		}
 	}))
 
-	relay := outbox.NewRelay(newDBOutboxStore(db), bus, slog.New(slog.DiscardHandler))
+	relay := outbox.NewRelay(NewOutboxStore(db), bus, slog.New(slog.DiscardHandler))
 
 	// First drain delivers it.
 	if n, err := relay.Drain(ctx); err != nil || n != 1 {

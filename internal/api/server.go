@@ -668,7 +668,7 @@ func (s *Server) initAlertPipelines(db *database.DB) {
 	logger := logging.GetLogger()
 	settings := db.Settings()
 	suppressions := alertpipeline.NewDBSuppressionStore(db.AlertSuppressions())
-	alerts := s.alertStore(db, logger)
+	alerts := s.useAlertDelivery(app.NewAlertDelivery(db, s.config, logger))
 
 	if p, err := alertpipeline.NewListenerPipeline(alertpipeline.ListenerConfig{
 		Events:       db.ListenerEvents(),
@@ -695,7 +695,7 @@ func (s *Server) initAlertPipelines(db *database.DB) {
 		logger.Warn("observation alert pipeline registry registration failed", "error", regErr)
 	}
 
-	s.initAlertEscalation(db, logger)
+	s.registerAlertEscalator(app.NewAlertEscalator(db, s.alertDelivery, logger))
 }
 
 // Service accessors — the in-package read interface and the lazy method
