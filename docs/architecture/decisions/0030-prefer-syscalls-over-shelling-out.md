@@ -72,9 +72,13 @@ env -i ./probe  AF_INET NET_RT_FLAGS RTF_LLINFO -> 1292 bytes
 So a measurement taken under `go test` is not evidence about what the shipped
 daemon can see.
 
-**macOS IPv6.** `ndp_darwin.go` still shells out, and the measurement above says
-it probably need not. Reconciling the RIB's 10 resolved addresses against
-`ndp -an`'s 17 rows is #2336, not a claim this ADR should make either way.
+**macOS IPv6.** `ndp_darwin.go` is native as of #2336, read the way `ndp`
+itself reads it: `NET_RT_FLAGS`/`RTF_LLINFO` on `AF_INET6` lists the entries,
+and `SIOCGNBRINFO_IN6` supplies each one's state and router flag. Reconciled
+on Darwin 27.2 on 2026-10-05: the RIB's 23 messages against `ndp -an`'s 22
+rows are `::1` (no link gateway), 14 of the host's own addresses
+(`RTF_LOCAL`, printed `permanent`, which the reader now drops as Linux never
+reports them) and 8 neighbours that match row for row.
 
 **Windows.** `x/sys/windows` binds `GetIpForwardTable`, `GetIpInterfaceTable`
 and `GetUnicastIpAddressTable`, but not `GetIpNetTable2`. Using it means a

@@ -2,125 +2,180 @@
 
 package enumerate
 
-import "testing"
+import (
+	"net"
+	"syscall"
+	"testing"
+	"unsafe"
 
-// Captured verbatim from `ndp -an` on macOS 27 (Darwin 27.0.0). Real output
-// rather than an invented shape: the unpadded MAC, the "(incomplete)" marker
-// and the %zone suffix are all things this parser has to survive, and all
-// three appear here.
-const realNDPTable = `Neighbor                                Linklayer Address  Netif Expire    St Flgs Prbs
-fe80::1%lo0                             (incomplete)         lo0 permanent R      
-fe80::60:3651:1cc2:c27c%en0             ea:3b:2d:35:63:81    en0 11s       R      
-fe80::2c0:17ff:fe57:17e%en0             0:c0:17:57:1:7e      en0 4h19m27s  S      
-fe80::48f:f729:535d:eeab%en0            (incomplete)         en0 expired   N      
-fe80::38f0:5aff:fe8b:c504%awdl0         3a:f0:5a:8b:c5:4   awdl0 permanent R      
-`
+	"golang.org/x/net/route"
+)
 
-func TestParseNDPTable_ReadsRealOutput(t *testing.T) {
-	got := parseNDPTable(realNDPTable, "en0")
+// neighbourRoute builds the shape the kernel hands back for one IPv6
+// neighbour-cache entry, so the conversion can be exercised without a
+// neighbour table in front of it.
+func neighbourRoute(ip string, zone int, flags int, mac []byte) *route.RouteMessage {
+	dst := &route.Inet6Addr{ZoneID: zone}
+	copy(dst.IP[:], net.ParseIP(ip).To16())
 
-	if len(got) != 3 {
-		t.Fatalf("neighbours = %d, want 3 on en0: %+v", len(got), got)
-	}
-
-	reachable, ok := got["fe80::60:3651:1cc2:c27c"]
-	if !ok {
-		t.Fatalf("neighbour missing; got %+v", got)
-	}
-	if reachable.MAC != "ea:3b:2d:35:63:81" {
-		t.Errorf("MAC = %q, want ea:3b:2d:35:63:81", reachable.MAC)
-	}
-	if reachable.State != "REACHABLE" {
-		t.Errorf("State = %q, want REACHABLE", reachable.State)
-	}
-
-	// ndp does not zero-pad: 0:c0:17:57:1:7e must widen to a valid MAC.
-	stale := got["fe80::2c0:17ff:fe57:17e"]
-	if stale == nil || stale.MAC != "00:c0:17:57:01:7e" {
-		t.Errorf("unpadded MAC not normalised: %+v", stale)
-	}
-	if stale != nil && stale.State != "STALE" {
-		t.Errorf("State = %q, want STALE", stale.State)
-	}
-
-	// "(incomplete)" is not a link-layer address.
-	incomplete := got["fe80::48f:f729:535d:eeab"]
-	if incomplete == nil || incomplete.MAC != "" {
-		t.Errorf("incomplete entry should carry no MAC: %+v", incomplete)
+	return &route.RouteMessage{
+		Flags: flags,
+		Index: 1,
+		Addrs: []route.Addr{
+			syscall.RTAX_DST:     dst,
+			syscall.RTAX_GATEWAY: &route.LinkAddr{Index: 12, Name: "en0", Addr: mac},
+		},
 	}
 }
 
-func TestParseNDPTable_FiltersByInterface(t *testing.T) {
-	// awdl0 and lo0 entries must not leak into an en0 scan.
-	for _, n := range parseNDPTable(realNDPTable, "en0") {
-		if n.IPv6 == "fe80::38f0:5aff:fe8b:c504" || n.IPv6 == "fe80::1" {
-			t.Errorf("entry from another interface leaked: %s", n.IPv6)
-		}
-	}
+func TestNDPRowFromRoute(t *testing.T) {
+	// RFC 7042 documentation address; the values only have to round-trip.
+	mac := []byte{0x00, 0x00, 0x5e, 0x00, 0x53, 0x01}
 
-	if got := parseNDPTable(realNDPTable, "awdl0"); len(got) != 1 {
-		t.Errorf("awdl0 neighbours = %d, want 1", len(got))
-	}
-}
-
-func TestParseNDPTable_StripsTheZoneFromTheAddress(t *testing.T) {
-	for ip := range parseNDPTable(realNDPTable, "en0") {
-		if len(ip) > 0 && ip[len(ip)-1] == '0' && ip != "fe80::2c0:17ff:fe57:17e" {
-			continue
-		}
-		if got := parseNDPTable(realNDPTable, "en0")[ip]; got != nil && got.IPv6 != ip {
-			t.Errorf("key %q does not match IPv6 %q", ip, got.IPv6)
-		}
-	}
-	// The %en0 suffix must not survive into the address.
-	if _, bad := parseNDPTable(realNDPTable, "en0")["fe80::60:3651:1cc2:c27c%en0"]; bad {
-		t.Error("zone suffix left on the address")
-	}
-}
-
-// The scanner must read the live table, not return an empty map as it did
-// before #2089. Asserted against the machine's own count so it cannot pass by
-// returning something plausible but fixed.
-func TestGetNeighbors_ReadsTheLiveTable(t *testing.T) {
-	ns := NewNDPScanner("")
-	live := ns.GetNeighbors()
-
-	if len(live) == 0 {
-		t.Skip("no IPv6 neighbours on this host; nothing to assert against")
-	}
-	for _, n := range live {
-		if n.IPv6 == "" {
-			t.Error("neighbour with no address")
-		}
-		if n.State == "" {
-			t.Error("neighbour with no state")
-		}
-	}
-}
-
-// TestParseNDPLinklayerRejectsPlaceholder covers #2337. macOS prints
-// 02:00:00:00:00:00 for an entry whose link layer never resolved -- the
-// locally-administered bit over an otherwise empty address. It parses as a
-// MAC, so unlike "(incomplete)" it used to survive the parser and reach the
-// operator as a device named after the placeholder.
-func TestParseNDPLinklayerRejectsPlaceholder(t *testing.T) {
 	tests := []struct {
-		name  string
-		field string
-		want  string
+		name    string
+		msg     *route.RouteMessage
+		want    ndpRow
+		wantRow bool
 	}{
-		{"macOS unresolved placeholder", "02:00:00:00:00:00", ""},
-		{"all-zero address", "00:00:00:00:00:00", ""},
-		{"unresolved marker", "(incomplete)", ""},
-		{"real unpadded address", "0:c0:17:53:62:6", "00:c0:17:53:62:06"},
-		{"real locally-administered address", "02:00:00:00:00:01", "02:00:00:00:00:01"},
+		{
+			name: "resolved link-local neighbour",
+			msg:  neighbourRoute("fe80::1865:2d21:d7d8:673e", 12, 0, mac),
+			want: ndpRow{
+				ip:    net.ParseIP("fe80::1865:2d21:d7d8:673e"),
+				zone:  12,
+				iface: "en0",
+				mac:   "00:00:5e:00:53:01",
+			},
+			wantRow: true,
+		},
+		{
+			// ndp prints "(incomplete)": the kernel is still resolving it.
+			name:    "unresolved neighbour keeps its row with no MAC",
+			msg:     neighbourRoute("2001:db8::7", 0, 0, nil),
+			want:    ndpRow{ip: net.ParseIP("2001:db8::7"), iface: "en0"},
+			wantRow: true,
+		},
+		{
+			// #2337: the placeholder a filtered reader is handed is not a MAC.
+			name:    "placeholder link address",
+			msg:     neighbourRoute("fe80::2", 12, 0, []byte{0x02, 0, 0, 0, 0, 0}),
+			want:    ndpRow{ip: net.ParseIP("fe80::2"), zone: 12, iface: "en0"},
+			wantRow: true,
+		},
+		{
+			// ndp prints these "permanent"; they are this host, not a neighbour.
+			name: "host's own address",
+			msg:  neighbourRoute("fe80::1894:73c5:7543:b644", 12, syscall.RTF_LOCAL|syscall.RTF_LLINFO, mac),
+		},
+		{
+			name: "multicast group",
+			msg:  neighbourRoute("ff02::fb", 12, 0, []byte{0x33, 0x33, 0, 0, 0, 0xfb}),
+		},
+		{
+			// ::1 is in the table with an address, not a link, as its gateway.
+			name: "gateway is not a link address",
+			msg: &route.RouteMessage{Addrs: []route.Addr{
+				syscall.RTAX_DST:     &route.Inet6Addr{IP: [16]byte{15: 1}},
+				syscall.RTAX_GATEWAY: &route.Inet6Addr{IP: [16]byte{15: 1}},
+			}},
+		},
+		{
+			name: "destination is not IPv6",
+			msg: &route.RouteMessage{Addrs: []route.Addr{
+				syscall.RTAX_DST:     &route.Inet4Addr{IP: [4]byte{192, 0, 2, 1}},
+				syscall.RTAX_GATEWAY: &route.LinkAddr{Addr: mac},
+			}},
+		},
+		{
+			name: "truncated message",
+			msg:  &route.RouteMessage{Addrs: []route.Addr{&route.Inet6Addr{}}},
+		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := parseNDPLinklayer(tt.field); got != tt.want {
-				t.Errorf("parseNDPLinklayer(%q) = %q, want %q", tt.field, got, tt.want)
+			got, ok := ndpRowFromRoute(tt.msg)
+			if ok != tt.wantRow {
+				t.Fatalf("row = %v, want %v (%+v)", ok, tt.wantRow, got)
+			}
+			if !ok {
+				return
+			}
+			if !got.ip.Equal(tt.want.ip) || got.zone != tt.want.zone || got.iface != tt.want.iface ||
+				got.mac != tt.want.mac {
+				t.Errorf("got %+v, want %+v", got, tt.want)
 			}
 		})
+	}
+}
+
+func TestNDPLinkLayer(t *testing.T) {
+	tests := []struct {
+		name string
+		addr []byte
+		want string
+	}{
+		{"macOS unresolved placeholder", []byte{0x02, 0, 0, 0, 0, 0}, ""},
+		{"all-zero address", []byte{0, 0, 0, 0, 0, 0}, ""},
+		{"no address", nil, ""},
+		{"not Ethernet length", []byte{0x00, 0xc0, 0x17}, ""},
+		{"real address", []byte{0x00, 0xc0, 0x17, 0x53, 0x62, 0x06}, "00:c0:17:53:62:06"},
+		{"real locally-administered address", []byte{0x02, 0, 0, 0, 0, 0x01}, "02:00:00:00:00:01"},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := ndpLinkLayer(tt.addr); got != tt.want {
+				t.Errorf("ndpLinkLayer(%v) = %q, want %q", tt.addr, got, tt.want)
+			}
+		})
+	}
+}
+
+func TestND6StateName(t *testing.T) {
+	tests := []struct {
+		state int32
+		want  string
+	}{
+		{nd6LLInfoIncomplete, "INCOMPLETE"},
+		{nd6LLInfoReachable, "REACHABLE"},
+		{nd6LLInfoStale, "STALE"},
+		{nd6LLInfoDelay, "DELAY"},
+		{nd6LLInfoProbe, "PROBE"},
+		{-2, "UNKNOWN"}, // ND6_LLINFO_NOSTATE
+	}
+
+	for _, tt := range tests {
+		if got := nd6StateName(tt.state); got != tt.want {
+			t.Errorf("nd6StateName(%d) = %q, want %q", tt.state, got, tt.want)
+		}
+	}
+}
+
+// The ioctl request encodes the struct size, so a layout that drifts from the
+// C struct sends the kernel a request it does not recognise.
+func TestIn6NbrInfoMatchesTheKernelLayout(t *testing.T) {
+	if size := unsafe.Sizeof(in6NbrInfo{}); size != 56 {
+		t.Errorf("sizeof(in6_nbrinfo) = %d, want 56 (LP64)", size)
+	}
+	if siocgnbrinfoIn6 != 0xc038694e {
+		t.Errorf("SIOCGNBRINFO_IN6 = %#x, want 0xc038694e", siocgnbrinfoIn6)
+	}
+}
+
+// The scanner must read the live table, not return an empty map as it did
+// before #2089. Under `go test` macOS may hand the process a filtered table
+// (ADR-0030), so this asserts the read works, not what it finds.
+func TestReadNDPTable_ReadsTheLiveTable(t *testing.T) {
+	live, err := readNDPTable("")
+	if err != nil {
+		t.Fatalf("readNDPTable: %v", err)
+	}
+	for _, n := range live {
+		t.Logf("%-40s %-17s %-10s router=%v", n.IPv6, n.MAC, n.State, n.IsRouter)
+		if n.IPv6 == "" || n.State == "" {
+			t.Errorf("incomplete neighbour %+v", n)
+		}
 	}
 }

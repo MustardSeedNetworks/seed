@@ -2,21 +2,25 @@
 
 package enumerate
 
-// NDP (Neighbor Discovery Protocol) support for macOS is a stub implementation
-// as IPv6 neighbor discovery on macOS is complex and the primary production target is Linux.
+// macOS has no passive NDP listener; the scanner reads the kernel's neighbour
+// cache on demand instead.
 
 import (
-	"context"
+	"encoding/binary"
 	"errors"
+	"fmt"
+	"math"
 	"net"
-	"os/exec"
-	"strings"
+	"syscall"
 	"time"
+	"unsafe"
+
+	"golang.org/x/net/route"
 
 	"github.com/MustardSeedNetworks/seed/internal/logging"
 )
 
-// NDPScanner is a stub for macOS (production target is Linux).
+// NDPScanner reads the IPv6 neighbour cache on macOS.
 type NDPScanner struct {
 	interfaceName string
 	neighbors     map[string]*NDPNeighbor
@@ -39,7 +43,8 @@ func NewNDPScanner(interfaceName string) *NDPScanner {
 	}
 }
 
-// Start is a stub on macOS.
+// Start reports that macOS has no passive NDP listener; GetNeighbors reads the
+// table directly.
 func (ns *NDPScanner) Start() error {
 	return errors.New("IPv6 NDP scanning not implemented on macOS (production target is Linux)")
 }
@@ -54,149 +59,221 @@ func (ns *NDPScanner) IsRunning() bool {
 	return false
 }
 
-// ndpCommandTimeout bounds the ndp call so a hung command cannot stall the
-// scan loop, which runs on a ticker.
-const ndpCommandTimeout = 15 * time.Second
-
 const (
-	// ndpMinFields is the column count of a row carrying no flags:
-	// Neighbor, Linklayer, Netif, Expire, St.
-	ndpMinFields = 5
-	// ndpFlagsField is the index of the Flgs column, present only on rows
-	// that have flags at all.
-	ndpFlagsField = 5
-	// macOctets is how many octets a link-layer address must split into.
+	// macOctets is the length of an Ethernet link-layer address.
 	macOctets = 6
 	// locallyAdministeredBit is the low-order bit of a MAC's first octet.
 	// macOS sets it alone to stand in for an address it never resolved.
 	locallyAdministeredBit = 0x02
 )
 
-// GetNeighbors returns the IPv6 neighbours read from the kernel's table.
-//
-// This used to return an empty map (#2089). It shells out where the ARP scanner
-// reads the routing socket, and that asymmetry is no longer justified: the
-// measurement it rested on was taken from a process the Go tool spawned, which
-// macOS answers with placeholder link-layer addresses (#2272). Closing the gap
-// means reconciling what the RIB reports against what `ndp -an` does, which is
-// #2336 rather than a change to make in passing.
-func (ns *NDPScanner) GetNeighbors() map[string]*NDPNeighbor {
-	ctx, cancel := context.WithTimeout(context.Background(), ndpCommandTimeout)
-	defer cancel()
+// in6NbrInfo mirrors struct in6_nbrinfo from <netinet6/nd6.h> on LP64.
+type in6NbrInfo struct {
+	ifname   [syscall.IFNAMSIZ]byte
+	addr     [16]byte
+	asked    int64
+	isRouter int32
+	state    int32
+	expire   int32
+	_        int32 // tail padding to the struct's 8-byte alignment
+}
 
-	out, err := exec.CommandContext(ctx, "ndp", "-an").Output()
+// _IOWR encoding from <sys/ioccom.h>.
+const (
+	iocInOut     = 0xc0000000
+	iocParamMask = 0x1fff
+)
+
+// siocgnbrinfoIn6 is SIOCGNBRINFO_IN6, _IOWR('i', 78, struct in6_nbrinfo).
+// Neither syscall nor x/sys/unix exports it. Built from the struct's size so
+// the request code cannot drift from the layout it describes.
+const siocgnbrinfoIn6 = iocInOut | (unsafe.Sizeof(in6NbrInfo{})&iocParamMask)<<16 | 'i'<<8 | 78
+
+// ND6_LLINFO_* from <netinet6/nd6.h>: the neighbour states the kernel reports.
+const (
+	nd6LLInfoIncomplete = 0
+	nd6LLInfoReachable  = 1
+	nd6LLInfoStale      = 2
+	nd6LLInfoDelay      = 3
+	nd6LLInfoProbe      = 4
+)
+
+// GetNeighbors returns the IPv6 neighbours read from the kernel's table.
+func (ns *NDPScanner) GetNeighbors() map[string]*NDPNeighbor {
+	neighbors, err := readNDPTable(ns.interfaceName)
 	if err != nil {
 		logging.GetLogger().Error("IPv6 neighbour read failed", "error", err)
 
 		return map[string]*NDPNeighbor{}
 	}
 
-	return parseNDPTable(string(out), ns.interfaceName)
-}
-
-// parseNDPTable turns `ndp -an` output into neighbours for one interface.
-//
-// Split from the command so it is testable without a neighbour table in front
-// of it. An empty ifaceName returns every interface's entries.
-func parseNDPTable(out, ifaceName string) map[string]*NDPNeighbor {
-	neighbors := make(map[string]*NDPNeighbor)
-	now := time.Now()
-
-	for i, line := range strings.Split(out, "\n") {
-		if i == 0 {
-			continue // header
-		}
-		fields := strings.Fields(line)
-		// Neighbor, Linklayer, Netif, Expire, St -- and optionally Flgs, Prbs.
-		if len(fields) < ndpMinFields {
-			continue
-		}
-
-		// The address carries its zone as fe80::1%lo0; the zone is the
-		// interface, which is already its own column.
-		addr, _, _ := strings.Cut(fields[0], "%")
-		ip := net.ParseIP(addr)
-		if ip == nil || ip.To4() != nil {
-			continue
-		}
-
-		netif := fields[2]
-		if ifaceName != "" && netif != ifaceName {
-			continue
-		}
-
-		neighbors[ip.String()] = &NDPNeighbor{
-			IPv6: ip.String(),
-			MAC:  parseNDPLinklayer(fields[1]),
-			// The Flgs column carries R for a router; it is absent on rows
-			// that have no flags at all, which is why it is read by index
-			// rather than assumed present.
-			IsRouter: len(fields) > ndpFlagsField && strings.Contains(fields[ndpFlagsField], "R"),
-			State:    ndpStateFromFlag(fields[4]),
-			LastSeen: now,
-		}
-	}
-
 	return neighbors
 }
 
-// parseNDPLinklayer normalises ndp's link-layer column. It prints
-// "(incomplete)" when unresolved and does not zero-pad octets, so
-// 3a:f0:5a:8b:c5:4 has to be widened before [net.ParseMAC] will take it.
-// An address that carries no information is not an address: see #2337.
-func parseNDPLinklayer(field string) string {
-	if strings.HasPrefix(field, "(") {
-		return ""
+// readNDPTable reads the IPv6 neighbour cache the way `ndp -an` does, without
+// running it (#2336, #2530): the routing socket lists the entries, and
+// SIOCGNBRINFO_IN6 supplies each one's state and router flag, which the
+// routing message does not carry. An empty ifaceName returns every
+// interface's entries.
+//
+// Reconciled against `ndp -an` on Darwin 27.2, 2026-10-05: 23 routing
+// messages, 22 `ndp -an` rows. The extra message is ::1, whose gateway is not
+// a link address. Of the 22 rows, 14 are the host's own addresses (RTF_LOCAL,
+// printed "permanent"), which the Linux reader never sees either, and 8 are
+// neighbours, with the same link addresses, states and router flag as ndp.
+func readNDPTable(ifaceName string) (map[string]*NDPNeighbor, error) {
+	rib, err := route.FetchRIB(syscall.AF_INET6, ribTypeFlags, syscall.RTF_LLINFO)
+	if err != nil {
+		return nil, fmt.Errorf("fetch routing table: %w", err)
 	}
 
-	octets := strings.Split(field, ":")
-	if len(octets) != macOctets {
-		return ""
+	msgs, err := route.ParseRIB(ribTypeFlags, rib)
+	if err != nil {
+		return nil, fmt.Errorf("parse routing table: %w", err)
 	}
-	for i, o := range octets {
-		if len(o) == 1 {
-			octets[i] = "0" + o
+
+	fd, err := syscall.Socket(syscall.AF_INET6, syscall.SOCK_DGRAM, 0)
+	if err != nil {
+		return nil, fmt.Errorf("open neighbour query socket: %w", err)
+	}
+	defer func() { _ = syscall.Close(fd) }()
+
+	now := time.Now()
+	neighbors := make(map[string]*NDPNeighbor)
+	for _, msg := range msgs {
+		rm, ok := msg.(*route.RouteMessage)
+		if !ok {
+			continue
+		}
+		row, ok := ndpRowFromRoute(rm)
+		if !ok || (ifaceName != "" && row.iface != ifaceName) {
+			continue
+		}
+
+		n := &NDPNeighbor{
+			IPv6:     row.ip.String(),
+			MAC:      row.mac,
+			State:    "UNKNOWN",
+			LastSeen: now,
+		}
+		// The entry can expire between the two reads; ndp prints such a row
+		// without a state, and so does this.
+		if info, infoErr := neighbourInfo(fd, row); infoErr == nil {
+			n.State = nd6StateName(info.state)
+			n.IsRouter = info.isRouter != 0
+		}
+		neighbors[n.IPv6] = n
+	}
+
+	return neighbors, nil
+}
+
+// ndpRow is one neighbour-cache entry as the routing socket reports it.
+type ndpRow struct {
+	ip    net.IP
+	zone  int
+	iface string
+	mac   string
+}
+
+// ndpRowFromRoute turns one link-layer route into a neighbour-cache row, or
+// reports false when the route is not a neighbour.
+//
+// An unresolved entry is kept with no MAC, as ndp prints "(incomplete)" for
+// it: unlike the ARP reader, an IPv6 neighbour that has not answered is still
+// one the kernel is resolving.
+func ndpRowFromRoute(rm *route.RouteMessage) (ndpRow, bool) {
+	// The host's own addresses are in this table too, routed over lo0.
+	if rm.Flags&syscall.RTF_LOCAL != 0 || len(rm.Addrs) <= syscall.RTAX_GATEWAY {
+		return ndpRow{}, false
+	}
+
+	dst, ok := rm.Addrs[syscall.RTAX_DST].(*route.Inet6Addr)
+	if !ok {
+		return ndpRow{}, false
+	}
+	ip := net.IP(dst.IP[:])
+	if ip.IsMulticast() || ip.IsUnspecified() {
+		return ndpRow{}, false
+	}
+
+	link, ok := rm.Addrs[syscall.RTAX_GATEWAY].(*route.LinkAddr)
+	if !ok {
+		return ndpRow{}, false
+	}
+
+	// The link address's index is the neighbour's interface; the message's
+	// own index is lo0 for some entries, which is why ndp reads this one.
+	iface := link.Name
+	if iface == "" && link.Index > 0 {
+		if byIndex, err := net.InterfaceByIndex(link.Index); err == nil {
+			iface = byIndex.Name
 		}
 	}
-	hw, err := net.ParseMAC(strings.Join(octets, ":"))
-	if err != nil {
+
+	return ndpRow{ip: ip, zone: dst.ZoneID, iface: iface, mac: ndpLinkLayer(link.Addr)}, true
+}
+
+// ndpLinkLayer returns a neighbour's MAC, or "" when the kernel holds none.
+//
+// 02:00:00:00:00:00 is what macOS hands a filtered reader for an entry whose
+// link layer it will not disclose (ADR-0030) -- the locally-administered bit
+// over an otherwise empty address. It parses as a MAC, so it is rejected by
+// value, the same way the Windows ARP reader rejects the all-zero address
+// (#2337).
+func ndpLinkLayer(addr []byte) string {
+	if len(addr) != macOctets {
 		return ""
 	}
-
-	// 02:00:00:00:00:00 is what ndp prints for an entry whose link layer
-	// never resolved -- the locally-administered bit over an otherwise empty
-	// address. Unlike "(incomplete)" it parses, so it has to be rejected by
-	// value, the same way the Windows ARP reader rejects the all-zero
-	// address (#2337).
-	for i, octet := range hw {
+	for i, octet := range addr {
 		if i == 0 {
 			octet &^= locallyAdministeredBit
 		}
 		if octet != 0 {
-			return hw.String()
+			return net.HardwareAddr(addr).String()
 		}
 	}
 
 	return ""
 }
 
-// ndpStateFromFlag maps ndp's single-letter state onto the NUD vocabulary the
+// neighbourInfo asks the kernel for one entry's state, as ndp's getnbrinfo
+// does. A link-local address goes in with its scope embedded in the second
+// 16-bit word, which is the KAME form the kernel matches on.
+func neighbourInfo(fd int, row ndpRow) (in6NbrInfo, error) {
+	var req in6NbrInfo
+	copy(req.ifname[:], row.iface)
+	copy(req.addr[:], row.ip.To16())
+	if row.ip.IsLinkLocalUnicast() {
+		if row.zone <= 0 || row.zone > math.MaxUint16 {
+			return in6NbrInfo{}, fmt.Errorf("link-local %s has no usable scope %d", row.ip, row.zone)
+		}
+		binary.BigEndian.PutUint16(req.addr[2:4], uint16(row.zone))
+	}
+
+	_, _, errno := syscall.Syscall(syscall.SYS_IOCTL, uintptr(fd), siocgnbrinfoIn6, uintptr(unsafe.Pointer(&req)))
+	if errno != 0 {
+		return in6NbrInfo{}, errno
+	}
+
+	return req, nil
+}
+
+// nd6StateName maps the kernel's ND6_LLINFO state onto the NUD vocabulary the
 // Linux scanner reports, so a caller reads one set of names whichever platform
 // answered.
-func ndpStateFromFlag(state string) string {
+func nd6StateName(state int32) string {
 	switch state {
-	case "R":
-		return "REACHABLE"
-	case "S":
-		return "STALE"
-	case "D":
-		return "DELAY"
-	case "P":
-		return "PROBE"
-	case "I":
+	case nd6LLInfoIncomplete:
 		return "INCOMPLETE"
-	case "N":
-		return "FAILED"
+	case nd6LLInfoReachable:
+		return "REACHABLE"
+	case nd6LLInfoStale:
+		return "STALE"
+	case nd6LLInfoDelay:
+		return "DELAY"
+	case nd6LLInfoProbe:
+		return "PROBE"
 	default:
 		return "UNKNOWN"
 	}
