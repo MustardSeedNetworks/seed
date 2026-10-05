@@ -115,8 +115,33 @@ jobs:
           # inputs, so granting the installation the permission is necessary but
           # not sufficient; it has to be requested here too.
           permission-workflows: write
+      # A queued release PR's branch is locked: release-please's ref update
+      # fails ("Error updating ref heads/release-please--branches--main") and
+      # main reads red until the merge-time release-notes guard either merges
+      # the PR or ejects it, after which the next run regenerates it
+      # (.github#110). Skip instead of failing; nothing is lost.
+      - name: Skip while the release PR is in the merge queue
+        id: queue
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+        run: |
+          set -euo pipefail
+          queued="$(gh api graphql -F owner="${GITHUB_REPOSITORY_OWNER}" -F name="${GITHUB_REPOSITORY#*/}" -f query='
+            query($owner: String!, $name: String!) {
+              repository(owner: $owner, name: $name) {
+                pullRequests(headRefName: "release-please--branches--main", states: OPEN, first: 1) {
+                  nodes { number isInMergeQueue }
+                }
+              }
+            }' --jq '.data.repository.pullRequests.nodes[0].isInMergeQueue // false')"
+          echo "queued=${queued}" >> "${GITHUB_OUTPUT}"
+          if [ "${queued}" = "true" ]; then
+            echo "::notice::Release PR is in the merge queue; skipping this run."
+          fi
+
       - name: Run Release Please
         id: release
+        if: steps.queue.outputs.queued != 'true'
         uses: googleapis/release-please-action@45996ed1f6d02564a971a2fa1b5860e934307cf7 # v5.0.0
         with:
           # Short-lived GitHub App installation token (msn-ci-bot), minted
@@ -159,6 +184,7 @@ jobs:
       # "failed to run git: fatal: not a git repository" on every scheduled
       # tick after this step landed, and the job went red fleet-wide.
       - name: Arm auto-merge on the release PR
+        if: steps.queue.outputs.queued != 'true'
         env:
           GH_TOKEN: ${{ steps.app-token.outputs.token }}
         run: |
