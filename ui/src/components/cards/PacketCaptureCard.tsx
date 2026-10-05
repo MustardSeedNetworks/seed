@@ -26,6 +26,7 @@ import { Button } from '../ui/Button';
 import { Card, type Status } from '../ui/Card';
 import { Activity } from '../ui/Icons';
 import { Input } from '../ui/Input';
+import { SummaryTable } from './SummaryTable';
 
 // The job's bounds (internal/diagnostics/packetcapture): a minute when the
 // request names no duration, at most an hour, and a 64 MiB file.
@@ -373,66 +374,6 @@ function Counter({ label, value }: { label: string; value: number }): JSX.Elemen
         {label}
       </dt>
       <dd className="body-small text-text-primary">{value}</dd>
-    </div>
-  );
-}
-
-interface Column {
-  label: string;
-  width: string;
-  mono?: boolean;
-}
-
-function SummaryTable({
-  testId,
-  caption,
-  columns,
-  rows,
-}: {
-  testId: string;
-  caption: string;
-  columns: Column[];
-  rows: { key: string; cells: string[] }[];
-}): JSX.Element | null {
-  if (rows.length === 0) {
-    return null;
-  }
-  return (
-    // See NeighbourCacheCard: table-fixed, not overflow-x-auto (#2708).
-    <div className={cn(radius.default, 'border border-surface-border')}>
-      <table className="w-full table-fixed body-small" data-testid={testId}>
-        <caption className="caption text-text-muted text-left px-cell pt-row">{caption}</caption>
-        <thead>
-          <tr className="border-b border-surface-border text-text-muted">
-            {columns.map((column) => (
-              <th
-                key={column.label}
-                scope="col"
-                className={cn('px-cell py-row text-left truncate', column.width)}
-                title={column.label}
-              >
-                {column.label}
-              </th>
-            ))}
-          </tr>
-        </thead>
-        <tbody>
-          {rows.map((row) => (
-            <tr key={row.key} className="border-b border-surface-border last:border-0">
-              {row.cells.map((cell, i) => (
-                <td
-                  // Cells are positional; the column label is unique per table.
-                  key={columns[i]?.label ?? i}
-                  className={cn('px-cell py-row truncate', columns[i]?.mono && 'font-mono')}
-                  title={cell}
-                >
-                  {cell}
-                </td>
-              ))}
-            </tr>
-          ))}
-        </tbody>
-      </table>
     </div>
   );
 }

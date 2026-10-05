@@ -19,7 +19,18 @@ export const upstreamSections: HelpSection[] = [
     id: 'network',
     titleKey: 'sections.network',
     icon: <Network className={ICON} />,
-    keywords: ['network', 'dhcp', 'lease', 'ip', 'subnet', 'gateway', 'vlan', 'upstream'],
+    keywords: [
+      'network',
+      'dhcp',
+      'lease',
+      'ip',
+      'subnet',
+      'gateway',
+      'vlan',
+      'upstream',
+      'multicast',
+      'iptv',
+    ],
     blocks: [
       {
         kind: 'paragraph',
@@ -129,6 +140,15 @@ export const upstreamSections: HelpSection[] = [
           {
             term: 'cards:packetCapture.title',
             description: 'content.cardHelp.PacketCaptureCard.description',
+          },
+        ],
+      },
+      {
+        kind: 'terms',
+        items: [
+          {
+            term: 'cards:multicastListen.title',
+            description: 'content.cardHelp.MulticastListenCard.description',
           },
         ],
       },

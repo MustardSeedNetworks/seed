@@ -2,6 +2,7 @@ import { useTranslation } from 'react-i18next';
 import { BonjourCard } from '../components/cards/BonjourCard';
 import { DnsCard } from '../components/cards/DnsCard';
 import { GatewayCard } from '../components/cards/GatewayCard';
+import { MulticastListenCard } from '../components/cards/MulticastListenCard';
 import { NeighbourCacheCard } from '../components/cards/NeighbourCacheCard';
 import { NetworkCard } from '../components/cards/NetworkCard';
 import { NetworkDiscoveryCard } from '../components/cards/NetworkDiscoveryCard';
@@ -73,6 +74,7 @@ export function NetworkPage() {
             <DnsCard data={cards.dns} loading={loading} />
             <NeighbourCacheCard />
             <BonjourCard />
+            <MulticastListenCard defaultInterface={currentInterface} />
             <PublicIpCard data={cards.publicip} loading={loading} />
           </>
         )}
