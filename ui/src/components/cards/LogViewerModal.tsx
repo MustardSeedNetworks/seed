@@ -1,7 +1,7 @@
 import { Tooltip } from '../ui/Tooltip';
 /** Full-screen log filtering, streaming and export. */
 
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useFocusTrap } from '../../hooks/useFocusTrap';
 import {
@@ -392,8 +392,6 @@ export function LogViewerModal({ isOpen, onClose }: LogViewerModalProps): React.
   } = useLogs({ maxLogs: 1000 });
 
   const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set());
-  const [autoScroll, setAutoScroll] = useState(true);
-  const logContainerRef = useRef<HTMLDivElement>(null);
 
   // Get unique components from logs
   const availableComponents = Array.from(
@@ -420,24 +418,6 @@ export function LogViewerModal({ isOpen, onClose }: LogViewerModalProps): React.
       newSet.delete(timestamp);
       return newSet;
     });
-  }, []);
-
-  // Auto-scroll to bottom when new logs arrive
-  const logsLength: number = logs.length;
-  useEffect((): void => {
-    if (autoScroll && logContainerRef.current && isStreaming && logsLength > 0) {
-      logContainerRef.current.scrollTop = logContainerRef.current.scrollHeight;
-    }
-  }, [logsLength, autoScroll, isStreaming]);
-
-  // Handle scroll to detect if user scrolled up
-  const handleScroll = useCallback((): void => {
-    if (!logContainerRef.current) {
-      return;
-    }
-    const { scrollTop, scrollHeight, clientHeight } = logContainerRef.current;
-    const isAtBottom: boolean = scrollHeight - scrollTop - clientHeight < 50;
-    setAutoScroll(isAtBottom);
   }, []);
 
   const dialogRef = useFocusTrap<HTMLDivElement>({ isActive: isOpen, onEscape: onClose });
@@ -691,9 +671,8 @@ export function LogViewerModal({ isOpen, onClose }: LogViewerModalProps): React.
 
         {/* Log entries - scrollable area */}
         <div
-          ref={logContainerRef}
+          data-testid="log-viewer-entries"
           className={cn('flex-1 overflow-y-auto pad-lg bg-surface-base/40')}
-          onScroll={handleScroll}
         >
           {/* Loading state */}
           {isLoading ? (
@@ -723,30 +702,6 @@ export function LogViewerModal({ isOpen, onClose }: LogViewerModalProps): React.
             />
           ))}
         </div>
-
-        {/* Footer with scroll-to-bottom */}
-        {!autoScroll && logs.length > 0 ? (
-          <div
-            className={cn(
-              'px-6 py-row-lg',
-              'text-center border-t border-surface-border',
-              'bg-surface-raised shrink-0',
-            )}
-          >
-            <button
-              type="button"
-              onClick={(): void => {
-                setAutoScroll(true);
-                if (logContainerRef.current) {
-                  logContainerRef.current.scrollTop = logContainerRef.current.scrollHeight;
-                }
-              }}
-              className="text-base text-brand-primary hover:underline"
-            >
-              ↓ {t('logs.scrollToBottom')}
-            </button>
-          </div>
-        ) : null}
       </div>
     </div>
   );

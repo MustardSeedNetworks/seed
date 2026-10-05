@@ -187,7 +187,6 @@
     "loading": "Loading logs...",
     "noMatchingLogs": "No logs match the current filters",
     "noLogs": "No logs yet",
-    "scrollToBottom": "Scroll to latest",
     "fullScreen": "Full Screen",
     "close": "Close log viewer",
     "viewLogs": "View Logs",
