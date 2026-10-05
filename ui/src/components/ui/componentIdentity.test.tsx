@@ -10,10 +10,11 @@
  * skips the whole component.
  */
 
-import { render } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 import type { ReactNode } from 'react';
 import { describe, expect, it, vi } from 'vitest';
 
+import { type Column, DataTable } from './DataTable';
 import { InterfaceSelector } from './InterfaceSelector';
 import { Slider } from './Slider';
 import { HealthScoreBadge } from './Sparkline';
@@ -66,5 +67,29 @@ describe('compiled components skip work on an unchanged re-render', () => {
     rerender(<InterfaceSelector {...props} />);
     expect(first).toBeGreaterThan(0);
     expect(tooltipRenders).toHaveBeenCalledTimes(first);
+  });
+
+  it('DataTable neither re-sorts nor re-renders its cells', () => {
+    interface Row {
+      name: string;
+    }
+    const accessor = vi.fn((r: Row) => r.name);
+    const renderCell = vi.fn((r: Row) => r.name);
+    const columns: Column<Row>[] = [
+      { key: 'name', header: 'Name', accessor, sortable: true, render: renderCell },
+    ];
+    const data: Row[] = [{ name: 'b' }, { name: 'a' }, { name: 'c' }];
+    const keyExtractor = (r: Row): string => r.name;
+    const { rerender } = render(
+      <DataTable data={data} columns={columns} keyExtractor={keyExtractor} />,
+    );
+    fireEvent.click(screen.getByText('Name'));
+    const sorts = accessor.mock.calls.length;
+    const cells = renderCell.mock.calls.length;
+    rerender(<DataTable data={data} columns={columns} keyExtractor={keyExtractor} />);
+    expect(sorts).toBeGreaterThan(0);
+    expect(cells).toBe(6);
+    expect(accessor).toHaveBeenCalledTimes(sorts);
+    expect(renderCell).toHaveBeenCalledTimes(cells);
   });
 });
