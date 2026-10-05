@@ -7,9 +7,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/MustardSeedNetworks/seed/internal/database"
 	"github.com/MustardSeedNetworks/seed/internal/i18n"
 	"github.com/MustardSeedNetworks/seed/internal/logging"
+	"github.com/MustardSeedNetworks/seed/internal/timeseries/history"
 	"github.com/MustardSeedNetworks/seed/internal/timeseries/retention"
 )
 
@@ -63,17 +63,17 @@ type HistoryWindowResponse struct {
 
 // ProbeHistoryResponse is one probe's trend over the resolved window.
 type ProbeHistoryResponse struct {
-	ProbeID string                     `json:"probeId"`
-	Window  HistoryWindowResponse      `json:"window"`
-	Points  []database.ProbeTrendPoint `json:"points"`
+	ProbeID string                    `json:"probeId"`
+	Window  HistoryWindowResponse     `json:"window"`
+	Points  []history.ProbeTrendPoint `json:"points"`
 }
 
 // AnomalyHistoryResponse is the per-day anomaly count over the resolved
 // window. Days with no anomaly are present with a zero count, so a client can
 // draw the series without filling gaps itself.
 type AnomalyHistoryResponse struct {
-	Window HistoryWindowResponse      `json:"window"`
-	Days   []database.AnomalyDayCount `json:"days"`
+	Window HistoryWindowResponse     `json:"window"`
+	Days   []history.AnomalyDayCount `json:"days"`
 }
 
 // handleProbeHistory serves GET /api/v1/history/probes/{probeID}.
@@ -96,20 +96,14 @@ func (s *Server) handleProbeHistory(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	daily := window.Resolution == historyResolutionDaily
-	history := s.db().History()
-
-	var (
-		points []database.ProbeTrendPoint
-		err    error
-	)
-	if window.Source == historySourceRaw {
-		points, err = history.ProbeTrendRaw(r.Context(), clientID, probeID,
-			window.From, window.To, daily)
-	} else {
-		points, err = history.ProbeTrendRollup(r.Context(), clientID, probeID,
-			window.From, window.To, daily)
-	}
+	points, err := s.historyQueries.ProbeTrend(r.Context(), history.ProbeTrendQuery{
+		ClientID: clientID,
+		ProbeID:  probeID,
+		From:     window.From,
+		To:       window.To,
+		Daily:    window.Resolution == historyResolutionDaily,
+		Raw:      window.Source == historySourceRaw,
+	})
 	if err != nil {
 		logger.ErrorContext(r.Context(), "Failed to read probe history", "error", err)
 		sendErrorResponseWithDetails(w, logger, http.StatusInternalServerError,
@@ -140,20 +134,10 @@ func (s *Server) handleAnomalyHistory(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	history := s.db().History()
 	// The window's last day is inclusive here: a day bucket is the whole day,
 	// and the day in progress is one the caller wants to see.
-	from, to := window.From, window.To
-
-	var (
-		days []database.AnomalyDayCount
-		err  error
-	)
-	if window.Source == historySourceRaw {
-		days, err = history.AnomalyCountsByDayLive(r.Context(), from, to)
-	} else {
-		days, err = history.AnomalyCountsByDayRollup(r.Context(), from, to)
-	}
+	days, err := s.historyQueries.AnomalyCounts(r.Context(), window.From, window.To,
+		window.Source == historySourceRaw)
 	if err != nil {
 		logger.ErrorContext(r.Context(), "Failed to read anomaly history", "error", err)
 		sendErrorResponseWithDetails(w, logger, http.StatusInternalServerError,

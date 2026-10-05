@@ -10,6 +10,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 
+	"github.com/MustardSeedNetworks/seed/internal/app"
 	"github.com/MustardSeedNetworks/seed/internal/auth"
 	"github.com/MustardSeedNetworks/seed/internal/database"
 )
@@ -18,6 +19,7 @@ func newHistoryServer(t *testing.T) *Server {
 	t.Helper()
 	s := &Server{}
 	s.dbConn = newTestDB(t)
+	s.historyQueries = app.NewHistory(s.db)
 	return s
 }
 
