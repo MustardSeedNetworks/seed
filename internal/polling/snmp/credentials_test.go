@@ -51,6 +51,7 @@ func TestResolveDecryptsStoredSecrets(t *testing.T) {
 
 	store := &fakeCredStore{creds: &polling.Credentials{
 		ID:              "cred-1",
+		Kind:            polling.CredentialKindV3,
 		SNMPCommunityCT: "enc:v1:community",
 		SNMPv3User:      "operator",
 		SNMPv3AuthCT:    "enc:v1:auth",
@@ -87,6 +88,7 @@ func TestResolveEmptyColumnsStayEmpty(t *testing.T) {
 
 	store := &fakeCredStore{creds: &polling.Credentials{
 		ID:              "cred-2",
+		Kind:            polling.CredentialKindV2c,
 		SNMPCommunityCT: "enc:v1:public",
 	}}
 
@@ -125,9 +127,21 @@ func TestResolveFailsClosed(t *testing.T) {
 			target: &polling.Target{ID: "t-1", CredentialsID: "gone"},
 		},
 		{
-			name:   "decryption fails",
-			store:  &fakeCredStore{creds: &polling.Credentials{SNMPCommunityCT: "enc:v1:x"}},
+			name: "decryption fails",
+			store: &fakeCredStore{creds: &polling.Credentials{
+				Kind: polling.CredentialKindV2c, SNMPCommunityCT: "enc:v1:x",
+			}},
 			dec:    fakeDecrypter{err: errors.New("bad key")},
+			target: &polling.Target{ID: "t-1", CredentialsID: "cred-1"},
+		},
+		{
+			// An SSH login has no community, so polling with it would go out
+			// unauthenticated instead of failing.
+			name: "credential is an SSH login",
+			store: &fakeCredStore{creds: &polling.Credentials{
+				Kind: polling.CredentialKindSSH, SSHUser: "backup", SSHPasswordCT: "enc:v1:pw",
+			}},
+			dec:    fakeDecrypter{},
 			target: &polling.Target{ID: "t-1", CredentialsID: "cred-1"},
 		},
 	}
@@ -168,7 +182,7 @@ func TestResolveScopesTheReadToTheTargetsClient(t *testing.T) {
 	t.Parallel()
 
 	store := &fakeCredStore{creds: &polling.Credentials{
-		ID: "cred-1", SNMPCommunityCT: "enc:v1:community",
+		ID: "cred-1", Kind: polling.CredentialKindV2c, SNMPCommunityCT: "enc:v1:community",
 	}}
 
 	_, err := newResolver(t, store, fakeDecrypter{}).Resolve(context.Background(), &polling.Target{

@@ -82,6 +82,7 @@ type DB struct {
 	probes            *ProbeRepository
 	pollingTargets    *PollingTargetRepository
 	deviceCredentials *DeviceCredentialRepository
+	deviceConfigs     *DeviceConfigRepository
 	jobs              *JobRepository
 	outbox            *OutboxRepository
 	snmpObservations  *SNMPObservationsRepository

@@ -35,7 +35,8 @@ func (r *DeviceCredentialRepository) Get(ctx context.Context, id, clientID strin
 		SELECT id, client_id, name, kind, security_level,
 			snmp_community_enc, snmp_v3_user,
 			snmp_v3_auth_enc, snmp_v3_priv_enc, snmp_v3_auth_proto,
-			snmp_v3_priv_proto, created_at, updated_at
+			snmp_v3_priv_proto, ssh_user, ssh_password_enc,
+			created_at, updated_at
 		FROM device_credentials
 		WHERE id = ? AND client_id = ?
 	`
@@ -43,7 +44,8 @@ func (r *DeviceCredentialRepository) Get(ctx context.Context, id, clientID strin
 	var (
 		c                           polling.Credentials
 		community, authSec, privSec []byte
-		level                       sql.NullString
+		sshPassword                 []byte
+		level, sshUser              sql.NullString
 		user, authProto, privProto  sql.NullString
 		createdAt, updatedAt        string
 	)
@@ -51,6 +53,7 @@ func (r *DeviceCredentialRepository) Get(ctx context.Context, id, clientID strin
 		&c.ID, &c.ClientID, &c.Name, &c.Kind, &level,
 		&community, &user,
 		&authSec, &privSec, &authProto, &privProto,
+		&sshUser, &sshPassword,
 		&createdAt, &updatedAt,
 	)
 	if errors.Is(err, sql.ErrNoRows) {
@@ -67,6 +70,8 @@ func (r *DeviceCredentialRepository) Get(ctx context.Context, id, clientID strin
 	c.SNMPv3User = user.String
 	c.SNMPv3AuthProto = authProto.String
 	c.SNMPv3PrivProto = privProto.String
+	c.SSHUser = sshUser.String
+	c.SSHPasswordCT = string(sshPassword)
 	c.CreatedAt = parseCredentialTime(createdAt)
 	c.UpdatedAt = parseCredentialTime(updatedAt)
 
@@ -91,7 +96,8 @@ func (r *DeviceCredentialRepository) List(
 		SELECT id, client_id, name, kind, security_level,
 			snmp_community_enc, snmp_v3_user,
 			snmp_v3_auth_enc, snmp_v3_priv_enc, snmp_v3_auth_proto,
-			snmp_v3_priv_proto, created_at, updated_at
+			snmp_v3_priv_proto, ssh_user, ssh_password_enc,
+			created_at, updated_at
 		FROM device_credentials
 		WHERE client_id = ?
 		ORDER BY created_at DESC, id
@@ -108,7 +114,8 @@ func (r *DeviceCredentialRepository) List(
 		var (
 			c                           polling.Credentials
 			community, authSec, privSec []byte
-			level                       sql.NullString
+			sshPassword                 []byte
+			level, sshUser              sql.NullString
 			user, authProto, privProto  sql.NullString
 			createdAt, updatedAt        string
 		)
@@ -116,6 +123,7 @@ func (r *DeviceCredentialRepository) List(
 			&c.ID, &c.ClientID, &c.Name, &c.Kind, &level,
 			&community, &user,
 			&authSec, &privSec, &authProto, &privProto,
+			&sshUser, &sshPassword,
 			&createdAt, &updatedAt,
 		); scanErr != nil {
 			return nil, fmt.Errorf("scan device_credentials: %w", scanErr)
@@ -127,6 +135,8 @@ func (r *DeviceCredentialRepository) List(
 		c.SNMPv3User = user.String
 		c.SNMPv3AuthProto = authProto.String
 		c.SNMPv3PrivProto = privProto.String
+		c.SSHUser = sshUser.String
+		c.SSHPasswordCT = string(sshPassword)
 		c.CreatedAt = parseCredentialTime(createdAt)
 		c.UpdatedAt = parseCredentialTime(updatedAt)
 		out = append(out, &c)
@@ -166,8 +176,9 @@ func (r *DeviceCredentialRepository) Upsert(ctx context.Context, c *polling.Cred
 			id, client_id, name, kind, security_level,
 			snmp_community_enc, snmp_v3_user,
 			snmp_v3_auth_enc, snmp_v3_priv_enc, snmp_v3_auth_proto,
-			snmp_v3_priv_proto, created_at, updated_at
-		) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+			snmp_v3_priv_proto, ssh_user, ssh_password_enc,
+			created_at, updated_at
+		) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
 		ON CONFLICT(id) DO UPDATE SET
 			client_id = excluded.client_id,
 			name = excluded.name,
@@ -179,6 +190,8 @@ func (r *DeviceCredentialRepository) Upsert(ctx context.Context, c *polling.Cred
 			snmp_v3_priv_enc = excluded.snmp_v3_priv_enc,
 			snmp_v3_auth_proto = excluded.snmp_v3_auth_proto,
 			snmp_v3_priv_proto = excluded.snmp_v3_priv_proto,
+			ssh_user = excluded.ssh_user,
+			ssh_password_enc = excluded.ssh_password_enc,
 			updated_at = excluded.updated_at
 	`
 
@@ -194,6 +207,7 @@ func (r *DeviceCredentialRepository) Upsert(ctx context.Context, c *polling.Cred
 		blobOrNull(c.SNMPv3AuthCT), blobOrNull(c.SNMPv3PrivCT),
 		nullIfEmpty(normalizeProto(c.SNMPv3AuthProto)),
 		nullIfEmpty(normalizeProto(c.SNMPv3PrivProto)),
+		nullIfEmpty(strings.TrimSpace(c.SSHUser)), blobOrNull(c.SSHPasswordCT),
 		created, now,
 	); execErr != nil {
 		return fmt.Errorf("upsert device_credentials: %w", execErr)
@@ -202,22 +216,29 @@ func (r *DeviceCredentialRepository) Upsert(ctx context.Context, c *polling.Cred
 }
 
 // ErrCredentialAmbiguous is returned when a credential holds a combination of
-// secrets the canonical form has no name for — both a community string and a
-// v3 user, or neither, or privacy without authentication.
-var ErrCredentialAmbiguous = errors.New("device_credentials: credential is neither a v2c nor a v3 credential")
+// secrets the canonical form has no name for — more than one of a community
+// string, a v3 user and an SSH user, or none, or privacy without
+// authentication, or an SSH user without a password.
+var ErrCredentialAmbiguous = errors.New("device_credentials: credential is not exactly one of v2c, v3 or ssh")
 
 // canonicalizeCredentials names what a credential actually holds.
 func canonicalizeCredentials(c *polling.Credentials) (string, string, error) {
 	hasCommunity := c.SNMPCommunityCT != ""
 	hasUser := strings.TrimSpace(c.SNMPv3User) != ""
+	hasSSH := strings.TrimSpace(c.SSHUser) != "" || c.SSHPasswordCT != ""
 
 	switch {
-	case hasCommunity && hasUser:
-		return "", "", fmt.Errorf("%w: %q has both a community string and a v3 user", ErrCredentialAmbiguous, c.ID)
-	case !hasCommunity && !hasUser:
-		return "", "", fmt.Errorf("%w: %q has neither a community string nor a v3 user", ErrCredentialAmbiguous, c.ID)
+	case btoi(hasCommunity)+btoi(hasUser)+btoi(hasSSH) > 1:
+		return "", "", fmt.Errorf("%w: %q mixes credential kinds", ErrCredentialAmbiguous, c.ID)
+	case !hasCommunity && !hasUser && !hasSSH:
+		return "", "", fmt.Errorf("%w: %q has no community string, v3 user or SSH user", ErrCredentialAmbiguous, c.ID)
 	case hasCommunity:
 		return polling.CredentialKindV2c, "", nil
+	case hasSSH:
+		if strings.TrimSpace(c.SSHUser) == "" || c.SSHPasswordCT == "" {
+			return "", "", fmt.Errorf("%w: %q needs both an SSH user and a password", ErrCredentialAmbiguous, c.ID)
+		}
+		return polling.CredentialKindSSH, "", nil
 	}
 
 	switch {
@@ -230,6 +251,13 @@ func canonicalizeCredentials(c *polling.Credentials) (string, string, error) {
 	default:
 		return polling.CredentialKindV3, polling.SecurityLevelNoAuthNoPriv, nil
 	}
+}
+
+func btoi(b bool) int {
+	if b {
+		return 1
+	}
+	return 0
 }
 
 // blobOrNull writes NULL rather than a zero-length blob for an absent secret.
@@ -267,16 +295,17 @@ func normalizeProto(name string) string {
 }
 
 // ErrCredentialInUse is returned when a credential cannot be deleted because a
-// polling target still references it.
-var ErrCredentialInUse = errors.New("device_credentials: credential is in use by a polling target")
+// polling target or a configuration backup target still references it.
+var ErrCredentialInUse = errors.New("device_credentials: credential is in use by a polling or backup target")
 
 // Delete removes a credentials row owned by clientID.
 //
-// The reference from polling_targets is ON DELETE RESTRICT, so deleting a
-// credential a target still uses now fails instead of succeeding. The previous
-// SET NULL quietly unbound every target that referenced it — an operator
-// deleting one unused credential could disarm a dozen live ones and get no
-// error. Refusing is the honest answer: unbind the targets first, deliberately.
+// The references from polling_targets and config_backup_targets are ON DELETE
+// RESTRICT, so deleting a credential a target still uses fails instead of
+// succeeding. The previous SET NULL quietly unbound every target that
+// referenced it — an operator deleting one unused credential could disarm a
+// dozen live ones and get no error. Refusing is the honest answer: unbind the
+// targets first, deliberately.
 func (r *DeviceCredentialRepository) Delete(ctx context.Context, clientID, id string) error {
 	if clientID == "" {
 		return errors.New("device_credentials: client id required for Delete")

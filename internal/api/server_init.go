@@ -482,16 +482,7 @@ func (s *Server) initDiscoveryUseCases() {
 	s.flows = app.NewFlows(s.db)
 	s.interfaceStats = app.NewInterfaceStats(s.db)
 	s.pollingTargets = app.NewPollingTargets(s.db, s.pollingTargetLimit)
-	// The credential vault needs the keyring that owns the DEK. Without a
-	// config there is none, so the use-case stays nil and its handlers report
-	// 503 — the alternative is a CRUD surface that would persist plaintext.
-	if s.config != nil {
-		if keyring, err := s.config.CredentialKeyring(); err == nil {
-			if svc, credErr := app.NewDeviceCredentials(s.db, keyring); credErr == nil {
-				s.deviceCredentials = svc
-			}
-		}
-	}
+	s.initVaultUseCases()
 	s.alertInbox = app.NewAlertInbox(s.db)
 }
 
