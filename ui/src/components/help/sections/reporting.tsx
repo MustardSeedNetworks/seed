@@ -56,6 +56,15 @@ export const reportingSections: HelpSection[] = [
         kind: 'terms',
         items: [
           {
+            term: 'cards:pathMonitor.title',
+            description: 'content.cardHelp.PathMonitorCard.description',
+          },
+        ],
+      },
+      {
+        kind: 'terms',
+        items: [
+          {
             term: 'cards:discovery.title',
             description: 'content.cardHelp.NetworkDiscoveryCard.description',
           },

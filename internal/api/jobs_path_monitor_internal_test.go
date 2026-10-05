@@ -1,8 +1,11 @@
 package api
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
+	"net/http"
+	"net/http/httptest"
 	"sync"
 	"testing"
 	"time"
@@ -227,5 +230,70 @@ func TestHandlerRejectsAbsentParams(t *testing.T) {
 	handler := newPathMonitorHandler(pathMonitorDeps{now: time.Now})
 	if _, err := handler(t.Context(), nil, nil); err == nil {
 		t.Fatal("handler accepted a job with no params")
+	}
+}
+
+// Path monitoring is sold at Pro with the one-shot trace (path_analysis). It
+// arrives through POST /jobs, which every tier reaches, so the kind is the
+// boundary: without it a Free install ran a continuous traceroute that /path
+// refuses with 402.
+func TestPathMonitorKindRequiresPathAnalysis(t *testing.T) {
+	t.Parallel()
+
+	for _, tc := range []struct {
+		name, key string
+		gated     bool
+	}{
+		{"free", "", true},
+		{"starter", prodSeedStarterVector, true},
+		{"pro", prodSeedProVector, false},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+			srv := newLicensedJobsServer(t, tc.key)
+			srv.registerPathMonitorKind(func(int) pathTracer { return &fakeTracer{} })
+			body, _ := json.Marshal(CreateJobRequest{
+				Kind:   pathMonitorJobKind,
+				Params: json.RawMessage(`{"destination":"10.0.0.1"}`),
+			})
+			w := httptest.NewRecorder()
+			srv.handleJobs(w, httptest.NewRequest(http.MethodPost, APIVersionPrefix+"/jobs", bytes.NewReader(body)))
+
+			if tc.gated {
+				assertPathAnalysisGate(t, w)
+				return
+			}
+			assertMonitorStarted(t, srv, w)
+		})
+	}
+}
+
+func assertPathAnalysisGate(t *testing.T, w *httptest.ResponseRecorder) {
+	t.Helper()
+	if w.Code != http.StatusPaymentRequired {
+		t.Fatalf("status = %d, want 402; body=%s", w.Code, w.Body.String())
+	}
+	var gate FeatureGateResponse
+	if err := json.NewDecoder(w.Body).Decode(&gate); err != nil {
+		t.Fatalf("decode 402 body: %v", err)
+	}
+	if gate.RequiredFeature != pathAnalysisFeature {
+		t.Errorf("requiredFeature = %q, want %q", gate.RequiredFeature, pathAnalysisFeature)
+	}
+}
+
+// assertMonitorStarted checks the job was created, then stops it so the
+// monitor does not outlive the test.
+func assertMonitorStarted(t *testing.T, srv *Server, w *httptest.ResponseRecorder) {
+	t.Helper()
+	if w.Code != http.StatusCreated {
+		t.Fatalf("status = %d, want 201; body=%s", w.Code, w.Body.String())
+	}
+	var created JobResponse
+	if err := json.NewDecoder(w.Body).Decode(&created); err != nil {
+		t.Fatalf("decode 201 body: %v", err)
+	}
+	if err := srv.jobsRunner().Cancel(created.ID); err != nil {
+		t.Fatalf("Cancel: %v", err)
 	}
 }

@@ -25,6 +25,7 @@ import type { SwitchData, VlanData } from '../components/cards/SwitchCard';
 import type { WiFiData } from '../components/cards/WiFiCard';
 import { LogComponents, logger } from '../lib/logger';
 import { useTestRunStore } from '../stores/testRunStore';
+import { isPathMonitorUpdate, type PathMonitorUpdate } from './usePathMonitor';
 import type { SseCardUpdate as CardUpdate, SseMessage as Message } from './useSse';
 
 /**
@@ -86,6 +87,7 @@ export function useCardState({
   handleCardUpdate: (update: CardUpdate) => void;
   prevLinkUpRef: React.MutableRefObject<boolean | null>;
   registerTraceHopHandler: (handler: (msg: TraceHopMessage) => void) => () => void;
+  registerPathMonitorHandler: (handler: (update: PathMonitorUpdate) => void) => () => void;
 } {
   const [cards, setCards] = useState<CardState>({
     link: null,
@@ -106,6 +108,7 @@ export function useCardState({
   const initialAutoRunDoneRef = useRef(false);
   // Track setTimeout IDs for cleanup on unmount (fixes #851)
   const timeoutIdsRef = useRef<Set<ReturnType<typeof setTimeout>>>(new Set());
+  const pathMonitorHandlerRef = useRef<((update: PathMonitorUpdate) => void) | null>(null);
 
   const handleMessage = (message: Message) => {
     // Route traceHop events to the path discovery component
@@ -126,6 +129,13 @@ export function useCardState({
             target: traceHopMessage.target,
           });
         }
+      }
+      return;
+    }
+
+    if (message.type === 'pathMonitor') {
+      if (isPathMonitorUpdate(message.payload)) {
+        pathMonitorHandlerRef.current?.(message.payload);
       }
       return;
     }
@@ -311,6 +321,18 @@ export function useCardState({
     };
   };
 
+  // One path monitor card is mounted at a time, so one handler slot is enough.
+  const registerPathMonitorHandler = (
+    handler: (update: PathMonitorUpdate) => void,
+  ): (() => void) => {
+    pathMonitorHandlerRef.current = handler;
+    return () => {
+      if (pathMonitorHandlerRef.current === handler) {
+        pathMonitorHandlerRef.current = null;
+      }
+    };
+  };
+
   return {
     cards,
     loading,
@@ -320,5 +342,6 @@ export function useCardState({
     handleCardUpdate,
     prevLinkUpRef,
     registerTraceHopHandler,
+    registerPathMonitorHandler,
   };
 }

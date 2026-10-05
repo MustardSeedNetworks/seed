@@ -25,6 +25,10 @@ import (
 // pathMonitorJobKind is the registered kind name for continuous path monitoring.
 const pathMonitorJobKind = "path-monitor"
 
+// pathAnalysisFeature is the licence feature path monitoring is sold under, the
+// same one that gates the one-shot trace on /path.
+const pathAnalysisFeature = "path_analysis"
+
 // The probe budget. docs/EDITIONS.md targets a ~5W Pi-class "Lite (portable)"
 // unit, so this is a number rather than an adjective: at most one probe per hop
 // per second, over at most pathMonitorMaxHops hops.
@@ -58,9 +62,9 @@ const (
 
 // PathMonitorRequest starts a continuous monitor.
 type PathMonitorRequest struct {
-	Destination     string `json:"destination"     validate:"required"`
-	IntervalSeconds int    `json:"intervalSeconds" validate:"omitempty,gte=1,lte=60"`
-	MaxHops         int    `json:"maxHops"         validate:"omitempty,gte=1,lte=30"`
+	Destination     string `json:"destination"               validate:"required"`
+	IntervalSeconds int    `json:"intervalSeconds,omitempty" validate:"omitempty,gte=1,lte=60"`
+	MaxHops         int    `json:"maxHops,omitempty"         validate:"omitempty,gte=1,lte=30"`
 }
 
 // PathMonitorUpdate is the SSE payload carrying one round's accumulated view.

@@ -716,5 +716,33 @@
     "colFrom": "From",
     "colTo": "To",
     "truncated": "More hosts or conversations crossed the wire than the summary tracks; the tables cover the first ones seen."
+  },
+  "pathMonitor": {
+    "title": "Path monitor",
+    "description": "Trace a destination every second and keep per-hop loss and latency, to find the hop that drops packets or adds delay.",
+    "target": "Destination",
+    "targetPlaceholder": "IP address or hostname",
+    "start": "Start monitor",
+    "starting": "Starting the monitor…",
+    "running": "Monitoring the path to {{target}}.",
+    "stop": "Stop",
+    "stopping": "Stopping…",
+    "stopFailed": "The monitor did not stop. Try again.",
+    "linkDown": "Stopped because the link went down.",
+    "readOnly": "Starting a path monitor needs the operator role.",
+    "failed": "The monitor did not run.",
+    "rounds_one": "{{count}} round to {{target}}",
+    "rounds_other": "{{count}} rounds to {{target}}",
+    "empty": "No hop has answered yet.",
+    "moreAddresses_one": "{{name}} +{{count}}",
+    "moreAddresses_other": "{{name}} +{{count}}",
+    "colHop": "Hop",
+    "colAddress": "Address",
+    "colLoss": "Loss",
+    "colLast": "Last",
+    "colAvg": "Avg",
+    "colBest": "Best",
+    "colWorst": "Worst",
+    "colJitter": "Jitter"
   }
 }
