@@ -20,9 +20,10 @@
  * />
  */
 
+import type { TFunction } from 'i18next';
 import type { LucideIcon } from 'lucide-react';
 import type React from 'react';
-import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   type DiscoveredDevice,
@@ -42,6 +43,12 @@ import {
   Server,
   Smartphone,
 } from '../ui/Icons';
+
+interface DeviceGroup {
+  label: string;
+  icon: LucideIcon;
+  devices: DiscoveredDevice[];
+}
 
 interface DeviceSelectorProps {
   value: string;
@@ -73,10 +80,76 @@ function getDeviceIcon(type: string): LucideIcon {
   }
 }
 
-export const DeviceSelector: React.MemoExoticComponent<typeof DeviceSelectorComponent> =
-  memo(DeviceSelectorComponent);
+/** The device groups the dropdown lists: by type, or one group of search matches. */
+function filterDeviceGroups(
+  searchTerm: string,
+  devices: DiscoveredDevice[],
+  groupedDevices: ReturnType<typeof useDiscoveredDevices>['groupedDevices'],
+  t: TFunction,
+): DeviceGroup[] {
+  if (!searchTerm.trim()) {
+    return [
+      {
+        label: t('device.routers'),
+        icon: Router,
+        devices: groupedDevices.routers,
+      },
+      {
+        label: t('device.switches'),
+        icon: Router,
+        devices: groupedDevices.switches,
+      },
+      {
+        label: t('device.servers'),
+        icon: Server,
+        devices: groupedDevices.servers,
+      },
+      {
+        label: t('device.workstations'),
+        icon: Monitor,
+        devices: groupedDevices.workstations,
+      },
+      {
+        label: t('device.printers'),
+        icon: Printer,
+        devices: groupedDevices.printers,
+      },
+      {
+        label: t('device.phones'),
+        icon: Smartphone,
+        devices: groupedDevices.phones,
+      },
+      {
+        label: t('device.other'),
+        icon: HardDrive,
+        devices: groupedDevices.other,
+      },
+    ].filter((g) => g.devices.length > 0);
+  }
 
-function DeviceSelectorComponent({
+  // Filter all devices based on search term
+  const search = searchTerm.toLowerCase();
+  const filtered = devices.filter((d) => {
+    const displayName = getDeviceDisplayName(d).toLowerCase();
+    const vendor = (d.vendor || '').toLowerCase();
+    return d.ip.includes(search) || displayName.includes(search) || vendor.includes(search);
+  });
+
+  // If we have filtered results, show them in a single "Search Results" group
+  if (filtered.length > 0) {
+    return [
+      {
+        label: t('device.searchResults'),
+        icon: Search,
+        devices: filtered,
+      },
+    ];
+  }
+
+  return [];
+}
+
+export function DeviceSelector({
   value,
   onChange,
   placeholder,
@@ -129,115 +202,44 @@ function DeviceSelectorComponent({
   }, [manualEntry]);
 
   // Handle keyboard navigation
-  const handleKeyDown = useCallback(
-    (event: React.KeyboardEvent) => {
-      if (event.key === 'Escape') {
-        setIsOpen(false);
-        setManualEntry(false);
-        buttonRef.current?.focus();
-      } else if (event.key === 'ArrowDown' && !isOpen) {
-        event.preventDefault();
-        setIsOpen(true);
-      }
-    },
-    [isOpen],
-  );
+  const handleKeyDown = (event: React.KeyboardEvent) => {
+    if (event.key === 'Escape') {
+      setIsOpen(false);
+      setManualEntry(false);
+      buttonRef.current?.focus();
+    } else if (event.key === 'ArrowDown' && !isOpen) {
+      event.preventDefault();
+      setIsOpen(true);
+    }
+  };
 
   // Select a device
-  const selectDevice = useCallback(
-    (device: DiscoveredDevice) => {
-      onChange(device.ip);
+  const selectDevice = (device: DiscoveredDevice) => {
+    onChange(device.ip);
+    setIsOpen(false);
+    setManualEntry(false);
+    setSearchTerm('');
+    buttonRef.current?.focus();
+  };
+
+  // Handle manual IP entry
+  const handleManualEntry = () => {
+    setManualEntry(true);
+    setSearchTerm('');
+  };
+
+  // Submit manual IP
+  const submitManualIp = (ip: string) => {
+    if (ip.trim()) {
+      onChange(ip.trim());
       setIsOpen(false);
       setManualEntry(false);
       setSearchTerm('');
       buttonRef.current?.focus();
-    },
-    [onChange],
-  );
-
-  // Handle manual IP entry
-  const handleManualEntry = useCallback(() => {
-    setManualEntry(true);
-    setSearchTerm('');
-  }, []);
-
-  // Submit manual IP
-  const submitManualIp = useCallback(
-    (ip: string) => {
-      if (ip.trim()) {
-        onChange(ip.trim());
-        setIsOpen(false);
-        setManualEntry(false);
-        setSearchTerm('');
-        buttonRef.current?.focus();
-      }
-    },
-    [onChange],
-  );
-
-  // Filter devices based on search term
-  const filteredGroups = useMemo(() => {
-    if (!searchTerm.trim()) {
-      return [
-        {
-          label: t('device.routers'),
-          icon: Router,
-          devices: groupedDevices.routers,
-        },
-        {
-          label: t('device.switches'),
-          icon: Router,
-          devices: groupedDevices.switches,
-        },
-        {
-          label: t('device.servers'),
-          icon: Server,
-          devices: groupedDevices.servers,
-        },
-        {
-          label: t('device.workstations'),
-          icon: Monitor,
-          devices: groupedDevices.workstations,
-        },
-        {
-          label: t('device.printers'),
-          icon: Printer,
-          devices: groupedDevices.printers,
-        },
-        {
-          label: t('device.phones'),
-          icon: Smartphone,
-          devices: groupedDevices.phones,
-        },
-        {
-          label: t('device.other'),
-          icon: HardDrive,
-          devices: groupedDevices.other,
-        },
-      ].filter((g) => g.devices.length > 0);
     }
+  };
 
-    // Filter all devices based on search term
-    const search = searchTerm.toLowerCase();
-    const filtered = devices.filter((d) => {
-      const displayName = getDeviceDisplayName(d).toLowerCase();
-      const vendor = (d.vendor || '').toLowerCase();
-      return d.ip.includes(search) || displayName.includes(search) || vendor.includes(search);
-    });
-
-    // If we have filtered results, show them in a single "Search Results" group
-    if (filtered.length > 0) {
-      return [
-        {
-          label: t('device.searchResults'),
-          icon: Search,
-          devices: filtered,
-        },
-      ];
-    }
-
-    return [];
-  }, [searchTerm, groupedDevices, devices, t]);
+  const filteredGroups = filterDeviceGroups(searchTerm, devices, groupedDevices, t);
 
   // Get display text for button
   const getButtonText = (): string => {

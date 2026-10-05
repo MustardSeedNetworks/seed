@@ -33,12 +33,11 @@ import { Tooltip } from './Tooltip';
  * />
  * ```
  *
- * Dependencies: React, memo/useMemo hooks, theme utilities
+ * Dependencies: React, theme utilities
  * State: Memoized calculations for path generation and scaling
  */
 
 import type React from 'react';
-import { memo, useMemo } from 'react';
 import { cn, radius } from '../../styles/theme';
 
 export type SparklineType = 'availability' | 'latency' | 'score';
@@ -157,10 +156,88 @@ function generateAreaPath(
   return `${linePath} L ${endX} ${baseY} L ${startX} ${baseY} Z`;
 }
 
-export const Sparkline: React.MemoExoticComponent<typeof SparklineComponent> =
-  memo(SparklineComponent);
+/**
+ * Scale bounds, latest value and trend direction for a sparkline series.
+ */
+function sparklineStats(
+  data: number[],
+  type: SparklineType,
+): {
+  minValue: number;
+  maxValue: number;
+  currentValue: number;
+  trendDirection: 'up' | 'down' | 'stable';
+} {
+  if (data.length === 0) {
+    return {
+      minValue: 0,
+      maxValue: 100,
+      currentValue: 0,
+      trendDirection: 'stable' as const,
+    };
+  }
 
-function SparklineComponent({
+  const first = data.at(0);
+  if (first === undefined) {
+    return { minValue: 0, maxValue: 100, currentValue: 0, trendDirection: 'stable' as const };
+  }
+
+  let min = first;
+  let max = first;
+  let sum = 0;
+
+  for (const value of data) {
+    if (value < min) {
+      min = value;
+    }
+    if (value > max) {
+      max = value;
+    }
+    sum += value;
+  }
+
+  // For availability/score, use fixed 0-100 range for consistency
+  if (type === 'availability' || type === 'score') {
+    min = Math.min(min, 0);
+    max = Math.max(max, 100);
+  } else {
+    // Add some padding to the range for latency
+    const range = max - min;
+    min = Math.max(0, min - range * 0.1);
+    max += range * 0.1;
+  }
+
+  const avg = sum / data.length;
+  const current = data.at(-1) ?? 0;
+
+  // Determine trend direction
+  let trend: 'up' | 'down' | 'stable' = 'stable';
+  if (data.length >= 2) {
+    const recentAvg =
+      data.slice(-Math.min(3, data.length)).reduce((a, b) => a + b, 0) / Math.min(3, data.length);
+    const olderAvg =
+      data.slice(0, -Math.min(3, data.length)).reduce((a, b) => a + b, 0) /
+      Math.max(1, data.length - Math.min(3, data.length));
+
+    const diff = recentAvg - olderAvg;
+    const thresholdPct = avg * 0.05; // 5% change threshold
+
+    if (diff > thresholdPct) {
+      trend = 'up';
+    } else if (diff < -thresholdPct) {
+      trend = 'down';
+    }
+  }
+
+  return {
+    minValue: min,
+    maxValue: max,
+    currentValue: current,
+    trendDirection: trend,
+  };
+}
+
+export function Sparkline({
   data,
   type = 'availability',
   size = 'md',
@@ -173,83 +250,10 @@ function SparklineComponent({
   const config = sizeConfigs[size];
   const padding = 2;
 
-  // Calculate min/max for scaling
-  const { minValue, maxValue, currentValue, trendDirection } = useMemo(() => {
-    if (data.length === 0) {
-      return {
-        minValue: 0,
-        maxValue: 100,
-        currentValue: 0,
-        trendDirection: 'stable' as const,
-      };
-    }
+  const { minValue, maxValue, currentValue, trendDirection } = sparklineStats(data, type);
 
-    const first = data.at(0);
-    if (first === undefined) {
-      return { minValue: 0, maxValue: 100, currentValue: 0, trendDirection: 'stable' as const };
-    }
-
-    let min = first;
-    let max = first;
-    let sum = 0;
-
-    for (const value of data) {
-      if (value < min) {
-        min = value;
-      }
-      if (value > max) {
-        max = value;
-      }
-      sum += value;
-    }
-
-    // For availability/score, use fixed 0-100 range for consistency
-    if (type === 'availability' || type === 'score') {
-      min = Math.min(min, 0);
-      max = Math.max(max, 100);
-    } else {
-      // Add some padding to the range for latency
-      const range = max - min;
-      min = Math.max(0, min - range * 0.1);
-      max += range * 0.1;
-    }
-
-    const avg = sum / data.length;
-    const current = data.at(-1) ?? 0;
-
-    // Determine trend direction
-    let trend: 'up' | 'down' | 'stable' = 'stable';
-    if (data.length >= 2) {
-      const recentAvg =
-        data.slice(-Math.min(3, data.length)).reduce((a, b) => a + b, 0) / Math.min(3, data.length);
-      const olderAvg =
-        data.slice(0, -Math.min(3, data.length)).reduce((a, b) => a + b, 0) /
-        Math.max(1, data.length - Math.min(3, data.length));
-
-      const diff = recentAvg - olderAvg;
-      const thresholdPct = avg * 0.05; // 5% change threshold
-
-      if (diff > thresholdPct) {
-        trend = 'up';
-      } else if (diff < -thresholdPct) {
-        trend = 'down';
-      }
-    }
-
-    return {
-      minValue: min,
-      maxValue: max,
-      currentValue: current,
-      trendDirection: trend,
-    };
-  }, [data, type]);
-
-  // Generate paths
-  const { linePath, areaPath } = useMemo(() => {
-    const line = generatePath(data, config.width, config.height, padding, minValue, maxValue);
-    const area = showArea ? generateAreaPath(line, config.width, config.height, padding) : '';
-    return { linePath: line, areaPath: area };
-  }, [data, config, minValue, maxValue, showArea]);
+  const linePath = generatePath(data, config.width, config.height, padding, minValue, maxValue);
+  const areaPath = showArea ? generateAreaPath(linePath, config.width, config.height, padding) : '';
 
   // Get stroke color based on current value
   const strokeColor = getSparklineColor(currentValue, type, threshold);
@@ -340,10 +344,18 @@ interface SparklineWithLabelProps extends SparklineProps {
   unit?: string;
 }
 
-export const SparklineWithLabel: React.MemoExoticComponent<typeof SparklineWithLabelComponent> =
-  memo(SparklineWithLabelComponent);
+/** Latest value of a series, formatted for its sparkline type. */
+function formatSparklineValue(value: number, type: SparklineType): string {
+  if (type === 'latency') {
+    if (value >= 1000) {
+      return `${(value / 1000).toFixed(1)}s`;
+    }
+    return `${Math.round(value)}ms`;
+  }
+  return `${value.toFixed(1)}%`;
+}
 
-function SparklineWithLabelComponent({
+export function SparklineWithLabel({
   labelText,
   showValue = true,
   unit,
@@ -353,16 +365,7 @@ function SparklineWithLabelComponent({
 }: SparklineWithLabelProps): React.JSX.Element {
   const currentValue = data.at(-1) ?? 0;
 
-  // Format value based on type
-  const formattedValue = useMemo((): string => {
-    if (type === 'latency') {
-      if (currentValue >= 1000) {
-        return `${(currentValue / 1000).toFixed(1)}s`;
-      }
-      return `${Math.round(currentValue)}ms`;
-    }
-    return `${currentValue.toFixed(1)}%`;
-  }, [currentValue, type]);
+  const formattedValue = formatSparklineValue(currentValue, type);
 
   const displayUnit = unit ?? (type === 'latency' ? '' : '');
 
@@ -394,10 +397,7 @@ interface HealthScoreBadgeProps {
   className?: string;
 }
 
-export const HealthScoreBadge: React.MemoExoticComponent<typeof HealthScoreBadgeComponent> =
-  memo(HealthScoreBadgeComponent);
-
-function HealthScoreBadgeComponent({
+export function HealthScoreBadge({
   score,
   size = 'md',
   showValue = true,

@@ -22,7 +22,7 @@ import { Tooltip } from './Tooltip';
  */
 
 import type React from 'react';
-import { useCallback, useEffect, useRef } from 'react';
+import { useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useTestRunStore } from '../../stores/testRunStore';
 import { cn, icon as iconTokens, layout, radius } from '../../styles/theme';
@@ -69,7 +69,7 @@ export function Fab({ className = '', variant = 'floating' }: FabProps): React.J
     [],
   );
 
-  const handleClick = useCallback((): void => {
+  const handleClick = (): void => {
     if (isRunning) {
       return;
     }
@@ -84,7 +84,7 @@ export function Fab({ className = '', variant = 'floating' }: FabProps): React.J
     timeoutRef.current = setTimeout(() => {
       useTestRunStore.getState().settlePartial(runId);
     }, 60000);
-  }, [isRunning, start]);
+  };
 
   const runStatus = isRunning ? 'running' : partial ? 'partial' : 'idle';
   const label = partial ? t('buttons.runAllTestsPartial') : t('buttons.runAllTests');

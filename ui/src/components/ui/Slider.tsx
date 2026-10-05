@@ -42,7 +42,7 @@
  */
 
 import type React from 'react';
-import { memo, useCallback, useRef, useState } from 'react';
+import { useRef, useState } from 'react';
 import { cn, layout, radius, spacing } from '../../styles/theme';
 
 interface SliderProps {
@@ -74,9 +74,7 @@ interface SliderProps {
  * Range slider component for numeric input with visual feedback.
  * Supports keyboard navigation and custom value formatting.
  */
-export const Slider: React.MemoExoticComponent<typeof SliderComponent> = memo(SliderComponent);
-
-function SliderComponent({
+export function Slider({
   value,
   onChange,
   min,
@@ -101,13 +99,10 @@ function SliderComponent({
   /**
    * Handle input change from slider interaction
    */
-  const handleChange = useCallback(
-    (event: React.ChangeEvent<HTMLInputElement>) => {
-      const newValue = Number(event.target.value);
-      onChange(newValue);
-    },
-    [onChange],
-  );
+  const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const newValue = Number(event.target.value);
+    onChange(newValue);
+  };
 
   /**
    * Handle keyboard shortcuts for quick adjustments
@@ -115,36 +110,33 @@ function SliderComponent({
    * - Page Up/Down: increment/decrement by 10 steps
    * - Home/End: jump to min/max
    */
-  const handleKeyDown = useCallback(
-    (event: React.KeyboardEvent<HTMLInputElement>) => {
-      let newValue: number;
-      const largeStep = step * 10;
+  const handleKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {
+    let newValue: number;
+    const largeStep = step * 10;
 
-      switch (event.key) {
-        case 'PageUp':
-          event.preventDefault();
-          newValue = Math.min(max, value + largeStep);
-          break;
-        case 'PageDown':
-          event.preventDefault();
-          newValue = Math.max(min, value - largeStep);
-          break;
-        case 'Home':
-          event.preventDefault();
-          newValue = min;
-          break;
-        case 'End':
-          event.preventDefault();
-          newValue = max;
-          break;
-        default:
-          return; // Let browser handle arrow keys
-      }
+    switch (event.key) {
+      case 'PageUp':
+        event.preventDefault();
+        newValue = Math.min(max, value + largeStep);
+        break;
+      case 'PageDown':
+        event.preventDefault();
+        newValue = Math.max(min, value - largeStep);
+        break;
+      case 'Home':
+        event.preventDefault();
+        newValue = min;
+        break;
+      case 'End':
+        event.preventDefault();
+        newValue = max;
+        break;
+      default:
+        return; // Let browser handle arrow keys
+    }
 
-      onChange(newValue);
-    },
-    [value, min, max, step, onChange],
-  );
+    onChange(newValue);
+  };
 
   return (
     <div className={cn('w-full', className)}>
