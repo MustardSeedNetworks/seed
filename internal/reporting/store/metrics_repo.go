@@ -8,6 +8,7 @@ import (
 
 	"github.com/MustardSeedNetworks/seed/internal/database"
 	"github.com/MustardSeedNetworks/seed/internal/reporting"
+	"github.com/MustardSeedNetworks/seed/internal/security/vulntriage"
 	"github.com/MustardSeedNetworks/seed/internal/timeseries/telemetry"
 )
 
@@ -53,7 +54,7 @@ func (r *MetricsRepo) VulnerabilitySeverityCounts(
 		FROM device_vulnerabilities
 		WHERE detected_at >= ? AND status NOT IN (?, ?)
 		GROUP BY severity
-	`, since.Format(time.RFC3339), database.VulnStatusResolved, database.VulnStatusIgnored)
+	`, since.Format(time.RFC3339), vulntriage.StatusResolved, vulntriage.StatusIgnored)
 	if err != nil {
 		return nil, fmt.Errorf("querying vulnerability counts: %w", err)
 	}
@@ -138,7 +139,7 @@ func (r *MetricsRepo) TopIssues(ctx context.Context) ([]reporting.IssueSummary, 
 			END,
 			count DESC
 		LIMIT 10
-	`, database.VulnStatusResolved, database.VulnStatusIgnored)
+	`, vulntriage.StatusResolved, vulntriage.StatusIgnored)
 	if err != nil {
 		return nil, fmt.Errorf("querying top issues: %w", err)
 	}

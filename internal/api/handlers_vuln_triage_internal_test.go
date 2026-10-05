@@ -12,11 +12,12 @@ import (
 
 	"github.com/stretchr/testify/require"
 
+	"github.com/MustardSeedNetworks/seed/internal/app"
 	"github.com/MustardSeedNetworks/seed/internal/auth"
-	"github.com/MustardSeedNetworks/seed/internal/database"
 	"github.com/MustardSeedNetworks/seed/internal/discovery"
 	"github.com/MustardSeedNetworks/seed/internal/identity/roles"
 	"github.com/MustardSeedNetworks/seed/internal/reporting/store"
+	"github.com/MustardSeedNetworks/seed/internal/security/vulntriage"
 )
 
 // newTriageServer scans one device carrying the fixture CVE and returns the
@@ -25,6 +26,7 @@ func newTriageServer(t *testing.T) (*Server, func(osGuess string), int64) {
 	t.Helper()
 	db := newTestDB(t)
 	s := &Server{dbConn: db}
+	s.vulnTriage = app.NewVulnTriage(s.db)
 	scanner := newStoredVulnScanner(t, db)
 	device := &discovery.DiscoveredDevice{
 		IP: "10.20.30.50", MAC: "02:00:00:00:00:05", Vendor: "Linux", OSGuess: "Linux 5.4",
@@ -36,7 +38,7 @@ func newTriageServer(t *testing.T) (*Server, func(osGuess string), int64) {
 	}
 	rescan("Linux 5.4")
 
-	findings, err := db.Vulnerabilities().ListFindings(context.Background(), database.VulnListOptions{})
+	findings, err := db.Vulnerabilities().ListFindings(context.Background(), vulntriage.ListOptions{})
 	require.NoError(t, err)
 	require.Len(t, findings, 1)
 	return s, rescan, findings[0].ID
@@ -79,8 +81,8 @@ func TestVulnTriageLifecycle(t *testing.T) {
 		require.NoError(t, err)
 		return counts["critical"]
 	}
-	status := func() database.VulnStatus {
-		findings, err := s.db().Vulnerabilities().ListFindings(ctx, database.VulnListOptions{})
+	status := func() vulntriage.Status {
+		findings, err := s.db().Vulnerabilities().ListFindings(ctx, vulntriage.ListOptions{})
 		require.NoError(t, err)
 		require.Len(t, findings, 1)
 		return findings[0].Status
@@ -90,7 +92,7 @@ func TestVulnTriageLifecycle(t *testing.T) {
 	require.Equal(t, http.StatusOK, w.Code, w.Body.String())
 	require.Equal(t, 1, openCritical(), "an acknowledged finding is still open")
 	rescan("Linux 5.4")
-	require.Equal(t, database.VulnStatusAcknowledged, status())
+	require.Equal(t, vulntriage.StatusAcknowledged, status())
 
 	w = triage(t, s, id, `{"status":"ignored","reason":"  kernel module not loaded  "}`)
 	require.Equal(t, http.StatusOK, w.Code, w.Body.String())
@@ -99,12 +101,12 @@ func TestVulnTriageLifecycle(t *testing.T) {
 	require.NoError(t, err)
 	require.Empty(t, issues)
 	rescan("Linux 5.4")
-	require.Equal(t, database.VulnStatusIgnored, status(), "a rescan does not undo a triage decision")
+	require.Equal(t, vulntriage.StatusIgnored, status(), "a rescan does not undo a triage decision")
 
 	rescan("Windows 10")
-	require.Equal(t, database.VulnStatusResolved, status())
+	require.Equal(t, vulntriage.StatusResolved, status())
 	rescan("Linux 5.4")
-	require.Equal(t, database.VulnStatusNew, status())
+	require.Equal(t, vulntriage.StatusNew, status())
 	require.Equal(t, 1, openCritical())
 
 	history := findingHistory(t, s, id)
@@ -143,7 +145,7 @@ func TestVulnTriageRefusals(t *testing.T) {
 		{name: "unknown field", body: `{"status":"acknowledged","by":"bob"}`, want: http.StatusBadRequest},
 		{
 			name: "reason too long", want: http.StatusBadRequest,
-			body: `{"status":"ignored","reason":"` + strings.Repeat("x", vulnReasonMaxLen+1) + `"}`,
+			body: `{"status":"ignored","reason":"` + strings.Repeat("x", vulntriage.ReasonMaxLen+1) + `"}`,
 		},
 		{name: "unknown finding", target: "999999", body: `{"status":"acknowledged"}`, want: http.StatusNotFound},
 		{name: "malformed id", target: "abc", body: `{"status":"acknowledged"}`, want: http.StatusNotFound},
@@ -222,6 +224,27 @@ func TestVulnFindingActionMethods(t *testing.T) {
 	w := httptest.NewRecorder()
 	s.handleVulnFindingAction(w, httptest.NewRequest(http.MethodGet, base+"/notes", http.NoBody))
 	require.Equal(t, http.StatusNotFound, w.Code)
+}
+
+// TestVulnTriageStoreUnavailable pins the reply without a database: every
+// route answers 503 rather than reaching a nil store.
+func TestVulnTriageStoreUnavailable(t *testing.T) {
+	t.Parallel()
+	s := &Server{}
+	for _, req := range []*http.Request{
+		httptest.NewRequest(http.MethodGet, vulnFindingsPath, http.NoBody),
+		httptest.NewRequest(http.MethodPost, vulnFindingsPathPrefix+"1/status",
+			strings.NewReader(`{"status":"acknowledged"}`)),
+		httptest.NewRequest(http.MethodGet, vulnFindingsPathPrefix+"1/history", http.NoBody),
+	} {
+		w := httptest.NewRecorder()
+		if req.URL.Path == vulnFindingsPath {
+			s.handleVulnFindings(w, req)
+		} else {
+			s.handleVulnFindingAction(w, req)
+		}
+		require.Equal(t, http.StatusServiceUnavailable, w.Code, req.URL.Path)
+	}
 }
 
 // TestVulnTriageRequiresOperator pins the role gate: triage is a persistent

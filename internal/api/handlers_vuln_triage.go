@@ -20,9 +20,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/MustardSeedNetworks/seed/internal/database"
 	"github.com/MustardSeedNetworks/seed/internal/i18n"
 	"github.com/MustardSeedNetworks/seed/internal/logging"
+	"github.com/MustardSeedNetworks/seed/internal/security/vulntriage"
 )
 
 const (
@@ -31,9 +31,6 @@ const (
 
 	vulnFindingsDefaultLimit = 100
 	vulnFindingsMaxLimit     = 1000
-
-	// vulnReasonMaxLen bounds the free-text reason kept in the history.
-	vulnReasonMaxLen = 500
 )
 
 // VulnFindingResponse is one persisted finding.
@@ -81,17 +78,17 @@ func (s *Server) handleVulnFindings(w http.ResponseWriter, r *http.Request) {
 	}
 
 	q := r.URL.Query()
-	opts := database.VulnListOptions{
+	opts := vulntriage.ListOptions{
 		DeviceID: q.Get("device_id"),
 		Limit:    vulnFindingsDefaultLimit,
 	}
 	if status := q.Get("status"); status != "" {
-		if !validVulnStatus(status) {
+		opts.Status = vulntriage.Status(status)
+		if !opts.Status.Valid() {
 			sendErrorResponseWithDetails(w, logger, http.StatusBadRequest,
 				ErrCodeValidation, localizer.T("errors.vulnerability.invalidStatus"), status)
 			return
 		}
-		opts.Status = database.VulnStatus(status)
 	}
 	var ok bool
 	if opts.Limit, ok = vulnQueryInt(q.Get("limit"), vulnFindingsDefaultLimit, 1, vulnFindingsMaxLimit); !ok {
@@ -105,7 +102,7 @@ func (s *Server) handleVulnFindings(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	findings, err := s.db().Vulnerabilities().ListFindings(r.Context(), opts)
+	findings, err := s.vulnTriage.List(r.Context(), opts)
 	if err != nil {
 		logger.ErrorContext(r.Context(), "list vulnerability findings failed", "error", err)
 		sendErrorResponseWithDetails(w, logger, http.StatusInternalServerError,
@@ -172,33 +169,27 @@ func (s *Server) setVulnFindingStatus(w http.ResponseWriter, r *http.Request, id
 	if !decodeJSONStrictLocalized(w, r, &req, MaxBodySizeJSON, logger, localizer) {
 		return
 	}
-	req.Reason = strings.TrimSpace(req.Reason)
-	if !validVulnStatus(req.Status) {
-		sendErrorResponseWithDetails(w, logger, http.StatusBadRequest,
-			ErrCodeValidation, localizer.T("errors.vulnerability.invalidStatus"), req.Status)
-		return
-	}
-	if len(req.Reason) > vulnReasonMaxLen {
-		sendErrorResponseWithDetails(w, logger, http.StatusBadRequest,
-			ErrCodeValidation, localizer.T("errors.vulnerability.reasonTooLong"), "")
-		return
-	}
-
 	actor := s.usernameFromRequest(r)
-	err := s.db().Vulnerabilities().SetStatus(r.Context(), id,
-		database.VulnStatus(req.Status), actor, req.Reason, time.Now())
+	err := s.vulnTriage.SetStatus(r.Context(), id,
+		vulntriage.Status(req.Status), actor, strings.TrimSpace(req.Reason))
 	switch {
 	case err == nil:
 		logger.InfoContext(r.Context(), "vulnerability finding triaged",
 			"event", "vuln.status", "id", id, "status", req.Status, "actor", actor)
 		sendJSONResponse(w, logger, http.StatusOK, map[string]any{"id": id, "status": req.Status})
-	case errors.Is(err, database.ErrVulnFindingNotFound):
+	case errors.Is(err, vulntriage.ErrInvalidStatus):
+		sendErrorResponseWithDetails(w, logger, http.StatusBadRequest,
+			ErrCodeValidation, localizer.T("errors.vulnerability.invalidStatus"), req.Status)
+	case errors.Is(err, vulntriage.ErrReasonTooLong):
+		sendErrorResponseWithDetails(w, logger, http.StatusBadRequest,
+			ErrCodeValidation, localizer.T("errors.vulnerability.reasonTooLong"), "")
+	case errors.Is(err, vulntriage.ErrFindingNotFound):
 		sendErrorResponseWithDetails(w, logger, http.StatusNotFound,
 			ErrCodeNotFound, localizer.T("errors.vulnerability.findingNotFound"), "")
-	case errors.Is(err, database.ErrVulnReasonRequired):
+	case errors.Is(err, vulntriage.ErrReasonRequired):
 		sendErrorResponseWithDetails(w, logger, http.StatusBadRequest,
 			ErrCodeValidation, localizer.T("errors.vulnerability.reasonRequired"), "")
-	case errors.Is(err, database.ErrVulnTransition):
+	case errors.Is(err, vulntriage.ErrTransition):
 		sendErrorResponseWithDetails(w, logger, http.StatusConflict,
 			ErrCodeConflict, localizer.T("errors.vulnerability.transitionRefused"), req.Status)
 	default:
@@ -212,8 +203,8 @@ func (s *Server) writeVulnFindingHistory(w http.ResponseWriter, r *http.Request,
 	logger := logging.FromContext(r.Context())
 	localizer := i18n.FromRequest(r)
 
-	changes, err := s.db().Vulnerabilities().History(r.Context(), id)
-	if errors.Is(err, database.ErrVulnFindingNotFound) {
+	changes, err := s.vulnTriage.History(r.Context(), id)
+	if errors.Is(err, vulntriage.ErrFindingNotFound) {
 		sendErrorResponseWithDetails(w, logger, http.StatusNotFound,
 			ErrCodeNotFound, localizer.T("errors.vulnerability.findingNotFound"), "")
 		return
@@ -232,16 +223,6 @@ func (s *Server) writeVulnFindingHistory(w http.ResponseWriter, r *http.Request,
 		})
 	}
 	sendJSONResponse(w, logger, http.StatusOK, map[string]any{"id": id, "history": out})
-}
-
-// validVulnStatus reports whether s names one of the four finding states.
-func validVulnStatus(s string) bool {
-	switch database.VulnStatus(s) {
-	case database.VulnStatusNew, database.VulnStatusAcknowledged,
-		database.VulnStatusIgnored, database.VulnStatusResolved:
-		return true
-	}
-	return false
 }
 
 // vulnQueryInt parses an optional integer query value within [lo, hi]; a

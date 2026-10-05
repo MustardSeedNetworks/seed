@@ -7,38 +7,8 @@ import (
 	"errors"
 	"fmt"
 	"time"
-)
 
-// VulnStatus is a finding's triage state; migration 00019's CHECK holds the
-// column to these four values.
-type VulnStatus string
-
-// The scanner owns new and resolved; the operator owns acknowledged and
-// ignored, and may move a finding back to new.
-const (
-	// VulnStatusNew is a finding the last scan pass reported and no operator
-	// has triaged.
-	VulnStatusNew VulnStatus = "new"
-	// VulnStatusAcknowledged is a finding an operator has seen. It stays open.
-	VulnStatusAcknowledged VulnStatus = "acknowledged"
-	// VulnStatusIgnored is a finding an operator accepted or judged a false
-	// positive. It is kept but leaves the open counts.
-	VulnStatusIgnored VulnStatus = "ignored"
-	// VulnStatusResolved marks a finding a later scan pass of its device no
-	// longer reported.
-	VulnStatusResolved VulnStatus = "resolved"
-)
-
-var (
-	// ErrVulnFindingNotFound is returned for a finding id that does not exist.
-	ErrVulnFindingNotFound = errors.New("vulnerability finding not found")
-	// ErrVulnTransition is returned for a status change the operator may not
-	// make: to resolved (the scanner decides that), from resolved (nothing is
-	// left to triage), or to the status the finding already has.
-	ErrVulnTransition = errors.New("vulnerability status change not allowed")
-	// ErrVulnReasonRequired is returned when a finding is ignored without a
-	// reason; an ignored finding leaves the reports, so the record says why.
-	ErrVulnReasonRequired = errors.New("ignoring a vulnerability finding requires a reason")
+	"github.com/MustardSeedNetworks/seed/internal/security/vulntriage"
 )
 
 // VulnerabilityFinding is one CVE a scan pass found on a device.
@@ -51,43 +21,9 @@ type VulnerabilityFinding struct {
 	AffectedVersion   string
 }
 
-// StoredVulnerability is a persisted finding with its device's address.
-type StoredVulnerability struct {
-	ID                int64
-	DeviceID          string
-	DeviceIP          string
-	Hostname          string
-	CVEID             string
-	Severity          string
-	CVSSScore         float64
-	Description       string
-	AffectedComponent string
-	AffectedVersion   string
-	Status            VulnStatus
-	DetectedAt        time.Time
-	ResolvedAt        *time.Time
-}
-
-// VulnStatusChange is one entry of a finding's remediation history. An empty
-// Actor is the scanner.
-type VulnStatusChange struct {
-	From      VulnStatus
-	To        VulnStatus
-	Actor     string
-	Reason    string
-	ChangedAt time.Time
-}
-
-// VulnListOptions filters ListFindings; zero values do not filter.
-type VulnListOptions struct {
-	Status   VulnStatus
-	DeviceID string
-	Limit    int
-	Offset   int
-}
-
 // VulnerabilityRepository persists vulnerability scan passes into
-// device_vulnerabilities, the table report generation and export read.
+// device_vulnerabilities, the table report generation and export read. It
+// implements vulntriage.Store.
 type VulnerabilityRepository struct {
 	db *DB
 }
@@ -117,7 +53,7 @@ func (r *VulnerabilityRepository) RecordScan(
 			SELECT id, status, ?, ? FROM device_vulnerabilities
 			WHERE device_id = ? AND status = ?
 			  AND cve_id IN (SELECT value FROM json_each(?))
-		`, VulnStatusNew, at, deviceID, VulnStatusResolved, string(reported),
+		`, vulntriage.StatusNew, at, deviceID, vulntriage.StatusResolved, string(reported),
 		); execErr != nil {
 			return fmt.Errorf("recording reopened findings on device %s: %w", deviceID, execErr)
 		}
@@ -138,7 +74,7 @@ func (r *VulnerabilityRepository) RecordScan(
 					resolved_at = NULL
 			`, deviceID, f.CVEID, f.Severity, f.CVSSScore, toNullString(f.Description),
 				toNullString(f.AffectedComponent), toNullString(f.AffectedVersion), at,
-				VulnStatusResolved, VulnStatusNew,
+				vulntriage.StatusResolved, vulntriage.StatusNew,
 			); execErr != nil {
 				return fmt.Errorf("recording %s on device %s: %w", f.CVEID, deviceID, execErr)
 			}
@@ -149,7 +85,7 @@ func (r *VulnerabilityRepository) RecordScan(
 			SELECT id, status, ?, ? FROM device_vulnerabilities
 			WHERE device_id = ? AND status != ?
 			  AND cve_id NOT IN (SELECT value FROM json_each(?))
-		`, VulnStatusResolved, at, deviceID, VulnStatusResolved, string(reported),
+		`, vulntriage.StatusResolved, at, deviceID, vulntriage.StatusResolved, string(reported),
 		); execErr != nil {
 			return fmt.Errorf("recording resolved findings on device %s: %w", deviceID, execErr)
 		}
@@ -157,7 +93,7 @@ func (r *VulnerabilityRepository) RecordScan(
 			UPDATE device_vulnerabilities SET status = ?, resolved_at = ?
 			WHERE device_id = ? AND status != ?
 			  AND cve_id NOT IN (SELECT value FROM json_each(?))
-		`, VulnStatusResolved, at, deviceID, VulnStatusResolved, string(reported),
+		`, vulntriage.StatusResolved, at, deviceID, vulntriage.StatusResolved, string(reported),
 		); execErr != nil {
 			return fmt.Errorf("resolving findings no longer reported on device %s: %w", deviceID, execErr)
 		}
@@ -167,8 +103,8 @@ func (r *VulnerabilityRepository) RecordScan(
 
 // ListFindings returns persisted findings, most severe first.
 func (r *VulnerabilityRepository) ListFindings(
-	ctx context.Context, opts VulnListOptions,
-) ([]StoredVulnerability, error) {
+	ctx context.Context, opts vulntriage.ListOptions,
+) ([]vulntriage.Finding, error) {
 	query := `
 		SELECT v.id, v.device_id, d.ip_address, COALESCE(d.hostname, ''), v.cve_id,
 		       COALESCE(v.severity, ''), COALESCE(v.cvss_score, 0),
@@ -202,10 +138,10 @@ func (r *VulnerabilityRepository) ListFindings(
 	}
 	defer rows.Close()
 
-	var out []StoredVulnerability
+	var out []vulntriage.Finding
 	for rows.Next() {
 		var (
-			v        StoredVulnerability
+			v        vulntriage.Finding
 			detected string
 			resolved sql.NullString
 		)
@@ -234,34 +170,34 @@ func (r *VulnerabilityRepository) ListFindings(
 
 // SetStatus applies an operator's triage decision and records it in the
 // finding's history. The operator may acknowledge, ignore (with a reason) or
-// reopen an unresolved finding; see ErrVulnTransition for what is refused.
+// reopen an unresolved finding; see vulntriage.ErrTransition for what is refused.
 func (r *VulnerabilityRepository) SetStatus(
-	ctx context.Context, id int64, to VulnStatus, actor, reason string, at time.Time,
+	ctx context.Context, id int64, to vulntriage.Status, actor, reason string, at time.Time,
 ) error {
 	switch to {
-	case VulnStatusNew, VulnStatusAcknowledged:
-	case VulnStatusIgnored:
+	case vulntriage.StatusNew, vulntriage.StatusAcknowledged:
+	case vulntriage.StatusIgnored:
 		if reason == "" {
-			return ErrVulnReasonRequired
+			return vulntriage.ErrReasonRequired
 		}
-	case VulnStatusResolved:
-		return ErrVulnTransition
+	case vulntriage.StatusResolved:
+		return vulntriage.ErrTransition
 	default:
-		return fmt.Errorf("%w: unknown status %q", ErrVulnTransition, to)
+		return fmt.Errorf("%w: unknown status %q", vulntriage.ErrTransition, to)
 	}
 
 	return r.db.WithTx(ctx, func(tx *sql.Tx) error {
-		var from VulnStatus
+		var from vulntriage.Status
 		err := tx.QueryRowContext(ctx,
 			`SELECT status FROM device_vulnerabilities WHERE id = ?`, id).Scan(&from)
 		if errors.Is(err, sql.ErrNoRows) {
-			return ErrVulnFindingNotFound
+			return vulntriage.ErrFindingNotFound
 		}
 		if err != nil {
 			return fmt.Errorf("reading finding %d: %w", id, err)
 		}
-		if from == VulnStatusResolved || from == to {
-			return fmt.Errorf("%w: finding %d is %s", ErrVulnTransition, id, from)
+		if from == vulntriage.StatusResolved || from == to {
+			return fmt.Errorf("%w: finding %d is %s", vulntriage.ErrTransition, id, from)
 		}
 		if _, err = tx.ExecContext(ctx,
 			`UPDATE device_vulnerabilities SET status = ? WHERE id = ?`, to, id); err != nil {
@@ -279,14 +215,14 @@ func (r *VulnerabilityRepository) SetStatus(
 }
 
 // History returns a finding's status changes, oldest first.
-func (r *VulnerabilityRepository) History(ctx context.Context, id int64) ([]VulnStatusChange, error) {
+func (r *VulnerabilityRepository) History(ctx context.Context, id int64) ([]vulntriage.StatusChange, error) {
 	var exists bool
 	if err := r.db.QueryRow(ctx,
 		`SELECT EXISTS (SELECT 1 FROM device_vulnerabilities WHERE id = ?)`, id).Scan(&exists); err != nil {
 		return nil, fmt.Errorf("reading finding %d: %w", id, err)
 	}
 	if !exists {
-		return nil, ErrVulnFindingNotFound
+		return nil, vulntriage.ErrFindingNotFound
 	}
 
 	rows, err := r.db.Query(ctx, `
@@ -300,10 +236,10 @@ func (r *VulnerabilityRepository) History(ctx context.Context, id int64) ([]Vuln
 	}
 	defer rows.Close()
 
-	out := []VulnStatusChange{}
+	out := []vulntriage.StatusChange{}
 	for rows.Next() {
 		var (
-			c       VulnStatusChange
+			c       vulntriage.StatusChange
 			changed string
 		)
 		if err = rows.Scan(&c.From, &c.To, &c.Actor, &c.Reason, &changed); err != nil {
