@@ -16,7 +16,7 @@
  */
 
 import type React from 'react';
-import { memo, useCallback, useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { cn, icon as iconTokens, radius, spacing } from '../../styles/theme';
 import type { Profile } from '../../types/profile';
@@ -30,10 +30,7 @@ interface ProfileSelectorProps {
   loading?: boolean;
 }
 
-export const ProfileSelector: React.MemoExoticComponent<typeof ProfileSelectorComponent> =
-  memo(ProfileSelectorComponent);
-
-function ProfileSelectorComponent({
+export function ProfileSelector({
   profiles,
   activeProfile,
   onSwitch,
@@ -65,46 +62,36 @@ function ProfileSelectorComponent({
   }, [isOpen]);
 
   // Handle keyboard navigation
-  const handleKeyDown = useCallback(
-    (event: React.KeyboardEvent) => {
-      if (event.key === 'Escape') {
-        setIsOpen(false);
-        buttonRef.current?.focus();
-      } else if (event.key === 'ArrowDown' && !isOpen) {
-        event.preventDefault();
-        setIsOpen(true);
-      }
-    },
-    [isOpen],
-  );
+  const handleKeyDown = (event: React.KeyboardEvent) => {
+    if (event.key === 'Escape') {
+      setIsOpen(false);
+      buttonRef.current?.focus();
+    } else if (event.key === 'ArrowDown' && !isOpen) {
+      event.preventDefault();
+      setIsOpen(true);
+    }
+  };
 
   // Select a profile
-  const selectProfile = useCallback(
-    async (id: string) => {
-      if (id === activeProfile?.id) {
-        setIsOpen(false);
-        return;
-      }
+  const selectProfile = async (id: string) => {
+    if (id === activeProfile?.id) {
+      setIsOpen(false);
+      return;
+    }
 
-      setSwitching(true);
-      try {
-        const success = await onSwitch(id);
-        if (success) {
-          setIsOpen(false);
-          buttonRef.current?.focus();
-        }
-      } finally {
-        setSwitching(false);
-      }
-    },
-    [activeProfile, onSwitch],
-  );
+    setSwitching(true);
+    const success = await onSwitch(id).finally(() => setSwitching(false));
+    if (success) {
+      setIsOpen(false);
+      buttonRef.current?.focus();
+    }
+  };
 
   // Navigate to profile management
-  const goToManagement = useCallback(() => {
+  const goToManagement = () => {
     setIsOpen(false);
     onManageClick?.();
-  }, [onManageClick]);
+  };
 
   // Get profile display name (extracted to avoid nested ternary)
   const getProfileDisplayName = (): string => {

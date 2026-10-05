@@ -33,12 +33,11 @@
  * <PulsingDot />
  * ```
  *
- * Dependencies: React, memo/useMemo hooks, theme utilities (gauge config)
+ * Dependencies: React, theme utilities (gauge config)
  * State: Memoized calculations for display values and size configurations
  */
 
 import type React from 'react';
-import { memo, useMemo } from 'react';
 import {
   cn,
   gauge,
@@ -89,10 +88,31 @@ function getFontSizeClass(size: 'sm' | 'md' | 'lg'): string {
   }
 }
 
-export const SpeedGauge: React.MemoExoticComponent<typeof SpeedGaugeComponent> =
-  memo(SpeedGaugeComponent);
+/** The value shown in the gauge, auto-converted to Gbps above 1000 Mbps. */
+function gaugeDisplayValue(value: number, unit: string): { value: string; unit: string } {
+  if (value >= 1000) {
+    return { value: (value / 1000).toFixed(2), unit: 'Gbps' };
+  }
+  return { value: value.toFixed(1), unit };
+}
 
-function SpeedGaugeComponent({
+function gaugeSizeConfig(size: 'sm' | 'md' | 'lg'): {
+  width: number;
+  height: number;
+  strokeWidth: number;
+  fontSize: number;
+} {
+  switch (size) {
+    case 'sm':
+      return { width: 100, height: 60, strokeWidth: 8, fontSize: 14 };
+    case 'lg':
+      return { width: 180, height: 110, strokeWidth: 14, fontSize: 24 };
+    default:
+      return { width: 140, height: 85, strokeWidth: 12, fontSize: 18 };
+  }
+}
+
+export function SpeedGauge({
   value,
   maxValue = 1000,
   label,
@@ -100,31 +120,8 @@ function SpeedGaugeComponent({
   isRunning = false,
   size = 'md',
 }: SpeedGaugeProps): React.JSX.Element {
-  // Calculate display value (auto-convert to Gbps if > 1000 Mbps)
-  const displayValue: { value: string; unit: string } = useMemo(() => {
-    if (value >= 1000) {
-      return {
-        value: (value / 1000).toFixed(2),
-        unit: 'Gbps',
-      };
-    }
-    return {
-      value: value.toFixed(1),
-      unit: unit,
-    };
-  }, [value, unit]);
-
-  // Size configurations
-  const sizeConfig = useMemo(() => {
-    switch (size) {
-      case 'sm':
-        return { width: 100, height: 60, strokeWidth: 8, fontSize: 14 };
-      case 'lg':
-        return { width: 180, height: 110, strokeWidth: 14, fontSize: 24 };
-      default:
-        return { width: 140, height: 85, strokeWidth: 12, fontSize: 18 };
-    }
-  }, [size]);
+  const displayValue = gaugeDisplayValue(value, unit);
+  const sizeConfig = gaugeSizeConfig(size);
 
   // Gauge calculations
   const percentage = Math.min((value / maxValue) * 100, 100);
@@ -273,10 +270,7 @@ interface ProgressRingProps {
   label?: string;
 }
 
-export const ProgressRing: React.MemoExoticComponent<typeof ProgressRingComponent> =
-  memo(ProgressRingComponent);
-
-function ProgressRingComponent({
+export function ProgressRing({
   progress,
   size = 48,
   strokeWidth = 4,
@@ -336,13 +330,7 @@ interface PulsingDotProps {
   size?: 'sm' | 'md';
 }
 
-export const PulsingDot: React.MemoExoticComponent<typeof PulsingDotComponent> =
-  memo(PulsingDotComponent);
-
-function PulsingDotComponent({
-  color = 'primary',
-  size = 'md',
-}: PulsingDotProps): React.JSX.Element {
+export function PulsingDot({ color = 'primary', size = 'md' }: PulsingDotProps): React.JSX.Element {
   // Type-safe color class getter
   function getColorClass(c: PulsingDotProps['color']): string {
     switch (c) {

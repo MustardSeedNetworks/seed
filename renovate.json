@@ -1,4 +1,11 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
-  "extends": ["github>MustardSeedNetworks/.github"]
+  "extends": ["github>MustardSeedNetworks/.github"],
+  "packageRules": [
+    {
+      "description": "babel-plugin-react-compiler 1.0.0 is built on @babel/types 7; under @babel/core 8 it skips every component with a defaulted destructured prop. Lift when the compiler supports Babel 8.",
+      "matchPackageNames": ["@babel/core"],
+      "allowedVersions": "<8"
+    }
+  ]
 }

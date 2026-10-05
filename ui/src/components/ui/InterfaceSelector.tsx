@@ -22,7 +22,7 @@ import { Tooltip } from './Tooltip';
  */
 
 import type React from 'react';
-import { memo, useCallback, useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { cn, icon as iconTokens, radius, spacing, status as statusColor } from '../../styles/theme';
 import type { InterfaceInfo } from '../../types/generated/categorized-interfaces-response';
@@ -45,11 +45,7 @@ interface InterfaceSelectorProps {
   onAcceptSuggestion?: () => void;
 }
 
-export const InterfaceSelector: React.MemoExoticComponent<typeof InterfaceSelectorComponent> = memo(
-  InterfaceSelectorComponent,
-);
-
-function InterfaceSelectorComponent({
+export function InterfaceSelector({
   interfaces,
   currentInterface,
   isWifi,
@@ -99,28 +95,22 @@ function InterfaceSelectorComponent({
   }, [isOpen]);
 
   // Handle keyboard navigation
-  const handleKeyDown = useCallback(
-    (event: React.KeyboardEvent) => {
-      if (event.key === 'Escape') {
-        setIsOpen(false);
-        buttonRef.current?.focus();
-      } else if (event.key === 'ArrowDown' && !isOpen) {
-        event.preventDefault();
-        setIsOpen(true);
-      }
-    },
-    [isOpen],
-  );
-
-  // Select an interface
-  const selectInterface = useCallback(
-    (name: string) => {
-      onChange(name);
+  const handleKeyDown = (event: React.KeyboardEvent) => {
+    if (event.key === 'Escape') {
       setIsOpen(false);
       buttonRef.current?.focus();
-    },
-    [onChange],
-  );
+    } else if (event.key === 'ArrowDown' && !isOpen) {
+      event.preventDefault();
+      setIsOpen(true);
+    }
+  };
+
+  // Select an interface
+  const selectInterface = (name: string) => {
+    onChange(name);
+    setIsOpen(false);
+    buttonRef.current?.focus();
+  };
 
   // Get display name for an interface
   const getDisplayName = (iface: InterfaceInfo): string => {

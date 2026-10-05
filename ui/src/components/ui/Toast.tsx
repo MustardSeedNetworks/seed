@@ -30,7 +30,7 @@
  */
 
 import type React from 'react';
-import { type ReactNode, useCallback, useEffect, useState } from 'react';
+import { type ReactNode, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   cn,
@@ -67,14 +67,14 @@ interface ToastProviderProps {
 export function ToastProvider({ children }: ToastProviderProps): React.JSX.Element {
   const [toasts, setToasts] = useState<Toast[]>([]);
 
-  const addToast = useCallback((message: string, type: ToastType = 'info', duration = 5000) => {
+  const addToast = (message: string, type: ToastType = 'info', duration = 5000) => {
     const id = `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
     setToasts((prev) => [...prev, { id, message, type, duration }]);
-  }, []);
+  };
 
-  const removeToast = useCallback((id: string) => {
+  const removeToast = (id: string) => {
     setToasts((prev) => prev.filter((toast) => toast.id !== id));
-  }, []);
+  };
 
   return (
     <ToastContext.Provider value={{ addToast, removeToast }}>
