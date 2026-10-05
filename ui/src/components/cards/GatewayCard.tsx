@@ -68,10 +68,7 @@ function getLatencyStatus(
   return 'success';
 }
 
-export const GatewayCard: React.FC<GatewayCardProps> = memo(function gatewayCard({
-  data,
-  loading,
-}: GatewayCardProps) {
+export const GatewayCard = memo(function gatewayCard({ data, loading }: GatewayCardProps) {
   const { t: tr } = useTranslation('cards');
   const { thresholds } = useSettings();
   // Map context ThresholdPair (good/warning) to card format (warning/critical)

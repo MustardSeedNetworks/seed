@@ -23,7 +23,7 @@
  *     figures={[{ label: 'Frames', value: '1.2M' }, { label: 'Loss', value: '2.1%' }]}
  *   />
  */
-import type { FC, ReactNode } from 'react';
+import type { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 
 export type RollupState = 'ok' | 'warn' | 'crit' | 'unknown';
@@ -89,14 +89,14 @@ const STATE_LABEL_KEYS = {
   unknown: 'status.rollupNoData',
 } as const satisfies Record<RollupState, string>;
 
-export const StatusRollup: FC<StatusRollupProps> = ({
+export function StatusRollup({
   state,
   headline,
   body,
   figures = [],
   actions,
   className = '',
-}) => {
+}: StatusRollupProps) {
   const { t } = useTranslation('common');
   const styles = STATE_STYLES[state];
   const shown = figures.slice(0, 4);
@@ -145,4 +145,4 @@ export const StatusRollup: FC<StatusRollupProps> = ({
       </div>
     </section>
   );
-};
+}

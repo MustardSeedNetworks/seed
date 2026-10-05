@@ -1,4 +1,3 @@
-import type { FC } from 'react';
 import { useTranslation } from 'react-i18next';
 
 interface ProductTitleProps {
@@ -14,7 +13,7 @@ interface ProductTitleProps {
  * The product name with the device's own name under it, as both the rail and
  * the phone top bar show it, so several open tabs can be told apart.
  */
-export const ProductTitle: FC<ProductTitleProps> = ({ className, deviceName, bar }) => {
+export function ProductTitle({ className, deviceName, bar }: ProductTitleProps) {
   const { t } = useTranslation();
   return (
     <span className="flex min-w-0 flex-col">
@@ -26,4 +25,4 @@ export const ProductTitle: FC<ProductTitleProps> = ({ className, deviceName, bar
       ) : null}
     </span>
   );
-};
+}

@@ -15,7 +15,6 @@
  * invite someone to tokenise those colours, at which point the seed stops being
  * mustard.
  */
-import type { FC } from 'react';
 import msnLogo from '../assets/msn-logo.svg';
 
 interface MsnMarkProps {
@@ -24,18 +23,20 @@ interface MsnMarkProps {
   className?: string;
 }
 
-export const MsnMark: FC<MsnMarkProps> = ({ collapsed = false, className = '' }) => (
-  <div
-    className={`flex items-center gap-compact ${collapsed ? 'justify-center' : ''} ${className}`}
-    data-testid="msn-mark"
-  >
-    <img src={msnLogo} alt="" aria-hidden="true" className="h-4 w-4 shrink-0" />
-    {!collapsed ? (
-      /* allow-hardcoded: a company name is a proper noun, not copy — the
+export function MsnMark({ collapsed = false, className = '' }: MsnMarkProps) {
+  return (
+    <div
+      className={`flex items-center gap-compact ${collapsed ? 'justify-center' : ''} ${className}`}
+      data-testid="msn-mark"
+    >
+      <img src={msnLogo} alt="" aria-hidden="true" className="h-4 w-4 shrink-0" />
+      {!collapsed ? (
+        /* allow-hardcoded: a company name is a proper noun, not copy — the
          glossary rule keeps product and brand names verbatim in every locale. */
-      <span className="text-[10px] font-semibold tracking-wide text-text-muted">
-        Mustard Seed Networks
-      </span>
-    ) : null}
-  </div>
-);
+        <span className="text-[10px] font-semibold tracking-wide text-text-muted">
+          Mustard Seed Networks
+        </span>
+      ) : null}
+    </div>
+  );
+}

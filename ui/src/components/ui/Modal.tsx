@@ -5,7 +5,7 @@
  * and the trap calls onClose on Escape when closeOnEscape is true.
  */
 import { X } from 'lucide-react';
-import { type FC, type ReactNode, useEffect } from 'react';
+import { type ReactNode, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { iconSizes } from '../../constants/sizes';
 import { useFocusTrap } from '../../hooks/useFocusTrap';
@@ -45,7 +45,7 @@ const sizeClasses: Record<ModalSize, string> = {
   full: 'max-w-4xl',
 };
 
-export const Modal: FC<ModalProps> = ({
+export function Modal({
   isOpen,
   onClose,
   title,
@@ -57,7 +57,7 @@ export const Modal: FC<ModalProps> = ({
   closeOnBackdropClick = true,
   closeOnEscape = true,
   className = '',
-}) => {
+}: ModalProps) {
   const { t } = useTranslation();
   const containerRef = useFocusTrap<HTMLDivElement>({
     isActive: isOpen,
@@ -120,25 +120,40 @@ export const Modal: FC<ModalProps> = ({
       </div>
     </div>
   );
-};
+}
 
-export const ModalHeader: FC<{ children: ReactNode; className?: string }> = ({
+export function ModalHeader({
   children,
   className = '',
-}) => <div className={`mb-content ${className}`}>{children}</div>;
+}: {
+  children: ReactNode;
+  className?: string;
+}) {
+  return <div className={`mb-content ${className}`}>{children}</div>;
+}
 
-export const ModalBody: FC<{ children: ReactNode; className?: string }> = ({
+export function ModalBody({
   children,
   className = '',
-}) => <div className={`stack-lg ${className}`}>{children}</div>;
+}: {
+  children: ReactNode;
+  className?: string;
+}) {
+  return <div className={`stack-lg ${className}`}>{children}</div>;
+}
 
-export const ModalFooter: FC<{ children: ReactNode; className?: string }> = ({
+export function ModalFooter({
   children,
   className = '',
-}) => (
-  <div
-    className={`flex justify-end gap-default pt-section mt-content border-t border-surface-border ${className}`}
-  >
-    {children}
-  </div>
-);
+}: {
+  children: ReactNode;
+  className?: string;
+}) {
+  return (
+    <div
+      className={`flex justify-end gap-default pt-section mt-content border-t border-surface-border ${className}`}
+    >
+      {children}
+    </div>
+  );
+}

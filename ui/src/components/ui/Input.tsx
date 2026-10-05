@@ -4,7 +4,7 @@
  *
  * React 19: refs are regular props.
  */
-import type { FC, InputHTMLAttributes, ReactNode, Ref, TextareaHTMLAttributes } from 'react';
+import type { InputHTMLAttributes, ReactNode, Ref, TextareaHTMLAttributes } from 'react';
 import { useTranslation } from 'react-i18next';
 
 const inputBaseStyles =
@@ -22,7 +22,7 @@ interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
   ref?: Ref<HTMLInputElement>;
 }
 
-export const Input: FC<InputProps> = ({
+export function Input({
   label,
   error,
   hint,
@@ -33,7 +33,7 @@ export const Input: FC<InputProps> = ({
   id,
   ref,
   ...props
-}) => {
+}: InputProps) {
   const inputId = id || label?.toLowerCase().replace(/\s+/g, '-');
   const hasError = !!error;
 
@@ -74,7 +74,7 @@ export const Input: FC<InputProps> = ({
       ) : null}
     </div>
   );
-};
+}
 
 interface TextareaProps extends TextareaHTMLAttributes<HTMLTextAreaElement> {
   label?: string;
@@ -84,7 +84,7 @@ interface TextareaProps extends TextareaHTMLAttributes<HTMLTextAreaElement> {
   ref?: Ref<HTMLTextAreaElement>;
 }
 
-export const Textarea: FC<TextareaProps> = ({
+export function Textarea({
   label,
   error,
   hint,
@@ -93,7 +93,7 @@ export const Textarea: FC<TextareaProps> = ({
   id,
   ref,
   ...props
-}) => {
+}: TextareaProps) {
   const textareaId = id || label?.toLowerCase().replace(/\s+/g, '-');
   const hasError = !!error;
 
@@ -122,7 +122,7 @@ export const Textarea: FC<TextareaProps> = ({
       ) : null}
     </div>
   );
-};
+}
 
 interface SelectOption {
   value: string;
@@ -141,7 +141,7 @@ interface SelectProps extends Omit<InputHTMLAttributes<HTMLSelectElement>, 'onCh
   ref?: Ref<HTMLSelectElement>;
 }
 
-export const Select: FC<SelectProps> = ({
+export function Select({
   label,
   error,
   hint,
@@ -153,7 +153,7 @@ export const Select: FC<SelectProps> = ({
   onChange,
   ref,
   ...props
-}) => {
+}: SelectProps) {
   const selectId = id || label?.toLowerCase().replace(/\s+/g, '-');
   const hasError = !!error;
 
@@ -196,7 +196,7 @@ export const Select: FC<SelectProps> = ({
       ) : null}
     </div>
   );
-};
+}
 
 interface CheckboxProps extends Omit<InputHTMLAttributes<HTMLInputElement>, 'type'> {
   label: string;
@@ -205,7 +205,7 @@ interface CheckboxProps extends Omit<InputHTMLAttributes<HTMLInputElement>, 'typ
   ref?: Ref<HTMLInputElement>;
 }
 
-export const Checkbox: FC<CheckboxProps> = ({
+export function Checkbox({
   label,
   description,
   className = '',
@@ -213,7 +213,7 @@ export const Checkbox: FC<CheckboxProps> = ({
   id,
   ref,
   ...props
-}) => {
+}: CheckboxProps) {
   const checkboxId = id || label.toLowerCase().replace(/\s+/g, '-');
 
   return (
@@ -238,7 +238,7 @@ export const Checkbox: FC<CheckboxProps> = ({
       </div>
     </div>
   );
-};
+}
 
 interface ToggleProps extends Omit<InputHTMLAttributes<HTMLInputElement>, 'type'> {
   label: string;
@@ -247,7 +247,7 @@ interface ToggleProps extends Omit<InputHTMLAttributes<HTMLInputElement>, 'type'
   ref?: Ref<HTMLInputElement>;
 }
 
-export const Toggle: FC<ToggleProps> = ({
+export function Toggle({
   label,
   description,
   className = '',
@@ -256,7 +256,7 @@ export const Toggle: FC<ToggleProps> = ({
   checked,
   ref,
   ...props
-}) => {
+}: ToggleProps) {
   const toggleId = id || label.toLowerCase().replace(/\s+/g, '-');
   // The visible control is the button, but the <label> is bound to the hidden
   // checkbox, so the button itself had no accessible name and a screen reader
@@ -307,7 +307,7 @@ export const Toggle: FC<ToggleProps> = ({
       />
     </div>
   );
-};
+}
 
 interface SearchInputProps extends Omit<InputHTMLAttributes<HTMLInputElement>, 'type'> {
   label?: string;
@@ -316,7 +316,7 @@ interface SearchInputProps extends Omit<InputHTMLAttributes<HTMLInputElement>, '
   ref?: Ref<HTMLInputElement>;
 }
 
-export const SearchInput: FC<SearchInputProps> = ({
+export function SearchInput({
   label,
   onClear,
   className = '',
@@ -326,7 +326,7 @@ export const SearchInput: FC<SearchInputProps> = ({
   onChange,
   ref,
   ...props
-}) => {
+}: SearchInputProps) {
   const { t } = useTranslation();
   const inputId = id || label?.toLowerCase().replace(/\s+/g, '-') || 'search-input';
   const hasValue = value !== undefined && value !== '';
@@ -409,16 +409,16 @@ export const SearchInput: FC<SearchInputProps> = ({
       </div>
     </div>
   );
-};
+}
 
 interface FormGroupProps {
   children: ReactNode;
   className?: string;
 }
 
-export const FormGroup: FC<FormGroupProps> = ({ children, className = '' }) => (
-  <div className={`stack-lg ${className}`}>{children}</div>
-);
+export function FormGroup({ children, className = '' }: FormGroupProps) {
+  return <div className={`stack-lg ${className}`}>{children}</div>;
+}
 
 interface FormSectionProps {
   title: string;
@@ -427,17 +427,14 @@ interface FormSectionProps {
   className?: string;
 }
 
-export const FormSection: FC<FormSectionProps> = ({
-  title,
-  description,
-  children,
-  className = '',
-}) => (
-  <div className={`stack-lg ${className}`}>
-    <div>
-      <h3 className="heading-3 text-text-primary">{title}</h3>
-      {description ? <p className="text-sm text-text-muted mt-tight">{description}</p> : null}
+export function FormSection({ title, description, children, className = '' }: FormSectionProps) {
+  return (
+    <div className={`stack-lg ${className}`}>
+      <div>
+        <h3 className="heading-3 text-text-primary">{title}</h3>
+        {description ? <p className="text-sm text-text-muted mt-tight">{description}</p> : null}
+      </div>
+      <div className="stack-lg">{children}</div>
     </div>
-    <div className="stack-lg">{children}</div>
-  </div>
-);
+  );
+}

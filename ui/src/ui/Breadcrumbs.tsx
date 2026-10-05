@@ -1,5 +1,4 @@
 import { ChevronRight, Home } from 'lucide-react';
-import type { FC } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link, useLocation } from 'wouter';
 import { iconSizes } from '../constants/sizes';
@@ -18,7 +17,7 @@ interface BreadcrumbItem {
  * disagreeing with the heading directly beneath it (#2645). It was also
  * untranslated, so every breadcrumb stayed English under `es`.
  */
-export const Breadcrumbs: FC = () => {
+export function Breadcrumbs() {
   const { t } = useTranslation();
   const [location] = useLocation();
   const pages = usePages();
@@ -70,4 +69,4 @@ export const Breadcrumbs: FC = () => {
       ))}
     </nav>
   );
-};
+}
