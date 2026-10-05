@@ -724,6 +724,9 @@
       "PathDiscoveryCard": {
         "description": "Trace la ruta hasta un destino e inspeccione los saltos que responden y su latencia (latency)."
       },
+      "PathMonitorCard": {
+        "description": "Traza un destino cada segundo hasta que lo detenga. La pérdida en un salto que continúa en todos los saltos siguientes es la falla; la pérdida en un solo salto es un enrutador que responde despacio a las trazas. Dos direcciones en un salto indican que la ruta tiene balanceo de carga."
+      },
       "NetworkDiscoveryCard": {
         "description": "Explore las redes locales configuradas e inspeccione los dispositivos, las direcciones y los servicios anunciados descubiertos."
       },

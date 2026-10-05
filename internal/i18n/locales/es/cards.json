@@ -716,5 +716,33 @@
     "colFrom": "Origen",
     "colTo": "Destino",
     "truncated": "Por el cable pasaron más equipos o conversaciones de los que el resumen registra; las tablas muestran los primeros que se vieron."
+  },
+  "pathMonitor": {
+    "title": "Monitor de ruta",
+    "description": "Traza un destino cada segundo y conserva la pérdida y la latencia (latency) de cada salto, para encontrar el salto que pierde paquetes o añade retardo.",
+    "target": "Destino",
+    "targetPlaceholder": "Dirección IP o nombre de host",
+    "start": "Iniciar monitor",
+    "starting": "Iniciando el monitor…",
+    "running": "Monitoreando la ruta a {{target}}.",
+    "stop": "Detener",
+    "stopping": "Deteniendo…",
+    "stopFailed": "El monitor no se detuvo. Inténtelo de nuevo.",
+    "linkDown": "Se detuvo porque el enlace se cayó.",
+    "readOnly": "Iniciar un monitor de ruta requiere el rol de operador.",
+    "failed": "El monitor no se ejecutó.",
+    "rounds_one": "{{count}} ronda a {{target}}",
+    "rounds_other": "{{count}} rondas a {{target}}",
+    "empty": "Ningún salto ha respondido todavía.",
+    "moreAddresses_one": "{{name}} +{{count}}",
+    "moreAddresses_other": "{{name}} +{{count}}",
+    "colHop": "Salto",
+    "colAddress": "Dirección",
+    "colLoss": "Pérdida",
+    "colLast": "Último",
+    "colAvg": "Media",
+    "colBest": "Mejor",
+    "colWorst": "Peor",
+    "colJitter": "Jitter"
   }
 }

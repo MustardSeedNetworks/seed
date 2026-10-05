@@ -268,6 +268,12 @@ func schemaTargets() []schemaTarget {
 		{&packetcapture.Request{}, "packet-capture-request.schema.json"},
 		{&packetcapture.Result{}, "packet-capture-response.schema.json"},
 
+		// #165's continuous path monitor, a jobs-spine kind. Each round's
+		// accumulated view arrives as a `pathMonitor` SSE frame, and the job's
+		// result is the same shape at the moment it stopped.
+		{&api.PathMonitorRequest{}, "path-monitor-request.schema.json"},
+		{&api.PathMonitorUpdate{}, "path-monitor-update.schema.json"},
+
 		// Profile/settings config — code-first model of the per-profile
 		// config.Config blob (ADR-0007/0008, Phase 7 S6). The profile Config
 		// is applied via Config.ApplyProfileJSON, so config.Config is its

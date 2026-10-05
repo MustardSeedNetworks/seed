@@ -1,5 +1,6 @@
 import { NetworkDiscoveryCard } from '../components/cards/NetworkDiscoveryCard';
 import { PathDiscoveryCard } from '../components/cards/PathDiscoveryCard';
+import { PathMonitorCard } from '../components/cards/PathMonitorCard';
 import { PathAnalysisPreview } from '../components/previews/PathAnalysisPreview';
 import { GatedPreview } from '../components/ui/GatedPreview';
 import { useAppContext } from '../contexts/AppContext';
@@ -15,6 +16,7 @@ export function PathAnalysisPage() {
     scanError,
     triggerDeviceScan,
     registerTraceHopHandler,
+    registerPathMonitorHandler,
     openSettings,
   } = useAppContext();
 
@@ -22,11 +24,18 @@ export function PathAnalysisPage() {
     <GatedPreview feature="path_analysis" preview={<PathAnalysisPreview />}>
       <div className={layout.grid.cards}>
         {(!isWifi || cards.wifi) && (
-          <PathDiscoveryCard
-            gateway={cards.gateway?.gateway}
-            dnsServer={cards.dns?.servers?.[0] ?? cards.dns?.server}
-            onRegisterTraceHandler={registerTraceHopHandler}
-          />
+          <>
+            <PathDiscoveryCard
+              gateway={cards.gateway?.gateway}
+              dnsServer={cards.dns?.servers?.[0] ?? cards.dns?.server}
+              onRegisterTraceHandler={registerTraceHopHandler}
+            />
+            <PathMonitorCard
+              defaultTarget={cards.gateway?.gateway ?? ''}
+              linkDown={!isWifi && cards.link?.linkUp === false}
+              subscribe={registerPathMonitorHandler}
+            />
+          </>
         )}
         {/* The card renders with discovery switched off as well: hiding it was
             half of #2674 — nothing found and no page saying why. */}

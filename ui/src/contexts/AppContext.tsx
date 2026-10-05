@@ -14,6 +14,7 @@ import type { NetworkDiscoveryData } from '../components/cards/NetworkDiscoveryC
 import type { TraceHopMessage } from '../components/cards/PathDiscoveryCard';
 import type { ChannelGraphResponse } from '../components/cards/WiFiChannelGraph';
 import type { CardState } from '../hooks/useCardState';
+import type { PathMonitorUpdate } from '../hooks/usePathMonitor';
 import type { CardSettings, DisplayOptions } from '../types/settings';
 
 export interface AppContextValue {
@@ -28,6 +29,7 @@ export interface AppContextValue {
   scanError: boolean;
   triggerDeviceScan: () => Promise<void>;
   registerTraceHopHandler: (handler: (msg: TraceHopMessage) => void) => () => void;
+  registerPathMonitorHandler: (handler: (update: PathMonitorUpdate) => void) => () => void;
   channelGraphData: ChannelGraphResponse | null;
   channelGraphLoading: boolean;
   appVersion: string;

@@ -724,6 +724,9 @@
       "PathDiscoveryCard": {
         "description": "Run a trace to a destination and inspect the responding hops and their latency."
       },
+      "PathMonitorCard": {
+        "description": "Trace a destination every second until you stop it. Loss on one hop that carries on to every later hop is the fault; loss on a single hop only is a router that answers traces slowly. Two addresses on one hop mean the path is load-balanced."
+      },
       "NetworkDiscoveryCard": {
         "description": "Scan configured local networks and inspect discovered devices, addresses and advertised services."
       },

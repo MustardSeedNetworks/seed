@@ -1,0 +1,102 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/MustardSeedNetworks/seed/main/docs/schemas/api/path-monitor-update.schema.json",
+  "$ref": "#/$defs/PathMonitorUpdate",
+  "$defs": {
+    "HopAddress": {
+      "properties": {
+        "ip": {
+          "type": "string"
+        },
+        "hostname": {
+          "type": "string"
+        },
+        "count": {
+          "type": "integer"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "ip",
+        "count"
+      ]
+    },
+    "HopStats": {
+      "properties": {
+        "ttl": {
+          "type": "integer"
+        },
+        "addresses": {
+          "items": {
+            "$ref": "#/$defs/HopAddress"
+          },
+          "type": "array"
+        },
+        "sent": {
+          "type": "integer"
+        },
+        "received": {
+          "type": "integer"
+        },
+        "lossPct": {
+          "type": "number"
+        },
+        "lastRtt": {
+          "type": "integer"
+        },
+        "bestRtt": {
+          "type": "integer"
+        },
+        "worstRtt": {
+          "type": "integer"
+        },
+        "avgRtt": {
+          "type": "integer"
+        },
+        "jitter": {
+          "type": "integer"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "ttl",
+        "addresses",
+        "sent",
+        "received",
+        "lossPct",
+        "lastRtt",
+        "bestRtt",
+        "worstRtt",
+        "avgRtt",
+        "jitter"
+      ]
+    },
+    "PathMonitorUpdate": {
+      "properties": {
+        "target": {
+          "type": "string"
+        },
+        "rounds": {
+          "type": "integer"
+        },
+        "hops": {
+          "items": {
+            "$ref": "#/$defs/HopStats"
+          },
+          "type": "array"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "target",
+        "rounds",
+        "hops"
+      ]
+    }
+  },
+  "title": "PathMonitorUpdate",
+  "description": "PathMonitorUpdate — generated from the Go struct in internal/api; refresh with `make schema` after struct changes."
+}

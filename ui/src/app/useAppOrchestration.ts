@@ -141,6 +141,7 @@ export function useAppOrchestration({ isAuthenticated }: UseAppOrchestrationArgs
     handleCardUpdate,
     prevLinkUpRef,
     registerTraceHopHandler,
+    registerPathMonitorHandler,
   } = useCardState({
     setCurrentInterface,
     setIsWifi,
@@ -576,6 +577,7 @@ export function useAppOrchestration({ isAuthenticated }: UseAppOrchestrationArgs
     cards,
     loading,
     registerTraceHopHandler,
+    registerPathMonitorHandler,
     // device scan
     triggerDeviceScan,
     // channel graph

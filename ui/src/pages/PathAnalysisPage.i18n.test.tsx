@@ -27,6 +27,12 @@ vi.mock('../contexts/LicenseContext', async (importOriginal) => ({
   }),
 }));
 
+vi.mock('../contexts/RoleContext', async (importOriginal) => ({
+  ...(await importOriginal<Record<string, unknown>>()),
+  useRole: () => ({ canWrite: true, role: 'admin', loading: false }),
+}));
+vi.mock('../hooks/useJobEvents', () => ({ useJobEvents: () => ({ status: 'connecting' }) }));
+
 vi.mock('../hooks/useEngineScan', () => ({
   useEngineScan: () => ({
     running: false,
@@ -49,6 +55,7 @@ const context = {
   scanError: false,
   triggerDeviceScan: vi.fn(),
   registerTraceHopHandler: vi.fn(() => () => undefined),
+  registerPathMonitorHandler: vi.fn(() => () => undefined),
 } as unknown as AppContextValue;
 
 const { PathAnalysisPage } = await import('./PathAnalysisPage');
@@ -95,6 +102,8 @@ describe('PathAnalysisPage — real locale copy', () => {
     expect(screen.getByText('Enter an IP or hostname to trace the network path.')).toBeVisible();
     expect(screen.getByText('Network Discovery')).toBeVisible();
     expect(screen.getByText('Start Scan')).toBeVisible();
+    expect(screen.getByText('Path monitor')).toBeVisible();
+    expect(screen.getByText('Start monitor')).toBeVisible();
   });
 
   it('renders the pitch in Spanish, with the commands still verbatim', async () => {
@@ -117,6 +126,8 @@ describe('PathAnalysisPage — real locale copy', () => {
       'Enter an IP or hostname to trace the network path.',
       'Network Discovery',
       'Enter target',
+      'Path monitor',
+      'Start monitor',
     ]) {
       expect(screen.queryByText(english)).toBeNull();
     }
@@ -126,6 +137,8 @@ describe('PathAnalysisPage — real locale copy', () => {
       screen.getByText('Ingrese una IP o nombre de host para trazar la ruta de red.'),
     ).toBeVisible();
     expect(screen.getByText('Descubrimiento de red')).toBeVisible();
+    expect(screen.getByText('Monitor de ruta')).toBeVisible();
+    expect(screen.getByText('Iniciar monitor')).toBeVisible();
     // ICMP, UDP and TCP are protocol names in both locales.
     for (const protocol of ['ICMP', 'UDP', 'TCP']) {
       expect(screen.getByText(protocol)).toBeVisible();
