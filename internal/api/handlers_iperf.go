@@ -39,6 +39,14 @@ const (
 // iPerf Types
 // ============================================================================
 
+// iperfDeps is the server's iperf3 tooling. version is iperf.GetVersion, which
+// execs iperf3 on first use; the test server swaps it so a route test never
+// forks (#2530).
+type iperfDeps struct {
+	mgr     *iperf.Manager
+	version func() (string, error)
+}
+
 // IperfInfoResponse contains iperf3 installation info.
 type IperfInfoResponse struct {
 	Installed bool   `json:"installed"`
@@ -151,7 +159,7 @@ func (s *Server) handleIperfInfo(w http.ResponseWriter, r *http.Request) {
 	logger := logging.FromContext(r.Context())
 
 	resp := IperfInfoResponse{}
-	iperfVersion, err := iperf.GetVersion()
+	iperfVersion, err := s.iperf.version()
 	if err != nil {
 		logger.WarnContext(r.Context(), "Failed to get iperf version", "error", err)
 		resp.Installed = false

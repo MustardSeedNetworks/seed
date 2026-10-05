@@ -208,7 +208,7 @@ type Server struct {
 	gatewayTest   *gateway.Tester
 	vlanMgr       *vlan.Manager
 	speedtestTest *speedtest.Tester
-	iperfMgr      *iperf.Manager
+	iperf         iperfDeps
 	cableTest     *cable.Tester
 	publicIP      *publicip.Checker
 
@@ -431,7 +431,7 @@ func (s *Server) initTelemetryAndWiFiServices(cfg *config.Config) {
 	s.gatewayTest = gateway.NewTesterForInterface(gateway.DefaultThresholds(), cfg.Interface.Default)
 	s.vlanMgr = vlan.NewManager(cfg.Interface.Default)
 	s.speedtestTest = speedtest.NewTesterWithConfig(cfg.Speedtest.ServerID)
-	s.iperfMgr = iperf.NewManager()
+	s.iperf = iperfDeps{mgr: iperf.NewManager(), version: iperf.GetVersion}
 	s.cableTest = cable.NewTester(cfg.Interface.Default)
 	s.publicIP = publicip.NewChecker()
 
@@ -764,7 +764,7 @@ func (s *Server) VLANManager() *vlan.Manager { return s.vlanMgr }
 func (s *Server) SpeedtestTester() *speedtest.Tester { return s.speedtestTest }
 
 // IperfManager returns the iperf manager.
-func (s *Server) IperfManager() *iperf.Manager { return s.iperfMgr }
+func (s *Server) IperfManager() *iperf.Manager { return s.iperf.mgr }
 
 // CableTester returns the cable tester.
 func (s *Server) CableTester() *cable.Tester { return s.cableTest }
@@ -853,7 +853,7 @@ func (s *Server) rogueDetector() *dhcp.RogueDetector            { return s.rogue
 func (s *Server) gatewayTester() *gateway.Tester                { return s.gatewayTest }
 func (s *Server) vlanManager() *vlan.Manager                    { return s.vlanMgr }
 func (s *Server) speedtestTester() *speedtest.Tester            { return s.speedtestTest }
-func (s *Server) iperfManager() *iperf.Manager                  { return s.iperfMgr }
+func (s *Server) iperfManager() *iperf.Manager                  { return s.iperf.mgr }
 func (s *Server) cableTester() *cable.Tester                    { return s.cableTest }
 func (s *Server) publicipChecker() *publicip.Checker            { return s.publicIP }
 func (s *Server) wifiManager() *wifi.Manager                    { return s.wifiMgr }

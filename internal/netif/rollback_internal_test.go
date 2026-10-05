@@ -24,6 +24,13 @@ func (f *fakeApplier) Apply(_ string, cfg *StaticIPConfig) error {
 	return nil
 }
 
+func (*fakeApplier) DHCP(string) error        { return errUnexpectedWrite }
+func (*fakeApplier) SetMTU(string, int) error { return errUnexpectedWrite }
+
+// errUnexpectedWrite fails a rollback test that reaches a write it never asked
+// for.
+var errUnexpectedWrite = errors.New("unexpected configuration write")
+
 type fakeSnapshotter struct {
 	cfg *StaticIPConfig
 	err error
@@ -126,6 +133,8 @@ func TestFailedRollbackIsReportedDistinctly(t *testing.T) {
 type alwaysFailingApplier struct{ err error }
 
 func (a alwaysFailingApplier) Apply(string, *StaticIPConfig) error { return a.err }
+func (a alwaysFailingApplier) DHCP(string) error                   { return a.err }
+func (a alwaysFailingApplier) SetMTU(string, int) error            { return a.err }
 
 // TestApplyProceedsWithoutASnapshot pins that an interface with nothing to
 // restore is still configurable. Refusing to configure an unconfigured

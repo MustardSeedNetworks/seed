@@ -296,9 +296,8 @@ func TestIperfJSONFields(t *testing.T) {
 
 func TestFindIperf3Binary(t *testing.T) {
 	// Clear the cache so the lookup actually runs.
-	originalPath := iperf.IperfBinaryPath()
-	iperf.SetIperfBinaryPath("")
-	defer func() { iperf.SetIperfBinaryPath(originalPath) }()
+	iperf.KeepIperfBinary(t)
+	iperf.ClearIperfBinaryPath()
 
 	path, err := iperf.FindIperf3Binary()
 
@@ -319,9 +318,8 @@ func TestFindIperf3Binary(t *testing.T) {
 
 func TestFindIperf3BinaryCached(t *testing.T) {
 	// Test that cached path is returned
-	originalPath := iperf.IperfBinaryPath()
+	iperf.KeepIperfBinary(t)
 	iperf.SetIperfBinaryPath("/cached/path/iperf3")
-	defer func() { iperf.SetIperfBinaryPath(originalPath) }()
 
 	path, err := iperf.FindIperf3Binary()
 	if err != nil {

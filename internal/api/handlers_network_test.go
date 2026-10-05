@@ -343,13 +343,7 @@ func TestHandleIPSettingsPUT(t *testing.T) {
 
 			server.Mux().ServeHTTP(w, req)
 
-			// Static IP requires root permissions, so may fail with Internal Error
-			if tt.expectedStatus == http.StatusOK {
-				if w.Code != http.StatusOK && w.Code != http.StatusInternalServerError {
-					t.Errorf("Expected status %d or %d, got %d: %s",
-						http.StatusOK, http.StatusInternalServerError, w.Code, w.Body.String())
-				}
-			} else if w.Code != tt.expectedStatus {
+			if w.Code != tt.expectedStatus {
 				t.Errorf("Expected status %d, got %d: %s", tt.expectedStatus, w.Code, w.Body.String())
 			}
 		})
@@ -427,13 +421,7 @@ func TestHandleSetMTU(t *testing.T) {
 
 			server.Mux().ServeHTTP(w, req)
 
-			// MTU changes may require root, so OK or InternalServerError both acceptable for valid requests
-			if tt.expectedStatus == http.StatusOK {
-				if w.Code != http.StatusOK && w.Code != http.StatusInternalServerError {
-					t.Errorf("Expected status %d or %d, got %d: %s",
-						http.StatusOK, http.StatusInternalServerError, w.Code, w.Body.String())
-				}
-			} else if w.Code != tt.expectedStatus {
+			if w.Code != tt.expectedStatus {
 				t.Errorf("Expected status %d, got %d: %s", tt.expectedStatus, w.Code, w.Body.String())
 			}
 		})

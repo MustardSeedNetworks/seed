@@ -29,10 +29,12 @@ type configSnapshotter interface {
 	Snapshot(iface string) (*StaticIPConfig, error)
 }
 
-// configApplier applies a configuration to an interface. The production
-// implementation is the platform-specific configureStaticIPPlatform.
+// configApplier writes configuration to an interface. The production
+// implementation is platformApplier; NewMockManager's never touches the host.
 type configApplier interface {
 	Apply(iface string, cfg *StaticIPConfig) error
+	DHCP(iface string) error
+	SetMTU(iface string, mtu int) error
 }
 
 // systemSnapshotter reads the live configuration by composing the read paths
@@ -69,6 +71,16 @@ type platformApplier struct{}
 // Apply calls the platform implementation.
 func (platformApplier) Apply(iface string, cfg *StaticIPConfig) error {
 	return configureStaticIPPlatform(iface, cfg)
+}
+
+// DHCP calls the platform implementation.
+func (platformApplier) DHCP(iface string) error {
+	return configureDHCPPlatform(iface)
+}
+
+// SetMTU calls the platform implementation.
+func (platformApplier) SetMTU(iface string, mtu int) error {
+	return setMTUPlatform(iface, mtu)
 }
 
 // applyWithRollback applies cfg and restores prev if the apply fails.

@@ -1,17 +1,38 @@
 package iperf
 
-import "time"
+import (
+	"testing"
+	"time"
+)
 
 // This file is only compiled during testing.
 
 // IperfBinaryPath returns the current cached iperf binary path for testing.
 func IperfBinaryPath() string {
-	return getIperfBinaryPath()
+	return getIperfBinary().path
 }
 
 // SetIperfBinaryPath sets the cached iperf binary path for testing.
 func SetIperfBinaryPath(path string) {
-	setIperfBinaryPath(path)
+	setIperfBinary(iperfBinary{path: path})
+}
+
+// SetIperfBinary caches a resolved binary and the version it reported.
+func SetIperfBinary(path, version string) {
+	setIperfBinary(iperfBinary{path: path, version: version})
+}
+
+// KeepIperfBinary restores the cached binary, path and version both, when the
+// test ends.
+func KeepIperfBinary(t testing.TB) {
+	t.Helper()
+	saved := getIperfBinary()
+	t.Cleanup(func() { setIperfBinary(saved) })
+}
+
+// ParseVersion exposes the internal parseVersion function for testing.
+func ParseVersion(out string) string {
+	return parseVersion(out)
 }
 
 // FindIperf3Binary exposes the internal findIperf3Binary function for testing.
@@ -84,7 +105,8 @@ func GetLegacyPaths() []string {
 
 // ValidateBinary exposes the internal validateBinary function for testing.
 func ValidateBinary(path string) bool {
-	return validateBinary(path)
+	_, ok := probeVersion(path)
+	return ok
 }
 
 // GetCacheDir exposes the internal getCacheDir function for testing.
@@ -119,7 +141,7 @@ func FindSystemIperf3() (string, error) {
 
 // ClearIperfBinaryPath clears the cached binary path for testing.
 func ClearIperfBinaryPath() {
-	setIperfBinaryPath("")
+	setIperfBinary(iperfBinary{})
 }
 
 // VersionCheckTimeout exposes the version check timeout constant for testing.

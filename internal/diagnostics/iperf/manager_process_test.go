@@ -56,9 +56,8 @@ func fakeIperf3(t *testing.T) string {
 func useFakeIperf3(t *testing.T) {
 	t.Helper()
 
-	previous := iperf.IperfBinaryPath()
+	iperf.KeepIperfBinary(t)
 	iperf.SetIperfBinaryPath(fakeIperf3(t))
-	t.Cleanup(func() { iperf.SetIperfBinaryPath(previous) })
 }
 
 // freePort returns a port nothing is listening on. The listener is closed
