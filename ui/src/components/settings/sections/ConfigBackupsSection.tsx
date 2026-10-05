@@ -23,7 +23,7 @@ import { Tooltip } from '../../ui/Tooltip';
  */
 
 import type React from 'react';
-import { memo, useCallback, useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { api } from '../../../api';
 import { useRole } from '../../../contexts/RoleContext';
@@ -42,155 +42,170 @@ interface ConfigVersion {
   needsMigration: boolean;
 }
 
+async function readBackups(res: Response): Promise<BackupInfo[]> {
+  const data = (await res.json()) as { backups?: BackupInfo[] };
+  return data.backups ?? [];
+}
+
 /**
  * Settings section for configuration backup and restore.
  */
-export const ConfigBackupsSection: React.NamedExoticComponent<Record<string, never>> = memo(
-  function ConfigBackupsSectionComponent(): React.ReactElement {
-    const { t } = useTranslation('settings');
-    const { canWrite } = useRole();
-    const [backups, setBackups] = useState<BackupInfo[]>([]);
-    const [version, setVersion] = useState<ConfigVersion | null>(null);
-    const [loading, setLoading] = useState(false);
-    const [error, setError] = useState<string | null>(null);
-    const [restoreConfirm, setRestoreConfirm] = useState<string | null>(null);
-    const [actionLoading, setActionLoading] = useState<string | null>(null);
+export function ConfigBackupsSection(): React.ReactElement {
+  const { t } = useTranslation('settings');
+  const { canWrite } = useRole();
+  const [backups, setBackups] = useState<BackupInfo[]>([]);
+  const [version, setVersion] = useState<ConfigVersion | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [restoreConfirm, setRestoreConfirm] = useState<string | null>(null);
+  const [actionLoading, setActionLoading] = useState<string | null>(null);
 
-    const fetchBackups = useCallback(async (): Promise<void> => {
-      setLoading(true);
-      setError(null);
-      try {
-        const [backupsRes, versionRes] = await Promise.all([
-          fetch(`${API_BASE}/api/v1/config/backups`, { credentials: 'include' }),
-          fetch(`${API_BASE}/api/v1/config/version`, { credentials: 'include' }),
-        ]);
+  const fetchBackups = async (): Promise<void> => {
+    setLoading(true);
+    setError(null);
+    try {
+      const [backupsRes, versionRes] = await Promise.all([
+        fetch(`${API_BASE}/api/v1/config/backups`, { credentials: 'include' }),
+        fetch(`${API_BASE}/api/v1/config/version`, { credentials: 'include' }),
+      ]);
 
-        if (backupsRes.ok) {
-          const data = await backupsRes.json();
-          setBackups(data.backups || []);
-        } else {
-          setError(t('configBackups.fetchError'));
-        }
-
-        if (versionRes.ok) {
-          setVersion(await versionRes.json());
-        }
-      } catch {
-        setError(t('configBackups.networkError'));
-      } finally {
-        setLoading(false);
+      if (backupsRes.ok) {
+        setBackups(await readBackups(backupsRes));
+      } else {
+        setError(t('configBackups.fetchError'));
       }
-    }, [t]);
 
-    useEffect((): void => {
-      fetchBackups().catch(() => undefined);
-    }, [fetchBackups]);
+      if (versionRes.ok) {
+        setVersion(await versionRes.json());
+      }
+    } catch {
+      setError(t('configBackups.networkError'));
+    }
+    setLoading(false);
+  };
 
-    const createBackup = async (): Promise<void> => {
-      setActionLoading('create');
-      setError(null);
-      try {
-        await api.post('/api/v1/config/backup');
-        await fetchBackups();
-      } catch (err) {
-        setError(err instanceof Error ? err.message : t('configBackups.createError'));
-      } finally {
-        setActionLoading(null);
-      }
-    };
+  useEffect((): void => {
+    fetchBackups().catch(() => undefined);
+  }, [fetchBackups]);
 
-    const restoreBackup = async (backupName: string): Promise<void> => {
-      setActionLoading(backupName);
-      setError(null);
-      try {
-        await api.post('/api/v1/config/restore', { backupName });
-        setRestoreConfirm(null);
-        // Reload page to apply restored config
-        window.location.reload();
-      } catch (err) {
-        // The client carries the server's own message, which the raw branch
-        // used to read out of the body itself.
-        setError(err instanceof Error ? err.message : t('configBackups.restoreError'));
-      } finally {
-        setActionLoading(null);
-      }
-    };
+  const createBackup = async (): Promise<void> => {
+    setActionLoading('create');
+    setError(null);
+    try {
+      await api.post('/api/v1/config/backup');
+      await fetchBackups();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : t('configBackups.createError'));
+    }
+    setActionLoading(null);
+  };
 
-    const deleteBackup = async (backupName: string): Promise<void> => {
-      setActionLoading(backupName);
-      setError(null);
-      try {
-        await api.delete(`/api/v1/config/backup/delete?name=${encodeURIComponent(backupName)}`);
-        await fetchBackups();
-      } catch (err) {
-        setError(err instanceof Error ? err.message : t('configBackups.deleteError'));
-      } finally {
-        setActionLoading(null);
-      }
-    };
+  const restoreBackup = async (backupName: string): Promise<void> => {
+    setActionLoading(backupName);
+    setError(null);
+    try {
+      await api.post('/api/v1/config/restore', { backupName });
+      setRestoreConfirm(null);
+      // Reload page to apply restored config
+      window.location.reload();
+    } catch (err) {
+      // The client carries the server's own message, which the raw branch
+      // used to read out of the body itself.
+      setError(err instanceof Error ? err.message : t('configBackups.restoreError'));
+    }
+    setActionLoading(null);
+  };
 
-    const formatDate = (dateStr: string): string => {
-      try {
-        return new Date(dateStr).toLocaleString();
-      } catch {
-        return dateStr;
-      }
-    };
+  const deleteBackup = async (backupName: string): Promise<void> => {
+    setActionLoading(backupName);
+    setError(null);
+    try {
+      await api.delete(`/api/v1/config/backup/delete?name=${encodeURIComponent(backupName)}`);
+      await fetchBackups();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : t('configBackups.deleteError'));
+    }
+    setActionLoading(null);
+  };
 
-    // Helper function to render backups list content based on loading/data state
-    const renderBackupsContent = (): React.ReactElement => {
-      if (loading) {
-        return <p className="caption text-text-muted">{t('configBackups.loading')}</p>;
-      }
-      if (backups.length === 0) {
-        return <p className="caption text-text-muted">{t('configBackups.noBackups')}</p>;
-      }
-      return (
-        <div className="stack-xs">
-          <p className="caption text-text-muted">
-            {t('configBackups.available', { count: backups.length })}
-          </p>
-          {backups.map((backup) => (
-            <div
-              key={backup.name}
-              className={cn(
-                spacing.pad.sm,
-                'bg-surface-base',
-                radius.default,
-                'border border-surface-border',
-              )}
-            >
-              <div className={layout.flex.between}>
-                <div>
-                  <p className="body-small text-text-primary font-medium">
-                    {formatDate(backup.createdAt)}
-                  </p>
-                  <p className="caption text-text-muted">
-                    {formatBytes(backup.size)} • v{backup.version || '?'}
-                  </p>
-                </div>
-                <div className={cn('flex', spacing.gap.compact)}>
-                  {restoreConfirm === backup.name ? (
-                    <>
+  const formatDate = (dateStr: string): string => {
+    try {
+      return new Date(dateStr).toLocaleString();
+    } catch {
+      return dateStr;
+    }
+  };
+
+  // Helper function to render backups list content based on loading/data state
+  const renderBackupsContent = (): React.ReactElement => {
+    if (loading) {
+      return <p className="caption text-text-muted">{t('configBackups.loading')}</p>;
+    }
+    if (backups.length === 0) {
+      return <p className="caption text-text-muted">{t('configBackups.noBackups')}</p>;
+    }
+    return (
+      <div className="stack-xs">
+        <p className="caption text-text-muted">
+          {t('configBackups.available', { count: backups.length })}
+        </p>
+        {backups.map((backup) => (
+          <div
+            key={backup.name}
+            className={cn(
+              spacing.pad.sm,
+              'bg-surface-base',
+              radius.default,
+              'border border-surface-border',
+            )}
+          >
+            <div className={layout.flex.between}>
+              <div>
+                <p className="body-small text-text-primary font-medium">
+                  {formatDate(backup.createdAt)}
+                </p>
+                <p className="caption text-text-muted">
+                  {formatBytes(backup.size)} • v{backup.version || '?'}
+                </p>
+              </div>
+              <div className={cn('flex', spacing.gap.compact)}>
+                {restoreConfirm === backup.name ? (
+                  <>
+                    <button
+                      type="button"
+                      onClick={(): void => {
+                        restoreBackup(backup.name).catch(() => undefined);
+                      }}
+                      disabled={!!actionLoading}
+                      className={cn(
+                        spacing.chip.sm,
+                        radius.md,
+                        'bg-status-warning text-text-inverse caption hover:opacity-90 disabled:opacity-50',
+                      )}
+                    >
+                      {actionLoading === backup.name
+                        ? t('configBackups.restoring')
+                        : t('configBackups.confirm')}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={(): void => setRestoreConfirm(null)}
+                      disabled={!!actionLoading}
+                      className={cn(
+                        spacing.chip.sm,
+                        radius.md,
+                        'border border-surface-border caption text-text-muted hover:text-text-primary disabled:opacity-50',
+                      )}
+                    >
+                      {t('configBackups.cancel')}
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    <Tooltip text={t('configBackups.restoreTooltip')}>
                       <button
                         type="button"
-                        onClick={(): void => {
-                          restoreBackup(backup.name).catch(() => undefined);
-                        }}
-                        disabled={!!actionLoading}
-                        className={cn(
-                          spacing.chip.sm,
-                          radius.md,
-                          'bg-status-warning text-text-inverse caption hover:opacity-90 disabled:opacity-50',
-                        )}
-                      >
-                        {actionLoading === backup.name
-                          ? t('configBackups.restoring')
-                          : t('configBackups.confirm')}
-                      </button>
-                      <button
-                        type="button"
-                        onClick={(): void => setRestoreConfirm(null)}
+                        onClick={(): void => setRestoreConfirm(backup.name)}
                         disabled={!!actionLoading}
                         className={cn(
                           spacing.chip.sm,
@@ -198,149 +213,132 @@ export const ConfigBackupsSection: React.NamedExoticComponent<Record<string, nev
                           'border border-surface-border caption text-text-muted hover:text-text-primary disabled:opacity-50',
                         )}
                       >
-                        {t('configBackups.cancel')}
+                        {t('configBackups.restore')}
                       </button>
-                    </>
-                  ) : (
-                    <>
-                      <Tooltip text={t('configBackups.restoreTooltip')}>
-                        <button
-                          type="button"
-                          onClick={(): void => setRestoreConfirm(backup.name)}
-                          disabled={!!actionLoading}
-                          className={cn(
-                            spacing.chip.sm,
-                            radius.md,
-                            'border border-surface-border caption text-text-muted hover:text-text-primary disabled:opacity-50',
-                          )}
-                        >
-                          {t('configBackups.restore')}
-                        </button>
-                      </Tooltip>
-                      <Tooltip text={t('configBackups.deleteTooltip')}>
-                        <button
-                          type="button"
-                          onClick={(): void => {
-                            deleteBackup(backup.name).catch(() => undefined);
-                          }}
-                          disabled={!!actionLoading}
-                          className={cn(
-                            spacing.chip.sm,
-                            radius.md,
-                            'border border-status-error caption text-status-error hover:bg-status-error hover:text-text-inverse disabled:opacity-50',
-                          )}
-                        >
-                          {actionLoading === backup.name ? '...' : t('configBackups.delete')}
-                        </button>
-                      </Tooltip>
-                    </>
-                  )}
-                </div>
+                    </Tooltip>
+                    <Tooltip text={t('configBackups.deleteTooltip')}>
+                      <button
+                        type="button"
+                        onClick={(): void => {
+                          deleteBackup(backup.name).catch(() => undefined);
+                        }}
+                        disabled={!!actionLoading}
+                        className={cn(
+                          spacing.chip.sm,
+                          radius.md,
+                          'border border-status-error caption text-status-error hover:bg-status-error hover:text-text-inverse disabled:opacity-50',
+                        )}
+                      >
+                        {actionLoading === backup.name ? '...' : t('configBackups.delete')}
+                      </button>
+                    </Tooltip>
+                  </>
+                )}
               </div>
             </div>
-          ))}
-        </div>
-      );
-    };
-
-    return (
-      <CollapsibleSection
-        title={
-          <div className={layout.inline.default}>
-            <svg
-              className={iconTokens.size.sm}
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-              aria-hidden="true"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M8 7v8a2 2 0 002 2h6M8 7V5a2 2 0 012-2h4.586a1 1 0 01.707.293l4.414 4.414a1 1 0 01.293.707V15a2 2 0 01-2 2h-2M8 7H6a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2v-2"
-              />
-            </svg>
-            <span>{t('configBackups.title')}</span>
           </div>
-        }
-        readOnlyReason={canWrite ? undefined : t('common.readOnly')}
-      >
-        <div className="stack-sm">
-          {/* Version Info */}
-          {version ? (
-            <div
-              className={cn(
-                layout.flex.between,
-                spacing.pad.sm,
-                'bg-surface-base',
-                radius.default,
-                'border border-surface-border',
-              )}
-            >
-              <span className="body-small text-text-muted">{t('configBackups.version')}</span>
-              <span className="body-small text-text-primary">
-                v{version.current}
-                {version.needsMigration ? (
-                  <span className="ml-inline text-status-warning">
-                    ({t('configBackups.needsMigration')})
-                  </span>
-                ) : null}
-              </span>
-            </div>
-          ) : null}
+        ))}
+      </div>
+    );
+  };
 
-          {/* Create Backup Button */}
-          <button
-            type="button"
-            onClick={(): void => {
-              createBackup().catch(() => undefined);
-            }}
-            disabled={actionLoading === 'create'}
+  return (
+    <CollapsibleSection
+      title={
+        <div className={layout.inline.default}>
+          <svg
+            className={iconTokens.size.sm}
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+            aria-hidden="true"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M8 7v8a2 2 0 002 2h6M8 7V5a2 2 0 012-2h4.586a1 1 0 01.707.293l4.414 4.414a1 1 0 01.293.707V15a2 2 0 01-2 2h-2M8 7H6a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2v-2"
+            />
+          </svg>
+          <span>{t('configBackups.title')}</span>
+        </div>
+      }
+      readOnlyReason={canWrite ? undefined : t('common.readOnly')}
+    >
+      <div className="stack-sm">
+        {/* Version Info */}
+        {version ? (
+          <div
             className={cn(
-              'w-full',
-              button.size.md,
-              'bg-brand-primary text-on-brand',
-              radius.md,
-              'font-medium hover:bg-brand-accent transition-colors flex-center',
-              spacing.gap.compact,
-              'touch-manipulation disabled:opacity-50',
+              layout.flex.between,
+              spacing.pad.sm,
+              'bg-surface-base',
+              radius.default,
+              'border border-surface-border',
             )}
           >
-            {actionLoading === 'create' ? (
-              t('configBackups.creating')
-            ) : (
-              <>
-                <svg
-                  className={iconTokens.size.sm}
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                  aria-hidden="true"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M12 4v16m8-8H4"
-                  />
-                </svg>
-                {t('configBackups.createBackup')}
-              </>
-            )}
-          </button>
+            <span className="body-small text-text-muted">{t('configBackups.version')}</span>
+            <span className="body-small text-text-primary">
+              v{version.current}
+              {version.needsMigration ? (
+                <span className="ml-inline text-status-warning">
+                  ({t('configBackups.needsMigration')})
+                </span>
+              ) : null}
+            </span>
+          </div>
+        ) : null}
 
-          {/* Error Message */}
-          {error ? <p className="caption text-status-error">{error}</p> : null}
+        {/* Create Backup Button */}
+        <button
+          type="button"
+          onClick={(): void => {
+            createBackup().catch(() => undefined);
+          }}
+          disabled={actionLoading === 'create'}
+          className={cn(
+            'w-full',
+            button.size.md,
+            'bg-brand-primary text-on-brand',
+            radius.md,
+            'font-medium hover:bg-brand-accent transition-colors flex-center',
+            spacing.gap.compact,
+            'touch-manipulation disabled:opacity-50',
+          )}
+        >
+          {actionLoading === 'create' ? (
+            t('configBackups.creating')
+          ) : (
+            <>
+              <svg
+                className={iconTokens.size.sm}
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+                aria-hidden="true"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M12 4v16m8-8H4"
+                />
+              </svg>
+              {t('configBackups.createBackup')}
+            </>
+          )}
+        </button>
 
-          {/* Backups List */}
-          {renderBackupsContent()}
+        {/* Error Message */}
+        {error ? <p className="caption text-status-error">{error}</p> : null}
 
-          <p className={cn('caption text-text-muted', spacing.margin.top.inline)}>
-            {t('configBackups.description')}
-          </p>
-        </div>
-      </CollapsibleSection>
-    );
-  },
-);
+        {/* Backups List */}
+        {renderBackupsContent()}
+
+        <p className={cn('caption text-text-muted', spacing.margin.top.inline)}>
+          {t('configBackups.description')}
+        </p>
+      </div>
+    </CollapsibleSection>
+  );
+}

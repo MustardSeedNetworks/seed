@@ -16,7 +16,6 @@
  */
 
 import type React from 'react';
-import { memo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useRole } from '../../../contexts/RoleContext';
 import { cn, icon as iconTokens, layout, radius, spacing } from '../../../styles/theme';
@@ -65,162 +64,158 @@ const LINK_MODE_OPTIONS: { value: string; label: string }[] = [
  * Settings section for link speed and duplex configuration.
  * Uses a single dropdown with combined speed/duplex modes.
  */
-export const LinkSettings: React.NamedExoticComponent<LinkSettingsProps> = memo(
-  function LinkSettingsComponent({
-    linkSettings,
-    setLinkSettings,
-    linkStatus,
-    cardSettings,
-    updateCardSettings,
-  }: LinkSettingsProps): React.ReactElement {
-    const { t } = useTranslation('settings');
-    const { canWrite } = useRole();
-    const readOnlyReason = canWrite ? undefined : t('common.readOnly');
+export function LinkSettings({
+  linkSettings,
+  setLinkSettings,
+  linkStatus,
+  cardSettings,
+  updateCardSettings,
+}: LinkSettingsProps): React.ReactElement {
+  const { t } = useTranslation('settings');
+  const { canWrite } = useRole();
+  const readOnlyReason = canWrite ? undefined : t('common.readOnly');
 
-    // Handle mode change
-    const handleModeChange = (mode: string): void => {
-      setLinkSettings((prev) => ({
-        ...prev,
-        mode,
-      }));
-    };
+  // Handle mode change
+  const handleModeChange = (mode: string): void => {
+    setLinkSettings((prev) => ({
+      ...prev,
+      mode,
+    }));
+  };
 
-    // Check if current mode is manual (not auto)
-    const isManualMode = linkSettings.mode !== 'auto';
+  // Check if current mode is manual (not auto)
+  const isManualMode = linkSettings.mode !== 'auto';
 
-    return (
-      <CollapsibleSection
-        readOnlyReason={readOnlyReason}
-        title={
-          <div className={layout.inline.default}>
-            <PlugZap className={iconTokens.size.sm} />
-            <span>{t('sections.link')}</span>
-            <AutoSaveIndicator status={linkStatus} />
-          </div>
-        }
-        defaultOpen={false}
-      >
-        <div className="stack">
-          {/* Card Visibility & FAB Controls */}
-          <div className="stack-sm">
-            <label
-              className={cn(
-                layout.flex.between,
-                spacing.pad.sm,
-                'bg-surface-base',
-                radius.default,
-                'border border-surface-border',
-              )}
-            >
-              <div>
-                <span className="body-small text-text-primary font-medium">
-                  {t('common.showCard')}
-                </span>
-                <p className="caption text-text-muted">{t('common.showCardDesc')}</p>
-              </div>
-              <input
-                type="checkbox"
-                checked={cardSettings.link.enabled}
-                onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>
-                  updateCardSettings({
-                    link: { ...cardSettings.link, enabled: e.target.checked },
-                  })
-                }
-                className={iconTokens.size.sm}
-              />
-            </label>
-            <label
-              className={cn(
-                layout.flex.between,
-                spacing.pad.sm,
-                'bg-surface-base',
-                radius.default,
-                'border border-surface-border',
-              )}
-            >
-              <div>
-                <span className="body-small text-text-primary font-medium">
-                  {t('common.runOnFab')}
-                </span>
-                <p className="caption text-text-muted">{t('common.runOnFabDesc')}</p>
-              </div>
-              <input
-                type="checkbox"
-                checked={cardSettings.link.autoRunOnLink}
-                onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>
-                  updateCardSettings({
-                    link: { ...cardSettings.link, autoRunOnLink: e.target.checked },
-                  })
-                }
-                className={iconTokens.size.sm}
-              />
-            </label>
-          </div>
-
-          {/* Combined Speed/Duplex Dropdown */}
-          <div>
-            <label className="caption text-text-muted font-medium" htmlFor="link-mode">
-              {t('link.speedDuplex')}
-            </label>
-            <select
-              id="link-mode"
-              value={linkSettings.mode}
-              onChange={(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>): void =>
-                handleModeChange(e.target.value)
-              }
-              className={cn(
-                'w-full',
-                spacing.margin.top.tight,
-                spacing.chip.lg,
-                'bg-surface-base border border-surface-border',
-                radius.default,
-                'body-small text-text-primary',
-              )}
-            >
-              {LINK_MODE_OPTIONS.map((option) => (
-                <option key={option.value} value={option.value}>
-                  {option.label}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          {/* Warning for manual settings */}
-          {isManualMode ? (
-            <p className={cn('caption text-status-warning', spacing.margin.top.inline)}>
-              {t('link.manualWarning')}
-            </p>
-          ) : null}
-
-          {/* Available Modes Display */}
-          {linkSettings.availableModes.length > 0 ? (
-            <div className={cn('border-t border-surface-border', spacing.padding.top.heading)}>
-              <span className="caption text-text-muted font-medium">
-                {t('link.availableModes')}
-              </span>
-              <div className={cn('flex flex-wrap', spacing.gap.tight, spacing.margin.top.inline)}>
-                {linkSettings.availableModes.map((mode) => (
-                  <span
-                    key={mode}
-                    className={cn(
-                      spacing.chip.sm,
-                      'bg-surface-base border border-surface-border',
-                      radius.default,
-                      'caption text-text-muted',
-                    )}
-                  >
-                    {mode}
-                  </span>
-                ))}
-              </div>
-            </div>
-          ) : null}
-
-          <p className={cn('caption text-text-muted', spacing.margin.top.inline)}>
-            {t('link.requiresRoot')}
-          </p>
+  return (
+    <CollapsibleSection
+      readOnlyReason={readOnlyReason}
+      title={
+        <div className={layout.inline.default}>
+          <PlugZap className={iconTokens.size.sm} />
+          <span>{t('sections.link')}</span>
+          <AutoSaveIndicator status={linkStatus} />
         </div>
-      </CollapsibleSection>
-    );
-  },
-);
+      }
+      defaultOpen={false}
+    >
+      <div className="stack">
+        {/* Card Visibility & FAB Controls */}
+        <div className="stack-sm">
+          <label
+            className={cn(
+              layout.flex.between,
+              spacing.pad.sm,
+              'bg-surface-base',
+              radius.default,
+              'border border-surface-border',
+            )}
+          >
+            <div>
+              <span className="body-small text-text-primary font-medium">
+                {t('common.showCard')}
+              </span>
+              <p className="caption text-text-muted">{t('common.showCardDesc')}</p>
+            </div>
+            <input
+              type="checkbox"
+              checked={cardSettings.link.enabled}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>
+                updateCardSettings({
+                  link: { ...cardSettings.link, enabled: e.target.checked },
+                })
+              }
+              className={iconTokens.size.sm}
+            />
+          </label>
+          <label
+            className={cn(
+              layout.flex.between,
+              spacing.pad.sm,
+              'bg-surface-base',
+              radius.default,
+              'border border-surface-border',
+            )}
+          >
+            <div>
+              <span className="body-small text-text-primary font-medium">
+                {t('common.runOnFab')}
+              </span>
+              <p className="caption text-text-muted">{t('common.runOnFabDesc')}</p>
+            </div>
+            <input
+              type="checkbox"
+              checked={cardSettings.link.autoRunOnLink}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>
+                updateCardSettings({
+                  link: { ...cardSettings.link, autoRunOnLink: e.target.checked },
+                })
+              }
+              className={iconTokens.size.sm}
+            />
+          </label>
+        </div>
+
+        {/* Combined Speed/Duplex Dropdown */}
+        <div>
+          <label className="caption text-text-muted font-medium" htmlFor="link-mode">
+            {t('link.speedDuplex')}
+          </label>
+          <select
+            id="link-mode"
+            value={linkSettings.mode}
+            onChange={(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>): void =>
+              handleModeChange(e.target.value)
+            }
+            className={cn(
+              'w-full',
+              spacing.margin.top.tight,
+              spacing.chip.lg,
+              'bg-surface-base border border-surface-border',
+              radius.default,
+              'body-small text-text-primary',
+            )}
+          >
+            {LINK_MODE_OPTIONS.map((option) => (
+              <option key={option.value} value={option.value}>
+                {option.label}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        {/* Warning for manual settings */}
+        {isManualMode ? (
+          <p className={cn('caption text-status-warning', spacing.margin.top.inline)}>
+            {t('link.manualWarning')}
+          </p>
+        ) : null}
+
+        {/* Available Modes Display */}
+        {linkSettings.availableModes.length > 0 ? (
+          <div className={cn('border-t border-surface-border', spacing.padding.top.heading)}>
+            <span className="caption text-text-muted font-medium">{t('link.availableModes')}</span>
+            <div className={cn('flex flex-wrap', spacing.gap.tight, spacing.margin.top.inline)}>
+              {linkSettings.availableModes.map((mode) => (
+                <span
+                  key={mode}
+                  className={cn(
+                    spacing.chip.sm,
+                    'bg-surface-base border border-surface-border',
+                    radius.default,
+                    'caption text-text-muted',
+                  )}
+                >
+                  {mode}
+                </span>
+              ))}
+            </div>
+          </div>
+        ) : null}
+
+        <p className={cn('caption text-text-muted', spacing.margin.top.inline)}>
+          {t('link.requiresRoot')}
+        </p>
+      </div>
+    </CollapsibleSection>
+  );
+}

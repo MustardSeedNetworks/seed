@@ -20,7 +20,7 @@ import { Tooltip } from '../../ui/Tooltip';
 
 import type { TFunction } from 'i18next';
 import type React from 'react';
-import { memo, useCallback, useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { api } from '../../../api';
 import { useRole } from '../../../contexts/RoleContext';
@@ -71,10 +71,10 @@ interface CapabilityEntry {
  * than reporting whether one is possible.
  */
 function tdrSupportFromCapabilities(
-  entries: readonly CapabilityEntry[],
+  entries: readonly CapabilityEntry[] | undefined,
   t: TFunction<['settings', 'errors']>,
 ): TdrSupportStatus {
-  const entry = entries.find((candidate) => candidate.capability === 'cable_diagnostics');
+  const entry = entries?.find((candidate) => candidate.capability === 'cable_diagnostics');
   if (!entry) {
     return { supported: false, message: t('cableTest.notReported') };
   }
@@ -87,167 +87,163 @@ function tdrSupportFromCapabilities(
 
 /**
  * Settings section for cable test (TDR) configuration.
- * Memoized to prevent unnecessary re-renders when parent state changes.
  */
-export const CableTestSettings: React.NamedExoticComponent<CableTestSettingsProps> = memo(
-  function CableTestSettingsComponent({
-    cableTestSettings,
-    setCableTestSettings,
-    cableTestStatus,
-  }: CableTestSettingsProps): React.ReactElement {
-    const { t } = useTranslation(['settings', 'errors']);
-    // Per-control rather than a read-only fieldset: the support Refresh below
-    // is a read, and a disabled fieldset would take it with the checkbox.
-    const { canWrite } = useRole();
-    const [tdrSupport, setTdrSupport] = useState<TdrSupportStatus | null>(null);
-    const [checkingSupport, setCheckingSupport] = useState(false);
+export function CableTestSettings({
+  cableTestSettings,
+  setCableTestSettings,
+  cableTestStatus,
+}: CableTestSettingsProps): React.ReactElement {
+  const { t } = useTranslation(['settings', 'errors']);
+  // Per-control rather than a read-only fieldset: the support Refresh below
+  // is a read, and a disabled fieldset would take it with the checkbox.
+  const { canWrite } = useRole();
+  const [tdrSupport, setTdrSupport] = useState<TdrSupportStatus | null>(null);
+  const [checkingSupport, setCheckingSupport] = useState(false);
 
-    // Check TDR support on mount
-    const checkTdrSupport = useCallback(async (): Promise<void> => {
-      setCheckingSupport(true);
-      try {
-        const status = await api.get<{ capabilities?: CapabilityEntry[] }>('/api/v1/status');
-        setTdrSupport(tdrSupportFromCapabilities(status.capabilities ?? [], t));
-      } catch {
-        setTdrSupport({ supported: false, message: t('errors:network.networkError') });
-      } finally {
-        setCheckingSupport(false);
-      }
-    }, [t]);
+  // Check TDR support on mount
+  const checkTdrSupport = async (): Promise<void> => {
+    setCheckingSupport(true);
+    try {
+      const status = await api.get<{ capabilities?: CapabilityEntry[] }>('/api/v1/status');
+      setTdrSupport(tdrSupportFromCapabilities(status.capabilities, t));
+    } catch {
+      setTdrSupport({ supported: false, message: t('errors:network.networkError') });
+    }
+    setCheckingSupport(false);
+  };
 
-    useEffect((): void => {
-      checkTdrSupport().catch(() => undefined);
-    }, [checkTdrSupport]);
+  useEffect((): void => {
+    checkTdrSupport().catch(() => undefined);
+  }, [checkTdrSupport]);
 
-    // Helper functions to avoid nested ternaries
-    const getStatusIndicatorClass = (): string => {
-      if (checkingSupport) {
-        return 'bg-status-warning animate-pulse';
-      }
-      if (tdrSupport?.supported) {
-        return statusColor.bg.success;
-      }
-      return 'bg-text-muted';
-    };
+  // Helper functions to avoid nested ternaries
+  const getStatusIndicatorClass = (): string => {
+    if (checkingSupport) {
+      return 'bg-status-warning animate-pulse';
+    }
+    if (tdrSupport?.supported) {
+      return statusColor.bg.success;
+    }
+    return 'bg-text-muted';
+  };
 
-    const getStatusLabel = (): string => {
-      if (checkingSupport) {
-        return t('cableTest.checkingSupport');
-      }
-      if (tdrSupport?.supported) {
-        return t('cableTest.supported');
-      }
-      return t('cableTest.notSupported');
-    };
+  const getStatusLabel = (): string => {
+    if (checkingSupport) {
+      return t('cableTest.checkingSupport');
+    }
+    if (tdrSupport?.supported) {
+      return t('cableTest.supported');
+    }
+    return t('cableTest.notSupported');
+  };
 
-    return (
-      <CollapsibleSection
-        title={
-          <div className={layout.inline.default}>
-            <Cable className={iconTokens.size.sm} />
-            <span>{t('sections.cableTest')}</span>
-            <AutoSaveIndicator status={cableTestStatus} />
-          </div>
-        }
-        defaultOpen={false}
-      >
-        <div className="stack">
-          {/* TDR Support Status */}
-          <div
-            className={cn(
-              spacing.pad.sm,
-              radius.lg,
-              'border',
-              tdrSupport?.supported
-                ? 'bg-status-success/10 border-status-success/30'
-                : 'bg-surface-base border-surface-border',
-            )}
-          >
-            <div className={layout.flex.between}>
-              <div className={layout.inline.default}>
-                <div className={cn('w-2 h-2', radius.full, getStatusIndicatorClass())} />
-                <span className="body-small font-medium text-text-primary">{getStatusLabel()}</span>
-              </div>
-              <button
-                type="button"
-                onClick={(): void => {
-                  checkTdrSupport().catch(() => undefined);
-                }}
-                disabled={checkingSupport}
-                className="caption text-text-muted hover:text-text-primary"
-              >
-                {checkingSupport ? '...' : t('common.refresh')}
-              </button>
-            </div>
-            {tdrSupport?.driver ? (
-              <p className={cn('caption text-text-muted', spacing.margin.top.tight)}>
-                {t('cableTest.driver')}: {tdrSupport.driver}
-              </p>
-            ) : null}
-            {!tdrSupport?.supported && tdrSupport?.message ? (
-              <p className={cn('caption text-text-muted', spacing.margin.top.tight)}>
-                {tdrSupport.message}
-              </p>
-            ) : null}
-          </div>
-
-          {/* Enable Cable Test Card */}
-          <label
-            htmlFor="cable-test-card-enabled"
-            className={cn(
-              layout.flex.between,
-              spacing.pad.sm,
-              'bg-surface-base',
-              radius.default,
-              'border border-surface-border',
-            )}
-          >
-            <div>
-              <span className="body-small text-text-primary font-medium">
-                {t('cableTest.enableCard')}
-              </span>
-              <p className="caption text-text-muted">{t('cableTest.enableCardDesc')}</p>
-            </div>
-            <Tooltip text={canWrite ? undefined : t('common.readOnly')}>
-              {(description) => (
-                <span className="contents">
-                  <input
-                    {...description}
-                    id="cable-test-card-enabled"
-                    type="checkbox"
-                    checked={cableTestSettings.enabled}
-                    onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>
-                      setCableTestSettings((prev) => ({
-                        ...prev,
-                        enabled: e.target.checked,
-                      }))
-                    }
-                    disabled={!canWrite}
-                    className={iconTokens.size.sm}
-                  />
-                  {!canWrite ? (
-                    <button
-                      type="button"
-                      {...description}
-                      aria-label={t('common.readOnly')}
-                      onClick={(event) => event.preventDefault()}
-                      className="inline-flex text-text-muted rounded focus-visible:outline focus-visible:outline-2 focus-visible:outline-brand-primary"
-                    >
-                      <Info className="h-4 w-4" aria-hidden="true" />
-                    </button>
-                  ) : null}
-                </span>
-              )}
-            </Tooltip>
-          </label>
-
-          {/* Auto-Run on Link Down */}
-          {/* Note: Auto-run is automatic when link down + PHY supports TDR - no toggle needed */}
-          <p className={cn('caption text-text-muted', spacing.margin.top.inline)}>
-            {t('cableTest.tdrNote')}
-          </p>
+  return (
+    <CollapsibleSection
+      title={
+        <div className={layout.inline.default}>
+          <Cable className={iconTokens.size.sm} />
+          <span>{t('sections.cableTest')}</span>
+          <AutoSaveIndicator status={cableTestStatus} />
         </div>
-      </CollapsibleSection>
-    );
-  },
-);
+      }
+      defaultOpen={false}
+    >
+      <div className="stack">
+        {/* TDR Support Status */}
+        <div
+          className={cn(
+            spacing.pad.sm,
+            radius.lg,
+            'border',
+            tdrSupport?.supported
+              ? 'bg-status-success/10 border-status-success/30'
+              : 'bg-surface-base border-surface-border',
+          )}
+        >
+          <div className={layout.flex.between}>
+            <div className={layout.inline.default}>
+              <div className={cn('w-2 h-2', radius.full, getStatusIndicatorClass())} />
+              <span className="body-small font-medium text-text-primary">{getStatusLabel()}</span>
+            </div>
+            <button
+              type="button"
+              onClick={(): void => {
+                checkTdrSupport().catch(() => undefined);
+              }}
+              disabled={checkingSupport}
+              className="caption text-text-muted hover:text-text-primary"
+            >
+              {checkingSupport ? '...' : t('common.refresh')}
+            </button>
+          </div>
+          {tdrSupport?.driver ? (
+            <p className={cn('caption text-text-muted', spacing.margin.top.tight)}>
+              {t('cableTest.driver')}: {tdrSupport.driver}
+            </p>
+          ) : null}
+          {!tdrSupport?.supported && tdrSupport?.message ? (
+            <p className={cn('caption text-text-muted', spacing.margin.top.tight)}>
+              {tdrSupport.message}
+            </p>
+          ) : null}
+        </div>
+
+        {/* Enable Cable Test Card */}
+        <label
+          htmlFor="cable-test-card-enabled"
+          className={cn(
+            layout.flex.between,
+            spacing.pad.sm,
+            'bg-surface-base',
+            radius.default,
+            'border border-surface-border',
+          )}
+        >
+          <div>
+            <span className="body-small text-text-primary font-medium">
+              {t('cableTest.enableCard')}
+            </span>
+            <p className="caption text-text-muted">{t('cableTest.enableCardDesc')}</p>
+          </div>
+          <Tooltip text={canWrite ? undefined : t('common.readOnly')}>
+            {(description) => (
+              <span className="contents">
+                <input
+                  {...description}
+                  id="cable-test-card-enabled"
+                  type="checkbox"
+                  checked={cableTestSettings.enabled}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>
+                    setCableTestSettings((prev) => ({
+                      ...prev,
+                      enabled: e.target.checked,
+                    }))
+                  }
+                  disabled={!canWrite}
+                  className={iconTokens.size.sm}
+                />
+                {!canWrite ? (
+                  <button
+                    type="button"
+                    {...description}
+                    aria-label={t('common.readOnly')}
+                    onClick={(event) => event.preventDefault()}
+                    className="inline-flex text-text-muted rounded focus-visible:outline focus-visible:outline-2 focus-visible:outline-brand-primary"
+                  >
+                    <Info className="h-4 w-4" aria-hidden="true" />
+                  </button>
+                ) : null}
+              </span>
+            )}
+          </Tooltip>
+        </label>
+
+        {/* Auto-Run on Link Down */}
+        {/* Note: Auto-run is automatic when link down + PHY supports TDR - no toggle needed */}
+        <p className={cn('caption text-text-muted', spacing.margin.top.inline)}>
+          {t('cableTest.tdrNote')}
+        </p>
+      </div>
+    </CollapsibleSection>
+  );
+}

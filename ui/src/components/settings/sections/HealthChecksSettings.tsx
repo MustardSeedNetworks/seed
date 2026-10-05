@@ -33,7 +33,6 @@ import { Tooltip } from '../../ui/Tooltip';
  */
 
 import type React from 'react';
-import { memo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useRole } from '../../../contexts/RoleContext';
 import { useArrayItem } from '../../../hooks/useArrayItem';
@@ -55,458 +54,437 @@ interface HealthChecksSettingsProps {
   updateCardSettings: (updates: Partial<CardSettings>) => void;
 }
 
-export const HealthChecksSettings: React.NamedExoticComponent<HealthChecksSettingsProps> = memo(
-  function healthChecksSettings({
-    testsSettings,
-    setTestsSettings,
-    testsStatus,
-    cardSettings,
-    updateCardSettings,
-  }: HealthChecksSettingsProps) {
-    const { t } = useTranslation('settings');
-    const { canWrite } = useRole();
-    const readOnlyReason = canWrite ? undefined : t('common.readOnly');
+export function HealthChecksSettings({
+  testsSettings,
+  setTestsSettings,
+  testsStatus,
+  cardSettings,
+  updateCardSettings,
+}: HealthChecksSettingsProps) {
+  const { t } = useTranslation('settings');
+  const { canWrite } = useRole();
+  const readOnlyReason = canWrite ? undefined : t('common.readOnly');
 
-    // Ping target CRUD helpers
-    const {
-      add: addPingTarget,
-      remove: removePingTarget,
-      update: updatePingTarget,
-    } = useArrayItem(setTestsSettings, 'pingTargets', () => ({
-      name: '',
-      host: '',
-      enabled: true,
-      count: 3,
-    }));
+  // Ping target CRUD helpers
+  const {
+    add: addPingTarget,
+    remove: removePingTarget,
+    update: updatePingTarget,
+  } = useArrayItem(setTestsSettings, 'pingTargets', () => ({
+    name: '',
+    host: '',
+    enabled: true,
+    count: 3,
+  }));
 
-    // TCP port CRUD helpers
-    const {
-      add: addTcpPort,
-      remove: removeTcpPort,
-      update: updateTcpPort,
-    } = useArrayItem(setTestsSettings, 'tcpPorts', () => ({
-      name: '',
-      host: '',
-      port: 80,
-      enabled: true,
-    }));
+  // TCP port CRUD helpers
+  const {
+    add: addTcpPort,
+    remove: removeTcpPort,
+    update: updateTcpPort,
+  } = useArrayItem(setTestsSettings, 'tcpPorts', () => ({
+    name: '',
+    host: '',
+    port: 80,
+    enabled: true,
+  }));
 
-    // UDP port CRUD helpers
-    const {
-      add: addUdpPort,
-      remove: removeUdpPort,
-      update: updateUdpPort,
-    } = useArrayItem(setTestsSettings, 'udpPorts', () => ({
-      name: '',
-      host: '',
-      port: 53,
-      enabled: true,
-    }));
+  // UDP port CRUD helpers
+  const {
+    add: addUdpPort,
+    remove: removeUdpPort,
+    update: updateUdpPort,
+  } = useArrayItem(setTestsSettings, 'udpPorts', () => ({
+    name: '',
+    host: '',
+    port: 53,
+    enabled: true,
+  }));
 
-    // HTTP endpoint CRUD helpers
-    const {
-      add: addHttpEndpoint,
-      remove: removeHttpEndpoint,
-      update: updateHttpEndpoint,
-    } = useArrayItem(setTestsSettings, 'httpEndpoints', () => ({
-      name: '',
-      url: '',
-      expectedStatus: 200,
-      enabled: true,
-    }));
+  // HTTP endpoint CRUD helpers
+  const {
+    add: addHttpEndpoint,
+    remove: removeHttpEndpoint,
+    update: updateHttpEndpoint,
+  } = useArrayItem(setTestsSettings, 'httpEndpoints', () => ({
+    name: '',
+    url: '',
+    expectedStatus: 200,
+    enabled: true,
+  }));
 
-    return (
-      <CollapsibleSection
-        readOnlyReason={readOnlyReason}
-        title={
-          <div className={layout.inline.default}>
-            <HeartPulse className={iconTokens.size.sm} />
-            <span>{t('sections.health')}</span>
-            <AutoSaveIndicator status={testsStatus} />
-          </div>
-        }
-      >
-        <div className={spacing.stack.default}>
-          {/* Card Visibility & FAB Controls */}
-          <div className="stack-sm">
-            <label
-              className={cn(
-                layout.flex.between,
-                spacing.pad.sm,
-                'bg-surface-base',
-                radius.default,
-                'border border-surface-border',
-              )}
-            >
-              <div>
-                <span className="body-small text-text-primary font-medium">
-                  {t('common.showCard')}
-                </span>
-                <p className="caption text-text-muted">{t('common.showCardDesc')}</p>
-              </div>
-              <input
-                type="checkbox"
-                checked={cardSettings.healthChecks.enabled}
-                onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>
-                  updateCardSettings({
-                    healthChecks: {
-                      ...cardSettings.healthChecks,
-                      enabled: e.target.checked,
-                    },
-                  })
-                }
-                className={iconTokens.size.sm}
-              />
-            </label>
-            <label
-              className={cn(
-                layout.flex.between,
-                spacing.pad.sm,
-                'bg-surface-base',
-                radius.default,
-                'border border-surface-border',
-              )}
-            >
-              <div>
-                <span className="body-small text-text-primary font-medium">
-                  {t('common.runOnFab')}
-                </span>
-                <p className="caption text-text-muted">{t('common.runOnFabDesc')}</p>
-              </div>
-              <input
-                type="checkbox"
-                checked={cardSettings.healthChecks.autoRunOnLink}
-                onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>
-                  updateCardSettings({
-                    healthChecks: {
-                      ...cardSettings.healthChecks,
-                      autoRunOnLink: e.target.checked,
-                    },
-                  })
-                }
-                className={iconTokens.size.sm}
-              />
-            </label>
-          </div>
-
-          {/* Enable Toggle */}
+  return (
+    <CollapsibleSection
+      readOnlyReason={readOnlyReason}
+      title={
+        <div className={layout.inline.default}>
+          <HeartPulse className={iconTokens.size.sm} />
+          <span>{t('sections.health')}</span>
+          <AutoSaveIndicator status={testsStatus} />
+        </div>
+      }
+    >
+      <div className={spacing.stack.default}>
+        {/* Card Visibility & FAB Controls */}
+        <div className="stack-sm">
           <label
             className={cn(
               layout.flex.between,
               spacing.pad.sm,
-              'bg-surface-base border border-surface-border',
+              'bg-surface-base',
               radius.default,
+              'border border-surface-border',
             )}
           >
             <div>
               <span className="body-small text-text-primary font-medium">
-                {t('health.enableHealthChecks')}
+                {t('common.showCard')}
               </span>
-              <p className="caption text-text-muted">{t('health.enableDescription')}</p>
+              <p className="caption text-text-muted">{t('common.showCardDesc')}</p>
             </div>
             <input
               type="checkbox"
-              checked={testsSettings.runPerformance !== false}
+              checked={cardSettings.healthChecks.enabled}
               onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>
-                setTestsSettings((prev) => ({
-                  ...prev,
-                  runPerformance: e.target.checked,
-                }))
+                updateCardSettings({
+                  healthChecks: {
+                    ...cardSettings.healthChecks,
+                    enabled: e.target.checked,
+                  },
+                })
               }
               className={iconTokens.size.sm}
             />
           </label>
+          <label
+            className={cn(
+              layout.flex.between,
+              spacing.pad.sm,
+              'bg-surface-base',
+              radius.default,
+              'border border-surface-border',
+            )}
+          >
+            <div>
+              <span className="body-small text-text-primary font-medium">
+                {t('common.runOnFab')}
+              </span>
+              <p className="caption text-text-muted">{t('common.runOnFabDesc')}</p>
+            </div>
+            <input
+              type="checkbox"
+              checked={cardSettings.healthChecks.autoRunOnLink}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>
+                updateCardSettings({
+                  healthChecks: {
+                    ...cardSettings.healthChecks,
+                    autoRunOnLink: e.target.checked,
+                  },
+                })
+              }
+              className={iconTokens.size.sm}
+            />
+          </label>
+        </div>
 
-          {/* Ping Targets */}
+        {/* Enable Toggle */}
+        <label
+          className={cn(
+            layout.flex.between,
+            spacing.pad.sm,
+            'bg-surface-base border border-surface-border',
+            radius.default,
+          )}
+        >
           <div>
-            <div className={cn(layout.flex.between, spacing.margin.bottom.inline)}>
-              <span className="caption text-text-muted font-medium">{t('health.pingTargets')}</span>
-              <button
-                type="button"
-                onClick={addPingTarget}
-                className="caption text-brand-primary hover:text-brand-accent"
-              >
-                {t('common.add')}
-              </button>
-            </div>
-            <p className={cn('caption text-text-muted', spacing.margin.bottom.inline)}>
-              {t('health.pingDefault')}
-            </p>
-            {testsSettings.pingTargets.map((target) => (
-              <div
-                key={target.id || target.host}
-                className={cn('flex', spacing.gap.compact, spacing.margin.bottom.inline)}
-              >
-                <input
-                  type="text"
-                  value={target.name}
-                  onChange={(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>): void =>
-                    updatePingTarget(target.id ?? '', 'name', e.target.value)
-                  }
-                  placeholder={t('common.name')}
-                  className={cn(input.base, input.state.default, input.size.md, 'w-24')}
-                />
-                <input
-                  type="text"
-                  value={target.host}
-                  onChange={(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>): void =>
-                    updatePingTarget(target.id ?? '', 'host', e.target.value)
-                  }
-                  placeholder={t('common.hostIp')}
-                  className={cn(input.base, input.state.default, input.size.md, 'flex-1')}
-                />
-                <Tooltip text={t('health.numberOfPings')}>
-                  <input
-                    type="number"
-                    aria-label={t('health.numberOfPings')}
-                    value={target.count || 3}
-                    onChange={(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>): void =>
-                      updatePingTarget(
-                        target.id ?? '',
-                        'count',
-                        Number.parseInt(e.target.value, 10) || 3,
-                      )
-                    }
-                    min={1}
-                    max={10}
-                    className={cn(
-                      input.base,
-                      input.state.default,
-                      input.size.md,
-                      'w-14 text-center',
-                    )}
-                  />
-                </Tooltip>
-                <button
-                  type="button"
-                  onClick={(): void => removePingTarget(target.id ?? '')}
-                  className={cn('text-status-error hover:text-status-error/80', spacing.actionBtn)}
-                  aria-label={t('common.remove')}
-                >
-                  {t('common.remove')}
-                </button>
-              </div>
-            ))}
+            <span className="body-small text-text-primary font-medium">
+              {t('health.enableHealthChecks')}
+            </span>
+            <p className="caption text-text-muted">{t('health.enableDescription')}</p>
           </div>
+          <input
+            type="checkbox"
+            checked={testsSettings.runPerformance !== false}
+            onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>
+              setTestsSettings((prev) => ({
+                ...prev,
+                runPerformance: e.target.checked,
+              }))
+            }
+            className={iconTokens.size.sm}
+          />
+        </label>
 
-          {/* TCP Ports */}
-          <div className={cn('border-t border-surface-border', spacing.padding.top.heading)}>
-            <div className={cn(layout.flex.between, spacing.margin.bottom.inline)}>
-              <span className="caption text-text-muted font-medium">
-                {t('health.tcpPortTests')}
-              </span>
-              <button
-                type="button"
-                onClick={addTcpPort}
-                className="caption text-brand-primary hover:text-brand-accent"
-              >
-                {t('common.add')}
-              </button>
-            </div>
-            {testsSettings.tcpPorts.map((port) => (
-              <div
-                key={port.id || `${port.host}:${port.port}`}
-                className={cn('flex', spacing.gap.compact, spacing.margin.bottom.inline)}
-              >
-                <input
-                  type="text"
-                  value={port.name}
-                  onChange={(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>): void =>
-                    updateTcpPort(port.id ?? '', 'name', e.target.value)
-                  }
-                  placeholder={t('common.name')}
-                  className={cn(input.base, input.state.default, input.size.md, 'w-24')}
-                />
-                <input
-                  type="text"
-                  value={port.host}
-                  onChange={(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>): void =>
-                    updateTcpPort(port.id ?? '', 'host', e.target.value)
-                  }
-                  placeholder={t('common.host')}
-                  className={cn(input.base, input.state.default, input.size.md, 'flex-1')}
-                />
+        {/* Ping Targets */}
+        <div>
+          <div className={cn(layout.flex.between, spacing.margin.bottom.inline)}>
+            <span className="caption text-text-muted font-medium">{t('health.pingTargets')}</span>
+            <button
+              type="button"
+              onClick={addPingTarget}
+              className="caption text-brand-primary hover:text-brand-accent"
+            >
+              {t('common.add')}
+            </button>
+          </div>
+          <p className={cn('caption text-text-muted', spacing.margin.bottom.inline)}>
+            {t('health.pingDefault')}
+          </p>
+          {testsSettings.pingTargets.map((target) => (
+            <div
+              key={target.id || target.host}
+              className={cn('flex', spacing.gap.compact, spacing.margin.bottom.inline)}
+            >
+              <input
+                type="text"
+                value={target.name}
+                onChange={(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>): void =>
+                  updatePingTarget(target.id ?? '', 'name', e.target.value)
+                }
+                placeholder={t('common.name')}
+                className={cn(input.base, input.state.default, input.size.md, 'w-24')}
+              />
+              <input
+                type="text"
+                value={target.host}
+                onChange={(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>): void =>
+                  updatePingTarget(target.id ?? '', 'host', e.target.value)
+                }
+                placeholder={t('common.hostIp')}
+                className={cn(input.base, input.state.default, input.size.md, 'flex-1')}
+              />
+              <Tooltip text={t('health.numberOfPings')}>
                 <input
                   type="number"
-                  value={port.port}
+                  aria-label={t('health.numberOfPings')}
+                  value={target.count || 3}
                   onChange={(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>): void =>
-                    updateTcpPort(port.id ?? '', 'port', Number.parseInt(e.target.value, 10) || 80)
+                    updatePingTarget(
+                      target.id ?? '',
+                      'count',
+                      Number.parseInt(e.target.value, 10) || 3,
+                    )
                   }
-                  placeholder={t('common.port')}
-                  className={cn(input.base, input.state.default, input.size.md, 'w-20')}
+                  min={1}
+                  max={10}
+                  className={cn(input.base, input.state.default, input.size.md, 'w-14 text-center')}
                 />
-                <button
-                  type="button"
-                  onClick={(): void => removeTcpPort(port.id ?? '')}
-                  className={cn('text-status-error hover:text-status-error/80', spacing.actionBtn)}
-                  aria-label={t('common.remove')}
-                >
-                  {t('common.remove')}
-                </button>
-              </div>
-            ))}
-          </div>
-
-          {/* UDP Ports */}
-          <div className={cn('border-t border-surface-border', spacing.padding.top.heading)}>
-            <div className={cn(layout.flex.between, spacing.margin.bottom.inline)}>
-              <span className="caption text-text-muted font-medium">
-                {t('health.udpPortTests')}
-              </span>
+              </Tooltip>
               <button
                 type="button"
-                onClick={addUdpPort}
-                className="caption text-brand-primary hover:text-brand-accent"
+                onClick={(): void => removePingTarget(target.id ?? '')}
+                className={cn('text-status-error hover:text-status-error/80', spacing.actionBtn)}
+                aria-label={t('common.remove')}
               >
-                {t('common.add')}
+                {t('common.remove')}
               </button>
             </div>
-            <p className={cn('caption text-text-muted', spacing.margin.bottom.inline)}>
-              {t('health.udpDescription')}
-            </p>
-            {testsSettings.udpPorts.map((port) => (
-              <div
-                key={port.id || `${port.host}:${port.port}`}
-                className={cn('flex', spacing.gap.compact, spacing.margin.bottom.inline)}
+          ))}
+        </div>
+
+        {/* TCP Ports */}
+        <div className={cn('border-t border-surface-border', spacing.padding.top.heading)}>
+          <div className={cn(layout.flex.between, spacing.margin.bottom.inline)}>
+            <span className="caption text-text-muted font-medium">{t('health.tcpPortTests')}</span>
+            <button
+              type="button"
+              onClick={addTcpPort}
+              className="caption text-brand-primary hover:text-brand-accent"
+            >
+              {t('common.add')}
+            </button>
+          </div>
+          {testsSettings.tcpPorts.map((port) => (
+            <div
+              key={port.id || `${port.host}:${port.port}`}
+              className={cn('flex', spacing.gap.compact, spacing.margin.bottom.inline)}
+            >
+              <input
+                type="text"
+                value={port.name}
+                onChange={(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>): void =>
+                  updateTcpPort(port.id ?? '', 'name', e.target.value)
+                }
+                placeholder={t('common.name')}
+                className={cn(input.base, input.state.default, input.size.md, 'w-24')}
+              />
+              <input
+                type="text"
+                value={port.host}
+                onChange={(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>): void =>
+                  updateTcpPort(port.id ?? '', 'host', e.target.value)
+                }
+                placeholder={t('common.host')}
+                className={cn(input.base, input.state.default, input.size.md, 'flex-1')}
+              />
+              <input
+                type="number"
+                value={port.port}
+                onChange={(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>): void =>
+                  updateTcpPort(port.id ?? '', 'port', Number.parseInt(e.target.value, 10) || 80)
+                }
+                placeholder={t('common.port')}
+                className={cn(input.base, input.state.default, input.size.md, 'w-20')}
+              />
+              <button
+                type="button"
+                onClick={(): void => removeTcpPort(port.id ?? '')}
+                className={cn('text-status-error hover:text-status-error/80', spacing.actionBtn)}
+                aria-label={t('common.remove')}
               >
+                {t('common.remove')}
+              </button>
+            </div>
+          ))}
+        </div>
+
+        {/* UDP Ports */}
+        <div className={cn('border-t border-surface-border', spacing.padding.top.heading)}>
+          <div className={cn(layout.flex.between, spacing.margin.bottom.inline)}>
+            <span className="caption text-text-muted font-medium">{t('health.udpPortTests')}</span>
+            <button
+              type="button"
+              onClick={addUdpPort}
+              className="caption text-brand-primary hover:text-brand-accent"
+            >
+              {t('common.add')}
+            </button>
+          </div>
+          <p className={cn('caption text-text-muted', spacing.margin.bottom.inline)}>
+            {t('health.udpDescription')}
+          </p>
+          {testsSettings.udpPorts.map((port) => (
+            <div
+              key={port.id || `${port.host}:${port.port}`}
+              className={cn('flex', spacing.gap.compact, spacing.margin.bottom.inline)}
+            >
+              <input
+                type="text"
+                value={port.name}
+                onChange={(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>): void =>
+                  updateUdpPort(port.id ?? '', 'name', e.target.value)
+                }
+                placeholder={t('common.name')}
+                className={cn(input.base, input.state.default, input.size.md, 'w-24')}
+              />
+              <input
+                type="text"
+                value={port.host}
+                onChange={(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>): void =>
+                  updateUdpPort(port.id ?? '', 'host', e.target.value)
+                }
+                placeholder={t('common.host')}
+                className={cn(input.base, input.state.default, input.size.md, 'flex-1')}
+              />
+              <input
+                type="number"
+                value={port.port}
+                onChange={(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>): void =>
+                  updateUdpPort(port.id ?? '', 'port', Number.parseInt(e.target.value, 10) || 53)
+                }
+                placeholder={t('common.port')}
+                className={cn(input.base, input.state.default, input.size.md, 'w-20')}
+              />
+              <button
+                type="button"
+                onClick={(): void => removeUdpPort(port.id ?? '')}
+                className={cn('text-status-error hover:text-status-error/80', spacing.actionBtn)}
+                aria-label={t('common.remove')}
+              >
+                {t('common.remove')}
+              </button>
+            </div>
+          ))}
+        </div>
+
+        {/* HTTP Endpoints */}
+        <div className={cn('border-t border-surface-border', spacing.padding.top.heading)}>
+          <div className={cn(layout.flex.between, spacing.margin.bottom.inline)}>
+            <span className="caption text-text-muted font-medium">{t('health.httpEndpoints')}</span>
+            <button
+              type="button"
+              onClick={addHttpEndpoint}
+              className="caption text-brand-primary hover:text-brand-accent"
+            >
+              {t('common.add')}
+            </button>
+          </div>
+          {testsSettings.httpEndpoints.map((endpoint) => (
+            <div
+              key={endpoint.id || endpoint.url}
+              className={cn(
+                spacing.stack.xs,
+                spacing.margin.bottom.heading,
+                spacing.pad.xs,
+                'bg-surface-base border border-surface-border',
+                radius.default,
+              )}
+            >
+              <div className={cn('flex', spacing.gap.compact)}>
                 <input
                   type="text"
-                  value={port.name}
+                  value={endpoint.name}
                   onChange={(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>): void =>
-                    updateUdpPort(port.id ?? '', 'name', e.target.value)
+                    updateHttpEndpoint(endpoint.id ?? '', 'name', e.target.value)
                   }
                   placeholder={t('common.name')}
-                  className={cn(input.base, input.state.default, input.size.md, 'w-24')}
-                />
-                <input
-                  type="text"
-                  value={port.host}
-                  onChange={(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>): void =>
-                    updateUdpPort(port.id ?? '', 'host', e.target.value)
-                  }
-                  placeholder={t('common.host')}
-                  className={cn(input.base, input.state.default, input.size.md, 'flex-1')}
-                />
-                <input
-                  type="number"
-                  value={port.port}
-                  onChange={(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>): void =>
-                    updateUdpPort(port.id ?? '', 'port', Number.parseInt(e.target.value, 10) || 53)
-                  }
-                  placeholder={t('common.port')}
-                  className={cn(input.base, input.state.default, input.size.md, 'w-20')}
-                />
-                <button
-                  type="button"
-                  onClick={(): void => removeUdpPort(port.id ?? '')}
-                  className={cn('text-status-error hover:text-status-error/80', spacing.actionBtn)}
-                  aria-label={t('common.remove')}
-                >
-                  {t('common.remove')}
-                </button>
-              </div>
-            ))}
-          </div>
-
-          {/* HTTP Endpoints */}
-          <div className={cn('border-t border-surface-border', spacing.padding.top.heading)}>
-            <div className={cn(layout.flex.between, spacing.margin.bottom.inline)}>
-              <span className="caption text-text-muted font-medium">
-                {t('health.httpEndpoints')}
-              </span>
-              <button
-                type="button"
-                onClick={addHttpEndpoint}
-                className="caption text-brand-primary hover:text-brand-accent"
-              >
-                {t('common.add')}
-              </button>
-            </div>
-            {testsSettings.httpEndpoints.map((endpoint) => (
-              <div
-                key={endpoint.id || endpoint.url}
-                className={cn(
-                  spacing.stack.xs,
-                  spacing.margin.bottom.heading,
-                  spacing.pad.xs,
-                  'bg-surface-base border border-surface-border',
-                  radius.default,
-                )}
-              >
-                <div className={cn('flex', spacing.gap.compact)}>
-                  <input
-                    type="text"
-                    value={endpoint.name}
-                    onChange={(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>): void =>
-                      updateHttpEndpoint(endpoint.id ?? '', 'name', e.target.value)
-                    }
-                    placeholder={t('common.name')}
-                    className={cn(
-                      input.base,
-                      input.state.default,
-                      input.size.md,
-                      'flex-1 bg-surface-raised',
-                    )}
-                  />
-                  <input
-                    type="number"
-                    value={endpoint.expectedStatus}
-                    onChange={(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>): void =>
-                      updateHttpEndpoint(
-                        endpoint.id ?? '',
-                        'expectedStatus',
-                        Number.parseInt(e.target.value, 10) || 200,
-                      )
-                    }
-                    placeholder={t('health.status')}
-                    className={cn(
-                      input.base,
-                      input.state.default,
-                      input.size.md,
-                      'w-20 bg-surface-raised',
-                    )}
-                  />
-                  <button
-                    type="button"
-                    onClick={(): void => removeHttpEndpoint(endpoint.id ?? '')}
-                    className={cn(
-                      'text-status-error hover:text-status-error/80',
-                      spacing.actionBtn,
-                    )}
-                    aria-label={t('common.remove')}
-                  >
-                    {t('common.remove')}
-                  </button>
-                </div>
-                <input
-                  type="text"
-                  value={endpoint.url}
-                  onChange={(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>): void =>
-                    updateHttpEndpoint(endpoint.id ?? '', 'url', e.target.value)
-                  }
-                  placeholder="https://example.com/health"
                   className={cn(
                     input.base,
                     input.state.default,
                     input.size.md,
-                    'bg-surface-raised',
+                    'flex-1 bg-surface-raised',
                   )}
                 />
+                <input
+                  type="number"
+                  value={endpoint.expectedStatus}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>): void =>
+                    updateHttpEndpoint(
+                      endpoint.id ?? '',
+                      'expectedStatus',
+                      Number.parseInt(e.target.value, 10) || 200,
+                    )
+                  }
+                  placeholder={t('health.status')}
+                  className={cn(
+                    input.base,
+                    input.state.default,
+                    input.size.md,
+                    'w-20 bg-surface-raised',
+                  )}
+                />
+                <button
+                  type="button"
+                  onClick={(): void => removeHttpEndpoint(endpoint.id ?? '')}
+                  className={cn('text-status-error hover:text-status-error/80', spacing.actionBtn)}
+                  aria-label={t('common.remove')}
+                >
+                  {t('common.remove')}
+                </button>
               </div>
-            ))}
-          </div>
-
-          <HealthChecksSettingsEnterprise
-            testsSettings={testsSettings}
-            setTestsSettings={setTestsSettings}
-          />
-
-          <HealthChecksSettingsSpecialty
-            testsSettings={testsSettings}
-            setTestsSettings={setTestsSettings}
-          />
+              <input
+                type="text"
+                value={endpoint.url}
+                onChange={(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>): void =>
+                  updateHttpEndpoint(endpoint.id ?? '', 'url', e.target.value)
+                }
+                placeholder="https://example.com/health"
+                className={cn(input.base, input.state.default, input.size.md, 'bg-surface-raised')}
+              />
+            </div>
+          ))}
         </div>
-      </CollapsibleSection>
-    );
-  },
-);
+
+        <HealthChecksSettingsEnterprise
+          testsSettings={testsSettings}
+          setTestsSettings={setTestsSettings}
+        />
+
+        <HealthChecksSettingsSpecialty
+          testsSettings={testsSettings}
+          setTestsSettings={setTestsSettings}
+        />
+      </div>
+    </CollapsibleSection>
+  );
+}

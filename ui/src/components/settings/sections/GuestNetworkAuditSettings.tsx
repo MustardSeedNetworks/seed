@@ -15,7 +15,7 @@ import { Tooltip } from '../../ui/Tooltip';
  */
 
 import type React from 'react';
-import { useCallback, useState } from 'react';
+import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { useRole } from '../../../contexts/RoleContext';
@@ -84,7 +84,7 @@ export function GuestNetworkAuditSettings(): React.ReactElement {
   const ports = settings.ports ?? DEFAULT_PORTS;
   const portsValue = portsField ?? ports.join(', ');
 
-  const addTarget = useCallback((): void => {
+  const addTarget = (): void => {
     const ip = newIp.trim();
     if (!isIPv4(ip)) {
       setTargetError(t('guestAudit.invalidIp'));
@@ -102,19 +102,16 @@ export function GuestNetworkAuditSettings(): React.ReactElement {
     setNewIp('');
     setNewLabel('');
     setTargetError(null);
-  }, [newIp, newLabel, settings, setSettings, t]);
+  };
 
-  const removeTarget = useCallback(
-    (ip: string): void => {
-      setSettings({
-        ...settings,
-        targets: settings.targets.filter((target) => target.ip !== ip),
-      });
-    },
-    [settings, setSettings],
-  );
+  const removeTarget = (ip: string): void => {
+    setSettings({
+      ...settings,
+      targets: settings.targets.filter((target) => target.ip !== ip),
+    });
+  };
 
-  const commitPorts = useCallback((): void => {
+  const commitPorts = (): void => {
     if (portsField === null) {
       return;
     }
@@ -126,14 +123,14 @@ export function GuestNetworkAuditSettings(): React.ReactElement {
     }
     setPortsError(null);
     setSettings({ ...settings, ports: parsed.length > 0 ? parsed : undefined });
-  }, [portsField, settings, setSettings, t]);
+  };
 
-  const save = useCallback((): void => {
+  const save = (): void => {
     setSaving(true);
     saveSettings()
       .catch(() => undefined)
       .finally(() => setSaving(false));
-  }, [saveSettings]);
+  };
 
   return (
     <CollapsibleSection
