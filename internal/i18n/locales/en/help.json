@@ -771,6 +771,9 @@
       },
       "PacketCaptureCard": {
         "description": "Record traffic on an interface to a PCAP file, bounded by a duration and a 64 MB file limit. The summary counts frames by protocol and lists the busiest hosts and conversations; open the file in Wireshark for the packets themselves. Starting and downloading a capture need the operator role."
+      },
+      "MulticastListenCard": {
+        "description": "Join one multicast group on one interface for up to a minute and count what arrives, with the busiest senders. Seed sends nothing; joining makes an IGMP- or MLD-snooping switch forward the group. Nothing arriving points at the sender or the multicast path, not at the receiving application. Starting a listen needs the operator role."
       }
     }
   },

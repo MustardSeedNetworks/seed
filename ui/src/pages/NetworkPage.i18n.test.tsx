@@ -37,8 +37,8 @@ vi.mock('../hooks/useEngineScan', () => ({
   }),
 }));
 
-// PacketCaptureCard gates its form on the role and mounts the job stream,
-// the same EventSource blocker as useEngineScan above.
+// PacketCaptureCard and MulticastListenCard gate their forms on the role and
+// mount the job stream, the same EventSource blocker as useEngineScan above.
 vi.mock('../contexts/RoleContext', async (importOriginal) => ({
   ...(await importOriginal<Record<string, unknown>>()),
   useRole: () => ({ canWrite: true, role: 'admin', loading: false }),
@@ -46,6 +46,10 @@ vi.mock('../contexts/RoleContext', async (importOriginal) => ({
 
 vi.mock('../hooks/usePacketCapture', () => ({
   usePacketCapture: () => ({ state: { phase: 'idle' }, start: vi.fn(), stop: vi.fn() }),
+}));
+
+vi.mock('../hooks/useMulticastListen', () => ({
+  useMulticastListen: () => ({ state: { phase: 'idle' }, start: vi.fn(), stop: vi.fn() }),
 }));
 
 vi.mock('../hooks/useEnginePhase', () => ({ useEnginePhase: () => ({ phase: '' }) }));

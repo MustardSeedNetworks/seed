@@ -28,6 +28,7 @@ import { useGuestNetworkAudit } from './useGuestNetworkAudit';
 import { useInsecurePortScan } from './useInsecurePortScan';
 import { useIperfServerSync } from './useIperfServerSync';
 import { useLogs } from './useLogs';
+import { useMulticastListen } from './useMulticastListen';
 import { useNeighbourCache } from './useNeighbourCache';
 import { useNetworkDiscoveryAutoScan } from './useNetworkDiscoveryAutoScan';
 import { usePacketCapture } from './usePacketCapture';
@@ -124,6 +125,7 @@ const cases: [string, () => object][] = [
   ['useGuestNetworkAudit', () => useGuestNetworkAudit()],
   ['useInsecurePortScan', () => useInsecurePortScan()],
   ['useLogs', () => useLogs()],
+  ['useMulticastListen', () => useMulticastListen()],
   ['useNeighbourCache', () => useNeighbourCache()],
   ['useNetworkDiscoveryAutoScan', () => useNetworkDiscoveryAutoScan(null)],
   ['usePacketCapture', () => usePacketCapture()],

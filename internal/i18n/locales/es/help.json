@@ -771,6 +771,9 @@
       },
       "PacketCaptureCard": {
         "description": "Graba el tráfico de una interfaz en un archivo PCAP, limitado por una duración y un tamaño máximo de archivo de 64 MB. El resumen cuenta las tramas por protocolo y muestra los equipos y las conversaciones con más tráfico; abra el archivo en Wireshark para ver los paquetes. Iniciar y descargar una captura requiere el rol de operador."
+      },
+      "MulticastListenCard": {
+        "description": "Se une a un grupo multicast en una interfaz durante un minuto como máximo y cuenta lo que llega, con los emisores más activos. Seed no envía nada; unirse hace que un switch con IGMP o MLD snooping reenvíe el grupo. Si no llega nada, el fallo está en el emisor o en la ruta multicast, no en la aplicación receptora. Iniciar una escucha requiere el rol de operador."
       }
     }
   },
