@@ -15,67 +15,28 @@ package api
 // the notifier (#2605).
 
 import (
-	"log/slog"
-
-	alertcorrelation "github.com/MustardSeedNetworks/seed/internal/alerts/correlation"
 	alertdelivery "github.com/MustardSeedNetworks/seed/internal/alerts/delivery"
 	"github.com/MustardSeedNetworks/seed/internal/alerts/escalation"
-	"github.com/MustardSeedNetworks/seed/internal/app"
-	"github.com/MustardSeedNetworks/seed/internal/database"
+	"github.com/MustardSeedNetworks/seed/internal/logging"
 )
 
-// alertStore returns the writer the alert pipelines emit through: the alert
-// repository, wrapped in the webhook decorator. Wrapping the store rather than
-// each pipeline means a pipeline added later delivers without being taught to,
-// and wrapping the delivery Manager rather than a notifier means the receiver
-// behind it can be changed from Settings without rebuilding the chain.
-func (s *Server) alertStore(db *database.DB, logger *slog.Logger) alertdelivery.Writer {
-	// Correlation sits inside delivery: it annotates the alert with the id of
-	// the earlier alert that probably caused it, and it must do so before the
-	// row is written, so the cause is on disk and in the delivered payload
-	// rather than only in the inbox's later reading of it. It is unconditional
-	// — the annotation is worth having whether or not a receiver is
-	// configured, and with no webhook this is the whole of it.
-	store := alertcorrelation.WrapWriter(db.Alerts(), alertcorrelation.Config{})
-	return alertdelivery.WrapWriter(store, s.initAlertDelivery(db.Alerts(), app.NewAlertNarrator(db), logger))
-}
-
-// initAlertDelivery builds the delivery Manager and points it at the
-// configured receiver, if there is one. The Manager exists either way: it is
-// the indirection a later settings write re-points, and with no receiver it
-// stores the alert and sends nothing.
-func (s *Server) initAlertDelivery(
-	recorder alertdelivery.Recorder,
-	narrator alertdelivery.Narrator,
-	logger *slog.Logger,
-) *alertdelivery.Manager {
-	manager := alertdelivery.NewManager(recorder, narrator, logger)
+// useAlertDelivery keeps the delivery Manager app.NewAlertDelivery built, for
+// settings writes to re-point, and returns the writer the alert pipelines emit
+// through.
+func (s *Server) useAlertDelivery(manager *alertdelivery.Manager, writer alertdelivery.Writer) alertdelivery.Writer {
 	s.alertDelivery = manager
-	// Point it at what the config already says, so a receiver configured in a
-	// previous session is live from the first alert rather than from the first
-	// settings write. A Server built without a config — the hand-assembled one
-	// several internal tests use — has no stored receiver to apply.
-	if s.config != nil {
-		app.ApplyAlertReceivers(s.config, manager)
-	}
-	return manager
+	return writer
 }
 
-// initAlertEscalation registers the escalator that re-sends an alert nobody
-// acknowledged (P-B2). It runs after alertStore, which built the delivery
-// Manager it sends through and reads the operator's ladders from.
-func (s *Server) initAlertEscalation(db *database.DB, logger *slog.Logger) {
-	e, err := escalation.New(escalation.Config{
-		Store:   db.Alerts(),
-		Sender:  s.alertDelivery,
-		Ladders: s.alertDelivery.Escalations,
-		Logger:  logger,
-	})
+// registerAlertEscalator registers the escalator that re-sends an alert nobody
+// acknowledged (P-B2). It is built after useAlertDelivery, whose Manager it
+// sends through and reads the operator's ladders from.
+func (s *Server) registerAlertEscalator(e *escalation.Escalator, err error) {
 	if err != nil {
-		logger.Warn("alert escalation init failed", "error", err)
+		logging.GetLogger().Warn("alert escalation init failed", "error", err)
 		return
 	}
 	if regErr := s.registerEngineIfLicensed(e); regErr != nil {
-		logger.Warn("alert escalation registry registration failed", "error", regErr)
+		logging.GetLogger().Warn("alert escalation registry registration failed", "error", regErr)
 	}
 }

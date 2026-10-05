@@ -15,6 +15,7 @@ import (
 	alertdelivery "github.com/MustardSeedNetworks/seed/internal/alerts/delivery"
 	"github.com/MustardSeedNetworks/seed/internal/alerts/narrative"
 	alertpipeline "github.com/MustardSeedNetworks/seed/internal/alerts/pipeline"
+	"github.com/MustardSeedNetworks/seed/internal/app"
 	"github.com/MustardSeedNetworks/seed/internal/database"
 	"github.com/MustardSeedNetworks/seed/internal/i18n"
 	"github.com/MustardSeedNetworks/seed/internal/logging"
@@ -187,7 +188,7 @@ func TestAlertStore_DeliversTheNarrativeToAReceiver(t *testing.T) {
 
 	s := newAlertsTestServer(t)
 	db := s.db()
-	store := s.alertStore(db, logging.GetLogger())
+	store := s.useAlertDelivery(app.NewAlertDelivery(db, s.config, logging.GetLogger()))
 	defer s.alertDelivery.Stop(context.Background())
 	s.alertDelivery.ApplyWebhook(alertdelivery.WebhookConfig{URL: receiver.URL, Secret: "test-signing-material"})
 	seedLinkFault(t, db, store)

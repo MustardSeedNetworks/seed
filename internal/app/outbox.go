@@ -1,4 +1,6 @@
-package api
+package app
+
+// outbox.go adapts the outbox table to the relay's outbox.Store seam (ADR-0017).
 
 import (
 	"context"
@@ -10,11 +12,6 @@ import (
 	"github.com/MustardSeedNetworks/seed/internal/platform/outbox"
 )
 
-// outboxRetention is how long a delivered (published) outbox row is kept before
-// the maintenance loop prunes it. Delivered rows have no further use; the window
-// is a short grace period for debugging, mirroring jobs retention.
-const outboxRetention = time.Hour
-
 // dbOutboxStore adapts the durable database.OutboxRepository to the outbox.Store
 // seam the relay drains through (ADR-0017). It is the composition-root bridge
 // between internal/platform/outbox (which must not know about persistence) and
@@ -25,8 +22,8 @@ type dbOutboxStore struct {
 	repo *database.OutboxRepository
 }
 
-// newDBOutboxStore builds the adapter over db's outbox repository.
-func newDBOutboxStore(db *database.DB) *dbOutboxStore {
+// NewOutboxStore builds the relay's store over db's outbox repository.
+func NewOutboxStore(db *database.DB) outbox.Store {
 	return &dbOutboxStore{repo: db.Outbox()}
 }
 

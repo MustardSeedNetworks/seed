@@ -38,6 +38,11 @@ func sweepJobs(
 	}
 }
 
+// outboxRetention is how long a delivered (published) outbox row is kept before
+// the maintenance loop prunes it. Delivered rows have no further use; the window
+// is a short grace period for debugging, mirroring jobs retention.
+const outboxRetention = time.Hour
+
 // sweepOutbox prunes delivered outbox rows past the retention window (ADR-0017).
 // It is a no-op unless the relay is wired (db-backed); pending rows are never
 // touched. Driven by the maintenance loop alongside sweepJobs.

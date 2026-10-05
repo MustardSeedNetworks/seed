@@ -9,6 +9,7 @@ import (
 	"context"
 	"slices"
 
+	"github.com/MustardSeedNetworks/seed/internal/app"
 	"github.com/MustardSeedNetworks/seed/internal/auth"
 	"github.com/MustardSeedNetworks/seed/internal/config"
 	"github.com/MustardSeedNetworks/seed/internal/database"
@@ -189,7 +190,7 @@ func (s *Server) initSSEAndLogging(db *database.DB) {
 	// future durable consumer never misses the startup replay.
 	if db != nil && s.background != nil {
 		s.background.Outbox = outbox.NewRelay(
-			newDBOutboxStore(db), s.eventBus(), logging.GetLogger(),
+			app.NewOutboxStore(db), s.eventBus(), logging.GetLogger(),
 		)
 	}
 
