@@ -25,8 +25,8 @@ import { Tooltip } from '../ui/Tooltip';
 
 import { valibotResolver } from '@hookform/resolvers/valibot';
 import type React from 'react';
-import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { useForm } from 'react-hook-form';
+import { useEffect, useRef, useState } from 'react';
+import { useForm, useWatch } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
 import { api } from '../../api';
 import { PathDiscoverySchema } from '../../schemas/auth';
@@ -43,7 +43,7 @@ import {
 import type { PathResponse, TracerouteHop } from '../../types';
 import { Card, CardDivider, CardValue, type Status } from '../ui/Card';
 import { Route } from '../ui/Icons';
-import { PATH_TIMELINE } from './PathDiscoveryTimeline';
+import { PathTimeline } from './PathDiscoveryTimeline';
 import { formatRtt, getMaxRtt } from './pathDiscoveryHelpers';
 
 type Protocol = 'icmp' | 'udp' | 'tcp';
@@ -64,524 +64,518 @@ interface PathDiscoveryCardProps {
   onRegisterTraceHandler?: (handler: (msg: TraceHopMessage) => void) => () => void;
 }
 
-export const PathDiscoveryCard: React.NamedExoticComponent<PathDiscoveryCardProps> = memo(
-  function pathDiscoveryCard({
-    gateway,
-    dnsServer,
-    onRegisterTraceHandler,
-  }: PathDiscoveryCardProps): React.ReactElement {
-    const { t } = useTranslation('cards');
+/** The card status from the worst hop of the last trace. */
+function pathCardStatus(
+  loading: boolean,
+  error: string | null,
+  result: PathResponse | null,
+): Status {
+  if (loading) {
+    return 'loading';
+  }
+  if (error) {
+    return 'error';
+  }
+  if (!result) {
+    return 'unknown';
+  }
+  // L3Hop.state is 'timeout' | 'reply'; absence of reply = error state.
+  const l3Hops = result.l3Path?.hops || [];
+  const hasTimeouts = l3Hops.some((h) => h.state === 'timeout');
+  const hasHighLatency = l3Hops.some((h) => h.rtt > 100000000); // > 100ms
+  if (hasTimeouts || hasHighLatency) {
+    return 'warning';
+  }
+  if (result.l3Path?.completed || result.l2Path) {
+    return 'success';
+  }
+  return 'warning';
+}
 
-    const {
-      register,
-      handleSubmit,
-      watch,
-      setValue,
-      formState: { errors },
-    } = useForm<{ target: string; protocol: Protocol; port: number }>({
-      resolver: valibotResolver(PathDiscoverySchema),
-      defaultValues: { target: '', protocol: 'icmp', port: 80 },
-      mode: 'onBlur',
+export function PathDiscoveryCard({
+  gateway,
+  dnsServer,
+  onRegisterTraceHandler,
+}: PathDiscoveryCardProps): React.ReactElement {
+  const { t } = useTranslation('cards');
+
+  const {
+    register,
+    handleSubmit,
+    control,
+    setValue,
+    formState: { errors },
+  } = useForm<{ target: string; protocol: Protocol; port: number }>({
+    resolver: valibotResolver(PathDiscoverySchema),
+    defaultValues: { target: '', protocol: 'icmp', port: 80 },
+    mode: 'onBlur',
+  });
+  // useWatch, not watch(): the React Compiler skips a component that calls
+  // react-hook-form's watch().
+  const [target, protocol, port] = useWatch({ control, name: ['target', 'protocol', 'port'] });
+  const setTarget = (next: string): void => {
+    setValue('target', next, { shouldValidate: true, shouldDirty: true });
+  };
+  const [loading, setLoading] = useState(false);
+  const [result, setResult] = useState<PathResponse | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [expandedL2Hop, setExpandedL2Hop] = useState<number | null>(null);
+
+  // Streaming hops received via WebSocket (accumulates as trace progresses)
+  const [streamingHops, setStreamingHops] = useState<TracerouteHop[]>([]);
+  const [_streamingTarget, setStreamingTarget] = useState<string>('');
+  const activeTraceRef = useRef<string | null>(null);
+
+  // Handle WebSocket trace hop messages for real-time updates
+  const handleTraceHop = (msg: TraceHopMessage) => {
+    // Only process if this is for our active trace
+    if (activeTraceRef.current !== msg.target) {
+      return;
+    }
+
+    setStreamingHops((prev) => {
+      // Avoid duplicates by checking TTL
+      if (prev.some((h) => h.ttl === msg.hop.ttl)) {
+        return prev;
+      }
+      return [...prev, msg.hop].sort((a, b) => a.ttl - b.ttl);
     });
-    const target = watch('target');
-    const protocol = watch('protocol');
-    const port = watch('port');
-    const setTarget = useCallback(
-      (next: string): void => {
-        setValue('target', next, { shouldValidate: true, shouldDirty: true });
-      },
-      [setValue],
-    );
-    const [loading, setLoading] = useState(false);
-    const [result, setResult] = useState<PathResponse | null>(null);
-    const [error, setError] = useState<string | null>(null);
-    const [expandedL2Hop, setExpandedL2Hop] = useState<number | null>(null);
+    setStreamingTarget(msg.target);
 
-    // Streaming hops received via WebSocket (accumulates as trace progresses)
-    const [streamingHops, setStreamingHops] = useState<TracerouteHop[]>([]);
-    const [_streamingTarget, setStreamingTarget] = useState<string>('');
-    const activeTraceRef = useRef<string | null>(null);
+    if (msg.completed) {
+      // Trace complete - the HTTP response will have the full result
+      activeTraceRef.current = null;
+    }
+  };
 
-    // Handle WebSocket trace hop messages for real-time updates
-    const handleTraceHop = useCallback((msg: TraceHopMessage) => {
-      // Only process if this is for our active trace
-      if (activeTraceRef.current !== msg.target) {
-        return;
-      }
+  // Register for WebSocket trace hop messages
+  useEffect(() => {
+    if (!onRegisterTraceHandler) {
+      return;
+    }
+    return onRegisterTraceHandler(handleTraceHop);
+  }, [onRegisterTraceHandler, handleTraceHop]);
 
-      setStreamingHops((prev) => {
-        // Avoid duplicates by checking TTL
-        if (prev.some((h) => h.ttl === msg.hop.ttl)) {
-          return prev;
-        }
-        return [...prev, msg.hop].sort((a, b) => a.ttl - b.ttl);
-      });
-      setStreamingTarget(msg.target);
+  // Run path discovery (always L2+L3 combined)
+  const runTrace = (traceTarget: string): Promise<void> => {
+    if (!traceTarget.trim()) {
+      return Promise.resolve();
+    }
 
-      if (msg.completed) {
-        // Trace complete - the HTTP response will have the full result
+    setLoading(true);
+    setError(null);
+    setResult(null);
+    setExpandedL2Hop(null);
+    setStreamingHops([]); // Clear streaming hops
+    setStreamingTarget(traceTarget.trim());
+    activeTraceRef.current = traceTarget.trim(); // Set active trace target
+
+    // A promise chain, not try/finally: the React Compiler cannot lower
+    // a finally clause and would skip the whole component.
+    return api
+      .post<PathResponse>('/api/v1/path/path', {
+        source: 'self',
+        destination: traceTarget.trim(),
+        method: 'both', // Always do both L2+L3
+        protocol,
+        port: protocol !== 'icmp' ? port : undefined,
+      })
+      .then((data) => {
+        setResult(data);
+        setStreamingHops([]); // Clear streaming hops now that we have full result
         activeTraceRef.current = null;
-      }
-    }, []);
+      })
+      .catch((err: unknown) => {
+        setError(err instanceof Error ? err.message : t('pathDiscovery.failed'));
+        activeTraceRef.current = null;
+      })
+      .finally(() => setLoading(false));
+  };
 
-    // Register for WebSocket trace hop messages
-    useEffect(() => {
-      if (!onRegisterTraceHandler) {
-        return;
-      }
-      return onRegisterTraceHandler(handleTraceHop);
-    }, [onRegisterTraceHandler, handleTraceHop]);
+  const onSubmit = ({ target: traceTarget }: { target: string }): void => {
+    runTrace(traceTarget).catch(() => {
+      // Error handled in runTrace
+    });
+  };
 
-    // Run path discovery (always L2+L3 combined)
-    const runTrace = useCallback(
-      async (traceTarget: string) => {
-        if (!traceTarget.trim()) {
-          return;
-        }
-
-        setLoading(true);
-        setError(null);
-        setResult(null);
-        setExpandedL2Hop(null);
-        setStreamingHops([]); // Clear streaming hops
-        setStreamingTarget(traceTarget.trim());
-        activeTraceRef.current = traceTarget.trim(); // Set active trace target
-
-        try {
-          const data = await api.post<PathResponse>('/api/v1/path/path', {
-            source: 'self',
-            destination: traceTarget.trim(),
-            method: 'both', // Always do both L2+L3
-            protocol,
-            port: protocol !== 'icmp' ? port : undefined,
-          });
-          setResult(data);
-          setStreamingHops([]); // Clear streaming hops now that we have full result
-          activeTraceRef.current = null;
-        } catch (err) {
-          setError(err instanceof Error ? err.message : t('pathDiscovery.failed'));
-          activeTraceRef.current = null;
-        } finally {
-          setLoading(false);
-        }
-      },
-      [protocol, port, t],
-    );
-
-    const onSubmit = useCallback(
-      ({ target: traceTarget }: { target: string }): void => {
-        runTrace(traceTarget).catch(() => {
-          // Error handled in runTrace
-        });
-      },
-      [runTrace],
-    );
-
-    // Quick target handlers
-    const traceGateway = useCallback((): void => {
-      if (gateway) {
-        setTarget(gateway);
-        runTrace(gateway).catch(() => {
-          // Error handled in runTrace
-        });
-      }
-    }, [gateway, runTrace]);
-
-    const traceDns = useCallback((): void => {
-      const dns = dnsServer || '8.8.8.8';
-      setTarget(dns);
-      runTrace(dns).catch(() => {
+  // Quick target handlers
+  const traceGateway = (): void => {
+    if (gateway) {
+      setTarget(gateway);
+      runTrace(gateway).catch(() => {
         // Error handled in runTrace
       });
-    }, [dnsServer, runTrace]);
+    }
+  };
 
-    const traceInternet = useCallback((): void => {
-      const internetTarget = '8.8.8.8';
-      setTarget(internetTarget);
-      runTrace(internetTarget).catch(() => {
-        // Error handled in runTrace
-      });
-    }, [runTrace]);
+  const traceDns = (): void => {
+    const dns = dnsServer || '8.8.8.8';
+    setTarget(dns);
+    runTrace(dns).catch(() => {
+      // Error handled in runTrace
+    });
+  };
 
-    // Export as JSON
-    const exportJson = useCallback(() => {
-      if (!result) {
-        return;
+  const traceInternet = (): void => {
+    const internetTarget = '8.8.8.8';
+    setTarget(internetTarget);
+    runTrace(internetTarget).catch(() => {
+      // Error handled in runTrace
+    });
+  };
+
+  // Export as JSON
+  const exportJson = () => {
+    if (!result) {
+      return;
+    }
+    const blob = new Blob([JSON.stringify(result, null, 2)], {
+      type: 'application/json',
+    });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `path-discovery-${target}-${Date.now()}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  // Export as CSV
+  const exportCsv = () => {
+    if (!result) {
+      return;
+    }
+
+    let csvContent = '';
+
+    // L3 path section
+    if (result.l3Path) {
+      csvContent += 'L3 Path\n';
+      csvContent += 'TTL,IP,Hostname,RTT (ms),State\n';
+      csvContent += result.l3Path.hops
+        .map(
+          (h) =>
+            `${h.ttl},${h.ip || '*'},${h.hostname || ''},${h.rtt > 0 ? (h.rtt / 1_000_000).toFixed(2) : ''},${h.state}`,
+        )
+        .join('\n');
+    }
+
+    // L2 path section
+    if (result.l2Path) {
+      if (csvContent) {
+        csvContent += '\n\n';
       }
-      const blob = new Blob([JSON.stringify(result, null, 2)], {
-        type: 'application/json',
-      });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `path-discovery-${target}-${Date.now()}.json`;
-      a.click();
-      URL.revokeObjectURL(url);
-    }, [result, target]);
+      csvContent += 'L2 Path\n';
+      csvContent += 'Device,Device IP,Ingress Port,Egress Port,Source\n';
+      csvContent += result.l2Path.hops
+        .map(
+          (h) =>
+            `${h.device},${h.deviceIp},${h.ingressPort?.name || ''},${h.egressPort?.name || ''},${h.source}`,
+        )
+        .join('\n');
+    }
 
-    // Export as CSV
-    const exportCsv = useCallback(() => {
-      if (!result) {
-        return;
-      }
+    const blob = new Blob([csvContent], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `path-discovery-${target}-${Date.now()}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
 
-      let csvContent = '';
+  // Copy to clipboard
+  const copyToClipboard = () => {
+    if (!result) {
+      return;
+    }
+    navigator.clipboard.writeText(JSON.stringify(result, null, 2));
+  };
 
-      // L3 path section
-      if (result.l3Path) {
-        csvContent += 'L3 Path\n';
-        csvContent += 'TTL,IP,Hostname,RTT (ms),State\n';
-        csvContent += result.l3Path.hops
-          .map(
-            (h) =>
-              `${h.ttl},${h.ip || '*'},${h.hostname || ''},${h.rtt > 0 ? (h.rtt / 1_000_000).toFixed(2) : ''},${h.state}`,
-          )
-          .join('\n');
-      }
+  const cardStatus = pathCardStatus(loading, error, result);
 
-      // L2 path section
-      if (result.l2Path) {
-        if (csvContent) {
-          csvContent += '\n\n';
-        }
-        csvContent += 'L2 Path\n';
-        csvContent += 'Device,Device IP,Ingress Port,Egress Port,Source\n';
-        csvContent += result.l2Path.hops
-          .map(
-            (h) =>
-              `${h.device},${h.deviceIp},${h.ingressPort?.name || ''},${h.egressPort?.name || ''},${h.source}`,
-          )
-          .join('\n');
-      }
+  const maxRtt = result?.l3Path ? getMaxRtt(result.l3Path.hops) : 1;
 
-      const blob = new Blob([csvContent], { type: 'text/csv' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `path-discovery-${target}-${Date.now()}.csv`;
-      a.click();
-      URL.revokeObjectURL(url);
-    }, [result, target]);
-
-    // Copy to clipboard
-    const copyToClipboard = useCallback(() => {
-      if (!result) {
-        return;
-      }
-      navigator.clipboard.writeText(JSON.stringify(result, null, 2));
-    }, [result]);
-
-    // Determine card status based on worst hop result
-    const cardStatus: Status = useMemo(() => {
-      if (loading) {
-        return 'loading';
-      }
-      if (error) {
-        return 'error';
-      }
-      if (!result) {
-        return 'unknown';
-      }
-
-      // Check L3 path for issues
-      const l3Hops = result.l3Path?.hops || [];
-      // L3Hop.state is 'timeout' | 'reply'; absence of reply = error state.
-      const hasTimeouts = l3Hops.some((h) => h.state === 'timeout');
-      const hasErrors = false;
-      const hasHighLatency = l3Hops.some((h) => h.rtt > 100000000); // > 100ms
-
-      if (hasErrors) {
-        return 'error';
-      }
-      if (hasTimeouts || hasHighLatency) {
-        return 'warning';
-      }
-      if (result.l3Path?.completed || result.l2Path) {
-        return 'success';
-      }
-      return 'warning';
-    }, [loading, error, result]);
-
-    const maxRtt = result?.l3Path ? getMaxRtt(result.l3Path.hops) : 1;
-
-    return (
-      <Card
-        title={t('pathDiscovery.title')}
-        icon={<Route className={iconTokens.size.md} />}
-        status={cardStatus}
+  return (
+    <Card
+      title={t('pathDiscovery.title')}
+      icon={<Route className={iconTokens.size.md} />}
+      status={cardStatus}
+    >
+      {/* Target Input Form - Responsive layout for various screen sizes */}
+      <form
+        // handleSubmit runs in the handler, not in render: the React
+        // Compiler refuses a render-time call that is handed the
+        // ref-writing onSubmit.
+        onSubmit={(event) => handleSubmit(onSubmit)(event)}
+        className={cn('stack-sm', spacing.margin.bottom.content)}
       >
-        {/* Target Input Form - Responsive layout for various screen sizes */}
-        <form
-          onSubmit={handleSubmit(onSubmit)}
-          className={cn('stack-sm', spacing.margin.bottom.content)}
-        >
-          {/* Target Input Row - Stack on mobile, inline on larger screens */}
-          <div className="flex flex-col sm:flex-row gap-compact">
-            {/* Target input - full width on mobile */}
-            <input
-              type="text"
-              {...register('target')}
-              placeholder={t('pathDiscovery.enterTarget')}
+        {/* Target Input Row - Stack on mobile, inline on larger screens */}
+        <div className="flex flex-col sm:flex-row gap-compact">
+          {/* Target input - full width on mobile */}
+          <input
+            type="text"
+            {...register('target')}
+            placeholder={t('pathDiscovery.enterTarget')}
+            disabled={loading}
+            className={cn(
+              'flex-1 min-w-0',
+              inputTokens.base,
+              inputTokens.state.default,
+              inputTokens.size.sm,
+              'body-small',
+            )}
+          />
+
+          {/* Protocol and Trace button group - inline always */}
+          <div className="flex items-center gap-compact shrink-0">
+            {/* Protocol selector - styled to match design system */}
+            <Tooltip text={t('pathDiscovery.protocol')}>
+              <select
+                {...register('protocol')}
+                disabled={loading}
+                className={cn(
+                  inputTokens.base,
+                  inputTokens.state.default,
+                  inputTokens.size.sm,
+                  'w-20 body-small cursor-pointer',
+                )}
+                // title alone does not name a form control (axe
+                // label-title-only); the inline layout has no room for a
+                // visible label beside a 20-wide select.
+                aria-label={t('pathDiscovery.protocol')}
+              >
+                <option value="icmp">ICMP</option>
+                <option value="udp">UDP</option>
+                <option value="tcp">TCP</option>
+              </select>
+            </Tooltip>
+
+            {/* Port input (only for TCP/UDP) */}
+            {protocol !== 'icmp' && (
+              <input
+                type="number"
+                {...register('port', { valueAsNumber: true })}
+                placeholder={t('pathDiscovery.port')}
+                min={1}
+                max={65535}
+                disabled={loading}
+                className={cn(
+                  'w-16',
+                  inputTokens.base,
+                  inputTokens.state.default,
+                  inputTokens.size.sm,
+                  'body-small',
+                )}
+              />
+            )}
+
+            <button
+              type="submit"
+              disabled={loading || !target?.trim()}
+              className={cn(
+                buttonTokens.base,
+                buttonTokens.variant.primary,
+                buttonTokens.size.sm,
+                'whitespace-nowrap',
+              )}
+            >
+              {loading ? '...' : t('pathDiscovery.trace')}
+            </button>
+          </div>
+        </div>
+        {errors.target ? (
+          <p className={cn('caption', statusColor.text.error)}>{errors.target.message}</p>
+        ) : null}
+        {errors.port ? (
+          <p className={cn('caption', statusColor.text.error)}>{errors.port.message}</p>
+        ) : null}
+
+        {/* Quick Targets - Wrap on small screens */}
+        <div className="flex items-center gap-compact flex-wrap">
+          <span className="caption text-text-muted shrink-0">{t('pathDiscovery.quick')}:</span>
+          <div className="flex items-center gap-1.5 flex-wrap">
+            <button
+              type="button"
+              onClick={traceGateway}
+              disabled={loading || !gateway}
+              className={cn(
+                buttonTokens.base,
+                buttonTokens.variant.ghost,
+                buttonTokens.size.xs,
+                'caption whitespace-nowrap',
+              )}
+            >
+              {t('pathDiscovery.gateway')}
+            </button>
+            <button
+              type="button"
+              onClick={traceDns}
               disabled={loading}
               className={cn(
-                'flex-1 min-w-0',
-                inputTokens.base,
-                inputTokens.state.default,
-                inputTokens.size.sm,
-                'body-small',
+                buttonTokens.base,
+                buttonTokens.variant.ghost,
+                buttonTokens.size.xs,
+                'caption whitespace-nowrap',
               )}
-            />
-
-            {/* Protocol and Trace button group - inline always */}
-            <div className="flex items-center gap-compact shrink-0">
-              {/* Protocol selector - styled to match design system */}
-              <Tooltip text={t('pathDiscovery.protocol')}>
-                <select
-                  {...register('protocol')}
-                  disabled={loading}
-                  className={cn(
-                    inputTokens.base,
-                    inputTokens.state.default,
-                    inputTokens.size.sm,
-                    'w-20 body-small cursor-pointer',
-                  )}
-                  // title alone does not name a form control (axe
-                  // label-title-only); the inline layout has no room for a
-                  // visible label beside a 20-wide select.
-                  aria-label={t('pathDiscovery.protocol')}
-                >
-                  <option value="icmp">ICMP</option>
-                  <option value="udp">UDP</option>
-                  <option value="tcp">TCP</option>
-                </select>
-              </Tooltip>
-
-              {/* Port input (only for TCP/UDP) */}
-              {protocol !== 'icmp' && (
-                <input
-                  type="number"
-                  {...register('port', { valueAsNumber: true })}
-                  placeholder={t('pathDiscovery.port')}
-                  min={1}
-                  max={65535}
-                  disabled={loading}
-                  className={cn(
-                    'w-16',
-                    inputTokens.base,
-                    inputTokens.state.default,
-                    inputTokens.size.sm,
-                    'body-small',
-                  )}
-                />
-              )}
-
-              <button
-                type="submit"
-                disabled={loading || !target?.trim()}
-                className={cn(
-                  buttonTokens.base,
-                  buttonTokens.variant.primary,
-                  buttonTokens.size.sm,
-                  'whitespace-nowrap',
-                )}
-              >
-                {loading ? '...' : t('pathDiscovery.trace')}
-              </button>
-            </div>
-          </div>
-          {errors.target ? (
-            <p className={cn('caption', statusColor.text.error)}>{errors.target.message}</p>
-          ) : null}
-          {errors.port ? (
-            <p className={cn('caption', statusColor.text.error)}>{errors.port.message}</p>
-          ) : null}
-
-          {/* Quick Targets - Wrap on small screens */}
-          <div className="flex items-center gap-compact flex-wrap">
-            <span className="caption text-text-muted shrink-0">{t('pathDiscovery.quick')}:</span>
-            <div className="flex items-center gap-1.5 flex-wrap">
-              <button
-                type="button"
-                onClick={traceGateway}
-                disabled={loading || !gateway}
-                className={cn(
-                  buttonTokens.base,
-                  buttonTokens.variant.ghost,
-                  buttonTokens.size.xs,
-                  'caption whitespace-nowrap',
-                )}
-              >
-                {t('pathDiscovery.gateway')}
-              </button>
-              <button
-                type="button"
-                onClick={traceDns}
-                disabled={loading}
-                className={cn(
-                  buttonTokens.base,
-                  buttonTokens.variant.ghost,
-                  buttonTokens.size.xs,
-                  'caption whitespace-nowrap',
-                )}
-              >
-                {t('pathDiscovery.dns')}
-              </button>
-              <button
-                type="button"
-                onClick={traceInternet}
-                disabled={loading}
-                className={cn(
-                  buttonTokens.base,
-                  buttonTokens.variant.ghost,
-                  buttonTokens.size.xs,
-                  'caption whitespace-nowrap',
-                )}
-              >
-                {t('pathDiscovery.internet')}
-              </button>
-            </div>
-          </div>
-        </form>
-        <CardDivider />
-        {/* Loading State with Streaming Hops */}
-        {loading ? (
-          <div className="stack-sm">
-            <CardValue
-              value={
-                streamingHops.length > 0
-                  ? t('pathDiscovery.tracingHops', {
-                      count: streamingHops.length,
-                    })
-                  : t('pathDiscovery.tracing')
-              }
-              size="lg"
-            />
-            {/* Show streaming hops in real-time */}
-            {streamingHops.length > 0 ? (
-              <div className="stack-xs">
-                {streamingHops.map((hop) => (
-                  <div
-                    key={hop.ttl}
-                    className={cn(
-                      'flex items-center gap-compact py-compact',
-                      hop.state === 'timeout' && 'opacity-50',
-                    )}
-                  >
-                    <span className="w-6 text-xs text-text-muted font-mono">{hop.ttl}</span>
-                    <span className="flex-1 text-sm font-mono text-text-primary">
-                      {hop.ip || '*'}
-                    </span>
-                    <span className="text-xs text-text-muted">{formatRtt(hop.rtt)}</span>
-                  </div>
-                ))}
-                {/* Pulsing indicator for next hop */}
-                <div className="flex items-center gap-compact py-compact animate-pulse">
-                  <span className="w-6 text-xs text-text-muted font-mono">
-                    {streamingHops.length + 1}
-                  </span>
-                  <span className="text-sm text-text-muted">...</span>
-                </div>
-              </div>
-            ) : null}
-          </div>
-        ) : null}
-        {/* Error State */}
-        {error && !loading ? (
-          <div className={cn(spacing.pad.sm, statusColor.bg.errorSoft, radius.default)}>
-            <span className="body-small text-status-error">{error}</span>
-          </div>
-        ) : null}
-        {/* Results */}
-        {result && !loading ? (
-          <div className="stack-md">
-            {/* Unified L2+L3 path: source -> switches -> routers -> destination */}
-            <PATH_TIMELINE
-              result={result}
-              maxRtt={maxRtt}
-              expandedL2Hop={expandedL2Hop}
-              onToggleL2Hop={setExpandedL2Hop}
-              t={t}
-            />
-
-            {/* Export Actions */}
-            <div
-              className={cn(layout.inline.default, spacing.gap.compact, spacing.margin.top.inline)}
             >
-              <button
-                type="button"
-                onClick={exportJson}
-                className={cn(
-                  buttonTokens.base,
-                  buttonTokens.variant.ghost,
-                  buttonTokens.size.xs,
-                  'caption',
-                )}
-              >
-                {t('pathDiscovery.exportJSON')}
-              </button>
-              <button
-                type="button"
-                onClick={exportCsv}
-                className={cn(
-                  buttonTokens.base,
-                  buttonTokens.variant.ghost,
-                  buttonTokens.size.xs,
-                  'caption',
-                )}
-              >
-                {t('pathDiscovery.exportCSV')}
-              </button>
-              <button
-                type="button"
-                onClick={copyToClipboard}
-                className={cn(
-                  buttonTokens.base,
-                  buttonTokens.variant.ghost,
-                  buttonTokens.size.xs,
-                  'caption',
-                )}
-              >
-                {t('pathDiscovery.copy')}
-              </button>
-              <button
-                type="button"
-                onClick={(): void => {
-                  runTrace(target).catch(() => {
-                    // Error handled in runTrace
-                  });
-                }}
-                disabled={loading}
-                className={cn(
-                  buttonTokens.base,
-                  buttonTokens.variant.ghost,
-                  buttonTokens.size.xs,
-                  'caption',
-                )}
-              >
-                {t('pathDiscovery.rerun')}
-              </button>
-            </div>
+              {t('pathDiscovery.dns')}
+            </button>
+            <button
+              type="button"
+              onClick={traceInternet}
+              disabled={loading}
+              className={cn(
+                buttonTokens.base,
+                buttonTokens.variant.ghost,
+                buttonTokens.size.xs,
+                'caption whitespace-nowrap',
+              )}
+            >
+              {t('pathDiscovery.internet')}
+            </button>
           </div>
-        ) : null}
-        {/* Empty State - improved visual design */}
-        {result || loading || error ? null : (
+        </div>
+      </form>
+      <CardDivider />
+      {/* Loading State with Streaming Hops */}
+      {loading ? (
+        <div className="stack-sm">
+          <CardValue
+            value={
+              streamingHops.length > 0
+                ? t('pathDiscovery.tracingHops', {
+                    count: streamingHops.length,
+                  })
+                : t('pathDiscovery.tracing')
+            }
+            size="lg"
+          />
+          {/* Show streaming hops in real-time */}
+          {streamingHops.length > 0 ? (
+            <div className="stack-xs">
+              {streamingHops.map((hop) => (
+                <div
+                  key={hop.ttl}
+                  className={cn(
+                    'flex items-center gap-compact py-compact',
+                    hop.state === 'timeout' && 'opacity-50',
+                  )}
+                >
+                  <span className="w-6 text-xs text-text-muted font-mono">{hop.ttl}</span>
+                  <span className="flex-1 text-sm font-mono text-text-primary">
+                    {hop.ip || '*'}
+                  </span>
+                  <span className="text-xs text-text-muted">{formatRtt(hop.rtt)}</span>
+                </div>
+              ))}
+              {/* Pulsing indicator for next hop */}
+              <div className="flex items-center gap-compact py-compact animate-pulse">
+                <span className="w-6 text-xs text-text-muted font-mono">
+                  {streamingHops.length + 1}
+                </span>
+                <span className="text-sm text-text-muted">...</span>
+              </div>
+            </div>
+          ) : null}
+        </div>
+      ) : null}
+      {/* Error State */}
+      {error && !loading ? (
+        <div className={cn(spacing.pad.sm, statusColor.bg.errorSoft, radius.default)}>
+          <span className="body-small text-status-error">{error}</span>
+        </div>
+      ) : null}
+      {/* Results */}
+      {result && !loading ? (
+        <div className="stack-md">
+          {/* Unified L2+L3 path: source -> switches -> routers -> destination */}
+          <PathTimeline
+            result={result}
+            maxRtt={maxRtt}
+            expandedL2Hop={expandedL2Hop}
+            onToggleL2Hop={setExpandedL2Hop}
+            t={t}
+          />
+
+          {/* Export Actions */}
           <div
-            className={cn(
-              spacing.pad.default,
-              'text-center',
-              'bg-surface-base/50',
-              radius.lg,
-              'border border-dashed border-surface-border',
-            )}
+            className={cn(layout.inline.default, spacing.gap.compact, spacing.margin.top.inline)}
           >
-            <div className="text-text-muted mb-2">
-              <Route className={cn(iconTokens.size.lg, 'mx-auto opacity-40')} />
-            </div>
-            <p className="body-small text-text-muted">{t('pathDiscovery.enterTarget')}</p>
-            <p className="caption text-text-muted mt-tight">{t('pathDiscovery.emptyHint')}</p>
+            <button
+              type="button"
+              onClick={exportJson}
+              className={cn(
+                buttonTokens.base,
+                buttonTokens.variant.ghost,
+                buttonTokens.size.xs,
+                'caption',
+              )}
+            >
+              {t('pathDiscovery.exportJSON')}
+            </button>
+            <button
+              type="button"
+              onClick={exportCsv}
+              className={cn(
+                buttonTokens.base,
+                buttonTokens.variant.ghost,
+                buttonTokens.size.xs,
+                'caption',
+              )}
+            >
+              {t('pathDiscovery.exportCSV')}
+            </button>
+            <button
+              type="button"
+              onClick={copyToClipboard}
+              className={cn(
+                buttonTokens.base,
+                buttonTokens.variant.ghost,
+                buttonTokens.size.xs,
+                'caption',
+              )}
+            >
+              {t('pathDiscovery.copy')}
+            </button>
+            <button
+              type="button"
+              onClick={(): void => {
+                runTrace(target).catch(() => {
+                  // Error handled in runTrace
+                });
+              }}
+              disabled={loading}
+              className={cn(
+                buttonTokens.base,
+                buttonTokens.variant.ghost,
+                buttonTokens.size.xs,
+                'caption',
+              )}
+            >
+              {t('pathDiscovery.rerun')}
+            </button>
           </div>
-        )}
-      </Card>
-    );
-  },
-);
+        </div>
+      ) : null}
+      {/* Empty State - improved visual design */}
+      {result || loading || error ? null : (
+        <div
+          className={cn(
+            spacing.pad.default,
+            'text-center',
+            'bg-surface-base/50',
+            radius.lg,
+            'border border-dashed border-surface-border',
+          )}
+        >
+          <div className="text-text-muted mb-2">
+            <Route className={cn(iconTokens.size.lg, 'mx-auto opacity-40')} />
+          </div>
+          <p className="body-small text-text-muted">{t('pathDiscovery.enterTarget')}</p>
+          <p className="caption text-text-muted mt-tight">{t('pathDiscovery.emptyHint')}</p>
+        </div>
+      )}
+    </Card>
+  );
+}

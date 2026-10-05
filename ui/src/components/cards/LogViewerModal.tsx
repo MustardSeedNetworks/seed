@@ -1,7 +1,7 @@
 import { Tooltip } from '../ui/Tooltip';
 /** Full-screen log filtering, streaming and export. */
 
-import { useCallback, useState } from 'react';
+import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useFocusTrap } from '../../hooks/useFocusTrap';
 import {
@@ -399,7 +399,7 @@ export function LogViewerModal({ isOpen, onClose }: LogViewerModalProps): React.
   ).sort();
 
   // Toggle log expansion
-  const toggleExpand = useCallback((timestamp: string): void => {
+  const toggleExpand = (timestamp: string): void => {
     setExpandedIds((prev: Set<string>): Set<string> => {
       const newSet = new Set(prev);
       if (newSet.has(timestamp)) {
@@ -409,21 +409,21 @@ export function LogViewerModal({ isOpen, onClose }: LogViewerModalProps): React.
       }
       return newSet;
     });
-  }, []);
+  };
 
   // Close expanded entry
-  const closeExpanded = useCallback((timestamp: string): void => {
+  const closeExpanded = (timestamp: string): void => {
     setExpandedIds((prev: Set<string>): Set<string> => {
       const newSet = new Set(prev);
       newSet.delete(timestamp);
       return newSet;
     });
-  }, []);
+  };
 
   const dialogRef = useFocusTrap<HTMLDivElement>({ isActive: isOpen, onEscape: onClose });
 
   // Export functions
-  const exportJson = useCallback((): void => {
+  const exportJson = (): void => {
     const blob = new Blob([JSON.stringify(logs, null, 2)], {
       type: 'application/json',
     });
@@ -433,9 +433,9 @@ export function LogViewerModal({ isOpen, onClose }: LogViewerModalProps): React.
     link.download = `logs-${new Date().toISOString().split('T')[0]}.json`;
     link.click();
     URL.revokeObjectURL(url);
-  }, [logs]);
+  };
 
-  const exportCsv = useCallback((): void => {
+  const exportCsv = (): void => {
     const escapeCsv = (val: unknown): string => {
       if (val === null || val === undefined) {
         return '';
@@ -472,7 +472,7 @@ export function LogViewerModal({ isOpen, onClose }: LogViewerModalProps): React.
     link.download = `logs-${new Date().toISOString().split('T')[0]}.csv`;
     link.click();
     URL.revokeObjectURL(url);
-  }, [logs]);
+  };
 
   if (!isOpen) {
     return null;

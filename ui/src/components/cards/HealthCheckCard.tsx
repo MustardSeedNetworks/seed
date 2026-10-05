@@ -28,7 +28,7 @@
  */
 
 import { useQuery } from '@tanstack/react-query';
-import { memo, useEffect } from 'react';
+import { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { api } from '../../api';
 import { useSettings } from '../../contexts/useSettings';
@@ -58,9 +58,7 @@ interface HealthCheckCardProps {
   loading?: boolean;
 }
 
-export const HealthCheckCard: React.MemoExoticComponent<
-  ({ loading }: HealthCheckCardProps) => React.JSX.Element | null
-> = memo(function healthCheckCard({ loading }: HealthCheckCardProps): React.JSX.Element | null {
+export function HealthCheckCard({ loading }: HealthCheckCardProps): React.JSX.Element | null {
   const { t } = useTranslation('cards');
   const { cardSettings } = useSettings();
   const run = useQuery({
@@ -597,4 +595,4 @@ export const HealthCheckCard: React.MemoExoticComponent<
       {error ? <p className="body-small text-status-error">{error}</p> : null}
     </Card>
   );
-});
+}

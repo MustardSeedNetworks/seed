@@ -10,7 +10,6 @@
 
 import type { TFunction } from 'i18next';
 import type React from 'react';
-import { memo, useCallback } from 'react';
 import { cn, icon as iconTokens, radius } from '../../styles/theme';
 import type { L2Hop, PathResponse, PortInfo, TracerouteHop } from '../../types';
 import { ChevronDown, ChevronUp, Globe, HardDrive, Network, Router } from '../ui/Icons';
@@ -35,106 +34,95 @@ const LAYER_CHIP: Record<'l2' | 'l3', string> = {
   l3: 'bg-brand-primary text-text-inverse',
 };
 
-export const PATH_TIMELINE: React.NamedExoticComponent<PathTimelineProps> = memo(
-  function pathTimeline({
-    result,
-    maxRtt,
-    expandedL2Hop,
-    onToggleL2Hop,
-    t,
-  }: PathTimelineProps): React.ReactElement {
-    const { l2Path } = result;
-    const l2Hops = l2Path?.hops ?? [];
-    const l3Hops = result.l3Path?.hops ?? [];
-    // A trace that returned nothing and said why: on an unprivileged run a UDP
-    // or TCP traceroute cannot open the raw socket it reads hop errors from
-    // (seed#2689). Without this the L3 segment is simply absent and the
-    // operator sees an empty path with no reason for it.
-    const l3Limitation = l3Hops.length === 0 ? (result.l3Path?.error ?? '') : '';
-    const destination = result.l3Path?.target ?? '';
+export function PathTimeline({
+  result,
+  maxRtt,
+  expandedL2Hop,
+  onToggleL2Hop,
+  t,
+}: PathTimelineProps): React.ReactElement {
+  const { l2Path } = result;
+  const l2Hops = l2Path?.hops ?? [];
+  const l3Hops = result.l3Path?.hops ?? [];
+  // A trace that returned nothing and said why: on an unprivileged run a UDP
+  // or TCP traceroute cannot open the raw socket it reads hop errors from
+  // (seed#2689). Without this the L3 segment is simply absent and the
+  // operator sees an empty path with no reason for it.
+  const l3Limitation = l3Hops.length === 0 ? (result.l3Path?.error ?? '') : '';
+  const destination = result.l3Path?.target ?? '';
 
-    const toggleHop = useCallback(
-      (index: number): void => {
-        onToggleL2Hop(expandedL2Hop === index ? null : index);
-      },
-      [expandedL2Hop, onToggleL2Hop],
-    );
+  const toggleHop = (index: number): void => {
+    onToggleL2Hop(expandedL2Hop === index ? null : index);
+  };
 
-    // The bottom rail must reach the destination endpoint when one is rendered.
-    const lastIsEndpoint = destination !== '';
+  // The bottom rail must reach the destination endpoint when one is rendered.
+  const lastIsEndpoint = destination !== '';
 
-    return (
-      <div data-testid="path-timeline" className="stack-xs">
-        {/* Source endpoint */}
-        <TIMELINE_ROW isFirst dotKind="endpoint">
-          <div className="flex items-center gap-compact">
-            <HardDrive className={cn(iconTokens.size.sm, 'text-text-secondary')} />
-            <span className="body-small font-medium text-text-primary">
-              {t('pathDiscovery.thisDevice')}
+  return (
+    <div data-testid="path-timeline" className="stack-xs">
+      {/* Source endpoint */}
+      <TimelineRow isFirst dotKind="endpoint">
+        <div className="flex items-center gap-compact">
+          <HardDrive className={cn(iconTokens.size.sm, 'text-text-secondary')} />
+          <span className="body-small font-medium text-text-primary">
+            {t('pathDiscovery.thisDevice')}
+          </span>
+          <span className="caption text-text-muted">{t('pathDiscovery.source')}</span>
+        </div>
+      </TimelineRow>
+
+      {/* L2 switch segment */}
+      {l2Path ? (
+        l2Hops.length > 0 ? (
+          l2Hops.map((hop, index) => (
+            <TimelineRow key={`l2-${hop.deviceIp}-${hop.ingressPort?.name ?? index}`} dotKind="l2">
+              <L2TimelineHop
+                hop={hop}
+                index={index}
+                isExpanded={expandedL2Hop === index}
+                onToggle={(): void => toggleHop(index)}
+                t={t}
+              />
+            </TimelineRow>
+          ))
+        ) : (
+          <TimelineRow dotKind="l2-empty">
+            <span data-testid="l2-empty" className="caption text-text-muted">
+              {t('pathDiscovery.noL2Hops')}
             </span>
-            <span className="caption text-text-muted">{t('pathDiscovery.source')}</span>
+          </TimelineRow>
+        )
+      ) : null}
+
+      {/* L3 router segment */}
+      {l3Limitation === '' ? null : (
+        <TimelineRow dotKind="l3-empty">
+          <span data-testid="l3-limitation" className="caption text-text-muted">
+            {t('pathDiscovery.l3Unavailable', { reason: l3Limitation })}
+          </span>
+        </TimelineRow>
+      )}
+      {l3Hops.map((hop) => (
+        <TimelineRow key={`l3-${hop.ttl}`} dotKind={hop.state === 'timeout' ? 'l3-timeout' : 'l3'}>
+          <L3TimelineHop hop={hop} maxRtt={maxRtt} t={t} />
+        </TimelineRow>
+      ))}
+
+      {/* Destination endpoint */}
+      {lastIsEndpoint ? (
+        <TimelineRow isLast dotKind="endpoint">
+          <div className="flex items-center gap-compact" data-testid="timeline-dest">
+            <Globe className={cn(iconTokens.size.sm, 'text-text-secondary')} />
+            <span className="body-small font-medium text-text-primary font-mono truncate">
+              {destination}
+            </span>
+            <span className="caption text-text-muted">{t('pathDiscovery.destination')}</span>
           </div>
-        </TIMELINE_ROW>
-
-        {/* L2 switch segment */}
-        {l2Path ? (
-          l2Hops.length > 0 ? (
-            l2Hops.map((hop, index) => (
-              <TIMELINE_ROW
-                key={`l2-${hop.deviceIp}-${hop.ingressPort?.name ?? index}`}
-                dotKind="l2"
-              >
-                <L2_TIMELINE_HOP
-                  hop={hop}
-                  index={index}
-                  isExpanded={expandedL2Hop === index}
-                  onToggle={(): void => toggleHop(index)}
-                  t={t}
-                />
-              </TIMELINE_ROW>
-            ))
-          ) : (
-            <TIMELINE_ROW dotKind="l2-empty">
-              <span data-testid="l2-empty" className="caption text-text-muted">
-                {t('pathDiscovery.noL2Hops')}
-              </span>
-            </TIMELINE_ROW>
-          )
-        ) : null}
-
-        {/* L3 router segment */}
-        {l3Limitation === '' ? null : (
-          <TIMELINE_ROW dotKind="l3-empty">
-            <span data-testid="l3-limitation" className="caption text-text-muted">
-              {t('pathDiscovery.l3Unavailable', { reason: l3Limitation })}
-            </span>
-          </TIMELINE_ROW>
-        )}
-        {l3Hops.map((hop) => (
-          <TIMELINE_ROW
-            key={`l3-${hop.ttl}`}
-            dotKind={hop.state === 'timeout' ? 'l3-timeout' : 'l3'}
-          >
-            <L3_TIMELINE_HOP hop={hop} maxRtt={maxRtt} t={t} />
-          </TIMELINE_ROW>
-        ))}
-
-        {/* Destination endpoint */}
-        {lastIsEndpoint ? (
-          <TIMELINE_ROW isLast dotKind="endpoint">
-            <div className="flex items-center gap-compact" data-testid="timeline-dest">
-              <Globe className={cn(iconTokens.size.sm, 'text-text-secondary')} />
-              <span className="body-small font-medium text-text-primary font-mono truncate">
-                {destination}
-              </span>
-              <span className="caption text-text-muted">{t('pathDiscovery.destination')}</span>
-            </div>
-          </TIMELINE_ROW>
-        ) : null}
-      </div>
-    );
-  },
-);
+        </TimelineRow>
+      ) : null}
+    </div>
+  );
+}
 
 type DotKind = 'endpoint' | 'l2' | 'l2-empty' | 'l3' | 'l3-empty' | 'l3-timeout';
 
@@ -155,7 +143,7 @@ const DOT_CLASS: Record<DotKind, string> = {
 };
 
 /** One timeline step: a connector rail (line + node dot) plus its content. */
-const TIMELINE_ROW: React.NamedExoticComponent<TimelineRowProps> = memo(function timelineRow({
+function TimelineRow({
   children,
   dotKind,
   isFirst = false,
@@ -175,7 +163,7 @@ const TIMELINE_ROW: React.NamedExoticComponent<TimelineRowProps> = memo(function
       <div className="min-w-0 flex-1 py-tight">{children}</div>
     </div>
   );
-});
+}
 
 interface L3HopProps {
   hop: TracerouteHop;
@@ -183,11 +171,7 @@ interface L3HopProps {
   t: Translate;
 }
 
-const L3_TIMELINE_HOP: React.NamedExoticComponent<L3HopProps> = memo(function l3TimelineHop({
-  hop,
-  maxRtt,
-  t,
-}: L3HopProps): React.ReactElement {
+function L3TimelineHop({ hop, maxRtt, t }: L3HopProps): React.ReactElement {
   const isTimeout = hop.state === 'timeout';
   return (
     <div
@@ -233,7 +217,7 @@ const L3_TIMELINE_HOP: React.NamedExoticComponent<L3HopProps> = memo(function l3
       <span className="sr-only">{t('pathDiscovery.layerL3')}</span>
     </div>
   );
-});
+}
 
 interface L2HopProps {
   hop: L2Hop;
@@ -243,13 +227,7 @@ interface L2HopProps {
   t: Translate;
 }
 
-const L2_TIMELINE_HOP: React.NamedExoticComponent<L2HopProps> = memo(function l2TimelineHop({
-  hop,
-  index,
-  isExpanded,
-  onToggle,
-  t,
-}: L2HopProps): React.ReactElement {
+function L2TimelineHop({ hop, index, isExpanded, onToggle, t }: L2HopProps): React.ReactElement {
   const ports = [hop.ingressPort?.name, hop.egressPort?.name].filter(Boolean).join(' → ');
   return (
     <div
@@ -282,14 +260,14 @@ const L2_TIMELINE_HOP: React.NamedExoticComponent<L2HopProps> = memo(function l2
       {isExpanded ? (
         <div className="px-tight pb-tight bg-surface-base border-t border-surface-border">
           <div className="grid grid-cols-2 gap-comfortable pt-tight">
-            <PORT_DETAIL label={t('pathDiscovery.ingressPort')} port={hop.ingressPort} t={t} />
-            <PORT_DETAIL label={t('pathDiscovery.egressPort')} port={hop.egressPort} t={t} />
+            <PortDetail label={t('pathDiscovery.ingressPort')} port={hop.ingressPort} t={t} />
+            <PortDetail label={t('pathDiscovery.egressPort')} port={hop.egressPort} t={t} />
           </div>
         </div>
       ) : null}
     </div>
   );
-});
+}
 
 interface PortDetailProps {
   label: string;
@@ -297,11 +275,7 @@ interface PortDetailProps {
   t: Translate;
 }
 
-const PORT_DETAIL: React.NamedExoticComponent<PortDetailProps> = memo(function portDetail({
-  label,
-  port,
-  t,
-}: PortDetailProps): React.ReactElement {
+function PortDetail({ label, port, t }: PortDetailProps): React.ReactElement {
   return (
     <div>
       <div className="caption font-semibold text-text-muted uppercase tracking-wide mb-tight">
@@ -335,4 +309,4 @@ const PORT_DETAIL: React.NamedExoticComponent<PortDetailProps> = memo(function p
       )}
     </div>
   );
-});
+}

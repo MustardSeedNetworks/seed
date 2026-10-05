@@ -17,7 +17,7 @@
  */
 
 import type React from 'react';
-import { useMemo, useState } from 'react';
+import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { cn, icon as iconTokens, layout, spacing } from '../../styles/theme';
 import { CardValue } from '../ui/Card';
@@ -174,6 +174,52 @@ function getCardStatus(
   return 'error';
 }
 
+/** X positions of the channel labels along the graph's horizontal axis. */
+function channelAxisMarkers(
+  { min, max, step }: { min: number; max: number; step: number },
+  left: number,
+  graphWidth: number,
+): { channel: number; x: number }[] {
+  const markers: { channel: number; x: number }[] = [];
+  for (let ch = min; ch <= max; ch += step) {
+    markers.push({ channel: ch, x: left + ((ch - min) / (max - min)) * graphWidth });
+  }
+  return markers;
+}
+
+function bandNetworks(data: ChannelGraphResponse | null, band: BandType): ChannelNetwork[] {
+  if (!data?.data) {
+    return [];
+  }
+  switch (band) {
+    case '2.4GHz':
+      return data.data.networks24Ghz;
+    case '5GHz':
+      return data.data.networks5Ghz;
+    case '6GHz':
+      return data.data.networks6Ghz;
+    default:
+      return data.data.networks24Ghz;
+  }
+}
+
+function bandsWithNetworks(data: ChannelGraphResponse | null): BandType[] {
+  if (!data?.data) {
+    return [];
+  }
+  const bands: BandType[] = [];
+  if (data.data.networks24Ghz.length > 0) {
+    bands.push('2.4GHz');
+  }
+  if (data.data.networks5Ghz.length > 0) {
+    bands.push('5GHz');
+  }
+  if (data.data.networks6Ghz.length > 0) {
+    bands.push('6GHz');
+  }
+  return bands;
+}
+
 /**
  * Render the channel graph for a specific band
  */
@@ -198,16 +244,7 @@ function ChannelGraph({
   const graphWidth = width - padding.left - padding.right;
   const graphHeight = height - padding.top - padding.bottom;
 
-  // Generate channel markers
-  const channelMarkers = useMemo(() => {
-    const markers: { channel: number; x: number }[] = [];
-    const { min, max, step } = channelRange;
-    for (let ch = min; ch <= max; ch += step) {
-      const x = padding.left + ((ch - min) / (max - min)) * graphWidth;
-      markers.push({ channel: ch, x });
-    }
-    return markers;
-  }, [channelRange, graphWidth]);
+  const channelMarkers = channelAxisMarkers(channelRange, padding.left, graphWidth);
 
   // Signal markers (Y-axis)
   const signalMarkers = [-90, -70, -50, -30];
@@ -365,41 +402,8 @@ export function WifiChannelGraph({
   const { t: tc } = useTranslation('common');
   const [selectedBand, setSelectedBand] = useState<BandType>('2.4GHz');
 
-  // Get networks for selected band
-  // Note: All hooks must be called before any early returns to follow React rules
-  const networks = useMemo(() => {
-    if (!data?.data) {
-      return [];
-    }
-    switch (selectedBand) {
-      case '2.4GHz':
-        return data.data.networks24Ghz;
-      case '5GHz':
-        return data.data.networks5Ghz;
-      case '6GHz':
-        return data.data.networks6Ghz;
-      default:
-        return data.data.networks24Ghz;
-    }
-  }, [data, selectedBand]);
-
-  // Determine which bands have networks
-  const availableBands = useMemo(() => {
-    if (!data?.data) {
-      return [];
-    }
-    const bands: BandType[] = [];
-    if (data.data.networks24Ghz.length > 0) {
-      bands.push('2.4GHz');
-    }
-    if (data.data.networks5Ghz.length > 0) {
-      bands.push('5GHz');
-    }
-    if (data.data.networks6Ghz.length > 0) {
-      bands.push('6GHz');
-    }
-    return bands;
-  }, [data]);
+  const networks = bandNetworks(data, selectedBand);
+  const availableBands = bandsWithNetworks(data);
 
   // Auto-select first available band
   const firstBand = availableBands.at(0);

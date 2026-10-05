@@ -11,7 +11,7 @@ import { Tooltip } from '../ui/Tooltip';
  */
 
 import type React from 'react';
-import { useMemo, useState } from 'react';
+import { useState } from 'react';
 import type { useTranslation } from 'react-i18next';
 import {
   category as categoryTheme,
@@ -132,15 +132,12 @@ export function SubnetList({
   const [expanded, setExpanded] = useState(false);
 
   // Use subnets array if available, otherwise fall back to single subnet
-  const allSubnets = useMemo(() => {
-    if (subnets && subnets.length > 0) {
-      return subnets.map(calculateNetworkAddress);
-    }
-    if (fallbackSubnet) {
-      return [calculateNetworkAddress(fallbackSubnet)];
-    }
-    return [];
-  }, [subnets, fallbackSubnet]);
+  const allSubnets =
+    subnets && subnets.length > 0
+      ? subnets.map(calculateNetworkAddress)
+      : fallbackSubnet
+        ? [calculateNetworkAddress(fallbackSubnet)]
+        : [];
 
   if (allSubnets.length === 0) {
     return <span className="font-mono">{unknownLabel}</span>;

@@ -24,7 +24,6 @@
  * State: Uses SettingsContext for threshold configuration, receives data from parent
  */
 
-import { memo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useSettings } from '../../contexts/useSettings';
 import { formatTime, isValidNumber } from '../../lib/format';
@@ -68,7 +67,7 @@ function getLatencyStatus(
   return 'success';
 }
 
-export const GatewayCard = memo(function gatewayCard({ data, loading }: GatewayCardProps) {
+export function GatewayCard({ data, loading }: GatewayCardProps) {
   const { t: tr } = useTranslation('cards');
   const { thresholds } = useSettings();
   // Map context ThresholdPair (good/warning) to card format (warning/critical)
@@ -270,4 +269,4 @@ export const GatewayCard = memo(function gatewayCard({ data, loading }: GatewayC
       ) : null}
     </Card>
   );
-});
+}

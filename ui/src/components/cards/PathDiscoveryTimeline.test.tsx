@@ -10,14 +10,14 @@ import type { ComponentProps } from 'react';
 import { describe, expect, it, vi } from 'vitest';
 
 import type { PathResponse } from '../../types';
-import { PATH_TIMELINE } from './PathDiscoveryTimeline';
+import { PathTimeline } from './PathDiscoveryTimeline';
 
 /* The component's `t` prop is `TFunction<'cards'>`; this stand-in has the
    two-argument shape the tests need and none of the rest, so it is cast at the
    definition rather than at each of the four call sites. That it never
    typechecked before is #1946. */
 const t = ((_key: string, fallback: string): string => fallback) as unknown as ComponentProps<
-  typeof PATH_TIMELINE
+  typeof PathTimeline
 >['t'];
 
 function makeResult(overrides: Partial<PathResponse> = {}): PathResponse {
@@ -74,12 +74,12 @@ function makeResult(overrides: Partial<PathResponse> = {}): PathResponse {
    cannot do: it returns its second argument, and here that is the options
    object. This one renders the key and its interpolated values instead. */
 const interpolatingT = ((key: string, options?: { reason?: string }): string =>
-  `${key} ${options?.reason ?? ''}`) as unknown as ComponentProps<typeof PATH_TIMELINE>['t'];
+  `${key} ${options?.reason ?? ''}`) as unknown as ComponentProps<typeof PathTimeline>['t'];
 
-describe('<PATH_TIMELINE>', () => {
+describe('<PathTimeline>', () => {
   it('renders L2 switch hops before L3 router hops, ending at the destination', () => {
     const { getByTestId } = render(
-      <PATH_TIMELINE
+      <PathTimeline
         result={makeResult()}
         maxRtt={20_000_000}
         expandedL2Hop={null}
@@ -107,7 +107,7 @@ describe('<PATH_TIMELINE>', () => {
 
   it('shows an explicit empty state when L2 was requested but found no hops', () => {
     const { getByTestId, queryByTestId } = render(
-      <PATH_TIMELINE
+      <PathTimeline
         result={makeResult({ l2Path: { hops: [] } })}
         maxRtt={20_000_000}
         expandedL2Hop={null}
@@ -125,7 +125,7 @@ describe('<PATH_TIMELINE>', () => {
   it('toggles L2 port detail via the hop header', () => {
     const onToggle = vi.fn();
     const { getByTestId } = render(
-      <PATH_TIMELINE
+      <PathTimeline
         result={makeResult()}
         maxRtt={20_000_000}
         expandedL2Hop={null}
@@ -147,7 +147,7 @@ describe('<PATH_TIMELINE>', () => {
       'udp traceroute needs a raw ICMP socket, which this process may not open ' +
       '(socket: operation not permitted); use the ICMP protocol, which works unprivileged';
     const { getByTestId, queryByTestId } = render(
-      <PATH_TIMELINE
+      <PathTimeline
         result={makeResult({
           l3Path: {
             target: '8.8.8.8',
@@ -171,7 +171,7 @@ describe('<PATH_TIMELINE>', () => {
 
   it('shows no limitation row when the L3 trace returned hops', () => {
     const { queryByTestId } = render(
-      <PATH_TIMELINE
+      <PathTimeline
         result={makeResult()}
         maxRtt={20_000_000}
         expandedL2Hop={null}
@@ -185,7 +185,7 @@ describe('<PATH_TIMELINE>', () => {
 
   it('renders L3-only when no L2 path is present', () => {
     const { getByTestId, queryByTestId } = render(
-      <PATH_TIMELINE
+      <PathTimeline
         result={makeResult({ l2Path: undefined })}
         maxRtt={20_000_000}
         expandedL2Hop={null}

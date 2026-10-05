@@ -25,7 +25,6 @@
  */
 
 import type React from 'react';
-import { memo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { icon as iconTokens } from '../../styles/theme';
 import { CardDivider, CardRow, CardValue, type Status } from '../ui/Card';
@@ -149,120 +148,118 @@ function getStatus(data: PublicIpData): Status {
   return 'unknown';
 }
 
-export const PublicIpCard: React.NamedExoticComponent<PublicIpCardProps> = memo(
-  function publicIpCard({ data, loading }: PublicIpCardProps): React.ReactElement {
-    const { t } = useTranslation('cards');
+export function PublicIpCard({ data, loading }: PublicIpCardProps): React.ReactElement {
+  const { t } = useTranslation('cards');
 
-    return (
-      <BaseCard
-        title={t('publicIp.title')}
-        icon={<Globe className={iconTokens.size.md} />}
-        data={data}
-        loading={loading}
-        getStatus={getStatus}
-        loadingContent={<CardValue value={t('publicIp.checking')} size="lg" />}
-        emptyMessage={t('publicIp.unableToDetect')}
-      >
-        {(ipData: PublicIpData): React.ReactElement => {
-          const ispAsnDisplay = formatIspAsn(ipData.asn, ipData.org, ipData.isp);
-          const locationDisplay = formatLocation(ipData.city, ipData.region, ipData.country);
-          const hasHistory = ipData.history && ipData.history.length > 0;
+  return (
+    <BaseCard
+      title={t('publicIp.title')}
+      icon={<Globe className={iconTokens.size.md} />}
+      data={data}
+      loading={loading}
+      getStatus={getStatus}
+      loadingContent={<CardValue value={t('publicIp.checking')} size="lg" />}
+      emptyMessage={t('publicIp.unableToDetect')}
+    >
+      {(ipData: PublicIpData): React.ReactElement => {
+        const ispAsnDisplay = formatIspAsn(ipData.asn, ipData.org, ipData.isp);
+        const locationDisplay = formatLocation(ipData.city, ipData.region, ipData.country);
+        const hasHistory = ipData.history && ipData.history.length > 0;
 
-          return (
-            <>
-              {/* IPv4 Address */}
-              {ipData.ipv4 ? (
-                <>
-                  <p className="caption font-medium">{t('publicIp.ipv4')}</p>
-                  <CardValue value={ipData.ipv4} size="lg" />
-                </>
-              ) : (
-                <>
-                  <p className="caption font-medium">{t('publicIp.ipv4')}</p>
-                  <p className="body-small text-text-muted">{t('publicIp.notAvailable')}</p>
-                </>
-              )}
-              <CardDivider />
-              {/* IPv6 Address */}
-              {ipData.ipv6 ? (
-                <>
-                  <p className="caption font-medium">{t('publicIp.ipv6')}</p>
-                  <p className="body-small font-mono break-all text-text-primary">{ipData.ipv6}</p>
-                </>
-              ) : (
-                <>
-                  <p className="caption font-medium">{t('publicIp.ipv6')}</p>
-                  <p className="body-small text-text-muted">{t('publicIp.notAvailable')}</p>
-                </>
-              )}
-              {/* ISP/ASN - only show if available */}
-              {ispAsnDisplay ? (
-                <>
-                  <CardDivider />
-                  <CardRow label={t('publicIp.ispAsn')} value={ispAsnDisplay} />
-                </>
-              ) : null}
-              {/* Location - only show if available */}
-              {locationDisplay ? (
-                <>
-                  <CardDivider />
-                  <CardRow label={t('publicIp.location')} value={locationDisplay} />
-                </>
-              ) : null}
-              {/* Last checked */}
-              {ipData.lastChecked ? (
-                <>
-                  <CardDivider />
-                  <CardRow
-                    label={t('publicIp.lastChecked')}
-                    value={formatLastChecked(ipData.lastChecked)}
-                  />
-                </>
-              ) : null}
-              {/* Error if any */}
-              {ipData.error ? (
-                <>
-                  <CardDivider />
-                  <p className="caption text-status-error">{ipData.error}</p>
-                </>
-              ) : null}
-              {/* IP History - collapsible section */}
-              {hasHistory ? (
-                <>
-                  <CardDivider />
-                  <CollapsibleSection
-                    title={t('publicIp.history')}
-                    count={ipData.history?.length}
-                    variant="compact"
-                    defaultOpen={false}
-                  >
-                    <div className="stack-sm">
-                      {ipData.history?.map((entry, index) => {
-                        const entryLocation = formatLocation(entry.city, undefined, entry.country);
-                        return (
-                          <div key={`${entry.ip}-${index}`} className="flex flex-col gap-0.5">
-                            <div className="flex justify-between items-center">
-                              <span className="body-small font-mono text-text-primary">
-                                {entry.ip}
-                              </span>
-                              <span className="caption text-text-muted">
-                                {formatDateRange(entry.firstSeen, entry.lastSeen)}
-                              </span>
-                            </div>
-                            {entryLocation ? (
-                              <span className="caption text-text-muted">{entryLocation}</span>
-                            ) : null}
+        return (
+          <>
+            {/* IPv4 Address */}
+            {ipData.ipv4 ? (
+              <>
+                <p className="caption font-medium">{t('publicIp.ipv4')}</p>
+                <CardValue value={ipData.ipv4} size="lg" />
+              </>
+            ) : (
+              <>
+                <p className="caption font-medium">{t('publicIp.ipv4')}</p>
+                <p className="body-small text-text-muted">{t('publicIp.notAvailable')}</p>
+              </>
+            )}
+            <CardDivider />
+            {/* IPv6 Address */}
+            {ipData.ipv6 ? (
+              <>
+                <p className="caption font-medium">{t('publicIp.ipv6')}</p>
+                <p className="body-small font-mono break-all text-text-primary">{ipData.ipv6}</p>
+              </>
+            ) : (
+              <>
+                <p className="caption font-medium">{t('publicIp.ipv6')}</p>
+                <p className="body-small text-text-muted">{t('publicIp.notAvailable')}</p>
+              </>
+            )}
+            {/* ISP/ASN - only show if available */}
+            {ispAsnDisplay ? (
+              <>
+                <CardDivider />
+                <CardRow label={t('publicIp.ispAsn')} value={ispAsnDisplay} />
+              </>
+            ) : null}
+            {/* Location - only show if available */}
+            {locationDisplay ? (
+              <>
+                <CardDivider />
+                <CardRow label={t('publicIp.location')} value={locationDisplay} />
+              </>
+            ) : null}
+            {/* Last checked */}
+            {ipData.lastChecked ? (
+              <>
+                <CardDivider />
+                <CardRow
+                  label={t('publicIp.lastChecked')}
+                  value={formatLastChecked(ipData.lastChecked)}
+                />
+              </>
+            ) : null}
+            {/* Error if any */}
+            {ipData.error ? (
+              <>
+                <CardDivider />
+                <p className="caption text-status-error">{ipData.error}</p>
+              </>
+            ) : null}
+            {/* IP History - collapsible section */}
+            {hasHistory ? (
+              <>
+                <CardDivider />
+                <CollapsibleSection
+                  title={t('publicIp.history')}
+                  count={ipData.history?.length}
+                  variant="compact"
+                  defaultOpen={false}
+                >
+                  <div className="stack-sm">
+                    {ipData.history?.map((entry, index) => {
+                      const entryLocation = formatLocation(entry.city, undefined, entry.country);
+                      return (
+                        <div key={`${entry.ip}-${index}`} className="flex flex-col gap-0.5">
+                          <div className="flex justify-between items-center">
+                            <span className="body-small font-mono text-text-primary">
+                              {entry.ip}
+                            </span>
+                            <span className="caption text-text-muted">
+                              {formatDateRange(entry.firstSeen, entry.lastSeen)}
+                            </span>
                           </div>
-                        );
-                      })}
-                    </div>
-                  </CollapsibleSection>
-                </>
-              ) : null}
-            </>
-          );
-        }}
-      </BaseCard>
-    );
-  },
-);
+                          {entryLocation ? (
+                            <span className="caption text-text-muted">{entryLocation}</span>
+                          ) : null}
+                        </div>
+                      );
+                    })}
+                  </div>
+                </CollapsibleSection>
+              </>
+            ) : null}
+          </>
+        );
+      }}
+    </BaseCard>
+  );
+}
