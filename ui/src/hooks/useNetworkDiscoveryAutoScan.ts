@@ -14,7 +14,7 @@
  * tracked-set refs to prevent double-scanning the same device.
  */
 
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { api } from '../api';
 import { COMMON_PORTS } from '../components/cards/NetworkDiscoveryCardHelpers';
 import type {
@@ -92,133 +92,132 @@ export function useNetworkDiscoveryAutoScan(
   }, []);
 
   // Trigger vulnerability scan for a device based on any good info we have
-  const triggerVulnScan = useCallback(
-    async (ip: string, device?: DiscoveredDevice, services?: ServiceInfo[]) => {
-      if (!(autoScanSettings.vulnScanEnabled && autoScanSettings.vulnAutoScan)) {
-        return;
+  const triggerVulnScan = async (
+    ip: string,
+    device?: DiscoveredDevice,
+    services?: ServiceInfo[],
+  ) => {
+    if (!(autoScanSettings.vulnScanEnabled && autoScanSettings.vulnAutoScan)) {
+      return;
+    }
+
+    let hasGoodInfo = false;
+    const reasons: string[] = [];
+
+    // Check port scan services
+    if (services && services.length > 0) {
+      const openServices = services.filter(
+        (s) => s.state === 'open' && (s.banner || s.version || s.service !== 'unknown'),
+      );
+      if (openServices.length > 0) {
+        hasGoodInfo = true;
+        reasons.push(`${openServices.length} services`);
       }
+    }
 
-      let hasGoodInfo = false;
-      const reasons: string[] = [];
-
-      // Check port scan services
-      if (services && services.length > 0) {
-        const openServices = services.filter(
-          (s) => s.state === 'open' && (s.banner || s.version || s.service !== 'unknown'),
-        );
-        if (openServices.length > 0) {
-          hasGoodInfo = true;
-          reasons.push(`${openServices.length} services`);
-        }
+    // Check device info if provided
+    if (device) {
+      if (device.osGuess) {
+        hasGoodInfo = true;
+        reasons.push('OS guess');
       }
-
-      // Check device info if provided
-      if (device) {
-        if (device.osGuess) {
-          hasGoodInfo = true;
-          reasons.push('OS guess');
-        }
-        if (device.lldpInfo?.systemDescription) {
-          hasGoodInfo = true;
-          reasons.push('LLDP system info');
-        }
-        if (device.cdpInfo?.platform || device.cdpInfo?.softwareVersion) {
-          hasGoodInfo = true;
-          reasons.push('CDP info');
-        }
-        if (device.profile?.openPorts?.some((p) => p.isOpen)) {
-          hasGoodInfo = true;
-          reasons.push('profile ports');
-        }
-        if (device.profile?.httpInfo?.server) {
-          hasGoodInfo = true;
-          reasons.push('HTTP server');
-        }
+      if (device.lldpInfo?.systemDescription) {
+        hasGoodInfo = true;
+        reasons.push('LLDP system info');
       }
-
-      if (!hasGoodInfo) {
-        return;
+      if (device.cdpInfo?.platform || device.cdpInfo?.softwareVersion) {
+        hasGoodInfo = true;
+        reasons.push('CDP info');
       }
+      if (device.profile?.openPorts?.some((p) => p.isOpen)) {
+        hasGoodInfo = true;
+        reasons.push('profile ports');
+      }
+      if (device.profile?.httpInfo?.server) {
+        hasGoodInfo = true;
+        reasons.push('HTTP server');
+      }
+    }
 
-      try {
-        logger.info(LogComponents.DISCOVERY, 'Triggering auto vulnerability scan', {
-          ip,
-          reasons: reasons.join(', '),
+    if (!hasGoodInfo) {
+      return;
+    }
+
+    try {
+      logger.info(LogComponents.DISCOVERY, 'Triggering auto vulnerability scan', {
+        ip,
+        reasons: reasons.join(', '),
+      });
+      const params: VulnScanRequest = { ip };
+      await submitJob({ kind: 'vuln-scan', params });
+    } catch (error) {
+      logger.debug(LogComponents.DISCOVERY, 'Failed to trigger vulnerability scan', {
+        error: error instanceof Error ? error.message : String(error),
+      });
+    }
+  };
+
+  const handleDeepScan = async (ip: string) => {
+    setScanningDevices((prev) => new Set(prev).add(ip));
+    const device = data?.devices.find((d) => d.ip === ip);
+
+    try {
+      const apiResponse = await api.post<PortScanApiResponse>(
+        '/api/v1/security/discovery/portscan',
+        {
+          target: ip,
+          ports: COMMON_PORTS,
+          timeout: 2000,
+        },
+      );
+
+      // Transform backend response to frontend format
+      const results: PortScanResult[] = apiResponse.services.map((svc) => ({
+        port: svc.port,
+        state: svc.state,
+        service: svc.service,
+        banner: svc.banner,
+        version: svc.version,
+        rtt: 0, // Backend doesn't return individual RTT per port
+      }));
+      setScanResults((prev) => {
+        const next = new Map(prev);
+        next.set(ip, {
+          target: apiResponse.ip,
+          results: results,
+          scannedAt: new Date(),
         });
-        const params: VulnScanRequest = { ip };
-        await submitJob({ kind: 'vuln-scan', params });
-      } catch (error) {
-        logger.debug(LogComponents.DISCOVERY, 'Failed to trigger vulnerability scan', {
-          error: error instanceof Error ? error.message : String(error),
-        });
-      }
-    },
-    [autoScanSettings.vulnScanEnabled, autoScanSettings.vulnAutoScan],
-  );
-
-  const handleDeepScan = useCallback(
-    async (ip: string) => {
-      setScanningDevices((prev) => new Set(prev).add(ip));
-
-      try {
-        const apiResponse = await api.post<PortScanApiResponse>(
-          '/api/v1/security/discovery/portscan',
-          {
-            target: ip,
-            ports: COMMON_PORTS,
-            timeout: 2000,
-          },
-        );
-
-        // Transform backend response to frontend format
-        const results: PortScanResult[] = apiResponse.services.map((svc) => ({
-          port: svc.port,
-          state: svc.state,
-          service: svc.service,
-          banner: svc.banner,
-          version: svc.version,
-          rtt: 0, // Backend doesn't return individual RTT per port
-        }));
-        setScanResults((prev) => {
-          const next = new Map(prev);
-          next.set(ip, {
-            target: apiResponse.ip,
-            results: results,
-            scannedAt: new Date(),
-          });
-          // Fixes #904: Limit stored scan results to prevent unbounded memory growth
-          const MAX_SCAN_RESULTS = 100;
-          if (next.size > MAX_SCAN_RESULTS) {
-            const entries = [...next.entries()].sort(
-              (a, b) => a[1].scannedAt.getTime() - b[1].scannedAt.getTime(),
-            );
-            while (next.size > MAX_SCAN_RESULTS && entries.length > 0) {
-              const oldest = entries.shift();
-              if (oldest) {
-                next.delete(oldest[0]);
-              }
+        // Fixes #904: Limit stored scan results to prevent unbounded memory growth
+        const MAX_SCAN_RESULTS = 100;
+        if (next.size > MAX_SCAN_RESULTS) {
+          const entries = [...next.entries()].sort(
+            (a, b) => a[1].scannedAt.getTime() - b[1].scannedAt.getTime(),
+          );
+          while (next.size > MAX_SCAN_RESULTS && entries.length > 0) {
+            const oldest = entries.shift();
+            if (oldest) {
+              next.delete(oldest[0]);
             }
           }
-          return next;
-        });
-
-        // If vulnerability scanning is enabled with auto-scan, trigger vuln scan
-        const device = data?.devices.find((d) => d.ip === ip);
-        if (apiResponse.services && apiResponse.services.length > 0) {
-          await triggerVulnScan(ip, device, apiResponse.services);
         }
-      } catch (error) {
-        logger.error(LogComponents.DISCOVERY, 'Deep scan failed', error);
-      } finally {
-        setScanningDevices((prev) => {
-          const next = new Set(prev);
-          next.delete(ip);
-          return next;
-        });
+        return next;
+      });
+
+      // If vulnerability scanning is enabled with auto-scan, trigger vuln scan
+      if (apiResponse.services.length > 0) {
+        await triggerVulnScan(ip, device, apiResponse.services);
       }
-    },
-    [triggerVulnScan, data?.devices],
-  );
+    } catch (error) {
+      logger.error(LogComponents.DISCOVERY, 'Deep scan failed', error);
+    }
+    // Not a `finally`: the React Compiler cannot lower one, and the catch
+    // above swallows every error, so this always runs.
+    setScanningDevices((prev) => {
+      const next = new Set(prev);
+      next.delete(ip);
+      return next;
+    });
+  };
 
   // Track devices we've already auto-scanned to avoid duplicates
   const autoScannedDevices = useRef<Set<string>>(new Set());
@@ -268,10 +267,9 @@ export function useNetworkDiscoveryAutoScan(
     // Fixes #906: Track all timeout IDs for proper cleanup
     const timeoutIds: ReturnType<typeof setTimeout>[] = [];
     const MAX_CONCURRENT_SCANS = 3;
-    let scanIndex = 0;
 
-    const scanNextBatch = (): void => {
-      const batch = devicesToScan.slice(scanIndex, scanIndex + MAX_CONCURRENT_SCANS);
+    const scanNextBatch = (start: number): void => {
+      const batch = devicesToScan.slice(start, start + MAX_CONCURRENT_SCANS);
       if (batch.length === 0) {
         return;
       }
@@ -280,14 +278,14 @@ export function useNetworkDiscoveryAutoScan(
           // Errors handled in handleDeepScan
         });
       }
-      scanIndex += MAX_CONCURRENT_SCANS;
-      if (scanIndex < devicesToScan.length) {
-        const tid = setTimeout(scanNextBatch, 1000);
+      const next = start + MAX_CONCURRENT_SCANS;
+      if (next < devicesToScan.length) {
+        const tid = setTimeout(() => scanNextBatch(next), 1000);
         timeoutIds.push(tid);
       }
     };
 
-    const initialTimeoutId = setTimeout(scanNextBatch, 500);
+    const initialTimeoutId = setTimeout(() => scanNextBatch(0), 500);
     timeoutIds.push(initialTimeoutId);
 
     return (): void => {
@@ -362,9 +360,8 @@ export function useNetworkDiscoveryAutoScan(
 
     // Fixes #928: Track ALL timeout IDs to prevent orphaned recursive timeouts
     const timeoutIds: ReturnType<typeof setTimeout>[] = [];
-    let index = 0;
 
-    const triggerNext = (): void => {
+    const triggerNext = (index: number): void => {
       const device = devicesToVulnScan.at(index);
       if (!device) {
         return;
@@ -372,14 +369,13 @@ export function useNetworkDiscoveryAutoScan(
       triggerVulnScan(device.ip, device).catch(() => {
         // Errors handled in triggerVulnScan
       });
-      index++;
-      if (index < devicesToVulnScan.length) {
-        const tid = setTimeout(triggerNext, 200);
+      if (index + 1 < devicesToVulnScan.length) {
+        const tid = setTimeout(() => triggerNext(index + 1), 200);
         timeoutIds.push(tid);
       }
     };
 
-    const initialId = setTimeout(triggerNext, 300);
+    const initialId = setTimeout(() => triggerNext(0), 300);
     timeoutIds.push(initialId);
     return (): void => {
       for (const tid of timeoutIds) {
