@@ -7,11 +7,15 @@
 // Concrete implementations live in subpackages:
 //
 //   - internal/listener/syslog      — RFC 3164 / 5424 over UDP
-//   - internal/listener/snmptrap    — SNMPv2c traps over UDP/162
+//   - internal/listener/snmptrap    — SNMP traps over UDP/162
+//   - internal/listener/flow        — NetFlow, IPFIX and sFlow over UDP
+//   - internal/listener/microburst  — 1 ms link saturation from capture
 //
-// Listeners do not own persistence. Each one calls [Sink.Publish]
-// with a typed [Event]; the sink decides where the event lands
-// (default: the listener_events table via the database sink).
+// Listeners do not own persistence. syslog and snmptrap call
+// [Sink.Publish] with a typed [Event]; the sink decides where the event
+// lands (default: the listener_events table via the database sink).
+// flow and microburst write typed batches through their own Store ports
+// (ADR-0022).
 package listener
 
 import (

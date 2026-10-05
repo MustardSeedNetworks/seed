@@ -275,6 +275,7 @@ func (s *Server) startMaintenance(retentionDays int) {
 		// active anomalies are never purged, so this is independent of the
 		// operator's general retention window.
 		AnomalyResolvedDays: database.DefaultRetentionPolicy().AnomalyResolvedDays,
+		MicroburstDays:      retentionDays,
 	}
 
 	for {

@@ -38,8 +38,9 @@ load on every agent to buy a resolution that P-A4's utilization and the P-B
 trend reports do not need.
 
 A rate is therefore the **mean over one poll interval**. A burst shorter than
-the interval is averaged away. Sub-second burst detection is P-A6's microburst
-sampling (100 ms, 10 ms in burst mode), not a shorter SNMP poll.
+the interval is averaged away. Sub-second burst detection is P-A6's
+capture-timed microburst listener on the probe's own link
+([ADR-0022](0022-passive-ingress-listeners.md)), not a shorter SNMP poll.
 
 ### 2. Deltas: wrap, restart and clear
 

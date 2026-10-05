@@ -179,6 +179,18 @@ func (db *DB) FlowRecords() *FlowRecordsRepository {
 	return db.flowRecords
 }
 
+// Microbursts returns the repository the microburst listener writes
+// into.
+func (db *DB) Microbursts() *MicroburstsRepository {
+	db.mu.Lock()
+	defer db.mu.Unlock()
+
+	if db.microbursts == nil {
+		db.microbursts = &MicroburstsRepository{db: db}
+	}
+	return db.microbursts
+}
+
 // Topology returns the topology repository (Stage A4). Reconcilers
 // in internal/topology own writes; the operator UI + alert rules
 // own reads.

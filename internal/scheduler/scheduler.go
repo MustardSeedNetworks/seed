@@ -1,7 +1,7 @@
 // Package scheduler provides a generic, persistence-agnostic job
 // scheduler. It is the chassis primitive for periodic work across
 // seed — reporting scheduled reports, DNS endpoint monitoring, SSL cert
-// expiry sweeps, microburst sampling, estate-wide SNMP polling,
+// expiry sweeps, estate-wide SNMP polling,
 // management-frame capture, VoIP/BGP collection, and any future
 // collector that needs a "wake up periodically and check what's due"
 // behavior.
@@ -22,8 +22,7 @@
 //
 //   - Configurable tick: callers choose the tick interval. Tick is the
 //     worst-case precision for NextRun. Reporting reports use 1 minute.
-//     Microburst sampling uses 100ms baseline. DNS monitors use 1
-//     minute. Each collector instantiates its own Scheduler with the
+//     DNS monitors use 1 minute. Each collector instantiates its own Scheduler with the
 //     cadence it needs.
 //
 // V1.0 NMS expansion — Phase 0 extraction from

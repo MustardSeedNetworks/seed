@@ -88,6 +88,7 @@ type DB struct {
 	snmpObservations  *SNMPObservationsRepository
 	listenerEvents    *ListenerEventsRepository
 	flowRecords       *FlowRecordsRepository
+	microbursts       *MicroburstsRepository
 	topology          *TopologyRepository
 	alertRules        *AlertRulesRepository
 	alertSuppressions *AlertSuppressionsRepository
