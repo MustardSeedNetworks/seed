@@ -5,6 +5,44 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.233.0](https://github.com/MustardSeedNetworks/seed/compare/v0.232.1...v0.233.0) (2026-10-05)
+
+
+### Features
+
+* **discovery:** record the operator's decision on a learned network ([#3112](https://github.com/MustardSeedNetworks/seed/issues/3112)) ([cab452d](https://github.com/MustardSeedNetworks/seed/commit/cab452dd2a9fc52346464a7a7f49bc816633a19e))
+* **flows:** alert on flows to operator-listed threat indicators ([#3109](https://github.com/MustardSeedNetworks/seed/issues/3109)) ([e5ea465](https://github.com/MustardSeedNetworks/seed/commit/e5ea465cb94c837226e1bb0824cd8296571e5f5f)), closes [#3106](https://github.com/MustardSeedNetworks/seed/issues/3106)
+* **flows:** name the application of each collected flow ([#3103](https://github.com/MustardSeedNetworks/seed/issues/3103)) ([70cc970](https://github.com/MustardSeedNetworks/seed/commit/70cc97026a90e3acbab8bb5c960bbe0cad7e547d)), closes [#3101](https://github.com/MustardSeedNetworks/seed/issues/3101)
+* **flows:** top talkers and conversations over collected flows ([#3099](https://github.com/MustardSeedNetworks/seed/issues/3099)) ([82d6400](https://github.com/MustardSeedNetworks/seed/commit/82d6400ba10056a1995285165f2a4a480c2f0278)), closes [#3095](https://github.com/MustardSeedNetworks/seed/issues/3095)
+* **listener:** record microbursts from 1 ms capture bins ([#3111](https://github.com/MustardSeedNetworks/seed/issues/3111)) ([246692c](https://github.com/MustardSeedNetworks/seed/commit/246692cf539cbfee41a743a6d2d1476c9cf7629d))
+
+
+### Bug Fixes
+
+* **database:** drop the tables nothing writes ([#3116](https://github.com/MustardSeedNetworks/seed/issues/3116)) ([59e9f17](https://github.com/MustardSeedNetworks/seed/commit/59e9f17c4ac3c2ae7b40662a22bdda345816a1ec))
+* **deps:** update dependency @tanstack/react-query to v5.104.0 ([#2976](https://github.com/MustardSeedNetworks/seed/issues/2976)) ([229fb23](https://github.com/MustardSeedNetworks/seed/commit/229fb23965ebf92d88447fbf64e6992fb5590eea))
+* **deps:** update dependency react-hook-form to v7.89.0 ([#2983](https://github.com/MustardSeedNetworks/seed/issues/2983)) ([543213a](https://github.com/MustardSeedNetworks/seed/commit/543213af46cc9e31a04ea44a58c20de22a722628))
+* **link:** read hasIP as the daemon sends it ([#3114](https://github.com/MustardSeedNetworks/seed/issues/3114)) ([14e14af](https://github.com/MustardSeedNetworks/seed/commit/14e14afd16b76c613691ad4bd4b7616827ae7221)), closes [#2696](https://github.com/MustardSeedNetworks/seed/issues/2696)
+* **ui:** set up the focus trap before the dialog paints ([#3107](https://github.com/MustardSeedNetworks/seed/issues/3107)) ([315e452](https://github.com/MustardSeedNetworks/seed/commit/315e4521bb626908e11a0095709d42fc4a10849c)), closes [#3016](https://github.com/MustardSeedNetworks/seed/issues/3016)
+* **ui:** stop page mounts spending the shared rate limit ([#3104](https://github.com/MustardSeedNetworks/seed/issues/3104)) ([853073d](https://github.com/MustardSeedNetworks/seed/commit/853073d5dc6e379aa9f679ae5c663c8808db2d59)), closes [#2691](https://github.com/MustardSeedNetworks/seed/issues/2691)
+
+
+### Code Refactoring
+
+* **ui:** let the React Compiler hold useAuth and the scan hooks' identities ([#3098](https://github.com/MustardSeedNetworks/seed/issues/3098)) ([9eaece0](https://github.com/MustardSeedNetworks/seed/commit/9eaece014233cad0ea521d8bc2bcf301b88002a3))
+
+
+### Continuous Integration
+
+* **release:** eject a queued release PR whose changelog misses a commit ([#3100](https://github.com/MustardSeedNetworks/seed/issues/3100)) ([17c92e1](https://github.com/MustardSeedNetworks/seed/commit/17c92e1a7e5991ee620debc16c263580283e0ac4)), closes [#2769](https://github.com/MustardSeedNetworks/seed/issues/2769)
+
+
+### Miscellaneous
+
+* **deps:** lock file maintenance ([#2964](https://github.com/MustardSeedNetworks/seed/issues/2964)) ([7d17a52](https://github.com/MustardSeedNetworks/seed/commit/7d17a52a0cafc56835c1bbed3c03b3fdc1879c99))
+* **deps:** lock file maintenance ([#3113](https://github.com/MustardSeedNetworks/seed/issues/3113)) ([307d9bb](https://github.com/MustardSeedNetworks/seed/commit/307d9bbc3373d301448db83000753c25365d8d0a))
+* **deps:** update dependency lint-staged to v17.6.0 ([#2985](https://github.com/MustardSeedNetworks/seed/issues/2985)) ([a8a177b](https://github.com/MustardSeedNetworks/seed/commit/a8a177b9f7ce417f54d1cd7d2d480cc15d613322))
+
 ## [0.232.1](https://github.com/MustardSeedNetworks/seed/compare/v0.232.0...v0.232.1) (2026-10-04)
 
 
