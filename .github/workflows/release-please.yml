@@ -124,16 +124,18 @@ jobs:
         id: queue
         env:
           GH_TOKEN: ${{ steps.app-token.outputs.token }}
-        run: |
-          set -euo pipefail
-          queued="$(gh api graphql -F owner="${GITHUB_REPOSITORY_OWNER}" -F name="${GITHUB_REPOSITORY#*/}" -f query='
+          QUERY: >-
             query($owner: String!, $name: String!) {
               repository(owner: $owner, name: $name) {
                 pullRequests(headRefName: "release-please--branches--main", states: OPEN, first: 1) {
                   nodes { number isInMergeQueue }
                 }
               }
-            }' --jq '.data.repository.pullRequests.nodes[0].isInMergeQueue // false')"
+            }
+        run: |
+          set -euo pipefail
+          queued="$(gh api graphql -F owner="${GITHUB_REPOSITORY_OWNER}" -F name="${GITHUB_REPOSITORY#*/}" \
+                      -f query="${QUERY}" --jq '.data.repository.pullRequests.nodes[0].isInMergeQueue // false')"
           echo "queued=${queued}" >> "${GITHUB_OUTPUT}"
           if [ "${queued}" = "true" ]; then
             echo "::notice::Release PR is in the merge queue; skipping this run."
