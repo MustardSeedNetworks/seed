@@ -5,6 +5,43 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.235.0](https://github.com/MustardSeedNetworks/seed/compare/v0.234.1...v0.235.0) (2026-10-05)
+
+
+### Features
+
+* **path:** add a continuous path monitor card beside the one-shot trace ([#3142](https://github.com/MustardSeedNetworks/seed/issues/3142)) ([bd57139](https://github.com/MustardSeedNetworks/seed/commit/bd57139e1878e92a9f79c711af0b6eba58773810))
+
+
+### Bug Fixes
+
+* **build:** compile components with defaulted props, drop their memos ([#3134](https://github.com/MustardSeedNetworks/seed/issues/3134)) ([3fb20cf](https://github.com/MustardSeedNetworks/seed/commit/3fb20cfc7d257ee0fac217b01719e5c5f2ebfa6c))
+* **ci:** update a same-day OUI refresh branch in place instead of failing the push ([#3143](https://github.com/MustardSeedNetworks/seed/issues/3143)) ([247cf30](https://github.com/MustardSeedNetworks/seed/commit/247cf307005c21ed24b654a2824877e62bf2525a)), closes [#2366](https://github.com/MustardSeedNetworks/seed/issues/2366)
+
+
+### Code Refactoring
+
+* **api:** move alert delivery and outbox wiring into internal/app ([#3145](https://github.com/MustardSeedNetworks/seed/issues/3145)) ([983e976](https://github.com/MustardSeedNetworks/seed/commit/983e9763b367b366313235b554ebbccdc6b75967))
+* **roles:** move the role names out of internal/database ([#3136](https://github.com/MustardSeedNetworks/seed/issues/3136)) ([9f1df93](https://github.com/MustardSeedNetworks/seed/commit/9f1df9360c9aa8ab1052ede716199d65b2b6da71))
+* **ui:** drop FC&lt;&gt; component typing and guard against its return ([#3137](https://github.com/MustardSeedNetworks/seed/issues/3137)) ([07139d1](https://github.com/MustardSeedNetworks/seed/commit/07139d1217f3e79455dc42ee0362eb3429e03651)), closes [#3135](https://github.com/MustardSeedNetworks/seed/issues/3135)
+* **ui:** drop the compiler-provided memos from the cards ([#3146](https://github.com/MustardSeedNetworks/seed/issues/3146)) ([88ff8a3](https://github.com/MustardSeedNetworks/seed/commit/88ff8a30e86180b844d30ee7af29d86c105cb384))
+
+
+### Tests
+
+* **reporting:** read summary PDF streams by their length ([#3140](https://github.com/MustardSeedNetworks/seed/issues/3140)) ([ba5bc6f](https://github.com/MustardSeedNetworks/seed/commit/ba5bc6fdbaf932f5b7542ddf4be1e39bcc340b8e)), closes [#3138](https://github.com/MustardSeedNetworks/seed/issues/3138)
+
+
+### Continuous Integration
+
+* **release:** skip release-please while the release PR is queued ([#3132](https://github.com/MustardSeedNetworks/seed/issues/3132)) ([4c68e9a](https://github.com/MustardSeedNetworks/seed/commit/4c68e9a4eb75e68b31ab67476e7daa4af202ec5b))
+
+
+### Miscellaneous
+
+* **deps:** lock file maintenance ([#3139](https://github.com/MustardSeedNetworks/seed/issues/3139)) ([8219daa](https://github.com/MustardSeedNetworks/seed/commit/8219daacc8f8f77dd4d823ce02c61d73a283708b))
+* **deps:** lock file maintenance ([#3144](https://github.com/MustardSeedNetworks/seed/issues/3144)) ([46ea134](https://github.com/MustardSeedNetworks/seed/commit/46ea13464fb2d5f6daf45605b8d8f643a19930b5))
+
 ## [0.234.1](https://github.com/MustardSeedNetworks/seed/compare/v0.234.0...v0.234.1) (2026-10-05)
 
 
