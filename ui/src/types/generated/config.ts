@@ -110,6 +110,7 @@ export interface SubnetConfig {
   name: string;
   enabled: boolean;
   learned?: boolean;
+  decision?: 'added' | 'dismissed';
 }
 export interface FingerprintingConfig {
   enabled: boolean;

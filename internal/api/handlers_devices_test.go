@@ -6,10 +6,12 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"path/filepath"
+	"slices"
 	"strings"
 	"testing"
 
 	api "github.com/MustardSeedNetworks/seed/internal/api"
+	"github.com/MustardSeedNetworks/seed/internal/config"
 )
 
 // skipInShortMode skips tests that go through Mux with auth middleware.
@@ -778,5 +780,86 @@ func TestSubnetRequestValidation(t *testing.T) {
 				t.Error("Expected valid CIDR for valid request")
 			}
 		})
+	}
+}
+
+const pendingSubnetsPath = "/api/v1/security/devices/subnets/pending"
+
+// offeredSubnets is the pending list, checking every entry awaits a decision.
+func offeredSubnets(t *testing.T, server *api.Server) []string {
+	t.Helper()
+	w := httptest.NewRecorder()
+	server.Mux().ServeHTTP(w, httptest.NewRequest(http.MethodGet, pendingSubnetsPath, http.NoBody))
+	if w.Code != http.StatusOK {
+		t.Fatalf("GET status = %d: %s", w.Code, w.Body)
+	}
+	var resp []api.SubnetResponse
+	if err := json.NewDecoder(w.Body).Decode(&resp); err != nil {
+		t.Fatalf("decode: %v", err)
+	}
+	cidrs := make([]string, 0, len(resp))
+	for _, subnet := range resp {
+		if !subnet.Learned || subnet.Enabled || subnet.Decision != "" {
+			t.Errorf("listed %+v, which does not await a decision", subnet)
+		}
+		cidrs = append(cidrs, subnet.CIDR)
+	}
+	return cidrs
+}
+
+// The learned-network prompt's API (seed#3108): GET lists what awaits an
+// answer, POST records one, and an answered network leaves the list.
+func TestPendingSubnetsListAndDecide(t *testing.T) {
+	skipInShortMode(t)
+	cfg := config.DefaultConfig()
+	cfg.NetworkDiscovery.TargetNetworks = []config.SubnetConfig{
+		{CIDR: "192.168.1.0/24", Name: "Typed in by hand", Enabled: true},
+		{CIDR: "10.51.0.0/16", Name: "Learned from 10.50.0.1 (routing table)", Learned: true},
+		{CIDR: "10.52.0.0/16", Name: "Learned from 10.50.0.1 (routing table)", Learned: true},
+	}
+	server := api.NewTestServerWithConfig(cfg)
+	defer server.Close()
+	server.SetConfigPath(filepath.Join(t.TempDir(), "config.json"))
+
+	if got := offeredSubnets(t, server); !slices.Equal(got, []string{"10.51.0.0/16", "10.52.0.0/16"}) {
+		t.Fatalf("pending = %v, want both learned networks", got)
+	}
+
+	for _, tc := range []struct {
+		body string
+		want int
+	}{
+		{`{"cidr":"10.51.0.0/16","decision":"maybe"}`, http.StatusBadRequest},
+		{`{"cidr":"192.168.1.0/24","decision":"added"}`, http.StatusConflict},
+		{`{"cidr":"10.99.0.0/16","decision":"added"}`, http.StatusNotFound},
+		{`{"cidr":"10.51.0.0/16","decision":"added","enabled":true}`, http.StatusBadRequest},
+		{`{"cidr":"10.51.0.0/16","decision":"added"}`, http.StatusOK},
+		{`{"cidr":"10.52.0.0/16","decision":"dismissed"}`, http.StatusOK},
+	} {
+		w := httptest.NewRecorder()
+		req := httptest.NewRequest(http.MethodPost, pendingSubnetsPath, strings.NewReader(tc.body))
+		req.Header.Set("Content-Type", "application/json")
+		server.Mux().ServeHTTP(w, req)
+		if w.Code != tc.want {
+			t.Errorf("POST %s: status %d, want %d", tc.body, w.Code, tc.want)
+		}
+	}
+
+	if got := offeredSubnets(t, server); len(got) != 0 {
+		t.Errorf("pending = %v after both were answered", got)
+	}
+	want := []config.SubnetConfig{
+		{CIDR: "192.168.1.0/24", Name: "Typed in by hand", Enabled: true},
+		{
+			CIDR: "10.51.0.0/16", Name: "Learned from 10.50.0.1 (routing table)",
+			Enabled: true, Learned: true, Decision: config.LearnedAdded,
+		},
+		{
+			CIDR: "10.52.0.0/16", Name: "Learned from 10.50.0.1 (routing table)",
+			Learned: true, Decision: config.LearnedDismissed,
+		},
+	}
+	if got := cfg.NetworkDiscovery.TargetNetworks; !slices.Equal(got, want) {
+		t.Errorf("target networks = %+v, want %+v", got, want)
 	}
 }

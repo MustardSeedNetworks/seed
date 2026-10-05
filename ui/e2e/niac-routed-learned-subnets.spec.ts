@@ -1,5 +1,7 @@
 import { type APIRequestContext, expect, test } from '@playwright/test';
 import type { PathResponse } from '../src/types/generated/path-response';
+import type { SubnetDecisionRequest } from '../src/types/generated/subnet-decision-request';
+import type { SubnetResponse as Subnet } from '../src/types/generated/subnet-response';
 
 /**
  * Site networks behind the edge router are found from the learned summary
@@ -19,8 +21,11 @@ import type { PathResponse } from '../src/types/generated/path-response';
  *   SEED_E2E_SITE_DEVICES    `cidr=ip|ip;cidr=ip|…`, the devices inside each
  *   SEED_E2E_CORE            the agent whose address table names the site networks
  *
+ * Every learned network is offered for the operator's decision and nothing is
+ * swept until the operator adds it (seed#3108). The spec adds only the summary.
+ *
  * The edge router names the site only as its summary route, which is wider
- * than one sweep may probe. With only that summary switched on, the sweep
+ * than one sweep may probe. With only that summary added, the sweep
  * first probes .1 to .4 of each /24 inside it, finds the core switch, and then
  * sweeps the /24s the core's address table names, one per sweep. No site
  * network is typed in and none of the learned /24s is switched on.
@@ -62,13 +67,6 @@ const siteDevices = new Map(
 
 test.skip(!enabled, 'needs scripts/e2e-niac-routed.sh (a routed NIAC pack over a veth pair)');
 
-interface Subnet {
-  cidr: string;
-  name: string;
-  enabled: boolean;
-  learned: boolean;
-}
-
 /** An IPv4 network contains addr: the path step's check on a hop's route. */
 function covers(network: string, prefix: number, addr: string): boolean {
   const toInt = (ip: string) => ip.split('.').reduce((n, octet) => n * 256 + Number(octet), 0);
@@ -89,6 +87,13 @@ async function csrfToken(request: APIRequestContext): Promise<string> {
 async function subnets(request: APIRequestContext): Promise<Subnet[]> {
   const response = await request.get('/api/v1/security/devices/subnets');
   return response.ok() ? ((await response.json()) as Subnet[]) : [];
+}
+
+/** The learned networks offered for the operator's decision. */
+async function offered(request: APIRequestContext): Promise<Set<string>> {
+  const response = await request.get('/api/v1/security/devices/subnets/pending');
+  expect(response.status(), 'GET /api/v1/security/devices/subnets/pending').toBe(200);
+  return new Set(((await response.json()) as Subnet[]).map((s) => s.cidr));
 }
 
 async function discoveredIPs(request: APIRequestContext): Promise<Set<string>> {
@@ -159,27 +164,34 @@ test.describe('target networks behind a NIAC edge router', () => {
     expect(saved.status(), 'POST /api/v1/device-credentials').toBe(200);
     const savedAt = Date.now();
 
-    await test.step('the host route to the site is learned, switched off', async () => {
+    await test.step('the host route to the site is learned and offered, switched off', async () => {
       await expect
         .poll(
           async () => {
             const route = (await subnets(request)).find((s) => s.cidr === siteRoute);
             return route === undefined
               ? 'absent'
-              : { learned: route.learned, enabled: route.enabled };
+              : {
+                  learned: route.learned,
+                  enabled: route.enabled,
+                  offered: (await offered(request)).has(siteRoute),
+                };
           },
           { message: `${siteRoute} as a learned target`, timeout: RESCAN_MS, intervals: [2_000] },
         )
-        .toEqual({ learned: true, enabled: false });
+        .toEqual({ learned: true, enabled: false, offered: true });
     });
     const routeAfter = Date.now() - savedAt;
 
-    const summaryName = (await subnets(request)).find((s) => s.cidr === siteRoute)?.name ?? '';
-    const switched = await request.put('/api/v1/security/devices/subnets', {
+    const decision: SubnetDecisionRequest = { cidr: siteRoute, decision: 'added' };
+    const added = await request.post('/api/v1/security/devices/subnets/pending', {
       headers: { 'X-CSRF-Token': await csrfToken(request) },
-      data: { cidr: siteRoute, name: summaryName, enabled: true },
+      data: decision,
     });
-    expect(switched.status(), `PUT /api/v1/security/devices/subnets ${siteRoute}`).toBe(200);
+    expect(added.status(), `POST /api/v1/security/devices/subnets/pending ${siteRoute}`).toBe(200);
+    expect((await offered(request)).has(siteRoute), `${siteRoute} still offered once added`).toBe(
+      false,
+    );
     const enabledAt = Date.now();
     const scan = scanner(request);
 
@@ -196,15 +208,20 @@ test.describe('target networks behind a NIAC edge router', () => {
     });
     const coreAfter = Date.now() - enabledAt;
 
-    await test.step('the site networks are learned from it, switched off', async () => {
+    await test.step('the site networks are learned from it and offered, switched off', async () => {
       await expect
         .poll(
           async () => {
             await scan();
-            return pending(siteNetworks, request, (s) => s?.learned === true && !s.enabled);
+            const offers = await offered(request);
+            return pending(
+              siteNetworks,
+              request,
+              (s) => s?.learned === true && !s.enabled && offers.has(s.cidr),
+            );
           },
           {
-            message: 'site networks not listed as learned and switched off',
+            message: 'site networks not listed as learned, offered and switched off',
             timeout: LEARN_MS,
             intervals: [2_000],
           },

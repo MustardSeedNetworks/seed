@@ -87,10 +87,11 @@ func TestPersistentWriteRoutesRequireOperator(t *testing.T) {
 	// methods. (Diagnostic-action POSTs — scans/probes/speedtest — are
 	// deliberately ungated and intentionally absent from this list.)
 	wantOperator := map[string]bool{
-		APIVersionPrefix + "/interface":                  true, // PUT persists active NIC
-		APIVersionPrefix + "/telemetry/vlan/interface":   true, // POST creates kernel VLAN
-		APIVersionPrefix + "/security/discovery/options": true, // PUT saves discovery config
-		APIVersionPrefix + "/security/devices/subnets":   true, // CRUD on persisted subnets
+		APIVersionPrefix + "/interface":                        true, // PUT persists active NIC
+		APIVersionPrefix + "/telemetry/vlan/interface":         true, // POST creates kernel VLAN
+		APIVersionPrefix + "/security/discovery/options":       true, // PUT saves discovery config
+		APIVersionPrefix + "/security/devices/subnets":         true, // CRUD on persisted subnets
+		APIVersionPrefix + "/security/devices/subnets/pending": true, // POST answers a learned network
 	}
 
 	seen := make(map[string]bool, len(wantOperator))

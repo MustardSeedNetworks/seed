@@ -595,6 +595,15 @@
           "type": "boolean",
           "description": "Whether to scan this subnet",
           "default": true
+        },
+        "learned": {
+          "type": "boolean",
+          "description": "Derived from a router's tables rather than entered by an operator"
+        },
+        "decision": {
+          "type": "string",
+          "description": "The operator's answer to a learned network; absent while it awaits one",
+          "enum": ["added", "dismissed"]
         }
       }
     },

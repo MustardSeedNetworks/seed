@@ -28,7 +28,7 @@ func (s *Server) setupRoutes() {
 	s.setupReportingRoutes()
 	s.setupTopologyRoutes()
 	s.registerAll(s.alertRoutes(), s.vulnerabilityRoutes(), s.flowRoutes(),
-		s.jobsRoutes(), s.captureRoutes())
+		s.jobsRoutes(), s.captureRoutes(), s.targetNetworkRoutes())
 	s.setupSSEAndStatic()
 }
 
@@ -574,7 +574,6 @@ func (s *Server) setupSecurityRoutes() {
 	post := []string{http.MethodPost}
 	getPost := []string{http.MethodGet, http.MethodPost}
 	getPut := []string{http.MethodGet, http.MethodPut}
-	crud := []string{http.MethodGet, http.MethodPost, http.MethodPut, http.MethodDelete}
 	s.registerAll([]route{
 		{path: APIVersionPrefix + "/security/discovery", handler: s.handleDiscovery, methods: get},
 		// probe and fingerprint connect to a caller-named host just as
@@ -633,12 +632,6 @@ func (s *Server) setupSecurityRoutes() {
 			handler: s.handleDevicesSettings,
 			methods: getPut,
 			minRole: op,
-		},
-		{
-			path:    APIVersionPrefix + "/security/devices/subnets",
-			handler: s.handleDevicesSubnets,
-			methods: crud,
-			minRole: op, // POST/PUT/DELETE mutate persisted subnet entries (writeGated: operator+)
 		},
 		// Reports (#2154). export_csv_json is Starter+ (license/policy.go), the
 		// same gate ReportsPage already applies -- but the page gate is

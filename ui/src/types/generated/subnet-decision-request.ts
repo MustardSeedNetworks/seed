@@ -5,10 +5,7 @@
  * after Go DTO changes). The schema source of truth lives at
  * docs/schemas/api/; the Go DTO source lives at internal/api/.
  */
-export interface SubnetResponse {
+export interface SubnetDecisionRequest {
   cidr: string;
-  name: string;
-  enabled: boolean;
-  learned: boolean;
-  decision?: 'added' | 'dismissed';
+  decision: 'added' | 'dismissed';
 }

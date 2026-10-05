@@ -292,4 +292,26 @@ type SubnetConfig struct {
 	// one an operator typed in (seed#2695). It ships disabled: learning names
 	// a network, switching it on stays the operator's decision.
 	Learned bool `json:"learned,omitempty"`
+
+	// Decision records the operator's answer to a learned network (seed#3108).
+	// Until there is one, the network is offered for review; a dismissed one
+	// stays in the list so the learner never offers it again.
+	Decision LearnedDecision `json:"decision,omitempty" jsonschema:"enum=added,enum=dismissed"`
+}
+
+// LearnedDecision is the operator's answer to a learned target network. The
+// zero value means nobody has answered yet.
+type LearnedDecision string
+
+// The two answers an operator can give a learned network.
+const (
+	LearnedAdded     LearnedDecision = "added"
+	LearnedDismissed LearnedDecision = "dismissed"
+)
+
+// AwaitingDecision reports whether the network is a learned one the operator
+// has not yet been asked about. A learned network already switched on was
+// answered by switching it on.
+func (s SubnetConfig) AwaitingDecision() bool {
+	return s.Learned && s.Decision == "" && !s.Enabled
 }
