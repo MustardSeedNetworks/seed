@@ -5,7 +5,8 @@
     {
       "description": "babel-plugin-react-compiler 1.0.0 is built on @babel/types 7; under @babel/core 8 it skips every component with a defaulted destructured prop. Lift when the compiler supports Babel 8.",
       "matchPackageNames": ["@babel/core"],
-      "allowedVersions": "<8"
+      "allowedVersions": "<8",
+      "minimumReleaseAge": "7 days"
     }
   ]
 }
