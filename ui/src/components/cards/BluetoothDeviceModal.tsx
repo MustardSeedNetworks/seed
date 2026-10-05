@@ -10,7 +10,6 @@
 
 import type { TFunction } from 'i18next';
 import type React from 'react';
-import { memo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { cn, icon as iconTokens, radius, spacing } from '../../styles/theme';
 import type {
@@ -95,97 +94,95 @@ function expandedDetail(d: BluetoothDevice, t: TFunction<'cards'>): React.ReactE
   );
 }
 
-export const BluetoothDeviceModal: React.NamedExoticComponent<BluetoothDeviceModalProps> = memo(
-  function bluetoothDeviceModal({
-    isOpen,
-    onClose,
-    devices,
-    stats,
-  }: BluetoothDeviceModalProps): React.ReactElement {
-    const { t } = useTranslation('cards');
+export function BluetoothDeviceModal({
+  isOpen,
+  onClose,
+  devices,
+  stats,
+}: BluetoothDeviceModalProps): React.ReactElement {
+  const { t } = useTranslation('cards');
 
-    const columns: Column<BluetoothDevice>[] = [
-      {
-        key: 'name',
-        header: t('bluetooth.colName'),
-        accessor: (d) => displayName(d),
-        sortable: true,
-        render: (d) => (
-          <span className="flex items-center gap-tight">
-            {d.isConnected ? (
-              <BluetoothConnected className={cn(iconTokens.size.xs, 'text-brand-primary')} />
-            ) : (
-              <BluetoothIcon className={cn(iconTokens.size.xs, 'text-text-muted')} />
-            )}
-            <span className="text-text-primary">{displayName(d)}</span>
-          </span>
-        ),
-      },
-      {
-        key: 'address',
-        header: t('bluetooth.colAddress'),
-        accessor: (d) => d.address,
-        sortable: true,
-      },
-      {
-        key: 'type',
-        header: t('bluetooth.colType'),
-        accessor: (d) => d.type,
-        sortable: true,
-        hiddenOnMobile: true,
-      },
-      {
-        key: 'company',
-        header: t('bluetooth.colManufacturer'),
-        accessor: (d) => d.companyName || d.vendor || '',
-        sortable: true,
-        hiddenOnMobile: true,
-      },
-      {
-        key: 'rssi',
-        header: t('bluetooth.colSignal'),
-        accessor: (d) => d.rssi,
-        sortable: true,
-        render: (d) => <span className="text-text-secondary">{rssiLabel(d.rssi)}</span>,
-      },
-      {
-        key: 'distance',
-        header: t('bluetooth.colDistance'),
-        accessor: (d) => d.estDistanceM,
-        sortable: true,
-        hiddenOnMobile: true,
-        render: (d) => <span className="text-text-secondary">{distanceLabel(d.estDistanceM)}</span>,
-      },
-    ];
+  const columns: Column<BluetoothDevice>[] = [
+    {
+      key: 'name',
+      header: t('bluetooth.colName'),
+      accessor: (d) => displayName(d),
+      sortable: true,
+      render: (d) => (
+        <span className="flex items-center gap-tight">
+          {d.isConnected ? (
+            <BluetoothConnected className={cn(iconTokens.size.xs, 'text-brand-primary')} />
+          ) : (
+            <BluetoothIcon className={cn(iconTokens.size.xs, 'text-text-muted')} />
+          )}
+          <span className="text-text-primary">{displayName(d)}</span>
+        </span>
+      ),
+    },
+    {
+      key: 'address',
+      header: t('bluetooth.colAddress'),
+      accessor: (d) => d.address,
+      sortable: true,
+    },
+    {
+      key: 'type',
+      header: t('bluetooth.colType'),
+      accessor: (d) => d.type,
+      sortable: true,
+      hiddenOnMobile: true,
+    },
+    {
+      key: 'company',
+      header: t('bluetooth.colManufacturer'),
+      accessor: (d) => d.companyName || d.vendor || '',
+      sortable: true,
+      hiddenOnMobile: true,
+    },
+    {
+      key: 'rssi',
+      header: t('bluetooth.colSignal'),
+      accessor: (d) => d.rssi,
+      sortable: true,
+      render: (d) => <span className="text-text-secondary">{rssiLabel(d.rssi)}</span>,
+    },
+    {
+      key: 'distance',
+      header: t('bluetooth.colDistance'),
+      accessor: (d) => d.estDistanceM,
+      sortable: true,
+      hiddenOnMobile: true,
+      render: (d) => <span className="text-text-secondary">{distanceLabel(d.estDistanceM)}</span>,
+    },
+  ];
 
-    return (
-      <Modal isOpen={isOpen} onClose={onClose} size="full" title={t('bluetooth.modalTitle')}>
-        <div className="stack-md" data-testid="bluetooth-modal">
-          {stats ? (
-            <div className={cn('flex flex-wrap gap-default', spacing.margin.bottom.inline)}>
-              <StatChip label={t('bluetooth.statTotal')} value={stats.totalDevices} />
-              <StatChip label="BLE" value={stats.bleDevices} />
-              <StatChip label={t('bluetooth.statClassic')} value={stats.classicDevices} />
-              <StatChip label={t('bluetooth.statConnected')} value={stats.connectedDevices} />
-            </div>
-          ) : null}
-          <div data-testid="bluetooth-device-table">
-            <DataTable<BluetoothDevice>
-              data={devices}
-              columns={columns}
-              keyExtractor={(d) => d.id || d.address}
-              searchKeys={['name', 'alias', 'address', 'companyName', 'vendor']}
-              searchPlaceholder={t('bluetooth.searchPlaceholder')}
-              emptyMessage={t('bluetooth.empty')}
-              expandedContent={(d) => expandedDetail(d, t)}
-              maxHeight="max-h-[60vh]"
-            />
+  return (
+    <Modal isOpen={isOpen} onClose={onClose} size="full" title={t('bluetooth.modalTitle')}>
+      <div className="stack-md" data-testid="bluetooth-modal">
+        {stats ? (
+          <div className={cn('flex flex-wrap gap-default', spacing.margin.bottom.inline)}>
+            <StatChip label={t('bluetooth.statTotal')} value={stats.totalDevices} />
+            <StatChip label="BLE" value={stats.bleDevices} />
+            <StatChip label={t('bluetooth.statClassic')} value={stats.classicDevices} />
+            <StatChip label={t('bluetooth.statConnected')} value={stats.connectedDevices} />
           </div>
+        ) : null}
+        <div data-testid="bluetooth-device-table">
+          <DataTable<BluetoothDevice>
+            data={devices}
+            columns={columns}
+            keyExtractor={(d) => d.id || d.address}
+            searchKeys={['name', 'alias', 'address', 'companyName', 'vendor']}
+            searchPlaceholder={t('bluetooth.searchPlaceholder')}
+            emptyMessage={t('bluetooth.empty')}
+            expandedContent={(d) => expandedDetail(d, t)}
+            maxHeight="max-h-[60vh]"
+          />
         </div>
-      </Modal>
-    );
-  },
-);
+      </div>
+    </Modal>
+  );
+}
 
 function StatChip({ label, value }: { label: string; value: number }): React.ReactElement {
   return (

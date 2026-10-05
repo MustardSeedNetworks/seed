@@ -25,9 +25,7 @@ import { Tooltip } from '../ui/Tooltip';
  * State: Receives test data and thresholds from parent component and settings context
  */
 
-import type React from 'react';
 import type { JSX } from 'react';
-import { memo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { formatTime } from '../../lib/format';
 import { cn, icon as iconTokens, layout, spacing, status as statusColor } from '../../styles/theme';
@@ -148,156 +146,140 @@ function LookupRow({
   );
 }
 
-export const DnsCard: React.MemoExoticComponent<(props: DnsCardProps) => JSX.Element> = memo(
-  function dnsCard({ data, loading }: DnsCardProps): JSX.Element {
-    const { t } = useTranslation('cards');
+export function DnsCard({ data, loading }: DnsCardProps): JSX.Element {
+  const { t } = useTranslation('cards');
 
-    if (loading) {
-      return (
-        <Card
-          title={t('dns.title')}
-          icon={<Globe className={iconTokens.size.md} />}
-          status="loading"
-        >
-          <CardValue value={t('dns.testing')} size="lg" />
-        </Card>
-      );
-    }
-
-    if (!data) {
-      return (
-        <Card
-          title={t('dns.title')}
-          icon={<Globe className={iconTokens.size.md} />}
-          status="unknown"
-        >
-          <CardValue value={t('dns.noData')} size="md" />
-        </Card>
-      );
-    }
-
-    if (hasNoResolversOfItsOwn(data)) {
-      return (
-        <Card
-          title={t('dns.title')}
-          icon={<Globe className={iconTokens.size.md} />}
-          status="warning"
-        >
-          <CardValue value={t('dns.noResolvers')} size="md" />
-          <p className="caption">{t('dns.noResolversHint')}</p>
-        </Card>
-      );
-    }
-
-    // Determine overall status based on forward/reverse lookups
-    let overallStatus: Status = 'success';
-    const lookups = [data.forward, data.forwardIpv6, data.reverse, data.reverseIpv6];
-    if (lookups.some((l) => l?.status === 'error')) {
-      overallStatus = 'error';
-    } else if (lookups.some((l) => l?.status === 'warning')) {
-      overallStatus = 'warning';
-    }
-
-    // Show all DNS servers if available
-    // An empty server is the system resolver.
-    const servers =
-      data.servers && data.servers.length > 0
-        ? data.servers
-        : [data.server || t('dns.systemResolver')];
-
+  if (loading) {
     return (
-      <Card
-        title={t('dns.title')}
-        icon={<Globe className={iconTokens.size.md} />}
-        status={overallStatus}
-      >
-        {/* DNS Servers */}
-        <div className={spacing.margin.bottom.inline}>
-          <p className={cn('caption', spacing.margin.bottom.tight)}>
-            {data.serverScope === 'interface' ? t('dns.scopeInterface') : t('dns.dnsServers')}
-          </p>
-          <div className="stack-xs">
-            {servers.map((server) => (
-              <p key={server} className="body-small font-mono break-all">
-                {server}
-              </p>
-            ))}
-          </div>
-        </div>
-        {data.serverScope === 'system' ? (
-          <p className="caption">{t('dns.scopeSystemHint')}</p>
-        ) : null}
-        <p className="caption">{t('dns.testingHost', { hostname: data.testHostname })}</p>
-        <CardDivider />
-        {/* IPv4 Lookups */}
-        {data.forward || data.reverse ? (
-          <div className={spacing.margin.bottom.inline}>
-            <p className={cn('caption font-medium', spacing.margin.bottom.tight)}>IPv4</p>
-            <LookupRow label={t('dns.forwardA')} record="A" lookup={data.forward} />
-            <LookupRow label={t('dns.reversePTR')} record="PTR" lookup={data.reverse} />
-          </div>
-        ) : null}
-        {/* IPv6 Lookups */}
-        {data.forwardIpv6 || data.reverseIpv6 ? (
-          <>
-            <CardDivider />
-            <div>
-              <p className={cn('caption font-medium', spacing.margin.bottom.tight)}>IPv6</p>
-              <LookupRow label={t('dns.forwardAAAA')} record="AAAA" lookup={data.forwardIpv6} />
-              <LookupRow label={t('dns.reversePTR')} record="PTR" lookup={data.reverseIpv6} />
-            </div>
-          </>
-        ) : null}
-        {/* Per-Server Results (collapsible) */}
-        {data.perServerResults && data.perServerResults.length > 0 && (
-          <>
-            <CardDivider />
-            <CollapsibleSection
-              title={t('dns.serverTests')}
-              count={data.perServerResults.length}
-              variant="compact"
-              status={getAggregatedStatus(data.perServerResults)}
-            >
-              {data.perServerResults.map((server) => (
-                <div key={server.server} className={spacing.chip.sm}>
-                  <div className={cn(layout.flex.between, spacing.margin.bottom.tight)}>
-                    <span className="caption font-mono">{server.server}</span>
-                    <span className={cn('caption font-medium', getStatusColorClass(server.status))}>
-                      {formatTime(server.avgTimeMs)}
-                    </span>
-                  </div>
-                  {server.forward ? (
-                    <div className={cn(layout.flex.between, 'caption')}>
-                      <span>A</span>
-                      <span className={layout.inline.default}>
-                        <StatusBadge status={server.forward.status} size="sm" />
-                        <span className={getStatusColorClass(server.forward.status)}>
-                          {answeredNothing(server.forward)
-                            ? 'N/A'
-                            : formatTime(server.forward.timeMs)}
-                        </span>
-                      </span>
-                    </div>
-                  ) : null}
-                  {server.forwardIpv6 ? (
-                    <div className={cn(layout.flex.between, 'caption')}>
-                      <span>AAAA</span>
-                      <span className={layout.inline.default}>
-                        <StatusBadge status={server.forwardIpv6.status} size="sm" />
-                        <span className={getStatusColorClass(server.forwardIpv6.status)}>
-                          {answeredNothing(server.forwardIpv6)
-                            ? 'N/A'
-                            : formatTime(server.forwardIpv6.timeMs)}
-                        </span>
-                      </span>
-                    </div>
-                  ) : null}
-                </div>
-              ))}
-            </CollapsibleSection>
-          </>
-        )}
+      <Card title={t('dns.title')} icon={<Globe className={iconTokens.size.md} />} status="loading">
+        <CardValue value={t('dns.testing')} size="lg" />
       </Card>
     );
-  },
-);
+  }
+
+  if (!data) {
+    return (
+      <Card title={t('dns.title')} icon={<Globe className={iconTokens.size.md} />} status="unknown">
+        <CardValue value={t('dns.noData')} size="md" />
+      </Card>
+    );
+  }
+
+  if (hasNoResolversOfItsOwn(data)) {
+    return (
+      <Card title={t('dns.title')} icon={<Globe className={iconTokens.size.md} />} status="warning">
+        <CardValue value={t('dns.noResolvers')} size="md" />
+        <p className="caption">{t('dns.noResolversHint')}</p>
+      </Card>
+    );
+  }
+
+  // Determine overall status based on forward/reverse lookups
+  let overallStatus: Status = 'success';
+  const lookups = [data.forward, data.forwardIpv6, data.reverse, data.reverseIpv6];
+  if (lookups.some((l) => l?.status === 'error')) {
+    overallStatus = 'error';
+  } else if (lookups.some((l) => l?.status === 'warning')) {
+    overallStatus = 'warning';
+  }
+
+  // Show all DNS servers if available
+  // An empty server is the system resolver.
+  const servers =
+    data.servers && data.servers.length > 0
+      ? data.servers
+      : [data.server || t('dns.systemResolver')];
+
+  return (
+    <Card
+      title={t('dns.title')}
+      icon={<Globe className={iconTokens.size.md} />}
+      status={overallStatus}
+    >
+      {/* DNS Servers */}
+      <div className={spacing.margin.bottom.inline}>
+        <p className={cn('caption', spacing.margin.bottom.tight)}>
+          {data.serverScope === 'interface' ? t('dns.scopeInterface') : t('dns.dnsServers')}
+        </p>
+        <div className="stack-xs">
+          {servers.map((server) => (
+            <p key={server} className="body-small font-mono break-all">
+              {server}
+            </p>
+          ))}
+        </div>
+      </div>
+      {data.serverScope === 'system' ? <p className="caption">{t('dns.scopeSystemHint')}</p> : null}
+      <p className="caption">{t('dns.testingHost', { hostname: data.testHostname })}</p>
+      <CardDivider />
+      {/* IPv4 Lookups */}
+      {data.forward || data.reverse ? (
+        <div className={spacing.margin.bottom.inline}>
+          <p className={cn('caption font-medium', spacing.margin.bottom.tight)}>IPv4</p>
+          <LookupRow label={t('dns.forwardA')} record="A" lookup={data.forward} />
+          <LookupRow label={t('dns.reversePTR')} record="PTR" lookup={data.reverse} />
+        </div>
+      ) : null}
+      {/* IPv6 Lookups */}
+      {data.forwardIpv6 || data.reverseIpv6 ? (
+        <>
+          <CardDivider />
+          <div>
+            <p className={cn('caption font-medium', spacing.margin.bottom.tight)}>IPv6</p>
+            <LookupRow label={t('dns.forwardAAAA')} record="AAAA" lookup={data.forwardIpv6} />
+            <LookupRow label={t('dns.reversePTR')} record="PTR" lookup={data.reverseIpv6} />
+          </div>
+        </>
+      ) : null}
+      {/* Per-Server Results (collapsible) */}
+      {data.perServerResults && data.perServerResults.length > 0 && (
+        <>
+          <CardDivider />
+          <CollapsibleSection
+            title={t('dns.serverTests')}
+            count={data.perServerResults.length}
+            variant="compact"
+            status={getAggregatedStatus(data.perServerResults)}
+          >
+            {data.perServerResults.map((server) => (
+              <div key={server.server} className={spacing.chip.sm}>
+                <div className={cn(layout.flex.between, spacing.margin.bottom.tight)}>
+                  <span className="caption font-mono">{server.server}</span>
+                  <span className={cn('caption font-medium', getStatusColorClass(server.status))}>
+                    {formatTime(server.avgTimeMs)}
+                  </span>
+                </div>
+                {server.forward ? (
+                  <div className={cn(layout.flex.between, 'caption')}>
+                    <span>A</span>
+                    <span className={layout.inline.default}>
+                      <StatusBadge status={server.forward.status} size="sm" />
+                      <span className={getStatusColorClass(server.forward.status)}>
+                        {answeredNothing(server.forward)
+                          ? 'N/A'
+                          : formatTime(server.forward.timeMs)}
+                      </span>
+                    </span>
+                  </div>
+                ) : null}
+                {server.forwardIpv6 ? (
+                  <div className={cn(layout.flex.between, 'caption')}>
+                    <span>AAAA</span>
+                    <span className={layout.inline.default}>
+                      <StatusBadge status={server.forwardIpv6.status} size="sm" />
+                      <span className={getStatusColorClass(server.forwardIpv6.status)}>
+                        {answeredNothing(server.forwardIpv6)
+                          ? 'N/A'
+                          : formatTime(server.forwardIpv6.timeMs)}
+                      </span>
+                    </span>
+                  </div>
+                ) : null}
+              </div>
+            ))}
+          </CollapsibleSection>
+        </>
+      )}
+    </Card>
+  );
+}

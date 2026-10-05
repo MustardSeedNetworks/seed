@@ -56,14 +56,14 @@ ui/src/hooks/useVulnerabilitySettings.ts:38  # read-only — bypasses the client
 ui/src/lib/logger.ts:267  # mutating but CSRF-exempt by design (isCSRFExemptPath) — correct as a raw fetch
 ui/src/app/LoginForm.tsx:101  # read-only — bypasses the client 401 refresh/retry
 ui/src/app/LoginForm.tsx:115  # read-only — bypasses the client 401 refresh/retry
-ui/src/components/cards/PerformanceCard.tsx:189  # read-only — bypasses the client 401 refresh/retry
-ui/src/components/cards/PerformanceCard.tsx:202  # read-only — bypasses the client 401 refresh/retry
-ui/src/components/cards/PerformanceCard.tsx:210  # read-only — bypasses the client 401 refresh/retry
-ui/src/components/cards/PerformanceCard.tsx:223  # read-only — bypasses the client 401 refresh/retry
-ui/src/components/cards/PerformanceCard.tsx:254  # read-only — bypasses the client 401 refresh/retry
-ui/src/components/cards/PerformanceCard.tsx:289  # read-only — bypasses the client 401 refresh/retry
-ui/src/components/cards/SlaDashboardCard.tsx:46  # read-only — bypasses the client 401 refresh/retry
-ui/src/components/cards/SystemHealthCard.tsx:187  # read-only — bypasses the client 401 refresh/retry
+ui/src/components/cards/PerformanceCard.tsx:188  # read-only — bypasses the client 401 refresh/retry
+ui/src/components/cards/PerformanceCard.tsx:201  # read-only — bypasses the client 401 refresh/retry
+ui/src/components/cards/PerformanceCard.tsx:209  # read-only — bypasses the client 401 refresh/retry
+ui/src/components/cards/PerformanceCard.tsx:222  # read-only — bypasses the client 401 refresh/retry
+ui/src/components/cards/PerformanceCard.tsx:253  # read-only — bypasses the client 401 refresh/retry
+ui/src/components/cards/PerformanceCard.tsx:288  # read-only — bypasses the client 401 refresh/retry
+ui/src/components/cards/SlaDashboardCard.tsx:37  # read-only — bypasses the client 401 refresh/retry
+ui/src/components/cards/SystemHealthCard.tsx:184  # read-only — bypasses the client 401 refresh/retry
 ui/src/components/login/RecoveryForm.tsx:83  # read-only — bypasses the client 401 refresh/retry
 ui/src/components/login/RecoveryForm.tsx:121  # mutating but CSRF-exempt by design (isCSRFExemptPath) — correct as a raw fetch
 ui/src/components/settings/sections/ConfigBackupsSection.tsx:64  # read-only — bypasses the client 401 refresh/retry

@@ -22,14 +22,11 @@
  * The card is the primary indicator of network interface health.
  */
 
-import type React from 'react';
-
 import type { LinkHistoryEvent, LinkResponse } from '../../types/generated/link-response';
 
 export type { LinkHistoryEvent };
 
 import type { JSX } from 'react';
-import { memo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { cn, icon as iconTokens, layout, radius, spacing } from '../../styles/theme';
 import { CardDivider, CardRow, CardValue, type Status } from '../ui/Card';
@@ -145,208 +142,197 @@ function LinkLoadingSkeleton(): JSX.Element {
   );
 }
 
-export const LinkCard: React.MemoExoticComponent<(props: LinkCardProps) => JSX.Element> = memo(
-  function linkCard({ data, loading }: LinkCardProps): JSX.Element {
-    const { t } = useTranslation('cards');
-    const { t: tc } = useTranslation('common');
+export function LinkCard({ data, loading }: LinkCardProps): JSX.Element {
+  const { t } = useTranslation('cards');
+  const { t: tc } = useTranslation('common');
 
-    const getLocalizedStatusText = (linkData: LinkData): string => {
-      if (!linkData.carrier) {
-        return tc('status.noCarrier');
-      }
-      if (!linkData.hasIP) {
-        return tc('status.noIP');
-      }
-      return linkData.speed || tc('status.connected');
-    };
+  const getLocalizedStatusText = (linkData: LinkData): string => {
+    if (!linkData.carrier) {
+      return tc('status.noCarrier');
+    }
+    if (!linkData.hasIP) {
+      return tc('status.noIP');
+    }
+    return linkData.speed || tc('status.connected');
+  };
 
-    return (
-      <BaseCard
-        title={t('link.title')}
-        icon={<Cable className={iconTokens.size.md} />}
-        data={data}
-        loading={loading}
-        getStatus={getStatus}
-        loadingContent={<LinkLoadingSkeleton />}
-        emptyMessage={tc('status.noData')}
-      >
-        {/* biome-ignore lint/complexity/noExcessiveCognitiveComplexity: Complex link card with multiple status displays */}
-        {(linkData: LinkData): JSX.Element => {
-          const status = getStatus(linkData);
-          return (
-            <>
-              <CardValue value={getLocalizedStatusText(linkData)} size="lg" status={status} />
-              <CardDivider />
-              <CardRow
-                label={t('link.carrier')}
-                value={linkData.carrier ? tc('status.connected') : tc('status.noSignal')}
-              />
-              {linkData.carrier ? (
-                <>
+  return (
+    <BaseCard
+      title={t('link.title')}
+      icon={<Cable className={iconTokens.size.md} />}
+      data={data}
+      loading={loading}
+      getStatus={getStatus}
+      loadingContent={<LinkLoadingSkeleton />}
+      emptyMessage={tc('status.noData')}
+    >
+      {/* biome-ignore lint/complexity/noExcessiveCognitiveComplexity: Complex link card with multiple status displays */}
+      {(linkData: LinkData): JSX.Element => {
+        const status = getStatus(linkData);
+        return (
+          <>
+            <CardValue value={getLocalizedStatusText(linkData)} size="lg" status={status} />
+            <CardDivider />
+            <CardRow
+              label={t('link.carrier')}
+              value={linkData.carrier ? tc('status.connected') : tc('status.noSignal')}
+            />
+            {linkData.carrier ? (
+              <>
+                <CardRow label={t('link.duplex')} value={linkData.duplex || tc('status.unknown')} />
+                {linkData.mtu ? (
+                  <CardRow label={t('link.mtu')} value={linkData.mtu.toString()} />
+                ) : null}
+                {linkData.autoNeg !== undefined && (
                   <CardRow
-                    label={t('link.duplex')}
-                    value={linkData.duplex || tc('status.unknown')}
+                    label={t('link.autoNeg')}
+                    value={linkData.autoNeg ? tc('status.on') : tc('status.off')}
                   />
-                  {linkData.mtu ? (
-                    <CardRow label={t('link.mtu')} value={linkData.mtu.toString()} />
-                  ) : null}
-                  {linkData.autoNeg !== undefined && (
-                    <CardRow
-                      label={t('link.autoNeg')}
-                      value={linkData.autoNeg ? tc('status.on') : tc('status.off')}
-                    />
-                  )}
-                  {linkData.flapCount24h !== undefined && (
-                    <CardRow label={t('link.flaps24h')} value={linkData.flapCount24h.toString()} />
-                  )}
-                  {linkData.advertisedSpeeds && linkData.advertisedSpeeds.length > 0 && (
-                    <div className={spacing.margin.top.inline}>
-                      <p className={cn('caption', spacing.margin.bottom.inline)}>
-                        {t('link.advertisedSpeeds')}
-                      </p>
-                      <div className={layout.inline.wrap}>
-                        {linkData.advertisedSpeeds.map((speed) => (
-                          <span
-                            key={speed}
-                            className={cn(
-                              'caption bg-surface-hover',
-                              spacing.chip.sm,
-                              radius.default,
-                            )}
-                          >
-                            {speed}
-                          </span>
-                        ))}
-                      </div>
+                )}
+                {linkData.flapCount24h !== undefined && (
+                  <CardRow label={t('link.flaps24h')} value={linkData.flapCount24h.toString()} />
+                )}
+                {linkData.advertisedSpeeds && linkData.advertisedSpeeds.length > 0 && (
+                  <div className={spacing.margin.top.inline}>
+                    <p className={cn('caption', spacing.margin.bottom.inline)}>
+                      {t('link.advertisedSpeeds')}
+                    </p>
+                    <div className={layout.inline.wrap}>
+                      {linkData.advertisedSpeeds.map((speed) => (
+                        <span
+                          key={speed}
+                          className={cn(
+                            'caption bg-surface-hover',
+                            spacing.chip.sm,
+                            radius.default,
+                          )}
+                        >
+                          {speed}
+                        </span>
+                      ))}
                     </div>
-                  )}
+                  </div>
+                )}
 
-                  {/* PoE Status */}
-                  {linkData.poe?.detected ? (
-                    <>
-                      <CardDivider />
-                      <p
-                        className={cn(
-                          'caption font-medium text-text-muted',
-                          spacing.margin.bottom.tight,
-                        )}
-                      >
-                        {t('link.poe')}
-                      </p>
+                {/* PoE Status */}
+                {linkData.poe?.detected ? (
+                  <>
+                    <CardDivider />
+                    <p
+                      className={cn(
+                        'caption font-medium text-text-muted',
+                        spacing.margin.bottom.tight,
+                      )}
+                    >
+                      {t('link.poe')}
+                    </p>
+                    <CardRow
+                      label={t('link.poeStandard')}
+                      value={linkData.poe.standard || 'Unknown'}
+                    />
+                    {linkData.poe.className !== undefined && (
                       <CardRow
-                        label={t('link.poeStandard')}
-                        value={linkData.poe.standard || 'Unknown'}
+                        label={t('link.poeClass')}
+                        value={linkData.poe.className.toString()}
                       />
-                      {linkData.poe.className !== undefined && (
-                        <CardRow
-                          label={t('link.poeClass')}
-                          value={linkData.poe.className.toString()}
-                        />
-                      )}
-                      {linkData.poe.powerMw !== undefined && (
-                        <CardRow
-                          label={t('link.poePower')}
-                          value={`${(linkData.poe.powerMw / 1000).toFixed(1)} W`}
-                        />
-                      )}
-                      {linkData.poe.voltage !== undefined && (
-                        <CardRow
-                          label={t('link.poeVoltage')}
-                          value={`${linkData.poe.voltage.toFixed(1)} V`}
-                        />
-                      )}
-                    </>
-                  ) : null}
+                    )}
+                    {linkData.poe.powerMw !== undefined && (
+                      <CardRow
+                        label={t('link.poePower')}
+                        value={`${(linkData.poe.powerMw / 1000).toFixed(1)} W`}
+                      />
+                    )}
+                    {linkData.poe.voltage !== undefined && (
+                      <CardRow
+                        label={t('link.poeVoltage')}
+                        value={`${linkData.poe.voltage.toFixed(1)} V`}
+                      />
+                    )}
+                  </>
+                ) : null}
 
-                  {/* SFP Module Info */}
-                  {linkData.sfp?.present ? (
-                    <>
-                      <CardDivider />
-                      <p
-                        className={cn(
-                          'caption font-medium text-text-muted',
-                          spacing.margin.bottom.tight,
-                        )}
-                      >
-                        {t('link.sfp')}
-                      </p>
-                      {linkData.sfp.vendor ? (
-                        <CardRow label={t('link.sfpVendor')} value={linkData.sfp.vendor} />
-                      ) : null}
-                      {linkData.sfp.type ? (
-                        <CardRow label={t('link.sfpType')} value={linkData.sfp.type} />
-                      ) : null}
-                      {linkData.sfp.wavelength ? (
-                        <CardRow
-                          label={t('link.sfpWavelength')}
-                          value={`${linkData.sfp.wavelength} nm`}
-                        />
-                      ) : null}
-                      {linkData.sfp.distance ? (
-                        <CardRow
-                          label={t('link.sfpDistance')}
-                          value={`${linkData.sfp.distance} m`}
-                        />
-                      ) : null}
+                {/* SFP Module Info */}
+                {linkData.sfp?.present ? (
+                  <>
+                    <CardDivider />
+                    <p
+                      className={cn(
+                        'caption font-medium text-text-muted',
+                        spacing.margin.bottom.tight,
+                      )}
+                    >
+                      {t('link.sfp')}
+                    </p>
+                    {linkData.sfp.vendor ? (
+                      <CardRow label={t('link.sfpVendor')} value={linkData.sfp.vendor} />
+                    ) : null}
+                    {linkData.sfp.type ? (
+                      <CardRow label={t('link.sfpType')} value={linkData.sfp.type} />
+                    ) : null}
+                    {linkData.sfp.wavelength ? (
+                      <CardRow
+                        label={t('link.sfpWavelength')}
+                        value={`${linkData.sfp.wavelength} nm`}
+                      />
+                    ) : null}
+                    {linkData.sfp.distance ? (
+                      <CardRow label={t('link.sfpDistance')} value={`${linkData.sfp.distance} m`} />
+                    ) : null}
 
-                      {/* SFP DDM Readings */}
-                      {linkData.sfp.ddmSupport && linkData.sfp.ddm ? (
-                        <div className={spacing.margin.top.inline}>
-                          <p
-                            className={cn(
-                              'caption font-medium text-text-muted',
-                              spacing.margin.bottom.tight,
-                            )}
+                    {/* SFP DDM Readings */}
+                    {linkData.sfp.ddmSupport && linkData.sfp.ddm ? (
+                      <div className={spacing.margin.top.inline}>
+                        <p
+                          className={cn(
+                            'caption font-medium text-text-muted',
+                            spacing.margin.bottom.tight,
+                          )}
+                        >
+                          {t('link.ddm')}
+                        </p>
+                        <CardRow
+                          label={t('link.ddmTemp')}
+                          value={`${linkData.sfp.ddm.temperature.toFixed(1)}°C`}
+                        />
+                        <CardRow
+                          label={t('link.ddmVoltage')}
+                          value={`${linkData.sfp.ddm.voltage.toFixed(2)} V`}
+                        />
+                        <CardRow
+                          label={t('link.ddmTxPower')}
+                          value={`${linkData.sfp.ddm.txPowerDbm.toFixed(1)} dBm`}
+                        />
+                        <CardRow
+                          label={t('link.ddmRxPower')}
+                          value={`${linkData.sfp.ddm.rxPowerDbm.toFixed(1)} dBm`}
+                        />
+                        {linkData.sfp.ddm.alarms && linkData.sfp.ddm.alarms.length > 0 && (
+                          <div
+                            className={cn('caption text-status-error', spacing.margin.top.tight)}
                           >
-                            {t('link.ddm')}
-                          </p>
-                          <CardRow
-                            label={t('link.ddmTemp')}
-                            value={`${linkData.sfp.ddm.temperature.toFixed(1)}°C`}
-                          />
-                          <CardRow
-                            label={t('link.ddmVoltage')}
-                            value={`${linkData.sfp.ddm.voltage.toFixed(2)} V`}
-                          />
-                          <CardRow
-                            label={t('link.ddmTxPower')}
-                            value={`${linkData.sfp.ddm.txPowerDbm.toFixed(1)} dBm`}
-                          />
-                          <CardRow
-                            label={t('link.ddmRxPower')}
-                            value={`${linkData.sfp.ddm.rxPowerDbm.toFixed(1)} dBm`}
-                          />
-                          {linkData.sfp.ddm.alarms && linkData.sfp.ddm.alarms.length > 0 && (
-                            <div
-                              className={cn('caption text-status-error', spacing.margin.top.tight)}
-                            >
-                              {linkData.sfp.ddm.alarms.map((alarm) => (
-                                <p key={alarm}>{alarm}</p>
-                              ))}
-                            </div>
-                          )}
-                          {linkData.sfp.ddm.warnings && linkData.sfp.ddm.warnings.length > 0 && (
-                            <div
-                              className={cn(
-                                'caption text-status-warning',
-                                spacing.margin.top.tight,
-                              )}
-                            >
-                              {linkData.sfp.ddm.warnings.map((warning) => (
-                                <p key={warning}>{warning}</p>
-                              ))}
-                            </div>
-                          )}
-                        </div>
-                      ) : null}
-                    </>
-                  ) : null}
-                </>
-              ) : null}
-            </>
-          );
-        }}
-      </BaseCard>
-    );
-  },
-);
+                            {linkData.sfp.ddm.alarms.map((alarm) => (
+                              <p key={alarm}>{alarm}</p>
+                            ))}
+                          </div>
+                        )}
+                        {linkData.sfp.ddm.warnings && linkData.sfp.ddm.warnings.length > 0 && (
+                          <div
+                            className={cn('caption text-status-warning', spacing.margin.top.tight)}
+                          >
+                            {linkData.sfp.ddm.warnings.map((warning) => (
+                              <p key={warning}>{warning}</p>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    ) : null}
+                  </>
+                ) : null}
+              </>
+            ) : null}
+          </>
+        );
+      }}
+    </BaseCard>
+  );
+}

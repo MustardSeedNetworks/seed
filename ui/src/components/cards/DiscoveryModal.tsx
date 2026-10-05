@@ -18,7 +18,7 @@ import { Tooltip } from '../ui/Tooltip';
 
 import type React from 'react';
 import type { JSX } from 'react';
-import { useCallback, useMemo, useState } from 'react';
+import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useFocusTrap } from '../../hooks/useFocusTrap';
 import { button, cn, icon as iconTokens, modal, radius } from '../../styles/theme';
@@ -138,6 +138,50 @@ function SortableHeader({
 
 const headerCell = 'px-3 py-row text-left text-xs font-semibold uppercase tracking-wider';
 
+interface DeviceView {
+  showLocalOnly: boolean;
+  searchQuery: string;
+  sortField: SortField | null;
+  sortDirection: SortDirection;
+}
+
+/** The devices the table shows: filtered by network and search, then sorted. */
+function visibleDevices(all: DiscoveredDevice[] | undefined, view: DeviceView): DiscoveredDevice[] {
+  const { showLocalOnly, searchQuery, sortField, sortDirection } = view;
+  if (!all) {
+    return [];
+  }
+
+  let devices = [...all];
+
+  // Filter by local/extended
+  if (showLocalOnly) {
+    devices = devices.filter((d) => d.isLocal);
+  }
+
+  // Search filter
+  if (searchQuery.trim()) {
+    const q = searchQuery.toLowerCase();
+    devices = devices.filter(
+      (d) =>
+        d.ip?.toLowerCase().includes(q) ||
+        d.hostname?.toLowerCase().includes(q) ||
+        d.netbiosName?.toLowerCase().includes(q) ||
+        d.mdnsName?.toLowerCase().includes(q) ||
+        d.displayName?.toLowerCase().includes(q) ||
+        d.mac?.toLowerCase().includes(q) ||
+        d.vendor?.toLowerCase().includes(q),
+    );
+  }
+
+  // Sort
+  if (sortField) {
+    devices.sort((a, b) => compareDevices(a, b, sortField, sortDirection));
+  }
+
+  return devices;
+}
+
 // Stands in for the rows scrolled out of a virtualised list, so the scrollbar
 // keeps the height of the whole list.
 function Spacer({ height }: { height: number }): JSX.Element {
@@ -171,7 +215,7 @@ export function DiscoveryModal({
   const [vulnDeviceIp, setVulnDeviceIp] = useState<string | null>(null);
 
   // Toggle sort
-  const handleSort = useCallback((field: SortField) => {
+  const handleSort = (field: SortField) => {
     setSortField((prev) => {
       if (prev === field) {
         setSortDirection((d) => (d === 'asc' ? 'desc' : 'asc'));
@@ -180,10 +224,10 @@ export function DiscoveryModal({
       setSortDirection('asc');
       return field;
     });
-  }, []);
+  };
 
   // Toggle device expansion
-  const toggleDevice = useCallback((key: string) => {
+  const toggleDevice = (key: string) => {
     setExpandedDevices((prev) => {
       const next = new Set(prev);
       if (next.has(key)) {
@@ -193,66 +237,34 @@ export function DiscoveryModal({
       }
       return next;
     });
-  }, []);
+  };
 
   // Deep scan handler
-  const handleDeepScan = useCallback(
-    async (ip: string): Promise<void> => {
-      if (!onDeepScan) {
-        return;
-      }
-      setScanningDevices((prev) => new Set(prev).add(ip));
-      try {
-        await onDeepScan(ip);
-      } finally {
-        setScanningDevices((prev) => {
-          const next = new Set(prev);
-          next.delete(ip);
-          return next;
-        });
-      }
-    },
-    [onDeepScan],
-  );
-
-  // Filter and sort devices
-  const filteredDevices = useMemo(() => {
-    if (!data?.devices) {
-      return [];
+  // A promise .finally, not try/finally: the React Compiler cannot lower a
+  // finally clause and would skip the whole component.
+  const handleDeepScan = (ip: string): Promise<void> => {
+    if (!onDeepScan) {
+      return Promise.resolve();
     }
+    setScanningDevices((prev) => new Set(prev).add(ip));
+    return onDeepScan(ip).finally(() => {
+      setScanningDevices((prev) => {
+        const next = new Set(prev);
+        next.delete(ip);
+        return next;
+      });
+    });
+  };
 
-    let devices = [...data.devices];
-
-    // Filter by local/extended
-    if (showLocalOnly) {
-      devices = devices.filter((d) => d.isLocal);
-    }
-
-    // Search filter
-    if (searchQuery.trim()) {
-      const q = searchQuery.toLowerCase();
-      devices = devices.filter(
-        (d) =>
-          d.ip?.toLowerCase().includes(q) ||
-          d.hostname?.toLowerCase().includes(q) ||
-          d.netbiosName?.toLowerCase().includes(q) ||
-          d.mdnsName?.toLowerCase().includes(q) ||
-          d.displayName?.toLowerCase().includes(q) ||
-          d.mac?.toLowerCase().includes(q) ||
-          d.vendor?.toLowerCase().includes(q),
-      );
-    }
-
-    // Sort
-    if (sortField) {
-      devices.sort((a, b) => compareDevices(a, b, sortField, sortDirection));
-    }
-
-    return devices;
-  }, [data?.devices, searchQuery, sortField, sortDirection, showLocalOnly]);
+  const filteredDevices = visibleDevices(data?.devices, {
+    showLocalOnly,
+    searchQuery,
+    sortField,
+    sortDirection,
+  });
 
   // Export functions
-  const exportJson = useCallback(() => {
+  const exportJson = () => {
     const blob = new Blob([JSON.stringify(filteredDevices, null, 2)], {
       type: 'application/json',
     });
@@ -262,9 +274,9 @@ export function DiscoveryModal({
     link.download = `devices-${new Date().toISOString().split('T')[0]}.json`;
     link.click();
     URL.revokeObjectURL(url);
-  }, [filteredDevices]);
+  };
 
-  const exportCsv = useCallback((): void => {
+  const exportCsv = (): void => {
     const escapeCsv = (val: unknown): string => {
       if (val === null || val === undefined) {
         return '';
@@ -301,7 +313,7 @@ export function DiscoveryModal({
     link.download = `devices-${new Date().toISOString().split('T')[0]}.csv`;
     link.click();
     URL.revokeObjectURL(url);
-  }, [filteredDevices]);
+  };
 
   const dialogRef = useFocusTrap<HTMLDivElement>({ isActive: isOpen, onEscape: onClose });
 

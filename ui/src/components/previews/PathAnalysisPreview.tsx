@@ -1,7 +1,7 @@
 /**
  * PathAnalysisPreview — the sample body <GatedPreview> shows for /path.
  *
- * Renders the real PATH_TIMELINE, which is presentational, over a fixture
+ * Renders the real PathTimeline, which is presentational, over a fixture
  * typed by the very type the timeline consumes, so the sample is the feature's
  * own rendering rather than a drawing of it, and a shape change breaks the
  * build here rather than shipping a stale picture. PathDiscoveryCard itself is not reused: its result
@@ -11,7 +11,7 @@
 
 import { useTranslation } from 'react-i18next';
 import type { PathResponse } from '../../types';
-import { PATH_TIMELINE } from '../cards/PathDiscoveryTimeline';
+import { PathTimeline } from '../cards/PathDiscoveryTimeline';
 import { Card } from '../ui/Card';
 
 const SAMPLE_PATH: PathResponse = {
@@ -62,7 +62,7 @@ export function PathAnalysisPreview(): React.ReactElement {
 
   return (
     <Card title={t('pathDiscovery.title')} status="success">
-      <PATH_TIMELINE
+      <PathTimeline
         result={SAMPLE_PATH}
         maxRtt={SAMPLE_MAX_RTT}
         expandedL2Hop={null}

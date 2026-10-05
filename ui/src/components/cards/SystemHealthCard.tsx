@@ -28,7 +28,7 @@
 
 import { Server } from 'lucide-react';
 import type React from 'react';
-import { useCallback, useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { formatBytes } from '../../lib/format';
 import { cn, icon as iconTokens, radius, spacing, status as statusColor } from '../../styles/theme';
@@ -77,6 +77,12 @@ function formatUptime(seconds: number): string {
     return `${hours}h ${minutes}m`;
   }
   return `${minutes}m`;
+}
+
+// A module function, not an inline ternary: the React Compiler cannot lower a
+// ternary whose test holds `??`, and would skip the whole component.
+function loadStatus(health: SystemHealth): Status | undefined {
+  return (health.loadAvg1 ?? 0) > (health.numCpu ?? 1) ? 'warning' : undefined;
 }
 
 function getResourceStatus(percent: number): Status {
@@ -173,6 +179,23 @@ function ResourceBar({
   );
 }
 
+/** The host's resource usage, or null on a 401 (left to the session refresh). */
+async function fetchSystemHealth(): Promise<SystemHealth | null> {
+  const response = await fetch('/api/v1/telemetry/system/health', {
+    credentials: 'include',
+  });
+  if (response.status === 401) {
+    // Trigger session refresh - dispatch custom event for app-level handling
+    window.dispatchEvent(new CustomEvent('session-expired'));
+    return null;
+  }
+  if (!response.ok) {
+    throw new Error(`HTTP ${response.status}`);
+  }
+  const result = await response.json();
+  return result.system;
+}
+
 /**
  * Displays system resource usage with CPU, memory, and disk metrics.
  */
@@ -182,28 +205,20 @@ export function SystemHealthCard(): React.ReactElement {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const fetchHealth = useCallback(async () => {
-    try {
-      const response = await fetch('/api/v1/telemetry/system/health', {
-        credentials: 'include',
-      });
-      if (response.status === 401) {
-        // Trigger session refresh - dispatch custom event for app-level handling
-        window.dispatchEvent(new CustomEvent('session-expired'));
-        return; // Don't treat as error, let session refresh handle it
-      }
-      if (!response.ok) {
-        throw new Error(`HTTP ${response.status}`);
-      }
-      const result = await response.json();
-      setData(result.system);
-      setError(null);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : t('system.loadFailed'));
-    } finally {
-      setLoading(false);
-    }
-  }, [t]);
+  // A promise chain, not try/finally: the React Compiler cannot lower a
+  // finally clause or a throw inside try, and would skip the whole component.
+  const fetchHealth = (): Promise<void> =>
+    fetchSystemHealth()
+      .then((health) => {
+        if (health) {
+          setData(health);
+          setError(null);
+        }
+      })
+      .catch((err: unknown) => {
+        setError(err instanceof Error ? err.message : t('system.loadFailed'));
+      })
+      .finally(() => setLoading(false));
 
   useEffect(() => {
     fetchHealth().catch(() => undefined);
@@ -270,7 +285,7 @@ export function SystemHealthCard(): React.ReactElement {
               label={t('system.load1m')}
               value={(health.loadAvg1 ?? 0).toFixed(2)}
               align="left"
-              status={(health.loadAvg1 ?? 0) > (health.numCpu ?? 1) ? 'warning' : undefined}
+              status={loadStatus(health)}
             />
             <CardRow label={t('system.goroutines')} value={health.goroutines ?? 0} align="left" />
             <CardRow

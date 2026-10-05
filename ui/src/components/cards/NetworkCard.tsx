@@ -21,7 +21,6 @@
  */
 
 import type React from 'react';
-import { useCallback, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { formatTime, isValidNumber } from '../../lib/format';
 import { border, cn, icon as iconTokens, spacing } from '../../styles/theme';
@@ -287,6 +286,8 @@ function DhcpTimingSection({
 /**
  * Displays network interface information with IP addresses and connection status.
  */
+const IPV6_SCOPE_ORDER: Ipv6Info['scope'][] = ['global', 'unique-local', 'link-local'];
+
 export function NetworkCard({
   data,
   publicIp,
@@ -306,39 +307,31 @@ export function NetworkCard({
   // Keep hooks unconditional: derive safe fallbacks
   const hasData = !!data;
   const ipv4 = data?.ipv4 ?? null;
-  const ipv6List = useMemo(() => data?.ipv6 ?? [], [data?.ipv6]);
+  const ipv6List = data?.ipv6 ?? [];
   const timing = data?.timing ?? null;
-  const dnsServers = useMemo(() => data?.dns ?? [], [data?.dns]);
+  const dnsServers = data?.dns ?? [];
   const hasIpv4 = ipv4 !== null;
   const hasIpv6 = ipv6List.length > 0;
   const globalIpv6 = ipv6List.filter((ip) => ip.scope === 'global');
 
-  const getScopeLabel = useCallback(
-    (scope: Ipv6Info['scope']): string => {
-      switch (scope) {
-        case 'global':
-          return tr('network.global');
-        case 'link-local':
-          return tr('network.linkLocal');
-        case 'unique-local':
-          return tr('network.ula');
-        default:
-          return scope;
-      }
-    },
-    [tr],
-  );
+  const getScopeLabel = (scope: Ipv6Info['scope']): string => {
+    switch (scope) {
+      case 'global':
+        return tr('network.global');
+      case 'link-local':
+        return tr('network.linkLocal');
+      case 'unique-local':
+        return tr('network.ula');
+      default:
+        return scope;
+    }
+  };
 
-  const groupedIpv6 = useMemo(() => {
-    const order: Ipv6Info['scope'][] = ['global', 'unique-local', 'link-local'];
-    return order
-      .map((scope) => ({
-        scope,
-        label: getScopeLabel(scope),
-        entries: ipv6List.filter((ip) => ip.scope === scope),
-      }))
-      .filter((group) => group.entries.length > 0);
-  }, [ipv6List, getScopeLabel]);
+  const groupedIpv6 = IPV6_SCOPE_ORDER.map((scope) => ({
+    scope,
+    label: getScopeLabel(scope),
+    entries: ipv6List.filter((ip) => ip.scope === scope),
+  })).filter((group) => group.entries.length > 0);
 
   // Determine overall status using priority: error > warning > success
   const getOverallStatus = (): Status => {

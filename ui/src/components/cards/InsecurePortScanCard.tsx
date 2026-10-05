@@ -18,7 +18,7 @@ import { Tooltip } from '../ui/Tooltip';
  */
 
 import type { JSX } from 'react';
-import { useCallback, useState } from 'react';
+import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { useRole } from '../../contexts/RoleContext';
@@ -111,13 +111,13 @@ export function InsecurePortScanCard(): JSX.Element {
   const { result, scanning, error, scan } = useInsecurePortScan();
   const [target, setTarget] = useState('');
 
-  const run = useCallback((): void => {
+  const run = (): void => {
     const trimmed = target.trim();
     if (!trimmed) {
       return;
     }
     scan(trimmed).catch(() => undefined);
-  }, [scan, target]);
+  };
 
   const risks = riskTexts(t as unknown as (key: string) => string);
   const openPorts = result?.services.filter(isOpen) ?? [];

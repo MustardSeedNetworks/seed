@@ -30,7 +30,7 @@
  */
 
 import type React from 'react';
-import { memo, useCallback, useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { api } from '../../api';
 import { useSettings } from '../../contexts/useSettings';
@@ -120,585 +120,583 @@ type SpeedtestPhase =
   | 'complete';
 type IperfPhase = 'idle' | 'connecting' | 'testing' | 'complete';
 
-export const PerformanceCard: React.NamedExoticComponent<PerformanceCardProps> = memo(
-  // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: Performance card manages speedtest and iperf state machines with multiple polling effects and UI states
-  function performanceCard({
-    loading,
-    runSpeedtestEnabled = true,
-    runIperfEnabled = true,
-  }: PerformanceCardProps): React.ReactElement {
-    const { t } = useTranslation('cards');
-    // Get iperf settings from context
-    const { iperfSettings } = useSettings();
+// biome-ignore lint/complexity/noExcessiveCognitiveComplexity: Performance card manages speedtest and iperf state machines with multiple polling effects and UI states
+export function PerformanceCard({
+  loading,
+  runSpeedtestEnabled = true,
+  runIperfEnabled = true,
+}: PerformanceCardProps): React.ReactElement {
+  const { t } = useTranslation('cards');
+  // Get iperf settings from context
+  const { iperfSettings } = useSettings();
 
-    // Helper to get speedtest phase label
-    const getSpeedtestPhaseLabel = (phase: string): string => {
-      switch (phase as SpeedtestPhase) {
-        case 'idle':
-          return t('performance.phaseReady');
-        case 'finding_server':
-          return t('performance.phaseFindingServer');
-        case 'testing_latency':
-          return t('performance.phaseTestingLatency');
-        case 'testing_download':
-          return t('performance.phaseTestingDownload');
-        case 'testing_upload':
-          return t('performance.phaseTestingUpload');
-        case 'complete':
-          return t('performance.phaseComplete');
-        default:
-          return phase;
+  // Helper to get speedtest phase label
+  const getSpeedtestPhaseLabel = (phase: string): string => {
+    switch (phase as SpeedtestPhase) {
+      case 'idle':
+        return t('performance.phaseReady');
+      case 'finding_server':
+        return t('performance.phaseFindingServer');
+      case 'testing_latency':
+        return t('performance.phaseTestingLatency');
+      case 'testing_download':
+        return t('performance.phaseTestingDownload');
+      case 'testing_upload':
+        return t('performance.phaseTestingUpload');
+      case 'complete':
+        return t('performance.phaseComplete');
+      default:
+        return phase;
+    }
+  };
+
+  // Helper to get iperf phase label
+  const getIperfPhaseLabel = (phase: string): string => {
+    switch (phase as IperfPhase) {
+      case 'idle':
+        return t('performance.phaseReady');
+      case 'connecting':
+        return t('performance.phaseConnecting');
+      case 'testing':
+        return t('performance.phaseTesting');
+      case 'complete':
+        return t('performance.phaseComplete');
+      default:
+        return phase;
+    }
+  };
+
+  // Speedtest state
+  const [speedtestStatus, setSpeedtestStatus] = useState<SpeedtestStatus | null>(null);
+  const [speedtestResult, setSpeedtestResult] = useState<SpeedtestData | null>(null);
+  const [speedtestError, setSpeedtestError] = useState<string | null>(null);
+  const [speedtestRunning, setSpeedtestRunning] = useState(false);
+
+  // iperf3 state
+  const [iperfInfo, setIperfInfo] = useState<IperfInfo | null>(null);
+  const [iperfClientStatus, setIperfClientStatus] = useState<IperfClientStatus | null>(null);
+  const [iperfResult, setIperfResult] = useState<IperfResult | null>(null);
+  const [iperfServerStatus, setIperfServerStatus] = useState<IperfServerStatus | null>(null);
+  const [iperfError, setIperfError] = useState<string | null>(null);
+  const [iperfClientRunning, setIperfClientRunning] = useState(false);
+
+  // Fetch initial status
+  useEffect(() => {
+    const fetchStatus = async (): Promise<void> => {
+      try {
+        // Fetch speedtest status
+        const speedRes = await fetch('/api/v1/telemetry/speedtest/status', {
+          credentials: 'include',
+        });
+        if (speedRes.ok) {
+          const data = await speedRes.json();
+          setSpeedtestStatus(data);
+          if (data.last) {
+            setSpeedtestResult(data.last);
+          }
+          setSpeedtestRunning(data.running);
+        }
+
+        // Fetch iperf3 info
+        const iperfInfoRes = await fetch('/api/v1/telemetry/iperf/info', {
+          credentials: 'include',
+        });
+        if (iperfInfoRes.ok) {
+          setIperfInfo(await iperfInfoRes.json());
+        }
+
+        // Fetch iperf3 client status
+        const iperfClientRes = await fetch('/api/v1/telemetry/iperf/client/status', {
+          credentials: 'include',
+        });
+        if (iperfClientRes.ok) {
+          const data = await iperfClientRes.json();
+          setIperfClientStatus(data);
+          if (data.last) {
+            setIperfResult(data.last);
+          }
+          setIperfClientRunning(data.running);
+        }
+
+        // Fetch iperf3 server status
+        const iperfServerRes = await fetch('/api/v1/telemetry/iperf/server/status', {
+          credentials: 'include',
+        });
+        if (iperfServerRes.ok) {
+          setIperfServerStatus(await iperfServerRes.json());
+        }
+      } catch (err) {
+        logger.error(LogComponents.SPEEDTEST, 'Failed to fetch performance status', err);
       }
     };
+    fetchStatus().catch(() => {
+      // Error already logged in fetchStatus
+    });
+  }, []);
 
-    // Helper to get iperf phase label
-    const getIperfPhaseLabel = (phase: string): string => {
-      switch (phase as IperfPhase) {
-        case 'idle':
-          return t('performance.phaseReady');
-        case 'connecting':
-          return t('performance.phaseConnecting');
-        case 'testing':
-          return t('performance.phaseTesting');
-        case 'complete':
-          return t('performance.phaseComplete');
-        default:
-          return phase;
-      }
-    };
+  useIperfServerSync({
+    installed: iperfInfo?.installed === true,
+    enableServer: iperfSettings.enableServer,
+    serverPort: iperfSettings.serverPort,
+    onStatus: setIperfServerStatus,
+  });
 
-    // Speedtest state
-    const [speedtestStatus, setSpeedtestStatus] = useState<SpeedtestStatus | null>(null);
-    const [speedtestResult, setSpeedtestResult] = useState<SpeedtestData | null>(null);
-    const [speedtestError, setSpeedtestError] = useState<string | null>(null);
-    const [speedtestRunning, setSpeedtestRunning] = useState(false);
+  // Poll speedtest status while running (300ms for smooth gauge updates)
+  useEffect(() => {
+    if (!speedtestRunning) {
+      return;
+    }
 
-    // iperf3 state
-    const [iperfInfo, setIperfInfo] = useState<IperfInfo | null>(null);
-    const [iperfClientStatus, setIperfClientStatus] = useState<IperfClientStatus | null>(null);
-    const [iperfResult, setIperfResult] = useState<IperfResult | null>(null);
-    const [iperfServerStatus, setIperfServerStatus] = useState<IperfServerStatus | null>(null);
-    const [iperfError, setIperfError] = useState<string | null>(null);
-    const [iperfClientRunning, setIperfClientRunning] = useState(false);
-
-    // Fetch initial status
-    useEffect(() => {
-      const fetchStatus = async (): Promise<void> => {
+    const interval = setInterval((): void => {
+      (async (): Promise<void> => {
         try {
-          // Fetch speedtest status
-          const speedRes = await fetch('/api/v1/telemetry/speedtest/status', {
+          const res = await fetch('/api/v1/telemetry/speedtest/status', {
             credentials: 'include',
           });
-          if (speedRes.ok) {
-            const data = await speedRes.json();
+          if (res.ok) {
+            const data = await res.json();
             setSpeedtestStatus(data);
-            if (data.last) {
-              setSpeedtestResult(data.last);
+            if (!data.running) {
+              setSpeedtestRunning(false);
+              if (data.last) {
+                setSpeedtestResult(data.last);
+              }
+              // Signal the run orchestrator that speedtest is complete.
+              useTestRunStore.getState().reportComplete('speedtest');
             }
-            setSpeedtestRunning(data.running);
-          }
-
-          // Fetch iperf3 info
-          const iperfInfoRes = await fetch('/api/v1/telemetry/iperf/info', {
-            credentials: 'include',
-          });
-          if (iperfInfoRes.ok) {
-            setIperfInfo(await iperfInfoRes.json());
-          }
-
-          // Fetch iperf3 client status
-          const iperfClientRes = await fetch('/api/v1/telemetry/iperf/client/status', {
-            credentials: 'include',
-          });
-          if (iperfClientRes.ok) {
-            const data = await iperfClientRes.json();
-            setIperfClientStatus(data);
-            if (data.last) {
-              setIperfResult(data.last);
-            }
-            setIperfClientRunning(data.running);
-          }
-
-          // Fetch iperf3 server status
-          const iperfServerRes = await fetch('/api/v1/telemetry/iperf/server/status', {
-            credentials: 'include',
-          });
-          if (iperfServerRes.ok) {
-            setIperfServerStatus(await iperfServerRes.json());
           }
         } catch (err) {
-          logger.error(LogComponents.SPEEDTEST, 'Failed to fetch performance status', err);
+          logger.error(LogComponents.SPEEDTEST, 'Failed to poll speedtest status', err);
         }
-      };
-      fetchStatus().catch(() => {
-        // Error already logged in fetchStatus
+      })().catch(() => {
+        // Error already logged
       });
-    }, []);
+    }, 300);
 
-    useIperfServerSync({
-      installed: iperfInfo?.installed === true,
-      enableServer: iperfSettings.enableServer,
-      serverPort: iperfSettings.serverPort,
-      onStatus: setIperfServerStatus,
+    return (): void => clearInterval(interval);
+  }, [speedtestRunning]);
+
+  // Poll iperf3 client status while running
+  useEffect(() => {
+    if (!iperfClientRunning) {
+      return;
+    }
+
+    const interval = setInterval((): void => {
+      (async (): Promise<void> => {
+        try {
+          const res = await fetch('/api/v1/telemetry/iperf/client/status', {
+            credentials: 'include',
+          });
+          if (res.ok) {
+            const data = await res.json();
+            setIperfClientStatus(data);
+            if (!data.running) {
+              setIperfClientRunning(false);
+              if (data.last) {
+                setIperfResult(data.last);
+              }
+              // Signal the run orchestrator that iperf is complete.
+              useTestRunStore.getState().reportComplete('iperf');
+            }
+          }
+        } catch (err) {
+          logger.error(LogComponents.IPERF, 'Failed to poll iperf status', err);
+        }
+      })().catch(() => {
+        // Error already logged
+      });
+    }, 1000);
+
+    return (): void => clearInterval(interval);
+  }, [iperfClientRunning]);
+
+  const runSpeedtest = async () => {
+    if (!runSpeedtestEnabled) {
+      setSpeedtestError(t('performance.testsDisabled'));
+      return;
+    }
+
+    setSpeedtestError(null);
+    setSpeedtestRunning(true);
+    setSpeedtestStatus({
+      running: true,
+      phase: 'finding_server',
+      progress: 0,
+      currentDownload: 0,
+      currentUpload: 0,
     });
 
-    // Poll speedtest status while running (300ms for smooth gauge updates)
-    useEffect(() => {
-      if (!speedtestRunning) {
-        return;
-      }
-
-      const interval = setInterval((): void => {
-        (async (): Promise<void> => {
-          try {
-            const res = await fetch('/api/v1/telemetry/speedtest/status', {
-              credentials: 'include',
-            });
-            if (res.ok) {
-              const data = await res.json();
-              setSpeedtestStatus(data);
-              if (!data.running) {
-                setSpeedtestRunning(false);
-                if (data.last) {
-                  setSpeedtestResult(data.last);
-                }
-                // Signal the run orchestrator that speedtest is complete.
-                useTestRunStore.getState().reportComplete('speedtest');
-              }
-            }
-          } catch (err) {
-            logger.error(LogComponents.SPEEDTEST, 'Failed to poll speedtest status', err);
-          }
-        })().catch(() => {
-          // Error already logged
-        });
-      }, 300);
-
-      return (): void => clearInterval(interval);
-    }, [speedtestRunning]);
-
-    // Poll iperf3 client status while running
-    useEffect(() => {
-      if (!iperfClientRunning) {
-        return;
-      }
-
-      const interval = setInterval((): void => {
-        (async (): Promise<void> => {
-          try {
-            const res = await fetch('/api/v1/telemetry/iperf/client/status', {
-              credentials: 'include',
-            });
-            if (res.ok) {
-              const data = await res.json();
-              setIperfClientStatus(data);
-              if (!data.running) {
-                setIperfClientRunning(false);
-                if (data.last) {
-                  setIperfResult(data.last);
-                }
-                // Signal the run orchestrator that iperf is complete.
-                useTestRunStore.getState().reportComplete('iperf');
-              }
-            }
-          } catch (err) {
-            logger.error(LogComponents.IPERF, 'Failed to poll iperf status', err);
-          }
-        })().catch(() => {
-          // Error already logged
-        });
-      }, 1000);
-
-      return (): void => clearInterval(interval);
-    }, [iperfClientRunning]);
-
-    const runSpeedtest = useCallback(async () => {
-      if (!runSpeedtestEnabled) {
-        setSpeedtestError(t('performance.testsDisabled'));
-        return;
-      }
-
-      setSpeedtestError(null);
-      setSpeedtestRunning(true);
+    try {
+      await api.post('/api/v1/telemetry/speedtest');
+    } catch (err) {
+      setSpeedtestError(err instanceof Error ? err.message : t('performance.speedtestFailed'));
       setSpeedtestStatus({
-        running: true,
-        phase: 'finding_server',
+        running: false,
+        phase: 'idle',
         progress: 0,
         currentDownload: 0,
         currentUpload: 0,
       });
+      setSpeedtestRunning(false);
+    }
+  };
 
-      try {
-        await api.post('/api/v1/telemetry/speedtest');
-      } catch (err) {
-        setSpeedtestError(err instanceof Error ? err.message : t('performance.speedtestFailed'));
-        setSpeedtestStatus({
-          running: false,
-          phase: 'idle',
-          progress: 0,
-          currentDownload: 0,
-          currentUpload: 0,
+  const runIperfClient = async () => {
+    if (!runIperfEnabled) {
+      setIperfError(t('performance.testsDisabled'));
+      return;
+    }
+
+    if (!iperfSettings.server) {
+      setIperfError(t('performance.serverNotConfigured'));
+      return;
+    }
+
+    setIperfError(null);
+    setIperfClientRunning(true);
+    setIperfClientStatus({ running: true, phase: 'connecting', progress: 0 });
+
+    try {
+      await api.post('/api/v1/telemetry/iperf/client', {
+        server: iperfSettings.server,
+        port: iperfSettings.port,
+        protocol: iperfSettings.protocol,
+        direction: iperfSettings.direction,
+        reverse: iperfSettings.direction === 'download',
+        duration: iperfSettings.duration,
+        parallel: 1,
+      });
+    } catch (err) {
+      setIperfError(err instanceof Error ? err.message : t('performance.iperfFailed'));
+      setIperfClientStatus({ running: false, phase: 'idle', progress: 0 });
+      setIperfClientRunning(false);
+    }
+  };
+
+  // React to a run start via the testRunStore (was the `window` runAllTests
+  // event). Completion is reported from the poll effects above.
+  useTestRunSignal((): void => {
+    // Run speedtest if enabled
+    if (runSpeedtestEnabled && !speedtestRunning) {
+      runSpeedtest().catch(() => {
+        // Error handled in runSpeedtest
+      });
+    }
+    // Run iperf client test if enabled and configured
+    if (runIperfEnabled && !iperfClientRunning && iperfSettings.server && iperfInfo?.installed) {
+      // Delay slightly so tests don't all hammer at once
+      setTimeout((): void => {
+        runIperfClient().catch(() => {
+          // Error handled in runIperfClient
         });
-        setSpeedtestRunning(false);
-      }
-    }, [runSpeedtestEnabled, t]);
+      }, 500);
+    }
+  });
 
-    const runIperfClient = useCallback(async () => {
-      if (!runIperfEnabled) {
-        setIperfError(t('performance.testsDisabled'));
-        return;
-      }
+  const formatSpeed = (mbps: number): string => {
+    if (mbps >= 1000) {
+      return `${(mbps / 1000).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} Gbps`;
+    }
+    return `${mbps.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} Mbps`;
+  };
 
-      if (!iperfSettings.server) {
-        setIperfError(t('performance.serverNotConfigured'));
-        return;
-      }
-
-      setIperfError(null);
-      setIperfClientRunning(true);
-      setIperfClientStatus({ running: true, phase: 'connecting', progress: 0 });
-
-      try {
-        await api.post('/api/v1/telemetry/iperf/client', {
-          server: iperfSettings.server,
-          port: iperfSettings.port,
-          protocol: iperfSettings.protocol,
-          direction: iperfSettings.direction,
-          reverse: iperfSettings.direction === 'download',
-          duration: iperfSettings.duration,
-          parallel: 1,
-        });
-      } catch (err) {
-        setIperfError(err instanceof Error ? err.message : t('performance.iperfFailed'));
-        setIperfClientStatus({ running: false, phase: 'idle', progress: 0 });
-        setIperfClientRunning(false);
-      }
-    }, [iperfSettings, runIperfEnabled, t]);
-
-    // React to a run start via the testRunStore (was the `window` runAllTests
-    // event). Completion is reported from the poll effects above.
-    useTestRunSignal((): void => {
-      // Run speedtest if enabled
-      if (runSpeedtestEnabled && !speedtestRunning) {
-        runSpeedtest().catch(() => {
-          // Error handled in runSpeedtest
-        });
-      }
-      // Run iperf client test if enabled and configured
-      if (runIperfEnabled && !iperfClientRunning && iperfSettings.server && iperfInfo?.installed) {
-        // Delay slightly so tests don't all hammer at once
-        setTimeout((): void => {
-          runIperfClient().catch(() => {
-            // Error handled in runIperfClient
-          });
-        }, 500);
-      }
-    });
-
-    const formatSpeed = (mbps: number): string => {
-      if (mbps >= 1000) {
-        return `${(mbps / 1000).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} Gbps`;
-      }
-      return `${mbps.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} Mbps`;
-    };
-
-    const getStatus = (): Status => {
-      if (!(runSpeedtestEnabled || runIperfEnabled)) {
-        return 'unknown';
-      }
-      if (loading || speedtestRunning || iperfClientRunning) {
-        return 'loading';
-      }
-      if (speedtestError || iperfError) {
-        return 'error';
-      }
-      if (speedtestResult || iperfResult) {
-        return 'success';
-      }
+  const getStatus = (): Status => {
+    if (!(runSpeedtestEnabled || runIperfEnabled)) {
       return 'unknown';
-    };
+    }
+    if (loading || speedtestRunning || iperfClientRunning) {
+      return 'loading';
+    }
+    if (speedtestError || iperfError) {
+      return 'error';
+    }
+    if (speedtestResult || iperfResult) {
+      return 'success';
+    }
+    return 'unknown';
+  };
 
-    return (
-      <Card
-        title={t('performance.title')}
-        subtitle={t('performance.subtitle')}
-        icon={<Gauge className={iconTokens.size.md} />}
-        status={getStatus()}
-      >
-        <div>
-          {/* Internet Speed Section */}
-          <p className={cn('caption font-medium', spacing.margin.bottom.inline)}>
-            {t('performance.internetSpeed')}
-          </p>
+  return (
+    <Card
+      title={t('performance.title')}
+      subtitle={t('performance.subtitle')}
+      icon={<Gauge className={iconTokens.size.md} />}
+      status={getStatus()}
+    >
+      <div>
+        {/* Internet Speed Section */}
+        <p className={cn('caption font-medium', spacing.margin.bottom.inline)}>
+          {t('performance.internetSpeed')}
+        </p>
 
-          {speedtestRunning && speedtestStatus ? (
-            <div className={spacing.margin.bottom.heading}>
-              <div
-                className={cn(
-                  layout.flex.center,
-                  spacing.gap.spacious,
-                  spacing.padding.bottom.inline,
-                )}
-              >
-                <SpeedGauge
-                  value={speedtestStatus.currentDownload || 0}
-                  label={t('performance.download')}
-                  size="md"
-                  isRunning={speedtestStatus.phase === 'testing_download'}
-                />
-                <SpeedGauge
-                  value={speedtestStatus.currentUpload || 0}
-                  label={t('performance.upload')}
-                  size="md"
-                  isRunning={speedtestStatus.phase === 'testing_upload'}
-                />
-              </div>
-              <div
-                className={cn(layout.inline.default, spacing.pad.xs, 'bg-surface-hover', radius.md)}
-              >
-                <PulsingDot color="primary" size="sm" />
-                <span className="body-small font-medium">
-                  {getSpeedtestPhaseLabel(speedtestStatus.phase)}
-                </span>
-                <span className="body-small text-text-muted ml-auto">
-                  {Math.round(speedtestStatus.progress)}%
-                </span>
-              </div>
-            </div>
-          ) : null}
-
-          {!speedtestRunning && speedtestResult ? (
-            <div className={spacing.margin.bottom.heading}>
-              <div
-                className={cn(
-                  layout.flex.center,
-                  spacing.gap.spacious,
-                  spacing.padding.bottom.inline,
-                )}
-              >
-                <SpeedGauge
-                  value={speedtestResult.download}
-                  label={t('performance.download')}
-                  size="md"
-                />
-                <SpeedGauge
-                  value={speedtestResult.upload}
-                  label={t('performance.upload')}
-                  size="md"
-                />
-              </div>
-              <CardRow
-                label={t('performance.latency')}
-                value={`${speedtestResult.latency.toFixed(0)} ms`}
-              />
-              <CardRow label={t('performance.server')} value={speedtestResult.location} />
-            </div>
-          ) : null}
-
-          {speedtestRunning || speedtestResult || speedtestError ? null : (
-            <p className={cn('body-small', spacing.margin.bottom.inline)}>
-              {t('performance.noResults')}
-            </p>
-          )}
-
-          {speedtestError ? <p className="body-small text-status-error">{speedtestError}</p> : null}
-
-          <CardDivider />
-
-          {/* LAN Speed (iperf3) Section */}
-          <p
-            className={cn(
-              'caption font-medium',
-              spacing.margin.bottom.inline,
-              spacing.margin.top.inline,
-            )}
-          >
-            {t('performance.lanSpeed')}
-            {iperfInfo?.version ? (
-              <span className={cn('text-text-muted font-normal', spacing.margin.left.inline)}>
-                {iperfInfo.version}
-              </span>
-            ) : null}
-          </p>
-
-          {iperfInfo?.installed ? null : (
-            <p className={cn('body-small text-status-warning', spacing.margin.bottom.heading)}>
-              {t('performance.iperfNotInstalled')}
-            </p>
-          )}
-
-          {iperfInfo?.installed ? (
-            <>
-              {/* Config Summary */}
-              {iperfSettings.server ? (
-                <div
-                  className={cn(
-                    'caption',
-                    spacing.margin.bottom.heading,
-                    spacing.pad.sm,
-                    'bg-surface-hover',
-                    radius.default,
-                  )}
-                >
-                  <div className={layout.flex.between}>
-                    <span>{t('performance.server')}:</span>
-                    <span className="text-text-primary">
-                      {iperfSettings.server}:{iperfSettings.port}
-                    </span>
-                  </div>
-                  <div className={layout.flex.between}>
-                    <span>{t('performance.test')}:</span>
-                    <span className="text-text-primary">
-                      {iperfSettings.protocol.toUpperCase()}{' '}
-                      {iperfSettings.direction === 'bidirectional'
-                        ? t('performance.both')
-                        : iperfSettings.direction}
-                    </span>
-                  </div>
-                </div>
-              ) : (
-                <p className={cn('caption', spacing.margin.bottom.heading)}>
-                  {t('performance.configureServer')}
-                </p>
+        {speedtestRunning && speedtestStatus ? (
+          <div className={spacing.margin.bottom.heading}>
+            <div
+              className={cn(
+                layout.flex.center,
+                spacing.gap.spacious,
+                spacing.padding.bottom.inline,
               )}
+            >
+              <SpeedGauge
+                value={speedtestStatus.currentDownload || 0}
+                label={t('performance.download')}
+                size="md"
+                isRunning={speedtestStatus.phase === 'testing_download'}
+              />
+              <SpeedGauge
+                value={speedtestStatus.currentUpload || 0}
+                label={t('performance.upload')}
+                size="md"
+                isRunning={speedtestStatus.phase === 'testing_upload'}
+              />
+            </div>
+            <div
+              className={cn(layout.inline.default, spacing.pad.xs, 'bg-surface-hover', radius.md)}
+            >
+              <PulsingDot color="primary" size="sm" />
+              <span className="body-small font-medium">
+                {getSpeedtestPhaseLabel(speedtestStatus.phase)}
+              </span>
+              <span className="body-small text-text-muted ml-auto">
+                {Math.round(speedtestStatus.progress)}%
+              </span>
+            </div>
+          </div>
+        ) : null}
 
-              {/* Client Status/Results */}
-              {iperfClientRunning && iperfClientStatus ? (
-                <div
-                  className={cn(
-                    layout.inline.spacious,
-                    spacing.margin.bottom.heading,
-                    spacing.pad.sm,
-                    'bg-surface-hover',
-                    radius.lg,
-                  )}
-                >
-                  <ProgressRing progress={iperfClientStatus.progress} size={56} strokeWidth={5} />
-                  <div className="flex-1">
-                    <div className={layout.inline.default}>
-                      <PulsingDot color="primary" size="sm" />
-                      <span className="body-small font-medium">
-                        {getIperfPhaseLabel(iperfClientStatus.phase)}
-                      </span>
-                    </div>
-                    {(() => {
-                      const pp = Math.min(Math.max(iperfClientStatus.progress, 0), 100);
-                      return (
-                        <progress
-                          value={pp}
-                          max={100}
-                          aria-label="iPerf progress"
-                          className={cn(spacing.margin.top.inline, 'w-full', radius.full)}
-                        />
-                      );
-                    })()}
-                  </div>
+        {!speedtestRunning && speedtestResult ? (
+          <div className={spacing.margin.bottom.heading}>
+            <div
+              className={cn(
+                layout.flex.center,
+                spacing.gap.spacious,
+                spacing.padding.bottom.inline,
+              )}
+            >
+              <SpeedGauge
+                value={speedtestResult.download}
+                label={t('performance.download')}
+                size="md"
+              />
+              <SpeedGauge
+                value={speedtestResult.upload}
+                label={t('performance.upload')}
+                size="md"
+              />
+            </div>
+            <CardRow
+              label={t('performance.latency')}
+              value={`${speedtestResult.latency.toFixed(0)} ms`}
+            />
+            <CardRow label={t('performance.server')} value={speedtestResult.location} />
+          </div>
+        ) : null}
+
+        {speedtestRunning || speedtestResult || speedtestError ? null : (
+          <p className={cn('body-small', spacing.margin.bottom.inline)}>
+            {t('performance.noResults')}
+          </p>
+        )}
+
+        {speedtestError ? <p className="body-small text-status-error">{speedtestError}</p> : null}
+
+        <CardDivider />
+
+        {/* LAN Speed (iperf3) Section */}
+        <p
+          className={cn(
+            'caption font-medium',
+            spacing.margin.bottom.inline,
+            spacing.margin.top.inline,
+          )}
+        >
+          {t('performance.lanSpeed')}
+          {iperfInfo?.version ? (
+            <span className={cn('text-text-muted font-normal', spacing.margin.left.inline)}>
+              {iperfInfo.version}
+            </span>
+          ) : null}
+        </p>
+
+        {iperfInfo?.installed ? null : (
+          <p className={cn('body-small text-status-warning', spacing.margin.bottom.heading)}>
+            {t('performance.iperfNotInstalled')}
+          </p>
+        )}
+
+        {iperfInfo?.installed ? (
+          <>
+            {/* Config Summary */}
+            {iperfSettings.server ? (
+              <div
+                className={cn(
+                  'caption',
+                  spacing.margin.bottom.heading,
+                  spacing.pad.sm,
+                  'bg-surface-hover',
+                  radius.default,
+                )}
+              >
+                <div className={layout.flex.between}>
+                  <span>{t('performance.server')}:</span>
+                  <span className="text-text-primary">
+                    {iperfSettings.server}:{iperfSettings.port}
+                  </span>
                 </div>
-              ) : null}
+                <div className={layout.flex.between}>
+                  <span>{t('performance.test')}:</span>
+                  <span className="text-text-primary">
+                    {iperfSettings.protocol.toUpperCase()}{' '}
+                    {iperfSettings.direction === 'bidirectional'
+                      ? t('performance.both')
+                      : iperfSettings.direction}
+                  </span>
+                </div>
+              </div>
+            ) : (
+              <p className={cn('caption', spacing.margin.bottom.heading)}>
+                {t('performance.configureServer')}
+              </p>
+            )}
 
-              {!iperfClientRunning && iperfResult ? (
-                <div className={cn(spacing.margin.bottom.heading, 'stack-sm')}>
-                  {iperfResult.direction === 'bidirectional' ? (
-                    <div className={cn('grid grid-cols-1 sm:grid-cols-2', spacing.gap.default)}>
-                      <CardValue
-                        label={t('performance.download')}
-                        value={formatSpeed(iperfResult.downloadBandwidth ?? iperfResult.bandwidth)}
-                        size="md"
-                        status="success"
+            {/* Client Status/Results */}
+            {iperfClientRunning && iperfClientStatus ? (
+              <div
+                className={cn(
+                  layout.inline.spacious,
+                  spacing.margin.bottom.heading,
+                  spacing.pad.sm,
+                  'bg-surface-hover',
+                  radius.lg,
+                )}
+              >
+                <ProgressRing progress={iperfClientStatus.progress} size={56} strokeWidth={5} />
+                <div className="flex-1">
+                  <div className={layout.inline.default}>
+                    <PulsingDot color="primary" size="sm" />
+                    <span className="body-small font-medium">
+                      {getIperfPhaseLabel(iperfClientStatus.phase)}
+                    </span>
+                  </div>
+                  {(() => {
+                    const pp = Math.min(Math.max(iperfClientStatus.progress, 0), 100);
+                    return (
+                      <progress
+                        value={pp}
+                        max={100}
+                        aria-label="iPerf progress"
+                        className={cn(spacing.margin.top.inline, 'w-full', radius.full)}
                       />
-                      <CardValue
-                        label={t('performance.upload')}
-                        value={formatSpeed(iperfResult.uploadBandwidth ?? iperfResult.bandwidth)}
-                        size="md"
-                        status="success"
-                      />
-                    </div>
-                  ) : (
+                    );
+                  })()}
+                </div>
+              </div>
+            ) : null}
+
+            {!iperfClientRunning && iperfResult ? (
+              <div className={cn(spacing.margin.bottom.heading, 'stack-sm')}>
+                {iperfResult.direction === 'bidirectional' ? (
+                  <div className={cn('grid grid-cols-1 sm:grid-cols-2', spacing.gap.default)}>
                     <CardValue
-                      label={
-                        iperfResult.direction === 'download'
-                          ? t('performance.download')
-                          : t('performance.upload')
-                      }
-                      value={formatSpeed(iperfResult.bandwidth)}
+                      label={t('performance.download')}
+                      value={formatSpeed(iperfResult.downloadBandwidth ?? iperfResult.bandwidth)}
                       size="md"
                       status="success"
                     />
-                  )}
-
-                  {iperfResult.direction === 'bidirectional' ? (
-                    <div className={cn('grid grid-cols-1 sm:grid-cols-2', spacing.gap.default)}>
-                      {iperfResult.downloadTransfer !== undefined ? (
-                        <CardRow
-                          label={t('performance.downloadTransfer')}
-                          value={`${iperfResult.downloadTransfer.toFixed(1)} MB`}
-                        />
-                      ) : null}
-                      {iperfResult.uploadTransfer !== undefined ? (
-                        <CardRow
-                          label={t('performance.uploadTransfer')}
-                          value={`${iperfResult.uploadTransfer.toFixed(1)} MB`}
-                        />
-                      ) : null}
-                    </div>
-                  ) : (
-                    <CardRow
-                      label={t('performance.transfer')}
-                      value={`${iperfResult.transfer.toFixed(1)} MB`}
+                    <CardValue
+                      label={t('performance.upload')}
+                      value={formatSpeed(iperfResult.uploadBandwidth ?? iperfResult.bandwidth)}
+                      size="md"
+                      status="success"
                     />
-                  )}
-
-                  {iperfResult.protocol === 'tcp' && iperfResult.retransmits > 0 ? (
-                    <CardRow
-                      label={t('performance.retransmits')}
-                      value={iperfResult.retransmits.toString()}
-                    />
-                  ) : null}
-                  {iperfResult.protocol === 'udp' ? (
-                    <>
-                      <CardRow
-                        label={t('performance.jitter')}
-                        value={`${iperfResult.jitter.toFixed(2)} ms`}
-                      />
-                      <CardRow
-                        label={t('performance.packetLoss')}
-                        value={`${iperfResult.lostPercent.toFixed(2)}%`}
-                      />
-                    </>
-                  ) : null}
-                </div>
-              ) : null}
-
-              {iperfError ? <p className="body-small text-status-error">{iperfError}</p> : null}
-
-              {/* Server status indicator (if enabled) */}
-              {iperfSettings.enableServer ? (
-                <div
-                  className={cn(
-                    'caption',
-                    layout.flex.between,
-                    'pad-sm bg-surface-hover',
-                    radius.default,
-                  )}
-                >
-                  <span>{t('performance.serverMode')}</span>
-                  <span
-                    className={
-                      iperfServerStatus?.running ? statusColor.text.success : 'text-text-muted'
+                  </div>
+                ) : (
+                  <CardValue
+                    label={
+                      iperfResult.direction === 'download'
+                        ? t('performance.download')
+                        : t('performance.upload')
                     }
-                  >
-                    {iperfServerStatus?.running
-                      ? t('performance.listening', {
-                          port: iperfServerStatus.port,
-                        })
-                      : t('performance.stopped')}
-                  </span>
-                </div>
-              ) : null}
-            </>
-          ) : null}
-        </div>
-      </Card>
-    );
-  },
-);
+                    value={formatSpeed(iperfResult.bandwidth)}
+                    size="md"
+                    status="success"
+                  />
+                )}
+
+                {iperfResult.direction === 'bidirectional' ? (
+                  <div className={cn('grid grid-cols-1 sm:grid-cols-2', spacing.gap.default)}>
+                    {iperfResult.downloadTransfer !== undefined ? (
+                      <CardRow
+                        label={t('performance.downloadTransfer')}
+                        value={`${iperfResult.downloadTransfer.toFixed(1)} MB`}
+                      />
+                    ) : null}
+                    {iperfResult.uploadTransfer !== undefined ? (
+                      <CardRow
+                        label={t('performance.uploadTransfer')}
+                        value={`${iperfResult.uploadTransfer.toFixed(1)} MB`}
+                      />
+                    ) : null}
+                  </div>
+                ) : (
+                  <CardRow
+                    label={t('performance.transfer')}
+                    value={`${iperfResult.transfer.toFixed(1)} MB`}
+                  />
+                )}
+
+                {iperfResult.protocol === 'tcp' && iperfResult.retransmits > 0 ? (
+                  <CardRow
+                    label={t('performance.retransmits')}
+                    value={iperfResult.retransmits.toString()}
+                  />
+                ) : null}
+                {iperfResult.protocol === 'udp' ? (
+                  <>
+                    <CardRow
+                      label={t('performance.jitter')}
+                      value={`${iperfResult.jitter.toFixed(2)} ms`}
+                    />
+                    <CardRow
+                      label={t('performance.packetLoss')}
+                      value={`${iperfResult.lostPercent.toFixed(2)}%`}
+                    />
+                  </>
+                ) : null}
+              </div>
+            ) : null}
+
+            {iperfError ? <p className="body-small text-status-error">{iperfError}</p> : null}
+
+            {/* Server status indicator (if enabled) */}
+            {iperfSettings.enableServer ? (
+              <div
+                className={cn(
+                  'caption',
+                  layout.flex.between,
+                  'pad-sm bg-surface-hover',
+                  radius.default,
+                )}
+              >
+                <span>{t('performance.serverMode')}</span>
+                <span
+                  className={
+                    iperfServerStatus?.running ? statusColor.text.success : 'text-text-muted'
+                  }
+                >
+                  {iperfServerStatus?.running
+                    ? t('performance.listening', {
+                        port: iperfServerStatus.port,
+                      })
+                    : t('performance.stopped')}
+                </span>
+              </div>
+            ) : null}
+          </>
+        ) : null}
+      </div>
+    </Card>
+  );
+}
