@@ -3,7 +3,7 @@ package api
 // server_init.go contains the per-subsystem initialisation helpers that
 // NewServer composes: DNS/discovery, target networks, database +
 // migration, MIB DB, SSE + log broadcaster, discovery pipeline, vulnerability
-// scanner, and CORS origin policy.
+// scanner, CORS origin policy, and the retention engine.
 
 import (
 	"context"
@@ -18,11 +18,13 @@ import (
 	"github.com/MustardSeedNetworks/seed/internal/discovery/fingerprint"
 	"github.com/MustardSeedNetworks/seed/internal/discovery/resolve"
 	"github.com/MustardSeedNetworks/seed/internal/discovery/vuln"
+	"github.com/MustardSeedNetworks/seed/internal/license"
 	"github.com/MustardSeedNetworks/seed/internal/logging"
 	"github.com/MustardSeedNetworks/seed/internal/mibdb"
 	"github.com/MustardSeedNetworks/seed/internal/platform/events"
 	"github.com/MustardSeedNetworks/seed/internal/platform/jobs"
 	"github.com/MustardSeedNetworks/seed/internal/platform/outbox"
+	"github.com/MustardSeedNetworks/seed/internal/timeseries/retention"
 )
 
 // initNetworkServices initializes DNS servers and device discovery subnets.
@@ -403,4 +405,40 @@ func newDiscoverySNMPCredentials(
 		return nil
 	}
 	return creds
+}
+
+// initRetentionEngine constructs the unified retention engine and
+// registers its sources (probe_results, metrics, flow_records). The engine is
+// tier-aware — it reads license.Manager on each pass — so in-place
+// license upgrades take effect on the next tick.
+//
+// V1.0 NMS expansion — Stage A2.
+func (s *Server) initRetentionEngine(db *database.DB) {
+	retentionEngine := retention.New(
+		licenseTierAdapter{lm: s.licenseMgr},
+		logging.GetLogger(),
+	)
+	retentionEngine.Register(database.NewProbeRollupSource(db))
+	retentionEngine.Register(database.NewMetricsRollupSource(db))
+	retentionEngine.Register(database.NewFlowRollupSource(db))
+	s.retentionEngine = retentionEngine
+	if regErr := s.registerEngineIfLicensed(retentionEngine); regErr != nil {
+		logging.GetLogger().Warn("retention engine registry registration failed", "error", regErr)
+	}
+}
+
+// licenseTierAdapter satisfies retention.TierProvider with the tier the
+// license manager grants now. nil-safe — falls back to TierFree when no
+// license manager is wired.
+type licenseTierAdapter struct {
+	lm *license.Manager
+}
+
+// GetTier returns the granted tier, Free when there is no manager or no live
+// grant.
+func (a licenseTierAdapter) GetTier() license.Tier {
+	if a.lm == nil {
+		return license.TierFree
+	}
+	return license.EffectiveTier(a.lm)
 }

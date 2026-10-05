@@ -12,6 +12,7 @@ import (
 	"github.com/MustardSeedNetworks/seed/internal/anomaly"
 	"github.com/MustardSeedNetworks/seed/internal/database"
 	"github.com/MustardSeedNetworks/seed/internal/database/dbtest"
+	"github.com/MustardSeedNetworks/seed/internal/timeseries/history"
 )
 
 func setupHistoryDB(t *testing.T) (*database.DB, context.Context) {
@@ -161,7 +162,7 @@ func TestAnomalyCountsByDayLive(t *testing.T) {
 	require.NoError(t, err)
 	require.Len(t, counts, 5, "every day in the range, quiet days included")
 
-	byDay := map[string]database.AnomalyDayCount{}
+	byDay := map[string]history.AnomalyDayCount{}
 	for _, c := range counts {
 		byDay[c.Day] = c
 	}
