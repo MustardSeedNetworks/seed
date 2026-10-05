@@ -19,7 +19,7 @@ import type { MintTokenResponse } from '../../../types/generated/mint-token-resp
 // be shown or checked in this view (seed#2393).
 export type { MintTokenResponse };
 
-import { useCallback, useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Trans, useTranslation } from 'react-i18next';
 import { api } from '../../../api/client';
 import { useLicense } from '../../../contexts/LicenseContext';
@@ -53,6 +53,10 @@ function formatDate(value: string | undefined): string {
   }
 }
 
+function listTokens(): Promise<ApiToken[]> {
+  return api.get<ApiToken[] | null>('/api/v1/tokens').then((list) => list ?? []);
+}
+
 export function ApiTokensSettings(): React.ReactElement {
   const { t } = useTranslation(['settings', 'common']);
   // License state is sourced from the shared LicenseProvider so every
@@ -68,26 +72,22 @@ export function ApiTokensSettings(): React.ReactElement {
   const [minting, setMinting] = useState(false);
   const [mintedToken, setMintedToken] = useState<MintTokenResponse | null>(null);
 
-  const refresh = useCallback(async (): Promise<void> => {
+  const refresh = async (): Promise<void> => {
     setError(null);
     try {
-      const [, tokenList] = await Promise.all([
-        refreshLicense(),
-        api.get<ApiToken[] | null>('/api/v1/tokens'),
-      ]);
-      setTokens(tokenList ?? []);
+      const [, tokenList] = await Promise.all([refreshLicense(), listTokens()]);
+      setTokens(tokenList);
     } catch (err) {
       setError(err instanceof Error ? err.message : t('apiTokens.loadFailed'));
-    } finally {
-      setLoading(false);
     }
-  }, [refreshLicense, t]);
+    setLoading(false);
+  };
 
   useEffect(() => {
     void refresh();
   }, [refresh]);
 
-  const handleMint = useCallback(async (): Promise<void> => {
+  const handleMint = async (): Promise<void> => {
     const trimmed = newTokenName.trim();
     if (!trimmed) return;
     setMinting(true);
@@ -99,25 +99,21 @@ export function ApiTokensSettings(): React.ReactElement {
       await refresh();
     } catch (err) {
       setError(err instanceof Error ? err.message : t('apiTokens.mintFailed'));
-    } finally {
-      setMinting(false);
     }
-  }, [newTokenName, refresh, t]);
+    setMinting(false);
+  };
 
-  const handleRevoke = useCallback(
-    async (token: ApiToken): Promise<void> => {
-      const ok = window.confirm(t('apiTokens.confirmRevoke', { name: token.name }));
-      if (!ok) return;
-      setError(null);
-      try {
-        await api.delete(`/api/v1/tokens/${token.id}`);
-        await refresh();
-      } catch (err) {
-        setError(err instanceof Error ? err.message : t('apiTokens.revokeFailed'));
-      }
-    },
-    [refresh, t],
-  );
+  const handleRevoke = async (token: ApiToken): Promise<void> => {
+    const ok = window.confirm(t('apiTokens.confirmRevoke', { name: token.name }));
+    if (!ok) return;
+    setError(null);
+    try {
+      await api.delete(`/api/v1/tokens/${token.id}`);
+      await refresh();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : t('apiTokens.revokeFailed'));
+    }
+  };
 
   const canMint = licenseStatus?.canMintTokens ?? false;
   const tierLabel = licenseStatus?.tier ?? 'Free';

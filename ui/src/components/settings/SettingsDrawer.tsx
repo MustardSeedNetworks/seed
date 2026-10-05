@@ -27,7 +27,7 @@
  */
 
 import type React from 'react';
-import { memo, useCallback, useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { api } from '../../api';
 import { useRole } from '../../contexts/RoleContext';
@@ -85,9 +85,7 @@ interface SettingsDrawerProps {
   isWifi?: boolean;
 }
 
-export const SettingsDrawer: React.MemoExoticComponent<
-  (props: SettingsDrawerProps) => React.ReactElement | null
-> = memo(function settingsDrawer({
+export function SettingsDrawer({
   isOpen,
   onClose,
   version = 'dev',
@@ -109,21 +107,15 @@ export const SettingsDrawer: React.MemoExoticComponent<
   } = useSettings();
 
   // Create setter wrappers that use context update methods
-  const setDisplayOptions = useCallback(
-    (updater: React.SetStateAction<typeof displayOptions>) => {
-      const newValue = typeof updater === 'function' ? updater(displayOptions) : updater;
-      updateDisplayOptions(newValue);
-    },
-    [displayOptions, updateDisplayOptions],
-  );
+  const setDisplayOptions = (updater: React.SetStateAction<typeof displayOptions>) => {
+    const newValue = typeof updater === 'function' ? updater(displayOptions) : updater;
+    updateDisplayOptions(newValue);
+  };
 
-  const setIperfSettings = useCallback(
-    (updater: React.SetStateAction<typeof iperfSettings>) => {
-      const newValue = typeof updater === 'function' ? updater(iperfSettings) : updater;
-      updateIperfSettings(newValue);
-    },
-    [iperfSettings, updateIperfSettings],
-  );
+  const setIperfSettings = (updater: React.SetStateAction<typeof iperfSettings>) => {
+    const newValue = typeof updater === 'function' ? updater(iperfSettings) : updater;
+    updateIperfSettings(newValue);
+  };
 
   const scrollRef = useRef<HTMLDivElement | null>(null);
   // Track if health check settings were modified - dispatch event on drawer close
@@ -366,9 +358,8 @@ export const SettingsDrawer: React.MemoExoticComponent<
     } catch (err) {
       // The client carries the server's own message through.
       setIpMessage(`Failed: ${err instanceof Error ? err.message : t('errors:network.ipFailed')}`);
-    } finally {
-      setSavingIp(false);
     }
+    setSavingIp(false);
   };
 
   // The setters the controls edit through: each edit schedules its group's
@@ -636,4 +627,4 @@ export const SettingsDrawer: React.MemoExoticComponent<
       </div>
     </>
   );
-});
+}

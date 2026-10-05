@@ -12,7 +12,6 @@ import { Tooltip } from '../../ui/Tooltip';
  */
 
 import type React from 'react';
-import { memo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useRole } from '../../../contexts/RoleContext';
 import {
@@ -53,259 +52,256 @@ interface PerformanceSettingsProps {
 
 /**
  * Settings section for speed test and iPerf performance testing configuration.
- * Memoized to prevent unnecessary re-renders when parent state changes.
  */
-export const PerformanceSettings: React.NamedExoticComponent<PerformanceSettingsProps> = memo(
-  function performanceSettings({
-    testsSettings,
-    setTestsSettings,
-    iperfSettings,
-    setIperfSettings,
-    iperfStatus,
-    iperfSuggestions,
-    iperfSuggestionsStatus,
-    iperfSuggestionsError,
-    fetchIperfSuggestions,
-    cardSettings,
-    updateCardSettings,
-  }: PerformanceSettingsProps) {
-    const { t } = useTranslation('settings');
-    const { canWrite } = useRole();
-    // Not `readOnlyReason` on the CollapsibleSection: that fieldset would cover
-    // the whole body, and the iperf child carries a read (find hosts) a viewer
-    // keeps. The write groups here take their own fieldset instead.
-    const readOnlyReason = canWrite ? undefined : t('common.readOnly');
+export function PerformanceSettings({
+  testsSettings,
+  setTestsSettings,
+  iperfSettings,
+  setIperfSettings,
+  iperfStatus,
+  iperfSuggestions,
+  iperfSuggestionsStatus,
+  iperfSuggestionsError,
+  fetchIperfSuggestions,
+  cardSettings,
+  updateCardSettings,
+}: PerformanceSettingsProps) {
+  const { t } = useTranslation('settings');
+  const { canWrite } = useRole();
+  // Not `readOnlyReason` on the CollapsibleSection: that fieldset would cover
+  // the whole body, and the iperf child carries a read (find hosts) a viewer
+  // keeps. The write groups here take their own fieldset instead.
+  const readOnlyReason = canWrite ? undefined : t('common.readOnly');
 
-    return (
-      <CollapsibleSection
-        data-testid="performance-settings-section"
-        title={
-          <div className={layout.inline.default}>
-            <Gauge className={iconTokens.size.sm} />
-            <span>{t('sections.performance')}</span>
-            <AutoSaveIndicator status={iperfStatus} />
-          </div>
-        }
-        defaultOpen={false}
-      >
-        <div className="stack">
-          <Tooltip text={readOnlyReason}>
-            {(description) => (
-              <fieldset disabled={!canWrite} className="stack min-w-0">
-                {readOnlyReason ? (
-                  <legend>
-                    <button
-                      type="button"
-                      {...description}
-                      aria-label={readOnlyReason}
-                      className="text-text-muted inline-flex rounded focus-visible:outline focus-visible:outline-2 focus-visible:outline-brand-primary"
-                    >
-                      <Info className="h-4 w-4" aria-hidden="true" />
-                    </button>
-                  </legend>
-                ) : null}
-                {/* Enable/Disable Toggles */}
-                <div className="stack-sm">
-                  <label
-                    className={cn(
-                      layout.flex.between,
-                      spacing.pad.sm,
-                      'bg-surface-base',
-                      radius.default,
-                      'border border-surface-border',
-                    )}
+  return (
+    <CollapsibleSection
+      data-testid="performance-settings-section"
+      title={
+        <div className={layout.inline.default}>
+          <Gauge className={iconTokens.size.sm} />
+          <span>{t('sections.performance')}</span>
+          <AutoSaveIndicator status={iperfStatus} />
+        </div>
+      }
+      defaultOpen={false}
+    >
+      <div className="stack">
+        <Tooltip text={readOnlyReason}>
+          {(description) => (
+            <fieldset disabled={!canWrite} className="stack min-w-0">
+              {readOnlyReason ? (
+                <legend>
+                  <button
+                    type="button"
+                    {...description}
+                    aria-label={readOnlyReason}
+                    className="text-text-muted inline-flex rounded focus-visible:outline focus-visible:outline-2 focus-visible:outline-brand-primary"
                   >
-                    <div>
-                      <span className="body-small text-text-primary font-medium">
-                        {t('performance.enableSpeedtest')}
-                      </span>
-                      <p className="caption text-text-muted">{t('performance.speedtestDesc')}</p>
-                    </div>
-                    <input
-                      type="checkbox"
-                      checked={testsSettings.runSpeedtest}
-                      onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>
-                        setTestsSettings((prev) => ({
-                          ...prev,
-                          runSpeedtest: e.target.checked,
-                        }))
-                      }
-                      className={iconTokens.size.sm}
-                    />
-                  </label>
-                  <label
-                    className={cn(
-                      layout.flex.between,
-                      spacing.pad.sm,
-                      'bg-surface-base',
-                      radius.default,
-                      'border border-surface-border',
-                    )}
-                  >
-                    <div>
-                      <span className="body-small text-text-primary font-medium">
-                        {t('performance.enableIperf')}
-                      </span>
-                      <p className="caption text-text-muted">{t('performance.iperfDesc')}</p>
-                    </div>
-                    <input
-                      type="checkbox"
-                      checked={testsSettings.runIperf}
-                      onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>
-                        setTestsSettings((prev) => ({
-                          ...prev,
-                          runIperf: e.target.checked,
-                        }))
-                      }
-                      className={iconTokens.size.sm}
-                    />
-                  </label>
-                </div>
-
-                {/* Auto-Run on Link Up (FAB button) */}
-                <div className={cn('border-t border-surface-border', spacing.padding.top.heading)}>
-                  <span className="caption text-text-muted font-medium">
-                    {t('performance.autoRunOnLink')}
-                  </span>
-                  <p className="caption text-text-muted mt-tight">
-                    {t('performance.autoRunOnLinkDesc')}
-                  </p>
-                  <div className={cn(spacing.margin.top.inline, 'stack-sm')}>
-                    <label
-                      className={cn(
-                        layout.flex.between,
-                        spacing.pad.sm,
-                        'bg-surface-base',
-                        radius.default,
-                        'border border-surface-border',
-                      )}
-                    >
-                      <span className="body-small text-text-primary">
-                        {t('performance.speedtest')}
-                      </span>
-                      <input
-                        type="checkbox"
-                        checked={cardSettings.performance.speedtest.autoRunOnLink}
-                        onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>
-                          updateCardSettings({
-                            performance: {
-                              ...cardSettings.performance,
-                              speedtest: {
-                                ...cardSettings.performance.speedtest,
-                                autoRunOnLink: e.target.checked,
-                              },
-                            },
-                          })
-                        }
-                        className={iconTokens.size.sm}
-                      />
-                    </label>
-                    <label
-                      className={cn(
-                        layout.flex.between,
-                        spacing.pad.sm,
-                        'bg-surface-base',
-                        radius.default,
-                        'border border-surface-border',
-                      )}
-                    >
-                      <span className="body-small text-text-primary">{t('performance.iperf')}</span>
-                      <input
-                        type="checkbox"
-                        checked={cardSettings.performance.iperf.autoRunOnLink}
-                        onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>
-                          updateCardSettings({
-                            performance: {
-                              ...cardSettings.performance,
-                              iperf: {
-                                ...cardSettings.performance.iperf,
-                                autoRunOnLink: e.target.checked,
-                              },
-                            },
-                          })
-                        }
-                        className={iconTokens.size.sm}
-                      />
-                    </label>
+                    <Info className="h-4 w-4" aria-hidden="true" />
+                  </button>
+                </legend>
+              ) : null}
+              {/* Enable/Disable Toggles */}
+              <div className="stack-sm">
+                <label
+                  className={cn(
+                    layout.flex.between,
+                    spacing.pad.sm,
+                    'bg-surface-base',
+                    radius.default,
+                    'border border-surface-border',
+                  )}
+                >
+                  <div>
+                    <span className="body-small text-text-primary font-medium">
+                      {t('performance.enableSpeedtest')}
+                    </span>
+                    <p className="caption text-text-muted">{t('performance.speedtestDesc')}</p>
                   </div>
-                </div>
+                  <input
+                    type="checkbox"
+                    checked={testsSettings.runSpeedtest}
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>
+                      setTestsSettings((prev) => ({
+                        ...prev,
+                        runSpeedtest: e.target.checked,
+                      }))
+                    }
+                    className={iconTokens.size.sm}
+                  />
+                </label>
+                <label
+                  className={cn(
+                    layout.flex.between,
+                    spacing.pad.sm,
+                    'bg-surface-base',
+                    radius.default,
+                    'border border-surface-border',
+                  )}
+                >
+                  <div>
+                    <span className="body-small text-text-primary font-medium">
+                      {t('performance.enableIperf')}
+                    </span>
+                    <p className="caption text-text-muted">{t('performance.iperfDesc')}</p>
+                  </div>
+                  <input
+                    type="checkbox"
+                    checked={testsSettings.runIperf}
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>
+                      setTestsSettings((prev) => ({
+                        ...prev,
+                        runIperf: e.target.checked,
+                      }))
+                    }
+                    className={iconTokens.size.sm}
+                  />
+                </label>
+              </div>
 
-                {/* Internet Speed (Speedtest) Subsection */}
-                <div className={cn('border-t border-surface-border', spacing.padding.top.heading)}>
-                  <h4
+              {/* Auto-Run on Link Up (FAB button) */}
+              <div className={cn('border-t border-surface-border', spacing.padding.top.heading)}>
+                <span className="caption text-text-muted font-medium">
+                  {t('performance.autoRunOnLink')}
+                </span>
+                <p className="caption text-text-muted mt-tight">
+                  {t('performance.autoRunOnLinkDesc')}
+                </p>
+                <div className={cn(spacing.margin.top.inline, 'stack-sm')}>
+                  <label
                     className={cn(
-                      'body-small font-semibold text-text-primary',
-                      spacing.margin.bottom.inline,
-                      'uppercase tracking-wide',
+                      layout.flex.between,
+                      spacing.pad.sm,
+                      'bg-surface-base',
+                      radius.default,
+                      'border border-surface-border',
                     )}
                   >
-                    {t('performance.internetSpeed')}
-                  </h4>
-                  <div className="stack">
-                    <div>
-                      <label
-                        htmlFor="speedtest-server-id"
-                        className="caption text-text-muted font-medium"
-                      >
-                        {t('performance.serverId')}
-                      </label>
-                      <input
-                        id="speedtest-server-id"
-                        type="text"
-                        value={testsSettings.speedtest.serverId}
-                        onChange={(
-                          e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>,
-                        ): void =>
+                    <span className="body-small text-text-primary">
+                      {t('performance.speedtest')}
+                    </span>
+                    <input
+                      type="checkbox"
+                      checked={cardSettings.performance.speedtest.autoRunOnLink}
+                      onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>
+                        updateCardSettings({
+                          performance: {
+                            ...cardSettings.performance,
+                            speedtest: {
+                              ...cardSettings.performance.speedtest,
+                              autoRunOnLink: e.target.checked,
+                            },
+                          },
+                        })
+                      }
+                      className={iconTokens.size.sm}
+                    />
+                  </label>
+                  <label
+                    className={cn(
+                      layout.flex.between,
+                      spacing.pad.sm,
+                      'bg-surface-base',
+                      radius.default,
+                      'border border-surface-border',
+                    )}
+                  >
+                    <span className="body-small text-text-primary">{t('performance.iperf')}</span>
+                    <input
+                      type="checkbox"
+                      checked={cardSettings.performance.iperf.autoRunOnLink}
+                      onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>
+                        updateCardSettings({
+                          performance: {
+                            ...cardSettings.performance,
+                            iperf: {
+                              ...cardSettings.performance.iperf,
+                              autoRunOnLink: e.target.checked,
+                            },
+                          },
+                        })
+                      }
+                      className={iconTokens.size.sm}
+                    />
+                  </label>
+                </div>
+              </div>
+
+              {/* Internet Speed (Speedtest) Subsection */}
+              <div className={cn('border-t border-surface-border', spacing.padding.top.heading)}>
+                <h4
+                  className={cn(
+                    'body-small font-semibold text-text-primary',
+                    spacing.margin.bottom.inline,
+                    'uppercase tracking-wide',
+                  )}
+                >
+                  {t('performance.internetSpeed')}
+                </h4>
+                <div className="stack">
+                  <div>
+                    <label
+                      htmlFor="speedtest-server-id"
+                      className="caption text-text-muted font-medium"
+                    >
+                      {t('performance.serverId')}
+                    </label>
+                    <input
+                      id="speedtest-server-id"
+                      type="text"
+                      value={testsSettings.speedtest.serverId}
+                      onChange={(
+                        e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>,
+                      ): void =>
+                        setTestsSettings((prev) => ({
+                          ...prev,
+                          speedtest: {
+                            ...prev.speedtest,
+                            serverId: e.target.value,
+                          },
+                        }))
+                      }
+                      placeholder={t('performance.autoClosestServer')}
+                      className={cn(
+                        inputTokens.base,
+                        inputTokens.state.default,
+                        inputTokens.size.md,
+                        'w-full',
+                        spacing.margin.top.tight,
+                        'body-small',
+                      )}
+                    />
+                    <div className={cn(layout.flex.between, spacing.margin.top.tight)}>
+                      <p className="caption text-text-muted">{t('performance.autoSelectDesc')}</p>
+                      <button
+                        type="button"
+                        onClick={(): void =>
                           setTestsSettings((prev) => ({
                             ...prev,
-                            speedtest: {
-                              ...prev.speedtest,
-                              serverId: e.target.value,
-                            },
+                            speedtest: { ...prev.speedtest, serverId: '' },
                           }))
                         }
-                        placeholder={t('performance.autoClosestServer')}
-                        className={cn(
-                          inputTokens.base,
-                          inputTokens.state.default,
-                          inputTokens.size.md,
-                          'w-full',
-                          spacing.margin.top.tight,
-                          'body-small',
-                        )}
-                      />
-                      <div className={cn(layout.flex.between, spacing.margin.top.tight)}>
-                        <p className="caption text-text-muted">{t('performance.autoSelectDesc')}</p>
-                        <button
-                          type="button"
-                          onClick={(): void =>
-                            setTestsSettings((prev) => ({
-                              ...prev,
-                              speedtest: { ...prev.speedtest, serverId: '' },
-                            }))
-                          }
-                          className="caption text-brand-primary hover:underline"
-                        >
-                          {t('performance.resetToAuto')}
-                        </button>
-                      </div>
+                        className="caption text-brand-primary hover:underline"
+                      >
+                        {t('performance.resetToAuto')}
+                      </button>
                     </div>
                   </div>
                 </div>
-              </fieldset>
-            )}
-          </Tooltip>
+              </div>
+            </fieldset>
+          )}
+        </Tooltip>
 
-          <PerformanceIperfSection
-            iperfSettings={iperfSettings}
-            setIperfSettings={setIperfSettings}
-            iperfSuggestions={iperfSuggestions}
-            iperfSuggestionsStatus={iperfSuggestionsStatus}
-            iperfSuggestionsError={iperfSuggestionsError}
-            fetchIperfSuggestions={fetchIperfSuggestions}
-          />
-        </div>
-      </CollapsibleSection>
-    );
-  },
-);
+        <PerformanceIperfSection
+          iperfSettings={iperfSettings}
+          setIperfSettings={setIperfSettings}
+          iperfSuggestions={iperfSuggestions}
+          iperfSuggestionsStatus={iperfSuggestionsStatus}
+          iperfSuggestionsError={iperfSuggestionsError}
+          fetchIperfSuggestions={fetchIperfSuggestions}
+        />
+      </div>
+    </CollapsibleSection>
+  );
+}

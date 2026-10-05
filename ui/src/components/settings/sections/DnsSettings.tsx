@@ -28,7 +28,6 @@
  */
 
 import type React from 'react';
-import { memo, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useRole } from '../../../contexts/RoleContext';
 import {
@@ -56,198 +55,190 @@ interface DnsSettingsProps {
   updateCardSettings: (updates: Partial<CardSettings>) => void;
 }
 
-export const DnsSettings: React.NamedExoticComponent<DnsSettingsProps> = memo(
-  function DnsSettingsComponent({
-    testsSettings,
-    setTestsSettings,
-    testsStatus,
-    cardSettings,
-    updateCardSettings,
-  }: DnsSettingsProps): React.ReactElement {
-    const { t } = useTranslation('settings');
-    const { canWrite } = useRole();
-    const readOnlyReason = canWrite ? undefined : t('common.readOnly');
+export function DnsSettings({
+  testsSettings,
+  setTestsSettings,
+  testsStatus,
+  cardSettings,
+  updateCardSettings,
+}: DnsSettingsProps): React.ReactElement {
+  const { t } = useTranslation('settings');
+  const { canWrite } = useRole();
+  const readOnlyReason = canWrite ? undefined : t('common.readOnly');
 
-    const addDnsServer = useCallback((): void => {
-      setTestsSettings((prev) => ({
-        ...prev,
-        dnsServers: [...prev.dnsServers, { id: generateId(), address: '', enabled: true }],
-      }));
-    }, [setTestsSettings]);
+  const addDnsServer = (): void => {
+    setTestsSettings((prev) => ({
+      ...prev,
+      dnsServers: [...prev.dnsServers, { id: generateId(), address: '', enabled: true }],
+    }));
+  };
 
-    const removeDnsServer = useCallback(
-      (id: string): void => {
-        setTestsSettings((prev) => ({
-          ...prev,
-          dnsServers: prev.dnsServers.filter((s) => s.id !== id),
-        }));
-      },
-      [setTestsSettings],
-    );
+  const removeDnsServer = (id: string): void => {
+    setTestsSettings((prev) => ({
+      ...prev,
+      dnsServers: prev.dnsServers.filter((s) => s.id !== id),
+    }));
+  };
 
-    const updateDnsServer = useCallback(
-      (id: string, field: keyof DnsServer, value: string | boolean): void => {
-        setTestsSettings((prev) => ({
-          ...prev,
-          dnsServers: prev.dnsServers.map((s) => (s.id === id ? { ...s, [field]: value } : s)),
-        }));
-      },
-      [setTestsSettings],
-    );
+  const updateDnsServer = (id: string, field: keyof DnsServer, value: string | boolean): void => {
+    setTestsSettings((prev) => ({
+      ...prev,
+      dnsServers: prev.dnsServers.map((s) => (s.id === id ? { ...s, [field]: value } : s)),
+    }));
+  };
 
-    return (
-      <CollapsibleSection
-        readOnlyReason={readOnlyReason}
-        data-testid="dns-settings-section"
-        title={
-          <div className={layout.inline.default}>
-            <Globe className={iconTokens.size.sm} />
-            <span>{t('sections.dns')}</span>
-            <AutoSaveIndicator status={testsStatus} />
-          </div>
-        }
-      >
-        <div className="stack">
-          {/* Card Visibility & FAB Controls */}
-          <div className="stack-sm">
-            <label
-              className={cn(
-                layout.flex.between,
-                spacing.pad.sm,
-                'bg-surface-base',
-                radius.default,
-                'border border-surface-border',
-              )}
-            >
-              <div>
-                <span className="body-small text-text-primary font-medium">
-                  {t('common.showCard')}
-                </span>
-                <p className="caption text-text-muted">{t('common.showCardDesc')}</p>
-              </div>
-              <input
-                type="checkbox"
-                checked={cardSettings.dns.enabled}
-                onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>
-                  updateCardSettings({
-                    dns: { ...cardSettings.dns, enabled: e.target.checked },
-                  })
-                }
-                className={iconTokens.size.sm}
-              />
-            </label>
-            <label
-              className={cn(
-                layout.flex.between,
-                spacing.pad.sm,
-                'bg-surface-base',
-                radius.default,
-                'border border-surface-border',
-              )}
-            >
-              <div>
-                <span className="body-small text-text-primary font-medium">
-                  {t('common.runOnFab')}
-                </span>
-                <p className="caption text-text-muted">{t('common.runOnFabDesc')}</p>
-              </div>
-              <input
-                type="checkbox"
-                checked={cardSettings.dns.autoRunOnLink}
-                onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>
-                  updateCardSettings({
-                    dns: { ...cardSettings.dns, autoRunOnLink: e.target.checked },
-                  })
-                }
-                className={iconTokens.size.sm}
-              />
-            </label>
-          </div>
-
-          {/* DNS Hostname */}
-          <div>
-            <label htmlFor="dns-test-hostname" className="caption text-text-muted">
-              {t('dns.testHostname')}
-            </label>
-            <input
-              id="dns-test-hostname"
-              type="text"
-              value={testsSettings.dnsHostname}
-              onChange={(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>): void =>
-                setTestsSettings((prev) => ({
-                  ...prev,
-                  dnsHostname: e.target.value,
-                }))
-              }
-              placeholder="google.com"
-              className={cn(
-                inputTokens.base,
-                inputTokens.state.default,
-                inputTokens.size.md,
-                'w-full',
-                spacing.margin.top.tight,
-                'body-small',
-              )}
-            />
-            <p className={cn('caption', 'text-text-muted', spacing.margin.top.tight)}>
-              {t('dns.testHostnameDesc')}
-            </p>
-          </div>
-
-          {/* DNS Servers for per-server testing */}
-          <div className={cn('border-t', 'border-surface-border', spacing.padding.top.heading)}>
-            <div className={cn(layout.flex.between, spacing.margin.bottom.inline)}>
-              <span className="caption text-text-muted font-medium">
-                {t('dns.additionalServers')}
+  return (
+    <CollapsibleSection
+      readOnlyReason={readOnlyReason}
+      data-testid="dns-settings-section"
+      title={
+        <div className={layout.inline.default}>
+          <Globe className={iconTokens.size.sm} />
+          <span>{t('sections.dns')}</span>
+          <AutoSaveIndicator status={testsStatus} />
+        </div>
+      }
+    >
+      <div className="stack">
+        {/* Card Visibility & FAB Controls */}
+        <div className="stack-sm">
+          <label
+            className={cn(
+              layout.flex.between,
+              spacing.pad.sm,
+              'bg-surface-base',
+              radius.default,
+              'border border-surface-border',
+            )}
+          >
+            <div>
+              <span className="body-small text-text-primary font-medium">
+                {t('common.showCard')}
               </span>
+              <p className="caption text-text-muted">{t('common.showCardDesc')}</p>
+            </div>
+            <input
+              type="checkbox"
+              checked={cardSettings.dns.enabled}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>
+                updateCardSettings({
+                  dns: { ...cardSettings.dns, enabled: e.target.checked },
+                })
+              }
+              className={iconTokens.size.sm}
+            />
+          </label>
+          <label
+            className={cn(
+              layout.flex.between,
+              spacing.pad.sm,
+              'bg-surface-base',
+              radius.default,
+              'border border-surface-border',
+            )}
+          >
+            <div>
+              <span className="body-small text-text-primary font-medium">
+                {t('common.runOnFab')}
+              </span>
+              <p className="caption text-text-muted">{t('common.runOnFabDesc')}</p>
+            </div>
+            <input
+              type="checkbox"
+              checked={cardSettings.dns.autoRunOnLink}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>
+                updateCardSettings({
+                  dns: { ...cardSettings.dns, autoRunOnLink: e.target.checked },
+                })
+              }
+              className={iconTokens.size.sm}
+            />
+          </label>
+        </div>
+
+        {/* DNS Hostname */}
+        <div>
+          <label htmlFor="dns-test-hostname" className="caption text-text-muted">
+            {t('dns.testHostname')}
+          </label>
+          <input
+            id="dns-test-hostname"
+            type="text"
+            value={testsSettings.dnsHostname}
+            onChange={(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>): void =>
+              setTestsSettings((prev) => ({
+                ...prev,
+                dnsHostname: e.target.value,
+              }))
+            }
+            placeholder="google.com"
+            className={cn(
+              inputTokens.base,
+              inputTokens.state.default,
+              inputTokens.size.md,
+              'w-full',
+              spacing.margin.top.tight,
+              'body-small',
+            )}
+          />
+          <p className={cn('caption', 'text-text-muted', spacing.margin.top.tight)}>
+            {t('dns.testHostnameDesc')}
+          </p>
+        </div>
+
+        {/* DNS Servers for per-server testing */}
+        <div className={cn('border-t', 'border-surface-border', spacing.padding.top.heading)}>
+          <div className={cn(layout.flex.between, spacing.margin.bottom.inline)}>
+            <span className="caption text-text-muted font-medium">
+              {t('dns.additionalServers')}
+            </span>
+            <button
+              type="button"
+              onClick={addDnsServer}
+              className="caption text-brand-primary hover:text-brand-accent"
+            >
+              {t('common.add')}
+            </button>
+          </div>
+          <p className={cn('caption', 'text-text-muted', spacing.margin.bottom.inline)}>
+            {t('dns.serversDescription')}
+          </p>
+          {testsSettings.dnsServers.map((server) => (
+            <div
+              key={server.id || server.address}
+              className={cn('flex', spacing.gap.compact, spacing.margin.bottom.inline)}
+            >
+              <input
+                type="text"
+                value={server.address}
+                onChange={(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>): void =>
+                  updateDnsServer(server.id ?? '', 'address', e.target.value)
+                }
+                placeholder={t('dns.serverIp')}
+                className={cn(
+                  inputTokens.base,
+                  inputTokens.state.default,
+                  inputTokens.size.md,
+                  'flex-1',
+                  'caption',
+                )}
+              />
               <button
                 type="button"
-                onClick={addDnsServer}
-                className="caption text-brand-primary hover:text-brand-accent"
+                onClick={(): void => removeDnsServer(server.id ?? '')}
+                className={cn(
+                  statusColor.text.error,
+                  'hover:text-status-error/80',
+                  spacing.actionBtn,
+                )}
+                aria-label={t('common.remove')}
               >
-                {t('common.add')}
+                {t('common.remove')}
               </button>
             </div>
-            <p className={cn('caption', 'text-text-muted', spacing.margin.bottom.inline)}>
-              {t('dns.serversDescription')}
-            </p>
-            {testsSettings.dnsServers.map((server) => (
-              <div
-                key={server.id || server.address}
-                className={cn('flex', spacing.gap.compact, spacing.margin.bottom.inline)}
-              >
-                <input
-                  type="text"
-                  value={server.address}
-                  onChange={(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>): void =>
-                    updateDnsServer(server.id ?? '', 'address', e.target.value)
-                  }
-                  placeholder={t('dns.serverIp')}
-                  className={cn(
-                    inputTokens.base,
-                    inputTokens.state.default,
-                    inputTokens.size.md,
-                    'flex-1',
-                    'caption',
-                  )}
-                />
-                <button
-                  type="button"
-                  onClick={(): void => removeDnsServer(server.id ?? '')}
-                  className={cn(
-                    statusColor.text.error,
-                    'hover:text-status-error/80',
-                    spacing.actionBtn,
-                  )}
-                  aria-label={t('common.remove')}
-                >
-                  {t('common.remove')}
-                </button>
-              </div>
-            ))}
-          </div>
+          ))}
         </div>
-      </CollapsibleSection>
-    );
-  },
-);
+      </div>
+    </CollapsibleSection>
+  );
+}

@@ -15,7 +15,7 @@
  */
 
 import type React from 'react';
-import { useCallback, useState } from 'react';
+import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useLicense } from '../../../contexts/LicenseContext';
 import { useProfileContext } from '../../../contexts/profileContext';
@@ -61,54 +61,45 @@ export function InterfacesSettings(): React.ReactElement {
   const canAddEthernet = hasMultiInterface || ethernetInterfaces.length < 1;
   const canAddWifi = hasMultiInterface || wifiInterfaces.length < 1;
 
-  const handleAdd = useCallback(
-    async (kind: IfaceKind, name: string): Promise<void> => {
-      const trimmed = name.trim();
-      if (!trimmed) return;
-      setError(null);
-      const ok =
-        kind === 'ethernet'
-          ? await addEthernetInterface(trimmed, true)
-          : await addWifiInterface(trimmed, true);
-      if (!ok) {
-        setError(t('errors:profile.multiInterfaceRequired'));
-        return;
-      }
-      if (kind === 'ethernet') setNewEthernetName('');
-      else setNewWifiName('');
-    },
-    [addEthernetInterface, addWifiInterface, t],
-  );
+  const handleAdd = async (kind: IfaceKind, name: string): Promise<void> => {
+    const trimmed = name.trim();
+    if (!trimmed) return;
+    setError(null);
+    const ok =
+      kind === 'ethernet'
+        ? await addEthernetInterface(trimmed, true)
+        : await addWifiInterface(trimmed, true);
+    if (!ok) {
+      setError(t('errors:profile.multiInterfaceRequired'));
+      return;
+    }
+    if (kind === 'ethernet') setNewEthernetName('');
+    else setNewWifiName('');
+  };
 
-  const handleRemove = useCallback(
-    async (kind: IfaceKind, name: string): Promise<void> => {
-      const ok = window.confirm(
-        t('settings:interfaces.removeConfirm', { name }) +
-          '\n\n' +
-          t('settings:interfaces.removeConfirmPrompt'),
-      );
-      if (!ok) return;
-      setError(null);
-      if (kind === 'ethernet') {
-        await removeEthernetInterface(name);
-      } else {
-        await removeWifiInterface(name);
-      }
-    },
-    [removeEthernetInterface, removeWifiInterface, t],
-  );
+  const handleRemove = async (kind: IfaceKind, name: string): Promise<void> => {
+    const ok = window.confirm(
+      t('settings:interfaces.removeConfirm', { name }) +
+        '\n\n' +
+        t('settings:interfaces.removeConfirmPrompt'),
+    );
+    if (!ok) return;
+    setError(null);
+    if (kind === 'ethernet') {
+      await removeEthernetInterface(name);
+    } else {
+      await removeWifiInterface(name);
+    }
+  };
 
-  const handleSetActive = useCallback(
-    async (kind: IfaceKind, name: string): Promise<void> => {
-      setError(null);
-      if (kind === 'ethernet') {
-        await setActiveEthernetInterface(name);
-      } else {
-        await setActiveWifiInterface(name);
-      }
-    },
-    [setActiveEthernetInterface, setActiveWifiInterface],
-  );
+  const handleSetActive = async (kind: IfaceKind, name: string): Promise<void> => {
+    setError(null);
+    if (kind === 'ethernet') {
+      await setActiveEthernetInterface(name);
+    } else {
+      await setActiveWifiInterface(name);
+    }
+  };
 
   return (
     <CollapsibleSection

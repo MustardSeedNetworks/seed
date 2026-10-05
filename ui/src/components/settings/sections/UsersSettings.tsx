@@ -16,7 +16,7 @@
 
 import type { TFunction } from 'i18next';
 import type React from 'react';
-import { useCallback, useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { api } from '../../../api/client';
 import { useLicense } from '../../../contexts/LicenseContext';
@@ -64,6 +64,10 @@ function statusOf(u: UserRow, t: StatusT): string {
   return t('settings:users.status.active');
 }
 
+function listUsers(): Promise<UserRow[]> {
+  return api.get<UserRow[] | null>('/api/v1/users').then((list) => list ?? []);
+}
+
 export function UsersSettings(): React.ReactElement {
   const { t } = useTranslation(['settings', 'errors', 'common']);
   const { status: licenseStatus, refresh: refreshLicense } = useLicense();
@@ -83,30 +87,28 @@ export function UsersSettings(): React.ReactElement {
   const canCreate =
     isAdmin && licenseStatus !== null && Boolean(licenseStatus?.features?.includes?.('multi_user'));
 
-  const refresh = useCallback(async (): Promise<void> => {
+  const refresh = async (): Promise<void> => {
     setError(null);
     try {
       await refreshLicense();
       const meRow = await api.get<UserRow>('/api/v1/users/me');
       setMe(meRow);
       if (meRow.role === 'admin') {
-        const list = await api.get<UserRow[]>('/api/v1/users');
-        setUsers(list ?? []);
+        setUsers(await listUsers());
       } else {
         setUsers([meRow]);
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : t('errors:users.loadFailed'));
-    } finally {
-      setLoading(false);
     }
-  }, [refreshLicense]);
+    setLoading(false);
+  };
 
   useEffect(() => {
     void refresh();
   }, [refresh]);
 
-  const handleCreate = useCallback(async (): Promise<void> => {
+  const handleCreate = async (): Promise<void> => {
     if (!newUsername.trim() || !newPassword) return;
     setCreating(true);
     setError(null);
@@ -122,43 +124,36 @@ export function UsersSettings(): React.ReactElement {
       await refresh();
     } catch (err) {
       setError(err instanceof Error ? err.message : t('errors:users.createFailed'));
-    } finally {
-      setCreating(false);
     }
-  }, [newUsername, newPassword, newRole, refresh]);
+    setCreating(false);
+  };
 
-  const handleRoleChange = useCallback(
-    async (target: UserRow, role: Role): Promise<void> => {
-      if (role === target.role) return;
-      setError(null);
-      try {
-        await api.patch(`/api/v1/users/${target.username}`, { role });
-        await refresh();
-      } catch (err) {
-        setError(err instanceof Error ? err.message : t('errors:users.updateRoleFailed'));
-      }
-    },
-    [refresh],
-  );
+  const handleRoleChange = async (target: UserRow, role: Role): Promise<void> => {
+    if (role === target.role) return;
+    setError(null);
+    try {
+      await api.patch(`/api/v1/users/${target.username}`, { role });
+      await refresh();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : t('errors:users.updateRoleFailed'));
+    }
+  };
 
-  const handleDelete = useCallback(
-    async (target: UserRow): Promise<void> => {
-      const ok = window.confirm(
-        t('settings:users.confirmDelete', { username: target.username }) +
-          '\n\n' +
-          t('settings:users.confirmDeletePrompt', { username: target.username }),
-      );
-      if (!ok) return;
-      setError(null);
-      try {
-        await api.delete(`/api/v1/users/${target.username}`);
-        await refresh();
-      } catch (err) {
-        setError(err instanceof Error ? err.message : t('errors:users.deleteFailed'));
-      }
-    },
-    [refresh, t],
-  );
+  const handleDelete = async (target: UserRow): Promise<void> => {
+    const ok = window.confirm(
+      t('settings:users.confirmDelete', { username: target.username }) +
+        '\n\n' +
+        t('settings:users.confirmDeletePrompt', { username: target.username }),
+    );
+    if (!ok) return;
+    setError(null);
+    try {
+      await api.delete(`/api/v1/users/${target.username}`);
+      await refresh();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : t('errors:users.deleteFailed'));
+    }
+  };
 
   const tierLabel = licenseStatus?.tier ?? 'Free';
 

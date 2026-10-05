@@ -2,7 +2,7 @@ import { Tooltip } from '../../ui/Tooltip';
 /** Wireless interface selection, scanning and saved network configuration. */
 
 import type React from 'react';
-import { memo, useCallback, useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { api } from '../../../api';
 import { useRole } from '../../../contexts/RoleContext';
@@ -119,40 +119,40 @@ function SavedNetworks({
   );
 }
 
-export const WiFiSettings: React.NamedExoticComponent<WiFiSettingsProps> = memo(
-  function wiFiSettings({ wifiSettings, setWifiSettings, wifiStatus }: WiFiSettingsProps) {
-    const { t } = useTranslation(['settings', 'errors']);
-    const { t: tCommon } = useTranslation('common');
+export function WiFiSettings({ wifiSettings, setWifiSettings, wifiStatus }: WiFiSettingsProps) {
+  const { t } = useTranslation(['settings', 'errors']);
+  const { t: tCommon } = useTranslation('common');
 
-    // State for network scanning and connection
-    const [networks, setNetworks] = useState<ScannedNetwork[]>([]);
-    const [scanning, setScanning] = useState(false);
-    const [scanError, setScanError] = useState<string | null>(null);
-    // connect / disconnect / forget all POST or DELETE against routes the
-    // backend registers with minRole: op, so a viewer's click can only 403
-    // (#1254). Disabled with a reason rather than hidden, matching the
-    // API-tokens section beside it.
-    const { canWrite } = useRole();
-    const [connecting, setConnecting] = useState(false);
-    const [connectionStatus, setConnectionStatus] = useState<{
-      ok: boolean;
-      text: string;
-    } | null>(null);
-    /** Shown on every Wi-Fi action a viewer cannot perform (#1254). */
-    const readOnlyReason = t('wifi.readOnlyReason');
-    const [selectedNetwork, setSelectedNetwork] = useState<ScannedNetwork | null>(null);
-    const [password, setPassword] = useState('');
-    const [savedNetworks, setSavedNetworks] = useState<SavedNetwork[]>([]);
-    const [showPassword, setShowPassword] = useState(false);
+  // State for network scanning and connection
+  const [networks, setNetworks] = useState<ScannedNetwork[]>([]);
+  const [scanning, setScanning] = useState(false);
+  const [scanError, setScanError] = useState<string | null>(null);
+  // connect / disconnect / forget all POST or DELETE against routes the
+  // backend registers with minRole: op, so a viewer's click can only 403
+  // (#1254). Disabled with a reason rather than hidden, matching the
+  // API-tokens section beside it.
+  const { canWrite } = useRole();
+  const [connecting, setConnecting] = useState(false);
+  const [connectionStatus, setConnectionStatus] = useState<{
+    ok: boolean;
+    text: string;
+  } | null>(null);
+  /** Shown on every Wi-Fi action a viewer cannot perform (#1254). */
+  const readOnlyReason = t('wifi.readOnlyReason');
+  const [selectedNetwork, setSelectedNetwork] = useState<ScannedNetwork | null>(null);
+  const [password, setPassword] = useState('');
+  const [savedNetworks, setSavedNetworks] = useState<SavedNetwork[]>([]);
+  const [showPassword, setShowPassword] = useState(false);
 
-    // Scan for available networks
-    const scanNetworks = useCallback(async () => {
-      setScanning(true);
-      setScanError(null);
-      try {
-        const response = await api.get<{ networks: ScannedNetwork[]; error?: string }>(
-          `/api/v1/wifi/wifi/scan?interface=${wifiSettings.interface}`,
-        );
+  // Scan for available networks
+  const scanNetworks = async () => {
+    setScanning(true);
+    setScanError(null);
+    await api
+      .get<{ networks: ScannedNetwork[]; error?: string }>(
+        `/api/v1/wifi/wifi/scan?interface=${wifiSettings.interface}`,
+      )
+      .then((response) => {
         if (response?.networks) {
           // Filter out hidden networks (empty SSID) and sort by signal strength
           const visibleNetworks = response.networks
@@ -163,424 +163,415 @@ export const WiFiSettings: React.NamedExoticComponent<WiFiSettingsProps> = memo(
         if (response?.error) {
           setScanError(response.error);
         }
-      } catch {
+      })
+      .catch(() => {
         setScanError(t('errors:wifi.scanFailed'));
-      } finally {
-        setScanning(false);
-      }
-    }, [wifiSettings.interface]);
+      });
+    setScanning(false);
+  };
 
-    // Load saved networks
-    const loadSavedNetworks = useCallback(async () => {
-      try {
-        const response = await api.get<{ networks: SavedNetwork[] }>('/api/v1/wifi/wifi/saved');
+  // Load saved networks
+  const loadSavedNetworks = async () => {
+    await api
+      .get<{ networks: SavedNetwork[] }>('/api/v1/wifi/wifi/saved')
+      .then((response) => {
         if (response?.networks) {
           setSavedNetworks(response.networks);
         }
-      } catch {
+      })
+      .catch(() => {
         // Ignore errors for saved networks
-      }
-    }, []);
+      });
+  };
 
-    // Connect to a network
-    const connectToNetwork = useCallback(async () => {
-      if (!selectedNetwork) {
-        return;
-      }
+  // Connect to a network
+  const connectToNetwork = async () => {
+    if (!selectedNetwork) {
+      return;
+    }
 
-      setConnecting(true);
-      setConnectionStatus(null);
-      try {
-        const response = await api.post<ConnectionResult>('/api/v1/wifi/wifi/connect', {
-          ssid: selectedNetwork.ssid,
-          password: password,
-        });
-        if (response?.success) {
-          setConnectionStatus({
-            ok: true,
-            text: t('wifi.connectedTo', { ssid: selectedNetwork.ssid }),
-          });
-          setSelectedNetwork(null);
-          setPassword('');
-          // Refresh saved networks
-          await loadSavedNetworks();
-        } else {
+    setConnecting(true);
+    setConnectionStatus(null);
+    const { ssid } = selectedNetwork;
+    await api
+      .post<ConnectionResult>('/api/v1/wifi/wifi/connect', { ssid, password })
+      .then((response) => {
+        if (!response?.success) {
           setConnectionStatus(failed(response?.message || t('errors:network.connectionFailed')));
+          return;
         }
-      } catch {
+        setConnectionStatus({ ok: true, text: t('wifi.connectedTo', { ssid }) });
+        setSelectedNetwork(null);
+        setPassword('');
+        // Refresh saved networks
+        return loadSavedNetworks();
+      })
+      .catch(() => {
         setConnectionStatus(failed(t('errors:network.connectionFailed')));
-      } finally {
-        setConnecting(false);
-      }
-    }, [selectedNetwork, password, loadSavedNetworks]);
+      });
+    setConnecting(false);
+  };
 
-    // Disconnect from current network
-    const disconnectNetwork = useCallback(async () => {
-      setConnecting(true);
-      try {
-        const response = await api.post<ConnectionResult>('/api/v1/wifi/wifi/disconnect', {});
+  // Disconnect from current network
+  const disconnectNetwork = async () => {
+    setConnecting(true);
+    await api
+      .post<ConnectionResult>('/api/v1/wifi/wifi/disconnect', {})
+      .then((response) => {
         if (response?.success) {
           setConnectionStatus({ ok: true, text: t('wifi.disconnected') });
         } else {
           setConnectionStatus(failed(response?.message || t('errors:wifi.disconnectFailed')));
         }
-      } catch {
+      })
+      .catch(() => {
         setConnectionStatus(failed(t('errors:wifi.disconnectFailed')));
-      } finally {
-        setConnecting(false);
-      }
-    }, []);
+      });
+    setConnecting(false);
+  };
 
-    // Forget a saved network
-    const forgetNetwork = useCallback(
-      async (ssid: string) => {
-        try {
-          await api.delete(`/api/v1/wifi/wifi/forget?ssid=${encodeURIComponent(ssid)}`);
-          await loadSavedNetworks();
-        } catch {
-          // Ignore errors
-        }
-      },
-      [loadSavedNetworks],
-    );
+  // Forget a saved network
+  const forgetNetwork = async (ssid: string) => {
+    try {
+      await api.delete(`/api/v1/wifi/wifi/forget?ssid=${encodeURIComponent(ssid)}`);
+      await loadSavedNetworks();
+    } catch {
+      // Ignore errors
+    }
+  };
 
-    // Auto-scan networks and load saved networks on mount, refresh every 30s
-    useEffect(() => {
-      if (wifiSettings.isWireless) {
-        // Initial load
-        loadSavedNetworks().catch(() => undefined);
+  // Auto-scan networks and load saved networks on mount, refresh every 30s
+  useEffect(() => {
+    if (wifiSettings.isWireless) {
+      // Initial load
+      loadSavedNetworks().catch(() => undefined);
+      scanNetworks().catch(() => undefined);
+
+      // Auto-refresh scan every 30 seconds
+      const interval = setInterval(() => {
         scanNetworks().catch(() => undefined);
+      }, 30000);
 
-        // Auto-refresh scan every 30 seconds
-        const interval = setInterval(() => {
-          scanNetworks().catch(() => undefined);
-        }, 30000);
+      return (): void => clearInterval(interval);
+    }
+  }, [wifiSettings.isWireless, loadSavedNetworks, scanNetworks]);
 
-        return (): void => clearInterval(interval);
-      }
-    }, [wifiSettings.isWireless, loadSavedNetworks, scanNetworks]);
+  // Get signal strength indicator
+  const getSignalBars = (signal: number): string => {
+    if (signal >= -50) {
+      return '████';
+    }
+    if (signal >= -60) {
+      return '███░';
+    }
+    if (signal >= -70) {
+      return '██░░';
+    }
+    if (signal >= -80) {
+      return '█░░░';
+    }
+    return '░░░░';
+  };
 
-    // Get signal strength indicator
-    const getSignalBars = (signal: number): string => {
-      if (signal >= -50) {
-        return '████';
-      }
-      if (signal >= -60) {
-        return '███░';
-      }
-      if (signal >= -70) {
-        return '██░░';
-      }
-      if (signal >= -80) {
-        return '█░░░';
-      }
-      return '░░░░';
-    };
+  const getSignalColor = (signal: number): string => {
+    if (signal >= -50) {
+      return statusColor.text.success;
+    }
+    if (signal >= -60) {
+      return statusColor.text.success;
+    }
+    if (signal >= -70) {
+      return statusColor.text.warning;
+    }
+    return statusColor.text.error;
+  };
 
-    const getSignalColor = (signal: number): string => {
-      if (signal >= -50) {
-        return statusColor.text.success;
+  return (
+    <CollapsibleSection
+      title={
+        <div className={layout.inline.default}>
+          <Wifi className={iconTokens.size.sm} />
+          <span>{t('sections.wifi')}</span>
+          <AutoSaveIndicator status={wifiStatus} />
+        </div>
       }
-      if (signal >= -60) {
-        return statusColor.text.success;
-      }
-      if (signal >= -70) {
-        return statusColor.text.warning;
-      }
-      return statusColor.text.error;
-    };
+    >
+      <div className="stack-md">
+        {/* Interface Selection */}
+        <div>
+          <label className="caption text-text-muted" htmlFor="wifi-interface">
+            {t('wifi.title')}
+          </label>
+          {wifiSettings.availableWifi.length > 0 ? (
+            <select
+              id="wifi-interface"
+              value={wifiSettings.interface}
+              onChange={(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>): void =>
+                setWifiSettings((prev) => ({
+                  ...prev,
+                  interface: e.target.value,
+                }))
+              }
+              className={cn(
+                'w-full',
+                spacing.margin.top.tight,
+                spacing.chip.lg,
+                'bg-surface-base border border-surface-border',
+                radius.default,
+                'body-small text-text-primary',
+              )}
+            >
+              {wifiSettings.availableWifi.map((iface) => (
+                <option key={iface} value={iface}>
+                  {iface}
+                </option>
+              ))}
+            </select>
+          ) : (
+            <input
+              id="wifi-interface-input"
+              type="text"
+              value={wifiSettings.interface}
+              onChange={(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>): void =>
+                setWifiSettings((prev) => ({
+                  ...prev,
+                  interface: e.target.value,
+                }))
+              }
+              placeholder="wlan0 or en0"
+              className={cn(
+                'w-full',
+                spacing.margin.top.tight,
+                spacing.chip.lg,
+                'bg-surface-base border border-surface-border',
+                radius.default,
+                'body-small text-text-primary',
+              )}
+            />
+          )}
+          <p className={cn('caption text-text-muted', spacing.margin.top.tight)}>
+            {wifiSettings.isWireless ? t('wifi.wirelessMonitoring') : t('wifi.noWireless')}
+          </p>
+        </div>
 
-    return (
-      <CollapsibleSection
-        title={
-          <div className={layout.inline.default}>
-            <Wifi className={iconTokens.size.sm} />
-            <span>{t('sections.wifi')}</span>
-            <AutoSaveIndicator status={wifiStatus} />
-          </div>
-        }
-      >
-        <div className="stack-md">
-          {/* Interface Selection */}
-          <div>
-            <label className="caption text-text-muted" htmlFor="wifi-interface">
-              {t('wifi.title')}
-            </label>
-            {wifiSettings.availableWifi.length > 0 ? (
-              <select
-                id="wifi-interface"
-                value={wifiSettings.interface}
-                onChange={(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>): void =>
-                  setWifiSettings((prev) => ({
-                    ...prev,
-                    interface: e.target.value,
-                  }))
-                }
-                className={cn(
-                  'w-full',
-                  spacing.margin.top.tight,
-                  spacing.chip.lg,
-                  'bg-surface-base border border-surface-border',
-                  radius.default,
-                  'body-small text-text-primary',
-                )}
-              >
-                {wifiSettings.availableWifi.map((iface) => (
-                  <option key={iface} value={iface}>
-                    {iface}
-                  </option>
-                ))}
-              </select>
-            ) : (
-              <input
-                id="wifi-interface-input"
-                type="text"
-                value={wifiSettings.interface}
-                onChange={(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>): void =>
-                  setWifiSettings((prev) => ({
-                    ...prev,
-                    interface: e.target.value,
-                  }))
-                }
-                placeholder="wlan0 or en0"
-                className={cn(
-                  'w-full',
-                  spacing.margin.top.tight,
-                  spacing.chip.lg,
-                  'bg-surface-base border border-surface-border',
-                  radius.default,
-                  'body-small text-text-primary',
-                )}
-              />
-            )}
-            <p className={cn('caption text-text-muted', spacing.margin.top.tight)}>
-              {wifiSettings.isWireless ? t('wifi.wirelessMonitoring') : t('wifi.noWireless')}
-            </p>
-          </div>
+        {/* WiFi Network Connection - only show if wireless adapter available */}
+        {wifiSettings.isWireless ? (
+          <>
+            {/* Available Networks */}
+            <div className="border-t border-surface-border pt-heading">
+              <div className="flex-between">
+                <span className="body-small font-medium text-text-primary">
+                  {t('wifi.availableNetworks')}{' '}
+                  {scanning ? (
+                    <span className="text-text-muted">{t('wifi.scanningInline')}</span>
+                  ) : null}
+                </span>
+                <button
+                  type="button"
+                  onClick={scanNetworks}
+                  disabled={scanning}
+                  className={cn(
+                    'caption font-medium',
+                    spacing.chip.md,
+                    radius.default,
+                    'bg-surface-hover text-text-primary border border-surface-border',
+                    'hover:bg-surface-border disabled:opacity-50',
+                  )}
+                >
+                  ↻ {t('wifi.refresh')}
+                </button>
+              </div>
 
-          {/* WiFi Network Connection - only show if wireless adapter available */}
-          {wifiSettings.isWireless ? (
-            <>
-              {/* Available Networks */}
-              <div className="border-t border-surface-border pt-heading">
-                <div className="flex-between">
-                  <span className="body-small font-medium text-text-primary">
-                    {t('wifi.availableNetworks')}{' '}
-                    {scanning ? (
-                      <span className="text-text-muted">{t('wifi.scanningInline')}</span>
-                    ) : null}
-                  </span>
+              {scanError ? <p className="caption text-status-error mt-tight">{scanError}</p> : null}
+
+              {/* Loading state when no networks yet */}
+              {networks.length === 0 && scanning && (
+                <p className="caption text-text-muted mt-inline">{t('wifi.scanning')}</p>
+              )}
+
+              {/* No networks found */}
+              {networks.length === 0 && !scanning && !scanError && (
+                <p className="caption text-text-muted mt-inline">{t('wifi.noNetworks')}</p>
+              )}
+
+              {/* Network List */}
+              {networks.length > 0 && (
+                <div
+                  className={cn(
+                    'mt-inline max-h-48 overflow-y-auto',
+                    'border border-surface-border',
+                    radius.default,
+                    'bg-surface-base',
+                  )}
+                >
+                  {networks.map((network) => (
+                    <button
+                      type="button"
+                      key={network.bssid}
+                      onClick={(): void => {
+                        setSelectedNetwork(network);
+                        setPassword('');
+                        setConnectionStatus(null);
+                      }}
+                      className={cn(
+                        'w-full text-left px-3 py-row',
+                        'border-b border-surface-border last:border-b-0',
+                        'hover:bg-surface-hover',
+                        selectedNetwork?.bssid === network.bssid && 'bg-brand-primary/10',
+                      )}
+                    >
+                      <div className="flex-between">
+                        <div>
+                          <span className="body-small text-text-primary">{network.ssid}</span>
+                          <span className="caption text-text-muted ml-inline">
+                            {network.security}
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-compact">
+                          <span className="caption text-text-muted">
+                            {t('wifi.channelShort', { channel: network.channel })}
+                          </span>
+                          <span className={cn('font-mono caption', getSignalColor(network.signal))}>
+                            {getSignalBars(network.signal)}
+                          </span>
+                        </div>
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              )}
+
+              {/* Connection Dialog */}
+              {selectedNetwork ? (
+                <div
+                  className={cn(
+                    'mt-heading pad-sm',
+                    'border border-surface-border',
+                    radius.default,
+                    'bg-surface-sunken',
+                  )}
+                >
+                  <div className="flex-between mb-2">
+                    <span className="body-small font-medium text-text-primary">
+                      {t('wifi.connectTo', { ssid: selectedNetwork.ssid })}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={(): void => {
+                        setSelectedNetwork(null);
+                        setPassword('');
+                      }}
+                      className="caption text-text-muted hover:text-text-primary"
+                    >
+                      {tCommon('buttons.cancel')}
+                    </button>
+                  </div>
+
+                  {selectedNetwork.security !== 'Open' ? (
+                    <div className="relative mb-2">
+                      <input
+                        type={showPassword ? 'text' : 'password'}
+                        value={password}
+                        onChange={(
+                          e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>,
+                        ): void => setPassword(e.target.value)}
+                        placeholder={t('wifi.password')}
+                        className={cn(
+                          'w-full pr-16',
+                          spacing.chip.lg,
+                          'bg-surface-base border border-surface-border',
+                          radius.default,
+                          'body-small text-text-primary',
+                        )}
+                        onKeyDown={(e: React.KeyboardEvent): void => {
+                          if (e.key === 'Enter' && password) {
+                            connectToNetwork().catch(() => undefined);
+                          }
+                        }}
+                      />
+                      <button
+                        type="button"
+                        onClick={(): void => setShowPassword(!showPassword)}
+                        className="absolute right-2 top-1/2 -translate-y-1/2 caption text-text-muted hover:text-text-primary"
+                      >
+                        {showPassword ? t('wifi.hide') : t('wifi.show')}
+                      </button>
+                    </div>
+                  ) : null}
+
+                  <Tooltip text={canWrite ? undefined : readOnlyReason}>
+                    <button
+                      type="button"
+                      onClick={connectToNetwork}
+                      disabled={
+                        !canWrite ||
+                        connecting ||
+                        (selectedNetwork.security !== 'Open' && !password)
+                      }
+                      className={cn(
+                        'w-full',
+                        'body-small font-medium',
+                        spacing.chip.lg,
+                        radius.default,
+                        'bg-brand-primary text-on-brand',
+                        'hover:bg-brand-accent disabled:opacity-50',
+                      )}
+                    >
+                      {connecting ? t('wifi.connecting') : t('wifi.connect')}
+                    </button>
+                  </Tooltip>
+                </div>
+              ) : null}
+
+              {/* Connection Status */}
+              {connectionStatus ? (
+                <p
+                  className={cn(
+                    'caption mt-inline',
+                    connectionStatus.ok ? statusColor.text.success : statusColor.text.error,
+                  )}
+                >
+                  {connectionStatus.text}
+                </p>
+              ) : null}
+            </div>
+
+            {/* Current Connection / Disconnect */}
+            <div className="border-t border-surface-border pt-heading">
+              <div className="flex-between">
+                <span className="body-small font-medium text-text-primary">
+                  {t('wifi.connection')}
+                </span>
+                <Tooltip text={canWrite ? undefined : readOnlyReason}>
                   <button
                     type="button"
-                    onClick={scanNetworks}
-                    disabled={scanning}
+                    onClick={disconnectNetwork}
+                    disabled={!canWrite || connecting}
                     className={cn(
                       'caption font-medium',
                       spacing.chip.md,
                       radius.default,
-                      'bg-surface-hover text-text-primary border border-surface-border',
-                      'hover:bg-surface-border disabled:opacity-50',
+                      'bg-status-error/10 text-status-error-strong border border-status-error/20',
+                      'hover:bg-status-error/20 disabled:opacity-50',
                     )}
                   >
-                    ↻ {t('wifi.refresh')}
+                    {t('wifi.disconnect')}
                   </button>
-                </div>
-
-                {scanError ? (
-                  <p className="caption text-status-error mt-tight">{scanError}</p>
-                ) : null}
-
-                {/* Loading state when no networks yet */}
-                {networks.length === 0 && scanning && (
-                  <p className="caption text-text-muted mt-inline">{t('wifi.scanning')}</p>
-                )}
-
-                {/* No networks found */}
-                {networks.length === 0 && !scanning && !scanError && (
-                  <p className="caption text-text-muted mt-inline">{t('wifi.noNetworks')}</p>
-                )}
-
-                {/* Network List */}
-                {networks.length > 0 && (
-                  <div
-                    className={cn(
-                      'mt-inline max-h-48 overflow-y-auto',
-                      'border border-surface-border',
-                      radius.default,
-                      'bg-surface-base',
-                    )}
-                  >
-                    {networks.map((network) => (
-                      <button
-                        type="button"
-                        key={network.bssid}
-                        onClick={(): void => {
-                          setSelectedNetwork(network);
-                          setPassword('');
-                          setConnectionStatus(null);
-                        }}
-                        className={cn(
-                          'w-full text-left px-3 py-row',
-                          'border-b border-surface-border last:border-b-0',
-                          'hover:bg-surface-hover',
-                          selectedNetwork?.bssid === network.bssid && 'bg-brand-primary/10',
-                        )}
-                      >
-                        <div className="flex-between">
-                          <div>
-                            <span className="body-small text-text-primary">{network.ssid}</span>
-                            <span className="caption text-text-muted ml-inline">
-                              {network.security}
-                            </span>
-                          </div>
-                          <div className="flex items-center gap-compact">
-                            <span className="caption text-text-muted">
-                              {t('wifi.channelShort', { channel: network.channel })}
-                            </span>
-                            <span
-                              className={cn('font-mono caption', getSignalColor(network.signal))}
-                            >
-                              {getSignalBars(network.signal)}
-                            </span>
-                          </div>
-                        </div>
-                      </button>
-                    ))}
-                  </div>
-                )}
-
-                {/* Connection Dialog */}
-                {selectedNetwork ? (
-                  <div
-                    className={cn(
-                      'mt-heading pad-sm',
-                      'border border-surface-border',
-                      radius.default,
-                      'bg-surface-sunken',
-                    )}
-                  >
-                    <div className="flex-between mb-2">
-                      <span className="body-small font-medium text-text-primary">
-                        {t('wifi.connectTo', { ssid: selectedNetwork.ssid })}
-                      </span>
-                      <button
-                        type="button"
-                        onClick={(): void => {
-                          setSelectedNetwork(null);
-                          setPassword('');
-                        }}
-                        className="caption text-text-muted hover:text-text-primary"
-                      >
-                        {tCommon('buttons.cancel')}
-                      </button>
-                    </div>
-
-                    {selectedNetwork.security !== 'Open' ? (
-                      <div className="relative mb-2">
-                        <input
-                          type={showPassword ? 'text' : 'password'}
-                          value={password}
-                          onChange={(
-                            e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>,
-                          ): void => setPassword(e.target.value)}
-                          placeholder={t('wifi.password')}
-                          className={cn(
-                            'w-full pr-16',
-                            spacing.chip.lg,
-                            'bg-surface-base border border-surface-border',
-                            radius.default,
-                            'body-small text-text-primary',
-                          )}
-                          onKeyDown={(e: React.KeyboardEvent): void => {
-                            if (e.key === 'Enter' && password) {
-                              connectToNetwork().catch(() => undefined);
-                            }
-                          }}
-                        />
-                        <button
-                          type="button"
-                          onClick={(): void => setShowPassword(!showPassword)}
-                          className="absolute right-2 top-1/2 -translate-y-1/2 caption text-text-muted hover:text-text-primary"
-                        >
-                          {showPassword ? t('wifi.hide') : t('wifi.show')}
-                        </button>
-                      </div>
-                    ) : null}
-
-                    <Tooltip text={canWrite ? undefined : readOnlyReason}>
-                      <button
-                        type="button"
-                        onClick={connectToNetwork}
-                        disabled={
-                          !canWrite ||
-                          connecting ||
-                          (selectedNetwork.security !== 'Open' && !password)
-                        }
-                        className={cn(
-                          'w-full',
-                          'body-small font-medium',
-                          spacing.chip.lg,
-                          radius.default,
-                          'bg-brand-primary text-on-brand',
-                          'hover:bg-brand-accent disabled:opacity-50',
-                        )}
-                      >
-                        {connecting ? t('wifi.connecting') : t('wifi.connect')}
-                      </button>
-                    </Tooltip>
-                  </div>
-                ) : null}
-
-                {/* Connection Status */}
-                {connectionStatus ? (
-                  <p
-                    className={cn(
-                      'caption mt-inline',
-                      connectionStatus.ok ? statusColor.text.success : statusColor.text.error,
-                    )}
-                  >
-                    {connectionStatus.text}
-                  </p>
-                ) : null}
+                </Tooltip>
               </div>
+            </div>
 
-              {/* Current Connection / Disconnect */}
-              <div className="border-t border-surface-border pt-heading">
-                <div className="flex-between">
-                  <span className="body-small font-medium text-text-primary">
-                    {t('wifi.connection')}
-                  </span>
-                  <Tooltip text={canWrite ? undefined : readOnlyReason}>
-                    <button
-                      type="button"
-                      onClick={disconnectNetwork}
-                      disabled={!canWrite || connecting}
-                      className={cn(
-                        'caption font-medium',
-                        spacing.chip.md,
-                        radius.default,
-                        'bg-status-error/10 text-status-error-strong border border-status-error/20',
-                        'hover:bg-status-error/20 disabled:opacity-50',
-                      )}
-                    >
-                      {t('wifi.disconnect')}
-                    </button>
-                  </Tooltip>
-                </div>
-              </div>
-
-              <SavedNetworks
-                networks={savedNetworks}
-                canWrite={canWrite}
-                readOnlyReason={readOnlyReason}
-                onForget={(ssid): void => {
-                  forgetNetwork(ssid).catch(() => undefined);
-                }}
-              />
-            </>
-          ) : null}
-        </div>
-      </CollapsibleSection>
-    );
-  },
-);
+            <SavedNetworks
+              networks={savedNetworks}
+              canWrite={canWrite}
+              readOnlyReason={readOnlyReason}
+              onForget={(ssid): void => {
+                forgetNetwork(ssid).catch(() => undefined);
+              }}
+            />
+          </>
+        ) : null}
+      </div>
+    </CollapsibleSection>
+  );
+}

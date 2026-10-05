@@ -1,5 +1,5 @@
 import type React from 'react';
-import { memo, useId, useState } from 'react';
+import { useId, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useDefaults } from '../../../../hooks/useDefaults';
 import { useLocale } from '../../../../hooks/useLocale';
@@ -97,53 +97,52 @@ interface DiscoveryTimingSettingsProps {
  * The two discovery timers the daemon reads: how often it rescans, and how
  * long one sweep may run.
  */
-export const DiscoveryTimingSettings: React.NamedExoticComponent<DiscoveryTimingSettingsProps> =
-  memo(function discoveryTimingSettings({
-    settings,
-    onSettingsChange,
-  }: DiscoveryTimingSettingsProps) {
-    const { t } = useTranslation('settings');
-    const { defaults } = useDefaults();
-    const recommended = defaults?.networkDiscovery;
+export function DiscoveryTimingSettings({
+  settings,
+  onSettingsChange,
+}: DiscoveryTimingSettingsProps) {
+  const { t } = useTranslation('settings');
+  const { defaults } = useDefaults();
+  const recommended = defaults?.networkDiscovery;
 
-    return (
-      <div className={cn('border-t border-surface-border', spacing.pad.sm)}>
-        <span className="caption text-text-muted font-medium">{t('discovery.timingSettings')}</span>
-        <DurationField
-          data-testid="discovery-rescan-interval"
-          label={t('discovery.rescanInterval')}
-          description={t('discovery.rescanIntervalDesc')}
-          valueMs={settings.timing.rescanIntervalMs}
-          recommendedMs={recommended?.timing.rescanIntervalMs}
-          unit="minute"
-          min={1}
-          max={60}
-          onChange={(ms): void =>
-            onSettingsChange((prev) => ({
-              ...prev,
-              timing: { ...prev.timing, rescanIntervalMs: ms },
-            }))
-          }
-        />
-        <div className={spacing.margin.top.content}>
-          <CollapsibleSection
-            title={t('discovery.advancedTiming')}
-            variant="compact"
-            data-testid="discovery-timing-advanced"
-          >
-            <DurationField
-              data-testid="discovery-scan-timeout"
-              label={t('discovery.scanTimeout')}
-              description={t('discovery.scanTimeoutDesc')}
-              valueMs={settings.scanTimeoutMs}
-              recommendedMs={recommended?.scanTimeoutMs}
-              unit="second"
-              min={5}
-              max={120}
-              onChange={(ms): void => onSettingsChange((prev) => ({ ...prev, scanTimeoutMs: ms }))}
-            />
-          </CollapsibleSection>
-        </div>
+  return (
+    <div className={cn('border-t border-surface-border', spacing.pad.sm)}>
+      <span className="caption text-text-muted font-medium">{t('discovery.timingSettings')}</span>
+      <DurationField
+        data-testid="discovery-rescan-interval"
+        label={t('discovery.rescanInterval')}
+        description={t('discovery.rescanIntervalDesc')}
+        valueMs={settings.timing.rescanIntervalMs}
+        recommendedMs={recommended?.timing.rescanIntervalMs}
+        unit="minute"
+        min={1}
+        max={60}
+        onChange={(ms): void =>
+          onSettingsChange((prev) => ({
+            ...prev,
+            timing: { ...prev.timing, rescanIntervalMs: ms },
+          }))
+        }
+      />
+      <div className={spacing.margin.top.content}>
+        <CollapsibleSection
+          title={t('discovery.advancedTiming')}
+          variant="compact"
+          data-testid="discovery-timing-advanced"
+        >
+          <DurationField
+            data-testid="discovery-scan-timeout"
+            label={t('discovery.scanTimeout')}
+            description={t('discovery.scanTimeoutDesc')}
+            valueMs={settings.scanTimeoutMs}
+            recommendedMs={recommended?.scanTimeoutMs}
+            unit="second"
+            min={5}
+            max={120}
+            onChange={(ms): void => onSettingsChange((prev) => ({ ...prev, scanTimeoutMs: ms }))}
+          />
+        </CollapsibleSection>
       </div>
-    );
-  });
+    </div>
+  );
+}

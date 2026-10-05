@@ -15,7 +15,7 @@
  */
 
 import type React from 'react';
-import { useCallback, useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { api } from '../../../api/client';
 import { useLicense } from '../../../contexts/LicenseContext';
@@ -77,7 +77,7 @@ export function SsoSettings(): React.ReactElement {
 
   const canEdit = Boolean(licenseStatus?.features?.includes?.('sso'));
 
-  const refresh = useCallback(async (): Promise<void> => {
+  const refresh = async (): Promise<void> => {
     setError(null);
     try {
       const resp = await api.get<SettingsResponse>('/api/v1/sso/settings');
@@ -89,54 +89,47 @@ export function SsoSettings(): React.ReactElement {
       }));
     } catch (err) {
       setError(err instanceof Error ? err.message : t('errors:sso.loadFailed'));
-    } finally {
-      setLoading(false);
     }
-  }, []);
+    setLoading(false);
+  };
 
   useEffect(() => {
     void refresh();
   }, [refresh]);
 
-  const updateField = useCallback(
-    <K extends keyof ProviderConfig>(
-      name: ProviderName,
-      key: K,
-      value: ProviderConfig[K],
-    ): void => {
-      setProviders((prev) => ({ ...prev, [name]: { ...prev[name], [key]: value } }));
-    },
-    [],
-  );
+  const updateField = <K extends keyof ProviderConfig>(
+    name: ProviderName,
+    key: K,
+    value: ProviderConfig[K],
+  ): void => {
+    setProviders((prev) => ({ ...prev, [name]: { ...prev[name], [key]: value } }));
+  };
 
-  const handleSave = useCallback(
-    async (name: ProviderName): Promise<void> => {
-      setSavingProvider(name);
-      setError(null);
-      setSaveStatus(null);
-      try {
-        const cfg = providers[name];
-        await api.put('/api/v1/sso/update', {
-          provider: cfg.name,
-          enabled: cfg.enabled,
-          clientId: cfg.clientId,
-          clientSecret: cfg.clientSecret,
-          redirectUrl: cfg.redirectUrl || defaultRedirectUrl(),
-          tenantId: cfg.tenantId,
-          scopes: cfg.scopes,
-        });
-        setSaveStatus(t('settings:sso.status.saved', { provider: name }));
-        // Wipe the secret input now that it's saved server-side.
-        updateField(name, 'clientSecret', '');
-        await refresh();
-      } catch (err) {
-        setError(err instanceof Error ? err.message : t('errors:sso.saveFailed'));
-      } finally {
-        setSavingProvider(null);
-      }
-    },
-    [providers, refresh, t, updateField],
-  );
+  const handleSave = async (name: ProviderName): Promise<void> => {
+    setSavingProvider(name);
+    setError(null);
+    setSaveStatus(null);
+    const cfg = providers[name];
+    const redirectUrl = cfg.redirectUrl || defaultRedirectUrl();
+    try {
+      await api.put('/api/v1/sso/update', {
+        provider: cfg.name,
+        enabled: cfg.enabled,
+        clientId: cfg.clientId,
+        clientSecret: cfg.clientSecret,
+        redirectUrl,
+        tenantId: cfg.tenantId,
+        scopes: cfg.scopes,
+      });
+      setSaveStatus(t('settings:sso.status.saved', { provider: name }));
+      // Wipe the secret input now that it's saved server-side.
+      updateField(name, 'clientSecret', '');
+      await refresh();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : t('errors:sso.saveFailed'));
+    }
+    setSavingProvider(null);
+  };
 
   return (
     <CollapsibleSection
