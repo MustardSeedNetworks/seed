@@ -5,6 +5,23 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.234.1](https://github.com/MustardSeedNetworks/seed/compare/v0.234.0...v0.234.1) (2026-10-05)
+
+
+### Bug Fixes
+
+* **ui:** save settings on an edit, not after a 500 ms window ([#3126](https://github.com/MustardSeedNetworks/seed/issues/3126)) ([77cd22f](https://github.com/MustardSeedNetworks/seed/commit/77cd22f7a89c9f38da639590bf48724d7417802d)), closes [#2994](https://github.com/MustardSeedNetworks/seed/issues/2994)
+
+
+### Code Refactoring
+
+* **history:** read probe and anomaly history through an app use-case ([#3128](https://github.com/MustardSeedNetworks/seed/issues/3128)) ([1763e0b](https://github.com/MustardSeedNetworks/seed/commit/1763e0b8beec8c896ff225c5f0abc708a63166a7))
+
+
+### Continuous Integration
+
+* run the macOS and Windows backend jobs only in the merge queue and on main ([#3130](https://github.com/MustardSeedNetworks/seed/issues/3130)) ([3623e8d](https://github.com/MustardSeedNetworks/seed/commit/3623e8dc46e046de8ac5c0d9d802be9bf41348a1)), closes [#3129](https://github.com/MustardSeedNetworks/seed/issues/3129)
+
 ## [0.234.0](https://github.com/MustardSeedNetworks/seed/compare/v0.233.0...v0.234.0) (2026-10-05)
 
 
