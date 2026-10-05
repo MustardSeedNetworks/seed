@@ -14,7 +14,7 @@ import (
 // neighbourRoute builds the shape the kernel hands back for one IPv6
 // neighbour-cache entry, so the conversion can be exercised without a
 // neighbour table in front of it.
-func neighbourRoute(ip string, zone int, flags int, mac []byte, name string) *route.RouteMessage {
+func neighbourRoute(ip string, zone int, flags int, mac []byte) *route.RouteMessage {
 	dst := &route.Inet6Addr{ZoneID: zone}
 	copy(dst.IP[:], net.ParseIP(ip).To16())
 
@@ -23,7 +23,7 @@ func neighbourRoute(ip string, zone int, flags int, mac []byte, name string) *ro
 		Index: 1,
 		Addrs: []route.Addr{
 			syscall.RTAX_DST:     dst,
-			syscall.RTAX_GATEWAY: &route.LinkAddr{Index: 12, Name: name, Addr: mac},
+			syscall.RTAX_GATEWAY: &route.LinkAddr{Index: 12, Name: "en0", Addr: mac},
 		},
 	}
 }
@@ -39,33 +39,38 @@ func TestNDPRowFromRoute(t *testing.T) {
 		wantRow bool
 	}{
 		{
-			name:    "resolved link-local neighbour",
-			msg:     neighbourRoute("fe80::1865:2d21:d7d8:673e", 12, 0, mac, "en0"),
-			want:    ndpRow{ip: net.ParseIP("fe80::1865:2d21:d7d8:673e"), zone: 12, iface: "en0", mac: "00:00:5e:00:53:01"},
+			name: "resolved link-local neighbour",
+			msg:  neighbourRoute("fe80::1865:2d21:d7d8:673e", 12, 0, mac),
+			want: ndpRow{
+				ip:    net.ParseIP("fe80::1865:2d21:d7d8:673e"),
+				zone:  12,
+				iface: "en0",
+				mac:   "00:00:5e:00:53:01",
+			},
 			wantRow: true,
 		},
 		{
 			// ndp prints "(incomplete)": the kernel is still resolving it.
 			name:    "unresolved neighbour keeps its row with no MAC",
-			msg:     neighbourRoute("2001:db8::7", 0, 0, nil, "en0"),
+			msg:     neighbourRoute("2001:db8::7", 0, 0, nil),
 			want:    ndpRow{ip: net.ParseIP("2001:db8::7"), iface: "en0"},
 			wantRow: true,
 		},
 		{
 			// #2337: the placeholder a filtered reader is handed is not a MAC.
 			name:    "placeholder link address",
-			msg:     neighbourRoute("fe80::2", 12, 0, []byte{0x02, 0, 0, 0, 0, 0}, "en0"),
+			msg:     neighbourRoute("fe80::2", 12, 0, []byte{0x02, 0, 0, 0, 0, 0}),
 			want:    ndpRow{ip: net.ParseIP("fe80::2"), zone: 12, iface: "en0"},
 			wantRow: true,
 		},
 		{
 			// ndp prints these "permanent"; they are this host, not a neighbour.
 			name: "host's own address",
-			msg:  neighbourRoute("fe80::1894:73c5:7543:b644", 12, syscall.RTF_LOCAL|syscall.RTF_LLINFO, mac, "en0"),
+			msg:  neighbourRoute("fe80::1894:73c5:7543:b644", 12, syscall.RTF_LOCAL|syscall.RTF_LLINFO, mac),
 		},
 		{
 			name: "multicast group",
-			msg:  neighbourRoute("ff02::fb", 12, 0, []byte{0x33, 0x33, 0, 0, 0, 0xfb}, "en0"),
+			msg:  neighbourRoute("ff02::fb", 12, 0, []byte{0x33, 0x33, 0, 0, 0, 0xfb}),
 		},
 		{
 			// ::1 is in the table with an address, not a link, as its gateway.
@@ -97,7 +102,8 @@ func TestNDPRowFromRoute(t *testing.T) {
 			if !ok {
 				return
 			}
-			if !got.ip.Equal(tt.want.ip) || got.zone != tt.want.zone || got.iface != tt.want.iface || got.mac != tt.want.mac {
+			if !got.ip.Equal(tt.want.ip) || got.zone != tt.want.zone || got.iface != tt.want.iface ||
+				got.mac != tt.want.mac {
 				t.Errorf("got %+v, want %+v", got, tt.want)
 			}
 		})

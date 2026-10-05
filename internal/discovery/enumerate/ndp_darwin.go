@@ -81,7 +81,7 @@ type in6NbrInfo struct {
 // siocgnbrinfoIn6 is SIOCGNBRINFO_IN6, _IOWR('i', 78, struct in6_nbrinfo).
 // Neither syscall nor x/sys/unix exports it. Built from the struct's size so
 // the request code cannot drift from the layout it describes.
-const siocgnbrinfoIn6 = 0xc0000000 | (uintptr(unsafe.Sizeof(in6NbrInfo{}))&0x1fff)<<16 | 'i'<<8 | 78
+const siocgnbrinfoIn6 = 0xc0000000 | (unsafe.Sizeof(in6NbrInfo{})&0x1fff)<<16 | 'i'<<8 | 78
 
 // ND6_LLINFO_* from <netinet6/nd6.h>: the neighbour states the kernel reports.
 const (
