@@ -27,7 +27,7 @@ function link(over: Partial<LinkData> = {}): LinkData {
   return {
     linkUp: true,
     carrier: true,
-    hasIp: true,
+    hasIP: true,
     speed: '1000Mb/s',
     duplex: 'full',
     advertisedSpeeds: [],

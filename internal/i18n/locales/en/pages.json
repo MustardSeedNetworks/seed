@@ -59,8 +59,6 @@
     "rollupNoDataBody": "The interface has reported nothing. Nothing below is current.",
     "rollupNoCarrier": "No carrier on this interface",
     "rollupNoCarrierBody": "Nothing is detected on the wire. Check the cable and the far-end port; the cable test below reports where the fault is.",
-    "rollupDown": "The link is down",
-    "rollupDownBody": "Carrier is present but the interface is not up. Check whether it is administratively disabled.",
     "rollupNoAddress": "The link is up with no routable address",
     "rollupNoAddressBody": "Layer 2 is healthy and layer 3 is not. DHCP or the static configuration is the next thing to check.",
     "rollupHalfDuplex": "The link negotiated half duplex",

@@ -128,15 +128,7 @@ function describeLink({ link, loading, isWifi, t }: LinkRollupInput): LinkRollup
       figures,
     };
   }
-  if (!link.linkUp) {
-    return {
-      state: 'crit',
-      headline: t('link.rollupDown'),
-      body: t('link.rollupDownBody'),
-      figures,
-    };
-  }
-  if (!link.hasIp) {
+  if (!link.hasIP) {
     return {
       state: 'warn',
       headline: t('link.rollupNoAddress'),
