@@ -110,6 +110,7 @@ func (s *Server) registerJobKinds() {
 		},
 	)
 	s.registerDefaultPacketCaptureKind()
+	s.registerDeviceConfigKind()
 }
 
 // registerSpeedtestKind registers the speedtest kind with an injectable tester

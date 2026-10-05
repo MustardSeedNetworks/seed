@@ -29,6 +29,7 @@ import (
 	"github.com/MustardSeedNetworks/seed/internal/config"
 	"github.com/MustardSeedNetworks/seed/internal/config/backups"
 	"github.com/MustardSeedNetworks/seed/internal/database"
+	"github.com/MustardSeedNetworks/seed/internal/deviceconfig"
 	"github.com/MustardSeedNetworks/seed/internal/dhcp"
 	"github.com/MustardSeedNetworks/seed/internal/diagnostics/cable"
 	"github.com/MustardSeedNetworks/seed/internal/diagnostics/dns"
@@ -272,6 +273,7 @@ type Server struct {
 	pollingTargets     *targets.Service            // Polling-targets CRUD use-case (ADR-0020)
 	snmpPoller         *snmppoller.Poller          // Live poller, reloaded when targets change (seed#2452)
 	deviceCredentials  *credentials.Service        // Device-credential CRUD use-case (#1799)
+	deviceConfigs      *deviceconfig.Service       // Device configuration backup use-case (P-D1)
 	alertInbox         *inbox.Service              // Alert-inbox (list/ack/resolve) use-case (ADR-0020)
 	configBackups      *backups.Service            // Config backup/restore use-case (ADR-0020)
 	exportService      *export.Service             // Diagnostic-export use-case (ADR-0020)

@@ -63,6 +63,13 @@ func (r *CredentialResolver) Resolve(ctx context.Context, target *polling.Target
 	if err != nil {
 		return ResolvedCredentials{}, fmt.Errorf("%w: %w", ErrCredentialsUnresolved, err)
 	}
+	// An SSH login has no community and no v3 user, so polling with it would
+	// go out unauthenticated rather than fail.
+	if stored.Kind != polling.CredentialKindV2c && stored.Kind != polling.CredentialKindV3 {
+		return ResolvedCredentials{}, fmt.Errorf(
+			"%w: target %s references a %s credential, not an SNMP one",
+			ErrCredentialsUnresolved, target.ID, stored.Kind)
+	}
 
 	community, err := r.decrypt(stored.SNMPCommunityCT)
 	if err != nil {

@@ -115,6 +115,13 @@ func (s *Server) handleJobs(w http.ResponseWriter, r *http.Request) {
 			ErrCodeValidation, "Job kind is required", "")
 		return
 	}
+	// A configuration backup belongs to the caller's client, which this
+	// tenant-blind route cannot carry; it has its own route.
+	if req.Kind == deviceConfigJobKind {
+		sendErrorResponseWithDetails(w, logger, http.StatusBadRequest, ErrCodeValidation,
+			"Start a configuration backup with POST "+deviceConfigRunPath, "")
+		return
+	}
 	if feature, ok := jobKindFeature(req.Kind); ok && !s.hasFeature(feature) {
 		s.sendFeatureGate(w, r, feature)
 		return

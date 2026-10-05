@@ -93,11 +93,17 @@ CREATE INDEX idx_audit_user ON audit_log(user);
 -- index: idx_clients_slug
 CREATE INDEX idx_clients_slug ON clients(slug);
 
+-- index: idx_device_config_targets_credentials
+CREATE INDEX idx_device_config_targets_credentials ON device_config_targets(client_id, credentials_id);
+
 -- index: idx_device_credentials_client
 CREATE INDEX idx_device_credentials_client ON device_credentials(client_id);
 
 -- index: idx_device_credentials_name
 CREATE INDEX idx_device_credentials_name   ON device_credentials(name);
+
+-- index: idx_device_device_config_backups_target
+CREATE INDEX idx_device_device_config_backups_target ON device_config_backups(client_id, target_id, taken_at);
 
 -- index: idx_device_vulns_cve
 CREATE INDEX idx_device_vulns_cve ON device_vulnerabilities(cve_id);
@@ -543,12 +549,46 @@ CREATE TABLE clients (
 				updated_at TEXT NOT NULL
 			) STRICT;
 
+-- table: device_config_backups
+CREATE TABLE device_config_backups (
+				id         TEXT NOT NULL PRIMARY KEY,
+				client_id  TEXT NOT NULL,
+				target_id  TEXT NOT NULL,
+				taken_at   TEXT NOT NULL,
+				status     TEXT NOT NULL CHECK (status IN ('ok','auth_failed','host_key_mismatch','unreachable','command_failed','error')),
+				error      TEXT,
+				config     TEXT,
+				sha256     TEXT,
+				CHECK (status <> 'ok' OR (config IS NOT NULL AND sha256 IS NOT NULL AND error IS NULL)),
+				CHECK (status = 'ok' OR (config IS NULL AND sha256 IS NULL AND error IS NOT NULL)),
+				FOREIGN KEY (client_id, target_id)
+					REFERENCES device_config_targets(client_id, id) ON DELETE CASCADE
+			) STRICT;
+
+-- table: device_config_targets
+CREATE TABLE device_config_targets (
+				id              TEXT NOT NULL PRIMARY KEY,
+				client_id       TEXT NOT NULL REFERENCES clients(id),
+				name            TEXT NOT NULL CHECK (name <> ''),
+				host            TEXT NOT NULL CHECK (host <> ''),
+				port            INTEGER NOT NULL CHECK (port BETWEEN 1 AND 65535),
+				platform        TEXT NOT NULL CHECK (platform IN ('cisco-ios','cisco-nxos','arista-eos','juniper-junos')),
+				credentials_id  TEXT NOT NULL,
+				host_key_sha256 TEXT CHECK (host_key_sha256 IS NULL OR host_key_sha256 GLOB 'SHA256:*'),
+				created_at      TEXT NOT NULL,
+				updated_at      TEXT NOT NULL,
+				UNIQUE (client_id, id),
+				UNIQUE (client_id, host, port),
+				FOREIGN KEY (client_id, credentials_id)
+					REFERENCES device_credentials(client_id, id) ON DELETE RESTRICT
+			) STRICT;
+
 -- table: device_credentials
 CREATE TABLE "device_credentials" (
 				id                 TEXT NOT NULL,
 				client_id          TEXT NOT NULL DEFAULT 'default' REFERENCES clients(id),
 				name               TEXT NOT NULL,
-				kind               TEXT NOT NULL CHECK (kind IN ('v2c','v3')),
+				kind               TEXT NOT NULL CHECK (kind IN ('v2c','v3','ssh')),
 				security_level     TEXT CHECK (security_level IS NULL OR security_level IN ('noAuthNoPriv','authNoPriv','authPriv')),
 				snmp_community_enc BLOB,
 				snmp_v3_user       TEXT,
@@ -556,19 +596,21 @@ CREATE TABLE "device_credentials" (
 				snmp_v3_priv_enc   BLOB,
 				snmp_v3_auth_proto TEXT CHECK (snmp_v3_auth_proto IS NULL OR snmp_v3_auth_proto IN ('SHA','SHA224','SHA256','SHA384','SHA512')),
 				snmp_v3_priv_proto TEXT CHECK (snmp_v3_priv_proto IS NULL OR snmp_v3_priv_proto IN ('DES','AES','AES192','AES256')),
+				ssh_user           TEXT,
+				ssh_password_enc   BLOB,
 				created_at         TEXT NOT NULL,
 				updated_at         TEXT NOT NULL,
 				PRIMARY KEY (id),
 				UNIQUE (client_id, id),
 
-				-- Every stored secret is versioned ciphertext. The legacy
-				-- unversioned "enc:…" fails this too, on purpose: the key that
-				-- produced it is unknown, so it cannot be rotated.
 				CHECK (snmp_community_enc IS NULL OR CAST(snmp_community_enc AS TEXT) GLOB 'enc:v[0-9]*:*'),
 				CHECK (snmp_v3_auth_enc   IS NULL OR CAST(snmp_v3_auth_enc   AS TEXT) GLOB 'enc:v[0-9]*:*'),
 				CHECK (snmp_v3_priv_enc   IS NULL OR CAST(snmp_v3_priv_enc   AS TEXT) GLOB 'enc:v[0-9]*:*'),
+				CHECK (ssh_password_enc   IS NULL OR CAST(ssh_password_enc   AS TEXT) GLOB 'enc:v[0-9]*:*'),
 
-				-- v2c is a community string and nothing else.
+				-- SNMP kinds carry nothing of SSH's.
+				CHECK (kind = 'ssh' OR (ssh_user IS NULL AND ssh_password_enc IS NULL)),
+
 				CHECK (kind <> 'v2c' OR (
 					snmp_community_enc IS NOT NULL
 					AND security_level IS NULL
@@ -579,16 +621,25 @@ CREATE TABLE "device_credentials" (
 					AND snmp_v3_priv_proto IS NULL
 				)),
 
-				-- v3 is a user plus a security level, and no community.
 				CHECK (kind <> 'v3' OR (
 					snmp_community_enc IS NULL
 					AND snmp_v3_user IS NOT NULL AND snmp_v3_user <> ''
 					AND security_level IS NOT NULL
 				)),
 
-				-- The security level and the secrets present cannot disagree,
-				-- which is what makes "privacy without authentication"
-				-- unrepresentable rather than merely discouraged.
+				-- SSH is a user and a password, and nothing of SNMP's.
+				CHECK (kind <> 'ssh' OR (
+					ssh_user IS NOT NULL AND ssh_user <> ''
+					AND ssh_password_enc IS NOT NULL
+					AND security_level IS NULL
+					AND snmp_community_enc IS NULL
+					AND snmp_v3_user     IS NULL
+					AND snmp_v3_auth_enc IS NULL
+					AND snmp_v3_priv_enc IS NULL
+					AND snmp_v3_auth_proto IS NULL
+					AND snmp_v3_priv_proto IS NULL
+				)),
+
 				CHECK (security_level <> 'noAuthNoPriv' OR (
 					snmp_v3_auth_enc IS NULL AND snmp_v3_priv_enc IS NULL
 					AND snmp_v3_auth_proto IS NULL AND snmp_v3_priv_proto IS NULL
