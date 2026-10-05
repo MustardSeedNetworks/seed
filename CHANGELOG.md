@@ -5,6 +5,26 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.235.1](https://github.com/MustardSeedNetworks/seed/compare/v0.235.0...v0.235.1) (2026-10-05)
+
+
+### Bug Fixes
+
+* **acceptance:** read NIAC's attachment pool as a list of switches ([#3149](https://github.com/MustardSeedNetworks/seed/issues/3149)) ([c0a019d](https://github.com/MustardSeedNetworks/seed/commit/c0a019d721e88bafeadae37db23329a35b14bd83)), closes [#3148](https://github.com/MustardSeedNetworks/seed/issues/3148)
+
+
+### Code Refactoring
+
+* **api:** move vulnerability triage behind an app use-case ([#3152](https://github.com/MustardSeedNetworks/seed/issues/3152)) ([c2ec5d1](https://github.com/MustardSeedNetworks/seed/commit/c2ec5d1a02c694770b04b39c68ba8d310bdca3d2))
+* **ui:** drop the compiler-provided memos from the settings sections ([#3147](https://github.com/MustardSeedNetworks/seed/issues/3147)) ([0b3e32c](https://github.com/MustardSeedNetworks/seed/commit/0b3e32cb6334d37b6b7f682e9118cab7b148682b))
+* **ui:** drop the last component memos the compiler provides ([#3151](https://github.com/MustardSeedNetworks/seed/issues/3151)) ([8748d62](https://github.com/MustardSeedNetworks/seed/commit/8748d62d8c4ed748c48ab73db64183759cdeccf1))
+* **ui:** let the compiler memoize useNetworkDiscoveryAutoScan ([#3154](https://github.com/MustardSeedNetworks/seed/issues/3154)) ([f22a10e](https://github.com/MustardSeedNetworks/seed/commit/f22a10eec0423cc8b983202a68d88153460d2fd5))
+
+
+### Miscellaneous
+
+* **deps:** lock file maintenance ([#3156](https://github.com/MustardSeedNetworks/seed/issues/3156)) ([824a290](https://github.com/MustardSeedNetworks/seed/commit/824a290d6831e26225aa5ef7b8a7a80f322d0d54))
+
 ## [0.235.0](https://github.com/MustardSeedNetworks/seed/compare/v0.234.1...v0.235.0) (2026-10-05)
 
 
