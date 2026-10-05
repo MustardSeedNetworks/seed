@@ -70,7 +70,7 @@ func (r *DeviceConfigRepository) GetTarget(ctx context.Context, clientID, id str
 	t, err := scanDeviceConfigTarget(r.db.QueryRow(ctx, `SELECT `+deviceConfigTargetColumns+`
 		FROM device_config_targets WHERE id = ? AND client_id = ?`, id, clientID))
 	if errors.Is(err, sql.ErrNoRows) {
-		return deviceconfig.Target{}, fmt.Errorf("%w: target %s", deviceconfig.ErrNotFound, id)
+		return deviceconfig.Target{}, deviceconfig.ErrNotFound
 	}
 	if err != nil {
 		return deviceconfig.Target{}, fmt.Errorf("get device_config_targets: %w", err)
@@ -106,7 +106,7 @@ func (r *DeviceConfigRepository) SaveTarget(ctx context.Context, t *deviceconfig
 		}
 		return fmt.Errorf("save device_config_targets: %w", err)
 	}
-	return requireOneRow(res, t.ID)
+	return requireOneRow(res)
 }
 
 // DeleteTarget removes a target; its backups go with it (ON DELETE CASCADE).
@@ -116,7 +116,7 @@ func (r *DeviceConfigRepository) DeleteTarget(ctx context.Context, clientID, id 
 	if err != nil {
 		return fmt.Errorf("delete device_config_targets: %w", err)
 	}
-	return requireOneRow(res, id)
+	return requireOneRow(res)
 }
 
 // PinHostKey records the fingerprint only where none is pinned yet.
@@ -136,7 +136,7 @@ func (r *DeviceConfigRepository) ClearHostKey(ctx context.Context, clientID, id 
 	if err != nil {
 		return fmt.Errorf("clear device_config_targets host key: %w", err)
 	}
-	return requireOneRow(res, id)
+	return requireOneRow(res)
 }
 
 // InsertBackup records one attempt, generating its id.
@@ -199,7 +199,7 @@ func (r *DeviceConfigRepository) GetBackup(ctx context.Context, clientID, id str
 		FROM device_config_backups WHERE id = ? AND client_id = ?`, id, clientID).
 		Scan(&b.ID, &b.ClientID, &b.TargetID, &takenAt, &status, &msg, &config, &digest)
 	if errors.Is(err, sql.ErrNoRows) {
-		return deviceconfig.Backup{}, fmt.Errorf("%w: backup %s", deviceconfig.ErrNotFound, id)
+		return deviceconfig.Backup{}, deviceconfig.ErrNotFound
 	}
 	if err != nil {
 		return deviceconfig.Backup{}, fmt.Errorf("get device_config_backups: %w", err)
@@ -222,13 +222,13 @@ func parseBackupTime(s string) time.Time {
 
 // requireOneRow turns "matched nothing" into deviceconfig.ErrNotFound: the id
 // is absent or belongs to another client, and the caller cannot tell which.
-func requireOneRow(res sql.Result, id string) error {
+func requireOneRow(res sql.Result) error {
 	n, err := res.RowsAffected()
 	if err != nil {
 		return fmt.Errorf("rows affected: %w", err)
 	}
 	if n == 0 {
-		return fmt.Errorf("%w: %s", deviceconfig.ErrNotFound, id)
+		return deviceconfig.ErrNotFound
 	}
 	return nil
 }
