@@ -5,6 +5,29 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.236.0](https://github.com/MustardSeedNetworks/seed/compare/v0.235.1...v0.236.0) (2026-10-05)
+
+
+### Features
+
+* **ui:** add a multicast listen card beside Bonjour on the network page ([#3165](https://github.com/MustardSeedNetworks/seed/issues/3165)) ([d4999f4](https://github.com/MustardSeedNetworks/seed/commit/d4999f42d65444a82f9bedd5e8e29e433b3fc84b))
+
+
+### Bug Fixes
+
+* **darwin:** stop the api tests forking iperf3 and networksetup ([#3160](https://github.com/MustardSeedNetworks/seed/issues/3160)) ([2e6b0a7](https://github.com/MustardSeedNetworks/seed/commit/2e6b0a759dfbd1c86938e537958b7a97e1e38169))
+* **discovery:** read the macOS IPv6 neighbour cache without running ndp ([#3164](https://github.com/MustardSeedNetworks/seed/issues/3164)) ([3c51f7d](https://github.com/MustardSeedNetworks/seed/commit/3c51f7d6239f5e0422f1da1b4cff205b4c4ff7ce))
+
+
+### Code Refactoring
+
+* **ui:** let the compiler memoise DataTable and drop its memos ([#3159](https://github.com/MustardSeedNetworks/seed/issues/3159)) ([6ddb684](https://github.com/MustardSeedNetworks/seed/commit/6ddb6844413f1ecf4b75befb685687296fa4c3d0)), closes [#3066](https://github.com/MustardSeedNetworks/seed/issues/3066)
+
+
+### Miscellaneous
+
+* **deps:** lock file maintenance ([#3161](https://github.com/MustardSeedNetworks/seed/issues/3161)) ([63ed922](https://github.com/MustardSeedNetworks/seed/commit/63ed922403e839e19b9899800fc5290d76133f99))
+
 ## [0.235.1](https://github.com/MustardSeedNetworks/seed/compare/v0.235.0...v0.235.1) (2026-10-05)
 
 
