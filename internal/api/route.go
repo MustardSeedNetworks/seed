@@ -69,15 +69,15 @@ func (s *Server) authenticate(next http.Handler) http.Handler {
 	return apiTokenMiddleware(s.identityTokens, s.resolveClientID, s.authManager().Middleware(next))
 }
 
-// scopeGate is the Route.Scope hook. roles.Operator is the one scope the
-// registry declares: writeGated lets safe methods through and requires
-// operator+ for the rest. Admin-only routes check the role in the handler.
+// scopeGate is the Route.Scope hook. A scope is the minimum role for a
+// route's state-changing methods, roles.Operator or roles.Admin: writeGated
+// lets safe methods through and requires that role or above for the rest.
 func (s *Server) scopeGate(scope string) route.Middleware {
-	if scope != roles.Operator {
-		panic(fmt.Sprintf("route scope %q: only %q is supported", scope, roles.Operator))
+	if scope != roles.Operator && scope != roles.Admin {
+		panic(fmt.Sprintf("route scope %q: only %q and %q are supported", scope, roles.Operator, roles.Admin))
 	}
 	return func(next http.Handler) http.Handler {
-		return s.writeGated(next.ServeHTTP)
+		return s.writeGated(scope, next.ServeHTTP)
 	}
 }
 

@@ -749,3 +749,15 @@ func (s *Server) handleWiFiDiscoveryStats(w http.ResponseWriter, r *http.Request
 		Stats: toWiFiDiscoveryStats(stats),
 	})
 }
+
+// resolveWiFiInterface picks the Wi-Fi interface for a request: an explicit query
+// override, else the configured Wi-Fi interface, else the default interface.
+func (s *Server) resolveWiFiInterface(r *http.Request) string {
+	if iface := s.getInterfaceFromRequest(r); iface != "" {
+		return iface
+	}
+	if wifi := s.config.Interface.WiFi; wifi != "" {
+		return wifi
+	}
+	return s.config.Interface.Default
+}

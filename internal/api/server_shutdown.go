@@ -157,6 +157,10 @@ func (s *Server) stopServices(ctx context.Context) {
 		logging.GetLogger().WarnContext(ctx, "Failed to close Wi-Fi helper socket", "error", err)
 	}
 
+	if s.tftpSessions != nil {
+		s.tftpSessions.Close()
+	}
+
 	if mon := s.linkMonitor(); mon != nil {
 		logging.GetLogger().InfoContext(ctx, "Stopping link monitor...")
 		mon.Stop()

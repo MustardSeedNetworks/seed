@@ -47,5 +47,6 @@
 /api/v1/telemetry/dhcp/rogue              # delete: unclaimed. Rogue DHCP is a NetAlly problem type, but no wave item claims it and these routes are dhcp.RogueDetector's only reader — nothing starts it, AlertOnDetection reaches no alert path. Queued with bluetooth
 /api/v1/telemetry/dhcp/rogue/config       # delete: see /telemetry/dhcp/rogue
 /api/v1/telemetry/dhcp/rogue/servers      # delete: see /telemetry/dhcp/rogue
+/api/v1/tftp/session                      # scheduled: TFTP session card #3124 (fleet UI driver); P-D4 backend #3123 landed first
 /api/v1/topology/arp                      # scheduled: Wave 3 #328 (this is the SNMP-harvested remote table, not the local cache)
 /api/v1/wifi/wifi/status                  # scheduled: Wave 9 #360 connection management (connect/disconnect/forget/status)

@@ -67,7 +67,7 @@ func TestWriteGate_ViewerScopedAdminTokenBlocksWrites(t *testing.T) {
 	// As "admin", the write gate would let the request through.
 	req := newAuthedRequest(http.MethodPost, APIVersionPrefix+"/probe", nil, "admin")
 	w := httptest.NewRecorder()
-	if !s.requireWriteAccess(w, req) {
+	if !s.requireRole(w, req, roles.Operator) {
 		t.Fatalf("admin without scope must clear gate, got %d", w.Code)
 	}
 
@@ -75,7 +75,7 @@ func TestWriteGate_ViewerScopedAdminTokenBlocksWrites(t *testing.T) {
 	req = newAuthedRequest(http.MethodPost, APIVersionPrefix+"/probe", nil, "admin")
 	req = req.WithContext(auth.WithTokenScope(req.Context(), roles.Viewer))
 	w = httptest.NewRecorder()
-	if s.requireWriteAccess(w, req) {
+	if s.requireRole(w, req, roles.Operator) {
 		t.Errorf("admin-owned viewer-scoped token must be blocked by write gate, status=%d", w.Code)
 	}
 	if w.Code != http.StatusForbidden {

@@ -206,8 +206,8 @@ func TestScopeGateRefusesAnUnknownScope(t *testing.T) {
 	t.Parallel()
 	defer func() {
 		if recover() == nil {
-			t.Error("scopeGate(\"admin\") did not panic")
+			t.Error("scopeGate(\"viewer\") did not panic")
 		}
 	}()
-	(&Server{}).scopeGate("admin")
+	(&Server{}).scopeGate("viewer")
 }

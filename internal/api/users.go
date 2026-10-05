@@ -529,24 +529,18 @@ func (s *Server) requireRole(w http.ResponseWriter, r *http.Request, minRole str
 	return true
 }
 
-// requireWriteAccess gates state-changing operations on operator-or-above;
-// viewers are read-only (#1226). Safe (read) methods should skip this.
-func (s *Server) requireWriteAccess(w http.ResponseWriter, r *http.Request) bool {
-	return s.requireRole(w, r, roles.Operator)
-}
-
-// writeGated wraps a handler so that state-changing methods require an
-// operator-or-above role while safe reads (GET/HEAD/OPTIONS) pass through
-// untouched. Applied at route registration to persistent-configuration
-// endpoints so viewers stay read-only on them; diagnostic actions
-// (scans/pings/traceroute) are deliberately left ungated (#1226).
-func (s *Server) writeGated(next http.HandlerFunc) http.HandlerFunc {
+// writeGated wraps a handler so that state-changing methods require minRole
+// or above while safe reads (GET/HEAD/OPTIONS) pass through untouched.
+// Applied at route registration to persistent-configuration endpoints so
+// viewers stay read-only on them; diagnostic actions (scans/pings/traceroute)
+// are deliberately left ungated (#1226).
+func (s *Server) writeGated(minRole string, next http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		switch r.Method {
 		case http.MethodGet, http.MethodHead, http.MethodOptions:
 			next(w, r)
 		default:
-			if !s.requireWriteAccess(w, r) {
+			if !s.requireRole(w, r, minRole) {
 				return
 			}
 			next(w, r)

@@ -31,7 +31,7 @@ func TestWriteGate_MethodAndRoleMatrix(t *testing.T) {
 		called = true
 		w.WriteHeader(http.StatusOK)
 	}
-	gated := s.writeGated(probe)
+	gated := s.writeGated(roles.Operator, probe)
 
 	cases := []struct {
 		user       string
@@ -121,8 +121,8 @@ func TestCallerRole_NoDBIsImplicitAdmin(t *testing.T) {
 		t.Fatalf("callerRole with no DB = (%q, %v), want (admin, true)", role, ok)
 	}
 	w := httptest.NewRecorder()
-	if !s.requireWriteAccess(w, req) {
-		t.Errorf("requireWriteAccess with no DB should allow; status=%d", w.Code)
+	if !s.requireRole(w, req, roles.Operator) {
+		t.Errorf("operator gate with no DB should allow; status=%d", w.Code)
 	}
 }
 
