@@ -353,15 +353,19 @@ export function DiscoveryModal({
           <div className="flex items-center gap-default">
             {/* Scan button */}
             {onScan ? (
+              // aria-disabled, not disabled: a scan started from this button
+              // would otherwise drop the keyboard focus that pressed it (#2996).
               <button
                 type="button"
-                onClick={onScan}
-                disabled={data?.status?.scanning}
+                data-testid="discovery-rescan"
+                onClick={data?.status?.scanning ? undefined : onScan}
+                aria-disabled={data?.status?.scanning}
                 className={cn(
                   button.base,
                   button.variant.secondary,
                   button.size.sm,
                   'flex items-center gap-compact',
+                  'aria-disabled:opacity-50 aria-disabled:cursor-not-allowed',
                 )}
               >
                 <RefreshCw

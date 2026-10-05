@@ -215,3 +215,73 @@ test('the vulnerability details pass axe and return focus to the CVE badge', asy
   await expect(table).toBeVisible();
   await expectFocused(badge);
 });
+
+// Rescan took `disabled` once its scan began, and a disabled control cannot
+// hold focus: the press that started the scan dropped focus onto the body,
+// and the trap pulled it back to the first control a frame later. A Tab walk
+// that reached Rescan just as the link-up auto-run started a scan failed the
+// same way (#2996). The status poll is held at scanning so the state cannot
+// clear before the assertion.
+test('Rescan keeps keyboard focus while its scan runs', async ({ page }) => {
+  await page.route('**/api/v1/security/devices/status', (route) =>
+    route.fulfill({ json: { scanning: true } }),
+  );
+  await page.goto('/network');
+  await expect(page.getByTestId('page-header-title')).toBeVisible();
+  await page.getByTestId('discovery-card-maximize').focus();
+  await page.keyboard.press('Enter');
+  await expect(byLabelledBy('discovery-modal-title')(page)).toBeVisible();
+
+  const rescan = page.getByTestId('discovery-rescan');
+  await rescan.focus();
+  await page.keyboard.press('Enter');
+
+  await expect(rescan).toContainText('Scanning');
+  await expectFocused(rescan);
+  await expect(rescan).toHaveAttribute('aria-disabled', 'true');
+});
+
+// The list is newest first, yet its "Scroll to latest" button and its
+// auto-scroll both went to the bottom, which holds the oldest entry. The button
+// appeared and vanished with the scroll position, so a Tab onto it as focus
+// scrolled the last row into view landed on a removed control, and pressing it
+// removed it under its own focus (#2996). Forty entries overflow the list here.
+test('the log viewer opens at the newest entry and keeps Tab inside a long list', async ({
+  page,
+}) => {
+  const start = Date.parse('2026-10-05T03:00:00Z');
+  const logs = Array.from({ length: 40 }, (_, i) => ({
+    timestamp: new Date(start - i * 1000).toISOString(),
+    level: 'INFO',
+    layer: 'backend',
+    message: `entry ${i}`,
+  }));
+  await page.route('**/api/v1/reporting/logs/recent?*', (route) =>
+    route.fulfill({ json: { logs } }),
+  );
+  await page.setViewportSize({ width: 1440, height: 600 });
+  await page.goto('/logs');
+  await expect(page.getByTestId('page-header-title')).toBeVisible();
+  await page.getByTestId('logs-card-maximize').focus();
+  await page.keyboard.press('Enter');
+  const viewer = byLabelledBy('log-viewer-modal-title')(page);
+  await expect(viewer).toBeVisible();
+
+  const entries = page.getByTestId('log-viewer-entries');
+  await expect(entries.getByRole('button', { name: /entry 39/ })).toBeAttached();
+  expect(
+    await entries.evaluate((list) => ({
+      overflows: list.scrollHeight > list.clientHeight,
+      scrollTop: list.scrollTop,
+    })),
+  ).toEqual({ overflows: true, scrollTop: 0 });
+  await expect(entries.getByRole('button', { name: /entry 0\b/ })).toBeInViewport();
+
+  for (let presses = 0; presses < 70; presses++) {
+    await page.keyboard.press('Tab');
+    expect(
+      await viewer.evaluate((root) => root.contains(document.activeElement)),
+      `Tab #${presses + 1} left the log viewer`,
+    ).toBe(true);
+  }
+});
