@@ -29,6 +29,7 @@ import { useInsecurePortScan } from './useInsecurePortScan';
 import { useIperfServerSync } from './useIperfServerSync';
 import { useLogs } from './useLogs';
 import { useNeighbourCache } from './useNeighbourCache';
+import { usePacketCapture } from './usePacketCapture';
 import { usePlatformCapabilities } from './usePlatformCapabilities';
 import { usePollingTargets } from './usePollingTargets';
 import { useReports } from './useReports';
@@ -123,6 +124,7 @@ const cases: [string, () => object][] = [
   ['useInsecurePortScan', () => useInsecurePortScan()],
   ['useLogs', () => useLogs()],
   ['useNeighbourCache', () => useNeighbourCache()],
+  ['usePacketCapture', () => usePacketCapture()],
   ['usePlatformCapabilities', () => usePlatformCapabilities()],
   ['usePollingTargets', () => usePollingTargets()],
   ['useReports', () => useReports()],

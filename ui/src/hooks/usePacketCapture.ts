@@ -9,7 +9,7 @@
  * the file GET /api/v1/captures/{id} downloads, and carries its summary (#239).
  */
 
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { cancelJob, getJob, submitJob } from '../lib/jobsClient';
 import type { JobResponse } from '../types/generated/job-response';
 import type { Request as CaptureRequest } from '../types/generated/packet-capture-request';
@@ -56,7 +56,7 @@ export function usePacketCapture(): UsePacketCaptureReturn {
   const [state, setState] = useState<CaptureState>({ phase: 'idle' });
   const jobIdRef = useRef('');
 
-  const apply = useCallback((job: JobResponse): void => {
+  const apply = (job: JobResponse): void => {
     if (job.id !== jobIdRef.current) {
       return;
     }
@@ -79,12 +79,12 @@ export function usePacketCapture(): UsePacketCaptureReturn {
           prev.phase === 'stopping' ? prev : { phase: 'running', jobId: job.id },
         );
     }
-  }, []);
+  };
 
   // The stream is live-only: a change published before it connects, or while
   // it reconnects, is never delivered. The runner's own answer is to re-read
   // the job, so the hook does that whenever it may have missed one.
-  const resync = useCallback(async (): Promise<void> => {
+  const resync = async (): Promise<void> => {
     const jobId = jobIdRef.current;
     if (!jobId) {
       return;
@@ -94,7 +94,7 @@ export function usePacketCapture(): UsePacketCaptureReturn {
     } catch {
       // The next stream event or re-sync will bring the job's state.
     }
-  }, [apply]);
+  };
 
   const { status: streamStatus } = useJobEvents(apply);
 
@@ -104,26 +104,23 @@ export function usePacketCapture(): UsePacketCaptureReturn {
     }
   }, [streamStatus, resync]);
 
-  const start = useCallback(
-    async (request: CaptureRequest): Promise<void> => {
-      setState({ phase: 'starting' });
-      try {
-        const job = await submitJob({ kind: PACKET_CAPTURE_KIND, params: request });
-        jobIdRef.current = job.id;
-        apply(job);
-      } catch (err) {
-        jobIdRef.current = '';
-        setState({ phase: 'failed', error: errorMessage(err) });
-        return;
-      }
-      // A capture that ends within the POST's round trip has already
-      // published its end.
-      await resync();
-    },
-    [apply, resync],
-  );
+  const start = async (request: CaptureRequest): Promise<void> => {
+    setState({ phase: 'starting' });
+    try {
+      const job = await submitJob({ kind: PACKET_CAPTURE_KIND, params: request });
+      jobIdRef.current = job.id;
+      apply(job);
+    } catch (err) {
+      jobIdRef.current = '';
+      setState({ phase: 'failed', error: errorMessage(err) });
+      return;
+    }
+    // A capture that ends within the POST's round trip has already
+    // published its end.
+    await resync();
+  };
 
-  const stop = useCallback(async (): Promise<void> => {
+  const stop = async (): Promise<void> => {
     const jobId = jobIdRef.current;
     if (!jobId) {
       return;
@@ -136,7 +133,7 @@ export function usePacketCapture(): UsePacketCaptureReturn {
       // The capture is still running, so the operator can try again.
       setState({ phase: 'running', jobId, stopFailed: true });
     }
-  }, [apply]);
+  };
 
   return { state, start, stop };
 }
