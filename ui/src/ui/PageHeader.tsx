@@ -18,7 +18,7 @@
  */
 import type { LucideIcon } from 'lucide-react';
 import { ChevronRight, HelpCircle } from 'lucide-react';
-import { createElement, type FC, type ReactNode } from 'react';
+import { createElement, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'wouter';
 import { Tooltip } from '../components/ui/Tooltip';
@@ -58,7 +58,7 @@ interface BreadcrumbProps {
   className?: string;
 }
 
-const Breadcrumb: FC<BreadcrumbProps> = ({ items, className = '' }) => {
+function Breadcrumb({ items, className = '' }: BreadcrumbProps) {
   const { t } = useTranslation();
   return (
     <nav
@@ -82,9 +82,9 @@ const Breadcrumb: FC<BreadcrumbProps> = ({ items, className = '' }) => {
       ))}
     </nav>
   );
-};
+}
 
-export const PageHeader: FC<PageHeaderProps> = ({
+export function PageHeader({
   title,
   eyebrow,
   secondary,
@@ -95,7 +95,7 @@ export const PageHeader: FC<PageHeaderProps> = ({
   breadcrumbs,
   onHelp,
   className = '',
-}) => {
+}: PageHeaderProps) {
   const { t } = useTranslation();
   return (
     <div className={`mb-content animate-fade-in ${className}`}>
@@ -145,4 +145,4 @@ export const PageHeader: FC<PageHeaderProps> = ({
       </div>
     </div>
   );
-};
+}

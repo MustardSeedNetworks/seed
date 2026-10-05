@@ -19,7 +19,7 @@ import {
   Settings,
   Users,
 } from 'lucide-react';
-import { createElement, type FC, type ReactNode, useEffect, useState } from 'react';
+import { createElement, type ReactNode, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useLocation } from 'wouter';
 import { SeedLogo } from '../components/app/SeedLogo';
@@ -107,63 +107,61 @@ interface NavItemButtonProps {
 }
 
 function badgeClass(badge: string): string {
-  if (badge === 'New') return 'bg-status-success/15 text-status-success-strong';
-  if (badge === 'Beta') return 'bg-status-warning/15 text-status-warning-strong';
-  return 'bg-brand-primary/20 text-brand-primary-strong';
+  const base = 'px-1.5 py-0.5 text-xs rounded font-medium';
+  if (badge === 'New') return `${base} bg-status-success/15 text-status-success-strong`;
+  if (badge === 'Beta') return `${base} bg-status-warning/15 text-status-warning-strong`;
+  return `${base} bg-brand-primary/20 text-brand-primary-strong`;
 }
 
-const NavItemButton: FC<NavItemButtonProps> = ({ item, active, collapsed, onNavigate }) => (
-  <Tooltip text={collapsed ? item.label : undefined}>
-    <button
-      data-testid={`sidebar-nav-${item.path.slice(1)}`}
-      aria-label={item.label}
-      type="button"
-      onClick={() => onNavigate(item.path)}
-      onMouseEnter={() => prefetchRoute(item.path)}
-      aria-current={active ? 'page' : undefined}
-      /* 44px minimum target, 11px radius, and a 3px left bar for the active
-       route. The bar carries the state rather than a gradient fill: a filled
-       row competes with status colour, and the rail is chrome. */
-      className={`group relative flex items-center gap-default w-full min-h-11 px-3 py-2.5 rounded-[11px] text-sm font-medium transition-all duration-200 ${
-        active
-          ? 'bg-[color-mix(in_oklab,var(--color-brand-primary)_16%,transparent)] text-text-primary'
-          : 'text-text-muted hover:text-text-primary hover:bg-surface-hover'
-      }`}
-    >
-      {active ? (
-        <span
-          aria-hidden="true"
-          className="absolute inset-y-1 left-0 w-[3px] rounded-full bg-brand-primary"
-        />
-      ) : null}
-      {createElement(item.icon, {
-        // Module accent (M1 follow-up): the icon carries the per-module brand
-        // colour the function-first nav moved off the group headers — dimmed at
-        // rest, full-strength when active. Items without a module accent keep the
-        // neutral→brand colouring.
-        className: `${iconSizes.lg} flex-shrink-0 ${
-          item.accent
-            ? active
-              ? item.accent
-              : `${item.accent} opacity-60 group-hover:opacity-100`
-            : active
-              ? 'text-brand-primary'
-              : 'text-text-muted group-hover:text-text-secondary'
-        }`,
-      })}
-      {!collapsed ? (
-        <>
-          <span className="flex-1 text-left truncate">{item.label}</span>
-          {item.badge ? (
-            <span className={`px-1.5 py-0.5 text-xs rounded font-medium ${badgeClass(item.badge)}`}>
-              {item.badge}
-            </span>
-          ) : null}
-        </>
-      ) : null}
-    </button>
-  </Tooltip>
-);
+function NavItemButton({ item, active, collapsed, onNavigate }: NavItemButtonProps) {
+  return (
+    <Tooltip text={collapsed ? item.label : undefined}>
+      <button
+        data-testid={`sidebar-nav-${item.path.slice(1)}`}
+        aria-label={item.label}
+        type="button"
+        onClick={() => onNavigate(item.path)}
+        onMouseEnter={() => prefetchRoute(item.path)}
+        aria-current={active ? 'page' : undefined}
+        /* 44px minimum target, 11px radius, and a 3px left bar for the active route.
+           The bar carries the state rather than a gradient fill: a filled row
+           competes with status colour, and the rail is chrome. */
+        className={`group relative flex items-center gap-default w-full min-h-11 px-3 py-2.5 rounded-[11px] text-sm font-medium transition-all duration-200 ${
+          active
+            ? 'bg-[color-mix(in_oklab,var(--color-brand-primary)_16%,transparent)] text-text-primary'
+            : 'text-text-muted hover:text-text-primary hover:bg-surface-hover'
+        }`}
+      >
+        {active ? (
+          <span
+            aria-hidden="true"
+            className="absolute inset-y-1 left-0 w-[3px] rounded-full bg-brand-primary"
+          />
+        ) : null}
+        {createElement(item.icon, {
+          // Module accent (M1 follow-up): the icon carries the per-module brand colour
+          // the function-first nav moved off the group headers — dimmed at rest,
+          // full-strength when active. Items without one keep neutral→brand colouring.
+          className: `${iconSizes.lg} flex-shrink-0 ${
+            item.accent
+              ? active
+                ? item.accent
+                : `${item.accent} opacity-60 group-hover:opacity-100`
+              : active
+                ? 'text-brand-primary'
+                : 'text-text-muted group-hover:text-text-secondary'
+          }`,
+        })}
+        {!collapsed ? (
+          <>
+            <span className="flex-1 text-left truncate">{item.label}</span>
+            {item.badge ? <span className={badgeClass(item.badge)}>{item.badge}</span> : null}
+          </>
+        ) : null}
+      </button>
+    </Tooltip>
+  );
+}
 
 interface FooterIconButtonProps {
   collapsed: boolean;
@@ -176,29 +174,31 @@ interface FooterIconButtonProps {
   testId: string;
 }
 
-const FooterIconButton: FC<FooterIconButtonProps> = ({
+function FooterIconButton({
   collapsed,
   onClick,
   icon,
   label,
   title,
   testId,
-}) => (
-  <Tooltip text={title}>
-    <button
-      type="button"
-      onClick={onClick}
-      data-testid={testId}
-      className={`${collapsed ? 'w-full' : 'flex-1'} flex items-center ${
-        collapsed ? 'justify-center' : 'gap-compact'
-      } px-3 py-row rounded-lg text-text-muted hover:text-text-primary hover:bg-surface-hover transition-colors text-sm font-medium`}
-      aria-label={title}
-    >
-      {createElement(icon, { className: `${iconSizes.md} flex-shrink-0` })}
-      {!collapsed ? <span>{label}</span> : null}
-    </button>
-  </Tooltip>
-);
+}: FooterIconButtonProps) {
+  return (
+    <Tooltip text={title}>
+      <button
+        type="button"
+        onClick={onClick}
+        data-testid={testId}
+        className={`${collapsed ? 'w-full' : 'flex-1'} flex items-center ${
+          collapsed ? 'justify-center' : 'gap-compact'
+        } px-3 py-row rounded-lg text-text-muted hover:text-text-primary hover:bg-surface-hover transition-colors text-sm font-medium`}
+        aria-label={title}
+      >
+        {createElement(icon, { className: `${iconSizes.md} flex-shrink-0` })}
+        {!collapsed ? <span>{label}</span> : null}
+      </button>
+    </Tooltip>
+  );
+}
 
 interface SidebarHeaderProps {
   collapsed: boolean;
@@ -213,7 +213,7 @@ const STATUS_DOT: Record<RailStatus['tone'], string> = {
   error: 'bg-status-error',
 };
 
-const SidebarHeader: FC<SidebarHeaderProps> = ({ collapsed, onCollapse, status, deviceName }) => {
+function SidebarHeader({ collapsed, onCollapse, status, deviceName }: SidebarHeaderProps) {
   const { t } = useTranslation();
   const lockupClass = `flex items-center gap-compact rounded-lg ${
     collapsed ? 'justify-center' : ''
@@ -289,7 +289,7 @@ const SidebarHeader: FC<SidebarHeaderProps> = ({ collapsed, onCollapse, status, 
       ) : null}
     </div>
   );
-};
+}
 
 interface SidebarFooterProps {
   collapsed: boolean;
@@ -309,21 +309,23 @@ interface FullWidthDrawerButtonProps {
   title: string;
 }
 
-const FullWidthDrawerButton: FC<FullWidthDrawerButtonProps> = ({ onClick, icon, label, title }) => (
-  <Tooltip text={title}>
-    <button
-      type="button"
-      onClick={onClick}
-      className="w-full mb-heading flex items-center gap-compact px-3 py-row rounded-lg text-text-muted hover:text-text-primary hover:bg-surface-hover transition-colors text-sm font-medium"
-      aria-label={title}
-    >
-      {createElement(icon, { className: `${iconSizes.md} flex-shrink-0` })}
-      <span>{label}</span>
-    </button>
-  </Tooltip>
-);
+function FullWidthDrawerButton({ onClick, icon, label, title }: FullWidthDrawerButtonProps) {
+  return (
+    <Tooltip text={title}>
+      <button
+        type="button"
+        onClick={onClick}
+        className="w-full mb-heading flex items-center gap-compact px-3 py-row rounded-lg text-text-muted hover:text-text-primary hover:bg-surface-hover transition-colors text-sm font-medium"
+        aria-label={title}
+      >
+        {createElement(icon, { className: `${iconSizes.md} flex-shrink-0` })}
+        <span>{label}</span>
+      </button>
+    </Tooltip>
+  );
+}
 
-const SidebarFooter: FC<SidebarFooterProps> = ({
+function SidebarFooter({
   collapsed,
   version,
   railControls,
@@ -332,7 +334,7 @@ const SidebarFooter: FC<SidebarFooterProps> = ({
   onOpenHistory,
   onOpenProfiles,
   onExpand,
-}) => {
+}: SidebarFooterProps) {
   const { t } = useTranslation();
   return (
     <div className={`px-3 py-4 border-t border-surface-border ${collapsed ? 'text-center' : ''}`}>
@@ -403,7 +405,7 @@ const SidebarFooter: FC<SidebarFooterProps> = ({
       ) : null}
     </div>
   );
-};
+}
 
 interface SidebarBodyProps {
   groups: SidebarNavGroup[];
@@ -422,7 +424,7 @@ interface SidebarBodyProps {
   onOpenProfiles?: () => void;
 }
 
-const SidebarBody: FC<SidebarBodyProps> = ({
+function SidebarBody({
   groups,
   collapsed,
   version,
@@ -437,7 +439,7 @@ const SidebarBody: FC<SidebarBodyProps> = ({
   onOpenSettings,
   onOpenHistory,
   onOpenProfiles,
-}) => {
+}: SidebarBodyProps) {
   const { t } = useTranslation();
   // group.label is either a plain display string ("Account") or an
   // i18n key ("common:sections.modules"). t() returns the translation
@@ -487,9 +489,9 @@ const SidebarBody: FC<SidebarBodyProps> = ({
       />
     </>
   );
-};
+}
 
-export const SidebarLayout: FC<SidebarLayoutProps> = ({
+export function SidebarLayout({
   groups,
   version,
   children,
@@ -500,7 +502,7 @@ export const SidebarLayout: FC<SidebarLayoutProps> = ({
   status,
   railControls,
   deviceName,
-}) => {
+}: SidebarLayoutProps) {
   const { t } = useTranslation();
   const [location, navigate] = useLocation();
   const [collapsed, setCollapsed] = useState(() => safeGetItem(STORAGE_KEY) === 'true');
@@ -591,4 +593,4 @@ export const SidebarLayout: FC<SidebarLayoutProps> = ({
       </main>
     </div>
   );
-};
+}
