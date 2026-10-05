@@ -699,17 +699,6 @@ body:
     "path": "/api/v1/security/devices/settings"
   },
   {
-    "maxBodyBytes": 262144,
-    "methods": [
-      "GET",
-      "POST",
-      "PUT",
-      "DELETE"
-    ],
-    "minRole": "operator",
-    "path": "/api/v1/security/devices/subnets"
-  },
-  {
     "feature": "export_csv_json",
     "maxBodyBytes": 262144,
     "methods": [
@@ -1277,6 +1266,26 @@ body:
       "GET"
     ],
     "path": "/api/v1/captures/"
+  },
+  {
+    "maxBodyBytes": 262144,
+    "methods": [
+      "GET",
+      "POST",
+      "PUT",
+      "DELETE"
+    ],
+    "minRole": "operator",
+    "path": "/api/v1/security/devices/subnets"
+  },
+  {
+    "maxBodyBytes": 262144,
+    "methods": [
+      "GET",
+      "POST"
+    ],
+    "minRole": "operator",
+    "path": "/api/v1/security/devices/subnets/pending"
   },
   {
     "feature": "live_telemetry",

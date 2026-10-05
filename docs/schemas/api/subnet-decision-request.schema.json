@@ -1,0 +1,29 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/MustardSeedNetworks/seed/main/docs/schemas/api/subnet-decision-request.schema.json",
+  "$ref": "#/$defs/SubnetDecisionRequest",
+  "$defs": {
+    "SubnetDecisionRequest": {
+      "properties": {
+        "cidr": {
+          "type": "string"
+        },
+        "decision": {
+          "type": "string",
+          "enum": [
+            "added",
+            "dismissed"
+          ]
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "cidr",
+        "decision"
+      ]
+    }
+  },
+  "title": "SubnetDecisionRequest",
+  "description": "SubnetDecisionRequest — generated from the Go struct in internal/api; refresh with `make schema` after struct changes."
+}

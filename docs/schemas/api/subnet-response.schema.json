@@ -16,6 +16,13 @@
         },
         "learned": {
           "type": "boolean"
+        },
+        "decision": {
+          "type": "string",
+          "enum": [
+            "added",
+            "dismissed"
+          ]
         }
       },
       "additionalProperties": false,

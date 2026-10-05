@@ -27,6 +27,10 @@ var (
 	// ErrInvalidPortPreset is returned for a port-scan preset that is not one of
 	// the four the config defines.
 	ErrInvalidPortPreset = errors.New("settings: invalid port-scan preset")
+	// ErrNotLearned is returned when deciding on a network an operator entered.
+	ErrNotLearned = errors.New("settings: subnet was not learned")
+	// ErrInvalidDecision is returned for an answer other than added or dismissed.
+	ErrInvalidDecision = errors.New("settings: invalid learned-network decision")
 )
 
 // Store reads and persists the network-discovery configuration. Discovery
@@ -189,6 +193,42 @@ func learnedName(candidate learn.Candidate) string {
 	}
 }
 
+// Pending returns the learned networks awaiting the operator's decision, in
+// the order they were learned.
+func (s *Service) Pending() []config.SubnetConfig {
+	var pending []config.SubnetConfig
+	for _, subnet := range s.store.Discovery().TargetNetworks {
+		if subnet.AwaitingDecision() {
+			pending = append(pending, subnet)
+		}
+	}
+	return pending
+}
+
+// Decide records the operator's answer to the learned network cidr (seed#3108).
+// Added switches it on; dismissed switches it off. Either answer is kept, so
+// the network is not offered again and the learner, which skips every CIDR
+// already listed, never re-adds it. An operator may change an earlier answer.
+func (s *Service) Decide(cidr string, decision config.LearnedDecision) error {
+	if decision != config.LearnedAdded && decision != config.LearnedDismissed {
+		return ErrInvalidDecision
+	}
+	cur := s.store.Discovery()
+	for i := range cur.TargetNetworks {
+		subnet := &cur.TargetNetworks[i]
+		if subnet.CIDR != cidr {
+			continue
+		}
+		if !subnet.Learned {
+			return ErrNotLearned
+		}
+		subnet.Decision = decision
+		subnet.Enabled = decision == config.LearnedAdded
+		return s.saveAndSync(cur)
+	}
+	return ErrSubnetNotFound
+}
+
 // UpdateSubnet renames/toggles the subnet matching in.CIDR. Returns ErrInvalidCIDR
 // for a malformed CIDR or ErrSubnetNotFound if no subnet matches.
 func (s *Service) UpdateSubnet(in config.SubnetConfig) error {
@@ -201,6 +241,10 @@ func (s *Service) UpdateSubnet(in config.SubnetConfig) error {
 		if cur.TargetNetworks[i].CIDR == in.CIDR {
 			cur.TargetNetworks[i].Name = in.Name
 			cur.TargetNetworks[i].Enabled = in.Enabled
+			// Switching a learned network on in Settings answers its prompt.
+			if in.Enabled && cur.TargetNetworks[i].Learned {
+				cur.TargetNetworks[i].Decision = config.LearnedAdded
+			}
 			found = true
 			break
 		}
@@ -212,7 +256,8 @@ func (s *Service) UpdateSubnet(in config.SubnetConfig) error {
 }
 
 // DeleteSubnet removes the subnet with the given CIDR. Returns ErrSubnetNotFound
-// if absent.
+// if absent. Deleting a learned network forgets the operator's decision with
+// it, so the network is offered again the next time it is learned.
 func (s *Service) DeleteSubnet(cidr string) error {
 	cur := s.store.Discovery()
 	kept := make([]config.SubnetConfig, 0, len(cur.TargetNetworks))

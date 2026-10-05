@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/MustardSeedNetworks/seed/internal/config"
+	"github.com/MustardSeedNetworks/seed/internal/database"
 	discoverysettings "github.com/MustardSeedNetworks/seed/internal/discovery/settings"
 	"github.com/MustardSeedNetworks/seed/internal/i18n"
 	"github.com/MustardSeedNetworks/seed/internal/logging"
@@ -425,6 +426,16 @@ type SubnetResponse struct {
 	// Learned is true for a network Seed derived from a router's tables
 	// rather than one an operator entered (seed#2695).
 	Learned bool `json:"learned"`
+	// Decision is the operator's answer to a learned network, "added" or
+	// "dismissed"; empty while it awaits one (seed#3108).
+	Decision config.LearnedDecision `json:"decision,omitempty" jsonschema:"enum=added,enum=dismissed"`
+}
+
+// SubnetDecisionRequest answers the prompt for a learned network: "added"
+// switches it on, "dismissed" keeps it off and stops it being offered again.
+type SubnetDecisionRequest struct {
+	CIDR     string                 `json:"cidr"`
+	Decision config.LearnedDecision `json:"decision" jsonschema:"enum=added,enum=dismissed"`
 }
 
 // handleDevicesSubnets handles GET/POST/DELETE for target networks (fixes #702 - uses r.Context()).
@@ -451,20 +462,61 @@ func (s *Server) handleDevicesSubnets(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+// targetNetworkRoutes serves the discovery target networks and the decisions
+// on learned ones. Every write is operator+ (writeGated).
+func (s *Server) targetNetworkRoutes() []route {
+	return []route{
+		{
+			path:    APIVersionPrefix + "/security/devices/subnets",
+			handler: s.handleDevicesSubnets,
+			methods: []string{http.MethodGet, http.MethodPost, http.MethodPut, http.MethodDelete},
+			minRole: database.RoleOperator,
+		},
+		{
+			path:    APIVersionPrefix + "/security/devices/subnets/pending",
+			handler: s.handlePendingSubnets,
+			methods: []string{http.MethodGet, http.MethodPost},
+			minRole: database.RoleOperator,
+		},
+	}
+}
+
 // getDevicesSubnets lists the configured target networks. Thin transport.
 func (s *Server) getDevicesSubnets(w http.ResponseWriter, r *http.Request) {
-	logger := logging.FromContext(r.Context())
-	cfgSubnets := s.discoverySettings.Subnets()
+	sendJSONResponse(w, logging.FromContext(r.Context()), http.StatusOK,
+		subnetResponses(s.discoverySettings.Subnets()))
+}
+
+func subnetResponses(cfgSubnets []config.SubnetConfig) []SubnetResponse {
 	subnets := make([]SubnetResponse, 0, len(cfgSubnets))
 	for _, subnet := range cfgSubnets {
 		subnets = append(subnets, SubnetResponse{
-			CIDR:    subnet.CIDR,
-			Name:    subnet.Name,
-			Enabled: subnet.Enabled,
-			Learned: subnet.Learned,
+			CIDR:     subnet.CIDR,
+			Name:     subnet.Name,
+			Enabled:  subnet.Enabled,
+			Learned:  subnet.Learned,
+			Decision: subnet.Decision,
 		})
 	}
-	sendJSONResponse(w, logger, http.StatusOK, subnets)
+	return subnets
+}
+
+// handlePendingSubnets lists the learned networks awaiting the operator's
+// decision (GET) and records one (POST). Nothing learned is swept until the
+// operator adds it (seed#3108).
+func (s *Server) handlePendingSubnets(w http.ResponseWriter, r *http.Request) {
+	if r.Method == http.MethodGet {
+		sendJSONResponse(w, logging.FromContext(r.Context()), http.StatusOK,
+			subnetResponses(s.discoverySettings.Pending()))
+		return
+	}
+
+	var req SubnetDecisionRequest
+	if !decodeJSONStrict(w, r, &req, MaxBodySizeJSON) {
+		return
+	}
+	err := s.discoverySettings.Decide(req.CIDR, req.Decision)
+	s.writeSubnetResult(w, r, err, "Decision recorded")
 }
 
 func (s *Server) addDevicesSubnet(w http.ResponseWriter, r *http.Request) {
@@ -521,6 +573,13 @@ func (s *Server) writeSubnetResult(
 	case errors.Is(err, discoverysettings.ErrSubnetExists):
 		sendErrorResponseWithDetails(
 			w, logger, http.StatusConflict, ErrCodeConflict, "Subnet already exists", "")
+	case errors.Is(err, discoverysettings.ErrInvalidDecision):
+		sendErrorResponseWithDetails(
+			w, logger, http.StatusBadRequest, ErrCodeBadRequest,
+			"Decision must be added or dismissed", "")
+	case errors.Is(err, discoverysettings.ErrNotLearned):
+		sendErrorResponseWithDetails(
+			w, logger, http.StatusConflict, ErrCodeConflict, "Subnet was not learned", "")
 	case errors.Is(err, discoverysettings.ErrSubnetNotFound):
 		sendErrorResponseWithDetails(
 			w, logger, http.StatusNotFound, ErrCodeNotFound, "Subnet not found", "")

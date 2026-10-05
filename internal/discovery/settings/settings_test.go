@@ -370,3 +370,130 @@ func TestLearnRejectsAMalformedCandidate(t *testing.T) {
 		t.Errorf("Learn() added %d entries %+v, want none", added, st.cfg.TargetNetworks)
 	}
 }
+
+// A learned network nobody has answered is offered for review and is never
+// handed to the scanner (seed#3108).
+func TestPendingListsOnlyUnansweredLearnedNetworks(t *testing.T) {
+	svc, _, sink := newService(config.NetworkDiscoveryConfig{
+		TargetNetworks: []config.SubnetConfig{
+			{CIDR: "192.168.1.0/24", Name: "Typed in by hand"},
+			{CIDR: "10.51.0.0/16", Name: "Learned, unanswered", Learned: true},
+			{CIDR: "10.51.1.0/24", Name: "Learned, switched on", Enabled: true, Learned: true},
+			{CIDR: "10.51.2.0/24", Name: "Learned, dismissed", Learned: true, Decision: config.LearnedDismissed},
+			{CIDR: "10.51.3.0/24", Name: "Learned, added then off", Learned: true, Decision: config.LearnedAdded},
+		},
+	})
+
+	if _, err := svc.Learn([]learn.Candidate{
+		{CIDR: "10.51.4.0/24", Source: learn.SourceRouteTable, Router: "10.51.0.1"},
+	}); err != nil {
+		t.Fatalf("Learn() error = %v", err)
+	}
+
+	var got []string
+	for _, subnet := range svc.Pending() {
+		got = append(got, subnet.CIDR)
+	}
+	want := []string{"10.51.0.0/16", "10.51.4.0/24"}
+	if len(got) != len(want) || got[0] != want[0] || got[1] != want[1] {
+		t.Errorf("Pending() = %v, want %v", got, want)
+	}
+	if len(sink.last) != 1 || sink.last[0] != "10.51.1.0/24" {
+		t.Errorf("scanner was given %v; only the switched-on network may be swept", sink.last)
+	}
+}
+
+const learnedSummary = "10.51.0.0/16"
+
+func TestDecide(t *testing.T) {
+	tests := []struct {
+		name        string
+		cidr        string
+		decision    config.LearnedDecision
+		wantErr     error
+		wantEnabled bool
+	}{
+		{name: "add switches it on", cidr: learnedSummary, decision: config.LearnedAdded, wantEnabled: true},
+		{name: "dismiss keeps it off", cidr: learnedSummary, decision: config.LearnedDismissed},
+		{name: "unknown answer", cidr: learnedSummary, decision: "maybe", wantErr: settings.ErrInvalidDecision},
+		{
+			name: "operator's own network", cidr: "192.168.1.0/24", decision: config.LearnedAdded,
+			wantErr: settings.ErrNotLearned,
+		},
+		{
+			name: "absent network", cidr: "10.99.0.0/24", decision: config.LearnedAdded,
+			wantErr: settings.ErrSubnetNotFound,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			svc, st, sink := newService(config.NetworkDiscoveryConfig{
+				TargetNetworks: []config.SubnetConfig{
+					{CIDR: "192.168.1.0/24", Name: "Typed in by hand"},
+					{CIDR: learnedSummary, Name: "Learned from 10.51.0.1 (routing table)", Learned: true},
+				},
+			})
+
+			err := svc.Decide(tt.cidr, tt.decision)
+			if !errors.Is(err, tt.wantErr) {
+				t.Fatalf("Decide() error = %v, want %v", err, tt.wantErr)
+			}
+			if tt.wantErr != nil {
+				if st.saved != 0 {
+					t.Errorf("a refused decision saved the config")
+				}
+				return
+			}
+
+			subnet := st.cfg.TargetNetworks[1]
+			if subnet.Decision != tt.decision || subnet.Enabled != tt.wantEnabled {
+				t.Errorf("after Decide: %+v, want decision %q enabled %v", subnet, tt.decision, tt.wantEnabled)
+			}
+			if swept := len(sink.last) == 1 && sink.last[0] == learnedSummary; swept != tt.wantEnabled {
+				t.Errorf("scanner was given %v; swept = %v, want %v", sink.last, swept, tt.wantEnabled)
+			}
+			assertAnswerSticks(t, svc, st)
+		})
+	}
+}
+
+// assertAnswerSticks checks that an answered network leaves the prompt, and
+// that the learner seeing it again on the next sweep neither re-offers it nor
+// changes the answer.
+func assertAnswerSticks(t *testing.T, svc *settings.Service, st *fakeStore) {
+	t.Helper()
+	if pending := svc.Pending(); len(pending) != 0 {
+		t.Errorf("an answered network is still offered: %+v", pending)
+	}
+	before := st.cfg.TargetNetworks[1]
+	added, err := svc.Learn([]learn.Candidate{
+		{CIDR: learnedSummary, Source: learn.SourceRouteTable, Router: "10.51.0.1"},
+	})
+	if err != nil || added != 0 {
+		t.Fatalf("Learn() = %d, %v; want 0, nil", added, err)
+	}
+	if got := st.cfg.TargetNetworks[1]; got != before {
+		t.Errorf("re-learning changed the answered network: %+v, was %+v", got, before)
+	}
+}
+
+// Switching a learned network on in Settings answers its prompt, so switching
+// it off again later does not bring the prompt back.
+func TestUpdateSubnetAnswersALearnedNetwork(t *testing.T) {
+	svc, st, _ := newService(config.NetworkDiscoveryConfig{
+		TargetNetworks: []config.SubnetConfig{{CIDR: learnedSummary, Name: "learned", Learned: true}},
+	})
+
+	for _, enabled := range []bool{true, false} {
+		err := svc.UpdateSubnet(config.SubnetConfig{CIDR: learnedSummary, Name: "learned", Enabled: enabled})
+		if err != nil {
+			t.Fatalf("UpdateSubnet(enabled=%v): %v", enabled, err)
+		}
+	}
+	if got := st.cfg.TargetNetworks[0].Decision; got != config.LearnedAdded {
+		t.Errorf("Decision = %q, want %q", got, config.LearnedAdded)
+	}
+	if pending := svc.Pending(); len(pending) != 0 {
+		t.Errorf("Pending() = %+v; the operator already answered", pending)
+	}
+}
