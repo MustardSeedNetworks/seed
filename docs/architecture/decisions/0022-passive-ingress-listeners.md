@@ -81,7 +81,7 @@ a port.
   sink and both listeners and registers them with the engine registry.
 - **Enrichment is NOT wired yet (Stage A4).** `ClientID` is `"default"` and
   `TargetKind`/`TargetID` are empty/`"unknown_ip"` on every event until the step
-  that resolves `SourceAddr` against `polling_targets` / `discovered_devices`
+  that resolves `SourceAddr` against `polling_targets` / `devices`
   lands. Events persist and flow to the alerts pipeline; they are simply not yet
   attributed to a known device.
 

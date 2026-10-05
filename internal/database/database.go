@@ -78,7 +78,6 @@ type DB struct {
 	alerts            *AlertRepository
 	settings          *SettingsRepository
 	logs              *LogRepository
-	discovery         *DiscoveryRepository
 	clients           *ClientRepository
 	probes            *ProbeRepository
 	pollingTargets    *PollingTargetRepository
