@@ -1,7 +1,7 @@
 /** Contextual, translated help for the current Seed page. */
 
 import type React from 'react';
-import { type ReactElement, useMemo, useState } from 'react';
+import { type ReactElement, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useFocusTrap } from '../../hooks/useFocusTrap';
 import { button, cn, icon as iconTokens, layout, radius, spacing } from '../../styles/theme';
@@ -54,19 +54,16 @@ export function HelpDrawer({
 
   // Filter the TOC: a section matches on its translated title, its id, or any
   // of its rendered body text / keywords.
-  const filteredSections = useMemo(() => {
-    if (!query) {
-      return helpSections;
-    }
-    return helpSections.filter((candidate) => {
-      const title = t(candidate.titleKey).toLowerCase();
-      return (
-        title.includes(query) ||
-        candidate.id.toLowerCase().includes(query) ||
-        sectionSearchText(candidate, t).includes(query)
-      );
-    });
-  }, [query, t]);
+  const filteredSections = query
+    ? helpSections.filter((candidate) => {
+        const title = t(candidate.titleKey).toLowerCase();
+        return (
+          title.includes(query) ||
+          candidate.id.toLowerCase().includes(query) ||
+          sectionSearchText(candidate, t).includes(query)
+        );
+      })
+    : helpSections;
 
   // Keep the active section valid as the filter narrows the list.
   const currentSection =

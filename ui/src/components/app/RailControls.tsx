@@ -12,7 +12,7 @@
  * collapsed to 64px.
  */
 
-import { type JSX, useCallback, useEffect, useRef, useState } from 'react';
+import { type JSX, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useProfileContext } from '../../contexts/profileContext';
 import { cn, icon as iconTokens, radius, spacing } from '../../styles/theme';
@@ -129,29 +129,23 @@ export function RailControls({
     return (): void => document.removeEventListener('mousedown', onPointerDown);
   }, []);
 
-  const selectProfile = useCallback(
-    async (profileId: string) => {
-      await onProfileSwitch(profileId);
-      setOpenPanel(null);
-    },
-    [onProfileSwitch],
-  );
+  const selectProfile = async (profileId: string) => {
+    await onProfileSwitch(profileId);
+    setOpenPanel(null);
+  };
 
-  const selectInterface = useCallback(
-    async (name: string, wifi: boolean) => {
-      switchToInterfaceType(wifi ? 'wifi' : 'ethernet');
-      onInterfaceChange(name);
-      setOpenPanel(null);
-      // The choice is persisted to the active profile (#754), so it survives a
-      // reload rather than only holding for this session.
-      if (wifi) {
-        await setWifiInterface(name, true);
-      } else {
-        await setEthernetInterface(name, true);
-      }
-    },
-    [onInterfaceChange, switchToInterfaceType, setEthernetInterface, setWifiInterface],
-  );
+  const selectInterface = async (name: string, wifi: boolean) => {
+    switchToInterfaceType(wifi ? 'wifi' : 'ethernet');
+    onInterfaceChange(name);
+    setOpenPanel(null);
+    // The choice is persisted to the active profile (#754), so it survives a
+    // reload rather than only holding for this session.
+    if (wifi) {
+      await setWifiInterface(name, true);
+    } else {
+      await setEthernetInterface(name, true);
+    }
+  };
 
   const ethernet = interfaces.filter((i) => i.type !== 'wifi');
 

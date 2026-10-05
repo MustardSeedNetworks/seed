@@ -2,7 +2,7 @@ import { Tooltip } from '../ui/Tooltip';
 /** Create, edit, switch and transfer saved profiles. */
 
 import type React from 'react';
-import { useCallback, useMemo, useState } from 'react';
+import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useProfileContext } from '../../contexts/profileContext';
 import { useFocusTrap } from '../../hooks/useFocusTrap';
@@ -43,73 +43,58 @@ export function ProfileManagement({ onClose }: ProfileManagementProps): React.Re
   const modalRef = useFocusTrap<HTMLDivElement>({ isActive: true, onEscape: onClose });
 
   // Filter profiles by search
-  const filteredProfiles = useMemo(() => {
-    if (!searchQuery.trim()) {
-      return profiles;
-    }
-    const query = searchQuery.toLowerCase();
-    return profiles.filter(
-      (p) => p.name.toLowerCase().includes(query) || p.description?.toLowerCase().includes(query),
-    );
-  }, [profiles, searchQuery]);
+  const query = searchQuery.toLowerCase();
+  const filteredProfiles = searchQuery.trim()
+    ? profiles.filter(
+        (p) => p.name.toLowerCase().includes(query) || p.description?.toLowerCase().includes(query),
+      )
+    : profiles;
 
   // Handlers
-  const handleCreate = useCallback((): void => {
+  const handleCreate = (): void => {
     setEditingProfile(null);
     setIsCreating(true);
     setIsEditorOpen(true);
-  }, []);
+  };
 
-  const handleEdit = useCallback((profile: Profile): void => {
+  const handleEdit = (profile: Profile): void => {
     setEditingProfile(profile);
     setIsCreating(false);
     setIsEditorOpen(true);
-  }, []);
+  };
 
-  const handleSave = useCallback(
-    async (data: ProfileRequest): Promise<void> => {
-      if (isCreating) {
-        const created = await createProfile(data);
-        if (created) {
-          setIsEditorOpen(false);
-        }
-      } else if (editingProfile) {
-        const updated = await updateProfile(editingProfile.id, data);
-        if (updated) {
-          setIsEditorOpen(false);
-        }
+  const handleSave = async (data: ProfileRequest): Promise<void> => {
+    if (isCreating) {
+      const created = await createProfile(data);
+      if (created) {
+        setIsEditorOpen(false);
       }
-    },
-    [isCreating, editingProfile, createProfile, updateProfile],
-  );
-
-  const handleDelete = useCallback(
-    async (id: string): Promise<void> => {
-      const success = await deleteProfile(id);
-      if (success) {
-        setDeleteConfirm(null);
+    } else if (editingProfile) {
+      const updated = await updateProfile(editingProfile.id, data);
+      if (updated) {
+        setIsEditorOpen(false);
       }
-    },
-    [deleteProfile],
-  );
+    }
+  };
 
-  const handleDuplicate = useCallback(
-    async (profile: Profile): Promise<void> => {
-      await duplicateProfile(profile.id);
-    },
-    [duplicateProfile],
-  );
+  const handleDelete = async (id: string): Promise<void> => {
+    const success = await deleteProfile(id);
+    if (success) {
+      setDeleteConfirm(null);
+    }
+  };
 
-  const handleSetActive = useCallback(
-    async (id: string): Promise<void> => {
-      await switchProfile(id);
-    },
-    [switchProfile],
-  );
+  const handleDuplicate = async (profile: Profile): Promise<void> => {
+    await duplicateProfile(profile.id);
+  };
 
-  const handleExport = useCallback(async (): Promise<void> => {
+  const handleSetActive = async (id: string): Promise<void> => {
+    await switchProfile(id);
+  };
+
+  const handleExport = async (): Promise<void> => {
     await downloadProfiles();
-  }, [downloadProfiles]);
+  };
 
   return (
     <>

@@ -9,7 +9,7 @@
 
 import { AlertTriangle, ChevronDown, ChevronUp, X } from 'lucide-react';
 import type { JSX } from 'react';
-import { useCallback, useState } from 'react';
+import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { type Capabilities, getMissingCapabilities } from '../../hooks/useCapabilities';
 import { usePlatformCapabilities } from '../../hooks/usePlatformCapabilities';
@@ -48,10 +48,10 @@ export function CapabilityWarnings({
 
   const missingCapabilities = getMissingCapabilities(capabilities, degraded);
 
-  const handleDismiss = useCallback(() => {
+  const handleDismiss = () => {
     setDismissed(true);
     onDismiss?.();
-  }, [onDismiss]);
+  };
 
   // Don't render if no missing capabilities or dismissed
   if (missingCapabilities.length === 0 || dismissed) {
