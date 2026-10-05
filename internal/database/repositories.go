@@ -180,6 +180,17 @@ func (db *DB) Microbursts() *MicroburstsRepository {
 	return db.microbursts
 }
 
+// VoIPStreams returns the repository the VoIP analyser writes into.
+func (db *DB) VoIPStreams() *VoIPStreamsRepository {
+	db.mu.Lock()
+	defer db.mu.Unlock()
+
+	if db.voipStreams == nil {
+		db.voipStreams = &VoIPStreamsRepository{db: db}
+	}
+	return db.voipStreams
+}
+
 // Topology returns the topology repository (Stage A4). Reconcilers
 // in internal/topology own writes; the operator UI + alert rules
 // own reads.

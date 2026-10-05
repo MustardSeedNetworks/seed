@@ -12,6 +12,7 @@ import (
 	listenersink "github.com/MustardSeedNetworks/seed/internal/listener/sink"
 	"github.com/MustardSeedNetworks/seed/internal/listener/snmptrap"
 	"github.com/MustardSeedNetworks/seed/internal/listener/syslog"
+	"github.com/MustardSeedNetworks/seed/internal/listener/voip"
 	"github.com/MustardSeedNetworks/seed/internal/logging"
 )
 
@@ -22,8 +23,9 @@ import (
 // is off because binding to <1024 requires elevated privileges and we
 // don't want the server to crash out of the box when run as a non-root
 // user. SEED_MICROBURST_IFACE names the probe's own interface to measure
-// microbursts on; it is off by default because it captures every frame on
-// that link.
+// microbursts on, and SEED_VOIP_IFACE the interface whose RTP calls are
+// scored (the probe's own link or a SPAN port). Both are off by default
+// because they capture every frame on that link.
 //
 // V1.0 NMS expansion — Stage A3.5e-4.
 func (s *Server) initListeners(db *database.DB) {
@@ -64,6 +66,21 @@ func (s *Server) initListeners(db *database.DB) {
 			logger.Warn("microburst listener init failed", "error", err)
 		} else if regErr := s.registerEngineIfLicensed(l); regErr != nil {
 			logger.Warn("microburst listener registry registration failed", "error", regErr)
+		}
+	}
+
+	if iface := os.Getenv("SEED_VOIP_IFACE"); iface != "" {
+		l, err := voip.New(voip.Config{
+			Interface: iface,
+			Opener:    defaultCaptureOpener(),
+			Store:     db.VoIPStreams(),
+			Sink:      persistSink,
+			Logger:    logger,
+		})
+		if err != nil {
+			logger.Warn("voip listener init failed", "error", err)
+		} else if regErr := s.registerEngineIfLicensed(l); regErr != nil {
+			logger.Warn("voip listener registry registration failed", "error", regErr)
 		}
 	}
 

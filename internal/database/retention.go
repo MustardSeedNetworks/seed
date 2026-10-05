@@ -32,6 +32,10 @@ const (
 	// defaultMicroburstDays is the default retention period for microbursts
 	// (3 months, as metrics).
 	defaultMicroburstDays = 90
+
+	// defaultVoIPDays is the default retention period for VoIP stream
+	// windows (3 months, as metrics).
+	defaultVoIPDays = 90
 )
 
 // SQL query fragment constants.
@@ -80,6 +84,9 @@ type RetentionPolicy struct {
 
 	// MicroburstDays is how many days to keep microbursts (0 = forever)
 	MicroburstDays int
+
+	// VoIPDays is how many days to keep VoIP stream windows (0 = forever)
+	VoIPDays int
 }
 
 // DefaultRetentionPolicy returns the default retention policy.
@@ -92,6 +99,7 @@ func DefaultRetentionPolicy() RetentionPolicy {
 		SpeedTestDays:       defaultSpeedTestDays,
 		AnomalyResolvedDays: defaultAnomalyResolvedDays,
 		MicroburstDays:      defaultMicroburstDays,
+		VoIPDays:            defaultVoIPDays,
 	}
 }
 
@@ -106,6 +114,7 @@ type CleanupResult struct {
 	AnomalyRollupsCensused   int64
 	AnomalyRollupsDeleted    int64
 	MicroburstsDeleted       int64
+	VoIPStreamsDeleted       int64
 	Duration                 time.Duration
 }
 
@@ -157,6 +166,7 @@ func (db *DB) RunCleanup(ctx context.Context, policy RetentionPolicy) (*CleanupR
 		{policy.SpeedTestDays, db.deleteSpeedTestsOlderThan, "speed tests"},
 		{policy.AnomalyResolvedDays, db.cleanupResolvedAnomalies, "resolved anomalies"},
 		{policy.MicroburstDays, db.Microbursts().DeleteOlderThan, "microbursts"},
+		{policy.VoIPDays, db.VoIPStreams().DeleteOlderThan, "voip streams"},
 	}
 
 	results := make([]int64, len(tasks))
@@ -175,6 +185,7 @@ func (db *DB) RunCleanup(ctx context.Context, policy RetentionPolicy) (*CleanupR
 	result.SpeedTestsDeleted = results[4]
 	result.AnomaliesResolvedDeleted = results[5]
 	result.MicroburstsDeleted = results[6]
+	result.VoIPStreamsDeleted = results[7]
 	result.Duration = time.Since(start)
 
 	return result, nil

@@ -276,6 +276,7 @@ func (s *Server) startMaintenance(retentionDays int) {
 		// operator's general retention window.
 		AnomalyResolvedDays: database.DefaultRetentionPolicy().AnomalyResolvedDays,
 		MicroburstDays:      retentionDays,
+		VoIPDays:            retentionDays,
 	}
 
 	for {

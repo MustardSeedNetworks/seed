@@ -295,3 +295,35 @@ port as inbound frames, which this model would sum against one direction's
 capacity. Frames the kernel drops under load are not counted, so a burst can be
 missed, but never invented. Estate-wide utilization stays with the SNMP
 pipeline ([ADR-0033](0033-interface-counter-pipeline.md)).
+
+## Amendment 2026-10-05: the VoIP analyser (P-A7)
+
+`internal/listener/voip` scores the voice quality of RTP calls seen on one
+interface. It is opt-in (`SEED_VOIP_IFACE` names the interface) and registers
+at the Pro tier. Unlike the microburst listener it works on a SPAN port as well
+as the probe's own link, because its analysis is per stream and does not depend
+on direction, so it opens the interface in promiscuous mode with a `udp` filter.
+
+- **Streams are found without signalling.** A UDP flow counts as RTP once ten
+  packets in a row carry version 2, one SSRC, one scored payload type and
+  consecutive sequence numbers. Seed does not parse SIP, so without the call's
+  SDP only the static narrowband payload types are scored: PCMU, PCMA and
+  G.729. Dynamic types and the wideband G.722 are ignored.
+- **Loss and jitter follow RFC 3550.** Extended sequence numbers give
+  cumulative loss (A.1, A.3), and the interarrival jitter estimate is A.8.
+  Each stream is scored every minute and when it ends (5 s idle). Each window
+  is one row in `voip_streams`, its own table (the old `voip_calls` had no
+  writer and was dropped in `00024`).
+- **The score is the E-model reduced to its delay and loss terms.** With every
+  other ITU-T G.107 parameter at its default, R = 93.2 − Id − Ie,eff. Id
+  is the Cole and Rosenbluth fit, which stays within 0.25 R of the full G.107
+  equations up to 300 ms. Ie,eff is G.107 equation 7-29 with the codec's
+  G.113 Appendix I Ie and Bpl. The delay is packetization, encoder lookahead
+  and a jitter buffer of twice the mean jitter. A passive probe cannot see the
+  network's one-way delay, so the score omits it and is an upper bound for a
+  long path.
+- **A poor window alerts.** A window at or below MOS 3.6 (R 70, the G.109
+  boundary below which many users are dissatisfied) is published to `Sink` as
+  a `voip-quality` event. The `voip.quality` listener rule is pinned like the
+  threat indicator rule, because the operator who enabled the analyser asked
+  for its alerts. Rows age out on the metrics retention window.

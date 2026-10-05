@@ -390,6 +390,15 @@ CREATE INDEX idx_users_provider_external_id ON users(auth_provider, external_id)
 -- index: idx_users_username
 CREATE INDEX idx_users_username             ON users(username);
 
+-- index: idx_voip_streams_client
+CREATE INDEX idx_voip_streams_client ON voip_streams(client_id);
+
+-- index: idx_voip_streams_mos
+CREATE INDEX idx_voip_streams_mos ON voip_streams(mos);
+
+-- index: idx_voip_streams_started
+CREATE INDEX idx_voip_streams_started ON voip_streams(started_at);
+
 -- index: idx_vuln_status_history_vuln
 CREATE INDEX idx_vuln_status_history_vuln
 	ON vulnerability_status_history(vulnerability_id, id);
@@ -1073,6 +1082,27 @@ CREATE TABLE "users" (
 				updated_at      TEXT    NOT NULL,
 				UNIQUE (auth_provider, external_id)
 			) STRICT;
+
+-- table: voip_streams
+CREATE TABLE voip_streams (
+	id INTEGER PRIMARY KEY AUTOINCREMENT,
+	client_id TEXT NOT NULL DEFAULT 'default' REFERENCES clients(id),
+	interface_name TEXT NOT NULL,
+	src_addr TEXT NOT NULL,
+	dst_addr TEXT NOT NULL,
+	ssrc INTEGER NOT NULL,
+	codec TEXT NOT NULL,
+	started_at TEXT NOT NULL,
+	ended_at TEXT NOT NULL,
+	packets_expected INTEGER NOT NULL,
+	packets_received INTEGER NOT NULL,
+	loss_pct REAL NOT NULL,
+	jitter_ms REAL NOT NULL,
+	max_jitter_ms REAL NOT NULL,
+	delay_ms REAL NOT NULL,
+	r_factor REAL NOT NULL,
+	mos REAL NOT NULL
+) STRICT;
 
 -- table: vulnerability_status_history
 CREATE TABLE vulnerability_status_history (

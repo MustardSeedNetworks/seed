@@ -88,6 +88,7 @@ type DB struct {
 	listenerEvents    *ListenerEventsRepository
 	flowRecords       *FlowRecordsRepository
 	microbursts       *MicroburstsRepository
+	voipStreams       *VoIPStreamsRepository
 	topology          *TopologyRepository
 	alertRules        *AlertRulesRepository
 	alertSuppressions *AlertSuppressionsRepository
