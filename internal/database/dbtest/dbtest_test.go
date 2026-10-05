@@ -4,8 +4,8 @@ import (
 	"os"
 	"testing"
 
-	"github.com/MustardSeedNetworks/seed/internal/database"
 	"github.com/MustardSeedNetworks/seed/internal/database/dbtest"
+	"github.com/MustardSeedNetworks/seed/internal/identity/roles"
 )
 
 // Two copies are two databases: a write to one is invisible to the other.
@@ -17,7 +17,7 @@ func TestCopiesAreIndependent(t *testing.T) {
 		t.Fatalf("both copies share %s", a.Path())
 	}
 
-	if _, err := a.CreateUser(t.Context(), "only-in-a", "$2a$10$x", database.RoleViewer); err != nil {
+	if _, err := a.CreateUser(t.Context(), "only-in-a", "$2a$10$x", roles.Viewer); err != nil {
 		t.Fatalf("create user: %v", err)
 	}
 	if _, err := b.GetUser(t.Context(), "only-in-a"); err == nil {

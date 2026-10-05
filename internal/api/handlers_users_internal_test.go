@@ -10,6 +10,7 @@ import (
 
 	"github.com/MustardSeedNetworks/seed/internal/database"
 	"github.com/MustardSeedNetworks/seed/internal/database/dbtest"
+	"github.com/MustardSeedNetworks/seed/internal/identity/roles"
 	"github.com/MustardSeedNetworks/seed/internal/license"
 )
 
@@ -34,7 +35,7 @@ func usersTestSetup(t *testing.T) (*Server, *license.Manager) {
 
 	// Seed the bootstrap admin so handlers that consult callerIsAdmin
 	// against the request username find a real row.
-	_, createErr := db.CreateUser(t.Context(), "admin", "$2a$10$x", database.RoleAdmin)
+	_, createErr := db.CreateUser(t.Context(), "admin", "$2a$10$x", roles.Admin)
 	if createErr != nil {
 		t.Fatalf("seed admin: %v", createErr)
 	}
@@ -59,13 +60,13 @@ func TestUserCreate_RequiresAdmin(t *testing.T) {
 	}
 
 	// Add a non-admin user.
-	_, err := s.dbConn.CreateUser(t.Context(), "viewer1", "$2a$10$x", database.RoleViewer)
+	_, err := s.dbConn.CreateUser(t.Context(), "viewer1", "$2a$10$x", roles.Viewer)
 	if err != nil {
 		t.Fatalf("seed viewer: %v", err)
 	}
 
 	body, _ := json.Marshal(
-		CreateUserRequest{Username: "newone", Password: "GoodPassw0rd!ABC", Role: database.RoleOperator},
+		CreateUserRequest{Username: "newone", Password: "GoodPassw0rd!ABC", Role: roles.Operator},
 	)
 	req := newAuthedRequest(http.MethodPost, APIVersionPrefix+"/users", body, "viewer1")
 	w := httptest.NewRecorder()
@@ -82,7 +83,7 @@ func TestUserCreate_RequiresPro(t *testing.T) {
 	// No trial → Free tier → multi_user gate fires.
 
 	body, _ := json.Marshal(
-		CreateUserRequest{Username: "newone", Password: "GoodPassw0rd!ABC", Role: database.RoleOperator},
+		CreateUserRequest{Username: "newone", Password: "GoodPassw0rd!ABC", Role: roles.Operator},
 	)
 	req := newAuthedRequest(http.MethodPost, APIVersionPrefix+"/users", body, "admin")
 	w := httptest.NewRecorder()
@@ -101,7 +102,7 @@ func TestUserCreate_Success(t *testing.T) {
 	}
 
 	body, _ := json.Marshal(
-		CreateUserRequest{Username: "operator1", Password: "GoodPassw0rd!ABC", Role: database.RoleOperator},
+		CreateUserRequest{Username: "operator1", Password: "GoodPassw0rd!ABC", Role: roles.Operator},
 	)
 	req := newAuthedRequest(http.MethodPost, APIVersionPrefix+"/users", body, "admin")
 	w := httptest.NewRecorder()
@@ -114,7 +115,7 @@ func TestUserCreate_Success(t *testing.T) {
 	if err := json.NewDecoder(w.Body).Decode(&got); err != nil {
 		t.Fatalf("decode: %v", err)
 	}
-	if got.Username != "operator1" || got.Role != database.RoleOperator {
+	if got.Username != "operator1" || got.Role != roles.Operator {
 		t.Errorf("unexpected response: %+v", got)
 	}
 	if got.AuthProvider != database.AuthProviderLocal {
@@ -132,7 +133,7 @@ func TestUserDelete_RefusesLastAdmin(t *testing.T) {
 	// Seed a second admin so we can delete one of them without hitting
 	// the self-delete guard, then expect the last-admin guard to fire
 	// when we try to delete the remaining admin (us).
-	_, err := s.dbConn.CreateUser(t.Context(), "admin2", "$2a$10$x", database.RoleAdmin)
+	_, err := s.dbConn.CreateUser(t.Context(), "admin2", "$2a$10$x", roles.Admin)
 	if err != nil {
 		t.Fatalf("seed admin2: %v", err)
 	}
@@ -148,12 +149,12 @@ func TestUserDelete_RefusesLastAdmin(t *testing.T) {
 	// Now try to delete admin via another admin — there's only one left.
 	// We need a second admin to act, so re-seed and then try to delete
 	// the first one.
-	_, err = s.dbConn.CreateUser(t.Context(), "admin3", "$2a$10$x", database.RoleAdmin)
+	_, err = s.dbConn.CreateUser(t.Context(), "admin3", "$2a$10$x", roles.Admin)
 	if err != nil {
 		t.Fatalf("seed admin3: %v", err)
 	}
 	// Now demote admin3 and try to delete admin (the only admin left).
-	if upErr := s.dbConn.UpdateUserRole(t.Context(), "admin3", database.RoleOperator); upErr != nil {
+	if upErr := s.dbConn.UpdateUserRole(t.Context(), "admin3", roles.Operator); upErr != nil {
 		t.Fatalf("demote admin3: %v", upErr)
 	}
 
@@ -187,7 +188,7 @@ func TestUserList_AdminOnly(t *testing.T) {
 	if r := mgr.StartTrial(); !r.Success {
 		t.Fatalf("StartTrial: %s", r.Message)
 	}
-	_, err := s.dbConn.CreateUser(t.Context(), "viewer1", "$2a$10$x", database.RoleViewer)
+	_, err := s.dbConn.CreateUser(t.Context(), "viewer1", "$2a$10$x", roles.Viewer)
 	if err != nil {
 		t.Fatalf("seed viewer: %v", err)
 	}
@@ -230,7 +231,7 @@ func TestCurrentUser_ReturnsCallerOwnRecord(t *testing.T) {
 	if err := json.NewDecoder(w.Body).Decode(&got); err != nil {
 		t.Fatalf("decode: %v", err)
 	}
-	if got.Username != "admin" || got.Role != database.RoleAdmin {
+	if got.Username != "admin" || got.Role != roles.Admin {
 		t.Errorf("unexpected: %+v", got)
 	}
 }
@@ -254,7 +255,7 @@ func TestUpsertSSOUser_FirstEverBecomesAdmin(t *testing.T) {
 	if err != nil {
 		t.Fatalf("upsert: %v", err)
 	}
-	if u.Role != database.RoleAdmin {
+	if u.Role != roles.Admin {
 		t.Errorf("first SSO user role = %q, want admin", u.Role)
 	}
 	if u.AuthProvider != database.AuthProviderGoogle || u.ExternalID != "google-sub-12345" {
@@ -280,7 +281,7 @@ func TestUpsertSSOUser_SubsequentDefaultsToViewer(t *testing.T) {
 	t.Cleanup(func() { _ = db.Close() })
 
 	// Bootstrap a local admin first.
-	if _, createErr := db.CreateUser(t.Context(), "admin", "$2a$10$x", database.RoleAdmin); createErr != nil {
+	if _, createErr := db.CreateUser(t.Context(), "admin", "$2a$10$x", roles.Admin); createErr != nil {
 		t.Fatalf("bootstrap admin: %v", createErr)
 	}
 
@@ -293,7 +294,7 @@ func TestUpsertSSOUser_SubsequentDefaultsToViewer(t *testing.T) {
 	if err != nil {
 		t.Fatalf("upsert: %v", err)
 	}
-	if u.Role != database.RoleViewer {
+	if u.Role != roles.Viewer {
 		t.Errorf("subsequent SSO user role = %q, want viewer", u.Role)
 	}
 }
@@ -309,7 +310,7 @@ func TestDeleteUser_CascadesAPITokens(t *testing.T) {
 	db := s.dbConn
 
 	// Seed a second admin so we can delete one of them.
-	if _, err := db.CreateUser(t.Context(), "bob", "$2a$10$x", database.RoleAdmin); err != nil {
+	if _, err := db.CreateUser(t.Context(), "bob", "$2a$10$x", roles.Admin); err != nil {
 		t.Fatalf("seed bob: %v", err)
 	}
 
@@ -335,7 +336,7 @@ func TestDeleteUser_CascadesAPITokens(t *testing.T) {
 	// Token row should have been cascaded away — Insert again with the
 	// same id should succeed (it would conflict if the row remained).
 	// First we need to also re-create bob so the FK passes.
-	if _, err := db.CreateUser(t.Context(), "bob", "$2a$10$x", database.RoleAdmin); err != nil {
+	if _, err := db.CreateUser(t.Context(), "bob", "$2a$10$x", roles.Admin); err != nil {
 		t.Fatalf("re-create bob: %v", err)
 	}
 	if err := repo.Insert(t.Context(), database.APITokenRecord{

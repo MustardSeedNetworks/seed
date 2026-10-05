@@ -22,7 +22,7 @@ import {
   Shield,
   Wifi,
 } from 'lucide-react';
-import { type FC, lazy } from 'react';
+import { type ComponentType, lazy } from 'react';
 import { useTranslation } from 'react-i18next';
 
 const LinkPage = lazy(() => import('./pages/LinkPage').then((m) => ({ default: m.LinkPage })));
@@ -72,7 +72,7 @@ export interface PageConfig {
   description: string;
   icon: LucideIcon;
   iconColorClass?: string;
-  component: FC;
+  component: ComponentType;
   /**
    * Id of the HelpDrawer section this page's (?) opens. Omit to hide the
    * button. Kept explicit rather than derived from i18nKey so a page may
@@ -122,7 +122,7 @@ interface PageDef {
   group: NavGroupKey;
   icon: LucideIcon;
   iconColorClass?: string;
-  component: FC;
+  component: ComponentType;
   help?: string;
 }
 

@@ -6,6 +6,7 @@ import (
 
 	"github.com/MustardSeedNetworks/seed/internal/database"
 	"github.com/MustardSeedNetworks/seed/internal/i18n"
+	"github.com/MustardSeedNetworks/seed/internal/identity/roles"
 	"github.com/MustardSeedNetworks/seed/internal/logging"
 )
 
@@ -63,14 +64,14 @@ func (s *Server) flowRoutes() []route {
 			path:         APIVersionPrefix + "/flows/application-signatures",
 			handler:      s.handleAppSignatures,
 			methods:      []string{http.MethodGet, http.MethodPut, http.MethodDelete},
-			minRole:      database.RoleOperator,
+			minRole:      roles.Operator,
 			maxBodyBytes: MaxBodySizeConfig,
 		},
 		{
 			path:         APIVersionPrefix + "/flows/threat-indicators",
 			handler:      s.handleFlowIndicators,
 			methods:      []string{http.MethodGet, http.MethodPut},
-			minRole:      database.RoleOperator,
+			minRole:      roles.Operator,
 			maxBodyBytes: MaxBodySizeJSON,
 		},
 	}

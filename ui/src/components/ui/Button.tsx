@@ -10,7 +10,7 @@
  * All color tokens resolve via the theme aliases in index.css so the same
  * source compiles in seed/stem/niac.
  */
-import type { ButtonHTMLAttributes, FC, ReactNode, Ref } from 'react';
+import type { ButtonHTMLAttributes, ReactNode, Ref } from 'react';
 import { useTranslation } from 'react-i18next';
 import { iconSizes } from '../../constants/sizes';
 import { Tooltip } from './Tooltip';
@@ -78,7 +78,7 @@ const variantStyles: Record<ButtonVariant, Record<ButtonTone, string>> = {
   },
 };
 
-const LoadingSpinner: FC<{ size: ButtonSize }> = ({ size }) => {
+function LoadingSpinner({ size }: { size: ButtonSize }) {
   const { t } = useTranslation('common');
   const spinnerSize = size === 'xs' || size === 'sm' ? iconSizes.xs : iconSizes.md;
   return (
@@ -97,9 +97,9 @@ const LoadingSpinner: FC<{ size: ButtonSize }> = ({ size }) => {
       />
     </svg>
   );
-};
+}
 
-export const Button: FC<ButtonProps> = ({
+export function Button({
   children,
   variant = 'solid',
   tone = 'violet',
@@ -112,21 +112,23 @@ export const Button: FC<ButtonProps> = ({
   ref,
   title,
   ...props
-}) => (
-  <Tooltip text={title}>
-    <button
-      type="button"
-      ref={ref}
-      className={`${baseStyles} ${sizeStyles[size]} ${variantStyles[variant][tone]} ${className}`}
-      disabled={disabled || loading}
-      {...props}
-    >
-      {loading ? <LoadingSpinner size={size} /> : (leftIcon ?? null)}
-      {children}
-      {!loading ? (rightIcon ?? null) : null}
-    </button>
-  </Tooltip>
-);
+}: ButtonProps) {
+  return (
+    <Tooltip text={title}>
+      <button
+        type="button"
+        ref={ref}
+        className={`${baseStyles} ${sizeStyles[size]} ${variantStyles[variant][tone]} ${className}`}
+        disabled={disabled || loading}
+        {...props}
+      >
+        {loading ? <LoadingSpinner size={size} /> : (leftIcon ?? null)}
+        {children}
+        {!loading ? (rightIcon ?? null) : null}
+      </button>
+    </Tooltip>
+  );
+}
 
 interface IconButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   icon: ReactNode;
@@ -137,7 +139,7 @@ interface IconButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   className?: string;
 }
 
-export const IconButton: FC<IconButtonProps> = ({
+export function IconButton({
   icon,
   variant = 'ghost',
   tone = 'gray',
@@ -145,7 +147,7 @@ export const IconButton: FC<IconButtonProps> = ({
   className = '',
   title,
   ...props
-}) => {
+}: IconButtonProps) {
   const iconSizeStyles = {
     sm: 'p-1.5',
     md: 'pad-xs',
@@ -177,4 +179,4 @@ export const IconButton: FC<IconButtonProps> = ({
       </button>
     </Tooltip>
   );
-};
+}

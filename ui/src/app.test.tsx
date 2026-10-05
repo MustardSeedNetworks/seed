@@ -179,7 +179,7 @@ function createTestQueryClient(): QueryClient {
 }
 
 // Wrapper with QueryClientProvider and ProfileProvider
-function createWrapper(): React.FC<{ children: ReactNode }> {
+function createWrapper(): React.ComponentType<{ children: ReactNode }> {
   const testQueryClient = createTestQueryClient();
   return function wrapper({ children }: { children: ReactNode }): JSX.Element {
     return (

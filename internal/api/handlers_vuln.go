@@ -15,10 +15,10 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/MustardSeedNetworks/seed/internal/database"
 	"github.com/MustardSeedNetworks/seed/internal/discovery"
 	"github.com/MustardSeedNetworks/seed/internal/discovery/vuln"
 	"github.com/MustardSeedNetworks/seed/internal/i18n"
+	"github.com/MustardSeedNetworks/seed/internal/identity/roles"
 	"github.com/MustardSeedNetworks/seed/internal/logging"
 	securitysettings "github.com/MustardSeedNetworks/seed/internal/security/settings"
 	"github.com/MustardSeedNetworks/seed/internal/validation"
@@ -29,7 +29,7 @@ import (
 // reads stay open so prior scan output remains visible to lower tiers, and
 // the writes are gated by role.
 func (s *Server) vulnerabilityRoutes() []route {
-	op := database.RoleOperator
+	op := roles.Operator
 	get := []string{http.MethodGet}
 	post := []string{http.MethodPost}
 	getPost := []string{http.MethodGet, http.MethodPost}

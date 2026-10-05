@@ -22,8 +22,8 @@ import (
 	"github.com/MustardSeedNetworks/seed/internal/alerts"
 	"github.com/MustardSeedNetworks/seed/internal/alerts/inbox"
 	"github.com/MustardSeedNetworks/seed/internal/alerts/narrative"
-	"github.com/MustardSeedNetworks/seed/internal/database"
 	"github.com/MustardSeedNetworks/seed/internal/i18n"
+	"github.com/MustardSeedNetworks/seed/internal/identity/roles"
 	"github.com/MustardSeedNetworks/seed/internal/logging"
 )
 
@@ -40,7 +40,7 @@ const (
 // actions, and the test-send is rate-limited because each call is an outbound
 // connection.
 func (s *Server) alertRoutes() []route {
-	op := database.RoleOperator
+	op := roles.Operator
 	post := []string{http.MethodPost}
 	return []route{
 		{path: APIVersionPrefix + "/alerts", handler: s.handleAlerts, methods: []string{http.MethodGet}},

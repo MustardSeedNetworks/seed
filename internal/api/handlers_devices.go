@@ -8,9 +8,9 @@ import (
 	"time"
 
 	"github.com/MustardSeedNetworks/seed/internal/config"
-	"github.com/MustardSeedNetworks/seed/internal/database"
 	discoverysettings "github.com/MustardSeedNetworks/seed/internal/discovery/settings"
 	"github.com/MustardSeedNetworks/seed/internal/i18n"
+	"github.com/MustardSeedNetworks/seed/internal/identity/roles"
 	"github.com/MustardSeedNetworks/seed/internal/logging"
 )
 
@@ -470,13 +470,13 @@ func (s *Server) targetNetworkRoutes() []route {
 			path:    APIVersionPrefix + "/security/devices/subnets",
 			handler: s.handleDevicesSubnets,
 			methods: []string{http.MethodGet, http.MethodPost, http.MethodPut, http.MethodDelete},
-			minRole: database.RoleOperator,
+			minRole: roles.Operator,
 		},
 		{
 			path:    APIVersionPrefix + "/security/devices/subnets/pending",
 			handler: s.handlePendingSubnets,
 			methods: []string{http.MethodGet, http.MethodPost},
-			minRole: database.RoleOperator,
+			minRole: roles.Operator,
 		},
 	}
 }

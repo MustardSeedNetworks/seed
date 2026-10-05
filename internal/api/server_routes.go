@@ -7,7 +7,7 @@ package api
 import (
 	"net/http"
 
-	"github.com/MustardSeedNetworks/seed/internal/database"
+	"github.com/MustardSeedNetworks/seed/internal/identity/roles"
 	"github.com/MustardSeedNetworks/seed/internal/logging"
 )
 
@@ -36,7 +36,7 @@ func (s *Server) setupRoutes() {
 // endpoints. All are GET-only and run through the same JWT/PAT auth
 // middleware as the rest of /api/v1.
 func (s *Server) setupTopologyRoutes() {
-	op := database.RoleOperator
+	op := roles.Operator
 	get := []string{http.MethodGet}
 	getPost := []string{http.MethodGet, http.MethodPost}
 	getPutDelete := []string{http.MethodGet, http.MethodPut, http.MethodDelete}
@@ -111,7 +111,7 @@ func (s *Server) setupTopologyRoutes() {
 // endpoints and the read-only license status endpoint the UI uses to
 // know whether the mint button should be enabled.
 func (s *Server) setupAPITokenRoutes() {
-	op := database.RoleOperator
+	op := roles.Operator
 	get := []string{http.MethodGet}
 	getPost := []string{http.MethodGet, http.MethodPost}
 	del := []string{http.MethodDelete}
@@ -141,7 +141,7 @@ func (s *Server) setupAPITokenRoutes() {
 
 // setupCoreRoutes registers auth, settings, config, and setup routes.
 func (s *Server) setupCoreRoutes() {
-	op := database.RoleOperator
+	op := roles.Operator
 	get := []string{http.MethodGet}
 	post := []string{http.MethodPost}
 	put := []string{http.MethodPut}
@@ -393,7 +393,7 @@ func (s *Server) setupCoreRoutes() {
 
 // setupTelemetryRoutes registers telemetry routes.
 func (s *Server) setupTelemetryRoutes() {
-	op := database.RoleOperator
+	op := roles.Operator
 	get := []string{http.MethodGet}
 	post := []string{http.MethodPost}
 	getPost := []string{http.MethodGet, http.MethodPost}
@@ -569,7 +569,7 @@ func (s *Server) setupTelemetryRoutes() {
 
 // setupSecurityRoutes registers security routes.
 func (s *Server) setupSecurityRoutes() {
-	op := database.RoleOperator
+	op := roles.Operator
 	get := []string{http.MethodGet}
 	post := []string{http.MethodPost}
 	getPost := []string{http.MethodGet, http.MethodPost}
@@ -815,7 +815,7 @@ func (s *Server) setupPathRoutes() {
 // (ADR-0002): policy is data, composed by register() in one canonical order.
 // Behavior is identical to the prior hand-wrapped form.
 func (s *Server) setupWiFiRoutes() {
-	op := database.RoleOperator
+	op := roles.Operator
 	get := []string{http.MethodGet}
 	post := []string{http.MethodPost}
 	del := []string{http.MethodDelete}

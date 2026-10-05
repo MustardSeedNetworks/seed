@@ -368,8 +368,10 @@ linters:
         # retention) orchestrates rollup + purge cadence through its consumer-side
         # RollupSource port; the concrete SQL adapters (MetricsRollupSource /
         # ProbeRollupSource) live in internal/database and are wired in at the
-        # composition root (internal/api initRetentionEngine). The timeseries domain
-        # therefore never imports internal/database. Production-only (tests use the
+        # composition root (internal/api initRetentionEngine). The history read side
+        # (internal/timeseries/history) owns its Store port and row types the same
+        # way; HistoryRepository implements it and internal/app wires it. The
+        # timeseries domain therefore never imports internal/database. Production-only (tests use the
         # engine's domain-typed fakeSource).
         "timeseries-no-persistence":
           files:

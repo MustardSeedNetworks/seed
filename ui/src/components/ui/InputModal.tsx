@@ -1,7 +1,7 @@
 /**
  * InputModal primitive — ported from niac UI kit (Phase B).
  */
-import { type FC, useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Button } from './Button';
 import { Modal } from './Modal';
 
@@ -18,7 +18,7 @@ export interface InputModalProps {
   submitTone?: 'violet' | 'blue' | 'green' | 'red';
 }
 
-export const InputModal: FC<InputModalProps> = ({
+export function InputModal({
   isOpen,
   onSubmit,
   onCancel,
@@ -29,7 +29,7 @@ export const InputModal: FC<InputModalProps> = ({
   submitLabel = 'Submit',
   cancelLabel = 'Cancel',
   submitTone = 'violet',
-}) => {
+}: InputModalProps) {
   const [value, setValue] = useState(defaultValue);
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -81,4 +81,4 @@ export const InputModal: FC<InputModalProps> = ({
       </div>
     </Modal>
   );
-};
+}

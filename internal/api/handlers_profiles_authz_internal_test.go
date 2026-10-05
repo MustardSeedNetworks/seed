@@ -7,7 +7,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/MustardSeedNetworks/seed/internal/database"
+	"github.com/MustardSeedNetworks/seed/internal/identity/roles"
 )
 
 // seedRoledUser adds a user with the given role to the test server's DB.
@@ -22,9 +22,9 @@ func seedRoledUser(t *testing.T, s *Server, username, role string) {
 // reads pass through for every role; non-safe methods require operator+.
 func TestWriteGate_MethodAndRoleMatrix(t *testing.T) {
 	t.Parallel()
-	s, _ := usersTestSetup(t) // seeds "admin" (RoleAdmin)
-	seedRoledUser(t, s, "viewer1", database.RoleViewer)
-	seedRoledUser(t, s, "operator1", database.RoleOperator)
+	s, _ := usersTestSetup(t) // seeds "admin" (roles.Admin)
+	seedRoledUser(t, s, "viewer1", roles.Viewer)
+	seedRoledUser(t, s, "operator1", roles.Operator)
 
 	called := false
 	probe := func(w http.ResponseWriter, _ *http.Request) {
@@ -83,21 +83,21 @@ func TestWriteGate_MethodAndRoleMatrix(t *testing.T) {
 func TestRequireRole_Hierarchy(t *testing.T) {
 	t.Parallel()
 	s, _ := usersTestSetup(t)
-	seedRoledUser(t, s, "viewer1", database.RoleViewer)
-	seedRoledUser(t, s, "operator1", database.RoleOperator)
+	seedRoledUser(t, s, "viewer1", roles.Viewer)
+	seedRoledUser(t, s, "operator1", roles.Operator)
 
 	cases := []struct {
 		user    string
 		min     string
 		allowed bool
 	}{
-		{"viewer1", database.RoleViewer, true},
-		{"viewer1", database.RoleOperator, false},
-		{"viewer1", database.RoleAdmin, false},
-		{"operator1", database.RoleOperator, true},
-		{"operator1", database.RoleAdmin, false},
-		{"admin", database.RoleAdmin, true},
-		{"admin", database.RoleOperator, true},
+		{"viewer1", roles.Viewer, true},
+		{"viewer1", roles.Operator, false},
+		{"viewer1", roles.Admin, false},
+		{"operator1", roles.Operator, true},
+		{"operator1", roles.Admin, false},
+		{"admin", roles.Admin, true},
+		{"admin", roles.Operator, true},
 	}
 	for _, c := range cases {
 		req := newAuthedRequest(http.MethodGet, APIVersionPrefix+"/x", nil, c.user)
@@ -117,7 +117,7 @@ func TestCallerRole_NoDBIsImplicitAdmin(t *testing.T) {
 	s := &Server{} // no DB attached
 	req := newAuthedRequest(http.MethodPost, APIVersionPrefix+"/x", nil, "someone")
 	role, ok := s.callerRole(req)
-	if !ok || role != database.RoleAdmin {
+	if !ok || role != roles.Admin {
 		t.Fatalf("callerRole with no DB = (%q, %v), want (admin, true)", role, ok)
 	}
 	w := httptest.NewRecorder()
@@ -135,7 +135,7 @@ func TestCallerRole_NoDBIsImplicitAdmin(t *testing.T) {
 func TestWriteGate_WiredOnSettingsRoute(t *testing.T) {
 	t.Parallel()
 	s, _ := usersTestSetup(t)
-	seedRoledUser(t, s, "viewer1", database.RoleViewer)
+	seedRoledUser(t, s, "viewer1", roles.Viewer)
 	s.setupRoutes()
 
 	req := newAuthedRequest(http.MethodPut, APIVersionPrefix+"/settings", []byte(`{}`), "viewer1")

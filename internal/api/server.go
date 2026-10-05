@@ -72,6 +72,7 @@ import (
 	"github.com/MustardSeedNetworks/seed/internal/settings/management"
 	"github.com/MustardSeedNetworks/seed/internal/settings/persistence"
 	"github.com/MustardSeedNetworks/seed/internal/system"
+	"github.com/MustardSeedNetworks/seed/internal/timeseries/history"
 	"github.com/MustardSeedNetworks/seed/internal/timeseries/retention"
 	"github.com/MustardSeedNetworks/seed/internal/topology"
 	"github.com/MustardSeedNetworks/seed/internal/wifi"
@@ -281,6 +282,7 @@ type Server struct {
 	configBackups      *backups.Service            // Config backup/restore use-case (ADR-0020)
 	exportService      *export.Service             // Diagnostic-export use-case (ADR-0020)
 	logQuery           *logquery.Service           // Log-query use-case (ADR-0020)
+	historyQueries     *history.Service            // Probe/anomaly history read use-case (#175, ADR-0020)
 	healthMonitoring   *monitoring.Service         // Health-monitoring use-case (ADR-0020)
 	healthSettings     *healthsettings.Service     // Health-checks settings use-case (ADR-0020)
 	engineStatus       *enginestatus.Service       // Engine-status use-case (ADR-0020)
@@ -696,42 +698,6 @@ func (s *Server) initAlertPipelines(db *database.DB) {
 	s.initAlertEscalation(db, logger)
 }
 
-// initRetentionEngine constructs the unified retention engine and
-// registers its sources (probe_results, metrics, flow_records). The engine is
-// tier-aware — it reads license.Manager on each pass — so in-place
-// license upgrades take effect on the next tick.
-//
-// V1.0 NMS expansion — Stage A2.
-func (s *Server) initRetentionEngine(db *database.DB) {
-	retentionEngine := retention.New(
-		licenseTierAdapter{lm: s.licenseMgr},
-		logging.GetLogger(),
-	)
-	retentionEngine.Register(database.NewProbeRollupSource(db))
-	retentionEngine.Register(database.NewMetricsRollupSource(db))
-	retentionEngine.Register(database.NewFlowRollupSource(db))
-	s.retentionEngine = retentionEngine
-	if regErr := s.registerEngineIfLicensed(retentionEngine); regErr != nil {
-		logging.GetLogger().Warn("retention engine registry registration failed", "error", regErr)
-	}
-}
-
-// licenseTierAdapter satisfies retention.TierProvider with the tier the
-// license manager grants now. nil-safe — falls back to TierFree when no
-// license manager is wired.
-type licenseTierAdapter struct {
-	lm *license.Manager
-}
-
-// GetTier returns the granted tier, Free when there is no manager or no live
-// grant.
-func (a licenseTierAdapter) GetTier() license.Tier {
-	if a.lm == nil {
-		return license.TierFree
-	}
-	return license.EffectiveTier(a.lm)
-}
-
 // Service accessors — the in-package read interface and the lazy method
 // values the ADR-0020 use-cases bind to (D1, formerly #888).
 
@@ -927,6 +893,7 @@ func (s *Server) initDiscoveryUseCases() {
 	s.topologyQueries = app.NewTopologyQueries(s.db, topologyMaxLimit)
 	s.exportService = export.NewService(serverExportSources{s: s})
 	s.logQuery = app.NewLogQuery(s.db)
+	s.historyQueries = app.NewHistory(s.db)
 	s.pollingTargets = app.NewPollingTargets(s.db, s.pollingTargetLimit)
 	// The credential vault needs the keyring that owns the DEK. Without a
 	// config there is none, so the use-case stays nil and its handlers report

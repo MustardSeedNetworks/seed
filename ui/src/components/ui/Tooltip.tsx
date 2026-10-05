@@ -1,7 +1,6 @@
 import {
   type ButtonHTMLAttributes,
   cloneElement,
-  type FC,
   isValidElement,
   type ReactElement,
   type ReactNode,
@@ -55,7 +54,7 @@ function describedChild(
   });
 }
 
-export const Tooltip: FC<TooltipProps> = ({ text, side = 'top', children, className = '' }) => {
+export function Tooltip({ text, side = 'top', children, className = '' }: TooltipProps) {
   const id = useId();
   const hasText = text !== null && text !== undefined && text !== '';
   const wrapperRef = useRef<HTMLSpanElement>(null);
@@ -153,4 +152,4 @@ export const Tooltip: FC<TooltipProps> = ({ text, side = 'top', children, classN
         : null}
     </span>
   );
-};
+}

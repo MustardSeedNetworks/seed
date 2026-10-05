@@ -21,8 +21,8 @@ import (
 	"github.com/MustardSeedNetworks/seed/internal/auth"
 	"github.com/MustardSeedNetworks/seed/internal/capture"
 	"github.com/MustardSeedNetworks/seed/internal/config"
-	"github.com/MustardSeedNetworks/seed/internal/database"
 	"github.com/MustardSeedNetworks/seed/internal/diagnostics/packetcapture"
+	"github.com/MustardSeedNetworks/seed/internal/identity/roles"
 	"github.com/MustardSeedNetworks/seed/internal/platform/jobs"
 )
 
@@ -221,7 +221,7 @@ func TestCaptureDownloadRefusals(t *testing.T) {
 		{name: "unknown id", id: "AAAAAAAAAAAAAAAAAAAAAAAAAA", want: http.StatusNotFound},
 		{name: "traversal", id: "..%2F..%2Fetc%2Fpasswd", want: http.StatusNotFound},
 		{name: "empty", id: "", want: http.StatusNotFound},
-		{name: "viewer", id: "AAAAAAAAAAAAAAAAAAAAAAAAAA", scope: database.RoleViewer, want: http.StatusForbidden},
+		{name: "viewer", id: "AAAAAAAAAAAAAAAAAAAAAAAAAA", scope: roles.Viewer, want: http.StatusForbidden},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

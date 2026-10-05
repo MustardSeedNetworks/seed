@@ -1,11 +1,10 @@
-import type { FC } from 'react';
 import { useTranslation } from 'react-i18next';
 
 /**
  * Suspense fallback for lazy-loaded routed pages. Sized to match a
  * typical page header so the layout doesn't jump when the chunk lands.
  */
-export const PageLoader: FC = () => {
+export function PageLoader() {
   const { t } = useTranslation('common');
 
   return (
@@ -16,4 +15,4 @@ export const PageLoader: FC = () => {
       </div>
     </div>
   );
-};
+}

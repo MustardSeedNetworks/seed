@@ -20,7 +20,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/MustardSeedNetworks/seed/internal/database"
+	"github.com/MustardSeedNetworks/seed/internal/identity/roles"
 	"github.com/MustardSeedNetworks/seed/internal/logging"
 	"github.com/MustardSeedNetworks/seed/internal/platform/events"
 	"github.com/MustardSeedNetworks/seed/internal/platform/jobs"
@@ -320,7 +320,7 @@ func writeJobError(w http.ResponseWriter, logger *slog.Logger, err error) {
 // (status) and the SSE stream are safe reads. The exact /jobs/events pattern
 // out-ranks the /jobs/ subtree in net/http's ServeMux (longest match wins).
 func (s *Server) jobsRoutes() []route {
-	op := database.RoleOperator
+	op := roles.Operator
 	return []route{
 		{
 			path:        APIVersionPrefix + "/jobs",

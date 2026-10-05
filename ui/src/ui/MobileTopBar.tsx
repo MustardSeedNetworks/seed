@@ -3,7 +3,6 @@
  * rail as a drawer. Below the `lg` breakpoint it stands in for the rail.
  */
 import { Menu, X } from 'lucide-react';
-import type { FC } from 'react';
 import { useTranslation } from 'react-i18next';
 import { SeedLogo } from '../components/app/SeedLogo';
 import { Tooltip } from '../components/ui/Tooltip';
@@ -16,7 +15,7 @@ interface MobileTopBarProps {
   deviceName?: string;
 }
 
-export const MobileTopBar: FC<MobileTopBarProps> = ({ mobileOpen, toggleMobile, deviceName }) => {
+export function MobileTopBar({ mobileOpen, toggleMobile, deviceName }: MobileTopBarProps) {
   const { t } = useTranslation();
   return (
     <header className="lg:hidden fixed top-0 left-0 right-0 z-50 flex-between px-4 py-row-lg bg-surface-raised/95 backdrop-blur-xl border-b border-surface-border">
@@ -41,4 +40,4 @@ export const MobileTopBar: FC<MobileTopBarProps> = ({ mobileOpen, toggleMobile, 
       </Tooltip>
     </header>
   );
-};
+}

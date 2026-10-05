@@ -177,11 +177,20 @@ jobs:
   # job never compiles it. The macOS Wi-Fi path is CoreWLAN through cgo and
   # Objective-C; a break in it would leave every other check green. This job
   # builds the real thing.
+  #
+  # Not on `pull_request`: this ran on the PR AND again on the merge group for
+  # the same commit, and macOS runners carry a 10x minute multiplier. `push:`
+  # is `branches: [main]`, so it still runs in the queue, on main and on
+  # dispatch -- and the `changes` job forces every filter true on merge_group,
+  # so nothing merges without it. A darwin-only break now ejects the PR from the
+  # queue instead of reddening it; that is the trade.
   backend-darwin:
     name: Backend (macOS)
     runs-on: macos-latest
     needs: changes
-    if: needs.changes.outputs.backend == 'true' || needs.changes.outputs.ci_infra == 'true'
+    if: >-
+      github.event_name != 'pull_request' &&
+      (needs.changes.outputs.backend == 'true' || needs.changes.outputs.ci_infra == 'true')
     timeout-minutes: 20
     env:
       GOMODCACHE: ${{ github.workspace }}/.cache/go/pkg/mod
@@ -235,12 +244,17 @@ jobs:
   # cannot link here. Build and vet still cover every package compiling; the
   # test step is scoped to the port-fallback tests, which are the ones with
   # Windows-specific behaviour to exercise.
+  #
+  # Off `pull_request` for the same reason as Backend (macOS) above. Every PR
+  # still cross-vets the Windows tree and runs `Lint (GOOS=windows)`.
   backend-windows:
     name: Backend (Windows)
     runs-on: windows-latest
     timeout-minutes: 20
     needs: changes
-    if: needs.changes.outputs.backend == 'true' || needs.changes.outputs.ci_infra == 'true'
+    if: >-
+      github.event_name != 'pull_request' &&
+      (needs.changes.outputs.backend == 'true' || needs.changes.outputs.ci_infra == 'true')
     env:
       CGO_ENABLED: "0"
     steps:

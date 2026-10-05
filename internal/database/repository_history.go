@@ -5,6 +5,8 @@ import (
 	"database/sql"
 	"fmt"
 	"time"
+
+	"github.com/MustardSeedNetworks/seed/internal/timeseries/history"
 )
 
 // repository_history.go is the bounded read side of the tiered time-series
@@ -15,40 +17,12 @@ import (
 // take a fixed window. Deliberately not a query surface: seed stays
 // handheld-class and exposes a fixed window over what it recorded (#175).
 //
-// Each read has a raw form and a rollup form. The caller (internal/api's
-// resolveHistoryWindow) picks between them from the licence tier's horizons:
-// the raw form is identical on every tier and includes the bucket in progress,
-// the rollup form reaches back past the raw horizon.
+// Each read has a raw form and a rollup form; history.Service picks between
+// them. The repository implements history.Store and maps rows to its types.
 
 // HistoryRepository reads the time-series tables. Obtained via DB.History().
 type HistoryRepository struct {
 	db *DB
-}
-
-// ProbeTrendPoint is one bucket of a probe's history. Latencies are over the
-// successful runs in the bucket; SampleCount counts every run, so
-// SampleCount-SuccessCount is the failure count the UI draws as availability.
-type ProbeTrendPoint struct {
-	Bucket       time.Time `json:"bucket"`
-	SampleCount  int       `json:"sampleCount"`
-	SuccessCount int       `json:"successCount"`
-	AvgLatencyMs float64   `json:"avgLatencyMs"`
-	MinLatencyMs float64   `json:"minLatencyMs"`
-	MaxLatencyMs float64   `json:"maxLatencyMs"`
-}
-
-// AnomalyDayCount is one day's anomaly census: how many distinct (def,
-// subject) anomalies were open on that day.
-//
-// Deliberately no severity field. The obvious SQL for one — MAX over the
-// severity column — is a lexical maximum, and "warning" sorts above
-// "critical". The ordering that means anything is anomaly.Severity.rank(),
-// which is unexported and lives a package away; restating it in SQL would be
-// a second source of truth for the escalation order. A client that needs the
-// worst severity on a day asks the anomaly surface for that day.
-type AnomalyDayCount struct {
-	Day   string `json:"day"`
-	Count int    `json:"count"`
 }
 
 // probeTrendRawSQL aggregates probe_results on read. The bucket expression is
@@ -78,7 +52,7 @@ const (
 // is why it is preferred for any window the raw horizon covers.
 func (r *HistoryRepository) ProbeTrendRaw(
 	ctx context.Context, clientID, probeID string, from, to time.Time, daily bool,
-) ([]ProbeTrendPoint, error) {
+) ([]history.ProbeTrendPoint, error) {
 	bucketExpr, layout := sqliteHourBucket, hourFormat
 	if daily {
 		bucketExpr, layout = sqliteDayBucket, dayFormat
@@ -109,7 +83,7 @@ const probeTrendRollupSQL = `
 // once its bucket closes.
 func (r *HistoryRepository) ProbeTrendRollup(
 	ctx context.Context, clientID, probeID string, from, to time.Time, daily bool,
-) ([]ProbeTrendPoint, error) {
+) ([]history.ProbeTrendPoint, error) {
 	table, column, layout := "probe_rollups_hourly", "hour_bucket", hourFormat
 	if daily {
 		table, column, layout = "probe_rollups_daily", "day_bucket", dayFormat
@@ -129,10 +103,10 @@ func (r *HistoryRepository) ProbeTrendRollup(
 // Every latency is NULL for a bucket in which no run succeeded; those surface
 // as zero beside a SuccessCount of zero, which reads as "no successful run"
 // rather than "zero milliseconds".
-func scanProbeTrend(rows *sql.Rows, layout, op string) ([]ProbeTrendPoint, error) {
+func scanProbeTrend(rows *sql.Rows, layout, op string) ([]history.ProbeTrendPoint, error) {
 	defer func() { _ = rows.Close() }()
 
-	var points []ProbeTrendPoint
+	var points []history.ProbeTrendPoint
 	for rows.Next() {
 		var (
 			bucket              string
@@ -146,7 +120,7 @@ func scanProbeTrend(rows *sql.Rows, layout, op string) ([]ProbeTrendPoint, error
 		if err != nil {
 			return nil, fmt.Errorf("%s bucket %q: %w", op, bucket, err)
 		}
-		points = append(points, ProbeTrendPoint{
+		points = append(points, history.ProbeTrendPoint{
 			Bucket:       ts,
 			SampleCount:  samples,
 			SuccessCount: successful,
@@ -177,7 +151,7 @@ const anomalyCountsRollupSQL = `
 // DailyDays horizon, which is zero below Pro.
 func (r *HistoryRepository) AnomalyCountsByDayRollup(
 	ctx context.Context, from, to time.Time,
-) ([]AnomalyDayCount, error) {
+) ([]history.AnomalyDayCount, error) {
 	rows, err := r.db.Query(ctx, anomalyCountsRollupSQL,
 		from.UTC().Format(dayFormat), to.UTC().Format(dayFormat))
 	if err != nil {
@@ -211,7 +185,7 @@ const anomalyCountsLiveSQL = `
 // returned with a zero count so the series has no gaps.
 func (r *HistoryRepository) AnomalyCountsByDayLive(
 	ctx context.Context, from, to time.Time,
-) ([]AnomalyDayCount, error) {
+) ([]history.AnomalyDayCount, error) {
 	rows, err := r.db.Query(ctx, anomalyCountsLiveSQL,
 		from.UTC().Format(dayFormat), to.UTC().Format(dayFormat))
 	if err != nil {
@@ -220,12 +194,12 @@ func (r *HistoryRepository) AnomalyCountsByDayLive(
 	return scanAnomalyCounts(rows, "anomaly counts (live)")
 }
 
-func scanAnomalyCounts(rows *sql.Rows, op string) ([]AnomalyDayCount, error) {
+func scanAnomalyCounts(rows *sql.Rows, op string) ([]history.AnomalyDayCount, error) {
 	defer func() { _ = rows.Close() }()
 
-	var counts []AnomalyDayCount
+	var counts []history.AnomalyDayCount
 	for rows.Next() {
-		var c AnomalyDayCount
+		var c history.AnomalyDayCount
 		if err := rows.Scan(&c.Day, &c.Count); err != nil {
 			return nil, fmt.Errorf("%s scan: %w", op, err)
 		}

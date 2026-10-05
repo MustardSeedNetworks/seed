@@ -11,7 +11,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/MustardSeedNetworks/seed/internal/database"
+	"github.com/MustardSeedNetworks/seed/internal/identity/roles"
 )
 
 // apiPath strips a Go 1.22 method prefix ("GET /api/v1/x" -> "/api/v1/x").
@@ -100,9 +100,9 @@ func TestPersistentWriteRoutesRequireOperator(t *testing.T) {
 			continue
 		}
 		seen[apiPath(rt.path)] = true
-		if rt.minRole != database.RoleOperator {
+		if rt.minRole != roles.Operator {
 			t.Errorf("route %q: minRole = %q, want %q (persistent write must be operator-gated)",
-				rt.path, rt.minRole, database.RoleOperator)
+				rt.path, rt.minRole, roles.Operator)
 		}
 	}
 	for path := range wantOperator {

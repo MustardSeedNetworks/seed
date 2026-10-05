@@ -12,7 +12,7 @@ import (
 	"slices"
 	"strings"
 
-	"github.com/MustardSeedNetworks/seed/internal/database"
+	"github.com/MustardSeedNetworks/seed/internal/identity/roles"
 	"github.com/MustardSeedNetworks/seed/internal/logging"
 )
 
@@ -36,7 +36,7 @@ type route struct {
 	// (MaxBodySizeJSON); set explicitly for larger uploads or tighter limits.
 	maxBodyBytes int64
 	// minRole gates state-changing methods. The supported value today is
-	// database.RoleOperator, applied via writeGated (safe GET/HEAD/OPTIONS pass;
+	// roles.Operator, applied via writeGated (safe GET/HEAD/OPTIONS pass;
 	// mutating methods require operator+). Empty = no role gate.
 	minRole string
 	// feature is the license feature required via requireFeature. Empty = none.
@@ -111,7 +111,7 @@ func (s *Server) register(rt route) {
 	// bodyLimit closest to the handler so r.Body is capped before any read.
 	h = bodyLimited(rt.maxBodyBytes, h)
 	// requireRole next.
-	if rt.minRole == database.RoleOperator {
+	if rt.minRole == roles.Operator {
 		h = s.writeGated(h)
 	}
 	// requireFeature next.
