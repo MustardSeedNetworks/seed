@@ -38,6 +38,7 @@ import type {
   CategorizedInterfacesResponse,
   InterfaceInfo,
 } from '../types/generated/categorized-interfaces-response';
+import type { LinkResponse } from '../types/generated/link-response';
 import type { WiFiResponse } from '../types/generated/wifi-response';
 
 const API_BASE: string = import.meta.env.VITE_API_BASE || '';
@@ -115,16 +116,14 @@ export function useNetworkFetchers({
         credentials: 'include',
       });
       if (response.ok) {
-        const data = await response.json();
+        const data: LinkResponse = await response.json();
 
         // Detect link-up transition for auto-run tests (fallback polling case)
         const newLinkUp = data.linkUp === true;
         const wasDown = prevLinkUpRef.current === false;
 
         // Update previous state
-        if (typeof data.linkUp === 'boolean') {
-          prevLinkUpRef.current = data.linkUp;
-        }
+        prevLinkUpRef.current = data.linkUp;
 
         // Trigger auto-run when link transitions from down to up
         if (newLinkUp && wasDown) {
@@ -138,8 +137,8 @@ export function useNetworkFetchers({
           ...prev,
           link: {
             linkUp: data.linkUp,
-            carrier: data.carrier ?? data.linkUp, // Fallback for compatibility
-            hasIp: data.hasIp ?? data.linkUp, // Fallback for compatibility
+            carrier: data.carrier,
+            hasIP: data.hasIP,
             speed: data.speed || '',
             duplex: data.duplex || '',
             advertisedSpeeds: data.advertisedSpeeds || [],

@@ -32,7 +32,7 @@ function link(over: Partial<LinkData> = {}): LinkData {
   return {
     linkUp: true,
     carrier: true,
-    hasIp: true,
+    hasIP: true,
     speed: '1000Mb/s',
     duplex: 'full',
     advertisedSpeeds: [],
@@ -85,13 +85,30 @@ describe('LinkPage', () => {
     expect(rollup()).toHaveTextContent('No carrier');
   });
 
-  it('calls a link with no address degraded, not healthy', () => {
+  it('calls a link with no address degraded, not down', () => {
+    // The wire's linkUp is carrier && hasIP, so it is false here too (#2696).
     useAppContext.mockReturnValue(
-      context({ cards: { link: link({ hasIp: false }), cable: null, wifi: null } }),
+      context({
+        cards: { link: link({ hasIP: false, linkUp: false }), cable: null, wifi: null },
+      }),
     );
     render(<LinkPage />);
 
     expect(rollup()).toHaveAttribute('data-state', 'warn');
+    expect(rollup()).toHaveTextContent('The link is up with no routable address');
+  });
+
+  it('reads the SSE link payload as the daemon sends it (#2696)', () => {
+    const payload: unknown = JSON.parse(
+      '{"interface":"eth0","linkUp":true,"mtu":1500,"carrier":true,"hasIP":true,' +
+        '"speed":"1000Mb/s","duplex":"full","advertisedSpeeds":null,"autoNeg":true}',
+    );
+    useAppContext.mockReturnValue(
+      context({ cards: { link: payload as LinkData, cable: null, wifi: null } }),
+    );
+    render(<LinkPage />);
+
+    expect(rollup()).toHaveAttribute('data-state', 'ok');
   });
 
   it('refuses to read as healthy while nothing has arrived', () => {

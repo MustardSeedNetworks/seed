@@ -32,7 +32,7 @@ export default meta;
 const linkDataOnline = {
   linkUp: true,
   carrier: true,
-  hasIp: true,
+  hasIP: true,
   speed: '1000Mb/s',
   duplex: 'Full',
   mtu: 1500,
@@ -44,7 +44,7 @@ const linkDataOnline = {
 const linkDataNoIp = {
   linkUp: true,
   carrier: true,
-  hasIp: false,
+  hasIP: false,
   speed: '100Mb/s',
   duplex: 'Full',
   mtu: 1500,

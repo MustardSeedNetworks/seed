@@ -24,7 +24,7 @@
 
 import type React from 'react';
 
-import type { LinkHistoryEvent } from '../../types/generated/link-response';
+import type { LinkHistoryEvent, LinkResponse } from '../../types/generated/link-response';
 
 export type { LinkHistoryEvent };
 
@@ -83,15 +83,16 @@ interface SfpInfo {
 }
 
 /**
- * Link layer and network layer status data
+ * Link layer and network layer status data. The fields both the poll and the
+ * SSE card update carry are picked from the generated wire type, so a renamed
+ * Go field fails to compile here instead of reading as undefined (#2696).
+ * `linkUp` is the wire's carrier && hasIP, not the administrative flag.
  */
-export interface LinkData {
-  linkUp: boolean; // Link is administratively up
-  carrier: boolean; // Physical carrier/link detected (L2)
-  hasIp: boolean; // Has routable IP address (L3)
-  speed: string; // Current connection speed (e.g., "1000Mb/s")
-  duplex: string; // Duplex mode ("full" or "half")
-  advertisedSpeeds: string[]; // Speeds supported by auto-negotiation
+export interface LinkData
+  extends Pick<
+    LinkResponse,
+    'linkUp' | 'carrier' | 'hasIP' | 'speed' | 'duplex' | 'advertisedSpeeds'
+  > {
   mtu?: number; // Maximum transmission unit
   autoNeg?: boolean; // Auto-negotiation enabled
   flapCount24h?: number; // Number of link state changes in last 24h
@@ -120,7 +121,7 @@ function getStatus(data: LinkData): Status {
   if (!data.carrier) {
     return 'error'; // No physical link
   }
-  if (!data.hasIp) {
+  if (!data.hasIP) {
     return 'warning'; // Carrier but no IP
   }
   return 'success'; // Fully connected
@@ -153,7 +154,7 @@ export const LinkCard: React.MemoExoticComponent<(props: LinkCardProps) => JSX.E
       if (!linkData.carrier) {
         return tc('status.noCarrier');
       }
-      if (!linkData.hasIp) {
+      if (!linkData.hasIP) {
         return tc('status.noIP');
       }
       return linkData.speed || tc('status.connected');
