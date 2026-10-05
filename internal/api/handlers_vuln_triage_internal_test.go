@@ -15,6 +15,7 @@ import (
 	"github.com/MustardSeedNetworks/seed/internal/auth"
 	"github.com/MustardSeedNetworks/seed/internal/database"
 	"github.com/MustardSeedNetworks/seed/internal/discovery"
+	"github.com/MustardSeedNetworks/seed/internal/identity/roles"
 	"github.com/MustardSeedNetworks/seed/internal/reporting/store"
 )
 
@@ -231,6 +232,6 @@ func TestVulnTriageRequiresOperator(t *testing.T) {
 	for _, rt := range s.manifest {
 		byPath[rt.path] = rt
 	}
-	require.Equal(t, database.RoleOperator, byPath[vulnFindingsPathPrefix].minRole)
+	require.Equal(t, roles.Operator, byPath[vulnFindingsPathPrefix].minRole)
 	require.Equal(t, []string{http.MethodGet}, byPath[vulnFindingsPath].methods)
 }

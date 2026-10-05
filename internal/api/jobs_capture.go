@@ -16,9 +16,9 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/MustardSeedNetworks/seed/internal/database"
 	"github.com/MustardSeedNetworks/seed/internal/diagnostics/packetcapture"
 	"github.com/MustardSeedNetworks/seed/internal/i18n"
+	"github.com/MustardSeedNetworks/seed/internal/identity/roles"
 	"github.com/MustardSeedNetworks/seed/internal/logging"
 	"github.com/MustardSeedNetworks/seed/internal/paths"
 	"github.com/MustardSeedNetworks/seed/internal/platform/jobs"
@@ -82,7 +82,7 @@ func (s *Server) registerDefaultPacketCaptureKind() {
 // credentials in the clear included, so reading one takes the same operator
 // role as starting one.
 func (s *Server) handleCaptureDownload(w http.ResponseWriter, r *http.Request) {
-	if !s.requireRole(w, r, database.RoleOperator) {
+	if !s.requireRole(w, r, roles.Operator) {
 		return
 	}
 	logger := logging.FromContext(r.Context())

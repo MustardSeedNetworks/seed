@@ -19,7 +19,7 @@ import (
 // behind an internal/app use-case; each feature moved there lowers this number,
 // and it only goes down. At zero, internal/app is the database's only importer
 // outside cmd/seed.
-const apiDatabaseImporters = 30
+const apiDatabaseImporters = 23
 
 const databaseImportPath = "github.com/MustardSeedNetworks/seed/internal/database"
 

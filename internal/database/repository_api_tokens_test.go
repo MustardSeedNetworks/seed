@@ -11,6 +11,7 @@ import (
 
 	"github.com/MustardSeedNetworks/seed/internal/database"
 	"github.com/MustardSeedNetworks/seed/internal/database/dbtest"
+	"github.com/MustardSeedNetworks/seed/internal/identity/roles"
 )
 
 func setupAPITokenTest(t *testing.T, owners ...string) (*database.APITokenRepository, context.Context) {
@@ -31,7 +32,7 @@ func setupAPITokenTest(t *testing.T, owners ...string) (*database.APITokenReposi
 		owners = []string{"alice", "bob"}
 	}
 	for _, name := range owners {
-		_, createErr := db.CreateUser(ctx, name, "$2a$10$x", database.RoleAdmin)
+		_, createErr := db.CreateUser(ctx, name, "$2a$10$x", roles.Admin)
 		if createErr != nil {
 			t.Fatalf("seed user %q: %v", name, createErr)
 		}

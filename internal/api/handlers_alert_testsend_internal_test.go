@@ -12,7 +12,7 @@ import (
 	"testing"
 
 	alertdelivery "github.com/MustardSeedNetworks/seed/internal/alerts/delivery"
-	"github.com/MustardSeedNetworks/seed/internal/database"
+	"github.com/MustardSeedNetworks/seed/internal/identity/roles"
 )
 
 // The test-send action (#2997) is an outbound connection a caller can trigger
@@ -26,7 +26,7 @@ func TestAlertTestSendRouteIsOperatorGatedAndRateLimited(t *testing.T) {
 		if apiPath(rt.path) != APIVersionPrefix+"/settings/alerts/test" {
 			continue
 		}
-		if rt.minRole != database.RoleOperator || !rt.rateLimited ||
+		if rt.minRole != roles.Operator || !rt.rateLimited ||
 			len(rt.methods) != 1 || rt.methods[0] != http.MethodPost {
 			t.Errorf("route = %+v, want POST, operator-gated, rate-limited", rt)
 		}

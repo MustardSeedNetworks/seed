@@ -9,6 +9,7 @@ import (
 
 	"github.com/MustardSeedNetworks/seed/internal/auth"
 	"github.com/MustardSeedNetworks/seed/internal/database"
+	"github.com/MustardSeedNetworks/seed/internal/identity/roles"
 )
 
 // TestCallerRole_ClampsOnTokenScope proves the #1255 auth-time clamp:
@@ -18,7 +19,7 @@ import (
 func TestCallerRole_ClampsOnTokenScope(t *testing.T) {
 	t.Parallel()
 	s, _ := usersTestSetup(t) // seeds "admin"
-	seedRoledUser(t, s, "operator1", database.RoleOperator)
+	seedRoledUser(t, s, "operator1", roles.Operator)
 
 	cases := []struct {
 		owner     string
@@ -28,18 +29,18 @@ func TestCallerRole_ClampsOnTokenScope(t *testing.T) {
 		wantClamp bool
 	}{
 		// Admin owner gets clamped down by viewer-scoped token.
-		{"admin", "viewer", database.RoleViewer, true, true},
-		{"admin", "operator", database.RoleOperator, true, true},
+		{"admin", "viewer", roles.Viewer, true, true},
+		{"admin", "operator", roles.Operator, true, true},
 		// No scope = inherit owner role; admin stays admin.
-		{"admin", "", database.RoleAdmin, true, false},
+		{"admin", "", roles.Admin, true, false},
 		// Scope at owner's level is a no-op.
-		{"admin", "admin", database.RoleAdmin, true, false},
+		{"admin", "admin", roles.Admin, true, false},
 		// Operator owner can be clamped down to viewer.
-		{"operator1", "viewer", database.RoleViewer, true, true},
+		{"operator1", "viewer", roles.Viewer, true, true},
 		// Scope above owner's role can't escalate — owner's role wins.
-		{"operator1", "admin", database.RoleOperator, true, false},
+		{"operator1", "admin", roles.Operator, true, false},
 		// Invalid scope is ignored, owner's role applies.
-		{"admin", "superuser", database.RoleAdmin, true, false},
+		{"admin", "superuser", roles.Admin, true, false},
 	}
 	for _, c := range cases {
 		req := newAuthedRequest(http.MethodGet, APIVersionPrefix+"/x", nil, c.owner)
@@ -71,7 +72,7 @@ func TestWriteGate_ViewerScopedAdminTokenBlocksWrites(t *testing.T) {
 
 	// Same admin caller, but the PAT clamped them to viewer.
 	req = newAuthedRequest(http.MethodPost, APIVersionPrefix+"/probe", nil, "admin")
-	req = req.WithContext(auth.WithTokenScope(req.Context(), database.RoleViewer))
+	req = req.WithContext(auth.WithTokenScope(req.Context(), roles.Viewer))
 	w = httptest.NewRecorder()
 	if s.requireWriteAccess(w, req) {
 		t.Errorf("admin-owned viewer-scoped token must be blocked by write gate, status=%d", w.Code)
@@ -92,7 +93,7 @@ func TestAPITokenRepo_ScopeRoundtrips(t *testing.T) {
 	// Seed two tokens for "admin": one viewer-scoped, one inherits.
 	rec1 := database.APITokenRecord{
 		ID: "t1", OwnerUsername: "admin", Name: "ci-readonly",
-		TokenHash: "hash1", Prefix: "sd_pat_abcde", Scope: database.RoleViewer,
+		TokenHash: "hash1", Prefix: "sd_pat_abcde", Scope: roles.Viewer,
 	}
 	rec2 := database.APITokenRecord{
 		ID: "t2", OwnerUsername: "admin", Name: "all-access",
@@ -109,8 +110,8 @@ func TestAPITokenRepo_ScopeRoundtrips(t *testing.T) {
 	if err != nil {
 		t.Fatalf("find t1: %v", err)
 	}
-	if got1.Scope != database.RoleViewer {
-		t.Errorf("scope round-trip: got %q, want %q", got1.Scope, database.RoleViewer)
+	if got1.Scope != roles.Viewer {
+		t.Errorf("scope round-trip: got %q, want %q", got1.Scope, roles.Viewer)
 	}
 
 	got2, err := repo.FindActiveByHash(t.Context(), "hash2")
@@ -130,7 +131,7 @@ func TestAPITokenRepo_ScopeRoundtrips(t *testing.T) {
 	for _, r := range list {
 		scopes[r.ID] = r.Scope
 	}
-	if scopes["t1"] != database.RoleViewer || scopes["t2"] != "" {
+	if scopes["t1"] != roles.Viewer || scopes["t2"] != "" {
 		t.Errorf("list scopes: got %v, want t1=viewer t2=''", scopes)
 	}
 }
@@ -152,7 +153,7 @@ func TestMintAPIToken_RejectsScopeAboveOwner(t *testing.T) {
 	if r := mgr.StartTrial(); !r.Success { // mint requires Pro
 		t.Fatalf("StartTrial: %s", r.Message)
 	}
-	seedRoledUser(t, s, "operator1", database.RoleOperator)
+	seedRoledUser(t, s, "operator1", roles.Operator)
 	// Operator tries to mint an admin-scoped token.
 	req := newAuthedRequest(http.MethodPost, APIVersionPrefix+"/tokens",
 		[]byte(`{"name":"escalate","scope":"admin"}`), "operator1")

@@ -13,6 +13,7 @@ import (
 	"github.com/MustardSeedNetworks/seed/internal/config"
 	"github.com/MustardSeedNetworks/seed/internal/database"
 	"github.com/MustardSeedNetworks/seed/internal/database/dbtest"
+	"github.com/MustardSeedNetworks/seed/internal/identity/roles"
 	"github.com/MustardSeedNetworks/seed/internal/license"
 	"github.com/MustardSeedNetworks/seed/internal/netif"
 	"github.com/MustardSeedNetworks/seed/internal/testutil"
@@ -31,8 +32,8 @@ func ssoGateServer(t *testing.T) *Server {
 	}
 	t.Cleanup(func() { _ = db.Close() })
 	for _, u := range []struct{ name, role string }{
-		{"viewer", database.RoleViewer},
-		{"admin", database.RoleAdmin},
+		{"viewer", roles.Viewer},
+		{"admin", roles.Admin},
 	} {
 		if _, createErr := db.CreateUser(t.Context(), u.name, "$2a$10$x", u.role); createErr != nil {
 			t.Fatalf("seed %s: %v", u.name, createErr)

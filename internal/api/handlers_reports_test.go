@@ -18,6 +18,7 @@ import (
 	"github.com/MustardSeedNetworks/seed/internal/config"
 	"github.com/MustardSeedNetworks/seed/internal/database"
 	"github.com/MustardSeedNetworks/seed/internal/database/dbtest"
+	"github.com/MustardSeedNetworks/seed/internal/identity/roles"
 	"github.com/MustardSeedNetworks/seed/internal/license"
 	"github.com/MustardSeedNetworks/seed/internal/reporting"
 	"github.com/MustardSeedNetworks/seed/internal/testutil"
@@ -88,7 +89,7 @@ func reportsTestServerOn(t *testing.T, cfg *config.Config, configPath string, db
 	// POST and DELETE are operator-gated. Without a real operator the write
 	// routes answer 401 and the handler never runs, so the tests below would
 	// be asserting the middleware rather than the code they name.
-	_, err = db.CreateUser(t.Context(), reportsOperator, "$2a$10$x", database.RoleOperator)
+	_, err = db.CreateUser(t.Context(), reportsOperator, "$2a$10$x", roles.Operator)
 	require.NoError(t, err)
 
 	return s
