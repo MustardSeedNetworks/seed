@@ -71,8 +71,14 @@ func productionGoSource(t *testing.T, module fs.FS) string {
 			return walkErr
 		}
 		if d.IsDir() {
+			// Hidden directories hold no module source, and CI points
+			// GOMODCACHE at <repo>/.cache: walking it scanned every
+			// dependency once per table and timed the package out.
+			if path != "." && strings.HasPrefix(d.Name(), ".") {
+				return fs.SkipDir
+			}
 			switch d.Name() {
-			case ".git", "node_modules", "testdata":
+			case "node_modules", "testdata":
 				return fs.SkipDir
 			}
 			return nil
