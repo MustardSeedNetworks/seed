@@ -463,9 +463,7 @@ func TestGetLegacyPathsUniqueness(t *testing.T) {
 func TestBinaryPathCachingThreadSafety(t *testing.T) {
 	t.Parallel()
 
-	// Save original
-	original := iperf.IperfBinaryPath()
-	defer iperf.SetIperfBinaryPath(original)
+	iperf.KeepIperfBinary(t)
 
 	done := make(chan bool)
 	numGoroutines := 20
@@ -493,9 +491,7 @@ func TestBinaryPathCachingThreadSafety(t *testing.T) {
 
 // TestClearIperfBinaryPath tests clearing the cached path.
 func TestClearIperfBinaryPath(t *testing.T) {
-	// Save original
-	original := iperf.IperfBinaryPath()
-	defer iperf.SetIperfBinaryPath(original)
+	iperf.KeepIperfBinary(t)
 
 	// Set a value
 	iperf.SetIperfBinaryPath("/test/path/iperf3")
@@ -512,9 +508,7 @@ func TestClearIperfBinaryPath(t *testing.T) {
 
 // TestFindIperf3BinaryWithPresetPath tests finding with preset cached path.
 func TestFindIperf3BinaryWithPresetPath(t *testing.T) {
-	// Save original
-	original := iperf.IperfBinaryPath()
-	defer iperf.SetIperfBinaryPath(original)
+	iperf.KeepIperfBinary(t)
 
 	// Set a cached path
 	cachedPath := "/cached/iperf3/path"

@@ -89,5 +89,15 @@ func NewMockManager(cfg MockManagerConfig) *Manager {
 		detector:         nil, // Not needed for mock
 		callbackMu:       sync.RWMutex{},
 		callbacks:        nil,
+		applier:          mockApplier{},
 	}
 }
+
+// mockApplier accepts every write without touching the host. Without it the
+// api handler tests ran `networksetup -setdhcp` against the developer's Mac
+// and set the real loopback MTU (#2530).
+type mockApplier struct{}
+
+func (mockApplier) Apply(string, *StaticIPConfig) error { return nil }
+func (mockApplier) DHCP(string) error                   { return nil }
+func (mockApplier) SetMTU(string, int) error            { return nil }

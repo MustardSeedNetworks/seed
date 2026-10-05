@@ -390,9 +390,7 @@ func TestBuildClientArgsUDPBandwidth(t *testing.T) {
 
 // TestFindIperf3BinaryWithMockedPath tests binary finding with mocked paths.
 func TestFindIperf3BinaryWithMockedPath(t *testing.T) {
-	// Save and restore original path
-	originalPath := iperf.IperfBinaryPath()
-	defer iperf.SetIperfBinaryPath(originalPath)
+	iperf.KeepIperfBinary(t)
 
 	// Test with cached path
 	testPath := "/mocked/path/iperf3"

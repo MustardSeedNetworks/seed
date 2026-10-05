@@ -559,9 +559,7 @@ func TestConstantsValues(t *testing.T) {
 
 // TestBinaryPathCaching tests the binary path caching mechanism.
 func TestBinaryPathCaching(t *testing.T) {
-	// Save and restore original path
-	originalPath := iperf.IperfBinaryPath()
-	defer iperf.SetIperfBinaryPath(originalPath)
+	iperf.KeepIperfBinary(t)
 
 	// Test set and get
 	testPath := "/test/path/iperf3"
@@ -611,8 +609,7 @@ func TestGetLegacyPathsContent(t *testing.T) {
 // when nothing was found — so on a machine without iperf3 it asserted nothing,
 // and on one with iperf3 it asserted only that a search succeeded.
 func TestFindIperf3BinaryUsesTheCache(t *testing.T) {
-	original := iperf.IperfBinaryPath()
-	t.Cleanup(func() { iperf.SetIperfBinaryPath(original) })
+	iperf.KeepIperfBinary(t)
 
 	const cached = "/nonexistent/cached/iperf3"
 	iperf.SetIperfBinaryPath(cached)
@@ -629,8 +626,7 @@ func TestFindIperf3BinaryUsesTheCache(t *testing.T) {
 // TestClearIperfBinaryPathEmptiesTheCache is the other half: after clearing,
 // the cache no longer reports a path, so the next call performs a real search.
 func TestClearIperfBinaryPathEmptiesTheCache(t *testing.T) {
-	original := iperf.IperfBinaryPath()
-	t.Cleanup(func() { iperf.SetIperfBinaryPath(original) })
+	iperf.KeepIperfBinary(t)
 
 	iperf.SetIperfBinaryPath("/nonexistent/cached/iperf3")
 	iperf.ClearIperfBinaryPath()

@@ -74,8 +74,8 @@ import (
 )
 
 const (
-	// versionCheckTimeout is the maximum time allowed for iperf3 --version to complete.
-	// Short timeout since version check should be instant for a healthy binary.
+	// versionCheckTimeout bounds the one iperf3 --version probe a process runs.
+	// The answer is instant for a healthy binary; the slack is for a loaded host.
 	versionCheckTimeout = 5 * time.Second
 
 	// serverStartTimeout is the maximum time allowed for iperf3 server to start listening.
@@ -85,9 +85,6 @@ const (
 	// portCheckTimeout is the maximum time allowed for TCP port availability check.
 	// Short timeout since port bind should succeed or fail immediately.
 	portCheckTimeout = 2 * time.Second
-
-	// binaryValidationTimeoutSeconds is the timeout for validating iperf3 binary via --version check.
-	binaryValidationTimeoutSeconds = 2
 
 	// minSupportedVersion is the minimum iperf3 version required for reliable operation.
 	// Version 3.17+ provides stable JSON output format for programmatic parsing.
@@ -159,35 +156,36 @@ func validateServer(server string) error {
 	return nil
 }
 
-// iperf binary path accessor functions use closure-encapsulated state for thread-safe singleton access.
-// getIperfBinaryPath returns the cached iperf3 binary path.
-// setIperfBinaryPath sets the cached iperf3 binary path.
-// _ (clearIperfBinaryPath) resets the cached path to empty (unused but required for pattern).
+// iperfBinary is the resolved iperf3 binary and the version it reported when
+// it was probed. The two are cached together so the version is read once per
+// process: every exec from the daemon can wedge its child on macOS (#2530).
+type iperfBinary struct {
+	path    string
+	version string
+}
+
+// getIperfBinary returns the cached binary; a zero path means none is cached.
+// setIperfBinary replaces it.
 //
 //nolint:gochecknoglobals // Intentional thread-safe singleton using closure pattern
 var (
-	getIperfBinaryPath, setIperfBinaryPath, _ = func() (
-		func() string,
-		func(string),
-		func(),
+	getIperfBinary, setIperfBinary = func() (
+		func() iperfBinary,
+		func(iperfBinary),
 	) {
 		var (
-			mu   sync.RWMutex
-			path string
+			mu     sync.RWMutex
+			cached iperfBinary
 		)
 
-		return func() string {
+		return func() iperfBinary {
 				mu.RLock()
 				defer mu.RUnlock()
-				return path
-			}, func(p string) {
+				return cached
+			}, func(b iperfBinary) {
 				mu.Lock()
 				defer mu.Unlock()
-				path = p
-			}, func() {
-				mu.Lock()
-				defer mu.Unlock()
-				path = ""
+				cached = b
 			}
 	}()
 )

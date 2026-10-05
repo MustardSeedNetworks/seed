@@ -92,8 +92,8 @@ type Manager struct {
 	callbackMu sync.RWMutex
 	callbacks  []InterfaceChangeCallback
 
-	// Seams for ConfigureStaticIP's rollback path, so it can be tested without
-	// reconfiguring a live interface. Nil means the real implementations.
+	// Seams for every configuration write, so a test never reconfigures a
+	// live interface. Nil means the real implementations.
 	snapshotter configSnapshotter
 	applier     configApplier
 }
@@ -363,7 +363,7 @@ func (m *Manager) applierFor() configApplier {
 // Requires root/administrator privileges.
 // Implementation is platform-specific (interfaces_linux.go, interfaces_darwin.go).
 func (m *Manager) ConfigureDHCP(iface string) error {
-	return configureDHCPPlatform(iface)
+	return m.applierFor().DHCP(iface)
 }
 
 // SetMTU sets the MTU (Maximum Transmission Unit) for an interface.
@@ -376,7 +376,7 @@ func (m *Manager) SetMTU(iface string, mtu int) error {
 		return fmt.Errorf("invalid MTU %d: must be between 68 and 9000", mtu)
 	}
 
-	return setMTUPlatform(iface, mtu)
+	return m.applierFor().SetMTU(iface, mtu)
 }
 
 // validateIPConfig validates the static IP configuration.

@@ -14,14 +14,20 @@ import (
 	"github.com/MustardSeedNetworks/seed/internal/validation"
 )
 
-// findIperf3Binary locates the iperf3 binary using a robust detection strategy:
+// findIperf3Binary returns the path of the resolved iperf3 binary.
+func findIperf3Binary() (string, error) {
+	b, err := resolveIperf3()
+	return b.path, err
+}
+
+// resolveIperf3 locates the iperf3 binary using a robust detection strategy,
+// probing each candidate once and caching the first that answers:
 //  1. Try embedded binary (extracted to user cache directory).
 //  2. Search system PATH using [exec.LookPath] (the proper way).
 //  3. Return detailed error with OS-specific install instructions if not found.
-func findIperf3Binary() (string, error) {
-	// Return cached path if already found
-	if cachedPath := getIperfBinaryPath(); cachedPath != "" {
-		return cachedPath, nil
+func resolveIperf3() (iperfBinary, error) {
+	if cached := getIperfBinary(); cached.path != "" {
+		return cached, nil
 	}
 
 	searchedPaths := make([]string, 0, searchPathsPrealloc) // Preallocate for typical search paths
@@ -30,12 +36,12 @@ func findIperf3Binary() (string, error) {
 	// Strategy 1: Try embedded binary (extract to cache if needed)
 	if HasEmbeddedBinary() {
 		if path, err := extractEmbeddedBinary(); err == nil {
-			// Validate the extracted binary works
-			if validateBinary(path) {
-				setIperfBinaryPath(path)
+			if version, ok := probeVersion(path); ok {
+				b := iperfBinary{path: path, version: version}
+				setIperfBinary(b)
 				logging.GetLogger().
 					Info("Using embedded iperf3 binary", "path", path, "version", EmbeddedVersion)
-				return path, nil
+				return b, nil
 			}
 			logging.GetLogger().Warn("Extracted iperf3 binary failed validation", "path", path)
 		} else {
@@ -47,10 +53,11 @@ func findIperf3Binary() (string, error) {
 	// Strategy 2: Search system PATH using exec.LookPath
 	// This is the proper way to find executables - it searches the entire PATH
 	if path, err := findSystemIperf3(); err == nil {
-		if validateBinary(path) {
-			setIperfBinaryPath(path)
+		if version, ok := probeVersion(path); ok {
+			b := iperfBinary{path: path, version: version}
+			setIperfBinary(b)
 			logging.GetLogger().Info("Using system iperf3 binary", "path", path)
-			return path, nil
+			return b, nil
 		}
 		logging.GetLogger().Warn("System iperf3 binary failed validation", "path", path)
 	} else {
@@ -63,16 +70,17 @@ func findIperf3Binary() (string, error) {
 	for _, path := range legacyPaths {
 		searchedPaths = append(searchedPaths, path)
 		if info, err := os.Stat(path); err == nil && info.Mode()&0o111 != 0 {
-			if validateBinary(path) {
-				setIperfBinaryPath(path)
+			if version, ok := probeVersion(path); ok {
+				b := iperfBinary{path: path, version: version}
+				setIperfBinary(b)
 				logging.GetLogger().Info("Using iperf3 from legacy path", "path", path)
-				return path, nil
+				return b, nil
 			}
 		}
 	}
 
 	// Not found - return detailed error with install instructions.
-	return "", &NotFoundError{
+	return iperfBinary{}, &NotFoundError{
 		SearchedPaths: searchedPaths,
 		SystemError:   systemErr,
 		EmbeddedError: embeddedErr,
@@ -102,60 +110,45 @@ func getLegacyPaths() []string {
 	return paths
 }
 
-// validateBinary checks if the binary at the given path is a valid iperf3 executable.
-func validateBinary(path string) bool {
-	ctx, cancel := context.WithTimeout(context.Background(), binaryValidationTimeoutSeconds*time.Second)
+// probeVersion runs the binary's --version and reports whether it answered as
+// iperf3, with the version it named.
+func probeVersion(path string) (string, bool) {
+	ctx, cancel := context.WithTimeout(context.Background(), versionCheckTimeout)
 	defer cancel()
 
-	cmd := exec.CommandContext(ctx, path, "--version")
-	out, err := cmd.Output()
-	if err != nil {
-		return false
+	out, err := exec.CommandContext(ctx, path, "--version").Output()
+	if err != nil || !strings.Contains(string(out), "iperf") {
+		return "", false
 	}
 
-	// Should output something like "iperf 3.x"
-	return strings.Contains(string(out), "iperf")
+	return parseVersion(string(out)), true
+}
+
+// parseVersion extracts the version from --version output such as
+// "iperf 3.16 (cJSON 1.7.17)\n...", returning "v3.16".
+func parseVersion(out string) string {
+	line, _, _ := strings.Cut(out, "\n")
+	line = strings.TrimSpace(line)
+	if parts := strings.Fields(line); len(parts) >= minVersionParts {
+		return "v" + parts[1]
+	}
+	return line
 }
 
 // CheckInstalled checks if iperf3 is available.
 func CheckInstalled() error {
-	_, err := findIperf3Binary()
+	_, err := resolveIperf3()
 	return err
 }
 
-// GetVersion returns the installed iperf3 version.
+// GetVersion returns the installed iperf3 version, read once when the binary
+// was resolved.
 func GetVersion() (string, error) {
-	binaryPath, err := findIperf3Binary()
+	b, err := resolveIperf3()
 	if err != nil {
 		return "", err
 	}
-
-	// Use timeout context to prevent indefinite blocking
-	ctx, cancel := context.WithTimeout(context.Background(), versionCheckTimeout)
-	defer cancel()
-
-	cmd := exec.CommandContext(ctx, binaryPath, "--version")
-	out, err := cmd.Output()
-	if err != nil {
-		if ctx.Err() == context.DeadlineExceeded {
-			return "", fmt.Errorf("iperf3 version check timed out after %v", versionCheckTimeout)
-		}
-		return "", fmt.Errorf("failed to get iperf3 version: %w", err)
-	}
-
-	// Output is like "iperf 3.16 (cJSON 1.7.17)\n..."
-	// Extract just the version number (e.g., "3.16")
-	lines := strings.Split(string(out), "\n")
-	if len(lines) > 0 {
-		line := strings.TrimSpace(lines[0])
-		// Parse "iperf X.XX" format
-		parts := strings.Fields(line)
-		if len(parts) >= minVersionParts {
-			return "v" + parts[1], nil
-		}
-		return line, nil
-	}
-	return "unknown", nil
+	return b.version, nil
 }
 
 // ValidateVersion checks if the installed iperf3 version meets minimum requirements.

@@ -242,8 +242,7 @@ func TestReal_SystemBinaryIsAbsoluteExecutableAndValid(t *testing.T) {
 func TestReal_FindIperf3BinaryResolvesAndCaches(t *testing.T) {
 	requireIperf3(t)
 
-	original := iperf.IperfBinaryPath()
-	t.Cleanup(func() { iperf.SetIperfBinaryPath(original) })
+	iperf.KeepIperfBinary(t)
 	iperf.ClearIperfBinaryPath()
 
 	path, err := iperf.FindIperf3Binary()

@@ -1,6 +1,7 @@
 package api
 
 import (
+	"errors"
 	"net/http"
 
 	alertdelivery "github.com/MustardSeedNetworks/seed/internal/alerts/delivery"
@@ -21,6 +22,10 @@ import (
 	"github.com/MustardSeedNetworks/seed/internal/testutil"
 	"github.com/MustardSeedNetworks/seed/internal/wifi"
 )
+
+// errIperfNotInTestServer is what the test server's iperf3 version probe
+// answers: it has no binary to probe, and execing one is what #2530 removes.
+var errIperfNotInTestServer = errors.New("iperf3 is not probed by the test server")
 
 // NewTestServer creates a minimal server instance for testing.
 // This is used by integration tests to verify auth and routing behavior.
@@ -151,7 +156,10 @@ func NewTestServerWithConfig(cfg *config.Config) *Server {
 	s.gatewayTest = gateway.NewTester(gateway.DefaultThresholds())
 	s.vlanMgr = vlan.NewManager(cfg.Interface.Default)
 	s.speedtestTest = speedtest.NewTesterWithConfig(cfg.Speedtest.ServerID)
-	s.iperfMgr = iperf.NewManager()
+	s.iperf = iperfDeps{
+		mgr:     iperf.NewManager(),
+		version: func() (string, error) { return "", errIperfNotInTestServer },
+	}
 	s.cableTest = cable.NewTester(cfg.Interface.Default)
 	s.publicIP = publicip.NewChecker()
 
