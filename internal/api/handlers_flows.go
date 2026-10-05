@@ -36,11 +36,11 @@ type FlowConversationsResponse struct {
 	Conversations []database.FlowConversation `json:"conversations"`
 }
 
-// flowRoutes registers the top-N reads and the application signature table.
-// The reads have no role gate and no feature gate: the collector that fills
+// flowRoutes registers the top-N reads, the application signature table and
+// the threat indicator list. The reads have no role gate and no feature gate: the collector that fills
 // flow_records is Pro, so below Pro they answer with empty lists, over the
-// window the tier retains. Editing the signature table is a persistent
-// write, so it is operator-gated.
+// window the tier retains. Editing the signature table or the indicator
+// list is a persistent write, so it is operator-gated.
 func (s *Server) flowRoutes() []route {
 	get := []string{http.MethodGet}
 	return []route{
@@ -65,6 +65,13 @@ func (s *Server) flowRoutes() []route {
 			methods:      []string{http.MethodGet, http.MethodPut, http.MethodDelete},
 			minRole:      database.RoleOperator,
 			maxBodyBytes: MaxBodySizeConfig,
+		},
+		{
+			path:         APIVersionPrefix + "/flows/threat-indicators",
+			handler:      s.handleFlowIndicators,
+			methods:      []string{http.MethodGet, http.MethodPut},
+			minRole:      database.RoleOperator,
+			maxBodyBytes: MaxBodySizeJSON,
 		},
 	}
 }

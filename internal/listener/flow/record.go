@@ -15,7 +15,10 @@
 // dozens of flows and an exporter sends thousands of datagrams a minute,
 // so the listener batches decoded records into a [Store] behind a bounded
 // queue. A full queue drops and counts records instead of blocking the
-// read loop or growing the heap.
+// read loop or growing the heap. The exception is a flow to or from an
+// address on the operator's threat indicator list: each batch's matches are
+// published to the sink as [listener.FlowIndicatorKind] events, so the alert
+// pipeline raises them.
 package flow
 
 import (

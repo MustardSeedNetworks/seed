@@ -1249,6 +1249,15 @@ body:
   {
     "maxBodyBytes": 262144,
     "methods": [
+      "GET",
+      "PUT"
+    ],
+    "minRole": "operator",
+    "path": "/api/v1/flows/threat-indicators"
+  },
+  {
+    "maxBodyBytes": 262144,
+    "methods": [
       "POST"
     ],
     "minRole": "operator",

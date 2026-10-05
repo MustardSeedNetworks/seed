@@ -10,6 +10,8 @@ import (
 	"sync"
 	"sync/atomic"
 	"time"
+
+	"github.com/MustardSeedNetworks/seed/internal/listener"
 )
 
 // Name is the listener key in the engine registry.
@@ -62,6 +64,11 @@ type Config struct {
 	Store    Store
 	Logger   *slog.Logger
 	Now      func() time.Time
+	// Indicators and Sink are set together or not at all: every batch is
+	// checked against the operator's threat indicator list, and a match is
+	// published to Sink as a [listener.FlowIndicatorKind] event.
+	Indicators IndicatorSource
+	Sink       listener.Sink
 	// QueueSize overrides the record queue bound; tests use it to force
 	// a flood.
 	QueueSize int
@@ -69,11 +76,13 @@ type Config struct {
 
 // Listener receives NetFlow v5, v9 and IPFIX on one UDP socket.
 type Listener struct {
-	bindAddr  string
-	store     Store
-	logger    *slog.Logger
-	now       func() time.Time
-	queueSize int
+	bindAddr   string
+	store      Store
+	indicators IndicatorSource
+	sink       listener.Sink
+	logger     *slog.Logger
+	now        func() time.Time
+	queueSize  int
 
 	datagrams, records, dropped        atomic.Int64
 	missingTemplate, malformed, failed atomic.Int64
@@ -91,6 +100,9 @@ func New(cfg Config) (*Listener, error) {
 	if cfg.Store == nil {
 		return nil, errors.New("flow: Store required")
 	}
+	if (cfg.Indicators == nil) != (cfg.Sink == nil) {
+		return nil, errors.New("flow: Indicators and Sink are set together")
+	}
 	if cfg.BindAddr == "" {
 		cfg.BindAddr = defaultBindAddr
 	}
@@ -104,11 +116,13 @@ func New(cfg Config) (*Listener, error) {
 		cfg.QueueSize = queueSize
 	}
 	return &Listener{
-		bindAddr:  cfg.BindAddr,
-		store:     cfg.Store,
-		logger:    cfg.Logger,
-		now:       cfg.Now,
-		queueSize: cfg.QueueSize,
+		bindAddr:   cfg.BindAddr,
+		store:      cfg.Store,
+		indicators: cfg.Indicators,
+		sink:       cfg.Sink,
+		logger:     cfg.Logger,
+		now:        cfg.Now,
+		queueSize:  cfg.QueueSize,
 	}, nil
 }
 
@@ -271,6 +285,7 @@ func (l *Listener) flush(ctx context.Context, batch []Record) {
 		l.failed.Add(1)
 		l.logger.WarnContext(ctx, "flow: store failed", "records", len(batch), "error", err)
 	}
+	l.checkIndicators(ctx, batch)
 }
 
 // report logs what was lost since the previous report, once a minute
