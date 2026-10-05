@@ -14,7 +14,6 @@ package api
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"net/http"
 	"path/filepath"
@@ -22,7 +21,7 @@ import (
 
 	"github.com/MustardSeedNetworks/foundation/pkg/httpserver/route"
 
-	"github.com/MustardSeedNetworks/seed/internal/database"
+	"github.com/MustardSeedNetworks/seed/internal/app"
 	"github.com/MustardSeedNetworks/seed/internal/identity/roles"
 	"github.com/MustardSeedNetworks/seed/internal/logging"
 	"github.com/MustardSeedNetworks/seed/internal/paths"
@@ -31,10 +30,9 @@ import (
 )
 
 const (
-	tftpFeature       = "compliance_advanced"
-	tftpAuditResource = "tftp"
-	tftpAuditStart    = "start"
-	tftpAuditStop     = "stop"
+	tftpFeature    = "compliance_advanced"
+	tftpAuditStart = "start"
+	tftpAuditStop  = "stop"
 	// tftpAuditTimeout bounds an audit write made from a transfer goroutine,
 	// which has no request context to inherit a deadline from.
 	tftpAuditTimeout = 5 * time.Second
@@ -59,6 +57,7 @@ type tftpStartInput struct {
 
 // initTFTP builds the session manager over <data dir>/tftp. It starts nothing.
 func (s *Server) initTFTP() {
+	s.tftpAudit = app.NewTFTPAudit(s.db)
 	s.tftpSessions = tftp.NewManager(tftp.Config{
 		Dir:        filepath.Join(paths.Resolve(paths.ModeAuto).DataDir, "tftp"),
 		OnTransfer: s.auditTFTPTransfer,
@@ -81,13 +80,14 @@ func (s *Server) handleTFTPSession(w http.ResponseWriter, r *http.Request) {
 			writeError(w, r, http.StatusConflict, ErrCodeConflict, err.Error())
 			return
 		}
-		s.auditTFTP(r.Context(), &database.AuditLogEntry{
-			Action:     tftpAuditStop,
-			User:       usernameFromContext(r),
-			ResourceID: stopping.Interface,
-			IPAddress:  GetClientIP(r),
-			UserAgent:  r.UserAgent(),
-		}, map[string]string{"reason": string(tftp.StopOperator)})
+		s.auditTFTP(r.Context(), tftp.AuditEvent{
+			Action:    tftpAuditStop,
+			User:      usernameFromContext(r),
+			Resource:  stopping.Interface,
+			Remote:    GetClientIP(r),
+			UserAgent: r.UserAgent(),
+			Detail:    map[string]string{"reason": string(tftp.StopOperator)},
+		})
 		sendJSONResponse(w, logging.FromContext(r.Context()), http.StatusOK, s.tftpSessions.Status())
 	default:
 		sendJSONResponse(w, logging.FromContext(r.Context()), http.StatusOK, s.tftpSessions.Status())
@@ -121,13 +121,14 @@ func (s *Server) startTFTP(w http.ResponseWriter, r *http.Request) {
 		writeError(w, r, http.StatusInternalServerError, ErrCodeInternal, "TFTP could not start")
 		return
 	}
-	s.auditTFTP(r.Context(), &database.AuditLogEntry{
-		Action:     tftpAuditStart,
-		User:       usernameFromContext(r),
-		ResourceID: status.Interface,
-		IPAddress:  GetClientIP(r),
-		UserAgent:  r.UserAgent(),
-	}, status)
+	s.auditTFTP(r.Context(), tftp.AuditEvent{
+		Action:    tftpAuditStart,
+		User:      usernameFromContext(r),
+		Resource:  status.Interface,
+		Remote:    GetClientIP(r),
+		UserAgent: r.UserAgent(),
+		Detail:    status,
+	})
 	sendJSONResponse(w, logging.FromContext(r.Context()), http.StatusCreated, status)
 }
 
@@ -140,11 +141,12 @@ func (s *Server) auditTFTPTransfer(t tftp.Transfer) {
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), tftpAuditTimeout)
 	defer cancel()
-	s.auditTFTP(ctx, &database.AuditLogEntry{
-		Action:     string(t.Direction),
-		ResourceID: t.Filename,
-		IPAddress:  t.Remote,
-	}, detail)
+	s.auditTFTP(ctx, tftp.AuditEvent{
+		Action:   string(t.Direction),
+		Resource: t.Filename,
+		Remote:   t.Remote,
+		Detail:   detail,
+	})
 }
 
 // auditTFTPStop records the stops no admin asked for; the DELETE handler
@@ -155,26 +157,21 @@ func (s *Server) auditTFTPStop(st tftp.Status, reason tftp.StopReason) {
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), tftpAuditTimeout)
 	defer cancel()
-	s.auditTFTP(ctx, &database.AuditLogEntry{Action: tftpAuditStop, ResourceID: st.Interface},
-		map[string]string{"reason": string(reason)})
+	s.auditTFTP(ctx, tftp.AuditEvent{
+		Action:   tftpAuditStop,
+		Resource: st.Interface,
+		Detail:   map[string]string{"reason": string(reason)},
+	})
 }
 
-func (s *Server) auditTFTP(ctx context.Context, entry *database.AuditLogEntry, detail any) {
+func (s *Server) auditTFTP(ctx context.Context, e tftp.AuditEvent) {
 	logger := logging.FromContext(ctx)
-	logger.InfoContext(ctx, "tftp audit", "event", "tftp."+entry.Action, "resource", entry.ResourceID,
-		"remote", entry.IPAddress, "user", entry.User)
-	db := s.db()
-	if db == nil {
+	logger.InfoContext(ctx, "tftp audit", "event", "tftp."+e.Action, "resource", e.Resource,
+		"remote", e.Remote, "user", e.User)
+	if s.tftpAudit == nil {
 		return
 	}
-	body, err := json.Marshal(detail)
-	if err != nil {
-		logger.WarnContext(ctx, "tftp audit encode failed", "error", err)
-		return
-	}
-	entry.ResourceType = tftpAuditResource
-	entry.NewValueJSON = string(body)
-	if err = db.RecordAuditLog(ctx, entry); err != nil {
+	if err := s.tftpAudit(ctx, e); err != nil {
 		logger.WarnContext(ctx, "tftp audit write failed", "error", err)
 	}
 }

@@ -238,6 +238,7 @@ type Server struct {
 	jobIdemp     jobIdempotencyStore     // Idempotency-Key dedup for POST /jobs
 	captures     *packetcapture.Store    // packet-capture job files, downloaded by ID
 	tftpSessions *tftp.Manager           // admin-started TFTP session (P-D4)
+	tftpAudit    func(context.Context, tftp.AuditEvent) error
 
 	// --- Database ---
 	dbConn          *database.DB

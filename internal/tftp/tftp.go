@@ -91,6 +91,21 @@ type Transfer struct {
 	Err       error
 }
 
+// AuditResource is the audit log resource type of every TFTP event.
+const AuditResource = "tftp"
+
+// AuditEvent is one start, stop or transfer for the audit log. Resource is the
+// interface for a start or stop and the filename for a transfer; a transfer
+// has no user, so Remote, the device's address, identifies it.
+type AuditEvent struct {
+	Action    string
+	User      string
+	Resource  string
+	Remote    string
+	UserAgent string
+	Detail    any
+}
+
 // Options are what the admin chooses when starting a session.
 type Options struct {
 	Interface   string

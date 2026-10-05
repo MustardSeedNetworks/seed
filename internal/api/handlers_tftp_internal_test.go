@@ -7,6 +7,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	"github.com/MustardSeedNetworks/seed/internal/app"
 	"github.com/MustardSeedNetworks/seed/internal/database"
 	"github.com/MustardSeedNetworks/seed/internal/identity/roles"
 	"github.com/MustardSeedNetworks/seed/internal/tftp"
@@ -49,6 +50,7 @@ func newTFTPTestServer(t *testing.T, trial bool) *Server {
 	port := probe.LocalAddr().(*net.UDPAddr).Port
 	_ = probe.Close()
 
+	s.tftpAudit = app.NewTFTPAudit(s.db)
 	s.tftpSessions = tftp.NewManager(tftp.Config{
 		Dir:        t.TempDir(),
 		Port:       port,
@@ -145,7 +147,7 @@ func TestTFTPSessionLifecycle(t *testing.T) {
 		t.Fatalf("DELETE: %d %s, want 200 and not running", rec.Code, rec.Body.String())
 	}
 
-	logs, err := s.dbConn.GetAuditLogs(t.Context(), database.AuditLogOptions{ResourceType: tftpAuditResource})
+	logs, err := s.dbConn.GetAuditLogs(t.Context(), database.AuditLogOptions{ResourceType: tftp.AuditResource})
 	if err != nil {
 		t.Fatalf("audit logs: %v", err)
 	}
