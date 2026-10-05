@@ -5,6 +5,19 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.234.0](https://github.com/MustardSeedNetworks/seed/compare/v0.233.0...v0.234.0) (2026-10-05)
+
+
+### Features
+
+* **ui:** packet capture card on the Network page ([#2988](https://github.com/MustardSeedNetworks/seed/issues/2988)) ([f9e0708](https://github.com/MustardSeedNetworks/seed/commit/f9e0708798d4ae2187a16c482addb0ea5d711fa6))
+* **voip:** score RTP call quality with the E-model and alert on poor calls ([#3118](https://github.com/MustardSeedNetworks/seed/issues/3118)) ([8b6de0d](https://github.com/MustardSeedNetworks/seed/commit/8b6de0d90b9aca7de949e141b3280d41641551fc)), closes [#3117](https://github.com/MustardSeedNetworks/seed/issues/3117)
+
+
+### Bug Fixes
+
+* **ui:** keep keyboard focus on controls the discovery and log dialogs change ([#3119](https://github.com/MustardSeedNetworks/seed/issues/3119)) ([1f0048b](https://github.com/MustardSeedNetworks/seed/commit/1f0048baff2c6bf460b02a3adb82cee5ed3f2298)), closes [#2996](https://github.com/MustardSeedNetworks/seed/issues/2996)
+
 ## [0.233.0](https://github.com/MustardSeedNetworks/seed/compare/v0.232.1...v0.233.0) (2026-10-05)
 
 
