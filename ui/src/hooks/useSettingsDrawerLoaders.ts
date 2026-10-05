@@ -5,7 +5,7 @@
  * declare inline (thresholds, IP, tests, iperf suggestions, wifi,
  * network-discovery, snmp, link, cable, logs) and the open-time
  * initial-load useEffect that fires them. The drawer passes in the
- * relevant state setters and init refs; the hook owns the network
+ * relevant state setters; the hook owns the network
  * calls and the on-open orchestration.
  */
 
@@ -28,21 +28,8 @@ import type {
 
 const API_BASE: string = import.meta.env.VITE_API_BASE || '';
 
-interface InitRefs {
-  initialLoadRef: React.MutableRefObject<boolean>;
-  thresholdsInitRef: React.MutableRefObject<boolean>;
-  testsInitRef: React.MutableRefObject<boolean>;
-  wifiInitRef: React.MutableRefObject<boolean>;
-  linkInitRef: React.MutableRefObject<boolean>;
-  cableTestInitRef: React.MutableRefObject<boolean>;
-  networkDiscoveryInitRef: React.MutableRefObject<boolean>;
-  snmpInitRef: React.MutableRefObject<boolean>;
-  vulnInitRef: React.MutableRefObject<boolean>;
-}
-
 interface UseSettingsDrawerLoadersArgs {
   isOpen: boolean;
-  initRefs: InitRefs;
   setThresholds: React.Dispatch<React.SetStateAction<SettingsThresholds>>;
   setIpSettings: (s: IpSettings) => void;
   setDnsInput: (value: string) => void;
@@ -69,7 +56,6 @@ interface UseSettingsDrawerLoadersResult {
 
 export function useSettingsDrawerLoaders({
   isOpen,
-  initRefs,
   setThresholds,
   setIpSettings,
   setDnsInput,
@@ -331,37 +317,12 @@ export function useSettingsDrawerLoaders({
     setLogLoading(false);
   };
 
-  // Destructured so the compiler reads each as a ref (by name) and allows the
-  // effect below to write it; through `initRefs` it would be a frozen prop.
-  const {
-    initialLoadRef,
-    thresholdsInitRef,
-    testsInitRef,
-    wifiInitRef,
-    linkInitRef,
-    cableTestInitRef,
-    networkDiscoveryInitRef,
-    snmpInitRef,
-    vulnInitRef,
-  } = initRefs;
-
-  // Open-time orchestration: reset init refs, fire every fetch, then
-  // clear init refs after a short delay so the auto-save hooks ignore
-  // the seeded values.
+  // Load every section each time the drawer opens. The drawer saves only on
+  // an edit, so seeding these values never writes them back.
   useEffect(() => {
     if (!isOpen) {
       return;
     }
-    initialLoadRef.current = true;
-    thresholdsInitRef.current = true;
-    testsInitRef.current = true;
-    wifiInitRef.current = true;
-    linkInitRef.current = true;
-    cableTestInitRef.current = true;
-    networkDiscoveryInitRef.current = true;
-    snmpInitRef.current = true;
-    vulnInitRef.current = true;
-
     fetchThresholds().catch(() => undefined);
     fetchIpSettings().catch(() => undefined);
     fetchTestsSettings().catch(() => undefined);
@@ -372,31 +333,8 @@ export function useSettingsDrawerLoaders({
     fetchLinkSettings().catch(() => undefined);
     fetchCableTestSettings().catch(() => undefined);
     fetchSubnets().catch(() => undefined);
-
-    const timer = setTimeout(() => {
-      initialLoadRef.current = false;
-      thresholdsInitRef.current = false;
-      testsInitRef.current = false;
-      wifiInitRef.current = false;
-      linkInitRef.current = false;
-      cableTestInitRef.current = false;
-      networkDiscoveryInitRef.current = false;
-      snmpInitRef.current = false;
-      vulnInitRef.current = false;
-    }, 500);
-
-    return (): void => clearTimeout(timer);
   }, [
     isOpen,
-    initialLoadRef,
-    thresholdsInitRef,
-    testsInitRef,
-    wifiInitRef,
-    linkInitRef,
-    cableTestInitRef,
-    networkDiscoveryInitRef,
-    snmpInitRef,
-    vulnInitRef,
     fetchThresholds,
     fetchIpSettings,
     fetchTestsSettings,

@@ -27,7 +27,7 @@
  */
 
 import type React from 'react';
-import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { memo, useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { api } from '../../api';
 import { useRole } from '../../contexts/RoleContext';
@@ -283,63 +283,21 @@ export const SettingsDrawer: React.MemoExoticComponent<
   const [linkStatus, setLinkStatus] = useState<SaveStatus>('idle');
   const [cableTestStatus, setCableTestStatus] = useState<SaveStatus>('idle');
   const [snmpStatus, setSnmpStatus] = useState<SaveStatus>('idle');
-  const {
-    vulnSettings,
-    setVulnSettings,
-    vulnStatus,
-    vulnInitRef,
-    vulnTimerRef,
-    fetchVulnSettings,
-    saveVulnSettings,
-  } = useVulnerabilitySettings();
+  const { vulnSettings, setVulnSettings, vulnStatus, fetchVulnSettings, saveVulnSettings } =
+    useVulnerabilitySettings();
   // Status for display, iperf comes from context (settingsStatus)
   const displayStatus = settingsStatus.display;
   const iperfStatus = settingsStatus.iperf;
 
   const [networkDiscoveryStatus, setNetworkDiscoveryStatus] = useState<SaveStatus>('idle');
 
-  // Refs to track initial load (skip auto-save on first load)
-  const initialLoadRef = useRef(true);
-  const thresholdsInitRef = useRef(true);
-  const testsInitRef = useRef(true);
-  const wifiInitRef = useRef(true);
-  const linkInitRef = useRef(true);
-  const cableTestInitRef = useRef(true);
-  const networkDiscoveryInitRef = useRef(true);
-  const snmpInitRef = useRef(true);
-
-  // Debounce timers (fab, display, iperf now handled by context)
-  const thresholdsTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const testsTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const wifiTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const linkTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const cableTestTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const networkDiscoveryTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const snmpTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-
   // Legacy state (keep for IP settings which still needs manual apply)
   const [savingIp, setSavingIp] = useState(false);
   const [ipMessage, setIpMessage] = useState<string | null>(null);
 
-  const initRefs = useMemo(
-    () => ({
-      initialLoadRef,
-      thresholdsInitRef,
-      testsInitRef,
-      wifiInitRef,
-      linkInitRef,
-      cableTestInitRef,
-      networkDiscoveryInitRef,
-      snmpInitRef,
-      vulnInitRef,
-    }),
-    [],
-  );
-
   // Per-section fetch callbacks + open-time orchestration live in their hook
   const { fetchIperfSuggestions, fetchLogPreview } = useSettingsDrawerLoaders({
     isOpen,
-    initRefs,
     setThresholds,
     setIpSettings,
     setDnsInput,
@@ -413,53 +371,25 @@ export const SettingsDrawer: React.MemoExoticComponent<
     }
   };
 
-  // Debounced auto-save effects for every settings group. Every save behind
+  // The setters the controls edit through: each edit schedules its group's
+  // debounced save, and the loaders keep the raw setters. Every save behind
   // them is minRole: op, so a viewer arms none of them (#2467).
-  useDebouncedAutoSave(saveThresholds, thresholdsInitRef, thresholdsTimerRef, canWrite);
-  useDebouncedAutoSave(saveTestsSettings, testsInitRef, testsTimerRef, canWrite);
-  useDebouncedAutoSave(saveWifiSettings, wifiInitRef, wifiTimerRef, canWrite);
-  useDebouncedAutoSave(saveLinkSettings, linkInitRef, linkTimerRef, canWrite);
-  useDebouncedAutoSave(saveCableTestSettings, cableTestInitRef, cableTestTimerRef, canWrite);
-  useDebouncedAutoSave(
-    saveNetworkDiscoverySettings,
-    networkDiscoveryInitRef,
-    networkDiscoveryTimerRef,
+  const editThresholds = useDebouncedAutoSave(setThresholds, saveThresholds, canWrite);
+  const editTestsSettings = useDebouncedAutoSave(setTestsSettings, saveTestsSettings, canWrite);
+  const editWifiSettings = useDebouncedAutoSave(setWifiSettings, saveWifiSettings, canWrite);
+  const editLinkSettings = useDebouncedAutoSave(setLinkSettings, saveLinkSettings, canWrite);
+  const editCableTestSettings = useDebouncedAutoSave(
+    setCableTestSettings,
+    saveCableTestSettings,
     canWrite,
   );
-  useDebouncedAutoSave(saveSnmpSettings, snmpInitRef, snmpTimerRef, canWrite);
-  useDebouncedAutoSave(saveVulnSettings, vulnInitRef, vulnTimerRef, canWrite);
-
-  // Fixes #917: Master cleanup effect for all timer refs on unmount
-  // Individual useEffects clean up on re-render, but this ensures cleanup on unmount
-  useEffect(
-    (): (() => void) => (): void => {
-      if (thresholdsTimerRef.current) {
-        clearTimeout(thresholdsTimerRef.current);
-      }
-      if (testsTimerRef.current) {
-        clearTimeout(testsTimerRef.current);
-      }
-      if (wifiTimerRef.current) {
-        clearTimeout(wifiTimerRef.current);
-      }
-      if (linkTimerRef.current) {
-        clearTimeout(linkTimerRef.current);
-      }
-      if (cableTestTimerRef.current) {
-        clearTimeout(cableTestTimerRef.current);
-      }
-      if (networkDiscoveryTimerRef.current) {
-        clearTimeout(networkDiscoveryTimerRef.current);
-      }
-      if (snmpTimerRef.current) {
-        clearTimeout(snmpTimerRef.current);
-      }
-      if (vulnTimerRef.current) {
-        clearTimeout(vulnTimerRef.current);
-      }
-    },
-    [],
+  const editNetworkDiscoverySettings = useDebouncedAutoSave(
+    setNetworkDiscoverySettings,
+    saveNetworkDiscoverySettings,
+    canWrite,
   );
+  const editSnmpSettings = useDebouncedAutoSave(setSnmpSettings, saveSnmpSettings, canWrite);
+  const editVulnSettings = useDebouncedAutoSave(setVulnSettings, saveVulnSettings, canWrite);
 
   // Validate IP address format
   const isValidIp = (ip: string): boolean => {
@@ -552,7 +482,7 @@ export const SettingsDrawer: React.MemoExoticComponent<
           {/* Link Settings - always visible for ethernet interface config */}
           <LinkSettings
             linkSettings={linkSettings}
-            setLinkSettings={setLinkSettings}
+            setLinkSettings={editLinkSettings}
             linkStatus={linkStatus}
             cardSettings={cardSettings}
             updateCardSettings={updateCardSettings}
@@ -561,7 +491,7 @@ export const SettingsDrawer: React.MemoExoticComponent<
           {/* Cable Test Settings - always visible for cable diagnostics */}
           <CableTestSettings
             cableTestSettings={cableTestSettings}
-            setCableTestSettings={setCableTestSettings}
+            setCableTestSettings={editCableTestSettings}
             cableTestStatus={cableTestStatus}
           />
 
@@ -584,7 +514,7 @@ export const SettingsDrawer: React.MemoExoticComponent<
           {isWifi ? (
             <WiFiSettings
               wifiSettings={wifiSettings}
-              setWifiSettings={setWifiSettings}
+              setWifiSettings={editWifiSettings}
               wifiStatus={wifiStatus}
             />
           ) : null}
@@ -592,7 +522,7 @@ export const SettingsDrawer: React.MemoExoticComponent<
           {/* DNS Settings - matches DnsCard position */}
           <DnsSettings
             testsSettings={testsSettings}
-            setTestsSettings={setTestsSettings}
+            setTestsSettings={editTestsSettings}
             testsStatus={testsStatus}
             cardSettings={cardSettings}
             updateCardSettings={updateCardSettings}
@@ -600,7 +530,7 @@ export const SettingsDrawer: React.MemoExoticComponent<
 
           <HealthChecksSettings
             testsSettings={testsSettings}
-            setTestsSettings={setTestsSettings}
+            setTestsSettings={editTestsSettings}
             testsStatus={testsStatus}
             cardSettings={cardSettings}
             updateCardSettings={updateCardSettings}
@@ -608,7 +538,7 @@ export const SettingsDrawer: React.MemoExoticComponent<
 
           <PerformanceSettings
             testsSettings={testsSettings}
-            setTestsSettings={setTestsSettings}
+            setTestsSettings={editTestsSettings}
             iperfSettings={iperfSettings}
             setIperfSettings={setIperfSettings}
             iperfStatus={iperfStatus}
@@ -622,7 +552,7 @@ export const SettingsDrawer: React.MemoExoticComponent<
 
           <DiscoverySettings
             networkDiscoverySettings={networkDiscoverySettings}
-            setNetworkDiscoverySettings={setNetworkDiscoverySettings}
+            setNetworkDiscoverySettings={editNetworkDiscoverySettings}
             networkDiscoveryStatus={networkDiscoveryStatus}
             subnets={subnets}
             subnetsStatus={subnetsStatus}
@@ -636,7 +566,7 @@ export const SettingsDrawer: React.MemoExoticComponent<
             toggleSubnet={toggleSubnet}
             deleteSubnet={deleteSubnet}
             snmpSettings={snmpSettings}
-            setSnmpSettings={setSnmpSettings}
+            setSnmpSettings={editSnmpSettings}
             snmpStatus={snmpStatus}
             cardSettings={cardSettings}
             updateCardSettings={updateCardSettings}
@@ -644,7 +574,7 @@ export const SettingsDrawer: React.MemoExoticComponent<
 
           <VulnerabilitySettings
             settings={vulnSettings}
-            setSettings={setVulnSettings}
+            setSettings={editVulnSettings}
             status={vulnStatus}
           />
 
@@ -652,7 +582,7 @@ export const SettingsDrawer: React.MemoExoticComponent<
 
           <ThresholdsSettings
             thresholds={thresholds}
-            setThresholds={setThresholds}
+            setThresholds={editThresholds}
             thresholdsStatus={thresholdsStatus}
           />
 

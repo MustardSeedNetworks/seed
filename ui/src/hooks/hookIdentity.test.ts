@@ -189,23 +189,10 @@ describe('hook effects do not re-run on an unrelated re-render', () => {
   });
 
   it('useSettingsDrawerLoaders loads each section once per open', async () => {
-    const ref = (): { current: boolean } => ({ current: false });
-    const initRefs = {
-      initialLoadRef: ref(),
-      thresholdsInitRef: ref(),
-      testsInitRef: ref(),
-      wifiInitRef: ref(),
-      linkInitRef: ref(),
-      cableTestInitRef: ref(),
-      networkDiscoveryInitRef: ref(),
-      snmpInitRef: ref(),
-      vulnInitRef: ref(),
-    };
     const set = vi.fn();
     const load = vi.fn(() => Promise.resolve());
     const args = {
       isOpen: true,
-      initRefs,
       setThresholds: set,
       setIpSettings: set,
       setDnsInput: set,

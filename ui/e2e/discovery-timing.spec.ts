@@ -25,6 +25,13 @@ function savedSettings(page: Page): Promise<Record<string, unknown>> {
     .then((req) => req.postDataJSON() as Record<string, unknown>);
 }
 
+async function storedRescanMinutes(page: Page): Promise<number> {
+  const res = await page.request.get(SETTINGS_PATH);
+  const body = (await res.json()) as { timing: { rescanIntervalMs: number } };
+  expect(Object.keys(body.timing)).toEqual(['rescanIntervalMs']);
+  return body.timing.rescanIntervalMs / 60000;
+}
+
 test.describe('Discovery timing settings', () => {
   // Every test rewrites the daemon's one discovery config.
   test.describe.configure({ mode: 'serial' });
@@ -44,8 +51,11 @@ test.describe('Discovery timing settings', () => {
     }
 
     const rescan = page.getByTestId('discovery-rescan-interval');
-    // A retry reuses the daemon, so always move to a value it does not hold.
-    const minutes = (await rescan.inputValue()) === '3' ? 4 : 3;
+    // The field shows a placeholder until the drawer's load lands, so wait for
+    // the stored value before choosing one the daemon does not hold.
+    const held = await storedRescanMinutes(page);
+    await expect(rescan).toHaveValue(String(held));
+    const minutes = held === 3 ? 4 : 3;
     const afterRescan = savedSettings(page);
     await rescan.fill(String(minutes));
     expect((await afterRescan).timing).toEqual({ rescanIntervalMs: minutes * 60000 });
@@ -64,10 +74,7 @@ test.describe('Discovery timing settings', () => {
     await page.reload();
     await openDiscoverySettings(page);
     await expect(page.getByTestId('discovery-rescan-interval')).toHaveValue(String(minutes));
-    const stored = await page.request.get(SETTINGS_PATH);
-    expect(((await stored.json()) as { timing: unknown }).timing).toEqual({
-      rescanIntervalMs: minutes * 60000,
-    });
+    expect(await storedRescanMinutes(page)).toBe(minutes);
   });
 
   test('refuses an out-of-range value and restores the stored one on blur', async ({ page }) => {
