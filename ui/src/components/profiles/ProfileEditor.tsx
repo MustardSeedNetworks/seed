@@ -5,7 +5,7 @@
 
 import { valibotResolver } from '@hookform/resolvers/valibot';
 import type React from 'react';
-import { type SubmitHandler, useForm } from 'react-hook-form';
+import { type SubmitHandler, useForm, useWatch } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
 import { useFocusTrap } from '../../hooks/useFocusTrap';
 import { ProfileEditorSchema } from '../../schemas/auth';
@@ -44,7 +44,7 @@ export function ProfileEditor({
   const {
     register,
     handleSubmit,
-    watch,
+    control,
     setValue,
     formState: { errors, isValid },
   } = useForm<ProfileFormFields>({
@@ -58,7 +58,7 @@ export function ProfileEditor({
     mode: 'onBlur',
   });
 
-  const isDefault = watch('isDefault');
+  const isDefault = useWatch({ control, name: 'isDefault' });
 
   const onSubmit: SubmitHandler<ProfileFormFields> = async (values) => {
     await onSave({
