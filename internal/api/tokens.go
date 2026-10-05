@@ -25,6 +25,7 @@ import (
 
 	"github.com/MustardSeedNetworks/seed/internal/auth"
 	"github.com/MustardSeedNetworks/seed/internal/database"
+	"github.com/MustardSeedNetworks/seed/internal/identity/roles"
 	"github.com/MustardSeedNetworks/seed/internal/identity/tokens"
 	"github.com/MustardSeedNetworks/seed/internal/license"
 	"github.com/MustardSeedNetworks/seed/internal/logging"
@@ -218,7 +219,7 @@ func (s *Server) handleAPITokenMint(w http.ResponseWriter, r *http.Request) {
 	// (authorization edge concern, ADR-0024).
 	req.Scope = strings.TrimSpace(req.Scope)
 	if req.Scope != "" {
-		if !database.IsValidRole(req.Scope) {
+		if !roles.IsValid(req.Scope) {
 			writeError(w, r, http.StatusBadRequest, ErrCodeValidation,
 				"`scope` must be one of viewer, operator, admin")
 			return

@@ -14,6 +14,7 @@ import (
 	"github.com/MustardSeedNetworks/seed/internal/auth"
 	"github.com/MustardSeedNetworks/seed/internal/database"
 	"github.com/MustardSeedNetworks/seed/internal/database/dbtest"
+	"github.com/MustardSeedNetworks/seed/internal/identity/roles"
 	"github.com/MustardSeedNetworks/seed/internal/license"
 )
 
@@ -33,7 +34,7 @@ func apiTokenTestSetup(t *testing.T) (*Server, *license.Manager) {
 	// ON DELETE CASCADE on api_tokens, so any owner referenced by an
 	// inserted token must exist as a users row first.
 	for _, name := range []string{"alice", "bob", "carol"} {
-		_, createErr := db.CreateUser(t.Context(), name, "$2a$10$x", database.RoleAdmin)
+		_, createErr := db.CreateUser(t.Context(), name, "$2a$10$x", roles.Admin)
 		if createErr != nil {
 			t.Fatalf("seed user %q: %v", name, createErr)
 		}

@@ -6,6 +6,8 @@ import (
 	"errors"
 	"fmt"
 	"time"
+
+	"github.com/MustardSeedNetworks/seed/internal/identity/roles"
 )
 
 // SSOUserInput is the payload for UpsertSSOUser. The auth_provider +
@@ -70,9 +72,9 @@ func (db *DB) UpsertSSOUser(ctx context.Context, in SSOUserInput) (*User, error)
 	if cntErr := db.readConn.QueryRowContext(ctx, `SELECT COUNT(*) FROM users`).Scan(&totalUsers); cntErr != nil {
 		return nil, fmt.Errorf("failed to count users for SSO bootstrap: %w", cntErr)
 	}
-	role := RoleViewer
+	role := roles.Viewer
 	if totalUsers == 0 {
-		role = RoleAdmin
+		role = roles.Admin
 	}
 
 	username := in.Provider + ":" + in.ExternalID

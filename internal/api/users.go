@@ -20,6 +20,7 @@ import (
 
 	"github.com/MustardSeedNetworks/seed/internal/auth"
 	"github.com/MustardSeedNetworks/seed/internal/database"
+	"github.com/MustardSeedNetworks/seed/internal/identity/roles"
 	"github.com/MustardSeedNetworks/seed/internal/identity/users"
 	"github.com/MustardSeedNetworks/seed/internal/logging"
 )
@@ -163,14 +164,14 @@ func (s *Server) handleUserCreate(w http.ResponseWriter, r *http.Request) {
 	req.Username = strings.TrimSpace(req.Username)
 	req.Role = strings.TrimSpace(req.Role)
 	if req.Role == "" {
-		req.Role = database.RoleViewer
+		req.Role = roles.Viewer
 	}
 
 	if err := validateUsername(req.Username); err != nil {
 		writeError(w, r, http.StatusBadRequest, ErrCodeValidation, err.Error())
 		return
 	}
-	if !database.IsValidRole(req.Role) {
+	if !roles.IsValid(req.Role) {
 		writeError(w, r, http.StatusBadRequest, ErrCodeValidation,
 			"role must be one of: admin, operator, viewer")
 		return
@@ -324,7 +325,7 @@ func (s *Server) applyPasswordUpdate(
 func (s *Server) applyRoleUpdate(
 	w http.ResponseWriter, r *http.Request, target, role string,
 ) bool {
-	if !database.IsValidRole(role) {
+	if !roles.IsValid(role) {
 		writeError(w, r, http.StatusBadRequest, ErrCodeValidation,
 			"role must be one of: admin, operator, viewer")
 		return false
@@ -424,14 +425,14 @@ func (s *Server) callerRole(r *http.Request) (string, bool) {
 	// callerIsAdmin "no user store = admin" tolerance from the pre-strangle
 	// `s.dbConn == nil` branch.
 	if s.identityUsers == nil {
-		return database.RoleAdmin, true
+		return roles.Admin, true
 	}
 	// Production single-user still gets an identity from the auth middleware,
 	// so a wired use-case with a nil underlying store (ErrUnavailable) keeps
 	// the same admin tolerance.
 	u, err := s.identityUsers.Get(r.Context(), caller)
 	if errors.Is(err, users.ErrUnavailable) {
-		return database.RoleAdmin, true
+		return roles.Admin, true
 	}
 	if caller == "" {
 		return "", false
@@ -445,7 +446,7 @@ func (s *Server) callerRole(r *http.Request) (string, bool) {
 	// can't escalate. An invalid/unknown scope value is ignored (rank-0
 	// would lock the token out entirely, the wrong failure mode for a
 	// malformed value).
-	if scope := auth.TokenScopeFromContext(r.Context()); scope != "" && database.IsValidRole(scope) {
+	if scope := auth.TokenScopeFromContext(r.Context()); scope != "" && roles.IsValid(scope) {
 		if roleRank(scope) < roleRank(u.Role) {
 			return scope, true
 		}
@@ -465,11 +466,11 @@ const (
 // roleRank maps a role string to its comparable rank.
 func roleRank(role string) int {
 	switch role {
-	case database.RoleAdmin:
+	case roles.Admin:
 		return rankAdmin
-	case database.RoleOperator:
+	case roles.Operator:
 		return rankOperator
-	case database.RoleViewer:
+	case roles.Viewer:
 		return rankViewer
 	default:
 		return rankNone
@@ -480,7 +481,7 @@ func roleRank(role string) int {
 // a missing DB (dev builds) by assuming admin so the panel stays usable.
 func (s *Server) callerIsAdmin(r *http.Request) bool {
 	role, ok := s.callerRole(r)
-	return ok && role == database.RoleAdmin
+	return ok && role == roles.Admin
 }
 
 // requireRole replies 401 (no caller) or 403 (under-privileged) unless the
@@ -532,7 +533,7 @@ func (s *Server) requireRole(w http.ResponseWriter, r *http.Request, minRole str
 // requireWriteAccess gates state-changing operations on operator-or-above;
 // viewers are read-only (#1226). Safe (read) methods should skip this.
 func (s *Server) requireWriteAccess(w http.ResponseWriter, r *http.Request) bool {
-	return s.requireRole(w, r, database.RoleOperator)
+	return s.requireRole(w, r, roles.Operator)
 }
 
 // writeGated wraps a handler so that state-changing methods require an

@@ -13,6 +13,7 @@ import (
 	"github.com/MustardSeedNetworks/seed/internal/auth"
 	"github.com/MustardSeedNetworks/seed/internal/database"
 	"github.com/MustardSeedNetworks/seed/internal/database/dbtest"
+	"github.com/MustardSeedNetworks/seed/internal/identity/roles"
 	"github.com/MustardSeedNetworks/seed/internal/netif"
 	"github.com/MustardSeedNetworks/seed/internal/testutil"
 )
@@ -28,7 +29,7 @@ func csrfEndpointServer(t *testing.T) *Server {
 		t.Fatalf("open db: %v", err)
 	}
 	t.Cleanup(func() { _ = db.Close() })
-	if _, createErr := db.CreateUser(t.Context(), "admin", "$2a$10$x", database.RoleAdmin); createErr != nil {
+	if _, createErr := db.CreateUser(t.Context(), "admin", "$2a$10$x", roles.Admin); createErr != nil {
 		t.Fatalf("seed admin: %v", createErr)
 	}
 

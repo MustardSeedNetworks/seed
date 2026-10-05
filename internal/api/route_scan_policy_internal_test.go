@@ -7,7 +7,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/MustardSeedNetworks/seed/internal/database"
+	"github.com/MustardSeedNetworks/seed/internal/identity/roles"
 )
 
 // targetedScanRoutes are the endpoints that reach out to a host the caller
@@ -99,10 +99,10 @@ func TestHostProbesRequireOperator(t *testing.T) {
 			if !ok {
 				t.Fatalf("%s is not registered", suffix)
 			}
-			if rt.minRole != database.RoleOperator {
+			if rt.minRole != roles.Operator {
 				t.Errorf("%s minRole = %q, want %q — probing arbitrary hosts "+
 					"is an action on the network, not a read of it",
-					suffix, rt.minRole, database.RoleOperator)
+					suffix, rt.minRole, roles.Operator)
 			}
 		})
 	}
@@ -115,8 +115,8 @@ func TestHostProbesRequireOperator(t *testing.T) {
 // the wire.
 func TestHostProbesRefuseViewerAtTheMux(t *testing.T) {
 	t.Parallel()
-	s := routedServer(t, "viewer1", database.RoleViewer)
-	seedRoledUser(t, s, "operator1", database.RoleOperator)
+	s := routedServer(t, "viewer1", roles.Viewer)
+	seedRoledUser(t, s, "operator1", roles.Operator)
 
 	for _, suffix := range []string{"/security/discovery/probe", "/security/discovery/fingerprint"} {
 		for _, c := range []struct {

@@ -6,6 +6,8 @@ import (
 	"errors"
 	"fmt"
 	"time"
+
+	"github.com/MustardSeedNetworks/seed/internal/identity/roles"
 )
 
 // User represents a user in the database.
@@ -26,20 +28,6 @@ type User struct {
 	ClientID       string // owning tenant; the session's client claim is minted from this
 	CreatedAt      time.Time
 	UpdatedAt      time.Time
-}
-
-// Valid role identifiers (enforced by the DB CHECK constraint added in the
-// hardening migration). The constant set lives in code as well so handlers
-// can validate input before hitting the DB.
-const (
-	RoleAdmin    = "admin"
-	RoleOperator = "operator"
-	RoleViewer   = "viewer"
-)
-
-// IsValidRole returns true if r is one of admin, operator, or viewer.
-func IsValidRole(r string) bool {
-	return r == RoleAdmin || r == RoleOperator || r == RoleViewer
 }
 
 // Valid auth providers (enforced by the DB CHECK constraint).
@@ -288,7 +276,7 @@ func (db *DB) ListUsers(ctx context.Context) ([]*User, error) {
 // reject an invalid role at the DB layer too, but we surface a clean
 // Go-level error.
 func (db *DB) UpdateUserRole(ctx context.Context, username, role string) error {
-	if !IsValidRole(role) {
+	if !roles.IsValid(role) {
 		return ErrInvalidRole
 	}
 
@@ -316,7 +304,7 @@ func (db *DB) UpdateUserRole(ctx context.Context, username, role string) error {
 		return fmt.Errorf("failed to read current role: %w", scanErr)
 	}
 
-	if currentRole == RoleAdmin && role != RoleAdmin {
+	if currentRole == roles.Admin && role != roles.Admin {
 		var adminCount int
 		cntErr := tx.QueryRowContext(ctx,
 			`SELECT COUNT(*) FROM users WHERE role = 'admin' AND is_active = 1`).Scan(&adminCount)
@@ -379,7 +367,7 @@ func (db *DB) DeleteUser(ctx context.Context, username string) error {
 		return fmt.Errorf("failed to read role: %w", scanErr)
 	}
 
-	if role == RoleAdmin {
+	if role == roles.Admin {
 		var adminCount int
 		cntErr := tx.QueryRowContext(ctx,
 			`SELECT COUNT(*) FROM users WHERE role = 'admin' AND is_active = 1`).Scan(&adminCount)

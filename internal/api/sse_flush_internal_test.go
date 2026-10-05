@@ -14,6 +14,7 @@ import (
 
 	"github.com/MustardSeedNetworks/seed/internal/database"
 	"github.com/MustardSeedNetworks/seed/internal/database/dbtest"
+	"github.com/MustardSeedNetworks/seed/internal/identity/roles"
 	"github.com/MustardSeedNetworks/seed/internal/netif"
 	"github.com/MustardSeedNetworks/seed/internal/testutil"
 )
@@ -29,7 +30,7 @@ func sseServer(t *testing.T) *Server {
 	}
 	t.Cleanup(func() { _ = db.Close() })
 	if _, createErr := db.CreateUser(t.Context(), "operator", "$2a$10$x",
-		database.RoleOperator); createErr != nil {
+		roles.Operator); createErr != nil {
 		t.Fatalf("seed operator: %v", createErr)
 	}
 

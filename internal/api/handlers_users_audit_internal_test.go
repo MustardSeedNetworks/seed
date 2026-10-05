@@ -10,7 +10,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/MustardSeedNetworks/seed/internal/database"
+	"github.com/MustardSeedNetworks/seed/internal/identity/roles"
 	"github.com/MustardSeedNetworks/seed/internal/logging"
 )
 
@@ -50,12 +50,12 @@ func captureLogs(t *testing.T, fn func()) []map[string]any {
 // (required_role, actual_role, username, path, method, client_ip).
 func TestRequireRole_EmitsForbiddenEvent(t *testing.T) {
 	s, _ := usersTestSetup(t)
-	seedRoledUser(t, s, "viewer1", database.RoleViewer)
+	seedRoledUser(t, s, "viewer1", roles.Viewer)
 
 	records := captureLogs(t, func() {
 		req := newAuthedRequest(http.MethodPost, APIVersionPrefix+"/profiles", []byte(`{}`), "viewer1")
 		w := httptest.NewRecorder()
-		if got := s.requireRole(w, req, database.RoleOperator); got {
+		if got := s.requireRole(w, req, roles.Operator); got {
 			t.Fatal("requireRole should reject viewer asking for operator+")
 		}
 	})
@@ -81,10 +81,10 @@ func TestRequireRole_EmitsForbiddenEvent(t *testing.T) {
 	if forbidden["reason"] != "role" {
 		t.Errorf("reason = %v, want role", forbidden["reason"])
 	}
-	if forbidden["required_role"] != database.RoleOperator {
+	if forbidden["required_role"] != roles.Operator {
 		t.Errorf("required_role = %v, want operator", forbidden["required_role"])
 	}
-	if forbidden["actual_role"] != database.RoleViewer {
+	if forbidden["actual_role"] != roles.Viewer {
 		t.Errorf("actual_role = %v, want viewer", forbidden["actual_role"])
 	}
 	if forbidden["username"] != "viewer1" {
@@ -105,7 +105,7 @@ func TestRequireRole_EmitsUnauthorizedEvent(t *testing.T) {
 	records := captureLogs(t, func() {
 		req := newAuthedRequest(http.MethodPost, APIVersionPrefix+"/profiles", []byte(`{}`), "")
 		w := httptest.NewRecorder()
-		if got := s.requireRole(w, req, database.RoleOperator); got {
+		if got := s.requireRole(w, req, roles.Operator); got {
 			t.Fatal("requireRole should reject empty caller")
 		}
 	})
@@ -120,7 +120,7 @@ func TestRequireRole_EmitsUnauthorizedEvent(t *testing.T) {
 	if unauthz == nil {
 		t.Fatalf("expected an event=auth.unauthorized record, got %v", records)
 	}
-	if unauthz["required_role"] != database.RoleOperator {
+	if unauthz["required_role"] != roles.Operator {
 		t.Errorf("required_role = %v, want operator", unauthz["required_role"])
 	}
 	if unauthz["path"] != APIVersionPrefix+"/profiles" {

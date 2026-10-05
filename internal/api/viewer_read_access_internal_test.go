@@ -14,6 +14,7 @@ import (
 
 	"github.com/MustardSeedNetworks/seed/internal/database"
 	"github.com/MustardSeedNetworks/seed/internal/database/dbtest"
+	"github.com/MustardSeedNetworks/seed/internal/identity/roles"
 	"github.com/MustardSeedNetworks/seed/internal/netif"
 	"github.com/MustardSeedNetworks/seed/internal/testutil"
 )
@@ -122,7 +123,7 @@ func bearerRequest(t *testing.T, s *Server, method, path, username string) *http
 func TestViewerCanReadEveryRoleGatedRoute(t *testing.T) {
 	t.Parallel()
 
-	s := routedServer(t, "viewer1", database.RoleViewer)
+	s := routedServer(t, "viewer1", roles.Viewer)
 
 	// Counted before the subtests run, since t.Parallel defers them.
 	checked := 0
@@ -200,7 +201,7 @@ func isPreSessionPath(path string) bool {
 func TestRouteMethodsMatchTheirHandlers(t *testing.T) {
 	t.Parallel()
 
-	s := routedServer(t, "admin", database.RoleAdmin)
+	s := routedServer(t, "admin", roles.Admin)
 
 	for _, rt := range s.manifest {
 		if len(rt.methods) == 0 {
