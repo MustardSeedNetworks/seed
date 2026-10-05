@@ -73,6 +73,10 @@ const (
 // or from an address on the operator's threat indicator list.
 const RuleFlowIndicator = "flow.indicator"
 
+// RuleVoIPQuality is the listener pipeline rule that alerts on an RTP
+// stream window scored at or below the VoIP analyser's alert MOS.
+const RuleVoIPQuality = "voip.quality"
+
 // InterfaceDownEvidence is the Metadata of a RuleInterfaceDown alert: the one
 // ifTable row that went down, not the whole table it was read from.
 type InterfaceDownEvidence struct {

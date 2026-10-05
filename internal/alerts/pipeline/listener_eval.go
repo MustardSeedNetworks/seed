@@ -118,10 +118,11 @@ func DefaultListenerRules() []Rule {
 }
 
 // pinnedListenerRules are the built-in rules that run whatever rule set is
-// active. Each acts on a list the operator configured for that purpose, so
-// the operator has already asked for its alert.
+// active. Each acts on events from a listener the operator enabled for that
+// purpose, a threat list or a VoIP interface, so the operator has already
+// asked for its alert.
 func pinnedListenerRules() []Rule {
-	return []Rule{ruleFlowIndicator()}
+	return []Rule{ruleFlowIndicator(), ruleVoIPQuality()}
 }
 
 // withPinned returns rules followed by the pinned rules, leaving rules
@@ -160,6 +161,44 @@ func ruleFlowIndicator() Rule {
 					hit.LastSeen.UTC().Format(time.RFC3339),
 				),
 				Source:   hit.Host,
+				Metadata: evt.PayloadJSON,
+			}
+		},
+	}
+}
+
+// ruleVoIPQuality alerts on a window of an RTP stream the VoIP analyser
+// scored at or below its alert MOS (P-A7). The event's SourceAddr is the
+// sender, so suppression holds one alert per sending host per window.
+func ruleVoIPQuality() Rule {
+	return Rule{
+		ID: alerts.RuleVoIPQuality,
+		Match: func(evt *listener.EventRecord) bool {
+			return evt.Kind == listener.VoIPQualityKind
+		},
+		Build: func(evt *listener.EventRecord) *alerts.Alert {
+			var q listener.VoIPQuality
+			if err := json.Unmarshal([]byte(evt.PayloadJSON), &q); err != nil {
+				return nil
+			}
+			return &alerts.Alert{
+				Type:     alerts.TypePerformance,
+				Severity: alerts.SeverityWarning,
+				Title:    fmt.Sprintf("Poor call quality from %s to %s: MOS %.2f", q.Src, q.Dst, q.MOS),
+				Message: fmt.Sprintf(
+					"%s stream %08x on %s scored MOS %.2f (R %.1f) between %s and %s: %.2f%% loss, %.1f ms mean jitter, %.1f ms peak.",
+					q.Codec,
+					q.SSRC,
+					q.Interface,
+					q.MOS,
+					q.RFactor,
+					q.Start.UTC().Format(time.RFC3339),
+					q.End.UTC().Format(time.RFC3339),
+					q.LossPct,
+					q.JitterMs,
+					q.MaxJitterMs,
+				),
+				Source:   evt.SourceAddr,
 				Metadata: evt.PayloadJSON,
 			}
 		},
