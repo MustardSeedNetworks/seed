@@ -77,17 +77,6 @@ func (db *DB) Logs() *LogRepository {
 	return db.logs
 }
 
-// Discovery returns the discovery repository for WiFi, problems, and OUI data.
-func (db *DB) Discovery() *DiscoveryRepository {
-	db.mu.Lock()
-	defer db.mu.Unlock()
-
-	if db.discovery == nil {
-		db.discovery = &DiscoveryRepository{db: db}
-	}
-	return db.discovery
-}
-
 // Clients returns the client repository (Stage A1.1 multi-tenancy
 // foundation). The seeded default client is the fallback for
 // single-tenant deployments.

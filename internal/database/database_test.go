@@ -118,10 +118,8 @@ func TestMigrations(t *testing.T) {
 
 // TestV10NMSSchemaArtifacts asserts that every V1.0 NMS-expansion
 // table (Phase 0 schema landed in migrations 36-53) was actually
-// created after the standard migrate-on-open, plus the
-// wifi_access_points 802.11 management-frame columns. Catches typos
-// in CREATE TABLE / ALTER TABLE statements that compile but produce
-// no artifact.
+// created after the standard migrate-on-open. Catches typos in
+// CREATE TABLE statements that compile but produce no artifact.
 //
 // See msn-docs-internal/01-Strategy/SEED_NMS_EXPANSION.md.
 func TestV10NMSSchemaArtifacts(t *testing.T) {
@@ -142,12 +140,6 @@ func TestV10NMSSchemaArtifacts(t *testing.T) {
 		"device_credentials",
 		"topology_nodes",
 		"topology_links",
-		"wifi_clients",
-		"wifi_associations",
-		"wifi_roams",
-		"wifi_deauths",
-		"voip_calls",
-		"bgp_sessions",
 	}
 
 	for _, tbl := range nmsTables {
@@ -162,23 +154,6 @@ func TestV10NMSSchemaArtifacts(t *testing.T) {
 		if err != nil {
 			t.Errorf("query for table %q failed: %v", tbl, err)
 		}
-	}
-
-	// ALTER wifi_access_points — verify each added 802.11
-	// management-frame decode column landed.
-	addedColumns := []string{
-		"beacon_interval_tu",
-		"rsn_cipher",
-		"rsn_akm",
-		"phy_capabilities",
-		"supports_11k",
-		"supports_11v",
-		"supports_11r",
-		"bss_load_json",
-		"vendor_ies_json",
-	}
-	for _, col := range addedColumns {
-		assertHasColumn(t, db, "wifi_access_points", col)
 	}
 }
 
@@ -419,10 +394,6 @@ func TestStageA11ClientsArtifacts(t *testing.T) {
 	tables := []string{
 		"profiles", "alerts", "metrics",
 		"speedtest_results",
-		"discovered_devices", "discovery_interfaces",
-		"wifi_networks", "wifi_access_points", "channel_utilization",
-		"discovery_history", "bluetooth_devices", "bluetooth_scan_history",
-		"network_problems",
 	}
 	for _, tbl := range tables {
 		assertHasColumn(t, db, tbl, "client_id")

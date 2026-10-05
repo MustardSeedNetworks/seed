@@ -18,8 +18,9 @@ import (
 // SQL. Rollup buckets are stored as ISO-8601 strings truncated to the hour or
 // day, in UTC.
 const (
-	hourFormat = "2006-01-02T15:00:00Z"
-	dayFormat  = "2006-01-02"
+	hourFormat  = "2006-01-02T15:00:00Z"
+	dayFormat   = "2006-01-02"
+	hoursPerDay = 24
 )
 
 // MetricsRollupSource rolls up the metrics table into metrics_hourly and

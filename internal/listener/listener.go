@@ -26,7 +26,7 @@ import (
 
 // Event is one passive-ingress observation. ClientID is filled by
 // the enrichment step that resolves SourceAddr against the
-// polling_targets and discovered_devices tables (Stage A4 work);
+// polling_targets and devices tables (Stage A4 work);
 // unresolved sources land in the default client with TargetKind
 // "unknown_ip".
 type Event struct {

@@ -90,63 +90,6 @@ CREATE INDEX idx_audit_timestamp ON audit_log(timestamp);
 -- index: idx_audit_user
 CREATE INDEX idx_audit_user ON audit_log(user);
 
--- index: idx_bgp_sessions_client
-CREATE INDEX idx_bgp_sessions_client ON bgp_sessions(client_id);
-
--- index: idx_bgp_sessions_device
-CREATE INDEX idx_bgp_sessions_device ON bgp_sessions(device_id);
-
--- index: idx_bgp_sessions_peer
-CREATE INDEX idx_bgp_sessions_peer ON bgp_sessions(peer_address);
-
--- index: idx_bgp_sessions_state
-CREATE INDEX idx_bgp_sessions_state ON bgp_sessions(state);
-
--- index: idx_bluetooth_devices_client
-CREATE INDEX idx_bluetooth_devices_client ON bluetooth_devices(client_id);
-
--- index: idx_bluetooth_scan_history_client
-CREATE INDEX idx_bluetooth_scan_history_client ON bluetooth_scan_history(client_id);
-
--- index: idx_bt_devices_address
-CREATE INDEX idx_bt_devices_address ON bluetooth_devices(address);
-
--- index: idx_bt_devices_authorized
-CREATE INDEX idx_bt_devices_authorized ON bluetooth_devices(is_authorized);
-
--- index: idx_bt_devices_class
-CREATE INDEX idx_bt_devices_class ON bluetooth_devices(device_class);
-
--- index: idx_bt_devices_connected
-CREATE INDEX idx_bt_devices_connected ON bluetooth_devices(is_connected);
-
--- index: idx_bt_devices_last_seen
-CREATE INDEX idx_bt_devices_last_seen ON bluetooth_devices(last_seen);
-
--- index: idx_bt_devices_name
-CREATE INDEX idx_bt_devices_name ON bluetooth_devices(name);
-
--- index: idx_bt_devices_type
-CREATE INDEX idx_bt_devices_type ON bluetooth_devices(bluetooth_type);
-
--- index: idx_bt_devices_vendor
-CREATE INDEX idx_bt_devices_vendor ON bluetooth_devices(vendor);
-
--- index: idx_bt_scan_time
-CREATE INDEX idx_bt_scan_time ON bluetooth_scan_history(scan_time);
-
--- index: idx_bt_scan_type
-CREATE INDEX idx_bt_scan_type ON bluetooth_scan_history(scan_type);
-
--- index: idx_channel_util_channel
-CREATE INDEX idx_channel_util_channel ON channel_utilization(channel, band);
-
--- index: idx_channel_util_time
-CREATE INDEX idx_channel_util_time ON channel_utilization(recorded_at);
-
--- index: idx_channel_utilization_client
-CREATE INDEX idx_channel_utilization_client ON channel_utilization(client_id);
-
 -- index: idx_clients_slug
 CREATE INDEX idx_clients_slug ON clients(slug);
 
@@ -155,24 +98,6 @@ CREATE INDEX idx_device_credentials_client ON device_credentials(client_id);
 
 -- index: idx_device_credentials_name
 CREATE INDEX idx_device_credentials_name   ON device_credentials(name);
-
--- index: idx_device_interfaces_device
-CREATE INDEX idx_device_interfaces_device ON device_interfaces(device_id);
-
--- index: idx_device_interfaces_mac
-CREATE INDEX idx_device_interfaces_mac ON device_interfaces(mac_address);
-
--- index: idx_device_interfaces_unique
-CREATE UNIQUE INDEX idx_device_interfaces_unique ON device_interfaces(device_id, if_index);
-
--- index: idx_device_ports_device
-CREATE INDEX idx_device_ports_device ON device_ports(device_id);
-
--- index: idx_device_ports_port
-CREATE INDEX idx_device_ports_port ON device_ports(port);
-
--- index: idx_device_ports_unique
-CREATE UNIQUE INDEX idx_device_ports_unique ON device_ports(device_id, port, protocol);
 
 -- index: idx_device_vulns_cve
 CREATE INDEX idx_device_vulns_cve ON device_vulnerabilities(cve_id);
@@ -203,57 +128,6 @@ CREATE INDEX idx_devices_last_seen ON devices(last_seen);
 
 -- index: idx_devices_mac
 CREATE INDEX idx_devices_mac ON devices(mac_address);
-
--- index: idx_disc_devices_auth
-CREATE INDEX idx_disc_devices_auth ON discovered_devices(authorization_status);
-
--- index: idx_disc_devices_last_seen
-CREATE INDEX idx_disc_devices_last_seen ON discovered_devices(last_seen);
-
--- index: idx_disc_devices_mac
-CREATE INDEX idx_disc_devices_mac ON discovered_devices(primary_mac);
-
--- index: idx_disc_devices_online
-CREATE INDEX idx_disc_devices_online ON discovered_devices(is_online);
-
--- index: idx_disc_devices_type
-CREATE INDEX idx_disc_devices_type ON discovered_devices(device_type);
-
--- index: idx_disc_devices_vendor
-CREATE INDEX idx_disc_devices_vendor ON discovered_devices(vendor);
-
--- index: idx_disc_history_device
-CREATE INDEX idx_disc_history_device ON discovery_history(device_id);
-
--- index: idx_disc_history_time
-CREATE INDEX idx_disc_history_time ON discovery_history(recorded_at);
-
--- index: idx_disc_history_type
-CREATE INDEX idx_disc_history_type ON discovery_history(event_type);
-
--- index: idx_disc_iface_bssid
-CREATE INDEX idx_disc_iface_bssid ON discovery_interfaces(bssid);
-
--- index: idx_disc_iface_device
-CREATE INDEX idx_disc_iface_device ON discovery_interfaces(device_id);
-
--- index: idx_disc_iface_mac
-CREATE INDEX idx_disc_iface_mac ON discovery_interfaces(mac_address);
-
--- index: idx_disc_iface_ssid
-CREATE INDEX idx_disc_iface_ssid ON discovery_interfaces(ssid);
-
--- index: idx_disc_iface_type
-CREATE INDEX idx_disc_iface_type ON discovery_interfaces(interface_type);
-
--- index: idx_discovered_devices_client
-CREATE INDEX idx_discovered_devices_client ON discovered_devices(client_id);
-
--- index: idx_discovery_history_client
-CREATE INDEX idx_discovery_history_client ON discovery_history(client_id);
-
--- index: idx_discovery_interfaces_client
-CREATE INDEX idx_discovery_interfaces_client ON discovery_interfaces(client_id);
 
 -- index: idx_flow_applications_daily_bucket
 CREATE INDEX idx_flow_applications_daily_bucket ON flow_applications_daily(day_bucket);
@@ -360,9 +234,6 @@ CREATE INDEX idx_mib_oid_names_mib ON mib_oid_names(mib_name);
 -- index: idx_mib_oid_names_oid
 CREATE INDEX idx_mib_oid_names_oid ON mib_oid_names(oid);
 
--- index: idx_microburst_device
-CREATE INDEX idx_microburst_device ON microburst_events(device_id);
-
 -- index: idx_microburst_events_client
 CREATE INDEX idx_microburst_events_client ON microburst_events(client_id);
 
@@ -372,41 +243,11 @@ CREATE INDEX idx_microburst_interface ON microburst_events(interface_name);
 -- index: idx_microburst_timestamp
 CREATE INDEX idx_microburst_timestamp ON microburst_events(timestamp);
 
--- index: idx_net_problems_detected
-CREATE INDEX idx_net_problems_detected ON network_problems(detected_at);
-
--- index: idx_net_problems_device
-CREATE INDEX idx_net_problems_device ON network_problems(device_id);
-
--- index: idx_net_problems_resolved
-CREATE INDEX idx_net_problems_resolved ON network_problems(is_resolved);
-
--- index: idx_net_problems_severity
-CREATE INDEX idx_net_problems_severity ON network_problems(severity);
-
--- index: idx_net_problems_type
-CREATE INDEX idx_net_problems_type ON network_problems(problem_type);
-
--- index: idx_network_problems_client
-CREATE INDEX idx_network_problems_client ON network_problems(client_id);
-
--- index: idx_oui_category
-CREATE INDEX idx_oui_category ON oui_vendors(device_category);
-
--- index: idx_oui_vendor_name
-CREATE INDEX idx_oui_vendor_name ON oui_vendors(vendor_name);
-
 -- index: idx_outbox_published
 CREATE INDEX idx_outbox_published ON outbox(published_at);
 
 -- index: idx_outbox_unpublished
 CREATE INDEX idx_outbox_unpublished ON outbox(id) WHERE published_at IS NULL;
-
--- index: idx_pipeline_runs_started
-CREATE INDEX idx_pipeline_runs_started ON pipeline_runs(started_at);
-
--- index: idx_pipeline_runs_status
-CREATE INDEX idx_pipeline_runs_status ON pipeline_runs(status);
 
 -- index: idx_polling_targets_client
 CREATE INDEX idx_polling_targets_client  ON polling_targets(client_id);
@@ -549,18 +390,6 @@ CREATE INDEX idx_users_provider_external_id ON users(auth_provider, external_id)
 -- index: idx_users_username
 CREATE INDEX idx_users_username             ON users(username);
 
--- index: idx_voip_calls_call_id
-CREATE INDEX idx_voip_calls_call_id ON voip_calls(call_id);
-
--- index: idx_voip_calls_client
-CREATE INDEX idx_voip_calls_client ON voip_calls(client_id);
-
--- index: idx_voip_calls_mos
-CREATE INDEX idx_voip_calls_mos ON voip_calls(mos_score);
-
--- index: idx_voip_calls_started
-CREATE INDEX idx_voip_calls_started ON voip_calls(started_at);
-
 -- index: idx_vuln_status_history_vuln
 CREATE INDEX idx_vuln_status_history_vuln
 	ON vulnerability_status_history(vulnerability_id, id);
@@ -571,84 +400,6 @@ CREATE UNIQUE INDEX idx_webauthn_credential_id
 
 -- index: idx_webauthn_user
 CREATE INDEX idx_webauthn_user ON webauthn_credentials(user_id);
-
--- index: idx_wifi_access_points_client
-CREATE INDEX idx_wifi_access_points_client ON wifi_access_points(client_id);
-
--- index: idx_wifi_aps_band
-CREATE INDEX idx_wifi_aps_band ON wifi_access_points(band);
-
--- index: idx_wifi_aps_bssid
-CREATE INDEX idx_wifi_aps_bssid ON wifi_access_points(bssid);
-
--- index: idx_wifi_aps_channel
-CREATE INDEX idx_wifi_aps_channel ON wifi_access_points(channel);
-
--- index: idx_wifi_aps_device
-CREATE INDEX idx_wifi_aps_device ON wifi_access_points(device_id);
-
--- index: idx_wifi_aps_ssid
-CREATE INDEX idx_wifi_aps_ssid ON wifi_access_points(ssid_id);
-
--- index: idx_wifi_assoc_ap
-CREATE INDEX idx_wifi_assoc_ap ON wifi_associations(ap_bssid);
-
--- index: idx_wifi_assoc_client
-CREATE INDEX idx_wifi_assoc_client ON wifi_associations(client_mac);
-
--- index: idx_wifi_assoc_status
-CREATE INDEX idx_wifi_assoc_status ON wifi_associations(status_code);
-
--- index: idx_wifi_assoc_timestamp
-CREATE INDEX idx_wifi_assoc_timestamp ON wifi_associations(timestamp);
-
--- index: idx_wifi_associations_client
-CREATE INDEX idx_wifi_associations_client ON wifi_associations(client_id);
-
--- index: idx_wifi_clients_client
-CREATE INDEX idx_wifi_clients_client ON wifi_clients(client_id);
-
--- index: idx_wifi_clients_last_seen
-CREATE INDEX idx_wifi_clients_last_seen ON wifi_clients(last_seen);
-
--- index: idx_wifi_clients_mac
-CREATE INDEX idx_wifi_clients_mac ON wifi_clients(mac_full);
-
--- index: idx_wifi_clients_oui
-CREATE INDEX idx_wifi_clients_oui ON wifi_clients(vendor_oui);
-
--- index: idx_wifi_deauths_ap
-CREATE INDEX idx_wifi_deauths_ap ON wifi_deauths(ap_bssid);
-
--- index: idx_wifi_deauths_client
-CREATE INDEX idx_wifi_deauths_client ON wifi_deauths(client_mac);
-
--- index: idx_wifi_deauths_reason
-CREATE INDEX idx_wifi_deauths_reason ON wifi_deauths(reason_code);
-
--- index: idx_wifi_deauths_timestamp
-CREATE INDEX idx_wifi_deauths_timestamp ON wifi_deauths(timestamp);
-
--- index: idx_wifi_networks_auth
-CREATE INDEX idx_wifi_networks_auth ON wifi_networks(authorization_status);
-
--- index: idx_wifi_networks_client
-CREATE INDEX idx_wifi_networks_client ON wifi_networks(client_id);
-
--- index: idx_wifi_networks_ssid
-CREATE INDEX idx_wifi_networks_ssid ON wifi_networks(ssid);
-
--- index: idx_wifi_roams_client
-CREATE INDEX idx_wifi_roams_client ON wifi_roams(client_mac);
-
--- index: idx_wifi_roams_from
-CREATE INDEX idx_wifi_roams_from ON wifi_roams(from_bssid);
-
--- index: idx_wifi_roams_started
-CREATE INDEX idx_wifi_roams_started ON wifi_roams(started_at);
-
--- index: idx_wifi_roams_to
-CREATE INDEX idx_wifi_roams_to ON wifi_roams(to_bssid);
 
 -- table: alert_deliveries
 CREATE TABLE alert_deliveries (
@@ -772,84 +523,6 @@ CREATE TABLE audit_log (
 				timestamp TEXT NOT NULL
 			) STRICT;
 
--- table: bgp_sessions
-CREATE TABLE bgp_sessions (
-				id TEXT PRIMARY KEY,
-				device_id TEXT,
-				peer_address TEXT NOT NULL,
-				peer_as INTEGER,
-				local_as INTEGER,
-				state TEXT NOT NULL,
-				established_at TEXT,
-				last_state_change TEXT NOT NULL,
-				prefixes_received INTEGER DEFAULT 0,
-				prefixes_sent INTEGER DEFAULT 0,
-				last_error TEXT,
-				first_seen TEXT NOT NULL,
-				last_seen TEXT NOT NULL, client_id TEXT NOT NULL DEFAULT 'default' REFERENCES clients(id),
-				FOREIGN KEY (device_id) REFERENCES discovered_devices(id) ON DELETE SET NULL
-			) STRICT;
-
--- table: bluetooth_devices
-CREATE TABLE bluetooth_devices (
-				id TEXT PRIMARY KEY,
-				device_id TEXT,
-				address TEXT NOT NULL UNIQUE,
-				name TEXT,
-				alias TEXT,
-				vendor TEXT,
-				bluetooth_type TEXT NOT NULL,
-				device_class TEXT,
-				appearance INTEGER DEFAULT 0,
-				class_of_device INTEGER DEFAULT 0,
-				rssi INTEGER,
-				tx_power INTEGER,
-				is_connected INTEGER DEFAULT 0 CHECK (is_connected IN (0,1)),
-				is_connectable INTEGER DEFAULT 0 CHECK (is_connectable IN (0,1)),
-				is_authorized INTEGER DEFAULT 0 CHECK (is_authorized IN (0,1)),
-				is_trusted INTEGER DEFAULT 0 CHECK (is_trusted IN (0,1)),
-				is_paired INTEGER DEFAULT 0 CHECK (is_paired IN (0,1)),
-				is_blocked INTEGER DEFAULT 0 CHECK (is_blocked IN (0,1)),
-				service_uuids_json TEXT,
-				manufacturer_id INTEGER,
-				first_seen TEXT NOT NULL,
-				last_seen TEXT NOT NULL,
-				metadata_json TEXT, client_id TEXT NOT NULL DEFAULT 'default' REFERENCES clients(id),
-
-				FOREIGN KEY (device_id) REFERENCES discovered_devices(id) ON DELETE SET NULL
-			) STRICT;
-
--- table: bluetooth_scan_history
-CREATE TABLE bluetooth_scan_history (
-				id TEXT PRIMARY KEY,
-				adapter_name TEXT,
-				scan_type TEXT NOT NULL,
-				devices_found INTEGER NOT NULL,
-				classic_count INTEGER DEFAULT 0,
-				ble_count INTEGER DEFAULT 0,
-				scan_duration_ms INTEGER,
-				scan_time TEXT NOT NULL
-			, client_id TEXT NOT NULL DEFAULT 'default' REFERENCES clients(id)) STRICT;
-
--- table: channel_utilization
-CREATE TABLE channel_utilization (
-				id TEXT PRIMARY KEY,
-				channel INTEGER NOT NULL,
-				band TEXT NOT NULL,
-				frequency_mhz INTEGER NOT NULL,
-
-				-- Utilization metrics
-				utilization_percent REAL,
-				non_wifi_percent REAL,
-				retry_percent REAL,
-				ap_count INTEGER,
-				client_count INTEGER,
-
-				recorded_at TEXT NOT NULL, client_id TEXT NOT NULL DEFAULT 'default' REFERENCES clients(id),
-
-				UNIQUE(channel, band, recorded_at)
-			) STRICT;
-
 -- table: clients
 CREATE TABLE clients (
 				id TEXT PRIMARY KEY,
@@ -921,38 +594,6 @@ CREATE TABLE "device_credentials" (
 				))
 			) STRICT;
 
--- table: device_interfaces
-CREATE TABLE device_interfaces (
-				id INTEGER PRIMARY KEY AUTOINCREMENT,
-				device_id TEXT NOT NULL,
-				if_index INTEGER NOT NULL,
-				name TEXT,
-				description TEXT,
-				alias TEXT,
-				type INTEGER,
-				mtu INTEGER,
-				speed_mbps INTEGER,
-				mac_address TEXT,
-				admin_status TEXT,
-				oper_status TEXT,
-				collected_at TEXT NOT NULL,
-				FOREIGN KEY (device_id) REFERENCES devices(id) ON DELETE CASCADE
-			) STRICT;
-
--- table: device_ports
-CREATE TABLE device_ports (
-				id INTEGER PRIMARY KEY AUTOINCREMENT,
-				device_id TEXT NOT NULL,
-				port INTEGER NOT NULL,
-				protocol TEXT NOT NULL DEFAULT 'tcp',
-				state TEXT NOT NULL DEFAULT 'open',
-				service_name TEXT,
-				banner TEXT,
-				version TEXT,
-				scanned_at TEXT NOT NULL,
-				FOREIGN KEY (device_id) REFERENCES devices(id) ON DELETE CASCADE
-			) STRICT;
-
 -- table: device_vulnerabilities
 CREATE TABLE "device_vulnerabilities" (
 				id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -987,79 +628,6 @@ CREATE TABLE devices (
 				is_active INTEGER DEFAULT 1 CHECK (is_active IN (0,1)),
 				ports_json TEXT,
 				metadata_json TEXT
-			) STRICT;
-
--- table: discovered_devices
-CREATE TABLE discovered_devices (
-				id TEXT PRIMARY KEY,
-				primary_mac TEXT NOT NULL UNIQUE,
-				hostname TEXT,
-				vendor TEXT,
-				device_type TEXT DEFAULT 'unknown',
-				device_model TEXT,
-				authorization_status TEXT DEFAULT 'unknown',
-				criticality INTEGER DEFAULT 5,
-				first_seen TEXT NOT NULL,
-				last_seen TEXT NOT NULL,
-				is_online INTEGER DEFAULT 1 CHECK (is_online IN (0,1)),
-				notes TEXT,
-				tags TEXT,
-				metadata_json TEXT,
-				created_at TEXT DEFAULT CURRENT_TIMESTAMP,
-				updated_at TEXT DEFAULT CURRENT_TIMESTAMP
-			, client_id TEXT NOT NULL DEFAULT 'default' REFERENCES clients(id)) STRICT;
-
--- table: discovery_history
-CREATE TABLE discovery_history (
-				id TEXT PRIMARY KEY,
-				device_id TEXT NOT NULL,
-				event_type TEXT NOT NULL,
-				event_data TEXT,
-				recorded_at TEXT NOT NULL, client_id TEXT NOT NULL DEFAULT 'default' REFERENCES clients(id),
-
-				FOREIGN KEY (device_id) REFERENCES discovered_devices(id) ON DELETE CASCADE
-			) STRICT;
-
--- table: discovery_interfaces
-CREATE TABLE discovery_interfaces (
-				id TEXT PRIMARY KEY,
-				device_id TEXT NOT NULL,
-				interface_type TEXT NOT NULL,
-				mac_address TEXT NOT NULL,
-				ip_addresses TEXT,
-				interface_name TEXT,
-				is_primary INTEGER DEFAULT 0 CHECK (is_primary IN (0,1)),
-
-				-- Wired-specific
-				switch_port TEXT,
-				switch_name TEXT,
-				vlan_id INTEGER,
-				duplex TEXT,
-				speed_mbps INTEGER,
-				poe_status TEXT,
-
-				-- WiFi-specific
-				ssid TEXT,
-				bssid TEXT,
-				signal_dbm INTEGER,
-				noise_dbm INTEGER,
-				channel INTEGER,
-				channel_width INTEGER,
-				frequency_mhz INTEGER,
-				wifi_standards TEXT,
-				security_type TEXT,
-
-				-- Bluetooth-specific
-				bt_class TEXT,
-				bt_version TEXT,
-				bt_signal INTEGER,
-
-				last_seen TEXT NOT NULL,
-				created_at TEXT DEFAULT CURRENT_TIMESTAMP,
-				updated_at TEXT DEFAULT CURRENT_TIMESTAMP, client_id TEXT NOT NULL DEFAULT 'default' REFERENCES clients(id),
-
-				FOREIGN KEY (device_id) REFERENCES discovered_devices(id) ON DELETE CASCADE,
-				UNIQUE(device_id, mac_address)
 			) STRICT;
 
 -- table: flow_applications_daily
@@ -1227,56 +795,17 @@ CREATE TABLE mib_oid_names (
 				created_at TEXT DEFAULT (datetime('now'))
 			) STRICT;
 
--- table: mib_sources
-CREATE TABLE mib_sources (
-				mib_name TEXT PRIMARY KEY,
-				description TEXT,
-				vendor TEXT,
-				rfc_reference TEXT,
-				loaded_at TEXT DEFAULT (datetime('now'))
-			) STRICT;
-
 -- table: microburst_events
-CREATE TABLE microburst_events (
+CREATE TABLE "microburst_events" (
 				id INTEGER PRIMARY KEY AUTOINCREMENT,
 				timestamp TEXT NOT NULL,
-				device_id TEXT,
 				interface_name TEXT NOT NULL,
 				direction TEXT NOT NULL,
 				peak_utilization_pct REAL NOT NULL,
 				duration_ms INTEGER NOT NULL,
 				sampling_mode TEXT NOT NULL,
-				link_speed_mbps INTEGER, client_id TEXT NOT NULL DEFAULT 'default' REFERENCES clients(id),
-				FOREIGN KEY (device_id) REFERENCES discovered_devices(id) ON DELETE SET NULL
-			) STRICT;
-
--- table: network_problems
-CREATE TABLE network_problems (
-				id TEXT PRIMARY KEY,
-				problem_type TEXT NOT NULL,
-				severity TEXT NOT NULL,
-				device_id TEXT,
-				interface_id TEXT,
-				description TEXT NOT NULL,
-				details_json TEXT,
-				is_resolved INTEGER DEFAULT 0 CHECK (is_resolved IN (0,1)),
-				detected_at TEXT NOT NULL,
-				resolved_at TEXT,
-				acknowledged_at TEXT,
-				acknowledged_by TEXT, client_id TEXT NOT NULL DEFAULT 'default' REFERENCES clients(id),
-
-				FOREIGN KEY (device_id) REFERENCES discovered_devices(id) ON DELETE CASCADE,
-				FOREIGN KEY (interface_id) REFERENCES discovery_interfaces(id) ON DELETE CASCADE
-			) STRICT;
-
--- table: oui_vendors
-CREATE TABLE oui_vendors (
-				oui TEXT PRIMARY KEY,
-				vendor_name TEXT NOT NULL,
-				vendor_short TEXT,
-				is_private INTEGER DEFAULT 0 CHECK (is_private IN (0,1)),
-				device_category TEXT,
-				updated_at TEXT DEFAULT CURRENT_TIMESTAMP
+				link_speed_mbps INTEGER,
+				client_id TEXT NOT NULL DEFAULT 'default' REFERENCES clients(id)
 			) STRICT;
 
 -- table: outbox
@@ -1289,19 +818,6 @@ CREATE TABLE outbox (
 	created_at   TEXT NOT NULL,
 	published_at TEXT
 ) STRICT;
-
--- table: pipeline_runs
-CREATE TABLE pipeline_runs (
-				id TEXT PRIMARY KEY,
-				started_at TEXT NOT NULL,
-				completed_at TEXT,
-				status TEXT NOT NULL,
-				triggered_by TEXT,
-				phases_enabled TEXT NOT NULL,
-				config_json TEXT,
-				summary_json TEXT,
-				error_message TEXT
-			) STRICT;
 
 -- table: polling_targets
 CREATE TABLE "polling_targets" (
@@ -1558,25 +1074,6 @@ CREATE TABLE "users" (
 				UNIQUE (auth_provider, external_id)
 			) STRICT;
 
--- table: voip_calls
-CREATE TABLE voip_calls (
-				id INTEGER PRIMARY KEY AUTOINCREMENT,
-				call_id TEXT NOT NULL,
-				src_ip TEXT NOT NULL,
-				dst_ip TEXT NOT NULL,
-				src_port INTEGER,
-				dst_port INTEGER,
-				codec TEXT,
-				started_at TEXT NOT NULL,
-				ended_at TEXT,
-				duration_seconds INTEGER,
-				mos_score REAL,
-				avg_jitter_ms REAL,
-				packet_loss_pct REAL,
-				avg_latency_ms REAL,
-				direction TEXT
-			, client_id TEXT NOT NULL DEFAULT 'default' REFERENCES clients(id)) STRICT;
-
 -- table: vulnerability_status_history
 CREATE TABLE vulnerability_status_history (
 				id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -1605,105 +1102,4 @@ CREATE TABLE webauthn_credentials (
 				last_used_at TEXT,
 				FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 			) STRICT;
-
--- table: wifi_access_points
-CREATE TABLE wifi_access_points (
-				id TEXT PRIMARY KEY,
-				device_id TEXT,
-				bssid TEXT NOT NULL UNIQUE,
-				ssid_id TEXT,
-				ap_name TEXT,
-				vendor TEXT,
-
-				-- Radio info
-				channel INTEGER,
-				channel_width INTEGER,
-				frequency_mhz INTEGER,
-				band TEXT,
-				wifi_standards TEXT,
-
-				-- Signal
-				signal_dbm INTEGER,
-				noise_dbm INTEGER,
-
-				-- Status
-				client_count INTEGER DEFAULT 0,
-				max_clients INTEGER,
-				is_authorized INTEGER DEFAULT 1 CHECK (is_authorized IN (0,1)),
-
-				first_seen TEXT NOT NULL,
-				last_seen TEXT NOT NULL,
-				metadata_json TEXT, client_id TEXT NOT NULL DEFAULT 'default' REFERENCES clients(id), beacon_interval_tu INTEGER, rsn_cipher TEXT, rsn_akm TEXT, phy_capabilities TEXT, supports_11k INTEGER DEFAULT 0 CHECK (supports_11k IN (0,1)), supports_11v INTEGER DEFAULT 0 CHECK (supports_11v IN (0,1)), supports_11r INTEGER DEFAULT 0 CHECK (supports_11r IN (0,1)), bss_load_json TEXT, vendor_ies_json TEXT,
-
-				FOREIGN KEY (device_id) REFERENCES discovered_devices(id) ON DELETE SET NULL,
-				FOREIGN KEY (ssid_id) REFERENCES wifi_networks(id) ON DELETE SET NULL
-			) STRICT;
-
--- table: wifi_associations
-CREATE TABLE wifi_associations (
-				id INTEGER PRIMARY KEY AUTOINCREMENT,
-				timestamp TEXT NOT NULL,
-				client_mac TEXT NOT NULL,
-				ap_bssid TEXT NOT NULL,
-				ssid TEXT,
-				attempt_type TEXT NOT NULL,
-				status_code INTEGER,
-				status_text TEXT,
-				failure_stage TEXT,
-				duration_ms INTEGER,
-				rsn_negotiation_json TEXT
-			, client_id TEXT NOT NULL DEFAULT 'default' REFERENCES clients(id)) STRICT;
-
--- table: wifi_clients
-CREATE TABLE wifi_clients (
-				id TEXT PRIMARY KEY,
-				mac_full TEXT NOT NULL UNIQUE,
-				vendor_oui TEXT,
-				vendor_name TEXT,
-				capabilities_json TEXT,
-				pnl_json TEXT,
-				first_seen TEXT NOT NULL,
-				last_seen TEXT NOT NULL,
-				anonymized INTEGER NOT NULL DEFAULT 0 CHECK (anonymized IN (0,1))
-			, client_id TEXT NOT NULL DEFAULT 'default' REFERENCES clients(id)) STRICT;
-
--- table: wifi_deauths
-CREATE TABLE wifi_deauths (
-				id INTEGER PRIMARY KEY AUTOINCREMENT,
-				timestamp TEXT NOT NULL,
-				ap_bssid TEXT NOT NULL,
-				client_mac TEXT NOT NULL,
-				frame_type TEXT NOT NULL,
-				reason_code INTEGER NOT NULL,
-				reason_text TEXT,
-				originator TEXT NOT NULL
-			, client_id TEXT NOT NULL DEFAULT 'default' REFERENCES clients(id)) STRICT;
-
--- table: wifi_networks
-CREATE TABLE wifi_networks (
-				id TEXT PRIMARY KEY,
-				ssid TEXT NOT NULL,
-				is_hidden INTEGER DEFAULT 0 CHECK (is_hidden IN (0,1)),
-				security_type TEXT,
-				authorization_status TEXT DEFAULT 'unknown',
-				first_seen TEXT NOT NULL,
-				last_seen TEXT NOT NULL,
-				metadata_json TEXT, client_id TEXT NOT NULL DEFAULT 'default' REFERENCES clients(id),
-				UNIQUE(ssid, security_type)
-			) STRICT;
-
--- table: wifi_roams
-CREATE TABLE wifi_roams (
-				id INTEGER PRIMARY KEY AUTOINCREMENT,
-				client_mac TEXT NOT NULL,
-				from_bssid TEXT NOT NULL,
-				to_bssid TEXT NOT NULL,
-				ssid TEXT,
-				started_at TEXT NOT NULL,
-				completed_at TEXT,
-				duration_ms INTEGER,
-				roam_type TEXT,
-				rssi_before INTEGER,
-				rssi_after INTEGER
-			, client_id TEXT NOT NULL DEFAULT 'default' REFERENCES clients(id)) STRICT;
 
