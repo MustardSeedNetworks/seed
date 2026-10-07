@@ -1,7 +1,7 @@
 /**
  * PerformancePage.i18n.test.tsx — the performance page renders real locale copy.
  *
- * S1-14b. The page is two cards and owns no copy, so the suite renders the
+ * S1-14b. The page is three cards and owns no copy, so the suite renders the
  * real cards through it. Writing it found three things a Spanish operator saw
  * in English: a failed health check reading `fail`, the ping detail line
  * `0% loss, 1.2ms jitter` built by string concatenation, and all five HTTP
@@ -42,6 +42,17 @@ vi.mock('../contexts/useSettings', () => ({
 }));
 
 vi.mock('../hooks/useIperfServerSync', () => ({ useIperfServerSync: () => undefined }));
+
+// The DSCP check gates its form on the licence and the role and runs as a
+// job; DscpCheckCard.test.tsx covers those. Here it only has to render copy.
+vi.mock('../contexts/LicenseContext', () => ({
+  useLicense: () => ({ loading: false, hasFeature: () => true }),
+}));
+vi.mock('../contexts/RoleContext', () => ({ useRole: () => ({ canWrite: true }) }));
+vi.mock('../hooks/useDscpCheck', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../hooks/useDscpCheck')>()),
+  useDscpCheck: () => ({ state: { phase: 'idle' }, start: vi.fn(), stop: vi.fn() }),
+}));
 
 // The Health Check card reads its run through the api client; the rest of the
 // page's reads only need to resolve.
@@ -88,6 +99,7 @@ const appContext = {
   isWifi: false,
   cards: { wifi: false },
   cardSettings,
+  currentInterface: 'eth0',
 } as unknown as AppContextValue;
 
 const { PerformancePage } = await import('./PerformancePage');
@@ -132,6 +144,8 @@ describe('PerformancePage — real locale copy', () => {
     expect(screen.getByText('Performance Tests')).toBeVisible();
     expect(screen.getByText('Internet Speed')).toBeVisible();
     expect(screen.getByText('No results yet')).toBeVisible();
+    expect(screen.getByText('DSCP check')).toBeVisible();
+    expect(screen.getByText('Start listening')).toBeVisible();
   });
 
   it('says in English what a failed check and a lossy ping did', async () => {
@@ -170,6 +184,8 @@ describe('PerformancePage — real locale copy', () => {
       '0% loss, 1.2ms jitter',
       'Time to resolve the hostname to an IP address via DNS lookup. Shows 0 when connection is reused from pool.',
       'Time to download the full response body after receiving the first byte.',
+      'DSCP check',
+      'Start listening',
     ]) {
       expect(screen.queryByText(english)).toBeNull();
     }
@@ -179,6 +195,8 @@ describe('PerformancePage — real locale copy', () => {
     expect(screen.getByText('Pruebas de rendimiento')).toBeVisible();
     expect(screen.getByText('fallo')).toBeVisible();
     expect(screen.getByText('0% pérdida, 1.2ms jitter')).toBeVisible();
+    expect(screen.getByText('Comprobación DSCP')).toBeVisible();
+    expect(screen.getByText('Empezar a escuchar')).toBeVisible();
     fireEvent.focus(must(screen.getAllByTestId('http-timing-segment')[4], 'download timing'));
     expect(
       screen.getByText(
