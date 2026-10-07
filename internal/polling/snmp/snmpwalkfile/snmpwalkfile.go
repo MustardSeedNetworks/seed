@@ -21,6 +21,7 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"math"
 	"os"
 	"sort"
 	"strconv"
@@ -235,12 +236,20 @@ func (c *client) Get(ctx context.Context, oids []string) ([]snmp.Varbind, error)
 // subtree returns no rows and no error, which is what a real agent does and
 // what the collector chain relies on to survive a device lacking a MIB.
 func (c *client) Walk(ctx context.Context, prefix string) ([]snmp.Varbind, error) {
+	return c.WalkLimit(ctx, prefix, math.MaxInt)
+}
+
+// WalkLimit is Walk returning at most the first limit varbinds.
+func (c *client) WalkLimit(ctx context.Context, prefix string, limit int) ([]snmp.Varbind, error) {
 	if err := ctx.Err(); err != nil {
 		return nil, err
 	}
 	root := strings.TrimPrefix(prefix, ".")
 	var out []snmp.Varbind
 	for _, oid := range c.walk.oids {
+		if len(out) == limit {
+			break
+		}
 		if oid == root || strings.HasPrefix(oid, root+".") {
 			out = append(out, c.walk.byOID[oid])
 		}

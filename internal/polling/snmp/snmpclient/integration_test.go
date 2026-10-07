@@ -206,6 +206,38 @@ func TestWalkReadsTheInterfaceTable(t *testing.T) {
 	}
 }
 
+// TestWalkLimitEndsTheWalkAtTheLimit pins that a bounded GETBULK walk stops
+// at its limit without reporting the early end as a failure, and returns the
+// same leading rows an unbounded walk does.
+func TestWalkLimitEndsTheWalkAtTheLimit(t *testing.T) {
+	client := dial(t)
+	ctx := timeout(t)
+
+	all, err := client.Walk(ctx, oidIfDescr)
+	if err != nil {
+		t.Fatalf("Walk ifDescr: %v", err)
+	}
+	if len(all) < 2 {
+		t.Fatalf("agent serves %d ifDescr rows; the limit needs at least 2 to cut", len(all))
+	}
+
+	for _, limit := range []int{1, len(all), len(all) + 5} {
+		got, walkErr := client.WalkLimit(ctx, oidIfDescr, limit)
+		if walkErr != nil {
+			t.Fatalf("WalkLimit(%d): %v", limit, walkErr)
+		}
+		want := all[:min(limit, len(all))]
+		if len(got) != len(want) {
+			t.Fatalf("WalkLimit(%d) returned %d rows, want %d", limit, len(got), len(want))
+		}
+		for i := range want {
+			if got[i].OID != want[i].OID {
+				t.Errorf("WalkLimit(%d) row %d = %s, want %s", limit, i, got[i].OID, want[i].OID)
+			}
+		}
+	}
+}
+
 // TestWalkHandlesCounter64 pins the 64-bit counter path. Counter64 arrives as
 // uint64 where Counter32 arrives as uint; a collector that type-asserts the
 // wrong one silently records zero, and no fake would catch it.

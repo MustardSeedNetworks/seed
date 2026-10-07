@@ -30,6 +30,10 @@ func (f *fakeClient) Walk(_ context.Context, _ string) ([]snmp.Varbind, error) {
 	return f.vbs, nil
 }
 
+func (f *fakeClient) WalkLimit(_ context.Context, _ string, _ int) ([]snmp.Varbind, error) {
+	return nil, errors.New("WalkLimit not used by arp")
+}
+
 type fakePublisher struct {
 	mu  sync.Mutex
 	got []arp.Observation

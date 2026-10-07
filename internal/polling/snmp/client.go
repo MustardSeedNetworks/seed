@@ -27,6 +27,12 @@ type Client interface {
 	// ctx — a misbehaving agent that never returns end-of-mib must
 	// not hang the collector chain forever.
 	Walk(ctx context.Context, prefix string) ([]Varbind, error)
+
+	// WalkLimit is Walk that stops after limit varbinds, for a subtree
+	// that can be too large to hold: a full BGP table is about a million
+	// rows. Ask for one more than the rows wanted to learn whether the
+	// subtree held more.
+	WalkLimit(ctx context.Context, prefix string, limit int) ([]Varbind, error)
 }
 
 // ClientFactory builds a Client for a Target + decoded credentials.

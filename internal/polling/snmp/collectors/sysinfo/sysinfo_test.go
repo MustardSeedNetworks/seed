@@ -41,6 +41,10 @@ func (f *fakeClient) Walk(_ context.Context, _ string) ([]snmp.Varbind, error) {
 	return nil, errors.New("walk not used by sysinfo")
 }
 
+func (f *fakeClient) WalkLimit(_ context.Context, _ string, _ int) ([]snmp.Varbind, error) {
+	return nil, errors.New("WalkLimit not used by sysinfo")
+}
+
 // fakePublisher records every PublishSysInfo invocation.
 type fakePublisher struct {
 	mu   sync.Mutex

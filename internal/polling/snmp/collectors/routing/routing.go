@@ -1,6 +1,7 @@
 // Package routing implements the routing SNMP Collector. Walks
 // IP-FORWARD-MIB::ipCidrRouteTable (1.3.6.1.2.1.4.24.4.1) and emits
-// one Observation per poll listing every IPv4 route entry. Used by
+// one Observation per poll listing the IPv4 route entries, at most
+// [MaxRows] of them. Used by
 // Stage A4 topology to draw L3 next-hop edges between routers and
 // by the listener pipeline to alert on flapping/withdrawn routes.
 //
@@ -11,11 +12,13 @@
 package routing
 
 import (
+	"cmp"
 	"context"
 	"errors"
 	"fmt"
 	"net"
 	"net/netip"
+	"slices"
 	"strconv"
 	"strings"
 	"time"
@@ -25,6 +28,13 @@ import (
 
 // Name is the collector key used in polling_targets.collector_chain.
 const Name = "routing"
+
+// MaxRows bounds one route-table read, the same bound discovery's walk has
+// (seed#2833, seed#2857). An edge router carrying a full BGP table holds
+// about a million routes, and this read runs on every poll; ten thousand rows
+// is far more than any site's own networks, and the rows past it are the
+// internet's.
+const MaxRows = 10_000
 
 const (
 	tablePrefix = "1.3.6.1.2.1.4.24.4.1"
@@ -108,6 +118,9 @@ type Observation struct {
 	TargetID   string
 	ObservedAt time.Time
 	Routes     []Route
+	// Truncated is true when the device held more than MaxRows routes
+	// and Routes is only the first of them.
+	Truncated bool
 }
 
 // Publisher is the consumer-defined seam.
@@ -149,18 +162,21 @@ func (c *Collector) Collect(ctx context.Context, target snmp.Target, creds snmp.
 	}
 
 	observedAt := c.now()
-	vbs, err := client.Walk(ctx, tablePrefix)
+	vbs, truncated, err := walkColumns(ctx, client, tablePrefix,
+		colIfIndex, colType, colProto, colAge, colMetric1)
 	if err != nil {
 		return fmt.Errorf("routing: walk ipCidrRouteTable: %w", err)
 	}
 
 	routes := buildRoutes(vbs)
 	if len(routes) == 0 {
-		legacy, legacyErr := client.Walk(ctx, legacyTablePrefix)
+		legacy, legacyTruncated, legacyErr := walkColumns(ctx, client, legacyTablePrefix,
+			legacyColIfIndex, legacyColMetric1, legacyColNextHop, legacyColType,
+			legacyColProto, legacyColAge, legacyColMask)
 		if legacyErr != nil {
 			return fmt.Errorf("routing: walk ipRouteTable: %w", legacyErr)
 		}
-		routes = buildLegacyRoutes(legacy)
+		routes, truncated = buildLegacyRoutes(legacy), legacyTruncated
 	}
 
 	if pubErr := c.publisher.PublishRouting(ctx, Observation{
@@ -168,10 +184,36 @@ func (c *Collector) Collect(ctx context.Context, target snmp.Target, creds snmp.
 		TargetID:   target.ID,
 		ObservedAt: observedAt,
 		Routes:     routes,
+		Truncated:  truncated,
 	}); pubErr != nil {
 		return fmt.Errorf("routing: publish: %w", pubErr)
 	}
 	return nil
+}
+
+// walkColumns reads the given columns of table, at most MaxRows rows of
+// each, and reports whether any held more. A table walk is column-major, so
+// a bound on the whole table would end inside its first columns and never
+// reach the ones read here; each column is walked, and bounded, on its own.
+func walkColumns(
+	ctx context.Context,
+	client snmp.Client,
+	table string,
+	columns ...string,
+) ([]snmp.Varbind, bool, error) {
+	var vbs []snmp.Varbind
+	truncated := false
+	for _, col := range columns {
+		got, err := client.WalkLimit(ctx, table+"."+col, MaxRows+1)
+		if err != nil {
+			return nil, false, err
+		}
+		if len(got) > MaxRows {
+			got, truncated = got[:MaxRows], true
+		}
+		vbs = append(vbs, got...)
+	}
+	return vbs, truncated, nil
 }
 
 // routeKey is one ipCidrRouteTable row keyed by the 4-tuple
@@ -443,18 +485,11 @@ func uint32Value(v any) uint32 {
 }
 
 func sortRoutes(rs []Route) {
-	less := func(i, j int) bool {
-		if rs[i].Destination != rs[j].Destination {
-			return rs[i].Destination < rs[j].Destination
-		}
-		if rs[i].Mask != rs[j].Mask {
-			return rs[i].Mask < rs[j].Mask
-		}
-		return rs[i].NextHop < rs[j].NextHop
-	}
-	for i := 1; i < len(rs); i++ {
-		for j := i; j > 0 && less(j, j-1); j-- {
-			rs[j-1], rs[j] = rs[j], rs[j-1]
-		}
-	}
+	slices.SortFunc(rs, func(a, b Route) int {
+		return cmp.Or(
+			strings.Compare(a.Destination, b.Destination),
+			strings.Compare(a.Mask, b.Mask),
+			strings.Compare(a.NextHop, b.NextHop),
+		)
+	})
 }
