@@ -10,6 +10,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/MustardSeedNetworks/seed/internal/database"
+	"github.com/MustardSeedNetworks/seed/internal/flows"
 	"github.com/MustardSeedNetworks/seed/internal/listener/flow"
 )
 
@@ -81,72 +82,48 @@ func TestFlowTopTalkers(t *testing.T) {
 	from, to := seedTopFixture(t, db)
 	repo := db.FlowRecords()
 
-	byBytes := []database.FlowTalker{
+	byBytes := []flows.Talker{
 		{Addr: hostA, Bytes: 4540, Packets: 19},
 		{Addr: hostC, Bytes: 3200, Packets: 53},
 		{Addr: hostB, Bytes: 1540, Packets: 16},
 		{Addr: hostD, Bytes: 300, Packets: 51},
 	}
-	byPackets := []database.FlowTalker{byBytes[1], byBytes[3], byBytes[0], byBytes[2]}
+	byPackets := []flows.Talker{byBytes[1], byBytes[3], byBytes[0], byBytes[2]}
 
 	for _, tc := range []struct {
 		name     string
-		tier     database.FlowTier
+		tier     flows.Tier
 		from, to time.Time
 	}{
-		{"raw", database.FlowTierRaw, from, to},
-		{"hourly", database.FlowTierHourly, from, to},
+		{"raw", flows.TierRaw, from, to},
+		{"hourly", flows.TierHourly, from, to},
 		// The daily tier answers at day granularity; the fixture's day holds
 		// exactly the six flows. The window ends mid-day, as one ending now
 		// does: the day it ends in is still read.
-		{"daily", database.FlowTierDaily, flowDay(), flowDay().Add(13 * time.Hour)},
+		{"daily", flows.TierDaily, flowDay(), flowDay().Add(13 * time.Hour)},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
-			got, err := repo.TopTalkers(
-				context.Background(),
-				"default",
-				tc.tier,
-				tc.from,
-				tc.to,
-				database.FlowRankBytes,
-				10,
-			)
+			got, err := repo.TopTalkers(context.Background(), flows.Query{
+				ClientID: "default", Tier: tc.tier, From: tc.from, To: tc.to, By: flows.RankBytes, Limit: 10,
+			})
 			require.NoError(t, err)
 			require.Equal(t, byBytes, got)
 
-			got, err = repo.TopTalkers(
-				context.Background(),
-				"default",
-				tc.tier,
-				tc.from,
-				tc.to,
-				database.FlowRankPackets,
-				10,
-			)
+			got, err = repo.TopTalkers(context.Background(), flows.Query{
+				ClientID: "default", Tier: tc.tier, From: tc.from, To: tc.to, By: flows.RankPackets, Limit: 10,
+			})
 			require.NoError(t, err)
 			require.Equal(t, byPackets, got)
 
-			got, err = repo.TopTalkers(
-				context.Background(),
-				"default",
-				tc.tier,
-				tc.from,
-				tc.to,
-				database.FlowRankBytes,
-				2,
-			)
+			got, err = repo.TopTalkers(context.Background(), flows.Query{
+				ClientID: "default", Tier: tc.tier, From: tc.from, To: tc.to, By: flows.RankBytes, Limit: 2,
+			})
 			require.NoError(t, err)
 			require.Equal(t, byBytes[:2], got)
 
-			got, err = repo.TopTalkers(
-				context.Background(),
-				"other",
-				tc.tier,
-				tc.from,
-				tc.to,
-				database.FlowRankBytes,
-				10,
-			)
+			got, err = repo.TopTalkers(context.Background(), flows.Query{
+				ClientID: "other", Tier: tc.tier, From: tc.from, To: tc.to, By: flows.RankBytes, Limit: 10,
+			})
 			require.NoError(t, err)
 			require.Empty(t, got, "another client's flows are not this client's")
 		})
@@ -166,20 +143,24 @@ func TestFlowTopConversations(t *testing.T) {
 	from, to := seedTopFixture(t, db)
 	repo := db.FlowRecords()
 
-	abTCP := database.FlowConversation{AddrA: hostA, AddrB: hostB, Protocol: 6, Bytes: 1500, Packets: 15}
-	acUDP := database.FlowConversation{AddrA: hostA, AddrB: hostC, Protocol: 17, Bytes: 3000, Packets: 3}
-	cdTCP := database.FlowConversation{AddrA: hostC, AddrB: hostD, Protocol: 6, Bytes: 200, Packets: 50}
-	ddICMP := database.FlowConversation{AddrA: hostD, AddrB: hostD, Protocol: 1, Bytes: 100, Packets: 1}
-	abUDP := database.FlowConversation{AddrA: hostA, AddrB: hostB, Protocol: 17, Bytes: 40, Packets: 1}
+	abTCP := flows.Conversation{AddrA: hostA, AddrB: hostB, Protocol: 6, Bytes: 1500, Packets: 15}
+	acUDP := flows.Conversation{AddrA: hostA, AddrB: hostC, Protocol: 17, Bytes: 3000, Packets: 3}
+	cdTCP := flows.Conversation{AddrA: hostC, AddrB: hostD, Protocol: 6, Bytes: 200, Packets: 50}
+	ddICMP := flows.Conversation{AddrA: hostD, AddrB: hostD, Protocol: 1, Bytes: 100, Packets: 1}
+	abUDP := flows.Conversation{AddrA: hostA, AddrB: hostB, Protocol: 17, Bytes: 40, Packets: 1}
 
-	for _, tier := range []database.FlowTier{database.FlowTierRaw, database.FlowTierHourly} {
-		got, err := repo.TopConversations(context.Background(), "default", tier, from, to, database.FlowRankBytes, 10)
+	for _, tier := range []flows.Tier{flows.TierRaw, flows.TierHourly} {
+		got, err := repo.TopConversations(context.Background(), flows.Query{
+			ClientID: "default", Tier: tier, From: from, To: to, By: flows.RankBytes, Limit: 10,
+		})
 		require.NoError(t, err)
-		require.Equal(t, []database.FlowConversation{acUDP, abTCP, cdTCP, ddICMP, abUDP}, got)
+		require.Equal(t, []flows.Conversation{acUDP, abTCP, cdTCP, ddICMP, abUDP}, got)
 
-		got, err = repo.TopConversations(context.Background(), "default", tier, from, to, database.FlowRankPackets, 3)
+		got, err = repo.TopConversations(context.Background(), flows.Query{
+			ClientID: "default", Tier: tier, From: from, To: to, By: flows.RankPackets, Limit: 3,
+		})
 		require.NoError(t, err)
-		require.Equal(t, []database.FlowConversation{cdTCP, abTCP, acUDP}, got)
+		require.Equal(t, []flows.Conversation{cdTCP, abTCP, acUDP}, got)
 	}
 }
 
@@ -202,14 +183,16 @@ func TestFlowRollupSaturatesAndPurges(t *testing.T) {
 	_, err = src.RollupDay(ctx, flowDay())
 	require.NoError(t, err)
 
-	got, err := db.FlowRecords().TopTalkers(ctx, "default", database.FlowTierHourly,
-		hour, hour.Add(time.Hour), database.FlowRankBytes, 1)
+	got, err := db.FlowRecords().TopTalkers(ctx, flows.Query{
+		ClientID: "default", Tier: flows.TierHourly, From: hour, To: hour.Add(time.Hour), By: flows.RankBytes, Limit: 1,
+	})
 	require.NoError(t, err)
-	require.Equal(t, []database.FlowTalker{{Addr: hostA, Bytes: math.MaxInt64, Packets: 2}}, got)
-	apps, err := db.FlowRecords().TopApplications(ctx, "default", database.FlowTierDaily,
-		hour, hour.Add(time.Hour), database.FlowRankBytes, 1)
+	require.Equal(t, []flows.Talker{{Addr: hostA, Bytes: math.MaxInt64, Packets: 2}}, got)
+	apps, err := db.FlowRecords().TopApplications(ctx, flows.Query{
+		ClientID: "default", Tier: flows.TierDaily, From: hour, To: hour.Add(time.Hour), By: flows.RankBytes, Limit: 1,
+	})
 	require.NoError(t, err)
-	require.Equal(t, []database.FlowApplication{{Name: "unknown", Bytes: math.MaxInt64, Packets: 2}}, apps)
+	require.Equal(t, []flows.Application{{Name: "unknown", Bytes: math.MaxInt64, Packets: 2}}, apps)
 
 	purged, err := src.PurgeHourly(ctx, hour.Add(time.Hour))
 	require.NoError(t, err)

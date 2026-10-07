@@ -10,7 +10,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/MustardSeedNetworks/seed/internal/database"
+	"github.com/MustardSeedNetworks/seed/internal/flows"
 	"github.com/MustardSeedNetworks/seed/internal/license"
 	"github.com/MustardSeedNetworks/seed/internal/listener/flow"
 	"github.com/MustardSeedNetworks/seed/internal/timeseries/retention"
@@ -27,13 +27,13 @@ func TestFlowTierForWindow(t *testing.T) {
 		name      string
 		requested time.Duration
 		h         retention.TierHorizons
-		want      database.FlowTier
+		want      flows.Tier
 	}{
-		{"24h is raw", 24 * time.Hour, pro, database.FlowTierRaw},
-		{"7d is raw", 7 * 24 * time.Hour, pro, database.FlowTierRaw},
-		{"14d is hourly", 14 * 24 * time.Hour, pro, database.FlowTierHourly},
-		{"60d is daily", 60 * 24 * time.Hour, pro, database.FlowTierDaily},
-		{"Free clamps 30d to raw", 30 * 24 * time.Hour, retention.HorizonsFor(license.TierFree), database.FlowTierRaw},
+		{"24h is raw", 24 * time.Hour, pro, flows.TierRaw},
+		{"7d is raw", 7 * 24 * time.Hour, pro, flows.TierRaw},
+		{"14d is hourly", 14 * 24 * time.Hour, pro, flows.TierHourly},
+		{"60d is daily", 60 * 24 * time.Hour, pro, flows.TierDaily},
+		{"Free clamps 30d to raw", 30 * 24 * time.Hour, retention.HorizonsFor(license.TierFree), flows.TierRaw},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
@@ -89,8 +89,8 @@ func TestFlowTopServesTheRankedLists(t *testing.T) {
 	var talkers FlowTalkersResponse
 	require.NoError(t, json.Unmarshal(w.Body.Bytes(), &talkers))
 	require.Equal(t, historySourceRaw, talkers.Window.Source)
-	require.Equal(t, database.FlowRankPackets, talkers.By)
-	require.Equal(t, []database.FlowTalker{
+	require.Equal(t, flows.RankPackets, talkers.By)
+	require.Equal(t, []flows.Talker{
 		{Addr: "10.0.0.1", Bytes: 1050, Packets: 11},
 		{Addr: "10.0.0.2", Bytes: 1000, Packets: 10},
 	}, talkers.Talkers)
@@ -100,8 +100,8 @@ func TestFlowTopServesTheRankedLists(t *testing.T) {
 	require.Equal(t, http.StatusOK, w.Code)
 	var convs FlowConversationsResponse
 	require.NoError(t, json.Unmarshal(w.Body.Bytes(), &convs))
-	require.Equal(t, database.FlowRankBytes, convs.By)
-	require.Equal(t, []database.FlowConversation{
+	require.Equal(t, flows.RankBytes, convs.By)
+	require.Equal(t, []flows.Conversation{
 		{AddrA: "10.0.0.1", AddrB: "10.0.0.2", Protocol: 6, Bytes: 1000, Packets: 10},
 		{AddrA: "10.0.0.1", AddrB: "10.0.0.3", Protocol: 17, Bytes: 50, Packets: 1},
 	}, convs.Conversations)

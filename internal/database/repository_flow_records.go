@@ -9,6 +9,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/MustardSeedNetworks/seed/internal/flows"
 	"github.com/MustardSeedNetworks/seed/internal/indicators"
 	"github.com/MustardSeedNetworks/seed/internal/listener/flow"
 )
@@ -28,7 +29,7 @@ type FlowRecordsRepository struct {
 	// mu guards signatures and indicators, which are loaded from settings
 	// on first use and replaced when the operator edits them.
 	mu         sync.Mutex
-	signatures *AppSignatures
+	signatures *flows.AppSignatures
 	indicators *indicators.List
 }
 

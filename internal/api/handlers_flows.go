@@ -4,7 +4,7 @@ import (
 	"net/http"
 	"strconv"
 
-	"github.com/MustardSeedNetworks/seed/internal/database"
+	"github.com/MustardSeedNetworks/seed/internal/flows"
 	"github.com/MustardSeedNetworks/seed/internal/i18n"
 	"github.com/MustardSeedNetworks/seed/internal/identity/roles"
 	"github.com/MustardSeedNetworks/seed/internal/logging"
@@ -25,16 +25,16 @@ const (
 // FlowTalkersResponse is the top hosts by traffic sent and received.
 type FlowTalkersResponse struct {
 	Window  HistoryWindowResponse `json:"window"`
-	By      database.FlowRank     `json:"by"`
-	Talkers []database.FlowTalker `json:"talkers"`
+	By      flows.Rank            `json:"by"`
+	Talkers []flows.Talker        `json:"talkers"`
 }
 
 // FlowConversationsResponse is the top host pairs, per protocol, by traffic
 // in both directions.
 type FlowConversationsResponse struct {
-	Window        HistoryWindowResponse       `json:"window"`
-	By            database.FlowRank           `json:"by"`
-	Conversations []database.FlowConversation `json:"conversations"`
+	Window        HistoryWindowResponse `json:"window"`
+	By            flows.Rank            `json:"by"`
+	Conversations []flows.Conversation  `json:"conversations"`
 }
 
 // flowRoutes registers the top-N reads, the application signature table and
@@ -77,13 +77,11 @@ func (s *Server) flowRoutes() []route {
 	}
 }
 
-// flowTopQuery is a parsed top-N request.
+// flowTopQuery is a parsed top-N request: the read, and the window it was
+// resolved from, which the response reports.
 type flowTopQuery struct {
-	clientID string
-	window   historyWindow
-	tier     database.FlowTier
-	by       database.FlowRank
-	limit    int
+	read   flows.Query
+	window historyWindow
 }
 
 // handleFlowTopTalkers serves GET /api/v1/flows/top-talkers.
@@ -92,15 +90,14 @@ func (s *Server) handleFlowTopTalkers(w http.ResponseWriter, r *http.Request) {
 	if !ok {
 		return
 	}
-	talkers, err := s.db().FlowRecords().TopTalkers(r.Context(), q.clientID, q.tier,
-		q.window.From, q.window.To, q.by, q.limit)
+	talkers, err := s.flows.TopTalkers(r.Context(), q.read)
 	if err != nil {
 		flowReadFailed(w, r, err)
 		return
 	}
 	sendJSONResponse(w, logging.FromContext(r.Context()), http.StatusOK, FlowTalkersResponse{
 		Window:  windowResponse(q.window),
-		By:      q.by,
+		By:      q.read.By,
 		Talkers: emptyIfNil(talkers),
 	})
 }
@@ -111,15 +108,14 @@ func (s *Server) handleFlowTopConversations(w http.ResponseWriter, r *http.Reque
 	if !ok {
 		return
 	}
-	conversations, err := s.db().FlowRecords().TopConversations(r.Context(), q.clientID, q.tier,
-		q.window.From, q.window.To, q.by, q.limit)
+	conversations, err := s.flows.TopConversations(r.Context(), q.read)
 	if err != nil {
 		flowReadFailed(w, r, err)
 		return
 	}
 	sendJSONResponse(w, logging.FromContext(r.Context()), http.StatusOK, FlowConversationsResponse{
 		Window:        windowResponse(q.window),
-		By:            q.by,
+		By:            q.read.By,
 		Conversations: emptyIfNil(conversations),
 	})
 }
@@ -131,11 +127,11 @@ func (s *Server) flowTopQuery(w http.ResponseWriter, r *http.Request) (flowTopQu
 	localizer := i18n.FromRequest(r)
 	params := r.URL.Query()
 
-	by := database.FlowRankBytes
+	by := flows.RankBytes
 	switch raw := params.Get("by"); raw {
-	case "", string(database.FlowRankBytes):
-	case string(database.FlowRankPackets):
-		by = database.FlowRankPackets
+	case "", string(flows.RankBytes):
+	case string(flows.RankPackets):
+		by = flows.RankPackets
 	default:
 		sendErrorResponseWithDetails(w, logger, http.StatusBadRequest,
 			ErrCodeValidation, localizer.T("errors.flows.invalidRank"), "")
@@ -162,23 +158,27 @@ func (s *Server) flowTopQuery(w http.ResponseWriter, r *http.Request) (flowTopQu
 		return flowTopQuery{}, false
 	}
 	return flowTopQuery{
-		clientID: clientID,
-		window:   window,
-		tier:     flowTierFor(window),
-		by:       by,
-		limit:    limit,
+		read: flows.Query{
+			ClientID: clientID,
+			Tier:     flowTierFor(window),
+			From:     window.From,
+			To:       window.To,
+			By:       by,
+			Limit:    limit,
+		},
+		window: window,
 	}, true
 }
 
 // flowTierFor maps a resolved window onto the flow table that answers it.
-func flowTierFor(w historyWindow) database.FlowTier {
+func flowTierFor(w historyWindow) flows.Tier {
 	switch {
 	case w.Source == historySourceRaw:
-		return database.FlowTierRaw
+		return flows.TierRaw
 	case w.Resolution == historyResolutionDaily:
-		return database.FlowTierDaily
+		return flows.TierDaily
 	default:
-		return database.FlowTierHourly
+		return flows.TierHourly
 	}
 }
 

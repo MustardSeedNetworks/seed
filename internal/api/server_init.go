@@ -14,6 +14,7 @@ import (
 	"github.com/MustardSeedNetworks/seed/internal/config"
 	"github.com/MustardSeedNetworks/seed/internal/database"
 	"github.com/MustardSeedNetworks/seed/internal/diagnostics/dns"
+	"github.com/MustardSeedNetworks/seed/internal/diagnostics/export"
 	"github.com/MustardSeedNetworks/seed/internal/discovery"
 	"github.com/MustardSeedNetworks/seed/internal/discovery/enumerate"
 	"github.com/MustardSeedNetworks/seed/internal/discovery/fingerprint"
@@ -455,4 +456,35 @@ func (s *Server) initHealthUseCases() {
 		s.config, s.configPath, s.dnsTester, s.speedtestTester,
 		s.healthSettingsRepo,
 	)
+}
+
+// initDiscoveryUseCases wires the discovery use-cases (ADR-0020) from the
+// composition root: the unified-discovery engine, the network problem detector,
+// and the Bluetooth scanner, each over the server's lazy accessors so a nil or
+// later-set collaborator (the test harness) is honored. The problem detector's
+// scan reads the discovered devices through the device-discovery accessor.
+func (s *Server) initDiscoveryUseCases() {
+	s.discoveryDevices = app.NewDiscoveryDevices(s.discoveryEngine)
+	s.discoverySettings = app.NewDiscoverySettings(
+		s.config, s.configPath, s.deviceDiscovery, s.discoveryService,
+	)
+	s.networkProblems = app.NewProblems(s.problemDetector, s.discoveryService)
+	s.topologyQueries = app.NewTopologyQueries(s.db, topologyMaxLimit)
+	s.exportService = export.NewService(serverExportSources{s: s})
+	s.logQuery = app.NewLogQuery(s.db)
+	s.historyQueries = app.NewHistory(s.db)
+	s.vulnTriage = app.NewVulnTriage(s.db)
+	s.flows = app.NewFlows(s.db)
+	s.pollingTargets = app.NewPollingTargets(s.db, s.pollingTargetLimit)
+	// The credential vault needs the keyring that owns the DEK. Without a
+	// config there is none, so the use-case stays nil and its handlers report
+	// 503 — the alternative is a CRUD surface that would persist plaintext.
+	if s.config != nil {
+		if keyring, err := s.config.CredentialKeyring(); err == nil {
+			if svc, credErr := app.NewDeviceCredentials(s.db, keyring); credErr == nil {
+				s.deviceCredentials = svc
+			}
+		}
+	}
+	s.alertInbox = app.NewAlertInbox(s.db)
 }
