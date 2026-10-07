@@ -102,11 +102,16 @@ func (r *TopologyRepository) insert(ctx context.Context, node *topology.Node) er
 	return nil
 }
 
+// update leaves primary_mac and primary_ip alone when the node carries
+// none: the sysinfo reconciler re-upserts every node on every poll from
+// a Node that never knows them, and writing them through wiped what the
+// ARP and ifTable reconcilers had recorded.
 func (r *TopologyRepository) update(ctx context.Context, node *topology.Node) error {
 	_, err := r.db.Exec(ctx, `
 		UPDATE topology_nodes SET
 			display_name = ?, device_type = ?, chassis_id = ?, sys_name = ?,
-			primary_mac = ?, primary_ip = ?, last_seen = ?, expires_at = ?,
+			primary_mac = COALESCE(?, primary_mac), primary_ip = COALESCE(?, primary_ip),
+			last_seen = ?, expires_at = ?,
 			metadata_json = ?
 		WHERE identity_hash = ?
 	`,
@@ -256,20 +261,38 @@ func (r *TopologyRepository) ListARPBindings(
 	return out, nil
 }
 
-// SetNodePrimaryIP updates a node's primary_ip column without
-// touching last_seen or first_seen. Used by the ARP reconciler to
-// backfill node identity when a binding's MAC matches the node's
-// primary MAC.
-func (r *TopologyRepository) SetNodePrimaryIP(ctx context.Context, nodeID, ip string) error {
+// SetNodePrimaryAddress records the address a node is reached at and
+// the MAC that answers for it, without touching last_seen or
+// first_seen. Used by the ARP reconciler; an ARP binding is the
+// strongest evidence of which interface carries a node's address, so
+// it overwrites whatever [TopologyRepository.FillNodePrimaryMAC] chose.
+func (r *TopologyRepository) SetNodePrimaryAddress(ctx context.Context, nodeID, ip, mac string) error {
 	if nodeID == "" {
 		return errors.New("topology_nodes: NodeID required")
 	}
 	_, err := r.db.Exec(ctx,
-		`UPDATE topology_nodes SET primary_ip = ? WHERE id = ?`,
-		toNullString(ip), nodeID,
+		`UPDATE topology_nodes SET primary_ip = ?, primary_mac = ? WHERE id = ?`,
+		toNullString(ip), toNullString(mac), nodeID,
 	)
 	if err != nil {
-		return fmt.Errorf("set primary_ip: %w", err)
+		return fmt.Errorf("set primary address: %w", err)
+	}
+	return nil
+}
+
+// FillNodePrimaryMAC sets a node's primary_mac only when nothing has
+// set it yet. Used by the ifTable reconciler for a device no ARP table
+// has resolved, so it never displaces the ARP reconciler's choice.
+func (r *TopologyRepository) FillNodePrimaryMAC(ctx context.Context, nodeID, mac string) error {
+	if nodeID == "" {
+		return errors.New("topology_nodes: NodeID required")
+	}
+	_, err := r.db.Exec(ctx,
+		`UPDATE topology_nodes SET primary_mac = ? WHERE id = ? AND primary_mac IS NULL`,
+		toNullString(mac), nodeID,
+	)
+	if err != nil {
+		return fmt.Errorf("fill primary_mac: %w", err)
 	}
 	return nil
 }
@@ -283,11 +306,11 @@ func (r *TopologyRepository) NodeIDForMAC(ctx context.Context, clientID, mac str
 }
 
 // NodeForMAC resolves a MAC to its node and, when the match came
-// from an interface row, that interface's name. topology_nodes has a
-// primary_mac column but no producer writes it, so an interface's
-// ifPhysAddress is in practice the only MAC seed knows for a device;
-// both are matched here rather than in two methods, because a second
-// MAC->node lookup over a different table is how the two drift.
+// from an interface row, that interface's name. A node's primary_mac
+// is one of its interfaces' ifPhysAddress, but a device has a MAC per
+// interface, so both are matched here rather than in two methods,
+// because a second MAC->node lookup over a different table is how the
+// two drift.
 // Both sides render a MAC as lowercase colon-hex ([iftable.macAddressString],
 // [fdb.parseFdbOID]), so the comparison is a plain equality.
 //

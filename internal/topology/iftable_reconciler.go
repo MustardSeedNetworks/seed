@@ -6,6 +6,8 @@ import (
 	"errors"
 	"fmt"
 	"log/slog"
+	"net"
+	"slices"
 	"sync"
 	"time"
 
@@ -23,10 +25,11 @@ const ifTableHighWaterKey = "topology.iftable.high_water"
 // nodeIfaceUpserter is the narrowed surface the iftable reconciler
 // needs. The sysinfo reconciler already populated the
 // (client, target) -> node_id mapping; here we look it up + write
-// one row per interface.
+// one row per interface, then offer the node a primary MAC.
 type nodeIfaceUpserter interface {
 	NodeIDForTarget(ctx context.Context, clientID, targetID string) (string, error)
 	UpsertInterface(ctx context.Context, iface *Interface) error
+	FillNodePrimaryMAC(ctx context.Context, nodeID, mac string) error
 }
 
 // IfTableReconciler turns if_table observations into
@@ -231,7 +234,9 @@ type ifRow struct {
 }
 
 // applyObservation decodes the iftable payload and upserts one row
-// per interface. Returns the count of upserts that succeeded.
+// per interface. The lowest-ifIndex interface with a unicast MAC fills
+// the node's primary_mac when no ARP table has resolved a better one
+// (seed#2574). Returns the count of upserts that succeeded.
 func (r *IfTableReconciler) applyObservation(
 	ctx context.Context,
 	obs *observation.SNMPObservation,
@@ -244,6 +249,7 @@ func (r *IfTableReconciler) applyObservation(
 		return 0
 	}
 	count := 0
+	var primary ifRow
 	for _, row := range p.Rows {
 		if row.IfIndex == 0 {
 			continue
@@ -267,8 +273,28 @@ func (r *IfTableReconciler) applyObservation(
 			continue
 		}
 		count++
+		if unicastMAC(row.IfPhysAddr) && (primary.IfIndex == 0 || row.IfIndex < primary.IfIndex) {
+			primary = row
+		}
+	}
+	if primary.IfIndex != 0 {
+		if err := r.store.FillNodePrimaryMAC(ctx, nodeID, primary.IfPhysAddr); err != nil {
+			r.logger.WarnContext(ctx, "iftable: primary_mac fill failed",
+				"target_id", obs.TargetID, "node_id", nodeID, "error", err)
+		}
 	}
 	return count
+}
+
+// unicastMAC reports whether mac is an address an interface can be
+// reached by: six bytes, not all zero (what loopbacks and tunnels
+// report as ifPhysAddress), and not a group address.
+func unicastMAC(mac string) bool {
+	hw, err := net.ParseMAC(mac)
+	if err != nil || len(hw) != 6 || hw[0]&1 != 0 {
+		return false
+	}
+	return slices.ContainsFunc(hw, func(b byte) bool { return b != 0 })
 }
 
 func (r *IfTableReconciler) loadHighWater(ctx context.Context) (time.Time, error) {

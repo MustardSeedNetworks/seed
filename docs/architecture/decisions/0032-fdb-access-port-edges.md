@@ -46,9 +46,13 @@ query.
 
 MAC-to-node resolution goes through `TopologyRepository.NodeForMAC`, which
 matches `topology_nodes.primary_mac` **and** `topology_interfaces.if_phys_addr`.
-No producer writes `primary_mac`, so the interface's `ifPhysAddress` is in
-practice the only MAC seed knows for a device; a second MAC-keyed lookup over a
-different table is how the two would drift.
+No producer wrote `primary_mac` at the time, so the interface's `ifPhysAddress`
+was in practice the only MAC seed knew for a device; a second MAC-keyed lookup
+over a different table is how the two would drift. (seed#2574 later gave
+`primary_mac` producers: the ARP reconciler records the MAC that carries a
+node's chosen address, and the ifTable reconciler fills the lowest-ifIndex
+unicast MAC when no ARP table has resolved one. `primary_mac` is always one of
+the node's interface MACs, so both columns still resolve.)
 
 The pass keeps its own high-water mark, `topology.edge.fdb.high_water`. Sharing
 the neighbour mark would skip every `fdb` observation already on disk at upgrade

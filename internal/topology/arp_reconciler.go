@@ -23,18 +23,18 @@ const arpHighWaterKey = "topology.arp.high_water"
 
 // arpStore is the narrowed repo surface the ARP reconciler uses.
 // In addition to writing bindings, the reconciler resolves each
-// binding's MAC to a node to backfill that node's primary_ip — the
-// bridge between L2 and L3 identity.
+// binding's MAC to a node to backfill that node's primary_ip and
+// primary_mac — the bridge between L2 and L3 identity.
 type arpStore interface {
 	NodeIDForTarget(ctx context.Context, clientID, targetID string) (string, error)
 	NodeIDForMAC(ctx context.Context, clientID, mac string) (string, error)
 	UpsertARPBinding(ctx context.Context, b *ARPBinding) error
-	SetNodePrimaryIP(ctx context.Context, nodeID, ip string) error
+	SetNodePrimaryAddress(ctx context.Context, nodeID, ip, mac string) error
 }
 
 // ARPReconciler turns arp observations into topology_arp_bindings
-// rows and backfills node.primary_ip when a binding's MAC matches
-// a known node. Two operations per binding — keep them in one
+// rows and backfills node.primary_ip and node.primary_mac when a
+// binding's MAC matches a known node. Two operations per binding — keep them in one
 // reconciler so the high-water mark stays coherent.
 type ARPReconciler struct {
 	obs      observationsReader
@@ -225,8 +225,8 @@ type arpEntry struct {
 }
 
 // applyObservation decodes the arp payload, upserts one binding per
-// entry, and backfills primary_ip on any node an entry's MAC
-// resolves to. Returns (bindingCount, backfillCount).
+// entry, and backfills primary_ip and primary_mac on any node an
+// entry's MAC resolves to. Returns (bindingCount, backfillCount).
 func (r *ARPReconciler) applyObservation(
 	ctx context.Context,
 	obs *observation.SNMPObservation,
@@ -245,7 +245,7 @@ func (r *ARPReconciler) applyObservation(
 	// every binding was IPv4, and stops being harmless now that a device can
 	// report a link-local fe80:: address for the same MAC (#1371). An address
 	// nothing can route to is not the address to reach a node by.
-	best := make(map[string]string)
+	best := make(map[string]arpEntry)
 
 	for _, e := range p.Entries {
 		if e.IPAddress == "" || e.MACAddress == "" {
@@ -268,27 +268,27 @@ func (r *ARPReconciler) applyObservation(
 		bindings++
 
 		// L2 -> L3 identity bridge: if this binding's MAC belongs to
-		// a known node, that node's primary_ip is this binding's IP.
-		// The fat-Node finally has a network-layer identity.
+		// a known node, that node's primary_ip is this binding's IP and
+		// its primary_mac the interface that answers for it (seed#2574).
 		matchedNodeID, lookupErr := r.store.NodeIDForMAC(ctx, obs.ClientID, e.MACAddress)
 		if lookupErr != nil {
 			continue
 		}
-		if preferAddress(best[matchedNodeID], e.IPAddress) {
-			best[matchedNodeID] = e.IPAddress
+		if preferAddress(best[matchedNodeID].IPAddress, e.IPAddress) {
+			best[matchedNodeID] = e
 		}
 	}
 
-	return bindings, r.backfillPrimaryIPs(ctx, best)
+	return bindings, r.backfillPrimaryAddresses(ctx, best)
 }
 
-// backfillPrimaryIPs writes the chosen address for each node.
-func (r *ARPReconciler) backfillPrimaryIPs(ctx context.Context, best map[string]string) int {
+// backfillPrimaryAddresses writes the chosen binding for each node.
+func (r *ARPReconciler) backfillPrimaryAddresses(ctx context.Context, best map[string]arpEntry) int {
 	backfills := 0
-	for nodeID, ip := range best {
-		if err := r.store.SetNodePrimaryIP(ctx, nodeID, ip); err != nil {
-			r.logger.WarnContext(ctx, "arp: primary_ip backfill failed",
-				"node_id", nodeID, "ip", ip, "error", err)
+	for nodeID, e := range best {
+		if err := r.store.SetNodePrimaryAddress(ctx, nodeID, e.IPAddress, e.MACAddress); err != nil {
+			r.logger.WarnContext(ctx, "arp: primary address backfill failed",
+				"node_id", nodeID, "ip", e.IPAddress, "mac", e.MACAddress, "error", err)
 			continue
 		}
 		backfills++

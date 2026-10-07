@@ -18,10 +18,11 @@ type fakeIfStore struct {
 	lookupErr error
 	upserts   []*topology.Interface
 	upsertErr error
+	fills     map[string]string // nodeID -> mac offered as primary_mac
 }
 
 func newFakeIfStore() *fakeIfStore {
-	return &fakeIfStore{nodeFor: make(map[string]string)}
+	return &fakeIfStore{nodeFor: make(map[string]string), fills: make(map[string]string)}
 }
 
 func (f *fakeIfStore) NodeIDForTarget(_ context.Context, clientID, targetID string) (string, error) {
@@ -44,6 +45,13 @@ func (f *fakeIfStore) UpsertInterface(_ context.Context, iface *topology.Interfa
 		return f.upsertErr
 	}
 	f.upserts = append(f.upserts, iface)
+	return nil
+}
+
+func (f *fakeIfStore) FillNodePrimaryMAC(_ context.Context, nodeID, mac string) error {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	f.fills[nodeID] = mac
 	return nil
 }
 
@@ -277,5 +285,85 @@ func TestIfTableReconciler_EngineName(t *testing.T) {
 	})
 	if r.Name() != topology.IfTableReconcilerName {
 		t.Errorf("Name() = %q, want %q", r.Name(), topology.IfTableReconcilerName)
+	}
+}
+
+// seed#2574: the fallback primary_mac is the lowest-ifIndex interface
+// with an address a frame can be sent to; loopbacks, tunnels and
+// malformed ifPhysAddress values are passed over.
+func TestIfTableReconcileOnce_OffersTheLowestUnicastMAC(t *testing.T) {
+	t.Parallel()
+	for _, tc := range []struct {
+		name string
+		rows []map[string]any
+		want string
+	}{
+		{
+			name: "lowest ifIndex wins regardless of row order",
+			rows: []map[string]any{
+				{"IfIndex": 3, "IfPhysAddr": "aa:bb:cc:00:00:03"},
+				{"IfIndex": 1, "IfPhysAddr": "aa:bb:cc:00:00:01"},
+				{"IfIndex": 2, "IfPhysAddr": "aa:bb:cc:00:00:02"},
+			},
+			want: "aa:bb:cc:00:00:01",
+		},
+		{
+			name: "loopback without a MAC is skipped",
+			rows: []map[string]any{
+				{"IfIndex": 1, "IfPhysAddr": ""},
+				{"IfIndex": 2, "IfPhysAddr": "aa:bb:cc:00:00:02"},
+			},
+			want: "aa:bb:cc:00:00:02",
+		},
+		{
+			name: "all-zero tunnel address is skipped",
+			rows: []map[string]any{
+				{"IfIndex": 1, "IfPhysAddr": "00:00:00:00:00:00"},
+				{"IfIndex": 2, "IfPhysAddr": "aa:bb:cc:00:00:02"},
+			},
+			want: "aa:bb:cc:00:00:02",
+		},
+		{
+			name: "group address is skipped",
+			rows: []map[string]any{
+				{"IfIndex": 1, "IfPhysAddr": "01:00:5e:00:00:01"},
+				{"IfIndex": 2, "IfPhysAddr": "aa:bb:cc:00:00:02"},
+			},
+			want: "aa:bb:cc:00:00:02",
+		},
+		{
+			name: "eight-byte address is skipped",
+			rows: []map[string]any{
+				{"IfIndex": 1, "IfPhysAddr": "aa:bb:cc:00:00:00:00:01"},
+				{"IfIndex": 2, "IfPhysAddr": "aa:bb:cc:00:00:02"},
+			},
+			want: "aa:bb:cc:00:00:02",
+		},
+		{
+			name: "no usable MAC offers nothing",
+			rows: []map[string]any{{"IfIndex": 1, "IfPhysAddr": "not-a-mac"}},
+			want: "",
+		},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+			store := newFakeIfStore()
+			store.nodeFor["c|t-1"] = "node-A"
+			o := &fakeObservations{rows: []*observation.SNMPObservation{
+				ifObs("c", "t-1", time.Now(), tc.rows...),
+			}}
+			r, err := topology.NewIfTableReconciler(topology.IfTableConfig{
+				Observations: o, Store: store, Settings: newFakeSettings(), Logger: silentLogger(),
+			})
+			if err != nil {
+				t.Fatalf("new: %v", err)
+			}
+			if err = r.ReconcileOnce(context.Background()); err != nil {
+				t.Fatalf("ReconcileOnce: %v", err)
+			}
+			if got := store.fills["node-A"]; got != tc.want {
+				t.Errorf("primary_mac offered = %q, want %q", got, tc.want)
+			}
+		})
 	}
 }

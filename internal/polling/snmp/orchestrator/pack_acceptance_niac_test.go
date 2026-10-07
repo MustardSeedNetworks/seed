@@ -128,6 +128,7 @@ func TestNIACPack(t *testing.T) {
 		reconcileTopology(t, db)
 		drawn, findings := drawnLinks(t.Context(), db, targets.Agents)
 		findings = append(findings, topologyFindings(targets.Links, drawn)...)
+		findings = append(findings, primaryMACFindings(t, db, targets.Agents)...)
 		for _, finding := range findings {
 			t.Errorf("%s: %s", targets.Pack, finding)
 		}
@@ -305,6 +306,45 @@ func drawnLinks(ctx context.Context, db *database.DB, agents []packAgent) ([]pac
 		}
 	}
 	return drawn, findings
+}
+
+// primaryMACFindings reports every agent seed knows an interface MAC for
+// whose node still serves no primaryMac (seed#2574).
+func primaryMACFindings(t *testing.T, db *database.DB, agents []packAgent) []string {
+	t.Helper()
+	ctx := t.Context()
+	nodes, err := db.Topology().List(ctx, topology.ListOptions{Limit: 5000})
+	if err != nil {
+		return []string{fmt.Sprintf("topology: list nodes: %v", err)}
+	}
+	primaryMAC := make(map[string]string, len(nodes))
+	for _, n := range nodes {
+		primaryMAC[n.ID] = n.PrimaryMAC
+	}
+	var findings []string
+	withMAC := 0
+	for _, agent := range agents {
+		nodeID, lookupErr := db.Topology().NodeIDForTarget(ctx, database.DefaultClientID, agent.Name)
+		if lookupErr != nil {
+			continue // drawnLinks already reports an agent with no node
+		}
+		ifaces, listErr := db.Topology().ListInterfaces(ctx, nodeID)
+		if listErr != nil {
+			findings = append(findings, fmt.Sprintf("topology: list interfaces of %s: %v", agent.Name, listErr))
+			continue
+		}
+		if !slices.ContainsFunc(ifaces, func(i *topology.Interface) bool {
+			return i.IfPhysAddr != "" && i.IfPhysAddr != "00:00:00:00:00:00"
+		}) {
+			continue
+		}
+		withMAC++
+		if primaryMAC[nodeID] == "" {
+			findings = append(findings, fmt.Sprintf("topology: %s has an interface MAC but no primaryMac", agent.Name))
+		}
+	}
+	t.Logf("topology: %d agents with an interface MAC, %d without a primaryMac", withMAC, len(findings))
+	return findings
 }
 
 // pollPack runs the named collectors, or every collector when none is named,
