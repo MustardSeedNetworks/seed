@@ -55,6 +55,7 @@ import { RequireAdmin } from '../ui/RequireRole';
 import { SettingsDrawerFooter } from './SettingsDrawerFooter';
 import { SettingsDrawerNetworkSection } from './SettingsDrawerNetworkSection';
 import { AlertDeliverySettings } from './sections/AlertDeliverySettings';
+import { AlertEscalationSettings } from './sections/AlertEscalationSettings';
 import { ApiTokensSettings } from './sections/ApiTokensSettings';
 import { AppearanceSettings } from './sections/AppearanceSettings';
 import { CableTestSettings } from './sections/CableTestSettings';
@@ -570,6 +571,8 @@ export function SettingsDrawer({
           />
 
           <AlertDeliverySettings />
+
+          <AlertEscalationSettings />
 
           <ThresholdsSettings
             thresholds={thresholds}

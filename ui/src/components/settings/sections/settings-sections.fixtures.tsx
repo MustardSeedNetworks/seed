@@ -24,6 +24,7 @@ import {
 } from '../../../types/settings';
 import { SettingsDrawerNetworkSection } from '../SettingsDrawerNetworkSection';
 import { AlertDeliverySettings } from './AlertDeliverySettings';
+import { AlertEscalationSettings } from './AlertEscalationSettings';
 import { ApiTokensSettings } from './ApiTokensSettings';
 import { AppearanceSettings } from './AppearanceSettings';
 import { CableTestSettings } from './CableTestSettings';
@@ -313,6 +314,11 @@ export const COPY_ONLY_SECTIONS: SectionFixture[] = [
     header: /alert delivery/i,
     render: () => <AlertDeliverySettings />,
   },
+  {
+    name: 'AlertEscalationSettings',
+    header: /alert escalation/i,
+    render: () => <AlertEscalationSettings />,
+  },
   { name: 'ApiTokensSettings', header: /api tokens/i, render: () => <ApiTokensSettings /> },
   {
     name: 'GuestNetworkAuditSettings',
@@ -335,8 +341,22 @@ export const API_GET_BODIES: Record<string, unknown> = {
     targets: [{ ip: '10.0.0.1', label: 'core' }],
     ports: [22, 443],
   },
+  // The escalation section's rule picker reads only each alert's rule.
+  '/api/v1/alerts?limit=1000': { count: 1, alerts: [{ rule: 'iface.down' }] },
   '/api/v1/settings': {
-    alerts: { webhook: { url: 'https://hooks.example.test/seed', secretSet: true } },
+    alerts: {
+      webhook: { url: 'https://hooks.example.test/seed', secretSet: true },
+      escalations: [
+        {
+          rule: 'iface.down',
+          stages: [
+            { afterSeconds: 300, channels: ['webhook'] },
+            { afterSeconds: 900, channels: ['webhook', 'email'] },
+          ],
+          repeatSeconds: 1800,
+        },
+      ],
+    },
     identity: { name: 'seed-idf-3b', location: 'idf-3b-rack-12' },
   },
 };

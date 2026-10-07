@@ -28,6 +28,8 @@
     "labelRaised": "Generada",
     "labelAcknowledged": "Reconocida",
     "labelResolved": "Resuelta",
+    "labelEscalated": "Escalada",
+    "escalatedStage": "etapa {{stage}}, {{time}}",
     "labelDeliveryWebhook": "Envío al webhook",
     "labelDeliveryEmail": "Envío por correo",
     "labelDeliverySyslog": "Envío por syslog",

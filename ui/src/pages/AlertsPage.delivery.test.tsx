@@ -1,5 +1,6 @@
 /**
- * AlertsPage.delivery.test.tsx — each receiver's delivery outcome is visible.
+ * AlertsPage.delivery.test.tsx — each receiver's delivery outcome, and the
+ * escalation stage a ladder reached (P-B2), are visible.
  *
  * #368's acceptance is that a receiver which stopped accepting POSTs becomes
  * discoverable from the inbox. Two rules carry that and are asserted here:
@@ -8,7 +9,7 @@
  * deployments configure none, so an empty status must never read as a failure.
  * Each channel (webhook, email #2997, syslog #3037) answers for itself.
  */
-import { render, screen, waitFor } from '@testing-library/react';
+import { cleanup, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { RoleProvider } from '../contexts/RoleContext';
@@ -186,5 +187,30 @@ describe('AlertsPage — delivery status', () => {
     expect(screen.getByTestId('alert-row-1').textContent).toContain('sin enviar');
     // The receiver's own words are not copy and stay as the daemon recorded them.
     expect(screen.getByText(/receiver answered 401 for alert 1/)).toBeVisible();
+  });
+});
+
+describe('AlertsPage — escalation', () => {
+  it('says nothing about escalation on an alert no ladder has escalated', async () => {
+    await renderWith(baseAlert);
+
+    expect(screen.queryByText('Escalated')).toBeNull();
+  });
+
+  it('shows the stage a ladder escalated the alert to, in both locales', async () => {
+    const escalated: Alert = {
+      ...baseAlert,
+      rule: 'iface.down',
+      escalationStage: 2,
+      escalatedAt: '2026-09-06T10:15:00Z',
+    };
+    await renderWith(escalated);
+    expect(screen.getByText('Escalated')).toBeVisible();
+    expect(screen.getByText(/^stage 2, /)).toBeVisible();
+
+    cleanup();
+    await renderWith(escalated, 'es');
+    expect(screen.getByText('Escalada')).toBeVisible();
+    expect(screen.getByText(/^etapa 2, /)).toBeVisible();
   });
 });

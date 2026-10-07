@@ -162,6 +162,8 @@ const SHARED_BY_DESIGN = new Set([
   'common:labels.autoNeg',
   'settings:discovery.traceroute',
   'settings:common.host',
+  'settings:alertEscalation.channelWebhook',
+  'settings:alertEscalation.channelSyslog',
   // Spanish spells these the same way.
   'settings:users.providers.local',
   // The language picker names each language in its own language.
