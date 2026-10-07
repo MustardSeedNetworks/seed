@@ -31,7 +31,8 @@
     "logs": "Logs",
     "alerts": "Alertas",
     "pollingTargets": "Objetivos de sondeo",
-    "topology": "Topología"
+    "topology": "Topología",
+    "interfaces": "Interfaces"
   },
   "content": {
     "about": {
@@ -647,6 +648,23 @@
         "interface": {
           "term": "Interfaz",
           "description": "Un puerto de dispositivo con su estado y los vecinos observados."
+        }
+      }
+    },
+    "interfaces": {
+      "description": "Compare todas las interfaces que informan sus destinos de sondeo. Seed calcula la tasa de cada interfaz a partir de dos sondeos consecutivos y muestra primero la tasa de errores más alta. Ordene por cualquier columna de tasa para encontrar los puertos más cargados o con más problemas.",
+      "terms": {
+        "errors": {
+          "term": "Errores",
+          "description": "Paquetes recibidos y enviados que la interfaz no pudo entregar porque estaban dañados, por segundo."
+        },
+        "discards": {
+          "term": "Descartes",
+          "description": "Paquetes válidos que la interfaz descartó, normalmente porque un búfer estaba lleno, por segundo."
+        },
+        "utilization": {
+          "term": "Utilización",
+          "description": "El tráfico de cada sentido como porcentaje de la velocidad de línea. Vacío cuando el dispositivo no informa la velocidad de línea."
         }
       }
     },

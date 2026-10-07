@@ -9,7 +9,15 @@
  * @copyright 2026 Mustard Seed Networks. All rights reserved.
  */
 
-import { AlertTriangle, BarChart3, Network, Route, ScrollText, Server } from '../../ui/Icons';
+import {
+  AlertTriangle,
+  BarChart3,
+  EthernetPort,
+  Network,
+  Route,
+  ScrollText,
+  Server,
+} from '../../ui/Icons';
 import type { HelpSection } from '../helpModel';
 
 const ICON = 'w-4 h-4';
@@ -249,6 +257,36 @@ export const reportingSections: HelpSection[] = [
           {
             term: 'content.topology.terms.interface.term',
             description: 'content.topology.terms.interface.description',
+          },
+        ],
+      },
+    ],
+  },
+  {
+    id: 'interfaces',
+    titleKey: 'sections.interfaces',
+    icon: <EthernetPort className={ICON} />,
+    keywords: ['interfaces', 'ports', 'errors', 'discards', 'utilization', 'traffic', 'snmp'],
+    blocks: [
+      {
+        kind: 'paragraph',
+        text: 'content.interfaces.description',
+      },
+      {
+        kind: 'terms',
+        heading: 'content.common.terms',
+        items: [
+          {
+            term: 'content.interfaces.terms.errors.term',
+            description: 'content.interfaces.terms.errors.description',
+          },
+          {
+            term: 'content.interfaces.terms.discards.term',
+            description: 'content.interfaces.terms.discards.description',
+          },
+          {
+            term: 'content.interfaces.terms.utilization.term',
+            description: 'content.interfaces.terms.utilization.description',
           },
         ],
       },

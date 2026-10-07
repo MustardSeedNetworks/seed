@@ -33,6 +33,7 @@ import {
   Activity,
   BarChart3,
   Bell,
+  EthernetPort,
   Network,
   Route,
   ScrollText,
@@ -84,6 +85,7 @@ export function useNavGroups(): SidebarNavGroup[] {
       label: t('groups.monitoring'),
       items: [
         { path: '/topology', label: t('topology.label'), icon: Share2 },
+        { path: '/interfaces', label: t('interfaces.label'), icon: EthernetPort },
         { path: '/alerts', label: t('alerts.label'), icon: Bell },
         { path: '/polling-targets', label: t('pollingTargets.label'), icon: Target },
       ],

@@ -1,0 +1,116 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/MustardSeedNetworks/seed/main/docs/schemas/api/interface-stats-list-response.schema.json",
+  "$ref": "#/$defs/InterfaceStatsListResponse",
+  "$defs": {
+    "InterfaceRatesResponse": {
+      "properties": {
+        "sampledAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "inOctetsPerSec": {
+          "type": "number"
+        },
+        "outOctetsPerSec": {
+          "type": "number"
+        },
+        "inUtilizationPct": {
+          "type": "number"
+        },
+        "outUtilizationPct": {
+          "type": "number"
+        },
+        "inErrorsPerSec": {
+          "type": "number"
+        },
+        "outErrorsPerSec": {
+          "type": "number"
+        },
+        "inDiscardsPerSec": {
+          "type": "number"
+        },
+        "outDiscardsPerSec": {
+          "type": "number"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "sampledAt",
+        "inErrorsPerSec",
+        "outErrorsPerSec",
+        "inDiscardsPerSec",
+        "outDiscardsPerSec"
+      ]
+    },
+    "InterfaceStatsListResponse": {
+      "properties": {
+        "interfaces": {
+          "items": {
+            "$ref": "#/$defs/InterfaceStatsResponse"
+          },
+          "type": "array"
+        },
+        "count": {
+          "type": "integer"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "interfaces",
+        "count"
+      ]
+    },
+    "InterfaceStatsResponse": {
+      "properties": {
+        "targetId": {
+          "type": "string"
+        },
+        "targetName": {
+          "type": "string"
+        },
+        "ifIndex": {
+          "type": "integer"
+        },
+        "name": {
+          "type": "string"
+        },
+        "alias": {
+          "type": "string"
+        },
+        "operStatus": {
+          "type": "string",
+          "enum": [
+            "up",
+            "down",
+            "testing",
+            "unknown",
+            "dormant",
+            "notPresent",
+            "lowerLayerDown"
+          ]
+        },
+        "speedBps": {
+          "type": "integer"
+        },
+        "rates": {
+          "$ref": "#/$defs/InterfaceRatesResponse"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "targetId",
+        "targetName",
+        "ifIndex",
+        "name",
+        "operStatus",
+        "speedBps"
+      ]
+    }
+  },
+  "title": "InterfaceStatsListResponse",
+  "description": "InterfaceStatsListResponse — generated from the Go struct in internal/api; refresh with `make schema` after struct changes."
+}

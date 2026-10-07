@@ -30,6 +30,7 @@ const ROUTES = [
   '/logs',
   '/polling-targets',
   '/topology',
+  '/interfaces',
   '/alerts',
 ];
 

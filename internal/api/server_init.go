@@ -475,6 +475,7 @@ func (s *Server) initDiscoveryUseCases() {
 	s.historyQueries = app.NewHistory(s.db)
 	s.vulnTriage = app.NewVulnTriage(s.db)
 	s.flows = app.NewFlows(s.db)
+	s.interfaceStats = app.NewInterfaceStats(s.db)
 	s.pollingTargets = app.NewPollingTargets(s.db, s.pollingTargetLimit)
 	// The credential vault needs the keyring that owns the DEK. Without a
 	// config there is none, so the use-case stays nil and its handlers report

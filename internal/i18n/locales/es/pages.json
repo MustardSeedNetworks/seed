@@ -48,6 +48,31 @@
     "monitoring": "Monitorización",
     "reporting": "Informes"
   },
+  "interfaces": {
+    "description": "Todas las interfaces que informan sus destinos de sondeo, con su tráfico, utilización, errores y descartes más recientes.",
+    "label": "Interfaces",
+    "title": "Interfaces",
+    "count_one": "{{count}} interfaz",
+    "count_other": "{{count}} interfaces",
+    "empty": "Aún no hay interfaces. Añada un destino de sondeo; sus interfaces aparecen tras el primer sondeo.",
+    "addTarget": "Añadir un destino de sondeo",
+    "noData": "Aún no hay tasas. Una tasa necesita dos sondeos, así que aparecen un intervalo de sondeo después del primero.",
+    "noRateYet": "Sin tasa todavía",
+    "colInterface": "Interfaz",
+    "colTraffic": "Tráfico entrada / salida",
+    "colUtilization": "Utilización entrada / salida",
+    "colErrors": "Errores",
+    "colDiscards": "Descartes",
+    "status": {
+      "up": "Activa",
+      "down": "Inactiva",
+      "testing": "En prueba",
+      "unknown": "Desconocido",
+      "dormant": "Latente",
+      "notPresent": "No presente",
+      "lowerLayerDown": "Capa inferior inactiva"
+    }
+  },
   "link": {
     "description": "Estado del enlace físico, diagnóstico de cableado y asociación Wi-Fi de la interfaz activa.",
     "label": "Enlace",

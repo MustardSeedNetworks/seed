@@ -268,5 +268,9 @@
     "invalidTarget": "Invalid target: enter a hostname or IP address",
     "ipRequired": "An IP address is required",
     "portCount": "Enter from 1 to 100 ports"
+  },
+  "interfaceStats": {
+    "storeUnavailable": "Interface statistics are unavailable: the database is not open",
+    "readFailed": "Failed to read interface statistics"
   }
 }
