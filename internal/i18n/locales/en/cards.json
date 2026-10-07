@@ -701,6 +701,69 @@
     "truncated": "More senders were heard than the table lists; it shows the busiest.",
     "unfiltered": "This platform cannot tell which group a datagram was sent to, so the counts include everything that reached this port."
   },
+  "dscpCheck": {
+    "title": "DSCP check",
+    "description": "Check that the network keeps the DSCP marking each traffic class is sent with. A switch port that does not trust the marking, or an access point that maps Wi-Fi priority to the wrong wired class, turns voice into best effort.",
+    "modeLabel": "Check",
+    "mode": {
+      "listen": "Listen",
+      "send": "Send",
+      "single-host": "One host, two interfaces"
+    },
+    "modeHint": {
+      "listen": "Run this on the receiving Seed first, then start Send on the other Seed.",
+      "send": "Start Listen on the receiving Seed first. The verdict appears there.",
+      "single-host": "Send out of one interface, such as Wi-Fi, and read the probes back on the other, such as the wired port."
+    },
+    "target": "Listening Seed address",
+    "port": "Port",
+    "portInvalid": "Enter a whole number from 1 to {{max}}.",
+    "duration": "Duration (seconds)",
+    "durationInvalid": "Enter a whole number from 1 to {{max}}.",
+    "sendInterface": "Send interface",
+    "captureInterface": "Receive interface",
+    "sameInterface": "Choose two different interfaces.",
+    "start": {
+      "listen": "Start listening",
+      "send": "Send probes",
+      "single-host": "Run check"
+    },
+    "starting": "Starting…",
+    "running": {
+      "listen": "Listening. Start Send on the other Seed now.",
+      "send": "Sending marked probes…",
+      "single-host": "Sending and reading back marked probes…"
+    },
+    "stop": "Stop",
+    "stopping": "Stopping…",
+    "stopFailed": "The check did not stop. Try again.",
+    "readOnly": "Running a DSCP check needs the operator role.",
+    "failed": "The check did not run.",
+    "pass": "Pass: every class arrived with the marking it was sent with.",
+    "fail_one": "Fail: {{count}} of {{total}} classes was changed or lost on the way.",
+    "fail_other": "Fail: {{count}} of {{total}} classes were changed or lost on the way.",
+    "unobserved": "Probes arrived, but this platform cannot read the marking they carry. Listen on Linux or macOS instead.",
+    "silent": "No probes reached port {{port}}. Check the address and port on the sending Seed, and any firewall in between.",
+    "runFrom": "From {{sender}}",
+    "truncated": "More senders were heard than the card lists.",
+    "classesCaption": "Each class as sent and as it arrived",
+    "colClass": "Sent as",
+    "colResult": "Result",
+    "colArrivedAs": "Arrived as",
+    "colReceived": "Received",
+    "verdict": {
+      "preserved": "Kept",
+      "remarked": "Changed",
+      "mixed": "Changed on some",
+      "lost": "Lost",
+      "unobserved": "Not readable"
+    },
+    "routeDirect": "Out of {{send}} ({{source}}), back in on {{capture}} ({{target}}) on the same network.",
+    "routeRouted": "Out of {{send}} ({{source}}) through {{nextHop}}, back in on {{capture}} ({{target}}).",
+    "sent_one": "Sent {{count}} probe of each class ({{classes}}) to {{target}} port {{port}}. Read the verdict on the listening Seed.",
+    "sent_other": "Sent {{count}} probes of each class ({{classes}}) to {{target}} port {{port}}. Read the verdict on the listening Seed.",
+    "unmarked": "This platform sent the probes unmarked, so the listener will read every class as best effort. Send from Linux or macOS instead."
+  },
   "packetCapture": {
     "title": "Packet capture",
     "description": "Record traffic on an interface to a PCAP file for Wireshark, with a summary of what crossed the wire.",

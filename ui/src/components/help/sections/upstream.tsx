@@ -284,6 +284,15 @@ export const upstreamSections: HelpSection[] = [
           },
         ],
       },
+      {
+        kind: 'terms',
+        items: [
+          {
+            term: 'cards:dscpCheck.title',
+            description: 'content.cardHelp.DscpCheckCard.description',
+          },
+        ],
+      },
     ],
   },
   {
