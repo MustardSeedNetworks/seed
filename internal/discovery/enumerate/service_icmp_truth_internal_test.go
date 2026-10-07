@@ -65,7 +65,7 @@ func TestPingSweepUnavailableCarriesTheReasonAndClearsOnSuccess(t *testing.T) {
 	if err != nil {
 		t.Fatalf("parsing the sweep range: %v", err)
 	}
-	if sweepErr := s.pingSweepChunk(context.Background(), loopback); sweepErr != nil {
+	if _, sweepErr := s.pingSweepChunk(context.Background(), loopback); sweepErr != nil {
 		t.Fatalf("pingSweepChunk: %v", sweepErr)
 	}
 	if got := s.PingSweepUnavailable(); got != "" {

@@ -100,6 +100,7 @@ type DegradationStatus = discovery.DegradationStatus
 const (
 	MethodARP  = discovery.MethodARP
 	MethodPING = discovery.MethodPING
+	MethodSNMP = discovery.MethodSNMP
 	MethodLLDP = discovery.MethodLLDP
 	MethodCDP  = discovery.MethodCDP
 	MethodEDP  = discovery.MethodEDP

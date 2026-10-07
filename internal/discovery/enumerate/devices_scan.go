@@ -142,14 +142,16 @@ func (d *DeviceDiscovery) mergeARPResults() {
 			device.Hostname = arp.Hostname
 		}
 
-		if mac != "" {
-			if !containsMethod(device.DiscoveryMethod, MethodARP) {
-				device.DiscoveryMethod = append(device.DiscoveryMethod, MethodARP)
-			}
-		} else {
-			if !containsMethod(device.DiscoveryMethod, MethodPING) {
-				device.DiscoveryMethod = append(device.DiscoveryMethod, MethodPING)
-			}
+		method := MethodARP
+		switch {
+		case mac != "":
+		case arp.State == stateSNMPOnly:
+			method = MethodSNMP
+		default:
+			method = MethodPING
+		}
+		if !containsMethod(device.DiscoveryMethod, method) {
+			device.DiscoveryMethod = append(device.DiscoveryMethod, method)
 		}
 	}
 }
