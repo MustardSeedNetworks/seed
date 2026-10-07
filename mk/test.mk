@@ -17,8 +17,8 @@
 # Main Test Targets
 # =============================================================================
 
-# Packages `make test` skips. validate-touched skips the same ones, so the
-# inner loop never runs a package the full suite does not.
+# Packages `make test` skips. validate-touched reads this line and skips the
+# same ones, so the inner loop never runs a package the full suite does not.
 TEST_PKG_EXCLUDE := /cmd/|/ui$$|/i18n$$|/mcp$$|/oauth$$
 
 # check-stale-tests refuses to start while orphaned test binaries from an
@@ -40,11 +40,8 @@ test: check-stale-tests ## Run unit tests (backend + frontend)
 	$(call timer-end,test-frontend,Frontend tests)
 	@printf "$(CYAN)└──────────────────────────────────────────────────────────────────────────────┘$(RESET)\n"
 
-validate-touched: check-stale-tests golangci-lint-pinned ## Lint, test and gate only what this branch changed (BASE=origin/main)
-	@python3 scripts/validate-touched.py --base "$(or $(BASE),origin/main)" \
-		--golangci-lint "$(GOLANGCI_LINT)" \
-		--markdownlint-version "$(MARKDOWNLINT_CLI2_VERSION)" \
-		--test-exclude '$(TEST_PKG_EXCLUDE)'
+validate-touched: check-stale-tests golangci-lint-pinned ## Lint, test and gate only what this branch changed since origin/main
+	@python3 scripts/validate-touched.py
 
 test-all: check-stale-tests ## Run ALL tests (unit + E2E)
 	@printf "$(BOLD)$(CYAN)┌─ Full Test Suite ────────────────────────────────────────────────────────────┐$(RESET)\n"

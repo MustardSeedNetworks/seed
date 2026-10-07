@@ -8,8 +8,9 @@ changed Markdown, and every CI gate in scripts/ whose inputs changed. Each
 command is printed before it runs. The full `make test` still runs once before
 the PR: a gate's input list here is a judgement, CI's is the whole tree.
 
-The changed set is everything between the merge base with BASE (default
-origin/main) and the working tree, plus untracked files.
+The changed set is everything between the merge base with origin/main and the
+working tree, plus untracked files. Tool pins and the packages `make test`
+skips are read from the make fragments, so the Makefile stays their one source.
 """
 
 from __future__ import annotations
@@ -26,6 +27,9 @@ from dataclasses import dataclass
 from pathlib import Path, PurePosixPath
 
 ROOT = Path(__file__).resolve().parent.parent
+
+# Fixed, not a flag: whatever a caller passes reaches the commands this runs.
+BASE = "origin/main"
 
 
 @dataclass(frozen=True)
@@ -262,8 +266,8 @@ def git_lines(*args: str) -> list[str]:
     return [line for line in out.splitlines() if line]
 
 
-def changed_files(base: str) -> list[str]:
-    merge_base = git_lines("merge-base", base, "HEAD")[0]
+def changed_files() -> list[str]:
+    merge_base = git_lines("merge-base", BASE, "HEAD")[0]
     paths = set(git_lines("diff", "--name-only", merge_base)) | set(git_lines("ls-files", "--others", "--exclude-standard"))
     return sorted(paths)
 
@@ -297,24 +301,43 @@ def _skip_ws(text: str, pos: int) -> int:
     return pos
 
 
+def make_var(fragment: str, name: str) -> str:
+    """A `NAME := value` assignment in mk/<fragment>, with make's `$$` escape
+    undone."""
+    for line in (ROOT / "mk" / fragment).read_text().splitlines():
+        key, sep, value = line.partition(":=")
+        if sep and key.strip() == name:
+            return value.strip().replace("$$", "$")
+    sys.exit(f"validate-touched: mk/{fragment} sets no {name}")
+
+
+def golangci_binary() -> str:
+    """The GOPATH golangci-lint, refused unless it is the version CI pins."""
+    want = make_var("lint.mk", "GOLANGCI_LINT_VERSION")
+    gopath = subprocess.run(["go", "env", "GOPATH"], check=True, capture_output=True, text=True).stdout.strip()
+    binary = str(Path(gopath) / "bin" / "golangci-lint")
+    try:
+        version = subprocess.run([binary, "version"], check=True, capture_output=True, text=True).stdout
+    except (OSError, subprocess.CalledProcessError):
+        version = ""
+    if f"version {want.removeprefix('v')} " not in version:
+        sys.exit(f"validate-touched: {binary} is not golangci-lint {want}; `make lint-backend` installs it")
+    return binary
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    parser.add_argument("--base", default=os.environ.get("BASE", "origin/main"))
     parser.add_argument("--dry-run", action="store_true", help="print the commands without running them")
-    # Pinned by the Makefile, so the inner loop cannot pass what CI rejects.
-    parser.add_argument("--golangci-lint", required=True, help="path to the pinned golangci-lint")
-    parser.add_argument("--markdownlint-version", required=True)
-    parser.add_argument("--test-exclude", required=True, help="regexp of packages `make test` skips")
     args = parser.parse_args()
 
-    changed = changed_files(args.base)
-    print(f"{len(changed)} changed file(s) since the merge base with {args.base}")
+    changed = changed_files()
+    print(f"{len(changed)} changed file(s) since the merge base with {BASE}")
     steps = plan(
         changed,
         go_packages(),
-        re.compile(args.test_exclude),
-        args.golangci_lint,
-        args.markdownlint_version,
+        re.compile(make_var("test.mk", "TEST_PKG_EXCLUDE")),
+        "golangci-lint" if args.dry_run else golangci_binary(),
+        make_var("lint.mk", "MARKDOWNLINT_CLI2_VERSION"),
         frozenset(p for p in changed if not (ROOT / p).exists()),
     )
     if not steps:

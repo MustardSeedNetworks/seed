@@ -120,6 +120,13 @@ class Selection(unittest.TestCase):
         lines = plan(["scripts/test-check-feature-catalog.py"])
         self.assertIn("python3 scripts/check-feature-catalog.py", lines)
 
+    def test_make_fragments_set_every_value_read(self) -> None:
+        self.assertRegex(vt.make_var("lint.mk", "GOLANGCI_LINT_VERSION"), r"^v\d+\.\d+\.\d+$")
+        self.assertRegex(vt.make_var("lint.mk", "MARKDOWNLINT_CLI2_VERSION"), r"^\d+\.\d+\.\d+$")
+        exclude = re.compile(vt.make_var("test.mk", "TEST_PKG_EXCLUDE"))
+        self.assertTrue(exclude.search("github.com/MustardSeedNetworks/seed/internal/api/ui"))
+        self.assertFalse(exclude.search("github.com/MustardSeedNetworks/seed/internal/uix"))
+
     def test_every_gate_script_exists(self) -> None:
         root = HERE.parent
         for gate in vt.GATES:
