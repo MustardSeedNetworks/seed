@@ -22,7 +22,6 @@ import { useLicense } from '../../contexts/LicenseContext';
 import { useRole } from '../../contexts/RoleContext';
 import type { UseBoundedJobReturn } from '../../hooks/useBoundedJob';
 import {
-  type ClassResult,
   type DscpMode,
   type DscpRequest,
   type DscpResult,
@@ -30,9 +29,6 @@ import {
   isListenResult,
   isModeResult,
   isSingleHostResult,
-  type ListenResult,
-  type SendResult,
-  type SingleHostResult,
   useDscpCheck,
 } from '../../hooks/useDscpCheck';
 import { cn, radius, spacing, status as statusColor } from '../../styles/theme';
@@ -40,7 +36,7 @@ import { Button } from '../ui/Button';
 import { Card, type Status } from '../ui/Card';
 import { Gauge } from '../ui/Icons';
 import { Input } from '../ui/Input';
-import { SummaryTable } from './SummaryTable';
+import { DscpCheckResult, verdictOf } from './DscpCheckResult';
 
 const FEATURE = 'dscp_verification';
 const MODES: readonly DscpMode[] = ['listen', 'send', 'single-host'];
@@ -57,14 +53,6 @@ const MAX_PORT = 65535;
 function parseWhole(raw: string, max: number): number | null {
   const value = Number(raw);
   return raw.trim() !== '' && Number.isInteger(value) && value >= 1 && value <= max ? value : null;
-}
-
-/** Whether every class kept its marking; null when none could be read. */
-function verdictOf(classes: ClassResult[]): boolean | null {
-  if (classes.length > 0 && classes.every((c) => c.verdict === 'unobserved')) {
-    return null;
-  }
-  return classes.every((c) => c.verdict === 'preserved');
 }
 
 function resultStatus(result: DscpResult): Status {
@@ -199,7 +187,7 @@ export function DscpCheckCard({
           </div>
         ) : null}
 
-        {licensed && result !== null ? <CheckResult result={result} /> : null}
+        {licensed && result !== null ? <DscpCheckResult result={result} /> : null}
       </div>
     </Card>
   );
@@ -451,155 +439,6 @@ function CheckRunning({
           </p>
         ) : null}
       </div>
-    </div>
-  );
-}
-
-function CheckResult({ result }: { result: DscpResult }): JSX.Element {
-  if (isListenResult(result)) {
-    return <ListenSummary result={result} />;
-  }
-  if (isSingleHostResult(result)) {
-    return <SingleHostSummary result={result} />;
-  }
-  return <SendSummary result={result} />;
-}
-
-function classLabel(dscp: number, name: string | undefined): string {
-  return name ? `${name} (${dscp})` : String(dscp);
-}
-
-function Verdict({ classes, testId }: { classes: ClassResult[]; testId: string }): JSX.Element {
-  const { t } = useTranslation('cards');
-  const preserved = verdictOf(classes);
-  const changed = classes.filter((c) => c.verdict !== 'preserved').length;
-
-  if (preserved === null) {
-    return (
-      <p className="body-small text-status-warning-strong" data-testid={testId}>
-        {t('dscpCheck.unobserved')}
-      </p>
-    );
-  }
-  return (
-    <p
-      className={cn(
-        'body-small font-medium',
-        preserved ? 'text-status-success-strong' : 'text-status-error-strong',
-      )}
-      data-testid={testId}
-      data-pass={preserved}
-    >
-      {preserved
-        ? t('dscpCheck.pass')
-        : t('dscpCheck.fail', { count: changed, total: classes.length })}
-    </p>
-  );
-}
-
-function ClassTable({ classes, testId }: { classes: ClassResult[]; testId: string }): JSX.Element {
-  const { t } = useTranslation('cards');
-  const verdicts: Record<ClassResult['verdict'], string> = {
-    preserved: t('dscpCheck.verdict.preserved'),
-    remarked: t('dscpCheck.verdict.remarked'),
-    mixed: t('dscpCheck.verdict.mixed'),
-    lost: t('dscpCheck.verdict.lost'),
-    unobserved: t('dscpCheck.verdict.unobserved'),
-  };
-
-  return (
-    <SummaryTable
-      testId={testId}
-      caption={t('dscpCheck.classesCaption')}
-      columns={[
-        { label: t('dscpCheck.colClass'), width: 'w-[25%]', mono: true },
-        { label: t('dscpCheck.colResult'), width: 'w-[20%]' },
-        { label: t('dscpCheck.colArrivedAs'), width: 'w-[35%]', mono: true },
-        { label: t('dscpCheck.colReceived'), width: 'w-[20%]' },
-      ]}
-      rows={classes.map((c) => ({
-        key: String(c.sentDscp),
-        cells: [
-          classLabel(c.sentDscp, c.sentName),
-          verdicts[c.verdict],
-          c.observed.length === 0
-            ? '—'
-            : c.observed.map((o) => `${classLabel(o.dscp, o.name)} ×${o.count}`).join(', '),
-          `${c.received}/${c.expected}`,
-        ],
-      }))}
-    />
-  );
-}
-
-function ListenSummary({ result }: { result: ListenResult }): JSX.Element {
-  const { t } = useTranslation('cards');
-
-  return (
-    <div className="stack-sm" data-testid="dscp-check-result">
-      {result.runs.length === 0 ? (
-        <p className="body-small text-status-warning-strong" data-testid="dscp-check-silent">
-          {t('dscpCheck.silent', { port: result.port })}
-        </p>
-      ) : (
-        result.runs.map((run) => (
-          <div key={`${run.sender}-${run.runId}`} className="stack-xs" data-testid="dscp-check-run">
-            <p className="body-small text-text-primary">
-              {t('dscpCheck.runFrom', { sender: run.sender })}
-            </p>
-            <Verdict classes={run.classes} testId="dscp-check-verdict" />
-            <ClassTable classes={run.classes} testId="dscp-check-classes" />
-          </div>
-        ))
-      )}
-      {result.runsTruncated ? (
-        <p className="caption text-text-muted" data-testid="dscp-check-truncated">
-          {t('dscpCheck.truncated')}
-        </p>
-      ) : null}
-    </div>
-  );
-}
-
-function SingleHostSummary({ result }: { result: SingleHostResult }): JSX.Element {
-  const { t } = useTranslation('cards');
-  const route = {
-    send: result.sendInterface,
-    source: result.source,
-    capture: result.captureInterface,
-    target: result.target,
-    nextHop: result.nextHop,
-  };
-
-  return (
-    <div className="stack-sm" data-testid="dscp-check-result">
-      <p className="body-small text-text-primary" data-testid="dscp-check-route">
-        {result.routed ? t('dscpCheck.routeRouted', route) : t('dscpCheck.routeDirect', route)}
-      </p>
-      <Verdict classes={result.classes} testId="dscp-check-verdict" />
-      <ClassTable classes={result.classes} testId="dscp-check-classes" />
-    </div>
-  );
-}
-
-function SendSummary({ result }: { result: SendResult }): JSX.Element {
-  const { t } = useTranslation('cards');
-
-  return (
-    <div className="stack-xs" data-testid="dscp-check-result">
-      <p className="body-small text-text-primary" data-testid="dscp-check-sent">
-        {t('dscpCheck.sent', {
-          count: result.count,
-          classes: result.classes.map((c) => classLabel(c.dscp, c.name)).join(', '),
-          target: result.target,
-          port: result.port,
-        })}
-      </p>
-      {result.marked ? null : (
-        <p className="body-small text-status-warning-strong" data-testid="dscp-check-unmarked">
-          {t('dscpCheck.unmarked')}
-        </p>
-      )}
     </div>
   );
 }
