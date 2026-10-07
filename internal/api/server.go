@@ -444,22 +444,6 @@ func (s *Server) initTelemetryAndWiFiServices(cfg *config.Config) {
 	s.startWiFiHelper()
 }
 
-// initSettingsUseCases wires the ADR-0020 settings, profiles, network-IP, and
-// alert-rule use-cases. The composition root builds the adapters; api passes
-// its lazy db/manager accessors + live config. Split out of NewServer to
-// keep it under the funlen limit.
-func (s *Server) initSettingsUseCases() {
-	s.settingsStore = app.NewSettings(s.db, s.config)
-	s.settingsManagement = app.NewSettingsManagement(s.config, s.configPath,
-		func() *alertdelivery.Manager { return s.alertDelivery })
-	s.configBackups = app.NewConfigBackups(s.config, s.configPath,
-		func() *alertdelivery.Manager { return s.alertDelivery })
-	s.securitySettings = app.NewSecuritySettings(s.config, s.configPath, s.rogueDetector)
-	s.profiles = app.NewProfiles(s.db, s.config, s.configPath)
-	s.networkIP = app.NewNetworkIP(s.netManager, s.config, s.configPath)
-	s.alertRules = app.NewAlertRules(s.db)
-}
-
 // initCaptureServices constructs the services that perform live packet capture
 // (device discovery via LLDP/CDP/EDP, DHCP monitoring, rogue-DHCP detection, and
 // VLAN traffic) and injects the capture port adapter into each. The adapter is

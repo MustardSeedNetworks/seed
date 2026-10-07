@@ -3,12 +3,14 @@ package api
 // server_init.go contains the per-subsystem initialisation helpers that
 // NewServer composes: DNS/discovery, target networks, database +
 // migration, MIB DB, SSE + log broadcaster, discovery pipeline, vulnerability
-// scanner, CORS origin policy, the retention engine, and the health use-cases.
+// scanner, CORS origin policy, the retention engine, and the health and
+// settings use-cases.
 
 import (
 	"context"
 	"slices"
 
+	alertdelivery "github.com/MustardSeedNetworks/seed/internal/alerts/delivery"
 	"github.com/MustardSeedNetworks/seed/internal/app"
 	"github.com/MustardSeedNetworks/seed/internal/auth"
 	"github.com/MustardSeedNetworks/seed/internal/config"
@@ -488,4 +490,20 @@ func (s *Server) initDiscoveryUseCases() {
 		}
 	}
 	s.alertInbox = app.NewAlertInbox(s.db)
+}
+
+// initSettingsUseCases wires the ADR-0020 settings, profiles, network-IP, and
+// alert-rule use-cases. The composition root builds the adapters; api passes
+// its lazy db/manager accessors + live config. Split out of NewServer to
+// keep it under the funlen limit.
+func (s *Server) initSettingsUseCases() {
+	s.settingsStore = app.NewSettings(s.db, s.config)
+	s.settingsManagement = app.NewSettingsManagement(s.config, s.configPath,
+		func() *alertdelivery.Manager { return s.alertDelivery })
+	s.configBackups = app.NewConfigBackups(s.config, s.configPath,
+		func() *alertdelivery.Manager { return s.alertDelivery })
+	s.securitySettings = app.NewSecuritySettings(s.config, s.configPath, s.rogueDetector)
+	s.profiles = app.NewProfiles(s.db, s.config, s.configPath)
+	s.networkIP = app.NewNetworkIP(s.netManager, s.config, s.configPath)
+	s.alertRules = app.NewAlertRules(s.db)
 }
