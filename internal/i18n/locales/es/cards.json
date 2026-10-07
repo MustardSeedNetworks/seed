@@ -711,6 +711,69 @@
     "truncated": "Se oyeron más emisores de los que muestra la tabla; aparecen los más activos.",
     "unfiltered": "Esta plataforma no puede saber a qué grupo se envió cada datagrama, así que los recuentos incluyen todo lo que llegó a este puerto."
   },
+  "dscpCheck": {
+    "title": "Comprobación DSCP",
+    "description": "Comprueba que la red conserva la marca DSCP con la que se envía cada clase de tráfico. Un puerto de switch que no confía en la marca, o un punto de acceso que asigna la prioridad Wi-Fi a la clase cableada equivocada, convierte la voz en best effort.",
+    "modeLabel": "Comprobación",
+    "mode": {
+      "listen": "Escuchar",
+      "send": "Enviar",
+      "single-host": "Un equipo, dos interfaces"
+    },
+    "modeHint": {
+      "listen": "Ejecútelo primero en el Seed receptor y después inicie Enviar en el otro Seed.",
+      "send": "Inicie primero Escuchar en el Seed receptor. El resultado aparece allí.",
+      "single-host": "Envía por una interfaz, como la Wi-Fi, y lee las sondas de vuelta en la otra, como el puerto cableado."
+    },
+    "target": "Dirección del Seed que escucha",
+    "port": "Puerto",
+    "portInvalid": "Escriba un número entero de 1 a {{max}}.",
+    "duration": "Duración (segundos)",
+    "durationInvalid": "Escriba un número entero de 1 a {{max}}.",
+    "sendInterface": "Interfaz de envío",
+    "captureInterface": "Interfaz de recepción",
+    "sameInterface": "Elija dos interfaces distintas.",
+    "start": {
+      "listen": "Empezar a escuchar",
+      "send": "Enviar sondas",
+      "single-host": "Ejecutar comprobación"
+    },
+    "starting": "Iniciando…",
+    "running": {
+      "listen": "Escuchando. Inicie Enviar en el otro Seed ahora.",
+      "send": "Enviando sondas marcadas…",
+      "single-host": "Enviando y leyendo de vuelta sondas marcadas…"
+    },
+    "stop": "Detener",
+    "stopping": "Deteniendo…",
+    "stopFailed": "La comprobación no se detuvo. Inténtelo de nuevo.",
+    "readOnly": "Ejecutar una comprobación DSCP requiere el rol de operador.",
+    "failed": "La comprobación no se ejecutó.",
+    "pass": "Correcto: todas las clases llegaron con la marca con la que se enviaron.",
+    "fail_one": "Fallo: {{count}} de {{total}} clases se cambió o se perdió por el camino.",
+    "fail_other": "Fallo: {{count}} de {{total}} clases se cambiaron o se perdieron por el camino.",
+    "unobserved": "Llegaron sondas, pero esta plataforma no puede leer su marca. Escuche desde Linux o macOS.",
+    "silent": "No llegó ninguna sonda al puerto {{port}}. Revise la dirección y el puerto en el Seed emisor y cualquier firewall intermedio.",
+    "runFrom": "Desde {{sender}}",
+    "truncated": "Se oyeron más emisores de los que muestra la tarjeta.",
+    "classesCaption": "Cada clase tal como se envió y como llegó",
+    "colClass": "Enviada como",
+    "colResult": "Resultado",
+    "colArrivedAs": "Llegó como",
+    "colReceived": "Recibidas",
+    "verdict": {
+      "preserved": "Conservada",
+      "remarked": "Cambiada",
+      "mixed": "Cambiada en parte",
+      "lost": "Perdida",
+      "unobserved": "No legible"
+    },
+    "routeDirect": "Sale por {{send}} ({{source}}) y vuelve por {{capture}} ({{target}}) en la misma red.",
+    "routeRouted": "Sale por {{send}} ({{source}}) a través de {{nextHop}} y vuelve por {{capture}} ({{target}}).",
+    "sent_one": "Se envió {{count}} sonda de cada clase ({{classes}}) a {{target}} puerto {{port}}. Lea el resultado en el Seed que escucha.",
+    "sent_other": "Se enviaron {{count}} sondas de cada clase ({{classes}}) a {{target}} puerto {{port}}. Lea el resultado en el Seed que escucha.",
+    "unmarked": "Esta plataforma envió las sondas sin marcar, así que el receptor leerá todas las clases como best effort. Envíe desde Linux o macOS."
+  },
   "packetCapture": {
     "title": "Captura de paquetes",
     "description": "Graba el tráfico de una interfaz en un archivo PCAP para Wireshark, con un resumen de lo que pasó por el cable.",
