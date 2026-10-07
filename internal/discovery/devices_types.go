@@ -23,6 +23,7 @@ const (
 	MethodEDP  Method = "edp"
 	MethodMDNS Method = "mdns"
 	MethodPING Method = "ping"
+	MethodSNMP Method = "snmp" // Answered SNMP but no echo (seed#2449)
 )
 
 // ConnectionType indicates how a device connects to the network.

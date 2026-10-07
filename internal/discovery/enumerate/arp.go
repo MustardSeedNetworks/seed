@@ -28,6 +28,7 @@ package enumerate
 //   - Automatically selects ICMP for remote subnets (beyond local broadcast domain)
 //   - Results are merged with local ARP results
 //   - Marked with IsLocal flag to distinguish origin
+//   - Addresses that answer no echo are asked over SNMP (snmpsweep.go)
 //
 // OS detection heuristics (based on initial TTL):
 //   - TTL 64: Linux/Unix (decremented from 64)
@@ -54,7 +55,9 @@ import (
 	"sync"
 	"time"
 
+	"github.com/MustardSeedNetworks/seed/internal/discovery"
 	"github.com/MustardSeedNetworks/seed/internal/discovery/resolve"
+	"github.com/MustardSeedNetworks/seed/internal/protocols/snmp"
 )
 
 // ARPEntry represents a discovered device from ARP or ICMP scanning.
@@ -128,7 +131,9 @@ type ARPScanner struct {
 	pingerErr         error                 // Why the last sweep could not open a socket (seed#2629)
 	scanning          bool
 	lastScan          time.Time
-	maxHostsPerSubnet int // Configurable limit (0 = use default)
+	maxHostsPerSubnet int             // Configurable limit (0 = use default)
+	snmpProber        *snmpProber     // Asks silent target-network addresses over SNMP (seed#2449)
+	snmpProbe         SNMPProbeReport // What the last sweep's SNMP probe did
 }
 
 // NewARPScanner creates a new ARP scanner for the given interface.
@@ -197,6 +202,27 @@ func (s *ARPScanner) SetTargetNetworks(cidrs []string) error {
 	}
 	s.rotations = kept
 	return nil
+}
+
+// SetSNMPCredentials lets each sweep ask the target-network addresses that
+// answered no echo for SNMP with the vault's credentials (seed#2449). A nil
+// source asks nothing.
+func (s *ARPScanner) SetSNMPCredentials(creds discovery.SNMPCredentialProvider) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	if creds == nil {
+		s.snmpProber = nil
+		return
+	}
+	s.snmpProber = &snmpProber{creds: creds, query: snmp.GetSystemInfo, interval: snmpProbeInterval}
+}
+
+// LastSNMPProbe reports what the last sweep's SNMP probe of silent addresses
+// did.
+func (s *ARPScanner) LastSNMPProbe() SNMPProbeReport {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+	return s.snmpProbe
 }
 
 // SetSweepEvidence records the addresses discovery has seen in use. A target

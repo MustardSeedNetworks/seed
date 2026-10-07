@@ -46,7 +46,8 @@ func (s *ARPScanner) Scan(ctx context.Context) error {
 	// Perform ping sweep on primary subnet with retry logic
 	// Note: ping sweep may fail without CAP_NET_RAW - continue with ARP table
 	result := discovery.RetryWithBackoff(ctx, discovery.NetworkRetryConfig(), func() error {
-		return s.pingSweep(ctx, subnet)
+		_, sweepErr := s.pingSweep(ctx, subnet)
+		return sweepErr
 	})
 	if !result.Successful {
 		logging.GetLogger().WarnContext(ctx, "Ping sweep failed after retries (continuing with ARP table only)",
@@ -57,6 +58,7 @@ func (s *ARPScanner) Scan(ctx context.Context) error {
 	}
 
 	// Perform ping sweep on target networks with retry logic
+	var targetSwept []PingResult
 	for _, additionalSubnet := range targetNetworks {
 		select {
 		case <-ctx.Done():
@@ -64,9 +66,13 @@ func (s *ARPScanner) Scan(ctx context.Context) error {
 		default:
 			// Retry logic for target networks - continue even if some fail
 			subnetCopy := additionalSubnet // Capture for closure
+			var swept []PingResult
 			subnetResult := discovery.RetryWithBackoff(ctx, discovery.NetworkRetryConfig(), func() error {
-				return s.pingSweep(ctx, subnetCopy)
+				var sweepErr error
+				swept, sweepErr = s.pingSweep(ctx, subnetCopy)
+				return sweepErr
 			})
+			targetSwept = append(targetSwept, swept...)
 			if !subnetResult.Successful {
 				logging.GetLogger().WarnContext(ctx, "Ping sweep failed for target network after retries",
 					"subnet", additionalSubnet,
@@ -115,6 +121,8 @@ func (s *ARPScanner) Scan(ctx context.Context) error {
 		}
 	}
 
+	entries = append(entries, s.probeSilentTargets(ctx, targetSwept, targetNetworks, existingIPs)...)
+
 	// Enrich entries with OUI lookup and hostname resolution
 	s.enrichEntries(ctx, entries)
 
@@ -124,7 +132,7 @@ func (s *ARPScanner) Scan(ctx context.Context) error {
 // pingSweep sends ICMP echo requests to the hosts of subnet using raw sockets.
 // A subnet wider than the per-sweep host cap is swept in the /24s planSweep
 // picks for it, so successive sweeps rotate through it (seed#2832).
-func (s *ARPScanner) pingSweep(ctx context.Context, subnet *net.IPNet) error {
+func (s *ARPScanner) pingSweep(ctx context.Context, subnet *net.IPNet) ([]PingResult, error) {
 	target, ok := ipv4Prefix(subnet)
 	if !ok || target.Bits() >= cidrMask24 {
 		return s.pingSweepChunk(ctx, subnet)
@@ -160,25 +168,26 @@ func (s *ARPScanner) pingSweep(ctx context.Context, subnet *net.IPNet) error {
 	for _, host := range hosts {
 		ips = append(ips, host.AsSlice())
 	}
-	if err := s.pingHosts(ctx, ips); err != nil {
-		return err
+	results, err := s.pingHosts(ctx, ips)
+	if err != nil {
+		return nil, err
 	}
 
 	s.mu.Lock()
 	turn.commit(target, plan)
 	s.mu.Unlock()
-	return nil
+	return results, nil
 }
 
 // pingSweepChunk scans a single /24 or smaller subnet chunk.
-func (s *ARPScanner) pingSweepChunk(ctx context.Context, subnet *net.IPNet) error {
+func (s *ARPScanner) pingSweepChunk(ctx context.Context, subnet *net.IPNet) ([]PingResult, error) {
 	ones, bits := subnet.Mask.Size()
 	numHosts := 1<<(bits-ones) - subnetExcludeCount // Exclude network and broadcast
 
 	// Generate host IPs
 	baseIP := subnet.IP.Mask(subnet.Mask).To4()
 	if baseIP == nil {
-		return errors.New("invalid subnet")
+		return nil, errors.New("invalid subnet")
 	}
 
 	var ips []net.IP
@@ -190,9 +199,9 @@ func (s *ARPScanner) pingSweepChunk(ctx context.Context, subnet *net.IPNet) erro
 	return s.pingHosts(ctx, ips)
 }
 
-// pingHosts pings ips, skipping this host's own address, and records who
-// answered.
-func (s *ARPScanner) pingHosts(ctx context.Context, ips []net.IP) error {
+// pingHosts pings ips, skipping this host's own address, records who answered
+// and returns every result.
+func (s *ARPScanner) pingHosts(ctx context.Context, ips []net.IP) ([]PingResult, error) {
 	ips = slices.DeleteFunc(ips, func(ip net.IP) bool { return ip.Equal(s.localIP) })
 
 	// Initialize pinger if needed (fixes #822 - check under lock)
@@ -203,7 +212,7 @@ func (s *ARPScanner) pingHosts(ctx context.Context, ips []net.IP) error {
 			s.pingerErr = err
 			s.mu.Unlock()
 			logging.GetLogger().WarnContext(ctx, "Failed to create ICMP pinger", "error", err)
-			return err
+			return nil, err
 		}
 		s.pinger = pinger
 	}
@@ -227,5 +236,27 @@ func (s *ARPScanner) pingHosts(ctx context.Context, ips []net.IP) error {
 	}
 	s.mu.Unlock()
 
-	return nil
+	return results, nil
+}
+
+// probeSilentTargets asks the swept target-network addresses that answered no
+// echo for SNMP, recording what the probe did (seed#2449).
+func (s *ARPScanner) probeSilentTargets(
+	ctx context.Context, swept []PingResult, targets []*net.IPNet, known map[string]bool,
+) []*ARPEntry {
+	s.mu.RLock()
+	prober := s.snmpProber
+	s.mu.RUnlock()
+
+	silent := silentTargets(swept, targets, known)
+	var found []*ARPEntry
+	report := SNMPProbeReport{Silent: len(silent), Skipped: "no SNMP credential source"}
+	if prober != nil {
+		found, report = prober.probe(ctx, silent)
+	}
+
+	s.mu.Lock()
+	s.snmpProbe = report
+	s.mu.Unlock()
+	return found
 }

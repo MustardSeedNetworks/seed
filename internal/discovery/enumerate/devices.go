@@ -24,6 +24,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/MustardSeedNetworks/seed/internal/discovery"
 	"github.com/MustardSeedNetworks/seed/internal/discovery/resolve"
 	"github.com/MustardSeedNetworks/seed/internal/logging"
 )
@@ -188,6 +189,18 @@ func (d *DeviceDiscovery) SetInterface(name string) error {
 // SetTargetNetworks configures extra subnets to scan.
 func (d *DeviceDiscovery) SetTargetNetworks(cidrs []string) error {
 	return d.arpScanner.SetTargetNetworks(cidrs)
+}
+
+// SetSNMPCredentials lets each sweep ask the target-network addresses that
+// answered no echo for SNMP (seed#2449). A nil source asks nothing.
+func (d *DeviceDiscovery) SetSNMPCredentials(creds discovery.SNMPCredentialProvider) {
+	d.arpScanner.SetSNMPCredentials(creds)
+}
+
+// LastSNMPProbe reports what the last sweep's SNMP probe of silent addresses
+// did.
+func (d *DeviceDiscovery) LastSNMPProbe() SNMPProbeReport {
+	return d.arpScanner.LastSNMPProbe()
 }
 
 // SetSweepEvidence records the addresses discovery has seen in use, which

@@ -236,6 +236,9 @@ func (s *Server) initDiscovery(cfg *config.Config) {
 
 	// The service sweeps s.deviceDisc, the registry the API lists and the
 	// discovery settings feed, never one of its own (seed#2831).
+	if s.deviceDisc != nil {
+		s.deviceDisc.SetSNMPCredentials(s.snmpCreds)
+	}
 	s.discoverySvc = enumerate.NewService(cfg, s.deviceDisc, sharedProfiler)
 	logging.GetLogger().Info("Discovery service initialized with shared profiler")
 }
