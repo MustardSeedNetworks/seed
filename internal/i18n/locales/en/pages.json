@@ -28,6 +28,8 @@
     "labelRaised": "Raised",
     "labelAcknowledged": "Acknowledged",
     "labelResolved": "Resolved",
+    "labelEscalated": "Escalated",
+    "escalatedStage": "stage {{stage}}, {{time}}",
     "labelDeliveryWebhook": "Webhook delivery",
     "labelDeliveryEmail": "Email delivery",
     "labelDeliverySyslog": "Syslog delivery",

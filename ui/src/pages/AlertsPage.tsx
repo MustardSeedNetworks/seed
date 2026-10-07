@@ -241,6 +241,21 @@ export function AlertsPage(): JSX.Element {
                   label: t('alerts.labelResolved'),
                   value: selected.resolved ? fmtTime(selected.resolvedAt) : t('alerts.valueNo'),
                 },
+                // Only once a ladder has sent a stage: most alerts never
+                // escalate, and "not escalated" on each would be noise.
+                ...(selected.escalationStage
+                  ? [
+                      {
+                        label: t('alerts.labelEscalated'),
+                        testId: 'alert-escalation',
+                        value: t('alerts.escalatedStage', {
+                          stage: selected.escalationStage,
+                          time: fmtTime(selected.escalatedAt),
+                        }),
+                        prose: true,
+                      },
+                    ]
+                  : []),
                 // One row per channel that was offered the alert, none when
                 // nothing tried to send it. Most installs configure no
                 // receiver, and a row reading "not delivered" there would

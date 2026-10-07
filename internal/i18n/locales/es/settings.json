@@ -15,6 +15,7 @@
     "link": "Enlace",
     "vulnerability": "Escaneo de vulnerabilidades",
     "alertDelivery": "Envío de alertas",
+    "alertEscalation": "Escalado de alertas",
     "identity": "Identidad del equipo"
   },
   "common": {
@@ -561,6 +562,25 @@
     "url": "URL del receptor",
     "urlHelp": "Una dirección http o https absoluta. Al borrarla se desactiva el envío y no sale ninguna petición del equipo.",
     "urlPlaceholder": "https://hooks.example.com/services/T000/B000/XXXX"
+  },
+  "alertEscalation": {
+    "description": "Vuelva a enviar una alerta, por más canales, cuando nadie la reconoce. Cada regla tiene una escalera; cada etapa sale un tiempo fijo después de generarse la alerta.",
+    "stageRules": "Una etapa llega al menos un minuto después de la alerta y después de la etapa anterior. Una escalera tiene hasta cinco etapas.",
+    "empty": "Sin escaleras. Cada alerta se envía una vez, al generarse.",
+    "rule": "Regla",
+    "ruleHelp": "La regla que lleva la alerta, como iface.down. Se sugieren las reglas vistas en la bandeja de alertas.",
+    "stageAfter": "Etapa {{stage}}: minutos tras la alerta",
+    "stageChannels": "Canales de la etapa {{stage}}",
+    "channelWebhook": "Webhook",
+    "channelEmail": "Correo",
+    "channelSyslog": "Syslog",
+    "removeStage": "Quitar la etapa {{stage}}",
+    "addStage": "Añadir etapa",
+    "removeLadder": "Quitar escalera",
+    "repeat": "Repetir la última etapa cada (minutos)",
+    "repeatHelp": "Déjelo vacío para enviar la última etapa una sola vez.",
+    "addLadder": "Añadir escalera",
+    "save": "Guardar escalado"
   },
   "identity": {
     "description": "Asigne un nombre a este Seed e indique dónde está instalado, para distinguirlo de los demás en el encabezado y en la pestaña del navegador.",

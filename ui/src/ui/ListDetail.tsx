@@ -210,14 +210,14 @@ export function DetailPane({ eyebrow, title, meta, status, actions, children }: 
 
 interface DetailFactsProps {
   /** Label/value pairs. Values are figures unless `prose` says otherwise. */
-  items: { label: string; value: ReactNode; prose?: boolean }[];
+  items: { label: string; value: ReactNode; prose?: boolean; testId?: string }[];
 }
 
 export function DetailFacts({ items }: DetailFactsProps) {
   return (
     <dl className="grid gap-default sm:grid-cols-2">
       {items.map((item) => (
-        <div key={item.label} className="stack-xs">
+        <div key={item.label} data-testid={item.testId} className="stack-xs">
           <dt className="caption">{item.label}</dt>
           <dd className={cn('text-sm text-text-primary', item.prose ? '' : 'figure')}>
             {item.value}

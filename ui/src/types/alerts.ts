@@ -21,6 +21,10 @@ export interface Alert {
   resolvedAt?: string;
   /** The pipeline rule that raised this alert, e.g. "bgp.flap". */
   rule?: string;
+  /** The escalation stage last sent for this alert (P-B2); absent until one is. */
+  escalationStage?: number;
+  /** When that stage was sent. */
+  escalatedAt?: string;
   /** An earlier alert that probably caused this one (#409). */
   rootCauseId?: number;
   /**

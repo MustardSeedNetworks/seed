@@ -15,6 +15,7 @@
     "link": "Link",
     "vulnerability": "Vulnerability Scanning",
     "alertDelivery": "Alert Delivery",
+    "alertEscalation": "Alert escalation",
     "identity": "Device Identity"
   },
   "common": {
@@ -561,6 +562,25 @@
     "url": "Receiver URL",
     "urlHelp": "An absolute http or https address. Clearing it turns delivery off; no request leaves the host.",
     "urlPlaceholder": "https://hooks.example.com/services/T000/B000/XXXX"
+  },
+  "alertEscalation": {
+    "description": "Send an alert again, on more channels, when nobody acknowledges it. Each rule gets one ladder; each stage goes out a set time after the alert was raised.",
+    "stageRules": "A stage comes at least a minute after the alert and after the stage before it. A ladder has up to five stages.",
+    "empty": "No ladders. Each alert is sent once, when it is raised.",
+    "rule": "Rule",
+    "ruleHelp": "The rule the alert carries, such as iface.down. Rules seen in the alert inbox are suggested.",
+    "stageAfter": "Stage {{stage}}: minutes after the alert",
+    "stageChannels": "Stage {{stage}} channels",
+    "channelWebhook": "Webhook",
+    "channelEmail": "Email",
+    "channelSyslog": "Syslog",
+    "removeStage": "Remove stage {{stage}}",
+    "addStage": "Add stage",
+    "removeLadder": "Remove ladder",
+    "repeat": "Repeat the last stage every (minutes)",
+    "repeatHelp": "Leave empty to send the last stage once.",
+    "addLadder": "Add ladder",
+    "save": "Save escalation"
   },
   "identity": {
     "description": "Name this Seed and record where it is installed, so it can be told apart from the others in the header and in a browser tab.",
