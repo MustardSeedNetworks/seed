@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/MustardSeedNetworks/seed/internal/appid"
+	"github.com/MustardSeedNetworks/seed/internal/flows"
 )
 
 // repository_flow_apps.go is application identification over the flow store
@@ -18,24 +19,10 @@ import (
 // SettingKeyFlowAppSignatures holds the operator's signature table as JSON.
 const SettingKeyFlowAppSignatures = "flow_app_signatures"
 
-// AppSignatures is the table in effect and whether the operator replaced
-// the builtin one.
-type AppSignatures struct {
-	Table  *appid.Table
-	Custom bool
-}
-
-// FlowApplication is one application's traffic over a window.
-type FlowApplication struct {
-	Name    string `json:"name"`
-	Bytes   int64  `json:"bytes"`
-	Packets int64  `json:"packets"`
-}
-
 // AppSignatures returns the signature table in effect. A stored table that
 // no longer parses is an error, not a silent return to the builtin: the
 // operator's naming would otherwise change without anyone saying so.
-func (r *FlowRecordsRepository) AppSignatures(ctx context.Context) (*AppSignatures, error) {
+func (r *FlowRecordsRepository) AppSignatures(ctx context.Context) (*flows.AppSignatures, error) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 	if r.signatures != nil {
@@ -46,14 +33,14 @@ func (r *FlowRecordsRepository) AppSignatures(ctx context.Context) (*AppSignatur
 		return nil, fmt.Errorf("read application signatures: %w", err)
 	}
 	if stored == "" {
-		r.signatures = &AppSignatures{Table: appid.Builtin()}
+		r.signatures = &flows.AppSignatures{Table: appid.Builtin()}
 		return r.signatures, nil
 	}
 	table, err := appid.Parse([]byte(stored))
 	if err != nil {
 		return nil, fmt.Errorf("stored application signatures: %w", err)
 	}
-	r.signatures = &AppSignatures{Table: table, Custom: true}
+	r.signatures = &flows.AppSignatures{Table: table, Custom: true}
 	return r.signatures, nil
 }
 
@@ -69,7 +56,7 @@ func (r *FlowRecordsRepository) SetAppSignatures(ctx context.Context, table *app
 	if setErr := r.db.Settings().Set(ctx, SettingKeyFlowAppSignatures, string(data)); setErr != nil {
 		return setErr
 	}
-	r.signatures = &AppSignatures{Table: table, Custom: true}
+	r.signatures = &flows.AppSignatures{Table: table, Custom: true}
 	return nil
 }
 
@@ -80,22 +67,22 @@ func (r *FlowRecordsRepository) ResetAppSignatures(ctx context.Context) error {
 	if err := r.db.Settings().Delete(ctx, SettingKeyFlowAppSignatures); err != nil {
 		return err
 	}
-	r.signatures = &AppSignatures{Table: appid.Builtin()}
+	r.signatures = &flows.AppSignatures{Table: appid.Builtin()}
 	return nil
 }
 
 // flowApplicationWindowSQL is flowWindowSQL for the per-application tables.
-func flowApplicationWindowSQL(tier FlowTier, from, to time.Time) (string, string, string, error) {
+func flowApplicationWindowSQL(tier flows.Tier, from, to time.Time) (string, string, string, error) {
 	switch tier {
-	case FlowTierRaw:
+	case flows.TierRaw:
 		return `SELECT application, bytes, packets FROM flow_records
 			WHERE client_id = ? AND flow_end >= ? AND flow_end < ?`,
 			from.UTC().Format(flowTimeFormat), to.UTC().Format(flowTimeFormat), nil
-	case FlowTierHourly:
+	case flows.TierHourly:
 		return `SELECT application, bytes, packets FROM flow_applications_hourly
 			WHERE client_id = ? AND hour_bucket >= ? AND hour_bucket <= ?`,
 			from.UTC().Format(hourFormat), to.UTC().Format(hourFormat), nil
-	case FlowTierDaily:
+	case flows.TierDaily:
 		return `SELECT application, bytes, packets FROM flow_applications_daily
 			WHERE client_id = ? AND day_bucket >= ? AND day_bucket <= ?`,
 			from.UTC().Format(dayFormat), to.UTC().Format(dayFormat), nil
@@ -103,16 +90,16 @@ func flowApplicationWindowSQL(tier FlowTier, from, to time.Time) (string, string
 	return "", "", "", fmt.Errorf("unknown flow tier %d", tier)
 }
 
-// TopApplications returns the limit applications that carried the most over
-// [from, to). Unidentified traffic is one entry, appid.Unknown, ranked with
+// TopApplications returns the q.Limit applications that carried the most over
+// [q.From, q.To). Unidentified traffic is one entry, appid.Unknown, ranked with
 // the rest so its share is visible rather than hidden.
 func (r *FlowRecordsRepository) TopApplications(
-	ctx context.Context, clientID string, tier FlowTier, from, to time.Time, by FlowRank, limit int,
-) ([]FlowApplication, error) {
-	return queryFlowTop(ctx, r.db, "top applications", flowTopRead{clientID, tier, from, to, by, limit},
+	ctx context.Context, q flows.Query,
+) ([]flows.Application, error) {
+	return queryFlowTop(ctx, r.db, "top applications", q,
 		flowApplicationWindowSQL, `
 		SELECT application, CAST(TOTAL(bytes) AS INTEGER) AS bytes, CAST(TOTAL(packets) AS INTEGER) AS packets
 		FROM f
 		GROUP BY application`, "application",
-		func(rows *sql.Rows, a *FlowApplication) error { return rows.Scan(&a.Name, &a.Bytes, &a.Packets) })
+		func(rows *sql.Rows, a *flows.Application) error { return rows.Scan(&a.Name, &a.Bytes, &a.Packets) })
 }

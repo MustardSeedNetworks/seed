@@ -44,6 +44,7 @@ import (
 	"github.com/MustardSeedNetworks/seed/internal/discovery/vuln"
 	"github.com/MustardSeedNetworks/seed/internal/engine"
 	enginestatus "github.com/MustardSeedNetworks/seed/internal/engine/status"
+	"github.com/MustardSeedNetworks/seed/internal/flows"
 	"github.com/MustardSeedNetworks/seed/internal/health/monitoring"
 	healthsettings "github.com/MustardSeedNetworks/seed/internal/health/settings"
 	ssosync "github.com/MustardSeedNetworks/seed/internal/identity/oauth"
@@ -285,6 +286,7 @@ type Server struct {
 	logQuery           *logquery.Service           // Log-query use-case (ADR-0020)
 	historyQueries     *history.Service            // Probe/anomaly history read use-case (#175, ADR-0020)
 	vulnTriage         *vulntriage.Service         // Vulnerability-triage use-case (#899, ADR-0020)
+	flows              *flows.Service              // Flow top-N reads and flow settings use-case (ADR-0020)
 	healthMonitoring   *monitoring.Service         // Health-monitoring use-case (ADR-0020)
 	healthSettings     *healthsettings.Service     // Health-checks settings use-case (ADR-0020)
 	engineStatus       *enginestatus.Service       // Engine-status use-case (ADR-0020)
@@ -879,36 +881,6 @@ func (s *Server) initWiFiUseCases() {
 	if v := s.wifiVisibility(); v != nil {
 		v.SetScanSource(app.WiFiScanSource(s.wifiManagement))
 	}
-}
-
-// initDiscoveryUseCases wires the discovery use-cases (ADR-0020) from the
-// composition root: the unified-discovery engine, the network problem detector,
-// and the Bluetooth scanner, each over the server's lazy accessors so a nil or
-// later-set collaborator (the test harness) is honored. The problem detector's
-// scan reads the discovered devices through the device-discovery accessor.
-func (s *Server) initDiscoveryUseCases() {
-	s.discoveryDevices = app.NewDiscoveryDevices(s.discoveryEngine)
-	s.discoverySettings = app.NewDiscoverySettings(
-		s.config, s.configPath, s.deviceDiscovery, s.discoveryService,
-	)
-	s.networkProblems = app.NewProblems(s.problemDetector, s.discoveryService)
-	s.topologyQueries = app.NewTopologyQueries(s.db, topologyMaxLimit)
-	s.exportService = export.NewService(serverExportSources{s: s})
-	s.logQuery = app.NewLogQuery(s.db)
-	s.historyQueries = app.NewHistory(s.db)
-	s.vulnTriage = app.NewVulnTriage(s.db)
-	s.pollingTargets = app.NewPollingTargets(s.db, s.pollingTargetLimit)
-	// The credential vault needs the keyring that owns the DEK. Without a
-	// config there is none, so the use-case stays nil and its handlers report
-	// 503 — the alternative is a CRUD surface that would persist plaintext.
-	if s.config != nil {
-		if keyring, err := s.config.CredentialKeyring(); err == nil {
-			if svc, credErr := app.NewDeviceCredentials(s.db, keyring); credErr == nil {
-				s.deviceCredentials = svc
-			}
-		}
-	}
-	s.alertInbox = app.NewAlertInbox(s.db)
 }
 
 // healthProbeRepo is the probes-table accessor the health-settings use-case reads

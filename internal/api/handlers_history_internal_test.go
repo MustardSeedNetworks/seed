@@ -20,6 +20,7 @@ func newHistoryServer(t *testing.T) *Server {
 	s := &Server{}
 	s.dbConn = newTestDB(t)
 	s.historyQueries = app.NewHistory(s.db)
+	s.flows = app.NewFlows(s.db)
 	return s
 }
 

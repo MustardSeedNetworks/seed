@@ -12,7 +12,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/MustardSeedNetworks/seed/internal/appid"
-	"github.com/MustardSeedNetworks/seed/internal/database"
+	"github.com/MustardSeedNetworks/seed/internal/flows"
 	"github.com/MustardSeedNetworks/seed/internal/listener/flow"
 )
 
@@ -56,8 +56,8 @@ func TestFlowTopApplicationsServesTheRankedList(t *testing.T) {
 	var resp FlowApplicationsResponse
 	require.NoError(t, json.Unmarshal(w.Body.Bytes(), &resp))
 	require.Equal(t, historySourceRaw, resp.Window.Source)
-	require.Equal(t, database.FlowRankPackets, resp.By)
-	require.Equal(t, []database.FlowApplication{
+	require.Equal(t, flows.RankPackets, resp.By)
+	require.Equal(t, []flows.Application{
 		{Name: "dns", Bytes: 100, Packets: 7},
 		{Name: "https", Bytes: 900, Packets: 3},
 		{Name: appid.Unknown, Bytes: 50, Packets: 1},

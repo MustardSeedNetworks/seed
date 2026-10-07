@@ -4,7 +4,7 @@ import (
 	"net/http"
 
 	"github.com/MustardSeedNetworks/seed/internal/appid"
-	"github.com/MustardSeedNetworks/seed/internal/database"
+	"github.com/MustardSeedNetworks/seed/internal/flows"
 	"github.com/MustardSeedNetworks/seed/internal/i18n"
 	"github.com/MustardSeedNetworks/seed/internal/logging"
 )
@@ -23,9 +23,9 @@ const (
 
 // FlowApplicationsResponse is the top applications by traffic.
 type FlowApplicationsResponse struct {
-	Window       HistoryWindowResponse      `json:"window"`
-	By           database.FlowRank          `json:"by"`
-	Applications []database.FlowApplication `json:"applications"`
+	Window       HistoryWindowResponse `json:"window"`
+	By           flows.Rank            `json:"by"`
+	Applications []flows.Application   `json:"applications"`
 }
 
 // AppSignaturesRequest replaces the signature table.
@@ -47,15 +47,14 @@ func (s *Server) handleFlowTopApplications(w http.ResponseWriter, r *http.Reques
 	if !ok {
 		return
 	}
-	apps, err := s.db().FlowRecords().TopApplications(r.Context(), q.clientID, q.tier,
-		q.window.From, q.window.To, q.by, q.limit)
+	apps, err := s.flows.TopApplications(r.Context(), q.read)
 	if err != nil {
 		flowReadFailed(w, r, err)
 		return
 	}
 	sendJSONResponse(w, logging.FromContext(r.Context()), http.StatusOK, FlowApplicationsResponse{
 		Window:       windowResponse(q.window),
-		By:           q.by,
+		By:           q.read.By,
 		Applications: emptyIfNil(apps),
 	})
 }
@@ -66,7 +65,6 @@ func (s *Server) handleFlowTopApplications(w http.ResponseWriter, r *http.Reques
 func (s *Server) handleAppSignatures(w http.ResponseWriter, r *http.Request) {
 	logger := logging.FromContext(r.Context())
 	localizer := i18n.FromRequest(r)
-	repo := s.db().FlowRecords()
 
 	switch r.Method {
 	case http.MethodPut:
@@ -80,20 +78,20 @@ func (s *Server) handleAppSignatures(w http.ResponseWriter, r *http.Request) {
 				localizer.T("errors.flows.invalidSignatures"), err.Error())
 			return
 		}
-		if setErr := repo.SetAppSignatures(r.Context(), table); setErr != nil {
+		if setErr := s.flows.SetAppSignatures(r.Context(), table); setErr != nil {
 			appSignaturesFailed(w, r, setErr)
 			return
 		}
 		logger.InfoContext(r.Context(), "Application signatures replaced", "signatures", len(req.Signatures))
 	case http.MethodDelete:
-		if err := repo.ResetAppSignatures(r.Context()); err != nil {
+		if err := s.flows.ResetAppSignatures(r.Context()); err != nil {
 			appSignaturesFailed(w, r, err)
 			return
 		}
 		logger.InfoContext(r.Context(), "Application signatures reset to builtin")
 	}
 
-	sigs, err := repo.AppSignatures(r.Context())
+	sigs, err := s.flows.AppSignatures(r.Context())
 	if err != nil {
 		appSignaturesFailed(w, r, err)
 		return

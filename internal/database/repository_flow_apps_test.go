@@ -9,6 +9,7 @@ import (
 
 	"github.com/MustardSeedNetworks/seed/internal/appid"
 	"github.com/MustardSeedNetworks/seed/internal/database"
+	"github.com/MustardSeedNetworks/seed/internal/flows"
 	"github.com/MustardSeedNetworks/seed/internal/listener/flow"
 )
 
@@ -56,7 +57,7 @@ func TestFlowTopApplications(t *testing.T) {
 	_, err = src.RollupDay(ctx, flowDay())
 	require.NoError(t, err)
 
-	byBytes := []database.FlowApplication{
+	byBytes := []flows.Application{
 		{Name: "https", Bytes: 1500, Packets: 15},
 		{Name: "historian", Bytes: 400, Packets: 4},
 		{Name: "dns", Bytes: 300, Packets: 3},
@@ -64,14 +65,18 @@ func TestFlowTopApplications(t *testing.T) {
 		{Name: "icmp", Bytes: 100, Packets: 1},
 	}
 
-	for _, tier := range []database.FlowTier{database.FlowTierRaw, database.FlowTierHourly, database.FlowTierDaily} {
-		got, readErr := repo.TopApplications(ctx, database.DefaultClientID, tier, at(10, 0), at(12, 0),
-			database.FlowRankBytes, 10)
+	for _, tier := range []flows.Tier{flows.TierRaw, flows.TierHourly, flows.TierDaily} {
+		got, readErr := repo.TopApplications(ctx, flows.Query{
+			ClientID: database.DefaultClientID, Tier: tier, From: at(10, 0), To: at(12, 0),
+			By: flows.RankBytes, Limit: 10,
+		})
 		require.NoError(t, readErr)
 		require.Equal(t, byBytes, got, "tier %d by bytes", tier)
 
-		got, readErr = repo.TopApplications(ctx, database.DefaultClientID, tier, at(10, 0), at(12, 0),
-			database.FlowRankPackets, 2)
+		got, readErr = repo.TopApplications(ctx, flows.Query{
+			ClientID: database.DefaultClientID, Tier: tier, From: at(10, 0), To: at(12, 0),
+			By: flows.RankPackets, Limit: 2,
+		})
 		require.NoError(t, readErr)
 		// Packets rank the fixture in the same order; the limit is what this checks.
 		require.Equal(t, byBytes[:2], got, "tier %d by packets, limit 2", tier)

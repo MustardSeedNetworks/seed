@@ -30,7 +30,6 @@ type FlowIndicatorsResponse struct {
 func (s *Server) handleFlowIndicators(w http.ResponseWriter, r *http.Request) {
 	logger := logging.FromContext(r.Context())
 	localizer := i18n.FromRequest(r)
-	repo := s.db().FlowRecords()
 
 	if r.Method == http.MethodPut {
 		var req FlowIndicatorsRequest
@@ -43,14 +42,14 @@ func (s *Server) handleFlowIndicators(w http.ResponseWriter, r *http.Request) {
 				localizer.T("errors.flows.invalidIndicators"), err.Error())
 			return
 		}
-		if setErr := repo.SetFlowIndicators(r.Context(), list); setErr != nil {
+		if setErr := s.flows.SetIndicators(r.Context(), list); setErr != nil {
 			flowIndicatorsFailed(w, r, setErr)
 			return
 		}
 		logger.InfoContext(r.Context(), "Threat indicator list replaced", "indicators", list.Len())
 	}
 
-	list, err := repo.FlowIndicators(r.Context())
+	list, err := s.flows.Indicators(r.Context())
 	if err != nil {
 		flowIndicatorsFailed(w, r, err)
 		return
