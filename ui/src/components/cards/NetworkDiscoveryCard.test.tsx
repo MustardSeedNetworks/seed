@@ -43,6 +43,10 @@ vi.mock('../../hooks/useEnginePhase', () => ({
   useEnginePhase: () => ({ phase: '' }),
 }));
 
+// The learned-network notice has its own suite; it needs a query client and
+// a role, neither of which these card states are about.
+vi.mock('./LearnedNetworksNotice', () => ({ LearnedNetworksNotice: () => null }));
+
 vi.mock('../../hooks/useNetworkDiscoveryAutoScan', () => ({
   useNetworkDiscoveryAutoScan: () => ({
     handleDeepScan: vi.fn().mockResolvedValue(undefined),
