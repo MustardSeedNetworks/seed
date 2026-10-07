@@ -177,6 +177,16 @@
       "interfaces": "Interfaces ({{total}}):",
       "hardware": "Hardware:",
       "model": "Model:"
+    },
+    "learned": {
+      "title_one": "Seed learned a new network",
+      "title_other": "Seed learned {{count}} new networks",
+      "body": "It is not scanned until you add it. Dismiss it and it is not offered again.",
+      "add": "Add",
+      "dismiss": "Dismiss",
+      "addAria": "Add {{cidr}} to discovery",
+      "dismissAria": "Dismiss {{cidr}}",
+      "error": "Your choice was not saved. Try again."
     }
   },
   "pipeline": {

@@ -11,6 +11,7 @@
  * locales, because the call passed a default-value string where i18next
  * expects the options object carrying `count`.
  */
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { act, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -95,12 +96,15 @@ function context(): AppContextValue {
 
 async function renderIn(language: string): Promise<void> {
   await i18n.changeLanguage(language);
+  const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   render(
-    <RoleProvider isAuthenticated={true}>
-      <AppContext.Provider value={context()}>
-        <SecurityPage />
-      </AppContext.Provider>
-    </RoleProvider>,
+    <QueryClientProvider client={queryClient}>
+      <RoleProvider isAuthenticated={true}>
+        <AppContext.Provider value={context()}>
+          <SecurityPage />
+        </AppContext.Provider>
+      </RoleProvider>
+    </QueryClientProvider>,
   );
   // The MFA status line only appears once the status request resolves.
   expect(await screen.findByText(i18n.t('cards:mfa.none'))).toBeVisible();
@@ -109,11 +113,19 @@ async function renderIn(language: string): Promise<void> {
 beforeEach(() => {
   mockGet.mockReset();
   state.targets = [{ label: 'EMR', address: '10.0.0.5' }];
-  mockGet.mockImplementation((path: string) =>
-    path.includes('/users/me')
-      ? Promise.resolve({ username: 'u', role: 'admin', isActive: true })
-      : Promise.resolve({ totpEnabled: false, webauthnEnabled: false, webauthnCredentialCount: 0 }),
-  );
+  mockGet.mockImplementation((path: string) => {
+    if (path.includes('/users/me')) {
+      return Promise.resolve({ username: 'u', role: 'admin', isActive: true });
+    }
+    if (path.includes('/subnets/pending')) {
+      return Promise.resolve([]);
+    }
+    return Promise.resolve({
+      totpEnabled: false,
+      webauthnEnabled: false,
+      webauthnCredentialCount: 0,
+    });
+  });
 });
 
 afterEach(async () => {

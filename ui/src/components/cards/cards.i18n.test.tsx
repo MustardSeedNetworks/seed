@@ -34,6 +34,10 @@ vi.mock('../../hooks/useEnginePhase', () => ({
   useEnginePhase: () => ({ phase: '' }),
 }));
 
+// LearnedNetworksNotice.test.tsx covers the learned-network prompt's copy in
+// both languages.
+vi.mock('./LearnedNetworksNotice', () => ({ LearnedNetworksNotice: () => null }));
+
 vi.mock('../../hooks/useNetworkDiscoveryAutoScan', () => ({
   useNetworkDiscoveryAutoScan: () => ({
     handleDeepScan: vi.fn().mockResolvedValue(undefined),

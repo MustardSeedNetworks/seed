@@ -18,6 +18,7 @@ import { Maximize2, RefreshCw, ScanSearch } from '../ui/Icons';
 import { Tooltip } from '../ui/Tooltip';
 import { DiscoveryEmptyState, discoveryPhase } from './DiscoveryEmptyState';
 import { DiscoveryModal } from './DiscoveryModal';
+import { LearnedNetworksNotice } from './LearnedNetworksNotice';
 import { categorizeDevices, DiscoverySummary } from './NetworkDiscoveryCardHelpers';
 import type { NetworkDiscoveryData as _NetworkDiscoveryData } from './networkDiscoveryCardTypes';
 
@@ -135,6 +136,7 @@ export function NetworkDiscoveryCard({
         enableLiveRegion={true}
         ariaLabel={t('discovery.ariaNoData')}
       >
+        <LearnedNetworksNotice />
         <DiscoveryEmptyState
           phase={discoveryPhase(discoveryEnabled, null)}
           onOpenSettings={onOpenSettings}
@@ -251,6 +253,9 @@ export function NetworkDiscoveryCard({
         </div>
       }
     >
+      {/* A learned network is asked about here, where the operator looks at what
+          discovery found, rather than only as a disabled row in Settings. */}
+      <LearnedNetworksNotice />
       {/* Discovery Summary - Minimal view showing status, subnet, device count, and categories */}
       <DiscoverySummary
         status={status}

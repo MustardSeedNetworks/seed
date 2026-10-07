@@ -177,6 +177,16 @@
       "interfaces": "Interfaces ({{total}}):",
       "hardware": "Hardware:",
       "model": "Modelo:"
+    },
+    "learned": {
+      "title_one": "Seed detectó una red nueva",
+      "title_other": "Seed detectó {{count}} redes nuevas",
+      "body": "No se escanea hasta que la agregue. Si la descarta, no se vuelve a ofrecer.",
+      "add": "Agregar",
+      "dismiss": "Descartar",
+      "addAria": "Agregar {{cidr}} a la detección",
+      "dismissAria": "Descartar {{cidr}}",
+      "error": "No se guardó su elección. Inténtelo de nuevo."
     }
   },
   "pipeline": {
