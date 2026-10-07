@@ -257,6 +257,53 @@ linters:
           deny:
             - pkg: log$
               desc: Use log/slog instead, see https://go.dev/blog/slog
+        # ADR-0001 direction, ADR-0003 boundary: the HTTP transport
+        # (internal/api) and the binaries (cmd/) are the outer ring and the
+        # composition root (internal/app) sits just inside them, so nothing
+        # below may import any of the three. Applies to tests as well: a test
+        # that needs a running server lives in internal/api. The trailing $
+        # keeps internal/app from also matching internal/appid.
+        "outer-ring-direction":
+          files:
+            - "$all"
+            - "!**/cmd/**"
+            - "!**/internal/api/**"
+          deny:
+            - pkg: github.com/MustardSeedNetworks/seed/internal/api$
+              desc: "inward-only — the HTTP transport imports feature packages, never the reverse; expose a port or a use-case in the feature and call it from the handler"
+            - pkg: github.com/MustardSeedNetworks/seed/cmd/
+              desc: "inward-only — a binary is a composition root; move the shared code into internal/ and import it from cmd/"
+        "composition-root-direction":
+          files:
+            - "$all"
+            - "!**/cmd/**"
+            - "!**/internal/api/**"
+            - "!**/internal/app/**"
+          deny:
+            - pkg: github.com/MustardSeedNetworks/seed/internal/app$
+              desc: "inward-only — internal/app wires feature packages together; a feature declares the port it needs and app injects the implementation"
+        # Vendor SDKs stay in the one ring that owns them. The SQLite driver
+        # and the migration runner are internal/database's; every other
+        # package reaches storage through it or through a repository port.
+        # The CLI framework is cmd/'s.
+        "storage-driver-confinement":
+          files:
+            - "$all"
+            - "!**/internal/database/**"
+          deny:
+            - pkg: modernc.org/sqlite
+              desc: "the SQLite driver belongs to internal/database; open the store through it"
+            - pkg: github.com/pressly/goose
+              desc: "migrations belong to internal/database; add a migration there"
+        "cli-framework-confinement":
+          files:
+            - "$all"
+            - "!**/cmd/**"
+          deny:
+            - pkg: github.com/spf13/cobra
+              desc: "the CLI framework belongs to cmd/; keep commands thin and call into internal/"
+            - pkg: github.com/spf13/pflag
+              desc: "the CLI framework belongs to cmd/; take typed options, not flag sets"
         # Phase 3 reconcile: capability-first feature packages (internal/<feature>)
         # are persistence-free and transport-free. SQL lives behind repo ports
         # implemented in a single store adapter sub-package; the feature owns the
