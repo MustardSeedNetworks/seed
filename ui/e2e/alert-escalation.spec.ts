@@ -5,10 +5,11 @@ import { sidebarSettingsButton, skipSetupWizard } from './helpers/auth';
  * Alert escalation ladders (#3186), against the E2E daemon.
  *
  * The ladder editor saves alerts.escalations through PUT /api/v1/settings,
- * which the running daemon applies without a restart, so a reload must serve
- * back what was saved. A ladder the server cannot run is refused with its
- * reason, shown as given. An escalated alert needs a ladder to have run for
- * at least a minute, so the inbox half serves a fixture alert instead.
+ * which the running daemon applies without a restart. openEscalation
+ * navigates afresh, so each reopen reads back what the server stored. A
+ * ladder the server cannot run is refused with its reason, shown as given.
+ * An escalated alert needs a ladder to have run for at least a minute, so
+ * the inbox half serves a fixture alert instead.
  *
  * The suite's daemon is shared, so the test ends with no ladders stored.
  */
@@ -37,6 +38,8 @@ test.describe('Alert escalation', () => {
   });
 
   test('an operator adds, edits and removes a two-stage ladder', async ({ page }) => {
+    // Four full loads of the Settings drawer; webkit on CI needs ~7 s each.
+    test.slow();
     await openEscalation(page);
     await expect(page.getByTestId('escalation-empty')).toBeVisible();
 
@@ -51,7 +54,6 @@ test.describe('Alert escalation', () => {
     await save(page);
     await expect(page.getByTestId('escalation-error')).toHaveCount(0);
 
-    await page.reload();
     await openEscalation(page);
     await expect(page.getByTestId('escalation-rule-0')).toHaveValue('iface.down');
     await expect(page.getByTestId('escalation-after-0-0')).toHaveValue('5');
@@ -63,7 +65,6 @@ test.describe('Alert escalation', () => {
     await page.getByTestId('escalation-repeat-0').fill('60');
     await save(page);
 
-    await page.reload();
     await openEscalation(page);
     await expect(page.getByTestId('escalation-after-0-1')).toHaveValue('30');
     await expect(page.getByTestId('escalation-repeat-0')).toHaveValue('60');
@@ -71,7 +72,6 @@ test.describe('Alert escalation', () => {
     await page.getByTestId('escalation-remove-0').click();
     await save(page);
 
-    await page.reload();
     await openEscalation(page);
     await expect(page.getByTestId('escalation-empty')).toBeVisible();
   });
