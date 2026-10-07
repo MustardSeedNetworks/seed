@@ -319,3 +319,80 @@ func TestFDBEdges_NodesCarryARoleNotAVendor(t *testing.T) {
 		}
 	}
 }
+
+// seed#2574: topology_nodes.primary_mac had no producer, so every node
+// served an empty primaryMac. After one discovery every node seed
+// knows a MAC for carries one; the pump's is the MAC its address
+// answered from.
+func TestFDBEdges_EveryNodeWithAKnownMACServesIt(t *testing.T) {
+	t.Parallel()
+	db, _ := buildHospitalAccessLayer(t)
+	ctx := context.Background()
+
+	nodes, err := db.Topology().List(ctx, topology.ListOptions{})
+	if err != nil {
+		t.Fatalf("list nodes: %v", err)
+	}
+	for _, n := range nodes {
+		ifaces, listErr := db.Topology().ListInterfaces(ctx, n.ID)
+		if listErr != nil {
+			t.Fatalf("list interfaces of %s: %v", n.SysName, listErr)
+		}
+		knowsMAC := false
+		for _, i := range ifaces {
+			knowsMAC = knowsMAC || i.IfPhysAddr != ""
+		}
+		if knowsMAC && n.PrimaryMAC == "" {
+			t.Errorf("%s has an interface MAC but primary_mac is empty", n.SysName)
+		}
+		if n.SysName == "hosp-infusion-pump-1" && n.PrimaryMAC != fdbPumpMAC {
+			t.Errorf("pump primary_mac = %q, want %q", n.PrimaryMAC, fdbPumpMAC)
+		}
+	}
+}
+
+// The sysinfo reconciler re-upserts every node on every poll, and the
+// upsert wrote the node's primary_ip and primary_mac from a Node that
+// never carries them — wiping what the ARP and ifTable reconcilers
+// had recorded until their next pass.
+func TestFDBEdges_SysInfoRepollKeepsTheNodesAddresses(t *testing.T) {
+	t.Parallel()
+	db, _ := buildHospitalAccessLayer(t)
+	ctx := context.Background()
+
+	s := sink.New(db.SNMPObservations(), slog.New(slog.DiscardHandler),
+		func() time.Time { return fdbTestTime().Add(time.Minute) })
+	if err := s.PublishSysInfo(ctx, sysinfo.Observation{
+		ClientID: "default", TargetID: fdbPumpTarget, ObservedAt: fdbTestTime().Add(time.Minute),
+		SysName: "hosp-infusion-pump-1", SysObjectID: "1.3.6.1.4.1.4444.1.1",
+		SysDescr: "Baxter Spectrum IQ infusion pump, agent 2.1", SysServices: 0x48,
+	}); err != nil {
+		t.Fatalf("publish sysinfo: %v", err)
+	}
+	si, err := topology.NewSysInfoReconciler(topology.Config{
+		Observations: db.SNMPObservations(), Nodes: db.Topology(),
+		Settings: db.Settings(), Logger: slog.New(slog.DiscardHandler),
+	})
+	if err != nil {
+		t.Fatalf("sysinfo reconciler: %v", err)
+	}
+	if err = si.ReconcileOnce(ctx); err != nil {
+		t.Fatalf("sysinfo reconcile: %v", err)
+	}
+
+	nodes, err := db.Topology().List(ctx, topology.ListOptions{})
+	if err != nil {
+		t.Fatalf("list nodes: %v", err)
+	}
+	for _, n := range nodes {
+		if n.SysName != "hosp-infusion-pump-1" {
+			continue
+		}
+		if n.PrimaryIP != fdbPumpIP || n.PrimaryMAC != fdbPumpMAC {
+			t.Errorf("after a sysinfo re-poll the pump is (%q, %q), want (%q, %q)",
+				n.PrimaryIP, n.PrimaryMAC, fdbPumpIP, fdbPumpMAC)
+		}
+		return
+	}
+	t.Fatal("pump node not found")
+}

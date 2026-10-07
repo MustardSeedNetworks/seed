@@ -18,18 +18,20 @@ type fakeARPStore struct {
 	targetMap map[string]string // (client|target) -> node_id
 	macMap    map[string]string // mac -> node_id
 
-	bindings   []*topology.ARPBinding
-	primaryIPs map[string]string // node_id -> ip
+	bindings    []*topology.ARPBinding
+	primaryIPs  map[string]string // node_id -> ip
+	primaryMACs map[string]string // node_id -> mac
 
-	upsertErr error
-	setIPErr  error
+	upsertErr     error
+	setAddressErr error
 }
 
 func newFakeARPStore() *fakeARPStore {
 	return &fakeARPStore{
-		targetMap:  map[string]string{},
-		macMap:     map[string]string{},
-		primaryIPs: map[string]string{},
+		targetMap:   map[string]string{},
+		macMap:      map[string]string{},
+		primaryIPs:  map[string]string{},
+		primaryMACs: map[string]string{},
 	}
 }
 
@@ -63,13 +65,14 @@ func (f *fakeARPStore) UpsertARPBinding(_ context.Context, b *topology.ARPBindin
 	return nil
 }
 
-func (f *fakeARPStore) SetNodePrimaryIP(_ context.Context, nodeID, ip string) error {
+func (f *fakeARPStore) SetNodePrimaryAddress(_ context.Context, nodeID, ip, mac string) error {
 	f.mu.Lock()
 	defer f.mu.Unlock()
-	if f.setIPErr != nil {
-		return f.setIPErr
+	if f.setAddressErr != nil {
+		return f.setAddressErr
 	}
 	f.primaryIPs[nodeID] = ip
+	f.primaryMACs[nodeID] = mac
 	return nil
 }
 
@@ -133,7 +136,7 @@ func TestARPReconcileOnce_UpsertsOneBindingPerEntry(t *testing.T) {
 	}
 }
 
-func TestARPReconcileOnce_BackfillsPrimaryIPOnMACMatch(t *testing.T) {
+func TestARPReconcileOnce_BackfillsPrimaryAddressOnMACMatch(t *testing.T) {
 	t.Parallel()
 	store := newFakeARPStore()
 	store.targetMap["c|t-1"] = "node-source"
@@ -154,6 +157,38 @@ func TestARPReconcileOnce_BackfillsPrimaryIPOnMACMatch(t *testing.T) {
 
 	if got := store.primaryIPs["node-B"]; got != "192.0.2.10" {
 		t.Errorf("primary_ip[node-B] = %q, want 192.0.2.10", got)
+	}
+	if got := store.primaryMACs["node-B"]; got != "aa:bb:cc:dd:ee:99" {
+		t.Errorf("primary_mac[node-B] = %q, want aa:bb:cc:dd:ee:99", got)
+	}
+}
+
+// A device answers on several interfaces. Its primary_mac is the one
+// that carries the address it is reached by, not whichever binding was
+// read last (seed#2574).
+func TestARPReconcileOnce_PrimaryMACFollowsTheChosenAddress(t *testing.T) {
+	t.Parallel()
+	store := newFakeARPStore()
+	store.targetMap["c|t-1"] = "node-source"
+	store.macMap["aa:bb:cc:dd:ee:01"] = "node-B"
+	store.macMap["aa:bb:cc:dd:ee:02"] = "node-B"
+
+	o := &fakeObservations{rows: []*observation.SNMPObservation{
+		arpObs("t-1", at(), []map[string]any{
+			{"IfIndex": 1, "IPAddress": "192.0.2.10", "MACAddress": "aa:bb:cc:dd:ee:01"},
+			{"IfIndex": 2, "IPAddress": "fe80::2", "MACAddress": "aa:bb:cc:dd:ee:02"},
+		}),
+	}}
+	r, _ := topology.NewARPReconciler(topology.ARPConfig{
+		Observations: o, Store: store, Settings: newFakeSettings(),
+		Logger: silentLogger(), Now: at,
+	})
+	if err := r.ReconcileOnce(context.Background()); err != nil {
+		t.Fatalf("ReconcileOnce: %v", err)
+	}
+
+	if got := store.primaryMACs["node-B"]; got != "aa:bb:cc:dd:ee:01" {
+		t.Errorf("primary_mac[node-B] = %q, want the routable address's aa:bb:cc:dd:ee:01", got)
 	}
 }
 
