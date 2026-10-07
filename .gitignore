@@ -144,3 +144,6 @@ coverage.out
 
 # Written by `make bench-compare`
 bench-compare.txt
+
+# Python bytecode from the scripts/ self-tests
+__pycache__/

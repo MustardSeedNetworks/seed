@@ -9,13 +9,17 @@
 #
 # =============================================================================
 
-.PHONY: test test-all test-backend test-backend-quiet test-fast test-frontend test-frontend-quiet \
+.PHONY: test test-all validate-touched test-backend test-backend-quiet test-fast test-frontend test-frontend-quiet \
         test-e2e test-e2e-ui test-e2e-install test-e2e-niac-link test-e2e-niac-routed test-snmp-niac-packs test-coverage \
         check-stale-tests
 
 # =============================================================================
 # Main Test Targets
 # =============================================================================
+
+# Packages `make test` skips. validate-touched reads this line and skips the
+# same ones, so the inner loop never runs a package the full suite does not.
+TEST_PKG_EXCLUDE := /cmd/|/ui$$|/i18n$$|/mcp$$|/oauth$$
 
 # check-stale-tests refuses to start while orphaned test binaries from an
 # earlier run are still holding the machine. Go's -test.timeout cannot kill a
@@ -35,6 +39,9 @@ test: check-stale-tests ## Run unit tests (backend + frontend)
 	@$(MAKE) --no-print-directory test-frontend-quiet
 	$(call timer-end,test-frontend,Frontend tests)
 	@printf "$(CYAN)└──────────────────────────────────────────────────────────────────────────────┘$(RESET)\n"
+
+validate-touched: check-stale-tests golangci-lint-pinned ## Lint, test and gate only what this branch changed since origin/main
+	@python3 scripts/validate-touched.py
 
 test-all: check-stale-tests ## Run ALL tests (unit + E2E)
 	@printf "$(BOLD)$(CYAN)┌─ Full Test Suite ────────────────────────────────────────────────────────────┐$(RESET)\n"
@@ -58,7 +65,7 @@ test-all: check-stale-tests ## Run ALL tests (unit + E2E)
 
 test-backend: check-stale-tests ## Run Go tests with progress
 	@printf "\n$(BOLD)🧪 Running backend tests...$(RESET)\n"
-	@PKGS=$$(go list ./... | grep -v '/cmd/' | grep -v '/ui$$' | grep -v '/i18n$$' | grep -v '/mcp$$' | grep -v '/oauth$$'); \
+	@PKGS=$$(go list ./... | grep -vE '$(TEST_PKG_EXCLUDE)'); \
 	PKG_COUNT=$$(echo "$$PKGS" | wc -l | tr -d ' '); \
 	printf "   📦 Testing $$PKG_COUNT packages...\n\n"; \
 	if command -v gotestsum > /dev/null 2>&1; then \
@@ -73,7 +80,7 @@ test-backend: check-stale-tests ## Run Go tests with progress
 	@printf "\n$(GREEN)✓ Backend tests complete$(RESET)\n"
 
 test-backend-quiet:
-	@PKGS=$$(go list ./... | grep -v '/cmd/' | grep -v '/ui$$' | grep -v '/i18n$$' | grep -v '/mcp$$' | grep -v '/oauth$$'); \
+	@PKGS=$$(go list ./... | grep -vE '$(TEST_PKG_EXCLUDE)'); \
 	PKG_COUNT=$$(echo "$$PKGS" | wc -l | tr -d ' '); \
 	printf "   Testing $$PKG_COUNT packages...\n"; \
 	OUT="$$(go test -race -coverprofile=coverage.out $$PKGS 2>&1)"; STATUS=$$?; \
@@ -153,7 +160,7 @@ test-e2e-install: ## Install Playwright browsers
 # =============================================================================
 
 test-coverage: ## Generate coverage report
-	@PKGS=$$(go list ./... | grep -v '/cmd/' | grep -v '/ui$$' | grep -v '/i18n$$' | grep -v '/mcp$$' | grep -v '/oauth$$'); \
+	@PKGS=$$(go list ./... | grep -vE '$(TEST_PKG_EXCLUDE)'); \
 	go test -race -coverprofile=coverage.out $$PKGS
 	go tool cover -html=coverage.out -o coverage.html
 	@echo "Coverage report: coverage.html"
