@@ -26,7 +26,7 @@
  * Applied In: All test files via vitest configuration
  */
 
-import '@testing-library/jest-dom';
+import '@testing-library/jest-dom/vitest';
 
 // ============================================================
 // Real i18n

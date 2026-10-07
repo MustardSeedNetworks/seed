@@ -100,3 +100,5 @@ tool (
 	golang.org/x/vuln/cmd/govulncheck
 	honnef.co/go/tools/cmd/staticcheck
 )
+
+ignore ./ui/node_modules
