@@ -242,6 +242,8 @@ export const handlers = [
   ),
 
   http.get('*/api/v1/reporting/logs', () => HttpResponse.json({ logs: [], total: 0 })),
+  // AlertEscalationSettings lists recent alerts to offer their rule names.
+  http.get('*/api/v1/alerts', () => HttpResponse.json({ count: 0, alerts: [] })),
 
   // useSubnetSettings expects a bare array (it checks Array.isArray and falls
   // back to [] otherwise), not an envelope.
