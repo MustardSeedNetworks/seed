@@ -52,7 +52,7 @@ Deviations / deferred from the original decision:
 
 - **Persistence is in-memory v1** (fail-cleanly-on-restart), not durable. — _Updated
   (Phase 5c, 2026-06-03):_ the **durable job store landed** (#1481–#1485): write-through
-  persistence + Get fallback (`jobs.Store` / `dbJobStore` over the `jobs` table),
+  persistence + Get fallback (`jobs.Store` / `app.JobStore` over the `jobs` table),
   boot recovery (`Recover` → in-flight jobs reconciled to failed), durable
   Idempotency-Key dedup, and a retention sweep on the maintenance loop. The
   **transactional outbox is deferred** with a documented trigger — see the ADR-0004

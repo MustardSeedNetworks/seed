@@ -11,6 +11,7 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/MustardSeedNetworks/seed/internal/app"
 	"github.com/MustardSeedNetworks/seed/internal/database"
 	"github.com/MustardSeedNetworks/seed/internal/discovery/enumerate"
 	"github.com/MustardSeedNetworks/seed/internal/logging"
@@ -288,11 +289,11 @@ func (s *Server) startMaintenance(retentionDays int) {
 			// Jobs retention runs every tick, independent of the data-retention
 			// policy: the in-memory runner map and the durable jobs table both
 			// grow with every completed job (Phase 5c).
-			var jobsRepo *database.JobRepository
+			var jobStore *app.JobStore
 			if s.db() != nil {
-				jobsRepo = s.db().Jobs()
+				jobStore = app.NewJobStore(s.db())
 			}
-			sweepJobs(context.Background(), s.jobsRunner(), jobsRepo,
+			sweepJobs(context.Background(), s.jobsRunner(), jobStore,
 				time.Now().UTC().Add(-jobsRetention), logging.GetLogger())
 
 			// Outbox retention (ADR-0017): prune delivered event rows so the
