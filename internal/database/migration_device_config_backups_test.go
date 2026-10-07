@@ -1,6 +1,6 @@
 package database_test
 
-// 00026 rebuilds device_credentials to admit the SSH kind and adds the
+// 00027 rebuilds device_credentials to admit the SSH kind and adds the
 // configuration backup tables. Existing SNMP credentials, and the polling
 // targets bound to them, survive the rebuild in both directions.
 
@@ -14,10 +14,10 @@ const credentialRows = `SELECT group_concat(row, ';') FROM (
 	       coalesce(CAST(snmp_community_enc AS TEXT), '-') || ',' || coalesce(snmp_v3_user, '-') AS row
 	FROM device_credentials ORDER BY id)`
 
-func TestMigration00026AddsSSHCredentialsAndKeepsSNMPOnes(t *testing.T) {
+func TestMigration00027AddsSSHCredentialsAndKeepsSNMPOnes(t *testing.T) {
 	t.Parallel()
 
-	db := migrateTo(t, 24)
+	db := migrateTo(t, 26)
 	ctx := context.Background()
 
 	if _, err := db.ExecContext(ctx, `
@@ -31,7 +31,7 @@ func TestMigration00026AddsSSHCredentialsAndKeepsSNMPOnes(t *testing.T) {
 	}
 	want := "cred-a,default,v2c,-,enc:v1:x,-;cred-b,default,v3,noAuthNoPriv,-,ops"
 
-	upTo(t, db, 26)
+	upTo(t, db, 27)
 
 	if got := scanString(t, db, credentialRows); got != want {
 		t.Errorf("credentials after up = %q, want %q", got, want)
@@ -48,7 +48,7 @@ func TestMigration00026AddsSSHCredentialsAndKeepsSNMPOnes(t *testing.T) {
 		t.Errorf("foreign key violations after up: %s", got)
 	}
 
-	downTo(t, db, 24)
+	downTo(t, db, 26)
 
 	if got := scanString(t, db, credentialRows); got != want {
 		t.Errorf("credentials after down = %q, want %q (the ssh row cannot survive)", got, want)
