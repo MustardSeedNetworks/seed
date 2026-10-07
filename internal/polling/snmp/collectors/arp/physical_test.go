@@ -37,6 +37,10 @@ func (c *tableClient) Walk(_ context.Context, prefix string) ([]snmp.Varbind, er
 	return c.media, c.mediaErr
 }
 
+func (c *tableClient) WalkLimit(_ context.Context, _ string, _ int) ([]snmp.Varbind, error) {
+	return nil, errors.New("WalkLimit not used by arp")
+}
+
 func factoryForTable(c *tableClient) snmp.ClientFactory {
 	return func(_ snmp.Target, _ snmp.ResolvedCredentials) (snmp.Client, error) { return c, nil }
 }

@@ -2,7 +2,9 @@ package snmpwalkfile_test
 
 import (
 	"context"
+	"fmt"
 	"path/filepath"
+	"slices"
 	"strings"
 	"testing"
 
@@ -144,6 +146,41 @@ func TestWalkOrdersNumerically(t *testing.T) {
 		if vb.Value != want[i] {
 			t.Errorf("row %d = %v, want %q — rows are not in numeric OID order",
 				i, vb.Value, want[i])
+		}
+	}
+}
+
+// TestWalkLimitStopsAtTheLimit pins that a bounded walk returns the first
+// rows in OID order and no more, the way a GETBULK walk ended early does.
+func TestWalkLimitStopsAtTheLimit(t *testing.T) {
+	walk, err := snmpwalkfile.Parse(strings.NewReader(`
+.1.3.6.1.2.1.2.2.1.2.10 = STRING: ten
+.1.3.6.1.2.1.2.2.1.2.2 = STRING: two
+.1.3.6.1.2.1.2.2.1.2.1 = STRING: one
+.1.3.6.1.2.1.2.2.1.3.1 = INTEGER: 6
+`))
+	if err != nil {
+		t.Fatalf("parse: %v", err)
+	}
+	for _, tt := range []struct {
+		limit int
+		want  []string
+	}{
+		{0, nil},
+		{2, []string{"one", "two"}},
+		{3, []string{"one", "two", "ten"}},
+		{5, []string{"one", "two", "ten"}},
+	} {
+		rows, walkErr := walk.Client().WalkLimit(context.Background(), oidIfDescr, tt.limit)
+		if walkErr != nil {
+			t.Fatalf("WalkLimit(%d): %v", tt.limit, walkErr)
+		}
+		got := make([]string, 0, len(rows))
+		for _, vb := range rows {
+			got = append(got, fmt.Sprint(vb.Value))
+		}
+		if !slices.Equal(got, tt.want) {
+			t.Errorf("WalkLimit(%d) = %v, want %v", tt.limit, got, tt.want)
 		}
 	}
 }

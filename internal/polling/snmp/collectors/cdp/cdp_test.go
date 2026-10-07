@@ -30,6 +30,10 @@ func (f *fakeClient) Walk(_ context.Context, prefix string) ([]snmp.Varbind, err
 	return f.vbs, nil
 }
 
+func (f *fakeClient) WalkLimit(_ context.Context, _ string, _ int) ([]snmp.Varbind, error) {
+	return nil, errors.New("WalkLimit not used by cdp")
+}
+
 type fakePublisher struct {
 	mu  sync.Mutex
 	got []cdp.Observation

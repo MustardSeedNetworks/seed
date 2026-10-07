@@ -48,6 +48,10 @@ func (f *fakeClient) Walk(_ context.Context, prefix string) ([]snmp.Varbind, err
 	return nil, nil
 }
 
+func (f *fakeClient) WalkLimit(_ context.Context, _ string, _ int) ([]snmp.Varbind, error) {
+	return nil, errors.New("WalkLimit not used by iftable")
+}
+
 type fakePublisher struct {
 	mu  sync.Mutex
 	got []iftable.Observation

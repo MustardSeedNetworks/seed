@@ -19,34 +19,59 @@ const (
 	legacyTablePrefix = "1.3.6.1.2.1.4.21.1"
 )
 
-// fakeClient answers a Walk with the varbinds under the walked prefix, the
-// way an agent does, and records the prefixes it was asked for.
+// fakeClient answers a WalkLimit with the varbinds under the walked prefix,
+// up to the limit, the way an agent does, and records the prefixes it was
+// asked for and the most varbinds it handed back for any one of them.
 type fakeClient struct {
 	vbs       []snmp.Varbind
 	walkErr   error
 	legacyErr error
 	walked    []string
+	mostSent  int
 }
 
 func (f *fakeClient) Get(_ context.Context, _ []string) ([]snmp.Varbind, error) {
 	return nil, errors.New("get not used by routing")
 }
 
-func (f *fakeClient) Walk(_ context.Context, prefix string) ([]snmp.Varbind, error) {
+func (f *fakeClient) Walk(_ context.Context, _ string) ([]snmp.Varbind, error) {
+	return nil, errors.New("unbounded walk not used by routing")
+}
+
+func (f *fakeClient) WalkLimit(_ context.Context, prefix string, limit int) ([]snmp.Varbind, error) {
 	f.walked = append(f.walked, prefix)
 	if f.walkErr != nil {
 		return nil, f.walkErr
 	}
-	if prefix == legacyTablePrefix && f.legacyErr != nil {
+	if strings.HasPrefix(prefix, legacyTablePrefix+".") && f.legacyErr != nil {
 		return nil, f.legacyErr
 	}
 	var out []snmp.Varbind
 	for _, vb := range f.vbs {
+		if len(out) == limit {
+			break
+		}
 		if strings.HasPrefix(vb.OID, prefix+".") {
 			out = append(out, vb)
 		}
 	}
+	f.mostSent = max(f.mostSent, len(out))
 	return out, nil
+}
+
+// columns names the column subtrees of table the collector reads.
+func columns(table string, cols ...string) []string {
+	out := make([]string, len(cols))
+	for i, col := range cols {
+		out[i] = table + "." + col
+	}
+	return out
+}
+
+func cidrColumns() []string { return columns(tablePrefix, "5", "6", "7", "8", "11") }
+
+func legacyColumns() []string {
+	return columns(legacyTablePrefix, "2", "3", "7", "8", "9", "10", "11")
 }
 
 type fakePublisher struct {
@@ -135,7 +160,7 @@ func TestCollect_ReadsIPRouteTableWhenTheCIDRTableIsEmpty(t *testing.T) {
 	if !slices.Equal(got, want) {
 		t.Errorf("routes = %+v\nwant %+v", got, want)
 	}
-	if !slices.Equal(fc.walked, []string{tablePrefix, legacyTablePrefix}) {
+	if !slices.Equal(fc.walked, slices.Concat(cidrColumns(), legacyColumns())) {
 		t.Errorf("walked %v, want the CIDR table then ipRouteTable", fc.walked)
 	}
 }
@@ -172,7 +197,7 @@ func TestCollect_IPRouteTableNotWalkedWhenTheCIDRTableHoldsRoutes(t *testing.T) 
 	if len(got) != 1 || got[0].Destination != "10.0.0.0" {
 		t.Errorf("routes = %+v, want the CIDR table's row only", got)
 	}
-	if !slices.Equal(fc.walked, []string{tablePrefix}) {
+	if !slices.Equal(fc.walked, cidrColumns()) {
 		t.Errorf("walked %v, want the CIDR table only", fc.walked)
 	}
 }
@@ -335,5 +360,76 @@ func TestCollect_OctetOverflowRejected(t *testing.T) {
 
 	if len(pub.got[0].Routes) != 0 {
 		t.Errorf("overflow should be skipped, got %d routes", len(pub.got[0].Routes))
+	}
+}
+
+// cidrTable is n ipCidrRouteTable rows of every column the collector reads,
+// in the column-major order an agent walks them.
+func cidrTable(n int) []snmp.Varbind {
+	var vbs []snmp.Varbind
+	for _, col := range []string{"5", "6", "7", "8", "11"} {
+		for i := range n {
+			dest := fmt.Sprintf("10.%d.%d.0", i/256, i%256)
+			vbs = append(vbs, snmp.Varbind{OID: routeOID(col, dest, "10.255.255.1"), Value: 1})
+		}
+	}
+	return vbs
+}
+
+// legacyTable is n ipRouteTable rows, in the column-major order an agent
+// walks them.
+func legacyTable(n int) []snmp.Varbind {
+	rows := make([][]snmp.Varbind, n)
+	for i := range n {
+		rows[i] = legacyRow(fmt.Sprintf("10.%d.%d.0", i/256, i%256), "255.255.255.0", "10.0.0.1", routing.TypeRemote)
+	}
+	var vbs []snmp.Varbind
+	for col := range rows[0] {
+		for _, row := range rows {
+			vbs = append(vbs, row[col])
+		}
+	}
+	return vbs
+}
+
+func TestCollect_RouteTableReadIsBoundedAtMaxRows(t *testing.T) {
+	t.Parallel()
+	tests := []struct {
+		name          string
+		vbs           []snmp.Varbind
+		wantRoutes    int
+		wantTruncated bool
+	}{
+		{"CIDR table past the cap", cidrTable(routing.MaxRows + 500), routing.MaxRows, true},
+		{"CIDR table at exactly the cap", cidrTable(routing.MaxRows), routing.MaxRows, false},
+		{"CIDR table under the cap", cidrTable(3), 3, false},
+		{"ipRouteTable past the cap", legacyTable(routing.MaxRows + 500), routing.MaxRows, true},
+		{"ipRouteTable at exactly the cap", legacyTable(routing.MaxRows), routing.MaxRows, false},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			fc := &fakeClient{vbs: tt.vbs}
+			pub := &fakePublisher{}
+			if err := routing.New(factoryFor(fc), pub, at).
+				Collect(context.Background(), snmp.Target{ID: "t-1"}, snmp.ResolvedCredentials{}); err != nil {
+				t.Fatalf("Collect: %v", err)
+			}
+			if len(pub.got) != 1 {
+				t.Fatalf("published %d observations, want 1", len(pub.got))
+			}
+			obs := pub.got[0]
+			if len(obs.Routes) != tt.wantRoutes || obs.Truncated != tt.wantTruncated {
+				t.Errorf("routes = %d, truncated = %v; want %d, %v",
+					len(obs.Routes), obs.Truncated, tt.wantRoutes, tt.wantTruncated)
+			}
+			// The bound is on what the agent is asked for, not on what is
+			// kept: a walk that reads the whole table and trims it afterwards
+			// still holds a full BGP table in memory on every poll.
+			if fc.mostSent > routing.MaxRows+1 {
+				t.Errorf("one walk read %d varbinds, want at most MaxRows+1 = %d",
+					fc.mostSent, routing.MaxRows+1)
+			}
+		})
 	}
 }

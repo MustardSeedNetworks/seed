@@ -14,6 +14,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"math"
 	"strings"
 	"time"
 
@@ -104,6 +105,20 @@ func (c *client) Get(ctx context.Context, oids []string) ([]snmp.Varbind, error)
 // Walk traverses prefix using GETBULK (SNMPv2c+) and returns every
 // varbind reached before the subtree boundary or ctx cancellation.
 func (c *client) Walk(ctx context.Context, prefix string) ([]snmp.Varbind, error) {
+	return c.walk(ctx, prefix, math.MaxInt)
+}
+
+// WalkLimit is Walk ending the GETBULK walk once it holds limit varbinds.
+func (c *client) WalkLimit(ctx context.Context, prefix string, limit int) ([]snmp.Varbind, error) {
+	return c.walk(ctx, prefix, limit)
+}
+
+// errWalkLimit ends a BulkWalk at its limit. gosnmp stops a walk when the
+// callback returns an error and hands that error back, so walk tells it
+// apart from a failure.
+var errWalkLimit = errors.New("walk limit reached")
+
+func (c *client) walk(ctx context.Context, prefix string, limit int) ([]snmp.Varbind, error) {
 	g, err := c.dial(ctx)
 	if err != nil {
 		return nil, err
@@ -118,10 +133,13 @@ func (c *client) Walk(ctx context.Context, prefix string) ([]snmp.Varbind, error
 		if ctxErr := ctx.Err(); ctxErr != nil {
 			return ctxErr
 		}
+		if len(out) >= limit {
+			return errWalkLimit
+		}
 		out = append(out, toVarbind(pdu))
 		return nil
 	}
-	if walkErr := g.BulkWalk(prefix, cb); walkErr != nil {
+	if walkErr := g.BulkWalk(prefix, cb); walkErr != nil && !errors.Is(walkErr, errWalkLimit) {
 		return nil, fmt.Errorf("snmpclient: BulkWalk(%s, %s): %w",
 			c.target.IPAddress, prefix, walkErr)
 	}
