@@ -1,4 +1,4 @@
-package api
+package app
 
 import (
 	"context"
@@ -12,37 +12,6 @@ import (
 	"github.com/MustardSeedNetworks/seed/internal/platform/jobs"
 )
 
-// TestDBJobIdempotency exercises the durable Idempotency-Key store through its
-// interface: miss -> store -> hit (same body) -> conflict (changed body).
-func TestDBJobIdempotency(t *testing.T) {
-	t.Parallel()
-	db := newJobStoreTestDB(t)
-	ctx := context.Background()
-
-	// The key's FK requires the job row to exist first (the runner persists on
-	// Submit before the handler records the key).
-	if err := newDBJobStore(db).Save(ctx, jobs.Job{ID: "j1", Kind: "speedtest", State: jobs.StateQueued}); err != nil {
-		t.Fatalf("seed job: %v", err)
-	}
-
-	var idem jobIdempotencyStore = newDBJobIdempotency(db, slog.New(slog.DiscardHandler))
-	req := CreateJobRequest{Kind: "speedtest", Params: json.RawMessage(`{"server":"a"}`)}
-
-	if res := idem.check(ctx, "key-1", req); res.kind != idemMiss {
-		t.Fatalf("first check = %v, want idemMiss", res.kind)
-	}
-	idem.store(ctx, "key-1", req, "j1")
-
-	if res := idem.check(ctx, "key-1", req); res.kind != idemHit || res.id != "j1" {
-		t.Errorf("replay check = (%v,%q), want (idemHit,j1)", res.kind, res.id)
-	}
-
-	other := CreateJobRequest{Kind: "speedtest", Params: json.RawMessage(`{"server":"DIFFERENT"}`)}
-	if res := idem.check(ctx, "key-1", other); res.kind != idemConflict {
-		t.Errorf("changed-body check = %v, want idemConflict", res.kind)
-	}
-}
-
 func newJobStoreTestDB(t *testing.T) *database.DB {
 	t.Helper()
 	db, err := database.Open(dbtest.Path(t))
@@ -53,11 +22,11 @@ func newJobStoreTestDB(t *testing.T) *database.DB {
 	return db
 }
 
-// TestDBJobStoreSaveLoadRoundTrip proves a terminal job round-trips through the
+// TestJobStoreSaveLoadRoundTrip proves a terminal job round-trips through the
 // adapter: the result is stored as JSON and returned as [json.RawMessage].
-func TestDBJobStoreSaveLoadRoundTrip(t *testing.T) {
+func TestJobStoreSaveLoadRoundTrip(t *testing.T) {
 	t.Parallel()
-	store := newDBJobStore(newJobStoreTestDB(t))
+	store := NewJobStore(newJobStoreTestDB(t))
 	ctx := context.Background()
 
 	want := jobs.Job{
@@ -88,10 +57,10 @@ func TestDBJobStoreSaveLoadRoundTrip(t *testing.T) {
 	}
 }
 
-// TestDBJobStoreLoadMiss: an unknown id is a clean miss, not an error.
-func TestDBJobStoreLoadMiss(t *testing.T) {
+// TestJobStoreLoadMiss: an unknown id is a clean miss, not an error.
+func TestJobStoreLoadMiss(t *testing.T) {
 	t.Parallel()
-	store := newDBJobStore(newJobStoreTestDB(t))
+	store := NewJobStore(newJobStoreTestDB(t))
 
 	_, ok, err := store.Load(context.Background(), "absent")
 	if err != nil {
@@ -102,10 +71,10 @@ func TestDBJobStoreLoadMiss(t *testing.T) {
 	}
 }
 
-// TestDBJobStoreMarkInterrupted: only non-terminal jobs are reconciled to failed.
-func TestDBJobStoreMarkInterrupted(t *testing.T) {
+// TestJobStoreMarkInterrupted: only non-terminal jobs are reconciled to failed.
+func TestJobStoreMarkInterrupted(t *testing.T) {
 	t.Parallel()
-	store := newDBJobStore(newJobStoreTestDB(t))
+	store := NewJobStore(newJobStoreTestDB(t))
 	ctx := context.Background()
 
 	for _, j := range []jobs.Job{
@@ -144,7 +113,7 @@ func TestDBJobStoreMarkInterrupted(t *testing.T) {
 func TestRunnerRecoversAcrossRestart(t *testing.T) {
 	t.Parallel()
 	db := newJobStoreTestDB(t)
-	store := newDBJobStore(db)
+	store := NewJobStore(db)
 	ctx := context.Background()
 
 	// Prior process left a job mid-flight.

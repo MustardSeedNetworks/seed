@@ -288,7 +288,7 @@ func (r *Runner) Cancel(id string) error {
 		r.mu.Unlock()
 		return ErrNotFound
 	}
-	if isTerminal(e.job.State) {
+	if e.job.State.Terminal() {
 		r.mu.Unlock()
 		return nil
 	}
@@ -309,7 +309,7 @@ func (r *Runner) Cleanup() int {
 	defer r.mu.Unlock()
 	removed := 0
 	for id, e := range r.jobs {
-		if isTerminal(e.job.State) && now.Sub(e.completedAt) >= r.retention {
+		if e.job.State.Terminal() && now.Sub(e.completedAt) >= r.retention {
 			delete(r.jobs, id)
 			removed++
 		}
@@ -329,7 +329,7 @@ func (r *Runner) Close(ctx context.Context) error {
 	r.closed = true
 	cancels := make([]context.CancelFunc, 0, len(r.jobs))
 	for _, e := range r.jobs {
-		if !isTerminal(e.job.State) {
+		if !e.job.State.Terminal() {
 			e.cancelled = true
 			cancels = append(cancels, e.cancel)
 		}
@@ -458,8 +458,8 @@ func safeRun(
 	return result, err
 }
 
-// isTerminal reports whether s is a final state.
-func isTerminal(s State) bool {
+// Terminal reports whether s is a final state.
+func (s State) Terminal() bool {
 	switch s {
 	case StateSucceeded, StateFailed, StateCancelled:
 		return true

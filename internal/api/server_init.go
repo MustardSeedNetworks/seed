@@ -153,19 +153,21 @@ func (s *Server) initSSEAndLogging(db *database.DB) {
 	// long-ops are migrated in a later slice; both Close() on shutdown.
 	s.bus = events.New(logging.GetLogger())
 	jobsCfg := jobs.Config{Retention: jobsRetention}
+	var jobStore *app.JobStore
 	if db != nil {
 		// Durable backing (Phase 5c): the runner write-throughs lifecycle
 		// transitions so a job survives a restart. Without a database the runner
 		// stays in-memory only (the fail-cleanly v1).
-		jobsCfg.Store = newDBJobStore(db)
+		jobStore = app.NewJobStore(db)
+		jobsCfg.Store = jobStore
 	}
 	s.jobRunner = jobs.New(
 		s.bus, logging.GetLogger(), jobsCfg,
 	)
-	if db != nil {
+	if jobStore != nil {
 		// Durable Idempotency-Key dedup (Phase 5c-4): survives restart, so a
 		// client retry across a restart still replays rather than duplicating.
-		s.jobIdemp = newDBJobIdempotency(db, logging.GetLogger())
+		s.jobIdemp = newDBJobIdempotency(jobStore, logging.GetLogger())
 	} else {
 		s.jobIdemp = newJobIdempotencyCache(jobIdempotencyCapacity)
 	}

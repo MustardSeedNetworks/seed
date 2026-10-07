@@ -7,6 +7,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/MustardSeedNetworks/seed/internal/app"
 	"github.com/MustardSeedNetworks/seed/internal/database"
 	"github.com/MustardSeedNetworks/seed/internal/platform/events"
 	"github.com/MustardSeedNetworks/seed/internal/platform/jobs"
@@ -16,7 +17,8 @@ import (
 // from the durable store; recent terminal jobs survive.
 func TestSweepJobsDurable(t *testing.T) {
 	t.Parallel()
-	repo := newJobStoreTestDB(t).Jobs()
+	db := newJobStoreTestDB(t)
+	repo := db.Jobs()
 	ctx := context.Background()
 	now := time.Now().UTC().Truncate(time.Second)
 
@@ -34,7 +36,7 @@ func TestSweepJobsDurable(t *testing.T) {
 		t.Fatalf("save recent: %v", err)
 	}
 
-	sweepJobs(ctx, nil, repo, now.Add(-time.Hour), slog.New(slog.DiscardHandler))
+	sweepJobs(ctx, nil, app.NewJobStore(db), now.Add(-time.Hour), slog.New(slog.DiscardHandler))
 
 	if _, err := repo.Get(ctx, "old"); !errors.Is(err, database.ErrJobNotFound) {
 		t.Errorf("old terminal job not evicted (err=%v)", err)
@@ -87,7 +89,7 @@ func TestSweepJobsInMemory(t *testing.T) {
 	}
 }
 
-// TestSweepJobsNilSafe: nil runner and nil repo are tolerated (no-op, no panic).
+// TestSweepJobsNilSafe: nil runner and nil store are tolerated (no-op, no panic).
 func TestSweepJobsNilSafe(t *testing.T) {
 	t.Parallel()
 	sweepJobs(context.Background(), nil, nil, time.Now(), slog.New(slog.DiscardHandler))
