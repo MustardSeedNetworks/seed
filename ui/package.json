@@ -55,7 +55,7 @@
   "devDependencies": {
     "@babel/core": "7.29.7",
     "@biomejs/biome": "2.5.14",
-    "@chromatic-com/storybook": "5.3.1",
+    "@chromatic-com/storybook": "5.4.0",
     "@playwright/test": "1.63.0",
     "@rolldown/plugin-babel": "0.2.4",
     "@storybook/addon-a11y": "10.6.1",
