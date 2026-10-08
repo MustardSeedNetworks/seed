@@ -4,6 +4,7 @@ import (
 	"net"
 	"testing"
 
+	"github.com/MustardSeedNetworks/seed/internal/app"
 	"github.com/MustardSeedNetworks/seed/internal/database"
 	"github.com/MustardSeedNetworks/seed/internal/database/dbtest"
 	"github.com/MustardSeedNetworks/seed/internal/engine"
@@ -41,7 +42,7 @@ func TestInitListeners_NoEnvVarsRegistersNoListeners(t *testing.T) {
 
 	s := &Server{engines: engine.NewRegistry(nil)}
 	before := len(s.engines.Engines())
-	s.initListeners(newTestDB(t))
+	s.initListeners(app.NewListenerPersistence(newTestDB(t)))
 	after := len(s.engines.Engines())
 
 	if after != before {
@@ -54,7 +55,7 @@ func TestInitListeners_SyslogEnvVarRegistersListener(t *testing.T) {
 	t.Setenv("SEED_SNMP_TRAP_BIND", "")
 
 	s := &Server{engines: engine.NewRegistry(nil)}
-	s.initListeners(newTestDB(t))
+	s.initListeners(app.NewListenerPersistence(newTestDB(t)))
 
 	names := make(map[string]bool)
 	for _, e := range s.engines.Engines() {
@@ -73,7 +74,7 @@ func TestInitListeners_SnmpTrapEnvVarRegistersListener(t *testing.T) {
 	t.Setenv("SEED_SNMP_TRAP_BIND", freeAddr(t))
 
 	s := &Server{engines: engine.NewRegistry(nil)}
-	s.initListeners(newTestDB(t))
+	s.initListeners(app.NewListenerPersistence(newTestDB(t)))
 
 	names := make(map[string]bool)
 	for _, e := range s.engines.Engines() {
@@ -89,7 +90,7 @@ func TestInitListeners_BothEnvVarsRegistersBoth(t *testing.T) {
 	t.Setenv("SEED_SNMP_TRAP_BIND", freeAddr(t))
 
 	s := &Server{engines: engine.NewRegistry(nil)}
-	s.initListeners(newTestDB(t))
+	s.initListeners(app.NewListenerPersistence(newTestDB(t)))
 
 	names := make(map[string]bool)
 	for _, e := range s.engines.Engines() {
@@ -112,7 +113,7 @@ func TestInitListeners_MicroburstUnknownInterfaceRegistersNothing(t *testing.T) 
 		t.Fatalf("netif manager: %v", err)
 	}
 	s := &Server{engines: engine.NewRegistry(nil), netMgr: mgr}
-	s.initListeners(newTestDB(t))
+	s.initListeners(app.NewListenerPersistence(newTestDB(t)))
 	for _, e := range s.engines.Engines() {
 		if e.Name() == microburst.Name {
 			t.Fatalf("microburst registered for an unknown interface")

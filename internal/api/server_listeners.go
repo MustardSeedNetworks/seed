@@ -6,10 +6,9 @@ import (
 	"net"
 	"os"
 
-	"github.com/MustardSeedNetworks/seed/internal/database"
+	"github.com/MustardSeedNetworks/seed/internal/app"
 	"github.com/MustardSeedNetworks/seed/internal/listener/flow"
 	"github.com/MustardSeedNetworks/seed/internal/listener/microburst"
-	listenersink "github.com/MustardSeedNetworks/seed/internal/listener/sink"
 	"github.com/MustardSeedNetworks/seed/internal/listener/snmptrap"
 	"github.com/MustardSeedNetworks/seed/internal/listener/syslog"
 	"github.com/MustardSeedNetworks/seed/internal/listener/voip"
@@ -28,14 +27,13 @@ import (
 // because they capture every frame on that link.
 //
 // V1.0 NMS expansion — Stage A3.5e-4.
-func (s *Server) initListeners(db *database.DB) {
-	persistSink := listenersink.New(db.ListenerEvents(), logging.GetLogger(), nil)
+func (s *Server) initListeners(store app.ListenerPersistence) {
 	logger := logging.GetLogger()
 
 	if addr := os.Getenv("SEED_SYSLOG_BIND"); addr != "" {
 		l, err := syslog.New(syslog.Config{
 			BindAddr: addr,
-			Sink:     persistSink,
+			Sink:     store.Events,
 			Logger:   logger,
 		})
 		if err != nil {
@@ -48,9 +46,9 @@ func (s *Server) initListeners(db *database.DB) {
 	if addr := os.Getenv("SEED_FLOW_BIND"); addr != "" {
 		l, err := flow.New(flow.Config{
 			BindAddr:   addr,
-			Store:      db.FlowRecords(),
-			Indicators: db.FlowRecords(),
-			Sink:       persistSink,
+			Store:      store.Flows,
+			Indicators: store.FlowIndicators,
+			Sink:       store.Events,
 			Logger:     logger,
 		})
 		if err != nil {
@@ -61,7 +59,7 @@ func (s *Server) initListeners(db *database.DB) {
 	}
 
 	if iface := os.Getenv("SEED_MICROBURST_IFACE"); iface != "" {
-		l, err := s.newMicroburstListener(iface, db)
+		l, err := s.newMicroburstListener(iface, store.Microbursts)
 		if err != nil {
 			logger.Warn("microburst listener init failed", "error", err)
 		} else if regErr := s.registerEngineIfLicensed(l); regErr != nil {
@@ -73,8 +71,8 @@ func (s *Server) initListeners(db *database.DB) {
 		l, err := voip.New(voip.Config{
 			Interface: iface,
 			Opener:    defaultCaptureOpener(),
-			Store:     db.VoIPStreams(),
-			Sink:      persistSink,
+			Store:     store.VoIP,
+			Sink:      store.Events,
 			Logger:    logger,
 		})
 		if err != nil {
@@ -87,7 +85,7 @@ func (s *Server) initListeners(db *database.DB) {
 	if addr := os.Getenv("SEED_SNMP_TRAP_BIND"); addr != "" {
 		l, err := snmptrap.New(snmptrap.Config{
 			BindAddr:    addr,
-			Sink:        persistSink,
+			Sink:        store.Events,
 			Credentials: s.snmpCreds,
 			Logger:      logger,
 		})
@@ -105,7 +103,7 @@ const bitsPerMegabit = 1_000_000
 
 // newMicroburstListener measures against the interface's own address and
 // negotiated speed, both read from the interface manager.
-func (s *Server) newMicroburstListener(iface string, db *database.DB) (*microburst.Listener, error) {
+func (s *Server) newMicroburstListener(iface string, bursts microburst.Store) (*microburst.Listener, error) {
 	if s.netMgr == nil {
 		return nil, errors.New("microburst: no interface manager")
 	}
@@ -122,7 +120,7 @@ func (s *Server) newMicroburstListener(iface string, db *database.DB) (*microbur
 		MAC:           mac,
 		LinkSpeedMbps: info.Speed / bitsPerMegabit,
 		Opener:        defaultCaptureOpener(),
-		Store:         db.Microbursts(),
+		Store:         bursts,
 		Logger:        logging.GetLogger(),
 	})
 }
