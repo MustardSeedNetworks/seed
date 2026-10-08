@@ -1,4 +1,4 @@
-package api
+package app_test
 
 import (
 	"context"
@@ -7,6 +7,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 
+	"github.com/MustardSeedNetworks/seed/internal/app"
 	"github.com/MustardSeedNetworks/seed/internal/database"
 	"github.com/MustardSeedNetworks/seed/internal/database/dbtest"
 	"github.com/MustardSeedNetworks/seed/internal/discovery"
@@ -20,7 +21,7 @@ func TestLogWriterPersistsEntries(t *testing.T) {
 	t.Parallel()
 	ctx := context.Background()
 	db := dbtest.Open(t)
-	w := logging.DBLogWriter(&dbLogWriterAdapter{db: db})
+	w := app.NewLogWriter(db)
 	ts := time.Date(2026, 10, 8, 2, 30, 0, 0, time.UTC)
 
 	require.NoError(t, w.WriteLog(ctx, &logging.LogEntry{
@@ -64,7 +65,7 @@ func TestDeviceWriterRefreshesByAddress(t *testing.T) {
 	t.Parallel()
 	ctx := context.Background()
 	db := dbtest.Open(t)
-	w := discovery.DBDeviceWriter(&dbDeviceWriterAdapter{db: db})
+	w := app.NewDeviceWriter(db)
 	seen := time.Date(2026, 10, 8, 2, 30, 0, 0, time.UTC)
 
 	require.NoError(t, w.PersistDevices(ctx, nil))

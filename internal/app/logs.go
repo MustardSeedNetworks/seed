@@ -2,7 +2,7 @@ package app
 
 // logs.go wires the composition root to the log-query use-case (ADR-0020): a Store
 // adapter over the database log repository and a Buffer adapter over the in-memory
-// log broadcaster. The database handle is resolved through a lazy accessor so a
+// log broadcaster. It also supplies the broadcaster's database writer. The database handle is resolved through a lazy accessor so a
 // later-set value (the api test harness) is honored and a nil handle degrades the
 // store to "unavailable" rather than panicking.
 
@@ -79,4 +79,43 @@ func (logBuffer) All() []*logging.LogEntry {
 		return nil
 	}
 	return b.GetAllLogs()
+}
+
+// NewLogWriter returns the log broadcaster's database writer.
+func NewLogWriter(db *database.DB) logging.DBLogWriter {
+	return logWriter{db: db}
+}
+
+type logWriter struct {
+	db *database.DB
+}
+
+func (w logWriter) WriteLog(ctx context.Context, entry *logging.LogEntry) error {
+	return w.db.Logs().Create(ctx, toDBLogEntry(entry))
+}
+
+func (w logWriter) WriteBatch(ctx context.Context, entries []*logging.LogEntry) error {
+	if len(entries) == 0 {
+		return nil
+	}
+	rows := make([]*database.LogEntry, len(entries))
+	for i, e := range entries {
+		rows[i] = toDBLogEntry(e)
+	}
+	return w.db.Logs().BatchCreate(ctx, rows)
+}
+
+func toDBLogEntry(e *logging.LogEntry) *database.LogEntry {
+	return &database.LogEntry{
+		Timestamp:  e.Timestamp,
+		Level:      e.Level,
+		Layer:      e.Layer,
+		Message:    e.Message,
+		Component:  e.Component,
+		RequestID:  e.RequestID,
+		SessionID:  e.SessionID,
+		DurationMs: e.DurationMs,
+		Metadata:   database.ConvertMetadataToJSON(e.Metadata),
+		Stack:      e.Stack,
+	}
 }
