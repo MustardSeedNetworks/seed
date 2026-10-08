@@ -60,15 +60,15 @@ type dbUsersAdapter struct {
 
 func (a dbUsersAdapter) Available() bool { return a.db() != nil }
 
-func (a dbUsersAdapter) List(ctx context.Context) ([]*database.User, error) {
+func (a dbUsersAdapter) List(ctx context.Context) ([]*users.User, error) {
 	return a.db().ListUsers(ctx)
 }
 
-func (a dbUsersAdapter) Create(ctx context.Context, username, hash, role string) (*database.User, error) {
+func (a dbUsersAdapter) Create(ctx context.Context, username, hash, role string) (*users.User, error) {
 	return a.db().CreateUser(ctx, username, hash, role)
 }
 
-func (a dbUsersAdapter) Get(ctx context.Context, username string) (*database.User, error) {
+func (a dbUsersAdapter) Get(ctx context.Context, username string) (*users.User, error) {
 	return a.db().GetUser(ctx, username)
 }
 
@@ -135,6 +135,6 @@ type dbSSOAdapter struct {
 
 func (a dbSSOAdapter) Available() bool { return a.db() != nil }
 
-func (a dbSSOAdapter) SyncUser(ctx context.Context, in database.SSOUserInput) (*database.User, error) {
+func (a dbSSOAdapter) SyncUser(ctx context.Context, in database.SSOUserInput) (*users.User, error) {
 	return a.db().UpsertSSOUser(ctx, in)
 }

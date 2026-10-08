@@ -8,27 +8,8 @@ import (
 	"time"
 
 	"github.com/MustardSeedNetworks/seed/internal/identity/roles"
+	"github.com/MustardSeedNetworks/seed/internal/identity/users"
 )
-
-// User represents a user in the database.
-type User struct {
-	ID             int64
-	Username       string
-	PasswordHash   string
-	Role           string
-	IsActive       bool
-	LastLogin      *time.Time
-	FailedAttempts int
-	LockedUntil    *time.Time
-	TokenVersion   int
-	AuthProvider   string // 'local' | 'google' | 'microsoft' | 'github'
-	ExternalID     string // IdP subject claim (OIDC 'sub' / MS Graph 'id'); empty for local users
-	Email          string // display + cross-provider matching
-	DisplayName    string // optional human name returned by the IdP
-	ClientID       string // owning tenant; the session's client claim is minted from this
-	CreatedAt      time.Time
-	UpdatedAt      time.Time
-}
 
 // Valid auth providers (enforced by the DB CHECK constraint).
 const (
@@ -38,19 +19,8 @@ const (
 	AuthProviderGitHub    = "github"
 )
 
-// Common errors for user operations.
-var (
-	ErrUserNotFound      = errors.New("user not found")
-	ErrUserExists        = errors.New("user already exists")
-	ErrUserLocked        = errors.New("user account is locked")
-	ErrUserInactive      = errors.New("user account is inactive")
-	ErrNoUsersConfigured = errors.New("no users configured")
-	ErrInvalidRole       = errors.New("invalid role")
-	ErrLastAdmin         = errors.New("cannot demote or delete the last admin")
-)
-
 // GetUser retrieves a user by username.
-func (db *DB) GetUser(ctx context.Context, username string) (*User, error) {
+func (db *DB) GetUser(ctx context.Context, username string) (*users.User, error) {
 	db.mu.RLock()
 	defer db.mu.RUnlock()
 
@@ -58,7 +28,7 @@ func (db *DB) GetUser(ctx context.Context, username string) (*User, error) {
 		return nil, errors.New("database is closed")
 	}
 
-	var user User
+	var user users.User
 	var lastLogin, lockedUntil, externalID, email, displayName sql.NullString
 	var createdAt, updatedAt string
 
@@ -77,7 +47,7 @@ func (db *DB) GetUser(ctx context.Context, username string) (*User, error) {
 	)
 
 	if errors.Is(err, sql.ErrNoRows) {
-		return nil, ErrUserNotFound
+		return nil, users.ErrUserNotFound
 	}
 	if err != nil {
 		return nil, fmt.Errorf("failed to get user: %w", err)
@@ -109,7 +79,7 @@ func (db *DB) GetUser(ctx context.Context, username string) (*User, error) {
 }
 
 // CreateUser creates a new user in the database.
-func (db *DB) CreateUser(ctx context.Context, username, passwordHash, role string) (*User, error) {
+func (db *DB) CreateUser(ctx context.Context, username, passwordHash, role string) (*users.User, error) {
 	db.mu.Lock()
 	defer db.mu.Unlock()
 
@@ -127,14 +97,14 @@ func (db *DB) CreateUser(ctx context.Context, username, passwordHash, role strin
 	if err != nil {
 		// Check for unique constraint violation
 		if isUniqueConstraintError(err) {
-			return nil, ErrUserExists
+			return nil, users.ErrUserExists
 		}
 		return nil, fmt.Errorf("failed to create user: %w", err)
 	}
 
 	id, _ := result.LastInsertId()
 
-	return &User{
+	return &users.User{
 		ID:           id,
 		Username:     username,
 		PasswordHash: passwordHash,
@@ -169,7 +139,7 @@ func (db *DB) UpdateUserPassword(ctx context.Context, username, passwordHash str
 
 	rows, _ := result.RowsAffected()
 	if rows == 0 {
-		return ErrUserNotFound
+		return users.ErrUserNotFound
 	}
 
 	return nil
@@ -202,13 +172,13 @@ func (db *DB) MigrateUserFromConfig(ctx context.Context, username, passwordHash 
 		// User exists, no migration needed
 		return nil
 	}
-	if !errors.Is(err, ErrUserNotFound) {
+	if !errors.Is(err, users.ErrUserNotFound) {
 		return fmt.Errorf("failed to check existing user: %w", err)
 	}
 
 	// Create the user
 	_, err = db.CreateUser(ctx, username, passwordHash, "admin")
-	if err != nil && !errors.Is(err, ErrUserExists) {
+	if err != nil && !errors.Is(err, users.ErrUserExists) {
 		return fmt.Errorf("failed to migrate user: %w", err)
 	}
 
@@ -216,7 +186,7 @@ func (db *DB) MigrateUserFromConfig(ctx context.Context, username, passwordHash 
 }
 
 // ListUsers returns every user, ordered by username.
-func (db *DB) ListUsers(ctx context.Context) ([]*User, error) {
+func (db *DB) ListUsers(ctx context.Context) ([]*users.User, error) {
 	db.mu.RLock()
 	defer db.mu.RUnlock()
 
@@ -237,9 +207,9 @@ func (db *DB) ListUsers(ctx context.Context) ([]*User, error) {
 	}
 	defer func() { _ = rows.Close() }()
 
-	var out []*User
+	var out []*users.User
 	for rows.Next() {
-		var u User
+		var u users.User
 		var lastLogin, lockedUntil, externalID, email, displayName sql.NullString
 		var createdAt, updatedAt string
 		if scanErr := rows.Scan(
@@ -272,12 +242,12 @@ func (db *DB) ListUsers(ctx context.Context) ([]*User, error) {
 }
 
 // UpdateUserRole sets a user's role. Refuses to demote the last admin
-// (returns ErrLastAdmin). The CHECK constraint on the role column would
+// (returns users.ErrLastAdmin). The CHECK constraint on the role column would
 // reject an invalid role at the DB layer too, but we surface a clean
 // Go-level error.
 func (db *DB) UpdateUserRole(ctx context.Context, username, role string) error {
 	if !roles.IsValid(role) {
-		return ErrInvalidRole
+		return users.ErrInvalidRole
 	}
 
 	db.mu.Lock()
@@ -299,7 +269,7 @@ func (db *DB) UpdateUserRole(ctx context.Context, username, role string) error {
 		`SELECT role FROM users WHERE username = ?`, username).Scan(&currentRole)
 	if scanErr != nil {
 		if errors.Is(scanErr, sql.ErrNoRows) {
-			return ErrUserNotFound
+			return users.ErrUserNotFound
 		}
 		return fmt.Errorf("failed to read current role: %w", scanErr)
 	}
@@ -312,7 +282,7 @@ func (db *DB) UpdateUserRole(ctx context.Context, username, role string) error {
 			return fmt.Errorf("failed to count admins: %w", cntErr)
 		}
 		if adminCount <= 1 {
-			return ErrLastAdmin
+			return users.ErrLastAdmin
 		}
 	}
 
@@ -325,7 +295,7 @@ func (db *DB) UpdateUserRole(ctx context.Context, username, role string) error {
 	}
 	rows, _ := res.RowsAffected()
 	if rows == 0 {
-		return ErrUserNotFound
+		return users.ErrUserNotFound
 	}
 
 	if commitErr := tx.Commit(); commitErr != nil {
@@ -335,7 +305,7 @@ func (db *DB) UpdateUserRole(ctx context.Context, username, role string) error {
 }
 
 // DeleteUser hard-deletes a user. Refuses to delete the last admin
-// (returns ErrLastAdmin). The FK cascade on api_tokens automatically
+// (returns users.ErrLastAdmin). The FK cascade on api_tokens automatically
 // purges the user's tokens; the user's authenticated sessions are
 // already revoked because the FK delete also removes the token_version
 // row they verify against (incrementing TokenVersion is unnecessary
@@ -362,7 +332,7 @@ func (db *DB) DeleteUser(ctx context.Context, username string) error {
 		`SELECT role FROM users WHERE username = ?`, username).Scan(&role)
 	if scanErr != nil {
 		if errors.Is(scanErr, sql.ErrNoRows) {
-			return ErrUserNotFound
+			return users.ErrUserNotFound
 		}
 		return fmt.Errorf("failed to read role: %w", scanErr)
 	}
@@ -375,7 +345,7 @@ func (db *DB) DeleteUser(ctx context.Context, username string) error {
 			return fmt.Errorf("failed to count admins: %w", cntErr)
 		}
 		if adminCount <= 1 {
-			return ErrLastAdmin
+			return users.ErrLastAdmin
 		}
 	}
 
@@ -385,7 +355,7 @@ func (db *DB) DeleteUser(ctx context.Context, username string) error {
 	}
 	rows, _ := res.RowsAffected()
 	if rows == 0 {
-		return ErrUserNotFound
+		return users.ErrUserNotFound
 	}
 
 	if commitErr := tx.Commit(); commitErr != nil {
@@ -417,7 +387,7 @@ func (db *DB) DeactivateUser(ctx context.Context, username string) error {
 	}
 	rows, _ := res.RowsAffected()
 	if rows == 0 {
-		return ErrUserNotFound
+		return users.ErrUserNotFound
 	}
 	return nil
 }

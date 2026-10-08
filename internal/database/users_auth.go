@@ -6,6 +6,8 @@ import (
 	"errors"
 	"fmt"
 	"time"
+
+	"github.com/MustardSeedNetworks/seed/internal/identity/users"
 )
 
 // RecordLoginSuccess records a successful login.
@@ -114,7 +116,7 @@ func (db *DB) IsUserLocked(ctx context.Context, username string) (bool, error) {
 
 // GetClientID returns the id of the client that owns a user. It is the
 // source of truth the session's client claim is minted from, so it never
-// substitutes a default: an unknown user is ErrUserNotFound, not tenant zero.
+// substitutes a default: an unknown user is users.ErrUserNotFound, not tenant zero.
 func (db *DB) GetClientID(ctx context.Context, username string) (string, error) {
 	db.mu.RLock()
 	defer db.mu.RUnlock()
@@ -129,7 +131,7 @@ func (db *DB) GetClientID(ctx context.Context, username string) (string, error) 
 	`, username).Scan(&clientID)
 
 	if errors.Is(err, sql.ErrNoRows) {
-		return "", ErrUserNotFound
+		return "", users.ErrUserNotFound
 	}
 	if err != nil {
 		return "", fmt.Errorf("failed to get client id: %w", err)
@@ -152,7 +154,7 @@ func (db *DB) GetTokenVersion(ctx context.Context, username string) (int, error)
 	`, username).Scan(&version)
 
 	if errors.Is(err, sql.ErrNoRows) {
-		return 0, ErrUserNotFound
+		return 0, users.ErrUserNotFound
 	}
 	if err != nil {
 		return 0, fmt.Errorf("failed to get token version: %w", err)

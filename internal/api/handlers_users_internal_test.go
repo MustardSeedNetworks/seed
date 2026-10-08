@@ -361,13 +361,62 @@ func TestUserHandlers_DomainErrorStatus(t *testing.T) {
 		wantCode int
 		wantErr  string
 	}{
-		{"create existing", http.MethodPost, "/users", `{"username":"admin","password":"GoodPassw0rd!ABC"}`, http.StatusConflict, "USER_EXISTS"},
-		{"get missing", http.MethodGet, "/users/ghost", "", http.StatusNotFound, ErrCodeNotFound},
-		{"password missing", http.MethodPatch, "/users/ghost", `{"password":"GoodPassw0rd!ABC"}`, http.StatusNotFound, ErrCodeNotFound},
-		{"role missing", http.MethodPatch, "/users/ghost", `{"role":"operator"}`, http.StatusNotFound, ErrCodeNotFound},
-		{"deactivate missing", http.MethodPatch, "/users/ghost", `{"isActive":false}`, http.StatusNotFound, ErrCodeNotFound},
-		{"demote last admin", http.MethodPatch, "/users/admin", `{"role":"operator"}`, http.StatusConflict, "LAST_ADMIN"},
-		{"delete missing", http.MethodDelete, "/users/ghost", "", http.StatusNotFound, ErrCodeNotFound},
+		{
+			"create existing",
+			http.MethodPost,
+			"/users",
+			`{"username":"admin","password":"GoodPassw0rd!ABC"}`,
+			http.StatusConflict,
+			"USER_EXISTS",
+		},
+		{
+			"get missing",
+			http.MethodGet,
+			"/users/ghost",
+			"",
+			http.StatusNotFound,
+			ErrCodeNotFound,
+		},
+		{
+			"password missing",
+			http.MethodPatch,
+			"/users/ghost",
+			`{"password":"GoodPassw0rd!ABC"}`,
+			http.StatusNotFound,
+			ErrCodeNotFound,
+		},
+		{
+			"role missing",
+			http.MethodPatch,
+			"/users/ghost",
+			`{"role":"operator"}`,
+			http.StatusNotFound,
+			ErrCodeNotFound,
+		},
+		{
+			"deactivate missing",
+			http.MethodPatch,
+			"/users/ghost",
+			`{"isActive":false}`,
+			http.StatusNotFound,
+			ErrCodeNotFound,
+		},
+		{
+			"demote last admin",
+			http.MethodPatch,
+			"/users/admin",
+			`{"role":"operator"}`,
+			http.StatusConflict,
+			"LAST_ADMIN",
+		},
+		{
+			"delete missing",
+			http.MethodDelete,
+			"/users/ghost",
+			"",
+			http.StatusNotFound,
+			ErrCodeNotFound,
+		},
 	}
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
