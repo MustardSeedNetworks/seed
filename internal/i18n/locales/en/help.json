@@ -31,7 +31,8 @@
     "logs": "Logs",
     "alerts": "Alerts",
     "pollingTargets": "Polling Targets",
-    "topology": "Topology"
+    "topology": "Topology",
+    "interfaces": "Interfaces"
   },
   "content": {
     "about": {
@@ -647,6 +648,23 @@
         "interface": {
           "term": "Interface",
           "description": "A device port with its status and any observed neighbors."
+        }
+      }
+    },
+    "interfaces": {
+      "description": "Compare every interface your polling targets report. Seed rates each interface from two consecutive polls and lists the highest error rate first. Sort by any rate column to find the busiest or noisiest ports.",
+      "terms": {
+        "errors": {
+          "term": "Errors",
+          "description": "Received and sent packets the interface could not deliver because they were damaged, per second."
+        },
+        "discards": {
+          "term": "Discards",
+          "description": "Packets the interface dropped though they were valid, usually because a buffer was full, per second."
+        },
+        "utilization": {
+          "term": "Utilization",
+          "description": "Each direction's traffic as a percentage of the line rate. Blank when the device reports no line rate."
         }
       }
     },

@@ -1297,6 +1297,13 @@ body:
     "path": "/api/v1/security/devices/subnets/pending"
   },
   {
+    "maxBodyBytes": 262144,
+    "methods": [
+      "GET"
+    ],
+    "path": "/api/v1/topology/interfaces"
+  },
+  {
     "feature": "live_telemetry",
     "maxBodyBytes": 262144,
     "methods": [

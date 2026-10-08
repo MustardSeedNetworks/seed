@@ -196,6 +196,7 @@ for (const route of [
   '/logs',
   '/polling-targets',
   '/topology',
+  '/interfaces',
   '/alerts',
 ]) {
   test(`accessible help and tooltip surfaces on ${route}`, async ({ page }) => {

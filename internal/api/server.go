@@ -75,6 +75,7 @@ import (
 	"github.com/MustardSeedNetworks/seed/internal/settings/persistence"
 	"github.com/MustardSeedNetworks/seed/internal/system"
 	"github.com/MustardSeedNetworks/seed/internal/timeseries/history"
+	"github.com/MustardSeedNetworks/seed/internal/timeseries/ifstats"
 	"github.com/MustardSeedNetworks/seed/internal/timeseries/retention"
 	"github.com/MustardSeedNetworks/seed/internal/topology"
 	"github.com/MustardSeedNetworks/seed/internal/wifi"
@@ -287,6 +288,7 @@ type Server struct {
 	historyQueries     *history.Service            // Probe/anomaly history read use-case (#175, ADR-0020)
 	vulnTriage         *vulntriage.Service         // Vulnerability-triage use-case (#899, ADR-0020)
 	flows              *flows.Service              // Flow top-N reads and flow settings use-case (ADR-0020)
+	interfaceStats     *ifstats.Service            // Interface rates read use-case (UI-SEED-21, #3191)
 	healthMonitoring   *monitoring.Service         // Health-monitoring use-case (ADR-0020)
 	healthSettings     *healthsettings.Service     // Health-checks settings use-case (ADR-0020)
 	engineStatus       *enginestatus.Service       // Engine-status use-case (ADR-0020)
@@ -440,22 +442,6 @@ func (s *Server) initTelemetryAndWiFiServices(cfg *config.Config) {
 	s.wifiMgr = wifi.NewManager(cfg.Interface.ResolvedWiFi())
 	s.wifiScan = wifi.NewScanner(cfg.Interface.ResolvedWiFi())
 	s.startWiFiHelper()
-}
-
-// initSettingsUseCases wires the ADR-0020 settings, profiles, network-IP, and
-// alert-rule use-cases. The composition root builds the adapters; api passes
-// its lazy db/manager accessors + live config. Split out of NewServer to
-// keep it under the funlen limit.
-func (s *Server) initSettingsUseCases() {
-	s.settingsStore = app.NewSettings(s.db, s.config)
-	s.settingsManagement = app.NewSettingsManagement(s.config, s.configPath,
-		func() *alertdelivery.Manager { return s.alertDelivery })
-	s.configBackups = app.NewConfigBackups(s.config, s.configPath,
-		func() *alertdelivery.Manager { return s.alertDelivery })
-	s.securitySettings = app.NewSecuritySettings(s.config, s.configPath, s.rogueDetector)
-	s.profiles = app.NewProfiles(s.db, s.config, s.configPath)
-	s.networkIP = app.NewNetworkIP(s.netManager, s.config, s.configPath)
-	s.alertRules = app.NewAlertRules(s.db)
 }
 
 // initCaptureServices constructs the services that perform live packet capture

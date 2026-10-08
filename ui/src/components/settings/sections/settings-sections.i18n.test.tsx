@@ -166,6 +166,7 @@ const SHARED_BY_DESIGN = new Set([
   'settings:alertEscalation.channelSyslog',
   // Spanish spells these the same way.
   'settings:users.providers.local',
+  'help:sections.interfaces',
   // The language picker names each language in its own language.
   'settings:appearance.languageEn',
   'settings:appearance.languageEs',

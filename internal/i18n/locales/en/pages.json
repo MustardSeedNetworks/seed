@@ -50,6 +50,31 @@
     "monitoring": "Monitoring",
     "reporting": "Reporting"
   },
+  "interfaces": {
+    "description": "Every interface your polling targets report, with its latest traffic, utilization, errors and discards.",
+    "label": "Interfaces",
+    "title": "Interfaces",
+    "count_one": "{{count}} interface",
+    "count_other": "{{count}} interfaces",
+    "empty": "No interfaces yet. Add a polling target; its interfaces appear after the first poll.",
+    "addTarget": "Add a polling target",
+    "noData": "No rates yet. A rate needs two polls, so rates appear one poll interval after the first.",
+    "noRateYet": "No rate yet",
+    "colInterface": "Interface",
+    "colTraffic": "Traffic in / out",
+    "colUtilization": "Utilization in / out",
+    "colErrors": "Errors",
+    "colDiscards": "Discards",
+    "status": {
+      "up": "Up",
+      "down": "Down",
+      "testing": "Testing",
+      "unknown": "Unknown",
+      "dormant": "Dormant",
+      "notPresent": "Not present",
+      "lowerLayerDown": "Lower layer down"
+    }
+  },
   "link": {
     "description": "Physical link state, cable diagnostics, and Wi-Fi association for the active interface.",
     "label": "Link",

@@ -14,6 +14,7 @@ import {
   Activity,
   BarChart3,
   Bell,
+  EthernetPort,
   Network,
   Route,
   ScrollText,
@@ -48,6 +49,9 @@ const PollingTargetsPage = lazy(() =>
 );
 const TopologyPage = lazy(() =>
   import('./pages/TopologyPage').then((m) => ({ default: m.TopologyPage })),
+);
+const InterfacesPage = lazy(() =>
+  import('./pages/InterfacesPage').then((m) => ({ default: m.InterfacesPage })),
 );
 const AlertsPage = lazy(() =>
   import('./pages/AlertsPage').then((m) => ({ default: m.AlertsPage })),
@@ -98,6 +102,7 @@ type PageI18nKey =
   | 'logs'
   | 'pollingTargets'
   | 'topology'
+  | 'interfaces'
   | 'alerts';
 
 /**
@@ -215,6 +220,15 @@ const staticPages: PageDef[] = [
     iconColorClass: 'text-module-security',
     component: TopologyPage,
     help: 'topology',
+  },
+  {
+    path: '/interfaces',
+    group: 'monitoring',
+    i18nKey: 'interfaces',
+    icon: EthernetPort,
+    iconColorClass: 'text-module-security',
+    component: InterfacesPage,
+    help: 'interfaces',
   },
   {
     path: '/alerts',

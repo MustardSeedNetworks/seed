@@ -28,7 +28,7 @@ func (s *Server) setupRoutes() {
 	s.setupReportingRoutes()
 	s.setupTopologyRoutes()
 	s.registerAll(s.alertRoutes(), s.vulnerabilityRoutes(), s.flowRoutes(),
-		s.jobsRoutes(), s.captureRoutes(), s.targetNetworkRoutes())
+		s.jobsRoutes(), s.captureRoutes(), s.targetNetworkRoutes(), s.interfaceStatsRoutes())
 	s.setupSSEAndStatic()
 }
 

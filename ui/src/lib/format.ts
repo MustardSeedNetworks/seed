@@ -67,3 +67,39 @@ export function formatBytes(
 
   return `${Number.parseFloat((bytes / k ** i).toFixed(decimals))} ${size}`;
 }
+
+/**
+ * Formats a bit rate with an SI prefix: 950 bps, 12.5 Mbps, 1.2 Gbps.
+ * Returns fallback for invalid or negative values.
+ */
+export function formatBitRate(bps: number | undefined | null, fallback: string = '-'): string {
+  if (!isValidNumber(bps) || bps < 0) {
+    return fallback;
+  }
+  const units = ['bps', 'kbps', 'Mbps', 'Gbps', 'Tbps'];
+  let value = bps;
+  let unit = 0;
+  while (value >= 1000 && unit < units.length - 1) {
+    value /= 1000;
+    unit++;
+  }
+  const digits = unit === 0 || value >= 100 ? 0 : 1;
+  return `${Number.parseFloat(value.toFixed(digits))} ${units[unit]}`;
+}
+
+/**
+ * Formats an events-per-second rate such as interface errors. A rate too small
+ * to show at two decimals still reads as non-zero.
+ */
+export function formatPerSecond(rate: number | undefined | null, fallback: string = '-'): string {
+  if (!isValidNumber(rate) || rate < 0) {
+    return fallback;
+  }
+  if (rate === 0) {
+    return '0/s';
+  }
+  if (rate < 0.01) {
+    return '<0.01/s';
+  }
+  return `${Number.parseFloat(rate.toFixed(2))}/s`;
+}

@@ -50,13 +50,14 @@ const pageFiles = {
   '/logs': 'LogsPage',
   '/polling-targets': 'PollingTargetsPage',
   '/topology': 'TopologyPage',
+  '/interfaces': 'InterfacesPage',
   '/alerts': 'AlertsPage',
 } as const;
 const sourceRoot = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
 
 describe('GUI help — current card coverage', () => {
-  it('keeps all 25 sections with translated bodies', () => {
-    expect(new Set(helpSections.map((section) => section.id)).size).toBe(25);
+  it('keeps all 26 sections with translated bodies', () => {
+    expect(new Set(helpSections.map((section) => section.id)).size).toBe(26);
     for (const language of ['en', 'es']) {
       const translate = i18next.getFixedT(language, ['help', 'cards', 'pages', 'common'] as const);
       for (const section of helpSections) {

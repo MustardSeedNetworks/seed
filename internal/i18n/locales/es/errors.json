@@ -268,5 +268,9 @@
     "invalidTarget": "Destino no válido: introduzca un nombre de host o una dirección IP",
     "ipRequired": "Se requiere una dirección IP",
     "portCount": "Introduzca de 1 a 100 puertos"
+  },
+  "interfaceStats": {
+    "storeUnavailable": "Las estadísticas de interfaces no están disponibles: la base de datos no está abierta",
+    "readFailed": "No se pudieron leer las estadísticas de interfaces"
   }
 }
