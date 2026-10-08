@@ -227,7 +227,7 @@ func (s *Server) handleTOTPSetup(w http.ResponseWriter, r *http.Request) {
 	}
 
 	username := usernameFromContext(r)
-	if username == "" || s.db() == nil {
+	if username == "" || !s.identityMFA.Available() {
 		sendErrorResponseWithDetails(w, logger, http.StatusUnauthorized,
 			ErrCodeUnauthorized, localizer.T("errors.auth.unauthorized"), "")
 		return
@@ -241,7 +241,7 @@ func (s *Server) handleTOTPSetup(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if storeErr := s.db().SetTOTPSecret(r.Context(), username, setup.Secret); storeErr != nil {
+	if storeErr := s.identityMFA.SetTOTPSecret(r.Context(), username, setup.Secret); storeErr != nil {
 		logger.ErrorContext(r.Context(), "Failed to persist TOTP secret", "error", storeErr, "event", "mfa_setup")
 		sendErrorResponseWithDetails(w, logger, http.StatusInternalServerError,
 			ErrCodeInternal, localizer.T("errors.api.internalError"), "")
@@ -274,7 +274,7 @@ func (s *Server) handleTOTPVerify(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	username := usernameFromContext(r)
-	if username == "" || s.db() == nil {
+	if username == "" || !s.identityMFA.Available() {
 		sendErrorResponseWithDetails(w, logger, http.StatusUnauthorized,
 			ErrCodeUnauthorized, localizer.T("errors.auth.unauthorized"), "")
 		return
@@ -293,7 +293,7 @@ func (s *Server) handleTOTPVerify(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	secret, _, getErr := s.db().GetTOTP(r.Context(), username)
+	secret, _, getErr := s.identityMFA.GetTOTP(r.Context(), username)
 	if getErr != nil || secret == "" {
 		recordMFAAuditEvent(r, username, mfaFactorTOTP, "no_secret")
 		sendErrorResponseWithDetails(w, logger, http.StatusBadRequest,
@@ -309,7 +309,7 @@ func (s *Server) handleTOTPVerify(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if enableErr := s.db().EnableTOTP(r.Context(), username); enableErr != nil {
+	if enableErr := s.identityMFA.EnableTOTP(r.Context(), username); enableErr != nil {
 		logger.ErrorContext(r.Context(), "Failed to enable TOTP", "error", enableErr, "event", "mfa_setup")
 		sendErrorResponseWithDetails(w, logger, http.StatusInternalServerError,
 			ErrCodeInternal, localizer.T("errors.api.internalError"), "")
@@ -344,7 +344,7 @@ func (s *Server) handleTOTPDisable(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	username := usernameFromContext(r)
-	if username == "" || s.db() == nil {
+	if username == "" || !s.identityMFA.Available() {
 		sendErrorResponseWithDetails(w, logger, http.StatusUnauthorized,
 			ErrCodeUnauthorized, localizer.T("errors.auth.unauthorized"), "")
 		return
@@ -369,7 +369,7 @@ func (s *Server) handleTOTPDisable(w http.ResponseWriter, r *http.Request) {
 		sendReauthRejected(w, logger, ErrCodePasswordInvalid, localizer.T("errors.auth.invalidCredentials"))
 		return
 	}
-	secret, enabled, getErr := s.db().GetTOTP(r.Context(), username)
+	secret, enabled, getErr := s.identityMFA.GetTOTP(r.Context(), username)
 	if getErr != nil || !enabled || secret == "" {
 		recordMFAAuditEvent(r, username, mfaFactorTOTP, "not_enrolled")
 		sendErrorResponseWithDetails(w, logger, http.StatusBadRequest,
@@ -384,7 +384,7 @@ func (s *Server) handleTOTPDisable(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if disableErr := s.db().DisableTOTP(r.Context(), username); disableErr != nil {
+	if disableErr := s.identityMFA.DisableTOTP(r.Context(), username); disableErr != nil {
 		logger.ErrorContext(r.Context(), "Failed to disable TOTP", "error", disableErr, "event", "mfa_disable")
 		sendErrorResponseWithDetails(w, logger, http.StatusInternalServerError,
 			ErrCodeInternal, localizer.T("errors.api.internalError"), "")
@@ -444,13 +444,13 @@ func (s *Server) handleLoginTOTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if s.db() == nil {
+	if !s.identityMFA.Available() {
 		sendErrorResponseWithDetails(w, logger, http.StatusInternalServerError,
 			ErrCodeInternal, localizer.T("errors.api.internalError"), "")
 		return
 	}
 
-	secret, enabled, getErr := s.db().GetTOTP(r.Context(), username)
+	secret, enabled, getErr := s.identityMFA.GetTOTP(r.Context(), username)
 	if getErr != nil || !enabled || secret == "" {
 		recordMFAAuditEvent(r, username, mfaFactorTOTP, "not_enrolled")
 		sendErrorResponseWithDetails(w, logger, http.StatusUnauthorized,
@@ -551,18 +551,18 @@ func (s *webAuthnSessionStore) Take(
 var webAuthnSessions = newWebAuthnSessionStore() //nolint:gochecknoglobals // process-wide cache
 
 // loadWebAuthnUser builds a *auth.WebAuthnUser for the given username
-// by reading the row + their stored credentials out of the database.
+// through the users use-case and the MFA store.
 func (s *Server) loadWebAuthnUser(
 	ctx context.Context, username string,
 ) (*auth.WebAuthnUser, *users.User, error) {
-	if s.db() == nil {
+	if !s.identityMFA.Available() {
 		return nil, nil, errors.New("database not available")
 	}
-	user, err := s.db().GetUser(ctx, username)
+	user, err := s.identityUsers.Get(ctx, username)
 	if err != nil {
 		return nil, nil, err
 	}
-	creds, err := s.db().ListWebAuthnCredentials(ctx, user.ID)
+	creds, err := s.identityMFA.ListWebAuthnCredentials(ctx, user.ID)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -668,7 +668,7 @@ func (s *Server) handleWebAuthnRegisterFinish(w http.ResponseWriter, r *http.Req
 		AttestationType: cred.AttestationType,
 		AAGUID:          cred.Authenticator.AAGUID,
 	}
-	if _, addErr := s.db().AddWebAuthnCredential(r.Context(), dbUser.ID, dbCred); addErr != nil {
+	if _, addErr := s.identityMFA.AddWebAuthnCredential(r.Context(), dbUser.ID, dbCred); addErr != nil {
 		logger.ErrorContext(r.Context(), "Failed to persist WebAuthn credential", "error", addErr)
 		sendErrorResponseWithDetails(w, logger, http.StatusInternalServerError,
 			ErrCodeInternal, localizer.T("errors.api.internalError"), "")
@@ -789,7 +789,7 @@ func (s *Server) completeWebAuthnLogin(
 ) {
 	logger := logging.FromContext(r.Context())
 	localizer := i18n.FromRequest(r)
-	if updErr := s.db().UpdateWebAuthnSignCount(
+	if updErr := s.identityMFA.UpdateWebAuthnSignCount(
 		r.Context(), cred.ID, cred.Authenticator.SignCount,
 	); updErr != nil {
 		logger.ErrorContext(r.Context(), "Failed to update WebAuthn sign count",
@@ -835,16 +835,16 @@ func (s *Server) handleMFAStatus(w http.ResponseWriter, r *http.Request) {
 	localizer := i18n.FromRequest(r)
 
 	username := usernameFromContext(r)
-	if username == "" || s.db() == nil {
+	if username == "" || !s.identityMFA.Available() {
 		sendErrorResponseWithDetails(w, logger, http.StatusUnauthorized,
 			ErrCodeUnauthorized, localizer.T("errors.auth.unauthorized"), "")
 		return
 	}
-	_, totpEnabled, _ := s.db().GetTOTP(r.Context(), username)
+	_, totpEnabled, _ := s.identityMFA.GetTOTP(r.Context(), username)
 
 	var credCount int
-	if user, err := s.db().GetUser(r.Context(), username); err == nil {
-		if creds, listErr := s.db().ListWebAuthnCredentials(r.Context(), user.ID); listErr == nil {
+	if user, err := s.identityUsers.Get(r.Context(), username); err == nil {
+		if creds, listErr := s.identityMFA.ListWebAuthnCredentials(r.Context(), user.ID); listErr == nil {
 			credCount = len(creds)
 		}
 	}

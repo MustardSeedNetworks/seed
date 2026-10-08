@@ -47,6 +47,7 @@ import (
 	"github.com/MustardSeedNetworks/seed/internal/flows"
 	"github.com/MustardSeedNetworks/seed/internal/health/monitoring"
 	healthsettings "github.com/MustardSeedNetworks/seed/internal/health/settings"
+	"github.com/MustardSeedNetworks/seed/internal/identity/mfa"
 	ssosync "github.com/MustardSeedNetworks/seed/internal/identity/oauth"
 	"github.com/MustardSeedNetworks/seed/internal/identity/tokens"
 	"github.com/MustardSeedNetworks/seed/internal/identity/users"
@@ -285,6 +286,7 @@ type Server struct {
 	identityUsers      *users.Service              // User-management use-case (ADR-0020, ADR-0024)
 	identityTokens     *tokens.Service             // PAT mint/list/revoke use-case (ADR-0020, ADR-0024)
 	identityOAuth      *ssosync.Service            // SSO identity-sync use-case (ADR-0020, ADR-0024)
+	identityMFA        mfa.Store                   // TOTP + WebAuthn factor store (ADR-0024)
 	tlsFingerprint     tlsFingerprintCache         // Cached SHA-256 fingerprint of the active TLS cert, exposed via /__version
 }
 
@@ -817,12 +819,6 @@ func (s *Server) rescheduleProbeEngine(ctx context.Context) error {
 	return s.probeEngine.Reschedule(ctx)
 }
 
-// initUpdateUseCases wires the update-lifecycle use-case (ADR-0020) from the
-// composition root over the server's lazy accessor for the update service, so
-// a nil or later-set service (the test harness) is honored.
-func (s *Server) initUpdateUseCases() {
-}
-
 // initEngineUseCases wires the engine-status use-case (ADR-0020) from the
 // composition root over the server's lazy accessor for the engine registry,
 // so a nil or later-set registry (the api test harness) is honored.
@@ -831,23 +827,23 @@ func (s *Server) initEngineUseCases() {
 }
 
 // initIdentityUseCases wires the identity use-cases (ADR-0020, ADR-0024) from
-// the composition root over the server's lazy accessors for the database, the
-// token repository, and the license manager, so a nil or later-set collaborator
-// (the api test harness) is honored.
+// the composition root over the server's lazy accessors for the database and
+// the license manager, so a nil or later-set collaborator (the api test
+// harness) is honored.
 func (s *Server) initIdentityUseCases() {
 	s.identityUsers = app.NewIdentityUsers(s.db)
 	s.identityTokens = app.NewIdentityTokens(s.db, s.licenseManager)
 	s.identityOAuth = app.NewIdentityOAuth(s.db)
+	s.identityMFA = app.NewMFAStore(s.db)
 }
 
 // initUseCases wires the ADR-0020 application use-cases that depend on the
-// discovery components existing: troubleshooting + discovery + health + update +
+// discovery components existing: troubleshooting + discovery + health +
 // identity + engine-status.
 func (s *Server) initUseCases() {
 	s.initWiFiUseCases()
 	s.initDiscoveryUseCases()
 	s.initHealthUseCases()
-	s.initUpdateUseCases()
 	s.initEngineUseCases()
 	s.initIdentityUseCases()
 }
