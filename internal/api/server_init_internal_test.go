@@ -16,7 +16,8 @@ import (
 // the retention engine and SNMP poller exist.
 func TestNewServerWiresTheDatabaseServices(t *testing.T) {
 	db := newTestDB(t)
-	cfg := testutil.NewConfigBuilder().WithAuth("admin", "$2a$10$abcdefghijklmnopqrstuuSq0wbGu2yQn6E0pE0Qb3PcJ2nqfhG5q").Build()
+	const adminHash = "$2a$10$abcdefghijklmnopqrstuuSq0wbGu2yQn6E0pE0Qb3PcJ2nqfhG5q"
+	cfg := testutil.NewConfigBuilder().WithAuth("admin", adminHash).Build()
 	cfg.Database.RetentionDays = 0
 
 	s := NewServer(cfg, filepath.Join(t.TempDir(), "seed.json"), "",

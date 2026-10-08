@@ -12,7 +12,7 @@ import (
 // implement the retention.RollupSource port (internal/timeseries/retention)
 // — the engine there orchestrates cadence; these adapters own the table
 // layout and SQL. Wired into the engine at the composition root
-// (internal/api initRetentionEngine).
+// (internal/app NewEnginePersistence).
 
 // hourFormat / dayFormat match the SQLite strftime forms used in the rollup
 // SQL. Rollup buckets are stored as ISO-8601 strings truncated to the hour or

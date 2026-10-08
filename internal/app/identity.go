@@ -14,6 +14,7 @@ package app
 import (
 	"context"
 
+	"github.com/MustardSeedNetworks/seed/internal/auth"
 	"github.com/MustardSeedNetworks/seed/internal/database"
 	ssosync "github.com/MustardSeedNetworks/seed/internal/identity/oauth"
 	"github.com/MustardSeedNetworks/seed/internal/identity/tokens"
@@ -47,6 +48,18 @@ func NewIdentityTokens(
 // (the pre-strangle "User store unavailable" redirect path).
 func NewIdentityOAuth(db func() *database.DB) *ssosync.Service {
 	return ssosync.NewService(dbSSOAdapter{db: db})
+}
+
+// AuthUserStore is the login-path user store, plus the startup migration of the
+// config file's admin into the users table.
+type AuthUserStore interface {
+	auth.UserStore
+	MigrateUserFromConfig(ctx context.Context, username, passwordHash string) error
+}
+
+// NewAuthUserStore builds the auth manager's user store over db.
+func NewAuthUserStore(db *database.DB) AuthUserStore {
+	return database.NewUserStoreAdapter(db)
 }
 
 // ── users adapter ────────────────────────────────────────────────────────────
