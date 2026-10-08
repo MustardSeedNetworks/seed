@@ -746,6 +746,12 @@
       "PathMonitorCard": {
         "description": "Trace a destination every second until you stop it. Loss on one hop that carries on to every later hop is the fault; loss on a single hop only is a router that answers traces slowly. Two addresses on one hop mean the path is load-balanced."
       },
+      "MultiPathCard": {
+        "description": "Trace a destination eight times, each as a different flow. More than one route means a router on the way load-balances (ECMP or SD-WAN), so one trace can look healthy while connections on another route are slow. Look at the hop where the routes split."
+      },
+      "PathMTUCard": {
+        "description": "Find the largest packet that reaches a destination unfragmented. Below the local MTU means a tunnel or VPN on the way. When large packets vanish without an ICMP reply, the result is a lower bound and the path is a black hole for large transfers."
+      },
       "NetworkDiscoveryCard": {
         "description": "Scan configured local networks and inspect discovered devices, addresses and advertised services."
       },

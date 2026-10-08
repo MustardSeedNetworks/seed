@@ -883,5 +883,49 @@
     "colBest": "Mejor",
     "colWorst": "Peor",
     "colJitter": "Jitter"
+  },
+  "pathCheck": {
+    "target": "Destino",
+    "targetPlaceholder": "Dirección IP o nombre de host",
+    "starting": "Iniciando…",
+    "stop": "Detener",
+    "stopping": "Deteniendo…",
+    "stopFailed": "La comprobación no se detuvo. Inténtelo de nuevo.",
+    "readOnly": "Ejecutar una comprobación de ruta requiere el rol de operador."
+  },
+  "multiPath": {
+    "title": "Multirruta",
+    "description": "Traza un destino varias veces, cada una como un flujo distinto, para encontrar rutas balanceadas que una sola traza no ve.",
+    "start": "Buscar rutas",
+    "running": "Trazando las rutas a {{target}}…",
+    "failed": "La comprobación multirruta no se ejecutó.",
+    "noRoute_one": "Ningún salto respondió en {{count}} traza.",
+    "noRoute_other": "Ningún salto respondió en {{count}} trazas.",
+    "oneRoute_one": "Una ruta a {{target}} en {{count}} traza.",
+    "oneRoute_other": "Una ruta a {{target}} en {{count}} trazas.",
+    "routes_one": "{{count}} ruta a {{target}}.",
+    "routes_other": "{{count}} rutas a {{target}}. Se separan en el salto {{ttl}}.",
+    "route_one": "Ruta {{number}}: {{seen}} de {{count}} traza",
+    "route_other": "Ruta {{number}}: {{seen}} de {{count}} trazas",
+    "notReached": "no llegó al destino"
+  },
+  "pathMtu": {
+    "title": "MTU de la ruta",
+    "description": "Encuentra el paquete más grande que llega a un destino sin fragmentarse.",
+    "start": "Medir",
+    "running": "Midiendo la MTU de la ruta a {{target}}…",
+    "failed": "La comprobación de MTU de la ruta no se ejecutó.",
+    "atLeast": "Al menos {{mtu}}",
+    "bytes": "bytes",
+    "verdict": {
+      "full": "Toda la ruta admite los {{local}} bytes del enlace local.",
+      "ceiling": "Todos los saltos admiten el tamaño más grande que se prueba.",
+      "smaller": "Menor que los {{local}} bytes del enlace local: un salto intermedio, a menudo un túnel o una VPN, admite menos.",
+      "icmp_filtered": "Los paquetes más grandes desaparecen sin respuesta ICMP. Un salto los descarta en silencio, lo que detiene las transferencias grandes mientras el ping funciona.",
+      "unreachable": "No llegó nada de ningún tamaño. El destino no respondió.",
+      "incomplete": "Se detuvo antes de terminar la búsqueda."
+    },
+    "probes_one": "{{count}} sonda enviada a {{target}}",
+    "probes_other": "{{count}} sondas enviadas a {{target}}"
   }
 }

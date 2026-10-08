@@ -74,6 +74,24 @@ export const reportingSections: HelpSection[] = [
         kind: 'terms',
         items: [
           {
+            term: 'cards:multiPath.title',
+            description: 'content.cardHelp.MultiPathCard.description',
+          },
+        ],
+      },
+      {
+        kind: 'terms',
+        items: [
+          {
+            term: 'cards:pathMtu.title',
+            description: 'content.cardHelp.PathMTUCard.description',
+          },
+        ],
+      },
+      {
+        kind: 'terms',
+        items: [
+          {
             term: 'cards:discovery.title',
             description: 'content.cardHelp.NetworkDiscoveryCard.description',
           },

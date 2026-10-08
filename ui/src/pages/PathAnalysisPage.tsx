@@ -1,6 +1,8 @@
+import { MultiPathCard } from '../components/cards/MultiPathCard';
 import { NetworkDiscoveryCard } from '../components/cards/NetworkDiscoveryCard';
 import { PathDiscoveryCard } from '../components/cards/PathDiscoveryCard';
 import { PathMonitorCard } from '../components/cards/PathMonitorCard';
+import { PathMTUCard } from '../components/cards/PathMTUCard';
 import { PathAnalysisPreview } from '../components/previews/PathAnalysisPreview';
 import { GatedPreview } from '../components/ui/GatedPreview';
 import { useAppContext } from '../contexts/AppContext';
@@ -35,6 +37,8 @@ export function PathAnalysisPage() {
               linkDown={!isWifi && cards.link?.linkUp === false}
               subscribe={registerPathMonitorHandler}
             />
+            <MultiPathCard />
+            <PathMTUCard />
           </>
         )}
         {/* The card renders with discovery switched off as well: hiding it was
