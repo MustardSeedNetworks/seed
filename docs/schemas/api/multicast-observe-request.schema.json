@@ -1,0 +1,24 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/MustardSeedNetworks/seed/main/docs/schemas/api/multicast-observe-request.schema.json",
+  "$ref": "#/$defs/ObserveRequest",
+  "$defs": {
+    "ObserveRequest": {
+      "properties": {
+        "interface": {
+          "type": "string"
+        },
+        "durationSeconds": {
+          "type": "integer"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "interface"
+      ]
+    }
+  },
+  "title": "ObserveRequest",
+  "description": "ObserveRequest — generated from the Go struct in internal/api; refresh with `make schema` after struct changes."
+}

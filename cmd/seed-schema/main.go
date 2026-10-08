@@ -256,11 +256,13 @@ func schemaTargets() []schemaTarget {
 		// and the handler serves this struct verbatim.
 		{&bonjour.BrowseResult{}, "bonjour-browse-response.schema.json"},
 
-		// #399's multicast listen, a jobs-spine kind: the request is the kind's
-		// params and the result is the job's result. Registered as the
+		// #399's multicast listen and observation, jobs-spine kinds: the request is
+		// the kind's params and the result is the job's result. Registered as the
 		// multicast package's own types for the same reason as the browse.
 		{&multicast.ListenRequest{}, "multicast-listen-request.schema.json"},
 		{&multicast.ListenResult{}, "multicast-listen-response.schema.json"},
+		{&multicast.ObserveRequest{}, "multicast-observe-request.schema.json"},
+		{&multicast.ObserveResult{}, "multicast-observe-response.schema.json"},
 
 		// #400's DSCP preservation check, three jobs-spine kinds (one per host,
 		// or both on one host), registered as the qos package's own types like
