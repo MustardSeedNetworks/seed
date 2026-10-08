@@ -119,7 +119,7 @@ describe('DashboardPage', () => {
   });
 
   it('keeps the draft and says why when the server refuses it', async () => {
-    store.refuse = 'widget "link" appears twice';
+    store.refuse = 'widget 2 repeats widget 1';
     const user = userEvent.setup();
     render(<DashboardPage />);
     await user.click(await screen.findByTestId('dashboard-customize'));
@@ -127,7 +127,7 @@ describe('DashboardPage', () => {
     await user.click(screen.getByTestId('dashboard-save'));
 
     expect(await screen.findByTestId('dashboard-save-error')).toHaveTextContent(
-      'Not saved: widget "link" appears twice',
+      'Not saved: widget 2 repeats widget 1',
     );
     expect(screen.getByTestId('dashboard-editor')).toBeInTheDocument();
     expect(shown()).toEqual(['link', 'gateway', 'network']);

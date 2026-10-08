@@ -70,19 +70,21 @@ var dashboardWidgetID = regexp.MustCompile(`^[a-z][a-zA-Z0-9]{0,31}$`)
 
 // ValidateDashboard checks a layout's shape: at most MaxDashboardWidgets ids,
 // each well formed and none repeated. Order is the layout, so it is kept.
+// A reason names widgets by position, never by id: it reaches the error log,
+// and the caller already holds the layout it sent.
 func ValidateDashboard(widgets []string) error {
 	if len(widgets) > MaxDashboardWidgets {
 		return fmt.Errorf("%w: %d widgets, at most %d", ErrInvalidDashboard, len(widgets), MaxDashboardWidgets)
 	}
-	seen := make(map[string]bool, len(widgets))
-	for _, id := range widgets {
+	seen := make(map[string]int, len(widgets))
+	for i, id := range widgets {
 		if !dashboardWidgetID.MatchString(id) {
-			return fmt.Errorf("%w: widget id %q is not a widget name", ErrInvalidDashboard, id)
+			return fmt.Errorf("%w: widget %d is not a widget name", ErrInvalidDashboard, i+1)
 		}
-		if seen[id] {
-			return fmt.Errorf("%w: widget %q appears twice", ErrInvalidDashboard, id)
+		if first, ok := seen[id]; ok {
+			return fmt.Errorf("%w: widget %d repeats widget %d", ErrInvalidDashboard, i+1, first)
 		}
-		seen[id] = true
+		seen[id] = i + 1
 	}
 	return nil
 }

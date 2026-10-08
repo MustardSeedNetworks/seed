@@ -82,7 +82,7 @@ func TestMyDashboard_Refusals(t *testing.T) {
 		{"unknown field", authedRequest(t, s, http.MethodPut, myDashboardPath, "viewer",
 			`{"widgets":["link"],"owner":"admin"}`), http.StatusBadRequest, ""},
 		{"repeated widget", authedRequest(t, s, http.MethodPut, myDashboardPath, "viewer",
-			`{"widgets":["link","link"]}`), http.StatusBadRequest, `widget "link" appears twice`},
+			`{"widgets":["link","link"]}`), http.StatusBadRequest, "widget 2 repeats widget 1"},
 		{"malformed id", authedRequest(t, s, http.MethodPut, myDashboardPath, "viewer",
 			`{"widgets":["<b>"]}`), http.StatusBadRequest, "is not a widget name"},
 	}
