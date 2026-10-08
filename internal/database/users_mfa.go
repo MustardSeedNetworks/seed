@@ -12,27 +12,9 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/MustardSeedNetworks/seed/internal/identity/mfa"
 	"github.com/MustardSeedNetworks/seed/internal/identity/users"
 )
-
-// ErrCredentialNotFound is returned when a WebAuthn credential lookup
-// finds no matching row.
-var ErrCredentialNotFound = errors.New("webauthn credential not found")
-
-// WebAuthnCredential is the on-disk representation of a single
-// registered authenticator. A user may have multiple of these.
-type WebAuthnCredential struct {
-	ID              int64
-	UserID          int64
-	CredentialID    []byte // raw credential ID bytes (NOT base64-encoded)
-	PublicKey       []byte // COSE-encoded public key from the authenticator
-	SignCount       uint32
-	AttestationType string
-	Transports      string // comma-joined transport hints ("usb,nfc",...)
-	AAGUID          []byte
-	CreatedAt       time.Time
-	LastUsedAt      *time.Time
-}
 
 // SetTOTPSecret stores a candidate TOTP secret for the user but leaves
 // totp_enabled = 0. The two-step "setup then verify" enrolment lives in
@@ -136,7 +118,7 @@ func (db *DB) GetTOTP(ctx context.Context, username string) (string, bool, error
 // AddWebAuthnCredential inserts a freshly registered authenticator for
 // the given user. Returns the assigned row ID.
 func (db *DB) AddWebAuthnCredential(
-	ctx context.Context, userID int64, cred WebAuthnCredential,
+	ctx context.Context, userID int64, cred mfa.WebAuthnCredential,
 ) (int64, error) {
 	db.mu.Lock()
 	defer db.mu.Unlock()
@@ -165,7 +147,7 @@ func (db *DB) AddWebAuthnCredential(
 // given user. The order is by creation time ascending.
 func (db *DB) ListWebAuthnCredentials(
 	ctx context.Context, userID int64,
-) ([]WebAuthnCredential, error) {
+) ([]mfa.WebAuthnCredential, error) {
 	db.mu.RLock()
 	defer db.mu.RUnlock()
 	if db.closed {
@@ -184,10 +166,10 @@ func (db *DB) ListWebAuthnCredentials(
 	}
 	defer func() { _ = rows.Close() }()
 
-	var out []WebAuthnCredential
+	var out []mfa.WebAuthnCredential
 	for rows.Next() {
 		var (
-			c          WebAuthnCredential
+			c          mfa.WebAuthnCredential
 			signCount  int64
 			attest     sql.NullString
 			transports sql.NullString
@@ -248,31 +230,7 @@ func (db *DB) UpdateWebAuthnSignCount(
 	}
 	rows, _ := res.RowsAffected()
 	if rows == 0 {
-		return ErrCredentialNotFound
-	}
-	return nil
-}
-
-// DeleteWebAuthnCredential removes a credential by its database ID,
-// scoped to the owning user to prevent cross-user deletion.
-func (db *DB) DeleteWebAuthnCredential(
-	ctx context.Context, userID, credentialDBID int64,
-) error {
-	db.mu.Lock()
-	defer db.mu.Unlock()
-	if db.closed {
-		return errors.New("database is closed")
-	}
-
-	res, err := db.writeConn.ExecContext(ctx, `
-		DELETE FROM webauthn_credentials WHERE id = ? AND user_id = ?
-	`, credentialDBID, userID)
-	if err != nil {
-		return fmt.Errorf("delete webauthn credential: %w", err)
-	}
-	rows, _ := res.RowsAffected()
-	if rows == 0 {
-		return ErrCredentialNotFound
+		return mfa.ErrCredentialNotFound
 	}
 	return nil
 }
