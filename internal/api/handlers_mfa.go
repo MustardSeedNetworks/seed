@@ -34,6 +34,7 @@ import (
 	"github.com/MustardSeedNetworks/seed/internal/auth"
 	"github.com/MustardSeedNetworks/seed/internal/database"
 	"github.com/MustardSeedNetworks/seed/internal/i18n"
+	"github.com/MustardSeedNetworks/seed/internal/identity/users"
 	"github.com/MustardSeedNetworks/seed/internal/logging"
 )
 
@@ -553,7 +554,7 @@ var webAuthnSessions = newWebAuthnSessionStore() //nolint:gochecknoglobals // pr
 // by reading the row + their stored credentials out of the database.
 func (s *Server) loadWebAuthnUser(
 	ctx context.Context, username string,
-) (*auth.WebAuthnUser, *database.User, error) {
+) (*auth.WebAuthnUser, *users.User, error) {
 	if s.db() == nil {
 		return nil, nil, errors.New("database not available")
 	}

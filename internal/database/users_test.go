@@ -8,6 +8,7 @@ import (
 
 	"github.com/MustardSeedNetworks/seed/internal/database"
 	"github.com/MustardSeedNetworks/seed/internal/database/dbtest"
+	"github.com/MustardSeedNetworks/seed/internal/identity/users"
 )
 
 // userCRUDTestDB holds test dependencies for user CRUD tests.
@@ -34,7 +35,7 @@ func setupUserCRUDTest(t *testing.T) *userCRUDTestDB {
 }
 
 // createTestUser creates a user and fails the test if an error occurs.
-func (uct *userCRUDTestDB) createTestUser(t *testing.T, username, passwordHash, role string) *database.User {
+func (uct *userCRUDTestDB) createTestUser(t *testing.T, username, passwordHash, role string) *users.User {
 	t.Helper()
 
 	user, err := uct.db.CreateUser(uct.ctx, username, passwordHash, role)
@@ -45,7 +46,7 @@ func (uct *userCRUDTestDB) createTestUser(t *testing.T, username, passwordHash, 
 }
 
 // getTestUser retrieves a user and fails the test if an error occurs.
-func (uct *userCRUDTestDB) getTestUser(t *testing.T, username string) *database.User {
+func (uct *userCRUDTestDB) getTestUser(t *testing.T, username string) *users.User {
 	t.Helper()
 
 	user, err := uct.db.GetUser(uct.ctx, username)
@@ -56,7 +57,7 @@ func (uct *userCRUDTestDB) getTestUser(t *testing.T, username string) *database.
 }
 
 // assertUserFields validates common user field expectations.
-func assertUserFields(t *testing.T, user *database.User, expectedUsername, expectedRole string) {
+func assertUserFields(t *testing.T, user *users.User, expectedUsername, expectedRole string) {
 	t.Helper()
 
 	if user.Username != expectedUsername {
@@ -68,7 +69,7 @@ func assertUserFields(t *testing.T, user *database.User, expectedUsername, expec
 }
 
 // assertUserActive checks that a user is active with expected token version.
-func assertUserActive(t *testing.T, user *database.User, expectedTokenVersion int) {
+func assertUserActive(t *testing.T, user *users.User, expectedTokenVersion int) {
 	t.Helper()
 
 	if !user.IsActive {
@@ -98,7 +99,7 @@ func assertTokenVersion(t *testing.T, got, want int) {
 }
 
 // assertPasswordHash checks that the password hash matches expected.
-func assertPasswordHash(t *testing.T, user *database.User, expected string) {
+func assertPasswordHash(t *testing.T, user *users.User, expected string) {
 	t.Helper()
 
 	if user.PasswordHash != expected {
@@ -130,7 +131,7 @@ func TestUserCRUD(t *testing.T) {
 
 	t.Run("CreateDuplicateUser", func(t *testing.T) {
 		_, err := uct.db.CreateUser(uct.ctx, "admin", "$2a$10$anotherpassword", "admin")
-		assertExpectedError(t, err, database.ErrUserExists)
+		assertExpectedError(t, err, users.ErrUserExists)
 	})
 
 	t.Run("GetUser", func(t *testing.T) {
@@ -140,7 +141,7 @@ func TestUserCRUD(t *testing.T) {
 
 	t.Run("GetNonexistentUser", func(t *testing.T) {
 		_, err := uct.db.GetUser(uct.ctx, "nonexistent")
-		assertExpectedError(t, err, database.ErrUserNotFound)
+		assertExpectedError(t, err, users.ErrUserNotFound)
 	})
 
 	t.Run("UpdateUserPassword", func(t *testing.T) {
@@ -157,7 +158,7 @@ func TestUserCRUD(t *testing.T) {
 
 	t.Run("UpdateNonexistentUserPassword", func(t *testing.T) {
 		err := uct.db.UpdateUserPassword(uct.ctx, "nonexistent", "$2a$10$hash")
-		assertExpectedError(t, err, database.ErrUserNotFound)
+		assertExpectedError(t, err, users.ErrUserNotFound)
 	})
 
 	t.Run("GetUserCount", func(t *testing.T) {
@@ -360,7 +361,7 @@ func (mut *migrateUserTestDB) migrateUser(t *testing.T, username, passwordHash s
 }
 
 // getUser retrieves a user and fails the test if an error occurs.
-func (mut *migrateUserTestDB) getUser(t *testing.T, username string) *database.User {
+func (mut *migrateUserTestDB) getUser(t *testing.T, username string) *users.User {
 	t.Helper()
 
 	user, err := mut.db.GetUser(mut.ctx, username)

@@ -19,7 +19,6 @@ import (
 	"time"
 
 	"github.com/MustardSeedNetworks/seed/internal/auth"
-	"github.com/MustardSeedNetworks/seed/internal/database"
 	"github.com/MustardSeedNetworks/seed/internal/identity/roles"
 	"github.com/MustardSeedNetworks/seed/internal/identity/users"
 	"github.com/MustardSeedNetworks/seed/internal/logging"
@@ -192,7 +191,7 @@ func (s *Server) handleUserCreate(w http.ResponseWriter, r *http.Request) {
 		switch {
 		case errors.Is(err, users.ErrUnavailable):
 			writeError(w, r, http.StatusServiceUnavailable, ErrCodeServiceUnavail, "User store unavailable")
-		case errors.Is(err, database.ErrUserExists):
+		case errors.Is(err, users.ErrUserExists):
 			writeError(w, r, http.StatusConflict, "USER_EXISTS", "Username already in use")
 		default:
 			logging.FromContext(r.Context()).ErrorContext(r.Context(), "create user failed", "error", err)
@@ -224,7 +223,7 @@ func (s *Server) handleUserGet(w http.ResponseWriter, r *http.Request, target st
 		switch {
 		case errors.Is(err, users.ErrUnavailable):
 			writeError(w, r, http.StatusServiceUnavailable, ErrCodeServiceUnavail, "User store unavailable")
-		case errors.Is(err, database.ErrUserNotFound):
+		case errors.Is(err, users.ErrUserNotFound):
 			writeError(w, r, http.StatusNotFound, ErrCodeNotFound, "User not found")
 		default:
 			writeError(w, r, http.StatusInternalServerError, ErrCodeInternal, "Failed to fetch user")
@@ -312,7 +311,7 @@ func (s *Server) applyPasswordUpdate(
 		return false
 	}
 	if updErr := s.identityUsers.UpdatePassword(r.Context(), target, hash); updErr != nil {
-		if errors.Is(updErr, database.ErrUserNotFound) {
+		if errors.Is(updErr, users.ErrUserNotFound) {
 			writeError(w, r, http.StatusNotFound, ErrCodeNotFound, "User not found")
 			return false
 		}
@@ -335,9 +334,9 @@ func (s *Server) applyRoleUpdate(
 		return true
 	}
 	switch {
-	case errors.Is(err, database.ErrUserNotFound):
+	case errors.Is(err, users.ErrUserNotFound):
 		writeError(w, r, http.StatusNotFound, ErrCodeNotFound, "User not found")
-	case errors.Is(err, database.ErrLastAdmin):
+	case errors.Is(err, users.ErrLastAdmin):
 		writeError(w, r, http.StatusConflict, "LAST_ADMIN", "Cannot demote the last administrator")
 	default:
 		writeError(w, r, http.StatusInternalServerError, ErrCodeInternal, "Failed to update role")
@@ -354,7 +353,7 @@ func (s *Server) applyDeactivation(
 		return false
 	}
 	if err := s.identityUsers.Deactivate(r.Context(), target); err != nil {
-		if errors.Is(err, database.ErrUserNotFound) {
+		if errors.Is(err, users.ErrUserNotFound) {
 			writeError(w, r, http.StatusNotFound, ErrCodeNotFound, "User not found")
 			return false
 		}
@@ -377,9 +376,9 @@ func (s *Server) handleUserDelete(w http.ResponseWriter, r *http.Request, target
 		switch {
 		case errors.Is(err, users.ErrUnavailable):
 			writeError(w, r, http.StatusServiceUnavailable, ErrCodeServiceUnavail, "User store unavailable")
-		case errors.Is(err, database.ErrUserNotFound):
+		case errors.Is(err, users.ErrUserNotFound):
 			writeError(w, r, http.StatusNotFound, ErrCodeNotFound, "User not found")
-		case errors.Is(err, database.ErrLastAdmin):
+		case errors.Is(err, users.ErrLastAdmin):
 			writeError(w, r, http.StatusConflict, "LAST_ADMIN",
 				"Cannot delete the last administrator")
 		default:
@@ -587,7 +586,7 @@ func validateUsername(name string) error {
 	return nil
 }
 
-func toUserResponse(u *database.User) UserResponse {
+func toUserResponse(u *users.User) UserResponse {
 	out := UserResponse{
 		ID:           u.ID,
 		Username:     u.Username,

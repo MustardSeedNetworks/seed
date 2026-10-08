@@ -8,18 +8,19 @@ import (
 	"github.com/MustardSeedNetworks/seed/internal/database"
 	ssosync "github.com/MustardSeedNetworks/seed/internal/identity/oauth"
 	"github.com/MustardSeedNetworks/seed/internal/identity/roles"
+	"github.com/MustardSeedNetworks/seed/internal/identity/users"
 )
 
 // fakeRepo is a test double implementing ssosync.Repository.
 type fakeRepo struct {
 	available bool
-	user      *database.User
+	user      *users.User
 	err       error
 }
 
 func (f *fakeRepo) Available() bool { return f.available }
 
-func (f *fakeRepo) SyncUser(_ context.Context, _ database.SSOUserInput) (*database.User, error) {
+func (f *fakeRepo) SyncUser(_ context.Context, _ database.SSOUserInput) (*users.User, error) {
 	return f.user, f.err
 }
 
@@ -38,7 +39,7 @@ func TestService_UnavailableReturnsErrUnavailable(t *testing.T) {
 
 func TestService_HappySyncUser(t *testing.T) {
 	t.Parallel()
-	want := &database.User{Username: "google:sub-123", Role: roles.Admin}
+	want := &users.User{Username: "google:sub-123", Role: roles.Admin}
 	svc := ssosync.NewService(&fakeRepo{available: true, user: want})
 	got, err := svc.SyncUser(context.Background(), database.SSOUserInput{
 		Provider:   database.AuthProviderGoogle,

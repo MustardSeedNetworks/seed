@@ -9,17 +9,37 @@
 // nil database degrades every method to ErrUnavailable (the pre-strangle 503)
 // rather than panicking.
 //
-// Domain sentinels (database.ErrUserExists, database.ErrUserNotFound,
-// database.ErrLastAdmin) are NOT remapped here — they pass through verbatim so
-// handlers keep their existing [errors.Is] switches mapping to 409/404/etc.
+// The package also owns the user entity and its domain sentinels (ErrUserExists,
+// ErrUserNotFound, ErrLastAdmin): the database returns them and the use-case
+// passes them through verbatim, so handlers map them to 409/404 without
+// importing the database (seed#2750).
 package users
 
 import (
 	"context"
 	"errors"
-
-	"github.com/MustardSeedNetworks/seed/internal/database"
+	"time"
 )
+
+// User is a local or SSO account as the user store holds it.
+type User struct {
+	ID             int64
+	Username       string
+	PasswordHash   string
+	Role           string
+	IsActive       bool
+	LastLogin      *time.Time
+	FailedAttempts int
+	LockedUntil    *time.Time
+	TokenVersion   int
+	AuthProvider   string // 'local' | 'google' | 'microsoft' | 'github'
+	ExternalID     string // IdP subject claim (OIDC 'sub' / MS Graph 'id'); empty for local users
+	Email          string // display + cross-provider matching
+	DisplayName    string // optional human name returned by the IdP
+	ClientID       string // owning tenant; the session's client claim is minted from this
+	CreatedAt      time.Time
+	UpdatedAt      time.Time
+}
 
 // Sentinel errors, mapped by handlers to the pre-strangle HTTP responses.
 var (
@@ -28,20 +48,24 @@ var (
 	ErrUnavailable = errors.New("user store not available")
 )
 
+// Domain sentinels the user store returns; the use-case passes them through.
+var (
+	ErrUserNotFound = errors.New("user not found")
+	ErrUserExists   = errors.New("user already exists")
+	ErrInvalidRole  = errors.New("invalid role")
+	ErrLastAdmin    = errors.New("cannot demote or delete the last admin")
+)
+
 // Repository is the user-store surface the use-case drives, defined at the
 // consumer (ADR-0020) and satisfied by an adapter over *database.DB in
 // internal/app. Available reports whether a user store is wired (resolved per
 // call so the use-case can degrade gracefully); the remaining methods are only
 // invoked once availability is confirmed.
-//
-// The port returns *database.User directly (ADR-0024: thin CRUD stays thin;
-// no new domain DTO is introduced because it would be churn without a security
-// or clarity gain).
 type Repository interface {
 	Available() bool
-	List(ctx context.Context) ([]*database.User, error)
-	Create(ctx context.Context, username, hash, role string) (*database.User, error)
-	Get(ctx context.Context, username string) (*database.User, error)
+	List(ctx context.Context) ([]*User, error)
+	Create(ctx context.Context, username, hash, role string) (*User, error)
+	Get(ctx context.Context, username string) (*User, error)
 	UpdatePassword(ctx context.Context, username, hash string) error
 	UpdateRole(ctx context.Context, username, role string) error
 	Deactivate(ctx context.Context, username string) error
@@ -59,7 +83,7 @@ func NewService(repo Repository) *Service {
 }
 
 // List returns all users. Returns ErrUnavailable when the store is not wired.
-func (s *Service) List(ctx context.Context) ([]*database.User, error) {
+func (s *Service) List(ctx context.Context) ([]*User, error) {
 	if !s.repo.Available() {
 		return nil, ErrUnavailable
 	}
@@ -67,8 +91,8 @@ func (s *Service) List(ctx context.Context) ([]*database.User, error) {
 }
 
 // Create inserts a new user. Returns ErrUnavailable when the store is not
-// wired; domain errors (database.ErrUserExists) pass through verbatim.
-func (s *Service) Create(ctx context.Context, username, hash, role string) (*database.User, error) {
+// wired; domain errors (ErrUserExists) pass through verbatim.
+func (s *Service) Create(ctx context.Context, username, hash, role string) (*User, error) {
 	if !s.repo.Available() {
 		return nil, ErrUnavailable
 	}
@@ -76,8 +100,8 @@ func (s *Service) Create(ctx context.Context, username, hash, role string) (*dat
 }
 
 // Get returns a user by username. Returns ErrUnavailable when the store is not
-// wired; database.ErrUserNotFound passes through verbatim.
-func (s *Service) Get(ctx context.Context, username string) (*database.User, error) {
+// wired; ErrUserNotFound passes through verbatim.
+func (s *Service) Get(ctx context.Context, username string) (*User, error) {
 	if !s.repo.Available() {
 		return nil, ErrUnavailable
 	}
@@ -94,7 +118,7 @@ func (s *Service) UpdatePassword(ctx context.Context, username, hash string) err
 }
 
 // UpdateRole sets the user's role. Returns ErrUnavailable when the store is not
-// wired; database.ErrUserNotFound and database.ErrLastAdmin pass through.
+// wired; ErrUserNotFound and ErrLastAdmin pass through.
 func (s *Service) UpdateRole(ctx context.Context, username, role string) error {
 	if !s.repo.Available() {
 		return ErrUnavailable
@@ -103,7 +127,7 @@ func (s *Service) UpdateRole(ctx context.Context, username, role string) error {
 }
 
 // Deactivate marks the user inactive. Returns ErrUnavailable when the store is
-// not wired; database.ErrUserNotFound passes through verbatim.
+// not wired; ErrUserNotFound passes through verbatim.
 func (s *Service) Deactivate(ctx context.Context, username string) error {
 	if !s.repo.Available() {
 		return ErrUnavailable
@@ -112,7 +136,7 @@ func (s *Service) Deactivate(ctx context.Context, username string) error {
 }
 
 // Delete removes the user. Returns ErrUnavailable when the store is not wired;
-// database.ErrUserNotFound and database.ErrLastAdmin pass through verbatim.
+// ErrUserNotFound and ErrLastAdmin pass through verbatim.
 func (s *Service) Delete(ctx context.Context, username string) error {
 	if !s.repo.Available() {
 		return ErrUnavailable

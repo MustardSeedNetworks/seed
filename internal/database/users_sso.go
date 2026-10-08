@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/MustardSeedNetworks/seed/internal/identity/roles"
+	"github.com/MustardSeedNetworks/seed/internal/identity/users"
 )
 
 // SSOUserInput is the payload for UpsertSSOUser. The auth_provider +
@@ -31,7 +32,7 @@ type SSOUserInput struct {
 // users.username UNIQUE constraint applies to the entire users table).
 // SSO users never have a usable password_hash — we store a sentinel
 // value that bcrypt cannot match against any input.
-func (db *DB) UpsertSSOUser(ctx context.Context, in SSOUserInput) (*User, error) {
+func (db *DB) UpsertSSOUser(ctx context.Context, in SSOUserInput) (*users.User, error) {
 	if in.Provider == "" || in.ExternalID == "" {
 		return nil, errors.New("provider and external_id are required")
 	}
@@ -51,7 +52,7 @@ func (db *DB) UpsertSSOUser(ctx context.Context, in SSOUserInput) (*User, error)
 
 	// Fast path: look up by (provider, external_id).
 	existing, lookupErr := db.lookupSSOUserLocked(ctx, in.Provider, in.ExternalID)
-	if lookupErr != nil && !errors.Is(lookupErr, ErrUserNotFound) {
+	if lookupErr != nil && !errors.Is(lookupErr, users.ErrUserNotFound) {
 		return nil, lookupErr
 	}
 	if existing != nil {
@@ -100,7 +101,7 @@ func (db *DB) UpsertSSOUser(ctx context.Context, in SSOUserInput) (*User, error)
 	}
 	id, _ := res.LastInsertId()
 
-	return &User{
+	return &users.User{
 		ID:           id,
 		Username:     username,
 		PasswordHash: ssoSentinelHash,
@@ -118,8 +119,8 @@ func (db *DB) UpsertSSOUser(ctx context.Context, in SSOUserInput) (*User, error)
 
 // lookupSSOUserLocked finds a user by (provider, external_id). MUST be
 // called with db.mu held.
-func (db *DB) lookupSSOUserLocked(ctx context.Context, provider, externalID string) (*User, error) {
-	var u User
+func (db *DB) lookupSSOUserLocked(ctx context.Context, provider, externalID string) (*users.User, error) {
+	var u users.User
 	var lastLogin, lockedUntil, email, displayName sql.NullString
 	var createdAt, updatedAt string
 
@@ -137,7 +138,7 @@ func (db *DB) lookupSSOUserLocked(ctx context.Context, provider, externalID stri
 		&createdAt, &updatedAt,
 	)
 	if errors.Is(err, sql.ErrNoRows) {
-		return nil, ErrUserNotFound
+		return nil, users.ErrUserNotFound
 	}
 	if err != nil {
 		return nil, fmt.Errorf("failed to look up SSO user: %w", err)

@@ -18,6 +18,7 @@ import (
 	"errors"
 
 	"github.com/MustardSeedNetworks/seed/internal/database"
+	"github.com/MustardSeedNetworks/seed/internal/identity/users"
 )
 
 // Sentinel errors, mapped by handlers to the pre-strangle HTTP behavior.
@@ -33,7 +34,7 @@ var (
 // the IdP identity into the users table.
 type Repository interface {
 	Available() bool
-	SyncUser(ctx context.Context, in database.SSOUserInput) (*database.User, error)
+	SyncUser(ctx context.Context, in database.SSOUserInput) (*users.User, error)
 }
 
 // Service is the SSO identity-sync use-case.
@@ -49,7 +50,7 @@ func NewService(repo Repository) *Service {
 // SyncUser upserts the IdP-authenticated identity into the local user store.
 // Returns ErrUnavailable when the store is not wired; other errors from the
 // repository pass through verbatim.
-func (s *Service) SyncUser(ctx context.Context, in database.SSOUserInput) (*database.User, error) {
+func (s *Service) SyncUser(ctx context.Context, in database.SSOUserInput) (*users.User, error) {
 	if !s.repo.Available() {
 		return nil, ErrUnavailable
 	}

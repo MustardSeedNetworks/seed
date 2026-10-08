@@ -346,3 +346,108 @@ func TestDeleteUser_CascadesAPITokens(t *testing.T) {
 		t.Fatalf("re-insert token after cascade: %v", err)
 	}
 }
+
+// TestUserHandlers_DomainErrorStatus pins how each user-store sentinel maps to
+// a status and error code, so moving the sentinels between packages (seed#2750)
+// cannot silently turn a 404 or 409 into a 500.
+func TestUserHandlers_DomainErrorStatus(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name     string
+		method   string
+		path     string
+		body     string
+		wantCode int
+		wantErr  string
+	}{
+		{
+			"create existing",
+			http.MethodPost,
+			"/users",
+			`{"username":"admin","password":"GoodPassw0rd!ABC"}`,
+			http.StatusConflict,
+			"USER_EXISTS",
+		},
+		{
+			"get missing",
+			http.MethodGet,
+			"/users/ghost",
+			"",
+			http.StatusNotFound,
+			ErrCodeNotFound,
+		},
+		{
+			"password missing",
+			http.MethodPatch,
+			"/users/ghost",
+			`{"password":"GoodPassw0rd!ABC"}`,
+			http.StatusNotFound,
+			ErrCodeNotFound,
+		},
+		{
+			"role missing",
+			http.MethodPatch,
+			"/users/ghost",
+			`{"role":"operator"}`,
+			http.StatusNotFound,
+			ErrCodeNotFound,
+		},
+		{
+			"deactivate missing",
+			http.MethodPatch,
+			"/users/ghost",
+			`{"isActive":false}`,
+			http.StatusNotFound,
+			ErrCodeNotFound,
+		},
+		{
+			"demote last admin",
+			http.MethodPatch,
+			"/users/admin",
+			`{"role":"operator"}`,
+			http.StatusConflict,
+			"LAST_ADMIN",
+		},
+		{
+			"delete missing",
+			http.MethodDelete,
+			"/users/ghost",
+			"",
+			http.StatusNotFound,
+			ErrCodeNotFound,
+		},
+	}
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+			s, mgr := usersTestSetup(t)
+			if r := mgr.StartTrial(); !r.Success {
+				t.Fatalf("StartTrial: %s", r.Message)
+			}
+			var body []byte
+			if tc.body != "" {
+				body = []byte(tc.body)
+			}
+			req := newAuthedRequest(tc.method, APIVersionPrefix+tc.path, body, "admin")
+			w := httptest.NewRecorder()
+			if tc.path == "/users" {
+				s.handleUsers(w, req)
+			} else {
+				s.handleUserByName(w, req)
+			}
+			if w.Code != tc.wantCode {
+				t.Fatalf("status = %d, want %d; body=%s", w.Code, tc.wantCode, w.Body.String())
+			}
+			var got struct {
+				Code string `json:"code"`
+			}
+			if err := json.NewDecoder(w.Body).Decode(&got); err != nil {
+				t.Fatalf("decode: %v", err)
+			}
+			if got.Code != tc.wantErr {
+				t.Errorf("error code = %q, want %q", got.Code, tc.wantErr)
+			}
+		})
+	}
+}

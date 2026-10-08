@@ -11,6 +11,8 @@ import (
 	"errors"
 	"fmt"
 	"time"
+
+	"github.com/MustardSeedNetworks/seed/internal/identity/users"
 )
 
 // ErrCredentialNotFound is returned when a WebAuthn credential lookup
@@ -53,7 +55,7 @@ func (db *DB) SetTOTPSecret(ctx context.Context, username, secret string) error 
 	}
 	rows, _ := res.RowsAffected()
 	if rows == 0 {
-		return ErrUserNotFound
+		return users.ErrUserNotFound
 	}
 	return nil
 }
@@ -78,7 +80,7 @@ func (db *DB) EnableTOTP(ctx context.Context, username string) error {
 	}
 	rows, _ := res.RowsAffected()
 	if rows == 0 {
-		return ErrUserNotFound
+		return users.ErrUserNotFound
 	}
 	return nil
 }
@@ -102,7 +104,7 @@ func (db *DB) DisableTOTP(ctx context.Context, username string) error {
 	}
 	rows, _ := res.RowsAffected()
 	if rows == 0 {
-		return ErrUserNotFound
+		return users.ErrUserNotFound
 	}
 	return nil
 }
@@ -123,7 +125,7 @@ func (db *DB) GetTOTP(ctx context.Context, username string) (string, bool, error
 		SELECT totp_secret, totp_enabled FROM users WHERE username = ?
 	`, username).Scan(&sec, &en)
 	if errors.Is(scanErr, sql.ErrNoRows) {
-		return "", false, ErrUserNotFound
+		return "", false, users.ErrUserNotFound
 	}
 	if scanErr != nil {
 		return "", false, fmt.Errorf("get totp: %w", scanErr)

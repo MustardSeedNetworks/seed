@@ -5,7 +5,6 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/MustardSeedNetworks/seed/internal/database"
 	"github.com/MustardSeedNetworks/seed/internal/identity/roles"
 	"github.com/MustardSeedNetworks/seed/internal/identity/users"
 )
@@ -13,25 +12,25 @@ import (
 // fakeRepo is a test double implementing users.Repository.
 type fakeRepo struct {
 	available bool
-	user      *database.User
-	listUsers []*database.User
+	user      *users.User
+	listUsers []*users.User
 	err       error
 }
 
 func (f *fakeRepo) Available() bool { return f.available }
 
-func (f *fakeRepo) List(_ context.Context) ([]*database.User, error) {
+func (f *fakeRepo) List(_ context.Context) ([]*users.User, error) {
 	return f.listUsers, f.err
 }
 
-func (f *fakeRepo) Create(_ context.Context, username, _, role string) (*database.User, error) {
+func (f *fakeRepo) Create(_ context.Context, username, _, role string) (*users.User, error) {
 	if f.err != nil {
 		return nil, f.err
 	}
-	return &database.User{Username: username, Role: role}, nil
+	return &users.User{Username: username, Role: role}, nil
 }
 
-func (f *fakeRepo) Get(_ context.Context, _ string) (*database.User, error) {
+func (f *fakeRepo) Get(_ context.Context, _ string) (*users.User, error) {
 	return f.user, f.err
 }
 
@@ -71,11 +70,11 @@ func TestService_UnavailableReturnsErrUnavailable(t *testing.T) {
 func TestService_HappyPaths(t *testing.T) {
 	t.Parallel()
 	ctx := context.Background()
-	admin := &database.User{Username: "admin", Role: roles.Admin, IsActive: true}
+	admin := &users.User{Username: "admin", Role: roles.Admin, IsActive: true}
 
 	t.Run("List", func(t *testing.T) {
 		t.Parallel()
-		svc := users.NewService(&fakeRepo{available: true, listUsers: []*database.User{admin}})
+		svc := users.NewService(&fakeRepo{available: true, listUsers: []*users.User{admin}})
 		got, err := svc.List(ctx)
 		if err != nil {
 			t.Fatalf("unexpected error: %v", err)
@@ -139,9 +138,9 @@ func TestService_DomainSentinelsPassThrough(t *testing.T) {
 		err     error
 		wantErr error
 	}{
-		{"ErrUserExists", database.ErrUserExists, database.ErrUserExists},
-		{"ErrUserNotFound", database.ErrUserNotFound, database.ErrUserNotFound},
-		{"ErrLastAdmin", database.ErrLastAdmin, database.ErrLastAdmin},
+		{"users.ErrUserExists", users.ErrUserExists, users.ErrUserExists},
+		{"users.ErrUserNotFound", users.ErrUserNotFound, users.ErrUserNotFound},
+		{"users.ErrLastAdmin", users.ErrLastAdmin, users.ErrLastAdmin},
 	}
 
 	for _, tc := range tests {

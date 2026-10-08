@@ -1,7 +1,9 @@
 # ADR-0024: Identity decomposition — users / oauth / tokens use-cases over repository ports
 
-**Status:** Accepted — 2026-06-10 · applies ADR-0020 to the identity surface (C4, the final `internal/api` strangle
-slice before the `ServiceContainer` deletion)
+**Status:** Accepted — 2026-06-10; amended 2026-10-08 (users entity moves into
+`internal/identity/users`, see "Amendment" below) · applies ADR-0020 to the
+identity surface (C4, the final `internal/api` strangle slice before the
+`ServiceContainer` deletion)
 
 ## Context
 
@@ -128,6 +130,20 @@ prefix (`handlers_users.go` → `users.go`, `handlers_oauth.go` → `oauth.go`,
   `.golangci.yml`, next to the other WS-B rules). Should a future change give the
   user/token store domain-meaningful behavior beyond thin CRUD, revisit this — the
   exception is scoped to the current thin-CRUD shape, not a permanent carve-out.
+
+## Amendment — 2026-10-08: the user entity leaves `internal/database`
+
+seed#2750 (D-SEED-30) sets the target this ADR's identity exception stood in
+the way of: `internal/app` is the only importer of `internal/database` outside
+`cmd/seed`. An `internal/api` handler that maps `ErrUserNotFound` to 404 had to
+import the database for the sentinel alone. So `User` and its sentinels
+(`ErrUserNotFound`, `ErrUserExists`, `ErrInvalidRole`, `ErrLastAdmin`) now live
+in `internal/identity/users`; the database imports that package and returns its
+types. No DTO was invented and no field changed — the "thin CRUD stays thin"
+decision holds; only the type's home moved. `internal/identity/users` no longer
+imports the database; since the database now imports it, the reverse import is
+a compile-time cycle and needs no depguard rule. `tokens` (`APITokenRecord`) and `oauth` (`SSOUserInput`) keep the
+exception until their own D-SEED-30 slices.
 
 ## Implementation phasing
 
