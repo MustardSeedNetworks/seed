@@ -14,7 +14,6 @@ import (
 	alertmodel "github.com/MustardSeedNetworks/seed/internal/alerts"
 	"github.com/MustardSeedNetworks/seed/internal/database"
 	"github.com/MustardSeedNetworks/seed/internal/database/dbtest"
-	"github.com/MustardSeedNetworks/seed/internal/identity/roles"
 )
 
 // testDB creates a temporary database for testing.
@@ -1117,22 +1116,6 @@ func TestUserStoreAdapter(t *testing.T) {
 		// Migrating again should succeed (no-op)
 		err = adapter.MigrateUserFromConfig(ctx, "migrated", "$2a$10$differenthash")
 		require.NoError(t, err)
-	})
-
-	t.Run("CreateUser", func(t *testing.T) {
-		// "user" is not a valid role anymore (CHECK constraint added in
-		// the hardening migration). Use the canonical "operator" role
-		// instead — the call exercises the same code path.
-		err := adapter.CreateUser(ctx, "newuser", "$2a$10$newhash", roles.Operator)
-		require.NoError(t, err)
-	})
-
-	t.Run("GetUserCount", func(t *testing.T) {
-		count, err := adapter.GetUserCount(ctx)
-		require.NoError(t, err)
-		if count < 3 {
-			t.Errorf("expected at least 3 users, got %d", count)
-		}
 	})
 }
 

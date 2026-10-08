@@ -9,8 +9,8 @@ import (
 	"time"
 
 	"github.com/MustardSeedNetworks/seed/internal/auth"
-	"github.com/MustardSeedNetworks/seed/internal/database"
 	"github.com/MustardSeedNetworks/seed/internal/i18n"
+	"github.com/MustardSeedNetworks/seed/internal/identity/users"
 	"github.com/MustardSeedNetworks/seed/internal/logging"
 )
 
@@ -562,15 +562,12 @@ func (s *Server) handleSetupComplete(w http.ResponseWriter, r *http.Request) {
 	s.config.Auth.DefaultPasswordHash = hash
 	s.config.Unlock() // Explicit unlock before Save() to prevent deadlock
 
-	// Create or update user in database if available
-	if s.db() != nil {
-		userStore := database.NewUserStoreAdapter(s.db())
-		// Try to create user first (for new setups)
-		if createErr := userStore.CreateUser(r.Context(), username, hash, "admin"); createErr != nil {
-			// If user exists, update the password
-			if updateErr := userStore.UpdatePassword(r.Context(), username, hash); updateErr != nil {
-				logger.ErrorContext(r.Context(), "Failed to update user in database", "error", updateErr)
-			}
+	// Create the admin user, or update its password when it already exists.
+	// With no user store the config hash below stays the only copy.
+	if _, createErr := s.identityUsers.Create(r.Context(), username, hash, "admin"); createErr != nil &&
+		!errors.Is(createErr, users.ErrUnavailable) {
+		if updateErr := s.identityUsers.UpdatePassword(r.Context(), username, hash); updateErr != nil {
+			logger.ErrorContext(r.Context(), "Failed to update user in database", "error", updateErr)
 		}
 	}
 

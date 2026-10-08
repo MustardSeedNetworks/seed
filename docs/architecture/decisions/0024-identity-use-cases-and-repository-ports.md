@@ -169,6 +169,14 @@ The WebAuthn credential followed: `database.WebAuthnCredential` and
 registration handler builds the credential without importing the database.
 `DeleteWebAuthnCredential`, which had no caller, was deleted.
 
+The first-run setup and password-recovery handlers then stopped building
+their own `database.NewUserStoreAdapter`: they create or update the admin row
+through the `users.Service` they already shared with user management, and
+treat `users.ErrUnavailable` as the old "no database" skip. The adapter's
+`CreateUser` and `GetUserCount`, left without a caller, were deleted. The
+adapter itself stays the `auth.UserStore` the composition root hands the auth
+manager.
+
 ## Implementation phasing
 
 C4 lands as one cohesive PR (the three packages share the edge helpers and the

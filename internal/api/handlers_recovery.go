@@ -2,12 +2,13 @@ package api
 
 import (
 	"context"
+	"errors"
 	"log/slog"
 	"net/http"
 
 	"github.com/MustardSeedNetworks/seed/internal/auth"
-	"github.com/MustardSeedNetworks/seed/internal/database"
 	"github.com/MustardSeedNetworks/seed/internal/i18n"
+	"github.com/MustardSeedNetworks/seed/internal/identity/users"
 	"github.com/MustardSeedNetworks/seed/internal/logging"
 )
 
@@ -70,15 +71,11 @@ func (s *Server) updatePasswordHash(ctx context.Context, hash string) (string, e
 	username := s.config.Auth.DefaultUsername
 	s.config.Unlock()
 
-	// Update user in database if available
-	if s.db() != nil {
-		userStore := database.NewUserStoreAdapter(s.db())
-		if updateErr := userStore.UpdatePassword(ctx, username, hash); updateErr != nil {
-			logging.FromContext(ctx).
-				WarnContext(ctx, "Failed to update user in database during recovery", "error", updateErr)
-
-			// Continue anyway - config update is the primary storage
-		}
+	// Config is the primary storage; a failed user-store write is logged only.
+	if updateErr := s.identityUsers.UpdatePassword(ctx, username, hash); updateErr != nil &&
+		!errors.Is(updateErr, users.ErrUnavailable) {
+		logging.FromContext(ctx).
+			WarnContext(ctx, "Failed to update user in database during recovery", "error", updateErr)
 	}
 
 	// Update auth manager (invalidates all existing tokens)
