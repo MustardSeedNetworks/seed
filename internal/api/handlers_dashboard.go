@@ -61,7 +61,7 @@ func (s *Server) handleMyDashboard(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		if err := s.identityUsers.SetDashboard(r.Context(), caller, req.Widgets); err != nil {
-			s.sendDashboardError(w, r, err, "errors.dashboard.saveFailed")
+			s.sendDashboardError(w, r, err, t.T("errors.dashboard.saveFailed"))
 			return
 		}
 		sendJSONResponse(w, logger, http.StatusOK, DashboardLayout{Widgets: req.Widgets, Saved: true})
@@ -70,7 +70,7 @@ func (s *Server) handleMyDashboard(w http.ResponseWriter, r *http.Request) {
 
 	widgets, saved, err := s.identityUsers.GetDashboard(r.Context(), caller)
 	if err != nil {
-		s.sendDashboardError(w, r, err, "errors.dashboard.readFailed")
+		s.sendDashboardError(w, r, err, t.T("errors.dashboard.readFailed"))
 		return
 	}
 	if widgets == nil {
@@ -81,7 +81,7 @@ func (s *Server) handleMyDashboard(w http.ResponseWriter, r *http.Request) {
 
 // sendDashboardError maps a layout-store error onto the response. A refused
 // layout carries its reason in details: it is our own text naming the widget.
-func (s *Server) sendDashboardError(w http.ResponseWriter, r *http.Request, err error, failedKey string) {
+func (s *Server) sendDashboardError(w http.ResponseWriter, r *http.Request, err error, failedMsg string) {
 	logger := logging.FromContext(r.Context())
 	t := i18n.FromRequest(r)
 
@@ -99,6 +99,6 @@ func (s *Server) sendDashboardError(w http.ResponseWriter, r *http.Request, err 
 	default:
 		logger.ErrorContext(r.Context(), "dashboard store failed", "event", "dashboard.failed", "error", err)
 		sendErrorResponseWithDetails(w, logger, http.StatusInternalServerError,
-			ErrCodeInternal, t.T(failedKey), "")
+			ErrCodeInternal, failedMsg, "")
 	}
 }

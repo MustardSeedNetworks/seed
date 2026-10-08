@@ -203,6 +203,7 @@ validation:fields.
 # InterfacesPage also reads t(`interfaces.status.${operStatus}`), and its
 # history panel t(`interfaces.history.window.${range}`).
 pages:alerts.
+pages:dashboard.
 pages:flows.
 pages:groups.
 pages:interfaces.
