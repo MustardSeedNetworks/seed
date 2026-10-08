@@ -15,6 +15,7 @@ import (
 	"encoding/binary"
 	"errors"
 	"net"
+	"strconv"
 	"time"
 
 	"golang.org/x/net/icmp"
@@ -32,10 +33,79 @@ const codeFragmentationNeeded = 4
 // look like a path with no bottleneck.
 var errNotARawIPSocket = errors.New("icmp socket is not a raw IP socket")
 
-// NewICMPProbe returns a ProbeFunc that sends don't-fragment echo requests to a
+// discardPort is the port the egress lookup dials. Dialling UDP only asks the
+// kernel for a route; no datagram is sent, so the port is never reached.
+const discardPort = 9
+
+// errNoEgressInterface is returned when the source address the kernel picked
+// for a destination belongs to no interface, which leaves no MTU to start from.
+var errNoEgressInterface = errors.New("no interface holds the source address for the destination")
+
+// MeasurePathMTU resolves a destination, starts the search from the MTU of
+// the interface the kernel would send through, and runs it over a
+// don't-fragment ICMP probe.
+//
+// An error means the search could not begin -- the name did not resolve, the
+// route has no interface, the raw socket was refused. Everything the search
+// itself learned, including a black hole or a cancellation, is in the result.
+func MeasurePathMTU(ctx context.Context, target string, timeout time.Duration) (*PMTUDResult, error) {
+	dst, err := resolveIPv4(target)
+	if err != nil {
+		return nil, err
+	}
+	localMTU, err := egressMTU(ctx, dst)
+	if err != nil {
+		return nil, err
+	}
+
+	probe, closeProbe, err := newICMPProbe(ctx, dst, newFlowID(), timeout)
+	if err != nil {
+		return nil, err
+	}
+	defer func() { _ = closeProbe() }()
+
+	result := DiscoverPathMTU(ctx, target, localMTU, probe)
+	result.TargetIP = dst.String()
+	return result, nil
+}
+
+// egressMTU returns the MTU of the interface the kernel routes a destination
+// through, found by the source address it picks for a connected UDP socket.
+func egressMTU(ctx context.Context, dst net.IP) (int, error) {
+	var dialer net.Dialer
+	conn, err := dialer.DialContext(ctx, "udp4", net.JoinHostPort(dst.String(), strconv.Itoa(discardPort)))
+	if err != nil {
+		return 0, err
+	}
+	defer func() { _ = conn.Close() }()
+
+	local, ok := conn.LocalAddr().(*net.UDPAddr)
+	if !ok {
+		return 0, errNoEgressInterface
+	}
+
+	ifaces, err := net.Interfaces()
+	if err != nil {
+		return 0, err
+	}
+	for _, iface := range ifaces {
+		addrs, addrErr := iface.Addrs()
+		if addrErr != nil {
+			continue
+		}
+		for _, addr := range addrs {
+			if ipNet, isNet := addr.(*net.IPNet); isNet && ipNet.IP.Equal(local.IP) {
+				return iface.MTU, nil
+			}
+		}
+	}
+	return 0, errNoEgressInterface
+}
+
+// newICMPProbe returns a ProbeFunc that sends don't-fragment echo requests to a
 // destination, for DiscoverPathMTU to drive, along with the closer for its
 // socket.
-func NewICMPProbe(
+func newICMPProbe(
 	ctx context.Context,
 	dst net.IP,
 	flowID int,

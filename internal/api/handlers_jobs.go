@@ -59,7 +59,7 @@ func jobKindFeature(kind string) (string, bool) {
 		return dscpVerificationFeature, true
 	case vulnScanJobKind:
 		return vulnScanFeature, true
-	case pathMonitorJobKind:
+	case pathMonitorJobKind, multiPathJobKind, pathMTUJobKind:
 		return pathAnalysisFeature, true
 	}
 	return "", false

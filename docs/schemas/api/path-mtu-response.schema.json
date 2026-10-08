@@ -1,0 +1,50 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/MustardSeedNetworks/seed/main/docs/schemas/api/path-mtu-response.schema.json",
+  "$ref": "#/$defs/PMTUDResult",
+  "$defs": {
+    "PMTUDResult": {
+      "properties": {
+        "target": {
+          "type": "string"
+        },
+        "targetIp": {
+          "type": "string"
+        },
+        "status": {
+          "type": "string",
+          "enum": [
+            "ok",
+            "icmp_filtered",
+            "unreachable",
+            "incomplete"
+          ]
+        },
+        "pathMtu": {
+          "type": "integer"
+        },
+        "localMtu": {
+          "type": "integer"
+        },
+        "probes": {
+          "type": "integer"
+        },
+        "error": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "target",
+        "targetIp",
+        "status",
+        "pathMtu",
+        "localMtu",
+        "probes"
+      ]
+    }
+  },
+  "title": "PMTUDResult",
+  "description": "PMTUDResult — generated from the Go struct in internal/api; refresh with `make schema` after struct changes."
+}

@@ -114,6 +114,13 @@ func (t *Tracer) resolveHostname(ip string) string {
 	return ""
 }
 
+// TraceFlow reports that this platform cannot hold a trace's flow identifier
+// fixed: the ICMP API the Windows tracer uses picks its own, so the attempts
+// DiscoverPaths compares would not differ in the field a load balancer hashes.
+func TraceFlow(_ context.Context, _ string, _, _ int, _ time.Duration) (*TracerouteResult, error) {
+	return nil, ErrMultiPathUnsupported
+}
+
 // TraceICMP performs an ICMP-based traceroute.
 // On Windows, this uses a simplified approach since raw ICMP requires admin privileges.
 func (t *Tracer) TraceICMP(ctx context.Context, target string) *TracerouteResult {

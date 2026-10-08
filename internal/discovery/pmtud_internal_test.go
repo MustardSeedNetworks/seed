@@ -228,3 +228,27 @@ func TestPayloadAccountsForHeaders(t *testing.T) {
 		t.Errorf("PayloadForMTU(20) = %d, want 0", got)
 	}
 }
+
+// A search the operator stops is neither a measurement nor a broken socket: it
+// reports the largest size seen to arrive as a lower bound and says it is
+// incomplete.
+func TestCancelledSearchIsIncompleteWithALowerBound(t *testing.T) {
+	ctx, cancel := context.WithCancel(t.Context())
+	path := &pathProbe{limit: 1400}
+	cancelOnBisect := func(c context.Context, size int) (ProbeOutcome, int, error) {
+		if size != 1500 && size != MinProbeMTU {
+			cancel()
+			return ProbeLost, 0, c.Err()
+		}
+		return path.probe(c, size)
+	}
+
+	result := DiscoverPathMTU(ctx, "example.test", 1500, cancelOnBisect)
+
+	if result.Status != PMTUDStatusIncomplete || result.PathMTU != MinProbeMTU {
+		t.Fatalf("result = %+v, want incomplete with %d as the lower bound", result, MinProbeMTU)
+	}
+	if result.Error != "" {
+		t.Errorf("error = %q, want none for a cancelled run", result.Error)
+	}
+}

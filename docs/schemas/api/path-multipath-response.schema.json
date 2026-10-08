@@ -1,0 +1,66 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/MustardSeedNetworks/seed/main/docs/schemas/api/path-multipath-response.schema.json",
+  "$ref": "#/$defs/MultiPathResult",
+  "$defs": {
+    "MultiPathResult": {
+      "properties": {
+        "target": {
+          "type": "string"
+        },
+        "targetIp": {
+          "type": "string"
+        },
+        "attempts": {
+          "type": "integer"
+        },
+        "paths": {
+          "items": {
+            "$ref": "#/$defs/PathVariant"
+          },
+          "type": "array"
+        },
+        "divergesAtTtl": {
+          "type": "integer"
+        },
+        "error": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "target",
+        "targetIp",
+        "attempts",
+        "paths",
+        "divergesAtTtl"
+      ]
+    },
+    "PathVariant": {
+      "properties": {
+        "hops": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "seen": {
+          "type": "integer"
+        },
+        "completed": {
+          "type": "boolean"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "hops",
+        "seen",
+        "completed"
+      ]
+    }
+  },
+  "title": "MultiPathResult",
+  "description": "MultiPathResult — generated from the Go struct in internal/api; refresh with `make schema` after struct changes."
+}

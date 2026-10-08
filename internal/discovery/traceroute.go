@@ -132,6 +132,17 @@ func (t *Tracer) WithFlowID(id int) *Tracer {
 	return t
 }
 
+// TraceFlow runs one ICMP traceroute on a fixed flow identifier: the trace
+// DiscoverPaths repeats with a different identifier each time.
+func TraceFlow(
+	ctx context.Context,
+	target string,
+	maxHops, flowID int,
+	timeout time.Duration,
+) (*TracerouteResult, error) {
+	return NewTracer(timeout, maxHops).WithFlowID(flowID).TraceICMP(ctx, target), nil
+}
+
 // resolveIPv4 resolves a target hostname to its first IPv4 address.
 func resolveIPv4(target string) (net.IP, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), traceDNSResolveTimeoutS*time.Second)

@@ -14,9 +14,15 @@ package discovery
 
 import (
 	"context"
+	"errors"
 	"sort"
 	"strings"
 )
+
+// ErrMultiPathUnsupported is returned where a trace cannot hold its flow
+// identifier fixed, so the attempts could not be told apart. Declared here
+// rather than beside the platform that returns it, like ErrPMTUDUnsupported.
+var ErrMultiPathUnsupported = errors.New("multi-path discovery is not supported on this platform")
 
 // PathVariant is one distinct route to the destination.
 type PathVariant struct {
@@ -60,11 +66,11 @@ func (r *MultiPathResult) LoadBalanced() bool { return len(r.Paths) > 1 }
 // the discovery loop is testable without a socket.
 type pathTraceFunc func(ctx context.Context, flowID int) *TracerouteResult
 
-// multiPathAttempts is how many traces are run. Enough to expose a two- or
+// MultiPathAttempts is how many traces are run. Enough to expose a two- or
 // three-way split with reasonable confidence, few enough that the whole run
 // stays within the patience of someone watching it: each trace is bounded by
 // the per-hop timeout times the hop count.
-const multiPathAttempts = 8
+const MultiPathAttempts = 8
 
 // DiscoverPaths traces a destination repeatedly with a different flow
 // identifier each time and reports the distinct routes.
@@ -78,7 +84,7 @@ func DiscoverPaths(ctx context.Context, target string, trace pathTraceFunc) *Mul
 	result := &MultiPathResult{Target: target, Attempts: 0}
 	variants := make(map[string]*PathVariant)
 
-	for attempt := range multiPathAttempts {
+	for attempt := range MultiPathAttempts {
 		if ctx.Err() != nil {
 			break
 		}
@@ -87,6 +93,12 @@ func DiscoverPaths(ctx context.Context, target string, trace pathTraceFunc) *Mul
 		// bits of the identifier would map 1..8 onto very few buckets and hide
 		// a split that exists.
 		round := trace(ctx, multiPathFlowID(attempt))
+		if ctx.Err() != nil {
+			// A trace cut short by cancellation stops at whatever hop it had
+			// reached. Folded in, it would be a shorter route that no packet
+			// took, so the partial result keeps only the attempts that ran.
+			break
+		}
 		if round == nil {
 			continue
 		}
