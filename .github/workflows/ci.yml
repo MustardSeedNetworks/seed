@@ -990,7 +990,7 @@ jobs:
   # of .github@main (a canonical change there reaches this repo only when this
   # pin moves).
   ci-conformance:
-    uses: MustardSeedNetworks/.github/.github/workflows/ci-conformance.yml@6b754001cf1d0b14c97c59379fb4275d77c6ece3 # .github#93, untagged
+    uses: MustardSeedNetworks/.github/.github/workflows/ci-conformance.yml@485e2b4000fc589ea9f33a48216d2a3634f43c17 # .github#117, untagged
     permissions:
       contents: read
       id-token: write

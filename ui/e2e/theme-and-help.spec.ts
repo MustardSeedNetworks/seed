@@ -72,7 +72,12 @@ async function gotoDashboard(page: Page): Promise<void> {
   await expect(page.getByTestId('page-header-title')).toBeVisible({ timeout: 10000 });
 }
 
-/** Assert the document root reflects the given effective theme. */
+/**
+ * Assert the document root reflects the given effective theme: the class the
+ * tokens key on, and the color-scheme the browser paints native controls
+ * (select, scrollbar, date input) from. Without the second, the dark theme
+ * drew a light select face on Linux Chromium (seed#3202).
+ */
 async function expectTheme(page: Page, theme: 'light' | 'dark'): Promise<void> {
   const html = page.locator('html');
   if (theme === 'dark') {
@@ -80,6 +85,7 @@ async function expectTheme(page: Page, theme: 'light' | 'dark'): Promise<void> {
   } else {
     await expect(html).not.toHaveClass(/dark/);
   }
+  await expect(html).toHaveCSS('color-scheme', theme);
 }
 
 test.describe('Theme Toggle and Help Modal', { tag: '@smoke' }, () => {

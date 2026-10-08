@@ -74,6 +74,12 @@
    ========================================================================== */
 
 :root {
+  /* Native controls — a <select>, a scrollbar, a date picker — are painted by
+     the browser from color-scheme, not from these tokens. Without it the
+     dark theme got a light select face on Linux Chromium, its selected
+     option light text on near-white (seed#3202). */
+  color-scheme: light;
+
   /* ---- surfaces (light: warm cream, unchanged in character) ---------- */
   --color-surface-base: #fbfaf5;
   --color-surface-raised: #ffffff;
@@ -149,6 +155,7 @@
    * hairlines, which the proposal does not list: they carry text-primary at
    * the alphas the old cold-steel pair used. The contrast in each comment is
    * measured, not asserted. */
+  color-scheme: dark;
   --color-surface-base: #181611;
   --color-surface-raised: #23211a;
   /* was #746d58 — 3.50 on base and 3.12 on raised, but 2.63 on hover, under
