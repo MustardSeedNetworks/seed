@@ -9,6 +9,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 
+	"github.com/MustardSeedNetworks/seed/internal/app"
 	"github.com/MustardSeedNetworks/seed/internal/config"
 	"github.com/MustardSeedNetworks/seed/internal/database"
 	"github.com/MustardSeedNetworks/seed/internal/database/dbtest"
@@ -44,7 +45,7 @@ func newStoredVulnScanner(t *testing.T, db *database.DB) *vuln.VulnerabilityScan
 		SeverityThreshold: "low",
 	})
 	require.NoError(t, err)
-	scanner.SetStore(&dbVulnStoreAdapter{db: db})
+	scanner.SetStore(app.NewVulnStore(db))
 	return scanner
 }
 

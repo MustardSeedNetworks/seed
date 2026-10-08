@@ -228,7 +228,7 @@ func (s *Server) initSSEAndLogging(db *database.DB) {
 
 	// Wire up database persistence for logs if database is available
 	if db != nil {
-		s.logBroadcaster().SetDBWriter(&dbLogWriterAdapter{db: db})
+		s.logBroadcaster().SetDBWriter(app.NewLogWriter(db))
 		logging.GetLogger().
 			Info("Log broadcaster initialized with database persistence", "buffer_size", logBroadcasterBufferSize)
 	} else {
@@ -241,7 +241,7 @@ func (s *Server) initSSEAndLogging(db *database.DB) {
 
 	// Wire up database persistence for devices if database is available
 	if db != nil {
-		s.deviceDiscovery().SetDBWriter(&dbDeviceWriterAdapter{db: db})
+		s.deviceDiscovery().SetDBWriter(app.NewDeviceWriter(db))
 		logging.GetLogger().Info("Device discovery initialized with database persistence")
 	}
 }
@@ -293,7 +293,7 @@ func (s *Server) initVulnerabilityScanner(cfg *config.Config, db *database.DB) {
 		return
 	}
 	if db != nil {
-		vulnScanner.SetStore(&dbVulnStoreAdapter{db: db})
+		vulnScanner.SetStore(app.NewVulnStore(db))
 	}
 	s.vulnScan = vulnScanner
 	logging.GetLogger().Info("Vulnerability scanner initialized",

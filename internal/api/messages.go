@@ -1,19 +1,13 @@
 package api
 
 //
-// This file contains shared message types and adapters used by the SSE broadcasting system.
-// These types are used for real-time updates to connected clients.
+// This file contains the message types sent to SSE clients for real-time
+// updates, and the origin checks the CORS middleware uses.
 //
 
 import (
-	"context"
-	"fmt"
 	"strings"
 	"sync"
-
-	"github.com/MustardSeedNetworks/seed/internal/database"
-	"github.com/MustardSeedNetworks/seed/internal/discovery"
-	"github.com/MustardSeedNetworks/seed/internal/logging"
 )
 
 // Message represents a broadcast message sent to SSE clients.
@@ -268,129 +262,4 @@ func parseOctet(s string) int {
 		}
 	}
 	return n
-}
-
-// dbLogWriterAdapter implements logging.DBLogWriter for database persistence.
-type dbLogWriterAdapter struct {
-	db *database.DB
-}
-
-// WriteLog implements logging.DBLogWriter interface - writes a single log entry.
-func (a *dbLogWriterAdapter) WriteLog(ctx context.Context, entry *logging.LogEntry) error {
-	if a.db == nil {
-		return nil
-	}
-
-	dbEntry := &database.LogEntry{
-		Timestamp:  entry.Timestamp,
-		Level:      entry.Level,
-		Layer:      entry.Layer,
-		Message:    entry.Message,
-		Component:  entry.Component,
-		RequestID:  entry.RequestID,
-		SessionID:  entry.SessionID,
-		DurationMs: entry.DurationMs,
-		Metadata:   database.ConvertMetadataToJSON(entry.Metadata),
-		Stack:      entry.Stack,
-	}
-
-	return a.db.Logs().Create(ctx, dbEntry)
-}
-
-// WriteBatch implements logging.DBLogWriter interface - writes multiple log entries.
-func (a *dbLogWriterAdapter) WriteBatch(ctx context.Context, entries []*logging.LogEntry) error {
-	if a.db == nil || len(entries) == 0 {
-		return nil
-	}
-
-	dbEntries := make([]*database.LogEntry, len(entries))
-	for i, entry := range entries {
-		dbEntries[i] = &database.LogEntry{
-			Timestamp:  entry.Timestamp,
-			Level:      entry.Level,
-			Layer:      entry.Layer,
-			Message:    entry.Message,
-			Component:  entry.Component,
-			RequestID:  entry.RequestID,
-			SessionID:  entry.SessionID,
-			DurationMs: entry.DurationMs,
-			Metadata:   database.ConvertMetadataToJSON(entry.Metadata),
-			Stack:      entry.Stack,
-		}
-	}
-
-	return a.db.Logs().BatchCreate(ctx, dbEntries)
-}
-
-// dbDeviceWriterAdapter implements discovery.DBDeviceWriter for database persistence.
-type dbDeviceWriterAdapter struct {
-	db *database.DB
-}
-
-// PersistDevices implements discovery.DBDeviceWriter interface.
-func (a *dbDeviceWriterAdapter) PersistDevices(
-	ctx context.Context,
-	devices []*discovery.DiscoveredDevice,
-) error {
-	if a.db == nil || len(devices) == 0 {
-		return nil
-	}
-
-	// Persist each device individually using upsert
-	for _, d := range devices {
-		dbDevice := &database.Device{
-			ID:         d.MAC, // Use MAC as unique ID
-			IPAddress:  d.IP,
-			MACAddress: d.MAC,
-			Hostname:   d.Hostname,
-			Vendor:     d.Vendor,
-			DeviceType: d.OSGuess,
-			LastSeen:   d.LastSeen,
-			IsActive:   true,
-		}
-		if err := a.db.Devices().Upsert(ctx, dbDevice); err != nil {
-			return err
-		}
-	}
-
-	return nil
-}
-
-// dbVulnStoreAdapter implements vuln.Store: it writes each scan pass to
-// device_vulnerabilities under the device's persisted id, persisting the device
-// first so a finding never waits on the next discovery flush.
-type dbVulnStoreAdapter struct {
-	db *database.DB
-}
-
-// SaveScan implements vuln.Store.
-func (a *dbVulnStoreAdapter) SaveScan(
-	ctx context.Context,
-	device *discovery.DiscoveredDevice,
-	result *discovery.DeviceVulnerabilities,
-) error {
-	devices := &dbDeviceWriterAdapter{db: a.db}
-	if err := devices.PersistDevices(ctx, []*discovery.DiscoveredDevice{device}); err != nil {
-		return err
-	}
-	stored, err := a.db.Devices().GetByIP(ctx, device.IP)
-	if err != nil {
-		return fmt.Errorf("resolving device id for %s: %w", device.IP, err)
-	}
-
-	findings := make([]database.VulnerabilityFinding, 0, len(result.Vulnerabilities))
-	for i := range result.Vulnerabilities {
-		v := &result.Vulnerabilities[i]
-		findings = append(findings, database.VulnerabilityFinding{
-			CVEID: v.CVEID,
-			// Providers report NVD's upper-case severities; reports and the
-			// scanner's own filter work in lower case.
-			Severity:          strings.ToLower(v.Severity),
-			CVSSScore:         v.Score,
-			Description:       v.Description,
-			AffectedComponent: result.Product,
-			AffectedVersion:   result.Version,
-		})
-	}
-	return a.db.Vulnerabilities().RecordScan(ctx, stored.ID, findings, result.ScanTime)
 }
