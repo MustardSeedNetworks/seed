@@ -12,11 +12,11 @@ package discovery
 // so, which is the machinery #750 exists for. Tracked as a platform gap.
 
 import (
-	"net"
+	"context"
 	"time"
 )
 
-// NewICMPProbe reports that this platform cannot probe path MTU.
-func NewICMPProbe(_ net.IP, _ int, _ time.Duration) (ProbeFunc, func() error, error) {
-	return nil, nil, ErrPMTUDUnsupported
+// MeasurePathMTU reports that this platform cannot probe path MTU.
+func MeasurePathMTU(_ context.Context, _ string, _ time.Duration) (*PMTUDResult, error) {
+	return nil, ErrPMTUDUnsupported
 }

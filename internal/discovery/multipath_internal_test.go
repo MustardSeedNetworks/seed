@@ -47,8 +47,8 @@ func TestSinglePathIsNotReportedAsLoadBalanced(t *testing.T) {
 	if result.DivergesAtTTL != 0 {
 		t.Errorf("divergence at ttl %d, want 0 -- nothing diverged", result.DivergesAtTTL)
 	}
-	if result.Paths[0].Seen != multiPathAttempts {
-		t.Errorf("route seen %d times, want all %d attempts", result.Paths[0].Seen, multiPathAttempts)
+	if result.Paths[0].Seen != MultiPathAttempts {
+		t.Errorf("route seen %d times, want all %d attempts", result.Paths[0].Seen, MultiPathAttempts)
 	}
 }
 
@@ -133,8 +133,8 @@ func TestSeenCountsSumToTheAttempts(t *testing.T) {
 	for _, path := range result.Paths {
 		total += path.Seen
 	}
-	if total != result.Attempts || result.Attempts != multiPathAttempts {
-		t.Errorf("seen totals %d over %d attempts, want %d each", total, result.Attempts, multiPathAttempts)
+	if total != result.Attempts || result.Attempts != MultiPathAttempts {
+		t.Errorf("seen totals %d over %d attempts, want %d each", total, result.Attempts, MultiPathAttempts)
 	}
 }
 
@@ -172,8 +172,8 @@ func TestFlowIDsAreSpreadNotSequential(t *testing.T) {
 			consecutive++
 		}
 	}
-	if len(seen) != multiPathAttempts {
-		t.Errorf("%d distinct flow ids across %d attempts", len(seen), multiPathAttempts)
+	if len(seen) != MultiPathAttempts {
+		t.Errorf("%d distinct flow ids across %d attempts", len(seen), MultiPathAttempts)
 	}
 	if consecutive > 0 {
 		t.Errorf("%d flow ids were consecutive; they should be spread", consecutive)
@@ -208,8 +208,8 @@ func TestFailedAttemptDoesNotCount(t *testing.T) {
 
 	result := DiscoverPaths(t.Context(), "example.test", trace)
 
-	if result.Attempts != multiPathAttempts/2 {
-		t.Errorf("counted %d attempts, want %d -- half of them produced nothing", result.Attempts, multiPathAttempts/2)
+	if result.Attempts != MultiPathAttempts/2 {
+		t.Errorf("counted %d attempts, want %d -- half of them produced nothing", result.Attempts, MultiPathAttempts/2)
 	}
 }
 
@@ -224,5 +224,26 @@ func TestTraceErrorIsSurfaced(t *testing.T) {
 
 	if result.Error != "no route to host" {
 		t.Errorf("error = %q, want it surfaced from the trace", result.Error)
+	}
+}
+
+// The trace a cancel interrupts stops at whatever hop it had reached. Folded
+// in, it would be a shorter third route that no packet took.
+func TestTraceCutShortByCancellationIsNotARoute(t *testing.T) {
+	ctx, cancel := context.WithCancel(t.Context())
+	call := 0
+	trace := func(_ context.Context, _ int) *TracerouteResult {
+		call++
+		if call == 3 {
+			cancel()
+			return tracePath("10.0.0.1")
+		}
+		return tracePath("10.0.0.1", "10.0.0.2", "203.0.113.1")
+	}
+
+	result := DiscoverPaths(ctx, "example.test", trace)
+
+	if result.Attempts != 2 || len(result.Paths) != 1 || result.Paths[0].Seen != 2 {
+		t.Fatalf("result = %+v, want the two finished traces on one route", result)
 	}
 }

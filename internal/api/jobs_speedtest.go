@@ -14,6 +14,7 @@ import (
 	"github.com/MustardSeedNetworks/seed/internal/diagnostics/multicast"
 	"github.com/MustardSeedNetworks/seed/internal/diagnostics/qos"
 	"github.com/MustardSeedNetworks/seed/internal/diagnostics/speedtest"
+	"github.com/MustardSeedNetworks/seed/internal/discovery"
 	"github.com/MustardSeedNetworks/seed/internal/logging"
 	"github.com/MustardSeedNetworks/seed/internal/platform/jobs"
 )
@@ -91,6 +92,7 @@ func (s *Server) registerJobKinds() {
 	s.registerBluetoothScanKind(func() bluetoothScannerService { return s.bluetoothScanner() })
 	s.registerWiFiDiscoveryScanKind(func() wifiDiscoveryBridge { return s.wifiBridge() })
 	s.registerPathMonitorKind(defaultPathTracer)
+	s.registerPathDiscoveryKinds(discovery.TraceFlow, discovery.MeasurePathMTU)
 	s.registerDeviceScanKind(func() deviceScanService { return s.deviceDiscovery() })
 	s.registerMulticastListenKind(multicast.Listen)
 	s.registerQoSKinds(

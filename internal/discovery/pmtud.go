@@ -51,13 +51,18 @@ const (
 	// PMTUDStatusUnreachable means nothing arrived at any size, so the
 	// destination says nothing about MTU.
 	PMTUDStatusUnreachable PMTUDStatus = "unreachable"
+
+	// PMTUDStatusIncomplete means the run was cancelled before the bounds
+	// met. PathMTU is the largest size seen to arrive so far, a lower bound,
+	// and zero when nothing had arrived yet.
+	PMTUDStatusIncomplete PMTUDStatus = "incomplete"
 )
 
 // PMTUDResult is the outcome of a path MTU discovery run.
 type PMTUDResult struct {
 	Target   string      `json:"target"`
 	TargetIP string      `json:"targetIp"`
-	Status   PMTUDStatus `json:"status"`
+	Status   PMTUDStatus `json:"status"   jsonschema:"enum=ok,enum=icmp_filtered,enum=unreachable,enum=incomplete"`
 
 	// PathMTU is the largest size that traverses the path. Under
 	// PMTUDStatusICMPFiltered it is a lower bound rather than the answer.
@@ -229,6 +234,9 @@ func (s *pmtudSearch) narrow() {
 // place.
 func (s *pmtudSearch) conclude(first ProbeOutcome) {
 	switch {
+	case s.ctx.Err() != nil:
+		s.result.Status = PMTUDStatusIncomplete
+		s.result.PathMTU = s.low
 	case s.low == 0:
 		s.result.Status = PMTUDStatusUnreachable
 	case first == ProbeLost:
@@ -253,6 +261,11 @@ func (s *pmtudSearch) send(size int) (ProbeOutcome, int) {
 		s.result.Probes++
 		outcome, nextHop, err := s.probe(s.ctx, size)
 		if err != nil {
+			if s.ctx.Err() != nil {
+				// The operator stopped the run; conclude says so, and a
+				// probe failure would misreport it as a broken socket.
+				return ProbeLost, 0
+			}
 			s.result.Error = fmt.Sprintf("probe at %d bytes failed: %v", size, err)
 			return ProbeLost, 0
 		}

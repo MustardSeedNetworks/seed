@@ -30,6 +30,7 @@ import (
 	"github.com/MustardSeedNetworks/seed/internal/diagnostics/multicast"
 	"github.com/MustardSeedNetworks/seed/internal/diagnostics/packetcapture"
 	"github.com/MustardSeedNetworks/seed/internal/diagnostics/qos"
+	"github.com/MustardSeedNetworks/seed/internal/discovery"
 	"github.com/MustardSeedNetworks/seed/internal/discovery/bonjour"
 )
 
@@ -275,6 +276,13 @@ func schemaTargets() []schemaTarget {
 		// result is the same shape at the moment it stopped.
 		{&api.PathMonitorRequest{}, "path-monitor-request.schema.json"},
 		{&api.PathMonitorUpdate{}, "path-monitor-update.schema.json"},
+
+		// #395's multi-path egress run and #435's path MTU discovery, two
+		// jobs-spine kinds whose results are the discovery engines' own types.
+		{&api.MultiPathRequest{}, "path-multipath-request.schema.json"},
+		{&discovery.MultiPathResult{}, "path-multipath-response.schema.json"},
+		{&api.PathMTURequest{}, "path-mtu-request.schema.json"},
+		{&discovery.PMTUDResult{}, "path-mtu-response.schema.json"},
 
 		// Profile/settings config — code-first model of the per-profile
 		// config.Config blob (ADR-0007/0008, Phase 7 S6). The profile Config
