@@ -5,6 +5,19 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.241.0](https://github.com/MustardSeedNetworks/seed/compare/v0.240.0...v0.241.0) (2026-10-08)
+
+
+### Features
+
+* **ui:** add a per-user dashboard whose cards add, move and remove ([#3228](https://github.com/MustardSeedNetworks/seed/issues/3228)) ([4d8286e](https://github.com/MustardSeedNetworks/seed/commit/4d8286ec82a5d471ef3e5a3083268913f1115814))
+
+
+### Code Refactoring
+
+* **app:** apply the data-retention policy through app.RunDataRetention ([#3230](https://github.com/MustardSeedNetworks/seed/issues/3230)) ([733f71a](https://github.com/MustardSeedNetworks/seed/commit/733f71ab24e329b030981f4381e6f74c851818a8))
+* **app:** build the passive-listener persistence in app.NewListenerPersistence ([#3232](https://github.com/MustardSeedNetworks/seed/issues/3232)) ([3bf3ad5](https://github.com/MustardSeedNetworks/seed/commit/3bf3ad57e4015ca905c72b7066d288ccc54cf96b))
+
 ## [0.240.0](https://github.com/MustardSeedNetworks/seed/compare/v0.239.0...v0.240.0) (2026-10-08)
 
 
