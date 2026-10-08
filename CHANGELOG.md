@@ -5,6 +5,46 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.237.0](https://github.com/MustardSeedNetworks/seed/compare/v0.236.2...v0.237.0) (2026-10-08)
+
+
+### Features
+
+* **ui:** add the DSCP check card to the performance page ([#3181](https://github.com/MustardSeedNetworks/seed/issues/3181)) ([0025067](https://github.com/MustardSeedNetworks/seed/commit/00250674b94e6d922ec0e684444bfd83b70bd31c))
+* **ui:** ask the operator about each learned network on the discovery card ([#3178](https://github.com/MustardSeedNetworks/seed/issues/3178)) ([d3e78fc](https://github.com/MustardSeedNetworks/seed/commit/d3e78fc9dba12afdf948b987c445439d1faab581))
+* **ui:** edit alert escalation ladders in Settings ([#3188](https://github.com/MustardSeedNetworks/seed/issues/3188)) ([86eb4eb](https://github.com/MustardSeedNetworks/seed/commit/86eb4eb6d84f14bdc2626114496f9b6f617b5ba2))
+* **ui:** list every polled interface sorted by error rate ([#3194](https://github.com/MustardSeedNetworks/seed/issues/3194)) ([008d928](https://github.com/MustardSeedNetworks/seed/commit/008d928fbd6609112f75d608ed6243ccf150aa5d))
+
+
+### Bug Fixes
+
+* **deps:** update dependency lucide-react to v1.49.0 ([#3176](https://github.com/MustardSeedNetworks/seed/issues/3176)) ([f0701ff](https://github.com/MustardSeedNetworks/seed/commit/f0701ffba2bf3cf9e8fce86066e542dd0ac7e199))
+* **deps:** update dependency wouter to v3.12.0 ([#3177](https://github.com/MustardSeedNetworks/seed/issues/3177)) ([e164c4d](https://github.com/MustardSeedNetworks/seed/commit/e164c4d0047b41151706d79baa4562721606601a))
+* **deps:** update dependency wouter to v3.13.0 ([#3195](https://github.com/MustardSeedNetworks/seed/issues/3195)) ([cbd3c3f](https://github.com/MustardSeedNetworks/seed/commit/cbd3c3f16cdfb42a9235ffe6e47ccc11d233887d))
+* **deps:** update module github.com/mustardseednetworks/foundation to v0.7.1 ([#3187](https://github.com/MustardSeedNetworks/seed/issues/3187)) ([d81e3ac](https://github.com/MustardSeedNetworks/seed/commit/d81e3ac0b0abcbb7557ffdacb0ec45e1ed0f247b))
+* **deps:** update module modernc.org/sqlite to v1.60.1 ([#3174](https://github.com/MustardSeedNetworks/seed/issues/3174)) ([4cadd19](https://github.com/MustardSeedNetworks/seed/commit/4cadd19a2fea7a5745b1767026b179f90a9485d9))
+* **discovery:** ask silent target-network addresses over SNMP ([#3201](https://github.com/MustardSeedNetworks/seed/issues/3201)) ([8dd3a9a](https://github.com/MustardSeedNetworks/seed/commit/8dd3a9a05c2bce9627f2f54aae0f167bf2b07962))
+* **polling:** bound the routing collector's route-table walk ([#3193](https://github.com/MustardSeedNetworks/seed/issues/3193)) ([d470dc2](https://github.com/MustardSeedNetworks/seed/commit/d470dc2e4fbfd3e2557c8fe3ec3057a409f528e5)), closes [#2857](https://github.com/MustardSeedNetworks/seed/issues/2857)
+* **topology:** give topology_nodes.primary_mac its producers ([#3197](https://github.com/MustardSeedNetworks/seed/issues/3197)) ([8d121fc](https://github.com/MustardSeedNetworks/seed/commit/8d121fce72a8ed9e04ff8fd9ec577e3f083d05e2)), closes [#2574](https://github.com/MustardSeedNetworks/seed/issues/2574)
+
+
+### Code Refactoring
+
+* **api:** move flow reads and the speed-test record behind app use-cases ([#3179](https://github.com/MustardSeedNetworks/seed/issues/3179)) ([5cbe6c5](https://github.com/MustardSeedNetworks/seed/commit/5cbe6c568e063dd3eb4c6808ba99cab743b5c880))
+* **api:** move the durable job store behind an app use-case ([#3199](https://github.com/MustardSeedNetworks/seed/issues/3199)) ([6dfade8](https://github.com/MustardSeedNetworks/seed/commit/6dfade805b886546066619979588909522d6f4d8))
+
+
+### Miscellaneous
+
+* **deps:** lock file maintenance ([#3173](https://github.com/MustardSeedNetworks/seed/issues/3173)) ([5e5d496](https://github.com/MustardSeedNetworks/seed/commit/5e5d496097f7df55d72589afff116ed801851772))
+* **deps:** lock file maintenance ([#3196](https://github.com/MustardSeedNetworks/seed/issues/3196)) ([4fe380e](https://github.com/MustardSeedNetworks/seed/commit/4fe380e18a68c65b7945db46de848bcec7354f38))
+* **deps:** lock file maintenance ([#3198](https://github.com/MustardSeedNetworks/seed/issues/3198)) ([633917c](https://github.com/MustardSeedNetworks/seed/commit/633917ce191e27207482f622285a990a43fde768))
+* **deps:** migrate the UI test stack to vitest 5 ([#3190](https://github.com/MustardSeedNetworks/seed/issues/3190)) ([13bdc96](https://github.com/MustardSeedNetworks/seed/commit/13bdc96bbc6522c50d660e0857580a49c69255e2)), closes [#3189](https://github.com/MustardSeedNetworks/seed/issues/3189)
+* **deps:** update npm to v12.2.0 ([#3192](https://github.com/MustardSeedNetworks/seed/issues/3192)) ([4c06f17](https://github.com/MustardSeedNetworks/seed/commit/4c06f172f862882cfa89bc4422987d2856cf3797))
+* **deps:** update storybook monorepo to v10.6.1 ([#3175](https://github.com/MustardSeedNetworks/seed/issues/3175)) ([159c991](https://github.com/MustardSeedNetworks/seed/commit/159c991bdaf8a436de93869c82fda559681eab6d))
+* **lint:** enforce the inward direction from api, app and cmd ([#3184](https://github.com/MustardSeedNetworks/seed/issues/3184)) ([347dc2d](https://github.com/MustardSeedNetworks/seed/commit/347dc2d0c5d1c976e3872d1e3516112ac9be9f83)), closes [#3183](https://github.com/MustardSeedNetworks/seed/issues/3183)
+* **make:** add validate-touched for targeted validation ([#3158](https://github.com/MustardSeedNetworks/seed/issues/3158)) ([6c67bc1](https://github.com/MustardSeedNetworks/seed/commit/6c67bc1ceaa2057b83593a417e495655d570ba25))
+
 ## [0.236.2](https://github.com/MustardSeedNetworks/seed/compare/v0.236.1...v0.236.2) (2026-10-05)
 
 
