@@ -45,6 +45,7 @@ const ROUTES = [
   '/interfaces',
   '/flows',
   '/alerts',
+  '/dashboard',
 ];
 
 test.use({ storageState: AUTH_STORAGE_STATE });

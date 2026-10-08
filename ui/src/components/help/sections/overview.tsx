@@ -67,6 +67,36 @@ export const overviewSections: HelpSection[] = [
     ],
   },
   {
+    id: 'dashboard',
+    titleKey: 'sections.dashboard',
+    icon: <LayoutDashboard className={ICON} />,
+    keywords: ['dashboard', 'customize', 'cards', 'layout', 'reorder', 'widgets'],
+    blocks: [
+      {
+        kind: 'paragraph',
+        text: 'content.dashboard.description',
+      },
+      {
+        kind: 'steps',
+        ordered: true,
+        items: [
+          {
+            title: 'content.dashboard.steps.customize.title',
+            description: 'content.dashboard.steps.customize.description',
+          },
+          {
+            title: 'content.dashboard.steps.arrange.title',
+            description: 'content.dashboard.steps.arrange.description',
+          },
+          {
+            title: 'content.dashboard.steps.save.title',
+            description: 'content.dashboard.steps.save.description',
+          },
+        ],
+      },
+    ],
+  },
+  {
     id: 'profiles',
     titleKey: 'sections.profiles',
     icon: <SlidersHorizontal className={ICON} />,

@@ -40,6 +40,7 @@ describe('GUI help — route coverage', () => {
 });
 
 const pageFiles = {
+  '/dashboard': 'DashboardPage',
   '/link': 'LinkPage',
   '/network': 'NetworkPage',
   '/path': 'PathAnalysisPage',
@@ -57,8 +58,8 @@ const pageFiles = {
 const sourceRoot = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
 
 describe('GUI help — current card coverage', () => {
-  it('keeps all 27 sections with translated bodies', () => {
-    expect(new Set(helpSections.map((section) => section.id)).size).toBe(27);
+  it('keeps all 28 sections with translated bodies', () => {
+    expect(new Set(helpSections.map((section) => section.id)).size).toBe(28);
     for (const language of ['en', 'es']) {
       const translate = i18next.getFixedT(language, ['help', 'cards', 'pages', 'common'] as const);
       for (const section of helpSections) {

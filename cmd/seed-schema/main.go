@@ -251,6 +251,11 @@ func schemaTargets() []schemaTarget {
 		{&api.FlowConversationsResponse{}, "flow-conversations-response.schema.json"},
 		{&api.FlowApplicationsResponse{}, "flow-applications-response.schema.json"},
 
+		// The caller's own dashboard layout (UI-SEED-22): PUT body and the
+		// GET/PUT response.
+		{&api.DashboardLayoutRequest{}, "dashboard-layout-request.schema.json"},
+		{&api.DashboardLayout{}, "dashboard-layout.schema.json"},
+
 		// #364's Bonjour browse. Registered as the bonjour package's own type
 		// rather than an api mirror of it: a mirror is one more thing to drift
 		// and the handler serves this struct verbatim.
