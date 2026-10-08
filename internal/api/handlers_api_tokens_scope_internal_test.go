@@ -10,6 +10,7 @@ import (
 	"github.com/MustardSeedNetworks/seed/internal/auth"
 	"github.com/MustardSeedNetworks/seed/internal/database"
 	"github.com/MustardSeedNetworks/seed/internal/identity/roles"
+	"github.com/MustardSeedNetworks/seed/internal/identity/tokens"
 )
 
 // TestCallerRole_ClampsOnTokenScope proves the #1255 auth-time clamp:
@@ -91,11 +92,11 @@ func TestAPITokenRepo_ScopeRoundtrips(t *testing.T) {
 	repo := database.NewAPITokenRepository(db)
 
 	// Seed two tokens for "admin": one viewer-scoped, one inherits.
-	rec1 := database.APITokenRecord{
+	rec1 := tokens.Record{
 		ID: "t1", OwnerUsername: "admin", Name: "ci-readonly",
 		TokenHash: "hash1", Prefix: "sd_pat_abcde", Scope: roles.Viewer,
 	}
-	rec2 := database.APITokenRecord{
+	rec2 := tokens.Record{
 		ID: "t2", OwnerUsername: "admin", Name: "all-access",
 		TokenHash: "hash2", Prefix: "sd_pat_fghij", Scope: "",
 	}

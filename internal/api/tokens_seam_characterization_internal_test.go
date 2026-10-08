@@ -26,7 +26,7 @@ func TestAPITokenSeamStampsLastUsed(t *testing.T) {
 	plaintext := insertPAT(t, s, "carol")
 
 	w := httptest.NewRecorder()
-	apiTokenMiddleware(s.apiTokens, s.resolveClientID,
+	apiTokenMiddleware(s.identityTokens, s.resolveClientID,
 		http.HandlerFunc(func(http.ResponseWriter, *http.Request) {})).ServeHTTP(w, patRequest(plaintext))
 	require.Equal(t, http.StatusOK, w.Code)
 
@@ -39,16 +39,21 @@ func TestAPITokenSeamStampsLastUsed(t *testing.T) {
 func TestAPITokenSeamRejectsRevoked(t *testing.T) {
 	t.Parallel()
 	s, _ := apiTokenTestSetup(t)
-	plaintext := insertPAT(t, s, "carol")
-	listed, err := s.apiTokens.ListByOwner(t.Context(), "carol")
+	plaintext := insertPAT(t, s, "alice")
+	listed, err := s.apiTokens.ListByOwner(t.Context(), "alice")
 	require.NoError(t, err)
 	require.Len(t, listed, 1)
-	require.NoError(t, s.apiTokens.Revoke(t.Context(), listed[0].ID, "carol"))
+	require.NoError(t, s.apiTokens.Revoke(t.Context(), listed[0].ID, "alice"))
 
 	called := false
 	w := httptest.NewRecorder()
-	apiTokenMiddleware(s.apiTokens, s.resolveClientID,
-		http.HandlerFunc(func(http.ResponseWriter, *http.Request) { called = true })).ServeHTTP(w, patRequest(plaintext))
+	apiTokenMiddleware(
+		s.identityTokens,
+		s.resolveClientID,
+		http.HandlerFunc(
+			func(http.ResponseWriter, *http.Request) { called = true },
+		),
+	).ServeHTTP(w, patRequest(plaintext))
 	require.Equal(t, http.StatusUnauthorized, w.Code)
 	require.False(t, called)
 }
@@ -56,13 +61,18 @@ func TestAPITokenSeamRejectsRevoked(t *testing.T) {
 func TestAPITokenSeamRejectsWithoutStore(t *testing.T) {
 	t.Parallel()
 	s, _ := apiTokenTestSetup(t)
-	plaintext := insertPAT(t, s, "carol")
+	plaintext := insertPAT(t, s, "bob")
 	s.apiTokens = nil
 
 	called := false
 	w := httptest.NewRecorder()
-	apiTokenMiddleware(s.apiTokens, s.resolveClientID,
-		http.HandlerFunc(func(http.ResponseWriter, *http.Request) { called = true })).ServeHTTP(w, patRequest(plaintext))
+	apiTokenMiddleware(
+		s.identityTokens,
+		s.resolveClientID,
+		http.HandlerFunc(
+			func(http.ResponseWriter, *http.Request) { called = true },
+		),
+	).ServeHTTP(w, patRequest(plaintext))
 	require.Equal(t, http.StatusUnauthorized, w.Code)
 	require.False(t, called)
 }

@@ -98,16 +98,24 @@ type dbTokensAdapter struct {
 
 func (a dbTokensAdapter) Available() bool { return a.repo() != nil }
 
-func (a dbTokensAdapter) Insert(ctx context.Context, t database.APITokenRecord) error {
+func (a dbTokensAdapter) Insert(ctx context.Context, t tokens.Record) error {
 	return a.repo().Insert(ctx, t)
 }
 
-func (a dbTokensAdapter) ListByOwner(ctx context.Context, owner string) ([]database.APITokenRecord, error) {
+func (a dbTokensAdapter) ListByOwner(ctx context.Context, owner string) ([]tokens.Record, error) {
 	return a.repo().ListByOwner(ctx, owner)
 }
 
 func (a dbTokensAdapter) Revoke(ctx context.Context, id, owner string) error {
 	return a.repo().Revoke(ctx, id, owner)
+}
+
+func (a dbTokensAdapter) FindActiveByHash(ctx context.Context, hash string) (tokens.Record, error) {
+	return a.repo().FindActiveByHash(ctx, hash)
+}
+
+func (a dbTokensAdapter) TouchLastUsed(ctx context.Context, id string) error {
+	return a.repo().TouchLastUsed(ctx, id)
 }
 
 // licenseTokenGate implements tokens.LicenseGate over *license.Manager,

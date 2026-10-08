@@ -11,6 +11,7 @@ import (
 	"github.com/MustardSeedNetworks/seed/internal/database"
 	"github.com/MustardSeedNetworks/seed/internal/database/dbtest"
 	"github.com/MustardSeedNetworks/seed/internal/identity/roles"
+	"github.com/MustardSeedNetworks/seed/internal/identity/tokens"
 	"github.com/MustardSeedNetworks/seed/internal/license"
 )
 
@@ -318,7 +319,7 @@ func TestDeleteUser_CascadesAPITokens(t *testing.T) {
 	s.apiTokens = repo
 
 	// Insert a token owned by bob.
-	if err := repo.Insert(t.Context(), database.APITokenRecord{
+	if err := repo.Insert(t.Context(), tokens.Record{
 		ID: "tokn-bob-001", OwnerUsername: "bob", Name: "ci",
 		TokenHash: "hash-bob", Prefix: "sd_pat_bob",
 	}); err != nil {
@@ -339,7 +340,7 @@ func TestDeleteUser_CascadesAPITokens(t *testing.T) {
 	if _, err := db.CreateUser(t.Context(), "bob", "$2a$10$x", roles.Admin); err != nil {
 		t.Fatalf("re-create bob: %v", err)
 	}
-	if err := repo.Insert(t.Context(), database.APITokenRecord{
+	if err := repo.Insert(t.Context(), tokens.Record{
 		ID: "tokn-bob-001", OwnerUsername: "bob", Name: "ci2",
 		TokenHash: "hash-bob-2", Prefix: "sd_pat_bob2",
 	}); err != nil {
