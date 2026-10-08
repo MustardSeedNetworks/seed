@@ -242,6 +242,7 @@ func schemaTargets() []schemaTarget {
 		{&api.ProbeHistoryResponse{}, "probe-history-response.schema.json"},
 		{&api.AnomalyHistoryResponse{}, "anomaly-history-response.schema.json"},
 		{&api.InterfaceStatsListResponse{}, "interface-stats-list-response.schema.json"},
+		{&api.InterfaceHistoryResponse{}, "interface-history-response.schema.json"},
 
 		// #364's Bonjour browse. Registered as the bonjour package's own type
 		// rather than an api mirror of it: a mirror is one more thing to drift

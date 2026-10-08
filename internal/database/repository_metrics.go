@@ -4,7 +4,6 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
-	"strconv"
 	"time"
 
 	"github.com/MustardSeedNetworks/seed/internal/timeseries/ifrate"
@@ -91,7 +90,7 @@ func (r *MetricsRepository) RecordInterfaceRates(ctx context.Context, rates []if
 		defer func() { _ = stmt.Close() }()
 
 		for _, rate := range rates {
-			targetID := rate.TargetID + "/" + strconv.FormatUint(uint64(rate.IfIndex), 10)
+			targetID := rateKey(rate.TargetID, rate.IfIndex)
 			at := rate.At.UTC().Format(time.RFC3339)
 			for _, pt := range rate.Points() {
 				if _, execErr := stmt.ExecContext(ctx, targetID, pt.Type, pt.Value, pt.Unit, at,
@@ -116,7 +115,7 @@ func (r *MetricsRepository) InterfaceErrorPeaks(
 		  AND timestamp > ? AND timestamp <= ?
 		  AND client_id = ? AND target_kind = ?
 		GROUP BY metric_type
-	`, targetID+"/"+strconv.FormatUint(uint64(ifIndex), 10),
+	`, rateKey(targetID, ifIndex),
 		ifrate.MetricInErrors, ifrate.MetricOutErrors, ifrate.MetricInDiscards, ifrate.MetricOutDiscards,
 		from.UTC().Format(time.RFC3339), to.UTC().Format(time.RFC3339),
 		clientID, ifrate.TargetKind)

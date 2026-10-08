@@ -104,3 +104,75 @@ test('the interface table fits a 390px phone', async ({ page }) => {
   });
   expect(overflow).toBeLessThanOrEqual(0);
 });
+
+function historyBody(range: string): Record<string, unknown> {
+  const to = Date.parse('2026-10-08T12:00:00Z');
+  const points = [0, 1, 2, 3].map((i) => ({
+    sampledAt: new Date(to - (4 - i) * 60_000).toISOString(),
+    inOctetsPerSec: 812_500_000,
+    outOctetsPerSec: 93_750_000,
+    inErrorsPerSec: i === 2 ? 4.2 : 0,
+    outErrorsPerSec: 0,
+    inDiscardsPerSec: 0,
+    outDiscardsPerSec: 0,
+  }));
+  return {
+    targetId: 'target-core',
+    ifIndex: 3,
+    range,
+    from: new Date(to - 3_600_000).toISOString(),
+    to: new Date(to).toISOString(),
+    bucketSeconds: 15,
+    points: range === '7d' ? [] : points,
+  };
+}
+
+test('opens an interface to its traffic and error history', async ({ page }) => {
+  await page.route('**/api/v1/topology/interfaces', (route) =>
+    route.fulfill({ json: { interfaces: INTERFACES, count: INTERFACES.length } }),
+  );
+  const ranges: string[] = [];
+  await page.route('**/api/v1/topology/interfaces/history?*', (route) => {
+    const url = new URL(route.request().url());
+    const range = url.searchParams.get('range') ?? '';
+    ranges.push(`${url.searchParams.get('target')}/${url.searchParams.get('ifIndex')}/${range}`);
+    return route.fulfill({ json: historyBody(range) });
+  });
+  await skipSetupWizard(page);
+  await page.goto('/interfaces');
+  await expect(page.getByTestId('interfaces-table')).toBeVisible({ timeout: 10000 });
+
+  await page.getByRole('button', { name: 'TenGigabitEthernet1/0/3' }).click();
+  const history = page.getByTestId('interface-history');
+  await expect(history.getByRole('heading', { name: 'TenGigabitEthernet1/0/3' })).toBeFocused();
+  await expect(history.getByTestId('interface-history-traffic-peaks')).toHaveText(
+    'Peak In 6.5 Gbps · Peak Out 750 Mbps',
+  );
+  await expect(history.getByTestId('interface-history-errors-peaks')).toHaveText(
+    'Peak Errors 4.2/s · Peak Discards 0/s',
+  );
+
+  await history.getByTestId('interface-history-range').selectOption('7d');
+  await expect(history.getByTestId('interface-history-empty')).toBeVisible();
+  expect(ranges).toEqual(['target-core/3/24h', 'target-core/3/7d']);
+
+  await history.getByTestId('interface-history-close').click();
+  await expect(history).toHaveCount(0);
+});
+
+test('the interface history fits a 390px phone', async ({ page }) => {
+  await page.route('**/api/v1/topology/interfaces', (route) =>
+    route.fulfill({ json: { interfaces: INTERFACES, count: INTERFACES.length } }),
+  );
+  await page.route('**/api/v1/topology/interfaces/history?*', (route) =>
+    route.fulfill({ json: historyBody('24h') }),
+  );
+  await page.setViewportSize({ width: 390, height: 844 });
+  await skipSetupWizard(page);
+  await page.goto('/interfaces');
+  await page.getByRole('button', { name: 'TenGigabitEthernet1/0/3' }).click();
+  await expect(page.getByTestId('interface-history-traffic')).toBeVisible({ timeout: 10000 });
+
+  const overflow = await page.evaluate(() => document.documentElement.scrollWidth - 390);
+  expect(overflow).toBeLessThanOrEqual(0);
+});

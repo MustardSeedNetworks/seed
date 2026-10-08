@@ -652,7 +652,7 @@
       }
     },
     "interfaces": {
-      "description": "Compare every interface your polling targets report. Seed rates each interface from two consecutive polls and lists the highest error rate first. Sort by any rate column to find the busiest or noisiest ports.",
+      "description": "Compare every interface your polling targets report. Seed rates each interface from two consecutive polls and lists the highest error rate first. Sort by any rate column to find the busiest or noisiest ports. Select an interface to chart its traffic and errors over the last hour, day or week. A break in the line means no poll was rated then.",
       "terms": {
         "errors": {
           "term": "Errors",

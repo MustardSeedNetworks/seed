@@ -78,3 +78,78 @@ func TestHandleInterfaceStats(t *testing.T) {
 	require.InDelta(t, 3.0, body.Interfaces[0].Rates.InErrors, 0)
 	require.Equal(t, "port1", body.Interfaces[1].Name)
 }
+
+func getInterfaceHistory(s *Server, query string) *httptest.ResponseRecorder {
+	req := httptest.NewRequest(http.MethodGet, APIVersionPrefix+"/topology/interfaces/history?"+query, http.NoBody)
+	w := httptest.NewRecorder()
+	s.handleInterfaceHistory(w, req)
+	return w
+}
+
+func TestHandleInterfaceHistoryRejectsBadQuery(t *testing.T) {
+	t.Parallel()
+	s := &Server{dbConn: newTestDB(t)}
+	s.interfaceStats = app.NewInterfaceStats(s.db)
+	for _, query := range []string{
+		"ifIndex=1", "target=t1", "target=t1&ifIndex=-1", "target=t1&ifIndex=4294967296",
+		"target=t1&ifIndex=one", "target=t1&ifIndex=1&range=30d", "target=t1&ifIndex=1&range=2h",
+	} {
+		w := getInterfaceHistory(s, query)
+		require.Equal(t, http.StatusBadRequest, w.Code, query)
+	}
+}
+
+func TestHandleInterfaceHistoryWithoutDatabase(t *testing.T) {
+	t.Parallel()
+	s := &Server{}
+	s.interfaceStats = app.NewInterfaceStats(s.db)
+
+	w := getInterfaceHistory(s, "target=t1&ifIndex=1")
+	require.Equal(t, http.StatusServiceUnavailable, w.Code, w.Body.String())
+}
+
+func TestHandleInterfaceHistory(t *testing.T) {
+	t.Parallel()
+	db := newTestDB(t)
+	s := &Server{dbConn: db}
+	s.interfaceStats = app.NewInterfaceStats(s.db)
+
+	w := getInterfaceHistory(s, "target=t1&ifIndex=2&range=1h")
+	require.Equal(t, http.StatusOK, w.Code, w.Body.String())
+	var empty InterfaceHistoryResponse
+	require.NoError(t, json.Unmarshal(w.Body.Bytes(), &empty))
+	require.NotNil(t, empty.Points, "no rated poll is an empty list, not null")
+	require.Empty(t, empty.Points)
+	require.InDelta(t, 15.0, empty.BucketSeconds, 0, "1h over 240 buckets")
+
+	recent := time.Now().UTC().Add(-10 * time.Minute).Truncate(time.Second)
+	require.NoError(t, db.Metrics().RecordInterfaceRates(context.Background(), []ifrate.Rate{
+		{ClientID: database.DefaultClientID, TargetID: "t1", IfIndex: 2, At: recent.Add(-2 * time.Hour), InErrors: 9},
+		{
+			ClientID: database.DefaultClientID, TargetID: "t1", IfIndex: 2, At: recent,
+			Octets: &ifrate.Octets{In: 125, Out: 25}, OutErrors: 2,
+		},
+	}))
+
+	// The default range is 24h, which holds both polls.
+	w = getInterfaceHistory(s, "target=t1&ifIndex=2")
+	require.Equal(t, http.StatusOK, w.Code, w.Body.String())
+	var day InterfaceHistoryResponse
+	require.NoError(t, json.Unmarshal(w.Body.Bytes(), &day))
+	require.Equal(t, "24h", string(day.Range))
+	require.Equal(t, "t1", day.TargetID)
+	require.Equal(t, uint32(2), day.IfIndex)
+	require.Len(t, day.Points, 2)
+	require.InDelta(t, 9.0, day.Points[0].InErrors, 0)
+
+	// The last hour holds only the recent one.
+	w = getInterfaceHistory(s, "target=t1&ifIndex=2&range=1h")
+	require.Equal(t, http.StatusOK, w.Code, w.Body.String())
+	var hour InterfaceHistoryResponse
+	require.NoError(t, json.Unmarshal(w.Body.Bytes(), &hour))
+	require.Len(t, hour.Points, 1)
+	require.True(t, hour.Points[0].SampledAt.Equal(recent))
+	require.NotNil(t, hour.Points[0].InOctets)
+	require.InDelta(t, 125.0, *hour.Points[0].InOctets, 0)
+	require.InDelta(t, 2.0, hour.Points[0].OutErrors, 0)
+}

@@ -1,6 +1,7 @@
 // Package ifstats is the read side of the interface rates the SNMP pipeline
 // stores (P-A, ADR-0033): every interface a polling target has reported,
-// with the rates of its most recent rated poll (UI-SEED-21, #3191).
+// with the rates of its most recent rated poll, and one interface's rates
+// over a recent window (UI-SEED-21, #3191).
 //
 // An interface is listed as soon as the target's ifTable has been walked,
 // before any rate exists: the first poll only baselines the counters, so a
@@ -78,9 +79,11 @@ type Interface struct {
 	Rates      *Rates
 }
 
-// Store reads the discovered interfaces and their latest rates.
+// Store reads the discovered interfaces with their latest rates, and the
+// rated polls of one interface in (from, to], oldest first.
 type Store interface {
 	Interfaces(ctx context.Context) ([]Interface, error)
+	InterfaceRates(ctx context.Context, targetID string, ifIndex uint32, from, to time.Time) ([]Rates, error)
 }
 
 // Service answers interface statistics reads from a Store.

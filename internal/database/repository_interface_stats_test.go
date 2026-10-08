@@ -115,3 +115,51 @@ func TestInterfaceStatsEmpty(t *testing.T) {
 		t.Errorf("got %+v, want no interfaces", got)
 	}
 }
+
+func TestInterfaceRates(t *testing.T) {
+	db, cleanup := testDB(t)
+	defer cleanup()
+	ctx := context.Background()
+
+	start := time.Date(2026, 10, 7, 12, 0, 0, 0, time.UTC)
+	// metrics.client_id is a real FK, so the second tenant has to exist.
+	if _, err := db.Exec(ctx, `
+		INSERT INTO clients (id, name, slug, created_at, updated_at)
+		VALUES ('other', 'Other', 'other', ?, ?)`, start, start); err != nil {
+		t.Fatalf("seed client: %v", err)
+	}
+	util := ifrate.Utilization{In: 40, Out: 10}
+	if err := db.Metrics().RecordInterfaceRates(ctx, []ifrate.Rate{
+		// At the window's open bound, so outside (from, to].
+		{ClientID: database.DefaultClientID, TargetID: "t1", IfIndex: 1, At: start, InErrors: 99},
+		{
+			ClientID: database.DefaultClientID, TargetID: "t1", IfIndex: 1, At: start.Add(2 * time.Minute),
+			Octets: &ifrate.Octets{In: 500, Out: 50, Utilization: &util}, OutDiscards: 1,
+			EtherLike: map[string]float64{"dot3_fcs_errors": 7},
+		},
+		{ClientID: database.DefaultClientID, TargetID: "t1", IfIndex: 1, At: start.Add(time.Minute), InErrors: 3},
+		// Another interface, another target and another client: none are read.
+		{ClientID: database.DefaultClientID, TargetID: "t1", IfIndex: 2, At: start.Add(time.Minute), InErrors: 5},
+		{ClientID: database.DefaultClientID, TargetID: "t10", IfIndex: 1, At: start.Add(time.Minute), InErrors: 5},
+		{ClientID: "other", TargetID: "t1", IfIndex: 1, At: start.Add(time.Minute), InErrors: 5},
+		// Past the window's closed bound.
+		{ClientID: database.DefaultClientID, TargetID: "t1", IfIndex: 1, At: start.Add(4 * time.Minute), InErrors: 8},
+	}); err != nil {
+		t.Fatalf("RecordInterfaceRates: %v", err)
+	}
+
+	got, err := db.Metrics().InterfaceRates(ctx, database.DefaultClientID, "t1", 1, start, start.Add(3*time.Minute))
+	if err != nil {
+		t.Fatalf("InterfaceRates: %v", err)
+	}
+	in, out := 500.0, 50.0
+	inU, outU := 40.0, 10.0
+	want := []ifstats.Rates{
+		{At: start.Add(time.Minute), InErrors: 3},
+		{
+			At: start.Add(2 * time.Minute), InOctets: &in, OutOctets: &out,
+			InUtilization: &inU, OutUtilization: &outU, OutDiscards: 1,
+		},
+	}
+	require.Equal(t, want, got)
+}

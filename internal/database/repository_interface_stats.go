@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"strconv"
 	"time"
 
 	"github.com/MustardSeedNetworks/seed/internal/timeseries/ifrate"
@@ -104,4 +105,51 @@ func setRate(r *ifstats.Rates, metric string, v float64) {
 	case ifrate.MetricOutDiscards:
 		r.OutDiscards = v
 	}
+}
+
+// InterfaceRates reads the rated polls RecordInterfaceRates stored for one
+// interface of clientID in (from, to], oldest first.
+func (r *MetricsRepository) InterfaceRates(
+	ctx context.Context, clientID, targetID string, ifIndex uint32, from, to time.Time,
+) ([]ifstats.Rates, error) {
+	rows, err := r.db.Query(ctx, `
+		SELECT timestamp, metric_type, value FROM metrics
+		WHERE interface_name = ? AND client_id = ? AND target_kind = ?
+		  AND timestamp > ? AND timestamp <= ?
+		ORDER BY timestamp
+	`, rateKey(targetID, ifIndex), clientID, ifrate.TargetKind,
+		from.UTC().Format(time.RFC3339), to.UTC().Format(time.RFC3339))
+	if err != nil {
+		return nil, fmt.Errorf("query interface rates: %w", err)
+	}
+	defer func() { _ = rows.Close() }()
+
+	var out []ifstats.Rates
+	for rows.Next() {
+		var (
+			stamp, metric string
+			value         float64
+		)
+		if scanErr := rows.Scan(&stamp, &metric, &value); scanErr != nil {
+			return nil, fmt.Errorf("scan interface rate: %w", scanErr)
+		}
+		at, parseErr := time.Parse(time.RFC3339, stamp)
+		if parseErr != nil {
+			return nil, fmt.Errorf("parse interface rate time %q: %w", stamp, parseErr)
+		}
+		// Rows arrive grouped by poll, one per stored point.
+		if n := len(out); n == 0 || !out[n-1].At.Equal(at) {
+			out = append(out, ifstats.Rates{At: at})
+		}
+		setRate(&out[len(out)-1], metric, value)
+	}
+	if rowsErr := rows.Err(); rowsErr != nil {
+		return nil, fmt.Errorf("interface rates rows: %w", rowsErr)
+	}
+	return out, nil
+}
+
+// rateKey is the target_id RecordInterfaceRates keys an interface's points by.
+func rateKey(targetID string, ifIndex uint32) string {
+	return targetID + "/" + strconv.FormatUint(uint64(ifIndex), 10)
 }

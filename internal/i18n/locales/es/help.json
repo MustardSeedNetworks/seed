@@ -652,7 +652,7 @@
       }
     },
     "interfaces": {
-      "description": "Compare todas las interfaces que informan sus destinos de sondeo. Seed calcula la tasa de cada interfaz a partir de dos sondeos consecutivos y muestra primero la tasa de errores más alta. Ordene por cualquier columna de tasa para encontrar los puertos más cargados o con más problemas.",
+      "description": "Compare todas las interfaces que informan sus destinos de sondeo. Seed calcula la tasa de cada interfaz a partir de dos sondeos consecutivos y muestra primero la tasa de errores más alta. Ordene por cualquier columna de tasa para encontrar los puertos más cargados o con más problemas. Seleccione una interfaz para ver su tráfico y sus errores en la última hora, día o semana. Un corte en la línea indica que entonces no hubo ningún sondeo con tasa.",
       "terms": {
         "errors": {
           "term": "Errores",

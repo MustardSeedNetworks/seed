@@ -271,6 +271,7 @@
   },
   "interfaceStats": {
     "storeUnavailable": "Interface statistics are unavailable: the database is not open",
-    "readFailed": "Failed to read interface statistics"
+    "readFailed": "Failed to read interface statistics",
+    "invalidHistoryQuery": "Name a polling target, an ifIndex and a range of 1h, 24h or 7d"
   }
 }
