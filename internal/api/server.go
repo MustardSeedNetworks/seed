@@ -105,15 +105,6 @@ const (
 	// setupModeTimeoutMin is how long setup mode remains active (security fix #891).
 	// After this duration, setup is disabled and server restart is required.
 	setupModeTimeoutMin = 15
-
-	// retentionAlertsMultiplier is the multiplier for alerts retention (keep alerts longer).
-	retentionAlertsMultiplier = 2
-
-	// retentionAuditLogMultiplier is the multiplier for audit log retention (keep longest).
-	retentionAuditLogMultiplier = 3
-
-	// retentionInactiveDeviceMultiplier is the multiplier for inactive device retention.
-	retentionInactiveDeviceMultiplier = 4
 )
 
 // API versioning constants (fixes #887).
