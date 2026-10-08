@@ -12,6 +12,7 @@ import (
 	"github.com/MustardSeedNetworks/seed/internal/database"
 	"github.com/MustardSeedNetworks/seed/internal/database/dbtest"
 	"github.com/MustardSeedNetworks/seed/internal/identity/roles"
+	"github.com/MustardSeedNetworks/seed/internal/identity/tokens"
 )
 
 func setupAPITokenTest(t *testing.T, owners ...string) (*database.APITokenRepository, context.Context) {
@@ -45,7 +46,7 @@ func TestAPITokenInsertAndLookup(t *testing.T) {
 	t.Parallel()
 	repo, ctx := setupAPITokenTest(t)
 
-	rec := database.APITokenRecord{
+	rec := tokens.Record{
 		ID:            "tokenid01",
 		OwnerUsername: "alice",
 		Name:          "ci-bot",
@@ -64,7 +65,7 @@ func TestAPITokenInsertAndLookup(t *testing.T) {
 	if got.OwnerUsername != "alice" || got.Name != "ci-bot" {
 		t.Errorf("unexpected record: %+v", got)
 	}
-	if !got.IsActive() {
+	if !got.RevokedAt.IsZero() {
 		t.Error("expected IsActive == true on fresh token")
 	}
 }
@@ -73,7 +74,7 @@ func TestAPITokenRevokeMakesInactive(t *testing.T) {
 	t.Parallel()
 	repo, ctx := setupAPITokenTest(t)
 
-	rec := database.APITokenRecord{
+	rec := tokens.Record{
 		ID: "tokenid02", OwnerUsername: "bob", Name: "old",
 		TokenHash: "cafe", Prefix: "sd_pat_cafe", CreatedAt: time.Now().UTC(),
 	}
@@ -98,7 +99,7 @@ func TestAPITokenRevokeRequiresOwner(t *testing.T) {
 	t.Parallel()
 	repo, ctx := setupAPITokenTest(t)
 
-	rec := database.APITokenRecord{
+	rec := tokens.Record{
 		ID: "tokenid03", OwnerUsername: "alice", Name: "mine",
 		TokenHash: "beef", Prefix: "sd_pat_beef", CreatedAt: time.Now().UTC(),
 	}
@@ -121,7 +122,7 @@ func TestAPITokenListByOwnerSorted(t *testing.T) {
 	repo, ctx := setupAPITokenTest(t)
 
 	now := time.Now().UTC()
-	tokens := []database.APITokenRecord{
+	tokens := []tokens.Record{
 		{
 			ID: "t1", OwnerUsername: "alice", Name: "first",
 			TokenHash: "h1", Prefix: "sd_pat_aaa", CreatedAt: now.Add(-3 * time.Hour),
@@ -158,7 +159,7 @@ func TestAPITokenTouchLastUsedUpdatesTimestamp(t *testing.T) {
 	t.Parallel()
 	repo, ctx := setupAPITokenTest(t, "carol")
 
-	rec := database.APITokenRecord{
+	rec := tokens.Record{
 		ID: "tokenid04", OwnerUsername: "carol", Name: "k",
 		TokenHash: "abcd", Prefix: "sd_pat_xxx", CreatedAt: time.Now().UTC(),
 	}

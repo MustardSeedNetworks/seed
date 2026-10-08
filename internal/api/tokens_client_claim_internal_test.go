@@ -13,7 +13,7 @@ import (
 	"testing"
 
 	"github.com/MustardSeedNetworks/seed/internal/auth"
-	"github.com/MustardSeedNetworks/seed/internal/database"
+	"github.com/MustardSeedNetworks/seed/internal/identity/tokens"
 )
 
 // insertPAT mints a token owned by owner and returns its plaintext.
@@ -25,7 +25,7 @@ func insertPAT(t *testing.T, s *Server, owner string) string {
 		t.Fatalf("mintTokenMaterial: %v", err)
 	}
 	plaintext := APITokenPrefix + secret
-	rec := database.APITokenRecord{
+	rec := tokens.Record{
 		ID: id, OwnerUsername: owner, Name: "ci",
 		TokenHash: hashAPIToken(plaintext),
 		Prefix:    plaintext[:apiTokenDisplayPrefix],
@@ -61,7 +61,7 @@ func TestAPITokenMiddlewareCarriesOwnersClient(t *testing.T) {
 	next := http.HandlerFunc(func(_ http.ResponseWriter, r *http.Request) {
 		got, gotErr = auth.ClientIDFromContext(r.Context())
 	})
-	mw := apiTokenMiddleware(s.apiTokens, s.resolveClientID, next)
+	mw := apiTokenMiddleware(s.identityTokens, s.resolveClientID, next)
 
 	req := httptest.NewRequest(http.MethodGet, APIVersionPrefix+"/anything", http.NoBody)
 	req.Header.Set("Authorization", "Bearer "+plaintext)
@@ -87,7 +87,7 @@ func TestAPITokenMiddlewareRejectsUnresolvableClient(t *testing.T) {
 	unresolvable := func(_ context.Context, _ string) (string, error) {
 		return "", errors.New("client identity unavailable")
 	}
-	mw := apiTokenMiddleware(s.apiTokens, unresolvable, next)
+	mw := apiTokenMiddleware(s.identityTokens, unresolvable, next)
 
 	req := httptest.NewRequest(http.MethodGet, APIVersionPrefix+"/anything", http.NoBody)
 	req.Header.Set("Authorization", "Bearer "+plaintext)

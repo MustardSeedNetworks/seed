@@ -15,6 +15,7 @@ import (
 	"github.com/MustardSeedNetworks/seed/internal/database"
 	"github.com/MustardSeedNetworks/seed/internal/database/dbtest"
 	"github.com/MustardSeedNetworks/seed/internal/identity/roles"
+	"github.com/MustardSeedNetworks/seed/internal/identity/tokens"
 	"github.com/MustardSeedNetworks/seed/internal/license"
 )
 
@@ -229,7 +230,7 @@ func TestAPITokenMiddlewareResolvesValidToken(t *testing.T) {
 		t.Fatalf("mintTokenMaterial: %v", err)
 	}
 	plaintext := APITokenPrefix + secret
-	rec := database.APITokenRecord{
+	rec := tokens.Record{
 		ID: id, OwnerUsername: "carol", Name: "ci",
 		TokenHash: hashAPIToken(plaintext),
 		Prefix:    plaintext[:apiTokenDisplayPrefix],
@@ -242,7 +243,7 @@ func TestAPITokenMiddlewareResolvesValidToken(t *testing.T) {
 	next := http.HandlerFunc(func(_ http.ResponseWriter, r *http.Request) {
 		capturedUser = auth.UsernameFromContext(r.Context())
 	})
-	mw := apiTokenMiddleware(s.apiTokens, s.resolveClientID, next)
+	mw := apiTokenMiddleware(s.identityTokens, s.resolveClientID, next)
 
 	req := httptest.NewRequest(http.MethodGet, APIVersionPrefix+"/anything", http.NoBody)
 	req.Header.Set("Authorization", "Bearer "+plaintext)
@@ -260,7 +261,7 @@ func TestAPITokenMiddlewareRejectsBadToken(t *testing.T) {
 
 	called := false
 	next := http.HandlerFunc(func(_ http.ResponseWriter, _ *http.Request) { called = true })
-	mw := apiTokenMiddleware(s.apiTokens, s.resolveClientID, next)
+	mw := apiTokenMiddleware(s.identityTokens, s.resolveClientID, next)
 
 	req := httptest.NewRequest(http.MethodGet, APIVersionPrefix+"/anything", http.NoBody)
 	req.Header.Set("Authorization", "Bearer "+APITokenPrefix+"deadbeef")
@@ -281,7 +282,7 @@ func TestAPITokenMiddlewareFallsThroughForJWT(t *testing.T) {
 
 	called := false
 	next := http.HandlerFunc(func(_ http.ResponseWriter, _ *http.Request) { called = true })
-	mw := apiTokenMiddleware(s.apiTokens, s.resolveClientID, next)
+	mw := apiTokenMiddleware(s.identityTokens, s.resolveClientID, next)
 
 	req := httptest.NewRequest(http.MethodGet, APIVersionPrefix+"/anything", http.NoBody)
 	req.Header.Set("Authorization", "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.fake.fake")
@@ -299,7 +300,7 @@ func TestAPITokenMiddlewareSkipsNonAPI(t *testing.T) {
 
 	called := false
 	next := http.HandlerFunc(func(_ http.ResponseWriter, _ *http.Request) { called = true })
-	mw := apiTokenMiddleware(s.apiTokens, s.resolveClientID, next)
+	mw := apiTokenMiddleware(s.identityTokens, s.resolveClientID, next)
 
 	req := httptest.NewRequest(http.MethodGet, "/static/app.js", http.NoBody)
 	req.Header.Set("Authorization", "Bearer "+APITokenPrefix+"anything")

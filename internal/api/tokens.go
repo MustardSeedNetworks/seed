@@ -7,10 +7,10 @@ package api
 // CI). Minting requires the Pro tier; listing / revoking is available to any
 // authenticated user for their own tokens.
 //
-// All token-store access in handler bodies goes through s.identityTokens (the
-// use-case, ADR-0024). The PAT authentication seam (apiTokenMiddleware /
-// resolveAPIToken) remains unchanged — it is wired in server_lifecycle.go
-// via s.apiTokens and is authentication infrastructure, not handler data access.
+// All token-store access goes through s.identityTokens (the use-case,
+// ADR-0024), including the PAT authentication seam (apiTokenMiddleware, wired
+// in server_lifecycle.go), which keeps its policy here and reads the store
+// through tokens.Service.Resolve.
 
 import (
 	"context"
@@ -24,7 +24,6 @@ import (
 	"time"
 
 	"github.com/MustardSeedNetworks/seed/internal/auth"
-	"github.com/MustardSeedNetworks/seed/internal/database"
 	"github.com/MustardSeedNetworks/seed/internal/identity/roles"
 	"github.com/MustardSeedNetworks/seed/internal/identity/tokens"
 	"github.com/MustardSeedNetworks/seed/internal/license"
@@ -78,7 +77,7 @@ type MintTokenResponse struct {
 	Scope string `json:"scope,omitempty"`
 }
 
-// TokenListItem is a sanitized projection of APITokenRecord for the
+// TokenListItem is a sanitized projection of tokens.Record for the
 // list endpoint — never contains the plaintext token or the hash.
 type TokenListItem struct {
 	ID         string    `json:"id"`
@@ -239,7 +238,7 @@ func (s *Server) handleAPITokenMint(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	plaintext := APITokenPrefix + secret
-	rec := database.APITokenRecord{
+	rec := tokens.Record{
 		ID:            id,
 		OwnerUsername: username,
 		Name:          req.Name,
@@ -362,48 +361,20 @@ func hashAPIToken(plaintext string) string {
 	return hex.EncodeToString(sum[:])
 }
 
-// resolveAPIToken returns the matched record for the given plaintext
-// token, or a zero record if no active token matches. The token's
-// last_used_at is touched on a successful lookup (best-effort; failures
-// are logged but do not block the request). Callers check the returned
-// OwnerUsername == "" to detect no-match; #1255 callers also read Scope
-// to clamp the effective role.
-//
-// This function is part of the PAT authentication seam and takes
-// *database.APITokenRepository directly — it is not a handler data-access
-// path and is intentionally excluded from the use-case strangle (ADR-0024).
-func resolveAPIToken(ctx context.Context, repo *database.APITokenRepository, plaintext string) database.APITokenRecord {
-	if repo == nil || !strings.HasPrefix(plaintext, APITokenPrefix) {
-		return database.APITokenRecord{}
-	}
-	rec, err := repo.FindActiveByHash(ctx, hashAPIToken(plaintext))
-	if err != nil {
-		return database.APITokenRecord{}
-	}
-	if touchErr := repo.TouchLastUsed(ctx, rec.ID); touchErr != nil {
-		logging.GetLogger().WarnContext(ctx, "failed to update api token last_used_at",
-			"token_id", rec.ID, "error", touchErr)
-	}
-	return rec
-}
-
-// apiTokenMiddleware sits in front of the existing JWT auth middleware.
-// If the request carries `Authorization: Bearer sd_pat_...`, it looks
-// up the token, stamps the owner on the request context, and forwards to
-// `next` so downstream handlers see an authenticated user. Otherwise it falls through to
-// `next` unchanged, letting the JWT middleware handle the request.
-//
-// This middleware is part of the PAT authentication seam — it takes
-// *database.APITokenRepository directly and is wired in server_lifecycle.go.
-// It is intentionally excluded from the use-case strangle (ADR-0024).
 // clientResolver answers which client owns a user. It is a function rather
 // than an interface because the server's database handle is created after the
 // middleware chain is built, and a nil *database.DB boxed in an interface is
 // a non-nil interface that panics on call.
 type clientResolver func(ctx context.Context, username string) (string, error)
 
+// apiTokenMiddleware sits in front of the existing JWT auth middleware.
+// If the request carries `Authorization: Bearer sd_pat_...`, it looks
+// up the token, stamps the owner on the request context, and forwards to
+// `next` so downstream handlers see an authenticated user. Otherwise it falls through to
+// `next` unchanged, letting the JWT middleware handle the request.
+// A matched token is stamped as used.
 func apiTokenMiddleware(
-	repo *database.APITokenRepository, resolveClient clientResolver, next http.Handler,
+	pats *tokens.Service, resolveClient clientResolver, next http.Handler,
 ) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		// Only attempt token auth for API paths; static assets and
@@ -428,8 +399,8 @@ func apiTokenMiddleware(
 			next.ServeHTTP(w, r)
 			return
 		}
-		rec := resolveAPIToken(r.Context(), repo, token)
-		if rec.OwnerUsername == "" {
+		rec, ok := pats.Resolve(r.Context(), hashAPIToken(token))
+		if !ok {
 			writeError(w, r, http.StatusUnauthorized, ErrCodeUnauthorized,
 				"Invalid or revoked API token")
 			return

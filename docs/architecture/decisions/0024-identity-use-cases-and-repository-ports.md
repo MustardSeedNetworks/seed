@@ -1,7 +1,8 @@
 # ADR-0024: Identity decomposition — users / oauth / tokens use-cases over repository ports
 
 **Status:** Accepted — 2026-06-10; amended 2026-10-08 (users entity moves into
-`internal/identity/users`, see "Amendment" below) · applies ADR-0020 to the
+`internal/identity/users`, then the token record into `internal/identity/tokens`;
+see "Amendment" below) · applies ADR-0020 to the
 identity surface (C4, the final `internal/api` strangle slice before the
 `ServiceContainer` deletion)
 
@@ -142,8 +143,19 @@ in `internal/identity/users`; the database imports that package and returns its
 types. No DTO was invented and no field changed — the "thin CRUD stays thin"
 decision holds; only the type's home moved. `internal/identity/users` no longer
 imports the database; since the database now imports it, the reverse import is
-a compile-time cycle and needs no depguard rule. `tokens` (`APITokenRecord`) and `oauth` (`SSOUserInput`) keep the
-exception until their own D-SEED-30 slices.
+a compile-time cycle and needs no depguard rule.
+
+The same day the token record followed: `database.APITokenRecord` is now
+`tokens.Record` in `internal/identity/tokens` (`IsActive`, which had no
+production caller, was deleted). The PAT authentication seam keeps its policy in
+`internal/api` — prefix check, owner-client resolution, scope clamping — but no
+longer holds `*database.APITokenRepository`: the `tokens.Store` port gained
+`FindActiveByHash` and `TouchLastUsed`, and `apiTokenMiddleware` reads through
+`tokens.Service.Resolve`, which stamps a matched token as used and logs a failed
+stamp without refusing the token, as `resolveAPIToken` did. That function is
+deleted. The "PAT authN middleware keeps its direct repository" sentence above
+is superseded. `oauth` (`SSOUserInput`) keeps the exception until its own
+D-SEED-30 slice.
 
 ## Implementation phasing
 

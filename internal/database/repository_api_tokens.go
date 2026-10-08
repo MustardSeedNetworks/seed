@@ -8,33 +8,9 @@ import (
 	"errors"
 	"fmt"
 	"time"
+
+	"github.com/MustardSeedNetworks/seed/internal/identity/tokens"
 )
-
-// APITokenRecord is the persisted form of a personal-access token.
-// The plaintext token is never stored — only the SHA-256 hex digest
-// in TokenHash. Prefix is the first 12 chars of the plaintext, kept
-// so the UI can identify a token without revealing it.
-type APITokenRecord struct {
-	ID            string
-	OwnerUsername string
-	Name          string
-	TokenHash     string
-	Prefix        string
-	CreatedAt     time.Time
-	LastUsedAt    time.Time
-	RevokedAt     time.Time
-	// Scope caps the effective role of requests made with this token.
-	// Empty means inherit the owner's role (the default for tokens minted
-	// before #1255). When set, the effective role is min(owner.role,
-	// scope) at auth time so a less-privileged automation token can be
-	// minted from an admin owner.
-	Scope string
-}
-
-// IsActive reports whether the token is currently usable (not revoked).
-func (r APITokenRecord) IsActive() bool {
-	return r.RevokedAt.IsZero()
-}
 
 // APITokenRepository persists api_tokens rows. Methods are safe to call
 // concurrently because they delegate to *database/sql which handles
@@ -51,7 +27,7 @@ func NewAPITokenRepository(db *DB) *APITokenRepository {
 // Insert persists a newly minted token record. An empty Scope is stored
 // as NULL so the column reads back as "" via the COALESCE in scan, which
 // the auth layer interprets as "inherit owner's role" (#1255).
-func (r *APITokenRepository) Insert(ctx context.Context, t APITokenRecord) error {
+func (r *APITokenRepository) Insert(ctx context.Context, t tokens.Record) error {
 	var scope any
 	if t.Scope != "" {
 		scope = t.Scope
@@ -68,7 +44,7 @@ func (r *APITokenRepository) Insert(ctx context.Context, t APITokenRecord) error
 
 // FindActiveByHash returns the active (non-revoked) token row matching
 // the given hash, or [sql.ErrNoRows] if no match.
-func (r *APITokenRepository) FindActiveByHash(ctx context.Context, hash string) (APITokenRecord, error) {
+func (r *APITokenRepository) FindActiveByHash(ctx context.Context, hash string) (tokens.Record, error) {
 	row := r.db.readConn.QueryRowContext(ctx, `
 		SELECT id, owner_username, name, token_hash, prefix, created_at,
 		       COALESCE(last_used_at, ''), COALESCE(revoked_at, ''),
@@ -83,7 +59,7 @@ func (r *APITokenRepository) FindActiveByHash(ctx context.Context, hash string) 
 // creation time descending. Revoked tokens are included so the UI can
 // show "revoked" entries that haven't been deleted; callers filter as
 // needed.
-func (r *APITokenRepository) ListByOwner(ctx context.Context, owner string) ([]APITokenRecord, error) {
+func (r *APITokenRepository) ListByOwner(ctx context.Context, owner string) ([]tokens.Record, error) {
 	rows, err := r.db.readConn.QueryContext(ctx, `
 		SELECT id, owner_username, name, token_hash, prefix, created_at,
 		       COALESCE(last_used_at, ''), COALESCE(revoked_at, ''),
@@ -97,7 +73,7 @@ func (r *APITokenRepository) ListByOwner(ctx context.Context, owner string) ([]A
 	}
 	defer func() { _ = rows.Close() }()
 
-	var out []APITokenRecord
+	var out []tokens.Record
 	for rows.Next() {
 		rec, scanErr := scanAPIToken(rows)
 		if scanErr != nil {
@@ -147,8 +123,8 @@ type rowScanner interface {
 	Scan(dest ...any) error
 }
 
-func scanAPIToken(r rowScanner) (APITokenRecord, error) {
-	var rec APITokenRecord
+func scanAPIToken(r rowScanner) (tokens.Record, error) {
+	var rec tokens.Record
 	var createdStr, lastUsedStr, revokedStr string
 
 	scanErr := r.Scan(

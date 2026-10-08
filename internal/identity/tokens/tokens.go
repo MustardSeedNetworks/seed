@@ -11,15 +11,42 @@
 // enforces the license gate (ErrMintingNotAllowed) and the store seam
 // (ErrUnavailable). [sql.ErrNoRows] from Revoke passes through verbatim so the
 // handler maps it to 404.
+//
+// Record is the token entity. It lives here rather than in internal/database
+// (ADR-0024 amendment, seed#2750): the database imports this package and
+// returns Record, so the PAT authentication seam in internal/api reaches the
+// store through Service.Resolve without importing the database.
 package tokens
 
 import (
 	"context"
 	"database/sql"
 	"errors"
+	"time"
 
-	"github.com/MustardSeedNetworks/seed/internal/database"
+	"github.com/MustardSeedNetworks/seed/internal/logging"
 )
+
+// Record is the persisted form of a personal-access token. The plaintext
+// token is never stored — only the SHA-256 hex digest in TokenHash. Prefix is
+// the first 12 chars of the plaintext, kept so the UI can identify a token
+// without revealing it.
+type Record struct {
+	ID            string
+	OwnerUsername string
+	Name          string
+	TokenHash     string
+	Prefix        string
+	CreatedAt     time.Time
+	LastUsedAt    time.Time
+	RevokedAt     time.Time
+	// Scope caps the effective role of requests made with this token.
+	// Empty means inherit the owner's role (the default for tokens minted
+	// before #1255). When set, the effective role is min(owner.role,
+	// scope) at auth time so a less-privileged automation token can be
+	// minted from an admin owner.
+	Scope string
+}
 
 // Sentinel errors, mapped by handlers to the pre-strangle HTTP responses.
 var (
@@ -37,9 +64,11 @@ var (
 // in internal/app. Available reports whether a store is wired.
 type Store interface {
 	Available() bool
-	Insert(ctx context.Context, t database.APITokenRecord) error
-	ListByOwner(ctx context.Context, owner string) ([]database.APITokenRecord, error)
+	Insert(ctx context.Context, t Record) error
+	ListByOwner(ctx context.Context, owner string) ([]Record, error)
 	Revoke(ctx context.Context, id, owner string) error
+	FindActiveByHash(ctx context.Context, hash string) (Record, error)
+	TouchLastUsed(ctx context.Context, id string) error
 }
 
 // LicenseGate is the license-feature surface the use-case drives. AllowsMinting
@@ -65,7 +94,7 @@ func NewService(store Store, gate LicenseGate) *Service {
 // checks before calling Mint. Mint enforces the license gate and the store
 // seam only. Returns ErrMintingNotAllowed when the license does not permit
 // minting; ErrUnavailable when the store is not wired.
-func (s *Service) Mint(ctx context.Context, rec database.APITokenRecord) error {
+func (s *Service) Mint(ctx context.Context, rec Record) error {
 	if !s.gate.AllowsMinting() {
 		return ErrMintingNotAllowed
 	}
@@ -78,9 +107,9 @@ func (s *Service) Mint(ctx context.Context, rec database.APITokenRecord) error {
 // List returns the active tokens owned by the given user. Returns an empty
 // slice (not ErrUnavailable) when the store is not wired — the pre-strangle
 // list handler returned an empty array when repo was nil.
-func (s *Service) List(ctx context.Context, owner string) ([]database.APITokenRecord, error) {
+func (s *Service) List(ctx context.Context, owner string) ([]Record, error) {
 	if !s.store.Available() {
-		return []database.APITokenRecord{}, nil
+		return []Record{}, nil
 	}
 	return s.store.ListByOwner(ctx, owner)
 }
@@ -97,4 +126,22 @@ func (s *Service) Revoke(ctx context.Context, id, owner string) error {
 		return err
 	}
 	return err
+}
+
+// Resolve returns the active token whose hash matches and stamps it as used,
+// for the PAT authentication seam. ok is false when no store is wired or no
+// active token matches. A failed stamp is logged and does not refuse the token.
+func (s *Service) Resolve(ctx context.Context, hash string) (Record, bool) {
+	if !s.store.Available() {
+		return Record{}, false
+	}
+	rec, err := s.store.FindActiveByHash(ctx, hash)
+	if err != nil {
+		return Record{}, false
+	}
+	if touchErr := s.store.TouchLastUsed(ctx, rec.ID); touchErr != nil {
+		logging.GetLogger().WarnContext(ctx, "failed to update api token last_used_at",
+			"token_id", rec.ID, "error", touchErr)
+	}
+	return rec, true
 }
