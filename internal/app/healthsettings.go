@@ -24,23 +24,22 @@ import (
 )
 
 // NewHealthSettings builds the health-checks settings use-case over the probes
-// table, the live config, and the live DNS/speedtest testers. reschedule is the
+// and settings tables of the lazily read database, the live config, and the live DNS/speedtest testers. reschedule is the
 // probe-engine reschedule (best-effort, nil-safe); dnsTester/speedTester are lazy
 // accessors.
 func NewHealthSettings(
-	probes func() *database.ProbeRepository,
+	db func() *database.DB,
 	reschedule func(context.Context) error,
 	cfg *config.Config,
 	path string,
 	dnsTester func() *dns.Tester,
 	speedTester func() *speedtest.Tester,
-	settings func() *database.SettingsRepository,
 ) *healthsettings.Service {
 	return healthsettings.NewService(
-		healthProbeStore{probes: probes, reschedule: reschedule},
+		healthProbeStore{probes: lazyRepo(db, (*database.DB).Probes), reschedule: reschedule},
 		healthConfigStore{cfg: cfg, path: path},
 		healthAppliers{dnsTester: dnsTester, speedTester: speedTester},
-		healthSeedMarker{settings: settings},
+		healthSeedMarker{settings: lazyRepo(db, (*database.DB).Settings)},
 	)
 }
 

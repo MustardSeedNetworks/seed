@@ -73,9 +73,9 @@ func TestNewServerWithoutDatabaseSkipsTheDatabaseServices(t *testing.T) {
 func TestDatabaseServicesRegisterTheEnginesAndUseCases(t *testing.T) {
 	db := newTestDB(t)
 	licenseDir := t.TempDir()
-	mgr, err := license.NewManagerWithDir(licenseDir)
-	if err != nil {
-		t.Fatalf("license manager: %v", err)
+	mgr, mgrErr := license.NewManagerWithDir(licenseDir)
+	if mgrErr != nil {
+		t.Fatalf("license manager: %v", mgrErr)
 	}
 	if r := mgr.StartTrial(); !r.Success {
 		t.Fatalf("StartTrial: %s", r.Message)

@@ -18,15 +18,19 @@ import (
 )
 
 // NewHealthMonitoring builds the health-monitoring use-case (ADR-0020) over lazy
-// accessors for the unified anomaly store and the shared engine (the latter
+// accessors for the database (whose unified anomaly store it reads) and the
+// shared engine (the latter
 // re-derives the catalog-static Impact / FollowUps the store does not persist,
 // ADR-0029). A nil store makes Anomalies degrade to monitoring.ErrUnavailable
 // (the golden-pinned 503 path).
 func NewHealthMonitoring(
-	anomalyStore func() *database.AnomalyRepository,
+	db func() *database.DB,
 	anomalyEngine func() *anomaly.Engine,
 ) *monitoring.Service {
-	return monitoring.NewService(healthAnomaly{store: anomalyStore, engine: anomalyEngine})
+	return monitoring.NewService(healthAnomaly{
+		store:  lazyRepo(db, (*database.DB).Anomalies),
+		engine: anomalyEngine,
+	})
 }
 
 // healthAnomaly implements monitoring.AnomalyReader over the unified anomaly

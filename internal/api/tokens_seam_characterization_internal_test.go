@@ -30,7 +30,7 @@ func TestAPITokenSeamStampsLastUsed(t *testing.T) {
 		http.HandlerFunc(func(http.ResponseWriter, *http.Request) {})).ServeHTTP(w, patRequest(plaintext))
 	require.Equal(t, http.StatusOK, w.Code)
 
-	listed, err := s.apiTokens.ListByOwner(t.Context(), "carol")
+	listed, err := s.identityTokens.List(t.Context(), "carol")
 	require.NoError(t, err)
 	require.Len(t, listed, 1)
 	require.False(t, listed[0].LastUsedAt.IsZero(), "a resolved PAT must be stamped as used")
@@ -40,10 +40,10 @@ func TestAPITokenSeamRejectsRevoked(t *testing.T) {
 	t.Parallel()
 	s, _ := apiTokenTestSetup(t)
 	plaintext := insertPAT(t, s, "alice")
-	listed, err := s.apiTokens.ListByOwner(t.Context(), "alice")
+	listed, err := s.identityTokens.List(t.Context(), "alice")
 	require.NoError(t, err)
 	require.Len(t, listed, 1)
-	require.NoError(t, s.apiTokens.Revoke(t.Context(), listed[0].ID, "alice"))
+	require.NoError(t, s.identityTokens.Revoke(t.Context(), listed[0].ID, "alice"))
 
 	called := false
 	w := httptest.NewRecorder()
@@ -62,7 +62,7 @@ func TestAPITokenSeamRejectsWithoutStore(t *testing.T) {
 	t.Parallel()
 	s, _ := apiTokenTestSetup(t)
 	plaintext := insertPAT(t, s, "bob")
-	s.apiTokens = nil
+	s.dbConn = nil
 
 	called := false
 	w := httptest.NewRecorder()

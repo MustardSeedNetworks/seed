@@ -137,20 +137,12 @@ func TestAPITokenRepo_ScopeRoundtrips(t *testing.T) {
 	}
 }
 
-// attachAPITokenRepo wires an APITokenRepository onto the test server's
-// service container so the mint/list/revoke handlers can run.
-func attachAPITokenRepo(t *testing.T, s *Server) {
-	t.Helper()
-	s.apiTokens = database.NewAPITokenRepository(s.dbConn)
-}
-
 // TestMintAPIToken_RejectsScopeAboveOwner proves the mint handler
 // refuses to issue a token with a scope higher than the minter's role
 // — that would be a one-line escalation if accepted.
 func TestMintAPIToken_RejectsScopeAboveOwner(t *testing.T) {
 	t.Parallel()
 	s, mgr := usersTestSetup(t)
-	attachAPITokenRepo(t, s)
 	if r := mgr.StartTrial(); !r.Success { // mint requires Pro
 		t.Fatalf("StartTrial: %s", r.Message)
 	}
@@ -171,7 +163,6 @@ func TestMintAPIToken_RejectsScopeAboveOwner(t *testing.T) {
 func TestMintAPIToken_RejectsUnknownScope(t *testing.T) {
 	t.Parallel()
 	s, mgr := usersTestSetup(t)
-	attachAPITokenRepo(t, s)
 	if r := mgr.StartTrial(); !r.Success {
 		t.Fatalf("StartTrial: %s", r.Message)
 	}

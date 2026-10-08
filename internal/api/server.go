@@ -151,9 +151,8 @@ type Server struct {
 	recovery   *auth.RecoveryTokenManager
 	oauthMgr   *oauth.Manager
 	proxies    *TrustedProxies
-	webAuthn   *auth.WebAuthnManager        // optional WebAuthn (passkeys), Wave 3 (#85)
-	licenseMgr *license.Manager             // offline license manager (Phase D-2); nil in tests
-	apiTokens  *database.APITokenRepository // personal-access tokens (Phase D-2)
+	webAuthn   *auth.WebAuthnManager // optional WebAuthn (passkeys), Wave 3 (#85)
+	licenseMgr *license.Manager      // offline license manager (Phase D-2); nil in tests
 
 	// renewSupportedFn/renewLeaseFn are the DHCP-renewal seam; vlanSeam is the
 	// analogous VLAN seam (handlers_vlan.go). Nil/zero in production; a test
@@ -460,15 +459,13 @@ func (s *Server) initCaptureServices(cfg *config.Config) {
 	}, dhcp.WithCapture(captureOpener))
 }
 
-// initLicenseAndAPITokens wires the Phase D-2 license manager + API
-// token repository onto the server. The license manager is
+// initLicense wires the Phase D-2 license manager onto the server. It is
 // best-effort: failure to load isn't fatal. It leaves s.licenseMgr nil,
 // which every gate reads as the pre-license dev state and treats as Pro
 // (effectiveTier, the mint flag, and the feature catalogue on
 // GET /api/v1/license) — so the warning has to say "unenforced", not
 // "disabled", which is what it claimed while permitting minting.
-func (s *Server) initLicenseAndAPITokens(db *database.DB) {
-	s.apiTokens = database.NewAPITokenRepository(db)
+func (s *Server) initLicense() {
 	lm, lmErr := s.newLicenseManager()
 	if lmErr != nil {
 		logging.GetLogger().Warn("license manager init failed; licensing is unenforced (Pro)",
@@ -500,11 +497,11 @@ func (s *Server) newLicenseManager() (*license.Manager, error) {
 // server construction.
 //
 // V1.0 NMS expansion — Stage A1.8.
-func (s *Server) initProbeEngine(db *database.DB) {
+func (s *Server) initProbeEngine(storage *app.ProbeStorage) {
 	sched := scheduler.New(probeSchedulerTick)
 
 	probeEngine := probe.NewEngine(logging.GetLogger()).
-		WithStorage(app.NewProbeStorage(db.Probes()), sched)
+		WithStorage(storage, sched)
 
 	// Register V1.0 baseline checkers plus the health-check vertical
 	// checkers absorbed onto the probe engine (ADR-0027 P1).
@@ -577,39 +574,32 @@ const snmpPollerSchedulerTick = 5 * time.Second
 // topology_links / topology_arp_bindings.
 //
 // V1.0 NMS expansion — Stage A4 wire-up.
-func (s *Server) initTopologyReconcilers(db *database.DB) {
+func (s *Server) initTopologyReconcilers(cfg app.TopologyReconcilers) {
 	logger := logging.GetLogger()
-	obs := db.SNMPObservations()
-	topo := db.Topology()
-	settings := db.Settings()
+	cfg.SysInfo.Logger = logger
+	cfg.IfTable.Logger = logger
+	cfg.Edge.Logger = logger
+	cfg.ARP.Logger = logger
 
-	if r, err := topology.NewSysInfoReconciler(topology.Config{
-		Observations: obs, Nodes: topo, Settings: settings, Logger: logger,
-	}); err != nil {
+	if r, err := topology.NewSysInfoReconciler(cfg.SysInfo); err != nil {
 		logger.Warn("sysinfo reconciler init failed", "error", err)
 	} else if regErr := s.registerEngineIfLicensed(r); regErr != nil {
 		logger.Warn("sysinfo reconciler registry registration failed", "error", regErr)
 	}
 
-	if r, err := topology.NewIfTableReconciler(topology.IfTableConfig{
-		Observations: obs, Store: topo, Settings: settings, Logger: logger,
-	}); err != nil {
+	if r, err := topology.NewIfTableReconciler(cfg.IfTable); err != nil {
 		logger.Warn("iftable reconciler init failed", "error", err)
 	} else if regErr := s.registerEngineIfLicensed(r); regErr != nil {
 		logger.Warn("iftable reconciler registry registration failed", "error", regErr)
 	}
 
-	if r, err := topology.NewEdgeReconciler(topology.EdgeConfig{
-		Observations: obs, Store: topo, Settings: settings, Logger: logger,
-	}); err != nil {
+	if r, err := topology.NewEdgeReconciler(cfg.Edge); err != nil {
 		logger.Warn("edge reconciler init failed", "error", err)
 	} else if regErr := s.registerEngineIfLicensed(r); regErr != nil {
 		logger.Warn("edge reconciler registry registration failed", "error", regErr)
 	}
 
-	if r, err := topology.NewARPReconciler(topology.ARPConfig{
-		Observations: obs, Store: topo, Settings: settings, Logger: logger,
-	}); err != nil {
+	if r, err := topology.NewARPReconciler(cfg.ARP); err != nil {
 		logger.Warn("arp reconciler init failed", "error", err)
 	} else if regErr := s.registerEngineIfLicensed(r); regErr != nil {
 		logger.Warn("arp reconciler registry registration failed", "error", regErr)
@@ -624,38 +614,28 @@ func (s *Server) initTopologyReconcilers(db *database.DB) {
 // existing alerts table via the same Alert repository.
 //
 // V1.0 NMS expansion — Stage A4 wire-up.
-func (s *Server) initAlertPipelines(db *database.DB) {
+func (s *Server) initAlertPipelines(
+	listener alertpipeline.ListenerConfig,
+	observation alertpipeline.ObservationConfig,
+) {
 	logger := logging.GetLogger()
-	settings := db.Settings()
-	suppressions := alertpipeline.NewDBSuppressionStore(db.AlertSuppressions())
-	alerts := s.useAlertDelivery(app.NewAlertDelivery(db, s.config, logger))
+	alerts := s.useAlertDelivery(app.NewAlertDelivery(s.dbConn, s.config, logger))
+	listener.Alerts, listener.Logger = alerts, logger
+	observation.Alerts, observation.Logger = alerts, logger
 
-	if p, err := alertpipeline.NewListenerPipeline(alertpipeline.ListenerConfig{
-		Events:       db.ListenerEvents(),
-		Alerts:       alerts,
-		Settings:     settings,
-		Logger:       logger,
-		AlertRules:   db.AlertRules(),
-		Suppressions: suppressions,
-	}); err != nil {
+	if p, err := alertpipeline.NewListenerPipeline(listener); err != nil {
 		logger.Warn("listener alert pipeline init failed", "error", err)
 	} else if regErr := s.registerEngineIfLicensed(p); regErr != nil {
 		logger.Warn("listener alert pipeline registry registration failed", "error", regErr)
 	}
 
-	if p, err := alertpipeline.NewObservationPipeline(alertpipeline.ObservationConfig{
-		Observations: db.SNMPObservations(),
-		Alerts:       alerts,
-		Settings:     settings,
-		Logger:       logger,
-		Suppressions: suppressions,
-	}); err != nil {
+	if p, err := alertpipeline.NewObservationPipeline(observation); err != nil {
 		logger.Warn("observation alert pipeline init failed", "error", err)
 	} else if regErr := s.registerEngineIfLicensed(p); regErr != nil {
 		logger.Warn("observation alert pipeline registry registration failed", "error", regErr)
 	}
 
-	s.registerAlertEscalator(app.NewAlertEscalator(db, s.alertDelivery, logger))
+	s.registerAlertEscalator(app.NewAlertEscalator(s.dbConn, s.alertDelivery, logger))
 }
 
 // Service accessors — the in-package read interface and the lazy method
@@ -782,16 +762,6 @@ func (s *Server) resolveWiFiInterface(r *http.Request) string {
 	return s.config.Interface.Default
 }
 
-// anomalyStore is the unified anomaly system of record (ADR-0021), the read
-// source for the health-checks anomaly endpoint after the bespoke health
-// detector was deleted. Nil-safe for the test harness (no DB wired).
-func (s *Server) anomalyStore() *database.AnomalyRepository {
-	if s.dbConn == nil {
-		return nil
-	}
-	return s.dbConn.Anomalies()
-}
-
 // anomalyEngine is the shared, server-owned anomaly engine (ADR-0029), exposed so
 // the store-read adapters can re-derive the catalog-static Impact / FollowUps the
 // store does not persist. Nil when the merged catalog failed to build or no DB is
@@ -822,7 +792,6 @@ func (s *Server) eventBus() *events.Bus                         { return s.bus }
 func (s *Server) jobsRunner() *jobs.Runner                      { return s.jobRunner }
 func (s *Server) jobIdempotency() jobIdempotencyStore           { return s.jobIdemp }
 func (s *Server) db() *database.DB                              { return s.dbConn }
-func (s *Server) apiTokenRepo() *database.APITokenRepository    { return s.apiTokens }
 func (s *Server) licenseManager() *license.Manager              { return s.licenseMgr }
 func (s *Server) engineRegistry() *engine.Registry              { return s.engines }
 
@@ -831,30 +800,12 @@ func (s *Server) engineRegistry() *engine.Registry              { return s.engin
 // the server's lazy accessors + live config. Called after initDiscovery so the
 // discovery bridge the discovery use-case captures already exists.
 func (s *Server) initWiFiUseCases() {
-	s.wifiQueries = app.NewWiFiQueries(s.wifiVisibility, s.anomalyStore, s.anomalyEngine)
+	s.wifiQueries = app.NewWiFiQueries(s.wifiVisibility, s.db, s.anomalyEngine)
 	s.wifiManagement = app.NewWiFiManagement(s.wifiManager, s.wifiScanner, s.netManager, s.config, s.configPath)
 	s.wifiDiscovery = app.NewWiFiDiscovery(s.wifiBridge)
 	if v := s.wifiVisibility(); v != nil {
 		v.SetScanSource(app.WiFiScanSource(s.wifiManagement))
 	}
-}
-
-// healthProbeRepo is the probes-table accessor the health-settings use-case reads
-// and writes through; nil when no DB is wired (the test harness).
-func (s *Server) healthProbeRepo() *database.ProbeRepository {
-	if s.dbConn == nil {
-		return nil
-	}
-	return s.dbConn.Probes()
-}
-
-// healthSettingsRepo is the settings-KV accessor the health seed-marker reads and
-// writes through; nil when no DB is wired (the test harness).
-func (s *Server) healthSettingsRepo() *database.SettingsRepository {
-	if s.dbConn == nil {
-		return nil
-	}
-	return s.dbConn.Settings()
 }
 
 // rescheduleProbeEngine reschedules the running probe engine after a settings
@@ -885,7 +836,7 @@ func (s *Server) initEngineUseCases() {
 // (the api test harness) is honored.
 func (s *Server) initIdentityUseCases() {
 	s.identityUsers = app.NewIdentityUsers(s.db)
-	s.identityTokens = app.NewIdentityTokens(s.apiTokenRepo, s.licenseManager)
+	s.identityTokens = app.NewIdentityTokens(s.db, s.licenseManager)
 	s.identityOAuth = app.NewIdentityOAuth(s.db)
 }
 
