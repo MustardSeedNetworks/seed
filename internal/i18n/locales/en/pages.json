@@ -73,6 +73,22 @@
       "dormant": "Dormant",
       "notPresent": "Not present",
       "lowerLayerDown": "Lower layer down"
+    },
+    "history": {
+      "openHint": "Select an interface to see its history.",
+      "windowLabel": "Window",
+      "window": {
+        "1h": "Last hour",
+        "24h": "Last 24 hours",
+        "7d": "Last 7 days"
+      },
+      "close": "Close history",
+      "empty": "No rated polls in this window. A target that was just added, or stopped answering, has none yet.",
+      "traffic": "Traffic",
+      "errors": "Errors and discards",
+      "in": "In",
+      "out": "Out",
+      "peak": "Peak {{series}} {{value}}"
     }
   },
   "link": {

@@ -198,7 +198,8 @@ validation:fields.
 # pages.<route>.* — the page registry (ui/src/pageRegistry.tsx) builds
 # the route table via t(`${i18nKey}.label`) / .title / .description /
 # .eyebrow, so the static analyzer never sees these as literal keys.
-# InterfacesPage also reads t(`interfaces.status.${operStatus}`).
+# InterfacesPage also reads t(`interfaces.status.${operStatus}`), and its
+# history panel t(`interfaces.history.window.${range}`).
 pages:alerts.
 pages:groups.
 pages:interfaces.

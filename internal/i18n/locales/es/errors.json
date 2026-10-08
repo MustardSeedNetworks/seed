@@ -271,6 +271,7 @@
   },
   "interfaceStats": {
     "storeUnavailable": "Las estadísticas de interfaces no están disponibles: la base de datos no está abierta",
-    "readFailed": "No se pudieron leer las estadísticas de interfaces"
+    "readFailed": "No se pudieron leer las estadísticas de interfaces",
+    "invalidHistoryQuery": "Indique un destino de sondeo, un ifIndex y un intervalo de 1h, 24h o 7d"
   }
 }

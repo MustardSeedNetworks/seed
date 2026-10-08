@@ -1,7 +1,7 @@
 /**
  * InterfacesPage (UI-SEED-21): loading, empty and no-data-yet are three
- * distinct states, and the list sorts by any rate with unrated interfaces
- * always last.
+ * distinct states, the list sorts by any rate with unrated interfaces
+ * always last, and an interface opens to its history.
  */
 import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
@@ -49,6 +49,20 @@ const state: { current: UseInterfaceStatsResult } = {
 
 vi.mock('../hooks/useInterfaceStats', () => ({
   useInterfaceStats: (): UseInterfaceStatsResult => state.current,
+}));
+
+vi.mock('./interfaces/InterfaceHistory', () => ({
+  InterfaceHistory: ({
+    iface: open,
+    onClose,
+  }: {
+    iface: InterfaceStatsResponse;
+    onClose: () => void;
+  }): React.JSX.Element => (
+    <button type="button" data-testid="history-stub" onClick={onClose}>
+      {open.name}
+    </button>
+  ),
 }));
 
 const { InterfacesPage } = await import('./InterfacesPage');
@@ -173,6 +187,27 @@ describe('InterfacesPage sorting', () => {
       'aria-sort',
       'none',
     );
+  });
+});
+
+describe('InterfacesPage history', () => {
+  it('opens the selected interface and closes it again', async () => {
+    state.current = {
+      interfaces: [iface('Gi0/1', 1), iface('Gi0/2', 0)],
+      loading: false,
+      error: null,
+    };
+    render(<InterfacesPage />);
+    expect(screen.queryByTestId('history-stub')).not.toBeInTheDocument();
+
+    const second = screen.getByRole('button', { name: 'Gi0/2' });
+    await userEvent.click(second);
+    expect(screen.getByTestId('history-stub')).toHaveTextContent('Gi0/2');
+    expect(second).toHaveAttribute('aria-expanded', 'true');
+
+    await userEvent.click(screen.getByTestId('history-stub'));
+    expect(screen.queryByTestId('history-stub')).not.toBeInTheDocument();
+    expect(second).toHaveAttribute('aria-expanded', 'false');
   });
 });
 

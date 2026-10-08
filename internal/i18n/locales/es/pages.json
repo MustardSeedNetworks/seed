@@ -73,6 +73,22 @@
       "dormant": "Latente",
       "notPresent": "No presente",
       "lowerLayerDown": "Capa inferior inactiva"
+    },
+    "history": {
+      "openHint": "Seleccione una interfaz para ver su historial.",
+      "windowLabel": "Periodo",
+      "window": {
+        "1h": "Última hora",
+        "24h": "Últimas 24 horas",
+        "7d": "Últimos 7 días"
+      },
+      "close": "Cerrar historial",
+      "empty": "No hay sondeos con tasa en este periodo. Un destino recién añadido, o que dejó de responder, aún no tiene ninguno.",
+      "traffic": "Tráfico",
+      "errors": "Errores y descartes",
+      "in": "Entrada",
+      "out": "Salida",
+      "peak": "Pico {{series}} {{value}}"
     }
   },
   "link": {

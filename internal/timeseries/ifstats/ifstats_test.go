@@ -5,17 +5,23 @@ import (
 	"errors"
 	"strconv"
 	"testing"
+	"time"
 
 	"github.com/MustardSeedNetworks/seed/internal/timeseries/ifstats"
 )
 
 type fakeStore struct {
 	ifaces []ifstats.Interface
+	polls  []ifstats.Rates
 	err    error
 }
 
 func (f fakeStore) Interfaces(context.Context) ([]ifstats.Interface, error) {
 	return f.ifaces, f.err
+}
+
+func (f fakeStore) InterfaceRates(context.Context, string, uint32, time.Time, time.Time) ([]ifstats.Rates, error) {
+	return f.polls, f.err
 }
 
 func rated(target string, ifIndex uint32, inErrors, outErrors float64) ifstats.Interface {

@@ -1304,6 +1304,13 @@ body:
     "path": "/api/v1/topology/interfaces"
   },
   {
+    "maxBodyBytes": 262144,
+    "methods": [
+      "GET"
+    ],
+    "path": "/api/v1/topology/interfaces/history"
+  },
+  {
     "feature": "live_telemetry",
     "maxBodyBytes": 262144,
     "methods": [

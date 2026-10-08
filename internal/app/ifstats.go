@@ -7,6 +7,7 @@ package app
 
 import (
 	"context"
+	"time"
 
 	"github.com/MustardSeedNetworks/seed/internal/database"
 	"github.com/MustardSeedNetworks/seed/internal/timeseries/ifstats"
@@ -28,4 +29,14 @@ func (a interfaceStatsStore) Interfaces(ctx context.Context) ([]ifstats.Interfac
 		return nil, ifstats.ErrUnavailable
 	}
 	return db.Metrics().InterfaceStats(ctx, database.DefaultClientID)
+}
+
+func (a interfaceStatsStore) InterfaceRates(
+	ctx context.Context, targetID string, ifIndex uint32, from, to time.Time,
+) ([]ifstats.Rates, error) {
+	db := a.db()
+	if db == nil {
+		return nil, ifstats.ErrUnavailable
+	}
+	return db.Metrics().InterfaceRates(ctx, database.DefaultClientID, targetID, ifIndex, from, to)
 }

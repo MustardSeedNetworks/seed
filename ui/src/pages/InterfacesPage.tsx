@@ -7,6 +7,8 @@
  * but none has a rate. The last is normal for a new target: a rate is the
  * difference between two polls, so the first poll lists the interfaces and
  * the second rates them.
+ *
+ * Opening an interface shows its history above the table (InterfaceHistory).
  */
 
 import { type JSX, useState } from 'react';
@@ -19,12 +21,17 @@ import type {
   InterfaceRatesResponse,
   InterfaceStatsResponse,
 } from '../types/generated/interface-stats-list-response';
+import { InterfaceHistory } from './interfaces/InterfaceHistory';
 
 type SortKey = 'interface' | 'traffic' | 'utilization' | 'errors' | 'discards';
 type SortDir = 'asc' | 'desc';
 type OperStatus = InterfaceStatsResponse['operStatus'];
 
 const BITS_PER_OCTET = 8;
+
+function interfaceKey(iface: InterfaceStatsResponse): string {
+  return `${iface.targetId}/${iface.ifIndex}`;
+}
 
 /** The number a rate column sorts by; undefined when the interface has none. */
 function sortValue(iface: InterfaceStatsResponse, key: SortKey): number | undefined {
@@ -157,6 +164,7 @@ export function InterfacesPage(): JSX.Element {
     key: 'errors',
     dir: 'desc',
   });
+  const [openKey, setOpenKey] = useState<string | null>(null);
 
   const onSort = (key: SortKey): void => {
     setSort((prev) =>
@@ -200,10 +208,13 @@ export function InterfacesPage(): JSX.Element {
 
   const rows = sortInterfaces(interfaces, sort.key, sort.dir);
   const rated = interfaces.some((iface) => iface.rates);
+  const open = interfaces.find((iface) => interfaceKey(iface) === openKey);
 
   return (
     <>
-      <p className="body-small">{t('interfaces.count', { count: interfaces.length })}</p>
+      <p className="body-small">
+        {t('interfaces.count', { count: interfaces.length })} · {t('interfaces.history.openHint')}
+      </p>
       {rated ? null : (
         <p
           data-testid="interfaces-no-data"
@@ -212,6 +223,9 @@ export function InterfacesPage(): JSX.Element {
           {t('interfaces.noData')}
         </p>
       )}
+      {open ? (
+        <InterfaceHistory key={openKey} iface={open} onClose={(): void => setOpenKey(null)} />
+      ) : null}
       <div className="rounded-lg border border-surface-border bg-surface-raised">
         <table className="w-full text-sm" data-testid="interfaces-table">
           <caption className="sr-only">{t('interfaces.title')}</caption>
@@ -253,19 +267,22 @@ export function InterfacesPage(): JSX.Element {
           </thead>
           <tbody className="divide-y divide-surface-border">
             {rows.map((iface) => (
-              <tr key={`${iface.targetId}/${iface.ifIndex}`} data-testid="interface-row">
+              <tr key={interfaceKey(iface)} data-testid="interface-row">
                 <td className="px-3 py-2">
                   <div className="flex items-center gap-2">
                     <span
                       className={`h-2 w-2 shrink-0 rounded-full ${STATUS_DOT[iface.operStatus]}`}
                       aria-hidden="true"
                     />
-                    <span
-                      className="break-all font-medium text-text-primary"
+                    <button
+                      type="button"
+                      onClick={(): void => setOpenKey(interfaceKey(iface))}
+                      aria-expanded={openKey === interfaceKey(iface)}
+                      className="min-h-6 break-all text-left font-medium text-text-primary underline-offset-2 hover:underline"
                       data-testid="interface-name"
                     >
                       {iface.name || `#${iface.ifIndex}`}
-                    </span>
+                    </button>
                     {/* Up is the expected case; anything else is spelled out, not left to colour. */}
                     <span
                       className={

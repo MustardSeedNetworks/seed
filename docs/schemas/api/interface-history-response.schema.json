@@ -1,0 +1,96 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/MustardSeedNetworks/seed/main/docs/schemas/api/interface-history-response.schema.json",
+  "$ref": "#/$defs/InterfaceHistoryResponse",
+  "$defs": {
+    "InterfaceHistoryResponse": {
+      "properties": {
+        "targetId": {
+          "type": "string"
+        },
+        "ifIndex": {
+          "type": "integer"
+        },
+        "range": {
+          "type": "string",
+          "enum": [
+            "1h",
+            "24h",
+            "7d"
+          ]
+        },
+        "from": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "to": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "bucketSeconds": {
+          "type": "number"
+        },
+        "points": {
+          "items": {
+            "$ref": "#/$defs/InterfaceRatesResponse"
+          },
+          "type": "array"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "targetId",
+        "ifIndex",
+        "range",
+        "from",
+        "to",
+        "bucketSeconds",
+        "points"
+      ]
+    },
+    "InterfaceRatesResponse": {
+      "properties": {
+        "sampledAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "inOctetsPerSec": {
+          "type": "number"
+        },
+        "outOctetsPerSec": {
+          "type": "number"
+        },
+        "inUtilizationPct": {
+          "type": "number"
+        },
+        "outUtilizationPct": {
+          "type": "number"
+        },
+        "inErrorsPerSec": {
+          "type": "number"
+        },
+        "outErrorsPerSec": {
+          "type": "number"
+        },
+        "inDiscardsPerSec": {
+          "type": "number"
+        },
+        "outDiscardsPerSec": {
+          "type": "number"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "sampledAt",
+        "inErrorsPerSec",
+        "outErrorsPerSec",
+        "inDiscardsPerSec",
+        "outDiscardsPerSec"
+      ]
+    }
+  },
+  "title": "InterfaceHistoryResponse",
+  "description": "InterfaceHistoryResponse — generated from the Go struct in internal/api; refresh with `make schema` after struct changes."
+}
