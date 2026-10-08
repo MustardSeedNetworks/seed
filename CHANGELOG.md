@@ -5,6 +5,19 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.238.0](https://github.com/MustardSeedNetworks/seed/compare/v0.237.0...v0.238.0) (2026-10-08)
+
+
+### Features
+
+* **discovery:** run multi-path and path MTU discovery as jobs ([#3207](https://github.com/MustardSeedNetworks/seed/issues/3207)) ([d37f53b](https://github.com/MustardSeedNetworks/seed/commit/d37f53b878d26b27703982a5346016c0c6e033d1))
+* **ui:** chart one interface's traffic and errors over a recent window ([#3206](https://github.com/MustardSeedNetworks/seed/issues/3206)) ([4fb67c4](https://github.com/MustardSeedNetworks/seed/commit/4fb67c408ef17ee3383f70b54399702ad80b209a)), closes [#3191](https://github.com/MustardSeedNetworks/seed/issues/3191)
+
+
+### Code Refactoring
+
+* **api:** hand the engine initialisers their store ports ([#3205](https://github.com/MustardSeedNetworks/seed/issues/3205)) ([bd0c1e6](https://github.com/MustardSeedNetworks/seed/commit/bd0c1e6d607f354a4e5130d3f7ec08e7c4d4de5d))
+
 ## [0.237.0](https://github.com/MustardSeedNetworks/seed/compare/v0.236.2...v0.237.0) (2026-10-08)
 
 
