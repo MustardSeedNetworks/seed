@@ -6,6 +6,7 @@ package app
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"strings"
 
@@ -29,22 +30,36 @@ type deviceWriter struct {
 	db *database.DB
 }
 
+// PersistDevices upserts each device by MAC, so a device that comes back on a
+// new address is updated in place. One failing device does not drop the rest
+// of the flush; every failure is returned together.
 func (w deviceWriter) PersistDevices(ctx context.Context, devices []*discovery.DiscoveredDevice) error {
+	var errs []error
 	for _, d := range devices {
-		if err := w.db.Devices().Upsert(ctx, &database.Device{
-			ID:         d.MAC,
-			IPAddress:  d.IP,
-			MACAddress: d.MAC,
-			Hostname:   d.Hostname,
-			Vendor:     d.Vendor,
-			DeviceType: d.OSGuess,
-			LastSeen:   d.LastSeen,
-			IsActive:   true,
-		}); err != nil {
-			return err
+		if _, err := w.persist(ctx, d); err != nil {
+			errs = append(errs, fmt.Errorf("persisting device %s: %w", d.IP, err))
 		}
 	}
-	return nil
+	return errors.Join(errs...)
+}
+
+// persist upserts one device and returns its stored id. A device without a MAC
+// falls back to its address.
+func (w deviceWriter) persist(ctx context.Context, d *discovery.DiscoveredDevice) (string, error) {
+	rec := &database.Device{
+		ID:         d.MAC,
+		IPAddress:  d.IP,
+		MACAddress: d.MAC,
+		Hostname:   d.Hostname,
+		Vendor:     d.Vendor,
+		DeviceType: d.OSGuess,
+		LastSeen:   d.LastSeen,
+		IsActive:   true,
+	}
+	if err := w.db.Devices().UpsertByMAC(ctx, rec); err != nil {
+		return "", err
+	}
+	return rec.ID, nil
 }
 
 type vulnStore struct {
@@ -57,12 +72,9 @@ func (s vulnStore) SaveScan(
 	device *discovery.DiscoveredDevice,
 	result *discovery.DeviceVulnerabilities,
 ) error {
-	if err := s.devices.PersistDevices(ctx, []*discovery.DiscoveredDevice{device}); err != nil {
-		return err
-	}
-	stored, err := s.db.Devices().GetByIP(ctx, device.IP)
+	deviceID, err := s.devices.persist(ctx, device)
 	if err != nil {
-		return fmt.Errorf("resolving device id for %s: %w", device.IP, err)
+		return fmt.Errorf("persisting device %s: %w", device.IP, err)
 	}
 
 	findings := make([]database.VulnerabilityFinding, 0, len(result.Vulnerabilities))
@@ -79,5 +91,5 @@ func (s vulnStore) SaveScan(
 			AffectedVersion:   result.Version,
 		})
 	}
-	return s.db.Vulnerabilities().RecordScan(ctx, stored.ID, findings, result.ScanTime)
+	return s.db.Vulnerabilities().RecordScan(ctx, deviceID, findings, result.ScanTime)
 }

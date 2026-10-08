@@ -123,3 +123,31 @@ func TestVulnRescanResolvesAndReopens(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, 1, openCount())
 }
+
+// TestVulnFindingsFollowRenumberedDevice: a device rescanned at a new address
+// keeps one finding under its MAC-keyed row, reported at the new address
+// (seed#3210).
+func TestVulnFindingsFollowRenumberedDevice(t *testing.T) {
+	ctx := context.Background()
+	db, err := database.Open(dbtest.Path(t))
+	require.NoError(t, err)
+	t.Cleanup(func() { _ = db.Close() })
+
+	scanner := newStoredVulnScanner(t, db)
+	device := &discovery.DiscoveredDevice{
+		IP: "10.20.30.42", MAC: "02:00:00:00:00:03", Vendor: "Linux", OSGuess: "Linux 5.4",
+	}
+	_, err = scanner.ScanDevice(ctx, device)
+	require.NoError(t, err)
+
+	device.IP = "10.20.30.43"
+	_, err = scanner.ScanDevice(ctx, device)
+	require.NoError(t, err)
+
+	exported, err := store.NewExportRepo(db).ExportVulnerabilities(ctx)
+	require.NoError(t, err)
+	require.Len(t, exported, 1)
+	ip, ok := exported[0]["device_ip"].(*string)
+	require.True(t, ok)
+	require.Equal(t, device.IP, *ip)
+}
