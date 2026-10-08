@@ -95,6 +95,13 @@ func (s *Server) registerJobKinds() {
 	s.registerPathDiscoveryKinds(discovery.TraceFlow, discovery.MeasurePathMTU)
 	s.registerDeviceScanKind(func() deviceScanService { return s.deviceDiscovery() })
 	s.registerMulticastListenKind(multicast.Listen)
+	s.registerMulticastObserveKind(func(
+		ctx context.Context,
+		req multicast.ObserveRequest,
+		report func(float64),
+	) (*multicast.ObserveResult, error) {
+		return multicast.Observe(ctx, defaultCaptureOpener(), req, report)
+	})
 	s.registerQoSKinds(
 		qos.Send,
 		qos.Listen,

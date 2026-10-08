@@ -138,3 +138,134 @@ func TestServerRegistersTheMulticastListenKind(t *testing.T) {
 		t.Fatalf("Err = %q, want the listen's refusal", j.Err)
 	}
 }
+
+// fakeMulticastObserve records the request and, when hold is set, observes
+// until the job is cancelled, returning what it "saw" as the real one does.
+type fakeMulticastObserve struct {
+	got  multicast.ObserveRequest
+	hold bool
+	err  error
+}
+
+func (f *fakeMulticastObserve) observe(
+	ctx context.Context,
+	req multicast.ObserveRequest,
+	_ func(float64),
+) (*multicast.ObserveResult, error) {
+	f.got = req
+	if f.err != nil {
+		return nil, f.err
+	}
+	if f.hold {
+		<-ctx.Done()
+	}
+	return &multicast.ObserveResult{
+		Interface: req.Interface,
+		Groups:    []multicast.ObservedGroup{{Group: "239.1.1.1"}},
+	}, nil
+}
+
+func submitMulticastObserve(t *testing.T, fake *fakeMulticastObserve, params string) (*jobs.Runner, string) {
+	t.Helper()
+	srv, runner := newJobsTestServer(t, jobs.Config{})
+	withDefaultInterface(srv, "eth7")
+	srv.registerMulticastObserveKind(fake.observe)
+	id, err := runner.Submit(multicastObserveJobKind, json.RawMessage(params))
+	if err != nil {
+		t.Fatalf("Submit: %v", err)
+	}
+	return runner, id
+}
+
+func TestMulticastObserveKindPassesTheRequestThrough(t *testing.T) {
+	t.Parallel()
+
+	cases := map[string]struct {
+		params string
+		want   multicast.ObserveRequest
+	}{
+		"named interface": {
+			`{"interface":"en0","durationSeconds":30}`,
+			multicast.ObserveRequest{Interface: "en0", DurationSeconds: 30},
+		},
+		"default interface": {`{}`, multicast.ObserveRequest{Interface: "eth7"}},
+		"no params":         {``, multicast.ObserveRequest{Interface: "eth7"}},
+	}
+	for name, tc := range cases {
+		t.Run(name, func(t *testing.T) {
+			t.Parallel()
+			fake := &fakeMulticastObserve{}
+			runner, id := submitMulticastObserve(t, fake, tc.params)
+			j := waitForState(t, runner, id, jobs.StateSucceeded)
+			if fake.got != tc.want {
+				t.Fatalf("observe got %+v, want %+v", fake.got, tc.want)
+			}
+			if res, ok := j.Result.(*multicast.ObserveResult); !ok || len(res.Groups) != 1 {
+				t.Fatalf("result = %#v, want the observation's result", j.Result)
+			}
+		})
+	}
+}
+
+func TestCancelledMulticastObserveKeepsItsResult(t *testing.T) {
+	t.Parallel()
+
+	fake := &fakeMulticastObserve{hold: true}
+	runner, id := submitMulticastObserve(t, fake, `{"interface":"en0"}`)
+	waitForState(t, runner, id, jobs.StateRunning)
+	if err := runner.Cancel(id); err != nil {
+		t.Fatalf("Cancel: %v", err)
+	}
+	j := waitForState(t, runner, id, jobs.StateSucceeded)
+	if res, ok := j.Result.(*multicast.ObserveResult); !ok || len(res.Groups) != 1 {
+		t.Fatalf("result = %#v, want the partial observation", j.Result)
+	}
+}
+
+func TestMulticastObserveKindRejectsBadParams(t *testing.T) {
+	t.Parallel()
+
+	cases := map[string]string{
+		"not json":      `{`,
+		"unknown field": `{"interface":"en0","group":"239.1.1.1"}`,
+	}
+	for name, params := range cases {
+		t.Run(name, func(t *testing.T) {
+			t.Parallel()
+			runner, id := submitMulticastObserve(t, &fakeMulticastObserve{}, params)
+			if j := waitForState(t, runner, id, jobs.StateFailed); j.Err == "" {
+				t.Fatal("failed job has an empty error")
+			}
+		})
+	}
+}
+
+func TestMulticastObserveKindReportsTheObserveError(t *testing.T) {
+	t.Parallel()
+
+	fake := &fakeMulticastObserve{err: multicast.ErrInterfaceRequired}
+	runner, id := submitMulticastObserve(t, fake, `{"interface":"en0"}`)
+	j := waitForState(t, runner, id, jobs.StateFailed)
+	if j.Err != multicast.ErrInterfaceRequired.Error() {
+		t.Fatalf("Err = %q, want %q", j.Err, multicast.ErrInterfaceRequired)
+	}
+}
+
+// The production registration: the kind is known to the runner, not a 400
+// unknown kind. With no default interface configured the real observation
+// refuses before opening any capture handle.
+func TestServerRegistersTheMulticastObserveKind(t *testing.T) {
+	t.Parallel()
+
+	srv, runner := newJobsTestServer(t, jobs.Config{})
+	withDefaultInterface(srv, "")
+	srv.registerJobKinds()
+	id, err := runner.Submit(multicastObserveJobKind, json.RawMessage(`{}`))
+	if err != nil {
+		t.Fatalf("Submit: %v", err)
+	}
+	j := waitForState(t, runner, id, jobs.StateFailed)
+	if !strings.Contains(j.Err, multicast.ErrInterfaceRequired.Error()) {
+		t.Fatalf("Err = %q, want the observation's refusal", j.Err)
+	}
+}

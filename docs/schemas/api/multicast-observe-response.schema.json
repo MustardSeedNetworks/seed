@@ -1,0 +1,114 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/MustardSeedNetworks/seed/main/docs/schemas/api/multicast-observe-response.schema.json",
+  "$ref": "#/$defs/ObserveResult",
+  "$defs": {
+    "ObserveResult": {
+      "properties": {
+        "interface": {
+          "type": "string"
+        },
+        "observedMs": {
+          "type": "integer"
+        },
+        "messages": {
+          "type": "integer"
+        },
+        "groups": {
+          "items": {
+            "$ref": "#/$defs/ObservedGroup"
+          },
+          "type": "array"
+        },
+        "queriers": {
+          "items": {
+            "$ref": "#/$defs/ObservedQuerier"
+          },
+          "type": "array"
+        },
+        "truncated": {
+          "type": "boolean"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "interface",
+        "observedMs",
+        "messages",
+        "groups",
+        "queriers",
+        "truncated"
+      ]
+    },
+    "ObservedGroup": {
+      "properties": {
+        "group": {
+          "type": "string"
+        },
+        "reporters": {
+          "items": {
+            "$ref": "#/$defs/ObservedReporter"
+          },
+          "type": "array"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "group",
+        "reporters"
+      ]
+    },
+    "ObservedQuerier": {
+      "properties": {
+        "address": {
+          "type": "string"
+        },
+        "version": {
+          "type": "integer"
+        },
+        "queries": {
+          "type": "integer"
+        },
+        "elected": {
+          "type": "boolean"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "address",
+        "version",
+        "queries",
+        "elected"
+      ]
+    },
+    "ObservedReporter": {
+      "properties": {
+        "address": {
+          "type": "string"
+        },
+        "version": {
+          "type": "integer"
+        },
+        "reports": {
+          "type": "integer"
+        },
+        "left": {
+          "type": "boolean"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "address",
+        "version",
+        "reports",
+        "left"
+      ]
+    }
+  },
+  "title": "ObserveResult",
+  "description": "ObserveResult — generated from the Go struct in internal/api; refresh with `make schema` after struct changes."
+}
