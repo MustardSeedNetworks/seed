@@ -7,19 +7,10 @@ import (
 	"fmt"
 	"time"
 
+	ssosync "github.com/MustardSeedNetworks/seed/internal/identity/oauth"
 	"github.com/MustardSeedNetworks/seed/internal/identity/roles"
 	"github.com/MustardSeedNetworks/seed/internal/identity/users"
 )
-
-// SSOUserInput is the payload for UpsertSSOUser. The auth_provider +
-// external_id pair is the unique key — matching purely on email would
-// allow a compromised IdP to take over an existing local-account user.
-type SSOUserInput struct {
-	Provider    string // "google" | "microsoft" | "github"
-	ExternalID  string // the IdP's stable subject claim
-	Email       string // for display and cross-provider matching
-	DisplayName string // optional human name from the IdP
-}
 
 // UpsertSSOUser returns the user matching (provider, external_id), or
 // creates a new row if none exists. On first-ever user creation across
@@ -32,7 +23,7 @@ type SSOUserInput struct {
 // users.username UNIQUE constraint applies to the entire users table).
 // SSO users never have a usable password_hash — we store a sentinel
 // value that bcrypt cannot match against any input.
-func (db *DB) UpsertSSOUser(ctx context.Context, in SSOUserInput) (*users.User, error) {
+func (db *DB) UpsertSSOUser(ctx context.Context, in ssosync.Identity) (*users.User, error) {
 	if in.Provider == "" || in.ExternalID == "" {
 		return nil, errors.New("provider and external_id are required")
 	}

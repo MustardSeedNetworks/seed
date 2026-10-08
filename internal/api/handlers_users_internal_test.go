@@ -10,6 +10,7 @@ import (
 
 	"github.com/MustardSeedNetworks/seed/internal/database"
 	"github.com/MustardSeedNetworks/seed/internal/database/dbtest"
+	ssosync "github.com/MustardSeedNetworks/seed/internal/identity/oauth"
 	"github.com/MustardSeedNetworks/seed/internal/identity/roles"
 	"github.com/MustardSeedNetworks/seed/internal/identity/tokens"
 	"github.com/MustardSeedNetworks/seed/internal/license"
@@ -245,7 +246,7 @@ func TestUpsertSSOUser_FirstEverBecomesAdmin(t *testing.T) {
 	}
 	t.Cleanup(func() { _ = db.Close() })
 
-	in := database.SSOUserInput{
+	in := ssosync.Identity{
 		Provider:    database.AuthProviderGoogle,
 		ExternalID:  "google-sub-12345",
 		Email:       "alice@example.com",
@@ -286,7 +287,7 @@ func TestUpsertSSOUser_SubsequentDefaultsToViewer(t *testing.T) {
 		t.Fatalf("bootstrap admin: %v", createErr)
 	}
 
-	in := database.SSOUserInput{
+	in := ssosync.Identity{
 		Provider:   database.AuthProviderMicrosoft,
 		ExternalID: "ms-sub-99999",
 		Email:      "ops@example.com",

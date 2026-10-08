@@ -12,7 +12,6 @@ import (
 
 	"github.com/MustardSeedNetworks/seed/internal/auth"
 	"github.com/MustardSeedNetworks/seed/internal/config"
-	"github.com/MustardSeedNetworks/seed/internal/database"
 	ssosync "github.com/MustardSeedNetworks/seed/internal/identity/oauth"
 	"github.com/MustardSeedNetworks/seed/internal/logging"
 	"github.com/MustardSeedNetworks/seed/internal/oauth"
@@ -325,7 +324,7 @@ func (s *Server) completeOAuthLogin(
 	providerName string,
 	logger *slog.Logger,
 ) bool {
-	user, err := s.identityOAuth.SyncUser(r.Context(), database.SSOUserInput{
+	user, err := s.identityOAuth.SyncUser(r.Context(), ssosync.Identity{
 		Provider:    providerName,
 		ExternalID:  userInfo.ID,
 		Email:       userInfo.Email,

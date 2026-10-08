@@ -17,7 +17,6 @@ import (
 	"context"
 	"errors"
 
-	"github.com/MustardSeedNetworks/seed/internal/database"
 	"github.com/MustardSeedNetworks/seed/internal/identity/users"
 )
 
@@ -28,13 +27,23 @@ var (
 	ErrUnavailable = errors.New("user store not available")
 )
 
+// Identity is an IdP-authenticated identity to sync. The Provider +
+// ExternalID pair is the unique key — matching purely on email would
+// allow a compromised IdP to take over an existing local-account user.
+type Identity struct {
+	Provider    string // "google" | "microsoft" | "github"
+	ExternalID  string // the IdP's stable subject claim
+	Email       string // for display and cross-provider matching
+	DisplayName string // optional human name from the IdP
+}
+
 // Repository is the user-store surface the use-case drives, defined at the
 // consumer (ADR-0020) and satisfied by an adapter over *database.DB in
 // internal/app. Available reports whether a store is wired; SyncUser upserts
 // the IdP identity into the users table.
 type Repository interface {
 	Available() bool
-	SyncUser(ctx context.Context, in database.SSOUserInput) (*users.User, error)
+	SyncUser(ctx context.Context, in Identity) (*users.User, error)
 }
 
 // Service is the SSO identity-sync use-case.
@@ -50,7 +59,7 @@ func NewService(repo Repository) *Service {
 // SyncUser upserts the IdP-authenticated identity into the local user store.
 // Returns ErrUnavailable when the store is not wired; other errors from the
 // repository pass through verbatim.
-func (s *Service) SyncUser(ctx context.Context, in database.SSOUserInput) (*users.User, error) {
+func (s *Service) SyncUser(ctx context.Context, in Identity) (*users.User, error) {
 	if !s.repo.Available() {
 		return nil, ErrUnavailable
 	}
