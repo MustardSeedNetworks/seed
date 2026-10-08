@@ -469,27 +469,6 @@ func (s *Server) initCaptureServices(cfg *config.Config) {
 	}, dhcp.WithCapture(captureOpener))
 }
 
-// initDatabaseDependentServices wires every service that needs a
-// live database connection. Called from NewServer after s.dbConn
-// is populated. Splits into per-concern helpers to keep each scope
-// focused and to keep NewServer under the funlen limit.
-func (s *Server) initDatabaseDependentServices(db *database.DB) {
-	if db == nil {
-		// Tests construct a Server without a DB; skip the
-		// database-dependent wiring entirely rather than crash.
-		return
-	}
-	s.initLicenseAndAPITokens(db)
-	s.initAnomalyPlatform(db)
-	s.initProbeEngine(db)
-	s.initRetentionEngine(db)
-	s.initTelemetry(db)
-	s.initListeners(db)
-	s.initTopologyReconcilers(db)
-	s.initAlertPipelines(db)
-	s.initSNMPPoller(db)
-}
-
 // initLicenseAndAPITokens wires the Phase D-2 license manager + API
 // token repository onto the server. The license manager is
 // best-effort: failure to load isn't fatal. It leaves s.licenseMgr nil,

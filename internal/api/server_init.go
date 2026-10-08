@@ -2,9 +2,9 @@ package api
 
 // server_init.go contains the per-subsystem initialisation helpers that
 // NewServer composes: DNS/discovery, target networks, database +
-// migration, MIB DB, SSE + log broadcaster, discovery pipeline, vulnerability
-// scanner, CORS origin policy, the retention engine, and the health and
-// settings use-cases.
+// migration, the database-dependent engines, MIB DB, SSE + log broadcaster,
+// discovery pipeline, vulnerability scanner, CORS origin policy, the
+// retention engine, and the health and settings use-cases.
 
 import (
 	"context"
@@ -28,6 +28,7 @@ import (
 	"github.com/MustardSeedNetworks/seed/internal/platform/events"
 	"github.com/MustardSeedNetworks/seed/internal/platform/jobs"
 	"github.com/MustardSeedNetworks/seed/internal/platform/outbox"
+	snmporchestrator "github.com/MustardSeedNetworks/seed/internal/polling/snmp/orchestrator"
 	"github.com/MustardSeedNetworks/seed/internal/timeseries/retention"
 )
 
@@ -114,6 +115,32 @@ func (s *Server) initDatabaseServices(cfg *config.Config, db *database.DB) {
 	// the data-retention policy when a positive window is configured.
 	s.retentionStopCh = make(chan struct{})
 	go s.startMaintenance(cfg.Database.RetentionDays)
+}
+
+// initDatabaseDependentServices wires every service that needs a
+// live database connection. Called from NewServer after s.dbConn
+// is populated. Splits into per-concern helpers to keep each scope
+// focused and to keep NewServer under the funlen limit.
+func (s *Server) initDatabaseDependentServices(db *database.DB) {
+	if db == nil {
+		// Tests construct a Server without a DB; skip the
+		// database-dependent wiring entirely rather than crash.
+		return
+	}
+	s.initLicenseAndAPITokens(db)
+	s.initAnomalyPlatform(db.Anomalies())
+	s.initProbeEngine(db)
+	s.initRetentionEngine(db)
+	s.initTelemetry(db.Metrics())
+	s.initListeners(db)
+	s.initTopologyReconcilers(db)
+	s.initAlertPipelines(db)
+	s.initSNMPPoller(snmporchestrator.Config{
+		Targets:      db.PollingTargets(),
+		Observations: db.SNMPObservations(),
+		Rates:        db.Metrics(),
+		Credentials:  db.DeviceCredentials(),
+	})
 }
 
 // initMibDatabase initializes the MIB database and loads built-in OID definitions.

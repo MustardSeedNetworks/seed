@@ -3,7 +3,6 @@ package api
 import (
 	"context"
 
-	"github.com/MustardSeedNetworks/seed/internal/database"
 	"github.com/MustardSeedNetworks/seed/internal/logging"
 	snmporchestrator "github.com/MustardSeedNetworks/seed/internal/polling/snmp/orchestrator"
 	"github.com/MustardSeedNetworks/seed/internal/polling/snmp/snmpclient"
@@ -24,8 +23,11 @@ import (
 //  3. The scheduler needs a tick interval; snmpPollerSchedulerTick
 //     defaults to 5s — see the doc comment for the rationale.
 //
+// stores carries the orchestrator's storage ports (Targets, Observations,
+// Rates, Credentials); the rest of the config is filled in here.
+//
 // V1.0 NMS expansion — Stage A5.4.
-func (s *Server) initSNMPPoller(db *database.DB) {
+func (s *Server) initSNMPPoller(stores snmporchestrator.Config) {
 	logger := logging.GetLogger()
 	sched := scheduler.New(snmpPollerSchedulerTick)
 	factory := snmpclient.NewFactory(snmpclient.Options{})
@@ -41,17 +43,14 @@ func (s *Server) initSNMPPoller(db *database.DB) {
 		return
 	}
 
-	poller, err := snmporchestrator.Build(snmporchestrator.Config{
-		Targets:       licensedPollerTargets{PollerStorage: db.PollingTargets(), limit: s.pollingTargetLimit},
-		Observations:  db.SNMPObservations(),
-		Rates:         db.Metrics(),
-		Scheduler:     sched,
-		ClientFactory: factory,
-		Logger:        logger,
-		Credentials:   db.DeviceCredentials(),
-		Decrypter:     keyring,
-		Licensed:      s.collectorLicensed,
-	})
+	cfg := stores
+	cfg.Targets = licensedPollerTargets{PollerStorage: stores.Targets, limit: s.pollingTargetLimit}
+	cfg.Scheduler = sched
+	cfg.ClientFactory = factory
+	cfg.Logger = logger
+	cfg.Decrypter = keyring
+	cfg.Licensed = s.collectorLicensed
+	poller, err := snmporchestrator.Build(cfg)
 	if err != nil {
 		logger.Warn("snmp poller init failed", "error", err)
 		return
