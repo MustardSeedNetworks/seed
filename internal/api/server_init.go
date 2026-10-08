@@ -132,7 +132,7 @@ func (s *Server) initDatabaseDependentServices(db *database.DB) {
 	s.initProbeEngine(db)
 	s.initRetentionEngine(db)
 	s.initTelemetry(db.Metrics())
-	s.initListeners(db)
+	s.initListeners(app.NewListenerPersistence(db))
 	s.initTopologyReconcilers(db)
 	s.initAlertPipelines(db)
 	s.initSNMPPoller(snmporchestrator.Config{
