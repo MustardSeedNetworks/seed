@@ -39,6 +39,7 @@ const PAGES = [
   { path: '/interfaces', label: 'Interfaces' },
   { path: '/flows', label: 'Flows' },
   { path: '/alerts', label: 'Alerts' },
+  { path: '/dashboard', label: 'Dashboard' },
 ];
 
 test.use({ storageState: AUTH_STORAGE_STATE });

@@ -9,6 +9,7 @@
   "sections": {
     "about": "Acerca de Seed",
     "gettingStarted": "Primeros pasos",
+    "dashboard": "Panel",
     "profiles": "Perfiles",
     "link": "Estado del enlace",
     "cable": "Prueba de cable",
@@ -45,8 +46,8 @@
     "gettingStarted": {
       "steps": {
         "dashboard": {
-          "title": "Resumen del panel",
-          "description": "El panel principal muestra todas las tarjetas de diagnóstico. Cada tarjeta muestra información en tiempo real sobre un aspecto específico de su red."
+          "title": "Su panel",
+          "description": "La página Panel muestra las tarjetas que usted elige. Elija Personalizar para añadirlas, quitarlas o reordenarlas; la disposición se guarda en su cuenta."
         },
         "interface": {
           "title": "Seleccionar interfaz de red",
@@ -66,6 +67,23 @@
         "tips": {
           "0": "Use la tarjeta de Descubrimiento de red para encontrar todos los dispositivos en su red",
           "2": "Exporte datos de diagnóstico para solución de problemas o documentación"
+        }
+      }
+    },
+    "dashboard": {
+      "description": "El panel es su propia página de tarjetas. Empieza con Enlace, Puerta de enlace, DNS y Red, y usted elige qué tarjetas muestra y en qué orden. La disposición se guarda en su cuenta, así que le acompaña a cualquier navegador desde el que inicie sesión, y no cambia lo que ven otros usuarios. Cualquier rol puede organizar su propio panel.",
+      "steps": {
+        "customize": {
+          "title": "Personalizar",
+          "description": "Elija Personalizar para abrir la lista de tarjetas de su panel. La página muestra cada cambio a medida que lo hace."
+        },
+        "arrange": {
+          "title": "Añadir, mover o quitar",
+          "description": "Elija una tarjeta y pulse Añadir para ponerla al final. Las flechas suben o bajan una tarjeta y la cruz la quita. Restaurar predeterminado recupera las tarjetas iniciales."
+        },
+        "save": {
+          "title": "Guardar",
+          "description": "No se guarda nada hasta que elija Guardar. Cancelar deja su panel guardado como estaba."
         }
       }
     },

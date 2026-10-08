@@ -9,6 +9,7 @@
   "sections": {
     "about": "About Seed",
     "gettingStarted": "Getting Started",
+    "dashboard": "Dashboard",
     "profiles": "Profiles",
     "link": "Link Status",
     "cable": "Cable Test",
@@ -45,8 +46,8 @@
     "gettingStarted": {
       "steps": {
         "dashboard": {
-          "title": "Dashboard Overview",
-          "description": "The main dashboard shows all diagnostic cards. Each card displays real-time information about a specific aspect of your network."
+          "title": "Your dashboard",
+          "description": "The Dashboard page shows the cards you choose. Choose Customize to add, remove or reorder them; the layout is saved to your account."
         },
         "interface": {
           "title": "Select Network Interface",
@@ -66,6 +67,23 @@
         "tips": {
           "0": "Use the Network Discovery card to find all devices on your network",
           "2": "Export diagnostics data for troubleshooting or documentation"
+        }
+      }
+    },
+    "dashboard": {
+      "description": "Dashboard is your own page of cards. It starts with Link, Gateway, DNS and Network, and you choose which cards it shows and in what order. The layout is saved to your account, so it follows you to any browser you sign in from, and it changes nothing other users see. Every role can arrange their own dashboard.",
+      "steps": {
+        "customize": {
+          "title": "Customize",
+          "description": "Choose Customize to open the list of cards on your dashboard. The page previews each change as you make it."
+        },
+        "arrange": {
+          "title": "Add, move or remove",
+          "description": "Pick a card and choose Add to put it at the end. The arrows move a card up or down, and the cross removes it. Restore default brings back the starting cards."
+        },
+        "save": {
+          "title": "Save",
+          "description": "Nothing is stored until you choose Save. Cancel leaves your saved dashboard as it was."
         }
       }
     },

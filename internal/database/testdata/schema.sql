@@ -1060,6 +1060,13 @@ CREATE TABLE topology_target_nodes (
 				PRIMARY KEY (client_id, target_id)
 			) STRICT;
 
+-- table: user_dashboards
+CREATE TABLE user_dashboards (
+	user_id INTEGER PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
+	widgets TEXT NOT NULL CHECK (json_valid(widgets) AND json_type(widgets) = 'array'),
+	updated_at TEXT NOT NULL
+) STRICT;
+
 -- table: users
 CREATE TABLE "users" (
 				id              INTEGER PRIMARY KEY AUTOINCREMENT,

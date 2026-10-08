@@ -44,6 +44,35 @@
     "stateAcknowledged": "Reconocida",
     "stateOpen": "Abierta"
   },
+  "dashboard": {
+    "label": "Panel",
+    "title": "Panel",
+    "description": "Su propia página de tarjetas. Elija qué tarjetas muestra y en qué orden.",
+    "customize": "Personalizar",
+    "editorTitle": "Tarjetas en su panel",
+    "editorEmpty": "Aún no hay tarjetas. Añada una abajo.",
+    "moveUp": "Subir {{widget}}",
+    "moveDown": "Bajar {{widget}}",
+    "remove": "Quitar {{widget}}",
+    "addLabel": "Tarjeta para añadir",
+    "add": "Añadir",
+    "save": "Guardar",
+    "cancel": "Cancelar",
+    "reset": "Restaurar predeterminado",
+    "saveFailed": "No se guardó: {{reason}}",
+    "loadFailed": "No se pudo cargar su panel: {{reason}}",
+    "empty": "Su panel no tiene tarjetas. Elija Personalizar para añadir algunas.",
+    "widget": {
+      "link": "Enlace",
+      "network": "Red",
+      "gateway": "Puerta de enlace",
+      "dns": "DNS",
+      "publicIp": "IP pública",
+      "switch": "Switch más cercano",
+      "neighbours": "Caché de vecinos",
+      "driverStats": "Contadores de errores del controlador"
+    }
+  },
   "flows": {
     "label": "Flujos",
     "title": "Flujos",

@@ -31,6 +31,7 @@ const ROUTES = [
   '/interfaces',
   '/flows',
   '/alerts',
+  '/dashboard',
 ];
 
 /** Rate-limited routes a page mount used to call (server_routes.go `rateLimited`). */

@@ -44,6 +44,35 @@
     "stateAcknowledged": "Acknowledged",
     "stateOpen": "Open"
   },
+  "dashboard": {
+    "label": "Dashboard",
+    "title": "Dashboard",
+    "description": "Your own page of cards. Choose which cards it shows and in what order.",
+    "customize": "Customize",
+    "editorTitle": "Cards on your dashboard",
+    "editorEmpty": "No cards yet. Add one below.",
+    "moveUp": "Move {{widget}} up",
+    "moveDown": "Move {{widget}} down",
+    "remove": "Remove {{widget}}",
+    "addLabel": "Card to add",
+    "add": "Add",
+    "save": "Save",
+    "cancel": "Cancel",
+    "reset": "Restore default",
+    "saveFailed": "Not saved: {{reason}}",
+    "loadFailed": "Could not load your dashboard: {{reason}}",
+    "empty": "Your dashboard has no cards. Choose Customize to add some.",
+    "widget": {
+      "link": "Link",
+      "network": "Network",
+      "gateway": "Gateway",
+      "dns": "DNS",
+      "publicIp": "Public IP",
+      "switch": "Nearest switch",
+      "neighbours": "Neighbour cache",
+      "driverStats": "Driver error counters"
+    }
+  },
   "flows": {
     "label": "Flows",
     "title": "Flows",
