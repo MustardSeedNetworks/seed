@@ -24,6 +24,7 @@ import {
 } from '../../../types/settings';
 import { SettingsDrawerNetworkSection } from '../SettingsDrawerNetworkSection';
 import { AlertDeliverySettings } from './AlertDeliverySettings';
+import { AlertEmailSettings } from './AlertEmailSettings';
 import { AlertEscalationSettings } from './AlertEscalationSettings';
 import { ApiTokensSettings } from './ApiTokensSettings';
 import { AppearanceSettings } from './AppearanceSettings';
@@ -315,6 +316,11 @@ export const COPY_ONLY_SECTIONS: SectionFixture[] = [
     render: () => <AlertDeliverySettings />,
   },
   {
+    name: 'AlertEmailSettings',
+    header: /alert email|correo de alertas/i,
+    render: () => <AlertEmailSettings />,
+  },
+  {
     name: 'AlertEscalationSettings',
     header: /alert escalation/i,
     render: () => <AlertEscalationSettings />,
@@ -346,6 +352,15 @@ export const API_GET_BODIES: Record<string, unknown> = {
   '/api/v1/settings': {
     alerts: {
       webhook: { url: 'https://hooks.example.test/seed', secretSet: true },
+      email: {
+        host: 'smtp.example.test',
+        port: 587,
+        tls: 'starttls',
+        username: 'seed',
+        passwordSet: true,
+        from: 'seed@example.test',
+        to: ['noc@example.test'],
+      },
       escalations: [
         {
           rule: 'iface.down',
