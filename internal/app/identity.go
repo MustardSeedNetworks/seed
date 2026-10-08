@@ -16,6 +16,7 @@ import (
 
 	"github.com/MustardSeedNetworks/seed/internal/auth"
 	"github.com/MustardSeedNetworks/seed/internal/database"
+	"github.com/MustardSeedNetworks/seed/internal/identity/mfa"
 	ssosync "github.com/MustardSeedNetworks/seed/internal/identity/oauth"
 	"github.com/MustardSeedNetworks/seed/internal/identity/tokens"
 	"github.com/MustardSeedNetworks/seed/internal/identity/users"
@@ -48,6 +49,13 @@ func NewIdentityTokens(
 // (the pre-strangle "User store unavailable" redirect path).
 func NewIdentityOAuth(db func() *database.DB) *ssosync.Service {
 	return ssosync.NewService(dbSSOAdapter{db: db})
+}
+
+// NewMFAStore builds the second-factor store the MFA handlers enrol and verify
+// through, over a lazy accessor for the database. It reports unavailable while
+// no database is wired.
+func NewMFAStore(db func() *database.DB) mfa.Store {
+	return dbMFAAdapter{db: db}
 }
 
 // AuthUserStore is the login-path user store, plus the startup migration of the
@@ -166,4 +174,43 @@ func (a dbSSOAdapter) Available() bool { return a.db() != nil }
 
 func (a dbSSOAdapter) SyncUser(ctx context.Context, in ssosync.Identity) (*users.User, error) {
 	return a.db().UpsertSSOUser(ctx, in)
+}
+
+// ── MFA adapter ──────────────────────────────────────────────────────────────
+
+// dbMFAAdapter implements mfa.Store over *database.DB, resolving it lazily.
+type dbMFAAdapter struct {
+	db func() *database.DB
+}
+
+func (a dbMFAAdapter) Available() bool { return a.db() != nil }
+
+func (a dbMFAAdapter) SetTOTPSecret(ctx context.Context, username, secret string) error {
+	return a.db().SetTOTPSecret(ctx, username, secret)
+}
+
+func (a dbMFAAdapter) EnableTOTP(ctx context.Context, username string) error {
+	return a.db().EnableTOTP(ctx, username)
+}
+
+func (a dbMFAAdapter) DisableTOTP(ctx context.Context, username string) error {
+	return a.db().DisableTOTP(ctx, username)
+}
+
+func (a dbMFAAdapter) GetTOTP(ctx context.Context, username string) (string, bool, error) {
+	return a.db().GetTOTP(ctx, username)
+}
+
+func (a dbMFAAdapter) AddWebAuthnCredential(
+	ctx context.Context, userID int64, cred mfa.WebAuthnCredential,
+) (int64, error) {
+	return a.db().AddWebAuthnCredential(ctx, userID, cred)
+}
+
+func (a dbMFAAdapter) ListWebAuthnCredentials(ctx context.Context, userID int64) ([]mfa.WebAuthnCredential, error) {
+	return a.db().ListWebAuthnCredentials(ctx, userID)
+}
+
+func (a dbMFAAdapter) UpdateWebAuthnSignCount(ctx context.Context, credentialID []byte, signCount uint32) error {
+	return a.db().UpdateWebAuthnSignCount(ctx, credentialID, signCount)
 }

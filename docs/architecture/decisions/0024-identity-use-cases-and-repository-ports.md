@@ -2,10 +2,10 @@
 
 **Status:** Accepted — 2026-06-10; amended 2026-10-08 (users entity moves into
 `internal/identity/users`, then the token record into `internal/identity/tokens`
-the SSO sync input into `internal/identity/oauth`, and the WebAuthn credential
-into `internal/identity/mfa`; see "Amendment" below) · applies ADR-0020 to the
-identity surface (C4, the final `internal/api` strangle slice before the
-`ServiceContainer` deletion)
+the SSO sync input into `internal/identity/oauth`, the WebAuthn credential
+into `internal/identity/mfa`, and the MFA handlers onto an `mfa.Store` port;
+see "Amendment" below) · applies ADR-0020 to the identity surface (C4, the
+final `internal/api` strangle slice before the `ServiceContainer` deletion)
 
 ## Context
 
@@ -176,6 +176,12 @@ treat `users.ErrUnavailable` as the old "no database" skip. The adapter's
 `CreateUser` and `GetUserCount`, left without a caller, were deleted. The
 adapter itself stays the `auth.UserStore` the composition root hands the auth
 manager.
+
+The MFA handlers then stopped calling TOTP and WebAuthn methods on the server's
+database handle: `internal/identity/mfa` declares a `Store` port, which
+`internal/app` implements over the lazily read database, and the handlers read
+the user through `users.Service`. Behaviour is unchanged: with no database the
+store reports unavailable and the routes answer as before.
 
 ## Implementation phasing
 
