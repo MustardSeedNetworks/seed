@@ -20,9 +20,8 @@ import (
 // handlers on a bare Server (no probe engine / testers — those degrade to no-ops).
 func wireHealthSettings(s *Server) {
 	s.healthSettings = app.NewHealthSettings(
-		s.healthProbeRepo, s.rescheduleProbeEngine,
+		s.db, s.rescheduleProbeEngine,
 		s.config, s.configPath, s.dnsTester, s.speedtestTester,
-		s.healthSettingsRepo,
 	)
 }
 

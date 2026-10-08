@@ -13,6 +13,7 @@ import (
 	"testing"
 
 	"github.com/MustardSeedNetworks/seed/internal/auth"
+	"github.com/MustardSeedNetworks/seed/internal/database"
 	"github.com/MustardSeedNetworks/seed/internal/identity/tokens"
 )
 
@@ -30,7 +31,7 @@ func insertPAT(t *testing.T, s *Server, owner string) string {
 		TokenHash: hashAPIToken(plaintext),
 		Prefix:    plaintext[:apiTokenDisplayPrefix],
 	}
-	if insErr := s.apiTokens.Insert(context.Background(), rec); insErr != nil {
+	if insErr := database.NewAPITokenRepository(s.dbConn).Insert(context.Background(), rec); insErr != nil {
 		t.Fatalf("insert token: %v", insErr)
 	}
 	return plaintext

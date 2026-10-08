@@ -178,9 +178,8 @@ func NewTestServerWithConfig(cfg *config.Config) *Server {
 		func() *alertdelivery.Manager { return s.alertDelivery })
 	s.securitySettings = app.NewSecuritySettings(s.config, s.configPath, s.rogueDetector)
 	s.healthSettings = app.NewHealthSettings(
-		s.healthProbeRepo, s.rescheduleProbeEngine,
+		s.db, s.rescheduleProbeEngine,
 		s.config, s.configPath, s.dnsTester, s.speedtestTester,
-		s.healthSettingsRepo,
 	)
 	s.profiles = app.NewProfiles(s.db, s.config, s.configPath)
 	s.networkIP = app.NewNetworkIP(s.netManager, s.config, s.configPath)

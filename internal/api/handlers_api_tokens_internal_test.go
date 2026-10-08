@@ -51,7 +51,6 @@ func apiTokenTestSetup(t *testing.T) (*Server, *license.Manager) {
 		mux: http.NewServeMux(),
 	}
 	s.dbConn = db
-	s.apiTokens = database.NewAPITokenRepository(db)
 	s.licenseMgr = mgr
 	// Wire the discovery use-cases so routed handlers (e.g. the
 	// /discovery/engine/events SSE policy test) have a non-nil use-case; the
@@ -235,7 +234,7 @@ func TestAPITokenMiddlewareResolvesValidToken(t *testing.T) {
 		TokenHash: hashAPIToken(plaintext),
 		Prefix:    plaintext[:apiTokenDisplayPrefix],
 	}
-	if insErr := s.apiTokens.Insert(context.Background(), rec); insErr != nil {
+	if insErr := database.NewAPITokenRepository(s.dbConn).Insert(context.Background(), rec); insErr != nil {
 		t.Fatalf("insert: %v", insErr)
 	}
 

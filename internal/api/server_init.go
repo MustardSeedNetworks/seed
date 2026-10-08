@@ -127,14 +127,14 @@ func (s *Server) initDatabaseDependentServices() {
 		return
 	}
 	engines := app.NewEnginePersistence(db)
-	s.initLicenseAndAPITokens(db)
+	s.initLicense()
 	s.initAnomalyPlatform(engines.Anomalies)
-	s.initProbeEngine(db)
+	s.initProbeEngine(engines.Probes)
 	s.initRetentionEngine(engines.Rollups)
 	s.initTelemetry(engines.Telemetry)
 	s.initListeners(app.NewListenerPersistence(db))
-	s.initTopologyReconcilers(db)
-	s.initAlertPipelines(db)
+	s.initTopologyReconcilers(engines.Topology)
+	s.initAlertPipelines(engines.ListenerAlerts, engines.ObservationAlerts)
 	s.initSNMPPoller(engines.SNMPPoller)
 }
 
@@ -451,15 +451,15 @@ func (a licenseTierAdapter) GetTier() license.Tier {
 }
 
 // initHealthUseCases wires the health-monitoring use-case (ADR-0020) from the
-// composition root over the server's lazy accessor for the unified anomaly store
-// (the only remaining concern after the dead health_check_results read-path was
-// deleted — ADR-0026), so a nil or later-set store (the test harness) is honored.
+// composition root over the server's lazy accessor for the database, whose
+// unified anomaly store is the only remaining concern after the dead
+// health_check_results read-path was deleted (ADR-0026), so a nil or later-set
+// database (the test harness) is honored.
 func (s *Server) initHealthUseCases() {
-	s.healthMonitoring = app.NewHealthMonitoring(s.anomalyStore, s.anomalyEngine)
+	s.healthMonitoring = app.NewHealthMonitoring(s.db, s.anomalyEngine)
 	s.healthSettings = app.NewHealthSettings(
-		s.healthProbeRepo, s.rescheduleProbeEngine,
+		s.db, s.rescheduleProbeEngine,
 		s.config, s.configPath, s.dnsTester, s.speedtestTester,
-		s.healthSettingsRepo,
 	)
 }
 

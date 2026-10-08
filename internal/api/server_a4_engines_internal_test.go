@@ -5,6 +5,7 @@ import (
 	"path/filepath"
 	"testing"
 
+	"github.com/MustardSeedNetworks/seed/internal/app"
 	"github.com/MustardSeedNetworks/seed/internal/engine"
 	"github.com/MustardSeedNetworks/seed/internal/license"
 )
@@ -15,7 +16,7 @@ import (
 // skips them when a configured license.Manager reports a tier
 // below the engine's minimum.
 //
-// The test environment goes through initLicenseAndAPITokens which
+// The test environment goes through initLicense which
 // calls license.NewManager() — that returns a Free-tier Manager
 // (no key file present). The gate then filters Starter + Pro
 // engines, leaving only probe + retention in s.engines.
@@ -29,7 +30,7 @@ func TestInitTopologyReconcilers_RegistersOnPro(t *testing.T) {
 	// No license manager wired -> effectiveTier returns Pro,
 	// so all four topology reconcilers land.
 	s := &Server{engines: engine.NewRegistry(nil)}
-	s.initTopologyReconcilers(newTestDB(t))
+	s.initTopologyReconcilers(app.NewEnginePersistence(newTestDB(t)).Topology)
 
 	names := make(map[string]bool)
 	for _, e := range s.engines.Engines() {
@@ -49,8 +50,10 @@ func TestInitTopologyReconcilers_RegistersOnPro(t *testing.T) {
 }
 
 func TestInitAlertPipelines_RegistersOnPro(t *testing.T) {
-	s := &Server{engines: engine.NewRegistry(nil)}
-	s.initAlertPipelines(newTestDB(t))
+	db := newTestDB(t)
+	s := &Server{engines: engine.NewRegistry(nil), dbConn: db}
+	persistence := app.NewEnginePersistence(db)
+	s.initAlertPipelines(persistence.ListenerAlerts, persistence.ObservationAlerts)
 
 	names := make(map[string]bool)
 	for _, e := range s.engines.Engines() {

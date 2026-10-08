@@ -25,17 +25,18 @@ import (
 
 // NewWiFiQueries builds the Wi-Fi visibility read use-case (ADR-0020) over lazy
 // accessors for the live visibility component (airspace tree + status) and the
-// unified anomaly store (the source=wifi anomaly list, ADR-0029 §4). A nil
+// database, whose unified anomaly store holds the source=wifi anomaly list
+// (ADR-0029 §4). A nil
 // component or store (no capture / no DB, e.g. the test harness) yields a
 // use-case that degrades to empty-but-valid results rather than erroring.
 func NewWiFiQueries(
 	src func() *visibility.Service,
-	anomalyStore func() *database.AnomalyRepository,
+	db func() *database.DB,
 	anomalyEngine func() *anomaly.Engine,
 ) *troubleshooting.Queries {
 	return troubleshooting.NewQueries(
 		wifiVisibilitySource(src),
-		wifiAnomalyStore{store: anomalyStore, engine: anomalyEngine},
+		wifiAnomalyStore{store: lazyRepo(db, (*database.DB).Anomalies), engine: anomalyEngine},
 	)
 }
 

@@ -317,7 +317,6 @@ func TestDeleteUser_CascadesAPITokens(t *testing.T) {
 	}
 
 	repo := database.NewAPITokenRepository(db)
-	s.apiTokens = repo
 
 	// Insert a token owned by bob.
 	if err := repo.Insert(t.Context(), tokens.Record{

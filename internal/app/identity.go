@@ -30,15 +30,15 @@ func NewIdentityUsers(db func() *database.DB) *users.Service {
 }
 
 // NewIdentityTokens builds the PAT use-case (ADR-0020) over lazy accessors
-// for the token repository and the license manager. A nil repository degrades
-// every method to tokens.ErrUnavailable; a nil license manager permits minting
+// for the database (its api_tokens table) and the license manager. A nil
+// database degrades every method to tokens.ErrUnavailable; a nil license manager permits minting
 // (the pre-strangle dev/test behavior: builds without a license manager).
 func NewIdentityTokens(
-	repo func() *database.APITokenRepository,
+	db func() *database.DB,
 	mgr func() *license.Manager,
 ) *tokens.Service {
 	return tokens.NewService(
-		dbTokensAdapter{repo: repo},
+		dbTokensAdapter{repo: lazyRepo(db, database.NewAPITokenRepository)},
 		licenseTokenGate{mgr: mgr},
 	)
 }
