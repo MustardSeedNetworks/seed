@@ -912,7 +912,7 @@
   "pathMtu": {
     "title": "Path MTU",
     "description": "Find the largest packet that reaches a destination without being fragmented.",
-    "start": "Measure",
+    "start": "Find path MTU",
     "running": "Measuring the path MTU to {{target}}…",
     "failed": "The path MTU check did not run.",
     "atLeast": "At least {{mtu}}",

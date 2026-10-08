@@ -912,7 +912,7 @@
   "pathMtu": {
     "title": "MTU de la ruta",
     "description": "Encuentra el paquete más grande que llega a un destino sin fragmentarse.",
-    "start": "Medir",
+    "start": "Buscar la MTU",
     "running": "Midiendo la MTU de la ruta a {{target}}…",
     "failed": "La comprobación de MTU de la ruta no se ejecutó.",
     "atLeast": "Al menos {{mtu}}",
