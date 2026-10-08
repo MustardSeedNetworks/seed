@@ -55,6 +55,7 @@ import { RequireAdmin } from '../ui/RequireRole';
 import { SettingsDrawerFooter } from './SettingsDrawerFooter';
 import { SettingsDrawerNetworkSection } from './SettingsDrawerNetworkSection';
 import { AlertDeliverySettings } from './sections/AlertDeliverySettings';
+import { AlertEmailSettings } from './sections/AlertEmailSettings';
 import { AlertEscalationSettings } from './sections/AlertEscalationSettings';
 import { ApiTokensSettings } from './sections/ApiTokensSettings';
 import { AppearanceSettings } from './sections/AppearanceSettings';
@@ -571,6 +572,8 @@ export function SettingsDrawer({
           />
 
           <AlertDeliverySettings />
+
+          <AlertEmailSettings />
 
           <AlertEscalationSettings />
 

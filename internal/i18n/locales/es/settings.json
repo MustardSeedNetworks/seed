@@ -15,6 +15,7 @@
     "link": "Enlace",
     "vulnerability": "Escaneo de vulnerabilidades",
     "alertDelivery": "Envío de alertas",
+    "alertEmail": "Correo de alertas",
     "alertEscalation": "Escalado de alertas",
     "identity": "Identidad del equipo"
   },
@@ -562,6 +563,27 @@
     "url": "URL del receptor",
     "urlHelp": "Una dirección http o https absoluta. Al borrarla se desactiva el envío y no sale ninguna petición del equipo.",
     "urlPlaceholder": "https://hooks.example.com/services/T000/B000/XXXX"
+  },
+  "alertEmail": {
+    "description": "Envíe por correo cada alerta que Seed genere, a través de un servidor de correo propio. Deje el servidor vacío para no enviar correo.",
+    "host": "Servidor de correo",
+    "hostHelp": "Solo el nombre del equipo, sin esquema ni puerto. Al borrarlo se desactiva el correo y no sale ninguna conexión del equipo.",
+    "hostPlaceholder": "smtp.example.com",
+    "tls": "Cifrado",
+    "tlsStartTls": "STARTTLS",
+    "tlsImplicit": "TLS",
+    "port": "Puerto",
+    "username": "Usuario",
+    "usernameHelp": "Déjelo vacío si el servidor acepta el correo por dirección.",
+    "password": "Contraseña",
+    "passwordHelp": "Se guarda cifrada y no vuelve a mostrarse. Déjela vacía para conservar la guardada.",
+    "passwordStored": "Hay una contraseña guardada; escriba para reemplazarla",
+    "from": "Remitente",
+    "fromPlaceholder": "Seed <seed@example.com>",
+    "to": "Destinatarios",
+    "toHelp": "Separe las direcciones con comas o saltos de línea.",
+    "toPlaceholder": "noc@example.com, oncall@example.com",
+    "save": "Guardar correo"
   },
   "alertEscalation": {
     "description": "Vuelva a enviar una alerta, por más canales, cuando nadie la reconoce. Cada regla tiene una escalera; cada etapa sale un tiempo fijo después de generarse la alerta.",

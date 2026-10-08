@@ -15,6 +15,7 @@
     "link": "Link",
     "vulnerability": "Vulnerability Scanning",
     "alertDelivery": "Alert Delivery",
+    "alertEmail": "Alert email",
     "alertEscalation": "Alert escalation",
     "identity": "Device Identity"
   },
@@ -562,6 +563,27 @@
     "url": "Receiver URL",
     "urlHelp": "An absolute http or https address. Clearing it turns delivery off; no request leaves the host.",
     "urlPlaceholder": "https://hooks.example.com/services/T000/B000/XXXX"
+  },
+  "alertEmail": {
+    "description": "Email every alert Seed raises through a mail server of your own. Leave the server empty to send no email.",
+    "host": "Mail server",
+    "hostHelp": "A host name only, without scheme or port. Clearing it turns email off; no connection leaves the host.",
+    "hostPlaceholder": "smtp.example.com",
+    "tls": "Encryption",
+    "tlsStartTls": "STARTTLS",
+    "tlsImplicit": "TLS",
+    "port": "Port",
+    "username": "Username",
+    "usernameHelp": "Leave empty for a relay that accepts mail by address.",
+    "password": "Password",
+    "passwordHelp": "Stored encrypted and never shown again. Leave empty to keep the stored one.",
+    "passwordStored": "A password is stored; type to replace it",
+    "from": "Sender",
+    "fromPlaceholder": "Seed <seed@example.com>",
+    "to": "Recipients",
+    "toHelp": "Separate addresses with commas or new lines.",
+    "toPlaceholder": "noc@example.com, oncall@example.com",
+    "save": "Save email"
   },
   "alertEscalation": {
     "description": "Send an alert again, on more channels, when nobody acknowledges it. Each rule gets one ladder; each stage goes out a set time after the alert was raised.",
