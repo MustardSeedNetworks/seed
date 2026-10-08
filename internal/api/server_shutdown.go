@@ -12,7 +12,6 @@ import (
 	"time"
 
 	"github.com/MustardSeedNetworks/seed/internal/app"
-	"github.com/MustardSeedNetworks/seed/internal/database"
 	"github.com/MustardSeedNetworks/seed/internal/discovery/enumerate"
 	"github.com/MustardSeedNetworks/seed/internal/logging"
 	"github.com/MustardSeedNetworks/seed/internal/netif"
@@ -266,20 +265,6 @@ func (s *Server) startMaintenance(retentionDays int) {
 	ticker := time.NewTicker(time.Hour)
 	defer ticker.Stop()
 
-	policy := database.RetentionPolicy{
-		MetricsDays:        retentionDays,
-		AlertsDays:         retentionDays * retentionAlertsMultiplier, // Keep alerts longer
-		SpeedTestDays:      retentionDays,
-		AuditLogDays:       retentionDays * retentionAuditLogMultiplier,       // Keep audit logs longest
-		InactiveDeviceDays: retentionDays * retentionInactiveDeviceMultiplier, // Keep inactive device records longer
-		// Resolved anomalies age out on their own fixed 90d window (ADR-0021);
-		// active anomalies are never purged, so this is independent of the
-		// operator's general retention window.
-		AnomalyResolvedDays: database.DefaultRetentionPolicy().AnomalyResolvedDays,
-		MicroburstDays:      retentionDays,
-		VoIPDays:            retentionDays,
-	}
-
 	for {
 		select {
 		case <-s.retentionStopCh:
@@ -309,8 +294,8 @@ func (s *Server) startMaintenance(retentionDays int) {
 			// license upgrade takes effect on the next pass (ADR-0028 §4 reuses the
 			// probe DailyDays horizon, same as the retention engine).
 			tier := licenseTierAdapter{lm: s.licenseMgr}.GetTier()
-			policy.AnomalyRollupDailyDays = retention.HorizonsFor(tier).DailyDays
-			result, err := s.db().RunCleanup(context.Background(), policy)
+			result, err := app.RunDataRetention(context.Background(), s.db(),
+				retentionDays, retention.HorizonsFor(tier).DailyDays)
 			if err != nil {
 				logging.GetLogger().Error("Data retention cleanup failed", "error", err)
 				continue
