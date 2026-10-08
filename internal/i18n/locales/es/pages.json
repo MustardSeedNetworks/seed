@@ -44,6 +44,38 @@
     "stateAcknowledged": "Reconocida",
     "stateOpen": "Abierta"
   },
+  "flows": {
+    "label": "Flujos",
+    "title": "Flujos",
+    "description": "Principales hosts, conversaciones y aplicaciones de los flujos que los exportadores envían a Seed.",
+    "windowLabel": "Periodo",
+    "window": {
+      "1d": "Últimas 24 horas",
+      "7d": "Últimos 7 días",
+      "30d": "Últimos 30 días",
+      "90d": "Últimos 90 días"
+    },
+    "rankLabel": "Ordenar por",
+    "rank": {
+      "bytes": "Bytes",
+      "packets": "Paquetes"
+    },
+    "clamped_one": "Se muestra el 1 día que conserva su licencia.",
+    "clamped_other": "Se muestran los {{count}} días que conserva su licencia.",
+    "empty": "No hay flujos en este periodo. Los flujos aparecen cuando un router o switch exporta NetFlow, IPFIX o sFlow a Seed.",
+    "none": "Ninguno en este periodo.",
+    "talkers": "Hosts con más tráfico",
+    "conversations": "Conversaciones principales",
+    "applications": "Aplicaciones principales",
+    "colHost": "Host",
+    "colHosts": "Hosts",
+    "colProtocol": "Protocolo",
+    "colApplication": "Aplicación",
+    "colBytes": "Bytes",
+    "colPackets": "Paquetes",
+    "protocolNumber": "IP {{number}}",
+    "unknownApplication": "Sin identificar"
+  },
   "groups": {
     "diagnostics": "Diagnóstico",
     "liveTelemetry": "Telemetría en vivo",

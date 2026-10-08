@@ -12,6 +12,7 @@
 import type { LucideIcon } from 'lucide-react';
 import {
   Activity,
+  ArrowLeftRight,
   BarChart3,
   Bell,
   EthernetPort,
@@ -53,6 +54,7 @@ const TopologyPage = lazy(() =>
 const InterfacesPage = lazy(() =>
   import('./pages/InterfacesPage').then((m) => ({ default: m.InterfacesPage })),
 );
+const FlowsPage = lazy(() => import('./pages/FlowsPage').then((m) => ({ default: m.FlowsPage })));
 const AlertsPage = lazy(() =>
   import('./pages/AlertsPage').then((m) => ({ default: m.AlertsPage })),
 );
@@ -103,6 +105,7 @@ type PageI18nKey =
   | 'pollingTargets'
   | 'topology'
   | 'interfaces'
+  | 'flows'
   | 'alerts';
 
 /**
@@ -229,6 +232,15 @@ const staticPages: PageDef[] = [
     iconColorClass: 'text-module-security',
     component: InterfacesPage,
     help: 'interfaces',
+  },
+  {
+    path: '/flows',
+    group: 'monitoring',
+    i18nKey: 'flows',
+    icon: ArrowLeftRight,
+    iconColorClass: 'text-module-security',
+    component: FlowsPage,
+    help: 'flows',
   },
   {
     path: '/alerts',

@@ -11,6 +11,7 @@
 
 import {
   AlertTriangle,
+  ArrowLeftRight,
   BarChart3,
   EthernetPort,
   Network,
@@ -287,6 +288,36 @@ export const reportingSections: HelpSection[] = [
           {
             term: 'content.interfaces.terms.utilization.term',
             description: 'content.interfaces.terms.utilization.description',
+          },
+        ],
+      },
+    ],
+  },
+  {
+    id: 'flows',
+    titleKey: 'sections.flows',
+    icon: <ArrowLeftRight className={ICON} />,
+    keywords: ['flows', 'netflow', 'ipfix', 'sflow', 'talkers', 'conversations', 'applications'],
+    blocks: [
+      {
+        kind: 'paragraph',
+        text: 'content.flows.description',
+      },
+      {
+        kind: 'terms',
+        heading: 'content.common.terms',
+        items: [
+          {
+            term: 'content.flows.terms.talker.term',
+            description: 'content.flows.terms.talker.description',
+          },
+          {
+            term: 'content.flows.terms.conversation.term',
+            description: 'content.flows.terms.conversation.description',
+          },
+          {
+            term: 'content.flows.terms.application.term',
+            description: 'content.flows.terms.application.description',
           },
         ],
       },

@@ -31,6 +31,7 @@ const ROUTES = [
   '/polling-targets',
   '/topology',
   '/interfaces',
+  '/flows',
   '/alerts',
 ];
 

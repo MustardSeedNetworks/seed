@@ -2103,7 +2103,7 @@ jobs:
       start-command: ./scripts/e2e-daemon.sh "$RUNNER_TEMP/seed-phone-width" 8443
       setup-command: node ui/e2e/phone-width-sign-in.ts
       storage-state: phone-width-state.json
-      routes: '["/link", "/network", "/path", "/wifi", "/security", "/performance", "/reports", "/logs", "/polling-targets", "/topology", "/interfaces", "/alerts"]'
+      routes: '["/link", "/network", "/path", "/wifi", "/security", "/performance", "/reports", "/logs", "/polling-targets", "/topology", "/interfaces", "/flows", "/alerts"]'
       rail-testid: sidebar-desktop
       primary-action-testid: fab-run-all-tests
 
