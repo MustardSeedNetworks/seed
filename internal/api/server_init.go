@@ -14,7 +14,6 @@ import (
 	"github.com/MustardSeedNetworks/seed/internal/app"
 	"github.com/MustardSeedNetworks/seed/internal/auth"
 	"github.com/MustardSeedNetworks/seed/internal/config"
-	"github.com/MustardSeedNetworks/seed/internal/database"
 	"github.com/MustardSeedNetworks/seed/internal/diagnostics/dns"
 	"github.com/MustardSeedNetworks/seed/internal/diagnostics/export"
 	"github.com/MustardSeedNetworks/seed/internal/discovery"
@@ -24,11 +23,9 @@ import (
 	"github.com/MustardSeedNetworks/seed/internal/discovery/vuln"
 	"github.com/MustardSeedNetworks/seed/internal/license"
 	"github.com/MustardSeedNetworks/seed/internal/logging"
-	"github.com/MustardSeedNetworks/seed/internal/mibdb"
 	"github.com/MustardSeedNetworks/seed/internal/platform/events"
 	"github.com/MustardSeedNetworks/seed/internal/platform/jobs"
 	"github.com/MustardSeedNetworks/seed/internal/platform/outbox"
-	snmporchestrator "github.com/MustardSeedNetworks/seed/internal/polling/snmp/orchestrator"
 	"github.com/MustardSeedNetworks/seed/internal/timeseries/retention"
 )
 
@@ -81,14 +78,15 @@ func (s *Server) collectEnabledSubnets(cfg *config.Config) []string {
 	return enabledCIDRs
 }
 
-// initDatabaseServices configures database-backed services if db is available.
-func (s *Server) initDatabaseServices(cfg *config.Config, db *database.DB) {
-	if db == nil {
+// initDatabaseServices configures database-backed services if a database is
+// wired.
+func (s *Server) initDatabaseServices(cfg *config.Config) {
+	if s.dbConn == nil {
 		return
 	}
 
 	// Set up database-backed user store for authentication
-	userStore := database.NewUserStoreAdapter(db)
+	userStore := app.NewAuthUserStore(s.dbConn)
 	s.authManager().SetUserStore(userStore)
 
 	// Migrate admin user from config to database if needed
@@ -107,9 +105,9 @@ func (s *Server) initDatabaseServices(cfg *config.Config, db *database.DB) {
 	}
 
 	// Initialize MIB database for SNMP OID resolution
-	s.initMibDatabase(db)
+	s.initMibDatabase()
 
-	// Start the background maintenance loop (fixes #848). db is non-nil here
+	// Start the background maintenance loop (fixes #848). s.dbConn is non-nil here
 	// (the function returns early otherwise), so it always runs: it sweeps jobs
 	// retention every tick (the runner map + jobs table always grow) and applies
 	// the data-retention policy when a positive window is configured.
@@ -121,32 +119,28 @@ func (s *Server) initDatabaseServices(cfg *config.Config, db *database.DB) {
 // live database connection. Called from NewServer after s.dbConn
 // is populated. Splits into per-concern helpers to keep each scope
 // focused and to keep NewServer under the funlen limit.
-func (s *Server) initDatabaseDependentServices(db *database.DB) {
+func (s *Server) initDatabaseDependentServices() {
+	db := s.dbConn
 	if db == nil {
 		// Tests construct a Server without a DB; skip the
 		// database-dependent wiring entirely rather than crash.
 		return
 	}
+	engines := app.NewEnginePersistence(db)
 	s.initLicenseAndAPITokens(db)
-	s.initAnomalyPlatform(db.Anomalies())
+	s.initAnomalyPlatform(engines.Anomalies)
 	s.initProbeEngine(db)
-	s.initRetentionEngine(db)
-	s.initTelemetry(db.Metrics())
+	s.initRetentionEngine(engines.Rollups)
+	s.initTelemetry(engines.Telemetry)
 	s.initListeners(app.NewListenerPersistence(db))
 	s.initTopologyReconcilers(db)
 	s.initAlertPipelines(db)
-	s.initSNMPPoller(snmporchestrator.Config{
-		Targets:      db.PollingTargets(),
-		Observations: db.SNMPObservations(),
-		Rates:        db.Metrics(),
-		Credentials:  db.DeviceCredentials(),
-	})
+	s.initSNMPPoller(engines.SNMPPoller)
 }
 
 // initMibDatabase initializes the MIB database and loads built-in OID definitions.
-func (s *Server) initMibDatabase(db *database.DB) {
-	// Create MIB database interface using the underlying SQL connection
-	mibDB := mibdb.New(db.WriteConn())
+func (s *Server) initMibDatabase() {
+	mibDB := app.NewMIBDatabase(s.dbConn)
 	s.mibDB = mibDB
 
 	// Load built-in OID definitions (918+ standard OIDs from RFC MIBs)
@@ -167,7 +161,8 @@ func (s *Server) initMibDatabase(db *database.DB) {
 }
 
 // initSSEAndLogging initializes the SSE hub and log broadcaster.
-func (s *Server) initSSEAndLogging(db *database.DB) {
+func (s *Server) initSSEAndLogging() {
+	db := s.dbConn
 	// Initialize SSE hub for real-time updates
 	s.sse = NewSSEHub()
 	go s.sseHub().Run()
@@ -273,7 +268,7 @@ func (s *Server) initDiscovery(cfg *config.Config) {
 }
 
 // initVulnerabilityScanner initializes the vulnerability scanner if enabled.
-func (s *Server) initVulnerabilityScanner(cfg *config.Config, db *database.DB) {
+func (s *Server) initVulnerabilityScanner(cfg *config.Config) {
 	if !cfg.Security.VulnerabilityScanning.Enabled {
 		return
 	}
@@ -292,8 +287,8 @@ func (s *Server) initVulnerabilityScanner(cfg *config.Config, db *database.DB) {
 		logging.GetLogger().Warn("Failed to initialize vulnerability scanner", "error", err)
 		return
 	}
-	if db != nil {
-		vulnScanner.SetStore(app.NewVulnStore(db))
+	if s.dbConn != nil {
+		vulnScanner.SetStore(app.NewVulnStore(s.dbConn))
 	}
 	s.vulnScan = vulnScanner
 	logging.GetLogger().Info("Vulnerability scanner initialized",
@@ -396,35 +391,13 @@ func (s *Server) logWildcardOriginWarning(cfg *config.Config) {
 	)
 }
 
-// clientIDLister adapts database.ClientRepository to discovery.ClientLister:
-// discovery needs the deployment's client ids to decide whose credentials it
-// may use, and nothing more of a client record than that.
-type clientIDLister struct {
-	repo *database.ClientRepository
-}
-
-func (l clientIDLister) ListClientIDs(ctx context.Context) ([]string, error) {
-	clients, err := l.repo.List(ctx)
-	if err != nil {
-		return nil, err
-	}
-	ids := make([]string, 0, len(clients))
-	for _, c := range clients {
-		ids = append(ids, c.ID)
-	}
-	return ids, nil
-}
-
 // newDiscoverySNMPCredentials builds discovery's vault-backed credential
 // source (#2118). It returns nil — and discovery then probes no SNMP at all —
 // when there is no database or no keyring to decrypt with, because the only
 // other way to answer an SNMP probe would be the plaintext file-config
 // communities #1799 removed.
-func newDiscoverySNMPCredentials(
-	cfg *config.Config,
-	db *database.DB,
-) discovery.SNMPCredentialProvider {
-	if cfg == nil || db == nil {
+func (s *Server) newDiscoverySNMPCredentials(cfg *config.Config) discovery.SNMPCredentialProvider {
+	if cfg == nil || s.dbConn == nil {
 		logging.GetLogger().Warn("SNMP discovery disabled: no credential vault available")
 		return nil
 	}
@@ -433,9 +406,7 @@ func newDiscoverySNMPCredentials(
 		logging.GetLogger().Warn("SNMP discovery disabled: no credential keyring", "error", err)
 		return nil
 	}
-	creds, err := discovery.NewVaultSNMPCredentials(
-		clientIDLister{repo: db.Clients()}, db.DeviceCredentials(), keyring, &cfg.SNMP,
-	)
+	creds, err := app.NewDiscoverySNMPCredentials(s.dbConn, keyring, &cfg.SNMP)
 	if err != nil {
 		logging.GetLogger().Warn("SNMP discovery disabled", "error", err)
 		return nil
@@ -444,19 +415,19 @@ func newDiscoverySNMPCredentials(
 }
 
 // initRetentionEngine constructs the unified retention engine and
-// registers its sources (probe_results, metrics, flow_records). The engine is
+// registers its rollup sources. The engine is
 // tier-aware — it reads license.Manager on each pass — so in-place
 // license upgrades take effect on the next tick.
 //
 // V1.0 NMS expansion — Stage A2.
-func (s *Server) initRetentionEngine(db *database.DB) {
+func (s *Server) initRetentionEngine(sources []retention.RollupSource) {
 	retentionEngine := retention.New(
 		licenseTierAdapter{lm: s.licenseMgr},
 		logging.GetLogger(),
 	)
-	retentionEngine.Register(database.NewProbeRollupSource(db))
-	retentionEngine.Register(database.NewMetricsRollupSource(db))
-	retentionEngine.Register(database.NewFlowRollupSource(db))
+	for _, src := range sources {
+		retentionEngine.Register(src)
+	}
 	s.retentionEngine = retentionEngine
 	if regErr := s.registerEngineIfLicensed(retentionEngine); regErr != nil {
 		logging.GetLogger().Warn("retention engine registry registration failed", "error", regErr)

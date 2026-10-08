@@ -64,7 +64,7 @@ fi
 # one sanctioned consumer is mibdb, which takes the write handle by name.
 RAW_HANDLE=$(grep -rEn '\.WriteConn\(\)' --include='*.go' internal cmd 2>/dev/null \
   | grep -v '^internal/database/' \
-  | grep -v 'internal/api/server_init.go' || true)
+  | grep -v 'internal/app/mibdb.go' || true)
 if [ -n "$RAW_HANDLE" ]; then
   echo "============================================================"
   echo "[single-writer] raw write handle taken outside the sanctioned sites:"

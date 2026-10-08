@@ -28,8 +28,9 @@ func TestTelemetry_DaemonRecordsAndRollsUp(t *testing.T) {
 		gatewayTest: gw,
 		// localhost resolves from the hosts file, so the lookup needs no network.
 		dnsTest: dns.NewTester("", "localhost", dns.DefaultThresholds()),
+		dbConn:  db,
 	}
-	s.initDatabaseDependentServices(db)
+	s.initDatabaseDependentServices()
 
 	ctx := t.Context()
 	if err := s.engines.Start(ctx); err != nil {

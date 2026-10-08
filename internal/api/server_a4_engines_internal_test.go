@@ -76,8 +76,8 @@ func TestInitDatabaseDependentServices_GatesByFreeLicense(t *testing.T) {
 	// real ~/.config/seed: this assertion used to depend on whether the machine
 	// running it happened to have a licence activated, and was green in CI only
 	// because runners start clean (#2155).
-	s := &Server{engines: engine.NewRegistry(nil), licenseDir: t.TempDir()}
-	s.initDatabaseDependentServices(newTestDB(t))
+	s := &Server{engines: engine.NewRegistry(nil), licenseDir: t.TempDir(), dbConn: newTestDB(t)}
+	s.initDatabaseDependentServices()
 
 	names := make(map[string]bool)
 	for _, e := range s.engines.Engines() {
@@ -119,8 +119,8 @@ func TestInitDatabaseDependentServices_HonoursLicenseDir(t *testing.T) {
 	realLicense := realLicensePath()
 	existedBefore := realLicense != "" && fileExists(realLicense)
 
-	s := &Server{engines: engine.NewRegistry(nil), licenseDir: dir}
-	s.initDatabaseDependentServices(newTestDB(t))
+	s := &Server{engines: engine.NewRegistry(nil), licenseDir: dir, dbConn: newTestDB(t)}
+	s.initDatabaseDependentServices()
 
 	names := make(map[string]bool)
 	for _, e := range s.engines.Engines() {

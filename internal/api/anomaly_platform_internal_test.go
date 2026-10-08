@@ -27,8 +27,8 @@ func TestInitDatabaseDependentServices_RestoresPersistedAnomalies(t *testing.T) 
 		t.Fatalf("Observe: %v", obsErr)
 	}
 
-	s := &Server{engines: engine.NewRegistry(nil), licenseDir: t.TempDir()}
-	s.initDatabaseDependentServices(db)
+	s := &Server{engines: engine.NewRegistry(nil), licenseDir: t.TempDir(), dbConn: db}
+	s.initDatabaseDependentServices()
 
 	if s.anomalyCoord == nil {
 		t.Fatal("anomaly coordinator not built")

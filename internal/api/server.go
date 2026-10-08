@@ -337,9 +337,9 @@ func NewServer(
 
 	// Discovery and the trap listener read SNMP credentials from the vault;
 	// the listener is built in initDatabaseDependentServices.
-	s.snmpCreds = newDiscoverySNMPCredentials(cfg, db)
+	s.snmpCreds = s.newDiscoverySNMPCredentials(cfg)
 
-	s.initDatabaseDependentServices(db)
+	s.initDatabaseDependentServices()
 
 	// Security fix #891: Record setup mode start time
 	if auth.IsDefaultPasswordHash(cfg.Auth.DefaultPasswordHash) {
@@ -356,10 +356,10 @@ func NewServer(
 	s.initOAuthManager()
 
 	// Configure database-backed services if db was passed in
-	s.initDatabaseServices(cfg, db)
+	s.initDatabaseServices(cfg)
 
 	// Initialize SSE hub and log broadcaster
-	s.initSSEAndLogging(db)
+	s.initSSEAndLogging()
 
 	// Initialize discovery service and pipeline
 	s.initDiscovery(cfg)
@@ -384,7 +384,7 @@ func NewServer(
 	s.initSettingsUseCases()
 
 	// Initialize vulnerability scanner if enabled
-	s.initVulnerabilityScanner(cfg, db)
+	s.initVulnerabilityScanner(cfg)
 
 	// Configure security: allowed origins for CORS
 	s.initSecurityOrigins(cfg)

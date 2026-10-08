@@ -34,8 +34,8 @@ func (r *reportingEngine) Status() engine.Status       { return r.status }
 func TestHandleEngines_ReturnsRegistryContents(t *testing.T) {
 	// licenseDir keeps activation state out of the developer's real config
 	// directory; see #2155.
-	s := &Server{engines: engine.NewRegistry(nil), licenseDir: t.TempDir()}
-	s.initDatabaseDependentServices(newTestDB(t))
+	s := &Server{engines: engine.NewRegistry(nil), licenseDir: t.TempDir(), dbConn: newTestDB(t)}
+	s.initDatabaseDependentServices()
 	s.initEngineUseCases()
 
 	req := httptest.NewRequest(http.MethodGet, APIVersionPrefix+"/engines", http.NoBody)

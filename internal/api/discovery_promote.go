@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 
+	"github.com/MustardSeedNetworks/seed/internal/app"
 	"github.com/MustardSeedNetworks/seed/internal/discovery"
 	"github.com/MustardSeedNetworks/seed/internal/discovery/promote"
 	"github.com/MustardSeedNetworks/seed/internal/logging"
@@ -35,7 +36,7 @@ func (s *Server) promoteDiscoveredDevices(
 
 	logger := logging.FromContext(ctx)
 
-	clientID, err := discovery.SingleClientID(ctx, clientIDLister{repo: s.db().Clients()})
+	clientID, err := discovery.SingleClientID(ctx, app.NewClientIDLister(s.db()))
 	if err != nil {
 		logger.WarnContext(ctx, "Discovered devices not promoted to polling targets",
 			"error", err)
