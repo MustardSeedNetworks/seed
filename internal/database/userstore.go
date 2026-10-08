@@ -82,17 +82,3 @@ func (a *UserStoreAdapter) MigrateUserFromConfig(
 ) error {
 	return a.db.MigrateUserFromConfig(ctx, username, passwordHash)
 }
-
-// CreateUser creates a new user in the database.
-func (a *UserStoreAdapter) CreateUser(
-	ctx context.Context,
-	username, passwordHash, role string,
-) error {
-	_, err := a.db.CreateUser(ctx, username, passwordHash, role)
-	return err
-}
-
-// GetUserCount returns the number of users in the database.
-func (a *UserStoreAdapter) GetUserCount(ctx context.Context) (int, error) {
-	return a.db.GetUserCount(ctx)
-}
