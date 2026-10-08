@@ -19,12 +19,12 @@ func TestInitDatabaseDependentServices_RestoresPersistedAnomalies(t *testing.T) 
 		t.Fatalf("NewCatalog: %v", err)
 	}
 	earlier := anomaly.NewCoordinator(anomaly.NewEngine(cat), db.Anomalies())
-	if err := earlier.Observe(context.Background(), anomaly.Detection{
+	if obsErr := earlier.Observe(context.Background(), anomaly.Detection{
 		DefKey:  wifianomaly.DefOpenNetwork,
 		Subject: anomaly.SubjectRef{Kind: anomaly.SubjectBSSID, ID: "aa:bb:cc:dd:ee:ff"},
 		Source:  anomaly.SourceWiFi,
-	}, time.Now()); err != nil {
-		t.Fatalf("Observe: %v", err)
+	}, time.Now()); obsErr != nil {
+		t.Fatalf("Observe: %v", obsErr)
 	}
 
 	s := &Server{engines: engine.NewRegistry(nil), licenseDir: t.TempDir()}

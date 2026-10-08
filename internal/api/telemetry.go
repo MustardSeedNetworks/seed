@@ -4,7 +4,6 @@ import (
 	"context"
 	"time"
 
-	"github.com/MustardSeedNetworks/seed/internal/database"
 	"github.com/MustardSeedNetworks/seed/internal/diagnostics/dns"
 	"github.com/MustardSeedNetworks/seed/internal/diagnostics/gateway"
 	"github.com/MustardSeedNetworks/seed/internal/logging"
@@ -17,9 +16,9 @@ import (
 const telemetryDNSTimeout = 10 * time.Second
 
 // initTelemetry registers the engine that records link, gateway and DNS
-// health into metrics every [telemetry.Interval].
-func (s *Server) initTelemetry(db *database.DB) {
-	eng := telemetry.New(serverSampler{s: s}, db.Metrics(), telemetry.Interval, logging.GetLogger())
+// health into store every [telemetry.Interval].
+func (s *Server) initTelemetry(store telemetry.Store) {
+	eng := telemetry.New(serverSampler{s: s}, store, telemetry.Interval, logging.GetLogger())
 	if err := s.registerEngineIfLicensed(eng); err != nil {
 		logging.GetLogger().Warn("telemetry engine registry registration failed", "error", err)
 	}

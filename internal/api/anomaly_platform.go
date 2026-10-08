@@ -9,7 +9,6 @@ import (
 	"context"
 
 	"github.com/MustardSeedNetworks/seed/internal/anomaly"
-	"github.com/MustardSeedNetworks/seed/internal/database"
 	"github.com/MustardSeedNetworks/seed/internal/logging"
 	probeanomaly "github.com/MustardSeedNetworks/seed/internal/probe/anomaly"
 	wifianomaly "github.com/MustardSeedNetworks/seed/internal/wifi/anomaly"
@@ -30,7 +29,7 @@ import (
 // Load-on-start is performed here, once, before any producer observes (ADR-0029
 // §5): the merged engine holds every def, so Restore no longer silently drops one
 // producer's persisted rows as orphans. The producers therefore do not load.
-func (s *Server) initAnomalyPlatform(db *database.DB) {
+func (s *Server) initAnomalyPlatform(store anomaly.Store) {
 	defs := append(append([]anomaly.Def{}, wifianomaly.Defs()...), probeanomaly.Defs()...)
 	cat, err := anomaly.NewCatalog(defs...)
 	if err != nil {
@@ -38,7 +37,7 @@ func (s *Server) initAnomalyPlatform(db *database.DB) {
 		return
 	}
 
-	coord := anomaly.NewCoordinator(anomaly.NewEngine(cat), db.Anomalies())
+	coord := anomaly.NewCoordinator(anomaly.NewEngine(cat), store)
 	s.anomalyCoord = coord
 
 	// Inject the shared Coordinator into the Wi-Fi visibility producer, which the

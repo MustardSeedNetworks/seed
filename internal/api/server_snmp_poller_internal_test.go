@@ -5,6 +5,7 @@ import (
 
 	"github.com/MustardSeedNetworks/seed/internal/config"
 	"github.com/MustardSeedNetworks/seed/internal/engine"
+	snmporchestrator "github.com/MustardSeedNetworks/seed/internal/polling/snmp/orchestrator"
 )
 
 func TestInitSNMPPoller_RegistersOnPro(t *testing.T) {
@@ -17,7 +18,13 @@ func TestInitSNMPPoller_RegistersOnPro(t *testing.T) {
 	// keyring at all, and the poller declines to register rather than come up
 	// unable to authenticate to anything.
 	s := &Server{engines: engine.NewRegistry(nil), config: &config.Config{}}
-	s.initSNMPPoller(newTestDB(t))
+	db := newTestDB(t)
+	s.initSNMPPoller(snmporchestrator.Config{
+		Targets:      db.PollingTargets(),
+		Observations: db.SNMPObservations(),
+		Rates:        db.Metrics(),
+		Credentials:  db.DeviceCredentials(),
+	})
 
 	names := make(map[string]bool)
 	for _, e := range s.engines.Engines() {

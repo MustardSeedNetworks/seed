@@ -1,6 +1,6 @@
 # Files over the size limit, with the maximum they may not grow past.
 # Seeded by ci/file-size-one-tier; shrink-only. One line: <path> <lines>
-internal/api/server.go 973
+internal/api/server.go 952
 internal/api/server_routes.go 944
 internal/auth/auth_test.go 1489
 internal/config/config_test.go 1386
