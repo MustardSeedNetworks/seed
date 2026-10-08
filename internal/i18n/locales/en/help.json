@@ -781,6 +781,9 @@
       "ReportsCard": {
         "description": "Generate, download or remove reports according to your role. Review their data window before sharing them."
       },
+      "ScheduledReportsCard": {
+        "description": "Generate a report daily, weekly or monthly at a set time in a chosen time zone (Pro). Each run is listed in the reports card. An operator role is required to create, edit or delete a schedule."
+      },
       "SystemHealthCard": {
         "description": "Inspect the Seed process and host resource measurements while investigating slow or failed tests."
       },

@@ -84,7 +84,17 @@ export const reportingSections: HelpSection[] = [
     id: 'reports',
     titleKey: 'sections.reports',
     icon: <BarChart3 className={ICON} />,
-    keywords: ['reports', 'sla', 'compliance', 'history', 'export', 'csv', 'json', 'pdf'],
+    keywords: [
+      'reports',
+      'sla',
+      'compliance',
+      'history',
+      'export',
+      'csv',
+      'json',
+      'pdf',
+      'schedule',
+    ],
     blocks: [
       {
         kind: 'paragraph',
@@ -119,6 +129,10 @@ export const reportingSections: HelpSection[] = [
           {
             term: 'cards:reports.title',
             description: 'content.cardHelp.ReportsCard.description',
+          },
+          {
+            term: 'cards:reportSchedules.title',
+            description: 'content.cardHelp.ScheduledReportsCard.description',
           },
         ],
       },

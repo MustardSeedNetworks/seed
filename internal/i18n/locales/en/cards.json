@@ -599,6 +599,44 @@
     "download": "Download",
     "delete": "Delete"
   },
+  "reportSchedules": {
+    "title": "Scheduled reports",
+    "description": "Generate a report on a schedule. Each run appears under Reports.",
+    "new": "New schedule",
+    "empty": "No schedules yet.",
+    "name": "Name",
+    "template": "Report",
+    "format": "Format",
+    "frequency": "Repeats",
+    "dayOfWeek": "Day",
+    "dayOfMonth": "Day of month",
+    "time": "Time",
+    "timezone": "Time zone",
+    "enabled": "Enabled",
+    "save": "Save",
+    "cancel": "Cancel",
+    "edit": "Edit",
+    "delete": "Delete",
+    "when": "When",
+    "nextRun": "Next run",
+    "paused": "Paused",
+    "templates": {
+      "executive": "Executive summary",
+      "vulnerability": "Vulnerability report",
+      "inventory": "Device inventory",
+      "performance": "Performance report"
+    },
+    "frequencies": {
+      "daily": "Daily",
+      "weekly": "Weekly",
+      "monthly": "Monthly"
+    },
+    "cadence": {
+      "daily": "Daily at {{time}} ({{zone}})",
+      "weekly": "{{day}} at {{time}} ({{zone}})",
+      "monthly": "Day {{day}} at {{time}} ({{zone}})"
+    }
+  },
   "neighbours": {
     "title": "Neighbour Cache",
     "description": "What this device currently sees on its own link. Not the ARP table a remote switch reports.",

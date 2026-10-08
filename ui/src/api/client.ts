@@ -289,6 +289,22 @@ function errorEnvelope(body: unknown): Partial<ErrorResponse> {
 }
 
 /**
+ * Parses a successful response. A 204 has no body, and the server answers
+ * every successful DELETE that way (users, tokens, reports, schedules), so
+ * parsing it threw "Unexpected end of JSON input" after the delete had
+ * already happened and the caller reported a failure.
+ *
+ * T is the caller's claim about the body; a 204 has none, so its callers
+ * type the call `void` or ignore the result.
+ */
+function responseBody<T>(response: Response): Promise<T> {
+  if (response.status === 204) {
+    return Promise.resolve(undefined as T);
+  }
+  return response.json() as Promise<T>;
+}
+
+/**
  * Builds the error for a non-2xx response.
  *
  * The server's own message is carried through. Callers that used a raw fetch
@@ -338,7 +354,7 @@ async function handleResponse<T>(
       // Token refreshed successfully, retry original request
       const retryResponse = await retryRequest();
       if (retryResponse.ok) {
-        return retryResponse.json();
+        return responseBody<T>(retryResponse);
       }
       // The retry reached the server under a live access token, so anything
       // other than a second 401 is an ordinary request error and must surface
@@ -374,8 +390,7 @@ async function handleResponse<T>(
     throw await requestError(response);
   }
 
-  // Parse and return JSON response
-  return response.json();
+  return responseBody<T>(response);
 }
 
 /**
