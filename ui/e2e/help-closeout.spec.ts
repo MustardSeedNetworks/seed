@@ -103,7 +103,7 @@ for (const width of [1440, 390]) {
   }
 }
 
-test('all 25 Spanish sections render and remain selectable at 390px', async ({ page }) => {
+test('every Spanish section renders and remains selectable at 390px', async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   await page.addInitScript(() => localStorage.setItem('language', 'es'));
   await page.goto('/network');
@@ -197,6 +197,7 @@ for (const route of [
   '/polling-targets',
   '/topology',
   '/interfaces',
+  '/flows',
   '/alerts',
 ]) {
   test(`accessible help and tooltip surfaces on ${route}`, async ({ page }) => {

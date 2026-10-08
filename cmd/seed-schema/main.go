@@ -245,6 +245,12 @@ func schemaTargets() []schemaTarget {
 		{&api.InterfaceStatsListResponse{}, "interface-stats-list-response.schema.json"},
 		{&api.InterfaceHistoryResponse{}, "interface-history-response.schema.json"},
 
+		// Top-N reads over collected flows (P-C3, P-C4), consumed by the flow
+		// explorer (UI-SEED-23).
+		{&api.FlowTalkersResponse{}, "flow-talkers-response.schema.json"},
+		{&api.FlowConversationsResponse{}, "flow-conversations-response.schema.json"},
+		{&api.FlowApplicationsResponse{}, "flow-applications-response.schema.json"},
+
 		// #364's Bonjour browse. Registered as the bonjour package's own type
 		// rather than an api mirror of it: a mirror is one more thing to drift
 		// and the handler serves this struct verbatim.

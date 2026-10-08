@@ -32,7 +32,8 @@
     "alerts": "Alerts",
     "pollingTargets": "Polling Targets",
     "topology": "Topology",
-    "interfaces": "Interfaces"
+    "interfaces": "Interfaces",
+    "flows": "Flows"
   },
   "content": {
     "about": {
@@ -798,6 +799,23 @@
       },
       "DscpCheckCard": {
         "description": "Check that the network keeps the DSCP marking of each class: EF, AF41, AF31, AF21, AF11 and best effort, five probes each. Across two hosts, start Listen on the receiving Seed, then Send on the other; the listener shows each class as kept, changed or lost. On one host, send out of one interface, such as Wi-Fi, and read the probes back on the other. Pro feature; running a check needs the operator role."
+      }
+    },
+    "flows": {
+      "description": "See which hosts, host pairs and applications carried the most traffic over a window. Seed builds these lists from the NetFlow, IPFIX and sFlow records that routers and switches export to it. The collector is a Pro feature and listens on the address in SEED_FLOW_BIND.",
+      "terms": {
+        "talker": {
+          "term": "Talker",
+          "description": "A host, counted for the traffic it sent and received."
+        },
+        "conversation": {
+          "term": "Conversation",
+          "description": "Traffic between two hosts over one protocol, both directions together."
+        },
+        "application": {
+          "term": "Application",
+          "description": "A name Seed gives a flow from its protocol and port. Traffic with no match is listed as Unidentified."
+        }
       }
     }
   },

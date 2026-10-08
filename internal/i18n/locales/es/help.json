@@ -32,7 +32,8 @@
     "alerts": "Alertas",
     "pollingTargets": "Objetivos de sondeo",
     "topology": "Topología",
-    "interfaces": "Interfaces"
+    "interfaces": "Interfaces",
+    "flows": "Flujos"
   },
   "content": {
     "about": {
@@ -798,6 +799,23 @@
       },
       "DscpCheckCard": {
         "description": "Comprueba que la red conserva la marca DSCP de cada clase: EF, AF41, AF31, AF21, AF11 y best effort, cinco sondas de cada una. Entre dos equipos, inicie Escuchar en el Seed receptor y después Enviar en el otro; el receptor muestra cada clase como conservada, cambiada o perdida. En un solo equipo, envíe por una interfaz, como la Wi-Fi, y lea las sondas de vuelta en la otra. Función Pro; ejecutar una comprobación requiere el rol de operador."
+      }
+    },
+    "flows": {
+      "description": "Vea qué hosts, pares de hosts y aplicaciones llevaron más tráfico en un periodo. Seed crea estas listas a partir de los registros NetFlow, IPFIX y sFlow que le exportan routers y switches. El colector es una función Pro y escucha en la dirección de SEED_FLOW_BIND.",
+      "terms": {
+        "talker": {
+          "term": "Host con tráfico",
+          "description": "Un host, contado por el tráfico que envió y recibió."
+        },
+        "conversation": {
+          "term": "Conversación",
+          "description": "Tráfico entre dos hosts sobre un protocolo, en ambos sentidos."
+        },
+        "application": {
+          "term": "Aplicación",
+          "description": "Un nombre que Seed asigna a un flujo según su protocolo y puerto. El tráfico sin coincidencia aparece como Sin identificar."
+        }
       }
     }
   },
