@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.239.0](https://github.com/MustardSeedNetworks/seed/compare/v0.238.0...v0.239.0) (2026-10-08)
+
+
+### Features
+
+* **ui:** configure the alert email relay in settings ([#3211](https://github.com/MustardSeedNetworks/seed/issues/3211)) ([0402c0e](https://github.com/MustardSeedNetworks/seed/commit/0402c0e8ed154bd7efbc6e899163c8c1a6ae43a3))
+
+
+### Code Refactoring
+
+* **api:** move the log, device and vuln persistence writers to internal/app ([#3212](https://github.com/MustardSeedNetworks/seed/issues/3212)) ([f828573](https://github.com/MustardSeedNetworks/seed/commit/f8285738790b63eee8823ca531d341cd1598c474))
+
 ## [0.238.0](https://github.com/MustardSeedNetworks/seed/compare/v0.237.0...v0.238.0) (2026-10-08)
 
 
