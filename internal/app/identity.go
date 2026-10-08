@@ -143,6 +143,6 @@ type dbSSOAdapter struct {
 
 func (a dbSSOAdapter) Available() bool { return a.db() != nil }
 
-func (a dbSSOAdapter) SyncUser(ctx context.Context, in database.SSOUserInput) (*users.User, error) {
+func (a dbSSOAdapter) SyncUser(ctx context.Context, in ssosync.Identity) (*users.User, error) {
 	return a.db().UpsertSSOUser(ctx, in)
 }

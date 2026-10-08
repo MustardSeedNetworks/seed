@@ -1,8 +1,8 @@
 # ADR-0024: Identity decomposition — users / oauth / tokens use-cases over repository ports
 
 **Status:** Accepted — 2026-06-10; amended 2026-10-08 (users entity moves into
-`internal/identity/users`, then the token record into `internal/identity/tokens`;
-see "Amendment" below) · applies ADR-0020 to the
+`internal/identity/users`, then the token record into `internal/identity/tokens`
+and the SSO sync input into `internal/identity/oauth`; see "Amendment" below) · applies ADR-0020 to the
 identity surface (C4, the final `internal/api` strangle slice before the
 `ServiceContainer` deletion)
 
@@ -154,8 +154,14 @@ longer holds `*database.APITokenRepository`: the `tokens.Store` port gained
 `tokens.Service.Resolve`, which stamps a matched token as used and logs a failed
 stamp without refusing the token, as `resolveAPIToken` did. That function is
 deleted. The "PAT authN middleware keeps its direct repository" sentence above
-is superseded. `oauth` (`SSOUserInput`) keeps the exception until its own
-D-SEED-30 slice.
+is superseded.
+
+The SSO sync input followed last: `database.SSOUserInput` is now
+`ssosync.Identity` in `internal/identity/oauth`, so the `Repository` port names
+no database type and `internal/api/oauth.go` no longer imports the database. The
+fields and `UpsertSSOUser`'s behaviour are unchanged. With that, identity is no
+longer an exception to WS-B: `.golangci.yml` carries an `identity-no-persistence`
+rule over every identity package, like the other domain packages.
 
 ## Implementation phasing
 

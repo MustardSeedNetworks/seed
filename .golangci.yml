@@ -442,13 +442,19 @@ linters:
           deny:
             - pkg: github.com/MustardSeedNetworks/seed/internal/database
               desc: "health is persistence-free — probemap maps to the probe.Probe domain type; the probe repository (internal/database) is wired in internal/app (healthProbeStore); never import internal/database from internal/health"
-        # WS-B repository-port discipline — identity/oauth is the remaining
-        # intentional exception (ADR-0024): its port stays typed on
-        # database.SSOUserInput, so it imports internal/database until its
-        # seed#2750 slice. identity/users owns the User entity and
-        # identity/tokens the token Record since the 2026-10-08 amendments; the
-        # database imports both, so the reverse import is an import cycle and
-        # needs no rule here.
+        # WS-B repository-port discipline: identity owns its entities and port
+        # inputs (users.User, tokens.Record, ssosync.Identity) since the
+        # 2026-10-08 ADR-0024 amendments, and the database imports them. users
+        # and tokens are already held by the import cycle; identity/oauth's
+        # port has no database type left, so this rule keeps a future one out
+        # of every identity package. Production-only.
+        "identity-no-persistence":
+          files:
+            - "**/internal/identity/**"
+            - "!$test"
+          deny:
+            - pkg: github.com/MustardSeedNetworks/seed/internal/database
+              desc: "identity is persistence-free — its entities and port inputs live in internal/identity; the database implements the ports over them; wire it in internal/app"
         # Phase 6 capture port: libpcap (via gopacket/pcap) carries the CGO
         # taint that re-links libpcap into every dependent test binary. It is
         # confined to the single adapter package internal/capture/pcap; every
