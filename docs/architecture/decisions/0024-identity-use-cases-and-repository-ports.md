@@ -2,7 +2,8 @@
 
 **Status:** Accepted — 2026-06-10; amended 2026-10-08 (users entity moves into
 `internal/identity/users`, then the token record into `internal/identity/tokens`
-and the SSO sync input into `internal/identity/oauth`; see "Amendment" below) · applies ADR-0020 to the
+the SSO sync input into `internal/identity/oauth`, and the WebAuthn credential
+into `internal/identity/mfa`; see "Amendment" below) · applies ADR-0020 to the
 identity surface (C4, the final `internal/api` strangle slice before the
 `ServiceContainer` deletion)
 
@@ -162,6 +163,11 @@ no database type and `internal/api/oauth.go` no longer imports the database. The
 fields and `UpsertSSOUser`'s behaviour are unchanged. With that, identity is no
 longer an exception to WS-B: `.golangci.yml` carries an `identity-no-persistence`
 rule over every identity package, like the other domain packages.
+
+The WebAuthn credential followed: `database.WebAuthnCredential` and
+`ErrCredentialNotFound` now live in `internal/identity/mfa`, so the passkey
+registration handler builds the credential without importing the database.
+`DeleteWebAuthnCredential`, which had no caller, was deleted.
 
 ## Implementation phasing
 

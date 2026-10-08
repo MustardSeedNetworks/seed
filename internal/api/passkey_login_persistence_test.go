@@ -10,7 +10,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/MustardSeedNetworks/seed/internal/api"
-	"github.com/MustardSeedNetworks/seed/internal/database"
+	"github.com/MustardSeedNetworks/seed/internal/identity/mfa"
 )
 
 func TestPasskeyLoginRequiresPersistedCounter(t *testing.T) {
@@ -42,7 +42,7 @@ func preparePasskeyPersistence(t *testing.T, fixture *mfaTestFixture, state stri
 	}
 	user, err := fixture.db.GetUser(t.Context(), "admin")
 	require.NoError(t, err)
-	_, err = fixture.db.AddWebAuthnCredential(t.Context(), user.ID, database.WebAuthnCredential{
+	_, err = fixture.db.AddWebAuthnCredential(t.Context(), user.ID, mfa.WebAuthnCredential{
 		CredentialID: id, PublicKey: []byte("public-key"),
 	})
 	require.NoError(t, err)

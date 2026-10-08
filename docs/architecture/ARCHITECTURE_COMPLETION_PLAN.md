@@ -111,8 +111,9 @@ The 7 bypass packages define consumer-side repo ports + receive concretes from
   exception (ADR-0024 kept the ports typed on `database` rows). seed#2750's target,
   `internal/app` as the database's only importer outside `cmd/seed`, reversed that:
   `User` moved to `internal/identity/users`, the token record to
-  `internal/identity/tokens`, and the SSO sync input to `ssosync.Identity` in
-  `internal/identity/oauth`, each recorded as an ADR-0024 amendment. No field
+  `internal/identity/tokens`, the SSO sync input to `ssosync.Identity` in
+  `internal/identity/oauth`, and the WebAuthn credential to
+  `internal/identity/mfa`, each recorded as an ADR-0024 amendment. No field
   changed. `identity-no-persistence` in `.golangci.yml` now holds the package like
   the others, so every domain package has a purity rule.
 

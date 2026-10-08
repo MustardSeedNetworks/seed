@@ -32,8 +32,8 @@ import (
 	"github.com/go-webauthn/webauthn/webauthn"
 
 	"github.com/MustardSeedNetworks/seed/internal/auth"
-	"github.com/MustardSeedNetworks/seed/internal/database"
 	"github.com/MustardSeedNetworks/seed/internal/i18n"
+	"github.com/MustardSeedNetworks/seed/internal/identity/mfa"
 	"github.com/MustardSeedNetworks/seed/internal/identity/users"
 	"github.com/MustardSeedNetworks/seed/internal/logging"
 )
@@ -660,7 +660,7 @@ func (s *Server) handleWebAuthnRegisterFinish(w http.ResponseWriter, r *http.Req
 			ErrCodeBadRequest, localizer.T("errors.mfa.registrationFailed"), "")
 		return
 	}
-	dbCred := database.WebAuthnCredential{
+	dbCred := mfa.WebAuthnCredential{
 		UserID:          dbUser.ID,
 		CredentialID:    cred.ID,
 		PublicKey:       cred.PublicKey,
