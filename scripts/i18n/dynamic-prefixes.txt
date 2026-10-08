@@ -59,6 +59,8 @@ cards:slaDashboard.
 cards:switch.
 cards:system.
 cards:vlan.
+cards:reportSchedules.frequencies.
+cards:reportSchedules.templates.
 
 # settings.* — Settings sections render via field-schema → label
 # lookups: t(`settings:${section}.${field}`).
