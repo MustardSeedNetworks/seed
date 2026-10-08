@@ -273,5 +273,11 @@
     "storeUnavailable": "Las estadísticas de interfaces no están disponibles: la base de datos no está abierta",
     "readFailed": "No se pudieron leer las estadísticas de interfaces",
     "invalidHistoryQuery": "Indique un destino de sondeo, un ifIndex y un intervalo de 1h, 24h o 7d"
+  },
+  "dashboard": {
+    "storeUnavailable": "Los paneles no están disponibles: la base de datos no está abierta",
+    "invalidLayout": "No se puede guardar esa disposición del panel",
+    "readFailed": "No se pudo leer su panel",
+    "saveFailed": "No se pudo guardar su panel"
   }
 }

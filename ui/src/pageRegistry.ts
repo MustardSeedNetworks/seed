@@ -16,6 +16,7 @@ import {
   BarChart3,
   Bell,
   EthernetPort,
+  LayoutDashboard,
   Network,
   Route,
   ScrollText,
@@ -27,6 +28,9 @@ import {
 import { type ComponentType, lazy } from 'react';
 import { useTranslation } from 'react-i18next';
 
+const DashboardPage = lazy(() =>
+  import('./pages/DashboardPage').then((m) => ({ default: m.DashboardPage })),
+);
 const LinkPage = lazy(() => import('./pages/LinkPage').then((m) => ({ default: m.LinkPage })));
 const NetworkPage = lazy(() =>
   import('./pages/NetworkPage').then((m) => ({ default: m.NetworkPage })),
@@ -94,6 +98,7 @@ export interface PageConfig {
  * new route forces a corresponding locale entry.
  */
 type PageI18nKey =
+  | 'dashboard'
   | 'link'
   | 'network'
   | 'path'
@@ -135,6 +140,15 @@ interface PageDef {
 }
 
 const staticPages: PageDef[] = [
+  {
+    path: '/dashboard',
+    group: 'liveTelemetry',
+    i18nKey: 'dashboard',
+    icon: LayoutDashboard,
+    iconColorClass: 'text-module-telemetry',
+    component: DashboardPage,
+    help: 'dashboard',
+  },
   {
     path: '/link',
     group: 'liveTelemetry',

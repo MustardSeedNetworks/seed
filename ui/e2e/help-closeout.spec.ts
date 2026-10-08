@@ -199,6 +199,7 @@ for (const route of [
   '/interfaces',
   '/flows',
   '/alerts',
+  '/dashboard',
 ]) {
   test(`accessible help and tooltip surfaces on ${route}`, async ({ page }) => {
     await page.goto(route);

@@ -1,0 +1,28 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/MustardSeedNetworks/seed/main/docs/schemas/api/dashboard-layout.schema.json",
+  "$ref": "#/$defs/DashboardLayout",
+  "$defs": {
+    "DashboardLayout": {
+      "properties": {
+        "widgets": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "saved": {
+          "type": "boolean"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "widgets",
+        "saved"
+      ]
+    }
+  },
+  "title": "DashboardLayout",
+  "description": "DashboardLayout — generated from the Go struct in internal/api; refresh with `make schema` after struct changes."
+}

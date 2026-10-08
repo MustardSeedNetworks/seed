@@ -88,6 +88,14 @@ func (a dbUsersAdapter) Delete(ctx context.Context, username string) error {
 	return a.db().DeleteUser(ctx, username)
 }
 
+func (a dbUsersAdapter) GetDashboard(ctx context.Context, username string) ([]string, bool, error) {
+	return a.db().GetUserDashboard(ctx, username)
+}
+
+func (a dbUsersAdapter) SetDashboard(ctx context.Context, username string, widgets []string) error {
+	return a.db().SetUserDashboard(ctx, username, widgets)
+}
+
 // ── tokens adapters ──────────────────────────────────────────────────────────
 
 // dbTokensAdapter implements tokens.Store over *database.APITokenRepository,

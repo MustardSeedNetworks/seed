@@ -31,10 +31,10 @@ const WIDTHS = [
   { name: 'comfortable', width: 768 },
 ];
 
-/** Every page in pageRegistry, plus the dashboard. A subset would only prove
- *  the subset. */
+/** Every page in pageRegistry, plus the landing route. A subset would only
+ *  prove the subset. */
 const PAGES = [
-  { name: 'dashboard', path: '/' },
+  { name: 'landing', path: '/' },
   { name: 'link', path: '/link' },
   { name: 'network', path: '/network' },
   { name: 'path', path: '/path' },
@@ -48,6 +48,7 @@ const PAGES = [
   { name: 'interfaces', path: '/interfaces' },
   { name: 'flows', path: '/flows' },
   { name: 'alerts', path: '/alerts' },
+  { name: 'dashboard', path: '/dashboard' },
 ];
 
 test.use({ storageState: AUTH_STORAGE_STATE });

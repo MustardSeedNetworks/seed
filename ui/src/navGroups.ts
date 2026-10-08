@@ -35,6 +35,7 @@ import {
   BarChart3,
   Bell,
   EthernetPort,
+  LayoutDashboard,
   Network,
   Route,
   ScrollText,
@@ -53,6 +54,12 @@ export function useNavGroups(): SidebarNavGroup[] {
     {
       label: t('groups.liveTelemetry'),
       items: [
+        {
+          path: '/dashboard',
+          label: t('dashboard.label'),
+          icon: LayoutDashboard,
+          accent: 'text-module-telemetry',
+        },
         { path: '/link', label: t('link.label'), icon: Network, accent: 'text-module-telemetry' },
         {
           path: '/network',

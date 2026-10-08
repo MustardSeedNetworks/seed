@@ -46,6 +46,7 @@ const ROUTES = [
   '/interfaces',
   '/flows',
   '/alerts',
+  '/dashboard',
 ];
 
 /**
