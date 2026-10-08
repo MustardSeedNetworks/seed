@@ -5,6 +5,37 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.240.0](https://github.com/MustardSeedNetworks/seed/compare/v0.239.0...v0.240.0) (2026-10-08)
+
+
+### Features
+
+* **multicast:** observe IGMP and MLD on a segment as a job ([#3220](https://github.com/MustardSeedNetworks/seed/issues/3220)) ([9cc8ba6](https://github.com/MustardSeedNetworks/seed/commit/9cc8ba603cadaa05cdd70cdd811f9ba204b54b80))
+* **path:** add multi-path and path MTU cards to the path page ([#3221](https://github.com/MustardSeedNetworks/seed/issues/3221)) ([2e14170](https://github.com/MustardSeedNetworks/seed/commit/2e14170c7b32349d139bdbf5538532c2c827206c))
+* **ui:** edit scheduled reports on the reports page ([#3216](https://github.com/MustardSeedNetworks/seed/issues/3216)) ([9c82f7e](https://github.com/MustardSeedNetworks/seed/commit/9c82f7ee1b9e27d75d5ec5d3db3dc728ccb2da5c))
+* **ui:** flow explorer for top talkers, conversations and applications ([#3203](https://github.com/MustardSeedNetworks/seed/issues/3203)) ([25818a7](https://github.com/MustardSeedNetworks/seed/commit/25818a735ad8cf65fd0b908aa5b93de18c8e1132))
+
+
+### Bug Fixes
+
+* **deps:** update module github.com/shirou/gopsutil/v4 to v4.26.9 ([#3217](https://github.com/MustardSeedNetworks/seed/issues/3217)) ([1b11584](https://github.com/MustardSeedNetworks/seed/commit/1b11584dea721b98d1f876fe9b685741dc9bae87))
+* **discovery:** keep a renumbered device's row and the rest of its flush ([#3215](https://github.com/MustardSeedNetworks/seed/issues/3215)) ([27a5893](https://github.com/MustardSeedNetworks/seed/commit/27a58931791c192b3756a67773e8c0936bc614ac)), closes [#3210](https://github.com/MustardSeedNetworks/seed/issues/3210)
+
+
+### Code Refactoring
+
+* **identity:** move the API token record into identity/tokens ([#3223](https://github.com/MustardSeedNetworks/seed/issues/3223)) ([50b37b7](https://github.com/MustardSeedNetworks/seed/commit/50b37b710213d382d0792de4017082fac157033c))
+* **identity:** move the SSO sync input into identity/oauth ([#3225](https://github.com/MustardSeedNetworks/seed/issues/3225)) ([7c1b2e3](https://github.com/MustardSeedNetworks/seed/commit/7c1b2e3fa3b3c5de476582aa18c6140212011889))
+* **identity:** move the user entity and its sentinels into identity/users ([#3219](https://github.com/MustardSeedNetworks/seed/issues/3219)) ([233431e](https://github.com/MustardSeedNetworks/seed/commit/233431e96c979e2a13ce513cfc182a3daa7f85a0))
+* **identity:** move the WebAuthn credential into identity/mfa ([#3227](https://github.com/MustardSeedNetworks/seed/issues/3227)) ([8f46534](https://github.com/MustardSeedNetworks/seed/commit/8f4653422f98d255f7b27469cb31e081d792aa96))
+* **identity:** route setup and recovery user writes through identityUsers ([#3229](https://github.com/MustardSeedNetworks/seed/issues/3229)) ([6ae122a](https://github.com/MustardSeedNetworks/seed/commit/6ae122a164e7a630d44f9652025531123a638ea1))
+
+
+### Miscellaneous
+
+* **deps:** lock file maintenance ([#3222](https://github.com/MustardSeedNetworks/seed/issues/3222)) ([798f658](https://github.com/MustardSeedNetworks/seed/commit/798f658e9907597146156ab304ff6745112a8d4e))
+* **deps:** update dependency @chromatic-com/storybook to v5.4.0 ([#3226](https://github.com/MustardSeedNetworks/seed/issues/3226)) ([153c1d5](https://github.com/MustardSeedNetworks/seed/commit/153c1d54ca7efd856953e312dd03d044f09b79b1))
+
 ## [0.239.0](https://github.com/MustardSeedNetworks/seed/compare/v0.238.0...v0.239.0) (2026-10-08)
 
 
