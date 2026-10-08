@@ -104,6 +104,8 @@ describe('PathAnalysisPage — real locale copy', () => {
     expect(screen.getByText('Start Scan')).toBeVisible();
     expect(screen.getByText('Path monitor')).toBeVisible();
     expect(screen.getByText('Start monitor')).toBeVisible();
+    expect(screen.getByText('Multi-path')).toBeVisible();
+    expect(screen.getByText('Path MTU')).toBeVisible();
   });
 
   it('renders the pitch in Spanish, with the commands still verbatim', async () => {
@@ -128,6 +130,9 @@ describe('PathAnalysisPage — real locale copy', () => {
       'Enter target',
       'Path monitor',
       'Start monitor',
+      'Multi-path',
+      'Find routes',
+      'Path MTU',
     ]) {
       expect(screen.queryByText(english)).toBeNull();
     }
@@ -139,6 +144,8 @@ describe('PathAnalysisPage — real locale copy', () => {
     expect(screen.getByText('Descubrimiento de red')).toBeVisible();
     expect(screen.getByText('Monitor de ruta')).toBeVisible();
     expect(screen.getByText('Iniciar monitor')).toBeVisible();
+    expect(screen.getByText('Multirruta')).toBeVisible();
+    expect(screen.getByText('MTU de la ruta')).toBeVisible();
     // ICMP, UDP and TCP are protocol names in both locales.
     for (const protocol of ['ICMP', 'UDP', 'TCP']) {
       expect(screen.getByText(protocol)).toBeVisible();

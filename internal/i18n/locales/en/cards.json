@@ -883,5 +883,49 @@
     "colBest": "Best",
     "colWorst": "Worst",
     "colJitter": "Jitter"
+  },
+  "pathCheck": {
+    "target": "Destination",
+    "targetPlaceholder": "IP address or hostname",
+    "starting": "Starting…",
+    "stop": "Stop",
+    "stopping": "Stopping…",
+    "stopFailed": "The check did not stop. Try again.",
+    "readOnly": "Running a path check needs the operator role."
+  },
+  "multiPath": {
+    "title": "Multi-path",
+    "description": "Trace a destination several times, each as a different flow, to find load-balanced routes that a single trace misses.",
+    "start": "Find routes",
+    "running": "Tracing the routes to {{target}}…",
+    "failed": "The multi-path check did not run.",
+    "noRoute_one": "No hop answered in {{count}} trace.",
+    "noRoute_other": "No hop answered in {{count}} traces.",
+    "oneRoute_one": "One route to {{target}} in {{count}} trace.",
+    "oneRoute_other": "One route to {{target}} in {{count}} traces.",
+    "routes_one": "{{count}} route to {{target}}.",
+    "routes_other": "{{count}} routes to {{target}}. They split at hop {{ttl}}.",
+    "route_one": "Route {{number}}: {{seen}} of {{count}} trace",
+    "route_other": "Route {{number}}: {{seen}} of {{count}} traces",
+    "notReached": "did not reach the destination"
+  },
+  "pathMtu": {
+    "title": "Path MTU",
+    "description": "Find the largest packet that reaches a destination without being fragmented.",
+    "start": "Find path MTU",
+    "running": "Measuring the path MTU to {{target}}…",
+    "failed": "The path MTU check did not run.",
+    "atLeast": "At least {{mtu}}",
+    "bytes": "bytes",
+    "verdict": {
+      "full": "The whole path carries the local link’s {{local}} bytes.",
+      "ceiling": "Every hop carries the largest size probed.",
+      "smaller": "Smaller than the local link’s {{local}} bytes: a hop on the way, often a tunnel or VPN, carries less.",
+      "icmp_filtered": "Larger packets vanish without an ICMP reply. A hop drops them silently, which stalls large transfers while pings work.",
+      "unreachable": "Nothing arrived at any size. The destination did not answer.",
+      "incomplete": "Stopped before the search finished."
+    },
+    "probes_one": "{{count}} probe sent to {{target}}",
+    "probes_other": "{{count}} probes sent to {{target}}"
   }
 }

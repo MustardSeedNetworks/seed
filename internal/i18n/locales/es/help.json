@@ -746,6 +746,12 @@
       "PathMonitorCard": {
         "description": "Traza un destino cada segundo hasta que lo detenga. La pérdida en un salto que continúa en todos los saltos siguientes es la falla; la pérdida en un solo salto es un enrutador que responde despacio a las trazas. Dos direcciones en un salto indican que la ruta tiene balanceo de carga."
       },
+      "MultiPathCard": {
+        "description": "Traza un destino ocho veces, cada una como un flujo distinto. Más de una ruta significa que un router intermedio balancea la carga (ECMP o SD-WAN), así que una traza puede verse bien mientras las conexiones por otra ruta van lentas. Fíjese en el salto donde se separan las rutas."
+      },
+      "PathMTUCard": {
+        "description": "Encuentra el paquete más grande que llega a un destino sin fragmentarse. Menor que la MTU local indica un túnel o una VPN en el camino. Si los paquetes grandes desaparecen sin respuesta ICMP, el resultado es un límite inferior y la ruta es un agujero negro para las transferencias grandes."
+      },
       "NetworkDiscoveryCard": {
         "description": "Explore las redes locales configuradas e inspeccione los dispositivos, las direcciones y los servicios anunciados descubiertos."
       },
