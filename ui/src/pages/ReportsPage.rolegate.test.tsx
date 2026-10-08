@@ -12,6 +12,7 @@ import { render, screen, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { type CurrentUser, RoleProvider } from '../contexts/RoleContext';
+import type { ReportScheduleInfo } from '../types/generated/report-schedule-info';
 import type { ReportInfo } from '../types/generated/reports-response';
 
 const reports: ReportInfo[] = [
@@ -23,6 +24,30 @@ const reports: ReportInfo[] = [
     createdAt: '2026-09-06T10:00:00Z',
   } as ReportInfo,
 ];
+
+const schedules: ReportScheduleInfo[] = [
+  {
+    id: 's1',
+    name: 'Monday summary',
+    template: 'executive',
+    format: 'pdf',
+    schedule: { frequency: 'weekly', dayOfWeek: 1, hour: 6, minute: 0, timezone: 'UTC' },
+    enabled: true,
+    createdAt: '2026-10-08T00:00:00Z',
+    updatedAt: '2026-10-08T00:00:00Z',
+  },
+];
+
+vi.mock('../hooks/useReportSchedules', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../hooks/useReportSchedules')>()),
+  useReportSchedules: () => ({
+    schedules,
+    loading: false,
+    error: null,
+    save: vi.fn(),
+    remove: vi.fn(),
+  }),
+}));
 
 vi.mock('../hooks/useReports', () => ({
   useReports: () => ({
@@ -78,6 +103,28 @@ describe('ReportsPage — viewer gating', () => {
     });
     expect(screen.queryByTestId('reports-generate')).toBeNull();
     expect(screen.queryByTestId('report-delete-r1')).toBeNull();
+  });
+
+  // Schedule writes are minRole: op (#3209): a viewer reads the list only.
+  it('shows a viewer the schedules but no way to change them', async () => {
+    renderAs('viewer');
+
+    await waitFor(() => {
+      expect(screen.getByTestId('schedule-row')).toBeTruthy();
+    });
+    expect(screen.queryByTestId('schedule-new')).toBeNull();
+    expect(screen.queryByTestId('schedule-edit-s1')).toBeNull();
+    expect(screen.queryByTestId('schedule-delete-s1')).toBeNull();
+  });
+
+  it('lets an operator create, edit and delete schedules', async () => {
+    renderAs('operator');
+
+    await waitFor(() => {
+      expect(screen.getByTestId('schedule-new')).toBeTruthy();
+    });
+    expect(screen.getByTestId('schedule-edit-s1')).toBeTruthy();
+    expect(screen.getByTestId('schedule-delete-s1')).toBeTruthy();
   });
 
   it('offers both to an operator', async () => {

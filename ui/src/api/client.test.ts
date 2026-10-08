@@ -386,3 +386,30 @@ describe('api client CSRF on authenticated auth mutations', () => {
     expect(sent).toEqual([[expect.stringContaining(endpoint), null]]);
   });
 });
+
+/**
+ * A successful DELETE answers 204 with no body. Parsing it as JSON threw after
+ * the delete had happened, so every delete reported a failure.
+ */
+describe('api client 204 No Content', () => {
+  beforeEach(() => {
+    clearCSRFToken();
+    beginSession();
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  it('resolves a bodiless 204 instead of failing to parse it', async () => {
+    vi.spyOn(globalThis, 'fetch').mockImplementation((input: RequestInfo | URL) => {
+      const url = typeof input === 'string' ? input : input.toString();
+      if (url.includes('/api/v1/auth/csrf')) {
+        return Promise.resolve(new Response(JSON.stringify({ token: 'csrf-1' }), { status: 200 }));
+      }
+      return Promise.resolve(new Response(null, { status: 204 }));
+    });
+
+    await expect(api.delete('/api/v1/reports/schedules/s1')).resolves.toBeUndefined();
+  });
+});

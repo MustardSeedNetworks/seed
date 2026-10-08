@@ -599,6 +599,44 @@
     "download": "Descargar",
     "delete": "Eliminar"
   },
+  "reportSchedules": {
+    "title": "Informes programados",
+    "description": "Genera un informe según una programación. Cada ejecución aparece en Informes.",
+    "new": "Nueva programación",
+    "empty": "Aún no hay programaciones.",
+    "name": "Nombre",
+    "template": "Informe",
+    "format": "Formato",
+    "frequency": "Se repite",
+    "dayOfWeek": "Día",
+    "dayOfMonth": "Día del mes",
+    "time": "Hora",
+    "timezone": "Zona horaria",
+    "enabled": "Activado",
+    "save": "Guardar",
+    "cancel": "Cancelar",
+    "edit": "Editar",
+    "delete": "Eliminar",
+    "when": "Cuándo",
+    "nextRun": "Próxima ejecución",
+    "paused": "En pausa",
+    "templates": {
+      "executive": "Resumen ejecutivo",
+      "vulnerability": "Informe de vulnerabilidades",
+      "inventory": "Inventario de dispositivos",
+      "performance": "Informe de rendimiento"
+    },
+    "frequencies": {
+      "daily": "Diario",
+      "weekly": "Semanal",
+      "monthly": "Mensual"
+    },
+    "cadence": {
+      "daily": "Cada día a las {{time}} ({{zone}})",
+      "weekly": "{{day}} a las {{time}} ({{zone}})",
+      "monthly": "Día {{day}} a las {{time}} ({{zone}})"
+    }
+  },
   "neighbours": {
     "title": "Caché de vecinos",
     "description": "Lo que este dispositivo ve actualmente en su propio enlace. No es la tabla ARP que informa un switch remoto.",

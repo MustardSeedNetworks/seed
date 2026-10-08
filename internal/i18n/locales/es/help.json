@@ -781,6 +781,9 @@
       "ReportsCard": {
         "description": "Genere, descargue o elimine informes según su rol. Revise el período de datos antes de compartirlos."
       },
+      "ScheduledReportsCard": {
+        "description": "Genere un informe cada día, semana o mes a una hora fija en la zona horaria elegida (Pro). Cada ejecución aparece en la tarjeta de informes. Crear, editar o eliminar una programación requiere el rol de operador."
+      },
       "SystemHealthCard": {
         "description": "Inspeccione el proceso Seed y las mediciones de recursos del host al investigar pruebas lentas o fallidas."
       },
