@@ -45,7 +45,6 @@ type DiscoveryDefaults struct {
 // NetworkDiscoveryDefaults contains network discovery-related test defaults.
 type NetworkDiscoveryDefaults struct {
 	ScanTimeout time.Duration // Scan timeout
-	AutoScan    bool          // Auto-scan on startup
 }
 
 // Test defaults accessor functions use closure-encapsulated state for thread-safe singleton access.
@@ -108,7 +107,6 @@ func GetTestDefaults() *TestDefaults {
 			},
 			NetworkDiscovery: NetworkDiscoveryDefaults{
 				ScanTimeout: cfg.NetworkDiscovery.ScanTimeout,
-				AutoScan:    cfg.NetworkDiscovery.AutoScan,
 			},
 		})
 	})

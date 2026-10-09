@@ -31,9 +31,6 @@
         "scanTimeoutMs": {
           "type": "integer"
         },
-        "autoScan": {
-          "type": "boolean"
-        },
         "ouiFilePath": {
           "type": "string"
         },
@@ -42,9 +39,6 @@
         },
         "timing": {
           "$ref": "#/$defs/TimingResponse"
-        },
-        "profiler": {
-          "$ref": "#/$defs/ProfilerResponse"
         },
         "fingerprinting": {
           "$ref": "#/$defs/FingerprintingResponse"
@@ -58,11 +52,9 @@
       "required": [
         "enabled",
         "scanTimeoutMs",
-        "autoScan",
         "ouiFilePath",
         "options",
         "timing",
-        "profiler",
         "fingerprinting",
         "ipv6Enabled"
       ]
@@ -81,9 +73,6 @@
         "portScan": {
           "$ref": "#/$defs/PortScanResponse"
         },
-        "tcpProbe": {
-          "$ref": "#/$defs/TCPProbeSettingsResponse"
-        },
         "traceroute": {
           "type": "boolean"
         },
@@ -98,7 +87,6 @@
         "arpScan",
         "icmpScan",
         "portScan",
-        "tcpProbe",
         "traceroute",
         "snmpQuery"
       ]
@@ -137,9 +125,6 @@
         },
         "tcpPorts": {
           "type": "string"
-        },
-        "udpPorts": {
-          "type": "string"
         }
       },
       "additionalProperties": false,
@@ -147,51 +132,7 @@
       "required": [
         "enabled",
         "preset",
-        "tcpPorts",
-        "udpPorts"
-      ]
-    },
-    "ProfilerResponse": {
-      "properties": {
-        "enabled": {
-          "type": "boolean"
-        },
-        "timeoutMs": {
-          "type": "integer"
-        },
-        "maxConcurrent": {
-          "type": "integer"
-        },
-        "quickPorts": {
-          "items": {
-            "type": "integer"
-          },
-          "type": "array"
-        }
-      },
-      "additionalProperties": false,
-      "type": "object",
-      "required": [
-        "enabled",
-        "timeoutMs",
-        "maxConcurrent",
-        "quickPorts"
-      ]
-    },
-    "TCPProbeSettingsResponse": {
-      "properties": {
-        "timeoutMs": {
-          "type": "integer"
-        },
-        "workers": {
-          "type": "integer"
-        }
-      },
-      "additionalProperties": false,
-      "type": "object",
-      "required": [
-        "timeoutMs",
-        "workers"
+        "tcpPorts"
       ]
     },
     "TimingResponse": {

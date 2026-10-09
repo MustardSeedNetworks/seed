@@ -54,11 +54,8 @@ func TestParsePortList(t *testing.T) {
 func TestParsePortListOnTheRealPresets(t *testing.T) {
 	for name, list := range map[string]string{
 		"PortsInsecureTCP": config.PortsInsecureTCP,
-		"PortsInsecureUDP": config.PortsInsecureUDP,
 		"PortsCommonTCP":   config.PortsCommonTCP,
-		"PortsCommonUDP":   config.PortsCommonUDP,
 		"PortsSecureTCP":   config.PortsSecureTCP,
-		"PortsSecureUDP":   config.PortsSecureUDP,
 	} {
 		t.Run(name, func(t *testing.T) {
 			ports := config.ParsePortList(list)
@@ -92,19 +89,6 @@ func TestInsecurePresetCoversTheNamedProtocols(t *testing.T) {
 	} {
 		if !slices.Contains(ports, tc.port) {
 			t.Errorf("the insecure preset omits port %d (%s)", tc.port, tc.what)
-		}
-	}
-
-	udp := config.ParsePortList(config.PortsInsecureUDP)
-	for _, tc := range []struct {
-		port int
-		what string
-	}{
-		{69, "TFTP"},
-		{161, "SNMPv1/v2c"},
-	} {
-		if !slices.Contains(udp, tc.port) {
-			t.Errorf("the insecure UDP preset omits port %d (%s)", tc.port, tc.what)
 		}
 	}
 }

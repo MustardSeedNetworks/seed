@@ -137,12 +137,6 @@ export interface PortScanDefaults {
   enabled: boolean;
   preset: string;
   tcpPorts: string;
-  udpPorts: string;
-}
-
-export interface TcpProbeDefaults {
-  timeoutMs: number;
-  workers: number;
 }
 
 export interface DiscoveryOptionsDefaults {
@@ -150,20 +144,12 @@ export interface DiscoveryOptionsDefaults {
   arpScan: boolean;
   icmpScan: boolean;
   portScan: PortScanDefaults;
-  tcpProbe: TcpProbeDefaults;
   traceroute: boolean;
   snmpQuery: boolean;
 }
 
 export interface DiscoveryTimingDefaults {
   rescanIntervalMs: number;
-}
-
-export interface DeviceProfilerDefaults {
-  enabled: boolean;
-  timeoutMs: number;
-  maxConcurrent: number;
-  quickPorts: number[];
 }
 
 export interface FingerprintingDefaults {
@@ -175,11 +161,9 @@ export interface FingerprintingDefaults {
 export interface NetworkDiscoveryDefaults {
   enabled: boolean;
   scanTimeoutMs: number;
-  autoScan: boolean;
   ipv6Enabled: boolean;
   options: DiscoveryOptionsDefaults;
   timing: DiscoveryTimingDefaults;
-  profiler: DeviceProfilerDefaults;
   fingerprinting: FingerprintingDefaults;
 }
 

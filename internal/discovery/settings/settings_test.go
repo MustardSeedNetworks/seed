@@ -58,7 +58,6 @@ func TestUpdateMergeRules(t *testing.T) {
 		ScanTimeoutMs: 0,                                          // keep 45s
 		Timing:        settings.TimingUpdate{RescanIntervalMs: 0}, // keep 5m
 		OUIFilePath:   "",                                         // keep /old/oui
-		AutoScan:      true,                                       // unconditional
 	})
 	if err != nil {
 		t.Fatalf("Update: %v", err)
@@ -66,9 +65,6 @@ func TestUpdateMergeRules(t *testing.T) {
 	got := st.cfg
 	if got.Enabled {
 		t.Error("Enabled should be set unconditionally to false")
-	}
-	if !got.AutoScan {
-		t.Error("AutoScan should be set unconditionally to true")
 	}
 	if got.ScanTimeout != 45*time.Second {
 		t.Errorf("ScanTimeout = %v, want 45s (kept)", got.ScanTimeout)
@@ -85,11 +81,7 @@ func TestUpdatePositiveValuesConvertMs(t *testing.T) {
 	svc, st, _ := newService(config.NetworkDiscoveryConfig{})
 	err := svc.Update(settings.Update{
 		ScanTimeoutMs: 3000,
-		Options: settings.OptionsUpdate{
-			TCPProbe: settings.TCPProbeUpdate{TimeoutMs: 1500, Workers: 20},
-		},
-		Timing:   settings.TimingUpdate{RescanIntervalMs: 600000},
-		Profiler: settings.ProfilerUpdate{TimeoutMs: 2000, MaxConcurrent: 5, QuickPorts: []int{22, 80}},
+		Timing:        settings.TimingUpdate{RescanIntervalMs: 600000},
 	})
 	if err != nil {
 		t.Fatalf("Update: %v", err)
@@ -98,14 +90,8 @@ func TestUpdatePositiveValuesConvertMs(t *testing.T) {
 	if c.ScanTimeout != 3*time.Second {
 		t.Errorf("ms→duration conversion off: scan=%v", c.ScanTimeout)
 	}
-	if c.Options.TCPProbe.Timeout != 1500*time.Millisecond {
-		t.Errorf("options durations off: %+v", c.Options)
-	}
 	if c.Timing.RescanInterval != 10*time.Minute {
 		t.Errorf("timing off: %+v", c.Timing)
-	}
-	if c.Profiler.MaxConcurrent != 5 || len(c.Profiler.QuickPorts) != 2 {
-		t.Errorf("profiler off: %+v", c.Profiler)
 	}
 }
 

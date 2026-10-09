@@ -17,9 +17,6 @@
         "portScan": {
           "$ref": "#/$defs/PortScanResponse"
         },
-        "tcpProbe": {
-          "$ref": "#/$defs/TCPProbeSettingsResponse"
-        },
         "traceroute": {
           "type": "boolean"
         },
@@ -34,7 +31,6 @@
         "arpScan",
         "icmpScan",
         "portScan",
-        "tcpProbe",
         "traceroute",
         "snmpQuery"
       ]
@@ -73,9 +69,6 @@
         },
         "tcpPorts": {
           "type": "string"
-        },
-        "udpPorts": {
-          "type": "string"
         }
       },
       "additionalProperties": false,
@@ -83,24 +76,7 @@
       "required": [
         "enabled",
         "preset",
-        "tcpPorts",
-        "udpPorts"
-      ]
-    },
-    "TCPProbeSettingsResponse": {
-      "properties": {
-        "timeoutMs": {
-          "type": "integer"
-        },
-        "workers": {
-          "type": "integer"
-        }
-      },
-      "additionalProperties": false,
-      "type": "object",
-      "required": [
-        "timeoutMs",
-        "workers"
+        "tcpPorts"
       ]
     }
   },

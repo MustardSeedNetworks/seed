@@ -148,17 +148,14 @@ type PortPreset string
 const (
 	// PortPresetCommon scans common service ports for OS/app identification.
 	// TCP: 21,22,23,25,53,80,110,111,135,139,143,443,445,993,995,1433,1521,3306,3389,5432,5900,5985,8080,8443.
-	// UDP: 53,67,68,69,123,137,138,161,162,500,514,1900.
 	PortPresetCommon PortPreset = "common"
 
 	// PortPresetSecure scans encrypted/authenticated service ports (good services).
 	// TCP: 22,443,465,587,636,853,993,995,8443,9443.
-	// UDP: 443,500,4500,853.
 	PortPresetSecure PortPreset = "secure"
 
 	// PortPresetInsecure scans ports that should probably be disabled if found running.
 	// TCP: 21,23,25,69,80,110,111,135,139,143,445,512,513,514,1099,2049,3389,5800,5900,6000-6009.
-	// UDP: 67,68,69,111,137,138,161,162,514,1900,2049.
 	PortPresetInsecure PortPreset = "insecure"
 
 	// PortPresetCustom uses user-defined port lists.
@@ -178,7 +175,6 @@ type NetworkDiscoveryConfig struct {
 
 	Enabled     bool          `json:"enabled"`       // Enable network discovery
 	ScanTimeout time.Duration `json:"scan_timeout"`  // Total scan timeout
-	AutoScan    bool          `json:"auto_scan"`     // Auto-scan on startup
 	OUIFilePath string        `json:"oui_file_path"` // Path to IEEE OUI file
 	// OUIMaxAge opts in to refreshing OUIFilePath from the IEEE registry once
 	// it is older than this. Zero, the default, never calls out: the registry
@@ -187,9 +183,6 @@ type NetworkDiscoveryConfig struct {
 
 	// Fingerprinting enables OS/service detection.
 	Fingerprinting FingerprintingConfig `json:"fingerprinting,omitzero"`
-
-	// Profiler controls automatic device profiling.
-	Profiler DeviceProfilerConfig `json:"profiler,omitzero"`
 
 	// IPv6Enabled enables IPv6 Neighbor Discovery Protocol (NDP) scanning.
 	IPv6Enabled bool `json:"ipv6_enabled"`
@@ -200,52 +193,45 @@ type DiscoveryOptions struct {
 	PassiveProtocols PassiveProtocolConfig `json:"passiveProtocols"` // Granular passive protocol control
 	ARPScan          bool                  `json:"arpScan"`          // ARP-based host discovery
 	ICMPScan         bool                  `json:"icmpScan"`         // ICMP ping sweep
-	PortScan         PortScanConfig        `json:"portScan"`         // TCP/UDP port scanning
-	TCPProbe         TCPProbeConfig        `json:"tcpProbe"`         // TCP probe settings
+	PortScan         PortScanConfig        `json:"portScan"`         // TCP port scanning
 	Traceroute       bool                  `json:"traceroute"`       // Path discovery
 	SNMPQuery        bool                  `json:"snmpQuery"`        // SNMP device interrogation
 }
 
-// PortScanConfig controls port scanning behavior.
+// PortScanConfig controls port scanning behavior. Enabling it widens the
+// profiler's per-device TCP scan from the quick classification list to the
+// preset's ports, or TCPPorts when the preset is custom.
 type PortScanConfig struct {
 	Enabled  bool       `json:"enabled"`
 	Preset   PortPreset `json:"preset"`   // Port preset: common, secure, insecure, custom
 	TCPPorts string     `json:"tcpPorts"` // Comma-separated ports or ranges (used when preset is "custom")
-	UDPPorts string     `json:"udpPorts"` // Comma-separated ports or ranges (used when preset is "custom")
 }
 
-// GetEffectivePorts returns the TCP and UDP ports based on the preset or custom settings.
-func (c *PortScanConfig) GetEffectivePorts() (string, string) {
+// EffectivePorts returns the TCP ports the preset, or the custom list, names.
+func (c PortScanConfig) EffectivePorts() []int {
 	switch c.Preset {
-	case PortPresetCommon:
-		return PortsCommonTCP, PortsCommonUDP
 	case PortPresetSecure:
-		return PortsSecureTCP, PortsSecureUDP
+		return ParsePortList(PortsSecureTCP)
 	case PortPresetInsecure:
-		return PortsInsecureTCP, PortsInsecureUDP
+		return ParsePortList(PortsInsecureTCP)
 	case PortPresetCustom:
-		return c.TCPPorts, c.UDPPorts
-	default:
-		return PortsCommonTCP, PortsCommonUDP
+		return ParsePortList(c.TCPPorts)
+	case PortPresetCommon:
 	}
+	// Common, and a config that predates presets and names none.
+	return ParsePortList(PortsCommonTCP)
 }
 
 // Port preset definitions.
 const (
 	// PortsCommonTCP are common service ports for OS/app identification.
 	PortsCommonTCP = "21,22,23,25,53,80,110,111,135,139,143,443,445,993,995,1433,1521,3306,3389,5432,5900,5985,8080,8443"
-	// PortsCommonUDP are common UDP service ports.
-	PortsCommonUDP = "53,67,68,69,123,137,138,161,162,500,514,1900"
 
 	// PortsSecureTCP are encrypted/authenticated service ports (good services).
 	PortsSecureTCP = "22,443,465,587,636,853,993,995,8443,9443"
-	// PortsSecureUDP are encrypted UDP service ports.
-	PortsSecureUDP = "443,500,4500,853"
 
 	// PortsInsecureTCP are ports that should probably be disabled if found running.
 	PortsInsecureTCP = "21,23,25,69,80,110,111,135,139,143,445,512,513,514,1099,2049,3389,5800,5900,6000-6009"
-	// PortsInsecureUDP are insecure UDP service ports.
-	PortsInsecureUDP = "67,68,69,111,137,138,161,162,514,1900,2049"
 )
 
 // PassiveProtocolConfig provides granular control over passive discovery protocols.

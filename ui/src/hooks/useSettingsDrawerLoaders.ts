@@ -205,7 +205,6 @@ export function useSettingsDrawerLoaders({
           setNetworkDiscoverySettings({
             enabled: data.enabled ?? true,
             scanTimeoutMs: data.scanTimeoutMs ?? 30000,
-            autoScan: data.autoScan ?? false,
             ipv6Enabled: data.ipv6Enabled ?? true,
             options: data.options ?? {
               passiveProtocols: { lldp: true, cdp: true, edp: true, ndp: true },
@@ -215,20 +214,12 @@ export function useSettingsDrawerLoaders({
                 enabled: false,
                 preset: 'common',
                 tcpPorts: '22,80,443,8080-8100',
-                udpPorts: '53,123,161',
               },
-              tcpProbe: { timeoutMs: 2000, workers: 20 },
               traceroute: false,
               snmpQuery: false,
             },
             timing: data.timing ?? {
               rescanIntervalMs: 60000,
-            },
-            profiler: data.profiler ?? {
-              enabled: true,
-              timeoutMs: 2000,
-              maxConcurrent: 5,
-              quickPorts: [22, 80, 443, 8080],
             },
             fingerprinting: data.fingerprinting ?? {
               enabled: false,

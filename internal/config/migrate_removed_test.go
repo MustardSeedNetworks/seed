@@ -134,6 +134,20 @@ func TestRemovedKeysAreStripped(t *testing.T) {
 				"options": map[string]any{"portScan": map[string]any{"bannerTimeout": 2000000000}},
 			}},
 		},
+		{
+			name: "discovery settings nothing read (#2926)",
+			document: map[string]any{"networkDiscovery": map[string]any{
+				"auto_scan": true,
+				"profiler": map[string]any{
+					"enabled": true, "timeout": 2000000000, "max_concurrent": 5,
+					"quick_ports": []any{22, 80, 443, 8080},
+				},
+				"options": map[string]any{
+					"tcpProbe": map[string]any{"timeout": 2000000000, "workers": 20},
+					"portScan": map[string]any{"preset": "custom", "tcpPorts": "22", "udpPorts": "53"},
+				},
+			}},
+		},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			encoded, err := json.MarshalIndent(tc.document, "", "  ")

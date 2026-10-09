@@ -236,7 +236,6 @@ func TestHandleDevicesSettingsPUT(t *testing.T) {
 	reqBody := api.NetworkDiscoverySettingsResponse{
 		Enabled:       true,
 		ScanTimeoutMs: 30000,
-		AutoScan:      false,
 	}
 	body, _ := json.Marshal(reqBody)
 
@@ -273,12 +272,11 @@ func TestHandleDevicesSettingsPUTAcceptsTheDrawerBody(t *testing.T) {
 	defer server.Close()
 	server.SetConfigPath(filepath.Join(t.TempDir(), "config.json"))
 
-	const drawerBody = `{"enabled":true,"scanTimeoutMs":31000,"autoScan":false,"ipv6Enabled":true,` +
+	const drawerBody = `{"enabled":true,"scanTimeoutMs":31000,"ipv6Enabled":true,` +
 		`"options":{"passiveProtocols":{"lldp":true,"cdp":true,"edp":true,"ndp":true},` +
 		`"arpScan":true,"icmpScan":true,"portScan":{"enabled":false,"tcpPorts":"22,443",` +
-		`"udpPorts":"53","preset":"secure"},"tcpProbe":{"timeoutMs":2000,"workers":20},` +
-		`"traceroute":false,"snmpQuery":false},"timing":{"rescanIntervalMs":180000},` +
-		`"profiler":{"enabled":true,"timeoutMs":2000,"maxConcurrent":5,"quickPorts":[22,80,443,8080]},` +
+		`"preset":"secure"},"traceroute":false,"snmpQuery":false},` +
+		`"timing":{"rescanIntervalMs":180000},` +
 		`"fingerprinting":{"enabled":false,"osDetection":false,"serviceProbes":false}}`
 
 	put := httptest.NewRequest(http.MethodPut, "/api/v1/security/devices/settings",
@@ -652,7 +650,6 @@ func TestNetworkDiscoverySettingsResponseFields(t *testing.T) {
 	resp := api.NetworkDiscoverySettingsResponse{
 		Enabled:       true,
 		ScanTimeoutMs: 30000,
-		AutoScan:      true,
 		OUIFilePath:   "/var/lib/seed/oui.txt",
 		IPv6Enabled:   true,
 		Options: api.OptionsResponse{
@@ -667,23 +664,12 @@ func TestNetworkDiscoverySettingsResponseFields(t *testing.T) {
 			PortScan: api.PortScanResponse{
 				Enabled:  true,
 				TCPPorts: "22,80,443",
-				UDPPorts: "53,161",
-			},
-			TCPProbe: api.TCPProbeSettingsResponse{
-				TimeoutMs: 1000,
-				Workers:   10,
 			},
 			Traceroute: false,
 			SNMPQuery:  true,
 		},
 		Timing: api.TimingResponse{
 			RescanIntervalMs: 300000,
-		},
-		Profiler: api.ProfilerResponse{
-			Enabled:       true,
-			TimeoutMs:     5000,
-			MaxConcurrent: 5,
-			QuickPorts:    []int{22, 80, 443, 8080},
 		},
 		Fingerprinting: api.FingerprintingResponse{
 			Enabled:       true,
@@ -699,9 +685,6 @@ func TestNetworkDiscoverySettingsResponseFields(t *testing.T) {
 	if resp.ScanTimeoutMs != 30000 {
 		t.Errorf("Expected ScanTimeoutMs 30000, got %d", resp.ScanTimeoutMs)
 	}
-	if !resp.AutoScan {
-		t.Error("Expected AutoScan to be true")
-	}
 	if resp.OUIFilePath != "/var/lib/seed/oui.txt" {
 		t.Errorf("Expected OUIFilePath /var/lib/seed/oui.txt, got %q", resp.OUIFilePath)
 	}
@@ -716,12 +699,6 @@ func TestNetworkDiscoverySettingsResponseFields(t *testing.T) {
 	}
 	if resp.Timing.RescanIntervalMs != 300000 {
 		t.Errorf("Expected Timing.RescanIntervalMs 300000, got %d", resp.Timing.RescanIntervalMs)
-	}
-	if !resp.Profiler.Enabled {
-		t.Error("Expected Profiler to be enabled")
-	}
-	if len(resp.Profiler.QuickPorts) != 4 {
-		t.Errorf("Expected 4 QuickPorts, got %d", len(resp.Profiler.QuickPorts))
 	}
 	if !resp.Fingerprinting.OSDetection {
 		t.Error("Expected OSDetection to be enabled")

@@ -9,5 +9,4 @@ export interface PortScanResponse {
   enabled: boolean;
   preset: string;
   tcpPorts: string;
-  udpPorts: string;
 }

@@ -41,7 +41,6 @@ ui/src/types/profile.ts:ProfileRequest # same Profile/config narrowing as Profil
 # React list key for an editable row) on top of the wire shape, and narrows the
 # wire's strings to the unions the form's <select> offers. A field-by-field
 # reconciliation against the generated Config, not a swap. Slice 2 of seed#2393.
-ui/src/types/settings.ts:DeviceProfilerConfig # settings-drawer view model
 ui/src/types/settings.ts:DiscoveryOptions # settings-drawer view model, composed of the local PortScanConfig/TcpProbeConfig below
 ui/src/types/settings.ts:FileShareEndpoint # settings-drawer view model: UI row `id`, and `protocol` narrowed to 'smb' | 'nfs'
 ui/src/types/settings.ts:FingerprintingConfig # settings-drawer view model

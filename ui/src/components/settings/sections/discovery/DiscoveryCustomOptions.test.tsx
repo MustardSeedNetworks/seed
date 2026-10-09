@@ -20,7 +20,7 @@ describe('DiscoveryCustomOptions', () => {
         ...DEFAULT_NETWORK_DISCOVERY_SETTINGS,
         options: {
           ...DEFAULT_NETWORK_DISCOVERY_SETTINGS.options,
-          portScan: { enabled: true, preset, tcpPorts: '2222', udpPorts: '5353' },
+          portScan: { enabled: true, preset, tcpPorts: '2222' },
         },
       };
       const onSettingsChange = vi.fn();

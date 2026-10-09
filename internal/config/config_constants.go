@@ -101,12 +101,6 @@ const (
 
 	// portNTP is the standard NTP time synchronization port.
 	portNTP = 123
-
-	// portHTTP is the standard HTTP port for default health check endpoints.
-	portHTTP = 80
-
-	// portHTTPAlt is the alternate HTTP port commonly used for web servers.
-	portHTTPAlt = 8080
 )
 
 // HTTP response status codes.
@@ -119,15 +113,6 @@ const (
 const (
 	// defaultBannerTimeoutSec is the timeout in seconds for service banner grabbing.
 	defaultBannerTimeoutSec = 2
-
-	// defaultTracerouteTimeoutSec is the timeout in seconds for traceroute TCP probes.
-	defaultTracerouteTimeoutSec = 2
-
-	// defaultTracerouteWorkers is the number of concurrent traceroute workers.
-	defaultTracerouteWorkers = 20
-
-	// defaultMDNSTimeoutSec is the timeout in seconds for mDNS/device profiling operations.
-	defaultMDNSTimeoutSec = 2
 
 	// defaultMDNSMaxConcurrent is the maximum concurrent mDNS/profiler operations.
 	defaultMDNSMaxConcurrent = 5

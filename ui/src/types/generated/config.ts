@@ -70,11 +70,9 @@ export interface NetworkDiscoveryConfig {
   target_networks: SubnetConfig[];
   enabled: boolean;
   scan_timeout: number;
-  auto_scan: boolean;
   oui_file_path: string;
   oui_max_age: number;
   fingerprinting?: FingerprintingConfig;
-  profiler?: DeviceProfilerConfig;
   ipv6_enabled: boolean;
 }
 export interface DiscoveryOptions {
@@ -82,7 +80,6 @@ export interface DiscoveryOptions {
   arpScan: boolean;
   icmpScan: boolean;
   portScan: PortScanConfig;
-  tcpProbe: TCPProbeConfig;
   traceroute: boolean;
   snmpQuery: boolean;
 }
@@ -96,11 +93,6 @@ export interface PortScanConfig {
   enabled: boolean;
   preset: string;
   tcpPorts: string;
-  udpPorts: string;
-}
-export interface TCPProbeConfig {
-  timeout: number;
-  workers: number;
 }
 export interface DiscoveryTiming {
   rescan_interval: number;
@@ -116,12 +108,6 @@ export interface FingerprintingConfig {
   enabled: boolean;
   os_detection: boolean;
   service_probes: boolean;
-}
-export interface DeviceProfilerConfig {
-  enabled: boolean;
-  timeout: number;
-  max_concurrent: number;
-  quick_ports: number[];
 }
 export interface DNSConfig {
   test_hostname: string;

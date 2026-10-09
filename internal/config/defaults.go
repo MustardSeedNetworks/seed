@@ -171,13 +171,6 @@ type PortScanDefaults struct {
 	Enabled  bool   `json:"enabled"`
 	Preset   string `json:"preset"`
 	TCPPorts string `json:"tcpPorts"`
-	UDPPorts string `json:"udpPorts"`
-}
-
-// TCPProbeDefaults contains default TCP probe settings.
-type TCPProbeDefaults struct {
-	TimeoutMs int64 `json:"timeoutMs"`
-	Workers   int   `json:"workers"`
 }
 
 // DiscoveryOptionsDefaults contains default discovery option settings.
@@ -186,7 +179,6 @@ type DiscoveryOptionsDefaults struct {
 	ARPScan          bool                    `json:"arpScan"`
 	ICMPScan         bool                    `json:"icmpScan"`
 	PortScan         PortScanDefaults        `json:"portScan"`
-	TCPProbe         TCPProbeDefaults        `json:"tcpProbe"`
 	Traceroute       bool                    `json:"traceroute"`
 	SNMPQuery        bool                    `json:"snmpQuery"`
 }
@@ -194,14 +186,6 @@ type DiscoveryOptionsDefaults struct {
 // DiscoveryTimingDefaults contains default timing settings.
 type DiscoveryTimingDefaults struct {
 	RescanIntervalMs int64 `json:"rescanIntervalMs"`
-}
-
-// DeviceProfilerDefaults contains default device profiler settings.
-type DeviceProfilerDefaults struct {
-	Enabled       bool  `json:"enabled"`
-	TimeoutMs     int64 `json:"timeoutMs"`
-	MaxConcurrent int   `json:"maxConcurrent"`
-	QuickPorts    []int `json:"quickPorts"`
 }
 
 // FingerprintingDefaults contains default fingerprinting settings.
@@ -216,11 +200,9 @@ type FingerprintingDefaults struct {
 type NetworkDiscoveryDefaults struct {
 	Enabled        bool                     `json:"enabled"`
 	ScanTimeoutMs  int64                    `json:"scanTimeoutMs"`
-	AutoScan       bool                     `json:"autoScan"`
 	IPv6Enabled    bool                     `json:"ipv6Enabled"`
 	Options        DiscoveryOptionsDefaults `json:"options"`
 	Timing         DiscoveryTimingDefaults  `json:"timing"`
-	Profiler       DeviceProfilerDefaults   `json:"profiler"`
 	Fingerprinting FingerprintingDefaults   `json:"fingerprinting"`
 }
 
@@ -365,7 +347,6 @@ func buildNetworkDiscoveryDefaults(cfg *Config) NetworkDiscoveryDefaults {
 	return NetworkDiscoveryDefaults{
 		Enabled:       cfg.NetworkDiscovery.Enabled,
 		ScanTimeoutMs: cfg.NetworkDiscovery.ScanTimeout.Milliseconds(),
-		AutoScan:      cfg.NetworkDiscovery.AutoScan,
 		IPv6Enabled:   cfg.NetworkDiscovery.IPv6Enabled,
 		Options: DiscoveryOptionsDefaults{
 			PassiveProtocols: PassiveProtocolDefaults{
@@ -379,22 +360,11 @@ func buildNetworkDiscoveryDefaults(cfg *Config) NetworkDiscoveryDefaults {
 				Enabled:  cfg.NetworkDiscovery.Options.PortScan.Enabled,
 				Preset:   string(cfg.NetworkDiscovery.Options.PortScan.Preset),
 				TCPPorts: cfg.NetworkDiscovery.Options.PortScan.TCPPorts,
-				UDPPorts: cfg.NetworkDiscovery.Options.PortScan.UDPPorts,
-			},
-			TCPProbe: TCPProbeDefaults{
-				TimeoutMs: cfg.NetworkDiscovery.Options.TCPProbe.Timeout.Milliseconds(),
-				Workers:   cfg.NetworkDiscovery.Options.TCPProbe.Workers,
 			},
 			Traceroute: cfg.NetworkDiscovery.Options.Traceroute, SNMPQuery: cfg.NetworkDiscovery.Options.SNMPQuery,
 		},
 		Timing: DiscoveryTimingDefaults{
 			RescanIntervalMs: cfg.NetworkDiscovery.Timing.RescanInterval.Milliseconds(),
-		},
-		Profiler: DeviceProfilerDefaults{
-			Enabled:       cfg.NetworkDiscovery.Profiler.Enabled,
-			TimeoutMs:     cfg.NetworkDiscovery.Profiler.Timeout.Milliseconds(),
-			MaxConcurrent: cfg.NetworkDiscovery.Profiler.MaxConcurrent,
-			QuickPorts:    cfg.NetworkDiscovery.Profiler.QuickPorts,
 		},
 		Fingerprinting: FingerprintingDefaults{
 			Enabled:       cfg.NetworkDiscovery.Fingerprinting.Enabled,

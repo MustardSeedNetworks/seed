@@ -6,6 +6,7 @@ import (
 	"os"
 	"path/filepath"
 	"reflect"
+	"slices"
 	"testing"
 	"testing/quick"
 	"time"
@@ -766,55 +767,49 @@ func TestDefaultPortScanConfig(t *testing.T) {
 	}
 }
 
-func TestGetEffectivePorts(t *testing.T) {
+func TestEffectivePorts(t *testing.T) {
 	tests := []struct {
-		preset     config.PortPreset
-		wantTCPLen int
-		wantUDPLen int
+		name string
+		cfg  config.PortScanConfig
+		want []int
 	}{
-		{config.PortPresetCommon, len(config.PortsCommonTCP), len(config.PortsCommonUDP)},
-		{config.PortPresetSecure, len(config.PortsSecureTCP), len(config.PortsSecureUDP)},
-		{config.PortPresetInsecure, len(config.PortsInsecureTCP), len(config.PortsInsecureUDP)},
+		{
+			name: "common",
+			cfg:  config.PortScanConfig{Preset: config.PortPresetCommon},
+			want: config.ParsePortList(config.PortsCommonTCP),
+		},
+		{
+			name: "secure",
+			cfg:  config.PortScanConfig{Preset: config.PortPresetSecure},
+			want: config.ParsePortList(config.PortsSecureTCP),
+		},
+		{
+			name: "insecure",
+			cfg:  config.PortScanConfig{Preset: config.PortPresetInsecure},
+			want: config.ParsePortList(config.PortsInsecureTCP),
+		},
+		{
+			name: "unset falls back to common",
+			want: config.ParsePortList(config.PortsCommonTCP),
+		},
+		{
+			name: "custom",
+			cfg:  config.PortScanConfig{Preset: config.PortPresetCustom, TCPPorts: "8080, 22,9000-9002"},
+			want: []int{22, 8080, 9000, 9001, 9002},
+		},
+		{
+			name: "custom and empty",
+			cfg:  config.PortScanConfig{Preset: config.PortPresetCustom},
+		},
 	}
 
 	for _, tt := range tests {
-		t.Run(string(tt.preset), func(t *testing.T) {
-			cfg := config.PortScanConfig{Preset: tt.preset}
-			tcp, udp := cfg.GetEffectivePorts()
-			if len(tcp) != tt.wantTCPLen {
-				t.Errorf(
-					"preset %s: expected TCP ports length %d, got %d",
-					tt.preset,
-					tt.wantTCPLen,
-					len(tcp),
-				)
-			}
-			if len(udp) != tt.wantUDPLen {
-				t.Errorf(
-					"preset %s: expected UDP ports length %d, got %d",
-					tt.preset,
-					tt.wantUDPLen,
-					len(udp),
-				)
+		t.Run(tt.name, func(t *testing.T) {
+			if got := tt.cfg.EffectivePorts(); !slices.Equal(got, tt.want) {
+				t.Errorf("EffectivePorts() = %v, want %v", got, tt.want)
 			}
 		})
 	}
-
-	// Test custom preset
-	t.Run("custom", func(t *testing.T) {
-		cfg := config.PortScanConfig{
-			Preset:   config.PortPresetCustom,
-			TCPPorts: "22,80",
-			UDPPorts: "53",
-		}
-		tcp, udp := cfg.GetEffectivePorts()
-		if tcp != "22,80" {
-			t.Errorf("expected custom TCP ports '22,80', got %q", tcp)
-		}
-		if udp != "53" {
-			t.Errorf("expected custom UDP ports '53', got %q", udp)
-		}
-	})
 }
 
 // ========== SubnetConfig Tests ==========

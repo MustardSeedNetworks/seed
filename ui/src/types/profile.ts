@@ -221,7 +221,6 @@ export interface PortScanSettingsConfig {
   enabled?: boolean;
   preset?: string;
   tcpPorts?: string;
-  udpPorts?: string;
 }
 
 /** Network discovery options. */
@@ -230,7 +229,6 @@ export interface DiscoveryOptionsConfig {
   arpScan?: boolean;
   icmpScan?: boolean;
   portScan?: PortScanSettingsConfig;
-  tcpProbe?: { timeoutMs?: number; workers?: number };
   traceroute?: boolean;
   snmpQuery?: boolean;
 }
@@ -242,16 +240,9 @@ export interface DiscoveryOptionsConfig {
 export interface NetworkDiscoveryConfig {
   enabled?: boolean;
   scanTimeoutMs?: number;
-  autoScan?: boolean;
   ipv6Enabled?: boolean;
   options?: DiscoveryOptionsConfig;
   timing?: { rescanIntervalMs?: number };
-  profiler?: {
-    enabled?: boolean;
-    timeoutMs?: number;
-    maxConcurrent?: number;
-    quickPorts?: number[];
-  };
   fingerprinting?: { enabled?: boolean; osDetection?: boolean; serviceProbes?: boolean };
 }
 

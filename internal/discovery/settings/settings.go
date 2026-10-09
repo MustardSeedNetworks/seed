@@ -299,13 +299,11 @@ func (s *Service) saveAndSync(cur config.NetworkDiscoveryConfig) error {
 type Update struct {
 	Enabled       bool
 	ScanTimeoutMs int64
-	AutoScan      bool
 	OUIFilePath   string
 	IPv6Enabled   bool
 
 	Options        OptionsUpdate
 	Timing         TimingUpdate
-	Profiler       ProfilerUpdate
 	Fingerprinting FingerprintingUpdate
 }
 
@@ -315,7 +313,6 @@ type OptionsUpdate struct {
 	ARPScan          bool
 	ICMPScan         bool
 	PortScan         PortScanUpdate
-	TCPProbe         TCPProbeUpdate
 	Traceroute       bool
 	SNMPQuery        bool
 }
@@ -333,26 +330,11 @@ type PortScanUpdate struct {
 	Enabled  bool
 	Preset   string
 	TCPPorts string
-	UDPPorts string
-}
-
-// TCPProbeUpdate mirrors the TCP-probe write model.
-type TCPProbeUpdate struct {
-	TimeoutMs int64
-	Workers   int
 }
 
 // TimingUpdate mirrors the discovery-timing write model.
 type TimingUpdate struct {
 	RescanIntervalMs int64
-}
-
-// ProfilerUpdate mirrors the profiler write model.
-type ProfilerUpdate struct {
-	Enabled       bool
-	TimeoutMs     int64
-	MaxConcurrent int
-	QuickPorts    []int
 }
 
 // FingerprintingUpdate mirrors the fingerprinting write model.
@@ -371,7 +353,6 @@ func (u Update) mergeInto(cur *config.NetworkDiscoveryConfig) {
 	if u.ScanTimeoutMs > 0 {
 		cur.ScanTimeout = msDuration(u.ScanTimeoutMs)
 	}
-	cur.AutoScan = u.AutoScan
 	if u.OUIFilePath != "" {
 		cur.OUIFilePath = u.OUIFilePath
 	}
@@ -379,7 +360,6 @@ func (u Update) mergeInto(cur *config.NetworkDiscoveryConfig) {
 
 	u.Options.mergeInto(&cur.Options)
 	u.Timing.mergeInto(&cur.Timing)
-	u.Profiler.mergeInto(&cur.Profiler)
 	cur.Fingerprinting.Enabled = u.Fingerprinting.Enabled
 	cur.Fingerprinting.OSDetection = u.Fingerprinting.OSDetection
 	cur.Fingerprinting.ServiceProbes = u.Fingerprinting.ServiceProbes
@@ -402,33 +382,11 @@ func (o OptionsUpdate) mergeInto(cur *config.DiscoveryOptions) {
 	if o.PortScan.TCPPorts != "" {
 		cur.PortScan.TCPPorts = o.PortScan.TCPPorts
 	}
-	if o.PortScan.UDPPorts != "" {
-		cur.PortScan.UDPPorts = o.PortScan.UDPPorts
-	}
-	if o.TCPProbe.TimeoutMs > 0 {
-		cur.TCPProbe.Timeout = msDuration(o.TCPProbe.TimeoutMs)
-	}
-	if o.TCPProbe.Workers > 0 {
-		cur.TCPProbe.Workers = o.TCPProbe.Workers
-	}
 }
 
 func (t TimingUpdate) mergeInto(cur *config.DiscoveryTiming) {
 	if t.RescanIntervalMs > 0 {
 		cur.RescanInterval = msDuration(t.RescanIntervalMs)
-	}
-}
-
-func (p ProfilerUpdate) mergeInto(cur *config.DeviceProfilerConfig) {
-	cur.Enabled = p.Enabled
-	if p.TimeoutMs > 0 {
-		cur.Timeout = msDuration(p.TimeoutMs)
-	}
-	if p.MaxConcurrent > 0 {
-		cur.MaxConcurrent = p.MaxConcurrent
-	}
-	if len(p.QuickPorts) > 0 {
-		cur.QuickPorts = p.QuickPorts
 	}
 }
 
