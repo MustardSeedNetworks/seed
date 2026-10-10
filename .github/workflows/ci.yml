@@ -95,6 +95,10 @@ jobs:
               # the Go suite even when no .go file moves.
               - 'internal/database/migrations/**'
               - 'internal/database/testdata/**'
+              # cmd/seed-openapi renders docs/openapi.yaml from this source and
+              # the route registry; editing either alone must run the drift gate.
+              - 'docs/openapi-source.yaml'
+              - 'docs/openapi.yaml'
               # The locale catalogue is //go:embed'ed by internal/i18n and
               # imported by the UI through the @locales alias, so a
               # translation-only change is an input of both test suites and
@@ -413,6 +417,9 @@ jobs:
 
       - name: Verify API schemas are up to date
         run: ./scripts/check-schema-drift.sh
+
+      - name: Verify docs/openapi.yaml is up to date
+        run: ./scripts/check-openapi-drift.sh
 
       - name: Verify generated TS types are up to date
         run: ./scripts/check-types-drift.sh

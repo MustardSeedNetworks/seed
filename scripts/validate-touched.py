@@ -107,6 +107,11 @@ GATES: tuple[Gate, ...] = (
         ("HARDWARE.md", "cmd/seed-hardware/*", "internal/capabilities/*"),
     ),
     Gate("json-casing", (_sh("check-json-casing.sh"),), ("internal/*.go",)),
+    Gate(
+        "openapi-drift",
+        (_sh("check-openapi-drift.sh"),),
+        ("internal/api/*", "cmd/seed-openapi/*", "docs/openapi*.yaml"),
+    ),
     Gate("output-escaping", (_sh("check-output-escaping.sh"),), ("internal/api/*", "ui/src/*")),
     Gate(
         "package-reachability",

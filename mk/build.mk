@@ -12,7 +12,7 @@
 # =============================================================================
 
 .PHONY: build build-iperf3 build-iperf3-quiet \
-        frontend-deps generate-types schema build-frontend build-frontend-quiet \
+        frontend-deps generate-types schema openapi build-frontend build-frontend-quiet \
         build-backend build-backend-quiet build-backend-dev \
         run dev dev-frontend
 
@@ -76,6 +76,10 @@ schema: ## Regenerate docs/schemas/api/*.json from internal/api Go DTOs
 	@printf "$(BOLD)Generating JSON Schemas for API DTOs...$(RESET)\n"
 	@go run ./cmd/seed-schema -o docs/schemas/api
 	@printf "$(GREEN)Wrote $$(ls -1 docs/schemas/api/*.json 2>/dev/null | wc -l | tr -d ' ') schema(s) to docs/schemas/api/$(RESET)\n"
+
+openapi: ## Regenerate docs/openapi.yaml from the route registry
+	@go run ./cmd/seed-openapi -o docs/openapi.yaml
+	@printf "$(GREEN)Wrote docs/openapi.yaml$(RESET)\n"
 
 hardware-matrix: ## Regenerate HARDWARE.md's Platform Support Matrix from internal/capabilities
 	@printf "$(BOLD)Generating the platform support matrix...$(RESET)\n"

@@ -1,0 +1,87 @@
+# openapi-source.yaml — the hand-written half of docs/openapi.yaml.
+#
+# docs/openapi.yaml is GENERATED (`make openapi`) and must not be edited. Its
+# `paths` block comes from the route registry (internal/api Server.routes), so
+# every registered route is documented with the policy it actually carries
+# (auth, CSRF, operator scope, rate limit, body cap) and no route can be
+# missing. The error schema comes from the Go type api.ErrorResponse.
+#
+# What the registry cannot know (prose, path parameter names, bodies) lives
+# here:
+#
+#   preamble   verbatim top-level keys: info, servers, tags, components…
+#   operations keyed "<METHOD> <path>", merged onto the generated operation.
+#              `pathTemplate` renames a prefix route (a path ending in "/")
+#              to its real shape.
+#
+# An operations key naming a path or method the registry does not serve fails
+# the generator, so this file cannot outlive the routes it describes.
+
+preamble:
+  openapi: 3.0.3
+  info:
+    title: The Seed API
+    description: |
+      REST API of the Seed daemon: network diagnostics, discovery and
+      topology, Wi-Fi troubleshooting, security posture, compliance,
+      alerting and reporting. The web UI and the `seed` CLI are both clients
+      of it.
+
+      ## Authentication
+      Operations with the `BearerAuth` requirement need the access token that
+      `POST /api/v1/auth/login` returns, or a personal access token
+      (`sd_pat_…`). The browser presents the session as the `seed_access`
+      cookie; API clients send `Authorization: Bearer`. `/__version` and
+      `/__capabilities` are deliberately unauthenticated deployment
+      introspection.
+
+      ## CSRF protection
+      Operations marked with the `CsrfToken` security scheme need a token from
+      `GET /api/v1/auth/csrf` in the `X-CSRF-Token` header. Tokens are per
+      session. A request authenticated by a personal access token carries no
+      ambient credential and is not checked for CSRF.
+
+      ## Roles and licence tiers
+      Operations that require an operator-scoped token say so. Admin-only
+      operations check the role in the handler. An operation outside the
+      active licence answers 402 Payment Required.
+
+      ## Rate limiting
+      Routes marked rate limited share a per-IP endpoint budget and answer 429
+      once it is spent.
+    version: v1
+    contact:
+      name: Mustard Seed Networks
+      url: https://github.com/MustardSeedNetworks/seed
+    license:
+      name: Business Source License 1.1
+      url: https://github.com/MustardSeedNetworks/seed/blob/main/LICENSE
+  servers:
+    - url: https://localhost:8443
+      description: Local daemon (paths are absolute from the origin)
+  security:
+    - BearerAuth: []
+  components:
+    securitySchemes:
+      BearerAuth:
+        type: http
+        scheme: bearer
+        description: >
+          Session access token from POST /api/v1/auth/login, sent as the
+          seed_access cookie or an Authorization bearer, or a personal access
+          token.
+      CsrfToken:
+        type: apiKey
+        in: header
+        name: X-CSRF-Token
+        description: Per-session CSRF token from GET /api/v1/auth/csrf.
+
+operations:
+  GET /__version:
+    summary: Build metadata (version, commit, build time, UI build hash)
+  GET /__capabilities:
+    summary: Route-policy manifest of every registered route
+  POST /api/v1/auth/login:
+    summary: Sign in and receive a session
+  GET /api/v1/auth/csrf:
+    summary: Mint a CSRF token for the current session
