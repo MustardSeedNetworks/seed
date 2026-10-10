@@ -335,6 +335,58 @@ operations:
           application/json:
             schema:
               $ref: '#/components/schemas/EnginesResponse'
+  GET /api/v1/flows/application-signatures:
+    responses:
+      "200":
+        description: The signature table the collector names flows with. source is builtin for the shipped table and custom once an operator has replaced it.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AppSignaturesResponse'
+  PUT /api/v1/flows/application-signatures:
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/AppSignaturesRequest'
+    responses:
+      "200":
+        description: The table in effect after the replacement. Flows stored after it are named by it; stored flows keep their names. An empty table, a bad port, or a port claimed by two signatures is a 400.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AppSignaturesResponse'
+  DELETE /api/v1/flows/application-signatures:
+    responses:
+      "200":
+        description: The builtin table, now back in effect.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AppSignaturesResponse'
+  GET /api/v1/flows/threat-indicators:
+    responses:
+      "200":
+        description: The operator-supplied addresses and prefixes each collected flow is checked against. Seed ships no list and never fetches one.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FlowIndicatorsResponse'
+  PUT /api/v1/flows/threat-indicators:
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/FlowIndicatorsRequest'
+    responses:
+      "200":
+        description: The list in effect after the replacement, each entry in canonical form. An empty list turns matching off. Flows collected after the change are checked against it; stored flows are not re-checked.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FlowIndicatorsResponse'
   GET /api/v1/flows/top-applications:
     responses:
       "200":

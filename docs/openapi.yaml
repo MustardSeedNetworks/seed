@@ -285,6 +285,32 @@ components:
                 - window
                 - days
             type: object
+        AppSignaturesRequest:
+            additionalProperties: false
+            properties:
+                signatures:
+                    items:
+                        $ref: '#/components/schemas/Signature'
+                    type: array
+            required:
+                - signatures
+            type: object
+        AppSignaturesResponse:
+            additionalProperties: false
+            properties:
+                signatures:
+                    items:
+                        $ref: '#/components/schemas/Signature'
+                    type: array
+                source:
+                    enum:
+                        - builtin
+                        - custom
+                    type: string
+            required:
+                - source
+                - signatures
+            type: object
         Application:
             additionalProperties: false
             properties:
@@ -2072,6 +2098,26 @@ components:
                 - window
                 - by
                 - conversations
+            type: object
+        FlowIndicatorsRequest:
+            additionalProperties: false
+            properties:
+                indicators:
+                    items:
+                        type: string
+                    type: array
+            required:
+                - indicators
+            type: object
+        FlowIndicatorsResponse:
+            additionalProperties: false
+            properties:
+                indicators:
+                    items:
+                        type: string
+                    type: array
+            required:
+                - indicators
             type: object
         FlowTalkersResponse:
             additionalProperties: false
@@ -6009,6 +6055,24 @@ components:
                 - warning
                 - critical
             type: object
+        Signature:
+            additionalProperties: false
+            properties:
+                description:
+                    type: string
+                name:
+                    type: string
+                ports:
+                    items:
+                        type: string
+                    type: array
+                protocol:
+                    type: integer
+            required:
+                - name
+                - description
+                - protocol
+            type: object
         SingleHostRequest:
             additionalProperties: false
             properties:
@@ -9221,6 +9285,12 @@ paths:
             description: Requires an operator-scoped token.
             operationId: deleteApiV1FlowsApplicationSignatures
             responses:
+                "200":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/AppSignaturesResponse'
+                    description: The builtin table, now back in effect.
                 "401":
                     content:
                         application/json:
@@ -9257,6 +9327,12 @@ paths:
         get:
             operationId: getApiV1FlowsApplicationSignatures
             responses:
+                "200":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/AppSignaturesResponse'
+                    description: The signature table the collector names flows with. source is builtin for the shipped table and custom once an operator has replaced it.
                 "401":
                     content:
                         application/json:
@@ -9278,7 +9354,19 @@ paths:
         put:
             description: Requires an operator-scoped token.
             operationId: putApiV1FlowsApplicationSignatures
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/AppSignaturesRequest'
+                required: true
             responses:
+                "200":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/AppSignaturesResponse'
+                    description: The table in effect after the replacement. Flows stored after it are named by it; stored flows keep their names. An empty table, a bad port, or a port claimed by two signatures is a 400.
                 "401":
                     content:
                         application/json:
@@ -9316,6 +9404,12 @@ paths:
         get:
             operationId: getApiV1FlowsThreatIndicators
             responses:
+                "200":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/FlowIndicatorsResponse'
+                    description: The operator-supplied addresses and prefixes each collected flow is checked against. Seed ships no list and never fetches one.
                 "401":
                     content:
                         application/json:
@@ -9337,7 +9431,19 @@ paths:
         put:
             description: Requires an operator-scoped token.
             operationId: putApiV1FlowsThreatIndicators
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/FlowIndicatorsRequest'
+                required: true
             responses:
+                "200":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/FlowIndicatorsResponse'
+                    description: The list in effect after the replacement, each entry in canonical form. An empty list turns matching off. Flows collected after the change are checked against it; stored flows are not re-checked.
                 "401":
                     content:
                         application/json:
