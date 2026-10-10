@@ -39,9 +39,9 @@ const (
 	pollingTargetsPathPrefix = pollingTargetsPath + "/"
 )
 
-// pollingTargetInput is the request body for POST + PUT. Mirrors the
+// PollingTargetRequest is the request body for POST + PUT. Mirrors the
 // repo struct minus the audit columns the server fills in.
-type pollingTargetInput struct {
+type PollingTargetRequest struct {
 	Name            string   `json:"name"`
 	IPAddress       string   `json:"ipAddress"`
 	SNMPVersion     string   `json:"snmpVersion,omitempty"`
@@ -49,6 +49,33 @@ type pollingTargetInput struct {
 	PollIntervalSec int      `json:"pollIntervalSeconds,omitempty"`
 	Enabled         bool     `json:"enabled"`
 	CollectorChain  []string `json:"collectorChain,omitempty"`
+}
+
+// PollingTargetResponse is one polling target on the wire. It is built
+// explicitly from the domain row so the wire format stays stable when DB
+// columns evolve. Timestamps are RFC 3339 UTC; lastPolledAt is absent until
+// the first poll.
+type PollingTargetResponse struct {
+	ID              string   `json:"id"`
+	ClientID        string   `json:"clientId"`
+	Name            string   `json:"name"`
+	IPAddress       string   `json:"ipAddress"`
+	SNMPVersion     string   `json:"snmpVersion"`
+	CredentialsID   string   `json:"credentialsId"`
+	PollIntervalSec int      `json:"pollIntervalSeconds"`
+	Enabled         bool     `json:"enabled"`
+	CollectorChain  []string `json:"collectorChain"`
+	LastStatus      string   `json:"lastStatus"`
+	LastError       string   `json:"lastError"`
+	LastPolledAt    string   `json:"lastPolledAt,omitempty"`
+	CreatedAt       string   `json:"createdAt"`
+	UpdatedAt       string   `json:"updatedAt"`
+}
+
+// PollingTargetListResponse is the GET /polling-targets envelope.
+type PollingTargetListResponse struct {
+	Count   int                     `json:"count"`
+	Targets []PollingTargetResponse `json:"targets"`
 }
 
 // handlePollingTargets routes the collection-level endpoint
@@ -117,9 +144,9 @@ func (s *Server) listPollingTargets(w http.ResponseWriter, r *http.Request) {
 		writePollingError(w, r, err, "Failed to list polling targets")
 		return
 	}
-	sendJSONResponse(w, logger, http.StatusOK, map[string]any{
-		jsonKeyCount: len(list),
-		"targets":    encodePollingTargets(list),
+	sendJSONResponse(w, logger, http.StatusOK, PollingTargetListResponse{
+		Count:   len(list),
+		Targets: encodePollingTargets(list),
 	})
 }
 
@@ -227,8 +254,8 @@ func writePollingError(w http.ResponseWriter, r *http.Request, err error, generi
 
 // decodePollingTargetInput parses the JSON body. Returns a 400-
 // shaped error for malformed payloads.
-func decodePollingTargetInput(r *http.Request) (*pollingTargetInput, error) {
-	var in pollingTargetInput
+func decodePollingTargetInput(r *http.Request) (*PollingTargetRequest, error) {
+	var in PollingTargetRequest
 	if r.Body == nil {
 		return nil, errors.New("body required")
 	}
@@ -249,9 +276,9 @@ func decodePollingTargetInput(r *http.Request) (*pollingTargetInput, error) {
 // inputToTarget maps the wire shape into the domain struct. id ==
 // "" means "let the repo generate one" (Create); a non-empty id is
 // used for Update. The owning client comes from the caller's session, never
-// from the body — pollingTargetInput has no field for it, and the decoder
+// from the body — PollingTargetRequest has no field for it, and the decoder
 // rejects unknown fields, so a request that tries to name a tenant gets a 400.
-func inputToTarget(in *pollingTargetInput, id, clientID string) *polling.Target {
+func inputToTarget(in *PollingTargetRequest, id, clientID string) *polling.Target {
 	return &polling.Target{
 		ID:              id,
 		ClientID:        clientID,
@@ -265,33 +292,33 @@ func inputToTarget(in *pollingTargetInput, id, clientID string) *polling.Target 
 	}
 }
 
-// encodePollingTarget shapes the domain row into JSON. Done
-// explicitly so the wire format stays stable when DB columns
-// evolve.
-func encodePollingTarget(t *polling.Target) map[string]any {
-	row := map[string]any{
-		"id":                  t.ID,
-		"clientId":            t.ClientID,
-		jsonKeyName:           t.Name,
-		"ipAddress":           t.IPAddress,
-		"snmpVersion":         t.SNMPVersion,
-		"credentialsId":       t.CredentialsID,
-		"pollIntervalSeconds": t.PollIntervalSec,
-		jsonKeyEnabled:        t.Enabled,
-		"collectorChain":      t.CollectorChain,
-		"lastStatus":          t.LastStatus,
-		"lastError":           t.LastError,
-		"createdAt":           formatTime(t.CreatedAt),
-		"updatedAt":           formatTime(t.UpdatedAt),
+// encodePollingTarget shapes the domain row into its wire form. A row whose
+// stored chain is empty answers [] rather than null.
+func encodePollingTarget(t *polling.Target) PollingTargetResponse {
+	chain := t.CollectorChain
+	if chain == nil {
+		chain = []string{}
 	}
-	if !t.LastPolledAt.IsZero() {
-		row["lastPolledAt"] = formatTime(t.LastPolledAt)
+	return PollingTargetResponse{
+		ID:              t.ID,
+		ClientID:        t.ClientID,
+		Name:            t.Name,
+		IPAddress:       t.IPAddress,
+		SNMPVersion:     t.SNMPVersion,
+		CredentialsID:   t.CredentialsID,
+		PollIntervalSec: t.PollIntervalSec,
+		Enabled:         t.Enabled,
+		CollectorChain:  chain,
+		LastStatus:      t.LastStatus,
+		LastError:       t.LastError,
+		LastPolledAt:    formatTime(t.LastPolledAt),
+		CreatedAt:       formatTime(t.CreatedAt),
+		UpdatedAt:       formatTime(t.UpdatedAt),
 	}
-	return row
 }
 
-func encodePollingTargets(targets []*polling.Target) []map[string]any {
-	out := make([]map[string]any, 0, len(targets))
+func encodePollingTargets(targets []*polling.Target) []PollingTargetResponse {
+	out := make([]PollingTargetResponse, 0, len(targets))
 	for _, t := range targets {
 		out = append(out, encodePollingTarget(t))
 	}

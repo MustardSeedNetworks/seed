@@ -922,6 +922,39 @@ components:
                 - password
                 - role
             type: object
+        Credentials:
+            additionalProperties: false
+            properties:
+                clientId:
+                    type: string
+                createdAt:
+                    format: date-time
+                    type: string
+                id:
+                    type: string
+                kind:
+                    type: string
+                name:
+                    type: string
+                securityLevel:
+                    type: string
+                snmpV3AuthProto:
+                    type: string
+                snmpV3PrivProto:
+                    type: string
+                snmpV3User:
+                    type: string
+                updatedAt:
+                    format: date-time
+                    type: string
+            required:
+                - id
+                - clientId
+                - name
+                - kind
+                - createdAt
+                - updatedAt
+            type: object
         CuratedCounter:
             additionalProperties: false
             properties:
@@ -1199,6 +1232,39 @@ components:
                 - retention_days
                 - enable_wal
                 - max_connections
+            type: object
+        DeviceCredentialListResponse:
+            additionalProperties: false
+            properties:
+                count:
+                    type: integer
+                credentials:
+                    items:
+                        $ref: '#/components/schemas/Credentials'
+                    type: array
+            required:
+                - count
+                - credentials
+            type: object
+        DeviceCredentialRequest:
+            additionalProperties: false
+            properties:
+                community:
+                    type: string
+                name:
+                    type: string
+                snmpV3AuthProto:
+                    type: string
+                snmpV3AuthSecret:
+                    type: string
+                snmpV3PrivProto:
+                    type: string
+                snmpV3PrivSecret:
+                    type: string
+                snmpV3User:
+                    type: string
+            required:
+                - name
             type: object
         DeviceProfile:
             additionalProperties: false
@@ -4237,6 +4303,91 @@ components:
                     type: number
             required:
                 - detected
+            type: object
+        PollingTargetListResponse:
+            additionalProperties: false
+            properties:
+                count:
+                    type: integer
+                targets:
+                    items:
+                        $ref: '#/components/schemas/PollingTargetResponse'
+                    type: array
+            required:
+                - count
+                - targets
+            type: object
+        PollingTargetRequest:
+            additionalProperties: false
+            properties:
+                collectorChain:
+                    items:
+                        type: string
+                    type: array
+                credentialsId:
+                    type: string
+                enabled:
+                    type: boolean
+                ipAddress:
+                    type: string
+                name:
+                    type: string
+                pollIntervalSeconds:
+                    type: integer
+                snmpVersion:
+                    type: string
+            required:
+                - name
+                - ipAddress
+                - enabled
+            type: object
+        PollingTargetResponse:
+            additionalProperties: false
+            properties:
+                clientId:
+                    type: string
+                collectorChain:
+                    items:
+                        type: string
+                    type: array
+                createdAt:
+                    type: string
+                credentialsId:
+                    type: string
+                enabled:
+                    type: boolean
+                id:
+                    type: string
+                ipAddress:
+                    type: string
+                lastError:
+                    type: string
+                lastPolledAt:
+                    type: string
+                lastStatus:
+                    type: string
+                name:
+                    type: string
+                pollIntervalSeconds:
+                    type: integer
+                snmpVersion:
+                    type: string
+                updatedAt:
+                    type: string
+            required:
+                - id
+                - clientId
+                - name
+                - ipAddress
+                - snmpVersion
+                - credentialsId
+                - pollIntervalSeconds
+                - enabled
+                - collectorChain
+                - lastStatus
+                - lastError
+                - createdAt
+                - updatedAt
             type: object
         PortInfo:
             additionalProperties: false
@@ -8161,6 +8312,12 @@ paths:
         get:
             operationId: getApiV1DeviceCredentials
             responses:
+                "200":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/DeviceCredentialListResponse'
+                    description: The caller's client's SNMP credentials. Secrets are write-only and never returned.
                 "401":
                     content:
                         application/json:
@@ -8182,7 +8339,19 @@ paths:
         post:
             description: Requires an operator-scoped token.
             operationId: postApiV1DeviceCredentials
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/DeviceCredentialRequest'
+                required: true
             responses:
+                "200":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Credentials'
+                    description: The stored credential, without its secrets. Devices found without SNMP are asked again.
                 "401":
                     content:
                         application/json:
@@ -8216,11 +8385,13 @@ paths:
             security:
                 - BearerAuth: []
                   CsrfToken: []
-    /api/v1/device-credentials/{subpath}:
+    /api/v1/device-credentials/{credentialId}:
         delete:
             description: Requires an operator-scoped token.
-            operationId: deleteApiV1DeviceCredentialsSubpath
+            operationId: deleteApiV1DeviceCredentialsCredentialId
             responses:
+                "204":
+                    description: The credential was deleted. A credential a polling target still references is a 409.
                 "401":
                     content:
                         application/json:
@@ -8255,8 +8426,14 @@ paths:
                 - BearerAuth: []
                   CsrfToken: []
         get:
-            operationId: getApiV1DeviceCredentialsSubpath
+            operationId: getApiV1DeviceCredentialsCredentialId
             responses:
+                "200":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Credentials'
+                    description: The credential, without its secrets.
                 "401":
                     content:
                         application/json:
@@ -8276,16 +8453,28 @@ paths:
                                 $ref: '#/components/schemas/Error'
                     description: Internal error.
         parameters:
-            - description: Trailing path segment; this route matches by prefix.
+            - description: Path parameter.
               in: path
-              name: subpath
+              name: credentialId
               required: true
               schema:
                 type: string
         put:
             description: Requires an operator-scoped token.
-            operationId: putApiV1DeviceCredentialsSubpath
+            operationId: putApiV1DeviceCredentialsCredentialId
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/DeviceCredentialRequest'
+                required: true
             responses:
+                "200":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Credentials'
+                    description: The replaced credential, without its secrets.
                 "401":
                     content:
                         application/json:
@@ -9466,6 +9655,12 @@ paths:
         get:
             operationId: getApiV1PollingTargets
             responses:
+                "200":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/PollingTargetListResponse'
+                    description: The caller's client's SNMP polling targets.
                 "401":
                     content:
                         application/json:
@@ -9487,7 +9682,19 @@ paths:
         post:
             description: Requires an operator-scoped token.
             operationId: postApiV1PollingTargets
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/PollingTargetRequest'
+                required: true
             responses:
+                "200":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/PollingTargetResponse'
+                    description: The created target; Location names it. A target past the licence's limit, or a Pro collector below Pro, is a 402.
                 "401":
                     content:
                         application/json:
@@ -9521,11 +9728,13 @@ paths:
             security:
                 - BearerAuth: []
                   CsrfToken: []
-    /api/v1/polling-targets/{subpath}:
+    /api/v1/polling-targets/{targetId}:
         delete:
             description: Requires an operator-scoped token.
-            operationId: deleteApiV1PollingTargetsSubpath
+            operationId: deleteApiV1PollingTargetsTargetId
             responses:
+                "204":
+                    description: The target was deleted.
                 "401":
                     content:
                         application/json:
@@ -9560,8 +9769,14 @@ paths:
                 - BearerAuth: []
                   CsrfToken: []
         get:
-            operationId: getApiV1PollingTargetsSubpath
+            operationId: getApiV1PollingTargetsTargetId
             responses:
+                "200":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/PollingTargetResponse'
+                    description: The polling target.
                 "401":
                     content:
                         application/json:
@@ -9581,16 +9796,28 @@ paths:
                                 $ref: '#/components/schemas/Error'
                     description: Internal error.
         parameters:
-            - description: Trailing path segment; this route matches by prefix.
+            - description: Path parameter.
               in: path
-              name: subpath
+              name: targetId
               required: true
               schema:
                 type: string
         put:
             description: Requires an operator-scoped token.
-            operationId: putApiV1PollingTargetsSubpath
+            operationId: putApiV1PollingTargetsTargetId
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/PollingTargetRequest'
+                required: true
             responses:
+                "200":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/PollingTargetResponse'
+                    description: The replaced target.
                 "401":
                     content:
                         application/json:

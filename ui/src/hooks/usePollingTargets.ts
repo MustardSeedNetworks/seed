@@ -14,26 +14,24 @@
 
 import { useEffect, useState } from 'react';
 import { api } from '../api/client';
-import type {
-  PollingTarget,
-  PollingTargetInput,
-  PollingTargetsListResponse,
-} from '../types/polling';
+import type { PollingTargetListResponse } from '../types/generated/polling-target-list-response';
+import type { PollingTargetRequest } from '../types/generated/polling-target-request';
+import type { PollingTargetResponse } from '../types/generated/polling-target-response';
 
 const ENDPOINT = '/api/v1/polling-targets';
 
 export interface UsePollingTargetsResult {
-  targets: PollingTarget[];
+  targets: PollingTargetResponse[];
   loading: boolean;
   error: string | null;
   refresh: () => Promise<void>;
-  create: (input: PollingTargetInput) => Promise<PollingTarget>;
-  update: (id: string, input: PollingTargetInput) => Promise<PollingTarget>;
+  create: (input: PollingTargetRequest) => Promise<PollingTargetResponse>;
+  update: (id: string, input: PollingTargetRequest) => Promise<PollingTargetResponse>;
   remove: (id: string) => Promise<void>;
 }
 
 export function usePollingTargets(): UsePollingTargetsResult {
-  const [targets, setTargets] = useState<PollingTarget[]>([]);
+  const [targets, setTargets] = useState<PollingTargetResponse[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -41,7 +39,7 @@ export function usePollingTargets(): UsePollingTargetsResult {
     setLoading(true);
     setError(null);
     await api
-      .get<PollingTargetsListResponse>(ENDPOINT)
+      .get<PollingTargetListResponse>(ENDPOINT)
       .then((resp) => {
         setTargets(resp.targets ?? []);
       })
@@ -58,8 +56,8 @@ export function usePollingTargets(): UsePollingTargetsResult {
     void refresh();
   }, [refresh]);
 
-  const create = async (input: PollingTargetInput): Promise<PollingTarget> => {
-    const created = await api.post<PollingTarget>(ENDPOINT, input);
+  const create = async (input: PollingTargetRequest): Promise<PollingTargetResponse> => {
+    const created = await api.post<PollingTargetResponse>(ENDPOINT, input);
     // Re-fetch so the row order, audit columns, and any server-
     // generated defaults (id, collectorChain) reflect what's on
     // disk instead of a partial echo of the input.
@@ -67,8 +65,11 @@ export function usePollingTargets(): UsePollingTargetsResult {
     return created;
   };
 
-  const update = async (id: string, input: PollingTargetInput): Promise<PollingTarget> => {
-    const updated = await api.put<PollingTarget>(`${ENDPOINT}/${id}`, input);
+  const update = async (
+    id: string,
+    input: PollingTargetRequest,
+  ): Promise<PollingTargetResponse> => {
+    const updated = await api.put<PollingTargetResponse>(`${ENDPOINT}/${id}`, input);
     await refresh();
     return updated;
   };

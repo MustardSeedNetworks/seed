@@ -7,9 +7,9 @@ import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { type CurrentUser, RoleProvider } from '../contexts/RoleContext';
-import type { PollingTarget } from '../types/polling';
+import type { PollingTargetResponse } from '../types/generated/polling-target-response';
 
-const targets: PollingTarget[] = [
+const targets: PollingTargetResponse[] = [
   {
     id: 'healthy',
     clientId: 'c',
