@@ -5,11 +5,13 @@ package gateway
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net"
 	"sync"
 	"time"
 
+	"github.com/MustardSeedNetworks/seed/internal/diagnostics/dhcp"
 	"github.com/MustardSeedNetworks/seed/internal/discovery/enumerate"
 )
 
@@ -22,6 +24,26 @@ const (
 	StatusWarning Status = "warning"
 	StatusError   Status = "error"
 	StatusUnknown Status = "unknown"
+)
+
+// Source names where a detected gateway address came from, so the operator
+// can tell a router the kernel routes through from one a DHCP lease names.
+type Source string
+
+// Gateway source constants.
+const (
+	// SourceRoute is the next hop of a default route in this host's routing
+	// table.
+	SourceRoute Source = "route"
+	// SourceLease is the router option of the interface's DHCP lease, used
+	// when the kernel installed no default route over the interface.
+	SourceLease Source = "lease"
+)
+
+// Route families as RouteInfo.Family spells them.
+const (
+	familyIPv4 = "inet"
+	familyIPv6 = "inet6"
 )
 
 // Time conversion and threshold constants.
@@ -68,6 +90,7 @@ type PingResult struct {
 // PingStats contains aggregated ping statistics.
 type PingStats struct {
 	Gateway     string       `json:"gateway"`
+	Source      Source       `json:"source,omitempty"`
 	Sent        int          `json:"sent"`
 	Received    int          `json:"received"`
 	Lost        int          `json:"lost"`
@@ -104,6 +127,7 @@ func DefaultThresholds() Thresholds {
 // Tester performs gateway ping tests.
 type Tester struct {
 	gateway     string
+	source      Source
 	thresholds  Thresholds
 	pingCount   int
 	pingTimeout time.Duration
@@ -163,11 +187,17 @@ func NewTesterForInterface(thresholds Thresholds, iface string) *Tester {
 	return t
 }
 
-// SetGateway updates the gateway address to ping.
+// SetGateway updates the gateway address to ping. An address given here was
+// not detected, so it carries no Source.
 func (t *Tester) SetGateway(gateway string) {
+	t.setGateway(gateway, "")
+}
+
+func (t *Tester) setGateway(gateway string, source Source) {
 	t.mu.Lock()
 	defer t.mu.Unlock()
 	t.gateway = gateway
+	t.source = source
 }
 
 // SetInterface scopes detection to the interface the operator selected.
@@ -184,6 +214,7 @@ func (t *Tester) SetInterface(name string) {
 	}
 	t.iface = name
 	t.gateway = ""
+	t.source = ""
 	// The cached stats describe the previous interface's gateway, and
 	// collectGatewayData serves them straight to the card — leaving them would
 	// show the old router's loss under the new interface until the next tick,
@@ -223,54 +254,127 @@ func DetectGateway() (string, error) {
 	return detectGatewayPlatform()
 }
 
-// routingReader holds the two routing-table reads the interface-scoping rule
-// needs. The Tester carries one so the rule can be exercised without a host
-// whose routing table happens to say the right thing; production is always
-// built from systemRouting.
+// routingReader holds the reads the interface-scoping rule needs. The Tester
+// carries one so the rule can be exercised without a host whose routing table
+// and leases happen to say the right thing; production is always built from
+// systemRouting.
 type routingReader struct {
-	defaultRouteInterface func() (string, error)
-	defaultRouteGateway   func() (string, error)
+	routes            func() ([]RouteInfo, error)
+	systemGateway     func() (string, error)
+	systemGatewayIPv6 func() (string, error)
+	leaseRouter       func(iface string) (string, error)
 }
 
 func systemRouting() routingReader {
 	return routingReader{
-		defaultRouteInterface: GetDefaultGatewayInterface,
-		defaultRouteGateway:   DetectGateway,
+		routes:            GetAllRoutes,
+		systemGateway:     DetectGateway,
+		systemGatewayIPv6: DetectGatewayIPv6,
+		leaseRouter:       leaseRouter,
 	}
 }
 
-// gatewayForInterface returns the gateway reachable over iface.
+// gatewayForInterface returns the IPv4 gateway reachable over iface and where
+// it came from.
 //
-// A gateway is the next hop of a default route, so an interface that does not
-// carry the default route has none of its own: answering with the system
-// default would name a router on another link, which is what made the Network
-// page report a Wi-Fi gateway at 100 % loss for a probe pinned to a virtual
-// link (#2690). An empty iface means no selection and keeps the system answer.
-//
-// Limit, stated rather than papered over: a DHCP lease can carry a router
-// option for an interface the kernel gave no default route, and that address
-// is not consulted here — the routing table is the only source. Such an
-// interface reports an honest absence.
-func (r routingReader) gatewayForInterface(iface string) (string, error) {
+// A default route over iface wins: it is the router the kernel actually sends
+// through. Without one, the router option of iface's DHCP lease is the next
+// best answer — a lease can name a router the kernel installed no default
+// route for — and it is labelled as such. Neither means iface has no gateway
+// of its own, which is reported as an empty address rather than borrowing the
+// system default, the answer that showed a Wi-Fi gateway at 100 % loss for a
+// probe pinned to a virtual link (#2690, #2759). An empty iface means no
+// selection and keeps the system answer.
+func (r routingReader) gatewayForInterface(iface string) (string, Source, error) {
 	if iface == "" {
-		return r.defaultRouteGateway()
+		gw, err := r.systemGateway()
+		return gw, SourceRoute, err
 	}
 
-	routeIface, err := r.defaultRouteInterface()
+	routes, err := r.routes()
 	if err != nil {
-		return "", fmt.Errorf("default route interface: %w", err)
+		return "", "", fmt.Errorf("routing table: %w", err)
 	}
-	if routeIface != iface {
+	if gw := defaultGatewayOn(routes, iface, familyIPv4); gw != "" {
+		return gw, SourceRoute, nil
+	}
+
+	gw, err := r.leaseRouter(iface)
+	if err != nil {
+		return "", "", fmt.Errorf("DHCP lease on %s: %w", iface, err)
+	}
+	return gw, SourceLease, nil
+}
+
+// ipv6GatewayForInterface returns the IPv6 gateway reachable over iface. Only
+// the routing table can name one: DHCPv6 has no router option, and the router
+// advertisements that do name routers are what install the default route.
+func (r routingReader) ipv6GatewayForInterface(iface string) (string, error) {
+	if iface == "" {
+		return r.systemGatewayIPv6()
+	}
+
+	routes, err := r.routes()
+	if err != nil {
+		return "", fmt.Errorf("routing table: %w", err)
+	}
+	return defaultGatewayOn(routes, iface, familyIPv6), nil
+}
+
+// defaultGatewayOn returns the next hop of a default route of family over
+// iface, or "" when iface carries none. Of several IPv6 default routes a
+// global next hop is preferred over a link-local one, as the system-wide
+// detection does.
+func defaultGatewayOn(routes []RouteInfo, iface, family string) string {
+	var linkLocal string
+	for i := range routes {
+		route := &routes[i]
+		if route.Family != family || route.Interface != iface || route.Prefix != 0 || route.Gateway == "" {
+			continue
+		}
+		dst := net.ParseIP(route.Destination)
+		gw := net.ParseIP(route.Gateway)
+		if dst == nil || !dst.IsUnspecified() || gw == nil {
+			continue
+		}
+		if !gw.IsLinkLocalUnicast() {
+			return route.Gateway
+		}
+		if linkLocal == "" {
+			linkLocal = route.Gateway
+		}
+	}
+	return linkLocal
+}
+
+// leaseRouter returns the router option of iface's current DHCP lease.
+func leaseRouter(iface string) (string, error) {
+	lease, err := dhcp.CurrentLease(iface)
+	return routerOfLease(lease, err, time.Now())
+}
+
+// routerOfLease returns the router a lease read names, or "" when the
+// interface holds no lease, the lease names no router, or the lease has
+// expired — a dhclient lease file outlives its lease, and a router it named
+// then is not this interface's gateway now. Any other read failure is
+// returned rather than reported as an absence.
+func routerOfLease(lease *dhcp.LeaseInfo, err error, now time.Time) (string, error) {
+	if noLease := (*dhcp.InterfaceError)(nil); errors.As(err, &noLease) {
 		return "", nil
 	}
-
-	return r.defaultRouteGateway()
+	if err != nil {
+		return "", err
+	}
+	if !lease.Expiry.IsZero() && lease.Expiry.Before(now) {
+		return "", nil
+	}
+	return lease.Gateway, nil
 }
 
-// DetectGatewayForInterface returns the gateway reachable over iface, read
-// from this host's routing table. See routingReader.gatewayForInterface.
-func DetectGatewayForInterface(iface string) (string, error) {
-	return systemRouting().gatewayForInterface(iface)
+// DetectGatewayIPv6ForInterface returns the IPv6 gateway reachable over iface,
+// or the system default when iface is empty.
+func DetectGatewayIPv6ForInterface(iface string) (string, error) {
+	return systemRouting().ipv6GatewayForInterface(iface)
 }
 
 // DetectGatewayIPv6 attempts to detect the default IPv6 gateway.
@@ -340,6 +444,7 @@ func pingErrorMessage(err error) string {
 func (t *Tester) Test() *PingStats {
 	t.mu.RLock()
 	gateway := t.gateway
+	source := t.source
 	count := t.pingCount
 	iface := t.iface
 	routing := t.routing
@@ -347,6 +452,7 @@ func (t *Tester) Test() *PingStats {
 
 	stats := &PingStats{
 		Gateway:     gateway,
+		Source:      source,
 		Sent:        0,
 		Received:    0,
 		Lost:        0,
@@ -356,11 +462,12 @@ func (t *Tester) Test() *PingStats {
 
 	if gateway == "" {
 		// Try to detect gateway
-		detected, err := routing.gatewayForInterface(iface)
+		detected, detectedSource, err := routing.gatewayForInterface(iface)
 		if err == nil && detected != "" {
-			t.SetGateway(detected)
+			t.setGateway(detected, detectedSource)
 			gateway = detected
 			stats.Gateway = gateway
+			stats.Source = detectedSource
 		} else {
 			stats.Status = StatusError
 			stats.Reachable = false

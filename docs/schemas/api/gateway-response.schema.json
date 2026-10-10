@@ -8,6 +8,13 @@
         "gateway": {
           "type": "string"
         },
+        "gatewaySource": {
+          "type": "string",
+          "enum": [
+            "route",
+            "lease"
+          ]
+        },
         "reachable": {
           "type": "boolean"
         },
@@ -55,6 +62,13 @@
       "properties": {
         "gateway": {
           "type": "string"
+        },
+        "gatewaySource": {
+          "type": "string",
+          "enum": [
+            "route",
+            "lease"
+          ]
         },
         "reachable": {
           "type": "boolean"

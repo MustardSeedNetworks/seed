@@ -259,6 +259,12 @@ func (t *Tester) GetCurrentLease() (*LeaseInfo, error) {
 	iface := t.interfaceName
 	t.mu.RUnlock()
 
+	return CurrentLease(iface)
+}
+
+// CurrentLease reads the DHCP lease iface holds. A missing interface or lease
+// is reported as an *InterfaceError.
+func CurrentLease(iface string) (*LeaseInfo, error) {
 	if iface == "" {
 		return nil, &InterfaceError{Message: "no interface specified"}
 	}
