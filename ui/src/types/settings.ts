@@ -284,13 +284,6 @@ export interface IperfSettings {
   enableServer: boolean;
 }
 
-export interface IperfSuggestion {
-  host: string;
-  hostname?: string;
-  latencyMs?: number;
-  source?: string;
-}
-
 // ============================================================================
 // Network Discovery Settings (fixes #773, #774)
 // ============================================================================

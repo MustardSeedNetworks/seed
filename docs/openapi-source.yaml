@@ -109,6 +109,12 @@ operations:
             schema:
               $ref: '#/components/schemas/CSRFTokenResponse'
   POST /api/v1/auth/login/totp:
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/TOTPLoginRequest'
     responses:
       "200":
         description: Second factor accepted; the session token.
@@ -124,6 +130,58 @@ operations:
           application/json:
             schema:
               $ref: '#/components/schemas/LoginResponse'
+  POST /api/v1/auth/logout:
+    responses:
+      "200":
+        description: Signed out; the session's tokens are revoked and its cookies cleared.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LogoutResponse'
+  GET /api/v1/auth/mfa/status:
+    responses:
+      "200":
+        description: The caller's second-factor enrolment.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MFAStatusResponse'
+  POST /api/v1/auth/totp/setup:
+    responses:
+      "200":
+        description: A new, not yet enabled TOTP secret, its provisioning URI and QR code.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TOTPSetupResponse'
+  POST /api/v1/auth/totp/verify:
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/TOTPVerifyRequest'
+    responses:
+      "200":
+        description: The code matched; TOTP is now required at sign-in.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TOTPToggleResponse'
+  POST /api/v1/auth/totp/disable:
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/TOTPDisableRequest'
+    responses:
+      "200":
+        description: Password and code matched; TOTP is no longer required.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TOTPToggleResponse'
   POST /api/v1/config/backup:
     responses:
       "201":
@@ -218,6 +276,14 @@ operations:
           application/json:
             schema:
               $ref: '#/components/schemas/EngineStats'
+  GET /api/v1/engines:
+    responses:
+      "200":
+        description: Every running background engine and its state.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EnginesResponse'
   GET /api/v1/flows/top-applications:
     responses:
       "200":
@@ -937,6 +1003,24 @@ operations:
         application/json:
           schema:
             $ref: '#/components/schemas/IperfServerRequest'
+  GET /api/v1/telemetry/iperf/server/status:
+    responses:
+      "200":
+        description: Whether the local iperf3 server is running, and on which port.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ServerStatus'
+  GET /api/v1/telemetry/iperf/suggestions:
+    responses:
+      "200":
+        description: Discovered hosts that accept a TCP connection on the iperf3 port, with the connect latency.
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: '#/components/schemas/IperfSuggestion'
   GET /api/v1/telemetry/link:
     responses:
       "200":

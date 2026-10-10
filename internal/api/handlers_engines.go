@@ -23,31 +23,39 @@ package api
 import (
 	"net/http"
 
-	"github.com/MustardSeedNetworks/seed/internal/engine/status"
 	"github.com/MustardSeedNetworks/seed/internal/logging"
 )
 
-func (s *Server) handleEngines(w http.ResponseWriter, r *http.Request) {
-	statuses := s.engineStatus.List()
-	out := make([]map[string]any, 0, len(statuses))
-	for _, st := range statuses {
-		out = append(out, encodeEngineEntry(st))
-	}
-	sendJSONResponse(w, logging.FromContext(r.Context()), http.StatusOK, map[string]any{
-		jsonKeyCount: len(out),
-		"engines":    out,
-	})
+// EnginesResponse is the GET /api/v1/engines body.
+type EnginesResponse struct {
+	Count   int           `json:"count"`
+	Engines []EngineEntry `json:"engines"`
 }
 
-// encodeEngineEntry flattens one engine-status snapshot into the wire
-// shape. The status determination (Reporter vs StatusOK fallback) happens
-// in the use-case; this only shapes the response.
-func encodeEngineEntry(st status.EngineStatus) map[string]any {
-	return map[string]any{
-		jsonKeyName:  st.Name,
-		"state":      st.State,
-		"lastTickAt": formatTime(st.LastTickAt),
-		"lastError":  st.LastError,
-		"inflight":   st.Inflight,
+// EngineEntry is one engine's status. LastTickAt is RFC 3339, or "" for an
+// engine that has not ticked yet.
+type EngineEntry struct {
+	Name       string `json:"name"`
+	State      string `json:"state"`
+	LastTickAt string `json:"lastTickAt"`
+	LastError  string `json:"lastError"`
+	Inflight   int    `json:"inflight"`
+}
+
+func (s *Server) handleEngines(w http.ResponseWriter, r *http.Request) {
+	statuses := s.engineStatus.List()
+	out := make([]EngineEntry, 0, len(statuses))
+	for _, st := range statuses {
+		out = append(out, EngineEntry{
+			Name:       st.Name,
+			State:      st.State,
+			LastTickAt: formatTime(st.LastTickAt),
+			LastError:  st.LastError,
+			Inflight:   st.Inflight,
+		})
 	}
+	sendJSONResponse(w, logging.FromContext(r.Context()), http.StatusOK, EnginesResponse{
+		Count:   len(out),
+		Engines: out,
+	})
 }

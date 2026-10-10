@@ -13,9 +13,9 @@ import type React from 'react';
 import { useEffect } from 'react';
 import { withIds } from '../components/settings/settingsDrawerNormalizer';
 import { LogComponents, logger } from '../lib/logger';
+import type { IperfSuggestion } from '../types/generated/iperf-suggestion';
 import type {
   CableTestSettings as CableTestSettingsType,
-  IperfSuggestion,
   IpSettings,
   LinkSettings as LinkSettingsType,
   LogsResponse,

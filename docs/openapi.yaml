@@ -1497,6 +1497,26 @@ components:
                 - stats
                 - capabilities
             type: object
+        EngineEntry:
+            additionalProperties: false
+            properties:
+                inflight:
+                    type: integer
+                lastError:
+                    type: string
+                lastTickAt:
+                    type: string
+                name:
+                    type: string
+                state:
+                    type: string
+            required:
+                - name
+                - state
+                - lastTickAt
+                - lastError
+                - inflight
+            type: object
         EngineScanRequest:
             additionalProperties: false
             properties:
@@ -1567,6 +1587,19 @@ components:
                 - scanCount
                 - running
                 - scanning
+            type: object
+        EnginesResponse:
+            additionalProperties: false
+            properties:
+                count:
+                    type: integer
+                engines:
+                    items:
+                        $ref: '#/components/schemas/EngineEntry'
+                    type: array
+            required:
+                - count
+                - engines
             type: object
         Entry:
             additionalProperties: false
@@ -2948,6 +2981,20 @@ components:
             required:
                 - autoRunOnLink
             type: object
+        IperfSuggestion:
+            additionalProperties: false
+            properties:
+                host:
+                    type: string
+                hostname:
+                    type: string
+                latencyMs:
+                    type: number
+                source:
+                    type: string
+            required:
+                - host
+            type: object
         JobResponse:
             additionalProperties: false
             properties:
@@ -3375,6 +3422,14 @@ components:
                 token:
                     type: string
             type: object
+        LogoutResponse:
+            additionalProperties: false
+            properties:
+                status:
+                    type: string
+            required:
+                - status
+            type: object
         MDNSService:
             additionalProperties: false
             properties:
@@ -3391,6 +3446,20 @@ components:
             required:
                 - name
                 - type
+            type: object
+        MFAStatusResponse:
+            additionalProperties: false
+            properties:
+                totpEnabled:
+                    type: boolean
+                webauthnCredentialCount:
+                    type: integer
+                webauthnEnabled:
+                    type: boolean
+            required:
+                - totpEnabled
+                - webauthnEnabled
+                - webauthnCredentialCount
             type: object
         MintTokenRequest:
             additionalProperties: false
@@ -5593,6 +5662,22 @@ components:
                 - cert_file
                 - key_file
             type: object
+        ServerStatus:
+            additionalProperties: false
+            properties:
+                error:
+                    type: string
+                pid:
+                    type: integer
+                port:
+                    type: integer
+                running:
+                    type: boolean
+            required:
+                - running
+                - port
+                - pid
+            type: object
         ServiceInstance:
             additionalProperties: false
             properties:
@@ -6101,6 +6186,61 @@ components:
                 - state
                 - ttl
                 - rtt
+            type: object
+        TOTPDisableRequest:
+            additionalProperties: false
+            properties:
+                code:
+                    type: string
+                password:
+                    type: string
+            required:
+                - password
+                - code
+            type: object
+        TOTPLoginRequest:
+            additionalProperties: false
+            properties:
+                code:
+                    type: string
+                mfaToken:
+                    type: string
+            required:
+                - mfaToken
+                - code
+            type: object
+        TOTPSetupResponse:
+            additionalProperties: false
+            properties:
+                provisioningUri:
+                    type: string
+                qrCodePngBase64:
+                    type: string
+                secret:
+                    type: string
+            required:
+                - secret
+                - provisioningUri
+                - qrCodePngBase64
+            type: object
+        TOTPToggleResponse:
+            additionalProperties: false
+            properties:
+                enabled:
+                    type: boolean
+                status:
+                    type: string
+            required:
+                - status
+                - enabled
+            type: object
+        TOTPVerifyRequest:
+            additionalProperties: false
+            properties:
+                code:
+                    type: string
+            required:
+                - code
             type: object
         TestsSettingsResponse:
             additionalProperties: false
@@ -7422,6 +7562,12 @@ paths:
     /api/v1/auth/login/totp:
         post:
             operationId: postApiV1AuthLoginTotp
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/TOTPLoginRequest'
+                required: true
             responses:
                 "200":
                     content:
@@ -7452,6 +7598,12 @@ paths:
         post:
             operationId: postApiV1AuthLogout
             responses:
+                "200":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/LogoutResponse'
+                    description: Signed out; the session's tokens are revoked and its cookies cleared.
                 "401":
                     content:
                         application/json:
@@ -7480,6 +7632,12 @@ paths:
         get:
             operationId: getApiV1AuthMfaStatus
             responses:
+                "200":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/MFAStatusResponse'
+                    description: The caller's second-factor enrolment.
                 "401":
                     content:
                         application/json:
@@ -7530,7 +7688,19 @@ paths:
     /api/v1/auth/totp/disable:
         post:
             operationId: postApiV1AuthTotpDisable
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/TOTPDisableRequest'
+                required: true
             responses:
+                "200":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/TOTPToggleResponse'
+                    description: Password and code matched; TOTP is no longer required.
                 "401":
                     content:
                         application/json:
@@ -7568,6 +7738,12 @@ paths:
         post:
             operationId: postApiV1AuthTotpSetup
             responses:
+                "200":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/TOTPSetupResponse'
+                    description: A new, not yet enabled TOTP secret, its provisioning URI and QR code.
                 "401":
                     content:
                         application/json:
@@ -7604,7 +7780,19 @@ paths:
     /api/v1/auth/totp/verify:
         post:
             operationId: postApiV1AuthTotpVerify
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/TOTPVerifyRequest'
+                required: true
             responses:
+                "200":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/TOTPToggleResponse'
+                    description: The code matched; TOTP is now required at sign-in.
                 "401":
                     content:
                         application/json:
@@ -8451,6 +8639,12 @@ paths:
         get:
             operationId: getApiV1Engines
             responses:
+                "200":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/EnginesResponse'
+                    description: Every running background engine and its state.
                 "401":
                     content:
                         application/json:
@@ -13104,6 +13298,12 @@ paths:
         get:
             operationId: getApiV1TelemetryIperfServerStatus
             responses:
+                "200":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/ServerStatus'
+                    description: Whether the local iperf3 server is running, and on which port.
                 "401":
                     content:
                         application/json:
@@ -13126,6 +13326,14 @@ paths:
         get:
             operationId: getApiV1TelemetryIperfSuggestions
             responses:
+                "200":
+                    content:
+                        application/json:
+                            schema:
+                                items:
+                                    $ref: '#/components/schemas/IperfSuggestion'
+                                type: array
+                    description: Discovered hosts that accept a TCP connection on the iperf3 port, with the connect latency.
                 "401":
                     content:
                         application/json:

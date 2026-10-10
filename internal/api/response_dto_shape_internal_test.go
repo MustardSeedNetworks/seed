@@ -13,6 +13,8 @@ import (
 
 	"github.com/MustardSeedNetworks/seed/internal/config"
 	"github.com/MustardSeedNetworks/seed/internal/discovery"
+	"github.com/MustardSeedNetworks/seed/internal/engine"
+	enginestatus "github.com/MustardSeedNetworks/seed/internal/engine/status"
 	"github.com/MustardSeedNetworks/seed/internal/wifi/troubleshooting"
 )
 
@@ -146,4 +148,41 @@ func TestVulnerabilityListResponseShapes(t *testing.T) {
 	require.NoError(t, json.Unmarshal(findings.Body.Bytes(), &f))
 	require.Equal(t, 1, f.Count)
 	require.Len(t, f.Findings, 1)
+}
+
+type fixedEngines []engine.Engine
+
+func (fixedEngines) Available() bool            { return true }
+func (e fixedEngines) Engines() []engine.Engine { return e }
+
+func TestEnginesResponseShape(t *testing.T) {
+	t.Parallel()
+	tick := time.Date(2026, 10, 10, 12, 0, 0, 0, time.UTC)
+	tests := []struct {
+		name    string
+		engines fixedEngines
+		want    string
+	}{
+		{name: "none", want: `{"count":0,"engines":[]}`},
+		{
+			name: "reporter and plain",
+			engines: fixedEngines{
+				&reportingEngine{name: "snmp-poller", status: engine.Status{
+					State: engine.StateDegraded, LastTickAt: tick, LastError: "timeout", Inflight: 2,
+				}},
+				&minimalEngine{name: "retention"},
+			},
+			want: `{"count":2,"engines":[` +
+				`{"name":"snmp-poller","state":"degraded","lastTickAt":"2026-10-10T12:00:00Z","lastError":"timeout","inflight":2},` +
+				`{"name":"retention","state":"ok","lastTickAt":"","lastError":"","inflight":0}]}`,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			s := &Server{engineStatus: enginestatus.NewService(tt.engines)}
+			w := serve(t, s.handleEngines, "/api/v1/engines")
+			require.JSONEq(t, tt.want, w.Body.String())
+		})
+	}
 }
