@@ -182,6 +182,7 @@ func Targets() []Target {
 		{&api.TokenListItem{}, "token-list-item.schema.json"},
 		{&api.SSOProvidersResponse{}, "sso-providers-response.schema.json"},
 		{&api.SSOSettingsResponse{}, "sso-settings-response.schema.json"},
+		{&api.SSOUpdateRequest{}, "sso-update-request.schema.json"},
 		{&api.NVDAPIKeyValidateRequest{}, "nvd-api-key-validate-request.schema.json"},
 		{&api.NVDAPIKeyValidateResponse{}, "nvd-api-key-validate-response.schema.json"},
 		{&api.VulnerabilityResultsResponse{}, "vulnerability-results-response.schema.json"},
@@ -346,8 +347,13 @@ func Targets() []Target {
 
 		// Acknowledgement-only success bodies.
 		{&api.StatusMessageResponse{}, "status-message-response.schema.json"},
+		{&api.StatusUpdatedResponse{}, "status-updated-response.schema.json"},
 		{&api.RenewDHCPLeaseRequest{}, "renew-dhcp-lease-request.schema.json"},
 		{&api.RenewDHCPLeaseResponse{}, "renew-dhcp-lease-response.schema.json"},
+
+		// The alert test-send action on a saved receiver (#2997).
+		{&api.AlertTestSendRequest{}, "alert-test-send-request.schema.json"},
+		{&api.AlertTestSendResponse{}, "alert-test-send-response.schema.json"},
 
 		// Operator-defined alert rules (Stage A5.10).
 		{&api.AlertRuleRequest{}, "alert-rule-request.schema.json"},

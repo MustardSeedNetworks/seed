@@ -994,6 +994,13 @@ operations:
         application/json:
           schema:
             $ref: '#/components/schemas/GuestNetworkAuditConfig'
+    responses:
+      "200":
+        description: The guest network audit settings were saved.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StatusUpdatedResponse'
   GET /api/v1/security/problems:
     responses:
       "200":
@@ -1064,6 +1071,14 @@ operations:
           application/json:
             schema:
               $ref: '#/components/schemas/VulnerabilityScanConfig'
+  PUT /api/v1/security/vulnerabilities/settings:
+    responses:
+      "200":
+        description: The vulnerability scan settings were saved.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StatusUpdatedResponse'
   POST /api/v1/security/vulnerabilities/validate-api-key:
     requestBody:
       required: true
@@ -1110,6 +1125,30 @@ operations:
           application/json:
             schema:
               $ref: '#/components/schemas/WiFiDiscoveryStatsResponse'
+  PUT /api/v1/settings:
+    summary: Update settings (partial; If-Match refuses a stale write)
+    responses:
+      "200":
+        description: The settings were saved; the ETag header carries the new version.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StatusUpdatedResponse'
+  POST /api/v1/settings/alerts/test:
+    summary: Send a test alert through a saved receiver
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/AlertTestSendRequest'
+    responses:
+      "200":
+        description: The receiver accepted the test alert.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AlertTestSendResponse'
   GET /api/v1/settings/cable:
     responses:
       "200":
@@ -1125,6 +1164,13 @@ operations:
         application/json:
           schema:
             $ref: '#/components/schemas/CableTestConfig'
+    responses:
+      "200":
+        description: The cable test settings were saved.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StatusUpdatedResponse'
   GET /api/v1/settings/link:
     responses:
       "200":
@@ -1140,6 +1186,13 @@ operations:
         application/json:
           schema:
             $ref: '#/components/schemas/LinkConfig'
+    responses:
+      "200":
+        description: The link settings were saved.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StatusUpdatedResponse'
   POST /api/v1/setup/complete:
     requestBody:
       required: true
@@ -1171,6 +1224,20 @@ operations:
           application/json:
             schema:
               $ref: '#/components/schemas/SSOSettingsResponse'
+  PUT /api/v1/sso/update:
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/SSOUpdateRequest'
+    responses:
+      "200":
+        description: The provider was saved and the sign-on providers reloaded.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StatusUpdatedResponse'
   GET /api/v1/status:
     responses:
       "200":

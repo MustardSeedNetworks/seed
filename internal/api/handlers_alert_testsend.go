@@ -13,6 +13,17 @@ import (
 // ErrCodeDeliveryFailed is a receiver that refused or could not be reached.
 const ErrCodeDeliveryFailed = "DELIVERY_FAILED"
 
+// AlertTestSendRequest names the saved receiver to test.
+type AlertTestSendRequest struct {
+	Channel alerts.Channel `json:"channel" jsonschema:"enum=email,enum=syslog,enum=webhook"`
+}
+
+// AlertTestSendResponse reports that the receiver accepted the test alert.
+type AlertTestSendResponse struct {
+	Channel alerts.Channel `json:"channel" jsonschema:"enum=email,enum=syslog,enum=webhook"`
+	Sent    bool           `json:"sent"`
+}
+
 // handleAlertTestSend serves POST /api/v1/settings/alerts/test (#2997): send a
 // synthetic alert on one channel now, through the receiver that is saved, and
 // answer with what the receiver said. A relay that refuses AUTH or a webhook
@@ -25,9 +36,7 @@ func (s *Server) handleAlertTestSend(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	logger := logging.FromContext(ctx)
 
-	var req struct {
-		Channel alerts.Channel `json:"channel"`
-	}
+	var req AlertTestSendRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		sendErrorResponseWithDetails(w, logger, http.StatusBadRequest,
 			ErrCodeBadRequest, "body must be {\"channel\": \"email\" | \"syslog\" | \"webhook\"}", "")
@@ -57,12 +66,7 @@ func (s *Server) handleAlertTestSend(w http.ResponseWriter, r *http.Request) {
 	err := s.alertDelivery.SendTest(ctx, channel)
 	switch {
 	case err == nil:
-		sendJSONResponse(
-			w,
-			logging.FromContext(r.Context()),
-			http.StatusOK,
-			map[string]any{"channel": channel, "sent": true},
-		)
+		sendJSONResponse(w, logger, http.StatusOK, AlertTestSendResponse{Channel: channel, Sent: true})
 	case errors.Is(err, alertdelivery.ErrNotConfigured):
 		sendErrorResponseWithDetails(w, logger, http.StatusConflict,
 			ErrCodeConflict, err.Error(), "")

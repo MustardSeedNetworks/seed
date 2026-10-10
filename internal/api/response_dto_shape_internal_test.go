@@ -3,8 +3,10 @@ package api
 import (
 	"context"
 	"encoding/json"
+	"log/slog"
 	"net/http"
 	"net/http/httptest"
+	"path/filepath"
 	"slices"
 	"strconv"
 	"strings"
@@ -13,6 +15,8 @@ import (
 
 	"github.com/stretchr/testify/require"
 
+	alertdelivery "github.com/MustardSeedNetworks/seed/internal/alerts/delivery"
+	"github.com/MustardSeedNetworks/seed/internal/app"
 	"github.com/MustardSeedNetworks/seed/internal/config"
 	"github.com/MustardSeedNetworks/seed/internal/discovery"
 	"github.com/MustardSeedNetworks/seed/internal/discovery/enumerate"
@@ -505,4 +509,64 @@ func TestSubnetWriteAckShape(t *testing.T) {
 		nil, "Subnet deleted")
 	require.Equal(t, http.StatusOK, w.Code, w.Body.String())
 	require.JSONEq(t, `{"status":"success","message":"Subnet deleted"}`, w.Body.String())
+}
+
+// TestSettingsWriteAckShape pins the {"status":"updated"} acknowledgement the
+// settings writes answer, over a temp config path so each save succeeds.
+func TestSettingsWriteAckShape(t *testing.T) {
+	t.Parallel()
+	cfg := config.DefaultConfig()
+	cfg.Auth.SSO.Providers = []config.SSOProviderConfig{{Name: "google"}}
+	s := &Server{config: cfg, configPath: filepath.Join(t.TempDir(), "config.yaml")}
+	s.settingsStore = app.NewSettings(s.db, s.config)
+	s.settingsManagement = app.NewSettingsManagement(s.config, s.configPath,
+		func() *alertdelivery.Manager { return nil })
+	s.securitySettings = app.NewSecuritySettings(s.config, s.configPath, nil)
+
+	marshal := func(v any) string {
+		b, err := json.Marshal(v)
+		require.NoError(t, err)
+		return string(b)
+	}
+	for _, tc := range []struct {
+		name    string
+		handler http.HandlerFunc
+		target  string
+		body    string
+	}{
+		{"settings", s.handleSettings, "/api/v1/settings", `{}`},
+		{"link", s.handleLinkSettings, "/api/v1/settings/link", marshal(s.settingsManagement.Link())},
+		{"cable", s.handleCableTestSettings, "/api/v1/settings/cable", marshal(s.settingsManagement.CableTest())},
+		{
+			"guest audit", s.handleGuestAuditSettings, "/api/v1/security/guest-audit/settings",
+			marshal(s.securitySettings.GuestAudit()),
+		},
+		{
+			"vulnerability", s.handleVulnerabilitySettings, "/api/v1/security/vulnerabilities/settings",
+			`{"enabled":false}`,
+		},
+		{"sso", s.handleSSOUpdate, "/api/v1/sso/update", `{"provider":"google","enabled":false}`},
+	} {
+		w := httptest.NewRecorder()
+		tc.handler(w, httptest.NewRequest(http.MethodPut, tc.target, strings.NewReader(tc.body)))
+		require.Equal(t, http.StatusOK, w.Code, "%s: %s", tc.name, w.Body.String())
+		require.JSONEq(t, `{"status":"updated"}`, w.Body.String(), tc.name)
+	}
+}
+
+func TestAlertTestSendResponseShape(t *testing.T) {
+	t.Parallel()
+	receiver := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		w.WriteHeader(http.StatusNoContent)
+	}))
+	defer receiver.Close()
+	manager := alertdelivery.NewManager(nil, nil, slog.New(slog.DiscardHandler))
+	defer manager.Stop(context.Background())
+	manager.ApplyWebhook(alertdelivery.WebhookConfig{URL: receiver.URL, Secret: "s3cret"})
+
+	w := httptest.NewRecorder()
+	(&Server{alertDelivery: manager}).handleAlertTestSend(w, httptest.NewRequest(http.MethodPost,
+		"/api/v1/settings/alerts/test", strings.NewReader(`{"channel":"webhook"}`)))
+	require.Equal(t, http.StatusOK, w.Code, w.Body.String())
+	require.JSONEq(t, `{"channel":"webhook","sent":true}`, w.Body.String())
 }

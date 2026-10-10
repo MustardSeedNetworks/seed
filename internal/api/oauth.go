@@ -491,8 +491,8 @@ func (s *Server) handleSSOSettings(w http.ResponseWriter, r *http.Request) {
 	sendJSONResponse(w, logger, http.StatusOK, SSOSettingsResponse{Providers: providers})
 }
 
-// ssoUpdateRequest represents the SSO provider update request.
-type ssoUpdateRequest struct {
+// SSOUpdateRequest represents the SSO provider update request.
+type SSOUpdateRequest struct {
 	Provider     string   `json:"provider"`
 	Enabled      bool     `json:"enabled"`
 	ClientID     string   `json:"clientId"`
@@ -504,7 +504,7 @@ type ssoUpdateRequest struct {
 
 // updateProviderConfig updates the provider configuration in the config.
 // Returns true if the provider was found and updated.
-func (s *Server) updateProviderConfig(req *ssoUpdateRequest) bool {
+func (s *Server) updateProviderConfig(req *SSOUpdateRequest) bool {
 	for i := range s.config.Auth.SSO.Providers {
 		if !strings.EqualFold(s.config.Auth.SSO.Providers[i].Name, req.Provider) {
 			continue
@@ -530,7 +530,7 @@ func (s *Server) handleSSOUpdate(w http.ResponseWriter, r *http.Request) {
 	logger := logging.FromContext(r.Context())
 
 	// Existing handler was English-only — use the non-localized helper.
-	var req ssoUpdateRequest
+	var req SSOUpdateRequest
 	if !decodeJSONStrict(w, r, &req, MaxBodySizeJSON) {
 		return
 	}
@@ -575,5 +575,5 @@ func (s *Server) handleSSOUpdate(w http.ResponseWriter, r *http.Request) {
 		"event",
 		"config.sso.updated",
 	)
-	sendJSONResponse(w, logger, http.StatusOK, map[string]string{"status": "updated"})
+	sendJSONResponse(w, logger, http.StatusOK, StatusUpdatedResponse{Status: "updated"})
 }

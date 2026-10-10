@@ -1,0 +1,46 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/MustardSeedNetworks/seed/main/docs/schemas/api/sso-update-request.schema.json",
+  "$ref": "#/$defs/SSOUpdateRequest",
+  "$defs": {
+    "SSOUpdateRequest": {
+      "properties": {
+        "provider": {
+          "type": "string"
+        },
+        "enabled": {
+          "type": "boolean"
+        },
+        "clientId": {
+          "type": "string"
+        },
+        "clientSecret": {
+          "type": "string"
+        },
+        "redirectUrl": {
+          "type": "string"
+        },
+        "tenantId": {
+          "type": "string"
+        },
+        "scopes": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "provider",
+        "enabled",
+        "clientId",
+        "clientSecret",
+        "redirectUrl"
+      ]
+    }
+  },
+  "title": "SSOUpdateRequest",
+  "description": "SSOUpdateRequest — generated from the Go struct in internal/api; refresh with `make schema` after struct changes."
+}

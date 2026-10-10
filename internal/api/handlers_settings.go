@@ -99,7 +99,7 @@ func (s *Server) updateSettings(w http.ResponseWriter, r *http.Request) {
 
 	// Emit the fresh token so the client can chain a subsequent conditional write.
 	w.Header().Set("ETag", s.settingsManagement.ETag())
-	sendJSONResponse(w, logger, http.StatusOK, map[string]string{"status": "updated"})
+	sendJSONResponse(w, logger, http.StatusOK, StatusUpdatedResponse{Status: "updated"})
 }
 
 func (s *Server) handleLinkSettings(w http.ResponseWriter, r *http.Request) {
@@ -161,7 +161,7 @@ func (s *Server) updateLinkSettings(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	sendJSONResponse(w, logger, http.StatusOK, map[string]string{"status": "updated"})
+	sendJSONResponse(w, logger, http.StatusOK, StatusUpdatedResponse{Status: "updated"})
 }
 
 // ============================================================================
@@ -224,5 +224,5 @@ func (s *Server) updateCableTestSettings(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	sendJSONResponse(w, logger, http.StatusOK, map[string]string{"status": "updated"})
+	sendJSONResponse(w, logger, http.StatusOK, StatusUpdatedResponse{Status: "updated"})
 }
