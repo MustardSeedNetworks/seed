@@ -9,9 +9,7 @@ export interface EngineDiscoveryResponse {
   devices: DiscoveredDevice[];
   stats: EngineStats;
   scanResult?: ScanResult;
-  capabilities: {
-    [k: string]: boolean;
-  };
+  capabilities: EngineCapabilities;
 }
 export interface DiscoveredDevice {
   ip: string;
@@ -305,4 +303,15 @@ export interface ScanStats {
   updatedDevices: number;
   enrichedDevices: number;
   vulnerableDevices: number;
+}
+export interface EngineCapabilities {
+  wired: boolean;
+  wifi: boolean;
+  bluetooth: boolean;
+  snmp: boolean;
+  portScan: boolean;
+  profiling: boolean;
+  vulnScan: boolean;
+  nameRes: boolean;
+  correlation: boolean;
 }

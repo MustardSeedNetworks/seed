@@ -29,7 +29,7 @@ type EngineDiscoveryResponse struct {
 	Devices      []*discovery.DiscoveredDevice `json:"devices"`
 	Stats        *discovery.EngineStats        `json:"stats"`
 	ScanResult   *discovery.ScanResult         `json:"scanResult,omitempty"`
-	Capabilities map[string]bool               `json:"capabilities"`
+	Capabilities discovery.EngineCapabilities  `json:"capabilities"`
 }
 
 // EngineScanRequest contains options for an engine scan.

@@ -40,7 +40,9 @@ func (f *fakeEngineScanner) Scan(
 func (f *fakeEngineScanner) GetDevices() []*discovery.DiscoveredDevice { return f.devices }
 func (f *fakeEngineScanner) GetStats() *discovery.EngineStats          { return &discovery.EngineStats{} }
 
-func (f *fakeEngineScanner) GetCapabilities() map[string]bool { return map[string]bool{"wired": true} }
+func (f *fakeEngineScanner) GetCapabilities() discovery.EngineCapabilities {
+	return discovery.EngineCapabilities{Wired: true}
+}
 
 func TestEngineScanKindRunsToSuccess(t *testing.T) {
 	t.Parallel()
@@ -69,7 +71,7 @@ func TestEngineScanKindRunsToSuccess(t *testing.T) {
 	if !ok {
 		t.Fatalf("Result type = %T, want EngineDiscoveryResponse", j.Result)
 	}
-	if len(res.Devices) != 2 || res.Capabilities["wired"] != true {
+	if len(res.Devices) != 2 || !res.Capabilities.Wired {
 		t.Fatalf("result = %+v, want 2 devices + wired capability", res)
 	}
 }

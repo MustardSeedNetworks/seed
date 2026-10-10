@@ -41,7 +41,7 @@ type Engine interface {
 	Device(mac string) *discovery.DiscoveredDevice
 	Stats() *discovery.EngineStats
 	LastScan() *discovery.ScanResult
-	Capabilities() map[string]bool
+	Capabilities() discovery.EngineCapabilities
 	Scan(ctx context.Context, opts *discovery.ScanOptions) (*discovery.ScanResult, error)
 	SubscribeAll(handler func(*discovery.Event)) string
 	Unsubscribe(id string)
@@ -54,7 +54,7 @@ type Snapshot struct {
 	Devices      []*discovery.DiscoveredDevice
 	Stats        *discovery.EngineStats
 	ScanResult   *discovery.ScanResult
-	Capabilities map[string]bool
+	Capabilities discovery.EngineCapabilities
 }
 
 // Service is the unified-discovery use-case.
@@ -134,9 +134,9 @@ func (s *Service) Stats() (*discovery.EngineStats, error) {
 }
 
 // Capabilities returns the engine's capability set.
-func (s *Service) Capabilities() (map[string]bool, error) {
+func (s *Service) Capabilities() (discovery.EngineCapabilities, error) {
 	if !s.engine.Available() {
-		return nil, ErrUnavailable
+		return discovery.EngineCapabilities{}, ErrUnavailable
 	}
 	return s.engine.Capabilities(), nil
 }

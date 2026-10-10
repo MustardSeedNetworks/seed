@@ -7,68 +7,18 @@ import (
 )
 
 func TestInfo(t *testing.T) {
-	tests := []struct {
-		name     string
-		wantKeys []string
-	}{
-		{
-			name:     "returns all version fields",
-			wantKeys: []string{"version", "commit", "buildTime", "releaseTrain", "uiBuildHash"},
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			info := version.Info()
-
-			// Verify all expected keys are present
-			for _, key := range tt.wantKeys {
-				if _, exists := info[key]; !exists {
-					t.Errorf("Info() missing key %q", key)
-				}
-			}
-
-			// Verify no extra keys
-			if len(info) != len(tt.wantKeys) {
-				t.Errorf("Info() returned %d keys, want %d", len(info), len(tt.wantKeys))
-			}
-		})
-	}
-}
-
-func TestInfoDefaultValues(t *testing.T) {
 	info := version.Info()
 
-	// Test default values (when not set via ldflags)
-	if info["version"] == "" {
-		t.Error("Info() version should not be empty")
-	}
-
-	if info["commit"] == "" {
-		t.Error("Info() commit should not be empty")
-	}
-
-	if info["buildTime"] == "" {
-		t.Error("Info() buildTime should not be empty")
-	}
-
-	if info["uiBuildHash"] == "" {
-		t.Error("Info() uiBuildHash should not be empty")
-	}
-}
-
-func TestInfoMapStructure(t *testing.T) {
-	info := version.Info()
-
-	// Verify it returns a non-nil map
-	if info == nil {
-		t.Fatal("Info() returned nil map")
-	}
-
-	// Verify all values are non-empty strings
-	for key, value := range info {
+	// Without ldflags every field still answers: a fallback, never empty.
+	for name, value := range map[string]string{
+		"Version":      info.Version,
+		"Commit":       info.Commit,
+		"BuildTime":    info.BuildTime,
+		"ReleaseTrain": info.ReleaseTrain,
+		"UIBuildHash":  info.UIBuildHash,
+	} {
 		if value == "" {
-			t.Errorf("Info()[%q] should not be empty", key)
+			t.Errorf("Info().%s is empty", name)
 		}
 	}
 }

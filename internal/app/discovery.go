@@ -131,7 +131,9 @@ func (a discoveryEngineAdapter) Device(mac string) *discovery.DiscoveredDevice {
 }
 func (a discoveryEngineAdapter) Stats() *discovery.EngineStats   { return a.eng().GetStats() }
 func (a discoveryEngineAdapter) LastScan() *discovery.ScanResult { return a.eng().GetLastScan() }
-func (a discoveryEngineAdapter) Capabilities() map[string]bool   { return a.eng().GetCapabilities() }
+func (a discoveryEngineAdapter) Capabilities() discovery.EngineCapabilities {
+	return a.eng().GetCapabilities()
+}
 
 func (a discoveryEngineAdapter) Scan(
 	ctx context.Context, opts *discovery.ScanOptions,

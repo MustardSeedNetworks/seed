@@ -139,14 +139,23 @@ func releaseTrainFromBuildTime(buildTime string) string {
 	return strings.ReplaceAll(buildTime[:len("2006-01")], "-", ".")
 }
 
+// BuildInfo is the running binary's build metadata, which /__version serves.
+type BuildInfo struct {
+	Version      string `json:"version"`
+	Commit       string `json:"commit"`
+	BuildTime    string `json:"buildTime"`
+	ReleaseTrain string `json:"releaseTrain"`
+	UIBuildHash  string `json:"uiBuildHash"`
+}
+
 // Info returns all version information.
-func Info() map[string]string {
+func Info() BuildInfo {
 	ver, commit, buildTime := getVersionInfo()
-	return map[string]string{
-		"version":      ver,
-		"commit":       commit,
-		"buildTime":    buildTime,
-		"releaseTrain": releaseTrainFromBuildTime(buildTime),
-		"uiBuildHash":  GetUIBuildHash(),
+	return BuildInfo{
+		Version:      ver,
+		Commit:       commit,
+		BuildTime:    buildTime,
+		ReleaseTrain: releaseTrainFromBuildTime(buildTime),
+		UIBuildHash:  GetUIBuildHash(),
 	}
 }
