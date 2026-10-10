@@ -27,41 +27,14 @@
 import type React from 'react';
 import { useTranslation } from 'react-i18next';
 import { icon as iconTokens } from '../../styles/theme';
+import type { PublicIPResponse } from '../../types/generated/public-ip-response';
 import { CardDivider, CardRow, CardValue, type Status } from '../ui/Card';
 import { CollapsibleSection } from '../ui/CollapsibleSection';
 import { Globe } from '../ui/Icons';
 import { BaseCard } from './BaseCard';
 
-/** IP history entry for tracking address changes */
-export interface IpHistoryEntry {
-  ip: string;
-  firstSeen: string;
-  lastSeen: string;
-  city?: string;
-  country?: string;
-}
-
-export interface PublicIpData {
-  ipv4?: string;
-  ipv6?: string;
-  lastChecked: string;
-  error?: string;
-  // Geo fields
-  isp?: string;
-  asn?: string;
-  org?: string;
-  city?: string;
-  region?: string;
-  country?: string;
-  countryCode?: string;
-  lat?: number;
-  lon?: number;
-  // History
-  history?: IpHistoryEntry[];
-}
-
 interface PublicIpCardProps {
-  data: PublicIpData | null;
+  data: PublicIPResponse | null;
   loading?: boolean;
 }
 
@@ -138,7 +111,7 @@ function formatLocation(city?: string, region?: string, country?: string): strin
   return parts.length > 0 ? parts.join(', ') : null;
 }
 
-function getStatus(data: PublicIpData): Status {
+function getStatus(data: PublicIPResponse): Status {
   if (data.error && !data.ipv4 && !data.ipv6) {
     return 'error';
   }
@@ -161,7 +134,7 @@ export function PublicIpCard({ data, loading }: PublicIpCardProps): React.ReactE
       loadingContent={<CardValue value={t('publicIp.checking')} size="lg" />}
       emptyMessage={t('publicIp.unableToDetect')}
     >
-      {(ipData: PublicIpData): React.ReactElement => {
+      {(ipData: PublicIPResponse): React.ReactElement => {
         const ispAsnDisplay = formatIspAsn(ipData.asn, ipData.org, ipData.isp);
         const locationDisplay = formatLocation(ipData.city, ipData.region, ipData.country);
         const hasHistory = ipData.history && ipData.history.length > 0;

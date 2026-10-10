@@ -89,6 +89,15 @@ func (s *Server) vulnerabilityRoutes() []route.Route {
 	}
 }
 
+// VulnerabilityStatusResponse is the scanner's state, its result counts and
+// the configured severity threshold.
+type VulnerabilityStatusResponse struct {
+	Enabled        bool              `json:"enabled"`
+	Scanning       bool              `json:"scanning"`
+	Stats          vuln.ScannerStats `json:"stats"`
+	SeverityFilter string            `json:"severityFilter"`
+}
+
 // handleVulnerabilityStatus returns scanner status and statistics
 // GET /api/vulnerabilities/status (fixes #703).
 func (s *Server) handleVulnerabilityStatus(w http.ResponseWriter, r *http.Request) {
@@ -101,13 +110,11 @@ func (s *Server) handleVulnerabilityStatus(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
-	stats := s.vulnScanner().GetStats()
-
-	sendJSONResponse(w, logger, http.StatusOK, map[string]any{
-		jsonKeyEnabled:   true,
-		"scanning":       s.vulnScanner().IsRunning(),
-		"stats":          stats,
-		"severityFilter": s.securitySettings.VulnSeverity(),
+	sendJSONResponse(w, logger, http.StatusOK, VulnerabilityStatusResponse{
+		Enabled:        true,
+		Scanning:       s.vulnScanner().IsRunning(),
+		Stats:          s.vulnScanner().GetStats(),
+		SeverityFilter: s.securitySettings.VulnSeverity(),
 	})
 }
 

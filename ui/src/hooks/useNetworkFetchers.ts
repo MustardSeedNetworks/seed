@@ -29,7 +29,6 @@ import type { GatewayData } from '../components/cards/GatewayCard';
 import type { LinkData } from '../components/cards/LinkCard';
 import type { DhcpData } from '../components/cards/NetworkCard';
 import type { NetworkDiscoveryData } from '../components/cards/NetworkDiscoveryCard';
-import type { PublicIpData } from '../components/cards/PublicIpCard';
 import type { SwitchData, VlanData } from '../components/cards/SwitchCard';
 import type { WiFiData } from '../components/cards/WiFiCard';
 import { LogComponents, logger } from '../lib/logger';
@@ -39,6 +38,7 @@ import type {
   InterfaceInfo,
 } from '../types/generated/categorized-interfaces-response';
 import type { LinkResponse } from '../types/generated/link-response';
+import type { PublicIPResponse } from '../types/generated/public-ip-response';
 import type { WiFiResponse } from '../types/generated/wifi-response';
 
 const API_BASE: string = import.meta.env.VITE_API_BASE || '';
@@ -52,7 +52,7 @@ interface CardState {
   dhcp: DhcpData | null;
   dns: DnsData | null;
   gateway: GatewayData | null;
-  publicip: PublicIpData | null;
+  publicip: PublicIPResponse | null;
 }
 
 function isPlainObject(value: unknown): value is Record<string, unknown> {

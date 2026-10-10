@@ -185,6 +185,7 @@ func Targets() []Target {
 		{&api.SSOUpdateRequest{}, "sso-update-request.schema.json"},
 		{&api.NVDAPIKeyValidateRequest{}, "nvd-api-key-validate-request.schema.json"},
 		{&api.NVDAPIKeyValidateResponse{}, "nvd-api-key-validate-response.schema.json"},
+		{&api.VulnerabilityStatusResponse{}, "vulnerability-status-response.schema.json"},
 		{&api.VulnerabilityResultsResponse{}, "vulnerability-results-response.schema.json"},
 		{&api.VulnFindingsResponse{}, "vuln-findings-response.schema.json"},
 		{&api.RestoreRequest{}, "restore-request.schema.json"},
@@ -292,6 +293,10 @@ func Targets() []Target {
 		// The iperf3 server's state, which /telemetry/iperf/server/status
 		// serves as it is: flat, pure data.
 		{&iperf.ServerStatus{}, "iperf-server-status.schema.json"},
+
+		// The public address lookup, which /telemetry/publicip serves as the
+		// publicip package's own flat type, named for the API.
+		{&api.PublicIPResponse{}, "public-ip-response.schema.json"},
 
 		// #326's packet capture, a jobs-spine kind registered as the
 		// packetcapture package's own types like the two above.

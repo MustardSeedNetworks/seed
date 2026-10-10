@@ -20,11 +20,11 @@ import type { GatewayData } from '../components/cards/GatewayCard';
 import type { LinkData } from '../components/cards/LinkCard';
 import type { DhcpData } from '../components/cards/NetworkCard';
 import type { TraceHopMessage } from '../components/cards/PathDiscoveryCard';
-import type { PublicIpData } from '../components/cards/PublicIpCard';
 import type { SwitchData, VlanData } from '../components/cards/SwitchCard';
 import type { WiFiData } from '../components/cards/WiFiCard';
 import { LogComponents, logger } from '../lib/logger';
 import { useTestRunStore } from '../stores/testRunStore';
+import type { PublicIPResponse } from '../types/generated/public-ip-response';
 import { isPathMonitorUpdate, type PathMonitorUpdate } from './usePathMonitor';
 import type { SseCardUpdate as CardUpdate, SseMessage as Message } from './useSse';
 
@@ -41,7 +41,7 @@ export interface CardState {
   dhcp: DhcpData | null;
   dns: DnsData | null;
   gateway: GatewayData | null;
-  publicip: PublicIpData | null;
+  publicip: PublicIPResponse | null;
 }
 
 const CARD_IDS = [

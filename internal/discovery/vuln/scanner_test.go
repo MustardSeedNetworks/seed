@@ -172,29 +172,17 @@ func TestVulnerabilityScanner_GetStats(t *testing.T) {
 
 	stats := scanner.GetStats()
 
-	// Verify stats
-	if enabled, ok := stats["enabled"].(bool); !ok || !enabled {
-		t.Error("expected enabled to be true")
+	want := vuln.ScannerStats{
+		Enabled:        true,
+		DevicesScanned: 2,
+		TotalVulns:     3,
+		CriticalCount:  1,
+		HighCount:      1,
+		MediumCount:    1,
+		CVEDatabase:    "nvd",
 	}
-
-	if devicesScanned, ok := stats["devicesScanned"].(int); !ok || devicesScanned != 2 {
-		t.Errorf("expected devicesScanned to be 2, got %v", devicesScanned)
-	}
-
-	if totalVulns, ok := stats["totalVulns"].(int); !ok || totalVulns != 3 {
-		t.Errorf("expected totalVulns to be 3, got %v", totalVulns)
-	}
-
-	if criticalCount, ok := stats["criticalCount"].(int); !ok || criticalCount != 1 {
-		t.Errorf("expected criticalCount to be 1, got %v", criticalCount)
-	}
-
-	if highCount, ok := stats["highCount"].(int); !ok || highCount != 1 {
-		t.Errorf("expected highCount to be 1, got %v", highCount)
-	}
-
-	if mediumCount, ok := stats["mediumCount"].(int); !ok || mediumCount != 1 {
-		t.Errorf("expected mediumCount to be 1, got %v", mediumCount)
+	if stats != want {
+		t.Errorf("GetStats() = %+v, want %+v", stats, want)
 	}
 }
 

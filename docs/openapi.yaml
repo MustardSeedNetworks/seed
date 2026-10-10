@@ -2866,6 +2866,26 @@ components:
                 - status
                 - uptime
             type: object
+        HistoryEntry:
+            additionalProperties: false
+            properties:
+                city:
+                    type: string
+                country:
+                    type: string
+                firstSeen:
+                    format: date-time
+                    type: string
+                ip:
+                    type: string
+                lastSeen:
+                    format: date-time
+                    type: string
+            required:
+                - ip
+                - firstSeen
+                - lastSeen
+            type: object
         HistoryWindowResponse:
             additionalProperties: false
             properties:
@@ -3585,6 +3605,26 @@ components:
                 - kind
                 - state
                 - progress
+            type: object
+        KEVCatalogStats:
+            additionalProperties: false
+            properties:
+                count:
+                    type: integer
+                dateReleased:
+                    type: string
+                lastUpdate:
+                    format: date-time
+                    type: string
+                loaded:
+                    type: boolean
+                ransomwareCount:
+                    type: integer
+                version:
+                    type: string
+            required:
+                - loaded
+                - lastUpdate
             type: object
         L2Hop:
             additionalProperties: false
@@ -5304,6 +5344,43 @@ components:
                 - packets
                 - bytes
             type: object
+        PublicIPResponse:
+            additionalProperties: false
+            properties:
+                asn:
+                    type: string
+                city:
+                    type: string
+                country:
+                    type: string
+                countryCode:
+                    type: string
+                error:
+                    type: string
+                history:
+                    items:
+                        $ref: '#/components/schemas/HistoryEntry'
+                    type: array
+                ipv4:
+                    type: string
+                ipv6:
+                    type: string
+                isp:
+                    type: string
+                lastChecked:
+                    format: date-time
+                    type: string
+                lat:
+                    type: number
+                lon:
+                    type: number
+                org:
+                    type: string
+                region:
+                    type: string
+            required:
+                - lastChecked
+            type: object
         QosListenRequest:
             additionalProperties: false
             properties:
@@ -6442,6 +6519,53 @@ components:
                 - hasBssLoad
                 - channelUtil
                 - advertisedStations
+            type: object
+        ScannerStats:
+            additionalProperties: false
+            properties:
+                activelyExploited:
+                    type: integer
+                criticalCount:
+                    type: integer
+                cveDatabase:
+                    type: string
+                devicesScanned:
+                    type: integer
+                enabled:
+                    type: boolean
+                highCount:
+                    type: integer
+                kevEnabled:
+                    type: boolean
+                kevStats:
+                    $ref: '#/components/schemas/KEVCatalogStats'
+                lastUpdate:
+                    format: date-time
+                    type: string
+                lowCount:
+                    type: integer
+                mediumCount:
+                    type: integer
+                ransomwareRelated:
+                    type: integer
+                running:
+                    type: boolean
+                totalVulns:
+                    type: integer
+            required:
+                - enabled
+                - running
+                - devicesScanned
+                - totalVulns
+                - criticalCount
+                - highCount
+                - mediumCount
+                - lowCount
+                - activelyExploited
+                - ransomwareRelated
+                - lastUpdate
+                - cveDatabase
+                - kevEnabled
             type: object
         Schedule:
             additionalProperties: false
@@ -8041,6 +8165,23 @@ components:
                 - severity_threshold
                 - max_concurrent
                 - auto_scan
+            type: object
+        VulnerabilityStatusResponse:
+            additionalProperties: false
+            properties:
+                enabled:
+                    type: boolean
+                scanning:
+                    type: boolean
+                severityFilter:
+                    type: string
+                stats:
+                    $ref: '#/components/schemas/ScannerStats'
+            required:
+                - enabled
+                - scanning
+                - stats
+                - severityFilter
             type: object
         WiFiAccessPoint:
             additionalProperties: false
@@ -13461,6 +13602,12 @@ paths:
         get:
             operationId: getApiV1SecurityVulnerabilitiesStatus
             responses:
+                "200":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/VulnerabilityStatusResponse'
+                    description: The scanner's state, its result counts by severity and the configured severity threshold. Answers 503 with only enabled false when the scanner is off.
                 "401":
                     content:
                         application/json:
@@ -15161,6 +15308,12 @@ paths:
         get:
             operationId: getApiV1TelemetryPublicip
             responses:
+                "200":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/PublicIPResponse'
+                    description: The public IPv4 and IPv6 addresses with their geolocation, cached between lookups.
                 "401":
                     content:
                         application/json:
@@ -15182,6 +15335,12 @@ paths:
         post:
             operationId: postApiV1TelemetryPublicip
             responses:
+                "200":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/PublicIPResponse'
+                    description: A fresh lookup of the public addresses, bypassing the cache.
                 "401":
                     content:
                         application/json:

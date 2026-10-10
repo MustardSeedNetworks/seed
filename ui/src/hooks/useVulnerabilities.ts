@@ -40,11 +40,8 @@ import { getJob, isTerminalJobState, submitJob } from '../lib/jobsClient';
 import { LogComponents, logger } from '../lib/logger';
 import type { JobResponse } from '../types/generated/job-response';
 import type { VulnScanRequest } from '../types/generated/vuln-scan-request';
-import type {
-  DeviceVulnerabilities,
-  VulnerabilityScannerConfig,
-  VulnerabilityScannerStatus,
-} from '../types/vulnerabilities';
+import type { VulnerabilityStatusResponse } from '../types/generated/vulnerability-status-response';
+import type { DeviceVulnerabilities, VulnerabilityScannerConfig } from '../types/vulnerabilities';
 import { useJobEvents } from './useJobEvents';
 
 type SeverityFilter = 'critical' | 'high' | 'medium' | 'low';
@@ -135,9 +132,9 @@ function normalizeSeverityFilter(severity: string): SeverityFilter | null {
   }
 }
 
-async function fetchStatus(): Promise<VulnerabilityScannerStatus | null> {
+async function fetchStatus(): Promise<VulnerabilityStatusResponse | null> {
   try {
-    return await api.get<VulnerabilityScannerStatus>('/api/v1/security/vulnerabilities/status');
+    return await api.get<VulnerabilityStatusResponse>('/api/v1/security/vulnerabilities/status');
   } catch (error) {
     logger.error(LogComponents.VULN, 'Failed to fetch vulnerability status', error, {
       endpoint: '/api/v1/security/vulnerabilities/status',
