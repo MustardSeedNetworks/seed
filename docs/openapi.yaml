@@ -7952,6 +7952,12 @@ paths:
         get:
             operationId: getApiV1DiscoveryEngine
             responses:
+                "200":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/EngineDiscoveryResponse'
+                    description: The engine's devices and statistics from its last scan.
                 "401":
                     content:
                         application/json:
@@ -8047,6 +8053,12 @@ paths:
         post:
             operationId: postApiV1DiscoveryEngineFull
             responses:
+                "200":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/EngineDiscoveryResponse'
+                    description: The completed full scan.
                 "401":
                     content:
                         application/json:
@@ -8090,6 +8102,12 @@ paths:
         post:
             operationId: postApiV1DiscoveryEngineQuick
             responses:
+                "200":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/EngineDiscoveryResponse'
+                    description: The completed quick scan.
                 "401":
                     content:
                         application/json:
@@ -8132,7 +8150,19 @@ paths:
     /api/v1/discovery/engine/scan:
         post:
             operationId: postApiV1DiscoveryEngineScan
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/EngineScanRequest'
+                required: true
             responses:
+                "200":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/EngineDiscoveryResponse'
+                    description: The completed scan.
                 "401":
                     content:
                         application/json:
@@ -8527,10 +8557,16 @@ paths:
                             schema:
                                 $ref: '#/components/schemas/Error'
                     description: Internal error.
-    /api/v1/history/probes/{subpath}:
+    /api/v1/history/probes/{probeId}:
         get:
-            operationId: getApiV1HistoryProbesSubpath
+            operationId: getApiV1HistoryProbesProbeId
             responses:
+                "200":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/ProbeHistoryResponse'
+                    description: The probe's trend over the resolved window.
                 "401":
                     content:
                         application/json:
@@ -8550,9 +8586,9 @@ paths:
                                 $ref: '#/components/schemas/Error'
                     description: Internal error.
         parameters:
-            - description: Trailing path segment; this route matches by prefix.
+            - description: Path parameter.
               in: path
-              name: subpath
+              name: probeId
               required: true
               schema:
                 type: string
@@ -8581,6 +8617,12 @@ paths:
         put:
             description: Requires an operator-scoped token.
             operationId: putApiV1Interface
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/SetInterfaceRequest'
+                required: true
             responses:
                 "401":
                     content:
@@ -9188,6 +9230,12 @@ paths:
         get:
             operationId: getApiV1Profiles
             responses:
+                "200":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/ProfileListResponse'
+                    description: Every profile.
                 "401":
                     content:
                         application/json:
@@ -9209,7 +9257,19 @@ paths:
         post:
             description: Requires an operator-scoped token.
             operationId: postApiV1Profiles
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/ProfileRequest'
+                required: true
             responses:
+                "201":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/ProfileResponse'
+                    description: The created profile.
                 "401":
                     content:
                         application/json:
@@ -10347,6 +10407,12 @@ paths:
         get:
             operationId: getApiV1SecurityDevicesSettings
             responses:
+                "200":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/NetworkDiscoverySettingsResponse'
+                    description: The network discovery settings.
                 "401":
                     content:
                         application/json:
@@ -10368,6 +10434,12 @@ paths:
         put:
             description: Requires an operator-scoped token.
             operationId: putApiV1SecurityDevicesSettings
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/NetworkDiscoverySettingsResponse'
+                required: true
             responses:
                 "401":
                     content:
@@ -10465,6 +10537,14 @@ paths:
         get:
             operationId: getApiV1SecurityDevicesSubnets
             responses:
+                "200":
+                    content:
+                        application/json:
+                            schema:
+                                items:
+                                    $ref: '#/components/schemas/SubnetResponse'
+                                type: array
+                    description: The configured discovery subnets.
                 "401":
                     content:
                         application/json:
@@ -10486,6 +10566,12 @@ paths:
         post:
             description: Requires an operator-scoped token.
             operationId: postApiV1SecurityDevicesSubnets
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/SubnetRequest'
+                required: true
             responses:
                 "401":
                     content:
@@ -10523,6 +10609,12 @@ paths:
         put:
             description: Requires an operator-scoped token.
             operationId: putApiV1SecurityDevicesSubnets
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/SubnetRequest'
+                required: true
             responses:
                 "401":
                     content:
@@ -11435,6 +11527,12 @@ paths:
         post:
             operationId: postApiV1SecurityWifiDiscoveryScan
             responses:
+                "200":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/WiFiDiscoveryScanResponse'
+                    description: The scan's networks, access points and statistics.
                 "401":
                     content:
                         application/json:
@@ -12146,6 +12244,12 @@ paths:
         get:
             operationId: getApiV1TelemetryDhcpRogueConfig
             responses:
+                "200":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/RogueDHCPConfigResponse'
+                    description: The rogue DHCP detector configuration.
                 "401":
                     content:
                         application/json:
@@ -12168,6 +12272,12 @@ paths:
             description: Requires an operator-scoped token.
             operationId: putApiV1TelemetryDhcpRogueConfig
             responses:
+                "200":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/RogueDHCPConfigResponse'
+                    description: The configuration after the update.
                 "401":
                     content:
                         application/json:
@@ -12269,6 +12379,12 @@ paths:
         get:
             operationId: getApiV1TelemetryDns
             responses:
+                "200":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/DNSResponse'
+                    description: Resolution results for each configured server.
                 "401":
                     content:
                         application/json:
@@ -12411,6 +12527,12 @@ paths:
         get:
             operationId: getApiV1TelemetryIpconfigSettings
             responses:
+                "200":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/IPSettingsResponse'
+                    description: The interface's IP configuration settings.
                 "401":
                     content:
                         application/json:
@@ -12432,6 +12554,12 @@ paths:
         put:
             description: Requires an operator-scoped token.
             operationId: putApiV1TelemetryIpconfigSettings
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/IPSettingsRequest'
+                required: true
             responses:
                 "401":
                     content:
@@ -12575,6 +12703,12 @@ paths:
         post:
             description: Requires an operator-scoped token.
             operationId: postApiV1TelemetryIperfServer
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/IperfServerRequest'
+                required: true
             responses:
                 "401":
                     content:
@@ -12777,6 +12911,12 @@ paths:
         get:
             operationId: getApiV1TelemetryProbesSettings
             responses:
+                "200":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/TestsSettingsResponse'
+                    description: The probe settings.
                 "401":
                     content:
                         application/json:
@@ -12798,6 +12938,12 @@ paths:
         put:
             description: Requires an operator-scoped token.
             operationId: putApiV1TelemetryProbesSettings
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/TestsSettingsResponse'
+                required: true
             responses:
                 "401":
                     content:
@@ -12930,6 +13076,12 @@ paths:
         get:
             operationId: getApiV1TelemetrySnmpSettings
             responses:
+                "200":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/SNMPSettingsResponse'
+                    description: The SNMP transport settings.
                 "401":
                     content:
                         application/json:
@@ -12951,6 +13103,12 @@ paths:
         put:
             description: Requires an operator-scoped token.
             operationId: putApiV1TelemetrySnmpSettings
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/SNMPSettingsResponse'
+                required: true
             responses:
                 "401":
                     content:
@@ -13131,6 +13289,12 @@ paths:
         post:
             description: Requires an operator-scoped token.
             operationId: postApiV1TelemetryVlanInterface
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/VLANInterfaceRequest'
+                required: true
             responses:
                 "401":
                     content:
@@ -13227,7 +13391,19 @@ paths:
         post:
             description: Requires an operator-scoped token.
             operationId: postApiV1Tokens
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/MintTokenRequest'
+                required: true
             responses:
+                "201":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/MintTokenResponse'
+                    description: The minted token; its secret is shown only here.
                 "401":
                     content:
                         application/json:
@@ -13461,6 +13637,14 @@ paths:
         get:
             operationId: getApiV1Users
             responses:
+                "200":
+                    content:
+                        application/json:
+                            schema:
+                                items:
+                                    $ref: '#/components/schemas/UserResponse'
+                                type: array
+                    description: Every user.
                 "401":
                     content:
                         application/json:
@@ -13481,7 +13665,19 @@ paths:
                     description: Internal error.
         post:
             operationId: postApiV1Users
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/CreateUserRequest'
+                required: true
             responses:
+                "201":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/UserResponse'
+                    description: The created user.
                 "401":
                     content:
                         application/json:
@@ -13515,10 +13711,12 @@ paths:
             security:
                 - BearerAuth: []
                   CsrfToken: []
-    /api/v1/users/{subpath}:
+    /api/v1/users/{username}:
         delete:
-            operationId: deleteApiV1UsersSubpath
+            operationId: deleteApiV1UsersUsername
             responses:
+                "204":
+                    description: The user was deleted.
                 "401":
                     content:
                         application/json:
@@ -13553,8 +13751,14 @@ paths:
                 - BearerAuth: []
                   CsrfToken: []
         get:
-            operationId: getApiV1UsersSubpath
+            operationId: getApiV1UsersUsername
             responses:
+                "200":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/UserResponse'
+                    description: The user.
                 "401":
                     content:
                         application/json:
@@ -13574,15 +13778,27 @@ paths:
                                 $ref: '#/components/schemas/Error'
                     description: Internal error.
         parameters:
-            - description: Trailing path segment; this route matches by prefix.
+            - description: Path parameter.
               in: path
-              name: subpath
+              name: username
               required: true
               schema:
                 type: string
         patch:
-            operationId: patchApiV1UsersSubpath
+            operationId: patchApiV1UsersUsername
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/UpdateUserRequest'
+                required: true
             responses:
+                "200":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/UserResponse'
+                    description: The user after the update.
                 "401":
                     content:
                         application/json:
@@ -13620,6 +13836,12 @@ paths:
         get:
             operationId: getApiV1UsersMe
             responses:
+                "200":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/UserResponse'
+                    description: The signed-in user.
                 "401":
                     content:
                         application/json:
@@ -13774,6 +13996,12 @@ paths:
         get:
             operationId: getApiV1WifiWifi
             responses:
+                "200":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/WiFiResponse'
+                    description: The interface's association state.
                 "401":
                     content:
                         application/json:
@@ -14054,6 +14282,12 @@ paths:
         get:
             operationId: getApiV1WifiWifiSettings
             responses:
+                "200":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/WiFiSettingsResponse'
+                    description: The Wi-Fi interface settings.
                 "401":
                     content:
                         application/json:

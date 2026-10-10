@@ -147,6 +147,44 @@ operations:
           application/json:
             schema:
               $ref: '#/components/schemas/ConfigVersionResponse'
+  GET /api/v1/discovery/engine:
+    responses:
+      "200":
+        description: The engine's devices and statistics from its last scan.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EngineDiscoveryResponse'
+  POST /api/v1/discovery/engine/full:
+    responses:
+      "200":
+        description: The completed full scan.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EngineDiscoveryResponse'
+  POST /api/v1/discovery/engine/quick:
+    responses:
+      "200":
+        description: The completed quick scan.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EngineDiscoveryResponse'
+  POST /api/v1/discovery/engine/scan:
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/EngineScanRequest'
+    responses:
+      "200":
+        description: The completed scan.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EngineDiscoveryResponse'
   GET /api/v1/flows/top-applications:
     responses:
       "200":
@@ -179,6 +217,22 @@ operations:
           application/json:
             schema:
               $ref: '#/components/schemas/AnomalyHistoryResponse'
+  GET /api/v1/history/probes/:
+    pathTemplate: /api/v1/history/probes/{probeId}
+    responses:
+      "200":
+        description: The probe's trend over the resolved window.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProbeHistoryResponse'
+  PUT /api/v1/interface:
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/SetInterfaceRequest'
   POST /api/v1/jobs:
     requestBody:
       required: true
@@ -243,6 +297,28 @@ operations:
         application/json:
           schema:
             $ref: '#/components/schemas/TracerouteRequest'
+  GET /api/v1/profiles:
+    responses:
+      "200":
+        description: Every profile.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProfileListResponse'
+  POST /api/v1/profiles:
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ProfileRequest'
+    responses:
+      "201":
+        description: The created profile.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProfileResponse'
   GET /api/v1/profiles/export:
     responses:
       "200":
@@ -370,6 +446,45 @@ operations:
           application/json:
             schema:
               $ref: '#/components/schemas/ReportScheduleInfo'
+  GET /api/v1/security/devices/settings:
+    responses:
+      "200":
+        description: The network discovery settings.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/NetworkDiscoverySettingsResponse'
+  PUT /api/v1/security/devices/settings:
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/NetworkDiscoverySettingsResponse'
+  GET /api/v1/security/devices/subnets:
+    responses:
+      "200":
+        description: The configured discovery subnets.
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: '#/components/schemas/SubnetResponse'
+  POST /api/v1/security/devices/subnets:
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/SubnetRequest'
+  PUT /api/v1/security/devices/subnets:
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/SubnetRequest'
   POST /api/v1/security/devices/subnets/pending:
     requestBody:
       required: true
@@ -452,6 +567,14 @@ operations:
           application/json:
             schema:
               $ref: '#/components/schemas/WiFiDiscoveryNetworksResponse'
+  POST /api/v1/security/wifi/discovery/scan:
+    responses:
+      "200":
+        description: The scan's networks, access points and statistics.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/WiFiDiscoveryScanResponse'
   GET /api/v1/security/wifi/discovery/stats:
     responses:
       "200":
@@ -507,6 +630,22 @@ operations:
           application/json:
             schema:
               $ref: '#/components/schemas/RogueDHCPResponse'
+  GET /api/v1/telemetry/dhcp/rogue/config:
+    responses:
+      "200":
+        description: The rogue DHCP detector configuration.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RogueDHCPConfigResponse'
+  PUT /api/v1/telemetry/dhcp/rogue/config:
+    responses:
+      "200":
+        description: The configuration after the update.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RogueDHCPConfigResponse'
   GET /api/v1/telemetry/dhcp/rogue/servers:
     responses:
       "200":
@@ -515,6 +654,14 @@ operations:
           application/json:
             schema:
               $ref: '#/components/schemas/RogueServersResponse'
+  GET /api/v1/telemetry/dns:
+    responses:
+      "200":
+        description: Resolution results for each configured server.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DNSResponse'
   GET /api/v1/telemetry/gateway:
     responses:
       "200":
@@ -539,6 +686,21 @@ operations:
           application/json:
             schema:
               $ref: '#/components/schemas/IPConfigResponse'
+  GET /api/v1/telemetry/ipconfig/settings:
+    responses:
+      "200":
+        description: The interface's IP configuration settings.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/IPSettingsResponse'
+  PUT /api/v1/telemetry/ipconfig/settings:
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/IPSettingsRequest'
   POST /api/v1/telemetry/iperf/client:
     requestBody:
       required: true
@@ -562,6 +724,13 @@ operations:
           application/json:
             schema:
               $ref: '#/components/schemas/IperfInfoResponse'
+  POST /api/v1/telemetry/iperf/server:
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/IperfServerRequest'
   GET /api/v1/telemetry/link:
     responses:
       "200":
@@ -570,6 +739,36 @@ operations:
           application/json:
             schema:
               $ref: '#/components/schemas/LinkResponse'
+  GET /api/v1/telemetry/probes/settings:
+    responses:
+      "200":
+        description: The probe settings.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TestsSettingsResponse'
+  PUT /api/v1/telemetry/probes/settings:
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/TestsSettingsResponse'
+  GET /api/v1/telemetry/snmp/settings:
+    responses:
+      "200":
+        description: The SNMP transport settings.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SNMPSettingsResponse'
+  PUT /api/v1/telemetry/snmp/settings:
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/SNMPSettingsResponse'
   GET /api/v1/telemetry/speedtest/status:
     responses:
       "200":
@@ -586,6 +785,27 @@ operations:
           application/json:
             schema:
               $ref: '#/components/schemas/VLANResponse'
+  POST /api/v1/telemetry/vlan/interface:
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/VLANInterfaceRequest'
+  POST /api/v1/tokens:
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/MintTokenRequest'
+    responses:
+      "201":
+        description: The minted token; its secret is shown only here.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MintTokenResponse'
   GET /api/v1/topology/interfaces:
     responses:
       "200":
@@ -602,6 +822,67 @@ operations:
           application/json:
             schema:
               $ref: '#/components/schemas/InterfaceHistoryResponse'
+  GET /api/v1/users:
+    responses:
+      "200":
+        description: Every user.
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: '#/components/schemas/UserResponse'
+  POST /api/v1/users:
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/CreateUserRequest'
+    responses:
+      "201":
+        description: The created user.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserResponse'
+  GET /api/v1/users/:
+    pathTemplate: /api/v1/users/{username}
+    responses:
+      "200":
+        description: The user.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserResponse'
+  PATCH /api/v1/users/:
+    pathTemplate: /api/v1/users/{username}
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/UpdateUserRequest'
+    responses:
+      "200":
+        description: The user after the update.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserResponse'
+  DELETE /api/v1/users/:
+    pathTemplate: /api/v1/users/{username}
+    responses:
+      "204":
+        description: The user was deleted.
+  GET /api/v1/users/me:
+    responses:
+      "200":
+        description: The signed-in user.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserResponse'
   GET /api/v1/users/me/dashboard:
     responses:
       "200":
@@ -640,6 +921,14 @@ operations:
           application/json:
             schema:
               $ref: '#/components/schemas/WiFiAnomaliesResponse'
+  GET /api/v1/wifi/wifi:
+    responses:
+      "200":
+        description: The interface's association state.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/WiFiResponse'
   POST /api/v1/wifi/wifi/connect:
     requestBody:
       required: true
@@ -647,3 +936,11 @@ operations:
         application/json:
           schema:
             $ref: '#/components/schemas/WiFiConnectRequest'
+  GET /api/v1/wifi/wifi/settings:
+    responses:
+      "200":
+        description: The Wi-Fi interface settings.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/WiFiSettingsResponse'
