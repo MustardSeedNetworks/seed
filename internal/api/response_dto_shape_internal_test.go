@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"slices"
+	"strconv"
 	"testing"
 	"time"
 
@@ -358,4 +359,44 @@ func TestEmptyTopologyListsAreArrays(t *testing.T) {
 		serve(t, s.handleTopologyLinks, topologyPathPrefix+"links").Body.String())
 	require.JSONEq(t, `{"count":0,"bindings":[]}`,
 		serve(t, s.handleTopologyARP, topologyPathPrefix+"arp").Body.String())
+}
+
+func TestAlertRuleResponseShape(t *testing.T) {
+	s := newAlertRulesTestServer(t)
+	seeded := seedAlertRule(t, s.db(), "rule-1", true)
+
+	list := serve(t, s.handleAlertRules, alertRulesPath)
+	require.Equal(t, []string{"count", "rules"}, topLevelKeys(t, list.Body.Bytes()))
+	var l struct {
+		Count int               `json:"count"`
+		Rules []json.RawMessage `json:"rules"`
+	}
+	require.NoError(t, json.Unmarshal(list.Body.Bytes(), &l))
+	require.Equal(t, 1, l.Count)
+	require.Len(t, l.Rules, 1)
+
+	one := serve(t, s.handleAlertRuleByID, alertRulesPathPrefix+strconv.FormatInt(seeded.ID, 10))
+	require.JSONEq(t, string(l.Rules[0]), one.Body.String())
+
+	// Every key is always sent, empty match filters included.
+	require.Equal(t, []string{
+		"alertMessage", "alertSeverity", "alertTitle", "alertType", "createdAt", "enabled",
+		"id", "matchKind", "matchPayloadContains", "matchSeverity", "name",
+		"thresholdCount", "updatedAt", "windowSeconds",
+	}, topLevelKeys(t, one.Body.Bytes()))
+	var got map[string]any
+	require.NoError(t, json.Unmarshal(one.Body.Bytes(), &got))
+	require.InDelta(t, seeded.ID, got["id"], 0)
+	require.Equal(t, "rule-1", got["name"])
+	require.Equal(t, "syslog-udp", got["matchKind"])
+	require.Empty(t, got["matchPayloadContains"])
+	created, err := time.Parse(time.RFC3339Nano, got["createdAt"].(string))
+	require.NoError(t, err)
+	require.Equal(t, time.UTC, created.Location())
+}
+
+func TestEmptyAlertRuleListIsArray(t *testing.T) {
+	s := newAlertRulesTestServer(t)
+	w := serve(t, s.handleAlertRules, alertRulesPath)
+	require.JSONEq(t, `{"count":0,"rules":[]}`, w.Body.String())
 }

@@ -1,0 +1,56 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/MustardSeedNetworks/seed/main/docs/schemas/api/alert-rule-request.schema.json",
+  "$ref": "#/$defs/AlertRuleRequest",
+  "$defs": {
+    "AlertRuleRequest": {
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "enabled": {
+          "type": "boolean"
+        },
+        "matchKind": {
+          "type": "string"
+        },
+        "matchSeverity": {
+          "type": "string"
+        },
+        "matchPayloadContains": {
+          "type": "string"
+        },
+        "alertType": {
+          "type": "string"
+        },
+        "alertSeverity": {
+          "type": "string"
+        },
+        "alertTitle": {
+          "type": "string"
+        },
+        "alertMessage": {
+          "type": "string"
+        },
+        "windowSeconds": {
+          "type": "integer"
+        },
+        "thresholdCount": {
+          "type": "integer"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "name",
+        "enabled",
+        "alertType",
+        "alertSeverity",
+        "alertTitle",
+        "alertMessage"
+      ]
+    }
+  },
+  "title": "AlertRuleRequest",
+  "description": "AlertRuleRequest — generated from the Go struct in internal/api; refresh with `make schema` after struct changes."
+}

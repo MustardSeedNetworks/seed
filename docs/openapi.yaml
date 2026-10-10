@@ -74,6 +74,99 @@ components:
                 - after_seconds
                 - channels
             type: object
+        AlertRuleListResponse:
+            additionalProperties: false
+            properties:
+                count:
+                    type: integer
+                rules:
+                    items:
+                        $ref: '#/components/schemas/AlertRuleResponse'
+                    type: array
+            required:
+                - count
+                - rules
+            type: object
+        AlertRuleRequest:
+            additionalProperties: false
+            properties:
+                alertMessage:
+                    type: string
+                alertSeverity:
+                    type: string
+                alertTitle:
+                    type: string
+                alertType:
+                    type: string
+                enabled:
+                    type: boolean
+                matchKind:
+                    type: string
+                matchPayloadContains:
+                    type: string
+                matchSeverity:
+                    type: string
+                name:
+                    type: string
+                thresholdCount:
+                    type: integer
+                windowSeconds:
+                    type: integer
+            required:
+                - name
+                - enabled
+                - alertType
+                - alertSeverity
+                - alertTitle
+                - alertMessage
+            type: object
+        AlertRuleResponse:
+            additionalProperties: false
+            properties:
+                alertMessage:
+                    type: string
+                alertSeverity:
+                    type: string
+                alertTitle:
+                    type: string
+                alertType:
+                    type: string
+                createdAt:
+                    type: string
+                enabled:
+                    type: boolean
+                id:
+                    type: integer
+                matchKind:
+                    type: string
+                matchPayloadContains:
+                    type: string
+                matchSeverity:
+                    type: string
+                name:
+                    type: string
+                thresholdCount:
+                    type: integer
+                updatedAt:
+                    type: string
+                windowSeconds:
+                    type: integer
+            required:
+                - id
+                - name
+                - enabled
+                - matchKind
+                - matchSeverity
+                - matchPayloadContains
+                - alertType
+                - alertSeverity
+                - alertTitle
+                - alertMessage
+                - windowSeconds
+                - thresholdCount
+                - createdAt
+                - updatedAt
+            type: object
         AlertSyslogConfig:
             additionalProperties: false
             properties:
@@ -7631,6 +7724,12 @@ paths:
         get:
             operationId: getApiV1AlertRules
             responses:
+                "200":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/AlertRuleListResponse'
+                    description: Operator-defined alert rules, applied on top of the built-in rule set. enabled_only=true lists only the enabled ones.
                 "401":
                     content:
                         application/json:
@@ -7652,7 +7751,19 @@ paths:
         post:
             description: Requires an operator-scoped token.
             operationId: postApiV1AlertRules
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/AlertRuleRequest'
+                required: true
             responses:
+                "200":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/AlertRuleResponse'
+                    description: The created rule; Location names it. name, alertType, alertSeverity and alertTitle are required, and unknown fields are a 400.
                 "401":
                     content:
                         application/json:
@@ -7686,11 +7797,13 @@ paths:
             security:
                 - BearerAuth: []
                   CsrfToken: []
-    /api/v1/alert-rules/{subpath}:
+    /api/v1/alert-rules/{ruleId}:
         delete:
             description: Requires an operator-scoped token.
-            operationId: deleteApiV1AlertRulesSubpath
+            operationId: deleteApiV1AlertRulesRuleId
             responses:
+                "204":
+                    description: The rule was deleted.
                 "401":
                     content:
                         application/json:
@@ -7725,8 +7838,14 @@ paths:
                 - BearerAuth: []
                   CsrfToken: []
         get:
-            operationId: getApiV1AlertRulesSubpath
+            operationId: getApiV1AlertRulesRuleId
             responses:
+                "200":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/AlertRuleResponse'
+                    description: The alert rule.
                 "401":
                     content:
                         application/json:
@@ -7746,16 +7865,28 @@ paths:
                                 $ref: '#/components/schemas/Error'
                     description: Internal error.
         parameters:
-            - description: Trailing path segment; this route matches by prefix.
+            - description: Path parameter.
               in: path
-              name: subpath
+              name: ruleId
               required: true
               schema:
                 type: string
         put:
             description: Requires an operator-scoped token.
-            operationId: putApiV1AlertRulesSubpath
+            operationId: putApiV1AlertRulesRuleId
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/AlertRuleRequest'
+                required: true
             responses:
+                "200":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/AlertRuleResponse'
+                    description: The replaced rule, read back after the write.
                 "401":
                     content:
                         application/json:

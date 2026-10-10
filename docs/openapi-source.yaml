@@ -473,6 +473,57 @@ operations:
         application/json:
           schema:
             $ref: '#/components/schemas/TracerouteRequest'
+  GET /api/v1/alert-rules:
+    responses:
+      "200":
+        description: Operator-defined alert rules, applied on top of the built-in rule set. enabled_only=true lists only the enabled ones.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AlertRuleListResponse'
+  POST /api/v1/alert-rules:
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/AlertRuleRequest'
+    responses:
+      "200":
+        description: The created rule; Location names it. name, alertType, alertSeverity and alertTitle are required, and unknown fields are a 400.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AlertRuleResponse'
+  GET /api/v1/alert-rules/:
+    pathTemplate: /api/v1/alert-rules/{ruleId}
+    responses:
+      "200":
+        description: The alert rule.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AlertRuleResponse'
+  PUT /api/v1/alert-rules/:
+    pathTemplate: /api/v1/alert-rules/{ruleId}
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/AlertRuleRequest'
+    responses:
+      "200":
+        description: The replaced rule, read back after the write.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AlertRuleResponse'
+  DELETE /api/v1/alert-rules/:
+    pathTemplate: /api/v1/alert-rules/{ruleId}
+    responses:
+      "204":
+        description: The rule was deleted.
   GET /api/v1/polling-targets:
     responses:
       "200":

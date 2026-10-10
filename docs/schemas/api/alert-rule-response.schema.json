@@ -1,0 +1,73 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/MustardSeedNetworks/seed/main/docs/schemas/api/alert-rule-response.schema.json",
+  "$ref": "#/$defs/AlertRuleResponse",
+  "$defs": {
+    "AlertRuleResponse": {
+      "properties": {
+        "id": {
+          "type": "integer"
+        },
+        "name": {
+          "type": "string"
+        },
+        "enabled": {
+          "type": "boolean"
+        },
+        "matchKind": {
+          "type": "string"
+        },
+        "matchSeverity": {
+          "type": "string"
+        },
+        "matchPayloadContains": {
+          "type": "string"
+        },
+        "alertType": {
+          "type": "string"
+        },
+        "alertSeverity": {
+          "type": "string"
+        },
+        "alertTitle": {
+          "type": "string"
+        },
+        "alertMessage": {
+          "type": "string"
+        },
+        "windowSeconds": {
+          "type": "integer"
+        },
+        "thresholdCount": {
+          "type": "integer"
+        },
+        "createdAt": {
+          "type": "string"
+        },
+        "updatedAt": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "id",
+        "name",
+        "enabled",
+        "matchKind",
+        "matchSeverity",
+        "matchPayloadContains",
+        "alertType",
+        "alertSeverity",
+        "alertTitle",
+        "alertMessage",
+        "windowSeconds",
+        "thresholdCount",
+        "createdAt",
+        "updatedAt"
+      ]
+    }
+  },
+  "title": "AlertRuleResponse",
+  "description": "AlertRuleResponse — generated from the Go struct in internal/api; refresh with `make schema` after struct changes."
+}
