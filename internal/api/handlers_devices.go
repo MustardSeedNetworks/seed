@@ -10,6 +10,7 @@ import (
 	"github.com/MustardSeedNetworks/foundation/pkg/httpserver/route"
 
 	"github.com/MustardSeedNetworks/seed/internal/config"
+	"github.com/MustardSeedNetworks/seed/internal/discovery"
 	discoverysettings "github.com/MustardSeedNetworks/seed/internal/discovery/settings"
 	"github.com/MustardSeedNetworks/seed/internal/i18n"
 	"github.com/MustardSeedNetworks/seed/internal/identity/roles"
@@ -168,6 +169,10 @@ func (s *Server) postScanVulnerabilityCheck(logger *slog.Logger) {
 	logger.Info("Auto-scan: completed vulnerability scan", "vulnerable_devices", len(results))
 }
 
+// DeviceDiscoveryStatusResponse is GET /security/devices/status: the device
+// registry's status served as it is, named for the API.
+type DeviceDiscoveryStatusResponse discovery.Status
+
 // handleDevicesStatus returns the current device discovery status (fixes #702 - uses r.Context()).
 func (s *Server) handleDevicesStatus(w http.ResponseWriter, r *http.Request) {
 	logger := logging.FromContext(r.Context())
@@ -183,8 +188,7 @@ func (s *Server) handleDevicesStatus(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	status := s.deviceDiscovery().GetStatus()
-	sendJSONResponse(w, logger, http.StatusOK, status)
+	sendJSONResponse(w, logger, http.StatusOK, DeviceDiscoveryStatusResponse(*s.deviceDiscovery().GetStatus()))
 }
 
 // NetworkDiscoverySettingsResponse represents network discovery settings.

@@ -14,6 +14,7 @@ import (
 
 	"github.com/MustardSeedNetworks/seed/internal/config"
 	"github.com/MustardSeedNetworks/seed/internal/discovery"
+	"github.com/MustardSeedNetworks/seed/internal/discovery/enumerate"
 	"github.com/MustardSeedNetworks/seed/internal/engine"
 	enginestatus "github.com/MustardSeedNetworks/seed/internal/engine/status"
 	"github.com/MustardSeedNetworks/seed/internal/polling"
@@ -399,4 +400,23 @@ func TestEmptyAlertRuleListIsArray(t *testing.T) {
 	s := newAlertRulesTestServer(t)
 	w := serve(t, s.handleAlertRules, alertRulesPath)
 	require.JSONEq(t, `{"count":0,"rules":[]}`, w.Body.String())
+}
+
+func TestDeviceDiscoveryStatusResponseShape(t *testing.T) {
+	t.Parallel()
+	s := &Server{deviceDisc: enumerate.NewDeviceDiscovery("lo")}
+	w := serve(t, s.handleDevicesStatus, "/api/v1/security/devices/status")
+	require.Equal(t, []string{"deviceCount", "interface", "lastScan", "localIP", "scanning", "subnet"},
+		topLevelKeys(t, w.Body.Bytes()))
+}
+
+func TestDiscoveryOptionsResponseShape(t *testing.T) {
+	t.Parallel()
+	svc := enumerate.NewService(&config.Config{}, enumerate.NewDeviceDiscovery("lo"), nil)
+	s := &Server{discoverySvc: svc}
+	w := serve(t, s.handleDiscoveryOptions, "/api/v1/security/discovery/options")
+
+	want, err := json.Marshal(map[string]config.DiscoveryOptions{"options": svc.GetOptions()})
+	require.NoError(t, err)
+	require.JSONEq(t, string(want), w.Body.String())
 }

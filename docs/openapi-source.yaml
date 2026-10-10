@@ -82,6 +82,13 @@ preamble:
 operations:
   GET /__version:
     summary: Build metadata (version, commit, build time, UI build hash)
+    responses:
+      "200":
+        description: The running binary's build metadata and TLS certificate fingerprint.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BuildVersionResponse'
   GET /__capabilities:
     summary: Route-policy manifest of every registered route
   POST /api/v1/auth/login:
@@ -280,6 +287,14 @@ operations:
           application/json:
             schema:
               $ref: '#/components/schemas/EngineDiscoveryResponse'
+  GET /api/v1/discovery/engine/capabilities:
+    responses:
+      "200":
+        description: Which discovery capabilities the engine can use.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EngineCapabilities'
   GET /api/v1/discovery/engine/device/:
     pathTemplate: /api/v1/discovery/engine/device/{mac}
     responses:
@@ -798,6 +813,14 @@ operations:
           application/json:
             schema:
               $ref: '#/components/schemas/ReportScheduleInfo'
+  GET /api/v1/security/devices/status:
+    responses:
+      "200":
+        description: The device registry's scan state, device count and scanned subnet.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DeviceDiscoveryStatusResponse'
   GET /api/v1/security/devices/settings:
     responses:
       "200":
@@ -862,6 +885,14 @@ operations:
           application/json:
             schema:
               $ref: '#/components/schemas/DiscoveryResponse'
+  GET /api/v1/security/discovery/options:
+    responses:
+      "200":
+        description: The discovery options in force.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DiscoveryOptionsResponse'
   PUT /api/v1/security/discovery/options:
     requestBody:
       required: true

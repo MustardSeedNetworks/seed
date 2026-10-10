@@ -1,0 +1,41 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/MustardSeedNetworks/seed/main/docs/schemas/api/build-version-response.schema.json",
+  "$ref": "#/$defs/BuildVersionResponse",
+  "$defs": {
+    "BuildVersionResponse": {
+      "properties": {
+        "version": {
+          "type": "string"
+        },
+        "commit": {
+          "type": "string"
+        },
+        "buildTime": {
+          "type": "string"
+        },
+        "releaseTrain": {
+          "type": "string"
+        },
+        "uiBuildHash": {
+          "type": "string"
+        },
+        "tlsFingerprint": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "version",
+        "commit",
+        "buildTime",
+        "releaseTrain",
+        "uiBuildHash",
+        "tlsFingerprint"
+      ]
+    }
+  },
+  "title": "BuildVersionResponse",
+  "description": "BuildVersionResponse — generated from the Go struct in internal/api; refresh with `make schema` after struct changes."
+}

@@ -312,6 +312,12 @@ func Targets() []Target {
 		// reads and replaces as they are: flat, pure data.
 		{&discovery.ProblemThresholds{}, "problem-thresholds.schema.json"},
 
+		// Discovery status reads, and /__version's build metadata.
+		{&api.DeviceDiscoveryStatusResponse{}, "device-discovery-status-response.schema.json"},
+		{&api.DiscoveryOptionsResponse{}, "discovery-options-response.schema.json"},
+		{&discovery.EngineCapabilities{}, "engine-capabilities.schema.json"},
+		{&api.BuildVersionResponse{}, "build-version-response.schema.json"},
+
 		// SNMP polling targets and the device-credential vault (#1799). The
 		// vault answers polling.Credentials as it is: pure data whose
 		// ciphertext fields are json:"-", so no schema can carry a secret.

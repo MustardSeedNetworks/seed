@@ -12,6 +12,7 @@ import { useEffect, useRef, useState } from 'react';
 import { api, SessionExpiredError } from '../api';
 import type { NetworkDiscoveryData } from '../components/cards/NetworkDiscoveryCard';
 import { LogComponents, logger } from '../lib/logger';
+import type { DeviceDiscoveryStatusResponse } from '../types/generated/device-discovery-status-response';
 
 interface UseDeviceScanArgs {
   fetchNetworkDiscovery: () => Promise<void>;
@@ -71,7 +72,9 @@ export function useDeviceScan({
       // Poll for completion
       scanPollIntervalRef.current = setInterval(async () => {
         try {
-          const status = await api.get<{ scanning: boolean }>('/api/v1/security/devices/status');
+          const status = await api.get<DeviceDiscoveryStatusResponse>(
+            '/api/v1/security/devices/status',
+          );
           if (!status.scanning) {
             if (scanPollIntervalRef.current) {
               clearInterval(scanPollIntervalRef.current);

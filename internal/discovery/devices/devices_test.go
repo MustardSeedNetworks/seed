@@ -17,7 +17,7 @@ type fakeEngine struct {
 	devices    []*discovery.DiscoveredDevice
 	stats      *discovery.EngineStats
 	lastScan   *discovery.ScanResult
-	caps       map[string]bool
+	caps       discovery.EngineCapabilities
 	device     *discovery.DiscoveredDevice
 	scanResult *discovery.ScanResult
 	scanErr    error
@@ -32,7 +32,7 @@ func (f *fakeEngine) Devices() []*discovery.DiscoveredDevice     { return f.devi
 func (f *fakeEngine) Device(string) *discovery.DiscoveredDevice  { return f.device }
 func (f *fakeEngine) Stats() *discovery.EngineStats              { return f.stats }
 func (f *fakeEngine) LastScan() *discovery.ScanResult            { return f.lastScan }
-func (f *fakeEngine) Capabilities() map[string]bool              { return f.caps }
+func (f *fakeEngine) Capabilities() discovery.EngineCapabilities { return f.caps }
 func (f *fakeEngine) SubscribeAll(func(*discovery.Event)) string { return f.subID }
 func (f *fakeEngine) Unsubscribe(id string)                      { f.unsubbed = id }
 
@@ -58,7 +58,7 @@ func TestSnapshotReturnsInventory(t *testing.T) {
 		devices:   []*discovery.DiscoveredDevice{{}},
 		stats:     &discovery.EngineStats{},
 		lastScan:  &discovery.ScanResult{},
-		caps:      map[string]bool{"wired": true},
+		caps:      discovery.EngineCapabilities{Wired: true},
 	}
 	svc := devices.NewService(eng)
 
@@ -66,7 +66,7 @@ func TestSnapshotReturnsInventory(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Snapshot() err = %v", err)
 	}
-	if len(snap.Devices) != 1 || snap.Stats == nil || snap.ScanResult == nil || !snap.Capabilities["wired"] {
+	if len(snap.Devices) != 1 || snap.Stats == nil || snap.ScanResult == nil || !snap.Capabilities.Wired {
 		t.Fatalf("Snapshot() = %+v, missing inventory fields", snap)
 	}
 }

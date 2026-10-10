@@ -111,6 +111,11 @@ func (s *Server) handleDiscovery(w http.ResponseWriter, r *http.Request) {
 	sendJSONResponse(w, logger, http.StatusOK, resp)
 }
 
+// DiscoveryOptionsResponse is GET /security/discovery/options.
+type DiscoveryOptionsResponse struct {
+	Options config.DiscoveryOptions `json:"options"`
+}
+
 // handleDiscoveryOptions handles GET/PUT for the discovery options.
 func (s *Server) handleDiscoveryOptions(w http.ResponseWriter, r *http.Request) {
 	logger := logging.FromContext(r.Context())
@@ -135,10 +140,7 @@ func (s *Server) handleDiscoveryOptions(w http.ResponseWriter, r *http.Request) 
 
 func (s *Server) getDiscoveryOptions(w http.ResponseWriter, r *http.Request) {
 	logger := logging.FromContext(r.Context())
-	opts := s.discoveryService().GetOptions()
-	sendJSONResponse(w, logger, http.StatusOK, map[string]any{
-		"options": opts,
-	})
+	sendJSONResponse(w, logger, http.StatusOK, DiscoveryOptionsResponse{Options: s.discoveryService().GetOptions()})
 }
 
 func (s *Server) setDiscoveryOptions(w http.ResponseWriter, r *http.Request) {

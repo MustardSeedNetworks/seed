@@ -28,7 +28,7 @@ import type {
 } from '../components/cards/networkDiscoveryCardTypes';
 import { submitJob } from '../lib/jobsClient';
 import { LogComponents, logger } from '../lib/logger';
-import type { OptionsResponse } from '../types/generated/options-response';
+import type { DiscoveryOptionsResponse } from '../types/generated/discovery-options-response';
 import type { VulnScanRequest } from '../types/generated/vuln-scan-request';
 
 interface UseNetworkDiscoveryAutoScanResult {
@@ -55,7 +55,7 @@ export function useNetworkDiscoveryAutoScan(
           credentials: 'include',
         });
         if (discoveryResponse.ok) {
-          const discoveryData = (await discoveryResponse.json()) as { options: OptionsResponse };
+          const discoveryData = (await discoveryResponse.json()) as DiscoveryOptionsResponse;
           const portScanEnabled = discoveryData.options.portScan.enabled;
 
           const vulnResponse = await fetch(`${apiBase}/api/v1/security/vulnerabilities/settings`, {

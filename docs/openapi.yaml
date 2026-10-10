@@ -664,6 +664,29 @@ components:
                 - truncated
                 - durationMs
             type: object
+        BuildVersionResponse:
+            additionalProperties: false
+            properties:
+                buildTime:
+                    type: string
+                commit:
+                    type: string
+                releaseTrain:
+                    type: string
+                tlsFingerprint:
+                    type: string
+                uiBuildHash:
+                    type: string
+                version:
+                    type: string
+            required:
+                - version
+                - commit
+                - buildTime
+                - releaseTrain
+                - uiBuildHash
+                - tlsFingerprint
+            type: object
         CDPDeviceInfo:
             additionalProperties: false
             properties:
@@ -1385,6 +1408,30 @@ components:
             required:
                 - name
             type: object
+        DeviceDiscoveryStatusResponse:
+            additionalProperties: false
+            properties:
+                deviceCount:
+                    type: integer
+                interface:
+                    type: string
+                lastScan:
+                    format: date-time
+                    type: string
+                localIP:
+                    type: string
+                scanning:
+                    type: boolean
+                subnet:
+                    type: string
+            required:
+                - scanning
+                - deviceCount
+                - lastScan
+                - subnet
+                - localIP
+                - interface
+            type: object
         DeviceProfile:
             additionalProperties: false
             properties:
@@ -1592,6 +1639,14 @@ components:
                 - traceroute
                 - snmpQuery
             type: object
+        DiscoveryOptionsResponse:
+            additionalProperties: false
+            properties:
+                options:
+                    $ref: '#/components/schemas/DiscoveryOptions'
+            required:
+                - options
+            type: object
         DiscoveryResponse:
             additionalProperties: false
             properties:
@@ -1662,13 +1717,43 @@ components:
                 - deviceId
                 - portId
             type: object
+        EngineCapabilities:
+            additionalProperties: false
+            properties:
+                bluetooth:
+                    type: boolean
+                correlation:
+                    type: boolean
+                nameRes:
+                    type: boolean
+                portScan:
+                    type: boolean
+                profiling:
+                    type: boolean
+                snmp:
+                    type: boolean
+                vulnScan:
+                    type: boolean
+                wifi:
+                    type: boolean
+                wired:
+                    type: boolean
+            required:
+                - wired
+                - wifi
+                - bluetooth
+                - snmp
+                - portScan
+                - profiling
+                - vulnScan
+                - nameRes
+                - correlation
+            type: object
         EngineDiscoveryResponse:
             additionalProperties: false
             properties:
                 capabilities:
-                    additionalProperties:
-                        type: boolean
-                    type: object
+                    $ref: '#/components/schemas/EngineCapabilities'
                 devices:
                     items:
                         $ref: '#/components/schemas/DiscoveredDevice'
@@ -7770,6 +7855,12 @@ paths:
         get:
             operationId: getVersion
             responses:
+                "200":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/BuildVersionResponse'
+                    description: The running binary's build metadata and TLS certificate fingerprint.
                 "405":
                     content:
                         application/json:
@@ -8974,6 +9065,12 @@ paths:
         get:
             operationId: getApiV1DiscoveryEngineCapabilities
             responses:
+                "200":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/EngineCapabilities'
+                    description: Which discovery capabilities the engine can use.
                 "401":
                     content:
                         application/json:
@@ -11606,6 +11703,12 @@ paths:
         get:
             operationId: getApiV1SecurityDevicesStatus
             responses:
+                "200":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/DeviceDiscoveryStatusResponse'
+                    description: The device registry's scan state, device count and scanned subnet.
                 "401":
                     content:
                         application/json:
@@ -11926,6 +12029,12 @@ paths:
         get:
             operationId: getApiV1SecurityDiscoveryOptions
             responses:
+                "200":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/DiscoveryOptionsResponse'
+                    description: The discovery options in force.
                 "401":
                     content:
                         application/json:
