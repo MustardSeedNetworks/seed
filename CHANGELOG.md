@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.245.0](https://github.com/MustardSeedNetworks/seed/compare/v0.244.0...v0.245.0) (2026-10-10)
+
+
+### Features
+
+* **api:** document polling-target and device-credential bodies ([#3269](https://github.com/MustardSeedNetworks/seed/issues/3269)) ([6fc20b9](https://github.com/MustardSeedNetworks/seed/commit/6fc20b905151e43cece125129f865960f7ed0235))
+* **api:** document request and response bodies for 8 more operations ([#3268](https://github.com/MustardSeedNetworks/seed/issues/3268)) ([5c4664d](https://github.com/MustardSeedNetworks/seed/commit/5c4664dbaa0ff62a6ab9f67125e3a35a022f0af4))
+
 ## [0.244.0](https://github.com/MustardSeedNetworks/seed/compare/v0.243.0...v0.244.0) (2026-10-10)
 
 
