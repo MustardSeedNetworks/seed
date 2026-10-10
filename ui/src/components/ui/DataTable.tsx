@@ -97,7 +97,7 @@ function SortIcon({
   active: boolean;
 }): React.JSX.Element {
   if (!(active && direction)) {
-    return <ArrowUpDown className={cn(iconTokens.size.xs, 'opacity-40')} />;
+    return <ArrowUpDown className={cn(iconTokens.size.xs, 'text-current/40')} />;
   }
   return direction === 'asc' ? (
     <ChevronUp className={iconTokens.size.xs} />

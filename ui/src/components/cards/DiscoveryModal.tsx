@@ -90,7 +90,7 @@ function compareDevices(
 // Helper function to get sort icon (avoids nested ternary)
 function getSortIcon(isActive: boolean, direction: SortDirection): JSX.Element {
   if (!isActive) {
-    return <ArrowUpDown className="w-3 h-3 opacity-30" />;
+    return <ArrowUpDown className="w-3 h-3 text-current/30" />;
   }
   if (direction === 'asc') {
     return <ChevronUp className="w-3 h-3" />;

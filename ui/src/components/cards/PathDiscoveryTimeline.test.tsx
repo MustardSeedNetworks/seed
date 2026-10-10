@@ -198,4 +198,30 @@ describe('<PathTimeline>', () => {
     expect(queryByTestId('l2-hop-0')).toBeNull();
     expect(getByTestId('l3-hop-2')).toBeTruthy();
   });
+
+  // A layer dim on the row pushed its already-muted text under contrast
+  // (#1944); the timeout reads from the muted "* * *" alone.
+  it('marks a timed-out hop with muted text, not a dimmed row', () => {
+    const { getByTestId } = render(
+      <PathTimeline
+        result={makeResult({
+          l3Path: {
+            target: '8.8.8.8',
+            targetIp: '8.8.8.8',
+            protocol: 'icmp',
+            completed: true,
+            hops: [{ ttl: 1, ip: '', rtt: 0, state: 'timeout' }],
+          },
+        })}
+        maxRtt={20_000_000}
+        expandedL2Hop={null}
+        onToggleL2Hop={vi.fn()}
+        t={t}
+      />,
+    );
+
+    const row = getByTestId('l3-hop-1');
+    expect(row.className).not.toMatch(/\bopacity-/);
+    expect(within(row).getByText('* * *').className).toContain('text-text-muted');
+  });
 });

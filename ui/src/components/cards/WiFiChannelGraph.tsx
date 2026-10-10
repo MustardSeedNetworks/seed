@@ -270,7 +270,7 @@ function ChannelGraph({
         aria-label={tPages('wifi.channelGraphAlt')}
       >
         {/* Background grid */}
-        <g className="opacity-10">
+        <g className="stroke-current/10">
           {/* Horizontal lines (signal strength) */}
           {signalMarkers.map((signal) => {
             const y = padding.top + signalToY(signal, graphHeight);
@@ -281,7 +281,6 @@ function ChannelGraph({
                 y1={y}
                 x2={width - padding.right}
                 y2={y}
-                stroke="currentColor"
                 strokeWidth="1"
               />
             );
@@ -294,7 +293,6 @@ function ChannelGraph({
               y1={padding.top}
               x2={x}
               y2={height - padding.bottom}
-              stroke="currentColor"
               strokeWidth="1"
             />
           ))}
@@ -459,11 +457,11 @@ export function WifiChannelGraph({
           {/* Legend */}
           <div className={cn(layout.inline.default, spacing.margin.top.inline)}>
             <div className={layout.inline.tight}>
-              <div className="w-4 h-4 bg-brand-primary opacity-70 rounded" />
+              <div className="w-4 h-4 bg-brand-primary/70 rounded" />
               <span className="caption text-text-muted">{tc('status.connected')}</span>
             </div>
             <div className={layout.inline.tight}>
-              <div className="w-4 h-4 bg-status-info opacity-40 rounded" />
+              <div className="w-4 h-4 bg-status-info/40 rounded" />
               <span className="caption text-text-muted">
                 {tr('wifi.channelGraph.otherNetworks')}
               </span>

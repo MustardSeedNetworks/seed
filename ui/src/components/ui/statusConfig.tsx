@@ -69,15 +69,8 @@ export const statusConfig: Record<Status, { icon: ReactNode; color: string; bgCo
         fill="none"
         aria-hidden="true"
       >
-        <circle
-          className="opacity-25"
-          cx="10"
-          cy="10"
-          r="8"
-          stroke="currentColor"
-          strokeWidth="3"
-        />
-        <path className="opacity-75" fill="currentColor" d="M18 10a8 8 0 00-8-8v4a4 4 0 014 4h4z" />
+        <circle className="stroke-current/25" cx="10" cy="10" r="8" strokeWidth="3" />
+        <path className="fill-current/75" d="M18 10a8 8 0 00-8-8v4a4 4 0 014 4h4z" />
       </svg>
     ),
     color: statusColor.text.info,

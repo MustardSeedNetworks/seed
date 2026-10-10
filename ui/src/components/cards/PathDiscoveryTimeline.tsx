@@ -174,10 +174,7 @@ interface L3HopProps {
 function L3TimelineHop({ hop, maxRtt, t }: L3HopProps): React.ReactElement {
   const isTimeout = hop.state === 'timeout';
   return (
-    <div
-      data-testid={`l3-hop-${hop.ttl}`}
-      className={cn('flex items-center gap-compact', isTimeout && 'opacity-60')}
-    >
+    <div data-testid={`l3-hop-${hop.ttl}`} className="flex items-center gap-compact">
       <span className={cn('px-1 caption font-semibold', radius.sm, LAYER_CHIP.l3)}>L3</span>
       <Router className={cn(iconTokens.size.sm, 'text-text-muted shrink-0')} />
       <span className="w-6 caption font-mono text-text-muted">{hop.ttl}</span>

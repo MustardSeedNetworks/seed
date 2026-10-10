@@ -455,15 +455,14 @@ export function PathDiscoveryCard({
           {streamingHops.length > 0 ? (
             <div className="stack-xs">
               {streamingHops.map((hop) => (
-                <div
-                  key={hop.ttl}
-                  className={cn(
-                    'flex items-center gap-compact py-compact',
-                    hop.state === 'timeout' && 'opacity-50',
-                  )}
-                >
+                <div key={hop.ttl} className="flex items-center gap-compact py-compact">
                   <span className="w-6 text-xs text-text-muted font-mono">{hop.ttl}</span>
-                  <span className="flex-1 text-sm font-mono text-text-primary">
+                  <span
+                    className={cn(
+                      'flex-1 text-sm font-mono',
+                      hop.state === 'timeout' ? 'text-text-muted' : 'text-text-primary',
+                    )}
+                  >
                     {hop.ip || '*'}
                   </span>
                   <span className="text-xs text-text-muted">{formatRtt(hop.rtt)}</span>
@@ -570,7 +569,7 @@ export function PathDiscoveryCard({
           )}
         >
           <div className="text-text-muted mb-2">
-            <Route className={cn(iconTokens.size.lg, 'mx-auto opacity-40')} />
+            <Route className={cn(iconTokens.size.lg, 'mx-auto text-current/40')} />
           </div>
           <p className="body-small text-text-muted">{t('pathDiscovery.enterTarget')}</p>
           <p className="caption text-text-muted mt-tight">{t('pathDiscovery.emptyHint')}</p>
