@@ -370,7 +370,9 @@ func TestPoller_TargetJob_NextRunCadence(t *testing.T) {
 func testResolver(t *testing.T) *snmp.CredentialResolver {
 	t.Helper()
 	r, err := snmp.NewCredentialResolver(
-		&fakeCredStore{creds: &polling.Credentials{SNMPCommunityCT: "enc:v1:public"}},
+		&fakeCredStore{creds: &polling.Credentials{
+			Kind: polling.CredentialKindV2c, SNMPCommunityCT: "enc:v1:public",
+		}},
 		fakeDecrypter{},
 	)
 	if err != nil {
@@ -415,6 +417,7 @@ func TestPoller_RunChain_CredentialFailureLeaksNoSecret(t *testing.T) {
 	resolver, err := snmp.NewCredentialResolver(
 		&fakeCredStore{creds: &polling.Credentials{
 			ID:              "cred-1",
+			Kind:            polling.CredentialKindV2c,
 			SNMPCommunityCT: "enc:v1:community",
 			SNMPv3AuthCT:    "enc:v1:auth",
 			SNMPv3PrivCT:    "enc:v1:priv",

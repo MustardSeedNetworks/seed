@@ -45,10 +45,12 @@ var ErrCredentialsNotFound = errors.New("device credentials not found")
 // Decryption happens at poll time in internal/polling/snmp, which owns the
 // keyring seam.
 // Credential kinds. A credential is exactly one of these; the schema has no
-// representation for a row that is both or neither.
+// representation for a row that is both or neither. SSH is the configuration
+// backup login (P-D1): the SNMP poller never uses it.
 const (
 	CredentialKindV2c = "v2c"
 	CredentialKindV3  = "v3"
+	CredentialKindSSH = "ssh"
 )
 
 // SNMPv3 security levels, in the spelling RFC 3414 uses. The level and the
@@ -61,14 +63,14 @@ const (
 	SecurityLevelAuthPriv     = "authPriv"
 )
 
-// Credentials is one SNMP credential from the vault. Kind names which of the
-// two shapes it is; the secret fields of the other shape are empty, and the
-// schema has no representation for a row that is both or neither.
+// Credentials is one credential from the vault. Kind names which of the three
+// shapes it is; the fields of the other shapes are empty, and the schema has no
+// representation for a row that is more than one or none.
 type Credentials struct {
 	ID              string    `json:"id"`
 	ClientID        string    `json:"clientId"`
 	Name            string    `json:"name"`
-	Kind            string    `json:"kind"`                    // CredentialKindV2c | CredentialKindV3
+	Kind            string    `json:"kind"`                    // CredentialKind* constants
 	SecurityLevel   string    `json:"securityLevel,omitempty"` // v3 only; see SecurityLevel* constants
 	SNMPCommunityCT string    `json:"-"`
 	SNMPv3User      string    `json:"snmpV3User,omitempty"`
@@ -76,6 +78,8 @@ type Credentials struct {
 	SNMPv3PrivCT    string    `json:"-"`
 	SNMPv3AuthProto string    `json:"snmpV3AuthProto,omitempty"`
 	SNMPv3PrivProto string    `json:"snmpV3PrivProto,omitempty"`
+	SSHUser         string    `json:"sshUser,omitempty"`
+	SSHPasswordCT   string    `json:"-"`
 	CreatedAt       time.Time `json:"createdAt"`
 	UpdatedAt       time.Time `json:"updatedAt"`
 }

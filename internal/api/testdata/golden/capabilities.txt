@@ -1824,6 +1824,67 @@ body:
   },
   {
     "auth": true,
+    "csrf": true,
+    "feature": "compliance_advanced",
+    "maxBodyBytes": 262144,
+    "methods": [
+      "GET",
+      "POST"
+    ],
+    "path": "/api/v1/device-config-targets",
+    "rateLimited": false,
+    "scope": "operator"
+  },
+  {
+    "auth": true,
+    "csrf": true,
+    "feature": "compliance_advanced",
+    "maxBodyBytes": 262144,
+    "methods": [
+      "GET",
+      "PUT",
+      "DELETE"
+    ],
+    "path": "/api/v1/device-config-targets/",
+    "rateLimited": false,
+    "scope": "operator"
+  },
+  {
+    "auth": true,
+    "csrf": true,
+    "feature": "compliance_advanced",
+    "maxBodyBytes": 262144,
+    "methods": [
+      "POST"
+    ],
+    "path": "/api/v1/device-configs/run",
+    "rateLimited": true,
+    "scope": "operator"
+  },
+  {
+    "auth": true,
+    "csrf": false,
+    "feature": "compliance_advanced",
+    "maxBodyBytes": 262144,
+    "methods": [
+      "GET"
+    ],
+    "path": "/api/v1/device-configs",
+    "rateLimited": false
+  },
+  {
+    "auth": true,
+    "csrf": false,
+    "feature": "compliance_advanced",
+    "maxBodyBytes": 262144,
+    "methods": [
+      "GET"
+    ],
+    "path": "/api/v1/device-configs/",
+    "rateLimited": false
+  },
+  {
+    "auth": true,
     "csrf": false,
     "feature": "live_telemetry",
     "maxBodyBytes": 262144,

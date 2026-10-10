@@ -26,9 +26,9 @@ var (
 	// ErrUnavailable is returned when the store is not wired (handler → 503).
 	ErrUnavailable = errors.New("credentials: store unavailable")
 	// ErrInUse is returned when a credential is still referenced by a polling
-	// target (handler → 409). Deleting it would leave that target unable to
-	// authenticate, which fails closed but silently.
-	ErrInUse = errors.New("credentials: still referenced by a polling target")
+	// or configuration backup target (handler → 409). Deleting it would leave
+	// that target unable to authenticate, which fails closed but silently.
+	ErrInUse = errors.New("credentials: still referenced by a polling or backup target")
 )
 
 // ValidationError carries a user-input message the handler maps to 400.
@@ -63,6 +63,8 @@ type Input struct {
 	V3PrivSecret    string
 	SNMPv3AuthProto string
 	SNMPv3PrivProto string
+	SSHUser         string // ssh (configuration backup login)
+	SSHPassword     string
 }
 
 // Service is the device-credential CRUD use-case.
@@ -97,25 +99,31 @@ func (s *Service) Get(ctx context.Context, clientID, id string) (*polling.Creden
 
 // Save encrypts the submitted secrets and writes the credential.
 //
-// A request carrying neither a community nor a v3 user is refused here rather
-// than at the schema, so the caller gets a sentence instead of a constraint
-// number. Which secrets are present is what names the kind, so the repository
-// derives that; this only checks the request says something.
+// A request that names no kind, or more than one, is refused here rather than
+// at the schema, so the caller gets a sentence instead of a constraint number.
+// Which secrets are present is what names the kind, so the repository derives
+// that; this only checks the request says exactly one thing.
 func (s *Service) Save(ctx context.Context, in Input) (*polling.Credentials, error) {
 	if strings.TrimSpace(in.Name) == "" {
 		return nil, ValidationError{Msg: "name is required"}
 	}
-	hasCommunity := strings.TrimSpace(in.Community) != ""
-	hasUser := strings.TrimSpace(in.V3User) != ""
+	kinds := 0
+	for _, field := range []string{in.Community, in.V3User, in.SSHUser + in.SSHPassword} {
+		if strings.TrimSpace(field) != "" {
+			kinds++
+		}
+	}
 	switch {
-	case hasCommunity && hasUser:
+	case kinds > 1:
 		return nil, ValidationError{
-			Msg: "a credential is either v2c (community) or v3 (user), not both",
+			Msg: "a credential is one of v2c (community), v3 (user) or SSH (sshUser), not several",
 		}
-	case !hasCommunity && !hasUser:
+	case kinds == 0:
 		return nil, ValidationError{
-			Msg: "provide either a community string (v2c) or a user (v3)",
+			Msg: "provide a community string (v2c), a user (v3) or an SSH user and password",
 		}
+	case (strings.TrimSpace(in.SSHUser) == "") != (strings.TrimSpace(in.SSHPassword) == ""):
+		return nil, ValidationError{Msg: "an SSH credential needs both sshUser and sshPassword"}
 	}
 
 	c := &polling.Credentials{
@@ -125,6 +133,7 @@ func (s *Service) Save(ctx context.Context, in Input) (*polling.Credentials, err
 		SNMPv3User:      strings.TrimSpace(in.V3User),
 		SNMPv3AuthProto: in.SNMPv3AuthProto,
 		SNMPv3PrivProto: in.SNMPv3PrivProto,
+		SSHUser:         strings.TrimSpace(in.SSHUser),
 	}
 
 	for _, f := range []struct {
@@ -135,6 +144,7 @@ func (s *Service) Save(ctx context.Context, in Input) (*polling.Credentials, err
 		{in.Community, &c.SNMPCommunityCT, "community"},
 		{in.V3AuthSecret, &c.SNMPv3AuthCT, "v3 auth secret"},
 		{in.V3PrivSecret, &c.SNMPv3PrivCT, "v3 privacy secret"},
+		{in.SSHPassword, &c.SSHPasswordCT, "SSH password"},
 	} {
 		if strings.TrimSpace(f.plaintext) == "" {
 			continue
