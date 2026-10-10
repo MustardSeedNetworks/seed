@@ -233,7 +233,7 @@ func SafeError(err error, context string) error {
 }
 
 // LogRequest logs an HTTP request with sensitive data redacted.
-// Note: Prefer using LoggingMiddleware for request logging in new code.
+// The Registrar (foundation pkg/httpserver/route) writes the access log line.
 func LogRequest(r *http.Request, message string) {
 	GetLogger().InfoContext(r.Context(), message,
 		"method", r.Method,

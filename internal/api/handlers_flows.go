@@ -4,6 +4,8 @@ import (
 	"net/http"
 	"strconv"
 
+	"github.com/MustardSeedNetworks/foundation/pkg/httpserver/route"
+
 	"github.com/MustardSeedNetworks/seed/internal/flows"
 	"github.com/MustardSeedNetworks/seed/internal/i18n"
 	"github.com/MustardSeedNetworks/seed/internal/identity/roles"
@@ -42,37 +44,44 @@ type FlowConversationsResponse struct {
 // flow_records is Pro, so below Pro they answer with empty lists, over the
 // window the tier retains. Editing the signature table or the indicator
 // list is a persistent write, so it is operator-gated.
-func (s *Server) flowRoutes() []route {
+func (s *Server) flowRoutes() []route.Route {
 	get := []string{http.MethodGet}
-	return []route{
+	return []route.Route{
 		{
-			path:    APIVersionPrefix + "/flows/top-talkers",
-			handler: s.handleFlowTopTalkers,
-			methods: get,
+			Path:    APIVersionPrefix + "/flows/top-talkers",
+			Handler: s.handleFlowTopTalkers,
+			Methods: get,
+			Auth:    true,
 		},
 		{
-			path:    APIVersionPrefix + "/flows/top-conversations",
-			handler: s.handleFlowTopConversations,
-			methods: get,
+			Path:    APIVersionPrefix + "/flows/top-conversations",
+			Handler: s.handleFlowTopConversations,
+			Methods: get,
+			Auth:    true,
 		},
 		{
-			path:    APIVersionPrefix + "/flows/top-applications",
-			handler: s.handleFlowTopApplications,
-			methods: get,
+			Path:    APIVersionPrefix + "/flows/top-applications",
+			Handler: s.handleFlowTopApplications,
+			Methods: get,
+			Auth:    true,
 		},
 		{
-			path:         APIVersionPrefix + "/flows/application-signatures",
-			handler:      s.handleAppSignatures,
-			methods:      []string{http.MethodGet, http.MethodPut, http.MethodDelete},
-			minRole:      roles.Operator,
-			maxBodyBytes: MaxBodySizeConfig,
+			Path:         APIVersionPrefix + "/flows/application-signatures",
+			Handler:      s.handleAppSignatures,
+			Methods:      []string{http.MethodGet, http.MethodPut, http.MethodDelete},
+			Scope:        roles.Operator,
+			MaxBodyBytes: MaxBodySizeConfig,
+			Auth:         true,
+			CSRF:         true,
 		},
 		{
-			path:         APIVersionPrefix + "/flows/threat-indicators",
-			handler:      s.handleFlowIndicators,
-			methods:      []string{http.MethodGet, http.MethodPut},
-			minRole:      roles.Operator,
-			maxBodyBytes: MaxBodySizeJSON,
+			Path:         APIVersionPrefix + "/flows/threat-indicators",
+			Handler:      s.handleFlowIndicators,
+			Methods:      []string{http.MethodGet, http.MethodPut},
+			Scope:        roles.Operator,
+			MaxBodyBytes: MaxBodySizeJSON,
+			Auth:         true,
+			CSRF:         true,
 		},
 	}
 }

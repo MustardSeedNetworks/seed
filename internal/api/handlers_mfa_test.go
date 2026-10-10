@@ -76,9 +76,9 @@ func newMFAFixture(t *testing.T) *mfaTestFixture {
 
 	return &mfaTestFixture{
 		server: server,
-		// Handler(), not GetAuthenticatedHandler(): the latter stops at the JWT
-		// middleware and omits CSRF, so this suite passed all the way through
-		// the enrolment routes answering 403 in production (#2725).
+		// Handler(), the chain production serves: a JWT-only handler omitted
+		// CSRF, so this suite once passed all the way through the enrolment
+		// routes answering 403 in production (#2725).
 		handler: server.Handler(),
 		db:      db,
 		token:   token,
@@ -107,7 +107,7 @@ func (f *mfaTestFixture) post(
 		// A session-bearing POST now crosses the CSRF middleware, exactly as the
 		// browser's does; the pre-session login routes pass an empty token and
 		// are exempt there.
-		req.Header.Set(auth.CSRFHeaderName, f.csrfToken(t, token))
+		req.Header.Set("X-Csrf-Token", f.csrfToken(t, token))
 	}
 	w := httptest.NewRecorder()
 	f.handler.ServeHTTP(w, req)

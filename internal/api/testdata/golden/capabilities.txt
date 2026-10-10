@@ -2,201 +2,301 @@ status: 200
 body:
 [
   {
-    "maxBodyBytes": 1024,
-    "methods": [
-      "POST"
-    ],
-    "path": "/api/v1/auth/login"
-  },
-  {
-    "maxBodyBytes": 1024,
-    "methods": [
-      "POST"
-    ],
-    "path": "/api/v1/auth/logout"
-  },
-  {
-    "maxBodyBytes": 1024,
-    "methods": [
-      "POST"
-    ],
-    "path": "/api/v1/auth/refresh"
-  },
-  {
-    "maxBodyBytes": 1024,
-    "methods": [
-      "GET"
-    ],
-    "path": "/api/v1/auth/csrf"
-  },
-  {
-    "maxBodyBytes": 1024,
-    "methods": [
-      "POST"
-    ],
-    "path": "/api/v1/auth/login/totp"
-  },
-  {
-    "maxBodyBytes": 1024,
-    "methods": [
-      "POST"
-    ],
-    "path": "/api/v1/auth/totp/setup"
-  },
-  {
-    "maxBodyBytes": 1024,
-    "methods": [
-      "POST"
-    ],
-    "path": "/api/v1/auth/totp/verify"
-  },
-  {
-    "maxBodyBytes": 1024,
-    "methods": [
-      "POST"
-    ],
-    "path": "/api/v1/auth/totp/disable"
-  },
-  {
-    "maxBodyBytes": 1024,
-    "methods": [
-      "GET"
-    ],
-    "path": "/api/v1/auth/mfa/status"
-  },
-  {
-    "maxBodyBytes": 1024,
-    "methods": [
-      "POST"
-    ],
-    "path": "/api/v1/auth/webauthn/register/begin"
-  },
-  {
-    "maxBodyBytes": 1024,
-    "methods": [
-      "POST"
-    ],
-    "path": "/api/v1/auth/webauthn/register/finish"
-  },
-  {
-    "maxBodyBytes": 1024,
-    "methods": [
-      "POST"
-    ],
-    "path": "/api/v1/auth/webauthn/login/begin"
-  },
-  {
-    "maxBodyBytes": 1024,
-    "methods": [
-      "POST"
-    ],
-    "path": "/api/v1/auth/webauthn/login/finish"
-  },
-  {
+    "auth": false,
+    "csrf": false,
     "maxBodyBytes": 262144,
     "methods": [
       "GET"
     ],
-    "path": "/api/v1/status"
+    "path": "/__version",
+    "rateLimited": false
   },
   {
+    "auth": false,
+    "csrf": false,
+    "maxBodyBytes": 262144,
+    "methods": [
+      "GET"
+    ],
+    "path": "/__capabilities",
+    "rateLimited": false
+  },
+  {
+    "auth": false,
+    "csrf": false,
+    "maxBodyBytes": 1024,
+    "methods": [
+      "POST"
+    ],
+    "path": "/api/v1/auth/login",
+    "rateLimited": false
+  },
+  {
+    "auth": true,
+    "csrf": false,
+    "maxBodyBytes": 1024,
+    "methods": [
+      "POST"
+    ],
+    "path": "/api/v1/auth/logout",
+    "rateLimited": false
+  },
+  {
+    "auth": false,
+    "csrf": false,
+    "maxBodyBytes": 1024,
+    "methods": [
+      "POST"
+    ],
+    "path": "/api/v1/auth/refresh",
+    "rateLimited": false
+  },
+  {
+    "auth": true,
+    "csrf": false,
+    "maxBodyBytes": 1024,
+    "methods": [
+      "GET"
+    ],
+    "path": "/api/v1/auth/csrf",
+    "rateLimited": false
+  },
+  {
+    "auth": false,
+    "csrf": false,
+    "maxBodyBytes": 1024,
+    "methods": [
+      "POST"
+    ],
+    "path": "/api/v1/auth/login/totp",
+    "rateLimited": false
+  },
+  {
+    "auth": true,
+    "csrf": true,
+    "maxBodyBytes": 1024,
+    "methods": [
+      "POST"
+    ],
+    "path": "/api/v1/auth/totp/setup",
+    "rateLimited": false
+  },
+  {
+    "auth": true,
+    "csrf": true,
+    "maxBodyBytes": 1024,
+    "methods": [
+      "POST"
+    ],
+    "path": "/api/v1/auth/totp/verify",
+    "rateLimited": false
+  },
+  {
+    "auth": true,
+    "csrf": true,
+    "maxBodyBytes": 1024,
+    "methods": [
+      "POST"
+    ],
+    "path": "/api/v1/auth/totp/disable",
+    "rateLimited": false
+  },
+  {
+    "auth": true,
+    "csrf": false,
+    "maxBodyBytes": 1024,
+    "methods": [
+      "GET"
+    ],
+    "path": "/api/v1/auth/mfa/status",
+    "rateLimited": false
+  },
+  {
+    "auth": true,
+    "csrf": true,
+    "maxBodyBytes": 1024,
+    "methods": [
+      "POST"
+    ],
+    "path": "/api/v1/auth/webauthn/register/begin",
+    "rateLimited": false
+  },
+  {
+    "auth": true,
+    "csrf": true,
+    "maxBodyBytes": 1024,
+    "methods": [
+      "POST"
+    ],
+    "path": "/api/v1/auth/webauthn/register/finish",
+    "rateLimited": false
+  },
+  {
+    "auth": false,
+    "csrf": false,
+    "maxBodyBytes": 1024,
+    "methods": [
+      "POST"
+    ],
+    "path": "/api/v1/auth/webauthn/login/begin",
+    "rateLimited": false
+  },
+  {
+    "auth": false,
+    "csrf": false,
+    "maxBodyBytes": 1024,
+    "methods": [
+      "POST"
+    ],
+    "path": "/api/v1/auth/webauthn/login/finish",
+    "rateLimited": false
+  },
+  {
+    "auth": true,
+    "csrf": false,
+    "maxBodyBytes": 262144,
+    "methods": [
+      "GET"
+    ],
+    "path": "/api/v1/status",
+    "rateLimited": false
+  },
+  {
+    "auth": true,
+    "csrf": true,
     "maxBodyBytes": 65536,
     "methods": [
       "GET",
       "PUT"
     ],
-    "minRole": "operator",
-    "path": "/api/v1/settings"
+    "path": "/api/v1/settings",
+    "rateLimited": false,
+    "scope": "operator"
   },
   {
+    "auth": true,
+    "csrf": false,
     "maxBodyBytes": 65536,
     "methods": [
       "GET"
     ],
-    "minRole": "operator",
-    "path": "/api/v1/settings/defaults"
+    "path": "/api/v1/settings/defaults",
+    "rateLimited": false,
+    "scope": "operator"
   },
   {
+    "auth": true,
+    "csrf": true,
     "maxBodyBytes": 65536,
     "methods": [
       "GET",
       "PUT"
     ],
-    "minRole": "operator",
-    "path": "/api/v1/settings/link"
+    "path": "/api/v1/settings/link",
+    "rateLimited": false,
+    "scope": "operator"
   },
   {
+    "auth": true,
+    "csrf": true,
     "maxBodyBytes": 65536,
     "methods": [
       "GET",
       "PUT"
     ],
-    "minRole": "operator",
-    "path": "/api/v1/settings/cable"
+    "path": "/api/v1/settings/cable",
+    "rateLimited": false,
+    "scope": "operator"
   },
   {
+    "auth": true,
+    "csrf": false,
     "maxBodyBytes": 262144,
     "methods": [
       "GET"
     ],
-    "path": "/api/v1/interfaces"
+    "path": "/api/v1/interfaces",
+    "rateLimited": false
   },
   {
+    "auth": true,
+    "csrf": true,
     "maxBodyBytes": 262144,
     "methods": [
       "GET",
       "PUT"
     ],
-    "minRole": "operator",
-    "path": "/api/v1/interface"
+    "path": "/api/v1/interface",
+    "rateLimited": false,
+    "scope": "operator"
   },
   {
+    "auth": true,
+    "csrf": true,
     "maxBodyBytes": 262144,
     "methods": [
       "POST"
     ],
-    "minRole": "operator",
-    "path": "/api/v1/network/mtu"
+    "path": "/api/v1/network/mtu",
+    "rateLimited": false,
+    "scope": "operator"
   },
   {
+    "auth": true,
+    "csrf": false,
     "maxBodyBytes": 65536,
     "methods": [
       "GET"
     ],
-    "path": "/api/v1/config/backups"
+    "path": "/api/v1/config/backups",
+    "rateLimited": false
   },
   {
+    "auth": true,
+    "csrf": true,
     "maxBodyBytes": 65536,
     "methods": [
       "POST"
     ],
-    "minRole": "operator",
-    "path": "/api/v1/config/backup"
+    "path": "/api/v1/config/backup",
+    "rateLimited": false,
+    "scope": "operator"
   },
   {
+    "auth": true,
+    "csrf": true,
     "maxBodyBytes": 65536,
     "methods": [
       "DELETE"
     ],
-    "minRole": "operator",
-    "path": "/api/v1/config/backup/delete"
+    "path": "/api/v1/config/backup/delete",
+    "rateLimited": false,
+    "scope": "operator"
   },
   {
+    "auth": true,
+    "csrf": true,
     "maxBodyBytes": 65536,
     "methods": [
       "POST"
     ],
-    "minRole": "operator",
-    "path": "/api/v1/config/restore"
+    "path": "/api/v1/config/restore",
+    "rateLimited": false,
+    "scope": "operator"
   },
   {
+    "auth": true,
+    "csrf": false,
     "maxBodyBytes": 65536,
     "methods": [
       "GET"
     ],
-    "path": "/api/v1/config/version"
+    "path": "/api/v1/config/version",
+    "rateLimited": false
   },
   {
+    "auth": true,
+    "csrf": true,
     "maxBodyBytes": 262144,
     "methods": [
       "GET",
@@ -204,43 +304,58 @@ body:
       "PUT",
       "DELETE"
     ],
-    "minRole": "operator",
-    "path": "/api/v1/profiles"
+    "path": "/api/v1/profiles",
+    "rateLimited": false,
+    "scope": "operator"
   },
   {
+    "auth": true,
+    "csrf": true,
     "maxBodyBytes": 262144,
     "methods": [
       "GET",
       "POST",
       "PUT"
     ],
-    "minRole": "operator",
-    "path": "/api/v1/profiles/active"
+    "path": "/api/v1/profiles/active",
+    "rateLimited": false,
+    "scope": "operator"
   },
   {
+    "auth": true,
+    "csrf": true,
     "maxBodyBytes": 262144,
     "methods": [
       "POST"
     ],
-    "minRole": "operator",
-    "path": "/api/v1/profiles/import"
+    "path": "/api/v1/profiles/import",
+    "rateLimited": false,
+    "scope": "operator"
   },
   {
+    "auth": true,
+    "csrf": false,
     "maxBodyBytes": 262144,
     "methods": [
       "GET"
     ],
-    "path": "/api/v1/profiles/export"
+    "path": "/api/v1/profiles/export",
+    "rateLimited": false
   },
   {
+    "auth": true,
+    "csrf": true,
     "maxBodyBytes": 262144,
     "methods": [
       "POST"
     ],
-    "minRole": "operator",
-    "path": "/api/v1/profiles/switch"
+    "path": "/api/v1/profiles/switch",
+    "rateLimited": false,
+    "scope": "operator"
   },
   {
+    "auth": true,
+    "csrf": true,
     "maxBodyBytes": 262144,
     "methods": [
       "GET",
@@ -249,174 +364,243 @@ body:
       "DELETE",
       "PATCH"
     ],
-    "minRole": "operator",
-    "path": "/api/v1/profiles/"
+    "path": "/api/v1/profiles/",
+    "rateLimited": false,
+    "scope": "operator"
   },
   {
+    "auth": false,
+    "csrf": false,
     "maxBodyBytes": 262144,
     "methods": [
       "GET"
     ],
-    "path": "/api/v1/setup/status"
+    "path": "/api/v1/setup/status",
+    "rateLimited": false
   },
   {
+    "auth": false,
+    "csrf": false,
     "maxBodyBytes": 262144,
     "methods": [
       "POST"
     ],
-    "path": "/api/v1/setup/complete"
+    "path": "/api/v1/setup/complete",
+    "rateLimited": false
   },
   {
+    "auth": false,
+    "csrf": false,
     "maxBodyBytes": 262144,
     "methods": [
       "GET"
     ],
-    "path": "/api/v1/recovery/status"
+    "path": "/api/v1/recovery/status",
+    "rateLimited": false
   },
   {
+    "auth": false,
+    "csrf": false,
     "maxBodyBytes": 262144,
     "methods": [
       "POST"
     ],
-    "path": "/api/v1/recovery/complete"
+    "path": "/api/v1/recovery/complete",
+    "rateLimited": false
   },
   {
+    "auth": false,
+    "csrf": false,
     "maxBodyBytes": 262144,
     "methods": [
       "GET"
     ],
-    "path": "/api/v1/recovery/instructions"
+    "path": "/api/v1/recovery/instructions",
+    "rateLimited": false
   },
   {
+    "auth": false,
+    "csrf": false,
     "maxBodyBytes": 262144,
     "methods": [
       "GET"
     ],
-    "path": "/api/v1/sso/providers"
+    "path": "/api/v1/sso/providers",
+    "rateLimited": false
   },
   {
+    "auth": false,
+    "csrf": false,
     "maxBodyBytes": 262144,
     "methods": [
       "GET"
     ],
-    "path": "/api/v1/sso/login"
+    "path": "/api/v1/sso/login",
+    "rateLimited": false
   },
   {
+    "auth": false,
+    "csrf": false,
     "maxBodyBytes": 262144,
     "methods": [
       "GET"
     ],
-    "path": "/api/v1/sso/callback"
+    "path": "/api/v1/sso/callback",
+    "rateLimited": false
   },
   {
+    "auth": true,
+    "csrf": false,
     "maxBodyBytes": 262144,
     "methods": [
       "GET"
     ],
-    "minRole": "operator",
-    "path": "/api/v1/sso/settings"
+    "path": "/api/v1/sso/settings",
+    "rateLimited": false,
+    "scope": "operator"
   },
   {
+    "auth": true,
+    "csrf": true,
     "feature": "sso",
     "maxBodyBytes": 262144,
     "methods": [
       "PUT"
     ],
-    "minRole": "operator",
-    "path": "/api/v1/sso/update"
+    "path": "/api/v1/sso/update",
+    "rateLimited": false,
+    "scope": "operator"
   },
   {
+    "auth": true,
+    "csrf": false,
     "maxBodyBytes": 262144,
     "methods": [
       "GET"
     ],
-    "path": "/api/v1/health"
+    "path": "/api/v1/health",
+    "rateLimited": false
   },
   {
+    "auth": true,
+    "csrf": true,
     "maxBodyBytes": 262144,
     "methods": [
       "GET",
       "POST"
     ],
-    "minRole": "operator",
-    "path": "/api/v1/tokens"
+    "path": "/api/v1/tokens",
+    "rateLimited": false,
+    "scope": "operator"
   },
   {
+    "auth": true,
+    "csrf": true,
     "maxBodyBytes": 262144,
     "methods": [
       "DELETE"
     ],
-    "minRole": "operator",
-    "path": "/api/v1/tokens/"
+    "path": "/api/v1/tokens/",
+    "rateLimited": false,
+    "scope": "operator"
   },
   {
+    "auth": true,
+    "csrf": false,
     "maxBodyBytes": 262144,
     "methods": [
       "GET"
     ],
-    "path": "/api/v1/license"
+    "path": "/api/v1/license",
+    "rateLimited": false
   },
   {
+    "auth": true,
+    "csrf": false,
     "maxBodyBytes": 262144,
     "methods": [
       "GET"
     ],
-    "path": "/api/v1/users/me"
+    "path": "/api/v1/users/me",
+    "rateLimited": false
   },
   {
+    "auth": true,
+    "csrf": true,
     "maxBodyBytes": 262144,
     "methods": [
       "GET",
       "POST"
     ],
-    "path": "/api/v1/users"
+    "path": "/api/v1/users",
+    "rateLimited": false
   },
   {
+    "auth": true,
+    "csrf": true,
     "maxBodyBytes": 262144,
     "methods": [
       "GET",
       "PATCH",
       "DELETE"
     ],
-    "path": "/api/v1/users/"
+    "path": "/api/v1/users/",
+    "rateLimited": false
   },
   {
+    "auth": true,
+    "csrf": false,
     "maxBodyBytes": 262144,
     "methods": [
       "GET"
     ],
-    "path": "/api/v1/telemetry/link"
+    "path": "/api/v1/telemetry/link",
+    "rateLimited": false
   },
   {
+    "auth": true,
+    "csrf": false,
     "maxBodyBytes": 262144,
     "methods": [
       "GET"
     ],
-    "path": "/api/v1/telemetry/cable"
+    "path": "/api/v1/telemetry/cable",
+    "rateLimited": false
   },
   {
+    "auth": true,
+    "csrf": false,
     "maxBodyBytes": 262144,
     "methods": [
       "GET"
     ],
-    "path": "/api/v1/telemetry/interface/driver-stats"
+    "path": "/api/v1/telemetry/interface/driver-stats",
+    "rateLimited": false
   },
   {
+    "auth": true,
+    "csrf": true,
     "maxBodyBytes": 262144,
     "methods": [
       "GET",
       "POST"
     ],
-    "path": "/api/v1/telemetry/dns"
+    "path": "/api/v1/telemetry/dns",
+    "rateLimited": false
   },
   {
+    "auth": true,
+    "csrf": false,
     "maxBodyBytes": 262144,
     "methods": [
       "GET"
     ],
-    "path": "/api/v1/telemetry/gateway"
+    "path": "/api/v1/telemetry/gateway",
+    "rateLimited": false
   },
   {
+    "auth": true,
+    "csrf": true,
     "maxBodyBytes": 262144,
     "methods": [
       "GET",
@@ -426,57 +610,76 @@ body:
     "rateLimited": true
   },
   {
+    "auth": true,
+    "csrf": true,
     "maxBodyBytes": 262144,
     "methods": [
       "POST"
     ],
-    "minRole": "operator",
     "path": "/api/v1/telemetry/dhcp/renew",
-    "rateLimited": true
+    "rateLimited": true,
+    "scope": "operator"
   },
   {
+    "auth": true,
+    "csrf": true,
     "maxBodyBytes": 262144,
     "methods": [
       "GET",
       "POST"
     ],
-    "path": "/api/v1/telemetry/dhcp/rogue"
+    "path": "/api/v1/telemetry/dhcp/rogue",
+    "rateLimited": false
   },
   {
+    "auth": true,
+    "csrf": true,
     "maxBodyBytes": 262144,
     "methods": [
       "GET",
       "POST"
     ],
-    "path": "/api/v1/telemetry/dhcp/rogue/servers"
+    "path": "/api/v1/telemetry/dhcp/rogue/servers",
+    "rateLimited": false
   },
   {
+    "auth": true,
+    "csrf": true,
     "maxBodyBytes": 262144,
     "methods": [
       "GET",
       "PUT"
     ],
-    "minRole": "operator",
-    "path": "/api/v1/telemetry/dhcp/rogue/config"
+    "path": "/api/v1/telemetry/dhcp/rogue/config",
+    "rateLimited": false,
+    "scope": "operator"
   },
   {
+    "auth": true,
+    "csrf": false,
     "maxBodyBytes": 262144,
     "methods": [
       "GET"
     ],
-    "path": "/api/v1/telemetry/vlan"
+    "path": "/api/v1/telemetry/vlan",
+    "rateLimited": false
   },
   {
+    "auth": true,
+    "csrf": true,
     "maxBodyBytes": 262144,
     "methods": [
       "GET",
       "POST",
       "PUT"
     ],
-    "minRole": "operator",
-    "path": "/api/v1/telemetry/vlan/interface"
+    "path": "/api/v1/telemetry/vlan/interface",
+    "rateLimited": false,
+    "scope": "operator"
   },
   {
+    "auth": true,
+    "csrf": true,
     "maxBodyBytes": 262144,
     "methods": [
       "POST"
@@ -485,20 +688,28 @@ body:
     "rateLimited": true
   },
   {
+    "auth": true,
+    "csrf": false,
     "maxBodyBytes": 262144,
     "methods": [
       "GET"
     ],
-    "path": "/api/v1/telemetry/speedtest/status"
+    "path": "/api/v1/telemetry/speedtest/status",
+    "rateLimited": false
   },
   {
+    "auth": true,
+    "csrf": false,
     "maxBodyBytes": 262144,
     "methods": [
       "GET"
     ],
-    "path": "/api/v1/telemetry/iperf/info"
+    "path": "/api/v1/telemetry/iperf/info",
+    "rateLimited": false
   },
   {
+    "auth": true,
+    "csrf": true,
     "maxBodyBytes": 262144,
     "methods": [
       "POST"
@@ -507,44 +718,61 @@ body:
     "rateLimited": true
   },
   {
+    "auth": true,
+    "csrf": false,
     "maxBodyBytes": 262144,
     "methods": [
       "GET"
     ],
-    "path": "/api/v1/telemetry/iperf/client/status"
+    "path": "/api/v1/telemetry/iperf/client/status",
+    "rateLimited": false
   },
   {
+    "auth": true,
+    "csrf": true,
     "maxBodyBytes": 262144,
     "methods": [
       "POST"
     ],
-    "minRole": "operator",
-    "path": "/api/v1/telemetry/iperf/server"
+    "path": "/api/v1/telemetry/iperf/server",
+    "rateLimited": false,
+    "scope": "operator"
   },
   {
+    "auth": true,
+    "csrf": false,
     "maxBodyBytes": 262144,
     "methods": [
       "GET"
     ],
-    "path": "/api/v1/telemetry/iperf/server/status"
+    "path": "/api/v1/telemetry/iperf/server/status",
+    "rateLimited": false
   },
   {
+    "auth": true,
+    "csrf": false,
     "maxBodyBytes": 262144,
     "methods": [
       "GET"
     ],
-    "path": "/api/v1/telemetry/iperf/suggestions"
+    "path": "/api/v1/telemetry/iperf/suggestions",
+    "rateLimited": false
   },
   {
+    "auth": true,
+    "csrf": true,
     "maxBodyBytes": 262144,
     "methods": [
       "GET",
       "PUT"
     ],
-    "minRole": "operator",
-    "path": "/api/v1/telemetry/probes/settings"
+    "path": "/api/v1/telemetry/probes/settings",
+    "rateLimited": false,
+    "scope": "operator"
   },
   {
+    "auth": true,
+    "csrf": true,
     "maxBodyBytes": 262144,
     "methods": [
       "GET",
@@ -554,127 +782,171 @@ body:
     "rateLimited": true
   },
   {
+    "auth": true,
+    "csrf": false,
     "feature": "anomaly_detection",
     "maxBodyBytes": 262144,
     "methods": [
       "GET"
     ],
-    "path": "/api/v1/telemetry/probes/anomalies"
+    "path": "/api/v1/telemetry/probes/anomalies",
+    "rateLimited": false
   },
   {
+    "auth": true,
+    "csrf": false,
     "maxBodyBytes": 262144,
     "methods": [
       "GET"
     ],
-    "path": "/api/v1/history/probes/"
+    "path": "/api/v1/history/probes/",
+    "rateLimited": false
   },
   {
+    "auth": true,
+    "csrf": false,
     "maxBodyBytes": 262144,
     "methods": [
       "GET"
     ],
-    "path": "/api/v1/history/anomalies"
+    "path": "/api/v1/history/anomalies",
+    "rateLimited": false
   },
   {
+    "auth": true,
+    "csrf": true,
     "maxBodyBytes": 262144,
     "methods": [
       "GET",
       "PUT"
     ],
-    "minRole": "operator",
-    "path": "/api/v1/telemetry/snmp/settings"
+    "path": "/api/v1/telemetry/snmp/settings",
+    "rateLimited": false,
+    "scope": "operator"
   },
   {
+    "auth": true,
+    "csrf": false,
     "maxBodyBytes": 262144,
     "methods": [
       "GET"
     ],
-    "path": "/api/v1/telemetry/system/health"
+    "path": "/api/v1/telemetry/system/health",
+    "rateLimited": false
   },
   {
+    "auth": true,
+    "csrf": false,
     "maxBodyBytes": 262144,
     "methods": [
       "GET"
     ],
-    "path": "/api/v1/telemetry/ipconfig"
+    "path": "/api/v1/telemetry/ipconfig",
+    "rateLimited": false
   },
   {
+    "auth": true,
+    "csrf": true,
     "maxBodyBytes": 262144,
     "methods": [
       "GET",
       "PUT"
     ],
-    "minRole": "operator",
-    "path": "/api/v1/telemetry/ipconfig/settings"
+    "path": "/api/v1/telemetry/ipconfig/settings",
+    "rateLimited": false,
+    "scope": "operator"
   },
   {
+    "auth": true,
+    "csrf": true,
     "maxBodyBytes": 262144,
     "methods": [
       "GET",
       "POST",
       "PUT"
     ],
-    "path": "/api/v1/telemetry/publicip"
+    "path": "/api/v1/telemetry/publicip",
+    "rateLimited": false
   },
   {
+    "auth": true,
+    "csrf": false,
     "maxBodyBytes": 262144,
     "methods": [
       "GET"
     ],
-    "path": "/api/v1/security/discovery"
+    "path": "/api/v1/security/discovery",
+    "rateLimited": false
   },
   {
+    "auth": true,
+    "csrf": true,
     "maxBodyBytes": 262144,
     "methods": [
       "POST"
     ],
-    "minRole": "operator",
     "path": "/api/v1/security/discovery/probe",
-    "rateLimited": true
+    "rateLimited": true,
+    "scope": "operator"
   },
   {
+    "auth": true,
+    "csrf": true,
     "maxBodyBytes": 262144,
     "methods": [
       "POST"
     ],
-    "minRole": "operator",
     "path": "/api/v1/security/discovery/portscan",
-    "rateLimited": true
+    "rateLimited": true,
+    "scope": "operator"
   },
   {
+    "auth": true,
+    "csrf": true,
     "maxBodyBytes": 262144,
     "methods": [
       "GET",
       "PUT"
     ],
-    "minRole": "operator",
-    "path": "/api/v1/security/discovery/options"
+    "path": "/api/v1/security/discovery/options",
+    "rateLimited": false,
+    "scope": "operator"
   },
   {
+    "auth": true,
+    "csrf": false,
     "maxBodyBytes": 262144,
     "methods": [
       "GET"
     ],
-    "path": "/api/v1/security/discovery/service/status"
+    "path": "/api/v1/security/discovery/service/status",
+    "rateLimited": false
   },
   {
+    "auth": true,
+    "csrf": true,
     "maxBodyBytes": 262144,
     "methods": [
       "POST"
     ],
-    "minRole": "operator",
     "path": "/api/v1/security/discovery/fingerprint",
-    "rateLimited": true
+    "rateLimited": true,
+    "scope": "operator"
   },
   {
+    "auth": true,
+    "csrf": true,
     "maxBodyBytes": 262144,
     "methods": [
       "GET",
       "POST"
     ],
-    "path": "/api/v1/security/devices"
+    "path": "/api/v1/security/devices",
+    "rateLimited": false
   },
   {
+    "auth": true,
+    "csrf": true,
     "maxBodyBytes": 262144,
     "methods": [
       "POST"
@@ -683,50 +955,66 @@ body:
     "rateLimited": true
   },
   {
+    "auth": true,
+    "csrf": false,
     "maxBodyBytes": 262144,
     "methods": [
       "GET"
     ],
-    "path": "/api/v1/security/devices/status"
+    "path": "/api/v1/security/devices/status",
+    "rateLimited": false
   },
   {
+    "auth": true,
+    "csrf": true,
     "maxBodyBytes": 262144,
     "methods": [
       "GET",
       "PUT"
     ],
-    "minRole": "operator",
-    "path": "/api/v1/security/devices/settings"
+    "path": "/api/v1/security/devices/settings",
+    "rateLimited": false,
+    "scope": "operator"
   },
   {
+    "auth": true,
+    "csrf": false,
     "feature": "export_csv_json",
     "maxBodyBytes": 262144,
     "methods": [
       "GET"
     ],
-    "path": "/api/v1/reports"
+    "path": "/api/v1/reports",
+    "rateLimited": false
   },
   {
+    "auth": true,
+    "csrf": true,
     "feature": "export_csv_json",
     "maxBodyBytes": 262144,
     "methods": [
       "POST"
     ],
-    "minRole": "operator",
     "path": "/api/v1/reports/generate",
-    "rateLimited": true
+    "rateLimited": true,
+    "scope": "operator"
   },
   {
+    "auth": true,
+    "csrf": true,
     "feature": "scheduled_reports",
     "maxBodyBytes": 262144,
     "methods": [
       "GET",
       "POST"
     ],
-    "minRole": "operator",
-    "path": "/api/v1/reports/schedules"
+    "path": "/api/v1/reports/schedules",
+    "rateLimited": false,
+    "scope": "operator"
   },
   {
+    "auth": true,
+    "csrf": true,
     "feature": "scheduled_reports",
     "maxBodyBytes": 262144,
     "methods": [
@@ -734,29 +1022,38 @@ body:
       "PUT",
       "DELETE"
     ],
-    "minRole": "operator",
-    "path": "/api/v1/reports/schedules/"
+    "path": "/api/v1/reports/schedules/",
+    "rateLimited": false,
+    "scope": "operator"
   },
   {
+    "auth": true,
+    "csrf": true,
     "feature": "export_csv_json",
     "maxBodyBytes": 262144,
     "methods": [
       "GET",
       "DELETE"
     ],
-    "minRole": "operator",
-    "path": "/api/v1/reports/"
+    "path": "/api/v1/reports/",
+    "rateLimited": false,
+    "scope": "operator"
   },
   {
+    "auth": true,
+    "csrf": true,
     "maxBodyBytes": 262144,
     "methods": [
       "GET",
       "PUT"
     ],
-    "minRole": "operator",
-    "path": "/api/v1/security/guest-audit/settings"
+    "path": "/api/v1/security/guest-audit/settings",
+    "rateLimited": false,
+    "scope": "operator"
   },
   {
+    "auth": true,
+    "csrf": true,
     "feature": "compliance_advanced",
     "maxBodyBytes": 262144,
     "methods": [
@@ -766,71 +1063,100 @@ body:
     "rateLimited": true
   },
   {
+    "auth": true,
+    "csrf": false,
     "maxBodyBytes": 262144,
     "methods": [
       "GET"
     ],
-    "path": "/api/v1/security/problems"
+    "path": "/api/v1/security/problems",
+    "rateLimited": false
   },
   {
+    "auth": true,
+    "csrf": true,
     "maxBodyBytes": 262144,
     "methods": [
       "POST"
     ],
-    "path": "/api/v1/security/problems/scan"
+    "path": "/api/v1/security/problems/scan",
+    "rateLimited": false
   },
   {
+    "auth": true,
+    "csrf": true,
     "maxBodyBytes": 262144,
     "methods": [
       "GET",
       "PUT"
     ],
-    "minRole": "operator",
-    "path": "/api/v1/security/problems/thresholds"
+    "path": "/api/v1/security/problems/thresholds",
+    "rateLimited": false,
+    "scope": "operator"
   },
   {
+    "auth": true,
+    "csrf": true,
     "maxBodyBytes": 262144,
     "methods": [
       "POST"
     ],
-    "path": "/api/v1/security/wifi/discovery/scan"
+    "path": "/api/v1/security/wifi/discovery/scan",
+    "rateLimited": false
   },
   {
+    "auth": true,
+    "csrf": false,
     "maxBodyBytes": 262144,
     "methods": [
       "GET"
     ],
-    "path": "/api/v1/security/wifi/discovery/networks"
+    "path": "/api/v1/security/wifi/discovery/networks",
+    "rateLimited": false
   },
   {
+    "auth": true,
+    "csrf": false,
     "maxBodyBytes": 262144,
     "methods": [
       "GET"
     ],
-    "path": "/api/v1/security/wifi/discovery/aps"
+    "path": "/api/v1/security/wifi/discovery/aps",
+    "rateLimited": false
   },
   {
+    "auth": true,
+    "csrf": false,
     "maxBodyBytes": 262144,
     "methods": [
       "GET"
     ],
-    "path": "/api/v1/security/wifi/discovery/stats"
+    "path": "/api/v1/security/wifi/discovery/stats",
+    "rateLimited": false
   },
   {
+    "auth": true,
+    "csrf": false,
     "maxBodyBytes": 262144,
     "methods": [
       "GET"
     ],
-    "path": "/api/v1/discovery/bonjour"
+    "path": "/api/v1/discovery/bonjour",
+    "rateLimited": false
   },
   {
+    "auth": true,
+    "csrf": false,
     "maxBodyBytes": 262144,
     "methods": [
       "GET"
     ],
-    "path": "/api/v1/discovery/engine"
+    "path": "/api/v1/discovery/engine",
+    "rateLimited": false
   },
   {
+    "auth": true,
+    "csrf": true,
     "maxBodyBytes": 262144,
     "methods": [
       "POST"
@@ -839,6 +1165,8 @@ body:
     "rateLimited": true
   },
   {
+    "auth": true,
+    "csrf": true,
     "maxBodyBytes": 262144,
     "methods": [
       "POST"
@@ -847,6 +1175,8 @@ body:
     "rateLimited": true
   },
   {
+    "auth": true,
+    "csrf": true,
     "maxBodyBytes": 262144,
     "methods": [
       "POST"
@@ -855,34 +1185,48 @@ body:
     "rateLimited": true
   },
   {
+    "auth": true,
+    "csrf": false,
     "maxBodyBytes": 262144,
     "methods": [
       "GET"
     ],
-    "path": "/api/v1/discovery/engine/stats"
+    "path": "/api/v1/discovery/engine/stats",
+    "rateLimited": false
   },
   {
+    "auth": true,
+    "csrf": false,
     "maxBodyBytes": 262144,
     "methods": [
       "GET"
     ],
-    "path": "/api/v1/discovery/engine/capabilities"
+    "path": "/api/v1/discovery/engine/capabilities",
+    "rateLimited": false
   },
   {
+    "auth": true,
+    "csrf": false,
     "maxBodyBytes": 262144,
     "methods": [
       "GET"
     ],
-    "path": "/api/v1/discovery/engine/device/"
+    "path": "/api/v1/discovery/engine/device/",
+    "rateLimited": false
   },
   {
+    "auth": true,
+    "csrf": false,
     "maxBodyBytes": 262144,
     "methods": [
       "GET"
     ],
-    "path": "/api/v1/discovery/engine/events"
+    "path": "/api/v1/discovery/engine/events",
+    "rateLimited": false
   },
   {
+    "auth": true,
+    "csrf": true,
     "feature": "path_analysis",
     "maxBodyBytes": 262144,
     "methods": [
@@ -892,399 +1236,549 @@ body:
     "rateLimited": true
   },
   {
+    "auth": true,
+    "csrf": true,
     "feature": "path_analysis",
     "maxBodyBytes": 262144,
     "methods": [
       "POST"
     ],
-    "path": "/api/v1/path/path"
+    "path": "/api/v1/path/path",
+    "rateLimited": false
   },
   {
+    "auth": true,
+    "csrf": true,
     "maxBodyBytes": 262144,
     "methods": [
       "GET",
       "POST",
       "PUT"
     ],
-    "path": "/api/v1/wifi/wifi"
+    "path": "/api/v1/wifi/wifi",
+    "rateLimited": false
   },
   {
+    "auth": true,
+    "csrf": false,
     "maxBodyBytes": 262144,
     "methods": [
       "GET"
     ],
-    "path": "/api/v1/wifi/wifi/scan"
+    "path": "/api/v1/wifi/wifi/scan",
+    "rateLimited": false
   },
   {
+    "auth": true,
+    "csrf": false,
     "maxBodyBytes": 262144,
     "methods": [
       "GET"
     ],
-    "path": "/api/v1/wifi/wifi/status"
+    "path": "/api/v1/wifi/wifi/status",
+    "rateLimited": false
   },
   {
+    "auth": true,
+    "csrf": false,
     "maxBodyBytes": 262144,
     "methods": [
       "GET"
     ],
-    "path": "/api/v1/wifi/wifi/channel-graph"
+    "path": "/api/v1/wifi/wifi/channel-graph",
+    "rateLimited": false
   },
   {
+    "auth": true,
+    "csrf": false,
     "feature": "wifi_analysis",
     "maxBodyBytes": 262144,
     "methods": [
       "GET"
     ],
-    "path": "/api/v1/wifi/airspace"
+    "path": "/api/v1/wifi/airspace",
+    "rateLimited": false
   },
   {
+    "auth": true,
+    "csrf": false,
     "feature": "wifi_analysis",
     "maxBodyBytes": 262144,
     "methods": [
       "GET"
     ],
-    "path": "/api/v1/wifi/anomalies"
+    "path": "/api/v1/wifi/anomalies",
+    "rateLimited": false
   },
   {
+    "auth": true,
+    "csrf": true,
     "maxBodyBytes": 262144,
     "methods": [
       "GET",
       "PUT"
     ],
-    "minRole": "operator",
-    "path": "/api/v1/wifi/wifi/settings"
+    "path": "/api/v1/wifi/wifi/settings",
+    "rateLimited": false,
+    "scope": "operator"
   },
   {
+    "auth": true,
+    "csrf": true,
     "maxBodyBytes": 262144,
     "methods": [
       "POST"
     ],
-    "minRole": "operator",
-    "path": "/api/v1/wifi/wifi/connect"
+    "path": "/api/v1/wifi/wifi/connect",
+    "rateLimited": false,
+    "scope": "operator"
   },
   {
+    "auth": true,
+    "csrf": true,
     "maxBodyBytes": 262144,
     "methods": [
       "POST"
     ],
-    "minRole": "operator",
-    "path": "/api/v1/wifi/wifi/disconnect"
+    "path": "/api/v1/wifi/wifi/disconnect",
+    "rateLimited": false,
+    "scope": "operator"
   },
   {
+    "auth": true,
+    "csrf": false,
     "maxBodyBytes": 262144,
     "methods": [
       "GET"
     ],
-    "path": "/api/v1/wifi/wifi/saved"
+    "path": "/api/v1/wifi/wifi/saved",
+    "rateLimited": false
   },
   {
+    "auth": true,
+    "csrf": true,
     "maxBodyBytes": 262144,
     "methods": [
       "DELETE"
     ],
-    "minRole": "operator",
-    "path": "/api/v1/wifi/wifi/forget"
+    "path": "/api/v1/wifi/wifi/forget",
+    "rateLimited": false,
+    "scope": "operator"
   },
   {
+    "auth": true,
+    "csrf": false,
     "feature": "export_csv_json",
     "maxBodyBytes": 262144,
     "methods": [
       "GET"
     ],
-    "path": "/api/v1/reporting/export"
+    "path": "/api/v1/reporting/export",
+    "rateLimited": false
   },
   {
+    "auth": true,
+    "csrf": false,
     "maxBodyBytes": 262144,
     "methods": [
       "GET"
     ],
-    "path": "/api/v1/reporting/logs"
+    "path": "/api/v1/reporting/logs",
+    "rateLimited": false
   },
   {
+    "auth": true,
+    "csrf": false,
     "maxBodyBytes": 262144,
     "methods": [
       "POST"
     ],
-    "path": "/api/v1/reporting/logs/client"
+    "path": "/api/v1/reporting/logs/client",
+    "rateLimited": false
   },
   {
+    "auth": true,
+    "csrf": false,
     "maxBodyBytes": 262144,
     "methods": [
       "GET"
     ],
-    "path": "/api/v1/reporting/logs/query"
+    "path": "/api/v1/reporting/logs/query",
+    "rateLimited": false
   },
   {
+    "auth": true,
+    "csrf": false,
     "maxBodyBytes": 262144,
     "methods": [
       "GET"
     ],
-    "path": "/api/v1/reporting/logs/stats"
+    "path": "/api/v1/reporting/logs/stats",
+    "rateLimited": false
   },
   {
+    "auth": true,
+    "csrf": false,
     "maxBodyBytes": 262144,
     "methods": [
       "GET"
     ],
-    "path": "/api/v1/reporting/logs/recent"
+    "path": "/api/v1/reporting/logs/recent",
+    "rateLimited": false
   },
   {
+    "auth": true,
+    "csrf": false,
     "maxBodyBytes": 262144,
     "methods": [
       "GET"
     ],
-    "path": "/api/v1/topology/nodes"
+    "path": "/api/v1/topology/nodes",
+    "rateLimited": false
   },
   {
+    "auth": true,
+    "csrf": false,
     "maxBodyBytes": 262144,
     "methods": [
       "GET"
     ],
-    "path": "/api/v1/topology/nodes/"
+    "path": "/api/v1/topology/nodes/",
+    "rateLimited": false
   },
   {
+    "auth": true,
+    "csrf": false,
     "maxBodyBytes": 262144,
     "methods": [
       "GET"
     ],
-    "path": "/api/v1/topology/links"
+    "path": "/api/v1/topology/links",
+    "rateLimited": false
   },
   {
+    "auth": true,
+    "csrf": false,
     "maxBodyBytes": 262144,
     "methods": [
       "GET"
     ],
-    "path": "/api/v1/topology/arp"
+    "path": "/api/v1/topology/arp",
+    "rateLimited": false
   },
   {
+    "auth": true,
+    "csrf": false,
     "maxBodyBytes": 262144,
     "methods": [
       "GET"
     ],
-    "path": "/api/v1/network/neighbours"
+    "path": "/api/v1/network/neighbours",
+    "rateLimited": false
   },
   {
+    "auth": true,
+    "csrf": true,
     "maxBodyBytes": 262144,
     "methods": [
       "GET",
       "POST"
     ],
-    "minRole": "operator",
-    "path": "/api/v1/polling-targets"
+    "path": "/api/v1/polling-targets",
+    "rateLimited": false,
+    "scope": "operator"
   },
   {
+    "auth": true,
+    "csrf": true,
     "maxBodyBytes": 262144,
     "methods": [
       "GET",
       "PUT",
       "DELETE"
     ],
-    "minRole": "operator",
-    "path": "/api/v1/polling-targets/"
+    "path": "/api/v1/polling-targets/",
+    "rateLimited": false,
+    "scope": "operator"
   },
   {
+    "auth": true,
+    "csrf": true,
     "maxBodyBytes": 262144,
     "methods": [
       "GET",
       "POST"
     ],
-    "minRole": "operator",
-    "path": "/api/v1/device-credentials"
+    "path": "/api/v1/device-credentials",
+    "rateLimited": false,
+    "scope": "operator"
   },
   {
+    "auth": true,
+    "csrf": true,
     "maxBodyBytes": 262144,
     "methods": [
       "GET",
       "PUT",
       "DELETE"
     ],
-    "minRole": "operator",
-    "path": "/api/v1/device-credentials/"
+    "path": "/api/v1/device-credentials/",
+    "rateLimited": false,
+    "scope": "operator"
   },
   {
+    "auth": true,
+    "csrf": false,
     "maxBodyBytes": 262144,
     "methods": [
       "GET"
     ],
-    "path": "/api/v1/engines"
+    "path": "/api/v1/engines",
+    "rateLimited": false
   },
   {
+    "auth": true,
+    "csrf": true,
     "maxBodyBytes": 262144,
     "methods": [
       "GET",
       "POST"
     ],
-    "minRole": "operator",
-    "path": "/api/v1/alert-rules"
+    "path": "/api/v1/alert-rules",
+    "rateLimited": false,
+    "scope": "operator"
   },
   {
+    "auth": true,
+    "csrf": true,
     "maxBodyBytes": 262144,
     "methods": [
       "GET",
       "PUT",
       "DELETE"
     ],
-    "minRole": "operator",
-    "path": "/api/v1/alert-rules/"
+    "path": "/api/v1/alert-rules/",
+    "rateLimited": false,
+    "scope": "operator"
   },
   {
+    "auth": true,
+    "csrf": false,
     "maxBodyBytes": 262144,
     "methods": [
       "GET"
     ],
-    "path": "/api/v1/alerts"
+    "path": "/api/v1/alerts",
+    "rateLimited": false
   },
   {
+    "auth": true,
+    "csrf": true,
     "maxBodyBytes": 262144,
     "methods": [
       "POST"
     ],
-    "minRole": "operator",
-    "path": "/api/v1/alerts/"
+    "path": "/api/v1/alerts/",
+    "rateLimited": false,
+    "scope": "operator"
   },
   {
+    "auth": true,
+    "csrf": true,
     "maxBodyBytes": 65536,
     "methods": [
       "POST"
     ],
-    "minRole": "operator",
     "path": "/api/v1/settings/alerts/test",
-    "rateLimited": true
+    "rateLimited": true,
+    "scope": "operator"
   },
   {
+    "auth": true,
+    "csrf": false,
     "maxBodyBytes": 262144,
     "methods": [
       "GET"
     ],
-    "path": "/api/v1/security/vulnerabilities/status"
+    "path": "/api/v1/security/vulnerabilities/status",
+    "rateLimited": false
   },
   {
+    "auth": true,
+    "csrf": false,
     "maxBodyBytes": 262144,
     "methods": [
       "GET"
     ],
-    "path": "/api/v1/security/vulnerabilities/results"
+    "path": "/api/v1/security/vulnerabilities/results",
+    "rateLimited": false
   },
   {
+    "auth": true,
+    "csrf": false,
     "maxBodyBytes": 262144,
     "methods": [
       "GET"
     ],
-    "path": "/api/v1/security/vulnerabilities/device"
+    "path": "/api/v1/security/vulnerabilities/device",
+    "rateLimited": false
   },
   {
+    "auth": true,
+    "csrf": false,
     "maxBodyBytes": 262144,
     "methods": [
       "GET"
     ],
-    "path": "/api/v1/security/vulnerabilities/findings"
+    "path": "/api/v1/security/vulnerabilities/findings",
+    "rateLimited": false
   },
   {
+    "auth": true,
+    "csrf": true,
     "maxBodyBytes": 262144,
     "methods": [
       "GET",
       "POST"
     ],
-    "minRole": "operator",
-    "path": "/api/v1/security/vulnerabilities/findings/"
+    "path": "/api/v1/security/vulnerabilities/findings/",
+    "rateLimited": false,
+    "scope": "operator"
   },
   {
+    "auth": true,
+    "csrf": true,
     "maxBodyBytes": 262144,
     "methods": [
       "GET",
       "PUT"
     ],
-    "minRole": "operator",
-    "path": "/api/v1/security/vulnerabilities/settings"
+    "path": "/api/v1/security/vulnerabilities/settings",
+    "rateLimited": false,
+    "scope": "operator"
   },
   {
+    "auth": true,
+    "csrf": true,
     "maxBodyBytes": 262144,
     "methods": [
       "POST"
     ],
-    "path": "/api/v1/security/vulnerabilities/validate-api-key"
+    "path": "/api/v1/security/vulnerabilities/validate-api-key",
+    "rateLimited": false
   },
   {
+    "auth": true,
+    "csrf": false,
     "maxBodyBytes": 262144,
     "methods": [
       "GET"
     ],
-    "path": "/api/v1/flows/top-talkers"
+    "path": "/api/v1/flows/top-talkers",
+    "rateLimited": false
   },
   {
+    "auth": true,
+    "csrf": false,
     "maxBodyBytes": 262144,
     "methods": [
       "GET"
     ],
-    "path": "/api/v1/flows/top-conversations"
+    "path": "/api/v1/flows/top-conversations",
+    "rateLimited": false
   },
   {
+    "auth": true,
+    "csrf": false,
     "maxBodyBytes": 262144,
     "methods": [
       "GET"
     ],
-    "path": "/api/v1/flows/top-applications"
+    "path": "/api/v1/flows/top-applications",
+    "rateLimited": false
   },
   {
+    "auth": true,
+    "csrf": true,
     "maxBodyBytes": 65536,
     "methods": [
       "GET",
       "PUT",
       "DELETE"
     ],
-    "minRole": "operator",
-    "path": "/api/v1/flows/application-signatures"
+    "path": "/api/v1/flows/application-signatures",
+    "rateLimited": false,
+    "scope": "operator"
   },
   {
+    "auth": true,
+    "csrf": true,
     "maxBodyBytes": 262144,
     "methods": [
       "GET",
       "PUT"
     ],
-    "minRole": "operator",
-    "path": "/api/v1/flows/threat-indicators"
+    "path": "/api/v1/flows/threat-indicators",
+    "rateLimited": false,
+    "scope": "operator"
   },
   {
+    "auth": true,
+    "csrf": true,
     "maxBodyBytes": 4096,
     "methods": [
       "GET",
       "PUT"
     ],
-    "path": "/api/v1/users/me/dashboard"
+    "path": "/api/v1/users/me/dashboard",
+    "rateLimited": false
   },
   {
+    "auth": true,
+    "csrf": true,
     "maxBodyBytes": 262144,
     "methods": [
       "POST"
     ],
-    "minRole": "operator",
     "path": "/api/v1/jobs",
-    "rateLimited": true
+    "rateLimited": true,
+    "scope": "operator"
   },
   {
+    "auth": true,
+    "csrf": false,
     "maxBodyBytes": 262144,
     "methods": [
       "GET"
     ],
-    "path": "/api/v1/jobs/events"
+    "path": "/api/v1/jobs/events",
+    "rateLimited": false
   },
   {
+    "auth": true,
+    "csrf": true,
     "maxBodyBytes": 262144,
     "methods": [
       "GET",
       "DELETE"
     ],
-    "minRole": "operator",
-    "path": "/api/v1/jobs/"
+    "path": "/api/v1/jobs/",
+    "rateLimited": false,
+    "scope": "operator"
   },
   {
+    "auth": true,
+    "csrf": false,
     "maxBodyBytes": 262144,
     "methods": [
       "GET"
     ],
-    "path": "/api/v1/captures/"
+    "path": "/api/v1/captures/",
+    "rateLimited": false
   },
   {
+    "auth": true,
+    "csrf": true,
     "maxBodyBytes": 262144,
     "methods": [
       "GET",
@@ -1292,38 +1786,67 @@ body:
       "PUT",
       "DELETE"
     ],
-    "minRole": "operator",
-    "path": "/api/v1/security/devices/subnets"
+    "path": "/api/v1/security/devices/subnets",
+    "rateLimited": false,
+    "scope": "operator"
   },
   {
+    "auth": true,
+    "csrf": true,
     "maxBodyBytes": 262144,
     "methods": [
       "GET",
       "POST"
     ],
-    "minRole": "operator",
-    "path": "/api/v1/security/devices/subnets/pending"
+    "path": "/api/v1/security/devices/subnets/pending",
+    "rateLimited": false,
+    "scope": "operator"
   },
   {
+    "auth": true,
+    "csrf": false,
     "maxBodyBytes": 262144,
     "methods": [
       "GET"
     ],
-    "path": "/api/v1/topology/interfaces"
+    "path": "/api/v1/topology/interfaces",
+    "rateLimited": false
   },
   {
+    "auth": true,
+    "csrf": false,
     "maxBodyBytes": 262144,
     "methods": [
       "GET"
     ],
-    "path": "/api/v1/topology/interfaces/history"
+    "path": "/api/v1/topology/interfaces/history",
+    "rateLimited": false
   },
   {
+    "auth": true,
+    "csrf": false,
     "feature": "live_telemetry",
     "maxBodyBytes": 262144,
     "methods": [
       "GET"
     ],
-    "path": "/api/v1/events"
+    "path": "/api/v1/events",
+    "rateLimited": false
+  },
+  {
+    "auth": true,
+    "csrf": true,
+    "hidden": true,
+    "maxBodyBytes": 262144,
+    "path": "/api/",
+    "rateLimited": false
+  },
+  {
+    "auth": false,
+    "csrf": false,
+    "hidden": true,
+    "maxBodyBytes": 262144,
+    "path": "/",
+    "rateLimited": false
   }
 ]

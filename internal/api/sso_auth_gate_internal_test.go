@@ -79,11 +79,11 @@ func authedRequest(t *testing.T, s *Server, method, path, username, body string)
 	req.Header.Set("Authorization", "Bearer "+token)
 	req.Header.Set("Content-Type", "application/json")
 
-	csrfToken, err := s.csrfManager().TokenForSession(auth.GetSessionIDFromRequest(req))
+	csrfToken, err := s.csrfManager().GetOrCreate(auth.GetSessionIDFromRequest(req))
 	if err != nil {
 		t.Fatalf("mint CSRF token: %v", err)
 	}
-	req.Header.Set(auth.CSRFHeaderName, csrfToken)
+	req.Header.Set("X-Csrf-Token", csrfToken)
 
 	return req
 }
@@ -157,10 +157,10 @@ func TestSSOHandshakeStaysAnonymous(t *testing.T) {
 }
 
 // TestNoGatedRouteBypassesAuth is the general form of #2632: a route whose
-// policy is a role gate or a licence-feature gate must pass through the JWT
-// middleware, because both gates resolve the caller from an identity only that
-// middleware establishes. A gated route sitting on an auth-bypass path reads
-// whatever the anonymous caller supplied.
+// policy is a role gate or a licence-feature gate must declare Auth, because
+// both gates resolve the caller from an identity only the auth middleware
+// establishes. A gated route without Auth reads whatever the anonymous caller
+// supplied.
 //
 // This is the invariant the scripts/check-route-policy.sh gate runs; keeping it
 // as a Go test over the real route table beats grepping route literals, which
@@ -171,19 +171,15 @@ func TestNoGatedRouteBypassesAuth(t *testing.T) {
 	s := ssoGateServer(t)
 
 	checked := 0
-	for _, rt := range s.manifest {
-		if rt.minRole == "" && rt.feature == "" {
+	for _, rt := range s.routes.Policies() {
+		if rt.Scope == "" && rt.Feature == "" {
 			continue
 		}
 		checked++
-		path := rt.path
-		if method, ok := methodFromPath(path); ok {
-			path = strings.TrimPrefix(path, method+" ")
-		}
-		if auth.ShouldBypassAuth(path) {
-			t.Errorf("%s carries minRole=%q feature=%q but bypasses the auth middleware, "+
+		if !rt.Auth {
+			t.Errorf("%s carries scope=%q feature=%q but does not declare Auth, "+
 				"so its gate resolves an identity the caller supplied (#2632)",
-				rt.path, rt.minRole, rt.feature)
+				rt.Path, rt.Scope, rt.Feature)
 		}
 	}
 

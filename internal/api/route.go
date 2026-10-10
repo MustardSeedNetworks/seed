@@ -1,182 +1,114 @@
 package api
 
-// route.go is the capability registry: routes are declared as data and a single
-// register() composes their per-route middleware in one canonical order. This
-// replaces hand-wrapping each route at registration, where the wrapper nesting
-// was applied inconsistently and could be forgotten (a documented regression
-// class). See docs/architecture/decisions/0002-capability-registry.md.
+// route.go wires seed's policy into the fleet's capability registry
+// (foundation pkg/httpserver/route, ADR-0002). Routes are declared as data and
+// the shared Registrar composes each one's policy in its one canonical order —
+// limiter → auth → method gate → CSRF → feature → scope → body cap — wrapped in
+// request ID, access log and panic recovery. This file supplies only what that
+// order does not decide: seed's error envelope, its authentication chain, its
+// CSRF session key, its role gate, its licence gate and its endpoint limiter.
+// scripts/check-route-policy.sh keeps every route on the Registrar.
 
 import (
-	"encoding/json"
+	"fmt"
 	"net/http"
-	"slices"
-	"strings"
 
+	"github.com/MustardSeedNetworks/foundation/pkg/httpserver/route"
+
+	"github.com/MustardSeedNetworks/seed/internal/auth"
+	"github.com/MustardSeedNetworks/seed/internal/i18n"
 	"github.com/MustardSeedNetworks/seed/internal/identity/roles"
 	"github.com/MustardSeedNetworks/seed/internal/logging"
 )
 
-// route declares an HTTP route and its per-route policy. Authentication and CSRF
-// are enforced globally (server_lifecycle.go) and are NOT part of this policy.
-// Everything a route's request handling is gated on lives here so the registry
-// is the single authoritative source (ADR-0002): allowed methods, body-size
-// limit, a role gate, a license-feature gate, and rate limiting.
-type route struct {
-	// path is the full request path (callers pass APIVersionPrefix+"/..."). It
-	// MAY carry a Go 1.22 method prefix ("GET /api/v1/..."), in which case the
-	// method is enforced natively by ServeMux and `methods` is left empty.
-	path string
-	// handler is the terminal handler for the route.
-	handler http.HandlerFunc
-	// methods is the set of HTTP methods the route accepts. register() rejects
-	// any other method with 405 + an Allow header (before feature/role checks).
-	// Leave empty ONLY when path carries a method prefix (ServeMux enforces it).
-	methods []string
-	// maxBodyBytes caps the request body (DoS guard). 0 means the default
-	// (MaxBodySizeJSON); set explicitly for larger uploads or tighter limits.
-	maxBodyBytes int64
-	// minRole gates state-changing methods. The supported value today is
-	// roles.Operator, applied via writeGated (safe GET/HEAD/OPTIONS pass;
-	// mutating methods require operator+). Empty = no role gate.
-	minRole string
-	// feature is the license feature required via requireFeature. Empty = none.
-	feature string
-	// rateLimited wraps the route in the shared endpoint rate limiter.
-	rateLimited bool
+// limitEndpoint names the shared endpoint rate limiter (Route.Limiter).
+const limitEndpoint = "endpoint"
+
+// newRegistrar builds the Registrar over this server's policy. It reads the
+// auth manager, CSRF manager and endpoint limiter when called, so build it
+// after they are set.
+func (s *Server) newRegistrar() *route.Registrar {
+	return route.New(route.Config{
+		Error:        registrarError,
+		MaxBodyBytes: MaxBodySizeJSON,
+		Logger:       logging.GetLogger(),
+		Auth:         s.authenticate,
+		CSRF:         s.csrfManager(),
+		SessionKey:   csrfSessionKey,
+		Scope:        s.scopeGate,
+		Feature:      s.featureGate,
+		Limiters: map[string]route.Middleware{
+			limitEndpoint: s.endpointRateLimiter().RateLimitMiddleware,
+		},
+	})
 }
 
-// methodFromPath extracts a Go 1.22 method prefix ("GET /path") if present.
-func methodFromPath(path string) (string, bool) {
-	i := strings.IndexByte(path, ' ')
-	if i <= 0 {
+// authenticate admits a request carrying a personal access token or a valid
+// session JWT. The PAT middleware runs first so an `sd_pat_…` bearer is
+// resolved before the JWT middleware would reject it as a malformed JWT.
+func (s *Server) authenticate(next http.Handler) http.Handler {
+	return apiTokenMiddleware(s.identityTokens, s.resolveClientID, s.authManager().Middleware(next))
+}
+
+// scopeGate is the Route.Scope hook. roles.Operator is the one scope the
+// registry declares: writeGated lets safe methods through and requires
+// operator+ for the rest. Admin-only routes check the role in the handler.
+func (s *Server) scopeGate(scope string) route.Middleware {
+	if scope != roles.Operator {
+		panic(fmt.Sprintf("route scope %q: only %q is supported", scope, roles.Operator))
+	}
+	return func(next http.Handler) http.Handler {
+		return s.writeGated(next.ServeHTTP)
+	}
+}
+
+// featureGate is the Route.Feature hook: the route answers 402 unless the
+// active licence includes feature.
+func (s *Server) featureGate(feature string) route.Middleware {
+	return func(next http.Handler) http.Handler {
+		return s.requireFeature(feature, next.ServeHTTP)
+	}
+}
+
+// csrfSessionKey keys CSRF tokens by the session JWT, the key
+// /api/v1/auth/csrf mints under. A personal access token is not an ambient
+// credential — a cross-site page cannot set an Authorization header — so a
+// PAT-authenticated request has no session to forge and passes (#2450). A
+// request with no session passes too: behind Auth it has already been refused,
+// and on a pre-session route there is nothing to forge (#2391).
+func csrfSessionKey(r *http.Request) (string, bool) {
+	if auth.IsAPITokenAuth(r.Context()) {
 		return "", false
 	}
-	switch m := path[:i]; m {
-	case http.MethodGet, http.MethodHead, http.MethodPost, http.MethodPut,
-		http.MethodPatch, http.MethodDelete, http.MethodOptions:
-		return m, true
+	key := auth.GetSessionIDFromRequest(r)
+	return key, key != ""
+}
+
+// registrarError renders the Registrar's own refusals (405, CSRF, a recovered
+// panic) in seed's JSON envelope, with the codes and messages seed answered
+// before the shared registrar.
+func registrarError(w http.ResponseWriter, r *http.Request, status int, code, message string) {
+	switch code {
+	case "method_not_allowed":
+		writeError(w, r, status, ErrCodeMethodNotAllowed, message)
+	case "csrf_token_missing", "csrf_token_expired", "csrf_token_invalid":
+		logging.FromContext(r.Context()).WarnContext(r.Context(), "CSRF validation failed",
+			"pattern", r.Pattern, "method", r.Method, "reason", code)
+		writeError(w, r, status, ErrCodeForbidden, csrfRefusal(code))
+	default: // internal_server_error, csrf_unavailable
+		writeError(w, r, http.StatusInternalServerError, ErrCodeInternal,
+			i18n.FromRequest(r).T("errors.api.internalError"))
+	}
+}
+
+// csrfRefusal is the message the UI has always received for each CSRF failure.
+func csrfRefusal(code string) string {
+	switch code {
+	case "csrf_token_missing":
+		return "CSRF token required"
+	case "csrf_token_expired":
+		return "CSRF token expired"
 	default:
-		return "", false
-	}
-}
-
-// effectiveMethods is the route's declared method set: a method prefix on the
-// path (ServeMux-enforced) takes precedence, otherwise the methods field.
-func effectiveMethods(rt route) []string {
-	if m, ok := methodFromPath(rt.path); ok {
-		return []string{m}
-	}
-	return rt.methods
-}
-
-// methodGate rejects any method outside allowed with a 405 + Allow header,
-// preserving the project's JSON error envelope.
-func (s *Server) methodGate(allowed []string, next http.HandlerFunc) http.HandlerFunc {
-	allowHeader := strings.Join(allowed, ", ")
-	return func(w http.ResponseWriter, r *http.Request) {
-		if slices.Contains(allowed, r.Method) {
-			next(w, r)
-			return
-		}
-		w.Header().Set("Allow", allowHeader)
-		sendErrorResponseWithDetails(w, logging.FromContext(r.Context()),
-			http.StatusMethodNotAllowed, ErrCodeMethodNotAllowed, "Method not allowed", "")
-	}
-}
-
-// bodyLimited caps the request body before the handler reads it.
-func bodyLimited(limit int64, next http.HandlerFunc) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		r.Body = http.MaxBytesReader(w, r.Body, limit)
-		next(w, r)
-	}
-}
-
-// register installs rt on the mux, composing middleware in ONE canonical order
-// for every route: rateLimit → requireFeature → requireRole → handler (rate
-// limit outermost, role gate closest to the handler). Composing here — rather
-// than at each call site — makes the policy declarative and the ordering
-// uniform, and is the single choke point a future audit/CI gate can enforce.
-func (s *Server) register(rt route) {
-	// Resolve the effective policy, then record it for the /__capabilities
-	// manifest (and the route-policy test) before composing middleware.
-	rt.methods = effectiveMethods(rt)
-	if rt.maxBodyBytes == 0 {
-		rt.maxBodyBytes = MaxBodySizeJSON
-	}
-	s.manifest = append(s.manifest, rt)
-
-	h := rt.handler
-
-	// bodyLimit closest to the handler so r.Body is capped before any read.
-	h = bodyLimited(rt.maxBodyBytes, h)
-	// requireRole next.
-	if rt.minRole == roles.Operator {
-		h = s.writeGated(h)
-	}
-	// requireFeature next.
-	if rt.feature != "" {
-		h = s.requireFeature(rt.feature, h)
-	}
-	// methodGate before feature/role so a wrong method 405s early. Skipped when
-	// the path carries a method prefix — ServeMux enforces the method itself.
-	if len(rt.methods) > 0 && !hasMethodPrefix(rt.path) {
-		h = s.methodGate(rt.methods, h)
-	}
-	// rateLimit outermost. RateLimitMiddleware takes and returns http.Handler;
-	// an http.HandlerFunc satisfies http.Handler.
-	if rt.rateLimited {
-		s.mux.Handle(rt.path, s.endpointRateLimiter().RateLimitMiddleware(h))
-		return
-	}
-	s.mux.HandleFunc(rt.path, h)
-}
-
-// hasMethodPrefix reports whether path carries a Go 1.22 method prefix.
-func hasMethodPrefix(path string) bool {
-	_, ok := methodFromPath(path)
-	return ok
-}
-
-// registerAll installs one or more groups of routes, in order.
-func (s *Server) registerAll(groups ...[]route) {
-	for _, routes := range groups {
-		for _, rt := range routes {
-			s.register(rt)
-		}
-	}
-}
-
-// capabilityView is the JSON-serializable projection of a route's policy for
-// the /__capabilities manifest (the handler func itself is not exposed).
-type capabilityView struct {
-	Path         string   `json:"path"`
-	Methods      []string `json:"methods,omitempty"`
-	MaxBodyBytes int64    `json:"maxBodyBytes,omitempty"`
-	MinRole      string   `json:"minRole,omitempty"`
-	Feature      string   `json:"feature,omitempty"`
-	RateLimited  bool     `json:"rateLimited,omitempty"`
-}
-
-// handleCapabilities serves the route-policy manifest: every route registered
-// through register() with its per-route policy (role / feature / rate-limit).
-// No auth — like /__version, it is a deployment/audit introspection surface.
-// Auth and CSRF are global and intentionally not represented here.
-func (s *Server) handleCapabilities(w http.ResponseWriter, r *http.Request) {
-	views := make([]capabilityView, 0, len(s.manifest))
-	for _, rt := range s.manifest {
-		views = append(views, capabilityView{
-			Path:         rt.path,
-			Methods:      rt.methods,
-			MaxBodyBytes: rt.maxBodyBytes,
-			MinRole:      rt.minRole,
-			Feature:      rt.feature,
-			RateLimited:  rt.rateLimited,
-		})
-	}
-	w.Header().Set("Content-Type", "application/json")
-	if err := json.NewEncoder(w).Encode(views); err != nil {
-		logging.FromContext(r.Context()).ErrorContext(r.Context(),
-			"failed to encode capabilities manifest", "error", err)
+		return "Invalid CSRF token"
 	}
 }

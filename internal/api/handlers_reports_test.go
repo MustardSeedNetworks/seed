@@ -112,6 +112,8 @@ func TestReports_FeatureGatedOnFreeTier(t *testing.T) {
 	mgr, err := license.NewManagerWithDir(t.TempDir())
 	require.NoError(t, err)
 	s.SetLicenseManagerForTest(mgr)
+	_, err = db.CreateUser(t.Context(), reportsOperator, "$2a$10$x", roles.Operator)
+	require.NoError(t, err)
 
 	for _, tc := range []struct{ method, path string }{
 		{http.MethodGet, "/api/v1/reports"},

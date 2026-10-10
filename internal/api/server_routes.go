@@ -1,24 +1,35 @@
 package api
 
 // server_routes.go contains the HTTP route table: setupRoutes plus the
-// per-capability setup helpers (core auth/settings, telemetry, security, path,
-// wifi, reporting) and the SSE + static file fallback.
+// per-capability setup helpers (core auth/settings, API tokens, path, Wi-Fi,
+// reporting, topology) and the SSE + static file fallback. The telemetry and
+// security tables are in server_routes_telemetry.go and
+// server_routes_security.go.
 
 import (
 	"net/http"
+	"slices"
+
+	"github.com/MustardSeedNetworks/foundation/pkg/httpserver/route"
 
 	"github.com/MustardSeedNetworks/seed/internal/identity/roles"
 	"github.com/MustardSeedNetworks/seed/internal/logging"
 )
 
-// setupRoutes configures all HTTP routes.
+// setupRoutes registers every route on one Registrar. Auth and CSRF are
+// declared per route: Auth on every /api route except the pre-session steps
+// (sign-in, refresh, first-run setup, recovery, the OAuth handshake), CSRF on
+// every authenticated route that takes a state-changing method except logout
+// and the client log sink.
 func (s *Server) setupRoutes() {
-	s.mux.HandleFunc("/__version", s.handleBuildVersion)
-	// /__capabilities exposes the route-policy manifest (ADR-0002). Registered
-	// directly (not via register()) because it is infra introspection, not an
-	// API surface — same as /__version. Reads s.manifest at request time, after
-	// the module setups below have populated it.
-	s.mux.HandleFunc("/__capabilities", s.handleCapabilities)
+	s.routes = s.newRegistrar()
+	get := []string{http.MethodGet}
+	s.routes.RegisterAll([]route.Route{
+		{Path: "/__version", Handler: s.handleBuildVersion, Methods: get},
+		// The route-policy manifest (ADR-0002): a deployment and audit
+		// surface like /__version, naming no secret.
+		{Path: "/__capabilities", Handler: s.routes.ServeManifest, Methods: get},
+	})
 	s.setupCoreRoutes()
 	s.setupAPITokenRoutes()
 	s.setupTelemetryRoutes()
@@ -27,8 +38,9 @@ func (s *Server) setupRoutes() {
 	s.setupWiFiRoutes()
 	s.setupReportingRoutes()
 	s.setupTopologyRoutes()
-	s.registerAll(s.alertRoutes(), s.vulnerabilityRoutes(), s.flowRoutes(), s.dashboardRoutes(),
-		s.jobsRoutes(), s.captureRoutes(), s.targetNetworkRoutes(), s.interfaceStatsRoutes())
+	s.routes.RegisterAll(slices.Concat(s.alertRoutes(), s.vulnerabilityRoutes(), s.flowRoutes(),
+		s.dashboardRoutes(), s.jobsRoutes(), s.captureRoutes(), s.targetNetworkRoutes(),
+		s.interfaceStatsRoutes()))
 	s.setupSSEAndStatic()
 }
 
@@ -40,37 +52,43 @@ func (s *Server) setupTopologyRoutes() {
 	get := []string{http.MethodGet}
 	getPost := []string{http.MethodGet, http.MethodPost}
 	getPutDelete := []string{http.MethodGet, http.MethodPut, http.MethodDelete}
-	s.registerAll([]route{
+	s.routes.RegisterAll([]route.Route{
 		// /nodes must register BEFORE /nodes/ so the router doesn't treat the
 		// list endpoint as a /nodes/{id} request.
-		{path: APIVersionPrefix + "/topology/nodes", handler: s.handleTopologyNodes, methods: get},
+		{Path: APIVersionPrefix + "/topology/nodes", Handler: s.handleTopologyNodes, Methods: get, Auth: true},
 		{
-			path:    APIVersionPrefix + "/topology/nodes/",
-			handler: s.handleTopologyNodeByID,
-			methods: get,
+			Path:    APIVersionPrefix + "/topology/nodes/",
+			Handler: s.handleTopologyNodeByID,
+			Methods: get,
+			Auth:    true,
 		},
-		{path: APIVersionPrefix + "/topology/links", handler: s.handleTopologyLinks, methods: get},
-		{path: APIVersionPrefix + "/topology/arp", handler: s.handleTopologyARP, methods: get},
+		{Path: APIVersionPrefix + "/topology/links", Handler: s.handleTopologyLinks, Methods: get, Auth: true},
+		{Path: APIVersionPrefix + "/topology/arp", Handler: s.handleTopologyARP, Methods: get, Auth: true},
 		// This device's own neighbour cache, not a remote node's (#328). The
 		// path deliberately does not sit under /topology/ — the two are easy
 		// to confuse and answer different questions.
 		{
-			path:    APIVersionPrefix + "/network/neighbours",
-			handler: s.handleNeighbourCache,
-			methods: get,
+			Path:    APIVersionPrefix + "/network/neighbours",
+			Handler: s.handleNeighbourCache,
+			Methods: get,
+			Auth:    true,
 		},
 		// A5.3 polling targets CRUD: both writeGated (collection accepts POST).
 		{
-			path:    APIVersionPrefix + "/polling-targets",
-			handler: s.handlePollingTargets,
-			methods: getPost,
-			minRole: op,
+			Path:    APIVersionPrefix + "/polling-targets",
+			Handler: s.handlePollingTargets,
+			Methods: getPost,
+			Scope:   op,
+			Auth:    true,
+			CSRF:    true,
 		},
 		{
-			path:    APIVersionPrefix + "/polling-targets/",
-			handler: s.handlePollingTargetByID,
-			methods: getPutDelete,
-			minRole: op,
+			Path:    APIVersionPrefix + "/polling-targets/",
+			Handler: s.handlePollingTargetByID,
+			Methods: getPutDelete,
+			Scope:   op,
+			Auth:    true,
+			CSRF:    true,
 		},
 		// Device-credential vault CRUD (#1799). Operator+ on the mutating
 		// routes, matching /polling-targets: a credential is polling
@@ -78,31 +96,39 @@ func (s *Server) setupTopologyRoutes() {
 		// credentials they reference cannot do the job. Secrets go in and
 		// never come back out.
 		{
-			path:    APIVersionPrefix + "/device-credentials",
-			handler: s.handleDeviceCredentials,
-			methods: getPost,
-			minRole: op,
+			Path:    APIVersionPrefix + "/device-credentials",
+			Handler: s.handleDeviceCredentials,
+			Methods: getPost,
+			Scope:   op,
+			Auth:    true,
+			CSRF:    true,
 		},
 		{
-			path:    APIVersionPrefix + "/device-credentials/",
-			handler: s.handleDeviceCredentialByID,
-			methods: getPutDelete,
-			minRole: op,
+			Path:    APIVersionPrefix + "/device-credentials/",
+			Handler: s.handleDeviceCredentialByID,
+			Methods: getPutDelete,
+			Scope:   op,
+			Auth:    true,
+			CSRF:    true,
 		},
 		// A5.8 read-only engine registry surface.
-		{path: APIVersionPrefix + "/engines", handler: s.handleEngines, methods: get},
+		{Path: APIVersionPrefix + "/engines", Handler: s.handleEngines, Methods: get, Auth: true},
 		// A5.10 operator-defined alert rules: both writeGated.
 		{
-			path:    APIVersionPrefix + "/alert-rules",
-			handler: s.handleAlertRules,
-			methods: getPost,
-			minRole: op,
+			Path:    APIVersionPrefix + "/alert-rules",
+			Handler: s.handleAlertRules,
+			Methods: getPost,
+			Scope:   op,
+			Auth:    true,
+			CSRF:    true,
 		},
 		{
-			path:    APIVersionPrefix + "/alert-rules/",
-			handler: s.handleAlertRuleByID,
-			methods: getPutDelete,
-			minRole: op,
+			Path:    APIVersionPrefix + "/alert-rules/",
+			Handler: s.handleAlertRuleByID,
+			Methods: getPutDelete,
+			Scope:   op,
+			Auth:    true,
+			CSRF:    true,
 		},
 	})
 }
@@ -116,26 +142,36 @@ func (s *Server) setupAPITokenRoutes() {
 	getPost := []string{http.MethodGet, http.MethodPost}
 	del := []string{http.MethodDelete}
 	getPatchDelete := []string{http.MethodGet, http.MethodPatch, http.MethodDelete}
-	s.registerAll([]route{
+	s.routes.RegisterAll([]route.Route{
 		{
-			path:    APIVersionPrefix + "/tokens",
-			handler: s.handleAPITokens,
-			methods: getPost,
-			minRole: op,
+			Path:    APIVersionPrefix + "/tokens",
+			Handler: s.handleAPITokens,
+			Methods: getPost,
+			Scope:   op,
+			Auth:    true,
+			CSRF:    true,
 		},
 		{
-			path:    APIVersionPrefix + "/tokens/",
-			handler: s.handleAPITokenByID,
-			methods: del,
-			minRole: op,
+			Path:    APIVersionPrefix + "/tokens/",
+			Handler: s.handleAPITokenByID,
+			Methods: del,
+			Scope:   op,
+			Auth:    true,
+			CSRF:    true,
 		},
-		{path: APIVersionPrefix + "/license", handler: s.handleLicenseStatus, methods: get},
+		{Path: APIVersionPrefix + "/license", Handler: s.handleLicenseStatus, Methods: get, Auth: true},
 		// Users CRUD (#1191): /users/me registers before /users/ for path routing.
 		// POST /users is admin-only AND Pro-gated, enforced inside the handler so the
 		// response carries the right 403/402 FeatureGateResponse.
-		{path: APIVersionPrefix + "/users/me", handler: s.handleCurrentUser, methods: get},
-		{path: APIVersionPrefix + "/users", handler: s.handleUsers, methods: getPost},
-		{path: APIVersionPrefix + "/users/", handler: s.handleUserByName, methods: getPatchDelete},
+		{Path: APIVersionPrefix + "/users/me", Handler: s.handleCurrentUser, Methods: get, Auth: true},
+		{Path: APIVersionPrefix + "/users", Handler: s.handleUsers, Methods: getPost, Auth: true, CSRF: true},
+		{
+			Path:    APIVersionPrefix + "/users/",
+			Handler: s.handleUserByName,
+			Methods: getPatchDelete,
+			Auth:    true,
+			CSRF:    true,
+		},
 	})
 }
 
@@ -151,183 +187,222 @@ func (s *Server) setupCoreRoutes() {
 	crud := []string{http.MethodGet, http.MethodPost, http.MethodPut, http.MethodDelete}
 	authBody := MaxBodySizeAuth  // 1 KB — auth payloads are tiny.
 	cfgBody := MaxBodySizeConfig // 64 KB — settings/config JSON.
-	s.registerAll([]route{
+	s.routes.RegisterAll([]route.Route{
 		{
-			path:         APIVersionPrefix + "/auth/login",
-			handler:      s.handleLogin,
-			methods:      post,
-			maxBodyBytes: authBody,
+			Path:         APIVersionPrefix + "/auth/login",
+			Handler:      s.handleLogin,
+			Methods:      post,
+			MaxBodyBytes: authBody,
 		},
 		{
-			path:         APIVersionPrefix + "/auth/logout",
-			handler:      s.handleLogout,
-			methods:      post,
-			maxBodyBytes: authBody,
+			Path:         APIVersionPrefix + "/auth/logout",
+			Handler:      s.handleLogout,
+			Methods:      post,
+			MaxBodyBytes: authBody,
+			Auth:         true,
 		},
 		{
-			path:         APIVersionPrefix + "/auth/refresh",
-			handler:      s.handleRefreshToken,
-			methods:      post,
-			maxBodyBytes: authBody,
+			Path:         APIVersionPrefix + "/auth/refresh",
+			Handler:      s.handleRefreshToken,
+			Methods:      post,
+			MaxBodyBytes: authBody,
 		},
 		{
-			path:         APIVersionPrefix + "/auth/csrf",
-			handler:      s.handleCSRFToken,
-			methods:      get,
-			maxBodyBytes: authBody,
+			Path:         APIVersionPrefix + "/auth/csrf",
+			Handler:      s.handleCSRFToken,
+			Methods:      get,
+			MaxBodyBytes: authBody,
+			Auth:         true,
 		},
 		// Wave 3 (#85): MFA + WebAuthn endpoints.
 		{
-			path:         APIVersionPrefix + "/auth/login/totp",
-			handler:      s.handleLoginTOTP,
-			methods:      post,
-			maxBodyBytes: authBody,
+			Path:         APIVersionPrefix + "/auth/login/totp",
+			Handler:      s.handleLoginTOTP,
+			Methods:      post,
+			MaxBodyBytes: authBody,
 		},
 		{
-			path:         APIVersionPrefix + "/auth/totp/setup",
-			handler:      s.handleTOTPSetup,
-			methods:      post,
-			maxBodyBytes: authBody,
+			Path:         APIVersionPrefix + "/auth/totp/setup",
+			Handler:      s.handleTOTPSetup,
+			Methods:      post,
+			MaxBodyBytes: authBody,
+			Auth:         true,
+			CSRF:         true,
 		},
 		{
-			path:         APIVersionPrefix + "/auth/totp/verify",
-			handler:      s.handleTOTPVerify,
-			methods:      post,
-			maxBodyBytes: authBody,
+			Path:         APIVersionPrefix + "/auth/totp/verify",
+			Handler:      s.handleTOTPVerify,
+			Methods:      post,
+			MaxBodyBytes: authBody,
+			Auth:         true,
+			CSRF:         true,
 		},
 		{
-			path:         APIVersionPrefix + "/auth/totp/disable",
-			handler:      s.handleTOTPDisable,
-			methods:      post,
-			maxBodyBytes: authBody,
+			Path:         APIVersionPrefix + "/auth/totp/disable",
+			Handler:      s.handleTOTPDisable,
+			Methods:      post,
+			MaxBodyBytes: authBody,
+			Auth:         true,
+			CSRF:         true,
 		},
 		{
-			path:         APIVersionPrefix + "/auth/mfa/status",
-			handler:      s.handleMFAStatus,
-			methods:      get,
-			maxBodyBytes: authBody,
+			Path:         APIVersionPrefix + "/auth/mfa/status",
+			Handler:      s.handleMFAStatus,
+			Methods:      get,
+			MaxBodyBytes: authBody,
+			Auth:         true,
 		},
 		{
-			path:         APIVersionPrefix + "/auth/webauthn/register/begin",
-			handler:      s.handleWebAuthnRegisterBegin,
-			methods:      post,
-			maxBodyBytes: authBody,
+			Path:         APIVersionPrefix + "/auth/webauthn/register/begin",
+			Handler:      s.handleWebAuthnRegisterBegin,
+			Methods:      post,
+			MaxBodyBytes: authBody,
+			Auth:         true,
+			CSRF:         true,
 		},
 		{
-			path:         APIVersionPrefix + "/auth/webauthn/register/finish",
-			handler:      s.handleWebAuthnRegisterFinish,
-			methods:      post,
-			maxBodyBytes: authBody,
+			Path:         APIVersionPrefix + "/auth/webauthn/register/finish",
+			Handler:      s.handleWebAuthnRegisterFinish,
+			Methods:      post,
+			MaxBodyBytes: authBody,
+			Auth:         true,
+			CSRF:         true,
 		},
 		{
-			path:         APIVersionPrefix + "/auth/webauthn/login/begin",
-			handler:      s.handleWebAuthnLoginBegin,
-			methods:      post,
-			maxBodyBytes: authBody,
+			Path:         APIVersionPrefix + "/auth/webauthn/login/begin",
+			Handler:      s.handleWebAuthnLoginBegin,
+			Methods:      post,
+			MaxBodyBytes: authBody,
 		},
 		{
-			path:         APIVersionPrefix + "/auth/webauthn/login/finish",
-			handler:      s.handleWebAuthnLoginFinish,
-			methods:      post,
-			maxBodyBytes: authBody,
+			Path:         APIVersionPrefix + "/auth/webauthn/login/finish",
+			Handler:      s.handleWebAuthnLoginFinish,
+			Methods:      post,
+			MaxBodyBytes: authBody,
 		},
-		{path: APIVersionPrefix + "/status", handler: s.handleStatus, methods: get},
+		{Path: APIVersionPrefix + "/status", Handler: s.handleStatus, Methods: get, Auth: true},
 		{
-			path:         APIVersionPrefix + "/settings",
-			handler:      s.handleSettings,
-			methods:      getPut,
-			minRole:      op,
-			maxBodyBytes: cfgBody,
-		},
-		{
-			path:         APIVersionPrefix + "/settings/defaults",
-			handler:      s.handleSettingsDefaults,
-			methods:      get,
-			minRole:      op,
-			maxBodyBytes: cfgBody,
+			Path:         APIVersionPrefix + "/settings",
+			Handler:      s.handleSettings,
+			Methods:      getPut,
+			Scope:        op,
+			MaxBodyBytes: cfgBody,
+			Auth:         true,
+			CSRF:         true,
 		},
 		{
-			path:         APIVersionPrefix + "/settings/link",
-			handler:      s.handleLinkSettings,
-			methods:      getPut,
-			minRole:      op,
-			maxBodyBytes: cfgBody,
+			Path:         APIVersionPrefix + "/settings/defaults",
+			Handler:      s.handleSettingsDefaults,
+			Methods:      get,
+			Scope:        op,
+			MaxBodyBytes: cfgBody,
+			Auth:         true,
 		},
 		{
-			path:         APIVersionPrefix + "/settings/cable",
-			handler:      s.handleCableTestSettings,
-			methods:      getPut,
-			minRole:      op,
-			maxBodyBytes: cfgBody,
-		},
-		{path: APIVersionPrefix + "/interfaces", handler: s.handleInterfaces, methods: get},
-		{
-			path:    APIVersionPrefix + "/interface",
-			handler: s.handleInterface,
-			methods: getPut,
-			minRole: op, // PUT persists the active NIC to disk (writeGated: operator+)
+			Path:         APIVersionPrefix + "/settings/link",
+			Handler:      s.handleLinkSettings,
+			Methods:      getPut,
+			Scope:        op,
+			MaxBodyBytes: cfgBody,
+			Auth:         true,
+			CSRF:         true,
 		},
 		{
-			path:    APIVersionPrefix + "/network/mtu",
-			handler: s.handleSetMTU,
-			methods: post,
-			minRole: op,
+			Path:         APIVersionPrefix + "/settings/cable",
+			Handler:      s.handleCableTestSettings,
+			Methods:      getPut,
+			Scope:        op,
+			MaxBodyBytes: cfgBody,
+			Auth:         true,
+			CSRF:         true,
+		},
+		{Path: APIVersionPrefix + "/interfaces", Handler: s.handleInterfaces, Methods: get, Auth: true},
+		{
+			Path:    APIVersionPrefix + "/interface",
+			Handler: s.handleInterface,
+			Methods: getPut,
+			Scope:   op, // PUT persists the active NIC to disk (writeGated: operator+)
+			Auth:    true,
+			CSRF:    true,
 		},
 		{
-			path:         APIVersionPrefix + "/config/backups",
-			handler:      s.handleConfigBackups,
-			methods:      get,
-			maxBodyBytes: cfgBody,
+			Path:    APIVersionPrefix + "/network/mtu",
+			Handler: s.handleSetMTU,
+			Methods: post,
+			Scope:   op,
+			Auth:    true,
+			CSRF:    true,
 		},
 		{
-			path:         APIVersionPrefix + "/config/backup",
-			handler:      s.handleConfigBackupCreate,
-			methods:      post,
-			minRole:      op,
-			maxBodyBytes: cfgBody,
+			Path:         APIVersionPrefix + "/config/backups",
+			Handler:      s.handleConfigBackups,
+			Methods:      get,
+			MaxBodyBytes: cfgBody,
+			Auth:         true,
 		},
 		{
-			path:         APIVersionPrefix + "/config/backup/delete",
-			handler:      s.handleConfigBackupDelete,
-			methods:      del,
-			minRole:      op,
-			maxBodyBytes: cfgBody,
+			Path:         APIVersionPrefix + "/config/backup",
+			Handler:      s.handleConfigBackupCreate,
+			Methods:      post,
+			Scope:        op,
+			MaxBodyBytes: cfgBody,
+			Auth:         true,
+			CSRF:         true,
 		},
 		{
-			path:         APIVersionPrefix + "/config/restore",
-			handler:      s.handleConfigRestore,
-			methods:      post,
-			minRole:      op,
-			maxBodyBytes: cfgBody,
+			Path:         APIVersionPrefix + "/config/backup/delete",
+			Handler:      s.handleConfigBackupDelete,
+			Methods:      del,
+			Scope:        op,
+			MaxBodyBytes: cfgBody,
+			Auth:         true,
+			CSRF:         true,
 		},
 		{
-			path:         APIVersionPrefix + "/config/version",
-			handler:      s.handleConfigVersion,
-			methods:      get,
-			maxBodyBytes: cfgBody,
+			Path:         APIVersionPrefix + "/config/restore",
+			Handler:      s.handleConfigRestore,
+			Methods:      post,
+			Scope:        op,
+			MaxBodyBytes: cfgBody,
+			Auth:         true,
+			CSRF:         true,
 		},
 		{
-			path:    APIVersionPrefix + "/profiles",
-			handler: s.handleProfiles,
-			methods: crud,
-			minRole: op,
+			Path:         APIVersionPrefix + "/config/version",
+			Handler:      s.handleConfigVersion,
+			Methods:      get,
+			MaxBodyBytes: cfgBody,
+			Auth:         true,
 		},
 		{
-			path:    APIVersionPrefix + "/profiles/active",
-			handler: s.handleActiveProfile,
-			methods: getPostPut,
-			minRole: op,
+			Path:    APIVersionPrefix + "/profiles",
+			Handler: s.handleProfiles,
+			Methods: crud,
+			Scope:   op,
+			Auth:    true,
+			CSRF:    true,
 		},
 		{
-			path:    APIVersionPrefix + "/profiles/import",
-			handler: s.handleImportProfiles,
-			methods: post,
-			minRole: op,
+			Path:    APIVersionPrefix + "/profiles/active",
+			Handler: s.handleActiveProfile,
+			Methods: getPostPut,
+			Scope:   op,
+			Auth:    true,
+			CSRF:    true,
 		},
 		{
-			path:    APIVersionPrefix + "/profiles/export",
-			handler: s.handleExportProfiles,
-			methods: get,
+			Path:    APIVersionPrefix + "/profiles/import",
+			Handler: s.handleImportProfiles,
+			Methods: post,
+			Scope:   op,
+			Auth:    true,
+			CSRF:    true,
+		},
+		{
+			Path:    APIVersionPrefix + "/profiles/export",
+			Handler: s.handleExportProfiles,
+			Methods: get,
+			Auth:    true,
 		},
 		{
 			// The UI switches profiles by posting {profileId} here, which is
@@ -335,45 +410,50 @@ func (s *Server) setupCoreRoutes() {
 			// route rather than handled inside the prefix route because a
 			// route the registry can see is a route the capability manifest
 			// and the route-consumer gate can see.
-			path:    APIVersionPrefix + "/profiles/switch",
-			handler: s.handleSetActiveProfile,
-			methods: post,
-			minRole: op,
+			Path:    APIVersionPrefix + "/profiles/switch",
+			Handler: s.handleSetActiveProfile,
+			Methods: post,
+			Scope:   op,
+			Auth:    true,
+			CSRF:    true,
 		},
 		{
 			// PATCH is here and not in crud because only this route accepts
 			// one: /profiles/{id}/settings is a partial update, and the
 			// collection routes have nothing to patch.
-			path:    APIVersionPrefix + "/profiles/",
-			handler: s.handleProfiles,
-			methods: append(append([]string{}, crud...), http.MethodPatch),
-			minRole: op,
+			Path:    APIVersionPrefix + "/profiles/",
+			Handler: s.handleProfiles,
+			Methods: append(append([]string{}, crud...), http.MethodPatch),
+			Scope:   op,
+			Auth:    true,
+			CSRF:    true,
 		},
-		{path: APIVersionPrefix + "/setup/status", handler: s.handleSetupStatus, methods: get},
-		{path: APIVersionPrefix + "/setup/complete", handler: s.handleSetupComplete, methods: post},
+		{Path: APIVersionPrefix + "/setup/status", Handler: s.handleSetupStatus, Methods: get},
+		{Path: APIVersionPrefix + "/setup/complete", Handler: s.handleSetupComplete, Methods: post},
 		{
-			path:    APIVersionPrefix + "/recovery/status",
-			handler: s.handleRecoveryStatus,
-			methods: get,
-		},
-		{
-			path:    APIVersionPrefix + "/recovery/complete",
-			handler: s.handleRecoveryComplete,
-			methods: post,
+			Path:    APIVersionPrefix + "/recovery/status",
+			Handler: s.handleRecoveryStatus,
+			Methods: get,
 		},
 		{
-			path:    APIVersionPrefix + "/recovery/instructions",
-			handler: s.handleRecoveryInstructions,
-			methods: get,
+			Path:    APIVersionPrefix + "/recovery/complete",
+			Handler: s.handleRecoveryComplete,
+			Methods: post,
 		},
-		{path: APIVersionPrefix + "/sso/providers", handler: s.handleSSOProviders, methods: get},
-		{path: APIVersionPrefix + "/sso/login", handler: s.handleSSOLogin, methods: get},
-		{path: APIVersionPrefix + "/sso/callback", handler: s.handleSSOCallback, methods: get},
 		{
-			path:    APIVersionPrefix + "/sso/settings",
-			handler: s.handleSSOSettings,
-			methods: get,
-			minRole: op,
+			Path:    APIVersionPrefix + "/recovery/instructions",
+			Handler: s.handleRecoveryInstructions,
+			Methods: get,
+		},
+		{Path: APIVersionPrefix + "/sso/providers", Handler: s.handleSSOProviders, Methods: get},
+		{Path: APIVersionPrefix + "/sso/login", Handler: s.handleSSOLogin, Methods: get},
+		{Path: APIVersionPrefix + "/sso/callback", Handler: s.handleSSOCallback, Methods: get},
+		{
+			Path:    APIVersionPrefix + "/sso/settings",
+			Handler: s.handleSSOSettings,
+			Methods: get,
+			Scope:   op,
+			Auth:    true,
 		},
 		// SSO update is Pro-gated (requireFeature "sso", #1198) AND operator-gated.
 		// NORMALIZATION (ADR-0002): the registry composes canonical order
@@ -381,408 +461,15 @@ func (s *Server) setupCoreRoutes() {
 		// (feature) where the prior hand-wrapped writeGated(requireFeature(...))
 		// returned 403 (role) first. Operators and Pro tiers are unaffected.
 		{
-			path:    APIVersionPrefix + "/sso/update",
-			handler: s.handleSSOUpdate,
-			methods: put,
-			minRole: op,
-			feature: "sso",
+			Path:    APIVersionPrefix + "/sso/update",
+			Handler: s.handleSSOUpdate,
+			Methods: put,
+			Scope:   op,
+			Feature: "sso",
+			Auth:    true,
+			CSRF:    true,
 		},
-		{path: APIVersionPrefix + "/health", handler: s.handleHealth, methods: get},
-	})
-}
-
-// setupTelemetryRoutes registers telemetry routes.
-func (s *Server) setupTelemetryRoutes() {
-	op := roles.Operator
-	get := []string{http.MethodGet}
-	post := []string{http.MethodPost}
-	getPost := []string{http.MethodGet, http.MethodPost}
-	getPut := []string{http.MethodGet, http.MethodPut}
-	getPostPut := []string{http.MethodGet, http.MethodPost, http.MethodPut}
-	s.registerAll([]route{
-		{path: APIVersionPrefix + "/telemetry/link", handler: s.handleLink, methods: get},
-		{path: APIVersionPrefix + "/telemetry/cable", handler: s.handleCable, methods: get},
-		// The NIC driver's own error counters (#416). Linux only; the handler
-		// refuses elsewhere with a 501 that names the reason.
-		{
-			path:    APIVersionPrefix + "/telemetry/interface/driver-stats",
-			handler: s.handleDriverStats,
-			methods: get,
-		},
-		{path: APIVersionPrefix + "/telemetry/dns", handler: s.handleDNS, methods: getPost},
-		{path: APIVersionPrefix + "/telemetry/gateway", handler: s.handleGateway, methods: get},
-		// Reads the lease this host already holds — no DISCOVER is sent and no
-		// target is supplied, so it is a read of local state rather than an
-		// active scan. Rate limited all the same: it shells out to a platform
-		// command, and there is no reason to allow that in a tight loop.
-		{
-			path:        APIVersionPrefix + "/telemetry/dhcp/lease",
-			handler:     s.handleDHCPLease,
-			methods:     getPost,
-			rateLimited: true,
-		},
-		{
-			// Operator+ and rate-limited: this restarts the DHCP client on a
-			// live interface, so it is a persistent write in every sense that
-			// matters even though nothing is written to disk (#170).
-			path:        APIVersionPrefix + "/telemetry/dhcp/renew",
-			handler:     s.handleRenewDHCPLease,
-			methods:     post,
-			minRole:     op,
-			rateLimited: true,
-		},
-		{
-			path:    APIVersionPrefix + "/telemetry/dhcp/rogue",
-			handler: s.handleRogueDHCP,
-			methods: getPost,
-		},
-		{
-			path:    APIVersionPrefix + "/telemetry/dhcp/rogue/servers",
-			handler: s.handleRogueDHCPServers,
-			methods: getPost,
-		},
-		{
-			path:    APIVersionPrefix + "/telemetry/dhcp/rogue/config",
-			handler: s.handleRogueDHCPConfig,
-			methods: getPut,
-			minRole: op,
-		},
-		{path: APIVersionPrefix + "/telemetry/vlan", handler: s.handleVLAN, methods: get},
-		{
-			path:    APIVersionPrefix + "/telemetry/vlan/interface",
-			handler: s.handleVLANInterface,
-			methods: getPostPut,
-			minRole: op, // POST creates a live kernel VLAN sub-interface (writeGated: operator+)
-		},
-		{
-			path:        APIVersionPrefix + "/telemetry/speedtest",
-			handler:     s.handleSpeedtest,
-			methods:     post,
-			rateLimited: true,
-		},
-		{
-			path:    APIVersionPrefix + "/telemetry/speedtest/status",
-			handler: s.handleSpeedtestStatus,
-			methods: get,
-		},
-		{
-			path:    APIVersionPrefix + "/telemetry/iperf/info",
-			handler: s.handleIperfInfo,
-			methods: get,
-		},
-		{
-			path:        APIVersionPrefix + "/telemetry/iperf/client",
-			handler:     s.handleIperfClient,
-			methods:     post,
-			rateLimited: true,
-		},
-		{
-			path:    APIVersionPrefix + "/telemetry/iperf/client/status",
-			handler: s.handleIperfClientStatus,
-			methods: get,
-		},
-		{
-			// POST, not GET: handleIperfServer answers 405 to anything else, and
-			// the route declared `get`, so the methodGate and the handler
-			// refused opposite halves and NOTHING worked — start and stop were
-			// both dead on every role. Operator+, because it binds a listener.
-			path:    APIVersionPrefix + "/telemetry/iperf/server",
-			handler: s.handleIperfServer,
-			methods: post,
-			minRole: op,
-		},
-		{
-			path:    APIVersionPrefix + "/telemetry/iperf/server/status",
-			handler: s.handleIperfServerStatus,
-			methods: get,
-		},
-		{
-			path:    APIVersionPrefix + "/telemetry/iperf/suggestions",
-			handler: s.handleIperfSuggestions,
-			methods: get,
-		},
-		{
-			path:    APIVersionPrefix + "/telemetry/probes/settings",
-			handler: s.handleHealthChecksSettings,
-			methods: getPut,
-			minRole: op,
-		},
-		{
-			path:        APIVersionPrefix + "/telemetry/probes/run",
-			handler:     s.handleHealthChecks,
-			methods:     getPost,
-			rateLimited: true,
-		},
-		// Anomaly detection is Pro (LICENSE_STRATEGY §2). It reads the unified
-		// anomaly store's source=probe slice (ADR-0021/0025); the legacy
-		// results/history/scores/sla/alerts read-path over health_check_results
-		// was deleted as dead code (ADR-0026).
-		{
-			path:    APIVersionPrefix + "/telemetry/probes/anomalies",
-			handler: s.handleHealthCheckAnomalies,
-			methods: get,
-			feature: "anomaly_detection",
-		},
-		// #175's bounded history read surface. Reads only, so no role gate;
-		// the window each licence tier can answer is resolved per request
-		// from the retention horizons rather than gated as a feature, so a
-		// Free deployment gets its 7 days rather than a 402.
-		{
-			// Spelled as a literal, not the historyProbesPathPrefix const the
-			// handler trims with: scripts/check-route-consumers.py matches on
-			// the string in this table, so a const here hides the route from
-			// the ratchet entirely.
-			path:    APIVersionPrefix + "/history/probes/",
-			handler: s.handleProbeHistory,
-			methods: get,
-		},
-		{
-			path:    APIVersionPrefix + "/history/anomalies",
-			handler: s.handleAnomalyHistory,
-			methods: get,
-		},
-		{
-			path:    APIVersionPrefix + "/telemetry/snmp/settings",
-			handler: s.handleSNMPSettings,
-			methods: getPut,
-			minRole: op,
-		},
-		{
-			path:    APIVersionPrefix + "/telemetry/system/health",
-			handler: s.handleSystemHealth,
-			methods: get,
-		},
-		{path: APIVersionPrefix + "/telemetry/ipconfig", handler: s.handleIPConfig, methods: get},
-		{
-			path:    APIVersionPrefix + "/telemetry/ipconfig/settings",
-			handler: s.handleIPSettings,
-			methods: getPut,
-			minRole: op,
-		},
-		{
-			path:    APIVersionPrefix + "/telemetry/publicip",
-			handler: s.handlePublicIP,
-			methods: getPostPut,
-		},
-	})
-}
-
-// setupSecurityRoutes registers security routes.
-func (s *Server) setupSecurityRoutes() {
-	op := roles.Operator
-	get := []string{http.MethodGet}
-	post := []string{http.MethodPost}
-	getPost := []string{http.MethodGet, http.MethodPost}
-	getPut := []string{http.MethodGet, http.MethodPut}
-	s.registerAll([]route{
-		{path: APIVersionPrefix + "/security/discovery", handler: s.handleDiscovery, methods: get},
-		// probe and fingerprint connect to a caller-named host just as
-		// portscan does, so they carry the same gate (#2635).
-		{
-			path:        APIVersionPrefix + "/security/discovery/probe",
-			handler:     s.handleTCPProbe,
-			methods:     post,
-			minRole:     op,
-			rateLimited: true,
-		},
-		// Port scanning is an active, outbound operation against an
-		// operator-supplied target. Every sibling active scan in this file
-		// carries rateLimited; this route had neither that nor a role gate, so
-		// a viewer could scan arbitrary hosts at will. Operator+ matches the other routes that act on the network
-		// rather than read from it (#347).
-		{
-			path:        APIVersionPrefix + "/security/discovery/portscan",
-			handler:     s.handlePortScan,
-			methods:     post,
-			minRole:     op,
-			rateLimited: true,
-		},
-		{
-			path:    APIVersionPrefix + "/security/discovery/options",
-			handler: s.handleDiscoveryOptions,
-			methods: getPut,
-			minRole: op, // PUT saves discovery options to disk (writeGated: operator+)
-		},
-		{
-			path:    APIVersionPrefix + "/security/discovery/service/status",
-			handler: s.handleDiscoveryServiceStatus,
-			methods: get,
-		},
-		{
-			path:        APIVersionPrefix + "/security/discovery/fingerprint",
-			handler:     s.handleAdvancedFingerprint,
-			methods:     post,
-			minRole:     op,
-			rateLimited: true,
-		},
-		{path: APIVersionPrefix + "/security/devices", handler: s.handleDevices, methods: getPost},
-		{
-			path:        APIVersionPrefix + "/security/devices/scan",
-			handler:     s.handleDevicesScan,
-			methods:     post,
-			rateLimited: true,
-		},
-		{
-			path:    APIVersionPrefix + "/security/devices/status",
-			handler: s.handleDevicesStatus,
-			methods: get,
-		},
-		{
-			path:    APIVersionPrefix + "/security/devices/settings",
-			handler: s.handleDevicesSettings,
-			methods: getPut,
-			minRole: op,
-		},
-		// Reports (#2154). export_csv_json is Starter+ (license/policy.go), the
-		// same gate ReportsPage already applies -- but the page gate is
-		// cosmetic on its own, so it belongs here too.
-		//
-		// Generation sits on its own path rather than POST /reports because
-		// rateLimited wraps the whole route and the shared endpoint limiter is
-		// 5 requests/minute: on the collection it would throttle list reads.
-		// ServeMux prefers the exact pattern over the /reports/ prefix.
-		{
-			path:    APIVersionPrefix + "/reports",
-			handler: s.handleReports,
-			methods: get,
-			feature: "export_csv_json",
-		},
-		{
-			path:        APIVersionPrefix + "/reports/generate",
-			handler:     s.handleReportGenerate,
-			methods:     post,
-			minRole:     op,
-			feature:     "export_csv_json",
-			rateLimited: true,
-		},
-		// Scheduled reports are Pro (scheduled_reports). The more specific
-		// /reports/schedules/ pattern wins over /reports/ in ServeMux.
-		{
-			path:    APIVersionPrefix + "/reports/schedules",
-			handler: s.handleReportSchedules,
-			methods: getPost,
-			minRole: op,
-			feature: "scheduled_reports",
-		},
-		{
-			path:    APIVersionPrefix + "/reports/schedules/",
-			handler: s.handleReportScheduleByID,
-			methods: []string{http.MethodGet, http.MethodPut, http.MethodDelete},
-			minRole: op,
-			feature: "scheduled_reports",
-		},
-		{
-			path:    APIVersionPrefix + "/reports/",
-			handler: s.handleReportByID,
-			methods: []string{http.MethodGet, http.MethodDelete},
-			minRole: op, // gates DELETE only; GET stays open to viewers
-			feature: "export_csv_json",
-		},
-		// Guest-network isolation audit (#397); the run is compliance_advanced
-		// (Pro, LICENSE_STRATEGY §2).
-		{
-			path:    APIVersionPrefix + "/security/guest-audit/settings",
-			handler: s.handleGuestAuditSettings,
-			methods: getPut,
-			minRole: op,
-		},
-		{
-			path:        APIVersionPrefix + "/security/guest-audit/run",
-			handler:     s.handleGuestAuditRun,
-			methods:     post,
-			feature:     "compliance_advanced",
-			rateLimited: true,
-		},
-		// Network problem detection.
-		{
-			path:    APIVersionPrefix + "/security/problems",
-			handler: s.handleNetworkProblems,
-			methods: get,
-		},
-		{
-			path:    APIVersionPrefix + "/security/problems/scan",
-			handler: s.handleProblemScan,
-			methods: post,
-		},
-		{
-			path:    APIVersionPrefix + "/security/problems/thresholds",
-			handler: s.handleProblemThresholds,
-			methods: getPut,
-			minRole: op,
-		},
-		// Enhanced WiFi discovery (unified).
-		{
-			path:    APIVersionPrefix + "/security/wifi/discovery/scan",
-			handler: s.handleWiFiDiscoveryScan,
-			methods: post,
-		},
-		{
-			path:    APIVersionPrefix + "/security/wifi/discovery/networks",
-			handler: s.handleWiFiDiscoveryNetworks,
-			methods: get,
-		},
-		{
-			path:    APIVersionPrefix + "/security/wifi/discovery/aps",
-			handler: s.handleWiFiDiscoveryAPs,
-			methods: get,
-		},
-		{
-			path:    APIVersionPrefix + "/security/wifi/discovery/stats",
-			handler: s.handleWiFiDiscoveryStats,
-			methods: get,
-		},
-		{
-			// #364's Bonjour browse; reads the segment, so no role gate. A
-			// literal, not a const: the route-consumer ratchet matches on the
-			// string in this table (see /history/* above).
-			path:    APIVersionPrefix + "/discovery/bonjour",
-			handler: s.handleBonjourBrowse,
-			methods: get,
-		},
-		// Discovery Engine (primary unified discovery system).
-		{
-			path:    APIVersionPrefix + "/discovery/engine",
-			handler: s.handleEngineDiscovery,
-			methods: get,
-		},
-		{
-			path:        APIVersionPrefix + "/discovery/engine/scan",
-			handler:     s.handleEngineScan,
-			methods:     post,
-			rateLimited: true,
-		},
-		{
-			path:        APIVersionPrefix + "/discovery/engine/quick",
-			handler:     s.handleEngineQuickScan,
-			methods:     post,
-			rateLimited: true,
-		},
-		{
-			path:        APIVersionPrefix + "/discovery/engine/full",
-			handler:     s.handleEngineFullScan,
-			methods:     post,
-			rateLimited: true,
-		},
-		{
-			path:    APIVersionPrefix + "/discovery/engine/stats",
-			handler: s.handleEngineStats,
-			methods: get,
-		},
-		{
-			path:    APIVersionPrefix + "/discovery/engine/capabilities",
-			handler: s.handleEngineCapabilities,
-			methods: get,
-		},
-		{
-			path:    APIVersionPrefix + "/discovery/engine/device/",
-			handler: s.handleEngineDevice,
-			methods: get,
-		},
-		{
-			path:    APIVersionPrefix + "/discovery/engine/events",
-			handler: s.handleEngineEvents,
-			methods: get,
-		},
+		{Path: APIVersionPrefix + "/health", Handler: s.handleHealth, Methods: get, Auth: true},
 	})
 }
 
@@ -793,19 +480,23 @@ func (s *Server) setupSecurityRoutes() {
 // trial users.
 func (s *Server) setupPathRoutes() {
 	post := []string{http.MethodPost}
-	s.registerAll([]route{
+	s.routes.RegisterAll([]route.Route{
 		{
-			path:        APIVersionPrefix + "/path/traceroute",
-			handler:     s.handleTraceroute,
-			methods:     post,
-			feature:     "path_analysis",
-			rateLimited: true,
+			Path:    APIVersionPrefix + "/path/traceroute",
+			Handler: s.handleTraceroute,
+			Methods: post,
+			Feature: "path_analysis",
+			Limiter: limitEndpoint,
+			Auth:    true,
+			CSRF:    true,
 		},
 		{
-			path:    APIVersionPrefix + "/path/path",
-			handler: s.handlePath,
-			methods: post,
-			feature: "path_analysis",
+			Path:    APIVersionPrefix + "/path/path",
+			Handler: s.handlePath,
+			Methods: post,
+			Feature: "path_analysis",
+			Auth:    true,
+			CSRF:    true,
 		},
 	})
 }
@@ -821,58 +512,70 @@ func (s *Server) setupWiFiRoutes() {
 	del := []string{http.MethodDelete}
 	getPut := []string{http.MethodGet, http.MethodPut}
 	getPostPut := []string{http.MethodGet, http.MethodPost, http.MethodPut}
-	s.registerAll([]route{
-		{path: APIVersionPrefix + "/wifi/wifi", handler: s.handleWiFi, methods: getPostPut},
-		{path: APIVersionPrefix + "/wifi/wifi/scan", handler: s.handleWiFiScan, methods: get},
-		{path: APIVersionPrefix + "/wifi/wifi/status", handler: s.handleWiFiStatus, methods: get},
+	s.routes.RegisterAll([]route.Route{
+		{Path: APIVersionPrefix + "/wifi/wifi", Handler: s.handleWiFi, Methods: getPostPut, Auth: true, CSRF: true},
+		{Path: APIVersionPrefix + "/wifi/wifi/scan", Handler: s.handleWiFiScan, Methods: get, Auth: true},
+		{Path: APIVersionPrefix + "/wifi/wifi/status", Handler: s.handleWiFiStatus, Methods: get, Auth: true},
 		{
-			path:    APIVersionPrefix + "/wifi/wifi/channel-graph",
-			handler: s.handleWiFiChannelGraph,
-			methods: get,
+			Path:    APIVersionPrefix + "/wifi/wifi/channel-graph",
+			Handler: s.handleWiFiChannelGraph,
+			Methods: get,
+			Auth:    true,
 		},
 		// Starter: the airspace tree + anomaly stream (#2351). Read-only; the
 		// scan and capture sources feed the model out-of-band. Free keeps the
 		// raw scan above; the clients inside the tree are Pro (see the handler).
 		{
-			path:    APIVersionPrefix + "/wifi/airspace",
-			handler: s.handleWiFiAirspace,
-			methods: get,
-			feature: "wifi_analysis",
+			Path:    APIVersionPrefix + "/wifi/airspace",
+			Handler: s.handleWiFiAirspace,
+			Methods: get,
+			Feature: "wifi_analysis",
+			Auth:    true,
 		},
 		{
-			path:    APIVersionPrefix + "/wifi/anomalies",
-			handler: s.handleWiFiAnomalies,
-			methods: get,
-			feature: "wifi_analysis",
+			Path:    APIVersionPrefix + "/wifi/anomalies",
+			Handler: s.handleWiFiAnomalies,
+			Methods: get,
+			Feature: "wifi_analysis",
+			Auth:    true,
 		},
 		{
-			path:    APIVersionPrefix + "/wifi/wifi/settings",
-			handler: s.handleWiFiSettings,
-			methods: getPut,
-			minRole: op,
+			Path:    APIVersionPrefix + "/wifi/wifi/settings",
+			Handler: s.handleWiFiSettings,
+			Methods: getPut,
+			Scope:   op,
+			Auth:    true,
+			CSRF:    true,
 		},
 		{
-			path:    APIVersionPrefix + "/wifi/wifi/connect",
-			handler: s.handleWiFiConnect,
-			methods: post,
-			minRole: op,
+			Path:    APIVersionPrefix + "/wifi/wifi/connect",
+			Handler: s.handleWiFiConnect,
+			Methods: post,
+			Scope:   op,
+			Auth:    true,
+			CSRF:    true,
 		},
 		{
-			path:    APIVersionPrefix + "/wifi/wifi/disconnect",
-			handler: s.handleWiFiDisconnect,
-			methods: post,
-			minRole: op,
+			Path:    APIVersionPrefix + "/wifi/wifi/disconnect",
+			Handler: s.handleWiFiDisconnect,
+			Methods: post,
+			Scope:   op,
+			Auth:    true,
+			CSRF:    true,
 		},
 		{
-			path:    APIVersionPrefix + "/wifi/wifi/saved",
-			handler: s.handleWiFiSavedNetworks,
-			methods: get,
+			Path:    APIVersionPrefix + "/wifi/wifi/saved",
+			Handler: s.handleWiFiSavedNetworks,
+			Methods: get,
+			Auth:    true,
 		},
 		{
-			path:    APIVersionPrefix + "/wifi/wifi/forget",
-			handler: s.handleWiFiForgetNetwork,
-			methods: del,
-			minRole: op,
+			Path:    APIVersionPrefix + "/wifi/wifi/forget",
+			Handler: s.handleWiFiForgetNetwork,
+			Methods: del,
+			Scope:   op,
+			Auth:    true,
+			CSRF:    true,
 		},
 	})
 }
@@ -886,33 +589,38 @@ func (s *Server) setupWiFiRoutes() {
 func (s *Server) setupReportingRoutes() {
 	get := []string{http.MethodGet}
 	post := []string{http.MethodPost}
-	s.registerAll([]route{
+	s.routes.RegisterAll([]route.Route{
 		{
-			path:    APIVersionPrefix + "/reporting/export",
-			handler: s.handleExport,
-			methods: get,
-			feature: "export_csv_json",
+			Path:    APIVersionPrefix + "/reporting/export",
+			Handler: s.handleExport,
+			Methods: get,
+			Feature: "export_csv_json",
+			Auth:    true,
 		},
-		{path: APIVersionPrefix + "/reporting/logs", handler: s.handleLogs, methods: get},
+		{Path: APIVersionPrefix + "/reporting/logs", Handler: s.handleLogs, Methods: get, Auth: true},
 		{
-			path:    APIVersionPrefix + "/reporting/logs/client",
-			handler: s.handleClientLogs,
-			methods: post,
-		},
-		{
-			path:    APIVersionPrefix + "/reporting/logs/query",
-			handler: s.handleLogsQuery,
-			methods: get,
+			Path:    APIVersionPrefix + "/reporting/logs/client",
+			Handler: s.handleClientLogs,
+			Methods: post,
+			Auth:    true,
 		},
 		{
-			path:    APIVersionPrefix + "/reporting/logs/stats",
-			handler: s.handleLogsStats,
-			methods: get,
+			Path:    APIVersionPrefix + "/reporting/logs/query",
+			Handler: s.handleLogsQuery,
+			Methods: get,
+			Auth:    true,
 		},
 		{
-			path:    APIVersionPrefix + "/reporting/logs/recent",
-			handler: s.handleLogsRecent,
-			methods: get,
+			Path:    APIVersionPrefix + "/reporting/logs/stats",
+			Handler: s.handleLogsStats,
+			Methods: get,
+			Auth:    true,
+		},
+		{
+			Path:    APIVersionPrefix + "/reporting/logs/recent",
+			Handler: s.handleLogsRecent,
+			Methods: get,
+			Auth:    true,
 		},
 	})
 }
@@ -926,19 +634,28 @@ func (s *Server) setupSSEAndStatic() {
 	// per-endpoint REST handlers without the WebSocket-like stream.
 	// `/discovery/engine/events` (the discovery-lifecycle SSE) is
 	// intentionally NOT gated here — discovery is a Free-tier surface.
-	s.register(route{
-		path:    APIVersionPrefix + "/events",
-		handler: s.handleSSE,
-		methods: []string{http.MethodGet},
-		feature: "live_telemetry",
+	s.routes.Register(route.Route{
+		Path:    APIVersionPrefix + "/events",
+		Handler: s.handleSSE,
+		Methods: []string{http.MethodGet},
+		Feature: "live_telemetry",
+		Auth:    true,
 	})
+	var ui http.Handler
 	frontendFS, err := getUIFS()
 	if err != nil {
 		logging.GetLogger().
 			Warn("Failed to get embedded frontend FS, falling back to disk", "error", err)
-		s.mux.Handle("/", http.FileServer(http.Dir("internal/api/ui")))
+		ui = http.FileServer(http.Dir("internal/api/ui"))
 	} else {
 		logging.GetLogger().Info("Serving frontend from embedded filesystem", "embedded", isUIEmbedded())
-		s.mux.Handle("/", spaHandler(http.FS(frontendFS)))
+		ui = spaHandler(http.FS(frontendFS))
 	}
+	// Catch-alls, hidden from the API document. An unknown /api path still
+	// meets Auth and CSRF before its 404, so an unauthenticated caller cannot
+	// tell a route that exists from one that does not.
+	s.routes.RegisterAll([]route.Route{
+		{Path: "/api/", Handler: ui.ServeHTTP, Auth: true, CSRF: true, Hidden: true},
+		{Path: "/", Handler: ui.ServeHTTP, Hidden: true},
+	})
 }

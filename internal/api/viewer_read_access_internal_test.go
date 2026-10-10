@@ -127,23 +127,23 @@ func TestViewerCanReadEveryRoleGatedRoute(t *testing.T) {
 
 	// Counted before the subtests run, since t.Parallel defers them.
 	checked := 0
-	for _, rt := range s.manifest {
-		if rt.minRole == "" {
+	for _, rt := range s.routes.Policies() {
+		if rt.Scope == "" {
 			continue
 		}
 		// Only routes that actually serve a read.
-		if len(rt.methods) > 0 && !slices.Contains(rt.methods, http.MethodGet) {
+		if len(rt.Methods) > 0 && !slices.Contains(rt.Methods, http.MethodGet) {
 			continue
 		}
 
-		path := rt.path
+		path := rt.Path
 		// Collection routes ending in "/" take an id; any value exercises the gate.
 		if strings.HasSuffix(path, "/") {
 			path += "probe"
 		}
 
 		checked++
-		t.Run(rt.path, func(t *testing.T) {
+		t.Run(rt.Path, func(t *testing.T) {
 			t.Parallel()
 			req := bearerRequest(t, s, http.MethodGet, path, "viewer1")
 			w := httptest.NewRecorder()
@@ -156,7 +156,7 @@ func TestViewerCanReadEveryRoleGatedRoute(t *testing.T) {
 			if w.Code == http.StatusForbidden {
 				t.Errorf("GET %s as a viewer = 403; a read behind minRole=%q is not "+
 					"reachable, so the page that needs it renders empty: %s",
-					path, rt.minRole, strings.TrimSpace(w.Body.String()))
+					path, rt.Scope, strings.TrimSpace(w.Body.String()))
 			}
 		})
 	}
@@ -203,27 +203,27 @@ func TestRouteMethodsMatchTheirHandlers(t *testing.T) {
 
 	s := routedServer(t, "admin", roles.Admin)
 
-	for _, rt := range s.manifest {
-		if len(rt.methods) == 0 {
+	for _, rt := range s.routes.Policies() {
+		if len(rt.Methods) == 0 {
 			continue
 		}
 		// Pre-session routes answer 401 on their own terms — an empty body is
 		// not a credential — so a 401 there is the handler working, not the
 		// chain refusing. They are covered by the auth tests instead.
-		if isPreSessionPath(rt.path) {
+		if isPreSessionPath(rt.Path) {
 			continue
 		}
-		path := rt.path
+		path := rt.Path
 		if strings.HasSuffix(path, "/") {
 			path += "probe"
 		}
 
-		t.Run(rt.path, func(t *testing.T) {
+		t.Run(rt.Path, func(t *testing.T) {
 			t.Parallel()
-			if answersOnlyMethodNotAllowed(t, s, path, rt.methods) {
+			if answersOnlyMethodNotAllowed(t, s, path, rt.Methods) {
 				t.Errorf("%s answers 405 to every method it declares (%v) — the route "+
 					"and its handler disagree, so the endpoint is unreachable",
-					rt.path, rt.methods)
+					rt.Path, rt.Methods)
 			}
 		})
 	}

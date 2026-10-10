@@ -10,6 +10,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/MustardSeedNetworks/foundation/pkg/httpserver/route"
+
 	"github.com/stretchr/testify/require"
 
 	"github.com/MustardSeedNetworks/seed/internal/app"
@@ -251,10 +253,10 @@ func TestVulnTriageStoreUnavailable(t *testing.T) {
 // write, while the list and the history stay readable by viewers.
 func TestVulnTriageRequiresOperator(t *testing.T) {
 	s := newRoutePolicyServer(t)
-	byPath := make(map[string]route, len(s.manifest))
-	for _, rt := range s.manifest {
-		byPath[rt.path] = rt
+	byPath := make(map[string]route.Policy, len(s.routes.Policies()))
+	for _, rt := range s.routes.Policies() {
+		byPath[rt.Path] = rt
 	}
-	require.Equal(t, roles.Operator, byPath[vulnFindingsPathPrefix].minRole)
-	require.Equal(t, []string{http.MethodGet}, byPath[vulnFindingsPath].methods)
+	require.Equal(t, roles.Operator, byPath[vulnFindingsPathPrefix].Scope)
+	require.Equal(t, []string{http.MethodGet}, byPath[vulnFindingsPath].Methods)
 }

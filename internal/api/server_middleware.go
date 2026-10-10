@@ -1,12 +1,11 @@
 package api
 
-// server_middleware.go contains the http.Handler middlewares applied to the
-// main server mux: security headers, CORS (with null-origin rejection), body
-// size limits, and panic recovery.
+// server_middleware.go contains the http.Handler middlewares applied in front
+// of the route registry: security headers, CORS (with null-origin rejection)
+// and the non-API body size limit. Panic recovery belongs to the Registrar.
 
 import (
 	"net/http"
-	"runtime/debug"
 	"strings"
 
 	"github.com/MustardSeedNetworks/seed/internal/i18n"
@@ -93,41 +92,14 @@ func corsMiddleware(next http.Handler) http.Handler {
 
 // bodyLimitMiddleware caps request bodies on NON-API paths (a DoS backstop for
 // the SPA/static + infra routes). Per-route body limits for /api/v1 are
-// authoritative in the capability registry (route.maxBodyBytes, applied by
-// register()), so a path-switch here would be a second, drift-prone source of
+// authoritative in the capability registry (route.Route.MaxBodyBytes, applied
+// by the Registrar), so a path-switch here would be a second, drift-prone source of
 // truth — the registry is the single source (ADR-0002).
 func bodyLimitMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if !strings.HasPrefix(r.URL.Path, APIVersionPrefix) {
 			r.Body = http.MaxBytesReader(w, r.Body, MaxBodySizeDefault)
 		}
-		next.ServeHTTP(w, r)
-	})
-}
-
-// recoverMiddleware recovers from panics in HTTP handlers (fixes #519).
-// Prevents a single panic from crashing the entire server.
-func recoverMiddleware(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		defer func() {
-			if err := recover(); err != nil {
-				logging.GetLogger().ErrorContext(r.Context(), "PANIC in handler",
-					"method", r.Method,
-					"path", r.URL.Path,
-					"error", err,
-					"stack", string(debug.Stack()))
-				logger := logging.FromContext(r.Context())
-				localizer := i18n.FromRequest(r)
-				sendErrorResponseWithDetails(
-					w,
-					logger,
-					http.StatusInternalServerError,
-					ErrCodeInternal,
-					localizer.T("errors.api.internalError"),
-					"",
-				) // fixes #694
-			}
-		}()
 		next.ServeHTTP(w, r)
 	})
 }

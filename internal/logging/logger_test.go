@@ -175,36 +175,6 @@ func TestGetLogger(t *testing.T) {
 	logging.ExportClearGlobalLogger()
 }
 
-func TestWithRequestID(t *testing.T) {
-	tests := []struct {
-		name      string
-		requestID string
-	}{
-		{"empty string", ""},
-		{"simple ID", "abc123"},
-		{"UUID format", "550e8400-e29b-41d4-a716-446655440000"},
-		{"hex format", "deadbeef12345678"},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			ctx := context.Background()
-			newCtx := logging.WithRequestID(ctx, tt.requestID)
-
-			// Verify the context is different
-			if tt.requestID != "" && ctx == newCtx {
-				t.Error("WithRequestID returned same context")
-			}
-
-			// Verify the request ID can be retrieved
-			result := logging.RequestIDFromContext(newCtx)
-			if result != tt.requestID {
-				t.Errorf("RequestIDFromContext() = %q, want %q", result, tt.requestID)
-			}
-		})
-	}
-}
-
 func TestRequestIDFromContext(t *testing.T) {
 	t.Run("returns empty string for background context", func(t *testing.T) {
 		ctx := context.Background()
@@ -214,18 +184,8 @@ func TestRequestIDFromContext(t *testing.T) {
 		}
 	})
 
-	t.Run("returns empty string for context with wrong type", func(t *testing.T) {
-		// Create context with wrong value type
-		ctx := context.WithValue(context.Background(), logging.ExportRequestIDKeyValue(), 12345)
-		result := logging.RequestIDFromContext(ctx)
-		if result != "" {
-			t.Errorf("RequestIDFromContext(wrong type) = %q, want empty string", result)
-		}
-	})
-
-	t.Run("returns request ID from context", func(t *testing.T) {
-		expectedID := "test-request-id"
-		ctx := logging.WithRequestID(context.Background(), expectedID)
+	t.Run("returns the ID the Registrar assigned", func(t *testing.T) {
+		ctx, expectedID := logging.ContextWithRequestID(context.Background(), t)
 		result := logging.RequestIDFromContext(ctx)
 		if result != expectedID {
 			t.Errorf("RequestIDFromContext() = %q, want %q", result, expectedID)
@@ -249,7 +209,7 @@ func TestFromContext(t *testing.T) {
 	})
 
 	t.Run("returns logger with request_id when in context", func(t *testing.T) {
-		ctx := logging.WithRequestID(context.Background(), "test-123")
+		ctx, _ := logging.ContextWithRequestID(context.Background(), t)
 		logger := logging.FromContext(ctx)
 		if logger == nil {
 			t.Error("FromContext() returned nil")
@@ -316,7 +276,7 @@ func TestContextLogFunctions(t *testing.T) {
 		t.Fatalf("InitLogger() failed: %v", err)
 	}
 
-	ctx := logging.WithRequestID(context.Background(), "ctx-test-123")
+	ctx, requestID := logging.ContextWithRequestID(context.Background(), t)
 
 	// Test all context convenience functions
 	logging.DebugContext(ctx, "debug with context", "key", "value")
@@ -327,7 +287,7 @@ func TestContextLogFunctions(t *testing.T) {
 	output := buf.String()
 
 	// Verify request_id appears in output
-	if !strings.Contains(output, "ctx-test-123") {
+	if !strings.Contains(output, requestID) {
 		t.Error("Context log functions did not include request_id")
 	}
 
@@ -464,15 +424,14 @@ func TestFromContextWithBothIDs(t *testing.T) {
 		t.Fatalf("InitLogger() failed: %v", err)
 	}
 
-	ctx := context.Background()
-	ctx = logging.WithRequestID(ctx, "req-789")
+	ctx, requestID := logging.ContextWithRequestID(context.Background(), t)
 	ctx = logging.WithUserID(ctx, "user-123")
 
 	logger := logging.FromContext(ctx)
 	logger.Info("test with both IDs")
 
 	output := buf.String()
-	if !strings.Contains(output, "req-789") {
+	if !strings.Contains(output, requestID) {
 		t.Error("Log output should contain request_id")
 	}
 	if !strings.Contains(output, "user-123") {

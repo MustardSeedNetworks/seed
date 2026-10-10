@@ -22,12 +22,12 @@ func TestAlertTestSendRouteIsOperatorGatedAndRateLimited(t *testing.T) {
 	s := NewTestServer()
 	defer s.Close()
 
-	for _, rt := range s.manifest {
-		if apiPath(rt.path) != APIVersionPrefix+"/settings/alerts/test" {
+	for _, rt := range s.routes.Policies() {
+		if rt.Path != APIVersionPrefix+"/settings/alerts/test" {
 			continue
 		}
-		if rt.minRole != roles.Operator || !rt.rateLimited ||
-			len(rt.methods) != 1 || rt.methods[0] != http.MethodPost {
+		if rt.Scope != roles.Operator || !rt.RateLimited ||
+			len(rt.Methods) != 1 || rt.Methods[0] != http.MethodPost {
 			t.Errorf("route = %+v, want POST, operator-gated, rate-limited", rt)
 		}
 		return

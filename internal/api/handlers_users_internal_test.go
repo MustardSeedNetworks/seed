@@ -42,9 +42,8 @@ func usersTestSetup(t *testing.T) (*Server, *license.Manager) {
 		t.Fatalf("seed admin: %v", createErr)
 	}
 
-	s := &Server{
-		mux: http.NewServeMux(),
-	}
+	s := &Server{}
+	s.withRouteDeps(t)
 	s.dbConn = db
 	s.licenseMgr = mgr
 	// Wire the identity use-cases (ADR-0024) so callerRole/requireRole and the

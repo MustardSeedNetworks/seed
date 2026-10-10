@@ -8,17 +8,14 @@ import (
 	"net/http/httptest"
 	"strings"
 	"testing"
-
-	"github.com/MustardSeedNetworks/seed/internal/auth"
 )
 
 // TestMFAEnrolmentRequiresCSRFThroughTheRealChain pins the server half of the
 // MFA-enrolment defect. The pre-session login routes are CSRF-exempt (#2391),
 // but the *enrolment* routes are not and must not be: they run under a live
 // session, so a cross-site page could ride the operator's cookie and enrol its
-// own second factor. The MFA suite could not see this: it drove
-// GetAuthenticatedHandler(), which stops at the JWT middleware and omits CSRF
-// entirely. That suite now drives Handler() too — the chain production serves —
+// own second factor. The MFA suite could not see this: it drove a handler
+// that stopped at the JWT middleware and omitted CSRF entirely. That suite now drives Handler() too — the chain production serves —
 // so this test pins the routes and that one covers the flows through them.
 func TestMFAEnrolmentRequiresCSRFThroughTheRealChain(t *testing.T) {
 	enrolment := []string{
@@ -56,7 +53,7 @@ func TestMFAEnrolmentRequiresCSRFThroughTheRealChain(t *testing.T) {
 			req = httptest.NewRequest(http.MethodPost, path, strings.NewReader(`{}`))
 			req.Header.Set("Authorization", "Bearer "+bearer)
 			req.Header.Set("Content-Type", "application/json")
-			req.Header.Set(auth.CSRFHeaderName, token)
+			req.Header.Set("X-Csrf-Token", token)
 			w = httptest.NewRecorder()
 			s.Handler().ServeHTTP(w, req)
 

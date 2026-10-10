@@ -324,7 +324,7 @@ func (s *Server) handleCSRFToken(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	token, err := s.csrfManager().TokenForSession(sessionID)
+	token, err := s.csrfManager().GetOrCreate(sessionID)
 	if err != nil {
 		logger.ErrorContext(r.Context(), "Failed to resolve CSRF token", "error", err)
 		sendErrorResponseWithDetails(

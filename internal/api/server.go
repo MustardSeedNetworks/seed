@@ -16,6 +16,9 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/MustardSeedNetworks/foundation/pkg/csrf"
+	"github.com/MustardSeedNetworks/foundation/pkg/httpserver/route"
+
 	alertdelivery "github.com/MustardSeedNetworks/seed/internal/alerts/delivery"
 	"github.com/MustardSeedNetworks/seed/internal/alerts/inbox"
 	alertpipeline "github.com/MustardSeedNetworks/seed/internal/alerts/pipeline"
@@ -135,19 +138,16 @@ type Server struct {
 
 	// HTTP server components
 	httpServer *http.Server
-	mux        *http.ServeMux
+	// routes is the capability registry (ADR-0002): every route and its
+	// policy, served behind the global headers by Handler.
+	routes *route.Registrar
 
 	// boundPort receives the port startHTTPS bound (the +1..+9 fallback, #69).
 	boundPort func(int)
 
-	// manifest records every route registered through register() (the
-	// capability registry, ADR-0002). Exposed read-only via /__capabilities
-	// for fleet policy audits.
-	manifest []route
-
 	// --- Auth & security services ---
 	authMgr    *auth.Manager
-	csrf       *auth.CSRFManager
+	csrf       *csrf.Manager
 	setupToken *SetupTokenManager
 	recovery   *auth.RecoveryTokenManager
 	oauthMgr   *oauth.Manager
@@ -304,7 +304,6 @@ func NewServer(
 		config:        cfg,
 		configPath:    configPath,
 		logPath:       logPath,
-		mux:           http.NewServeMux(),
 		icmpAvailable: icmpAvailable,
 		startTime:     time.Now(),
 		background:    background,
@@ -408,7 +407,7 @@ func (s *Server) initAuthSecurity(cfg *config.Config, trustedProxies *TrustedPro
 		cfg.Auth.DefaultUsername,
 		cfg.Auth.DefaultPasswordHash,
 	)
-	s.csrf = auth.NewCSRFManager()
+	s.csrf = csrf.NewManager()
 	s.setupToken = NewSetupTokenManager()
 	s.recovery = auth.NewRecoveryTokenManager(paths.Resolve(paths.ModeAuto).DataDir)
 	s.proxies = trustedProxies
@@ -650,7 +649,7 @@ func (s *Server) GetConfig() *config.Config { return s.config }
 func (s *Server) AuthManager() *auth.Manager { return s.authMgr }
 
 // CSRFManager returns the CSRF token manager.
-func (s *Server) CSRFManager() *auth.CSRFManager { return s.csrf }
+func (s *Server) CSRFManager() *csrf.Manager { return s.csrf }
 
 // SetupTokenManager returns the setup token manager.
 func (s *Server) SetupTokenManager() *SetupTokenManager { return s.setupToken }
@@ -735,7 +734,7 @@ func (s *Server) MibDB() *mibdb.DB { return s.mibDB }
 // stay methods (not be inlined to field access).
 
 func (s *Server) authManager() *auth.Manager                  { return s.authMgr }
-func (s *Server) csrfManager() *auth.CSRFManager              { return s.csrf }
+func (s *Server) csrfManager() *csrf.Manager                  { return s.csrf }
 func (s *Server) setupTokenManager() *SetupTokenManager       { return s.setupToken }
 func (s *Server) recoveryManager() *auth.RecoveryTokenManager { return s.recovery }
 func (s *Server) oauthManager() *oauth.Manager                { return s.oauthMgr }

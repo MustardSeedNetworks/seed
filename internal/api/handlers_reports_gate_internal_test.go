@@ -45,7 +45,7 @@ func TestReportGenerateGatesPDFOnAuditPDF(t *testing.T) {
 		body, _ := json.Marshal(GenerateReportRequest{Type: "executive", Format: format})
 		req := newAuthedRequest(http.MethodPost, APIVersionPrefix+"/reports/generate", body, "alice")
 		w := httptest.NewRecorder()
-		s.mux.ServeHTTP(w, req)
+		s.Mux().ServeHTTP(w, req)
 
 		return w
 	}

@@ -16,6 +16,8 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/MustardSeedNetworks/foundation/pkg/httpserver/route"
+
 	"github.com/MustardSeedNetworks/seed/internal/i18n"
 	"github.com/MustardSeedNetworks/seed/internal/logging"
 	"github.com/MustardSeedNetworks/seed/internal/timeseries/ifstats"
@@ -74,17 +76,19 @@ type InterfaceHistoryResponse struct {
 
 // interfaceStatsRoutes registers the interface statistics reads. The paths
 // are literals, not consts, so the route-consumer gate sees them.
-func (s *Server) interfaceStatsRoutes() []route {
-	return []route{
+func (s *Server) interfaceStatsRoutes() []route.Route {
+	return []route.Route{
 		{
-			path:    APIVersionPrefix + "/topology/interfaces",
-			handler: s.handleInterfaceStats,
-			methods: []string{http.MethodGet},
+			Path:    APIVersionPrefix + "/topology/interfaces",
+			Handler: s.handleInterfaceStats,
+			Methods: []string{http.MethodGet},
+			Auth:    true,
 		},
 		{
-			path:    APIVersionPrefix + "/topology/interfaces/history",
-			handler: s.handleInterfaceHistory,
-			methods: []string{http.MethodGet},
+			Path:    APIVersionPrefix + "/topology/interfaces/history",
+			Handler: s.handleInterfaceHistory,
+			Methods: []string{http.MethodGet},
+			Auth:    true,
 		},
 	}
 }

@@ -8,8 +8,6 @@ import (
 	"net/http/httptest"
 	"strings"
 	"testing"
-
-	"github.com/MustardSeedNetworks/seed/internal/auth"
 )
 
 const myDashboardPath = APIVersionPrefix + "/users/me/dashboard"
@@ -63,7 +61,7 @@ func TestMyDashboard_Refusals(t *testing.T) {
 	s := ssoGateServer(t)
 
 	noCSRF := authedRequest(t, s, http.MethodPut, myDashboardPath, "viewer", `{"widgets":["link"]}`)
-	noCSRF.Header.Del(auth.CSRFHeaderName)
+	noCSRF.Header.Del("X-Csrf-Token")
 
 	anonymous := httptest.NewRequest(http.MethodGet, myDashboardPath, http.NoBody)
 

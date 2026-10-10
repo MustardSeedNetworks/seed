@@ -6,9 +6,12 @@ import (
 	"net/http"
 	"net/netip"
 	"path/filepath"
+	"testing"
+	"time"
 
 	"github.com/go-webauthn/webauthn/webauthn"
 
+	"github.com/MustardSeedNetworks/foundation/pkg/csrf"
 	"github.com/MustardSeedNetworks/foundation/pkg/httpserver"
 
 	alertdelivery "github.com/MustardSeedNetworks/seed/internal/alerts/delivery"
@@ -213,9 +216,48 @@ func (s *Server) HandleSetupStatus(w http.ResponseWriter, r *http.Request) {
 	s.handleSetupStatus(w, r)
 }
 
-// Mux returns the server's HTTP mux for testing.
-func (s *Server) Mux() *http.ServeMux {
-	return s.mux
+// Mux returns every route as a signed-in browser session reaches it, for tests
+// that exercise a handler rather than the auth chain. A request that carries no
+// credential gets a session JWT for the identity already on its context
+// (newAuthedRequest's username), or "admin", plus that session's CSRF token, so
+// it passes Auth and CSRF the way the UI's requests do. Handler() is the chain
+// unmodified; tests of authentication and CSRF themselves use it.
+func (s *Server) Mux() http.Handler {
+	routes := s.routes.Handler()
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if token, _ := auth.GetTokenFromRequest(r); token == "" && !auth.IsAPITokenAuth(r.Context()) {
+			username := auth.UsernameFromContext(r.Context())
+			if username == "" {
+				username = "admin"
+			}
+			jwt, err := s.authManager().GenerateToken(r.Context(), username)
+			if err != nil {
+				panic("Mux: minting a test session for " + username + ": " + err.Error())
+			}
+			r.Header.Set("Authorization", "Bearer "+jwt)
+			csrfToken, err := s.csrfManager().GetOrCreate(auth.GetSessionIDFromRequest(r))
+			if err != nil {
+				panic("Mux: minting a CSRF token: " + err.Error())
+			}
+			r.Header.Set("X-Csrf-Token", csrfToken)
+		}
+		routes.ServeHTTP(w, r)
+	})
+}
+
+// withRouteDeps gives a hand-built Server what the route registry needs to
+// register and serve: the auth manager that mints and checks Mux's test
+// sessions, the CSRF manager and the endpoint limiter.
+func (s *Server) withRouteDeps(t *testing.T) {
+	t.Helper()
+	s.authMgr = auth.NewManager("", time.Hour, "", "")
+	s.csrf = csrf.NewManager()
+	s.endpointLimiter = NewEndpointRateLimiter(DefaultEndpointRateLimitConfig())
+	t.Cleanup(func() {
+		s.authMgr.Stop()
+		s.csrf.Stop()
+		s.endpointLimiter.Stop()
+	})
 }
 
 // HandleRecoveryStatus exports handleRecoveryStatus for testing.
@@ -361,11 +403,6 @@ func ExportValidateStruct(
 	localizer *i18n.Localizer,
 ) bool {
 	return validateStruct(w, r, dto, localizer)
-}
-
-// ExportRecoverMiddleware exposes recoverMiddleware for testing.
-func ExportRecoverMiddleware(next http.Handler) http.Handler {
-	return recoverMiddleware(next)
 }
 
 // ExportCORSMiddleware exposes corsMiddleware for testing.

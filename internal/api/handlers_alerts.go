@@ -19,6 +19,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/MustardSeedNetworks/foundation/pkg/httpserver/route"
+
 	"github.com/MustardSeedNetworks/seed/internal/alerts"
 	"github.com/MustardSeedNetworks/seed/internal/alerts/inbox"
 	"github.com/MustardSeedNetworks/seed/internal/alerts/narrative"
@@ -39,19 +41,28 @@ const (
 // is a safe read; acknowledging, resolving and test-sending are operator
 // actions, and the test-send is rate-limited because each call is an outbound
 // connection.
-func (s *Server) alertRoutes() []route {
+func (s *Server) alertRoutes() []route.Route {
 	op := roles.Operator
 	post := []string{http.MethodPost}
-	return []route{
-		{path: APIVersionPrefix + "/alerts", handler: s.handleAlerts, methods: []string{http.MethodGet}},
-		{path: APIVersionPrefix + "/alerts/", handler: s.handleAlertAction, methods: post, minRole: op},
+	return []route.Route{
+		{Path: APIVersionPrefix + "/alerts", Handler: s.handleAlerts, Methods: []string{http.MethodGet}, Auth: true},
 		{
-			path:         APIVersionPrefix + "/settings/alerts/test",
-			handler:      s.handleAlertTestSend,
-			methods:      post,
-			minRole:      op,
-			maxBodyBytes: MaxBodySizeConfig,
-			rateLimited:  true,
+			Path:    APIVersionPrefix + "/alerts/",
+			Handler: s.handleAlertAction,
+			Methods: post,
+			Scope:   op,
+			Auth:    true,
+			CSRF:    true,
+		},
+		{
+			Path:         APIVersionPrefix + "/settings/alerts/test",
+			Handler:      s.handleAlertTestSend,
+			Methods:      post,
+			Scope:        op,
+			MaxBodyBytes: MaxBodySizeConfig,
+			Limiter:      limitEndpoint,
+			Auth:         true,
+			CSRF:         true,
 		},
 	}
 }

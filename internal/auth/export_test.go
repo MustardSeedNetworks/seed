@@ -48,12 +48,6 @@ func (m *Manager) ManagerUsername() string {
 	return m.username
 }
 
-// ExportIsCSRFExemptPath exports isCSRFExemptPath so the CSRF exempt-list
-// coverage gate (#1223) can pin the policy from the external test package.
-func ExportIsCSRFExemptPath(path string) bool {
-	return isCSRFExemptPath(path)
-}
-
 // ManagerSessionTimeout returns the sessionTimeout from a Manager for testing.
 func (m *Manager) ManagerSessionTimeout() any {
 	return m.sessionTimeout
@@ -62,9 +56,4 @@ func (m *Manager) ManagerSessionTimeout() any {
 // ManagerJWTSecret returns the jwtSecret from a Manager for testing.
 func (m *Manager) ManagerJWTSecret() []byte {
 	return m.jwtSecret
-}
-
-// ExportPreSessionPaths exposes preSessionPaths for testing.
-func ExportPreSessionPaths() []string {
-	return preSessionPaths()
 }

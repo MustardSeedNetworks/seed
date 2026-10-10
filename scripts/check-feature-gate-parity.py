@@ -3,7 +3,7 @@
 
 The UI gates whole pages on a licence feature (ui/src/constants/featureCatalog.ts,
 read by <GatedPreview>), and the API gates routes on the same features
-(`feature: "x"` rows in internal/api/server_routes.go, enforced by
+(`Feature: "x"` in the route.Route tables of internal/api, enforced by
 requireFeature). Nothing held the two together: a UI gate could name a feature
 no route enforces — a page hidden behind a pitch the server would have served
 anyway — or advertise a tier the licence policy does not grant it in (#2669).
@@ -27,11 +27,11 @@ import re
 import sys
 from pathlib import Path
 
-ROUTES = "internal/api/server_routes.go"
+ROUTES = "internal/api"
 POLICY = "internal/license/policy.go"
 CATALOG = "ui/src/constants/featureCatalog.ts"
 
-ROUTE_FEATURE = re.compile(r'\bfeature:\s*"([a-z][a-z0-9_]*)"')
+ROUTE_FEATURE = re.compile(r'\bFeature:\s*"([a-z][a-z0-9_]*)"')
 CATALOG_BODY = re.compile(r"export const FEATURE_CATALOG = \{(.*?)\n\} as const", re.S)
 CATALOG_ENTRY = re.compile(r"(\w+):\s*\{\s*tier:\s*'(\w+)'")
 POLICY_FUNC = re.compile(r"func (starterFeatures|proFeatures)\(\) \[\]string \{(.*?)\n\}", re.S)
@@ -60,14 +60,17 @@ def policy_tiers(root: Path) -> dict[str, str]:
 
 def run(root: Path, out=sys.stdout) -> int:
     catalog = ui_catalog(root)
-    enforced = set(ROUTE_FEATURE.findall((root / ROUTES).read_text(encoding="utf-8")))
+    enforced: set[str] = set()
+    for file in sorted((root / ROUTES).glob("*.go")):
+        if not file.name.endswith("_test.go"):
+            enforced.update(ROUTE_FEATURE.findall(file.read_text(encoding="utf-8")))
     tiers = policy_tiers(root)
 
     failures: list[str] = []
     for feature, tier in sorted(catalog.items()):
         if feature not in enforced:
             failures.append(
-                f"{feature}: gated in the UI but no route in {ROUTES} carries feature: \"{feature}\""
+                f"{feature}: gated in the UI but no route in {ROUTES} carries Feature: \"{feature}\""
             )
         actual = tiers.get(feature)
         if actual is None:

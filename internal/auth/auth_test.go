@@ -299,18 +299,6 @@ func TestMiddleware(t *testing.T) {
 			authHeader:     "Bearer invalid.token.here",
 			expectedStatus: http.StatusUnauthorized,
 		},
-		{
-			name:           "skip auth for login",
-			path:           "/api/v1/auth/login",
-			authHeader:     "",
-			expectedStatus: http.StatusOK,
-		},
-		{
-			name:           "skip auth for static files",
-			path:           "/static/index.html",
-			authHeader:     "",
-			expectedStatus: http.StatusOK,
-		},
 	}
 
 	for _, tt := range tests {
@@ -780,41 +768,6 @@ func TestMiddlewareWithCookie(t *testing.T) {
 
 	if rec.Code != http.StatusOK {
 		t.Errorf("expected status %d, got %d", http.StatusOK, rec.Code)
-	}
-}
-
-func TestMiddlewareSkipSetupEndpoints(t *testing.T) {
-	defaults := testutil.GetTestDefaults()
-	m := auth.NewManager(
-		defaults.Auth.JWTSecret,
-		time.Hour,
-		defaults.Auth.Username,
-		defaults.Auth.PasswordHash,
-	)
-
-	handler := http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
-		w.WriteHeader(http.StatusOK)
-	})
-
-	middleware := m.Middleware(handler)
-
-	// Test that setup endpoints skip auth
-	paths := []string{
-		"/api/v1/setup/status",
-		"/api/v1/setup/complete",
-		"/api/v1/auth/refresh",
-	}
-
-	for _, path := range paths {
-		t.Run(path, func(t *testing.T) {
-			req := httptest.NewRequest(http.MethodGet, path, http.NoBody)
-			rec := httptest.NewRecorder()
-			middleware.ServeHTTP(rec, req)
-
-			if rec.Code != http.StatusOK {
-				t.Errorf("expected status %d for %s, got %d", http.StatusOK, path, rec.Code)
-			}
-		})
 	}
 }
 
@@ -1323,123 +1276,6 @@ func TestUpdatePasswordHashForUser(t *testing.T) {
 		// Verify hash was updated
 		if store.passwords["testuser"] != "newhash" {
 			t.Error("password hash was not updated in store")
-		}
-	})
-}
-
-func TestCSRFRevokeToken(t *testing.T) {
-	mgr := auth.NewCSRFManager()
-	defer mgr.Stop()
-
-	// Resolve the session's token
-	token, err := mgr.TokenForSession("testsession")
-	if err != nil {
-		t.Fatalf("failed to generate token: %v", err)
-	}
-
-	// Validate it
-	err = mgr.ValidateToken("testsession", token)
-	if err != nil {
-		t.Fatalf("token should be valid: %v", err)
-	}
-
-	// Revoke it
-	mgr.RevokeToken("testsession")
-
-	// Should no longer be valid (returns ErrTokenInvalid when session not found)
-	err = mgr.ValidateToken("testsession", token)
-	if !errors.Is(err, csrf.ErrTokenInvalid) {
-		t.Errorf("expected ErrTokenInvalid after revoke, got %v", err)
-	}
-}
-
-func TestCSRFMiddleware(t *testing.T) {
-	mgr := auth.NewCSRFManager()
-	defer mgr.Stop()
-
-	handler := http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
-		w.WriteHeader(http.StatusOK)
-	})
-
-	middleware := mgr.CSRFMiddleware(handler)
-
-	t.Run("GET requests bypass CSRF", func(t *testing.T) {
-		req := httptest.NewRequest(http.MethodGet, "/api/test", http.NoBody)
-		rec := httptest.NewRecorder()
-		middleware.ServeHTTP(rec, req)
-
-		if rec.Code != http.StatusOK {
-			t.Errorf("expected status 200 for GET, got %d", rec.Code)
-		}
-	})
-
-	t.Run("HEAD requests bypass CSRF", func(t *testing.T) {
-		req := httptest.NewRequest(http.MethodHead, "/api/test", http.NoBody)
-		rec := httptest.NewRecorder()
-		middleware.ServeHTTP(rec, req)
-
-		if rec.Code != http.StatusOK {
-			t.Errorf("expected status 200 for HEAD, got %d", rec.Code)
-		}
-	})
-
-	t.Run("OPTIONS requests bypass CSRF", func(t *testing.T) {
-		req := httptest.NewRequest(http.MethodOptions, "/api/test", http.NoBody)
-		rec := httptest.NewRecorder()
-		middleware.ServeHTTP(rec, req)
-
-		if rec.Code != http.StatusOK {
-			t.Errorf("expected status 200 for OPTIONS, got %d", rec.Code)
-		}
-	})
-
-	t.Run("non-API routes bypass CSRF", func(t *testing.T) {
-		req := httptest.NewRequest(http.MethodPost, "/static/file.js", http.NoBody)
-		rec := httptest.NewRecorder()
-		middleware.ServeHTTP(rec, req)
-
-		if rec.Code != http.StatusOK {
-			t.Errorf("expected status 200 for non-API route, got %d", rec.Code)
-		}
-	})
-
-	t.Run("login endpoint bypasses CSRF", func(t *testing.T) {
-		req := httptest.NewRequest(http.MethodPost, "/api/v1/auth/login", http.NoBody)
-		rec := httptest.NewRecorder()
-		middleware.ServeHTTP(rec, req)
-
-		if rec.Code != http.StatusOK {
-			t.Errorf("expected status 200 for login, got %d", rec.Code)
-		}
-	})
-
-	t.Run("setup endpoints bypass CSRF", func(t *testing.T) {
-		req := httptest.NewRequest(http.MethodPost, "/api/v1/setup/complete", http.NoBody)
-		rec := httptest.NewRecorder()
-		middleware.ServeHTTP(rec, req)
-
-		if rec.Code != http.StatusOK {
-			t.Errorf("expected status 200 for setup, got %d", rec.Code)
-		}
-	})
-
-	t.Run("SSO endpoints bypass CSRF", func(t *testing.T) {
-		req := httptest.NewRequest(http.MethodPost, "/api/v1/sso/callback", http.NoBody)
-		rec := httptest.NewRecorder()
-		middleware.ServeHTTP(rec, req)
-
-		if rec.Code != http.StatusOK {
-			t.Errorf("expected status 200 for SSO, got %d", rec.Code)
-		}
-	})
-
-	t.Run("POST without session returns 401", func(t *testing.T) {
-		req := httptest.NewRequest(http.MethodPost, "/api/devices", http.NoBody)
-		rec := httptest.NewRecorder()
-		middleware.ServeHTTP(rec, req)
-
-		if rec.Code != http.StatusUnauthorized {
-			t.Errorf("expected status 401 without session, got %d", rec.Code)
 		}
 	})
 }

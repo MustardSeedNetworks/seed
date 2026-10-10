@@ -19,11 +19,11 @@ spec.loader.exec_module(gate)
 
 ROUTES_GO = '''package api
 func (s *Server) registerRoutes() {
-	s.registerAll(mux, []apiRoute{
-		{path: "/api/v1/config", handler: s.handleConfig},
-		{path: APIVersionPrefix + "/profiles/", handler: s.handleProfiles},
-		{path: "GET /api/v1/updates/check", handler: s.handleUpdateCheck},
-		{path: "/api/v1/orphan", handler: s.handleOrphan},
+	s.routes.RegisterAll([]route.Route{
+		{Path: "/api/v1/config", Handler: s.handleConfig},
+		{Path: APIVersionPrefix + "/profiles/", Handler: s.handleProfiles},
+		{Path: "GET /api/v1/updates/check", Handler: s.handleUpdateCheck},
+		{Path: "/api/v1/orphan", Handler: s.handleOrphan},
 	})
 }
 '''
@@ -46,7 +46,7 @@ class Tree:
         (self.root / "scripts").mkdir()
         (self.root / "internal" / "api" / "routes.go").write_text(ROUTES_GO)
         (self.root / "internal" / "api" / "handlers_sessions.go").write_text(SESSIONS_GO)
-        (self.root / "internal" / "api" / "routes_test.go").write_text('{path: "/api/v1/only-in-test"}')
+        (self.root / "internal" / "api" / "routes_test.go").write_text('{Path: "/api/v1/only-in-test"}')
         (self.root / "ui" / "src" / "client.ts").write_text(
             "const updates = '/api/v1/updates';\n"
             "api.get('/api/v1/config');\n"
@@ -94,6 +94,17 @@ class RouteConsumerGateTest(unittest.TestCase):
         code, out = t.run()
         self.assertEqual(code, 0, out)  # not a 404 ...
         self.assertIn("orphan", t.baseline.read_text())  # ... and /api/v1/updates/check stays consumed only by its real caller
+
+    def test_cookie_path_and_api_catch_all_are_not_routes(self) -> None:
+        t = Tree()
+        (t.root / "internal" / "api" / "cookie.go").write_text(
+            'package api\nvar c = http.Cookie{\n\tName: "state",\n\tPath: "/api/sso",\n\tHttpOnly: true,\n}\n'
+            'var r = []route.Route{{Path: "/api/", Handler: ui.ServeHTTP, Auth: true, Hidden: true}}\n'
+        )
+        routes = gate.load_routes(t.root)
+        self.assertNotIn("/api/sso", routes)
+        self.assertNotIn("/api/", routes)
+        self.assertIn("/api/v1/config", routes)
 
     def test_orphan_route_without_baseline_fails(self) -> None:
         t = Tree()

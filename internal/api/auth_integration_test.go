@@ -333,79 +333,6 @@ func TestEndpointAuthWithExpiredToken(t *testing.T) {
 	)
 }
 
-// TestWebSocketAuth verifies WebSocket authentication via query parameter.
-func TestWebSocketAuth(t *testing.T) {
-	server := createAuthTestServer(t)
-	defer server.cleanup()
-
-	// Test without token
-	t.Run("WebSocket without token", func(t *testing.T) {
-		req := httptest.NewRequest(http.MethodGet, "/ws", http.NoBody)
-		// Upgrade headers for WebSocket
-		req.Header.Set("Upgrade", "websocket")
-		req.Header.Set("Connection", "Upgrade")
-		req.Header.Set("Sec-WebSocket-Version", "13")
-		req.Header.Set("Sec-WebSocket-Key", "test-key")
-
-		w := httptest.NewRecorder()
-		server.handler.ServeHTTP(w, req)
-
-		// Should return 401 without token
-		if w.Code != http.StatusUnauthorized {
-			t.Errorf("WebSocket without token should return 401 but got %d", w.Code)
-		}
-	})
-
-	// Test with token in query (DISABLED for security fix #706)
-	// Query parameter authentication is no longer supported to prevent token leakage via logs/referer
-	t.Run("WebSocket with token in query (disabled #706)", func(t *testing.T) {
-		token, err := server.server.AuthManager().GenerateToken(context.Background(), "testuser")
-		if err != nil {
-			t.Fatalf("Failed to generate token: %v", err)
-		}
-
-		req := httptest.NewRequest(http.MethodGet, "/ws?token="+token, http.NoBody)
-		req.Header.Set("Upgrade", "websocket")
-		req.Header.Set("Connection", "Upgrade")
-		req.Header.Set("Sec-WebSocket-Version", "13")
-		req.Header.Set("Sec-WebSocket-Key", "test-key")
-
-		w := httptest.NewRecorder()
-		server.handler.ServeHTTP(w, req)
-
-		// Security fix #706: Query param auth is disabled, should return 401
-		if w.Code != http.StatusUnauthorized {
-			t.Errorf(
-				"WebSocket with query param token should return 401 (query auth disabled for security), got %d",
-				w.Code,
-			)
-		}
-	})
-
-	// Test with token in Sec-WebSocket-Protocol header (new secure method)
-	t.Run("WebSocket with token in subprotocol", func(t *testing.T) {
-		token, err := server.server.AuthManager().GenerateToken(context.Background(), "testuser")
-		if err != nil {
-			t.Fatalf("Failed to generate token: %v", err)
-		}
-
-		req := httptest.NewRequest(http.MethodGet, "/ws", http.NoBody)
-		req.Header.Set("Upgrade", "websocket")
-		req.Header.Set("Connection", "Upgrade")
-		req.Header.Set("Sec-WebSocket-Version", "13")
-		req.Header.Set("Sec-WebSocket-Key", "test-key")
-		req.Header.Set("Sec-WebSocket-Protocol", "access_token, "+token)
-
-		w := httptest.NewRecorder()
-		server.handler.ServeHTTP(w, req)
-
-		// Should NOT return 401 with valid token in subprotocol
-		if w.Code == http.StatusUnauthorized {
-			t.Errorf("WebSocket with valid token in subprotocol should not return 401")
-		}
-	})
-}
-
 // TestStaticFilesNoAuth verifies that static files don't require authentication.
 func TestStaticFilesNoAuth(t *testing.T) {
 	server := createAuthTestServer(t)
@@ -448,7 +375,7 @@ func (ts *authTestServer) cleanup() {
 
 func createAuthTestServer(_ *testing.T) *authTestServer {
 	server := api.NewTestServer()
-	handler := server.GetAuthenticatedHandler()
+	handler := server.Handler()
 
 	return &authTestServer{
 		server:  server,
