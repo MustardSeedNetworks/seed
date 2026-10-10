@@ -147,6 +147,14 @@ operations:
           application/json:
             schema:
               $ref: '#/components/schemas/ConfigVersionResponse'
+  GET /api/v1/discovery/bonjour:
+    responses:
+      "200":
+        description: The Bonjour services observed during the browse window.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BrowseResult'
   GET /api/v1/discovery/engine:
     responses:
       "200":
@@ -155,6 +163,15 @@ operations:
           application/json:
             schema:
               $ref: '#/components/schemas/EngineDiscoveryResponse'
+  GET /api/v1/discovery/engine/device/:
+    pathTemplate: /api/v1/discovery/engine/device/{mac}
+    responses:
+      "200":
+        description: The discovered device with that MAC address.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DiscoveredDevice'
   POST /api/v1/discovery/engine/full:
     responses:
       "200":
@@ -185,6 +202,14 @@ operations:
           application/json:
             schema:
               $ref: '#/components/schemas/EngineDiscoveryResponse'
+  GET /api/v1/discovery/engine/stats:
+    responses:
+      "200":
+        description: Discovery engine counters.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EngineStats'
   GET /api/v1/flows/top-applications:
     responses:
       "200":
@@ -253,6 +278,24 @@ operations:
           application/json:
             schema:
               $ref: '#/components/schemas/JobResponse'
+  GET /api/v1/jobs/:
+    pathTemplate: /api/v1/jobs/{jobId}
+    responses:
+      "200":
+        description: The job's current state.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/JobResponse'
+  DELETE /api/v1/jobs/:
+    pathTemplate: /api/v1/jobs/{jobId}
+    responses:
+      "202":
+        description: Cancellation requested; the job's state at that moment.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/JobResponse'
   GET /api/v1/license:
     responses:
       "200":
@@ -315,6 +358,14 @@ operations:
     responses:
       "201":
         description: The created profile.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProfileResponse'
+  GET /api/v1/profiles/active:
+    responses:
+      "200":
+        description: The active profile.
         content:
           application/json:
             schema:
@@ -500,6 +551,13 @@ operations:
           application/json:
             schema:
               $ref: '#/components/schemas/DiscoveryResponse'
+  PUT /api/v1/security/discovery/options:
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/DiscoveryOptions'
   POST /api/v1/security/discovery/portscan:
     requestBody:
       required: true
@@ -521,6 +579,21 @@ operations:
           application/json:
             schema:
               $ref: '#/components/schemas/TCPProbeResponse'
+  GET /api/v1/security/guest-audit/settings:
+    responses:
+      "200":
+        description: The guest network audit settings.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GuestNetworkAuditConfig'
+  PUT /api/v1/security/guest-audit/settings:
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/GuestNetworkAuditConfig'
   GET /api/v1/security/problems:
     responses:
       "200":
@@ -537,6 +610,14 @@ operations:
           application/json:
             schema:
               $ref: '#/components/schemas/ProblemScanResponse'
+  GET /api/v1/security/vulnerabilities/settings:
+    responses:
+      "200":
+        description: The vulnerability scan settings.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/VulnerabilityScanConfig'
   POST /api/v1/security/vulnerabilities/validate-api-key:
     requestBody:
       required: true
@@ -583,6 +664,36 @@ operations:
           application/json:
             schema:
               $ref: '#/components/schemas/WiFiDiscoveryStatsResponse'
+  GET /api/v1/settings/cable:
+    responses:
+      "200":
+        description: The cable test settings.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CableTestConfig'
+  PUT /api/v1/settings/cable:
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/CableTestConfig'
+  GET /api/v1/settings/link:
+    responses:
+      "200":
+        description: The link settings.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LinkConfig'
+  PUT /api/v1/settings/link:
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/LinkConfig'
   POST /api/v1/setup/complete:
     requestBody:
       required: true
@@ -806,6 +917,21 @@ operations:
           application/json:
             schema:
               $ref: '#/components/schemas/MintTokenResponse'
+  GET /api/v1/tokens:
+    responses:
+      "200":
+        description: The caller's personal access tokens, without their secrets.
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: '#/components/schemas/TokenListItem'
+  DELETE /api/v1/tokens/:
+    pathTemplate: /api/v1/tokens/{tokenId}
+    responses:
+      "204":
+        description: The token was revoked.
   GET /api/v1/topology/interfaces:
     responses:
       "200":

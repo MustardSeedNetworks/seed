@@ -6164,6 +6164,32 @@ components:
             required:
                 - rescanIntervalMs
             type: object
+        TokenListItem:
+            additionalProperties: false
+            properties:
+                createdAt:
+                    format: date-time
+                    type: string
+                id:
+                    type: string
+                lastUsedAt:
+                    format: date-time
+                    type: string
+                name:
+                    type: string
+                prefix:
+                    type: string
+                revokedAt:
+                    format: date-time
+                    type: string
+                scope:
+                    type: string
+            required:
+                - id
+                - name
+                - prefix
+                - createdAt
+            type: object
         TracerouteHop:
             additionalProperties: false
             properties:
@@ -7930,6 +7956,12 @@ paths:
         get:
             operationId: getApiV1DiscoveryBonjour
             responses:
+                "200":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/BrowseResult'
+                    description: The Bonjour services observed during the browse window.
                 "401":
                     content:
                         application/json:
@@ -7998,10 +8030,16 @@ paths:
                             schema:
                                 $ref: '#/components/schemas/Error'
                     description: Internal error.
-    /api/v1/discovery/engine/device/{subpath}:
+    /api/v1/discovery/engine/device/{mac}:
         get:
-            operationId: getApiV1DiscoveryEngineDeviceSubpath
+            operationId: getApiV1DiscoveryEngineDeviceMac
             responses:
+                "200":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/DiscoveredDevice'
+                    description: The discovered device with that MAC address.
                 "401":
                     content:
                         application/json:
@@ -8021,9 +8059,9 @@ paths:
                                 $ref: '#/components/schemas/Error'
                     description: Internal error.
         parameters:
-            - description: Trailing path segment; this route matches by prefix.
+            - description: Path parameter.
               in: path
-              name: subpath
+              name: mac
               required: true
               schema:
                 type: string
@@ -8206,6 +8244,12 @@ paths:
         get:
             operationId: getApiV1DiscoveryEngineStats
             responses:
+                "200":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/EngineStats'
+                    description: Discovery engine counters.
                 "401":
                     content:
                         application/json:
@@ -8741,11 +8785,17 @@ paths:
             security:
                 - BearerAuth: []
                   CsrfToken: []
-    /api/v1/jobs/{subpath}:
+    /api/v1/jobs/{jobId}:
         delete:
             description: Requires an operator-scoped token.
-            operationId: deleteApiV1JobsSubpath
+            operationId: deleteApiV1JobsJobId
             responses:
+                "202":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/JobResponse'
+                    description: Cancellation requested; the job's state at that moment.
                 "401":
                     content:
                         application/json:
@@ -8780,8 +8830,14 @@ paths:
                 - BearerAuth: []
                   CsrfToken: []
         get:
-            operationId: getApiV1JobsSubpath
+            operationId: getApiV1JobsJobId
             responses:
+                "200":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/JobResponse'
+                    description: The job's current state.
                 "401":
                     content:
                         application/json:
@@ -8801,9 +8857,9 @@ paths:
                                 $ref: '#/components/schemas/Error'
                     description: Internal error.
         parameters:
-            - description: Trailing path segment; this route matches by prefix.
+            - description: Path parameter.
               in: path
-              name: subpath
+              name: jobId
               required: true
               schema:
                 type: string
@@ -9521,6 +9577,12 @@ paths:
         get:
             operationId: getApiV1ProfilesActive
             responses:
+                "200":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/ProfileResponse'
+                    description: The active profile.
                 "401":
                     content:
                         application/json:
@@ -10811,6 +10873,12 @@ paths:
         put:
             description: Requires an operator-scoped token.
             operationId: putApiV1SecurityDiscoveryOptions
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/DiscoveryOptions'
+                required: true
             responses:
                 "401":
                     content:
@@ -11020,6 +11088,12 @@ paths:
         get:
             operationId: getApiV1SecurityGuestAuditSettings
             responses:
+                "200":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/GuestNetworkAuditConfig'
+                    description: The guest network audit settings.
                 "401":
                     content:
                         application/json:
@@ -11041,6 +11115,12 @@ paths:
         put:
             description: Requires an operator-scoped token.
             operationId: putApiV1SecurityGuestAuditSettings
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/GuestNetworkAuditConfig'
+                required: true
             responses:
                 "401":
                     content:
@@ -11341,6 +11421,12 @@ paths:
         get:
             operationId: getApiV1SecurityVulnerabilitiesSettings
             responses:
+                "200":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/VulnerabilityScanConfig'
+                    description: The vulnerability scan settings.
                 "401":
                     content:
                         application/json:
@@ -11701,6 +11787,12 @@ paths:
         get:
             operationId: getApiV1SettingsCable
             responses:
+                "200":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/CableTestConfig'
+                    description: The cable test settings.
                 "401":
                     content:
                         application/json:
@@ -11722,6 +11814,12 @@ paths:
         put:
             description: Requires an operator-scoped token.
             operationId: putApiV1SettingsCable
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/CableTestConfig'
+                required: true
             responses:
                 "401":
                     content:
@@ -11782,6 +11880,12 @@ paths:
         get:
             operationId: getApiV1SettingsLink
             responses:
+                "200":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/LinkConfig'
+                    description: The link settings.
                 "401":
                     content:
                         application/json:
@@ -11803,6 +11907,12 @@ paths:
         put:
             description: Requires an operator-scoped token.
             operationId: putApiV1SettingsLink
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/LinkConfig'
+                required: true
             responses:
                 "401":
                     content:
@@ -13370,6 +13480,14 @@ paths:
         get:
             operationId: getApiV1Tokens
             responses:
+                "200":
+                    content:
+                        application/json:
+                            schema:
+                                items:
+                                    $ref: '#/components/schemas/TokenListItem'
+                                type: array
+                    description: The caller's personal access tokens, without their secrets.
                 "401":
                     content:
                         application/json:
@@ -13437,11 +13555,13 @@ paths:
             security:
                 - BearerAuth: []
                   CsrfToken: []
-    /api/v1/tokens/{subpath}:
+    /api/v1/tokens/{tokenId}:
         delete:
             description: Requires an operator-scoped token.
-            operationId: deleteApiV1TokensSubpath
+            operationId: deleteApiV1TokensTokenId
             responses:
+                "204":
+                    description: The token was revoked.
                 "401":
                     content:
                         application/json:
@@ -13476,9 +13596,9 @@ paths:
                 - BearerAuth: []
                   CsrfToken: []
         parameters:
-            - description: Trailing path segment; this route matches by prefix.
+            - description: Path parameter.
               in: path
-              name: subpath
+              name: tokenId
               required: true
               schema:
                 type: string
