@@ -1,8 +1,15 @@
 /**
- * Topology wire shapes mirroring /api/v1/topology/*. Keep field
- * names aligned with internal/api/handlers_topology.go encoders.
+ * AUTO-GENERATED FILE. DO NOT EDIT BY HAND.
+ *
+ * Regenerate with: `npm run gen-types` (or `make schema && npm run gen-types`
+ * after Go DTO changes). The schema source of truth lives at
+ * docs/schemas/api/; the Go DTO source lives at internal/api/.
  */
-
+export interface TopologyNodeDetailResponse {
+  node: TopologyNode;
+  interfaces: TopologyInterface[];
+  links: TopologyLink[];
+}
 export interface TopologyNode {
   id: string;
   clientId: string;
@@ -15,9 +22,10 @@ export interface TopologyNode {
   primaryIp: string;
   firstSeen: string;
   lastSeen: string;
-  metadata: Record<string, unknown>;
+  metadata: {
+    [k: string]: unknown;
+  };
 }
-
 export interface TopologyInterface {
   id: number;
   nodeId: string;
@@ -32,7 +40,6 @@ export interface TopologyInterface {
   speedBps: number;
   lastSeen: string;
 }
-
 export interface TopologyLink {
   id: string;
   sourceNodeId: string;
@@ -45,21 +52,7 @@ export interface TopologyLink {
   utilizationPct: number;
   firstSeen: string;
   lastSeen: string;
-  evidence: Record<string, unknown>;
-}
-
-export interface TopologyNodesResponse {
-  count: number;
-  nodes: TopologyNode[];
-}
-
-export interface TopologyLinksResponse {
-  count: number;
-  links: TopologyLink[];
-}
-
-export interface TopologyNodeDetailResponse {
-  node: TopologyNode;
-  interfaces: TopologyInterface[];
-  links: TopologyLink[];
+  evidence: {
+    [k: string]: unknown;
+  };
 }

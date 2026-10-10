@@ -6562,6 +6562,217 @@ components:
                 - prefix
                 - createdAt
             type: object
+        TopologyARPBinding:
+            additionalProperties: false
+            properties:
+                clientId:
+                    type: string
+                id:
+                    type: integer
+                ifIndex:
+                    type: integer
+                ipAddress:
+                    type: string
+                lastSeen:
+                    type: string
+                macAddress:
+                    type: string
+                mediaType:
+                    type: integer
+                sourceNodeId:
+                    type: string
+            required:
+                - id
+                - clientId
+                - sourceNodeId
+                - ifIndex
+                - ipAddress
+                - macAddress
+                - mediaType
+                - lastSeen
+            type: object
+        TopologyARPListResponse:
+            additionalProperties: false
+            properties:
+                bindings:
+                    items:
+                        $ref: '#/components/schemas/TopologyARPBinding'
+                    type: array
+                count:
+                    type: integer
+            required:
+                - count
+                - bindings
+            type: object
+        TopologyInterface:
+            additionalProperties: false
+            properties:
+                id:
+                    type: integer
+                ifAdminStatus:
+                    type: integer
+                ifAlias:
+                    type: string
+                ifDescr:
+                    type: string
+                ifIndex:
+                    type: integer
+                ifName:
+                    type: string
+                ifOperStatus:
+                    type: integer
+                ifPhysAddr:
+                    type: string
+                ifType:
+                    type: integer
+                lastSeen:
+                    type: string
+                nodeId:
+                    type: string
+                speedBps:
+                    type: integer
+            required:
+                - id
+                - nodeId
+                - ifIndex
+                - ifName
+                - ifDescr
+                - ifAlias
+                - ifType
+                - ifAdminStatus
+                - ifOperStatus
+                - ifPhysAddr
+                - speedBps
+                - lastSeen
+            type: object
+        TopologyLink:
+            additionalProperties: false
+            properties:
+                evidence:
+                    additionalProperties: true
+                    type: object
+                firstSeen:
+                    type: string
+                id:
+                    type: string
+                lastSeen:
+                    type: string
+                linkType:
+                    type: string
+                sourceInterface:
+                    type: string
+                sourceNodeId:
+                    type: string
+                speedMbps:
+                    type: integer
+                status:
+                    type: string
+                targetInterface:
+                    type: string
+                targetNodeId:
+                    type: string
+                utilizationPct:
+                    type: number
+            required:
+                - id
+                - sourceNodeId
+                - targetNodeId
+                - sourceInterface
+                - targetInterface
+                - linkType
+                - status
+                - speedMbps
+                - utilizationPct
+                - firstSeen
+                - lastSeen
+                - evidence
+            type: object
+        TopologyLinkListResponse:
+            additionalProperties: false
+            properties:
+                count:
+                    type: integer
+                links:
+                    items:
+                        $ref: '#/components/schemas/TopologyLink'
+                    type: array
+            required:
+                - count
+                - links
+            type: object
+        TopologyNode:
+            additionalProperties: false
+            properties:
+                chassisId:
+                    type: string
+                clientId:
+                    type: string
+                deviceType:
+                    type: string
+                displayName:
+                    type: string
+                firstSeen:
+                    type: string
+                id:
+                    type: string
+                identityHash:
+                    type: string
+                lastSeen:
+                    type: string
+                metadata:
+                    additionalProperties: true
+                    type: object
+                primaryIp:
+                    type: string
+                primaryMac:
+                    type: string
+                sysName:
+                    type: string
+            required:
+                - id
+                - clientId
+                - identityHash
+                - displayName
+                - deviceType
+                - chassisId
+                - sysName
+                - primaryMac
+                - primaryIp
+                - firstSeen
+                - lastSeen
+                - metadata
+            type: object
+        TopologyNodeDetailResponse:
+            additionalProperties: false
+            properties:
+                interfaces:
+                    items:
+                        $ref: '#/components/schemas/TopologyInterface'
+                    type: array
+                links:
+                    items:
+                        $ref: '#/components/schemas/TopologyLink'
+                    type: array
+                node:
+                    $ref: '#/components/schemas/TopologyNode'
+            required:
+                - node
+                - interfaces
+                - links
+            type: object
+        TopologyNodeListResponse:
+            additionalProperties: false
+            properties:
+                count:
+                    type: integer
+                nodes:
+                    items:
+                        $ref: '#/components/schemas/TopologyNode'
+                    type: array
+            required:
+                - count
+                - nodes
+            type: object
         TracerouteHop:
             additionalProperties: false
             properties:
@@ -14288,6 +14499,12 @@ paths:
         get:
             operationId: getApiV1TopologyArp
             responses:
+                "200":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/TopologyARPListResponse'
+                    description: IP-to-MAC bindings harvested from node ARP tables, newest first. Filter by node_id, since (RFC 3339) and limit (default 200, capped at 1000).
                 "401":
                     content:
                         application/json:
@@ -14366,6 +14583,12 @@ paths:
         get:
             operationId: getApiV1TopologyLinks
             responses:
+                "200":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/TopologyLinkListResponse'
+                    description: Every link of the topology graph, or only those incident to node_id.
                 "401":
                     content:
                         application/json:
@@ -14388,6 +14611,12 @@ paths:
         get:
             operationId: getApiV1TopologyNodes
             responses:
+                "200":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/TopologyNodeListResponse'
+                    description: Topology nodes. Filter by device_type, since (RFC 3339) and limit (default 200, capped at 1000).
                 "401":
                     content:
                         application/json:
@@ -14406,10 +14635,16 @@ paths:
                             schema:
                                 $ref: '#/components/schemas/Error'
                     description: Internal error.
-    /api/v1/topology/nodes/{subpath}:
+    /api/v1/topology/nodes/{nodeId}:
         get:
-            operationId: getApiV1TopologyNodesSubpath
+            operationId: getApiV1TopologyNodesNodeId
             responses:
+                "200":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/TopologyNodeDetailResponse'
+                    description: The node with its interfaces and the links incident to it.
                 "401":
                     content:
                         application/json:
@@ -14429,9 +14664,9 @@ paths:
                                 $ref: '#/components/schemas/Error'
                     description: Internal error.
         parameters:
-            - description: Trailing path segment; this route matches by prefix.
+            - description: Path parameter.
               in: path
-              name: subpath
+              name: nodeId
               required: true
               schema:
                 type: string

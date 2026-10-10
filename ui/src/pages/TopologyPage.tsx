@@ -20,7 +20,11 @@ import { Activity, Cable, RefreshCw } from 'lucide-react';
 import { type JSX, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useTopologyLinks, useTopologyNode, useTopologyNodes } from '../hooks/useTopology';
-import type { TopologyInterface, TopologyLink, TopologyNode } from '../types/topology';
+import type {
+  TopologyInterface,
+  TopologyLink,
+  TopologyNode,
+} from '../types/generated/topology-node-detail-response';
 import {
   DetailEmpty,
   DetailFacts,

@@ -279,3 +279,83 @@ func TestCreatedPollingTargetReportsStoredChain(t *testing.T) {
 	require.Equal(t, polling.DefaultCollectorChain(), stored.CollectorChain)
 	require.Equal(t, stored.CollectorChain, created.CollectorChain)
 }
+
+func TestTopologyResponseShapes(t *testing.T) {
+	t.Parallel()
+	s := newTopologyTestServer(t)
+	nodeID := seedTopology(t, s.db())
+	seedARPBindingsForHandler(t, s.db())
+
+	nodeKeys := []string{
+		"chassisId", "clientId", "deviceType", "displayName", "firstSeen", "id",
+		"identityHash", "lastSeen", "metadata", "primaryIp", "primaryMac", "sysName",
+	}
+	linkKeys := []string{
+		"evidence", "firstSeen", "id", "lastSeen", "linkType", "sourceInterface",
+		"sourceNodeId", "speedMbps", "status", "targetInterface", "targetNodeId", "utilizationPct",
+	}
+
+	nodes := serve(t, s.handleTopologyNodes, topologyPathPrefix+"nodes")
+	require.Equal(t, []string{"count", "nodes"}, topLevelKeys(t, nodes.Body.Bytes()))
+	var nl struct {
+		Count int               `json:"count"`
+		Nodes []json.RawMessage `json:"nodes"`
+	}
+	require.NoError(t, json.Unmarshal(nodes.Body.Bytes(), &nl))
+	require.Equal(t, 2, nl.Count)
+	require.Equal(t, nodeKeys, topLevelKeys(t, nl.Nodes[0]))
+
+	detail := serve(t, s.handleTopologyNodeByID, topologyPathPrefix+"nodes/"+nodeID)
+	require.Equal(t, []string{"interfaces", "links", "node"}, topLevelKeys(t, detail.Body.Bytes()))
+	var d struct {
+		Node       json.RawMessage   `json:"node"`
+		Interfaces []json.RawMessage `json:"interfaces"`
+		Links      []json.RawMessage `json:"links"`
+	}
+	require.NoError(t, json.Unmarshal(detail.Body.Bytes(), &d))
+	require.Equal(t, nodeKeys, topLevelKeys(t, d.Node))
+	require.Len(t, d.Interfaces, 1)
+	require.Equal(t, []string{
+		"id", "ifAdminStatus", "ifAlias", "ifDescr", "ifIndex", "ifName", "ifOperStatus",
+		"ifPhysAddr", "ifType", "lastSeen", "nodeId", "speedBps",
+	}, topLevelKeys(t, d.Interfaces[0]))
+	require.Len(t, d.Links, 1)
+	require.Equal(t, linkKeys, topLevelKeys(t, d.Links[0]))
+
+	var node map[string]any
+	require.NoError(t, json.Unmarshal(d.Node, &node))
+	require.Equal(t, "router-1", node["displayName"])
+	require.Equal(t, map[string]any{}, node["metadata"])
+	var iface map[string]any
+	require.NoError(t, json.Unmarshal(d.Interfaces[0], &iface))
+	require.InDelta(t, 1_000_000_000, iface["speedBps"], 0)
+
+	links := serve(t, s.handleTopologyLinks, topologyPathPrefix+"links")
+	require.Equal(t, []string{"count", "links"}, topLevelKeys(t, links.Body.Bytes()))
+	var ll struct {
+		Links []json.RawMessage `json:"links"`
+	}
+	require.NoError(t, json.Unmarshal(links.Body.Bytes(), &ll))
+	require.JSONEq(t, string(d.Links[0]), string(ll.Links[0]))
+
+	arp := serve(t, s.handleTopologyARP, topologyPathPrefix+"arp")
+	require.Equal(t, []string{"bindings", "count"}, topLevelKeys(t, arp.Body.Bytes()))
+	var al struct {
+		Bindings []json.RawMessage `json:"bindings"`
+	}
+	require.NoError(t, json.Unmarshal(arp.Body.Bytes(), &al))
+	require.Equal(t, []string{
+		"clientId", "id", "ifIndex", "ipAddress", "lastSeen", "macAddress", "mediaType", "sourceNodeId",
+	}, topLevelKeys(t, al.Bindings[0]))
+}
+
+func TestEmptyTopologyListsAreArrays(t *testing.T) {
+	t.Parallel()
+	s := newTopologyTestServer(t)
+	require.JSONEq(t, `{"count":0,"nodes":[]}`,
+		serve(t, s.handleTopologyNodes, topologyPathPrefix+"nodes").Body.String())
+	require.JSONEq(t, `{"count":0,"links":[]}`,
+		serve(t, s.handleTopologyLinks, topologyPathPrefix+"links").Body.String())
+	require.JSONEq(t, `{"count":0,"bindings":[]}`,
+		serve(t, s.handleTopologyARP, topologyPathPrefix+"arp").Body.String())
+}

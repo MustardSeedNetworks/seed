@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import type { TopologyLink, TopologyNode } from '../types/topology';
+import type { TopologyLink, TopologyNode } from '../types/generated/topology-node-detail-response';
 import { TopologyGraph } from './TopologyGraph';
 
 /**

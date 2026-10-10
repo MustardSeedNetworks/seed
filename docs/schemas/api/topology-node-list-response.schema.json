@@ -1,0 +1,85 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/MustardSeedNetworks/seed/main/docs/schemas/api/topology-node-list-response.schema.json",
+  "$ref": "#/$defs/TopologyNodeListResponse",
+  "$defs": {
+    "TopologyNode": {
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "clientId": {
+          "type": "string"
+        },
+        "identityHash": {
+          "type": "string"
+        },
+        "displayName": {
+          "type": "string"
+        },
+        "deviceType": {
+          "type": "string"
+        },
+        "chassisId": {
+          "type": "string"
+        },
+        "sysName": {
+          "type": "string"
+        },
+        "primaryMac": {
+          "type": "string"
+        },
+        "primaryIp": {
+          "type": "string"
+        },
+        "firstSeen": {
+          "type": "string"
+        },
+        "lastSeen": {
+          "type": "string"
+        },
+        "metadata": {
+          "additionalProperties": true,
+          "type": "object"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "id",
+        "clientId",
+        "identityHash",
+        "displayName",
+        "deviceType",
+        "chassisId",
+        "sysName",
+        "primaryMac",
+        "primaryIp",
+        "firstSeen",
+        "lastSeen",
+        "metadata"
+      ]
+    },
+    "TopologyNodeListResponse": {
+      "properties": {
+        "count": {
+          "type": "integer"
+        },
+        "nodes": {
+          "items": {
+            "$ref": "#/$defs/TopologyNode"
+          },
+          "type": "array"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "count",
+        "nodes"
+      ]
+    }
+  },
+  "title": "TopologyNodeListResponse",
+  "description": "TopologyNodeListResponse — generated from the Go struct in internal/api; refresh with `make schema` after struct changes."
+}

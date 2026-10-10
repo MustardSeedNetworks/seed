@@ -17,7 +17,7 @@ import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import i18n from '../i18n';
-import type { TopologyNodeDetailResponse } from '../types/topology';
+import type { TopologyNodeDetailResponse } from '../types/generated/topology-node-detail-response';
 
 const detail: TopologyNodeDetailResponse = {
   node: {

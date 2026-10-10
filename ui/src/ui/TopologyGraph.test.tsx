@@ -8,7 +8,7 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
-import type { TopologyLink, TopologyNode } from '../types/topology';
+import type { TopologyLink, TopologyNode } from '../types/generated/topology-node-detail-response';
 import { TopologyGraph } from './TopologyGraph';
 
 function node(over: Partial<TopologyNode>): TopologyNode {
