@@ -822,6 +822,57 @@ components:
             required:
                 - enabled
             type: object
+        CableTestDefaults:
+            additionalProperties: false
+            properties:
+                enabled:
+                    type: boolean
+            required:
+                - enabled
+            type: object
+        CardOptionDefaults:
+            additionalProperties: false
+            properties:
+                autoRunOnLink:
+                    type: boolean
+                enabled:
+                    type: boolean
+            required:
+                - enabled
+                - autoRunOnLink
+            type: object
+        CardSettingsDefaults:
+            additionalProperties: false
+            properties:
+                dns:
+                    $ref: '#/components/schemas/CardOptionDefaults'
+                gateway:
+                    $ref: '#/components/schemas/CardOptionDefaults'
+                healthChecks:
+                    $ref: '#/components/schemas/CardOptionDefaults'
+                link:
+                    $ref: '#/components/schemas/CardOptionDefaults'
+                network:
+                    $ref: '#/components/schemas/CardOptionDefaults'
+                networkDiscovery:
+                    $ref: '#/components/schemas/CardOptionDefaults'
+                performance:
+                    $ref: '#/components/schemas/PerformanceCardDefaults'
+                switch:
+                    $ref: '#/components/schemas/CardOptionDefaults'
+                vlan:
+                    $ref: '#/components/schemas/CardOptionDefaults'
+            required:
+                - link
+                - switch
+                - vlan
+                - network
+                - gateway
+                - dns
+                - healthChecks
+                - networkDiscovery
+                - performance
+            type: object
         CategorizedInterfacesResponse:
             additionalProperties: false
             properties:
@@ -1429,6 +1480,80 @@ components:
                 - enable_wal
                 - max_connections
             type: object
+        DefaultHTTPEndpoint:
+            additionalProperties: false
+            properties:
+                enabled:
+                    type: boolean
+                expectedStatus:
+                    type: integer
+                id:
+                    type: string
+                name:
+                    type: string
+                url:
+                    type: string
+            required:
+                - id
+                - name
+                - url
+                - expectedStatus
+                - enabled
+            type: object
+        DefaultPingTarget:
+            additionalProperties: false
+            properties:
+                count:
+                    type: integer
+                enabled:
+                    type: boolean
+                host:
+                    type: string
+                id:
+                    type: string
+                name:
+                    type: string
+            required:
+                - id
+                - name
+                - host
+                - enabled
+            type: object
+        DefaultSettings:
+            additionalProperties: false
+            properties:
+                cableTest:
+                    $ref: '#/components/schemas/CableTestDefaults'
+                cardSettings:
+                    $ref: '#/components/schemas/CardSettingsDefaults'
+                displayOptions:
+                    $ref: '#/components/schemas/DisplayOptionsDefaults'
+                iperf:
+                    $ref: '#/components/schemas/IperfDefaults'
+                link:
+                    $ref: '#/components/schemas/LinkDefaults'
+                networkDiscovery:
+                    $ref: '#/components/schemas/NetworkDiscoveryDefaults'
+                snmp:
+                    $ref: '#/components/schemas/SNMPDefaults'
+                tests:
+                    $ref: '#/components/schemas/TestsDefaults'
+                thresholds:
+                    $ref: '#/components/schemas/ThresholdDefaults'
+                vulnerability:
+                    $ref: '#/components/schemas/VulnerabilityDefaults'
+            required:
+                - cardSettings
+                - displayOptions
+                - thresholds
+                - iperf
+                - tests
+                - networkDiscovery
+                - snmp
+                - link
+                - cableTest
+                - vulnerability
+            type: object
         DeviceCredentialListResponse:
             additionalProperties: false
             properties:
@@ -1693,6 +1818,29 @@ components:
                 - traceroute
                 - snmpQuery
             type: object
+        DiscoveryOptionsDefaults:
+            additionalProperties: false
+            properties:
+                arpScan:
+                    type: boolean
+                icmpScan:
+                    type: boolean
+                passiveProtocols:
+                    $ref: '#/components/schemas/PassiveProtocolDefaults'
+                portScan:
+                    $ref: '#/components/schemas/PortScanDefaults'
+                snmpQuery:
+                    type: boolean
+                traceroute:
+                    type: boolean
+            required:
+                - passiveProtocols
+                - arpScan
+                - icmpScan
+                - portScan
+                - traceroute
+                - snmpQuery
+            type: object
         DiscoveryOptionsResponse:
             additionalProperties: false
             properties:
@@ -1725,6 +1873,14 @@ components:
             required:
                 - rescan_interval
             type: object
+        DiscoveryTimingDefaults:
+            additionalProperties: false
+            properties:
+                rescanIntervalMs:
+                    type: integer
+            required:
+                - rescanIntervalMs
+            type: object
         DisplayOptionsConfig:
             additionalProperties: false
             properties:
@@ -1735,6 +1891,17 @@ components:
             required:
                 - show_public_ip
                 - unit_system
+            type: object
+        DisplayOptionsDefaults:
+            additionalProperties: false
+            properties:
+                showPublicIP:
+                    type: boolean
+                unitSystem:
+                    type: string
+            required:
+                - showPublicIP
+                - unitSystem
             type: object
         DriverStatsResponse:
             additionalProperties: false
@@ -2166,6 +2333,20 @@ components:
                 - os_detection
                 - service_probes
             type: object
+        FingerprintingDefaults:
+            additionalProperties: false
+            properties:
+                enabled:
+                    type: boolean
+                osDetection:
+                    type: boolean
+                serviceProbes:
+                    type: boolean
+            required:
+                - enabled
+                - osDetection
+                - serviceProbes
+            type: object
         FingerprintingResponse:
             additionalProperties: false
             properties:
@@ -2552,6 +2733,23 @@ components:
                 - port
                 - statusCode
                 - isHttps
+            type: object
+        HTTPTimingThresholdDefaults:
+            additionalProperties: false
+            properties:
+                dns:
+                    $ref: '#/components/schemas/ThresholdPairDefaults'
+                tcp:
+                    $ref: '#/components/schemas/ThresholdPairDefaults'
+                tls:
+                    $ref: '#/components/schemas/ThresholdPairDefaults'
+                ttfb:
+                    $ref: '#/components/schemas/ThresholdPairDefaults'
+            required:
+                - dns
+                - tcp
+                - tls
+                - ttfb
             type: object
         HTTPTimingThresholds:
             additionalProperties: false
@@ -3245,6 +3443,35 @@ components:
                 - server_port
                 - enable_server
             type: object
+        IperfDefaults:
+            additionalProperties: false
+            properties:
+                autoRunOnLink:
+                    type: boolean
+                direction:
+                    type: string
+                duration:
+                    type: integer
+                enableServer:
+                    type: boolean
+                port:
+                    type: integer
+                protocol:
+                    type: string
+                server:
+                    type: string
+                serverPort:
+                    type: integer
+            required:
+                - server
+                - port
+                - protocol
+                - direction
+                - duration
+                - serverPort
+                - enableServer
+                - autoRunOnLink
+            type: object
         IperfInfoResponse:
             additionalProperties: false
             properties:
@@ -3555,6 +3782,19 @@ components:
                     type: array
                 mode:
                     type: string
+            type: object
+        LinkDefaults:
+            additionalProperties: false
+            properties:
+                availableModes:
+                    items:
+                        type: string
+                    type: array
+                mode:
+                    type: string
+            required:
+                - mode
+                - availableModes
             type: object
         LinkHistoryEvent:
             additionalProperties: false
@@ -4089,6 +4329,29 @@ components:
                 - oui_max_age
                 - ipv6_enabled
             type: object
+        NetworkDiscoveryDefaults:
+            additionalProperties: false
+            properties:
+                enabled:
+                    type: boolean
+                fingerprinting:
+                    $ref: '#/components/schemas/FingerprintingDefaults'
+                ipv6Enabled:
+                    type: boolean
+                options:
+                    $ref: '#/components/schemas/DiscoveryOptionsDefaults'
+                scanTimeoutMs:
+                    type: integer
+                timing:
+                    $ref: '#/components/schemas/DiscoveryTimingDefaults'
+            required:
+                - enabled
+                - scanTimeoutMs
+                - ipv6Enabled
+                - options
+                - timing
+                - fingerprinting
+            type: object
         NetworkDiscoverySettingsResponse:
             additionalProperties: false
             properties:
@@ -4441,6 +4704,23 @@ components:
                 - edp
                 - ndp
             type: object
+        PassiveProtocolDefaults:
+            additionalProperties: false
+            properties:
+                cdp:
+                    type: boolean
+                edp:
+                    type: boolean
+                lldp:
+                    type: boolean
+                ndp:
+                    type: boolean
+            required:
+                - lldp
+                - cdp
+                - edp
+                - ndp
+            type: object
         PassiveProtocolResponse:
             additionalProperties: false
             properties:
@@ -4537,6 +4817,23 @@ components:
                 - hops
                 - seen
                 - completed
+            type: object
+        PerformanceCardDefaults:
+            additionalProperties: false
+            properties:
+                autoRunOnLink:
+                    type: boolean
+                enabled:
+                    type: boolean
+                iperf:
+                    $ref: '#/components/schemas/CardOptionDefaults'
+                speedtest:
+                    $ref: '#/components/schemas/CardOptionDefaults'
+            required:
+                - enabled
+                - autoRunOnLink
+                - speedtest
+                - iperf
             type: object
         PingTarget:
             additionalProperties: false
@@ -4696,6 +4993,20 @@ components:
                 - connectedTo
             type: object
         PortScanConfig:
+            additionalProperties: false
+            properties:
+                enabled:
+                    type: boolean
+                preset:
+                    type: string
+                tcpPorts:
+                    type: string
+            required:
+                - enabled
+                - preset
+                - tcpPorts
+            type: object
+        PortScanDefaults:
             additionalProperties: false
             properties:
                 enabled:
@@ -5551,6 +5862,20 @@ components:
                 - retries
                 - port
                 - max_repetitions
+            type: object
+        SNMPDefaults:
+            additionalProperties: false
+            properties:
+                port:
+                    type: integer
+                retries:
+                    type: integer
+                timeoutMs:
+                    type: integer
+            required:
+                - timeoutMs
+                - retries
+                - port
             type: object
         SNMPEntity:
             additionalProperties: false
@@ -6419,6 +6744,17 @@ components:
                 - server_id
                 - auto_run_on_link
             type: object
+        SpeedtestDefaults:
+            additionalProperties: false
+            properties:
+                autoRunOnLink:
+                    type: boolean
+                serverId:
+                    type: string
+            required:
+                - serverId
+                - autoRunOnLink
+            type: object
         SpeedtestResponse:
             additionalProperties: false
             properties:
@@ -6848,6 +7184,39 @@ components:
             required:
                 - code
             type: object
+        TestsDefaults:
+            additionalProperties: false
+            properties:
+                dnsHostname:
+                    type: string
+                httpEndpoints:
+                    items:
+                        $ref: '#/components/schemas/DefaultHTTPEndpoint'
+                    type: array
+                pingTargets:
+                    items:
+                        $ref: '#/components/schemas/DefaultPingTarget'
+                    type: array
+                runDiscovery:
+                    type: boolean
+                runIperf:
+                    type: boolean
+                runPerformance:
+                    type: boolean
+                runSpeedtest:
+                    type: boolean
+                speedtest:
+                    $ref: '#/components/schemas/SpeedtestDefaults'
+            required:
+                - dnsHostname
+                - pingTargets
+                - httpEndpoints
+                - runPerformance
+                - runSpeedtest
+                - runIperf
+                - runDiscovery
+                - speedtest
+            type: object
         TestsSettingsResponse:
             additionalProperties: false
             properties:
@@ -6959,6 +7328,54 @@ components:
             required:
                 - warning
                 - critical
+            type: object
+        ThresholdDefaults:
+            additionalProperties: false
+            properties:
+                customHttp:
+                    $ref: '#/components/schemas/ThresholdPairDefaults'
+                customPing:
+                    $ref: '#/components/schemas/ThresholdPairDefaults'
+                customTcp:
+                    $ref: '#/components/schemas/ThresholdPairDefaults'
+                dns:
+                    $ref: '#/components/schemas/ThresholdPairDefaults'
+                gateway:
+                    $ref: '#/components/schemas/ThresholdPairDefaults'
+                httpTimings:
+                    $ref: '#/components/schemas/HTTPTimingThresholdDefaults'
+                wifi:
+                    $ref: '#/components/schemas/ThresholdPairIntDefaults'
+            required:
+                - dns
+                - gateway
+                - wifi
+                - customPing
+                - customTcp
+                - customHttp
+                - httpTimings
+            type: object
+        ThresholdPairDefaults:
+            additionalProperties: false
+            properties:
+                good:
+                    type: integer
+                warning:
+                    type: integer
+            required:
+                - good
+                - warning
+            type: object
+        ThresholdPairIntDefaults:
+            additionalProperties: false
+            properties:
+                good:
+                    type: integer
+                warning:
+                    type: integer
+            required:
+                - good
+                - warning
             type: object
         ThresholdsConfig:
             additionalProperties: false
@@ -7559,6 +7976,32 @@ components:
                 - modified
                 - references
                 - affectedCpe
+            type: object
+        VulnerabilityDefaults:
+            additionalProperties: false
+            properties:
+                autoScan:
+                    type: boolean
+                cveDatabase:
+                    type: string
+                enabled:
+                    type: boolean
+                maxConcurrent:
+                    type: integer
+                nvdApiKey:
+                    type: string
+                severityThreshold:
+                    type: string
+                updateInterval:
+                    type: integer
+            required:
+                - enabled
+                - cveDatabase
+                - nvdApiKey
+                - updateInterval
+                - severityThreshold
+                - maxConcurrent
+                - autoScan
             type: object
         VulnerabilityResultsResponse:
             additionalProperties: false
@@ -13416,6 +13859,12 @@ paths:
         get:
             operationId: getApiV1SettingsDefaults
             responses:
+                "200":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/DefaultSettings'
+                    description: The built-in default of every profile setting. A profile value that is not set falls back to this.
                 "401":
                     content:
                         application/json:

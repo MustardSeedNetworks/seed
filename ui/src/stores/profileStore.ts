@@ -14,7 +14,7 @@ import type { StoreApi, UseBoundStore } from 'zustand';
 import { create } from 'zustand';
 import { devtools, persist, subscribeWithSelector } from 'zustand/middleware';
 import { immer } from 'zustand/middleware/immer';
-import type { DefaultSettings } from '../types/defaults';
+import type { DefaultSettings } from '../types/generated/default-settings';
 import type {
   AppearanceConfig,
   CableTestConfig,
