@@ -82,7 +82,7 @@ func removedKeys() []removedKey {
 		{
 			key: "pipeline",
 			replacement: "discovery pipeline settings now live under networkDiscovery " +
-				"(options, timing, profiler) and snmp; re-apply them there",
+				"(options, timing) and snmp; re-apply them there",
 		},
 		{
 			path: []string{"snmp"},
@@ -108,34 +108,55 @@ func removedKeys() []removedKey {
 		// Discovery timers no code ever read (#491). Dropping them changes
 		// nothing a running daemon did.
 		{
-			path:        []string{"networkDiscovery"},
+			path:        []string{networkDiscoveryKey},
 			key:         "arp_scan_workers",
 			replacement: neverReadDiscoveryTimer,
 		},
 		{
-			path:        []string{"networkDiscovery"},
+			path:        []string{networkDiscoveryKey},
 			key:         "ping_timeout",
 			replacement: neverReadDiscoveryTimer,
 		},
 		{
-			path:        []string{"networkDiscovery"},
+			path:        []string{networkDiscoveryKey},
 			key:         "scan_interval",
 			replacement: "the rescan period is networkDiscovery.timing.rescan_interval",
 		},
 		{
-			path:        []string{"networkDiscovery", "timing"},
+			path:        []string{networkDiscoveryKey, "timing"},
 			key:         "probe_interval",
 			replacement: neverReadDiscoveryTimer,
 		},
 		{
-			path:        []string{"networkDiscovery", "timing"},
+			path:        []string{networkDiscoveryKey, "timing"},
 			key:         "workers",
 			replacement: neverReadDiscoveryTimer,
 		},
 		{
-			path:        []string{"networkDiscovery", "options", "portScan"},
+			path:        []string{networkDiscoveryKey, "options", "portScan"},
 			key:         "bannerTimeout",
 			replacement: neverReadDiscoveryTimer,
+		},
+		// Discovery settings the drawer saved and no code read (seed#2926).
+		{
+			path:        []string{networkDiscoveryKey},
+			key:         "auto_scan",
+			replacement: "discovery sweeps on startup whenever it is enabled; the link-up scan is fabOptions.autoScanOnLink",
+		},
+		{
+			path:        []string{networkDiscoveryKey},
+			key:         "profiler",
+			replacement: neverReadDiscoveryTimer,
+		},
+		{
+			path:        []string{networkDiscoveryKey, "options"},
+			key:         "tcpProbe",
+			replacement: neverReadDiscoveryTimer,
+		},
+		{
+			path:        []string{networkDiscoveryKey, "options", "portScan"},
+			key:         "udpPorts",
+			replacement: "discovery scans TCP only; nothing replaces the UDP list",
 		},
 	}
 }
@@ -144,12 +165,15 @@ func removedKeys() []removedKey {
 // accepted and saved but never used.
 const neverReadDiscoveryTimer = "discovery never used this setting; nothing replaces it"
 
+// networkDiscoveryKey is the config section most removals and renames sit in.
+const networkDiscoveryKey = "networkDiscovery"
+
 // renamedKeys is every rename the loader knows how to apply, oldest first.
 func renamedKeys() []renamedKey {
 	return []renamedKey{
 		{
 			introducedIn: versionTargetNetworks,
-			path:         []string{"networkDiscovery"},
+			path:         []string{networkDiscoveryKey},
 			from:         "additional_subnets",
 			to:           "target_networks",
 		},

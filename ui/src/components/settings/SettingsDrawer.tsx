@@ -205,7 +205,6 @@ export function SettingsDrawer({
     useState<NetworkDiscoverySettings>({
       enabled: true,
       scanTimeoutMs: 30000,
-      autoScan: false,
       ipv6Enabled: true,
       options: {
         passiveProtocols: {
@@ -220,23 +219,12 @@ export function SettingsDrawer({
           enabled: false,
           preset: 'common',
           tcpPorts: '22,80,443,8080-8100',
-          udpPorts: '53,123,161',
-        },
-        tcpProbe: {
-          timeoutMs: 2000,
-          workers: 20,
         },
         traceroute: false,
         snmpQuery: false,
       },
       timing: {
         rescanIntervalMs: 60000,
-      },
-      profiler: {
-        enabled: true,
-        timeoutMs: 2000,
-        maxConcurrent: 5,
-        quickPorts: [22, 80, 443, 8080],
       },
       fingerprinting: {
         enabled: false,

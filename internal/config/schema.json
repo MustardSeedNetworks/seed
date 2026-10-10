@@ -335,7 +335,6 @@
         "target_networks",
         "enabled",
         "scan_timeout",
-        "auto_scan",
         "oui_file_path",
         "oui_max_age",
         "ipv6_enabled"
@@ -366,11 +365,6 @@
           "description": "Total scan timeout (legacy)",
           "default": "30s"
         },
-        "auto_scan": {
-          "type": "boolean",
-          "description": "Auto-scan on startup (legacy)",
-          "default": true
-        },
         "oui_file_path": {
           "type": "string",
           "description": "Path to IEEE OUI file for MAC address vendor lookup",
@@ -383,9 +377,6 @@
         },
         "fingerprinting": {
           "$ref": "#/$defs/FingerprintingConfig"
-        },
-        "profiler": {
-          "$ref": "#/$defs/DeviceProfilerConfig"
         },
         "ipv6_enabled": {
           "type": "boolean",
@@ -415,9 +406,6 @@
         },
         "portScan": {
           "$ref": "#/$defs/PortScanConfig"
-        },
-        "tcpProbe": {
-          "$ref": "#/$defs/TCPProbeConfig"
         },
         "traceroute": {
           "type": "boolean",
@@ -458,63 +446,10 @@
         }
       }
     },
-    "TCPProbeConfig": {
-      "type": "object",
-      "description": "TCP connection probing configuration",
-      "additionalProperties": false,
-      "properties": {
-        "timeout": {
-          "$ref": "#/$defs/Duration",
-          "description": "Connection timeout",
-          "default": "2s"
-        },
-        "workers": {
-          "type": "integer",
-          "description": "Concurrent probe workers",
-          "minimum": 1,
-          "maximum": 100,
-          "default": 20
-        }
-      }
-    },
-    "DeviceProfilerConfig": {
-      "type": "object",
-      "description": "Automatic device profiling configuration",
-      "additionalProperties": false,
-      "properties": {
-        "enabled": {
-          "type": "boolean",
-          "description": "Enable automatic profiling",
-          "default": true
-        },
-        "timeout": {
-          "$ref": "#/$defs/Duration",
-          "description": "Profile operation timeout",
-          "default": "2s"
-        },
-        "max_concurrent": {
-          "type": "integer",
-          "description": "Max concurrent profile operations",
-          "minimum": 1,
-          "maximum": 50,
-          "default": 5
-        },
-        "quick_ports": {
-          "type": "array",
-          "description": "Quick scan ports for profiling",
-          "items": {
-            "type": "integer",
-            "minimum": 1,
-            "maximum": 65535
-          },
-          "default": [22, 80, 443, 8080]
-        }
-      }
-    },
     "PortScanConfig": {
       "type": "object",
       "description": "Port scanning configuration",
-      "required": ["enabled", "preset", "tcpPorts", "udpPorts"],
+      "required": ["enabled", "preset", "tcpPorts"],
       "additionalProperties": false,
       "properties": {
         "enabled": {
@@ -531,11 +466,6 @@
         "tcpPorts": {
           "type": "string",
           "description": "Comma-separated TCP ports or ranges (used when preset is 'custom')",
-          "default": ""
-        },
-        "udpPorts": {
-          "type": "string",
-          "description": "Comma-separated UDP ports or ranges (used when preset is 'custom')",
           "default": ""
         }
       }

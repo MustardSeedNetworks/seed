@@ -454,33 +454,6 @@
         "max_connections"
       ]
     },
-    "DeviceProfilerConfig": {
-      "properties": {
-        "enabled": {
-          "type": "boolean"
-        },
-        "timeout": {
-          "type": "integer"
-        },
-        "max_concurrent": {
-          "type": "integer"
-        },
-        "quick_ports": {
-          "items": {
-            "type": "integer"
-          },
-          "type": "array"
-        }
-      },
-      "additionalProperties": false,
-      "type": "object",
-      "required": [
-        "enabled",
-        "timeout",
-        "max_concurrent",
-        "quick_ports"
-      ]
-    },
     "DiscoveryConfig": {
       "properties": {
         "protocol": {
@@ -511,9 +484,6 @@
         "portScan": {
           "$ref": "#/$defs/PortScanConfig"
         },
-        "tcpProbe": {
-          "$ref": "#/$defs/TCPProbeConfig"
-        },
         "traceroute": {
           "type": "boolean"
         },
@@ -528,7 +498,6 @@
         "arpScan",
         "icmpScan",
         "portScan",
-        "tcpProbe",
         "traceroute",
         "snmpQuery"
       ]
@@ -1326,9 +1295,6 @@
         "scan_timeout": {
           "type": "integer"
         },
-        "auto_scan": {
-          "type": "boolean"
-        },
         "oui_file_path": {
           "type": "string"
         },
@@ -1337,9 +1303,6 @@
         },
         "fingerprinting": {
           "$ref": "#/$defs/FingerprintingConfig"
-        },
-        "profiler": {
-          "$ref": "#/$defs/DeviceProfilerConfig"
         },
         "ipv6_enabled": {
           "type": "boolean"
@@ -1353,7 +1316,6 @@
         "target_networks",
         "enabled",
         "scan_timeout",
-        "auto_scan",
         "oui_file_path",
         "oui_max_age",
         "ipv6_enabled"
@@ -1451,9 +1413,6 @@
         },
         "tcpPorts": {
           "type": "string"
-        },
-        "udpPorts": {
-          "type": "string"
         }
       },
       "additionalProperties": false,
@@ -1461,8 +1420,7 @@
       "required": [
         "enabled",
         "preset",
-        "tcpPorts",
-        "udpPorts"
+        "tcpPorts"
       ]
     },
     "RTSPEndpoint": {
@@ -1786,22 +1744,6 @@
         "host",
         "port",
         "enabled"
-      ]
-    },
-    "TCPProbeConfig": {
-      "properties": {
-        "timeout": {
-          "type": "integer"
-        },
-        "workers": {
-          "type": "integer"
-        }
-      },
-      "additionalProperties": false,
-      "type": "object",
-      "required": [
-        "timeout",
-        "workers"
       ]
     },
     "Threshold": {

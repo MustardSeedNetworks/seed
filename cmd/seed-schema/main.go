@@ -156,10 +156,8 @@ func schemaTargets() []schemaTarget {
 		{&api.UDPPortResponse{}, "udp-port-response.schema.json"},
 		{&api.IperfSettingsResponse{}, "iperf-settings-response.schema.json"},
 		{&api.SpeedtestSettingsResponse{}, "speedtest-settings-response.schema.json"},
-		{&api.TCPProbeSettingsResponse{}, "tcp-probe-settings-response.schema.json"},
 		{&api.PassiveProtocolResponse{}, "passive-protocol-response.schema.json"},
 		{&api.PortScanResponse{}, "port-scan-response.schema.json"},
-		{&api.ProfilerResponse{}, "profiler-response.schema.json"},
 		{&api.TimingResponse{}, "timing-response.schema.json"},
 		{&api.FingerprintingResponse{}, "fingerprinting-response.schema.json"},
 

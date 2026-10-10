@@ -10,7 +10,6 @@ export interface OptionsResponse {
   arpScan: boolean;
   icmpScan: boolean;
   portScan: PortScanResponse;
-  tcpProbe: TCPProbeSettingsResponse;
   traceroute: boolean;
   snmpQuery: boolean;
 }
@@ -24,9 +23,4 @@ export interface PortScanResponse {
   enabled: boolean;
   preset: string;
   tcpPorts: string;
-  udpPorts: string;
-}
-export interface TCPProbeSettingsResponse {
-  timeoutMs: number;
-  workers: number;
 }

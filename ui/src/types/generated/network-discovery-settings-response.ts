@@ -8,11 +8,9 @@
 export interface NetworkDiscoverySettingsResponse {
   enabled: boolean;
   scanTimeoutMs: number;
-  autoScan: boolean;
   ouiFilePath: string;
   options: OptionsResponse;
   timing: TimingResponse;
-  profiler: ProfilerResponse;
   fingerprinting: FingerprintingResponse;
   ipv6Enabled: boolean;
 }
@@ -21,7 +19,6 @@ export interface OptionsResponse {
   arpScan: boolean;
   icmpScan: boolean;
   portScan: PortScanResponse;
-  tcpProbe: TCPProbeSettingsResponse;
   traceroute: boolean;
   snmpQuery: boolean;
 }
@@ -35,20 +32,9 @@ export interface PortScanResponse {
   enabled: boolean;
   preset: string;
   tcpPorts: string;
-  udpPorts: string;
-}
-export interface TCPProbeSettingsResponse {
-  timeoutMs: number;
-  workers: number;
 }
 export interface TimingResponse {
   rescanIntervalMs: number;
-}
-export interface ProfilerResponse {
-  enabled: boolean;
-  timeoutMs: number;
-  maxConcurrent: number;
-  quickPorts: number[];
 }
 export interface FingerprintingResponse {
   enabled: boolean;

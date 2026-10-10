@@ -10,7 +10,7 @@ interface DiscoveryPortScanDetailsProps {
 }
 
 /**
- * Port-scan preset, port lists and banner timeout, shown when port scanning is enabled.
+ * Port-scan preset and TCP port list, shown when port scanning is enabled.
  */
 export function DiscoveryPortScanDetails({
   settings,
@@ -51,10 +51,6 @@ export function DiscoveryPortScanDetails({
                     newPreset === 'custom'
                       ? (prev.options?.portScan?.tcpPorts ?? '22,80,443')
                       : presetConfig.tcp,
-                  udpPorts:
-                    newPreset === 'custom'
-                      ? (prev.options?.portScan?.udpPorts ?? '53,161')
-                      : presetConfig.udp,
                 },
               },
             }));
@@ -101,55 +97,11 @@ export function DiscoveryPortScanDetails({
                   enabled: prev.options?.portScan?.enabled ?? false,
                   preset: prev.options?.portScan?.preset ?? 'common',
                   tcpPorts: e.target.value,
-                  udpPorts: prev.options?.portScan?.udpPorts ?? '53,161',
                 },
               },
             }))
           }
           placeholder="22,80,443,8080-8100"
-          readOnly={(settings.options?.portScan?.preset ?? 'common') !== 'custom'}
-          disabled={(settings.options?.portScan?.preset ?? 'common') !== 'custom'}
-          className={cn(
-            'w-full',
-            spacing.margin.top.tight,
-            inputTokens.base,
-            (settings.options?.portScan?.preset ?? 'common') !== 'custom'
-              ? 'bg-surface-hover cursor-not-allowed opacity-60'
-              : inputTokens.state.default,
-            inputTokens.size.sm,
-            'body-small',
-          )}
-        />
-      </div>
-      <div>
-        <label className="caption text-text-muted" htmlFor="port-scan-udp">
-          {t('discovery.portScanUdpPorts')}
-          {(settings.options?.portScan?.preset ?? 'common') !== 'custom' && (
-            <span className="ml-inline text-text-muted italic">
-              {t('discovery.portPresetReadOnly')}
-            </span>
-          )}
-        </label>
-        <input
-          id="port-scan-udp"
-          type="text"
-          value={settings.options?.portScan?.udpPorts ?? '53,161'}
-          onChange={(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>): void =>
-            onSettingsChange((prev) => ({
-              ...prev,
-              options: {
-                ...prev.options,
-                portScan: {
-                  ...prev.options?.portScan,
-                  enabled: prev.options?.portScan?.enabled ?? false,
-                  preset: prev.options?.portScan?.preset ?? 'common',
-                  tcpPorts: prev.options?.portScan?.tcpPorts ?? '22,80,443',
-                  udpPorts: e.target.value,
-                },
-              },
-            }))
-          }
-          placeholder="53,123,161"
           readOnly={(settings.options?.portScan?.preset ?? 'common') !== 'custom'}
           disabled={(settings.options?.portScan?.preset ?? 'common') !== 'custom'}
           className={cn(

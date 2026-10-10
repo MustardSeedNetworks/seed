@@ -93,18 +93,8 @@ func defaultNetworkDiscoveryConfig() NetworkDiscoveryConfig {
 				Enabled:  false,
 				Preset:   PortPresetCommon,
 				TCPPorts: "",
-				UDPPorts: "",
 			},
-			TCPProbe: TCPProbeConfig{
-				Timeout: defaultTracerouteTimeoutSec * time.Second,
-				Workers: defaultTracerouteWorkers,
-			}, Traceroute: false, SNMPQuery: false,
-		},
-		Profiler: DeviceProfilerConfig{
-			Enabled:       true,
-			Timeout:       defaultMDNSTimeoutSec * time.Second,
-			MaxConcurrent: defaultMDNSMaxConcurrent,
-			QuickPorts:    []int{portSSH, portHTTP, portHTTPS, portHTTPAlt},
+			Traceroute: false, SNMPQuery: false,
 		},
 		Timing: DiscoveryTiming{
 			RescanInterval: defaultRescanIntervalSec * time.Second,
@@ -117,7 +107,6 @@ func defaultNetworkDiscoveryConfig() NetworkDiscoveryConfig {
 		IPv6Enabled:    true,
 		Enabled:        true,
 		ScanTimeout:    defaultScanTimeoutSec * time.Second,
-		AutoScan:       true,
 		OUIFilePath:    "data/oui.txt",
 		TargetNetworks: []SubnetConfig{},
 	}

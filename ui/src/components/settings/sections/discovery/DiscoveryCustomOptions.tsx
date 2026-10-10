@@ -1,13 +1,6 @@
 import type React from 'react';
 import { useTranslation } from 'react-i18next';
-import {
-  cn,
-  icon as iconTokens,
-  input as inputTokens,
-  layout,
-  radius,
-  spacing,
-} from '../../../../styles/theme';
+import { cn, icon as iconTokens, layout, radius, spacing } from '../../../../styles/theme';
 import type { NetworkDiscoverySettings } from '../../../../types/settings';
 import { DiscoveryPortScanDetails } from './DiscoveryPortScanDetails';
 
@@ -194,7 +187,6 @@ export function DiscoveryCustomOptions({
                     enabled: e.target.checked,
                     preset: prev.options?.portScan?.preset ?? 'common',
                     tcpPorts: prev.options?.portScan?.tcpPorts ?? '22,80,443',
-                    udpPorts: prev.options?.portScan?.udpPorts ?? '53,161',
                   },
                 },
               }))
@@ -208,88 +200,6 @@ export function DiscoveryCustomOptions({
         {settings.options?.portScan?.enabled ? (
           <DiscoveryPortScanDetails settings={settings} onSettingsChange={onSettingsChange} />
         ) : null}
-
-        {/* TCP Probe Settings */}
-        <div
-          className={cn(
-            'border-t border-surface-border',
-            spacing.pad.sm,
-            spacing.margin.top.inline,
-          )}
-        >
-          <span className="caption text-text-muted font-medium">
-            {t('discovery.tcpProbeSettings')}
-          </span>
-          <p className="caption text-text-muted">{t('discovery.tcpProbeDesc')}</p>
-          <div className={cn('grid grid-cols-2', spacing.gap.compact, spacing.margin.top.inline)}>
-            <div>
-              <label className="caption text-text-muted" htmlFor="tcp-probe-timeout">
-                {t('discovery.tcpProbeTimeout')}
-              </label>
-              <input
-                id="tcp-probe-timeout"
-                type="number"
-                value={settings.options?.tcpProbe?.timeoutMs ?? 2000}
-                onChange={(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>): void =>
-                  onSettingsChange((prev) => ({
-                    ...prev,
-                    options: {
-                      ...prev.options,
-                      tcpProbe: {
-                        ...prev.options?.tcpProbe,
-                        timeoutMs: Number.parseInt(e.target.value, 10) || 2000,
-                        workers: prev.options?.tcpProbe?.workers ?? 20,
-                      },
-                    },
-                  }))
-                }
-                min={100}
-                max={10000}
-                className={cn(
-                  'w-full',
-                  spacing.margin.top.tight,
-                  inputTokens.base,
-                  inputTokens.state.default,
-                  inputTokens.size.sm,
-                  'body-small',
-                )}
-              />
-            </div>
-            <div>
-              <label className="caption text-text-muted" htmlFor="tcp-probe-workers">
-                {t('discovery.tcpProbeWorkers')}
-              </label>
-              <input
-                id="tcp-probe-workers"
-                type="number"
-                value={settings.options?.tcpProbe?.workers ?? 20}
-                onChange={(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>): void =>
-                  onSettingsChange((prev) => ({
-                    ...prev,
-                    options: {
-                      ...prev.options,
-                      tcpProbe: {
-                        ...prev.options?.tcpProbe,
-                        timeoutMs: prev.options?.tcpProbe?.timeoutMs ?? 2000,
-                        workers: Number.parseInt(e.target.value, 10) || 20,
-                      },
-                    },
-                  }))
-                }
-                min={1}
-                max={100}
-                className={cn(
-                  'w-full',
-                  spacing.margin.top.tight,
-                  inputTokens.base,
-                  inputTokens.state.default,
-                  inputTokens.size.sm,
-                  'body-small',
-                )}
-              />
-            </div>
-          </div>
-        </div>
 
         {/* Traceroute */}
         <label className={layout.inline.default}>

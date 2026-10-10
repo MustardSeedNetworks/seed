@@ -36,12 +36,7 @@
       "portScan": {
         "enabled": false,
         "preset": "common",
-        "tcpPorts": "",
-        "udpPorts": ""
-      },
-      "tcpProbe": {
-        "timeout": 2000000000,
-        "workers": 20
+        "tcpPorts": ""
       },
       "traceroute": false,
       "snmpQuery": false
@@ -52,20 +47,8 @@
     "target_networks": [],
     "enabled": true,
     "scan_timeout": 30000000000,
-    "auto_scan": true,
     "oui_file_path": "data/oui.txt",
     "oui_max_age": 0,
-    "profiler": {
-      "enabled": true,
-      "timeout": 2000000000,
-      "max_concurrent": 5,
-      "quick_ports": [
-        22,
-        80,
-        443,
-        8080
-      ]
-    },
     "ipv6_enabled": true
   },
   "dns": {

@@ -44,8 +44,8 @@ func TestFreshInstallDiscoversByDefault(t *testing.T) {
 	if got, want := cfg.NetworkDiscovery.Timing.RescanInterval, time.Minute; got != want {
 		t.Errorf("rescan interval = %s, want %s", got, want)
 	}
-	if !cfg.NetworkDiscovery.Enabled || !cfg.NetworkDiscovery.AutoScan {
-		t.Error("discovery must be enabled and auto-scanning on a fresh install")
+	if !cfg.NetworkDiscovery.Enabled {
+		t.Error("discovery must be enabled on a fresh install")
 	}
 }
 

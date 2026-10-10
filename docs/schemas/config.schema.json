@@ -319,7 +319,6 @@
         "target_networks",
         "enabled",
         "scan_timeout",
-        "auto_scan",
         "oui_file_path",
         "oui_max_age",
         "ipv6_enabled"
@@ -355,11 +354,6 @@
           "$ref": "#/$defs/Duration",
           "description": "Total scan timeout (legacy)",
           "default": "30s"
-        },
-        "auto_scan": {
-          "type": "boolean",
-          "description": "Auto-scan on startup (legacy)",
-          "default": true
         },
         "oui_file_path": {
           "type": "string",

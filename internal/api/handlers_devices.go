@@ -189,13 +189,11 @@ func (s *Server) handleDevicesStatus(w http.ResponseWriter, r *http.Request) {
 type NetworkDiscoverySettingsResponse struct {
 	Enabled       bool   `json:"enabled"`
 	ScanTimeoutMs int64  `json:"scanTimeoutMs"`
-	AutoScan      bool   `json:"autoScan"`
 	OUIFilePath   string `json:"ouiFilePath"`
 
 	// Direct options configuration (profiles removed in favor of direct settings).
 	Options        OptionsResponse        `json:"options"`
 	Timing         TimingResponse         `json:"timing"`
-	Profiler       ProfilerResponse       `json:"profiler"`
 	Fingerprinting FingerprintingResponse `json:"fingerprinting"`
 	IPv6Enabled    bool                   `json:"ipv6Enabled"`
 }
@@ -213,37 +211,21 @@ type PortScanResponse struct {
 	Enabled  bool   `json:"enabled"`
 	Preset   string `json:"preset"`
 	TCPPorts string `json:"tcpPorts"`
-	UDPPorts string `json:"udpPorts"`
-}
-
-// TCPProbeSettingsResponse represents TCP probe settings in the discovery config.
-type TCPProbeSettingsResponse struct {
-	TimeoutMs int64 `json:"timeoutMs"`
-	Workers   int   `json:"workers"`
 }
 
 // OptionsResponse represents discovery options.
 type OptionsResponse struct {
-	PassiveProtocols PassiveProtocolResponse  `json:"passiveProtocols"`
-	ARPScan          bool                     `json:"arpScan"`
-	ICMPScan         bool                     `json:"icmpScan"`
-	PortScan         PortScanResponse         `json:"portScan"`
-	TCPProbe         TCPProbeSettingsResponse `json:"tcpProbe"`
-	Traceroute       bool                     `json:"traceroute"`
-	SNMPQuery        bool                     `json:"snmpQuery"`
+	PassiveProtocols PassiveProtocolResponse `json:"passiveProtocols"`
+	ARPScan          bool                    `json:"arpScan"`
+	ICMPScan         bool                    `json:"icmpScan"`
+	PortScan         PortScanResponse        `json:"portScan"`
+	Traceroute       bool                    `json:"traceroute"`
+	SNMPQuery        bool                    `json:"snmpQuery"`
 }
 
 // TimingResponse represents discovery timing settings.
 type TimingResponse struct {
 	RescanIntervalMs int64 `json:"rescanIntervalMs"`
-}
-
-// ProfilerResponse represents device profiler settings.
-type ProfilerResponse struct {
-	Enabled       bool  `json:"enabled"`
-	TimeoutMs     int64 `json:"timeoutMs"`
-	MaxConcurrent int   `json:"maxConcurrent"`
-	QuickPorts    []int `json:"quickPorts"`
 }
 
 // FingerprintingResponse represents fingerprinting settings.
@@ -321,7 +303,6 @@ func discoveryConfigToResponse(cfg config.NetworkDiscoveryConfig) NetworkDiscove
 	return NetworkDiscoverySettingsResponse{
 		Enabled:       cfg.Enabled,
 		ScanTimeoutMs: cfg.ScanTimeout.Milliseconds(),
-		AutoScan:      cfg.AutoScan,
 		OUIFilePath:   cfg.OUIFilePath,
 		IPv6Enabled:   cfg.IPv6Enabled,
 		Options: OptionsResponse{
@@ -337,23 +318,12 @@ func discoveryConfigToResponse(cfg config.NetworkDiscoveryConfig) NetworkDiscove
 				Enabled:  cfg.Options.PortScan.Enabled,
 				Preset:   string(cfg.Options.PortScan.Preset),
 				TCPPorts: cfg.Options.PortScan.TCPPorts,
-				UDPPorts: cfg.Options.PortScan.UDPPorts,
-			},
-			TCPProbe: TCPProbeSettingsResponse{
-				TimeoutMs: cfg.Options.TCPProbe.Timeout.Milliseconds(),
-				Workers:   cfg.Options.TCPProbe.Workers,
 			},
 			Traceroute: cfg.Options.Traceroute,
 			SNMPQuery:  cfg.Options.SNMPQuery,
 		},
 		Timing: TimingResponse{
 			RescanIntervalMs: cfg.Timing.RescanInterval.Milliseconds(),
-		},
-		Profiler: ProfilerResponse{
-			Enabled:       cfg.Profiler.Enabled,
-			TimeoutMs:     cfg.Profiler.Timeout.Milliseconds(),
-			MaxConcurrent: cfg.Profiler.MaxConcurrent,
-			QuickPorts:    cfg.Profiler.QuickPorts,
 		},
 		Fingerprinting: FingerprintingResponse{
 			Enabled:       cfg.Fingerprinting.Enabled,
@@ -369,7 +339,6 @@ func requestToDiscoveryUpdate(req NetworkDiscoverySettingsResponse) discoveryset
 	return discoverysettings.Update{
 		Enabled:       req.Enabled,
 		ScanTimeoutMs: req.ScanTimeoutMs,
-		AutoScan:      req.AutoScan,
 		OUIFilePath:   req.OUIFilePath,
 		IPv6Enabled:   req.IPv6Enabled,
 		Options: discoverysettings.OptionsUpdate{
@@ -385,23 +354,12 @@ func requestToDiscoveryUpdate(req NetworkDiscoverySettingsResponse) discoveryset
 				Enabled:  req.Options.PortScan.Enabled,
 				Preset:   req.Options.PortScan.Preset,
 				TCPPorts: req.Options.PortScan.TCPPorts,
-				UDPPorts: req.Options.PortScan.UDPPorts,
-			},
-			TCPProbe: discoverysettings.TCPProbeUpdate{
-				TimeoutMs: req.Options.TCPProbe.TimeoutMs,
-				Workers:   req.Options.TCPProbe.Workers,
 			},
 			Traceroute: req.Options.Traceroute,
 			SNMPQuery:  req.Options.SNMPQuery,
 		},
 		Timing: discoverysettings.TimingUpdate{
 			RescanIntervalMs: req.Timing.RescanIntervalMs,
-		},
-		Profiler: discoverysettings.ProfilerUpdate{
-			Enabled:       req.Profiler.Enabled,
-			TimeoutMs:     req.Profiler.TimeoutMs,
-			MaxConcurrent: req.Profiler.MaxConcurrent,
-			QuickPorts:    req.Profiler.QuickPorts,
 		},
 		Fingerprinting: discoverysettings.FingerprintingUpdate{
 			Enabled:       req.Fingerprinting.Enabled,

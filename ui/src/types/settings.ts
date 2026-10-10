@@ -311,13 +311,6 @@ export interface PortScanConfig {
   enabled: boolean;
   preset: PortPreset; // Quick selection of port sets
   tcpPorts: string; // Comma-separated ports or ranges (e.g., "22,80,443,8000-8100")
-  udpPorts: string; // Comma-separated ports or ranges
-}
-
-/** TCP probe configuration */
-export interface TcpProbeConfig {
-  timeoutMs: number; // Connection timeout
-  workers: number; // Concurrent probe workers
 }
 
 /** Discovery options - granular protocol control */
@@ -326,7 +319,6 @@ export interface DiscoveryOptions {
   arpScan: boolean;
   icmpScan: boolean;
   portScan: PortScanConfig;
-  tcpProbe: TcpProbeConfig;
   traceroute: boolean;
   snmpQuery: boolean;
 }
@@ -334,14 +326,6 @@ export interface DiscoveryOptions {
 /** Discovery timing configuration */
 export interface DiscoveryTimingConfig {
   rescanIntervalMs: number; // Time between full rescans
-}
-
-/** Device profiler configuration */
-export interface DeviceProfilerConfig {
-  enabled: boolean;
-  timeoutMs: number;
-  maxConcurrent: number;
-  quickPorts: number[];
 }
 
 /** Fingerprinting configuration */
@@ -368,13 +352,11 @@ export interface NetworkDiscoverySettings {
   // Core settings
   enabled: boolean;
   scanTimeoutMs: number;
-  autoScan: boolean;
   // Note: OUI database is baked into binary at build time - no runtime path needed
 
   // Configuration objects
   options: DiscoveryOptions;
   timing: DiscoveryTimingConfig;
-  profiler: DeviceProfilerConfig;
   fingerprinting: FingerprintingConfig;
   ipv6Enabled: boolean;
 }
@@ -541,7 +523,6 @@ export const DEFAULT_NETWORK_DISCOVERY_SETTINGS: NetworkDiscoverySettings = {
   // Core settings
   enabled: true,
   scanTimeoutMs: 30000,
-  autoScan: true,
 
   // Configuration objects
   ipv6Enabled: true,
@@ -558,23 +539,12 @@ export const DEFAULT_NETWORK_DISCOVERY_SETTINGS: NetworkDiscoverySettings = {
       enabled: false,
       preset: 'common',
       tcpPorts: '22,80,443,8080-8100',
-      udpPorts: '53,123,161',
-    },
-    tcpProbe: {
-      timeoutMs: 2000,
-      workers: 20,
     },
     traceroute: false,
     snmpQuery: false,
   },
   timing: {
     rescanIntervalMs: 60000, // 1 minute
-  },
-  profiler: {
-    enabled: true,
-    timeoutMs: 2000,
-    maxConcurrent: 5,
-    quickPorts: [22, 80, 443, 8080],
   },
   fingerprinting: {
     enabled: false,

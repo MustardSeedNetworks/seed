@@ -6,6 +6,7 @@ package enumerate
 import (
 	"context"
 	"errors"
+	"slices"
 	"sync"
 	"time"
 
@@ -82,12 +83,30 @@ func NewService(cfg *config.Config, registry *DeviceDiscovery, profiler *DeviceP
 	if profiler == nil {
 		profiler = discovery.NewDeviceProfiler(discovery.DefaultProfilerConfig(), nil)
 	}
-	return &Service{
+	s := &Service{
 		cfg:             cfg,
 		deviceDiscovery: registry,
 		profiler:        profiler,
 		metrics:         discovery.NewMetrics(),
 	}
+	s.applyPortScanPolicy()
+	return s
+}
+
+// applyPortScanPolicy points the profiler's per-device TCP scan at the
+// operator's port-scan setting (seed#2926). The quick list always runs, because
+// it is what classifies a bare address on the first sweep (seed#2674); turning
+// port scanning on widens it with the preset's ports or the custom list.
+func (s *Service) applyPortScanPolicy() {
+	_, _, timing := s.profiler.ScanConfigSnapshot()
+	portScan := s.cfg.NetworkDiscovery.Options.PortScan
+	if !portScan.Enabled {
+		s.profiler.UpdateScanConfig(discovery.PortScanQuick, nil, timing)
+		return
+	}
+	ports := slices.Concat(discovery.GetQuickPorts(), portScan.EffectivePorts())
+	slices.Sort(ports)
+	s.profiler.UpdateScanConfig(discovery.PortScanCustom, slices.Compact(ports), timing)
 }
 
 // GetProfiler returns the shared DeviceProfiler instance.
@@ -362,6 +381,7 @@ func (s *Service) Reload() error {
 
 	opts := &s.cfg.NetworkDiscovery.Options
 	logging.GetLogger().Info("Discovery: reloading options", "methods", s.getActiveMethods())
+	s.applyPortScanPolicy()
 
 	if wasRunning {
 		// Create new stopCh for the new rescanLoop goroutine

@@ -118,7 +118,6 @@ export const FullDiscovery: Story = {
           enabled: true,
           preset: 'common',
           tcpPorts: '22,80,443,8080,8443',
-          udpPorts: '53,161,162',
         },
         traceroute: true,
         snmpQuery: true,
@@ -146,7 +145,6 @@ export const WithPortScanCommon: Story = {
           enabled: true,
           preset: 'common',
           tcpPorts: '22,80,443,8080',
-          udpPorts: '53,161',
         },
       },
     },
@@ -167,7 +165,6 @@ export const WithPortScanSecure: Story = {
           enabled: true,
           preset: 'secure',
           tcpPorts: '22,443,8443',
-          udpPorts: '',
         },
       },
     },
@@ -188,7 +185,6 @@ export const WithPortScanInsecure: Story = {
           enabled: true,
           preset: 'insecure',
           tcpPorts: '21,23,25,80,110,143',
-          udpPorts: '69,161',
         },
       },
     },
@@ -209,7 +205,6 @@ export const CustomPorts: Story = {
           enabled: true,
           preset: 'custom',
           tcpPorts: '22,80,443,3000-3010,8000-8100',
-          udpPorts: '53,161,500-600',
         },
       },
     },
@@ -223,19 +218,6 @@ export const Disabled: Story = {
   args: {
     ...baseArgs(),
     networkDiscoverySettings: { ...defaultSettings, enabled: false },
-  },
-};
-
-/**
- * Auto-scan enabled
- */
-export const AutoScanEnabled: Story = {
-  args: {
-    ...baseArgs(),
-    networkDiscoverySettings: {
-      ...defaultSettings,
-      autoScan: true,
-    },
   },
 };
 
@@ -273,10 +255,6 @@ export const FastTiming: Story = {
       ...defaultSettings,
       scanTimeoutMs: 15000,
       timing: { rescanIntervalMs: 60000 },
-      options: {
-        ...defaultSettings.options,
-        tcpProbe: { timeoutMs: 1000, workers: 20 },
-      },
     },
   },
 };
@@ -291,10 +269,6 @@ export const ThoroughTiming: Story = {
       ...defaultSettings,
       scanTimeoutMs: 120000,
       timing: { rescanIntervalMs: 600000 },
-      options: {
-        ...defaultSettings.options,
-        tcpProbe: { timeoutMs: 10000, workers: 5 },
-      },
     },
   },
 };
