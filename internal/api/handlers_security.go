@@ -265,16 +265,20 @@ func rogueViewToResponse(v securitysettings.RogueView) RogueDHCPConfigResponse {
 // self-contained value object shared by the IPv4 and IPv6 sides of a gateway
 // test, so the transport contract never has to reference itself.
 type GatewayPingResult struct {
-	Gateway     string  `json:"gateway"`
-	Reachable   bool    `json:"reachable"`
-	Sent        int     `json:"sent"`
-	Received    int     `json:"received"`
-	LossPercent float64 `json:"lossPercent"`
-	MinTime     float64 `json:"minTime"`
-	MaxTime     float64 `json:"maxTime"`
-	AvgTime     float64 `json:"avgTime"`
-	LastTime    float64 `json:"lastTime"`
-	Status      string  `json:"status"`
+	Gateway string `json:"gateway"`
+	// GatewaySource is where the gateway address came from: "route" for a
+	// default route in the routing table, "lease" for the router option of the
+	// interface's DHCP lease when the kernel routes no default over it (#2759).
+	GatewaySource gateway.Source `json:"gatewaySource,omitempty" jsonschema:"enum=route,enum=lease"`
+	Reachable     bool           `json:"reachable"`
+	Sent          int            `json:"sent"`
+	Received      int            `json:"received"`
+	LossPercent   float64        `json:"lossPercent"`
+	MinTime       float64        `json:"minTime"`
+	MaxTime       float64        `json:"maxTime"`
+	AvgTime       float64        `json:"avgTime"`
+	LastTime      float64        `json:"lastTime"`
+	Status        string         `json:"status"`
 }
 
 // GatewayResponse represents the gateway ping test results for the API: the
@@ -324,20 +328,22 @@ func (s *Server) handleGateway(w http.ResponseWriter, r *http.Request) {
 	stats := s.gatewayTester().Test()
 
 	resp := GatewayResponse{
-		Gateway:     stats.Gateway,
-		Reachable:   stats.Reachable,
-		Sent:        stats.Sent,
-		Received:    stats.Received,
-		LossPercent: stats.LossPercent,
-		MinTime:     stats.MinTime,
-		MaxTime:     stats.MaxTime,
-		AvgTime:     stats.AvgTime,
-		LastTime:    stats.LastTime,
-		Status:      string(stats.Status),
+		Gateway:       stats.Gateway,
+		GatewaySource: stats.Source,
+		Reachable:     stats.Reachable,
+		Sent:          stats.Sent,
+		Received:      stats.Received,
+		LossPercent:   stats.LossPercent,
+		MinTime:       stats.MinTime,
+		MaxTime:       stats.MaxTime,
+		AvgTime:       stats.AvgTime,
+		LastTime:      stats.LastTime,
+		Status:        string(stats.Status),
 	}
 
-	// Detect and ping IPv6 gateway if available
-	ipv6Gateway, err := gateway.DetectGatewayIPv6()
+	// The IPv6 half of the card answers for the same interface as the IPv4
+	// half; a system-wide read named another link's router (#2759).
+	ipv6Gateway, err := gateway.DetectGatewayIPv6ForInterface(s.gatewayTester().GetInterface())
 	if err == nil && ipv6Gateway != "" {
 		// Create a temporary tester for IPv6
 		ipv6Tester := gateway.NewTester(gateway.DefaultThresholds())
@@ -346,16 +352,17 @@ func (s *Server) handleGateway(w http.ResponseWriter, r *http.Request) {
 		ipv6Stats := ipv6Tester.Test()
 
 		resp.IPv6 = &GatewayPingResult{
-			Gateway:     ipv6Stats.Gateway,
-			Reachable:   ipv6Stats.Reachable,
-			Sent:        ipv6Stats.Sent,
-			Received:    ipv6Stats.Received,
-			LossPercent: ipv6Stats.LossPercent,
-			MinTime:     ipv6Stats.MinTime,
-			MaxTime:     ipv6Stats.MaxTime,
-			AvgTime:     ipv6Stats.AvgTime,
-			LastTime:    ipv6Stats.LastTime,
-			Status:      string(ipv6Stats.Status),
+			Gateway:       ipv6Stats.Gateway,
+			GatewaySource: gateway.SourceRoute,
+			Reachable:     ipv6Stats.Reachable,
+			Sent:          ipv6Stats.Sent,
+			Received:      ipv6Stats.Received,
+			LossPercent:   ipv6Stats.LossPercent,
+			MinTime:       ipv6Stats.MinTime,
+			MaxTime:       ipv6Stats.MaxTime,
+			AvgTime:       ipv6Stats.AvgTime,
+			LastTime:      ipv6Stats.LastTime,
+			Status:        string(ipv6Stats.Status),
 		}
 	}
 

@@ -7,6 +7,7 @@
  */
 export interface GatewayResponse {
   gateway: string;
+  gatewaySource?: 'route' | 'lease';
   reachable: boolean;
   sent: number;
   received: number;
@@ -20,6 +21,7 @@ export interface GatewayResponse {
 }
 export interface GatewayPingResult {
   gateway: string;
+  gatewaySource?: 'route' | 'lease';
   reachable: boolean;
   sent: number;
   received: number;

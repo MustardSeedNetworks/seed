@@ -5,6 +5,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/MustardSeedNetworks/seed/internal/diagnostics/dhcp"
 	"github.com/MustardSeedNetworks/seed/internal/discovery/enumerate"
 )
 
@@ -89,16 +90,45 @@ func PingErrorMessage(err error) string {
 // ErrTest is a sentinel error for testing.
 var ErrTest = errors.New("test error")
 
-// GatewayForInterfaceWithReads applies the interface-scoping rule to the
-// routing-table answers given, so the rule is testable without a routing table.
-func GatewayForInterfaceWithReads(iface string, routeIface, gw func() (string, error)) (string, error) {
-	return routingReader{defaultRouteInterface: routeIface, defaultRouteGateway: gw}.
-		gatewayForInterface(iface)
+// RoutingReads stands in for the host's routing table and DHCP leases, so the
+// interface-scoping rule is testable without a host that says the right thing.
+type RoutingReads struct {
+	Routes            []RouteInfo
+	RoutesErr         error
+	SystemGateway     string
+	SystemGatewayIPv6 string
+	// LeaseRouters is the router each interface's lease names.
+	LeaseRouters map[string]string
+	LeaseErr     error
 }
 
-// SetRoutingForTesting points the tester's detection at the given reads.
-func (t *Tester) SetRoutingForTesting(routeIface, gw func() (string, error)) {
+func (r RoutingReads) reader() routingReader {
+	return routingReader{
+		routes:            func() ([]RouteInfo, error) { return r.Routes, r.RoutesErr },
+		systemGateway:     func() (string, error) { return r.SystemGateway, nil },
+		systemGatewayIPv6: func() (string, error) { return r.SystemGatewayIPv6, nil },
+		leaseRouter:       func(iface string) (string, error) { return r.LeaseRouters[iface], r.LeaseErr },
+	}
+}
+
+// GatewayForInterfaceWithReads applies the IPv4 interface-scoping rule to r.
+func GatewayForInterfaceWithReads(iface string, r RoutingReads) (string, Source, error) {
+	return r.reader().gatewayForInterface(iface)
+}
+
+// IPv6GatewayForInterfaceWithReads applies the IPv6 interface-scoping rule to r.
+func IPv6GatewayForInterfaceWithReads(iface string, r RoutingReads) (string, error) {
+	return r.reader().ipv6GatewayForInterface(iface)
+}
+
+// RouterOfLease exposes routerOfLease for testing.
+func RouterOfLease(lease *dhcp.LeaseInfo, err error, now time.Time) (string, error) {
+	return routerOfLease(lease, err, now)
+}
+
+// SetRoutingForTesting points the tester's detection at r.
+func (t *Tester) SetRoutingForTesting(r RoutingReads) {
 	t.mu.Lock()
 	defer t.mu.Unlock()
-	t.routing = routingReader{defaultRouteInterface: routeIface, defaultRouteGateway: gw}
+	t.routing = r.reader()
 }
