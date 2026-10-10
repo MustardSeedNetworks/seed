@@ -107,9 +107,9 @@ func TestEdgeReconcile_LocalPortFallsBackToIfNameThenIfIndex(t *testing.T) {
 	}
 }
 
-// A switch seed has not run the iftable collector against yet, and a
-// vendor whose lldpLocPortNum is a bridge port rather than an
-// ifIndex, both land here: the label is what it always was.
+// A switch seed has not run the iftable collector against yet, with
+// no lldpLocPortTable row either, lands here: the label is what it
+// always was.
 func TestEdgeReconcile_LocalPortFallsBackWhenTheIfTableHasNoSuchIndex(t *testing.T) {
 	t.Parallel()
 	store := newFakeEdgeStore().withInterface("node-A", 2, "GigabitEthernet1/0/11", "Gi1/0/11")
@@ -124,6 +124,78 @@ func TestEdgeReconcile_LocalPortFallsBackWhenTheIfTableHasNoSuchIndex(t *testing
 
 	if got := linkOfKind(t, store, "lldp").SourceInterface; got != "ifIndex-97" {
 		t.Errorf("SourceInterface = %q, want ifIndex-97", got)
+	}
+}
+
+// seed#2602: on HP, Aruba and Juniper lldpLocPortNum is not an
+// ifIndex. Read as one, local port 3 named whichever interface
+// happens to carry ifIndex 3. The agent's own lldpLocPortTable row
+// names the port instead, rendered through the if_table when a row
+// carries that label.
+func TestEdgeReconcile_LLDPLocalPortIsTheAgentsOwnPortName(t *testing.T) {
+	t.Parallel()
+	tests := []struct {
+		name      string
+		subtype   int
+		portID    string
+		portDesc  string
+		wantLocal string
+	}{
+		{"lldpLocPortDesc is an ifDescr", 7, "3", "1/1/3", "1/1/3"},
+		{"lldpLocPortDesc is an ifName, rendered as the ifDescr", 7, "3", "A3", "1/1/3"},
+		{"interfaceName port id when the description is empty", 5, "1/1/3", "", "1/1/3"},
+		{"a label the if_table lacks is used as given", 7, "3", "uplink to core", "uplink to core"},
+		{"a label two rows share is used as given", 7, "3", "shared", "shared"},
+		{"with no port name the number is read as an ifIndex, as before", 3, "0c:56:55:3f:00:00", "", "Vlan3"},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			store := newFakeEdgeStore().
+				withInterface("node-A", 3, "Vlan3", "vlan3").
+				withInterface("node-A", 1003, "1/1/3", "A3").
+				withInterface("node-A", 1004, "1/1/4", "shared").
+				withInterface("node-A", 1005, "1/1/5", "shared")
+			store.targetMap["c|t-source"] = "node-A"
+			store.sysNameMap["core-sw"] = "node-B"
+
+			runFDBReconcile(t, store, []*observation.SNMPObservation{
+				lldpObs("t-source", at(), []map[string]any{{
+					"LocalPortNum": 3, "LocalPortIDSubtype": tt.subtype,
+					"LocalPortID": tt.portID, "LocalPortDescription": tt.portDesc,
+					"SysName": "core-sw",
+				}}),
+			})
+
+			if got := linkOfKind(t, store, "lldp").SourceInterface; got != tt.wantLocal {
+				t.Errorf("SourceInterface = %q, want %q", got, tt.wantLocal)
+			}
+		})
+	}
+}
+
+// The fdb pass reaches the same port through dot1dBasePortIfIndex,
+// a real ifIndex. Its label must match the one LLDP now writes, or
+// the uplink check of seed#2454 stops matching on these vendors.
+func TestFDBReconcile_PortClaimedByLLDPIsSkippedOnANonCiscoAgent(t *testing.T) {
+	t.Parallel()
+	store := newFDBStore().
+		withInterface("node-SW", 3, "Vlan3", "vlan3").
+		withInterface("node-SW", 1003, "1/1/3", "A3")
+	store.sysNameMap["core-sw"] = "node-CORE"
+
+	runFDBReconcile(t, store, []*observation.SNMPObservation{
+		lldpObs("t-sw", at(), []map[string]any{{
+			"LocalPortNum": 3, "LocalPortIDSubtype": 7, "LocalPortID": "1003",
+			"LocalPortDescription": "1/1/3", "SysName": "core-sw",
+		}}),
+		fdbObs("t-sw", at(), []fdbEntry{
+			{MACAddress: "aa:bb:cc:00:00:01", BridgePort: 3, IfIndex: 1003, Status: fdbLearned, VLANID: 200},
+		}),
+	})
+
+	if got := len(fdbLinksOf(store)); got != 0 {
+		t.Errorf("fdb links = %d, want 0: LLDP already describes 1/1/3", got)
 	}
 }
 

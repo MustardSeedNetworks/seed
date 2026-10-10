@@ -1,7 +1,9 @@
 // Package lldp implements the lldp SNMP Collector: walks
-// LLDP-MIB::lldpRemTable (1.0.8802.1.1.2.1.4.1.1) and emits one
+// LLDP-MIB::lldpRemTable (1.0.8802.1.1.2.1.4.1.1) and
+// lldpLocPortTable (1.0.8802.1.1.2.1.3.7.1) and emits one
 // Observation per poll listing every LLDP neighbor the target's
-// agent has learned. The neighbor relationships form the edges of
+// agent has learned, with the agent's own name for the local port
+// it was learned on. The neighbor relationships form the edges of
 // Stage A4's topology graph.
 package lldp
 
@@ -35,21 +37,37 @@ const (
 	indexFieldsRemTable = 3 // (timeMark, localPortNum, remIndex)
 )
 
+// lldpLocPortTable column OIDs, indexed by lldpLocPortNum. The
+// number is an ifIndex on Cisco and a bridge-port or vendor-local
+// number on HP, Aruba and Juniper, so the port id and description
+// are the only vendor-neutral name for the local end (seed#2602).
+const (
+	locTablePrefix   = "1.0.8802.1.1.2.1.3.7.1"
+	colLocPortIDType = "2"
+	colLocPortID     = "3"
+	colLocPortDesc   = "4"
+)
+
 // Neighbor is one row of lldpRemTable identifying a remote device
-// + remote port reachable through the local port LocalPortNum.
+// + remote port reachable through the local port LocalPortNum. The
+// LocalPort* fields come from that port's lldpLocPortTable row and
+// are empty when the agent has none.
 type Neighbor struct {
-	LocalPortNum     uint32
-	ChassisIDSubtype int
-	ChassisID        string
-	PortIDSubtype    int
-	PortID           string
-	PortDescription  string
-	SysName          string
-	SysDescription   string
-	SysCapSupported  uint32
-	SysCapEnabled    uint32
-	LldpRemIndex     uint32
-	LldpRemTimeMark  uint32
+	LocalPortNum         uint32
+	LocalPortIDSubtype   int
+	LocalPortID          string
+	LocalPortDescription string
+	ChassisIDSubtype     int
+	ChassisID            string
+	PortIDSubtype        int
+	PortID               string
+	PortDescription      string
+	SysName              string
+	SysDescription       string
+	SysCapSupported      uint32
+	SysCapEnabled        uint32
+	LldpRemIndex         uint32
+	LldpRemTimeMark      uint32
 }
 
 // Observation is the per-poll set of LLDP neighbors.
@@ -84,7 +102,8 @@ func New(factory snmp.ClientFactory, publisher Publisher, now func() time.Time) 
 // Name implements snmp.Collector.
 func (*Collector) Name() string { return Name }
 
-// Collect walks lldpRemTable and publishes the assembled neighbor list.
+// Collect walks lldpRemTable and lldpLocPortTable and publishes the
+// assembled neighbor list.
 func (c *Collector) Collect(ctx context.Context, target snmp.Target, creds snmp.ResolvedCredentials) error {
 	if c.newClient == nil {
 		return errors.New("lldp: client factory not configured")
@@ -104,7 +123,13 @@ func (c *Collector) Collect(ctx context.Context, target snmp.Target, creds snmp.
 		return fmt.Errorf("lldp: walk lldpRemTable: %w", err)
 	}
 
+	locVBs, err := client.Walk(ctx, locTablePrefix)
+	if err != nil {
+		return fmt.Errorf("lldp: walk lldpLocPortTable: %w", err)
+	}
+
 	neighbors := buildNeighbors(vbs)
+	applyLocalPorts(neighbors, buildLocalPorts(locVBs))
 
 	if pubErr := c.publisher.PublishLLDP(ctx, Observation{
 		ClientID:   target.ClientID,
@@ -182,6 +207,56 @@ func parseUint32(s string) (uint32, error) {
 		return 0, err
 	}
 	return uint32(v), nil
+}
+
+// localPort is one row of lldpLocPortTable.
+type localPort struct {
+	idSubtype int
+	id        string
+	desc      string
+}
+
+// buildLocalPorts folds the lldpLocPortTable walk into one localPort
+// per lldpLocPortNum.
+func buildLocalPorts(vbs []snmp.Varbind) map[uint32]localPort {
+	ports := make(map[uint32]localPort)
+	for _, vb := range vbs {
+		rest, ok := strings.CutPrefix(vb.OID, locTablePrefix+".")
+		if !ok {
+			continue
+		}
+		col, index, ok := strings.Cut(rest, ".")
+		if !ok {
+			continue
+		}
+		portNum, err := parseUint32(index)
+		if err != nil {
+			continue
+		}
+		p := ports[portNum]
+		switch col {
+		case colLocPortIDType:
+			p.idSubtype = intValue(vb.Value)
+		case colLocPortID:
+			p.id = chassisIDString(vb.Value)
+		case colLocPortDesc:
+			p.desc = stringValue(vb.Value)
+		default:
+			continue
+		}
+		ports[portNum] = p
+	}
+	return ports
+}
+
+// applyLocalPorts copies each neighbor's local-port row onto it.
+func applyLocalPorts(neighbors []Neighbor, ports map[uint32]localPort) {
+	for i := range neighbors {
+		p := ports[neighbors[i].LocalPortNum]
+		neighbors[i].LocalPortIDSubtype = p.idSubtype
+		neighbors[i].LocalPortID = p.id
+		neighbors[i].LocalPortDescription = p.desc
+	}
 }
 
 // applyColumn writes one lldpRemTable column onto n.

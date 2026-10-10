@@ -3,6 +3,7 @@ package lldp_test
 import (
 	"context"
 	"errors"
+	"strconv"
 	"sync"
 	"testing"
 	"time"
@@ -65,19 +66,12 @@ func remOID(col string, localPort, remIndex uint32) string {
 		uint32Str(localPort) + "." + uint32Str(remIndex)
 }
 
-func uint32Str(v uint32) string {
-	switch v {
-	case 1:
-		return "1"
-	case 2:
-		return "2"
-	case 10:
-		return "10"
-	case 100:
-		return "100"
-	}
-	// fallback: small test values only
-	return "0"
+func uint32Str(v uint32) string { return strconv.FormatUint(uint64(v), 10) }
+
+const locPrefix = "1.0.8802.1.1.2.1.3.7.1"
+
+func locOID(col string, localPort uint32) string {
+	return locPrefix + "." + col + "." + uint32Str(localPort)
 }
 
 func TestCollector_Name(t *testing.T) {
@@ -129,6 +123,47 @@ func TestCollect_BuildsNeighborFromCompleteRow(t *testing.T) {
 	}
 	if n.SysCapEnabled == 0 {
 		t.Errorf("SysCapEnabled = 0, want decoded BITS")
+	}
+}
+
+// An Aruba-style agent numbers lldpLocPortNum from 1 while its
+// ifIndexes start elsewhere; the neighbor carries the agent's own
+// name for the port so nothing downstream has to guess (seed#2602).
+func TestCollect_CarriesLocalPortRow(t *testing.T) {
+	t.Parallel()
+	fc := &fakeClient{vbs: []snmp.Varbind{
+		{OID: locOID("2", 3), Value: 5},
+		{OID: locOID("3", 3), Value: []byte("1/1/3")},
+		{OID: locOID("4", 3), Value: "1/1/3 uplink"},
+		{OID: locOID("4", 4), Value: "1/1/4"},
+		{OID: remOID("9", 3, 1), Value: "core-sw-1"},
+		{OID: remOID("9", 7, 1), Value: "edge-sw-7"},
+	}}
+	pub := &fakePublisher{}
+	c := lldp.New(factoryFor(fc), pub, at)
+
+	if err := c.Collect(context.Background(), snmp.Target{ID: "t-1"}, snmp.ResolvedCredentials{}); err != nil {
+		t.Fatalf("Collect: %v", err)
+	}
+	got := pub.got[0].Neighbors
+	if len(got) != 2 {
+		t.Fatalf("got %d neighbors, want 2", len(got))
+	}
+	want := lldp.Neighbor{
+		LocalPortNum:         3,
+		LocalPortIDSubtype:   5,
+		LocalPortID:          "1/1/3",
+		LocalPortDescription: "1/1/3 uplink",
+		SysName:              "core-sw-1",
+		LldpRemIndex:         1,
+		LldpRemTimeMark:      1,
+	}
+	if got[0] != want {
+		t.Errorf("port 3 neighbor = %+v, want %+v", got[0], want)
+	}
+	if got[1].LocalPortID != "" || got[1].LocalPortDescription != "" {
+		t.Errorf("port 7 has no lldpLocPortTable row but carries %q/%q",
+			got[1].LocalPortID, got[1].LocalPortDescription)
 	}
 }
 

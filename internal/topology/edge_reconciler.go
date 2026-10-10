@@ -339,12 +339,17 @@ func linkIDFor(sourceNodeID, _, remoteNodeID, _ string) string {
 
 // lldpPayload mirrors the lldp.Observation JSON shape.
 type lldpPayload struct {
-	Neighbors []struct {
-		LocalPortNum    uint32 `json:"LocalPortNum"`
-		PortID          string `json:"PortID"`
-		PortDescription string `json:"PortDescription"`
-		SysName         string `json:"SysName"`
-	} `json:"Neighbors"`
+	Neighbors []lldpNeighbor `json:"Neighbors"`
+}
+
+type lldpNeighbor struct {
+	LocalPortNum         uint32 `json:"LocalPortNum"`
+	LocalPortIDSubtype   int    `json:"LocalPortIDSubtype"`
+	LocalPortID          string `json:"LocalPortID"`
+	LocalPortDescription string `json:"LocalPortDescription"`
+	PortID               string `json:"PortID"`
+	PortDescription      string `json:"PortDescription"`
+	SysName              string `json:"SysName"`
 }
 
 // cdpPayload mirrors the cdp.Observation JSON shape (also used for fdp).
@@ -369,7 +374,7 @@ func decodeNeighbors(kind, raw string, ports portNamer) ([]neighborRecord, error
 		out := make([]neighborRecord, 0, len(p.Neighbors))
 		for _, n := range p.Neighbors {
 			out = append(out, neighborRecord{
-				localInterface:  ports.name(n.LocalPortNum),
+				localInterface:  ports.lldpLocal(n),
 				remoteName:      n.SysName,
 				remoteInterface: firstNonEmpty(n.PortDescription, n.PortID),
 			})
@@ -408,15 +413,16 @@ func decodeNeighbors(kind, raw string, ports portNamer) ([]neighborRecord, error
 // resolves the far end of an fdb edge by the same rule, so a link
 // row never mixes the two vocabularies.
 //
-// The index is assumed to be a real ifIndex. It is for the fdb pass
-// (dot1dBasePortIfIndex) and for cdp/fdp (cdpInterfaceIfIndex), and
-// on Cisco for LLDP, where lldpLocPortNum == ifIndex. On HP, Aruba
-// and Juniper lldpLocPortNum is a bridge-port or vendor-local number
-// and resolves to nothing, or worse to the wrong row; the honest fix
-// is to walk lldpLocPortTable and carry lldpLocPortId per neighbor,
-// which the collector does not do today (seed#2602).
+// [portNamer.name] takes a real ifIndex: the fdb pass's
+// dot1dBasePortIfIndex and cdp/fdp's cdpInterfaceIfIndex. LLDP's
+// lldpLocPortNum is one only on Cisco; on HP, Aruba and Juniper it
+// is a bridge-port or vendor-local number that names the wrong row,
+// so LLDP goes through [portNamer.lldpLocal] (seed#2602).
 type portNamer struct {
 	names map[uint32]string
+	// byLabel maps an ifDescr or ifName to the rendered name of its
+	// row. A label two rows share is left out: it names neither.
+	byLabel map[string]string
 }
 
 // portNamesFor reads the node's if_table once. A read failure or an
@@ -430,12 +436,27 @@ func (r *EdgeReconciler) portNamesFor(ctx context.Context, nodeID string) portNa
 		return portNamer{}
 	}
 	names := make(map[uint32]string, len(ifaces))
+	byLabel := make(map[string]string, len(ifaces))
+	ambiguous := make(map[string]bool)
 	for _, iface := range ifaces {
-		if name := firstNonEmpty(iface.IfDescr, iface.IfName); name != "" {
-			names[iface.IfIndex] = name
+		name := firstNonEmpty(iface.IfDescr, iface.IfName)
+		if name == "" {
+			continue
+		}
+		names[iface.IfIndex] = name
+		for _, label := range []string{iface.IfDescr, iface.IfName} {
+			if prev, seen := byLabel[label]; seen && prev != name {
+				ambiguous[label] = true
+			}
+			if label != "" {
+				byLabel[label] = name
+			}
 		}
 	}
-	return portNamer{names: names}
+	for label := range ambiguous {
+		delete(byLabel, label)
+	}
+	return portNamer{names: names, byLabel: byLabel}
 }
 
 // name returns the interface's own name, or ifIndex-N when the
@@ -447,6 +468,39 @@ func (p portNamer) name(ifIndex uint32) string {
 		return name
 	}
 	return fmt.Sprintf("ifIndex-%d", ifIndex)
+}
+
+// LLDP-MIB LldpPortIdSubtype values whose lldpLocPortId is a port
+// name rather than a MAC, a network address or a circuit id.
+const (
+	lldpPortIDInterfaceAlias = 1
+	lldpPortIDInterfaceName  = 5
+	lldpPortIDLocal          = 7
+)
+
+// lldpLocal names the local end of an LLDP neighbor from the agent's
+// own lldpLocPortTable row: the row of the if_table that carries its
+// lldpLocPortDesc or lldpLocPortId, rendered the way [portNamer.name]
+// renders it so the fdb pass's labels still compare equal; failing
+// that, the agent's label as given. Only a neighbor with no
+// lldpLocPortTable name falls back to reading lldpLocPortNum as an
+// ifIndex, which is right on Cisco and what every pass did before
+// seed#2602.
+func (p portNamer) lldpLocal(n lldpNeighbor) string {
+	labels := []string{n.LocalPortDescription}
+	switch n.LocalPortIDSubtype {
+	case lldpPortIDInterfaceAlias, lldpPortIDInterfaceName, lldpPortIDLocal:
+		labels = append(labels, n.LocalPortID)
+	}
+	for _, label := range labels {
+		if name, ok := p.byLabel[label]; ok {
+			return name
+		}
+	}
+	if label := firstNonEmpty(labels...); label != "" {
+		return label
+	}
+	return p.name(n.LocalPortNum)
 }
 
 func firstNonEmpty(values ...string) string {
