@@ -90,8 +90,9 @@ jobs:
   routed:
     name: Routed site learning against the latest NIAC release
     runs-on: ubuntu-latest
-    # About 4 minutes on dev-srv-ubuntu (2026-10-10), most of it the UI and
-    # Go builds; the spec itself waits on two discovery sweeps.
+    # About 9 minutes on dev-srv-ubuntu (2026-10-10): the UI and Go builds,
+    # then 5.5 minutes of spec, most of it waiting on one discovery sweep per
+    # site network.
     timeout-minutes: 30
     env:
       GOMODCACHE: ${{ github.workspace }}/.cache/go/pkg/mod
