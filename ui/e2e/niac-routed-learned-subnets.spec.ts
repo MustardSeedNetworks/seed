@@ -46,6 +46,9 @@ const LEARN_MS = 6 * SCAN_EVERY_MS;
 // Probing .1-.4 covers 63 /24s a sweep, so a /16 takes five.
 const PROBED_HOSTS = 4;
 const PROBE_MS = 6 * SCAN_EVERY_MS + SCAN_MS;
+// A sweep of the transit /24 and one summary block takes longer than one press
+// period (about 28 s on 2026-10-10), so only every other press starts one.
+const SWEEP_MS = 2 * SCAN_EVERY_MS;
 // The path route gives a trace two minutes.
 const TRACE_MS = 120_000;
 
@@ -107,7 +110,11 @@ async function discoveredIPs(request: APIRequestContext): Promise<Set<string>> {
 
 /**
  * A poll step that presses Scan when the last press is old enough, so a poll
- * waiting on a sweep's result also drives the sweeps it waits on.
+ * waiting on a sweep's result also drives the sweeps it waits on. Every
+ * rate-limited route shares one 5-per-minute bucket per client, and the
+ * specs that ran before this one on the same daemon may have spent part of
+ * it, so a 429 is a press that did not land: the next one comes a period
+ * later, and the poll's own timeout bounds the wait.
  */
 function scanner(request: APIRequestContext): () => Promise<void> {
   let pressedAt = 0;
@@ -119,7 +126,7 @@ function scanner(request: APIRequestContext): () => Promise<void> {
     const response = await request.post('/api/v1/security/devices/scan', {
       headers: { 'X-CSRF-Token': await csrfToken(request) },
     });
-    expect(response.status(), 'POST /api/v1/security/devices/scan').toBe(200);
+    expect([200, 429], 'POST /api/v1/security/devices/scan').toContain(response.status());
   };
 }
 
@@ -135,7 +142,7 @@ async function pending(
 
 test.describe('target networks behind a NIAC edge router', () => {
   test.setTimeout(
-    RESCAN_MS + PROBE_MS + LEARN_MS + siteNetworks.length * SCAN_EVERY_MS + SCAN_MS + TRACE_MS,
+    RESCAN_MS + PROBE_MS + LEARN_MS + siteNetworks.length * SWEEP_MS + SCAN_MS + TRACE_MS,
   );
 
   test('only the learned summary switched on, its site networks swept', async ({ page }) => {
@@ -261,7 +268,7 @@ test.describe('target networks behind a NIAC edge router', () => {
           },
           {
             message: `site networks with no device, or none above .${PROBED_HOSTS}, discovered`,
-            timeout: siteNetworks.length * SCAN_EVERY_MS + SCAN_MS,
+            timeout: siteNetworks.length * SWEEP_MS + SCAN_MS,
             intervals: [2_000],
           },
         )

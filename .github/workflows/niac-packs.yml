@@ -1,12 +1,19 @@
-# NIAC pack acceptance — seed's collectors, topology and alert pipeline
-# against NIAC's six presentation packs (niac plan P3-3, ledger M5-5).
+# NIAC pack acceptance — seed against NIAC's presentation packs, nightly
+# against the latest NIAC release, so a regression on either side shows up
+# within a day (niac plan P3-3, ledger M5-5; seed plan D-SEED-39, fleet rule 8).
 #
-# scripts/snmp-acceptance-niac.sh runs each pack in a network namespace and
-# polls it from a second one over a veth pair, then compares what seed saw with
-# the manifest NIAC generated alongside the pack. Nightly against the latest
-# NIAC release, so a regression on either side shows up within a day; on a PR
-# only when the harness itself changes, since it takes about a quarter of an
-# hour and adds nothing to an unrelated change.
+# packs: scripts/snmp-acceptance-niac.sh runs each of the six packs in a
+# network namespace and polls it from a second one over a veth pair, then
+# compares what seed's collectors, topology and alert pipeline saw with the
+# manifest NIAC generated alongside the pack.
+#
+# routed: scripts/e2e-niac-routed.sh puts the running product on the hospital
+# pack's transit network and drives the UI through learning the site networks
+# behind the edge router (seed#2695, seed#2832).
+#
+# On a PR only when a harness changes, since together they take about a
+# quarter of an hour and add nothing to an unrelated change. A dispatch can pin
+# a NIAC release, which is how a known regression is shown to fail the run.
 name: NIAC Packs
 
 on:
@@ -18,7 +25,15 @@ on:
       - .github/workflows/niac-packs.yml
       - scripts/snmp-acceptance-niac.sh
       - internal/polling/snmp/orchestrator/pack_acceptance_niac_test.go
+      - .github/actions/install-niac-release/**
+      - scripts/e2e-niac-routed.sh
+      - ui/e2e/niac-routed-learned-subnets.spec.ts
   workflow_dispatch:
+    inputs:
+      niac_release:
+        description: "NIAC release tag to test against, such as v0.113.3; empty for the latest"
+        required: false
+        default: ''
 
 permissions:
   contents: read
@@ -52,24 +67,11 @@ jobs:
         with:
           packages: libpcap-dev python3-yaml
 
-      # The release tarball, not a source build: the harness accepts what an
-      # operator installs. checksums.txt is verified against the archive so a
-      # truncated or swapped download fails here, not as a confusing finding.
-      - name: Install the latest NIAC release
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          set -eu
-          dir="$RUNNER_TEMP/niac"
-          mkdir -p "$dir/bin"
-          tag=$(gh release view --repo MustardSeedNetworks/niac-go --json tagName --jq .tagName)
-          version=${tag#v}
-          gh release download "$tag" --repo MustardSeedNetworks/niac-go --dir "$dir" \
-            --pattern "niac-$version-linux-amd64.tar.gz" --pattern checksums.txt
-          (cd "$dir" && sha256sum --check --ignore-missing --strict checksums.txt)
-          tar -xzf "$dir/niac-$version-linux-amd64.tar.gz" -C "$dir/bin" niac
-          echo "$dir/bin" >>"$GITHUB_PATH"
-          "$dir/bin/niac" --version
+      - name: Install the NIAC release
+        uses: ./.github/actions/install-niac-release
+        with:
+          tag: ${{ inputs.niac_release }}
+          token: ${{ github.token }}
 
       - name: Run the pack acceptance
         timeout-minutes: 25
@@ -79,6 +81,70 @@ jobs:
         if: failure()
         run: |
           for f in "${TMPDIR:-/tmp}"/seed-snmp-acceptance-logs.*/*.log; do
+            [ -e "$f" ] || continue
+            echo "::group::$f"
+            cat "$f"
+            echo "::endgroup::"
+          done
+
+  routed:
+    name: Routed site learning against the latest NIAC release
+    runs-on: ubuntu-latest
+    # About 4 minutes on dev-srv-ubuntu (2026-10-10), most of it the UI and
+    # Go builds; the spec itself waits on two discovery sweeps.
+    timeout-minutes: 30
+    env:
+      GOMODCACHE: ${{ github.workspace }}/.cache/go/pkg/mod
+      GOCACHE: ${{ github.workspace }}/.cache/go/build
+
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Set up Go
+        uses: ./.github/actions/setup-go
+
+      - name: Set up Node.js
+        uses: ./.github/actions/setup-node
+
+      - name: Install libpcap-dev and PyYAML
+        uses: MustardSeedNetworks/.github/.github/actions/apt-install@048d173dd72ca0f9e5fa832fb5b9fd2a6447e5e9 # v1.13.0
+        timeout-minutes: 10
+        with:
+          packages: libpcap-dev python3-yaml
+
+      - name: Install UI dependencies
+        working-directory: ui
+        run: npm ci
+
+      # Split from the browser download so apt runs under the fleet composite's
+      # timeout and lock handling; see the Storybook job in ci.yml.
+      - name: Install Chromium OS dependencies
+        uses: MustardSeedNetworks/.github/.github/actions/apt-install@048d173dd72ca0f9e5fa832fb5b9fd2a6447e5e9 # v1.13.0
+        timeout-minutes: 10
+        with:
+          command: cd ui && node ./node_modules/playwright/cli.js install-deps chromium
+
+      - name: Install Chromium
+        working-directory: ui
+        timeout-minutes: 10
+        run: node ./node_modules/playwright/cli.js install chromium
+
+      - name: Install the NIAC release
+        uses: ./.github/actions/install-niac-release
+        with:
+          tag: ${{ inputs.niac_release }}
+          token: ${{ github.token }}
+
+      - name: Run the routed E2E
+        timeout-minutes: 20
+        run: ./scripts/e2e-niac-routed.sh
+
+      - name: Harness logs
+        if: failure()
+        run: |
+          for f in "${TMPDIR:-/tmp}"/seed-niac-routed-logs.*/*.log; do
             [ -e "$f" ] || continue
             echo "::group::$f"
             cat "$f"

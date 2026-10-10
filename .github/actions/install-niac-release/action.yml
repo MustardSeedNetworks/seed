@@ -1,0 +1,35 @@
+name: 'Install a NIAC release'
+description: >-
+  Download a NIAC release's linux-amd64 tarball, verify it against the
+  release's checksums.txt, and install its niac binary in /usr/local/bin.
+inputs:
+  tag:
+    description: "Release tag such as v0.113.3; empty means the latest release"
+    required: false
+    default: ''
+  token:
+    description: 'Token for gh release download'
+    required: true
+runs:
+  using: composite
+  steps:
+    # The release tarball, not a source build: the harnesses accept what an
+    # operator installs. checksums.txt is verified against the archive so a
+    # truncated or swapped download fails here, not as a confusing finding.
+    - name: Install the NIAC release
+      shell: bash
+      env:
+        GH_TOKEN: ${{ inputs.token }}
+        TAG: ${{ inputs.tag }}
+      run: |
+        set -eu
+        dir="$RUNNER_TEMP/niac"
+        mkdir -p "$dir"
+        tag=${TAG:-$(gh release view --repo MustardSeedNetworks/niac-go --json tagName --jq .tagName)}
+        version=${tag#v}
+        gh release download "$tag" --repo MustardSeedNetworks/niac-go --dir "$dir" \
+          --pattern "niac-$version-linux-amd64.tar.gz" --pattern checksums.txt
+        (cd "$dir" && sha256sum --check --ignore-missing --strict checksums.txt)
+        tar -xzf "$dir/niac-$version-linux-amd64.tar.gz" -C "$dir" niac
+        sudo install -m 0755 "$dir/niac" /usr/local/bin/niac
+        niac --version
