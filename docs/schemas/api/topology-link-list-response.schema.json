@@ -1,0 +1,85 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/MustardSeedNetworks/seed/main/docs/schemas/api/topology-link-list-response.schema.json",
+  "$ref": "#/$defs/TopologyLinkListResponse",
+  "$defs": {
+    "TopologyLink": {
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "sourceNodeId": {
+          "type": "string"
+        },
+        "targetNodeId": {
+          "type": "string"
+        },
+        "sourceInterface": {
+          "type": "string"
+        },
+        "targetInterface": {
+          "type": "string"
+        },
+        "linkType": {
+          "type": "string"
+        },
+        "status": {
+          "type": "string"
+        },
+        "speedMbps": {
+          "type": "integer"
+        },
+        "utilizationPct": {
+          "type": "number"
+        },
+        "firstSeen": {
+          "type": "string"
+        },
+        "lastSeen": {
+          "type": "string"
+        },
+        "evidence": {
+          "additionalProperties": true,
+          "type": "object"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "id",
+        "sourceNodeId",
+        "targetNodeId",
+        "sourceInterface",
+        "targetInterface",
+        "linkType",
+        "status",
+        "speedMbps",
+        "utilizationPct",
+        "firstSeen",
+        "lastSeen",
+        "evidence"
+      ]
+    },
+    "TopologyLinkListResponse": {
+      "properties": {
+        "count": {
+          "type": "integer"
+        },
+        "links": {
+          "items": {
+            "$ref": "#/$defs/TopologyLink"
+          },
+          "type": "array"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "count",
+        "links"
+      ]
+    }
+  },
+  "title": "TopologyLinkListResponse",
+  "description": "TopologyLinkListResponse — generated from the Go struct in internal/api; refresh with `make schema` after struct changes."
+}

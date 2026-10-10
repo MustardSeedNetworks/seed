@@ -27,6 +27,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/invopop/jsonschema"
+
 	"github.com/MustardSeedNetworks/seed/internal/logging"
 	"github.com/MustardSeedNetworks/seed/internal/topology"
 )
@@ -57,6 +59,108 @@ const topologyMaxLimit = 1000
 // topologyDefaultLimit is the page size when ?limit isn't provided.
 const topologyDefaultLimit = 200
 
+// TopologyNode is one node of the topology graph. Timestamps are RFC 3339
+// UTC, or "" when never set. Metadata carries the poll's extra scalars
+// (vendor, sysObjectID and the like) as a JSON object.
+type TopologyNode struct {
+	ID           string          `json:"id"`
+	ClientID     string          `json:"clientId"`
+	IdentityHash string          `json:"identityHash"`
+	DisplayName  string          `json:"displayName"`
+	DeviceType   string          `json:"deviceType"`
+	ChassisID    string          `json:"chassisId"`
+	SysName      string          `json:"sysName"`
+	PrimaryMAC   string          `json:"primaryMac"`
+	PrimaryIP    string          `json:"primaryIp"`
+	FirstSeen    string          `json:"firstSeen"`
+	LastSeen     string          `json:"lastSeen"`
+	Metadata     json.RawMessage `json:"metadata"     jsonschema:"type=object"`
+}
+
+// JSONSchemaExtend opens metadata to any keys; the reflector otherwise closes
+// every object.
+func (TopologyNode) JSONSchemaExtend(s *jsonschema.Schema) {
+	s.Properties.Value("metadata").AdditionalProperties = jsonschema.TrueSchema
+}
+
+// TopologyInterface is one SNMP interface row of a node.
+type TopologyInterface struct {
+	ID            int64  `json:"id"`
+	NodeID        string `json:"nodeId"`
+	IfIndex       uint32 `json:"ifIndex"`
+	IfName        string `json:"ifName"`
+	IfDescr       string `json:"ifDescr"`
+	IfAlias       string `json:"ifAlias"`
+	IfType        uint32 `json:"ifType"`
+	IfAdminStatus int    `json:"ifAdminStatus"`
+	IfOperStatus  int    `json:"ifOperStatus"`
+	IfPhysAddr    string `json:"ifPhysAddr"`
+	SpeedBps      uint64 `json:"speedBps"`
+	LastSeen      string `json:"lastSeen"`
+}
+
+// TopologyLink is one edge between two nodes. Evidence is the reconciler's
+// record of what established it, as a JSON object.
+type TopologyLink struct {
+	ID              string          `json:"id"`
+	SourceNodeID    string          `json:"sourceNodeId"`
+	TargetNodeID    string          `json:"targetNodeId"`
+	SourceInterface string          `json:"sourceInterface"`
+	TargetInterface string          `json:"targetInterface"`
+	LinkType        string          `json:"linkType"`
+	Status          string          `json:"status"`
+	SpeedMbps       uint32          `json:"speedMbps"`
+	UtilizationPct  float64         `json:"utilizationPct"`
+	FirstSeen       string          `json:"firstSeen"`
+	LastSeen        string          `json:"lastSeen"`
+	Evidence        json.RawMessage `json:"evidence"        jsonschema:"type=object"`
+}
+
+// JSONSchemaExtend opens evidence to any keys; the reflector otherwise closes
+// every object.
+func (TopologyLink) JSONSchemaExtend(s *jsonschema.Schema) {
+	s.Properties.Value("evidence").AdditionalProperties = jsonschema.TrueSchema
+}
+
+// TopologyARPBinding is one IP-to-MAC binding harvested from a node's ARP
+// table.
+type TopologyARPBinding struct {
+	ID           int64  `json:"id"`
+	ClientID     string `json:"clientId"`
+	SourceNodeID string `json:"sourceNodeId"`
+	IfIndex      uint32 `json:"ifIndex"`
+	IPAddress    string `json:"ipAddress"`
+	MACAddress   string `json:"macAddress"`
+	MediaType    int    `json:"mediaType"`
+	LastSeen     string `json:"lastSeen"`
+}
+
+// TopologyNodeListResponse is the GET /topology/nodes envelope.
+type TopologyNodeListResponse struct {
+	Count int            `json:"count"`
+	Nodes []TopologyNode `json:"nodes"`
+}
+
+// TopologyNodeDetailResponse is GET /topology/nodes/{id}: the node with its
+// interfaces and incident links.
+type TopologyNodeDetailResponse struct {
+	Node       TopologyNode        `json:"node"`
+	Interfaces []TopologyInterface `json:"interfaces"`
+	Links      []TopologyLink      `json:"links"`
+}
+
+// TopologyLinkListResponse is the GET /topology/links envelope.
+type TopologyLinkListResponse struct {
+	Count int            `json:"count"`
+	Links []TopologyLink `json:"links"`
+}
+
+// TopologyARPListResponse is the GET /topology/arp envelope.
+type TopologyARPListResponse struct {
+	Count    int                  `json:"count"`
+	Bindings []TopologyARPBinding `json:"bindings"`
+}
+
 // handleTopologyNodes serves GET /api/v1/topology/nodes. Filters via
 // ?device_type, ?since (RFC3339), ?limit. Returns 200 with a JSON
 // array. Empty results are not 404 — that's reserved for malformed
@@ -77,7 +181,8 @@ func (s *Server) handleTopologyNodes(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	writeTopologyJSON(w, r, "nodes", encodeNodes(nodes))
+	enc := encodeNodes(nodes)
+	sendJSONResponse(w, logger, http.StatusOK, TopologyNodeListResponse{Count: len(enc), Nodes: enc})
 }
 
 // handleTopologyNodeByID serves GET /api/v1/topology/nodes/{id}.
@@ -98,10 +203,10 @@ func (s *Server) handleTopologyNodeByID(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	sendJSONResponse(w, logger, http.StatusOK, map[string]any{
-		"node":       encodeNode(detail.Node),
-		"interfaces": encodeInterfaces(detail.Interfaces),
-		"links":      encodeLinks(detail.Links),
+	sendJSONResponse(w, logger, http.StatusOK, TopologyNodeDetailResponse{
+		Node:       encodeNode(detail.Node),
+		Interfaces: encodeInterfaces(detail.Interfaces),
+		Links:      encodeLinks(detail.Links),
 	})
 }
 
@@ -118,7 +223,8 @@ func (s *Server) handleTopologyLinks(w http.ResponseWriter, r *http.Request) {
 		writeTopologyError(w, r, err, "Failed to list links")
 		return
 	}
-	writeTopologyJSON(w, r, "links", encodeLinks(links))
+	enc := encodeLinks(links)
+	sendJSONResponse(w, logger, http.StatusOK, TopologyLinkListResponse{Count: len(enc), Links: enc})
 }
 
 // handleTopologyARP serves GET /api/v1/topology/arp. Filters via
@@ -165,22 +271,23 @@ func (s *Server) handleTopologyARP(w http.ResponseWriter, r *http.Request) {
 		writeTopologyError(w, r, err, "Failed to list ARP bindings")
 		return
 	}
-	writeTopologyJSON(w, r, "bindings", encodeARPBindings(bindings))
+	enc := encodeARPBindings(bindings)
+	sendJSONResponse(w, logging.FromContext(r.Context()), http.StatusOK,
+		TopologyARPListResponse{Count: len(enc), Bindings: enc})
 }
 
-// encodeARPBindings flattens ARPBinding rows for JSON.
-func encodeARPBindings(bindings []*topology.ARPBinding) []map[string]any {
-	out := make([]map[string]any, 0, len(bindings))
+func encodeARPBindings(bindings []*topology.ARPBinding) []TopologyARPBinding {
+	out := make([]TopologyARPBinding, 0, len(bindings))
 	for _, b := range bindings {
-		out = append(out, map[string]any{
-			"id":           b.ID,
-			"clientId":     b.ClientID,
-			"sourceNodeId": b.SourceNodeID,
-			"ifIndex":      b.IfIndex,
-			"ipAddress":    b.IPAddress,
-			"macAddress":   b.MACAddress,
-			"mediaType":    b.MediaType,
-			"lastSeen":     formatTime(b.LastSeen),
+		out = append(out, TopologyARPBinding{
+			ID:           b.ID,
+			ClientID:     b.ClientID,
+			SourceNodeID: b.SourceNodeID,
+			IfIndex:      b.IfIndex,
+			IPAddress:    b.IPAddress,
+			MACAddress:   b.MACAddress,
+			MediaType:    b.MediaType,
+			LastSeen:     formatTime(b.LastSeen),
 		})
 	}
 	return out
@@ -218,81 +325,79 @@ func parseTopologyListOptions(r *http.Request) (topology.ListOptions, error) {
 // encodeNode flattens a Node for JSON. Done explicitly
 // (rather than tagging the DB struct) so the wire format stays
 // stable when DB columns evolve.
-func encodeNode(n *topology.Node) map[string]any {
-	return map[string]any{
-		"id":           n.ID,
-		"clientId":     n.ClientID,
-		"identityHash": n.IdentityHash,
-		"displayName":  n.DisplayName,
-		"deviceType":   n.DeviceType,
-		"chassisId":    n.ChassisID,
-		"sysName":      n.SysName,
-		"primaryMac":   n.PrimaryMAC,
-		"primaryIp":    n.PrimaryIP,
-		"firstSeen":    formatTime(n.FirstSeen),
-		"lastSeen":     formatTime(n.LastSeen),
-		"metadata":     rawJSON(n.MetadataJSON),
+func encodeNode(n *topology.Node) TopologyNode {
+	return TopologyNode{
+		ID:           n.ID,
+		ClientID:     n.ClientID,
+		IdentityHash: n.IdentityHash,
+		DisplayName:  n.DisplayName,
+		DeviceType:   n.DeviceType,
+		ChassisID:    n.ChassisID,
+		SysName:      n.SysName,
+		PrimaryMAC:   n.PrimaryMAC,
+		PrimaryIP:    n.PrimaryIP,
+		FirstSeen:    formatTime(n.FirstSeen),
+		LastSeen:     formatTime(n.LastSeen),
+		Metadata:     rawJSON(n.MetadataJSON),
 	}
 }
 
-func encodeNodes(nodes []*topology.Node) []map[string]any {
-	out := make([]map[string]any, 0, len(nodes))
+func encodeNodes(nodes []*topology.Node) []TopologyNode {
+	out := make([]TopologyNode, 0, len(nodes))
 	for _, n := range nodes {
 		out = append(out, encodeNode(n))
 	}
 	return out
 }
 
-func encodeInterfaces(ifaces []*topology.Interface) []map[string]any {
-	out := make([]map[string]any, 0, len(ifaces))
+func encodeInterfaces(ifaces []*topology.Interface) []TopologyInterface {
+	out := make([]TopologyInterface, 0, len(ifaces))
 	for _, i := range ifaces {
-		out = append(out, map[string]any{
-			"id":            i.ID,
-			"nodeId":        i.NodeID,
-			"ifIndex":       i.IfIndex,
-			"ifName":        i.IfName,
-			"ifDescr":       i.IfDescr,
-			"ifAlias":       i.IfAlias,
-			"ifType":        i.IfType,
-			"ifAdminStatus": i.IfAdminStatus,
-			"ifOperStatus":  i.IfOperStatus,
-			"ifPhysAddr":    i.IfPhysAddr,
-			"speedBps":      i.SpeedBps,
-			"lastSeen":      formatTime(i.LastSeen),
+		out = append(out, TopologyInterface{
+			ID:            i.ID,
+			NodeID:        i.NodeID,
+			IfIndex:       i.IfIndex,
+			IfName:        i.IfName,
+			IfDescr:       i.IfDescr,
+			IfAlias:       i.IfAlias,
+			IfType:        i.IfType,
+			IfAdminStatus: i.IfAdminStatus,
+			IfOperStatus:  i.IfOperStatus,
+			IfPhysAddr:    i.IfPhysAddr,
+			SpeedBps:      i.SpeedBps,
+			LastSeen:      formatTime(i.LastSeen),
 		})
 	}
 	return out
 }
 
-func encodeLinks(links []*topology.Link) []map[string]any {
-	out := make([]map[string]any, 0, len(links))
+func encodeLinks(links []*topology.Link) []TopologyLink {
+	out := make([]TopologyLink, 0, len(links))
 	for _, l := range links {
-		out = append(out, map[string]any{
-			"id":              l.ID,
-			"sourceNodeId":    l.SourceNodeID,
-			"targetNodeId":    l.TargetNodeID,
-			"sourceInterface": l.SourceInterface,
-			"targetInterface": l.TargetInterface,
-			"linkType":        l.LinkType,
-			"status":          l.Status,
-			"speedMbps":       l.SpeedMbps,
-			"utilizationPct":  l.UtilizationPct,
-			"firstSeen":       formatTime(l.FirstSeen),
-			"lastSeen":        formatTime(l.LastSeen),
-			"evidence":        rawJSON(l.EvidenceJSON),
+		out = append(out, TopologyLink{
+			ID:              l.ID,
+			SourceNodeID:    l.SourceNodeID,
+			TargetNodeID:    l.TargetNodeID,
+			SourceInterface: l.SourceInterface,
+			TargetInterface: l.TargetInterface,
+			LinkType:        l.LinkType,
+			Status:          l.Status,
+			SpeedMbps:       l.SpeedMbps,
+			UtilizationPct:  l.UtilizationPct,
+			FirstSeen:       formatTime(l.FirstSeen),
+			LastSeen:        formatTime(l.LastSeen),
+			Evidence:        rawJSON(l.EvidenceJSON),
 		})
 	}
 	return out
 }
 
-// rawJSON returns the payload as a [json.RawMessage] when it
-// parses, otherwise an empty object. Keeps the wire format
-// predictable for clients that walk the response shape.
+// rawJSON returns the payload as a [json.RawMessage] when it is a JSON
+// object, otherwise an empty object, so metadata and evidence always match
+// their documented object type.
 func rawJSON(s string) json.RawMessage {
-	if s == "" {
-		return json.RawMessage("{}")
-	}
-	if !json.Valid([]byte(s)) {
+	var obj map[string]json.RawMessage
+	if json.Unmarshal([]byte(s), &obj) != nil || obj == nil {
 		return json.RawMessage("{}")
 	}
 	return json.RawMessage(s)
@@ -305,27 +410,4 @@ func formatTime(t time.Time) string {
 		return ""
 	}
 	return t.UTC().Format(time.RFC3339Nano)
-}
-
-// writeTopologyJSON wraps a result list with a count + envelope so
-// the UI doesn't have to parse a bare array. Standard shape across
-// every topology list endpoint.
-func writeTopologyJSON(w http.ResponseWriter, r *http.Request, key string, payload any) {
-	sendJSONResponse(w, logging.FromContext(r.Context()), http.StatusOK, map[string]any{
-		jsonKeyCount: lenOf(payload),
-		key:          payload,
-	})
-}
-
-// lenOf returns len(v) for slice / map types or 0 otherwise.
-// Used by the envelope helper to surface count without forcing
-// callers to type-assert.
-func lenOf(v any) int {
-	switch s := v.(type) {
-	case []map[string]any:
-		return len(s)
-	case map[string]any:
-		return len(s)
-	}
-	return 0
 }

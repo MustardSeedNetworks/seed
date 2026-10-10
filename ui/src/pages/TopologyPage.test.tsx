@@ -19,7 +19,7 @@ import type {
   TopologyLink,
   TopologyNode,
   TopologyNodeDetailResponse,
-} from '../types/topology';
+} from '../types/generated/topology-node-detail-response';
 
 function node(over: Partial<TopologyNode>): TopologyNode {
   return {

@@ -325,15 +325,18 @@ func TestHandleTopologyARP_LimitClampsToMax(t *testing.T) {
 	}
 }
 
-func TestRawJSON_InvalidFallsBackToEmpty(t *testing.T) {
-	if got := string(rawJSON("not json {")); got != "{}" {
-		t.Errorf("invalid JSON should fall back to {}, got %q", got)
-	}
-	if got := string(rawJSON("")); got != "{}" {
-		t.Errorf("empty should fall back to {}, got %q", got)
-	}
-	if got := string(rawJSON(`{"ok":1}`)); got != `{"ok":1}` {
-		t.Errorf("valid JSON should pass through, got %q", got)
+func TestRawJSON_NonObjectFallsBackToEmpty(t *testing.T) {
+	for in, want := range map[string]string{
+		"not json {": "{}",
+		"":           "{}",
+		"null":       "{}",
+		"[1,2]":      "{}",
+		`"text"`:     "{}",
+		`{"ok":1}`:   `{"ok":1}`,
+	} {
+		if got := string(rawJSON(in)); got != want {
+			t.Errorf("rawJSON(%q) = %q, want %q", in, got, want)
+		}
 	}
 }
 

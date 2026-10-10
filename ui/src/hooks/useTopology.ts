@@ -8,13 +8,13 @@
 
 import { useEffect, useState } from 'react';
 import { api } from '../api/client';
+import type { TopologyLinkListResponse } from '../types/generated/topology-link-list-response';
 import type {
   TopologyLink,
-  TopologyLinksResponse,
   TopologyNode,
   TopologyNodeDetailResponse,
-  TopologyNodesResponse,
-} from '../types/topology';
+} from '../types/generated/topology-node-detail-response';
+import type { TopologyNodeListResponse } from '../types/generated/topology-node-list-response';
 
 const ENDPOINT = '/api/v1/topology';
 
@@ -43,7 +43,7 @@ export function useTopologyNodes(): UseTopologyNodesResult {
     setLoading(true);
     setError(null);
     await api
-      .get<TopologyNodesResponse>(`${ENDPOINT}/nodes?limit=${PAGE_LIMIT}`)
+      .get<TopologyNodeListResponse>(`${ENDPOINT}/nodes?limit=${PAGE_LIMIT}`)
       .then((resp) => {
         setNodes(resp.nodes ?? []);
       })
@@ -120,7 +120,7 @@ export function useTopologyLinks(): UseTopologyLinksResult {
     setLoading(true);
     setError(null);
     await api
-      .get<TopologyLinksResponse>(`${ENDPOINT}/links?limit=${PAGE_LIMIT}`)
+      .get<TopologyLinkListResponse>(`${ENDPOINT}/links?limit=${PAGE_LIMIT}`)
       .then((resp) => {
         setLinks(resp.links ?? []);
       })

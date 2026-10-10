@@ -1184,6 +1184,39 @@ operations:
         application/json:
           schema:
             $ref: '#/components/schemas/VLANInterfaceRequest'
+  GET /api/v1/topology/arp:
+    responses:
+      "200":
+        description: IP-to-MAC bindings harvested from node ARP tables, newest first. Filter by node_id, since (RFC 3339) and limit (default 200, capped at 1000).
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TopologyARPListResponse'
+  GET /api/v1/topology/links:
+    responses:
+      "200":
+        description: Every link of the topology graph, or only those incident to node_id.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TopologyLinkListResponse'
+  GET /api/v1/topology/nodes:
+    responses:
+      "200":
+        description: Topology nodes. Filter by device_type, since (RFC 3339) and limit (default 200, capped at 1000).
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TopologyNodeListResponse'
+  GET /api/v1/topology/nodes/:
+    pathTemplate: /api/v1/topology/nodes/{nodeId}
+    responses:
+      "200":
+        description: The node with its interfaces and the links incident to it.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TopologyNodeDetailResponse'
   POST /api/v1/tokens:
     requestBody:
       required: true

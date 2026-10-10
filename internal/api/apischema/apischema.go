@@ -315,6 +315,12 @@ func Targets() []Target {
 		{&polling.Credentials{}, "device-credential.schema.json"},
 		{&api.DeviceCredentialListResponse{}, "device-credential-list-response.schema.json"},
 
+		// The topology graph read API (Stage A5.1).
+		{&api.TopologyNodeListResponse{}, "topology-node-list-response.schema.json"},
+		{&api.TopologyNodeDetailResponse{}, "topology-node-detail-response.schema.json"},
+		{&api.TopologyLinkListResponse{}, "topology-link-list-response.schema.json"},
+		{&api.TopologyARPListResponse{}, "topology-arp-list-response.schema.json"},
+
 		// Profile/settings config — code-first model of the per-profile
 		// config.Config blob (ADR-0007/0008, Phase 7 S6). The profile Config
 		// is applied via Config.ApplyProfileJSON, so config.Config is its

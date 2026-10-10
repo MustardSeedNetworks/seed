@@ -1,0 +1,205 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/MustardSeedNetworks/seed/main/docs/schemas/api/topology-node-detail-response.schema.json",
+  "$ref": "#/$defs/TopologyNodeDetailResponse",
+  "$defs": {
+    "TopologyInterface": {
+      "properties": {
+        "id": {
+          "type": "integer"
+        },
+        "nodeId": {
+          "type": "string"
+        },
+        "ifIndex": {
+          "type": "integer"
+        },
+        "ifName": {
+          "type": "string"
+        },
+        "ifDescr": {
+          "type": "string"
+        },
+        "ifAlias": {
+          "type": "string"
+        },
+        "ifType": {
+          "type": "integer"
+        },
+        "ifAdminStatus": {
+          "type": "integer"
+        },
+        "ifOperStatus": {
+          "type": "integer"
+        },
+        "ifPhysAddr": {
+          "type": "string"
+        },
+        "speedBps": {
+          "type": "integer"
+        },
+        "lastSeen": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "id",
+        "nodeId",
+        "ifIndex",
+        "ifName",
+        "ifDescr",
+        "ifAlias",
+        "ifType",
+        "ifAdminStatus",
+        "ifOperStatus",
+        "ifPhysAddr",
+        "speedBps",
+        "lastSeen"
+      ]
+    },
+    "TopologyLink": {
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "sourceNodeId": {
+          "type": "string"
+        },
+        "targetNodeId": {
+          "type": "string"
+        },
+        "sourceInterface": {
+          "type": "string"
+        },
+        "targetInterface": {
+          "type": "string"
+        },
+        "linkType": {
+          "type": "string"
+        },
+        "status": {
+          "type": "string"
+        },
+        "speedMbps": {
+          "type": "integer"
+        },
+        "utilizationPct": {
+          "type": "number"
+        },
+        "firstSeen": {
+          "type": "string"
+        },
+        "lastSeen": {
+          "type": "string"
+        },
+        "evidence": {
+          "additionalProperties": true,
+          "type": "object"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "id",
+        "sourceNodeId",
+        "targetNodeId",
+        "sourceInterface",
+        "targetInterface",
+        "linkType",
+        "status",
+        "speedMbps",
+        "utilizationPct",
+        "firstSeen",
+        "lastSeen",
+        "evidence"
+      ]
+    },
+    "TopologyNode": {
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "clientId": {
+          "type": "string"
+        },
+        "identityHash": {
+          "type": "string"
+        },
+        "displayName": {
+          "type": "string"
+        },
+        "deviceType": {
+          "type": "string"
+        },
+        "chassisId": {
+          "type": "string"
+        },
+        "sysName": {
+          "type": "string"
+        },
+        "primaryMac": {
+          "type": "string"
+        },
+        "primaryIp": {
+          "type": "string"
+        },
+        "firstSeen": {
+          "type": "string"
+        },
+        "lastSeen": {
+          "type": "string"
+        },
+        "metadata": {
+          "additionalProperties": true,
+          "type": "object"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "id",
+        "clientId",
+        "identityHash",
+        "displayName",
+        "deviceType",
+        "chassisId",
+        "sysName",
+        "primaryMac",
+        "primaryIp",
+        "firstSeen",
+        "lastSeen",
+        "metadata"
+      ]
+    },
+    "TopologyNodeDetailResponse": {
+      "properties": {
+        "node": {
+          "$ref": "#/$defs/TopologyNode"
+        },
+        "interfaces": {
+          "items": {
+            "$ref": "#/$defs/TopologyInterface"
+          },
+          "type": "array"
+        },
+        "links": {
+          "items": {
+            "$ref": "#/$defs/TopologyLink"
+          },
+          "type": "array"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "node",
+        "interfaces",
+        "links"
+      ]
+    }
+  },
+  "title": "TopologyNodeDetailResponse",
+  "description": "TopologyNodeDetailResponse — generated from the Go struct in internal/api; refresh with `make schema` after struct changes."
+}
