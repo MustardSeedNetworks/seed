@@ -868,14 +868,14 @@ linters:
       - path: 'internal/api/'
         text: 'string `(status|message|error|interface|available|good|warning)` has'
         linters: [ goconst ]
-      # schemaTargets() in cmd/seed-schema/main.go is a single declarative
+      # Targets() in internal/api/apischema/apischema.go is a single declarative
       # registry table — one row per published DTO (RE_ARCHITECTURE_BLUEPRINT.md
       # Phase 2). Its length is data, not logic complexity, and it grows by one
       # line per DTO as coverage widens, so funlen is relaxed for this file.
       # Same spirit as the goconst lookup-table exclusions above; keeping it as
       # one table (rather than near-identical split functions) is what avoids
       # the dupl clones it would otherwise produce.
-      - path: 'cmd/seed-schema/main\.go'
+      - path: 'internal/api/apischema/apischema\.go'
         linters: [ funlen ]
       # The setup* helpers in internal/api/server_routes*.go are declarative
       # route tables (ADR-0002 capability registry): one row per route carrying

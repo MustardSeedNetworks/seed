@@ -3,6 +3,7 @@ package main
 import (
 	"os"
 	"path/filepath"
+	"reflect"
 	"strings"
 	"testing"
 
@@ -11,24 +12,42 @@ import (
 	"github.com/MustardSeedNetworks/seed/internal/api"
 )
 
-// generated renders the committed source against the live registry, which is
-// what `make openapi` writes.
-func generated(t *testing.T) map[string]map[string]any {
+// document is the part of the generated OpenAPI document the tests read.
+type document struct {
+	Paths      map[string]map[string]any `yaml:"paths"`
+	Components struct {
+		Schemas map[string]any `yaml:"schemas"`
+	} `yaml:"components"`
+}
+
+// committedSource reads docs/openapi-source.yaml.
+func committedSource(t *testing.T) []byte {
 	t.Helper()
 	src, err := os.ReadFile("../../docs/openapi-source.yaml")
 	if err != nil {
 		t.Fatalf("reading source: %v", err)
 	}
-	out, err := generate(src, api.RouteManifest())
+	return src
+}
+
+// generatedDocument renders the committed source against the live registry,
+// which is what `make openapi` writes.
+func generatedDocument(t *testing.T) (document, []byte) {
+	t.Helper()
+	out, err := generate(committedSource(t), api.RouteManifest())
 	if err != nil {
 		t.Fatalf("generate: %v", err)
 	}
-	var doc struct {
-		Paths map[string]map[string]any `yaml:"paths"`
-	}
+	var doc document
 	if unmarshalErr := yaml.Unmarshal(out, &doc); unmarshalErr != nil {
 		t.Fatalf("generated document is not valid YAML: %v", unmarshalErr)
 	}
+	return doc, out
+}
+
+func generated(t *testing.T) map[string]map[string]any {
+	t.Helper()
+	doc, _ := generatedDocument(t)
 	return doc.Paths
 }
 
@@ -138,5 +157,97 @@ func TestRunWritesTheCommittedDocument(t *testing.T) {
 	}
 	if string(got) != string(committed) {
 		t.Error("docs/openapi.yaml is stale; run `make openapi`")
+	}
+}
+
+// TestBodiesReferenceReflectedSchemas: an operation's body is the DTO its
+// handler decodes or sends, and attaching it keeps the policy-derived error
+// responses the registry produced.
+func TestBodiesReferenceReflectedSchemas(t *testing.T) {
+	t.Parallel()
+	doc, _ := generatedDocument(t)
+	login, ok := doc.Paths["/api/v1/auth/login"]["post"].(map[string]any)
+	if !ok {
+		t.Fatal("POST /api/v1/auth/login is not documented")
+	}
+
+	schemaRef := func(node any) string {
+		content, _ := node.(map[string]any)["content"].(map[string]any)
+		media, _ := content["application/json"].(map[string]any)
+		schema, _ := media["schema"].(map[string]any)
+		ref, _ := schema["$ref"].(string)
+		return ref
+	}
+	if got := schemaRef(login["requestBody"]); got != "#/components/schemas/LoginRequest" {
+		t.Errorf("request body = %q, want the LoginRequest component", got)
+	}
+	responses, _ := login["responses"].(map[string]any)
+	if got := schemaRef(responses["200"]); got != "#/components/schemas/LoginResponse" {
+		t.Errorf("200 body = %q, want the LoginResponse component", got)
+	}
+	if _, has413 := responses["413"]; !has413 {
+		t.Error("login lost its generated body-cap 413 when its 200 was added")
+	}
+	for _, name := range []string{"LoginRequest", "LoginResponse"} {
+		if _, published := doc.Components.Schemas[name]; !published {
+			t.Errorf("components.schemas has no %s", name)
+		}
+	}
+}
+
+// TestComponentsAreSelfContained: every registry DTO is published, every
+// reflected $defs reference was rewritten to a component, and a type name two
+// packages share is published once per package.
+func TestComponentsAreSelfContained(t *testing.T) {
+	t.Parallel()
+	doc, out := generatedDocument(t)
+	if strings.Contains(string(out), "#/$defs/") {
+		t.Error("the document still references #/$defs/; refs must point at components.schemas")
+	}
+	for _, name := range []string{"PathResponse", "EngineDiscoveryResponse", "Config"} {
+		if _, ok := doc.Components.Schemas[name]; !ok {
+			t.Errorf("registry DTO %s is not a component", name)
+		}
+	}
+	qos, multicast := doc.Components.Schemas["QosListenRequest"], doc.Components.Schemas["MulticastListenRequest"]
+	if qos == nil || multicast == nil || reflect.DeepEqual(qos, multicast) {
+		t.Error("qos.ListenRequest and multicast.ListenRequest must be two distinct components")
+	}
+	if _, bare := doc.Components.Schemas["ListenRequest"]; bare {
+		t.Error("an ambiguous name is published unqualified, so one package's type hides the other's")
+	}
+}
+
+// TestSourceMistakesFailTheGenerator: a $ref to no component and a
+// hand-written components.schemas both stop the build rather than publish a
+// body the daemon does not send.
+func TestSourceMistakesFailTheGenerator(t *testing.T) {
+	t.Parallel()
+	src := string(committedSource(t))
+	tests := []struct {
+		name, source, wantErr string
+	}{
+		{
+			name:    "dangling ref",
+			source:  strings.Replace(src, "schemas/LoginRequest'", "schemas/NoSuchRequest'", 1),
+			wantErr: "#/components/schemas/NoSuchRequest",
+		},
+		{
+			name:    "hand-written schema",
+			source:  strings.Replace(src, "  components:\n", "  components:\n    schemas: {}\n", 1),
+			wantErr: "must not define components.schemas",
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			if tt.source == src {
+				t.Fatal("the mutation did not apply to the committed source")
+			}
+			_, err := generate([]byte(tt.source), api.RouteManifest())
+			if err == nil || !strings.Contains(err.Error(), tt.wantErr) {
+				t.Errorf("generate error = %v, want one naming %q", err, tt.wantErr)
+			}
+		})
 	}
 }

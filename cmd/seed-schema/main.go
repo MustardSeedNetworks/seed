@@ -21,309 +21,11 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
-	"reflect"
 
 	"github.com/invopop/jsonschema"
 
-	"github.com/MustardSeedNetworks/seed/internal/api"
-	"github.com/MustardSeedNetworks/seed/internal/config"
-	"github.com/MustardSeedNetworks/seed/internal/diagnostics/multicast"
-	"github.com/MustardSeedNetworks/seed/internal/diagnostics/packetcapture"
-	"github.com/MustardSeedNetworks/seed/internal/diagnostics/qos"
-	"github.com/MustardSeedNetworks/seed/internal/discovery"
-	"github.com/MustardSeedNetworks/seed/internal/discovery/bonjour"
+	"github.com/MustardSeedNetworks/seed/internal/api/apischema"
 )
-
-// schemaTarget pairs a Go DTO with the on-disk schema filename and a
-// human-readable title. The title is the Go type name (derived, never
-// hand-written); the filename is explicit so legacy names that predate the
-// kebab convention (login.schema.json, ipconfig-response.schema.json,
-// set-mtu.schema.json …) stay stable for existing clients.
-type schemaTarget struct {
-	value    any    // pointer to a zero-value of the DTO
-	filename string // filename without directory (e.g., "login.schema.json")
-	title    string // human-readable schema title (the Go type name)
-}
-
-// reg is one row of the schema registry: a DTO pointer and the schema file it
-// is written to. It exists so the registry below reads as a flat data table —
-// one line per DTO — rather than a set of near-identical builder functions.
-type reg struct {
-	value    any
-	filename string
-}
-
-// schemaTargets is the single source of truth for the DTOs we publish schemas
-// for: one declarative row per DTO, grouped by comment only. It is a data
-// table, not logic — adding a DTO is one line — so its length is expected to
-// grow (funlen is intentionally relaxed for this file). The title is taken
-// from the Go type name so it can never drift from the type.
-//
-// POLICY (RE_ARCHITECTURE_BLUEPRINT.md Phase 2 — flat + self-contained): a DTO
-// belongs here iff it is flat or nests only local, purpose-built transport
-// sub-structs in internal/api. DTOs that put an internal domain type on the
-// wire (discovery.*/dhcp.*/netif.*/logging.*/config), carry
-// [json.RawMessage], or self-recurse (a field typed as the DTO itself) are
-// deferred to Phase 3, where they get hand-designed flat transport DTOs — e.g.
-// GatewayResponse's recursive ipv6 field was split out into the flat
-// GatewayPingResult value object so the published schema stays acyclic.
-// Unexported lowercase DTOs cannot be referenced here.
-//
-// EXCEPTION (ADR-0008): genuinely PURE-DATA domain types whose JSON shape the
-// endpoint already serializes at runtime may be reflected directly, rather than
-// hand-mirrored. EngineDiscoveryResponse uses this for the discovery.* result
-// cluster (DiscoveredDevice/EngineStats/ScanResult and their pure-data closure):
-// internal/discovery is CGO-free, the /discovery/engine endpoint already emits
-// these structs, and the cluster carries no behavior/channels/funcs. The
-// exception is narrow — behavior- or I/O-bearing domain types still get a flat
-// mirror. The round-trip + acyclicity guardrails enforce it either way.
-//
-// Function rather than a package-level var to keep gochecknoglobals happy and
-// so `go run` doesn't pull internal/api into an init side effect.
-func schemaTargets() []schemaTarget {
-	rows := []reg{
-		// Request DTOs — strict-decode + validator surface (#1102).
-		{&api.LoginRequest{}, "login.schema.json"},
-		{&api.SetupCompleteRequest{}, "setup-complete.schema.json"},
-		{&api.RecoveryCompleteRequest{}, "recovery-complete.schema.json"},
-		{&api.SetMTURequest{}, "set-mtu.schema.json"},
-		{&api.PathRequest{}, "path.schema.json"},
-		{&api.WiFiConnectRequest{}, "wifi-connect.schema.json"},
-		{&api.TracerouteRequest{}, "traceroute-request.schema.json"},
-
-		// Auth / status / recovery / config responses.
-		{&api.StatusResponse{}, "status-response.schema.json"},
-		{&api.NeighbourCacheResponse{}, "neighbour-cache-response.schema.json"},
-		{&api.DriverStatsResponse{}, "driver-stats-response.schema.json"},
-		{&api.LoginResponse{}, "login-response.schema.json"},
-		{&api.CSRFTokenResponse{}, "csrf-token-response.schema.json"},
-		{&api.SetupStatusResponse{}, "setup-status-response.schema.json"},
-		{&api.LicenseStatusResponse{}, "license-status-response.schema.json"},
-		{&api.ErrorResponse{}, "error-response.schema.json"},
-		{&api.FeatureGateResponse{}, "feature-gate-response.schema.json"},
-		{&api.RecoveryStatusResponse{}, "recovery-status-response.schema.json"},
-		{&api.RecoveryInstructionsResponse{}, "recovery-instructions-response.schema.json"},
-		{&api.RecoveryCompleteResponse{}, "recovery-complete-response.schema.json"},
-		{&api.ConfigVersionResponse{}, "config-version-response.schema.json"},
-		{&api.BackupListResponse{}, "backup-list-response.schema.json"},
-
-		// telemetry / network / discovery responses.
-		{&api.CableResponse{}, "cable-response.schema.json"},
-		{&api.VLANResponse{}, "vlan-response.schema.json"},
-		{&api.WiFiResponse{}, "wifi-response.schema.json"},
-		{&api.WiFiAirspaceResponse{}, "wifi-airspace-response.schema.json"},
-		{&api.WiFiAnomaliesResponse{}, "wifi-anomalies-response.schema.json"},
-		{&api.SpeedtestResponse{}, "speedtest-response.schema.json"},
-		{&api.RogueDHCPResponse{}, "rogue-dhcp-response.schema.json"},
-		{&api.IPConfigResponse{}, "ipconfig-response.schema.json"},
-		{&api.DiscoveryResponse{}, "discovery-response.schema.json"},
-		{&api.ReportsResponse{}, "reports-response.schema.json"},
-		{&api.ReportScheduleRequest{}, "report-schedule-request.schema.json"},
-		{&api.ReportScheduleInfo{}, "report-schedule-info.schema.json"},
-		{&api.ReportSchedulesResponse{}, "report-schedules-response.schema.json"},
-		{&api.NetworkProblemsResponse{}, "network-problems-response.schema.json"},
-		{&api.ProblemScanResponse{}, "problem-scan-response.schema.json"},
-		{&api.GatewayResponse{}, "gateway-response.schema.json"},
-
-		// telemetry / network settings.
-		{&api.IPSettingsRequest{}, "ip-settings-request.schema.json"},
-		{&api.IPSettingsResponse{}, "ip-settings-response.schema.json"},
-		{&api.SubnetRequest{}, "subnet-request.schema.json"},
-		{&api.SubnetResponse{}, "subnet-response.schema.json"},
-		{&api.SubnetDecisionRequest{}, "subnet-decision-request.schema.json"},
-		{&api.VLANInterfaceRequest{}, "vlan-interface-request.schema.json"},
-		{&api.SpeedtestStatusResponse{}, "speedtest-status-response.schema.json"},
-		{&api.RogueDHCPConfigResponse{}, "rogue-dhcp-config-response.schema.json"},
-		{&api.DNSServerResponse{}, "dns-server-response.schema.json"},
-		{&api.LinkResponse{}, "link-response.schema.json"},
-
-		// Health-check endpoint responses (per protocol).
-		{&api.DICOMEndpointResponse{}, "dicom-endpoint-response.schema.json"},
-		{&api.FHIREndpointResponse{}, "fhir-endpoint-response.schema.json"},
-		{&api.FileShareEndpointResponse{}, "file-share-endpoint-response.schema.json"},
-		{&api.HL7EndpointResponse{}, "hl7-endpoint-response.schema.json"},
-		{&api.HTTPEndpointResponse{}, "http-endpoint-response.schema.json"},
-		{&api.LDAPEndpointResponse{}, "ldap-endpoint-response.schema.json"},
-		{&api.LTIEndpointResponse{}, "lti-endpoint-response.schema.json"},
-		{&api.ModbusEndpointResponse{}, "modbus-endpoint-response.schema.json"},
-		{&api.OPCUAEndpointResponse{}, "opcua-endpoint-response.schema.json"},
-		{&api.RTSPEndpointResponse{}, "rtsp-endpoint-response.schema.json"},
-		{&api.SQLEndpointResponse{}, "sql-endpoint-response.schema.json"},
-		{&api.PingTargetResponse{}, "ping-target-response.schema.json"},
-
-		// Health-check / discovery settings value objects.
-		{&api.TCPPortResponse{}, "tcp-port-response.schema.json"},
-		{&api.UDPPortResponse{}, "udp-port-response.schema.json"},
-		{&api.IperfSettingsResponse{}, "iperf-settings-response.schema.json"},
-		{&api.SpeedtestSettingsResponse{}, "speedtest-settings-response.schema.json"},
-		{&api.PassiveProtocolResponse{}, "passive-protocol-response.schema.json"},
-		{&api.PortScanResponse{}, "port-scan-response.schema.json"},
-		{&api.TimingResponse{}, "timing-response.schema.json"},
-		{&api.FingerprintingResponse{}, "fingerprinting-response.schema.json"},
-
-		// iperf / tools / DNS / engine request + result DTOs.
-		{&api.IperfClientRequest{}, "iperf-client-request.schema.json"},
-		{&api.IperfServerRequest{}, "iperf-server-request.schema.json"},
-		{&api.IperfInfoResponse{}, "iperf-info-response.schema.json"},
-		{&api.IperfResultResponse{}, "iperf-result-response.schema.json"},
-		{&api.PortScanRequest{}, "port-scan-request.schema.json"},
-		{&api.TCPProbeRequest{}, "tcp-probe-request.schema.json"},
-		{&api.DNSResponse{}, "dns-response.schema.json"},
-		{&api.EngineScanRequest{}, "engine-scan-request.schema.json"},
-		{&api.VulnScanRequest{}, "vuln-scan-request.schema.json"},
-		{&api.SetInterfaceRequest{}, "set-interface-request.schema.json"},
-		{&api.WiFiSettingsResponse{}, "wifi-settings-response.schema.json"},
-
-		// Users / API tokens / update / SSO / logs.
-		{&api.UserResponse{}, "user-response.schema.json"},
-		{&api.CreateUserRequest{}, "create-user-request.schema.json"},
-		{&api.UpdateUserRequest{}, "update-user-request.schema.json"},
-		{&api.MintTokenRequest{}, "mint-token-request.schema.json"},
-		{&api.MintTokenResponse{}, "mint-token-response.schema.json"},
-		{&api.SSOProvidersResponse{}, "sso-providers-response.schema.json"},
-		{&api.NVDAPIKeyValidateRequest{}, "nvd-api-key-validate-request.schema.json"},
-		{&api.NVDAPIKeyValidateResponse{}, "nvd-api-key-validate-response.schema.json"},
-		{&api.RestoreRequest{}, "restore-request.schema.json"},
-		{&api.ClientLogRequest{}, "client-log-request.schema.json"},
-		{&api.LogStatsResponse{}, "log-stats-response.schema.json"},
-
-		// Profile-import response.
-		{&api.ProfileImportResponse{}, "profile-import-response.schema.json"},
-
-		// Settings composers: top-level DTOs whose entire transitive closure is
-		// flat, local transport sub-structs in internal/api (every composed
-		// *Response is itself registered above). They compose, but never reach a
-		// domain type, json.RawMessage, or a self-reference, so the published
-		// schema stays self-contained and acyclic.
-		{&api.NetworkDiscoverySettingsResponse{}, "network-discovery-settings-response.schema.json"},
-		{&api.OptionsResponse{}, "options-response.schema.json"},
-		{&api.SNMPSettingsResponse{}, "snmp-settings-response.schema.json"},
-		{&api.TestsSettingsResponse{}, "tests-settings-response.schema.json"},
-		{&api.IperfClientStatusResponse{}, "iperf-client-status-response.schema.json"},
-
-		// Domain-nested DTOs that now carry flat transport mirrors (the handler
-		// maps the discovery/dhcp/netif/logging domain value onto a local
-		// purpose-built sub-struct), so the published schema no longer reaches
-		// into a domain package.
-		{&api.TCPProbeResponse{}, "tcp-probe-response.schema.json"},
-		{&api.RogueServersResponse{}, "rogue-servers-response.schema.json"},
-		{&api.CategorizedInterfacesResponse{}, "categorized-interfaces-response.schema.json"},
-		{&api.LogQueryResponse{}, "log-query-response.schema.json"},
-		{&api.BluetoothScanResponse{}, "bluetooth-scan-response.schema.json"},
-		{&api.WiFiDiscoveryScanResponse{}, "wifi-discovery-scan-response.schema.json"},
-		{&api.WiFiDiscoveryNetworksResponse{}, "wifi-discovery-networks-response.schema.json"},
-		{&api.WiFiDiscoveryAPsResponse{}, "wifi-discovery-aps-response.schema.json"},
-		{&api.WiFiDiscoveryStatsResponse{}, "wifi-discovery-stats-response.schema.json"},
-		{&api.PathResponse{}, "path-response.schema.json"},
-
-		// Profile envelope DTOs. The backend treats the per-profile Config as an
-		// opaque JSON blob (json.RawMessage) — it only ever inspects the
-		// `interface` block for license gating and otherwise stores/forwards it
-		// verbatim — so the published schema documents config as arbitrary JSON.
-		// Modeling that blob as typed Go structs, and retiring the hand-written
-		// profile.ts/settings.ts TS twins, is deferred to Phase 7 (frontend
-		// re-architecture); here we just complete contract coverage of the
-		// envelope itself.
-		{&api.ProfileRequest{}, "profile-request.schema.json"},
-		{&api.ProfileResponse{}, "profile-response.schema.json"},
-		{&api.ProfileListResponse{}, "profile-list-response.schema.json"},
-		{&api.ProfileImportRequest{}, "profile-import-request.schema.json"},
-		{&api.ProfileExportResponse{}, "profile-export-response.schema.json"},
-
-		// Jobs spine — unified job runner transport (ADR-0005, §8). The job
-		// request params and the job result are deliberately opaque: params is
-		// json.RawMessage (each kind validates its own shape) and result is a
-		// bare interface (kind-specific payload), so both document as arbitrary
-		// JSON. Registration was deferred in #1468 until a frontend consumer
-		// existed; Phase 7 S1 adds the TS /jobs client that consumes these.
-		{&api.CreateJobRequest{}, "create-job-request.schema.json"},
-		{&api.JobResponse{}, "job-response.schema.json"},
-		{&api.ProbeHistoryResponse{}, "probe-history-response.schema.json"},
-		{&api.AnomalyHistoryResponse{}, "anomaly-history-response.schema.json"},
-		{&api.InterfaceStatsListResponse{}, "interface-stats-list-response.schema.json"},
-		{&api.InterfaceHistoryResponse{}, "interface-history-response.schema.json"},
-
-		// Top-N reads over collected flows (P-C3, P-C4), consumed by the flow
-		// explorer (UI-SEED-23).
-		{&api.FlowTalkersResponse{}, "flow-talkers-response.schema.json"},
-		{&api.FlowConversationsResponse{}, "flow-conversations-response.schema.json"},
-		{&api.FlowApplicationsResponse{}, "flow-applications-response.schema.json"},
-
-		// The caller's own dashboard layout (UI-SEED-22): PUT body and the
-		// GET/PUT response.
-		{&api.DashboardLayoutRequest{}, "dashboard-layout-request.schema.json"},
-		{&api.DashboardLayout{}, "dashboard-layout.schema.json"},
-
-		// #364's Bonjour browse. Registered as the bonjour package's own type
-		// rather than an api mirror of it: a mirror is one more thing to drift
-		// and the handler serves this struct verbatim.
-		{&bonjour.BrowseResult{}, "bonjour-browse-response.schema.json"},
-
-		// #399's multicast listen and observation, jobs-spine kinds: the request is
-		// the kind's params and the result is the job's result. Registered as the
-		// multicast package's own types for the same reason as the browse.
-		{&multicast.ListenRequest{}, "multicast-listen-request.schema.json"},
-		{&multicast.ListenResult{}, "multicast-listen-response.schema.json"},
-		{&multicast.ObserveRequest{}, "multicast-observe-request.schema.json"},
-		{&multicast.ObserveResult{}, "multicast-observe-response.schema.json"},
-
-		// #400's DSCP preservation check, three jobs-spine kinds (one per host,
-		// or both on one host), registered as the qos package's own types like
-		// the listen above.
-		{&qos.SendRequest{}, "qos-send-request.schema.json"},
-		{&qos.SendResult{}, "qos-send-response.schema.json"},
-		{&qos.ListenRequest{}, "qos-listen-request.schema.json"},
-		{&qos.ListenResult{}, "qos-listen-response.schema.json"},
-		{&qos.SingleHostRequest{}, "qos-single-host-request.schema.json"},
-		{&qos.SingleHostResult{}, "qos-single-host-response.schema.json"},
-
-		// #326's packet capture, a jobs-spine kind registered as the
-		// packetcapture package's own types like the two above.
-		{&packetcapture.Request{}, "packet-capture-request.schema.json"},
-		{&packetcapture.Result{}, "packet-capture-response.schema.json"},
-
-		// #165's continuous path monitor, a jobs-spine kind. Each round's
-		// accumulated view arrives as a `pathMonitor` SSE frame, and the job's
-		// result is the same shape at the moment it stopped.
-		{&api.PathMonitorRequest{}, "path-monitor-request.schema.json"},
-		{&api.PathMonitorUpdate{}, "path-monitor-update.schema.json"},
-
-		// #395's multi-path egress run and #435's path MTU discovery, two
-		// jobs-spine kinds whose results are the discovery engines' own types.
-		{&api.MultiPathRequest{}, "path-multipath-request.schema.json"},
-		{&discovery.MultiPathResult{}, "path-multipath-response.schema.json"},
-		{&api.PathMTURequest{}, "path-mtu-request.schema.json"},
-		{&discovery.PMTUDResult{}, "path-mtu-response.schema.json"},
-
-		// Profile/settings config — code-first model of the per-profile
-		// config.Config blob (ADR-0007/0008, Phase 7 S6). The profile Config
-		// is applied via Config.ApplyProfileJSON, so config.Config is its
-		// canonical shape; this generates the Config TS type that replaces the
-		// hand-written profile.ts/settings.ts twins. Pure data (the mutex is
-		// json:"-").
-		{&config.Config{}, "config.schema.json"},
-
-		// Engine discovery result — the ADR-0008 pure-data exception. Reflects
-		// the discovery.* result cluster (DiscoveredDevice/EngineStats/
-		// ScanResult and their pure-data closure) directly rather than
-		// hand-mirroring ~150 fields: internal/discovery is CGO-free, the
-		// /discovery/engine endpoint already serializes these structs, and the
-		// cluster carries no behavior. Unblocks the Phase 7 frontend consuming
-		// typed engine results off the /jobs spine.
-		{&api.EngineDiscoveryResponse{}, "engine-discovery-response.schema.json"},
-	}
-
-	targets := make([]schemaTarget, len(rows))
-	for i, row := range rows {
-		targets[i] = schemaTarget{
-			value:    row.value,
-			filename: row.filename,
-			title:    reflect.TypeOf(row.value).Elem().Name(),
-		}
-	}
-
-	return targets
-}
 
 func main() {
 	outDir := flag.String("o", "docs/schemas/api", "output directory")
@@ -336,28 +38,28 @@ func main() {
 		os.Exit(1)
 	}
 
-	reflector := newReflector()
+	reflector := apischema.NewReflector()
 
-	for _, target := range schemaTargets() {
-		schema := reflector.Reflect(target.value)
-		schema.Title = target.title
+	for _, target := range apischema.Targets() {
+		schema := reflector.Reflect(target.Value)
+		schema.Title = target.Title
 		schema.Description = fmt.Sprintf(
 			"%s — generated from the Go struct in internal/api; refresh with `make schema` after struct changes.",
-			target.title,
+			target.Title,
 		)
 		schema.ID = jsonschema.ID(fmt.Sprintf(
 			"https://raw.githubusercontent.com/MustardSeedNetworks/seed/main/docs/schemas/api/%s",
-			target.filename,
+			target.Filename,
 		))
 
 		data, err := json.MarshalIndent(schema, "", "  ")
 		if err != nil {
-			fmt.Fprintf(os.Stderr, "marshal %s: %v\n", target.filename, err)
+			fmt.Fprintf(os.Stderr, "marshal %s: %v\n", target.Filename, err)
 			os.Exit(1)
 		}
 		data = append(data, '\n')
 
-		path := filepath.Join(*outDir, target.filename)
+		path := filepath.Join(*outDir, target.Filename)
 		if writeErr := os.WriteFile(path, data, 0o600); writeErr != nil {
 			fmt.Fprintf(os.Stderr, "write %s: %v\n", path, writeErr)
 			os.Exit(1)
@@ -367,25 +69,4 @@ func main() {
 		// trailing summary is operator feedback, not data.
 		fmt.Fprintf(os.Stderr, "wrote %s\n", path)
 	}
-}
-
-// newReflector returns a jsonschema.Reflector configured for HTTP API
-// DTOs:
-//
-//   - FieldNameTag: "json" — schemas reflect the wire format clients see,
-//     not the Go field casing
-//   - AllowAdditionalProperties: false — schemas match the
-//     DisallowUnknownFields posture in decodeJSONStrict (#1100/#1101)
-//   - Anonymous: true — nested types are inlined rather than producing
-//     $ref indirection, which makes schemas easier to consume by tools
-//     that don't resolve refs across files
-func newReflector() *jsonschema.Reflector {
-	r := &jsonschema.Reflector{
-		ExpandedStruct:            false,
-		Anonymous:                 true,
-		AllowAdditionalProperties: false,
-	}
-	r.KeyNamer = func(s string) string { return s }
-	r.FieldNameTag = "json"
-	return r
 }
