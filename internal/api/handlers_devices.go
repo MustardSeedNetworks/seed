@@ -7,6 +7,8 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/MustardSeedNetworks/foundation/pkg/httpserver/route"
+
 	"github.com/MustardSeedNetworks/seed/internal/config"
 	discoverysettings "github.com/MustardSeedNetworks/seed/internal/discovery/settings"
 	"github.com/MustardSeedNetworks/seed/internal/i18n"
@@ -422,19 +424,23 @@ func (s *Server) handleDevicesSubnets(w http.ResponseWriter, r *http.Request) {
 
 // targetNetworkRoutes serves the discovery target networks and the decisions
 // on learned ones. Every write is operator+ (writeGated).
-func (s *Server) targetNetworkRoutes() []route {
-	return []route{
+func (s *Server) targetNetworkRoutes() []route.Route {
+	return []route.Route{
 		{
-			path:    APIVersionPrefix + "/security/devices/subnets",
-			handler: s.handleDevicesSubnets,
-			methods: []string{http.MethodGet, http.MethodPost, http.MethodPut, http.MethodDelete},
-			minRole: roles.Operator,
+			Path:    APIVersionPrefix + "/security/devices/subnets",
+			Handler: s.handleDevicesSubnets,
+			Methods: []string{http.MethodGet, http.MethodPost, http.MethodPut, http.MethodDelete},
+			Scope:   roles.Operator,
+			Auth:    true,
+			CSRF:    true,
 		},
 		{
-			path:    APIVersionPrefix + "/security/devices/subnets/pending",
-			handler: s.handlePendingSubnets,
-			methods: []string{http.MethodGet, http.MethodPost},
-			minRole: roles.Operator,
+			Path:    APIVersionPrefix + "/security/devices/subnets/pending",
+			Handler: s.handlePendingSubnets,
+			Methods: []string{http.MethodGet, http.MethodPost},
+			Scope:   roles.Operator,
+			Auth:    true,
+			CSRF:    true,
 		},
 	}
 }

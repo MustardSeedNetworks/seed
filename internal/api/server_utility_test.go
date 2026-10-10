@@ -96,27 +96,6 @@ func TestSecurityHeadersMiddleware(t *testing.T) {
 	}
 }
 
-// TestRecoverMiddleware tests panic recovery in handlers.
-func TestRecoverMiddleware(t *testing.T) {
-	// Handler that panics
-	panicHandler := http.HandlerFunc(func(_ http.ResponseWriter, _ *http.Request) {
-		panic("test panic")
-	})
-
-	wrapped := api.ExportRecoverMiddleware(panicHandler)
-
-	req := httptest.NewRequest(http.MethodGet, "/", http.NoBody)
-	w := httptest.NewRecorder()
-
-	// Should not panic
-	wrapped.ServeHTTP(w, req)
-
-	// Should return 500 Internal Server Error
-	if w.Code != http.StatusInternalServerError {
-		t.Errorf("Expected status %d, got %d", http.StatusInternalServerError, w.Code)
-	}
-}
-
 // TestCORSMiddleware tests CORS header handling.
 func TestCORSMiddleware(t *testing.T) {
 	tests := []struct {
@@ -363,28 +342,6 @@ func TestNewTestServer(t *testing.T) {
 
 	if server.AuthManager() == nil {
 		t.Error("Expected server to have an auth manager")
-	}
-}
-
-// TestGetAuthenticatedHandler tests getting the authenticated handler.
-func TestGetAuthenticatedHandler(t *testing.T) {
-	server := api.NewTestServer()
-	defer server.Close()
-
-	handler := server.GetAuthenticatedHandler()
-	if handler == nil {
-		t.Fatal("GetAuthenticatedHandler returned nil")
-	}
-
-	// Make a request to verify the handler works
-	req := httptest.NewRequest(http.MethodGet, "/api/v1/status", http.NoBody)
-	w := httptest.NewRecorder()
-
-	handler.ServeHTTP(w, req)
-
-	// Should return some response (likely 401 without auth, but not panic)
-	if w.Code == 0 {
-		t.Error("Expected handler to return a status code")
 	}
 }
 

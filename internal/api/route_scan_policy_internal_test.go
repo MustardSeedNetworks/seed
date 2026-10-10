@@ -7,6 +7,8 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/MustardSeedNetworks/foundation/pkg/httpserver/route"
+
 	"github.com/MustardSeedNetworks/seed/internal/identity/roles"
 )
 
@@ -46,7 +48,8 @@ func untargetedScanRoutes() []string {
 // of the handlers' dependencies, so nothing else has to be wired.
 func newRoutePolicyServer(t *testing.T) *Server {
 	t.Helper()
-	s := &Server{mux: http.NewServeMux()}
+	s := &Server{}
+	s.withRouteDeps(t)
 	s.setupRoutes()
 	return s
 }
@@ -58,9 +61,9 @@ func newRoutePolicyServer(t *testing.T) *Server {
 func TestTargetedScansAreRateLimited(t *testing.T) {
 	s := newRoutePolicyServer(t)
 
-	byPath := make(map[string]route, len(s.manifest))
-	for _, rt := range s.manifest {
-		byPath[rt.path] = rt
+	byPath := make(map[string]route.Policy, len(s.routes.Policies()))
+	for _, rt := range s.routes.Policies() {
+		byPath[rt.Path] = rt
 	}
 
 	for _, suffix := range targetedScanRoutes() {
@@ -70,7 +73,7 @@ func TestTargetedScansAreRateLimited(t *testing.T) {
 			if !ok {
 				t.Fatalf("%s is not registered; this list is stale", path)
 			}
-			if !rt.rateLimited {
+			if !rt.RateLimited {
 				t.Errorf("%s is an active scan with no rate limit", path)
 			}
 		})
@@ -84,9 +87,9 @@ func TestTargetedScansAreRateLimited(t *testing.T) {
 func TestHostProbesRequireOperator(t *testing.T) {
 	s := newRoutePolicyServer(t)
 
-	byPath := make(map[string]route, len(s.manifest))
-	for _, rt := range s.manifest {
-		byPath[rt.path] = rt
+	byPath := make(map[string]route.Policy, len(s.routes.Policies()))
+	for _, rt := range s.routes.Policies() {
+		byPath[rt.Path] = rt
 	}
 
 	for _, suffix := range []string{
@@ -99,10 +102,10 @@ func TestHostProbesRequireOperator(t *testing.T) {
 			if !ok {
 				t.Fatalf("%s is not registered", suffix)
 			}
-			if rt.minRole != roles.Operator {
+			if rt.Scope != roles.Operator {
 				t.Errorf("%s minRole = %q, want %q — probing arbitrary hosts "+
 					"is an action on the network, not a read of it",
-					suffix, rt.minRole, roles.Operator)
+					suffix, rt.Scope, roles.Operator)
 			}
 		})
 	}
@@ -128,7 +131,7 @@ func TestHostProbesRefuseViewerAtTheMux(t *testing.T) {
 		} {
 			req := newAuthedRequest(http.MethodPost, APIVersionPrefix+suffix, []byte(`{}`), c.user)
 			w := httptest.NewRecorder()
-			s.mux.ServeHTTP(w, req)
+			s.Mux().ServeHTTP(w, req)
 			if w.Code != c.want {
 				t.Errorf("%s POST %s: status = %d, want %d", c.user, suffix, w.Code, c.want)
 			}
@@ -180,10 +183,10 @@ func TestScanRoutesAreAllClassified(t *testing.T) {
 		known[APIVersionPrefix+suffix] = true
 	}
 
-	for _, rt := range s.manifest {
-		if strings.HasSuffix(rt.path, "/scan") && !known[rt.path] {
+	for _, rt := range s.routes.Policies() {
+		if strings.HasSuffix(rt.Path, "/scan") && !known[rt.Path] {
 			t.Errorf("%s ends in /scan but is in neither targetedScanRoutes nor "+
-				"untargetedScanRoutes; classify it", rt.path)
+				"untargetedScanRoutes; classify it", rt.Path)
 		}
 	}
 }

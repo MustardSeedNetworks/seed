@@ -53,26 +53,18 @@ func engineNames(engines []engine.Engine) []string {
 	return out
 }
 
-// Handler returns the fully composed HTTP handler: the route mux wrapped in the
-// complete middleware stack. Both Start (production) and characterization tests
-// use this so they exercise the identical chain.
+// Handler returns the fully composed HTTP handler: the registry behind the
+// global headers. Both Start (production) and characterization tests use this
+// so they exercise the identical chain.
 //
-// Stack (outermost → innermost): panic recovery → request ID → logging →
-// security headers → body limit → CORS → i18n → API-token → auth (JWT) → CSRF
-// → mux (fixes #519). apiTokenMiddleware sits in front of the JWT middleware so
-// an `Authorization: Bearer sd_pat_…` resolves a personal-access token before
-// the JWT middleware runs; otherwise it falls through.
+// Stack (outermost → innermost): security headers → body limit → CORS → i18n
+// → the Registrar (request ID → access log → panic recovery → mux → each
+// route's own limiter / auth / method / CSRF / feature / scope / body cap).
 func (s *Server) Handler() http.Handler {
-	return recoverMiddleware(
-		logging.RequestIDMiddleware(
-			logging.LoggingMiddleware(
-				securityHeadersMiddleware(
-					bodyLimitMiddleware(
-						corsMiddleware(
-							i18n.Middleware()(
-								apiTokenMiddleware(s.identityTokens, s.resolveClientID,
-									s.authManager().Middleware(
-										s.csrfManager().CSRFMiddleware(s.mux))))))))))
+	return securityHeadersMiddleware(
+		bodyLimitMiddleware(
+			corsMiddleware(
+				i18n.Middleware()(s.routes.Handler()))))
 }
 
 // Start brings the server fully online: it starts the link monitor(s),

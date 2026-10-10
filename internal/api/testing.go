@@ -2,7 +2,8 @@ package api
 
 import (
 	"errors"
-	"net/http"
+
+	"github.com/MustardSeedNetworks/foundation/pkg/csrf"
 
 	alertdelivery "github.com/MustardSeedNetworks/seed/internal/alerts/delivery"
 	"github.com/MustardSeedNetworks/seed/internal/app"
@@ -84,17 +85,6 @@ func (s *Server) Close() {
 	}
 }
 
-// GetAuthenticatedHandler returns the mux behind CORS and the JWT middleware
-// only. It is NOT the full stack: CSRF, the body limit, i18n and the API-token
-// middleware are all absent, so a test using it cannot see a protection the
-// production chain applies. The MFA suite read it as "authenticated" and so
-// never noticed that every enrolment route answered 403 in the browser (#2725).
-// Prefer Handler(), which is the chain Start serves; reach for this only when a
-// test deliberately needs the JWT middleware in isolation.
-func (s *Server) GetAuthenticatedHandler() http.Handler {
-	return corsMiddleware(s.authManager().Middleware(s.mux))
-}
-
 // SetTestDB injects a *database.DB into the test server. Wave 3 (#85)
 // added MFA endpoints that require persistence; tests use this to
 // attach a temp SQLite database without standing up the full
@@ -124,7 +114,6 @@ func NewTestServerWithConfig(cfg *config.Config) *Server {
 		config:        cfg,
 		configPath:    "/tmp/test-config.yaml",
 		logPath:       "/tmp/test.log",
-		mux:           http.NewServeMux(),
 		icmpAvailable: true,
 		engines:       engine.NewRegistry(nil),
 	}
@@ -139,7 +128,7 @@ func NewTestServerWithConfig(cfg *config.Config) *Server {
 		cfg.Auth.DefaultUsername,
 		cfg.Auth.DefaultPasswordHash,
 	)
-	s.csrf = auth.NewCSRFManager()
+	s.csrf = csrf.NewManager()
 	s.setupToken = NewSetupTokenManager()
 	s.proxies = NewTrustedProxies("") // Empty for testing
 

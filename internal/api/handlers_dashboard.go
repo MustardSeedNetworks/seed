@@ -4,6 +4,8 @@ import (
 	"errors"
 	"net/http"
 
+	"github.com/MustardSeedNetworks/foundation/pkg/httpserver/route"
+
 	"github.com/MustardSeedNetworks/seed/internal/i18n"
 	"github.com/MustardSeedNetworks/seed/internal/identity/users"
 	"github.com/MustardSeedNetworks/seed/internal/logging"
@@ -31,12 +33,14 @@ type DashboardLayoutRequest struct {
 
 // dashboardRoutes registers the caller's own layout. It is self-scoped, so
 // it carries no role gate.
-func (s *Server) dashboardRoutes() []route {
-	return []route{{
-		path:         APIVersionPrefix + "/users/me/dashboard",
-		handler:      s.handleMyDashboard,
-		methods:      []string{http.MethodGet, http.MethodPut},
-		maxBodyBytes: dashboardMaxBody,
+func (s *Server) dashboardRoutes() []route.Route {
+	return []route.Route{{
+		Path:         APIVersionPrefix + "/users/me/dashboard",
+		Handler:      s.handleMyDashboard,
+		Methods:      []string{http.MethodGet, http.MethodPut},
+		MaxBodyBytes: dashboardMaxBody,
+		Auth:         true,
+		CSRF:         true,
 	}}
 }
 

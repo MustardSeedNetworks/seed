@@ -9,17 +9,14 @@ import (
 	"encoding/json"
 	"errors"
 	"net/http"
-	"slices"
 	"strings"
 
 	"github.com/MustardSeedNetworks/seed/internal/logging"
 )
 
-// Common error codes for auth middleware JSON responses (matches api.ErrorResponse).
-const (
-	errCodeUnauthorized = "UNAUTHORIZED"
-	errCodeForbidden    = "FORBIDDEN"
-)
+// errCodeUnauthorized is the code of the auth middleware's refusals (matches
+// api.ErrCodeUnauthorized).
+const errCodeUnauthorized = "UNAUTHORIZED"
 
 // authErrorResponse represents a standardized error response for auth middleware.
 type authErrorResponse struct {
@@ -28,14 +25,13 @@ type authErrorResponse struct {
 	Details string `json:"details,omitempty"`
 }
 
-// sendAuthError sends a JSON error response from auth/CSRF middleware.
-// This ensures consistent error formats matching the API error schema.
-func sendAuthError(w http.ResponseWriter, status int, code, message string) {
+// sendUnauthorized sends the auth middleware's 401 in the API error schema.
+func sendUnauthorized(w http.ResponseWriter, message string) {
 	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(status)
+	w.WriteHeader(http.StatusUnauthorized)
 	resp := authErrorResponse{
 		Error: message,
-		Code:  code,
+		Code:  errCodeUnauthorized,
 	}
 	if err := json.NewEncoder(w).Encode(resp); err != nil {
 		logging.GetLogger().Error("Failed to encode auth error response", "error", err)
@@ -72,58 +68,6 @@ func extractTokenFromSubprotocol(protocols string) string {
 	return ""
 }
 
-// preSessionPaths are the API paths reachable before the caller holds an access
-// token: the login exchange and its second factor, first-run setup, and the
-// recovery that rescues a locked-out account (#478, and #85 for the second
-// factor).
-//
-// Every one of these that accepts a mutating method must also be on
-// isCSRFExemptPath. They have no session, so the CSRF middleware would find no
-// session ID and answer 401 — not protection, a wall. That divergence made
-// TOTP enrolment a permanent lockout (#2391), which is why
-// TestPreSessionPathsAreCSRFExempt now derives one list from the other.
-func preSessionPaths() []string {
-	return []string{
-		"/api/v1/auth/login",
-		"/api/v1/auth/refresh",
-		"/api/v1/setup/status",
-		"/api/v1/setup/complete",
-		"/api/v1/recovery/status",
-		"/api/v1/recovery/complete",
-		"/api/v1/recovery/instructions",
-		"/api/v1/auth/login/totp",
-		"/api/v1/auth/webauthn/login/begin",
-		"/api/v1/auth/webauthn/login/finish",
-
-		// The OAuth handshake, and only the handshake. These three run before
-		// a session exists: the browser is redirected to them with no bearer.
-		// #2632: this was a `/api/v1/sso/` prefix, which also swallowed
-		// /sso/settings and /sso/update — two operator-gated routes whose role
-		// gate reads an identity this middleware never got to set.
-		"/api/v1/sso/providers",
-		"/api/v1/sso/login",
-		"/api/v1/sso/callback",
-	}
-}
-
-// ShouldBypassAuth reports whether path skips the JWT middleware entirely:
-// login, refresh, setup, recovery, the OAuth handshake and static files.
-//
-// Exported so internal/api can assert the invariant this predicate has to
-// satisfy — a route carrying a role or feature gate must never be on it,
-// because the gate reads an identity only this middleware establishes
-// (#2632, TestNoGatedRouteBypassesAuth).
-func ShouldBypassAuth(path string) bool {
-	if slices.Contains(preSessionPaths(), path) {
-		return true
-	}
-	// Skip auth for static files (non-API, non-WebSocket paths)
-	if !strings.HasPrefix(path, "/api/") && !strings.HasPrefix(path, "/ws") {
-		return true
-	}
-	return false
-}
-
 // extractTokenFromRequest extracts the JWT token from the request.
 // For WebSocket connections, checks Sec-WebSocket-Protocol header first.
 // Falls back to cookie/Authorization header via GetTokenFromRequest.
@@ -147,10 +91,10 @@ func extractTokenFromRequest(r *http.Request) string {
 // handleTokenValidationError sends the appropriate error response for token validation failures.
 func handleTokenValidationError(w http.ResponseWriter, err error) {
 	if errors.Is(err, ErrTokenExpired) {
-		sendAuthError(w, http.StatusUnauthorized, errCodeUnauthorized, "Token expired")
+		sendUnauthorized(w, "Token expired")
 		return
 	}
-	sendAuthError(w, http.StatusUnauthorized, errCodeUnauthorized, "Invalid token")
+	sendUnauthorized(w, "Invalid token")
 }
 
 // patAuthKey marks a request already authenticated by the personal-access-token
@@ -177,12 +121,6 @@ func IsAPITokenAuth(ctx context.Context) bool {
 // Middleware returns an HTTP middleware that validates JWT tokens.
 func (m *Manager) Middleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		// Skip auth for bypassed paths (login, refresh, setup, SSO, static files)
-		if ShouldBypassAuth(r.URL.Path) {
-			next.ServeHTTP(w, r)
-			return
-		}
-
 		// #2450: the PAT middleware runs in front of this one and forwards the
 		// request with the owner's identity already set. Re-reading the bearer
 		// here would validate an `sd_pat_…` string as a JWT and reject every
@@ -195,7 +133,7 @@ func (m *Manager) Middleware(next http.Handler) http.Handler {
 		// Extract token from request (WebSocket subprotocol or cookie/header)
 		tokenString := extractTokenFromRequest(r)
 		if tokenString == "" {
-			sendAuthError(w, http.StatusUnauthorized, errCodeUnauthorized, "Unauthorized")
+			sendUnauthorized(w, "Unauthorized")
 			return
 		}
 
@@ -208,7 +146,7 @@ func (m *Manager) Middleware(next http.Handler) http.Handler {
 
 		// Validate username claim exists and is not empty (fixes #711)
 		if claims.Username == "" {
-			sendAuthError(w, http.StatusUnauthorized, errCodeUnauthorized, "Invalid token: missing username claim")
+			sendUnauthorized(w, "Invalid token: missing username claim")
 			return
 		}
 

@@ -63,3 +63,34 @@ Enforced by `TestEveryAPIRouteDeclaresMethodAndBodyLimit`, which fails if any
 `/api/v1` route is registered without a declared method or body limit (the
 "no route bypasses the policy" guard), and `TestMethodGateRejectsUndeclaredMethod`.
 The `/__capabilities` manifest exposes `methods`/`maxBodyBytes` for fleet audit.
+
+## Amendment (2026-10-10) — the fleet's shared registrar; auth and CSRF per route
+
+Seed now registers every route through foundation's `pkg/httpserver/route`
+Registrar (S-FDN-1, seed#2752), the registry stem and niac already use. The
+local `register()`, `methodGate`, panic recovery, request-ID and access-log
+middlewares are deleted, and `check-route-policy.sh` runs foundation's pinned
+copy of the rule.
+
+Auth and CSRF are no longer global. Each route declares them, and the
+path lists that used to decide them in the middlewares (`preSessionPaths`,
+`isCSRFExemptPath`) are gone. `Auth` is on every `/api` route except the
+pre-session steps: sign-in and its second factor, refresh, first-run setup,
+recovery and the OAuth handshake. `CSRF` is on every authenticated route that
+takes a state-changing method, except logout and the client log sink. A hidden
+`/api/` catch-all keeps an unknown API path behind Auth and CSRF before its
+404. The capability manifest of every route was compared against the old
+middlewares' decisions before the switch, and no route's protection changed.
+
+Canonical order, per route, is foundation's:
+`limiter → auth → method gate → CSRF → feature → scope → body cap → handler`,
+inside request ID → access log → panic recovery around the mux. Two
+consequences are visible on the wire. A wrong method now answers 405 before a
+CSRF token is demanded. The `/__capabilities` manifest takes foundation's shape
+(`scope` replaces `minRole`; `auth` and `csrf` are listed). The access log names
+the matched pattern, not the raw path, and a client-supplied `X-Request-ID` is
+replaced rather than trusted.
+
+Enforced by `TestNoGatedRouteBypassesAuth` (a scope or feature gate implies
+Auth), `TestCSRFExemptionsArePinned`, `TestPreSessionRoutesAreUnauthenticated`
+and the `/__capabilities` golden.

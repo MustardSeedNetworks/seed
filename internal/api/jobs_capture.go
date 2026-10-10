@@ -16,6 +16,8 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/MustardSeedNetworks/foundation/pkg/httpserver/route"
+
 	"github.com/MustardSeedNetworks/seed/internal/diagnostics/packetcapture"
 	"github.com/MustardSeedNetworks/seed/internal/i18n"
 	"github.com/MustardSeedNetworks/seed/internal/identity/roles"
@@ -121,12 +123,13 @@ func (s *Server) handleCaptureDownload(w http.ResponseWriter, r *http.Request) {
 
 // captureRoutes returns the capture download route. The ID is a random
 // token the store validates before touching the filesystem.
-func (s *Server) captureRoutes() []route {
-	return []route{
+func (s *Server) captureRoutes() []route.Route {
+	return []route.Route{
 		{
-			path:    APIVersionPrefix + "/captures/",
-			handler: s.handleCaptureDownload,
-			methods: []string{http.MethodGet},
+			Path:    APIVersionPrefix + "/captures/",
+			Handler: s.handleCaptureDownload,
+			Methods: []string{http.MethodGet},
+			Auth:    true,
 		},
 	}
 }

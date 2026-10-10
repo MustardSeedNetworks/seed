@@ -33,7 +33,9 @@ from pathlib import Path
 API_PREFIX = "/api/v1"
 BASELINE = "scripts/route-consumer-baseline.txt"
 
-ROUTE_LITERAL = re.compile(r'path:\s*(APIVersionPrefix\s*\+\s*)?"([^"]+)"')
+# A route.Route literal names its Handler right after its Path; a cookie's Path
+# does not.
+ROUTE_LITERAL = re.compile(r'Path:\s*(APIVersionPrefix\s*\+\s*)?"([^"]+)",\s*Handler:')
 DIRECT_HANDLE = re.compile(r'HandleFunc\("(/api/[^"]+)"')
 SESSION_RESOURCE = re.compile(r'^\s*"([\w-]+)":\s*s\.handle', re.M)
 # Consumers are scanned for any `/api/` path, not only `/api/v1/`: a call to a
@@ -69,7 +71,9 @@ def load_routes(root: Path) -> set[str]:
                 path = path.split(" ", 1)[1]
             if prefixed:
                 path = API_PREFIX + path
-            if path.startswith("/api/"):
+            # "/api/" is the hidden catch-all that answers an unknown API path
+            # with 404 behind Auth. As a route it would match every request.
+            if path.startswith("/api/") and path != "/api/":
                 routes.add(path)
         routes.update(DIRECT_HANDLE.findall(text))
         if file.name == "handlers_sessions.go":

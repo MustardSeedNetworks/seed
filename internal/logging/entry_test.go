@@ -297,10 +297,9 @@ func TestComponentConstants(t *testing.T) {
 }
 
 func TestContextChaining(t *testing.T) {
-	ctx := context.Background()
+	ctx, wantRequestID := logging.ContextWithRequestID(context.Background(), t)
 	ctx = logging.WithLayer(ctx, logging.LayerAPI)
 	ctx = logging.WithComponent(ctx, logging.ComponentAuth)
-	ctx = logging.WithRequestID(ctx, "req-789")
 
 	layer := logging.LayerFromContext(ctx)
 	component := logging.ComponentFromContext(ctx)
@@ -312,7 +311,7 @@ func TestContextChaining(t *testing.T) {
 	if component != logging.ComponentAuth {
 		t.Errorf("ComponentFromContext() = %q, want %q", component, logging.ComponentAuth)
 	}
-	if requestID != "req-789" {
-		t.Errorf("RequestIDFromContext() = %q, want req-789", requestID)
+	if requestID != wantRequestID {
+		t.Errorf("RequestIDFromContext() = %q, want %q", requestID, wantRequestID)
 	}
 }

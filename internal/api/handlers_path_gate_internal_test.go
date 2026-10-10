@@ -28,7 +28,7 @@ func TestRootsPathRequiresPro(t *testing.T) {
 	req := httptest.NewRequest(http.MethodPost, APIVersionPrefix+"/path/path", http.NoBody)
 	req = req.WithContext(auth.WithUsername(req.Context(), "alice"))
 	w := httptest.NewRecorder()
-	s.mux.ServeHTTP(w, req)
+	s.Mux().ServeHTTP(w, req)
 	if w.Code != http.StatusPaymentRequired {
 		t.Fatalf("free tier: status = %d, want 402; body=%s", w.Code, w.Body.String())
 	}
@@ -52,7 +52,7 @@ func TestRootsPathRequiresPro(t *testing.T) {
 	req2 := httptest.NewRequest(http.MethodPost, APIVersionPrefix+"/path/path", http.NoBody)
 	req2 = req2.WithContext(auth.WithUsername(req2.Context(), "alice"))
 	w2 := httptest.NewRecorder()
-	s.mux.ServeHTTP(w2, req2)
+	s.Mux().ServeHTTP(w2, req2)
 	if w2.Code == http.StatusPaymentRequired {
 		t.Errorf("trial license: status = 402 (should pass the gate); body=%s", w2.Body.String())
 	}

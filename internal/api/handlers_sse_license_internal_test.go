@@ -29,7 +29,7 @@ func TestSSEEventsRequiresLiveTelemetry(t *testing.T) {
 	req := httptest.NewRequest(http.MethodGet, APIVersionPrefix+"/events", http.NoBody)
 	req = req.WithContext(auth.WithUsername(req.Context(), "alice"))
 	w := httptest.NewRecorder()
-	s.mux.ServeHTTP(w, req)
+	s.Mux().ServeHTTP(w, req)
 	if w.Code != http.StatusPaymentRequired {
 		t.Fatalf("free tier: status = %d, want 402; body=%s", w.Code, w.Body.String())
 	}
@@ -54,7 +54,7 @@ func TestSSEEventsRequiresLiveTelemetry(t *testing.T) {
 	req2 := httptest.NewRequest(http.MethodGet, APIVersionPrefix+"/events", http.NoBody)
 	req2 = req2.WithContext(auth.WithUsername(req2.Context(), "alice"))
 	w2 := httptest.NewRecorder()
-	s.mux.ServeHTTP(w2, req2)
+	s.Mux().ServeHTTP(w2, req2)
 	if w2.Code == http.StatusPaymentRequired {
 		t.Errorf("trial license: status = 402 (should pass the gate); body=%s", w2.Body.String())
 	}
@@ -73,7 +73,7 @@ func TestDiscoveryEngineEventsStaysOpen(t *testing.T) {
 	req := httptest.NewRequest(http.MethodGet, APIVersionPrefix+"/discovery/engine/events", http.NoBody)
 	req = req.WithContext(auth.WithUsername(req.Context(), "alice"))
 	w := httptest.NewRecorder()
-	s.mux.ServeHTTP(w, req)
+	s.Mux().ServeHTTP(w, req)
 	if w.Code == http.StatusPaymentRequired {
 		t.Errorf("discovery events should NOT be license-gated; got 402: body=%s", w.Body.String())
 	}

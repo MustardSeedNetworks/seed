@@ -47,9 +47,8 @@ func apiTokenTestSetup(t *testing.T) (*Server, *license.Manager) {
 		t.Fatalf("license manager: %v", mgrErr)
 	}
 
-	s := &Server{
-		mux: http.NewServeMux(),
-	}
+	s := &Server{}
+	s.withRouteDeps(t)
 	s.dbConn = db
 	s.licenseMgr = mgr
 	// Wire the discovery use-cases so routed handlers (e.g. the

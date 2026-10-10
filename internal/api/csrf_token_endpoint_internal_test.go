@@ -10,7 +10,6 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/MustardSeedNetworks/seed/internal/auth"
 	"github.com/MustardSeedNetworks/seed/internal/database"
 	"github.com/MustardSeedNetworks/seed/internal/database/dbtest"
 	"github.com/MustardSeedNetworks/seed/internal/identity/roles"
@@ -98,7 +97,7 @@ func TestCSRFTokenEndpointDoesNotInvalidateTheFirstTab(t *testing.T) {
 	req := httptest.NewRequest(http.MethodPut, APIVersionPrefix+"/settings", strings.NewReader(body))
 	req.Header.Set("Authorization", "Bearer "+bearer)
 	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set(auth.CSRFHeaderName, firstTab)
+	req.Header.Set("X-Csrf-Token", firstTab)
 	w := httptest.NewRecorder()
 	s.Handler().ServeHTTP(w, req)
 

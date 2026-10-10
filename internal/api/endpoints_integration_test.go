@@ -462,9 +462,11 @@ func TestTestsSettingsEndpoints(t *testing.T) {
 	t.Run("UpdateHealthChecksSettingsIsWriteGated", func(t *testing.T) {
 		// The settings PUT persists to the probes table (ADR-0027 P2) and is a
 		// mutating route, so it must enforce the operator write gate. An
-		// unauthenticated request is rejected. The happy-path persistence
-		// round-trip is covered by the handler-level internal test
-		// (TestHealthChecksSettingsRoundTrip).
+		// unauthenticated request through the production chain is rejected. The
+		// happy-path persistence round-trip is covered by the handler-level
+		// internal test (TestHealthChecksSettingsRoundTrip).
+		gated := httptest.NewServer(server.Handler())
+		defer gated.Close()
 		settings := api.TestsSettingsResponse{
 			DNSHostname: "example.com",
 			DNSServers:  []api.DNSServerResponse{{Address: "8.8.8.8", Enabled: true}},
@@ -474,7 +476,7 @@ func TestTestsSettingsEndpoints(t *testing.T) {
 		body, _ := json.Marshal(settings)
 		req, _ := http.NewRequest(
 			http.MethodPut,
-			ts.URL+"/api/v1/telemetry/probes/settings",
+			gated.URL+"/api/v1/telemetry/probes/settings",
 			bytes.NewReader(body),
 		)
 		req.Header.Set("Content-Type", "application/json")

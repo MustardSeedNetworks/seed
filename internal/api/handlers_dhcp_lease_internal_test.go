@@ -75,11 +75,11 @@ func TestDHCPLeaseReportsARealInterface(t *testing.T) {
 func TestDHCPLeaseRouteIsRegistered(t *testing.T) {
 	s := newRoutePolicyServerForDHCP(t)
 
-	for _, rt := range s.manifest {
-		if rt.path != APIVersionPrefix+"/telemetry/dhcp/lease" {
+	for _, rt := range s.routes.Policies() {
+		if rt.Path != APIVersionPrefix+"/telemetry/dhcp/lease" {
 			continue
 		}
-		if !rt.rateLimited {
+		if !rt.RateLimited {
 			t.Error("the lease route is not rate limited; it shells out to a " +
 				"platform command")
 		}
@@ -90,7 +90,8 @@ func TestDHCPLeaseRouteIsRegistered(t *testing.T) {
 
 func newRoutePolicyServerForDHCP(t *testing.T) *Server {
 	t.Helper()
-	s := &Server{mux: http.NewServeMux()}
+	s := &Server{}
+	s.withRouteDeps(t)
 	s.setupRoutes()
 	return s
 }

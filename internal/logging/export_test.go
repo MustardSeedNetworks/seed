@@ -1,10 +1,13 @@
 package logging
 
 import (
-	"bufio"
+	"context"
 	"log/slog"
-	"net"
 	"net/http"
+	"net/http/httptest"
+	"testing"
+
+	"github.com/MustardSeedNetworks/foundation/pkg/httpserver/route"
 )
 
 // ExportIsSensitiveKey exposes isSensitiveKey for testing.
@@ -27,11 +30,6 @@ func ExportParseLevel(level string) slog.Level {
 	return parseLevel(level)
 }
 
-// ExportGenerateRequestID exposes generateRequestID for testing.
-func ExportGenerateRequestID() string {
-	return generateRequestID()
-}
-
 // ExportSetGlobalLogger sets the global logger for testing.
 func ExportSetGlobalLogger(l *slog.Logger) {
 	setLogger(l)
@@ -40,56 +38,6 @@ func ExportSetGlobalLogger(l *slog.Logger) {
 // ExportClearGlobalLogger clears the global logger for testing.
 func ExportClearGlobalLogger() {
 	clearLogger()
-}
-
-// ExportRequestIDKeyValue returns the requestIDKey for testing.
-func ExportRequestIDKeyValue() any {
-	return requestIDKey
-}
-
-// TestResponseWriter is a wrapper for responseWriter for testing.
-type TestResponseWriter struct {
-	rw *responseWriter
-}
-
-// NewTestResponseWriter creates a responseWriter for testing.
-func NewTestResponseWriter(w http.ResponseWriter, initialStatus int) *TestResponseWriter {
-	return &TestResponseWriter{
-		rw: &responseWriter{
-			ResponseWriter: w,
-			status:         initialStatus,
-		},
-	}
-}
-
-// WriteHeader wraps the internal WriteHeader.
-func (t *TestResponseWriter) WriteHeader(code int) {
-	t.rw.WriteHeader(code)
-}
-
-// Write wraps the internal Write.
-func (t *TestResponseWriter) Write(data []byte) (int, error) {
-	return t.rw.Write(data)
-}
-
-// Unwrap wraps the internal Unwrap.
-func (t *TestResponseWriter) Unwrap() http.ResponseWriter {
-	return t.rw.Unwrap()
-}
-
-// Header wraps the internal Header.
-func (t *TestResponseWriter) Header() http.Header {
-	return t.rw.Header()
-}
-
-// Status returns the response status code.
-func (t *TestResponseWriter) Status() int {
-	return t.rw.status
-}
-
-// WroteHeader returns whether WriteHeader was called.
-func (t *TestResponseWriter) WroteHeader() bool {
-	return t.rw.wroteHeader
 }
 
 // RedactAttr exports redactAttr for testing.
@@ -102,32 +50,28 @@ func (h *RedactingHandler) Inner() slog.Handler {
 	return h.inner
 }
 
-// ExportIsValidRequestID exposes isValidRequestID for testing.
-func ExportIsValidRequestID(id string) bool {
-	return isValidRequestID(id)
-}
-
 // ExportUserIDKeyValue returns the userIDKey for testing.
 func ExportUserIDKeyValue() any {
 	return userIDKey
 }
 
-// TestHijackableResponseWriter wraps responseWriter for Hijack testing.
-type TestHijackableResponseWriter struct {
-	rw *responseWriter
-}
-
-// NewTestHijackableResponseWriter creates a responseWriter for Hijack testing.
-func NewTestHijackableResponseWriter(w http.ResponseWriter) *TestHijackableResponseWriter {
-	return &TestHijackableResponseWriter{
-		rw: &responseWriter{
-			ResponseWriter: w,
-			status:         http.StatusOK,
-		},
+// ContextWithRequestID returns parent carrying an ID the route Registrar
+// assigned, and that ID. The Registrar is the only producer of request IDs, so
+// a test obtains one the way production does: by serving a request through it.
+func ContextWithRequestID(parent context.Context, tb testing.TB) (context.Context, string) {
+	tb.Helper()
+	reg := route.New(route.Config{
+		Error:        func(http.ResponseWriter, *http.Request, int, string, string) {},
+		MaxBodyBytes: 1,
+		Logger:       slog.New(slog.DiscardHandler),
+	})
+	var served *http.Request
+	reg.Register(route.Route{Path: "/", Handler: func(_ http.ResponseWriter, r *http.Request) { served = r }})
+	reg.Handler().ServeHTTP(httptest.NewRecorder(),
+		httptest.NewRequestWithContext(parent, http.MethodGet, "/", http.NoBody))
+	id := route.RequestID(served.Context())
+	if id == "" {
+		tb.Fatal("the Registrar assigned no request ID")
 	}
-}
-
-// Hijack exposes the Hijack method for testing.
-func (t *TestHijackableResponseWriter) Hijack() (net.Conn, *bufio.ReadWriter, error) {
-	return t.rw.Hijack()
+	return served.Context(), id
 }

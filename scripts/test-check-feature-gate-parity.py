@@ -33,11 +33,20 @@ func proFeatures() []string {
 '''
 
 ROUTES_GO = '''package api
-var routes = []apiRoute{
-	{path: "/path/path", feature: "path_analysis"},
-	{path: "/reports", feature: "export_csv_json"},
+var routes = []route.Route{
+	{Path: "/path/path", Feature: "path_analysis"},
 }
 '''
+
+# A second route table: every non-test file in internal/api is read.
+REPORT_ROUTES_GO = '''package api
+var reportRoutes = []route.Route{
+	{Path: "/reports", Feature: "export_csv_json"},
+}
+'''
+
+# A test file's gate is not enforcement.
+ROUTES_TEST_GO = 'package api\nvar fake = route.Route{Feature: "sso"}\n'
 
 CATALOG_TS = """export const FEATURE_CATALOG = {
   path_analysis: { tier: 'Pro' },
@@ -52,7 +61,9 @@ class Tree:
         self.root = Path(self.tmp.name)
         for rel, text in (
             (gate.POLICY, POLICY_GO),
-            (gate.ROUTES, ROUTES_GO),
+            (gate.ROUTES + "/server_routes.go", ROUTES_GO),
+            (gate.ROUTES + "/server_routes_reports.go", REPORT_ROUTES_GO),
+            (gate.ROUTES + "/server_routes_test.go", ROUTES_TEST_GO),
             (gate.CATALOG, CATALOG_TS),
         ):
             path = self.root / rel

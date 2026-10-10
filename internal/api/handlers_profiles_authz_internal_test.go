@@ -140,7 +140,7 @@ func TestWriteGate_WiredOnSettingsRoute(t *testing.T) {
 
 	req := newAuthedRequest(http.MethodPut, APIVersionPrefix+"/settings", []byte(`{}`), "viewer1")
 	w := httptest.NewRecorder()
-	s.mux.ServeHTTP(w, req)
+	s.Mux().ServeHTTP(w, req)
 	if w.Code != http.StatusForbidden {
 		t.Errorf("viewer PUT /settings via mux: status = %d, want 403 (gate must be wired at registration)", w.Code)
 	}

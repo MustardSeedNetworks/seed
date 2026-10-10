@@ -20,6 +20,8 @@ import (
 	"sync"
 	"time"
 
+	"github.com/MustardSeedNetworks/foundation/pkg/httpserver/route"
+
 	"github.com/MustardSeedNetworks/seed/internal/identity/roles"
 	"github.com/MustardSeedNetworks/seed/internal/logging"
 	"github.com/MustardSeedNetworks/seed/internal/platform/events"
@@ -321,26 +323,31 @@ func writeJobError(w http.ResponseWriter, logger *slog.Logger, err error) {
 // and DELETE (cancel) are mutating -> operator-gated via writeGated; GET
 // (status) and the SSE stream are safe reads. The exact /jobs/events pattern
 // out-ranks the /jobs/ subtree in net/http's ServeMux (longest match wins).
-func (s *Server) jobsRoutes() []route {
+func (s *Server) jobsRoutes() []route.Route {
 	op := roles.Operator
-	return []route{
+	return []route.Route{
 		{
-			path:        APIVersionPrefix + "/jobs",
-			handler:     s.handleJobs,
-			methods:     []string{http.MethodPost},
-			minRole:     op,
-			rateLimited: true,
+			Path:    APIVersionPrefix + "/jobs",
+			Handler: s.handleJobs,
+			Methods: []string{http.MethodPost},
+			Scope:   op,
+			Limiter: limitEndpoint,
+			Auth:    true,
+			CSRF:    true,
 		},
 		{
-			path:    APIVersionPrefix + "/jobs/events",
-			handler: s.handleJobsEvents,
-			methods: []string{http.MethodGet},
+			Path:    APIVersionPrefix + "/jobs/events",
+			Handler: s.handleJobsEvents,
+			Methods: []string{http.MethodGet},
+			Auth:    true,
 		},
 		{
-			path:    APIVersionPrefix + "/jobs/",
-			handler: s.handleJobByID,
-			methods: []string{http.MethodGet, http.MethodDelete},
-			minRole: op,
+			Path:    APIVersionPrefix + "/jobs/",
+			Handler: s.handleJobByID,
+			Methods: []string{http.MethodGet, http.MethodDelete},
+			Scope:   op,
+			Auth:    true,
+			CSRF:    true,
 		},
 	}
 }

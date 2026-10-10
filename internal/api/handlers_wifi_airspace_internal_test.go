@@ -209,7 +209,7 @@ func TestWiFiVisibilityTiers(t *testing.T) {
 
 			get := func(path string) *httptest.ResponseRecorder {
 				rec := httptest.NewRecorder()
-				s.mux.ServeHTTP(rec, newAuthedRequest(http.MethodGet, APIVersionPrefix+path, nil, "alice"))
+				s.Mux().ServeHTTP(rec, newAuthedRequest(http.MethodGet, APIVersionPrefix+path, nil, "alice"))
 				if rec.Code != tc.wantStatus {
 					t.Fatalf("GET %s: status = %d, want %d; body=%s", path, rec.Code, tc.wantStatus, rec.Body.String())
 				}

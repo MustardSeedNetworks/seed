@@ -43,7 +43,7 @@ func TestLicenseStatusCarriesFeatures(t *testing.T) {
 				t.Helper()
 				// Dev / pre-install build. registerEngineIfLicensed already
 				// treats a nil manager as Pro; the UI signal must agree.
-				return &Server{mux: http.NewServeMux()}
+				return &Server{}
 			},
 			want: uiGated,
 		},
@@ -222,7 +222,7 @@ func TestLicenseStatusReportsOnlyTheLiveGrant(t *testing.T) {
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
-			s := &Server{mux: http.NewServeMux(), licenseMgr: tc.mgr(t)}
+			s := &Server{licenseMgr: tc.mgr(t)}
 			resp := licenseStatusJSON(t, s)
 			if resp.Tier != tc.wantTier || resp.Activated != tc.wantActivated ||
 				resp.CanMintTokens != tc.wantMint || resp.Reason != tc.wantReason {

@@ -3,7 +3,7 @@ package api_test
 // mfa_login_chain_test.go drives the second factor through the FULL middleware
 // chain, which is where it was broken (#2391).
 //
-// handlers_mfa_test.go covers the same flow through GetAuthenticatedHandler, so
+// handlers_mfa_test.go once covered the same flow through a JWT-only handler, so
 // it passed while the product was unusable: /api/v1/auth/login/totp bypasses the
 // JWT middleware but was not on the CSRF exempt list, so the CSRF middleware
 // found no session and answered 401. Enrolling TOTP from the shipped Security

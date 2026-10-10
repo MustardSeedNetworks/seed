@@ -73,7 +73,7 @@ func TestStreamingHandler_Handle_RequestID(t *testing.T) {
 	sh := logging.NewStreamingHandler(baseHandler, broadcaster)
 	logger := slog.New(sh)
 
-	ctx := logging.WithRequestID(context.Background(), "req-test-123")
+	ctx, requestID := logging.ContextWithRequestID(context.Background(), t)
 	logger.InfoContext(ctx, "test with request ID")
 
 	entries := broadcaster.GetAllLogs()
@@ -81,8 +81,8 @@ func TestStreamingHandler_Handle_RequestID(t *testing.T) {
 		t.Fatalf("Expected 1 broadcast entry, got %d", len(entries))
 	}
 
-	if entries[0].RequestID != "req-test-123" {
-		t.Errorf("RequestID = %q, want req-test-123", entries[0].RequestID)
+	if entries[0].RequestID != requestID {
+		t.Errorf("RequestID = %q, want %q", entries[0].RequestID, requestID)
 	}
 }
 
@@ -418,10 +418,9 @@ func TestLogWithContext(t *testing.T) {
 	broadcaster := logging.NewLogBroadcaster(100)
 	_ = logging.InitLoggerWithBroadcaster(cfg, broadcaster)
 
-	ctx := context.Background()
+	ctx, _ := logging.ContextWithRequestID(context.Background(), t)
 	ctx = logging.WithLayer(ctx, logging.LayerAPI)
 	ctx = logging.WithComponent(ctx, logging.ComponentAuth)
-	ctx = logging.WithRequestID(ctx, "req-test-456")
 
 	logging.LogWithContext(ctx, slog.LevelInfo, "context log test", "extra", "data")
 
@@ -442,7 +441,7 @@ func TestTimedOperation(t *testing.T) {
 	}
 	_ = logging.InitLogger(cfg)
 
-	ctx := logging.WithRequestID(context.Background(), "req-timed-123")
+	ctx, _ := logging.ContextWithRequestID(context.Background(), t)
 	done := logging.TimedOperation(ctx, "database query", logging.ComponentSystem)
 
 	// Simulate some work
