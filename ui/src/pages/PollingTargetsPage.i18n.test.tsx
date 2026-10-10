@@ -16,9 +16,9 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { type CurrentUser, RoleProvider } from '../contexts/RoleContext';
 import i18n from '../i18n';
 import { must } from '../test/must';
-import type { PollingTarget } from '../types/polling';
+import type { PollingTargetResponse } from '../types/generated/polling-target-response';
 
-const healthy: PollingTarget = {
+const healthy: PollingTargetResponse = {
   id: 'healthy',
   clientId: 'c',
   name: 'core-01',
@@ -36,7 +36,7 @@ const healthy: PollingTarget = {
 };
 
 // Never polled and not enabled: the two states whose words are the point.
-const paused: PollingTarget = {
+const paused: PollingTargetResponse = {
   ...healthy,
   id: 'paused',
   name: 'acc-sw-12',
@@ -45,7 +45,7 @@ const paused: PollingTarget = {
   lastPolledAt: undefined,
 };
 
-const state = { targets: [healthy, paused] as PollingTarget[] };
+const state = { targets: [healthy, paused] as PollingTargetResponse[] };
 
 vi.mock('../hooks/usePollingTargets', () => ({
   usePollingTargets: () => ({

@@ -20,7 +20,7 @@ import { type JSX, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useRole } from '../contexts/RoleContext';
 import { usePollingTargets } from '../hooks/usePollingTargets';
-import type { PollingTarget } from '../types/polling';
+import type { PollingTargetResponse } from '../types/generated/polling-target-response';
 import {
   DetailEmpty,
   DetailFacts,
@@ -40,7 +40,7 @@ type Facet = 'all' | 'failing' | 'paused';
  * merely fine — it is unmeasured, and says so rather than showing green.
  * A target that has never completed a poll is in the same position.
  */
-function targetState(target: PollingTarget): RecordState {
+function targetState(target: PollingTargetResponse): RecordState {
   if (!target.enabled) {
     return 'unknown';
   }
@@ -51,14 +51,14 @@ function targetState(target: PollingTarget): RecordState {
 }
 
 /** The figure worth seeing without selecting the row: when it last succeeded. */
-function lastPollFigure(target: PollingTarget): string {
+function lastPollFigure(target: PollingTargetResponse): string {
   if (!target.lastPolledAt) {
     return '—';
   }
   return new Date(target.lastPolledAt).toLocaleTimeString();
 }
 
-function matchesFacet(target: PollingTarget, facet: Facet): boolean {
+function matchesFacet(target: PollingTargetResponse, facet: Facet): boolean {
   if (facet === 'failing') {
     return targetState(target) === 'crit';
   }
@@ -72,7 +72,7 @@ export function PollingTargetsPage(): JSX.Element {
   const { t } = useTranslation(['pages', 'common']);
   const { canWrite } = useRole();
   const { targets, loading, error, create, update, remove } = usePollingTargets();
-  const [editing, setEditing] = useState<PollingTarget | null>(null);
+  const [editing, setEditing] = useState<PollingTargetResponse | null>(null);
   const [showCreate, setShowCreate] = useState<boolean>(false);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [facet, setFacet] = useState<Facet>('all');
@@ -273,7 +273,7 @@ export function PollingTargetsPage(): JSX.Element {
 }
 
 /** The record's own state, spelled out rather than left to the colour bar. */
-function TargetStatus({ target }: { target: PollingTarget }): JSX.Element {
+function TargetStatus({ target }: { target: PollingTargetResponse }): JSX.Element {
   const { t } = useTranslation(['pages', 'common']);
   const state = targetState(target);
   if (state === 'crit') {

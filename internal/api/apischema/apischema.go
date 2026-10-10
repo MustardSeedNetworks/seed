@@ -17,6 +17,7 @@ import (
 	"github.com/MustardSeedNetworks/seed/internal/diagnostics/qos"
 	"github.com/MustardSeedNetworks/seed/internal/discovery"
 	"github.com/MustardSeedNetworks/seed/internal/discovery/bonjour"
+	"github.com/MustardSeedNetworks/seed/internal/polling"
 )
 
 // Target pairs a Go DTO with the on-disk schema filename and a human-readable
@@ -303,6 +304,16 @@ func Targets() []Target {
 		// The problem detector's thresholds, which /security/problems/thresholds
 		// reads and replaces as they are: flat, pure data.
 		{&discovery.ProblemThresholds{}, "problem-thresholds.schema.json"},
+
+		// SNMP polling targets and the device-credential vault (#1799). The
+		// vault answers polling.Credentials as it is: pure data whose
+		// ciphertext fields are json:"-", so no schema can carry a secret.
+		{&api.PollingTargetRequest{}, "polling-target-request.schema.json"},
+		{&api.PollingTargetResponse{}, "polling-target-response.schema.json"},
+		{&api.PollingTargetListResponse{}, "polling-target-list-response.schema.json"},
+		{&api.DeviceCredentialRequest{}, "device-credential-request.schema.json"},
+		{&polling.Credentials{}, "device-credential.schema.json"},
+		{&api.DeviceCredentialListResponse{}, "device-credential-list-response.schema.json"},
 
 		// Profile/settings config — code-first model of the per-profile
 		// config.Config blob (ADR-0007/0008, Phase 7 S6). The profile Config

@@ -1,0 +1,75 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/MustardSeedNetworks/seed/main/docs/schemas/api/polling-target-response.schema.json",
+  "$ref": "#/$defs/PollingTargetResponse",
+  "$defs": {
+    "PollingTargetResponse": {
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "clientId": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "ipAddress": {
+          "type": "string"
+        },
+        "snmpVersion": {
+          "type": "string"
+        },
+        "credentialsId": {
+          "type": "string"
+        },
+        "pollIntervalSeconds": {
+          "type": "integer"
+        },
+        "enabled": {
+          "type": "boolean"
+        },
+        "collectorChain": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "lastStatus": {
+          "type": "string"
+        },
+        "lastError": {
+          "type": "string"
+        },
+        "lastPolledAt": {
+          "type": "string"
+        },
+        "createdAt": {
+          "type": "string"
+        },
+        "updatedAt": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "id",
+        "clientId",
+        "name",
+        "ipAddress",
+        "snmpVersion",
+        "credentialsId",
+        "pollIntervalSeconds",
+        "enabled",
+        "collectorChain",
+        "lastStatus",
+        "lastError",
+        "createdAt",
+        "updatedAt"
+      ]
+    }
+  },
+  "title": "PollingTargetResponse",
+  "description": "PollingTargetResponse — generated from the Go struct in internal/api; refresh with `make schema` after struct changes."
+}

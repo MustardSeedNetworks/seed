@@ -11,6 +11,12 @@ import (
 // ErrTargetNotFound is returned when a polling target lookup misses.
 var ErrTargetNotFound = errors.New("polling target not found")
 
+// DefaultCollectorChain is the chain a target gets when it is created without
+// one. It matches the polling_targets.collector_chain column default.
+func DefaultCollectorChain() []string {
+	return []string{"sys_info", "if_table", "lldp", "arp", "fdb"}
+}
+
 // Target mirrors a polling_targets row. CollectorChain is decoded from
 // the JSON column. Last* fields record the most recent poll's outcome
 // and feed the operator-facing target status.

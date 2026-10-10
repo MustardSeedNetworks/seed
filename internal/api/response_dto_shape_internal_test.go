@@ -15,6 +15,7 @@ import (
 	"github.com/MustardSeedNetworks/seed/internal/discovery"
 	"github.com/MustardSeedNetworks/seed/internal/engine"
 	enginestatus "github.com/MustardSeedNetworks/seed/internal/engine/status"
+	"github.com/MustardSeedNetworks/seed/internal/polling"
 	"github.com/MustardSeedNetworks/seed/internal/wifi/troubleshooting"
 )
 
@@ -185,4 +186,96 @@ func TestEnginesResponseShape(t *testing.T) {
 			require.JSONEq(t, tt.want, w.Body.String())
 		})
 	}
+}
+
+func serveClaimed(t *testing.T, h http.HandlerFunc, target string) *httptest.ResponseRecorder {
+	t.Helper()
+	w := httptest.NewRecorder()
+	h(w, withClaim(httptest.NewRequest(http.MethodGet, target, http.NoBody)))
+	require.Equal(t, http.StatusOK, w.Code, w.Body.String())
+	return w
+}
+
+func TestPollingTargetResponseShape(t *testing.T) {
+	s := newPollingTargetsTestServer(t)
+	seeded := seedTarget(t, s.db(), "router-1")
+
+	list := serveClaimed(t, s.handlePollingTargets, pollingTargetsPath)
+	require.Equal(t, []string{"count", "targets"}, topLevelKeys(t, list.Body.Bytes()))
+	var l struct {
+		Count   int               `json:"count"`
+		Targets []json.RawMessage `json:"targets"`
+	}
+	require.NoError(t, json.Unmarshal(list.Body.Bytes(), &l))
+	require.Equal(t, 1, l.Count)
+	require.Len(t, l.Targets, 1)
+
+	one := serveClaimed(t, s.handlePollingTargetByID, pollingTargetsPathPrefix+seeded.ID)
+	require.JSONEq(t, string(l.Targets[0]), one.Body.String())
+
+	// lastPolledAt is absent until the first poll; every other key is always sent.
+	require.Equal(t, []string{
+		"clientId", "collectorChain", "createdAt", "credentialsId", "enabled", "id",
+		"ipAddress", "lastError", "lastStatus", "name", "pollIntervalSeconds",
+		"snmpVersion", "updatedAt",
+	}, topLevelKeys(t, one.Body.Bytes()))
+	var got map[string]any
+	require.NoError(t, json.Unmarshal(one.Body.Bytes(), &got))
+	require.Equal(t, seeded.ID, got["id"])
+	require.Equal(t, testClientID, got["clientId"])
+	require.Equal(t, "10.0.0.1", got["ipAddress"])
+	require.Equal(t, []any{"sys_info"}, got["collectorChain"])
+	require.InDelta(t, 60, got["pollIntervalSeconds"], 0)
+	require.Empty(t, got["credentialsId"])
+	created, err := time.Parse(time.RFC3339Nano, got["createdAt"].(string))
+	require.NoError(t, err)
+	require.Equal(t, time.UTC, created.Location())
+}
+
+func TestDeviceCredentialListShape(t *testing.T) {
+	s := newDeviceCredentialsTestServer(t)
+	require.Equal(t, http.StatusOK, postCredential(t, s, `{"name":"core","community":"c"}`).Code)
+
+	w := serveClaimed(t, s.handleDeviceCredentials, deviceCredentialsPath)
+	require.Equal(t, []string{"count", "credentials"}, topLevelKeys(t, w.Body.Bytes()))
+	var l struct {
+		Count       int              `json:"count"`
+		Credentials []map[string]any `json:"credentials"`
+	}
+	require.NoError(t, json.Unmarshal(w.Body.Bytes(), &l))
+	require.Equal(t, 1, l.Count)
+	require.Len(t, l.Credentials, 1)
+	require.Equal(t, "core", l.Credentials[0]["name"])
+}
+
+// An empty estate is an empty array, never null: the documented type is an
+// array, and the UI maps over it.
+func TestEmptyPollingListsAreArrays(t *testing.T) {
+	targets := newPollingTargetsTestServer(t)
+	require.JSONEq(t, `{"count":0,"targets":[]}`,
+		serveClaimed(t, targets.handlePollingTargets, pollingTargetsPath).Body.String())
+
+	creds := newDeviceCredentialsTestServer(t)
+	require.JSONEq(t, `{"count":0,"credentials":[]}`,
+		serveClaimed(t, creds.handleDeviceCredentials, deviceCredentialsPath).Body.String())
+}
+
+// A create without a chain stores the default chain; the response is the
+// stored target, so it reports that chain rather than null.
+func TestCreatedPollingTargetReportsStoredChain(t *testing.T) {
+	s := newPollingTargetsTestServer(t)
+	w := httptest.NewRecorder()
+	s.handlePollingTargets(w, postJSON(t, map[string]any{
+		"name": "router-1", "ipAddress": "10.0.0.1", "enabled": true,
+	}))
+	require.Equal(t, http.StatusOK, w.Code, w.Body.String())
+	var created PollingTargetResponse
+	require.NoError(t, json.Unmarshal(w.Body.Bytes(), &created))
+
+	var stored PollingTargetResponse
+	require.NoError(t, json.Unmarshal(
+		serveClaimed(t, s.handlePollingTargetByID, pollingTargetsPathPrefix+created.ID).Body.Bytes(),
+		&stored))
+	require.Equal(t, polling.DefaultCollectorChain(), stored.CollectorChain)
+	require.Equal(t, stored.CollectorChain, created.CollectorChain)
 }

@@ -213,6 +213,57 @@ operations:
           application/json:
             schema:
               $ref: '#/components/schemas/ConfigVersionResponse'
+  GET /api/v1/device-credentials:
+    responses:
+      "200":
+        description: The caller's client's SNMP credentials. Secrets are write-only and never returned.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DeviceCredentialListResponse'
+  POST /api/v1/device-credentials:
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/DeviceCredentialRequest'
+    responses:
+      "200":
+        description: The stored credential, without its secrets. Devices found without SNMP are asked again.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Credentials'
+  GET /api/v1/device-credentials/:
+    pathTemplate: /api/v1/device-credentials/{credentialId}
+    responses:
+      "200":
+        description: The credential, without its secrets.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Credentials'
+  PUT /api/v1/device-credentials/:
+    pathTemplate: /api/v1/device-credentials/{credentialId}
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/DeviceCredentialRequest'
+    responses:
+      "200":
+        description: The replaced credential, without its secrets.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Credentials'
+  DELETE /api/v1/device-credentials/:
+    pathTemplate: /api/v1/device-credentials/{credentialId}
+    responses:
+      "204":
+        description: The credential was deleted. A credential a polling target still references is a 409.
   GET /api/v1/discovery/bonjour:
     responses:
       "200":
@@ -422,6 +473,57 @@ operations:
         application/json:
           schema:
             $ref: '#/components/schemas/TracerouteRequest'
+  GET /api/v1/polling-targets:
+    responses:
+      "200":
+        description: The caller's client's SNMP polling targets.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PollingTargetListResponse'
+  POST /api/v1/polling-targets:
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/PollingTargetRequest'
+    responses:
+      "200":
+        description: The created target; Location names it. A target past the licence's limit, or a Pro collector below Pro, is a 402.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PollingTargetResponse'
+  GET /api/v1/polling-targets/:
+    pathTemplate: /api/v1/polling-targets/{targetId}
+    responses:
+      "200":
+        description: The polling target.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PollingTargetResponse'
+  PUT /api/v1/polling-targets/:
+    pathTemplate: /api/v1/polling-targets/{targetId}
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/PollingTargetRequest'
+    responses:
+      "200":
+        description: The replaced target.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PollingTargetResponse'
+  DELETE /api/v1/polling-targets/:
+    pathTemplate: /api/v1/polling-targets/{targetId}
+    responses:
+      "204":
+        description: The target was deleted.
   GET /api/v1/profiles:
     responses:
       "200":

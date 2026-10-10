@@ -120,13 +120,10 @@ func (r *PollingTargetRepository) Create(ctx context.Context, t *polling.Target)
 	if t.PollIntervalSec == 0 {
 		t.PollIntervalSec = 300
 	}
-	chainJSON, _ := json.Marshal(t.CollectorChain)
 	if len(t.CollectorChain) == 0 {
-		// Default chain matches the migration default so a freshly
-		// added target picks up the same set the migration would
-		// have populated.
-		chainJSON = []byte(`["sys_info","if_table","lldp","arp","fdb"]`)
+		t.CollectorChain = polling.DefaultCollectorChain()
 	}
+	chainJSON, _ := json.Marshal(t.CollectorChain)
 	now := time.Now().UTC().Format(time.RFC3339Nano)
 	t.CreatedAt = time.Now().UTC()
 	t.UpdatedAt = t.CreatedAt

@@ -9,22 +9,26 @@
 import { X } from 'lucide-react';
 import { type FormEvent, type JSX, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import type { PollingTarget, PollingTargetInput } from '../../types/polling';
+import type { PollingTargetRequest } from '../../types/generated/polling-target-request';
+import type { PollingTargetResponse } from '../../types/generated/polling-target-response';
 
 export interface TargetFormProps {
   mode: 'create' | 'edit';
-  initial: PollingTargetInput;
-  onSubmit: (input: PollingTargetInput) => Promise<void>;
+  initial: PollingTargetRequest;
+  onSubmit: (input: PollingTargetRequest) => Promise<void>;
   onCancel: () => void;
 }
 
 export function TargetForm({ mode, initial, onSubmit, onCancel }: TargetFormProps): JSX.Element {
   const { t } = useTranslation(['pages', 'common']);
-  const [form, setForm] = useState<PollingTargetInput>(initial);
+  const [form, setForm] = useState<PollingTargetRequest>(initial);
   const [submitting, setSubmitting] = useState<boolean>(false);
   const [formError, setFormError] = useState<string | null>(null);
 
-  function update<K extends keyof PollingTargetInput>(key: K, value: PollingTargetInput[K]): void {
+  function update<K extends keyof PollingTargetRequest>(
+    key: K,
+    value: PollingTargetRequest[K],
+  ): void {
     setForm((prev) => ({ ...prev, [key]: value }));
   }
 
@@ -202,7 +206,7 @@ const inputClass: string =
  * omitted rather than sent empty — the repository fills an absent chain with
  * its own default, and `[]` is not that default.
  */
-export function emptyInput(): PollingTargetInput {
+export function emptyInput(): PollingTargetRequest {
   return {
     name: '',
     ipAddress: '',
@@ -213,7 +217,7 @@ export function emptyInput(): PollingTargetInput {
 }
 
 /** targetToInput strips audit columns the server manages. */
-export function targetToInput(t: PollingTarget): PollingTargetInput {
+export function targetToInput(t: PollingTargetResponse): PollingTargetRequest {
   return {
     name: t.name,
     ipAddress: t.ipAddress,
