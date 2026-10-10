@@ -26,9 +26,9 @@ const (
 	alertRulesPathPrefix = alertRulesPath + "/"
 )
 
-// alertRuleInput is the wire shape for POST + PUT. Mirrors the
+// AlertRuleRequest is the request body for POST + PUT. Mirrors the
 // repo struct minus the audit columns.
-type alertRuleInput struct {
+type AlertRuleRequest struct {
 	Name                 string `json:"name"`
 	Enabled              bool   `json:"enabled"`
 	MatchKind            string `json:"matchKind,omitempty"`
@@ -40,6 +40,31 @@ type alertRuleInput struct {
 	AlertMessage         string `json:"alertMessage"`
 	WindowSeconds        int    `json:"windowSeconds,omitempty"`
 	ThresholdCount       int    `json:"thresholdCount,omitempty"`
+}
+
+// AlertRuleResponse is one alert rule on the wire. Every field is always
+// sent; an empty match filter matches everything. Timestamps are RFC 3339 UTC.
+type AlertRuleResponse struct {
+	ID                   int64  `json:"id"`
+	Name                 string `json:"name"`
+	Enabled              bool   `json:"enabled"`
+	MatchKind            string `json:"matchKind"`
+	MatchSeverity        string `json:"matchSeverity"`
+	MatchPayloadContains string `json:"matchPayloadContains"`
+	AlertType            string `json:"alertType"`
+	AlertSeverity        string `json:"alertSeverity"`
+	AlertTitle           string `json:"alertTitle"`
+	AlertMessage         string `json:"alertMessage"`
+	WindowSeconds        int    `json:"windowSeconds"`
+	ThresholdCount       int    `json:"thresholdCount"`
+	CreatedAt            string `json:"createdAt"`
+	UpdatedAt            string `json:"updatedAt"`
+}
+
+// AlertRuleListResponse is the GET /alert-rules envelope.
+type AlertRuleListResponse struct {
+	Count int                 `json:"count"`
+	Rules []AlertRuleResponse `json:"rules"`
 }
 
 func (s *Server) handleAlertRules(w http.ResponseWriter, r *http.Request) {
@@ -89,9 +114,9 @@ func (s *Server) listAlertRules(w http.ResponseWriter, r *http.Request) {
 		writeError(w, r, http.StatusInternalServerError, ErrCodeInternal, "Failed to list rules")
 		return
 	}
-	sendJSONResponse(w, logger, http.StatusOK, map[string]any{
-		jsonKeyCount: len(ruleList),
-		"rules":      encodeAlertRules(ruleList),
+	sendJSONResponse(w, logger, http.StatusOK, AlertRuleListResponse{
+		Count: len(ruleList),
+		Rules: encodeAlertRules(ruleList),
 	})
 }
 
@@ -183,11 +208,11 @@ func (s *Server) deleteAlertRule(w http.ResponseWriter, r *http.Request, id int6
 	w.WriteHeader(http.StatusNoContent)
 }
 
-func decodeAlertRuleInput(r *http.Request) (*alertRuleInput, error) {
+func decodeAlertRuleInput(r *http.Request) (*AlertRuleRequest, error) {
 	if r.Body == nil {
 		return nil, errors.New("body required")
 	}
-	var in alertRuleInput
+	var in AlertRuleRequest
 	dec := json.NewDecoder(r.Body)
 	dec.DisallowUnknownFields()
 	if err := dec.Decode(&in); err != nil {
@@ -204,7 +229,7 @@ func decodeAlertRuleInput(r *http.Request) (*alertRuleInput, error) {
 
 // inputToRule maps the wire input to the use-case model. The ThresholdCount
 // floor (>=1) is applied by the use-case, so it is passed through raw here.
-func inputToRule(in *alertRuleInput) rules.Rule {
+func inputToRule(in *AlertRuleRequest) rules.Rule {
 	return rules.Rule{
 		Name:                 in.Name,
 		Enabled:              in.Enabled,
@@ -220,27 +245,27 @@ func inputToRule(in *alertRuleInput) rules.Rule {
 	}
 }
 
-func encodeAlertRule(rule rules.Rule) map[string]any {
-	return map[string]any{
-		"id":                   rule.ID,
-		jsonKeyName:            rule.Name,
-		jsonKeyEnabled:         rule.Enabled,
-		"matchKind":            rule.MatchKind,
-		"matchSeverity":        rule.MatchSeverity,
-		"matchPayloadContains": rule.MatchPayloadContains,
-		"alertType":            rule.AlertType,
-		"alertSeverity":        rule.AlertSeverity,
-		"alertTitle":           rule.AlertTitle,
-		"alertMessage":         rule.AlertMessage,
-		"windowSeconds":        rule.WindowSeconds,
-		"thresholdCount":       rule.ThresholdCount,
-		"createdAt":            formatTime(rule.CreatedAt),
-		"updatedAt":            formatTime(rule.UpdatedAt),
+func encodeAlertRule(rule rules.Rule) AlertRuleResponse {
+	return AlertRuleResponse{
+		ID:                   rule.ID,
+		Name:                 rule.Name,
+		Enabled:              rule.Enabled,
+		MatchKind:            rule.MatchKind,
+		MatchSeverity:        rule.MatchSeverity,
+		MatchPayloadContains: rule.MatchPayloadContains,
+		AlertType:            rule.AlertType,
+		AlertSeverity:        rule.AlertSeverity,
+		AlertTitle:           rule.AlertTitle,
+		AlertMessage:         rule.AlertMessage,
+		WindowSeconds:        rule.WindowSeconds,
+		ThresholdCount:       rule.ThresholdCount,
+		CreatedAt:            formatTime(rule.CreatedAt),
+		UpdatedAt:            formatTime(rule.UpdatedAt),
 	}
 }
 
-func encodeAlertRules(ruleList []rules.Rule) []map[string]any {
-	out := make([]map[string]any, 0, len(ruleList))
+func encodeAlertRules(ruleList []rules.Rule) []AlertRuleResponse {
+	out := make([]AlertRuleResponse, 0, len(ruleList))
 	for _, r := range ruleList {
 		out = append(out, encodeAlertRule(r))
 	}

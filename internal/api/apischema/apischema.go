@@ -321,6 +321,11 @@ func Targets() []Target {
 		{&api.TopologyLinkListResponse{}, "topology-link-list-response.schema.json"},
 		{&api.TopologyARPListResponse{}, "topology-arp-list-response.schema.json"},
 
+		// Operator-defined alert rules (Stage A5.10).
+		{&api.AlertRuleRequest{}, "alert-rule-request.schema.json"},
+		{&api.AlertRuleResponse{}, "alert-rule-response.schema.json"},
+		{&api.AlertRuleListResponse{}, "alert-rule-list-response.schema.json"},
+
 		// Profile/settings config — code-first model of the per-profile
 		// config.Config blob (ADR-0007/0008, Phase 7 S6). The profile Config
 		// is applied via Config.ApplyProfileJSON, so config.Config is its
