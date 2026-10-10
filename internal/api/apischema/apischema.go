@@ -368,6 +368,12 @@ func Targets() []Target {
 		// json:"-").
 		{&config.Config{}, "config.schema.json"},
 
+		// Backend defaults for the settings pages (GET /settings/defaults).
+		// config.DefaultSettings is already a purpose-built wire shape of
+		// pure data, so it is reflected directly and replaces the
+		// hand-written ui/src/types/defaults.ts twin.
+		{&config.DefaultSettings{}, "default-settings.schema.json"},
+
 		// Engine discovery result — the ADR-0008 pure-data exception. Reflects
 		// the discovery.* result cluster (DiscoveredDevice/EngineStats/
 		// ScanResult and their pure-data closure) directly rather than

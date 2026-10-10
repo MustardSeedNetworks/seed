@@ -1171,6 +1171,16 @@ operations:
           application/json:
             schema:
               $ref: '#/components/schemas/StatusUpdatedResponse'
+  GET /api/v1/settings/defaults:
+    responses:
+      "200":
+        description: >-
+          The built-in default of every profile setting. A profile value
+          that is not set falls back to this.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DefaultSettings'
   GET /api/v1/settings/link:
     responses:
       "200":

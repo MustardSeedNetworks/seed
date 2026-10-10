@@ -22,7 +22,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useEffect } from 'react';
 import { ApiError, api, SessionExpiredError } from '../api';
 import { LogComponents, logger } from '../lib/logger';
-import type { DefaultSettings } from '../types/defaults';
+import type { DefaultSettings } from '../types/generated/default-settings';
 import type { ProfileImportResponse } from '../types/generated/profile-import-response';
 import type {
   Profile,

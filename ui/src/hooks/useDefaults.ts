@@ -13,7 +13,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { api } from '../api';
 import { LogComponents, logger } from '../lib/logger';
-import type { DefaultSettings } from '../types/defaults';
+import type { DefaultSettings } from '../types/generated/default-settings';
 
 // ============================================================================
 // Cache for defaults (shared across all hook instances)
