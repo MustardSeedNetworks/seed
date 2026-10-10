@@ -75,7 +75,7 @@ func (s *Server) handleGuestAuditSettings(w http.ResponseWriter, r *http.Request
 			w,
 			logger,
 			http.StatusOK,
-			map[string]string{"status": "updated"},
+			StatusUpdatedResponse{Status: "updated"},
 		)
 
 	default:

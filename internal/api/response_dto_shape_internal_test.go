@@ -537,10 +537,14 @@ func TestSettingsWriteAckShape(t *testing.T) {
 		{"settings", s.handleSettings, "/api/v1/settings", `{}`},
 		{"link", s.handleLinkSettings, "/api/v1/settings/link", marshal(s.settingsManagement.Link())},
 		{"cable", s.handleCableTestSettings, "/api/v1/settings/cable", marshal(s.settingsManagement.CableTest())},
-		{"guest audit", s.handleGuestAuditSettings, "/api/v1/security/guest-audit/settings",
-			marshal(s.securitySettings.GuestAudit())},
-		{"vulnerability", s.handleVulnerabilitySettings, "/api/v1/security/vulnerabilities/settings",
-			`{"enabled":false}`},
+		{
+			"guest audit", s.handleGuestAuditSettings, "/api/v1/security/guest-audit/settings",
+			marshal(s.securitySettings.GuestAudit()),
+		},
+		{
+			"vulnerability", s.handleVulnerabilitySettings, "/api/v1/security/vulnerabilities/settings",
+			`{"enabled":false}`,
+		},
 		{"sso", s.handleSSOUpdate, "/api/v1/sso/update", `{"provider":"google","enabled":false}`},
 	} {
 		w := httptest.NewRecorder()

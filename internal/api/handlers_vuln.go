@@ -240,9 +240,7 @@ func (s *Server) handleVulnerabilitySettings(w http.ResponseWriter, r *http.Requ
 			return
 		}
 
-		sendJSONResponse(w, logger, http.StatusOK, map[string]string{
-			"status": "updated",
-		})
+		sendJSONResponse(w, logger, http.StatusOK, StatusUpdatedResponse{Status: "updated"})
 
 	default:
 		sendErrorResponseWithDetails(

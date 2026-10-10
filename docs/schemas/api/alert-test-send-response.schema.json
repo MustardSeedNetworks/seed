@@ -1,0 +1,30 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/MustardSeedNetworks/seed/main/docs/schemas/api/alert-test-send-response.schema.json",
+  "$ref": "#/$defs/AlertTestSendResponse",
+  "$defs": {
+    "AlertTestSendResponse": {
+      "properties": {
+        "channel": {
+          "type": "string",
+          "enum": [
+            "email",
+            "syslog",
+            "webhook"
+          ]
+        },
+        "sent": {
+          "type": "boolean"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "channel",
+        "sent"
+      ]
+    }
+  },
+  "title": "AlertTestSendResponse",
+  "description": "AlertTestSendResponse — generated from the Go struct in internal/api; refresh with `make schema` after struct changes."
+}

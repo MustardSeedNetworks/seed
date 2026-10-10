@@ -30,6 +30,12 @@ type StatusMessageResponse struct {
 	Message string `json:"message"`
 }
 
+// StatusUpdatedResponse is the body of a settings write that saved and has
+// nothing else to return.
+type StatusUpdatedResponse struct {
+	Status string `json:"status" jsonschema:"enum=updated"`
+}
+
 // Common error codes for consistent API responses.
 const (
 	ErrCodeBadRequest       = "BAD_REQUEST"

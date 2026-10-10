@@ -181,6 +181,33 @@ components:
                 - port
                 - transport
             type: object
+        AlertTestSendRequest:
+            additionalProperties: false
+            properties:
+                channel:
+                    enum:
+                        - email
+                        - syslog
+                        - webhook
+                    type: string
+            required:
+                - channel
+            type: object
+        AlertTestSendResponse:
+            additionalProperties: false
+            properties:
+                channel:
+                    enum:
+                        - email
+                        - syslog
+                        - webhook
+                    type: string
+                sent:
+                    type: boolean
+            required:
+                - channel
+                - sent
+            type: object
         AlertWebhookConfig:
             additionalProperties: false
             properties:
@@ -5910,6 +5937,32 @@ components:
             required:
                 - providers
             type: object
+        SSOUpdateRequest:
+            additionalProperties: false
+            properties:
+                clientId:
+                    type: string
+                clientSecret:
+                    type: string
+                enabled:
+                    type: boolean
+                provider:
+                    type: string
+                redirectUrl:
+                    type: string
+                scopes:
+                    items:
+                        type: string
+                    type: array
+                tenantId:
+                    type: string
+            required:
+                - provider
+                - enabled
+                - clientId
+                - clientSecret
+                - redirectUrl
+            type: object
         SavedNetwork:
             additionalProperties: false
             properties:
@@ -6502,6 +6555,16 @@ components:
                 - isWireless
                 - icmpAvailable
                 - capabilities
+            type: object
+        StatusUpdatedResponse:
+            additionalProperties: false
+            properties:
+                status:
+                    enum:
+                        - updated
+                    type: string
+            required:
+                - status
             type: object
         SubjectRef:
             additionalProperties: false
@@ -12543,6 +12606,12 @@ paths:
                             $ref: '#/components/schemas/GuestNetworkAuditConfig'
                 required: true
             responses:
+                "200":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/StatusUpdatedResponse'
+                    description: The guest network audit settings were saved.
                 "401":
                     content:
                         application/json:
@@ -12906,6 +12975,12 @@ paths:
             description: Requires an operator-scoped token.
             operationId: putApiV1SecurityVulnerabilitiesSettings
             responses:
+                "200":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/StatusUpdatedResponse'
+                    description: The vulnerability scan settings were saved.
                 "401":
                     content:
                         application/json:
@@ -13163,6 +13238,12 @@ paths:
             description: Requires an operator-scoped token.
             operationId: putApiV1Settings
             responses:
+                "200":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/StatusUpdatedResponse'
+                    description: The settings were saved; the ETag header carries the new version.
                 "401":
                     content:
                         application/json:
@@ -13196,11 +13277,24 @@ paths:
             security:
                 - BearerAuth: []
                   CsrfToken: []
+            summary: Update settings (partial; If-Match refuses a stale write)
     /api/v1/settings/alerts/test:
         post:
             description: Requires an operator-scoped token.
             operationId: postApiV1SettingsAlertsTest
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/AlertTestSendRequest'
+                required: true
             responses:
+                "200":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/AlertTestSendResponse'
+                    description: The receiver accepted the test alert.
                 "401":
                     content:
                         application/json:
@@ -13240,6 +13334,7 @@ paths:
             security:
                 - BearerAuth: []
                   CsrfToken: []
+            summary: Send a test alert through a saved receiver
     /api/v1/settings/cable:
         get:
             operationId: getApiV1SettingsCable
@@ -13278,6 +13373,12 @@ paths:
                             $ref: '#/components/schemas/CableTestConfig'
                 required: true
             responses:
+                "200":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/StatusUpdatedResponse'
+                    description: The cable test settings were saved.
                 "401":
                     content:
                         application/json:
@@ -13371,6 +13472,12 @@ paths:
                             $ref: '#/components/schemas/LinkConfig'
                 required: true
             responses:
+                "200":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/StatusUpdatedResponse'
+                    description: The link settings were saved.
                 "401":
                     content:
                         application/json:
@@ -13545,7 +13652,19 @@ paths:
         put:
             description: Requires an operator-scoped token.
             operationId: putApiV1SsoUpdate
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/SSOUpdateRequest'
+                required: true
             responses:
+                "200":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/StatusUpdatedResponse'
+                    description: The provider was saved and the sign-on providers reloaded.
                 "401":
                     content:
                         application/json:
