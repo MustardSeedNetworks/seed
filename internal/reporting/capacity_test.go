@@ -117,7 +117,10 @@ func TestCapacityForecastOfATrendingInterface(t *testing.T) {
 	report := generateCapacity(t, gen, reporting.FormatJSON)
 	window := *report.Parameters.DateRange
 	assert.Equal(t, 90*24*time.Hour, window.End.Sub(window.Start))
-	assert.Equal(t, day0.AddDate(0, 0, trendDays), window.End, "the history ends at the start of today")
+	// The generator reads the clock after seedTrend did, so a run that
+	// crosses midnight UTC ends the window a day later.
+	today := time.Now().UTC().Truncate(24 * time.Hour)
+	assert.WithinRange(t, window.End, day0.AddDate(0, 0, trendDays), today, "the history ends at the start of today")
 
 	raw, err := os.ReadFile(report.FilePath)
 	require.NoError(t, err)
