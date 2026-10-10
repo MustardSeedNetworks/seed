@@ -1510,6 +1510,45 @@ operations:
         application/json:
           schema:
             $ref: '#/components/schemas/WiFiConnectRequest'
+    responses:
+      "200":
+        description: Whether the radio joined the network, and why not when it did not.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ConnectionResult'
+  POST /api/v1/wifi/wifi/disconnect:
+    responses:
+      "200":
+        description: Whether the radio left its network.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ConnectionResult'
+  DELETE /api/v1/wifi/wifi/forget:
+    responses:
+      "200":
+        description: The saved network named by the ssid query parameter was removed.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StatusMessageResponse'
+  GET /api/v1/wifi/wifi/saved:
+    responses:
+      "200":
+        description: Networks the host has saved credentials for.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/WiFiSavedNetworksResponse'
+  GET /api/v1/wifi/wifi/scan:
+    responses:
+      "200":
+        description: Access points heard by a neighbor scan, or the reason the scan could not run.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/WiFiScanResponse'
   GET /api/v1/wifi/wifi/settings:
     responses:
       "200":
@@ -1518,6 +1557,20 @@ operations:
           application/json:
             schema:
               $ref: '#/components/schemas/WiFiSettingsResponse'
+  PUT /api/v1/wifi/wifi/settings:
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/WiFiSettingsRequest'
+    responses:
+      "200":
+        description: The interface selection was saved.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StatusMessageResponse'
   GET /api/v1/wifi/wifi/status:
     responses:
       "200":

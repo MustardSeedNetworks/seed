@@ -453,16 +453,10 @@ func (s *Server) updateHealthChecksSettings(w http.ResponseWriter, r *http.Reque
 		return
 	}
 
-	sendJSONResponse(w, logger, http.StatusOK, statusResponse{
+	sendJSONResponse(w, logger, http.StatusOK, StatusMessageResponse{
 		Status:  statusSuccess,
 		Message: "Health checks settings updated",
 	})
-}
-
-// statusResponse is the JSON body returned by simple ack-style endpoints.
-type statusResponse struct {
-	Status  string `json:"status"`
-	Message string `json:"message"`
 }
 
 // Common JSON field-name keys reused across many SSE / response payloads.

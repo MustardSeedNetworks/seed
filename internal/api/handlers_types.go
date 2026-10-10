@@ -23,6 +23,13 @@ type ErrorResponse struct {
 	Details string `json:"details,omitempty"` // Additional details (optional)
 }
 
+// StatusMessageResponse is the body of an acknowledgement-only success: the
+// write happened and there is nothing else to return.
+type StatusMessageResponse struct {
+	Status  string `json:"status"  jsonschema:"enum=success"`
+	Message string `json:"message"`
+}
+
 // Common error codes for consistent API responses.
 const (
 	ErrCodeBadRequest       = "BAD_REQUEST"

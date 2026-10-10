@@ -18,6 +18,7 @@ import (
 	"github.com/MustardSeedNetworks/seed/internal/discovery"
 	"github.com/MustardSeedNetworks/seed/internal/discovery/bonjour"
 	"github.com/MustardSeedNetworks/seed/internal/polling"
+	"github.com/MustardSeedNetworks/seed/internal/wifi"
 )
 
 // Target pairs a Go DTO with the on-disk schema filename and a human-readable
@@ -333,6 +334,17 @@ func Targets() []Target {
 		{&api.TopologyNodeDetailResponse{}, "topology-node-detail-response.schema.json"},
 		{&api.TopologyLinkListResponse{}, "topology-link-list-response.schema.json"},
 		{&api.TopologyARPListResponse{}, "topology-arp-list-response.schema.json"},
+
+		// The Wi-Fi radio: neighbor scan, saved networks, interface selection
+		// and the connect/disconnect result, which /wifi/wifi/disconnect
+		// serves as the wifi package's own flat type.
+		{&api.WiFiScanResponse{}, "wifi-scan-response.schema.json"},
+		{&api.WiFiSavedNetworksResponse{}, "wifi-saved-networks-response.schema.json"},
+		{&api.WiFiSettingsRequest{}, "wifi-settings-request.schema.json"},
+		{&wifi.ConnectionResult{}, "wifi-connection-result.schema.json"},
+
+		// Acknowledgement-only success bodies.
+		{&api.StatusMessageResponse{}, "status-message-response.schema.json"},
 
 		// Operator-defined alert rules (Stage A5.10).
 		{&api.AlertRuleRequest{}, "alert-rule-request.schema.json"},
