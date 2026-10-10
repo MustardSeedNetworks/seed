@@ -110,7 +110,7 @@ GATES: tuple[Gate, ...] = (
     Gate(
         "openapi-drift",
         (_sh("check-openapi-drift.sh"),),
-        ("internal/api/*", "cmd/seed-openapi/*", "docs/openapi*.yaml"),
+        ("internal/*.go", "cmd/seed-openapi/*", "docs/openapi*.yaml"),
     ),
     Gate("output-escaping", (_sh("check-output-escaping.sh"),), ("internal/api/*", "ui/src/*")),
     Gate(

@@ -4,10 +4,13 @@
 # `paths` block comes from the route registry (internal/api Server.routes), so
 # every registered route is documented with the policy it actually carries
 # (auth, CSRF, operator scope, rate limit, body cap) and no route can be
-# missing. The error schema comes from the Go type api.ErrorResponse.
+# missing. The error schema comes from the Go type api.ErrorResponse, and
+# components.schemas holds every DTO of internal/api/apischema, reflected from
+# the Go types the handlers decode and send.
 #
-# What the registry cannot know (prose, path parameter names, bodies) lives
-# here:
+# What the registry cannot know (prose, path parameter names, which DTO an
+# operation takes and returns) lives here. A body is a $ref to one of those
+# components; a $ref naming none fails the generator.
 #
 #   preamble   verbatim top-level keys: info, servers, tags, components…
 #   operations keyed "<METHOD> <path>", merged onto the generated operation.
@@ -18,7 +21,7 @@
 # the generator, so this file cannot outlive the routes it describes.
 
 preamble:
-  openapi: 3.0.3
+  openapi: 3.1.0
   info:
     title: The Seed API
     description: |
@@ -83,5 +86,564 @@ operations:
     summary: Route-policy manifest of every registered route
   POST /api/v1/auth/login:
     summary: Sign in and receive a session
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/LoginRequest'
+    responses:
+      "200":
+        description: Signed in; the session token, or an MFA challenge.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginResponse'
   GET /api/v1/auth/csrf:
     summary: Mint a CSRF token for the current session
+    responses:
+      "200":
+        description: A CSRF token bound to the session.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CSRFTokenResponse'
+  POST /api/v1/auth/login/totp:
+    responses:
+      "200":
+        description: Second factor accepted; the session token.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginResponse'
+  POST /api/v1/auth/refresh:
+    responses:
+      "200":
+        description: A fresh session token.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginResponse'
+  GET /api/v1/config/backups:
+    responses:
+      "200":
+        description: The stored configuration backups.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BackupListResponse'
+  POST /api/v1/config/restore:
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/RestoreRequest'
+  GET /api/v1/config/version:
+    responses:
+      "200":
+        description: The configuration schema version.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ConfigVersionResponse'
+  GET /api/v1/flows/top-applications:
+    responses:
+      "200":
+        description: Top applications over the window.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FlowApplicationsResponse'
+  GET /api/v1/flows/top-conversations:
+    responses:
+      "200":
+        description: Top conversations over the window.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FlowConversationsResponse'
+  GET /api/v1/flows/top-talkers:
+    responses:
+      "200":
+        description: Top talkers over the window.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FlowTalkersResponse'
+  GET /api/v1/history/anomalies:
+    responses:
+      "200":
+        description: Recorded anomalies over the window.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AnomalyHistoryResponse'
+  POST /api/v1/jobs:
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/CreateJobRequest'
+    responses:
+      "201":
+        description: The job was started.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/JobResponse'
+      "200":
+        description: The job an earlier request with the same Idempotency-Key started.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/JobResponse'
+  GET /api/v1/license:
+    responses:
+      "200":
+        description: The active licence.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LicenseStatusResponse'
+  POST /api/v1/network/mtu:
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/SetMTURequest'
+  GET /api/v1/network/neighbours:
+    responses:
+      "200":
+        description: The host's ARP and NDP neighbour cache.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/NeighbourCacheResponse'
+  POST /api/v1/path/path:
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/PathRequest'
+    responses:
+      "200":
+        description: The discovered L2 and L3 path.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PathResponse'
+  POST /api/v1/path/traceroute:
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/TracerouteRequest'
+  GET /api/v1/profiles/export:
+    responses:
+      "200":
+        description: Every profile, in the import format.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProfileExportResponse'
+  POST /api/v1/profiles/import:
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ProfileImportRequest'
+    responses:
+      "200":
+        description: What was imported and what was skipped.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProfileImportResponse'
+  POST /api/v1/recovery/complete:
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/RecoveryCompleteRequest'
+    responses:
+      "200":
+        description: The password was reset.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RecoveryCompleteResponse'
+  GET /api/v1/recovery/instructions:
+    responses:
+      "200":
+        description: How to recover access on this install.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RecoveryInstructionsResponse'
+  GET /api/v1/recovery/status:
+    responses:
+      "200":
+        description: Whether password recovery is available.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RecoveryStatusResponse'
+  POST /api/v1/reporting/logs/client:
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ClientLogRequest'
+  GET /api/v1/reporting/logs/query:
+    responses:
+      "200":
+        description: The matching log entries.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LogQueryResponse'
+  GET /api/v1/reporting/logs/stats:
+    responses:
+      "200":
+        description: Log volume by level.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LogStatsResponse'
+  GET /api/v1/reports:
+    responses:
+      "200":
+        description: The generated reports.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ReportsResponse'
+  GET /api/v1/reports/schedules:
+    responses:
+      "200":
+        description: The report schedules.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ReportSchedulesResponse'
+  POST /api/v1/reports/schedules:
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ReportScheduleRequest'
+    responses:
+      "201":
+        description: The schedule was created.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ReportScheduleInfo'
+  GET /api/v1/reports/schedules/:
+    responses:
+      "200":
+        description: The schedule.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ReportScheduleInfo'
+  PUT /api/v1/reports/schedules/:
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ReportScheduleRequest'
+    responses:
+      "200":
+        description: The updated schedule.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ReportScheduleInfo'
+  POST /api/v1/security/devices/subnets/pending:
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/SubnetDecisionRequest'
+  GET /api/v1/security/discovery:
+    responses:
+      "200":
+        description: The discovered devices.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DiscoveryResponse'
+  POST /api/v1/security/discovery/portscan:
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/PortScanRequest'
+  POST /api/v1/security/discovery/probe:
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/TCPProbeRequest'
+    responses:
+      "200":
+        description: The probe result per port.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TCPProbeResponse'
+  GET /api/v1/security/problems:
+    responses:
+      "200":
+        description: The detected network problems.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/NetworkProblemsResponse'
+  POST /api/v1/security/problems/scan:
+    responses:
+      "200":
+        description: The problems the scan found.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProblemScanResponse'
+  POST /api/v1/security/vulnerabilities/validate-api-key:
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/NVDAPIKeyValidateRequest'
+    responses:
+      "200":
+        description: Whether the NVD accepted the key.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/NVDAPIKeyValidateResponse'
+  GET /api/v1/security/wifi/discovery/aps:
+    responses:
+      "200":
+        description: The access points seen.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/WiFiDiscoveryAPsResponse'
+  GET /api/v1/security/wifi/discovery/networks:
+    responses:
+      "200":
+        description: The networks seen.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/WiFiDiscoveryNetworksResponse'
+  GET /api/v1/security/wifi/discovery/stats:
+    responses:
+      "200":
+        description: Wi-Fi discovery counters.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/WiFiDiscoveryStatsResponse'
+  POST /api/v1/setup/complete:
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/SetupCompleteRequest'
+  GET /api/v1/setup/status:
+    responses:
+      "200":
+        description: Whether first-run setup is still required.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SetupStatusResponse'
+  GET /api/v1/sso/providers:
+    responses:
+      "200":
+        description: The configured single sign-on providers.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SSOProvidersResponse'
+  GET /api/v1/status:
+    responses:
+      "200":
+        description: Daemon status.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StatusResponse'
+  GET /api/v1/telemetry/cable:
+    responses:
+      "200":
+        description: The cable test result.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CableResponse'
+  GET /api/v1/telemetry/dhcp/rogue:
+    responses:
+      "200":
+        description: Rogue DHCP detection state.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RogueDHCPResponse'
+  GET /api/v1/telemetry/dhcp/rogue/servers:
+    responses:
+      "200":
+        description: The DHCP servers seen.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RogueServersResponse'
+  GET /api/v1/telemetry/gateway:
+    responses:
+      "200":
+        description: Gateway reachability.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GatewayResponse'
+  GET /api/v1/telemetry/interface/driver-stats:
+    responses:
+      "200":
+        description: Driver counters for the interface.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DriverStatsResponse'
+  GET /api/v1/telemetry/ipconfig:
+    responses:
+      "200":
+        description: The interface IP configuration.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/IPConfigResponse'
+  POST /api/v1/telemetry/iperf/client:
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/IperfClientRequest'
+  GET /api/v1/telemetry/iperf/client/status:
+    responses:
+      "200":
+        description: The running or last iperf client test.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/IperfClientStatusResponse'
+  GET /api/v1/telemetry/iperf/info:
+    responses:
+      "200":
+        description: The local iperf3 installation.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/IperfInfoResponse'
+  GET /api/v1/telemetry/link:
+    responses:
+      "200":
+        description: Link state of the interface.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LinkResponse'
+  GET /api/v1/telemetry/speedtest/status:
+    responses:
+      "200":
+        description: The running or last speed test.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SpeedtestStatusResponse'
+  GET /api/v1/telemetry/vlan:
+    responses:
+      "200":
+        description: VLANs seen on the interface.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/VLANResponse'
+  GET /api/v1/topology/interfaces:
+    responses:
+      "200":
+        description: Polled interface counters.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/InterfaceStatsListResponse'
+  GET /api/v1/topology/interfaces/history:
+    responses:
+      "200":
+        description: Counter history for one interface.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/InterfaceHistoryResponse'
+  GET /api/v1/users/me/dashboard:
+    responses:
+      "200":
+        description: The caller's dashboard layout.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DashboardLayout'
+  PUT /api/v1/users/me/dashboard:
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/DashboardLayoutRequest'
+    responses:
+      "200":
+        description: The saved layout.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DashboardLayout'
+  GET /api/v1/wifi/airspace:
+    responses:
+      "200":
+        description: SSIDs heard in the airspace.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/WiFiAirspaceResponse'
+  GET /api/v1/wifi/anomalies:
+    responses:
+      "200":
+        description: Wi-Fi anomalies detected.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/WiFiAnomaliesResponse'
+  POST /api/v1/wifi/wifi/connect:
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/WiFiConnectRequest'

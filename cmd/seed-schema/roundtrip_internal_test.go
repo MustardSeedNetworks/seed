@@ -11,6 +11,8 @@ import (
 	"time"
 
 	"github.com/santhosh-tekuri/jsonschema/v6"
+
+	"github.com/MustardSeedNetworks/seed/internal/api/apischema"
 )
 
 // TestCoveredDTOsRoundTripAgainstSchema is the Phase 2 round-trip guardrail
@@ -34,31 +36,31 @@ func TestCoveredDTOsRoundTripAgainstSchema(t *testing.T) {
 
 	schemaDir := schemaDirForTest(t)
 
-	for _, target := range schemaTargets() {
-		t.Run(target.title, func(t *testing.T) {
+	for _, target := range apischema.Targets() {
+		t.Run(target.Title, func(t *testing.T) {
 			t.Parallel()
 
-			schema := compileSchemaFile(t, filepath.Join(schemaDir, target.filename))
+			schema := compileSchemaFile(t, filepath.Join(schemaDir, target.Filename))
 
-			// target.value is a pointer to a zero-value DTO; reflect the
+			// target.Value is a pointer to a zero-value DTO; reflect the
 			// pointed-to struct type and fill every field so the sample
 			// exercises required and optional members alike.
-			sample := fillValue(t, reflect.TypeOf(target.value).Elem())
+			sample := fillValue(t, reflect.TypeOf(target.Value).Elem())
 
 			data, err := json.Marshal(sample.Interface())
 			if err != nil {
-				t.Fatalf("marshal sample for %s: %v", target.title, err)
+				t.Fatalf("marshal sample for %s: %v", target.Title, err)
 			}
 
 			var doc any
 			if unmarshalErr := json.Unmarshal(data, &doc); unmarshalErr != nil {
-				t.Fatalf("re-parse sample JSON for %s: %v", target.title, unmarshalErr)
+				t.Fatalf("re-parse sample JSON for %s: %v", target.Title, unmarshalErr)
 			}
 
 			if validateErr := schema.Validate(doc); validateErr != nil {
 				t.Fatalf(
 					"%s sample does not validate against %s — struct and wire have drifted:\n%v\nsample JSON: %s",
-					target.title, target.filename, validateErr, data,
+					target.Title, target.Filename, validateErr, data,
 				)
 			}
 		})
