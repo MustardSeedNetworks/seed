@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.248.0](https://github.com/MustardSeedNetworks/seed/compare/v0.247.0...v0.248.0) (2026-10-10)
+
+
+### Features
+
+* **api:** document the settings write and alert test-send bodies ([#3281](https://github.com/MustardSeedNetworks/seed/issues/3281)) ([da13d4d](https://github.com/MustardSeedNetworks/seed/commit/da13d4d5fd599493388be0d2dbf944b0efa54d39))
+* **api:** document the subnet, settings and DHCP renew acks ([#3278](https://github.com/MustardSeedNetworks/seed/issues/3278)) ([4c54adc](https://github.com/MustardSeedNetworks/seed/commit/4c54adcbd15c2f8f4c956ad68cfa6d120ceb860a))
+
 ## [0.247.0](https://github.com/MustardSeedNetworks/seed/compare/v0.246.0...v0.247.0) (2026-10-10)
 
 
