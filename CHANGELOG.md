@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.243.0](https://github.com/MustardSeedNetworks/seed/compare/v0.242.0...v0.243.0) (2026-10-10)
+
+
+### Features
+
+* **api:** document request and response bodies for 33 more operations ([#3263](https://github.com/MustardSeedNetworks/seed/issues/3263)) ([ee9aa8d](https://github.com/MustardSeedNetworks/seed/commit/ee9aa8daf6536376cd95b499d96e27d636216768))
+* **api:** publish the reflected DTO schemas in docs/openapi.yaml ([#3260](https://github.com/MustardSeedNetworks/seed/issues/3260)) ([f170ab5](https://github.com/MustardSeedNetworks/seed/commit/f170ab596b0610bd6db7ce7ad1988514b91c4dc2))
+
 ## [0.242.0](https://github.com/MustardSeedNetworks/seed/compare/v0.241.1...v0.242.0) (2026-10-10)
 
 
