@@ -164,6 +164,7 @@ func Targets() []Target {
 		{&api.UpdateUserRequest{}, "update-user-request.schema.json"},
 		{&api.MintTokenRequest{}, "mint-token-request.schema.json"},
 		{&api.MintTokenResponse{}, "mint-token-response.schema.json"},
+		{&api.TokenListItem{}, "token-list-item.schema.json"},
 		{&api.SSOProvidersResponse{}, "sso-providers-response.schema.json"},
 		{&api.NVDAPIKeyValidateRequest{}, "nvd-api-key-validate-request.schema.json"},
 		{&api.NVDAPIKeyValidateResponse{}, "nvd-api-key-validate-response.schema.json"},
