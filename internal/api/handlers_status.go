@@ -133,15 +133,21 @@ func (s *Server) handleLogs(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
+// HealthResponse is the liveness answer of GET /api/v1/health.
+type HealthResponse struct {
+	Status string  `json:"status"`
+	Uptime float64 `json:"uptime"` // seconds since the daemon started
+}
+
 // handleHealth handles GET /api/health - simple liveness check for load balancers (fixes #540, #544).
 // Returns 200 OK if server is running, minimal response for fast health checks.
 func (s *Server) handleHealth(w http.ResponseWriter, r *http.Request) {
 	logger := logging.FromContext(r.Context())
 	// Simple health check - just return OK
 	// For detailed health, use /api/system/health
-	sendJSONResponse(w, logger, http.StatusOK, map[string]any{
-		"status": "ok",
-		"uptime": time.Since(s.startTime).Seconds(),
+	sendJSONResponse(w, logger, http.StatusOK, HealthResponse{
+		Status: "ok",
+		Uptime: time.Since(s.startTime).Seconds(),
 	})
 }
 

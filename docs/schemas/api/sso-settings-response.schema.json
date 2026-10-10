@@ -1,0 +1,40 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/MustardSeedNetworks/seed/main/docs/schemas/api/sso-settings-response.schema.json",
+  "$ref": "#/$defs/SSOSettingsResponse",
+  "$defs": {
+    "SSOProviderInfo": {
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "enabled": {
+          "type": "boolean"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "name",
+        "enabled"
+      ]
+    },
+    "SSOSettingsResponse": {
+      "properties": {
+        "providers": {
+          "items": {
+            "$ref": "#/$defs/SSOProviderInfo"
+          },
+          "type": "array"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "providers"
+      ]
+    }
+  },
+  "title": "SSOSettingsResponse",
+  "description": "SSOSettingsResponse — generated from the Go struct in internal/api; refresh with `make schema` after struct changes."
+}

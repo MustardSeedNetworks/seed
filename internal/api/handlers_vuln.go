@@ -111,6 +111,12 @@ func (s *Server) handleVulnerabilityStatus(w http.ResponseWriter, r *http.Reques
 	})
 }
 
+// VulnerabilityResultsResponse is every scanned device's vulnerabilities.
+type VulnerabilityResultsResponse struct {
+	Results []*discovery.DeviceVulnerabilities `json:"results"`
+	Count   int                                `json:"count"`
+}
+
 // handleVulnerabilityResults returns all vulnerability scan results
 // GET /api/vulnerabilities/results?severity=high (optional filter) (fixes #703).
 func (s *Server) handleVulnerabilityResults(w http.ResponseWriter, r *http.Request) {
@@ -139,9 +145,9 @@ func (s *Server) handleVulnerabilityResults(w http.ResponseWriter, r *http.Reque
 		results = filtered
 	}
 
-	sendJSONResponse(w, logger, http.StatusOK, map[string]any{
-		"results": results,
-		"count":   len(results),
+	sendJSONResponse(w, logger, http.StatusOK, VulnerabilityResultsResponse{
+		Results: results,
+		Count:   len(results),
 	})
 }
 
