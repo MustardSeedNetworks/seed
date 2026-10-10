@@ -1824,6 +1824,20 @@ body:
   },
   {
     "auth": true,
+    "csrf": true,
+    "feature": "compliance_advanced",
+    "maxBodyBytes": 262144,
+    "methods": [
+      "GET",
+      "POST",
+      "DELETE"
+    ],
+    "path": "/api/v1/tftp/session",
+    "rateLimited": false,
+    "scope": "admin"
+  },
+  {
+    "auth": true,
     "csrf": false,
     "feature": "live_telemetry",
     "maxBodyBytes": 262144,

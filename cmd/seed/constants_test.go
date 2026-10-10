@@ -175,7 +175,8 @@ func TestSystemdTemplateHasCapabilities(t *testing.T) {
 	tmpl := GetSystemdServiceTemplate()
 
 	// Check for setcap in ExecStartPre for network capabilities
-	if !containsSubstring(tmpl, "setcap") || !containsSubstring(tmpl, "cap_net_raw") {
+	if !containsSubstring(tmpl, "setcap") || !containsSubstring(tmpl, "cap_net_raw") ||
+		!containsSubstring(tmpl, "cap_net_bind_service") {
 		t.Error("systemd template should set network capabilities via setcap")
 	}
 }
