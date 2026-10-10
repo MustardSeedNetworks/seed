@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.247.0](https://github.com/MustardSeedNetworks/seed/compare/v0.246.0...v0.247.0) (2026-10-10)
+
+
+### Features
+
+* **api:** document the version and discovery status bodies ([#3275](https://github.com/MustardSeedNetworks/seed/issues/3275)) ([37763eb](https://github.com/MustardSeedNetworks/seed/commit/37763eb7b479159221a437845af3135b003f9a9c))
+* **api:** document the Wi-Fi radio bodies ([#3277](https://github.com/MustardSeedNetworks/seed/issues/3277)) ([0a6546c](https://github.com/MustardSeedNetworks/seed/commit/0a6546ce16607c6d9947ffce812f98ed12bc12e3))
+
 ## [0.246.0](https://github.com/MustardSeedNetworks/seed/compare/v0.245.0...v0.246.0) (2026-10-10)
 
 
