@@ -77,6 +77,7 @@ func Targets() []Target {
 
 		// Auth / status / recovery / config responses.
 		{&api.StatusResponse{}, "status-response.schema.json"},
+		{&api.HealthResponse{}, "health-response.schema.json"},
 		{&api.NeighbourCacheResponse{}, "neighbour-cache-response.schema.json"},
 		{&api.DriverStatsResponse{}, "driver-stats-response.schema.json"},
 		{&api.LoginResponse{}, "login-response.schema.json"},
@@ -102,6 +103,7 @@ func Targets() []Target {
 		{&api.IPConfigResponse{}, "ipconfig-response.schema.json"},
 		{&api.DiscoveryResponse{}, "discovery-response.schema.json"},
 		{&api.ReportsResponse{}, "reports-response.schema.json"},
+		{&api.GenerateReportRequest{}, "generate-report-request.schema.json"},
 		{&api.ReportScheduleRequest{}, "report-schedule-request.schema.json"},
 		{&api.ReportScheduleInfo{}, "report-schedule-info.schema.json"},
 		{&api.ReportSchedulesResponse{}, "report-schedules-response.schema.json"},
@@ -157,6 +159,7 @@ func Targets() []Target {
 		{&api.VulnScanRequest{}, "vuln-scan-request.schema.json"},
 		{&api.SetInterfaceRequest{}, "set-interface-request.schema.json"},
 		{&api.WiFiSettingsResponse{}, "wifi-settings-response.schema.json"},
+		{&api.WiFiStatusResponse{}, "wifi-status-response.schema.json"},
 
 		// Users / API tokens / update / SSO / logs.
 		{&api.UserResponse{}, "user-response.schema.json"},
@@ -166,8 +169,11 @@ func Targets() []Target {
 		{&api.MintTokenResponse{}, "mint-token-response.schema.json"},
 		{&api.TokenListItem{}, "token-list-item.schema.json"},
 		{&api.SSOProvidersResponse{}, "sso-providers-response.schema.json"},
+		{&api.SSOSettingsResponse{}, "sso-settings-response.schema.json"},
 		{&api.NVDAPIKeyValidateRequest{}, "nvd-api-key-validate-request.schema.json"},
 		{&api.NVDAPIKeyValidateResponse{}, "nvd-api-key-validate-response.schema.json"},
+		{&api.VulnerabilityResultsResponse{}, "vulnerability-results-response.schema.json"},
+		{&api.VulnFindingsResponse{}, "vuln-findings-response.schema.json"},
 		{&api.RestoreRequest{}, "restore-request.schema.json"},
 		{&api.ClientLogRequest{}, "client-log-request.schema.json"},
 		{&api.LogStatsResponse{}, "log-stats-response.schema.json"},
@@ -279,6 +285,10 @@ func Targets() []Target {
 		{&discovery.MultiPathResult{}, "path-multipath-response.schema.json"},
 		{&api.PathMTURequest{}, "path-mtu-request.schema.json"},
 		{&discovery.PMTUDResult{}, "path-mtu-response.schema.json"},
+
+		// The problem detector's thresholds, which /security/problems/thresholds
+		// reads and replaces as they are: flat, pure data.
+		{&discovery.ProblemThresholds{}, "problem-thresholds.schema.json"},
 
 		// Profile/settings config — code-first model of the per-profile
 		// config.Config blob (ADR-0007/0008, Phase 7 S6). The profile Config

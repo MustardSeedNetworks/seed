@@ -50,6 +50,12 @@ type VulnFindingResponse struct {
 	ResolvedAt        *time.Time `json:"resolvedAt,omitempty"`
 }
 
+// VulnFindingsResponse is one page of the finding list.
+type VulnFindingsResponse struct {
+	Count    int                   `json:"count"`
+	Findings []VulnFindingResponse `json:"findings"`
+}
+
 // VulnStatusChangeResponse is one entry of a finding's history. An empty
 // actor is the scanner.
 type VulnStatusChangeResponse struct {
@@ -120,7 +126,7 @@ func (s *Server) handleVulnFindings(w http.ResponseWriter, r *http.Request) {
 			DetectedAt: f.DetectedAt, ResolvedAt: f.ResolvedAt,
 		})
 	}
-	sendJSONResponse(w, logger, http.StatusOK, map[string]any{jsonKeyCount: len(out), "findings": out})
+	sendJSONResponse(w, logger, http.StatusOK, VulnFindingsResponse{Count: len(out), Findings: out})
 }
 
 // handleVulnFindingAction routes /findings/{id}/status (POST) and

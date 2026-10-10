@@ -1,0 +1,85 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/MustardSeedNetworks/seed/main/docs/schemas/api/vuln-findings-response.schema.json",
+  "$ref": "#/$defs/VulnFindingsResponse",
+  "$defs": {
+    "VulnFindingResponse": {
+      "properties": {
+        "id": {
+          "type": "integer"
+        },
+        "deviceId": {
+          "type": "string"
+        },
+        "deviceIp": {
+          "type": "string"
+        },
+        "hostname": {
+          "type": "string"
+        },
+        "cveId": {
+          "type": "string"
+        },
+        "severity": {
+          "type": "string"
+        },
+        "score": {
+          "type": "number"
+        },
+        "description": {
+          "type": "string"
+        },
+        "affectedComponent": {
+          "type": "string"
+        },
+        "affectedVersion": {
+          "type": "string"
+        },
+        "status": {
+          "type": "string"
+        },
+        "detectedAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "resolvedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "id",
+        "deviceId",
+        "deviceIp",
+        "cveId",
+        "severity",
+        "score",
+        "status",
+        "detectedAt"
+      ]
+    },
+    "VulnFindingsResponse": {
+      "properties": {
+        "count": {
+          "type": "integer"
+        },
+        "findings": {
+          "items": {
+            "$ref": "#/$defs/VulnFindingResponse"
+          },
+          "type": "array"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "count",
+        "findings"
+      ]
+    }
+  },
+  "title": "VulnFindingsResponse",
+  "description": "VulnFindingsResponse — generated from the Go struct in internal/api; refresh with `make schema` after struct changes."
+}

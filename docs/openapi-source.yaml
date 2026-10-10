@@ -124,6 +124,14 @@ operations:
           application/json:
             schema:
               $ref: '#/components/schemas/LoginResponse'
+  POST /api/v1/config/backup:
+    responses:
+      "201":
+        description: The backup that was written.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BackupInfo'
   GET /api/v1/config/backups:
     responses:
       "200":
@@ -234,6 +242,14 @@ operations:
           application/json:
             schema:
               $ref: '#/components/schemas/FlowTalkersResponse'
+  GET /api/v1/health:
+    responses:
+      "200":
+        description: The daemon is up; uptime in seconds.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/HealthResponse'
   GET /api/v1/history/anomalies:
     responses:
       "200":
@@ -453,6 +469,20 @@ operations:
           application/json:
             schema:
               $ref: '#/components/schemas/ReportsResponse'
+  POST /api/v1/reports/generate:
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/GenerateReportRequest'
+    responses:
+      "202":
+        description: The report that was generated.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ReportInfo'
   GET /api/v1/reports/schedules:
     responses:
       "200":
@@ -536,6 +566,16 @@ operations:
         application/json:
           schema:
             $ref: '#/components/schemas/SubnetRequest'
+  GET /api/v1/security/devices/subnets/pending:
+    responses:
+      "200":
+        description: Learned subnets waiting for the operator's decision.
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: '#/components/schemas/SubnetResponse'
   POST /api/v1/security/devices/subnets/pending:
     requestBody:
       required: true
@@ -610,6 +650,45 @@ operations:
           application/json:
             schema:
               $ref: '#/components/schemas/ProblemScanResponse'
+  GET /api/v1/security/problems/thresholds:
+    responses:
+      "200":
+        description: The thresholds the problem detector applies.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProblemThresholds'
+  PUT /api/v1/security/problems/thresholds:
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ProblemThresholds'
+  GET /api/v1/security/vulnerabilities/device:
+    responses:
+      "200":
+        description: The vulnerabilities found on the device named by the ip query parameter.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DeviceVulnerabilities'
+  GET /api/v1/security/vulnerabilities/findings:
+    responses:
+      "200":
+        description: One page of tracked findings.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/VulnFindingsResponse'
+  GET /api/v1/security/vulnerabilities/results:
+    responses:
+      "200":
+        description: Every scanned device's vulnerabilities, optionally filtered by severity.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/VulnerabilityResultsResponse'
   GET /api/v1/security/vulnerabilities/settings:
     responses:
       "200":
@@ -717,6 +796,14 @@ operations:
           application/json:
             schema:
               $ref: '#/components/schemas/SSOProvidersResponse'
+  GET /api/v1/sso/settings:
+    responses:
+      "200":
+        description: Each configured SSO provider and whether it can be used.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SSOSettingsResponse'
   GET /api/v1/status:
     responses:
       "200":
@@ -737,6 +824,14 @@ operations:
     responses:
       "200":
         description: Rogue DHCP detection state.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RogueDHCPResponse'
+  POST /api/v1/telemetry/dhcp/rogue:
+    responses:
+      "200":
+        description: The detector's state after the start or stop action.
         content:
           application/json:
             schema:
@@ -1070,3 +1165,11 @@ operations:
           application/json:
             schema:
               $ref: '#/components/schemas/WiFiSettingsResponse'
+  GET /api/v1/wifi/wifi/status:
+    responses:
+      "200":
+        description: The wireless adapter state, read without a scan.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/WiFiStatusResponse'

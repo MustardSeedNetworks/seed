@@ -66,6 +66,16 @@ type WiFiSettingsResponse struct {
 	IsWireless    bool     `json:"isWireless"`
 }
 
+// WiFiStatusResponse is the wireless adapter state, read without a scan.
+type WiFiStatusResponse struct {
+	Status            string   `json:"status"`
+	Message           string   `json:"message"`
+	CurrentInterface  string   `json:"currentInterface"`
+	IsWireless        bool     `json:"isWireless"`
+	AvailableAdapters []string `json:"availableAdapters"`
+	CanScan           bool     `json:"canScan"`
+}
+
 // ============================================================================
 // WiFi Settings Handlers
 // ============================================================================
@@ -214,13 +224,18 @@ func (s *Server) handleWiFiScan(w http.ResponseWriter, r *http.Request) {
 func (s *Server) handleWiFiStatus(w http.ResponseWriter, r *http.Request) {
 	res := s.wifiManagement.Status(s.getInterfaceFromRequest(r))
 
-	sendJSONResponse(w, nil, http.StatusOK, map[string]any{
-		"status":            res.Status,
-		"message":           res.Message,
-		"currentInterface":  res.CurrentInterface,
-		"isWireless":        res.IsWireless,
-		"availableAdapters": res.AvailableAdapters,
-		"canScan":           res.CanScan,
+	// A host with no adapter lists none rather than sending null.
+	adapters := res.AvailableAdapters
+	if adapters == nil {
+		adapters = []string{}
+	}
+	sendJSONResponse(w, nil, http.StatusOK, WiFiStatusResponse{
+		Status:            res.Status,
+		Message:           res.Message,
+		CurrentInterface:  res.CurrentInterface,
+		IsWireless:        res.IsWireless,
+		AvailableAdapters: adapters,
+		CanScan:           res.CanScan,
 	})
 }
 

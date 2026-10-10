@@ -2009,6 +2009,17 @@ components:
                 - lastTime
                 - status
             type: object
+        GenerateReportRequest:
+            additionalProperties: false
+            properties:
+                format:
+                    type: string
+                type:
+                    type: string
+            required:
+                - type
+                - format
+            type: object
         GuestAuditTarget:
             additionalProperties: false
             properties:
@@ -2268,6 +2279,17 @@ components:
                 - run_speedtest
                 - run_iperf
                 - run_discovery
+            type: object
+        HealthResponse:
+            additionalProperties: false
+            properties:
+                status:
+                    type: string
+                uptime:
+                    type: number
+            required:
+                - status
+                - uptime
             type: object
         HistoryWindowResponse:
             additionalProperties: false
@@ -4317,6 +4339,44 @@ components:
                 - resolvedToday
                 - lastScanTime
             type: object
+        ProblemThresholds:
+            additionalProperties: false
+            properties:
+                collisionsPerMin:
+                    type: integer
+                cpuPercent:
+                    type: number
+                diskPercent:
+                    type: number
+                inputErrorsPerMin:
+                    type: integer
+                maxChannelUtil:
+                    type: number
+                maxCoChannelAps:
+                    type: integer
+                maxRetryPercent:
+                    type: number
+                memoryPercent:
+                    type: number
+                minSignalDbm:
+                    type: integer
+                outputErrorsPerMin:
+                    type: integer
+                tempCelsius:
+                    type: number
+            required:
+                - cpuPercent
+                - memoryPercent
+                - diskPercent
+                - tempCelsius
+                - inputErrorsPerMin
+                - outputErrorsPerMin
+                - collisionsPerMin
+                - minSignalDbm
+                - maxRetryPercent
+                - maxChannelUtil
+                - maxCoChannelAps
+            type: object
         ProfileExportResponse:
             additionalProperties: false
             properties:
@@ -5327,12 +5387,33 @@ components:
                 - client_secret
                 - redirect_url
             type: object
+        SSOProviderInfo:
+            additionalProperties: false
+            properties:
+                enabled:
+                    type: boolean
+                name:
+                    type: string
+            required:
+                - name
+                - enabled
+            type: object
         SSOProvidersResponse:
             additionalProperties: false
             properties:
                 providers:
                     items:
                         type: string
+                    type: array
+            required:
+                - providers
+            type: object
+        SSOSettingsResponse:
+            additionalProperties: false
+            properties:
+                providers:
+                    items:
+                        $ref: '#/components/schemas/SSOProviderInfo'
                     type: array
             required:
                 - providers
@@ -6419,6 +6500,60 @@ components:
                 - stations
                 - anomalies
             type: object
+        VulnFindingResponse:
+            additionalProperties: false
+            properties:
+                affectedComponent:
+                    type: string
+                affectedVersion:
+                    type: string
+                cveId:
+                    type: string
+                description:
+                    type: string
+                detectedAt:
+                    format: date-time
+                    type: string
+                deviceId:
+                    type: string
+                deviceIp:
+                    type: string
+                hostname:
+                    type: string
+                id:
+                    type: integer
+                resolvedAt:
+                    format: date-time
+                    type: string
+                score:
+                    type: number
+                severity:
+                    type: string
+                status:
+                    type: string
+            required:
+                - id
+                - deviceId
+                - deviceIp
+                - cveId
+                - severity
+                - score
+                - status
+                - detectedAt
+            type: object
+        VulnFindingsResponse:
+            additionalProperties: false
+            properties:
+                count:
+                    type: integer
+                findings:
+                    items:
+                        $ref: '#/components/schemas/VulnFindingResponse'
+                    type: array
+            required:
+                - count
+                - findings
+            type: object
         VulnScanRequest:
             additionalProperties: false
             properties:
@@ -6467,6 +6602,19 @@ components:
                 - modified
                 - references
                 - affectedCpe
+            type: object
+        VulnerabilityResultsResponse:
+            additionalProperties: false
+            properties:
+                count:
+                    type: integer
+                results:
+                    items:
+                        $ref: '#/components/schemas/DeviceVulnerabilities'
+                    type: array
+            required:
+                - results
+                - count
             type: object
         VulnerabilityScanConfig:
             additionalProperties: false
@@ -6857,6 +7005,31 @@ components:
                 - interface
                 - availableWifi
                 - isWireless
+            type: object
+        WiFiStatusResponse:
+            additionalProperties: false
+            properties:
+                availableAdapters:
+                    items:
+                        type: string
+                    type: array
+                canScan:
+                    type: boolean
+                currentInterface:
+                    type: string
+                isWireless:
+                    type: boolean
+                message:
+                    type: string
+                status:
+                    type: string
+            required:
+                - status
+                - message
+                - currentInterface
+                - isWireless
+                - availableAdapters
+                - canScan
             type: object
         WiFiThresholds:
             additionalProperties: false
@@ -7619,6 +7792,12 @@ paths:
             description: Requires an operator-scoped token.
             operationId: postApiV1ConfigBackup
             responses:
+                "201":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/BackupInfo'
+                    description: The backup that was written.
                 "401":
                     content:
                         application/json:
@@ -8555,6 +8734,12 @@ paths:
         get:
             operationId: getApiV1Health
             responses:
+                "200":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/HealthResponse'
+                    description: The daemon is up; uptime in seconds.
                 "401":
                     content:
                         application/json:
@@ -10126,7 +10311,19 @@ paths:
         post:
             description: Requires an operator-scoped token.
             operationId: postApiV1ReportsGenerate
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/GenerateReportRequest'
+                required: true
             responses:
+                "202":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/ReportInfo'
+                    description: The report that was generated.
                 "401":
                     content:
                         application/json:
@@ -10715,6 +10912,14 @@ paths:
         get:
             operationId: getApiV1SecurityDevicesSubnetsPending
             responses:
+                "200":
+                    content:
+                        application/json:
+                            schema:
+                                items:
+                                    $ref: '#/components/schemas/SubnetResponse'
+                                type: array
+                    description: Learned subnets waiting for the operator's decision.
                 "401":
                     content:
                         application/json:
@@ -11230,6 +11435,12 @@ paths:
         get:
             operationId: getApiV1SecurityProblemsThresholds
             responses:
+                "200":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/ProblemThresholds'
+                    description: The thresholds the problem detector applies.
                 "401":
                     content:
                         application/json:
@@ -11251,6 +11462,12 @@ paths:
         put:
             description: Requires an operator-scoped token.
             operationId: putApiV1SecurityProblemsThresholds
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/ProblemThresholds'
+                required: true
             responses:
                 "401":
                     content:
@@ -11289,6 +11506,12 @@ paths:
         get:
             operationId: getApiV1SecurityVulnerabilitiesDevice
             responses:
+                "200":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/DeviceVulnerabilities'
+                    description: The vulnerabilities found on the device named by the ip query parameter.
                 "401":
                     content:
                         application/json:
@@ -11311,6 +11534,12 @@ paths:
         get:
             operationId: getApiV1SecurityVulnerabilitiesFindings
             responses:
+                "200":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/VulnFindingsResponse'
+                    description: One page of tracked findings.
                 "401":
                     content:
                         application/json:
@@ -11399,6 +11628,12 @@ paths:
         get:
             operationId: getApiV1SecurityVulnerabilitiesResults
             responses:
+                "200":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/VulnerabilityResultsResponse'
+                    description: Every scanned device's vulnerabilities, optionally filtered by severity.
                 "401":
                     content:
                         application/json:
@@ -12060,6 +12295,12 @@ paths:
         get:
             operationId: getApiV1SsoSettings
             responses:
+                "200":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/SSOSettingsResponse'
+                    description: Each configured SSO provider and whether it can be used.
                 "401":
                     content:
                         application/json:
@@ -12317,6 +12558,12 @@ paths:
         post:
             operationId: postApiV1TelemetryDhcpRogue
             responses:
+                "200":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/RogueDHCPResponse'
+                    description: The detector's state after the start or stop action.
                 "401":
                     content:
                         application/json:
@@ -14467,6 +14714,12 @@ paths:
         get:
             operationId: getApiV1WifiWifiStatus
             responses:
+                "200":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/WiFiStatusResponse'
+                    description: The wireless adapter state, read without a scan.
                 "401":
                     content:
                         application/json:

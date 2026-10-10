@@ -1,0 +1,25 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/MustardSeedNetworks/seed/main/docs/schemas/api/health-response.schema.json",
+  "$ref": "#/$defs/HealthResponse",
+  "$defs": {
+    "HealthResponse": {
+      "properties": {
+        "status": {
+          "type": "string"
+        },
+        "uptime": {
+          "type": "number"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "status",
+        "uptime"
+      ]
+    }
+  },
+  "title": "HealthResponse",
+  "description": "HealthResponse — generated from the Go struct in internal/api; refresh with `make schema` after struct changes."
+}

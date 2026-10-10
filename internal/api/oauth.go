@@ -465,6 +465,12 @@ type SSOProviderInfo struct {
 	Enabled bool   `json:"enabled"`
 }
 
+// SSOSettingsResponse lists each configured SSO provider and whether it can
+// be used, for the settings UI.
+type SSOSettingsResponse struct {
+	Providers []SSOProviderInfo `json:"providers"`
+}
+
 // handleSSOSettings returns SSO configuration status for the settings UI.
 //
 // The route is registered with minRole: op, and since #2632 it no longer sits
@@ -482,9 +488,7 @@ func (s *Server) handleSSOSettings(w http.ResponseWriter, r *http.Request) {
 		})
 	}
 
-	sendJSONResponse(w, logger, http.StatusOK, map[string]any{
-		"providers": providers,
-	})
+	sendJSONResponse(w, logger, http.StatusOK, SSOSettingsResponse{Providers: providers})
 }
 
 // ssoUpdateRequest represents the SSO provider update request.
