@@ -7,6 +7,7 @@ import (
 	"net/http/httptest"
 	"slices"
 	"strconv"
+	"strings"
 	"testing"
 	"time"
 
@@ -18,6 +19,7 @@ import (
 	"github.com/MustardSeedNetworks/seed/internal/engine"
 	enginestatus "github.com/MustardSeedNetworks/seed/internal/engine/status"
 	"github.com/MustardSeedNetworks/seed/internal/polling"
+	"github.com/MustardSeedNetworks/seed/internal/wifi"
 	"github.com/MustardSeedNetworks/seed/internal/wifi/troubleshooting"
 )
 
@@ -419,4 +421,78 @@ func TestDiscoveryOptionsResponseShape(t *testing.T) {
 	want, err := json.Marshal(map[string]config.DiscoveryOptions{"options": svc.GetOptions()})
 	require.NoError(t, err)
 	require.JSONEq(t, string(want), w.Body.String())
+}
+
+type noScanRadio struct{ statusRadio }
+
+func (noScanRadio) ScannerAvailable() bool { return false }
+
+type scanRadio struct{ statusRadio }
+
+func (scanRadio) ScannerAvailable() bool { return true }
+func (scanRadio) SetInterface(string)    {}
+func (scanRadio) Scan() ([]*wifi.ScannedNetwork, error) {
+	return []*wifi.ScannedNetwork{{
+		SSID: "lab", BSSID: "aa:bb:cc:dd:ee:ff", Signal: -51, Channel: 36,
+		Frequency: 5180, Security: "WPA2", ChannelWidth: 80, LastSeen: time.Unix(0, 0).UTC(),
+	}}, nil
+}
+
+func (scanRadio) Disconnect() (*wifi.ConnectionResult, error) {
+	return &wifi.ConnectionResult{Success: true, Message: "Disconnected", SSID: "lab"}, nil
+}
+
+func TestWiFiScanResponseShape(t *testing.T) {
+	t.Parallel()
+	tests := []struct {
+		name  string
+		radio troubleshooting.Hardware
+		want  string
+	}{
+		{
+			name:  "scanned",
+			radio: scanRadio{},
+			want: `{"interface":"wlan0","available":true,"networks":[{"ssid":"lab","bssid":"aa:bb:cc:dd:ee:ff",` +
+				`"signal":-51,"channel":36,"frequency":5180,"security":"WPA2","channelWidth":80,"noiseFloor":0,` +
+				`"snr":0,"htMode":"","isDFS":false,"lastSeen":"1970-01-01T00:00:00Z","hidden":false,` +
+				`"pmfRequired":false,"wpsEnabled":false,"rrmNeighbor":false,"btmSupported":false,` +
+				`"ftSupported":false,"hasBssLoad":false,"channelUtil":0,"advertisedStations":0}]}`,
+		},
+		{
+			name:  "no scanner",
+			radio: noScanRadio{},
+			want:  `{"interface":"wlan0","available":false,"networks":[],"error":"WiFi scanner not initialized"}`,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			s := &Server{wifiManagement: troubleshooting.NewManagement(tt.radio, nil, fixedWiFiInterface("wlan0"))}
+			w := serve(t, s.handleWiFiScan, "/api/v1/wifi/wifi/scan")
+			require.JSONEq(t, tt.want, w.Body.String())
+		})
+	}
+}
+
+func TestWiFiDisconnectResponseShape(t *testing.T) {
+	t.Parallel()
+	s := &Server{wifiManagement: troubleshooting.NewManagement(scanRadio{}, nil, fixedWiFiInterface("wlan0"))}
+	w := serve(t, s.handleWiFiDisconnect, "/api/v1/wifi/wifi/disconnect")
+	require.JSONEq(t, `{"success":true,"message":"Disconnected","ssid":"lab"}`, w.Body.String())
+}
+
+func TestWiFiSettingsUpdateResponseShape(t *testing.T) {
+	t.Parallel()
+	s := &Server{wifiManagement: troubleshooting.NewManagement(scanRadio{}, nil, fixedWiFiInterface("wlan0"))}
+	w := httptest.NewRecorder()
+	s.handleWiFiSettings(w, httptest.NewRequest(http.MethodPut, "/api/v1/wifi/wifi/settings",
+		strings.NewReader(`{"interface":"wlan1"}`)))
+	require.Equal(t, http.StatusOK, w.Code, w.Body.String())
+	require.JSONEq(t, `{"status":"success","message":"WiFi settings updated"}`, w.Body.String())
+}
+
+func TestWiFiSavedNetworksWithoutManagerIsEmptyArray(t *testing.T) {
+	t.Parallel()
+	w := serve(t, (&Server{}).handleWiFiSavedNetworks, "/api/v1/wifi/wifi/saved")
+	require.JSONEq(t, `{"networks":[]}`, w.Body.String())
 }

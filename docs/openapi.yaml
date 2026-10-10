@@ -1021,6 +1021,19 @@ components:
                 - latest
                 - needsMigration
             type: object
+        ConnectionResult:
+            additionalProperties: false
+            properties:
+                message:
+                    type: string
+                ssid:
+                    type: string
+                success:
+                    type: boolean
+            required:
+                - success
+                - message
+            type: object
         Conversation:
             additionalProperties: false
             properties:
@@ -5862,6 +5875,22 @@ components:
             required:
                 - providers
             type: object
+        SavedNetwork:
+            additionalProperties: false
+            properties:
+                device:
+                    type: string
+                security:
+                    type: string
+                ssid:
+                    type: string
+                type:
+                    type: string
+                uuid:
+                    type: string
+            required:
+                - ssid
+            type: object
         ScanResult:
             additionalProperties: false
             properties:
@@ -5927,6 +5956,79 @@ components:
                 - updatedDevices
                 - enrichedDevices
                 - vulnerableDevices
+            type: object
+        ScannedNetwork:
+            additionalProperties: false
+            properties:
+                advertisedStations:
+                    type: integer
+                bssid:
+                    type: string
+                btmSupported:
+                    type: boolean
+                channel:
+                    type: integer
+                channelUtil:
+                    type: integer
+                channelWidth:
+                    type: integer
+                countryCode:
+                    type: string
+                frequency:
+                    type: integer
+                ftSupported:
+                    type: boolean
+                hasBssLoad:
+                    type: boolean
+                hidden:
+                    type: boolean
+                htMode:
+                    type: string
+                isDFS:
+                    type: boolean
+                lastSeen:
+                    format: date-time
+                    type: string
+                noiseFloor:
+                    type: integer
+                pmfRequired:
+                    type: boolean
+                rrmNeighbor:
+                    type: boolean
+                security:
+                    type: string
+                signal:
+                    type: integer
+                snr:
+                    type: integer
+                ssid:
+                    type: string
+                standard:
+                    type: string
+                wpsEnabled:
+                    type: boolean
+            required:
+                - ssid
+                - bssid
+                - signal
+                - channel
+                - frequency
+                - security
+                - channelWidth
+                - noiseFloor
+                - snr
+                - htMode
+                - isDFS
+                - lastSeen
+                - hidden
+                - pmfRequired
+                - wpsEnabled
+                - rrmNeighbor
+                - btmSupported
+                - ftSupported
+                - hasBssLoad
+                - channelUtil
+                - advertisedStations
             type: object
         Schedule:
             additionalProperties: false
@@ -6324,6 +6426,19 @@ components:
                 - signalDbm
                 - frames
                 - lastSeen
+            type: object
+        StatusMessageResponse:
+            additionalProperties: false
+            properties:
+                message:
+                    type: string
+                status:
+                    enum:
+                        - success
+                    type: string
+            required:
+                - status
+                - message
             type: object
         StatusResponse:
             additionalProperties: false
@@ -7733,6 +7848,46 @@ components:
                 - interface
                 - wireless
                 - status
+            type: object
+        WiFiSavedNetworksResponse:
+            additionalProperties: false
+            properties:
+                error:
+                    type: string
+                networks:
+                    items:
+                        $ref: '#/components/schemas/SavedNetwork'
+                    type: array
+            required:
+                - networks
+            type: object
+        WiFiScanResponse:
+            additionalProperties: false
+            properties:
+                available:
+                    type: boolean
+                error:
+                    type: string
+                interface:
+                    type: string
+                networks:
+                    items:
+                        $ref: '#/components/schemas/ScannedNetwork'
+                    type: array
+                remediation:
+                    type: string
+            required:
+                - interface
+                - available
+                - networks
+            type: object
+        WiFiSettingsRequest:
+            additionalProperties: false
+            properties:
+                interface:
+                    type: string
+            required:
+                - interface
             type: object
         WiFiSettingsResponse:
             additionalProperties: false
@@ -15508,6 +15663,12 @@ paths:
                             $ref: '#/components/schemas/WiFiConnectRequest'
                 required: true
             responses:
+                "200":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/ConnectionResult'
+                    description: Whether the radio joined the network, and why not when it did not.
                 "401":
                     content:
                         application/json:
@@ -15546,6 +15707,12 @@ paths:
             description: Requires an operator-scoped token.
             operationId: postApiV1WifiWifiDisconnect
             responses:
+                "200":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/ConnectionResult'
+                    description: Whether the radio left its network.
                 "401":
                     content:
                         application/json:
@@ -15584,6 +15751,12 @@ paths:
             description: Requires an operator-scoped token.
             operationId: deleteApiV1WifiWifiForget
             responses:
+                "200":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/StatusMessageResponse'
+                    description: The saved network named by the ssid query parameter was removed.
                 "401":
                     content:
                         application/json:
@@ -15621,6 +15794,12 @@ paths:
         get:
             operationId: getApiV1WifiWifiSaved
             responses:
+                "200":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/WiFiSavedNetworksResponse'
+                    description: Networks the host has saved credentials for.
                 "401":
                     content:
                         application/json:
@@ -15643,6 +15822,12 @@ paths:
         get:
             operationId: getApiV1WifiWifiScan
             responses:
+                "200":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/WiFiScanResponse'
+                    description: Access points heard by a neighbor scan, or the reason the scan could not run.
                 "401":
                     content:
                         application/json:
@@ -15692,7 +15877,19 @@ paths:
         put:
             description: Requires an operator-scoped token.
             operationId: putApiV1WifiWifiSettings
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/WiFiSettingsRequest'
+                required: true
             responses:
+                "200":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/StatusMessageResponse'
+                    description: The interface selection was saved.
                 "401":
                     content:
                         application/json:

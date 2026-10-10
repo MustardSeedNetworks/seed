@@ -1,0 +1,28 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/MustardSeedNetworks/seed/main/docs/schemas/api/status-message-response.schema.json",
+  "$ref": "#/$defs/StatusMessageResponse",
+  "$defs": {
+    "StatusMessageResponse": {
+      "properties": {
+        "status": {
+          "type": "string",
+          "enum": [
+            "success"
+          ]
+        },
+        "message": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "status",
+        "message"
+      ]
+    }
+  },
+  "title": "StatusMessageResponse",
+  "description": "StatusMessageResponse — generated from the Go struct in internal/api; refresh with `make schema` after struct changes."
+}

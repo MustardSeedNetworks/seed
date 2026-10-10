@@ -1,0 +1,137 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/MustardSeedNetworks/seed/main/docs/schemas/api/wifi-scan-response.schema.json",
+  "$ref": "#/$defs/WiFiScanResponse",
+  "$defs": {
+    "ScannedNetwork": {
+      "properties": {
+        "ssid": {
+          "type": "string"
+        },
+        "bssid": {
+          "type": "string"
+        },
+        "signal": {
+          "type": "integer"
+        },
+        "channel": {
+          "type": "integer"
+        },
+        "frequency": {
+          "type": "integer"
+        },
+        "security": {
+          "type": "string"
+        },
+        "channelWidth": {
+          "type": "integer"
+        },
+        "noiseFloor": {
+          "type": "integer"
+        },
+        "snr": {
+          "type": "integer"
+        },
+        "htMode": {
+          "type": "string"
+        },
+        "isDFS": {
+          "type": "boolean"
+        },
+        "lastSeen": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "hidden": {
+          "type": "boolean"
+        },
+        "standard": {
+          "type": "string"
+        },
+        "countryCode": {
+          "type": "string"
+        },
+        "pmfRequired": {
+          "type": "boolean"
+        },
+        "wpsEnabled": {
+          "type": "boolean"
+        },
+        "rrmNeighbor": {
+          "type": "boolean"
+        },
+        "btmSupported": {
+          "type": "boolean"
+        },
+        "ftSupported": {
+          "type": "boolean"
+        },
+        "hasBssLoad": {
+          "type": "boolean"
+        },
+        "channelUtil": {
+          "type": "integer"
+        },
+        "advertisedStations": {
+          "type": "integer"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "ssid",
+        "bssid",
+        "signal",
+        "channel",
+        "frequency",
+        "security",
+        "channelWidth",
+        "noiseFloor",
+        "snr",
+        "htMode",
+        "isDFS",
+        "lastSeen",
+        "hidden",
+        "pmfRequired",
+        "wpsEnabled",
+        "rrmNeighbor",
+        "btmSupported",
+        "ftSupported",
+        "hasBssLoad",
+        "channelUtil",
+        "advertisedStations"
+      ]
+    },
+    "WiFiScanResponse": {
+      "properties": {
+        "interface": {
+          "type": "string"
+        },
+        "available": {
+          "type": "boolean"
+        },
+        "networks": {
+          "items": {
+            "$ref": "#/$defs/ScannedNetwork"
+          },
+          "type": "array"
+        },
+        "remediation": {
+          "type": "string"
+        },
+        "error": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "interface",
+        "available",
+        "networks"
+      ]
+    }
+  },
+  "title": "WiFiScanResponse",
+  "description": "WiFiScanResponse — generated from the Go struct in internal/api; refresh with `make schema` after struct changes."
+}

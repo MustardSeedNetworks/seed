@@ -1,0 +1,51 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/MustardSeedNetworks/seed/main/docs/schemas/api/wifi-saved-networks-response.schema.json",
+  "$ref": "#/$defs/WiFiSavedNetworksResponse",
+  "$defs": {
+    "SavedNetwork": {
+      "properties": {
+        "ssid": {
+          "type": "string"
+        },
+        "uuid": {
+          "type": "string"
+        },
+        "type": {
+          "type": "string"
+        },
+        "device": {
+          "type": "string"
+        },
+        "security": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "ssid"
+      ]
+    },
+    "WiFiSavedNetworksResponse": {
+      "properties": {
+        "networks": {
+          "items": {
+            "$ref": "#/$defs/SavedNetwork"
+          },
+          "type": "array"
+        },
+        "error": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "networks"
+      ]
+    }
+  },
+  "title": "WiFiSavedNetworksResponse",
+  "description": "WiFiSavedNetworksResponse — generated from the Go struct in internal/api; refresh with `make schema` after struct changes."
+}

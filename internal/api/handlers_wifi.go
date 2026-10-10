@@ -66,6 +66,30 @@ type WiFiSettingsResponse struct {
 	IsWireless    bool     `json:"isWireless"`
 }
 
+// WiFiSettingsRequest selects the Wi-Fi interface. An empty interface clears
+// the selection, falling back to the default interface.
+type WiFiSettingsRequest struct {
+	Interface string `json:"interface"`
+}
+
+// WiFiScanResponse is a neighbor-AP scan. Error carries the reason the scan
+// could not run or complete; Remediation is set only when an operator can act
+// on it.
+type WiFiScanResponse struct {
+	Interface   string                 `json:"interface"`
+	Available   bool                   `json:"available"`
+	Networks    []*wifi.ScannedNetwork `json:"networks"`
+	Remediation string                 `json:"remediation,omitempty"`
+	Error       string                 `json:"error,omitempty"`
+}
+
+// WiFiSavedNetworksResponse lists the networks the host has credentials for.
+// Error is set when the platform could not list them.
+type WiFiSavedNetworksResponse struct {
+	Networks []wifi.SavedNetwork `json:"networks"`
+	Error    string              `json:"error,omitempty"`
+}
+
 // WiFiStatusResponse is the wireless adapter state, read without a scan.
 type WiFiStatusResponse struct {
 	Status            string   `json:"status"`
@@ -117,9 +141,7 @@ func (s *Server) updateWiFiSettings(
 	logger *slog.Logger,
 	localizer *i18n.Localizer,
 ) {
-	var req struct {
-		Interface string `json:"interface"`
-	}
+	var req WiFiSettingsRequest
 	if !decodeJSONStrictLocalized(w, r, &req, MaxBodySizeJSON, logger, localizer) {
 		return
 	}
@@ -137,9 +159,9 @@ func (s *Server) updateWiFiSettings(
 		return
 	}
 
-	sendJSONResponse(w, logger, http.StatusOK, map[string]string{
-		"status":  statusSuccess,
-		"message": "WiFi settings updated",
+	sendJSONResponse(w, logger, http.StatusOK, StatusMessageResponse{
+		Status:  statusSuccess,
+		Message: "WiFi settings updated",
 	})
 }
 
@@ -204,19 +226,13 @@ func (s *Server) handleWiFi(w http.ResponseWriter, r *http.Request) {
 // and delegates to the Wi-Fi management use-case, which owns the degrade logic.
 func (s *Server) handleWiFiScan(w http.ResponseWriter, r *http.Request) {
 	res := s.wifiManagement.Scan(s.getInterfaceFromRequest(r))
-
-	resp := map[string]any{
-		"interface": res.Interface,
-		"available": res.Available,
-		"networks":  res.Networks,
-	}
-	if res.Remediation != "" {
-		resp["remediation"] = res.Remediation
-	}
-	if res.Error != "" {
-		resp["error"] = res.Error
-	}
-	sendJSONResponse(w, nil, http.StatusOK, resp)
+	sendJSONResponse(w, nil, http.StatusOK, WiFiScanResponse{
+		Interface:   res.Interface,
+		Available:   res.Available,
+		Networks:    res.Networks,
+		Remediation: res.Remediation,
+		Error:       res.Error,
+	})
 }
 
 // handleWiFiStatus returns the WiFi adapter status without performing a scan.
@@ -343,25 +359,24 @@ func (s *Server) handleWiFiSavedNetworks(w http.ResponseWriter, r *http.Request)
 	logger := logging.FromContext(r.Context())
 
 	if s.wifiManager() == nil {
-		sendJSONResponse(w, nil, http.StatusOK, map[string]any{
-			"networks": []any{},
-		})
+		sendJSONResponse(w, nil, http.StatusOK, WiFiSavedNetworksResponse{Networks: []wifi.SavedNetwork{}})
 		return
 	}
 
 	networks, err := s.wifiManager().GetSavedNetworks()
 	if err != nil {
 		logger.WarnContext(r.Context(), "Failed to get saved networks", "error", err)
-		sendJSONResponse(w, nil, http.StatusOK, map[string]any{
-			"networks": []any{},
-			"error":    err.Error(),
+		sendJSONResponse(w, nil, http.StatusOK, WiFiSavedNetworksResponse{
+			Networks: []wifi.SavedNetwork{},
+			Error:    err.Error(),
 		})
 		return
 	}
-
-	sendJSONResponse(w, nil, http.StatusOK, map[string]any{
-		"networks": networks,
-	})
+	// A host with no saved networks lists none rather than sending null.
+	if networks == nil {
+		networks = []wifi.SavedNetwork{}
+	}
+	sendJSONResponse(w, nil, http.StatusOK, WiFiSavedNetworksResponse{Networks: networks})
 }
 
 // handleWiFiForgetNetwork handles requests to forget a saved WiFi network.
@@ -407,9 +422,9 @@ func (s *Server) handleWiFiForgetNetwork(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	sendJSONResponse(w, logger, http.StatusOK, map[string]string{
-		"status":  statusSuccess,
-		"message": "Network forgotten",
+	sendJSONResponse(w, logger, http.StatusOK, StatusMessageResponse{
+		Status:  statusSuccess,
+		Message: "Network forgotten",
 	})
 }
 

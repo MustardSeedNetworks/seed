@@ -14,37 +14,19 @@ import {
   spacing,
   status as statusColor,
 } from '../../../styles/theme';
+import type { ConnectionResult } from '../../../types/generated/wifi-connection-result';
+import type {
+  SavedNetwork,
+  WiFiSavedNetworksResponse,
+} from '../../../types/generated/wifi-saved-networks-response';
+import type { ScannedNetwork, WiFiScanResponse } from '../../../types/generated/wifi-scan-response';
 import type { SaveStatus, WiFiSettings as WiFiSettingsType } from '../../../types/settings';
 import { CollapsibleSection } from '../../ui/CollapsibleSection';
 import { Wifi } from '../../ui/Icons';
 import { AutoSaveIndicator } from './AutoSaveIndicator';
 
-// Types for WiFi scanning and connection
 /** The connection banner is red unless the action succeeded. */
 const failed = (text: string): { ok: boolean; text: string } => ({ ok: false, text });
-
-interface ScannedNetwork {
-  ssid: string;
-  bssid: string;
-  signal: number;
-  channel: number;
-  frequency: number;
-  security: string;
-  channelWidth?: number;
-}
-
-interface ConnectionResult {
-  success: boolean;
-  message: string;
-  ssid?: string;
-}
-
-interface SavedNetwork {
-  ssid: string;
-  uuid?: string;
-  type?: string;
-  device?: string;
-}
 
 interface WiFiSettingsProps {
   wifiSettings: WiFiSettingsType;
@@ -149,9 +131,7 @@ export function WiFiSettings({ wifiSettings, setWifiSettings, wifiStatus }: WiFi
     setScanning(true);
     setScanError(null);
     await api
-      .get<{ networks: ScannedNetwork[]; error?: string }>(
-        `/api/v1/wifi/wifi/scan?interface=${wifiSettings.interface}`,
-      )
+      .get<WiFiScanResponse>(`/api/v1/wifi/wifi/scan?interface=${wifiSettings.interface}`)
       .then((response) => {
         if (response?.networks) {
           // Filter out hidden networks (empty SSID) and sort by signal strength
@@ -173,7 +153,7 @@ export function WiFiSettings({ wifiSettings, setWifiSettings, wifiStatus }: WiFi
   // Load saved networks
   const loadSavedNetworks = async () => {
     await api
-      .get<{ networks: SavedNetwork[] }>('/api/v1/wifi/wifi/saved')
+      .get<WiFiSavedNetworksResponse>('/api/v1/wifi/wifi/saved')
       .then((response) => {
         if (response?.networks) {
           setSavedNetworks(response.networks);
