@@ -251,6 +251,13 @@ func Targets() []Target {
 		{&api.FlowConversationsResponse{}, "flow-conversations-response.schema.json"},
 		{&api.FlowApplicationsResponse{}, "flow-applications-response.schema.json"},
 
+		// The operator-editable tables the flow collector names and checks
+		// flows against (P-C4, P-C5).
+		{&api.AppSignaturesRequest{}, "app-signatures-request.schema.json"},
+		{&api.AppSignaturesResponse{}, "app-signatures-response.schema.json"},
+		{&api.FlowIndicatorsRequest{}, "flow-indicators-request.schema.json"},
+		{&api.FlowIndicatorsResponse{}, "flow-indicators-response.schema.json"},
+
 		// The caller's own dashboard layout (UI-SEED-22): PUT body and the
 		// GET/PUT response.
 		{&api.DashboardLayoutRequest{}, "dashboard-layout-request.schema.json"},
