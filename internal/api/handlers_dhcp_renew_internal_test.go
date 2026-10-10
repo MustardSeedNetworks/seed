@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"maps"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -84,12 +85,12 @@ func TestHandleRenewDHCPLease_RenewsTheNamedInterface(t *testing.T) {
 		t.Errorf("renewed %q, want en0", called)
 	}
 
-	var body map[string]any
+	var body map[string]string
 	if err := json.Unmarshal(w.Body.Bytes(), &body); err != nil {
-		t.Fatalf("response is not JSON: %v", err)
+		t.Fatalf("response is not a flat JSON object: %v", err)
 	}
-	if body["interface"] != "en0" {
-		t.Errorf("response interface = %v, want en0", body["interface"])
+	if want := map[string]string{"status": "success", "interface": "en0"}; !maps.Equal(body, want) {
+		t.Errorf("body = %v, want %v", body, want)
 	}
 }
 

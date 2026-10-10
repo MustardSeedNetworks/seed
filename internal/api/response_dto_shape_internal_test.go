@@ -496,3 +496,13 @@ func TestWiFiSavedNetworksWithoutManagerIsEmptyArray(t *testing.T) {
 	w := serve(t, (&Server{}).handleWiFiSavedNetworks, "/api/v1/wifi/wifi/saved")
 	require.JSONEq(t, `{"networks":[]}`, w.Body.String())
 }
+
+func TestSubnetWriteAckShape(t *testing.T) {
+	t.Parallel()
+	w := httptest.NewRecorder()
+	(&Server{}).writeSubnetResult(w,
+		httptest.NewRequest(http.MethodDelete, "/api/v1/security/devices/subnets?cidr=10.0.0.0/24", http.NoBody),
+		nil, "Subnet deleted")
+	require.Equal(t, http.StatusOK, w.Code, w.Body.String())
+	require.JSONEq(t, `{"status":"success","message":"Subnet deleted"}`, w.Body.String())
+}
