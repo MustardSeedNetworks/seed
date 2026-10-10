@@ -5,6 +5,49 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.242.0](https://github.com/MustardSeedNetworks/seed/compare/v0.241.1...v0.242.0) (2026-10-10)
+
+
+### Features
+
+* **api:** generate docs/openapi.yaml from the route registry ([#3258](https://github.com/MustardSeedNetworks/seed/issues/3258)) ([73c56e3](https://github.com/MustardSeedNetworks/seed/commit/73c56e3bdc6d601dc6023c57a0ba556be9e8886b)), closes [#2752](https://github.com/MustardSeedNetworks/seed/issues/2752)
+
+
+### Bug Fixes
+
+* **deps:** move to Go 1.27.2 for the net/http HTTP/2 CVEs ([#3246](https://github.com/MustardSeedNetworks/seed/issues/3246)) ([1cae841](https://github.com/MustardSeedNetworks/seed/commit/1cae841d6242651183babbd9cc92b6ba95a71d88)), closes [#3245](https://github.com/MustardSeedNetworks/seed/issues/3245)
+* **deps:** update dependency @tanstack/react-query to v5.104.1 ([#3240](https://github.com/MustardSeedNetworks/seed/issues/3240)) ([83cc043](https://github.com/MustardSeedNetworks/seed/commit/83cc0430b92ec70fffd588386fa78d6a0ed28513))
+* **deps:** update dependency immer to v11.1.21 ([#3243](https://github.com/MustardSeedNetworks/seed/issues/3243)) ([482d93e](https://github.com/MustardSeedNetworks/seed/commit/482d93eae954bc14e9ec017755c29ecd44977d6e))
+* **deps:** update dependency lucide-react to v1.50.0 ([#3242](https://github.com/MustardSeedNetworks/seed/issues/3242)) ([305941c](https://github.com/MustardSeedNetworks/seed/commit/305941c9c12aa2ad05a3996ac4f334e9e9799d34))
+* **deps:** update dependency lucide-react to v1.51.0 ([#3257](https://github.com/MustardSeedNetworks/seed/issues/3257)) ([df9156e](https://github.com/MustardSeedNetworks/seed/commit/df9156e80ef84e950a12e536184286c562444c41))
+* **deps:** update go dependencies ([#3241](https://github.com/MustardSeedNetworks/seed/issues/3241)) ([e4b1e72](https://github.com/MustardSeedNetworks/seed/commit/e4b1e727a8e3640c63f41cb8dd8c5be50d124bc8))
+* **discovery:** wire the port-scan list and drop discovery settings nothing read ([#3244](https://github.com/MustardSeedNetworks/seed/issues/3244)) ([2044d9b](https://github.com/MustardSeedNetworks/seed/commit/2044d9b0205b305a2600fe6e616352164b96ce18)), closes [#2926](https://github.com/MustardSeedNetworks/seed/issues/2926)
+* **gateway:** scope the lease router and IPv6 gateway to the selected interface ([#3252](https://github.com/MustardSeedNetworks/seed/issues/3252)) ([01c96d4](https://github.com/MustardSeedNetworks/seed/commit/01c96d4c96f1b1f702e1b8f2c2dadb84de2462a8)), closes [#2759](https://github.com/MustardSeedNetworks/seed/issues/2759)
+* **topology:** name an LLDP near port from the agent's lldpLocPortTable ([#3259](https://github.com/MustardSeedNetworks/seed/issues/3259)) ([fca7bd0](https://github.com/MustardSeedNetworks/seed/commit/fca7bd0410abee1724522ccd66ad3d82f22d51e0)), closes [#2602](https://github.com/MustardSeedNetworks/seed/issues/2602)
+* **ui:** dim colours instead of layers outside disabled states ([#3248](https://github.com/MustardSeedNetworks/seed/issues/3248)) ([91e6355](https://github.com/MustardSeedNetworks/seed/commit/91e63557ef5c26c1c28f1c2d2c608048b4d2fc91))
+
+
+### Code Refactoring
+
+* **api:** register every route through foundation's route registrar ([#3254](https://github.com/MustardSeedNetworks/seed/issues/3254)) ([fa446c2](https://github.com/MustardSeedNetworks/seed/commit/fa446c2fc607067c9ba343658925257994283fca))
+* **identity:** persist MFA factors through an mfa.Store port ([#3237](https://github.com/MustardSeedNetworks/seed/issues/3237)) ([24cc840](https://github.com/MustardSeedNetworks/seed/commit/24cc84027b87b9be41f0609096072089a9cadc21))
+
+
+### Tests
+
+* **reporting:** let the capacity window end cross midnight UTC ([#3249](https://github.com/MustardSeedNetworks/seed/issues/3249)) ([655f0ae](https://github.com/MustardSeedNetworks/seed/commit/655f0aefce936ee777f71201b3ecc75581bd066a)), closes [#3247](https://github.com/MustardSeedNetworks/seed/issues/3247)
+
+
+### Continuous Integration
+
+* **niac:** run the routed NIAC E2E nightly against the latest release ([#3256](https://github.com/MustardSeedNetworks/seed/issues/3256)) ([db62d75](https://github.com/MustardSeedNetworks/seed/commit/db62d75219272f1d54dc9e68276d5cf019f5a907))
+
+
+### Miscellaneous
+
+* **deps:** lock file maintenance ([#3239](https://github.com/MustardSeedNetworks/seed/issues/3239)) ([206f5fa](https://github.com/MustardSeedNetworks/seed/commit/206f5fa22c992225a223690f6343d3f55a7169ef))
+* **deps:** lock file maintenance ([#3250](https://github.com/MustardSeedNetworks/seed/issues/3250)) ([9497e6f](https://github.com/MustardSeedNetworks/seed/commit/9497e6f6ea8ab1d2dbff47e9822e8236d409d58e))
+
 ## [0.241.1](https://github.com/MustardSeedNetworks/seed/compare/v0.241.0...v0.241.1) (2026-10-08)
 
 
