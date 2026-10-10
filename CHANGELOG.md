@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.246.0](https://github.com/MustardSeedNetworks/seed/compare/v0.245.0...v0.246.0) (2026-10-10)
+
+
+### Features
+
+* **api:** document the alert-rule bodies ([#3272](https://github.com/MustardSeedNetworks/seed/issues/3272)) ([0df68a3](https://github.com/MustardSeedNetworks/seed/commit/0df68a365764e8f7abd3708ce4c6ccf8556ef0f5))
+* **api:** document the topology read bodies ([#3271](https://github.com/MustardSeedNetworks/seed/issues/3271)) ([10202a0](https://github.com/MustardSeedNetworks/seed/commit/10202a0393daa99916fa631771f1d18b93e34e04))
+
 ## [0.245.0](https://github.com/MustardSeedNetworks/seed/compare/v0.244.0...v0.245.0) (2026-10-10)
 
 
