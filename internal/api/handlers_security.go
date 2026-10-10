@@ -425,8 +425,8 @@ func (s *Server) updateSNMPSettings(w http.ResponseWriter, r *http.Request) {
 		sendErrorResponseWithDetails(w, logger, http.StatusInternalServerError,
 			ErrCodeInternal, localizer.T("errors.config.failedToSave"), "")
 	default:
-		sendJSONResponse(w, logger, http.StatusOK, map[string]string{
-			"status": statusSuccess, "message": "SNMP settings updated",
+		sendJSONResponse(w, logger, http.StatusOK, StatusMessageResponse{
+			Status: statusSuccess, Message: "SNMP settings updated",
 		})
 	}
 }

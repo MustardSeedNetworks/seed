@@ -1007,6 +1007,20 @@ components:
                 - logging
                 - database
             type: object
+        ConfigBackupResponse:
+            additionalProperties: false
+            properties:
+                backup:
+                    type: string
+                status:
+                    enum:
+                        - restored
+                        - deleted
+                    type: string
+            required:
+                - status
+                - backup
+            type: object
         ConfigVersionResponse:
             additionalProperties: false
             properties:
@@ -5135,6 +5149,27 @@ components:
                 - removeCount
                 - lastUpdate
             type: object
+        RenewDHCPLeaseRequest:
+            additionalProperties: false
+            properties:
+                interface:
+                    type: string
+            required:
+                - interface
+            type: object
+        RenewDHCPLeaseResponse:
+            additionalProperties: false
+            properties:
+                interface:
+                    type: string
+                status:
+                    enum:
+                        - success
+                    type: string
+            required:
+                - status
+                - interface
+            type: object
         ReportInfo:
             additionalProperties: false
             properties:
@@ -8827,6 +8862,12 @@ paths:
             description: Requires an operator-scoped token.
             operationId: deleteApiV1ConfigBackupDelete
             responses:
+                "200":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/ConfigBackupResponse'
+                    description: The backup named by the name query parameter was deleted.
                 "401":
                     content:
                         application/json:
@@ -8899,6 +8940,12 @@ paths:
                             $ref: '#/components/schemas/RestoreRequest'
                 required: true
             responses:
+                "200":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/ConfigBackupResponse'
+                    description: The configuration was restored from the named backup.
                 "401":
                     content:
                         application/json:
@@ -11821,6 +11868,12 @@ paths:
                             $ref: '#/components/schemas/NetworkDiscoverySettingsResponse'
                 required: true
             responses:
+                "200":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/StatusMessageResponse'
+                    description: The network discovery settings were saved.
                 "401":
                     content:
                         application/json:
@@ -11887,6 +11940,12 @@ paths:
             description: Requires an operator-scoped token.
             operationId: deleteApiV1SecurityDevicesSubnets
             responses:
+                "200":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/StatusMessageResponse'
+                    description: The subnet named by the cidr query parameter was removed.
                 "401":
                     content:
                         application/json:
@@ -11959,6 +12018,12 @@ paths:
                             $ref: '#/components/schemas/SubnetRequest'
                 required: true
             responses:
+                "200":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/StatusMessageResponse'
+                    description: The subnet was added.
                 "401":
                     content:
                         application/json:
@@ -12002,6 +12067,12 @@ paths:
                             $ref: '#/components/schemas/SubnetRequest'
                 required: true
             responses:
+                "200":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/StatusMessageResponse'
+                    description: The subnet was updated.
                 "401":
                     content:
                         application/json:
@@ -12075,6 +12146,12 @@ paths:
                             $ref: '#/components/schemas/SubnetDecisionRequest'
                 required: true
             responses:
+                "200":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/StatusMessageResponse'
+                    description: The decision was recorded.
                 "401":
                     content:
                         application/json:
@@ -12218,6 +12295,12 @@ paths:
                             $ref: '#/components/schemas/DiscoveryOptions'
                 required: true
             responses:
+                "200":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/StatusMessageResponse'
+                    description: The discovery options were saved and applied.
                 "401":
                     content:
                         application/json:
@@ -12602,6 +12685,12 @@ paths:
                             $ref: '#/components/schemas/ProblemThresholds'
                 required: true
             responses:
+                "200":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/StatusMessageResponse'
+                    description: The thresholds were saved.
                 "401":
                     content:
                         application/json:
@@ -13620,7 +13709,19 @@ paths:
         post:
             description: Requires an operator-scoped token.
             operationId: postApiV1TelemetryDhcpRenew
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/RenewDHCPLeaseRequest'
+                required: true
             responses:
+                "200":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/RenewDHCPLeaseResponse'
+                    description: The DHCP client renewed the lease on the named interface.
                 "401":
                     content:
                         application/json:
@@ -14051,6 +14152,12 @@ paths:
                             $ref: '#/components/schemas/IPSettingsRequest'
                 required: true
             responses:
+                "200":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/StatusMessageResponse'
+                    description: The IP configuration was applied.
                 "401":
                     content:
                         application/json:
@@ -14614,6 +14721,12 @@ paths:
                             $ref: '#/components/schemas/SNMPSettingsResponse'
                 required: true
             responses:
+                "200":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/StatusMessageResponse'
+                    description: The SNMP transport settings were saved.
                 "401":
                     content:
                         application/json:

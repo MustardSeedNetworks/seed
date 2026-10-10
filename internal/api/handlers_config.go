@@ -33,6 +33,12 @@ type RestoreRequest struct {
 	BackupName string `json:"backupName"`
 }
 
+// ConfigBackupResponse acknowledges a restore or delete and names the backup.
+type ConfigBackupResponse struct {
+	Status string `json:"status" jsonschema:"enum=restored,enum=deleted"`
+	Backup string `json:"backup"`
+}
+
 // handleConfigBackups handles GET /api/config/backups - list all backups.
 func (s *Server) handleConfigBackups(w http.ResponseWriter, r *http.Request) {
 	logger := logging.FromContext(r.Context())
@@ -130,7 +136,7 @@ func (s *Server) handleConfigRestore(w http.ResponseWriter, r *http.Request) {
 		w,
 		logger,
 		http.StatusOK,
-		map[string]string{"status": "restored", "backup": req.BackupName},
+		ConfigBackupResponse{Status: "restored", Backup: req.BackupName},
 	)
 }
 
@@ -192,7 +198,7 @@ func (s *Server) handleConfigBackupDelete(w http.ResponseWriter, r *http.Request
 		w,
 		logger,
 		http.StatusOK,
-		map[string]string{"status": "deleted", "backup": backupName},
+		ConfigBackupResponse{Status: "deleted", Backup: backupName},
 	)
 }
 

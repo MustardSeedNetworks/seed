@@ -129,9 +129,9 @@ func (s *Server) handleProblemThresholds(w http.ResponseWriter, r *http.Request)
 			writeProblemsUnavailable(w, logger)
 			return
 		}
-		sendJSONResponse(w, logger, http.StatusOK, map[string]string{
-			"status":  statusSuccess,
-			"message": "Thresholds updated",
+		sendJSONResponse(w, logger, http.StatusOK, StatusMessageResponse{
+			Status:  statusSuccess,
+			Message: "Thresholds updated",
 		})
 
 	default:

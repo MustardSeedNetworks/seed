@@ -197,6 +197,14 @@ operations:
           application/json:
             schema:
               $ref: '#/components/schemas/BackupInfo'
+  DELETE /api/v1/config/backup/delete:
+    responses:
+      "200":
+        description: The backup named by the name query parameter was deleted.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ConfigBackupResponse'
   GET /api/v1/config/backups:
     responses:
       "200":
@@ -212,6 +220,13 @@ operations:
         application/json:
           schema:
             $ref: '#/components/schemas/RestoreRequest'
+    responses:
+      "200":
+        description: The configuration was restored from the named backup.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ConfigBackupResponse'
   GET /api/v1/config/version:
     responses:
       "200":
@@ -836,6 +851,13 @@ operations:
         application/json:
           schema:
             $ref: '#/components/schemas/NetworkDiscoverySettingsResponse'
+    responses:
+      "200":
+        description: The network discovery settings were saved.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StatusMessageResponse'
   GET /api/v1/security/devices/subnets:
     responses:
       "200":
@@ -853,6 +875,13 @@ operations:
         application/json:
           schema:
             $ref: '#/components/schemas/SubnetRequest'
+    responses:
+      "200":
+        description: The subnet was added.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StatusMessageResponse'
   PUT /api/v1/security/devices/subnets:
     requestBody:
       required: true
@@ -860,6 +889,21 @@ operations:
         application/json:
           schema:
             $ref: '#/components/schemas/SubnetRequest'
+    responses:
+      "200":
+        description: The subnet was updated.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StatusMessageResponse'
+  DELETE /api/v1/security/devices/subnets:
+    responses:
+      "200":
+        description: The subnet named by the cidr query parameter was removed.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StatusMessageResponse'
   GET /api/v1/security/devices/subnets/pending:
     responses:
       "200":
@@ -877,6 +921,13 @@ operations:
         application/json:
           schema:
             $ref: '#/components/schemas/SubnetDecisionRequest'
+    responses:
+      "200":
+        description: The decision was recorded.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StatusMessageResponse'
   GET /api/v1/security/discovery:
     responses:
       "200":
@@ -900,6 +951,13 @@ operations:
         application/json:
           schema:
             $ref: '#/components/schemas/DiscoveryOptions'
+    responses:
+      "200":
+        description: The discovery options were saved and applied.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StatusMessageResponse'
   POST /api/v1/security/discovery/portscan:
     requestBody:
       required: true
@@ -967,6 +1025,13 @@ operations:
         application/json:
           schema:
             $ref: '#/components/schemas/ProblemThresholds'
+    responses:
+      "200":
+        description: The thresholds were saved.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StatusMessageResponse'
   GET /api/v1/security/vulnerabilities/device:
     responses:
       "200":
@@ -1122,6 +1187,20 @@ operations:
           application/json:
             schema:
               $ref: '#/components/schemas/CableResponse'
+  POST /api/v1/telemetry/dhcp/renew:
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/RenewDHCPLeaseRequest'
+    responses:
+      "200":
+        description: The DHCP client renewed the lease on the named interface.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RenewDHCPLeaseResponse'
   GET /api/v1/telemetry/dhcp/rogue:
     responses:
       "200":
@@ -1209,6 +1288,13 @@ operations:
         application/json:
           schema:
             $ref: '#/components/schemas/IPSettingsRequest'
+    responses:
+      "200":
+        description: The IP configuration was applied.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StatusMessageResponse'
   POST /api/v1/telemetry/iperf/client:
     requestBody:
       required: true
@@ -1295,6 +1381,13 @@ operations:
         application/json:
           schema:
             $ref: '#/components/schemas/SNMPSettingsResponse'
+    responses:
+      "200":
+        description: The SNMP transport settings were saved.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StatusMessageResponse'
   GET /api/v1/telemetry/speedtest/status:
     responses:
       "200":

@@ -3,6 +3,7 @@ package api_test
 import (
 	"bytes"
 	"encoding/json"
+	"maps"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -177,6 +178,8 @@ func TestHandleConfigRestore(t *testing.T) {
 			w.Code, http.StatusOK, w.Body.String())
 	}
 
+	assertBackupAck(t, w.Body.Bytes(), "restored", backup.Name)
+
 	// Verify config was restored
 	if s.GetConfig().Server.Port != 8080 {
 		t.Errorf("Config port = %d, want 8080 (restored value)", s.GetConfig().Server.Port)
@@ -218,6 +221,7 @@ func TestHandleConfigBackupDelete(t *testing.T) {
 		t.Errorf("HandleConfigBackupDelete() status = %d, want %d; body: %s",
 			w.Code, http.StatusOK, w.Body.String())
 	}
+	assertBackupAck(t, w.Body.Bytes(), "deleted", backup.Name)
 
 	// Verify backup was deleted
 	if _, statErr := os.Stat(backup.Path); !os.IsNotExist(statErr) {
@@ -239,5 +243,17 @@ func TestHandleConfigRestore_MissingBackupName(t *testing.T) {
 
 	if w.Code != http.StatusBadRequest {
 		t.Errorf("HandleConfigRestore() status = %d, want %d", w.Code, http.StatusBadRequest)
+	}
+}
+
+// assertBackupAck pins the restore and delete acknowledgement body.
+func assertBackupAck(t *testing.T, body []byte, status, name string) {
+	t.Helper()
+	var got map[string]string
+	if err := json.Unmarshal(body, &got); err != nil {
+		t.Fatalf("response is not a flat JSON object: %v: %s", err, body)
+	}
+	if want := map[string]string{"status": status, "backup": name}; !maps.Equal(got, want) {
+		t.Errorf("body = %v, want %v", got, want)
 	}
 }

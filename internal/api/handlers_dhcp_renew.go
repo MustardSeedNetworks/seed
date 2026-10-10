@@ -20,6 +20,12 @@ type RenewDHCPLeaseRequest struct {
 	Interface string `json:"interface" validate:"required"`
 }
 
+// RenewDHCPLeaseResponse acknowledges a renewed lease and names the interface.
+type RenewDHCPLeaseResponse struct {
+	Status    string `json:"status"    jsonschema:"enum=success"`
+	Interface string `json:"interface"`
+}
+
 // handleRenewDHCPLease handles POST /api/v1/telemetry/dhcp/renew.
 //
 // Registered operator+ and behind CSRF: this restarts the DHCP client on a
@@ -82,9 +88,9 @@ func (s *Server) handleRenewDHCPLease(w http.ResponseWriter, r *http.Request) {
 	}
 
 	logger.InfoContext(r.Context(), "DHCP lease renewed", "interface", req.Interface)
-	sendJSONResponse(w, nil, http.StatusOK, map[string]any{
-		"status":    statusSuccess,
-		"interface": req.Interface,
+	sendJSONResponse(w, logger, http.StatusOK, RenewDHCPLeaseResponse{
+		Status:    statusSuccess,
+		Interface: req.Interface,
 	})
 }
 
