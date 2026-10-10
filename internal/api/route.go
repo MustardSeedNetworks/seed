@@ -12,7 +12,9 @@ package api
 import (
 	"fmt"
 	"net/http"
+	"time"
 
+	"github.com/MustardSeedNetworks/foundation/pkg/csrf"
 	"github.com/MustardSeedNetworks/foundation/pkg/httpserver/route"
 
 	"github.com/MustardSeedNetworks/seed/internal/auth"
@@ -41,6 +43,23 @@ func (s *Server) newRegistrar() *route.Registrar {
 			limitEndpoint: s.endpointRateLimiter().RateLimitMiddleware,
 		},
 	})
+}
+
+// RouteManifest returns every route the registry declares, in registration
+// order, without starting a daemon: registration only composes closures, so a
+// Server carrying just the auth manager, CSRF manager and endpoint limiter
+// registers the full set. It is what cmd/seed-openapi documents.
+func RouteManifest() []route.Policy {
+	s := &Server{
+		authMgr:         auth.NewManager("", time.Hour, "", ""),
+		csrf:            csrf.NewManager(),
+		endpointLimiter: NewEndpointRateLimiter(DefaultEndpointRateLimitConfig()),
+	}
+	defer s.authMgr.Stop()
+	defer s.csrf.Stop()
+	defer s.endpointLimiter.Stop()
+	s.setupRoutes()
+	return s.routes.Policies()
 }
 
 // authenticate admits a request carrying a personal access token or a valid
