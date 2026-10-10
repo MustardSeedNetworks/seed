@@ -1,0 +1,58 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/MustardSeedNetworks/seed/main/docs/schemas/api/app-signatures-response.schema.json",
+  "$ref": "#/$defs/AppSignaturesResponse",
+  "$defs": {
+    "AppSignaturesResponse": {
+      "properties": {
+        "source": {
+          "type": "string",
+          "enum": [
+            "builtin",
+            "custom"
+          ]
+        },
+        "signatures": {
+          "items": {
+            "$ref": "#/$defs/Signature"
+          },
+          "type": "array"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "source",
+        "signatures"
+      ]
+    },
+    "Signature": {
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        },
+        "protocol": {
+          "type": "integer"
+        },
+        "ports": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "name",
+        "description",
+        "protocol"
+      ]
+    }
+  },
+  "title": "AppSignaturesResponse",
+  "description": "AppSignaturesResponse — generated from the Go struct in internal/api; refresh with `make schema` after struct changes."
+}
