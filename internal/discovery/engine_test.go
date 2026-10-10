@@ -2,9 +2,12 @@ package discovery_test
 
 import (
 	"context"
+	"encoding/json"
 	"sync"
 	"testing"
 	"time"
+
+	"github.com/stretchr/testify/require"
 
 	"github.com/MustardSeedNetworks/seed/internal/discovery"
 )
@@ -71,6 +74,17 @@ func TestEngineSetCollectors(t *testing.T) {
 	if !caps["correlation"] {
 		t.Error(`GetCapabilities()["correlation"] = false, want true — it needs no collector`)
 	}
+}
+
+// The capability set's wire shape: every key is always sent.
+func TestEngineCapabilitiesWireShape(t *testing.T) {
+	engine := discovery.NewEngine(nil)
+	defer engine.Stop()
+
+	got, err := json.Marshal(engine.GetCapabilities())
+	require.NoError(t, err)
+	require.JSONEq(t, `{"wired":false,"wifi":false,"bluetooth":false,"snmp":false,"portScan":false,`+
+		`"profiling":false,"vulnScan":false,"nameRes":false,"correlation":true}`, string(got))
 }
 
 func TestEngineGetCapabilities(t *testing.T) {
