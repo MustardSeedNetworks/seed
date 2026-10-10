@@ -187,6 +187,7 @@ func Targets() []Target {
 		{&api.VulnerabilityResultsResponse{}, "vulnerability-results-response.schema.json"},
 		{&api.VulnFindingsResponse{}, "vuln-findings-response.schema.json"},
 		{&api.RestoreRequest{}, "restore-request.schema.json"},
+		{&api.ConfigBackupResponse{}, "config-backup-response.schema.json"},
 		{&api.ClientLogRequest{}, "client-log-request.schema.json"},
 		{&api.LogStatsResponse{}, "log-stats-response.schema.json"},
 
@@ -345,6 +346,8 @@ func Targets() []Target {
 
 		// Acknowledgement-only success bodies.
 		{&api.StatusMessageResponse{}, "status-message-response.schema.json"},
+		{&api.RenewDHCPLeaseRequest{}, "renew-dhcp-lease-request.schema.json"},
+		{&api.RenewDHCPLeaseResponse{}, "renew-dhcp-lease-response.schema.json"},
 
 		// Operator-defined alert rules (Stage A5.10).
 		{&api.AlertRuleRequest{}, "alert-rule-request.schema.json"},

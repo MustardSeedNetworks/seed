@@ -297,9 +297,9 @@ func (s *Server) updateDevicesSettings(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	sendJSONResponse(w, logger, http.StatusOK, map[string]string{
-		"status":  statusSuccess,
-		"message": "Network discovery settings updated",
+	sendJSONResponse(w, logger, http.StatusOK, StatusMessageResponse{
+		Status:  statusSuccess,
+		Message: "Network discovery settings updated",
 	})
 }
 
@@ -557,8 +557,8 @@ func (s *Server) writeSubnetResult(
 			w, logger, http.StatusInternalServerError, ErrCodeInternal,
 			i18n.FromRequest(r).T("errors.settings.saveFailed"), "")
 	default:
-		sendJSONResponse(w, logger, http.StatusOK, map[string]string{
-			"status": statusSuccess, "message": successMsg,
+		sendJSONResponse(w, logger, http.StatusOK, StatusMessageResponse{
+			Status: statusSuccess, Message: successMsg,
 		})
 	}
 }

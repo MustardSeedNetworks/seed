@@ -249,12 +249,10 @@ func (s *Server) handleIPSettingsPut(
 		return
 	}
 
-	sendJSONResponse(
-		w,
-		logger,
-		http.StatusOK,
-		map[string]string{"status": statusSuccess, "message": "IP configuration updated"},
-	)
+	sendJSONResponse(w, logger, http.StatusOK, StatusMessageResponse{
+		Status:  statusSuccess,
+		Message: "IP configuration updated",
+	})
 }
 
 // writeIPApplyError maps an IPService.Apply sentinel to the pre-strangle HTTP
