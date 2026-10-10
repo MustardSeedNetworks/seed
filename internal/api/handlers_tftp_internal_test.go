@@ -58,7 +58,8 @@ func newTFTPTestServer(t *testing.T, trial bool) *Server {
 		OnStop:     s.auditTFTPStop,
 	})
 	t.Cleanup(s.tftpSessions.Close)
-	s.registerAll(s.tftpRoutes())
+	s.routes = s.newRegistrar()
+	s.routes.RegisterAll(s.tftpRoutes())
 	return s
 }
 
@@ -68,7 +69,7 @@ func tftpCall(s *Server, method, user, body string) *httptest.ResponseRecorder {
 		raw = []byte(body)
 	}
 	rec := httptest.NewRecorder()
-	s.mux.ServeHTTP(rec, newAuthedRequest(method, APIVersionPrefix+"/tftp/session", raw, user))
+	s.Mux().ServeHTTP(rec, newAuthedRequest(method, APIVersionPrefix+"/tftp/session", raw, user))
 	return rec
 }
 
