@@ -1,0 +1,25 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/MustardSeedNetworks/seed/main/docs/schemas/api/totp-toggle-response.schema.json",
+  "$ref": "#/$defs/TOTPToggleResponse",
+  "$defs": {
+    "TOTPToggleResponse": {
+      "properties": {
+        "status": {
+          "type": "string"
+        },
+        "enabled": {
+          "type": "boolean"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "status",
+        "enabled"
+      ]
+    }
+  },
+  "title": "TOTPToggleResponse",
+  "description": "TOTPToggleResponse — generated from the Go struct in internal/api; refresh with `make schema` after struct changes."
+}

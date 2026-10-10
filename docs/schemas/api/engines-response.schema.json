@@ -1,0 +1,56 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/MustardSeedNetworks/seed/main/docs/schemas/api/engines-response.schema.json",
+  "$ref": "#/$defs/EnginesResponse",
+  "$defs": {
+    "EngineEntry": {
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "state": {
+          "type": "string"
+        },
+        "lastTickAt": {
+          "type": "string"
+        },
+        "lastError": {
+          "type": "string"
+        },
+        "inflight": {
+          "type": "integer"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "name",
+        "state",
+        "lastTickAt",
+        "lastError",
+        "inflight"
+      ]
+    },
+    "EnginesResponse": {
+      "properties": {
+        "count": {
+          "type": "integer"
+        },
+        "engines": {
+          "items": {
+            "$ref": "#/$defs/EngineEntry"
+          },
+          "type": "array"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "count",
+        "engines"
+      ]
+    }
+  },
+  "title": "EnginesResponse",
+  "description": "EnginesResponse — generated from the Go struct in internal/api; refresh with `make schema` after struct changes."
+}

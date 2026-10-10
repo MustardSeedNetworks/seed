@@ -1,0 +1,29 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/MustardSeedNetworks/seed/main/docs/schemas/api/mfa-status-response.schema.json",
+  "$ref": "#/$defs/MFAStatusResponse",
+  "$defs": {
+    "MFAStatusResponse": {
+      "properties": {
+        "totpEnabled": {
+          "type": "boolean"
+        },
+        "webauthnEnabled": {
+          "type": "boolean"
+        },
+        "webauthnCredentialCount": {
+          "type": "integer"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "totpEnabled",
+        "webauthnEnabled",
+        "webauthnCredentialCount"
+      ]
+    }
+  },
+  "title": "MFAStatusResponse",
+  "description": "MFAStatusResponse — generated from the Go struct in internal/api; refresh with `make schema` after struct changes."
+}

@@ -11,6 +11,7 @@ import (
 
 	"github.com/MustardSeedNetworks/seed/internal/api"
 	"github.com/MustardSeedNetworks/seed/internal/config"
+	"github.com/MustardSeedNetworks/seed/internal/diagnostics/iperf"
 	"github.com/MustardSeedNetworks/seed/internal/diagnostics/multicast"
 	"github.com/MustardSeedNetworks/seed/internal/diagnostics/packetcapture"
 	"github.com/MustardSeedNetworks/seed/internal/diagnostics/qos"
@@ -78,9 +79,17 @@ func Targets() []Target {
 		// Auth / status / recovery / config responses.
 		{&api.StatusResponse{}, "status-response.schema.json"},
 		{&api.HealthResponse{}, "health-response.schema.json"},
+		{&api.EnginesResponse{}, "engines-response.schema.json"},
 		{&api.NeighbourCacheResponse{}, "neighbour-cache-response.schema.json"},
 		{&api.DriverStatsResponse{}, "driver-stats-response.schema.json"},
 		{&api.LoginResponse{}, "login-response.schema.json"},
+		{&api.LogoutResponse{}, "logout-response.schema.json"},
+		{&api.TOTPLoginRequest{}, "totp-login-request.schema.json"},
+		{&api.TOTPSetupResponse{}, "totp-setup-response.schema.json"},
+		{&api.TOTPVerifyRequest{}, "totp-verify-request.schema.json"},
+		{&api.TOTPDisableRequest{}, "totp-disable-request.schema.json"},
+		{&api.TOTPToggleResponse{}, "totp-toggle-response.schema.json"},
+		{&api.MFAStatusResponse{}, "mfa-status-response.schema.json"},
 		{&api.CSRFTokenResponse{}, "csrf-token-response.schema.json"},
 		{&api.SetupStatusResponse{}, "setup-status-response.schema.json"},
 		{&api.LicenseStatusResponse{}, "license-status-response.schema.json"},
@@ -152,6 +161,7 @@ func Targets() []Target {
 		{&api.IperfServerRequest{}, "iperf-server-request.schema.json"},
 		{&api.IperfInfoResponse{}, "iperf-info-response.schema.json"},
 		{&api.IperfResultResponse{}, "iperf-result-response.schema.json"},
+		{&api.IperfSuggestion{}, "iperf-suggestion.schema.json"},
 		{&api.PortScanRequest{}, "port-scan-request.schema.json"},
 		{&api.TCPProbeRequest{}, "tcp-probe-request.schema.json"},
 		{&api.DNSResponse{}, "dns-response.schema.json"},
@@ -267,6 +277,10 @@ func Targets() []Target {
 		{&qos.ListenResult{}, "qos-listen-response.schema.json"},
 		{&qos.SingleHostRequest{}, "qos-single-host-request.schema.json"},
 		{&qos.SingleHostResult{}, "qos-single-host-response.schema.json"},
+
+		// The iperf3 server's state, which /telemetry/iperf/server/status
+		// serves as it is: flat, pure data.
+		{&iperf.ServerStatus{}, "iperf-server-status.schema.json"},
 
 		// #326's packet capture, a jobs-spine kind registered as the
 		// packetcapture package's own types like the two above.

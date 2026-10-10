@@ -40,9 +40,9 @@ import { useSubnetSettings } from '../../hooks/useSubnetSettings';
 import { useTheme } from '../../hooks/useTheme';
 import { useVulnerabilitySettings } from '../../hooks/useVulnerabilitySettings';
 import { button, cn, icon as iconTokens, layout, radius, spacing } from '../../styles/theme';
+import type { IperfSuggestion } from '../../types/generated/iperf-suggestion';
 import type {
   CableTestSettings as CableTestSettingsType,
-  IperfSuggestion,
   IpSettings,
   LinkSettings as LinkSettingsType,
   NetworkDiscoverySettings,

@@ -217,7 +217,12 @@ func (s *Server) handleLogout(w http.ResponseWriter, r *http.Request) {
 	cookieConfig := auth.DefaultCookieConfig()
 	auth.ClearAuthCookies(w, cookieConfig)
 
-	sendJSONResponse(w, logger, http.StatusOK, map[string]string{"status": "logged out"})
+	sendJSONResponse(w, logger, http.StatusOK, LogoutResponse{Status: "logged out"})
+}
+
+// LogoutResponse is the POST /api/v1/auth/logout body.
+type LogoutResponse struct {
+	Status string `json:"status"`
 }
 
 // handleRefreshToken handles token refresh using refresh token (fixes #478).
