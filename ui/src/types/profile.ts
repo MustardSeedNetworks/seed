@@ -537,29 +537,3 @@ export interface ProfileExportResponse {
   exportedAt: string;
   profiles: Profile[];
 }
-
-/**
- * ActiveProfileRequest is used to set the active profile.
- */
-export interface ActiveProfileRequest {
-  profileId: string;
-}
-
-/**
- * ActiveProfileResponse is returned after setting the active profile.
- */
-export interface ActiveProfileResponse {
-  message: string;
-  profile: Profile;
-}
-
-/**
- * ProfileChangedEvent is broadcast via WebSocket when the active profile changes.
- */
-export interface ProfileChangedEvent {
-  type: 'profileChanged';
-  payload: {
-    profileId: string;
-    profileName: string;
-  };
-}

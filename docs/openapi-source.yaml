@@ -709,6 +709,20 @@ operations:
           application/json:
             schema:
               $ref: '#/components/schemas/ProfileImportResponse'
+  POST /api/v1/profiles/switch:
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ProfileSwitchRequest'
+    responses:
+      "200":
+        description: The profile that is now active; its saved settings are applied to the running configuration.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProfileSwitchResponse'
   POST /api/v1/recovery/complete:
     requestBody:
       required: true

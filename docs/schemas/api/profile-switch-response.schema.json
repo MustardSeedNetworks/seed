@@ -1,0 +1,59 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/MustardSeedNetworks/seed/main/docs/schemas/api/profile-switch-response.schema.json",
+  "$ref": "#/$defs/ProfileSwitchResponse",
+  "$defs": {
+    "ProfileResponse": {
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        },
+        "config": true,
+        "isDefault": {
+          "type": "boolean"
+        },
+        "createdAt": {
+          "type": "string"
+        },
+        "updatedAt": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "id",
+        "name",
+        "description",
+        "config",
+        "isDefault",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "ProfileSwitchResponse": {
+      "properties": {
+        "message": {
+          "type": "string"
+        },
+        "profile": {
+          "$ref": "#/$defs/ProfileResponse"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "message",
+        "profile"
+      ]
+    }
+  },
+  "title": "ProfileSwitchResponse",
+  "description": "ProfileSwitchResponse — generated from the Go struct in internal/api; refresh with `make schema` after struct changes."
+}
