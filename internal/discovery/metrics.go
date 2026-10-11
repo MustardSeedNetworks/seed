@@ -16,6 +16,7 @@ const (
 
 // Health status constants.
 const (
+	HealthHealthy  = "healthy"
 	HealthCritical = "critical"
 	HealthDegraded = "degraded"
 )
@@ -481,7 +482,7 @@ func deviceChanged(prev, curr *DiscoveredDevice) bool {
 
 // DegradationStatus represents the health of discovery methods.
 type DegradationStatus struct {
-	OverallHealth   string   `json:"overallHealth"` // healthy, degraded, critical
+	OverallHealth   string   `json:"overallHealth"   jsonschema:"enum=healthy,enum=degraded,enum=critical"`
 	HealthyMethods  []string `json:"healthyMethods"`
 	FailedMethods   []string `json:"failedMethods"`
 	Warnings        []string `json:"warnings"`
@@ -494,7 +495,7 @@ func (m *Metrics) GetDegradationStatus() *DegradationStatus {
 	defer m.mu.RUnlock()
 
 	status := &DegradationStatus{
-		OverallHealth:   "healthy",
+		OverallHealth:   HealthHealthy,
 		HealthyMethods:  make([]string, 0),
 		FailedMethods:   make([]string, 0),
 		Warnings:        make([]string, 0),
@@ -522,7 +523,7 @@ func (m *Metrics) GetDegradationStatus() *DegradationStatus {
 
 	// Check coverage.
 	if m.CoveragePercent < 50 && m.HostsProbed > 10 {
-		if status.OverallHealth == "healthy" {
+		if status.OverallHealth == HealthHealthy {
 			status.OverallHealth = HealthDegraded
 		}
 		status.Warnings = append(status.Warnings, "Low network coverage (<50% of hosts responding)")
@@ -534,7 +535,7 @@ func (m *Metrics) GetDegradationStatus() *DegradationStatus {
 		if len(m.MethodsAvailable) == 0 {
 			status.OverallHealth = HealthCritical
 			status.Warnings = append(status.Warnings, "All discovery methods failed")
-		} else if status.OverallHealth == "healthy" {
+		} else if status.OverallHealth == HealthHealthy {
 			status.OverallHealth = HealthDegraded
 		}
 	}

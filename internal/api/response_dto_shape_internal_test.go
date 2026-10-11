@@ -445,6 +445,27 @@ func TestDiscoveryOptionsResponseShape(t *testing.T) {
 	require.JSONEq(t, string(want), w.Body.String())
 }
 
+// The service status answered the domain ServiceStatus as it is: the rescan
+// interval in nanoseconds, every internal counter, and the last sweep's full
+// device lists, on a route the settings page polls every ten seconds.
+func TestDiscoveryServiceStatusResponseShape(t *testing.T) {
+	t.Parallel()
+	cfg := &config.Config{}
+	cfg.NetworkDiscovery.Timing.RescanInterval = 5 * time.Minute
+	s := &Server{discoverySvc: enumerate.NewService(cfg, enumerate.NewDeviceDiscovery("lo"), nil)}
+	w := serve(t, s.handleDiscoveryServiceStatus, "/api/v1/security/discovery/service/status")
+
+	require.Equal(t, []string{
+		"activeMethods", "degradationStatus", "deviceCount", "interface", "lastScan", "localIP",
+		"profilingStatus", "rescanIntervalMs", "running", "scanning", "snmpProbe", "subnet", "subnets",
+	}, topLevelKeys(t, w.Body.Bytes()))
+
+	var got DiscoveryServiceStatusResponse
+	require.NoError(t, json.Unmarshal(w.Body.Bytes(), &got))
+	require.Equal(t, int64(300_000), got.RescanIntervalMs)
+	require.Equal(t, "healthy", got.DegradationStatus.OverallHealth)
+}
+
 type noScanRadio struct{ statusRadio }
 
 func (noScanRadio) ScannerAvailable() bool { return false }

@@ -328,18 +328,6 @@ export interface FingerprintingConfig {
   serviceProbes: boolean;
 }
 
-export interface DiscoveryServiceStatus {
-  running: boolean;
-  scanning: boolean;
-  deviceCount: number;
-  lastScan: string;
-  subnet: string;
-  localIP: string;
-  interface: string;
-  activeMethods: string[];
-  rescanInterval: number; // Backend sends time.Duration (nanoseconds)
-}
-
 /** Full network discovery settings - matches API response */
 export interface NetworkDiscoverySettings {
   // Core settings

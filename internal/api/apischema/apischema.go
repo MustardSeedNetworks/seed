@@ -335,6 +335,7 @@ func Targets() []Target {
 		{&api.DevicesResponse{}, "devices-response.schema.json"},
 		{&api.DeviceScanResponse{}, "device-scan-response.schema.json"},
 		{&api.DiscoveryOptionsResponse{}, "discovery-options-response.schema.json"},
+		{&api.DiscoveryServiceStatusResponse{}, "discovery-service-status-response.schema.json"},
 		{&discovery.EngineCapabilities{}, "engine-capabilities.schema.json"},
 		{&api.BuildVersionResponse{}, "build-version-response.schema.json"},
 

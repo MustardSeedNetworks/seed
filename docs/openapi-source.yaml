@@ -1025,6 +1025,14 @@ operations:
           application/json:
             schema:
               $ref: '#/components/schemas/TCPProbeResponse'
+  GET /api/v1/security/discovery/service/status:
+    responses:
+      "200":
+        description: Whether the discovery service runs and is sweeping, what it sweeps, and the health of its discovery methods.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DiscoveryServiceStatusResponse'
   GET /api/v1/security/guest-audit/settings:
     responses:
       "200":

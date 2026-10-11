@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import type { DiscoveryServiceStatus as DiscoveryServiceStatusType } from '../../../../types/settings';
+import type { DiscoveryServiceStatusResponse } from '../../../../types/generated/discovery-service-status-response';
 import { DiscoveryServiceStatus } from './DiscoveryServiceStatus';
 
 const meta = {
@@ -11,16 +11,18 @@ export default meta;
 
 type Story = StoryObj<typeof meta>;
 
-const sampleStatus: DiscoveryServiceStatusType = {
+const sampleStatus: DiscoveryServiceStatusResponse = {
   running: true,
   scanning: false,
   deviceCount: 12,
   interface: 'eth0',
   subnet: '192.168.1.0/24',
+  subnets: ['192.168.1.0/24'],
   localIP: '192.168.1.10',
   activeMethods: ['arp', 'icmp', 'lldp'],
   lastScan: new Date(Date.now() - 30000).toISOString(),
-  rescanInterval: 60,
+  rescanIntervalMs: 60_000,
+  snmpProbe: { silent: 0, tried: 0, answered: 0 },
 };
 
 export const Running: Story = {
