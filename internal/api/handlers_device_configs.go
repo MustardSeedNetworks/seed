@@ -230,7 +230,7 @@ func (s *Server) handleDeviceConfigRun(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	j, _ := s.jobsRunner().Get(id)
-	w.Header().Set("Location", jobsPathPrefix+id)
+	w.Header().Set("Location", jobsPath+"/"+id)
 	sendJSONResponse(w, logger, http.StatusCreated, toJobResponse(j))
 }
 
