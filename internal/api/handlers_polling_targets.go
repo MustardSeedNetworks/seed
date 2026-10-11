@@ -26,7 +26,6 @@ import (
 	"encoding/json"
 	"errors"
 	"net/http"
-	"strings"
 
 	"github.com/MustardSeedNetworks/seed/internal/auth"
 	"github.com/MustardSeedNetworks/seed/internal/logging"
@@ -34,10 +33,7 @@ import (
 	"github.com/MustardSeedNetworks/seed/internal/polling/targets"
 )
 
-const (
-	pollingTargetsPath       = APIVersionPrefix + "/polling-targets"
-	pollingTargetsPathPrefix = pollingTargetsPath + "/"
-)
+const pollingTargetsPath = APIVersionPrefix + "/polling-targets"
 
 // PollingTargetRequest is the request body for POST + PUT. Mirrors the
 // repo struct minus the audit columns the server fills in.
@@ -93,13 +89,9 @@ func (s *Server) handlePollingTargets(w http.ResponseWriter, r *http.Request) {
 }
 
 // handlePollingTargetByID routes the resource-level endpoint
-// (GET / PUT / DELETE).
+// (GET / PUT / DELETE) on /polling-targets/{targetId}.
 func (s *Server) handlePollingTargetByID(w http.ResponseWriter, r *http.Request) {
-	id := strings.TrimPrefix(r.URL.Path, pollingTargetsPathPrefix)
-	if id == "" || strings.Contains(id, "/") {
-		writeError(w, r, http.StatusBadRequest, ErrCodeBadRequest, "Missing or invalid target id")
-		return
-	}
+	id := r.PathValue("targetId")
 	switch r.Method {
 	case http.MethodGet:
 		s.getPollingTarget(w, r, id)
@@ -191,7 +183,7 @@ func (s *Server) createPollingTarget(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	s.reloadSNMPPoller(r.Context())
-	w.Header().Set("Location", pollingTargetsPathPrefix+target.ID)
+	w.Header().Set("Location", pollingTargetsPath+"/"+target.ID)
 	sendJSONResponse(w, logger, http.StatusOK, encodePollingTarget(target))
 }
 

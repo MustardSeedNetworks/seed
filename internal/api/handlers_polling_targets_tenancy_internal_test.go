@@ -148,7 +148,7 @@ func TestCrossClientRoutesAre404NotForbidden(t *testing.T) {
 				req = httptest.NewRequest(tc.method, APIVersionPrefix+"/polling-targets/"+foreign.ID, http.NoBody)
 			}
 			w := httptest.NewRecorder()
-			s.handlePollingTargetByID(w, withClaim(req))
+			routed(pollingTargetPath, s.handlePollingTargetByID)(w, withClaim(req))
 
 			if w.Code != http.StatusNotFound {
 				t.Errorf("status = %d, want 404 — a 403 would confirm the id exists", w.Code)

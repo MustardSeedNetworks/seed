@@ -15,16 +15,12 @@ import (
 	"errors"
 	"net/http"
 	"strconv"
-	"strings"
 
 	"github.com/MustardSeedNetworks/seed/internal/alerts/rules"
 	"github.com/MustardSeedNetworks/seed/internal/logging"
 )
 
-const (
-	alertRulesPath       = APIVersionPrefix + "/alert-rules"
-	alertRulesPathPrefix = alertRulesPath + "/"
-)
+const alertRulesPath = APIVersionPrefix + "/alert-rules"
 
 // AlertRuleRequest is the request body for POST + PUT. Mirrors the
 // repo struct minus the audit columns.
@@ -78,13 +74,10 @@ func (s *Server) handleAlertRules(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+// handleAlertRuleByID routes the resource endpoint (GET / PUT / DELETE) on
+// /alert-rules/{ruleId}.
 func (s *Server) handleAlertRuleByID(w http.ResponseWriter, r *http.Request) {
-	rest := strings.TrimPrefix(r.URL.Path, alertRulesPathPrefix)
-	if rest == "" || strings.Contains(rest, "/") {
-		writeError(w, r, http.StatusBadRequest, ErrCodeBadRequest, "Missing or invalid rule id")
-		return
-	}
-	id, err := strconv.ParseInt(rest, 10, 64)
+	id, err := strconv.ParseInt(r.PathValue("ruleId"), 10, 64)
 	if err != nil || id <= 0 {
 		writeError(w, r, http.StatusBadRequest, ErrCodeBadRequest, "Rule id must be a positive integer")
 		return
@@ -160,7 +153,7 @@ func (s *Server) createAlertRule(w http.ResponseWriter, r *http.Request) {
 		writeError(w, r, http.StatusInternalServerError, ErrCodeInternal, "Failed to create rule")
 		return
 	}
-	w.Header().Set("Location", alertRulesPathPrefix+strconv.FormatInt(rule.ID, 10))
+	w.Header().Set("Location", alertRulesPath+"/"+strconv.FormatInt(rule.ID, 10))
 	sendJSONResponse(w, logger, http.StatusOK, encodeAlertRule(rule))
 }
 

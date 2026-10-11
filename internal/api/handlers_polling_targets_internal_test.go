@@ -36,6 +36,22 @@ func withClaim(req *http.Request) *http.Request {
 	return req.WithContext(auth.WithClientID(req.Context(), testClientID))
 }
 
+// The by-id patterns the route table registers, for tests that call a by-id
+// handler directly.
+const (
+	pollingTargetPath    = pollingTargetsPath + "/{targetId}"
+	deviceCredentialPath = deviceCredentialsPath + "/{credentialId}"
+	alertRulePath        = alertRulesPath + "/{ruleId}"
+)
+
+// routed serves h behind pattern on its own mux, so a handler that reads
+// r.PathValue sees the values the daemon's router gives it.
+func routed(pattern string, h http.HandlerFunc) http.HandlerFunc {
+	mux := http.NewServeMux()
+	mux.HandleFunc(pattern, h)
+	return mux.ServeHTTP
+}
+
 // seedTarget inserts a polling target via the repo and returns it.
 func seedTarget(t *testing.T, db *database.DB, name string) *polling.Target {
 	return seedTargetFor(t, db, testClientID, name)
@@ -178,7 +194,7 @@ func TestHandlePollingTargetByID_GET(t *testing.T) {
 		httptest.NewRequest(http.MethodGet, APIVersionPrefix+"/polling-targets/"+target.ID, http.NoBody),
 	)
 	w := httptest.NewRecorder()
-	s.handlePollingTargetByID(w, req)
+	routed(pollingTargetPath, s.handlePollingTargetByID)(w, req)
 	if w.Code != http.StatusOK {
 		t.Fatalf("status = %d", w.Code)
 	}
@@ -195,7 +211,7 @@ func TestHandlePollingTargetByID_GETUnknownReturns404(t *testing.T) {
 		httptest.NewRequest(http.MethodGet, APIVersionPrefix+"/polling-targets/no-such-id", http.NoBody),
 	)
 	w := httptest.NewRecorder()
-	s.handlePollingTargetByID(w, req)
+	routed(pollingTargetPath, s.handlePollingTargetByID)(w, req)
 	if w.Code != http.StatusNotFound {
 		t.Errorf("status = %d, want 404", w.Code)
 	}
@@ -217,7 +233,7 @@ func TestHandlePollingTargetByID_PUTUpdates(t *testing.T) {
 	req := withClaim(httptest.NewRequest(http.MethodPut, APIVersionPrefix+"/polling-targets/"+target.ID, buf))
 	req.Header.Set("Content-Type", "application/json")
 	w := httptest.NewRecorder()
-	s.handlePollingTargetByID(w, req)
+	routed(pollingTargetPath, s.handlePollingTargetByID)(w, req)
 
 	if w.Code != http.StatusOK {
 		t.Fatalf("status = %d, body=%s", w.Code, w.Body.String())
@@ -242,7 +258,7 @@ func TestHandlePollingTargetByID_PUTUnknownReturns404(t *testing.T) {
 	req := withClaim(httptest.NewRequest(http.MethodPut, APIVersionPrefix+"/polling-targets/no-such-id", buf))
 	req.Header.Set("Content-Type", "application/json")
 	w := httptest.NewRecorder()
-	s.handlePollingTargetByID(w, req)
+	routed(pollingTargetPath, s.handlePollingTargetByID)(w, req)
 	if w.Code != http.StatusNotFound {
 		t.Errorf("status = %d, want 404", w.Code)
 	}
@@ -256,7 +272,7 @@ func TestHandlePollingTargetByID_DELETERemoves(t *testing.T) {
 		httptest.NewRequest(http.MethodDelete, APIVersionPrefix+"/polling-targets/"+target.ID, http.NoBody),
 	)
 	w := httptest.NewRecorder()
-	s.handlePollingTargetByID(w, req)
+	routed(pollingTargetPath, s.handlePollingTargetByID)(w, req)
 	if w.Code != http.StatusNoContent {
 		t.Errorf("status = %d, want 204", w.Code)
 	}
@@ -272,20 +288,9 @@ func TestHandlePollingTargetByID_DELETEUnknownReturns404(t *testing.T) {
 		httptest.NewRequest(http.MethodDelete, APIVersionPrefix+"/polling-targets/no-such-id", http.NoBody),
 	)
 	w := httptest.NewRecorder()
-	s.handlePollingTargetByID(w, req)
+	routed(pollingTargetPath, s.handlePollingTargetByID)(w, req)
 	if w.Code != http.StatusNotFound {
 		t.Errorf("status = %d, want 404", w.Code)
-	}
-}
-
-func TestHandlePollingTargetByID_BadPathReturns400(t *testing.T) {
-	s := newPollingTargetsTestServer(t)
-	// trailing-slash-only path = empty id.
-	req := withClaim(httptest.NewRequest(http.MethodGet, APIVersionPrefix+"/polling-targets/", http.NoBody))
-	w := httptest.NewRecorder()
-	s.handlePollingTargetByID(w, req)
-	if w.Code != http.StatusBadRequest {
-		t.Errorf("status = %d, want 400", w.Code)
 	}
 }
 
@@ -296,7 +301,7 @@ func TestHandlePollingTargetByID_PATCHRejected(t *testing.T) {
 		httptest.NewRequest(http.MethodPatch, APIVersionPrefix+"/polling-targets/"+target.ID, http.NoBody),
 	)
 	w := httptest.NewRecorder()
-	s.handlePollingTargetByID(w, req)
+	routed(pollingTargetPath, s.handlePollingTargetByID)(w, req)
 	if w.Code != http.StatusMethodNotAllowed {
 		t.Errorf("status = %d, want 405", w.Code)
 	}

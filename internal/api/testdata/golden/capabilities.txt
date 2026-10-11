@@ -1504,7 +1504,7 @@ body:
       "PUT",
       "DELETE"
     ],
-    "path": "/api/v1/polling-targets/",
+    "path": "/api/v1/polling-targets/{targetId}",
     "rateLimited": false,
     "scope": "operator"
   },
@@ -1529,7 +1529,7 @@ body:
       "PUT",
       "DELETE"
     ],
-    "path": "/api/v1/device-credentials/",
+    "path": "/api/v1/device-credentials/{credentialId}",
     "rateLimited": false,
     "scope": "operator"
   },
@@ -1564,7 +1564,7 @@ body:
       "PUT",
       "DELETE"
     ],
-    "path": "/api/v1/alert-rules/",
+    "path": "/api/v1/alert-rules/{ruleId}",
     "rateLimited": false,
     "scope": "operator"
   },

@@ -257,8 +257,7 @@ operations:
           application/json:
             schema:
               $ref: '#/components/schemas/Credentials'
-  GET /api/v1/device-credentials/:
-    pathTemplate: /api/v1/device-credentials/{credentialId}
+  GET /api/v1/device-credentials/{credentialId}:
     responses:
       "200":
         description: The credential, without its secrets.
@@ -266,8 +265,7 @@ operations:
           application/json:
             schema:
               $ref: '#/components/schemas/Credentials'
-  PUT /api/v1/device-credentials/:
-    pathTemplate: /api/v1/device-credentials/{credentialId}
+  PUT /api/v1/device-credentials/{credentialId}:
     requestBody:
       required: true
       content:
@@ -281,8 +279,7 @@ operations:
           application/json:
             schema:
               $ref: '#/components/schemas/Credentials'
-  DELETE /api/v1/device-credentials/:
-    pathTemplate: /api/v1/device-credentials/{credentialId}
+  DELETE /api/v1/device-credentials/{credentialId}:
     responses:
       "204":
         description: The credential was deleted. A credential a polling target still references is a 409.
@@ -600,8 +597,7 @@ operations:
           application/json:
             schema:
               $ref: '#/components/schemas/AlertRuleResponse'
-  GET /api/v1/alert-rules/:
-    pathTemplate: /api/v1/alert-rules/{ruleId}
+  GET /api/v1/alert-rules/{ruleId}:
     responses:
       "200":
         description: The alert rule.
@@ -609,8 +605,7 @@ operations:
           application/json:
             schema:
               $ref: '#/components/schemas/AlertRuleResponse'
-  PUT /api/v1/alert-rules/:
-    pathTemplate: /api/v1/alert-rules/{ruleId}
+  PUT /api/v1/alert-rules/{ruleId}:
     requestBody:
       required: true
       content:
@@ -624,8 +619,7 @@ operations:
           application/json:
             schema:
               $ref: '#/components/schemas/AlertRuleResponse'
-  DELETE /api/v1/alert-rules/:
-    pathTemplate: /api/v1/alert-rules/{ruleId}
+  DELETE /api/v1/alert-rules/{ruleId}:
     responses:
       "204":
         description: The rule was deleted.
@@ -651,8 +645,7 @@ operations:
           application/json:
             schema:
               $ref: '#/components/schemas/PollingTargetResponse'
-  GET /api/v1/polling-targets/:
-    pathTemplate: /api/v1/polling-targets/{targetId}
+  GET /api/v1/polling-targets/{targetId}:
     responses:
       "200":
         description: The polling target.
@@ -660,8 +653,7 @@ operations:
           application/json:
             schema:
               $ref: '#/components/schemas/PollingTargetResponse'
-  PUT /api/v1/polling-targets/:
-    pathTemplate: /api/v1/polling-targets/{targetId}
+  PUT /api/v1/polling-targets/{targetId}:
     requestBody:
       required: true
       content:
@@ -675,8 +667,7 @@ operations:
           application/json:
             schema:
               $ref: '#/components/schemas/PollingTargetResponse'
-  DELETE /api/v1/polling-targets/:
-    pathTemplate: /api/v1/polling-targets/{targetId}
+  DELETE /api/v1/polling-targets/{targetId}:
     responses:
       "204":
         description: The target was deleted.
