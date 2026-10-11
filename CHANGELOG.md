@@ -5,6 +5,28 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.253.0](https://github.com/MustardSeedNetworks/seed/compare/v0.252.0...v0.253.0) (2026-10-11)
+
+
+### Features
+
+* **api:** document the guest audit report and serve openPorts as a list ([#3299](https://github.com/MustardSeedNetworks/seed/issues/3299)) ([d10f429](https://github.com/MustardSeedNetworks/seed/commit/d10f429f378e4ba03b6c2be1b5cda11264fa8f56))
+
+
+### Bug Fixes
+
+* **api:** answer discovery service status with a documented DTO ([#3307](https://github.com/MustardSeedNetworks/seed/issues/3307)) ([6d5b97a](https://github.com/MustardSeedNetworks/seed/commit/6d5b97a3b3921de6d02626eb7a34fc64b23e825c))
+* **api:** serve recent logs in camelCase and document both log reads ([#3305](https://github.com/MustardSeedNetworks/seed/issues/3305)) ([59a8736](https://github.com/MustardSeedNetworks/seed/commit/59a87362962d5420143d7282f9181b89097f37bd))
+* **deps:** update dependency lucide-react to v1.52.0 ([#3300](https://github.com/MustardSeedNetworks/seed/issues/3300)) ([7aa8c59](https://github.com/MustardSeedNetworks/seed/commit/7aa8c59b3b1e20aae9b4d5996157854d2956c7f9))
+* **deps:** update module github.com/mustardseednetworks/foundation to v0.7.4 ([#3302](https://github.com/MustardSeedNetworks/seed/issues/3302)) ([fbb1f2f](https://github.com/MustardSeedNetworks/seed/commit/fbb1f2fc0f1a1f3e8294a3e9df8f028368059de0))
+
+
+### Miscellaneous
+
+* **deps:** lock file maintenance ([#3301](https://github.com/MustardSeedNetworks/seed/issues/3301)) ([05eee80](https://github.com/MustardSeedNetworks/seed/commit/05eee80d51751bc2ab68e1eb246939f55fa73a92))
+* **deps:** lock file maintenance ([#3304](https://github.com/MustardSeedNetworks/seed/issues/3304)) ([bc21745](https://github.com/MustardSeedNetworks/seed/commit/bc217453403a70f53c37f7a113973e639daf4cba))
+* **deps:** update dependency jsdom to v30.1.2 ([#3306](https://github.com/MustardSeedNetworks/seed/issues/3306)) ([3c99704](https://github.com/MustardSeedNetworks/seed/commit/3c99704a78b82138adc71ec44b826033119957b8))
+
 ## [0.252.0](https://github.com/MustardSeedNetworks/seed/compare/v0.251.0...v0.252.0) (2026-10-11)
 
 
