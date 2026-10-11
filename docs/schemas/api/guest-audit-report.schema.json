@@ -1,0 +1,118 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/MustardSeedNetworks/seed/main/docs/schemas/api/guest-audit-report.schema.json",
+  "$ref": "#/$defs/GuestAuditReport",
+  "$defs": {
+    "GuestAuditReport": {
+      "properties": {
+        "startedAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "completedAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "isolationFailed": {
+          "type": "boolean"
+        },
+        "reachableTargets": {
+          "type": "integer"
+        },
+        "totalTargets": {
+          "type": "integer"
+        },
+        "results": {
+          "items": {
+            "$ref": "#/$defs/TargetResult"
+          },
+          "type": "array"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "startedAt",
+        "completedAt",
+        "isolationFailed",
+        "reachableTargets",
+        "totalTargets",
+        "results"
+      ]
+    },
+    "PortResult": {
+      "properties": {
+        "port": {
+          "type": "integer"
+        },
+        "open": {
+          "type": "boolean"
+        },
+        "error": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "port",
+        "open"
+      ]
+    },
+    "Target": {
+      "properties": {
+        "ip": {
+          "type": "string"
+        },
+        "label": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "ip"
+      ]
+    },
+    "TargetResult": {
+      "properties": {
+        "target": {
+          "$ref": "#/$defs/Target"
+        },
+        "reachable": {
+          "type": "boolean"
+        },
+        "pingResponded": {
+          "type": "boolean"
+        },
+        "openPorts": {
+          "items": {
+            "type": "integer"
+          },
+          "type": "array"
+        },
+        "portResults": {
+          "items": {
+            "$ref": "#/$defs/PortResult"
+          },
+          "type": "array"
+        },
+        "durationSeconds": {
+          "type": "number"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "target",
+        "reachable",
+        "pingResponded",
+        "openPorts",
+        "portResults",
+        "durationSeconds"
+      ]
+    }
+  },
+  "title": "GuestAuditReport",
+  "description": "GuestAuditReport — generated from the Go struct in internal/api; refresh with `make schema` after struct changes."
+}
