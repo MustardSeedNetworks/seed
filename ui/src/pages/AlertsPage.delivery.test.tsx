@@ -14,7 +14,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { RoleProvider } from '../contexts/RoleContext';
 import i18n from '../i18n';
-import type { Alert } from '../types/alerts';
+import type { Alert } from '../types/generated/alert-list-response';
 
 const baseAlert: Alert = {
   id: 1,

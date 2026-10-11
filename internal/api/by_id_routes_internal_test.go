@@ -8,6 +8,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/MustardSeedNetworks/seed/internal/alerts"
 	"github.com/MustardSeedNetworks/seed/internal/app"
 	"github.com/MustardSeedNetworks/seed/internal/identity/roles"
 )
@@ -22,6 +23,7 @@ func routedCRUDServer(t *testing.T) *Server {
 	s.historyQueries = app.NewHistory(s.db)
 	s.topologyQueries = app.NewTopologyQueries(s.db, topologyMaxLimit)
 	s.discoveryDevices = app.NewDiscoveryDevices(s.discoveryEngine)
+	s.alertInbox = app.NewAlertInbox(s.db)
 	s.initIdentityUseCases()
 	if _, err := s.db().CreateUser(t.Context(), "admin", "$2a$10$x", roles.Admin); err != nil {
 		t.Fatalf("seed admin: %v", err)
@@ -47,6 +49,7 @@ func TestByIDRoutesThroughTheRouter(t *testing.T) {
 		t.Fatalf("create credential: %d %s", created.Code, created.Body.String())
 	}
 	credential := deviceCredentialsPath + "/" + cred.ID
+	alert := alertsPath + "/" + strconv.FormatInt(seedAlert(t, s.db(), alerts.SeverityWarning), 10)
 
 	for _, tc := range []struct {
 		method string
@@ -86,6 +89,12 @@ func TestByIDRoutesThroughTheRouter(t *testing.T) {
 
 		{http.MethodGet, APIVersionPrefix + "/discovery/engine/device/AA:BB:CC:DD:EE:FF", "", http.StatusServiceUnavailable},
 		{http.MethodGet, APIVersionPrefix + "/discovery/engine/device/AA:BB/extra", "", http.StatusNotFound},
+
+		{http.MethodPost, alert + "/acknowledge", "", http.StatusOK},
+		{http.MethodPost, alert + "/resolve", "", http.StatusOK},
+		{http.MethodPost, alert + "/explode", "", http.StatusNotFound},
+		{http.MethodPost, alert, "", http.StatusNotFound},
+		{http.MethodPost, alertsPath + "/abc/acknowledge", "", http.StatusBadRequest},
 	} {
 		rec := httptest.NewRecorder()
 		s.Mux().ServeHTTP(rec, httptest.NewRequest(tc.method, tc.path, strings.NewReader(tc.body)))

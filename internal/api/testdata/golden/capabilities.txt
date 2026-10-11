@@ -1585,7 +1585,18 @@ body:
     "methods": [
       "POST"
     ],
-    "path": "/api/v1/alerts/",
+    "path": "/api/v1/alerts/{alertId}/acknowledge",
+    "rateLimited": false,
+    "scope": "operator"
+  },
+  {
+    "auth": true,
+    "csrf": true,
+    "maxBodyBytes": 262144,
+    "methods": [
+      "POST"
+    ],
+    "path": "/api/v1/alerts/{alertId}/resolve",
     "rateLimited": false,
     "scope": "operator"
   },

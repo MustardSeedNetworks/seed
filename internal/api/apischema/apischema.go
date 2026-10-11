@@ -387,6 +387,11 @@ func Targets() []Target {
 		{&api.AlertRuleResponse{}, "alert-rule-response.schema.json"},
 		{&api.AlertRuleListResponse{}, "alert-rule-list-response.schema.json"},
 
+		// The alert inbox and its acknowledge/resolve actions (Stage A5.2).
+		{&api.AlertListResponse{}, "alert-list-response.schema.json"},
+		{&api.AlertAcknowledgeResponse{}, "alert-acknowledge-response.schema.json"},
+		{&api.AlertResolveResponse{}, "alert-resolve-response.schema.json"},
+
 		// Profile/settings config — code-first model of the per-profile
 		// config.Config blob (ADR-0007/0008, Phase 7 S6). The profile Config
 		// is applied via Config.ApplyProfileJSON, so config.Config is its

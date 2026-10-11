@@ -12,7 +12,7 @@ import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { type CurrentUser, RoleProvider } from '../contexts/RoleContext';
-import type { Alert } from '../types/alerts';
+import type { Alert } from '../types/generated/alert-list-response';
 
 const alert: Alert = {
   id: 1,

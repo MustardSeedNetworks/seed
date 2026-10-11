@@ -8,7 +8,10 @@
 
 import { useEffect, useState } from 'react';
 import { api } from '../api/client';
-import type { Alert, AlertActionResponse, AlertsFilter, AlertsListResponse } from '../types/alerts';
+import type { AlertsFilter } from '../types/alerts';
+import type { AlertAcknowledgeResponse } from '../types/generated/alert-acknowledge-response';
+import type { Alert, AlertListResponse } from '../types/generated/alert-list-response';
+import type { AlertResolveResponse } from '../types/generated/alert-resolve-response';
 
 const ENDPOINT = '/api/v1/alerts';
 
@@ -47,7 +50,7 @@ export function useAlerts(initialFilter?: Partial<AlertsFilter>): UseAlertsResul
     setLoading(true);
     setError(null);
     await api
-      .get<AlertsListResponse>(`${ENDPOINT}${buildQuery(filter)}`)
+      .get<AlertListResponse>(`${ENDPOINT}${buildQuery(filter)}`)
       .then((resp) => {
         setAlerts(resp.alerts ?? []);
       })
@@ -62,12 +65,12 @@ export function useAlerts(initialFilter?: Partial<AlertsFilter>): UseAlertsResul
   }, [refresh]);
 
   const acknowledge = async (id: number): Promise<void> => {
-    await api.post<AlertActionResponse>(`${ENDPOINT}/${id}/acknowledge`);
+    await api.post<AlertAcknowledgeResponse>(`${ENDPOINT}/${id}/acknowledge`);
     await refresh();
   };
 
   const resolve = async (id: number): Promise<void> => {
-    await api.post<AlertActionResponse>(`${ENDPOINT}/${id}/resolve`);
+    await api.post<AlertResolveResponse>(`${ENDPOINT}/${id}/resolve`);
     await refresh();
   };
 

@@ -19,6 +19,102 @@ components:
                 - key
                 - bsses
             type: object
+        Alert:
+            additionalProperties: false
+            properties:
+                acknowledged:
+                    type: boolean
+                acknowledgedAt:
+                    type: string
+                acknowledgedBy:
+                    type: string
+                createdAt:
+                    type: string
+                deliveries:
+                    items:
+                        $ref: '#/components/schemas/AlertDelivery'
+                    type: array
+                deviceId:
+                    type: string
+                escalatedAt:
+                    type: string
+                escalationStage:
+                    type: integer
+                id:
+                    type: integer
+                message:
+                    type: string
+                metadata:
+                    additionalProperties: true
+                    type: object
+                narrative:
+                    $ref: '#/components/schemas/AlertNarrative'
+                resolved:
+                    type: boolean
+                resolvedAt:
+                    type: string
+                rootCauseId:
+                    type: integer
+                rule:
+                    type: string
+                severity:
+                    type: string
+                source:
+                    type: string
+                title:
+                    type: string
+                type:
+                    type: string
+            required:
+                - id
+                - type
+                - severity
+                - title
+                - message
+                - source
+                - acknowledged
+                - resolved
+                - createdAt
+                - metadata
+            type: object
+        AlertAcknowledgeResponse:
+            additionalProperties: false
+            properties:
+                acknowledged:
+                    type: boolean
+                acknowledgedBy:
+                    type: string
+                id:
+                    type: integer
+            required:
+                - id
+                - acknowledged
+                - acknowledgedBy
+            type: object
+        AlertDelivery:
+            additionalProperties: false
+            properties:
+                attemptedAt:
+                    type: string
+                channel:
+                    enum:
+                        - webhook
+                        - email
+                        - syslog
+                    type: string
+                error:
+                    type: string
+                status:
+                    enum:
+                        - pending
+                        - delivered
+                        - failed
+                        - dropped
+                    type: string
+            required:
+                - channel
+                - status
+            type: object
         AlertEmailConfig:
             additionalProperties: false
             properties:
@@ -73,6 +169,46 @@ components:
             required:
                 - after_seconds
                 - channels
+            type: object
+        AlertListResponse:
+            additionalProperties: false
+            properties:
+                alerts:
+                    items:
+                        $ref: '#/components/schemas/Alert'
+                    type: array
+                count:
+                    type: integer
+            required:
+                - count
+                - alerts
+            type: object
+        AlertNarrative:
+            additionalProperties: false
+            properties:
+                evidence:
+                    items:
+                        type: string
+                    type: array
+                nextCheck:
+                    type: string
+                summary:
+                    type: string
+            required:
+                - summary
+                - evidence
+                - nextCheck
+            type: object
+        AlertResolveResponse:
+            additionalProperties: false
+            properties:
+                id:
+                    type: integer
+                resolved:
+                    type: boolean
+            required:
+                - id
+                - resolved
             type: object
         AlertRuleListResponse:
             additionalProperties: false
@@ -9768,6 +9904,12 @@ paths:
         get:
             operationId: getApiV1Alerts
             responses:
+                "200":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/AlertListResponse'
+                    description: The alert inbox, newest first. Filters are query parameters - type, severity, device_id, unacknowledged_only, unresolved_only, since (RFC3339), limit (at most 1000, default 100) and offset.
                 "401":
                     content:
                         application/json:
@@ -9786,18 +9928,75 @@ paths:
                             schema:
                                 $ref: '#/components/schemas/Error'
                     description: Internal error.
-    /api/v1/alerts/{subpath}:
+    /api/v1/alerts/{alertId}/acknowledge:
         parameters:
-            - description: Trailing path segment; this route matches by prefix.
+            - description: Path parameter.
               in: path
-              name: subpath
+              name: alertId
               required: true
               schema:
                 type: string
         post:
             description: Requires an operator-scoped token.
-            operationId: postApiV1AlertsSubpath
+            operationId: postApiV1AlertsAlertIdAcknowledge
             responses:
+                "200":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/AlertAcknowledgeResponse'
+                    description: The alert is acknowledged by the caller.
+                "401":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Error'
+                    description: Missing or invalid bearer token.
+                "403":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Error'
+                    description: Operator scope required, or CSRF token missing or invalid.
+                "405":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Error'
+                    description: Method not allowed; the Allow header lists the accepted set.
+                "413":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Error'
+                    description: Request body larger than 262144 bytes.
+                "500":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Error'
+                    description: Internal error.
+            security:
+                - BearerAuth: []
+                  CsrfToken: []
+    /api/v1/alerts/{alertId}/resolve:
+        parameters:
+            - description: Path parameter.
+              in: path
+              name: alertId
+              required: true
+              schema:
+                type: string
+        post:
+            description: Requires an operator-scoped token.
+            operationId: postApiV1AlertsAlertIdResolve
+            responses:
+                "200":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/AlertResolveResponse'
+                    description: The alert is resolved.
                 "401":
                     content:
                         application/json:
