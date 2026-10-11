@@ -36,7 +36,7 @@ func TestProbeHistoryRefusesARequestWithNoClientClaim(t *testing.T) {
 	t.Parallel()
 
 	rec := httptest.NewRecorder()
-	newHistoryServer(t).handleProbeHistory(rec,
+	routed(historyProbePath, newHistoryServer(t).handleProbeHistory)(rec,
 		httptest.NewRequest(http.MethodGet, "/api/v1/history/probes/p1", nil))
 
 	require.Equal(t, http.StatusUnauthorized, rec.Code)
@@ -49,7 +49,7 @@ func TestProbeHistoryRejectsAnUnusableRange(t *testing.T) {
 		t.Run(raw, func(t *testing.T) {
 			t.Parallel()
 			rec := httptest.NewRecorder()
-			newHistoryServer(t).handleProbeHistory(rec,
+			routed(historyProbePath, newHistoryServer(t).handleProbeHistory)(rec,
 				historyRequest(t, "/api/v1/history/probes/p1?range="+url.QueryEscape(raw)))
 
 			require.Equal(t, http.StatusBadRequest, rec.Code, "range=%q", raw)
@@ -57,15 +57,17 @@ func TestProbeHistoryRejectsAnUnusableRange(t *testing.T) {
 	}
 }
 
-// The probe id comes off the path; an empty one is a bad request rather than a
-// read of every probe.
-func TestProbeHistoryRequiresAProbeID(t *testing.T) {
+// The probe id is one path segment: an empty or nested one is not a probe, so
+// the router answers 404 rather than reading every probe.
+func TestProbeHistoryRequiresOneProbeIDSegment(t *testing.T) {
 	t.Parallel()
 
-	rec := httptest.NewRecorder()
-	newHistoryServer(t).handleProbeHistory(rec, historyRequest(t, "/api/v1/history/probes/"))
+	for _, path := range []string{"/api/v1/history/probes/", "/api/v1/history/probes/p1/extra"} {
+		rec := httptest.NewRecorder()
+		routed(historyProbePath, newHistoryServer(t).handleProbeHistory)(rec, historyRequest(t, path))
 
-	require.Equal(t, http.StatusBadRequest, rec.Code)
+		require.Equal(t, http.StatusNotFound, rec.Code, path)
+	}
 }
 
 // The window is the contract the UI half draws against: it must say which
@@ -86,7 +88,7 @@ func TestProbeHistoryReportsTheServedWindow(t *testing.T) {
 	}))
 
 	rec := httptest.NewRecorder()
-	s.handleProbeHistory(rec, historyRequest(t, "/api/v1/history/probes/p-window?range=24h"))
+	routed(historyProbePath, s.handleProbeHistory)(rec, historyRequest(t, "/api/v1/history/probes/p-window?range=24h"))
 	require.Equal(t, http.StatusOK, rec.Code)
 
 	var got ProbeHistoryResponse
@@ -107,7 +109,7 @@ func TestProbeHistoryServesAnEmptySeriesAsAnArray(t *testing.T) {
 	t.Parallel()
 
 	rec := httptest.NewRecorder()
-	newHistoryServer(t).handleProbeHistory(rec,
+	routed(historyProbePath, newHistoryServer(t).handleProbeHistory)(rec,
 		historyRequest(t, "/api/v1/history/probes/never-run"))
 
 	require.Equal(t, http.StatusOK, rec.Code)

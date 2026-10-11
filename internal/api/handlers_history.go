@@ -4,7 +4,6 @@ import (
 	"errors"
 	"net/http"
 	"strconv"
-	"strings"
 	"time"
 
 	"github.com/MustardSeedNetworks/seed/internal/i18n"
@@ -25,10 +24,6 @@ import (
 // The window a tier can answer is resolved once, in resolveHistoryWindow, and
 // reported back on every response: a request past the tier's horizon is served
 // short and says so rather than erroring.
-
-// historyProbesPathPrefix is the collection prefix the per-probe route hangs
-// the probe id off, matching the /polling-targets/ idiom.
-const historyProbesPathPrefix = APIVersionPrefix + "/history/probes/"
 
 // errInvalidHistoryRange is returned for a range that is not a positive
 // duration.
@@ -76,17 +71,12 @@ type AnomalyHistoryResponse struct {
 	Days   []history.AnomalyDayCount `json:"days"`
 }
 
-// handleProbeHistory serves GET /api/v1/history/probes/{probeID}.
+// handleProbeHistory serves GET /api/v1/history/probes/{probeId}.
 func (s *Server) handleProbeHistory(w http.ResponseWriter, r *http.Request) {
 	logger := logging.FromContext(r.Context())
 	localizer := i18n.FromRequest(r)
 
-	probeID := strings.TrimPrefix(r.URL.Path, historyProbesPathPrefix)
-	if probeID == "" || strings.Contains(probeID, "/") {
-		sendErrorResponseWithDetails(w, logger, http.StatusBadRequest,
-			ErrCodeValidation, localizer.T("errors.history.probeRequired"), "")
-		return
-	}
+	probeID := r.PathValue("probeId")
 	clientID, ok := s.callerClient(w, r)
 	if !ok {
 		return

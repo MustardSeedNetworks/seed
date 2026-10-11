@@ -307,8 +307,7 @@ operations:
           application/json:
             schema:
               $ref: '#/components/schemas/EngineCapabilities'
-  GET /api/v1/discovery/engine/device/:
-    pathTemplate: /api/v1/discovery/engine/device/{mac}
+  GET /api/v1/discovery/engine/device/{mac}:
     responses:
       "200":
         description: The discovered device with that MAC address.
@@ -454,8 +453,7 @@ operations:
           application/json:
             schema:
               $ref: '#/components/schemas/AnomalyHistoryResponse'
-  GET /api/v1/history/probes/:
-    pathTemplate: /api/v1/history/probes/{probeId}
+  GET /api/v1/history/probes/{probeId}:
     responses:
       "200":
         description: The probe's trend over the resolved window.
@@ -1725,8 +1723,7 @@ operations:
           application/json:
             schema:
               $ref: '#/components/schemas/TopologyNodeListResponse'
-  GET /api/v1/topology/nodes/:
-    pathTemplate: /api/v1/topology/nodes/{nodeId}
+  GET /api/v1/topology/nodes/{nodeId}:
     responses:
       "200":
         description: The node with its interfaces and the links incident to it.

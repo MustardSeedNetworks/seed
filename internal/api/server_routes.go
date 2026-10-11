@@ -53,11 +53,9 @@ func (s *Server) setupTopologyRoutes() {
 	getPost := []string{http.MethodGet, http.MethodPost}
 	getPutDelete := []string{http.MethodGet, http.MethodPut, http.MethodDelete}
 	s.routes.RegisterAll([]route.Route{
-		// /nodes must register BEFORE /nodes/ so the router doesn't treat the
-		// list endpoint as a /nodes/{id} request.
 		{Path: APIVersionPrefix + "/topology/nodes", Handler: s.handleTopologyNodes, Methods: get, Auth: true},
 		{
-			Path:    APIVersionPrefix + "/topology/nodes/",
+			Path:    APIVersionPrefix + "/topology/nodes/{nodeId}",
 			Handler: s.handleTopologyNodeByID,
 			Methods: get,
 			Auth:    true,

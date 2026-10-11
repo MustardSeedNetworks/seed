@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"log/slog"
 	"net/http"
-	"strings"
 
 	"github.com/MustardSeedNetworks/seed/internal/discovery"
 	"github.com/MustardSeedNetworks/seed/internal/discovery/devices"
@@ -414,30 +413,13 @@ func (s *Server) handleEngineCapabilities(w http.ResponseWriter, r *http.Request
 func (s *Server) handleEngineDevice(w http.ResponseWriter, r *http.Request) {
 	logger := logging.FromContext(r.Context())
 
-	// Engine availability is checked first so a nil engine returns 503 before any
-	// path validation (the order the engine handler tests pin).
 	if !s.discoveryDevices.Available() {
 		sendErrorResponseWithDetails(w, logger, http.StatusServiceUnavailable,
 			ErrCodeServiceUnavail, "Discovery engine not available", "")
 		return
 	}
 
-	// Extract MAC from URL path: /api/v1/discovery/engine/device/{mac}
-	path := r.URL.Path
-	prefix := APIVersionPrefix + "/discovery/engine/device/"
-	if !strings.HasPrefix(path, prefix) {
-		sendErrorResponseWithDetails(w, logger, http.StatusBadRequest,
-			ErrCodeBadRequest, "Invalid request path", "")
-		return
-	}
-	mac := strings.TrimPrefix(path, prefix)
-	if mac == "" {
-		sendErrorResponseWithDetails(w, logger, http.StatusBadRequest,
-			ErrCodeBadRequest, "MAC address required", "")
-		return
-	}
-
-	device, err := s.discoveryDevices.Device(mac)
+	device, err := s.discoveryDevices.Device(r.PathValue("mac"))
 	if err != nil {
 		writeEngineError(w, logger, err)
 		return
