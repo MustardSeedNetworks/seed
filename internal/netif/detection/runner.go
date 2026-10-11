@@ -3,6 +3,8 @@ package detection
 import (
 	"context"
 	"os/exec"
+
+	"github.com/MustardSeedNetworks/seed/internal/platform/procrun"
 )
 
 // commandRunner runs a system helper and returns its stdout. Platform speed and
@@ -20,5 +22,5 @@ type commandRunner func(ctx context.Context, name string, args ...string) ([]byt
 
 // execRunner is the production runner: it actually starts the helper.
 func execRunner(ctx context.Context, name string, args ...string) ([]byte, error) {
-	return exec.CommandContext(ctx, name, args...).Output()
+	return procrun.Output(exec.CommandContext(ctx, name, args...))
 }

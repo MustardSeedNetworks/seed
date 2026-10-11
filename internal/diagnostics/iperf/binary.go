@@ -12,6 +12,8 @@ import (
 
 	"github.com/MustardSeedNetworks/seed/internal/logging"
 	"github.com/MustardSeedNetworks/seed/internal/validation"
+
+	"github.com/MustardSeedNetworks/seed/internal/platform/procrun"
 )
 
 // findIperf3Binary returns the path of the resolved iperf3 binary.
@@ -116,7 +118,7 @@ func probeVersion(path string) (string, bool) {
 	ctx, cancel := context.WithTimeout(context.Background(), versionCheckTimeout)
 	defer cancel()
 
-	out, err := exec.CommandContext(ctx, path, "--version").Output()
+	out, err := procrun.Output(exec.CommandContext(ctx, path, "--version"))
 	if err != nil || !strings.Contains(string(out), "iperf") {
 		return "", false
 	}

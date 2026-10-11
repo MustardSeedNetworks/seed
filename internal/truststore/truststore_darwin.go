@@ -6,6 +6,8 @@ import (
 	"context"
 	"fmt"
 	"os/exec"
+
+	"github.com/MustardSeedNetworks/seed/internal/platform/procrun"
 )
 
 // systemKeychain is the macOS system-wide keychain that ships trusted roots
@@ -21,7 +23,7 @@ func installPlatform(ctx context.Context, certPath string) (Result, error) {
 	cmd := exec.CommandContext(ctx, "security",
 		"add-trusted-cert", "-d", "-r", "trustRoot",
 		"-k", systemKeychain, certPath)
-	out, err := cmd.CombinedOutput()
+	out, err := procrun.CombinedOutput(cmd)
 	if err != nil {
 		return Result{}, fmt.Errorf("security add-trusted-cert: %s: %w", trimError(out), err)
 	}
@@ -33,7 +35,7 @@ func installPlatform(ctx context.Context, certPath string) (Result, error) {
 func uninstallPlatform(ctx context.Context, certPath string) (Result, error) {
 	cmd := exec.CommandContext(ctx, "security",
 		"remove-trusted-cert", "-d", certPath)
-	out, err := cmd.CombinedOutput()
+	out, err := procrun.CombinedOutput(cmd)
 	if err != nil {
 		return Result{}, fmt.Errorf("security remove-trusted-cert: %s: %w", trimError(out), err)
 	}
