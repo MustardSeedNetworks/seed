@@ -1,0 +1,25 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/MustardSeedNetworks/seed/main/docs/schemas/api/device-scan-response.schema.json",
+  "$ref": "#/$defs/DeviceScanResponse",
+  "$defs": {
+    "DeviceScanResponse": {
+      "properties": {
+        "message": {
+          "type": "string"
+        },
+        "scanning": {
+          "type": "boolean"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "message",
+        "scanning"
+      ]
+    }
+  },
+  "title": "DeviceScanResponse",
+  "description": "DeviceScanResponse — generated from the Go struct in internal/api; refresh with `make schema` after struct changes."
+}

@@ -90,7 +90,9 @@ beforeEach(() => {
   FakeEventSource.opened = 0;
   vi.stubGlobal('EventSource', FakeEventSource);
   mockGet.mockReset();
-  mockGet.mockResolvedValue({});
+  mockGet.mockImplementation((path) =>
+    Promise.resolve(path === '/api/v1/security/devices' ? { devices: [], status: {} } : {}),
+  );
   mockPost.mockReset();
   mockPost.mockResolvedValue({});
   vi.stubGlobal(

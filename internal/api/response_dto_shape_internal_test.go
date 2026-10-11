@@ -421,6 +421,19 @@ func TestDeviceDiscoveryStatusResponseShape(t *testing.T) {
 		topLevelKeys(t, w.Body.Bytes()))
 }
 
+func TestDevicesResponseShape(t *testing.T) {
+	t.Parallel()
+	s := &Server{deviceDisc: enumerate.NewDeviceDiscovery("lo")}
+	w := serve(t, s.handleDevices, "/api/v1/security/devices")
+
+	var got map[string]json.RawMessage
+	require.NoError(t, json.Unmarshal(w.Body.Bytes(), &got))
+	require.JSONEq(t, `[]`, string(got["devices"]))
+	require.Equal(t, []string{"devices", "status"}, topLevelKeys(t, w.Body.Bytes()))
+	require.Equal(t, []string{"deviceCount", "interface", "lastScan", "localIP", "scanning", "subnet"},
+		topLevelKeys(t, got["status"]))
+}
+
 func TestDiscoveryOptionsResponseShape(t *testing.T) {
 	t.Parallel()
 	svc := enumerate.NewService(&config.Config{}, enumerate.NewDeviceDiscovery("lo"), nil)
