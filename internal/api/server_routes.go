@@ -83,7 +83,7 @@ func (s *Server) setupTopologyRoutes() {
 			CSRF:    true,
 		},
 		{
-			Path:    APIVersionPrefix + "/polling-targets/",
+			Path:    APIVersionPrefix + "/polling-targets/{targetId}",
 			Handler: s.handlePollingTargetByID,
 			Methods: getPutDelete,
 			Scope:   op,
@@ -104,7 +104,7 @@ func (s *Server) setupTopologyRoutes() {
 			CSRF:    true,
 		},
 		{
-			Path:    APIVersionPrefix + "/device-credentials/",
+			Path:    APIVersionPrefix + "/device-credentials/{credentialId}",
 			Handler: s.handleDeviceCredentialByID,
 			Methods: getPutDelete,
 			Scope:   op,
@@ -123,7 +123,7 @@ func (s *Server) setupTopologyRoutes() {
 			CSRF:    true,
 		},
 		{
-			Path:    APIVersionPrefix + "/alert-rules/",
+			Path:    APIVersionPrefix + "/alert-rules/{ruleId}",
 			Handler: s.handleAlertRuleByID,
 			Methods: getPutDelete,
 			Scope:   op,

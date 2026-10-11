@@ -26,17 +26,13 @@ import (
 	"errors"
 	"net/http"
 	"regexp"
-	"strings"
 
 	"github.com/MustardSeedNetworks/seed/internal/logging"
 	"github.com/MustardSeedNetworks/seed/internal/polling"
 	"github.com/MustardSeedNetworks/seed/internal/polling/credentials"
 )
 
-const (
-	deviceCredentialsPath       = APIVersionPrefix + "/device-credentials"
-	deviceCredentialsPathPrefix = deviceCredentialsPath + "/"
-)
+const deviceCredentialsPath = APIVersionPrefix + "/device-credentials"
 
 // DeviceCredentialRequest is the request body for POST and PUT.
 //
@@ -86,9 +82,10 @@ func (s *Server) handleDeviceCredentials(w http.ResponseWriter, r *http.Request)
 	}
 }
 
-// handleDeviceCredentialByID routes the resource endpoint (GET / PUT / DELETE).
+// handleDeviceCredentialByID routes the resource endpoint (GET / PUT / DELETE)
+// on /device-credentials/{credentialId}.
 func (s *Server) handleDeviceCredentialByID(w http.ResponseWriter, r *http.Request) {
-	id := strings.TrimPrefix(r.URL.Path, deviceCredentialsPathPrefix)
+	id := r.PathValue("credentialId")
 	if !validCredentialID(id) {
 		writeError(w, r, http.StatusBadRequest, ErrCodeBadRequest, "Missing or invalid credential id")
 		return

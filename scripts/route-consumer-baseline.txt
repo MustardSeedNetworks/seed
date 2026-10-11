@@ -13,7 +13,8 @@
 #                 claims) reaches these. Each fronts a subsystem, so each is
 #                 its own change; reason on the line
 /api/v1/alert-rules                       # PAT-only allow-list (owner 2026-09-04)
-/api/v1/alert-rules/                      # PAT-only allow-list (owner 2026-09-04)
+/api/v1/alert-rules/{ruleId}              # PAT-only allow-list (owner 2026-09-04)
+/api/v1/device-credentials/{credentialId} # PAT-only allow-list (owner 2026-09-04) until the SE-2 credential picker
 /api/v1/discovery/engine                  # PAT-only allow-list (owner 2026-09-04)
 /api/v1/discovery/engine/capabilities     # PAT-only allow-list (owner 2026-09-04)
 /api/v1/discovery/engine/device/          # PAT-only allow-list (owner 2026-09-04)

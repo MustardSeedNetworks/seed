@@ -223,7 +223,7 @@ func TestPollingTargetResponseShape(t *testing.T) {
 	require.Equal(t, 1, l.Count)
 	require.Len(t, l.Targets, 1)
 
-	one := serveClaimed(t, s.handlePollingTargetByID, pollingTargetsPathPrefix+seeded.ID)
+	one := serveClaimed(t, routed(pollingTargetPath, s.handlePollingTargetByID), pollingTargetsPath+"/"+seeded.ID)
 	require.JSONEq(t, string(l.Targets[0]), one.Body.String())
 
 	// lastPolledAt is absent until the first poll; every other key is always sent.
@@ -287,8 +287,13 @@ func TestCreatedPollingTargetReportsStoredChain(t *testing.T) {
 
 	var stored PollingTargetResponse
 	require.NoError(t, json.Unmarshal(
-		serveClaimed(t, s.handlePollingTargetByID, pollingTargetsPathPrefix+created.ID).Body.Bytes(),
-		&stored))
+		serveClaimed(
+			t,
+			routed(pollingTargetPath, s.handlePollingTargetByID),
+			pollingTargetsPath+"/"+created.ID,
+		).Body.Bytes(),
+		&stored,
+	))
 	require.Equal(t, polling.DefaultCollectorChain(), stored.CollectorChain)
 	require.Equal(t, stored.CollectorChain, created.CollectorChain)
 }
@@ -387,7 +392,7 @@ func TestAlertRuleResponseShape(t *testing.T) {
 	require.Equal(t, 1, l.Count)
 	require.Len(t, l.Rules, 1)
 
-	one := serve(t, s.handleAlertRuleByID, alertRulesPathPrefix+strconv.FormatInt(seeded.ID, 10))
+	one := serve(t, routed(alertRulePath, s.handleAlertRuleByID), alertRulesPath+"/"+strconv.FormatInt(seeded.ID, 10))
 	require.JSONEq(t, string(l.Rules[0]), one.Body.String())
 
 	// Every key is always sent, empty match filters included.

@@ -120,9 +120,9 @@ func TestPollingTargetProCollectorsGated(t *testing.T) {
 				"name": "router-1", "ipAddress": "10.0.0.1", "collectorChain": chain,
 			})
 			req.Method = http.MethodPut
-			req.URL.Path = pollingTargetsPathPrefix + existing.ID
+			req.URL.Path = pollingTargetsPath + "/" + existing.ID
 			w := httptest.NewRecorder()
-			starter.handlePollingTargetByID(w, req)
+			routed(pollingTargetPath, starter.handlePollingTargetByID)(w, req)
 			requireFeatureGate(t, w, tt.feature)
 
 			defaultChain := postTarget(t, starter, map[string]any{"name": "router-2", "ipAddress": "10.0.0.2"})

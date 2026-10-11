@@ -90,9 +90,9 @@ func TestCredentialIsScopedToTheCallersClient(t *testing.T) {
 	}
 
 	// Same id, no client claim: unauthenticated, not another tenant's read.
-	req := httptest.NewRequest(http.MethodGet, deviceCredentialsPathPrefix+id, nil)
+	req := httptest.NewRequest(http.MethodGet, deviceCredentialsPath+"/"+id, nil)
 	rec := httptest.NewRecorder()
-	s.handleDeviceCredentialByID(rec, req)
+	routed(deviceCredentialPath, s.handleDeviceCredentialByID)(rec, req)
 	if rec.Code != http.StatusUnauthorized {
 		t.Errorf("no claim: status %d, want 401", rec.Code)
 	}
@@ -148,11 +148,11 @@ func TestCredentialIDMustBeServerGenerated(t *testing.T) {
 		"cred-0123456789abcdef",
 		"../../etc/passwd",
 	} {
-		// The path is set after construction: httptest.NewRequest refuses to
-		// build a target containing a newline, but a raw client can send one,
-		// and by the time the mux dispatches, it is just a string field.
+		// The value is set after construction: httptest.NewRequest refuses to
+		// build a target containing a newline, but a raw client can send one
+		// percent-encoded, and the mux hands it over decoded.
 		req := withClaim(httptest.NewRequest(http.MethodGet, deviceCredentialsPath, nil))
-		req.URL.Path = deviceCredentialsPathPrefix + id
+		req.SetPathValue("credentialId", id)
 		rec := httptest.NewRecorder()
 		s.handleDeviceCredentialByID(rec, req)
 		if rec.Code != http.StatusBadRequest {
@@ -163,9 +163,9 @@ func TestCredentialIDMustBeServerGenerated(t *testing.T) {
 	// The generated shape is accepted — 404 because it does not exist, which
 	// is the point: it got past validation and was actually looked up.
 	req := withClaim(httptest.NewRequest(http.MethodGet,
-		deviceCredentialsPathPrefix+"cred-0123456789ab", nil))
+		deviceCredentialsPath+"/cred-0123456789ab", nil))
 	rec := httptest.NewRecorder()
-	s.handleDeviceCredentialByID(rec, req)
+	routed(deviceCredentialPath, s.handleDeviceCredentialByID)(rec, req)
 	if rec.Code != http.StatusNotFound {
 		t.Errorf("well-formed id: status %d, want 404", rec.Code)
 	}
@@ -178,9 +178,9 @@ func TestCredentialDeleteReturns204(t *testing.T) {
 	_ = json.Unmarshal(created.Body.Bytes(), &body)
 	id, _ := body["id"].(string)
 
-	req := withClaim(httptest.NewRequest(http.MethodDelete, deviceCredentialsPathPrefix+id, nil))
+	req := withClaim(httptest.NewRequest(http.MethodDelete, deviceCredentialsPath+"/"+id, nil))
 	rec := httptest.NewRecorder()
-	s.handleDeviceCredentialByID(rec, req)
+	routed(deviceCredentialPath, s.handleDeviceCredentialByID)(rec, req)
 	if rec.Code != http.StatusNoContent {
 		t.Errorf("status %d, want 204: %s", rec.Code, rec.Body.String())
 	}
