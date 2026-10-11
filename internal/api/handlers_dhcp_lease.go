@@ -58,7 +58,7 @@ func newDHCPLeaseResponse(r *dhcp.TestResult) DHCPLeaseResponse {
 // handleDHCPLease reports the DHCP lease an interface currently holds.
 //
 // This inspects existing state rather than exercising the server: macOS reads
-// the cached packet via `ipconfig getpacket` and Linux parses the lease file.
+// the lease configd holds in its dynamic store and Linux parses the lease file.
 // Neither sends a DISCOVER, so the response deliberately makes no claim about
 // how quickly a DHCP server answers — see DHCPLeaseResponse.ResponseMs.
 //
