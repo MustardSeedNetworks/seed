@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.252.0](https://github.com/MustardSeedNetworks/seed/compare/v0.251.0...v0.252.0) (2026-10-11)
+
+
+### Features
+
+* **api:** document the profile switch body and make the active profile read only ([#3298](https://github.com/MustardSeedNetworks/seed/issues/3298)) ([40185c5](https://github.com/MustardSeedNetworks/seed/commit/40185c5a121ec04566096e2fac270f91f8fed38d))
+
+
+### Bug Fixes
+
+* **api:** declare only the methods four more routes serve ([#3296](https://github.com/MustardSeedNetworks/seed/issues/3296)) ([2439e89](https://github.com/MustardSeedNetworks/seed/commit/2439e893aafad9e122f5a416e6dfd8f98a83bb8d))
+
 ## [0.251.0](https://github.com/MustardSeedNetworks/seed/compare/v0.250.0...v0.251.0) (2026-10-11)
 
 
