@@ -1,9 +1,9 @@
 import { useTranslation } from 'react-i18next';
 import { cn, layout, radius, spacing, status as statusColor } from '../../../../styles/theme';
-import type { DiscoveryServiceStatus as DiscoveryServiceStatusType } from '../../../../types/settings';
+import type { DiscoveryServiceStatusResponse } from '../../../../types/generated/discovery-service-status-response';
 
 interface DiscoveryServiceStatusProps {
-  status: DiscoveryServiceStatusType | null;
+  status: DiscoveryServiceStatusResponse | null;
   loading: boolean;
   onRefresh: () => void;
 }

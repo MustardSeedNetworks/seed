@@ -1632,6 +1632,38 @@ components:
                 - cableTest
                 - vulnerability
             type: object
+        DegradationStatus:
+            additionalProperties: false
+            properties:
+                failedMethods:
+                    items:
+                        type: string
+                    type: array
+                healthyMethods:
+                    items:
+                        type: string
+                    type: array
+                overallHealth:
+                    enum:
+                        - healthy
+                        - degraded
+                        - critical
+                    type: string
+                recommendations:
+                    items:
+                        type: string
+                    type: array
+                warnings:
+                    items:
+                        type: string
+                    type: array
+            required:
+                - overallHealth
+                - healthyMethods
+                - failedMethods
+                - warnings
+                - recommendations
+            type: object
         DeviceCredentialListResponse:
             additionalProperties: false
             properties:
@@ -1966,6 +1998,53 @@ components:
                 - interface
                 - running
                 - neighbors
+            type: object
+        DiscoveryServiceStatusResponse:
+            additionalProperties: false
+            properties:
+                activeMethods:
+                    items:
+                        type: string
+                    type: array
+                degradationStatus:
+                    $ref: '#/components/schemas/DegradationStatus'
+                deviceCount:
+                    type: integer
+                interface:
+                    type: string
+                lastScan:
+                    format: date-time
+                    type: string
+                localIP:
+                    type: string
+                profilingStatus:
+                    $ref: '#/components/schemas/ProfilingStatus'
+                rescanIntervalMs:
+                    type: integer
+                running:
+                    type: boolean
+                scanning:
+                    type: boolean
+                snmpProbe:
+                    $ref: '#/components/schemas/SNMPProbeReport'
+                subnet:
+                    type: string
+                subnets:
+                    items:
+                        type: string
+                    type: array
+            required:
+                - running
+                - scanning
+                - deviceCount
+                - lastScan
+                - subnet
+                - subnets
+                - localIP
+                - interface
+                - activeMethods
+                - snmpProbe
+                - rescanIntervalMs
             type: object
         DiscoveryTiming:
             additionalProperties: false
@@ -5810,6 +5889,37 @@ components:
                 - message
                 - profile
             type: object
+        ProfilingStatus:
+            additionalProperties: false
+            properties:
+                enabled:
+                    type: boolean
+                inProgress:
+                    type: integer
+                maxConcurrent:
+                    type: integer
+                portsToScan:
+                    type: integer
+                profilingIps:
+                    items:
+                        type: string
+                    type: array
+                queueLength:
+                    type: integer
+                scanIntensity:
+                    type: string
+                totalProfiled:
+                    type: integer
+            required:
+                - totalProfiled
+                - inProgress
+                - queueLength
+                - profilingIps
+                - enabled
+                - maxConcurrent
+                - portsToScan
+                - scanIntensity
+            type: object
         ProtocolCount:
             additionalProperties: false
             properties:
@@ -6641,6 +6751,22 @@ components:
             required:
                 - mac
                 - ifIndex
+            type: object
+        SNMPProbeReport:
+            additionalProperties: false
+            properties:
+                answered:
+                    type: integer
+                silent:
+                    type: integer
+                skipped:
+                    type: string
+                tried:
+                    type: integer
+            required:
+                - silent
+                - tried
+                - answered
             type: object
         SNMPRoute:
             additionalProperties: false
@@ -13617,6 +13743,12 @@ paths:
         get:
             operationId: getApiV1SecurityDiscoveryServiceStatus
             responses:
+                "200":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/DiscoveryServiceStatusResponse'
+                    description: Whether the discovery service runs and is sweeping, what it sweeps, and the health of its discovery methods.
                 "401":
                     content:
                         application/json:

@@ -79,10 +79,12 @@ describe('endpoint options — Spanish, with no English left behind', () => {
           deviceCount: 3,
           lastScan: '',
           subnet: '10.44.10.0/24',
+          subnets: ['10.44.10.0/24'],
           localIP: '10.44.10.2',
           interface: '',
           activeMethods: [],
-          rescanInterval: 0,
+          rescanIntervalMs: 0,
+          snmpProbe: { silent: 0, tried: 0, answered: 0 },
         }}
         loading={false}
         onRefresh={() => {}}
