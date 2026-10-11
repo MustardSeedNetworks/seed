@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.249.0](https://github.com/MustardSeedNetworks/seed/compare/v0.248.0...v0.249.0) (2026-10-10)
+
+
+### Features
+
+* **api:** document the settings defaults response ([#3284](https://github.com/MustardSeedNetworks/seed/issues/3284)) ([ee0f888](https://github.com/MustardSeedNetworks/seed/commit/ee0f8889be23a2db4be755c5d74f3292d0f0838b))
+
+
+### Bug Fixes
+
+* **dns:** read macOS scoped resolvers in process, not from scutil ([#3282](https://github.com/MustardSeedNetworks/seed/issues/3282)) ([ad2fce1](https://github.com/MustardSeedNetworks/seed/commit/ad2fce1f9e6034849acd9aaef1f133ae0ea9e762))
+
 ## [0.248.0](https://github.com/MustardSeedNetworks/seed/compare/v0.247.0...v0.248.0) (2026-10-10)
 
 
