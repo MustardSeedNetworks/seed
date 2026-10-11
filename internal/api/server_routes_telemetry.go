@@ -19,6 +19,7 @@ func (s *Server) setupTelemetryRoutes() {
 	getPost := []string{http.MethodGet, http.MethodPost}
 	getPut := []string{http.MethodGet, http.MethodPut}
 	getPostPut := []string{http.MethodGet, http.MethodPost, http.MethodPut}
+	postDelete := []string{http.MethodPost, http.MethodDelete}
 	s.routes.RegisterAll([]route.Route{
 		{Path: APIVersionPrefix + "/telemetry/link", Handler: s.handleLink, Methods: get, Auth: true},
 		{Path: APIVersionPrefix + "/telemetry/cable", Handler: s.handleCable, Methods: get, Auth: true},
@@ -80,10 +81,13 @@ func (s *Server) setupTelemetryRoutes() {
 		},
 		{Path: APIVersionPrefix + "/telemetry/vlan", Handler: s.handleVLAN, Methods: get, Auth: true},
 		{
+			// POST and DELETE, the two methods handleVLANInterface serves. This
+			// declared GET/POST/PUT, so the method gate refused every DELETE and
+			// a sub-interface could be created but never removed (#3261).
 			Path:    APIVersionPrefix + "/telemetry/vlan/interface",
 			Handler: s.handleVLANInterface,
-			Methods: getPostPut,
-			Scope:   op, // POST creates a live kernel VLAN sub-interface (writeGated: operator+)
+			Methods: postDelete,
+			Scope:   op, // POST/DELETE change live kernel VLAN sub-interfaces (writeGated: operator+)
 			Auth:    true,
 			CSRF:    true,
 		},

@@ -1559,6 +1559,20 @@ operations:
           application/json:
             schema:
               $ref: '#/components/schemas/VLANResponse'
+  DELETE /api/v1/telemetry/vlan/interface:
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/VLANInterfaceRequest'
+    responses:
+      "200":
+        description: The 802.1Q sub-interface was removed. An empty interface means the current one.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/VLANInterfaceResponse'
   POST /api/v1/telemetry/vlan/interface:
     requestBody:
       required: true
@@ -1566,6 +1580,13 @@ operations:
         application/json:
           schema:
             $ref: '#/components/schemas/VLANInterfaceRequest'
+    responses:
+      "200":
+        description: The 802.1Q sub-interface was created. An empty interface means the current one.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/VLANInterfaceResponse'
   GET /api/v1/topology/arp:
     responses:
       "200":
