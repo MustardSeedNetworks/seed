@@ -63,7 +63,7 @@ ui/src/components/cards/PerformanceCard.tsx:222  # read-only — bypasses the cl
 ui/src/components/cards/PerformanceCard.tsx:253  # read-only — bypasses the client 401 refresh/retry
 ui/src/components/cards/PerformanceCard.tsx:288  # read-only — bypasses the client 401 refresh/retry
 ui/src/components/cards/SlaDashboardCard.tsx:38  # read-only — bypasses the client 401 refresh/retry
-ui/src/components/cards/SystemHealthCard.tsx:184  # read-only — bypasses the client 401 refresh/retry
+ui/src/components/cards/SystemHealthCard.tsx:154  # read-only — bypasses the client 401 refresh/retry
 ui/src/components/login/RecoveryForm.tsx:83  # read-only — bypasses the client 401 refresh/retry
 ui/src/components/login/RecoveryForm.tsx:121  # mutating but CSRF-exempt by design (the route declares no CSRF) — correct as a raw fetch
 ui/src/components/settings/sections/ConfigBackupsSection.tsx:68  # read-only — bypasses the client 401 refresh/retry

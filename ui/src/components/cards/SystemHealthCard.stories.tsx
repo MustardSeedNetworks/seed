@@ -1,6 +1,16 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import type { JSX } from 'react';
+import type { Health, SystemHealthResponse } from '../../types/generated/system-health-response';
 import { SystemHealthCard } from './SystemHealthCard';
+
+/** The route's answer around a host sample; the card reads only `system`. */
+function healthResponse(system: Health): SystemHealthResponse {
+  return {
+    system,
+    application: { version: '0.0.0', uptime: 3600 },
+    services: { discoveryService: true, linkMonitor: true, sseHub: true },
+  };
+}
 
 /**
  * SystemHealthCard monitors system resources and displays health metrics.
@@ -28,7 +38,7 @@ const meta: Meta<typeof SystemHealthCard> = {
         url: '/api/v1/telemetry/system/health',
         method: 'GET',
         status: 200,
-        response: {
+        response: healthResponse({
           cpuPercent: 25.5,
           memoryPercent: 45.2,
           memoryUsed: 4831838208,
@@ -46,7 +56,7 @@ const meta: Meta<typeof SystemHealthCard> = {
           os: 'linux',
           arch: 'amd64',
           numCpu: 4,
-        },
+        }),
       },
     ],
   },
@@ -80,7 +90,7 @@ export const ModerateLoad: Story = {
         url: '/api/v1/telemetry/system/health',
         method: 'GET',
         status: 200,
-        response: {
+        response: healthResponse({
           cpuPercent: 78.3,
           memoryPercent: 82.5,
           memoryUsed: 8858370048,
@@ -98,7 +108,7 @@ export const ModerateLoad: Story = {
           os: 'linux',
           arch: 'amd64',
           numCpu: 4,
-        },
+        }),
       },
     ],
   },
@@ -115,7 +125,7 @@ export const HighLoad: Story = {
         url: '/api/v1/telemetry/system/health',
         method: 'GET',
         status: 200,
-        response: {
+        response: healthResponse({
           cpuPercent: 94.7,
           memoryPercent: 96.1,
           memoryUsed: 10316865536,
@@ -133,7 +143,7 @@ export const HighLoad: Story = {
           os: 'linux',
           arch: 'amd64',
           numCpu: 4,
-        },
+        }),
       },
     ],
   },
@@ -150,7 +160,7 @@ export const DiskSpaceCritical: Story = {
         url: '/api/v1/telemetry/system/health',
         method: 'GET',
         status: 200,
-        response: {
+        response: healthResponse({
           cpuPercent: 15.2,
           memoryPercent: 38.4,
           memoryUsed: 4123168768,
@@ -168,7 +178,7 @@ export const DiskSpaceCritical: Story = {
           os: 'linux',
           arch: 'amd64',
           numCpu: 4,
-        },
+        }),
       },
     ],
   },
@@ -185,7 +195,7 @@ export const Macos: Story = {
         url: '/api/v1/telemetry/system/health',
         method: 'GET',
         status: 200,
-        response: {
+        response: healthResponse({
           cpuPercent: 32.1,
           memoryPercent: 52.3,
           memoryUsed: 8589934592,
@@ -203,7 +213,7 @@ export const Macos: Story = {
           os: 'darwin',
           arch: 'arm64',
           numCpu: 8,
-        },
+        }),
       },
     ],
   },
@@ -220,7 +230,7 @@ export const Windows: Story = {
         url: '/api/v1/telemetry/system/health',
         method: 'GET',
         status: 200,
-        response: {
+        response: healthResponse({
           cpuPercent: 28.5,
           memoryPercent: 48.9,
           memoryUsed: 8053063680,
@@ -238,7 +248,7 @@ export const Windows: Story = {
           os: 'windows',
           arch: 'amd64',
           numCpu: 6,
-        },
+        }),
       },
     ],
   },
@@ -255,7 +265,7 @@ export const RecentlyBooted: Story = {
         url: '/api/v1/telemetry/system/health',
         method: 'GET',
         status: 200,
-        response: {
+        response: healthResponse({
           cpuPercent: 18.3,
           memoryPercent: 28.7,
           memoryUsed: 3081510912,
@@ -273,7 +283,7 @@ export const RecentlyBooted: Story = {
           os: 'linux',
           arch: 'amd64',
           numCpu: 4,
-        },
+        }),
       },
     ],
   },
@@ -290,7 +300,7 @@ export const LongUptime: Story = {
         url: '/api/v1/telemetry/system/health',
         method: 'GET',
         status: 200,
-        response: {
+        response: healthResponse({
           cpuPercent: 22.1,
           memoryPercent: 64.5,
           memoryUsed: 6925950976,
@@ -308,7 +318,7 @@ export const LongUptime: Story = {
           os: 'linux',
           arch: 'amd64',
           numCpu: 4,
-        },
+        }),
       },
     ],
   },
@@ -325,7 +335,7 @@ export const HighGoroutines: Story = {
         url: '/api/v1/telemetry/system/health',
         method: 'GET',
         status: 200,
-        response: {
+        response: healthResponse({
           cpuPercent: 45.8,
           memoryPercent: 58.2,
           memoryUsed: 6249486336,
@@ -343,7 +353,7 @@ export const HighGoroutines: Story = {
           os: 'linux',
           arch: 'amd64',
           numCpu: 4,
-        },
+        }),
       },
     ],
   },
