@@ -68,13 +68,10 @@ func (s *Server) setupSecurityRoutes() {
 			Auth:    true,
 			CSRF:    true,
 		},
-		{
-			Path:    APIVersionPrefix + "/security/devices",
-			Handler: s.handleDevices,
-			Methods: getPost,
-			Auth:    true,
-			CSRF:    true,
-		},
+		// GET only, the one method handleDevices serves; POST was declared as
+		// well and reached the handler only to be refused (#3261). A scan is
+		// started on /security/devices/scan below.
+		{Path: APIVersionPrefix + "/security/devices", Handler: s.handleDevices, Methods: get, Auth: true},
 		{
 			Path:    APIVersionPrefix + "/security/devices/scan",
 			Handler: s.handleDevicesScan,

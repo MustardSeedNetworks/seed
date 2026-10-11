@@ -24,6 +24,10 @@ func TestRouteMethodSetsMatchTheirHandlers(t *testing.T) {
 		{APIVersionPrefix + "/telemetry/dns", "GET", []string{http.MethodPost}},
 		{APIVersionPrefix + "/wifi/wifi", "GET", []string{http.MethodPost, http.MethodPut}},
 		{APIVersionPrefix + "/profiles", "GET, POST", []string{http.MethodPut, http.MethodDelete}},
+		{APIVersionPrefix + "/telemetry/dhcp/rogue/servers", "GET", []string{http.MethodPost, http.MethodDelete}},
+		{APIVersionPrefix + "/telemetry/probes/run", "GET", []string{http.MethodPost}},
+		{APIVersionPrefix + "/telemetry/publicip", "GET, POST", []string{http.MethodPut}},
+		{APIVersionPrefix + "/security/devices", "GET", []string{http.MethodPost}},
 	}
 	for _, tt := range tests {
 		for _, method := range tt.refused {

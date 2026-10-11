@@ -437,13 +437,6 @@ func (rd *RogueDetector) UpdateKnownServers(servers []string) {
 	rd.config.KnownServers = servers
 }
 
-// ClearDetectedServers clears the list of detected servers.
-func (rd *RogueDetector) ClearDetectedServers() {
-	rd.mu.Lock()
-	defer rd.mu.Unlock()
-	rd.detectedServers = make(map[string]*RogueServer)
-}
-
 // SetInterface changes the monitored network interface.
 // If the detector is running, it will be stopped and restarted on the new interface.
 // This ensures rogue DHCP detection continues on the correct network segment. (fixes #838)

@@ -195,28 +195,6 @@ func TestRogueDetector_GetRogueServers(t *testing.T) {
 	}
 }
 
-func TestRogueDetector_ClearDetectedServers(t *testing.T) {
-	rd := dhcp.NewRogueDetector(nil)
-
-	// Add some servers
-	rd.AddDetectedServer(&dhcp.RogueServer{IP: "192.168.1.1"})
-	rd.AddDetectedServer(&dhcp.RogueServer{IP: "192.168.1.100"})
-
-	// Verify they exist
-	if len(rd.GetDetectedServers()) != 2 {
-		t.Fatal("servers should be present before clear")
-	}
-
-	// Clear
-	rd.ClearDetectedServers()
-
-	// Verify cleared
-	servers := rd.GetDetectedServers()
-	if len(servers) != 0 {
-		t.Errorf("expected 0 servers after clear, got %d", len(servers))
-	}
-}
-
 func TestRogueDetector_GetConfig(t *testing.T) {
 	originalConfig := &dhcp.RogueDetectorConfig{
 		Interface:        "wlan0",
