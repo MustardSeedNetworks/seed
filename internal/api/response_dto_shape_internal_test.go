@@ -17,6 +17,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	alertdelivery "github.com/MustardSeedNetworks/seed/internal/alerts/delivery"
+	"github.com/MustardSeedNetworks/seed/internal/anomaly"
 	"github.com/MustardSeedNetworks/seed/internal/app"
 	"github.com/MustardSeedNetworks/seed/internal/config"
 	"github.com/MustardSeedNetworks/seed/internal/discovery"
@@ -24,6 +25,7 @@ import (
 	"github.com/MustardSeedNetworks/seed/internal/discovery/vuln"
 	"github.com/MustardSeedNetworks/seed/internal/engine"
 	enginestatus "github.com/MustardSeedNetworks/seed/internal/engine/status"
+	"github.com/MustardSeedNetworks/seed/internal/health/monitoring"
 	"github.com/MustardSeedNetworks/seed/internal/polling"
 	"github.com/MustardSeedNetworks/seed/internal/wifi"
 	"github.com/MustardSeedNetworks/seed/internal/wifi/troubleshooting"
@@ -659,6 +661,56 @@ func TestVulnerabilityStatusResponseShape(t *testing.T) {
 			require.Contains(t, kev, "lastUpdate")
 			delete(kev, "lastUpdate")
 			require.Equal(t, tt.wantKEV, kev)
+		})
+	}
+}
+
+type fakeProbeAnomalies []anomaly.Anomaly
+
+func (fakeProbeAnomalies) Available() bool { return true }
+
+func (f fakeProbeAnomalies) ActiveAnomalies(context.Context) ([]anomaly.Anomaly, error) {
+	return f, nil
+}
+
+func TestProbeAnomaliesResponseShape(t *testing.T) {
+	t.Parallel()
+	seen := time.Date(2026, 10, 11, 0, 0, 0, 0, time.UTC)
+	tests := []struct {
+		name   string
+		active fakeProbeAnomalies
+		want   string
+	}{
+		{name: "none", want: `[]`},
+		{
+			name: "one",
+			active: fakeProbeAnomalies{{
+				DefKey: "probe.latency", Category: "performance", Severity: "warning",
+				Subject: anomaly.SubjectRef{Kind: "probe", ID: "p1"}, Title: "Latency high",
+				Description: "d", Recommendation: "r", FirstSeen: seen, LastSeen: seen, Count: 1,
+			}},
+			want: `[{"defKey":"probe.latency","category":"performance","severity":"warning",` +
+				`"subject":{"kind":"probe","id":"p1"},"title":"Latency high","description":"d",` +
+				`"recommendation":"r","firstSeen":"2026-10-11T00:00:00Z",` +
+				`"lastSeen":"2026-10-11T00:00:00Z","count":1}]`,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			s := &Server{healthMonitoring: monitoring.NewService(tt.active)}
+			w := serve(t, s.handleHealthCheckAnomalies, "/api/v1/telemetry/probes/anomalies")
+			require.Equal(t, []string{"activeCount", "anomalies", "timestamp"}, topLevelKeys(t, w.Body.Bytes()))
+			var got struct {
+				Timestamp   string          `json:"timestamp"`
+				Anomalies   json.RawMessage `json:"anomalies"`
+				ActiveCount int             `json:"activeCount"`
+			}
+			require.NoError(t, json.Unmarshal(w.Body.Bytes(), &got))
+			_, err := time.Parse(time.RFC3339, got.Timestamp)
+			require.NoError(t, err)
+			require.Equal(t, len(tt.active), got.ActiveCount)
+			require.JSONEq(t, tt.want, string(got.Anomalies))
 		})
 	}
 }
