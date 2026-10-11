@@ -515,7 +515,7 @@ body:
     "methods": [
       "DELETE"
     ],
-    "path": "/api/v1/tokens/",
+    "path": "/api/v1/tokens/{tokenId}",
     "rateLimited": false,
     "scope": "operator"
   },
@@ -559,7 +559,7 @@ body:
       "PATCH",
       "DELETE"
     ],
-    "path": "/api/v1/users/",
+    "path": "/api/v1/users/{username}",
     "rateLimited": false
   },
   {
@@ -1769,7 +1769,7 @@ body:
       "GET",
       "DELETE"
     ],
-    "path": "/api/v1/jobs/",
+    "path": "/api/v1/jobs/{jobId}",
     "rateLimited": false,
     "scope": "operator"
   },

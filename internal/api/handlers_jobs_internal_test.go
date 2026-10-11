@@ -252,7 +252,7 @@ func TestHandleJobByIDGet(t *testing.T) {
 
 	r := httptest.NewRequest(http.MethodGet, "/api/v1/jobs/"+id, nil)
 	w := httptest.NewRecorder()
-	srv.handleJobByID(w, r)
+	routed(jobPath, srv.handleJobByID)(w, r)
 	if w.Code != http.StatusOK {
 		t.Fatalf("status = %d, want 200", w.Code)
 	}
@@ -267,22 +267,22 @@ func TestHandleJobByIDNotFound(t *testing.T) {
 	srv, _ := newJobsTestServer(t, jobs.Config{})
 	r := httptest.NewRequest(http.MethodGet, "/api/v1/jobs/missing", nil)
 	w := httptest.NewRecorder()
-	srv.handleJobByID(w, r)
+	routed(jobPath, srv.handleJobByID)(w, r)
 	if w.Code != http.StatusNotFound {
 		t.Fatalf("status = %d, want 404", w.Code)
 	}
 }
 
-func TestHandleJobByIDInvalidID(t *testing.T) {
+func TestHandleJobByIDNestedPathIsNotAJob(t *testing.T) {
 	t.Parallel()
 
 	srv, _ := newJobsTestServer(t, jobs.Config{})
-	// A nested path segment is not a valid job id.
+	// A nested path segment is not a job: the router answers 404.
 	r := httptest.NewRequest(http.MethodGet, "/api/v1/jobs/a/b", nil)
 	w := httptest.NewRecorder()
-	srv.handleJobByID(w, r)
-	if w.Code != http.StatusBadRequest {
-		t.Fatalf("status = %d, want 400 for invalid id", w.Code)
+	routed(jobPath, srv.handleJobByID)(w, r)
+	if w.Code != http.StatusNotFound {
+		t.Fatalf("status = %d, want 404 for a nested path", w.Code)
 	}
 }
 
@@ -301,7 +301,7 @@ func TestHandleJobByIDCancel(t *testing.T) {
 
 	r := httptest.NewRequest(http.MethodDelete, "/api/v1/jobs/"+id, nil)
 	w := httptest.NewRecorder()
-	srv.handleJobByID(w, r)
+	routed(jobPath, srv.handleJobByID)(w, r)
 	if w.Code != http.StatusAccepted {
 		t.Fatalf("cancel status = %d, want 202", w.Code)
 	}
@@ -317,7 +317,7 @@ func TestHandleJobByIDCancelNotFound(t *testing.T) {
 	srv, _ := newJobsTestServer(t, jobs.Config{})
 	r := httptest.NewRequest(http.MethodDelete, "/api/v1/jobs/ghost", nil)
 	w := httptest.NewRecorder()
-	srv.handleJobByID(w, r)
+	routed(jobPath, srv.handleJobByID)(w, r)
 	if w.Code != http.StatusNotFound {
 		t.Fatalf("status = %d, want 404", w.Code)
 	}
@@ -329,7 +329,7 @@ func TestHandleJobByIDMethodNotAllowed(t *testing.T) {
 	srv, _ := newJobsTestServer(t, jobs.Config{})
 	r := httptest.NewRequest(http.MethodPut, "/api/v1/jobs/x", nil)
 	w := httptest.NewRecorder()
-	srv.handleJobByID(w, r)
+	routed(jobPath, srv.handleJobByID)(w, r)
 	if w.Code != http.StatusMethodNotAllowed {
 		t.Fatalf("status = %d, want 405", w.Code)
 	}

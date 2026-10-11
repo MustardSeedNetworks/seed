@@ -42,6 +42,9 @@ const (
 	pollingTargetPath    = pollingTargetsPath + "/{targetId}"
 	deviceCredentialPath = deviceCredentialsPath + "/{credentialId}"
 	alertRulePath        = alertRulesPath + "/{ruleId}"
+	jobPath              = jobsPath + "/{jobId}"
+	tokenPath            = APIVersionPrefix + "/tokens/{tokenId}"
+	userPath             = APIVersionPrefix + "/users/{username}"
 )
 
 // routed serves h behind pattern on its own mux, so a handler that reads

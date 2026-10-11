@@ -152,21 +152,21 @@ func (s *Server) setupAPITokenRoutes() {
 			CSRF:    true,
 		},
 		{
-			Path:    APIVersionPrefix + "/tokens/",
-			Handler: s.handleAPITokenByID,
+			Path:    APIVersionPrefix + "/tokens/{tokenId}",
+			Handler: s.handleAPITokenRevoke,
 			Methods: del,
 			Scope:   op,
 			Auth:    true,
 			CSRF:    true,
 		},
 		{Path: APIVersionPrefix + "/license", Handler: s.handleLicenseStatus, Methods: get, Auth: true},
-		// Users CRUD (#1191): /users/me registers before /users/ for path routing.
+		// Users CRUD (#1191): the literal /users/me out-ranks /users/{username}.
 		// POST /users is admin-only AND Pro-gated, enforced inside the handler so the
 		// response carries the right 403/402 FeatureGateResponse.
 		{Path: APIVersionPrefix + "/users/me", Handler: s.handleCurrentUser, Methods: get, Auth: true},
 		{Path: APIVersionPrefix + "/users", Handler: s.handleUsers, Methods: getPost, Auth: true, CSRF: true},
 		{
-			Path:    APIVersionPrefix + "/users/",
+			Path:    APIVersionPrefix + "/users/{username}",
 			Handler: s.handleUserByName,
 			Methods: getPatchDelete,
 			Auth:    true,

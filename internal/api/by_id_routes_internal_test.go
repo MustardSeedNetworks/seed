@@ -12,8 +12,8 @@ import (
 	"github.com/MustardSeedNetworks/seed/internal/identity/roles"
 )
 
-// routedCRUDServer serves the polling-target, device-credential and alert-rule
-// routes through the daemon's own route table, with an admin for Mux's session.
+// routedCRUDServer serves the by-id routes through the daemon's own route
+// table, with an admin for Mux's session.
 func routedCRUDServer(t *testing.T) *Server {
 	t.Helper()
 	s := newDeviceCredentialsTestServer(t)
@@ -66,6 +66,14 @@ func TestByIDRoutesThroughTheRouter(t *testing.T) {
 		{http.MethodGet, credential + "/extra", "", http.StatusNotFound},
 		{http.MethodDelete, credential, "", http.StatusNoContent},
 		{http.MethodGet, credential, "", http.StatusNotFound},
+
+		{http.MethodGet, jobsPath + "/a/b", "", http.StatusNotFound},
+
+		{http.MethodDelete, APIVersionPrefix + "/tokens/unknown", "", http.StatusNotFound},
+		{http.MethodDelete, APIVersionPrefix + "/tokens/unknown/extra", "", http.StatusNotFound},
+
+		{http.MethodGet, APIVersionPrefix + "/users/admin", "", http.StatusOK},
+		{http.MethodGet, APIVersionPrefix + "/users/admin/extra", "", http.StatusNotFound},
 	} {
 		rec := httptest.NewRecorder()
 		s.Mux().ServeHTTP(rec, httptest.NewRequest(tc.method, tc.path, strings.NewReader(tc.body)))

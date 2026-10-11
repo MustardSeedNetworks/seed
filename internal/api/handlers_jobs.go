@@ -16,7 +16,6 @@ import (
 	"errors"
 	"log/slog"
 	"net/http"
-	"strings"
 	"sync"
 	"time"
 
@@ -29,8 +28,8 @@ import (
 )
 
 const (
-	// jobsPathPrefix is the /jobs/{id} item-route prefix.
-	jobsPathPrefix = APIVersionPrefix + "/jobs/"
+	// jobsPath is the job collection; a job is jobsPath + "/" + its id.
+	jobsPath = APIVersionPrefix + "/jobs"
 
 	// jobSSEBuffer bounds a connection's pending event backlog. A consumer that
 	// falls this far behind drops events (it can re-sync with GET /jobs/{id});
@@ -149,20 +148,15 @@ func (s *Server) handleJobs(w http.ResponseWriter, r *http.Request) {
 	}
 
 	j, _ := s.jobsRunner().Get(id)
-	w.Header().Set("Location", jobsPathPrefix+id)
+	w.Header().Set("Location", jobsPath+"/"+id)
 	sendJSONResponse(w, logger, http.StatusCreated, toJobResponse(j))
 }
 
-// handleJobByID is the /jobs/{id} item handler: GET inspects, DELETE cancels.
-// DELETE is operator-gated by writeGated; GET is a safe read.
+// handleJobByID is the /jobs/{jobId} item handler: GET inspects, DELETE
+// cancels. DELETE is operator-gated by writeGated; GET is a safe read.
 func (s *Server) handleJobByID(w http.ResponseWriter, r *http.Request) {
 	logger := logging.FromContext(r.Context())
-	id := strings.TrimPrefix(r.URL.Path, jobsPathPrefix)
-	if id == "" || strings.Contains(id, "/") {
-		sendErrorResponseWithDetails(w, logger, http.StatusBadRequest,
-			ErrCodeValidation, "Missing or invalid job id", "")
-		return
-	}
+	id := r.PathValue("jobId")
 
 	switch r.Method {
 	case http.MethodGet:
@@ -183,7 +177,7 @@ func (s *Server) handleJobByID(w http.ResponseWriter, r *http.Request) {
 		sendJSONResponse(w, logger, http.StatusAccepted, toJobResponse(j))
 	default:
 		sendErrorResponseWithDetails(w, logger, http.StatusMethodNotAllowed,
-			ErrCodeMethodNotAllowed, "Only GET and DELETE are supported on /jobs/{id}", "")
+			ErrCodeMethodNotAllowed, "Only GET and DELETE are supported on /jobs/{jobId}", "")
 	}
 }
 
@@ -321,8 +315,8 @@ func writeJobError(w http.ResponseWriter, logger *slog.Logger, err error) {
 
 // jobsRoutes returns the unified job-runner routes (ADR-0005). POST (create)
 // and DELETE (cancel) are mutating -> operator-gated via writeGated; GET
-// (status) and the SSE stream are safe reads. The exact /jobs/events pattern
-// out-ranks the /jobs/ subtree in net/http's ServeMux (longest match wins).
+// (status) and the SSE stream are safe reads. The literal /jobs/events pattern
+// out-ranks /jobs/{jobId} in net/http's ServeMux (the more specific wins).
 func (s *Server) jobsRoutes() []route.Route {
 	op := roles.Operator
 	return []route.Route{
@@ -342,7 +336,7 @@ func (s *Server) jobsRoutes() []route.Route {
 			Auth:    true,
 		},
 		{
-			Path:    APIVersionPrefix + "/jobs/",
+			Path:    APIVersionPrefix + "/jobs/{jobId}",
 			Handler: s.handleJobByID,
 			Methods: []string{http.MethodGet, http.MethodDelete},
 			Scope:   op,
