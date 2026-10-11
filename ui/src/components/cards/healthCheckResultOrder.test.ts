@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import type { TestResult } from './healthCheckCardTypes';
+import type { TestResult } from '../../types/generated/health-check-run-response';
 import { failuresFirst, testResultRank } from './healthCheckResultOrder';
 
 const result = (name: string, fields: Partial<TestResult> = {}): TestResult => ({

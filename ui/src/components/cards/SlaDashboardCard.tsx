@@ -25,6 +25,7 @@ import type React from 'react';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { cn, icon as iconTokens, radius, spacing, status as statusColor } from '../../styles/theme';
+import type { ProbeAnomaliesResponse } from '../../types/generated/probe-anomalies-response';
 import { Card } from '../ui/Card';
 import type { Status } from '../ui/StatusBadge';
 
@@ -40,8 +41,8 @@ async function fetchActiveAnomalyCount(): Promise<number | null> {
   if (!res.ok) {
     return null;
   }
-  const data = await res.json();
-  return data.activeCount ?? 0;
+  const data: ProbeAnomaliesResponse = await res.json();
+  return data.activeCount;
 }
 
 export function SLADashboardCard({ className }: SLADashboardCardProps): React.ReactElement {

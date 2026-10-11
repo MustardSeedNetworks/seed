@@ -1,7 +1,6 @@
 package api
 
 import (
-	"encoding/json"
 	"errors"
 	"net/http"
 	"time"
@@ -18,13 +17,19 @@ import (
 // table was deleted as dead code (ADR-0026); only the probe-backed anomaly read
 // (ADR-0021/0025) remains.
 
+// ProbeAnomaliesResponse is the active probe anomalies, optionally filtered to
+// one endpoint, with the unfiltered active count.
+type ProbeAnomaliesResponse struct {
+	Timestamp   time.Time         `json:"timestamp"`
+	Anomalies   []anomaly.Anomaly `json:"anomalies"`
+	ActiveCount int               `json:"activeCount"`
+}
+
 // handleHealthCheckAnomalies returns the active anomalies from the unified store
 // (ADR-0021), optionally filtered to one endpoint. The active-monitoring probe
 // engine is the producer (source=probe, ADR-0025); the anomaly model carries
 // evidence, count, and lifecycle.
 func (s *Server) handleHealthCheckAnomalies(w http.ResponseWriter, r *http.Request) {
-	logger := logging.FromContext(r.Context())
-
 	result, err := s.healthMonitoring.Anomalies(r.Context(), r.URL.Query().Get("endpoint"))
 	switch {
 	case errors.Is(err, monitoring.ErrUnavailable):
@@ -45,14 +50,9 @@ func (s *Server) handleHealthCheckAnomalies(w http.ResponseWriter, r *http.Reque
 	if anomalies == nil {
 		anomalies = []anomaly.Anomaly{}
 	}
-	response := map[string]any{
-		"timestamp":   time.Now().UTC().Format(time.RFC3339),
-		"anomalies":   anomalies,
-		"activeCount": result.ActiveCount,
-	}
-
-	w.Header().Set("Content-Type", "application/json")
-	if encErr := json.NewEncoder(w).Encode(response); encErr != nil {
-		logger.ErrorContext(r.Context(), "failed to encode anomalies", "error", encErr)
-	}
+	sendJSONResponse(w, logging.FromContext(r.Context()), http.StatusOK, ProbeAnomaliesResponse{
+		Timestamp:   time.Now().UTC().Truncate(time.Second),
+		Anomalies:   anomalies,
+		ActiveCount: result.ActiveCount,
+	})
 }

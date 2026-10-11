@@ -1,0 +1,644 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/MustardSeedNetworks/seed/main/docs/schemas/api/health-check-run-response.schema.json",
+  "$ref": "#/$defs/HealthCheckRunResponse",
+  "$defs": {
+    "DICOMTestResult": {
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "success": {
+          "type": "boolean"
+        },
+        "host": {
+          "type": "string"
+        },
+        "port": {
+          "type": "integer"
+        },
+        "aeTitle": {
+          "type": "string"
+        },
+        "serverAeTitle": {
+          "type": "string"
+        },
+        "error": {
+          "type": "string"
+        },
+        "totalTimeMs": {
+          "type": "number"
+        },
+        "echoTimeMs": {
+          "type": "number"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "name",
+        "success",
+        "host",
+        "port",
+        "aeTitle",
+        "totalTimeMs"
+      ]
+    },
+    "EducationResults": {
+      "properties": {
+        "ltiResults": {
+          "items": {
+            "$ref": "#/$defs/LTITestResult"
+          },
+          "type": "array"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object"
+    },
+    "EnterpriseResults": {
+      "properties": {
+        "sqlResults": {
+          "items": {
+            "$ref": "#/$defs/SQLTestResult"
+          },
+          "type": "array"
+        },
+        "fileShareResults": {
+          "items": {
+            "$ref": "#/$defs/FileShareTestResult"
+          },
+          "type": "array"
+        },
+        "ldapResults": {
+          "items": {
+            "$ref": "#/$defs/LDAPTestResult"
+          },
+          "type": "array"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object"
+    },
+    "FHIRTestResult": {
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "success": {
+          "type": "boolean"
+        },
+        "baseUrl": {
+          "type": "string"
+        },
+        "fhirVersion": {
+          "type": "string"
+        },
+        "serverName": {
+          "type": "string"
+        },
+        "error": {
+          "type": "string"
+        },
+        "totalTimeMs": {
+          "type": "number"
+        },
+        "resourceCount": {
+          "type": "integer"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "name",
+        "success",
+        "baseUrl",
+        "totalTimeMs"
+      ]
+    },
+    "FileShareTestResult": {
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "success": {
+          "type": "boolean"
+        },
+        "protocol": {
+          "type": "string"
+        },
+        "host": {
+          "type": "string"
+        },
+        "share": {
+          "type": "string"
+        },
+        "error": {
+          "type": "string"
+        },
+        "connectTimeMs": {
+          "type": "number"
+        },
+        "readSpeedMbps": {
+          "type": "number"
+        },
+        "writeSpeedMbps": {
+          "type": "number"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "name",
+        "success",
+        "protocol",
+        "host",
+        "share",
+        "connectTimeMs"
+      ]
+    },
+    "HL7TestResult": {
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "success": {
+          "type": "boolean"
+        },
+        "host": {
+          "type": "string"
+        },
+        "port": {
+          "type": "integer"
+        },
+        "ackCode": {
+          "type": "string"
+        },
+        "serverVersion": {
+          "type": "string"
+        },
+        "error": {
+          "type": "string"
+        },
+        "totalTimeMs": {
+          "type": "number"
+        },
+        "responseTimeMs": {
+          "type": "number"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "name",
+        "success",
+        "host",
+        "port",
+        "totalTimeMs"
+      ]
+    },
+    "HealthCheckRunResponse": {
+      "properties": {
+        "pingResults": {
+          "items": {
+            "$ref": "#/$defs/TestResult"
+          },
+          "type": "array"
+        },
+        "tcpResults": {
+          "items": {
+            "$ref": "#/$defs/TestResult"
+          },
+          "type": "array"
+        },
+        "udpResults": {
+          "items": {
+            "$ref": "#/$defs/TestResult"
+          },
+          "type": "array"
+        },
+        "httpResults": {
+          "items": {
+            "$ref": "#/$defs/TestResult"
+          },
+          "type": "array"
+        },
+        "hasTests": {
+          "type": "boolean"
+        },
+        "enterpriseResults": {
+          "$ref": "#/$defs/EnterpriseResults"
+        },
+        "videoResults": {
+          "$ref": "#/$defs/VideoResults"
+        },
+        "medicalResults": {
+          "$ref": "#/$defs/MedicalResults"
+        },
+        "educationResults": {
+          "$ref": "#/$defs/EducationResults"
+        },
+        "industrialResults": {
+          "$ref": "#/$defs/IndustrialResults"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "pingResults",
+        "tcpResults",
+        "udpResults",
+        "httpResults",
+        "hasTests"
+      ]
+    },
+    "IndustrialResults": {
+      "properties": {
+        "opcuaResults": {
+          "items": {
+            "$ref": "#/$defs/OPCUATestResult"
+          },
+          "type": "array"
+        },
+        "modbusResults": {
+          "items": {
+            "$ref": "#/$defs/ModbusTestResult"
+          },
+          "type": "array"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object"
+    },
+    "LDAPTestResult": {
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "success": {
+          "type": "boolean"
+        },
+        "useTls": {
+          "type": "boolean"
+        },
+        "host": {
+          "type": "string"
+        },
+        "port": {
+          "type": "integer"
+        },
+        "serverInfo": {
+          "type": "string"
+        },
+        "error": {
+          "type": "string"
+        },
+        "totalTimeMs": {
+          "type": "number"
+        },
+        "connectTimeMs": {
+          "type": "number"
+        },
+        "bindTimeMs": {
+          "type": "number"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "name",
+        "success",
+        "useTls",
+        "host",
+        "port",
+        "totalTimeMs"
+      ]
+    },
+    "LTITestResult": {
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "success": {
+          "type": "boolean"
+        },
+        "launchUrl": {
+          "type": "string"
+        },
+        "ltiVersion": {
+          "type": "string"
+        },
+        "error": {
+          "type": "string"
+        },
+        "totalTimeMs": {
+          "type": "number"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "name",
+        "success",
+        "launchUrl",
+        "totalTimeMs"
+      ]
+    },
+    "MedicalResults": {
+      "properties": {
+        "dicomResults": {
+          "items": {
+            "$ref": "#/$defs/DICOMTestResult"
+          },
+          "type": "array"
+        },
+        "hl7Results": {
+          "items": {
+            "$ref": "#/$defs/HL7TestResult"
+          },
+          "type": "array"
+        },
+        "fhirResults": {
+          "items": {
+            "$ref": "#/$defs/FHIRTestResult"
+          },
+          "type": "array"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object"
+    },
+    "ModbusTestResult": {
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "success": {
+          "type": "boolean"
+        },
+        "host": {
+          "type": "string"
+        },
+        "port": {
+          "type": "integer"
+        },
+        "unitId": {
+          "type": "integer"
+        },
+        "error": {
+          "type": "string"
+        },
+        "totalTimeMs": {
+          "type": "number"
+        },
+        "registerValue": {
+          "type": "integer"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "name",
+        "success",
+        "host",
+        "port",
+        "unitId",
+        "totalTimeMs"
+      ]
+    },
+    "OPCUATestResult": {
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "success": {
+          "type": "boolean"
+        },
+        "endpointUrl": {
+          "type": "string"
+        },
+        "securityMode": {
+          "type": "string"
+        },
+        "productName": {
+          "type": "string"
+        },
+        "serverState": {
+          "type": "string"
+        },
+        "error": {
+          "type": "string"
+        },
+        "totalTimeMs": {
+          "type": "number"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "name",
+        "success",
+        "endpointUrl",
+        "totalTimeMs"
+      ]
+    },
+    "RTSPTestResult": {
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "success": {
+          "type": "boolean"
+        },
+        "url": {
+          "type": "string"
+        },
+        "codec": {
+          "type": "string"
+        },
+        "resolution": {
+          "type": "string"
+        },
+        "error": {
+          "type": "string"
+        },
+        "connectTimeMs": {
+          "type": "number"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "name",
+        "success",
+        "url",
+        "connectTimeMs"
+      ]
+    },
+    "SQLTestResult": {
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "success": {
+          "type": "boolean"
+        },
+        "driver": {
+          "type": "string"
+        },
+        "host": {
+          "type": "string"
+        },
+        "port": {
+          "type": "integer"
+        },
+        "serverVersion": {
+          "type": "string"
+        },
+        "error": {
+          "type": "string"
+        },
+        "totalTimeMs": {
+          "type": "number"
+        },
+        "connectTimeMs": {
+          "type": "number"
+        },
+        "queryTimeMs": {
+          "type": "number"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "name",
+        "success",
+        "driver",
+        "host",
+        "port",
+        "totalTimeMs"
+      ]
+    },
+    "TestResult": {
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "success": {
+          "type": "boolean"
+        },
+        "latency": {
+          "type": "number"
+        },
+        "error": {
+          "type": "string"
+        },
+        "status": {
+          "type": "integer"
+        },
+        "testStatus": {
+          "type": "string",
+          "enum": [
+            "success",
+            "warning",
+            "error"
+          ]
+        },
+        "packetLoss": {
+          "type": "number"
+        },
+        "jitter": {
+          "type": "number"
+        },
+        "dnsLatency": {
+          "type": "number"
+        },
+        "tcpConnect": {
+          "type": "number"
+        },
+        "tlsLatency": {
+          "type": "number"
+        },
+        "ttfbLatency": {
+          "type": "number"
+        },
+        "dnsStatus": {
+          "type": "string",
+          "enum": [
+            "success",
+            "warning",
+            "error"
+          ]
+        },
+        "tcpStatus": {
+          "type": "string",
+          "enum": [
+            "success",
+            "warning",
+            "error"
+          ]
+        },
+        "tlsStatus": {
+          "type": "string",
+          "enum": [
+            "success",
+            "warning",
+            "error"
+          ]
+        },
+        "ttfbStatus": {
+          "type": "string",
+          "enum": [
+            "success",
+            "warning",
+            "error"
+          ]
+        },
+        "certDaysLeft": {
+          "type": "integer"
+        },
+        "certStatus": {
+          "type": "string",
+          "enum": [
+            "success",
+            "warning",
+            "error"
+          ]
+        },
+        "certExpiry": {
+          "type": "string"
+        },
+        "certIssuer": {
+          "type": "string"
+        },
+        "tlsVersion": {
+          "type": "string"
+        },
+        "certWithheld": {
+          "type": "boolean"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "name",
+        "success",
+        "latency"
+      ]
+    },
+    "VideoResults": {
+      "properties": {
+        "rtspResults": {
+          "items": {
+            "$ref": "#/$defs/RTSPTestResult"
+          },
+          "type": "array"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object"
+    }
+  },
+  "title": "HealthCheckRunResponse",
+  "description": "HealthCheckRunResponse — generated from the Go struct in internal/api; refresh with `make schema` after struct changes."
+}

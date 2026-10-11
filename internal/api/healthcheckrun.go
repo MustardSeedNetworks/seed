@@ -8,10 +8,8 @@ package api
 // HealthCheckCard renders. The legacy run*Tests()/Run*Checks() parallel stack
 // it replaces is deleted.
 //
-// The response DTO mirrors the frontend's hand-written HealthCheckData
-// (ui/src/components/cards/healthCheckCardTypes.ts) field-for-field — the card
-// fetches this endpoint and casts the JSON directly, so the Go json tags are
-// the wire contract. Only fields the card actually renders are emitted.
+// The response DTO is registered in apischema, so the card's TypeScript types
+// are generated from it. Only fields the card actually renders are emitted.
 
 import (
 	"context"
@@ -31,8 +29,8 @@ import (
 // RunNow is a synchronous dispatch), so the handler bounds it.
 const maxConcurrentRunProbes = 8
 
-// HealthCheckRunResponse is the /run response. It mirrors the frontend
-// HealthCheckData interface; field json tags are the wire contract.
+// HealthCheckRunResponse is the /run response: every configured health check's
+// result, grouped by kind.
 type HealthCheckRunResponse struct {
 	PingResults []TestResult `json:"pingResults"`
 	TCPResults  []TestResult `json:"tcpResults"`
@@ -56,7 +54,7 @@ type TestResult struct {
 	Latency    float64 `json:"latency"`
 	Error      string  `json:"error,omitempty"`
 	Status     int     `json:"status,omitempty"`
-	TestStatus string  `json:"testStatus,omitempty"`
+	TestStatus string  `json:"testStatus,omitempty" jsonschema:"enum=success,enum=warning,enum=error"`
 	// Extended ping (emitted only when the probe supplies them; the probe
 	// engine samples once per interval, so these are usually absent — see
 	// ADR-0027 P3a non-port note).
@@ -67,13 +65,13 @@ type TestResult struct {
 	TCPConnect  float64 `json:"tcpConnect,omitempty"`
 	TLSLatency  float64 `json:"tlsLatency,omitempty"`
 	TTFBLatency float64 `json:"ttfbLatency,omitempty"`
-	DNSStatus   string  `json:"dnsStatus,omitempty"`
-	TCPStatus   string  `json:"tcpStatus,omitempty"`
-	TLSStatus   string  `json:"tlsStatus,omitempty"`
-	TTFBStatus  string  `json:"ttfbStatus,omitempty"`
+	DNSStatus   string  `json:"dnsStatus,omitempty"   jsonschema:"enum=success,enum=warning,enum=error"`
+	TCPStatus   string  `json:"tcpStatus,omitempty"   jsonschema:"enum=success,enum=warning,enum=error"`
+	TLSStatus   string  `json:"tlsStatus,omitempty"   jsonschema:"enum=success,enum=warning,enum=error"`
+	TTFBStatus  string  `json:"ttfbStatus,omitempty"  jsonschema:"enum=success,enum=warning,enum=error"`
 	// Certificate summary (https).
 	CertDaysLeft int    `json:"certDaysLeft,omitempty"`
-	CertStatus   string `json:"certStatus,omitempty"`
+	CertStatus   string `json:"certStatus,omitempty"   jsonschema:"enum=success,enum=warning,enum=error"`
 	CertExpiry   string `json:"certExpiry,omitempty"`
 	CertIssuer   string `json:"certIssuer,omitempty"`
 	TLSVersion   string `json:"tlsVersion,omitempty"`
@@ -112,7 +110,7 @@ type IndustrialResults struct {
 	ModbusResults []ModbusTestResult `json:"modbusResults,omitempty"`
 }
 
-// SQLTestResult mirrors the card's SqlTestResult (rendered fields only).
+// SQLTestResult is one SQL check's result (rendered fields only).
 type SQLTestResult struct {
 	Name          string  `json:"name"`
 	Success       bool    `json:"success"`
@@ -126,7 +124,7 @@ type SQLTestResult struct {
 	QueryTimeMs   float64 `json:"queryTimeMs,omitempty"`
 }
 
-// FileShareTestResult mirrors the card's FileShareTestResult.
+// FileShareTestResult is one file-share check's result.
 type FileShareTestResult struct {
 	Name           string  `json:"name"`
 	Success        bool    `json:"success"`
@@ -139,7 +137,7 @@ type FileShareTestResult struct {
 	WriteSpeedMbps float64 `json:"writeSpeedMbps,omitempty"`
 }
 
-// LDAPTestResult mirrors the card's LdapTestResult.
+// LDAPTestResult is one LDAP check's result.
 type LDAPTestResult struct {
 	Name          string  `json:"name"`
 	Success       bool    `json:"success"`
@@ -153,7 +151,7 @@ type LDAPTestResult struct {
 	BindTimeMs    float64 `json:"bindTimeMs,omitempty"`
 }
 
-// RTSPTestResult mirrors the card's RtspTestResult.
+// RTSPTestResult is one RTSP check's result.
 type RTSPTestResult struct {
 	Name          string  `json:"name"`
 	Success       bool    `json:"success"`
@@ -164,7 +162,7 @@ type RTSPTestResult struct {
 	ConnectTimeMs float64 `json:"connectTimeMs"`
 }
 
-// DICOMTestResult mirrors the card's DicomTestResult.
+// DICOMTestResult is one DICOM check's result.
 type DICOMTestResult struct {
 	Name          string  `json:"name"`
 	Success       bool    `json:"success"`
@@ -177,7 +175,7 @@ type DICOMTestResult struct {
 	EchoTimeMs    float64 `json:"echoTimeMs,omitempty"`
 }
 
-// HL7TestResult mirrors the card's Hl7TestResult.
+// HL7TestResult is one HL7 check's result.
 type HL7TestResult struct {
 	Name           string  `json:"name"`
 	Success        bool    `json:"success"`
@@ -190,7 +188,7 @@ type HL7TestResult struct {
 	ResponseTimeMs float64 `json:"responseTimeMs,omitempty"`
 }
 
-// FHIRTestResult mirrors the card's FhirTestResult.
+// FHIRTestResult is one FHIR check's result.
 type FHIRTestResult struct {
 	Name          string  `json:"name"`
 	Success       bool    `json:"success"`
@@ -202,7 +200,7 @@ type FHIRTestResult struct {
 	ResourceCount int     `json:"resourceCount,omitempty"`
 }
 
-// LTITestResult mirrors the card's LtiTestResult.
+// LTITestResult is one LTI check's result.
 type LTITestResult struct {
 	Name        string  `json:"name"`
 	Success     bool    `json:"success"`
@@ -212,7 +210,7 @@ type LTITestResult struct {
 	TotalTimeMs float64 `json:"totalTimeMs"`
 }
 
-// OPCUATestResult mirrors the card's OpcuaTestResult.
+// OPCUATestResult is one OPC UA check's result.
 type OPCUATestResult struct {
 	Name         string  `json:"name"`
 	Success      bool    `json:"success"`
@@ -224,7 +222,7 @@ type OPCUATestResult struct {
 	TotalTimeMs  float64 `json:"totalTimeMs"`
 }
 
-// ModbusTestResult mirrors the card's ModbusTestResult.
+// ModbusTestResult is one Modbus check's result.
 type ModbusTestResult struct {
 	Name          string  `json:"name"`
 	Success       bool    `json:"success"`

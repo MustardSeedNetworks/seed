@@ -10,10 +10,10 @@
 import type { TFunction } from 'i18next';
 import type { JSX } from 'react';
 import { cn, layout, radius, spacing, status as statusColor } from '../../styles/theme';
+import type { HealthCheckRunResponse } from '../../types/generated/health-check-run-response';
 import { CollapsibleSection } from '../ui/CollapsibleSection';
 import { StatusBadge } from '../ui/StatusBadge';
 import { Tooltip } from '../ui/Tooltip';
-import type { HealthCheckData } from './healthCheckCardTypes';
 import { failuresFirst } from './healthCheckResultOrder';
 
 /** One protocol result, reduced to what its row shows. */
@@ -35,7 +35,7 @@ interface ProtocolSection {
 
 const ms = (v: number): string => `${v.toFixed(1)}ms`;
 
-function sections(data: HealthCheckData, t: TFunction<'cards'>): ProtocolSection[] {
+function sections(data: HealthCheckRunResponse, t: TFunction<'cards'>): ProtocolSection[] {
   const { enterpriseResults: ent, videoResults: video, medicalResults: med } = data;
   const { educationResults: edu, industrialResults: ind } = data;
   const optional = <V,>(v: V | undefined, f: (v: V) => string): string | null =>
@@ -51,7 +51,7 @@ function sections(data: HealthCheckData, t: TFunction<'cards'>): ProtocolSection
         success: r.success,
         totalMs: r.totalTimeMs,
         details: [
-          t('health.detail.connect', { ms: ms(r.connectTimeMs) }),
+          optional(r.connectTimeMs, (v) => t('health.detail.connect', { ms: ms(v) })),
           optional(r.queryTimeMs, (v) => t('health.detail.query', { ms: ms(v) })),
           r.serverVersion ?? null,
         ],
@@ -82,7 +82,7 @@ function sections(data: HealthCheckData, t: TFunction<'cards'>): ProtocolSection
         success: r.success,
         totalMs: r.totalTimeMs,
         details: [
-          t('health.detail.connect', { ms: ms(r.connectTimeMs) }),
+          optional(r.connectTimeMs, (v) => t('health.detail.connect', { ms: ms(v) })),
           optional(r.bindTimeMs, (v) => t('health.detail.bind', { ms: ms(v) })),
           r.serverInfo ?? null,
         ],
@@ -234,7 +234,7 @@ function ProtocolResultRow({ row }: { row: ProtocolRow }): JSX.Element {
 }
 
 interface HealthCheckCardProtocolSectionsProps {
-  data: HealthCheckData;
+  data: HealthCheckRunResponse;
   t: TFunction<'cards'>;
 }
 

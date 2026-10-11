@@ -1,4 +1,4 @@
-import type { TestResult } from './healthCheckCardTypes';
+import type { TestResult } from '../../types/generated/health-check-run-response';
 
 /** Sort rank of a result: failures, then warnings, then passes. */
 export type ResultRank = 0 | 1 | 2;
