@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.254.0](https://github.com/MustardSeedNetworks/seed/compare/v0.253.1...v0.254.0) (2026-10-11)
+
+
+### Features
+
+* **api:** document the interface selection bodies (S6-4 slice 27) ([#3314](https://github.com/MustardSeedNetworks/seed/issues/3314)) ([a0f6010](https://github.com/MustardSeedNetworks/seed/commit/a0f6010faecb978b478e47062df2d3fc50f1a0f2))
+
+
+### Miscellaneous
+
+* **deps:** lock file maintenance ([#3315](https://github.com/MustardSeedNetworks/seed/issues/3315)) ([302612b](https://github.com/MustardSeedNetworks/seed/commit/302612b68f50259d48f1f7e3f3364c39863bb066))
+
 ## [0.253.1](https://github.com/MustardSeedNetworks/seed/compare/v0.253.0...v0.253.1) (2026-10-11)
 
 
