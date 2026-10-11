@@ -5,6 +5,21 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.250.0](https://github.com/MustardSeedNetworks/seed/compare/v0.249.0...v0.250.0) (2026-10-11)
+
+
+### Features
+
+* **api:** document the DHCP lease request and response bodies ([#3289](https://github.com/MustardSeedNetworks/seed/issues/3289)) ([b0153d9](https://github.com/MustardSeedNetworks/seed/commit/b0153d91f74caae8a99c71b0a827873e9c333c21))
+* **api:** document the discovered-devices list and scan bodies ([#3291](https://github.com/MustardSeedNetworks/seed/issues/3291)) ([16f7117](https://github.com/MustardSeedNetworks/seed/commit/16f711759b1d2afba41d8e4d87569d45a1079291))
+* **api:** document the health-check run and probe anomaly bodies ([#3287](https://github.com/MustardSeedNetworks/seed/issues/3287)) ([8afb976](https://github.com/MustardSeedNetworks/seed/commit/8afb976a96e10202f90b36a2028f2ec1c3a80259))
+* **api:** document the vulnerability status and public IP bodies ([#3286](https://github.com/MustardSeedNetworks/seed/issues/3286)) ([5154f0f](https://github.com/MustardSeedNetworks/seed/commit/5154f0fc59ce273c8088837997e22fa412a42a8d))
+
+
+### Miscellaneous
+
+* **deps:** update ubuntu:26.04 docker digest to f144425 ([#3290](https://github.com/MustardSeedNetworks/seed/issues/3290)) ([0a6a766](https://github.com/MustardSeedNetworks/seed/commit/0a6a766bd40a99a5bb5c39aea96f1bdf2550c305))
+
 ## [0.249.0](https://github.com/MustardSeedNetworks/seed/compare/v0.248.0...v0.249.0) (2026-10-10)
 
 
