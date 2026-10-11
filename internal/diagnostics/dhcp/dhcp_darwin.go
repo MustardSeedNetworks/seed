@@ -1,167 +1,163 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 //go:build darwin
 
 package dhcp
 
+/*
+#cgo LDFLAGS: -framework CoreFoundation -framework SystemConfiguration
+#include <stdlib.h>
+#include "lease_darwin.h"
+*/
+import "C"
+
 import (
-	"bufio"
 	"context"
+	"encoding/binary"
+	"encoding/hex"
+	"errors"
 	"net"
-	"os/exec"
 	"strconv"
 	"strings"
 	"time"
+	"unsafe"
 )
 
-// testDHCPPlatform performs platform-specific DHCP testing on macOS.
-// On macOS, we query the current DHCP lease information using ipconfig.
-func testDHCPPlatform(ctx context.Context, interfaceName string) *TestResult {
+// The DHCP options a lease is reported from (RFC 2132).
+const (
+	optionSubnetMask = 1
+	optionRouter     = 3
+	optionDNSServers = 6
+	optionDomainName = 15
+	optionLeaseTime  = 51
+	optionServerID   = 54
+
+	leaseTimeLen = 4 // option 51 is a uint32 count of seconds
+)
+
+// errStoreUnreadable reports that the dynamic store could not be read, which
+// is not the same answer as "this interface holds no lease".
+var errStoreUnreadable = errors.New("the network configuration store cannot be read")
+
+// storeLease is the lease configd holds for one interface: the address the
+// service bound and the options of the ACK that granted it.
+type storeLease struct {
+	address string
+	start   time.Time
+	expiry  time.Time
+	options map[int][]byte
+}
+
+// readStoreLease reads iface's lease in process, from the per-service DHCP
+// entity configd keeps in the dynamic store. It used to fork `ipconfig
+// getpacket` on every read, and any exec from the daemon can wedge its child
+// on macOS (#2530); the gateway check reads this on every poll. A nil lease
+// with a nil error means the interface holds none.
+func readStoreLease(iface string) (*storeLease, error) {
+	name := C.CString(iface)
+	defer C.free(unsafe.Pointer(name))
+	table := C.dhcp_lease(name)
+	if table == nil {
+		return nil, errStoreUnreadable
+	}
+	defer C.free(unsafe.Pointer(table))
+	return parseStoreLease(C.GoString(table)), nil
+}
+
+// parseStoreLease reads the table dhcp_lease writes. An empty table is no
+// lease.
+func parseStoreLease(table string) *storeLease {
+	if table == "" {
+		return nil
+	}
+	lease := &storeLease{options: map[int][]byte{}}
+	for line := range strings.SplitSeq(table, "\n") {
+		key, value, _ := strings.Cut(line, "\t")
+		switch key {
+		case "address":
+			lease.address = value
+		case "start":
+			lease.start = unixTime(value)
+		case "expiry":
+			lease.expiry = unixTime(value)
+		case "option":
+			code, data, _ := strings.Cut(value, "\t")
+			n, codeErr := strconv.Atoi(code)
+			raw, dataErr := hex.DecodeString(data)
+			if codeErr == nil && dataErr == nil {
+				lease.options[n] = raw
+			}
+		}
+	}
+	return lease
+}
+
+func unixTime(seconds string) time.Time {
+	n, err := strconv.ParseInt(seconds, 10, 64)
+	if err != nil {
+		return time.Time{}
+	}
+	return time.Unix(n, 0)
+}
+
+// addresses decodes an option holding one or more IPv4 addresses.
+func (l *storeLease) ips(code int) []string {
+	raw := l.options[code]
+	var out []string
+	for len(raw) >= ipv4Len {
+		out = append(out, net.IP(raw[:ipv4Len]).String())
+		raw = raw[ipv4Len:]
+	}
+	return out
+}
+
+func (l *storeLease) ip(code int) string {
+	if addrs := l.ips(code); len(addrs) > 0 {
+		return addrs[0]
+	}
+	return ""
+}
+
+// fill copies the lease into result. The server is the server identifier
+// (option 54), the address the client answers; the BOOTP siaddr field the
+// getpacket parser preferred names a boot server, and reads 0.0.0.0 on most
+// networks.
+func (l *storeLease) fill(result *TestResult) {
+	result.OfferedIP = l.address
+	result.ServerIP = l.ip(optionServerID)
+	result.SubnetMask = l.ip(optionSubnetMask)
+	result.Gateway = l.ip(optionRouter)
+	result.DNSServers = l.ips(optionDNSServers)
+	result.DomainName = strings.TrimRight(string(l.options[optionDomainName]), "\x00")
+	if raw := l.options[optionLeaseTime]; len(raw) == leaseTimeLen {
+		seconds := binary.BigEndian.Uint32(raw)
+		result.LeaseTime = time.Duration(seconds) * time.Second
+		result.LeaseTimeSec = int(seconds)
+	}
+}
+
+// testDHCPPlatform reports the lease iface holds. The read is local and
+// in process, so there is nothing for the context to bound.
+func testDHCPPlatform(_ context.Context, interfaceName string) *TestResult {
 	result := &TestResult{
 		Interface: interfaceName,
 		TestedAt:  time.Now(),
 	}
 
-	// Use ipconfig to get DHCP info
-	cmd := exec.CommandContext(ctx, "ipconfig", "getpacket", interfaceName)
-	output, err := cmd.Output()
-	if err != nil {
-		result.Success = false
-		result.Error = "failed to get DHCP packet: " + err.Error()
-		return result
-	}
-
-	// Parse the output
-	parseIPConfigOutput(string(output), result)
-
-	if result.OfferedIP != "" {
-		result.Success = true
-	} else {
-		result.Success = false
-		result.Error = "no DHCP lease found"
-	}
-
-	return result
-}
-
-// parseIPConfigOutput parses the output from ipconfig getpacket.
-func parseIPConfigOutput(output string, result *TestResult) {
-	scanner := bufio.NewScanner(strings.NewReader(output))
-	for scanner.Scan() {
-		line := strings.TrimSpace(scanner.Text())
-		parseDHCPLine(line, result)
-	}
-}
-
-// parseDHCPLine parses a single line from ipconfig getpacket output.
-func parseDHCPLine(line string, result *TestResult) {
+	lease, err := readStoreLease(interfaceName)
 	switch {
-	case strings.HasPrefix(line, "yiaddr = "):
-		result.OfferedIP = strings.TrimPrefix(line, "yiaddr = ")
-	case strings.HasPrefix(line, "siaddr = "):
-		result.ServerIP = strings.TrimPrefix(line, "siaddr = ")
-	case strings.HasPrefix(line, "subnet_mask"):
-		parseSubnetMask(line, result)
-	case strings.HasPrefix(line, "router"):
-		parseRouter(line, result)
-	case strings.HasPrefix(line, "domain_name_server"):
-		parseDNSServers(line, result)
-	case strings.HasPrefix(line, "domain_name"):
-		parseDomainName(line, result)
-	case strings.HasPrefix(line, "lease_time"):
-		parseLeaseTimeLine(line, result)
-	case strings.HasPrefix(line, "server_identifier"):
-		parseServerIdentifier(line, result)
-	}
-}
-
-// parseSubnetMask extracts subnet mask from ipconfig output line.
-func parseSubnetMask(line string, result *TestResult) {
-	// Format: subnet_mask (ip): 255.255.255.0
-	if _, after, found := strings.CutLast(line, ": "); found {
-		result.SubnetMask = strings.TrimSpace(after)
-	}
-}
-
-// parseRouter extracts gateway from ipconfig output line.
-func parseRouter(line string, result *TestResult) {
-	// Format: router (ip_mult): {192.168.1.1}
-	result.Gateway = extractBracedValue(line)
-}
-
-// parseDNSServers extracts DNS servers from ipconfig output line.
-func parseDNSServers(line string, result *TestResult) {
-	// Format: domain_name_server (ip_mult): {8.8.8.8, 8.8.4.4}
-	bracedContent := extractBracedContent(line)
-	if bracedContent == "" {
-		return
-	}
-	for s := range strings.SplitSeq(bracedContent, ",") {
-		s = strings.TrimSpace(s)
-		if s != "" {
-			result.DNSServers = append(result.DNSServers, s)
+	case err != nil:
+		result.Error = err.Error()
+	case lease == nil:
+		result.Error = "no DHCP lease found"
+	default:
+		lease.fill(result)
+		result.Success = result.OfferedIP != ""
+		if !result.Success {
+			result.Error = "no DHCP lease found"
 		}
 	}
-}
-
-// parseDomainName extracts domain name from ipconfig output line.
-func parseDomainName(line string, result *TestResult) {
-	// Format: domain_name (string): local
-	if _, after, found := strings.CutLast(line, ": "); found {
-		result.DomainName = strings.TrimSpace(after)
-	}
-}
-
-// parseLeaseTimeLine extracts lease time from ipconfig output line.
-func parseLeaseTimeLine(line string, result *TestResult) {
-	// Format: lease_time (uint32): 0x15180
-	if _, after, found := strings.CutLast(line, ": "); found {
-		valStr := strings.TrimSpace(after)
-		if seconds, err := parseLeaseTime(valStr); err == nil {
-			result.LeaseTime = time.Duration(seconds) * time.Second
-			result.LeaseTimeSec = seconds
-		}
-	}
-}
-
-// parseServerIdentifier extracts server identifier from ipconfig output line.
-func parseServerIdentifier(line string, result *TestResult) {
-	// Format: server_identifier (ip): 192.168.1.1
-	if _, after, found := strings.CutLast(line, ": "); found {
-		if result.ServerIP == "" {
-			result.ServerIP = strings.TrimSpace(after)
-		}
-	}
-}
-
-// extractBracedValue extracts the first value from braces.
-func extractBracedValue(line string) string {
-	content := extractBracedContent(line)
-	return strings.TrimSpace(content)
-}
-
-// extractBracedContent extracts content between braces.
-func extractBracedContent(line string) string {
-	idx := strings.Index(line, "{")
-	if idx == -1 {
-		return ""
-	}
-	end := strings.Index(line, "}")
-	if end <= idx {
-		return ""
-	}
-	return line[idx+1 : end]
-}
-
-// parseLeaseTime parses a lease time value which may be hex or decimal.
-func parseLeaseTime(val string) (int, error) {
-	val = strings.TrimSpace(val)
-	if strings.HasPrefix(val, "0x") || strings.HasPrefix(val, "0X") {
-		// Hex format
-		parsed, err := strconv.ParseInt(val[2:], 16, 64)
-		return int(parsed), err
-	}
-	// Decimal format
-	parsed, err := strconv.Atoi(val)
-	return parsed, err
+	return result
 }
 
 // getCurrentLeasePlatform retrieves the current DHCP lease on macOS.
@@ -170,27 +166,27 @@ func getCurrentLeasePlatform(interfaceName string) (*LeaseInfo, error) {
 		Interface: interfaceName,
 	}
 
-	// Get current IP info from interface
 	if err := populateLeaseFromInterface(interfaceName, lease); err != nil {
 		return nil, err
 	}
 
-	// Get DHCP-specific info using ipconfig
-	ctx := context.Background()
-	cmd := exec.CommandContext(ctx, "ipconfig", "getpacket", interfaceName)
-	output, err := cmd.Output()
+	stored, err := readStoreLease(interfaceName)
 	if err != nil {
-		// No DHCP lease, but we might still have static IP info
+		return nil, err
+	}
+	if stored == nil {
+		// No DHCP lease, but a static address is still worth reporting.
 		if lease.IPAddress != "" {
 			return lease, nil
 		}
-		return nil, &InterfaceError{Message: "no DHCP lease: " + err.Error()}
+		return nil, &InterfaceError{Message: "no DHCP lease"}
 	}
 
-	// Parse DHCP packet info and copy to lease
 	result := &TestResult{}
-	parseIPConfigOutput(string(output), result)
+	stored.fill(result)
 	copyResultToLease(result, lease)
+	lease.ObtainedAt = stored.start
+	lease.Expiry = stored.expiry
 
 	return lease, nil
 }
