@@ -31,7 +31,9 @@ func (s *Server) setupTelemetryRoutes() {
 			Methods: get,
 			Auth:    true,
 		},
-		{Path: APIVersionPrefix + "/telemetry/dns", Handler: s.handleDNS, Methods: getPost, Auth: true, CSRF: true},
+		// GET only, the one method handleDNS serves; POST was declared as well and
+		// passed auth and CSRF only to be refused with a 405 (#3261).
+		{Path: APIVersionPrefix + "/telemetry/dns", Handler: s.handleDNS, Methods: get, Auth: true},
 		{Path: APIVersionPrefix + "/telemetry/gateway", Handler: s.handleGateway, Methods: get, Auth: true},
 		// Reads the lease this host already holds — no DISCOVER is sent and no
 		// target is supplied, so it is a read of local state rather than an

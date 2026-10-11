@@ -300,9 +300,7 @@ body:
     "maxBodyBytes": 262144,
     "methods": [
       "GET",
-      "POST",
-      "PUT",
-      "DELETE"
+      "POST"
     ],
     "path": "/api/v1/profiles",
     "rateLimited": false,
@@ -579,11 +577,10 @@ body:
   },
   {
     "auth": true,
-    "csrf": true,
+    "csrf": false,
     "maxBodyBytes": 262144,
     "methods": [
-      "GET",
-      "POST"
+      "GET"
     ],
     "path": "/api/v1/telemetry/dns",
     "rateLimited": false
@@ -1247,12 +1244,10 @@ body:
   },
   {
     "auth": true,
-    "csrf": true,
+    "csrf": false,
     "maxBodyBytes": 262144,
     "methods": [
-      "GET",
-      "POST",
-      "PUT"
+      "GET"
     ],
     "path": "/api/v1/wifi/wifi",
     "rateLimited": false

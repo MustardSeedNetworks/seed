@@ -183,6 +183,7 @@ func (s *Server) setupCoreRoutes() {
 	put := []string{http.MethodPut}
 	del := []string{http.MethodDelete}
 	getPut := []string{http.MethodGet, http.MethodPut}
+	getPost := []string{http.MethodGet, http.MethodPost}
 	getPostPut := []string{http.MethodGet, http.MethodPost, http.MethodPut}
 	crud := []string{http.MethodGet, http.MethodPost, http.MethodPut, http.MethodDelete}
 	authBody := MaxBodySizeAuth  // 1 KB — auth payloads are tiny.
@@ -375,9 +376,12 @@ func (s *Server) setupCoreRoutes() {
 			Auth:         true,
 		},
 		{
+			// The collection: list and create. PUT and DELETE need an id, so they
+			// live on the /profiles/ route below; declaring them here only ever
+			// produced a 405 from the handler (#3261).
 			Path:    APIVersionPrefix + "/profiles",
 			Handler: s.handleProfiles,
-			Methods: crud,
+			Methods: getPost,
 			Scope:   op,
 			Auth:    true,
 			CSRF:    true,
@@ -511,9 +515,10 @@ func (s *Server) setupWiFiRoutes() {
 	post := []string{http.MethodPost}
 	del := []string{http.MethodDelete}
 	getPut := []string{http.MethodGet, http.MethodPut}
-	getPostPut := []string{http.MethodGet, http.MethodPost, http.MethodPut}
 	s.routes.RegisterAll([]route.Route{
-		{Path: APIVersionPrefix + "/wifi/wifi", Handler: s.handleWiFi, Methods: getPostPut, Auth: true, CSRF: true},
+		// GET only, the one method handleWiFi serves; POST and PUT were declared
+		// as well and reached the handler only to be refused with a 405 (#3261).
+		{Path: APIVersionPrefix + "/wifi/wifi", Handler: s.handleWiFi, Methods: get, Auth: true},
 		{Path: APIVersionPrefix + "/wifi/wifi/scan", Handler: s.handleWiFiScan, Methods: get, Auth: true},
 		{Path: APIVersionPrefix + "/wifi/wifi/status", Handler: s.handleWiFiStatus, Methods: get, Auth: true},
 		{
