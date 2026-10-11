@@ -2758,6 +2758,33 @@ components:
                 - type
                 - format
             type: object
+        GuestAuditReport:
+            additionalProperties: false
+            properties:
+                completedAt:
+                    format: date-time
+                    type: string
+                isolationFailed:
+                    type: boolean
+                reachableTargets:
+                    type: integer
+                results:
+                    items:
+                        $ref: '#/components/schemas/TargetResult'
+                    type: array
+                startedAt:
+                    format: date-time
+                    type: string
+                totalTargets:
+                    type: integer
+            required:
+                - startedAt
+                - completedAt
+                - isolationFailed
+                - reachableTargets
+                - totalTargets
+                - results
+            type: object
         GuestAuditTarget:
             additionalProperties: false
             properties:
@@ -5410,6 +5437,19 @@ components:
                 - isTrunk
                 - connectedTo
             type: object
+        PortResult:
+            additionalProperties: false
+            properties:
+                error:
+                    type: string
+                open:
+                    type: boolean
+                port:
+                    type: integer
+            required:
+                - port
+                - open
+            type: object
         PortScanConfig:
             additionalProperties: false
             properties:
@@ -7775,6 +7815,43 @@ components:
                     type: string
             required:
                 - code
+            type: object
+        Target:
+            additionalProperties: false
+            properties:
+                ip:
+                    type: string
+                label:
+                    type: string
+            required:
+                - ip
+            type: object
+        TargetResult:
+            additionalProperties: false
+            properties:
+                durationSeconds:
+                    type: number
+                openPorts:
+                    items:
+                        type: integer
+                    type: array
+                pingResponded:
+                    type: boolean
+                portResults:
+                    items:
+                        $ref: '#/components/schemas/PortResult'
+                    type: array
+                reachable:
+                    type: boolean
+                target:
+                    $ref: '#/components/schemas/Target'
+            required:
+                - target
+                - reachable
+                - pingResponded
+                - openPorts
+                - portResults
+                - durationSeconds
             type: object
         TestResult:
             additionalProperties: false
@@ -13524,6 +13601,12 @@ paths:
         post:
             operationId: postApiV1SecurityGuestAuditRun
             responses:
+                "200":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/GuestAuditReport'
+                    description: The audit report, one result per configured target. isolationFailed is true when any target answered a ping or a probed TCP port.
                 "401":
                     content:
                         application/json:

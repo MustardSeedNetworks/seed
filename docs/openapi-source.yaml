@@ -1017,6 +1017,14 @@ operations:
           application/json:
             schema:
               $ref: '#/components/schemas/GuestNetworkAuditConfig'
+  POST /api/v1/security/guest-audit/run:
+    responses:
+      "200":
+        description: The audit report, one result per configured target. isolationFailed is true when any target answered a ping or a probed TCP port.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GuestAuditReport'
   PUT /api/v1/security/guest-audit/settings:
     requestBody:
       required: true

@@ -13,6 +13,7 @@
 
 import { useEffect, useState } from 'react';
 import type { GuestAuditTarget } from '../types/generated/config';
+import type { GuestAuditReport } from '../types/generated/guest-audit-report';
 
 export type { GuestAuditTarget };
 
@@ -23,30 +24,6 @@ export interface GuestAuditSettings {
   enabled: boolean;
   targets: GuestAuditTarget[];
   ports?: number[];
-}
-
-export interface GuestAuditPortResult {
-  port: number;
-  open: boolean;
-  error?: string;
-}
-
-export interface GuestAuditTargetResult {
-  target: GuestAuditTarget;
-  reachable: boolean;
-  pingResponded: boolean;
-  openPorts: number[];
-  portResults: GuestAuditPortResult[];
-  durationSeconds: number;
-}
-
-export interface GuestAuditReport {
-  startedAt: string;
-  completedAt: string;
-  isolationFailed: boolean;
-  reachableTargets: number;
-  totalTargets: number;
-  results: GuestAuditTargetResult[];
 }
 
 interface UseGuestNetworkAuditResult {

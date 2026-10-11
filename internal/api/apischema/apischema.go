@@ -301,6 +301,11 @@ func Targets() []Target {
 		// publicip package's own flat type, named for the API.
 		{&api.PublicIPResponse{}, "public-ip-response.schema.json"},
 
+		// The guest-network isolation audit's report, which
+		// /security/guest-audit/run serves as the guestaudit package's own
+		// flat type, named for the API.
+		{&api.GuestAuditReport{}, "guest-audit-report.schema.json"},
+
 		// #326's packet capture, a jobs-spine kind registered as the
 		// packetcapture package's own types like the two above.
 		{&packetcapture.Request{}, "packet-capture-request.schema.json"},

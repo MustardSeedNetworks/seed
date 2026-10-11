@@ -2,7 +2,9 @@ package guestaudit_test
 
 import (
 	"context"
+	"encoding/json"
 	"net"
+	"strings"
 	"testing"
 	"time"
 
@@ -89,5 +91,16 @@ func TestRun_UnreachableUnusedPort(t *testing.T) {
 	}
 	if report.Results[0].PortResults[0].Open {
 		t.Fatalf("expected closed port to report open=false; got %+v", report.Results[0].PortResults[0])
+	}
+
+	// A target with no open port still serves openPorts as a list: the UI
+	// reads its length for every reachable target, and a ping-only target is
+	// reachable with nothing open.
+	body, err := json.Marshal(report.Results[0])
+	if err != nil {
+		t.Fatalf("marshal result: %v", err)
+	}
+	if !strings.Contains(string(body), `"openPorts":[]`) {
+		t.Fatalf("expected openPorts to marshal as [], got %s", body)
 	}
 }
