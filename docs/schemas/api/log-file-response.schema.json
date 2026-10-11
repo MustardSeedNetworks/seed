@@ -1,0 +1,28 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/MustardSeedNetworks/seed/main/docs/schemas/api/log-file-response.schema.json",
+  "$ref": "#/$defs/LogFileResponse",
+  "$defs": {
+    "LogFileResponse": {
+      "properties": {
+        "path": {
+          "type": "string"
+        },
+        "lines": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "path",
+        "lines"
+      ]
+    }
+  },
+  "title": "LogFileResponse",
+  "description": "LogFileResponse — generated from the Go struct in internal/api; refresh with `make schema` after struct changes."
+}

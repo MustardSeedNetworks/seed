@@ -81,6 +81,13 @@ func (s *Server) handleExport(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+// LogFileResponse is the answer of GET /api/v1/reporting/logs: the tail of the
+// daemon's log file.
+type LogFileResponse struct {
+	Path  string   `json:"path"`
+	Lines []string `json:"lines"`
+}
+
 // handleLogs returns the tail of the application log file for troubleshooting (fixes #544 - split from handlers.go).
 // Requires JWT authentication (enforced by middleware).
 // Security fix #301: Removed insecure LOG_ACCESS_TOKEN - JWT authentication is sufficient.
@@ -127,10 +134,7 @@ func (s *Server) handleLogs(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	sendJSONResponse(w, logger, http.StatusOK, map[string]any{
-		"path":  s.logPath,
-		"lines": lines,
-	})
+	sendJSONResponse(w, logger, http.StatusOK, LogFileResponse{Path: s.logPath, Lines: lines})
 }
 
 // HealthResponse is the liveness answer of GET /api/v1/health.

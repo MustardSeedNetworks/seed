@@ -4283,6 +4283,19 @@ components:
                 - layer
                 - message
             type: object
+        LogFileResponse:
+            additionalProperties: false
+            properties:
+                lines:
+                    items:
+                        type: string
+                    type: array
+                path:
+                    type: string
+            required:
+                - path
+                - lines
+            type: object
         LogQueryResponse:
             additionalProperties: false
             properties:
@@ -4390,6 +4403,19 @@ components:
                     type: string
             required:
                 - status
+            type: object
+        LogsRecentResponse:
+            additionalProperties: false
+            properties:
+                count:
+                    type: integer
+                logs:
+                    items:
+                        $ref: '#/components/schemas/LogEntry'
+                    type: array
+            required:
+                - logs
+                - count
             type: object
         MDNSService:
             additionalProperties: false
@@ -12410,6 +12436,12 @@ paths:
         get:
             operationId: getApiV1ReportingLogs
             responses:
+                "200":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/LogFileResponse'
+                    description: The last lines of the daemon log file, 200 by default; ?lines= asks for more, up to the server cap.
                 "401":
                     content:
                         application/json:
@@ -12494,6 +12526,12 @@ paths:
         get:
             operationId: getApiV1ReportingLogsRecent
             responses:
+                "200":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/LogsRecentResponse'
+                    description: The most recent log entries, 100 by default; ?limit= asks for 1 to 1000.
                 "401":
                     content:
                         application/json:

@@ -128,6 +128,11 @@ func (s *Server) HandleClientLogs(w http.ResponseWriter, r *http.Request) {
 	s.handleClientLogs(w, r)
 }
 
+// HandleLogsRecent exports handleLogsRecent for testing.
+func (s *Server) HandleLogsRecent(w http.ResponseWriter, r *http.Request) {
+	s.handleLogsRecent(w, r)
+}
+
 // HandleExport exports handleExport for testing.
 func (s *Server) HandleExport(w http.ResponseWriter, r *http.Request) {
 	s.handleExport(w, r)

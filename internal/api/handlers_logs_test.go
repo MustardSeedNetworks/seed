@@ -6,6 +6,7 @@ import (
 	"net/http/httptest"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/MustardSeedNetworks/seed/internal/api"
 	"github.com/MustardSeedNetworks/seed/internal/logging"
@@ -71,5 +72,44 @@ func TestHandleClientLogsWireContract(t *testing.T) {
 				t.Errorf("received = %d, want 1", body.Received)
 			}
 		})
+	}
+}
+
+// The log viewer loads its history from /logs/recent and reads requestId,
+// sessionId and durationMs. The handler served the logging package's records
+// directly, whose keys are snake_case, so those columns were always blank.
+func TestHandleLogsRecentWireKeys(t *testing.T) {
+	b := logging.InitBroadcaster(16)
+	entry := logging.NewLogEntry("INFO", "request served").
+		WithLayer("api").
+		WithRequestID("req-1").
+		WithDuration(42 * time.Millisecond)
+	entry.SessionID = "sess-1"
+	b.Write(entry)
+
+	server := api.NewTestServer()
+	defer server.Close()
+
+	w := httptest.NewRecorder()
+	server.HandleLogsRecent(w, httptest.NewRequest(http.MethodGet, "/api/v1/reporting/logs/recent", http.NoBody))
+	if w.Code != http.StatusOK {
+		t.Fatalf("status = %d, want 200 (body %s)", w.Code, w.Body.String())
+	}
+
+	var body struct {
+		Count int              `json:"count"`
+		Logs  []map[string]any `json:"logs"`
+	}
+	if err := json.NewDecoder(w.Body).Decode(&body); err != nil {
+		t.Fatalf("decode response: %v", err)
+	}
+	if body.Count != 1 || len(body.Logs) != 1 {
+		t.Fatalf("count = %d, logs = %d, want 1 and 1", body.Count, len(body.Logs))
+	}
+	want := map[string]any{"requestId": "req-1", "sessionId": "sess-1", "durationMs": float64(42)}
+	for key, value := range want {
+		if got := body.Logs[0][key]; got != value {
+			t.Errorf("%s = %v, want %v (entry %v)", key, got, value, body.Logs[0])
+		}
 	}
 }

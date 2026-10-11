@@ -753,6 +753,14 @@ operations:
           application/json:
             schema:
               $ref: '#/components/schemas/RecoveryStatusResponse'
+  GET /api/v1/reporting/logs:
+    responses:
+      "200":
+        description: The last lines of the daemon log file, 200 by default; ?lines= asks for more, up to the server cap.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LogFileResponse'
   POST /api/v1/reporting/logs/client:
     requestBody:
       required: true
@@ -768,6 +776,14 @@ operations:
           application/json:
             schema:
               $ref: '#/components/schemas/LogQueryResponse'
+  GET /api/v1/reporting/logs/recent:
+    responses:
+      "200":
+        description: The most recent log entries, 100 by default; ?limit= asks for 1 to 1000.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LogsRecentResponse'
   GET /api/v1/reporting/logs/stats:
     responses:
       "200":
