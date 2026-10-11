@@ -7,6 +7,8 @@ import (
 	"os/exec"
 	"strconv"
 	"time"
+
+	"github.com/MustardSeedNetworks/seed/internal/platform/procrun"
 )
 
 // pingHostImpl shells out to the system `ping` binary with -c1 so we don't
@@ -19,5 +21,5 @@ func pingHostImpl(ctx context.Context, ip string, timeout time.Duration) bool {
 	secs := max(int(timeout/time.Second), 1)
 	//#nosec G204 -- ip is validated upstream via validation.ValidateIP; timeout secs is int math.
 	cmd := exec.CommandContext(tctx, "ping", "-c", "1", "-W", strconv.Itoa(secs), ip)
-	return cmd.Run() == nil
+	return procrun.Run(cmd) == nil
 }

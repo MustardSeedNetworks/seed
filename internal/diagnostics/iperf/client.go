@@ -9,6 +9,8 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/MustardSeedNetworks/seed/internal/platform/procrun"
 )
 
 // RunClient runs an iperf3 client test.
@@ -35,8 +37,7 @@ func (m *Manager) RunClient(ctx context.Context, config *ClientConfig) (*Result,
 
 	m.updateClientProgress("testing", progressWarningThreshold)
 
-	cmd := exec.CommandContext(ctx, binaryPath, args...)
-	output, err := cmd.Output()
+	output, err := procrun.Output(exec.CommandContext(ctx, binaryPath, args...))
 	if err != nil {
 		var iperfOut iperfJSON
 		if jsonErr := json.Unmarshal(output, &iperfOut); jsonErr == nil && iperfOut.Error != "" {

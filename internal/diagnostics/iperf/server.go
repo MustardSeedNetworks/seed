@@ -9,6 +9,8 @@ import (
 
 	"github.com/MustardSeedNetworks/seed/internal/logging"
 	"github.com/MustardSeedNetworks/seed/internal/validation"
+
+	"github.com/MustardSeedNetworks/seed/internal/platform/procrun"
 )
 
 // StartServer starts the iperf3 server.
@@ -37,7 +39,7 @@ func (m *Manager) StartServer(port int) error {
 	// Start iperf3 server: iperf3 -s -p <port>
 
 	cmd := exec.CommandContext(ctx, binaryPath, "-s", "-p", strconv.Itoa(port))
-	if startErr := cmd.Start(); startErr != nil {
+	if startErr := procrun.Start(cmd); startErr != nil {
 		cancel()
 		return fmt.Errorf("failed to start iperf3 server: %w", startErr)
 	}

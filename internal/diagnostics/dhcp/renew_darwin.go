@@ -7,6 +7,8 @@ import (
 	"fmt"
 	"os/exec"
 	"strings"
+
+	"github.com/MustardSeedNetworks/seed/internal/platform/procrun"
 )
 
 // renewSupportedPlatform reports macOS support. `ipconfig set <if> DHCP`
@@ -23,7 +25,7 @@ func renewLeasePlatform(ctx context.Context, interfaceName string) error {
 		return fmt.Errorf("%w: an interface name is required on macOS", ErrRenewUnsupported)
 	}
 
-	out, err := exec.CommandContext(ctx, "ipconfig", "set", interfaceName, "DHCP").CombinedOutput()
+	out, err := procrun.CombinedOutput(exec.CommandContext(ctx, "ipconfig", "set", interfaceName, "DHCP"))
 	if err != nil {
 		return fmt.Errorf("ipconfig set %s DHCP: %w: %s",
 			interfaceName, err, strings.TrimSpace(string(out)))
