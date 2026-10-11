@@ -5,6 +5,19 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.251.0](https://github.com/MustardSeedNetworks/seed/compare/v0.250.0...v0.251.0) (2026-10-11)
+
+
+### Features
+
+* **api:** document the VLAN sub-interface bodies and serve its delete ([#3292](https://github.com/MustardSeedNetworks/seed/issues/3292)) ([173c0b3](https://github.com/MustardSeedNetworks/seed/commit/173c0b34ddd20d582a4cd4a02a07b80190e6687f))
+
+
+### Bug Fixes
+
+* **api:** declare only the methods the dns, wifi and profiles routes serve ([#3294](https://github.com/MustardSeedNetworks/seed/issues/3294)) ([c2e20b6](https://github.com/MustardSeedNetworks/seed/commit/c2e20b6f8face3816a96385c9d7f5b1f604ef789)), closes [#3261](https://github.com/MustardSeedNetworks/seed/issues/3261)
+* **deps:** update module github.com/mustardseednetworks/foundation to v0.7.3 ([#3295](https://github.com/MustardSeedNetworks/seed/issues/3295)) ([c0a7bd9](https://github.com/MustardSeedNetworks/seed/commit/c0a7bd967fb5fd4aebdbe043b81dbff444a47e0f))
+
 ## [0.250.0](https://github.com/MustardSeedNetworks/seed/compare/v0.249.0...v0.250.0) (2026-10-11)
 
 
