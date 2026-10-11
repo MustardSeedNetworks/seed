@@ -5,6 +5,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.253.1](https://github.com/MustardSeedNetworks/seed/compare/v0.253.0...v0.253.1) (2026-10-11)
+
+
+### Bug Fixes
+
+* **api:** give each profile-by-id shape its own route and document it ([#3313](https://github.com/MustardSeedNetworks/seed/issues/3313)) ([95f90a7](https://github.com/MustardSeedNetworks/seed/commit/95f90a75c12ac134f1a0eed84f01d23aed7dff16))
+* **darwin:** bound helper start so a wedged fork cannot stall its caller ([#3311](https://github.com/MustardSeedNetworks/seed/issues/3311)) ([b7bb5e4](https://github.com/MustardSeedNetworks/seed/commit/b7bb5e4b48aaf7c480cfbf1471e59a79e8b5f01c))
+* **dhcp:** read the macOS lease from the dynamic store, not ipconfig ([#3308](https://github.com/MustardSeedNetworks/seed/issues/3308)) ([c9dd9ed](https://github.com/MustardSeedNetworks/seed/commit/c9dd9ed74c6df8767cea70216008743dd5b45ab3))
+
 ## [0.253.0](https://github.com/MustardSeedNetworks/seed/compare/v0.252.0...v0.253.0) (2026-10-11)
 
 
