@@ -14,7 +14,6 @@ import (
 	"fmt"
 	"net/http"
 	"path/filepath"
-	"strings"
 
 	"github.com/MustardSeedNetworks/foundation/pkg/httpserver/route"
 
@@ -26,12 +25,8 @@ import (
 	"github.com/MustardSeedNetworks/seed/internal/platform/jobs"
 )
 
-const (
-	// packetCaptureJobKind is the registered kind name for a capture.
-	packetCaptureJobKind = "packet-capture"
-	// capturesPathPrefix is the /captures/{id} download route's prefix.
-	capturesPathPrefix = APIVersionPrefix + "/captures/"
-)
+// packetCaptureJobKind is the registered kind name for a capture.
+const packetCaptureJobKind = "packet-capture"
 
 // packetCaptureRun is packetcapture.Run bound to its opener and store, behind
 // a seam so the kind is testable without a capture handle.
@@ -90,7 +85,7 @@ func (s *Server) handleCaptureDownload(w http.ResponseWriter, r *http.Request) {
 	logger := logging.FromContext(r.Context())
 	localizer := i18n.FromRequest(r)
 
-	id := strings.TrimPrefix(r.URL.Path, capturesPathPrefix)
+	id := r.PathValue("captureId")
 	f, err := s.captures.Open(id)
 	switch {
 	case errors.Is(err, packetcapture.ErrNotFound):
@@ -126,7 +121,7 @@ func (s *Server) handleCaptureDownload(w http.ResponseWriter, r *http.Request) {
 func (s *Server) captureRoutes() []route.Route {
 	return []route.Route{
 		{
-			Path:    APIVersionPrefix + "/captures/",
+			Path:    APIVersionPrefix + "/captures/{captureId}",
 			Handler: s.handleCaptureDownload,
 			Methods: []string{http.MethodGet},
 			Auth:    true,

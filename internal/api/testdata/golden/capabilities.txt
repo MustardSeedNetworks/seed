@@ -1656,12 +1656,21 @@ body:
     "csrf": true,
     "maxBodyBytes": 262144,
     "methods": [
-      "GET",
       "POST"
     ],
-    "path": "/api/v1/security/vulnerabilities/findings/",
+    "path": "/api/v1/security/vulnerabilities/findings/{findingId}/status",
     "rateLimited": false,
     "scope": "operator"
+  },
+  {
+    "auth": true,
+    "csrf": false,
+    "maxBodyBytes": 262144,
+    "methods": [
+      "GET"
+    ],
+    "path": "/api/v1/security/vulnerabilities/findings/{findingId}/history",
+    "rateLimited": false
   },
   {
     "auth": true,
@@ -1791,7 +1800,7 @@ body:
     "methods": [
       "GET"
     ],
-    "path": "/api/v1/captures/",
+    "path": "/api/v1/captures/{captureId}",
     "rateLimited": false
   },
   {

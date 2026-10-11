@@ -87,9 +87,9 @@ func withDefaultInterface(srv *Server, iface string) {
 
 func download(t *testing.T, srv *Server, id string) *httptest.ResponseRecorder {
 	t.Helper()
-	req := httptest.NewRequest(http.MethodGet, capturesPathPrefix+id, http.NoBody)
+	req := httptest.NewRequest(http.MethodGet, APIVersionPrefix+"/captures/"+id, http.NoBody)
 	w := httptest.NewRecorder()
-	srv.handleCaptureDownload(w, req)
+	routed(capturePath, srv.handleCaptureDownload)(w, req)
 	return w
 }
 
@@ -226,12 +226,12 @@ func TestCaptureDownloadRefusals(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-			req := newAuthedRequest(http.MethodGet, capturesPathPrefix+tt.id, nil, "admin")
+			req := newAuthedRequest(http.MethodGet, APIVersionPrefix+"/captures/"+tt.id, nil, "admin")
 			if tt.scope != "" {
 				req = req.WithContext(auth.WithTokenScope(req.Context(), tt.scope))
 			}
 			w := httptest.NewRecorder()
-			srv.handleCaptureDownload(w, req)
+			routed(capturePath, srv.handleCaptureDownload)(w, req)
 			if w.Code != tt.want {
 				t.Fatalf("status = %d, want %d: %s", w.Code, tt.want, w.Body)
 			}

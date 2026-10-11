@@ -24,6 +24,7 @@ func routedCRUDServer(t *testing.T) *Server {
 	s.topologyQueries = app.NewTopologyQueries(s.db, topologyMaxLimit)
 	s.discoveryDevices = app.NewDiscoveryDevices(s.discoveryEngine)
 	s.alertInbox = app.NewAlertInbox(s.db)
+	s.vulnTriage = app.NewVulnTriage(s.db)
 	s.initIdentityUseCases()
 	if _, err := s.db().CreateUser(t.Context(), "admin", "$2a$10$x", roles.Admin); err != nil {
 		t.Fatalf("seed admin: %v", err)
@@ -95,6 +96,15 @@ func TestByIDRoutesThroughTheRouter(t *testing.T) {
 		{http.MethodPost, alert + "/explode", "", http.StatusNotFound},
 		{http.MethodPost, alert, "", http.StatusNotFound},
 		{http.MethodPost, alertsPath + "/abc/acknowledge", "", http.StatusBadRequest},
+
+		{http.MethodPost, vulnFindingsPath + "/999999/status", `{"status":"acknowledged"}`, http.StatusNotFound},
+		{http.MethodGet, vulnFindingsPath + "/999999/history", "", http.StatusNotFound},
+		{http.MethodGet, vulnFindingsPath + "/1/status", "", http.StatusMethodNotAllowed},
+		{http.MethodPost, vulnFindingsPath + "/1/history", "", http.StatusMethodNotAllowed},
+		{http.MethodGet, vulnFindingsPath + "/1/notes", "", http.StatusNotFound},
+		{http.MethodGet, vulnFindingsPath + "/1", "", http.StatusNotFound},
+
+		{http.MethodGet, APIVersionPrefix + "/captures/a/b", "", http.StatusNotFound},
 	} {
 		rec := httptest.NewRecorder()
 		s.Mux().ServeHTTP(rec, httptest.NewRequest(tc.method, tc.path, strings.NewReader(tc.body)))

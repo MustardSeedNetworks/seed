@@ -1207,6 +1207,28 @@ operations:
           application/json:
             schema:
               $ref: '#/components/schemas/VulnFindingsResponse'
+  POST /api/v1/security/vulnerabilities/findings/{findingId}/status:
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/VulnFindingStatusRequest'
+    responses:
+      "200":
+        description: The finding moved to the requested status. status is acknowledged, ignored (with a reason) or new; an operator cannot resolve a finding, the scanner does, and an unknown field is a 400.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/VulnFindingStatusResponse'
+  GET /api/v1/security/vulnerabilities/findings/{findingId}/history:
+    responses:
+      "200":
+        description: The finding's status changes, oldest first. A change with no actor is the scanner's.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/VulnFindingHistoryResponse'
   GET /api/v1/security/vulnerabilities/results:
     responses:
       "200":

@@ -49,6 +49,10 @@ const (
 	topologyNodePath     = APIVersionPrefix + "/topology/nodes/{nodeId}"
 	alertAcknowledgePath = alertsPath + "/{alertId}/acknowledge"
 	alertResolvePath     = alertsPath + "/{alertId}/resolve"
+
+	vulnFindingStatusPath  = vulnFindingsPath + "/{findingId}/status"
+	vulnFindingHistoryPath = vulnFindingsPath + "/{findingId}/history"
+	capturePath            = APIVersionPrefix + "/captures/{captureId}"
 )
 
 // routed serves h behind pattern on its own mux, so a handler that reads

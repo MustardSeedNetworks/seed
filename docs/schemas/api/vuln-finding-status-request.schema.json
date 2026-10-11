@@ -1,0 +1,25 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/MustardSeedNetworks/seed/main/docs/schemas/api/vuln-finding-status-request.schema.json",
+  "$ref": "#/$defs/VulnFindingStatusRequest",
+  "$defs": {
+    "VulnFindingStatusRequest": {
+      "properties": {
+        "status": {
+          "type": "string"
+        },
+        "reason": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "status",
+        "reason"
+      ]
+    }
+  },
+  "title": "VulnFindingStatusRequest",
+  "description": "VulnFindingStatusRequest — generated from the Go struct in internal/api; refresh with `make schema` after struct changes."
+}
