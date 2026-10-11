@@ -1,0 +1,70 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/MustardSeedNetworks/seed/main/docs/schemas/api/dhcp-lease-response.schema.json",
+  "$ref": "#/$defs/DHCPLeaseResponse",
+  "$defs": {
+    "DHCPLeaseResponse": {
+      "properties": {
+        "interface": {
+          "type": "string"
+        },
+        "success": {
+          "type": "boolean"
+        },
+        "status": {
+          "type": "string",
+          "enum": [
+            "success",
+            "warning",
+            "error"
+          ]
+        },
+        "serverIp": {
+          "type": "string"
+        },
+        "offeredIp": {
+          "type": "string"
+        },
+        "subnetMask": {
+          "type": "string"
+        },
+        "gateway": {
+          "type": "string"
+        },
+        "dnsServers": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "domainName": {
+          "type": "string"
+        },
+        "leaseTimeSec": {
+          "type": "integer"
+        },
+        "responseTimeMs": {
+          "type": "number"
+        },
+        "error": {
+          "type": "string"
+        },
+        "testedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "interface",
+        "success",
+        "status",
+        "responseTimeMs",
+        "testedAt"
+      ]
+    }
+  },
+  "title": "DHCPLeaseResponse",
+  "description": "DHCPLeaseResponse — generated from the Go struct in internal/api; refresh with `make schema` after struct changes."
+}

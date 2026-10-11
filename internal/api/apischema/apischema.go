@@ -355,6 +355,8 @@ func Targets() []Target {
 		{&api.StatusUpdatedResponse{}, "status-updated-response.schema.json"},
 		{&api.RenewDHCPLeaseRequest{}, "renew-dhcp-lease-request.schema.json"},
 		{&api.RenewDHCPLeaseResponse{}, "renew-dhcp-lease-response.schema.json"},
+		{&api.DHCPLeaseRequest{}, "dhcp-lease-request.schema.json"},
+		{&api.DHCPLeaseResponse{}, "dhcp-lease-response.schema.json"},
 
 		// The health-check run and the probe engine's active anomalies.
 		{&api.HealthCheckRunResponse{}, "health-check-run-response.schema.json"},
