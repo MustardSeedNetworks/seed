@@ -26,8 +26,7 @@ import (
 )
 
 const (
-	vulnFindingsPath       = APIVersionPrefix + "/security/vulnerabilities/findings"
-	vulnFindingsPathPrefix = vulnFindingsPath + "/"
+	vulnFindingsPath = APIVersionPrefix + "/security/vulnerabilities/findings"
 
 	vulnFindingsDefaultLimit = 100
 	vulnFindingsMaxLimit     = 1000
@@ -66,8 +65,21 @@ type VulnStatusChangeResponse struct {
 	ChangedAt time.Time `json:"changedAt"`
 }
 
-// vulnStatusRequest is the triage body.
-type vulnStatusRequest struct {
+// VulnFindingStatusResponse acknowledges a triage decision.
+type VulnFindingStatusResponse struct {
+	ID     int64  `json:"id"`
+	Status string `json:"status"`
+}
+
+// VulnFindingHistoryResponse is a finding's status changes, oldest first.
+type VulnFindingHistoryResponse struct {
+	ID      int64                      `json:"id"`
+	History []VulnStatusChangeResponse `json:"history"`
+}
+
+// VulnFindingStatusRequest is the triage body. A reason is required to
+// ignore a finding.
+type VulnFindingStatusRequest struct {
 	Status string `json:"status"`
 	Reason string `json:"reason"`
 }
@@ -129,49 +141,37 @@ func (s *Server) handleVulnFindings(w http.ResponseWriter, r *http.Request) {
 	sendJSONResponse(w, logger, http.StatusOK, VulnFindingsResponse{Count: len(out), Findings: out})
 }
 
-// handleVulnFindingAction routes /findings/{id}/status (POST) and
-// /findings/{id}/history (GET).
-func (s *Server) handleVulnFindingAction(w http.ResponseWriter, r *http.Request) {
+// vulnFindingID reads the {findingId} path value. A malformed id names no
+// finding, and the store must be there to look it up.
+func (s *Server) vulnFindingID(w http.ResponseWriter, r *http.Request) (int64, bool) {
 	logger := logging.FromContext(r.Context())
 	localizer := i18n.FromRequest(r)
 
-	idText, action, found := strings.Cut(strings.TrimPrefix(r.URL.Path, vulnFindingsPathPrefix), "/")
-	id, err := strconv.ParseInt(idText, 10, 64)
-	if !found || err != nil || id <= 0 {
+	id, err := strconv.ParseInt(r.PathValue("findingId"), 10, 64)
+	if err != nil || id <= 0 {
 		sendErrorResponseWithDetails(w, logger, http.StatusNotFound,
 			ErrCodeNotFound, localizer.T("errors.vulnerability.findingNotFound"), "")
-		return
+		return 0, false
 	}
 	if s.db() == nil {
 		sendErrorResponseWithDetails(w, logger, http.StatusServiceUnavailable,
 			ErrCodeServiceUnavail, localizer.T("errors.vulnerability.storeUnavailable"), "")
-		return
+		return 0, false
 	}
-
-	switch {
-	case action == "status" && r.Method == http.MethodPost:
-		s.setVulnFindingStatus(w, r, id)
-	case action == "history" && r.Method == http.MethodGet:
-		s.writeVulnFindingHistory(w, r, id)
-	case action == "status" || action == "history":
-		allow := http.MethodPost
-		if action == "history" {
-			allow = http.MethodGet
-		}
-		w.Header().Set("Allow", allow)
-		sendErrorResponseWithDetails(w, logger, http.StatusMethodNotAllowed,
-			ErrCodeMethodNotAllowed, "Method not allowed", "")
-	default:
-		sendErrorResponseWithDetails(w, logger, http.StatusNotFound,
-			ErrCodeNotFound, localizer.T("errors.vulnerability.findingNotFound"), "")
-	}
+	return id, true
 }
 
-func (s *Server) setVulnFindingStatus(w http.ResponseWriter, r *http.Request, id int64) {
+// handleVulnFindingStatus serves POST
+// /api/v1/security/vulnerabilities/findings/{findingId}/status.
+func (s *Server) handleVulnFindingStatus(w http.ResponseWriter, r *http.Request) {
 	logger := logging.FromContext(r.Context())
 	localizer := i18n.FromRequest(r)
 
-	var req vulnStatusRequest
+	id, ok := s.vulnFindingID(w, r)
+	if !ok {
+		return
+	}
+	var req VulnFindingStatusRequest
 	if !decodeJSONStrictLocalized(w, r, &req, MaxBodySizeJSON, logger, localizer) {
 		return
 	}
@@ -182,7 +182,7 @@ func (s *Server) setVulnFindingStatus(w http.ResponseWriter, r *http.Request, id
 	case err == nil:
 		logger.InfoContext(r.Context(), "vulnerability finding triaged",
 			"event", "vuln.status", "id", id, "status", req.Status, "actor", actor)
-		sendJSONResponse(w, logger, http.StatusOK, map[string]any{"id": id, "status": req.Status})
+		sendJSONResponse(w, logger, http.StatusOK, VulnFindingStatusResponse{ID: id, Status: req.Status})
 	case errors.Is(err, vulntriage.ErrInvalidStatus):
 		sendErrorResponseWithDetails(w, logger, http.StatusBadRequest,
 			ErrCodeValidation, localizer.T("errors.vulnerability.invalidStatus"), req.Status)
@@ -205,10 +205,16 @@ func (s *Server) setVulnFindingStatus(w http.ResponseWriter, r *http.Request, id
 	}
 }
 
-func (s *Server) writeVulnFindingHistory(w http.ResponseWriter, r *http.Request, id int64) {
+// handleVulnFindingHistory serves GET
+// /api/v1/security/vulnerabilities/findings/{findingId}/history.
+func (s *Server) handleVulnFindingHistory(w http.ResponseWriter, r *http.Request) {
 	logger := logging.FromContext(r.Context())
 	localizer := i18n.FromRequest(r)
 
+	id, ok := s.vulnFindingID(w, r)
+	if !ok {
+		return
+	}
 	changes, err := s.vulnTriage.History(r.Context(), id)
 	if errors.Is(err, vulntriage.ErrFindingNotFound) {
 		sendErrorResponseWithDetails(w, logger, http.StatusNotFound,
@@ -228,7 +234,7 @@ func (s *Server) writeVulnFindingHistory(w http.ResponseWriter, r *http.Request,
 			Reason: c.Reason, ChangedAt: c.ChangedAt,
 		})
 	}
-	sendJSONResponse(w, logger, http.StatusOK, map[string]any{"id": id, "history": out})
+	sendJSONResponse(w, logger, http.StatusOK, VulnFindingHistoryResponse{ID: id, History: out})
 }
 
 // vulnQueryInt parses an optional integer query value within [lo, hi]; a

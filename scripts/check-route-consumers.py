@@ -41,8 +41,10 @@ SESSION_RESOURCE = re.compile(r'^\s*"([\w-]+)":\s*s\.handle', re.M)
 # Consumers are scanned for any `/api/` path, not only `/api/v1/`: a call to a
 # pre-versioning path is exactly the kind of miss this gate exists to find.
 # The path must start a string (or follow a `${base}` interpolation) so that
-# import specifiers such as '../api/client' are not read as requests.
-PATH_LITERAL = re.compile(r"""(?<=['"`}])/api/[a-z0-9][^'"`\s)]*""")
+# import specifiers such as '../api/client' are not read as requests. A
+# `${...}` interpolation is one unit, so a call inside it (`${encode(id)}`)
+# does not end the path at its closing parenthesis.
+PATH_LITERAL = re.compile(r"""(?<=['"`}])/api/[a-z0-9](?:\$\{[^}]*\}|[^'"`\s)])*""")
 TS_CONST = re.compile(r"""const\s+(\w+)\s*=\s*['"](/api/[^'"]*)['"]""")
 TS_CONST_USE = re.compile(r"`\$\{(\w+)\}([^`]*)`")
 COMMENT_LINE = re.compile(r"^\s*(//|/\*|\*)")

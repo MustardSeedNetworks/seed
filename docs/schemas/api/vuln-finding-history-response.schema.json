@@ -1,0 +1,55 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/MustardSeedNetworks/seed/main/docs/schemas/api/vuln-finding-history-response.schema.json",
+  "$ref": "#/$defs/VulnFindingHistoryResponse",
+  "$defs": {
+    "VulnFindingHistoryResponse": {
+      "properties": {
+        "id": {
+          "type": "integer"
+        },
+        "history": {
+          "items": {
+            "$ref": "#/$defs/VulnStatusChangeResponse"
+          },
+          "type": "array"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "id",
+        "history"
+      ]
+    },
+    "VulnStatusChangeResponse": {
+      "properties": {
+        "from": {
+          "type": "string"
+        },
+        "to": {
+          "type": "string"
+        },
+        "actor": {
+          "type": "string"
+        },
+        "reason": {
+          "type": "string"
+        },
+        "changedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "from",
+        "to",
+        "changedAt"
+      ]
+    }
+  },
+  "title": "VulnFindingHistoryResponse",
+  "description": "VulnFindingHistoryResponse — generated from the Go struct in internal/api; refresh with `make schema` after struct changes."
+}

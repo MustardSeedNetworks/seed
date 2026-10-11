@@ -34,7 +34,6 @@ func (s *Server) vulnerabilityRoutes() []route.Route {
 	op := roles.Operator
 	get := []string{http.MethodGet}
 	post := []string{http.MethodPost}
-	getPost := []string{http.MethodGet, http.MethodPost}
 	getPut := []string{http.MethodGet, http.MethodPut}
 	return []route.Route{
 		{
@@ -64,12 +63,18 @@ func (s *Server) vulnerabilityRoutes() []route.Route {
 			Auth:    true,
 		},
 		{
-			Path:    APIVersionPrefix + "/security/vulnerabilities/findings/",
-			Handler: s.handleVulnFindingAction,
-			Methods: getPost,
+			Path:    APIVersionPrefix + "/security/vulnerabilities/findings/{findingId}/status",
+			Handler: s.handleVulnFindingStatus,
+			Methods: post,
 			Scope:   op,
 			Auth:    true,
 			CSRF:    true,
+		},
+		{
+			Path:    APIVersionPrefix + "/security/vulnerabilities/findings/{findingId}/history",
+			Handler: s.handleVulnFindingHistory,
+			Methods: get,
+			Auth:    true,
 		},
 		{
 			Path:    APIVersionPrefix + "/security/vulnerabilities/settings",

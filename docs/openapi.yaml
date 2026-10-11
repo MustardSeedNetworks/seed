@@ -8986,6 +8986,19 @@ components:
                 - stations
                 - anomalies
             type: object
+        VulnFindingHistoryResponse:
+            additionalProperties: false
+            properties:
+                history:
+                    items:
+                        $ref: '#/components/schemas/VulnStatusChangeResponse'
+                    type: array
+                id:
+                    type: integer
+            required:
+                - id
+                - history
+            type: object
         VulnFindingResponse:
             additionalProperties: false
             properties:
@@ -9027,6 +9040,28 @@ components:
                 - status
                 - detectedAt
             type: object
+        VulnFindingStatusRequest:
+            additionalProperties: false
+            properties:
+                reason:
+                    type: string
+                status:
+                    type: string
+            required:
+                - status
+                - reason
+            type: object
+        VulnFindingStatusResponse:
+            additionalProperties: false
+            properties:
+                id:
+                    type: integer
+                status:
+                    type: string
+            required:
+                - id
+                - status
+            type: object
         VulnFindingsResponse:
             additionalProperties: false
             properties:
@@ -9045,6 +9080,25 @@ components:
             properties:
                 ip:
                     type: string
+            type: object
+        VulnStatusChangeResponse:
+            additionalProperties: false
+            properties:
+                actor:
+                    type: string
+                changedAt:
+                    format: date-time
+                    type: string
+                from:
+                    type: string
+                reason:
+                    type: string
+                to:
+                    type: string
+            required:
+                - from
+                - to
+                - changedAt
             type: object
         Vulnerability:
             additionalProperties: false
@@ -10482,9 +10536,9 @@ paths:
             security:
                 - BearerAuth: []
                   CsrfToken: []
-    /api/v1/captures/{subpath}:
+    /api/v1/captures/{captureId}:
         get:
-            operationId: getApiV1CapturesSubpath
+            operationId: getApiV1CapturesCaptureId
             responses:
                 "401":
                     content:
@@ -10505,9 +10559,9 @@ paths:
                                 $ref: '#/components/schemas/Error'
                     description: Internal error.
         parameters:
-            - description: Trailing path segment; this route matches by prefix.
+            - description: Path parameter.
               in: path
-              name: subpath
+              name: captureId
               required: true
               schema:
                 type: string
@@ -14424,10 +14478,16 @@ paths:
                             schema:
                                 $ref: '#/components/schemas/Error'
                     description: Internal error.
-    /api/v1/security/vulnerabilities/findings/{subpath}:
+    /api/v1/security/vulnerabilities/findings/{findingId}/history:
         get:
-            operationId: getApiV1SecurityVulnerabilitiesFindingsSubpath
+            operationId: getApiV1SecurityVulnerabilitiesFindingsFindingIdHistory
             responses:
+                "200":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/VulnFindingHistoryResponse'
+                    description: The finding's status changes, oldest first. A change with no actor is the scanner's.
                 "401":
                     content:
                         application/json:
@@ -14447,16 +14507,36 @@ paths:
                                 $ref: '#/components/schemas/Error'
                     description: Internal error.
         parameters:
-            - description: Trailing path segment; this route matches by prefix.
+            - description: Path parameter.
               in: path
-              name: subpath
+              name: findingId
+              required: true
+              schema:
+                type: string
+    /api/v1/security/vulnerabilities/findings/{findingId}/status:
+        parameters:
+            - description: Path parameter.
+              in: path
+              name: findingId
               required: true
               schema:
                 type: string
         post:
             description: Requires an operator-scoped token.
-            operationId: postApiV1SecurityVulnerabilitiesFindingsSubpath
+            operationId: postApiV1SecurityVulnerabilitiesFindingsFindingIdStatus
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/VulnFindingStatusRequest'
+                required: true
             responses:
+                "200":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/VulnFindingStatusResponse'
+                    description: The finding moved to the requested status. status is acknowledged, ignored (with a reason) or new; an operator cannot resolve a finding, the scanner does, and an unknown field is a 400.
                 "401":
                     content:
                         application/json:
