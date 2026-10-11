@@ -193,7 +193,7 @@ export function useNetworkFetchers({
   // Fetch interfaces (#756: Use categorized endpoint for recommendations)
   const fetchInterfaces = useCallback(async () => {
     try {
-      const response = await fetch(`${API_BASE}/api/v1/interfaces?categorized=true`, {
+      const response = await fetch(`${API_BASE}/api/v1/interfaces`, {
         credentials: 'include',
       });
       if (response.ok) {

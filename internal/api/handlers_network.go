@@ -19,6 +19,31 @@ type SetInterfaceRequest struct {
 	Interface string `json:"interface"`
 }
 
+// InterfaceSelectionResponse is the GET /api/v1/interface body: the selected
+// interface and whether it is still usable. Type, Up and FriendlyName are
+// empty when the selected interface no longer exists; Warning and
+// SuggestedInterface are set only when it is unavailable.
+type InterfaceSelectionResponse struct {
+	Interface          string `json:"interface"`
+	IsWireless         bool   `json:"isWireless"`
+	Available          bool   `json:"available"`
+	Type               string `json:"type,omitempty"`
+	Up                 bool   `json:"up"`
+	FriendlyName       string `json:"friendlyName,omitempty"`
+	Warning            string `json:"warning,omitempty"`
+	SuggestedInterface string `json:"suggestedInterface,omitempty"`
+}
+
+// SetInterfaceResponse is the PUT /api/v1/interface body. Warning is set when
+// the newly selected interface is down.
+type SetInterfaceResponse struct {
+	Status     string `json:"status"            jsonschema:"enum=ok"`
+	Interface  string `json:"interface"`
+	IsWireless bool   `json:"isWireless"`
+	Type       string `json:"type"`
+	Warning    string `json:"warning,omitempty"`
+}
+
 // SetMTURequest represents the request to set interface MTU.
 //
 // MTU range 68..65535: 68 is the IPv4 minimum per RFC 791; 65535 is the
@@ -128,16 +153,12 @@ func (s *Server) handleInterfaces(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// #756: Check if categorized response is requested
-	if r.URL.Query().Get("categorized") == "true" {
-		s.handleCategorizedInterfaces(w, r)
-		return
-	}
+	resp := categorizeInterfaces(
+		s.netManager().GetUsableInterfaces(),
+		s.netManager().GetCurrentInterface(),
+	)
 
-	// Return only physical interfaces (ethernet and wifi) - excludes loopback, docker, veth, etc.
-	interfaces := s.netManager().GetUsableInterfaces()
-
-	sendJSONResponse(w, nil, http.StatusOK, interfaces)
+	sendJSONResponse(w, nil, http.StatusOK, resp)
 }
 
 // isBetterInterface returns true if candidate is better than current best.
@@ -150,17 +171,6 @@ func isBetterInterface(candidate, best *netif.InterfaceInfo) bool {
 		return true
 	}
 	return candidate.Up && best.Up && candidate.Score > best.Score
-}
-
-// handleCategorizedInterfaces returns interfaces grouped by type (ethernet vs WiFi).
-// #756: Helps UI show ethernet interfaces under Ethernet dropdown, WiFi under WiFi dropdown.
-func (s *Server) handleCategorizedInterfaces(w http.ResponseWriter, _ *http.Request) {
-	resp := categorizeInterfaces(
-		s.netManager().GetUsableInterfaces(),
-		s.netManager().GetCurrentInterface(),
-	)
-
-	sendJSONResponse(w, nil, http.StatusOK, resp)
 }
 
 // interfaceKind is the list an interface belongs in. The UI renders exactly
@@ -290,31 +300,22 @@ func (s *Server) handleGetInterface(w http.ResponseWriter) {
 		isWireless = s.wifiManager().IsWireless()
 	}
 
-	// #756: Check if the configured interface is still available
-	interfaceAvailable := ifaceInfo != nil && ifaceInfo.Up
-
-	resp := map[string]any{
-		"interface":  currentIface,
-		"isWireless": isWireless,
-		"available":  interfaceAvailable,
+	resp := InterfaceSelectionResponse{
+		Interface:  currentIface,
+		IsWireless: isWireless,
+		// #756: Check if the configured interface is still available
+		Available: ifaceInfo != nil && ifaceInfo.Up,
 	}
-
-	// Add interface details if available
 	if ifaceInfo != nil {
-		resp["type"] = string(ifaceInfo.Type)
-		resp["up"] = ifaceInfo.Up
-		if ifaceInfo.FriendlyName != "" {
-			resp["friendlyName"] = ifaceInfo.FriendlyName
-		}
+		resp.Type = string(ifaceInfo.Type)
+		resp.Up = ifaceInfo.Up
+		resp.FriendlyName = ifaceInfo.FriendlyName
 	}
 
 	// #756: If interface is unavailable, suggest alternatives
-	if !interfaceAvailable && currentIface != "" {
-		resp["warning"] = "Selected interface is no longer available"
-		// Find best alternative
-		if suggested := s.netManager().FindFirstAvailable(nil); suggested != "" {
-			resp["suggestedInterface"] = suggested
-		}
+	if !resp.Available && currentIface != "" {
+		resp.Warning = "Selected interface is no longer available"
+		resp.SuggestedInterface = s.netManager().FindFirstAvailable(nil)
 	}
 
 	sendJSONResponse(w, nil, http.StatusOK, resp)
@@ -403,17 +404,13 @@ func (s *Server) handlePutInterface(
 		isWireless = s.wifiManager().IsWireless()
 	}
 
-	resp := map[string]any{
-		"status":     "ok",
-		"interface":  req.Interface,
-		"isWireless": isWireless,
-		"type":       string(ifaceInfo.Type),
-	}
-	if warning != "" {
-		resp["warning"] = warning
-	}
-
-	sendJSONResponse(w, nil, http.StatusOK, resp)
+	sendJSONResponse(w, nil, http.StatusOK, SetInterfaceResponse{
+		Status:     "ok",
+		Interface:  req.Interface,
+		IsWireless: isWireless,
+		Type:       string(ifaceInfo.Type),
+		Warning:    warning,
+	})
 }
 
 // handleSetMTU handles POST requests to set interface MTU.

@@ -25,15 +25,13 @@ func selectableInterface(t *testing.T, server *api.Server) string {
 		t.Fatalf("list interfaces: status = %d: %s", w.Code, w.Body.String())
 	}
 
-	var ifaces []struct {
-		Name string `json:"name"`
-	}
-	if err := json.NewDecoder(w.Body).Decode(&ifaces); err != nil {
+	var listing api.CategorizedInterfacesResponse
+	if err := json.NewDecoder(w.Body).Decode(&listing); err != nil {
 		t.Fatalf("decode interfaces: %v", err)
 	}
-	for i := range ifaces {
-		if ifaces[i].Name != "" {
-			return ifaces[i].Name
+	for _, iface := range append(listing.Ethernet, listing.WiFi...) {
+		if iface.Name != "" {
+			return iface.Name
 		}
 	}
 	t.Skip("this host offers no selectable interface")
