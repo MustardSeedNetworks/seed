@@ -1,0 +1,166 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/MustardSeedNetworks/seed/main/docs/schemas/api/alert-list-response.schema.json",
+  "$ref": "#/$defs/AlertListResponse",
+  "$defs": {
+    "Alert": {
+      "properties": {
+        "id": {
+          "type": "integer"
+        },
+        "type": {
+          "type": "string"
+        },
+        "severity": {
+          "type": "string"
+        },
+        "title": {
+          "type": "string"
+        },
+        "message": {
+          "type": "string"
+        },
+        "source": {
+          "type": "string"
+        },
+        "acknowledged": {
+          "type": "boolean"
+        },
+        "resolved": {
+          "type": "boolean"
+        },
+        "createdAt": {
+          "type": "string"
+        },
+        "metadata": {
+          "additionalProperties": true,
+          "type": "object"
+        },
+        "deviceId": {
+          "type": "string"
+        },
+        "acknowledgedBy": {
+          "type": "string"
+        },
+        "acknowledgedAt": {
+          "type": "string"
+        },
+        "resolvedAt": {
+          "type": "string"
+        },
+        "deliveries": {
+          "items": {
+            "$ref": "#/$defs/AlertDelivery"
+          },
+          "type": "array"
+        },
+        "rule": {
+          "type": "string"
+        },
+        "rootCauseId": {
+          "type": "integer"
+        },
+        "narrative": {
+          "$ref": "#/$defs/AlertNarrative"
+        },
+        "escalationStage": {
+          "type": "integer"
+        },
+        "escalatedAt": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "id",
+        "type",
+        "severity",
+        "title",
+        "message",
+        "source",
+        "acknowledged",
+        "resolved",
+        "createdAt",
+        "metadata"
+      ]
+    },
+    "AlertDelivery": {
+      "properties": {
+        "channel": {
+          "type": "string",
+          "enum": [
+            "webhook",
+            "email",
+            "syslog"
+          ]
+        },
+        "status": {
+          "type": "string",
+          "enum": [
+            "pending",
+            "delivered",
+            "failed",
+            "dropped"
+          ]
+        },
+        "attemptedAt": {
+          "type": "string"
+        },
+        "error": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "channel",
+        "status"
+      ]
+    },
+    "AlertListResponse": {
+      "properties": {
+        "count": {
+          "type": "integer"
+        },
+        "alerts": {
+          "items": {
+            "$ref": "#/$defs/Alert"
+          },
+          "type": "array"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "count",
+        "alerts"
+      ]
+    },
+    "AlertNarrative": {
+      "properties": {
+        "summary": {
+          "type": "string"
+        },
+        "evidence": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "nextCheck": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "summary",
+        "evidence",
+        "nextCheck"
+      ]
+    }
+  },
+  "title": "AlertListResponse",
+  "description": "AlertListResponse — generated from the Go struct in internal/api; refresh with `make schema` after struct changes."
+}

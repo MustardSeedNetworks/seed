@@ -14,7 +14,7 @@
 import { useEffect, useState } from 'react';
 import { api } from '../api';
 import { LogComponents, logger } from '../lib/logger';
-import type { AlertsListResponse } from '../types/alerts';
+import type { AlertListResponse } from '../types/generated/alert-list-response';
 import type { SaveStatus } from '../types/settings';
 
 export const ESCALATION_CHANNELS = ['webhook', 'email', 'syslog'] as const;
@@ -109,7 +109,7 @@ export function useAlertEscalationSettings(): UseAlertEscalationSettingsResult {
           logger.error(LogComponents.CONFIG, 'Failed to fetch alert escalation settings', err);
         }),
       api
-        .get<AlertsListResponse>('/api/v1/alerts?limit=1000')
+        .get<AlertListResponse>('/api/v1/alerts?limit=1000')
         .then((data) => {
           const rules = new Set<string>();
           for (const alert of data.alerts) {

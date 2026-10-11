@@ -402,3 +402,12 @@ func formatTime(t time.Time) string {
 	}
 	return t.UTC().Format(time.RFC3339Nano)
 }
+
+// formatTimePtr is formatTime for an optional timestamp: "" when unset, so an
+// omitempty field drops it.
+func formatTimePtr(t *time.Time) string {
+	if t == nil {
+		return ""
+	}
+	return formatTime(*t)
+}

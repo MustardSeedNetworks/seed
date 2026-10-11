@@ -571,6 +571,30 @@ operations:
         application/json:
           schema:
             $ref: '#/components/schemas/TracerouteRequest'
+  GET /api/v1/alerts:
+    responses:
+      "200":
+        description: The alert inbox, newest first. Filters are query parameters - type, severity, device_id, unacknowledged_only, unresolved_only, since (RFC3339), limit (at most 1000, default 100) and offset.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AlertListResponse'
+  POST /api/v1/alerts/{alertId}/acknowledge:
+    responses:
+      "200":
+        description: The alert is acknowledged by the caller.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AlertAcknowledgeResponse'
+  POST /api/v1/alerts/{alertId}/resolve:
+    responses:
+      "200":
+        description: The alert is resolved.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AlertResolveResponse'
   GET /api/v1/alert-rules:
     responses:
       "200":

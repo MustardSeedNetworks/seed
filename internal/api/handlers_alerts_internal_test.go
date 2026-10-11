@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"strconv"
+	"strings"
 	"testing"
 	"time"
 
@@ -105,7 +106,7 @@ func TestHandleAlertAction_Acknowledge(t *testing.T) {
 	req := httptest.NewRequest(http.MethodPost, url, http.NoBody)
 	req = req.WithContext(auth.WithUsername(req.Context(), "alice"))
 	w := httptest.NewRecorder()
-	s.handleAlertAction(w, req)
+	routed(alertAcknowledgePath, s.handleAlertAcknowledge)(w, req)
 	if w.Code != http.StatusOK {
 		t.Fatalf("status = %d, want 200; body=%s", w.Code, w.Body.String())
 	}
@@ -130,7 +131,7 @@ func TestHandleAlertAction_Resolve(t *testing.T) {
 	url := APIVersionPrefix + "/alerts/" + strconv.FormatInt(id, 10) + "/resolve"
 	req := httptest.NewRequest(http.MethodPost, url, http.NoBody)
 	w := httptest.NewRecorder()
-	s.handleAlertAction(w, req)
+	routed(alertResolvePath, s.handleAlertResolve)(w, req)
 	if w.Code != http.StatusOK {
 		t.Fatalf("status = %d, want 200", w.Code)
 	}
@@ -141,35 +142,22 @@ func TestHandleAlertAction_Resolve(t *testing.T) {
 	}
 }
 
-func TestHandleAlertAction_BadPathReturns400(t *testing.T) {
+func TestHandleAlertAction_BadIDReturns400(t *testing.T) {
 	s := newAlertsTestServer(t)
-	tests := []struct{ name, path string }{
-		{"no action", APIVersionPrefix + "/alerts/1"},
-		{"non-int id", APIVersionPrefix + "/alerts/abc/acknowledge"},
-		{"zero id", APIVersionPrefix + "/alerts/0/acknowledge"},
-		{"missing id", APIVersionPrefix + "/alerts//acknowledge"},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			req := httptest.NewRequest(http.MethodPost, tt.path, http.NoBody)
-			w := httptest.NewRecorder()
-			s.handleAlertAction(w, req)
-			if w.Code != http.StatusBadRequest {
-				t.Errorf("status = %d, want 400", w.Code)
+	for _, id := range []string{"abc", "0", "-1"} {
+		t.Run(id, func(t *testing.T) {
+			for pattern, h := range map[string]http.HandlerFunc{
+				alertAcknowledgePath: s.handleAlertAcknowledge,
+				alertResolvePath:     s.handleAlertResolve,
+			} {
+				path := strings.Replace(pattern, "{alertId}", id, 1)
+				w := httptest.NewRecorder()
+				routed(pattern, h)(w, httptest.NewRequest(http.MethodPost, path, http.NoBody))
+				if w.Code != http.StatusBadRequest {
+					t.Errorf("POST %s = %d, want 400", path, w.Code)
+				}
 			}
 		})
-	}
-}
-
-func TestHandleAlertAction_UnknownActionReturns400(t *testing.T) {
-	s := newAlertsTestServer(t)
-	id := seedAlert(t, s.db(), alerts.SeverityWarning)
-	url := APIVersionPrefix + "/alerts/" + strconv.FormatInt(id, 10) + "/explode"
-	req := httptest.NewRequest(http.MethodPost, url, http.NoBody)
-	w := httptest.NewRecorder()
-	s.handleAlertAction(w, req)
-	if w.Code != http.StatusBadRequest {
-		t.Errorf("status = %d, want 400", w.Code)
 	}
 }
 
