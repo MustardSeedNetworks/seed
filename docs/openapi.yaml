@@ -8460,6 +8460,25 @@ components:
                 - interface
                 - vlanId
             type: object
+        VLANInterfaceResponse:
+            additionalProperties: false
+            properties:
+                interface:
+                    type: string
+                message:
+                    type: string
+                status:
+                    enum:
+                        - success
+                    type: string
+                vlanId:
+                    type: integer
+            required:
+                - status
+                - message
+                - interface
+                - vlanId
+            type: object
         VLANResponse:
             additionalProperties: false
             properties:
@@ -16184,30 +16203,9 @@ paths:
                                 $ref: '#/components/schemas/Error'
                     description: Internal error.
     /api/v1/telemetry/vlan/interface:
-        get:
-            operationId: getApiV1TelemetryVlanInterface
-            responses:
-                "401":
-                    content:
-                        application/json:
-                            schema:
-                                $ref: '#/components/schemas/Error'
-                    description: Missing or invalid bearer token.
-                "405":
-                    content:
-                        application/json:
-                            schema:
-                                $ref: '#/components/schemas/Error'
-                    description: Method not allowed; the Allow header lists the accepted set.
-                "500":
-                    content:
-                        application/json:
-                            schema:
-                                $ref: '#/components/schemas/Error'
-                    description: Internal error.
-        post:
+        delete:
             description: Requires an operator-scoped token.
-            operationId: postApiV1TelemetryVlanInterface
+            operationId: deleteApiV1TelemetryVlanInterface
             requestBody:
                 content:
                     application/json:
@@ -16215,6 +16213,12 @@ paths:
                             $ref: '#/components/schemas/VLANInterfaceRequest'
                 required: true
             responses:
+                "200":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/VLANInterfaceResponse'
+                    description: The 802.1Q sub-interface was removed. An empty interface means the current one.
                 "401":
                     content:
                         application/json:
@@ -16248,10 +16252,22 @@ paths:
             security:
                 - BearerAuth: []
                   CsrfToken: []
-        put:
+        post:
             description: Requires an operator-scoped token.
-            operationId: putApiV1TelemetryVlanInterface
+            operationId: postApiV1TelemetryVlanInterface
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/VLANInterfaceRequest'
+                required: true
             responses:
+                "200":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/VLANInterfaceResponse'
+                    description: The 802.1Q sub-interface was created. An empty interface means the current one.
                 "401":
                     content:
                         application/json:

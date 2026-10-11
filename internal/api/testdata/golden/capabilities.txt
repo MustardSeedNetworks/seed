@@ -669,9 +669,8 @@ body:
     "csrf": true,
     "maxBodyBytes": 262144,
     "methods": [
-      "GET",
       "POST",
-      "PUT"
+      "DELETE"
     ],
     "path": "/api/v1/telemetry/vlan/interface",
     "rateLimited": false,

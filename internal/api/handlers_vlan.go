@@ -35,6 +35,15 @@ type VLANInterfaceRequest struct {
 	VlanID    int    `json:"vlanId"`
 }
 
+// VLANInterfaceResponse confirms a VLAN sub-interface was created or removed,
+// naming the parent interface the request resolved to.
+type VLANInterfaceResponse struct {
+	Status    string `json:"status"    jsonschema:"enum=success"`
+	Message   string `json:"message"`
+	Interface string `json:"interface"`
+	VlanID    int    `json:"vlanId"`
+}
+
 // ============================================================================
 // VLAN Handlers
 // ============================================================================
@@ -258,11 +267,11 @@ func (s *Server) applyVLANOp(
 		return
 	}
 
-	sendJSONResponse(w, nil, http.StatusOK, map[string]any{
-		"status":    statusSuccess,
-		"message":   op.successMsg,
-		"interface": iface,
-		"vlanId":    vlanID,
+	sendJSONResponse(w, nil, http.StatusOK, VLANInterfaceResponse{
+		Status:    statusSuccess,
+		Message:   op.successMsg,
+		Interface: iface,
+		VlanID:    vlanID,
 	})
 }
 
