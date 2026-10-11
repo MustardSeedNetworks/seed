@@ -175,41 +175,26 @@ func (s *Server) handleRogueDHCPStop(
 	sendJSONResponse(w, logger, http.StatusOK, *resp)
 }
 
-// handleRogueDHCPServers returns detected DHCP servers (GET) or clears the list (DELETE).
+// handleRogueDHCPServers returns the detected DHCP servers.
 func (s *Server) handleRogueDHCPServers(w http.ResponseWriter, r *http.Request) {
 	logger := logging.FromContext(r.Context())
 	localizer := i18n.FromRequest(r)
 
-	switch r.Method {
-	case http.MethodGet:
-		// Get all detected servers
-		servers := s.rogueDetector().GetDetectedServers()
-		rogues := s.rogueDetector().GetRogueServers()
-
-		resp := RogueServersResponse{
-			Servers:         toRogueServers(servers),
-			RogueCount:      len(rogues),
-			AuthorizedCount: len(servers) - len(rogues),
-		}
-		sendJSONResponse(w, logger, http.StatusOK, resp)
-
-	case http.MethodDelete:
-		// Clear detected servers list
-		s.rogueDetector().ClearDetectedServers()
-		sendJSONResponse(w, logger, http.StatusOK, map[string]string{
-			"message": "Detected servers list cleared",
-		})
-
-	default:
+	if r.Method != http.MethodGet {
 		sendErrorResponseWithDetails(
-			w,
-			logger,
-			http.StatusMethodNotAllowed,
-			ErrCodeMethodNotAllowed,
-			localizer.T("errors.api.methodNotAllowed"),
-			"",
-		) // fixes #694
+			w, logger, http.StatusMethodNotAllowed, ErrCodeMethodNotAllowed,
+			localizer.T("errors.api.methodNotAllowed"), "",
+		)
+		return
 	}
+
+	servers := s.rogueDetector().GetDetectedServers()
+	rogues := s.rogueDetector().GetRogueServers()
+	sendJSONResponse(w, logger, http.StatusOK, RogueServersResponse{
+		Servers:         toRogueServers(servers),
+		RogueCount:      len(rogues),
+		AuthorizedCount: len(servers) - len(rogues),
+	})
 }
 
 // handleRogueDHCPConfig gets (GET) or updates (PUT) the rogue DHCP detector

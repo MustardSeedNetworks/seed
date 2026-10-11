@@ -18,7 +18,6 @@ func (s *Server) setupTelemetryRoutes() {
 	post := []string{http.MethodPost}
 	getPost := []string{http.MethodGet, http.MethodPost}
 	getPut := []string{http.MethodGet, http.MethodPut}
-	getPostPut := []string{http.MethodGet, http.MethodPost, http.MethodPut}
 	postDelete := []string{http.MethodPost, http.MethodDelete}
 	s.routes.RegisterAll([]route.Route{
 		{Path: APIVersionPrefix + "/telemetry/link", Handler: s.handleLink, Methods: get, Auth: true},
@@ -67,11 +66,12 @@ func (s *Server) setupTelemetryRoutes() {
 			CSRF:    true,
 		},
 		{
+			// GET only, the one method handleRogueDHCPServers serves; POST was
+			// declared as well and reached the handler only to be refused (#3261).
 			Path:    APIVersionPrefix + "/telemetry/dhcp/rogue/servers",
 			Handler: s.handleRogueDHCPServers,
-			Methods: getPost,
+			Methods: get,
 			Auth:    true,
-			CSRF:    true,
 		},
 		{
 			Path:    APIVersionPrefix + "/telemetry/dhcp/rogue/config",
@@ -160,12 +160,13 @@ func (s *Server) setupTelemetryRoutes() {
 			CSRF:    true,
 		},
 		{
+			// GET only, the one method handleHealthChecks serves; POST was
+			// declared as well and reached the handler only to be refused (#3261).
 			Path:    APIVersionPrefix + "/telemetry/probes/run",
 			Handler: s.handleHealthChecks,
-			Methods: getPost,
+			Methods: get,
 			Limiter: limitEndpoint,
 			Auth:    true,
-			CSRF:    true,
 		},
 		// Anomaly detection is Pro (LICENSE_STRATEGY §2). It reads the unified
 		// anomaly store's source=probe slice (ADR-0021/0025); the legacy
@@ -222,9 +223,11 @@ func (s *Server) setupTelemetryRoutes() {
 			CSRF:    true,
 		},
 		{
+			// GET reads the cached answer, POST forces a refresh; PUT was declared
+			// as well and reached the handler only to be refused (#3261).
 			Path:    APIVersionPrefix + "/telemetry/publicip",
 			Handler: s.handlePublicIP,
-			Methods: getPostPut,
+			Methods: getPost,
 			Auth:    true,
 			CSRF:    true,
 		},
