@@ -45,6 +45,8 @@ const (
 	jobPath              = jobsPath + "/{jobId}"
 	tokenPath            = APIVersionPrefix + "/tokens/{tokenId}"
 	userPath             = APIVersionPrefix + "/users/{username}"
+	historyProbePath     = APIVersionPrefix + "/history/probes/{probeId}"
+	topologyNodePath     = APIVersionPrefix + "/topology/nodes/{nodeId}"
 )
 
 // routed serves h behind pattern on its own mux, so a handler that reads

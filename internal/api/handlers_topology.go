@@ -24,7 +24,6 @@ import (
 	"errors"
 	"net/http"
 	"strconv"
-	"strings"
 	"time"
 
 	"github.com/invopop/jsonschema"
@@ -46,10 +45,6 @@ func writeTopologyError(w http.ResponseWriter, r *http.Request, err error, gener
 		writeError(w, r, http.StatusInternalServerError, ErrCodeInternal, genericMsg)
 	}
 }
-
-// topologyPathPrefix is the route root for every topology handler.
-// Used to strip the prefix when extracting path parameters.
-const topologyPathPrefix = APIVersionPrefix + "/topology/"
 
 // topologyMaxLimit caps the per-page result size for all topology
 // list endpoints. Larger values risk exceeding the JSON encoder's
@@ -185,15 +180,11 @@ func (s *Server) handleTopologyNodes(w http.ResponseWriter, r *http.Request) {
 	sendJSONResponse(w, logger, http.StatusOK, TopologyNodeListResponse{Count: len(enc), Nodes: enc})
 }
 
-// handleTopologyNodeByID serves GET /api/v1/topology/nodes/{id}.
+// handleTopologyNodeByID serves GET /api/v1/topology/nodes/{nodeId}.
 // Returns the node plus its interfaces and links — one HTTP call
 // per "device detail" page in the UI.
 func (s *Server) handleTopologyNodeByID(w http.ResponseWriter, r *http.Request) {
-	id := strings.TrimPrefix(r.URL.Path, topologyPathPrefix+"nodes/")
-	if id == "" || strings.Contains(id, "/") {
-		writeError(w, r, http.StatusBadRequest, ErrCodeBadRequest, "Missing or invalid node id")
-		return
-	}
+	id := r.PathValue("nodeId")
 	logger := logging.FromContext(r.Context())
 
 	detail, err := s.topologyQueries.Node(r.Context(), id)

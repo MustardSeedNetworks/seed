@@ -313,7 +313,7 @@ func TestTopologyResponseShapes(t *testing.T) {
 		"sourceNodeId", "speedMbps", "status", "targetInterface", "targetNodeId", "utilizationPct",
 	}
 
-	nodes := serve(t, s.handleTopologyNodes, topologyPathPrefix+"nodes")
+	nodes := serve(t, s.handleTopologyNodes, APIVersionPrefix+"/topology/nodes")
 	require.Equal(t, []string{"count", "nodes"}, topLevelKeys(t, nodes.Body.Bytes()))
 	var nl struct {
 		Count int               `json:"count"`
@@ -323,7 +323,7 @@ func TestTopologyResponseShapes(t *testing.T) {
 	require.Equal(t, 2, nl.Count)
 	require.Equal(t, nodeKeys, topLevelKeys(t, nl.Nodes[0]))
 
-	detail := serve(t, s.handleTopologyNodeByID, topologyPathPrefix+"nodes/"+nodeID)
+	detail := serve(t, routed(topologyNodePath, s.handleTopologyNodeByID), APIVersionPrefix+"/topology/nodes/"+nodeID)
 	require.Equal(t, []string{"interfaces", "links", "node"}, topLevelKeys(t, detail.Body.Bytes()))
 	var d struct {
 		Node       json.RawMessage   `json:"node"`
@@ -348,7 +348,7 @@ func TestTopologyResponseShapes(t *testing.T) {
 	require.NoError(t, json.Unmarshal(d.Interfaces[0], &iface))
 	require.InDelta(t, 1_000_000_000, iface["speedBps"], 0)
 
-	links := serve(t, s.handleTopologyLinks, topologyPathPrefix+"links")
+	links := serve(t, s.handleTopologyLinks, APIVersionPrefix+"/topology/links")
 	require.Equal(t, []string{"count", "links"}, topLevelKeys(t, links.Body.Bytes()))
 	var ll struct {
 		Links []json.RawMessage `json:"links"`
@@ -356,7 +356,7 @@ func TestTopologyResponseShapes(t *testing.T) {
 	require.NoError(t, json.Unmarshal(links.Body.Bytes(), &ll))
 	require.JSONEq(t, string(d.Links[0]), string(ll.Links[0]))
 
-	arp := serve(t, s.handleTopologyARP, topologyPathPrefix+"arp")
+	arp := serve(t, s.handleTopologyARP, APIVersionPrefix+"/topology/arp")
 	require.Equal(t, []string{"bindings", "count"}, topLevelKeys(t, arp.Body.Bytes()))
 	var al struct {
 		Bindings []json.RawMessage `json:"bindings"`
@@ -371,11 +371,11 @@ func TestEmptyTopologyListsAreArrays(t *testing.T) {
 	t.Parallel()
 	s := newTopologyTestServer(t)
 	require.JSONEq(t, `{"count":0,"nodes":[]}`,
-		serve(t, s.handleTopologyNodes, topologyPathPrefix+"nodes").Body.String())
+		serve(t, s.handleTopologyNodes, APIVersionPrefix+"/topology/nodes").Body.String())
 	require.JSONEq(t, `{"count":0,"links":[]}`,
-		serve(t, s.handleTopologyLinks, topologyPathPrefix+"links").Body.String())
+		serve(t, s.handleTopologyLinks, APIVersionPrefix+"/topology/links").Body.String())
 	require.JSONEq(t, `{"count":0,"bindings":[]}`,
-		serve(t, s.handleTopologyARP, topologyPathPrefix+"arp").Body.String())
+		serve(t, s.handleTopologyARP, APIVersionPrefix+"/topology/arp").Body.String())
 }
 
 func TestAlertRuleResponseShape(t *testing.T) {

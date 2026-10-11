@@ -268,7 +268,7 @@ func (s *Server) setupSecurityRoutes() {
 			Auth:    true,
 		},
 		{
-			Path:    APIVersionPrefix + "/discovery/engine/device/",
+			Path:    APIVersionPrefix + "/discovery/engine/device/{mac}",
 			Handler: s.handleEngineDevice,
 			Methods: get,
 			Auth:    true,

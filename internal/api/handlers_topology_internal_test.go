@@ -146,7 +146,7 @@ func TestHandleTopologyNodeByID_ReturnsNodeWithInterfacesAndLinks(t *testing.T) 
 
 	req := httptest.NewRequest(http.MethodGet, APIVersionPrefix+"/topology/nodes/"+nodeID, http.NoBody)
 	w := httptest.NewRecorder()
-	s.handleTopologyNodeByID(w, req)
+	routed(topologyNodePath, s.handleTopologyNodeByID)(w, req)
 
 	if w.Code != http.StatusOK {
 		t.Fatalf("status = %d, want 200; body=%s", w.Code, w.Body.String())
@@ -176,19 +176,22 @@ func TestHandleTopologyNodeByID_UnknownReturns404(t *testing.T) {
 
 	req := httptest.NewRequest(http.MethodGet, APIVersionPrefix+"/topology/nodes/no-such-node", http.NoBody)
 	w := httptest.NewRecorder()
-	s.handleTopologyNodeByID(w, req)
+	routed(topologyNodePath, s.handleTopologyNodeByID)(w, req)
 	if w.Code != http.StatusNotFound {
 		t.Errorf("status = %d, want 404", w.Code)
 	}
 }
 
-func TestHandleTopologyNodeByID_EmptyIDReturns400(t *testing.T) {
+// An empty or nested node id is not a node: the router answers 404.
+func TestHandleTopologyNodeByID_EmptyOrNestedIDReturns404(t *testing.T) {
 	s := newTopologyTestServer(t)
-	req := httptest.NewRequest(http.MethodGet, APIVersionPrefix+"/topology/nodes/", http.NoBody)
-	w := httptest.NewRecorder()
-	s.handleTopologyNodeByID(w, req)
-	if w.Code != http.StatusBadRequest {
-		t.Errorf("status = %d, want 400", w.Code)
+	for _, path := range []string{"/topology/nodes/", "/topology/nodes/a/b"} {
+		req := httptest.NewRequest(http.MethodGet, APIVersionPrefix+path, http.NoBody)
+		w := httptest.NewRecorder()
+		routed(topologyNodePath, s.handleTopologyNodeByID)(w, req)
+		if w.Code != http.StatusNotFound {
+			t.Errorf("%s status = %d, want 404", path, w.Code)
+		}
 	}
 }
 

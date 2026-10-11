@@ -19,6 +19,9 @@ func routedCRUDServer(t *testing.T) *Server {
 	s := newDeviceCredentialsTestServer(t)
 	s.pollingTargets = app.NewPollingTargets(s.db, s.pollingTargetLimit)
 	s.alertRules = app.NewAlertRules(s.db)
+	s.historyQueries = app.NewHistory(s.db)
+	s.topologyQueries = app.NewTopologyQueries(s.db, topologyMaxLimit)
+	s.discoveryDevices = app.NewDiscoveryDevices(s.discoveryEngine)
 	s.initIdentityUseCases()
 	if _, err := s.db().CreateUser(t.Context(), "admin", "$2a$10$x", roles.Admin); err != nil {
 		t.Fatalf("seed admin: %v", err)
@@ -74,6 +77,15 @@ func TestByIDRoutesThroughTheRouter(t *testing.T) {
 
 		{http.MethodGet, APIVersionPrefix + "/users/admin", "", http.StatusOK},
 		{http.MethodGet, APIVersionPrefix + "/users/admin/extra", "", http.StatusNotFound},
+
+		{http.MethodGet, APIVersionPrefix + "/history/probes/never-run", "", http.StatusOK},
+		{http.MethodGet, APIVersionPrefix + "/history/probes/never-run/extra", "", http.StatusNotFound},
+
+		{http.MethodGet, APIVersionPrefix + "/topology/nodes/no-such-node", "", http.StatusNotFound},
+		{http.MethodGet, APIVersionPrefix + "/topology/nodes/a/b", "", http.StatusNotFound},
+
+		{http.MethodGet, APIVersionPrefix + "/discovery/engine/device/AA:BB:CC:DD:EE:FF", "", http.StatusServiceUnavailable},
+		{http.MethodGet, APIVersionPrefix + "/discovery/engine/device/AA:BB/extra", "", http.StatusNotFound},
 	} {
 		rec := httptest.NewRecorder()
 		s.Mux().ServeHTTP(rec, httptest.NewRequest(tc.method, tc.path, strings.NewReader(tc.body)))

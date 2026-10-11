@@ -810,7 +810,7 @@ body:
     "methods": [
       "GET"
     ],
-    "path": "/api/v1/history/probes/",
+    "path": "/api/v1/history/probes/{probeId}",
     "rateLimited": false
   },
   {
@@ -1220,7 +1220,7 @@ body:
     "methods": [
       "GET"
     ],
-    "path": "/api/v1/discovery/engine/device/",
+    "path": "/api/v1/discovery/engine/device/{mac}",
     "rateLimited": false
   },
   {
@@ -1450,7 +1450,7 @@ body:
     "methods": [
       "GET"
     ],
-    "path": "/api/v1/topology/nodes/",
+    "path": "/api/v1/topology/nodes/{nodeId}",
     "rateLimited": false
   },
   {
