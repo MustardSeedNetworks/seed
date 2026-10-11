@@ -6,6 +6,7 @@ import (
 	"log/slog"
 	"net/http"
 	"net/http/httptest"
+	"os"
 	"path/filepath"
 	"slices"
 	"strconv"
@@ -20,6 +21,7 @@ import (
 	"github.com/MustardSeedNetworks/seed/internal/config"
 	"github.com/MustardSeedNetworks/seed/internal/discovery"
 	"github.com/MustardSeedNetworks/seed/internal/discovery/enumerate"
+	"github.com/MustardSeedNetworks/seed/internal/discovery/vuln"
 	"github.com/MustardSeedNetworks/seed/internal/engine"
 	enginestatus "github.com/MustardSeedNetworks/seed/internal/engine/status"
 	"github.com/MustardSeedNetworks/seed/internal/polling"
@@ -569,4 +571,101 @@ func TestAlertTestSendResponseShape(t *testing.T) {
 		"/api/v1/settings/alerts/test", strings.NewReader(`{"channel":"webhook"}`)))
 	require.Equal(t, http.StatusOK, w.Code, w.Body.String())
 	require.JSONEq(t, `{"channel":"webhook","sent":true}`, w.Body.String())
+}
+
+// TestVulnerabilityStatusResponseShape pins the scanner status read with no
+// KEV provider, with an empty KEV cache, and with a loaded catalog.
+func TestVulnerabilityStatusResponseShape(t *testing.T) {
+	t.Parallel()
+	const catalog = `{"catalogVersion":"2026.10.10","dateReleased":"2026-10-10T00:00:00Z","count":2,` +
+		`"vulnerabilities":[{"cveID":"CVE-2099-0001","knownRansomwareCampaignUse":"Known"},` +
+		`{"cveID":"CVE-2099-0002","knownRansomwareCampaignUse":"Unknown"}]}`
+	statsKeys := []string{
+		"activelyExploited", "criticalCount", "cveDatabase", "devicesScanned", "enabled",
+		"highCount", "kevEnabled", "lastUpdate", "lowCount", "mediumCount",
+		"ransomwareRelated", "running", "totalVulns",
+	}
+	tests := []struct {
+		name     string
+		kev      bool
+		cache    string
+		wantKEV  map[string]any
+		wantKeys []string
+	}{
+		{name: "no KEV", wantKeys: statsKeys},
+		{
+			name: "KEV not loaded", kev: true,
+			wantKEV:  map[string]any{"loaded": false},
+			wantKeys: append(slices.Clone(statsKeys), "kevStats"),
+		},
+		{
+			name: "KEV loaded", kev: true, cache: catalog,
+			wantKEV: map[string]any{
+				"loaded": true, "version": "2026.10.10", "dateReleased": "2026-10-10T00:00:00Z",
+				"count": float64(2), "ransomwareCount": float64(1),
+			},
+			wantKeys: append(slices.Clone(statsKeys), "kevStats"),
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			dir := t.TempDir()
+			cvePath := filepath.Join(dir, "cves.json")
+			require.NoError(t, os.WriteFile(cvePath, []byte(cveFixture), 0o600))
+			kevDir := ""
+			if tt.cache != "" {
+				kevDir = dir
+				require.NoError(t, os.WriteFile(filepath.Join(dir, "kev_catalog.json"), []byte(tt.cache), 0o600))
+			}
+			scanner, err := vuln.NewVulnerabilityScanner(&vuln.VulnerabilityScannerConfig{
+				Enabled: true, CVEDatabase: "local", LocalDBPath: cvePath,
+				SeverityThreshold: "low", KEVEnabled: tt.kev, KEVCachePath: kevDir,
+			})
+			require.NoError(t, err)
+			_, err = scanner.ScanDevice(context.Background(), &discovery.DiscoveredDevice{
+				IP: "10.20.30.50", MAC: "02:00:00:00:00:05", Vendor: "Linux", OSGuess: "Linux 5.4",
+			})
+			require.NoError(t, err)
+			cfg := config.DefaultConfig()
+			cfg.Security.VulnerabilityScanning.SeverityThreshold = "high"
+			s := &Server{vulnScan: scanner}
+			s.securitySettings = app.NewSecuritySettings(cfg, filepath.Join(dir, "config.yaml"), nil)
+
+			w := serve(t, s.handleVulnerabilityStatus, "/api/v1/security/vulnerabilities/status")
+			require.Equal(t, []string{"enabled", "scanning", "severityFilter", "stats"},
+				topLevelKeys(t, w.Body.Bytes()))
+			var got struct {
+				Enabled        bool                       `json:"enabled"`
+				Scanning       bool                       `json:"scanning"`
+				SeverityFilter string                     `json:"severityFilter"`
+				Stats          map[string]json.RawMessage `json:"stats"`
+			}
+			require.NoError(t, json.Unmarshal(w.Body.Bytes(), &got))
+			require.True(t, got.Enabled)
+			require.False(t, got.Scanning)
+			require.Equal(t, "high", got.SeverityFilter)
+			wantKeys := slices.Sorted(slices.Values(tt.wantKeys))
+			require.Equal(t, wantKeys, topLevelKeys(t, mustMarshal(t, got.Stats)))
+			require.JSONEq(t, "1", string(got.Stats["devicesScanned"]))
+			require.JSONEq(t, "1", string(got.Stats["totalVulns"]))
+			require.JSONEq(t, "1", string(got.Stats["criticalCount"]))
+			require.JSONEq(t, `"local"`, string(got.Stats["cveDatabase"]))
+			if tt.wantKEV == nil {
+				return
+			}
+			var kev map[string]any
+			require.NoError(t, json.Unmarshal(got.Stats["kevStats"], &kev))
+			require.Contains(t, kev, "lastUpdate")
+			delete(kev, "lastUpdate")
+			require.Equal(t, tt.wantKEV, kev)
+		})
+	}
+}
+
+func mustMarshal(t *testing.T, v any) []byte {
+	t.Helper()
+	b, err := json.Marshal(v)
+	require.NoError(t, err)
+	return b
 }

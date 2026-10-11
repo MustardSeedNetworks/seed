@@ -1079,6 +1079,14 @@ operations:
           application/json:
             schema:
               $ref: '#/components/schemas/StatusUpdatedResponse'
+  GET /api/v1/security/vulnerabilities/status:
+    responses:
+      "200":
+        description: The scanner's state, its result counts by severity and the configured severity threshold. Answers 503 with only enabled false when the scanner is off.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/VulnerabilityStatusResponse'
   POST /api/v1/security/vulnerabilities/validate-api-key:
     requestBody:
       required: true
@@ -1443,6 +1451,22 @@ operations:
         application/json:
           schema:
             $ref: '#/components/schemas/TestsSettingsResponse'
+  GET /api/v1/telemetry/publicip:
+    responses:
+      "200":
+        description: The public IPv4 and IPv6 addresses with their geolocation, cached between lookups.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PublicIPResponse'
+  POST /api/v1/telemetry/publicip:
+    responses:
+      "200":
+        description: A fresh lookup of the public addresses, bypassing the cache.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PublicIPResponse'
   GET /api/v1/telemetry/snmp/settings:
     responses:
       "200":

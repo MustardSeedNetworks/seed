@@ -428,61 +428,64 @@ func (vs *VulnerabilityScanner) GetConfig() *VulnerabilityScannerConfig {
 	return &config
 }
 
+// ScannerStats counts the scanner's stored results by severity and
+// exploitation context.
+type ScannerStats struct {
+	Enabled           bool             `json:"enabled"`
+	Running           bool             `json:"running"`
+	DevicesScanned    int              `json:"devicesScanned"`
+	TotalVulns        int              `json:"totalVulns"`
+	CriticalCount     int              `json:"criticalCount"`
+	HighCount         int              `json:"highCount"`
+	MediumCount       int              `json:"mediumCount"`
+	LowCount          int              `json:"lowCount"`
+	ActivelyExploited int              `json:"activelyExploited"`
+	RansomwareRelated int              `json:"ransomwareRelated"`
+	LastUpdate        time.Time        `json:"lastUpdate"`
+	CVEDatabase       string           `json:"cveDatabase"`
+	KEVEnabled        bool             `json:"kevEnabled"`
+	KEVStats          *KEVCatalogStats `json:"kevStats,omitempty"`
+}
+
 // GetStats returns statistics about the vulnerability scanner.
-func (vs *VulnerabilityScanner) GetStats() map[string]any {
+func (vs *VulnerabilityScanner) GetStats() ScannerStats {
 	vs.mu.RLock()
 	defer vs.mu.RUnlock()
 
-	totalVulns := 0
-	criticalCount := 0
-	highCount := 0
-	mediumCount := 0
-	lowCount := 0
-	activelyExploited := 0
-	ransomwareRelated := 0
-
+	stats := ScannerStats{
+		Enabled:        vs.config.Enabled,
+		Running:        vs.running,
+		DevicesScanned: len(vs.deviceResults),
+		LastUpdate:     vs.lastUpdate,
+		CVEDatabase:    vs.config.CVEDatabase,
+		KEVEnabled:     vs.config.KEVEnabled,
+	}
 	for _, result := range vs.deviceResults {
-		totalVulns += len(result.Vulnerabilities)
+		stats.TotalVulns += len(result.Vulnerabilities)
 		for i := range result.Vulnerabilities {
 			vuln := &result.Vulnerabilities[i]
 			switch strings.ToLower(vuln.Severity) {
 			case "critical":
-				criticalCount++
+				stats.CriticalCount++
 			case "high":
-				highCount++
+				stats.HighCount++
 			case "medium":
-				mediumCount++
+				stats.MediumCount++
 			case "low":
-				lowCount++
+				stats.LowCount++
 			}
 			if vuln.ActivelyExploited {
-				activelyExploited++
+				stats.ActivelyExploited++
 			}
 			if vuln.RansomwareRelated {
-				ransomwareRelated++
+				stats.RansomwareRelated++
 			}
 		}
 	}
 
-	stats := map[string]any{
-		"enabled":           vs.config.Enabled,
-		"running":           vs.running,
-		"devicesScanned":    len(vs.deviceResults),
-		"totalVulns":        totalVulns,
-		"criticalCount":     criticalCount,
-		"highCount":         highCount,
-		"mediumCount":       mediumCount,
-		"lowCount":          lowCount,
-		"activelyExploited": activelyExploited,
-		"ransomwareRelated": ransomwareRelated,
-		"lastUpdate":        vs.lastUpdate,
-		"cveDatabase":       vs.config.CVEDatabase,
-		"kevEnabled":        vs.config.KEVEnabled,
-	}
-
-	// Add KEV catalog stats if available
 	if vs.kevProvider != nil {
-		stats["kevStats"] = vs.kevProvider.GetCatalogStats()
+		kev := vs.kevProvider.GetCatalogStats()
+		stats.KEVStats = &kev
 	}
 
 	return stats

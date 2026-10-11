@@ -231,19 +231,26 @@ func (kev *KEVProvider) IsRansomwareRelated(cveID string) bool {
 	return strings.EqualFold(entry.KnownRansomwareCampaign, kevRansomwareKnown)
 }
 
+// KEVCatalogStats describes the cached KEV catalog. Until a catalog loads
+// only Loaded and LastUpdate are set.
+type KEVCatalogStats struct {
+	Loaded          bool      `json:"loaded"`
+	Version         string    `json:"version,omitempty"`
+	DateReleased    string    `json:"dateReleased,omitempty"`
+	Count           int       `json:"count,omitempty"`
+	RansomwareCount int       `json:"ransomwareCount,omitempty"`
+	LastUpdate      time.Time `json:"lastUpdate"`
+}
+
 // GetCatalogStats returns statistics about the KEV catalog.
-func (kev *KEVProvider) GetCatalogStats() map[string]any {
+func (kev *KEVProvider) GetCatalogStats() KEVCatalogStats {
 	kev.mu.RLock()
 	defer kev.mu.RUnlock()
 
 	if kev.catalog == nil {
-		return map[string]any{
-			"loaded":     false,
-			"lastUpdate": kev.lastUpdate,
-		}
+		return KEVCatalogStats{LastUpdate: kev.lastUpdate}
 	}
 
-	// Count ransomware-related entries
 	ransomwareCount := 0
 	for i := range kev.catalog.Vulnerabilities {
 		if strings.EqualFold(
@@ -254,13 +261,13 @@ func (kev *KEVProvider) GetCatalogStats() map[string]any {
 		}
 	}
 
-	return map[string]any{
-		"loaded":          true,
-		"version":         kev.catalog.CatalogVersion,
-		"dateReleased":    kev.catalog.DateReleased,
-		"count":           kev.catalog.Count,
-		"ransomwareCount": ransomwareCount,
-		"lastUpdate":      kev.lastUpdate,
+	return KEVCatalogStats{
+		Loaded:          true,
+		Version:         kev.catalog.CatalogVersion,
+		DateReleased:    kev.catalog.DateReleased,
+		Count:           kev.catalog.Count,
+		RansomwareCount: ransomwareCount,
+		LastUpdate:      kev.lastUpdate,
 	}
 }
 

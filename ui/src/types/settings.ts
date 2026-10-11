@@ -617,19 +617,6 @@ export interface VulnerabilityScanSettings {
   autoScan: boolean; // auto-scan after device discovery
 }
 
-export interface VulnerabilityScanStatus {
-  enabled: boolean;
-  scanning: boolean;
-  stats: {
-    totalDevices: number;
-    scannedDevices: number;
-    totalVulnerabilities: number;
-    bySeverity: Record<string, number>;
-    lastScanTime: string;
-  };
-  severityFilter: string;
-}
-
 /** @deprecated Use useDefaults() hook instead - backend is single source of truth */
 export const DEFAULT_VULNERABILITY_SETTINGS: VulnerabilityScanSettings = {
   enabled: true, // Enable by default for security visibility

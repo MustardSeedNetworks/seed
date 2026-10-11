@@ -1,0 +1,92 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/MustardSeedNetworks/seed/main/docs/schemas/api/public-ip-response.schema.json",
+  "$ref": "#/$defs/PublicIPResponse",
+  "$defs": {
+    "HistoryEntry": {
+      "properties": {
+        "ip": {
+          "type": "string"
+        },
+        "firstSeen": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "lastSeen": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "city": {
+          "type": "string"
+        },
+        "country": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "ip",
+        "firstSeen",
+        "lastSeen"
+      ]
+    },
+    "PublicIPResponse": {
+      "properties": {
+        "ipv4": {
+          "type": "string"
+        },
+        "ipv6": {
+          "type": "string"
+        },
+        "lastChecked": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "error": {
+          "type": "string"
+        },
+        "isp": {
+          "type": "string"
+        },
+        "asn": {
+          "type": "string"
+        },
+        "org": {
+          "type": "string"
+        },
+        "city": {
+          "type": "string"
+        },
+        "region": {
+          "type": "string"
+        },
+        "country": {
+          "type": "string"
+        },
+        "countryCode": {
+          "type": "string"
+        },
+        "lat": {
+          "type": "number"
+        },
+        "lon": {
+          "type": "number"
+        },
+        "history": {
+          "items": {
+            "$ref": "#/$defs/HistoryEntry"
+          },
+          "type": "array"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "lastChecked"
+      ]
+    }
+  },
+  "title": "PublicIPResponse",
+  "description": "PublicIPResponse — generated from the Go struct in internal/api; refresh with `make schema` after struct changes."
+}

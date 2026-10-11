@@ -15,6 +15,7 @@ import (
 	"github.com/MustardSeedNetworks/seed/internal/i18n"
 	"github.com/MustardSeedNetworks/seed/internal/identity/roles"
 	"github.com/MustardSeedNetworks/seed/internal/logging"
+	"github.com/MustardSeedNetworks/seed/internal/pipeline/publicip"
 )
 
 // Device discovery timing constants.
@@ -563,6 +564,10 @@ func (s *Server) writeSubnetResult(
 	}
 }
 
+// PublicIPResponse is GET and POST /telemetry/publicip: the checker's
+// result served as it is, named for the API.
+type PublicIPResponse publicip.Result
+
 // handlePublicIP returns the public IPv4 and IPv6 addresses (fixes #702 - uses r.Context() for service calls).
 func (s *Server) handlePublicIP(w http.ResponseWriter, r *http.Request) {
 	logger := logging.FromContext(r.Context())
@@ -582,12 +587,12 @@ func (s *Server) handlePublicIP(w http.ResponseWriter, r *http.Request) {
 	case http.MethodGet:
 		// Return cached result or fetch if cache expired (fixes #702 - passes context)
 		result := s.publicipChecker().GetPublicIP(r.Context())
-		sendJSONResponse(w, logger, http.StatusOK, result)
+		sendJSONResponse(w, logger, http.StatusOK, (*PublicIPResponse)(result))
 
 	case http.MethodPost:
 		// Force refresh (fixes #702 - passes context)
 		result := s.publicipChecker().Refresh(r.Context())
-		sendJSONResponse(w, logger, http.StatusOK, result)
+		sendJSONResponse(w, logger, http.StatusOK, (*PublicIPResponse)(result))
 
 	default:
 		sendErrorResponseWithDetails(
