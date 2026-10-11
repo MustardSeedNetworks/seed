@@ -354,12 +354,32 @@ body:
     "maxBodyBytes": 262144,
     "methods": [
       "GET",
-      "POST",
       "PUT",
-      "DELETE",
+      "DELETE"
+    ],
+    "path": "/api/v1/profiles/{profileId}",
+    "rateLimited": false,
+    "scope": "operator"
+  },
+  {
+    "auth": true,
+    "csrf": true,
+    "maxBodyBytes": 262144,
+    "methods": [
       "PATCH"
     ],
-    "path": "/api/v1/profiles/",
+    "path": "/api/v1/profiles/{profileId}/settings",
+    "rateLimited": false,
+    "scope": "operator"
+  },
+  {
+    "auth": true,
+    "csrf": true,
+    "maxBodyBytes": 262144,
+    "methods": [
+      "POST"
+    ],
+    "path": "/api/v1/profiles/{profileId}/duplicate",
     "rateLimited": false,
     "scope": "operator"
   },

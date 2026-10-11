@@ -5766,6 +5766,12 @@ components:
                 - maxChannelUtil
                 - maxCoChannelAps
             type: object
+        ProfileDuplicateRequest:
+            additionalProperties: false
+            properties:
+                name:
+                    type: string
+            type: object
         ProfileExportResponse:
             additionalProperties: false
             properties:
@@ -12122,11 +12128,17 @@ paths:
             security:
                 - BearerAuth: []
                   CsrfToken: []
-    /api/v1/profiles/{subpath}:
+    /api/v1/profiles/{profileId}:
         delete:
-            description: Requires an operator-scoped token.
-            operationId: deleteApiV1ProfilesSubpath
+            description: The default profile and the active profile cannot be deleted (400).
+            operationId: deleteApiV1ProfilesProfileId
             responses:
+                "200":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/StatusMessageResponse'
+                    description: The profile was deleted.
                 "401":
                     content:
                         application/json:
@@ -12161,8 +12173,14 @@ paths:
                 - BearerAuth: []
                   CsrfToken: []
         get:
-            operationId: getApiV1ProfilesSubpath
+            operationId: getApiV1ProfilesProfileId
             responses:
+                "200":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/ProfileResponse'
+                    description: The profile. The ETag header carries its version for a later If-Match.
                 "401":
                     content:
                         application/json:
@@ -12182,90 +12200,136 @@ paths:
                                 $ref: '#/components/schemas/Error'
                     description: Internal error.
         parameters:
-            - description: Trailing path segment; this route matches by prefix.
+            - description: Path parameter.
               in: path
-              name: subpath
+              name: profileId
+              required: true
+              schema:
+                type: string
+        put:
+            description: Replaces the profile. An If-Match header naming a stale ETag answers 412 and leaves it unchanged.
+            operationId: putApiV1ProfilesProfileId
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/ProfileRequest'
+                required: true
+            responses:
+                "200":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/ProfileResponse'
+                    description: The updated profile, with its new ETag.
+                "401":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Error'
+                    description: Missing or invalid bearer token.
+                "403":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Error'
+                    description: Operator scope required, or CSRF token missing or invalid.
+                "405":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Error'
+                    description: Method not allowed; the Allow header lists the accepted set.
+                "413":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Error'
+                    description: Request body larger than 262144 bytes.
+                "500":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Error'
+                    description: Internal error.
+            security:
+                - BearerAuth: []
+                  CsrfToken: []
+    /api/v1/profiles/{profileId}/duplicate:
+        parameters:
+            - description: Path parameter.
+              in: path
+              name: profileId
+              required: true
+              schema:
+                type: string
+        post:
+            description: A second profile needs the multi-client licence feature (402).
+            operationId: postApiV1ProfilesProfileIdDuplicate
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/ProfileDuplicateRequest'
+                required: false
+            responses:
+                "201":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/ProfileResponse'
+                    description: The copy. Without a name in the body the store names it.
+                "401":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Error'
+                    description: Missing or invalid bearer token.
+                "403":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Error'
+                    description: Operator scope required, or CSRF token missing or invalid.
+                "405":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Error'
+                    description: Method not allowed; the Allow header lists the accepted set.
+                "413":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Error'
+                    description: Request body larger than 262144 bytes.
+                "500":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Error'
+                    description: Internal error.
+            security:
+                - BearerAuth: []
+                  CsrfToken: []
+    /api/v1/profiles/{profileId}/settings:
+        parameters:
+            - description: Path parameter.
+              in: path
+              name: profileId
               required: true
               schema:
                 type: string
         patch:
-            description: Requires an operator-scoped token.
-            operationId: patchApiV1ProfilesSubpath
+            description: Replaces the settings block of the profile's config with the JSON object in the body, leaving its name, description, default flag and the rest of its config unchanged.
+            operationId: patchApiV1ProfilesProfileIdSettings
             responses:
-                "401":
+                "200":
                     content:
                         application/json:
                             schema:
-                                $ref: '#/components/schemas/Error'
-                    description: Missing or invalid bearer token.
-                "403":
-                    content:
-                        application/json:
-                            schema:
-                                $ref: '#/components/schemas/Error'
-                    description: Operator scope required, or CSRF token missing or invalid.
-                "405":
-                    content:
-                        application/json:
-                            schema:
-                                $ref: '#/components/schemas/Error'
-                    description: Method not allowed; the Allow header lists the accepted set.
-                "413":
-                    content:
-                        application/json:
-                            schema:
-                                $ref: '#/components/schemas/Error'
-                    description: Request body larger than 262144 bytes.
-                "500":
-                    content:
-                        application/json:
-                            schema:
-                                $ref: '#/components/schemas/Error'
-                    description: Internal error.
-            security:
-                - BearerAuth: []
-                  CsrfToken: []
-        post:
-            description: Requires an operator-scoped token.
-            operationId: postApiV1ProfilesSubpath
-            responses:
-                "401":
-                    content:
-                        application/json:
-                            schema:
-                                $ref: '#/components/schemas/Error'
-                    description: Missing or invalid bearer token.
-                "403":
-                    content:
-                        application/json:
-                            schema:
-                                $ref: '#/components/schemas/Error'
-                    description: Operator scope required, or CSRF token missing or invalid.
-                "405":
-                    content:
-                        application/json:
-                            schema:
-                                $ref: '#/components/schemas/Error'
-                    description: Method not allowed; the Allow header lists the accepted set.
-                "413":
-                    content:
-                        application/json:
-                            schema:
-                                $ref: '#/components/schemas/Error'
-                    description: Request body larger than 262144 bytes.
-                "500":
-                    content:
-                        application/json:
-                            schema:
-                                $ref: '#/components/schemas/Error'
-                    description: Internal error.
-            security:
-                - BearerAuth: []
-                  CsrfToken: []
-        put:
-            description: Requires an operator-scoped token.
-            operationId: putApiV1ProfilesSubpath
-            responses:
+                                $ref: '#/components/schemas/ProfileResponse'
+                    description: The updated profile.
                 "401":
                     content:
                         application/json:

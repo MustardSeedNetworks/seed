@@ -184,7 +184,7 @@ func (s *Server) setupCoreRoutes() {
 	del := []string{http.MethodDelete}
 	getPut := []string{http.MethodGet, http.MethodPut}
 	getPost := []string{http.MethodGet, http.MethodPost}
-	crud := []string{http.MethodGet, http.MethodPost, http.MethodPut, http.MethodDelete}
+	getPutDel := []string{http.MethodGet, http.MethodPut, http.MethodDelete}
 	authBody := MaxBodySizeAuth  // 1 KB — auth payloads are tiny.
 	cfgBody := MaxBodySizeConfig // 64 KB — settings/config JSON.
 	s.routes.RegisterAll([]route.Route{
@@ -376,7 +376,7 @@ func (s *Server) setupCoreRoutes() {
 		},
 		{
 			// The collection: list and create. PUT and DELETE need an id, so they
-			// live on the /profiles/ route below; declaring them here only ever
+			// live on the /profiles/{profileId} route below; declaring them here only ever
 			// produced a 405 from the handler (#3261).
 			Path:    APIVersionPrefix + "/profiles",
 			Handler: s.handleProfiles,
@@ -421,12 +421,30 @@ func (s *Server) setupCoreRoutes() {
 			CSRF:    true,
 		},
 		{
-			// PATCH is here and not in crud because only this route accepts
-			// one: /profiles/{id}/settings is a partial update, and the
-			// collection routes have nothing to patch.
-			Path:    APIVersionPrefix + "/profiles/",
-			Handler: s.handleProfiles,
-			Methods: append(append([]string{}, crud...), http.MethodPatch),
+			// One pattern per shape, so the mux hands each handler its id
+			// (r.PathValue) and the OpenAPI document names every path. A
+			// single "/profiles/" prefix route parsed the id out of the URL by
+			// hand, and the duplicate handler trimmed a stale unversioned
+			// prefix: every duplicate looked up "/api/v1/profiles/<id>".
+			Path:    APIVersionPrefix + "/profiles/{profileId}",
+			Handler: s.handleProfile,
+			Methods: getPutDel,
+			Scope:   op,
+			Auth:    true,
+			CSRF:    true,
+		},
+		{
+			Path:    APIVersionPrefix + "/profiles/{profileId}/settings",
+			Handler: s.handleUpdateProfileSettings,
+			Methods: []string{http.MethodPatch},
+			Scope:   op,
+			Auth:    true,
+			CSRF:    true,
+		},
+		{
+			Path:    APIVersionPrefix + "/profiles/{profileId}/duplicate",
+			Handler: s.handleDuplicateProfile,
+			Methods: post,
 			Scope:   op,
 			Auth:    true,
 			CSRF:    true,

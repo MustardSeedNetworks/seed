@@ -723,6 +723,62 @@ operations:
           application/json:
             schema:
               $ref: '#/components/schemas/ProfileSwitchResponse'
+  GET /api/v1/profiles/{profileId}:
+    responses:
+      "200":
+        description: The profile. The ETag header carries its version for a later If-Match.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProfileResponse'
+  PUT /api/v1/profiles/{profileId}:
+    description: Replaces the profile. An If-Match header naming a stale ETag answers 412 and leaves it unchanged.
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ProfileRequest'
+    responses:
+      "200":
+        description: The updated profile, with its new ETag.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProfileResponse'
+  DELETE /api/v1/profiles/{profileId}:
+    description: The default profile and the active profile cannot be deleted (400).
+    responses:
+      "200":
+        description: The profile was deleted.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StatusMessageResponse'
+  POST /api/v1/profiles/{profileId}/duplicate:
+    description: A second profile needs the multi-client licence feature (402).
+    requestBody:
+      required: false
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ProfileDuplicateRequest'
+    responses:
+      "201":
+        description: The copy. Without a name in the body the store names it.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProfileResponse'
+  PATCH /api/v1/profiles/{profileId}/settings:
+    description: Replaces the settings block of the profile's config with the JSON object in the body, leaving its name, description, default flag and the rest of its config unchanged.
+    responses:
+      "200":
+        description: The updated profile.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProfileResponse'
   POST /api/v1/recovery/complete:
     requestBody:
       required: true
