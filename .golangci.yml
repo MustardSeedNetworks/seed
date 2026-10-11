@@ -617,6 +617,8 @@ linters:
           msg: 'use log/slog for structured logging; fmt.Print* is for CLI output only (see cmd/ exclusion)'
         - pattern: '^print(ln)?$'
           msg: 'builtin print/println is debug residue — use log/slog'
+        - pattern: '^exec\.Cmd\.(Start|Run|Output|CombinedOutput)$'
+          msg: 'start helpers through internal/platform/procrun: on macOS a child can wedge before execve, where no context deadline reaches it (seed#2530)'
       analyze-types: true
 
     exhaustive:
@@ -868,6 +870,13 @@ linters:
       - path: 'internal/api/'
         text: 'string `(status|message|error|interface|available|good|warning)` has'
         linters: [ goconst ]
+      # The procrun rule targets the daemon on macOS (seed#2530). Linux and
+      # Windows children do not wedge before execve, the seed CLI is not the
+      # daemon, tests re-exec their own binary on purpose, and procrun is the
+      # one place allowed to call Cmd.Start.
+      - path: '(_linux\.go|_windows\.go|_test\.go|^cmd/|^internal/platform/procrun/)'
+        text: 'internal/platform/procrun'
+        linters: [ forbidigo ]
       # Targets() in internal/api/apischema/apischema.go is a single declarative
       # registry table — one row per published DTO (RE_ARCHITECTURE_BLUEPRINT.md
       # Phase 2). Its length is data, not logic complexity, and it grows by one
