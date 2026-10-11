@@ -142,7 +142,7 @@ func TestUserDelete_RefusesLastAdmin(t *testing.T) {
 	// First delete admin2 — fine because two admins still exist.
 	req := newAuthedRequest(http.MethodDelete, APIVersionPrefix+"/users/admin2", nil, "admin")
 	w := httptest.NewRecorder()
-	s.handleUserByName(w, req)
+	routed(userPath, s.handleUserByName)(w, req)
 	if w.Code != http.StatusNoContent {
 		t.Fatalf("delete admin2: status = %d, want 204; body=%s", w.Code, w.Body.String())
 	}
@@ -161,7 +161,7 @@ func TestUserDelete_RefusesLastAdmin(t *testing.T) {
 
 	req = newAuthedRequest(http.MethodDelete, APIVersionPrefix+"/users/admin", nil, "admin3")
 	w = httptest.NewRecorder()
-	s.handleUserByName(w, req)
+	routed(userPath, s.handleUserByName)(w, req)
 	if w.Code != http.StatusForbidden {
 		// admin3 is now an operator → not admin → 403 is the expected guard.
 		t.Errorf("non-admin delete: status = %d, want 403; body=%s", w.Code, w.Body.String())
@@ -177,7 +177,7 @@ func TestUserDelete_RefusesSelfDelete(t *testing.T) {
 
 	req := newAuthedRequest(http.MethodDelete, APIVersionPrefix+"/users/admin", nil, "admin")
 	w := httptest.NewRecorder()
-	s.handleUserByName(w, req)
+	routed(userPath, s.handleUserByName)(w, req)
 	if w.Code != http.StatusConflict {
 		t.Errorf("status = %d, want 409 SELF_DELETE; body=%s", w.Code, w.Body.String())
 	}
@@ -328,7 +328,7 @@ func TestDeleteUser_CascadesAPITokens(t *testing.T) {
 	// Delete bob (as admin "admin").
 	req := newAuthedRequest(http.MethodDelete, APIVersionPrefix+"/users/bob", nil, "admin")
 	w := httptest.NewRecorder()
-	s.handleUserByName(w, req)
+	routed(userPath, s.handleUserByName)(w, req)
 	if w.Code != http.StatusNoContent {
 		t.Fatalf("delete: status = %d; body=%s", w.Code, w.Body.String())
 	}
@@ -434,7 +434,7 @@ func TestUserHandlers_DomainErrorStatus(t *testing.T) {
 			if tc.path == "/users" {
 				s.handleUsers(w, req)
 			} else {
-				s.handleUserByName(w, req)
+				routed(userPath, s.handleUserByName)(w, req)
 			}
 			if w.Code != tc.wantCode {
 				t.Fatalf("status = %d, want %d; body=%s", w.Code, tc.wantCode, w.Body.String())

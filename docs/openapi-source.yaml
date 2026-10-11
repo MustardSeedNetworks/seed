@@ -513,8 +513,7 @@ operations:
           application/json:
             schema:
               $ref: '#/components/schemas/JobResponse'
-  GET /api/v1/jobs/:
-    pathTemplate: /api/v1/jobs/{jobId}
+  GET /api/v1/jobs/{jobId}:
     responses:
       "200":
         description: The job's current state.
@@ -522,8 +521,7 @@ operations:
           application/json:
             schema:
               $ref: '#/components/schemas/JobResponse'
-  DELETE /api/v1/jobs/:
-    pathTemplate: /api/v1/jobs/{jobId}
+  DELETE /api/v1/jobs/{jobId}:
     responses:
       "202":
         description: Cancellation requested; the job's state at that moment.
@@ -1760,8 +1758,7 @@ operations:
               type: array
               items:
                 $ref: '#/components/schemas/TokenListItem'
-  DELETE /api/v1/tokens/:
-    pathTemplate: /api/v1/tokens/{tokenId}
+  DELETE /api/v1/tokens/{tokenId}:
     responses:
       "204":
         description: The token was revoked.
@@ -1805,8 +1802,7 @@ operations:
           application/json:
             schema:
               $ref: '#/components/schemas/UserResponse'
-  GET /api/v1/users/:
-    pathTemplate: /api/v1/users/{username}
+  GET /api/v1/users/{username}:
     responses:
       "200":
         description: The user.
@@ -1814,8 +1810,7 @@ operations:
           application/json:
             schema:
               $ref: '#/components/schemas/UserResponse'
-  PATCH /api/v1/users/:
-    pathTemplate: /api/v1/users/{username}
+  PATCH /api/v1/users/{username}:
     requestBody:
       required: true
       content:
@@ -1829,8 +1824,7 @@ operations:
           application/json:
             schema:
               $ref: '#/components/schemas/UserResponse'
-  DELETE /api/v1/users/:
-    pathTemplate: /api/v1/users/{username}
+  DELETE /api/v1/users/{username}:
     responses:
       "204":
         description: The user was deleted.

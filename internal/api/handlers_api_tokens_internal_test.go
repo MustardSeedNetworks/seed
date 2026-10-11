@@ -181,7 +181,7 @@ func TestListAndRevokeRoundTrip(t *testing.T) {
 
 	// Revoke.
 	w = httptest.NewRecorder()
-	s.handleAPITokenByID(w,
+	routed(tokenPath, s.handleAPITokenRevoke)(w,
 		newAuthedRequest(http.MethodDelete, APIVersionPrefix+"/tokens/"+minted.ID, nil, "alice"))
 	if w.Code != http.StatusNoContent {
 		t.Errorf("revoke status = %d, want 204; body=%s", w.Code, w.Body.String())
@@ -189,7 +189,7 @@ func TestListAndRevokeRoundTrip(t *testing.T) {
 
 	// Revoke again is 404.
 	w = httptest.NewRecorder()
-	s.handleAPITokenByID(w,
+	routed(tokenPath, s.handleAPITokenRevoke)(w,
 		newAuthedRequest(http.MethodDelete, APIVersionPrefix+"/tokens/"+minted.ID, nil, "alice"))
 	if w.Code != http.StatusNotFound {
 		t.Errorf("second revoke status = %d, want 404", w.Code)
@@ -210,7 +210,7 @@ func TestRevokeForeignTokenFails(t *testing.T) {
 
 	// Bob tries to revoke Alice's token.
 	w = httptest.NewRecorder()
-	s.handleAPITokenByID(w,
+	routed(tokenPath, s.handleAPITokenRevoke)(w,
 		newAuthedRequest(http.MethodDelete, APIVersionPrefix+"/tokens/"+minted.ID, nil, "bob"))
 	if w.Code != http.StatusNotFound {
 		t.Errorf("bob revoking alice's token: status = %d, want 404 (silent reject)", w.Code)
