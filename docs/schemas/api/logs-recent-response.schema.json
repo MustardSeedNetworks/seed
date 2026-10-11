@@ -1,0 +1,71 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/MustardSeedNetworks/seed/main/docs/schemas/api/logs-recent-response.schema.json",
+  "$ref": "#/$defs/LogsRecentResponse",
+  "$defs": {
+    "LogEntry": {
+      "properties": {
+        "timestamp": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "level": {
+          "type": "string"
+        },
+        "layer": {
+          "type": "string"
+        },
+        "requestId": {
+          "type": "string"
+        },
+        "sessionId": {
+          "type": "string"
+        },
+        "message": {
+          "type": "string"
+        },
+        "component": {
+          "type": "string"
+        },
+        "durationMs": {
+          "type": "integer"
+        },
+        "metadata": {
+          "type": "object"
+        },
+        "stack": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "timestamp",
+        "level",
+        "layer",
+        "message"
+      ]
+    },
+    "LogsRecentResponse": {
+      "properties": {
+        "logs": {
+          "items": {
+            "$ref": "#/$defs/LogEntry"
+          },
+          "type": "array"
+        },
+        "count": {
+          "type": "integer"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "logs",
+        "count"
+      ]
+    }
+  },
+  "title": "LogsRecentResponse",
+  "description": "LogsRecentResponse — generated from the Go struct in internal/api; refresh with `make schema` after struct changes."
+}

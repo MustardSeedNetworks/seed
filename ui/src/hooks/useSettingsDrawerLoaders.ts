@@ -14,11 +14,11 @@ import { useEffect } from 'react';
 import { withIds } from '../components/settings/settingsDrawerNormalizer';
 import { LogComponents, logger } from '../lib/logger';
 import type { IperfSuggestion } from '../types/generated/iperf-suggestion';
+import type { LogFileResponse } from '../types/generated/log-file-response';
 import type {
   CableTestSettings as CableTestSettingsType,
   IpSettings,
   LinkSettings as LinkSettingsType,
-  LogsResponse,
   NetworkDiscoverySettings,
   SettingsThresholds,
   SnmpSettings as SnmpSettingsType,
@@ -298,8 +298,8 @@ export function useSettingsDrawerLoaders({
         if (!response.ok) {
           throw new Error('Unable to load logs');
         }
-        const data = await (response.json() as Promise<LogsResponse>);
-        setLogPreview(data.lines || []);
+        const data = await (response.json() as Promise<LogFileResponse>);
+        setLogPreview(data.lines);
       })
       .catch((err: unknown) => {
         setLogPreview([]);

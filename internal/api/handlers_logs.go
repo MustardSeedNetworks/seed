@@ -85,6 +85,12 @@ func toLogEntries(entries []*logging.LogEntry) []LogEntry {
 	return out
 }
 
+// LogsRecentResponse is the answer of GET /api/v1/reporting/logs/recent.
+type LogsRecentResponse struct {
+	Logs  []LogEntry `json:"logs"`
+	Count int        `json:"count"`
+}
+
 // LogStatsResponse represents log statistics.
 type LogStatsResponse struct {
 	TotalCount       int            `json:"totalCount"`
@@ -290,11 +296,8 @@ func (s *Server) handleLogsRecent(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	logs := broadcaster.GetRecentLogs(limit)
-	sendJSONResponse(w, logger, http.StatusOK, map[string]any{
-		"logs":  logs,
-		"count": len(logs),
-	})
+	logs := toLogEntries(broadcaster.GetRecentLogs(limit))
+	sendJSONResponse(w, logger, http.StatusOK, LogsRecentResponse{Logs: logs, Count: len(logs)})
 }
 
 // LogSubscription represents a client's log subscription preferences.

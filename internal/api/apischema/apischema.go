@@ -193,6 +193,8 @@ func Targets() []Target {
 		{&api.ConfigBackupResponse{}, "config-backup-response.schema.json"},
 		{&api.ClientLogRequest{}, "client-log-request.schema.json"},
 		{&api.LogStatsResponse{}, "log-stats-response.schema.json"},
+		{&api.LogsRecentResponse{}, "logs-recent-response.schema.json"},
+		{&api.LogFileResponse{}, "log-file-response.schema.json"},
 
 		// Profile-import response.
 		{&api.ProfileImportResponse{}, "profile-import-response.schema.json"},
