@@ -113,7 +113,7 @@ func (s *testEndpointServer) testInterfacesEndpoint(t *testing.T) {
 		t.Errorf("Expected status 200, got %d", resp.StatusCode)
 	}
 
-	var interfaces []any
+	var interfaces api.CategorizedInterfacesResponse
 	if decodeErr := json.NewDecoder(resp.Body).Decode(&interfaces); decodeErr != nil {
 		t.Errorf("Failed to decode interfaces response: %v", decodeErr)
 	}

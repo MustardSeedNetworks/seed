@@ -77,7 +77,7 @@ test.describe('promotion over a NIAC link', () => {
   test.setTimeout(PROMOTION_MS + POLL_MS + RECONCILE_MS + 30_000);
 
   test('the active interface is listed where the UI selects it', async ({ page }) => {
-    const response = await page.request.get('/api/v1/interfaces?categorized=true');
+    const response = await page.request.get('/api/v1/interfaces');
     expect(response.status()).toBe(200);
     expect(JSON.stringify(await response.json())).toContain(`"${link}"`);
   });

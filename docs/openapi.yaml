@@ -3708,6 +3708,31 @@ components:
                 - inDiscardsPerSec
                 - outDiscardsPerSec
             type: object
+        InterfaceSelectionResponse:
+            additionalProperties: false
+            properties:
+                available:
+                    type: boolean
+                friendlyName:
+                    type: string
+                interface:
+                    type: string
+                isWireless:
+                    type: boolean
+                suggestedInterface:
+                    type: string
+                type:
+                    type: string
+                up:
+                    type: boolean
+                warning:
+                    type: string
+            required:
+                - interface
+                - isWireless
+                - available
+                - up
+            type: object
         InterfaceStatsListResponse:
             additionalProperties: false
             properties:
@@ -7396,6 +7421,27 @@ components:
                     type: string
             required:
                 - interface
+            type: object
+        SetInterfaceResponse:
+            additionalProperties: false
+            properties:
+                interface:
+                    type: string
+                isWireless:
+                    type: boolean
+                status:
+                    enum:
+                        - ok
+                    type: string
+                type:
+                    type: string
+                warning:
+                    type: string
+            required:
+                - status
+                - interface
+                - isWireless
+                - type
             type: object
         SetMTURequest:
             additionalProperties: false
@@ -11408,6 +11454,12 @@ paths:
         get:
             operationId: getApiV1Interface
             responses:
+                "200":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/InterfaceSelectionResponse'
+                    description: The selected interface, and an alternative when it is no longer available.
                 "401":
                     content:
                         application/json:
@@ -11436,6 +11488,12 @@ paths:
                             $ref: '#/components/schemas/SetInterfaceRequest'
                 required: true
             responses:
+                "200":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/SetInterfaceResponse'
+                    description: The interface is selected; a warning says when it is down. An unknown interface answers 400.
                 "401":
                     content:
                         application/json:
@@ -11473,6 +11531,12 @@ paths:
         get:
             operationId: getApiV1Interfaces
             responses:
+                "200":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/CategorizedInterfacesResponse'
+                    description: The usable interfaces split into the Ethernet and Wi-Fi lists, with the recommended interface of each.
                 "401":
                     content:
                         application/json:

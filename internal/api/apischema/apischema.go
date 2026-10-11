@@ -171,6 +171,8 @@ func Targets() []Target {
 		{&api.EngineScanRequest{}, "engine-scan-request.schema.json"},
 		{&api.VulnScanRequest{}, "vuln-scan-request.schema.json"},
 		{&api.SetInterfaceRequest{}, "set-interface-request.schema.json"},
+		{&api.SetInterfaceResponse{}, "set-interface-response.schema.json"},
+		{&api.InterfaceSelectionResponse{}, "interface-selection-response.schema.json"},
 		{&api.WiFiSettingsResponse{}, "wifi-settings-response.schema.json"},
 		{&api.WiFiStatusResponse{}, "wifi-status-response.schema.json"},
 

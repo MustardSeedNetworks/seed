@@ -31,6 +31,7 @@ import { useTheme } from '../hooks/useTheme';
 import { LogComponents, logger } from '../lib/logger';
 import { useTestRunSignal, useTestRunStore } from '../stores/testRunStore';
 import type { InterfaceInfo } from '../types/generated/categorized-interfaces-response';
+import type { SetInterfaceResponse } from '../types/generated/set-interface-response';
 import {
   applyInterfaceRestoration,
   findBestInterface,
@@ -201,7 +202,7 @@ export function useAppOrchestration({ isAuthenticated }: UseAppOrchestrationArgs
   const changeInterface = async (interfaceName: string) => {
     try {
       // Use api.put() which handles CSRF tokens automatically
-      const data = await api.put<{ isWireless?: boolean }>('/api/v1/interface', {
+      const data = await api.put<SetInterfaceResponse>('/api/v1/interface', {
         interface: interfaceName,
       });
       if (data) {
@@ -211,7 +212,7 @@ export function useAppOrchestration({ isAuthenticated }: UseAppOrchestrationArgs
         currentInterfaceRef.current = interfaceName;
         // Only auto-set WiFi mode if user hasn't manually selected via Ethernet/WiFi buttons
         if (!userSetWifiModeRef.current) {
-          setIsWifi(data.isWireless === true);
+          setIsWifi(data.isWireless);
         }
         // Refresh data for new interface
         fetchLinkData().catch((): void => {

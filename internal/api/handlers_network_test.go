@@ -28,7 +28,7 @@ func TestHandleInterfacesGET(t *testing.T) {
 	}
 
 	// Verify JSON response
-	var resp []map[string]any
+	var resp api.CategorizedInterfacesResponse
 	if err := json.NewDecoder(w.Body).Decode(&resp); err != nil {
 		t.Fatalf("Failed to decode response: %v", err)
 	}

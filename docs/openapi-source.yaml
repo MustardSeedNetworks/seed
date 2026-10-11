@@ -466,6 +466,14 @@ operations:
           application/json:
             schema:
               $ref: '#/components/schemas/ProbeHistoryResponse'
+  GET /api/v1/interface:
+    responses:
+      "200":
+        description: The selected interface, and an alternative when it is no longer available.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/InterfaceSelectionResponse'
   PUT /api/v1/interface:
     requestBody:
       required: true
@@ -473,6 +481,21 @@ operations:
         application/json:
           schema:
             $ref: '#/components/schemas/SetInterfaceRequest'
+    responses:
+      "200":
+        description: The interface is selected; a warning says when it is down. An unknown interface answers 400.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SetInterfaceResponse'
+  GET /api/v1/interfaces:
+    responses:
+      "200":
+        description: The usable interfaces split into the Ethernet and Wi-Fi lists, with the recommended interface of each.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CategorizedInterfacesResponse'
   POST /api/v1/jobs:
     requestBody:
       required: true
