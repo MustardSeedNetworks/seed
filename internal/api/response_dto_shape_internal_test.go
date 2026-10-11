@@ -20,6 +20,7 @@ import (
 	"github.com/MustardSeedNetworks/seed/internal/anomaly"
 	"github.com/MustardSeedNetworks/seed/internal/app"
 	"github.com/MustardSeedNetworks/seed/internal/config"
+	"github.com/MustardSeedNetworks/seed/internal/diagnostics/dhcp"
 	"github.com/MustardSeedNetworks/seed/internal/discovery"
 	"github.com/MustardSeedNetworks/seed/internal/discovery/enumerate"
 	"github.com/MustardSeedNetworks/seed/internal/discovery/vuln"
@@ -711,6 +712,47 @@ func TestProbeAnomaliesResponseShape(t *testing.T) {
 			require.NoError(t, err)
 			require.Equal(t, len(tt.active), got.ActiveCount)
 			require.JSONEq(t, tt.want, string(got.Anomalies))
+		})
+	}
+}
+
+// The lease reply drops the domain result's nanosecond leaseTime and
+// responseTime; the seconds and milliseconds fields carry the same values.
+func TestDHCPLeaseResponseShape(t *testing.T) {
+	t.Parallel()
+	tested := time.Date(2026, 10, 11, 1, 0, 0, 0, time.UTC)
+	tests := []struct {
+		name   string
+		result dhcp.TestResult
+		want   string
+	}{
+		{
+			name: "lease",
+			result: dhcp.TestResult{
+				Interface: "eth0", Success: true, Status: dhcp.StatusSuccess,
+				ServerIP: "10.0.0.1", OfferedIP: "10.0.0.20", SubnetMask: "255.255.255.0",
+				Gateway: "10.0.0.1", DNSServers: []string{"10.0.0.53"}, DomainName: "lab",
+				LeaseTime: time.Hour, LeaseTimeSec: 3600,
+				ResponseTime: 2 * time.Millisecond, ResponseMs: 2, TestedAt: tested,
+			},
+			want: `{"interface":"eth0","success":true,"status":"success","serverIp":"10.0.0.1",` +
+				`"offeredIp":"10.0.0.20","subnetMask":"255.255.255.0","gateway":"10.0.0.1",` +
+				`"dnsServers":["10.0.0.53"],"domainName":"lab","leaseTimeSec":3600,` +
+				`"responseTimeMs":2,"testedAt":"2026-10-11T01:00:00Z"}`,
+		},
+		{
+			name: "no lease",
+			result: dhcp.TestResult{
+				Interface: "eth0", Status: dhcp.StatusError, Error: "interface is down", TestedAt: tested,
+			},
+			want: `{"interface":"eth0","success":false,"status":"error","responseTimeMs":0,` +
+				`"error":"interface is down","testedAt":"2026-10-11T01:00:00Z"}`,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			require.JSONEq(t, tt.want, string(mustMarshal(t, newDHCPLeaseResponse(&tt.result))))
 		})
 	}
 }

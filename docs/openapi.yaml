@@ -1250,6 +1250,55 @@ components:
             required:
                 - rogue_detection
             type: object
+        DHCPLeaseRequest:
+            additionalProperties: false
+            properties:
+                interface:
+                    type: string
+            type: object
+        DHCPLeaseResponse:
+            additionalProperties: false
+            properties:
+                dnsServers:
+                    items:
+                        type: string
+                    type: array
+                domainName:
+                    type: string
+                error:
+                    type: string
+                gateway:
+                    type: string
+                interface:
+                    type: string
+                leaseTimeSec:
+                    type: integer
+                offeredIp:
+                    type: string
+                responseTimeMs:
+                    type: number
+                serverIp:
+                    type: string
+                status:
+                    enum:
+                        - success
+                        - warning
+                        - error
+                    type: string
+                subnetMask:
+                    type: string
+                success:
+                    type: boolean
+                testedAt:
+                    format: date-time
+                    type: string
+            required:
+                - interface
+                - success
+                - status
+                - responseTimeMs
+                - testedAt
+            type: object
         DHCPThresholds:
             additionalProperties: false
             properties:
@@ -14814,6 +14863,12 @@ paths:
         get:
             operationId: getApiV1TelemetryDhcpLease
             responses:
+                "200":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/DHCPLeaseResponse'
+                    description: The DHCP lease the currently selected interface holds, read from local state; no DISCOVER is sent. An unknown interface answers 400.
                 "401":
                     content:
                         application/json:
@@ -14840,7 +14895,19 @@ paths:
                     description: Internal error.
         post:
             operationId: postApiV1TelemetryDhcpLease
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/DHCPLeaseRequest'
+                required: false
             responses:
+                "200":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/DHCPLeaseResponse'
+                    description: The DHCP lease the named interface holds, or the selected interface when the body is empty. An unknown interface answers 400.
                 "401":
                     content:
                         application/json:

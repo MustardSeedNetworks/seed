@@ -1272,6 +1272,28 @@ operations:
           application/json:
             schema:
               $ref: '#/components/schemas/CableResponse'
+  GET /api/v1/telemetry/dhcp/lease:
+    responses:
+      "200":
+        description: The DHCP lease the currently selected interface holds, read from local state; no DISCOVER is sent. An unknown interface answers 400.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DHCPLeaseResponse'
+  POST /api/v1/telemetry/dhcp/lease:
+    requestBody:
+      required: false
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/DHCPLeaseRequest'
+    responses:
+      "200":
+        description: The DHCP lease the named interface holds, or the selected interface when the body is empty. An unknown interface answers 400.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DHCPLeaseResponse'
   POST /api/v1/telemetry/dhcp/renew:
     requestBody:
       required: true
