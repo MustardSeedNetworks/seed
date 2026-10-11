@@ -61,6 +61,12 @@ type ProfileExportResponse struct {
 	Profiles   []ProfileResponse `json:"profiles"`
 }
 
+// ProfileDuplicateRequest optionally names the copy POST
+// /profiles/{profileId}/duplicate creates.
+type ProfileDuplicateRequest struct {
+	Name string `json:"name,omitempty"`
+}
+
 // ProfileSwitchRequest names the profile POST /profiles/switch activates.
 type ProfileSwitchRequest struct {
 	ProfileID string `json:"profileId"`
@@ -72,54 +78,44 @@ type ProfileSwitchResponse struct {
 	Profile ProfileResponse `json:"profile"`
 }
 
-// handleProfiles routes profile requests by method.
-func (s *Server) handleProfiles(w http.ResponseWriter, r *http.Request) {
-	logger := logging.FromContext(r.Context())
-	localizer := i18n.FromRequest(r)
+// profileStoreAvailable answers 503 and reports false when there is no
+// profile database to serve the request from.
+func (s *Server) profileStoreAvailable(w http.ResponseWriter, r *http.Request) bool {
+	if s.profiles.Available() {
+		return true
+	}
+	sendErrorResponseWithDetails(w, logging.FromContext(r.Context()), http.StatusServiceUnavailable,
+		ErrCodeServiceUnavail, i18n.FromRequest(r).T("errors.profile.dbNotAvailable"), "") // fixes #694
+	return false
+}
 
-	// Check if database is available
-	if !s.profiles.Available() {
-		sendErrorResponseWithDetails(w, logger, http.StatusServiceUnavailable,
-			ErrCodeServiceUnavail, localizer.T("errors.profile.dbNotAvailable"), "") // fixes #694
+// handleProfiles serves the collection: list and create. The route's method
+// gate admits only GET and POST.
+func (s *Server) handleProfiles(w http.ResponseWriter, r *http.Request) {
+	if !s.profileStoreAvailable(w, r) {
 		return
 	}
-
-	// Extract profile ID from path if present.
-	//
-	// The prefix is derived from the constant the routes are registered with.
-	// It was written out as "/api/profiles" while the registry mounted
-	// "/api/v1/profiles", so nothing was ever trimmed: every request fell
-	// through to the by-ID cases carrying "api/v1/profiles" as the id, and
-	// every profile operation had been failing through the router since the
-	// versioned prefix landed (#754). A literal is how that drifted, so this
-	// one cannot drift again.
-	path := strings.TrimPrefix(r.URL.Path, APIVersionPrefix+"/profiles")
-	path = strings.TrimPrefix(path, "/")
-
-	switch {
-	case path == "" && r.Method == http.MethodGet:
+	if r.Method == http.MethodGet {
 		s.handleListProfiles(w, r)
-	case path == "" && r.Method == http.MethodPost:
-		s.handleCreateProfile(w, r)
-	case strings.HasSuffix(path, "/duplicate") && r.Method == http.MethodPost:
-		s.handleDuplicateProfile(w, r)
-	case strings.HasSuffix(path, "/settings") && r.Method == http.MethodPatch:
-		s.handleUpdateProfileSettings(w, r, strings.TrimSuffix(path, "/settings"))
-	case path != "" && r.Method == http.MethodGet:
-		s.handleGetProfile(w, r, path)
-	case path != "" && r.Method == http.MethodPut:
-		s.handleUpdateProfile(w, r, path)
-	case path != "" && r.Method == http.MethodDelete:
-		s.handleDeleteProfile(w, r, path)
-	default:
-		sendErrorResponseWithDetails(
-			w,
-			logger,
-			http.StatusMethodNotAllowed,
-			ErrCodeMethodNotAllowed,
-			localizer.T("errors.api.methodNotAllowed"),
-			"",
-		) // fixes #694
+		return
+	}
+	s.handleCreateProfile(w, r)
+}
+
+// handleProfile serves one profile by id. The route's method gate admits only
+// GET, PUT and DELETE.
+func (s *Server) handleProfile(w http.ResponseWriter, r *http.Request) {
+	if !s.profileStoreAvailable(w, r) {
+		return
+	}
+	id := r.PathValue("profileId")
+	switch r.Method {
+	case http.MethodGet:
+		s.handleGetProfile(w, r, id)
+	case http.MethodPut:
+		s.handleUpdateProfile(w, r, id)
+	case http.MethodDelete:
+		s.handleDeleteProfile(w, r, id)
 	}
 }
 
@@ -130,9 +126,13 @@ func (s *Server) handleProfiles(w http.ResponseWriter, r *http.Request) {
 // because Update assigns Description and IsDefault unconditionally: handing it
 // only the new config would blank a profile's description and silently clear
 // its default flag every time a setting changed.
-func (s *Server) handleUpdateProfileSettings(w http.ResponseWriter, r *http.Request, id string) {
+func (s *Server) handleUpdateProfileSettings(w http.ResponseWriter, r *http.Request) {
+	if !s.profileStoreAvailable(w, r) {
+		return
+	}
 	logger := logging.FromContext(r.Context())
 	localizer := i18n.FromRequest(r)
+	id := r.PathValue("profileId")
 
 	var settings json.RawMessage
 	if !decodeJSONStrictLocalized(w, r, &settings, MaxBodySizeJSON, logger, localizer) {
@@ -407,8 +407,9 @@ func (s *Server) handleDeleteProfile(w http.ResponseWriter, r *http.Request, id 
 	err := s.profiles.Delete(r.Context(), id)
 	switch {
 	case err == nil:
-		sendJSONResponse(w, logger, http.StatusOK, map[string]string{
-			"message": "Profile deleted successfully",
+		sendJSONResponse(w, logger, http.StatusOK, StatusMessageResponse{
+			Status:  "success",
+			Message: "Profile deleted successfully",
 		})
 	case errors.Is(err, catalog.ErrNotFound):
 		sendErrorResponseWithDetails(w, logger, http.StatusNotFound,
@@ -517,16 +518,14 @@ func (s *Server) handleSetActiveProfile(w http.ResponseWriter, r *http.Request) 
 	})
 }
 
-// handleDuplicateProfile creates a copy of an existing profile.
+// handleDuplicateProfile creates a copy of an existing profile. The body is
+// optional: without one the store names the copy.
 func (s *Server) handleDuplicateProfile(w http.ResponseWriter, r *http.Request) {
-	logger := logging.FromContext(r.Context())
-	localizer := i18n.FromRequest(r)
-
-	if !s.profiles.Available() {
-		sendErrorResponseWithDetails(w, logger, http.StatusServiceUnavailable,
-			ErrCodeServiceUnavail, localizer.T("errors.profile.dbNotAvailable"), "") // fixes #694
+	if !s.profileStoreAvailable(w, r) {
 		return
 	}
+	logger := logging.FromContext(r.Context())
+	localizer := i18n.FromRequest(r)
 
 	// multi_client gate: duplicating always creates a NEW profile, which by
 	// definition pushes the operator over the Free/Starter 1-profile cap.
@@ -534,28 +533,12 @@ func (s *Server) handleDuplicateProfile(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	if r.Method != http.MethodPost {
-		sendErrorResponseWithDetails(
-			w,
-			logger,
-			http.StatusMethodNotAllowed,
-			ErrCodeMethodNotAllowed,
-			localizer.T("errors.api.methodNotAllowed"),
-			"",
-		) // fixes #694
+	var req ProfileDuplicateRequest
+	if r.Body != http.NoBody && !decodeJSONStrictLocalized(w, r, &req, MaxBodySizeJSON, logger, localizer) {
 		return
 	}
 
-	// Extract profile ID from path
-	path := strings.TrimPrefix(r.URL.Path, "/api/profiles/")
-	id := strings.TrimSuffix(path, "/duplicate")
-
-	// Parse optional new name from request body
-	var req struct {
-		Name string `json:"name"`
-	}
-	_ = json.NewDecoder(r.Body).Decode(&req)
-
+	id := r.PathValue("profileId")
 	duplicate, err := s.profiles.Duplicate(r.Context(), id, req.Name)
 	if err != nil {
 		switch {

@@ -9,6 +9,8 @@ import (
 
 	"gopkg.in/yaml.v3"
 
+	"github.com/MustardSeedNetworks/foundation/pkg/httpserver/route"
+
 	"github.com/MustardSeedNetworks/seed/internal/api"
 )
 
@@ -56,9 +58,10 @@ func generated(t *testing.T) map[string]map[string]any {
 // no methods dispatches for itself and is documented with the full set.
 func TestEveryRegistryRouteIsDocumented(t *testing.T) {
 	t.Parallel()
-	items := byRegistryPath(generated(t))
+	routes := api.RouteManifest()
+	items := byRegistryPath(generated(t), routes)
 
-	for _, rt := range api.RouteManifest() {
+	for _, rt := range routes {
 		if rt.Hidden {
 			continue // the embedded UI's catch-alls
 		}
@@ -87,12 +90,17 @@ func TestEveryRegistryRouteIsDocumented(t *testing.T) {
 }
 
 // byRegistryPath keys each documented path item by the registry path it came
-// from: a templated prefix route /x/{id} back to /x/.
-func byRegistryPath(paths map[string]map[string]any) map[string]map[string]any {
+// from: a templated prefix route /x/{id} back to /x/. A wildcard pattern such
+// as /x/{id}/settings is its own registry path and keeps its key.
+func byRegistryPath(paths map[string]map[string]any, routes []route.Policy) map[string]map[string]any {
+	registered := make(map[string]bool, len(routes))
+	for _, rt := range routes {
+		registered[rt.Path] = true
+	}
 	items := make(map[string]map[string]any, len(paths))
 	for docPath, item := range paths {
 		key := docPath
-		if i := strings.Index(docPath, "/{"); i >= 0 {
+		if i := strings.Index(docPath, "/{"); i >= 0 && !registered[docPath] {
 			key = docPath[:i+1]
 		}
 		items[key] = item
