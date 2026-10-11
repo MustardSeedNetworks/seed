@@ -184,7 +184,6 @@ func (s *Server) setupCoreRoutes() {
 	del := []string{http.MethodDelete}
 	getPut := []string{http.MethodGet, http.MethodPut}
 	getPost := []string{http.MethodGet, http.MethodPost}
-	getPostPut := []string{http.MethodGet, http.MethodPost, http.MethodPut}
 	crud := []string{http.MethodGet, http.MethodPost, http.MethodPut, http.MethodDelete}
 	authBody := MaxBodySizeAuth  // 1 KB — auth payloads are tiny.
 	cfgBody := MaxBodySizeConfig // 64 KB — settings/config JSON.
@@ -387,12 +386,13 @@ func (s *Server) setupCoreRoutes() {
 			CSRF:    true,
 		},
 		{
+			// Read only: the UI switches profiles through /profiles/switch,
+			// and the POST and PUT aliases that once lived here were a second
+			// and third way to make the same change.
 			Path:    APIVersionPrefix + "/profiles/active",
 			Handler: s.handleActiveProfile,
-			Methods: getPostPut,
-			Scope:   op,
+			Methods: get,
 			Auth:    true,
-			CSRF:    true,
 		},
 		{
 			Path:    APIVersionPrefix + "/profiles/import",
@@ -409,11 +409,10 @@ func (s *Server) setupCoreRoutes() {
 			Auth:    true,
 		},
 		{
-			// The UI switches profiles by posting {profileId} here, which is
-			// exactly what /profiles/active accepts. Registered as its own
-			// route rather than handled inside the prefix route because a
-			// route the registry can see is a route the capability manifest
-			// and the route-consumer gate can see.
+			// The UI switches profiles by posting {profileId} here. Registered
+			// as its own route rather than handled inside the prefix route
+			// because a route the registry can see is a route the capability
+			// manifest and the route-consumer gate can see.
 			Path:    APIVersionPrefix + "/profiles/switch",
 			Handler: s.handleSetActiveProfile,
 			Methods: post,

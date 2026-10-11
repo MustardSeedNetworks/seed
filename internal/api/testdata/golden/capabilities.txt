@@ -308,16 +308,13 @@ body:
   },
   {
     "auth": true,
-    "csrf": true,
+    "csrf": false,
     "maxBodyBytes": 262144,
     "methods": [
-      "GET",
-      "POST",
-      "PUT"
+      "GET"
     ],
     "path": "/api/v1/profiles/active",
-    "rateLimited": false,
-    "scope": "operator"
+    "rateLimited": false
   },
   {
     "auth": true,

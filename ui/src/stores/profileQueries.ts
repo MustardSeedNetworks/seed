@@ -24,6 +24,7 @@ import { ApiError, api, SessionExpiredError } from '../api';
 import { LogComponents, logger } from '../lib/logger';
 import type { DefaultSettings } from '../types/generated/default-settings';
 import type { ProfileImportResponse } from '../types/generated/profile-import-response';
+import type { ProfileSwitchRequest } from '../types/generated/profile-switch-request';
 import type {
   Profile,
   ProfileExportResponse,
@@ -289,7 +290,7 @@ export function useSwitchProfileMutation(): UseMutationResult<
   return useMutation({
     mutationFn: async (profileId: string) => {
       // Single API call to switch profile
-      await api.post<void>('/api/v1/profiles/switch', { profileId });
+      await api.post<void>('/api/v1/profiles/switch', { profileId } satisfies ProfileSwitchRequest);
 
       // Fetch updated data in parallel
       const [activeProfile, profileList] = await Promise.all([

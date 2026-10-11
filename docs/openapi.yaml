@@ -5725,6 +5725,25 @@ components:
                 - createdAt
                 - updatedAt
             type: object
+        ProfileSwitchRequest:
+            additionalProperties: false
+            properties:
+                profileId:
+                    type: string
+            required:
+                - profileId
+            type: object
+        ProfileSwitchResponse:
+            additionalProperties: false
+            properties:
+                message:
+                    type: string
+                profile:
+                    $ref: '#/components/schemas/ProfileResponse'
+            required:
+                - message
+                - profile
+            type: object
         ProtocolCount:
             additionalProperties: false
             properties:
@@ -12079,80 +12098,6 @@ paths:
                             schema:
                                 $ref: '#/components/schemas/Error'
                     description: Internal error.
-        post:
-            description: Requires an operator-scoped token.
-            operationId: postApiV1ProfilesActive
-            responses:
-                "401":
-                    content:
-                        application/json:
-                            schema:
-                                $ref: '#/components/schemas/Error'
-                    description: Missing or invalid bearer token.
-                "403":
-                    content:
-                        application/json:
-                            schema:
-                                $ref: '#/components/schemas/Error'
-                    description: Operator scope required, or CSRF token missing or invalid.
-                "405":
-                    content:
-                        application/json:
-                            schema:
-                                $ref: '#/components/schemas/Error'
-                    description: Method not allowed; the Allow header lists the accepted set.
-                "413":
-                    content:
-                        application/json:
-                            schema:
-                                $ref: '#/components/schemas/Error'
-                    description: Request body larger than 262144 bytes.
-                "500":
-                    content:
-                        application/json:
-                            schema:
-                                $ref: '#/components/schemas/Error'
-                    description: Internal error.
-            security:
-                - BearerAuth: []
-                  CsrfToken: []
-        put:
-            description: Requires an operator-scoped token.
-            operationId: putApiV1ProfilesActive
-            responses:
-                "401":
-                    content:
-                        application/json:
-                            schema:
-                                $ref: '#/components/schemas/Error'
-                    description: Missing or invalid bearer token.
-                "403":
-                    content:
-                        application/json:
-                            schema:
-                                $ref: '#/components/schemas/Error'
-                    description: Operator scope required, or CSRF token missing or invalid.
-                "405":
-                    content:
-                        application/json:
-                            schema:
-                                $ref: '#/components/schemas/Error'
-                    description: Method not allowed; the Allow header lists the accepted set.
-                "413":
-                    content:
-                        application/json:
-                            schema:
-                                $ref: '#/components/schemas/Error'
-                    description: Request body larger than 262144 bytes.
-                "500":
-                    content:
-                        application/json:
-                            schema:
-                                $ref: '#/components/schemas/Error'
-                    description: Internal error.
-            security:
-                - BearerAuth: []
-                  CsrfToken: []
     /api/v1/profiles/export:
         get:
             operationId: getApiV1ProfilesExport
@@ -12235,7 +12180,19 @@ paths:
         post:
             description: Requires an operator-scoped token.
             operationId: postApiV1ProfilesSwitch
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/ProfileSwitchRequest'
+                required: true
             responses:
+                "200":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/ProfileSwitchResponse'
+                    description: The profile that is now active; its saved settings are applied to the running configuration.
                 "401":
                     content:
                         application/json:

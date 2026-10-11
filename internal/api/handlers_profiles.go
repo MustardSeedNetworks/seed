@@ -61,6 +61,17 @@ type ProfileExportResponse struct {
 	Profiles   []ProfileResponse `json:"profiles"`
 }
 
+// ProfileSwitchRequest names the profile POST /profiles/switch activates.
+type ProfileSwitchRequest struct {
+	ProfileID string `json:"profileId"`
+}
+
+// ProfileSwitchResponse is the profile that is now active.
+type ProfileSwitchResponse struct {
+	Message string          `json:"message"`
+	Profile ProfileResponse `json:"profile"`
+}
+
 // handleProfiles routes profile requests by method.
 func (s *Server) handleProfiles(w http.ResponseWriter, r *http.Request) {
 	logger := logging.FromContext(r.Context())
@@ -414,7 +425,7 @@ func (s *Server) handleDeleteProfile(w http.ResponseWriter, r *http.Request, id 
 	}
 }
 
-// handleActiveProfile handles getting and setting the active profile.
+// handleActiveProfile returns the currently active profile.
 func (s *Server) handleActiveProfile(w http.ResponseWriter, r *http.Request) {
 	logger := logging.FromContext(r.Context())
 	localizer := i18n.FromRequest(r)
@@ -424,28 +435,6 @@ func (s *Server) handleActiveProfile(w http.ResponseWriter, r *http.Request) {
 			ErrCodeServiceUnavail, localizer.T("errors.profile.dbNotAvailable"), "") // fixes #694
 		return
 	}
-
-	switch r.Method {
-	case http.MethodGet:
-		s.handleGetActiveProfile(w, r)
-	case http.MethodPost, http.MethodPut:
-		s.handleSetActiveProfile(w, r)
-	default:
-		sendErrorResponseWithDetails(
-			w,
-			logger,
-			http.StatusMethodNotAllowed,
-			ErrCodeMethodNotAllowed,
-			localizer.T("errors.api.methodNotAllowed"),
-			"",
-		) // fixes #694
-	}
-}
-
-// handleGetActiveProfile returns the currently active profile.
-func (s *Server) handleGetActiveProfile(w http.ResponseWriter, r *http.Request) {
-	logger := logging.FromContext(r.Context())
-	localizer := i18n.FromRequest(r)
 
 	profile, err := s.profiles.ActiveProfile(r.Context())
 	if err != nil {
@@ -478,9 +467,13 @@ func (s *Server) handleSetActiveProfile(w http.ResponseWriter, r *http.Request) 
 	logger := logging.FromContext(r.Context())
 	localizer := i18n.FromRequest(r)
 
-	var req struct {
-		ProfileID string `json:"profileId"`
+	if !s.profiles.Available() {
+		sendErrorResponseWithDetails(w, logger, http.StatusServiceUnavailable,
+			ErrCodeServiceUnavail, localizer.T("errors.profile.dbNotAvailable"), "")
+		return
 	}
+
+	var req ProfileSwitchRequest
 	if !decodeJSONStrictLocalized(w, r, &req, MaxBodySizeJSON, logger, localizer) {
 		return
 	}
@@ -518,9 +511,9 @@ func (s *Server) handleSetActiveProfile(w http.ResponseWriter, r *http.Request) 
 		},
 	})
 
-	sendJSONResponse(w, logger, http.StatusOK, map[string]any{
-		"message": "Active profile updated",
-		"profile": profileToResponse(profile),
+	sendJSONResponse(w, logger, http.StatusOK, ProfileSwitchResponse{
+		Message: "Active profile updated",
+		Profile: profileToResponse(profile),
 	})
 }
 

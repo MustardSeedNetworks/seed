@@ -236,6 +236,8 @@ func Targets() []Target {
 		{&api.ProfileListResponse{}, "profile-list-response.schema.json"},
 		{&api.ProfileImportRequest{}, "profile-import-request.schema.json"},
 		{&api.ProfileExportResponse{}, "profile-export-response.schema.json"},
+		{&api.ProfileSwitchRequest{}, "profile-switch-request.schema.json"},
+		{&api.ProfileSwitchResponse{}, "profile-switch-response.schema.json"},
 
 		// Jobs spine — unified job runner transport (ADR-0005, §8). The job
 		// request params and the job result are deliberately opaque: params is
