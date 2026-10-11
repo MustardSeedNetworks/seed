@@ -828,6 +828,22 @@ operations:
           application/json:
             schema:
               $ref: '#/components/schemas/ReportScheduleInfo'
+  GET /api/v1/security/devices:
+    responses:
+      "200":
+        description: Every device in the discovery registry and the registry's scan state.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DevicesResponse'
+  POST /api/v1/security/devices/scan:
+    responses:
+      "200":
+        description: A background device scan was started, or one was already running.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DeviceScanResponse'
   GET /api/v1/security/devices/status:
     responses:
       "200":

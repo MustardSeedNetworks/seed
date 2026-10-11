@@ -1716,6 +1716,17 @@ components:
             required:
                 - profiledAt
             type: object
+        DeviceScanResponse:
+            additionalProperties: false
+            properties:
+                message:
+                    type: string
+                scanning:
+                    type: boolean
+            required:
+                - message
+                - scanning
+            type: object
         DeviceVulnerabilities:
             additionalProperties: false
             properties:
@@ -1749,6 +1760,19 @@ components:
                 - version
                 - vulnerabilities
                 - scanTime
+            type: object
+        DevicesResponse:
+            additionalProperties: false
+            properties:
+                devices:
+                    items:
+                        $ref: '#/components/schemas/DiscoveredDevice'
+                    type: array
+                status:
+                    $ref: '#/components/schemas/DeviceDiscoveryStatusResponse'
+            required:
+                - devices
+                - status
             type: object
         DiscoveredDevice:
             additionalProperties: false
@@ -12889,6 +12913,12 @@ paths:
         get:
             operationId: getApiV1SecurityDevices
             responses:
+                "200":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/DevicesResponse'
+                    description: Every device in the discovery registry and the registry's scan state.
                 "401":
                     content:
                         application/json:
@@ -12947,6 +12977,12 @@ paths:
         post:
             operationId: postApiV1SecurityDevicesScan
             responses:
+                "200":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/DeviceScanResponse'
+                    description: A background device scan was started, or one was already running.
                 "401":
                     content:
                         application/json:

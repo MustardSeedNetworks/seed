@@ -31,6 +31,13 @@ const (
 // Device Discovery Handlers (fixes #544 - split from handlers_discovery.go)
 // ============================================================================
 
+// DevicesResponse is GET /security/devices: every device in the registry
+// and the registry's status.
+type DevicesResponse struct {
+	Devices []*discovery.DiscoveredDevice `json:"devices"`
+	Status  DeviceDiscoveryStatusResponse `json:"status"`
+}
+
 // handleDevices returns discovered devices and status (fixes #702 - uses r.Context()).
 func (s *Server) handleDevices(w http.ResponseWriter, r *http.Request) {
 	logger := logging.FromContext(r.Context())
@@ -58,15 +65,17 @@ func (s *Server) handleDevices(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	devices := s.deviceDiscovery().GetDevices()
-	status := s.deviceDiscovery().GetStatus()
+	sendJSONResponse(w, logger, http.StatusOK, DevicesResponse{
+		Devices: s.deviceDiscovery().GetDevices(),
+		Status:  DeviceDiscoveryStatusResponse(*s.deviceDiscovery().GetStatus()),
+	})
+}
 
-	resp := map[string]any{
-		"devices": devices,
-		"status":  status,
-	}
-
-	sendJSONResponse(w, logger, http.StatusOK, resp)
+// DeviceScanResponse is POST /security/devices/scan: the scan runs in the
+// background, so the answer only says whether this call started it.
+type DeviceScanResponse struct {
+	Message  string `json:"message"`
+	Scanning bool   `json:"scanning"`
 }
 
 // handleDevicesScan triggers a network device scan (fixes #702 - uses r.Context()).
@@ -86,10 +95,12 @@ func (s *Server) handleDevicesScan(w http.ResponseWriter, r *http.Request) {
 
 	// Check if scan is already in progress
 	if s.deviceDiscovery().IsScanning() {
-		sendJSONResponse(w, logger, http.StatusOK, map[string]any{
-			"message":  "Scan already in progress",
-			"scanning": true,
-		})
+		sendJSONResponse(
+			w,
+			logger,
+			http.StatusOK,
+			DeviceScanResponse{Message: "Scan already in progress", Scanning: true},
+		)
 		return
 	}
 
@@ -131,10 +142,7 @@ func (s *Server) handleDevicesScan(w http.ResponseWriter, r *http.Request) {
 		})
 	}(r.Context())
 
-	sendJSONResponse(w, logger, http.StatusOK, map[string]any{
-		"message":  "Scan started",
-		"scanning": true,
-	})
+	sendJSONResponse(w, logger, http.StatusOK, DeviceScanResponse{Message: "Scan started", Scanning: true})
 }
 
 // postScanVulnerabilityCheck runs vulnerability scans after device discovery if auto-scan is enabled.
